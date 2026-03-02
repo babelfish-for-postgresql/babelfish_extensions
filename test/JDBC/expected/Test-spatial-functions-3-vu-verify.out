@@ -1,4 +1,914 @@
 
+<<<<<<< HEAD
+=======
+--Parse functions test 
+-- geometry::Parse with POINT
+DECLARE @geomText NVARCHAR(MAX);
+SET @geomText = 'POINT(1.0 2.0)';
+SELECT geometry::Parse(@geomText).STAsText() AS ParsedGeometry;
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+-- geometry::Parse with LINESTRING
+DECLARE @geomText NVARCHAR(MAX);
+SET @geomText = 'LINESTRING(0 0, 1 1, 2 2)';
+SELECT geometry::Parse(@geomText).STAsText() AS ParsedGeometry;
+go
+~~START~~
+nvarchar
+LINESTRING(0 0,1 1,2 2)
+~~END~~
+
+
+DECLARE @geomText NVARCHAR(MAX);
+SET @geomText = 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))';
+SELECT geometry::Parse(@geomText).STAsText() AS ParsedGeometry;
+go
+~~START~~
+nvarchar
+POLYGON((0 0,0 1,1 1,1 0,0 0))
+~~END~~
+
+
+DECLARE @geogText NVARCHAR(MAX);
+SET @geogText = 'POINT(1.0 2.0)';
+SELECT geography::Parse(@geogText).STAsText() AS ParsedGeography;
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+DECLARE @geogText NVARCHAR(MAX);
+SET @geogText = 'LINESTRING(0 0, 1 1, 2 2)';
+SELECT geography::Parse(@geogText).STAsText() AS ParsedGeography;
+go
+~~START~~
+nvarchar
+LINESTRING(0 0,1 1,2 2)
+~~END~~
+
+
+DECLARE @geogText NVARCHAR(MAX);
+SET @geogText = 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))';
+SELECT geography::Parse(@geogText).STAsText() AS ParsedGeography;
+go
+~~START~~
+nvarchar
+POLYGON((0 0,0 1,1 1,1 0,0 0))
+~~END~~
+
+
+-- Parse with real-world coordinates 
+DECLARE @geomText NVARCHAR(MAX);
+SET @geomText = 'POINT(-122.34900 47.65100)';
+SELECT geometry::Parse(@geomText).STAsText() AS ParsedGeometry;
+go
+~~START~~
+nvarchar
+POINT(-122.349 47.651)
+~~END~~
+
+
+DECLARE @geogText NVARCHAR(MAX);
+SET @geogText = 'POINT(-122.34900 47.65100)';
+SELECT geography::Parse(@geogText).STAsText() AS ParsedGeography;
+go
+~~START~~
+nvarchar
+POINT(-122.349 47.651)
+~~END~~
+
+
+-- Parse from table column
+SELECT ID, geometry::Parse(GeomColumn.STAsText()).STAsText() AS ParsedGeom FROM TestGeospatialParse_GeomTemp3 ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#POINT(3 4)
+2#!#LINESTRING(0 0,1 1)
+3#!#POLYGON((0 0,0 2,2 2,2 0,0 0))
+4#!#POINT(47.651 -22.349)
+~~END~~
+
+
+SELECT ID, geography::Parse(GeogColumn.STAsText()).STAsText() AS ParsedGeog FROM TestGeospatialParse_GeogTemp ORDER BY ID;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "testgeospatialparse_geogtemp" does not exist)~~
+
+
+-- Parse with STEquals in WHERE clause
+DECLARE @searchText NVARCHAR(MAX);
+SET @searchText = 'POINT(3.0 4.0)';
+SELECT ID FROM TestGeospatialParse_GeomTemp3 WHERE geometry::Parse(@searchText).STEquals(GeomColumn) = 1 ORDER BY ID;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+DECLARE @searchText NVARCHAR(MAX);
+SET @searchText = 'POINT(3.0 4.0)';
+SELECT ID FROM TestGeospatialParse_GeogTemp WHERE geography::Parse(@searchText).STEquals(GeogColumn) = 1 ORDER BY ID;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "testgeospatialparse_geogtemp" does not exist)~~
+
+
+-- Parse with JOIN and STIntersects
+DECLARE @refText NVARCHAR(MAX);
+SET @refText = 'POINT(3.0 4.0)';
+SELECT g1.ID, g2.ID FROM TestGeospatialParse_GeomTemp3 g1 
+JOIN TestGeospatialParse_GeomTemp3 g2 ON geometry::Parse(@refText).STIntersects(g1.GeomColumn) = 1 
+ORDER BY g1.ID, g2.ID;
+go
+~~START~~
+int#!#int
+1#!#1
+1#!#2
+1#!#3
+1#!#4
+~~END~~
+
+
+-- Parse with CASE and STDistance
+DECLARE @testText NVARCHAR(MAX);
+SET @testText = 'POINT(1.0 2.0)';
+SELECT ID, 
+CASE WHEN geometry::Parse(@testText).STDistance(GeomColumn) < 5.0 THEN 'Near' ELSE 'Far' END AS Proximity
+FROM TestGeospatialParse_GeomTemp3 ORDER BY ID;
+go
+~~START~~
+int#!#varchar
+1#!#Near
+2#!#Near
+3#!#Near
+4#!#Far
+~~END~~
+
+
+-- Parse with CTE
+DECLARE @refText NVARCHAR(MAX);
+SET @refText = 'POINT(3.0 4.0)';
+WITH ParseCTE AS (
+    SELECT ID, geometry::Parse(@refText).STDistance(GeomColumn) AS Distance 
+    FROM TestGeospatialParse_GeomTemp3
+)
+SELECT * FROM ParseCTE WHERE Distance < 10.0 ORDER BY Distance;
+go
+~~START~~
+int#!#float
+1#!#0.0
+3#!#2.23606797749979
+2#!#3.605551275463989
+~~END~~
+
+
+-- Parse with cross-database query (geometry)
+DECLARE @refText NVARCHAR(MAX);
+SET @refText = 'POINT(3.0 4.0)';
+SELECT ID, geometry::Parse(@refText).STDistance(GeomColumn) AS Distance 
+FROM TestGeospatialParse_DB.dbo.TestGeospatialParse_GeometryTable3ORDER BY ID;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'BY' at line 5 and character position 72)~~
+
+
+-- Parse with cross-database query (geography)
+DECLARE @refText NVARCHAR(MAX);
+SET @refText = 'POINT(3.0 4.0)';
+SELECT ID, geography::Parse(@refText).STDistance(GeogColumn) AS Distance 
+FROM TestGeospatialParse_DB.dbo.TestGeospatialParse_GeographyTable3 ORDER BY ID;
+go
+~~START~~
+int#!#float
+1#!#0.0
+2#!#247520.76060020996
+3#!#399384.36945885984
+4#!#313588.39721259556
+5#!#77836.58790621723
+6#!#247520.76060020996
+8#!#247520.76060020996
+9#!#313588.39721259556
+11#!#313588.39721259556
+12#!#399384.36945885984
+14#!#399384.36945885984
+~~END~~
+
+
+-- NULL variable input (geometry)
+DECLARE @nullText NVARCHAR(MAX);
+SET @nullText = NULL;
+SELECT geometry::Parse(@nullText) AS ParsedGeometry;
+go
+~~START~~
+geometry
+<NULL>
+~~END~~
+
+
+-- NULL variable input (geography)
+DECLARE @nullText NVARCHAR(MAX);
+SET @nullText = NULL;
+SELECT geography::Parse(@nullText) AS ParsedGeography;
+go
+~~START~~
+geography
+<NULL>
+~~END~~
+
+
+-- 'NULL' string literal - should error 
+DECLARE @nullString NVARCHAR(MAX);
+SET @nullString = 'NULL';
+SELECT geometry::Parse(@nullString) AS ParsedGeometry;
+go
+~~START~~
+geometry
+<NULL>
+~~END~~
+
+
+DECLARE @nullString NVARCHAR(MAX);
+SET @nullString = 'NULL';
+SELECT geography::Parse(@nullString) AS ParsedGeography;
+go
+~~START~~
+geography
+<NULL>
+~~END~~
+
+
+-- POINT EMPTY 
+DECLARE @emptyPoint NVARCHAR(MAX);
+SET @emptyPoint = 'POINT EMPTY';
+SELECT geometry::Parse(@emptyPoint).STAsText() AS ParsedGeometry;
+go
+~~START~~
+nvarchar
+POINT EMPTY
+~~END~~
+
+
+DECLARE @emptyPoint NVARCHAR(MAX);
+SET @emptyPoint = 'POINT EMPTY';
+SELECT geography::Parse(@emptyPoint).STAsText() AS ParsedGeography;
+go
+~~START~~
+nvarchar
+POINT EMPTY
+~~END~~
+
+
+-- Whitespace handling 
+DECLARE @geomText NVARCHAR(MAX);
+SET @geomText = ' POINT ( 1.0 2.0 ) ';
+SELECT geometry::Parse(@geomText).STAsText() AS ParsedGeometry;
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+DECLARE @geogText NVARCHAR(MAX);
+SET @geogText = ' POINT ( 1.0 2.0 ) ';
+SELECT geography::Parse(@geogText).STAsText() AS ParsedGeography;
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+-- Parse with different case
+DECLARE @lowerText NVARCHAR(MAX);
+SET @lowerText = 'point(1.0 2.0)';
+SELECT geometry::Parse(@lowerText).STAsText() AS ParsedGeometry;
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+DECLARE @upperText NVARCHAR(MAX);
+SET @upperText = 'POINT(1.0 2.0)';
+SELECT geography::Parse(@upperText).STAsText() AS ParsedGeography;
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+-- Nested function calls
+SELECT ID, geometry::Parse(GeomColumn.STAsText()).STDimension() AS Dimension 
+FROM TestGeospatialParse_GeomTemp3 ORDER BY ID;
+go
+~~START~~
+int#!#int
+1#!#0
+2#!#1
+3#!#2
+4#!#0
+~~END~~
+
+
+SELECT ID, geography::Parse(GeogColumn.STAsText()).STDimension() AS Dimension 
+FROM TestGeospatialParse_GeogTemp3 ORDER BY ID;
+go
+~~START~~
+int#!#int
+1#!#0
+2#!#1
+3#!#2
+4#!#0
+~~END~~
+
+
+-- Parse with function results
+SELECT geometry::Parse(geometry::Point(1.0, 2.0, 4326).STAsText()).STAsText() AS ParsedFromFunction;
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+SELECT geography::Parse(geography::Point(1.0, 2.0, 4326).STAsText()).STAsText() AS ParsedFromFunction;
+go
+~~START~~
+nvarchar
+POINT(2 1)
+~~END~~
+
+
+-- Direct NULL input
+SELECT geometry::Parse(NULL);
+go
+~~START~~
+geometry
+<NULL>
+~~END~~
+
+
+SELECT geography::Parse(NULL);
+go
+~~START~~
+geography
+<NULL>
+~~END~~
+
+
+-- 'NULL' string literal
+SELECT geometry::Parse('NULL');
+go
+~~START~~
+geometry
+<NULL>
+~~END~~
+
+
+SELECT geography::Parse('NULL');
+go
+~~START~~
+geography
+<NULL>
+~~END~~
+
+
+SELECT geometry::Parse('  NULL   ');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid geometry)~~
+
+
+-- XYZM coordinates (4D)
+SELECT geometry::Parse('POINT(1 2 3 4)').STAsText();
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+SELECT geography::Parse('POINT(1 2 3 4)').STAsText();
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+-- XYZ coordinates (3D)
+SELECT geometry::Parse('POINT(1 2 3)').STAsText();
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+SELECT geography::Parse('POINT(1 2 3)').STAsText();
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+-- Invalid: single coordinate - should error
+SELECT geometry::Parse('POINT(1)');   
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid geometry)~~
+
+
+SELECT geography::Parse('POINT(1)').STAsText();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid geometry)~~
+
+
+-- Invalid polygon: insufficient points - should error
+SELECT geometry::Parse('POLYGON((0 0, 1 1))');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: geometry requires more points)~~
+
+
+SELECT geography::Parse('POLYGON((0 0, 1 1))');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: geometry requires more points)~~
+
+
+-- Invalid WKT string - should error
+SELECT geometry::Parse('hello');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid geometry)~~
+
+
+SELECT geography::Parse('hello');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid geometry)~~
+
+
+-- Large coordinate values
+SELECT geometry::Parse('POINT(999999999 999999999)').STAsText();
+go
+~~START~~
+nvarchar
+POINT(999999999 999999999)
+~~END~~
+
+
+SELECT geography::Parse('POINT(999999999 999999999)').STAsText();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
+
+
+-- Boundary coordinate values
+SELECT geometry::Parse('POINT(-180 -90)').STAsText();
+go
+~~START~~
+nvarchar
+POINT(-180 -90)
+~~END~~
+
+
+SELECT geography::Parse('POINT(-180 -90)').STAsText();
+go
+~~START~~
+nvarchar
+POINT(-180 -90)
+~~END~~
+
+
+-- LINESTRING EMPTY
+SELECT geometry::Parse('LINESTRING EMPTY').STAsText();
+go
+~~START~~
+nvarchar
+LINESTRING EMPTY
+~~END~~
+
+
+-- Case insensitivity for LINESTRING
+SELECT geometry::Parse('lineString(0 0, 1 1)').STAsText();
+go
+~~START~~
+nvarchar
+LINESTRING(0 0,1 1)
+~~END~~
+
+
+SELECT geography::Parse('LINESTRING EMPTY').STAsText();
+go
+~~START~~
+nvarchar
+LINESTRING EMPTY
+~~END~~
+
+
+SELECT geography::Parse('lineString(0 0, 1 1)').STAsText();
+go
+~~START~~
+nvarchar
+LINESTRING(0 0,1 1)
+~~END~~
+
+
+-- UNION with Parse
+SELECT geometry::Parse('POINT(1 2)').STAsText() AS geom
+UNION
+SELECT geometry::Parse('POINT(3 4)').STAsText()
+UNION
+SELECT geometry::Parse('NULL').STAsText();
+ORDER BY geom DESC;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'ORDER' at line 7 and character position 0)~~
+
+
+-- GROUP BY with spatial type
+SELECT GeomColumn.STGeometryType() AS GeomType, 
+       COUNT(*) AS Count
+FROM TestGeospatialParse_GeomTemp3
+GROUP BY GeomColumn.STGeometryType()
+ORDER BY GeomType;
+go
+~~START~~
+nvarchar#!#int
+LineString#!#1
+Point#!#2
+Polygon#!#1
+~~END~~
+
+
+-- Window function with Parse
+SELECT ID, 
+       geometry::Parse('POINT(0 0)').STDistance(GeomColumn) AS Distance,
+       ROW_NUMBER() OVER (ORDER BY geometry::Parse('POINT(0 0)').STDistance(GeomColumn)) AS RowNum
+FROM TestGeospatialParse_GeomTemp3;
+go
+~~START~~
+int#!#float#!#bigint
+2#!#0.0#!#1
+3#!#0.0#!#2
+1#!#5.0#!#3
+4#!#52.63169769255026#!#4
+~~END~~
+
+
+-- CAST result to VARCHAR
+SELECT CAST(geometry::Parse('POINT(1 2)').STAsText() AS VARCHAR(100)) AS Result;
+go
+~~START~~
+varchar
+POINT(1 2)
+~~END~~
+
+
+-- Empty string - should error
+SELECT geometry::Parse('');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid input: string is empty or contains only whitespace characters)~~
+
+
+-- hierarchyid::Parse
+select hierarchyid::Parse('/1/3/2/');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
+
+
+-- hierarchyid::Parse with variable
+DECLARE @node hierarchyid;
+SET @node = hierarchyid::Parse('/1/3/2/');
+SELECT @node AS NodeValue;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
+
+
+-- CTE with multiple geometry types
+WITH ParseCTE AS (
+    SELECT 1 AS ID, geometry::Parse('POINT(1 2)').STAsText() AS GeomText
+    UNION ALL
+    SELECT 2, geometry::Parse('LINESTRING(0 0, 1 1)').STAsText()
+    UNION ALL
+    SELECT 3, geometry::Parse('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))').STAsText()
+)
+SELECT ID, GeomText FROM ParseCTE ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#POINT(1 2)
+2#!#LINESTRING(0 0,1 1)
+3#!#POLYGON((0 0,0 10,10 10,10 0,0 0))
+~~END~~
+
+
+-- CTE with geography types
+WITH GeogCTE AS (
+    SELECT 1 AS ID, geography::Parse('POINT(-122.349 47.651)').STAsText() AS GeogText
+    UNION ALL
+    SELECT 2, geography::Parse('LINESTRING(-122.36 47.65, -122.34 47.66)').STAsText()
+)
+SELECT ID, GeogText FROM GeogCTE ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#POINT(-122.349 47.651)
+2#!#LINESTRING(-122.36 47.65,-122.34 47.66)
+~~END~~
+
+
+-- Window function with STDimension
+SELECT *, ROW_NUMBER() OVER (ORDER BY Dimension) AS RowNum FROM (
+    SELECT 1 AS ID, geometry::Parse('POINT(1 2)').STDimension() AS Dimension
+    UNION ALL
+    SELECT 2, geometry::Parse('LINESTRING(0 0, 1 1)').STDimension()
+    UNION ALL
+    SELECT 3, geometry::Parse('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))').STDimension()
+) AS Results;
+go
+~~START~~
+int#!#int#!#bigint
+1#!#0#!#1
+2#!#1#!#2
+3#!#2#!#3
+~~END~~
+
+
+-- Schema-qualified Parse
+SELECT sys.geometry::Parse('POINT(1 2)').STAsText() AS Result;
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+-- Invalid geometry type - should error
+SELECT geometry::Parse('INVALID(1 2)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid geometry)~~
+
+
+-- GROUP BY with STDimension
+SELECT Dimension, COUNT(*) AS Count FROM (
+    SELECT geometry::Parse('POINT(1 2)').STDimension() AS Dimension
+    UNION ALL
+    SELECT geometry::Parse('POINT(3 4)').STDimension()
+    UNION ALL
+    SELECT geometry::Parse('LINESTRING(0 0, 1 1)').STDimension()
+    UNION ALL
+    SELECT geometry::Parse('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))').STDimension()
+) AS Results
+GROUP BY Dimension
+ORDER BY Dimension;
+go
+~~START~~
+int#!#int
+0#!#2
+1#!#1
+2#!#1
+~~END~~
+
+
+-- Parse returning geometry object (no STAsText)
+SELECT geometry::Parse('POINT(1 2 3 4)');
+go
+~~START~~
+geometry
+00000000010F000000000000F03F000000000000004000000000000008400000000000001040
+~~END~~
+
+
+SELECT geometry::Parse('LINESTRING(0 0, 1 1)');
+go
+~~START~~
+geometry
+00000000011400000000000000000000000000000000000000000000F03F000000000000F03F
+~~END~~
+
+
+SELECT geometry::Parse('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))');
+go
+~~START~~
+geometry
+00000000010005000000000000000000000000000000000000000000000000000000000000000000244000000000000024400000000000002440000000000000244000000000000000000000000000000000000000000000000001000000020000000001000000FFFFFFFF0000000003
+~~END~~
+
+
+SELECT geometry::Parse('POINT(999999999 999999999)');
+go
+~~START~~
+geometry
+00000000010C000080FF64CDCD41000080FF64CDCD41
+~~END~~
+
+
+-- Z coordinate (elevation)
+SELECT geometry::Parse('POINT Z(1 2 3)');
+go
+~~START~~
+geometry
+00000000010D000000000000F03F00000000000000400000000000000840
+~~END~~
+
+
+-- M coordinate (measure)
+SELECT geometry::Parse('POINT M(1 2 4)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+-- M coordinate (measure)
+SELECT geometry::Parse('POLYGON M((0 0 0, 0 10 0, 10 10 0, 10 0 0, 0 0 0))');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+-- geography with XYZM
+SELECT geography::Parse('POINT(1 2 3 4)');
+go
+~~START~~
+geography
+E6100000010F0000000000000040000000000000F03F00000000000008400000000000001040
+~~END~~
+
+
+SELECT geometry::Parse('LINESTRING Z(0 0 0, 1 1 1, 2 2 2)');
+go
+~~START~~
+geometry
+0000000001050300000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000004000000000000000400000000000000000000000000000F03F000000000000004001000000010000000001000000FFFFFFFF0000000002
+~~END~~
+
+
+SELECT geography::Parse('LINESTRING Z(0 0 0, 1 1 1)');
+go
+~~START~~
+geography
+E6100000011500000000000000000000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F
+~~END~~
+
+
+SELECT geography::Parse('POINT Z(1 2 3)');
+go
+~~START~~
+geography
+E6100000010D0000000000000040000000000000F03F0000000000000840
+~~END~~
+
+
+SELECT geography::Parse('LINESTRING Z(0 0 0, 1 1 1)');
+go
+~~START~~
+geography
+E6100000011500000000000000000000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F
+~~END~~
+
+
+SELECT geography::Parse('POLYGON Z((0 0 0, 0 1 0, 1 1 0, 1 0 0, 0 0 0))');
+go
+~~START~~
+geography
+E610000001010500000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000020000000001000000FFFFFFFF0000000003
+~~END~~
+
+
+SELECT geography::Parse('point z(1 2 3)');
+go
+~~START~~
+geography
+E6100000010D0000000000000040000000000000F03F0000000000000840
+~~END~~
+
+
+SELECT geography::Parse('POINT ZM(1 2 3 4)');
+go
+~~START~~
+geography
+E6100000010F0000000000000040000000000000F03F00000000000008400000000000001040
+~~END~~
+
+
+SELECT geography::Parse('LINESTRING ZM(0 0 0 0, 1 1 1 1)');
+go
+~~START~~
+geography
+E6100000011700000000000000000000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000F03F
+~~END~~
+
+
+SELECT geography::Parse('point zm(1 2 3 4)');
+go
+~~START~~
+geography
+E6100000010F0000000000000040000000000000F03F00000000000008400000000000001040
+~~END~~
+
+
+SELECT geography::Parse('POINT(1 2 3 4)');
+go
+~~START~~
+geography
+E6100000010F0000000000000040000000000000F03F00000000000008400000000000001040
+~~END~~
+
+
+SELECT geography::Parse('LINESTRING(0 0, 1 1)');
+go
+~~START~~
+geography
+E6100000011400000000000000000000000000000000000000000000F03F000000000000F03F
+~~END~~
+
+
+SELECT geography::Parse('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))');
+go
+~~START~~
+geography
+E610000001000500000000000000000000000000000000000000000000000000F03F0000000000000000000000000000F03F000000000000F03F0000000000000000000000000000F03F0000000000000000000000000000000001000000020000000001000000FFFFFFFF0000000003
+~~END~~
+
+
+SELECT geography::Parse('POINT M(1 2 4)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('LINESTRING M(0 0 0, 1 1 1)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('POLYGON M((0 0 0, 0 1 0, 1 1 0, 1 0 0, 0 0 0))');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('point m(1 2 4)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT geography::Parse('POINT(-122.349 47.651)');
+go
+~~START~~
+geography
+E6100000010C17D9CEF753D347407593180456965EC0
+~~END~~
+
+
+
+--STGeometryType()
+>>>>>>> upstream/BABEL_5_X_DEV
 USE TestGeospatialMethods3_DB;
 go
 

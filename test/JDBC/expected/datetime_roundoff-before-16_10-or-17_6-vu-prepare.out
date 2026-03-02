@@ -236,19 +236,19 @@ GO
 
 
 
-select * from datetime_test where date_time1 = '2014-03-12 12:00:34.467'
+select date_time1, date_time2 from datetime_test where date_time1 = '2014-03-12 12:00:34.467'
 GO
 ~~START~~
-int#!#datetime#!#datetime
-2#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+datetime#!#datetime
+2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
 ~~END~~
 
 
-select * from datetime_test where date_time1 = '2014-03-12 12:00:34.466'
+select date_time1, date_time2 from datetime_test where date_time1 = '2014-03-12 12:00:34.466'
 GO
 ~~START~~
-int#!#datetime#!#datetime
-1#!#2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
+datetime#!#datetime
+2014-03-12 12:00:34.467#!#2010-03-04 12:55:41.15
 ~~END~~
 
 

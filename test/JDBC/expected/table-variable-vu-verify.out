@@ -278,3 +278,283 @@ int
 
 ~~ERROR (Message: relation "@t" does not exist)~~
 
+
+
+---------------------------------------------------------------------------
+-- Cross-QueryEnv Table Variable Tests - Nested Query Environment (BABEL-6268)
+---------------------------------------------------------------------------
+-- Basic table variable operations in procedure
+EXEC p_tv_basic
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+2#!#second
+1#!#updated
+~~END~~
+
+
+-- Table variable with DELETE operations
+EXEC p_tv_delete
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar#!#int
+2#!#inactive#!#200
+1#!#processed#!#100
+4#!#new#!#150
+~~END~~
+
+
+-- Nested procedures with table variables
+EXEC p_tv_nested_outer
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+Inner procedure:
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#from inner proc
+2#!#inner data
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+Outer procedure:
+~~END~~
+
+~~START~~
+int#!#varchar
+10#!#updated in outer
+20#!#outer data
+~~END~~
+
+
+-- Table variable with transaction operations
+EXEC p_tv_transaction
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+Inside transaction:
+~~END~~
+
+~~START~~
+int#!#numeric
+2#!#400.00
+3#!#300.00
+~~END~~
+
+~~START~~
+varchar
+After rollback (TV unaffected):
+~~END~~
+
+~~START~~
+int#!#numeric
+2#!#400.00
+3#!#300.00
+~~END~~
+
+
+--  Multiple table variables with cross-operations
+EXEC p_tv_multiple
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+Table Variable 1:
+~~END~~
+
+~~START~~
+int#!#varchar
+2#!#second
+1#!#updated first
+~~END~~
+
+~~START~~
+varchar
+Table Variable 2:
+~~END~~
+
+~~START~~
+int#!#int#!#varchar
+10#!#1#!#ref to first
+~~END~~
+
+
+-- Table variable with error handling
+EXEC p_tv_error_handling
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+Error caught: duplicate key value violates unique constraint "@tv_1_pkey"
+~~END~~
+
+~~START~~
+int#!#varchar
+2#!#valid insert
+1#!#updated
+3#!#error handled
+~~END~~
+
+
+-- Table variable with conditional operations
+EXEC p_tv_conditional
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar#!#int
+1#!#active#!#50
+3#!#pending#!#75
+2#!#high_value#!#150
+4#!#new_high#!#200
+~~END~~
+
+
+-- Mixed table variable and temp table operations
+EXEC p_tv_mixed_with_temp
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+Table Variable:
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#updated TV
+2#!#TV second
+~~END~~
+
+~~START~~
+varchar
+Temp Table:
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#updated temp
+2#!#temp second
+~~END~~
+
+
+-- Table variable scope across nested calls
+EXEC p_tv_scope_outer
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+Outer scope TV before inner call:
+~~END~~
+
+~~START~~
+int#!#varchar
+100#!#outer scope
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+Inner scope TV:
+~~END~~
+
+~~START~~
+int#!#varchar
+200#!#inner scope
+201#!#inner scope 2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+Outer scope TV after inner call:
+~~END~~
+
+~~START~~
+int#!#varchar
+100#!#outer scope
+101#!#after inner call
+~~END~~
+

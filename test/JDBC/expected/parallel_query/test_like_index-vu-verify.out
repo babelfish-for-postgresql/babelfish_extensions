@@ -61,6 +61,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_v_cs84732f1ac470066fb5b0b1aa0dc83304 on test_like_index_vu_prepare_v_csas (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_v_csas_col = 'cs1'::"varchar" COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_v_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -113,6 +114,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_cs84732f1ac470066fb5b0b1aa0dc83304 on test_like_index_vu_prepare_v_csas (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_v_csas_col = 'cs1'::"varchar" COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_v_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -167,6 +169,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_v_cs1be7daa864eef6c8c3e0c3048d8f7fef on test_like_index_vu_prepare_v_csas (actual rows=1 loops=1)
         Index Cond: ((test_like_index_vu_prepare_v_csas_col2 = 'cs1'::"varchar" COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_v_csas_col3 = 'cs1'::"varchar" COLLATE bbf_unicode_cp1_cs_as))
+        Filter: (((test_like_index_vu_prepare_v_csas_col2)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((test_like_index_vu_prepare_v_csas_col3)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -221,6 +224,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_v_cs84732f1ac470066fb5b0b1aa0dc83304 on test_like_index_vu_prepare_v_csas (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_v_csas_col = 'cs1'::"varchar" COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_v_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -273,6 +277,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_cs84732f1ac470066fb5b0b1aa0dc83304 on test_like_index_vu_prepare_v_csas (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_v_csas_col = 'cs1'::"varchar" COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_v_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -327,6 +332,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_v_cs1be7daa864eef6c8c3e0c3048d8f7fef on test_like_index_vu_prepare_v_csas (actual rows=1 loops=1)
         Index Cond: ((test_like_index_vu_prepare_v_csas_col2 = 'cs1'::"varchar" COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_v_csas_col3 = 'cs1'::"varchar" COLLATE bbf_unicode_cp1_cs_as))
+        Filter: (((test_like_index_vu_prepare_v_csas_col2)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((test_like_index_vu_prepare_v_csas_col3)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -379,7 +385,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 2
   Workers Launched: 2
   ->  Parallel Seq Scan on test_like_index_vu_prepare_v_csas (actual rows=0 loops=3)
-        Filter: (test_like_index_vu_prepare_v_csas_col = 'cs1'::"varchar")
+        Filter: (((test_like_index_vu_prepare_v_csas_col)::text ~~* 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_v_csas_col = 'cs1'::"varchar"))
         Rows Removed by Filter: 333
 ~~END~~
 
@@ -408,6 +414,76 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_v_csas_col 
+FROM new_test_like_index_vu_prepare_v_csas 
+WHERE new_test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE 'csas';
+GO
+~~START~~
+varchar
+csas
+csas 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_v_csas_col 
+FROM new_test_like_index_vu_prepare_v_csas 
+WHERE new_test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE 'csas'
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_v_csas (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_v_csas_col)::text ~~ 'csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_v_csas_col = 'csas'::"varchar" COLLATE bbf_unicode_cp1_cs_as))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_v_csas_col 
+FROM new_test_like_index_vu_prepare_v_csas 
+WHERE new_test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE 'csas ';
+GO
+~~START~~
+varchar
+csas 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_v_csas_col 
+FROM new_test_like_index_vu_prepare_v_csas 
+WHERE new_test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE 'csas '
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_v_csas (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_v_csas_col)::text ~~ 'csas '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_v_csas_col = 'csas '::"varchar" COLLATE bbf_unicode_cp1_cs_as))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_v_csas_col 
+FROM new_test_like_index_vu_prepare_v_csas 
+WHERE new_test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE ' csas';
+GO
+~~START~~
+varchar
+ csas
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_v_csas_col 
+FROM new_test_like_index_vu_prepare_v_csas 
+WHERE new_test_like_index_vu_prepare_v_csas_col COLLATE latin1_general_cs_as LIKE ' csas'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_v_csas (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_v_csas_col)::text ~~ ' csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_v_csas_col = ' csas'::"varchar" COLLATE bbf_unicode_cp1_cs_as))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -428,6 +504,7 @@ ON t1.test_like_index_vu_prepare_v_csas_col LIKE 'cs1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_v_cs84732f1ac470066fb5b0b1aa0dc83304 on test_like_index_vu_prepare_v_csas t1
         Index Cond: (test_like_index_vu_prepare_v_csas_col = 'cs1'::"varchar" COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_v_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -446,6 +523,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_v_csas t1
@@ -509,6 +587,7 @@ ON t1.test_like_index_vu_prepare_v_csas_col LIKE 'cs1' COLLATE latin1_general_cs
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_v_cs84732f1ac470066fb5b0b1aa0dc83304 on test_like_index_vu_prepare_v_csas t1
         Index Cond: (test_like_index_vu_prepare_v_csas_col = 'cs1'::"varchar" COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_v_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -528,7 +607,7 @@ Nested Loop
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
-              Filter: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar" COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((test_like_index_vu_prepare_t_common_col)::text ~~ 'common1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar" COLLATE bbf_unicode_cp1_cs_as))
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_v_csas t1
@@ -610,6 +689,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_v_ci2d75c4ad76ed9b58a88ba0a93bab0133 on test_like_index_vu_prepare_v_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_v_cias_col = 'ci1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_v_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -662,6 +742,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_ci2d75c4ad76ed9b58a88ba0a93bab0133 on test_like_index_vu_prepare_v_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_v_cias_col = 'ci1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_v_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -716,6 +797,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_v_ci06c213505bb54e5b30098481866856c0 on test_like_index_vu_prepare_v_cias (actual rows=1 loops=1)
         Index Cond: ((test_like_index_vu_prepare_v_cias_col2 = 'ci1'::"varchar") AND (test_like_index_vu_prepare_v_cias_col3 = 'ci1'::"varchar"))
+        Filter: (((test_like_index_vu_prepare_v_cias_col2)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((test_like_index_vu_prepare_v_cias_col3)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -770,6 +852,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_v_ci2d75c4ad76ed9b58a88ba0a93bab0133 on test_like_index_vu_prepare_v_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_v_cias_col = 'ci1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_v_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -822,6 +905,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_ci2d75c4ad76ed9b58a88ba0a93bab0133 on test_like_index_vu_prepare_v_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_v_cias_col = 'ci1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_v_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -876,6 +960,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_v_ci06c213505bb54e5b30098481866856c0 on test_like_index_vu_prepare_v_cias (actual rows=1 loops=1)
         Index Cond: ((test_like_index_vu_prepare_v_cias_col2 = 'ci1'::"varchar") AND (test_like_index_vu_prepare_v_cias_col3 = 'ci1'::"varchar"))
+        Filter: (((test_like_index_vu_prepare_v_cias_col2)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((test_like_index_vu_prepare_v_cias_col3)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -928,7 +1013,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 2
   Workers Launched: 2
   ->  Parallel Seq Scan on test_like_index_vu_prepare_v_cias (actual rows=0 loops=3)
-        Filter: (test_like_index_vu_prepare_v_cias_col = 'ci1'::"varchar" COLLATE bbf_unicode_cp1_cs_as)
+        Filter: (((test_like_index_vu_prepare_v_cias_col)::text ~~ 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_v_cias_col = 'ci1'::"varchar" COLLATE bbf_unicode_cp1_cs_as))
         Rows Removed by Filter: 333
 ~~END~~
 
@@ -957,6 +1042,76 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_v_cias_col 
+FROM new_test_like_index_vu_prepare_v_cias 
+WHERE new_test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE 'cias';
+GO
+~~START~~
+varchar
+cias
+cias 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_v_cias_col 
+FROM new_test_like_index_vu_prepare_v_cias 
+WHERE new_test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE 'cias'
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_v_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_v_cias_col)::text ~~* 'cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_v_cias_col = 'cias'::"varchar"))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_v_cias_col 
+FROM new_test_like_index_vu_prepare_v_cias 
+WHERE new_test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE 'cias ';
+GO
+~~START~~
+varchar
+cias 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_v_cias_col 
+FROM new_test_like_index_vu_prepare_v_cias 
+WHERE new_test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE 'cias '
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_v_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_v_cias_col)::text ~~* 'cias '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_v_cias_col = 'cias '::"varchar"))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_v_cias_col 
+FROM new_test_like_index_vu_prepare_v_cias 
+WHERE new_test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE ' cias';
+GO
+~~START~~
+varchar
+ cias
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_v_cias_col 
+FROM new_test_like_index_vu_prepare_v_cias 
+WHERE new_test_like_index_vu_prepare_v_cias_col COLLATE latin1_general_ci_as LIKE ' cias'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_v_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_v_cias_col)::text ~~* ' cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_v_cias_col = ' cias'::"varchar"))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -977,6 +1132,7 @@ ON t1.test_like_index_vu_prepare_v_cias_col LIKE 'ci1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_v_ci2d75c4ad76ed9b58a88ba0a93bab0133 on test_like_index_vu_prepare_v_cias t1
         Index Cond: (test_like_index_vu_prepare_v_cias_col = 'ci1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_v_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -995,6 +1151,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_v_cias t1
@@ -1058,6 +1215,7 @@ ON t1.test_like_index_vu_prepare_v_cias_col LIKE 'ci1' COLLATE latin1_general_ci
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_v_ci2d75c4ad76ed9b58a88ba0a93bab0133 on test_like_index_vu_prepare_v_cias t1
         Index Cond: (test_like_index_vu_prepare_v_cias_col = 'ci1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_v_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -1076,6 +1234,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1' COLLATE latin1_gene
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_v_cias t1
@@ -1158,6 +1317,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_csai_idx on test_like_index_vu_prepare_v_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -1209,6 +1369,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_csai_idx on test_like_index_vu_prepare_v_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -1263,6 +1424,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_csai_idx_composite on test_like_index_vu_prepare_v_csai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col2)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((test_like_index_vu_prepare_v_csai_col3)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_v_csai_col2)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col3)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -1315,6 +1477,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_csai_idx on test_like_index_vu_prepare_v_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -1366,6 +1529,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_csai_idx on test_like_index_vu_prepare_v_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -1420,6 +1584,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_csai_idx_composite on test_like_index_vu_prepare_v_csai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col2)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((test_like_index_vu_prepare_v_csai_col3)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_v_csai_col2)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col3)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -1470,7 +1635,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 2
   Workers Launched: 2
   ->  Parallel Seq Scan on test_like_index_vu_prepare_v_csai (actual rows=0 loops=3)
-        Filter: (remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text))::text ~~* 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
         Rows Removed by Filter: 333
 ~~END~~
 
@@ -1499,6 +1664,76 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_v_csai_col 
+FROM new_test_like_index_vu_prepare_v_csai 
+WHERE new_test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE 'csai';
+GO
+~~START~~
+varchar
+csai
+csai 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_v_csai_col 
+FROM new_test_like_index_vu_prepare_v_csai 
+WHERE new_test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE 'csai'
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_v_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_v_csai_col)::text))::text ~~ 'csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_v_csai_col)::text) = 'csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_v_csai_col 
+FROM new_test_like_index_vu_prepare_v_csai 
+WHERE new_test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE 'csai ';
+GO
+~~START~~
+varchar
+csai 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_v_csai_col 
+FROM new_test_like_index_vu_prepare_v_csai 
+WHERE new_test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE 'csai '
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_v_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_v_csai_col)::text))::text ~~ 'csai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_v_csai_col)::text) = 'csai '::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_v_csai_col 
+FROM new_test_like_index_vu_prepare_v_csai 
+WHERE new_test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE ' csai';
+GO
+~~START~~
+varchar
+ csai
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_v_csai_col 
+FROM new_test_like_index_vu_prepare_v_csai 
+WHERE new_test_like_index_vu_prepare_v_csai_col COLLATE latin1_general_cs_ai LIKE ' csai'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_v_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_v_csai_col)::text))::text ~~ ' csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_v_csai_col)::text) = ' csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -1519,6 +1754,7 @@ ON t1.test_like_index_vu_prepare_v_csai_col LIKE 'csai1'
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_v_csai_idx on test_like_index_vu_prepare_v_csai t1
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -1537,6 +1773,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_v_csai t1
@@ -1600,6 +1837,7 @@ ON t1.test_like_index_vu_prepare_v_csai_col LIKE 'csai1' COLLATE latin1_general_
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_v_csai_idx on test_like_index_vu_prepare_v_csai t1
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -1618,12 +1856,11 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1' COLLATE latin1_gene
 Nested Loop
   ->  Gather
         Workers Planned: 2
+        ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
+              Filter: (((remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text))::text ~~ 'common1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+  ->  Gather
+        Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_v_csai t1
-  ->  Materialize
-        ->  Gather
-              Workers Planned: 2
-              ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
-                    Filter: (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
 ~~END~~
 
 
@@ -1702,6 +1939,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_ciai_idx on test_like_index_vu_prepare_v_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -1753,6 +1991,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_ciai_idx on test_like_index_vu_prepare_v_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -1807,6 +2046,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_ciai_idx_composite on test_like_index_vu_prepare_v_ciai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col2)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col3)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col2)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col3)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -1859,6 +2099,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_ciai_idx on test_like_index_vu_prepare_v_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -1910,6 +2151,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_ciai_idx on test_like_index_vu_prepare_v_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -1964,6 +2206,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_v_ciai_idx_composite on test_like_index_vu_prepare_v_ciai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col2)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col3)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col2)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col3)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -2014,7 +2257,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 2
   Workers Launched: 2
   ->  Parallel Seq Scan on test_like_index_vu_prepare_v_ciai (actual rows=0 loops=3)
-        Filter: (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text))::text ~~ 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
         Rows Removed by Filter: 333
 ~~END~~
 
@@ -2043,6 +2286,76 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_v_ciai_col 
+FROM new_test_like_index_vu_prepare_v_ciai 
+WHERE new_test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai';
+GO
+~~START~~
+varchar
+ciai
+ciai 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_v_ciai_col 
+FROM new_test_like_index_vu_prepare_v_ciai 
+WHERE new_test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai'
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_v_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* 'ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_v_ciai_col 
+FROM new_test_like_index_vu_prepare_v_ciai 
+WHERE new_test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai ';
+GO
+~~START~~
+varchar
+ciai 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_v_ciai_col 
+FROM new_test_like_index_vu_prepare_v_ciai 
+WHERE new_test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai '
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_v_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* 'ciai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai '::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_v_ciai_col 
+FROM new_test_like_index_vu_prepare_v_ciai 
+WHERE new_test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai';
+GO
+~~START~~
+varchar
+ ciai
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_v_ciai_col 
+FROM new_test_like_index_vu_prepare_v_ciai 
+WHERE new_test_like_index_vu_prepare_v_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_v_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* ' ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_v_ciai_col)::text) = ' ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -2062,6 +2375,7 @@ ON t1.test_like_index_vu_prepare_v_ciai_col LIKE 'ciai1'
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_v_ciai_idx on test_like_index_vu_prepare_v_ciai t1
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -2080,6 +2394,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_v_ciai t1
@@ -2143,6 +2458,7 @@ ON t1.test_like_index_vu_prepare_v_ciai_col LIKE 'ciai1' COLLATE latin1_general_
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_v_ciai_idx on test_like_index_vu_prepare_v_ciai t1
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_v_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -2161,12 +2477,11 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1' COLLATE latin1_gene
 Nested Loop
   ->  Gather
         Workers Planned: 2
+        ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
+              Filter: (((remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text))::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+  ->  Gather
+        Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_v_ciai t1
-  ->  Materialize
-        ->  Gather
-              Workers Planned: 2
-              ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
-                    Filter: (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
 ~~END~~
 
 
@@ -2247,6 +2562,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_c_csc57b567326112a54a52b273738c78881 on test_like_index_vu_prepare_c_csas (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_c_csas_col = 'cs1'::bpchar COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_c_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -2298,6 +2614,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_csc57b567326112a54a52b273738c78881 on test_like_index_vu_prepare_c_csas (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_c_csas_col = 'cs1'::bpchar COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_c_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -2350,6 +2667,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_c_cs791a5fc798e23d1a51f5f87124680363 on test_like_index_vu_prepare_c_csas (actual rows=1 loops=1)
         Index Cond: ((test_like_index_vu_prepare_c_csas_col2 = 'cs1'::bpchar COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_c_csas_col3 = 'cs1'::bpchar COLLATE bbf_unicode_cp1_cs_as))
+        Filter: (((test_like_index_vu_prepare_c_csas_col2)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((test_like_index_vu_prepare_c_csas_col3)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -2404,6 +2722,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_c_csc57b567326112a54a52b273738c78881 on test_like_index_vu_prepare_c_csas (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_c_csas_col = 'cs1'::bpchar COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_c_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -2455,6 +2774,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_csc57b567326112a54a52b273738c78881 on test_like_index_vu_prepare_c_csas (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_c_csas_col = 'cs1'::bpchar COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_c_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -2507,6 +2827,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_c_cs791a5fc798e23d1a51f5f87124680363 on test_like_index_vu_prepare_c_csas (actual rows=1 loops=1)
         Index Cond: ((test_like_index_vu_prepare_c_csas_col2 = 'cs1'::bpchar COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_c_csas_col3 = 'cs1'::bpchar COLLATE bbf_unicode_cp1_cs_as))
+        Filter: (((test_like_index_vu_prepare_c_csas_col2)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((test_like_index_vu_prepare_c_csas_col3)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -2559,7 +2880,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 4
   Workers Launched: 4
   ->  Parallel Seq Scan on test_like_index_vu_prepare_c_csas (actual rows=0 loops=5)
-        Filter: (test_like_index_vu_prepare_c_csas_col = 'cs1'::bpchar)
+        Filter: (((test_like_index_vu_prepare_c_csas_col)::text ~~* 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_c_csas_col = 'cs1'::bpchar))
         Rows Removed by Filter: 200
 ~~END~~
 
@@ -2588,6 +2909,143 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_c_csas_col
+FROM new_test_like_index_vu_prepare_c_csas 
+WHERE new_test_like_index_vu_prepare_c_csas_col  COLLATE latin1_general_cs_as LIKE 'csas';
+GO
+~~START~~
+char
+csas                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+csas                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_csas_col
+FROM new_test_like_index_vu_prepare_c_csas 
+WHERE new_test_like_index_vu_prepare_c_csas_col  COLLATE latin1_general_cs_as LIKE 'csas'
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_csas (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_c_csas_col)::text ~~ 'csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_csas_col = 'csas'::bpchar COLLATE bbf_unicode_cp1_cs_as))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_csas_col 
+FROM new_test_like_index_vu_prepare_c_csas 
+WHERE new_test_like_index_vu_prepare_c_csas_col  COLLATE latin1_general_cs_as LIKE 'csas ';
+GO
+~~START~~
+char
+csas                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+csas                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_csas_col 
+FROM new_test_like_index_vu_prepare_c_csas 
+WHERE new_test_like_index_vu_prepare_c_csas_col  COLLATE latin1_general_cs_as LIKE 'csas '
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_csas (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_c_csas_col)::text ~~ 'csas '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_csas_col = 'csas '::bpchar COLLATE bbf_unicode_cp1_cs_as))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_csas_col
+FROM new_test_like_index_vu_prepare_c_csas 
+WHERE new_test_like_index_vu_prepare_c_csas_col  COLLATE latin1_general_cs_as LIKE ' csas';
+GO
+~~START~~
+char
+ csas                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_csas_col
+FROM new_test_like_index_vu_prepare_c_csas 
+WHERE new_test_like_index_vu_prepare_c_csas_col  COLLATE latin1_general_cs_as LIKE ' csas'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_csas (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_c_csas_col)::text ~~ ' csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_csas_col = ' csas'::bpchar COLLATE bbf_unicode_cp1_cs_as))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_fixed_csas_col 
+FROM new_test_like_index_vu_prepare_c_fixed_csas 
+WHERE new_test_like_index_vu_prepare_c_fixed_csas_col  COLLATE latin1_general_cs_as LIKE 'csas';
+GO
+~~START~~
+char
+csas
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_csas_col 
+FROM new_test_like_index_vu_prepare_c_fixed_csas 
+WHERE new_test_like_index_vu_prepare_c_fixed_csas_col  COLLATE latin1_general_cs_as LIKE 'csas'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_fixed_csas (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_c_fixed_csas_col)::text ~~ 'csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_fixed_csas_col = 'csas'::bpchar COLLATE bbf_unicode_cp1_cs_as))
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_fixed_csas_col 
+FROM new_test_like_index_vu_prepare_c_fixed_csas 
+WHERE new_test_like_index_vu_prepare_c_fixed_csas_col  COLLATE latin1_general_cs_as LIKE 'csas ';
+GO
+~~START~~
+char
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_csas_col 
+FROM new_test_like_index_vu_prepare_c_fixed_csas 
+WHERE new_test_like_index_vu_prepare_c_fixed_csas_col  COLLATE latin1_general_cs_as LIKE 'csas '
+Gather (actual rows=0 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_fixed_csas (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_c_fixed_csas_col)::text ~~ 'csas '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_fixed_csas_col = 'csas '::bpchar COLLATE bbf_unicode_cp1_cs_as))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_fixed_csas_col
+FROM new_test_like_index_vu_prepare_c_fixed_csas 
+WHERE new_test_like_index_vu_prepare_c_fixed_csas_col  COLLATE latin1_general_cs_as LIKE ' csas';
+GO
+~~START~~
+char
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_csas_col
+FROM new_test_like_index_vu_prepare_c_fixed_csas 
+WHERE new_test_like_index_vu_prepare_c_fixed_csas_col  COLLATE latin1_general_cs_as LIKE ' csas'
+Gather (actual rows=0 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_fixed_csas (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_c_fixed_csas_col)::text ~~ ' csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_fixed_csas_col = ' csas'::bpchar COLLATE bbf_unicode_cp1_cs_as))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -2608,6 +3066,7 @@ ON t1.test_like_index_vu_prepare_c_csas_col LIKE 'cs1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_c_csc57b567326112a54a52b273738c78881 on test_like_index_vu_prepare_c_csas t1
         Index Cond: (test_like_index_vu_prepare_c_csas_col = 'cs1'::bpchar COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_c_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -2626,6 +3085,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on test_like_index_vu_prepare_c_csas t1
@@ -2687,6 +3147,7 @@ ON t1.test_like_index_vu_prepare_c_csas_col LIKE 'cs1' COLLATE latin1_general_cs
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_c_csc57b567326112a54a52b273738c78881 on test_like_index_vu_prepare_c_csas t1
         Index Cond: (test_like_index_vu_prepare_c_csas_col = 'cs1'::bpchar COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_c_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -2706,7 +3167,7 @@ Nested Loop
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
-              Filter: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar" COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((test_like_index_vu_prepare_t_common_col)::text ~~ 'common1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar" COLLATE bbf_unicode_cp1_cs_as))
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on test_like_index_vu_prepare_c_csas t1
@@ -2786,6 +3247,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_c_ci217f3585158e2dbe6ae3ecd7b6c05ffa on test_like_index_vu_prepare_c_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_c_cias_col = 'ci1'::bpchar)
+        Filter: ((test_like_index_vu_prepare_c_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -2837,6 +3299,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_ci217f3585158e2dbe6ae3ecd7b6c05ffa on test_like_index_vu_prepare_c_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_c_cias_col = 'ci1'::bpchar)
+        Filter: ((test_like_index_vu_prepare_c_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -2889,6 +3352,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_c_ci31b79f3450a4c7378407c1b6e6ccd10e on test_like_index_vu_prepare_c_cias (actual rows=1 loops=1)
         Index Cond: ((test_like_index_vu_prepare_c_cias_col2 = 'ci1'::bpchar) AND (test_like_index_vu_prepare_c_cias_col3 = 'ci1'::bpchar))
+        Filter: (((test_like_index_vu_prepare_c_cias_col2)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((test_like_index_vu_prepare_c_cias_col3)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -2943,6 +3407,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_c_ci217f3585158e2dbe6ae3ecd7b6c05ffa on test_like_index_vu_prepare_c_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_c_cias_col = 'ci1'::bpchar)
+        Filter: ((test_like_index_vu_prepare_c_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -2994,6 +3459,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_ci217f3585158e2dbe6ae3ecd7b6c05ffa on test_like_index_vu_prepare_c_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_c_cias_col = 'ci1'::bpchar)
+        Filter: ((test_like_index_vu_prepare_c_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -3046,6 +3512,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_c_ci31b79f3450a4c7378407c1b6e6ccd10e on test_like_index_vu_prepare_c_cias (actual rows=1 loops=1)
         Index Cond: ((test_like_index_vu_prepare_c_cias_col2 = 'ci1'::bpchar) AND (test_like_index_vu_prepare_c_cias_col3 = 'ci1'::bpchar))
+        Filter: (((test_like_index_vu_prepare_c_cias_col2)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((test_like_index_vu_prepare_c_cias_col3)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -3098,7 +3565,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 4
   Workers Launched: 4
   ->  Parallel Seq Scan on test_like_index_vu_prepare_c_cias (actual rows=0 loops=5)
-        Filter: (test_like_index_vu_prepare_c_cias_col = 'ci1'::bpchar COLLATE bbf_unicode_cp1_cs_as)
+        Filter: (((test_like_index_vu_prepare_c_cias_col)::text ~~ 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_c_cias_col = 'ci1'::bpchar COLLATE bbf_unicode_cp1_cs_as))
         Rows Removed by Filter: 200
 ~~END~~
 
@@ -3127,6 +3594,143 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_c_cias_col
+FROM new_test_like_index_vu_prepare_c_cias 
+WHERE new_test_like_index_vu_prepare_c_cias_col  COLLATE latin1_general_ci_as LIKE 'cias';
+GO
+~~START~~
+char
+cias                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+cias                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_cias_col
+FROM new_test_like_index_vu_prepare_c_cias 
+WHERE new_test_like_index_vu_prepare_c_cias_col  COLLATE latin1_general_ci_as LIKE 'cias'
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_c_cias_col)::text ~~* 'cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_cias_col = 'cias'::bpchar))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_cias_col 
+FROM new_test_like_index_vu_prepare_c_cias 
+WHERE new_test_like_index_vu_prepare_c_cias_col  COLLATE latin1_general_ci_as LIKE 'cias ';
+GO
+~~START~~
+char
+cias                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+cias                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_cias_col 
+FROM new_test_like_index_vu_prepare_c_cias 
+WHERE new_test_like_index_vu_prepare_c_cias_col  COLLATE latin1_general_ci_as LIKE 'cias '
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_c_cias_col)::text ~~* 'cias '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_cias_col = 'cias '::bpchar))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_cias_col
+FROM new_test_like_index_vu_prepare_c_cias 
+WHERE new_test_like_index_vu_prepare_c_cias_col  COLLATE latin1_general_ci_as LIKE ' cias';
+GO
+~~START~~
+char
+ cias                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_cias_col
+FROM new_test_like_index_vu_prepare_c_cias 
+WHERE new_test_like_index_vu_prepare_c_cias_col  COLLATE latin1_general_ci_as LIKE ' cias'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_c_cias_col)::text ~~* ' cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_cias_col = ' cias'::bpchar))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_fixed_cias_col 
+FROM new_test_like_index_vu_prepare_c_fixed_cias 
+WHERE new_test_like_index_vu_prepare_c_fixed_cias_col  COLLATE latin1_general_ci_as LIKE 'cias';
+GO
+~~START~~
+char
+cias
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_cias_col 
+FROM new_test_like_index_vu_prepare_c_fixed_cias 
+WHERE new_test_like_index_vu_prepare_c_fixed_cias_col  COLLATE latin1_general_ci_as LIKE 'cias'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_fixed_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_c_fixed_cias_col)::text ~~* 'cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_fixed_cias_col = 'cias'::bpchar))
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_fixed_cias_col 
+FROM new_test_like_index_vu_prepare_c_fixed_cias 
+WHERE new_test_like_index_vu_prepare_c_fixed_cias_col  COLLATE latin1_general_ci_as LIKE 'cias ';
+GO
+~~START~~
+char
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_cias_col 
+FROM new_test_like_index_vu_prepare_c_fixed_cias 
+WHERE new_test_like_index_vu_prepare_c_fixed_cias_col  COLLATE latin1_general_ci_as LIKE 'cias '
+Gather (actual rows=0 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_fixed_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_c_fixed_cias_col)::text ~~* 'cias '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_fixed_cias_col = 'cias '::bpchar))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_fixed_cias_col
+FROM new_test_like_index_vu_prepare_c_fixed_cias 
+WHERE new_test_like_index_vu_prepare_c_fixed_cias_col  COLLATE latin1_general_ci_as LIKE ' cias';
+GO
+~~START~~
+char
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_cias_col
+FROM new_test_like_index_vu_prepare_c_fixed_cias 
+WHERE new_test_like_index_vu_prepare_c_fixed_cias_col  COLLATE latin1_general_ci_as LIKE ' cias'
+Gather (actual rows=0 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_fixed_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_c_fixed_cias_col)::text ~~* ' cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_c_fixed_cias_col = ' cias'::bpchar))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -3147,6 +3751,7 @@ ON t1.test_like_index_vu_prepare_c_cias_col LIKE 'ci1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_c_ci217f3585158e2dbe6ae3ecd7b6c05ffa on test_like_index_vu_prepare_c_cias t1
         Index Cond: (test_like_index_vu_prepare_c_cias_col = 'ci1'::bpchar)
+        Filter: ((test_like_index_vu_prepare_c_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -3165,6 +3770,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on test_like_index_vu_prepare_c_cias t1
@@ -3226,6 +3832,7 @@ ON t1.test_like_index_vu_prepare_c_cias_col LIKE 'ci1' COLLATE latin1_general_ci
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_c_ci217f3585158e2dbe6ae3ecd7b6c05ffa on test_like_index_vu_prepare_c_cias t1
         Index Cond: (test_like_index_vu_prepare_c_cias_col = 'ci1'::bpchar)
+        Filter: ((test_like_index_vu_prepare_c_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -3244,6 +3851,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1' COLLATE latin1_gene
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on test_like_index_vu_prepare_c_cias t1
@@ -3324,6 +3932,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_csai_idx on test_like_index_vu_prepare_c_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -3373,6 +3982,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_csai_idx on test_like_index_vu_prepare_c_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -3425,6 +4035,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_csai_idx_composite on test_like_index_vu_prepare_c_csai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col2)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((test_like_index_vu_prepare_c_csai_col3)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_c_csai_col2)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col3)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -3477,6 +4088,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_csai_idx on test_like_index_vu_prepare_c_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -3526,6 +4138,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_csai_idx on test_like_index_vu_prepare_c_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -3578,6 +4191,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_csai_idx_composite on test_like_index_vu_prepare_c_csai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col2)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((test_like_index_vu_prepare_c_csai_col3)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_c_csai_col2)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col3)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -3628,7 +4242,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 4
   Workers Launched: 4
   ->  Parallel Seq Scan on test_like_index_vu_prepare_c_csai (actual rows=0 loops=5)
-        Filter: (remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text))::text ~~* 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
         Rows Removed by Filter: 200
 ~~END~~
 
@@ -3657,6 +4271,143 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_c_csai_col
+FROM new_test_like_index_vu_prepare_c_csai 
+WHERE new_test_like_index_vu_prepare_c_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai';
+GO
+~~START~~
+char
+csai                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+csai                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_csai_col
+FROM new_test_like_index_vu_prepare_c_csai 
+WHERE new_test_like_index_vu_prepare_c_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai'
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_csai_col)::text))::text ~~ 'csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_csai_col)::text) = 'csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_csai_col 
+FROM new_test_like_index_vu_prepare_c_csai 
+WHERE new_test_like_index_vu_prepare_c_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai ';
+GO
+~~START~~
+char
+csai                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+csai                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_csai_col 
+FROM new_test_like_index_vu_prepare_c_csai 
+WHERE new_test_like_index_vu_prepare_c_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai '
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_csai_col)::text))::text ~~ 'csai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_csai_col)::text) = 'csai '::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_csai_col
+FROM new_test_like_index_vu_prepare_c_csai 
+WHERE new_test_like_index_vu_prepare_c_csai_col  COLLATE latin1_general_cs_ai LIKE ' csai';
+GO
+~~START~~
+char
+ csai                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_csai_col
+FROM new_test_like_index_vu_prepare_c_csai 
+WHERE new_test_like_index_vu_prepare_c_csai_col  COLLATE latin1_general_cs_ai LIKE ' csai'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_csai_col)::text))::text ~~ ' csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_csai_col)::text) = ' csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_fixed_csai_col 
+FROM new_test_like_index_vu_prepare_c_fixed_csai 
+WHERE new_test_like_index_vu_prepare_c_fixed_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai';
+GO
+~~START~~
+char
+csai
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_csai_col 
+FROM new_test_like_index_vu_prepare_c_fixed_csai 
+WHERE new_test_like_index_vu_prepare_c_fixed_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_fixed_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_csai_col)::text))::text ~~ 'csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_csai_col)::text) = 'csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_fixed_csai_col 
+FROM new_test_like_index_vu_prepare_c_fixed_csai 
+WHERE new_test_like_index_vu_prepare_c_fixed_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai ';
+GO
+~~START~~
+char
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_csai_col 
+FROM new_test_like_index_vu_prepare_c_fixed_csai 
+WHERE new_test_like_index_vu_prepare_c_fixed_csai_col  COLLATE latin1_general_cs_ai LIKE 'csai '
+Gather (actual rows=0 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_fixed_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_csai_col)::text))::text ~~ 'csai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_csai_col)::text) = 'csai '::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_fixed_csai_col
+FROM new_test_like_index_vu_prepare_c_fixed_csai 
+WHERE new_test_like_index_vu_prepare_c_fixed_csai_col  COLLATE latin1_general_cs_ai LIKE ' csai';
+GO
+~~START~~
+char
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_csai_col
+FROM new_test_like_index_vu_prepare_c_fixed_csai 
+WHERE new_test_like_index_vu_prepare_c_fixed_csai_col  COLLATE latin1_general_cs_ai LIKE ' csai'
+Gather (actual rows=0 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_fixed_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_csai_col)::text))::text ~~ ' csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_csai_col)::text) = ' csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -3677,6 +4428,7 @@ ON t1.test_like_index_vu_prepare_c_csai_col LIKE 'csai1'
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_c_csai_idx on test_like_index_vu_prepare_c_csai t1
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -3695,6 +4447,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on test_like_index_vu_prepare_c_csai t1
@@ -3756,6 +4509,7 @@ ON t1.test_like_index_vu_prepare_c_csai_col LIKE 'csai1' COLLATE latin1_general_
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_c_csai_idx on test_like_index_vu_prepare_c_csai t1
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -3773,13 +4527,12 @@ FROM test_like_index_vu_prepare_c_csai t1 JOIN test_like_index_vu_prepare_t_comm
 ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1' COLLATE latin1_general_cs_ai
 Nested Loop
   ->  Gather
+        Workers Planned: 2
+        ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
+              Filter: (((remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text))::text ~~ 'common1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+  ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on test_like_index_vu_prepare_c_csai t1
-  ->  Materialize
-        ->  Gather
-              Workers Planned: 2
-              ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
-                    Filter: (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
 ~~END~~
 
 
@@ -3856,6 +4609,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_ciai_idx on test_like_index_vu_prepare_c_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -3905,6 +4659,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_ciai_idx on test_like_index_vu_prepare_c_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -3957,6 +4712,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_ciai_idx_composite on test_like_index_vu_prepare_c_ciai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col2)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col3)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col2)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col3)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -4009,6 +4765,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_ciai_idx on test_like_index_vu_prepare_c_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -4058,6 +4815,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_ciai_idx on test_like_index_vu_prepare_c_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -4110,6 +4868,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_c_ciai_idx_composite on test_like_index_vu_prepare_c_ciai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col2)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col3)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col2)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col3)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -4160,7 +4919,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 4
   Workers Launched: 4
   ->  Parallel Seq Scan on test_like_index_vu_prepare_c_ciai (actual rows=0 loops=5)
-        Filter: (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text))::text ~~ 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
         Rows Removed by Filter: 200
 ~~END~~
 
@@ -4189,6 +4948,143 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_c_ciai_col
+FROM new_test_like_index_vu_prepare_c_ciai 
+WHERE new_test_like_index_vu_prepare_c_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai';
+GO
+~~START~~
+char
+ciai                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+ciai                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_ciai_col
+FROM new_test_like_index_vu_prepare_c_ciai 
+WHERE new_test_like_index_vu_prepare_c_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai'
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* 'ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_ciai_col 
+FROM new_test_like_index_vu_prepare_c_ciai 
+WHERE new_test_like_index_vu_prepare_c_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai ';
+GO
+~~START~~
+char
+ciai                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+ciai                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_ciai_col 
+FROM new_test_like_index_vu_prepare_c_ciai 
+WHERE new_test_like_index_vu_prepare_c_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai '
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* 'ciai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai '::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_ciai_col
+FROM new_test_like_index_vu_prepare_c_ciai 
+WHERE new_test_like_index_vu_prepare_c_ciai_col  COLLATE latin1_general_ci_ai LIKE ' ciai';
+GO
+~~START~~
+char
+ ciai                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_ciai_col
+FROM new_test_like_index_vu_prepare_c_ciai 
+WHERE new_test_like_index_vu_prepare_c_ciai_col  COLLATE latin1_general_ci_ai LIKE ' ciai'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* ' ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_ciai_col)::text) = ' ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_fixed_ciai_col 
+FROM new_test_like_index_vu_prepare_c_fixed_ciai 
+WHERE new_test_like_index_vu_prepare_c_fixed_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai';
+GO
+~~START~~
+char
+ciai
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_ciai_col 
+FROM new_test_like_index_vu_prepare_c_fixed_ciai 
+WHERE new_test_like_index_vu_prepare_c_fixed_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_fixed_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_ciai_col)::text))::text ~~* 'ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_ciai_col)::text) = 'ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_fixed_ciai_col 
+FROM new_test_like_index_vu_prepare_c_fixed_ciai 
+WHERE new_test_like_index_vu_prepare_c_fixed_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai ';
+GO
+~~START~~
+char
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_ciai_col 
+FROM new_test_like_index_vu_prepare_c_fixed_ciai 
+WHERE new_test_like_index_vu_prepare_c_fixed_ciai_col  COLLATE latin1_general_ci_ai LIKE 'ciai '
+Gather (actual rows=0 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_fixed_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_ciai_col)::text))::text ~~* 'ciai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_ciai_col)::text) = 'ciai '::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_c_fixed_ciai_col
+FROM new_test_like_index_vu_prepare_c_fixed_ciai 
+WHERE new_test_like_index_vu_prepare_c_fixed_ciai_col  COLLATE latin1_general_ci_ai LIKE ' ciai';
+GO
+~~START~~
+char
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_c_fixed_ciai_col
+FROM new_test_like_index_vu_prepare_c_fixed_ciai 
+WHERE new_test_like_index_vu_prepare_c_fixed_ciai_col  COLLATE latin1_general_ci_ai LIKE ' ciai'
+Gather (actual rows=0 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_c_fixed_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_ciai_col)::text))::text ~~* ' ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_c_fixed_ciai_col)::text) = ' ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -4210,6 +5106,7 @@ ON t1.test_like_index_vu_prepare_c_ciai_col LIKE 'ciai1'
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_c_ciai_idx on test_like_index_vu_prepare_c_ciai t1
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -4228,6 +5125,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on test_like_index_vu_prepare_c_ciai t1
@@ -4289,6 +5187,7 @@ ON t1.test_like_index_vu_prepare_c_ciai_col LIKE 'ciai1' COLLATE latin1_general_
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_c_ciai_idx on test_like_index_vu_prepare_c_ciai t1
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_c_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -4306,13 +5205,12 @@ FROM test_like_index_vu_prepare_c_ciai t1 JOIN test_like_index_vu_prepare_t_comm
 ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1' COLLATE latin1_general_ci_ai
 Nested Loop
   ->  Gather
+        Workers Planned: 2
+        ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
+              Filter: (((remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text))::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+  ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on test_like_index_vu_prepare_c_ciai t1
-  ->  Materialize
-        ->  Gather
-              Workers Planned: 2
-              ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
-                    Filter: (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
 ~~END~~
 
 
@@ -4390,6 +5288,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_nv_ca8b74d26b39141ade7d5b3aae3285f48 on test_like_index_vu_prepare_nv_csas (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_nv_csas_col = 'cs1'::nvarchar COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_nv_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -4442,6 +5341,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_ca8b74d26b39141ade7d5b3aae3285f48 on test_like_index_vu_prepare_nv_csas (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_nv_csas_col = 'cs1'::nvarchar COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_nv_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -4496,6 +5396,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_nv_c99e80581dc4bb40f645fc48f195d2c30 on test_like_index_vu_prepare_nv_csas (actual rows=1 loops=1)
         Index Cond: ((test_like_index_vu_prepare_nv_csas_col2 = 'cs1'::nvarchar COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_nv_csas_col3 = 'cs1'::nvarchar COLLATE bbf_unicode_cp1_cs_as))
+        Filter: (((test_like_index_vu_prepare_nv_csas_col2)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((test_like_index_vu_prepare_nv_csas_col3)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -4550,6 +5451,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_nv_ca8b74d26b39141ade7d5b3aae3285f48 on test_like_index_vu_prepare_nv_csas (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_nv_csas_col = 'cs1'::nvarchar COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_nv_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -4602,6 +5504,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_ca8b74d26b39141ade7d5b3aae3285f48 on test_like_index_vu_prepare_nv_csas (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_nv_csas_col = 'cs1'::nvarchar COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_nv_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -4656,6 +5559,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_nv_c99e80581dc4bb40f645fc48f195d2c30 on test_like_index_vu_prepare_nv_csas (actual rows=1 loops=1)
         Index Cond: ((test_like_index_vu_prepare_nv_csas_col2 = 'cs1'::nvarchar COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_nv_csas_col3 = 'cs1'::nvarchar COLLATE bbf_unicode_cp1_cs_as))
+        Filter: (((test_like_index_vu_prepare_nv_csas_col2)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((test_like_index_vu_prepare_nv_csas_col3)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -4708,7 +5612,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 2
   Workers Launched: 2
   ->  Parallel Seq Scan on test_like_index_vu_prepare_nv_csas (actual rows=0 loops=3)
-        Filter: (test_like_index_vu_prepare_nv_csas_col = 'cs1'::nvarchar)
+        Filter: (((test_like_index_vu_prepare_nv_csas_col)::text ~~* 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_nv_csas_col = 'cs1'::nvarchar))
         Rows Removed by Filter: 333
 ~~END~~
 
@@ -4737,6 +5641,76 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_nv_csas_col 
+FROM new_test_like_index_vu_prepare_nv_csas 
+WHERE new_test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE 'csas';
+GO
+~~START~~
+nvarchar
+csas
+csas 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_nv_csas_col 
+FROM new_test_like_index_vu_prepare_nv_csas 
+WHERE new_test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE 'csas'
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_nv_csas (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_nv_csas_col)::text ~~ 'csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_nv_csas_col = 'csas'::nvarchar COLLATE bbf_unicode_cp1_cs_as))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_nv_csas_col 
+FROM new_test_like_index_vu_prepare_nv_csas 
+WHERE new_test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE 'csas ';
+GO
+~~START~~
+nvarchar
+csas 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_nv_csas_col 
+FROM new_test_like_index_vu_prepare_nv_csas 
+WHERE new_test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE 'csas '
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_nv_csas (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_nv_csas_col)::text ~~ 'csas '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_nv_csas_col = 'csas '::nvarchar COLLATE bbf_unicode_cp1_cs_as))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_nv_csas_col 
+FROM new_test_like_index_vu_prepare_nv_csas 
+WHERE new_test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE ' csas';
+GO
+~~START~~
+nvarchar
+ csas
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_nv_csas_col 
+FROM new_test_like_index_vu_prepare_nv_csas 
+WHERE new_test_like_index_vu_prepare_nv_csas_col COLLATE latin1_general_cs_as LIKE ' csas'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_nv_csas (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_nv_csas_col)::text ~~ ' csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_nv_csas_col = ' csas'::nvarchar COLLATE bbf_unicode_cp1_cs_as))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -4757,6 +5731,7 @@ ON t1.test_like_index_vu_prepare_nv_csas_col LIKE 'cs1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_nv_ca8b74d26b39141ade7d5b3aae3285f48 on test_like_index_vu_prepare_nv_csas t1
         Index Cond: (test_like_index_vu_prepare_nv_csas_col = 'cs1'::nvarchar COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_nv_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -4775,6 +5750,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_nv_csas t1
@@ -4838,6 +5814,7 @@ ON t1.test_like_index_vu_prepare_nv_csas_col LIKE 'cs1' COLLATE latin1_general_c
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_nv_ca8b74d26b39141ade7d5b3aae3285f48 on test_like_index_vu_prepare_nv_csas t1
         Index Cond: (test_like_index_vu_prepare_nv_csas_col = 'cs1'::nvarchar COLLATE bbf_unicode_cp1_cs_as)
+        Filter: ((test_like_index_vu_prepare_nv_csas_col)::text ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -4857,7 +5834,7 @@ Nested Loop
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
-              Filter: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar" COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((test_like_index_vu_prepare_t_common_col)::text ~~ 'common1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar" COLLATE bbf_unicode_cp1_cs_as))
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_nv_csas t1
@@ -4940,6 +5917,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_nv_cbf6b47879b13fa596ab94667e81ae9c9 on test_like_index_vu_prepare_nv_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_nv_cias_col = 'ci1'::nvarchar)
+        Filter: ((test_like_index_vu_prepare_nv_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -4992,6 +5970,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_cbf6b47879b13fa596ab94667e81ae9c9 on test_like_index_vu_prepare_nv_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_nv_cias_col = 'ci1'::nvarchar)
+        Filter: ((test_like_index_vu_prepare_nv_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -5046,6 +6025,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_nv_c0e22aed5922b7184785c4615b7989383 on test_like_index_vu_prepare_nv_cias (actual rows=1 loops=1)
         Index Cond: ((test_like_index_vu_prepare_nv_cias_col2 = 'ci1'::nvarchar) AND (test_like_index_vu_prepare_nv_cias_col3 = 'ci1'::nvarchar))
+        Filter: (((test_like_index_vu_prepare_nv_cias_col2)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((test_like_index_vu_prepare_nv_cias_col3)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -5100,6 +6080,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_nv_cbf6b47879b13fa596ab94667e81ae9c9 on test_like_index_vu_prepare_nv_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_nv_cias_col = 'ci1'::nvarchar)
+        Filter: ((test_like_index_vu_prepare_nv_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -5152,6 +6133,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_cbf6b47879b13fa596ab94667e81ae9c9 on test_like_index_vu_prepare_nv_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_nv_cias_col = 'ci1'::nvarchar)
+        Filter: ((test_like_index_vu_prepare_nv_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -5206,6 +6188,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_nv_c0e22aed5922b7184785c4615b7989383 on test_like_index_vu_prepare_nv_cias (actual rows=1 loops=1)
         Index Cond: ((test_like_index_vu_prepare_nv_cias_col2 = 'ci1'::nvarchar) AND (test_like_index_vu_prepare_nv_cias_col3 = 'ci1'::nvarchar))
+        Filter: (((test_like_index_vu_prepare_nv_cias_col2)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((test_like_index_vu_prepare_nv_cias_col3)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -5258,7 +6241,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 2
   Workers Launched: 2
   ->  Parallel Seq Scan on test_like_index_vu_prepare_nv_cias (actual rows=0 loops=3)
-        Filter: (test_like_index_vu_prepare_nv_cias_col = 'ci1'::nvarchar COLLATE bbf_unicode_cp1_cs_as)
+        Filter: (((test_like_index_vu_prepare_nv_cias_col)::text ~~ 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_nv_cias_col = 'ci1'::nvarchar COLLATE bbf_unicode_cp1_cs_as))
         Rows Removed by Filter: 333
 ~~END~~
 
@@ -5287,6 +6270,76 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_nv_cias_col 
+FROM new_test_like_index_vu_prepare_nv_cias 
+WHERE new_test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_ci_as LIKE 'cias';
+GO
+~~START~~
+nvarchar
+cias
+cias 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_nv_cias_col 
+FROM new_test_like_index_vu_prepare_nv_cias 
+WHERE new_test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_ci_as LIKE 'cias'
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_nv_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_nv_cias_col)::text ~~* 'cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_nv_cias_col = 'cias'::nvarchar))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_nv_cias_col 
+FROM new_test_like_index_vu_prepare_nv_cias 
+WHERE new_test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_ci_as LIKE 'cias ';
+GO
+~~START~~
+nvarchar
+cias 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_nv_cias_col 
+FROM new_test_like_index_vu_prepare_nv_cias 
+WHERE new_test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_ci_as LIKE 'cias '
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_nv_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_nv_cias_col)::text ~~* 'cias '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_nv_cias_col = 'cias '::nvarchar))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_nv_cias_col 
+FROM new_test_like_index_vu_prepare_nv_cias 
+WHERE new_test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_ci_as LIKE ' cias';
+GO
+~~START~~
+nvarchar
+ cias
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_nv_cias_col 
+FROM new_test_like_index_vu_prepare_nv_cias 
+WHERE new_test_like_index_vu_prepare_nv_cias_col COLLATE latin1_general_ci_as LIKE ' cias'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_nv_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_nv_cias_col)::text ~~* ' cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_nv_cias_col = ' cias'::nvarchar))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -5307,6 +6360,7 @@ ON t1.test_like_index_vu_prepare_nv_cias_col LIKE 'ci1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_nv_cbf6b47879b13fa596ab94667e81ae9c9 on test_like_index_vu_prepare_nv_cias t1
         Index Cond: (test_like_index_vu_prepare_nv_cias_col = 'ci1'::nvarchar)
+        Filter: ((test_like_index_vu_prepare_nv_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -5325,6 +6379,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_nv_cias t1
@@ -5388,6 +6443,7 @@ ON t1.test_like_index_vu_prepare_nv_cias_col LIKE 'ci1' COLLATE latin1_general_c
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_nv_cbf6b47879b13fa596ab94667e81ae9c9 on test_like_index_vu_prepare_nv_cias t1
         Index Cond: (test_like_index_vu_prepare_nv_cias_col = 'ci1'::nvarchar)
+        Filter: ((test_like_index_vu_prepare_nv_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -5406,6 +6462,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1' COLLATE latin1_gene
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_nv_cias t1
@@ -5488,6 +6545,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_csai_idx on test_like_index_vu_prepare_nv_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -5539,6 +6597,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_csai_idx on test_like_index_vu_prepare_nv_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -5593,6 +6652,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_csai_idx_composite on test_like_index_vu_prepare_nv_csai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col2)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col3)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col2)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col3)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -5645,6 +6705,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_csai_idx on test_like_index_vu_prepare_nv_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -5696,6 +6757,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_csai_idx on test_like_index_vu_prepare_nv_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -5750,6 +6812,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_csai_idx_composite on test_like_index_vu_prepare_nv_csai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col2)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col3)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col2)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col3)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -5800,7 +6863,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 2
   Workers Launched: 2
   ->  Parallel Seq Scan on test_like_index_vu_prepare_nv_csai (actual rows=0 loops=3)
-        Filter: (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text))::text ~~* 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
         Rows Removed by Filter: 333
 ~~END~~
 
@@ -5829,6 +6892,76 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_nv_csai_col 
+FROM new_test_like_index_vu_prepare_nv_csai 
+WHERE new_test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE 'csai';
+GO
+~~START~~
+nvarchar
+csai
+csai 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_nv_csai_col 
+FROM new_test_like_index_vu_prepare_nv_csai 
+WHERE new_test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE 'csai'
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_nv_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ 'csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_nv_csai_col)::text) = 'csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_nv_csai_col 
+FROM new_test_like_index_vu_prepare_nv_csai 
+WHERE new_test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE 'csai ';
+GO
+~~START~~
+nvarchar
+csai 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_nv_csai_col 
+FROM new_test_like_index_vu_prepare_nv_csai 
+WHERE new_test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE 'csai '
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_nv_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ 'csai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_nv_csai_col)::text) = 'csai '::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_nv_csai_col 
+FROM new_test_like_index_vu_prepare_nv_csai 
+WHERE new_test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE ' csai';
+GO
+~~START~~
+nvarchar
+ csai
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_nv_csai_col 
+FROM new_test_like_index_vu_prepare_nv_csai 
+WHERE new_test_like_index_vu_prepare_nv_csai_col COLLATE latin1_general_cs_ai LIKE ' csai'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_nv_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ ' csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_nv_csai_col)::text) = ' csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -5849,6 +6982,7 @@ ON t1.test_like_index_vu_prepare_nv_csai_col LIKE 'csai1'
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_nv_csai_idx on test_like_index_vu_prepare_nv_csai t1
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -5867,6 +7001,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_nv_csai t1
@@ -5930,6 +7065,7 @@ ON t1.test_like_index_vu_prepare_nv_csai_col LIKE 'csai1' COLLATE latin1_general
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_nv_csai_idx on test_like_index_vu_prepare_nv_csai t1
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_csai_col)::text))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -5948,12 +7084,11 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1' COLLATE latin1_gene
 Nested Loop
   ->  Gather
         Workers Planned: 2
+        ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
+              Filter: (((remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text))::text ~~ 'common1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+  ->  Gather
+        Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_nv_csai t1
-  ->  Materialize
-        ->  Gather
-              Workers Planned: 2
-              ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
-                    Filter: (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
 ~~END~~
 
 
@@ -6032,6 +7167,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_ciai_idx on test_like_index_vu_prepare_nv_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -6083,6 +7219,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_ciai_idx on test_like_index_vu_prepare_nv_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -6137,6 +7274,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_ciai_idx_composite on test_like_index_vu_prepare_nv_ciai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col2)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col3)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col2)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col3)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -6189,6 +7327,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_ciai_idx on test_like_index_vu_prepare_nv_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -6240,6 +7379,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_ciai_idx on test_like_index_vu_prepare_nv_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -6294,6 +7434,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_nv_ciai_idx_composite on test_like_index_vu_prepare_nv_ciai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col2)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col3)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col2)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col3)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -6344,7 +7485,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 2
   Workers Launched: 2
   ->  Parallel Seq Scan on test_like_index_vu_prepare_nv_ciai (actual rows=0 loops=3)
-        Filter: (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~ 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
         Rows Removed by Filter: 333
 ~~END~~
 
@@ -6373,6 +7514,76 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_nv_ciai_col 
+FROM new_test_like_index_vu_prepare_nv_ciai 
+WHERE new_test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai';
+GO
+~~START~~
+nvarchar
+ciai
+ciai 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_nv_ciai_col 
+FROM new_test_like_index_vu_prepare_nv_ciai 
+WHERE new_test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai'
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_nv_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* 'ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_nv_ciai_col 
+FROM new_test_like_index_vu_prepare_nv_ciai 
+WHERE new_test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai ';
+GO
+~~START~~
+nvarchar
+ciai 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_nv_ciai_col 
+FROM new_test_like_index_vu_prepare_nv_ciai 
+WHERE new_test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai '
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_nv_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* 'ciai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai '::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_nv_ciai_col 
+FROM new_test_like_index_vu_prepare_nv_ciai 
+WHERE new_test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai';
+GO
+~~START~~
+nvarchar
+ ciai
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_nv_ciai_col 
+FROM new_test_like_index_vu_prepare_nv_ciai 
+WHERE new_test_like_index_vu_prepare_nv_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_nv_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal((new_test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* ' ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((new_test_like_index_vu_prepare_nv_ciai_col)::text) = ' ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -6393,6 +7604,7 @@ ON t1.test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai1'
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_nv_ciai_idx on test_like_index_vu_prepare_nv_ciai t1
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -6411,6 +7623,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_nv_ciai t1
@@ -6474,6 +7687,7 @@ ON t1.test_like_index_vu_prepare_nv_ciai_col LIKE 'ciai1' COLLATE latin1_general
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_nv_ciai_idx on test_like_index_vu_prepare_nv_ciai t1
         Index Cond: (remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal((test_like_index_vu_prepare_nv_ciai_col)::text))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -6492,12 +7706,11 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1' COLLATE latin1_gene
 Nested Loop
   ->  Gather
         Workers Planned: 2
+        ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
+              Filter: (((remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text))::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+  ->  Gather
+        Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_nv_ciai t1
-  ->  Materialize
-        ->  Gather
-              Workers Planned: 2
-              ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
-                    Filter: (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
 ~~END~~
 
 
@@ -6576,7 +7789,8 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-        Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+        Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+        Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -6627,7 +7841,8 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-        Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+        Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+        Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -6679,7 +7894,8 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_t_csce712f1af9d7f9e1f899be47087d5a6f on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-        Index Cond: ((test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+        Index Cond: ((test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+        Filter: ((test_like_index_vu_prepare_t_csas_col2 ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -6733,7 +7949,8 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-        Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+        Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+        Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -6784,7 +8001,8 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-        Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+        Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+        Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -6836,7 +8054,8 @@ Gather (actual rows=1 loops=1)
   Workers Launched: 1
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_t_csce712f1af9d7f9e1f899be47087d5a6f on test_like_index_vu_prepare_t_csas (actual rows=1 loops=1)
-        Index Cond: ((test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+        Index Cond: ((test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col2 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col3 = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+        Filter: ((test_like_index_vu_prepare_t_csas_col2 ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col3 ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -6889,7 +8108,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 2
   Workers Launched: 2
   ->  Parallel Seq Scan on test_like_index_vu_prepare_t_csas (actual rows=0 loops=3)
-        Filter: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text)
+        Filter: ((test_like_index_vu_prepare_t_csas_col ~~* 'cs1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text))
         Rows Removed by Filter: 333
 ~~END~~
 
@@ -6918,6 +8137,75 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_t_csas_col 
+FROM new_test_like_index_vu_prepare_t_csas 
+WHERE new_test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE 'csas';
+GO
+~~START~~
+text
+csas
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_t_csas_col 
+FROM new_test_like_index_vu_prepare_t_csas 
+WHERE new_test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE 'csas'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_t_csas (actual rows=0 loops=4)
+        Filter: ((new_test_like_index_vu_prepare_t_csas_col ~~ 'csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_t_csas_col = 'csas'::text COLLATE bbf_unicode_cp1_cs_as))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_t_csas_col 
+FROM new_test_like_index_vu_prepare_t_csas 
+WHERE new_test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE 'csas ';
+GO
+~~START~~
+text
+csas 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_t_csas_col 
+FROM new_test_like_index_vu_prepare_t_csas 
+WHERE new_test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE 'csas '
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_t_csas (actual rows=0 loops=4)
+        Filter: ((new_test_like_index_vu_prepare_t_csas_col ~~ 'csas '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_t_csas_col = 'csas '::text COLLATE bbf_unicode_cp1_cs_as))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_t_csas_col 
+FROM new_test_like_index_vu_prepare_t_csas 
+WHERE new_test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE ' csas';
+GO
+~~START~~
+text
+ csas
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_t_csas_col 
+FROM new_test_like_index_vu_prepare_t_csas 
+WHERE new_test_like_index_vu_prepare_t_csas_col COLLATE latin1_general_cs_as LIKE ' csas'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_t_csas (actual rows=0 loops=4)
+        Filter: ((new_test_like_index_vu_prepare_t_csas_col ~~ ' csas'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_t_csas_col = ' csas'::text COLLATE bbf_unicode_cp1_cs_as))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -6937,7 +8225,8 @@ FROM test_like_index_vu_prepare_t_csas t1 JOIN test_like_index_vu_prepare_t_comm
 ON t1.test_like_index_vu_prepare_t_csas_col LIKE 'cs1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas t1
-        Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+        Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+        Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -6956,6 +8245,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_csas t1
@@ -7016,7 +8306,8 @@ FROM test_like_index_vu_prepare_t_csas t1 JOIN test_like_index_vu_prepare_t_comm
 ON t1.test_like_index_vu_prepare_t_csas_col LIKE 'cs1' COLLATE latin1_general_cs_as
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_cs4eed40d3bd890c30153d1932e03e043b on test_like_index_vu_prepare_t_csas t1
-        Index Cond: (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
+        Index Cond: ((test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE "default") AND (test_like_index_vu_prepare_t_csas_col = 'cs1'::text COLLATE bbf_unicode_cp1_cs_as))
+        Filter: (test_like_index_vu_prepare_t_csas_col ~~ 'cs1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -7036,7 +8327,7 @@ Nested Loop
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
-              Filter: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar" COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((test_like_index_vu_prepare_t_common_col)::text ~~ 'common1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar" COLLATE bbf_unicode_cp1_cs_as))
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_csas t1
@@ -7116,6 +8407,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_t_ci4396880db55c57e891a5445ee6b9f8f9 on test_like_index_vu_prepare_t_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_t_cias_col = 'ci1'::text)
+        Filter: ((test_like_index_vu_prepare_t_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -7167,6 +8459,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_ci4396880db55c57e891a5445ee6b9f8f9 on test_like_index_vu_prepare_t_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_t_cias_col = 'ci1'::text)
+        Filter: ((test_like_index_vu_prepare_t_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -7219,6 +8512,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_t_ciaf182c036c48c240a6285e2fb3b90309 on test_like_index_vu_prepare_t_cias (actual rows=1 loops=1)
         Index Cond: ((test_like_index_vu_prepare_t_cias_col2 = 'ci1'::text) AND (test_like_index_vu_prepare_t_cias_col3 = 'ci1'::text))
+        Filter: (((test_like_index_vu_prepare_t_cias_col2)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((test_like_index_vu_prepare_t_cias_col3)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -7273,6 +8567,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_t_ci4396880db55c57e891a5445ee6b9f8f9 on test_like_index_vu_prepare_t_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_t_cias_col = 'ci1'::text)
+        Filter: ((test_like_index_vu_prepare_t_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
         Heap Fetches: 1
 ~~END~~
 
@@ -7324,6 +8619,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_ci4396880db55c57e891a5445ee6b9f8f9 on test_like_index_vu_prepare_t_cias (actual rows=1 loops=1)
         Index Cond: (test_like_index_vu_prepare_t_cias_col = 'ci1'::text)
+        Filter: ((test_like_index_vu_prepare_t_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -7376,6 +8672,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Only Scan using test_like_index_vu_prepare_t_ciaf182c036c48c240a6285e2fb3b90309 on test_like_index_vu_prepare_t_cias (actual rows=1 loops=1)
         Index Cond: ((test_like_index_vu_prepare_t_cias_col2 = 'ci1'::text) AND (test_like_index_vu_prepare_t_cias_col3 = 'ci1'::text))
+        Filter: (((test_like_index_vu_prepare_t_cias_col2)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((test_like_index_vu_prepare_t_cias_col3)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as))
         Heap Fetches: 1
 ~~END~~
 
@@ -7425,11 +8722,13 @@ Query Text: SELECT test_like_index_vu_prepare_t_cias_col
 FROM test_like_index_vu_prepare_t_cias 
 WHERE test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_cs_as LIKE 'ci1'
 Gather (actual rows=1 loops=1)
-  Workers Planned: 2
-  Workers Launched: 2
-  ->  Parallel Seq Scan on test_like_index_vu_prepare_t_cias (actual rows=0 loops=3)
-        Filter: (test_like_index_vu_prepare_t_cias_col = 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
-        Rows Removed by Filter: 333
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Index Only Scan using test_like_index_vu_prepare_t_ci4396880db55c57e891a5445ee6b9f8f9 on test_like_index_vu_prepare_t_cias (actual rows=1 loops=1)
+        Index Cond: (test_like_index_vu_prepare_t_cias_col = 'ci1'::text COLLATE "default")
+        Filter: (((test_like_index_vu_prepare_t_cias_col)::text ~~ 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_cias_col = 'ci1'::text COLLATE bbf_unicode_cp1_cs_as))
+        Heap Fetches: 1
 ~~END~~
 
 
@@ -7457,6 +8756,75 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_t_cias_col 
+FROM new_test_like_index_vu_prepare_t_cias 
+WHERE new_test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE 'cias';
+GO
+~~START~~
+text
+cias
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_t_cias_col 
+FROM new_test_like_index_vu_prepare_t_cias 
+WHERE new_test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE 'cias'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_t_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_t_cias_col)::text ~~* 'cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_t_cias_col = 'cias'::text))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_t_cias_col 
+FROM new_test_like_index_vu_prepare_t_cias 
+WHERE new_test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE 'cias ';
+GO
+~~START~~
+text
+cias 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_t_cias_col 
+FROM new_test_like_index_vu_prepare_t_cias 
+WHERE new_test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE 'cias '
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_t_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_t_cias_col)::text ~~* 'cias '::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_t_cias_col = 'cias '::text))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_t_cias_col 
+FROM new_test_like_index_vu_prepare_t_cias 
+WHERE new_test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE ' cias';
+GO
+~~START~~
+text
+ cias
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_t_cias_col 
+FROM new_test_like_index_vu_prepare_t_cias 
+WHERE new_test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_ci_as LIKE ' cias'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_t_cias (actual rows=0 loops=4)
+        Filter: (((new_test_like_index_vu_prepare_t_cias_col)::text ~~* ' cias'::text COLLATE bbf_unicode_cp1_cs_as) AND (new_test_like_index_vu_prepare_t_cias_col = ' cias'::text))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -7477,6 +8845,7 @@ ON t1.test_like_index_vu_prepare_t_cias_col LIKE 'ci1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_ci4396880db55c57e891a5445ee6b9f8f9 on test_like_index_vu_prepare_t_cias t1
         Index Cond: (test_like_index_vu_prepare_t_cias_col = 'ci1'::text)
+        Filter: ((test_like_index_vu_prepare_t_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -7495,6 +8864,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_cias t1
@@ -7556,6 +8926,7 @@ ON t1.test_like_index_vu_prepare_t_cias_col LIKE 'ci1' COLLATE latin1_general_ci
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_ci4396880db55c57e891a5445ee6b9f8f9 on test_like_index_vu_prepare_t_cias t1
         Index Cond: (test_like_index_vu_prepare_t_cias_col = 'ci1'::text)
+        Filter: ((test_like_index_vu_prepare_t_cias_col)::text ~~* 'ci1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -7574,6 +8945,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1' COLLATE latin1_gene
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_cias t1
@@ -7654,6 +9026,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_csai_idx on test_like_index_vu_prepare_t_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_csai_col) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -7705,6 +9078,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_csai_idx on test_like_index_vu_prepare_t_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_csai_col) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -7759,6 +9133,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_csai_idx_composite on test_like_index_vu_prepare_t_csai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col2) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal(test_like_index_vu_prepare_t_csai_col3) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Filter: (((remove_accents_internal(test_like_index_vu_prepare_t_csai_col2))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col3))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -7811,6 +9186,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_csai_idx on test_like_index_vu_prepare_t_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_csai_col) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -7862,6 +9238,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_csai_idx on test_like_index_vu_prepare_t_csai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_csai_col) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -7916,6 +9293,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_csai_idx_composite on test_like_index_vu_prepare_t_csai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col2) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal(test_like_index_vu_prepare_t_csai_col3) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Filter: (((remove_accents_internal(test_like_index_vu_prepare_t_csai_col2))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col3))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -7966,7 +9344,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 2
   Workers Launched: 2
   ->  Parallel Seq Scan on test_like_index_vu_prepare_t_csai (actual rows=0 loops=3)
-        Filter: (remove_accents_internal((test_like_index_vu_prepare_t_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_t_csai_col)::text))::text ~~* 'csai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_t_csai_col)::text) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
         Rows Removed by Filter: 333
 ~~END~~
 
@@ -7995,6 +9373,76 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_t_csai_col 
+FROM new_test_like_index_vu_prepare_t_csai 
+WHERE new_test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE 'csai';
+GO
+~~START~~
+text
+csai
+csai 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_t_csai_col 
+FROM new_test_like_index_vu_prepare_t_csai 
+WHERE new_test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE 'csai'
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_t_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal(new_test_like_index_vu_prepare_t_csai_col))::text ~~ 'csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal(new_test_like_index_vu_prepare_t_csai_col) = 'csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_t_csai_col 
+FROM new_test_like_index_vu_prepare_t_csai 
+WHERE new_test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE 'csai ';
+GO
+~~START~~
+text
+csai 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_t_csai_col 
+FROM new_test_like_index_vu_prepare_t_csai 
+WHERE new_test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE 'csai '
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_t_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal(new_test_like_index_vu_prepare_t_csai_col))::text ~~ 'csai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal(new_test_like_index_vu_prepare_t_csai_col) = 'csai '::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_t_csai_col 
+FROM new_test_like_index_vu_prepare_t_csai 
+WHERE new_test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE ' csai';
+GO
+~~START~~
+text
+ csai
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_t_csai_col 
+FROM new_test_like_index_vu_prepare_t_csai 
+WHERE new_test_like_index_vu_prepare_t_csai_col COLLATE latin1_general_cs_ai LIKE ' csai'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_t_csai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal(new_test_like_index_vu_prepare_t_csai_col))::text ~~ ' csai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal(new_test_like_index_vu_prepare_t_csai_col) = ' csai'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -8015,6 +9463,7 @@ ON t1.test_like_index_vu_prepare_t_csai_col LIKE 'csai1'
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_t_csai_idx on test_like_index_vu_prepare_t_csai t1
         Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_csai_col) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -8033,6 +9482,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_csai t1
@@ -8096,6 +9546,7 @@ ON t1.test_like_index_vu_prepare_t_csai_col LIKE 'csai1' COLLATE latin1_general_
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_t_csai_idx on test_like_index_vu_prepare_t_csai t1
         Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_csai_col) = 'csai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_csai_col))::text ~~ 'csai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -8114,12 +9565,11 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1' COLLATE latin1_gene
 Nested Loop
   ->  Gather
         Workers Planned: 2
+        ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
+              Filter: (((remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text))::text ~~ 'common1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+  ->  Gather
+        Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_csai t1
-  ->  Materialize
-        ->  Gather
-              Workers Planned: 2
-              ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
-                    Filter: (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
 ~~END~~
 
 
@@ -8198,6 +9648,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_ciai_idx on test_like_index_vu_prepare_t_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_ciai_col) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -8249,6 +9700,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_ciai_idx on test_like_index_vu_prepare_t_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_ciai_col) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -8303,6 +9755,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_ciai_idx_composite on test_like_index_vu_prepare_t_ciai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col2) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal(test_like_index_vu_prepare_t_ciai_col3) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Filter: (((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col2))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col3))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -8355,6 +9808,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_ciai_idx on test_like_index_vu_prepare_t_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_ciai_col) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -8406,6 +9860,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_ciai_idx on test_like_index_vu_prepare_t_ciai (actual rows=1 loops=1)
         Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_ciai_col) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 
@@ -8460,6 +9915,7 @@ Gather (actual rows=1 loops=1)
   Single Copy: true
   ->  Index Scan using test_like_index_vu_prepare_t_ciai_idx_composite on test_like_index_vu_prepare_t_ciai (actual rows=1 loops=1)
         Index Cond: ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col2) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal(test_like_index_vu_prepare_t_ciai_col3) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Filter: (((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col2))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col3))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 
@@ -8510,7 +9966,7 @@ Gather (actual rows=1 loops=1)
   Workers Planned: 2
   Workers Launched: 2
   ->  Parallel Seq Scan on test_like_index_vu_prepare_t_ciai (actual rows=0 loops=3)
-        Filter: (remove_accents_internal((test_like_index_vu_prepare_t_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai)
+        Filter: (((remove_accents_internal((test_like_index_vu_prepare_t_ciai_col)::text))::text ~~ 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_t_ciai_col)::text) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
         Rows Removed by Filter: 333
 ~~END~~
 
@@ -8539,6 +9995,76 @@ Gather (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT new_test_like_index_vu_prepare_t_ciai_col 
+FROM new_test_like_index_vu_prepare_t_ciai 
+WHERE new_test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai';
+GO
+~~START~~
+text
+ciai
+ciai 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_t_ciai_col 
+FROM new_test_like_index_vu_prepare_t_ciai 
+WHERE new_test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai'
+Gather (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_t_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal(new_test_like_index_vu_prepare_t_ciai_col))::text ~~* 'ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal(new_test_like_index_vu_prepare_t_ciai_col) = 'ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_t_ciai_col 
+FROM new_test_like_index_vu_prepare_t_ciai 
+WHERE new_test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai ';
+GO
+~~START~~
+text
+ciai 
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_t_ciai_col 
+FROM new_test_like_index_vu_prepare_t_ciai 
+WHERE new_test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_ci_ai LIKE 'ciai '
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_t_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal(new_test_like_index_vu_prepare_t_ciai_col))::text ~~* 'ciai '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal(new_test_like_index_vu_prepare_t_ciai_col) = 'ciai '::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
+SELECT new_test_like_index_vu_prepare_t_ciai_col 
+FROM new_test_like_index_vu_prepare_t_ciai 
+WHERE new_test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai';
+GO
+~~START~~
+text
+ ciai
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT new_test_like_index_vu_prepare_t_ciai_col 
+FROM new_test_like_index_vu_prepare_t_ciai 
+WHERE new_test_like_index_vu_prepare_t_ciai_col COLLATE latin1_general_ci_ai LIKE ' ciai'
+Gather (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on new_test_like_index_vu_prepare_t_ciai (actual rows=0 loops=4)
+        Filter: (((remove_accents_internal(new_test_like_index_vu_prepare_t_ciai_col))::text ~~* ' ciai'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal(new_test_like_index_vu_prepare_t_ciai_col) = ' ciai'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+        Rows Removed by Filter: 0
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -8559,6 +10085,7 @@ ON t1.test_like_index_vu_prepare_t_ciai_col LIKE 'ciai1'
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_t_ciai_idx on test_like_index_vu_prepare_t_ciai t1
         Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_ciai_col) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -8577,6 +10104,7 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1'
 Nested Loop
   ->  Index Only Scan using test_like_index_vu_prepare_t_co6aff0678de8b489ba66e2cc9af2b6c77 on test_like_index_vu_prepare_t_common t2
         Index Cond: (test_like_index_vu_prepare_t_common_col = 'common1'::"varchar")
+        Filter: ((test_like_index_vu_prepare_t_common_col)::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_ciai t1
@@ -8640,6 +10168,7 @@ ON t1.test_like_index_vu_prepare_t_ciai_col LIKE 'ciai1' COLLATE latin1_general_
 Nested Loop
   ->  Index Scan using test_like_index_vu_prepare_t_ciai_idx on test_like_index_vu_prepare_t_ciai t1
         Index Cond: (remove_accents_internal(test_like_index_vu_prepare_t_ciai_col) = 'ciai1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
+        Filter: ((remove_accents_internal(test_like_index_vu_prepare_t_ciai_col))::text ~~* 'ciai1'::text COLLATE bbf_unicode_cp1_cs_as)
   ->  Gather
         Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
@@ -8658,12 +10187,11 @@ ON t2.test_like_index_vu_prepare_t_common_col LIKE 'common1' COLLATE latin1_gene
 Nested Loop
   ->  Gather
         Workers Planned: 2
+        ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
+              Filter: (((remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text))::text ~~* 'common1'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+  ->  Gather
+        Workers Planned: 2
         ->  Parallel Seq Scan on test_like_index_vu_prepare_t_ciai t1
-  ->  Materialize
-        ->  Gather
-              Workers Planned: 2
-              ->  Parallel Seq Scan on test_like_index_vu_prepare_t_common t2
-                    Filter: (remove_accents_internal((test_like_index_vu_prepare_t_common_col)::text) = 'common1'::nvarchar COLLATE bbf_unicode_cp1_ci_ai)
 ~~END~~
 
 

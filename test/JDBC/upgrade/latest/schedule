@@ -443,6 +443,7 @@ TestSmallMoney
 TestSpatialPoint
 Test-spatial-functions
 Test-spatial-functions-2
+Test-spatial-functions-3
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
@@ -676,3 +677,6 @@ sys-fn_varbintohexstr
 babel_string_to_money_reg
 string_aggregate
 babel_convert_with_style
+forxml-raw-elements
+forxml-raw-elements-1gb-limit
+forxml-path-elements

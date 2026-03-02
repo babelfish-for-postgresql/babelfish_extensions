@@ -39,3 +39,9 @@ go
 
 drop view enr_view
 go
+
+drop function custom_adder;
+GO
+
+drop procedure p_def_cons;
+GO
