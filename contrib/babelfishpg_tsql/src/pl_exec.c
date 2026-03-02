@@ -57,6 +57,7 @@
 
 #include "pltsql.h"
 #include "access/xact.h"
+#include "access/parallel.h"
 #include "err_handler.h"
 #include "iterative_exec.h"
 #include "guc.h"

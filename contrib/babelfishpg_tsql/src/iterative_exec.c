@@ -1329,6 +1329,9 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 *    when the error is caught by TRY-CATCH
 		 * 3. This causes "cannot DROP ... because it is being used" errors
 		 *    when the procedure later tries to DROP the temp table
+		 *
+		 * Also skip internal savepoints in parallel workers because
+		 * BeginInternalSubTransaction is not allowed in parallel mode.
 		 */
 		in_trycatch = is_part_of_pltsql_trycatch_block(estate);
 		insert_exec_active = pltsql_insert_exec_rewrite_active();
@@ -1346,7 +1349,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		txn_active_or_insert_exec_trycatch = IsTransactionBlockActive() || need_savepoint_for_insert_exec_trycatch;
 
 		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && txn_active_or_insert_exec_trycatch && !is_set_tran_isolation(stmt) && 
-			(!insert_exec_active || in_trycatch))
+			(!insert_exec_active || in_trycatch) && !IsParallelWorker())
 		{
 			elog(DEBUG5, "TSQL TXN Start internal savepoint");
 			BeginInternalSubTransaction(NULL);
