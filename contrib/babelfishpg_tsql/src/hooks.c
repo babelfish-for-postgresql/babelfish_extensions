@@ -12,6 +12,8 @@
 #include "access/xact.h"
 #include "access/relation.h"
 #include "access/reloptions.h"
+#include "catalog/catalog.h"
+#include "catalog/dependency.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_aggregate.h"
@@ -297,7 +299,8 @@ static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNu
 static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
 static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
-static EphemeralNamedRelation find_object_in_enr(Oid catalog_oid, Oid object_id);
+static EphemeralNamedRelation find_object_in_enr(Oid catalog_oid, Oid object_id, QueryEnvironment *qe);
+static bool is_enr_to_sys_object_dependency(const ObjectAddress *depender, const ObjectAddress *referenced);
 static bool verify_stmt_alterdatabaseset(Node* n, const char* dbname, const char* config);
 PG_FUNCTION_INFO_V1(persist_temp_oid_buffer_start_internal);
 
@@ -342,6 +345,7 @@ static GetNewTempOidWithIndex_hook_type prev_GetNewTempOidWithIndex_hook = NULL;
 static pltsql_is_local_only_inval_msg_hook_type prev_pltsql_is_local_only_inval_msg_hook = NULL;
 static pltsql_get_tsql_enr_from_oid_hook_type prev_pltsql_get_tsql_enr_from_oid_hook = NULL;
 static find_object_in_enr_hook_type prev_find_object_in_enr_hook = NULL;
+static is_enr_to_sys_object_dependency_hook_type prev_is_enr_to_sys_object_dependency_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static adjust_numeric_result_hook_type prev_adjust_numeric_result_hook = NULL;
@@ -494,6 +498,9 @@ InstallExtendedHooks(void)
 
 	prev_find_object_in_enr_hook = find_object_in_enr_hook;
 	find_object_in_enr_hook = find_object_in_enr;
+
+	prev_is_enr_to_sys_object_dependency_hook = is_enr_to_sys_object_dependency_hook;
+	is_enr_to_sys_object_dependency_hook = is_enr_to_sys_object_dependency;
 
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
@@ -698,6 +705,7 @@ UninstallExtendedHooks(void)
 	GetNewTempObjectId_hook = prev_GetNewTempObjectId_hook;
 	GetNewTempOidWithIndex_hook = prev_GetNewTempOidWithIndex_hook;
 	find_object_in_enr_hook = prev_find_object_in_enr_hook;
+	is_enr_to_sys_object_dependency_hook = prev_is_enr_to_sys_object_dependency_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
 	adjust_numeric_result_hook = prev_adjust_numeric_result_hook;
@@ -1200,6 +1208,210 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr)
 	return object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE);
 }
 
+typedef struct WalkSubplanContext
+{
+	bool (*plan_walker) ();
+	void *plan_context;
+	List *allplans;
+} WalkSubplanContext;
+
+static bool expr_walk_subplan(Node *node, void *context)
+{
+	struct WalkSubplanContext* sc = (struct WalkSubplanContext*)context;
+	if (node && IsA(node, SubPlan) &&
+		sc->plan_walker(list_nth(sc->allplans,
+			((SubPlan *) node)->plan_id - 1), sc->plan_context))
+	{
+		return true;
+	}
+	return expression_tree_walker(node, expr_walk_subplan, context);
+}
+
+static bool
+plan_walk_members(List *plans, bool (*walker) (), void *context)
+{
+	ListCell   *l;
+	foreach(l, plans)
+	{
+		if (walker((Plan *) lfirst(l), context))
+			return true;
+	}
+
+	return false;
+}
+
+static bool
+plan_walk_subplans(List *plans, List *allplans,
+						bool (*walker) (),
+						void *context)
+{
+	ListCell   *lc;
+
+	foreach(lc, plans)
+	{
+		SubPlan *sp = (SubPlan *) lfirst(lc);
+
+		Assert(IsA(sp, SubPlan));
+		if (walker(list_nth(allplans, sp->plan_id - 1),
+					context))
+			return true;
+	}
+
+	return false;
+}
+
+static bool
+plan_tree_walker(Plan *plan, List *allplans, bool (*walker) (), void *context)
+{
+	struct WalkSubplanContext sc = { walker, context, allplans };
+
+	/* lefttree and righttree are intentionally visited first here so that
+	 * join inners can be determined from a single flat plans array in the
+	 * outline. The inners will always be in the 2nd array element.
+	 */
+
+	/* lefttree */
+	if (plan->lefttree)
+	{
+		if (walker(plan->lefttree, context))
+			return true;
+	}
+
+	/* righttree */
+	if (plan->righttree)
+	{
+		if (walker(plan->righttree, context))
+			return true;
+	}
+
+	/* initPlan-s */
+	if (plan_walk_subplans(plan->initPlan, allplans, walker, context))
+		return true;
+
+	/* special child plans */
+	switch (nodeTag(plan))
+	{
+		case T_Append:
+			if (plan_walk_members(((Append *) plan)->appendplans,
+						walker, context))
+				return true;
+			break;
+		case T_MergeAppend:
+			if (plan_walk_members(((MergeAppend *) plan)->mergeplans,
+						walker, context))
+				return true;
+			break;
+		case T_BitmapAnd:
+			if (plan_walk_members(((BitmapAnd *) plan)->bitmapplans,
+						walker, context))
+				return true;
+			break;
+		case T_BitmapOr:
+			if (plan_walk_members(((BitmapOr *) plan)->bitmapplans,
+						walker, context))
+				return true;
+			break;
+		case T_SubqueryScan:
+			if (walker(((SubqueryScan *) plan)->subplan, context))
+				return true;
+			break;
+		case T_CustomScan:
+			if (plan_walk_members(((CustomScan *) plan)->custom_plans,
+						walker, context))
+				return true;
+			break;
+		case T_HashJoin:
+			if(expression_tree_walker((Node*)(((HashJoin*)plan)->hashclauses), expr_walk_subplan, &sc))
+				return true;
+			break;
+		case T_Result:
+			if(expression_tree_walker((Node*)(((Result*)plan)->resconstantqual), expr_walk_subplan, &sc))
+				return true;
+			break;
+		default:
+			break;
+	}
+
+	if(expression_tree_walker((Node*)(plan->qual), expr_walk_subplan, &sc))
+		return true;
+	if(expression_tree_walker((Node*)(plan->targetlist), expr_walk_subplan, &sc))
+		return true;
+
+	return false;
+}
+
+/* Context for param replacement in quals */
+typedef struct ParamReplaceContext
+{
+	bool		in_qual;		/* Are we currently in a qual? */
+	QueryDesc  *queryDesc;		/* Original QueryDesc */
+} ParamReplaceContext;
+
+/*
+ * Expression tree mutator that replaces Param nodes with Const nodes when in a qual.
+ */
+static Node *
+replace_params_mutator(Node *node, ParamReplaceContext *context)
+{
+	if (node == NULL)
+		return NULL;
+
+	/* Handle Param nodes when we're in a qual */
+	if (IsA(node, Param) && context->in_qual)
+	{
+		ParamListInfo	paramLI = context->queryDesc->params;
+		PlannerInfo		root;
+		Node		   *ret;
+
+		root.glob = makeNode(PlannerGlobal);
+		root.glob->boundParams = paramLI;
+
+		ret = eval_const_expressions(&root, node);
+
+		pfree(root.glob);
+		return ret;
+	}
+
+	/* Handle SubPlan - unset qual flag when entering subquery */
+	if (IsA(node, SubPlan))
+	{
+		SubPlan	   *newsubplan;
+		bool		save_in_qual = context->in_qual;
+		
+		context->in_qual = false;
+		
+		newsubplan = (SubPlan *) expression_tree_mutator(node, replace_params_mutator, context);
+		
+		context->in_qual = save_in_qual;
+		
+		return (Node *) newsubplan;
+	}
+
+	return expression_tree_mutator(node, replace_params_mutator, context);
+}
+
+/*
+ * Recursively walk the plan tree and replace params in quals.
+ */
+static bool
+replace_params_in_plan_tree(Plan *plan, ParamReplaceContext *context)
+{
+	if (plan == NULL)
+		return false;
+
+	if (plan->qual != NIL)
+	{
+		bool	save_in_qual = context->in_qual;
+		
+		context->in_qual = true;
+		plan->qual = (List *) replace_params_mutator((Node *) plan->qual, context);
+		context->in_qual = save_in_qual;
+	}
+
+	return plan_tree_walker(plan, context->queryDesc->plannedstmt->subplans,
+							replace_params_in_plan_tree, context);
+}
+
 static void
 pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
@@ -1282,6 +1494,22 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 				}
 			}
 		}
+	}
+
+	if (queryDesc->plannedstmt
+		&& queryDesc->plannedstmt->planTree
+		&& queryDesc->params
+		&& queryDesc->params->numParams > 0)
+	{
+		ParamReplaceContext context;
+
+		/* Copy the plannedstmt so that changing it won't affect the cached plan */
+		queryDesc->plannedstmt = copyObject(queryDesc->plannedstmt);
+		
+		context.in_qual = false;
+		context.queryDesc = queryDesc;
+
+		replace_params_in_plan_tree(queryDesc->plannedstmt->planTree, &context);
 	}
 
 	if (prev_ExecutorStart)
@@ -8316,12 +8544,13 @@ find_all_view_references(Node *node, List **view_oids)
  * For find_object_in_enr_hook
  *
  * Returns the ENR in which the given object (denoted by its catalog oid and object id)
- * exists. Based on the catalog we are searching the object in, the search criteria changes.
+ * exists. If a queryEnv is given, only check ENRs within that queryEnv.
+ * Based on the catalog we are searching the object in, the search criteria changes.
  */
 static EphemeralNamedRelation
-find_object_in_enr(Oid catalog_oid, Oid object_id)
+find_object_in_enr(Oid catalog_oid, Oid object_id, QueryEnvironment *qe)
 {
-	QueryEnvironment 		*queryEnv = currentQueryEnv;
+	QueryEnvironment 		*queryEnv = (qe ? qe : currentQueryEnv);
 	ListCell         		*curlc;
 	EphemeralNamedRelation	enr;
 
@@ -8420,9 +8649,59 @@ find_object_in_enr(Oid catalog_oid, Oid object_id)
 			default:
 				break;
 		}
+		/*
+		 * skip iterating through parent queryEnvs if a queryEnv is passed explicitly 
+		 */
+		if (qe)
+			break;
 		queryEnv = queryEnv->parentEnv;
 	}
 	return NULL;
+}
+
+/*
+ * Checks if the given objid from the given catalog is a system object or not.
+ *
+ * Pinned objects i.e. objects Postgres requires and babelfish extension declared objects i.e.
+ * objects created by the babelfish extension are regarded as system objects.
+ */
+static bool
+is_sys_object(Oid catalogid, Oid objid)
+{
+	/*
+	 * If the object is owned by an extension, only babelfish extension created
+	 * objects will be regarded as system objects.
+	 */
+	Oid 	owningext = getExtensionOfObject(catalogid, objid);
+	char	*bbf_prefix_ext_name = "babelfishpg";
+	if (owningext != InvalidOid)
+	{
+		char *ext_name = get_extension_name(owningext);
+		if (ext_name != NULL && strncmp(ext_name, bbf_prefix_ext_name, strlen(bbf_prefix_ext_name)) == 0)
+			return true;
+		else
+			return false;
+	}
+
+	/*
+	 * If this is not an object owned by an extension and it cannot be a postgres
+	 * pinned object because we skip creating dependency on pinned object way ahead
+	 * of this. Hence, this is simply not a system object.
+	 */
+	Assert(!IsPinnedObject(catalogid, objid));
+	return false;
+}
+
+/*
+ * Checks if the depender object is an ENR and the referenced object is a system object which
+ * helps to determine if we want to record a dependency between the objects in the pg_depend catalog. 
+ * Since system objects cannot be altered, it is safe to skip creating this dependency.
+ */		
+static bool
+is_enr_to_sys_object_dependency(const ObjectAddress *depender, const ObjectAddress *referenced)
+{
+	return find_object_in_enr(depender->classId, depender->objectId, NULL) && 
+			is_sys_object(referenced->classId, referenced->objectId);
 }
 
 static Node*

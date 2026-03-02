@@ -2335,7 +2335,6 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		Datum	   *values = palloc(nargs * sizeof(Datum));
 		char	   *nulls = palloc(nargs * sizeof(char));
 		Oid		   *argtypes = palloc(nargs * sizeof(Datum));
-		int			i = 0;
 
 		query = " ";
 
@@ -2354,79 +2353,69 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 			{
 				temp = &(row->columnValues[currentColumn]);
 				tempFuncInfo = TdsLookupTypeFunctionsByTdsId(colMetaData[currentColumn].columnTdsType, colMetaData[currentColumn].maxLen);
-				GetPgOid(argtypes[i], tempFuncInfo);
+				GetPgOid(argtypes[currentColumn], tempFuncInfo);
 
 				if (row->isNull[currentColumn] != 'n')
 					switch (colMetaData[currentColumn].columnTdsType)
 					{
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_VARCHAR:
-							values[i] = TdsTypeVarcharToDatum(temp, colMetaData[currentColumn].encoding, colMetaData[currentColumn].columnTdsType);
+							values[currentColumn] = TdsTypeVarcharToDatum(temp, colMetaData[currentColumn].encoding, colMetaData[currentColumn].columnTdsType);
 							break;
 						case TDS_TYPE_NCHAR:
-							values[i] = TdsTypeNCharToDatum(temp);
-							break;
 						case TDS_TYPE_NVARCHAR:
-							if (!row->isNull[currentColumn])	/* NULL. */
-								currentQuery = psprintf("%s,\'NULL\'", currentQuery);
-							else
-								currentQuery = psprintf("%s,\'%s\'", currentQuery, temp->data);
-							nargs--;
+							values[currentColumn] = TdsTypeNCharToDatum(temp);
 							break;
 						case TDS_TYPE_INTEGER:
 						case TDS_TYPE_BIT:
-							values[i] = TdsTypeIntegerToDatum(temp, colMetaData[currentColumn].maxLen);
+							values[currentColumn] = TdsTypeIntegerToDatum(temp, colMetaData[currentColumn].maxLen);
 							break;
 						case TDS_TYPE_FLOAT:
-							values[i] = TdsTypeFloatToDatum(temp, colMetaData[currentColumn].maxLen);
+							values[currentColumn] = TdsTypeFloatToDatum(temp, colMetaData[currentColumn].maxLen);
 							break;
 						case TDS_TYPE_NUMERICN:
 						case TDS_TYPE_DECIMALN:
-							values[i] = TdsTypeNumericToDatum(temp, colMetaData[currentColumn].scale);
+							values[currentColumn] = TdsTypeNumericToDatum(temp, colMetaData[currentColumn].scale);
 							break;
 						case TDS_TYPE_VARBINARY:
 						case TDS_TYPE_BINARY:
-							values[i] = TdsTypeVarbinaryToDatum(temp);
-							argtypes[i] = tempFuncInfo->ttmtypeid;
+							values[currentColumn] = TdsTypeVarbinaryToDatum(temp);
+							argtypes[currentColumn] = tempFuncInfo->ttmtypeid;
 							break;
 						case TDS_TYPE_DATE:
-							values[i] = TdsTypeDateToDatum(temp);
+							values[currentColumn] = TdsTypeDateToDatum(temp);
 							break;
 						case TDS_TYPE_TIME:
-							values[i] = TdsTypeTimeToDatum(temp, colMetaData[currentColumn].scale, temp->len);
+							values[currentColumn] = TdsTypeTimeToDatum(temp, colMetaData[currentColumn].scale, temp->len);
 							break;
 						case TDS_TYPE_DATETIMEOFFSET:
-							values[i] = TdsTypeDatetimeoffsetToDatum(temp, colMetaData[currentColumn].scale, temp->len);
+							values[currentColumn] = TdsTypeDatetimeoffsetToDatum(temp, colMetaData[currentColumn].scale, temp->len);
 							break;
 						case TDS_TYPE_DATETIME2:
-							values[i] = TdsTypeDatetime2ToDatum(temp, colMetaData[currentColumn].scale, temp->len);
+							values[currentColumn] = TdsTypeDatetime2ToDatum(temp, colMetaData[currentColumn].scale, temp->len);
 							break;
 						case TDS_TYPE_DATETIMEN:
-							values[i] = TdsTypeDatetimeToDatum(temp);
+							values[currentColumn] = TdsTypeDatetimeToDatum(temp);
 							break;
 						case TDS_TYPE_MONEYN:
-							values[i] = TdsTypeMoneyToDatum(temp);
+							values[currentColumn] = TdsTypeMoneyToDatum(temp);
 							break;
 						case TDS_TYPE_XML:
-							values[i] = TdsTypeXMLToDatum(temp);
+							values[currentColumn] = TdsTypeXMLToDatum(temp);
 							break;
 						case TDS_TYPE_UNIQUEIDENTIFIER:
-							values[i] = TdsTypeUIDToDatum(temp);
+							values[currentColumn] = TdsTypeUIDToDatum(temp);
 							break;
 						case TDS_TYPE_SQLVARIANT:
-							values[i] = TdsTypeSqlVariantToDatum(temp);
+							values[currentColumn] = TdsTypeSqlVariantToDatum(temp);
 							break;
 						case TDS_TYPE_CLRUDT:
-							values[i] = TdsTypeSpatialToDatum(temp, false);
+							values[currentColumn] = TdsTypeSpatialToDatum(temp, false);
 							break; 
 					}
 				/* Build a string for bind parameters. */
-				if (colMetaData[currentColumn].columnTdsType != TDS_TYPE_NVARCHAR || row->isNull[currentColumn] == 'n')
-				{
-					currentQuery = psprintf("%s,$%d", currentQuery, i + 1);
-					nulls[i] = row->isNull[currentColumn];
-					i++;
-				}
+				currentQuery = psprintf("%s,$%d", currentQuery, currentColumn + 1);
+				nulls[currentColumn] = row->isNull[currentColumn];
 				currentColumn++;
 			}
 			row = row->nextRow;

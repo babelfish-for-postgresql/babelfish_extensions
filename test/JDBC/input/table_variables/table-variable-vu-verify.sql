@@ -103,3 +103,43 @@ go
 -- BABEL-4337 - check nested TV for null; should not crash but throw an error
 SELECT * FROM tv_nested_func2(NULL)
 go
+
+---------------------------------------------------------------------------
+-- Cross-QueryEnv Table Variable Tests - Nested Query Environment (BABEL-6268)
+---------------------------------------------------------------------------
+
+-- Basic table variable operations in procedure
+EXEC p_tv_basic
+GO
+
+-- Table variable with DELETE operations
+EXEC p_tv_delete
+GO
+
+-- Nested procedures with table variables
+EXEC p_tv_nested_outer
+GO
+
+-- Table variable with transaction operations
+EXEC p_tv_transaction
+GO
+
+--  Multiple table variables with cross-operations
+EXEC p_tv_multiple
+GO
+
+-- Table variable with error handling
+EXEC p_tv_error_handling
+GO
+
+-- Table variable with conditional operations
+EXEC p_tv_conditional
+GO
+
+-- Mixed table variable and temp table operations
+EXEC p_tv_mixed_with_temp
+GO
+
+-- Table variable scope across nested calls
+EXEC p_tv_scope_outer
+GO

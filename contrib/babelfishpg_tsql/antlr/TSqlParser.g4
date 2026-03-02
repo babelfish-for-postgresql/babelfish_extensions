@@ -3942,6 +3942,7 @@ geospatial_func_no_arg
     | STASBINARY
     | STAREA
     | STDIMENSION
+    | STGEOMETRYTYPE   
     | STISCLOSED
     | STISEMPTY
     | STISVALID
@@ -3962,6 +3963,7 @@ geospatial_static_method
     | STLINEFROMTEXT
     | STPOLYFROMTEXT
     | POINT
+    | PARSE
     ;
 
 hierarchyid_methods
@@ -3970,7 +3972,6 @@ hierarchyid_methods
 
 hierarchyid_static_method
     : GETROOT
-    | PARSE
     ;
 
 datatype_static_method
@@ -5081,6 +5082,7 @@ keyword
     | STDISJOINT 
     | STDISTANCE
     | STEQUALS
+    | STGEOMETRYTYPE 
     | STGEOMFROMTEXT
     | STINTERSECTS
     | STISCLOSED

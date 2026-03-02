@@ -895,13 +895,28 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 	 */
 	CheckMessageHasEnoughBytesToReadRows(&message, 1);
 	if (request->rowCount < pltsql_plugin_handler_ptr->get_insert_bulk_rows_per_batch()
-		&& request->currentBatchSize < pltsql_plugin_handler_ptr->get_insert_bulk_kilobytes_per_batch() * 1024
-		&& (uint8_t) message->data[bcpOffset] != TDS_TOKEN_DONE)
-		ereport(ERROR,
-				(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				 errmsg("The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. "
-						"Row %d, unexpected token encountered processing the request. %d",
-						request->rowCount, (uint8_t) message->data[bcpOffset])));
+		&& request->currentBatchSize < pltsql_plugin_handler_ptr->get_insert_bulk_kilobytes_per_batch() * 1024)
+	{
+		if ((uint8_t) message->data[bcpOffset] == TDS_TOKEN_DONE)
+		{
+			/*
+			 * DONE token found (0xFD). Clients send variable-length DONE (8-13 bytes).
+			 * Fetch next packet ONLY if: incomplete DONE AND NOT at EOM.
+			 */
+			if (message->len - bcpOffset < 13 && !TdsGetRecvPacketEomStatus())
+			{
+				CheckMessageHasEnoughBytesToReadRows(&message, message->len - bcpOffset + 1);
+			}
+		}
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. "
+							"Row %d, unexpected token encountered processing the request. %d",
+							request->rowCount, (uint8_t) message->data[bcpOffset])));
+		}
+	}
 
 	pfree(temp);
 	return message;
