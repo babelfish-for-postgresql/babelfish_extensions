@@ -12,7 +12,7 @@ INSERT INTO t1 VALUES (1, 2.0);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Number of given values does not match target table definition)~~
+~~ERROR (Message: INSERT has more target columns than expressions)~~
 
 
 SELECT * FROM t1;
@@ -36,7 +36,7 @@ INSERT INTO t2 VALUES (5);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Number of given values does not match target table definition)~~
+~~ERROR (Message: INSERT has more target columns than expressions)~~
 
 
 SELECT * FROM t2;
@@ -66,7 +66,7 @@ INSERT INTO t1 SELECT id, c2 FROM t2;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Number of given values does not match target table definition)~~
+~~ERROR (Message: INSERT has more target columns than expressions)~~
 
 
 SELECT * FROM t1;
@@ -91,7 +91,7 @@ INSERT INTO t1 SELECT * FROM t3;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Number of given values does not match target table definition)~~
+~~ERROR (Message: INSERT has more target columns than expressions)~~
 
 
 DROP TABLE t1, t2, t3;

@@ -2259,7 +2259,7 @@ check_insert_row(List *icolumns, List *exprList, Oid relid)
 	if (exprList != NIL && list_length(exprList) < list_length(icolumns))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Number of given values does not match target table definition")));
+				 errmsg("INSERT has more target columns than expressions")));
 }
 
 char *

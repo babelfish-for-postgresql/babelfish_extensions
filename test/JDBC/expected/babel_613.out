@@ -180,7 +180,7 @@ insert into t1 values (1234567890123456789012345678901234567.1), (12345678901234
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Number of given values does not match target table definition)~~
+~~ERROR (Message: INSERT has more target columns than expressions)~~
 
 
 select * from t2

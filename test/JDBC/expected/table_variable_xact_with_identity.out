@@ -235,7 +235,7 @@ SELECT * FROM @tv2                              -- should still see 2 rows
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Number of given values does not match target table definition)~~
+~~ERROR (Message: INSERT has more target columns than expressions)~~
 
 
 DECLARE @tv2 TABLE(c1 INT, c2 INT);
