@@ -27,8 +27,8 @@ go
 -- CTE with Window Functions
 WITH RankedGeom AS (
     SELECT ID, geom_type, geom.STNumPoints() AS num_points,
-           ROW_NUMBER() OVER (ORDER BY geom.STNumPoints() DESC) AS row_num,
-           RANK() OVER (ORDER BY geom.STNumPoints() DESC) AS rnk,
+           ROW_NUMBER() OVER (ORDER BY geom.STNumPoints() DESC, ID) AS row_num,
+           RANK() OVER (ORDER BY geom.STNumPoints() DESC, ID) AS rnk,
            SUM(geom.STNumPoints()) OVER () AS total_pts
     FROM STNumPoints_geom_test_db
 )
@@ -272,7 +272,7 @@ go
 
 -- Geography Window test
 SELECT ID, geog_type, geog.STNumPoints() AS num_points,
-       ROW_NUMBER() OVER (ORDER BY geog.STNumPoints() DESC) AS row_num
+       ROW_NUMBER() OVER (ORDER BY geog.STNumPoints() DESC, ID) AS row_num
 FROM STNumPoints_geog_test ORDER BY row_num;
 go
 
@@ -370,7 +370,7 @@ go
 SELECT ID, geometry::Parse(GeomColumn.STAsText()).STAsText() AS ParsedGeom FROM TestGeospatialParse_GeomTemp3 ORDER BY ID;
 go
 
-SELECT ID, geography::Parse(GeogColumn.STAsText()).STAsText() AS ParsedGeog FROM TestGeospatialParse_GeogTemp ORDER BY ID;
+SELECT ID, geography::Parse(GeogColumn.STAsText()).STAsText() AS ParsedGeog FROM TestGeospatialParse_GeogTemp3 ORDER BY ID;
 go
 
 -- Parse with STEquals in WHERE clause
@@ -381,7 +381,7 @@ go
 
 DECLARE @searchText NVARCHAR(MAX);
 SET @searchText = 'POINT(3.0 4.0)';
-SELECT ID FROM TestGeospatialParse_GeogTemp WHERE geography::Parse(@searchText).STEquals(GeogColumn) = 1 ORDER BY ID;
+SELECT ID FROM TestGeospatialParse_GeogTemp3 WHERE geography::Parse(@searchText).STEquals(GeogColumn) = 1 ORDER BY ID;
 go
 
 -- Parse with JOIN and STIntersects
@@ -404,23 +404,24 @@ go
 DECLARE @refText NVARCHAR(MAX);
 SET @refText = 'POINT(3.0 4.0)';
 WITH ParseCTE AS (
-    SELECT ID, geometry::Parse(@refText).STDistance(GeomColumn) AS Distance 
+    SELECT ID, CAST(geometry::Parse(@refText).STDistance(GeomColumn) AS DECIMAL(10,3)) AS Distance  
     FROM TestGeospatialParse_GeomTemp3
 )
-SELECT * FROM ParseCTE WHERE Distance < 10.0 ORDER BY Distance;
+SELECT * FROM ParseCTE WHERE Distance < 10.0 ORDER BY Distance, ID;
 go
+
 
 -- Parse with cross-database query (geometry)
 DECLARE @refText NVARCHAR(MAX);
 SET @refText = 'POINT(3.0 4.0)';
-SELECT ID, geometry::Parse(@refText).STDistance(GeomColumn) AS Distance 
-FROM TestGeospatialParse_DB.dbo.TestGeospatialParse_GeometryTable3ORDER BY ID;
+SELECT ID, CAST(geometry::Parse(@refText).STDistance(GeomColumn) AS DECIMAL(10,3)) AS Distance 
+FROM TestGeospatialParse_DB.dbo.TestGeospatialParse_GeometryTable3 ORDER BY ID;
 go
 
 -- Parse with cross-database query (geography)
 DECLARE @refText NVARCHAR(MAX);
 SET @refText = 'POINT(3.0 4.0)';
-SELECT ID, geography::Parse(@refText).STDistance(GeogColumn) AS Distance 
+SELECT ID, CAST(geography::Parse(@refText).STDistance(GeogColumn) AS DECIMAL(15,2)) AS Distance 
 FROM TestGeospatialParse_DB.dbo.TestGeospatialParse_GeographyTable3 ORDER BY ID;
 go
 
@@ -581,9 +582,10 @@ SELECT geometry::Parse('POINT(1 2)').STAsText() AS geom
 UNION
 SELECT geometry::Parse('POINT(3 4)').STAsText()
 UNION
-SELECT geometry::Parse('NULL').STAsText();
-ORDER BY geom DESC;
+SELECT geometry::Parse('NULL').STAsText()
+ORDER BY CASE WHEN geom IS NULL THEN 1 ELSE 0 END, geom DESC;
 go
+
 
 -- GROUP BY with spatial type
 SELECT GeomColumn.STGeometryType() AS GeomType, 
@@ -595,8 +597,8 @@ go
 
 -- Window function with Parse
 SELECT ID, 
-       geometry::Parse('POINT(0 0)').STDistance(GeomColumn) AS Distance,
-       ROW_NUMBER() OVER (ORDER BY geometry::Parse('POINT(0 0)').STDistance(GeomColumn)) AS RowNum
+       CAST(geometry::Parse('POINT(0 0)').STDistance(GeomColumn) AS DECIMAL(10,3)) AS Distance,
+       ROW_NUMBER() OVER (ORDER BY geometry::Parse('POINT(0 0)').STDistance(GeomColumn), ID) AS RowNum
 FROM TestGeospatialParse_GeomTemp3;
 go
 
