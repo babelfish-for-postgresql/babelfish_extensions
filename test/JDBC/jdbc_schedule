@@ -766,3 +766,6 @@ ignore#!#test_constraint_like_before_17_8-or-16_12-vu-cleanup
 ignore#!#forxml-raw-elements-before-17_9-or-18_3-vu-prepare
 ignore#!#forxml-raw-elements-before-17_9-or-18_3-vu-verify
 ignore#!#forxml-raw-elements-before-17_9-or-18_3-vu-cleanup
+ignore#!#forxml-path-elements-before-17_10-or-18_4-vu-prepare
+ignore#!#forxml-path-elements-before-17_10-or-18_4-vu-verify
+ignore#!#forxml-path-elements-before-17_10-or-18_4-vu-cleanup
