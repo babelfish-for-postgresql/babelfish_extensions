@@ -578,13 +578,17 @@ SELECT geography::Parse('lineString(0 0, 1 1)').STAsText();
 go
 
 -- UNION with Parse
-SELECT geometry::Parse('POINT(1 2)').STAsText() AS geom
-UNION
-SELECT geometry::Parse('POINT(3 4)').STAsText()
-UNION
-SELECT geometry::Parse('NULL').STAsText()
+-- UNION with Parse
+SELECT * FROM (
+    SELECT geometry::Parse('POINT(1 2)').STAsText() AS geom
+    UNION
+    SELECT geometry::Parse('POINT(3 4)').STAsText() AS geom
+    UNION
+    SELECT geometry::Parse('NULL').STAsText() AS geom
+) t
 ORDER BY CASE WHEN geom IS NULL THEN 1 ELSE 0 END, geom DESC;
 go
+
 
 
 -- GROUP BY with spatial type

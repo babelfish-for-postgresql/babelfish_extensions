@@ -1430,16 +1430,23 @@ LINESTRING(0 0,1 1)
 
 
 -- UNION with Parse
-SELECT geometry::Parse('POINT(1 2)').STAsText() AS geom
-UNION
-SELECT geometry::Parse('POINT(3 4)').STAsText()
-UNION
-SELECT geometry::Parse('NULL').STAsText()
+-- UNION with Parse
+SELECT * FROM (
+    SELECT geometry::Parse('POINT(1 2)').STAsText() AS geom
+    UNION
+    SELECT geometry::Parse('POINT(3 4)').STAsText() AS geom
+    UNION
+    SELECT geometry::Parse('NULL').STAsText() AS geom
+) t
 ORDER BY CASE WHEN geom IS NULL THEN 1 ELSE 0 END, geom DESC;
 go
-~~ERROR (Code: 33557097)~~
+~~START~~
+nvarchar
+POINT(3 4)
+POINT(1 2)
+<NULL>
+~~END~~
 
-~~ERROR (Message: column "geom" does not exist)~~
 
 
 
