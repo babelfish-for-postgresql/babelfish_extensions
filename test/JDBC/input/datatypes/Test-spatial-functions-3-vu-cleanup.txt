@@ -1,3 +1,21 @@
+USE TestSTNumPoints_DB;
+
+DROP VIEW STNumPoints_geog_view_db;
+DROP VIEW STNumPoints_geom_view_db;
+
+DROP TABLE STNumPoints_geog_test_db;
+DROP TABLE STNumPoints_geom_test_db;
+
+USE MASTER;
+
+DROP VIEW STNumPoints_geog_view;
+DROP VIEW STNumPoints_geom_view;
+
+DROP TABLE STNumPoints_geog_test;
+DROP TABLE STNumPoints_geom_test;
+
+DROP DATABASE TestSTNumPoints_DB;
+
 USE TestGeospatialParse_DB 
 
 DROP TABLE TestGeospatialParse_GeometryTable3 
