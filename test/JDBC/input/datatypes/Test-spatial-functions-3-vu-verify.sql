@@ -1,3 +1,762 @@
+--STNumPoints()
+
+USE TestSTNumPoints_DB;
+GO
+
+-- View tests
+SELECT * FROM STNumPoints_geom_view_db ORDER BY ID;
+go
+SELECT * FROM STNumPoints_geog_view_db ORDER BY ID;
+go
+
+-- JOIN test (geom + geog, both DB tables)
+SELECT g.ID, g.geom_type, gg.geog_type,
+       g.geom.STNumPoints() AS geom_pts, gg.geog.STNumPoints() AS geog_pts
+FROM STNumPoints_geom_test_db g
+JOIN STNumPoints_geog_test_db gg ON g.ID = gg.ID
+ORDER BY g.ID;
+go
+
+-- CTE test
+WITH PointCTE AS (
+    SELECT ID, geom_type, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test_db
+)
+SELECT * FROM PointCTE WHERE num_points > 0 ORDER BY num_points DESC, geom_type;
+go
+
+-- CTE with Window Functions
+WITH RankedGeom AS (
+    SELECT ID, geom_type, geom.STNumPoints() AS num_points,
+           ROW_NUMBER() OVER (ORDER BY geom.STNumPoints() DESC, ID) AS row_num,
+           RANK() OVER (ORDER BY geom.STNumPoints() DESC, ID) AS rnk,
+           SUM(geom.STNumPoints()) OVER () AS total_pts
+    FROM STNumPoints_geom_test_db
+)
+SELECT * FROM RankedGeom ORDER BY row_num;
+go
+
+-- GROUP BY test
+SELECT geom_type, COUNT(*) AS cnt, SUM(geom.STNumPoints()) AS total_pts
+FROM STNumPoints_geom_test_db
+GROUP BY geom_type
+ORDER BY total_pts DESC, geom_type;
+go
+
+-- ORDER BY test
+SELECT ID, geom_type, geom.STNumPoints() AS num_points
+FROM STNumPoints_geom_test_db
+ORDER BY num_points DESC, ID ASC;
+go
+
+-- Nested functions test
+SELECT ID, geom_type,
+       ABS(geom.STNumPoints() - 5) AS diff_from_5,
+       COALESCE(NULLIF(geom.STNumPoints(), 0), -1) AS pts_or_neg1
+FROM STNumPoints_geom_test_db
+ORDER BY ID;
+go
+
+USE MASTER;
+go
+
+-- Test STNumPoints() on geometry table with various geometry types
+SELECT 
+    ID,
+    geom_type,
+    geom.STNumPoints() AS actual_result,
+    CASE ID
+        WHEN 1 THEN 1     
+        WHEN 2 THEN 1     
+        WHEN 3 THEN 1     
+        WHEN 4 THEN 2      
+        WHEN 5 THEN 3      
+        WHEN 6 THEN 5      
+        WHEN 7 THEN 4      
+        WHEN 8 THEN 5      
+        WHEN 9 THEN 10    
+        WHEN 10 THEN 0    
+        WHEN 11 THEN 0     
+        WHEN 12 THEN 0    
+        WHEN 13 THEN 1     
+        WHEN 14 THEN 0     
+        WHEN 15 THEN 0    
+        WHEN 16 THEN 0     
+    END AS expected_result
+FROM STNumPoints_geom_test
+ORDER BY ID;
+
+-- Test STNumPoints() with STPointFromText
+DECLARE @point geometry;
+SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT @point.STNumPoints();
+go
+
+DECLARE @point geometry;
+SET @point = geometry::Point(22.34900, -47.65100, 4326);
+SELECT @point.STNumPoints ( );
+go
+
+-- Test STNumPoints() on geography table with various geography types
+SELECT 
+    ID,
+    geog_type,
+    geog.STNumPoints() AS actual_result,
+    CASE ID
+        WHEN 1 THEN 1
+        WHEN 2 THEN 1
+        WHEN 3 THEN 2
+        WHEN 4 THEN 3
+        WHEN 5 THEN 5
+        WHEN 6 THEN 4
+        WHEN 7 THEN 5
+        WHEN 8 THEN 0
+        WHEN 9 THEN 0
+        WHEN 10 THEN 1     
+
+        WHEN 11 THEN 0     
+        WHEN 12 THEN 0     
+    END AS expected_result
+FROM STNumPoints_geog_test
+ORDER BY ID;
+go
+
+DECLARE @point geography;
+SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT @point.STNumPoints();
+go
+
+DECLARE @point geography;
+SET @point = geography::Point(47.65100, -122.34900, 4326);
+SELECT @point . STNumPoints ( );
+go
+
+-- Test STNumPoints() on NULL geometry
+DECLARE @nullGeom geometry;
+SELECT @nullGeom.STNumPoints() AS null_geometry_result;
+go
+
+-- Test STNumPoints() on empty point 
+DECLARE @g geometry;  
+SET @g = geometry::STGeomFromText('POINT EMPTY', 0);  
+SELECT @g.STNumPoints() AS empty_point_geometry;
+go
+
+DECLARE @g geography;  
+SET @g = geography::STGeomFromText('POINT EMPTY', 4326);  
+SELECT @g.STNumPoints() AS empty_point_geography;
+go
+
+-- Test STNumPoints() with CAST from VARCHAR
+SELECT CAST(CAST('POINT EMPTY' AS VARCHAR(100)) AS geography).STNumPoints() AS cast_varchar_result;
+go
+
+-- Test STNumPoints() with CAST from CHAR
+SELECT CAST(CAST('POINT EMPTY' AS CHAR(100)) AS geography).STNumPoints() AS cast_char_result;
+go
+
+-- Test STNumPoints() via geometry view
+SELECT * FROM STNumPoints_geom_view ORDER BY ID;
+go
+
+-- Test STNumPoints() via geography view
+SELECT * FROM STNumPoints_geog_view ORDER BY ID;
+go
+
+-- Test STNumPoints() with different SRIDs for geometry
+DECLARE @point1 geometry = geometry::STPointFromText('POINT(-122.349 47.651)', 4326);
+DECLARE @point2 geometry = geometry::STPointFromText('POINT(-122.349 47.651)', 0);
+DECLARE @point3 geometry = geometry::STPointFromText('POINT(-122.349 47.651)', 999999);
+SELECT 
+    @point1.STNumPoints() AS srid_4326,
+    @point2.STNumPoints() AS srid_0,
+    @point3.STNumPoints() AS srid_999999;
+go
+
+-- Test STNumPoints() with different SRIDs for geography
+DECLARE @point1 geography = geography::STPointFromText('POINT(-122.349 47.651)', 4326);
+DECLARE @point2 geography = geography::STPointFromText('POINT(-122.349 47.651)', 4204);
+SELECT 
+    @point1.STNumPoints() AS srid_4326,
+    @point2.STNumPoints() AS srid_4204;
+go
+
+-- Test STNumPoints() on LineString
+DECLARE @line geometry;
+SET @line = geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 0);
+SELECT @line.STNumPoints();
+go
+
+-- Test STNumPoints() on simple Polygon
+DECLARE @poly geometry;
+SET @poly = geometry::STGeomFromText('POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))', 0);
+SELECT @poly.STNumPoints();
+go
+
+-- Test STNumPoints() on Polygon with hole
+DECLARE @poly geometry;
+SET @poly = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0), (2 2, 8 2, 8 8, 2 8, 2 2))', 0);
+SELECT @poly.STNumPoints();
+go
+
+-- Test STNumPoints() on Point with Z coordinate (geometry)
+DECLARE @pointZ geometry;
+SET @pointZ = geometry::STGeomFromText('POINT(0 0 5)', 0);
+SELECT @pointZ.STNumPoints();
+go
+
+-- Test STNumPoints() on Point with Z coordinate (geography)
+DECLARE @pointZ geography;
+SET @pointZ = geography::STGeomFromText('POINT(-122.34 47.65 100)', 4326);
+SELECT @pointZ.STNumPoints();
+go
+
+-- Test STNumPoints() on Point with M coordinate
+DECLARE @pointM geometry;
+SET @pointM = geometry::STGeomFromText('POINT(0 0 NULL 5)', 0);
+SELECT @pointM.STNumPoints();
+go
+
+-- Test STNumPoints() on LineString with Z coordinates
+DECLARE @lineZ geometry;
+SET @lineZ = geometry::STGeomFromText('LINESTRING(0 0 0, 1 1 1, 2 2 2)', 0);
+SELECT @lineZ.STNumPoints();
+go
+
+-- UNION test
+SELECT 'geometry' AS source, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test WHERE ID <= 3
+UNION ALL
+SELECT 'geography' AS source, geog.STNumPoints() AS num_points FROM STNumPoints_geog_test WHERE ID <= 3
+ORDER BY source, num_points;
+go
+
+
+SELECT g1.ID, g1.geom_type, g1.geom.STNumPoints() AS geom_points,
+       g2.ID, g2.geog_type, g2.geog.STNumPoints() AS geog_points
+FROM STNumPoints_geom_test g1
+JOIN STNumPoints_geog_test g2 ON g1.geom.STNumPoints() = g2.geog.STNumPoints()
+WHERE g1.ID <= 5 AND g2.ID <= 5
+ORDER BY g1.ID, g2.ID;
+go
+
+-- Geometry WHERE/ORDER BY/GROUP BY tests
+SELECT ID, geom_type FROM STNumPoints_geom_test WHERE geom.STNumPoints() BETWEEN 2 AND 5 ORDER BY ID;
+go
+SELECT geom.STNumPoints() AS num_points, COUNT(*) AS count FROM STNumPoints_geom_test GROUP BY geom.STNumPoints() HAVING COUNT(*) > 1 ORDER BY num_points;
+go
+
+-- Geography WHERE/ORDER BY/GROUP BY tests
+SELECT ID, geog_type FROM STNumPoints_geog_test WHERE geog.STNumPoints() BETWEEN 2 AND 5 ORDER BY ID;
+go
+SELECT geog.STNumPoints() AS num_points, COUNT(*) AS count FROM STNumPoints_geog_test GROUP BY geog.STNumPoints() HAVING COUNT(*) > 1 ORDER BY num_points;
+go
+
+-- Geometry CTE test
+WITH GeomCTE AS (
+    SELECT ID, geom_type, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test
+)
+SELECT * FROM GeomCTE WHERE num_points > 0 ORDER BY num_points, ID;
+go
+
+-- Geometry Window test
+SELECT ID, geom_type, geom.STNumPoints() AS num_points,
+       ROW_NUMBER() OVER (ORDER BY geom.STNumPoints() DESC) AS row_num
+FROM STNumPoints_geom_test ORDER BY row_num;
+go
+
+-- Geography CTE test
+WITH GeogCTE AS (
+    SELECT ID, geog_type, geog.STNumPoints() AS num_points FROM STNumPoints_geog_test
+)
+SELECT * FROM GeogCTE WHERE num_points > 0 ORDER BY num_points, ID;
+go
+
+-- Geography Window test
+SELECT ID, geog_type, geog.STNumPoints() AS num_points,
+       ROW_NUMBER() OVER (ORDER BY geog.STNumPoints() DESC, ID) AS row_num
+FROM STNumPoints_geog_test ORDER BY row_num;
+go
+
+-- View tests
+SELECT * FROM STNumPoints_geom_view ORDER BY ID;
+go
+SELECT * FROM STNumPoints_geog_view ORDER BY ID;
+go
+
+-- JOIN test (geom + geog, both MASTER tables)
+SELECT g.ID, g.geom_type, gg.geog_type,
+       g.geom.STNumPoints() AS geom_pts, gg.geog.STNumPoints() AS geog_pts
+FROM STNumPoints_geom_test g
+JOIN STNumPoints_geog_test gg ON g.ID = gg.ID
+ORDER BY g.ID;
+go
+
+-- CTE with Window Functions
+WITH RankedGeom AS (
+    SELECT ID, geom_type, geom.STNumPoints() AS num_points,
+           ROW_NUMBER() OVER (ORDER BY geom.STNumPoints() DESC) AS row_num,
+           RANK() OVER (ORDER BY geom.STNumPoints() DESC) AS rnk,
+           SUM(geom.STNumPoints()) OVER () AS total_pts
+    FROM STNumPoints_geom_test
+)
+SELECT * FROM RankedGeom ORDER BY row_num;
+go
+
+-- GROUP BY test
+SELECT geom_type, COUNT(*) AS cnt, SUM(geom.STNumPoints()) AS total_pts
+FROM STNumPoints_geom_test
+GROUP BY geom_type
+ORDER BY total_pts DESC, geom_type;
+go
+
+-- ORDER BY test
+SELECT ID, geom_type, geom.STNumPoints() AS num_points
+FROM STNumPoints_geom_test
+ORDER BY num_points DESC, ID ASC;
+go
+
+-- Nested functions test
+SELECT ID, geom_type,
+       ABS(geom.STNumPoints() - 5) AS diff_from_5,
+       COALESCE(NULLIF(geom.STNumPoints(), 0), -1) AS pts_or_neg1
+FROM STNumPoints_geom_test
+ORDER BY ID;
+go
+--Parse functions test 
+
+-- geometry::Parse with POINT
+DECLARE @geomText NVARCHAR(MAX);
+SET @geomText = 'POINT(1.0 2.0)';
+SELECT geometry::Parse(@geomText).STAsText() AS ParsedGeometry;
+go
+
+-- geometry::Parse with LINESTRING
+DECLARE @geomText NVARCHAR(MAX);
+SET @geomText = 'LINESTRING(0 0, 1 1, 2 2)';
+SELECT geometry::Parse(@geomText).STAsText() AS ParsedGeometry;
+go
+
+DECLARE @geomText NVARCHAR(MAX);
+SET @geomText = 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))';
+SELECT geometry::Parse(@geomText).STAsText() AS ParsedGeometry;
+go
+
+DECLARE @geogText NVARCHAR(MAX);
+SET @geogText = 'POINT(1.0 2.0)';
+SELECT geography::Parse(@geogText).STAsText() AS ParsedGeography;
+go
+
+DECLARE @geogText NVARCHAR(MAX);
+SET @geogText = 'LINESTRING(0 0, 1 1, 2 2)';
+SELECT geography::Parse(@geogText).STAsText() AS ParsedGeography;
+go
+
+DECLARE @geogText NVARCHAR(MAX);
+SET @geogText = 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))';
+SELECT geography::Parse(@geogText).STAsText() AS ParsedGeography;
+go
+
+-- Parse with real-world coordinates 
+DECLARE @geomText NVARCHAR(MAX);
+SET @geomText = 'POINT(-122.34900 47.65100)';
+SELECT geometry::Parse(@geomText).STAsText() AS ParsedGeometry;
+go
+
+DECLARE @geogText NVARCHAR(MAX);
+SET @geogText = 'POINT(-122.34900 47.65100)';
+SELECT geography::Parse(@geogText).STAsText() AS ParsedGeography;
+go
+
+-- Parse from table column
+SELECT ID, geometry::Parse(GeomColumn.STAsText()).STAsText() AS ParsedGeom FROM TestGeospatialParse_GeomTemp3 ORDER BY ID;
+go
+
+SELECT ID, geography::Parse(GeogColumn.STAsText()).STAsText() AS ParsedGeog FROM TestGeospatialParse_GeogTemp3 ORDER BY ID;
+go
+
+-- Parse with STEquals in WHERE clause
+DECLARE @searchText NVARCHAR(MAX);
+SET @searchText = 'POINT(3.0 4.0)';
+SELECT ID FROM TestGeospatialParse_GeomTemp3 WHERE geometry::Parse(@searchText).STEquals(GeomColumn) = 1 ORDER BY ID;
+go
+
+DECLARE @searchText NVARCHAR(MAX);
+SET @searchText = 'POINT(3.0 4.0)';
+SELECT ID FROM TestGeospatialParse_GeogTemp3 WHERE geography::Parse(@searchText).STEquals(GeogColumn) = 1 ORDER BY ID;
+go
+
+-- Parse with JOIN and STIntersects
+DECLARE @refText NVARCHAR(MAX);
+SET @refText = 'POINT(3.0 4.0)';
+SELECT g1.ID, g2.ID FROM TestGeospatialParse_GeomTemp3 g1 
+JOIN TestGeospatialParse_GeomTemp3 g2 ON geometry::Parse(@refText).STIntersects(g1.GeomColumn) = 1 
+ORDER BY g1.ID, g2.ID;
+go
+
+-- Parse with CASE and STDistance
+DECLARE @testText NVARCHAR(MAX);
+SET @testText = 'POINT(1.0 2.0)';
+SELECT ID, 
+CASE WHEN geometry::Parse(@testText).STDistance(GeomColumn) < 5.0 THEN 'Near' ELSE 'Far' END AS Proximity
+FROM TestGeospatialParse_GeomTemp3 ORDER BY ID;
+go
+
+-- Parse with CTE
+DECLARE @refText NVARCHAR(MAX);
+SET @refText = 'POINT(3.0 4.0)';
+WITH ParseCTE AS (
+    SELECT ID, CAST(geometry::Parse(@refText).STDistance(GeomColumn) AS NUMERIC(20,6)) AS Distance  
+    FROM TestGeospatialParse_GeomTemp3
+)
+SELECT * FROM ParseCTE WHERE Distance < 10.0 ORDER BY Distance, ID;
+go
+
+
+-- Parse with cross-database query (geometry)
+DECLARE @refText NVARCHAR(MAX);
+SET @refText = 'POINT(3.0 4.0)';
+SELECT ID, CAST(geometry::Parse(@refText).STDistance(GeomColumn) AS NUMERIC(20,6)) AS Distance 
+FROM TestGeospatialParse_DB.dbo.TestGeospatialParse_GeometryTable3 ORDER BY ID;
+go
+
+-- Parse with cross-database query (geography)
+DECLARE @refText NVARCHAR(MAX);
+SET @refText = 'POINT(3.0 4.0)';
+SELECT ID, CAST(geography::Parse(@refText).STDistance(GeogColumn) AS NUMERIC(20,6)) AS Distance 
+FROM TestGeospatialParse_DB.dbo.TestGeospatialParse_GeographyTable3 ORDER BY ID;
+go
+
+-- NULL variable input (geometry)
+DECLARE @nullText NVARCHAR(MAX);
+SET @nullText = NULL;
+SELECT geometry::Parse(@nullText) AS ParsedGeometry;
+go
+
+-- NULL variable input (geography)
+DECLARE @nullText NVARCHAR(MAX);
+SET @nullText = NULL;
+SELECT geography::Parse(@nullText) AS ParsedGeography;
+go
+
+-- 'NULL' string literal - should error 
+DECLARE @nullString NVARCHAR(MAX);
+SET @nullString = 'NULL';
+SELECT geometry::Parse(@nullString) AS ParsedGeometry;
+go
+
+DECLARE @nullString NVARCHAR(MAX);
+SET @nullString = 'NULL';
+SELECT geography::Parse(@nullString) AS ParsedGeography;
+go
+
+-- POINT EMPTY 
+DECLARE @emptyPoint NVARCHAR(MAX);
+SET @emptyPoint = 'POINT EMPTY';
+SELECT geometry::Parse(@emptyPoint).STAsText() AS ParsedGeometry;
+go
+
+DECLARE @emptyPoint NVARCHAR(MAX);
+SET @emptyPoint = 'POINT EMPTY';
+SELECT geography::Parse(@emptyPoint).STAsText() AS ParsedGeography;
+go
+
+-- Whitespace handling 
+DECLARE @geomText NVARCHAR(MAX);
+SET @geomText = ' POINT ( 1.0 2.0 ) ';
+SELECT geometry::Parse(@geomText).STAsText() AS ParsedGeometry;
+go
+
+DECLARE @geogText NVARCHAR(MAX);
+SET @geogText = ' POINT ( 1.0 2.0 ) ';
+SELECT geography::Parse(@geogText).STAsText() AS ParsedGeography;
+go
+
+-- Parse with different case
+DECLARE @lowerText NVARCHAR(MAX);
+SET @lowerText = 'point(1.0 2.0)';
+SELECT geometry::Parse(@lowerText).STAsText() AS ParsedGeometry;
+go
+
+DECLARE @upperText NVARCHAR(MAX);
+SET @upperText = 'POINT(1.0 2.0)';
+SELECT geography::Parse(@upperText).STAsText() AS ParsedGeography;
+go
+
+-- Nested function calls
+SELECT ID, geometry::Parse(GeomColumn.STAsText()).STDimension() AS Dimension 
+FROM TestGeospatialParse_GeomTemp3 ORDER BY ID;
+go
+
+SELECT ID, geography::Parse(GeogColumn.STAsText()).STDimension() AS Dimension 
+FROM TestGeospatialParse_GeogTemp3 ORDER BY ID;
+go
+
+-- Parse with function results
+SELECT geometry::Parse(geometry::Point(1.0, 2.0, 4326).STAsText()).STAsText() AS ParsedFromFunction;
+go
+
+SELECT geography::Parse(geography::Point(1.0, 2.0, 4326).STAsText()).STAsText() AS ParsedFromFunction;
+go
+
+-- Direct NULL input
+SELECT geometry::Parse(NULL);
+go
+
+SELECT geography::Parse(NULL);
+go
+
+-- 'NULL' string literal
+SELECT geometry::Parse('NULL');
+go
+
+SELECT geography::Parse('NULL');
+go
+
+SELECT geometry::Parse('  NULL   ');
+go
+
+-- XYZM coordinates (4D)
+SELECT geometry::Parse('POINT(1 2 3 4)').STAsText();
+go
+
+SELECT geography::Parse('POINT(1 2 3 4)').STAsText();
+go
+
+-- XYZ coordinates (3D)
+SELECT geometry::Parse('POINT(1 2 3)').STAsText();
+go
+
+SELECT geography::Parse('POINT(1 2 3)').STAsText();
+go
+
+-- Invalid: single coordinate - should error
+SELECT geometry::Parse('POINT(1)');   
+go
+
+SELECT geography::Parse('POINT(1)').STAsText();
+go
+
+-- Invalid polygon: insufficient points - should error
+SELECT geometry::Parse('POLYGON((0 0, 1 1))');
+go
+
+SELECT geography::Parse('POLYGON((0 0, 1 1))');
+go
+
+-- Invalid WKT string - should error
+SELECT geometry::Parse('hello');
+go
+
+SELECT geography::Parse('hello');
+go
+
+-- Large coordinate values
+SELECT geometry::Parse('POINT(999999999 999999999)').STAsText();
+go
+
+SELECT geography::Parse('POINT(999999999 999999999)').STAsText();
+go
+
+-- Boundary coordinate values
+SELECT geometry::Parse('POINT(-180 -90)').STAsText();
+go
+
+SELECT geography::Parse('POINT(-180 -90)').STAsText();
+go
+
+-- LINESTRING EMPTY
+SELECT geometry::Parse('LINESTRING EMPTY').STAsText();
+go
+
+-- Case insensitivity for LINESTRING
+SELECT geometry::Parse('lineString(0 0, 1 1)').STAsText();
+go
+
+SELECT geography::Parse('LINESTRING EMPTY').STAsText();
+go
+
+SELECT geography::Parse('lineString(0 0, 1 1)').STAsText();
+go
+
+-- UNION with Parse
+-- UNION with Parse
+SELECT * FROM (
+    SELECT geometry::Parse('POINT(1 2)').STAsText() AS geom
+    UNION
+    SELECT geometry::Parse('POINT(3 4)').STAsText() AS geom
+    UNION
+    SELECT geometry::Parse('NULL').STAsText() AS geom
+) t
+ORDER BY CASE WHEN geom IS NULL THEN 1 ELSE 0 END, geom DESC;
+go
+
+
+
+-- GROUP BY with spatial type
+SELECT GeomColumn.STGeometryType() AS GeomType, 
+       COUNT(*) AS Count
+FROM TestGeospatialParse_GeomTemp3
+GROUP BY GeomColumn.STGeometryType()
+ORDER BY GeomType;
+go
+
+-- Window function with Parse
+SELECT ID, 
+       CAST(geometry::Parse('POINT(0 0)').STDistance(GeomColumn) AS NUMERIC(20,6)) AS Distance,
+       ROW_NUMBER() OVER (ORDER BY geometry::Parse('POINT(0 0)').STDistance(GeomColumn), ID) AS RowNum
+FROM TestGeospatialParse_GeomTemp3;
+go
+
+-- CAST result to VARCHAR
+SELECT CAST(geometry::Parse('POINT(1 2)').STAsText() AS VARCHAR(100)) AS Result;
+go
+
+-- Empty string - should error
+SELECT geometry::Parse('');
+go
+
+-- hierarchyid::Parse
+select hierarchyid::Parse('/1/3/2/');
+go
+
+-- hierarchyid::Parse with variable
+DECLARE @node hierarchyid;
+SET @node = hierarchyid::Parse('/1/3/2/');
+SELECT @node AS NodeValue;
+go
+
+-- CTE with multiple geometry types
+WITH ParseCTE AS (
+    SELECT 1 AS ID, geometry::Parse('POINT(1 2)').STAsText() AS GeomText
+    UNION ALL
+    SELECT 2, geometry::Parse('LINESTRING(0 0, 1 1)').STAsText()
+    UNION ALL
+    SELECT 3, geometry::Parse('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))').STAsText()
+)
+SELECT ID, GeomText FROM ParseCTE ORDER BY ID;
+go
+
+-- CTE with geography types
+WITH GeogCTE AS (
+    SELECT 1 AS ID, geography::Parse('POINT(-122.349 47.651)').STAsText() AS GeogText
+    UNION ALL
+    SELECT 2, geography::Parse('LINESTRING(-122.36 47.65, -122.34 47.66)').STAsText()
+)
+SELECT ID, GeogText FROM GeogCTE ORDER BY ID;
+go
+
+-- Window function with STDimension
+SELECT *, ROW_NUMBER() OVER (ORDER BY Dimension) AS RowNum FROM (
+    SELECT 1 AS ID, geometry::Parse('POINT(1 2)').STDimension() AS Dimension
+    UNION ALL
+    SELECT 2, geometry::Parse('LINESTRING(0 0, 1 1)').STDimension()
+    UNION ALL
+    SELECT 3, geometry::Parse('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))').STDimension()
+) AS Results;
+go
+
+-- Schema-qualified Parse
+SELECT sys.geometry::Parse('POINT(1 2)').STAsText() AS Result;
+go
+
+-- Invalid geometry type - should error
+SELECT geometry::Parse('INVALID(1 2)');
+go
+
+-- GROUP BY with STDimension
+SELECT Dimension, COUNT(*) AS Count FROM (
+    SELECT geometry::Parse('POINT(1 2)').STDimension() AS Dimension
+    UNION ALL
+    SELECT geometry::Parse('POINT(3 4)').STDimension()
+    UNION ALL
+    SELECT geometry::Parse('LINESTRING(0 0, 1 1)').STDimension()
+    UNION ALL
+    SELECT geometry::Parse('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))').STDimension()
+) AS Results
+GROUP BY Dimension
+ORDER BY Dimension;
+go
+
+-- Parse returning geometry object (no STAsText)
+SELECT geometry::Parse('POINT(1 2 3 4)');
+go
+
+SELECT geometry::Parse('LINESTRING(0 0, 1 1)');
+go
+
+SELECT geometry::Parse('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))');
+go
+
+SELECT geometry::Parse('POINT(999999999 999999999)');
+go
+
+-- Z coordinate (elevation)
+SELECT geometry::Parse('POINT Z(1 2 3)');
+go
+
+-- M coordinate (measure)
+SELECT geometry::Parse('POINT M(1 2 4)');
+go
+
+-- M coordinate (measure)
+SELECT geometry::Parse('POLYGON M((0 0 0, 0 10 0, 10 10 0, 10 0 0, 0 0 0))');
+go
+
+-- geography with XYZM
+SELECT geography::Parse('POINT(1 2 3 4)');
+go
+
+SELECT geometry::Parse('LINESTRING Z(0 0 0, 1 1 1, 2 2 2)');
+go
+
+SELECT geography::Parse('LINESTRING Z(0 0 0, 1 1 1)');
+go
+
+SELECT geography::Parse('POINT Z(1 2 3)');
+go
+
+SELECT geography::Parse('LINESTRING Z(0 0 0, 1 1 1)');
+go
+
+SELECT geography::Parse('POLYGON Z((0 0 0, 0 1 0, 1 1 0, 1 0 0, 0 0 0))');
+go
+
+SELECT geography::Parse('point z(1 2 3)');
+go
+
+SELECT geography::Parse('POINT ZM(1 2 3 4)');
+go
+
+SELECT geography::Parse('LINESTRING ZM(0 0 0 0, 1 1 1 1)');
+go
+
+SELECT geography::Parse('point zm(1 2 3 4)');
+go
+
+SELECT geography::Parse('POINT(1 2 3 4)');
+go
+
+SELECT geography::Parse('LINESTRING(0 0, 1 1)');
+go
+
+SELECT geography::Parse('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))');
+go
+
+SELECT geography::Parse('POINT M(1 2 4)');
+go
+
+SELECT geography::Parse('LINESTRING M(0 0 0, 1 1 1)');
+go
+
+SELECT geography::Parse('POLYGON M((0 0 0, 0 1 0, 1 1 0, 1 0 0, 0 0 0))');
+go
+
+SELECT geography::Parse('point m(1 2 4)');
+go
+
+SELECT geography::Parse('POINT(-122.349 47.651)');
+go
+
+--STGeometryType()
 
 USE TestGeospatialMethods3_DB;
 go
@@ -477,7 +1236,7 @@ DECLARE @geom geometry = geometry::STGeomFromText('LINESTRING(0 0, 10 10)', 4326
 DECLARE @geog geography = geography::STGeomFromText('POINT(-122.34 47.65)', 4326);
 SELECT 'Geometry' AS Source, @geom.STGeometryType() AS Type
 UNION ALL
-SELECT 'Geography', @geog.STGeometryType();
+SELECT 'Geography', @geog.STGeometryType()
 ORDER BY Source;
 go
 
