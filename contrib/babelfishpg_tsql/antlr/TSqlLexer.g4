@@ -986,6 +986,7 @@ STISCLOSED:                                      'STIsClosed';
 STISEMPTY:                                       'STIsEmpty';
 STISVALID:                                       'STIsValid';
 STLINEFROMTEXT:                                  'STLineFromText';
+STNUMPOINTS:                                     'STNumPoints';
 STOP:                                            S T O P;
 STOPAT:                                          S T O P A T;
 STOPATMARK:                                      S T O P A T M A R K;
