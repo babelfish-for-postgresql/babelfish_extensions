@@ -106,3 +106,39 @@ GO
 
 DROP PROC p_insert_exec_drop_table
 GO
+
+DROP PROC p_drop_if_exists_create
+GO
+
+DROP PROC p_multi_drop_create
+GO
+
+DROP PROC p_drop_create_schema_change
+GO
+
+DROP PROC p_trans_drop_create
+GO
+
+DROP PROC p_rollback_drop_create
+GO
+
+DROP PROC p_multi_tables_drop_create
+GO
+
+DROP PROC p_drop_create_with_index
+GO
+
+DROP PROC p_drop_create_constraints
+GO
+
+DROP PROC p_drop_create_alter
+GO
+
+DROP PROC p_conditional_drop_create
+GO
+
+DROP PROC p_drop_create_truncate
+GO
+
+DROP PROC p_error_drop_create
+GO

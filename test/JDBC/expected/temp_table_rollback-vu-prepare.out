@@ -405,3 +405,180 @@ BEGIN
     SELECT 200 as id, 'after drop' as data
 END
 GO
+
+
+---------------------------------------------------------------------------
+-- DROP TABLE IF EXISTS + CREATE TABLE in procedures (BABEL-6097)
+---------------------------------------------------------------------------
+-- Basic DROP IF EXISTS + CREATE pattern
+CREATE PROC p_drop_if_exists_create AS 
+BEGIN 
+    DROP TABLE IF EXISTS #t 
+    CREATE TABLE #t(a int) 
+    INSERT INTO #t VALUES (1) 
+    SELECT * FROM #t 
+END
+GO
+
+-- Multiple DROP IF EXISTS + CREATE cycles
+CREATE PROC p_multi_drop_create AS 
+BEGIN 
+    DROP TABLE IF EXISTS #t 
+    CREATE TABLE #t(a int) 
+    INSERT INTO #t VALUES (1) 
+    
+    DROP TABLE IF EXISTS #t 
+    CREATE TABLE #t(a int, b varchar(20)) 
+    INSERT INTO #t VALUES (2, 'second') 
+    
+    SELECT * FROM #t 
+END
+GO
+
+-- DROP IF EXISTS + CREATE with different schemas
+CREATE PROC p_drop_create_schema_change AS 
+BEGIN 
+    DROP TABLE IF EXISTS #t 
+    CREATE TABLE #t(id int, name varchar(50)) 
+    INSERT INTO #t VALUES (1, 'first') 
+    
+    DROP TABLE #t 
+    CREATE TABLE #t(x int, y int, z varchar(100)) 
+    INSERT INTO #t VALUES (10, 20, 'changed schema') 
+    
+    SELECT * FROM #t 
+END
+GO
+
+-- DROP IF EXISTS + CREATE in transaction
+CREATE PROC p_trans_drop_create AS 
+BEGIN 
+    BEGIN TRAN 
+        DROP TABLE IF EXISTS #trans_t 
+        CREATE TABLE #trans_t(a int, b varchar(30)) 
+        INSERT INTO #trans_t VALUES (1, 'in transaction') 
+    COMMIT 
+    SELECT * FROM #trans_t 
+END
+GO
+
+-- DROP IF EXISTS + CREATE with rollback
+CREATE PROC p_rollback_drop_create AS 
+BEGIN 
+    CREATE TABLE #rb_t(original int) 
+    INSERT INTO #rb_t VALUES (100) 
+    
+    BEGIN TRAN 
+        DROP TABLE IF EXISTS #rb_t 
+        CREATE TABLE #rb_t(new_col varchar(20)) 
+        INSERT INTO #rb_t VALUES ('rolled back') 
+    ROLLBACK 
+    
+    SELECT * FROM #rb_t 
+END
+GO
+
+-- Multiple temp tables with DROP IF EXISTS + CREATE
+CREATE PROC p_multi_tables_drop_create AS 
+BEGIN 
+    DROP TABLE IF EXISTS #t1 
+    DROP TABLE IF EXISTS #t2 
+    
+    CREATE TABLE #t1(a int) 
+    CREATE TABLE #t2(b varchar(20)) 
+    
+    INSERT INTO #t1 VALUES (1) 
+    INSERT INTO #t2 VALUES ('test') 
+    
+    DROP TABLE IF EXISTS #t1 
+    CREATE TABLE #t1(x int, y int) 
+    INSERT INTO #t1 VALUES (10, 20) 
+    
+    SELECT * FROM #t1 
+    SELECT * FROM #t2 
+END
+GO
+
+-- DROP IF EXISTS + CREATE with indexes
+CREATE PROC p_drop_create_with_index AS 
+BEGIN 
+    DROP TABLE IF EXISTS #idx_t 
+    CREATE TABLE #idx_t(id int, name varchar(50)) 
+    CREATE INDEX idx1 ON #idx_t(id) 
+    INSERT INTO #idx_t VALUES (1, 'indexed') 
+    SELECT * FROM #idx_t 
+END
+GO
+
+-- DROP IF EXISTS + CREATE with constraints
+CREATE PROC p_drop_create_constraints AS 
+BEGIN 
+    DROP TABLE IF EXISTS #const_t 
+    CREATE TABLE #const_t(id int PRIMARY KEY, val int DEFAULT 100) 
+    INSERT INTO #const_t(id) VALUES (1) 
+    INSERT INTO #const_t VALUES (2, 200) 
+    SELECT * FROM #const_t 
+END
+GO
+
+-- DROP IF EXISTS + CREATE with ALTER TABLE
+CREATE PROC p_drop_create_alter AS 
+BEGIN 
+    DROP TABLE IF EXISTS #alter_t 
+    CREATE TABLE #alter_t(a int) 
+    INSERT INTO #alter_t VALUES (1) 
+    
+    ALTER TABLE #alter_t ADD b varchar(20) 
+    UPDATE #alter_t SET b = 'altered' 
+    
+    SELECT * FROM #alter_t 
+END
+GO
+
+-- Conditional DROP IF EXISTS + CREATE
+CREATE PROC p_conditional_drop_create AS 
+BEGIN 
+    DECLARE @flag int = 1 
+    
+    IF @flag = 1 
+    BEGIN 
+        DROP TABLE IF EXISTS #cond_t 
+        CREATE TABLE #cond_t(a int) 
+        INSERT INTO #cond_t VALUES (100) 
+    END 
+    
+    SELECT * FROM #cond_t 
+END
+GO
+
+-- DROP IF EXISTS + CREATE with TRUNCATE
+CREATE PROC p_drop_create_truncate AS 
+BEGIN 
+    DROP TABLE IF EXISTS #trunc_t 
+    CREATE TABLE #trunc_t(id int, data varchar(30)) 
+    INSERT INTO #trunc_t VALUES (1, 'first') 
+    INSERT INTO #trunc_t VALUES (2, 'second') 
+    
+    TRUNCATE TABLE #trunc_t 
+    INSERT INTO #trunc_t VALUES (3, 'after truncate') 
+    
+    SELECT * FROM #trunc_t 
+END
+GO
+
+-- Error handling with DROP IF EXISTS + CREATE
+CREATE PROC p_error_drop_create AS 
+BEGIN 
+    BEGIN TRY 
+        DROP TABLE IF EXISTS #err_t 
+        CREATE TABLE #err_t(id int PRIMARY KEY) 
+        INSERT INTO #err_t VALUES (1) 
+        INSERT INTO #err_t VALUES (1) -- Duplicate key error 
+    END TRY 
+    BEGIN CATCH 
+        SELECT 'Error: ' + ERROR_MESSAGE() as error_msg 
+    END CATCH 
+    
+    SELECT * FROM #err_t 
+END
+GO
