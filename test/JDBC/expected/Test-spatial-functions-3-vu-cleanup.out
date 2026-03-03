@@ -1,5 +1,21 @@
-<<<<<<< HEAD
-=======
+USE TestSTNumPoints_DB;
+
+DROP VIEW STNumPoints_geog_view_db;
+DROP VIEW STNumPoints_geom_view_db;
+
+DROP TABLE STNumPoints_geog_test_db;
+DROP TABLE STNumPoints_geom_test_db;
+
+USE MASTER;
+
+DROP VIEW STNumPoints_geog_view;
+DROP VIEW STNumPoints_geom_view;
+
+DROP TABLE STNumPoints_geog_test;
+DROP TABLE STNumPoints_geom_test;
+
+DROP DATABASE TestSTNumPoints_DB;
+
 USE TestGeospatialParse_DB 
 
 DROP TABLE TestGeospatialParse_GeometryTable3 
@@ -18,7 +34,6 @@ DROP TABLE TestGeospatialParse_GeogTemp3
 
 DROP DATABASE TestGeospatialParse_DB 
 
->>>>>>> upstream/BABEL_5_X_DEV
 USE TestGeospatialMethods3_DB;
 
 DROP VIEW TestGeospatialMethods3_STGeometryType_GEOM_View_db;
@@ -36,7 +51,4 @@ DROP TABLE TestGeospatialMethods3_STGeometryType_GEOM_Temp;
 DROP TABLE TestGeospatialMethods3_STGeometryType_GEOG_Temp;
 
 DROP DATABASE TestGeospatialMethods3_DB;
-<<<<<<< HEAD
-=======
 
->>>>>>> upstream/BABEL_5_X_DEV

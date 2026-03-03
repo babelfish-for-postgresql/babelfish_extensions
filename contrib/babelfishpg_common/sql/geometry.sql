@@ -462,6 +462,19 @@ CREATE OR REPLACE FUNCTION sys.Geometry__Parse(geometry_tagged_text sys.NVARCHAR
     END;
     $$ LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
 
+--STNumPoints
+CREATE OR REPLACE FUNCTION sys.STNumPoints(geom sys.GEOMETRY)
+    RETURNS integer
+    AS $$
+    BEGIN
+        IF STIsValid(geom) = 0 THEN
+            RAISE EXCEPTION 'The geometry instance is not valid';
+        ELSE
+            RETURN sys.STNumPoints_helper(geom);
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	
 -- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
@@ -656,6 +669,11 @@ CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOMETRY)
         RETURNS integer
         AS '$libdir/postgis-3','LWGEOM_dimension'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+		
+CREATE OR REPLACE FUNCTION sys.STNumPoints_helper(sys.GEOMETRY)
+    RETURNS integer
+    AS '$libdir/postgis-3','LWGEOM_npoints'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
         RETURNS sys.BIT

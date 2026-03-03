@@ -1982,3 +1982,127 @@ GO
 
 DROP TABLE #insert_exec_drop_target
 GO
+
+DROP TABLE #t
+DROP TABLE #t1
+DROP TABLE #t2
+GO
+
+---------------------------------------------------------------------------
+-- DROP TABLE IF EXISTS + CREATE TABLE in procedures (BABEL-6097)
+---------------------------------------------------------------------------
+
+-- Basic DROP IF EXISTS + CREATE pattern
+CREATE TABLE #t(a int)
+GO
+
+EXEC p_drop_if_exists_create
+GO
+
+CREATE TABLE #t(a int)  -- Should not crash
+GO
+
+DROP TABLE #t
+GO
+
+-- Multiple DROP IF EXISTS + CREATE cycles
+CREATE TABLE #t(x varchar(10))
+INSERT INTO #t VALUES ('original')
+GO
+
+EXEC p_multi_drop_create
+GO
+
+CREATE TABLE #t(c int)
+INSERT INTO #t VALUES (999)
+SELECT * FROM #t
+GO
+
+DROP TABLE #t
+GO
+
+-- DROP IF EXISTS + CREATE with different schemas
+EXEC p_drop_create_schema_change
+GO
+
+CREATE TABLE #t(final_col int)
+INSERT INTO #t VALUES (777)
+SELECT * FROM #t
+GO
+
+DROP TABLE #t
+GO
+
+-- DROP IF EXISTS + CREATE in transaction
+EXEC p_trans_drop_create
+GO
+
+-- DROP IF EXISTS + CREATE with rollback
+EXEC p_rollback_drop_create
+GO
+
+-- Multiple temp tables with DROP IF EXISTS + CREATE
+EXEC p_multi_tables_drop_create
+GO
+
+-- DROP IF EXISTS + CREATE with indexes
+EXEC p_drop_create_with_index
+GO
+
+-- DROP IF EXISTS + CREATE with constraints
+EXEC p_drop_create_constraints
+GO
+
+-- DROP IF EXISTS + CREATE with ALTER TABLE
+EXEC p_drop_create_alter
+GO
+
+-- Conditional DROP IF EXISTS + CREATE
+EXEC p_conditional_drop_create
+GO
+
+-- DROP IF EXISTS + CREATE with TRUNCATE
+EXEC p_drop_create_truncate
+GO
+
+-- Error handling with DROP IF EXISTS + CREATE
+EXEC p_error_drop_create
+GO
+
+-- Repeated calls to same procedure
+CREATE TABLE #t(a int)
+GO
+
+EXEC p_drop_if_exists_create
+GO
+
+EXEC p_drop_if_exists_create  -- Second call
+GO
+
+EXEC p_drop_if_exists_create  -- Third call
+GO
+
+CREATE TABLE #t(final int)  -- Should not crash
+GO
+
+DROP TABLE #t
+GO
+
+-- Interleaved procedure calls
+CREATE TABLE #t(a int)
+CREATE TABLE #t1(a int)
+GO
+
+EXEC p_drop_if_exists_create
+GO
+
+EXEC p_multi_tables_drop_create
+GO
+
+CREATE TABLE #t(x int)
+CREATE TABLE #t1(y int)
+GO
+
+DROP TABLE #t
+DROP TABLE #t1
+GO

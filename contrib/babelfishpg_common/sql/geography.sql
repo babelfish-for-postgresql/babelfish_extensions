@@ -433,6 +433,19 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+--STNumPoints
+CREATE OR REPLACE FUNCTION sys.STNumPoints(geog sys.GEOGRAPHY)
+	RETURNS integer
+	AS $$
+	BEGIN
+		IF sys.STIsValid(geog) = 0 THEN
+			RAISE EXCEPTION 'The geography instance is not valid';
+		ELSE
+			RETURN sys.STNumPoints_helper(geog);
+		END IF;
+	END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 --Parse
 CREATE OR REPLACE FUNCTION sys.Geography__Parse(geography_tagged_text sys.NVARCHAR)
     RETURNS sys.GEOGRAPHY
@@ -664,6 +677,11 @@ CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOGRAPHY)
         RETURNS integer
         AS '$libdir/postgis-3','LWGEOM_dimension'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STNumPoints_helper(sys.GEOGRAPHY)
+    RETURNS integer
+    AS '$libdir/postgis-3', 'LWGEOM_npoints'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
         RETURNS sys.BIT
