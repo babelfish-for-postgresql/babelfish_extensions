@@ -650,7 +650,4 @@ babel_convert_with_style
 babel_string_to_money_reg
 forxml-raw-elements-before-17_9-or-18_3
 sys-fn-varbintohexsubstring
-<<<<<<< HEAD
-=======
 forxml-path-elements-before-17_10-or-18_4
->>>>>>> upstream/BABEL_5_X_DEV

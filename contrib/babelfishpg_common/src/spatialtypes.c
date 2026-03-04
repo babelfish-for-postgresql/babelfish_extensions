@@ -2203,21 +2203,6 @@ geography_from_bytea(PG_FUNCTION_ARGS)
     /* Get binary input argument and validate its length */
     input = PG_GETARG_BYTEA_PP(0);
 
-    /* 
-     * Check for NULL geography first (SRID = -1).
-     * Per spec: when SRID is -1, all other fields are omitted,
-     * so input may be only 4 bytes. Must check before 
-     * validate_input_length() which requires 22 bytes minimum.
-     */
-
-    // if (VARSIZE_ANY_EXHDR(input) >= sizeof(int32_t))
-    // {
-    //     int32_t srid;
-    //     memcpy(&srid, VARDATA_ANY(input), sizeof(int32_t));
-    //     if (srid == -1)
-    //         PG_RETURN_NULL();
-    // }
-
     validate_input_length(input, "Geography");
 
     /* Initialize geography data structure with input data */
