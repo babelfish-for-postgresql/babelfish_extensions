@@ -622,7 +622,7 @@ sys-login-property
 sys-fn-varbintohexsubstring
 BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 alter-mvu-test
-test_constraint_like
+test_constraint_like_before_17_8-or-16_12
 test_like_index
 unpivot
 forjson-escape
@@ -668,3 +668,5 @@ BABEL-1664
 string_aggregate
 babel_string_to_money_reg
 babel_convert_with_style
+forxml-raw-elements-before-17_9-or-18_3
+forxml-path-elements-before-17_10-or-18_4

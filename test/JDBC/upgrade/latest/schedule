@@ -677,3 +677,6 @@ sys-fn_varbintohexstr
 babel_string_to_money_reg
 string_aggregate
 babel_convert_with_style
+forxml-raw-elements
+forxml-raw-elements-1gb-limit
+forxml-path-elements

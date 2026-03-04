@@ -427,6 +427,27 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	
+--STGeomType
+CREATE OR REPLACE FUNCTION sys.STGeometryType(geom sys.GEOMETRY)
+	RETURNS sys.NVARCHAR(4000)
+	AS $$
+	DECLARE
+		geom_type text;
+	BEGIN
+		IF STIsValid(geom) = 0 THEN
+			RAISE EXCEPTION 'This operation cannot be completed because the instance is not valid';
+		END IF;
+		
+		geom_type := sys.ST_GeometryType(geom);
+		
+		IF geom_type LIKE 'ST\_%' ESCAPE '\' THEN
+			RETURN substr(geom_type, 4);
+		END IF;
+		
+	 	RAISE EXCEPTION 'Unexpected geometry type format: %. Expected ST_* prefix.', geom_type;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 --MAKE VALID
 CREATE OR REPLACE FUNCTION sys.MakeValid(geom sys.GEOMETRY)
@@ -443,6 +464,32 @@ CREATE OR REPLACE FUNCTION sys.MakeValid(geom sys.GEOMETRY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+--Parse
+CREATE OR REPLACE FUNCTION sys.Geometry__Parse(geometry_tagged_text sys.NVARCHAR)
+    RETURNS sys.GEOMETRY
+    AS $$
+    BEGIN
+	    IF UPPER(geometry_tagged_text COLLATE sys.DATABASE_DEFAULT) = 'NULL' THEN
+            RETURN NULL;
+        END IF;
+
+        RETURN sys.geomfromtext_helper(geometry_tagged_text, 0);
+    END;
+    $$ LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
+--STNumPoints
+CREATE OR REPLACE FUNCTION sys.STNumPoints(geom sys.GEOMETRY)
+    RETURNS integer
+    AS $$
+    BEGIN
+        IF STIsValid(geom) = 0 THEN
+            RAISE EXCEPTION 'The geometry instance is not valid';
+        ELSE
+            RETURN sys.STNumPoints_helper(geom);
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	
 -- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
@@ -637,6 +684,11 @@ CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOMETRY)
         RETURNS integer
         AS '$libdir/postgis-3','LWGEOM_dimension'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+		
+CREATE OR REPLACE FUNCTION sys.STNumPoints_helper(sys.GEOMETRY)
+    RETURNS integer
+    AS '$libdir/postgis-3','LWGEOM_npoints'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STMakeValid_helper(sys.GEOMETRY)
         RETURNS sys.GEOMETRY

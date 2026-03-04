@@ -101,7 +101,7 @@ jobs:
           wget https://github.com/pgvector/pgvector/archive/refs/tags/v${VECTOR_VERSION}.tar.gz
           tar -xvzf v${VECTOR_VERSION}.tar.gz
           cd pgvector-${VECTOR_VERSION}/
-          make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config
+          make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config OPTFLAGS=""
           sudo make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
         shell: bash
 

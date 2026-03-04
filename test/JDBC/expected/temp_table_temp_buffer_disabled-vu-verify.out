@@ -1,0 +1,50 @@
+-- tsql
+CREATE TABLE #temp_table1(col1 int , col2 DATE DEFAULT GETDATE());
+GO
+
+INSERT INTO #temp_table1(col1) SELECT col1 FROM perm_table;
+GO
+~~ROW COUNT: 3~~
+
+
+ALTER TABLE #temp_table1 ALTER COLUMN col1 BIGINT;
+ALTER TABLE #temp_table1 ADD col3 INT IDENTITY;
+ALTER TABLE #temp_table1 ADD col4 TEXT;
+ALTER TABLE #temp_table1 ADD CONSTRAINT col1_def DEFAULT 0 FOR col1;
+GO
+
+INSERT INTO #temp_table1(col4) VALUES ('test1'), ('test2'), ('test3');
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT col1, col3, col4 FROM #temp_table1;
+GO
+~~START~~
+bigint#!#int#!#text
+10#!#1#!#<NULL>
+20#!#2#!#<NULL>
+30#!#3#!#<NULL>
+0#!#4#!#test1
+0#!#5#!#test2
+0#!#6#!#test3
+~~END~~
+
+
+SELECT * INTO #temp_table2 FROM #temp_table1;
+GO
+
+SELECT col1, col3, col4 FROM #temp_table2;
+GO
+~~START~~
+bigint#!#int#!#text
+10#!#1#!#<NULL>
+20#!#2#!#<NULL>
+30#!#3#!#<NULL>
+0#!#4#!#test1
+0#!#5#!#test2
+0#!#6#!#test3
+~~END~~
+
+
+-- terminate-tsql-conn

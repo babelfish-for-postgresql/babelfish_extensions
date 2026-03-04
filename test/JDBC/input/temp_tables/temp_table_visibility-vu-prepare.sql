@@ -100,3 +100,21 @@ BEGIN
 	SELECT * FROM enr_view;
 END;
 GO
+
+CREATE FUNCTION custom_adder(@a INT, @b INT)
+RETURNS INT
+BEGIN
+	RETURN @a + @b;
+END;
+GO
+
+CREATE PROCEDURE p_def_cons
+AS
+BEGIN
+	DECLARE @tv_def_con TABLE(id INT PRIMARY KEY, a INT IDENTITY, b CHAR(1) DEFAULT 'F' CHECK (b IN ('T', 'F')));
+	INSERT INTO @tv_def_con(id, b) VALUES (1, 'T');
+	INSERT INTO @tv_def_con(id) VALUES (2);
+	INSERT INTO @tv_def_con(id, b) VALUES (3, 'A');
+	SELECT * FROM @tv_def_con;
+END;
+GO

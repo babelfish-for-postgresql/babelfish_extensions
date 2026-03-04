@@ -10,6 +10,9 @@ GO
 DROP TABLE test_like_index_vu_prepare_v_csas;
 GO
 
+DROP TABLE new_test_like_index_vu_prepare_v_csas;
+GO
+
 -- CI_AS
 DROP INDEX test_like_index_vu_prepare_v_cias_idx ON test_like_index_vu_prepare_v_cias;
 GO
@@ -18,6 +21,9 @@ DROP INDEX test_like_index_vu_prepare_v_cias_idx_composite ON test_like_index_vu
 GO
 
 DROP TABLE test_like_index_vu_prepare_v_cias;
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_v_cias;
 GO
 
 -- psql
@@ -32,6 +38,9 @@ GO
 DROP TABLE test_like_index_vu_prepare_v_csai;
 GO
 
+DROP TABLE new_test_like_index_vu_prepare_v_csai;
+GO
+
 -- psql
 -- CI_AI
 DROP INDEX master_dbo.test_like_index_vu_prepare_v_ciai_idx;
@@ -42,6 +51,9 @@ GO
 
 -- tsql
 DROP TABLE test_like_index_vu_prepare_v_ciai;
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_v_ciai;
 GO
 
 -- CHAR
@@ -55,6 +67,12 @@ GO
 DROP TABLE test_like_index_vu_prepare_c_csas;
 GO
 
+DROP TABLE new_test_like_index_vu_prepare_c_csas;
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_c_fixed_csas;
+GO
+
 -- CI_AS
 DROP INDEX test_like_index_vu_prepare_c_cias_idx ON test_like_index_vu_prepare_c_cias;
 GO
@@ -63,6 +81,12 @@ DROP INDEX test_like_index_vu_prepare_c_cias_idx_composite ON test_like_index_vu
 GO
 
 DROP TABLE test_like_index_vu_prepare_c_cias;
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_c_cias;
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_c_fixed_cias;
 GO
 
 -- psql
@@ -77,6 +101,12 @@ GO
 DROP TABLE test_like_index_vu_prepare_c_csai;
 GO
 
+DROP TABLE new_test_like_index_vu_prepare_c_csai;
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_c_fixed_csai;
+GO
+
 -- psql
 -- CI_AI
 DROP INDEX master_dbo.test_like_index_vu_prepare_c_ciai_idx;
@@ -87,6 +117,12 @@ GO
 
 -- tsql
 DROP TABLE test_like_index_vu_prepare_c_ciai;
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_c_ciai;
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_c_fixed_ciai;
 GO
 
 -- NVARCHAR
@@ -100,6 +136,9 @@ GO
 DROP TABLE test_like_index_vu_prepare_nv_csas;
 GO
 
+DROP TABLE new_test_like_index_vu_prepare_nv_csas;
+GO
+
 -- CI_AS
 DROP INDEX test_like_index_vu_prepare_nv_cias_idx ON test_like_index_vu_prepare_nv_cias;
 GO
@@ -108,6 +147,9 @@ DROP INDEX test_like_index_vu_prepare_nv_cias_idx_composite ON test_like_index_v
 GO
 
 DROP TABLE test_like_index_vu_prepare_nv_cias;
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_nv_cias;
 GO
 
 -- psql
@@ -122,6 +164,9 @@ GO
 DROP TABLE test_like_index_vu_prepare_nv_csai;
 GO
 
+DROP TABLE new_test_like_index_vu_prepare_nv_csai;
+GO
+
 -- psql
 -- CI_AI
 DROP INDEX master_dbo.test_like_index_vu_prepare_nv_ciai_idx;
@@ -132,6 +177,9 @@ GO
 
 -- tsql
 DROP TABLE test_like_index_vu_prepare_nv_ciai;
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_nv_ciai;
 GO
 
 -- TEXT
@@ -145,6 +193,9 @@ GO
 DROP TABLE test_like_index_vu_prepare_t_csas;
 GO
 
+DROP TABLE new_test_like_index_vu_prepare_t_csas;
+GO
+
 -- CI_AS
 DROP INDEX test_like_index_vu_prepare_t_cias_idx ON test_like_index_vu_prepare_t_cias;
 GO
@@ -153,6 +204,9 @@ DROP INDEX test_like_index_vu_prepare_t_cias_idx_composite ON test_like_index_vu
 GO
 
 DROP TABLE test_like_index_vu_prepare_t_cias;
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_t_cias;
 GO
 
 -- psql
@@ -167,6 +221,9 @@ GO
 DROP TABLE test_like_index_vu_prepare_t_csai;
 GO
 
+DROP TABLE new_test_like_index_vu_prepare_t_csai;
+GO
+
 -- psql
 -- CI_AI
 DROP INDEX master_dbo.test_like_index_vu_prepare_t_ciai_idx;
@@ -177,6 +234,9 @@ GO
 
 -- tsql
 DROP TABLE test_like_index_vu_prepare_t_ciai;
+GO
+
+DROP TABLE new_test_like_index_vu_prepare_t_ciai;
 GO
 
 -- COMMON TABLE FOR JOIN

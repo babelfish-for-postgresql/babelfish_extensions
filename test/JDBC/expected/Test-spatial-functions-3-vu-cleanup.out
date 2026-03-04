@@ -23,3 +23,57 @@ DROP TABLE TestSpatialFunc3_MakeValidGeomTemp;
 DROP TABLE TestSpatialFunc3_MakeValidGeogTemp;
 
 DROP DATABASE TestSpatialFunc3_DB;
+USE TestSTNumPoints_DB;
+
+DROP VIEW STNumPoints_geog_view_db;
+DROP VIEW STNumPoints_geom_view_db;
+
+DROP TABLE STNumPoints_geog_test_db;
+DROP TABLE STNumPoints_geom_test_db;
+
+USE MASTER;
+
+DROP VIEW STNumPoints_geog_view;
+DROP VIEW STNumPoints_geom_view;
+
+DROP TABLE STNumPoints_geog_test;
+DROP TABLE STNumPoints_geom_test;
+
+DROP DATABASE TestSTNumPoints_DB;
+
+USE TestGeospatialParse_DB 
+
+DROP TABLE TestGeospatialParse_GeometryTable3 
+
+DROP TABLE TestGeospatialParse_GeographyTable3 
+
+USE MASTER 
+
+DROP VIEW TestGeospatialParse_ParseGeomView3 
+
+DROP VIEW TestGeospatialParse_ParseGeogView3 
+
+DROP TABLE TestGeospatialParse_GeomTemp3 
+
+DROP TABLE TestGeospatialParse_GeogTemp3 
+
+DROP DATABASE TestGeospatialParse_DB 
+
+USE TestGeospatialMethods3_DB;
+
+DROP VIEW TestGeospatialMethods3_STGeometryType_GEOM_View_db;
+DROP VIEW TestGeospatialMethods3_STGeometryType_GEOG_View_db;
+
+DROP TABLE TestGeospatialMethods3_STGeometryType_GEOM_db;
+DROP TABLE TestGeospatialMethods3_STGeometryType_GEOG_db;
+
+USE MASTER;
+
+DROP VIEW TestGeospatialMethods3_STGeometryType_GEOM_View_Temp;
+DROP VIEW TestGeospatialMethods3_STGeometryType_GEOG_View_Temp;
+
+DROP TABLE TestGeospatialMethods3_STGeometryType_GEOM_Temp;
+DROP TABLE TestGeospatialMethods3_STGeometryType_GEOG_Temp;
+
+DROP DATABASE TestGeospatialMethods3_DB;
+
