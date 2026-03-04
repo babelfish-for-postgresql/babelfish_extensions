@@ -256,7 +256,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_agg_deprecated_in_5_6_0', 'anyelement, integer, text, boolean, text');
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_agg_deprecated_in_6_1_0', 'anyelement, integer, text, boolean, text');
 -- Deprecate and drop old aggregate (6 args) - tsql_select_for_xml_text_agg
 DO $$
 DECLARE
@@ -271,7 +271,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_text_agg_deprecated_in_5_6_0', 'anyelement, integer, text, boolean, text');
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_text_agg_deprecated_in_6_1_0', 'anyelement, integer, text, boolean, text');
 -- Deprecate and drop old function (6 args) - after aggregates are gone
 DO $$
 DECLARE
@@ -285,7 +285,7 @@ EXCEPTION WHEN OTHERS THEN
     RAISE WARNING '%', exception_message;
 END;
 $$;
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_sfunc_deprecated_in_5_6_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_sfunc_deprecated_in_6_1_0');
 
 -- Create new function with ELEMENTS parameters (8 args)
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
