@@ -204,7 +204,7 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 
 	if (SPI_processed == 0)
 	{
-		SPI_finish();
+		SPI_finish_safe();
 		return NULL;
 	}
 
@@ -239,7 +239,7 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 					 errmsg("invalid FOR JSON mode")));
 	}
 
-	SPI_finish();
+	SPI_finish_safe();
 
 
 	if (root_name)

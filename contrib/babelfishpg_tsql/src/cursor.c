@@ -1067,7 +1067,7 @@ execute_sp_cursor(int cursor_handle, int opttype, int rownum, const char *tablen
 		receiver->rShutdown(receiver);
 	}
 
-	if ((rc = SPI_finish()) != SPI_OK_FINISH)
+	if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	return 0;
@@ -1137,7 +1137,7 @@ execute_sp_cursorunprepare(int stmt_handle)
 	hash_search(CursorPreparedHandleHashTable, &stmt_handle, HASH_REMOVE, &found);
 	Assert(found);
 
-	if ((rc = SPI_finish()) != SPI_OK_FINISH)
+	if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	return 0;
@@ -1276,7 +1276,7 @@ execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int *pn
 		execute_sp_cursorclose(cursor_handle);
 	}
 
-	if ((rc = SPI_finish()) != SPI_OK_FINISH)
+	if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	return 0;
@@ -1370,7 +1370,7 @@ execute_sp_cursoroption(int cursor_handle, int code, int value)
 			Assert(0);
 	}
 
-	if ((rc = SPI_finish()) != SPI_OK_FINISH)
+	if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	return 0;
@@ -1423,7 +1423,7 @@ execute_sp_cursorclose(int cursor_handle)
 
 	pltsql_delete_cursor_entry(curname, false);
 
-	if ((rc = SPI_finish()) != SPI_OK_FINISH)
+	if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	return 0;
@@ -1620,7 +1620,7 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 	if (prepare && !save_plan)
 		SPI_freeplan(plan);
 
-	if ((rc = SPI_finish()) != SPI_OK_FINISH)
+	if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	return 0;

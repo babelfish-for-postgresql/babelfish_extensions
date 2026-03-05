@@ -5558,7 +5558,7 @@ pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, 
 	else
 		*acl = aclcopy(DatumGetAclP(aclDatum));
 
-	if ((spi_rc = SPI_finish()) != SPI_OK_FINISH)
+	if ((spi_rc = SPI_finish_safe()) != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish() failed in pltsql_proc_get_oid_proname_proacl with return code %d", spi_rc);
 
 	/* now we need to check if the function is exactly the same proc (i.e. the params match as well) or else
@@ -6258,7 +6258,7 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 			 SPI_depth, current_spi_stack_depth);
 		
 	while (current_spi_stack_depth-- >= SPI_depth)
-		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+		if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	/*
@@ -6652,7 +6652,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 				/*
 				 * Disconnect from SPI manager
 				 */
-				if ((rc = SPI_finish()) != SPI_OK_FINISH)
+				if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 					elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 				sql_dialect = saved_dialect;
@@ -7021,7 +7021,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 			/*
 			 * Disconnect from SPI manager
 			 */
-			if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 		}
 
@@ -7203,7 +7203,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 			}
 			MemoryContextSwitchTo(SPIMemoryContext);
 
-			if ((spi_rc = SPI_finish()) != SPI_OK_FINISH)
+			if ((spi_rc = SPI_finish_safe()) != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish() failed in pltsql_validator with return code %d", spi_rc);
 
 			/*

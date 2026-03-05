@@ -3681,7 +3681,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 
 		if(rc != 0)
 		{ 
-			SPI_finish();
+			SPI_finish_safe();
 			/* running 'SELECT MAX' query above holds a AccessShareLock on table, we want to unlock that as well */
 			UnlockRelationOid(table_oid, AccessShareLock);
 		}
@@ -3704,7 +3704,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		pfree(max_identity_value_str);
 	if(rc != 0)
 	{
-		SPI_finish();
+		SPI_finish_safe();
 		/* running 'SELECT MAX' query above holds a AccessShareLock on table, we want to unlock that as well */
 		UnlockRelationOid(table_oid, AccessShareLock);
 	}

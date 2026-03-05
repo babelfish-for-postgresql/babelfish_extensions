@@ -309,7 +309,7 @@ sp_babelfish_configure(PG_FUNCTION_ARGS)
 
 	SPI_cursor_close(portal);
 
-	if ((rc = SPI_finish()) != SPI_OK_FINISH)
+	if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	PG_RETURN_VOID();
@@ -548,7 +548,7 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 
 				pfree(query);
 				pfree(sp_describe_first_result_set_view_name);
-				SPI_finish();
+				SPI_finish_safe();
 				RESUME_INTERRUPTS();
 				PG_RE_THROW();
 			}
@@ -1743,12 +1743,12 @@ create_xp_qv_in_master_dbo_internal(PG_FUNCTION_ARGS)
 		if ((rc = SPI_execute(query, false, 1)) < 0)
 			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
-		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+		if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 	}
 	PG_CATCH();
 	{
-		SPI_finish();
+		SPI_finish_safe();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -1836,12 +1836,12 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 		if ((rc = SPI_execute(query2, false, 1)) < 0)
 			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
-		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+		if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 	}
 	PG_CATCH();
 	{
-		SPI_finish();
+		SPI_finish_safe();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -3577,12 +3577,12 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 			receiver->rDestroy(receiver);
 			SPI_cursor_close(portal);
 
-			if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 		}
 		PG_CATCH();
 		{
-			SPI_finish();
+			SPI_finish_safe();
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
@@ -3607,12 +3607,12 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 			if ((rc = SPI_execute(query, false, 1)) < 0)
 				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
-			if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 		}
 		PG_CATCH();
 		{
-			SPI_finish();
+			SPI_finish_safe();
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
@@ -4295,12 +4295,12 @@ sp_enum_oledb_providers_internal(PG_FUNCTION_ARGS)
 
 		SPI_cursor_close(portal);
 
-		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+		if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 	}
 	PG_CATCH();
 	{
-		SPI_finish();
+		SPI_finish_safe();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();

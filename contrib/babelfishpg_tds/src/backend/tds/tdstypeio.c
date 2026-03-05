@@ -2226,7 +2226,7 @@ FetchTvpTypeOid(const ParameterToken token, char *tvpName)
 																1, &isnull));
 
 	pfree(query);
-	SPI_finish();
+	SPI_finish_safe();
 }
 
 
@@ -2324,7 +2324,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		elog(ERROR, "Failed to create the underlying table for table-valued parameter: %d", rc);
 	}
 
-	SPI_finish();
+	SPI_finish_safe();
 	PopActiveSnapshot();
 	if (!xactStarted)
 		CommitTransactionCommand();
@@ -2458,7 +2458,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 				elog(ERROR, "Failed to insert in the underlying table for table-valued parameter: %d", rc);
 			}
 
-			SPI_finish();
+			SPI_finish_safe();
 		}
 
 		PopActiveSnapshot();
