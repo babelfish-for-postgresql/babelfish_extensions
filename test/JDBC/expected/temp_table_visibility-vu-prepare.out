@@ -16,6 +16,7 @@ CREATE VIEW enr_view AS
             ELSE relname
         END AS relname
     FROM sys.babelfish_get_enr_list()
+    ORDER BY relname COLLATE pg_c_utf8
 GO
 
 
@@ -35,7 +36,7 @@ go
 CREATE PROCEDURE enr_list_inner_proc
 as
     CREATE TABLE #tab_nest_level_0(a int)
-    SELECT relname FROM sys.babelfish_get_enr_list();
+    SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname COLLATE pg_c_utf8;
 go
 
 -- Ensure to check before and after table is created.

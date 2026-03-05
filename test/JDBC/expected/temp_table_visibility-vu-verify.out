@@ -162,13 +162,13 @@ SELECT * FROM enr_view;
 GO
 ~~START~~
 text
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
+#sys_comprehensive
+#sys_comprehensive_pkey
 #t4122
 #temptable5605
 idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
-#sys_comprehensive
-#pg_toast_#oid_masked#
-#pg_toast_#oid_masked#_index
-#sys_comprehensive_pkey
 ~~END~~
 
 
@@ -344,13 +344,13 @@ SELECT * FROM enr_view;
 GO
 ~~START~~
 text
+#advanced_columns
+#advanced_columns_pkey
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
 #t4122
 #temptable5605
 idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
-#advanced_columns
-#pg_toast_#oid_masked#
-#pg_toast_#oid_masked#_index
-#advanced_columns_pkey
 ~~END~~
 
 
@@ -530,18 +530,18 @@ SELECT * FROM enr_view;
 GO
 ~~START~~
 text
+#indexed_dml
+#indexed_dml_pkey
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
 #t4122
 #temptable5605
 idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
-#indexed_dml
-#pg_toast_#oid_masked#
-#pg_toast_#oid_masked#_index
-#indexed_dml_pkey
-ix_text#indexed_dml331193019682437d7418b66eb4c0d94e
-ix_int#indexed_dml035dab3da66aea81011a3eae459c604c
-ix_date#indexed_dmle2166a864eb6380802f1dd642a3fde15
-ix_money#indexed_dmlf15b16dc03c5e414c280565f841360cc
 ix_composite#indexed_dml607dc45075f81468865d4be46b38df3e
+ix_date#indexed_dmle2166a864eb6380802f1dd642a3fde15
+ix_int#indexed_dml035dab3da66aea81011a3eae459c604c
+ix_money#indexed_dmlf15b16dc03c5e414c280565f841360cc
+ix_text#indexed_dml331193019682437d7418b66eb4c0d94e
 ~~END~~
 
 
