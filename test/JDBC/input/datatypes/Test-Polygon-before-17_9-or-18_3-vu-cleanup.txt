@@ -1,45 +1,143 @@
-USE TestGeospatialMethods_DB 
 
-DROP TABLE TestGeospatialMethods_YourTable1Temp 
 
-DROP TABLE TestGeospatialMethods_YourTable3Temp 
+DROP TABLE  geometryAsVarcharpolygon
 
-USE MASTER 
+DROP TABLE  geographyAsVarcharpolygon
 
-DROP TABLE TestGeospatialMethods_YourTable2Temp 
+DROP TABLE  CharAsgeometrypolygon
 
-DROP TABLE TestGeospatialMethods_TableATemp 
+DROP TABLE  CharAsgeographypolygon
 
-DROP TABLE TestGeospatialMethods_TableBTemp 
+DROP TABLE  VarCharAsgeometrypolygon
 
-DROP VIEW TestGeospatialMethods_ValFromGeomTemp 
+DROP TABLE  VarcharAsgeographypolygon
 
-DROP VIEW TestGeospatialMethods_TextFromGeogTemp 
+DROP TABLE  GeoVarCharAsgeometrypolygon
 
-DROP VIEW TestGeospatialMethods_point_intersect1Temp 
+DROP TABLE  GeoVarcharAsgeographypolygon
 
-DROP VIEW TestGeospatialMethods_disjointTemp 
+DROP VIEW DimOfGeometrypolygon
 
-DROP VIEW TestGeospatialMethods_point_intersectTemp 
+DROP VIEW AreaOfGeometrypolygon
 
-DROP VIEW TestGeospatialMethods_point_disjointTemp 
+DROP VIEW TextFromGeometrypolygon
 
-DROP TABLE TestGeospatialMethods_YourTableTemp 
+DROP VIEW BinaryFromGeometrypolygon
 
-DROP VIEW TestGeospatialMethods_valid_ValFromGeomTemp 
+DROP VIEW SridFromGeometrypolygon
 
-DROP VIEW TestGeospatialMethods_valid_TextFromGeogTemp 
+DROP VIEW EmptyGeometrypolygon
 
-DROP VIEW TestGeospatialMethods_closed_ValFromGeomTemp 
+DROP VIEW ValidGeometrypolygon
 
-DROP VIEW TestGeospatialMethods_closed_TextFromGeogTemp 
+DROP VIEW ClosedGeometrypolygon
 
-DROP VIEW TestGeospatialMethods_empty_ValFromGeomTemp 
+DROP VIEW DisjointTempGeompolygon
 
-DROP VIEW TestGeospatialMethods_empty_TextFromGeomTemp 
+DROP VIEW DistanceTempGeompolygon
 
-DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOM_dttemp 
+DROP VIEW IntersectsTempGeompolygon
 
-DROP TABLE TestGeospatialMethods_SPATIALPOINTGEOG_dttemp 
+DROP VIEW ContainTempGeompolygon
 
-DROP DATABASE TestGeospatialMethods_DB 
+DROP VIEW EqualsTempGeompolygon
+
+DROP VIEW equals_opgeompolygon
+
+DROP VIEW notequal_opgeompolygon
+
+DROP VIEW DisjointTempGeompolysr
+
+DROP VIEW DistanceTempGeompolysr
+
+DROP VIEW IntersectsTempGeompolysr
+
+DROP VIEW EqualsTempGeompolysr
+
+DROP VIEW ContainTempGeompolysr
+
+DROP VIEW equals_opgeompolysr
+
+DROP VIEW notequal_opgeompolysr
+
+DROP TABLE  geometryToByteapolygon
+
+DROP TABLE  geometryAsVarbinarypolygon
+
+DROP TABLE  CharAsVarbinaryGeompolygon
+
+DROP TABLE  VarbinaryAsgeometrypolygon
+
+
+DROP VIEW DimOfgeographypolygon
+
+DROP VIEW AreaOfgeographypolygon
+
+DROP VIEW TextFromgeographypolygon
+
+DROP VIEW BinaryFromgeographypolygon
+
+DROP VIEW SridFromgeographypolygon
+
+DROP VIEW Emptygeographypolygon
+
+DROP VIEW Validgeographypolygon
+
+DROP VIEW Closedgeographypolygon
+
+DROP VIEW DisjointTempGeogpolygon
+
+DROP VIEW DistanceTempGeogpolygon
+
+DROP VIEW IntersectsTempGeogpolygon
+
+DROP VIEW ContainTempGeogpolygon
+
+DROP VIEW EqualsTempGeogpolygon
+
+DROP VIEW DisjointTempGeogpolysr
+
+DROP VIEW DistanceTempGeogpolysr
+
+DROP VIEW IntersectsTempGeogpolysr
+
+DROP VIEW EqualsTempGeogpolysr
+
+DROP VIEW ContainTempGeogpolysr
+
+DROP VIEW equals_opgeogpolygon
+
+DROP VIEW notequal_opgeogpolygon
+
+DROP VIEW equals_opgeogpolysr
+
+DROP VIEW notequal_opgeogpolysr
+
+DROP VIEW PolygonGeogFromText
+
+DROP VIEW PolygonGeomFromText
+
+DROP TABLE  geographyToByteapolygon
+
+DROP TABLE  geographyAsVarbinarypolygon
+
+DROP TABLE  CharAsVarbinaryGeogpolygon
+
+DROP TABLE  VarbinaryAsgeographypolygon
+
+
+DROP TABLE geospatialpointgeom_polysr
+
+DROP TABLE GEOSPATIALPOLYGONGEOM_dt
+
+DROP TABLE GEOSPATIALPOLYGONGEOM_INVALID_dt
+
+DROP TABLE GEOSPATIALPOLYGONGEOG_INVALID_dt
+
+DROP TABLE geospatialpointxgeog_polysr
+
+DROP TABLE GEOSPATIALPOLYGONGEOG_dt
+
+DROP TABLE GEOSPATIAL_POLYGEOMRCV_dt
+
+DROP TABLE GEOSPATIAL_POLYGEOGRCV_dt
