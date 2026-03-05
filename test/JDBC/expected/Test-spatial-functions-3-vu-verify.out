@@ -161,7 +161,7 @@ go
 SELECT ID, GeomData.MakeValid().STArea() AS AreaAfter
 FROM TestSpatialFunc3_GeomMetrics
 WHERE GeomData IS NOT NULL
-ORDER BY GeomData.MakeValid().STArea() DESC;
+ORDER BY GeomData.MakeValid().STArea() DESC, ID ASC;
 go
 ~~START~~
 int#!#float
@@ -172,38 +172,33 @@ int#!#float
 2#!#50.0
 14#!#50.0
 18#!#50.0
-12#!#0.0
-13#!#0.0
-15#!#0.0
-16#!#0.0
-17#!#0.0
-10#!#0.0
+1#!#0.0
 3#!#0.0
 4#!#0.0
 6#!#0.0
 7#!#0.0
 8#!#0.0
-1#!#0.0
+10#!#0.0
+12#!#0.0
+13#!#0.0
+15#!#0.0
+16#!#0.0
+17#!#0.0
 ~~END~~
 
 
 SELECT * FROM TestSpatialFunc3_GeomMetrics_Area_View
-ORDER BY AreaAfter DESC;
+ORDER BY AreaAfter DESC, ID ASC;
 go
 ~~START~~
 int#!#int#!#float#!#float#!#geometry
 9#!#5#!#125.9#!#300.0#!#0000000001000A00000000000000000000000000000000000000000000000000000000000000000034400000000000003440000000000000344000000000000034400000000000000000000000000000000000000000000000000000000000001440000000000000144000000000000014400000000000002E400000000000002E400000000000002E400000000000002E40000000000000144000000000000014400000000000001440020000000200000000000500000001000000FFFFFFFF0000000003
 5#!#2#!#300.2#!#100.0#!#00000000010005000000000000000000144000000000000014400000000000002E4000000000000014400000000000002E400000000000002E4000000000000014400000000000002E400000000000001440000000000000144001000000020000000001000000FFFFFFFF0000000003
-20#!#10#!#500.0#!#100.0#!#0107000000020000000103000000010000000700000000000000000000000000000000001440000000000000000000000000000024400000000000002440000000000000244000000000000024400000000000000000000000000000144000000000000000000000000000000000000000000000000000000000000000000000000000001440010200000003000000000000000000144000000000000000000000000000001440000000000000144000000000000000000000000000001440
 19#!#10#!#210.5#!#100.0#!#0000000001010500000000000000000000000000000000000000000000000000000000000000000024400000000000002440000000000000244000000000000024400000000000000000000000000000000000000000000000000000000000000000000000000000144000000000000024400000000000001440000000000000000001000000020000000001000000FFFFFFFF0000000003
+20#!#10#!#500.0#!#100.0#!#0107000000020000000103000000010000000700000000000000000000000000000000001440000000000000000000000000000024400000000000002440000000000000244000000000000024400000000000000000000000000000144000000000000000000000000000000000000000000000000000000000000000000000000000001440010200000003000000000000000000144000000000000000000000000000001440000000000000144000000000000000000000000000001440
 2#!#2#!#200.7#!#50.0#!#01060000000200000001030000000100000004000000000000000000000000000000000024400000000000001440000000000000144000000000000000000000000000000000000000000000000000000000000024400103000000010000000400000000000000000024400000000000000000000000000000144000000000000014400000000000002440000000000000244000000000000024400000000000000000
-18#!#9#!#145.0#!#50.0#!#0106000020E61000000200000001030000000100000004000000000000000000000000000000000024400000000000001440000000000000144000000000000000000000000000000000000000000000000000000000000024400103000000010000000400000000000000000024400000000000000000000000000000144000000000000014400000000000002440000000000000244000000000000024400000000000000000
 14#!#7#!#320.0#!#50.0#!#01060000000200000001030000000100000004000000000000000000000000000000000000000000000000001440000000000000144000000000000024400000000000000000000000000000000000000000000000000103000000010000000400000000000000000024400000000000002440000000000000144000000000000014400000000000000000000000000000244000000000000024400000000000002440
-12#!#6#!#180.0#!#0.0#!#00000000010C00000000000000000000000000000000
-13#!#7#!#55.5#!#0.0#!#00000000010F0000000000003E40000000000000444000000000000059400000000000006940
-15#!#8#!#10.0#!#0.0#!#000000000104000000000000000001000000FFFFFFFFFFFFFFFF02
-16#!#8#!#20.0#!#0.0#!#000000000104000000000000000001000000FFFFFFFFFFFFFFFF03
-17#!#9#!#88.8#!#0.0#!#00000000010C00000000000000000000000000000000
+18#!#9#!#145.0#!#50.0#!#0106000020E61000000200000001030000000100000004000000000000000000000000000000000024400000000000001440000000000000144000000000000000000000000000000000000000000000000000000000000024400103000000010000000400000000000000000024400000000000000000000000000000144000000000000014400000000000002440000000000000244000000000000024400000000000000000
 1#!#1#!#100.5#!#0.0#!#00000000010C00000000000024400000000000003440
 3#!#3#!#150.3#!#0.0#!#0000000001140000000000000000000000000000000000000000000024400000000000002440
 4#!#1#!#75.8#!#0.0#!#00000000010C0000000000003E400000000000004440
@@ -211,27 +206,27 @@ int#!#int#!#float#!#float#!#geometry
 7#!#4#!#400.1#!#0.0#!#0000000001070300000000000000000000000000000000000000000000000000144000000000000014400000000000002440000000000000000000000000000000000000000000002440000000000000000000000000000000000000000000003440000000000000000001000000010000000001000000FFFFFFFF0000000002
 8#!#4#!#0.0#!#0.0#!#000000000104000000000000000001000000FFFFFFFFFFFFFFFF01
 10#!#5#!#275.4#!#0.0#!#0000000001050300000000000000000000000000000000000000000000000000244000000000000024400000000000003440000000000000344000000000000000000000000000004940000000000000594001000000010000000001000000FFFFFFFF0000000002
+12#!#6#!#180.0#!#0.0#!#00000000010C00000000000000000000000000000000
+13#!#7#!#55.5#!#0.0#!#00000000010F0000000000003E40000000000000444000000000000059400000000000006940
+15#!#8#!#10.0#!#0.0#!#000000000104000000000000000001000000FFFFFFFFFFFFFFFF02
+16#!#8#!#20.0#!#0.0#!#000000000104000000000000000001000000FFFFFFFFFFFFFFFF03
+17#!#9#!#88.8#!#0.0#!#00000000010C00000000000000000000000000000000
 11#!#6#!#99.9#!#<NULL>#!#<NULL>
 ~~END~~
 
 
 SELECT * FROM TestSpatialFunc3_GeogMetrics_Area_View
-ORDER BY AreaAfter DESC;
+ORDER BY AreaAfter DESC, ID ASC;
 go
 ~~START~~
 int#!#int#!#float#!#float#!#geography
-20#!#10#!#500.0#!#100.0#!#0107000020E6100000020000000103000000010000000700000000000000000000000000000000002440000000000000244000000000000024400000000000002440000000000000000000000000000014400000000000000000000000000000000000000000000000000000000000000000000000000000144000000000000000000000000000002440010200000003000000000000000000000000000000000014400000000000001440000000000000144000000000000014400000000000000000
 5#!#2#!#300.2#!#100.0#!#E61000000100050000000000000000001440000000000000144000000000000014400000000000002E400000000000002E400000000000002E400000000000002E4000000000000014400000000000001440000000000000144001000000020000000001000000FFFFFFFF0000000003
 9#!#5#!#125.9#!#100.0#!#E6100000010005000000000000000000000000000000000000000000000000002440000000000000000000000000000024400000000000002440000000000000000000000000000024400000000000000000000000000000000001000000020000000001000000FFFFFFFF0000000003
 19#!#10#!#210.5#!#100.0#!#E610000001010500000000000000000000000000000000000000000000000000244000000000000000000000000000002440000000000000244000000000000000000000000000002440000000000000000000000000000000000000000000000000000000000000144000000000000024400000000000001440000000000000000001000000020000000001000000FFFFFFFF0000000003
-14#!#7#!#320.0#!#50.0#!#0106000020E61000000200000001030000000100000004000000000000000000144000000000000014400000000000000000000000000000000000000000000000000000000000002440000000000000144000000000000014400103000000010000000400000000000000000024400000000000000000000000000000144000000000000014400000000000002440000000000000244000000000000024400000000000000000
+20#!#10#!#500.0#!#100.0#!#0107000020E6100000020000000103000000010000000700000000000000000000000000000000002440000000000000244000000000000024400000000000002440000000000000000000000000000014400000000000000000000000000000000000000000000000000000000000000000000000000000144000000000000000000000000000002440010200000003000000000000000000000000000000000014400000000000001440000000000000144000000000000014400000000000000000
 2#!#2#!#200.7#!#50.0#!#0106000020E61000000200000001030000000100000004000000000000000000244000000000000000000000000000000000000000000000000000000000000014400000000000001440000000000000244000000000000000000103000000010000000400000000000000000024400000000000002440000000000000144000000000000014400000000000000000000000000000244000000000000024400000000000002440
+14#!#7#!#320.0#!#50.0#!#0106000020E61000000200000001030000000100000004000000000000000000144000000000000014400000000000000000000000000000000000000000000000000000000000002440000000000000144000000000000014400103000000010000000400000000000000000024400000000000000000000000000000144000000000000014400000000000002440000000000000244000000000000024400000000000000000
 18#!#9#!#145.0#!#50.0#!#0106000020E61000000200000001030000000100000004000000000000000000244000000000000000000000000000000000000000000000000000000000000014400000000000001440000000000000244000000000000000000103000000010000000400000000000000000024400000000000002440000000000000144000000000000014400000000000000000000000000000244000000000000024400000000000002440
-12#!#6#!#180.0#!#0.0#!#E6100000010C00000000000000000000000000000000
-13#!#7#!#55.5#!#0.0#!#E6100000010F9A99999999D947409A99999999995EC000000000000069400000000000C07240
-15#!#8#!#10.0#!#0.0#!#E61000000104000000000000000001000000FFFFFFFFFFFFFFFF02
-16#!#8#!#20.0#!#0.0#!#E61000000104000000000000000001000000FFFFFFFFFFFFFFFF03
-17#!#9#!#88.8#!#0.0#!#E6100000010C00000000000000000000000000000000
 1#!#1#!#100.5#!#0.0#!#E6100000010C17D9CEF753D347407593180456965EC0
 3#!#3#!#150.3#!#0.0#!#E610000001143333333333D34740F6285C8FC2955EC014AE47E17AD447406666666666965EC0
 4#!#1#!#75.8#!#0.0#!#E6100000010C9A99999999D947409A99999999995EC0
@@ -239,6 +234,11 @@ int#!#int#!#float#!#float#!#geography
 7#!#4#!#400.1#!#0.0#!#E61000000107030000003333333333D34740D7A3703D0A975EC014AE47E17AD447406666666666965EC03333333333D34740F6285C8FC2955EC000000000000000000000000000004940000000000000000000000000000000000000000000002440000000000000000001000000010000000001000000FFFFFFFF0000000002
 8#!#4#!#0.0#!#0.0#!#E61000000104000000000000000001000000FFFFFFFFFFFFFFFF01
 10#!#5#!#275.4#!#0.0#!#E61000000105030000003333333333D34740F6285C8FC2955EC014AE47E17AD447406666666666965EC0F6285C8FC2D54740D7A3703D0A975EC000000000000000000000000000004940000000000000594001000000010000000001000000FFFFFFFF0000000002
+12#!#6#!#180.0#!#0.0#!#E6100000010C00000000000000000000000000000000
+13#!#7#!#55.5#!#0.0#!#E6100000010F9A99999999D947409A99999999995EC000000000000069400000000000C07240
+15#!#8#!#10.0#!#0.0#!#E61000000104000000000000000001000000FFFFFFFFFFFFFFFF02
+16#!#8#!#20.0#!#0.0#!#E61000000104000000000000000001000000FFFFFFFFFFFFFFFF03
+17#!#9#!#88.8#!#0.0#!#E6100000010C00000000000000000000000000000000
 11#!#6#!#99.9#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -472,6 +472,7 @@ int#!#bit
 
 
 
+
 -- =============================================
 -- CASE STATEMENT
 -- =============================================
@@ -520,8 +521,6 @@ go
 ~~WARNING (Code: 0)~~
 
 ~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
-
-
 
 ~~START~~
 geometry
@@ -671,10 +670,6 @@ bit
 DECLARE @g geography;
 SET @g = NULL;
 SELECT @g.MakeValid() AS result;
--- NULL variable input (geography)
-DECLARE @nullText NVARCHAR(MAX);
-SET @nullText = NULL;
-SELECT geography::Parse(@nullText) AS ParsedGeography;
 go
 ~~START~~
 geography
@@ -686,31 +681,6 @@ geography
 DECLARE @g geography;
 SET @g = geography::STGeomFromText('POINT EMPTY', 4326);
 SELECT @g.MakeValid().STAsText() AS result;
--- 'NULL' string literal - should error 
-DECLARE @nullString NVARCHAR(MAX);
-SET @nullString = 'NULL';
-SELECT geometry::Parse(@nullString) AS ParsedGeometry;
-go
-~~START~~
-geometry
-<NULL>
-~~END~~
-
-
-DECLARE @nullString NVARCHAR(MAX);
-SET @nullString = 'NULL';
-SELECT geography::Parse(@nullString) AS ParsedGeography;
-go
-~~START~~
-geography
-<NULL>
-~~END~~
-
-
--- POINT EMPTY 
-DECLARE @emptyPoint NVARCHAR(MAX);
-SET @emptyPoint = 'POINT EMPTY';
-SELECT geometry::Parse(@emptyPoint).STAsText() AS ParsedGeometry;
 go
 ~~START~~
 nvarchar
@@ -1714,6 +1684,1225 @@ int#!#varchar#!#float#!#bigint
 --boundary testcases
 DECLARE @g geometry = geometry::STGeomFromText('POINT(-180 -90)', 4326);
 SELECT @g.MakeValid().STAsText() AS BoundaryPoint;
+go
+~~START~~
+nvarchar
+POINT(-180 -90)
+~~END~~
+
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 1 0, 0 0, 0 0))', 0);
+SELECT @g.MakeValid().STArea() AS ZeroArea;
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+
+-- Error Handling Tests
+DECLARE @g geometry;
+BEGIN TRY
+    SET @g = geometry::STGeomFromText('INVALID_GEOMETRY', 0);
+    SELECT @g.MakeValid().STAsText() AS Result;
+END TRY
+BEGIN CATCH
+    SELECT 'Error handled' AS Result;
+END CATCH;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid geometry)~~
+
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10.00000001, 0 0))', 0);
+SELECT @g.MakeValid().STIsValid() AS TinyDifferenceValid;
+go
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT * FROM TestSpatialFunc3_MakeValidGeomView4 ORDER BY ID;
+go
+~~START~~
+int#!#varchar#!#geometry
+1#!#Valid Point#!#00000000010C00000000000024400000000000003440
+2#!#Valid Point with SRID#!#E6100000010C0000000000003E400000000000004440
+3#!#Valid LineString#!#0000000001040300000000000000000000000000000000000000000000000000244000000000000024400000000000003440000000000000344001000000010000000001000000FFFFFFFF0000000002
+4#!#Valid Polygon#!#00000000010005000000000000000000000000000000000000000000000000000000000000000000244000000000000024400000000000002440000000000000244000000000000000000000000000000000000000000000000001000000020000000001000000FFFFFFFF0000000003
+5#!#Invalid Bowtie Polygon#!#01060000000200000001030000000100000004000000000000000000000000000000000024400000000000001440000000000000144000000000000000000000000000000000000000000000000000000000000024400103000000010000000400000000000000000024400000000000000000000000000000144000000000000014400000000000002440000000000000244000000000000024400000000000000000
+6#!#Invalid Twisted Polygon#!#01060000000200000001030000000100000004000000000000000000000000000000000024400000000000001440000000000000144000000000000000000000000000000000000000000000000000000000000024400103000000010000000400000000000000000024400000000000000000000000000000144000000000000014400000000000002440000000000000244000000000000024400000000000000000
+7#!#Invalid Bowtie with SRID#!#0106000020E61000000200000001030000000100000004000000000000000000000000000000000024400000000000001440000000000000144000000000000000000000000000000000000000000000000000000000000024400103000000010000000400000000000000000024400000000000000000000000000000144000000000000014400000000000002440000000000000244000000000000024400000000000000000
+8#!#Valid LineString 2#!#00000000010403000000000000000000144000000000000014400000000000002E400000000000002E400000000000003940000000000000394001000000010000000001000000FFFFFFFF0000000002
+9#!#Valid Polygon with Hole#!#0000000001000A00000000000000000000000000000000000000000000000000000000000000000034400000000000003440000000000000344000000000000034400000000000000000000000000000000000000000000000000000000000001440000000000000144000000000000014400000000000002E400000000000002E400000000000002E400000000000002E40000000000000144000000000000014400000000000001440020000000200000000000500000001000000FFFFFFFF0000000003
+10#!#Empty Point#!#000000000104000000000000000001000000FFFFFFFFFFFFFFFF01
+11#!#Empty Polygon#!#000000000104000000000000000001000000FFFFFFFFFFFFFFFF03
+12#!#Empty LineString#!#000000000104000000000000000001000000FFFFFFFFFFFFFFFF02
+13#!#NULL Geometry#!#<NULL>
+14#!#Point using Point method#!#00000000010C00000000000024400000000000003440
+15#!#Invalid LineString - duplicate points#!#00000000010C00000000000000000000000000000000
+16#!#Invalid LineString - all same points#!#00000000010C000000000000F03F000000000000F03F
+17#!#Invalid LineString - closed back on itself#!#0000000001040300000000000000000000000000000000000000000000000000144000000000000014400000000000000000000000000000000001000000010000000001000000FFFFFFFF0000000002
+18#!#Invalid Figure-8 Polygon#!#01060000000200000001030000000100000004000000000000000000000000000000000000000000000000001440000000000000144000000000000024400000000000000000000000000000000000000000000000000103000000010000000400000000000000000024400000000000002440000000000000144000000000000014400000000000000000000000000000244000000000000024400000000000002440
+19#!#Invalid Polygon - all same points#!#00000000010C00000000000000000000000000000000
+20#!#Invalid Polygon - nested holes#!#010600000002000000010300000002000000050000000000000000002440000000000000244000000000000024400000000000000000000000000000000000000000000000000000000000000000000000000000244000000000000024400000000000002440050000000000000000002040000000000000204000000000000000400000000000002040000000000000004000000000000000400000000000002040000000000000004000000000000020400000000000002040010300000001000000050000000000000000001840000000000000184000000000000018400000000000001040000000000000104000000000000010400000000000001040000000000000184000000000000018400000000000001840
+21#!#Invalid Polygon - hole touches shell#!#0107000000020000000103000000010000000700000000000000000000000000000000001440000000000000000000000000000024400000000000002440000000000000244000000000000024400000000000000000000000000000144000000000000000000000000000000000000000000000000000000000000000000000000000001440010200000003000000000000000000144000000000000000000000000000001440000000000000144000000000000000000000000000001440
+~~END~~
+
+
+
+--STNumPoints()
+USE TestSTNumPoints_DB;
+GO
+
+-- View tests
+SELECT * FROM STNumPoints_geom_view_db ORDER BY ID;
+go
+~~START~~
+int#!#varchar#!#int
+1#!#Point#!#1
+2#!#Point with SRID#!#1
+3#!#Point constructor#!#1
+4#!#LineString 2pts#!#2
+5#!#LineString 3pts#!#3
+6#!#LineString 5pts#!#5
+7#!#Polygon triangle#!#4
+8#!#Polygon square#!#5
+9#!#Polygon with hole#!#10
+10#!#Empty Point#!#0
+11#!#Empty LineString#!#0
+12#!#Empty Polygon#!#0
+13#!#Point Z#!#1
+14#!#Empty Point#!#0
+15#!#Empty LineString#!#0
+16#!#Empty Polygon#!#0
+~~END~~
+
+SELECT * FROM STNumPoints_geog_view_db ORDER BY ID;
+go
+~~START~~
+int#!#varchar#!#int
+1#!#Point#!#1
+2#!#Point constructor#!#1
+3#!#LineString 2pts#!#2
+4#!#LineString 3pts#!#3
+5#!#LineString 5pts#!#5
+6#!#Polygon triangle#!#4
+7#!#Polygon square#!#5
+8#!#Empty Point#!#0
+9#!#Empty LineString#!#0
+10#!#Point Z#!#1
+11#!#Empty Point#!#0
+12#!#Empty LineString#!#0
+~~END~~
+
+
+-- JOIN test (geom + geog, both DB tables)
+SELECT g.ID, g.geom_type, gg.geog_type,
+       g.geom.STNumPoints() AS geom_pts, gg.geog.STNumPoints() AS geog_pts
+FROM STNumPoints_geom_test_db g
+JOIN STNumPoints_geog_test_db gg ON g.ID = gg.ID
+ORDER BY g.ID;
+go
+~~START~~
+int#!#varchar#!#varchar#!#int#!#int
+1#!#Point#!#Point#!#1#!#1
+2#!#Point with SRID#!#Point constructor#!#1#!#1
+3#!#Point constructor#!#LineString 2pts#!#1#!#2
+4#!#LineString 2pts#!#LineString 3pts#!#2#!#3
+5#!#LineString 3pts#!#LineString 5pts#!#3#!#5
+6#!#LineString 5pts#!#Polygon triangle#!#5#!#4
+7#!#Polygon triangle#!#Polygon square#!#4#!#5
+8#!#Polygon square#!#Empty Point#!#5#!#0
+9#!#Polygon with hole#!#Empty LineString#!#10#!#0
+10#!#Empty Point#!#Point Z#!#0#!#1
+11#!#Empty LineString#!#Empty Point#!#0#!#0
+12#!#Empty Polygon#!#Empty LineString#!#0#!#0
+~~END~~
+
+
+-- CTE test
+WITH PointCTE AS (
+    SELECT ID, geom_type, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test_db
+)
+SELECT * FROM PointCTE WHERE num_points > 0 ORDER BY num_points DESC, geom_type;
+go
+~~START~~
+int#!#varchar#!#int
+9#!#Polygon with hole#!#10
+6#!#LineString 5pts#!#5
+8#!#Polygon square#!#5
+7#!#Polygon triangle#!#4
+5#!#LineString 3pts#!#3
+4#!#LineString 2pts#!#2
+1#!#Point#!#1
+3#!#Point constructor#!#1
+2#!#Point with SRID#!#1
+13#!#Point Z#!#1
+~~END~~
+
+
+-- CTE with Window Functions
+WITH RankedGeom AS (
+    SELECT ID, geom_type, geom.STNumPoints() AS num_points,
+           ROW_NUMBER() OVER (ORDER BY geom.STNumPoints() DESC, ID) AS row_num,
+           RANK() OVER (ORDER BY geom.STNumPoints() DESC, ID) AS rnk,
+           SUM(geom.STNumPoints()) OVER () AS total_pts
+    FROM STNumPoints_geom_test_db
+)
+SELECT * FROM RankedGeom ORDER BY row_num;
+go
+~~START~~
+int#!#varchar#!#int#!#bigint#!#bigint#!#int
+9#!#Polygon with hole#!#10#!#1#!#1#!#33
+6#!#LineString 5pts#!#5#!#2#!#2#!#33
+8#!#Polygon square#!#5#!#3#!#3#!#33
+7#!#Polygon triangle#!#4#!#4#!#4#!#33
+5#!#LineString 3pts#!#3#!#5#!#5#!#33
+4#!#LineString 2pts#!#2#!#6#!#6#!#33
+1#!#Point#!#1#!#7#!#7#!#33
+2#!#Point with SRID#!#1#!#8#!#8#!#33
+3#!#Point constructor#!#1#!#9#!#9#!#33
+13#!#Point Z#!#1#!#10#!#10#!#33
+10#!#Empty Point#!#0#!#11#!#11#!#33
+11#!#Empty LineString#!#0#!#12#!#12#!#33
+12#!#Empty Polygon#!#0#!#13#!#13#!#33
+14#!#Empty Point#!#0#!#14#!#14#!#33
+15#!#Empty LineString#!#0#!#15#!#15#!#33
+16#!#Empty Polygon#!#0#!#16#!#16#!#33
+~~END~~
+
+
+-- GROUP BY test
+SELECT geom_type, COUNT(*) AS cnt, SUM(geom.STNumPoints()) AS total_pts
+FROM STNumPoints_geom_test_db
+GROUP BY geom_type
+ORDER BY total_pts DESC, geom_type;
+go
+~~START~~
+varchar#!#int#!#int
+Polygon with hole#!#1#!#10
+LineString 5pts#!#1#!#5
+Polygon square#!#1#!#5
+Polygon triangle#!#1#!#4
+LineString 3pts#!#1#!#3
+LineString 2pts#!#1#!#2
+Point#!#1#!#1
+Point constructor#!#1#!#1
+Point with SRID#!#1#!#1
+Point Z#!#1#!#1
+Empty LineString#!#2#!#0
+Empty Point#!#2#!#0
+Empty Polygon#!#2#!#0
+~~END~~
+
+
+-- ORDER BY test
+SELECT ID, geom_type, geom.STNumPoints() AS num_points
+FROM STNumPoints_geom_test_db
+ORDER BY num_points DESC, ID ASC;
+go
+~~START~~
+int#!#varchar#!#int
+9#!#Polygon with hole#!#10
+6#!#LineString 5pts#!#5
+8#!#Polygon square#!#5
+7#!#Polygon triangle#!#4
+5#!#LineString 3pts#!#3
+4#!#LineString 2pts#!#2
+1#!#Point#!#1
+2#!#Point with SRID#!#1
+3#!#Point constructor#!#1
+13#!#Point Z#!#1
+10#!#Empty Point#!#0
+11#!#Empty LineString#!#0
+12#!#Empty Polygon#!#0
+14#!#Empty Point#!#0
+15#!#Empty LineString#!#0
+16#!#Empty Polygon#!#0
+~~END~~
+
+
+-- Nested functions test
+SELECT ID, geom_type,
+       ABS(geom.STNumPoints() - 5) AS diff_from_5,
+       COALESCE(NULLIF(geom.STNumPoints(), 0), -1) AS pts_or_neg1
+FROM STNumPoints_geom_test_db
+ORDER BY ID;
+go
+~~START~~
+int#!#varchar#!#int#!#int
+1#!#Point#!#4#!#1
+2#!#Point with SRID#!#4#!#1
+3#!#Point constructor#!#4#!#1
+4#!#LineString 2pts#!#3#!#2
+5#!#LineString 3pts#!#2#!#3
+6#!#LineString 5pts#!#0#!#5
+7#!#Polygon triangle#!#1#!#4
+8#!#Polygon square#!#0#!#5
+9#!#Polygon with hole#!#5#!#10
+10#!#Empty Point#!#5#!#-1
+11#!#Empty LineString#!#5#!#-1
+12#!#Empty Polygon#!#5#!#-1
+13#!#Point Z#!#4#!#1
+14#!#Empty Point#!#5#!#-1
+15#!#Empty LineString#!#5#!#-1
+16#!#Empty Polygon#!#5#!#-1
+~~END~~
+
+
+
+-- Test STNumPoints() on geometry table with various geometry types
+SELECT 
+    ID,
+    geom_type,
+    geom.STNumPoints() AS actual_result,
+    CASE ID
+        WHEN 1 THEN 1     
+        WHEN 2 THEN 1     
+        WHEN 3 THEN 1     
+        WHEN 4 THEN 2      
+        WHEN 5 THEN 3      
+        WHEN 6 THEN 5      
+        WHEN 7 THEN 4      
+        WHEN 8 THEN 5      
+        WHEN 9 THEN 10    
+        WHEN 10 THEN 0    
+        WHEN 11 THEN 0     
+        WHEN 12 THEN 0    
+        WHEN 13 THEN 1     
+        WHEN 14 THEN 0     
+        WHEN 15 THEN 0    
+        WHEN 16 THEN 0     
+    END AS expected_result
+FROM STNumPoints_geom_test_db
+ORDER BY ID;
+-- Test STNumPoints() with STPointFromText
+DECLARE @point geometry;
+SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT @point.STNumPoints();
+go
+~~START~~
+int#!#varchar#!#int#!#int
+1#!#Point#!#1#!#1
+2#!#Point with SRID#!#1#!#1
+3#!#Point constructor#!#1#!#1
+4#!#LineString 2pts#!#2#!#2
+5#!#LineString 3pts#!#3#!#3
+6#!#LineString 5pts#!#5#!#5
+7#!#Polygon triangle#!#4#!#4
+8#!#Polygon square#!#5#!#5
+9#!#Polygon with hole#!#10#!#10
+10#!#Empty Point#!#0#!#0
+11#!#Empty LineString#!#0#!#0
+12#!#Empty Polygon#!#0#!#0
+13#!#Point Z#!#1#!#1
+14#!#Empty Point#!#0#!#0
+15#!#Empty LineString#!#0#!#0
+16#!#Empty Polygon#!#0#!#0
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+DECLARE @point geometry;
+SET @point = geometry::Point(22.34900, -47.65100, 4326);
+SELECT @point.STNumPoints ( );
+go
+~~START~~
+int
+1
+~~END~~
+
+
+USE MASTER;
+go
+
+
+-- Test STNumPoints() on geography table with various geography types
+SELECT 
+    ID,
+    geog_type,
+    geog.STNumPoints() AS actual_result,
+    CASE ID
+        WHEN 1 THEN 1
+        WHEN 2 THEN 1
+        WHEN 3 THEN 2
+        WHEN 4 THEN 3
+        WHEN 5 THEN 5
+        WHEN 6 THEN 4
+        WHEN 7 THEN 5
+        WHEN 8 THEN 0
+        WHEN 9 THEN 0
+        WHEN 10 THEN 1     
+        WHEN 11 THEN 0     
+        WHEN 12 THEN 0     
+    END AS expected_result
+FROM STNumPoints_geog_test
+ORDER BY ID;
+go
+~~START~~
+int#!#varchar#!#int#!#int
+1#!#Point#!#1#!#1
+2#!#Point constructor#!#1#!#1
+3#!#LineString 2pts#!#2#!#2
+4#!#LineString 3pts#!#3#!#3
+5#!#LineString 5pts#!#5#!#5
+6#!#Polygon triangle#!#4#!#4
+7#!#Polygon square#!#5#!#5
+8#!#Empty Point#!#0#!#0
+9#!#Empty LineString#!#0#!#0
+10#!#Point Z#!#1#!#1
+11#!#Empty Point#!#0#!#0
+12#!#Empty LineString#!#0#!#0
+~~END~~
+
+
+DECLARE @point geography;
+SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT @point.STNumPoints();
+go
+~~START~~
+int
+1
+~~END~~
+
+
+DECLARE @point geography;
+SET @point = geography::Point(47.65100, -122.34900, 4326);
+SELECT @point . STNumPoints ( );
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- Test STNumPoints() on NULL geometry
+DECLARE @nullGeom geometry;
+SELECT @nullGeom.STNumPoints() AS null_geometry_result;
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- Test STNumPoints() on empty point 
+DECLARE @g geometry;  
+SET @g = geometry::STGeomFromText('POINT EMPTY', 0);  
+SELECT @g.STNumPoints() AS empty_point_geometry;
+go
+~~START~~
+int
+0
+~~END~~
+
+
+DECLARE @g geography;  
+SET @g = geography::STGeomFromText('POINT EMPTY', 4326);  
+SELECT @g.STNumPoints() AS empty_point_geography;
+go
+~~START~~
+int
+0
+~~END~~
+
+
+-- Test STNumPoints() with CAST from VARCHAR
+SELECT CAST(CAST('POINT EMPTY' AS VARCHAR(100)) AS geography).STNumPoints() AS cast_varchar_result;
+go
+~~START~~
+int
+0
+~~END~~
+
+
+-- Test STNumPoints() with CAST from CHAR
+SELECT CAST(CAST('POINT EMPTY' AS CHAR(100)) AS geography).STNumPoints() AS cast_char_result;
+go
+~~START~~
+int
+0
+~~END~~
+
+
+-- Test STNumPoints() via geometry view
+SELECT * FROM STNumPoints_geom_view ORDER BY ID;
+go
+~~START~~
+int#!#varchar#!#int
+1#!#Point#!#1
+2#!#Point with SRID#!#1
+3#!#Point constructor#!#1
+4#!#LineString 2pts#!#2
+5#!#LineString 3pts#!#3
+6#!#LineString 5pts#!#5
+7#!#Polygon triangle#!#4
+8#!#Polygon square#!#5
+9#!#Polygon with hole#!#10
+10#!#Empty Point#!#0
+11#!#Empty LineString#!#0
+12#!#Empty Polygon#!#0
+13#!#Point Z#!#1
+14#!#Empty Point#!#0
+15#!#Empty LineString#!#0
+16#!#Empty Polygon#!#0
+~~END~~
+
+
+-- Test STNumPoints() via geography view
+SELECT * FROM STNumPoints_geog_view ORDER BY ID;
+go
+~~START~~
+int#!#varchar#!#int
+1#!#Point#!#1
+2#!#Point constructor#!#1
+3#!#LineString 2pts#!#2
+4#!#LineString 3pts#!#3
+5#!#LineString 5pts#!#5
+6#!#Polygon triangle#!#4
+7#!#Polygon square#!#5
+8#!#Empty Point#!#0
+9#!#Empty LineString#!#0
+10#!#Point Z#!#1
+11#!#Empty Point#!#0
+12#!#Empty LineString#!#0
+~~END~~
+
+
+-- Test STNumPoints() with different SRIDs for geometry
+DECLARE @point1 geometry = geometry::STPointFromText('POINT(-122.349 47.651)', 4326);
+DECLARE @point2 geometry = geometry::STPointFromText('POINT(-122.349 47.651)', 0);
+DECLARE @point3 geometry = geometry::STPointFromText('POINT(-122.349 47.651)', 999999);
+SELECT 
+    @point1.STNumPoints() AS srid_4326,
+    @point2.STNumPoints() AS srid_0,
+    @point3.STNumPoints() AS srid_999999;
+go
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+
+-- Test STNumPoints() with different SRIDs for geography
+DECLARE @point1 geography = geography::STPointFromText('POINT(-122.349 47.651)', 4326);
+DECLARE @point2 geography = geography::STPointFromText('POINT(-122.349 47.651)', 4204);
+SELECT 
+    @point1.STNumPoints() AS srid_4326,
+    @point2.STNumPoints() AS srid_4204;
+go
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+
+-- Test STNumPoints() on LineString
+DECLARE @line geometry;
+SET @line = geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 0);
+SELECT @line.STNumPoints();
+go
+~~START~~
+int
+3
+~~END~~
+
+
+-- Test STNumPoints() on simple Polygon
+DECLARE @poly geometry;
+SET @poly = geometry::STGeomFromText('POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))', 0);
+SELECT @poly.STNumPoints();
+go
+~~START~~
+int
+5
+~~END~~
+
+
+-- Test STNumPoints() on Polygon with hole
+DECLARE @poly geometry;
+SET @poly = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0), (2 2, 8 2, 8 8, 2 8, 2 2))', 0);
+SELECT @poly.STNumPoints();
+go
+~~START~~
+int
+10
+~~END~~
+
+
+-- Test STNumPoints() on Point with Z coordinate (geometry)
+DECLARE @pointZ geometry;
+SET @pointZ = geometry::STGeomFromText('POINT(0 0 5)', 0);
+SELECT @pointZ.STNumPoints();
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- Test STNumPoints() on Point with Z coordinate (geography)
+DECLARE @pointZ geography;
+SET @pointZ = geography::STGeomFromText('POINT(-122.34 47.65 100)', 4326);
+SELECT @pointZ.STNumPoints();
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- Test STNumPoints() on Point with M coordinate
+DECLARE @pointM geometry;
+SET @pointM = geometry::STGeomFromText('POINT(0 0 NULL 5)', 0);
+SELECT @pointM.STNumPoints();
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- Test STNumPoints() on LineString with Z coordinates
+DECLARE @lineZ geometry;
+SET @lineZ = geometry::STGeomFromText('LINESTRING(0 0 0, 1 1 1, 2 2 2)', 0);
+SELECT @lineZ.STNumPoints();
+go
+~~START~~
+int
+3
+~~END~~
+
+
+-- UNION test
+(SELECT 'geometry' AS source, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test WHERE ID <= 3)
+UNION ALL
+(SELECT 'geography' AS source, geog.STNumPoints() AS num_points FROM STNumPoints_geog_test WHERE ID <= 3)
+ORDER BY source, num_points;
+go
+~~START~~
+varchar#!#int
+geography#!#1
+geography#!#1
+geography#!#2
+geometry#!#1
+geometry#!#1
+geometry#!#1
+~~END~~
+
+
+
+SELECT g1.ID, g1.geom_type, g1.geom.STNumPoints() AS geom_points,
+       g2.ID, g2.geog_type, g2.geog.STNumPoints() AS geog_points
+FROM STNumPoints_geom_test g1
+JOIN STNumPoints_geog_test g2 ON g1.geom.STNumPoints() = g2.geog.STNumPoints()
+WHERE g1.ID <= 5 AND g2.ID <= 5
+ORDER BY g1.geom.STNumPoints(), g1.ID, g2.ID;
+go
+~~START~~
+int#!#varchar#!#int#!#int#!#varchar#!#int
+1#!#Point#!#1#!#1#!#Point#!#1
+1#!#Point#!#1#!#2#!#Point constructor#!#1
+2#!#Point with SRID#!#1#!#1#!#Point#!#1
+2#!#Point with SRID#!#1#!#2#!#Point constructor#!#1
+3#!#Point constructor#!#1#!#1#!#Point#!#1
+3#!#Point constructor#!#1#!#2#!#Point constructor#!#1
+4#!#LineString 2pts#!#2#!#3#!#LineString 2pts#!#2
+5#!#LineString 3pts#!#3#!#4#!#LineString 3pts#!#3
+~~END~~
+
+
+-- Geometry WHERE/ORDER BY/GROUP BY tests
+SELECT ID, geom_type FROM STNumPoints_geom_test WHERE geom.STNumPoints() BETWEEN 2 AND 5 ORDER BY ID;
+go
+~~START~~
+int#!#varchar
+4#!#LineString 2pts
+5#!#LineString 3pts
+6#!#LineString 5pts
+7#!#Polygon triangle
+8#!#Polygon square
+~~END~~
+
+SELECT geom.STNumPoints() AS num_points, COUNT(*) AS count FROM STNumPoints_geom_test GROUP BY geom.STNumPoints() HAVING COUNT(*) > 1 ORDER BY num_points;
+go
+~~START~~
+int#!#int
+0#!#6
+1#!#4
+5#!#2
+~~END~~
+
+
+-- Geography WHERE/ORDER BY/GROUP BY tests
+SELECT ID, geog_type FROM STNumPoints_geog_test WHERE geog.STNumPoints() BETWEEN 2 AND 5 ORDER BY ID;
+go
+~~START~~
+int#!#varchar
+3#!#LineString 2pts
+4#!#LineString 3pts
+5#!#LineString 5pts
+6#!#Polygon triangle
+7#!#Polygon square
+~~END~~
+
+SELECT geog.STNumPoints() AS num_points, COUNT(*) AS count FROM STNumPoints_geog_test GROUP BY geog.STNumPoints() HAVING COUNT(*) > 1 ORDER BY num_points;
+go
+~~START~~
+int#!#int
+0#!#4
+1#!#3
+5#!#2
+~~END~~
+
+
+-- Geometry CTE test
+WITH GeomCTE AS (
+    SELECT ID, geom_type, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test
+)
+SELECT * FROM GeomCTE WHERE num_points > 0 ORDER BY num_points, ID;
+go
+~~START~~
+int#!#varchar#!#int
+1#!#Point#!#1
+2#!#Point with SRID#!#1
+3#!#Point constructor#!#1
+13#!#Point Z#!#1
+4#!#LineString 2pts#!#2
+5#!#LineString 3pts#!#3
+7#!#Polygon triangle#!#4
+6#!#LineString 5pts#!#5
+8#!#Polygon square#!#5
+9#!#Polygon with hole#!#10
+~~END~~
+
+
+-- Geometry Window test
+SELECT ID, geom_type, geom.STNumPoints() AS num_points,
+       ROW_NUMBER() OVER (ORDER BY geom.STNumPoints() DESC) AS row_num
+FROM STNumPoints_geom_test ORDER BY row_num;
+go
+~~START~~
+int#!#varchar#!#int#!#bigint
+9#!#Polygon with hole#!#10#!#1
+8#!#Polygon square#!#5#!#2
+6#!#LineString 5pts#!#5#!#3
+7#!#Polygon triangle#!#4#!#4
+5#!#LineString 3pts#!#3#!#5
+4#!#LineString 2pts#!#2#!#6
+1#!#Point#!#1#!#7
+2#!#Point with SRID#!#1#!#8
+3#!#Point constructor#!#1#!#9
+13#!#Point Z#!#1#!#10
+11#!#Empty LineString#!#0#!#11
+12#!#Empty Polygon#!#0#!#12
+16#!#Empty Polygon#!#0#!#13
+14#!#Empty Point#!#0#!#14
+15#!#Empty LineString#!#0#!#15
+10#!#Empty Point#!#0#!#16
+~~END~~
+
+
+-- Geography CTE test
+WITH GeogCTE AS (
+    SELECT ID, geog_type, geog.STNumPoints() AS num_points FROM STNumPoints_geog_test
+)
+SELECT * FROM GeogCTE WHERE num_points > 0 ORDER BY num_points, ID;
+go
+~~START~~
+int#!#varchar#!#int
+1#!#Point#!#1
+2#!#Point constructor#!#1
+10#!#Point Z#!#1
+3#!#LineString 2pts#!#2
+4#!#LineString 3pts#!#3
+6#!#Polygon triangle#!#4
+5#!#LineString 5pts#!#5
+7#!#Polygon square#!#5
+~~END~~
+
+
+-- Geography Window test
+SELECT ID, geog_type, geog.STNumPoints() AS num_points,
+       ROW_NUMBER() OVER (ORDER BY geog.STNumPoints() DESC, ID) AS row_num
+FROM STNumPoints_geog_test ORDER BY row_num;
+go
+~~START~~
+int#!#varchar#!#int#!#bigint
+5#!#LineString 5pts#!#5#!#1
+7#!#Polygon square#!#5#!#2
+6#!#Polygon triangle#!#4#!#3
+4#!#LineString 3pts#!#3#!#4
+3#!#LineString 2pts#!#2#!#5
+1#!#Point#!#1#!#6
+2#!#Point constructor#!#1#!#7
+10#!#Point Z#!#1#!#8
+8#!#Empty Point#!#0#!#9
+9#!#Empty LineString#!#0#!#10
+11#!#Empty Point#!#0#!#11
+12#!#Empty LineString#!#0#!#12
+~~END~~
+
+
+-- View tests
+SELECT * FROM STNumPoints_geom_view ORDER BY ID;
+go
+~~START~~
+int#!#varchar#!#int
+1#!#Point#!#1
+2#!#Point with SRID#!#1
+3#!#Point constructor#!#1
+4#!#LineString 2pts#!#2
+5#!#LineString 3pts#!#3
+6#!#LineString 5pts#!#5
+7#!#Polygon triangle#!#4
+8#!#Polygon square#!#5
+9#!#Polygon with hole#!#10
+10#!#Empty Point#!#0
+11#!#Empty LineString#!#0
+12#!#Empty Polygon#!#0
+13#!#Point Z#!#1
+14#!#Empty Point#!#0
+15#!#Empty LineString#!#0
+16#!#Empty Polygon#!#0
+~~END~~
+
+SELECT * FROM STNumPoints_geog_view ORDER BY ID;
+go
+~~START~~
+int#!#varchar#!#int
+1#!#Point#!#1
+2#!#Point constructor#!#1
+3#!#LineString 2pts#!#2
+4#!#LineString 3pts#!#3
+5#!#LineString 5pts#!#5
+6#!#Polygon triangle#!#4
+7#!#Polygon square#!#5
+8#!#Empty Point#!#0
+9#!#Empty LineString#!#0
+10#!#Point Z#!#1
+11#!#Empty Point#!#0
+12#!#Empty LineString#!#0
+~~END~~
+
+
+-- JOIN test (geom + geog, both MASTER tables)
+SELECT g.ID, g.geom_type, gg.geog_type,
+       g.geom.STNumPoints() AS geom_pts, gg.geog.STNumPoints() AS geog_pts
+FROM STNumPoints_geom_test g
+JOIN STNumPoints_geog_test gg ON g.ID = gg.ID
+ORDER BY g.ID;
+go
+~~START~~
+int#!#varchar#!#varchar#!#int#!#int
+1#!#Point#!#Point#!#1#!#1
+2#!#Point with SRID#!#Point constructor#!#1#!#1
+3#!#Point constructor#!#LineString 2pts#!#1#!#2
+4#!#LineString 2pts#!#LineString 3pts#!#2#!#3
+5#!#LineString 3pts#!#LineString 5pts#!#3#!#5
+6#!#LineString 5pts#!#Polygon triangle#!#5#!#4
+7#!#Polygon triangle#!#Polygon square#!#4#!#5
+8#!#Polygon square#!#Empty Point#!#5#!#0
+9#!#Polygon with hole#!#Empty LineString#!#10#!#0
+10#!#Empty Point#!#Point Z#!#0#!#1
+11#!#Empty LineString#!#Empty Point#!#0#!#0
+12#!#Empty Polygon#!#Empty LineString#!#0#!#0
+~~END~~
+
+
+-- CTE with Window Functions
+WITH RankedGeom AS (
+    SELECT ID, geom_type, geom.STNumPoints() AS num_points,
+           ROW_NUMBER() OVER (ORDER BY geom.STNumPoints() DESC) AS row_num,
+           RANK() OVER (ORDER BY geom.STNumPoints() DESC) AS rnk,
+           SUM(geom.STNumPoints()) OVER () AS total_pts
+    FROM STNumPoints_geom_test
+)
+SELECT * FROM RankedGeom ORDER BY row_num;
+go
+~~START~~
+int#!#varchar#!#int#!#bigint#!#bigint#!#int
+9#!#Polygon with hole#!#10#!#1#!#1#!#33
+8#!#Polygon square#!#5#!#2#!#2#!#33
+6#!#LineString 5pts#!#5#!#3#!#2#!#33
+7#!#Polygon triangle#!#4#!#4#!#4#!#33
+5#!#LineString 3pts#!#3#!#5#!#5#!#33
+4#!#LineString 2pts#!#2#!#6#!#6#!#33
+1#!#Point#!#1#!#7#!#7#!#33
+2#!#Point with SRID#!#1#!#8#!#7#!#33
+3#!#Point constructor#!#1#!#9#!#7#!#33
+13#!#Point Z#!#1#!#10#!#7#!#33
+11#!#Empty LineString#!#0#!#11#!#11#!#33
+12#!#Empty Polygon#!#0#!#12#!#11#!#33
+16#!#Empty Polygon#!#0#!#13#!#11#!#33
+14#!#Empty Point#!#0#!#14#!#11#!#33
+15#!#Empty LineString#!#0#!#15#!#11#!#33
+10#!#Empty Point#!#0#!#16#!#11#!#33
+~~END~~
+
+
+-- GROUP BY test
+SELECT geom_type, COUNT(*) AS cnt, SUM(geom.STNumPoints()) AS total_pts
+FROM STNumPoints_geom_test
+GROUP BY geom_type
+ORDER BY total_pts DESC, geom_type;
+go
+~~START~~
+varchar#!#int#!#int
+Polygon with hole#!#1#!#10
+LineString 5pts#!#1#!#5
+Polygon square#!#1#!#5
+Polygon triangle#!#1#!#4
+LineString 3pts#!#1#!#3
+LineString 2pts#!#1#!#2
+Point#!#1#!#1
+Point constructor#!#1#!#1
+Point with SRID#!#1#!#1
+Point Z#!#1#!#1
+Empty LineString#!#2#!#0
+Empty Point#!#2#!#0
+Empty Polygon#!#2#!#0
+~~END~~
+
+
+-- ORDER BY test
+SELECT ID, geom_type, geom.STNumPoints() AS num_points
+FROM STNumPoints_geom_test
+ORDER BY num_points DESC, ID ASC;
+go
+~~START~~
+int#!#varchar#!#int
+9#!#Polygon with hole#!#10
+6#!#LineString 5pts#!#5
+8#!#Polygon square#!#5
+7#!#Polygon triangle#!#4
+5#!#LineString 3pts#!#3
+4#!#LineString 2pts#!#2
+1#!#Point#!#1
+2#!#Point with SRID#!#1
+3#!#Point constructor#!#1
+13#!#Point Z#!#1
+10#!#Empty Point#!#0
+11#!#Empty LineString#!#0
+12#!#Empty Polygon#!#0
+14#!#Empty Point#!#0
+15#!#Empty LineString#!#0
+16#!#Empty Polygon#!#0
+~~END~~
+
+
+-- Nested functions test
+SELECT ID, geom_type,
+       ABS(geom.STNumPoints() - 5) AS diff_from_5,
+       COALESCE(NULLIF(geom.STNumPoints(), 0), -1) AS pts_or_neg1
+FROM STNumPoints_geom_test
+ORDER BY ID;
+go
+~~START~~
+int#!#varchar#!#int#!#int
+1#!#Point#!#4#!#1
+2#!#Point with SRID#!#4#!#1
+3#!#Point constructor#!#4#!#1
+4#!#LineString 2pts#!#3#!#2
+5#!#LineString 3pts#!#2#!#3
+6#!#LineString 5pts#!#0#!#5
+7#!#Polygon triangle#!#1#!#4
+8#!#Polygon square#!#0#!#5
+9#!#Polygon with hole#!#5#!#10
+10#!#Empty Point#!#5#!#-1
+11#!#Empty LineString#!#5#!#-1
+12#!#Empty Polygon#!#5#!#-1
+13#!#Point Z#!#4#!#1
+14#!#Empty Point#!#5#!#-1
+15#!#Empty LineString#!#5#!#-1
+16#!#Empty Polygon#!#5#!#-1
+~~END~~
+
+
+--Parse functions test 
+-- geometry::Parse with POINT
+DECLARE @geomText NVARCHAR(MAX);
+SET @geomText = 'POINT(1.0 2.0)';
+SELECT geometry::Parse(@geomText).STAsText() AS ParsedGeometry;
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+-- geometry::Parse with LINESTRING
+DECLARE @geomText NVARCHAR(MAX);
+SET @geomText = 'LINESTRING(0 0, 1 1, 2 2)';
+SELECT geometry::Parse(@geomText).STAsText() AS ParsedGeometry;
+go
+~~START~~
+nvarchar
+LINESTRING(0 0,1 1,2 2)
+~~END~~
+
+
+DECLARE @geomText NVARCHAR(MAX);
+SET @geomText = 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))';
+SELECT geometry::Parse(@geomText).STAsText() AS ParsedGeometry;
+go
+~~START~~
+nvarchar
+POLYGON((0 0,0 1,1 1,1 0,0 0))
+~~END~~
+
+
+DECLARE @geogText NVARCHAR(MAX);
+SET @geogText = 'POINT(1.0 2.0)';
+SELECT geography::Parse(@geogText).STAsText() AS ParsedGeography;
+go
+~~START~~
+nvarchar
+POINT(1 2)
+~~END~~
+
+
+DECLARE @geogText NVARCHAR(MAX);
+SET @geogText = 'LINESTRING(0 0, 1 1, 2 2)';
+SELECT geography::Parse(@geogText).STAsText() AS ParsedGeography;
+go
+~~START~~
+nvarchar
+LINESTRING(0 0,1 1,2 2)
+~~END~~
+
+
+DECLARE @geogText NVARCHAR(MAX);
+SET @geogText = 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))';
+SELECT geography::Parse(@geogText).STAsText() AS ParsedGeography;
+go
+~~START~~
+nvarchar
+POLYGON((0 0,0 1,1 1,1 0,0 0))
+~~END~~
+
+
+-- Parse with real-world coordinates 
+DECLARE @geomText NVARCHAR(MAX);
+SET @geomText = 'POINT(-122.34900 47.65100)';
+SELECT geometry::Parse(@geomText).STAsText() AS ParsedGeometry;
+go
+~~START~~
+nvarchar
+POINT(-122.349 47.651)
+~~END~~
+
+
+DECLARE @geogText NVARCHAR(MAX);
+SET @geogText = 'POINT(-122.34900 47.65100)';
+SELECT geography::Parse(@geogText).STAsText() AS ParsedGeography;
+go
+~~START~~
+nvarchar
+POINT(-122.349 47.651)
+~~END~~
+
+
+-- Parse from table column
+SELECT ID, geometry::Parse(GeomColumn.STAsText()).STAsText() AS ParsedGeom FROM TestGeospatialParse_GeomTemp3 ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#POINT(3 4)
+2#!#LINESTRING(0 0,1 1)
+3#!#POLYGON((0 0,0 2,2 2,2 0,0 0))
+4#!#POINT(47.651 -22.349)
+~~END~~
+
+
+SELECT ID, geography::Parse(GeogColumn.STAsText()).STAsText() AS ParsedGeog FROM TestGeospatialParse_GeogTemp3 ORDER BY ID;
+go
+~~START~~
+int#!#nvarchar
+1#!#POINT(3 4)
+2#!#LINESTRING(0 0,1 1)
+3#!#POLYGON((0 0,0 2,2 2,2 0,0 0))
+4#!#POINT(47.651 -22.349)
+~~END~~
+
+
+-- Parse with STEquals in WHERE clause
+DECLARE @searchText NVARCHAR(MAX);
+SET @searchText = 'POINT(3.0 4.0)';
+SELECT ID FROM TestGeospatialParse_GeomTemp3 WHERE geometry::Parse(@searchText).STEquals(GeomColumn) = 1 ORDER BY ID;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+DECLARE @searchText NVARCHAR(MAX);
+SET @searchText = 'POINT(3.0 4.0)';
+SELECT ID FROM TestGeospatialParse_GeogTemp3 WHERE geography::Parse(@searchText).STEquals(GeogColumn) = 1 ORDER BY ID;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- Parse with JOIN and STIntersects
+DECLARE @refText NVARCHAR(MAX);
+SET @refText = 'POINT(3.0 4.0)';
+SELECT g1.ID, g2.ID FROM TestGeospatialParse_GeomTemp3 g1 
+JOIN TestGeospatialParse_GeomTemp3 g2 ON geometry::Parse(@refText).STIntersects(g1.GeomColumn) = 1 
+ORDER BY g1.ID, g2.ID;
+go
+~~START~~
+int#!#int
+1#!#1
+1#!#2
+1#!#3
+1#!#4
+~~END~~
+
+
+-- Parse with CASE and STDistance
+DECLARE @testText NVARCHAR(MAX);
+SET @testText = 'POINT(1.0 2.0)';
+SELECT ID, 
+CASE WHEN geometry::Parse(@testText).STDistance(GeomColumn) < 5.0 THEN 'Near' ELSE 'Far' END AS Proximity
+FROM TestGeospatialParse_GeomTemp3 ORDER BY ID;
+go
+~~START~~
+int#!#varchar
+1#!#Near
+2#!#Near
+3#!#Near
+4#!#Far
+~~END~~
+
+
+-- Parse with CTE
+DECLARE @refText NVARCHAR(MAX);
+SET @refText = 'POINT(3.0 4.0)';
+WITH ParseCTE AS (
+    SELECT ID, CAST(geometry::Parse(@refText).STDistance(GeomColumn) AS NUMERIC(20,6)) AS Distance  
+    FROM TestGeospatialParse_GeomTemp3
+)
+SELECT * FROM ParseCTE WHERE Distance < 10.0 ORDER BY Distance, ID;
+go
+~~START~~
+int#!#numeric
+1#!#0.000000
+3#!#2.236068
+2#!#3.605551
+~~END~~
+
+
+
+-- Parse with cross-database query (geometry)
+DECLARE @refText NVARCHAR(MAX);
+SET @refText = 'POINT(3.0 4.0)';
+SELECT ID, CAST(geometry::Parse(@refText).STDistance(GeomColumn) AS NUMERIC(20,6)) AS Distance 
+FROM TestGeospatialParse_DB.dbo.TestGeospatialParse_GeometryTable3 ORDER BY ID;
+go
+~~START~~
+int#!#numeric
+1#!#0.000000
+2#!#2.236068
+3#!#3.605551
+4#!#2.828427
+5#!#0.707107
+7#!#2.236068
+9#!#2.236068
+10#!#2.828427
+12#!#2.828427
+13#!#3.605551
+15#!#3.605551
+~~END~~
+
+
+-- Parse with cross-database query (geography)
+DECLARE @refText NVARCHAR(MAX);
+SET @refText = 'POINT(3.0 4.0)';
+SELECT ID, CAST(geography::Parse(@refText).STDistance(GeogColumn) AS NUMERIC(20,6)) AS Distance 
+FROM TestGeospatialParse_DB.dbo.TestGeospatialParse_GeographyTable3 ORDER BY ID;
+go
+~~START~~
+int#!#numeric
+1#!#0.000000
+2#!#247520.760600
+3#!#399384.369459
+4#!#313588.397213
+5#!#77836.587906
+6#!#247520.760600
+8#!#247520.760600
+9#!#313588.397213
+11#!#313588.397213
+12#!#399384.369459
+14#!#399384.369459
+~~END~~
+
+
+-- NULL variable input (geometry)
+DECLARE @nullText NVARCHAR(MAX);
+SET @nullText = NULL;
+SELECT geometry::Parse(@nullText) AS ParsedGeometry;
+go
+~~START~~
+geometry
+<NULL>
+~~END~~
+
+
+-- NULL variable input (geography)
+DECLARE @nullText NVARCHAR(MAX);
+SET @nullText = NULL;
+SELECT geography::Parse(@nullText) AS ParsedGeography;
+go
+~~START~~
+geography
+<NULL>
+~~END~~
+
+
+-- 'NULL' string literal - should error 
+DECLARE @nullString NVARCHAR(MAX);
+SET @nullString = 'NULL';
+SELECT geometry::Parse(@nullString) AS ParsedGeometry;
+go
+~~START~~
+geometry
+<NULL>
+~~END~~
+
+
+DECLARE @nullString NVARCHAR(MAX);
+SET @nullString = 'NULL';
+SELECT geography::Parse(@nullString) AS ParsedGeography;
+go
+~~START~~
+geography
+<NULL>
+~~END~~
+
+
+-- POINT EMPTY 
+DECLARE @emptyPoint NVARCHAR(MAX);
+SET @emptyPoint = 'POINT EMPTY';
+SELECT geometry::Parse(@emptyPoint).STAsText() AS ParsedGeometry;
+go
+~~START~~
+nvarchar
+POINT EMPTY
+~~END~~
+
+
 DECLARE @emptyPoint NVARCHAR(MAX);
 SET @emptyPoint = 'POINT EMPTY';
 SELECT geography::Parse(@emptyPoint).STAsText() AS ParsedGeography;
@@ -1953,12 +3142,6 @@ POINT(-180 -90)
 ~~END~~
 
 
-DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 1 0, 0 0, 0 0))', 0);
-SELECT @g.MakeValid().STArea() AS ZeroArea;
-go
-~~START~~
-float
-0.0
 SELECT geography::Parse('POINT(-180 -90)').STAsText();
 go
 ~~START~~
@@ -2021,15 +3204,6 @@ POINT(1 2)
 
 
 
--- Error Handling Tests
-DECLARE @g geometry;
-BEGIN TRY
-    SET @g = geometry::STGeomFromText('INVALID_GEOMETRY', 0);
-    SELECT @g.MakeValid().STAsText() AS Result;
-END TRY
-BEGIN CATCH
-    SELECT 'Error handled' AS Result;
-END CATCH;
 
 -- GROUP BY with spatial type
 SELECT GeomColumn.STGeometryType() AS GeomType, 
@@ -2161,43 +3335,6 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Invalid geometry)~~
-
-
-DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10.0000000001, 0 0))', 0);
-SELECT @g.MakeValid().STIsValid() AS TinyDifferenceValid;
-go
-~~START~~
-bit
-1
-~~END~~
-
-
-SELECT * FROM TestSpatialFunc3_MakeValidGeomView4 ORDER BY ID;
-go
-~~START~~
-int#!#varchar#!#geometry
-1#!#Valid Point#!#00000000010C00000000000024400000000000003440
-2#!#Valid Point with SRID#!#E6100000010C0000000000003E400000000000004440
-3#!#Valid LineString#!#0000000001040300000000000000000000000000000000000000000000000000244000000000000024400000000000003440000000000000344001000000010000000001000000FFFFFFFF0000000002
-4#!#Valid Polygon#!#00000000010005000000000000000000000000000000000000000000000000000000000000000000244000000000000024400000000000002440000000000000244000000000000000000000000000000000000000000000000001000000020000000001000000FFFFFFFF0000000003
-5#!#Invalid Bowtie Polygon#!#01060000000200000001030000000100000004000000000000000000000000000000000024400000000000001440000000000000144000000000000000000000000000000000000000000000000000000000000024400103000000010000000400000000000000000024400000000000000000000000000000144000000000000014400000000000002440000000000000244000000000000024400000000000000000
-6#!#Invalid Twisted Polygon#!#01060000000200000001030000000100000004000000000000000000000000000000000024400000000000001440000000000000144000000000000000000000000000000000000000000000000000000000000024400103000000010000000400000000000000000024400000000000000000000000000000144000000000000014400000000000002440000000000000244000000000000024400000000000000000
-7#!#Invalid Bowtie with SRID#!#0106000020E61000000200000001030000000100000004000000000000000000000000000000000024400000000000001440000000000000144000000000000000000000000000000000000000000000000000000000000024400103000000010000000400000000000000000024400000000000000000000000000000144000000000000014400000000000002440000000000000244000000000000024400000000000000000
-8#!#Valid LineString 2#!#00000000010403000000000000000000144000000000000014400000000000002E400000000000002E400000000000003940000000000000394001000000010000000001000000FFFFFFFF0000000002
-9#!#Valid Polygon with Hole#!#0000000001000A00000000000000000000000000000000000000000000000000000000000000000034400000000000003440000000000000344000000000000034400000000000000000000000000000000000000000000000000000000000001440000000000000144000000000000014400000000000002E400000000000002E400000000000002E400000000000002E40000000000000144000000000000014400000000000001440020000000200000000000500000001000000FFFFFFFF0000000003
-10#!#Empty Point#!#000000000104000000000000000001000000FFFFFFFFFFFFFFFF01
-11#!#Empty Polygon#!#000000000104000000000000000001000000FFFFFFFFFFFFFFFF03
-12#!#Empty LineString#!#000000000104000000000000000001000000FFFFFFFFFFFFFFFF02
-13#!#NULL Geometry#!#<NULL>
-14#!#Point using Point method#!#00000000010C00000000000024400000000000003440
-15#!#Invalid LineString - duplicate points#!#00000000010C00000000000000000000000000000000
-16#!#Invalid LineString - all same points#!#00000000010C000000000000F03F000000000000F03F
-17#!#Invalid LineString - closed back on itself#!#0000000001040300000000000000000000000000000000000000000000000000144000000000000014400000000000000000000000000000000001000000010000000001000000FFFFFFFF0000000002
-18#!#Invalid Figure-8 Polygon#!#01060000000200000001030000000100000004000000000000000000000000000000000000000000000000001440000000000000144000000000000024400000000000000000000000000000000000000000000000000103000000010000000400000000000000000024400000000000002440000000000000144000000000000014400000000000000000000000000000244000000000000024400000000000002440
-19#!#Invalid Polygon - all same points#!#00000000010C00000000000000000000000000000000
-20#!#Invalid Polygon - nested holes#!#010600000002000000010300000002000000050000000000000000002440000000000000244000000000000024400000000000000000000000000000000000000000000000000000000000000000000000000000244000000000000024400000000000002440050000000000000000002040000000000000204000000000000000400000000000002040000000000000004000000000000000400000000000002040000000000000004000000000000020400000000000002040010300000001000000050000000000000000001840000000000000184000000000000018400000000000001040000000000000104000000000000010400000000000001040000000000000184000000000000018400000000000001840
-21#!#Invalid Polygon - hole touches shell#!#0107000000020000000103000000010000000700000000000000000000000000000000001440000000000000000000000000000024400000000000002440000000000000244000000000000024400000000000000000000000000000144000000000000000000000000000000000000000000000000000000000000000000000000000001440010200000003000000000000000000144000000000000000000000000000001440000000000000144000000000000000000000000000001440
-~~END~~
 
 
 -- GROUP BY with STDimension

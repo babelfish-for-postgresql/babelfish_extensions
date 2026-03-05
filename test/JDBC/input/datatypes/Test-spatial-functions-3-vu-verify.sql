@@ -41,15 +41,15 @@ go
 SELECT ID, GeomData.MakeValid().STArea() AS AreaAfter
 FROM TestSpatialFunc3_GeomMetrics
 WHERE GeomData IS NOT NULL
-ORDER BY GeomData.MakeValid().STArea() DESC;
+ORDER BY GeomData.MakeValid().STArea() DESC, ID ASC;
 go
 
 SELECT * FROM TestSpatialFunc3_GeomMetrics_Area_View
-ORDER BY AreaAfter DESC;
+ORDER BY AreaAfter DESC, ID ASC;
 go
 
 SELECT * FROM TestSpatialFunc3_GeogMetrics_Area_View
-ORDER BY AreaAfter DESC;
+ORDER BY AreaAfter DESC, ID ASC;
 go
 
 -- GROUP BY
@@ -556,7 +556,7 @@ BEGIN CATCH
 END CATCH;
 go
 
-DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10.0000000001, 0 0))', 0);
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10.00000001, 0 0))', 0);
 SELECT @g.MakeValid().STIsValid() AS TinyDifferenceValid;
 go
 
@@ -618,7 +618,7 @@ SELECT ID, geom_type,
        ABS(geom.STNumPoints() - 5) AS diff_from_5,
        COALESCE(NULLIF(geom.STNumPoints(), 0), -1) AS pts_or_neg1
 FROM STNumPoints_geom_test_db
-
+ORDER BY ID;
 go
 
 -- Test STNumPoints() on geometry table with various geometry types
@@ -644,7 +644,7 @@ SELECT
         WHEN 15 THEN 0    
         WHEN 16 THEN 0     
     END AS expected_result
-FROM STNumPoints_geom_test
+FROM STNumPoints_geom_test_db
 ORDER BY ID;
 
 -- Test STNumPoints() with STPointFromText
@@ -656,6 +656,9 @@ go
 DECLARE @point geometry;
 SET @point = geometry::Point(22.34900, -47.65100, 4326);
 SELECT @point.STNumPoints ( );
+go
+
+USE MASTER;
 go
 
 -- Test STNumPoints() on geography table with various geography types
@@ -785,9 +788,9 @@ SELECT @lineZ.STNumPoints();
 go
 
 -- UNION test
-SELECT 'geometry' AS source, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test WHERE ID <= 3
+(SELECT 'geometry' AS source, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test WHERE ID <= 3)
 UNION ALL
-SELECT 'geography' AS source, geog.STNumPoints() AS num_points FROM STNumPoints_geog_test WHERE ID <= 3
+(SELECT 'geography' AS source, geog.STNumPoints() AS num_points FROM STNumPoints_geog_test WHERE ID <= 3)
 ORDER BY source, num_points;
 go
 
@@ -797,7 +800,7 @@ SELECT g1.ID, g1.geom_type, g1.geom.STNumPoints() AS geom_points,
 FROM STNumPoints_geom_test g1
 JOIN STNumPoints_geog_test g2 ON g1.geom.STNumPoints() = g2.geog.STNumPoints()
 WHERE g1.ID <= 5 AND g2.ID <= 5
-ORDER BY g1.ID, g2.ID;
+ORDER BY g1.geom.STNumPoints(), g1.ID, g2.ID;
 go
 
 -- Geometry WHERE/ORDER BY/GROUP BY tests

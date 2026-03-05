@@ -696,6 +696,7 @@ CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOGRAPHY)
 CREATE OR REPLACE FUNCTION sys.makevalid_helper(geog sys.GEOGRAPHY)
     RETURNS sys.GEOGRAPHY
     AS '$libdir/postgis-3', 'ST_MakeValid'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STNumPoints_helper(sys.GEOGRAPHY)
     RETURNS integer
