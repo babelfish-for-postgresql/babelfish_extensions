@@ -278,7 +278,7 @@ tsql_query_to_xml_internal(const char *query, int mode,
 
 	if (root_name != NULL && strlen(root_name) > 0)
 		appendStringInfo(result, "</%s>", root_name);
-	SPI_finish_safe();
+	SPI_finish();
 
 	return result;
 }

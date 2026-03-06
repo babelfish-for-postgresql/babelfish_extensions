@@ -5100,7 +5100,7 @@ load_categories_hash(const char 	*sourcetext,
 		}
 	}
 
-	if (SPI_finish_safe() != SPI_OK_FINISH)
+	if (SPI_finish() != SPI_OK_FINISH)
 		/* internal error */
 		elog(ERROR, "load_categories_hash: SPI_finish() failed");
 
@@ -5306,7 +5306,7 @@ get_bbf_pivot_tuplestore(const char 	*sourcetext,
 		tuplestore_puttuple(tupstore, tuple);
 	}
 
-	if (SPI_finish_safe() != SPI_OK_FINISH)
+	if (SPI_finish() != SPI_OK_FINISH)
 		/* internal error */
 		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_finish() failed");
 

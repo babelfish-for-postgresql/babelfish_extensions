@@ -559,7 +559,7 @@ reseed_identity_post_select_into(Oid relid)
 			elog(ERROR, "SPI_connect() failed in SELECT INTO "
 						"with return code %d", rc);
 
-		if (SPI_finish_safe() != SPI_OK_FINISH)
+		if (SPI_finish() != SPI_OK_FINISH)
 			elog(ERROR, "SPI_finish failed");
 	}
 	PG_FINALLY();
