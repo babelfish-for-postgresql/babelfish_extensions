@@ -1,0 +1,65 @@
+#Q#Create table #EnrTempTable1(id int, name varchar(50))
+#Q#SqlBulkCopy to ENR temp table: #EnrTempTable1
+SUCCESS: Inserted 5 rows into ENR temp table
+#Q#Select * from #EnrTempTable1 order by id
+#D#int#!#varchar
+0#!#EnrName0
+1#!#EnrName1
+2#!#EnrName2
+3#!#EnrName3
+4#!#EnrName4
+#Q#drop table #EnrTempTable1
+#Q#Create table #EnrTempTable2(id int, name varchar(50))
+#Q#SqlBulkCopy to ENR temp table: #EnrTempTable2
+SUCCESS: Inserted 10 rows into ENR temp table
+#Q#Select count(*) as row_count from #EnrTempTable2
+#D#int
+10
+#Q#drop table #EnrTempTable2
+#Q#Create table #EnrTempTable3(id int, name varchar(50))
+#Q#SqlBulkCopy to ENR temp table: #EnrTempTable3
+SUCCESS: Inserted 3 rows into ENR temp table
+#Q#Select id, name from #EnrTempTable3 order by id
+#D#int#!#varchar
+0#!#EnrName0
+1#!#EnrName1
+2#!#EnrName2
+#Q#drop table #EnrTempTable3
+#Q#BEGIN TRY CREATE TYPE dbo.BcpTestVarcharType FROM VARCHAR(100) END TRY BEGIN CATCH END CATCH
+#Q#Create table #NonEnrTempTable4(id int, name dbo.BcpTestVarcharType)
+#Q#SqlBulkCopy to Non-ENR temp table: #NonEnrTempTable4
+SUCCESS: Inserted 5 rows into Non-ENR temp table
+#Q#Select * from #NonEnrTempTable4 order by id
+#D#int#!#varchar
+0#!#NonEnrName0
+1#!#NonEnrName1
+2#!#NonEnrName2
+3#!#NonEnrName3
+4#!#NonEnrName4
+#Q#drop table #NonEnrTempTable4
+#Q#BEGIN TRY CREATE TYPE dbo.BcpTestVarcharType2 FROM VARCHAR(100) END TRY BEGIN CATCH END CATCH
+#Q#Create table #NonEnrTempTable5(id int, name dbo.BcpTestVarcharType2)
+#Q#SqlBulkCopy to Non-ENR temp table: #NonEnrTempTable5
+SUCCESS: Inserted 10 rows into Non-ENR temp table
+#Q#Select count(*) as row_count from #NonEnrTempTable5
+#D#int
+10
+#Q#drop table #NonEnrTempTable5
+#Q#Create table #collTest6(id int, name varchar(50), description nvarchar(100))
+#Q#Select * from sys.sp_tablecollations_100_enr('#collTest6')
+#D#int#!#varchar#!#nvarchar
+1#!#id#!#
+2#!#name#!#bbf_unicode_cp1_ci_as
+3#!#description#!#bbf_unicode_cp1_ci_as
+#Q#drop table #collTest6
+#Q#Create table #collTest7(a int, b varchar(30), c nvarchar(30), d char(10))
+#Q#exec tempdb.dbo.sp_tablecollations_100 '#collTest7'
+#D#int#!#varchar#!#binary#!#nvarchar
+1#!#a#!#
+2#!#b#!#94208052#!#
+bbf_unicode_cp1_ci_as
+3#!#c#!#94208052#!#
+bbf_unicode_cp1_ci_as
+4#!#d#!#94208052#!#
+bbf_unicode_cp1_ci_as
+#Q#drop table #collTest7
