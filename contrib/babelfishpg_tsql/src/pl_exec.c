@@ -11738,6 +11738,7 @@ exec_flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	StringInfoData flush_query;
 	char *tsql_target_ref;
 	int rc;
+	bool saved_disable_txn_in_triggers;
 
 	if (estate->insert_exec_temp_table == NULL ||
 		estate->insert_exec_target_table == NULL)
@@ -11847,7 +11848,7 @@ exec_flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	 *   - trigger body changes stay in the current transaction
 	 *   - cleanup commit (after pltsql_clear_insert_exec_rewrite_context) commits all
 	 */
-	bool saved_disable_txn_in_triggers = pltsql_disable_txn_in_triggers;
+	saved_disable_txn_in_triggers = pltsql_disable_txn_in_triggers;
 	pltsql_disable_txn_in_triggers = true;
 
 	/*
