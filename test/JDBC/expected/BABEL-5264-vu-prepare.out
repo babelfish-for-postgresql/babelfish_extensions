@@ -1,0 +1,13 @@
+
+-- BABEL-5264: Test setup for sp_tablecollations_100 functions
+-- Create UDTs for non-ENR temp table tests
+CREATE TYPE dbo.TestVarcharType1 FROM varchar(100)
+GO
+CREATE TYPE dbo.TestVarcharType2 FROM varchar(50)
+GO
+CREATE TYPE dbo.TestVarcharType3 FROM varchar(50)
+GO
+CREATE TYPE dbo.TestVarcharType4 FROM varchar(50)
+GO
+CREATE TYPE dbo.TestIntType FROM int
+GO

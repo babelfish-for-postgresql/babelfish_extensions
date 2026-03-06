@@ -5126,25 +5126,25 @@ create_sp_tablecollations_100_in_tempdb_dbo_internal(PG_FUNCTION_ARGS)
 {
     char       *query = NULL;
     int         rc = -1;
-    const char *old_dialect;
 
     /*
      * Create the T-SQL procedure in tempdb_dbo schema.
-     * This procedure calls sys.sp_tablecollations_100_enr (SQL wrapper function)
-     * which uses the generic sys.babelfish_get_enr_attributes function, and
+     * This procedure calls sys.sp_tablecollations_100_enr SQL function.
+     * which uses the sys.babelfish_get_enr_attributes function, and
      * converts the collation_name to binary(5) tds_collation using CollationProperty.
      */
-    char       *tempq = "CREATE PROCEDURE %s.sp_tablecollations_100 "
-        "@tablename sys.nvarchar(4000) "
-        "AS "
+    char       *tempq = "CREATE PROCEDURE %s.sp_tablecollations_100( "
+        "p_tablename sys.nvarchar(4000)) "
+        "AS $$ "
         "BEGIN "
         "SELECT "
             "t.colid, "
             "t.name, "
             "CAST(CollationProperty(t.collation_name, 'tdscollation') AS sys.binary(5)) AS tds_collation, "
             "t.collation_name AS collation "
-        "FROM sys.sp_tablecollations_100_enr(@tablename) t "
-        "END";
+        "FROM sys.sp_tablecollations_100_enr(p_tablename) t; "
+        "END; "
+        "$$ LANGUAGE pltsql";
 
     char       *dbo_scm = get_dbo_schema_name("tempdb");
 
@@ -5152,38 +5152,14 @@ create_sp_tablecollations_100_in_tempdb_dbo_internal(PG_FUNCTION_ARGS)
 
     pfree(dbo_scm);
 
-    /* Save current dialect and switch to tsql for parsing T-SQL syntax */
-    old_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+    if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+        elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 
-    PG_TRY();
-    {
-        set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-                          GUC_CONTEXT_CONFIG,
-                          PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+    if ((rc = SPI_execute(query, false, 1)) < 0)
+        elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
-        if ((rc = SPI_connect()) != SPI_OK_CONNECT)
-            elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
-
-        if ((rc = SPI_execute(query, false, 1)) < 0)
-            elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
-
-        if ((rc = SPI_finish()) != SPI_OK_FINISH)
-            elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
-    }
-    PG_CATCH();
-    {
-        SPI_finish();
-        set_config_option("babelfishpg_tsql.sql_dialect", old_dialect,
-                          GUC_CONTEXT_CONFIG,
-                          PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-        PG_RE_THROW();
-    }
-    PG_END_TRY();
-
-    /* Restore original dialect */
-    set_config_option("babelfishpg_tsql.sql_dialect", old_dialect,
-                      GUC_CONTEXT_CONFIG,
-                      PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+    if ((rc = SPI_finish()) != SPI_OK_FINISH)
+        elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
     PG_RETURN_INT32(0);
 }

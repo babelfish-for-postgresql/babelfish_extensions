@@ -6099,12 +6099,9 @@ done:
 /*
  * get_enr_attributes - Get pg_attribute rows for temp tables (ENR and non-ENR)
  *
- * This is a generic function that returns all pg_attribute columns for a temp table.
+ * This function returns all pg_attribute columns for a temp table.
  * It works for both ENR temp tables (reads from ENR cache) and non-ENR temp tables
  * (reads from actual pg_attribute catalog).
- *
- * This function is designed to be extensible - similar functions can be created
- * for other catalogs (pg_index, pg_constraint, etc.) following the same pattern.
  */
 Datum
 get_enr_attributes(PG_FUNCTION_ARGS)

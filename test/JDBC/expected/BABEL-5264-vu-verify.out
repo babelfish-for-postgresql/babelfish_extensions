@@ -1,0 +1,404 @@
+
+-- BABEL-5264: Test sp_tablecollations_100 functions for BCP temp table support
+-- Test 1: Basic test of sys.sp_tablecollations_100_enr and tempdb.dbo.sp_tablecollations_100
+CREATE TABLE #collTest1(id int, name varchar(50), description nvarchar(100))
+GO
+
+SELECT * FROM sys.sp_tablecollations_100_enr('#collTest1')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#id#!#<NULL>
+2#!#name#!#bbf_unicode_cp1_ci_as
+3#!#description#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#collTest1'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#id#!#<NULL>#!#<NULL>
+2#!#name#!#0904D00034#!#bbf_unicode_cp1_ci_as
+3#!#description#!#0904D00034#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+DROP TABLE #collTest1
+GO
+
+-- Test 2: Test with various column types
+CREATE TABLE #collTest2(
+    a int,
+    b text,
+    c ntext,
+    d varchar(max),
+    e binary(10),
+    f varbinary(20),
+    g char(5),
+    h nchar(10)
+)
+GO
+
+SELECT * FROM sys.sp_tablecollations_100_enr('#collTest2')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#a#!#<NULL>
+2#!#b#!#bbf_unicode_cp1_ci_as
+3#!#c#!#bbf_unicode_cp1_ci_as
+4#!#d#!#bbf_unicode_cp1_ci_as
+5#!#e#!#<NULL>
+6#!#f#!#<NULL>
+7#!#g#!#bbf_unicode_cp1_ci_as
+8#!#h#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#collTest2'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#a#!#<NULL>#!#<NULL>
+2#!#b#!#0904D00034#!#bbf_unicode_cp1_ci_as
+3#!#c#!#0904D00034#!#bbf_unicode_cp1_ci_as
+4#!#d#!#0904D00034#!#bbf_unicode_cp1_ci_as
+5#!#e#!#<NULL>#!#<NULL>
+6#!#f#!#<NULL>#!#<NULL>
+7#!#g#!#0904D00034#!#bbf_unicode_cp1_ci_as
+8#!#h#!#0904D00034#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+DROP TABLE #collTest2
+GO
+
+-- Test 3: Test with different table name formats
+CREATE TABLE #collTest3(col1 varchar(100))
+GO
+
+-- With hash prefix
+SELECT * FROM sys.sp_tablecollations_100_enr('#collTest3')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#col1#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+-- With schema prefix
+SELECT * FROM sys.sp_tablecollations_100_enr('.[#collTest3]')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#col1#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+-- With brackets
+SELECT * FROM sys.sp_tablecollations_100_enr('[#collTest3]')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#col1#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+DROP TABLE #collTest3
+GO
+
+-- Test 4: Test with non-existent table (should return empty)
+SELECT * FROM sys.sp_tablecollations_100_enr('#nonExistentTable')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+~~END~~
+
+
+-- Test 5: Test with multiple temp tables
+CREATE TABLE #multiTest1(a varchar(50))
+GO
+
+CREATE TABLE #multiTest2(b nvarchar(100))
+GO
+
+SELECT * FROM sys.sp_tablecollations_100_enr('#multiTest1')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#a#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+SELECT * FROM sys.sp_tablecollations_100_enr('#multiTest2')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#b#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+DROP TABLE #multiTest1
+GO
+
+DROP TABLE #multiTest2
+GO
+
+-- Test 6: Temp table with different collations and case sensitivity
+CREATE TABLE #collTest6(
+    col_ci varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    col_cs varchar(50) COLLATE SQL_Latin1_General_CP1_CS_AS,
+    col_ai varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AI
+)
+GO
+
+SELECT * FROM sys.sp_tablecollations_100_enr('#collTest6')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#col_ci#!#bbf_unicode_cp1_ci_as
+2#!#col_cs#!#bbf_unicode_cp1_cs_as
+3#!#col_ai#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#collTest6'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#col_ci#!#0904D00034#!#bbf_unicode_cp1_ci_as
+2#!#col_cs#!#0904C00033#!#bbf_unicode_cp1_cs_as
+3#!#col_ai#!#0904F00036#!#bbf_unicode_cp1_ci_ai
+~~END~~
+
+
+DROP TABLE #collTest6
+GO
+
+-- Test 7: Temp table with no character columns (all numeric/binary)
+CREATE TABLE #noCharCols(
+    id int,
+    amount bigint,
+    price decimal(10,2),
+    flag bit,
+    data binary(8)
+)
+GO
+
+SELECT * FROM sys.sp_tablecollations_100_enr('#noCharCols')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#id#!#<NULL>
+2#!#amount#!#<NULL>
+3#!#price#!#<NULL>
+4#!#flag#!#<NULL>
+5#!#data#!#<NULL>
+~~END~~
+
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#noCharCols'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#id#!#<NULL>#!#<NULL>
+2#!#amount#!#<NULL>#!#<NULL>
+3#!#price#!#<NULL>#!#<NULL>
+4#!#flag#!#<NULL>#!#<NULL>
+5#!#data#!#<NULL>#!#<NULL>
+~~END~~
+
+
+DROP TABLE #noCharCols
+GO
+
+-- Test 8: Temp table with dropped column
+CREATE TABLE #droppedCol(
+    id int,
+    col_to_drop varchar(50),
+    name varchar(100)
+)
+GO
+
+ALTER TABLE #droppedCol DROP COLUMN col_to_drop
+GO
+
+SELECT * FROM sys.sp_tablecollations_100_enr('#droppedCol')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#id#!#<NULL>
+3#!#name#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#droppedCol'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#id#!#<NULL>#!#<NULL>
+3#!#name#!#0904D00034#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+DROP TABLE #droppedCol
+GO
+
+
+-- =====================================================
+-- Non-ENR Temp Table Tests (using UDT to force non-ENR)
+-- =====================================================
+-- Test 9: Basic non-ENR temp table test
+CREATE TABLE #nonEnrTest1(id int, name dbo.TestVarcharType1, description nvarchar(100))
+GO
+
+SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrTest1')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#id#!#<NULL>
+2#!#name#!#bbf_unicode_cp1_ci_as
+3#!#description#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#nonEnrTest1'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#id#!#<NULL>#!#<NULL>
+2#!#name#!#0904D00034#!#bbf_unicode_cp1_ci_as
+3#!#description#!#0904D00034#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+DROP TABLE #nonEnrTest1
+GO
+
+-- Test 10: Non-ENR with various column types
+CREATE TABLE #nonEnrTest2(
+    a int,
+    b dbo.TestVarcharType2,
+    c nvarchar(100),
+    d binary(10)
+)
+GO
+
+SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrTest2')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#a#!#<NULL>
+2#!#b#!#bbf_unicode_cp1_ci_as
+3#!#c#!#bbf_unicode_cp1_ci_as
+4#!#d#!#<NULL>
+~~END~~
+
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#nonEnrTest2'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#a#!#<NULL>#!#<NULL>
+2#!#b#!#0904D00034#!#bbf_unicode_cp1_ci_as
+3#!#c#!#0904D00034#!#bbf_unicode_cp1_ci_as
+4#!#d#!#<NULL>#!#<NULL>
+~~END~~
+
+
+DROP TABLE #nonEnrTest2
+GO
+
+-- Test 11: Non-ENR with different collations
+CREATE TABLE #nonEnrTest3(
+    col_default dbo.TestVarcharType3,
+    col_ci varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    col_cs varchar(50) COLLATE SQL_Latin1_General_CP1_CS_AS
+)
+GO
+
+SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrTest3')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#col_default#!#bbf_unicode_cp1_ci_as
+2#!#col_ci#!#bbf_unicode_cp1_ci_as
+3#!#col_cs#!#bbf_unicode_cp1_cs_as
+~~END~~
+
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#nonEnrTest3'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#col_default#!#0904D00034#!#bbf_unicode_cp1_ci_as
+2#!#col_ci#!#0904D00034#!#bbf_unicode_cp1_ci_as
+3#!#col_cs#!#0904C00033#!#bbf_unicode_cp1_cs_as
+~~END~~
+
+
+DROP TABLE #nonEnrTest3
+GO
+
+-- Test 12: Non-ENR with no character columns
+CREATE TABLE #nonEnrNoChar(
+    id dbo.TestIntType,
+    amount bigint,
+    price decimal(10,2)
+)
+GO
+
+SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrNoChar')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#id#!#<NULL>
+2#!#amount#!#<NULL>
+3#!#price#!#<NULL>
+~~END~~
+
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#nonEnrNoChar'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#id#!#<NULL>#!#<NULL>
+2#!#amount#!#<NULL>#!#<NULL>
+3#!#price#!#<NULL>#!#<NULL>
+~~END~~
+
+
+DROP TABLE #nonEnrNoChar
+GO
+
+-- Test 13: Non-ENR with dropped column
+CREATE TABLE #nonEnrDropped(
+    id int,
+    col_to_drop dbo.TestVarcharType4,
+    name varchar(100)
+)
+GO
+
+ALTER TABLE #nonEnrDropped DROP COLUMN col_to_drop
+GO
+
+SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrDropped')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#id#!#<NULL>
+3#!#name#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#nonEnrDropped'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#id#!#<NULL>#!#<NULL>
+3#!#name#!#0904D00034#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+DROP TABLE #nonEnrDropped
+GO

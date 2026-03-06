@@ -802,15 +802,14 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         c.is_sparse = 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
--- Generic function to get pg_attribute rows for temp tables (ENR and non-ENR)
--- This is extensible - similar functions can be added for other catalogs
+-- Function to get pg_attribute rows for temp tables (ENR and non-ENR)
 CREATE OR REPLACE FUNCTION sys.babelfish_get_enr_attributes(IN table_name sys.varchar(4000))
 RETURNS SETOF pg_catalog.pg_attribute
 AS 'babelfishpg_tsql', 'get_enr_attributes'
 LANGUAGE C STABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.babelfish_get_enr_attributes(IN sys.varchar(4000)) TO PUBLIC;
 
--- Wrapper function for sp_tablecollations_100 that uses the generic function
+-- Wrapper function for sp_tablecollations_100 that uses the babelfish_get_enr_attributes function
 CREATE OR REPLACE FUNCTION sys.sp_tablecollations_100_enr(IN table_name sys.varchar(4000))
 RETURNS TABLE(colid INT, name sys.varchar, collation_name sys.nvarchar(128))
 AS $$
