@@ -236,3 +236,102 @@ txn#!#commit
 select * from txntable2;
 
 DROP TABLE txntable2;
+
+# SQL scan Tests
+CREATE TABLE scan_test (id INT, data TEXT);
+
+# Test 1: Command scan via transaction name
+txn#!#begin#!#test'; DROP TABLE scan_test; --
+INSERT INTO scan_test VALUES(1, 'test');
+txn#!#commit
+SELECT * FROM scan_test;
+
+# Test 2: Semicolon separation attack
+txn#!#begin#!#test; DELETE FROM scan_test; BEGIN TRANSACTION real
+INSERT INTO scan_test VALUES(2, 'data');
+txn#!#commit
+SELECT * FROM scan_test;
+
+# Test 3: Savepoint scan
+txn#!#begin#!#tx1
+txn#!#savepoint#!#sp1'; DROP TABLE scan_test; --
+INSERT INTO scan_test VALUES(3, 'save');
+txn#!#rollback#!#sp1
+txn#!#commit
+SELECT * FROM scan_test;
+
+# Test 4: Commit scan
+txn#!#begin#!#tx1
+INSERT INTO scan_test VALUES(4, 'commit');
+txn#!#commit#!#txn'; UPDATE scan_test SET data='hacked'; --
+SELECT * FROM scan_test;
+
+# Test 5: Rollback scan
+txn#!#begin#!#tx1
+INSERT INTO scan_test VALUES(5, 'rollback');
+txn#!#rollback#!#rb'; DELETE FROM scan_test; --
+SELECT * FROM scan_test;
+
+# Test 6: Unicode bypass attempt
+txn#!#begin#!#test\u0027; SELECT version(); --
+INSERT INTO scan_test VALUES(6, 'unicode');
+txn#!#commit
+SELECT * FROM scan_test;
+
+# Test 7: Bracket escape attempt
+txn#!#begin#!#test]] UNION SELECT 999, 'injected' --
+INSERT INTO scan_test VALUES(7, 'bracket');
+txn#!#commit
+SELECT * FROM scan_test;
+
+# Test 8: Multiple statement scan
+txn#!#begin#!#t1]; SELECT @@version; --
+INSERT INTO scan_test VALUES(8, 'multi');
+txn#!#commit
+SELECT * FROM scan_test;
+
+# Test 9: Function execution attempt
+txn#!#begin#!#tx'; SELECT current_user(); --
+INSERT INTO scan_test VALUES(9, 'function');
+txn#!#commit
+SELECT * FROM scan_test;
+
+# Test 10: Information schema access
+txn#!#begin#!#tx'; SELECT table_name FROM information_schema.tables; --
+INSERT INTO scan_test VALUES(10, 'schema');
+txn#!#commit
+SELECT * FROM scan_test;
+
+# Test 11: Nested quote escape
+txn#!#begin#!#test']; INSERT INTO scan_test VALUES(999, 'injected'); --
+INSERT INTO scan_test VALUES(11, 'nested');
+txn#!#commit
+SELECT * FROM scan_test;
+
+# Test 12: Hash character bypass
+txn#!#begin#!##temp'; DROP TABLE scan_test; --
+INSERT INTO scan_test VALUES(12, 'hash');
+txn#!#commit
+SELECT * FROM scan_test;
+
+# Test 13: Dollar sign bypass
+txn#!#begin#!#$var'; DELETE FROM scan_test; --
+INSERT INTO scan_test VALUES(13, 'dollar');
+txn#!#commit
+SELECT * FROM scan_test;
+
+# Test 14: Extended ASCII bypass
+txn#!#begin#!#test\x80\xff'; SELECT 'injected'; --
+INSERT INTO scan_test VALUES(14, 'ascii');
+txn#!#commit
+SELECT * FROM scan_test;
+
+# Test 15: Savepoint with system command attempt
+txn#!#begin#!#tx1
+txn#!#savepoint#!#sp'; EXEC xp_cmdshell 'dir'; --
+INSERT INTO scan_test VALUES(15, 'system');
+txn#!#rollback#!#sp
+txn#!#commit
+SELECT * FROM scan_test;
+
+DROP TABLE scan_test;
