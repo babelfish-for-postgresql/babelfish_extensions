@@ -173,7 +173,7 @@ static const uint8 NAN_COORD[8] = {
 };
 
 /*
- * Parsed figure entry from T-SQL CLR binary (spec section 2.1.3)
+ * Parsed figure entry 
  */
 typedef struct {
     uint8_t  attribute;      /* FIGURE_INTERIOR_RING / STROKE / EXTERIOR_RING */
@@ -181,7 +181,7 @@ typedef struct {
 } Figure;
 
 /*
- * Parsed shape entry from T-SQL CLR binary (spec section 2.1.4)
+ * Parsed shape entry 
  */
 typedef struct {
     int32_t  parent_index;   /* -1 for root shape, else index of parent */
@@ -1384,7 +1384,6 @@ set_dimension_flag(GeometryData *geom_data)
 
         /* 
          *  Point — P flag (0x08) WITHOUT V flag.
-         * T-SQL accepts these as valid points.
          * Props: 0x08=P, 0x09=P+Z, 0x0A=P+M, 0x0B=P+Z+M
          */
         case 0x08:  /* P only (no V) — 2D */
@@ -1752,7 +1751,7 @@ parse_figures_and_shapes(GeometryData *geom_data)
             THROW_VARBINARY_CONVERSION_ERROR();
     }
 
-    /* ── Parse Shape Array (spec section 2.1.4) ──────────── */
+    /* ── Parse Shape Array ────────── */
 
     CHECK_METADATA_BOUNDS(geom_data, metadata, offset, COUNT_FIELD_SIZE);
     memcpy(&geom_data->nshapes, metadata + offset, sizeof(uint32_t));
