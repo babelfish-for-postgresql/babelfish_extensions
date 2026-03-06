@@ -1682,9 +1682,6 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 		return false;
 	if (pltsql_recursive_triggers)
 		return false;
-	/* Safety check for parallel workers where exec_state_call_stack may be NULL */
-	if (exec_state_call_stack == NULL)
-		return false;
 	cur = exec_state_call_stack;
 	while (cur != NULL)
 	{

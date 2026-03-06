@@ -5468,7 +5468,13 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		if ((!pltsql_disable_batch_auto_commit || (stmt->txn_data != NULL)) &&
 			support_tsql_trans &&
 			(enable_txn_in_triggers || estate->trigdata == NULL) &&
-			!ro_func && !estate->insert_exec)
+			!ro_func && !estate->insert_exec &&
+			!pltsql_insert_exec_rewrite_active())   /* Don't commit inside INSERT EXEC context:
+			                                         * triggers firing during the flush INSERT would
+			                                         * call CommitTransactionCommand() which destroys
+			                                         * the outer SPI portal's snapshot state, causing
+			                                         * "portal snapshots did not account for all
+			                                         * active snapshots" at portalmem.c:1292 */
 		{
 			commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED));
 

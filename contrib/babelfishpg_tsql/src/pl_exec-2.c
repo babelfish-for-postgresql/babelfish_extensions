@@ -1276,6 +1276,23 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 												   stmt->insert_exec_columns,
 												   saved_nested_tran_count);
 			insert_exec_context_set = true;
+			
+			/*
+			 * Temporarily disable T-SQL trigger transaction handling during INSERT EXEC.
+			 *
+			 * When a T-SQL AFTER trigger fires during INSERT EXEC, pltsql_exec_trigger
+			 * sets estate.atomic = false (because support_tsql_trans && 
+			 * !pltsql_disable_txn_in_triggers is true). This makes the trigger use
+			 * SPI_connect_ext(SPI_OPT_NONATOMIC), which pushes an independent snapshot
+			 * that conflicts with the portal's snapshot tracking, causing:
+			 *   "portal snapshots (1) did not account for all active snapshots (2)"
+			 *
+			 * Setting pltsql_disable_txn_in_triggers = true forces triggers to use
+			 * normal atomic SPI, which is compatible with the INSERT EXEC execution.
+			 * The trigger body still fires and executes normally — only the
+			 * Babelfish-specific non-atomic snapshot path is bypassed.
+			 */
+			pltsql_disable_txn_in_triggers = true;
 		}
 
 		rc = SPI_execute_plan_extended(expr->plan, &options);
