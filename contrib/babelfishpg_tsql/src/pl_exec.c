@@ -766,9 +766,6 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 			/* Obtain output parameters for Insert Execute */
 			if (estate.insert_exec)
 			{
-				elog(LOG, "INSERT-EXEC-OUTPUT: insert_exec=true, rettype=%u, retval=%p, retisnull=%d",
-					 estate.rettype, (void *)estate.retval, estate.retisnull);
-				
 				/* 
 				 * Switch to TopTransactionContext for the datum copy.
 				 * We MUST use TopTransactionContext (not estate.func->fn_cxt) because:
@@ -783,13 +780,10 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 				{
 					/* Get return type properties */
 					get_typlenbyval(estate.rettype, &typLen, &typByVal);
-					elog(LOG, "INSERT-EXEC-OUTPUT: rettype=%u is valid, typLen=%d, typByVal=%d",
-						 estate.rettype, typLen, typByVal);
 
 					if (typByVal)
 					{
 						execute_call_insert_exec_retval = estate.retval;
-						elog(LOG, "INSERT-EXEC-OUTPUT: typByVal=true, copied retval directly");
 					}
 					else
 					{
@@ -797,23 +791,10 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 						execute_call_insert_exec_retval = datumCopy(estate.retval,
 																	typByVal,
 																	typLen);
-						elog(LOG, "INSERT-EXEC-OUTPUT: typByVal=false, called datumCopy to TopTransactionContext, result=%p",
-							 (void *)execute_call_insert_exec_retval);
-						
-						/* Debug: check the HeapTupleHeader */
-						if (typLen == -1 && execute_call_insert_exec_retval != (Datum) 0)
-						{
-							HeapTupleHeader td = (HeapTupleHeader) DatumGetPointer(execute_call_insert_exec_retval);
-							Oid tupType = HeapTupleHeaderGetTypeId(td);
-							int32 tupTypmod = HeapTupleHeaderGetTypMod(td);
-							elog(LOG, "INSERT-EXEC-OUTPUT: HeapTupleHeader tupType=%u, tupTypmod=%d",
-								 tupType, tupTypmod);
-						}
 					}
 				}
 				else
 				{
-					elog(LOG, "INSERT-EXEC-OUTPUT: rettype=%u is NOT valid", estate.rettype);
 					/* For cases where rettype is not properly set, handle gracefully */
 					typLen = -1;    /* Variable length */
 					typByVal = false; /* Pass by reference */
@@ -823,13 +804,11 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 					{
 						/* Copy to TopTransactionContext */
 						execute_call_insert_exec_retval = datumCopy(estate.retval, typByVal, typLen);
-						elog(LOG, "INSERT-EXEC-OUTPUT: copied retval with datumCopy to TopTransactionContext");
 					}
 					else
 					{
 						/* Skip the exec_move_row_from_datum call entirely */
 						execute_call_insert_exec_retval = (Datum) 0;
-						elog(LOG, "INSERT-EXEC-OUTPUT: retval is 0, skipping");
 					}
 				}
 				MemoryContextSwitchTo(oldcontext);
@@ -4549,15 +4528,35 @@ commit_stmt(PLtsql_execstate *estate, bool txnStarted)
 	SimpleEcontextStackEntry *topEntry = simple_econtext_stack;
 	MemoryContext oldcontext = CurrentMemoryContext;
 
-	elog(LOG, "commit_stmt: txnStarted=%d, IsTransactionBlockActive=%d, insert_exec_rewrite_active=%d",
-		 txnStarted, IsTransactionBlockActive(), pltsql_insert_exec_rewrite_active());
+	/*
+	 * Do not commit when INSERT EXEC rewrite is active.
+	 *
+	 * When INSERT EXEC is in progress, the flush INSERT may fire triggers
+	 * (INSTEAD OF or AFTER). The trigger body's statements (like INSERT INTO
+	 * trigger_log) call commit_stmt. Calling CommitTransactionCommand() here
+	 * would:
+	 *   1. Destroy the INSTEAD OF trigger's 'inserted' transition table
+	 *      (it's registered against the current SPI context/transaction).
+	 *   2. Invalidate the outer flush INSERT portal's snapshot state,
+	 *      causing "portal snapshots did not account for..." errors.
+	 *
+	 * Note: We can't check estate->trigdata here because the trigger body's
+	 * nested INSERT statements have estate->trigdata = NULL (trigdata is only
+	 * set for the trigger function itself, not for statements inside it).
+	 *
+	 * Skipping the commit here is safe: all trigger body changes are in
+	 * the current transaction and will be committed by the INSERT EXEC
+	 * cleanup commit that fires after exec_flush completes and the
+	 * rewrite context is cleared.
+	 */
+	if (pltsql_insert_exec_rewrite_active())
+		return;
 
 	/* Hold portals to make sure that cursors work */
 	HoldPinnedPortals();
 
 	if (txnStarted)
 	{
-		elog(LOG, "commit_stmt: Calling PLTsqlCommitTransaction");
 		PLTsqlCommitTransaction(NULL, false);
 	}
 
@@ -4566,7 +4565,6 @@ commit_stmt(PLtsql_execstate *estate, bool txnStarted)
 		ForgetPortalSnapshots();
 	}
 
-	elog(LOG, "commit_stmt: Calling CommitTransactionCommand and StartTransactionCommand");
 	CommitTransactionCommand();
 	StartTransactionCommand();
 	MemoryContextSwitchTo(oldcontext);
@@ -5027,10 +5025,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			 */
 			if (stmt->insert_exec_target != NULL)
 			{
-				elog(DEBUG1, "INSERT-EXEC: About to create temp table. target='%s', columns='%s'",
-					 stmt->insert_exec_target,
-					 stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)");
-				
 				/*
 				 * SQL Server behavior for @@trancount during INSERT-EXEC:
 				 * - If @@trancount == 0 (no outer transaction), INSERT-EXEC creates an
@@ -5055,8 +5049,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				exec_create_insert_exec_temp_table(estate,
 												   stmt->insert_exec_target,
 												   stmt->insert_exec_columns);
-				elog(DEBUG1, "INSERT-EXEC: Temp table created: '%s'. Setting rewrite context.",
-					 estate->insert_exec_temp_table);
 				pltsql_set_insert_exec_rewrite_context(estate->insert_exec_temp_table, 
 													   stmt->insert_exec_columns,
 													   saved_nested_tran_count);
@@ -5300,16 +5292,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			 * datum (e.g., from a RETURN statement) that would cause a crash.
 			 */
 			row = (PLtsql_row *) stmt->target;
-			elog(LOG, "INSERT-EXEC-OUTPUT-CALLER: About to call exec_move_row_from_datum, nfields=%d, retval=%p",
-				 row->nfields, (void *)execute_call_insert_exec_retval);
 			if (row->nfields > 0)
 			{
-				/* Debug: check the HeapTupleHeader before calling exec_move_row_from_datum */
-				HeapTupleHeader td = (HeapTupleHeader) DatumGetPointer(execute_call_insert_exec_retval);
-				Oid tupType = HeapTupleHeaderGetTypeId(td);
-				int32 tupTypmod = HeapTupleHeaderGetTypMod(td);
-				elog(LOG, "INSERT-EXEC-OUTPUT-CALLER: HeapTupleHeader tupType=%u, tupTypmod=%d",
-					 tupType, tupTypmod);
 				exec_move_row_from_datum(estate, stmt->target, execute_call_insert_exec_retval);
 			}
 		}
@@ -5468,13 +5452,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		if ((!pltsql_disable_batch_auto_commit || (stmt->txn_data != NULL)) &&
 			support_tsql_trans &&
 			(enable_txn_in_triggers || estate->trigdata == NULL) &&
-			!ro_func && !estate->insert_exec &&
-			!pltsql_insert_exec_rewrite_active())   /* Don't commit inside INSERT EXEC context:
-			                                         * triggers firing during the flush INSERT would
-			                                         * call CommitTransactionCommand() which destroys
-			                                         * the outer SPI portal's snapshot state, causing
-			                                         * "portal snapshots did not account for all
-			                                         * active snapshots" at portalmem.c:1292 */
+			!ro_func && !estate->insert_exec)
 		{
 			commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED));
 
@@ -5512,41 +5490,39 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		}
 
 		/*
+		 * Clear the INSERT EXEC rewrite context HERE (success path) so that
+		 * the cleanup commit_stmt below can fire. Without this, the context
+		 * is cleared only in PG_FINALLY (after the commit check), making
+		 * !pltsql_insert_exec_rewrite_active() permanently false in the
+		 * success path and preventing the final commit.
+		 *
+		 * This is safe because:
+		 * - exec_flush and exec_drop have both completed
+		 * - No more CTE rewrites will run
+		 * - Error path still clears context via PG_FINALLY
+		 */
+		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
+			pltsql_clear_insert_exec_rewrite_context();
+
+		/*
 		 * INSERT EXEC: Commit the transaction after successful completion.
 		 * This is needed because we skip the normal commit_stmt call above
 		 * (due to !estate->insert_exec condition) to avoid committing in the
 		 * middle of INSERT EXEC processing. Now that the flush and cleanup
 		 * are done, we need to commit to ensure the inserted rows are visible
 		 * to subsequent statements.
-		 * 
-		 * However, when using the query rewriting approach, we don't need to
-		 * call commit_stmt because we didn't start any implicit transactions
-		 * (we added !pltsql_insert_exec_rewrite_active() to the condition at
-		 * line 5091). The transaction state is already correct.
 		 */
-		elog(LOG, "INSERT EXEC cleanup: insert_exec=%d, insert_exec_rewrite_active=%d, TSQL_TRAN_STARTED=%d",
-			 stmt->insert_exec, pltsql_insert_exec_rewrite_active(),
-			 (estate->tsql_trigger_flags & TSQL_TRAN_STARTED) ? 1 : 0);
 		if (stmt->insert_exec &&
 			!pltsql_disable_batch_auto_commit &&
 			support_tsql_trans &&
 			(enable_txn_in_triggers || estate->trigdata == NULL) &&
-			!ro_func &&
-			!pltsql_insert_exec_rewrite_active())
+			!ro_func)
 		{
-			elog(LOG, "INSERT EXEC cleanup: Calling commit_stmt");
 			commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED));
-		}
-		else if (stmt->insert_exec)
-		{
-			elog(LOG, "INSERT EXEC cleanup: Skipping commit_stmt (query rewriting active)");
 		}
 	}
 	PG_FINALLY();
 	{
-		elog(LOG, "PG_FINALLY: insert_exec=%d, insert_exec_rewrite_active=%d",
-			 stmt->insert_exec, pltsql_insert_exec_rewrite_active());
-		
 		original_query_string = NULL;
 		is_schemabinding_view = true;
 
@@ -5586,12 +5562,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			estate->insert_exec_identity_insert = false;
 		}
 
-		/* Clear INSERT EXEC rewrite context on any exit */
-		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
-		{
-			elog(LOG, "PG_FINALLY: Clearing INSERT EXEC rewrite context");
+		/* Clear INSERT EXEC rewrite context - only if not already cleared
+		 * in the success path above. On error path, this is the only cleanup. */
+		if (stmt->insert_exec && stmt->insert_exec_target != NULL &&
+			pltsql_insert_exec_rewrite_active())
 			pltsql_clear_insert_exec_rewrite_context();
-		}
 
 		if (is_cross_db)
 		{
@@ -11763,12 +11738,12 @@ exec_flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	StringInfoData flush_query;
 	char *tsql_target_ref;
 	int rc;
-	MemoryContext oldcontext;
-	ResourceOwner oldowner;
 
 	if (estate->insert_exec_temp_table == NULL ||
 		estate->insert_exec_target_table == NULL)
+	{
 		return;
+	}
 
 	/*
 	 * Build a T-SQL-level table reference for the flush INSERT.
@@ -11855,20 +11830,64 @@ exec_flush_insert_exec_temp_table(PLtsql_execstate *estate)
 			estate->insert_exec_temp_table);
 	}
 
-	elog(DEBUG1, "INSERT-EXEC-TEMP-TABLE: Flushing: %s", flush_query.data);
+	/*
+	 * Temporarily force atomic SPI for any triggers that fire during the
+	 * flush INSERT.
+	 *
+	 * Without this, pltsql_exec_trigger sets estate->atomic = false (non-atomic
+	 * SPI context) because !pltsql_disable_txn_in_triggers is true. A non-atomic
+	 * SPI connection calls CommitTransactionCommand() in SPI_finish() when the
+	 * trigger completes — this commits+destroys the transaction before the INSERT
+	 * EXEC cleanup commit runs, causing trigger body changes to be lost or causing
+	 * "portal snapshots did not account for all active snapshots" errors.
+	 *
+	 * With pltsql_disable_txn_in_triggers = true:
+	 *   - estate->atomic stays true → atomic SPI used
+	 *   - SPI_finish() does NOT commit on exit
+	 *   - trigger body changes stay in the current transaction
+	 *   - cleanup commit (after pltsql_clear_insert_exec_rewrite_context) commits all
+	 */
+	bool saved_disable_txn_in_triggers = pltsql_disable_txn_in_triggers;
+	pltsql_disable_txn_in_triggers = true;
 
 	/*
-	 * Wrap in subtransaction to protect AfterTrigger state.
-	 * The INSERT triggers AfterTriggerBeginQuery which increments query_depth.
-	 * If the INSERT fails, the longjmp skips AfterTriggerEndQuery, leaving
-	 * query_depth orphaned. The subtransaction rollback cleans this up.
+	 * Clear the INSERT EXEC rewrite context BEFORE running the flush INSERT.
+	 *
+	 * While the rewrite context is active, the commit_stmt guard prevents
+	 * commits from firing. But more importantly, clearing it here ensures
+	 * the flush INSERT behaves like a normal INSERT and fires triggers properly.
+	 *
+	 * The procedure has already run at this point — all its SELECTs have been
+	 * CTE-rewritten to insert into the temp table. We no longer need the
+	 * rewrite context for that purpose.
 	 */
-	oldcontext = CurrentMemoryContext;
-	oldowner = CurrentResourceOwner;
+	pltsql_clear_insert_exec_rewrite_context();
 
-	BeginInternalSubTransaction("insert_exec_flush");
-	MemoryContextSwitchTo(oldcontext);
+	/*
+	 * Open composite trigger nesting level for the flush INSERT.
+	 *
+	 * This is critical for INSTEAD OF triggers on views. The composite trigger
+	 * mechanism (BeginCompositeTriggers/EndCompositeTriggers) is normally called
+	 * from exec_stmt_execsql when enable_txn_in_triggers is true. But for INSERT
+	 * EXEC, enable_txn_in_triggers is false, so the flush INSERT via SPI_execute
+	 * doesn't go through that path.
+	 *
+	 * Without this, INSTEAD OF triggers queue their events but the events are
+	 * never fired because IsCompositeTriggerActive() returns false (no trigger
+	 * level was opened).
+	 */
+	BeginCompositeTriggers(CurrentMemoryContext);
 
+	/*
+	 * Execute the flush INSERT directly without a subtransaction.
+	 * 
+	 * Previously we wrapped this in a subtransaction to protect AfterTrigger state,
+	 * but that caused INSTEAD OF trigger changes to be lost because the trigger
+	 * runs inside the subtransaction and its changes are isolated.
+	 * 
+	 * With pltsql_disable_txn_in_triggers = true, triggers use atomic SPI which
+	 * doesn't have the AfterTrigger depth issues that required the subtransaction.
+	 */
 	PG_TRY();
 	{
 		rc = SPI_execute(flush_query.data, false, 0);
@@ -11883,10 +11902,7 @@ exec_flush_insert_exec_temp_table(PLtsql_execstate *estate)
 				 SPI_result_code_string(rc));
 		}
 
-		elog(DEBUG1, "INSERT-EXEC-TEMP-TABLE: Flushed %lu rows",
-			 (unsigned long) SPI_processed);
-
-		/* Capture results before releasing subtransaction */
+		/* Capture results */
 		estate->eval_processed = SPI_processed;
 		exec_set_rowcount(SPI_processed);
 		exec_set_found(estate, SPI_processed > 0);
@@ -11894,18 +11910,22 @@ exec_flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		/* Free the SPI tuple table (contains TupleDesc that must be released) */
 		SPI_freetuptable(SPI_tuptable);
 
-		/* Success - release the subtransaction */
-		ReleaseCurrentSubTransaction();
-		MemoryContextSwitchTo(oldcontext);
-		CurrentResourceOwner = oldowner;
+		/*
+		 * Close composite trigger nesting level and fire any queued triggers.
+		 * This is where INSTEAD OF triggers actually execute.
+		 */
+		EndCompositeTriggers(false);
+
+		/* Restore the flag */
+		pltsql_disable_txn_in_triggers = saved_disable_txn_in_triggers;
 	}
 	PG_CATCH();
 	{
-		/* Rollback subtransaction - this cleans up AfterTrigger depth */
-		MemoryContextSwitchTo(oldcontext);
-		RollbackAndReleaseCurrentSubTransaction();
-		MemoryContextSwitchTo(oldcontext);
-		CurrentResourceOwner = oldowner;
+		/* Close composite trigger level on error (don't fire triggers) */
+		EndCompositeTriggers(true);
+
+		/* Restore the flag first */
+		pltsql_disable_txn_in_triggers = saved_disable_txn_in_triggers;
 
 		/*
 		 * DO NOT try to drop the temp table here!
