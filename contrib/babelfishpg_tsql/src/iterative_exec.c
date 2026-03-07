@@ -1083,6 +1083,9 @@ static
 void
 record_error_state(PLtsql_execstate *estate)
 {
+	if (exec_state_call_stack == NULL)
+		return;  /* parallel worker or unexpected context — skip */
+
 	if (exec_state_call_stack->error_data.error_estate == NULL)
 	{
 		exec_state_call_stack->error_data.error_estate = estate;
@@ -1103,6 +1106,9 @@ static
 bool
 is_error_raising_batch(PLtsql_execstate *estate)
 {
+	if (exec_state_call_stack == NULL)
+		return false;  /* parallel worker or unexpected context */
+
 	if (exec_state_call_stack->error_data.error_estate == estate)
 		return true;
 	return false;
@@ -1112,6 +1118,9 @@ static
 bool
 is_xact_abort_on_error(PLtsql_execstate *estate)
 {
+	if (exec_state_call_stack == NULL)
+		return false;  /* parallel worker or unexpected context */
+
 	if (exec_state_call_stack->error_data.xact_abort_on)
 		return true;
 	return false;
@@ -1150,7 +1159,8 @@ abort_transaction(PLtsql_execstate *estate, ErrorData *edata, uint8_t override_f
 	 * If error is raised inside trigger execution then default behaviour is
 	 * to rollback the transaction.
 	 */
-	if (is_part_of_pltsql_trigger(estate) || exec_state_call_stack->error_data.trigger_error)
+	if (is_part_of_pltsql_trigger(estate) ||
+		(exec_state_call_stack != NULL && exec_state_call_stack->error_data.trigger_error))
 		return true;
 
 	/* Transaction count mismatch error inside try catch block */
@@ -1197,10 +1207,11 @@ abort_execution(PLtsql_execstate *estate, ErrorData *edata, bool *terminate_batc
 	}
 
 	/* If any error inside trigger execution. */
-	if (is_part_of_pltsql_trigger(estate) || exec_state_call_stack->error_data.trigger_error)
+	if (is_part_of_pltsql_trigger(estate) ||
+		(exec_state_call_stack != NULL && exec_state_call_stack->error_data.trigger_error))
 		return true;
 
-	if (exec_state_call_stack->error_data.rethrow_error)
+	if (exec_state_call_stack != NULL && exec_state_call_stack->error_data.rethrow_error)
 		return true;
 
 	/* Any error inside try catch block */
@@ -1700,10 +1711,13 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 					 * is accessible inside the CATCH block.
 					 */
 					estate->cur_error->error = restore_ctx_partial1(estate);
-					estate->cur_error->procedure = exec_state_call_stack->error_data.error_procedure;
-					estate->cur_error->number = exec_state_call_stack->error_data.error_number;
-					estate->cur_error->severity = exec_state_call_stack->error_data.error_severity;
-					estate->cur_error->state = exec_state_call_stack->error_data.error_state;
+					if (exec_state_call_stack != NULL)
+					{
+						estate->cur_error->procedure = exec_state_call_stack->error_data.error_procedure;
+						estate->cur_error->number = exec_state_call_stack->error_data.error_number;
+						estate->cur_error->severity = exec_state_call_stack->error_data.error_severity;
+						estate->cur_error->state = exec_state_call_stack->error_data.error_state;
+					}
 
 					/* Goto error handling blocks */
 					*pc = err_handler_pc - 1;	/* same as how goto handles PC */
@@ -1766,7 +1780,8 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 			if (!is_seterror_on(stmt) &&
 				!is_control_command(stmt) &&
 				!is_batch_command(stmt) &&
-				exec_state_call_stack->error_data.error_estate == NULL)
+				(exec_state_call_stack == NULL ||
+				 exec_state_call_stack->error_data.error_estate == NULL))
 				exec_set_error(estate, 0, 0, false /* error_mapping_failed */ );
 
 			/*
@@ -2085,6 +2100,9 @@ static
 void
 set_exec_error_data(char *procedure, int number, int severity, int state, bool rethrow)
 {
+	if (exec_state_call_stack == NULL)
+		return;  /* parallel worker — cannot record error data */
+
 	exec_state_call_stack->error_data.rethrow_error = rethrow;
 	exec_state_call_stack->error_data.error_procedure = procedure;
 	exec_state_call_stack->error_data.error_number = number;
@@ -2096,6 +2114,9 @@ static
 void
 reset_exec_error_data(PLtsql_execstate *estate)
 {
+	if (exec_state_call_stack == NULL)
+		return;  /* parallel worker — nothing to reset */
+
 	exec_state_call_stack->error_data.xact_abort_on = false;
 	exec_state_call_stack->error_data.rethrow_error = false;
 	if (estate->trigdata == NULL && estate->evtrigdata == NULL)
