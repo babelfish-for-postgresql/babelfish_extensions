@@ -951,10 +951,6 @@ is_part_of_pltsql_trycatch_block(PLtsql_execstate *estate)
 	PLExecStateCallStack *cur;
 	int level = 0;
 
-	/* Safety check for parallel workers where exec_state_call_stack may be NULL */
-	if (exec_state_call_stack == NULL)
-		return false;
-
 	Assert(estate == exec_state_call_stack->estate);
 	cur = exec_state_call_stack;
 	while (cur != NULL)
@@ -991,10 +987,6 @@ bool
 is_part_of_pltsql_trigger(PLtsql_execstate *estate)
 {
 	PLExecStateCallStack *cur;
-
-	/* Safety check for parallel workers where exec_state_call_stack may be NULL */
-	if (exec_state_call_stack == NULL)
-		return false;
 
 	Assert(estate == exec_state_call_stack->estate);
 	cur = exec_state_call_stack;
