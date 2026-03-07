@@ -1280,7 +1280,9 @@ pltsql_exec_trigger(PLtsql_function *func,
 		/*
 		 * If an error was encountered when executing trigger.
 		 */
-		if (support_tsql_trans && !pltsql_disable_txn_in_triggers && exec_state_call_stack->error_data.trigger_error)
+		if (support_tsql_trans && !pltsql_disable_txn_in_triggers &&
+			exec_state_call_stack != NULL &&
+			exec_state_call_stack->error_data.trigger_error)
 			ereport(ERROR,
 					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
 					 errmsg("An error was raised during trigger execution. The batch has been aborted and the user transaction, if any, has been rolled back.")));
@@ -10297,6 +10299,9 @@ void
 pltsql_estate_cleanup(void)
 {
 	PLExecStateCallStack *top_es_entry;
+
+	if (exec_state_call_stack == NULL)
+		return;
 
 	top_es_entry = exec_state_call_stack->next;
 	if (top_es_entry != NULL)

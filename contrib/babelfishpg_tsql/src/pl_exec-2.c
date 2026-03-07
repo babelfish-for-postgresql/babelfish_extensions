@@ -3362,7 +3362,7 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 
 	set_cur_user_db_and_path(stmt->db_name, false);
 
-	top_es_entry = exec_state_call_stack->next;
+	top_es_entry = (exec_state_call_stack != NULL) ? exec_state_call_stack->next : NULL;
 	while (top_es_entry != NULL)
 	{
 		/*
