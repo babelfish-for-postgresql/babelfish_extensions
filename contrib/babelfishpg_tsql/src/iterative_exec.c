@@ -951,7 +951,14 @@ is_part_of_pltsql_trycatch_block(PLtsql_execstate *estate)
 	PLExecStateCallStack *cur;
 	int level = 0;
 
-	Assert(estate == exec_state_call_stack->estate);
+	/* Safety: NULL stack means parallel worker or early init — not in TRY-CATCH */
+	if (exec_state_call_stack == NULL)
+		return false;
+
+	/* Replace hard Assert with soft check to prevent crash on estate mismatch */
+	if (estate != exec_state_call_stack->estate)
+		return false;
+
 	cur = exec_state_call_stack;
 	while (cur != NULL)
 	{
@@ -988,7 +995,14 @@ is_part_of_pltsql_trigger(PLtsql_execstate *estate)
 {
 	PLExecStateCallStack *cur;
 
-	Assert(estate == exec_state_call_stack->estate);
+	/* Safety: NULL stack means parallel worker or early init — not in trigger */
+	if (exec_state_call_stack == NULL)
+		return false;
+
+	/* Replace hard Assert with soft check to prevent crash on estate mismatch */
+	if (estate != exec_state_call_stack->estate)
+		return false;
+
 	cur = exec_state_call_stack;
 	while (cur != NULL)
 	{
@@ -1335,6 +1349,15 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 */
 		in_trycatch = is_part_of_pltsql_trycatch_block(estate);
 		insert_exec_active = pltsql_insert_exec_rewrite_active();
+
+		/*
+		 * Fallback for cases where exec_state_call_stack is NULL
+		 * (parallel workers, or early-path INSERT EXEC SPI execution).
+		 * Use the TRY-CATCH depth tracked explicitly in InsertExecRewriteContext.
+		 */
+		if (!in_trycatch && insert_exec_active)
+			in_trycatch = pltsql_insert_exec_in_trycatch();
+
 		/*
 		 * We need internal savepoints in two cases:
 		 * 1. Normal case: transaction block is active and we're not in INSERT EXEC

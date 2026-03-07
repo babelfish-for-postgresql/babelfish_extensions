@@ -572,6 +572,12 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 
 	MemoryContext stmt_mcontext;
 
+	/*
+	 * Track TRY-CATCH depth for INSERT EXEC.
+	 * This is used as a fallback when exec_state_call_stack is NULL.
+	 */
+	pltsql_insert_exec_enter_trycatch();
+
 	estate->err_text = gettext_noop("during statement block entry");
 
 	/*
@@ -697,6 +703,11 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 	PG_END_TRY();
 
 	Assert(save_cur_error == estate->cur_error->error);
+
+	/*
+	 * Decrement TRY-CATCH depth for INSERT EXEC tracking.
+	 */
+	pltsql_insert_exec_exit_trycatch();
 
 	estate->err_text = NULL;
 

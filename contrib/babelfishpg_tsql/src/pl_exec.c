@@ -90,6 +90,7 @@ typedef struct InsertExecRewriteContext
 	int			nest_level;		/* Nesting level for nested procedures */
 	bool		skip_triggers;	/* Skip AFTER triggers for current INSERT */
 	int			start_nested_tran_count;	/* NestedTranCount when INSERT EXEC started */
+	int			trycatch_depth;	/* How many TRY blocks are active during INSERT EXEC */
 } InsertExecRewriteContext;
 
 /* Global INSERT EXEC rewrite context */
@@ -11086,6 +11087,7 @@ pltsql_set_insert_exec_rewrite_context(const char *target_table, const char *col
 	if (column_list)
 		insert_exec_rewrite_ctx->column_list = MemoryContextStrdup(TopMemoryContext, column_list);
 	insert_exec_rewrite_ctx->nest_level++;
+	insert_exec_rewrite_ctx->trycatch_depth = 0;  /* Initialize TRY-CATCH depth */
 	
 	/*
 	 * Save the ORIGINAL NestedTranCount (before we incremented it for the
@@ -11170,6 +11172,39 @@ bool
 pltsql_insert_exec_rewrite_active(void)
 {
 	return insert_exec_rewrite_ctx != NULL && insert_exec_rewrite_ctx->active;
+}
+
+/*
+ * Check if we're inside a TRY-CATCH block during INSERT EXEC.
+ * This is a fallback for when exec_state_call_stack is NULL.
+ */
+bool
+pltsql_insert_exec_in_trycatch(void)
+{
+	if (insert_exec_rewrite_ctx == NULL || !insert_exec_rewrite_ctx->active)
+		return false;
+	return insert_exec_rewrite_ctx->trycatch_depth > 0;
+}
+
+/*
+ * Increment TRY-CATCH depth when entering a TRY block during INSERT EXEC.
+ */
+void
+pltsql_insert_exec_enter_trycatch(void)
+{
+	if (insert_exec_rewrite_ctx != NULL && insert_exec_rewrite_ctx->active)
+		insert_exec_rewrite_ctx->trycatch_depth++;
+}
+
+/*
+ * Decrement TRY-CATCH depth when exiting a TRY block during INSERT EXEC.
+ */
+void
+pltsql_insert_exec_exit_trycatch(void)
+{
+	if (insert_exec_rewrite_ctx != NULL && insert_exec_rewrite_ctx->active &&
+		insert_exec_rewrite_ctx->trycatch_depth > 0)
+		insert_exec_rewrite_ctx->trycatch_depth--;
 }
 
 /*
