@@ -343,6 +343,23 @@ $$;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'fn_varbintohexsubstring_deprecated_in_5_6_0');
 
+-- Add sys.textsize() function for @@textsize support
+CREATE OR REPLACE FUNCTION sys.textsize()
+RETURNS integer
+LANGUAGE plpgsql
+STABLE STRICT
+AS $$
+declare return_value integer;
+begin
+    return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfishpg_tsql.textsize');
+    RETURN return_value;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.textsize() TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
