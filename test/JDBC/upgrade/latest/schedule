@@ -212,7 +212,6 @@ date_time_empty_input_tests
 dateadd_internal_df
 datediff_big
 datediff
-datediff-weekday
 dateadd
 datename_tzoffset
 datepart
