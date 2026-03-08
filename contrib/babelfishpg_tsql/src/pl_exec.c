@@ -5055,6 +5055,14 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				pltsql_set_insert_exec_rewrite_context(estate->insert_exec_temp_table, 
 													   stmt->insert_exec_columns,
 													   saved_nested_tran_count);
+
+				/*
+				 * If the calling batch/function is inside a TRY-CATCH block, signal this
+				 * now that active=true. enter_trycatch() fires before active is set during
+				 * outer-batch TRY-CATCH setup, so trycatch_depth stays 0 without this.
+				 */
+				if (is_part_of_pltsql_trycatch_block(estate))
+					pltsql_insert_exec_enter_trycatch();
 			}
 		}
 
@@ -5209,9 +5217,44 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			 * cleanup of executor/trigger state when an error occurs inside the
 			 * procedure (e.g., in a rewritten INSERT) and is caught by TRY-CATCH.
 			 * Without this, the AfterTrigger query_depth can become inconsistent.
+			 *
+			 * Switch to the procedure owner's security context for the EXEC call.
+			 * Under SQL Server ownership chaining, if the calling proc and inner proc
+			 * share the same owner, the caller does not need explicit EXECUTE on the
+			 * inner proc. pltsql_ExecFuncProc_AclCheck uses GetUserId() for the
+			 * EXECUTE check, so switching to the procedure owner's identity here
+			 * allows the chain to work correctly.
+			 *
+			 * Note: Only switch context if we're inside a procedure (fn_oid is valid).
+			 * For top-level batches, fn_oid is InvalidOid and we skip the switch.
 			 */
-			rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
-												 estate->readonly_func, tcount);
+			if (OidIsValid(estate->func->fn_oid))
+			{
+				Oid		ie_save_userid;
+				int		ie_save_sec_context;
+
+				GetUserIdAndSecContext(&ie_save_userid, &ie_save_sec_context);
+				SetUserIdAndSecContext(get_func_owner(estate->func->fn_oid),
+									   ie_save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+				PG_TRY(_ie);
+				{
+					rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
+														 estate->readonly_func, tcount);
+				}
+				PG_CATCH(_ie);
+				{
+					SetUserIdAndSecContext(ie_save_userid, ie_save_sec_context);
+					PG_RE_THROW();
+				}
+				PG_END_TRY(_ie);
+				SetUserIdAndSecContext(ie_save_userid, ie_save_sec_context);
+			}
+			else
+			{
+				/* Top-level batch - no ownership chaining needed */
+				rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
+													 estate->readonly_func, tcount);
+			}
 		}
 		else
 			rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
@@ -11635,15 +11678,20 @@ exec_create_insert_exec_temp_table(PLtsql_execstate *estate,
 		 * IDENTITY columns have attidentity set to 'a' (ALWAYS) or 'd' (BY DEFAULT).
 		 * We exclude these columns from the temp table.
 		 * 
-		 * We use a subquery to break the link to source columns, preventing
-		 * Babelfish from copying any column properties.
+		 * IMPORTANT: We use CREATE TEMP TABLE (col_defs) instead of
+		 * CREATE TEMP TABLE AS SELECT ... FROM target WHERE FALSE.
+		 * This avoids accessing the target table, which is critical for
+		 * ownership chaining - the caller may not have SELECT permission
+		 * on the target table, but the procedure owner does.
 		 */
 		StringInfoData col_query;
 		int col_rc;
 		
 		initStringInfo(&col_query);
 		appendStringInfo(&col_query,
-			"SELECT string_agg(quote_ident(attname), ', ' ORDER BY attnum) "
+			"SELECT "
+			"  string_agg(quote_ident(attname) || ' ' || format_type(atttypid, atttypmod), ', ' ORDER BY attnum), "
+			"  string_agg(quote_ident(attname), ', ' ORDER BY attnum) "
 			"FROM pg_attribute "
 			"WHERE attrelid = '%s'::regclass "
 			"AND attnum > 0 "
@@ -11655,26 +11703,29 @@ exec_create_insert_exec_temp_table(PLtsql_execstate *estate,
 		
 		if (col_rc == SPI_OK_SELECT && SPI_processed == 1)
 		{
-			bool isnull;
-			Datum col_list_datum = SPI_getbinval(SPI_tuptable->vals[0], 
-												  SPI_tuptable->tupdesc, 1, &isnull);
+			bool isnull1, isnull2;
+			Datum col_defs_datum = SPI_getbinval(SPI_tuptable->vals[0], 
+												  SPI_tuptable->tupdesc, 1, &isnull1);
+			Datum col_names_datum = SPI_getbinval(SPI_tuptable->vals[0], 
+												  SPI_tuptable->tupdesc, 2, &isnull2);
 			
-			if (!isnull)
+			if (!isnull1 && !isnull2)
 			{
-				char *non_identity_cols = TextDatumGetCString(col_list_datum);
+				char *col_defs = TextDatumGetCString(col_defs_datum);
+				char *col_names = TextDatumGetCString(col_names_datum);
 				
-				/* Use subquery to break the link to source columns */
+				/* Use CREATE TABLE (col_defs) - no target table access needed */
 				appendStringInfo(&create_query,
-					"CREATE TEMP TABLE %s AS SELECT * FROM (SELECT %s FROM %s WHERE FALSE) AS __subq",
+					"CREATE TEMP TABLE %s (%s)",
 					temp_table_name,
-					non_identity_cols,
-					pg_table_ref);
+					col_defs);
 				
 				/* Save the non-identity column list for the flush INSERT */
 				estate->insert_exec_column_list = MemoryContextStrdup(TopMemoryContext,
-																	  non_identity_cols);
+																	  col_names);
 				
-				pfree(non_identity_cols);
+				pfree(col_defs);
+				pfree(col_names);
 			}
 			else
 			{
@@ -11928,85 +11979,113 @@ exec_flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	 * 
 	 * With pltsql_disable_txn_in_triggers = true, triggers use atomic SPI which
 	 * doesn't have the AfterTrigger depth issues that required the subtransaction.
+	 *
+	 * For ownership chaining: Switch to the procedure owner's security context
+	 * so the flush INSERT has permission to write to the target table. The caller
+	 * may not have INSERT permission on the target, but the procedure owner does.
+	 * This is the same pattern used for the inner procedure execution.
 	 */
-	PG_TRY();
 	{
-		rc = SPI_execute(flush_query.data, false, 0);
-		/* 
-		 * Accept both SPI_OK_INSERT and SPI_OK_INSERT_RETURNING.
-		 * When IDENTITY_INSERT is ON, the T-SQL parser adds a RETURNING clause
-		 * to track the identity values, which causes SPI_OK_INSERT_RETURNING.
-		 */
-		if (rc != SPI_OK_INSERT && rc != SPI_OK_INSERT_RETURNING)
+		Oid		flush_save_userid = InvalidOid;
+		int		flush_save_sec_context = 0;
+		bool	flush_switched_context = false;
+
+		/* Only switch context if we're inside a procedure (fn_oid is valid) */
+		if (OidIsValid(estate->func->fn_oid))
 		{
-			elog(ERROR, "INSERT-EXEC-TEMP-TABLE: Bulk insert failed: %s",
-				 SPI_result_code_string(rc));
+			GetUserIdAndSecContext(&flush_save_userid, &flush_save_sec_context);
+			SetUserIdAndSecContext(get_func_owner(estate->func->fn_oid),
+								   flush_save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+			flush_switched_context = true;
 		}
 
-		/* Capture results */
-		estate->eval_processed = SPI_processed;
-		exec_set_rowcount(SPI_processed);
-		exec_set_found(estate, SPI_processed > 0);
+		PG_TRY(_flush);
+		{
+			rc = SPI_execute(flush_query.data, false, 0);
+			/* 
+			 * Accept both SPI_OK_INSERT and SPI_OK_INSERT_RETURNING.
+			 * When IDENTITY_INSERT is ON, the T-SQL parser adds a RETURNING clause
+			 * to track the identity values, which causes SPI_OK_INSERT_RETURNING.
+			 */
+			if (rc != SPI_OK_INSERT && rc != SPI_OK_INSERT_RETURNING)
+			{
+				elog(ERROR, "INSERT-EXEC-TEMP-TABLE: Bulk insert failed: %s",
+					 SPI_result_code_string(rc));
+			}
 
-		/* Free the SPI tuple table (contains TupleDesc that must be released) */
-		SPI_freetuptable(SPI_tuptable);
+			/* Capture results */
+			estate->eval_processed = SPI_processed;
+			exec_set_rowcount(SPI_processed);
+			exec_set_found(estate, SPI_processed > 0);
 
-		/*
-		 * Close composite trigger nesting level and fire any queued triggers.
-		 * This is where INSTEAD OF triggers actually execute.
-		 */
-		EndCompositeTriggers(false);
+			/* Free the SPI tuple table (contains TupleDesc that must be released) */
+			SPI_freetuptable(SPI_tuptable);
 
-		/* Restore the flag */
-		pltsql_disable_txn_in_triggers = saved_disable_txn_in_triggers;
+			/*
+			 * Close composite trigger nesting level and fire any queued triggers.
+			 * This is where INSTEAD OF triggers actually execute.
+			 */
+			EndCompositeTriggers(false);
+
+			/* Restore the flag */
+			pltsql_disable_txn_in_triggers = saved_disable_txn_in_triggers;
+
+			/* Restore security context */
+			if (flush_switched_context)
+				SetUserIdAndSecContext(flush_save_userid, flush_save_sec_context);
+		}
+		PG_CATCH(_flush);
+		{
+			/* Restore security context first */
+			if (flush_switched_context)
+				SetUserIdAndSecContext(flush_save_userid, flush_save_sec_context);
+
+			/* Close composite trigger level on error (don't fire triggers) */
+			EndCompositeTriggers(true);
+
+			/* Restore the flag first */
+			pltsql_disable_txn_in_triggers = saved_disable_txn_in_triggers;
+
+			/*
+			 * DO NOT try to drop the temp table here!
+			 * The table may still be in use by active queries, and attempting
+			 * to drop it would fail with "table is being used by active queries".
+			 * 
+			 * Instead, just clear the estate fields so we don't try to drop again.
+			 * The temp table will be cleaned up:
+			 * 1. By the PG_FINALLY block in exec_stmt_exec (if transaction is still valid)
+			 * 2. By PostgreSQL when the session ends (if transaction is aborted)
+			 * 
+			 * We also need to free the TopMemoryContext allocations to prevent leaks.
+			 */
+			if (estate->insert_exec_temp_table != NULL)
+			{
+				pfree(estate->insert_exec_temp_table);
+				estate->insert_exec_temp_table = NULL;
+			}
+			if (estate->insert_exec_target_table != NULL)
+			{
+				pfree(estate->insert_exec_target_table);
+				estate->insert_exec_target_table = NULL;
+			}
+			if (estate->insert_exec_column_list != NULL)
+			{
+				pfree(estate->insert_exec_column_list);
+				estate->insert_exec_column_list = NULL;
+			}
+			estate->insert_exec_identity_insert = false;
+
+			pfree(flush_query.data);
+			pfree(tsql_target_ref);
+
+			/*
+			 * Re-raise the original error so T-SQL TRY/CATCH can handle it.
+			 * The error is still on the stack after RollbackAndReleaseCurrentSubTransaction.
+			 */
+			PG_RE_THROW();
+		}
+		PG_END_TRY(_flush);
 	}
-	PG_CATCH();
-	{
-		/* Close composite trigger level on error (don't fire triggers) */
-		EndCompositeTriggers(true);
-
-		/* Restore the flag first */
-		pltsql_disable_txn_in_triggers = saved_disable_txn_in_triggers;
-
-		/*
-		 * DO NOT try to drop the temp table here!
-		 * The table may still be in use by active queries, and attempting
-		 * to drop it would fail with "table is being used by active queries".
-		 * 
-		 * Instead, just clear the estate fields so we don't try to drop again.
-		 * The temp table will be cleaned up:
-		 * 1. By the PG_FINALLY block in exec_stmt_exec (if transaction is still valid)
-		 * 2. By PostgreSQL when the session ends (if transaction is aborted)
-		 * 
-		 * We also need to free the TopMemoryContext allocations to prevent leaks.
-		 */
-		if (estate->insert_exec_temp_table != NULL)
-		{
-			pfree(estate->insert_exec_temp_table);
-			estate->insert_exec_temp_table = NULL;
-		}
-		if (estate->insert_exec_target_table != NULL)
-		{
-			pfree(estate->insert_exec_target_table);
-			estate->insert_exec_target_table = NULL;
-		}
-		if (estate->insert_exec_column_list != NULL)
-		{
-			pfree(estate->insert_exec_column_list);
-			estate->insert_exec_column_list = NULL;
-		}
-		estate->insert_exec_identity_insert = false;
-
-		pfree(flush_query.data);
-		pfree(tsql_target_ref);
-
-		/*
-		 * Re-raise the original error so T-SQL TRY/CATCH can handle it.
-		 * The error is still on the stack after RollbackAndReleaseCurrentSubTransaction.
-		 */
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
 
 	pfree(flush_query.data);
 	pfree(tsql_target_ref);

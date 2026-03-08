@@ -28,6 +28,9 @@
 #include "pltsql_permissions.h"
 #include "rolecmds.h"
 #include "session.h"
+
+/* Forward declaration - defined in iterative_exec.c which is included after this file */
+static bool is_part_of_pltsql_trycatch_block(PLtsql_execstate *estate);
 #include "parser/scansup.h"
 #include "parser/parse_oper.h"
 #include "lib/qunique.h"
@@ -872,6 +875,9 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	 */
 	uint32 saved_nested_tran_count = 0;
 	bool restore_tran_count = false;
+	
+	/* Save the trigger transaction flag for INSERT EXEC */
+	bool saved_disable_txn_in_triggers = pltsql_disable_txn_in_triggers;
 
 	/*
 	 * We need to disable the explain gucs incase of sp_reset_connection
@@ -1286,6 +1292,15 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			pltsql_set_insert_exec_rewrite_context(estate->insert_exec_temp_table,
 												   stmt->insert_exec_columns,
 												   saved_nested_tran_count);
+
+			/*
+			 * If the calling batch/function is inside a TRY-CATCH block, signal this
+			 * now that active=true. enter_trycatch() fires before active is set during
+			 * outer-batch TRY-CATCH setup, so trycatch_depth stays 0 without this.
+			 */
+			if (is_part_of_pltsql_trycatch_block(estate))
+				pltsql_insert_exec_enter_trycatch();
+
 			insert_exec_context_set = true;
 			
 			/*
@@ -1410,6 +1425,9 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	}
 	PG_FINALLY();
 	{
+		/* Restore the trigger transaction flag */
+		pltsql_disable_txn_in_triggers = saved_disable_txn_in_triggers;
+		
 		/* Clear INSERT EXEC context if we set it */
 		if (insert_exec_context_set)
 		{
@@ -1745,6 +1763,15 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			pltsql_set_insert_exec_rewrite_context(estate->insert_exec_temp_table,
 												   stmt->insert_exec_columns,
 												   saved_nested_tran_count);
+
+			/*
+			 * If the calling batch/function is inside a TRY-CATCH block, signal this
+			 * now that active=true. enter_trycatch() fires before active is set during
+			 * outer-batch TRY-CATCH setup, so trycatch_depth stays 0 without this.
+			 */
+			if (is_part_of_pltsql_trycatch_block(estate))
+				pltsql_insert_exec_enter_trycatch();
+
 			insert_exec_context_set = true;
 		}
 
