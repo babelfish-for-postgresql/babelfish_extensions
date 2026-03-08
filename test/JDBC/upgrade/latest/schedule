@@ -344,7 +344,6 @@ sys-indexes-dep
 sys-key_constraints
 sys-key_constraints-dep
 sys-lock_timeout
-sys-textsize
 sys-master_files
 sys-max_connections
 sys-nestlevel-dep
