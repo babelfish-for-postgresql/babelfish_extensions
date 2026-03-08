@@ -1,5 +1,5 @@
 -- default value (0)
-exec sys_textsize_p1
+SELECT @@textsize
 GO
 ~~START~~
 int
@@ -8,7 +8,7 @@ int
 
 
 -- used in expression
-exec sys_textsize_p2
+SELECT CASE WHEN @@textsize >= 0 THEN 'valid' ELSE 'invalid' END
 GO
 ~~START~~
 varchar
@@ -17,28 +17,10 @@ valid
 
 
 -- used with other @@ variables
-exec sys_textsize_p3
+SELECT @@textsize AS textsize, @@lock_timeout AS lock_timeout
 GO
 ~~START~~
 int#!#int
 0#!#-1
-~~END~~
-
-
--- from view
-SELECT * FROM sys_textsize_v1
-GO
-~~START~~
-int
-0
-~~END~~
-
-
--- direct SELECT @@textsize
-SELECT @@textsize
-GO
-~~START~~
-int
-0
 ~~END~~
 
