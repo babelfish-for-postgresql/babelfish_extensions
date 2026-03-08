@@ -1,0 +1,53 @@
+-- 0
+exec datediff_weekday_p1
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- 1
+exec datediff_weekday_p2
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- -10
+exec datediff_weekday_p3
+GO
+~~START~~
+int
+-10
+~~END~~
+
+
+-- 365
+exec datediff_dw_p1
+GO
+~~START~~
+int
+365
+~~END~~
+
+
+-- 10957
+exec datediff_big_weekday_p1
+GO
+~~START~~
+bigint
+10957
+~~END~~
+
+
+-- -10957
+exec datediff_big_dw_p1
+GO
+~~START~~
+bigint
+-10957
+~~END~~
+
