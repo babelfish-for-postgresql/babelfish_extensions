@@ -1106,8 +1106,8 @@ transform_likenode(Node *node, bool is_constraint)
 
 		if (OidIsValid(like_entry.like_oid) && list_length(op->args) >= 2)
 		{
-					Node *left_arg = linitial(op->args);
-					Node *right_arg = lsecond(op->args);
+			Node *left_arg = linitial(op->args);
+			Node *right_arg = lsecond(op->args);
 			if (!IsA(left_arg, CollateExpr) && !IsA(right_arg, CollateExpr) && !contain_var_clause(right_arg))
 			{
 				Node *unwrapped = left_arg;

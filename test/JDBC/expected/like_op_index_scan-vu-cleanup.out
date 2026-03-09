@@ -1,20 +1,19 @@
 DROP VIEW BABEL_5966_vw_like_nested;
-DROP VIEW BABEL_5966_vw_like_exact_varchar;
-DROP VIEW BABEL_5966_vw_like_prefix_varchar;
-DROP VIEW BABEL_5966_vw_like_suffix_varchar;
-DROP VIEW BABEL_5966_vw_like_contains_varchar;
-DROP VIEW BABEL_5966_vw_like_single_char_varchar;
-DROP VIEW BABEL_5966_vw_not_like_varchar;
-DROP VIEW BABEL_5966_vw_not_like_exact_varchar;
-DROP VIEW BABEL_5966_vw_like_exact_nvarchar;
-DROP VIEW BABEL_5966_vw_like_prefix_nvarchar;
-DROP VIEW BABEL_5966_vw_like_suffix_nvarchar;
-DROP VIEW BABEL_5966_vw_like_exact_char;
-DROP VIEW BABEL_5966_vw_like_prefix_char;
-DROP VIEW BABEL_5966_vw_like_suffix_char;
+DROP VIEW BABEL_5966_vw_like_exact;
+DROP VIEW BABEL_5966_vw_like_prefix;
+DROP VIEW BABEL_5966_vw_like_suffix;
+DROP VIEW BABEL_5966_vw_like_contains;
+DROP VIEW BABEL_5966_vw_like_single_char;
+DROP VIEW BABEL_5966_vw_not_like;
+DROP VIEW BABEL_5966_vw_not_like_exact;
+DROP VIEW BABEL_5966_vw_like_nvar_exact;
+DROP VIEW BABEL_5966_vw_like_nvar_prefix;
+DROP VIEW BABEL_5966_vw_like_nvar_suffix;
+DROP VIEW BABEL_5966_vw_like_char_exact;
+DROP VIEW BABEL_5966_vw_like_char_prefix;
+DROP VIEW BABEL_5966_vw_like_char_suffix;
 DROP VIEW BABEL_5966_vw_like_or;
 DROP VIEW BABEL_5966_vw_like_and;
-DROP VIEW BABEL_5966_vw_like_mixed;
 DROP VIEW BABEL_5966_vw_like_escape_pct;
 DROP VIEW BABEL_5966_vw_like_escape_underscore;
 DROP VIEW BABEL_5966_vw_like_unicode;
@@ -38,7 +37,7 @@ DROP PROCEDURE BABEL_5966_sp_like_prefix_const;
 DROP PROCEDURE BABEL_5966_sp_like_suffix_const;
 DROP PROCEDURE BABEL_5966_sp_like_varchar_param;
 DROP PROCEDURE BABEL_5966_sp_like_nvarchar_param;
-DROP PROCEDURE BABEL_5966_sp_like_all_columns;
+DROP PROCEDURE BABEL_5966_sp_like_all_types;
 DROP PROCEDURE BABEL_5966_sp_not_like_param;
 DROP PROCEDURE BABEL_5966_sp_like_escape;
 DROP PROCEDURE BABEL_5966_sp_like_dynamic;
@@ -53,8 +52,6 @@ DROP PROCEDURE BABEL_5966_sp_like_exists;
 DROP PROCEDURE BABEL_5966_sp_like_top;
 GO
 
-DROP TABLE BABEL_5966_TestLikeIndex;
-GO
 DROP TABLE BABEL_5966_TestLikeCollation_CI_AS;
 GO
 DROP TABLE BABEL_5966_TestLikeCollation_CS_AS;
