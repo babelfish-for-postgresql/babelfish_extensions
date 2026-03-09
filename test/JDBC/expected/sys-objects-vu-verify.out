@@ -51,6 +51,7 @@ select name, type, type_desc from tempdb.sys.objects order by name;
 GO
 ~~START~~
 varchar#!#char#!#nvarchar
+sp_tablecollations_100#!#P #!#SQL_STORED_PROCEDURE
 ~~END~~
 
 
@@ -81,6 +82,7 @@ select name, type, type_desc from tempdb.sys.objects order by name;
 GO
 ~~START~~
 varchar#!#char#!#nvarchar
+sp_tablecollations_100#!#P #!#SQL_STORED_PROCEDURE
 ~~END~~
 
 

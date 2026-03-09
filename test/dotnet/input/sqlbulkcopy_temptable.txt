@@ -48,3 +48,7 @@ drop table #collTest6
 Create table #collTest7(a int, b varchar(30), c nvarchar(30), d char(10))
 exec tempdb.dbo.sp_tablecollations_100 '#collTest7'
 drop table #collTest7
+
+# Cleanup: Drop UDTs created for non-ENR tests
+DROP TYPE IF EXISTS dbo.BcpTestVarcharType
+DROP TYPE IF EXISTS dbo.BcpTestVarcharType2

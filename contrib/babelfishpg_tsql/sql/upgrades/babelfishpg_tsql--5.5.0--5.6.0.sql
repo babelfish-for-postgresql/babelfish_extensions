@@ -370,7 +370,7 @@ GRANT EXECUTE ON FUNCTION sys.babelfish_get_enr_attributes(IN sys.varchar(4000))
 -- Wrapper function for sp_tablecollations_100 that uses the babelfish_get_enr_attributes function
 CREATE OR REPLACE FUNCTION sys.sp_tablecollations_100_enr(IN table_name sys.varchar(4000))
 RETURNS TABLE(colid INT, name sys.varchar, collation_name sys.nvarchar(128))
-AS $
+AS $$
     SELECT 
         CAST(a.attnum AS INT) AS colid,
         CAST(a.attname AS sys.varchar) AS name,
@@ -379,7 +379,7 @@ AS $
     LEFT JOIN pg_catalog.pg_collation c ON a.attcollation = c.oid
     WHERE a.attnum > 0 AND NOT a.attisdropped
     ORDER BY a.attnum;
-$
+$$
 LANGUAGE SQL STABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.sp_tablecollations_100_enr(IN sys.varchar(4000)) TO PUBLIC;
 

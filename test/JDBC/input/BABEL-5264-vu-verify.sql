@@ -1,7 +1,7 @@
 -- BABEL-5264: Test sp_tablecollations_100 functions for BCP temp table support
 
 -- Test 1: Basic test of sys.sp_tablecollations_100_enr and tempdb.dbo.sp_tablecollations_100
-CREATE TABLE #collTest1(id int, name varchar(50), description nvarchar(100))
+CREATE TABLE #collTest1(id int, name varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS, description nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
 GO
 
 SELECT * FROM sys.sp_tablecollations_100_enr('#collTest1')
@@ -16,13 +16,13 @@ GO
 -- Test 2: Test with various column types
 CREATE TABLE #collTest2(
     a int,
-    b text,
-    c ntext,
-    d varchar(max),
+    b text COLLATE SQL_Latin1_General_CP1_CI_AS,
+    c ntext COLLATE SQL_Latin1_General_CP1_CI_AS,
+    d varchar(max) COLLATE SQL_Latin1_General_CP1_CI_AS,
     e binary(10),
     f varbinary(20),
-    g char(5),
-    h nchar(10)
+    g char(5) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    h nchar(10) COLLATE SQL_Latin1_General_CP1_CI_AS
 )
 GO
 
@@ -36,7 +36,7 @@ DROP TABLE #collTest2
 GO
 
 -- Test 3: Test with different table name formats
-CREATE TABLE #collTest3(col1 varchar(100))
+CREATE TABLE #collTest3(col1 varchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
 GO
 
 -- With hash prefix
@@ -59,10 +59,10 @@ SELECT * FROM sys.sp_tablecollations_100_enr('#nonExistentTable')
 GO
 
 -- Test 5: Test with multiple temp tables
-CREATE TABLE #multiTest1(a varchar(50))
+CREATE TABLE #multiTest1(a varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS)
 GO
 
-CREATE TABLE #multiTest2(b nvarchar(100))
+CREATE TABLE #multiTest2(b nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
 GO
 
 SELECT * FROM sys.sp_tablecollations_100_enr('#multiTest1')
@@ -116,8 +116,8 @@ GO
 -- Test 8: Temp table with dropped column
 CREATE TABLE #droppedCol(
     id int,
-    col_to_drop varchar(50),
-    name varchar(100)
+    col_to_drop varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    name varchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS
 )
 GO
 
@@ -138,7 +138,7 @@ GO
 -- =====================================================
 
 -- Test 9: Basic non-ENR temp table test
-CREATE TABLE #nonEnrTest1(id int, name dbo.TestVarcharType1, description nvarchar(100))
+CREATE TABLE #nonEnrTest1(id int, name dbo.TestVarcharType1, description nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
 GO
 
 SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrTest1')
@@ -154,7 +154,7 @@ GO
 CREATE TABLE #nonEnrTest2(
     a int,
     b dbo.TestVarcharType2,
-    c nvarchar(100),
+    c nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS,
     d binary(10)
 )
 GO
@@ -206,7 +206,7 @@ GO
 CREATE TABLE #nonEnrDropped(
     id int,
     col_to_drop dbo.TestVarcharType4,
-    name varchar(100)
+    name varchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS
 )
 GO
 

@@ -63,3 +63,5 @@ bbf_unicode_cp1_ci_as
 4#!#d#!#94208052#!#
 bbf_unicode_cp1_ci_as
 #Q#drop table #collTest7
+#Q#DROP TYPE IF EXISTS dbo.BcpTestVarcharType
+#Q#DROP TYPE IF EXISTS dbo.BcpTestVarcharType2
