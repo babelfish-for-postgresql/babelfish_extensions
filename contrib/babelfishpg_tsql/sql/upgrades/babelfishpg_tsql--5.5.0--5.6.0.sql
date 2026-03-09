@@ -351,7 +351,7 @@ STABLE STRICT
 AS $$
 declare return_value integer;
 begin
-    return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfishpg_tsql.textsize');
+    return_value := current_setting('babelfishpg_tsql.textsize');
     RETURN return_value;
 EXCEPTION
     WHEN others THEN

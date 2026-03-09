@@ -1,3 +1,4 @@
+
 -- default value (0)
 SELECT @@textsize
 GO
@@ -17,7 +18,7 @@ valid
 
 
 -- used with other @@ variables
-SELECT @@textsize AS textsize, @@lock_timeout AS lock_timeout
+SELECT @@textsize, @@lock_timeout
 GO
 ~~START~~
 int#!#int

@@ -7,5 +7,5 @@ SELECT CASE WHEN @@textsize >= 0 THEN 'valid' ELSE 'invalid' END
 GO
 
 -- used with other @@ variables
-SELECT @@textsize AS textsize, @@lock_timeout AS lock_timeout
+SELECT @@textsize, @@lock_timeout
 GO
