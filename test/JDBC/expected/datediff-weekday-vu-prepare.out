@@ -1,6 +1,6 @@
+
 -- Test DATEDIFF with weekday datepart (GitHub issue #2117)
 -- In SQL Server, DATEDIFF(weekday, ...) counts day boundaries (same as day)
-
 -- 0 (same day)
 CREATE PROCEDURE datediff_weekday_p1 as (select datediff(weekday, cast('2020-01-01' as datetime), cast('2020-01-01' as datetime)));
 GO
