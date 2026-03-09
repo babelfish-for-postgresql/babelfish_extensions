@@ -6420,8 +6420,6 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	char 		*saved_search_path = MemoryContextStrdup(TopMemoryContext, namespace_search_path);
 	int16		saved_dbid = get_cur_db_id();
 
-	create_queryEnv2(CacheMemoryContext, false);
-
 	nonatomic = support_tsql_trans ||
 		(fcinfo->context &&
 		 IsA(fcinfo->context, CallContext) &&
@@ -6443,6 +6441,8 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	if ((rc = SPI_connect_ext(nonatomic ? SPI_OPT_NONATOMIC : 0)) != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 	PortalContext = savedPortalCxt;
+
+	create_queryEnv2(CacheMemoryContext, false);
 
 	SPI_setCurrentInternalTxnMode(true);
 	current_spi_stack_depth = SPI_get_depth();
