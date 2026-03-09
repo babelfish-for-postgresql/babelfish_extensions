@@ -449,6 +449,21 @@ CREATE OR REPLACE FUNCTION sys.STGeometryType(geom sys.GEOMETRY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+--MAKE VALID
+CREATE OR REPLACE FUNCTION sys.MakeValid(geom sys.GEOMETRY)
+	RETURNS sys.GEOMETRY
+	AS $$
+	BEGIN
+    	IF sys.STIsEmpty(geom) = 1 THEN
+        	RETURN geom;
+    	ELSEIF sys.STIsValid(geom) = 1 THEN 
+        	RETURN geom;
+    	ELSE
+    		RETURN sys.STMakeValid_helper(geom);
+    	END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 --Parse
 CREATE OR REPLACE FUNCTION sys.Geometry__Parse(geometry_tagged_text sys.NVARCHAR)
     RETURNS sys.GEOMETRY
@@ -675,6 +690,11 @@ CREATE OR REPLACE FUNCTION sys.STNumPoints_helper(sys.GEOMETRY)
     AS '$libdir/postgis-3','LWGEOM_npoints'
     LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.STMakeValid_helper(sys.GEOMETRY)
+        RETURNS sys.GEOMETRY
+        AS '$libdir/postgis-3','ST_MakeValid'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+		
 CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
         RETURNS sys.BIT
         AS '$libdir/postgis-3','ST_Intersects'
