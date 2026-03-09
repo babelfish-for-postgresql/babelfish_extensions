@@ -1,1 +1,0 @@
--- No objects to clean up: all testing done inline in verify script.

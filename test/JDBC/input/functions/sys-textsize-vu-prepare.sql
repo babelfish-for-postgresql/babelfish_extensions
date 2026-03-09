@@ -1,2 +1,0 @@
--- No-op prepare: @@textsize is a new feature and cannot be tested on old versions.
--- All testing is done in the verify script.
