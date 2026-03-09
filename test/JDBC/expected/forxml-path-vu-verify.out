@@ -24,7 +24,7 @@ SELECT hello.String as [@param2] , string  FROM for_xml_path hello ORDER BY Sequ
 GO
 ~~START~~
 ntext
-<row param2="SELECT" ><string>SELECT</string></row><row param2="Product," ><string>Product,</string></row><row param2="UnitPrice," ><string>UnitPrice,</string></row><row param2="EffectiveDate" ><string>EffectiveDate</string></row><row param2="FROM" ><string>FROM</string></row><row param2="Products" ><string>Products</string></row><row param2="WHERE" ><string>WHERE</string></row><row param2="UnitPrice" ><string>UnitPrice</string></row><row param2="&gt; 100" ><string>&gt; 100</string></row>
+<row param2="SELECT"><string>SELECT</string></row><row param2="Product,"><string>Product,</string></row><row param2="UnitPrice,"><string>UnitPrice,</string></row><row param2="EffectiveDate"><string>EffectiveDate</string></row><row param2="FROM"><string>FROM</string></row><row param2="Products"><string>Products</string></row><row param2="WHERE"><string>WHERE</string></row><row param2="UnitPrice"><string>UnitPrice</string></row><row param2="&gt; 100"><string>&gt; 100</string></row>
 ~~END~~
 
 
@@ -33,7 +33,7 @@ SELECT String as [@param2]  FROM for_xml_path ORDER BY SequenceNumber FOR XML PA
 GO
 ~~START~~
 ntext
-<row param2="SELECT" /><row param2="Product," /><row param2="UnitPrice," /><row param2="EffectiveDate" /><row param2="FROM" /><row param2="Products" /><row param2="WHERE" /><row param2="UnitPrice" /><row param2="&gt; 100" />
+<row param2="SELECT"/><row param2="Product,"/><row param2="UnitPrice,"/><row param2="EffectiveDate"/><row param2="FROM"/><row param2="Products"/><row param2="WHERE"/><row param2="UnitPrice"/><row param2="&gt; 100"/>
 ~~END~~
 
 
@@ -78,7 +78,7 @@ SELECT * FROM for_xml_path_v3
 GO
 ~~START~~
 ntext
-<row param2="SELECT" ><string>SELECT</string></row><row param2="Product," ><string>Product,</string></row><row param2="UnitPrice," ><string>UnitPrice,</string></row><row param2="EffectiveDate" ><string>EffectiveDate</string></row><row param2="FROM" ><string>FROM</string></row><row param2="Products" ><string>Products</string></row><row param2="WHERE" ><string>WHERE</string></row><row param2="UnitPrice" ><string>UnitPrice</string></row><row param2="&gt; 100" ><string>&gt; 100</string></row>
+<row param2="SELECT"><string>SELECT</string></row><row param2="Product,"><string>Product,</string></row><row param2="UnitPrice,"><string>UnitPrice,</string></row><row param2="EffectiveDate"><string>EffectiveDate</string></row><row param2="FROM"><string>FROM</string></row><row param2="Products"><string>Products</string></row><row param2="WHERE"><string>WHERE</string></row><row param2="UnitPrice"><string>UnitPrice</string></row><row param2="&gt; 100"><string>&gt; 100</string></row>
 ~~END~~
 
 
@@ -112,7 +112,7 @@ EXEC for_xml_path_p3
 GO
 ~~START~~
 ntext
-<row param2="SELECT" ><string>SELECT</string></row><row param2="Product," ><string>Product,</string></row><row param2="UnitPrice," ><string>UnitPrice,</string></row><row param2="EffectiveDate" ><string>EffectiveDate</string></row><row param2="FROM" ><string>FROM</string></row><row param2="Products" ><string>Products</string></row><row param2="WHERE" ><string>WHERE</string></row><row param2="UnitPrice" ><string>UnitPrice</string></row><row param2="&gt; 100" ><string>&gt; 100</string></row>
+<row param2="SELECT"><string>SELECT</string></row><row param2="Product,"><string>Product,</string></row><row param2="UnitPrice,"><string>UnitPrice,</string></row><row param2="EffectiveDate"><string>EffectiveDate</string></row><row param2="FROM"><string>FROM</string></row><row param2="Products"><string>Products</string></row><row param2="WHERE"><string>WHERE</string></row><row param2="UnitPrice"><string>UnitPrice</string></row><row param2="&gt; 100"><string>&gt; 100</string></row>
 ~~END~~
 
 

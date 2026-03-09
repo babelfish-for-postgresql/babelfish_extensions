@@ -4059,3 +4059,300 @@ int#!#varchar
 
 DROP TABLE #insert_exec_drop_target
 GO
+
+DROP TABLE #t
+DROP TABLE #t1
+DROP TABLE #t2
+GO
+
+
+---------------------------------------------------------------------------
+-- DROP TABLE IF EXISTS + CREATE TABLE in procedures (BABEL-6097)
+---------------------------------------------------------------------------
+-- Basic DROP IF EXISTS + CREATE pattern
+CREATE TABLE #t(a int)
+GO
+
+EXEC p_drop_if_exists_create
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+CREATE TABLE #t(a int)  -- Should not crash
+GO
+
+DROP TABLE #t
+GO
+
+-- Multiple DROP IF EXISTS + CREATE cycles
+CREATE TABLE #t(x varchar(10))
+INSERT INTO #t VALUES ('original')
+GO
+~~ROW COUNT: 1~~
+
+
+EXEC p_multi_drop_create
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+2#!#second
+~~END~~
+
+
+CREATE TABLE #t(c int)
+INSERT INTO #t VALUES (999)
+SELECT * FROM #t
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+999
+~~END~~
+
+
+DROP TABLE #t
+GO
+
+-- DROP IF EXISTS + CREATE with different schemas
+EXEC p_drop_create_schema_change
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int#!#varchar
+10#!#20#!#changed schema
+~~END~~
+
+
+CREATE TABLE #t(final_col int)
+INSERT INTO #t VALUES (777)
+SELECT * FROM #t
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+777
+~~END~~
+
+
+DROP TABLE #t
+GO
+
+-- DROP IF EXISTS + CREATE in transaction
+EXEC p_trans_drop_create
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#in transaction
+~~END~~
+
+
+-- DROP IF EXISTS + CREATE with rollback
+EXEC p_rollback_drop_create
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+100
+~~END~~
+
+
+-- Multiple temp tables with DROP IF EXISTS + CREATE
+EXEC p_multi_tables_drop_create
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+10#!#20
+~~END~~
+
+~~START~~
+varchar
+test
+~~END~~
+
+
+-- DROP IF EXISTS + CREATE with indexes
+EXEC p_drop_create_with_index
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#indexed
+~~END~~
+
+
+-- DROP IF EXISTS + CREATE with constraints
+EXEC p_drop_create_constraints
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+1#!#100
+2#!#200
+~~END~~
+
+
+-- DROP IF EXISTS + CREATE with ALTER TABLE
+EXEC p_drop_create_alter
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#altered
+~~END~~
+
+
+-- Conditional DROP IF EXISTS + CREATE
+EXEC p_conditional_drop_create
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+100
+~~END~~
+
+
+-- DROP IF EXISTS + CREATE with TRUNCATE
+EXEC p_drop_create_truncate
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+3#!#after truncate
+~~END~~
+
+
+-- Error handling with DROP IF EXISTS + CREATE
+EXEC p_error_drop_create
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+Error: duplicate key value violates unique constraint "#err_t_pkey"
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+-- Repeated calls to same procedure
+CREATE TABLE #t(a int)
+GO
+
+EXEC p_drop_if_exists_create
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC p_drop_if_exists_create  -- Second call
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC p_drop_if_exists_create  -- Third call
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+CREATE TABLE #t(final int)  -- Should not crash
+GO
+
+DROP TABLE #t
+GO
+
+-- Interleaved procedure calls
+CREATE TABLE #t(a int)
+CREATE TABLE #t1(a int)
+GO
+
+EXEC p_drop_if_exists_create
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC p_multi_tables_drop_create
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+10#!#20
+~~END~~
+
+~~START~~
+varchar
+test
+~~END~~
+
+
+CREATE TABLE #t(x int)
+CREATE TABLE #t1(y int)
+GO
+
+DROP TABLE #t
+DROP TABLE #t1
+GO

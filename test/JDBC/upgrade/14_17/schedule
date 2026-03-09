@@ -502,3 +502,4 @@ BABEL-5788
 babel_convert_with_style
 like_op_index_scan-before-15_2
 forxml-raw-elements-before-17_9-or-18_3
+forxml-path-elements-before-17_10-or-18_4
