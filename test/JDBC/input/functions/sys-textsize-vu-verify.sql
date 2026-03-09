@@ -1,9 +1,9 @@
--- default value (0)
+-- default value
 SELECT @@textsize
 GO
 
 -- used in expression
-SELECT CASE WHEN @@textsize >= 0 THEN 'valid' ELSE 'invalid' END
+SELECT CASE WHEN @@textsize >= -1 THEN 'valid' ELSE 'invalid' END
 GO
 
 -- used with other @@ variables
