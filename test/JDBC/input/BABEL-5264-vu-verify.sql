@@ -138,7 +138,7 @@ GO
 -- =====================================================
 
 -- Test 9: Basic non-ENR temp table test
-CREATE TABLE #nonEnrTest1(id int, name dbo.TestVarcharType1, description nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
+CREATE TABLE #nonEnrTest1(id int, name dbo.TestVarcharType1 COLLATE SQL_Latin1_General_CP1_CI_AS, description nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
 GO
 
 SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrTest1')
@@ -153,7 +153,7 @@ GO
 -- Test 10: Non-ENR with various column types
 CREATE TABLE #nonEnrTest2(
     a int,
-    b dbo.TestVarcharType2,
+    b dbo.TestVarcharType2 COLLATE SQL_Latin1_General_CP1_CI_AS,
     c nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS,
     d binary(10)
 )
@@ -170,7 +170,7 @@ GO
 
 -- Test 11: Non-ENR with different collations
 CREATE TABLE #nonEnrTest3(
-    col_default dbo.TestVarcharType3,
+    col_default dbo.TestVarcharType3 COLLATE SQL_Latin1_General_CP1_CI_AS,
     col_ci varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS,
     col_cs varchar(50) COLLATE SQL_Latin1_General_CP1_CS_AS
 )
@@ -205,7 +205,7 @@ GO
 -- Test 13: Non-ENR with dropped column
 CREATE TABLE #nonEnrDropped(
     id int,
-    col_to_drop dbo.TestVarcharType4,
+    col_to_drop dbo.TestVarcharType4 COLLATE SQL_Latin1_General_CP1_CI_AS,
     name varchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS
 )
 GO

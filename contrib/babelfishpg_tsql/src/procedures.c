@@ -5152,6 +5152,9 @@ create_sp_tablecollations_100_in_tempdb_dbo_internal(PG_FUNCTION_ARGS)
 
     pfree(dbo_scm);
 
+    /* Make previous catalog changes visible before creating the procedure */
+    CommandCounterIncrement();
+
     if ((rc = SPI_connect()) != SPI_OK_CONNECT)
         elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 
