@@ -5,7 +5,7 @@ SELECT * FROM sys_configurations_vu_prepare_v1
 GO
 ~~START~~
 int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#nvarchar#!#bit#!#bit
-103#!#user connections#!#100#!#1#!#262143#!#100#!#Sets the maximum number of concurrent connections.#!#0#!#1
+103#!#user connections#!#<NULL>#!#1#!#262143#!#<NULL>#!#Sets the maximum number of concurrent connections.#!#0#!#1
 115#!#nested triggers#!#1#!#0#!#1#!#1#!#Allow triggers to be invoked within triggers#!#1#!#0
 124#!#default language#!#0#!#0#!#9999#!#0#!#default language#!#1#!#0
 505#!#network packet size (B)#!#4096#!#512#!#32767#!#4096#!#Sets the default packet size for all the clients being connected#!#1#!#1
@@ -21,7 +21,7 @@ EXEC sys_configurations_vu_prepare_p1
 GO
 ~~START~~
 int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#nvarchar#!#bit#!#bit
-103#!#user connections#!#100#!#1#!#262143#!#100#!#Sets the maximum number of concurrent connections.#!#0#!#1
+103#!#user connections#!#<NULL>#!#1#!#262143#!#<NULL>#!#Sets the maximum number of concurrent connections.#!#0#!#1
 115#!#nested triggers#!#1#!#0#!#1#!#1#!#Allow triggers to be invoked within triggers#!#1#!#0
 124#!#default language#!#0#!#0#!#9999#!#0#!#default language#!#1#!#0
 505#!#network packet size (B)#!#4096#!#512#!#32767#!#4096#!#Sets the default packet size for all the clients being connected#!#1#!#1
@@ -53,7 +53,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
 4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
-100#!#103#!#Sets the maximum number of concurrent connections.#!#2
+<NULL>#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
 
@@ -69,7 +69,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
 4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
-100#!#103#!#Sets the maximum number of concurrent connections.#!#2
+<NULL>#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
 
@@ -93,7 +93,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
 4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
-100#!#103#!#Sets the maximum number of concurrent connections.#!#2
+<NULL>#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
 
@@ -109,7 +109,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 2049#!#1127#!#two digit year cutoff#!#3
 0#!#1555#!#Transform noise words for full-text query#!#3
 4096#!#505#!#Sets the default packet size for all the clients being connected#!#3
-100#!#103#!#Sets the maximum number of concurrent connections.#!#2
+<NULL>#!#103#!#Sets the maximum number of concurrent connections.#!#2
 ~~END~~
 
 
