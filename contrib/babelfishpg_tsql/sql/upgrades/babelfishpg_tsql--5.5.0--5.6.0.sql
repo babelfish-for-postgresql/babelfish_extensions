@@ -386,14 +386,23 @@ GRANT EXECUTE ON FUNCTION sys.sp_tablecollations_100_enr(IN sys.varchar(4000)) T
 -- Create sp_tablecollations_100 in tempdb for BCP temp table support
 -- This procedure enables SqlBulkCopy to work with temp tables by providing
 -- column collation metadata that BCP needs to encode string data correctly.
-CREATE OR REPLACE PROCEDURE sys.create_sp_tablecollations_100_in_tempdb_dbo()
-LANGUAGE C
-AS 'babelfishpg_tsql', 'create_sp_tablecollations_100_in_tempdb_dbo_internal';
+-- Note: In upgrades, tempdb_dbo schema already exists, so we can create directly.
+CREATE OR REPLACE PROCEDURE tempdb_dbo.sp_tablecollations_100(
+    IN p_tablename sys.nvarchar(4000)
+)
+AS $$
+BEGIN
+    SELECT 
+        t.colid,
+        t.name,
+        CAST(CollationProperty(t.collation_name, 'tdscollation') AS sys.binary(5)) AS tds_collation,
+        t.collation_name AS collation
+    FROM sys.sp_tablecollations_100_enr(p_tablename) t;
+END;
+$$ LANGUAGE pltsql;
 
-CALL sys.create_sp_tablecollations_100_in_tempdb_dbo();
 ALTER PROCEDURE tempdb_dbo.sp_tablecollations_100 OWNER TO sysadmin;
 GRANT EXECUTE ON PROCEDURE tempdb_dbo.sp_tablecollations_100 TO PUBLIC;
-DROP PROCEDURE sys.create_sp_tablecollations_100_in_tempdb_dbo;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
