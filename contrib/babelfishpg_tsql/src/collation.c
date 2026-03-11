@@ -80,6 +80,22 @@ static Node *transform_likenode_for_AI(OpExpr *op);
 static Node *convert_node_to_funcexpr_for_like(Node *node, Oid inputcollid);
 
 /*
+ * Check whether a like_escape call appears anywhere in the expression.
+ * Uses expression_tree_walker for safe traversal of all node types.
+ */
+static bool
+contains_like_escape(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, FuncExpr) &&
+		strcmp(get_func_name(((FuncExpr *) node)->funcid),
+			   "like_escape") == 0)
+		return true;
+	return expression_tree_walker(node, contains_like_escape, context);
+}
+
+/*
  * Wrapper around estimate_expression_value that constructs a minimal
  * PlannerInfo so we can call it without a real planner context.
  *
@@ -443,9 +459,7 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	 * to backslash format, which doesn't match T-SQL bracket patterns.
 	 * Folding it produces wrong prefix bounds.
 	 */
-	if (!(IsA(rightop, FuncExpr) &&
-		  strcmp(get_func_name(((FuncExpr *) rightop)->funcid),
-				"like_escape") == 0))
+	if (!contains_like_escape(rightop, NULL))
 	{
 		rightop = eval_const_expressions(NULL, rightop);
 		if (!IsA(rightop, Const))
