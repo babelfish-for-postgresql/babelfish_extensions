@@ -20,7 +20,7 @@
 #include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
-#include "rewrite/rewriteManip.h"
+#include "nodes/pathnodes.h"
 #ifdef USE_ICU
 #include <unicode/utrans.h>
 #include "utils/removeaccent.map"
@@ -78,6 +78,32 @@ extern int	pattern_fixed_prefix_wrapper(Const *patt,
 
 static Node *transform_likenode_for_AI(OpExpr *op);
 static Node *convert_node_to_funcexpr_for_like(Node *node, Oid inputcollid);
+
+/*
+ * Wrapper around estimate_expression_value that constructs a minimal
+ * PlannerInfo so we can call it without a real planner context.
+ *
+ * estimate_expression_value folds both immutable and stable functions
+ * to constants — the same approach PG uses for planning estimates.
+ * This is safe for LIKE prefix extraction because the original LIKE
+ * clause is always kept as a recheck filter, guaranteeing correctness.
+ */
+static Node *
+fold_like_pattern_to_const(Node *expr)
+{
+	PlannerGlobal glob;
+	PlannerInfo root;
+
+	memset(&glob, 0, sizeof(PlannerGlobal));
+	glob.type = T_PlannerGlobal;
+	glob.boundParams = NULL;
+
+	memset(&root, 0, sizeof(PlannerInfo));
+	root.type = T_PlannerInfo;
+	root.glob = &glob;
+
+	return estimate_expression_value(&root, expr);
+}
 
 /* pattern prefix status for pattern_fixed_prefix_wrapper
  * Pattern_Prefix_None: no prefix found, this means the first character is a wildcard character
@@ -355,7 +381,6 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
 	CollateExpr *prefix_collate;
-	Node	   *check_node; 
 
 	tsql_get_database_or_server_collation_oid_internal(true);
 
@@ -406,43 +431,29 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	}
 
 	/*
-	 * Try to simplify rightop to a Const for prefix extraction.
-	 * eval_const_expressions folds immutable subexpressions, evaluate_expr
-	 * handles stable functions as a fallback.
+	 * Try to reduce rightop to a Const for prefix extraction.
 	 *
-	 * Peek through RelabelType wrappers to check for like_escape (ESCAPE
-	 * clause) and remove_accents_internal (AI mode). Evaluating these at
-	 * plan time loses escape and bracket pattern semantics.
-	 * For AI mode, the RelabelType unwrap below handles simple patterns.
+	 * First use eval_const_expressions (folds immutable functions like
+	 * string concatenation and type casts). If still not a Const, use
+	 * estimate_expression_value  which also folds stable functions like 
+	 * CONVERT/TRY_CONVERT. The original LIKE is kept as a recheck filter, 
+	 * so correctness is guaranteed.
+	 *
+	 * Skip for like_escape: PG's like_escape converts escape sequences
+	 * to backslash format, which doesn't match T-SQL bracket patterns.
+	 * Folding it produces wrong prefix bounds.
 	 */
-
-	check_node = rightop;
-	while (IsA(check_node, RelabelType))
-		check_node = (Node *) ((RelabelType *) check_node)->arg;
-
-	if (!(IsA(check_node, FuncExpr) &&
-		  (strcmp(get_func_name(((FuncExpr *) check_node)->funcid),
-				 "like_escape") == 0 ||
-		   strcmp(get_func_name(((FuncExpr *) check_node)->funcid),
-				 "remove_accents_internal") == 0)))
+	if (!(IsA(rightop, FuncExpr) &&
+		  strcmp(get_func_name(((FuncExpr *) rightop)->funcid),
+				"like_escape") == 0))
 	{
 		rightop = eval_const_expressions(NULL, rightop);
-
-		if (!IsA(rightop, Const) && !IsA(rightop, Param) &&
-			!checkExprHasSubLink(rightop) &&
-			!contain_var_clause(rightop) &&
-			!contain_volatile_functions(rightop) &&
-			bms_is_empty(pull_paramids((Expr *) rightop)))
-		{
-			rightop = (Node *) evaluate_expr((Expr *) rightop,
-											exprType(rightop),
-											exprTypmod(rightop),
-											exprCollation(rightop));
-		}
+		if (!IsA(rightop, Const))
+			rightop = fold_like_pattern_to_const(rightop);
 		lsecond(op->args) = rightop;
 	}
 
-	/*
+	/* 
 	 * This is needed to process CI_AI for Const nodes
 	 * Because after we call coerce_to_target_type for type conversion in transform_likenode_for_AI,
 	 * we obtain a Relabel node which won't help us to perform optimization
@@ -509,7 +520,6 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 		leftop = copyObject((Node*) relabel->arg);
 		ltypeId = exprType(leftop);
 	}
-
 	/* Reconcile types — LIKE coerces to TEXT but we need original column type */
 	prefix->consttype = rtypeId = ltypeId;
 
@@ -1100,7 +1110,6 @@ transform_likenode(Node *node, bool is_constraint)
 		/*
 		 * View definitions (after dump/restore) lose original column collation 
 		 * due to ::text casts, causing wrong LIKE/ILIKE operator selection. 
-		 * Unwrap coercions on leftop to find the original Var collation.
 		 * Skip if an explicit COLLATE clause is present.
 		 */
 
