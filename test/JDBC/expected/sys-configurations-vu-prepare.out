@@ -2,11 +2,21 @@ USE master;
 GO
 
 CREATE VIEW sys_configurations_vu_prepare_v1 AS
-SELECT * FROM sys.configurations
+SELECT configuration_id, name,
+       CASE WHEN configuration_id = 103 THEN CAST(NULL AS sql_variant) ELSE value END as value,
+       minimum, maximum,
+       CASE WHEN configuration_id = 103 THEN CAST(NULL AS sql_variant) ELSE value_in_use END as value_in_use,
+       description, is_dynamic, is_advanced
+FROM sys.configurations
 GO
 
 CREATE PROC sys_configurations_vu_prepare_p1 AS
-SELECT * FROM sys.configurations
+SELECT configuration_id, name,
+       CASE WHEN configuration_id = 103 THEN CAST(NULL AS sql_variant) ELSE value END as value,
+       minimum, maximum,
+       CASE WHEN configuration_id = 103 THEN CAST(NULL AS sql_variant) ELSE value_in_use END as value_in_use,
+       description, is_dynamic, is_advanced
+FROM sys.configurations
 GO
 
 CREATE FUNCTION sys_configurations_vu_prepare_f1()
@@ -18,11 +28,15 @@ END
 GO
 
 CREATE VIEW sys_configurations_vu_prepare_v2 AS
-SELECT * FROM sys.syscurconfigs
+SELECT CASE WHEN config = 103 THEN CAST(NULL AS sql_variant) ELSE value END as value,
+       config, comment, status
+FROM sys.syscurconfigs
 GO
 
 CREATE PROC sys_configurations_vu_prepare_p2 AS
-SELECT * FROM sys.syscurconfigs
+SELECT CASE WHEN config = 103 THEN CAST(NULL AS sql_variant) ELSE value END as value,
+       config, comment, status
+FROM sys.syscurconfigs
 GO
 
 CREATE FUNCTION sys_configurations_vu_prepare_f2()
@@ -34,11 +48,15 @@ END
 GO
 
 CREATE VIEW sys_configurations_vu_prepare_v3 AS
-SELECT * FROM sys.sysconfigures
+SELECT CASE WHEN config = 103 THEN CAST(NULL AS sql_variant) ELSE value END as value,
+       config, comment, status
+FROM sys.sysconfigures
 GO
 
 CREATE PROC sys_configurations_vu_prepare_p3 AS
-SELECT * FROM sys.sysconfigures
+SELECT CASE WHEN config = 103 THEN CAST(NULL AS sql_variant) ELSE value END as value,
+       config, comment, status
+FROM sys.sysconfigures
 GO
 
 CREATE FUNCTION sys_configurations_vu_prepare_f3()

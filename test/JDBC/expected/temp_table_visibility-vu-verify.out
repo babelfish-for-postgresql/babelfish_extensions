@@ -126,9 +126,9 @@ EXEC p_index_create
 GO
 ~~START~~
 text
-idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
 #t4122
 #temptable5605
+idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
 ~~END~~
 
 
@@ -162,12 +162,13 @@ SELECT * FROM enr_view;
 GO
 ~~START~~
 text
-#t4122
-#temptable5605
-#sys_comprehensive
 #pg_toast_#oid_masked#
 #pg_toast_#oid_masked#_index
+#sys_comprehensive
 #sys_comprehensive_pkey
+#t4122
+#temptable5605
+idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
 ~~END~~
 
 
@@ -343,12 +344,13 @@ SELECT * FROM enr_view;
 GO
 ~~START~~
 text
-#t4122
-#temptable5605
 #advanced_columns
+#advanced_columns_pkey
 #pg_toast_#oid_masked#
 #pg_toast_#oid_masked#_index
-#advanced_columns_pkey
+#t4122
+#temptable5605
+idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
 ~~END~~
 
 
@@ -528,17 +530,18 @@ SELECT * FROM enr_view;
 GO
 ~~START~~
 text
-#t4122
-#temptable5605
 #indexed_dml
+#indexed_dml_pkey
 #pg_toast_#oid_masked#
 #pg_toast_#oid_masked#_index
-#indexed_dml_pkey
-ix_text#indexed_dml331193019682437d7418b66eb4c0d94e
-ix_int#indexed_dml035dab3da66aea81011a3eae459c604c
-ix_date#indexed_dmle2166a864eb6380802f1dd642a3fde15
-ix_money#indexed_dmlf15b16dc03c5e414c280565f841360cc
+#t4122
+#temptable5605
+idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
 ix_composite#indexed_dml607dc45075f81468865d4be46b38df3e
+ix_date#indexed_dmle2166a864eb6380802f1dd642a3fde15
+ix_int#indexed_dml035dab3da66aea81011a3eae459c604c
+ix_money#indexed_dmlf15b16dc03c5e414c280565f841360cc
+ix_text#indexed_dml331193019682437d7418b66eb4c0d94e
 ~~END~~
 
 
@@ -767,3 +770,134 @@ GO
 
 ~~ERROR (Message: temporary objects cannot reference permanent non-system objects)~~
 
+
+-- SP_EXECUTESQL index creation/drop on temp tables
+EXEC p_sp_executesql_index;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int#!#varchar
+2#!#two
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+3#!#three
+~~END~~
+
+
+-- SP_EXECUTESQL ALTER TABLE ADD column that creates toast table
+EXEC p_sp_executesql_toast;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar#!#int
+1#!#test#!#5000
+~~END~~
+
+
+-- Inline index creation via SP_EXECUTESQL
+CREATE TABLE #temp_index1 (a INT, b VARCHAR(50));
+GO
+INSERT INTO #temp_index1 VALUES (1, 'one'), (2, 'two'), (3, 'three');
+GO
+~~ROW COUNT: 3~~
+
+
+DECLARE @sql1 NVARCHAR(MAX) = 'CREATE INDEX index1 ON #temp_index1(a)';
+EXEC SP_EXECUTESQL @sql1;
+GO
+
+SELECT * FROM #temp_index1 WHERE a = 2;
+GO
+~~START~~
+int#!#varchar
+2#!#two
+~~END~~
+
+
+DROP INDEX index1 ON #temp_index1;
+GO
+
+SELECT * FROM #temp_index1 ORDER BY a;
+GO
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+3#!#three
+~~END~~
+
+
+DROP TABLE #temp_index1;
+GO
+
+-- Inline ALTER TABLE ADD column (text type triggers toast) via SP_EXECUTESQL
+CREATE TABLE #temp_heap1 (a INT);
+GO
+INSERT INTO #temp_heap1 VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+
+DECLARE @sql2 NVARCHAR(MAX) = 'ALTER TABLE #temp_heap1 ADD col1 TEXT';
+EXEC SP_EXECUTESQL @sql2;
+GO
+
+UPDATE #temp_heap1 SET col1 = REPLICATE('x', 5000) WHERE a = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT a, LEN(col1) as col1_len FROM #temp_heap1;
+GO
+~~START~~
+int#!#int
+1#!#5000
+~~END~~
+
+
+DROP TABLE #temp_heap1;
+GO
+
+-- Index on column added via SP_EXECUTESQL
+CREATE TABLE #temp_index2 (a INT);
+GO
+INSERT INTO #temp_index2 VALUES (1), (2), (3);
+GO
+~~ROW COUNT: 3~~
+
+
+DECLARE @sql4 NVARCHAR(MAX) = 'ALTER TABLE #temp_index2 ADD b INT DEFAULT 0';
+EXEC SP_EXECUTESQL @sql4;
+GO
+
+UPDATE #temp_index2 SET b = a * 10;
+GO
+~~ROW COUNT: 3~~
+
+
+DECLARE @sql5 NVARCHAR(MAX) = 'CREATE INDEX index2 ON #temp_index2(b)';
+EXEC SP_EXECUTESQL @sql5;
+GO
+
+SELECT * FROM #temp_index2 WHERE b > 10 ORDER BY b;
+GO
+~~START~~
+int#!#int
+2#!#20
+3#!#30
+~~END~~
+
+
+DROP INDEX index2 ON #temp_index2;
+GO
+
+DROP TABLE #temp_index2;
+GO
