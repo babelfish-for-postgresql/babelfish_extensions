@@ -3853,7 +3853,7 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 			 SPI_depth, current_spi_stack_depth);
 		
 	while (current_spi_stack_depth-- >= SPI_depth)
-		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+		if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	if (send_error)
@@ -4006,8 +4006,6 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	int 		current_spi_stack_depth;
 	bool 		send_error = false;
 
-	create_queryEnv2(CacheMemoryContext, false);
-
 	nonatomic = support_tsql_trans ||
 		(fcinfo->context &&
 		 IsA(fcinfo->context, CallContext) &&
@@ -4029,6 +4027,8 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	if ((rc = SPI_connect_ext(nonatomic ? SPI_OPT_NONATOMIC : 0)) != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 	PortalContext = savedPortalCxt;
+
+	create_queryEnv2(CacheMemoryContext, false);
 
 	SPI_setCurrentInternalTxnMode(true);
 	current_spi_stack_depth = SPI_get_depth();
