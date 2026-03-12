@@ -521,7 +521,6 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 
 				pfree(query);
 				pfree(sp_describe_first_result_set_view_name);
-				SPI_finish();
 				RESUME_INTERRUPTS();
 				PG_RE_THROW();
 			}
@@ -1721,7 +1720,6 @@ create_xp_qv_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
-		SPI_finish();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -1814,7 +1812,6 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
-		SPI_finish();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -3489,7 +3486,6 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		}
 		PG_CATCH();
 		{
-			SPI_finish();
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
@@ -3519,7 +3515,6 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		}
 		PG_CATCH();
 		{
-			SPI_finish();
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
@@ -4076,7 +4071,6 @@ sp_enum_oledb_providers_internal(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
-		SPI_finish();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
