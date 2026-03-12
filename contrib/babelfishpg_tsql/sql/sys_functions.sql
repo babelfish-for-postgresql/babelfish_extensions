@@ -1764,8 +1764,12 @@ declare
   v_find_result VARCHAR;
   v_pos bigint;
   v_regexp_pattern VARCHAR;
+  v_escaped_pattern VARCHAR;
   start_offset boolean;
   end_offset boolean;
+  v_char char;
+  v_len int;
+  v_in_bracket boolean;
 begin
   if pattern is null or expression is null then
     return null;
@@ -1776,15 +1780,39 @@ begin
   if sys.is_collated_ai(expression) then
     return sys.patindex_ai_collations(pattern, expression);
   end if;
-  if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
-    v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i'::pg_catalog.TEXT);
+
+  -- Escape SIMILAR TO metacharacters that are not T-SQL PATINDEX wildcards.
+  -- T-SQL PATINDEX only supports: % _ [...] [^...] [!...]
+  -- SIMILAR TO also treats ( ) | * + ? { } as special operators.
+  -- Since '#' is our escape character for substring(), we also escape literal '#'.
+  -- Characters inside [...] are already literals in SIMILAR TO, so skip those.
+  v_escaped_pattern := '';
+  v_in_bracket := false;
+  v_len := length(pattern);
+  for i in 1..v_len loop
+    v_char := substring(pattern, i, 1);
+    if v_char = '[' and not v_in_bracket then
+      v_in_bracket := true;
+      v_escaped_pattern := v_escaped_pattern || v_char;
+    elsif v_char = ']' and v_in_bracket then
+      v_in_bracket := false;
+      v_escaped_pattern := v_escaped_pattern || v_char;
+    elsif not v_in_bracket and v_char in ('(', ')', '|', '+', '*', '?', '{', '}', '#') then
+      v_escaped_pattern := v_escaped_pattern || '#' || v_char;
+    else
+      v_escaped_pattern := v_escaped_pattern || v_char;
+    end if;
+  end loop;
+
+  if PG_CATALOG.left(v_escaped_pattern, 1) = '%' collate sys.database_default then
+    v_regexp_pattern := regexp_replace(v_escaped_pattern, '^%', '%#"', 'i'::pg_catalog.TEXT);
     start_offset := true;
   else
-    v_regexp_pattern := '#"' || pattern;
+    v_regexp_pattern := '#"' || v_escaped_pattern;
     start_offset := false;
   end if;
 
-  if PG_CATALOG.right(pattern, 1) = '%' collate sys.database_default then
+  if PG_CATALOG.right(v_escaped_pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%', 'i'::pg_catalog.TEXT);
     end_offset := true;
   else

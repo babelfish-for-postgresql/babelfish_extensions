@@ -401,6 +401,33 @@ END CATCH;
 GO
 
 -- =============================================
+-- SPECIAL CHARACTERS IN PATTERN (GitHub Issue #4296)
+-- =============================================
+-- Parentheses should be treated as literal characters
+SELECT PATINDEX('%(%', 'the phone Nr is 1-(800)-CARS');
+GO
+
+SELECT PATINDEX('%)%', 'the phone Nr is 1-(800)-CARS');
+GO
+
+-- Other SIMILAR TO metacharacters should also work as literals
+SELECT PATINDEX('%+%', '2+3=5');
+GO
+
+SELECT PATINDEX('%*%', '2*3=6');
+GO
+
+SELECT PATINDEX('%?%', 'is this a question?');
+GO
+
+SELECT PATINDEX('%{%', 'json: {key: val}');
+GO
+
+-- Parentheses inside character classes should still work
+SELECT PATINDEX('%[()]%', 'call func()');
+GO
+
+-- =============================================
 -- CLEANUP
 -- =============================================
 
