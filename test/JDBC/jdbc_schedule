@@ -758,6 +758,9 @@ ignore#!#babel_convert_with_style-before-14_12-or-16_3-vu-cleanup
 ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-prepare
 ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-verify
 ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-cleanup
+ignore#!#test_constraint_like_before_18_4-or-17_10-16_14-vu-prepare
+ignore#!#test_constraint_like_before_18_4-or-17_10-16_14-vu-verify
+ignore#!#test_constraint_like_before_18_4-or-17_10-16_14-vu-cleanup
 
 #crashes
 ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-prepare

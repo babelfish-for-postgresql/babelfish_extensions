@@ -46,7 +46,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 124.086 ms
+Babelfish T-SQL Batch Parsing Time: 118.958 ms
 ~~END~~
 
 
@@ -66,7 +66,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.329 ms
+Babelfish T-SQL Batch Parsing Time: 0.108 ms
 ~~END~~
 
 
@@ -84,7 +84,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -103,7 +103,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.203 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -125,7 +125,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.129 ms
+Babelfish T-SQL Batch Parsing Time: 0.103 ms
 ~~END~~
 
 
@@ -145,7 +145,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.107 ms
+Babelfish T-SQL Batch Parsing Time: 0.115 ms
 ~~END~~
 
 
@@ -167,7 +167,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -189,7 +189,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.222 ms
+Babelfish T-SQL Batch Parsing Time: 0.245 ms
 ~~END~~
 
 
@@ -209,7 +209,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.108 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -229,7 +229,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -249,7 +249,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.087 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -271,7 +271,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.107 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -291,7 +291,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.107 ms
 ~~END~~
 
 
@@ -313,7 +313,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -333,7 +333,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -353,7 +353,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.101 ms
+Babelfish T-SQL Batch Parsing Time: 0.102 ms
 ~~END~~
 
 
@@ -371,7 +371,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.084 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -389,7 +389,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -408,7 +408,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.084 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -426,7 +426,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -444,7 +444,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -462,7 +462,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.085 ms
+Babelfish T-SQL Batch Parsing Time: 0.105 ms
 ~~END~~
 
 
@@ -480,7 +480,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.083 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -498,7 +498,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.083 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -520,7 +520,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 14.098 ms
+Babelfish T-SQL Batch Parsing Time: 13.838 ms
 ~~END~~
 
 
@@ -540,7 +540,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.240 ms
+Babelfish T-SQL Batch Parsing Time: 3.275 ms
 ~~END~~
 
 
@@ -560,7 +560,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.112 ms
+Babelfish T-SQL Batch Parsing Time: 0.116 ms
 ~~END~~
 
 
@@ -580,7 +580,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.306 ms
+Babelfish T-SQL Batch Parsing Time: 3.490 ms
 ~~END~~
 
 
@@ -600,7 +600,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.082 ms
+Babelfish T-SQL Batch Parsing Time: 2.086 ms
 ~~END~~
 
 
@@ -620,7 +620,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.224 ms
+Babelfish T-SQL Batch Parsing Time: 2.218 ms
 ~~END~~
 
 
@@ -638,7 +638,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
 ~~END~~
 
 
@@ -657,7 +657,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.048 ms
+Babelfish T-SQL Batch Parsing Time: 3.037 ms
 ~~END~~
 
 
@@ -674,7 +674,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.114 ms
+Babelfish T-SQL Batch Parsing Time: 0.119 ms
 ~~END~~
 
 
@@ -691,7 +691,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.108 ms
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
 ~~END~~
 
 
@@ -708,7 +708,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.107 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 
@@ -724,7 +724,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.126 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 
@@ -746,7 +746,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 
@@ -766,7 +766,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.119 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -786,7 +786,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.106 ms
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
 ~~END~~
 
 
@@ -806,7 +806,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.123 ms
+Babelfish T-SQL Batch Parsing Time: 0.157 ms
 ~~END~~
 
 
@@ -823,7 +823,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.106 ms
+Babelfish T-SQL Batch Parsing Time: 0.108 ms
 ~~END~~
 
 
@@ -840,7 +840,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.106 ms
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
 ~~END~~
 
 
@@ -858,7 +858,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.105 ms
+Babelfish T-SQL Batch Parsing Time: 0.276 ms
 ~~END~~
 
 
@@ -880,7 +880,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.108 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -900,7 +900,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.106 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -920,7 +920,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.109 ms
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
 ~~END~~
 
 
@@ -940,7 +940,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.107 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 
@@ -960,7 +960,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.124 ms
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
 ~~END~~
 
 
@@ -977,7 +977,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.107 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -994,7 +994,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -1012,7 +1012,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.108 ms
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
 ~~END~~
 
 
@@ -1031,7 +1031,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.275 ms
+Babelfish T-SQL Batch Parsing Time: 5.335 ms
 ~~END~~
 
 
@@ -1048,7 +1048,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.116 ms
+Babelfish T-SQL Batch Parsing Time: 0.155 ms
 ~~END~~
 
 
@@ -1065,7 +1065,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
 ~~END~~
 
 
@@ -1082,7 +1082,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.108 ms
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 
@@ -1098,7 +1098,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.126 ms
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
 ~~END~~
 
 
@@ -1117,7 +1117,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.125 ms
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
 ~~END~~
 
 
@@ -1134,7 +1134,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.113 ms
+Babelfish T-SQL Batch Parsing Time: 0.136 ms
 ~~END~~
 
 
@@ -1151,7 +1151,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.112 ms
+Babelfish T-SQL Batch Parsing Time: 0.134 ms
 ~~END~~
 
 
@@ -1170,7 +1170,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.116 ms
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
 ~~END~~
 
 
@@ -1187,7 +1187,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.113 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -1206,7 +1206,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.329 ms
+Babelfish T-SQL Batch Parsing Time: 0.314 ms
 ~~END~~
 
 
@@ -1225,7 +1225,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.427 ms
+Babelfish T-SQL Batch Parsing Time: 0.148 ms
 ~~END~~
 
 
@@ -1242,7 +1242,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.137 ms
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
 ~~END~~
 
 
@@ -1259,7 +1259,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.118 ms
+Babelfish T-SQL Batch Parsing Time: 0.121 ms
 ~~END~~
 
 
@@ -1276,7 +1276,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.120 ms
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
 ~~END~~
 
 
@@ -1292,7 +1292,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.119 ms
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
 ~~END~~
 
 
@@ -1311,7 +1311,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.121 ms
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 
@@ -1328,7 +1328,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.156 ms
+Babelfish T-SQL Batch Parsing Time: 0.129 ms
 ~~END~~
 
 
@@ -1345,7 +1345,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.122 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -1362,7 +1362,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.119 ms
+Babelfish T-SQL Batch Parsing Time: 0.132 ms
 ~~END~~
 
 
@@ -1380,7 +1380,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.549 ms
+Babelfish T-SQL Batch Parsing Time: 0.345 ms
 ~~END~~
 
 
@@ -1396,7 +1396,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.039 ms
+Babelfish T-SQL Batch Parsing Time: 2.548 ms
 ~~END~~
 
 
@@ -1418,7 +1418,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.218 ms
+Babelfish T-SQL Batch Parsing Time: 8.567 ms
 ~~END~~
 
 
@@ -1438,7 +1438,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.694 ms
+Babelfish T-SQL Batch Parsing Time: 2.664 ms
 ~~END~~
 
 
@@ -1456,7 +1456,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 5.296 ms
+Babelfish T-SQL Batch Parsing Time: 5.076 ms
 ~~END~~
 
 
@@ -1478,7 +1478,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.289 ms
+Babelfish T-SQL Batch Parsing Time: 8.156 ms
 ~~END~~
 
 
@@ -1498,7 +1498,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.115 ms
+Babelfish T-SQL Batch Parsing Time: 0.116 ms
 ~~END~~
 
 
@@ -1518,7 +1518,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.168 ms
+Babelfish T-SQL Batch Parsing Time: 0.160 ms
 ~~END~~
 
 
@@ -1558,7 +1558,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.141 ms
+Babelfish T-SQL Batch Parsing Time: 7.951 ms
 ~~END~~
 
 
@@ -1578,7 +1578,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.115 ms
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
 ~~END~~
 
 
@@ -1598,7 +1598,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.116 ms
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
 ~~END~~
 
 
@@ -1617,7 +1617,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.526 ms
+Babelfish T-SQL Batch Parsing Time: 0.524 ms
 ~~END~~
 
 
@@ -1661,7 +1661,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.178 ms
+Babelfish T-SQL Batch Parsing Time: 0.168 ms
 ~~END~~
 
 
@@ -1681,7 +1681,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.166 ms
+Babelfish T-SQL Batch Parsing Time: 7.950 ms
 ~~END~~
 
 
@@ -1701,7 +1701,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.118 ms
+Babelfish T-SQL Batch Parsing Time: 0.279 ms
 ~~END~~
 
 
@@ -1720,7 +1720,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.115 ms
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 
@@ -1742,7 +1742,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.100 ms
 ~~END~~
 
 
@@ -1762,7 +1762,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -1802,7 +1802,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -1822,7 +1822,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.111 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -1842,7 +1842,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.108 ms
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
 ~~END~~
 
 
@@ -1862,7 +1862,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.109 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 
@@ -1882,7 +1882,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -1902,7 +1902,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 
@@ -1922,7 +1922,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.111 ms
+Babelfish T-SQL Batch Parsing Time: 0.134 ms
 ~~END~~
 
 
@@ -1942,7 +1942,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.112 ms
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 
@@ -1963,7 +1963,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.602 ms
+Babelfish T-SQL Batch Parsing Time: 0.562 ms
 ~~END~~
 
 
@@ -1982,7 +1982,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -2001,7 +2001,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -2039,7 +2039,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -2060,7 +2060,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.100 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -2079,7 +2079,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -2098,7 +2098,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -2117,7 +2117,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.111 ms
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 
@@ -2157,7 +2157,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -2176,7 +2176,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -2195,7 +2195,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -2214,7 +2214,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.123 ms
+Babelfish T-SQL Batch Parsing Time: 0.114 ms
 ~~END~~
 
 
@@ -2233,7 +2233,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -2254,7 +2254,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
 ~~END~~
 
 
@@ -2273,7 +2273,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.591 ms
+Babelfish T-SQL Batch Parsing Time: 2.586 ms
 ~~END~~
 
 
@@ -2311,7 +2311,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.087 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -2330,7 +2330,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.990 ms
+Babelfish T-SQL Batch Parsing Time: 7.888 ms
 ~~END~~
 
 
@@ -2349,7 +2349,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.601 ms
+Babelfish T-SQL Batch Parsing Time: 8.066 ms
 ~~END~~
 
 
@@ -2365,7 +2365,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 16.264 ms
+Babelfish T-SQL Batch Parsing Time: 15.601 ms
 ~~END~~
 
 
@@ -2381,7 +2381,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.065 ms
+Babelfish T-SQL Batch Parsing Time: 7.969 ms
 ~~END~~
 
 
@@ -2397,7 +2397,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.682 ms
+Babelfish T-SQL Batch Parsing Time: 9.380 ms
 ~~END~~
 
 
@@ -2415,7 +2415,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.276 ms
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
 ~~END~~
 
 
@@ -2436,7 +2436,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.658 ms
+Babelfish T-SQL Batch Parsing Time: 2.566 ms
 ~~END~~
 
 
@@ -2474,7 +2474,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.161 ms
+Babelfish T-SQL Batch Parsing Time: 0.154 ms
 ~~END~~
 
 
@@ -2496,7 +2496,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.119 ms
+Babelfish T-SQL Batch Parsing Time: 0.102 ms
 ~~END~~
 
 
@@ -2514,7 +2514,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.210 ms
+Babelfish T-SQL Batch Parsing Time: 0.209 ms
 ~~END~~
 
 
@@ -2532,7 +2532,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.100 ms
+Babelfish T-SQL Batch Parsing Time: 0.101 ms
 ~~END~~
 
 
@@ -2550,7 +2550,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -2568,7 +2568,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -2588,7 +2588,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.115 ms
+Babelfish T-SQL Batch Parsing Time: 0.102 ms
 ~~END~~
 
 
@@ -2608,7 +2608,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -2627,7 +2627,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.098 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -2685,7 +2685,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -2725,7 +2725,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -2744,7 +2744,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.087 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -2766,7 +2766,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.111 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -2784,7 +2784,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -2802,7 +2802,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.117 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -2822,7 +2822,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.107 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -2861,7 +2861,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.128 ms
 ~~END~~
 
 
@@ -2883,7 +2883,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
 ~~END~~
 
 
@@ -2903,7 +2903,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.111 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -2923,7 +2923,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -2943,7 +2943,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -2963,7 +2963,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.102 ms
 ~~END~~
 
 
@@ -2983,7 +2983,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -3003,7 +3003,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -3023,7 +3023,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -3043,7 +3043,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -3063,7 +3063,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -3083,7 +3083,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -3103,7 +3103,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -3125,7 +3125,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.106 ms
+Babelfish T-SQL Batch Parsing Time: 0.099 ms
 ~~END~~
 
 
@@ -3145,7 +3145,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.108 ms
 ~~END~~
 
 
@@ -3163,7 +3163,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.106 ms
 ~~END~~
 
 
@@ -3183,7 +3183,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -3201,7 +3201,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.086 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -3221,7 +3221,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -3241,7 +3241,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -3260,7 +3260,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.087 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -3282,7 +3282,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -3320,7 +3320,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.087 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -3340,7 +3340,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.087 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -3359,7 +3359,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -3401,7 +3401,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.087 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -3419,7 +3419,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.106 ms
 ~~END~~
 
 
@@ -3439,7 +3439,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -3479,7 +3479,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -3499,7 +3499,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -3518,7 +3518,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.101 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -3543,7 +3543,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.804 ms
+Babelfish T-SQL Batch Parsing Time: 2.810 ms
 ~~END~~
 
 
@@ -3566,7 +3566,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.151 ms
+Babelfish T-SQL Batch Parsing Time: 0.154 ms
 ~~END~~
 
 
@@ -3589,7 +3589,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.167 ms
+Babelfish T-SQL Batch Parsing Time: 0.177 ms
 ~~END~~
 
 
@@ -3609,7 +3609,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.164 ms
+Babelfish T-SQL Batch Parsing Time: 0.166 ms
 ~~END~~
 
 
@@ -3629,7 +3629,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.174 ms
+Babelfish T-SQL Batch Parsing Time: 0.215 ms
 ~~END~~
 
 
@@ -3648,7 +3648,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.109 ms
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
 ~~END~~
 
 
@@ -3668,7 +3668,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.122 ms
+Babelfish T-SQL Batch Parsing Time: 0.123 ms
 ~~END~~
 
 
@@ -3688,7 +3688,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 10.178 ms
+Babelfish T-SQL Batch Parsing Time: 9.901 ms
 ~~END~~
 
 
@@ -3708,7 +3708,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.149 ms
+Babelfish T-SQL Batch Parsing Time: 0.155 ms
 ~~END~~
 
 
@@ -3728,7 +3728,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.362 ms
+Babelfish T-SQL Batch Parsing Time: 8.173 ms
 ~~END~~
 
 
@@ -3746,7 +3746,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.264 ms
+Babelfish T-SQL Batch Parsing Time: 0.115 ms
 ~~END~~
 
 
@@ -3764,7 +3764,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.471 ms
+Babelfish T-SQL Batch Parsing Time: 2.432 ms
 ~~END~~
 
 
@@ -3782,7 +3782,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.141 ms
+Babelfish T-SQL Batch Parsing Time: 0.176 ms
 ~~END~~
 
 
@@ -3800,7 +3800,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.976 ms
+Babelfish T-SQL Batch Parsing Time: 1.951 ms
 ~~END~~
 
 
@@ -3842,7 +3842,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.101 ms
 ~~END~~
 
 
@@ -3882,7 +3882,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
 ~~END~~
 
 
@@ -3922,7 +3922,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -3942,7 +3942,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
 ~~END~~
 
 
@@ -3961,7 +3961,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.183 ms
+Babelfish T-SQL Batch Parsing Time: 0.158 ms
 ~~END~~
 
 
@@ -3978,7 +3978,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.009 ms
+Babelfish T-SQL Batch Parsing Time: 3.016 ms
 ~~END~~
 
 
@@ -3996,7 +3996,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -4015,7 +4015,7 @@ Result
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.659 ms
+Babelfish T-SQL Batch Parsing Time: 0.714 ms
 ~~END~~
 
 
@@ -4035,7 +4035,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.101 ms
+Babelfish T-SQL Batch Parsing Time: 0.102 ms
 ~~END~~
 
 
@@ -4074,7 +4074,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.155 ms
+Babelfish T-SQL Batch Parsing Time: 0.156 ms
 ~~END~~
 
 
@@ -4094,7 +4094,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.161 ms
+Babelfish T-SQL Batch Parsing Time: 0.164 ms
 ~~END~~
 
 
@@ -4114,7 +4114,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.545 ms
+Babelfish T-SQL Batch Parsing Time: 0.570 ms
 ~~END~~
 
 
@@ -4134,7 +4134,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.184 ms
+Babelfish T-SQL Batch Parsing Time: 0.186 ms
 ~~END~~
 
 
@@ -4154,7 +4154,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.157 ms
+Babelfish T-SQL Batch Parsing Time: 0.444 ms
 ~~END~~
 
 
@@ -4174,7 +4174,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.398 ms
+Babelfish T-SQL Batch Parsing Time: 0.579 ms
 ~~END~~
 
 
@@ -4202,7 +4202,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 18.789 ms
+Babelfish T-SQL Batch Parsing Time: 19.472 ms
 ~~END~~
 
 
@@ -4229,7 +4229,7 @@ GroupAggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 36.430 ms
+Babelfish T-SQL Batch Parsing Time: 36.060 ms
 ~~END~~
 
 
@@ -4247,7 +4247,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 27.208 ms
+Babelfish T-SQL Batch Parsing Time: 26.930 ms
 ~~END~~
 
 
@@ -4267,7 +4267,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.704 ms
+Babelfish T-SQL Batch Parsing Time: 0.684 ms
 ~~END~~
 
 
@@ -4286,7 +4286,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.794 ms
+Babelfish T-SQL Batch Parsing Time: 6.740 ms
 ~~END~~
 
 
@@ -4310,7 +4310,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.458 ms
+Babelfish T-SQL Batch Parsing Time: 6.399 ms
 ~~END~~
 
 
@@ -4338,7 +4338,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 15.931 ms
+Babelfish T-SQL Batch Parsing Time: 15.556 ms
 ~~END~~
 
 
@@ -4361,7 +4361,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 12.002 ms
+Babelfish T-SQL Batch Parsing Time: 11.976 ms
 ~~END~~
 
 
@@ -4383,7 +4383,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.104 ms
+Babelfish T-SQL Batch Parsing Time: 0.105 ms
 ~~END~~
 
 
@@ -4403,7 +4403,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -4423,7 +4423,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.101 ms
 ~~END~~
 
 
@@ -4443,7 +4443,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -4463,7 +4463,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.125 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -4483,7 +4483,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.122 ms
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
 ~~END~~
 
 
@@ -4503,7 +4503,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.101 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -4523,7 +4523,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -4543,7 +4543,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.152 ms
+Babelfish T-SQL Batch Parsing Time: 0.130 ms
 ~~END~~
 
 
@@ -4562,7 +4562,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.116 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -4580,7 +4580,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.109 ms
 ~~END~~
 
 
@@ -4599,7 +4599,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -4621,7 +4621,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -4661,7 +4661,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -4681,7 +4681,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.114 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -4701,7 +4701,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -4721,7 +4721,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -4741,7 +4741,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -4761,7 +4761,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -4781,7 +4781,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.117 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -4800,7 +4800,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -4818,7 +4818,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -4837,7 +4837,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -4857,7 +4857,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -4870,12 +4870,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'exact match'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.106 ms
+Babelfish T-SQL Batch Parsing Time: 0.104 ms
 ~~END~~
 
 
@@ -4893,7 +4893,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -4906,12 +4906,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) >= 'prefix'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((col)::text) < 'prefix?'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.112 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -4924,12 +4924,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'EXACT MATCH'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'EXACT MATCH'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'EXACT MATCH'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.111 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -4942,7 +4942,7 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'resume'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'resume'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'resume'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
@@ -4960,7 +4960,7 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'resume'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'resume'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'resume'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
@@ -4974,12 +4974,11 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'res%'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~* 'res%'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'res%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) >= 'res'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((col)::text) < 'res?'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
@@ -4993,17 +4992,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'cafe'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~* 'cafe'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'cafe'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'cafe'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -5016,12 +5014,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'naive'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'naive'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'naive'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -5034,12 +5032,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'exact match'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.139 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -5053,12 +5051,12 @@ Finalize Aggregate
         Workers Planned: 4
         ->  Partial Aggregate
               ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
-                    Filter: ((remove_accents_internal((col)::text))::text !~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+                    Filter: ((remove_accents_internal((col)::text) <> 'exact match'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) OR ((remove_accents_internal((col)::text))::text !~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -5076,7 +5074,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -5095,7 +5093,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -5115,7 +5113,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -5124,17 +5122,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'exact match'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'exact match'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -5152,7 +5149,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -5161,17 +5158,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'prefix%'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) >= 'prefix'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((col)::text) < 'prefix?'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.111 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -5180,17 +5176,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'EXACT MATCH'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'EXACT MATCH'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'EXACT MATCH'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'EXACT MATCH'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -5199,17 +5194,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'resume'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'resume'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'resume'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'resume'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -5218,17 +5212,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'résumé'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'resume'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'resume'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'resume'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.119 ms
+Babelfish T-SQL Batch Parsing Time: 0.116 ms
 ~~END~~
 
 
@@ -5237,17 +5230,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'RESUME'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'RESUME'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'RESUME'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'RESUME'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -5256,17 +5248,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'res%'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'res%'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'res%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) >= 'res'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((col)::text) < 'res?'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -5275,17 +5266,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE CAST(N'exact match' AS VARCHAR(50))
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'exact match'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.115 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -5299,7 +5289,7 @@ Finalize Aggregate
         Workers Planned: 4
         ->  Partial Aggregate
               ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text !~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+                    Filter: ((remove_accents_internal((col)::text) <> 'exact match'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) OR ((remove_accents_internal((col)::text))::text !~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 ~~START~~
@@ -5322,7 +5312,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -5341,7 +5331,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.089 ms
+Babelfish T-SQL Batch Parsing Time: 0.086 ms
 ~~END~~
 
 
@@ -5361,7 +5351,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.110 ms
+Babelfish T-SQL Batch Parsing Time: 5.924 ms
 ~~END~~
 
 
@@ -5379,7 +5369,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.107 ms
+Babelfish T-SQL Batch Parsing Time: 0.106 ms
 ~~END~~
 
 
@@ -5392,12 +5382,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_as
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'resume'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'resume'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'resume'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.114 ms
+Babelfish T-SQL Batch Parsing Time: 0.112 ms
 ~~END~~
 
 
@@ -5406,17 +5396,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'resume' COLLATE SQL_Latin1_General_CP1_CS_AI
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_as
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'resume'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_as
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'resume'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'resume'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.101 ms
+Babelfish T-SQL Batch Parsing Time: 0.100 ms
 ~~END~~
 
 
@@ -5434,7 +5423,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.100 ms
+Babelfish T-SQL Batch Parsing Time: 0.119 ms
 ~~END~~
 
 
@@ -5452,7 +5441,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.100 ms
+Babelfish T-SQL Batch Parsing Time: 0.098 ms
 ~~END~~
 
 
@@ -5470,7 +5459,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.157 ms
+Babelfish T-SQL Batch Parsing Time: 0.155 ms
 ~~END~~
 
 
@@ -5488,7 +5477,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.104 ms
+Babelfish T-SQL Batch Parsing Time: 0.101 ms
 ~~END~~
 
 
@@ -5506,7 +5495,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.096 ms
 ~~END~~
 
 
@@ -5519,12 +5508,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_as
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) >= 'prefix'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((col)::text) < 'prefix?'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.098 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -5546,7 +5535,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -5566,7 +5555,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -5586,7 +5575,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.112 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -5606,7 +5595,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -5619,12 +5608,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikenvarcollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'exact match'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -5637,12 +5626,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikenvarcollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'resume'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'resume'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'resume'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -5655,12 +5644,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikenvarcollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) >= 'prefix'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((col)::text) < 'prefix?'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -5669,17 +5658,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE N'exact match'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikenvarcollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikenvarcollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'exact match'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -5688,17 +5676,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE N'resume'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikenvarcollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'resume'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikenvarcollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'resume'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'resume'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.098 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -5707,17 +5694,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE N'prefix%'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikenvarcollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikenvarcollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) >= 'prefix'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((col)::text) < 'prefix?'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -5739,7 +5725,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -5759,7 +5745,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -5779,7 +5765,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.104 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -5799,7 +5785,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -5819,7 +5805,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -5839,7 +5825,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -5859,7 +5845,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.118 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 
@@ -5879,7 +5865,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.117 ms
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 
@@ -5898,7 +5884,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -5916,7 +5902,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -5935,7 +5921,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -5955,7 +5941,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.110 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -5975,7 +5961,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -6015,7 +6001,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -6035,7 +6021,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -6055,7 +6041,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -6075,7 +6061,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -6095,7 +6081,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.115 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 
@@ -6114,7 +6100,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.112 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -6132,7 +6118,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -6169,7 +6155,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.112 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -6182,12 +6168,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecharcollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'exact match'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -6205,7 +6191,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.092 ms
+Babelfish T-SQL Batch Parsing Time: 0.090 ms
 ~~END~~
 
 
@@ -6218,7 +6204,7 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecharcollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) >= 'prefix'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((col)::text) < 'prefix?'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
@@ -6236,12 +6222,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecharcollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'EXACT MATCH'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'EXACT MATCH'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'EXACT MATCH'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -6254,12 +6240,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecharcollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'resume'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'resume'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'resume'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.101 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -6272,12 +6258,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecharcollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'resume'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'resume'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'resume'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -6286,12 +6272,11 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE N'cafe'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecharcollation_ci_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~* 'cafe'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecharcollation_ci_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'cafe'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'cafe'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
@@ -6309,12 +6294,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecharcollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'naive'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'naive'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'naive'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -6327,12 +6312,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecharcollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'exact match'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.137 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 
@@ -6346,12 +6331,12 @@ Finalize Aggregate
         Workers Planned: 4
         ->  Partial Aggregate
               ->  Parallel Seq Scan on babel_5966_testlikecharcollation_ci_ai
-                    Filter: ((remove_accents_internal((col)::text))::text !~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+                    Filter: ((remove_accents_internal((col)::text) <> 'exact match'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) OR ((remove_accents_internal((col)::text))::text !~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -6369,7 +6354,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -6388,7 +6373,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.088 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -6415,17 +6400,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'exact match'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'exact match'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -6443,7 +6427,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.127 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 
@@ -6452,17 +6436,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'prefix%'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) >= 'prefix'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((col)::text) < 'prefix?'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.090 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -6471,17 +6454,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'EXACT MATCH'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'EXACT MATCH'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'EXACT MATCH'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'EXACT MATCH'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.113 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -6490,17 +6472,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'resume'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'resume'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'resume'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'resume'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.107 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -6509,17 +6490,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'résumé'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'resume'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'resume'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'resume'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -6528,17 +6508,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'RESUME'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'RESUME'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'RESUME'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'RESUME'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.108 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -6547,17 +6526,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE CAST(N'exact match' AS VARCHAR(50))
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'exact match'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.137 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 
@@ -6571,12 +6549,12 @@ Finalize Aggregate
         Workers Planned: 4
         ->  Partial Aggregate
               ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text !~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+                    Filter: ((remove_accents_internal((col)::text) <> 'exact match'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) OR ((remove_accents_internal((col)::text))::text !~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -6594,7 +6572,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -6635,7 +6613,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.098 ms
 ~~END~~
 
 
@@ -6655,7 +6633,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
@@ -6664,17 +6642,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'café'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~* 'cafe'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'cafe'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'cafe'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -6683,17 +6660,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'café'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'cafe'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'cafe'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'cafe'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -6713,7 +6689,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -6733,7 +6709,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -6751,7 +6727,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -6769,7 +6745,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
 ~~END~~
 
 
@@ -6809,7 +6785,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.124 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -6818,17 +6794,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE N'café'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecharcollation_ci_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~* 'cafe'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecharcollation_ci_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'cafe'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'cafe'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.114 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -6837,17 +6812,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'café'
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'cafe'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecharcollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'cafe'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'cafe'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -6887,7 +6861,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.114 ms
+Babelfish T-SQL Batch Parsing Time: 0.091 ms
 ~~END~~
 
 
@@ -6905,7 +6879,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -6923,7 +6897,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.113 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -6941,7 +6915,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.145 ms
+Babelfish T-SQL Batch Parsing Time: 0.118 ms
 ~~END~~
 
 
@@ -6961,7 +6935,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.183 ms
+Babelfish T-SQL Batch Parsing Time: 0.179 ms
 ~~END~~
 
 
@@ -6981,7 +6955,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.170 ms
+Babelfish T-SQL Batch Parsing Time: 0.167 ms
 ~~END~~
 
 
@@ -7004,7 +6978,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.164 ms
+Babelfish T-SQL Batch Parsing Time: 0.163 ms
 ~~END~~
 
 
@@ -7024,7 +6998,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.155 ms
+Babelfish T-SQL Batch Parsing Time: 0.152 ms
 ~~END~~
 
 
@@ -7041,7 +7015,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.246 ms
+Babelfish T-SQL Batch Parsing Time: 3.186 ms
 ~~END~~
 
 
@@ -7065,7 +7039,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.160 ms
+Babelfish T-SQL Batch Parsing Time: 0.152 ms
 ~~END~~
 
 
@@ -7092,7 +7066,7 @@ GroupAggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.199 ms
+Babelfish T-SQL Batch Parsing Time: 0.189 ms
 ~~END~~
 
 
@@ -7114,7 +7088,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.173 ms
+Babelfish T-SQL Batch Parsing Time: 0.174 ms
 ~~END~~
 
 
@@ -7134,7 +7108,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.144 ms
+Babelfish T-SQL Batch Parsing Time: 0.138 ms
 ~~END~~
 
 
@@ -7163,7 +7137,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.217 ms
+Babelfish T-SQL Batch Parsing Time: 0.187 ms
 ~~END~~
 
 
@@ -7183,7 +7157,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.127 ms
+Babelfish T-SQL Batch Parsing Time: 0.122 ms
 ~~END~~
 
 
@@ -7203,7 +7177,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.124 ms
+Babelfish T-SQL Batch Parsing Time: 0.120 ms
 ~~END~~
 
 
@@ -7223,7 +7197,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.116 ms
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 
@@ -7243,7 +7217,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.115 ms
+Babelfish T-SQL Batch Parsing Time: 0.116 ms
 ~~END~~
 
 
@@ -7262,7 +7236,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.143 ms
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 
@@ -7280,7 +7254,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.117 ms
+Babelfish T-SQL Batch Parsing Time: 0.111 ms
 ~~END~~
 
 
@@ -7299,7 +7273,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.236 ms
+Babelfish T-SQL Batch Parsing Time: 0.235 ms
 ~~END~~
 
 
@@ -7319,7 +7293,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.144 ms
+Babelfish T-SQL Batch Parsing Time: 0.139 ms
 ~~END~~
 
 
@@ -7339,7 +7313,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.134 ms
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
 ~~END~~
 
 
@@ -7359,7 +7333,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.118 ms
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
 ~~END~~
 
 
@@ -7397,7 +7371,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.123 ms
+Babelfish T-SQL Batch Parsing Time: 0.138 ms
 ~~END~~
 
 
@@ -7417,7 +7391,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.136 ms
+Babelfish T-SQL Batch Parsing Time: 0.132 ms
 ~~END~~
 
 
@@ -7437,7 +7411,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.127 ms
+Babelfish T-SQL Batch Parsing Time: 0.125 ms
 ~~END~~
 
 
@@ -7457,7 +7431,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.120 ms
+Babelfish T-SQL Batch Parsing Time: 0.119 ms
 ~~END~~
 
 
@@ -7474,7 +7448,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.231 ms
+Babelfish T-SQL Batch Parsing Time: 0.225 ms
 ~~END~~
 
 
@@ -7491,7 +7465,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.120 ms
+Babelfish T-SQL Batch Parsing Time: 0.119 ms
 ~~END~~
 
 
@@ -7531,7 +7505,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.214 ms
+Babelfish T-SQL Batch Parsing Time: 0.213 ms
 ~~END~~
 
 
@@ -7551,7 +7525,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.126 ms
+Babelfish T-SQL Batch Parsing Time: 0.124 ms
 ~~END~~
 
 
@@ -7571,7 +7545,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.126 ms
+Babelfish T-SQL Batch Parsing Time: 0.119 ms
 ~~END~~
 
 
@@ -7584,12 +7558,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'exact match         '::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'exact match         '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'exact match         '::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.118 ms
+Babelfish T-SQL Batch Parsing Time: 0.115 ms
 ~~END~~
 
 
@@ -7598,17 +7572,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS cs_ai_char FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE CAST('exact match' AS CHAR(20))
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'exact match         '::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'exact match         '::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'exact match         '::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.117 ms
+Babelfish T-SQL Batch Parsing Time: 0.128 ms
 ~~END~~
 
 
@@ -7630,7 +7603,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.078 ms
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
 ~~END~~
 
 
@@ -7650,7 +7623,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.071 ms
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 
@@ -7668,7 +7641,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.070 ms
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 
@@ -7686,7 +7659,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.078 ms
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 
@@ -7723,7 +7696,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.069 ms
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 
@@ -7742,7 +7715,7 @@ Finalize Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.070 ms
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 
@@ -7762,7 +7735,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.069 ms
+Babelfish T-SQL Batch Parsing Time: 0.070 ms
 ~~END~~
 
 
@@ -7782,7 +7755,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.070 ms
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 
@@ -7800,7 +7773,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.071 ms
+Babelfish T-SQL Batch Parsing Time: 0.082 ms
 ~~END~~
 
 
@@ -7820,7 +7793,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.070 ms
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 
@@ -7858,7 +7831,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.071 ms
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 
@@ -7876,7 +7849,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.080 ms
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 
@@ -7896,7 +7869,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.070 ms
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 
@@ -7972,7 +7945,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.069 ms
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 
@@ -8012,7 +7985,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.069 ms
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 
@@ -8032,7 +8005,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.071 ms
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 
@@ -8072,7 +8045,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.069 ms
+Babelfish T-SQL Batch Parsing Time: 0.067 ms
 ~~END~~
 
 
@@ -8085,12 +8058,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'exact match'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.069 ms
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 
@@ -8099,17 +8072,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_vw_like_cs_ai
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'exact match'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) = 'exact match'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.069 ms
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 
@@ -8129,7 +8101,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.069 ms
+Babelfish T-SQL Batch Parsing Time: 0.067 ms
 ~~END~~
 
 
@@ -8149,7 +8121,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.072 ms
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 
@@ -8162,12 +8134,12 @@ Aggregate
   ->  Gather
         Workers Planned: 4
         ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_ai
-              Filter: ((remove_accents_internal((col)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as)
+              Filter: (((remove_accents_internal((col)::text))::text ~~* 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) >= 'prefix'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((col)::text) < 'prefix?'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.070 ms
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 
@@ -8176,17 +8148,16 @@ GO
 ~~START~~
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_vw_like_cs_ai_prefix
-Finalize Aggregate
+Aggregate
   ->  Gather
         Workers Planned: 4
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
-                    Filter: ((remove_accents_internal((col)::text))::text ~~ 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as)
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_cs_ai
+              Filter: (((remove_accents_internal((col)::text))::text ~~ 'prefix%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((col)::text) >= 'prefix'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((col)::text) < 'prefix?'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.070 ms
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 
@@ -8226,7 +8197,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.070 ms
+Babelfish T-SQL Batch Parsing Time: 0.069 ms
 ~~END~~
 
 
@@ -8246,7 +8217,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.127 ms
+Babelfish T-SQL Batch Parsing Time: 0.094 ms
 ~~END~~
 
 
@@ -8266,7 +8237,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.128 ms
+Babelfish T-SQL Batch Parsing Time: 0.095 ms
 ~~END~~
 
 
@@ -8289,7 +8260,7 @@ Query Text: EXEC BABEL_5966_sp_like_exact_const
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.213 ms
+Babelfish T-SQL Batch Parsing Time: 7.880 ms
 ~~END~~
 
 
@@ -8310,7 +8281,7 @@ Query Text: EXEC BABEL_5966_sp_like_prefix_const
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.114 ms
+Babelfish T-SQL Batch Parsing Time: 0.110 ms
 ~~END~~
 
 
@@ -8329,7 +8300,7 @@ Query Text: EXEC BABEL_5966_sp_like_suffix_const
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.109 ms
+Babelfish T-SQL Batch Parsing Time: 0.108 ms
 ~~END~~
 
 
@@ -8348,7 +8319,7 @@ Query Text: EXEC BABEL_5966_sp_like_varchar_param 'exact match'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.130 ms
+Babelfish T-SQL Batch Parsing Time: 0.132 ms
 ~~END~~
 
 
@@ -8386,7 +8357,7 @@ Query Text: EXEC BABEL_5966_sp_like_varchar_param '%match'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.066 ms
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
 ~~END~~
 
 
@@ -8426,7 +8397,7 @@ Query Text: EXEC BABEL_5966_sp_like_varchar_param NULL
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.085 ms
 ~~END~~
 
 
@@ -8464,7 +8435,7 @@ Query Text: EXEC BABEL_5966_sp_like_varchar_param 'nonexistent_xyz'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.056 ms
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
 ~~END~~
 
 
@@ -8483,7 +8454,7 @@ Query Text: EXEC BABEL_5966_sp_like_nvarchar_param N'exact match'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.118 ms
+Babelfish T-SQL Batch Parsing Time: 0.115 ms
 ~~END~~
 
 
@@ -8502,7 +8473,7 @@ Query Text: EXEC BABEL_5966_sp_like_nvarchar_param N'prefix%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.154 ms
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
 ~~END~~
 
 
@@ -8521,7 +8492,7 @@ Query Text: EXEC BABEL_5966_sp_like_nvarchar_param N'%match'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.064 ms
+Babelfish T-SQL Batch Parsing Time: 0.054 ms
 ~~END~~
 
 
@@ -8540,7 +8511,7 @@ Query Text: EXEC BABEL_5966_sp_like_nvarchar_param N'%data%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.061 ms
+Babelfish T-SQL Batch Parsing Time: 0.052 ms
 ~~END~~
 
 
@@ -8559,7 +8530,7 @@ Query Text: EXEC BABEL_5966_sp_like_nvarchar_param N'café'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.069 ms
+Babelfish T-SQL Batch Parsing Time: 0.059 ms
 ~~END~~
 
 
@@ -8579,7 +8550,7 @@ Query Text: EXEC BABEL_5966_sp_like_nvarchar_param N'caf%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.057 ms
+Babelfish T-SQL Batch Parsing Time: 0.053 ms
 ~~END~~
 
 
@@ -8599,7 +8570,7 @@ Query Text: EXEC BABEL_5966_sp_like_nvarchar_param N'EXACT MATCH'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.060 ms
+Babelfish T-SQL Batch Parsing Time: 0.054 ms
 ~~END~~
 
 
@@ -8619,7 +8590,7 @@ Query Text: EXEC BABEL_5966_sp_like_nvarchar_param N'PREFIX%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.057 ms
+Babelfish T-SQL Batch Parsing Time: 0.053 ms
 ~~END~~
 
 
@@ -8650,7 +8621,7 @@ Query Text: EXEC BABEL_5966_sp_like_all_types N'prefix%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.383 ms
+Babelfish T-SQL Batch Parsing Time: 0.245 ms
 ~~END~~
 
 
@@ -8712,7 +8683,7 @@ Query Text: EXEC BABEL_5966_sp_like_all_types N'%match'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.056 ms
+Babelfish T-SQL Batch Parsing Time: 0.055 ms
 ~~END~~
 
 
@@ -8743,7 +8714,7 @@ Query Text: EXEC BABEL_5966_sp_like_all_types N'café'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.065 ms
+Babelfish T-SQL Batch Parsing Time: 0.059 ms
 ~~END~~
 
 
@@ -8763,7 +8734,7 @@ Query Text: EXEC BABEL_5966_sp_not_like_param N'zzz%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.128 ms
+Babelfish T-SQL Batch Parsing Time: 0.117 ms
 ~~END~~
 
 
@@ -8783,7 +8754,7 @@ Query Text: EXEC BABEL_5966_sp_not_like_param N'prefix%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.059 ms
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
 ~~END~~
 
 
@@ -8803,7 +8774,7 @@ Query Text: EXEC BABEL_5966_sp_not_like_param N'exact match'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.057 ms
+Babelfish T-SQL Batch Parsing Time: 0.075 ms
 ~~END~~
 
 
@@ -8822,7 +8793,7 @@ Query Text: EXEC BABEL_5966_sp_like_escape N'100!%done', '!'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.210 ms
+Babelfish T-SQL Batch Parsing Time: 0.172 ms
 ~~END~~
 
 
@@ -8841,7 +8812,7 @@ Query Text: EXEC BABEL_5966_sp_like_escape N'under!_score', '!'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.066 ms
+Babelfish T-SQL Batch Parsing Time: 0.064 ms
 ~~END~~
 
 
@@ -8858,7 +8829,7 @@ Query Text: EXEC BABEL_5966_sp_like_dynamic 'prefix'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.147 ms
+Babelfish T-SQL Batch Parsing Time: 0.137 ms
 ~~END~~
 
 
@@ -8875,7 +8846,7 @@ Query Text: EXEC BABEL_5966_sp_like_dynamic 'test'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.059 ms
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
 ~~END~~
 
 
@@ -8892,7 +8863,7 @@ Query Text: EXEC BABEL_5966_sp_like_dynamic 'exact'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.057 ms
+Babelfish T-SQL Batch Parsing Time: 0.054 ms
 ~~END~~
 
 
@@ -8909,7 +8880,7 @@ Query Text: EXEC BABEL_5966_sp_like_dynamic 'zzz'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.065 ms
+Babelfish T-SQL Batch Parsing Time: 0.059 ms
 ~~END~~
 
 
@@ -8933,7 +8904,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.169 ms
+Babelfish T-SQL Batch Parsing Time: 0.144 ms
 ~~END~~
 
 
@@ -8957,7 +8928,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.147 ms
+Babelfish T-SQL Batch Parsing Time: 0.144 ms
 ~~END~~
 
 
@@ -8981,7 +8952,7 @@ Gather
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.139 ms
+Babelfish T-SQL Batch Parsing Time: 0.136 ms
 ~~END~~
 
 
@@ -9019,7 +8990,7 @@ Query Text: EXEC BABEL_5966_sp_like_all_collations N'exact match'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.276 ms
+Babelfish T-SQL Batch Parsing Time: 0.266 ms
 ~~END~~
 
 
@@ -9057,7 +9028,7 @@ Query Text: EXEC BABEL_5966_sp_like_all_collations N'EXACT MATCH'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.058 ms
+Babelfish T-SQL Batch Parsing Time: 0.057 ms
 ~~END~~
 
 
@@ -9095,7 +9066,7 @@ Query Text: EXEC BABEL_5966_sp_like_all_collations N'prefix%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.055 ms
+Babelfish T-SQL Batch Parsing Time: 0.054 ms
 ~~END~~
 
 
@@ -9133,7 +9104,7 @@ Query Text: EXEC BABEL_5966_sp_like_all_collations N'PREFIX%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.055 ms
+Babelfish T-SQL Batch Parsing Time: 0.054 ms
 ~~END~~
 
 
@@ -9172,7 +9143,7 @@ Query Text: EXEC BABEL_5966_sp_like_all_collations N'café'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.061 ms
+Babelfish T-SQL Batch Parsing Time: 0.060 ms
 ~~END~~
 
 
@@ -9250,7 +9221,7 @@ Query Text: EXEC BABEL_5966_sp_like_nvar_collations N'exact match'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.279 ms
+Babelfish T-SQL Batch Parsing Time: 0.270 ms
 ~~END~~
 
 
@@ -9288,7 +9259,7 @@ Query Text: EXEC BABEL_5966_sp_like_nvar_collations N'EXACT MATCH'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.057 ms
+Babelfish T-SQL Batch Parsing Time: 0.058 ms
 ~~END~~
 
 
@@ -9326,7 +9297,7 @@ Query Text: EXEC BABEL_5966_sp_like_nvar_collations N'prefix%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.067 ms
+Babelfish T-SQL Batch Parsing Time: 0.057 ms
 ~~END~~
 
 
@@ -9402,7 +9373,7 @@ Query Text: EXEC BABEL_5966_sp_like_char_collations N'exact match'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.320 ms
+Babelfish T-SQL Batch Parsing Time: 0.268 ms
 ~~END~~
 
 
@@ -9440,7 +9411,7 @@ Query Text: EXEC BABEL_5966_sp_like_char_collations N'EXACT MATCH'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.059 ms
+Babelfish T-SQL Batch Parsing Time: 0.058 ms
 ~~END~~
 
 
@@ -9517,7 +9488,7 @@ Query Text: EXEC BABEL_5966_sp_like_char_collations N'café'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.061 ms
+Babelfish T-SQL Batch Parsing Time: 0.060 ms
 ~~END~~
 
 
@@ -9542,7 +9513,7 @@ Query Text: EXEC BABEL_5966_sp_like_with_cast 'exact match'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.280 ms
+Babelfish T-SQL Batch Parsing Time: 0.314 ms
 ~~END~~
 
 
@@ -9567,7 +9538,7 @@ Query Text: EXEC BABEL_5966_sp_like_with_cast 'prefix%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.058 ms
+Babelfish T-SQL Batch Parsing Time: 0.057 ms
 ~~END~~
 
 
@@ -9592,7 +9563,7 @@ Query Text: EXEC BABEL_5966_sp_like_multi_condition N'prefix%', N'prefix%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.434 ms
+Babelfish T-SQL Batch Parsing Time: 0.373 ms
 ~~END~~
 
 
@@ -9617,7 +9588,7 @@ Query Text: EXEC BABEL_5966_sp_like_multi_condition N'prefix%', N'test%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.065 ms
+Babelfish T-SQL Batch Parsing Time: 0.066 ms
 ~~END~~
 
 
@@ -9642,7 +9613,7 @@ Query Text: EXEC BABEL_5966_sp_like_multi_condition N'exact match', N'exact matc
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.063 ms
+Babelfish T-SQL Batch Parsing Time: 0.062 ms
 ~~END~~
 
 
@@ -9662,7 +9633,7 @@ Query Text: EXEC BABEL_5966_sp_like_subquery N'prefix%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.830 ms
+Babelfish T-SQL Batch Parsing Time: 2.735 ms
 ~~END~~
 
 
@@ -9682,7 +9653,7 @@ Query Text: EXEC BABEL_5966_sp_like_subquery N'exact match'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.059 ms
+Babelfish T-SQL Batch Parsing Time: 0.058 ms
 ~~END~~
 
 
@@ -9702,7 +9673,7 @@ Query Text: EXEC BABEL_5966_sp_like_exists N'prefix%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 2.836 ms
+Babelfish T-SQL Batch Parsing Time: 2.839 ms
 ~~END~~
 
 
@@ -9743,7 +9714,7 @@ Query Text: EXEC BABEL_5966_sp_like_top N'prefix%', 3
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 1.143 ms
+Babelfish T-SQL Batch Parsing Time: 1.106 ms
 ~~END~~
 
 
@@ -9815,7 +9786,7 @@ Query Text: EXEC BABEL_5966_sp_like_varchar_param 'a%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.213 ms
+Babelfish T-SQL Batch Parsing Time: 0.206 ms
 ~~END~~
 
 
@@ -9871,7 +9842,7 @@ Query Text: EXEC BABEL_5966_sp_like_nvarchar_param N'a%'
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.144 ms
+Babelfish T-SQL Batch Parsing Time: 0.141 ms
 ~~END~~
 
 
