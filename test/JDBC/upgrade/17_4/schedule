@@ -630,7 +630,6 @@ view_sec_setting_before_17_6-or-16_10
 alter-table-null-notnull
 babel_binary-before-17_5-or-16_9
 ascii_function_before-17_7-or-16_11
-cast_string_to_binary-before-17_7
 cast_binary_to_string-before-17_7
 test_conv_text_to_binary-before-17_7
 test_conv_text_to_string
