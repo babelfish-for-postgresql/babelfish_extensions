@@ -1,4 +1,29 @@
 
+USE TestSpatialFunc3_DB;
+
+DROP VIEW TestSpatialFunc3_GeomMetrics_MakeValid_View;
+DROP VIEW TestSpatialFunc3_GeogMetrics_MakeValid_View;
+DROP VIEW TestSpatialFunc3_GeomMetrics_Area_View;
+DROP VIEW TestSpatialFunc3_GeogMetrics_Area_View;
+
+DROP TABLE TestSpatialFunc3_GeomMetrics;
+DROP TABLE TestSpatialFunc3_GeogMetrics;
+
+USE MASTER;
+
+DROP VIEW TestSpatialFunc3_MakeValidGeomView1;
+DROP VIEW TestSpatialFunc3_MakeValidGeomView2;
+DROP VIEW TestSpatialFunc3_MakeValidGeomView3;
+DROP VIEW TestSpatialFunc3_MakeValidGeomView4;
+DROP VIEW TestSpatialFunc3_MakeValidGeomView5;
+DROP VIEW TestSpatialFunc3_MakeValidGeogView1;
+DROP VIEW TestSpatialFunc3_MakeValidGeogView2;
+DROP VIEW TestSpatialFunc3_MakeValidGeogView3;
+
+DROP TABLE TestSpatialFunc3_MakeValidGeomTemp;
+DROP TABLE TestSpatialFunc3_MakeValidGeogTemp;
+
+DROP DATABASE TestSpatialFunc3_DB;
 USE TestSTNumPoints_DB;
 
 DROP VIEW STNumPoints_geog_view_db;

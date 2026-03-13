@@ -433,6 +433,21 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+--MAKEVALID
+CREATE OR REPLACE FUNCTION sys.MakeValid(geog sys.GEOGRAPHY)
+    RETURNS sys.GEOGRAPHY
+    AS $$ 
+    BEGIN
+        IF sys.STIsEmpty(geog) = 1 THEN  
+            RETURN geog;
+        ELSEIF sys.STIsValid(geog) = 1 THEN
+            RETURN geog;
+        ELSE
+            RETURN sys.makevalid_helper(geog);
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 --STNumPoints
 CREATE OR REPLACE FUNCTION sys.STNumPoints(geog sys.GEOGRAPHY)
 	RETURNS integer
@@ -677,6 +692,11 @@ CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOGRAPHY)
         RETURNS integer
         AS '$libdir/postgis-3','LWGEOM_dimension'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.makevalid_helper(geog sys.GEOGRAPHY)
+    RETURNS sys.GEOGRAPHY
+    AS '$libdir/postgis-3', 'ST_MakeValid'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.STNumPoints_helper(sys.GEOGRAPHY)
     RETURNS integer
