@@ -51,3 +51,18 @@ bigint
 -10957
 ~~END~~
 
+
+-- DATE_BUCKET does not support weekday datepart (should error)
+SELECT DATE_BUCKET(weekday, 1, cast('2020-01-01' as datetime))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "weekday")~~
+
+
+SELECT DATE_BUCKET(dw, 1, cast('2020-01-01' as datetime))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "dw")~~
+

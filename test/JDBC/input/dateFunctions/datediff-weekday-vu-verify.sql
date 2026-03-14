@@ -21,3 +21,10 @@ GO
 -- -10957
 exec datediff_big_dw_p1
 GO
+
+-- DATE_BUCKET does not support weekday datepart (should error)
+SELECT DATE_BUCKET(weekday, 1, cast('2020-01-01' as datetime))
+GO
+
+SELECT DATE_BUCKET(dw, 1, cast('2020-01-01' as datetime))
+GO
