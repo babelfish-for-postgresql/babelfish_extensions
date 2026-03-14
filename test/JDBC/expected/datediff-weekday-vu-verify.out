@@ -1,0 +1,75 @@
+-- 0
+exec datediff_weekday_p1
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- 1
+exec datediff_weekday_p2
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- -10
+exec datediff_weekday_p3
+GO
+~~START~~
+int
+-10
+~~END~~
+
+
+-- 365
+exec datediff_dw_p1
+GO
+~~START~~
+int
+365
+~~END~~
+
+
+-- 10957
+exec datediff_big_weekday_p1
+GO
+~~START~~
+bigint
+10957
+~~END~~
+
+
+-- -10957
+exec datediff_big_dw_p1
+GO
+~~START~~
+bigint
+-10957
+~~END~~
+
+
+-- DATE_BUCKET does not support weekday datepart (should error)
+SELECT DATE_BUCKET(weekday, 1, cast('2020-01-01' as datetime))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "weekday")~~
+
+
+SELECT DATE_BUCKET(dw, 1, cast('2020-01-01' as datetime))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "dw")~~
+
+
+SELECT DATE_BUCKET(w, 1, cast('2020-01-01' as datetime))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "w")~~
+
