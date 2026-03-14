@@ -1433,7 +1433,7 @@ get_rpc_out_option(char *servername)
 	bool		rpc_out_enabled = false;  /* Default to disabled */
 
 	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
-										 RowExclusiveLock);
+										 AccessShareLock);
 
 	ScanKeyInit(&key,
 				Anum_bbf_servers_def_servername,
@@ -1455,7 +1455,7 @@ get_rpc_out_option(char *servername)
 	}
 
 	table_endscan(scan);
-	table_close(bbf_servers_def_rel, RowExclusiveLock);
+	table_close(bbf_servers_def_rel, AccessShareLock);
 	return rpc_out_enabled;
 }
 

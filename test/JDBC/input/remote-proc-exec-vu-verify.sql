@@ -759,3 +759,113 @@ PRINT 'Test 109: Outer calls inner with DELETE - should fail';
 GO
 EXEC bbf_rpe_server.master.dbo.sp_Outer_CallsDelete;
 GO
+
+-- ========================================
+-- SECTION 23: ERROR MESSAGE COMPATIBILITY
+-- Tests that validate SQL Server error code compatibility
+-- when errors occur during remote procedure execution.
+-- These cover the error scenarios from the RPC error comparison suite.
+-- ========================================
+
+-- Test 110: Missing required parameter
+-- Expected: Should return error 201 (missing parameter)
+EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt;
+GO
+
+-- Test 111: Wrong parameter name
+-- Expected: Should return error 201 (missing parameter - @value not supplied)
+EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt @wrong_name=42;
+GO
+
+-- Test 112: Too many parameters
+-- Expected: Should return error 8144 (too many arguments)
+EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt @value=42, @extra=99;
+GO
+
+-- Test 113: Wrong type - string to int (implicit conversion failure)
+-- Expected: Should return error 245 (conversion failed) - validates 22P02 error mapping fix
+EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt @value='not_a_number';
+GO
+
+-- Test 114: NULL for INT parameter (should work - NULL is valid for INT)
+-- Expected: Should succeed and return NULL
+EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt @value=NULL;
+GO
+
+-- Test 115: Missing one of two required parameters
+-- Expected: Should return error 201 (missing parameter @b)
+EXEC bbf_rpe_server.master.dbo.sp_err_TwoParams @a=10;
+GO
+
+-- Test 116: RAISERROR severity 16 (standard user error)
+-- Expected: Should propagate error 50000 at severity 16
+EXEC bbf_rpe_server.master.dbo.sp_err_Raiserror16;
+GO
+
+-- Test 117: RAISERROR severity 11 (lowest error severity)
+-- Expected: Should propagate error 50000 at severity 11
+EXEC bbf_rpe_server.master.dbo.sp_err_Raiserror11;
+GO
+
+-- Test 118: RAISERROR severity 10 (informational - should NOT error)
+-- Expected: Execution should continue, return result set
+EXEC bbf_rpe_server.master.dbo.sp_err_Raiserror10;
+GO
+
+-- Test 119: RAISERROR custom message
+-- Expected: Should propagate error 50000 with custom message text
+EXEC bbf_rpe_server.master.dbo.sp_err_RaiserrorCustomMsg;
+GO
+
+-- Test 120: Division by zero
+-- Expected: Babelfish raises error 8134; SQL Server returns NULL with ANSI_WARNINGS OFF
+-- Note: Known Babelfish limitation - ANSI_WARNINGS OFF is not supported
+EXEC bbf_rpe_server.master.dbo.sp_err_DivByZero;
+GO
+
+-- Test 121: Arithmetic overflow (INT max + 1)
+-- Expected: Babelfish raises error 8115; SQL Server returns NULL with ANSI_WARNINGS OFF
+-- Note: Known Babelfish limitation - ANSI_WARNINGS OFF is not supported
+EXEC bbf_rpe_server.master.dbo.sp_err_Overflow;
+GO
+
+-- Test 122: Conversion error (CAST string to INT)
+-- Expected: Should return error 245 (conversion failed) - validates 22P02 error mapping fix
+EXEC bbf_rpe_server.master.dbo.sp_err_ConversionError;
+GO
+
+-- Test 123: String truncation (long string to VARCHAR(5))
+-- Expected: Should truncate to 5 characters
+EXEC bbf_rpe_server.master.dbo.sp_err_StringTruncation;
+GO
+
+-- Test 124: NULL arithmetic (should return NULL, not error)
+-- Expected: Should succeed and return NULL with ISNULL fallback
+EXEC bbf_rpe_server.master.dbo.sp_err_NullDeref;
+GO
+
+-- Test 125: Outer calls inner that raises error
+-- Expected: Should propagate error 50000 from inner procedure
+EXEC bbf_rpe_server.master.dbo.sp_err_NestedError;
+GO
+
+-- Test 126: Procedure returns data THEN raises error
+-- Expected: Should propagate error 50000 after partial result
+EXEC bbf_rpe_server.master.dbo.sp_err_ReturnAfterError;
+GO
+
+-- Test 127: TRY/CATCH with re-raised error
+-- Expected: Babelfish leaks the re-raised error (known limitation)
+-- SQL Server TRY/CATCH swallows the error completely
+EXEC bbf_rpe_server.master.dbo.sp_err_MultipleErrors;
+GO
+
+-- Test 128: PRINT followed by error
+-- Expected: Should propagate error 50000
+EXEC bbf_rpe_server.master.dbo.sp_err_PrintAndError;
+GO
+
+-- Test 129: PRINT only (no error, no result set)
+-- Expected: Should complete without error
+EXEC bbf_rpe_server.master.dbo.sp_err_PrintOnly;
+GO

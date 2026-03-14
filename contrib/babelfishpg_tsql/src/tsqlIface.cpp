@@ -72,12 +72,15 @@ extern "C"
 
 	void report_antlr_error(ANTLR_result result);
 
+#ifdef ENABLE_TDS_LIB
 	void validate_remote_procedure_select_only_antlr(
 		const char *definition,
 		const char *server_name,
 		const char *database_name,
 		const char *schema_name,
-		const char *procedure_name);
+		const char *procedure_name,
+		List **nested_procs_out);
+#endif
 
 	extern PLtsql_type *parse_datatype(const char *string, int location);
 	extern bool is_tsql_text_ntext_or_image_datatype(Oid oid);
@@ -4295,15 +4298,21 @@ void report_antlr_error(ANTLR_result r)
 
 #pragma GCC diagnostic pop
 
+#ifdef ENABLE_TDS_LIB
 void
 validate_remote_procedure_select_only_antlr(
 	const char *definition,
 	const char *server_name,
 	const char *database_name,
 	const char *schema_name,
-	const char *procedure_name)
+	const char *procedure_name,
+	List **nested_procs_out)
 {
 	try {
+		/* Initialize output parameter */
+		if (nested_procs_out)
+			*nested_procs_out = NIL;
+
 		// Parse T-SQL procedure body using ANTLR
 		MyInputStream stream(definition);
 		TSqlLexer lexer(&stream);
@@ -4328,6 +4337,27 @@ validate_remote_procedure_select_only_antlr(
 						  validator.getStatementType()),
 				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
 		}
+
+		/*
+		 * Convert C++ vector of nested procedure calls to PostgreSQL List*.
+		 * This replaces the old extract_nested_procedure_calls() C string parser
+		 * which was inferior because it could match EXEC inside string literals,
+		 * comments, and was case-sensitive for keyword matching.
+		 */
+		if (nested_procs_out)
+		{
+			List *result = NIL;
+			for (const auto &np : validator.getNestedProcedures())
+			{
+				NestedProcedureInfo *info = (NestedProcedureInfo *) palloc(sizeof(NestedProcedureInfo));
+				info->server_name = np.server_name.empty() ? NULL : pstrdup(np.server_name.c_str());
+				info->database_name = np.database_name.empty() ? NULL : pstrdup(np.database_name.c_str());
+				info->schema_name = np.schema_name.empty() ? NULL : pstrdup(np.schema_name.c_str());
+				info->procedure_name = pstrdup(np.procedure_name.c_str());
+				result = lappend(result, info);
+			}
+			*nested_procs_out = result;
+		}
 	}
 	catch (PGErrorWrapperException &e) {
 		ereport(ERROR,
@@ -4341,6 +4371,7 @@ validate_remote_procedure_select_only_antlr(
 					server_name, database_name, schema_name, procedure_name)));
 	}
 }
+#endif /* ENABLE_TDS_LIB */
 
 } // extern "C"
 

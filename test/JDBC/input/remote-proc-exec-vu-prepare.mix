@@ -497,3 +497,136 @@ AS BEGIN
     SELECT 'After dynamic SQL' AS message;
 END;
 GO
+
+-- ========================================
+-- ERROR MESSAGE COMPATIBILITY TEST PROCEDURES
+-- Tests for SQL Server error code/message compatibility
+-- These validate that Babelfish returns correct SQL Server error codes
+-- when errors occur during remote procedure execution.
+-- ========================================
+
+-- Basic procedures for parameter error tests
+CREATE PROCEDURE sp_err_SingleInt @value INT
+AS BEGIN
+    SELECT @value AS input_val, @value * 2 AS doubled;
+END;
+GO
+
+CREATE PROCEDURE sp_err_TwoParams @a INT, @b VARCHAR(50)
+AS BEGIN
+    SELECT @a AS int_val, @b AS str_val;
+END;
+GO
+
+-- RAISERROR at various severities
+CREATE PROCEDURE sp_err_Raiserror16
+AS BEGIN
+    RAISERROR('Error severity 16: user error', 16, 1);
+END;
+GO
+
+CREATE PROCEDURE sp_err_Raiserror11
+AS BEGIN
+    RAISERROR('Error severity 11: object not found', 11, 1);
+END;
+GO
+
+CREATE PROCEDURE sp_err_Raiserror10
+AS BEGIN
+    RAISERROR('Info severity 10: informational message', 10, 1);
+    SELECT 'Execution continued after severity 10' AS result;
+END;
+GO
+
+CREATE PROCEDURE sp_err_RaiserrorCustomMsg
+AS BEGIN
+    RAISERROR('Custom application error: invalid operation', 16, 1);
+END;
+GO
+
+-- Runtime execution error procedures
+CREATE PROCEDURE sp_err_DivByZero
+AS BEGIN
+    DECLARE @x INT = 1;
+    DECLARE @y INT = 0;
+    SELECT @x / @y AS result;
+END;
+GO
+
+CREATE PROCEDURE sp_err_Overflow
+AS BEGIN
+    DECLARE @x INT = 2147483647;
+    SET @x = @x + 1;
+    SELECT @x AS result;
+END;
+GO
+
+CREATE PROCEDURE sp_err_ConversionError
+AS BEGIN
+    DECLARE @x INT = CAST('not_a_number' AS INT);
+    SELECT @x AS result;
+END;
+GO
+
+CREATE PROCEDURE sp_err_StringTruncation
+AS BEGIN
+    DECLARE @short VARCHAR(5);
+    SET @short = 'This is a very long string that will be truncated';
+    SELECT @short AS result;
+END;
+GO
+
+CREATE PROCEDURE sp_err_NullDeref
+AS BEGIN
+    DECLARE @x INT = NULL;
+    DECLARE @y INT = 5;
+    SELECT @x + @y AS result, ISNULL(@x + @y, -1) AS with_isnull;
+END;
+GO
+
+-- Nested error scenarios
+CREATE PROCEDURE sp_err_InnerRaiserror
+AS BEGIN
+    RAISERROR('Error from inner procedure', 16, 1);
+END;
+GO
+
+CREATE PROCEDURE sp_err_NestedError
+AS BEGIN
+    SELECT 'Before inner call' AS status;
+    EXEC dbo.sp_err_InnerRaiserror;
+    SELECT 'After inner call (should not reach here)' AS status;
+END;
+GO
+
+CREATE PROCEDURE sp_err_ReturnAfterError
+AS BEGIN
+    SELECT 'This result comes before error' AS result;
+    RAISERROR('Error after returning data', 16, 1);
+END;
+GO
+
+CREATE PROCEDURE sp_err_MultipleErrors
+AS BEGIN
+    BEGIN TRY
+        DECLARE @x INT = 1/0;
+    END TRY
+    BEGIN CATCH
+        RAISERROR('Caught and re-raised: division by zero', 16, 1);
+    END CATCH
+END;
+GO
+
+-- PRINT message scenarios
+CREATE PROCEDURE sp_err_PrintAndError
+AS BEGIN
+    PRINT 'Informational: starting execution';
+    RAISERROR('Error after PRINT', 16, 1);
+END;
+GO
+
+CREATE PROCEDURE sp_err_PrintOnly
+AS BEGIN
+    PRINT 'This is a PRINT message only';
+END;
+GO

@@ -3515,7 +3515,7 @@ GO
 int
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote server error: division by zero)~~
+~~ERROR (Message: TDS client library error: Msg #: 8134, Msg state: 1, Msg: division by zero, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
 
 
 -- Try executing a query that does not return a result set
@@ -3587,7 +3587,7 @@ GO
 text
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: DB #: 20047, DB Msg: DBPROCESS is dead or not enabled, OS #: 0, OS Msg: Success, Level: 9)~~
+~~ERROR (Message: TDS client library error: DB #: 20003, DB Msg: server connection timed out, OS #: 0, OS Msg: Success, Level: 6)~~
 
 
 -- Test connect timeout behaviour in OPENQUERY

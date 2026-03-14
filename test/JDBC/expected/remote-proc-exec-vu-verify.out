@@ -622,7 +622,7 @@ EXEC bbf_rpe_server.invalid_db.dbo.sp_NoParams;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote server error: database "invalid_db" does not exist)~~
+~~ERROR (Message: TDS client library error: Msg #: 911, Msg state: 1, Msg: database "invalid_db" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
 
 
 -- Test 53: Invalid schema name
@@ -812,7 +812,7 @@ EXEC bbf_rpe_server.master.dbo.sp_WithError @should_error=1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Test error message)~~
+~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Test error message, Server: BABELFISH, Process: , Line: 3, Level: 16)~~
 
 
 
@@ -999,7 +999,7 @@ EXEC bbf_rpe_server.master.dbo.sp_SingleInt; DROP TABLE test; --;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Procedure parameter error: procedure sp_singleint expects parameter "@value", which was not supplied.)~~
+~~ERROR (Message: TDS client library error: Msg #: 201, Msg state: 1, Msg: procedure sp_singleint expects parameter "@value", which was not supplied., Server: BABELFISH, Process: , Line: 1, Level: 16)~~
 
 
 -- Test 82e: Parameter value injection attempt
@@ -1377,3 +1377,193 @@ GO
 
 ~~ERROR (Message: Remote procedure contains DELETE statement)~~
 
+
+
+-- ========================================
+-- SECTION 23: ERROR MESSAGE COMPATIBILITY
+-- Tests that validate SQL Server error code compatibility
+-- when errors occur during remote procedure execution.
+-- These cover the error scenarios from the RPC error comparison suite.
+-- ========================================
+-- Test 110: Missing required parameter
+-- Expected: Should return error 201 (missing parameter)
+EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 201, Msg state: 1, Msg: procedure sp_err_singleint expects parameter "@value", which was not supplied., Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+
+
+-- Test 111: Wrong parameter name
+-- Expected: Should return error 201 (missing parameter - @value not supplied)
+EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt @wrong_name=42;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 201, Msg state: 1, Msg: procedure sp_err_singleint expects parameter "@value", which was not supplied., Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+
+
+-- Test 112: Too many parameters
+-- Expected: Should return error 8144 (too many arguments)
+EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt @value=42, @extra=99;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 8144, Msg state: 1, Msg: procedure sp_err_singleint has too many arguments specified., Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+
+
+-- Test 113: Wrong type - string to int (implicit conversion failure)
+-- Expected: Should return error 245 (conversion failed) - validates 22P02 error mapping fix
+EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt @value='not_a_number';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 245, Msg state: 1, Msg: invalid input syntax for type integer: "not_a_number", Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+
+
+-- Test 114: NULL for INT parameter (should work - NULL is valid for INT)
+-- Expected: Should succeed and return NULL
+EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt @value=NULL;
+GO
+~~START~~
+int#!#int
+<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test 115: Missing one of two required parameters
+-- Expected: Should return error 201 (missing parameter @b)
+EXEC bbf_rpe_server.master.dbo.sp_err_TwoParams @a=10;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 201, Msg state: 1, Msg: procedure sp_err_twoparams expects parameter "@b", which was not supplied., Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+
+
+-- Test 116: RAISERROR severity 16 (standard user error)
+-- Expected: Should propagate error 50000 at severity 16
+EXEC bbf_rpe_server.master.dbo.sp_err_Raiserror16;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Error severity 16: user error, Server: BABELFISH, Process: , Line: 2, Level: 16)~~
+
+
+-- Test 117: RAISERROR severity 11 (lowest error severity)
+-- Expected: Should propagate error 50000 at severity 11
+EXEC bbf_rpe_server.master.dbo.sp_err_Raiserror11;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Error severity 11: object not found, Server: BABELFISH, Process: , Line: 2, Level: 11)~~
+
+
+-- Test 118: RAISERROR severity 10 (informational - should NOT error)
+-- Expected: Execution should continue, return result set
+EXEC bbf_rpe_server.master.dbo.sp_err_Raiserror10;
+GO
+~~START~~
+varchar
+Execution continued after severity 10
+~~END~~
+
+
+-- Test 119: RAISERROR custom message
+-- Expected: Should propagate error 50000 with custom message text
+EXEC bbf_rpe_server.master.dbo.sp_err_RaiserrorCustomMsg;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Custom application error: invalid operation, Server: BABELFISH, Process: , Line: 2, Level: 16)~~
+
+
+-- Test 120: Division by zero
+-- Expected: Babelfish raises error 8134; SQL Server returns NULL with ANSI_WARNINGS OFF
+-- Note: Known Babelfish limitation - ANSI_WARNINGS OFF is not supported
+EXEC bbf_rpe_server.master.dbo.sp_err_DivByZero;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 8134, Msg state: 1, Msg: division by zero, Server: BABELFISH, Process: , Line: 4, Level: 16)~~
+
+
+-- Test 121: Arithmetic overflow (INT max + 1)
+-- Expected: Babelfish raises error 8115; SQL Server returns NULL with ANSI_WARNINGS OFF
+-- Note: Known Babelfish limitation - ANSI_WARNINGS OFF is not supported
+EXEC bbf_rpe_server.master.dbo.sp_err_Overflow;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 8115, Msg state: 1, Msg: integer out of range, Server: BABELFISH, Process: , Line: 3, Level: 16)~~
+
+
+-- Test 122: Conversion error (CAST string to INT)
+-- Expected: Should return error 245 (conversion failed) - validates 22P02 error mapping fix
+EXEC bbf_rpe_server.master.dbo.sp_err_ConversionError;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 245, Msg state: 1, Msg: invalid input syntax for type integer: "not_a_number", Server: BABELFISH, Process: , Line: 2, Level: 16)~~
+
+
+-- Test 123: String truncation (long string to VARCHAR(5))
+-- Expected: Should truncate to 5 characters
+EXEC bbf_rpe_server.master.dbo.sp_err_StringTruncation;
+GO
+~~START~~
+varchar
+This 
+~~END~~
+
+
+-- Test 124: NULL arithmetic (should return NULL, not error)
+-- Expected: Should succeed and return NULL with ISNULL fallback
+EXEC bbf_rpe_server.master.dbo.sp_err_NullDeref;
+GO
+~~START~~
+int#!#int
+<NULL>#!#-1
+~~END~~
+
+
+-- Test 125: Outer calls inner that raises error
+-- Expected: Should propagate error 50000 from inner procedure
+EXEC bbf_rpe_server.master.dbo.sp_err_NestedError;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Error from inner procedure, Server: BABELFISH, Process: , Line: 2, Level: 16)~~
+
+
+-- Test 126: Procedure returns data THEN raises error
+-- Expected: Should propagate error 50000 after partial result
+EXEC bbf_rpe_server.master.dbo.sp_err_ReturnAfterError;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Error after returning data, Server: BABELFISH, Process: , Line: 3, Level: 16)~~
+
+
+-- Test 127: TRY/CATCH with re-raised error
+-- Expected: Babelfish leaks the re-raised error (known limitation)
+-- SQL Server TRY/CATCH swallows the error completely
+EXEC bbf_rpe_server.master.dbo.sp_err_MultipleErrors;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Caught and re-raised: division by zero, Server: BABELFISH, Process: , Line: 6, Level: 16)~~
+
+
+-- Test 128: PRINT followed by error
+-- Expected: Should propagate error 50000
+EXEC bbf_rpe_server.master.dbo.sp_err_PrintAndError;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Error after PRINT, Server: BABELFISH, Process: , Line: 3, Level: 16)~~
+
+
+-- Test 129: PRINT only (no error, no result set)
+-- Expected: Should complete without error
+EXEC bbf_rpe_server.master.dbo.sp_err_PrintOnly;
+GO

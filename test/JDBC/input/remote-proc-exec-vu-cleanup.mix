@@ -58,6 +58,26 @@ DROP PROCEDURE IF EXISTS sp_Outer_MultipleInner;
 DROP PROCEDURE IF EXISTS sp_Outer_WithDynamicSQL;
 GO
 
+-- Drop error message compatibility test procedures
+DROP PROCEDURE IF EXISTS sp_err_SingleInt;
+DROP PROCEDURE IF EXISTS sp_err_TwoParams;
+DROP PROCEDURE IF EXISTS sp_err_Raiserror16;
+DROP PROCEDURE IF EXISTS sp_err_Raiserror11;
+DROP PROCEDURE IF EXISTS sp_err_Raiserror10;
+DROP PROCEDURE IF EXISTS sp_err_RaiserrorCustomMsg;
+DROP PROCEDURE IF EXISTS sp_err_DivByZero;
+DROP PROCEDURE IF EXISTS sp_err_Overflow;
+DROP PROCEDURE IF EXISTS sp_err_ConversionError;
+DROP PROCEDURE IF EXISTS sp_err_StringTruncation;
+DROP PROCEDURE IF EXISTS sp_err_NullDeref;
+DROP PROCEDURE IF EXISTS sp_err_InnerRaiserror;
+DROP PROCEDURE IF EXISTS sp_err_NestedError;
+DROP PROCEDURE IF EXISTS sp_err_ReturnAfterError;
+DROP PROCEDURE IF EXISTS sp_err_MultipleErrors;
+DROP PROCEDURE IF EXISTS sp_err_PrintAndError;
+DROP PROCEDURE IF EXISTS sp_err_PrintOnly;
+GO
+
 -- Drop linked server and login mapping
 EXEC sp_dropserver 'bbf_rpe_server', 'droplogins';
 GO

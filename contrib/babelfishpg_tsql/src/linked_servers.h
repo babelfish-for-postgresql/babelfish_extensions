@@ -102,6 +102,7 @@ typedef DBPROCESS * LinkedServerProcess;
 #define LINKED_SERVER_SET_PWD(login, password)		DBSETLPWD(login, password)
 #define LINKED_SERVER_SET_APP(login)			DBSETLAPP(login, "babelfish_linked_server")
 #define LINKED_SERVER_SET_VERSION(login)		DBSETLVERSION(login, DBVERSION_74)
+#define LINKED_SERVER_SET_CHARSET(login, cs)		DBSETLCHARSET(login, cs)
 #define LINKED_SERVER_SET_DBNAME(login, dbname)		DBSETLDBNAME(login, dbname)
 #define LINKED_SERVER_SET_QUERY_TIMEOUT(timeout) 	dbsettime(timeout)
 #define LINKED_SERVER_SET_CONNECT_TIMEOUT(timeout) dbsetlogintime(timeout)
@@ -199,6 +200,7 @@ typedef int *LinkedServerProcess;
 #define LINKED_SERVER_SET_PWD(login, password)          ((void)0)
 #define LINKED_SERVER_SET_APP(login)                    ((void)0)
 #define LINKED_SERVER_SET_VERSION(login)                ((void)0)
+#define LINKED_SERVER_SET_CHARSET(login, cs)            ((void)0)
 #define LINKED_SERVER_SET_DBNAME(login, dbname)         ((void)0)
 #define LINKED_SERVER_SET_QUERY_TIMEOUT(timeout) 	((void)0)
 #define LINKED_SERVER_SET_CONNECT_TIMEOUT(timeout)	((void)0)
@@ -294,11 +296,12 @@ extern void validate_procedure_select_only(const char *server_name,
 										   const char *schema_name,
 										   const char *procedure_name);
 
-/* ANTLR-based SELECT-only validation */
+/* ANTLR-based SELECT-only validation (also extracts nested procedure calls) */
 extern void validate_remote_procedure_select_only_antlr(
 	const char *definition,
 	const char *server_name,
 	const char *database_name,
 	const char *schema_name,
-	const char *procedure_name);
+	const char *procedure_name,
+	List **nested_procs_out);
 #endif

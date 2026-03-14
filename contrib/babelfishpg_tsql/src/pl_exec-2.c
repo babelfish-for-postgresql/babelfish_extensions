@@ -874,7 +874,6 @@ static int
 execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 {
 	LinkedServerProcess lsproc = NULL;
-	LinkedServerProcess validation_lsproc = NULL;  /* Separate connection for validation to avoid TDS error 20019 */
 	LINKED_SERVER_RETCODE erc;
 	char *full_proc_name;
 	int colcount = 0;
@@ -922,18 +921,16 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 */
 		LINKED_SERVER_DEBUG("SELECT-only validation: Validating procedure %s", full_proc_name);
 		
-		/* Temporarily establish connection just for validation */
-		linked_server_establish_connection(stmt->server_name, &validation_lsproc, false);
-		
-		/* Call the ANTLR-based validation function from linked_servers.c */
+		/*
+		 * Call the ANTLR-based validation function from linked_servers.c.
+		 * validate_procedure_select_only() manages its own connections internally —
+		 * each recursive level opens a connection, fetches the procedure definition,
+		 * validates it, closes the connection, then recurses into nested calls.
+		 */
 		validate_procedure_select_only(stmt->server_name,
 									   stmt->db_name ? stmt->db_name : get_cur_db_name(),
 									   stmt->schema_name ? stmt->schema_name : "dbo",
 									   stmt->proc_name);
-		
-		/* Validation connection has been closed internally - mark as cleaned up */
-		validation_lsproc = NULL;
-		
 		
 		/*
 		 * PHASE 2: Open fresh TDS connection for RPC execution
@@ -1301,15 +1298,7 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			param_data_buffers = NIL;
 		}
 		
-		/* Clean up validation connection if error occurred during validation */
-		if (validation_lsproc)
-		{
-			LINKED_SERVER_CANCEL(validation_lsproc);
-			LINKED_SERVER_CLOSE(validation_lsproc);
-			validation_lsproc = NULL;
-		}
-		
-		/* Clean up RPC connection if error occurred during RPC */
+		/* Clean up RPC connection */
 		if (lsproc)
 		{
 			LINKED_SERVER_CANCEL(lsproc);

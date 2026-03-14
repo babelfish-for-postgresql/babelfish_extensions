@@ -318,7 +318,7 @@ EXEC sp_testlinkedserver 'test_server'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote database not found: database "maste" does not exist)~~
+~~ERROR (Message: TDS client library error: Msg #: 911, Msg state: 1, Msg: database "maste" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
 
 
 EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'

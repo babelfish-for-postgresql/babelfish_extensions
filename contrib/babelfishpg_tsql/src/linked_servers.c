@@ -25,10 +25,11 @@
 #define LINKED_SERVER_DEBUG_FINER(...)	elog(DEBUG2, __VA_ARGS__)
 
 /*
- * Note: UTF-8 to UTF-16 LE conversion is not needed here because FreeTDS
- * handles the character encoding internally when we use XSYBNVARCHAR/XSYBNCHAR
- * types. We send UTF-8 data and FreeTDS converts it to UTF-16 LE as needed
- * for the TDS protocol wire format.
+ * Note: FreeTDS handles UTF-8 to UTF-16 LE conversion internally when we
+ * use XSYBNVARCHAR/XSYBNCHAR types with dbrpcparam(). We configure the
+ * client charset to UTF-8 via DBSETLCHARSET in linked_server_establish_connection()
+ * so that FreeTDS correctly converts multi-byte UTF-8 characters (e.g., CJK,
+ * Arabic, emoji) to UTF-16 LE for the TDS protocol wire format.
  */
 
 PG_FUNCTION_INFO_V1(openquery_internal);
@@ -56,72 +57,45 @@ Oid		tdsTypeToOid(int datatype);
 int		tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int scale);
 Datum		getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len);
 static bool 	isQueryTimeout;
-static char *format_tds_error_for_user(int error_code, int severity, const char *error_msg);
-
-/*
- * Format TDS error messages into user-friendly text
- * Strips internal TDS details and presents clean error messages
- */
-static char *
-format_tds_error_for_user(int error_code, int severity, const char *error_msg)
-{
-	StringInfoData buf;
-	const char *clean_msg = error_msg;
-	
-	initStringInfo(&buf);
-	
-	/* Format based on common error codes */
-	switch (error_code)
-	{
-		case 201:  /* Missing or invalid parameter */
-			appendStringInfo(&buf, "Procedure parameter error: %s", clean_msg);
-			break;
-			
-		case 911:  /* Database not found */
-			appendStringInfo(&buf, "Remote server error: %s", clean_msg);
-			break;
-			
-		case 2812: /* Procedure not found */
-		case 2571: /* User lacks permission */
-			appendStringInfo(&buf, "Remote server error: %s", clean_msg);
-			break;
-			
-		case 50000: /* User-defined RAISERROR */
-			/* For user errors, just pass through the message */
-			appendStringInfo(&buf, "%s", clean_msg);
-			break;
-			
-		default:
-			/* For unknown errors, provide generic wrapper */
-			if (severity > 10)
-				appendStringInfo(&buf, "Remote server error: %s", clean_msg);
-			else
-				appendStringInfo(&buf, "%s", clean_msg);
-			break;
-	}
-	
-	return buf.data;
-}
 
 static int
 linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state, int severity, char *error_msg, char *svr_name, char *proc_name, int line)
 {
+	StringInfoData buf;
+
+	initStringInfo(&buf);
+
 	/*
 	 * If error severity is greater than 10, we interpret it as a T-SQL error;
-	 * otherwise, a T-SQL info
+	 * otheriwse, a T-SQL info
 	 */
+	appendStringInfo(
+					 &buf,
+					 "TDS client library %s: Msg #: %i, Msg state: %i, ",
+					 severity > 10 ? "error" : "info",
+					 error_code,
+					 state
+		);
+
+	if (error_msg)
+		appendStringInfo(&buf, "Msg: %s, ", error_msg);
+
+	if (svr_name)
+		appendStringInfo(&buf, "Server: %s, ", svr_name);
+
+	if (proc_name)
+		appendStringInfo(&buf, "Process: %s, ", proc_name);
+
+	appendStringInfo(&buf, "Line: %i, Level: %i", line, severity);
+
 	if (severity > 10)
-	{
-		char *formatted_msg = format_tds_error_for_user(error_code, severity, error_msg);
-		
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-				 errmsg("%s", formatted_msg)));
-	}
+				 errmsg("%s", buf.data)));
 	else
 	{
 		/*
-		 * We deliberately don't call the TDS report warning/info function here
+		 * We delibrately don't call the TDS report warning/info function here
 		 * because in doing so, it spews a lot of messages client side like
 		 * for database change, language change for every single connection
 		 * made to a remote server. Thus, we just log those events in the PG
@@ -131,11 +105,8 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 		 *
 		 * TODO: Distinguish between WARNING and INFO
 		 */
-		if (error_msg)
-		{
-			ereport(INFO,
-					(errmsg("Remote server info: %s", error_msg)));
-		}
+		ereport(INFO,
+				(errmsg("%s", buf.data)));
 	}
 
 	return 0;
@@ -865,6 +836,7 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 
 		LINKED_SERVER_SET_APP(login);
 		LINKED_SERVER_SET_VERSION(login);
+		LINKED_SERVER_SET_CHARSET(login, "UTF-8");
 
 		/* options in foreign server should be the servername and database */
 		foreach(option, server->options)
@@ -896,8 +868,8 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 			LINKED_SERVER_SET_CONNECT_TIMEOUT(connect_timeout);
 		}
 
-		/* LOG: Connection parameters configured - using DEBUG1 for sensitive data_src (server URL/IP) */
-		elog(DEBUG1, "DEBUG_LINKED_SERVER: Connection parameters - data_source: %s, database: %s, connect_timeout: %d, query_timeout: %d",
+		/* LOG: Connection parameters configured */
+		LINKED_SERVER_DEBUG("LINKED SERVER: Connection parameters - data_source: %s, database: %s, connect_timeout: %d, query_timeout: %d",
 		     data_src ? data_src : "NULL", 
 		     database ? database : "(none)", 
 		     connect_timeout, 
@@ -913,8 +885,8 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("Unable to connect to \"%s\"", data_src)));
 
-		/* LOG: Connection successful - using DEBUG1 for sensitive data_src (server URL/IP) */
-		elog(DEBUG1, "DEBUG_LINKED_SERVER: TDS connection established successfully to: %s", data_src);
+		/* LOG: Connection successful */
+		LINKED_SERVER_DEBUG("LINKED SERVER: TDS connection established successfully to: %s", data_src);
 
 		LINKED_SERVER_FREELOGIN(login);
 
@@ -1203,9 +1175,8 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 	{
 		if (lsproc)
 		{
-			LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Closing connection to remote server");
-			LINKED_SERVER_CANCEL(lsproc);
-			LINKED_SERVER_CLOSE(lsproc);
+			LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Closing connections to remote server");
+			LINKED_SERVER_EXIT();
 		}
 	}
 	PG_END_TRY();
@@ -1393,9 +1364,8 @@ openquery_imp(PG_FUNCTION_ARGS)
 	{
 		if (lsproc)
 		{
-			LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Closing connection to remote server");
-			LINKED_SERVER_CANCEL(lsproc);
-			LINKED_SERVER_CLOSE(lsproc);
+			LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Closing connections to remote server");
+			LINKED_SERVER_EXIT();
 		}
 
 		if (query)
@@ -1409,91 +1379,104 @@ openquery_imp(PG_FUNCTION_ARGS)
 /*
  * Map PostgreSQL/Babelfish type OID to TDS type for RPC parameter binding.
  *
- * Babelfish type OIDs are resolved at runtime via lookup_tsql_datatype_oid(),
- * so they cannot be used in switch/case labels (C requires constant expressions).
- * We check all Babelfish types in a single if-chain first, then fall through
- * to a switch on standard PostgreSQL OIDs (compile-time constants).
+ * Babelfish type OIDs are resolved at runtime, so they cannot be used in
+ * switch/case labels (C requires constant expressions). We use the cached
+ * is_tsql_*_datatype() functions from the common utility plugin (typecode.c)
+ * which perform lazy-cached OID lookups internally — avoiding the overhead
+ * of repeated syscache queries on every call.
+ *
+ * For the few types without dedicated is_tsql_*_datatype() functions
+ * (float, real, datetime, uniqueidentifier), we use get_tsql_datatype_oid()
+ * which scans the pre-initialized type_infos[] array (also no syscache).
  */
 int
 get_tds_type_from_pg_oid(Oid pgtype)
 {
-	/* Check for Babelfish-specific types (runtime OIDs, cannot use switch) */
-	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
+	/*
+	 * Check for Babelfish-specific types using cached is_tsql_*_datatype()
+	 * functions from the common utility plugin. Each function uses a
+	 * lazy-initialized static OID variable internally (see typecode.c),
+	 * so the syscache is consulted at most once per type per session.
+	 */
+	if (common_utility_plugin_ptr)
 	{
-		Oid varchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varchar");
-		Oid nvarchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nvarchar");
-		Oid char_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("char");
-		Oid nchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nchar");
-		Oid int_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("int");
-		Oid bigint_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bigint");
-		Oid tinyint_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("tinyint");
-		Oid float_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("float");
-		Oid real_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("real");
-		Oid bit_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bit");
-		Oid datetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime");
-		Oid smalldatetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smalldatetime");
-		Oid datetime2_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime2");
-		Oid date_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("date");
-		Oid datetimeoffset_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetimeoffset");
-		Oid time_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("time");
-		Oid numeric_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("numeric");
-		Oid decimal_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("decimal");
-		Oid money_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("money");
-		Oid smallmoney_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smallmoney");
-		Oid varbinary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varbinary");
-		Oid binary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("binary");
-		Oid uniqueidentifier_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("uniqueidentifier");
-
 		/* String types */
-		if (pgtype == varchar_oid)
+		if (common_utility_plugin_ptr->is_tsql_varchar_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_varchar_datatype)(pgtype))
 			return LS_TYPE_VARCHAR;
-		if (pgtype == nvarchar_oid)
+		if (common_utility_plugin_ptr->is_tsql_nvarchar_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(pgtype))
 			return LS_TYPE_NVARCHAR;
-		if (pgtype == char_oid)
+		if (common_utility_plugin_ptr->is_tsql_bpchar_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(pgtype))
 			return LS_TYPE_CHAR;
-		if (pgtype == nchar_oid)
+		if (common_utility_plugin_ptr->is_tsql_nchar_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_nchar_datatype)(pgtype))
 			return LS_TYPE_NCHAR;
 
 		/* Integer types */
-		if (pgtype == int_oid)
+		if (common_utility_plugin_ptr->is_tsql_int_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_int_datatype)(pgtype))
 			return LS_TYPE_INT4;
-		if (pgtype == bigint_oid)
+		if (common_utility_plugin_ptr->is_tsql_bigint_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_bigint_datatype)(pgtype))
 			return LS_TYPE_INT8;
-		if (pgtype == tinyint_oid)
+		if (common_utility_plugin_ptr->is_tsql_tinyint_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(pgtype))
 			return LS_TYPE_INT1;
 
-		/* Floating point types */
-		if (pgtype == float_oid)
-			return LS_TYPE_FLOAT;
-		if (pgtype == real_oid)
-			return LS_TYPE_REAL;
+		/* Floating point types (no dedicated is_tsql_* — use cached array lookup) */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid)
+		{
+			if (pgtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("float"))
+				return LS_TYPE_FLOAT;
+			if (pgtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("real"))
+				return LS_TYPE_REAL;
+		}
 
 		/* Boolean type */
-		if (pgtype == bit_oid)
+		if (common_utility_plugin_ptr->is_tsql_bit_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_bit_datatype)(pgtype))
 			return LS_TYPE_BIT;
 
 		/* Binary types */
-		if (pgtype == varbinary_oid)
+		if (common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(pgtype))
 			return LS_TYPE_VARBINARY;
-		if (pgtype == binary_oid)
+		if (common_utility_plugin_ptr->is_tsql_sys_binary_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(pgtype))
 			return LS_TYPE_BINARY;
 
-		/* DateTime types - send as ISO string, server will parse */
-		if (pgtype == datetime_oid || pgtype == smalldatetime_oid ||
-			pgtype == datetime2_oid || pgtype == date_oid ||
-			pgtype == datetimeoffset_oid || pgtype == time_oid)
+		/* DateTime types — send as ISO string, server will parse */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid &&
+			pgtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("datetime"))
+			return LS_TYPE_VARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_smalldatetime_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_datetime2_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_datetime2_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype)(pgtype))
 			return LS_TYPE_VARCHAR;
 
-		/* Numeric/Decimal - send as string, server will convert */
-		if (pgtype == numeric_oid || pgtype == decimal_oid)
+		/* Numeric/Decimal — send as string, server will convert */
+		if (common_utility_plugin_ptr->is_tsql_decimal_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_decimal_datatype)(pgtype))
 			return LS_TYPE_VARCHAR;
 
-		/* Money types - send as string, server will convert */
-		if (pgtype == money_oid || pgtype == smallmoney_oid)
+		/* Money types — send as string, server will convert */
+		if (common_utility_plugin_ptr->is_tsql_money_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_money_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_smallmoney_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(pgtype))
 			return LS_TYPE_VARCHAR;
 
-		/* Uniqueidentifier - send as string (GUID format) */
-		if (pgtype == uniqueidentifier_oid)
+		/* Uniqueidentifier — send as string (GUID format) */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid &&
+			pgtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("uniqueidentifier"))
 			return LS_TYPE_VARCHAR;
 	}
 
@@ -1541,8 +1524,12 @@ get_tds_type_from_pg_oid(Oid pgtype)
  * Helper: Convert a text/varchar Datum to raw TDS bytes (no null terminator).
  * Used for all string-like types (varchar, nvarchar, char, nchar, text, etc.)
  *
- * Note: Do NOT include null terminator in output — it causes UTF-16
- * conversion errors in FreeTDS when passed via dbrpcparam.
+ * FreeTDS handles UTF-8 to UTF-16 encoding conversion internally when
+ * XSYBNVARCHAR/XSYBNCHAR types are used with dbrpcparam(). We send
+ * UTF-8 data and FreeTDS converts it as needed for the TDS wire format.
+ *
+ * Note: Do NOT include null terminator in output — it causes conversion
+ * errors in FreeTDS when passed via dbrpcparam.
  */
 static void
 datum_text_to_tds_bytes(Datum value, void **data_out, DBINT *len_out)
@@ -1582,8 +1569,18 @@ datum_output_to_tds_bytes(Datum value, Oid valtype, void **data_out, DBINT *len_
  * Convert a Datum value to raw bytes suitable for TDS RPC parameter binding.
  * Returns palloc'd buffer containing the data.
  *
- * Babelfish type OIDs are resolved at runtime, so they are checked in a
- * single if-chain first. Standard PostgreSQL types use a switch statement.
+ * Uses cached is_tsql_*_datatype() functions from the common utility plugin
+ * (typecode.c) to identify Babelfish types without repeated syscache lookups.
+ * Standard PostgreSQL types use a switch statement on compile-time OIDs.
+ *
+ * Note on tds_typeio.h: The TDS type I/O functions in babelfishpg_tds
+ * (TdsSendType*, TdsRecvType*) handle server-side TDS protocol I/O — they
+ * write/read TDS wire format bytes to/from the protocol stream buffer.
+ * This function handles client-side conversion — it produces raw C values
+ * (int32, float8, char*) for FreeTDS dbrpcparam() which has a different API
+ * contract. The two cannot be shared due to both the cross-extension boundary
+ * (babelfishpg_tds vs babelfishpg_tsql) and the fundamentally different
+ * output format requirements.
  */
 void
 convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnull,
@@ -1596,43 +1593,34 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 		return;
 	}
 
-	/* Check for Babelfish-specific types (runtime OIDs, single consolidated block) */
-	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
+	/*
+	 * Check for Babelfish-specific types using cached is_tsql_*_datatype()
+	 * functions from the common utility plugin. Each function uses a
+	 * lazy-initialized static OID variable internally (see typecode.c),
+	 * so the syscache is consulted at most once per type per session.
+	 */
+	if (common_utility_plugin_ptr)
 	{
-		Oid varchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varchar");
-		Oid nvarchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nvarchar");
-		Oid char_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("char");
-		Oid nchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nchar");
-		Oid float_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("float");
-		Oid real_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("real");
-		Oid bit_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bit");
-		Oid tinyint_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("tinyint");
-		Oid varbinary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varbinary");
-		Oid binary_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("binary");
-		Oid numeric_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("numeric");
-		Oid decimal_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("decimal");
-		Oid money_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("money");
-		Oid smallmoney_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smallmoney");
-		Oid datetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime");
-		Oid datetime2_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime2");
-		Oid smalldatetime_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smalldatetime");
-		Oid date_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("date");
-		Oid datetimeoffset_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetimeoffset");
-		Oid time_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("time");
-
 		/*
-		 * String types (varchar, nvarchar, char, nchar) - send as UTF-8.
+		 * String types (varchar, nvarchar, char, nchar) — send as UTF-8.
 		 * FreeTDS handles encoding conversion internally for nvarchar/nchar.
 		 */
-		if (valtype == nvarchar_oid || valtype == nchar_oid ||
-			valtype == varchar_oid || valtype == char_oid)
+		if ((common_utility_plugin_ptr->is_tsql_nvarchar_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_nchar_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_varchar_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_varchar_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_bpchar_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(valtype)))
 		{
 			datum_text_to_tds_bytes(value, data_out, len_out);
 			return;
 		}
 
 		/* Babelfish FLOAT (8 bytes) */
-		if (valtype == float_oid)
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid &&
+			valtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("float"))
 		{
 			*len_out = sizeof(LS_DBFLT8);
 			*data_out = palloc(*len_out);
@@ -1641,7 +1629,8 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 		}
 
 		/* Babelfish REAL (4 bytes) */
-		if (valtype == real_oid)
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid &&
+			valtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("real"))
 		{
 			*len_out = sizeof(LS_DBREAL);
 			*data_out = palloc(*len_out);
@@ -1650,7 +1639,8 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 		}
 
 		/* Babelfish BIT */
-		if (valtype == bit_oid)
+		if (common_utility_plugin_ptr->is_tsql_bit_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_bit_datatype)(valtype))
 		{
 			*len_out = sizeof(LS_DBBOOL);
 			*data_out = palloc(*len_out);
@@ -1659,7 +1649,8 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 		}
 
 		/* Babelfish TINYINT (unsigned 0-255, stored internally as int2) */
-		if (valtype == tinyint_oid)
+		if (common_utility_plugin_ptr->is_tsql_tinyint_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(valtype))
 		{
 			*len_out = sizeof(unsigned char);
 			*data_out = palloc(*len_out);
@@ -1668,7 +1659,10 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 		}
 
 		/* Babelfish VARBINARY/BINARY */
-		if (valtype == varbinary_oid || valtype == binary_oid)
+		if ((common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_sys_binary_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(valtype)))
 		{
 			bytea *bytes = DatumGetByteaPP(value);
 
@@ -1684,14 +1678,34 @@ convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnul
 		 *   numeric, decimal, money, smallmoney,
 		 *   datetime, datetime2, smalldatetime, date, datetimeoffset, time
 		 */
-		if (valtype == numeric_oid || valtype == decimal_oid ||
-			valtype == money_oid || valtype == smallmoney_oid ||
-			valtype == datetime_oid || valtype == datetime2_oid ||
-			valtype == smalldatetime_oid || valtype == date_oid ||
-			valtype == datetimeoffset_oid || valtype == time_oid)
+		if ((common_utility_plugin_ptr->is_tsql_decimal_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_decimal_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_money_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_money_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_smallmoney_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_datetime2_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_datetime2_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_smalldatetime_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype)(valtype)))
 		{
 			datum_output_to_tds_bytes(value, valtype, data_out, len_out);
 			return;
+		}
+
+		/* datetime, date, time — no dedicated is_tsql_* function, use cached array */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid)
+		{
+			Oid datetime_oid = (*common_utility_plugin_ptr->get_tsql_datatype_oid)("datetime");
+			Oid numeric_oid = (*common_utility_plugin_ptr->get_tsql_datatype_oid)("numeric");
+
+			if (valtype == datetime_oid || valtype == numeric_oid)
+			{
+				datum_output_to_tds_bytes(value, valtype, data_out, len_out);
+				return;
+			}
 		}
 	}
 
@@ -1841,107 +1855,6 @@ is_circular_reference(List *visited_procs,
 }
 
 /*
- * Extract nested EXEC/EXECUTE procedure calls from T-SQL definition
- * Uses split_object_name() to parse multi-part names
- * Returns List of NestedProcedureInfo structures
- */
-static List *
-extract_nested_procedure_calls(const char *definition)
-{
-	List *procedures = NIL;
-	const char *ptr = definition;
-	const char *exec_kw;
-	NestedProcedureInfo *info;  /* C90: declare at top of function */
-	
-	if (!definition || strlen(definition) == 0)
-		return NIL;
-	
-	/* Scan for EXEC or EXECUTE keywords */
-	while ((exec_kw = strstr(ptr, "EXEC")) != NULL)
-	{
-		const char *proc_start;
-		const char *proc_end;
-		char *proc_name_str;
-		char **parts;
-		bool is_dynamic_sql = false;
-		
-		/* Check if it's "EXECUTE" (longer form) */
-		if (strncmp(exec_kw, "EXECUTE", 7) == 0 && isspace(exec_kw[7]))
-			proc_start = exec_kw + 7;
-		else if (strncmp(exec_kw, "EXEC", 4) == 0 && isspace(exec_kw[4]))
-			proc_start = exec_kw + 4;
-		else
-		{
-			/* Not a keyword match, continue */
-			ptr = exec_kw + 4;
-			continue;
-		}
-		
-		/* Skip whitespace */
-		while (*proc_start && isspace(*proc_start))
-			proc_start++;
-		
-		/* Check for dynamic SQL: EXEC('string') or EXEC @var */
-		if (*proc_start == '(' || *proc_start == '@')
-		{
-			ptr = proc_start;
-			continue;
-		}
-		
-		/* Find end of procedure name (space, newline, semicolon, or open paren) */
-		proc_end = proc_start;
-		while (*proc_end && !isspace(*proc_end) && 
-		       *proc_end != ';' && *proc_end != '(' && *proc_end != '\n')
-		{
-			proc_end++;
-		}
-		
-		/* Extract procedure name */
-		if (proc_end > proc_start)
-		{
-			proc_name_str = pnstrdup(proc_start, proc_end - proc_start);
-			
-			/* Skip system procedures that don't need validation */
-			if (strncasecmp(proc_name_str, "sp_executesql", 13) == 0 ||
-			    strncasecmp(proc_name_str, "sp_execute", 10) == 0 ||
-			    strncasecmp(proc_name_str, "sp_prepexec", 11) == 0 ||
-			    strncasecmp(proc_name_str, "sp_prepare", 10) == 0)
-			{
-				is_dynamic_sql = true;
-			}
-			
-			if (!is_dynamic_sql)
-			{
-				/* Use existing split_object_name() utility */
-				parts = split_object_name(proc_name_str);
-				
-				/* Create NestedProcedureInfo */
-				info = (NestedProcedureInfo *) palloc(sizeof(NestedProcedureInfo));
-				
-				/* split_object_name returns [server, database, schema, object] */
-				info->server_name = (strlen(parts[0]) > 0) ? pstrdup(parts[0]) : NULL;
-				info->database_name = (strlen(parts[1]) > 0) ? pstrdup(parts[1]) : NULL;
-				info->schema_name = (strlen(parts[2]) > 0) ? pstrdup(parts[2]) : NULL;
-				info->procedure_name = pstrdup(parts[3]);
-				
-				/* Free the parts array */
-				for (int i = 0; i < 4; i++)
-					pfree(parts[i]);
-				pfree(parts);
-				
-				procedures = lappend(procedures, info);
-			}
-			
-			pfree(proc_name_str);
-		}
-		
-		ptr = proc_end;
-	}
-	
-	return procedures;
-}
-
-/*
  * Check if a procedure has already been validated (skip redundant validation)
  * Uses the same match logic as is_circular_reference but for validated list
  */
@@ -2047,14 +1960,35 @@ validate_remote_procedure_recursive(const char *server_name,
 		/* Establish separate connection for validation query */
 		linked_server_establish_connection((char *)server_name, &validation_lsproc, false);
 		
-		/* Build query to fetch procedure definition from sys.sql_modules */
+		/*
+		 * Build query to fetch procedure definition from sys.sql_modules.
+		 * Use bracket-quoting for identifiers and escape single quotes in
+		 * string literals to prevent SQL injection (reviewer comment #90:
+		 * procedure names with ' are valid in T-SQL via [] quoting).
+		 */
 		initStringInfo(&query);
 		appendStringInfo(&query,
 			"SELECT m.definition "
-			"FROM %s.sys.sql_modules m "
-			"JOIN %s.sys.objects o ON m.object_id = o.object_id "
-			"WHERE o.name = N'%s' AND SCHEMA_NAME(o.schema_id) = N'%s' AND o.type IN ('P', 'PC')",
-			database_name, database_name, procedure_name, schema_name);
+			"FROM [%s].sys.sql_modules m "
+			"JOIN [%s].sys.objects o ON m.object_id = o.object_id "
+			"WHERE o.name = N'",
+			database_name, database_name);
+		/* Escape single quotes in procedure_name */
+		for (int i = 0; procedure_name[i] != '\0'; i++)
+		{
+			appendStringInfoChar(&query, procedure_name[i]);
+			if (procedure_name[i] == '\'')
+				appendStringInfoChar(&query, '\'');
+		}
+		appendStringInfoString(&query, "' AND SCHEMA_NAME(o.schema_id) = N'");
+		/* Escape single quotes in schema_name */
+		for (int i = 0; schema_name[i] != '\0'; i++)
+		{
+			appendStringInfoChar(&query, schema_name[i]);
+			if (schema_name[i] == '\'')
+				appendStringInfoChar(&query, '\'');
+		}
+		appendStringInfoString(&query, "' AND o.type IN ('P', 'PC')");
 		
 		LINKED_SERVER_DEBUG("SELECT-only validation: Fetching definition for %s.%s.%s.%s (depth=%d)",
 			 server_name, database_name, schema_name, procedure_name, depth);
@@ -2129,7 +2063,12 @@ validate_remote_procedure_recursive(const char *server_name,
 	}
 	
 	
-	/* Validate this procedure with ANTLR (SELECT-only check) */
+	/*
+	 * Validate this procedure with ANTLR (SELECT-only check) and
+	 * extract nested procedure calls from the same parse.
+	 * This replaces the old extract_nested_procedure_calls() C string
+	 * parser which was inferior (case-sensitive, matched inside strings/comments).
+	 */
 	PG_TRY();
 	{
 		validate_remote_procedure_select_only_antlr(
@@ -2137,7 +2076,8 @@ validate_remote_procedure_recursive(const char *server_name,
 			server_name,
 			database_name,
 			schema_name,
-			procedure_name);
+			procedure_name,
+			&nested_calls);
 		
 	}
 	PG_CATCH();
@@ -2150,9 +2090,6 @@ validate_remote_procedure_recursive(const char *server_name,
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	
-	/* Extract nested procedure calls using C string parser */
-	nested_calls = extract_nested_procedure_calls(definition);
 	
 	LINKED_SERVER_DEBUG("SELECT-only validation: Found %d nested procedure calls in %s",
 	     list_length(nested_calls), procedure_name);
@@ -2286,9 +2223,8 @@ sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 	{
 		if (lsproc)
 		{
-			LINKED_SERVER_DEBUG("LINKED SERVER: (CONNECTION TEST) - Closing connection to remote server");
-			LINKED_SERVER_CANCEL(lsproc);
-			LINKED_SERVER_CLOSE(lsproc);
+			LINKED_SERVER_DEBUG("LINKED SERVER: (CONNECTION TEST) - Closing connections to remote server");
+			LINKED_SERVER_EXIT();
 		}
 	}
 	PG_END_TRY();
