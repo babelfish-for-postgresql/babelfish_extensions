@@ -2136,14 +2136,14 @@ func_expr_common_subexpr:
 											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
-			| TSQL_DATE_BUCKET '(' datediff_arg ',' a_expr ',' a_expr ')'
+			| TSQL_DATE_BUCKET '(' datebucket_arg ',' a_expr ',' a_expr ')'
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("date_bucket"),
 												list_make3(makeStringConst($3, @3), $5, $7),
 												COERCE_EXPLICIT_CALL,
 												@1);
 				}
-			| TSQL_DATE_BUCKET '(' datediff_arg ',' a_expr ',' a_expr ',' a_expr ')'
+			| TSQL_DATE_BUCKET '(' datebucket_arg ',' a_expr ',' a_expr ',' a_expr ')'
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("date_bucket"),
 												list_make4(makeStringConst($3, @3), $5, $7, $9),
@@ -4066,6 +4066,48 @@ datediff_arg:
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
 			| TSQL_W								{ $$ = "day"; }
+			| TSQL_WEEKDAY							{ $$ = "day"; }
+			| TSQL_DW								{ $$ = "day"; }
+			| TSQL_WEEK								{ $$ = "week"; }
+			| TSQL_WK								{ $$ = "week"; }
+			| TSQL_WW								{ $$ = "week"; }
+			| HOUR_P								{ $$ = "hour"; }
+			| TSQL_HH								{ $$ = "hour"; }
+			| TSQL_MI								{ $$ = "minute"; }
+			| MINUTE_P								{ $$ = "minute"; }
+			| TSQL_N								{ $$ = "minute"; }
+			| SECOND_P								{ $$ = "second"; }
+			| TSQL_SS								{ $$ = "second"; }
+			| TSQL_S								{ $$ = "second"; }
+			| TSQL_MILLISECOND						{ $$ = "millisecond"; }
+			| TSQL_MS								{ $$ = "millisecond"; }
+			| TSQL_MICROSECOND						{ $$ = "microsecond"; }
+			| TSQL_MCS								{ $$ = "microsecond"; }
+			| TSQL_NANOSECOND						{ $$ = "nanosecond"; }
+			| TSQL_NS								{ $$ = "nanosecond"; }
+			| Sconst								{ $$ = $1; }
+		;
+
+/* DATE_BUCKET() arguments — same as datediff_arg but without weekday/dw
+ * (DATE_BUCKET does not support weekday datepart in T-SQL)
+ */
+datebucket_arg:
+			IDENT									{ $$ = $1; }
+			| YEAR_P								{ $$ = "year"; }
+			| TSQL_YYYY								{ $$ = "year"; }
+			| TSQL_YY								{ $$ = "year"; }
+			| TSQL_QUARTER							{ $$ = "quarter"; }
+			| TSQL_QQ								{ $$ = "quarter"; }
+			| TSQL_Q								{ $$ = "quarter"; }
+			| MONTH_P								{ $$ = "month"; }
+			| TSQL_MM								{ $$ = "month"; }
+			| TSQL_M								{ $$ = "month"; }
+			| TSQL_DAYOFYEAR						{ $$ = "doy"; }
+			| TSQL_DY								{ $$ = "doy"; }
+			| TSQL_Y								{ $$ = "doy"; }
+			| DAY_P									{ $$ = "day"; }
+			| TSQL_DD								{ $$ = "day"; }
+			| TSQL_D								{ $$ = "day"; }
 			| TSQL_WEEK								{ $$ = "week"; }
 			| TSQL_WK								{ $$ = "week"; }
 			| TSQL_WW								{ $$ = "week"; }
