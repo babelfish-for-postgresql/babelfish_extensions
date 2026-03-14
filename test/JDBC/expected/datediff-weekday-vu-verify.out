@@ -66,3 +66,10 @@ GO
 
 ~~ERROR (Message: syntax error at or near "dw")~~
 
+
+SELECT DATE_BUCKET(w, 1, cast('2020-01-01' as datetime))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "w")~~
+

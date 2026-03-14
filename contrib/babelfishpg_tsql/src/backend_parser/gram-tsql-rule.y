@@ -4075,7 +4075,6 @@ datebucket_arg:
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
-			| TSQL_W								{ $$ = "day"; }
 			| TSQL_WEEK								{ $$ = "week"; }
 			| TSQL_WK								{ $$ = "week"; }
 			| TSQL_WW								{ $$ = "week"; }

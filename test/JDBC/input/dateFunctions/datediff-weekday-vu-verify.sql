@@ -28,3 +28,6 @@ GO
 
 SELECT DATE_BUCKET(dw, 1, cast('2020-01-01' as datetime))
 GO
+
+SELECT DATE_BUCKET(w, 1, cast('2020-01-01' as datetime))
+GO
