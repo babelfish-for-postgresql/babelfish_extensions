@@ -526,6 +526,61 @@ int#!#nvarchar
 
 
 -- =============================================
+-- SPECIAL CHARACTERS IN PATTERN (GitHub Issue #4296)
+-- =============================================
+-- Parentheses should be treated as literal characters
+SELECT PATINDEX('%(%', 'the phone Nr is 1-(800)-CARS');
+GO
+~~START~~
+bigint
+19
+~~END~~
+
+SELECT PATINDEX('%)%', 'the phone Nr is 1-(800)-CARS');
+GO
+~~START~~
+bigint
+23
+~~END~~
+
+-- Other SIMILAR TO metacharacters should also work as literals
+SELECT PATINDEX('%+%', '2+3=5');
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+SELECT PATINDEX('%*%', '2*3=6');
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+SELECT PATINDEX('%?%', 'is this a question?');
+GO
+~~START~~
+bigint
+19
+~~END~~
+
+SELECT PATINDEX('%{%', 'json: {key: val}');
+GO
+~~START~~
+bigint
+7
+~~END~~
+
+-- Parentheses inside character classes should still work
+SELECT PATINDEX('%[()]%', 'call func()');
+GO
+~~START~~
+bigint
+10
+~~END~~
+
+-- =============================================
 -- CLEANUP
 -- =============================================
 -- Drop Views

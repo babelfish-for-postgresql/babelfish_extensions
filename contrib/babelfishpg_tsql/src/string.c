@@ -16,6 +16,7 @@
 #include <openssl/sha.h>
 #include "utils/varlena.h"
 #include "utils/numeric.h"
+#include "mb/pg_wchar.h"
 #include "c.h"
 #include "pltsql.h"
 #include "pltsql-2.h"
@@ -32,6 +33,7 @@ PG_FUNCTION_INFO_V1(formatmessage);
 PG_FUNCTION_INFO_V1(tsql_varchar_substr);
 PG_FUNCTION_INFO_V1(tsql_varbinary_substr);
 PG_FUNCTION_INFO_V1(float_str);
+PG_FUNCTION_INFO_V1(tsql_patindex);
 
 /*
  * Helper functions for float_str()
@@ -902,4 +904,245 @@ return_varchar_pointer(char *buf, int size)
 
 	pfree(buf);
 	PG_RETURN_VARCHAR_P(result);
+}
+
+/*
+ * Advance a multibyte string pointer by one character.
+ */
+static inline void
+patindex_next_char(char **p, int *plen)
+{
+	int		l = pg_mblen(*p);
+
+	if (l > *plen)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("malformed string")));
+
+	(*p) += l;
+	*plen -= l;
+}
+
+/*
+ * patindex_match_text - T-SQL PATINDEX pattern matching for deterministic
+ * collations.  Returns the 1-based character position of the first match,
+ * or 0 if no match.
+ *
+ * Supports T-SQL pattern syntax:
+ *   %        - matches zero or more characters
+ *   _        - matches exactly one character
+ *   [abc]    - matches any character in the set
+ *   [^abc]   - matches any character NOT in the set
+ *   [a-z]    - matches any character in the range
+ *   All other characters are treated as literals.
+ */
+static int
+patindex_match_text(char *input_str, char *pattern)
+{
+	bool	start_wildcard = false;
+	int		char_pos = 0;
+
+	if (pattern == NULL || *pattern == '\0')
+		return 0;
+
+	/* Strip leading % wildcards */
+	while (*pattern == '%')
+	{
+		pattern++;
+		start_wildcard = true;
+	}
+
+	/* Pattern was only % wildcards */
+	if (*pattern == '\0')
+		return 1;
+
+	while (*input_str != '\0')
+	{
+		char	*t = input_str;
+		char	*p = pattern;
+		int		tlen = strlen(t);
+		int		plen = strlen(pattern);
+		bool	match_failed = false;
+
+		char_pos++;
+
+		while (tlen > 0 && plen > 0)
+		{
+			if (*p == '%')
+			{
+				/* Recurse for remaining pattern */
+				int		sub = patindex_match_text(t, p);
+
+				if (sub > 0)
+					return char_pos;
+				else
+					return 0;
+			}
+			else if (*p == '_')
+			{
+				/* _ matches any single character */
+				patindex_next_char(&t, &tlen);
+				patindex_next_char(&p, &plen);
+			}
+			else if (*p == '[')
+			{
+				/* Character class: [abc], [^abc], [a-z] */
+				bool	find_match = false;
+				bool	negate = false;
+				bool	close_bracket = false;
+				int		t_char_len = pg_mblen(t);
+
+				patindex_next_char(&p, &plen);
+
+				if (plen > 0 && *p == '^')
+				{
+					negate = true;
+					patindex_next_char(&p, &plen);
+				}
+
+				while (plen > 0)
+				{
+					if (*p == ']')
+					{
+						close_bracket = true;
+						patindex_next_char(&p, &plen);
+						break;
+					}
+
+					if (find_match)
+					{
+						/* Already matched; skip remaining class chars */
+						patindex_next_char(&p, &plen);
+						continue;
+					}
+
+					/*
+					 * Check for range pattern: prev_char '-' next_char
+					 * The '-' is a range operator only if it has a char on
+					 * both sides (not at the end before ']').
+					 */
+					{
+						char	*range_start = p;
+
+						patindex_next_char(&p, &plen);
+
+						if (plen > 0 && *p == '-' && plen > 1 && *(p + 1) != ']')
+						{
+							/* Range: compare start <= t <= end */
+							int		start_len = pg_mblen(range_start);
+							int		end_len;
+
+							patindex_next_char(&p, &plen);  /* skip '-' */
+							end_len = pg_mblen(p);
+
+							/*
+							 * For single-byte characters, use simple unsigned
+							 * byte comparison.  For multi-byte, require exact
+							 * length match and use memcmp.
+							 */
+							if (t_char_len == 1 && start_len == 1 && end_len == 1)
+							{
+								unsigned char tc = (unsigned char) *t;
+								unsigned char sc = (unsigned char) *range_start;
+								unsigned char ec = (unsigned char) *p;
+
+								if (tc >= sc && tc <= ec)
+									find_match = true;
+							}
+							else if (t_char_len == start_len && t_char_len == end_len)
+							{
+								if (memcmp(t, range_start, t_char_len) >= 0 &&
+									memcmp(t, p, t_char_len) <= 0)
+									find_match = true;
+							}
+
+							patindex_next_char(&p, &plen);  /* skip end char */
+						}
+						else
+						{
+							/* Single character match */
+							if (t_char_len == p_char_len &&
+								memcmp(t, range_start, t_char_len) == 0)
+								find_match = true;
+						}
+					}
+				}
+
+				if (close_bracket && (find_match != negate))
+					patindex_next_char(&t, &tlen);
+				else
+				{
+					match_failed = true;
+					break;
+				}
+			}
+			else
+			{
+				/*
+				 * Literal character(s): consume consecutive non-special
+				 * characters and compare as a chunk.
+				 */
+				int		t_char_len = pg_mblen(t);
+				int		p_char_len = pg_mblen(p);
+
+				if (t_char_len != p_char_len || memcmp(t, p, t_char_len) != 0)
+				{
+					match_failed = true;
+					break;
+				}
+				patindex_next_char(&t, &tlen);
+				patindex_next_char(&p, &plen);
+			}
+		}
+
+		/* Handle trailing spaces in text (T-SQL semantics) */
+		if (tlen > 0 && !match_failed)
+		{
+			while (tlen > 0 && *t == ' ')
+				patindex_next_char(&t, &tlen);
+			if (tlen <= 0 && plen <= 0)
+				return char_pos;
+		}
+
+		/* Check if remaining pattern is all % wildcards */
+		while (plen > 0 && *p == '%')
+			patindex_next_char(&p, &plen);
+
+		if (plen <= 0 && !match_failed)
+			return char_pos;
+
+		if (start_wildcard)
+			input_str += pg_mblen(input_str);
+		else
+			break;
+	}
+
+	return 0;
+}
+
+/*
+ * tsql_patindex - C implementation of sys.PATINDEX
+ *
+ * Returns the 1-based starting position of the first occurrence of a T-SQL
+ * pattern in a string, or 0 if the pattern is not found.
+ */
+Datum
+tsql_patindex(PG_FUNCTION_ARGS)
+{
+	char	*pattern;
+	char	*input_str;
+	int		result;
+
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
+		PG_RETURN_NULL();
+
+	pattern = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	input_str = text_to_cstring(PG_GETARG_TEXT_PP(1));
+
+	result = patindex_match_text(input_str, pattern);
+
+	pfree(pattern);
+	pfree(input_str);
+
+	PG_RETURN_INT64((int64) result);
 }
