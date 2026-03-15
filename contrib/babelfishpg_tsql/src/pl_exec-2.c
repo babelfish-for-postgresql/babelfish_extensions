@@ -23,6 +23,7 @@
 
 #include "catalog.h"
 #include "dbcmds.h"
+#include "err_handler.h"
 #include "multidb.h"
 #include "rolecmds.h"
 #include "pl_explain.h"
@@ -47,15 +48,15 @@
 static Oid insert_exec_temp_table_oid = InvalidOid;
 static char *insert_exec_target_table = NULL;
 static char *insert_exec_column_list = NULL;
+static int insert_exec_trycatch_depth = 0;  /* TRY-CATCH nesting depth during INSERT EXEC */
 
 /* DestReceiver struct for INSERT EXEC */
 typedef struct
 {
 	DestReceiver pub;			/* public fields */
 	Oid			temp_table_oid;	/* OID of temp table to insert into */
-	Relation	temp_rel;		/* open relation for temp table */
-	CommandId	output_cid;		/* command ID for inserts */
-	BulkInsertState bistate;	/* bulk insert state */
+	TupleDesc	typeinfo;		/* tuple descriptor from startup */
+	uint64		rows_inserted;	/* count of rows inserted */
 } DR_insertexec;
 
 /* Forward declarations for DestReceiver callbacks */
@@ -77,10 +78,6 @@ void
 pltsql_set_insert_exec_context_info(const char *target_table, const char *column_list)
 {
 	MemoryContext oldcontext;
-	
-	ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: pltsql_set_insert_exec_context_info called with target=%s, columns=%s",
-		target_table ? target_table : "(null)",
-		column_list ? column_list : "(null)")));
 	
 	/* Clear any previous context */
 	if (insert_exec_target_table)
@@ -108,7 +105,6 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 void
 pltsql_set_insert_exec_context(Oid temp_table_oid)
 {
-	ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: pltsql_set_insert_exec_context called with OID %u", temp_table_oid)));
 	insert_exec_temp_table_oid = temp_table_oid;
 }
 
@@ -120,6 +116,7 @@ void
 pltsql_clear_insert_exec_context(void)
 {
 	insert_exec_temp_table_oid = InvalidOid;
+	insert_exec_trycatch_depth = 0;  /* Reset TRY-CATCH depth */
 	if (insert_exec_target_table)
 	{
 		pfree(insert_exec_target_table);
@@ -139,12 +136,7 @@ pltsql_clear_insert_exec_context(void)
 bool
 pltsql_insert_exec_active(void)
 {
-	bool active = (insert_exec_target_table != NULL);
-	ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: pltsql_insert_exec_active called, returning %s (target=%s, OID=%u)", 
-		active ? "true" : "false", 
-		insert_exec_target_table ? insert_exec_target_table : "(null)",
-		insert_exec_temp_table_oid)));
-	return active;
+	return (insert_exec_target_table != NULL);
 }
 
 /*
@@ -175,6 +167,39 @@ pltsql_get_insert_exec_column_list(void)
 }
 
 /*
+ * Increment TRY-CATCH depth when entering a TRY block during INSERT EXEC.
+ * This is used to track whether we're inside a TRY-CATCH block during INSERT EXEC.
+ */
+void
+pltsql_insert_exec_enter_trycatch(void)
+{
+	if (insert_exec_target_table != NULL)
+		insert_exec_trycatch_depth++;
+}
+
+/*
+ * Decrement TRY-CATCH depth when exiting a TRY block during INSERT EXEC.
+ */
+void
+pltsql_insert_exec_exit_trycatch(void)
+{
+	if (insert_exec_target_table != NULL && insert_exec_trycatch_depth > 0)
+		insert_exec_trycatch_depth--;
+}
+
+/*
+ * Check if we're inside a TRY-CATCH block during INSERT EXEC.
+ * This is used as a fallback when exec_state_call_stack is NULL.
+ */
+bool
+pltsql_insert_exec_in_trycatch(void)
+{
+	if (insert_exec_target_table == NULL)
+		return false;
+	return insert_exec_trycatch_depth > 0;
+}
+
+/*
  * Create a DestReceiver for INSERT EXEC that writes to a temp table.
  */
 DestReceiver *
@@ -194,60 +219,71 @@ CreateInsertExecDestReceiver(Oid temp_table_oid)
 
 /*
  * insertexec_startup --- executor startup for INSERT EXEC receiver
+ * 
+ * We do NOT open the relation here. Instead, we open/close it for each
+ * tuple in insertexec_receive. This ensures the relation handle doesn't
+ * become invalid if a subtransaction rollback happens during procedure
+ * execution (e.g., inner TRY/CATCH blocks).
  */
 static void
 insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
 	DR_insertexec *myState = (DR_insertexec *) self;
 
-	/* Open the temp table */
-	myState->temp_rel = table_open(myState->temp_table_oid, RowExclusiveLock);
-	myState->output_cid = GetCurrentCommandId(true);
-	/* Note: We do NOT use TABLE_INSERT_FROZEN - must preserve MVCC semantics */
-	myState->bistate = GetBulkInsertState();
+	/* Just store the tuple descriptor for later use */
+	myState->typeinfo = typeinfo;
+	myState->rows_inserted = 0;
 }
 
 /*
  * insertexec_receive --- receive one tuple and insert into temp table
+ * 
+ * Opens the relation, inserts the tuple, and closes the relation for each
+ * tuple. This is less efficient than keeping the relation open, but it
+ * ensures we don't hold relation handles across subtransaction boundaries.
  */
 static bool
 insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_insertexec *myState = (DR_insertexec *) self;
+	Relation	temp_rel;
+	CommandId	cid;
+
+	/*
+	 * Open the temp table fresh for each tuple.
+	 * This ensures we don't hold a stale relation handle if a subtransaction
+	 * was rolled back since the last insert.
+	 */
+	temp_rel = table_open(myState->temp_table_oid, RowExclusiveLock);
+	cid = GetCurrentCommandId(true);
 
 	/*
 	 * Insert the tuple into the temp table.
 	 * table_tuple_insert handles slot type conversion if needed.
 	 */
-	table_tuple_insert(myState->temp_rel,
+	table_tuple_insert(temp_rel,
 					   slot,
-					   myState->output_cid,
+					   cid,
 					   0,  /* no special options - preserve MVCC */
-					   myState->bistate);
+					   NULL);  /* no bulk insert state */
+
+	/* Close relation immediately - don't hold across subtransaction boundaries */
+	table_close(temp_rel, NoLock);
+
+	myState->rows_inserted++;
 
 	return true;
 }
 
 /*
  * insertexec_shutdown --- executor end for INSERT EXEC receiver
+ * 
+ * Nothing to do here since we close the relation after each tuple.
  */
 static void
 insertexec_shutdown(DestReceiver *self)
 {
-	DR_insertexec *myState = (DR_insertexec *) self;
-
-	if (myState->bistate != NULL)
-		FreeBulkInsertState(myState->bistate);
-
-	if (myState->temp_rel != NULL)
-	{
-		table_finish_bulk_insert(myState->temp_rel, 0);
-		/* Close relation but keep lock until transaction end */
-		table_close(myState->temp_rel, NoLock);
-	}
-
-	myState->temp_rel = NULL;
-	myState->bistate = NULL;
+	/* Nothing to clean up - relation is closed after each tuple */
 }
 
 /*
@@ -463,6 +499,46 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 	if (!OidIsValid(temp_table_oid))
 		elog(ERROR, "could not find INSERT EXEC temp table %s", temp_table_name);
 
+	/*
+	 * IMPORTANT: "Anchor" the temp table by performing an INSERT and DELETE.
+	 * 
+	 * This is necessary because if the first actual INSERT into the temp table
+	 * happens inside a subtransaction (e.g., inside a TRY block) that later
+	 * rolls back, PostgreSQL may clean up the temp table's storage files.
+	 * 
+	 * By inserting and deleting a dummy row here (outside any subtransaction),
+	 * we ensure the temp table's storage is properly initialized and won't be
+	 * affected by subsequent subtransaction rollbacks.
+	 */
+	{
+		StringInfoData anchor_stmt;
+		
+		initStringInfo(&anchor_stmt);
+		
+		/* Insert a dummy row with NULL values */
+		appendStringInfo(&anchor_stmt, 
+			"INSERT INTO %s DEFAULT VALUES", temp_table_name);
+		
+		rc = SPI_execute(anchor_stmt.data, false, 0);
+		if (rc == SPI_OK_INSERT)
+		{
+			/* Delete the dummy row */
+			resetStringInfo(&anchor_stmt);
+			appendStringInfo(&anchor_stmt, "DELETE FROM %s", temp_table_name);
+			
+			SPI_execute(anchor_stmt.data, false, 0);
+		}
+		
+		pfree(anchor_stmt.data);
+	}
+	
+	/*
+	 * Force a command counter increment to ensure the temp table's storage
+	 * files are visible to subsequent commands. This is important because
+	 * if a subtransaction rolls back, we want the temp table to survive.
+	 */
+	CommandCounterIncrement();
+
 	return temp_table_oid;
 }
 
@@ -495,6 +571,12 @@ drop_insert_exec_temp_table(Oid temp_table_oid)
  * Flush all rows from the temp table to the target table using global context.
  * This version is called from exec_stmt_exec when INSERT EXEC context is active.
  * It uses the global insert_exec_target_table and insert_exec_column_list.
+ *
+ * CRITICAL: The flush is wrapped in its own subtransaction that commits
+ * immediately. This ensures that if an error occurs AFTER INSERT EXEC completes
+ * (e.g., SELECT 1/0 in the same TRY block), the TRY-CATCH rollback won't undo
+ * the already-flushed data. This matches SQL Server behavior where INSERT EXEC
+ * data is preserved even when subsequent errors occur in the same TRY block.
  */
 void
 flush_insert_exec_temp_table(PLtsql_execstate *estate)
@@ -505,6 +587,10 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	const char		*target_table = pltsql_get_insert_exec_target_table();
 	const char		*column_list = pltsql_get_insert_exec_column_list();
 	Oid				temp_oid = pltsql_get_insert_exec_temp_table_oid();
+	MemoryContext	oldcontext = CurrentMemoryContext;
+	ResourceOwner	oldowner = CurrentResourceOwner;
+	volatile bool	subtxn_started = false;
+	uint64			rows_inserted = 0;
 
 	if (!OidIsValid(temp_oid) || target_table == NULL)
 	{
@@ -609,21 +695,76 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 
 	elog(DEBUG1, "INSERT-EXEC: Flushing temp table to target: %s", flush_query.data);
 
-	rc = SPI_execute(flush_query.data, false, 0);
-	if (rc != SPI_OK_INSERT)
-		elog(ERROR, "INSERT-EXEC: Failed to flush temp table to target: %s",
-			 SPI_result_code_string(rc));
+	/*
+	 * Execute the flush INSERT in its own subtransaction that commits
+	 * immediately. This is critical for TRY-CATCH behavior:
+	 *
+	 * Without this subtransaction:
+	 * 1. INSERT EXEC runs inside TRY-CATCH subtransaction (level N+1)
+	 * 2. Flush INSERT happens at level N+1
+	 * 3. SELECT 1/0 throws error
+	 * 4. TRY-CATCH rolls back level N+1, undoing the flush
+	 * 5. Result: 0 rows in target table
+	 *
+	 * With this subtransaction:
+	 * 1. INSERT EXEC runs inside TRY-CATCH subtransaction (level N+1)
+	 * 2. Flush INSERT starts its own subtransaction (level N+2)
+	 * 3. Flush INSERT commits (ReleaseCurrentSubTransaction)
+	 * 4. Data is now "committed" at level N+1
+	 * 5. SELECT 1/0 throws error
+	 * 6. TRY-CATCH rolls back level N+1
+	 * 7. But the flush was already committed, so data survives
+	 * 8. Result: 3 rows in target table (matches SQL Server)
+	 *
+	 * This matches the QTM branch behavior where each INSERT is wrapped
+	 * in its own subtransaction that commits immediately.
+	 */
+	PG_TRY();
+	{
+		BeginInternalSubTransaction("insert_exec_flush");
+		subtxn_started = true;
+		MemoryContextSwitchTo(oldcontext);
+
+		rc = SPI_execute(flush_query.data, false, 0);
+		if (rc != SPI_OK_INSERT)
+			elog(ERROR, "INSERT-EXEC: Failed to flush temp table to target: %s",
+				 SPI_result_code_string(rc));
+
+		rows_inserted = SPI_processed;
+		SPI_freetuptable(SPI_tuptable);
+
+		/* Commit the flush subtransaction - this "locks in" the data */
+		ReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+
+		elog(DEBUG1, "INSERT-EXEC: Flush committed, %lu rows inserted", 
+			 (unsigned long) rows_inserted);
+	}
+	PG_CATCH();
+	{
+		/* Roll back the flush subtransaction on error */
+		if (subtxn_started)
+		{
+			RollbackAndReleaseCurrentSubTransaction();
+		}
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+
+		pfree(flush_query.data);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	/* Update rowcount */
 	if (estate)
 	{
-		estate->eval_processed = SPI_processed;
-		exec_set_rowcount(SPI_processed);
-		exec_set_found(estate, SPI_processed > 0);
+		estate->eval_processed = rows_inserted;
+		exec_set_rowcount(rows_inserted);
+		exec_set_found(estate, rows_inserted > 0);
 	}
 
 	pfree(flush_query.data);
-	SPI_freetuptable(SPI_tuptable);
 }
 
 /*
@@ -923,8 +1064,6 @@ static int
 exec_tsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt, PLtsql_stmt *save_estmt)
 {
 	int			rc;
-
-	ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_tsql_stmt called, stmt->cmd_type=%d", stmt->cmd_type)));
 
 	switch ((int) stmt->cmd_type)
 	{
@@ -1285,6 +1424,8 @@ static int
 exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 {
 	volatile int rc = -1;
+	int nest_level_before_subtxn;
+	volatile bool insert_exec_was_active = false;
 
 	/*
 	 * Execute the statements in the block's body inside a sub-transaction
@@ -1295,6 +1436,21 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 	ErrorData  *save_cur_error = estate->cur_error->error;
 
 	MemoryContext stmt_mcontext;
+
+	/*
+	 * Track TRY-CATCH depth for INSERT EXEC.
+	 * This is used as a fallback when exec_state_call_stack is NULL.
+	 */
+	pltsql_insert_exec_enter_trycatch();
+
+	/*
+	 * Check if INSERT EXEC is active at the start of the TRY block.
+	 * If so, we need special handling to preserve INSERT EXEC data
+	 * when a statement-terminating error occurs.
+	 */
+	insert_exec_was_active = pltsql_insert_exec_active();
+
+	nest_level_before_subtxn = GetCurrentTransactionNestLevel();
 
 	estate->err_text = gettext_noop("during statement block entry");
 
@@ -1363,17 +1519,60 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 	}
 	PG_CATCH();
 	{
-/* 		ErrorData  *edata; */
+		ErrorData  *edata;
+		int			last_error;
+		bool		is_stmt_terminating;
 
 		estate->err_text = gettext_noop("during exception cleanup");
 
 		/* Save error info in our stmt_mcontext */
 		MemoryContextSwitchTo(stmt_mcontext);
-/* 		edata = CopyErrorData(); */
+		edata = CopyErrorData();
 		FlushErrorState();
 
-		/* Abort the inner transaction */
-		RollbackAndReleaseCurrentSubTransaction();
+		/*
+		 * Check if this is a statement-terminating error.
+		 * Statement-terminating errors (like division by zero) should NOT
+		 * roll back previous statements' work in the TRY block.
+		 * This matches SQL Server behavior.
+		 */
+		(void) get_tsql_error_code(edata, &last_error);
+		is_stmt_terminating = is_ignorable_error(edata->sqlerrcode, 0);
+
+		/*
+		 * For statement-terminating errors when INSERT EXEC was active,
+		 * we want to preserve the INSERT EXEC data. To do this, we:
+		 * 1. Release (commit) the TRY-CATCH subtransaction instead of rolling back
+		 * 2. This preserves all work done before the error
+		 * 3. The CATCH block still runs to handle the error
+		 *
+		 * This matches SQL Server behavior where INSERT EXEC data is preserved
+		 * even when a subsequent statement-terminating error occurs in the
+		 * same TRY block.
+		 *
+		 * NOTE: We can only do this if the subtransaction is still at the
+		 * expected nesting level. If nested subtransactions were started
+		 * and not properly cleaned up, we must roll back.
+		 */
+		if (is_stmt_terminating && insert_exec_was_active &&
+			GetCurrentTransactionNestLevel() == nest_level_before_subtxn + 1)
+		{
+			/*
+			 * Release the subtransaction to commit all work done before the error.
+			 * This is safe because:
+			 * 1. The error has already been caught and saved
+			 * 2. The internal savepoint for the failed statement was already
+			 *    rolled back in dispatch_stmt_handle_error
+			 * 3. We're just committing the successful work from before the error
+			 */
+			ReleaseCurrentSubTransaction();
+		}
+		else
+		{
+			/* Abort the inner transaction */
+			RollbackAndReleaseCurrentSubTransaction();
+		}
+
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
 
@@ -1408,6 +1607,9 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 		estate->eval_tuptable = NULL;
 		exec_eval_cleanup(estate);
 
+		/* Free the error data now that we've extracted what we need */
+		FreeErrorData(edata);
+
 		rc = exec_stmt(estate, stmt->handler);
 
 		/*
@@ -1424,6 +1626,11 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 	PG_END_TRY();
 
 	Assert(save_cur_error == estate->cur_error->error);
+
+	/*
+	 * Decrement TRY-CATCH depth for INSERT EXEC tracking.
+	 */
+	pltsql_insert_exec_exit_trycatch();
 
 	estate->err_text = NULL;
 
@@ -1586,10 +1793,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	bool insert_exec_setup_done = false;
 	Oid insert_exec_temp_oid = InvalidOid;
 
-	ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_stmt_exec called, stmt->insert_exec=%s, stmt->insert_exec_target=%s",
-		stmt->insert_exec ? "true" : "false",
-		stmt->insert_exec_target ? stmt->insert_exec_target : "(null)")));
-
 	/*
 	 * We need to disable the explain gucs incase of sp_reset_connection
 	 * execution otherwise we will get explain output for it which is
@@ -1599,45 +1802,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	{
 		pltsql_explain_only = false;
 		pltsql_explain_analyze = false;
-	}
-	
-	/*
-	 * INSERT EXEC DestReceiver approach:
-	 * If this is an INSERT EXEC statement (set by parser), create temp table here.
-	 * The DestReceiver will redirect procedure output to this temp table.
-	 * After procedure completes, we flush temp table to target and cleanup.
-	 */
-	if (stmt->insert_exec && stmt->insert_exec_target != NULL)
-	{
-		/*
-		 * Check for nested INSERT EXEC - SQL Server error 8164.
-		 * If INSERT EXEC context is already active, this is a nested call.
-		 * Use same error code and message as old code path for consistency.
-		 */
-		if (pltsql_insert_exec_active())
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
-		}
-		
-		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_stmt_exec creating temp table for target=%s, columns=%s",
-			stmt->insert_exec_target,
-			stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)")));
-		
-		/* Set global context info for flush function */
-		pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
-		
-		/* Create temp table based on target table structure */
-		insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
-															 stmt->insert_exec_columns);
-		
-		/* Set global context so DestReceiver knows where to write */
-		pltsql_set_insert_exec_context(insert_exec_temp_oid);
-		
-		insert_exec_setup_done = true;
-		
-		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: Temp table created with OID %u", insert_exec_temp_oid)));
 	}
 
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
@@ -1655,6 +1819,47 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		/* for EXEC as part of inline code under INSERT ... EXECUTE */
 		Tuplestorestate *tss;
 		DestReceiver *dest;
+
+		/*
+		 * INSERT EXEC DestReceiver approach:
+		 * If this is an INSERT EXEC statement (set by parser), create temp table here.
+		 * The DestReceiver will redirect procedure output to this temp table.
+		 * After procedure completes, we flush temp table to target and cleanup.
+		 * 
+		 * This is inside PG_TRY so that errors (including nested INSERT EXEC)
+		 * can be caught by T-SQL TRY/CATCH.
+		 * 
+		 * IMPORTANT: We create the temp table in a subtransaction and immediately
+		 * release it. This ensures the temp table's storage files are "committed"
+		 * at the subtransaction level, so they won't be cleaned up if a nested
+		 * subtransaction (e.g., inner TRY/CATCH) rolls back.
+		 */
+		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
+		{
+			/*
+			 * Check for nested INSERT EXEC - SQL Server error 8164.
+			 * If INSERT EXEC context is already active, this is a nested call.
+			 * Use same error code and message as old code path for consistency.
+			 */
+			if (pltsql_insert_exec_active())
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
+			}
+			
+			/* Set global context info for flush function */
+			pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
+			
+			/* Create temp table based on target table structure - NO subtransaction wrapper */
+			insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
+																 stmt->insert_exec_columns);
+			
+			/* Set global context so DestReceiver knows where to write */
+			pltsql_set_insert_exec_context(insert_exec_temp_oid);
+			
+			insert_exec_setup_done = true;
+		}
 
 		if (IS_TDS_CONN())
 		{
@@ -2070,7 +2275,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 */
 		if (insert_exec_setup_done)
 		{
-			ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: Error occurred, clearing INSERT EXEC context (temp table will be cleaned up by transaction rollback)")));
 			/* Just clear the global state - don't try to drop the temp table */
 			pltsql_clear_insert_exec_context();
 		}
@@ -2141,21 +2345,67 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	/*
 	 * INSERT EXEC DestReceiver approach: Flush temp table to target
 	 * and cleanup after procedure execution completes.
+	 * 
+	 * Execute the flush INSERT directly without a subtransaction wrapper.
+	 * This matches the QTM branch behavior and ensures that:
+	 * 1. Data flushed to the target table is committed at the current
+	 *    transaction level (not nested in a subtransaction)
+	 * 2. If an error occurs AFTER INSERT EXEC completes (e.g., SELECT 1/0),
+	 *    the TRY-CATCH rollback won't undo the already-flushed data
+	 * 
+	 * NOTE: We must NOT clear the INSERT EXEC context before the flush,
+	 * because flush_insert_exec_temp_table needs the target table info.
+	 * We clear it AFTER the flush completes.
 	 */
 	if (insert_exec_setup_done)
 	{
-		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: Procedure completed, flushing temp table to target")));
+		MemoryContext oldcontext = CurrentMemoryContext;
+		ResourceOwner oldowner = CurrentResourceOwner;
 		
-		/* Flush temp table to target table */
-		flush_insert_exec_temp_table(estate);
+		PG_TRY();
+		{
+			/* Flush temp table to target table */
+			flush_insert_exec_temp_table(estate);
+			
+			/*
+			 * Clear the INSERT EXEC context AFTER the flush completes.
+			 * This ensures the flush INSERT has access to target table info.
+			 */
+			pltsql_clear_insert_exec_context();
+		}
+		PG_CATCH();
+		{
+			/* Clear context and drop temp table before re-throwing */
+			pltsql_clear_insert_exec_context();
+			drop_insert_exec_temp_table(insert_exec_temp_oid);
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
 		
-		/* Drop temp table */
-		drop_insert_exec_temp_table(insert_exec_temp_oid);
+		/*
+		 * Drop temp table in separate subtransaction.
+		 * This isolates DROP failures from the main transaction.
+		 */
+		BeginInternalSubTransaction(NULL);
+		MemoryContextSwitchTo(oldcontext);
 		
-		/* Clear global context */
-		pltsql_clear_insert_exec_context();
-		
-		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: INSERT EXEC completed successfully")));
+		PG_TRY();
+		{
+			drop_insert_exec_temp_table(insert_exec_temp_oid);
+			ReleaseCurrentSubTransaction();
+			MemoryContextSwitchTo(oldcontext);
+			CurrentResourceOwner = oldowner;
+		}
+		PG_CATCH();
+		{
+			/* DROP failed - rollback but don't propagate error */
+			RollbackAndReleaseCurrentSubTransaction();
+			MemoryContextSwitchTo(oldcontext);
+			CurrentResourceOwner = oldowner;
+			FlushErrorState();
+			elog(DEBUG1, "INSERT-EXEC: Failed to drop temp table, will be cleaned up at transaction end");
+		}
+		PG_END_TRY();
 	}
 
 	return PLTSQL_RC_OK;
@@ -2338,49 +2588,6 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 	LOCAL_FCINFO(fcinfo, 1);
 
-	ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_stmt_exec_batch called, stmt->insert_exec=%s, stmt->insert_exec_target=%s",
-		stmt->insert_exec ? "true" : "false",
-		stmt->insert_exec_target ? stmt->insert_exec_target : "(null)")));
-
-	/*
-	 * INSERT EXEC handling:
-	 * If this is an INSERT EXEC statement (set by parser), create temp table here.
-	 * The procedure output will be redirected to this temp table.
-	 * After procedure completes, we flush temp table to target and cleanup.
-	 */
-	if (stmt->insert_exec && stmt->insert_exec_target != NULL)
-	{
-		/*
-		 * Check for nested INSERT EXEC - SQL Server error 8164.
-		 * If INSERT EXEC context is already active, this is a nested call.
-		 * Use same error code and message as old code path for consistency.
-		 */
-		if (pltsql_insert_exec_active())
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
-		}
-		
-		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_stmt_exec_batch creating temp table for target=%s, columns=%s",
-			stmt->insert_exec_target,
-			stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)")));
-		
-		/* Set global context info for flush function */
-		pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
-		
-		/* Create temp table based on target table structure */
-		insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
-															 stmt->insert_exec_columns);
-		
-		/* Set global context so DestReceiver knows where to write */
-		pltsql_set_insert_exec_context(insert_exec_temp_oid);
-		
-		insert_exec_setup_done = true;
-		
-		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: Temp table created with OID %u", insert_exec_temp_oid)));
-	}
-
 	/*
 	 * First we evaluate the string expression. Its result is the
 	 * querystring we have to execute.
@@ -2388,12 +2595,6 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	query = exec_eval_expr(estate, stmt->expr, &isnull, &restype, &restypmod);
 	if (isnull)
 	{
-		/* No op in case of null - but cleanup INSERT EXEC if needed */
-		if (insert_exec_setup_done)
-		{
-			drop_insert_exec_temp_table(insert_exec_temp_oid);
-			pltsql_clear_insert_exec_context();
-		}
 		return PLTSQL_RC_OK;
 	}
 	save_nestlevel = pltsql_new_guc_nest_level();
@@ -2401,6 +2602,42 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 	PG_TRY();
 	{
+		/*
+		 * INSERT EXEC handling:
+		 * If this is an INSERT EXEC statement (set by parser), create temp table here.
+		 * The procedure output will be redirected to this temp table.
+		 * After procedure completes, we flush temp table to target and cleanup.
+		 * 
+		 * This is inside PG_TRY so that errors (including nested INSERT EXEC)
+		 * can be caught by T-SQL TRY/CATCH.
+		 */
+		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
+		{
+			/*
+			 * Check for nested INSERT EXEC - SQL Server error 8164.
+			 * If INSERT EXEC context is already active, this is a nested call.
+			 * Use same error code and message as old code path for consistency.
+			 */
+			if (pltsql_insert_exec_active())
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
+			}
+			
+			/* Set global context info for flush function */
+			pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
+			
+			/* Create temp table based on target table structure */
+			insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
+																 stmt->insert_exec_columns);
+			
+			/* Set global context so DestReceiver knows where to write */
+			pltsql_set_insert_exec_context(insert_exec_temp_oid);
+			
+			insert_exec_setup_done = true;
+		}
+
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(estate, query, restype);
 
@@ -2468,21 +2705,56 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	/*
 	 * INSERT EXEC: Flush temp table to target and cleanup after 
 	 * dynamic SQL execution completes.
+	 * 
+	 * Execute the flush INSERT directly without a subtransaction wrapper.
+	 * Clear the INSERT EXEC context BEFORE the flush so that subsequent
+	 * statements don't see the INSERT EXEC as active.
 	 */
 	if (insert_exec_setup_done)
 	{
-		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: Dynamic SQL completed, flushing temp table to target")));
+		MemoryContext oldcontext = CurrentMemoryContext;
+		ResourceOwner oldowner = CurrentResourceOwner;
 		
-		/* Flush temp table to target table */
-		flush_insert_exec_temp_table(estate);
+		PG_TRY();
+		{
+			/* Flush temp table to target table - no subtransaction wrapper */
+			flush_insert_exec_temp_table(estate);
+			
+			/*
+			 * Clear the INSERT EXEC context AFTER the flush completes.
+			 * This ensures the flush INSERT has access to target table info.
+			 */
+			pltsql_clear_insert_exec_context();
+		}
+		PG_CATCH();
+		{
+			/* Clear context and drop temp table before re-throwing */
+			pltsql_clear_insert_exec_context();
+			drop_insert_exec_temp_table(insert_exec_temp_oid);
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
 		
-		/* Drop temp table */
-		drop_insert_exec_temp_table(insert_exec_temp_oid);
+		/* Drop temp table in separate subtransaction */
+		BeginInternalSubTransaction(NULL);
+		MemoryContextSwitchTo(oldcontext);
 		
-		/* Clear global context */
-		pltsql_clear_insert_exec_context();
+		PG_TRY();
+		{
+			drop_insert_exec_temp_table(insert_exec_temp_oid);
+			ReleaseCurrentSubTransaction();
+			MemoryContextSwitchTo(oldcontext);
+			CurrentResourceOwner = oldowner;
+		}
+		PG_CATCH();
+		{
+			RollbackAndReleaseCurrentSubTransaction();
+			MemoryContextSwitchTo(oldcontext);
+			CurrentResourceOwner = oldowner;
+			FlushErrorState();
+		}
+		PG_END_TRY();
 		
-		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: INSERT EXEC (batch) completed successfully")));
 	}
 	
 	return PLTSQL_RC_OK;
@@ -3098,59 +3370,10 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				bool insert_exec_setup_done = false;
 				Oid insert_exec_temp_oid = InvalidOid;
 				
-				ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_stmt_exec_sp (sp_executesql) called, stmt->insert_exec=%s, stmt->insert_exec_target=%s",
-					stmt->insert_exec ? "true" : "false",
-					stmt->insert_exec_target ? stmt->insert_exec_target : "(null)")));
-				
-				/*
-				 * INSERT EXEC handling:
-				 * If this is an INSERT EXEC statement (set by parser), create temp table here.
-				 * The procedure output will be redirected to this temp table.
-				 * After procedure completes, we flush temp table to target and cleanup.
-				 */
-				if (stmt->insert_exec && stmt->insert_exec_target != NULL)
-				{
-					/*
-					 * Check for nested INSERT EXEC - SQL Server error 8164.
-					 * If INSERT EXEC context is already active, this is a nested call.
-					 * Use same error code and message as old code path for consistency.
-					 */
-					if (pltsql_insert_exec_active())
-					{
-						ereport(ERROR,
-								(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-								 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
-					}
-					
-					ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_stmt_exec_sp creating temp table for target=%s, columns=%s",
-						stmt->insert_exec_target,
-						stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)")));
-					
-					/* Set global context info for flush function */
-					pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
-					
-					/* Create temp table based on target table structure */
-					insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
-																		 stmt->insert_exec_columns);
-					
-					/* Set global context so DestReceiver knows where to write */
-					pltsql_set_insert_exec_context(insert_exec_temp_oid);
-					
-					insert_exec_setup_done = true;
-					
-					ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: Temp table created with OID %u", insert_exec_temp_oid)));
-				}
-				
 				batch = exec_eval_expr(estate, stmt->query, &isnull1, &restype1, &restypmod1);
 				if (isnull1)
 				{
 					/* When called with a NULL argument, sp_executesql should take no action at all */
-					/* But cleanup INSERT EXEC if needed */
-					if (insert_exec_setup_done)
-					{
-						drop_insert_exec_temp_table(insert_exec_temp_oid);
-						pltsql_clear_insert_exec_context();
-					}
 					break;
 				}
 
@@ -3192,6 +3415,42 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 
 				PG_TRY();
 				{
+					/*
+					 * INSERT EXEC handling:
+					 * If this is an INSERT EXEC statement (set by parser), create temp table here.
+					 * The procedure output will be redirected to this temp table.
+					 * After procedure completes, we flush temp table to target and cleanup.
+					 * 
+					 * This is inside PG_TRY so that errors (including nested INSERT EXEC)
+					 * can be caught by T-SQL TRY/CATCH.
+					 */
+					if (stmt->insert_exec && stmt->insert_exec_target != NULL)
+					{
+						/*
+						 * Check for nested INSERT EXEC - SQL Server error 8164.
+						 * If INSERT EXEC context is already active, this is a nested call.
+						 * Use same error code and message as old code path for consistency.
+						 */
+						if (pltsql_insert_exec_active())
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+									 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
+						}
+						
+						/* Set global context info for flush function */
+						pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
+						
+						/* Create temp table based on target table structure */
+						insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
+																			 stmt->insert_exec_columns);
+						
+						/* Set global context so DestReceiver knows where to write */
+						pltsql_set_insert_exec_context(insert_exec_temp_oid);
+						
+						insert_exec_setup_done = true;
+					}
+
 					if (strcmp(batchstr, "") != 0)	/* check edge cases for
 													 * sp_executesql */
 					{
@@ -3229,21 +3488,55 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				/*
 				 * INSERT EXEC: Flush temp table to target and cleanup after 
 				 * sp_executesql execution completes.
+				 * 
+				 * Execute the flush INSERT directly without a subtransaction wrapper.
+				 * Clear the INSERT EXEC context AFTER the flush so that the flush
+				 * has access to target table info.
 				 */
 				if (insert_exec_setup_done)
 				{
-					ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: sp_executesql completed, flushing temp table to target")));
+					MemoryContext oldcontext = CurrentMemoryContext;
+					ResourceOwner oldowner = CurrentResourceOwner;
 					
-					/* Flush temp table to target table */
-					flush_insert_exec_temp_table(estate);
+					PG_TRY();
+					{
+						/* Flush temp table to target table - no subtransaction wrapper */
+						flush_insert_exec_temp_table(estate);
+						
+						/*
+						 * Clear the INSERT EXEC context AFTER the flush completes.
+						 * This ensures the flush INSERT has access to target table info.
+						 */
+						pltsql_clear_insert_exec_context();
+					}
+					PG_CATCH();
+					{
+						/* Clear context and drop temp table before re-throwing */
+						pltsql_clear_insert_exec_context();
+						drop_insert_exec_temp_table(insert_exec_temp_oid);
+						PG_RE_THROW();
+					}
+					PG_END_TRY();
 					
-					/* Drop temp table */
-					drop_insert_exec_temp_table(insert_exec_temp_oid);
+					/* Drop temp table in separate subtransaction */
+					BeginInternalSubTransaction(NULL);
+					MemoryContextSwitchTo(oldcontext);
 					
-					/* Clear global context */
-					pltsql_clear_insert_exec_context();
-					
-					ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: INSERT EXEC (sp_executesql) completed successfully")));
+					PG_TRY();
+					{
+						drop_insert_exec_temp_table(insert_exec_temp_oid);
+						ReleaseCurrentSubTransaction();
+						MemoryContextSwitchTo(oldcontext);
+						CurrentResourceOwner = oldowner;
+					}
+					PG_CATCH();
+					{
+						RollbackAndReleaseCurrentSubTransaction();
+						MemoryContextSwitchTo(oldcontext);
+						CurrentResourceOwner = oldowner;
+						FlushErrorState();
+					}
+					PG_END_TRY();
 				}
 				
 				break;

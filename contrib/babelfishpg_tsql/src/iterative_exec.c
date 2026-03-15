@@ -1266,6 +1266,15 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 	PG_TRY();
 	{
 		/*
+		 * Variables for internal savepoint decision.
+		 * Declared at block start for C90 compliance.
+		 */
+		bool in_trycatch;
+		bool insert_exec_active;
+		bool need_savepoint_for_insert_exec_trycatch;
+		bool txn_active_or_insert_exec_trycatch;
+
+		/*
 		 * If no transaction is running, start implicit transaction for
 		 * qualified commands when implicit_transactions config option is on
 		 */
@@ -1290,8 +1299,53 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 * level. For statements inside an RO functions we do not start
 		 * savepoints and let the caller be responsible for handling the
 		 * error.
+		 *
+		 * Skip internal savepoints during INSERT EXEC execution because:
+		 * 1. The subtransaction's AtSubAbort_smgr deletes pending relations
+		 * 2. If an error occurs and is caught by TRY-CATCH, the subtransaction
+		 *    rollback deletes the INSERT EXEC temp table's storage files
+		 * 3. This causes "could not open file" errors when trying to access
+		 *    the temp table after the error is caught
+		 * The INSERT EXEC temp table provides transaction semantics anyway.
+		 *
+		 * EXCEPTION: We DO need internal savepoints during INSERT EXEC when
+		 * inside a TRY-CATCH block. This is because:
+		 * 1. When an error occurs (e.g., PK violation), the executor opens
+		 *    index references that need to be released
+		 * 2. Without a subtransaction, these references are not released
+		 *    when the error is caught by TRY-CATCH
+		 * 3. This causes "cannot DROP ... because it is being used" errors
+		 *    when the procedure later tries to DROP the temp table
+		 *
+		 * Also skip internal savepoints in parallel workers because
+		 * BeginInternalSubTransaction is not allowed in parallel mode.
 		 */
-		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && IsTransactionBlockActive() && !is_set_tran_isolation(stmt))
+		in_trycatch = is_part_of_pltsql_trycatch_block(estate);
+		insert_exec_active = pltsql_insert_exec_active();
+
+		/*
+		 * Fallback for cases where exec_state_call_stack is NULL
+		 * (parallel workers, or early-path INSERT EXEC SPI execution).
+		 * Use the TRY-CATCH depth tracked explicitly in INSERT EXEC context.
+		 */
+		if (!in_trycatch && insert_exec_active)
+			in_trycatch = pltsql_insert_exec_in_trycatch();
+
+		/*
+		 * We need internal savepoints in two cases:
+		 * 1. Normal case: transaction block is active and we're not in INSERT EXEC
+		 *    (or we're in INSERT EXEC but inside a TRY-CATCH block)
+		 * 2. Special case for INSERT EXEC with TRY-CATCH: even without an explicit
+		 *    transaction block, we need a subtransaction to properly release
+		 *    index references when an error is caught by TRY-CATCH. Without this,
+		 *    the index refcount is not decremented and DROP TABLE fails with
+		 *    "cannot DROP ... because it is being used by active queries"
+		 */
+		need_savepoint_for_insert_exec_trycatch = insert_exec_active && in_trycatch;
+		txn_active_or_insert_exec_trycatch = IsTransactionBlockActive() || need_savepoint_for_insert_exec_trycatch;
+
+		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && txn_active_or_insert_exec_trycatch && !is_set_tran_isolation(stmt) && 
+			(!insert_exec_active || in_trycatch) && !IsParallelWorker())
 		{
 			elog(DEBUG5, "TSQL TXN Start internal savepoint");
 			BeginInternalSubTransaction(NULL);
@@ -1324,11 +1378,20 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		/*
 		 * Handle transaction count mismatch for batch execution if
 		 * implicit_transaction config is off
+		 *
+		 * Skip this check when inside INSERT EXEC context because:
+		 * 1. INSERT EXEC creates its own temp table for buffering
+		 * 2. The executed procedure may create temp tables, table variables,
+		 *    or use DML with OUTPUT clause, all of which can change the
+		 *    transaction count
+		 * 3. The transaction count will be properly reconciled when the
+		 *    INSERT EXEC completes and flushes to the target table
 		 */
 		topEntry = simple_econtext_stack;
 		if (!pltsql_implicit_transactions &&
 			is_batch_command(stmt) &&
 			!is_part_of_pltsql_trigger(estate) &&
+			!pltsql_insert_exec_active() &&
 			before_tran_count != NestedTranCount)
 			ereport(ERROR,
 					(errcode(ERRCODE_T_R_INTEGRITY_CONSTRAINT_VIOLATION),
@@ -1366,7 +1429,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			}
 			else if (!IsTransactionBlockActive())
 			{
-				if (is_part_of_pltsql_trycatch_block(estate))
+				if (is_part_of_pltsql_trycatch_block(estate) && !pltsql_insert_exec_active())
 				{
 					HOLD_INTERRUPTS();
 					elog(DEBUG1, "TSQL TXN PG semantics : Rollback current transaction");
@@ -1430,16 +1493,48 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		{
 			/*
 			 * In case of no transaction, rollback the whole transaction to
-			 * match auto commit behavior
+			 * match auto commit behavior.
+			 *
+			 * However, skip this during INSERT EXEC because:
+			 * 1. AbortCurrentTransaction calls AtSubAbort_smgr which deletes
+			 *    pending relations including the INSERT EXEC temp table
+			 * 2. The temp table is needed to buffer results until flush
+			 * 3. The error will be caught by TRY-CATCH and the transaction
+			 *    state will be handled properly when INSERT EXEC completes
+			 *
+			 * Also skip this for statement-terminating errors (like division by
+			 * zero). In SQL Server, statement-terminating errors do NOT cause a
+			 * transaction rollback - they only terminate the failing statement.
+			 * Previous statements' work is preserved, regardless of TRY-CATCH.
 			 */
-			HOLD_INTERRUPTS();
-			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback current transaction");
-			/* Hold portals to make sure that cursors work */
-			HoldPinnedPortals();
-			AbortCurrentTransaction();
-			StartTransactionCommand();
-			MemoryContextSwitchTo(cur_ctxt);
-			RESUME_INTERRUPTS();
+			bool skip_abort = pltsql_insert_exec_active();
+			
+			/* Also skip abort for statement-terminating errors */
+			if (!skip_abort)
+			{
+				uint8_t override_flag = override_txn_behaviour(stmt);
+				if (is_ignorable_error(edata->sqlerrcode, override_flag))
+				{
+					skip_abort = true;
+					elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback for statement-terminating error");
+				}
+			}
+			
+			if (!skip_abort)
+			{
+				HOLD_INTERRUPTS();
+				elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback current transaction");
+				/* Hold portals to make sure that cursors work */
+				HoldPinnedPortals();
+				AbortCurrentTransaction();
+				StartTransactionCommand();
+				MemoryContextSwitchTo(cur_ctxt);
+				RESUME_INTERRUPTS();
+			}
+			else if (pltsql_insert_exec_active())
+			{
+				elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback during INSERT EXEC");
+			}
 		}
 		else if (estate->tsql_trigger_flags & TSQL_TRAN_STARTED)
 		{
