@@ -4844,10 +4844,16 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			set_cur_user_db_and_path(stmt->db_name, true);
 	}
 
+	ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_stmt_execsql called, stmt->insert_exec=%s, estate->insert_exec=%s, stmt->insert_exec_target=%s",
+		stmt->insert_exec ? "true" : "false",
+		estate->insert_exec ? "true" : "false",
+		stmt->insert_exec_target ? stmt->insert_exec_target : "(null)")));
+
 	PG_TRY();
 	{
 		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
-		if (stmt->need_to_push_result && estate->insert_exec)
+		/* Skip tuple store approach if our DestReceiver approach is active */
+		if (stmt->need_to_push_result && estate->insert_exec && !pltsql_insert_exec_active())
 		{
 			int			ret = exec_stmt_insert_execute_select(estate, expr);
 

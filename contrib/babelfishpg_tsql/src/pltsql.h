@@ -1172,6 +1172,8 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_tsql_select_assign_stmt; /* T-SQL SELECT-assign (i.e.
 											 * SELECT @a=1) */
 	bool		insert_exec;	/* INSERT-EXEC stmt? */
+	char	   *insert_exec_target;	/* Target table for INSERT-EXEC */
+	char	   *insert_exec_columns;	/* Column list for INSERT-EXEC */
 	bool		is_cross_db;	/* cross database reference */
 	bool		is_ddl;			/* DDL statement? */
 	char	   *schema_name;	/* Schema specified */
@@ -1542,6 +1544,11 @@ typedef struct PLtsql_execstate
 	 * EXECUTE, and can behave differently.
 	 */
 	bool		insert_exec;
+
+	/* INSERT EXEC temp table buffering fields */
+	Oid			insert_exec_temp_table_oid;		/* OID of temp table for buffering */
+	char	   *insert_exec_target_table;		/* Final target table name */
+	char	   *insert_exec_column_list;		/* Column list for final INSERT (NULL = all) */
 
 	List	   *explain_infos;
 	instr_time	planning_start;
@@ -2387,6 +2394,22 @@ extern bool 	is_numeric_datatype(Oid typid);
  * Function in pltsql_ruleutils.c
  */
 extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
+
+/*
+ * INSERT EXEC DestReceiver functions (pl_exec-2.c)
+ */
+extern void pltsql_set_insert_exec_context_info(const char *target_table, const char *column_list);
+extern void pltsql_set_insert_exec_context(Oid temp_table_oid);
+extern void pltsql_clear_insert_exec_context(void);
+extern bool pltsql_insert_exec_active(void);
+extern Oid pltsql_get_insert_exec_temp_table_oid(void);
+extern const char *pltsql_get_insert_exec_target_table(void);
+extern const char *pltsql_get_insert_exec_column_list(void);
+extern DestReceiver *CreateInsertExecDestReceiver(Oid temp_table_oid);
+extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list);
+extern void drop_insert_exec_temp_table(Oid temp_table_oid);
+extern void flush_temp_table_to_target(PLtsql_execstate *estate);
+extern void flush_insert_exec_temp_table(PLtsql_execstate *estate);
 
 #define NUM_DB_OBJECTS 11
 

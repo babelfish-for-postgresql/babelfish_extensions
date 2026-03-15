@@ -4,6 +4,7 @@
 #include "funcapi.h"
 
 #include "access/table.h"
+#include "access/tableam.h"
 #include "access/attmap.h"
 #include "access/nbtree.h"
 #include "catalog/namespace.h"
@@ -22,6 +23,7 @@
 
 #include "catalog.h"
 #include "dbcmds.h"
+#include "multidb.h"
 #include "rolecmds.h"
 #include "pl_explain.h"
 #include "pltsql.h"
@@ -32,6 +34,728 @@
 #include "parser/parse_oper.h"
 #include "src/include/lib/qunique.h"
 #include "utils/varlena.h"
+
+/*
+ * INSERT EXEC DestReceiver implementation
+ * 
+ * This DestReceiver writes tuples to a temp table for INSERT EXEC buffering.
+ * Modeled after CreateTransientRelDestReceiver in matview.c but without
+ * TABLE_INSERT_FROZEN flag to preserve MVCC semantics.
+ */
+
+/* Global context for INSERT EXEC - needed for nested procedure calls */
+static Oid insert_exec_temp_table_oid = InvalidOid;
+static char *insert_exec_target_table = NULL;
+static char *insert_exec_column_list = NULL;
+
+/* DestReceiver struct for INSERT EXEC */
+typedef struct
+{
+	DestReceiver pub;			/* public fields */
+	Oid			temp_table_oid;	/* OID of temp table to insert into */
+	Relation	temp_rel;		/* open relation for temp table */
+	CommandId	output_cid;		/* command ID for inserts */
+	BulkInsertState bistate;	/* bulk insert state */
+} DR_insertexec;
+
+/* Forward declarations for DestReceiver callbacks */
+static void insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
+static bool insertexec_receive(TupleTableSlot *slot, DestReceiver *self);
+static void insertexec_shutdown(DestReceiver *self);
+static void insertexec_destroy(DestReceiver *self);
+
+/*
+ * Set the global INSERT EXEC context with target table info.
+ * Called from ANTLR parser when INSERT EXEC is detected.
+ * This is called BEFORE temp table creation - just stores the target info.
+ * 
+ * IMPORTANT: We allocate in TopMemoryContext so the strings survive
+ * error handling (PG_CATCH blocks). The current memory context may be
+ * reset during error processing, which would corrupt these pointers.
+ */
+void
+pltsql_set_insert_exec_context_info(const char *target_table, const char *column_list)
+{
+	MemoryContext oldcontext;
+	
+	ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: pltsql_set_insert_exec_context_info called with target=%s, columns=%s",
+		target_table ? target_table : "(null)",
+		column_list ? column_list : "(null)")));
+	
+	/* Clear any previous context */
+	if (insert_exec_target_table)
+	{
+		pfree(insert_exec_target_table);
+		insert_exec_target_table = NULL;
+	}
+	if (insert_exec_column_list)
+	{
+		pfree(insert_exec_column_list);
+		insert_exec_column_list = NULL;
+	}
+	
+	/* Allocate in TopMemoryContext so strings survive error handling */
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	insert_exec_target_table = target_table ? pstrdup(target_table) : NULL;
+	insert_exec_column_list = column_list ? pstrdup(column_list) : NULL;
+	MemoryContextSwitchTo(oldcontext);
+}
+
+/*
+ * Set the global INSERT EXEC context with temp table OID.
+ * Called when temp table is created in exec_stmt_exec.
+ */
+void
+pltsql_set_insert_exec_context(Oid temp_table_oid)
+{
+	ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: pltsql_set_insert_exec_context called with OID %u", temp_table_oid)));
+	insert_exec_temp_table_oid = temp_table_oid;
+}
+
+/*
+ * Clear the global INSERT EXEC context.
+ * Called when exiting INSERT EXEC context.
+ */
+void
+pltsql_clear_insert_exec_context(void)
+{
+	insert_exec_temp_table_oid = InvalidOid;
+	if (insert_exec_target_table)
+	{
+		pfree(insert_exec_target_table);
+		insert_exec_target_table = NULL;
+	}
+	if (insert_exec_column_list)
+	{
+		pfree(insert_exec_column_list);
+		insert_exec_column_list = NULL;
+	}
+}
+
+/*
+ * Check if INSERT EXEC context is active (target table info is set).
+ * This returns true even before temp table is created.
+ */
+bool
+pltsql_insert_exec_active(void)
+{
+	bool active = (insert_exec_target_table != NULL);
+	ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: pltsql_insert_exec_active called, returning %s (target=%s, OID=%u)", 
+		active ? "true" : "false", 
+		insert_exec_target_table ? insert_exec_target_table : "(null)",
+		insert_exec_temp_table_oid)));
+	return active;
+}
+
+/*
+ * Get the temp table OID for INSERT EXEC buffering.
+ */
+Oid
+pltsql_get_insert_exec_temp_table_oid(void)
+{
+	return insert_exec_temp_table_oid;
+}
+
+/*
+ * Get the target table name for INSERT EXEC.
+ */
+const char *
+pltsql_get_insert_exec_target_table(void)
+{
+	return insert_exec_target_table;
+}
+
+/*
+ * Get the column list for INSERT EXEC.
+ */
+const char *
+pltsql_get_insert_exec_column_list(void)
+{
+	return insert_exec_column_list;
+}
+
+/*
+ * Create a DestReceiver for INSERT EXEC that writes to a temp table.
+ */
+DestReceiver *
+CreateInsertExecDestReceiver(Oid temp_table_oid)
+{
+	DR_insertexec *self = (DR_insertexec *) palloc0(sizeof(DR_insertexec));
+
+	self->pub.receiveSlot = insertexec_receive;
+	self->pub.rStartup = insertexec_startup;
+	self->pub.rShutdown = insertexec_shutdown;
+	self->pub.rDestroy = insertexec_destroy;
+	self->pub.mydest = DestTransientRel;  /* reuse existing dest type */
+	self->temp_table_oid = temp_table_oid;
+
+	return (DestReceiver *) self;
+}
+
+/*
+ * insertexec_startup --- executor startup for INSERT EXEC receiver
+ */
+static void
+insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
+{
+	DR_insertexec *myState = (DR_insertexec *) self;
+
+	/* Open the temp table */
+	myState->temp_rel = table_open(myState->temp_table_oid, RowExclusiveLock);
+	myState->output_cid = GetCurrentCommandId(true);
+	/* Note: We do NOT use TABLE_INSERT_FROZEN - must preserve MVCC semantics */
+	myState->bistate = GetBulkInsertState();
+}
+
+/*
+ * insertexec_receive --- receive one tuple and insert into temp table
+ */
+static bool
+insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
+{
+	DR_insertexec *myState = (DR_insertexec *) self;
+
+	/*
+	 * Insert the tuple into the temp table.
+	 * table_tuple_insert handles slot type conversion if needed.
+	 */
+	table_tuple_insert(myState->temp_rel,
+					   slot,
+					   myState->output_cid,
+					   0,  /* no special options - preserve MVCC */
+					   myState->bistate);
+
+	return true;
+}
+
+/*
+ * insertexec_shutdown --- executor end for INSERT EXEC receiver
+ */
+static void
+insertexec_shutdown(DestReceiver *self)
+{
+	DR_insertexec *myState = (DR_insertexec *) self;
+
+	if (myState->bistate != NULL)
+		FreeBulkInsertState(myState->bistate);
+
+	if (myState->temp_rel != NULL)
+	{
+		table_finish_bulk_insert(myState->temp_rel, 0);
+		/* Close relation but keep lock until transaction end */
+		table_close(myState->temp_rel, NoLock);
+	}
+
+	myState->temp_rel = NULL;
+	myState->bistate = NULL;
+}
+
+/*
+ * insertexec_destroy --- release DestReceiver object
+ */
+static void
+insertexec_destroy(DestReceiver *self)
+{
+	pfree(self);
+}
+
+/*
+ * Create a temp table for INSERT EXEC buffering.
+ * The temp table structure is based on the target table.
+ * IDENTITY and computed columns are excluded since procedure results
+ * won't include them.
+ * Returns the OID of the created temp table.
+ */
+Oid
+create_insert_exec_temp_table(const char *target_table, const char *column_list)
+{
+	StringInfoData create_stmt;
+	StringInfoData col_query;
+	int			rc;
+	Oid			temp_table_oid;
+	char		temp_table_name[NAMEDATALEN];
+	char	   *schema_name = NULL;
+	char	   *table_name = NULL;
+	char	   *physical_schema = NULL;
+	char	   *dot_pos;
+	char	   *second_dot;
+	char	   *target_copy;
+
+	/* Generate unique temp table name using backend PID */
+	snprintf(temp_table_name, sizeof(temp_table_name),
+			 "#insert_exec_buf_%d", MyProcPid);
+
+	/*
+	 * Parse schema and table name from target_table.
+	 * Format can be: "table", "schema.table", or "db.schema.table"
+	 * For temp tables (starting with #), we don't need schema parsing.
+	 */
+	if (target_table[0] == '#')
+	{
+		/* Temp table - no schema needed */
+		table_name = pstrdup(target_table);
+		schema_name = NULL;
+	}
+	else
+	{
+		target_copy = pstrdup(target_table);
+		
+		/* Find the last dot to separate schema from table */
+		dot_pos = strrchr(target_copy, '.');
+		if (dot_pos != NULL)
+		{
+			*dot_pos = '\0';
+			table_name = pstrdup(dot_pos + 1);
+			
+			/* Check if there's another dot (db.schema.table) */
+			second_dot = strrchr(target_copy, '.');
+			if (second_dot != NULL)
+			{
+				/* db.schema.table - schema is after the second dot */
+				schema_name = pstrdup(second_dot + 1);
+			}
+			else
+			{
+				/* schema.table */
+				schema_name = pstrdup(target_copy);
+			}
+		}
+		else
+		{
+			/* Just table name, use dbo as default */
+			table_name = pstrdup(target_copy);
+			schema_name = pstrdup("dbo");
+		}
+		pfree(target_copy);
+		
+		/* Convert logical schema name to physical schema name */
+		physical_schema = get_physical_schema_name(get_cur_db_name(), schema_name);
+	}
+
+	initStringInfo(&create_stmt);
+	
+	if (column_list != NULL)
+	{
+		/* Create temp table with specific columns provided by user */
+		appendStringInfo(&create_stmt, 
+			"SELECT %s INTO %s FROM %s WHERE 1=0",
+			column_list, temp_table_name, target_table);
+	}
+	else
+	{
+		/*
+		 * Create temp table excluding IDENTITY and computed columns.
+		 * We need to build a column list dynamically by querying the
+		 * target table's structure.
+		 */
+		StringInfoData non_identity_cols;
+		bool		first_col = true;
+		int			proc_count;
+		uint64		i;
+		
+		initStringInfo(&col_query);
+		initStringInfo(&non_identity_cols);
+		
+		/*
+		 * Query to get non-IDENTITY, non-computed columns.
+		 * attidentity = '' means not an identity column
+		 * attgenerated = '' means not a generated/computed column
+		 * Include namespace (schema) to avoid matching tables in other schemas.
+		 */
+		if (physical_schema != NULL)
+		{
+			appendStringInfo(&col_query,
+				"SELECT a.attname "
+				"FROM pg_attribute a "
+				"JOIN pg_class c ON a.attrelid = c.oid "
+				"JOIN pg_namespace n ON c.relnamespace = n.oid "
+				"WHERE c.relname = '%s' "
+				"AND n.nspname = '%s' "
+				"AND a.attnum > 0 "
+				"AND NOT a.attisdropped "
+				"AND a.attidentity = '' "
+				"AND a.attgenerated = '' "
+				"ORDER BY a.attnum",
+				table_name, physical_schema);
+		}
+		else
+		{
+			/* Temp table - no schema filter needed */
+			appendStringInfo(&col_query,
+				"SELECT a.attname "
+				"FROM pg_attribute a "
+				"JOIN pg_class c ON a.attrelid = c.oid "
+				"WHERE c.relname = '%s' "
+				"AND a.attnum > 0 "
+				"AND NOT a.attisdropped "
+				"AND a.attidentity = '' "
+				"AND a.attgenerated = '' "
+				"ORDER BY a.attnum",
+				table_name);
+		}
+		
+		rc = SPI_execute(col_query.data, true, 0);
+		if (rc != SPI_OK_SELECT)
+		{
+			pfree(col_query.data);
+			elog(ERROR, "failed to query target table columns: %s",
+				 SPI_result_code_string(rc));
+		}
+		
+		proc_count = SPI_processed;
+		
+		if (proc_count == 0)
+		{
+			/* No non-identity columns found, fall back to SELECT * */
+			pfree(col_query.data);
+			pfree(non_identity_cols.data);
+			appendStringInfo(&create_stmt, 
+				"SELECT * INTO %s FROM %s WHERE 1=0",
+				temp_table_name, target_table);
+		}
+		else
+		{
+			/* Build column list from query results */
+			for (i = 0; i < proc_count; i++)
+			{
+				char *colname = SPI_getvalue(SPI_tuptable->vals[i], 
+											 SPI_tuptable->tupdesc, 1);
+				if (colname != NULL)
+				{
+					if (!first_col)
+						appendStringInfoString(&non_identity_cols, ", ");
+					appendStringInfoString(&non_identity_cols, colname);
+					first_col = false;
+				}
+			}
+			
+			SPI_freetuptable(SPI_tuptable);
+			pfree(col_query.data);
+			
+			appendStringInfo(&create_stmt, 
+				"SELECT %s INTO %s FROM %s WHERE 1=0",
+				non_identity_cols.data, temp_table_name, target_table);
+			
+			pfree(non_identity_cols.data);
+		}
+	}
+	
+	/* Clean up parsed names */
+	if (table_name)
+		pfree(table_name);
+	if (schema_name)
+		pfree(schema_name);
+	if (physical_schema)
+		pfree(physical_schema);
+
+	elog(DEBUG1, "INSERT-EXEC: Creating temp table: %s", create_stmt.data);
+
+	/* Execute the SELECT INTO to create temp table */
+	rc = SPI_execute(create_stmt.data, false, 0);
+	if (rc != SPI_OK_SELINTO)
+		elog(ERROR, "failed to create INSERT EXEC temp table: %s",
+			 SPI_result_code_string(rc));
+
+	pfree(create_stmt.data);
+
+	/* Get the OID of the created temp table */
+	temp_table_oid = RelnameGetRelid(temp_table_name);
+	if (!OidIsValid(temp_table_oid))
+		elog(ERROR, "could not find INSERT EXEC temp table %s", temp_table_name);
+
+	return temp_table_oid;
+}
+
+/*
+ * Drop the INSERT EXEC temp table.
+ */
+void
+drop_insert_exec_temp_table(Oid temp_table_oid)
+{
+	char		temp_table_name[NAMEDATALEN];
+	StringInfoData drop_stmt;
+	int			rc;
+
+	/* Get the table name from OID */
+	snprintf(temp_table_name, sizeof(temp_table_name),
+			 "#insert_exec_buf_%d", MyProcPid);
+
+	initStringInfo(&drop_stmt);
+	appendStringInfo(&drop_stmt, "DROP TABLE IF EXISTS %s", temp_table_name);
+
+	rc = SPI_execute(drop_stmt.data, false, 0);
+	if (rc != SPI_OK_UTILITY)
+		elog(WARNING, "failed to drop INSERT EXEC temp table: %s",
+			 SPI_result_code_string(rc));
+
+	pfree(drop_stmt.data);
+}
+
+/*
+ * Flush all rows from the temp table to the target table using global context.
+ * This version is called from exec_stmt_exec when INSERT EXEC context is active.
+ * It uses the global insert_exec_target_table and insert_exec_column_list.
+ */
+void
+flush_insert_exec_temp_table(PLtsql_execstate *estate)
+{
+	char			temp_table_name[NAMEDATALEN];
+	StringInfoData	flush_query;
+	int				rc;
+	const char		*target_table = pltsql_get_insert_exec_target_table();
+	const char		*column_list = pltsql_get_insert_exec_column_list();
+	Oid				temp_oid = pltsql_get_insert_exec_temp_table_oid();
+
+	if (!OidIsValid(temp_oid) || target_table == NULL)
+	{
+		return;
+	}
+
+	snprintf(temp_table_name, sizeof(temp_table_name),
+			 "#insert_exec_buf_%d", MyProcPid);
+
+	initStringInfo(&flush_query);
+	
+	if (column_list != NULL)
+	{
+		/* User specified columns - use them directly */
+		appendStringInfo(&flush_query,
+			"INSERT INTO %s (%s) SELECT * FROM %s",
+			target_table,
+			column_list,
+			temp_table_name);
+	}
+	else
+	{
+		/*
+		 * No column list specified - we need to build one excluding
+		 * IDENTITY and computed columns to match the temp table structure.
+		 */
+		StringInfoData col_query;
+		StringInfoData non_identity_cols;
+		bool		first_col = true;
+		int			proc_count;
+		uint64		i;
+		
+		initStringInfo(&col_query);
+		initStringInfo(&non_identity_cols);
+		
+		appendStringInfo(&col_query,
+			"SELECT a.attname "
+			"FROM pg_attribute a "
+			"JOIN pg_class c ON a.attrelid = c.oid "
+			"WHERE c.relname = '%s' "
+			"AND a.attnum > 0 "
+			"AND NOT a.attisdropped "
+			"AND a.attidentity = '' "
+			"AND a.attgenerated = '' "
+			"ORDER BY a.attnum",
+			target_table);
+		
+		rc = SPI_execute(col_query.data, true, 0);
+		if (rc != SPI_OK_SELECT)
+		{
+			pfree(col_query.data);
+			pfree(non_identity_cols.data);
+			/* Fall back to simple INSERT */
+			appendStringInfo(&flush_query,
+				"INSERT INTO %s SELECT * FROM %s",
+				target_table,
+				temp_table_name);
+		}
+		else
+		{
+			proc_count = SPI_processed;
+			
+			if (proc_count == 0)
+			{
+				/* No columns found, fall back */
+				pfree(col_query.data);
+				pfree(non_identity_cols.data);
+				appendStringInfo(&flush_query,
+					"INSERT INTO %s SELECT * FROM %s",
+					target_table,
+					temp_table_name);
+			}
+			else
+			{
+				/* Build column list */
+				for (i = 0; i < proc_count; i++)
+				{
+					char *colname = SPI_getvalue(SPI_tuptable->vals[i], 
+												 SPI_tuptable->tupdesc, 1);
+					if (colname != NULL)
+					{
+						if (!first_col)
+							appendStringInfoString(&non_identity_cols, ", ");
+						appendStringInfoString(&non_identity_cols, colname);
+						first_col = false;
+					}
+				}
+				
+				SPI_freetuptable(SPI_tuptable);
+				pfree(col_query.data);
+				
+				appendStringInfo(&flush_query,
+					"INSERT INTO %s (%s) SELECT * FROM %s",
+					target_table,
+					non_identity_cols.data,
+					temp_table_name);
+				
+				pfree(non_identity_cols.data);
+			}
+		}
+	}
+
+	elog(DEBUG1, "INSERT-EXEC: Flushing temp table to target: %s", flush_query.data);
+
+	rc = SPI_execute(flush_query.data, false, 0);
+	if (rc != SPI_OK_INSERT)
+		elog(ERROR, "INSERT-EXEC: Failed to flush temp table to target: %s",
+			 SPI_result_code_string(rc));
+
+	/* Update rowcount */
+	if (estate)
+	{
+		estate->eval_processed = SPI_processed;
+		exec_set_rowcount(SPI_processed);
+		exec_set_found(estate, SPI_processed > 0);
+	}
+
+	pfree(flush_query.data);
+	SPI_freetuptable(SPI_tuptable);
+}
+
+/*
+ * Flush all rows from the temp table to the target table.
+ * This is the final step of INSERT EXEC - move data from buffer to target.
+ * When no column list is specified, we need to explicitly list non-IDENTITY
+ * columns to avoid column count mismatch.
+ */
+void
+flush_temp_table_to_target(PLtsql_execstate *estate)
+{
+	char			temp_table_name[NAMEDATALEN];
+	StringInfoData	flush_query;
+	int				rc;
+
+	if (!OidIsValid(estate->insert_exec_temp_table_oid) ||
+		estate->insert_exec_target_table == NULL)
+	{
+		return;
+	}
+
+	snprintf(temp_table_name, sizeof(temp_table_name),
+			 "#insert_exec_buf_%d", MyProcPid);
+
+	initStringInfo(&flush_query);
+	
+	if (estate->insert_exec_column_list != NULL)
+	{
+		/* User specified columns - use them directly */
+		appendStringInfo(&flush_query,
+			"INSERT INTO %s (%s) SELECT * FROM %s",
+			estate->insert_exec_target_table,
+			estate->insert_exec_column_list,
+			temp_table_name);
+	}
+	else
+	{
+		/*
+		 * No column list specified - we need to build one excluding
+		 * IDENTITY and computed columns to match the temp table structure.
+		 */
+		StringInfoData col_query;
+		StringInfoData non_identity_cols;
+		bool		first_col = true;
+		int			proc_count;
+		uint64		i;
+		
+		initStringInfo(&col_query);
+		initStringInfo(&non_identity_cols);
+		
+		appendStringInfo(&col_query,
+			"SELECT a.attname "
+			"FROM pg_attribute a "
+			"JOIN pg_class c ON a.attrelid = c.oid "
+			"WHERE c.relname = '%s' "
+			"AND a.attnum > 0 "
+			"AND NOT a.attisdropped "
+			"AND a.attidentity = '' "
+			"AND a.attgenerated = '' "
+			"ORDER BY a.attnum",
+			estate->insert_exec_target_table);
+		
+		rc = SPI_execute(col_query.data, true, 0);
+		if (rc != SPI_OK_SELECT)
+		{
+			pfree(col_query.data);
+			pfree(non_identity_cols.data);
+			/* Fall back to simple INSERT */
+			appendStringInfo(&flush_query,
+				"INSERT INTO %s SELECT * FROM %s",
+				estate->insert_exec_target_table,
+				temp_table_name);
+		}
+		else
+		{
+			proc_count = SPI_processed;
+			
+			if (proc_count == 0)
+			{
+				/* No columns found, fall back */
+				pfree(col_query.data);
+				pfree(non_identity_cols.data);
+				appendStringInfo(&flush_query,
+					"INSERT INTO %s SELECT * FROM %s",
+					estate->insert_exec_target_table,
+					temp_table_name);
+			}
+			else
+			{
+				/* Build column list */
+				for (i = 0; i < proc_count; i++)
+				{
+					char *colname = SPI_getvalue(SPI_tuptable->vals[i], 
+												 SPI_tuptable->tupdesc, 1);
+					if (colname != NULL)
+					{
+						if (!first_col)
+							appendStringInfoString(&non_identity_cols, ", ");
+						appendStringInfoString(&non_identity_cols, colname);
+						first_col = false;
+					}
+				}
+				
+				SPI_freetuptable(SPI_tuptable);
+				pfree(col_query.data);
+				
+				appendStringInfo(&flush_query,
+					"INSERT INTO %s (%s) SELECT * FROM %s",
+					estate->insert_exec_target_table,
+					non_identity_cols.data,
+					temp_table_name);
+				
+				pfree(non_identity_cols.data);
+			}
+		}
+	}
+
+	elog(DEBUG1, "INSERT-EXEC: Flushing temp table to target: %s", flush_query.data);
+
+	rc = SPI_execute(flush_query.data, false, 0);
+	if (rc != SPI_OK_INSERT)
+		elog(ERROR, "INSERT-EXEC: Failed to flush temp table to target: %s",
+			 SPI_result_code_string(rc));
+
+	/* Update rowcount */
+	estate->eval_processed = SPI_processed;
+	exec_set_rowcount(SPI_processed);
+	exec_set_found(estate, SPI_processed > 0);
+
+	pfree(flush_query.data);
+	SPI_freetuptable(SPI_tuptable);
+}
 
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
@@ -199,6 +923,8 @@ static int
 exec_tsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt, PLtsql_stmt *save_estmt)
 {
 	int			rc;
+
+	ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_tsql_stmt called, stmt->cmd_type=%d", stmt->cmd_type)));
 
 	switch ((int) stmt->cmd_type)
 	{
@@ -795,8 +1521,21 @@ exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_result *stmt
 		elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
 			 expr->query, SPI_result_code_string(SPI_result));
 
-	receiver = CreateDestReceiver(DestRemote);
-	SetRemoteDestReceiverParams(receiver, portal);
+	/*
+	 * INSERT EXEC context check - redirect OUTPUT clause results to temp table
+	 * instead of sending to client.
+	 */
+	if (pltsql_insert_exec_active())
+	{
+		Oid temp_table_oid = pltsql_get_insert_exec_temp_table_oid();
+		receiver = CreateInsertExecDestReceiver(temp_table_oid);
+		receiver->rStartup(receiver, CMD_SELECT, portal->tupDesc);
+	}
+	else
+	{
+		receiver = CreateDestReceiver(DestRemote);
+		SetRemoteDestReceiverParams(receiver, portal);
+	}
 
 	success = PortalRun(portal,
 						FETCH_ALL,
@@ -841,7 +1580,15 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	char 	*save_db_name = get_cur_db_name();
 
 	/* whether procedure was created WITH RECOMPILE */
-	bool created_with_recompile = false;		
+	bool created_with_recompile = false;
+	
+	/* INSERT EXEC handling - temp table lifecycle */
+	bool insert_exec_setup_done = false;
+	Oid insert_exec_temp_oid = InvalidOid;
+
+	ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_stmt_exec called, stmt->insert_exec=%s, stmt->insert_exec_target=%s",
+		stmt->insert_exec ? "true" : "false",
+		stmt->insert_exec_target ? stmt->insert_exec_target : "(null)")));
 
 	/*
 	 * We need to disable the explain gucs incase of sp_reset_connection
@@ -852,6 +1599,45 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	{
 		pltsql_explain_only = false;
 		pltsql_explain_analyze = false;
+	}
+	
+	/*
+	 * INSERT EXEC DestReceiver approach:
+	 * If this is an INSERT EXEC statement (set by parser), create temp table here.
+	 * The DestReceiver will redirect procedure output to this temp table.
+	 * After procedure completes, we flush temp table to target and cleanup.
+	 */
+	if (stmt->insert_exec && stmt->insert_exec_target != NULL)
+	{
+		/*
+		 * Check for nested INSERT EXEC - SQL Server error 8164.
+		 * If INSERT EXEC context is already active, this is a nested call.
+		 * Use same error code and message as old code path for consistency.
+		 */
+		if (pltsql_insert_exec_active())
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
+		}
+		
+		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_stmt_exec creating temp table for target=%s, columns=%s",
+			stmt->insert_exec_target,
+			stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)")));
+		
+		/* Set global context info for flush function */
+		pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
+		
+		/* Create temp table based on target table structure */
+		insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
+															 stmt->insert_exec_columns);
+		
+		/* Set global context so DestReceiver knows where to write */
+		pltsql_set_insert_exec_context(insert_exec_temp_oid);
+		
+		insert_exec_setup_done = true;
+		
+		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: Temp table created with OID %u", insert_exec_temp_oid)));
 	}
 
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
@@ -1272,8 +2058,23 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			dest->rDestroy(dest);
 		}
 	}
-	PG_FINALLY();
+	PG_CATCH();
 	{
+		/* 
+		 * Cleanup INSERT EXEC state on error.
+		 * 
+		 * IMPORTANT: We cannot call drop_insert_exec_temp_table() here because
+		 * SPI_execute cannot be used in an error context (transaction is aborted).
+		 * The temp table will be automatically cleaned up when the transaction
+		 * rolls back. We just need to clear the global state.
+		 */
+		if (insert_exec_setup_done)
+		{
+			ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: Error occurred, clearing INSERT EXEC context (temp table will be cleaned up by transaction rollback)")));
+			/* Just clear the global state - don't try to drop the temp table */
+			pltsql_clear_insert_exec_context();
+		}
+		
 		if (strcmp(get_current_pltsql_db_name(), save_db_name) != 0)
 			set_cur_user_db_and_path(save_db_name, false);
 
@@ -1290,8 +2091,28 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			expr->plan = NULL;
 			SPI_freeplan(plan);
 		}
+		
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	/* Cleanup that was in PG_FINALLY - runs on success path */
+	if (strcmp(get_current_pltsql_db_name(), save_db_name) != 0)
+		set_cur_user_db_and_path(save_db_name, false);
+
+	pfree(save_db_name);
+
+	/*
+	 * If we aren't saving the plan, unset the pointer.  Note that it
+	 * could have been unset already, in case of a recursive call.
+	 */
+	if (expr->plan && !expr->plan->saved)
+	{
+		SPIPlanPtr	plan = expr->plan;
+
+		expr->plan = NULL;
+		SPI_freeplan(plan);
+	}
 
 	if (rc < 0)
 		elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
@@ -1316,6 +2137,26 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 	exec_eval_cleanup(estate);
 	SPI_freetuptable(SPI_tuptable);
+
+	/*
+	 * INSERT EXEC DestReceiver approach: Flush temp table to target
+	 * and cleanup after procedure execution completes.
+	 */
+	if (insert_exec_setup_done)
+	{
+		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: Procedure completed, flushing temp table to target")));
+		
+		/* Flush temp table to target table */
+		flush_insert_exec_temp_table(estate);
+		
+		/* Drop temp table */
+		drop_insert_exec_temp_table(insert_exec_temp_oid);
+		
+		/* Clear global context */
+		pltsql_clear_insert_exec_context();
+		
+		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: INSERT EXEC completed successfully")));
+	}
 
 	return PLTSQL_RC_OK;
 }
@@ -1490,8 +2331,55 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	volatile int scope_level = 0;
 	char	   *old_db_name = get_cur_db_name();
 	char	   *cur_db_name = NULL;
+	
+	/* INSERT EXEC handling - temp table lifecycle */
+	bool insert_exec_setup_done = false;
+	Oid insert_exec_temp_oid = InvalidOid;
 
 	LOCAL_FCINFO(fcinfo, 1);
+
+	ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_stmt_exec_batch called, stmt->insert_exec=%s, stmt->insert_exec_target=%s",
+		stmt->insert_exec ? "true" : "false",
+		stmt->insert_exec_target ? stmt->insert_exec_target : "(null)")));
+
+	/*
+	 * INSERT EXEC handling:
+	 * If this is an INSERT EXEC statement (set by parser), create temp table here.
+	 * The procedure output will be redirected to this temp table.
+	 * After procedure completes, we flush temp table to target and cleanup.
+	 */
+	if (stmt->insert_exec && stmt->insert_exec_target != NULL)
+	{
+		/*
+		 * Check for nested INSERT EXEC - SQL Server error 8164.
+		 * If INSERT EXEC context is already active, this is a nested call.
+		 * Use same error code and message as old code path for consistency.
+		 */
+		if (pltsql_insert_exec_active())
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
+		}
+		
+		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_stmt_exec_batch creating temp table for target=%s, columns=%s",
+			stmt->insert_exec_target,
+			stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)")));
+		
+		/* Set global context info for flush function */
+		pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
+		
+		/* Create temp table based on target table structure */
+		insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
+															 stmt->insert_exec_columns);
+		
+		/* Set global context so DestReceiver knows where to write */
+		pltsql_set_insert_exec_context(insert_exec_temp_oid);
+		
+		insert_exec_setup_done = true;
+		
+		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: Temp table created with OID %u", insert_exec_temp_oid)));
+	}
 
 	/*
 	 * First we evaluate the string expression. Its result is the
@@ -1500,7 +2388,12 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	query = exec_eval_expr(estate, stmt->expr, &isnull, &restype, &restypmod);
 	if (isnull)
 	{
-		/* No op in case of null */
+		/* No op in case of null - but cleanup INSERT EXEC if needed */
+		if (insert_exec_setup_done)
+		{
+			drop_insert_exec_temp_table(insert_exec_temp_oid);
+			pltsql_clear_insert_exec_context();
+		}
 		return PLTSQL_RC_OK;
 	}
 	save_nestlevel = pltsql_new_guc_nest_level();
@@ -1529,17 +2422,31 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		if (fcinfo->isnull)
 			elog(ERROR, "pltsql_inline_handler failed");
 	}
-	PG_FINALLY();
+	PG_CATCH();
 	{
-		/* Restore past settings */
-		pltsql_revert_guc(save_nestlevel);
-		pltsql_revert_last_scope_identity(scope_level);
-
-		cur_db_name = get_cur_db_name();
-		if (strcmp(cur_db_name, old_db_name) != 0)
-			set_cur_user_db_and_path(old_db_name, false);
+		/* 
+		 * Cleanup INSERT EXEC state on error.
+		 * 
+		 * IMPORTANT: We cannot call drop_insert_exec_temp_table() here because
+		 * SPI_execute cannot be used in an error context (transaction is aborted).
+		 * The temp table will be automatically cleaned up when the transaction
+		 * rolls back. We just need to clear the global state.
+		 */
+		if (insert_exec_setup_done)
+		{
+			pltsql_clear_insert_exec_context();
+		}
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	/* Restore past settings */
+	pltsql_revert_guc(save_nestlevel);
+	pltsql_revert_last_scope_identity(scope_level);
+
+	cur_db_name = get_cur_db_name();
+	if (strcmp(cur_db_name, old_db_name) != 0)
+		set_cur_user_db_and_path(old_db_name, false);
 
 	after_lxid = MyProc->vxid.lxid;
 
@@ -1557,6 +2464,27 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		pltsql_create_econtext(estate);
 	}
 	exec_eval_cleanup(estate);
+	
+	/*
+	 * INSERT EXEC: Flush temp table to target and cleanup after 
+	 * dynamic SQL execution completes.
+	 */
+	if (insert_exec_setup_done)
+	{
+		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: Dynamic SQL completed, flushing temp table to target")));
+		
+		/* Flush temp table to target table */
+		flush_insert_exec_temp_table(estate);
+		
+		/* Drop temp table */
+		drop_insert_exec_temp_table(insert_exec_temp_oid);
+		
+		/* Clear global context */
+		pltsql_clear_insert_exec_context();
+		
+		ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: INSERT EXEC (batch) completed successfully")));
+	}
+	
 	return PLTSQL_RC_OK;
 }
 
@@ -2166,10 +3094,63 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				int			scope_level;
 				InlineCodeBlockArgs *args = NULL;
 				
+				/* INSERT EXEC handling - temp table lifecycle */
+				bool insert_exec_setup_done = false;
+				Oid insert_exec_temp_oid = InvalidOid;
+				
+				ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_stmt_exec_sp (sp_executesql) called, stmt->insert_exec=%s, stmt->insert_exec_target=%s",
+					stmt->insert_exec ? "true" : "false",
+					stmt->insert_exec_target ? stmt->insert_exec_target : "(null)")));
+				
+				/*
+				 * INSERT EXEC handling:
+				 * If this is an INSERT EXEC statement (set by parser), create temp table here.
+				 * The procedure output will be redirected to this temp table.
+				 * After procedure completes, we flush temp table to target and cleanup.
+				 */
+				if (stmt->insert_exec && stmt->insert_exec_target != NULL)
+				{
+					/*
+					 * Check for nested INSERT EXEC - SQL Server error 8164.
+					 * If INSERT EXEC context is already active, this is a nested call.
+					 * Use same error code and message as old code path for consistency.
+					 */
+					if (pltsql_insert_exec_active())
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+								 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
+					}
+					
+					ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: exec_stmt_exec_sp creating temp table for target=%s, columns=%s",
+						stmt->insert_exec_target,
+						stmt->insert_exec_columns ? stmt->insert_exec_columns : "(all)")));
+					
+					/* Set global context info for flush function */
+					pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
+					
+					/* Create temp table based on target table structure */
+					insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
+																		 stmt->insert_exec_columns);
+					
+					/* Set global context so DestReceiver knows where to write */
+					pltsql_set_insert_exec_context(insert_exec_temp_oid);
+					
+					insert_exec_setup_done = true;
+					
+					ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: Temp table created with OID %u", insert_exec_temp_oid)));
+				}
+				
 				batch = exec_eval_expr(estate, stmt->query, &isnull1, &restype1, &restypmod1);
 				if (isnull1)
 				{
-					// When called with a NULL argument, sp_executesql should take no action at all
+					/* When called with a NULL argument, sp_executesql should take no action at all */
+					/* But cleanup INSERT EXEC if needed */
+					if (insert_exec_setup_done)
+					{
+						drop_insert_exec_temp_table(insert_exec_temp_oid);
+						pltsql_clear_insert_exec_context();
+					}
 					break;
 				}
 
@@ -2222,12 +3203,49 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						exec_assign_value(estate, estate->datums[stmt->return_code_dno], Int32GetDatum(ret), false, INT4OID, 0);
 					}
 				}
-				PG_FINALLY();
+				PG_CATCH();
 				{
+					/* 
+					 * Cleanup INSERT EXEC state on error.
+					 * 
+					 * IMPORTANT: We cannot call drop_insert_exec_temp_table() here because
+					 * SPI_execute cannot be used in an error context (transaction is aborted).
+					 * The temp table will be automatically cleaned up when the transaction
+					 * rolls back. We just need to clear the global state.
+					 */
+					if (insert_exec_setup_done)
+					{
+						pltsql_clear_insert_exec_context();
+					}
 					pltsql_revert_guc(save_nestlevel);
 					pltsql_revert_last_scope_identity(scope_level);
+					PG_RE_THROW();
 				}
 				PG_END_TRY();
+				
+				pltsql_revert_guc(save_nestlevel);
+				pltsql_revert_last_scope_identity(scope_level);
+				
+				/*
+				 * INSERT EXEC: Flush temp table to target and cleanup after 
+				 * sp_executesql execution completes.
+				 */
+				if (insert_exec_setup_done)
+				{
+					ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: sp_executesql completed, flushing temp table to target")));
+					
+					/* Flush temp table to target table */
+					flush_insert_exec_temp_table(estate);
+					
+					/* Drop temp table */
+					drop_insert_exec_temp_table(insert_exec_temp_oid);
+					
+					/* Clear global context */
+					pltsql_clear_insert_exec_context();
+					
+					ereport(LOG, (errmsg("INSERT-EXEC-DEBUG: INSERT EXEC (sp_executesql) completed successfully")));
+				}
+				
 				break;
 			}
 		case PLTSQL_EXEC_SP_EXECUTE:
@@ -3828,6 +4846,16 @@ execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamL
 	if (pltsql_explain_only)
 	{
 		receiver = None_Receiver;
+	}
+	else if (pltsql_insert_exec_active())
+	{
+		/*
+		 * INSERT EXEC context is active - redirect results to temp table
+		 * instead of sending to client.
+		 */
+		Oid temp_table_oid = pltsql_get_insert_exec_temp_table_oid();
+		receiver = CreateInsertExecDestReceiver(temp_table_oid);
+		receiver->rStartup(receiver, CMD_SELECT, portal->tupDesc);
 	}
 	else
 	{
