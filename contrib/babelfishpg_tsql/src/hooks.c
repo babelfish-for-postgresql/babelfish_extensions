@@ -802,7 +802,17 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 		}
 		case T_TransactionStmt:
 		{
-			if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
+			TransactionStmt *stmt = (TransactionStmt *) parsetree;
+			/*
+			 * Call PLTsqlProcessTransaction when:
+			 * 1. NestedTranCount > 0 (explicit transaction)
+			 * 2. TSQL dialect and no active transaction block
+			 * 3. INSERT EXEC is active and it's a ROLLBACK (to block with error 3915)
+			 */
+			if (NestedTranCount > 0 || 
+				(sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()) ||
+				(pltsql_insert_exec_active() && 
+				 (stmt->kind == TRANS_STMT_ROLLBACK || stmt->kind == TRANS_STMT_ROLLBACK_TO)))
 			{
 				PLTsqlProcessTransaction(parsetree, params, qc);
 				return true;

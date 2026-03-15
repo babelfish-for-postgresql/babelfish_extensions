@@ -140,9 +140,16 @@ PLTsqlProcessTransaction(Node *parsetree,
 
 		case TRANS_STMT_ROLLBACK:
 			{
-				if (exec_state_call_stack &&
-					exec_state_call_stack->estate &&
-					exec_state_call_stack->estate->insert_exec)
+				/*
+				 * Block ROLLBACK (and ROLLBACK TO SAVEPOINT) during INSERT EXEC.
+				 * Check both the old estate->insert_exec flag and the new 
+				 * pltsql_insert_exec_active() for the DestReceiver approach.
+				 * SQL Server Error 3915.
+				 */
+				if ((exec_state_call_stack &&
+					 exec_state_call_stack->estate &&
+					 exec_state_call_stack->estate->insert_exec) ||
+					pltsql_insert_exec_active())
 					ereport(ERROR,
 							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 							 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));

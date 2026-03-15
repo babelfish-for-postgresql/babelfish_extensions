@@ -1632,17 +1632,9 @@ public:
 		PLtsql_stmt *old_stmt = getPLtsql_fragment(ctx);
 		ParserRuleContext *container = peekContainer();
 		
-		std::cerr << "INSERT-EXEC-DEBUG: replaceGraftedStatement called, old_stmt=" << (void*)old_stmt 
-				  << " (type=" << (old_stmt ? old_stmt->cmd_type : -1) << ")"
-				  << ", new_stmt=" << (void*)new_stmt 
-				  << " (type=" << (new_stmt ? new_stmt->cmd_type : -1) << ")"
-				  << ", container=" << (void*)container << std::endl;
-		
 		if (old_stmt && container)
 		{
 			List *siblings = getCode(container);
-			
-			std::cerr << "INSERT-EXEC-DEBUG: siblings list length before=" << list_length(siblings) << std::endl;
 			
 			if (pltsql_enable_antlr_detailed_log)
 				std::cout << "    replacing stmt (" << (void *) old_stmt << ") with (" << (void *) new_stmt << ") in container(" << (void *) container << ")" << std::endl;
@@ -1652,14 +1644,11 @@ public:
 			siblings = lappend(siblings, new_stmt);
 			setCode(container, siblings);
 			
-			std::cerr << "INSERT-EXEC-DEBUG: siblings list length after=" << list_length(siblings) << std::endl;
-			
 			// Update the fragment mapping
 			attachPLtsql_fragment(ctx, new_stmt);
 		}
 		else if (new_stmt)
 		{
-			std::cerr << "INSERT-EXEC-DEBUG: No old statement, just grafting new one" << std::endl;
 			// No old statement, just graft the new one
 			graft(new_stmt, container);
 			attachPLtsql_fragment(ctx, new_stmt);
@@ -1994,11 +1983,8 @@ public:
 			ctx->insert_statement()->insert_statement_value() &&
 			ctx->insert_statement()->insert_statement_value()->execute_statement();
 
-		std::cerr << "INSERT-EXEC-DEBUG: exitDml_statement is_insert_exec=" << (is_insert_exec ? "true" : "false") << std::endl;
-
 		if (is_insert_exec)
 		{
-			std::cerr << "INSERT-EXEC-DEBUG: Detected INSERT EXEC, creating PLtsql_stmt_exec" << std::endl;
 			/*
 			 * INSERT EXEC redesign: Instead of creating a PLtsql_stmt_execsql for
 			 * "INSERT INTO t EXEC p", we create a PLtsql_stmt_exec for just "EXEC p"
@@ -2084,11 +2070,6 @@ public:
 					exec_stmt->insert_exec_target = pstrdup(target_table.c_str());
 				if (!column_list.empty())
 					exec_stmt->insert_exec_columns = pstrdup(column_list.c_str());
-				
-				std::cerr << "INSERT-EXEC-DEBUG: PLtsql_stmt_exec insert_exec=" << (exec_stmt->insert_exec ? "true" : "false")
-						  << ", target=" << (exec_stmt->insert_exec_target ? exec_stmt->insert_exec_target : "(null)")
-						  << ", columns=" << (exec_stmt->insert_exec_columns ? exec_stmt->insert_exec_columns : "(null)")
-						  << std::endl;
 			}
 			else if (base_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
 			{
@@ -2099,11 +2080,6 @@ public:
 					exec_batch_stmt->insert_exec_target = pstrdup(target_table.c_str());
 				if (!column_list.empty())
 					exec_batch_stmt->insert_exec_columns = pstrdup(column_list.c_str());
-				
-				std::cerr << "INSERT-EXEC-DEBUG: PLtsql_stmt_exec_batch insert_exec=" << (exec_batch_stmt->insert_exec ? "true" : "false")
-						  << ", target=" << (exec_batch_stmt->insert_exec_target ? exec_batch_stmt->insert_exec_target : "(null)")
-						  << ", columns=" << (exec_batch_stmt->insert_exec_columns ? exec_batch_stmt->insert_exec_columns : "(null)")
-						  << std::endl;
 			}
 			else if (base_stmt->cmd_type == PLTSQL_STMT_EXEC_SP)
 			{
@@ -2114,17 +2090,10 @@ public:
 					exec_sp_stmt->insert_exec_target = pstrdup(target_table.c_str());
 				if (!column_list.empty())
 					exec_sp_stmt->insert_exec_columns = pstrdup(column_list.c_str());
-				
-				std::cerr << "INSERT-EXEC-DEBUG: PLtsql_stmt_exec_sp insert_exec=" << (exec_sp_stmt->insert_exec ? "true" : "false")
-						  << ", target=" << (exec_sp_stmt->insert_exec_target ? exec_sp_stmt->insert_exec_target : "(null)")
-						  << ", columns=" << (exec_sp_stmt->insert_exec_columns ? exec_sp_stmt->insert_exec_columns : "(null)")
-						  << std::endl;
 			}
 			
 			/* Replace the PLtsql_stmt_execsql with the exec statement in the container */
 			replaceGraftedStatement(ctx, base_stmt);
-			
-			std::cerr << "INSERT-EXEC-DEBUG: replaceGraftedStatement completed" << std::endl;
 			
 			/* Clear the mutator since we're not using the execsql statement */
 			statementMutator.reset();
@@ -5415,12 +5384,8 @@ makeBatch(TSqlParser::Tsql_fileContext *ctx, tsqlBuilder &builder)
 	List *code = builder.getCode(ctx);
 	ListCell *s;
 
-	std::cerr << "INSERT-EXEC-DEBUG: makeBatch ctx=" << (void*)ctx << ", code list length=" << list_length(code) << std::endl;
-
 	foreach(s, code)
 	{
-		PLtsql_stmt *stmt = (PLtsql_stmt *) lfirst(s);
-		std::cerr << "INSERT-EXEC-DEBUG: makeBatch adding stmt type=" << stmt->cmd_type << std::endl;
 		result->body = lappend(result->body, lfirst(s));
 	}
 #if 0	
