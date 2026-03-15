@@ -65,7 +65,6 @@ PG_FUNCTION_INFO_V1(sp_unprepare);
 PG_FUNCTION_INFO_V1(sp_prepare);
 PG_FUNCTION_INFO_V1(sp_babelfish_configure);
 PG_FUNCTION_INFO_V1(sp_describe_first_result_set_internal);
-PG_FUNCTION_INFO_V1(create_sp_tablecollations_100_in_tempdb_dbo_internal);
 PG_FUNCTION_INFO_V1(sp_describe_undeclared_parameters_internal);
 PG_FUNCTION_INFO_V1(xp_qv_internal);
 PG_FUNCTION_INFO_V1(create_xp_qv_in_master_dbo_internal);
@@ -5112,57 +5111,4 @@ tsql_openxml_get_colpattern(PG_FUNCTION_ARGS)
 	}
 	
 	PG_RETURN_TEXT_P(cstring_to_text(xpath_expr));
-}
-
-/*
- * create_sp_tablecollations_100_in_tempdb_dbo_internal
- * 
- * Creates the tempdb.dbo.sp_tablecollations_100 procedure that BCP uses
- * to get column collation metadata for temp tables.
- */
-
-Datum
-create_sp_tablecollations_100_in_tempdb_dbo_internal(PG_FUNCTION_ARGS)
-{
-    char       *query = NULL;
-    int         rc = -1;
-
-    /*
-     * Create the T-SQL procedure in tempdb_dbo schema.
-     * This procedure calls sys.sp_tablecollations_100_enr SQL function.
-     * which uses the sys.babelfish_get_enr_attributes function, and
-     * converts the collation_name to binary(5) tds_collation using CollationProperty.
-     */
-    char       *tempq = "CREATE PROCEDURE %s.sp_tablecollations_100( "
-        "p_tablename sys.nvarchar(4000)) "
-        "AS $$ "
-        "BEGIN "
-        "SELECT "
-            "t.colid, "
-            "t.name, "
-            "CAST(CollationProperty(t.collation_name, 'tdscollation') AS sys.binary(5)) AS tds_collation, "
-            "t.collation_name AS collation "
-        "FROM sys.sp_tablecollations_100_enr(p_tablename) t; "
-        "END; "
-        "$$ LANGUAGE pltsql";
-
-    char       *dbo_scm = get_dbo_schema_name("tempdb");
-
-    query = psprintf(tempq, dbo_scm);
-
-    pfree(dbo_scm);
-
-    /* Make previous catalog changes visible before creating the procedure */
-    CommandCounterIncrement();
-
-    if ((rc = SPI_connect()) != SPI_OK_CONNECT)
-        elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
-
-    if ((rc = SPI_execute(query, false, 1)) < 0)
-        elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
-
-    if ((rc = SPI_finish()) != SPI_OK_FINISH)
-        elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
-
-    PG_RETURN_INT32(0);
 }

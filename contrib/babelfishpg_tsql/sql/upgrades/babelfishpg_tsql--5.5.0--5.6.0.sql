@@ -383,26 +383,41 @@ $$
 LANGUAGE SQL STABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.sp_tablecollations_100_enr(IN sys.varchar(4000)) TO PUBLIC;
 
--- Create sp_tablecollations_100 in tempdb for BCP temp table support
--- This procedure enables SqlBulkCopy to work with temp tables by providing
--- column collation metadata that BCP needs to encode string data correctly.
--- Note: In upgrades, tempdb_dbo schema already exists, so we can create directly.
-CREATE OR REPLACE PROCEDURE tempdb_dbo.sp_tablecollations_100(
-    IN p_tablename sys.nvarchar(4000)
+-- Modify sys.sp_tablecollations_100 to handle temp tables (starting with #)
+-- This enables SqlBulkCopy to work with temp tables by providing column collation metadata.
+CREATE OR REPLACE PROCEDURE sys.sp_tablecollations_100
+(
+    IN "@object" nvarchar(4000)
 )
 AS $$
 BEGIN
-    SELECT 
-        t.colid,
-        t.name,
-        CAST(CollationProperty(t.collation_name, 'tdscollation') AS sys.binary(5)) AS tds_collation,
-        t.collation_name AS collation
-    FROM sys.sp_tablecollations_100_enr(p_tablename) t;
+    -- Check if this is a temp table (starts with # or [# or contains .# or .[#)
+    IF LEFT(@object, 1) = '#' OR LEFT(@object, 2) = '[#' OR @object LIKE '%.#%' OR @object LIKE '%.[[]#%'
+    BEGIN
+        -- Use ENR function for temp tables
+        SELECT
+            t.colid AS colid,
+            t.name AS name,
+            CAST(CollationProperty(t.collation_name, 'tdscollation') AS sys.binary(5)) AS tds_collation,
+            t.collation_name AS collation
+        FROM sys.sp_tablecollations_100_enr(@object) t
+        ORDER BY t.colid;
+    END
+    ELSE
+    BEGIN
+        -- Existing logic for regular tables
+        SELECT
+            s_tcv.colid AS colid,
+            s_tcv.name AS name,
+            s_tcv.tds_collation_100 AS tds_collation,
+            s_tcv.collation_100 AS collation
+        FROM sys.spt_tablecollations_view s_tcv
+        WHERE s_tcv.object_id = (SELECT sys.object_id(@object))
+        ORDER BY colid;
+    END
 END;
-$$ LANGUAGE pltsql;
-
-ALTER PROCEDURE tempdb_dbo.sp_tablecollations_100 OWNER TO sysadmin;
-GRANT EXECUTE ON PROCEDURE tempdb_dbo.sp_tablecollations_100 TO PUBLIC;
+$$
+LANGUAGE 'pltsql';
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
