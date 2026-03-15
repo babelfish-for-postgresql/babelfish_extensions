@@ -49,6 +49,7 @@ static Oid insert_exec_temp_table_oid = InvalidOid;
 static char *insert_exec_target_table = NULL;
 static char *insert_exec_column_list = NULL;
 static int insert_exec_trycatch_depth = 0;  /* TRY-CATCH nesting depth during INSERT EXEC */
+static int insert_exec_call_stack_depth = 0;  /* Call stack depth when INSERT EXEC was started */
 
 /* DestReceiver struct for INSERT EXEC */
 typedef struct
@@ -78,6 +79,8 @@ void
 pltsql_set_insert_exec_context_info(const char *target_table, const char *column_list)
 {
 	MemoryContext oldcontext;
+	PLExecStateCallStack *cur;
+	int depth = 0;
 	
 	/* Clear any previous context */
 	if (insert_exec_target_table)
@@ -96,6 +99,15 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 	insert_exec_target_table = target_table ? pstrdup(target_table) : NULL;
 	insert_exec_column_list = column_list ? pstrdup(column_list) : NULL;
 	MemoryContextSwitchTo(oldcontext);
+	
+	/* Record the call stack depth when INSERT EXEC was started */
+	cur = exec_state_call_stack;
+	while (cur != NULL)
+	{
+		depth++;
+		cur = cur->next;
+	}
+	insert_exec_call_stack_depth = depth;
 }
 
 /*
@@ -117,6 +129,7 @@ pltsql_clear_insert_exec_context(void)
 {
 	insert_exec_temp_table_oid = InvalidOid;
 	insert_exec_trycatch_depth = 0;  /* Reset TRY-CATCH depth */
+	insert_exec_call_stack_depth = 0;  /* Reset call stack depth */
 	if (insert_exec_target_table)
 	{
 		pfree(insert_exec_target_table);
@@ -189,14 +202,76 @@ pltsql_insert_exec_exit_trycatch(void)
 
 /*
  * Check if we're inside a TRY-CATCH block during INSERT EXEC.
- * This is used as a fallback when exec_state_call_stack is NULL.
+ * This checks the exec_state_call_stack to see if any estate has a TRY-CATCH block active.
  */
 bool
 pltsql_insert_exec_in_trycatch(void)
 {
+	PLExecStateCallStack *cur;
+	
 	if (insert_exec_target_table == NULL)
 		return false;
+	
+	/* Check the call stack for any active TRY-CATCH blocks */
+	cur = exec_state_call_stack;
+	while (cur != NULL)
+	{
+		/* There is at-least one try block active for sure */
+		if (vec_size(cur->estate->err_ctx_stack) > 1)
+			return true;
+		/* Either try or catch block is active */
+		if (vec_size(cur->estate->err_ctx_stack) == 1)
+		{
+			PLtsql_errctx *err_ctx = *(PLtsql_errctx **) vec_at(cur->estate->err_ctx_stack, 0);
+
+			/* Make sure that we are not inside the catch block */
+			if (!err_ctx->partial_restored)
+				return true;
+		}
+		cur = cur->next;
+	}
+	
+	/* Fallback to the depth counter */
 	return insert_exec_trycatch_depth > 0;
+}
+
+/*
+ * Check if we should clean up INSERT EXEC context when a TRY-CATCH catches an error.
+ * 
+ * This is used in the sigsetjmp handler to determine if we should clean up the
+ * INSERT EXEC context. We should only clean up if the TRY-CATCH that catches
+ * the error is at the same level or higher than where INSERT EXEC was started.
+ * 
+ * If the TRY-CATCH is inside the procedure being executed (deeper call stack),
+ * we should NOT clean up because the INSERT EXEC is still in progress.
+ * 
+ * Returns true if we should clean up, false otherwise.
+ */
+bool
+pltsql_insert_exec_should_cleanup_on_trycatch(void)
+{
+	PLExecStateCallStack *cur;
+	int current_depth = 0;
+	
+	if (insert_exec_target_table == NULL)
+		return false;
+	
+	/* Get current call stack depth */
+	cur = exec_state_call_stack;
+	while (cur != NULL)
+	{
+		current_depth++;
+		cur = cur->next;
+	}
+	
+	/*
+	 * If current depth is greater than INSERT EXEC depth, the TRY-CATCH
+	 * is inside the procedure being executed, so don't clean up.
+	 * 
+	 * If current depth is equal to or less than INSERT EXEC depth, the
+	 * TRY-CATCH is at the same level or higher, so clean up.
+	 */
+	return current_depth <= insert_exec_call_stack_depth;
 }
 
 /*
@@ -1576,6 +1651,49 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
 
+		elog(LOG, "INSERT-EXEC TRY-CATCH cleanup: checking if active, is_stmt_terminating=%d, insert_exec_was_active=%d",
+			 is_stmt_terminating, insert_exec_was_active);
+
+		/*
+		 * Clean up INSERT EXEC context if it is currently active.
+		 * This is necessary because the error may have been thrown from inside
+		 * the procedure being executed, and the INSERT EXEC context was not
+		 * properly cleaned up. We need to:
+		 * 1. Clear the INSERT EXEC context (target table, column list, temp table OID)
+		 * 2. Drop the temp table if it still exists
+		 *
+		 * When the subtransaction is rolled back, the temp table should be
+		 * automatically dropped by ENRRollbackSubtransaction. But we still
+		 * need to clear the global INSERT EXEC context.
+		 *
+		 * When the subtransaction is released (for statement-terminating errors),
+		 * we need to explicitly drop the temp table.
+		 */
+		if (pltsql_insert_exec_active())
+		{
+			Oid temp_oid = pltsql_get_insert_exec_temp_table_oid();
+			
+			elog(LOG, "INSERT-EXEC TRY-CATCH cleanup: is_stmt_terminating=%d, insert_exec_was_active=%d, temp_oid=%u",
+				 is_stmt_terminating, insert_exec_was_active, temp_oid);
+			
+			/* Clear the INSERT EXEC context */
+			pltsql_clear_insert_exec_context();
+			
+			/*
+			 * If subtransaction was released (not rolled back), drop the temp table.
+			 * When rolled back, the temp table is already gone.
+			 */
+			if (is_stmt_terminating && insert_exec_was_active && OidIsValid(temp_oid))
+			{
+				elog(LOG, "INSERT-EXEC TRY-CATCH cleanup: dropping temp table");
+				drop_insert_exec_temp_table(temp_oid);
+			}
+		}
+		else
+		{
+			elog(LOG, "INSERT-EXEC TRY-CATCH cleanup: INSERT EXEC not active");
+		}
+
 		/*
 		 * Set up the stmt_mcontext stack as though we had restored our
 		 * previous state and then done push_stmt_mcontext().  The push is
@@ -2271,9 +2389,13 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * IMPORTANT: We cannot call drop_insert_exec_temp_table() here because
 		 * SPI_execute cannot be used in an error context (transaction is aborted).
 		 * The temp table will be automatically cleaned up when the transaction
-		 * rolls back. We just need to clear the global state.
+		 * rolls back.
+		 *
+		 * If we're inside a TRY-CATCH block, do NOT clear the INSERT EXEC context.
+		 * Let the TRY-CATCH handler (exec_stmt_try_catch) do the cleanup, because
+		 * it has access to SPI and can properly drop the temp table.
 		 */
-		if (insert_exec_setup_done)
+		if (insert_exec_setup_done && !pltsql_insert_exec_in_trycatch())
 		{
 			/* Just clear the global state - don't try to drop the temp table */
 			pltsql_clear_insert_exec_context();
@@ -2667,9 +2789,13 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		 * IMPORTANT: We cannot call drop_insert_exec_temp_table() here because
 		 * SPI_execute cannot be used in an error context (transaction is aborted).
 		 * The temp table will be automatically cleaned up when the transaction
-		 * rolls back. We just need to clear the global state.
+		 * rolls back.
+		 *
+		 * If we're inside a TRY-CATCH block, do NOT clear the INSERT EXEC context.
+		 * Let the TRY-CATCH handler (exec_stmt_try_catch) do the cleanup, because
+		 * it has access to SPI and can properly drop the temp table.
 		 */
-		if (insert_exec_setup_done)
+		if (insert_exec_setup_done && !pltsql_insert_exec_in_trycatch())
 		{
 			pltsql_clear_insert_exec_context();
 		}
@@ -3470,9 +3596,13 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					 * IMPORTANT: We cannot call drop_insert_exec_temp_table() here because
 					 * SPI_execute cannot be used in an error context (transaction is aborted).
 					 * The temp table will be automatically cleaned up when the transaction
-					 * rolls back. We just need to clear the global state.
+					 * rolls back.
+					 *
+					 * If we're inside a TRY-CATCH block, do NOT clear the INSERT EXEC context.
+					 * Let the TRY-CATCH handler (exec_stmt_try_catch) do the cleanup, because
+					 * it has access to SPI and can properly drop the temp table.
 					 */
-					if (insert_exec_setup_done)
+					if (insert_exec_setup_done && !pltsql_insert_exec_in_trycatch())
 					{
 						pltsql_clear_insert_exec_context();
 					}

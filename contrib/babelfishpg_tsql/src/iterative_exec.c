@@ -1711,6 +1711,43 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 					estate->cur_error->severity = exec_state_call_stack->error_data.error_severity;
 					estate->cur_error->state = exec_state_call_stack->error_data.error_state;
 
+					/*
+					 * Clean up INSERT EXEC context if active.
+					 * 
+					 * When an error occurs during INSERT EXEC and is caught by TRY-CATCH,
+					 * we need to clean up the INSERT EXEC context (clear global state and
+					 * drop the temp table). This is necessary because:
+					 * 1. The error was caught and execution will continue to the CATCH block
+					 * 2. The INSERT EXEC temp table is still present
+					 * 3. If we don't clean up, subsequent INSERT EXEC statements will fail
+					 *    with "relation already exists"
+					 *
+					 * We can safely drop the temp table here because:
+					 * 1. SPI is available (we're in a valid transaction state)
+					 * 2. The error has been caught and we're about to jump to the CATCH block
+					 *
+					 * IMPORTANT: We only clean up if the TRY-CATCH that catches the error
+					 * is at the same level or higher than where INSERT EXEC was started.
+					 * If the TRY-CATCH is inside the procedure being executed (deeper call
+					 * stack), we should NOT clean up because the INSERT EXEC is still in
+					 * progress and the procedure may continue to produce more rows.
+					 */
+					if (pltsql_insert_exec_should_cleanup_on_trycatch())
+					{
+						Oid temp_oid = pltsql_get_insert_exec_temp_table_oid();
+						
+						elog(DEBUG1, "INSERT-EXEC: Cleaning up INSERT EXEC context after error caught by TRY-CATCH (sigsetjmp), temp_oid=%u", temp_oid);
+						
+						/* Clear the INSERT EXEC context first */
+						pltsql_clear_insert_exec_context();
+						
+						/* Drop the temp table if it exists */
+						if (OidIsValid(temp_oid))
+						{
+							drop_insert_exec_temp_table(temp_oid);
+						}
+					}
+
 					/* Goto error handling blocks */
 					*pc = err_handler_pc - 1;	/* same as how goto handles PC */
 
