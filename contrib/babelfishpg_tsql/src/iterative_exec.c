@@ -1,5 +1,6 @@
 #include "access/xact.h"
 #include "commands/explain.h"
+#include "utils/snapmgr.h"
 #include "pltsql.h"
 #include "pltsql-2.h"
 #include "pl_explain.h"
@@ -1531,9 +1532,25 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 				MemoryContextSwitchTo(cur_ctxt);
 				RESUME_INTERRUPTS();
 			}
-			else if (pltsql_insert_exec_active())
+			else
 			{
-				elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback during INSERT EXEC");
+				/*
+				 * We skipped AbortCurrentTransaction() (either for INSERT EXEC or
+				 * for a statement-terminating error). We need to clean up any leaked
+				 * snapshots that were pushed by SPI but not popped due to the error.
+				 * Without this cleanup, subsequent statements fail with
+				 * "portal snapshots did not account for all active snapshots".
+				 */
+				HOLD_INTERRUPTS();
+				while (ActiveSnapshotSet())
+					PopActiveSnapshot();
+				if (pltsql_snapshot_portal != NULL)
+					pltsql_snapshot_portal->portalSnapshot = NULL;
+				if (pltsql_insert_exec_active())
+					elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback during INSERT EXEC, cleaned up snapshots");
+				else
+					elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback for statement-terminating error, cleaned up snapshots");
+				RESUME_INTERRUPTS();
 			}
 		}
 		else if (estate->tsql_trigger_flags & TSQL_TRAN_STARTED)
