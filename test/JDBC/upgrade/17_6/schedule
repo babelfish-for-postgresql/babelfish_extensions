@@ -672,6 +672,6 @@ forxml-raw-elements-before-17_9-or-18_3
 forxml-path-elements-before-17_10-or-18_4
 
 # Remote Procedure Execution Upgrade Tests (PR #4292)
-remote-proc-exec-upgrade-prepare
-remote-proc-exec-upgrade-verify
-remote-proc-exec-upgrade-cleanup
+remote-proc-exec_upgrd_before_17_6-vu-prepare
+remote-proc-exec_upgrd_before_17_6-vu-verify
+remote-proc-exec_upgrd_before_17_6-vu-cleanup

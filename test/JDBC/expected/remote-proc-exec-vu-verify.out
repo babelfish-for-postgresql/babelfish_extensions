@@ -1418,7 +1418,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt @value='not_a_number';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 245, Msg state: 1, Msg: invalid input syntax for type integer: "not_a_number", Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: invalid input syntax for type integer: "not_a_number", Server: BABELFISH, Process: , Line: 1, Level: 16)~~
 
 
 -- Test 114: NULL for INT parameter (should work - NULL is valid for INT)
@@ -1503,7 +1503,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_ConversionError;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 245, Msg state: 1, Msg: invalid input syntax for type integer: "not_a_number", Server: BABELFISH, Process: , Line: 2, Level: 16)~~
+~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: invalid input syntax for type integer: "not_a_number", Server: BABELFISH, Process: , Line: 2, Level: 16)~~
 
 
 -- Test 123: String truncation (long string to VARCHAR(5))
