@@ -168,9 +168,12 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 					 errmsg("unexpected error parsing xml root tag")));
 
 		if (regexec(&preg, state, 1, pmatch, 0) != 0)
+		{
+			regfree(&preg);
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("unexpected error parsing xml root tag")));
+		}
 
 		match = pmatch[0];
 		/* we will be bashing the string in state, so copy it into res first */
@@ -181,6 +184,7 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 		initStringInfo(&root);
 		appendStringInfoString(&root, state + match.rm_so + 1);
 		appendStringInfo(res, "</%s>", root.data);
+		regfree(&preg);
 	}
 	else
 	{
