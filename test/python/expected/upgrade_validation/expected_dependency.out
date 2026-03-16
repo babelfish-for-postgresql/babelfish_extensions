@@ -289,7 +289,6 @@ Function sys.check_for_inconsistent_metadata()
 Function sys.checksum(text[])
 Function sys.collationproperty(text,text)
 Function sys.columnproperty(oid,name,text)
-Function sys.columns_internal()
 Function sys.columns_updated()
 Function sys.concat(text[])
 Function sys.concat_ws(text,text[])
@@ -965,6 +964,7 @@ View sys.assembly_modules
 View sys.babelfish_has_perms_by_name_permissions
 View sys.change_tracking_databases
 View sys.change_tracking_tables
+View sys.columns_internal
 View sys.database_files
 View sys.database_filestream_options
 View sys.database_recovery_status
