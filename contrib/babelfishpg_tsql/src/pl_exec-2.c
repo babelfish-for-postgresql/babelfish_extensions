@@ -299,15 +299,45 @@ CreateInsertExecDestReceiver(Oid temp_table_oid)
  * tuple in insertexec_receive. This ensures the relation handle doesn't
  * become invalid if a subtransaction rollback happens during procedure
  * execution (e.g., inner TRY/CATCH blocks).
+ * 
+ * We DO validate that the number of columns in the result set matches
+ * the temp table structure. If there's a mismatch, we raise an error
+ * similar to SQL Server's error 213.
  */
 static void
 insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
 	DR_insertexec *myState = (DR_insertexec *) self;
+	Relation	temp_rel;
+	TupleDesc	temp_tupdesc;
+	int			result_natts;
+	int			temp_natts;
 
 	/* Just store the tuple descriptor for later use */
 	myState->typeinfo = typeinfo;
 	myState->rows_inserted = 0;
+
+	/*
+	 * Validate column count: the number of columns in the result set
+	 * must match the number of columns in the temp table.
+	 * 
+	 * SQL Server error 213: "Column name or number of supplied values 
+	 * does not match table definition."
+	 */
+	result_natts = typeinfo->natts;
+	
+	/* Open temp table to get its tuple descriptor */
+	temp_rel = table_open(myState->temp_table_oid, AccessShareLock);
+	temp_tupdesc = RelationGetDescr(temp_rel);
+	temp_natts = temp_tupdesc->natts;
+	table_close(temp_rel, AccessShareLock);
+	
+	if (result_natts != temp_natts)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("Column name or number of supplied values does not match table definition.")));
+	}
 }
 
 /*
