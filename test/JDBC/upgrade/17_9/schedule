@@ -669,7 +669,7 @@ update_with_var
 BABEL-4271
 comparison_op_index_scan
 Test-Linestring
-Test-Polygon
+Test-Polygon-before-17_9-or-18_3
 BABEL-5788
 BABEL-1664
 sys-fn_varbintohexstr
