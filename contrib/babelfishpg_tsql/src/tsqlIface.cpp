@@ -1986,6 +1986,17 @@ public:
 		if (is_insert_exec)
 		{
 			/*
+			 * SQL Server error 483: The OUTPUT clause cannot be used in an INSERT...EXEC statement.
+			 * Check for OUTPUT clause and throw error if present.
+			 */
+			if (ctx->insert_statement()->output_clause())
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED,
+					"The OUTPUT clause cannot be used in an INSERT...EXEC statement.",
+					getLineAndPos(ctx->insert_statement()->output_clause()));
+			}
+
+			/*
 			 * INSERT EXEC redesign: Instead of creating a PLtsql_stmt_execsql for
 			 * "INSERT INTO t EXEC p", we create a PLtsql_stmt_exec for just "EXEC p"
 			 * and set the INSERT EXEC fields. This allows exec_stmt_exec to handle

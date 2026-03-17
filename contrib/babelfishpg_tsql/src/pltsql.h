@@ -1830,6 +1830,9 @@ typedef struct PLtsql_protocol_plugin
 	
 	Datum       (*sql_geography_from_bytea) (PG_FUNCTION_ARGS);
 
+	/* INSERT EXEC support */
+	bool		(*pltsql_insert_exec_active) (void);
+
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -2402,13 +2405,15 @@ extern void pltsql_set_insert_exec_context_info(const char *target_table, const 
 extern void pltsql_set_insert_exec_context(Oid temp_table_oid);
 extern void pltsql_clear_insert_exec_context(void);
 extern bool pltsql_insert_exec_active(void);
+extern bool pltsql_insert_exec_flush_in_progress(void);
+extern int pltsql_get_insert_exec_base_tran_count(void);
 extern Oid pltsql_get_insert_exec_temp_table_oid(void);
 extern const char *pltsql_get_insert_exec_target_table(void);
 extern const char *pltsql_get_insert_exec_column_list(void);
 extern void pltsql_insert_exec_enter_trycatch(void);
 extern void pltsql_insert_exec_exit_trycatch(void);
 extern bool pltsql_insert_exec_in_trycatch(void);
-extern bool pltsql_insert_exec_should_cleanup_on_trycatch(void);
+extern Oid pltsql_get_and_clear_insert_exec_temp_table_for_cleanup(void);
 extern DestReceiver *CreateInsertExecDestReceiver(Oid temp_table_oid);
 extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list);
 extern void drop_insert_exec_temp_table(Oid temp_table_oid);

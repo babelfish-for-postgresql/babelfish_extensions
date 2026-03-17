@@ -5258,12 +5258,25 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * Always commit to match auto commit behavior for each statement
 		 * inside batch or procedure, but not user-defined function or
 		 * procedure invoked by INSERT ... EXECUTE.
+		 * 
+		 * Also skip commit when INSERT EXEC is globally active (even if this
+		 * estate doesn't have insert_exec set, e.g., inside a trigger fired
+		 * during INSERT EXEC). Committing inside a trigger during INSERT EXEC
+		 * would orphan the SPI portal's snapshot, causing "portal snapshots
+		 * did not account for all active snapshots" error.
+		 * 
+		 * Also skip commit when INSERT EXEC flush is in progress. During flush,
+		 * we temporarily clear the INSERT EXEC context to allow INSTEAD OF
+		 * triggers to fire, but we still need to block commit_stmt inside
+		 * those triggers.
 		 */
 		/* TODO To let procedure call from PSQL work with old semantics */
 		if ((!pltsql_disable_batch_auto_commit || (stmt->txn_data != NULL)) &&
 			support_tsql_trans &&
 			(enable_txn_in_triggers || estate->trigdata == NULL) &&
-			!ro_func && !estate->insert_exec)
+			!ro_func && !estate->insert_exec &&
+			!pltsql_insert_exec_active() &&
+			!pltsql_insert_exec_flush_in_progress())
 		{
 			commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED));
 

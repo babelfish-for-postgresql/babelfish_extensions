@@ -1503,12 +1503,43 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			 * 3. The error will be caught by TRY-CATCH and the transaction
 			 *    state will be handled properly when INSERT EXEC completes
 			 *
+			 * IMPORTANT: We only skip the abort if there's a TRY-CATCH that
+			 * will catch the error. If there's no TRY-CATCH, we should clean
+			 * up the INSERT EXEC context and let the transaction abort normally.
+			 * Otherwise, the temp table will be left behind and cause
+			 * "relation already exists" errors on subsequent INSERT EXEC.
+			 *
 			 * Also skip this for statement-terminating errors (like division by
 			 * zero). In SQL Server, statement-terminating errors do NOT cause a
 			 * transaction rollback - they only terminate the failing statement.
 			 * Previous statements' work is preserved, regardless of TRY-CATCH.
 			 */
-			bool skip_abort = pltsql_insert_exec_active();
+			bool skip_abort = false;
+			
+			/*
+			 * Only skip abort for INSERT EXEC if there's a TRY-CATCH that
+			 * will catch the error. If no TRY-CATCH, clean up INSERT EXEC
+			 * context and let the transaction abort.
+			 */
+			if (pltsql_insert_exec_active())
+			{
+				if (pltsql_insert_exec_in_trycatch())
+				{
+					skip_abort = true;
+					elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback during INSERT EXEC (TRY-CATCH will handle)");
+				}
+				else
+				{
+					/*
+					 * No TRY-CATCH to catch the error. Clean up INSERT EXEC
+					 * context so the temp table is dropped when transaction
+					 * aborts. We just clear the context here - the temp table
+					 * will be dropped by the transaction abort.
+					 */
+					elog(DEBUG1, "TSQL TXN TSQL semantics : INSERT EXEC active but no TRY-CATCH, clearing context for cleanup");
+					pltsql_clear_insert_exec_context();
+				}
+			}
 			
 			/* Also skip abort for statement-terminating errors */
 			if (!skip_abort)
@@ -1715,28 +1746,20 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 					 * Clean up INSERT EXEC context if active.
 					 * 
 					 * When an error occurs during INSERT EXEC and is caught by TRY-CATCH,
-					 * we need to clean up the INSERT EXEC context (clear global state and
-					 * drop the temp table). This is necessary because:
-					 * 1. The error was caught and execution will continue to the CATCH block
-					 * 2. The INSERT EXEC temp table is still present
-					 * 3. If we don't clean up, subsequent INSERT EXEC statements will fail
+					 * the PG_CATCH in exec_stmt_exec leaves the INSERT EXEC context intact
+					 * so we can drop the temp table here (SPI is available after TRY-CATCH).
+					 * 
+					 * We drop the temp table here because:
+					 * 1. SPI is available (we're in a valid transaction state after TRY-CATCH)
+					 * 2. The error has been caught and execution will continue to the CATCH block
+					 * 3. If we don't drop it, subsequent INSERT EXEC statements will fail
 					 *    with "relation already exists"
-					 *
-					 * We can safely drop the temp table here because:
-					 * 1. SPI is available (we're in a valid transaction state)
-					 * 2. The error has been caught and we're about to jump to the CATCH block
-					 *
-					 * IMPORTANT: We only clean up if the TRY-CATCH that catches the error
-					 * is at the same level or higher than where INSERT EXEC was started.
-					 * If the TRY-CATCH is inside the procedure being executed (deeper call
-					 * stack), we should NOT clean up because the INSERT EXEC is still in
-					 * progress and the procedure may continue to produce more rows.
 					 */
-					if (pltsql_insert_exec_should_cleanup_on_trycatch())
+					if (pltsql_insert_exec_active())
 					{
 						Oid temp_oid = pltsql_get_insert_exec_temp_table_oid();
 						
-						elog(DEBUG1, "INSERT-EXEC: Cleaning up INSERT EXEC context after error caught by TRY-CATCH (sigsetjmp), temp_oid=%u", temp_oid);
+						elog(DEBUG1, "INSERT-EXEC: Cleaning up after error caught by TRY-CATCH, temp_oid=%u", temp_oid);
 						
 						/* Clear the INSERT EXEC context first */
 						pltsql_clear_insert_exec_context();

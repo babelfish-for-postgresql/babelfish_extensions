@@ -126,13 +126,34 @@ PLTsqlProcessTransaction(Node *parsetree,
 
 		case TRANS_STMT_COMMIT:
 			{
-				if (exec_state_call_stack &&
-					exec_state_call_stack->estate &&
-					exec_state_call_stack->estate->insert_exec &&
-					NestedTranCount <= 1)
+				/*
+				 * Block COMMIT during INSERT EXEC if there's no user-started transaction.
+				 * Check both the old estate->insert_exec flag and the new 
+				 * pltsql_insert_exec_active() for the DestReceiver approach.
+				 * SQL Server Error 3916.
+				 *
+				 * In SQL Server, INSERT EXEC implicitly starts a transaction, so @@TRANCOUNT=1.
+				 * When the procedure does BEGIN TRAN, it becomes @@TRANCOUNT=2, allowing COMMIT.
+				 * We simulate this by comparing NestedTranCount against the base count recorded
+				 * when INSERT EXEC started (which is NestedTranCount + 1 at that time).
+				 */
+				if (pltsql_insert_exec_active())
+				{
+					int base_tran_count = pltsql_get_insert_exec_base_tran_count();
+					if (NestedTranCount < base_tran_count)
+						ereport(ERROR,
+								(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+								 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+				}
+				else if ((exec_state_call_stack &&
+						  exec_state_call_stack->estate &&
+						  exec_state_call_stack->estate->insert_exec) &&
+						 NestedTranCount <= 1)
+				{
 					ereport(ERROR,
 							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+				}
 
 				PLTsqlCommitTransaction(qc, stmt->chain);
 			}
@@ -796,15 +817,28 @@ PLTsqlStartTransaction(char *txnName)
 	elog(DEBUG2, "TSQL TXN Start transaction %d", NestedTranCount);
 	if (!IsTransactionBlockActive())
 	{
-		Assert(NestedTranCount == 0);
-		BeginTransactionBlock();
-
 		/*
-		 * set transaction name in savepoint field. It is needed to
-		 * distinguish rollback vs rollback to savepoint requests.
+		 * During INSERT EXEC, we're inside a subtransaction, not a real transaction block.
+		 * IsTransactionBlockActive() returns false, but we should NOT call BeginTransactionBlock()
+		 * because we're already inside a subtransaction. We just need to increment NestedTranCount
+		 * to simulate SQL Server's @@TRANCOUNT behavior.
+		 * 
+		 * In SQL Server, INSERT EXEC implicitly starts a transaction (@@TRANCOUNT=1).
+		 * When the procedure does BEGIN TRAN, @@TRANCOUNT becomes 2.
+		 * We simulate this by just incrementing NestedTranCount without starting a real transaction.
 		 */
-		if (txnName != NULL)
-			SetTopTransactionName(txnName);
+		if (!pltsql_insert_exec_active())
+		{
+			Assert(NestedTranCount == 0);
+			BeginTransactionBlock();
+
+			/*
+			 * set transaction name in savepoint field. It is needed to
+			 * distinguish rollback vs rollback to savepoint requests.
+			 */
+			if (txnName != NULL)
+				SetTopTransactionName(txnName);
+		}
 	}
 	++NestedTranCount;
 
@@ -816,7 +850,39 @@ void
 PLTsqlCommitTransaction(QueryCompletion *qc, bool chain)
 {
 	elog(DEBUG2, "TSQL TXN Commit transaction %d", NestedTranCount);
-	if (NestedTranCount <= 1)
+	
+	/*
+	 * During INSERT EXEC, we simulate SQL Server's implicit transaction.
+	 * @@TRANCOUNT starts at 1 (the implicit transaction).
+	 * When the procedure does BEGIN TRAN, @@TRANCOUNT becomes 2.
+	 * When the procedure does COMMIT, @@TRANCOUNT goes back to 1.
+	 * 
+	 * COMMIT when @@TRANCOUNT is at the base level (1 during INSERT EXEC)
+	 * should fail with error 3916 because you can't commit the implicit transaction.
+	 */
+	if (pltsql_insert_exec_active())
+	{
+		int base_tran_count = pltsql_get_insert_exec_base_tran_count();
+		
+		if (NestedTranCount <= base_tran_count)
+		{
+			/*
+			 * Trying to COMMIT when at or below the base transaction level.
+			 * In SQL Server, this would fail with error 3916:
+			 * "Cannot use the COMMIT statement within an INSERT-EXEC statement
+			 * unless BEGIN TRANSACTION is used first."
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
+					 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+		}
+		else
+		{
+			/* Just decrement the count, don't actually commit */
+			--NestedTranCount;
+		}
+	}
+	else if (NestedTranCount <= 1)
 	{
 		RequireTransactionBlock(true, "COMMIT");
 		if (!EndTransactionBlock(chain))

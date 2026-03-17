@@ -7,11 +7,13 @@
 #include "access/tableam.h"
 #include "access/attmap.h"
 #include "access/nbtree.h"
+#include "access/xact.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "commands/proclang.h"
+#include "commands/trigger.h"
 #include "executor/tstoreReceiver.h"
 #include "nodes/parsenodes.h"
 #include "utils/acl.h"
@@ -48,8 +50,9 @@
 static Oid insert_exec_temp_table_oid = InvalidOid;
 static char *insert_exec_target_table = NULL;
 static char *insert_exec_column_list = NULL;
-static int insert_exec_trycatch_depth = 0;  /* TRY-CATCH nesting depth during INSERT EXEC */
-static int insert_exec_call_stack_depth = 0;  /* Call stack depth when INSERT EXEC was started */
+static int insert_exec_base_tran_count = 0;  /* NestedTranCount when INSERT EXEC started */
+static int insert_exec_saved_nested_tran_count = 0;  /* Original NestedTranCount to restore on cleanup */
+static bool insert_exec_flush_in_progress = false;  /* True during flush phase to block commit_stmt */
 
 /* DestReceiver struct for INSERT EXEC */
 typedef struct
@@ -79,8 +82,6 @@ void
 pltsql_set_insert_exec_context_info(const char *target_table, const char *column_list)
 {
 	MemoryContext oldcontext;
-	PLExecStateCallStack *cur;
-	int depth = 0;
 	
 	/* Clear any previous context */
 	if (insert_exec_target_table)
@@ -100,14 +101,36 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 	insert_exec_column_list = column_list ? pstrdup(column_list) : NULL;
 	MemoryContextSwitchTo(oldcontext);
 	
-	/* Record the call stack depth when INSERT EXEC was started */
-	cur = exec_state_call_stack;
-	while (cur != NULL)
+	/*
+	 * Record the NestedTranCount when INSERT EXEC started.
+	 * In SQL Server, INSERT EXEC implicitly starts a transaction, so @@TRANCOUNT=1.
+	 * When the procedure does BEGIN TRAN, it becomes @@TRANCOUNT=2, allowing COMMIT.
+	 * 
+	 * Save the original NestedTranCount so we can restore it on cleanup.
+	 * This is needed because during INSERT EXEC, BEGIN TRAN increments NestedTranCount
+	 * but doesn't start a real transaction. If an error occurs, we need to restore
+	 * NestedTranCount to its original value.
+	 */
+	insert_exec_saved_nested_tran_count = NestedTranCount;
+	
+	/*
+	 * In SQL Server, INSERT EXEC implicitly starts a transaction if there isn't one already.
+	 * - If @@TRANCOUNT=0 before INSERT EXEC, it becomes 1 (implicit transaction)
+	 * - If @@TRANCOUNT>=1 before INSERT EXEC, it stays the same (already in a transaction)
+	 * 
+	 * We simulate this by only incrementing NestedTranCount if it's currently 0.
+	 * The base_tran_count is the @@TRANCOUNT value that the procedure sees at start.
+	 */
+	if (NestedTranCount == 0)
 	{
-		depth++;
-		cur = cur->next;
+		NestedTranCount = 1;
+		
+		/* Update the protocol plugin with the new NestedTranCount */
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
 	}
-	insert_exec_call_stack_depth = depth;
+	
+	insert_exec_base_tran_count = NestedTranCount;
 }
 
 /*
@@ -127,9 +150,27 @@ pltsql_set_insert_exec_context(Oid temp_table_oid)
 void
 pltsql_clear_insert_exec_context(void)
 {
+	/*
+	 * Restore NestedTranCount to its original value when INSERT EXEC started.
+	 * This is needed because during INSERT EXEC, BEGIN TRAN increments NestedTranCount
+	 * but doesn't start a real transaction (we're inside a subtransaction).
+	 * If an error occurs and the subtransaction is rolled back, NestedTranCount
+	 * would be left in an inconsistent state without this restoration.
+	 * 
+	 * Only restore if INSERT EXEC was actually active (insert_exec_target_table != NULL).
+	 */
+	if (insert_exec_target_table != NULL)
+	{
+		NestedTranCount = insert_exec_saved_nested_tran_count;
+		
+		/* Update the protocol plugin with the restored NestedTranCount */
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
+	}
+	
 	insert_exec_temp_table_oid = InvalidOid;
-	insert_exec_trycatch_depth = 0;  /* Reset TRY-CATCH depth */
-	insert_exec_call_stack_depth = 0;  /* Reset call stack depth */
+	insert_exec_base_tran_count = 0;  /* Reset base transaction count */
+	insert_exec_saved_nested_tran_count = 0;  /* Reset saved nested tran count */
 	if (insert_exec_target_table)
 	{
 		pfree(insert_exec_target_table);
@@ -150,6 +191,28 @@ bool
 pltsql_insert_exec_active(void)
 {
 	return (insert_exec_target_table != NULL);
+}
+
+/*
+ * Check if INSERT EXEC flush is in progress.
+ * During flush, we temporarily clear the INSERT EXEC context to allow
+ * INSTEAD OF triggers to fire, but we still need to block commit_stmt.
+ */
+bool
+pltsql_insert_exec_flush_in_progress(void)
+{
+	return insert_exec_flush_in_progress;
+}
+
+/*
+ * Get the base transaction count for INSERT EXEC.
+ * This is the NestedTranCount + 1 when INSERT EXEC started.
+ * Used to determine if COMMIT is allowed during INSERT EXEC.
+ */
+int
+pltsql_get_insert_exec_base_tran_count(void)
+{
+	return insert_exec_base_tran_count;
 }
 
 /*
@@ -181,23 +244,24 @@ pltsql_get_insert_exec_column_list(void)
 
 /*
  * Increment TRY-CATCH depth when entering a TRY block during INSERT EXEC.
- * This is used to track whether we're inside a TRY-CATCH block during INSERT EXEC.
+ * NOTE: This function is now a no-op. TRY-CATCH detection is done via err_ctx_stack.
+ * Kept for API compatibility but does nothing.
  */
 void
 pltsql_insert_exec_enter_trycatch(void)
 {
-	if (insert_exec_target_table != NULL)
-		insert_exec_trycatch_depth++;
+	/* No-op: TRY-CATCH detection is done via err_ctx_stack in pltsql_insert_exec_in_trycatch() */
 }
 
 /*
  * Decrement TRY-CATCH depth when exiting a TRY block during INSERT EXEC.
+ * NOTE: This function is now a no-op. TRY-CATCH detection is done via err_ctx_stack.
+ * Kept for API compatibility but does nothing.
  */
 void
 pltsql_insert_exec_exit_trycatch(void)
 {
-	if (insert_exec_target_table != NULL && insert_exec_trycatch_depth > 0)
-		insert_exec_trycatch_depth--;
+	/* No-op: TRY-CATCH detection is done via err_ctx_stack in pltsql_insert_exec_in_trycatch() */
 }
 
 /*
@@ -231,47 +295,24 @@ pltsql_insert_exec_in_trycatch(void)
 		cur = cur->next;
 	}
 	
-	/* Fallback to the depth counter */
-	return insert_exec_trycatch_depth > 0;
+	return false;
 }
 
 /*
- * Check if we should clean up INSERT EXEC context when a TRY-CATCH catches an error.
+ * Get and clear the temp table OID for INSERT EXEC cleanup.
+ * Called from iterative_exec.c after TRY-CATCH catches an error.
+ * Returns the temp table OID that needs to be dropped, or InvalidOid if none.
  * 
- * This is used in the sigsetjmp handler to determine if we should clean up the
- * INSERT EXEC context. We should only clean up if the TRY-CATCH that catches
- * the error is at the same level or higher than where INSERT EXEC was started.
- * 
- * If the TRY-CATCH is inside the procedure being executed (deeper call stack),
- * we should NOT clean up because the INSERT EXEC is still in progress.
- * 
- * Returns true if we should clean up, false otherwise.
+ * This is used when an error occurs during INSERT EXEC and is caught by TRY-CATCH.
+ * The PG_CATCH in exec_stmt_exec clears the INSERT EXEC context but leaves the
+ * temp table OID for iterative_exec.c to drop.
  */
-bool
-pltsql_insert_exec_should_cleanup_on_trycatch(void)
+Oid
+pltsql_get_and_clear_insert_exec_temp_table_for_cleanup(void)
 {
-	PLExecStateCallStack *cur;
-	int current_depth = 0;
-	
-	if (insert_exec_target_table == NULL)
-		return false;
-	
-	/* Get current call stack depth */
-	cur = exec_state_call_stack;
-	while (cur != NULL)
-	{
-		current_depth++;
-		cur = cur->next;
-	}
-	
-	/*
-	 * If current depth is greater than INSERT EXEC depth, the TRY-CATCH
-	 * is inside the procedure being executed, so don't clean up.
-	 * 
-	 * If current depth is equal to or less than INSERT EXEC depth, the
-	 * TRY-CATCH is at the same level or higher, so clean up.
-	 */
-	return current_depth <= insert_exec_call_stack_depth;
+	Oid temp_oid = insert_exec_temp_table_oid;
+	insert_exec_temp_table_oid = InvalidOid;
+	return temp_oid;
 }
 
 /*
@@ -614,25 +655,60 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 	 * By inserting and deleting a dummy row here (outside any subtransaction),
 	 * we ensure the temp table's storage is properly initialized and won't be
 	 * affected by subsequent subtransaction rollbacks.
+	 *
+	 * We wrap this in a subtransaction so that if the INSERT fails (e.g., due
+	 * to NOT NULL constraints copied from the source table in T-SQL mode),
+	 * we can catch the error and continue. The table creation itself already
+	 * initializes the storage, so the anchor is just extra protection.
 	 */
 	{
 		StringInfoData anchor_stmt;
+		MemoryContext oldcontext;
+		ResourceOwner oldowner;
 		
 		initStringInfo(&anchor_stmt);
 		
-		/* Insert a dummy row with NULL values */
-		appendStringInfo(&anchor_stmt, 
-			"INSERT INTO %s DEFAULT VALUES", temp_table_name);
+		/* Start a subtransaction for the anchor operation */
+		oldcontext = CurrentMemoryContext;
+		oldowner = CurrentResourceOwner;
+		BeginInternalSubTransaction(NULL);
 		
-		rc = SPI_execute(anchor_stmt.data, false, 0);
-		if (rc == SPI_OK_INSERT)
+		PG_TRY();
 		{
-			/* Delete the dummy row */
-			resetStringInfo(&anchor_stmt);
-			appendStringInfo(&anchor_stmt, "DELETE FROM %s", temp_table_name);
+			/* Try to insert a dummy row with DEFAULT VALUES */
+			appendStringInfo(&anchor_stmt, 
+				"INSERT INTO %s DEFAULT VALUES", temp_table_name);
 			
-			SPI_execute(anchor_stmt.data, false, 0);
+			rc = SPI_execute(anchor_stmt.data, false, 0);
+			if (rc == SPI_OK_INSERT)
+			{
+				/* Delete the dummy row */
+				resetStringInfo(&anchor_stmt);
+				appendStringInfo(&anchor_stmt, "DELETE FROM %s", temp_table_name);
+				
+				SPI_execute(anchor_stmt.data, false, 0);
+			}
+			
+			/* Commit the subtransaction */
+			ReleaseCurrentSubTransaction();
+			MemoryContextSwitchTo(oldcontext);
+			CurrentResourceOwner = oldowner;
 		}
+		PG_CATCH();
+		{
+			/*
+			 * Anchor INSERT failed (likely due to NOT NULL constraints).
+			 * Roll back the subtransaction and continue - the table creation
+			 * itself already initialized the storage files.
+			 */
+			MemoryContextSwitchTo(oldcontext);
+			FlushErrorState();
+			RollbackAndReleaseCurrentSubTransaction();
+			CurrentResourceOwner = oldowner;
+			
+			elog(DEBUG1, "INSERT-EXEC: Anchor INSERT failed, continuing without anchor");
+		}
+		PG_END_TRY();
 		
 		pfree(anchor_stmt.data);
 	}
@@ -695,12 +771,26 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	MemoryContext	oldcontext = CurrentMemoryContext;
 	ResourceOwner	oldowner = CurrentResourceOwner;
 	volatile bool	subtxn_started = false;
+	volatile bool	composite_triggers_started = false;
 	uint64			rows_inserted = 0;
+	
+	/* Save INSERT EXEC context to restore after flush */
+	char		   *saved_target_table = NULL;
+	char		   *saved_column_list = NULL;
 
 	if (!OidIsValid(temp_oid) || target_table == NULL)
 	{
 		return;
 	}
+	
+	/*
+	 * Save the INSERT EXEC context info before clearing it.
+	 * We need to temporarily clear the context so that the flush INSERT
+	 * behaves like a normal INSERT and fires INSTEAD OF triggers properly.
+	 */
+	saved_target_table = pstrdup(target_table);
+	if (column_list)
+		saved_column_list = pstrdup(column_list);
 
 	snprintf(temp_table_name, sizeof(temp_table_name),
 			 "#insert_exec_buf_%d", MyProcPid);
@@ -823,12 +913,49 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	 *
 	 * This matches the QTM branch behavior where each INSERT is wrapped
 	 * in its own subtransaction that commits immediately.
+	 *
+	 * INSTEAD OF Trigger Support:
+	 * We temporarily clear the INSERT EXEC context before the flush INSERT
+	 * so that the INSERT behaves like a normal INSERT and fires INSTEAD OF
+	 * triggers properly. We set insert_exec_flush_in_progress to block
+	 * commit_stmt inside triggers during the flush.
+	 * We also use BeginCompositeTriggers/EndCompositeTriggers to ensure
+	 * trigger events are properly queued and fired.
 	 */
 	PG_TRY();
 	{
 		BeginInternalSubTransaction("insert_exec_flush");
 		subtxn_started = true;
 		MemoryContextSwitchTo(oldcontext);
+
+		/*
+		 * Set the flush flag BEFORE clearing the target table pointer.
+		 * This ensures commit_stmt is still blocked inside triggers
+		 * even though pltsql_insert_exec_active() will return false.
+		 */
+		insert_exec_flush_in_progress = true;
+		
+		/*
+		 * Temporarily clear just the target table pointer so that
+		 * pltsql_insert_exec_active() returns false. This allows the
+		 * flush INSERT to behave like a normal INSERT and fire INSTEAD OF
+		 * triggers properly.
+		 * 
+		 * IMPORTANT: We do NOT call pltsql_clear_insert_exec_context() here
+		 * because that would reset NestedTranCount, causing error 3609
+		 * "The transaction ended in the trigger" at the end of trigger execution.
+		 * 
+		 * We save the pointer and restore it after the flush.
+		 */
+		insert_exec_target_table = NULL;
+		
+		/*
+		 * Open a composite trigger nesting level to properly handle
+		 * INSTEAD OF triggers. This ensures trigger events are queued
+		 * and fired correctly.
+		 */
+		BeginCompositeTriggers(CurrentMemoryContext);
+		composite_triggers_started = true;
 
 		rc = SPI_execute(flush_query.data, false, 0);
 		if (rc != SPI_OK_INSERT)
@@ -837,6 +964,24 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 
 		rows_inserted = SPI_processed;
 		SPI_freetuptable(SPI_tuptable);
+		
+		/*
+		 * End the composite trigger level and fire any queued trigger events.
+		 * Pass false to indicate no error occurred.
+		 */
+		EndCompositeTriggers(false);
+		composite_triggers_started = false;
+		
+		/* Clear the flush flag after successful flush */
+		insert_exec_flush_in_progress = false;
+		
+		/*
+		 * Restore the target table pointer. This is needed because after
+		 * the flush, the caller will call pltsql_clear_insert_exec_context()
+		 * which expects insert_exec_target_table to be set.
+		 */
+		insert_exec_target_table = saved_target_table;
+		saved_target_table = NULL;  /* Don't free it, we're using it */
 
 		/* Commit the flush subtransaction - this "locks in" the data */
 		ReleaseCurrentSubTransaction();
@@ -848,6 +993,20 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	}
 	PG_CATCH();
 	{
+		/* Clear the flush flag on error */
+		insert_exec_flush_in_progress = false;
+		
+		/* Restore the target table pointer on error */
+		insert_exec_target_table = saved_target_table;
+		saved_target_table = NULL;  /* Don't free it, we're using it */
+		
+		/*
+		 * End composite triggers with error flag if started.
+		 * This cleans up without firing the queued events.
+		 */
+		if (composite_triggers_started)
+			EndCompositeTriggers(true);
+		
 		/* Roll back the flush subtransaction on error */
 		if (subtxn_started)
 		{
@@ -857,6 +1016,8 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		CurrentResourceOwner = oldowner;
 
 		pfree(flush_query.data);
+		if (saved_column_list)
+			pfree(saved_column_list);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -870,6 +1031,8 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	}
 
 	pfree(flush_query.data);
+	if (saved_column_list)
+		pfree(saved_column_list);
 }
 
 /*
@@ -2334,7 +2497,55 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		options.read_only = estate->readonly_func;
 		options.allow_nonatomic = true;
 
-		rc = SPI_execute_plan_extended(expr->plan, &options);
+		/*
+		 * For INSERT EXEC, wrap the procedure execution in a subtransaction.
+		 * This ensures that if an error occurs (e.g., COMMIT without BEGIN TRAN),
+		 * all changes made by the procedure are rolled back.
+		 * 
+		 * In SQL Server, INSERT EXEC runs in an implicit transaction context,
+		 * so if COMMIT is called without BEGIN TRAN, error 3916 is thrown and
+		 * all changes are rolled back.
+		 */
+		if (insert_exec_setup_done)
+		{
+			MemoryContext oldcontext = CurrentMemoryContext;
+			ResourceOwner oldowner = CurrentResourceOwner;
+			volatile bool subtxn_started = false;
+			volatile int subtxn_rc = 0;
+
+			PG_TRY(insert_exec_subtxn);
+			{
+				BeginInternalSubTransaction("insert_exec_proc");
+				subtxn_started = true;
+				MemoryContextSwitchTo(oldcontext);
+
+				subtxn_rc = SPI_execute_plan_extended(expr->plan, &options);
+
+				/* Procedure completed successfully - release (commit) the subtransaction */
+				ReleaseCurrentSubTransaction();
+				MemoryContextSwitchTo(oldcontext);
+				CurrentResourceOwner = oldowner;
+			}
+			PG_CATCH(insert_exec_subtxn);
+			{
+				/* Roll back the subtransaction - this undoes the INSERT inside the procedure */
+				if (subtxn_started)
+				{
+					RollbackAndReleaseCurrentSubTransaction();
+				}
+				MemoryContextSwitchTo(oldcontext);
+				CurrentResourceOwner = oldowner;
+
+				PG_RE_THROW();
+			}
+			PG_END_TRY(insert_exec_subtxn);
+
+			rc = subtxn_rc;
+		}
+		else
+		{
+			rc = SPI_execute_plan_extended(expr->plan, &options);
+		}
 
 		after_lxid = MyProc->vxid.lxid;
 
@@ -2422,12 +2633,14 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * rolls back.
 		 *
 		 * If we're inside a TRY-CATCH block, do NOT clear the INSERT EXEC context.
-		 * Let the TRY-CATCH handler (exec_stmt_try_catch) do the cleanup, because
-		 * it has access to SPI and can properly drop the temp table.
+		 * Leave it for iterative_exec.c to handle - it will drop the temp table
+		 * and clear the context after catching the error.
+		 * 
+		 * If NOT in TRY-CATCH, clear the context. The temp table will be
+		 * auto-cleaned when the transaction rolls back.
 		 */
 		if (insert_exec_setup_done && !pltsql_insert_exec_in_trycatch())
 		{
-			/* Just clear the global state - don't try to drop the temp table */
 			pltsql_clear_insert_exec_context();
 		}
 		

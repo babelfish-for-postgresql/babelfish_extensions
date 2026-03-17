@@ -67,7 +67,7 @@ insert into t3 execute sp_multi_selects;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: structure of query does not match function result type)~~
+~~ERROR (Message: Column name or number of supplied values does not match table definition.)~~
 
 select * from t3;
 GO
@@ -456,7 +456,7 @@ insert into t2 execute sp_select_mismatch_with_dml
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: structure of query does not match function result type)~~
+~~ERROR (Message: Column name or number of supplied values does not match table definition.)~~
 
 select * from t1;
 GO
@@ -513,7 +513,7 @@ insert into t2 execute sp_select_mismatch_after_subtran;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: structure of query does not match function result type)~~
+~~ERROR (Message: Column name or number of supplied values does not match table definition.)~~
 
 select * from t1;
 GO
@@ -1067,7 +1067,7 @@ GO
 -- Should fail with nested INSERT ... EXECUTE error
 INSERT INTO t8164 EXEC p8164a;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 8164)~~
 
 ~~ERROR (Message: nested INSERT ... EXECUTE statements are not allowed)~~
 
@@ -1098,7 +1098,7 @@ GO
 -- Should fail with nested INSERT EXECUTE error
 INSERT INTO t_nest2 EXEC p_outer;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 8164)~~
 
 ~~ERROR (Message: nested INSERT ... EXECUTE statements are not allowed)~~
 
@@ -1127,7 +1127,7 @@ GO
 -- Should fail with nested INSERT EXECUTE error
 INSERT INTO t_var_nest EXEC p_var_outer;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 8164)~~
 
 ~~ERROR (Message: nested INSERT ... EXECUTE statements are not allowed)~~
 
@@ -1157,7 +1157,7 @@ GO
 -- Should fail with nested INSERT EXECUTE error
 INSERT INTO t_tran_nest EXEC p_tran_outer;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 8164)~~
 
 ~~ERROR (Message: nested INSERT ... EXECUTE statements are not allowed)~~
 
@@ -1185,7 +1185,7 @@ GO
 -- Should fail with nested INSERT EXECUTE error
 INSERT INTO t_param_nest EXEC p_param_outer 10;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 8164)~~
 
 ~~ERROR (Message: nested INSERT ... EXECUTE statements are not allowed)~~
 
@@ -1213,7 +1213,7 @@ GO
 DECLARE @err_temp table(num int);
 INSERT INTO @err_temp EXEC p_err_outer;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 8164)~~
 
 ~~ERROR (Message: nested INSERT ... EXECUTE statements are not allowed)~~
 
