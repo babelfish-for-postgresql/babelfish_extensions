@@ -82,10 +82,10 @@ static void load_functions();
 #define VALID_3DLINE_MP     0x05  /* Valid 3D linestring with multiple points */
 #define VALID_2DMLINE_MP    0x06  /* Valid 2D linestring with M dimension and multiple points */
 #define VALID_3DMLINE_MP    0x07  /* Valid 3D linestring with M dimension and multiple points */
-#define POLYGON_2D          0x00  /* 2D Polygon - XY dimensions*/
-#define POLYGON_3D          0x01  /* 3D Polygon - XYZ dimensions */
-#define POLYGON_2DM         0x02  /* 2DM Polygon -  XYM dimensions*/
-#define POLYGON_3DM         0x03  /* 3DM Polygon - XYZM dimensions*/
+#define INVALID_POLYGON_2D  0x00  /* 2D Polygon - XY dimensions*/
+#define INVALID_POLYGON_3D  0x01  /* 3D Polygon - XYZ dimensions */
+#define INVALID_POLYGON_2DM 0x02  /* 2DM Polygon -  XYM dimensions*/
+#define INVALID_POLYGON_3DM 0x03  /* 3DM Polygon - XYZM dimensions*/
 
 /* Valid polygon variants — with V flag (bit 2 = 0x04) */
 #define VALID_POLYGON_2D    0x04  /* Valid 2D Polygon */
@@ -151,6 +151,14 @@ static void load_functions();
 #define SHAPE_ENTRY_SIZE    9   /* 4 bytes parent + 4 bytes figure_off + 1 byte type */
 #define COUNT_FIELD_SIZE    4   /* Size of NumFigures / NumShapes fields */
 
+/* Point geometry type flags - P flag (0x08) WITHOUT V flag */
+#define INVALID_POINT_2D_FLAG       0x08    /* P only (no V) —  2D Point */
+#define INVALID_POINT_3D_FLAG       0x09    /* P+Z (no V) —  3D Point */
+#define INVALID_POINT_2DM_FLAG      0x0A    /* P+M (no V) — 2DM Point */
+#define INVALID_POINT_3DM_FLAG      0x0B    /* P+Z+M (no V) —  3DM Point */
+
+#define SHAPE_TYPE_OFFSET (HEADER_SIZE + NPOINTS_SIZE + COUNT_FIELD_SIZE + COUNT_FIELD_SIZE + sizeof(int32_t) + sizeof(uint32_t))
+
 /* Macro to throw varbinary to geometry/geography conversion error */
 #define THROW_VARBINARY_CONVERSION_ERROR() \
     ereport(ERROR, \
@@ -210,7 +218,7 @@ typedef struct
     uint8_t  geom_class;
     uint8    geom_name;
     uint8    dimension_flag;
-    bool     isNaN;
+    bool     has_invalid_coords;
     bool     has_npoints_data;
 
     uint32_t  nfigures;      
@@ -543,6 +551,21 @@ validate_not_inf_nan(double value, const char *coord_name)
 }
 
 /*
+ * Validates a single lat/lon coordinate pair for geography constraints:
+ * - Neither value may be NaN or Infinity
+ * - Latitude must be in [-90, 90]
+ * - Longitude must be in [-15069, 15069]
+ */
+static inline void
+validate_geography_coord_pair(double lat, double lon)
+{
+    validate_not_inf_nan(lat, "Latitude");
+    validate_not_inf_nan(lon, "Longitude");
+    validate_latitude_range(lat);
+    validate_longitude_range(lon);
+}
+
+/*
  * Check for antipodal points and update previous coordinates
  */
 static void
@@ -622,10 +645,7 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
         UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
         lon = DatumGetFloat8(lwgeom_y_p(fcinfo_local));
         
-        validate_not_inf_nan(lat, "Latitude");
-        validate_not_inf_nan(lon, "Longitude");
-        validate_latitude_range(lat);
-        validate_longitude_range(lon);
+         validate_geography_coord_pair(lat, lon);
     } 
     else if (strcmp(geom_type, "ST_LineString") == 0) 
     {
@@ -650,10 +670,7 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
             UpdateFunctionCallInfo(fcinfo_local, 1, point);
             lon = DatumGetFloat8(lwgeom_y_p(fcinfo_local));
             
-            validate_not_inf_nan(lat, "Latitude");
-            validate_not_inf_nan(lon, "Longitude");
-            validate_latitude_range(lat);
-            validate_longitude_range(lon);
+            validate_geography_coord_pair(lat, lon);
             
             /* Check for antipodal points */
             check_antipodal_points(fcinfo_local, point, i, &prev_lat, &prev_lon);
@@ -692,10 +709,7 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
             UpdateFunctionCallInfo(fcinfo_local, 1, point);
             lon = DatumGetFloat8(lwgeom_y_p(fcinfo_local));
             
-            validate_not_inf_nan(lat, "Latitude");
-            validate_not_inf_nan(lon, "Longitude");
-            validate_latitude_range(lat);
-            validate_longitude_range(lon);
+            validate_geography_coord_pair(lat, lon);
             
             /* Check for antipodal points */
             check_antipodal_points(fcinfo_local, point, i, &prev_lat, &prev_lon);
@@ -736,10 +750,7 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
                 UpdateFunctionCallInfo(fcinfo_local, 1, point);
                 lon = DatumGetFloat8(lwgeom_y_p(fcinfo_local));
                 
-                validate_not_inf_nan(lat, "Latitude");
-                validate_not_inf_nan(lon, "Longitude");
-                validate_latitude_range(lat);
-                validate_longitude_range(lon);
+                validate_geography_coord_pair(lat, lon);
                 
                 /* Check for antipodal points */
                 check_antipodal_points(fcinfo_local, point, i, &prev_lat, &prev_lon);
@@ -1075,10 +1086,8 @@ geography_point(PG_FUNCTION_ARGS)
     }
 
      /* Validate coordinates: NaN, Infinity, and range */
-    validate_not_inf_nan(lat, "Latitude");
-    validate_not_inf_nan(lon, "Longitude");
-    validate_latitude_range(lat);
-    validate_longitude_range(lon);
+     validate_geography_coord_pair(lat, lon);
+
 
     /* Create the point using helper function */
     UpdateFunctionCallInfo(fcinfo_local, 3,
@@ -1288,7 +1297,7 @@ initialize_geometry_data(bytea *input)
     geom_data->has_npoints_data= false;
     geom_data->geom_name = 0;
     geom_data->dimension_flag = 0;
-    geom_data->isNaN = false;
+    geom_data->has_invalid_coords = false;
     
     /* Initialize CLR metadata (populated by parse_figures_and_shapes) */
     geom_data->nfigures      = 0;
@@ -1386,19 +1395,19 @@ set_dimension_flag(GeometryData *geom_data)
          *  Point — P flag (0x08) WITHOUT V flag.
          * Props: 0x08=P, 0x09=P+Z, 0x0A=P+M, 0x0B=P+Z+M
          */
-        case 0x08:  /* P only (no V) — 2D */
+        case INVALID_POINT_2D_FLAG:  /* P only (no V) — 2D */
             geom_data->dimension_flag = DIM_FLAG_2D;
             geom_data->geom_name = POINT_TYPE;
             break;
-        case 0x09:  /* P+Z (no V) — 3D */
+        case INVALID_POINT_3D_FLAG:  /* P+Z (no V) — 3D */
             geom_data->dimension_flag = DIM_FLAG_3D;
             geom_data->geom_name = POINT_TYPE;
             break;
-        case 0x0A:  /* P+M (no V) — 2DM */
+        case INVALID_POINT_2DM_FLAG:  /* P+M (no V) — 2DM */
             geom_data->dimension_flag = DIM_FLAG_2DM;
             geom_data->geom_name = POINT_TYPE;
             break;
-        case 0x0B:  /* P+Z+M (no V) — 3DM */
+        case INVALID_POINT_3DM_FLAG:  /* P+Z+M (no V) — 3DM */
             geom_data->dimension_flag = DIM_FLAG_3DM;
             geom_data->geom_name = POINT_TYPE;
             break;
@@ -1486,7 +1495,7 @@ check_nan_coordinates(GeometryData *geom_data)
         if (isnan(coord_value) || isinf(coord_value)) 
         {
             /* Set the NaN flag if a NaN is found */
-            geom_data->isNaN = true;
+            geom_data->has_invalid_coords = true;
             break;
         }
         
@@ -1540,7 +1549,7 @@ validate_geography_latitude_bytes(GeometryData *geom_data)
         memcpy(&lon, &lon_bits, sizeof(double));
 
         /* Check NaN */
-        if (geom_data->isNaN || isnan(lat) || isnan(lon))
+        if (geom_data->has_invalid_coords || isnan(lat) || isnan(lon))
         {
             ereport(ERROR,
                     (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1727,7 +1736,7 @@ parse_figures_and_shapes(GeometryData *geom_data)
 
     CHECK_METADATA_BOUNDS(geom_data, metadata, offset, geom_data->nfigures * FIGURE_ENTRY_SIZE);
 
-    geom_data->figures = palloc(geom_data->nfigures * sizeof(Figure));
+    geom_data->figures = palloc0(geom_data->nfigures * sizeof(Figure));
     for (i = 0; i < geom_data->nfigures; i++)
     {
         geom_data->figures[i].attribute = metadata[offset];
@@ -1762,7 +1771,7 @@ parse_figures_and_shapes(GeometryData *geom_data)
 
     CHECK_METADATA_BOUNDS(geom_data, metadata, offset, geom_data->nshapes * SHAPE_ENTRY_SIZE);
 
-    geom_data->shapes = palloc(geom_data->nshapes * sizeof(Shape));
+    geom_data->shapes = palloc0(geom_data->nshapes * sizeof(Shape));
     for (i = 0; i < geom_data->nshapes; i++)
     {
         memcpy(&geom_data->shapes[i].parent_index, 
@@ -1969,7 +1978,7 @@ handle_non_empty_geometry_bytea(GeometryData *geom_data)
     }
     
     /* Allocate result buffer */
-    result = (bytea *) palloc(VARHDRSZ + new_data_size);
+    result = (bytea *) palloc0(VARHDRSZ + new_data_size);
     SET_VARSIZE(result, VARHDRSZ + new_data_size);
     result_data = (uint8 *)VARDATA(result);
     
@@ -1999,7 +2008,7 @@ static bytea*
 create_empty_point(GeometryData *geom_data)
 {
     uint8 postgis_header[POSTGIS_HEADER_SIZE] = "\x01\x01\x00\x00\x20";
-    bytea *result = (bytea *) palloc(VARHDRSZ + POSTGIS_HEADER_SIZE + SRID_SIZE + COORD_SIZE * 2);
+    bytea *result = (bytea *) palloc0(VARHDRSZ + POSTGIS_HEADER_SIZE + SRID_SIZE + COORD_SIZE * 2);
     uint8 *result_data;
     
     SET_VARSIZE(result, VARHDRSZ + POSTGIS_HEADER_SIZE + SRID_SIZE + COORD_SIZE * 2);
@@ -2018,7 +2027,7 @@ static bytea*
 create_empty_geometry(GeometryData *geom_data)
 {
     uint8 postgis_header[POSTGIS_HEADER_SIZE] = "\x01\x02\x00\x00\x20"; /* keeping default as linestring, will be modified as per other geometries */
-    bytea *result = (bytea *) palloc(VARHDRSZ + POSTGIS_HEADER_SIZE + SRID_SIZE + EMPTY_GEOM_DATA_SIZE);
+    bytea *result = (bytea *) palloc0(VARHDRSZ + POSTGIS_HEADER_SIZE + SRID_SIZE + EMPTY_GEOM_DATA_SIZE);
     uint8 *result_data;
 
     if (geom_data->geom_name == POLYGON_TYPE)
@@ -2074,12 +2083,8 @@ handle_empty_geometry_bytea(GeometryData *geom_data)
          *
          * Shape type is at: HEADER_SIZE + 4 + 4 + 4 + 4 + 4 = HEADER_SIZE + 20
          */
-        uint32_t shape_type_offset = HEADER_SIZE 
-                                   + NPOINTS_SIZE         /* npoints */
-                                   + COUNT_FIELD_SIZE     /* nfigures */
-                                   + COUNT_FIELD_SIZE     /* nshapes */
-                                   + sizeof(int32_t)      /* parent_index */
-                                   + sizeof(uint32_t);    /* figure_offset */
+        uint32_t shape_type_offset = SHAPE_TYPE_OFFSET;
+
         
         if (geom_data->input_len < shape_type_offset + 1)
             THROW_VARBINARY_CONVERSION_ERROR();
@@ -2164,7 +2169,7 @@ geometry_from_bytea(PG_FUNCTION_ARGS)
      */
     if (geom_data->srid < 0 || 
         geom_data->srid > 999999 || 
-        geom_data->isNaN) 
+        geom_data->has_invalid_coords) 
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2335,7 +2340,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                 switch (geom_data->postgis_geom_type)
                 {
                     case POINT_TYPE:
-                        geom_data->geom_type = POINT_XY;
+                        geom_data->geom_type = geom_data->is_valid ? POINT_XY : INVALID_POINT_2D_FLAG;
                         geom_data->coord_size = COORD_SIZE_XY;
                         break;
                     case LINE_TYPE:
@@ -2345,7 +2350,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                         geom_data->coord_size = COORD_SIZE_XY * geom_data->npoints;
                         break;
                     case POLYGON_TYPE:
-                        geom_data->geom_type = geom_data->is_valid ? VALID_POLYGON_2D : POLYGON_2D;
+                        geom_data->geom_type = geom_data->is_valid ? VALID_POLYGON_2D : INVALID_POLYGON_2D;
                         geom_data->coord_size = COORD_SIZE_XY * geom_data->npoints;
                         break;
                 }
@@ -2356,7 +2361,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
             switch (geom_data->postgis_geom_type)
             {
                 case POINT_TYPE:
-                    geom_data->geom_type = POINT_XYZ;
+                    geom_data->geom_type = geom_data->is_valid ? POINT_XYZ : INVALID_POINT_3D_FLAG;
                     geom_data->coord_size = COORD_SIZE_XYZ;
                     break;
                 case LINE_TYPE:
@@ -2366,7 +2371,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                     geom_data->coord_size = COORD_SIZE_XYZ * geom_data->npoints;
                     break;
                 case POLYGON_TYPE:
-                    geom_data->geom_type = geom_data->is_valid ? VALID_POLYGON_3D : POLYGON_3D;
+                    geom_data->geom_type = geom_data->is_valid ? VALID_POLYGON_3D : INVALID_POLYGON_3D;
                     geom_data->coord_size = COORD_SIZE_XYZ * geom_data->npoints;
                     break;
             }
@@ -2376,7 +2381,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
             switch (geom_data->postgis_geom_type)
             {
                 case POINT_TYPE:
-                    geom_data->geom_type = POINT_XYZM;
+                    geom_data->geom_type = geom_data->is_valid ? POINT_XYZM : INVALID_POINT_3DM_FLAG;
                     geom_data->coord_size = COORD_SIZE_XYZM;
                     break;
                 case LINE_TYPE:
@@ -2386,7 +2391,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                     geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;
                     break;
                 case POLYGON_TYPE:
-                    geom_data->geom_type = geom_data->is_valid ? VALID_POLYGON_3DM : POLYGON_3DM;
+                    geom_data->geom_type = geom_data->is_valid ? VALID_POLYGON_3DM : INVALID_POLYGON_3DM;
                     geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;
                     break;
             }
@@ -2396,7 +2401,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
             switch (geom_data->postgis_geom_type)
             {
                 case POINT_TYPE:
-                    geom_data->geom_type = POINT_XYM;
+                    geom_data->geom_type = geom_data->is_valid ? POINT_XYM : INVALID_POINT_2DM_FLAG;
                     geom_data->coord_size = COORD_SIZE_XYM;
                     break;
                 case LINE_TYPE:
@@ -2406,7 +2411,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                     geom_data->coord_size = COORD_SIZE_XYM * geom_data->npoints;
                     break;
                 case POLYGON_TYPE:
-                    geom_data->geom_type = geom_data->is_valid ?   VALID_POLYGON_2DM : POLYGON_2DM;
+                    geom_data->geom_type = geom_data->is_valid ?   VALID_POLYGON_2DM : INVALID_POLYGON_2DM;
                     geom_data->coord_size = COORD_SIZE_XYM * geom_data->npoints;
                     break;
             }
@@ -2843,7 +2848,7 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
     total_size += metadata_size;
 
     /* Allocate and initialize result bytea */
-    result = (bytea *) palloc(VARHDRSZ + total_size);
+    result = (bytea *) palloc0(VARHDRSZ + total_size);
     SET_VARSIZE(result, VARHDRSZ + total_size);
 
     /* Get pointer to the data portion of the bytea */
@@ -3014,7 +3019,7 @@ st_as_binary_common(Datum input, bool is_geography)
         geom_type = GetGeometryTypeName(fcinfo_local, input);
         
         /* Allocate memory for empty WKB representation */
-        empty_geom = palloc(VARHDRSZ + EMPTY_Binary_SIZE);
+        empty_geom = palloc0(VARHDRSZ + EMPTY_Binary_SIZE);
         SET_VARSIZE(empty_geom, VARHDRSZ + EMPTY_Binary_SIZE);
         
         /* Create appropriate WKB based on geometry type */
