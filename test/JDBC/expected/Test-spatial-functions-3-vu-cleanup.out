@@ -1,3 +1,4 @@
+
 USE TestSpatialFunc3_DB;
 
 DROP VIEW TestSpatialFunc3_GeomMetrics_MakeValid_View;
@@ -76,4 +77,3 @@ DROP TABLE TestGeospatialMethods3_STGeometryType_GEOM_Temp;
 DROP TABLE TestGeospatialMethods3_STGeometryType_GEOG_Temp;
 
 DROP DATABASE TestGeospatialMethods3_DB;
-
