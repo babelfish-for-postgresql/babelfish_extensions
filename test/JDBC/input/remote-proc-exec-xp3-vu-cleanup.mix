@@ -1,0 +1,91 @@
+-- tsql
+-- Drop all test procedures
+DROP PROCEDURE IF EXISTS sp_NoParams;
+DROP PROCEDURE IF EXISTS sp_SingleInt;
+DROP PROCEDURE IF EXISTS sp_TestIntegers;
+DROP PROCEDURE IF EXISTS sp_TestFloat;
+DROP PROCEDURE IF EXISTS sp_TestDecimal;
+DROP PROCEDURE IF EXISTS sp_TestMoney;
+DROP PROCEDURE IF EXISTS sp_TestVarchar;
+DROP PROCEDURE IF EXISTS sp_TestNvarchar;
+DROP PROCEDURE IF EXISTS sp_TestChar;
+DROP PROCEDURE IF EXISTS sp_TestBit;
+DROP PROCEDURE IF EXISTS sp_TestBinary;
+DROP PROCEDURE IF EXISTS sp_TestUUID;
+DROP PROCEDURE IF EXISTS sp_TestDate;
+DROP PROCEDURE IF EXISTS sp_TestDateTime;
+DROP PROCEDURE IF EXISTS sp_TestTime;
+DROP PROCEDURE IF EXISTS sp_OutputSingle;
+DROP PROCEDURE IF EXISTS sp_OutputMultiple;
+DROP PROCEDURE IF EXISTS sp_OutputNoResult;
+DROP PROCEDURE IF EXISTS sp_InOut;
+DROP PROCEDURE IF EXISTS sp_MultiRow;
+DROP PROCEDURE IF EXISTS sp_MixedTypes;
+DROP PROCEDURE IF EXISTS sp_EmptyResult;
+DROP PROCEDURE IF EXISTS sp_NullValues;
+DROP PROCEDURE IF EXISTS sp_ConditionalLogic;
+DROP PROCEDURE IF EXISTS sp_FilterByParam;
+DROP PROCEDURE IF EXISTS sp_CombinedIO;
+DROP PROCEDURE IF EXISTS sp_OnlySelect;
+DROP PROCEDURE IF EXISTS sp_WithInsert;
+DROP PROCEDURE IF EXISTS sp_WithUpdate;
+DROP PROCEDURE IF EXISTS sp_WithDelete;
+DROP PROCEDURE IF EXISTS sp_WithDynamicSQL;
+DROP PROCEDURE IF EXISTS sp_NullableParam;
+DROP PROCEDURE IF EXISTS sp_LargeString;
+DROP PROCEDURE IF EXISTS sp_ReturnCode;
+DROP PROCEDURE IF EXISTS sp_WithError;
+GO
+
+-- Drop nested procedure test procedures
+DROP PROCEDURE IF EXISTS sp_Inner_SelectOnly;
+DROP PROCEDURE IF EXISTS sp_Inner_WithInsert;
+DROP PROCEDURE IF EXISTS sp_Inner_WithUpdate;
+DROP PROCEDURE IF EXISTS sp_Inner_WithDelete;
+DROP PROCEDURE IF EXISTS sp_Outer_CallsSelectOnly;
+DROP PROCEDURE IF EXISTS sp_Outer_CallsInsert;
+DROP PROCEDURE IF EXISTS sp_Outer_CallsUpdate;
+DROP PROCEDURE IF EXISTS sp_Outer_CallsDelete;
+DROP PROCEDURE IF EXISTS sp_Level3_SelectOnly;
+DROP PROCEDURE IF EXISTS sp_Level2_CallsLevel3;
+DROP PROCEDURE IF EXISTS sp_Level1_DeepNesting;
+DROP PROCEDURE IF EXISTS sp_Level3_WithDML;
+DROP PROCEDURE IF EXISTS sp_Level2_CallsDML;
+DROP PROCEDURE IF EXISTS sp_Level1_DeepWithDML;
+DROP PROCEDURE IF EXISTS sp_CircularA;
+DROP PROCEDURE IF EXISTS sp_CircularB;
+DROP PROCEDURE IF EXISTS sp_Outer_MultipleInner;
+DROP PROCEDURE IF EXISTS sp_Outer_WithDynamicSQL;
+GO
+
+-- Drop error message compatibility test procedures
+DROP PROCEDURE IF EXISTS sp_err_SingleInt;
+DROP PROCEDURE IF EXISTS sp_err_TwoParams;
+DROP PROCEDURE IF EXISTS sp_err_Raiserror16;
+DROP PROCEDURE IF EXISTS sp_err_Raiserror11;
+DROP PROCEDURE IF EXISTS sp_err_Raiserror10;
+DROP PROCEDURE IF EXISTS sp_err_RaiserrorCustomMsg;
+DROP PROCEDURE IF EXISTS sp_err_DivByZero;
+DROP PROCEDURE IF EXISTS sp_err_Overflow;
+DROP PROCEDURE IF EXISTS sp_err_ConversionError;
+DROP PROCEDURE IF EXISTS sp_err_StringTruncation;
+DROP PROCEDURE IF EXISTS sp_err_NullDeref;
+DROP PROCEDURE IF EXISTS sp_err_InnerRaiserror;
+DROP PROCEDURE IF EXISTS sp_err_NestedError;
+DROP PROCEDURE IF EXISTS sp_err_ReturnAfterError;
+DROP PROCEDURE IF EXISTS sp_err_MultipleErrors;
+DROP PROCEDURE IF EXISTS sp_err_PrintAndError;
+DROP PROCEDURE IF EXISTS sp_err_PrintOnly;
+GO
+
+-- Drop linked server and login mapping
+EXEC sp_dropserver 'bbf_rpe_server', 'droplogins';
+GO
+
+-- psql
+-- Drop tds_fdw extension
+-- Suppress cascade warnings for cleanup
+SET client_min_messages TO 'error';
+DROP EXTENSION IF EXISTS tds_fdw CASCADE;
+SET client_min_messages TO 'notice';
+GO

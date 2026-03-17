@@ -48,16 +48,28 @@ extern "C" {
 #include "utils/builtins.h"
 
 #include "guc.h"
-#include "linked_servers.h"
+
+/*
+ * Do NOT include "linked_servers.h" here — it pulls in sybdb.h (FreeTDS)
+ * which defines macros (ON, FAIL, SUCCEED, TRUE, FALSE, etc.) that corrupt
+ * the ANTLR-generated parser code compiled in this translation unit.
+ * Instead, forward-declare only what we need.
+ */
+#ifdef ENABLE_TDS_LIB
+/* Forward declaration of NestedProcedureInfo from linked_servers.h */
+typedef struct NestedProcedureInfo
+{
+	char *server_name;
+	char *database_name;
+	char *schema_name;
+	char *procedure_name;
+} NestedProcedureInfo;
+#endif
 
 #endif
 
 #ifdef LOG // maybe already defined in elog.h, which is conflicted with grammar token LOG
 #undef LOG
-#endif
-
-#ifdef ON
-#undef ON  // sybdb.h (FreeTDS) defines ON as a macro, conflicts with ANTLR grammar token ON
 #endif
 }
 #pragma GCC diagnostic pop

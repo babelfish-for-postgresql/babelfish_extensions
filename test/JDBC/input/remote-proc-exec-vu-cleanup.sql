@@ -2,8 +2,3 @@
 -- This keeps the linked server alive for p2 and p3 verify phases
 SELECT 1;
 GO
-~~START~~
-int
-1
-~~END~~
-
