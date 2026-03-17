@@ -215,7 +215,8 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 	TupleDesc       tupdesc;
 	HeapTupleData   tmptup;
 	HeapTuple       tuple;
-
+	bool            allnull = true;
+	
 	td = DatumGetHeapTupleHeader(record);
 
 	/* Extract rowtype info and find a tupdesc */
@@ -265,6 +266,7 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 			/* ELEMENTS mode output */
 			if (!isnull)
 			{
+				allnull = false;
 				/* Normal element: <col>value</col> */
 				appendStringInfo(state, "<%s>%s</%s>",
 								 colname,
@@ -273,6 +275,7 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 			}
 			else if (xsinil)
 			{
+				allnull = false;
 				/* XSINIL: <col xsi:nil="true"/> */
 				appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
 			}
@@ -292,7 +295,22 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 
 	/* Output closing tag */
 	if (elements)
-		appendStringInfo(state, "</%s>", element_name);
+	{
+		if (allnull)
+		{
+			/*
+			 * If all column values are NULL, produce a self-closing element
+			 * like SQL Server does: <row/>. Replace the '>' in the already
+			 * appended opening tag with '/' and append '>'.
+			 */
+			state->data[state->len - 1] = '/';
+			appendStringInfoChar(state, '>');
+		}
+		else
+		{
+			appendStringInfo(state, "</%s>", element_name);
+		}
+	}
 	else
 		appendStringInfoString(state, "/>");
 
