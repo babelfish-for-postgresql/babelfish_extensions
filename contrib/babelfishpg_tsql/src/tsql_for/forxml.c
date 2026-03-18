@@ -19,8 +19,7 @@
 #include "utils/typcache.h"
 #include "catalog/pg_type.h"
 #include "catalog/namespace.h"
-
-#include <regex.h>
+#include "catalog/pg_collation.h"
 
 #include "tsql_for.h"
 
@@ -132,37 +131,48 @@ static StringInfo
 for_xml_ffunc(PG_FUNCTION_ARGS)
 {
 	StringInfo	res = makeStringInfo();
-	char	   *state = ((StringInfo) PG_GETARG_POINTER(0))->data;
+	char	   *state;
+
+	if (PG_ARGISNULL(0))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("unexpected null state in FOR XML processing")));
+
+	state = ((StringInfo) PG_GETARG_POINTER(0))->data;
 
 	if (state[0] == '{')		/* '{' indicates that root was specified, so
 								 * add the corresponding end tag */
 	{
-		/* set up regex to match first tag */
-		char	   *pattern = "<([^\\/>]+)[\\/]*>";
-		regex_t		preg;
-		regmatch_t	match,
-					pmatch[1];
-		StringInfoData root;
+		/*
+		 * Using PostgreSQL's textregexsubstr() to extract the root tag name.
+		 * simpler than manual regex handling and leverages PostgreSQL's 
+		 * cached regex compilation and proper memory management.
+		 */
+		text	   *state_text = cstring_to_text(state);
+		text	   *pattern_text = cstring_to_text("<([^\\/>]+)[\\/]*>");
+		Datum		root_tag_datum;
+		text	   *root_tag_text;
+		char	   *root_tag;
 
-		if (regcomp(&preg, pattern, REG_EXTENDED) != 0)
+		/* Extract the root tag name using textregexsubstr */
+		root_tag_datum = DirectFunctionCall2Coll(textregexsubstr, 
+											 C_COLLATION_OID,
+											 PointerGetDatum(state_text),
+											 PointerGetDatum(pattern_text));
+
+		if (DatumGetPointer(root_tag_datum) == NULL)
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("unexpected error parsing xml root tag")));
+		}
 
-		if (regexec(&preg, state, 1, pmatch, 0) != 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("unexpected error parsing xml root tag")));
+		root_tag_text = DatumGetTextPP(root_tag_datum);
+		root_tag = text_to_cstring(root_tag_text);
 
-		match = pmatch[0];
-		/* we will be bashing the string in state, so copy it into res first */
+		/* Copy state content (skip the '{' marker) and add closing tag */
 		appendStringInfoString(res, state + 1);
-
-		/* copy the root tag */
-		state[match.rm_eo - 1] = '\0';
-		initStringInfo(&root);
-		appendStringInfoString(&root, state + match.rm_so + 1);
-		appendStringInfo(res, "</%s>", root.data);
+		appendStringInfo(res, "</%s>", root_tag);
 	}
 	else
 	{
