@@ -276,7 +276,7 @@ EXEC bbf_rpe_server.master.dbo.sp_TestNvarchar @p=@unicode;
 GO
 ~~START~~
 varchar#!#int
-Hello ?? ?????#!#14
+Hello 世界 ?????#!#14
 ~~END~~
 
 

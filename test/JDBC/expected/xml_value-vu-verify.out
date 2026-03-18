@@ -1146,49 +1146,59 @@ SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)').STArea()
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'spatial methods' is not currently supported in Babelfish)~~
+~~ERROR (Message: function starea("varchar") is not unique)~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)').STDistance(@point)
 GO
+~~START~~
+float
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)').STX
 GO
+~~START~~
+float
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'spatial methods' is not currently supported in Babelfish)~~
+~~ERROR (Message: Invalid geometry)~~
 
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
 DECLARE @point2 geometry = geometry::Point(3.0, 4.0, 4326);
 SELECT @point1.STDistance(@point2).value('(/artists/artist/@name)[1]', 'varchar(100)');
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: Cannot call methods on float.)~~
 
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 SELECT @point.STArea().value('(/artists/artist/@name)[1]', 'varchar(100)');
 go
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: Cannot call methods on float.)~~
 
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 SELECT @point.STX.value('(/artists/artist/@name)[1]', 'varchar(100)');
 go
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: Cannot call methods on float.)~~
 
 
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
@@ -1207,7 +1217,7 @@ SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)').STDistance(@poin
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: function starea("varchar") is not unique)~~
 
 
 -- different number of arguments than required (Error will be thrown in this scenario)
