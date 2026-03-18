@@ -149,7 +149,14 @@ static StringInfo
 for_xml_ffunc(PG_FUNCTION_ARGS)
 {
 	StringInfo	res = makeStringInfo();
-	char	   *state = ((StringInfo) PG_GETARG_POINTER(0))->data;
+	char	   *state;
+
+	if (PG_ARGISNULL(0))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("unexpected null state in FOR XML processing")));
+
+	state = ((StringInfo) PG_GETARG_POINTER(0))->data;
 
 	if (state[0] == '{')		/* '{' indicates that root was specified, so
 								 * add the corresponding end tag */
@@ -184,10 +191,6 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 		/* Copy state content (skip the '{' marker) and add closing tag */
 		appendStringInfoString(res, state + 1);
 		appendStringInfo(res, "</%s>", root_tag);
-
-		/* Clean up */
-		if (root_tag)
-			pfree(root_tag);
 	}
 	else
 	{
