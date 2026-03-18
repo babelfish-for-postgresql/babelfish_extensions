@@ -600,7 +600,7 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 		if (!missingOk)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("Could find logical schema name for: \"%s\"", physical_schema_name)));
+					 errmsg("Could not find logical schema name for: \"%s\"", physical_schema_name)));
 		return NULL;
 	}
 	datum = SysCacheGetAttr(SYSNAMESPACENAME, tuple, Anum_namespace_ext_orig_name, &isnull);
