@@ -18,7 +18,6 @@ Could not find tests for function sys.bbf_is_role_member
 Could not find tests for function sys.bbf_pivot
 Could not find tests for function sys.bbf_xmlexist
 Could not find tests for function sys.bbf_xmlvalue
-Could not find tests for function sys.columns_internal
 Could not find tests for function sys.date_bucket_internal_helper
 Could not find tests for function sys.dateadd_internal
 Could not find tests for function sys.datediff_internal
@@ -92,6 +91,7 @@ Could not find tests for table sys.versions
 Could not find tests for view babelfish_has_perms_by_name_permissions
 Could not find tests for view information_schema_tsql.columns_internal
 Could not find tests for view sys.all_sql_modules_internal
+Could not find tests for view sys.columns_internal
 Could not find tests for view sys.pg_namespace_ext
 Could not find tests for view sys.shipped_objects_not_in_sys
 Could not find tests for view sys.sp_column_privileges_view
@@ -126,7 +126,6 @@ Could not find upgrade tests for function sys.bbf_is_role_member
 Could not find upgrade tests for function sys.bbf_pivot
 Could not find upgrade tests for function sys.bbf_xmlexist
 Could not find upgrade tests for function sys.bbf_xmlvalue
-Could not find upgrade tests for function sys.columns_internal
 Could not find upgrade tests for function sys.cursor_rows
 Could not find upgrade tests for function sys.cursor_status
 Could not find upgrade tests for function sys.date_bucket_internal_helper
@@ -217,6 +216,7 @@ Could not find upgrade tests for table sys.versions
 Could not find upgrade tests for view babelfish_has_perms_by_name_permissions
 Could not find upgrade tests for view information_schema_tsql.columns_internal
 Could not find upgrade tests for view sys.all_sql_modules_internal
+Could not find upgrade tests for view sys.columns_internal
 Could not find upgrade tests for view sys.pg_namespace_ext
 Could not find upgrade tests for view sys.shipped_objects_not_in_sys
 Could not find upgrade tests for view sys.sp_column_privileges_view
