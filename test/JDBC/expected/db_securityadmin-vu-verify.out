@@ -980,28 +980,28 @@ GRANT SELECT ON sys.database_principals TO babel_5135_u1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could find logical schema name for: "sys")~~
+~~ERROR (Message: Could not find logical schema name for: "sys")~~
 
 
 REVOKE SELECT ON sys.database_principals FROM babel_5135_u1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could find logical schema name for: "sys")~~
+~~ERROR (Message: Could not find logical schema name for: "sys")~~
 
 
 GRANT SELECT ON pg_catalog.pg_namespace TO babel_5135_u1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could find logical schema name for: "pg_catalog")~~
+~~ERROR (Message: Could not find logical schema name for: "pg_catalog")~~
 
 
 REVOKE SELECT ON pg_catalog.pg_namespace FROM babel_5135_u1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could find logical schema name for: "pg_catalog")~~
+~~ERROR (Message: Could not find logical schema name for: "pg_catalog")~~
 
 
 REVOKE SELECT ON babel_5135_db1.dbo.babel_5135_show_role_mem TO babel_5135_u1;
