@@ -383,7 +383,7 @@ EXEC bbf_rpe_server.master.malicious_schema; DROP TABLE test; --.sp_SingleInt 1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: database "bbf_rpe_server" does not exist. Make sure that the name is entered correctly.)~~
+~~ERROR (Message: schema "bbf_rpe_server_master" does not exist)~~
 
 
 -- Test 82d: Procedure name injection attempt (unquoted)
