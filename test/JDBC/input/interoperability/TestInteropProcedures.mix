@@ -303,3 +303,18 @@ GO
 
 DROP FUNCTION IF EXISTS pg_stable_func, pltsql_stable_func;
 GO
+
+-- psql
+CREATE SCHEMA master_s6390;
+GO
+
+GRANT ALL ON SCHEMA master_s6390 TO PUBLIC ;
+GO
+
+-- tsql
+CREATE FUNCTION s6390.f1() RETURNS INT AS BEGIN return 1 END;
+GO
+
+-- psql
+DROP SCHEMA master_s6390;
+GO
