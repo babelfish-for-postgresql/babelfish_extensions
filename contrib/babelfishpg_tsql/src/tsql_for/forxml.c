@@ -317,7 +317,7 @@ validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tup
 			seen_non_att_centric = true;
 	}
 
-	if(seen_att_centric && element_name[0] == '\0')
+	if(seen_att_centric && (element_name && strlen(element_name) == 0))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION),
@@ -363,7 +363,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 	 * each tuple is either contained in a "row" tag, or standalone if the
 	 * element_name is an empty string
 	 */
-	if (element_name[0] != '\0')
+	if (element_name && strlen(element_name) > 0)
 	{
 		/* if "''" is the input path, ignore it per TSQL behavior */
 		if (has_att_centric)
@@ -425,7 +425,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 				else
 				{
 					/* When PATH('') is used with XSINIL, add xmlns to each element */
-					if (element_name[0] == '\0' && xsinil)
+					if ((element_name && strlen(element_name) == 0) && xsinil)
 						appendStringInfo(state, "<%s " XML_XMLNS_XSI ">%s</%s>",
 										 colname,
 										 map_sql_value_to_xml_value(colval, datatype_oid, true),
@@ -458,7 +458,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 				if (strncmp(NameStr(att->attname), "?column?", 8) != 0)
 				{
 					/* When PATH('') is used with XSINIL, add xmlns to each element */
-					if (element_name[0] == '\0')
+					if (element_name && strlen(element_name) == 0)
 						appendStringInfo(state, "<%s " XML_XMLNS_XSI " " XML_XSI_NIL "/>", colname);
 					else
 						appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
@@ -467,7 +467,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 		}
 	}
 
-	if (element_name[0] != '\0')
+	if (element_name && strlen(element_name) > 0)
 	{
 		if (has_att_centric && first)
 		{

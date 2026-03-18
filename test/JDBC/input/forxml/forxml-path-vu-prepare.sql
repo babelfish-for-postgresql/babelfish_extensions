@@ -7,6 +7,9 @@ GO
 CREATE TABLE for_xml_path_all_null (col1 INT NULL);
 GO
 
+SET NOCOUNT ON
+GO
+
 DECLARE @i INT = 1; 
 WHILE @i <= 2048 
 BEGIN
