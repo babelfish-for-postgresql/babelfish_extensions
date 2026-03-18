@@ -143,6 +143,10 @@ tsql_query_to_xml_text_ffunc(PG_FUNCTION_ARGS)
 {
 	StringInfo	res = for_xml_ffunc(fcinfo);
 
+	/* return NULL if empty result (i.e. no rows) */
+	if (res->len == 0)
+		PG_RETURN_NULL();
+
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(res->data, res->len));
 }
 
@@ -331,14 +335,15 @@ static void
 tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil)
 {
 	HeapTupleHeader td;
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc;
-	HeapTupleData tmptup;
-	HeapTuple	tuple;
-	bool		allnull = true;
-	bool		has_att_centric = false;
-	bool		first = true;
+	Oid             tupType;
+	int32           tupTypmod;
+	TupleDesc       tupdesc;
+	HeapTupleData   tmptup;
+	HeapTuple       tuple;
+	bool            allnull = true;
+	bool            has_att_centric = false;
+	bool            first = true;
+	int             inital_state_len = state->len;
 
 	td = DatumGetHeapTupleHeader(record);
 
@@ -462,24 +467,32 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 		}
 	}
 
-	if (allnull)
-	{
-		/*
-		 * If all the column values are nulls, this element should be
-		 * <element_name/>, modify the already appended <element_name> to
-		 * <element_name/>.
-		 */
-		state->data[state->len - 1] = '/';
-		appendStringInfoString(state, ">");
-	}
-	else if (element_name[0] != '\0')
+	if (element_name[0] != '\0')
 	{
 		if (has_att_centric && first)
 		{
 			appendStringInfoString(state, "/>");
 		}
 		else
-			appendStringInfo(state, "</%s>", element_name);
+		{
+			if (allnull)
+			{
+				/*
+				 * At this point, state = <output from previous rows> + '<element_name>'
+				 * 
+				 * If all the column values are nulls, this element should be
+				 * <element_name/>, modify the already appended <element_name> to
+				 * <element_name/>.
+				 */
+				if (state->len > inital_state_len)	// sanity check, should always be true
+				{
+					state->data[state->len - 1] = '/';
+					appendStringInfoString(state, ">");
+				}
+			}
+			else
+				appendStringInfo(state, "</%s>", element_name);
+		}
 	}
 	ReleaseTupleDesc(tupdesc);
 }

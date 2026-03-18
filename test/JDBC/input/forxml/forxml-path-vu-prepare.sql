@@ -4,6 +4,17 @@ GO
 INSERT INTO for_xml_path VALUES (1,'SELECT'),(2,'Product,'),(3,'UnitPrice,'),(4,'EffectiveDate'),(5,'FROM'), (6,'Products'),(7,'WHERE'),(8,'UnitPrice'),(9,'> 100');
 GO
 
+CREATE TABLE for_xml_path_all_null (col1 INT NULL);
+GO
+
+DECLARE @i INT = 1; 
+WHILE @i <= 2048 
+BEGIN
+    INSERT INTO for_xml_path_all_null VALUES (NULL);
+    SET @i = @i + 1;
+END
+GO
+
 CREATE VIEW for_xml_path_v1 AS SELECT String as param1, hello.String as [@param2] FROM for_xml_path hello ORDER BY SequenceNumber FOR XML PATH('hello')
 GO
 
