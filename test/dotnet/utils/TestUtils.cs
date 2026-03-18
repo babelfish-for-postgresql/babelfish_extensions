@@ -648,83 +648,6 @@ namespace BabelfishDotnetFramework
 				return null;
 			}
 		}
-		/// <summary>
-		/// Test SqlBulkCopy to ENR temp table (standard temp table stored in currentQueryEnv)
-		/// </summary>
-		public bool SqlBulkCopyEnrTempTable(DbConnection bblCnn, string tempTableName, int rowCount,
-			string testName, Logger logger, ref int stCount)
-		{
-			using var file = new StreamWriter(Path.Combine(ConfigSetup.OutputFolder, testName + ".out"), true);
-			file.WriteLine($"#Q#SqlBulkCopy to ENR temp table: {tempTableName}");
-
-			try
-			{
-				// Prepare test data
-				var table = new DataTable();
-				table.Columns.Add("id", typeof(int));
-				table.Columns.Add("name", typeof(string));
-
-				for (int i = 0; i < rowCount; i++)
-					table.Rows.Add(i, $"EnrName{i}");
-
-				// Bulk copy using same connection (required for temp tables)
-				using (var bulkCopy = new SqlBulkCopy((SqlConnection)bblCnn))
-				{
-					bulkCopy.DestinationTableName = tempTableName;
-					bulkCopy.WriteToServer(table);
-				}
-
-				file.WriteLine($"SUCCESS: Inserted {rowCount} rows into ENR temp table");
-				PrintToLogsOrConsole($"SqlBulkCopy to ENR temp table {tempTableName} succeeded", logger, "information");
-				return true;
-			}
-			catch (Exception e)
-			{
-				file.WriteLine($"#E#{e.Message}");
-				PrintToLogsOrConsole($"SqlBulkCopy to ENR temp table {tempTableName} failed: {e.Message}", logger, "error");
-				stCount--;
-				return false;
-			}
-		}
-
-		/// <summary>
-		/// Test SqlBulkCopy to Non-ENR temp table (temp table using UDT, stored in pg_temp schema)
-		/// </summary>
-		public bool SqlBulkCopyNonEnrTempTable(DbConnection bblCnn, string tempTableName, int rowCount,
-			string testName, Logger logger, ref int stCount)
-		{
-			using var file = new StreamWriter(Path.Combine(ConfigSetup.OutputFolder, testName + ".out"), true);
-			file.WriteLine($"#Q#SqlBulkCopy to Non-ENR temp table: {tempTableName}");
-
-			try
-			{
-				// Prepare test data
-				var table = new DataTable();
-				table.Columns.Add("id", typeof(int));
-				table.Columns.Add("name", typeof(string));
-
-				for (int i = 0; i < rowCount; i++)
-					table.Rows.Add(i, $"NonEnrName{i}");
-
-				// Bulk copy using same connection (required for temp tables)
-				using (var bulkCopy = new SqlBulkCopy((SqlConnection)bblCnn))
-				{
-					bulkCopy.DestinationTableName = tempTableName;
-					bulkCopy.WriteToServer(table);
-				}
-
-				file.WriteLine($"SUCCESS: Inserted {rowCount} rows into Non-ENR temp table");
-				PrintToLogsOrConsole($"SqlBulkCopy to Non-ENR temp table {tempTableName} succeeded", logger, "information");
-				return true;
-			}
-			catch (Exception e)
-			{
-				file.WriteLine($"#E#{e.Message}");
-				PrintToLogsOrConsole($"SqlBulkCopy to Non-ENR temp table {tempTableName} failed: {e.Message}", logger, "error");
-				stCount--;
-				return false;
-			}
-		}
 
 		public void FillSchemaTest(DbConnection conn, DbTransaction transaction, string query, 
 			string testName, Logger logger, ref int stCount)
@@ -779,6 +702,80 @@ namespace BabelfishDotnetFramework
 				myoutputfile.WriteLine($"#E#{ex.Message}");
 				PrintToLogsOrConsole($"Error in FillSchemaTest: {ex.Message}", logger, "error");
 				stCount--;
+			}
+		}
+
+		/* Test SqlBulkCopy to ENR temp table (standard temp table stored in currentQueryEnv) */
+		public bool SqlBulkCopyEnrTempTable(DbConnection bblCnn, string tempTableName, int rowCount,
+			string testName, Logger logger, ref int stCount)
+		{
+			using var file = new StreamWriter(Path.Combine(ConfigSetup.OutputFolder, testName + ".out"), true);
+			file.WriteLine($"#Q#SqlBulkCopy to ENR temp table: {tempTableName}");
+
+			try
+			{
+				/* Prepare test data */
+				var table = new DataTable();
+				table.Columns.Add("id", typeof(int));
+				table.Columns.Add("name", typeof(string));
+
+				for (int i = 0; i < rowCount; i++)
+					table.Rows.Add(i, $"EnrName{i}");
+
+				/* Bulk copy using same connection */
+				using (var bulkCopy = new SqlBulkCopy((SqlConnection)bblCnn))
+				{
+					bulkCopy.DestinationTableName = tempTableName;
+					bulkCopy.WriteToServer(table);
+				}
+
+				file.WriteLine($"SUCCESS: Inserted {rowCount} rows into ENR temp table");
+				PrintToLogsOrConsole($"SqlBulkCopy to ENR temp table {tempTableName} succeeded", logger, "information");
+				return true;
+			}
+			catch (Exception e)
+			{
+				file.WriteLine($"#E#{e.Message}");
+				PrintToLogsOrConsole($"SqlBulkCopy to ENR temp table {tempTableName} failed: {e.Message}", logger, "error");
+				stCount--;
+				return false;
+			}
+		}
+
+		/* Test SqlBulkCopy to Non-ENR temp table (temp table using UDT, stored in pg_temp schema) */
+		public bool SqlBulkCopyNonEnrTempTable(DbConnection bblCnn, string tempTableName, int rowCount,
+			string testName, Logger logger, ref int stCount)
+		{
+			using var file = new StreamWriter(Path.Combine(ConfigSetup.OutputFolder, testName + ".out"), true);
+			file.WriteLine($"#Q#SqlBulkCopy to Non-ENR temp table: {tempTableName}");
+
+			try
+			{
+				/* Prepare test data */
+				var table = new DataTable();
+				table.Columns.Add("id", typeof(int));
+				table.Columns.Add("name", typeof(string));
+
+				for (int i = 0; i < rowCount; i++)
+					table.Rows.Add(i, $"NonEnrName{i}");
+
+				/* Bulk copy using same connection */
+				using (var bulkCopy = new SqlBulkCopy((SqlConnection)bblCnn))
+				{
+					bulkCopy.DestinationTableName = tempTableName;
+					bulkCopy.WriteToServer(table);
+				}
+
+				file.WriteLine($"SUCCESS: Inserted {rowCount} rows into Non-ENR temp table");
+				PrintToLogsOrConsole($"SqlBulkCopy to Non-ENR temp table {tempTableName} succeeded", logger, "information");
+				return true;
+			}
+			catch (Exception e)
+			{
+				file.WriteLine($"#E#{e.Message}");
+				PrintToLogsOrConsole($"SqlBulkCopy to Non-ENR temp table {tempTableName} failed: {e.Message}", logger, "error");
+				stCount--;
+				return false;
 			}
 		}
 	}

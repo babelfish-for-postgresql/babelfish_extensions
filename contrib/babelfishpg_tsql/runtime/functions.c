@@ -136,7 +136,8 @@ PG_FUNCTION_INFO_V1(servername);
 PG_FUNCTION_INFO_V1(servicename);
 PG_FUNCTION_INFO_V1(xact_state);
 PG_FUNCTION_INFO_V1(get_enr_list);
-PG_FUNCTION_INFO_V1(get_enr_attributes);
+PG_FUNCTION_INFO_V1(get_tsql_temp_table_attributes);
+PG_FUNCTION_INFO_V1(is_temp_table_name);
 PG_FUNCTION_INFO_V1(tsql_random);
 PG_FUNCTION_INFO_V1(timezone_mapping);
 PG_FUNCTION_INFO_V1(pltsql_timezone_mapping_pg_to_windows);
@@ -6097,28 +6098,28 @@ done:
 }
 
 /*
- * get_enr_attributes - Get pg_attribute rows for temp tables (ENR and non-ENR)
+ * get_tsql_temp_table_attributes - Get pg_attribute rows for a temp table by name
  *
  * This function returns all pg_attribute columns for a temp table.
  * It works for both ENR temp tables (reads from ENR cache) and non-ENR temp tables
  * (reads from actual pg_attribute catalog).
  */
 Datum
-get_enr_attributes(PG_FUNCTION_ARGS)
+get_tsql_temp_table_attributes(PG_FUNCTION_ARGS)
 {
-	char	   *table_name_input = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *input;
+	char	   *db_name;
+	char	   *schema_name;
+	char	   *object_name;
+	Oid			relid = InvalidOid;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 	EphemeralNamedRelation enr = NULL;
-	char	   *table_name;
-	char	   *temp_name_ptr;
 	Relation	pg_attribute_rel;
-	Oid			relid = InvalidOid;
 	bool		is_enr = false;
-	int			i;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -6130,44 +6131,46 @@ get_enr_attributes(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
-	if (!table_name_input)
+	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
-	/* Handle formats like ".[#TempTable]" or "#TempTable" to find the # */
-	temp_name_ptr = strchr(table_name_input, '#');
-	if (!temp_name_ptr)
-		PG_RETURN_NULL();
+	input = text_to_cstring(PG_GETARG_VARCHAR_PP(0));
 
-	/* Lowercase the table name and strip trailing "]" */
-	table_name = pstrdup(temp_name_ptr);
-	for (i = 0; table_name[i]; i++)
+	/* Parse the table name */
+	downcase_truncate_split_object_name(input, NULL, &db_name, &schema_name, &object_name);
+	pfree(input);
+
+	/* Must be a temp table (starts with #) */
+	if (object_name[0] != '#')
 	{
-		if (table_name[i] == ']')
-		{
-			table_name[i] = '\0';
-			break;
-		}
-		table_name[i] = tolower((unsigned char) table_name[i]);
+		pfree(db_name);
+		pfree(schema_name);
+		pfree(object_name);
+		PG_RETURN_NULL();
 	}
 
 	/* Try ENR first */
 	if (currentQueryEnv != NULL)
 	{
-		enr = get_ENR(currentQueryEnv, table_name, true);
+		enr = get_ENR(currentQueryEnv, object_name, true);
 		if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 		{
-			relid = enr->md.reliddesc;
 			is_enr = true;
+			relid = enr->md.reliddesc;
 		}
 	}
 
-	/* Fallback: search pg_temp schema for non-ENR temp tables */
+	/* If not ENR, try pg_temp namespace for non-ENR temp tables */
 	if (!is_enr)
 	{
 		Oid temp_ns = LookupNamespaceNoError("pg_temp");
 		if (OidIsValid(temp_ns))
-			relid = get_relname_relid(table_name, temp_ns);
+			relid = get_relname_relid(object_name, temp_ns);
 	}
+
+	pfree(db_name);
+	pfree(schema_name);
+	pfree(object_name);
 
 	if (!OidIsValid(relid))
 		PG_RETURN_NULL();
@@ -6228,4 +6231,37 @@ get_enr_attributes(PG_FUNCTION_ARGS)
 	tuplestore_donestoring(tupstore);
 
 	PG_RETURN_NULL();
+}
+
+/*
+ * is_temp_table_name - Check if a name refers to a temp table
+ * Returns true if the object name part starts with #
+ */
+Datum
+is_temp_table_name(PG_FUNCTION_ARGS)
+{
+	char	   *input;
+	char	   *db_name;
+	char	   *schema_name;
+	char	   *object_name;
+	bool		result = false;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_BOOL(false);
+
+	input = text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+
+	/* Parse the name to extract object_name */
+	downcase_truncate_split_object_name(input, NULL, &db_name, &schema_name, &object_name);
+	pfree(input);
+
+	/* Check if object_name starts with # */
+	if (object_name[0] == '#')
+		result = true;
+
+	pfree(db_name);
+	pfree(schema_name);
+	pfree(object_name);
+
+	PG_RETURN_BOOL(result);
 }

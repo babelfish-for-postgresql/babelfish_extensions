@@ -802,14 +802,21 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         c.is_sparse = 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
--- Function to get pg_attribute rows for temp tables (ENR and non-ENR)
-CREATE OR REPLACE FUNCTION sys.babelfish_get_enr_attributes(IN table_name sys.varchar(4000))
+-- Function to get pg_attribute rows for #temp tables (ENR and non-ENR)
+CREATE OR REPLACE FUNCTION sys.babelfish_get_temp_table_attributes(IN table_name sys.varchar(4000))
 RETURNS SETOF pg_catalog.pg_attribute
-AS 'babelfishpg_tsql', 'get_enr_attributes'
+AS 'babelfishpg_tsql', 'get_tsql_temp_table_attributes'
 LANGUAGE C STABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.babelfish_get_enr_attributes(IN sys.varchar(4000)) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.babelfish_get_temp_table_attributes(IN sys.varchar(4000)) TO PUBLIC;
 
--- Wrapper function for sp_tablecollations_100 that uses the babelfish_get_enr_attributes function
+-- Function to check if a name refers to a #temp table
+CREATE OR REPLACE FUNCTION sys.is_temp_table_name(IN name sys.varchar(4000))
+RETURNS BOOLEAN
+AS 'babelfishpg_tsql', 'is_temp_table_name'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.is_temp_table_name(IN sys.varchar(4000)) TO PUBLIC;
+
+-- Wrapper function for sp_tablecollations_100 that uses the babelfish_get_temp_table_attributes function
 CREATE OR REPLACE FUNCTION sys.sp_tablecollations_100_enr(IN table_name sys.varchar(4000))
 RETURNS TABLE(colid INT, name sys.varchar, collation_name sys.nvarchar(128))
 AS $$
@@ -817,7 +824,7 @@ AS $$
         CAST(a.attnum AS INT) AS colid,
         CAST(a.attname AS sys.varchar) AS name,
         CAST(c.collname AS sys.nvarchar(128)) AS collation_name
-    FROM sys.babelfish_get_enr_attributes(table_name) a
+    FROM sys.babelfish_get_temp_table_attributes(table_name) a
     LEFT JOIN pg_catalog.pg_collation c ON a.attcollation = c.oid
     WHERE a.attnum > 0 AND NOT a.attisdropped
     ORDER BY a.attnum;
@@ -827,15 +834,15 @@ GRANT EXECUTE ON FUNCTION sys.sp_tablecollations_100_enr(IN sys.varchar(4000)) T
 
 -- We are limited by what postgres procedures can return here, but IEW may not
 -- need it for initial compatibility
--- Modified to handle temp tables (starting with #) using ENR function
+-- Modified to handle #temp tables using sp_tablecollations_100_enr function
 CREATE OR REPLACE PROCEDURE sys.sp_tablecollations_100
 (
     IN "@object" nvarchar(4000)
 )
 AS $$
 BEGIN
-    -- Check if this is a temp table (starts with # or [# or contains .# or .[#)
-    IF LEFT(@object, 1) = '#' OR LEFT(@object, 2) = '[#' OR @object LIKE '%.#%' OR @object LIKE '%.[[]#%'
+    -- Check if this is a #temp table 
+    IF sys.is_temp_table_name(@object) = 1
     BEGIN
         -- Use ENR function for temp tables
         SELECT
