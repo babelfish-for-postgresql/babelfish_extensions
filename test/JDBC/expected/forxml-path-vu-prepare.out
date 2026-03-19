@@ -6,6 +6,20 @@ GO
 ~~ROW COUNT: 9~~
 
 
+CREATE TABLE for_xml_path_all_null (col1 INT NULL);
+GO
+
+SET NOCOUNT ON
+GO
+
+DECLARE @i INT = 1; 
+WHILE @i <= 2048 
+BEGIN
+    INSERT INTO for_xml_path_all_null VALUES (NULL);
+    SET @i = @i + 1;
+END
+GO
+
 CREATE VIEW for_xml_path_v1 AS SELECT String as param1, hello.String as [@param2] FROM for_xml_path hello ORDER BY SequenceNumber FOR XML PATH('hello')
 GO
 
