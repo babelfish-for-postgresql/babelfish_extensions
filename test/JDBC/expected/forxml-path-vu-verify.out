@@ -133,7 +133,7 @@ ntext
 ~~END~~
 
 
-SELECT col1 from for_xml_path_all_null FOR XML PATH(''), ELEMENTS, TYPE
+SELECT col1 from for_xml_path_all_null FOR XML PATH(''), TYPE
 GO
 ~~START~~
 xml

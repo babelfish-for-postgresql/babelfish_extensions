@@ -53,7 +53,7 @@ GO
 SELECT col1 from for_xml_path_all_null FOR XML PATH('')
 GO
 
-SELECT col1 from for_xml_path_all_null FOR XML PATH(''), ELEMENTS, TYPE
+SELECT col1 from for_xml_path_all_null FOR XML PATH(''), TYPE
 GO
 
 SELECT Top 10 col1 from for_xml_path_all_null FOR XML PATH('element')
