@@ -10,5 +10,8 @@ DROP VIEW for_xml_path_v3
 DROP VIEW for_xml_path_v4
 GO
 
+DROP TABLE for_xml_path_all_null
+GO
+
 DROP TABLE for_xml_path
 GO

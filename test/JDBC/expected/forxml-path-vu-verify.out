@@ -123,3 +123,29 @@ ntext
  SELECT Product, UnitPrice, EffectiveDate FROM Products WHERE UnitPrice &gt; 100
 ~~END~~
 
+
+-- BABEL-5364
+-- Crash causing query
+SELECT col1 from for_xml_path_all_null FOR XML PATH('')
+GO
+~~START~~
+ntext
+~~END~~
+
+
+SELECT col1 from for_xml_path_all_null FOR XML PATH(''), TYPE
+GO
+~~START~~
+xml
+
+~~END~~
+
+
+SELECT Top 10 col1 from for_xml_path_all_null FOR XML PATH('element')
+GO
+~~START~~
+ntext
+<element/><element/><element/><element/><element/><element/><element/><element/><element/><element/>
+~~END~~
+
+
