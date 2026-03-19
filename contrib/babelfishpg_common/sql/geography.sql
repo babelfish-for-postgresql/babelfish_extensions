@@ -433,6 +433,25 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+--STGeomType 
+CREATE OR REPLACE FUNCTION sys.STGeometryType(geog sys.GEOGRAPHY)
+	RETURNS sys.NVARCHAR(4000)
+	AS $$
+	DECLARE
+		geom_type text;
+	BEGIN
+        IF STIsValid(geog) = 0 THEN
+            RAISE EXCEPTION 'This operation cannot be completed because the instance is not valid';
+        END IF;
+		geom_type := sys.ST_GeometryType(geog);
+		
+		IF geom_type LIKE 'ST\_%' ESCAPE '\' THEN
+			RETURN substr(geom_type, 4);
+		END IF;
+	    RAISE EXCEPTION 'Unexpected geometry type format: %. Expected ST_* prefix.', geom_type;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 -- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
