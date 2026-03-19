@@ -667,3 +667,90 @@ rewrite_dim_polygon_query(PointArrayList *pal)
     
     return output.data;
 }
+
+char* 
+rewrite_multipoint_wkt(PointArray *pa) 
+{
+    DimensionType type;
+    StringInfoData output;
+
+    if (!pa) 
+        return NULL;
+
+    if (pa->count == 0)
+    {
+        if (pa->points)
+            pfree(pa->points);
+        pfree(pa);
+        return pstrdup("MULTIPOINT EMPTY");
+    }
+    initStringInfo(&output);
+    
+    type = determine_ptarray_type(pa);
+    
+    appendStringInfoString(&output, "MULTIPOINT");
+
+    if (type == M) 
+        appendStringInfoString(&output, " M");
+
+    appendStringInfoChar(&output, '(');
+    
+    transform_points(pa, type);
+
+    for (int i = 0; i < pa->count; i++) 
+    {
+        POINT p = pa->points[i];
+        
+        appendStringInfoChar(&output, '(');
+        format_tsql_point_coordinates(&output, p);  
+        appendStringInfoChar(&output, ')');
+
+        if (i < pa->count - 1) 
+            appendStringInfoString(&output, ", ");
+    }
+
+    appendStringInfoChar(&output, ')');
+
+    pfree(pa->points);
+    pfree(pa);
+    
+    return output.data;
+}
+
+
+char* 
+rewrite_dim_multipoint_wkt(PointArray *pa) 
+{
+    StringInfoData output;
+
+    if (!pa || pa->count == 0)
+    {
+        if (pa) {
+            pfree(pa->points);
+            pfree(pa);
+        }
+        return pstrdup("MULTIPOINT EMPTY");
+    }
+
+    initStringInfo(&output);
+    appendStringInfoString(&output, "MULTIPOINT(");
+
+    for (int i = 0; i < pa->count; i++) 
+    {
+        POINT p = pa->points[i];
+        
+        appendStringInfoChar(&output, '(');
+        format_postgis_point_coordinates(&output, p);
+        appendStringInfoChar(&output, ')');
+
+        if (i < pa->count - 1) 
+            appendStringInfoString(&output, ", ");
+    }
+
+    appendStringInfoChar(&output, ')');
+
+    pfree(pa->points);
+    pfree(pa);
+    
+    return output.data;
+}

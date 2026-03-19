@@ -228,6 +228,33 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(sys.NVARCHAR, integer)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.Geography__STMPointFromText(sys.NVARCHAR, srid integer)
+    RETURNS sys.GEOGRAPHY
+    AS $$
+    DECLARE
+        Geomtype text;
+        geog sys.GEOGRAPHY;
+    BEGIN
+        IF $2 IS NULL THEN
+            RAISE EXCEPTION '''geography::STMPointFromText'' failed because parameter 2 is not allowed to be null.';
+        ELSIF $1 IS NULL THEN
+            RETURN NULL;
+        ELSIF $2 < 0 THEN
+            RAISE EXCEPTION 'SRID value must be non-negative.';
+        END IF;
+
+        geog = sys.geogfromtext_helper($1::text, $2);
+        Geomtype = sys.ST_GeometryType(geog::sys.GEOMETRY);
+
+        IF Geomtype = 'ST_MultiPoint' THEN
+            RETURN geog;
+        ELSE
+            RAISE EXCEPTION 'Expected "MULTIPOINT" at Position 1. The input has %s', $1;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+
 CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
 	RETURNS sys.NVARCHAR
 	AS $$

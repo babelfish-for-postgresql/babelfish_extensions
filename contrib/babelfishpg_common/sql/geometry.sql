@@ -313,6 +313,32 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPolyFromText(sys.NVARCHAR,srid intege
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromText(sys.NVARCHAR, srid integer)
+    RETURNS sys.GEOMETRY
+    AS $$
+    DECLARE
+        Geomtype text;
+        geom sys.GEOMETRY;
+    BEGIN
+        IF $2 IS NULL THEN
+            RAISE EXCEPTION '''geometry::STMPointFromText'' failed because parameter 2 is not allowed to be null.';
+        ELSIF $1 IS NULL THEN
+            RETURN NULL;
+        ELSIF $2 < 0 THEN
+            RAISE EXCEPTION 'SRID value must be non-negative.';
+        END IF;
+
+        geom = sys.geomfromtext_helper($1::text, $2);
+        Geomtype = sys.ST_GeometryType(geom);
+
+        IF Geomtype = 'ST_MultiPoint' THEN
+            RETURN geom;
+        ELSE
+            RAISE EXCEPTION 'Expected "MULTIPOINT" at Position 1. The input has %s', $1;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.ST_GeometryType(sys.GEOMETRY)
 	RETURNS text
 	AS '$libdir/postgis-3', 'geometry_geometrytype'

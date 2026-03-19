@@ -3963,6 +3963,7 @@ geospatial_static_method
     | STPOINTFROMTEXT
     | STLINEFROMTEXT
     | STPOLYFROMTEXT
+    | STMPOINTFROMTEXT
     | POINT
     | PARSE
     ;
@@ -5091,6 +5092,7 @@ keyword
     | STISEMPTY
     | STISVALID
     | STLINEFROMTEXT
+    | STMPOINTFROMTEXT
     | STNUMPOINTS
     | STOP
     | STOPAT
