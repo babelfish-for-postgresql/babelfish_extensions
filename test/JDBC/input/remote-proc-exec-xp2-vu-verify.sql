@@ -1,3 +1,4 @@
+-- single_db_mode_expected
 -- ========================================
 -- SECTION 9: ERROR AND NEGATIVE TESTS
 -- ========================================
