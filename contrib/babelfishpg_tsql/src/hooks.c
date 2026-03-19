@@ -8355,8 +8355,8 @@ tsql_set_typmod_op_expr(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexp
 		lopr = exprType(lexpr);
 		ropr = exprType(rexpr);
 		if (strncmp(opname, "+", 1) == 0 &&
-			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (lopr) &&
-			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (ropr))
+			(*common_utility_plugin_ptr->is_tsql_binary_datatype) (getBaseType(lopr)) &&
+			(*common_utility_plugin_ptr->is_tsql_binary_datatype) (getBaseType(ropr)))
 		{
 			int32	typmod1 = exprTypmod(lexpr),
 					typmod2 = exprTypmod(rexpr),
@@ -8415,10 +8415,10 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 				 * RelabelType with typmod = -1, so we need to look through to the underlying
 				 * expression to get the actual typmod value.
 				 */
-				while (lexpr && IsA(lexpr, RelabelType))
+				while (lexpr && IsA(lexpr, RelabelType) && exprTypmod(lexpr) == -1)
 					lexpr = (Node *) ((RelabelType *) lexpr)->arg;
 
-				while (rexpr && IsA(rexpr, RelabelType))
+				while (rexpr && IsA(rexpr, RelabelType) && exprTypmod(rexpr) == -1)
 					rexpr = (Node *) ((RelabelType *) rexpr)->arg;
 
 				expr = tsql_set_typmod_op_expr(pstate, expr, lexpr, rexpr);

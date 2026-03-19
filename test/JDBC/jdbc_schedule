@@ -10,12 +10,6 @@
 
 all
 
-# FIX ME: Crash in vector extension. Ignoring to Unblock Dev
-# branches. Will be fixed with jira: BABEL-6260
-ignore#!#TestHalfvecDatatype
-ignore#!#TestSparsevecDatatype
-ignore#!#TestVectorDatatype
-
 # These tests are ignored since latest changes with UTF-16<->binary conversion
 # They show the previous behavior of the conversion functions
 # and are not relevant to the current implementation.
@@ -747,15 +741,25 @@ ignore#!#cast_datetime_to_binary-before-17_7-16_11-vu-cleanup
 ignore#!#comparison_op_index_scan-before-17_8-or-16_12-vu-prepare
 ignore#!#comparison_op_index_scan-before-17_8-or-16_12-vu-verify
 ignore#!#comparison_op_index_scan-before-17_8-or-16_12-vu-cleanup
+ignore#!#babel_convert_with_style-before-14_8-or-15_3-vu-prepare
+ignore#!#babel_convert_with_style-before-14_8-or-15_3-vu-verify
+ignore#!#babel_convert_with_style-before-14_8-or-15_3-vu-cleanup
+ignore#!#babel_convert_with_style-before-15_7-vu-prepare
+ignore#!#babel_convert_with_style-before-15_7-vu-verify
+ignore#!#babel_convert_with_style-before-15_7-vu-cleanup
+ignore#!#babel_convert_with_style-before-14_12-or-16_3-vu-prepare
+ignore#!#babel_convert_with_style-before-14_12-or-16_3-vu-verify
+ignore#!#babel_convert_with_style-before-14_12-or-16_3-vu-cleanup
+
 # These tests are meant for upgrade scenario prior to 17_8 or 16_12 release
 ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-prepare
 ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-verify
 ignore#!#datetime_roundoff-before-17_8-or-16_12-vu-cleanup
 
 #crashes
-ignore#!#temp_catalog_inval-vu-prepare
-ignore#!#temp_catalog_inval-vu-verify
-ignore#!#temp_catalog_inval-vu-cleanup
 ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-prepare
 ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-verify
 ignore#!#TestDatatypeAggSort-before-16_12-or-17_8-vu-cleanup
+ignore#!#test_constraint_like_before_17_8-or-16_12-vu-prepare
+ignore#!#test_constraint_like_before_17_8-or-16_12-vu-verify
+ignore#!#test_constraint_like_before_17_8-or-16_12-vu-cleanup

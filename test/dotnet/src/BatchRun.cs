@@ -291,6 +291,28 @@ namespace BabelfishDotnetFramework
 							LoginDatabaseScripter.ScriptDatabase(strLine, testName, testUtils, logger);
 							LoginDatabaseScripter.ScriptLogins(testName, testUtils, logger);
 						}
+						else if (strLine.ToLowerInvariant().StartsWith("fillschema_test"))
+						{
+							testUtils.PrintToLogsOrConsole("######################################################################", logger, "information");
+							testUtils.PrintToLogsOrConsole("####################### FILLSCHEMA TEST ##############################", logger, "information");
+							testUtils.PrintToLogsOrConsole("######################################################################\n", logger, "information");
+							
+							var result = strLine.Split("#!#", StringSplitOptions.RemoveEmptyEntries);
+							
+							if (result.Length >= 2)
+							{
+								string tableOrQuery = result[1].Trim();
+								
+								testUtils.PrintToLogsOrConsole($"Query: {tableOrQuery}", logger, "information");
+								testUtils.FillSchemaTest(bblCnn, bblTransaction, tableOrQuery, testName, logger, ref stCount);
+							}
+							else
+							{
+								testUtils.PrintToLogsOrConsole("Invalid format. Use: fillschema_test#!#tablename OR fillschema_test#!#SELECT * FROM table", logger, "error");
+								stCount--;
+							}
+						}
+
 						else
 						{
 							/*

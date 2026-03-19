@@ -1,5 +1,5 @@
 from utils.config import config_dict as cfg
-from execute_query import  parse_prepared_statement, parse_stored_procedures, process_transaction_statement,process_statement_in_file_mode,process_statement_in_file_mode_ddl
+from execute_query import  parse_prepared_statement, parse_stored_procedures, process_transaction_statement,process_statement_in_file_mode,process_statement_in_file_mode_ddl, process_fillschema_in_file_mode
 from  python_authentication import py_authentication
 if cfg['runIsolationTests'] == 'true':
     from isolationtest.isolationTestHandler import isolationTestHandler
@@ -120,6 +120,12 @@ def batch_run(bbl_cnxn, file_handler, file, logger):
             elif line.startswith("cursor"):
                 flag = True
                 logger.info("Skipping statement " + line + " as cursor operations are not supported currently by pyodbc/pymssql")
+            
+            #run the fill schema tests
+            elif line.startswith("fillschema_test"):
+                result = line.split("#!#")
+                query = result[1] if len(result) > 1 else ""
+                flag = process_fillschema_in_file_mode(bbl_cnxn, file_handler, query, line, logger)
             
             # run as normal sql statement
             else:

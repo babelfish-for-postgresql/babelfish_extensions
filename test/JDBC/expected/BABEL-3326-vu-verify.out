@@ -741,9 +741,13 @@ GO
 -- psql
 -- Test cases if user tries to enable/disable trigger <schema-1>.<trigger-1> on table <schema-2>.<table-1> 
 -- if both schemas have tables with same name and each table have trigger with same trigger name
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
 ALTER TABLE master_dbo.babel_3326_Employees OWNER TO master_babel_3326_u1;
 GO
 ALTER TABLE master_db.babel_3326_Employees OWNER TO master_babel_3326_u1;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
 GO
 
 -- tsql user=babel_3326_u1 password=12345678
@@ -882,9 +886,13 @@ DISABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babe
 GO
 
 -- psql
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
 ALTER TABLE master_dbo.babel_3326_Employees OWNER TO master_dbo;
 GO
 ALTER TABLE master_db.babel_3326_Employees OWNER TO master_dbo;
+GO
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
 GO
 
 -- tsql user=jdbc_user password=12345678

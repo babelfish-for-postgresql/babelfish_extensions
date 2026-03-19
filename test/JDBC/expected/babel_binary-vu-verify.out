@@ -1414,3 +1414,80 @@ int
 1
 ~~END~~
 
+
+declare @bin1 binary(3) = 0x4142
+declare @bin2 binary(4) = 0x4344
+declare @bin3 binary(1) = 0x4546
+declare @bin4 binary(6) = 0x4748
+select (@bin1 + @bin2) + (@bin3 + @bin4) as NestedConcat
+GO
+~~START~~
+binary
+4142004344000045474800000000
+~~END~~
+
+
+declare @bin1 binary(5) = 0x4142
+declare @bin2 binary(9) = 0x4344
+declare @bin3 binary(12) = 0x4546
+declare @bin4 binary = 0x4748
+select (@bin1 + @bin2) + (@bin3 + @bin4) as NestedConcat
+GO
+~~START~~
+binary
+414200000043440000000000000045460000000000000000000047
+~~END~~
+
+
+declare @empty1 binary(15) = 0x00 
+declare @empty2 binary(1) = 0x00 
+declare @empty3 binary(6) = 0x00 
+select @empty1 + @empty2 + @empty3 as multiple_empty_concat 
+GO
+~~START~~
+binary
+00000000000000000000000000000000000000000000
+~~END~~
+
+
+create table binary_test_table (
+    id int identity(1,1),
+    bin_col1 binary(5),
+    bin_col2 binary(8),
+    varbin_col1 varbinary(10),
+    varbin_col2 varbinary(6)
+)
+GO
+
+-- Insert test data
+insert into binary_test_table (bin_col1, bin_col2, varbin_col1, varbin_col2) values
+(0x4142434445, 0x4647484950, 0x5152535455, 0x5657585960),
+(0x6162636465, 0x6667686970, 0x7172737475, 0x7677787980),
+(0x, 0x4142434445, 0x, 0x4647484950),
+(NULL, 0x4142434445, NULL, 0x4647484950)
+GO
+~~ROW COUNT: 4~~
+
+
+with binary_cte as ( 
+    select id, 
+           bin_col1 + bin_col2 as concat_result, 
+           datalength(bin_col1 + bin_col2) as concat_len 
+    from binary_test_table 
+    where bin_col1 is not null and bin_col2 is not null 
+) 
+select concat_result, 
+       concat_len, 
+       concat_result + cast(0x9999 as binary(2)) as extended_concat 
+from binary_cte
+GO
+~~START~~
+binary#!#int#!#binary
+41424344454647484950000000#!#13#!#414243444546474849500000009999
+61626364656667686970000000#!#13#!#616263646566676869700000009999
+00000000004142434445000000#!#13#!#000000000041424344450000009999
+~~END~~
+
+
+DROP table binary_test_table
+GO

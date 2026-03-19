@@ -4866,7 +4866,7 @@ FROM try_convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-123.45                                            #!#123.45#!#123.45                                            #!#123.45
+123.4500                                          #!#123.4500#!#123.4500                                          #!#123.4500
 ~~END~~
 
 
@@ -4892,7 +4892,7 @@ FROM try_convert_source_t1;
 GO
 ~~START~~
 char#!#varchar#!#nchar#!#nvarchar
-123.45                                            #!#123.45#!#123.45                                            #!#123.45
+123.4500                                          #!#123.4500#!#123.4500                                          #!#123.4500
 ~~END~~
 
 

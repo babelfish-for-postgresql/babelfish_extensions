@@ -388,4 +388,98 @@ def process_stored_procedure_in_file_mode(bbl_cnxn, file_writer, query, stored_p
     
     return True 
 
-         
+#function to generate output files for fillschema method statements   
+def extract_table_name(query):
+    try:
+        match = re.search(r'\bFROM\s+([^\s,;()]+)', query, re.IGNORECASE)
+        if match:
+            table_name = match.group(1)
+            if '.' in table_name:
+                table_name = table_name.split('.')[-1]
+            table_name = table_name.strip('[]"')
+            return table_name
+    except Exception:
+        pass
+    return None
+
+def get_python_type_name(type_code):
+    type_mapping = {
+        int: "System.Int32",
+        str: "System.String", 
+        float: "System.Double",
+        Decimal: "System.Decimal",
+        datetime: "System.DateTime",
+        date: "System.DateTime",
+        time: "System.TimeSpan",
+        bool: "System.Boolean",
+        bytes: "System.Byte[]",
+    }
+    return type_mapping.get(type_code, str(type_code))
+
+def process_fillschema_in_file_mode(bbl_cnxn, file_writer, actual_query, original_line, logger):
+    try:
+        file_writer.write(original_line)
+        file_writer.write("\n")
+        
+        try:
+            bbl_cursor = bbl_cnxn.get_cursor()
+            
+            bbl_cursor.execute(actual_query)
+            
+            file_writer.write("~~START~~\n")
+            
+            if bbl_cursor.description:
+                table_name = extract_table_name(actual_query)
+                
+                pk_columns = []
+                if table_name and cfg["driver"] == "pyodbc":
+                    try:
+                        pk_cursor = bbl_cnxn.get_cursor()
+                        for row in pk_cursor.primaryKeys(table=table_name):
+                            pk_columns.append(row.column_name)
+                        pk_cursor.close()
+                    except Exception as e:
+                        logger.warning(f"Could not retrieve primary keys: {str(e)}")
+                
+                file_writer.write("Table Columns:\n")
+                for col in bbl_cursor.description:
+                    col_name = col[0]         
+                    type_code = col[1]       
+                    nullable = col[6]        
+                    is_pk = col_name in pk_columns
+                    
+                    if nullable is None:
+                        allow_null = "Unknown"
+                    elif nullable:
+                        allow_null = "True"
+                    else:
+                        allow_null = "False"
+                    
+                    file_writer.write(f"Column: {col_name}\n")
+                    file_writer.write(f"  - Is Primary Key: {is_pk}\n")
+                    file_writer.write(f"  - Data Type: {get_python_type_name(type_code)}\n")
+                    file_writer.write(f"  - Allow Null: {allow_null}\n")
+                
+                file_writer.write("\nPrimary Key Columns:\n")
+                if pk_columns:
+                    for pk_col in pk_columns:
+                        file_writer.write(f"- {pk_col}\n")
+                else:
+                    file_writer.write("- None\n")
+            else:
+                file_writer.write("No result set returned\n")
+                
+            file_writer.write("~~END~~\n\n")
+                
+        except Exception as e:
+            handle_exception_in_file(e, file_writer)
+        
+        try:
+            bbl_cursor.close()
+        except Exception as e:
+            logger.warning(f"Error closing cursor: {str(e)}")
+            
+    except Exception as e:
+        logger.error(f"Error in process_fillschema_in_file_mode: {str(e)}")
+    
+    return True

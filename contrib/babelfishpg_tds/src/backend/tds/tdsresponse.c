@@ -1598,7 +1598,7 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 				TdsRelationMetaDataInfo relMetaDataInfo;
 				char	   *physical_schema_name;
 
-				relMetaDataInfo = (TdsRelationMetaDataInfo) palloc(sizeof(TdsRelationMetaDataInfoData));
+				relMetaDataInfo = (TdsRelationMetaDataInfo) palloc0(sizeof(TdsRelationMetaDataInfoData));
 				tableNum++;
 
 				relMetaDataInfo->relOid = col->relOid;
@@ -1628,7 +1628,7 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 				 * and we do not have to translate it to logical schema name.
 				 */
 				if (pltsql_plugin_handler_ptr &&
-					pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name)
+					pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name && physical_schema_name != NULL)
 					relMetaDataInfo->partName[1] = (char *) pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name(physical_schema_name, true);
 
 				/*
@@ -1636,8 +1636,13 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 				 * schema name only assuming its shared schema.
 				 */
 				if (relMetaDataInfo->partName[1] == NULL)
-					relMetaDataInfo->partName[1] = strdup(physical_schema_name);
-
+				{
+					if (physical_schema_name != NULL)
+						relMetaDataInfo->partName[1] = strdup(physical_schema_name);
+					else
+						relMetaDataInfo->partName[1] = NULL;
+				}
+				
 				if (physical_schema_name)
 					pfree(physical_schema_name);
 
@@ -2181,7 +2186,7 @@ TdsSendRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt,
 	Assert(typeinfo != NULL);
 
 	/* Prepare the column metadata first */
-	PrepareRowDescription(typeinfo, plannedstmt, targetlist, formats, false, false);
+	PrepareRowDescription(typeinfo, plannedstmt, targetlist, formats, true, true);
 
 	/*
 	 * If fNoMetadata flags is set in RPC header flag, the server doesn't need
@@ -2209,6 +2214,7 @@ TdsSendRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt,
 	}
 
 	SendColumnMetadataToken(typeinfo->natts, false);
+	SendColInfoToken(typeinfo->natts, false);
 }
 
 bool

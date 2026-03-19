@@ -458,6 +458,9 @@ GRANT SELECT ON information_schema_tsql.domains TO PUBLIC;
  */
 
 CREATE VIEW information_schema_tsql.tables AS
+	WITH tt_internal AS MATERIALIZED (
+		SELECT * FROM sys.table_types_internal
+	)
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		   CAST(
@@ -479,7 +482,7 @@ CREATE VIEW information_schema_tsql.tables AS
 
 	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
 		   LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
-		   LEFT JOIN sys.table_types_internal tt on c.oid = tt.typrelid
+		   LEFT JOIN tt_internal tt ON c.oid = tt.typrelid
 
 	WHERE c.relkind IN ('r', 'v', 'p')
 		AND c.relispartition = false

@@ -615,7 +615,7 @@ go
 
 create table t(a halfvec(3), b varchar(max))
 go
-select * from information_schema.columns where table_name = 't'
+select * from information_schema.columns where table_name = 't' ORDER BY ordinal_position
 go
 select count(*) from sys.columns where object_id = sys.object_id('t')
 go
@@ -638,7 +638,7 @@ WITH cte AS (
 )
 INSERT INTO document_embeddings(id, embedding) SELECT 4, CAST(CONCAT('[',a, ',', b, ',', c, ',', d, ']') as halfvec) FROM cte; 
 go
-SELECT * FROM document_embeddings;
+SELECT * FROM document_embeddings ORDER BY id;
 go
 SELECT TOP 5 * FROM document_embeddings ORDER BY embedding <=> '[3,1,2,4]';
 go
@@ -649,15 +649,15 @@ SELECT count(embedding <#> '[3,1,2,0]') FROM document_embeddings;
 go
 
 -- WHERE clause expressions
-SELECT * FROM document_embeddings WHERE embedding <-> '[3,20, 1,-2.5]' < 5;
-SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5;
-SELECT * FROM document_embeddings WHERE embedding <#> '[3,20, 1,-2.5]' < 5; 
+SELECT * FROM document_embeddings WHERE embedding <-> '[3,20, 1,-2.5]' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <#> '[3,20, 1,-2.5]' < 5 ORDER BY id;
 go
 
 SELECT AVG(embedding) FROM document_embeddings;
 go
 
-SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id;
+SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id ORDER BY id;
 go
 
 Drop table document_embeddings
@@ -1275,7 +1275,7 @@ go
 
 create table t(a halfvec(3), b varchar(max))
 go
-select * from information_schema.columns where table_name = 't'
+select * from information_schema.columns where table_name = 't' ORDER BY ordinal_position
 go
 select count(*) from sys.columns where object_id = sys.object_id('t')
 go
@@ -1298,7 +1298,7 @@ WITH cte AS (
 )
 INSERT INTO document_embeddings(id, embedding) SELECT 4, CAST(CONCAT('[',a, ',', b, ',', c, ',', d, ']') as halfvec) FROM cte; 
 go
-SELECT * FROM document_embeddings;
+SELECT * FROM document_embeddings ORDER BY id;
 go
 SELECT TOP 5 * FROM document_embeddings ORDER BY embedding <=> '[3,1,2,4]';
 go
@@ -1309,15 +1309,15 @@ SELECT count(embedding <#> '[3,1,2,0]') FROM document_embeddings;
 go
 
 -- WHERE clause expressions
-SELECT * FROM document_embeddings WHERE embedding <-> '[3,20, 1,-2.5]' < 5;
-SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5;
-SELECT * FROM document_embeddings WHERE embedding <#> '[3,20, 1,-2.5]' < 5; 
+SELECT * FROM document_embeddings WHERE embedding <-> '[3,20, 1,-2.5]' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5 ORDER BY id;
+SELECT * FROM document_embeddings WHERE embedding <#> '[3,20, 1,-2.5]' < 5 ORDER BY id; 
 go
 
 SELECT AVG(embedding) FROM document_embeddings;
 go
 
-SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id;
+SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id ORDER BY id;
 go
 
 Drop table document_embeddings
