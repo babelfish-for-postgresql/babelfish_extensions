@@ -951,6 +951,23 @@ public:
 		return visitChildren(ctx);
 	}
 	
+	// Block transaction control statements (BEGIN TRAN, COMMIT, ROLLBACK, SAVE TRAN)
+	antlrcpp::Any visitTransaction_statement(TSqlParser::Transaction_statementContext *ctx) override {
+		if (has_forbidden_statement)
+			return nullptr;  // Already found a forbidden statement, don't overwrite
+		has_forbidden_statement = true;
+		if (ctx->COMMIT())
+			forbidden_statement_type = "COMMIT TRANSACTION";
+		else if (ctx->ROLLBACK())
+			forbidden_statement_type = "ROLLBACK TRANSACTION";
+		else if (ctx->SAVE())
+			forbidden_statement_type = "SAVE TRANSACTION";
+		else
+			forbidden_statement_type = "BEGIN TRANSACTION";
+		error_location = getLineAndPos(ctx);
+		return nullptr;
+	}
+
 	// Block dynamic SQL: EXEC('string') and sp_executesql
 	// Also track nested procedure calls for recursive validation
 	antlrcpp::Any visitExecute_statement(TSqlParser::Execute_statementContext *ctx) override {

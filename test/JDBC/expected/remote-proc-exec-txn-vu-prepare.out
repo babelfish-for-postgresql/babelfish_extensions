@@ -7,11 +7,11 @@ SET client_min_messages TO 'notice';
 GO
 
 -- tsql
+
 -- ========================================
 -- Transaction Behavior and Error Handling Tests
 -- for Remote Procedure Execution (PR #4292)
 -- ========================================
-
 -- Clean up any existing test objects from previous runs
 DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_NoParams;
 DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_SingleInt;
@@ -45,10 +45,10 @@ GO
 EXEC sp_serveroption 'bbf_rpe_txn', 'rpc out', 'true';
 GO
 
+
 -- ========================================
 -- Test Procedures
 -- ========================================
-
 -- Basic no-params procedure
 CREATE PROCEDURE rpe_txn_sp_NoParams
 AS BEGIN

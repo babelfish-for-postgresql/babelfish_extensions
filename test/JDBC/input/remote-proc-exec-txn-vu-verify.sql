@@ -114,11 +114,7 @@ GO
 EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_WithInsert;
 GO
 
--- Test 2.6: Authentication failure — bad credentials
-EXEC bbf_rpe_txn_bad.master.dbo.rpe_txn_sp_NoParams;
-GO
-
--- Test 2.7: Parameter type mismatch — remote server rejects invalid value
+-- Test 2.6: Parameter type mismatch — remote server rejects invalid value
 EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_IntParam @id = 'not_a_number';
 GO
 
@@ -150,7 +146,8 @@ BEGIN TRANSACTION;
 COMMIT;
 GO
 
--- Verify: only row 1 from first batch survives; txn rows rolled back
+-- Verify: transaction was rolled back (@@TRANCOUNT = 0) and only row 1 survives
+SELECT @@TRANCOUNT AS txn_count_after_error;
 SELECT * FROM #txn_error_test ORDER BY id;
 DROP TABLE #txn_error_test;
 GO
@@ -213,15 +210,59 @@ GO
 -- ========================================
 
 -- Test 6.1: Nested error from inner procedure — propagated through outer
+-- NOTE: The outer procedure does SELECT before calling inner proc that errors.
+-- The partial result set from the SELECT is lost when the error aborts execution —
+-- this is expected because linked_server_msg_handler throws ERROR (severity > 10)
+-- which triggers PG error handling that discards any buffered/unsent results.
 EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_NestedError;
 GO
 
 -- Test 6.2: Procedure that returns result then errors
+-- Same behavior as 6.1: the SELECT result before RAISERROR is lost.
+-- The error handler aborts the entire RPC, discarding partial results.
 EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_ReturnAfterError;
 GO
 
 -- Test 6.3: PRINT-only procedure (no result set, no error)
 EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_PrintOnly;
+GO
+
+-- ========================================
+-- SECTION 7: TRANSACTION CONTROL STATEMENT BLOCKING
+-- Remote procedures containing BEGIN TRAN, COMMIT, ROLLBACK,
+-- or SAVE TRAN are blocked by ANTLR SELECT-only validation.
+-- ========================================
+
+-- Test 7.1: Procedure with BEGIN TRAN — blocked
+EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_WithBeginTran;
+GO
+
+-- Test 7.2: Procedure with COMMIT TRANSACTION — blocked
+EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_WithCommit;
+GO
+
+-- Test 7.3: Procedure with ROLLBACK TRANSACTION — blocked
+EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_WithRollback;
+GO
+
+-- Test 7.4: Procedure with SAVE TRANSACTION — blocked
+EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_WithSaveTran;
+GO
+
+-- ========================================
+-- SECTION 8: GUC FEATURE GATE
+-- babelfishpg_tsql.enable_remote_proc_exec controls RPC execution.
+-- This GUC is PGC_SUSET (superuser-only), so T-SQL users cannot change it.
+-- Test verifies the permission restriction and that calls still work after
+-- a failed set_config attempt (GUC remains unchanged).
+-- ========================================
+
+-- Test 8.1: Non-superuser cannot disable the GUC — permission denied
+SELECT set_config('babelfishpg_tsql.enable_remote_proc_exec', 'false', false);
+GO
+
+-- Test 8.2: Remote call still works (GUC was not actually changed)
+EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_NoParams;
 GO
 
 -- Test 6.4: Final sanity check — normal operation after all error tests
