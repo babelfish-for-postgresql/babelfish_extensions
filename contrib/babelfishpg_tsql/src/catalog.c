@@ -643,7 +643,7 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 		if (!missingOk)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("Could find logical schema name for: \"%s\"", physical_schema_name)));
+					 errmsg("Could not find logical schema name for: \"%s\"", physical_schema_name)));
 		return NULL;
 	}
 	datum = SysCacheGetAttr(SYSNAMESPACENAME, tuple, Anum_namespace_ext_orig_name, &isnull);
@@ -4459,7 +4459,7 @@ exec_internal_grant_on_function(Oid objectId)
 	object_name = NameStr(procedureStruct->proname);
 	phy_sch_oid = procedureStruct->pronamespace;
 	schema = get_namespace_name(phy_sch_oid);
-	logicalschema = get_logical_schema_name(schema, true);
+	logicalschema = get_logical_schema_name(schema, false);
 	object_type = procedureStruct->prokind;
 
 	/* Fetch the relation */
