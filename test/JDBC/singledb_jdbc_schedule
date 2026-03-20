@@ -29,3 +29,6 @@ ignore#!#user_token-dep-vu-verify
 ignore#!#proc_ownership_chaining-vu-prepare
 ignore#!#proc_ownership_chaining-vu-verify
 ignore#!#proc_ownership_chaining-vu-cleanup
+ignore#!#Test-spatial-functions-3-vu-prepare
+ignore#!#Test-spatial-functions-3-vu-verify
+ignore#!#Test-spatial-functions-3-vu-cleanup

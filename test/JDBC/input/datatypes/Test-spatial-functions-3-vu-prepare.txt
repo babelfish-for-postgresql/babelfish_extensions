@@ -1,3 +1,58 @@
+CREATE DATABASE TestGeospatialParse_DB;
+
+USE TestGeospatialParse_DB;
+
+CREATE TABLE TestGeospatialParse_GeometryTable3 ( ID INT PRIMARY KEY, GeomColumn geometry ); 
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (1, geometry::Parse('POINT(3.0 4.0)'));
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (2, geometry::Parse('LINESTRING(0 0, 1 1, 2 2)'));
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (3, geometry::Parse('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'));
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (4, geometry::Parse('POINT(1.0 2.0)'));
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (5, geometry::Parse('LINESTRING(0 0, 5 5)'));
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (7, geometry::Parse('LINESTRING(0 0 0, 1 1 1, 2 2 2)'));
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (8, geometry::Parse('LINESTRING M(0 0 0, 1 1 1, 2 2 2)'));
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (9, geometry::Parse('LINESTRING(0 0 0 0, 1 1 1 1, 2 2 2 2)'));
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (10, geometry::Parse('POINT(1 2 3)'));
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (11, geometry::Parse('POINT M(1 2 3)'));
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (12, geometry::Parse('POINT(1 2 3 4)'));
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (13, geometry::Parse('POLYGON((0 0 0, 0 1 1, 1 1 1, 1 0 0, 0 0 0))'));
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (14, geometry::Parse('POLYGON M((0 0 0, 0 1 1, 1 1 1, 1 0 0, 0 0 0))'));
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (15, geometry::Parse('POLYGON((0 0 0 0, 0 1 1 1, 1 1 1 1, 1 0 0 0, 0 0 0 0))'));
+
+CREATE TABLE TestGeospatialParse_GeographyTable3 ( ID INT PRIMARY KEY, GeogColumn geography ); 
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (1, geography::Parse('POINT(3.0 4.0)'));
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (2, geography::Parse('LINESTRING(0 0, 1 1, 2 2)'));
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (3, geography::Parse('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'));
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (4, geography::Parse('POINT(1.0 2.0)'));
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (5, geography::Parse('LINESTRING(0 0, 5 5)'));
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (6, geography::Parse('LINESTRING(0 0 0, 1 1 1, 2 2 2)'));
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (7, geography::Parse('LINESTRING M(0 0 0, 1 1 1, 2 2 2)'));
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (8, geography::Parse('LINESTRING(0 0 0 0, 1 1 1 1, 2 2 2 2)'));
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (9, geography::Parse('POINT(1 2 3)'));
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (10, geography::Parse('POINT M(1 2 3)'));
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (11, geography::Parse('POINT(1 2 3 4)'));
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (12, geography::Parse('POLYGON((0 0 0, 0 1 1, 1 1 1, 1 0 0, 0 0 0))'));
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (13, geography::Parse('POLYGON M((0 0 0, 0 1 1, 1 1 1, 1 0 0, 0 0 0))'));
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (14, geography::Parse('POLYGON((0 0 0 0, 0 1 1 1, 1 1 1 1, 1 0 0 0, 0 0 0 0))'));
+
+
+USE MASTER
+
+CREATE TABLE TestGeospatialParse_GeomTemp3 ( ID INT PRIMARY KEY, GeomColumn geometry ); 
+INSERT INTO TestGeospatialParse_GeomTemp3 (ID, GeomColumn) VALUES (1, geometry::Parse('POINT(3.0 4.0)'));
+INSERT INTO TestGeospatialParse_GeomTemp3 (ID, GeomColumn) VALUES (2, geometry::Parse('LINESTRING(0 0, 1 1)'));
+INSERT INTO TestGeospatialParse_GeomTemp3 (ID, GeomColumn) VALUES (3, geometry::Parse('POLYGON((0 0, 0 2, 2 2, 2 0, 0 0))'));
+INSERT INTO TestGeospatialParse_GeomTemp3 (ID, GeomColumn) VALUES (4, geometry::Parse('POINT(47.65100 -22.34900)'));
+
+CREATE TABLE TestGeospatialParse_GeogTemp3 ( ID INT PRIMARY KEY, GeogColumn geography ); 
+INSERT INTO TestGeospatialParse_GeogTemp3 (ID, GeogColumn) VALUES (1, geography::Parse('POINT(3.0 4.0)'));
+INSERT INTO TestGeospatialParse_GeogTemp3 (ID, GeogColumn) VALUES (2, geography::Parse('LINESTRING(0 0, 1 1)'));
+INSERT INTO TestGeospatialParse_GeogTemp3 (ID, GeogColumn) VALUES (3, geography::Parse('POLYGON((0 0, 0 2, 2 2, 2 0, 0 0))'));
+INSERT INTO TestGeospatialParse_GeogTemp3 (ID, GeogColumn) VALUES (4, geography::Parse('POINT(47.65100 -22.34900)'));
+
+CREATE VIEW TestGeospatialParse_ParseGeomView3 AS SELECT GeomColumn.STAsText() AS ParsedGeom FROM TestGeospatialParse_GeomTemp3 ORDER BY GeomColumn.STX;
+
+CREATE VIEW TestGeospatialParse_ParseGeogView3 AS SELECT GeogColumn.STAsText() AS ParsedGeog FROM TestGeospatialParse_GeogTemp3 ORDER BY GeogColumn.Lat;
+
 CREATE DATABASE TestGeospatialMethods3_DB;
 
 USE TestGeospatialMethods3_DB;
