@@ -2413,6 +2413,7 @@ extern const char *pltsql_get_insert_exec_column_list(void);
 extern void pltsql_insert_exec_enter_trycatch(void);
 extern void pltsql_insert_exec_exit_trycatch(void);
 extern bool pltsql_insert_exec_in_trycatch(void);
+extern bool pltsql_insert_exec_should_cleanup_on_trycatch(void);
 extern Oid pltsql_get_and_clear_insert_exec_temp_table_for_cleanup(void);
 extern DestReceiver *CreateInsertExecDestReceiver(Oid temp_table_oid);
 extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list);

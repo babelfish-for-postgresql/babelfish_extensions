@@ -1754,8 +1754,13 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 					 * 2. The error has been caught and execution will continue to the CATCH block
 					 * 3. If we don't drop it, subsequent INSERT EXEC statements will fail
 					 *    with "relation already exists"
+					 * 
+					 * We only clean up if the TRY-CATCH is at the same level or higher than
+					 * where INSERT EXEC was started. If the TRY-CATCH is inside the procedure
+					 * being executed (deeper call stack), we should NOT clean up because the
+					 * INSERT EXEC is still in progress.
 					 */
-					if (pltsql_insert_exec_active())
+					if (pltsql_insert_exec_should_cleanup_on_trycatch())
 					{
 						Oid temp_oid = pltsql_get_insert_exec_temp_table_oid();
 						

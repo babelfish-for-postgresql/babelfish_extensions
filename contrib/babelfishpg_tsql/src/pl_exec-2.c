@@ -53,6 +53,7 @@ static char *insert_exec_column_list = NULL;
 static int insert_exec_base_tran_count = 0;  /* NestedTranCount when INSERT EXEC started */
 static int insert_exec_saved_nested_tran_count = 0;  /* Original NestedTranCount to restore on cleanup */
 static bool insert_exec_flush_in_progress = false;  /* True during flush phase to block commit_stmt */
+static int insert_exec_call_stack_depth = 0;  /* Call stack depth when INSERT EXEC was started */
 
 /* DestReceiver struct for INSERT EXEC */
 typedef struct
@@ -82,6 +83,8 @@ void
 pltsql_set_insert_exec_context_info(const char *target_table, const char *column_list)
 {
 	MemoryContext oldcontext;
+	PLExecStateCallStack *cur;
+	int depth = 0;
 	
 	/* Clear any previous context */
 	if (insert_exec_target_table)
@@ -100,6 +103,15 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 	insert_exec_target_table = target_table ? pstrdup(target_table) : NULL;
 	insert_exec_column_list = column_list ? pstrdup(column_list) : NULL;
 	MemoryContextSwitchTo(oldcontext);
+	
+	/* Record the call stack depth when INSERT EXEC was started */
+	cur = exec_state_call_stack;
+	while (cur != NULL)
+	{
+		depth++;
+		cur = cur->next;
+	}
+	insert_exec_call_stack_depth = depth;
 	
 	/*
 	 * Record the NestedTranCount when INSERT EXEC started.
@@ -171,6 +183,7 @@ pltsql_clear_insert_exec_context(void)
 	insert_exec_temp_table_oid = InvalidOid;
 	insert_exec_base_tran_count = 0;  /* Reset base transaction count */
 	insert_exec_saved_nested_tran_count = 0;  /* Reset saved nested tran count */
+	insert_exec_call_stack_depth = 0;  /* Reset call stack depth */
 	if (insert_exec_target_table)
 	{
 		pfree(insert_exec_target_table);
@@ -296,6 +309,45 @@ pltsql_insert_exec_in_trycatch(void)
 	}
 	
 	return false;
+}
+
+/*
+ * Check if we should clean up INSERT EXEC context when a TRY-CATCH catches an error.
+ * 
+ * This is used in the sigsetjmp handler to determine if we should clean up the
+ * INSERT EXEC context. We should only clean up if the TRY-CATCH that catches
+ * the error is at the same level or higher than where INSERT EXEC was started.
+ * 
+ * If the TRY-CATCH is inside the procedure being executed (deeper call stack),
+ * we should NOT clean up because the INSERT EXEC is still in progress.
+ * 
+ * Returns true if we should clean up, false otherwise.
+ */
+bool
+pltsql_insert_exec_should_cleanup_on_trycatch(void)
+{
+	PLExecStateCallStack *cur;
+	int current_depth = 0;
+	
+	if (insert_exec_target_table == NULL)
+		return false;
+	
+	/* Get current call stack depth */
+	cur = exec_state_call_stack;
+	while (cur != NULL)
+	{
+		current_depth++;
+		cur = cur->next;
+	}
+	
+	/*
+	 * If current depth is greater than INSERT EXEC depth, the TRY-CATCH
+	 * is inside the procedure being executed, so don't clean up.
+	 * 
+	 * If current depth is equal to or less than INSERT EXEC depth, the
+	 * TRY-CATCH is at the same level or higher, so clean up.
+	 */
+	return current_depth <= insert_exec_call_stack_depth;
 }
 
 /*
