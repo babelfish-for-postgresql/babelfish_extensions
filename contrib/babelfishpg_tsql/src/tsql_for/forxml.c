@@ -19,14 +19,13 @@
 #include "utils/typcache.h"
 #include "catalog/pg_type.h"
 #include "catalog/namespace.h"
-
-#include <regex.h>
+#include "catalog/pg_collation.h"
 
 #include "tsql_for.h"
 
 static StringInfo for_xml_ffunc(PG_FUNCTION_ARGS);
-static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64);
-static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64);
+static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil);
+static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil);
 static void update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, bool binary_base64, int i);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_xml_sfunc);
@@ -39,10 +38,28 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	int			mode = PG_GETARG_INT32(2);
 	char	   *element_name = PG_ARGISNULL(3) ? "row" : text_to_cstring(PG_GETARG_TEXT_PP(3));
 	bool		binary_base64 = PG_GETARG_BOOL(4);
+	bool 		elements = false;
+	bool 		xsinil = false;
 	char	   *root_name;
 
 	MemoryContext agg_context;
 	MemoryContext old_context;
+
+	/*
+ 	* Backward compatibility: Check if ELEMENTS parameters are provided.
+ 	* Old 6-argument version (deprecated_in_5_6_0): state, rec, mode, element_name, binary_base64, root_name
+ 	* New 8-argument version (5.6.0+): adds elements, xsinil parameters
+ 	*/
+	if (PG_NARGS() > 8)
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+				 errmsg("too many arguments")));
+	
+	if (PG_NARGS() > 6)
+	{
+		elements = PG_GETARG_BOOL(6);
+		xsinil = PG_GETARG_BOOL(7);
+	}
 
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
@@ -68,7 +85,7 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	switch (mode)
 	{
 		case TSQL_FORXML_RAW:	/* FOR XML RAW */
-			tsql_row_to_xml_raw(state, record, element_name, binary_base64);
+			tsql_row_to_xml_raw(state, record, element_name, binary_base64, elements, xsinil);
 			break;
 		case TSQL_FORXML_AUTO:
 
@@ -84,7 +101,7 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 					 errmsg("AUTO mode is not supported")));
 			break;
 		case TSQL_FORXML_PATH:	/* FOR XML PATH */
-			tsql_row_to_xml_path(state, record, element_name, binary_base64);
+			tsql_row_to_xml_path(state, record, element_name, binary_base64, xsinil);
 			break;
 		case TSQL_FORXML_EXPLICIT:
 
@@ -125,6 +142,10 @@ tsql_query_to_xml_text_ffunc(PG_FUNCTION_ARGS)
 {
 	StringInfo	res = for_xml_ffunc(fcinfo);
 
+	/* return NULL if empty result (i.e. no rows) */
+	if (res->len == 0)
+		PG_RETURN_NULL();
+
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(res->data, res->len));
 }
 
@@ -132,37 +153,48 @@ static StringInfo
 for_xml_ffunc(PG_FUNCTION_ARGS)
 {
 	StringInfo	res = makeStringInfo();
-	char	   *state = ((StringInfo) PG_GETARG_POINTER(0))->data;
+	char	   *state;
+
+	if (PG_ARGISNULL(0))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("unexpected null state in FOR XML processing")));
+
+	state = ((StringInfo) PG_GETARG_POINTER(0))->data;
 
 	if (state[0] == '{')		/* '{' indicates that root was specified, so
 								 * add the corresponding end tag */
 	{
-		/* set up regex to match first tag */
-		char	   *pattern = "<([^\\/>]+)[\\/]*>";
-		regex_t		preg;
-		regmatch_t	match,
-					pmatch[1];
-		StringInfoData root;
+		/*
+		 * Using PostgreSQL's textregexsubstr() to extract the root tag name.
+		 * simpler than manual regex handling and leverages PostgreSQL's 
+		 * cached regex compilation and proper memory management.
+		 */
+		text	   *state_text = cstring_to_text(state);
+		text	   *pattern_text = cstring_to_text("<([^\\/>]+)[\\/]*>");
+		Datum		root_tag_datum;
+		text	   *root_tag_text;
+		char	   *root_tag;
 
-		if (regcomp(&preg, pattern, REG_EXTENDED) != 0)
+		/* Extract the root tag name using textregexsubstr */
+		root_tag_datum = DirectFunctionCall2Coll(textregexsubstr, 
+											 C_COLLATION_OID,
+											 PointerGetDatum(state_text),
+											 PointerGetDatum(pattern_text));
+
+		if (DatumGetPointer(root_tag_datum) == NULL)
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("unexpected error parsing xml root tag")));
+		}
 
-		if (regexec(&preg, state, 1, pmatch, 0) != 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("unexpected error parsing xml root tag")));
+		root_tag_text = DatumGetTextPP(root_tag_datum);
+		root_tag = text_to_cstring(root_tag_text);
 
-		match = pmatch[0];
-		/* we will be bashing the string in state, so copy it into res first */
+		/* Copy state content (skip the '{' marker) and add closing tag */
 		appendStringInfoString(res, state + 1);
-
-		/* copy the root tag */
-		state[match.rm_eo - 1] = '\0';
-		initStringInfo(&root);
-		appendStringInfoString(&root, state + match.rm_so + 1);
-		appendStringInfo(res, "</%s>", root.data);
+		appendStringInfo(res, "</%s>", root_tag);
 	}
 	else
 	{
@@ -175,14 +207,14 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
  * Map an SQL row to an XML element in RAW mode.
  */
 static void
-tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64)
+tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil)
 {
 	HeapTupleHeader td;
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc;
-	HeapTupleData tmptup;
-	HeapTuple	tuple;
+	Oid             tupType;
+	int32           tupTypmod;
+	TupleDesc       tupdesc;
+	HeapTupleData   tmptup;
+	HeapTuple       tuple;
 
 	td = DatumGetHeapTupleHeader(record);
 
@@ -196,16 +228,27 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 	tmptup.t_data = td;
 	tuple = &tmptup;
 
-	/* each tuple is its own tag in raw mode */
-	appendStringInfo(state, "<%s", element_name);
+	/* Output opening tag */
+	if (elements)
+	{
+		/* ELEMENTS mode: <row><col>value</col></row> */
+		if (xsinil)
+			appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
+		else
+			appendStringInfo(state, "<%s>", element_name);
+	}
+	else
+	{
+		/* ATTRIBUTES mode: <row col="value"/> */
+		appendStringInfo(state, "<%s", element_name);
+	}
 
-	/* process the tuple into attributes */
 	for (int i = 0; i < tupdesc->natts; i++)
 	{
-		char	   *colname;
-		Datum		colval;
-		bool		isnull;
-		Oid			datatype_oid;
+		char       *colname;
+		Datum       colval;
+		bool        isnull;
+		Oid         datatype_oid;
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 
 		if (att->attisdropped)
@@ -217,14 +260,42 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 
 		update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, binary_base64, i);
 
-		if (!isnull)
+		if (elements)
 		{
-			appendStringInfo(state, " %s=\"%s\"",
-							 colname,
-							 map_sql_value_to_xml_value(colval, datatype_oid, true));
+			/* ELEMENTS mode output */
+			if (!isnull)
+			{
+				/* Normal element: <col>value</col> */
+				appendStringInfo(state, "<%s>%s</%s>",
+								 colname,
+								 map_sql_value_to_xml_value(colval, datatype_oid, true),
+								 colname);
+			}
+			else if (xsinil)
+			{
+				/* XSINIL: <col xsi:nil="true"/> */
+				appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
+			}
+			/* else: ABSENT - skip NULL columns (do nothing) */
+		}
+		else
+		{
+			/* ATTRIBUTES mode output */
+			if (!isnull)
+			{
+				appendStringInfo(state, " %s=\"%s\"",
+								 colname,
+								 map_sql_value_to_xml_value(colval, datatype_oid, true));
+			}
 		}
 	}
-	appendStringInfoString(state, "/>");
+
+	/* Output closing tag */
+	if (elements)
+		appendStringInfo(state, "</%s>", element_name);
+	else
+		appendStringInfoString(state, "/>");
+
 	ReleaseTupleDesc(tupdesc);
 }
 
@@ -256,7 +327,7 @@ validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tup
 			seen_non_att_centric = true;
 	}
 
-	if(seen_att_centric && element_name[0] == '\0')
+	if(seen_att_centric && (element_name && strlen(element_name) == 0))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION),
@@ -271,17 +342,18 @@ validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tup
  * Map an SQL row to an XML element in PATH mode.
  */
 static void
-tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64)
+tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil)
 {
 	HeapTupleHeader td;
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc;
-	HeapTupleData tmptup;
-	HeapTuple	tuple;
-	bool		allnull = true;
-	bool		has_att_centric = false;
-	bool		first = true;
+	Oid             tupType;
+	int32           tupTypmod;
+	TupleDesc       tupdesc;
+	HeapTupleData   tmptup;
+	HeapTuple       tuple;
+	bool            allnull = true;
+	bool            has_att_centric = false;
+	bool            first = true;
+	int             inital_state_len = state->len;
 
 	td = DatumGetHeapTupleHeader(record);
 
@@ -301,14 +373,23 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 	 * each tuple is either contained in a "row" tag, or standalone if the
 	 * element_name is an empty string
 	 */
-	if (element_name[0] != '\0')
+	if (element_name && strlen(element_name) > 0)
 	{
 		/* if "''" is the input path, ignore it per TSQL behavior */
 		if (has_att_centric)
-			appendStringInfo(state, "<%s ", element_name);
+		{
+			if (xsinil)
+				appendStringInfo(state, "<%s " XML_XMLNS_XSI, element_name);
+			else
+				appendStringInfo(state, "<%s", element_name);
+		}
 		else
-			appendStringInfo(state, "<%s>", element_name);
-
+		{
+			if (xsinil)
+				appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
+			else
+				appendStringInfo(state, "<%s>", element_name);
+		}
 	}
 
 	/* process the tuple into tags */
@@ -334,7 +415,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 			allnull = false;
 			if(NameStr(att->attname)[0] == '@')
 			{
-				appendStringInfo(state, "%s=\"%s\" ",
+				appendStringInfo(state, " %s=\"%s\"",
 								 NameStr(att->attname)+1,
 								 map_sql_value_to_xml_value(colval, datatype_oid, true));
 			}
@@ -353,31 +434,75 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 				}
 				else
 				{
-					appendStringInfo(state, "<%s>%s</%s>",
-									 colname,
-									 map_sql_value_to_xml_value(colval, datatype_oid, true),
-									 colname);
+					/* When PATH('') is used with XSINIL, add xmlns to each element */
+					if ((element_name && strlen(element_name) == 0) && xsinil)
+						appendStringInfo(state, "<%s " XML_XMLNS_XSI ">%s</%s>",
+										 colname,
+										 map_sql_value_to_xml_value(colval, datatype_oid, true),
+										 colname);
+					else
+						appendStringInfo(state, "<%s>%s</%s>",
+										 colname,
+										 map_sql_value_to_xml_value(colval, datatype_oid, true),
+										 colname);
+				}
+			}
+		}
+		else if (xsinil)
+		{
+			/*
+     		* XSINIL: Output NULL columns with xsi:nil="true".
+     		* Skip attribute-centric columns (prefixed with '@') as
+     		* xsi:nil is only valid on XML elements, not on attributes.
+     		*/
+			if (NameStr(att->attname)[0] != '@')
+			{
+				allnull = false;
+
+				if (has_att_centric && first)
+				{
+					appendStringInfoChar(state, '>');
+					first = false;
+				}
+
+				if (strncmp(NameStr(att->attname), "?column?", 8) != 0)
+				{
+					/* When PATH('') is used with XSINIL, add xmlns to each element */
+					if (element_name && strlen(element_name) == 0)
+						appendStringInfo(state, "<%s " XML_XMLNS_XSI " " XML_XSI_NIL "/>", colname);
+					else
+						appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
 				}
 			}
 		}
 	}
 
-	if (allnull)
-	{
-		/*
-		 * If all the column values are nulls, this element should be
-		 * <element_name/>, modify the already appended <element_name> to
-		 * <element_name/>.
-		 */
-		state->data[state->len - 1] = '/';
-		appendStringInfoString(state, ">");
-	}
-	else if (element_name[0] != '\0')
+	if (element_name && strlen(element_name) > 0)
 	{
 		if (has_att_centric && first)
+		{
 			appendStringInfoString(state, "/>");
+		}
 		else
-			appendStringInfo(state, "</%s>", element_name);
+		{
+			if (allnull)
+			{
+				/*
+				 * At this point, state = <output from previous rows> + '<element_name>'
+				 * 
+				 * If all the column values are nulls, this element should be
+				 * <element_name/>, modify the already appended <element_name> to
+				 * <element_name/>.
+				 */
+				if (state->len > inital_state_len)	// sanity check, should always be true
+				{
+					state->data[state->len - 1] = '/';
+					appendStringInfoString(state, ">");
+				}
+			}
+			else
+				appendStringInfo(state, "</%s>", element_name);
+		}
 	}
 	ReleaseTupleDesc(tupdesc);
 }

@@ -124,7 +124,7 @@ BABEL-4516
 babel_417
 BABEL-493
 BABEL-4888
-# BABEL_539
+BABEL_539
 BABEL-621
 BABEL-728
 BABEL-733
@@ -646,3 +646,5 @@ BABEL-5788
 BABEL-1664-before-16_10-or-17_6
 babel_string_to_money_reg
 babel_convert_with_style
+forxml-raw-elements-before-17_9-or-18_3
+forxml-path-elements-before-17_10-or-18_4

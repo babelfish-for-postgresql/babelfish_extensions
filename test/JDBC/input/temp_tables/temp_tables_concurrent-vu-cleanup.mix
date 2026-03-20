@@ -7,3 +7,10 @@ GO
 
 DROP TABLE non_temp_table_2
 GO
+
+-- tsql
+DROP LOGIN templogin1
+GO
+
+DROP LOGIN templogin2
+GO

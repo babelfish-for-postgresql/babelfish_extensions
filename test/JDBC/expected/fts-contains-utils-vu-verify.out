@@ -1,3 +1,13 @@
+-- enable FULLTEXT
+-- tsql user=jdbc_user password=12345678
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
 SELECT * FROM fts_rewrite_prepare_v1;
 GO
 ~~START~~
@@ -170,5 +180,242 @@ go
 ~~START~~
 text
 onespecialCharscat2e09616b53f5138735a7d0a79e78e804etwo
+~~END~~
+
+
+-- Search for other languages
+SELECT * FROM fts_table WHERE CONTAINS((
+    nvarchar_column, 
+    ntext_column, 
+    nchar_column), N'"服务器"')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
+
+
+-- Search for English phrase
+SELECT * FROM fts_table WHERE CONTAINS((
+    text_column, 
+    varchar_column, 
+    ntext_column), '"index search"')
+GO
+~~START~~
+int#!#text#!#char#!#nvarchar#!#varchar#!#ntext#!#nchar
+2#!#Row 2: ?? Japanese index ? extended text for full-text search testing#!#CHAR2:???                                         #!#処理 Japanese index 🌍 | ID:2#!#VARCHAR2: database index search#!#NTEXT Row 2: 処理 Japanese index 🌍 詳細情報 detailed index server information with 処理 and 服务器#!#NCHAR2:服务器2                                                                
+17#!#Row 17: Search index with ???? ? extended text for full-text search testing#!#CHAR17:?index                                     #!#Search index with システム ⭐ | ID:17#!#VARCHAR17: database index search#!#NTEXT Row 17: Search index with システム ⭐ 詳細情報 detailed index system information with システム and 表格#!#NCHAR17:♪♫♬17                                                              
+32#!#Row 32: Testing index testing ??? ? extended text for full-text search testing#!#CHAR32:???                                        #!#Testing index testing テスト 🌍 | ID:32#!#VARCHAR32: database index search#!#NTEXT Row 32: Testing index testing テスト 🌍 詳細情報 detailed index testing information with テスト and 表格#!#NCHAR32:表格32                                                               
+~~END~~
+
+
+-- Search for other language with english
+SELECT * FROM fts_table WHERE CONTAINS((
+    nvarchar_column, 
+    ntext_column), '"column with インデックス"')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
+
+
+-- Search for french text with diatrics
+SELECT * FROM fts_table WHERE CONTAINS((
+    text_column, 
+    varchar_column, 
+    ntext_column), '"French données"')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
+
+
+-- Search for mixed language content
+DECLARE @a NVARCHAR(100)
+SET @a = '"testing AND N''システム 信息''"'
+SELECT * FROM fts_table WHERE CONTAINS((
+    nvarchar_column, 
+    ntext_column), @a)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
+
+
+-- Search for text with special symbols
+SELECT * FROM fts_table WHERE CONTAINS((
+    text_column, 
+    varchar_column), '"sp$/df*"')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Special characters in the prefix term search condition are not currently supported in Babelfish)~~
+
+
+-- Search for multi case content
+SELECT * FROM fts_table WHERE CONTAINS((
+    text_column,
+    char_column, 
+    nchar_column), '"Search SERVER wITh"')
+GO
+~~START~~
+int#!#text#!#char#!#nvarchar#!#varchar#!#ntext#!#nchar
+11#!#Row 11: Search server with ??? ? extended text for full-text search testing#!#CHAR11:±×÷                                        #!#表格 data 🔍 | ID:11#!#VARCHAR11: database server search#!#NTEXT Row 11: Search server with テスト 🔍 詳細情報 detailed server data information with テスト and 表格#!#NCHAR11:±×÷11                                                              
+15#!#Row 15: Search server with ???? ? ???? extended text for full-text search testing#!#CHAR15:????                                       #!#server システム | ID:15#!#VARCHAR15: server table query#!#NTEXT Row 15: Search server with システム 💾 αβγδ 詳細情報 detailed server table information with システム and 搜索#!#NCHAR15:serve15                                                            
+~~END~~
+
+
+-- 21. Search for emojis
+SELECT * FROM fts_table WHERE CONTAINS((
+    text_column, 
+    nvarchar_column, 
+    ntext_column), '"N''🔍'' OR N''📊''"')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
+
+
+-- Search on Views
+CREATE VIEW vw_JapaneseContent AS
+SELECT * FROM fts_table WHERE CONTAINS((
+    nvarchar_column, 
+    ntext_column, 
+    nchar_column), N'"テスト"')
+GO
+
+CREATE VIEW vw_MultilingualContent AS
+SELECT * FROM fts_table WHERE CONTAINS((
+    varchar_column, 
+    ntext_column), '""Eng*"" AND N''"requête""''')
+GO
+
+-- Create Stored Procedures
+CREATE PROCEDURE sp_SearchLanguageContent
+    @language NVARCHAR(50)
+AS
+BEGIN
+    SELECT * FROM fts_table WHERE CONTAINS((
+        varchar_column, 
+        ntext_column), @language)
+END
+GO
+
+CREATE PROCEDURE sp_SearchMultipleColumns
+    @searchTerm NVARCHAR(100),
+    @includeTextColumn BIT = 1,
+    @includeNVarcharColumn BIT = 1
+AS
+BEGIN
+    IF @includeTextColumn = 1 AND @includeNVarcharColumn = 1
+        SELECT * FROM fts_table WHERE CONTAINS((
+            text_column, 
+            nvarchar_column), @searchTerm)
+    ELSE IF @includeTextColumn = 1
+        SELECT * FROM fts_table WHERE CONTAINS((
+            text_column), @searchTerm)
+    ELSE
+        SELECT * FROM fts_table WHERE CONTAINS((
+            nvarchar_column), @searchTerm)
+END
+GO
+
+CREATE PROCEDURE sp_SearchMixedLanguages
+    @language1 NVARCHAR(50),
+    @language2 NVARCHAR(50)
+AS
+BEGIN
+    SELECT * FROM fts_table WHERE CONTAINS((
+        nvarchar_column, 
+        ntext_column), @language1 + ' AND ' + @language2)
+END
+GO
+
+-- Common Table Expressions (Wrapped in Procedures for Reuse)
+CREATE PROCEDURE sp_MultiCTESearch
+AS
+BEGIN
+    WITH JapaneseCTE AS (
+        SELECT * FROM fts_table WHERE CONTAINS((
+            nvarchar_column, 
+            ntext_column), N'ευρετήριο')
+    ),
+    EnglishCTE AS (
+        SELECT * FROM fts_table WHERE CONTAINS((
+            text_column, 
+            varchar_column), '"English"')
+    )
+    SELECT j.*, e.text_column as english_text
+    FROM JapaneseCTE j
+    FULL OUTER JOIN EnglishCTE e ON j.id = e.id
+END
+GO
+
+-- Create Function for Reusable Search
+CREATE FUNCTION fn_SearchContent
+(
+    @searchTerm NVARCHAR(100)
+)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT * FROM fts_table WHERE CONTAINS((
+        text_column, 
+        varchar_column, 
+        nvarchar_column), @searchTerm)
+)
+GO
+
+-- Execute Views
+SELECT * FROM vw_JapaneseContent
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
+
+
+SELECT * FROM vw_MultilingualContent
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
+
+
+-- Execute Stored Procedures
+EXEC sp_SearchLanguageContent @language = N'" 测试"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
+
+
+-- Execute CTE Procedures
+EXEC sp_MultiCTESearch
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
+
+
+-- Complex Execution Examples
+-- Combining Function with CTE
+WITH FunctionResults AS (
+    SELECT * FROM fts_table 
+    WHERE CONTAINS((varchar_column), '"English"')
+)
+SELECT * FROM FunctionResults 
+GO
+~~START~~
+int#!#text#!#char#!#nvarchar#!#varchar#!#ntext#!#nchar
+40#!#Row 40: English column with system and ? extended text for full-text search testing#!#CHAR40:??                                         #!#column 処理 | ID:40#!#VARCHAR40: English column with system and ?#!#NTEXT Row 40: English column with system and 🌍 詳細情報 detailed column system information with 処理 and 查询#!#NCHAR40:多言語40                                                              
+~~END~~
+
+
+-- disable FULLTEXT
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
+GO
+~~START~~
+text
+strict
 ~~END~~
 

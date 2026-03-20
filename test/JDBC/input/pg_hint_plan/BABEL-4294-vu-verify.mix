@@ -17,6 +17,7 @@ select COUNT( babel_4294_t3.val), babel_4294_t2.val from babel_4294_t1
 inner join babel_4294_t2 on babel_4294_t1.id = babel_4294_t2.babel_4294_t1_id
 inner join babel_4294_t3 on babel_4294_t1.id = babel_4294_t3.babel_4294_t1_id
 GROUP BY babel_4294_t2.val
+ORDER BY babel_4294_t2.val
 go
 
 -- Used force parallel mode to create a parallel worker

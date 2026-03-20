@@ -39,3 +39,15 @@ go
 
 drop view enr_view
 go
+
+drop function custom_adder;
+GO
+
+drop procedure p_def_cons;
+GO
+
+drop procedure p_sp_executesql_index;
+GO
+
+drop procedure p_sp_executesql_toast;
+GO

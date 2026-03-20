@@ -473,3 +473,5 @@ test_conv_text_to_string-before-15_2
 comparison_op_index_scan-before-15_2-or-14_7
 BABEL-5788
 babel_convert_with_style-before-14_8-or-15_3
+forxml-raw-elements-before-17_9-or-18_3
+forxml-path-elements-before-17_10-or-18_4

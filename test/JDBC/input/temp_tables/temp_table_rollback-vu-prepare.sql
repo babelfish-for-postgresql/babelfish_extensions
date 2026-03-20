@@ -94,3 +94,491 @@ BEGIN
     COMMIT TRAN 
 END
 GO
+
+CREATE FUNCTION func_get_sum_temp(@max_a int)
+RETURNS int
+AS
+BEGIN
+    DECLARE @result int;
+    SELECT @result = SUM(c) FROM #t_func_idx WHERE a <= @max_a;
+    RETURN @result;
+END
+GO
+
+-- Function with COUNT aggregation
+CREATE FUNCTION func_get_count_temp(@min_b int)
+RETURNS int
+AS
+BEGIN
+    DECLARE @result int;
+    SELECT @result = COUNT(*) FROM #t_func_idx WHERE b >= @min_b;
+    RETURN @result;
+END
+GO
+
+-- Function with MIN/MAX aggregation
+CREATE FUNCTION func_get_min_max_temp(@col char(1))
+RETURNS int
+AS
+BEGIN
+    DECLARE @result int;
+    IF @col = 'a'
+        SELECT @result = MAX(a) - MIN(a) FROM #t_func_idx;
+    ELSE IF @col = 'b'
+        SELECT @result = MAX(b) - MIN(b) FROM #t_func_idx;
+    ELSE
+        SELECT @result = MAX(c) - MIN(c) FROM #t_func_idx;
+    RETURN @result;
+END
+GO
+
+CREATE PROCEDURE test_temp_table_drop_intermediate_idx AS
+BEGIN
+    CREATE TABLE #t_procedure(a int default 1, b bigint primary key, c int);
+    CREATE INDEX #idx1 ON #t_procedure(a);
+    CREATE INDEX #idx2 ON #t_procedure(a,b);
+    SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname;
+    DROP INDEX #idx1 ON #t_procedure;
+    INSERT INTO #t_procedure(a, b, c) VALUES (4, 100, 2);
+    SELECT * FROM #t_procedure;
+END
+GO
+
+-- Procedure to test ALTER TABLE + INDEX + TRUNCATE (cache lookup fix)
+CREATE PROCEDURE test_alter_index_truncate_cache_fix
+AS
+BEGIN
+    SET XACT_ABORT ON
+
+    CREATE TABLE #t0_qdomqw (id int, name varchar(100) COLLATE polish_cs_as)
+
+    INSERT INTO #t0_qdomqw (id, name) VALUES (1282566819, 'geskxo')
+
+    BEGIN TRANSACTION
+        ALTER TABLE #t0_qdomqw ADD col_def_estp int DEFAULT 4
+        UPDATE #t0_qdomqw SET name = 'slukgofiuazhigik' WHERE id IS NOT NULL
+        SELECT * FROM #t0_qdomqw
+        CREATE INDEX idx_eefi ON #t0_qdomqw (id)
+        CREATE INDEX idx_eipj ON #t0_qdomqw (id)
+    COMMIT TRANSACTION
+
+    TRUNCATE TABLE #t0_qdomqw
+
+    SELECT * FROM #t0_qdomqw
+
+    DROP TABLE #t0_qdomqw
+
+    SET XACT_ABORT OFF
+END
+GO
+
+-- Cross Query Env Tests (BABEL-6268)
+CREATE PROC p_drop AS DROP TABLE #test
+GO
+
+CREATE PROC p_drop_multi AS 
+BEGIN 
+    DROP TABLE #temp_proc_test 
+END 
+GO
+
+CREATE PROC p_inner AS DROP TABLE #nested_test
+GO
+
+CREATE PROC p_outer AS EXEC p_inner
+GO
+
+CREATE PROC p_trans_drop AS 
+BEGIN 
+    BEGIN TRAN 
+        INSERT INTO #trans_test VALUES (2, 'during') 
+        DROP TABLE #trans_test 
+    COMMIT 
+END 
+GO
+
+CREATE PROC p_create_insert AS
+BEGIN
+    CREATE TABLE #proc_create(id int, name varchar(30))
+    INSERT INTO #proc_create VALUES (1, 'first')
+    INSERT INTO #proc_create VALUES (2, 'second')
+    SELECT * FROM #proc_create
+    DROP TABLE #proc_create
+END
+GO
+
+CREATE PROC p_update_delete AS
+BEGIN
+    UPDATE #update_delete_test SET status = 'processed' WHERE id = 1
+    DELETE FROM #update_delete_test WHERE value > 250
+    INSERT INTO #update_delete_test VALUES (4, 'new', 150)
+END
+GO
+
+CREATE PROC p_nested_inner AS
+BEGIN
+    INSERT INTO #nested_ops_test VALUES (2, 'from inner')
+    UPDATE #nested_ops_test SET data = 'updated by inner' WHERE id = 1
+END
+GO
+
+CREATE PROC p_nested_outer AS
+BEGIN
+    EXEC p_nested_inner
+    DELETE FROM #nested_ops_test WHERE id = 2
+    INSERT INTO #nested_ops_test VALUES (3, 'from outer')
+END
+GO
+
+CREATE PROC p_rollback_ops AS
+BEGIN
+    INSERT INTO #rollback_ops_test VALUES (2, 200.00)
+    BEGIN TRAN
+        UPDATE #rollback_ops_test SET amount = amount * 2
+        INSERT INTO #rollback_ops_test VALUES (3, 300.00)
+        DELETE FROM #rollback_ops_test WHERE id = 1
+        SELECT 'Inside transaction:' as label
+        SELECT * FROM #rollback_ops_test
+    ROLLBACK
+    SELECT 'After rollback:' as label
+END
+GO
+
+CREATE PROC p_multi_temp_ops AS
+BEGIN
+    CREATE TABLE #temp1(id int, name varchar(20))
+    CREATE TABLE #temp2(id int, ref_id int, value varchar(30))
+    
+    INSERT INTO #temp1 VALUES (1, 'first')
+    INSERT INTO #temp1 VALUES (2, 'second')
+    
+    INSERT INTO #temp2 VALUES (10, 1, 'ref to first')
+    INSERT INTO #temp2 VALUES (20, 2, 'ref to second')
+    
+    UPDATE #temp1 SET name = 'updated first' WHERE id = 1
+    DELETE FROM #temp2 WHERE ref_id = 2
+    
+    SELECT 'Temp1:' as label
+    SELECT * FROM #temp1
+    SELECT 'Temp2:' as label
+    SELECT * FROM #temp2
+    
+    DROP TABLE #temp1
+    DROP TABLE #temp2
+END
+GO
+
+CREATE PROC p_error_ops AS
+BEGIN
+    INSERT INTO #error_ops_test VALUES (2, 'valid insert')
+    UPDATE #error_ops_test SET data = 'updated' WHERE id = 1
+    
+    BEGIN TRY
+        INSERT INTO #error_ops_test VALUES (1, 'duplicate key') -- Should fail
+    END TRY
+    BEGIN CATCH
+        INSERT INTO #error_ops_test VALUES (3, 'error handled')
+        SELECT 'Error caught: ' + ERROR_MESSAGE() as error_info
+    END CATCH
+END
+GO
+
+CREATE PROC p_truncate_ops AS
+BEGIN
+    SELECT 'Before truncate:' as label
+    SELECT * FROM #truncate_test
+    
+    TRUNCATE TABLE #truncate_test
+    
+    INSERT INTO #truncate_test VALUES ('after truncate')
+    SELECT 'After truncate:' as label
+END
+GO
+
+CREATE PROC p_conditional_ops AS
+BEGIN
+    DECLARE @count int
+    SELECT @count = COUNT(*) FROM #conditional_test WHERE value > 100
+    
+    IF @count > 0
+    BEGIN
+        UPDATE #conditional_test SET status = 'high_value' WHERE value > 100
+        INSERT INTO #conditional_test VALUES (4, 'new_high', 200)
+    END
+    ELSE
+    BEGIN
+        DELETE FROM #conditional_test WHERE value < 60
+    END
+END
+GO
+
+-- INSERT INTO EXEC procedures
+CREATE PROC p_insert_exec_basic AS 
+BEGIN 
+    SELECT 1 as id, 'first' as name 
+    UNION ALL 
+    SELECT 2, 'second' 
+END
+GO
+
+CREATE PROC p_insert_exec_nested_inner AS
+BEGIN
+    SELECT 10 as id, 'inner data' as data
+END
+GO
+
+CREATE PROC p_insert_exec_nested_outer AS
+BEGIN
+    CREATE TABLE #temp_inner(id int, data varchar(50))
+    INSERT INTO #temp_inner EXEC p_insert_exec_nested_inner
+    INSERT INTO #temp_inner VALUES (20, 'outer data')
+    SELECT * FROM #temp_inner
+    DROP TABLE #temp_inner
+END
+GO
+
+CREATE PROC p_insert_exec_temp_ops AS
+BEGIN
+    CREATE TABLE #temp_ops(id int, status varchar(20), value int)
+    INSERT INTO #temp_ops VALUES (1, 'active', 100)
+    INSERT INTO #temp_ops VALUES (2, 'pending', 200)
+    UPDATE #temp_ops SET status = 'processed' WHERE id = 1
+    SELECT * FROM #temp_ops
+    DROP TABLE #temp_ops
+END
+GO
+
+CREATE PROC p_insert_exec_transaction AS
+BEGIN
+    CREATE TABLE #temp_trans(id int, amount decimal(10,2))
+    INSERT INTO #temp_trans VALUES (1, 100.00)
+    BEGIN TRAN
+        INSERT INTO #temp_trans VALUES (2, 200.00)
+        UPDATE #temp_trans SET amount = amount * 2
+    ROLLBACK
+    SELECT * FROM #temp_trans
+    DROP TABLE #temp_trans
+END
+GO
+
+CREATE PROC p_insert_exec_multi_results AS
+BEGIN
+    SELECT 1 as id, 'first result' as info
+    SELECT 2 as id, 'second result' as info
+    SELECT 3 as id, 'third result' as info
+END
+GO
+
+CREATE PROC p_insert_exec_error_handling AS
+BEGIN
+    CREATE TABLE #temp_error(id int primary key, data varchar(20))
+    INSERT INTO #temp_error VALUES (1, 'original')
+    BEGIN TRY
+        INSERT INTO #temp_error VALUES (1, 'duplicate')
+    END TRY
+    BEGIN CATCH
+        INSERT INTO #temp_error VALUES (2, 'error handled')
+    END CATCH
+    SELECT * FROM #temp_error
+    DROP TABLE #temp_error
+END
+GO
+
+CREATE PROC p_insert_exec_table_var AS
+BEGIN
+    DECLARE @tv TABLE (id int, tv_data varchar(30))
+    INSERT INTO @tv VALUES (1, 'from table var')
+    INSERT INTO @tv VALUES (2, 'tv data')
+    SELECT * FROM @tv
+END
+GO
+
+CREATE PROC p_insert_exec_drop_table AS
+BEGIN
+    -- Return some data first
+    SELECT 100 as id, 'before drop' as data
+    
+    -- Drop the target table
+    DROP TABLE #insert_exec_drop_target
+    
+    -- Try to return more data (but table is already dropped)
+    SELECT 200 as id, 'after drop' as data
+END
+GO
+
+---------------------------------------------------------------------------
+-- DROP TABLE IF EXISTS + CREATE TABLE in procedures (BABEL-6097)
+---------------------------------------------------------------------------
+
+-- Basic DROP IF EXISTS + CREATE pattern
+CREATE PROC p_drop_if_exists_create AS 
+BEGIN 
+    DROP TABLE IF EXISTS #t 
+    CREATE TABLE #t(a int) 
+    INSERT INTO #t VALUES (1) 
+    SELECT * FROM #t 
+END
+GO
+
+-- Multiple DROP IF EXISTS + CREATE cycles
+CREATE PROC p_multi_drop_create AS 
+BEGIN 
+    DROP TABLE IF EXISTS #t 
+    CREATE TABLE #t(a int) 
+    INSERT INTO #t VALUES (1) 
+    
+    DROP TABLE IF EXISTS #t 
+    CREATE TABLE #t(a int, b varchar(20)) 
+    INSERT INTO #t VALUES (2, 'second') 
+    
+    SELECT * FROM #t 
+END
+GO
+
+-- DROP IF EXISTS + CREATE with different schemas
+CREATE PROC p_drop_create_schema_change AS 
+BEGIN 
+    DROP TABLE IF EXISTS #t 
+    CREATE TABLE #t(id int, name varchar(50)) 
+    INSERT INTO #t VALUES (1, 'first') 
+    
+    DROP TABLE #t 
+    CREATE TABLE #t(x int, y int, z varchar(100)) 
+    INSERT INTO #t VALUES (10, 20, 'changed schema') 
+    
+    SELECT * FROM #t 
+END
+GO
+
+-- DROP IF EXISTS + CREATE in transaction
+CREATE PROC p_trans_drop_create AS 
+BEGIN 
+    BEGIN TRAN 
+        DROP TABLE IF EXISTS #trans_t 
+        CREATE TABLE #trans_t(a int, b varchar(30)) 
+        INSERT INTO #trans_t VALUES (1, 'in transaction') 
+    COMMIT 
+    SELECT * FROM #trans_t 
+END
+GO
+
+-- DROP IF EXISTS + CREATE with rollback
+CREATE PROC p_rollback_drop_create AS 
+BEGIN 
+    CREATE TABLE #rb_t(original int) 
+    INSERT INTO #rb_t VALUES (100) 
+    
+    BEGIN TRAN 
+        DROP TABLE IF EXISTS #rb_t 
+        CREATE TABLE #rb_t(new_col varchar(20)) 
+        INSERT INTO #rb_t VALUES ('rolled back') 
+    ROLLBACK 
+    
+    SELECT * FROM #rb_t 
+END
+GO
+
+-- Multiple temp tables with DROP IF EXISTS + CREATE
+CREATE PROC p_multi_tables_drop_create AS 
+BEGIN 
+    DROP TABLE IF EXISTS #t1 
+    DROP TABLE IF EXISTS #t2 
+    
+    CREATE TABLE #t1(a int) 
+    CREATE TABLE #t2(b varchar(20)) 
+    
+    INSERT INTO #t1 VALUES (1) 
+    INSERT INTO #t2 VALUES ('test') 
+    
+    DROP TABLE IF EXISTS #t1 
+    CREATE TABLE #t1(x int, y int) 
+    INSERT INTO #t1 VALUES (10, 20) 
+    
+    SELECT * FROM #t1 
+    SELECT * FROM #t2 
+END
+GO
+
+-- DROP IF EXISTS + CREATE with indexes
+CREATE PROC p_drop_create_with_index AS 
+BEGIN 
+    DROP TABLE IF EXISTS #idx_t 
+    CREATE TABLE #idx_t(id int, name varchar(50)) 
+    CREATE INDEX idx1 ON #idx_t(id) 
+    INSERT INTO #idx_t VALUES (1, 'indexed') 
+    SELECT * FROM #idx_t 
+END
+GO
+
+-- DROP IF EXISTS + CREATE with constraints
+CREATE PROC p_drop_create_constraints AS 
+BEGIN 
+    DROP TABLE IF EXISTS #const_t 
+    CREATE TABLE #const_t(id int PRIMARY KEY, val int DEFAULT 100) 
+    INSERT INTO #const_t(id) VALUES (1) 
+    INSERT INTO #const_t VALUES (2, 200) 
+    SELECT * FROM #const_t 
+END
+GO
+
+-- DROP IF EXISTS + CREATE with ALTER TABLE
+CREATE PROC p_drop_create_alter AS 
+BEGIN 
+    DROP TABLE IF EXISTS #alter_t 
+    CREATE TABLE #alter_t(a int) 
+    INSERT INTO #alter_t VALUES (1) 
+    
+    ALTER TABLE #alter_t ADD b varchar(20) 
+    UPDATE #alter_t SET b = 'altered' 
+    
+    SELECT * FROM #alter_t 
+END
+GO
+
+-- Conditional DROP IF EXISTS + CREATE
+CREATE PROC p_conditional_drop_create AS 
+BEGIN 
+    DECLARE @flag int = 1 
+    
+    IF @flag = 1 
+    BEGIN 
+        DROP TABLE IF EXISTS #cond_t 
+        CREATE TABLE #cond_t(a int) 
+        INSERT INTO #cond_t VALUES (100) 
+    END 
+    
+    SELECT * FROM #cond_t 
+END
+GO
+
+-- DROP IF EXISTS + CREATE with TRUNCATE
+CREATE PROC p_drop_create_truncate AS 
+BEGIN 
+    DROP TABLE IF EXISTS #trunc_t 
+    CREATE TABLE #trunc_t(id int, data varchar(30)) 
+    INSERT INTO #trunc_t VALUES (1, 'first') 
+    INSERT INTO #trunc_t VALUES (2, 'second') 
+    
+    TRUNCATE TABLE #trunc_t 
+    INSERT INTO #trunc_t VALUES (3, 'after truncate') 
+    
+    SELECT * FROM #trunc_t 
+END
+GO
+
+-- Error handling with DROP IF EXISTS + CREATE
+CREATE PROC p_error_drop_create AS 
+BEGIN 
+    BEGIN TRY 
+        DROP TABLE IF EXISTS #err_t 
+        CREATE TABLE #err_t(id int PRIMARY KEY) 
+        INSERT INTO #err_t VALUES (1) 
+        INSERT INTO #err_t VALUES (1) -- Duplicate key error 
+    END TRY 
+    BEGIN CATCH 
+        SELECT 'Error: ' + ERROR_MESSAGE() as error_msg 
+    END CATCH 
+    
+    SELECT * FROM #err_t 
+END
+GO
