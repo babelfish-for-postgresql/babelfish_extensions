@@ -183,7 +183,7 @@ EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_Raiserror16;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Test error severity 16, Server: BABELFISH, Process: , Line: 2, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_txn'. [Msg 50000, Level 16, State 1, Line 2] Test error severity 16)~~
 
 
 -- Test 2.3: Remote division by zero — runtime error propagated
@@ -191,7 +191,7 @@ EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_DivByZero;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 8134, Msg state: 1, Msg: division by zero, Server: BABELFISH, Process: , Line: 4, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_txn'. [Msg 8134, Level 16, State 1, Line 4] division by zero)~~
 
 
 -- Test 2.4: Remote conversion error — propagated
@@ -199,7 +199,7 @@ EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_ConversionError;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: invalid input syntax for type integer: "not_a_number", Server: BABELFISH, Process: , Line: 2, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_txn'. [Msg 33557097, Level 16, State 1, Line 2] invalid input syntax for type integer: "not_a_number")~~
 
 
 -- Test 2.5: SELECT-only validation failure — INSERT in procedure rejected
@@ -215,7 +215,7 @@ EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_IntParam @id = 'not_a_number';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: invalid input syntax for type integer: "not_a_number", Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_txn'. [Msg 33557097, Level 16, State 1, Line 1] invalid input syntax for type integer: "not_a_number")~~
 
 
 -- Test 2.8: Connection recovery after error — next call gets fresh connection
@@ -261,7 +261,7 @@ GO
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Test error severity 16, Server: BABELFISH, Process: , Line: 2, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_txn'. [Msg 50000, Level 16, State 1, Line 2] Test error severity 16)~~
 
 
 -- Verify: transaction was rolled back (@@TRANCOUNT = 0) and only row 1 survives
@@ -317,9 +317,9 @@ EXEC sp_serveroption 'bbf_rpe_txn', 'rpc out', 'false';
 GO
 EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_NoParams;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 7412)~~
 
-~~ERROR (Message: RPC out is not enabled for the specified server. Use sp_serveroption to enable it.)~~
+~~ERROR (Message: Server 'bbf_rpe_txn' is not configured for RPC OUT.)~~
 
 -- Restore
 EXEC sp_serveroption 'bbf_rpe_txn', 'rpc out', 'true';
@@ -392,7 +392,7 @@ EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_NestedError;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Error from inner procedure, Server: BABELFISH, Process: , Line: 2, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_txn'. [Msg 50000, Level 16, State 1, Line 2] Error from inner procedure)~~
 
 
 -- Test 6.2: Procedure that returns result then errors
@@ -402,7 +402,7 @@ EXEC bbf_rpe_txn.master.dbo.rpe_txn_sp_ReturnAfterError;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Error after returning data, Server: BABELFISH, Process: , Line: 3, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_txn'. [Msg 50000, Level 16, State 1, Line 3] Error after returning data)~~
 
 
 -- Test 6.3: PRINT-only procedure (no result set, no error)

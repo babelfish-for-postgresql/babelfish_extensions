@@ -937,6 +937,15 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * Clean connection with no SQL query history
 		 */
 		Assert(lsproc == NULL);  /* Sanity check - RPC connection must be clean */
+
+		/*
+		 * Enable RPC error capture mode before establishing the connection.
+		 * This causes linked_server_msg_handler() to capture remote server
+		 * errors instead of immediately throwing, so we can format them as
+		 * SQL Server error 7215 ("Could not execute statement on remote server").
+		 * OPENQUERY is unaffected (it never calls this function).
+		 */
+		linked_server_set_rpc_error_mode(true, stmt->server_name);
 		linked_server_establish_connection(stmt->server_name, &lsproc, false);
 
 		/* Initialize RPC call on clean connection */
@@ -1051,10 +1060,27 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		
 		/* Execute the RPC */
 		if (LINKED_SERVER_RPC_EXEC(lsproc) == FAIL)
+		{
+			/*
+			 * Check if the msg_handler captured a remote error (SQL Server error 7215).
+			 * If so, format it as "Could not execute statement on remote server '<name>'."
+			 * Otherwise, fall through to the generic error.
+			 */
+			if (linked_server_has_rpc_error())
+				linked_server_throw_rpc_error(stmt->server_name);
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("Failed to execute remote procedure %s", full_proc_name)));
+		}
 		
+		/*
+		 * Check for captured RPC error after successful execution.
+		 * Some errors (e.g., RAISERROR in the procedure body) may be reported
+		 * via the msg_handler during result processing rather than causing
+		 * LINKED_SERVER_RPC_EXEC to return FAIL.
+		 */
+		if (linked_server_has_rpc_error())
+			linked_server_throw_rpc_error(stmt->server_name);
 		
 		/* Get first result set (procedures may return multiple result sets) */
 		if ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
@@ -1306,6 +1332,9 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			lsproc = NULL;
 		}
 		
+		/* Always disable RPC error capture mode and clean up captured state */
+		linked_server_set_rpc_error_mode(false, NULL);
+		
 		if (full_proc_name)
 			pfree(full_proc_name);
 	}
@@ -1353,10 +1382,10 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 					 errhint("Execute: SET babelfishpg_tsql.enable_remote_proc_exec = true")));
 
 		/* Check if RPC out option is enabled for this server */
-		if (!get_rpc_out_option(stmt->server_name))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("RPC out is not enabled for the specified server. Use sp_serveroption to enable it."),
+	if (!get_rpc_out_option(stmt->server_name))
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("Server '%s' is not configured for RPC OUT.", stmt->server_name),
 					 errhint("Execute: EXEC sp_serveroption '%s', 'rpc out', 'true'", 
 							 stmt->server_name)));
 		

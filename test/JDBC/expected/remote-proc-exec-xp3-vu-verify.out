@@ -289,7 +289,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 201, Msg state: 1, Msg: procedure sp_err_singleint expects parameter "@value", which was not supplied., Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 201, Level 16, State 1, Line 1] procedure sp_err_singleint expects parameter "@value", which was not supplied.)~~
 
 
 -- Test 111: Wrong parameter name
@@ -298,7 +298,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt @wrong_name=42;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 201, Msg state: 1, Msg: procedure sp_err_singleint expects parameter "@value", which was not supplied., Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 201, Level 16, State 1, Line 1] procedure sp_err_singleint expects parameter "@value", which was not supplied.)~~
 
 
 -- Test 112: Too many parameters
@@ -307,7 +307,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt @value=42, @extra=99;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 8144, Msg state: 1, Msg: procedure sp_err_singleint has too many arguments specified., Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 8144, Level 16, State 1, Line 1] procedure sp_err_singleint has too many arguments specified.)~~
 
 
 -- Test 113: Wrong type - string to int (implicit conversion failure)
@@ -316,7 +316,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_SingleInt @value='not_a_number';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: invalid input syntax for type integer: "not_a_number", Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 33557097, Level 16, State 1, Line 1] invalid input syntax for type integer: "not_a_number")~~
 
 
 -- Test 114: NULL for INT parameter (should work - NULL is valid for INT)
@@ -335,7 +335,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_TwoParams @a=10;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 201, Msg state: 1, Msg: procedure sp_err_twoparams expects parameter "@b", which was not supplied., Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 201, Level 16, State 1, Line 1] procedure sp_err_twoparams expects parameter "@b", which was not supplied.)~~
 
 
 -- Test 116: RAISERROR severity 16 (standard user error)
@@ -344,7 +344,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_Raiserror16;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Error severity 16: user error, Server: BABELFISH, Process: , Line: 2, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 50000, Level 16, State 1, Line 2] Error severity 16: user error)~~
 
 
 -- Test 117: RAISERROR severity 11 (lowest error severity)
@@ -353,7 +353,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_Raiserror11;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Error severity 11: object not found, Server: BABELFISH, Process: , Line: 2, Level: 11)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 50000, Level 11, State 1, Line 2] Error severity 11: object not found)~~
 
 
 -- Test 118: RAISERROR severity 10 (informational - should NOT error)
@@ -372,7 +372,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_RaiserrorCustomMsg;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Custom application error: invalid operation, Server: BABELFISH, Process: , Line: 2, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 50000, Level 16, State 1, Line 2] Custom application error: invalid operation)~~
 
 
 -- Test 120: Division by zero
@@ -382,7 +382,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_DivByZero;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 8134, Msg state: 1, Msg: division by zero, Server: BABELFISH, Process: , Line: 4, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 8134, Level 16, State 1, Line 4] division by zero)~~
 
 
 -- Test 121: Arithmetic overflow (INT max + 1)
@@ -392,7 +392,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_Overflow;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 8115, Msg state: 1, Msg: integer out of range, Server: BABELFISH, Process: , Line: 3, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 8115, Level 16, State 1, Line 3] integer out of range)~~
 
 
 -- Test 122: Conversion error (CAST string to INT)
@@ -401,7 +401,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_ConversionError;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: invalid input syntax for type integer: "not_a_number", Server: BABELFISH, Process: , Line: 2, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 33557097, Level 16, State 1, Line 2] invalid input syntax for type integer: "not_a_number")~~
 
 
 -- Test 123: String truncation (long string to VARCHAR(5))
@@ -430,7 +430,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_NestedError;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Error from inner procedure, Server: BABELFISH, Process: , Line: 2, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 50000, Level 16, State 1, Line 2] Error from inner procedure)~~
 
 
 -- Test 126: Procedure returns data THEN raises error
@@ -439,7 +439,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_ReturnAfterError;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Error after returning data, Server: BABELFISH, Process: , Line: 3, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 50000, Level 16, State 1, Line 3] Error after returning data)~~
 
 
 -- Test 127: TRY/CATCH with re-raised error
@@ -449,7 +449,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_MultipleErrors;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Caught and re-raised: division by zero, Server: BABELFISH, Process: , Line: 6, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 50000, Level 16, State 1, Line 6] Caught and re-raised: division by zero)~~
 
 
 -- Test 128: PRINT followed by error
@@ -458,7 +458,7 @@ EXEC bbf_rpe_server.master.dbo.sp_err_PrintAndError;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Error after PRINT, Server: BABELFISH, Process: , Line: 3, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 50000, Level 16, State 1, Line 3] Error after PRINT)~~
 
 
 -- Test 129: PRINT only (no error, no result set)

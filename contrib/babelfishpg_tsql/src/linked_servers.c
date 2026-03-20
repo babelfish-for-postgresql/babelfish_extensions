@@ -58,6 +58,22 @@ int		tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, i
 Datum		getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len);
 static bool 	isQueryTimeout;
 
+/*
+ * RPC Error Capture State — must be inside #ifdef ENABLE_TDS_LIB since
+ * they reference TDS-specific types and are used by functions that are
+ * only compiled when the TDS client library is available.
+ */
+static bool     rpc_error_capture_mode = false;
+static bool     rpc_error_captured = false;
+static int      rpc_error_code = 0;
+static int      rpc_error_state = 0;
+static int      rpc_error_severity = 0;
+static char    *rpc_error_msg = NULL;
+static char    *rpc_error_svr_name = NULL;
+static char    *rpc_error_proc_name = NULL;
+static int      rpc_error_line = 0;
+static char    *rpc_error_linked_server_name = NULL;  /* configured linked server name */
+
 static int
 linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state, int severity, char *error_msg, char *svr_name, char *proc_name, int line)
 {
@@ -89,9 +105,31 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 	appendStringInfo(&buf, "Line: %i, Level: %i", line, severity);
 
 	if (severity > 10)
+	{
+		/*
+		 * In RPC error capture mode, save error details for later formatting
+		 * as SQL Server error 7215. Only capture the first error (subsequent
+		 * errors from the same execution are ignored).
+		 * OPENQUERY uses the default path (rpc_error_capture_mode = false).
+		 */
+		if (rpc_error_capture_mode && !rpc_error_captured)
+		{
+			rpc_error_captured = true;
+			rpc_error_code = error_code;
+			rpc_error_state = state;
+			rpc_error_severity = severity;
+			rpc_error_msg = error_msg ? MemoryContextStrdup(TopMemoryContext, error_msg) : NULL;
+			rpc_error_svr_name = svr_name ? MemoryContextStrdup(TopMemoryContext, svr_name) : NULL;
+			rpc_error_proc_name = proc_name ? MemoryContextStrdup(TopMemoryContext, proc_name) : NULL;
+			rpc_error_line = line;
+			pfree(buf.data);
+			return 0;  /* Don't throw — let RPC caller format the error */
+		}
+
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 				 errmsg("%s", buf.data)));
+	}
 	else
 	{
 		/*
@@ -196,6 +234,36 @@ linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error
 		isQueryTimeout = true;
 		return LS_INT_CANCEL;
 	} 
+
+	/*
+	 * In RPC error capture mode, if we already captured an error from
+	 * msg_handler, throw the captured error immediately instead of the
+	 * generic DB error 20018 ("General SQL server error"). This ensures
+	 * the error aborts execution (preventing partial results from leaking
+	 * through) while preserving the SQL Server-compatible error 7215 format.
+	 * OPENQUERY is unaffected (capture mode defaults to false).
+	 */
+	if (rpc_error_capture_mode && rpc_error_captured)
+	{
+		StringInfoData errbuf;
+
+		pfree(buf.data);
+		initStringInfo(&errbuf);
+		appendStringInfo(&errbuf,
+			"Could not execute statement on remote server '%s'.",
+			rpc_error_linked_server_name ? rpc_error_linked_server_name : "unknown");
+		if (rpc_error_msg)
+		{
+			appendStringInfo(&errbuf, " [Msg %d, Level %d, State %d, Line %d]",
+				rpc_error_code, rpc_error_severity,
+				rpc_error_state, rpc_error_line);
+			appendStringInfo(&errbuf, " %s", rpc_error_msg);
+		}
+		linked_server_clear_rpc_error();
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+				 errmsg("%s", errbuf.data)));
+	}
 
 	ereport(ERROR,
 			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -2175,6 +2243,107 @@ validate_procedure_select_only(const char *server_name,
 	list_free_deep(visited_procs);
 	list_free_deep(validated_procs);
 	
+}
+
+/*
+ * RPC Error Capture API
+ *
+ * These functions allow the RPC execution path (pl_exec-2.c) to:
+ * 1. Enable capture mode before RPC execution
+ * 2. Check if a remote error was captured
+ * 3. Format and throw a SQL Server-compatible error 7215
+ * 4. Clean up captured state
+ *
+ * The OPENQUERY path never enables capture mode, so it is unaffected.
+ */
+void
+linked_server_set_rpc_error_mode(bool enable, const char *server_name)
+{
+	rpc_error_capture_mode = enable;
+	if (enable)
+	{
+		/* Clear any stale state when entering capture mode */
+		linked_server_clear_rpc_error();
+		/* Store the configured linked server name for error formatting */
+		if (server_name)
+			rpc_error_linked_server_name = MemoryContextStrdup(TopMemoryContext, server_name);
+	}
+}
+
+bool
+linked_server_has_rpc_error(void)
+{
+	return rpc_error_captured;
+}
+
+/*
+ * Format and throw SQL Server error 7215:
+ *   "Could not execute statement on remote server '<name>'."
+ *
+ * The captured remote error details (Msg #, Level, State, Line, message)
+ * are appended to provide full context, matching SQL Server's behavior
+ * of wrapping the original error inside error 7215.
+ *
+ * Uses ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION (HV004) which maps to
+ * SQL_ERROR_7215 via error_mapping.txt when the message matches the
+ * keyword "Could not execute statement on remote server".
+ */
+void
+linked_server_throw_rpc_error(const char *linked_server_name)
+{
+	StringInfoData buf;
+
+	initStringInfo(&buf);
+
+	appendStringInfo(&buf,
+		"Could not execute statement on remote server '%s'.",
+		linked_server_name);
+
+	/* Append captured remote error details */
+	if (rpc_error_msg)
+	{
+		appendStringInfo(&buf, " [Msg %d, Level %d, State %d, Line %d]",
+			rpc_error_code, rpc_error_severity,
+			rpc_error_state, rpc_error_line);
+		appendStringInfo(&buf, " %s", rpc_error_msg);
+	}
+
+	linked_server_clear_rpc_error();
+
+	ereport(ERROR,
+			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+			 errmsg("%s", buf.data)));
+}
+
+void
+linked_server_clear_rpc_error(void)
+{
+	rpc_error_captured = false;
+	rpc_error_code = 0;
+	rpc_error_state = 0;
+	rpc_error_severity = 0;
+	rpc_error_line = 0;
+
+	if (rpc_error_msg)
+	{
+		pfree(rpc_error_msg);
+		rpc_error_msg = NULL;
+	}
+	if (rpc_error_svr_name)
+	{
+		pfree(rpc_error_svr_name);
+		rpc_error_svr_name = NULL;
+	}
+	if (rpc_error_proc_name)
+	{
+		pfree(rpc_error_proc_name);
+		rpc_error_proc_name = NULL;
+	}
+	if (rpc_error_linked_server_name)
+	{
+		pfree(rpc_error_linked_server_name);
+		rpc_error_linked_server_name = NULL;
+	}
 }
 
 #endif

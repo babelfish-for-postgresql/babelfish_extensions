@@ -6,9 +6,9 @@
 -- Expected: Should throw error - server not found
 EXEC invalid_server.master.dbo.sp_NoParams;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 7412)~~
 
-~~ERROR (Message: RPC out is not enabled for the specified server. Use sp_serveroption to enable it.)~~
+~~ERROR (Message: Server 'invalid_server' is not configured for RPC OUT.)~~
 
 
 -- Test 52: Invalid database name
@@ -83,9 +83,9 @@ GO
 -- Expected: Should throw error with hint to enable RPC out
 EXEC bbf_rpe_server.master.dbo.sp_NoParams;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 7412)~~
 
-~~ERROR (Message: RPC out is not enabled for the specified server. Use sp_serveroption to enable it.)~~
+~~ERROR (Message: Server 'bbf_rpe_server' is not configured for RPC OUT.)~~
 
 
 -- Test 61: Re-enable RPC out for remaining tests
@@ -207,7 +207,7 @@ EXEC bbf_rpe_server.master.dbo.sp_WithError @should_error=1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 50000, Msg state: 1, Msg: Test error message, Server: BABELFISH, Process: , Line: 3, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 50000, Level 16, State 1, Line 3] Test error message)~~
 
 
 
@@ -394,7 +394,7 @@ EXEC bbf_rpe_server.master.dbo.sp_SingleInt; DROP TABLE test; --;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 201, Msg state: 1, Msg: procedure sp_singleint expects parameter "@value", which was not supplied., Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rpe_server'. [Msg 201, Level 16, State 1, Line 1] procedure sp_singleint expects parameter "@value", which was not supplied.)~~
 
 
 -- Test 82e: Parameter value injection attempt

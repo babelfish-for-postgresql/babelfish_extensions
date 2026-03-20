@@ -296,6 +296,12 @@ extern void validate_procedure_select_only(const char *server_name,
 										   const char *schema_name,
 										   const char *procedure_name);
 
+/* RPC error capture — capture remote server errors for SQL Server-style formatting */
+extern void linked_server_set_rpc_error_mode(bool enable, const char *server_name);
+extern bool linked_server_has_rpc_error(void);
+extern void linked_server_throw_rpc_error(const char *linked_server_name);
+extern void linked_server_clear_rpc_error(void);
+
 /* ANTLR-based SELECT-only validation (also extracts nested procedure calls) */
 extern void validate_remote_procedure_select_only_antlr(
 	const char *definition,
