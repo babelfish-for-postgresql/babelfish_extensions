@@ -4884,34 +4884,38 @@ GO
 -- GEOMETRY -> NUMERIC
 SELECT CAST(GEOMETRY::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 0).STNumPoints() AS NUMERIC(10,0));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+3
+~~END~~
 
 
 -- GEOMETRY -> DECIMAL
 SELECT CAST(GEOMETRY::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 0).STNumPoints() AS DECIMAL(10,0));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+3
+~~END~~
 
 
 -- GEOGRAPHY -> NUMERIC/DECIMAL (using STNumPoints() method)
 -- GEOGRAPHY -> NUMERIC
 SELECT CAST(GEOGRAPHY::STGeomFromText('LINESTRING(-122.34 47.65, -122.35 47.66)', 4326).STNumPoints() AS NUMERIC(10,0));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+2
+~~END~~
 
 
 -- GEOGRAPHY -> DECIMAL
 SELECT CAST(GEOGRAPHY::STGeomFromText('LINESTRING(-122.34 47.65, -122.35 47.66)', 4326).STNumPoints() AS DECIMAL(10,0));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+2
+~~END~~
 
 
 -- ROWVERSION/TIMESTAMP -> NUMERIC/DECIMAL
@@ -5807,33 +5811,37 @@ GO
 -- GEOMETRY -> NUMERIC using CONVERT
 SELECT CONVERT(NUMERIC(10,0), GEOMETRY::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 0).STNumPoints());
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+3
+~~END~~
 
 
 -- GEOMETRY -> DECIMAL using CONVERT
 SELECT CONVERT(DECIMAL(10,0), GEOMETRY::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 0).STNumPoints());
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+3
+~~END~~
 
 
 -- GEOGRAPHY -> NUMERIC using CONVERT
 SELECT CONVERT(NUMERIC(10,0), GEOGRAPHY::STGeomFromText('LINESTRING(-122.34 47.65, -122.35 47.66)', 4326).STNumPoints());
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+2
+~~END~~
 
 
 -- GEOGRAPHY -> DECIMAL using CONVERT
 SELECT CONVERT(DECIMAL(10,0), GEOGRAPHY::STGeomFromText('LINESTRING(-122.34 47.65, -122.35 47.66)', 4326).STNumPoints());
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+numeric
+2
+~~END~~
 
 
 -- ROWVERSION/TIMESTAMP -> NUMERIC/DECIMAL using CONVERT
