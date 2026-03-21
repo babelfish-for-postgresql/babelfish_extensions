@@ -111,9 +111,9 @@ GO
 -- four part object is a procedure (Should throw error)
 EXEC bbf_fpn_server.master.dbo.sp_linkedserver
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 7412)~~
 
-~~ERROR (Message: RPC out is not enabled for the specified server. Use sp_serveroption to enable it.)~~
+~~ERROR (Message: Server 'bbf_fpn_server' is not configured for RPC OUT.)~~
 
 
 -- INSERT should not work with four-part object name
