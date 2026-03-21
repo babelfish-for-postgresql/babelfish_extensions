@@ -190,9 +190,11 @@ SendPendingDone(bool more)
 
 			/*
 			 * If a statement throws an error, the row count should be always
-			 * 0.
+			 * 0. Reset it here in case a previous statement (e.g., INSERT
+			 * inside a procedure during INSERT EXEC) had set a non-zero count
+			 * before the error was thrown.
 			 */
-			Assert(TdsPendingDoneRowCnt == 0);
+			TdsPendingDoneRowCnt = 0;
 		}
 
 		TDS_DEBUG(TDS_DEBUG3, "SendPendingDone: putbytes");

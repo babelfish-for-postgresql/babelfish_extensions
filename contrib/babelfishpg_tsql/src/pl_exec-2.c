@@ -15,8 +15,10 @@
 #include "commands/proclang.h"
 #include "commands/trigger.h"
 #include "executor/tstoreReceiver.h"
+#include "executor/tuptable.h"
 #include "nodes/parsenodes.h"
 #include "utils/acl.h"
+#include "utils/lsyscache.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "pltsql_bulkcopy.h"
@@ -54,6 +56,8 @@ static int insert_exec_base_tran_count = 0;  /* NestedTranCount when INSERT EXEC
 static int insert_exec_saved_nested_tran_count = 0;  /* Original NestedTranCount to restore on cleanup */
 static bool insert_exec_flush_in_progress = false;  /* True during flush phase to block commit_stmt */
 static int insert_exec_call_stack_depth = 0;  /* Call stack depth when INSERT EXEC was started */
+static bool insert_exec_incremented_tran_count = false;  /* True if INSERT EXEC incremented NestedTranCount */
+static bool insert_exec_had_error = false;  /* True if INSERT EXEC had an error - used to skip trancount mismatch check */
 
 /* DestReceiver struct for INSERT EXEC */
 typedef struct
@@ -133,9 +137,11 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 	 * We simulate this by only incrementing NestedTranCount if it's currently 0.
 	 * The base_tran_count is the @@TRANCOUNT value that the procedure sees at start.
 	 */
+	insert_exec_incremented_tran_count = false;
 	if (NestedTranCount == 0)
 	{
 		NestedTranCount = 1;
+		insert_exec_incremented_tran_count = true;
 		
 		/* Update the protocol plugin with the new NestedTranCount */
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
@@ -158,20 +164,25 @@ pltsql_set_insert_exec_context(Oid temp_table_oid)
 /*
  * Clear the global INSERT EXEC context.
  * Called when exiting INSERT EXEC context.
+ * 
+ * We only restore NestedTranCount if INSERT EXEC incremented it (from 0 to 1).
+ * If COMMIT was called inside INSERT EXEC (and allowed because @@TRANCOUNT > 1),
+ * the decrement should persist so that the transaction count mismatch warning
+ * is generated.
  */
 void
 pltsql_clear_insert_exec_context(void)
 {
 	/*
-	 * Restore NestedTranCount to its original value when INSERT EXEC started.
-	 * This is needed because during INSERT EXEC, BEGIN TRAN increments NestedTranCount
-	 * but doesn't start a real transaction (we're inside a subtransaction).
-	 * If an error occurs and the subtransaction is rolled back, NestedTranCount
-	 * would be left in an inconsistent state without this restoration.
+	 * Only restore NestedTranCount if INSERT EXEC incremented it.
+	 * This handles the case where INSERT EXEC started with @@TRANCOUNT=0
+	 * and we incremented it to 1 for the implicit transaction.
 	 * 
-	 * Only restore if INSERT EXEC was actually active (insert_exec_target_table != NULL).
+	 * If INSERT EXEC started with @@TRANCOUNT>=1, we don't restore because:
+	 * 1. We didn't increment it
+	 * 2. If COMMIT was called inside, the decrement should persist
 	 */
-	if (insert_exec_target_table != NULL)
+	if (insert_exec_target_table != NULL && insert_exec_incremented_tran_count)
 	{
 		NestedTranCount = insert_exec_saved_nested_tran_count;
 		
@@ -184,6 +195,8 @@ pltsql_clear_insert_exec_context(void)
 	insert_exec_base_tran_count = 0;  /* Reset base transaction count */
 	insert_exec_saved_nested_tran_count = 0;  /* Reset saved nested tran count */
 	insert_exec_call_stack_depth = 0;  /* Reset call stack depth */
+	insert_exec_incremented_tran_count = false;  /* Reset incremented flag */
+	/* Note: We do NOT reset insert_exec_had_error here - it's reset by pltsql_insert_exec_clear_error_flag() */
 	if (insert_exec_target_table)
 	{
 		pfree(insert_exec_target_table);
@@ -194,6 +207,37 @@ pltsql_clear_insert_exec_context(void)
 		pfree(insert_exec_column_list);
 		insert_exec_column_list = NULL;
 	}
+}
+
+/*
+ * Set the INSERT EXEC error flag.
+ * Called when an error occurs during INSERT EXEC.
+ * This flag is used to skip the transaction count mismatch check.
+ */
+void
+pltsql_insert_exec_set_error_flag(void)
+{
+	insert_exec_had_error = true;
+}
+
+/*
+ * Check if INSERT EXEC had an error.
+ * Used to skip the transaction count mismatch check.
+ */
+bool
+pltsql_insert_exec_had_error(void)
+{
+	return insert_exec_had_error;
+}
+
+/*
+ * Clear the INSERT EXEC error flag.
+ * Called after the error has been handled.
+ */
+void
+pltsql_insert_exec_clear_error_flag(void)
+{
+	insert_exec_had_error = false;
 }
 
 /*
@@ -439,6 +483,10 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
  * Opens the relation, inserts the tuple, and closes the relation for each
  * tuple. This is less efficient than keeping the relation open, but it
  * ensures we don't hold relation handles across subtransaction boundaries.
+ * 
+ * Performs type coercion when source and target types differ. This is needed
+ * because SQL Server implicitly converts types during INSERT EXEC (e.g., INT
+ * to VARCHAR), but PostgreSQL's table_tuple_insert doesn't do this.
  */
 static bool
 insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
@@ -446,6 +494,12 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	DR_insertexec *myState = (DR_insertexec *) self;
 	Relation	temp_rel;
 	CommandId	cid;
+	TupleDesc	temp_tupdesc;
+	TupleDesc	src_tupdesc;
+	int			natts;
+	int			i;
+	bool		needs_coercion = false;
+	TupleTableSlot *insert_slot;
 
 	/*
 	 * Open the temp table fresh for each tuple.
@@ -454,16 +508,122 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	 */
 	temp_rel = table_open(myState->temp_table_oid, RowExclusiveLock);
 	cid = GetCurrentCommandId(true);
-
+	
+	temp_tupdesc = RelationGetDescr(temp_rel);
+	src_tupdesc = myState->typeinfo;
+	natts = temp_tupdesc->natts;
+	
 	/*
-	 * Insert the tuple into the temp table.
-	 * table_tuple_insert handles slot type conversion if needed.
+	 * Check if any column needs type coercion.
+	 * We compare the type OIDs of source and target columns.
 	 */
-	table_tuple_insert(temp_rel,
-					   slot,
-					   cid,
-					   0,  /* no special options - preserve MVCC */
-					   NULL);  /* no bulk insert state */
+	for (i = 0; i < natts; i++)
+	{
+		Form_pg_attribute src_att = TupleDescAttr(src_tupdesc, i);
+		Form_pg_attribute tgt_att = TupleDescAttr(temp_tupdesc, i);
+		
+		if (src_att->atttypid != tgt_att->atttypid)
+		{
+			needs_coercion = true;
+			break;
+		}
+	}
+	
+	if (needs_coercion)
+	{
+		/*
+		 * Create a new slot with the temp table's tuple descriptor and
+		 * copy values with type coercion where needed.
+		 */
+		Datum	   *values;
+		bool	   *nulls;
+		
+		values = (Datum *) palloc(natts * sizeof(Datum));
+		nulls = (bool *) palloc(natts * sizeof(bool));
+		
+		/* Make sure the source slot is materialized */
+		slot_getallattrs(slot);
+		
+		for (i = 0; i < natts; i++)
+		{
+			Form_pg_attribute src_att = TupleDescAttr(src_tupdesc, i);
+			Form_pg_attribute tgt_att = TupleDescAttr(temp_tupdesc, i);
+			
+			if (slot->tts_isnull[i])
+			{
+				values[i] = (Datum) 0;
+				nulls[i] = true;
+			}
+			else if (src_att->atttypid == tgt_att->atttypid)
+			{
+				/* Same type, no coercion needed */
+				values[i] = slot->tts_values[i];
+				nulls[i] = false;
+			}
+			else
+			{
+				/*
+				 * Different types - convert via text representation.
+				 * This mimics SQL Server's implicit type conversion.
+				 */
+				Oid			src_typoutput;
+				bool		src_typisvarlena;
+				Oid			tgt_typinput;
+				Oid			tgt_typioparam;
+				char	   *str_value;
+				
+				/* Get output function for source type */
+				getTypeOutputInfo(src_att->atttypid, &src_typoutput, &src_typisvarlena);
+				
+				/* Convert source value to string */
+				str_value = OidOutputFunctionCall(src_typoutput, slot->tts_values[i]);
+				
+				/* Get input function for target type */
+				getTypeInputInfo(tgt_att->atttypid, &tgt_typinput, &tgt_typioparam);
+				
+				/* Convert string to target type */
+				values[i] = OidInputFunctionCall(tgt_typinput, str_value, 
+												 tgt_typioparam, tgt_att->atttypmod);
+				nulls[i] = false;
+				
+				pfree(str_value);
+			}
+		}
+		
+		/* Create a slot for the temp table and store the converted values */
+		insert_slot = MakeSingleTupleTableSlot(temp_tupdesc, &TTSOpsVirtual);
+		ExecStoreVirtualTuple(insert_slot);
+		
+		/* Copy values into the slot */
+		for (i = 0; i < natts; i++)
+		{
+			insert_slot->tts_values[i] = values[i];
+			insert_slot->tts_isnull[i] = nulls[i];
+		}
+		
+		/* Insert the coerced tuple */
+		table_tuple_insert(temp_rel,
+						   insert_slot,
+						   cid,
+						   0,
+						   NULL);
+		
+		ExecDropSingleTupleTableSlot(insert_slot);
+		pfree(values);
+		pfree(nulls);
+	}
+	else
+	{
+		/*
+		 * No coercion needed - insert directly.
+		 * table_tuple_insert handles slot type conversion if needed.
+		 */
+		table_tuple_insert(temp_rel,
+						   slot,
+						   cid,
+						   0,  /* no special options - preserve MVCC */
+						   NULL);  /* no bulk insert state */
+	}
 
 	/* Close relation immediately - don't hold across subtransaction boundaries */
 	table_close(temp_rel, NoLock);
@@ -935,7 +1095,12 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		composite_triggers_started = true;
 
 		rc = SPI_execute(flush_query.data, false, 0);
-		if (rc != SPI_OK_INSERT)
+		/*
+		 * Accept both SPI_OK_INSERT and SPI_OK_INSERT_RETURNING.
+		 * The latter is returned when IDENTITY_INSERT is ON because
+		 * the INSERT has a RETURNING clause for the identity column.
+		 */
+		if (rc != SPI_OK_INSERT && rc != SPI_OK_INSERT_RETURNING)
 			elog(ERROR, "INSERT-EXEC: Failed to flush temp table to target: %s",
 				 SPI_result_code_string(rc));
 
@@ -2604,20 +2769,17 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		/* 
 		 * Cleanup INSERT EXEC state on error.
 		 * 
-		 * IMPORTANT: We cannot call drop_insert_exec_temp_table() here because
-		 * SPI_execute cannot be used in an error context (transaction is aborted).
+		 * We set the error flag and clear the INSERT EXEC context. The error flag
+		 * is used to skip the transaction count mismatch check in iterative_exec.c.
+		 * 
+		 * We cannot call drop_insert_exec_temp_table() here because SPI_execute
+		 * cannot be used in an error context (transaction is aborted).
 		 * The temp table will be automatically cleaned up when the transaction
 		 * rolls back.
-		 *
-		 * If we're inside a TRY-CATCH block, do NOT clear the INSERT EXEC context.
-		 * Leave it for iterative_exec.c to handle - it will drop the temp table
-		 * and clear the context after catching the error.
-		 * 
-		 * If NOT in TRY-CATCH, clear the context. The temp table will be
-		 * auto-cleaned when the transaction rolls back.
 		 */
-		if (insert_exec_setup_done && !pltsql_insert_exec_in_trycatch())
+		if (insert_exec_setup_done)
 		{
+			pltsql_insert_exec_set_error_flag();
 			pltsql_clear_insert_exec_context();
 		}
 		

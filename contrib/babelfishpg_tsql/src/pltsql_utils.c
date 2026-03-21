@@ -127,23 +127,25 @@ PLTsqlProcessTransaction(Node *parsetree,
 		case TRANS_STMT_COMMIT:
 			{
 				/*
-				 * Block COMMIT during INSERT EXEC if there's no user-started transaction.
+				 * Block COMMIT during INSERT EXEC if it would make @@TRANCOUNT = 0.
 				 * Check both the old estate->insert_exec flag and the new 
 				 * pltsql_insert_exec_active() for the DestReceiver approach.
 				 * SQL Server Error 3916.
 				 *
-				 * In SQL Server, INSERT EXEC implicitly starts a transaction, so @@TRANCOUNT=1.
-				 * When the procedure does BEGIN TRAN, it becomes @@TRANCOUNT=2, allowing COMMIT.
-				 * We simulate this by comparing NestedTranCount against the base count recorded
-				 * when INSERT EXEC started (which is NestedTranCount + 1 at that time).
+				 * In SQL Server, COMMIT inside INSERT EXEC is only allowed if the
+				 * procedure did BEGIN TRAN first (i.e., @@TRANCOUNT > 1). If COMMIT
+				 * would make @@TRANCOUNT = 0, it's not allowed.
+				 *
+				 * Examples:
+				 * - @@TRANCOUNT=1 (implicit or explicit), COMMIT would go to 0: NOT allowed
+				 * - @@TRANCOUNT=2 (user did BEGIN TRAN), COMMIT would go to 1: ALLOWED
 				 */
-				if (pltsql_insert_exec_active())
+				if ((pltsql_insert_exec_active() || pltsql_insert_exec_flush_in_progress()) &&
+					NestedTranCount <= 1)
 				{
-					int base_tran_count = pltsql_get_insert_exec_base_tran_count();
-					if (NestedTranCount < base_tran_count)
-						ereport(ERROR,
-								(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-								 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+					ereport(ERROR,
+							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
 				}
 				else if ((exec_state_call_stack &&
 						  exec_state_call_stack->estate &&
@@ -853,21 +855,20 @@ PLTsqlCommitTransaction(QueryCompletion *qc, bool chain)
 	
 	/*
 	 * During INSERT EXEC, we simulate SQL Server's implicit transaction.
-	 * @@TRANCOUNT starts at 1 (the implicit transaction).
-	 * When the procedure does BEGIN TRAN, @@TRANCOUNT becomes 2.
-	 * When the procedure does COMMIT, @@TRANCOUNT goes back to 1.
+	 * COMMIT is only allowed if it would NOT make @@TRANCOUNT = 0.
 	 * 
-	 * COMMIT when @@TRANCOUNT is at the base level (1 during INSERT EXEC)
-	 * should fail with error 3916 because you can't commit the implicit transaction.
+	 * In SQL Server:
+	 * - @@TRANCOUNT=1, COMMIT would go to 0: NOT allowed (error 3916)
+	 * - @@TRANCOUNT=2, COMMIT would go to 1: ALLOWED
+	 * 
+	 * The check is: if NestedTranCount <= 1, COMMIT is not allowed.
 	 */
 	if (pltsql_insert_exec_active())
 	{
-		int base_tran_count = pltsql_get_insert_exec_base_tran_count();
-		
-		if (NestedTranCount <= base_tran_count)
+		if (NestedTranCount <= 1)
 		{
 			/*
-			 * Trying to COMMIT when at or below the base transaction level.
+			 * Trying to COMMIT when @@TRANCOUNT would go to 0.
 			 * In SQL Server, this would fail with error 3916:
 			 * "Cannot use the COMMIT statement within an INSERT-EXEC statement
 			 * unless BEGIN TRANSACTION is used first."

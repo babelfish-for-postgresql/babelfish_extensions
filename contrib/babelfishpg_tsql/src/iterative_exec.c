@@ -1387,12 +1387,24 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 *    transaction count
 		 * 3. The transaction count will be properly reconciled when the
 		 *    INSERT EXEC completes and flushes to the target table
+		 *
+		 * Also skip this check if INSERT EXEC had an error. The error flag is
+		 * set when an error occurs during INSERT EXEC (e.g., error 3916 for
+		 * COMMIT without BEGIN TRAN). In this case, we want the original error
+		 * to propagate, not the transaction count mismatch error.
+		 *
+		 * For INSERT EXEC at trancount >= 2, we should NOT skip the mismatch check.
+		 * In SQL Server, when INSERT EXEC starts at trancount >= 2, COMMIT is allowed
+		 * (because there's a BEGIN TRAN), but the mismatch error should still fire.
+		 * We only skip the mismatch check when INSERT EXEC started at trancount <= 1
+		 * (where COMMIT would be blocked by error 3916 anyway).
 		 */
 		topEntry = simple_econtext_stack;
 		if (!pltsql_implicit_transactions &&
 			is_batch_command(stmt) &&
 			!is_part_of_pltsql_trigger(estate) &&
-			!pltsql_insert_exec_active() &&
+			!(pltsql_insert_exec_active() && pltsql_get_insert_exec_base_tran_count() <= 1) &&
+			!pltsql_insert_exec_had_error() &&
 			before_tran_count != NestedTranCount)
 			ereport(ERROR,
 					(errcode(ERRCODE_T_R_INTEGRITY_CONSTRAINT_VIOLATION),
@@ -1622,6 +1634,9 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 
 		handle_error(estate, stmt, edata, topEntry, terminate_batch, ro_func);
 
+		/* Clear the INSERT EXEC error flag after error handling is complete */
+		pltsql_insert_exec_clear_error_flag();
+
 		rc = PLTSQL_RC_OK;
 	}
 	PG_END_TRY();
@@ -1654,6 +1669,15 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 
 	if (!exec_codes)
 		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Empty execution code")));
+
+	/*
+	 * Clear the INSERT EXEC error flag at the start of each batch.
+	 * This flag is used to skip the transaction count mismatch check when
+	 * an error occurs during INSERT EXEC (e.g., error 3916 for COMMIT without
+	 * BEGIN TRAN). The flag should only affect the current INSERT EXEC operation,
+	 * not subsequent batches.
+	 */
+	pltsql_insert_exec_clear_error_flag();
 
 
 	size = vec_size(exec_codes->codes);
