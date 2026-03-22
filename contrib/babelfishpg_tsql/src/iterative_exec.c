@@ -1553,14 +1553,21 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 				}
 			}
 			
-			/* Also skip abort for statement-terminating errors */
-			if (!skip_abort)
+			/*
+			 * Also skip abort for statement-terminating errors, but ONLY if
+			 * we're inside a TRY-CATCH block. Without TRY-CATCH, we need to
+			 * abort the transaction to properly clean up the trigger state
+			 * (afterTriggers.query_depth). Otherwise, when the TDS protocol
+			 * layer calls CommitTransactionCommand() in its PG_CATCH block,
+			 * the assertion "afterTriggers.query_depth == -1" will fail.
+			 */
+			if (!skip_abort && is_part_of_pltsql_trycatch_block(estate))
 			{
 				uint8_t override_flag = override_txn_behaviour(stmt);
 				if (is_ignorable_error(edata->sqlerrcode, override_flag))
 				{
 					skip_abort = true;
-					elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback for statement-terminating error");
+					elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback for statement-terminating error (TRY-CATCH will handle)");
 				}
 			}
 			
