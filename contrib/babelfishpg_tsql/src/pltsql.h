@@ -2422,6 +2422,7 @@ extern void pltsql_insert_exec_set_pending_drop(void);
 extern void pltsql_insert_exec_check_pending_drop(void);
 extern void pltsql_insert_exec_open_target_table(const char *target_table);
 extern void pltsql_insert_exec_close_target_table(void);
+extern bool pltsql_insert_exec_verify_schema(void);
 extern DestReceiver *CreateInsertExecDestReceiver(Oid temp_table_oid);
 extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list);
 extern void drop_insert_exec_temp_table(Oid temp_table_oid);

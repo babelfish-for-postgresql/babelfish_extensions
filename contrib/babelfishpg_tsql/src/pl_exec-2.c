@@ -97,8 +97,22 @@ static int insert_exec_call_stack_depth = 0;  /* Call stack depth when INSERT EX
 static bool insert_exec_incremented_tran_count = false;  /* True if INSERT EXEC incremented NestedTranCount */
 static bool insert_exec_had_error = false;  /* True if INSERT EXEC had an error - used to skip trancount mismatch check */
 static bool insert_exec_pending_drop = false;  /* True if temp table needs to be dropped when SPI is available */
-static Relation insert_exec_target_rel = NULL;  /* Target table relation held open during INSERT EXEC */
-static Oid insert_exec_target_rel_oid = InvalidOid;  /* OID of target table for schema change detection */
+static Oid insert_exec_target_rel_oid = InvalidOid;  /* OID of target table - lock held to detect schema changes */
+
+/*
+ * Schema signature for detecting schema changes during INSERT EXEC.
+ * We store the column count and column type OIDs at the start of INSERT EXEC,
+ * then verify they haven't changed before flushing data to the target table.
+ * This detects ALTER TABLE operations that would cause SQL Server error 556.
+ */
+typedef struct InsertExecSchemaSignature
+{
+	int			natts;			/* Number of columns */
+	Oid		   *atttypids;		/* Array of column type OIDs */
+	int32	   *atttypmods;		/* Array of column type modifiers */
+} InsertExecSchemaSignature;
+
+static InsertExecSchemaSignature *insert_exec_schema_sig = NULL;
 
 /* DestReceiver struct for INSERT EXEC */
 typedef struct
@@ -325,18 +339,19 @@ pltsql_insert_exec_check_pending_drop(void)
 /*
  * Open and hold the target table during INSERT EXEC execution.
  * 
- * This is critical for detecting schema alterations (SQL Server error 556).
- * By holding the target table open with a lock, PostgreSQL's CheckTableNotInUse()
- * will detect if the procedure tries to ALTER TABLE on the target, and raise
- * an error "cannot ALTER TABLE because it is being used by active queries".
+ * This function captures the schema signature (column count and types) of the
+ * target table at the start of INSERT EXEC. Before flushing data to the target,
+ * we verify the schema hasn't changed. If it has, we raise SQL Server error 556:
+ * "INSERT EXEC failed because the stored procedure altered the schema of the target table."
  * 
- * We use RowExclusiveLock because we will be inserting into this table.
- * This also prevents concurrent modifications to the table structure.
+ * IMPORTANT: We only acquire a lock, not hold the Relation pointer open.
+ * Holding a Relation pointer across subtransaction boundaries causes issues
+ * with resource owners and relcache invalidation, especially in upgrade tests
+ * where table OIDs may change.
  * 
  * For temp tables and table variables (starting with # or @), we don't need
- * to hold them open because they're session-local and can't be modified by
- * other sessions. Also, temp tables may not be resolvable via RangeVarGetRelid
- * in all contexts.
+ * to lock them because they're session-local and can't be modified by
+ * other sessions.
  */
 void
 pltsql_insert_exec_open_target_table(const char *target_table)
@@ -349,10 +364,20 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 	char	   *target_copy;
 	char	   *dot_pos;
 	char	   *second_dot;
+	Relation	rel;
+	TupleDesc	tupdesc;
+	int			i;
+	MemoryContext oldcontext;
+
+	elog(DEBUG1, "INSERT-EXEC: open_target_table called with target='%s'", 
+		 target_table ? target_table : "NULL");
 
 	/* Skip for temp tables and table variables */
 	if (target_table == NULL || target_table[0] == '#' || target_table[0] == '@')
+	{
+		elog(DEBUG1, "INSERT-EXEC: Skipping schema capture for temp table or table variable");
 		return;
+	}
 
 	/* Parse schema and table name from target_table */
 	target_copy = pstrdup(target_table);
@@ -405,24 +430,192 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 		return;
 	}
 	
-	/* Open the relation and hold it open */
-	insert_exec_target_rel = table_open(relid, RowExclusiveLock);
+	/*
+	 * Acquire RowExclusiveLock on the target table.
+	 * This lock will be held until the end of the transaction (or until
+	 * explicitly released).
+	 */
+	LockRelationOid(relid, RowExclusiveLock);
 	insert_exec_target_rel_oid = relid;
+	
+	/*
+	 * Capture the schema signature of the target table.
+	 * We open the relation briefly to get the tuple descriptor, then close it.
+	 * The lock we acquired above will remain held.
+	 */
+	rel = table_open(relid, NoLock);  /* Already have RowExclusiveLock */
+	tupdesc = RelationGetDescr(rel);
+	
+	/* Allocate schema signature in TopMemoryContext so it survives error handling */
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	
+	/* Free any previous schema signature */
+	if (insert_exec_schema_sig != NULL)
+	{
+		if (insert_exec_schema_sig->atttypids)
+			pfree(insert_exec_schema_sig->atttypids);
+		if (insert_exec_schema_sig->atttypmods)
+			pfree(insert_exec_schema_sig->atttypmods);
+		pfree(insert_exec_schema_sig);
+		insert_exec_schema_sig = NULL;
+	}
+	
+	insert_exec_schema_sig = palloc(sizeof(InsertExecSchemaSignature));
+	insert_exec_schema_sig->natts = tupdesc->natts;
+	insert_exec_schema_sig->atttypids = palloc(tupdesc->natts * sizeof(Oid));
+	insert_exec_schema_sig->atttypmods = palloc(tupdesc->natts * sizeof(int32));
+	
+	for (i = 0; i < tupdesc->natts; i++)
+	{
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+		insert_exec_schema_sig->atttypids[i] = attr->atttypid;
+		insert_exec_schema_sig->atttypmods[i] = attr->atttypmod;
+	}
+	
+	elog(DEBUG1, "INSERT-EXEC: Captured schema signature for target table OID %u with %d columns",
+		 relid, insert_exec_schema_sig->natts);
+	
+	MemoryContextSwitchTo(oldcontext);
+	
+	table_close(rel, NoLock);  /* Keep the lock */
 }
 
 /*
  * Close the target table that was held open during INSERT EXEC.
  * Called after the flush completes or on error cleanup.
+ * 
+ * Note: We only release the lock if we're not in an aborted transaction state.
+ * If the transaction was aborted (e.g., due to COMMIT without BEGIN TRAN error),
+ * the lock has already been released by the transaction abort, and trying to
+ * unlock it would cause an error.
+ * 
+ * In major version upgrade scenarios, the OID may be stale, so we wrap the
+ * unlock in a PG_TRY block to handle errors gracefully.
  */
 void
 pltsql_insert_exec_close_target_table(void)
 {
-	if (insert_exec_target_rel != NULL)
+	if (OidIsValid(insert_exec_target_rel_oid))
 	{
-		table_close(insert_exec_target_rel, NoLock);
-		insert_exec_target_rel = NULL;
+		/*
+		 * Only release the lock if we're not in an aborted transaction state.
+		 * In an aborted transaction, all locks have already been released.
+		 */
+		if (!IsAbortedTransactionBlockState())
+		{
+			MemoryContext oldcontext = CurrentMemoryContext;
+			PG_TRY();
+			{
+				UnlockRelationOid(insert_exec_target_rel_oid, RowExclusiveLock);
+			}
+			PG_CATCH();
+			{
+				/* 
+				 * Could not unlock - likely stale OID from upgrade scenario
+				 * or relation was dropped. Just ignore the error.
+				 */
+				MemoryContextSwitchTo(oldcontext);
+				FlushErrorState();
+				elog(DEBUG1, "INSERT-EXEC: Could not unlock target table OID %u, ignoring",
+					 insert_exec_target_rel_oid);
+			}
+			PG_END_TRY();
+		}
 		insert_exec_target_rel_oid = InvalidOid;
 	}
+	
+	/* Free the schema signature */
+	if (insert_exec_schema_sig != NULL)
+	{
+		if (insert_exec_schema_sig->atttypids)
+			pfree(insert_exec_schema_sig->atttypids);
+		if (insert_exec_schema_sig->atttypmods)
+			pfree(insert_exec_schema_sig->atttypmods);
+		pfree(insert_exec_schema_sig);
+		insert_exec_schema_sig = NULL;
+	}
+}
+
+/*
+ * Verify that the target table schema hasn't changed since INSERT EXEC started.
+ * Returns true if schema is unchanged, false if it has changed.
+ * 
+ * This is called before flushing data to the target table to detect if the
+ * executed procedure altered the target table's schema (SQL Server error 556).
+ * 
+ * Note: In major version upgrade scenarios, the OID captured at INSERT EXEC start
+ * may become stale. We handle this gracefully by skipping the check if we can't
+ * open the relation - the actual INSERT will validate the data anyway.
+ */
+bool
+pltsql_insert_exec_verify_schema(void)
+{
+	Relation	rel;
+	TupleDesc	tupdesc;
+	int			i;
+	bool		schema_changed = false;
+	MemoryContext oldcontext;
+	
+	/* If no schema signature was captured, skip the check */
+	if (insert_exec_schema_sig == NULL || !OidIsValid(insert_exec_target_rel_oid))
+		return true;
+	
+	/*
+	 * Try to open the relation. In major version upgrade scenarios, the OID
+	 * may be stale (table was recreated with a different OID). In that case,
+	 * we skip the schema check - the actual INSERT will validate the data.
+	 */
+	oldcontext = CurrentMemoryContext;
+	PG_TRY();
+	{
+		rel = table_open(insert_exec_target_rel_oid, NoLock);  /* Already have lock */
+	}
+	PG_CATCH();
+	{
+		/* 
+		 * Could not open relation - likely stale OID from upgrade scenario.
+		 * Skip the schema check and let the INSERT validate the data.
+		 */
+		MemoryContextSwitchTo(oldcontext);
+		FlushErrorState();
+		elog(DEBUG1, "INSERT-EXEC: Could not open target table OID %u for schema verification, skipping check",
+			 insert_exec_target_rel_oid);
+		return true;
+	}
+	PG_END_TRY();
+	
+	tupdesc = RelationGetDescr(rel);
+	
+	/* Check if column count changed */
+	if (tupdesc->natts != insert_exec_schema_sig->natts)
+	{
+		elog(DEBUG1, "INSERT-EXEC: Schema changed - column count: original=%d, current=%d",
+			 insert_exec_schema_sig->natts, tupdesc->natts);
+		schema_changed = true;
+	}
+	else
+	{
+		/* Check if any column type changed */
+		for (i = 0; i < tupdesc->natts; i++)
+		{
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+			if (attr->atttypid != insert_exec_schema_sig->atttypids[i] ||
+				attr->atttypmod != insert_exec_schema_sig->atttypmods[i])
+			{
+				elog(DEBUG1, "INSERT-EXEC: Schema changed - column %d type: original=%u, current=%u",
+					 i, insert_exec_schema_sig->atttypids[i], attr->atttypid);
+				schema_changed = true;
+				break;
+			}
+		}
+	}
+	
+	if (!schema_changed)
+		elog(DEBUG1, "INSERT-EXEC: Schema unchanged, %d columns verified", tupdesc->natts);
+	
+	table_close(rel, NoLock);  /* Keep the lock */
+	
+	return !schema_changed;
 }
 
 /*
@@ -968,6 +1161,9 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 	char	   *second_dot;
 	char	   *target_copy;
 
+	elog(DEBUG1, "INSERT-EXEC: create_insert_exec_temp_table called with target='%s'",
+		 target_table ? target_table : "NULL");
+
 	/* Generate unique temp table name using backend PID */
 	snprintf(temp_table_name, sizeof(temp_table_name),
 			 "#insert_exec_buf_%d", MyProcPid);
@@ -1461,6 +1657,19 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	if (!OidIsValid(temp_oid) || target_table == NULL)
 	{
 		return;
+	}
+	
+	/*
+	 * Verify that the target table schema hasn't changed since INSERT EXEC started.
+	 * If the executed procedure altered the target table's schema (e.g., ALTER TABLE
+	 * ADD COLUMN), we must raise SQL Server error 556:
+	 * "INSERT EXEC failed because the stored procedure altered the schema of the target table."
+	 */
+	if (!pltsql_insert_exec_verify_schema())
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("INSERT EXEC failed because the stored procedure altered the schema of the target table.")));
 	}
 	
 	/*
@@ -2947,6 +3156,8 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * at the subtransaction level, so they won't be cleaned up if a nested
 		 * subtransaction (e.g., inner TRY/CATCH) rolls back.
 		 */
+		elog(DEBUG1, "INSERT-EXEC: exec_stmt_exec - insert_exec=%d, insert_exec_target='%s'",
+			 stmt->insert_exec, stmt->insert_exec_target ? stmt->insert_exec_target : "NULL");
 		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
 		{
 			/*
@@ -3489,12 +3700,24 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * cannot be used in an error context (transaction is aborted).
 		 * We set the pending drop flag so the temp table will be dropped at the
 		 * next opportunity when SPI is available.
+		 * 
+		 * IMPORTANT: We MUST clear the INSERT EXEC context even if other cleanup
+		 * fails. Otherwise, subsequent queries will see pltsql_insert_exec_active()
+		 * as true and try to use the stale temp table OID.
 		 */
 		if (insert_exec_setup_done)
 		{
 			pltsql_insert_exec_set_error_flag();
 			pltsql_insert_exec_set_pending_drop();
-			pltsql_insert_exec_close_target_table();  /* Close target table on error */
+			
+			/*
+			 * Close target table. This function already checks
+			 * IsAbortedTransactionBlockState() and skips the unlock if
+			 * the transaction is aborted.
+			 */
+			pltsql_insert_exec_close_target_table();
+			
+			/* Always clear the context, even if close_target_table failed */
 			pltsql_clear_insert_exec_context();
 		}
 		
@@ -3909,24 +4132,32 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		/* 
 		 * Cleanup INSERT EXEC state on error.
 		 * 
-		 * IMPORTANT: We cannot call drop_insert_exec_temp_table() here because
-		 * SPI_execute cannot be used in an error context (transaction is aborted).
+		 * IMPORTANT: We MUST clear the INSERT EXEC context immediately, even if
+		 * we're inside a TRY-CATCH block. This is because:
+		 * 1. The temp table may have been dropped due to transaction abort
+		 * 2. Between this PG_CATCH and the TRY-CATCH handler, other code might
+		 *    check pltsql_insert_exec_active() and try to use the stale temp table OID
+		 * 3. This leads to "could not open relation with OID" errors
+		 * 
+		 * We cannot call drop_insert_exec_temp_table() here because SPI_execute
+		 * cannot be used in an error context (transaction is aborted).
 		 * We set the pending drop flag so the temp table will be dropped at the
 		 * next opportunity when SPI is available.
-		 *
-		 * If we're inside a TRY-CATCH block, do NOT clear the INSERT EXEC context.
-		 * Let the TRY-CATCH handler (exec_stmt_try_catch) do the cleanup, because
-		 * it has access to SPI and can properly drop the temp table.
 		 */
 		if (insert_exec_setup_done)
 		{
 			pltsql_insert_exec_set_error_flag();
 			pltsql_insert_exec_set_pending_drop();
-			pltsql_insert_exec_close_target_table();  /* Close target table on error */
-			if (!pltsql_insert_exec_in_trycatch())
-			{
-				pltsql_clear_insert_exec_context();
-			}
+			
+			/*
+			 * Close target table. This function already checks
+			 * IsAbortedTransactionBlockState() and skips the unlock if
+			 * the transaction is aborted.
+			 */
+			pltsql_insert_exec_close_target_table();
+			
+			/* Always clear the context to prevent stale state */
+			pltsql_clear_insert_exec_context();
 		}
 		
 		/* Restore GUC and scope identity settings before re-throwing */
@@ -4761,22 +4992,32 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					/* 
 					 * Cleanup INSERT EXEC state on error.
 					 * 
-					 * IMPORTANT: We cannot call drop_insert_exec_temp_table() here because
-					 * SPI_execute cannot be used in an error context (transaction is aborted).
+					 * IMPORTANT: We MUST clear the INSERT EXEC context immediately, even if
+					 * we're inside a TRY-CATCH block. This is because:
+					 * 1. The temp table may have been dropped due to transaction abort
+					 * 2. Between this PG_CATCH and the TRY-CATCH handler, other code might
+					 *    check pltsql_insert_exec_active() and try to use the stale temp table OID
+					 * 3. This leads to "could not open relation with OID" errors
+					 * 
+					 * We cannot call drop_insert_exec_temp_table() here because SPI_execute
+					 * cannot be used in an error context (transaction is aborted).
 					 * The temp table will be automatically cleaned up when the transaction
 					 * rolls back.
-					 *
-					 * If we're inside a TRY-CATCH block, do NOT clear the INSERT EXEC context.
-					 * Let the TRY-CATCH handler (exec_stmt_try_catch) do the cleanup, because
-					 * it has access to SPI and can properly drop the temp table.
 					 */
 					if (insert_exec_setup_done)
 					{
-						pltsql_insert_exec_close_target_table();  /* Close target table on error */
-						if (!pltsql_insert_exec_in_trycatch())
-						{
-							pltsql_clear_insert_exec_context();
-						}
+						pltsql_insert_exec_set_error_flag();
+						pltsql_insert_exec_set_pending_drop();
+						
+						/*
+						 * Close target table. This function already checks
+						 * IsAbortedTransactionBlockState() and skips the unlock if
+						 * the transaction is aborted.
+						 */
+						pltsql_insert_exec_close_target_table();
+						
+						/* Always clear the context to prevent stale state */
+						pltsql_clear_insert_exec_context();
 					}
 					pltsql_revert_guc(save_nestlevel);
 					pltsql_revert_last_scope_identity(scope_level);

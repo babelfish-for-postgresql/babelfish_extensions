@@ -210,6 +210,8 @@ XX000#!#The table-valued parameter "%s" must be declared with the READONLY optio
 22008#!#Adding a value to a '%s' column caused an overflow.#!##!#517
 42P01#!#FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.#!##!#13600
 42P01#!#sub-select and values for json auto are not currently supported.#!##!#13600
+54000#!#nested INSERT ... EXECUTE statements are not allowed#!##!#8164
+0A000#!#INSERT EXEC failed because the stored procedure altered the schema of the target table.#!##!#556
 ~~END~~
 
 
