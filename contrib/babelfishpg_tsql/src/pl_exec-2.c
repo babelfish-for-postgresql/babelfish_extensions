@@ -976,6 +976,10 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 			/*
 			 * Parse the column_list to build a SQL IN clause.
 			 * column_list is like "c, a" - we need to convert to ('c', 'a')
+			 * 
+			 * IMPORTANT: We lowercase the column names because pg_attribute stores
+			 * column names in lowercase (for unquoted identifiers), and we compare
+			 * using lower(a.attname) IN (...). Both sides must be lowercase.
 			 */
 			col_list_copy = pstrdup(column_list);
 			first_col = true;
@@ -988,9 +992,13 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 					col_name++;
 				if (*col_name != '\0')
 				{
+					char *lower_col_name;
 					if (!first_col)
 						appendStringInfoString(&col_names_sql, ", ");
-					appendStringInfo(&col_names_sql, "'%s'", col_name);
+					/* Lowercase the column name to match pg_attribute storage */
+					lower_col_name = downcase_identifier(col_name, strlen(col_name), false, false);
+					appendStringInfo(&col_names_sql, "'%s'", lower_col_name);
+					pfree(lower_col_name);
 					first_col = false;
 				}
 				col_name = strtok_r(NULL, ", ", &saveptr);
@@ -2926,12 +2934,18 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 		stmt->is_scalar_func = is_scalar_func;
 
-		/* T-SQL doesn't allow procedure calls in a function */
+		/*
+		 * T-SQL doesn't allow procedure calls in a function, EXCEPT when
+		 * the procedure is being called as part of INSERT EXEC. In that case,
+		 * the procedure's output is captured into a table variable, which is
+		 * allowed in T-SQL functions.
+		 */
 		if (estate->func && estate->func->fn_oid != InvalidOid && estate->func->fn_prokind == PROKIND_FUNCTION && estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER /* check EXEC is running
 																																									 * in the body of
 																																									 * function */
-			&& !is_scalar_func) /* in case of EXEC on scalar function, it is
+			&& !is_scalar_func /* in case of EXEC on scalar function, it is
 								 * allowed in T-SQL. do not throw an error */
+			&& !stmt->insert_exec) /* INSERT EXEC into table variable is allowed in functions */
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
