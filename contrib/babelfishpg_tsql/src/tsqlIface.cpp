@@ -2126,6 +2126,33 @@ public:
 					exec_sp_stmt->insert_exec_columns = pstrdup(column_list.c_str());
 			}
 			
+			/*
+			 * Apply rewriting to the EXEC statement's expression.
+			 * This is needed to convert double-quoted strings to single-quoted strings
+			 * (e.g., "master" -> 'master') which is required for PostgreSQL compatibility.
+			 * Without this, double-quoted strings would be interpreted as column references.
+			 */
+			if (base_stmt->cmd_type == PLTSQL_STMT_EXEC)
+			{
+				PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) base_stmt;
+				PLtsql_expr_query_mutator mutator(exec_stmt->expr, ctxES);
+				add_rewritten_query_fragment_to_mutator(&mutator);
+				mutator.run();
+			}
+			else if (base_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
+			{
+				PLtsql_stmt_exec_batch *exec_batch_stmt = (PLtsql_stmt_exec_batch *) base_stmt;
+				PLtsql_expr_query_mutator mutator(exec_batch_stmt->expr, ctxES);
+				/*
+				 * Note: We don't call markSelectFragment here because the selectFragmentOffsets
+				 * was recorded with ctx->parent as the key in makeExecuteStatement, not ctxES.
+				 * For INSERT EXEC with dynamic SQL, we don't need to limit the rewriting range
+				 * since the expression is the entire dynamic SQL string.
+				 */
+				add_rewritten_query_fragment_to_mutator(&mutator);
+				mutator.run();
+			}
+			
 			/* Replace the PLtsql_stmt_execsql with the exec statement in the container */
 			replaceGraftedStatement(ctx, base_stmt);
 			
