@@ -18,6 +18,7 @@
 #include "executor/tstoreReceiver.h"
 #include "executor/tuptable.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "nodes/parsenodes.h"
 #include "parser/parse_coerce.h"
 #include "utils/acl.h"
@@ -96,6 +97,8 @@ static int insert_exec_call_stack_depth = 0;  /* Call stack depth when INSERT EX
 static bool insert_exec_incremented_tran_count = false;  /* True if INSERT EXEC incremented NestedTranCount */
 static bool insert_exec_had_error = false;  /* True if INSERT EXEC had an error - used to skip trancount mismatch check */
 static bool insert_exec_pending_drop = false;  /* True if temp table needs to be dropped when SPI is available */
+static Relation insert_exec_target_rel = NULL;  /* Target table relation held open during INSERT EXEC */
+static Oid insert_exec_target_rel_oid = InvalidOid;  /* OID of target table for schema change detection */
 
 /* DestReceiver struct for INSERT EXEC */
 typedef struct
@@ -316,6 +319,109 @@ pltsql_insert_exec_check_pending_drop(void)
 
 		pfree(drop_stmt.data);
 		insert_exec_pending_drop = false;
+	}
+}
+
+/*
+ * Open and hold the target table during INSERT EXEC execution.
+ * 
+ * This is critical for detecting schema alterations (SQL Server error 556).
+ * By holding the target table open with a lock, PostgreSQL's CheckTableNotInUse()
+ * will detect if the procedure tries to ALTER TABLE on the target, and raise
+ * an error "cannot ALTER TABLE because it is being used by active queries".
+ * 
+ * We use RowExclusiveLock because we will be inserting into this table.
+ * This also prevents concurrent modifications to the table structure.
+ * 
+ * For temp tables and table variables (starting with # or @), we don't need
+ * to hold them open because they're session-local and can't be modified by
+ * other sessions. Also, temp tables may not be resolvable via RangeVarGetRelid
+ * in all contexts.
+ */
+void
+pltsql_insert_exec_open_target_table(const char *target_table)
+{
+	RangeVar   *rv;
+	Oid			relid;
+	char	   *schema_name = NULL;
+	char	   *table_name = NULL;
+	char	   *physical_schema = NULL;
+	char	   *target_copy;
+	char	   *dot_pos;
+	char	   *second_dot;
+
+	/* Skip for temp tables and table variables */
+	if (target_table == NULL || target_table[0] == '#' || target_table[0] == '@')
+		return;
+
+	/* Parse schema and table name from target_table */
+	target_copy = pstrdup(target_table);
+	
+	/* Find the last dot to separate schema from table */
+	dot_pos = strrchr(target_copy, '.');
+	if (dot_pos != NULL)
+	{
+		*dot_pos = '\0';
+		table_name = pstrdup(dot_pos + 1);
+		
+		/* Check if there's another dot (db.schema.table) */
+		second_dot = strrchr(target_copy, '.');
+		if (second_dot != NULL)
+		{
+			/* db.schema.table - schema is after the second dot */
+			schema_name = pstrdup(second_dot + 1);
+		}
+		else
+		{
+			/* schema.table */
+			schema_name = pstrdup(target_copy);
+		}
+	}
+	else
+	{
+		/* Just table name, use dbo as default */
+		table_name = pstrdup(target_copy);
+		schema_name = pstrdup("dbo");
+	}
+	pfree(target_copy);
+	
+	/* Convert logical schema name to physical schema name */
+	physical_schema = get_physical_schema_name(get_cur_db_name(), schema_name);
+	
+	/* Create RangeVar and get the relation OID */
+	rv = makeRangeVar(physical_schema, table_name, -1);
+	relid = RangeVarGetRelid(rv, NoLock, true);
+	
+	if (schema_name)
+		pfree(schema_name);
+	if (table_name)
+		pfree(table_name);
+	if (physical_schema)
+		pfree(physical_schema);
+	
+	if (!OidIsValid(relid))
+	{
+		/* Table doesn't exist - will be caught later during flush */
+		return;
+	}
+	
+	/* Open the relation and hold it open */
+	insert_exec_target_rel = table_open(relid, RowExclusiveLock);
+	insert_exec_target_rel_oid = relid;
+}
+
+/*
+ * Close the target table that was held open during INSERT EXEC.
+ * Called after the flush completes or on error cleanup.
+ */
+void
+pltsql_insert_exec_close_target_table(void)
+{
+	if (insert_exec_target_rel != NULL)
+	{
+		table_close(insert_exec_target_rel, NoLock);
+		insert_exec_target_rel = NULL;
+		insert_exec_target_rel_oid = InvalidOid;
 	}
 }
 
@@ -2858,6 +2964,14 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			/* Set global context info for flush function */
 			pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
 			
+			/*
+			 * Open and hold the target table during INSERT EXEC execution.
+			 * This is critical for detecting schema alterations (SQL Server error 556).
+			 * By holding the target table open, PostgreSQL's CheckTableNotInUse()
+			 * will detect if the procedure tries to ALTER TABLE on the target.
+			 */
+			pltsql_insert_exec_open_target_table(stmt->insert_exec_target);
+			
 			/* Create temp table based on target table structure - NO subtransaction wrapper */
 			insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
 																 stmt->insert_exec_columns);
@@ -3380,6 +3494,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		{
 			pltsql_insert_exec_set_error_flag();
 			pltsql_insert_exec_set_pending_drop();
+			pltsql_insert_exec_close_target_table();  /* Close target table on error */
 			pltsql_clear_insert_exec_context();
 		}
 		
@@ -3472,6 +3587,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			flush_insert_exec_temp_table(estate);
 			
 			/*
+			 * Close the target table that was held open during INSERT EXEC.
+			 * This must be done AFTER the flush completes.
+			 */
+			pltsql_insert_exec_close_target_table();
+			
+			/*
 			 * Clear the INSERT EXEC context AFTER the flush completes.
 			 * This ensures the flush INSERT has access to target table info.
 			 */
@@ -3479,7 +3600,8 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		}
 		PG_CATCH();
 		{
-			/* Clear context and drop temp table before re-throwing */
+			/* Close target table and clear context before re-throwing */
+			pltsql_insert_exec_close_target_table();
 			pltsql_clear_insert_exec_context();
 			drop_insert_exec_temp_table(insert_exec_temp_oid);
 			PG_RE_THROW();
@@ -3743,6 +3865,14 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			/* Set global context info for flush function */
 			pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
 			
+			/*
+			 * Open and hold the target table during INSERT EXEC execution.
+			 * This is critical for detecting schema alterations (SQL Server error 556).
+			 * By holding the target table open, PostgreSQL's CheckTableNotInUse()
+			 * will detect if the procedure tries to ALTER TABLE on the target.
+			 */
+			pltsql_insert_exec_open_target_table(stmt->insert_exec_target);
+			
 			/* Create temp table based on target table structure */
 			insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
 																 stmt->insert_exec_columns);
@@ -3792,6 +3922,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		{
 			pltsql_insert_exec_set_error_flag();
 			pltsql_insert_exec_set_pending_drop();
+			pltsql_insert_exec_close_target_table();  /* Close target table on error */
 			if (!pltsql_insert_exec_in_trycatch())
 			{
 				pltsql_clear_insert_exec_context();
@@ -3866,6 +3997,12 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			flush_insert_exec_temp_table(estate);
 			
 			/*
+			 * Close the target table that was held open during INSERT EXEC.
+			 * This must be done AFTER the flush completes.
+			 */
+			pltsql_insert_exec_close_target_table();
+			
+			/*
 			 * Clear the INSERT EXEC context AFTER the flush completes.
 			 * This ensures the flush INSERT has access to target table info.
 			 */
@@ -3873,7 +4010,8 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		}
 		PG_CATCH();
 		{
-			/* Clear context and drop temp table before re-throwing */
+			/* Close target table and clear context before re-throwing */
+			pltsql_insert_exec_close_target_table();
 			pltsql_clear_insert_exec_context();
 			drop_insert_exec_temp_table(insert_exec_temp_oid);
 			PG_RE_THROW();
@@ -4589,6 +4727,14 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						/* Set global context info for flush function */
 						pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
 						
+						/*
+						 * Open and hold the target table during INSERT EXEC execution.
+						 * This is critical for detecting schema alterations (SQL Server error 556).
+						 * By holding the target table open, PostgreSQL's CheckTableNotInUse()
+						 * will detect if the procedure tries to ALTER TABLE on the target.
+						 */
+						pltsql_insert_exec_open_target_table(stmt->insert_exec_target);
+						
 						/* Create temp table based on target table structure */
 						insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
 																			 stmt->insert_exec_columns);
@@ -4624,9 +4770,13 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					 * Let the TRY-CATCH handler (exec_stmt_try_catch) do the cleanup, because
 					 * it has access to SPI and can properly drop the temp table.
 					 */
-					if (insert_exec_setup_done && !pltsql_insert_exec_in_trycatch())
+					if (insert_exec_setup_done)
 					{
-						pltsql_clear_insert_exec_context();
+						pltsql_insert_exec_close_target_table();  /* Close target table on error */
+						if (!pltsql_insert_exec_in_trycatch())
+						{
+							pltsql_clear_insert_exec_context();
+						}
 					}
 					pltsql_revert_guc(save_nestlevel);
 					pltsql_revert_last_scope_identity(scope_level);
@@ -4656,6 +4806,12 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						flush_insert_exec_temp_table(estate);
 						
 						/*
+						 * Close the target table that was held open during INSERT EXEC.
+						 * This must be done AFTER the flush completes.
+						 */
+						pltsql_insert_exec_close_target_table();
+						
+						/*
 						 * Clear the INSERT EXEC context AFTER the flush completes.
 						 * This ensures the flush INSERT has access to target table info.
 						 */
@@ -4663,7 +4819,8 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					}
 					PG_CATCH();
 					{
-						/* Clear context and drop temp table before re-throwing */
+						/* Close target table and clear context before re-throwing */
+						pltsql_insert_exec_close_target_table();
 						pltsql_clear_insert_exec_context();
 						drop_insert_exec_temp_table(insert_exec_temp_oid);
 						PG_RE_THROW();
