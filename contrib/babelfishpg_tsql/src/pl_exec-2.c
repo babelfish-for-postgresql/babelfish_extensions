@@ -3683,14 +3683,23 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	SimpleEcontextStackEntry *topEntry = NULL;
 	volatile int save_nestlevel = 0;
 	volatile int scope_level = 0;
-	char	   *old_db_name = get_cur_db_name();
+	char	   *old_db_name;
 	char	   *cur_db_name = NULL;
+	MemoryContext saved_context;
 	
 	/* INSERT EXEC handling - temp table lifecycle */
 	bool insert_exec_setup_done = false;
 	Oid insert_exec_temp_oid = InvalidOid;
 
 	LOCAL_FCINFO(fcinfo, 1);
+	
+	/*
+	 * Allocate old_db_name in TopMemoryContext so it survives any memory
+	 * context switches during nested EXECUTE calls.
+	 */
+	saved_context = MemoryContextSwitchTo(TopMemoryContext);
+	old_db_name = get_cur_db_name();
+	MemoryContextSwitchTo(saved_context);
 
 	/*
 	 * First we evaluate the string expression. Its result is the
@@ -3699,6 +3708,8 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	query = exec_eval_expr(estate, stmt->expr, &isnull, &restype, &restypmod);
 	if (isnull)
 	{
+		/* Free old_db_name which was allocated in TopMemoryContext */
+		pfree(old_db_name);
 		return PLTSQL_RC_OK;
 	}
 	save_nestlevel = pltsql_new_guc_nest_level();
@@ -3791,6 +3802,20 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		pltsql_revert_guc(save_nestlevel);
 		pltsql_revert_last_scope_identity(scope_level);
 		
+		/*
+		 * Restore database context on error. This ensures that when an error
+		 * occurs inside a nested EXECUTE, the database context is properly
+		 * restored to what it was before this EXECUTE started.
+		 */
+		cur_db_name = get_cur_db_name();
+		if (strcmp(cur_db_name, old_db_name) != 0)
+		{
+			set_cur_user_db_and_path(old_db_name, false);
+		}
+		
+		/* Free old_db_name which was allocated in TopMemoryContext */
+		pfree(old_db_name);
+		
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -3801,7 +3826,9 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 	cur_db_name = get_cur_db_name();
 	if (strcmp(cur_db_name, old_db_name) != 0)
+	{
 		set_cur_user_db_and_path(old_db_name, false);
+	}
 
 	after_lxid = MyProc->vxid.lxid;
 
@@ -3874,6 +3901,9 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		PG_END_TRY();
 		
 	}
+	
+	/* Free old_db_name which was allocated in TopMemoryContext */
+	pfree(old_db_name);
 	
 	return PLTSQL_RC_OK;
 }
