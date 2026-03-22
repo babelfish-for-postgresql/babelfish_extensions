@@ -1520,11 +1520,6 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			 * up the INSERT EXEC context and let the transaction abort normally.
 			 * Otherwise, the temp table will be left behind and cause
 			 * "relation already exists" errors on subsequent INSERT EXEC.
-			 *
-			 * Also skip this for statement-terminating errors (like division by
-			 * zero). In SQL Server, statement-terminating errors do NOT cause a
-			 * transaction rollback - they only terminate the failing statement.
-			 * Previous statements' work is preserved, regardless of TRY-CATCH.
 			 */
 			bool skip_abort = false;
 			
@@ -1553,24 +1548,6 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 				}
 			}
 			
-			/*
-			 * Also skip abort for statement-terminating errors, but ONLY if
-			 * we're inside a TRY-CATCH block. Without TRY-CATCH, we need to
-			 * abort the transaction to properly clean up the trigger state
-			 * (afterTriggers.query_depth). Otherwise, when the TDS protocol
-			 * layer calls CommitTransactionCommand() in its PG_CATCH block,
-			 * the assertion "afterTriggers.query_depth == -1" will fail.
-			 */
-			if (!skip_abort && is_part_of_pltsql_trycatch_block(estate))
-			{
-				uint8_t override_flag = override_txn_behaviour(stmt);
-				if (is_ignorable_error(edata->sqlerrcode, override_flag))
-				{
-					skip_abort = true;
-					elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback for statement-terminating error (TRY-CATCH will handle)");
-				}
-			}
-			
 			if (!skip_abort)
 			{
 				HOLD_INTERRUPTS();
@@ -1585,21 +1562,38 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			else
 			{
 				/*
-				 * We skipped AbortCurrentTransaction() (either for INSERT EXEC or
-				 * for a statement-terminating error). We need to clean up any leaked
-				 * snapshots that were pushed by SPI but not popped due to the error.
-				 * Without this cleanup, subsequent statements fail with
-				 * "portal snapshots did not account for all active snapshots".
+				 * We skipped AbortCurrentTransaction() for INSERT EXEC.
+				 * We need to clean up any leaked snapshots that were pushed
+				 * by SPI but not popped due to the error. Without this cleanup,
+				 * subsequent statements fail with "portal snapshots did not
+				 * account for all active snapshots".
+				 *
+				 * We also need to restore the memory context to a safe context.
+				 * The error may have left us in the expression context's per-tuple
+				 * memory context. If we stay there, subsequent cleanup code
+				 * (like FreeExprContext) will fail with assertion
+				 * "context != CurrentMemoryContext" because we're trying to delete
+				 * the current memory context.
+				 *
+				 * We switch to the estate's statement memory context parent, which
+				 * is a safe context that won't be deleted during cleanup.
 				 */
 				HOLD_INTERRUPTS();
 				while (ActiveSnapshotSet())
 					PopActiveSnapshot();
 				if (pltsql_snapshot_portal != NULL)
 					pltsql_snapshot_portal->portalSnapshot = NULL;
-				if (pltsql_insert_exec_active())
-					elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback during INSERT EXEC, cleaned up snapshots");
+				/*
+				 * Switch to the estate's statement memory context parent.
+				 * This is a safe context that won't be deleted during cleanup.
+				 * We can't use cur_ctxt because it might be the expression
+				 * context's memory context.
+				 */
+				if (estate->stmt_mcontext_parent != NULL)
+					MemoryContextSwitchTo(estate->stmt_mcontext_parent);
 				else
-					elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback for statement-terminating error, cleaned up snapshots");
+					MemoryContextSwitchTo(cur_ctxt);
+				elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback during INSERT EXEC, cleaned up snapshots");
 				RESUME_INTERRUPTS();
 			}
 		}

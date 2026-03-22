@@ -1986,6 +1986,20 @@ public:
 		if (is_insert_exec)
 		{
 			/*
+			 * Check if we're inside a function - INSERT EXEC is not allowed in functions
+			 * unless the target is a table variable (local_id).
+			 */
+			if (is_compiling_create_function())
+			{
+				auto ddl_object = ctx->insert_statement()->ddl_object();
+				if (ddl_object && !ddl_object->local_id())
+				{
+					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION,
+						"'INSERT EXEC' cannot be used within a function", getLineAndPos(ddl_object));
+				}
+			}
+
+			/*
 			 * SQL Server error 483: The OUTPUT clause cannot be used in an INSERT...EXEC statement.
 			 * Check for OUTPUT clause and throw error if present.
 			 */
