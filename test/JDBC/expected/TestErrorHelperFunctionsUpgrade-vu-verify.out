@@ -108,6 +108,7 @@ int
 8146
 8152
 8159
+8164
 8179
 9441
 9451
@@ -318,6 +319,7 @@ int
 517
 13600
 13600
+8164
 ~~END~~
 
 
@@ -492,6 +494,7 @@ int
 517
 13600
 13600
+8164
 ~~END~~
 
 
@@ -499,6 +502,6 @@ EXEC TestErrorHelperFunctionsUpgrade_VU_PREPARE_PROC
 GO
 ~~START~~
 int
-167
+168
 ~~END~~
 
