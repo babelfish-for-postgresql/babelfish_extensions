@@ -822,6 +822,61 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 			}
 			break;
 		}
+		case T_DropStmt:
+		{
+			/*
+			 * Check if DROP TABLE is trying to drop the INSERT EXEC target table.
+			 * SQL Server error 556: "cannot DROP TABLE because it is being used 
+			 * by active queries in this session"
+			 */
+			DropStmt *stmt = (DropStmt *) parsetree;
+			
+			if (stmt->removeType == OBJECT_TABLE && pltsql_insert_exec_active())
+			{
+				const char *target_table = pltsql_get_insert_exec_target_table();
+				
+				if (target_table != NULL)
+				{
+					ListCell *cell;
+					
+					foreach(cell, stmt->objects)
+					{
+						List *names = (List *) lfirst(cell);
+						char *table_name = NULL;
+						
+						/* Get the table name from the list (last element) */
+						if (list_length(names) > 0)
+						{
+							table_name = strVal(llast(names));
+						}
+						
+						if (table_name != NULL)
+						{
+							/*
+							 * Compare table names (case-insensitive for temp tables).
+							 * The target_table might include schema prefix, so we need
+							 * to compare just the table name part.
+							 */
+							const char *target_name = strrchr(target_table, '.');
+							if (target_name != NULL)
+								target_name++;  /* Skip the dot */
+							else
+								target_name = target_table;
+							
+							if (pg_strcasecmp(table_name, target_name) == 0)
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_OBJECT_IN_USE),
+										 errmsg("cannot %s \"%s\" because it is being used by active queries in this session",
+												"DROP TABLE", table_name)));
+							}
+						}
+					}
+				}
+			}
+			/* Let the default handler process the DROP */
+			break;
+		}
 		default:
 			return false;
 			break;

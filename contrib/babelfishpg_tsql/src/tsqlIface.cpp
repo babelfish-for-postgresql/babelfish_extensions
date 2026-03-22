@@ -2019,13 +2019,13 @@ public:
 			{
 				if (ddl_object->local_id())
 				{
-					/* Temp table like #temp - use as-is, no schema needed */
+					/* Table variable like @tablevar - use as-is, no schema needed */
 					target_table = ::getFullText(ddl_object->local_id());
-					target_schema = "";  /* Temp tables don't need schema */
+					target_schema = "";  /* Table variables don't need schema */
 				}
 				else if (ddl_object->full_object_name())
 				{
-					/* Regular table - extract name and schema separately */
+					/* Regular table or temp table - extract name and schema separately */
 					std::string tbl_name, tbl_schema, tbl_db;
 					if (ddl_object->full_object_name()->object_name)
 						tbl_name = stripQuoteFromId(ddl_object->full_object_name()->object_name);
@@ -2034,8 +2034,17 @@ public:
 					if (ddl_object->full_object_name()->database)
 						tbl_db = stripQuoteFromId(ddl_object->full_object_name()->database);
 					
+					/*
+					 * Check if this is a temp table (starts with #).
+					 * Temp tables don't need schema prefix - they're in pg_temp schema.
+					 */
+					if (!tbl_name.empty() && tbl_name[0] == '#')
+					{
+						target_table = tbl_name;
+						target_schema = "";  /* Temp tables don't need schema */
+					}
 					/* Build table reference - always include schema for proper resolution */
-					if (!tbl_db.empty())
+					else if (!tbl_db.empty())
 					{
 						target_table = tbl_db + "." + (tbl_schema.empty() ? "dbo" : tbl_schema) + "." + tbl_name;
 						target_schema = tbl_schema.empty() ? "dbo" : tbl_schema;

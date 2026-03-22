@@ -2418,6 +2418,8 @@ extern Oid pltsql_get_and_clear_insert_exec_temp_table_for_cleanup(void);
 extern void pltsql_insert_exec_set_error_flag(void);
 extern bool pltsql_insert_exec_had_error(void);
 extern void pltsql_insert_exec_clear_error_flag(void);
+extern void pltsql_insert_exec_set_pending_drop(void);
+extern void pltsql_insert_exec_check_pending_drop(void);
 extern DestReceiver *CreateInsertExecDestReceiver(Oid temp_table_oid);
 extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list);
 extern void drop_insert_exec_temp_table(Oid temp_table_oid);

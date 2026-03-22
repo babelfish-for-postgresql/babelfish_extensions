@@ -12,11 +12,14 @@
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_proc.h"
 #include "commands/proclang.h"
 #include "commands/trigger.h"
 #include "executor/tstoreReceiver.h"
 #include "executor/tuptable.h"
+#include "miscadmin.h"
 #include "nodes/parsenodes.h"
+#include "parser/parse_coerce.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "storage/lmgr.h"
@@ -41,6 +44,40 @@
 #include "utils/varlena.h"
 
 /*
+ * Helper function to clean up type strings from format_type().
+ * 
+ * PostgreSQL's format_type() can return type strings with suffixes like
+ * "without time zone" for certain datetime types (e.g., "smalldatetime(0) without time zone").
+ * These suffixes are not valid in CREATE TABLE statements, so we need to strip them.
+ * 
+ * Returns a newly allocated string with the suffix removed, or a copy of the
+ * original string if no suffix is found.
+ */
+static char *
+clean_format_type_string(const char *coltype)
+{
+	char *result;
+	char *suffix_pos;
+	
+	if (coltype == NULL)
+		return NULL;
+	
+	result = pstrdup(coltype);
+	
+	/* Strip " without time zone" suffix if present */
+	suffix_pos = strstr(result, " without time zone");
+	if (suffix_pos != NULL)
+		*suffix_pos = '\0';
+	
+	/* Also strip " with time zone" suffix if present (for completeness) */
+	suffix_pos = strstr(result, " with time zone");
+	if (suffix_pos != NULL)
+		*suffix_pos = '\0';
+	
+	return result;
+}
+
+/*
  * INSERT EXEC DestReceiver implementation
  * 
  * This DestReceiver writes tuples to a temp table for INSERT EXEC buffering.
@@ -58,6 +95,7 @@ static bool insert_exec_flush_in_progress = false;  /* True during flush phase t
 static int insert_exec_call_stack_depth = 0;  /* Call stack depth when INSERT EXEC was started */
 static bool insert_exec_incremented_tran_count = false;  /* True if INSERT EXEC incremented NestedTranCount */
 static bool insert_exec_had_error = false;  /* True if INSERT EXEC had an error - used to skip trancount mismatch check */
+static bool insert_exec_pending_drop = false;  /* True if temp table needs to be dropped when SPI is available */
 
 /* DestReceiver struct for INSERT EXEC */
 typedef struct
@@ -238,6 +276,47 @@ void
 pltsql_insert_exec_clear_error_flag(void)
 {
 	insert_exec_had_error = false;
+}
+
+/*
+ * Set the pending drop flag.
+ * Called when an error occurs and we can't drop the temp table immediately.
+ */
+void
+pltsql_insert_exec_set_pending_drop(void)
+{
+	insert_exec_pending_drop = true;
+}
+
+/*
+ * Check and drop the pending temp table if needed.
+ * Called at the start of each INSERT EXEC to clean up any leftover temp table.
+ * This handles the case where a previous INSERT EXEC failed and couldn't
+ * drop its temp table because SPI wasn't available in the error context.
+ */
+void
+pltsql_insert_exec_check_pending_drop(void)
+{
+	if (insert_exec_pending_drop)
+	{
+		char		temp_table_name[NAMEDATALEN];
+		StringInfoData drop_stmt;
+		int			rc;
+
+		snprintf(temp_table_name, sizeof(temp_table_name),
+				 "#insert_exec_buf_%d", MyProcPid);
+
+		initStringInfo(&drop_stmt);
+		appendStringInfo(&drop_stmt, "DROP TABLE IF EXISTS %s", temp_table_name);
+
+		rc = SPI_execute(drop_stmt.data, false, 0);
+		if (rc != SPI_OK_UTILITY)
+			elog(WARNING, "failed to drop pending INSERT EXEC temp table: %s",
+				 SPI_result_code_string(rc));
+
+		pfree(drop_stmt.data);
+		insert_exec_pending_drop = false;
+	}
 }
 
 /*
@@ -515,14 +594,17 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	
 	/*
 	 * Check if any column needs type coercion.
-	 * We compare the type OIDs of source and target columns.
+	 * We compare the type OIDs and typmods of source and target columns.
+	 * Even if types are the same, we need coercion if typmods differ
+	 * (e.g., varchar(max) to varchar(10)) to enforce length constraints.
 	 */
 	for (i = 0; i < natts; i++)
 	{
 		Form_pg_attribute src_att = TupleDescAttr(src_tupdesc, i);
 		Form_pg_attribute tgt_att = TupleDescAttr(temp_tupdesc, i);
 		
-		if (src_att->atttypid != tgt_att->atttypid)
+		if (src_att->atttypid != tgt_att->atttypid ||
+			(src_att->atttypmod != tgt_att->atttypmod && tgt_att->atttypmod != -1))
 		{
 			needs_coercion = true;
 			break;
@@ -554,39 +636,137 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 				values[i] = (Datum) 0;
 				nulls[i] = true;
 			}
+			else if (src_att->atttypid == tgt_att->atttypid &&
+					 (src_att->atttypmod == tgt_att->atttypmod || tgt_att->atttypmod == -1))
+			{
+				/* Same type and compatible typmod, no coercion needed */
+				values[i] = slot->tts_values[i];
+				nulls[i] = false;
+			}
 			else if (src_att->atttypid == tgt_att->atttypid)
 			{
-				/* Same type, no coercion needed */
-				values[i] = slot->tts_values[i];
+				/*
+				 * Same type but different typmod - need to apply length/precision constraint.
+				 * Use find_typmod_coercion_function to get the typmod coercion function.
+				 */
+				Oid			funcid;
+				CoercionPathType pathtype;
+				
+				pathtype = find_typmod_coercion_function(tgt_att->atttypid, &funcid);
+				
+				if (pathtype == COERCION_PATH_FUNC && OidIsValid(funcid))
+				{
+					/* Apply the typmod coercion function */
+					int nargs = get_func_nargs(funcid);
+					switch (nargs)
+					{
+						case 2:
+							values[i] = OidFunctionCall2Coll(funcid,
+															 tgt_att->attcollation,
+															 slot->tts_values[i],
+															 Int32GetDatum(tgt_att->atttypmod));
+							break;
+						case 3:
+							values[i] = OidFunctionCall3Coll(funcid,
+															 tgt_att->attcollation,
+															 slot->tts_values[i],
+															 Int32GetDatum(tgt_att->atttypmod),
+															 BoolGetDatum(false));
+							break;
+						default:
+							/* Unexpected - just copy the value */
+							values[i] = slot->tts_values[i];
+					}
+				}
+				else
+				{
+					/* No typmod coercion function - just copy the value */
+					values[i] = slot->tts_values[i];
+				}
 				nulls[i] = false;
 			}
 			else
 			{
 				/*
-				 * Different types - convert via text representation.
-				 * This mimics SQL Server's implicit type conversion.
+				 * Different types - use PostgreSQL's coercion system.
+				 * This properly handles SQL Server's implicit type conversions
+				 * (e.g., INT to DATETIME, VARCHAR to INT, etc.)
 				 */
-				Oid			src_typoutput;
-				bool		src_typisvarlena;
-				Oid			tgt_typinput;
-				Oid			tgt_typioparam;
-				char	   *str_value;
+				Oid			funcid;
+				CoercionPathType pathtype;
+				Oid			typioparam;
+				bool		isVarlena;
+				int			nargs;
 				
-				/* Get output function for source type */
-				getTypeOutputInfo(src_att->atttypid, &src_typoutput, &src_typisvarlena);
+				pathtype = find_coercion_pathway(tgt_att->atttypid, src_att->atttypid,
+												 COERCION_ASSIGNMENT, &funcid);
 				
-				/* Convert source value to string */
-				str_value = OidOutputFunctionCall(src_typoutput, slot->tts_values[i]);
-				
-				/* Get input function for target type */
-				getTypeInputInfo(tgt_att->atttypid, &tgt_typinput, &tgt_typioparam);
-				
-				/* Convert string to target type */
-				values[i] = OidInputFunctionCall(tgt_typinput, str_value, 
-												 tgt_typioparam, tgt_att->atttypmod);
+				switch (pathtype)
+				{
+					case COERCION_PATH_FUNC:
+						/* Use the cast function */
+						nargs = get_func_nargs(funcid);
+						switch (nargs)
+						{
+							case 1:
+								values[i] = OidFunctionCall1Coll(funcid, 
+																 tgt_att->attcollation,
+																 slot->tts_values[i]);
+								break;
+							case 2:
+								values[i] = OidFunctionCall2Coll(funcid,
+																 tgt_att->attcollation,
+																 slot->tts_values[i],
+																 Int32GetDatum(tgt_att->atttypmod));
+								break;
+							case 3:
+								values[i] = OidFunctionCall3Coll(funcid,
+																 tgt_att->attcollation,
+																 slot->tts_values[i],
+																 Int32GetDatum(tgt_att->atttypmod),
+																 BoolGetDatum(false));
+								break;
+							default:
+								elog(ERROR, "unsupported number of arguments (%d) for cast function", nargs);
+						}
+						break;
+						
+					case COERCION_PATH_COERCEVIAIO:
+						/* Convert via I/O functions (text representation) */
+						{
+							Oid			src_typoutput;
+							Oid			tgt_typinput;
+							char	   *str_value;
+							
+							getTypeOutputInfo(src_att->atttypid, &src_typoutput, &isVarlena);
+							str_value = OidOutputFunctionCall(src_typoutput, slot->tts_values[i]);
+							
+							getTypeInputInfo(tgt_att->atttypid, &tgt_typinput, &typioparam);
+							values[i] = OidInputFunctionCall(tgt_typinput, str_value,
+															 typioparam, tgt_att->atttypmod);
+							pfree(str_value);
+						}
+						break;
+						
+					case COERCION_PATH_RELABELTYPE:
+						/* Binary compatible - just copy the value */
+						values[i] = slot->tts_values[i];
+						break;
+						
+					case COERCION_PATH_ARRAYCOERCE:
+						/* Array coercion - not expected for INSERT EXEC */
+						elog(ERROR, "array coercion not supported in INSERT EXEC");
+						break;
+						
+					case COERCION_PATH_NONE:
+					default:
+						ereport(ERROR,
+								(errcode(ERRCODE_CANNOT_COERCE),
+								 errmsg("cannot convert type %s to %s",
+										format_type_be(src_att->atttypid),
+										format_type_be(tgt_att->atttypid))));
+				}
 				nulls[i] = false;
-				
-				pfree(str_value);
 			}
 		}
 		
@@ -659,12 +839,19 @@ insertexec_destroy(DestReceiver *self)
  * IDENTITY and computed columns are excluded since procedure results
  * won't include them.
  * Returns the OID of the created temp table.
+ * 
+ * OWNERSHIP CHAINING FIX:
+ * We use catalog queries (pg_attribute) to get column definitions instead of
+ * SELECT ... INTO ... FROM target_table. This avoids requiring SELECT permission
+ * on the target table, which the caller may not have (only the procedure owner does).
+ * The catalog is readable by everyone, so this approach works with ownership chaining.
  */
 Oid
 create_insert_exec_temp_table(const char *target_table, const char *column_list)
 {
 	StringInfoData create_stmt;
 	StringInfoData col_query;
+	StringInfoData drop_stmt;
 	int			rc;
 	Oid			temp_table_oid;
 	char		temp_table_name[NAMEDATALEN];
@@ -680,13 +867,30 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 			 "#insert_exec_buf_%d", MyProcPid);
 
 	/*
+	 * Always try to drop any existing temp table with this name first.
+	 * This handles the case where a previous INSERT EXEC failed and couldn't
+	 * clean up its temp table (e.g., error during type coercion in insertexec_receive).
+	 * Using DROP TABLE IF EXISTS is safe and ensures we start with a clean slate.
+	 */
+	initStringInfo(&drop_stmt);
+	appendStringInfo(&drop_stmt, "DROP TABLE IF EXISTS %s", temp_table_name);
+	rc = SPI_execute(drop_stmt.data, false, 0);
+	pfree(drop_stmt.data);
+	if (rc != SPI_OK_UTILITY)
+		elog(WARNING, "failed to drop existing INSERT EXEC temp table: %s",
+			 SPI_result_code_string(rc));
+
+	/* Reset the pending drop flag since we just cleaned up */
+	insert_exec_pending_drop = false;
+
+	/*
 	 * Parse schema and table name from target_table.
 	 * Format can be: "table", "schema.table", or "db.schema.table"
 	 * For temp tables (starting with #), we don't need schema parsing.
 	 */
-	if (target_table[0] == '#')
+	if (target_table[0] == '#' || target_table[0] == '@')
 	{
-		/* Temp table - no schema needed */
+		/* Temp table or table variable - no schema needed */
 		table_name = pstrdup(target_table);
 		schema_name = NULL;
 	}
@@ -730,51 +934,173 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 	
 	if (column_list != NULL)
 	{
-		/* Create temp table with specific columns provided by user */
-		appendStringInfo(&create_stmt, 
-			"SELECT %s INTO %s FROM %s WHERE 1=0",
-			column_list, temp_table_name, target_table);
+		/*
+		 * User specified columns - create temp table with only those columns.
+		 * 
+		 * For temp tables and table variables (physical_schema == NULL), we can
+		 * use SELECT ... INTO because they're always owned by the current user.
+		 * 
+		 * For regular tables, we need to use pg_attribute to get column definitions
+		 * to avoid needing SELECT permission (ownership chaining fix).
+		 */
+		if (physical_schema == NULL)
+		{
+			/* Temp table or table variable - use SELECT ... INTO */
+			appendStringInfo(&create_stmt, 
+				"SELECT %s INTO %s FROM %s WHERE 1=0",
+				column_list, temp_table_name, target_table);
+		}
+		else
+		{
+			/*
+			 * Regular table - query pg_attribute for column definitions.
+			 * Parse the column_list to get individual column names, then
+			 * query their types from pg_attribute.
+			 */
+			StringInfoData col_defs;
+			bool		first_col = true;
+			int			proc_count;
+			uint64		i;
+			char	   *pg_table_ref;
+			char	   *col_list_copy;
+			char	   *col_name;
+			char	   *saveptr;
+			StringInfoData col_names_sql;
+			
+			initStringInfo(&col_query);
+			initStringInfo(&col_defs);
+			initStringInfo(&col_names_sql);
+			
+			pg_table_ref = psprintf("%s.%s", physical_schema, table_name);
+			
+			/*
+			 * Parse the column_list to build a SQL IN clause.
+			 * column_list is like "c, a" - we need to convert to ('c', 'a')
+			 */
+			col_list_copy = pstrdup(column_list);
+			first_col = true;
+			appendStringInfoChar(&col_names_sql, '(');
+			col_name = strtok_r(col_list_copy, ", ", &saveptr);
+			while (col_name != NULL)
+			{
+				/* Skip leading/trailing whitespace */
+				while (*col_name == ' ' || *col_name == '\t')
+					col_name++;
+				if (*col_name != '\0')
+				{
+					if (!first_col)
+						appendStringInfoString(&col_names_sql, ", ");
+					appendStringInfo(&col_names_sql, "'%s'", col_name);
+					first_col = false;
+				}
+				col_name = strtok_r(NULL, ", ", &saveptr);
+			}
+			appendStringInfoChar(&col_names_sql, ')');
+			pfree(col_list_copy);
+			
+			/*
+			 * Query to get column definitions for the specified columns.
+			 * We use CASE to preserve the order from the column_list.
+			 */
+			appendStringInfo(&col_query,
+				"SELECT a.attname, format_type(a.atttypid, a.atttypmod) as coltype "
+				"FROM pg_attribute a "
+				"WHERE a.attrelid = '%s'::regclass "
+				"AND a.attnum > 0 "
+				"AND NOT a.attisdropped "
+				"AND lower(a.attname) IN %s "
+				"ORDER BY a.attnum",
+				pg_table_ref, col_names_sql.data);
+			
+			pfree(pg_table_ref);
+			pfree(col_names_sql.data);
+			
+			elog(DEBUG1, "INSERT-EXEC: Column query for column_list: %s", col_query.data);
+			
+			rc = SPI_execute(col_query.data, false, 0);
+			if (rc != SPI_OK_SELECT)
+			{
+				pfree(col_query.data);
+				pfree(col_defs.data);
+				elog(ERROR, "failed to query target table columns for INSERT EXEC: %s",
+					 SPI_result_code_string(rc));
+			}
+			
+			proc_count = SPI_processed;
+			elog(DEBUG1, "INSERT-EXEC: Column query returned %d rows", proc_count);
+			
+			if (proc_count == 0)
+			{
+				pfree(col_query.data);
+				pfree(col_defs.data);
+				elog(ERROR, "no columns found for INSERT EXEC temp table");
+			}
+			else
+			{
+				/* Build column definitions from query results */
+				first_col = true;
+				for (i = 0; i < proc_count; i++)
+				{
+					char *colname = SPI_getvalue(SPI_tuptable->vals[i], 
+												 SPI_tuptable->tupdesc, 1);
+					char *coltype_raw = SPI_getvalue(SPI_tuptable->vals[i], 
+												 SPI_tuptable->tupdesc, 2);
+					if (colname != NULL && coltype_raw != NULL)
+					{
+						char *coltype = clean_format_type_string(coltype_raw);
+						if (!first_col)
+							appendStringInfoString(&col_defs, ", ");
+						appendStringInfo(&col_defs, "%s %s", colname, coltype);
+						first_col = false;
+						pfree(coltype);
+					}
+				}
+				
+				SPI_freetuptable(SPI_tuptable);
+				pfree(col_query.data);
+				
+				/* Create temp table with explicit column definitions */
+				appendStringInfo(&create_stmt, 
+					"CREATE TEMP TABLE %s (%s)",
+					temp_table_name, col_defs.data);
+				
+				pfree(col_defs.data);
+			}
+		}
 	}
 	else
 	{
 		/*
 		 * Create temp table excluding IDENTITY and computed columns.
-		 * We need to build a column list dynamically by querying the
-		 * target table's structure.
+		 * 
+		 * For temp tables (target starts with #) and table variables (start with @),
+		 * use SELECT * INTO ... FROM ... WHERE 1=0 because they are always owned by
+		 * the current user and we don't need to worry about SELECT permission.
+		 * Also, querying pg_attribute for temp tables can be unreliable in some SPI contexts.
+		 * 
+		 * For regular tables, query pg_attribute for column definitions to avoid
+		 * needing SELECT permission on the target table (ownership chaining fix).
 		 */
-		StringInfoData non_identity_cols;
-		bool		first_col = true;
-		int			proc_count;
-		uint64		i;
-		
-		initStringInfo(&col_query);
-		initStringInfo(&non_identity_cols);
-		
-		/*
-		 * Query to get non-IDENTITY, non-computed columns.
-		 * attidentity = '' means not an identity column
-		 * attgenerated = '' means not a generated/computed column
-		 * Include namespace (schema) to avoid matching tables in other schemas.
-		 */
-		if (physical_schema != NULL)
+		if (physical_schema == NULL)
 		{
-			appendStringInfo(&col_query,
-				"SELECT a.attname "
-				"FROM pg_attribute a "
-				"JOIN pg_class c ON a.attrelid = c.oid "
-				"JOIN pg_namespace n ON c.relnamespace = n.oid "
-				"WHERE c.relname = '%s' "
-				"AND n.nspname = '%s' "
-				"AND a.attnum > 0 "
-				"AND NOT a.attisdropped "
-				"AND a.attidentity = '' "
-				"AND a.attgenerated = '' "
-				"ORDER BY a.attnum",
-				table_name, physical_schema);
-		}
-		else
-		{
-			/* Temp table - no schema filter needed */
+			/*
+			 * Temp table or table variable - use SELECT * INTO to copy structure.
+			 * This is simpler and more reliable for temp tables.
+			 * We need to exclude IDENTITY and computed columns, so we query
+			 * for non-identity column names first, then use those in SELECT.
+			 */
+			StringInfoData non_identity_cols;
+			bool		first_col = true;
+			int			proc_count;
+			uint64		i;
+			
+			initStringInfo(&col_query);
+			initStringInfo(&non_identity_cols);
+			
+			/*
+			 * Query to get non-IDENTITY, non-computed column names.
+			 * Use pg_class join to find the temp table.
+			 */
 			appendStringInfo(&col_query,
 				"SELECT a.attname "
 				"FROM pg_attribute a "
@@ -786,51 +1112,145 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 				"AND a.attgenerated = '' "
 				"ORDER BY a.attnum",
 				table_name);
-		}
-		
-		rc = SPI_execute(col_query.data, true, 0);
-		if (rc != SPI_OK_SELECT)
-		{
-			pfree(col_query.data);
-			elog(ERROR, "failed to query target table columns: %s",
-				 SPI_result_code_string(rc));
-		}
-		
-		proc_count = SPI_processed;
-		
-		if (proc_count == 0)
-		{
-			/* No non-identity columns found, fall back to SELECT * */
-			pfree(col_query.data);
-			pfree(non_identity_cols.data);
-			appendStringInfo(&create_stmt, 
-				"SELECT * INTO %s FROM %s WHERE 1=0",
-				temp_table_name, target_table);
+			
+			rc = SPI_execute(col_query.data, false, 0);
+			if (rc != SPI_OK_SELECT)
+			{
+				pfree(col_query.data);
+				pfree(non_identity_cols.data);
+				/* Fall back to SELECT * INTO */
+				appendStringInfo(&create_stmt, 
+					"SELECT * INTO %s FROM %s WHERE 1=0",
+					temp_table_name, target_table);
+			}
+			else
+			{
+				proc_count = SPI_processed;
+				
+				if (proc_count == 0)
+				{
+					/* No columns found, fall back to SELECT * INTO */
+					pfree(col_query.data);
+					pfree(non_identity_cols.data);
+					appendStringInfo(&create_stmt, 
+						"SELECT * INTO %s FROM %s WHERE 1=0",
+						temp_table_name, target_table);
+				}
+				else
+				{
+					/* Build column list from query results */
+					for (i = 0; i < proc_count; i++)
+					{
+						char *colname = SPI_getvalue(SPI_tuptable->vals[i], 
+													 SPI_tuptable->tupdesc, 1);
+						if (colname != NULL)
+						{
+							if (!first_col)
+								appendStringInfoString(&non_identity_cols, ", ");
+							appendStringInfoString(&non_identity_cols, colname);
+							first_col = false;
+						}
+					}
+					
+					SPI_freetuptable(SPI_tuptable);
+					pfree(col_query.data);
+					
+					appendStringInfo(&create_stmt, 
+						"SELECT %s INTO %s FROM %s WHERE 1=0",
+						non_identity_cols.data, temp_table_name, target_table);
+					
+					pfree(non_identity_cols.data);
+				}
+			}
 		}
 		else
 		{
-			/* Build column list from query results */
-			for (i = 0; i < proc_count; i++)
+			/*
+			 * Regular table - query pg_attribute for column definitions.
+			 * This avoids needing SELECT permission on the target table.
+			 */
+			StringInfoData col_defs;
+			bool		first_col = true;
+			int			proc_count;
+			uint64		i;
+			char	   *pg_table_ref;
+			
+			initStringInfo(&col_query);
+			initStringInfo(&col_defs);
+			
+			pg_table_ref = psprintf("%s.%s", physical_schema, table_name);
+			
+			/*
+			 * Query to get non-IDENTITY, non-computed column definitions.
+			 * attidentity = '' means not an identity column
+			 * attgenerated = '' means not a generated/computed column
+			 * 
+			 * Use regclass cast to properly resolve the table.
+			 */
+			appendStringInfo(&col_query,
+				"SELECT a.attname, format_type(a.atttypid, a.atttypmod) as coltype "
+				"FROM pg_attribute a "
+				"WHERE a.attrelid = '%s'::regclass "
+				"AND a.attnum > 0 "
+				"AND NOT a.attisdropped "
+				"AND a.attidentity = '' "
+				"AND a.attgenerated = '' "
+				"ORDER BY a.attnum",
+				pg_table_ref);
+			
+			pfree(pg_table_ref);
+			
+			elog(DEBUG1, "INSERT-EXEC: Column query: %s", col_query.data);
+			
+			rc = SPI_execute(col_query.data, false, 0);
+			if (rc != SPI_OK_SELECT)
 			{
-				char *colname = SPI_getvalue(SPI_tuptable->vals[i], 
-											 SPI_tuptable->tupdesc, 1);
-				if (colname != NULL)
-				{
-					if (!first_col)
-						appendStringInfoString(&non_identity_cols, ", ");
-					appendStringInfoString(&non_identity_cols, colname);
-					first_col = false;
-				}
+				pfree(col_query.data);
+				pfree(col_defs.data);
+				elog(ERROR, "failed to query target table columns: %s",
+					 SPI_result_code_string(rc));
 			}
 			
-			SPI_freetuptable(SPI_tuptable);
-			pfree(col_query.data);
+			proc_count = SPI_processed;
+			elog(DEBUG1, "INSERT-EXEC: Column query returned %d rows", proc_count);
 			
-			appendStringInfo(&create_stmt, 
-				"SELECT %s INTO %s FROM %s WHERE 1=0",
-				non_identity_cols.data, temp_table_name, target_table);
-			
-			pfree(non_identity_cols.data);
+			if (proc_count == 0)
+			{
+				/* No non-identity columns found - this shouldn't happen normally */
+				pfree(col_query.data);
+				pfree(col_defs.data);
+				elog(ERROR, "no columns found for INSERT EXEC temp table");
+			}
+			else
+			{
+				/* Build column definitions from query results */
+				for (i = 0; i < proc_count; i++)
+				{
+					char *colname = SPI_getvalue(SPI_tuptable->vals[i], 
+												 SPI_tuptable->tupdesc, 1);
+					char *coltype_raw = SPI_getvalue(SPI_tuptable->vals[i], 
+												 SPI_tuptable->tupdesc, 2);
+					if (colname != NULL && coltype_raw != NULL)
+					{
+						char *coltype = clean_format_type_string(coltype_raw);
+						if (!first_col)
+							appendStringInfoString(&col_defs, ", ");
+						appendStringInfo(&col_defs, "%s %s", colname, coltype);
+						first_col = false;
+						pfree(coltype);
+					}
+				}
+				
+				SPI_freetuptable(SPI_tuptable);
+				pfree(col_query.data);
+				
+				/* Create temp table with explicit column definitions */
+				appendStringInfo(&create_stmt, 
+					"CREATE TEMP TABLE %s (%s)",
+					temp_table_name, col_defs.data);
+				
+				pfree(col_defs.data);
+			}
 		}
 	}
 	
@@ -844,9 +1264,13 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 
 	elog(DEBUG1, "INSERT-EXEC: Creating temp table: %s", create_stmt.data);
 
-	/* Execute the SELECT INTO to create temp table */
+	/* 
+	 * Execute the statement to create temp table.
+	 * For temp tables, we use SELECT ... INTO which returns SPI_OK_SELINTO.
+	 * For regular tables, we use CREATE TEMP TABLE which returns SPI_OK_UTILITY.
+	 */
 	rc = SPI_execute(create_stmt.data, false, 0);
-	if (rc != SPI_OK_SELINTO)
+	if (rc != SPI_OK_UTILITY && rc != SPI_OK_SELINTO)
 		elog(ERROR, "failed to create INSERT EXEC temp table: %s",
 			 SPI_result_code_string(rc));
 
@@ -914,6 +1338,11 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	/* Save INSERT EXEC context to restore after flush */
 	char		   *saved_target_table = NULL;
 	char		   *saved_column_list = NULL;
+	
+	/* Security context for ownership chaining */
+	Oid				flush_save_userid = InvalidOid;
+	int				flush_save_sec_context = 0;
+	volatile bool	flush_switched_context = false;
 
 	if (!OidIsValid(temp_oid) || target_table == NULL)
 	{
@@ -948,27 +1377,109 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		/*
 		 * No column list specified - we need to build one excluding
 		 * IDENTITY and computed columns to match the temp table structure.
+		 * 
+		 * Parse the target table name to get the physical schema and table name
+		 * for the catalog query.
 		 */
 		StringInfoData col_query;
 		StringInfoData non_identity_cols;
 		bool		first_col = true;
 		int			proc_count;
 		uint64		i;
+		char	   *flush_schema_name = NULL;
+		char	   *flush_table_name = NULL;
+		char	   *flush_physical_schema = NULL;
+		char	   *pg_table_ref;
+		char	   *target_copy;
+		char	   *dot_pos;
+		char	   *second_dot;
 		
 		initStringInfo(&col_query);
 		initStringInfo(&non_identity_cols);
 		
-		appendStringInfo(&col_query,
-			"SELECT a.attname "
-			"FROM pg_attribute a "
-			"JOIN pg_class c ON a.attrelid = c.oid "
-			"WHERE c.relname = '%s' "
-			"AND a.attnum > 0 "
-			"AND NOT a.attisdropped "
-			"AND a.attidentity = '' "
-			"AND a.attgenerated = '' "
-			"ORDER BY a.attnum",
-			target_table);
+		/*
+		 * Parse schema and table name from target_table.
+		 * Format can be: "table", "schema.table", or "db.schema.table"
+		 * For temp tables, use pg_class join since regclass cast may not
+		 * resolve temp tables correctly in all contexts.
+		 */
+		if (target_table[0] == '#')
+		{
+			/* 
+			 * Temp table - use pg_class join to find the table.
+			 * This is more reliable than regclass cast for temp tables
+			 * because it doesn't depend on search_path resolution.
+			 */
+			appendStringInfo(&col_query,
+				"SELECT a.attname "
+				"FROM pg_attribute a "
+				"JOIN pg_class c ON a.attrelid = c.oid "
+				"WHERE c.relname = '%s' "
+				"AND a.attnum > 0 "
+				"AND NOT a.attisdropped "
+				"AND a.attidentity = '' "
+				"AND a.attgenerated = '' "
+				"ORDER BY a.attnum",
+				target_table);
+		}
+		else
+		{
+			target_copy = pstrdup(target_table);
+			
+			/* Find the last dot to separate schema from table */
+			dot_pos = strrchr(target_copy, '.');
+			if (dot_pos != NULL)
+			{
+				*dot_pos = '\0';
+				flush_table_name = pstrdup(dot_pos + 1);
+				
+				/* Check if there's another dot (db.schema.table) */
+				second_dot = strrchr(target_copy, '.');
+				if (second_dot != NULL)
+				{
+					/* db.schema.table - schema is after the second dot */
+					flush_schema_name = pstrdup(second_dot + 1);
+				}
+				else
+				{
+					/* schema.table */
+					flush_schema_name = pstrdup(target_copy);
+				}
+			}
+			else
+			{
+				/* Just table name, use dbo as default */
+				flush_table_name = pstrdup(target_copy);
+				flush_schema_name = pstrdup("dbo");
+			}
+			pfree(target_copy);
+			
+			/* Convert logical schema name to physical schema name */
+			flush_physical_schema = get_physical_schema_name(get_cur_db_name(), flush_schema_name);
+			
+			/* Build the PostgreSQL table reference */
+			pg_table_ref = psprintf("%s.%s", flush_physical_schema, flush_table_name);
+			
+			if (flush_schema_name)
+				pfree(flush_schema_name);
+			if (flush_table_name)
+				pfree(flush_table_name);
+			if (flush_physical_schema)
+				pfree(flush_physical_schema);
+			
+			appendStringInfo(&col_query,
+				"SELECT a.attname "
+				"FROM pg_attribute a "
+				"WHERE a.attrelid = '%s'::regclass "
+				"AND a.attnum > 0 "
+				"AND NOT a.attisdropped "
+				"AND a.attidentity = '' "
+				"AND a.attgenerated = '' "
+				"ORDER BY a.attnum",
+				pg_table_ref);
+			
+			pfree(pg_table_ref);
+		}
 		
 		rc = SPI_execute(col_query.data, true, 0);
 		if (rc != SPI_OK_SELECT)
@@ -1094,7 +1605,35 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		BeginCompositeTriggers(CurrentMemoryContext);
 		composite_triggers_started = true;
 
+		/*
+		 * OWNERSHIP CHAINING FIX:
+		 * Switch to the procedure owner's identity before executing the flush INSERT.
+		 * This ensures the INSERT has the same permissions as the procedure owner,
+		 * which is required for ownership chaining to work correctly.
+		 * 
+		 * Only switch context if we're inside a procedure (estate->func->fn_oid is valid).
+		 * For top-level batches, no ownership chaining is needed.
+		 * 
+		 * IMPORTANT: Use get_func_owner() to get the procedure owner's OID, not the
+		 * procedure OID itself. The security context switch needs the user OID.
+		 */
+		if (estate && estate->func && OidIsValid(estate->func->fn_oid))
+		{
+			GetUserIdAndSecContext(&flush_save_userid, &flush_save_sec_context);
+			SetUserIdAndSecContext(get_func_owner(estate->func->fn_oid),
+								   flush_save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+			flush_switched_context = true;
+		}
+
 		rc = SPI_execute(flush_query.data, false, 0);
+		
+		/* Restore security context immediately after SPI_execute */
+		if (flush_switched_context)
+		{
+			SetUserIdAndSecContext(flush_save_userid, flush_save_sec_context);
+			flush_switched_context = false;
+		}
+		
 		/*
 		 * Accept both SPI_OK_INSERT and SPI_OK_INSERT_RETURNING.
 		 * The latter is returned when IDENTITY_INSERT is ON because
@@ -1135,6 +1674,13 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	}
 	PG_CATCH();
 	{
+		/* Restore security context on error if it was switched */
+		if (flush_switched_context)
+		{
+			SetUserIdAndSecContext(flush_save_userid, flush_save_sec_context);
+			flush_switched_context = false;
+		}
+		
 		/* Clear the flush flag on error */
 		insert_exec_flush_in_progress = false;
 		
@@ -2647,6 +3193,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * In SQL Server, INSERT EXEC runs in an implicit transaction context,
 		 * so if COMMIT is called without BEGIN TRAN, error 3916 is thrown and
 		 * all changes are rolled back.
+		 * 
+		 * OWNERSHIP CHAINING FIX:
+		 * We also switch the security context to the procedure owner's identity
+		 * before executing the inner procedure. This ensures that the EXECUTE
+		 * permission check for the inner procedure uses the procedure owner's
+		 * identity, which is required for ownership chaining to work correctly.
 		 */
 		if (insert_exec_setup_done)
 		{
@@ -2654,6 +3206,9 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			ResourceOwner oldowner = CurrentResourceOwner;
 			volatile bool subtxn_started = false;
 			volatile int subtxn_rc = 0;
+			Oid ie_save_userid = InvalidOid;
+			int ie_save_sec_context = 0;
+			volatile bool ie_switched_context = false;
 
 			PG_TRY(insert_exec_subtxn);
 			{
@@ -2661,7 +3216,30 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				subtxn_started = true;
 				MemoryContextSwitchTo(oldcontext);
 
+				/*
+				 * OWNERSHIP CHAINING FIX:
+				 * Switch to the procedure owner's identity before executing the inner procedure.
+				 * This ensures the EXECUTE permission check uses the procedure owner's identity.
+				 * 
+				 * Only switch context if we're inside a procedure (estate->func->fn_oid is valid).
+				 * For top-level batches, no ownership chaining is needed.
+				 */
+				if (estate->func && OidIsValid(estate->func->fn_oid))
+				{
+					GetUserIdAndSecContext(&ie_save_userid, &ie_save_sec_context);
+					SetUserIdAndSecContext(get_func_owner(estate->func->fn_oid),
+										   ie_save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+					ie_switched_context = true;
+				}
+
 				subtxn_rc = SPI_execute_plan_extended(expr->plan, &options);
+
+				/* Restore security context immediately after SPI call */
+				if (ie_switched_context)
+				{
+					SetUserIdAndSecContext(ie_save_userid, ie_save_sec_context);
+					ie_switched_context = false;
+				}
 
 				/* Procedure completed successfully - release (commit) the subtransaction */
 				ReleaseCurrentSubTransaction();
@@ -2670,6 +3248,13 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			}
 			PG_CATCH(insert_exec_subtxn);
 			{
+				/* Restore security context on error if it was switched */
+				if (ie_switched_context)
+				{
+					SetUserIdAndSecContext(ie_save_userid, ie_save_sec_context);
+					ie_switched_context = false;
+				}
+
 				/* Roll back the subtransaction - this undoes the INSERT inside the procedure */
 				if (subtxn_started)
 				{
@@ -2774,12 +3359,13 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * 
 		 * We cannot call drop_insert_exec_temp_table() here because SPI_execute
 		 * cannot be used in an error context (transaction is aborted).
-		 * The temp table will be automatically cleaned up when the transaction
-		 * rolls back.
+		 * We set the pending drop flag so the temp table will be dropped at the
+		 * next opportunity when SPI is available.
 		 */
 		if (insert_exec_setup_done)
 		{
 			pltsql_insert_exec_set_error_flag();
+			pltsql_insert_exec_set_pending_drop();
 			pltsql_clear_insert_exec_context();
 		}
 		
@@ -3170,17 +3756,27 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		 * 
 		 * IMPORTANT: We cannot call drop_insert_exec_temp_table() here because
 		 * SPI_execute cannot be used in an error context (transaction is aborted).
-		 * The temp table will be automatically cleaned up when the transaction
-		 * rolls back.
+		 * We set the pending drop flag so the temp table will be dropped at the
+		 * next opportunity when SPI is available.
 		 *
 		 * If we're inside a TRY-CATCH block, do NOT clear the INSERT EXEC context.
 		 * Let the TRY-CATCH handler (exec_stmt_try_catch) do the cleanup, because
 		 * it has access to SPI and can properly drop the temp table.
 		 */
-		if (insert_exec_setup_done && !pltsql_insert_exec_in_trycatch())
+		if (insert_exec_setup_done)
 		{
-			pltsql_clear_insert_exec_context();
+			pltsql_insert_exec_set_error_flag();
+			pltsql_insert_exec_set_pending_drop();
+			if (!pltsql_insert_exec_in_trycatch())
+			{
+				pltsql_clear_insert_exec_context();
+			}
 		}
+		
+		/* Restore GUC and scope identity settings before re-throwing */
+		pltsql_revert_guc(save_nestlevel);
+		pltsql_revert_last_scope_identity(scope_level);
+		
 		PG_RE_THROW();
 	}
 	PG_END_TRY();

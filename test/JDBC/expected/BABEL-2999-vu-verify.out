@@ -145,14 +145,14 @@ insert into t3_BABEL2999_2 exec('select ''123''');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: structure of query does not match function result type)~~
+~~ERROR (Message: Column name or number of supplied values does not match table definition.)~~
 
 
 insert into t3_BABEL2999_2 exec('select 123, 123');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: structure of query does not match function result type)~~
+~~ERROR (Message: Column name or number of supplied values does not match table definition.)~~
 
 
 insert into t4_BABEL2999 exec('select 123, 123, 123, 123, 123')

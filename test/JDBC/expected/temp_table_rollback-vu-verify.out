@@ -3912,7 +3912,7 @@ GO
 
 INSERT INTO #insert_exec_nested EXEC p_insert_exec_nested_outer
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 8164)~~
 
 ~~ERROR (Message: nested INSERT ... EXECUTE statements are not allowed)~~
 
