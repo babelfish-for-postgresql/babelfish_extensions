@@ -143,7 +143,7 @@ SELECT NULL AS a, NULL AS b FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row></row>
+<row/>
 ~~END~~
 
 
@@ -170,7 +170,7 @@ SELECT NULL AS a, NULL AS b, NULL AS c, NULL AS d FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row></row>
+<row/>
 ~~END~~
 
 
@@ -198,7 +198,7 @@ SELECT NULL AS a, NULL AS b FOR XML RAW, ELEMENTS ABSENT;
 GO
 ~~START~~
 ntext
-<row></row>
+<row/>
 ~~END~~
 
 
@@ -510,7 +510,7 @@ SELECT name, salary FROM forxml_raw_elements_t1 FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row><name>John</name><salary>50000</salary></row><row><name>Jane</name><salary>60000</salary></row><row><name>Bob</name></row><row><name>Alice</name><salary>70000</salary></row><row></row>
+<row><name>John</name><salary>50000</salary></row><row><name>Jane</name><salary>60000</salary></row><row><name>Bob</name></row><row><name>Alice</name><salary>70000</salary></row><row/>
 ~~END~~
 
 
@@ -950,7 +950,7 @@ SELECT CAST(NULL AS VARCHAR(10)) AS null_val FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row></row>
+<row/>
 ~~END~~
 
 
@@ -971,7 +971,7 @@ SELECT 1 AS a, 2 AS b FOR XML RAW(''), ELEMENTS;
 GO
 ~~START~~
 ntext
-<><a>1</a><b>2</b></>
+<a>1</a><b>2</b>
 ~~END~~
 
 
