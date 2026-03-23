@@ -1490,6 +1490,32 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		edata = CopyErrorData();
 		error_mapped = get_tsql_error_code(edata, &last_error);
 		exec_set_error(estate, last_error, edata->sqlerrcode, !error_mapped);
+
+		/*
+		 * Clean up INSERT EXEC context on error, but ONLY if there's no TRY-CATCH
+		 * inside the procedure that will handle the error.
+		 * 
+		 * This must be done early, before any transaction handling, to ensure
+		 * the INSERT EXEC state is cleared regardless of the transaction state.
+		 * 
+		 * Without this cleanup, if INSERT EXEC fails inside an explicit transaction
+		 * (e.g., BEGIN TRAN; INSERT INTO t EXEC proc; where proc does COMMIT without
+		 * BEGIN TRAN), the INSERT EXEC context remains set. Subsequent queries then
+		 * see pltsql_insert_exec_active() as true and try to use stale OIDs, causing
+		 * "could not open relation with OID" errors in major version upgrade tests.
+		 * 
+		 * We use pltsql_insert_exec_should_cleanup_on_trycatch() to check if the
+		 * TRY-CATCH (if any) is at the same level or higher than INSERT EXEC.
+		 * If the TRY-CATCH is inside the procedure being executed, we should NOT
+		 * clean up because the INSERT EXEC is still in progress.
+		 */
+		if (pltsql_insert_exec_active() && pltsql_insert_exec_should_cleanup_on_trycatch())
+		{
+			elog(DEBUG1, "TSQL TXN TSQL semantics : Cleaning up INSERT EXEC context on error (no inner TRY-CATCH)");
+			pltsql_insert_exec_close_target_table();
+			pltsql_clear_insert_exec_context();
+		}
+
 		if (internal_sp_started &&
 			before_lxid == MyProc->vxid.lxid &&
 			before_subtxn_id == GetCurrentSubTransactionId())
@@ -1544,6 +1570,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 					 * will be dropped by the transaction abort.
 					 */
 					elog(DEBUG1, "TSQL TXN TSQL semantics : INSERT EXEC active but no TRY-CATCH, clearing context for cleanup");
+					pltsql_insert_exec_close_target_table();
 					pltsql_clear_insert_exec_context();
 				}
 			}
@@ -1791,7 +1818,10 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 						
 						elog(DEBUG1, "INSERT-EXEC: Cleaning up after error caught by TRY-CATCH, temp_oid=%u", temp_oid);
 						
-						/* Clear the INSERT EXEC context first */
+						/* Close target table and release lock first */
+						pltsql_insert_exec_close_target_table();
+						
+						/* Clear the INSERT EXEC context */
 						pltsql_clear_insert_exec_context();
 						
 						/* Drop the temp table if it exists */

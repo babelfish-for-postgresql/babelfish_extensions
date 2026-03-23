@@ -2901,26 +2901,25 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 			 is_stmt_terminating, insert_exec_was_active);
 
 		/*
-		 * Clean up INSERT EXEC context if it is currently active.
-		 * This is necessary because the error may have been thrown from inside
-		 * the procedure being executed, and the INSERT EXEC context was not
-		 * properly cleaned up. We need to:
-		 * 1. Clear the INSERT EXEC context (target table, column list, temp table OID)
-		 * 2. Drop the temp table if it still exists
-		 *
-		 * When the subtransaction is rolled back, the temp table should be
-		 * automatically dropped by ENRRollbackSubtransaction. But we still
-		 * need to clear the global INSERT EXEC context.
-		 *
-		 * When the subtransaction is released (for statement-terminating errors),
-		 * we need to explicitly drop the temp table.
+		 * Clean up INSERT EXEC context ONLY if the TRY-CATCH that caught the
+		 * error is at the same level or higher than where INSERT EXEC was started.
+		 * 
+		 * If the TRY-CATCH is inside the procedure being executed by INSERT EXEC
+		 * (deeper call stack), we should NOT clean up because the INSERT EXEC
+		 * is still in progress and the data should be preserved.
+		 * 
+		 * This matches SQL Server behavior where TRY-CATCH inside a procedure
+		 * can catch errors without affecting the outer INSERT EXEC operation.
 		 */
-		if (pltsql_insert_exec_active())
+		if (pltsql_insert_exec_active() && pltsql_insert_exec_should_cleanup_on_trycatch())
 		{
 			Oid temp_oid = pltsql_get_insert_exec_temp_table_oid();
 			
 			elog(LOG, "INSERT-EXEC TRY-CATCH cleanup: is_stmt_terminating=%d, insert_exec_was_active=%d, temp_oid=%u",
 				 is_stmt_terminating, insert_exec_was_active, temp_oid);
+			
+			/* Close target table and release lock first */
+			pltsql_insert_exec_close_target_table();
 			
 			/* Clear the INSERT EXEC context */
 			pltsql_clear_insert_exec_context();
@@ -2934,6 +2933,10 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 				elog(LOG, "INSERT-EXEC TRY-CATCH cleanup: dropping temp table");
 				drop_insert_exec_temp_table(temp_oid);
 			}
+		}
+		else if (pltsql_insert_exec_active())
+		{
+			elog(LOG, "INSERT-EXEC TRY-CATCH cleanup: INSERT EXEC active but TRY-CATCH is inside procedure, not cleaning up");
 		}
 		else
 		{
