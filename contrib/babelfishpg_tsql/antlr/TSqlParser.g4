@@ -3941,6 +3941,7 @@ geospatial_func_no_arg
     : STASTEXT
     | STASBINARY
     | STAREA
+    | MAKEVALID
     | STDIMENSION
     | STGEOMETRYTYPE   
     | STISCLOSED
@@ -4726,6 +4727,7 @@ keyword
     | M
     | M_DOUBLE_QUOTE
     | M_SQBRACKET
+    | MAKEVALID
     | MANUAL
     | MARK
     | MASK
