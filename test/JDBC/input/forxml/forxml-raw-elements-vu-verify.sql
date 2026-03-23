@@ -414,6 +414,10 @@ GO
 SELECT 1 AS a, 2 AS b FOR XML RAW(''), ELEMENTS;
 GO
 
+-- Empty element name without ELEMENTS (attribute-centric) - should error
+SELECT 1 AS a, 2 AS b FOR XML RAW('');
+GO
+
 -- Element name with spaces
 SELECT 1 AS a FOR XML RAW('element name'), ELEMENTS;
 GO

@@ -229,19 +229,34 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 	tmptup.t_data = td;
 	tuple = &tmptup;
 
-	/* Output opening tag */
-	if (elements)
+	/*
+	 * Empty element name without ELEMENTS mode is not allowed — attribute-centric
+	 * serialization requires a row tag name.
+	 */
+	if (element_name[0] == '\0' && !elements)
 	{
-		/* ELEMENTS mode: <row><col>value</col></row> */
-		if (xsinil)
-			appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
-		else
-			appendStringInfo(state, "<%s>", element_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION),
+				 errmsg("Row tag omission (empty row tag name) cannot be used "
+						"with attribute-centric FOR XML serialization.")));
 	}
-	else
+
+	/* Output opening tag (only when element_name is non-empty) */
+	if (element_name[0] != '\0')
 	{
-		/* ATTRIBUTES mode: <row col="value"/> */
-		appendStringInfo(state, "<%s", element_name);
+		if (elements)
+		{
+			/* ELEMENTS mode: <row><col>value</col></row> */
+			if (xsinil)
+				appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
+			else
+				appendStringInfo(state, "<%s>", element_name);
+		}
+		else
+		{
+			/* ATTRIBUTES mode: <row col="value"/> */
+			appendStringInfo(state, "<%s", element_name);
+		}
 	}
 
 	for (int i = 0; i < tupdesc->natts; i++)
@@ -296,7 +311,14 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 	/* Output closing tag */
 	if (elements)
 	{
-		if (allnull)
+		if (element_name[0] == '\0')
+		{
+			/*
+			 * Empty element name with ELEMENTS: no wrapper tag needed.
+			 * Just output the child elements directly, same as PATH('').
+			 */
+		}
+		else if (allnull)
 		{
 			/*
 			 * If all column values are NULL, produce a self-closing element
