@@ -434,16 +434,58 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 	 * Acquire RowExclusiveLock on the target table.
 	 * This lock will be held until the end of the transaction (or until
 	 * explicitly released).
+	 * 
+	 * In major version upgrade scenarios, the OID might become stale between
+	 * RangeVarGetRelid and here. We wrap this in PG_TRY to handle such cases.
 	 */
-	LockRelationOid(relid, RowExclusiveLock);
+	oldcontext = CurrentMemoryContext;
+	PG_TRY();
+	{
+		LockRelationOid(relid, RowExclusiveLock);
+	}
+	PG_CATCH();
+	{
+		/* 
+		 * Could not lock relation - likely stale OID from upgrade scenario.
+		 * Skip the schema capture and let the flush handle the error.
+		 */
+		MemoryContextSwitchTo(oldcontext);
+		FlushErrorState();
+		elog(DEBUG1, "INSERT-EXEC: Could not lock target table OID %u, skipping schema capture",
+			 relid);
+		return;
+	}
+	PG_END_TRY();
+	
 	insert_exec_target_rel_oid = relid;
 	
 	/*
 	 * Capture the schema signature of the target table.
 	 * We open the relation briefly to get the tuple descriptor, then close it.
 	 * The lock we acquired above will remain held.
+	 * 
+	 * In major version upgrade scenarios, the OID might become stale. We wrap
+	 * this in PG_TRY to handle such cases gracefully.
 	 */
-	rel = table_open(relid, NoLock);  /* Already have RowExclusiveLock */
+	PG_TRY();
+	{
+		rel = table_open(relid, NoLock);  /* Already have RowExclusiveLock */
+	}
+	PG_CATCH();
+	{
+		/* 
+		 * Could not open relation - likely stale OID from upgrade scenario.
+		 * Clear the OID and skip the schema capture.
+		 */
+		MemoryContextSwitchTo(oldcontext);
+		FlushErrorState();
+		elog(DEBUG1, "INSERT-EXEC: Could not open target table OID %u for schema capture, skipping",
+			 relid);
+		insert_exec_target_rel_oid = InvalidOid;
+		return;
+	}
+	PG_END_TRY();
+	
 	tupdesc = RelationGetDescr(rel);
 	
 	/* Allocate schema signature in TopMemoryContext so it survives error handling */
