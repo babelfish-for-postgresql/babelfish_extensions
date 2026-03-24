@@ -149,3 +149,61 @@ CREATE OR REPLACE FUNCTION sys.STGeometryType(geog sys.GEOGRAPHY)
 	    RAISE EXCEPTION 'Unexpected geometry type format: %. Expected ST_* prefix.', geom_type;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+--geometry
+--STMPointFromText
+
+CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromText(sys.NVARCHAR, srid integer)
+    RETURNS sys.GEOMETRY
+    AS $$
+    DECLARE
+        Geomtype text;
+        geom sys.GEOMETRY;
+    BEGIN
+        IF $2 IS NULL THEN
+            RAISE EXCEPTION '''geometry::STMPointFromText'' failed because parameter 2 is not allowed to be null.';
+        ELSIF $1 IS NULL THEN
+            RETURN NULL;
+        ELSIF $2 < 0 THEN
+            RAISE EXCEPTION 'SRID value must be non-negative.';
+        END IF;
+
+        geom = sys.geomfromtext_helper($1::text, $2);
+        Geomtype = sys.ST_GeometryType(geom);
+
+        IF Geomtype = 'ST_MultiPoint' THEN
+            RETURN geom;
+        ELSE
+            RAISE EXCEPTION 'Expected "MULTIPOINT" at Position 1. The input has %s', $1;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+--Geography 
+--STMPointFromText
+
+CREATE OR REPLACE FUNCTION sys.Geography__STMPointFromText(sys.NVARCHAR, srid integer)
+    RETURNS sys.GEOGRAPHY
+    AS $$
+    DECLARE
+        Geomtype text;
+        geog sys.GEOGRAPHY;
+    BEGIN
+        IF $2 IS NULL THEN
+            RAISE EXCEPTION '''geography::STMPointFromText'' failed because parameter 2 is not allowed to be null.';
+        ELSIF $1 IS NULL THEN
+            RETURN NULL;
+        ELSIF $2 < 0 THEN
+            RAISE EXCEPTION 'SRID value must be non-negative.';
+        END IF;
+
+        geog = sys.geogfromtext_helper($1::text, $2);
+        Geomtype = sys.ST_GeometryType(geog::sys.GEOMETRY);
+
+        IF Geomtype = 'ST_MultiPoint' THEN
+            RETURN geog;
+        ELSE
+            RAISE EXCEPTION 'Expected "MULTIPOINT" at Position 1. The input has %s', $1;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
