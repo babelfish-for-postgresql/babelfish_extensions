@@ -686,13 +686,13 @@ go
 
 -- tsql
 -- Create users
-CREATE LOGIN partition_owner_l1 WITH PASSWORD = '[REDACTED:PASSWORD]';
+CREATE LOGIN partition_owner_l1 WITH PASSWORD = '123';
 GO
 
 CREATE USER partition_owner_u1 FOR LOGIN partition_owner_l1;
 GO
 
-CREATE LOGIN partition_owner_l2 WITH PASSWORD = '[REDACTED:PASSWORD]';
+CREATE LOGIN partition_owner_l2 WITH PASSWORD = '123';
 GO
 
 CREATE USER partition_owner_u2 FOR LOGIN partition_owner_l2;
