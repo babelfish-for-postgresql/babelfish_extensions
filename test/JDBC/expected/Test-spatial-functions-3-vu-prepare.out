@@ -1,0 +1,729 @@
+CREATE DATABASE TestSpatialFunc3_DB;
+
+USE TestSpatialFunc3_DB;
+
+CREATE TABLE TestSpatialFunc3_GeomMetrics ( ID INT PRIMARY KEY,  GeomID INT, MetricValue FLOAT, GeomData geometry );
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (1, 1, 100.5, geometry::STGeomFromText('POINT(10 20)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (2, 2, 200.7, geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (3, 3, 150.3, geometry::STGeomFromText('LINESTRING(0 0, 10 10)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (4, 1, 75.8, geometry::STGeomFromText('POINT(30 40)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (5, 2, 300.2, geometry::STGeomFromText('POLYGON((5 5, 15 5, 15 15, 5 15, 5 5))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (6, 3, 50.0, geometry::STGeomFromText('POINT Z(10 20 100)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (7, 4, 400.1, geometry::STGeomFromText('LINESTRING ZM(0 0 0 0, 5 5 10 20, 10 0 0 0)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (8, 4, 0.0, geometry::STGeomFromText('POINT EMPTY', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (9, 5, 125.9, geometry::STGeomFromText('POLYGON((0 0, 0 20, 20 20, 20 0, 0 0), (5 5, 5 15, 15 15, 15 5, 5 5))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (10, 5, 275.4, geometry::STGeomFromText('LINESTRING Z(0 0 0, 10 10 50, 20 20 100)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (11, 6, 99.9, NULL);
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (12, 6, 180.0, geometry::STGeomFromText('POLYGON((0 0, 0 0, 0 0, 0 0))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (13, 7, 55.5, geometry::STGeomFromText('POINT ZM(30 40 100 200)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (14, 7, 320.0, geometry::STGeomFromText('POLYGON((0 0, 10 0, 5 5, 10 10, 0 10, 5 5, 0 0))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (15, 8, 10.0, geometry::STGeomFromText('LINESTRING EMPTY', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (16, 8, 20.0, geometry::STGeomFromText('POLYGON EMPTY', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (17, 9, 88.8, geometry::STGeomFromText('LINESTRING(0 0, 0 0)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (18, 9, 145.0, geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (19, 10, 210.5, geometry::STGeomFromText('POLYGON Z((0 0 0, 0 10 5, 10 10 10, 10 0 5, 0 0 0))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeomMetrics (ID, GeomID, MetricValue, GeomData) VALUES (20, 10, 500.0, geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0), (0 0, 5 0, 5 5, 0 5, 0 0))', 0));
+~~ROW COUNT: 1~~
+
+
+
+CREATE TABLE TestSpatialFunc3_GeogMetrics ( ID INT PRIMARY KEY, GeogID INT, MetricValue FLOAT, GeogData geography );
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (1, 1, 100.5, geography::STGeomFromText('POINT(-122.349 47.651)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (2, 2, 200.7, geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (3, 3, 150.3, geography::STGeomFromText('LINESTRING(-122.34 47.65, -122.35 47.66)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (4, 1, 75.8, geography::STGeomFromText('POINT(-122.40 47.70)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (5, 2, 300.2, geography::STGeomFromText('POLYGON((5 5, 15 5, 15 15, 5 15, 5 5))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (6, 3, 50.0, geography::STGeomFromText('POINT Z(-122.349 47.651 100)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (7, 4, 400.1, geography::STGeomFromText('LINESTRING ZM(-122.36 47.65 0 0, -122.35 47.66 50 10, -122.34 47.65 0 0)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (8, 4, 0.0, geography::STGeomFromText('POINT EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (9, 5, 125.9, geography::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (10, 5, 275.4, geography::STGeomFromText('LINESTRING Z(-122.34 47.65 0, -122.35 47.66 50, -122.36 47.67 100)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (11, 6, 99.9, NULL);
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (12, 6, 180.0, geography::STGeomFromText('POLYGON((0 0, 0 0, 0 0, 0 0))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (13, 7, 55.5, geography::STGeomFromText('POINT ZM(-122.40 47.70 200 300)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (14, 7, 320.0, geography::STGeomFromText('POLYGON((0 0, 10 0, 5 5, 10 10, 0 10, 5 5, 0 0))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (15, 8, 10.0, geography::STGeomFromText('LINESTRING EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (16, 8, 20.0, geography::STGeomFromText('POLYGON EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (17, 9, 88.8, geography::STGeomFromText('LINESTRING(0 0, 0 0)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (18, 9, 145.0, geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (19, 10, 210.5, geography::STGeomFromText('POLYGON Z((0 0 0, 0 10 5, 10 10 10, 10 0 5, 0 0 0))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_GeogMetrics (ID, GeogID, MetricValue, GeogData) VALUES (20, 10, 500.0, geography::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0), (0 0, 5 0, 5 5, 0 5, 0 0))', 4326));
+~~ROW COUNT: 1~~
+
+
+CREATE VIEW TestSpatialFunc3_GeomMetrics_MakeValid_View AS SELECT ID, GeomID, MetricValue, GeomData.STIsValid() AS IsValidBefore,  (GeomData.MakeValid()).STIsValid() AS IsValidAfter, GeomData.MakeValid() AS TypeAfter FROM TestSpatialFunc3_GeomMetrics;
+
+CREATE VIEW TestSpatialFunc3_GeogMetrics_MakeValid_View AS SELECT ID, GeogID, MetricValue, (GeogData.MakeValid()).STIsValid() AS IsValidAfter, GeogData.MakeValid() AS TypeAfter FROM TestSpatialFunc3_GeogMetrics;
+
+CREATE VIEW TestSpatialFunc3_GeomMetrics_Area_View AS SELECT ID, GeomID, MetricValue, ValidGeom.STArea() AS AreaAfter, ValidGeom AS LengthAfter FROM (SELECT ID, GeomID, MetricValue, GeomData.MakeValid() AS ValidGeom FROM TestSpatialFunc3_GeomMetrics) AS t;
+
+CREATE VIEW TestSpatialFunc3_GeogMetrics_Area_View AS SELECT ID, GeogID, MetricValue, ValidGeog.STArea() AS AreaAfter, ValidGeog AS LengthAfter FROM (SELECT ID, GeogID, MetricValue, GeogData.MakeValid() AS ValidGeog FROM TestSpatialFunc3_GeogMetrics) AS t;
+
+USE MASTER
+
+CREATE TABLE TestSpatialFunc3_MakeValidGeomTemp ( ID INT PRIMARY KEY, GeomColumn geometry,Description VARCHAR(100) );
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (1, geometry::STGeomFromText('POINT(10 20)', 0), 'Valid Point');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (2, geometry::STGeomFromText('POINT(30 40)', 4326), 'Valid Point with SRID');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (3, geometry::STGeomFromText('LINESTRING(0 0, 10 10, 20 20)', 0), 'Valid LineString');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (4, geometry::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 0), 'Valid Polygon');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (5, geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0), 'Invalid Bowtie Polygon');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (6, geometry::STGeomFromText('POLYGON((0 0, 5 5, 10 0, 10 10, 5 5, 0 10, 0 0))', 0), 'Invalid Twisted Polygon');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (7, geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326), 'Invalid Bowtie with SRID');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (8, geometry::STGeomFromText('LINESTRING(5 5, 15 15, 25 25)', 0), 'Valid LineString 2');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (9, geometry::STGeomFromText('POLYGON((0 0, 0 20, 20 20, 20 0, 0 0), (5 5, 5 15, 15 15, 15 5, 5 5))', 0), 'Valid Polygon with Hole');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (10, geometry::STGeomFromText('POINT EMPTY', 0), 'Empty Point');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (11, geometry::STGeomFromText('POLYGON EMPTY', 0), 'Empty Polygon');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (12, geometry::STGeomFromText('LINESTRING EMPTY', 0), 'Empty LineString');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (13, NULL, 'NULL Geometry');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (14, geometry::Point(10, 20, 0), 'Point using Point method');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (15, geometry::STGeomFromText('LINESTRING(0 0, 0 0)', 0), 'Invalid LineString - duplicate points');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (16, geometry::STGeomFromText('LINESTRING(1 1, 1 1, 1 1)', 0), 'Invalid LineString - all same points');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (17, geometry::STGeomFromText('LINESTRING(0 0, 5 5, 0 0)', 0), 'Invalid LineString - closed back on itself');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (18, geometry::STGeomFromText('POLYGON((0 0, 10 0, 5 5, 10 10, 0 10, 5 5, 0 0))', 0), 'Invalid Figure-8 Polygon');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (19, geometry::STGeomFromText('POLYGON((0 0, 0 0, 0 0, 0 0))', 0), 'Invalid Polygon - all same points');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (20, geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0), (2 2, 8 2, 8 8, 2 8, 2 2), (4 4, 6 4, 6 6, 4 6, 4 4))', 0), 'Invalid Polygon - nested holes');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeomTemp (ID, GeomColumn, Description) VALUES (21, geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0), (0 0, 5 0, 5 5, 0 5, 0 0))', 0), 'Invalid Polygon - hole touches shell');
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE TestSpatialFunc3_MakeValidGeogTemp ( ID INT PRIMARY KEY, GeogColumn geography, Description VARCHAR(100) );
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (1, geography::STGeomFromText('POINT(-122.349 47.651)', 4326), 'Valid Point');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (2, geography::Point(47.651, -122.349, 4326), 'Valid Point using Point method');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (3, geography::STGeomFromText('LINESTRING(-122.34 47.65, -122.35 47.66, -122.36 47.67)', 4326), 'Valid LineString');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (4, geography::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 4326), 'Valid Polygon');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (5, geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326), 'Invalid Bowtie Polygon');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (6, geography::STGeomFromText('POLYGON((0 0, 5 5, 10 0, 10 10, 5 5, 0 10, 0 0))', 4326), 'Invalid Twisted Polygon');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (7, geography::STGeomFromText('LINESTRING(-122.37 47.68, -122.38 47.69)', 4326), 'Valid LineString 2');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (8, geography::STGeomFromText('POINT EMPTY', 4326), 'Empty Point');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (9, geography::STGeomFromText('POLYGON EMPTY', 4326), 'Empty Polygon');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (10, geography::STGeomFromText('LINESTRING EMPTY', 4326), 'Empty LineString');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (11, NULL, 'NULL Geography');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (12, geography::STGeomFromText('LINESTRING(0 0, 0 0)', 4326), 'Invalid LineString - duplicate points');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (13, geography::STGeomFromText('LINESTRING(1 1, 1 1, 1 1)', 4326), 'Invalid LineString - all same points');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (14, geography::STGeomFromText('LINESTRING(0 0, 5 5, 0 0)', 4326), 'Invalid LineString - closed back on itself');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (15, geography::STGeomFromText('POLYGON((0 0, 10 0, 5 5, 10 10, 0 10, 5 5, 0 0))', 4326), 'Invalid Figure-8 Polygon');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (16, geography::STGeomFromText('POLYGON((0 0, 0 0, 0 0, 0 0))', 4326), 'Invalid Polygon - all same points');
+~~ROW COUNT: 1~~
+
+INSERT INTO TestSpatialFunc3_MakeValidGeogTemp (ID, GeogColumn, Description) VALUES (17, geography::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0), (0 0, 5 0, 5 5, 0 5, 0 0))', 4326), 'Invalid Polygon - hole touches shell');
+~~ROW COUNT: 1~~
+
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeomView1 AS SELECT ID, Description, GeomColumn.MakeValid().STAsText() AS MadeValid, GeomColumn.MakeValid().STIsValid() AS IsValid FROM TestSpatialFunc3_MakeValidGeomTemp;
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeomView2 AS SELECT ID, Description, GeomColumn.STIsValid() AS BeforeValid, GeomColumn.MakeValid().STIsValid() AS AfterValid FROM TestSpatialFunc3_MakeValidGeomTemp;
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeomView3 AS SELECT ID, Description, GeomColumn.MakeValid().STArea() AS Area FROM TestSpatialFunc3_MakeValidGeomTemp;
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeomView4 AS SELECT ID, Description,  GeomColumn.MakeValid() AS type FROM TestSpatialFunc3_MakeValidGeomTemp;
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeomView5 AS SELECT ID, Description, GeomColumn.STSrid AS BeforeSRID, GeomColumn.MakeValid().STSrid AS AfterSRID FROM TestSpatialFunc3_MakeValidGeomTemp;
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeogView1 AS SELECT ID, Description, GeogColumn.MakeValid().STAsText() AS MadeValid, GeogColumn.MakeValid().STIsValid() AS IsValid FROM TestSpatialFunc3_MakeValidGeogTemp;
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeogView2 AS SELECT ID, Description, GeogColumn.STIsValid() AS BeforeValid, GeogColumn.MakeValid().STIsValid() AS AfterValid FROM TestSpatialFunc3_MakeValidGeogTemp;
+
+CREATE VIEW TestSpatialFunc3_MakeValidGeogView3 AS SELECT ID, Description, GeogColumn.MakeValid().STArea() AS Area FROM TestSpatialFunc3_MakeValidGeogTemp;
+CREATE DATABASE TestSTNumPoints_DB;
+
+USE TestSTNumPoints_DB;
+
+CREATE TABLE STNumPoints_geom_test_db ( ID INT PRIMARY KEY, geom_type VARCHAR(50), geom geometry);
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (1, 'Point', geometry::STPointFromText('POINT(0 0)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (2, 'Point with SRID', geometry::STPointFromText('POINT(-122.349 47.651)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (3, 'Point constructor', geometry::Point(3.0, 4.0, 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (4, 'LineString 2pts', geometry::STGeomFromText('LINESTRING(0 0, 1 1)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (5, 'LineString 3pts', geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (6, 'LineString 5pts', geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2, 3 3, 4 4)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (7, 'Polygon triangle', geometry::STGeomFromText('POLYGON((0 0, 1 0, 0 1, 0 0))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (8, 'Polygon square', geometry::STGeomFromText('POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (9, 'Polygon with hole', geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0), (2 2, 8 2, 8 8, 2 8, 2 2))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (10, 'Empty Point', geometry::STGeomFromText('POINT EMPTY', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (11, 'Empty LineString', geometry::STGeomFromText('LINESTRING EMPTY', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (12, 'Empty Polygon', geometry::STGeomFromText('POLYGON EMPTY', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (13, 'Point Z', geometry::STGeomFromText('POINT Z(1 2 3)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (14, 'Empty Point', geometry::STGeomFromText('POINT EMPTY', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (15, 'Empty LineString', geometry::STGeomFromText('LINESTRING EMPTY', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test_db (ID, geom_type, geom) VALUES (16, 'Empty Polygon', geometry::STGeomFromText('POLYGON EMPTY', 0));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE STNumPoints_geog_test_db ( ID INT PRIMARY KEY, geog_type VARCHAR(50), geog geography );
+
+INSERT INTO STNumPoints_geog_test_db (ID, geog_type, geog) VALUES (1, 'Point', geography::STPointFromText('POINT(-122.349 47.651)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test_db (ID, geog_type, geog) VALUES (2, 'Point constructor', geography::Point(47.651, -122.349, 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test_db (ID, geog_type, geog) VALUES (3, 'LineString 2pts', geography::STGeomFromText('LINESTRING(-122.36 47.65, -122.34 47.66)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test_db (ID, geog_type, geog) VALUES (4, 'LineString 3pts', geography::STGeomFromText('LINESTRING(-122.36 47.65, -122.34 47.66, -122.32 47.67)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test_db (ID, geog_type, geog) VALUES (5, 'LineString 5pts', geography::STGeomFromText('LINESTRING(-122.36 47.65, -122.35 47.66, -122.34 47.67, -122.33 47.68, -122.32 47.69)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test_db (ID, geog_type, geog) VALUES (6, 'Polygon triangle', geography::STGeomFromText('POLYGON((-122.36 47.65, -122.34 47.65, -122.35 47.67, -122.36 47.65))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test_db (ID, geog_type, geog) VALUES (7, 'Polygon square', geography::STGeomFromText('POLYGON((-122.36 47.65, -122.34 47.65, -122.34 47.67, -122.36 47.67, -122.36 47.65))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test_db (ID, geog_type, geog) VALUES (8, 'Empty Point', geography::STGeomFromText('POINT EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test_db (ID, geog_type, geog) VALUES (9, 'Empty LineString', geography::STGeomFromText('LINESTRING EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test_db (ID, geog_type, geog) VALUES (10, 'Point Z', geography::STGeomFromText('POINT Z(-122.349 47.651 100)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test_db (ID, geog_type, geog) VALUES (11, 'Empty Point', geography::STGeomFromText('POINT EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test_db (ID, geog_type, geog) VALUES (12, 'Empty LineString', geography::STGeomFromText('LINESTRING EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+
+CREATE VIEW STNumPoints_geom_view_db AS SELECT ID, geom_type, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test_db;
+
+CREATE VIEW STNumPoints_geog_view_db AS SELECT ID, geog_type, geog.STNumPoints() AS num_points FROM STNumPoints_geog_test_db;
+
+USE MASTER
+
+CREATE TABLE STNumPoints_geom_test ( ID INT PRIMARY KEY, geom_type VARCHAR(50), geom geometry );
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (1, 'Point', geometry::STPointFromText('POINT(0 0)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (2, 'Point with SRID', geometry::STPointFromText('POINT(-122.349 47.651)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (3, 'Point constructor', geometry::Point(3.0, 4.0, 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (4, 'LineString 2pts', geometry::STGeomFromText('LINESTRING(0 0, 1 1)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (5, 'LineString 3pts', geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (6, 'LineString 5pts', geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2, 3 3, 4 4)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (7, 'Polygon triangle', geometry::STGeomFromText('POLYGON((0 0, 1 0, 0 1, 0 0))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (8, 'Polygon square', geometry::STGeomFromText('POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (9, 'Polygon with hole', geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0), (2 2, 8 2, 8 8, 2 8, 2 2))', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (10, 'Empty Point', geometry::STGeomFromText('POINT EMPTY', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (11, 'Empty LineString', geometry::STGeomFromText('LINESTRING EMPTY', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (12, 'Empty Polygon', geometry::STGeomFromText('POLYGON EMPTY', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (13, 'Point Z', geometry::STGeomFromText('POINT Z(1 2 3)', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (14, 'Empty Point', geometry::STGeomFromText('POINT EMPTY', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (15, 'Empty LineString', geometry::STGeomFromText('LINESTRING EMPTY', 0));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geom_test (ID, geom_type, geom) VALUES (16, 'Empty Polygon', geometry::STGeomFromText('POLYGON EMPTY', 0));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE STNumPoints_geog_test ( ID INT PRIMARY KEY, geog_type VARCHAR(50), geog geography );
+INSERT INTO STNumPoints_geog_test (ID, geog_type, geog) VALUES (1, 'Point', geography::STPointFromText('POINT(-122.349 47.651)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test (ID, geog_type, geog) VALUES (2, 'Point constructor', geography::Point(47.651, -122.349, 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test (ID, geog_type, geog) VALUES (3, 'LineString 2pts', geography::STGeomFromText('LINESTRING(-122.36 47.65, -122.34 47.66)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test (ID, geog_type, geog) VALUES (4, 'LineString 3pts', geography::STGeomFromText('LINESTRING(-122.36 47.65, -122.34 47.66, -122.32 47.67)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test (ID, geog_type, geog) VALUES (5, 'LineString 5pts', geography::STGeomFromText('LINESTRING(-122.36 47.65, -122.35 47.66, -122.34 47.67, -122.33 47.68, -122.32 47.69)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test (ID, geog_type, geog) VALUES (6, 'Polygon triangle', geography::STGeomFromText('POLYGON((-122.36 47.65, -122.34 47.65, -122.35 47.67, -122.36 47.65))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test (ID, geog_type, geog) VALUES (7, 'Polygon square', geography::STGeomFromText('POLYGON((-122.36 47.65, -122.34 47.65, -122.34 47.67, -122.36 47.67, -122.36 47.65))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test (ID, geog_type, geog) VALUES (8, 'Empty Point', geography::STGeomFromText('POINT EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test (ID, geog_type, geog) VALUES (9, 'Empty LineString', geography::STGeomFromText('LINESTRING EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test (ID, geog_type, geog) VALUES (10, 'Point Z', geography::STGeomFromText('POINT Z(-122.349 47.651 100)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test (ID, geog_type, geog) VALUES (11, 'Empty Point', geography::STGeomFromText('POINT EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO STNumPoints_geog_test (ID, geog_type, geog) VALUES (12, 'Empty LineString', geography::STGeomFromText('LINESTRING EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+
+CREATE VIEW STNumPoints_geom_view AS SELECT ID, geom_type, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test;
+
+CREATE VIEW STNumPoints_geog_view AS SELECT ID, geog_type, geog.STNumPoints() AS num_points FROM STNumPoints_geog_test;
+CREATE DATABASE TestGeospatialParse_DB;
+
+USE TestGeospatialParse_DB;
+
+CREATE TABLE TestGeospatialParse_GeometryTable3 ( ID INT PRIMARY KEY, GeomColumn geometry ); 
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (1, geometry::Parse('POINT(3.0 4.0)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (2, geometry::Parse('LINESTRING(0 0, 1 1, 2 2)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (3, geometry::Parse('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (4, geometry::Parse('POINT(1.0 2.0)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (5, geometry::Parse('LINESTRING(0 0, 5 5)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (7, geometry::Parse('LINESTRING(0 0 0, 1 1 1, 2 2 2)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (8, geometry::Parse('LINESTRING M(0 0 0, 1 1 1, 2 2 2)'));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (9, geometry::Parse('LINESTRING(0 0 0 0, 1 1 1 1, 2 2 2 2)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (10, geometry::Parse('POINT(1 2 3)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (11, geometry::Parse('POINT M(1 2 3)'));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (12, geometry::Parse('POINT(1 2 3 4)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (13, geometry::Parse('POLYGON((0 0 0, 0 1 1, 1 1 1, 1 0 0, 0 0 0))'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (14, geometry::Parse('POLYGON M((0 0 0, 0 1 1, 1 1 1, 1 0 0, 0 0 0))'));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+INSERT INTO TestGeospatialParse_GeometryTable3 (ID, GeomColumn) VALUES (15, geometry::Parse('POLYGON((0 0 0 0, 0 1 1 1, 1 1 1 1, 1 0 0 0, 0 0 0 0))'));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE TestGeospatialParse_GeographyTable3 ( ID INT PRIMARY KEY, GeogColumn geography ); 
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (1, geography::Parse('POINT(3.0 4.0)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (2, geography::Parse('LINESTRING(0 0, 1 1, 2 2)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (3, geography::Parse('POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (4, geography::Parse('POINT(1.0 2.0)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (5, geography::Parse('LINESTRING(0 0, 5 5)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (6, geography::Parse('LINESTRING(0 0 0, 1 1 1, 2 2 2)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (7, geography::Parse('LINESTRING M(0 0 0, 1 1 1, 2 2 2)'));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (8, geography::Parse('LINESTRING(0 0 0 0, 1 1 1 1, 2 2 2 2)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (9, geography::Parse('POINT(1 2 3)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (10, geography::Parse('POINT M(1 2 3)'));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (11, geography::Parse('POINT(1 2 3 4)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (12, geography::Parse('POLYGON((0 0 0, 0 1 1, 1 1 1, 1 0 0, 0 0 0))'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (13, geography::Parse('POLYGON M((0 0 0, 0 1 1, 1 1 1, 1 0 0, 0 0 0))'));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parse error - invalid geometry)~~
+
+INSERT INTO TestGeospatialParse_GeographyTable3 (ID, GeogColumn) VALUES (14, geography::Parse('POLYGON((0 0 0 0, 0 1 1 1, 1 1 1 1, 1 0 0 0, 0 0 0 0))'));
+~~ROW COUNT: 1~~
+
+
+
+USE MASTER
+
+CREATE TABLE TestGeospatialParse_GeomTemp3 ( ID INT PRIMARY KEY, GeomColumn geometry ); 
+INSERT INTO TestGeospatialParse_GeomTemp3 (ID, GeomColumn) VALUES (1, geometry::Parse('POINT(3.0 4.0)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeomTemp3 (ID, GeomColumn) VALUES (2, geometry::Parse('LINESTRING(0 0, 1 1)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeomTemp3 (ID, GeomColumn) VALUES (3, geometry::Parse('POLYGON((0 0, 0 2, 2 2, 2 0, 0 0))'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeomTemp3 (ID, GeomColumn) VALUES (4, geometry::Parse('POINT(47.65100 -22.34900)'));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE TestGeospatialParse_GeogTemp3 ( ID INT PRIMARY KEY, GeogColumn geography ); 
+INSERT INTO TestGeospatialParse_GeogTemp3 (ID, GeogColumn) VALUES (1, geography::Parse('POINT(3.0 4.0)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeogTemp3 (ID, GeogColumn) VALUES (2, geography::Parse('LINESTRING(0 0, 1 1)'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeogTemp3 (ID, GeogColumn) VALUES (3, geography::Parse('POLYGON((0 0, 0 2, 2 2, 2 0, 0 0))'));
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialParse_GeogTemp3 (ID, GeogColumn) VALUES (4, geography::Parse('POINT(47.65100 -22.34900)'));
+~~ROW COUNT: 1~~
+
+
+CREATE VIEW TestGeospatialParse_ParseGeomView3 AS SELECT GeomColumn.STAsText() AS ParsedGeom FROM TestGeospatialParse_GeomTemp3 ORDER BY GeomColumn.STX;
+
+CREATE VIEW TestGeospatialParse_ParseGeogView3 AS SELECT GeogColumn.STAsText() AS ParsedGeog FROM TestGeospatialParse_GeogTemp3 ORDER BY GeogColumn.Lat;
+
+CREATE DATABASE TestGeospatialMethods3_DB;
+
+USE TestGeospatialMethods3_DB;
+
+CREATE TABLE TestGeospatialMethods3_STGeometryType_GEOM_db (ID INT PRIMARY KEY, GeomColumn geometry);
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_db (ID, GeomColumn) VALUES ( 1, geometry::STGeomFromText('POINT(1 2)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_db (ID, GeomColumn) VALUES ( 2, geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_db (ID, GeomColumn) VALUES ( 3, geometry::STGeomFromText('POLYGON((0 0, 4 0, 4 4, 0 4, 0 0))', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_db (ID, GeomColumn) VALUES ( 4, geometry::STGeomFromText('POINT(0 0 100)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_db (ID, GeomColumn) VALUES ( 5, geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2, 3 3)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_db (ID, GeomColumn) VALUES ( 6, geometry::STGeomFromText('POLYGON((0 0, 1 0, 1 1, 0 1, 0 0), (0.2 0.2, 0.8 0.2, 0.8 0.8, 0.2 0.8, 0.2 0.2))', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_db (ID, GeomColumn) VALUES ( 7, geometry::STGeomFromText('POINT(1 1 100 200)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_db (ID, GeomColumn) VALUES ( 8, geometry::STPointFromText('POINT EMPTY', 4326) );
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE TestGeospatialMethods3_STGeometryType_GEOG_db (ID INT PRIMARY KEY, GeogColumn geography);
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_db (ID, GeogColumn) VALUES ( 1, geography::STGeomFromText('POINT(-122.34 47.65)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_db (ID, GeogColumn) VALUES ( 2, geography::STGeomFromText('LINESTRING(-122.36 47.65, -122.34 47.66, -122.32 47.65)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_db (ID, GeogColumn) VALUES ( 3, geography::STGeomFromText('POLYGON((-122.35 47.64, -122.33 47.64, -122.33 47.66, -122.35 47.66, -122.35 47.64))', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_db (ID, GeogColumn) VALUES ( 4, geography::STGeomFromText('POINT(-122.34 47.65 100)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_db (ID, GeogColumn) VALUES ( 5, geography::STGeomFromText('LINESTRING(-122.36 47.65, -122.34 47.66, -122.32 47.65, -122.30 47.66)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_db (ID, GeogColumn) VALUES ( 6, geography::STGeomFromText('POLYGON((-122.35 47.64, -122.33 47.64, -122.33 47.66, -122.35 47.66, -122.35 47.64), (-122.34 47.645, -122.335 47.645, -122.335 47.655, -122.34 47.655, -122.34 47.645))', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_db (ID, GeogColumn) VALUES ( 7, geography::STGeomFromText('POINT(-122.34 47.65 200 300)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_db (ID, GeogColumn) VALUES ( 8, geography::STPointFromText('POINT EMPTY', 4326) );
+~~ROW COUNT: 1~~
+
+
+CREATE VIEW TestGeospatialMethods3_STGeometryType_GEOM_View_db AS SELECT ID, GeomColumn.STGeometryType() AS GeomType FROM TestGeospatialMethods3_STGeometryType_GEOM_db;
+
+CREATE VIEW TestGeospatialMethods3_STGeometryType_GEOG_View_db AS SELECT ID, GeogColumn.STGeometryType() AS GeogType FROM TestGeospatialMethods3_STGeometryType_GEOG_db;
+
+USE MASTER
+
+CREATE TABLE TestGeospatialMethods3_STGeometryType_GEOM_Temp (ID INT PRIMARY KEY, GeomColumn geometry);
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_Temp (ID, GeomColumn) VALUES ( 1, geometry::STGeomFromText('POINT(1 2)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_Temp (ID, GeomColumn) VALUES ( 2, geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_Temp (ID, GeomColumn) VALUES ( 3, geometry::STGeomFromText('POLYGON((0 0, 4 0, 4 4, 0 4, 0 0))', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_Temp (ID, GeomColumn) VALUES ( 4, geometry::STGeomFromText('POINT(0 0 100)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_Temp (ID, GeomColumn) VALUES ( 5, geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2, 3 3)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_Temp (ID, GeomColumn) VALUES ( 6, geometry::STGeomFromText('POLYGON((0 0, 1 0, 1 1, 0 1, 0 0), (0.2 0.2, 0.8 0.2, 0.8 0.8, 0.2 0.8, 0.2 0.2))', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_Temp (ID, GeomColumn) VALUES ( 7, geometry::STGeomFromText('POINT(1 1 100 200)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOM_Temp (ID, GeomColumn) VALUES ( 8, geometry::STPointFromText('POINT EMPTY', 4326) );
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE TestGeospatialMethods3_STGeometryType_GEOG_Temp (ID INT PRIMARY KEY, GeogColumn geography);
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_Temp (ID, GeogColumn) VALUES ( 1, geography::STGeomFromText('POINT(-122.34 47.65)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_Temp (ID, GeogColumn) VALUES ( 2, geography::STGeomFromText('LINESTRING(-122.36 47.65, -122.34 47.66, -122.32 47.65)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_Temp (ID, GeogColumn) VALUES ( 3, geography::STGeomFromText('POLYGON((-122.35 47.64, -122.33 47.64, -122.33 47.66, -122.35 47.66, -122.35 47.64))', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_Temp (ID, GeogColumn) VALUES ( 4, geography::STGeomFromText('POINT(-122.34 47.65 100)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_Temp (ID, GeogColumn) VALUES ( 5, geography::STGeomFromText('LINESTRING(-122.36 47.65, -122.34 47.66, -122.32 47.65, -122.30 47.66)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_Temp (ID, GeogColumn) VALUES ( 6, geography::STGeomFromText('POLYGON((-122.35 47.64, -122.33 47.64, -122.33 47.66, -122.35 47.66, -122.35 47.64), (-122.34 47.645, -122.335 47.645, -122.335 47.655, -122.34 47.655, -122.34 47.645))', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_Temp (ID, GeogColumn) VALUES ( 7, geography::STGeomFromText('POINT(-122.34 47.65 200 300)', 4326) );
+~~ROW COUNT: 1~~
+
+INSERT INTO TestGeospatialMethods3_STGeometryType_GEOG_Temp (ID, GeogColumn) VALUES ( 8, geography::STPointFromText('POINT EMPTY', 4326) );
+~~ROW COUNT: 1~~
+
+
+CREATE VIEW TestGeospatialMethods3_STGeometryType_GEOM_View_Temp AS SELECT ID, GeomColumn.STGeometryType() AS GeomType FROM TestGeospatialMethods3_STGeometryType_GEOM_Temp;
+
+CREATE VIEW TestGeospatialMethods3_STGeometryType_GEOG_View_Temp AS SELECT ID, GeogColumn.STGeometryType() AS GeogType FROM TestGeospatialMethods3_STGeometryType_GEOG_Temp;
+
