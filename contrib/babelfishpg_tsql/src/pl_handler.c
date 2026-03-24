@@ -98,6 +98,11 @@
 #include "schemacmds.h"
 #include "session.h"
 #include "pltsql.h"
+#include "nodes/readfuncs.h"
+
+/* PLtsql node serialization dispatch (defined in pltsql_serialize/) */
+extern void pltsql_outNode(StringInfo str, const void *obj);
+extern Node *pltsql_parseNodeString(const char *token, int length);
 #include "pltsql_partition.h"
 #include "pltsql_permissions.h"
 #include "pl_explain.h"
@@ -6149,6 +6154,10 @@ _PG_init(void)
 	coalesce_typmod_hook = coalesce_typmod_hook_impl;
 
 	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
+
+	/* PLtsql node serialization hooks */
+	outNode_hook = pltsql_outNode;
+	parseNodeString_hook = pltsql_parseNodeString;
 
 	inited = true;
 }

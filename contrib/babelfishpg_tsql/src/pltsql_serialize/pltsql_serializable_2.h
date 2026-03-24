@@ -1,0 +1,377 @@
+
+/*-------------------------------------------------------------------------
+ *
+ * pltsql_serializable_2.h
+ *    Annotated PLtsql node definitions for code generation
+ *
+ * This file contains PLtsql node struct definitions from pltsql-2.h with 
+ * additional pg_node_attr() annotations for use with gen_pltsql_support.pl to 
+ * generate serialization and deserialization code for caching ANTLR parse tree.
+ *
+ * NOTES:
+ *  - This file is used by gen_pltsql_support.pl to generate:
+ *    * pltsql_serialize_gen.c
+ *    * pltsql_deserialize_gen.c
+ *  - Annotations follow PostgreSQL's gen_node_support.pl pattern
+ *
+ * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *    src/pl/pltsql/src/pltsql_serializable_2.h
+ *
+ *-------------------------------------------------------------------------
+ */
+
+/*
+ * NOTE: This file is NOT compiled by the C compiler.
+ * It is read as text input by gen_pltsql_support.pl, which parses the
+ * struct definitions and pg_node_attr() annotations to generate
+ * pltsql_outfuncs_gen.c and pltsql_readfuncs_gen.c.
+ *
+ * The generated .c files will #include "pltsql.h" and "pltsql-2.h"
+ * and operate on the real runtime struct types directly.
+ *
+ * The struct definitions here MUST match pltsql-2.h exactly
+ * (same field names, same types, same order) — the only additions are
+ * pg_node_attr() annotations which compile to nothing in C.
+ */
+
+/*
+ * Annotation Guide:
+ * 
+ * Struct-level attributes (placed after opening brace):
+ *   - custom_read_write: Struct has custom serialization/deserialization logic
+ *   - no_copy: Don't generate copy support
+ *   - no_equal: Don't generate equal support
+ *   - special_read_write: Special handling for read/write
+ *
+ * Field-level attributes (placed after field declaration):
+ *   - read_write_ignore: Skip this field during serialization/deserialization
+ *   - array_size(field): Specifies the field that contains array size
+ *   - copy_as(expr): Use custom expression for copying
+ *   - read_as(expr): Use custom expression for reading
+ *   - equal_ignore: Skip this field during equality comparison
+ *
+ * Special handling notes:
+ *   - PLtsql_variable* references: Store dno (datum number) instead of pointer
+ *   - PLtsql_expr*: Serialize query string, paramnos, and other metadata
+ *   - List*: Serialize list length and elements
+ *   - Flexible arrays: Use array_size() annotation
+ */
+
+/*
+ * PRINT statement
+ */
+typedef struct PLtsql_stmt_print
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *label;
+	List	   *exprs;
+} PLtsql_stmt_print;
+
+/*
+ * KILL statement
+ */
+typedef struct PLtsql_stmt_kill
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *label;
+	int	    spid;
+} PLtsql_stmt_kill;
+
+/*
+ * init statement
+ */
+typedef struct PLtsql_stmt_init
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *label;
+	List	   *inits;
+} PLtsql_stmt_init;
+
+/*
+ * BEGIN TRY...END TRY  BEGIN CATCH...END CATCH block
+ */
+typedef struct PLtsql_stmt_try_catch
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *label;
+	PLtsql_stmt *body;			/* List of statements */
+	PLtsql_stmt *handler;
+} PLtsql_stmt_try_catch;
+
+/*
+ * SELECT-SET statement (this represents a SELECT
+ * statement that assignes variables to a set of
+ * target variables, such as:
+ *    SELECT @balance = cust_balance FROM customer ...
+ */
+typedef struct PLtsql_stmt_query_set
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	uint32		stmtid;
+	PLtsql_expr *sqlstmt;
+	PLtsql_variable *target;	/* INTO target (record or row) */
+} PLtsql_stmt_query_set;
+
+typedef struct PLtsql_stmt_push_result
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *label;
+	PLtsql_expr *query;
+} PLtsql_stmt_push_result;
+
+/*
+ * EXEC statement
+ */
+typedef struct PLtsql_stmt_exec
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	PLtsql_expr *expr;
+	bool		is_call;
+	PLtsql_variable *target;
+	int			return_code_dno;
+	int			paramno;
+	List	   *params;
+
+	/* indicates whether we're executing a scalar UDF using EXEC keyword */
+	bool		is_scalar_func;
+	bool		is_cross_db;	/* cross database reference */
+	char	   *db_name;
+	char	   *proc_name;
+	char	   *schema_name;
+		
+	bool		exec_with_recompile; /* forced recompile through EXECUTE */	
+} PLtsql_stmt_exec;
+
+typedef struct tsql_exec_param
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	const char *name;
+	PLtsql_expr *expr;
+	char		mode;
+	int			varno;			/* dno of the output variable */
+} tsql_exec_param;
+
+/*
+ * T-SQL provides variadic system procedures which are used for RPC.
+ * We cannot use "CREATE PROCEUDRE" to define those procedures since they can be variadic.
+ * PLtsql_stmt_exec_sp is a general stmt wrapper to call those procedures.
+ * TODO: integrate with other system procedures such as sp_executesql
+ */
+/*
+ * NOTE: In pltsql-2.h the enum tag is PLtsql_exec_sp_type_code but the typedef
+ * name is PLtsql_sp_type_code. gen_node_support.pl captures the tag name, so we
+ * use the typedef name as the tag here so the generator recognizes it.
+ */
+typedef enum PLtsql_sp_type_code
+{
+	PLTSQL_EXEC_SP_CURSOR,
+	PLTSQL_EXEC_SP_CURSOROPEN,
+	PLTSQL_EXEC_SP_CURSORPREPARE,
+	PLTSQL_EXEC_SP_CURSOREXECUTE,
+	PLTSQL_EXEC_SP_CURSORPREPEXEC,
+	PLTSQL_EXEC_SP_CURSORUNPREPARE,
+	PLTSQL_EXEC_SP_CURSORFETCH,
+	PLTSQL_EXEC_SP_CURSOROPTION,
+	PLTSQL_EXEC_SP_CURSORCLOSE,
+	PLTSQL_EXEC_SP_EXECUTESQL,
+	PLTSQL_EXEC_SP_EXECUTE,
+	PLTSQL_EXEC_SP_PREPEXEC
+} PLtsql_sp_type_code;
+
+typedef struct PLtsql_stmt_exec_sp
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+
+	PLtsql_sp_type_code sp_type_code;
+	int			prepared_handleno;
+	int			cursor_handleno;
+	int			return_code_dno;
+
+	PLtsql_expr *handle;
+
+	PLtsql_expr *query;			/* stmt */
+	int			paramno;
+	PLtsql_expr *param_def;
+	List	   *params;
+
+	PLtsql_expr *opt1;
+	PLtsql_expr *opt2;
+	PLtsql_expr *opt3;
+	List	   *stropt;
+} PLtsql_stmt_exec_sp;
+
+/*
+ * DECLARE table variable statement
+ */
+typedef struct PLtsql_stmt_decl_table
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	int			dno;			/* dno of the table variable */
+	/* One and only one of the remaining two fields should be used */
+	char	   *tbltypname;		/* name of the table type */
+	char	   *coldef;			/* column definition list */
+} PLtsql_stmt_decl_table;
+
+typedef struct PLtsql_stmt_exec_batch
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	PLtsql_expr *expr;
+} PLtsql_stmt_exec_batch;
+
+typedef struct PLtsql_stmt_raiserror
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	List	   *params;
+	int			paramno;
+	bool		log;
+	bool		nowait;
+	bool		seterror;
+} PLtsql_stmt_raiserror;
+
+typedef struct PLtsql_stmt_throw
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	List	   *params;
+} PLtsql_stmt_throw;
+
+/*
+ * DEALLOCATE curvar
+ */
+typedef struct PLtsql_stmt_deallocate
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	int			curvar;
+} PLtsql_stmt_deallocate;
+
+/*
+ * (re)DECLARE cur CURSOR ...
+ */
+typedef struct PLtsql_stmt_decl_cursor
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	int			curvar;
+	PLtsql_expr *cursor_explicit_expr;
+	int			cursor_options;
+} PLtsql_stmt_decl_cursor;
+
+extern bool is_cursor_datatype(Oid oid);
+
+/*
+ * GOTO statement
+ */
+typedef struct PLtsql_stmt_goto
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *label;
+	PLtsql_expr *cond;			/* conditional GOTO */
+	int32		target_pc; /* int32_t in pltsql-2.h */
+	char	   *target_label;
+} PLtsql_stmt_goto;
+
+/*
+ *  Label
+ */
+typedef struct PLtsql_stmt_label
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *label;
+} PLtsql_stmt_label;
+
+/*
+ *   Use DB statement
+ */
+typedef struct PLtsql_stmt_usedb
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *db_name;
+} PLtsql_stmt_usedb;
+
+/*
+ *   Save error handling context
+ */
+typedef struct PLtsql_stmt_save_ctx
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	int32		target_pc; /* int32_t in pltsql-2.h */
+	char	   *target_label;
+} PLtsql_stmt_save_ctx;
+
+/*
+ *   Delete exception handling context
+ */
+typedef struct PLtsql_stmt_restore_ctx_full
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+} PLtsql_stmt_restore_ctx_full;
+
+/*
+ *  Post-exception handling block
+ */
+typedef struct PLtsql_stmt_restore_ctx_partial
+{
+	pg_node_attr(no_copy_equal, no_query_jumble)
+	NodeTag		type;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+} PLtsql_stmt_restore_ctx_partial;
