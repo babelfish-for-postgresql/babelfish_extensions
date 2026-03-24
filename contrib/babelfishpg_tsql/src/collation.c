@@ -8,6 +8,7 @@
 #include "utils/syscache.h"
 #include "utils/memutils.h"
 #include "utils/builtins.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_collation.h"
 #include "catalog/namespace.h"
@@ -96,19 +97,58 @@ contains_like_escape(Node *node, void *context)
 }
 
 /*
- * Wrapper around estimate_expression_value that constructs a minimal
- * PlannerInfo so we can call it without a real planner context.
+ * Check whether the expression contains any non-immutable function
+ * outside our allowlist of safe-to-fold stable functions.
+ * Returns true if an unsafe function is found.
  *
- * estimate_expression_value folds both immutable and stable functions
- * to constants — the same approach PG uses for planning estimates.
- * This is safe for LIKE prefix extraction because the original LIKE
- * clause is always kept as a recheck filter, guaranteeing correctness.
+ * Allowlisted functions are STABLE only because plpgsql/C cannot be
+ * declared IMMUTABLE, but are deterministic for constant inputs:
+ *   babelfish_conv_helper_*   - CONVERT / TRY_CONVERT
+ *   babelfish_try_cast_to_*   - TRY_CAST
+ *   babelfish_concat_wrapper* - string + operator
+ *   concat                     - CONCAT()
+ */
+static bool
+has_unsafe_stable_func(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, FuncExpr))
+	{
+		FuncExpr   *func = (FuncExpr *) node;
+
+		if (func_volatile(func->funcid) != PROVOLATILE_IMMUTABLE)
+		{
+			char   *name = get_func_name(func->funcid);
+			bool	safe = (name != NULL &&
+							(strncmp(name, "babelfish_conv_helper_", 22) == 0 ||
+							 strncmp(name, "babelfish_try_cast_to_", 22) == 0 ||
+							 strncmp(name, "babelfish_concat_wrapper", 24) == 0 ||
+							 strcmp(name, "concat") == 0));
+
+			if (name)
+				pfree(name);
+			if (!safe)
+				return true;
+		}
+	}
+	return expression_tree_walker(node, has_unsafe_stable_func, context);
+}
+
+/*
+ * Fold a LIKE pattern to Const, restricted to expressions whose
+ * non-immutable functions are all known-safe stable functions.
+ * The original LIKE is always kept as a recheck, so correctness
+ * is guaranteed.
  */
 static Node *
 fold_like_pattern_to_const(Node *expr)
 {
 	PlannerGlobal glob;
 	PlannerInfo root;
+
+	if (has_unsafe_stable_func(expr, NULL))
+		return expr;
 
 	memset(&glob, 0, sizeof(PlannerGlobal));
 	glob.type = T_PlannerGlobal;
@@ -451,9 +491,9 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	 *
 	 * First use eval_const_expressions (folds immutable functions like
 	 * string concatenation and type casts). If still not a Const, use
-	 * estimate_expression_value  which also folds stable functions like 
-	 * CONVERT/TRY_CONVERT. The original LIKE is kept as a recheck filter, 
-	 * so correctness is guaranteed.
+	 * fold_like_pattern_to_const which selectively folds only
+	 * allowlisted stable functions (CONVERT, TRY_CONVERT, TRY_CAST,
+	 * string +) via estimate_expression_value.
 	 *
 	 * Skip for like_escape: PG's like_escape converts escape sequences
 	 * to backslash format, which doesn't match T-SQL bracket patterns.
