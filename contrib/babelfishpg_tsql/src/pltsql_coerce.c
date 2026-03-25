@@ -3207,8 +3207,18 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 			continue;
 		else if (is_tsql_str_const(expr))
 			type = common_utility_plugin_ptr->lookup_tsql_datatype_oid("varchar");
-		else if ((!is_tsql_char_type_with_len(type, is_case_expr)))
-			return InvalidOid;
+else if ((!is_tsql_char_type_with_len(type, is_case_expr)))
+{
+    if (is_case_expr && is_tsql_base_datatype(type))
+    {
+        // Type exists in tsql_precedence_infos — allow through
+        // to the precedence comparison below
+    }
+    else
+    {
+        return InvalidOid;
+    }
+}
 		
 		if (tsql_has_higher_precedence(type, result_type) || result_type == InvalidOid)
 		{
