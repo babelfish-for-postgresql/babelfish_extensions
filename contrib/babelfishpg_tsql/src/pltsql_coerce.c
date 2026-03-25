@@ -514,6 +514,30 @@ is_tsql_binary_family_datatype(Oid oid)
 	return false;
 }
 
+// /* Returns true if the oid belongs to sql_variant datatype */
+// static bool
+// is_sql_variant_type(Oid oid)
+// {
+// 	HeapTuple	tuple;
+// 	bool		result = false;
+
+// 	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(oid));
+// 	if (HeapTupleIsValid(tuple))
+// 	{
+// 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tuple);
+// 		Oid			type_nsoid = typtup->typnamespace;
+// 		char	   *type_name = NameStr(typtup->typname);
+// 		char	   *type_nsname = get_namespace_name(type_nsoid);
+
+// 		if (strcmp(type_nsname, "sys") == 0 && strcmp(type_name, "sql_variant") == 0)
+// 			result = true;
+
+// 		ReleaseSysCache(tuple);
+// 	}
+
+// 	return result;
+// }
+
 static CoercionPathType
 tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext ccontext, Oid *funcid)
 {
@@ -3173,6 +3197,30 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 	ListCell	*lc;
 	bool		is_case_expr = (strlen(context) == 4 && strncmp(context, "CASE", 4) == 0);
 
+	/*
+	 * For CASE expressions, if any branch is sql_variant, return sql_variant
+	 * directly. sql_variant has the highest TSQL type precedence (0) and can
+	 * hold any type, so it is always the correct common type when present.
+	 * We must check this before the main loop because the loop bails out on
+	 * non-char types, and the other branch (e.g. bit) would cause an early
+	 * return of InvalidOid before sql_variant is ever seen.
+	 */
+	if (is_case_expr)
+	{
+		foreach(lc, exprs)
+		{
+			Node	*expr = (Node *) lfirst(lc);
+			Oid		type = exprType(expr);
+
+			if ((*common_utility_plugin_ptr->is_tsql_sqlvariant_datatype)(type))
+			{
+				if (which_expr)
+					*which_expr = expr;
+				return type;
+			}
+		}
+	}
+
 	/* Find a common type based on precedence. NULLs are ignored, and make 
 	 * string literals varchars. If a type besides CHAR, NCHAR, VARCHAR, 
 	 * or NVARCHAR is present, let engine handle finding the type.
@@ -3207,18 +3255,8 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 			continue;
 		else if (is_tsql_str_const(expr))
 			type = common_utility_plugin_ptr->lookup_tsql_datatype_oid("varchar");
-else if ((!is_tsql_char_type_with_len(type, is_case_expr)))
-{
-    if (is_case_expr && is_tsql_base_datatype(type))
-    {
-        // Type exists in tsql_precedence_infos — allow through
-        // to the precedence comparison below
-    }
-    else
-    {
-        return InvalidOid;
-    }
-}
+		else if ((!is_tsql_char_type_with_len(type, is_case_expr)))
+			return InvalidOid;
 		
 		if (tsql_has_higher_precedence(type, result_type) || result_type == InvalidOid)
 		{
