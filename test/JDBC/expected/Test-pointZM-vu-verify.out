@@ -1430,14 +1430,14 @@ SELECT CAST(0xE61000000104000000000000F03F0000000000000040 as geometry)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Unsupported geometry type)~~
+~~ERROR (Message: Error converting data type varbinary.)~~
 
 
 SELECT CAST(0xE61000000104000000000000F03F0000000000000040 as geography)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Unsupported geometry type)~~
+~~ERROR (Message: Error converting data type varbinary.)~~
 
 
 -- When SRID is above 999999 for geometry 
@@ -1540,7 +1540,7 @@ SELECT CAST(CAST(0x000000000104000000000000000001000000ffffffffffffff01 as geome
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Unsupported geometry type)~~
+~~ERROR (Message: Error converting data type varbinary.)~~
 
 
 --  Negative Tests for Nan coordinates
