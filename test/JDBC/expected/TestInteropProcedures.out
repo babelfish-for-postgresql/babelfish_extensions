@@ -251,3 +251,22 @@ GO
 -- psql     currentSchema=master_dbo,public
 DROP PROCEDURE psql_interop_proc
 GO
+
+-- psql
+CREATE SCHEMA master_s6390;
+GO
+
+GRANT ALL ON SCHEMA master_s6390 TO PUBLIC ;
+GO
+
+-- tsql
+CREATE FUNCTION s6390.f1() RETURNS INT AS BEGIN return 1 END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not find logical schema name for: "master_s6390")~~
+
+
+-- psql
+DROP SCHEMA master_s6390;
+GO

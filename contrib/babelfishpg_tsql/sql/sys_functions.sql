@@ -2700,6 +2700,22 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION sys.lock_timeout() TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.textsize()
+RETURNS integer
+LANGUAGE plpgsql
+STABLE STRICT
+AS $$
+declare return_value integer;
+begin
+    return_value := current_setting('babelfishpg_tsql.textsize');
+    RETURN return_value;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.textsize() TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.max_connections()
 RETURNS integer
 LANGUAGE plpgsql
