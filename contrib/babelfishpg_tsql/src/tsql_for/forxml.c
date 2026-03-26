@@ -322,7 +322,7 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 		{
 			/*
 			 * If all column values are NULL, produce a self-closing element
-			 * like SQL Server does: <row/>. Replace the '>' in the already
+			 * like TSQL does: <row/>. Replace the '>' in the already
 			 * appended opening tag with '/' and append '>'.
 			 */
 			state->data[state->len - 1] = '/';
