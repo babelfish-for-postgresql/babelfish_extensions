@@ -999,7 +999,6 @@ SELECT NULL AS a, NULL AS b FOR XML RAW(''), ELEMENTS;
 GO
 ~~START~~
 ntext
-
 ~~END~~
 
 
