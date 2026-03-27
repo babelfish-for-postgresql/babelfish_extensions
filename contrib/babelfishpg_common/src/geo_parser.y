@@ -252,12 +252,6 @@ multipoint_query:
         { $$ = rewrite_dim_multipoint_wkt($4); }
     | MPOINT_TOK ZM_TOK LPAREN ptarrayzm RPAREN
         { $$ = rewrite_dim_multipoint_wkt($4); } 
-    | MPOINT_TOK Z_TOK EMPTY_TOK
-        { $$ = pstrdup("MULTIPOINT EMPTY"); }
-    | MPOINT_TOK M_TOK EMPTY_TOK
-        { $$ = pstrdup("MULTIPOINT EMPTY"); }
-    | MPOINT_TOK ZM_TOK EMPTY_TOK
-        { $$ = pstrdup("MULTIPOINT EMPTY"); }
     ;
 
 

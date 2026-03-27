@@ -126,10 +126,10 @@ static void load_functions();
 #define GEOM_TYPE_POS_RESULT   4   /* Position of geometry type in result data */
 
 #define EMPTY_Binary_SIZE      9   /* Size of empty representation in binary */
-#define EMPTY_POINT_Binary      "\x01\x04\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty point */
-#define EMPTY_LINE_Binary       "\x01\x02\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty linestring */
-#define EMPTY_POLYGON_Binary    "\x01\x03\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty polygon */
-#define EMPTY_MULTIPOINT_Binary "\x01\x04\x00\x00\x00\x00\x00\x00\x00"
+#define EMPTY_POINT_Bytes      "\x01\x04\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty point */
+#define EMPTY_LINE_Bytes       "\x01\x02\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty linestring */
+#define EMPTY_POLYGON_Bytes    "\x01\x03\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty polygon */
+#define EMPTY_MULTIPOINT_Bytes "\x01\x04\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty Multipoint */
 #define FIGURE_INTERIOR_RING  0x00
 #define FIGURE_STROKE         0x01
 #define FIGURE_EXTERIOR_RING  0x02
@@ -155,9 +155,6 @@ static void load_functions();
 #define INVALID_POINT_3DM_FLAG      0x0B    /* P+Z+M (no V) —  3DM Point */
 
 #define SHAPE_TYPE_OFFSET (HEADER_SIZE + NPOINTS_SIZE + COUNT_FIELD_SIZE + COUNT_FIELD_SIZE + sizeof(int32_t) + sizeof(uint32_t))
-#define WKB_POINT_TYPE            1
-#define WKB_LINESTRING_TYPE       2
-#define WKB_POLYGON_TYPE          3
 
 /* Macro to throw varbinary to geometry/geography conversion error */
 #define THROW_VARBINARY_CONVERSION_ERROR() \
@@ -466,6 +463,9 @@ PG_FUNCTION_INFO_V1(st_as_binary_geography);
 PG_FUNCTION_INFO_V1(st_as_text);
 PG_FUNCTION_INFO_V1(geometry_astext);
 PG_FUNCTION_INFO_V1(geometry_asbpchar);
+PG_FUNCTION_INFO_V1(get_geometry_from_wkb);
+PG_FUNCTION_INFO_V1(get_geography_from_wkb);
+
 /*
  * Module to load external PostGIS functions
  */
@@ -1082,7 +1082,103 @@ get_geography_from_text(PG_FUNCTION_ARGS)
     PG_RETURN_DATUM(flipped_geom_datum);
 }
 
-/* This function creates a geography point (only 2D) */
+/*
+ * Converts WKB binary to geometry with SRID validation.
+ */
+Datum
+get_geometry_from_wkb(PG_FUNCTION_ARGS)
+{
+    Datum    geom_datum;
+    int32    srid;
+    char    *geom_type;
+    bytea   *wkb_input;
+    LOCAL_FCINFO(fcinfo_local, 2);
+
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 2, InvalidOid, NULL, NULL);
+    load_functions();
+
+    srid = PG_GETARG_INT32(1);
+
+    if (srid < 0 || srid > 999999)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("SRID value should be between 0 and 999999")));
+    }
+
+    wkb_input = PG_GETARG_BYTEA_PP(0);
+
+    /* Convert WKB to geometry */
+    UpdateFunctionCallInfo(fcinfo_local, 1, PointerGetDatum(wkb_input));
+    geom_datum = lwgeom_from_bytea_p(fcinfo_local);
+
+    /* Set SRID */
+    UpdateFunctionCallInfo(fcinfo_local, 2, geom_datum, Int32GetDatum(srid));
+    geom_datum = gserialized_set_srid_p(fcinfo_local);
+
+    /* Validate geometry type */
+    geom_type = GetGeometryTypeName(fcinfo_local, geom_datum);
+    check_geom_type(geom_type);
+
+    if (geom_type)
+        pfree(geom_type);
+
+    PG_RETURN_DATUM(geom_datum);
+}
+
+/*
+ * Converts WKB binary to geography with SRID and latitude validation.
+ * Mirrors get_geography_from_text but for WKB input.
+ */
+Datum
+get_geography_from_wkb(PG_FUNCTION_ARGS)
+{
+    Datum    geom_datum;
+    char    *geom_type;
+    int32    srid;
+    bytea   *wkb_input;
+    LOCAL_FCINFO(fcinfo_local, 2);
+
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 2, InvalidOid, NULL, NULL);
+    load_functions();
+
+    srid = PG_GETARG_INT32(1);
+
+    if (!is_valid_geography_srid(srid))
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("Invalid SRID")));
+    }
+
+    wkb_input = PG_GETARG_BYTEA_PP(0);
+
+    /* Convert WKB to geometry */
+    UpdateFunctionCallInfo(fcinfo_local, 1, PointerGetDatum(wkb_input));
+    geom_datum = lwgeom_from_bytea_p(fcinfo_local);
+
+    /* Set SRID */
+    UpdateFunctionCallInfo(fcinfo_local, 2, geom_datum,  Int32GetDatum(srid));
+    geom_datum = gserialized_set_srid_p(fcinfo_local);
+
+    /* Validate geometry type */
+    geom_type = GetGeometryTypeName(fcinfo_local, geom_datum);
+    check_geom_type(geom_type);
+
+    /* Validate latitude */
+    validate_geography_latitude(geom_datum, false);
+
+    /* Flip coordinates for geography storage */
+    UpdateFunctionCallInfo(fcinfo_local, 1, geom_datum);
+    geom_datum = st_flipcoordinates_p(fcinfo_local);
+
+    if (geom_type)
+        pfree(geom_type);
+
+    PG_RETURN_DATUM(geom_datum);
+}
+
+/* This fusnction creates a geography point (only 2D) */
 Datum
 geography_point(PG_FUNCTION_ARGS)
 {
@@ -2062,7 +2158,7 @@ write_interleaved_point(uint8 *dst, uint8 *src_base, uint32_t total_points, uint
 static uint32_t
 write_wkb_point_child(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32_t pt_idx, bool has_z, bool has_m)
 {
-    uint32_t wkb_type = get_wkb_type(WKB_POINT_TYPE, has_z, has_m);
+    uint32_t wkb_type = get_wkb_type(POINT_TYPE, has_z, has_m);
     uint32_t pos = 0;
 
     dst[pos++] = 0x01;  /* little endian */
@@ -2110,6 +2206,33 @@ calculate_child_wkb_size(uint8 parent_type, uint32_t child_npoints, GeometryData
 }
 
 /*
+ * Get child geometry info (point range, figure range) for a given child index.
+ */
+
+static void
+get_child_info(GeometryData *geom_data, uint32_t child_idx,
+               uint32_t *pt_start, uint32_t *child_npoints,
+               uint32_t *fig_start, uint32_t *fig_end)
+{
+    uint32_t pt_end;
+
+    *fig_start = geom_data->shapes[child_idx].figure_offset;
+    *pt_start  = geom_data->figures[*fig_start].point_offset;
+
+    if (child_idx < geom_data->nshapes - 1)
+        *fig_end = geom_data->shapes[child_idx + 1].figure_offset;
+    else
+        *fig_end = geom_data->nfigures;
+
+    if (*fig_end < geom_data->nfigures)
+        pt_end = geom_data->figures[*fig_end].point_offset;
+    else
+        pt_end = geom_data->npoints;
+
+    *child_npoints = pt_end - *pt_start;
+}
+
+/*
  * Convert CLR multi-geometry binary to PostGIS WKB.
   Designed to support
  * MultiLineString, MultiPolygon in future with no changes
@@ -2149,28 +2272,10 @@ handle_multi_to_postgis(GeometryData *geom_data)
 
     for (i = 0; i < nchildren; i++)
     {
-        uint32_t child_idx = i + 1;
-        uint32_t fig_start = geom_data->shapes[child_idx].figure_offset;
-        uint32_t fig_end;
-        uint32_t pt_start  = geom_data->figures[fig_start].point_offset;
-        uint32_t pt_end;
-        uint32_t child_npoints;
+        uint32_t pt_start, child_npoints, fig_start, fig_end;
+        get_child_info(geom_data, i + 1, &pt_start, &child_npoints, &fig_start, &fig_end);
 
-        /* Determine figure range for this child */
-        if (child_idx < geom_data->nshapes - 1)
-            fig_end = geom_data->shapes[child_idx + 1].figure_offset;
-        else
-            fig_end = geom_data->nfigures;
-
-        /* Determine point range */
-        if (fig_end < geom_data->nfigures)
-            pt_end = geom_data->figures[fig_end].point_offset;
-        else
-            pt_end = geom_data->npoints;
-
-        child_npoints = pt_end - pt_start;
-
-        result_size += calculate_child_wkb_size(geom_data->geom_name, child_npoints,geom_data, fig_start, fig_end, has_z, has_m);
+        result_size += calculate_child_wkb_size(geom_data->geom_name, child_npoints, geom_data, fig_start, fig_end, has_z, has_m);
     }
 
     /* Build PostGIS header */
@@ -2194,24 +2299,8 @@ handle_multi_to_postgis(GeometryData *geom_data)
     /* Write each child geometry */
     for (i = 0; i < nchildren; i++)
     {
-        uint32_t child_idx = i + 1;
-        uint32_t fig_start = geom_data->shapes[child_idx].figure_offset;
-        uint32_t fig_end;
-        uint32_t pt_start  = geom_data->figures[fig_start].point_offset;
-        uint32_t pt_end;
-        uint32_t child_npoints;
-
-        if (child_idx < geom_data->nshapes - 1)
-            fig_end = geom_data->shapes[child_idx + 1].figure_offset;
-        else
-            fig_end = geom_data->nfigures;
-
-        if (fig_end < geom_data->nfigures)
-            pt_end = geom_data->figures[fig_end].point_offset;
-        else
-            pt_end = geom_data->npoints;
-
-        child_npoints = pt_end - pt_start;
+        uint32_t pt_start, child_npoints, fig_start, fig_end;
+        get_child_info(geom_data, i + 1, &pt_start, &child_npoints, &fig_start, &fig_end);
 
         offset += write_child_wkb(result_data + offset, src, geom_data->npoints, pt_start, child_npoints, geom_data->geom_name, geom_data, fig_start, fig_end, has_z, has_m);
     }
@@ -2255,7 +2344,6 @@ handle_non_empty_geometry_bytea(GeometryData *geom_data)
             break;
          case MULTIPOINT_TYPE:
             return handle_multi_to_postgis(geom_data);
-            break;
         default:
             THROW_VARBINARY_CONVERSION_ERROR();
             return NULL;  /* unreachable */
@@ -3468,21 +3556,21 @@ st_as_binary_common(Datum input, bool is_geography)
         if (strcmp(geom_type, "ST_Point" ) == 0) 
         {
             /* Copy empty point WKB pattern */
-            memcpy(VARDATA(empty_geom), EMPTY_POINT_Binary, EMPTY_Binary_SIZE);
+            memcpy(VARDATA(empty_geom), EMPTY_POINT_Bytes, EMPTY_Binary_SIZE);
         }
         else if (strcmp(geom_type, "ST_LineString" ) == 0) 
         {
             /* Copy empty linestring WKB pattern */
-            memcpy(VARDATA(empty_geom), EMPTY_LINE_Binary, EMPTY_Binary_SIZE);
+            memcpy(VARDATA(empty_geom), EMPTY_LINE_Bytes, EMPTY_Binary_SIZE);
         }
         else if (strcmp(geom_type, "ST_Polygon" ) == 0) 
         {
             /* Copy empty linestring WKB pattern */
-            memcpy(VARDATA(empty_geom), EMPTY_POLYGON_Binary, EMPTY_Binary_SIZE);
+            memcpy(VARDATA(empty_geom), EMPTY_POLYGON_Bytes, EMPTY_Binary_SIZE);
         }
          else if (strcmp(geom_type, "ST_MultiPoint") == 0)
         {
-            memcpy(VARDATA(empty_geom), EMPTY_MULTIPOINT_Binary, EMPTY_Binary_SIZE);
+            memcpy(VARDATA(empty_geom), EMPTY_MULTIPOINT_Bytes, EMPTY_Binary_SIZE);
         }
         
         /* Free allocated memory and return the empty WKB */

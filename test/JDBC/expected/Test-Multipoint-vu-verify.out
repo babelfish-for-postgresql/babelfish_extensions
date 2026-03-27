@@ -1502,26 +1502,30 @@ geometry
 DECLARE @wkb107 VARBINARY(MAX) = geometry::STGeomFromText('MULTIPOINT((1 2), (3 4))', 4326).STAsBinary();
 SELECT geometry::STMPointFromWKB(@wkb107, 4326).STAsText();
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Could not find method 'STMPointFromWKB' for type geometry.)~~
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(3 4))
+~~END~~
 
 
 -- TC-MP-108: STMPointFromWKB — Wrong type binary (should ERROR)
 DECLARE @wkb108 VARBINARY(MAX) = geometry::STGeomFromText('LINESTRING(1 2, 3 4)', 4326).STAsBinary();
 SELECT geometry::STMPointFromWKB(@wkb108, 4326);
 GO
+~~START~~
+geometry
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could not find method 'STMPointFromWKB' for type geometry.)~~
+~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has ST_LineStrings)~~
 
 
 -- TC-MP-109: STMPointFromWKB — NULL
 SELECT geometry::STMPointFromWKB(NULL, 4326);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Could not find method 'STMPointFromWKB' for type geometry.)~~
+~~START~~
+geometry
+<NULL>
+~~END~~
 
 
 
@@ -2287,9 +2291,11 @@ GO
 DECLARE @wkb VARBINARY(MAX) = geometry::STGeomFromText('MULTIPOINT((1 2), (3 4))', 4326).STAsBinary();
 SELECT geometry::STMPointFromWKB(@wkb, NULL);
 GO
+~~START~~
+geometry
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could not find method 'STMPointFromWKB' for type geometry.)~~
+~~ERROR (Message: 'geometry::STMPointFromWKB' failed because parameter 2 is not allowed to be null.)~~
 
 
 -- TC-MP-175: Geography STMPointFromText — Basic
@@ -2310,9 +2316,10 @@ GO
 -- TC-MP-176: Geography STMPointFromText — Empty
 SELECT geography::STMPointFromText('MULTIPOINT EMPTY', 4326);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot cast type geography to geometry)~~
+~~START~~
+geography
+E61000000104000000000000000001000000FFFFFFFFFFFFFFFF04
+~~END~~
 
 
 -- TC-MP-177: Geography STMPointFromText — Wrong type (should ERROR)
@@ -2320,7 +2327,7 @@ SELECT geography::STMPointFromText('POINT(45 90)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type geography to geometry)~~
+~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has POINT(45 90)s)~~
 
 
 -- TC-MP-178: Geography STMPointFromText — NULL input
@@ -2346,7 +2353,7 @@ SELECT geography::STMPointFromWKB(@wkb180, 4326).STAsText();
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could not find method 'STMPointFromWKB' for type geography.)~~
+~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
 
 
 -- TC-MP-181: Geography STMPointFromWKB — Wrong type (should ERROR)
@@ -2355,15 +2362,16 @@ SELECT geography::STMPointFromWKB(@wkb181, 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Could not find method 'STMPointFromWKB' for type geography.)~~
+~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
 
 
 -- TC-MP-182: Geography STMPointFromWKB — NULL input
 SELECT geography::STMPointFromWKB(NULL, 4326);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Could not find method 'STMPointFromWKB' for type geography.)~~
+~~START~~
+geography
+<NULL>
+~~END~~
 
 
 -- TC-MP-183: STNumPoints — 2 points
@@ -2516,28 +2524,25 @@ E6100000010702000000000000000000F03F00000000000000400000000000001440000000000000
 -- TC-MP-211: MULTIPOINT Z EMPTY
 SELECT geometry::STGeomFromText('MULTIPOINT Z EMPTY', 4326);
 GO
-~~START~~
-geometry
-E61000000104000000000000000001000000FFFFFFFFFFFFFFFF04
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid geometry)~~
 
 
 -- TC-MP-212: MULTIPOINT M EMPTY
 SELECT geometry::STGeomFromText('MULTIPOINT M EMPTY', 4326);
 GO
-~~START~~
-geometry
-E61000000104000000000000000001000000FFFFFFFFFFFFFFFF04
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid geometry)~~
 
 
 -- TC-MP-213: MULTIPOINT ZM EMPTY
 SELECT geometry::STGeomFromText('MULTIPOINT ZM EMPTY', 4326);
 GO
-~~START~~
-geometry
-E61000000104000000000000000001000000FFFFFFFFFFFFFFFF04
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid geometry)~~
 
 
 -- TC-MP-214: MULTIPOINT Z without inner parens
@@ -15830,4 +15835,868 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error at or near ".")~~
+
+
+
+-- geometry::STMPointFromText — Valid Cases
+-- Basic 2D multipoint
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (3 4))', 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(3 4))
+~~END~~
+
+
+-- Single point
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((5 10))', 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((5 10))
+~~END~~
+
+
+-- Without inner parentheses
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT(1 2, 3 4)', 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(3 4))
+~~END~~
+
+
+-- 3D multipoint
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2 3), (4 5 6))', 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(4 5))
+~~END~~
+
+
+-- 4D multipoint
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2 3 4), (5 6 7 8))', 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(5 6))
+~~END~~
+
+
+-- Empty multipoint
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT EMPTY', 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT EMPTY
+~~END~~
+
+
+-- Many points
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((0 0), (1 1), (2 2), (3 3), (4 4), (5 5))', 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((0 0),(1 1),(2 2),(3 3),(4 4),(5 5))
+~~END~~
+
+
+-- Negative coordinates
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((-1 -2), (-3 -4))', 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((-1 -2),(-3 -4))
+~~END~~
+
+
+-- Decimal coordinates
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1.5 2.5), (3.75 4.25))', 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1.5 2.5),(3.75 4.25))
+~~END~~
+
+
+-- Large coordinates
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1000000 2000000), (3000000 4000000))', 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1000000 2000000),(3000000 4000000))
+~~END~~
+
+
+-- Duplicate points
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (1 2), (1 2))', 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(1 2),(1 2))
+~~END~~
+
+
+-- With SRID
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (3 4))', 4326);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(3 4))
+~~END~~
+
+
+-- NULL WKT input
+DECLARE @g geometry = geometry::STMPointFromText(NULL, 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+-- Mixed dimensions (2D and 3D)
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2 3), (4 5))', 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(4 5))
+~~END~~
+
+
+-- NULL Z with M
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2 NULL 4), (5 6 NULL 8))', 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(5 6))
+~~END~~
+
+
+
+-- ============================================
+-- geometry::STMPointFromText — Error Cases
+-- ============================================
+-- NULL SRID
+BEGIN TRY
+    DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (3 4))', NULL);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geometry::STMPointFromText' failed because parameter 2 is not allowed to be null.)~~
+
+
+-- Wrong type: POINT
+BEGIN TRY
+    DECLARE @g geometry = geometry::STMPointFromText('POINT(1 2)', 0);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has POINT(1 2)s)~~
+
+
+-- Wrong type: LINESTRING
+BEGIN TRY
+    DECLARE @g geometry = geometry::STMPointFromText('LINESTRING(0 0, 1 1)', 0);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has LINESTRING(0 0, 1 1)s)~~
+
+
+-- Wrong type: POLYGON
+BEGIN TRY
+    DECLARE @g geometry = geometry::STMPointFromText('POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))', 0);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))s)~~
+
+
+-- Invalid WKT
+BEGIN TRY
+    DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (3))', 0);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid geometry)~~
+
+
+-- Invalid SRID (negative)
+BEGIN TRY
+    DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (3 4))', -1);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SRID value should be between 0 and 999999)~~
+
+
+-- Invalid SRID (too large)
+BEGIN TRY
+    DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (3 4))', 1000000);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SRID value should be between 0 and 999999)~~
+
+
+
+-- ============================================
+-- Binary round-trip
+-- ============================================
+-- 2D round-trip
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (3 4))', 0);
+DECLARE @b varbinary(max) = CAST(@g AS varbinary(max));
+DECLARE @g2 geometry = CAST(@b AS geometry);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(3 4))
+~~END~~
+
+
+-- 3D round-trip
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2 3), (4 5 6))', 0);
+DECLARE @b varbinary(max) = CAST(@g AS varbinary(max));
+DECLARE @g2 geometry = CAST(@b AS geometry);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(4 5))
+~~END~~
+
+
+-- Empty round-trip
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT EMPTY', 0);
+DECLARE @b varbinary(max) = CAST(@g AS varbinary(max));
+DECLARE @g2 geometry = CAST(@b AS geometry);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT EMPTY
+~~END~~
+
+
+
+-- ============================================
+-- geography::STMPointFromText — Valid Cases
+-- ============================================
+-- Basic 2D (lat/lon within range)
+DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((50 30), (60 40))', 4326);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((50 30),(60 40))
+~~END~~
+
+
+-- Single point
+DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((50 30))', 4326);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((50 30))
+~~END~~
+
+
+-- Empty
+DECLARE @g geography = geography::STMPointFromText('MULTIPOINT EMPTY', 4326);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT EMPTY
+~~END~~
+
+
+-- Boundary latitude values
+DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((0 90), (0 -90))', 4326);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((0 90),(0 -90))
+~~END~~
+
+
+-- Boundary longitude values
+DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((180 0), (-180 0))', 4326);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((180 0),(-180 0))
+~~END~~
+
+
+-- NULL WKT
+DECLARE @g geography = geography::STMPointFromText(NULL, 4326);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+-- Without inner parentheses
+DECLARE @g geography = geography::STMPointFromText('MULTIPOINT(50 30, 60 40)', 4326);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((50 30),(60 40))
+~~END~~
+
+
+
+-- ============================================
+-- geography::STMPointFromText — Error Cases
+-- ============================================
+-- NULL SRID
+BEGIN TRY
+    DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((50 30))', NULL);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geography::STMPointFromText' failed because parameter 2 is not allowed to be null.)~~
+
+
+-- Invalid latitude (> 90)
+BEGIN TRY
+    DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((50 100), (60 40))', 4326);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
+
+
+-- Invalid latitude (< -90)
+BEGIN TRY
+    DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((50 -100), (60 40))', 4326);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
+
+
+-- Invalid SRID
+BEGIN TRY
+    DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((50 30))', 0);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid SRID)~~
+
+
+-- Wrong type: POINT
+BEGIN TRY
+    DECLARE @g geography = geography::STMPointFromText('POINT(50 30)', 4326);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has POINT(50 30)s)~~
+
+
+-- Wrong type: LINESTRING
+BEGIN TRY
+    DECLARE @g geography = geography::STMPointFromText('LINESTRING(50 30, 60 40)', 4326);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has LINESTRING(50 30, 60 40)s)~~
+
+
+-- Geography binary round-trip
+DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((50 30), (60 40))', 4326);
+DECLARE @b varbinary(max) = CAST(@g AS varbinary(max));
+DECLARE @g2 geography = CAST(@b AS geography);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((50 30),(60 40))
+~~END~~
+
+
+
+-- ============================================
+-- geometry::STMPointFromWKB — Valid Cases
+-- ============================================
+-- Basic 2D multipoint from WKB
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (3 4))', 0);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, 0);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(3 4))
+~~END~~
+
+
+-- Single point from WKB
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((5 10))', 0);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, 0);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((5 10))
+~~END~~
+
+
+-- Empty multipoint from WKB
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT EMPTY', 0);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, 0);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT EMPTY
+~~END~~
+
+
+-- Many points from WKB
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((0 0), (1 1), (2 2), (3 3), (4 4))', 0);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, 0);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((0 0),(1 1),(2 2),(3 3),(4 4))
+~~END~~
+
+
+-- Negative coordinates from WKB
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((-1 -2), (-3 -4))', 0);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, 0);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((-1 -2),(-3 -4))
+~~END~~
+
+
+-- Decimal coordinates from WKB
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1.5 2.5), (3.75 4.25))', 0);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, 0);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1.5 2.5),(3.75 4.25))
+~~END~~
+
+
+-- Large coordinates from WKB
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1000000 2000000), (3000000 4000000))', 0);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, 0);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1000000 2000000),(3000000 4000000))
+~~END~~
+
+
+-- Duplicate points from WKB
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (1 2), (1 2))', 0);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, 0);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(1 2),(1 2))
+~~END~~
+
+
+-- With SRID
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (3 4))', 4326);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, 4326);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(3 4))
+~~END~~
+
+
+-- NULL WKB input
+DECLARE @g geometry = geometry::STMPointFromWKB(NULL, 0);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+-- Full round-trip: WKT → WKB → geometry → varbinary → geometry
+DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (3 4))', 0);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, 0);
+DECLARE @b2 varbinary(max) = CAST(@g2 AS varbinary(max));
+DECLARE @g3 geometry = CAST(@b2 AS geometry);
+SELECT @g3.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((1 2),(3 4))
+~~END~~
+
+
+
+-- ============================================
+-- geometry::STMPointFromWKB — Error Cases
+-- ============================================
+-- NULL SRID
+BEGIN TRY
+    DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (3 4))', 0);
+    DECLARE @b varbinary(max) = @g.STAsBinary();
+    DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, NULL);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geometry::STMPointFromWKB' failed because parameter 2 is not allowed to be null.)~~
+
+
+-- Wrong type: POINT WKB
+BEGIN TRY
+    DECLARE @g geometry = geometry::STPointFromText('POINT(1 2)', 0);
+    DECLARE @b varbinary(max) = @g.STAsBinary();
+    DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, 0);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has ST_Points)~~
+
+
+-- Wrong type: LINESTRING WKB
+BEGIN TRY
+    DECLARE @g geometry = geometry::STLineFromText('LINESTRING(0 0, 1 1)', 0);
+    DECLARE @b varbinary(max) = @g.STAsBinary();
+    DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, 0);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has ST_LineStrings)~~
+
+
+-- Wrong type: POLYGON WKB
+BEGIN TRY
+    DECLARE @g geometry = geometry::STPolyFromText('POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))', 0);
+    DECLARE @b varbinary(max) = @g.STAsBinary();
+    DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, 0);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has ST_Polygons)~~
+
+
+-- Invalid SRID (negative)
+BEGIN TRY
+    DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (3 4))', 0);
+    DECLARE @b varbinary(max) = @g.STAsBinary();
+    DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, -1);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SRID value should be between 0 and 999999)~~
+
+
+-- Invalid SRID (too large)
+BEGIN TRY
+    DECLARE @g geometry = geometry::STMPointFromText('MULTIPOINT((1 2), (3 4))', 0);
+    DECLARE @b varbinary(max) = @g.STAsBinary();
+    DECLARE @g2 geometry = geometry::STMPointFromWKB(@b, 1000000);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SRID value should be between 0 and 999999)~~
+
+
+
+-- ============================================
+-- geography::STMPointFromWKB — Valid Cases
+-- ============================================
+-- Basic 2D
+DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((50 30), (60 40))', 4326);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geography = geography::STMPointFromWKB(@b, 4326);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((50 30),(60 40))
+~~END~~
+
+
+-- Single point
+DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((50 30))', 4326);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geography = geography::STMPointFromWKB(@b, 4326);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((50 30))
+~~END~~
+
+
+-- Empty
+DECLARE @g geography = geography::STMPointFromText('MULTIPOINT EMPTY', 4326);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geography = geography::STMPointFromWKB(@b, 4326);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT EMPTY
+~~END~~
+
+
+-- NULL WKB
+DECLARE @g geography = geography::STMPointFromWKB(NULL, 4326);
+SELECT @g.STAsText();
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+-- Boundary latitude
+DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((0 90), (0 -90))', 4326);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geography = geography::STMPointFromWKB(@b, 4326);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((0 90),(0 -90))
+~~END~~
+
+
+-- Boundary longitude
+DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((180 0), (-180 0))', 4326);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geography = geography::STMPointFromWKB(@b, 4326);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((180 0),(-180 0))
+~~END~~
+
+
+-- Many points
+DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((10 20), (30 40), (50 60))', 4326);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geography = geography::STMPointFromWKB(@b, 4326);
+SELECT @g2.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((10 20),(30 40),(50 60))
+~~END~~
+
+
+-- Full round-trip geography
+DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((50 30), (60 40))', 4326);
+DECLARE @b varbinary(max) = @g.STAsBinary();
+DECLARE @g2 geography = geography::STMPointFromWKB(@b, 4326);
+DECLARE @b2 varbinary(max) = CAST(@g2 AS varbinary(max));
+DECLARE @g3 geography = CAST(@b2 AS geography);
+SELECT @g3.STAsText();
+GO
+~~START~~
+nvarchar
+MULTIPOINT((50 30),(60 40))
+~~END~~
+
+
+
+-- ============================================
+-- geography::STMPointFromWKB — Error Cases
+-- ============================================
+-- NULL SRID
+BEGIN TRY
+    DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((50 30))', 4326);
+    DECLARE @b varbinary(max) = @g.STAsBinary();
+    DECLARE @g2 geography = geography::STMPointFromWKB(@b, NULL);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geography::STMPointFromWKB' failed because parameter 2 is not allowed to be null.)~~
+
+
+-- Invalid SRID
+BEGIN TRY
+    DECLARE @g geography = geography::STMPointFromText('MULTIPOINT((50 30))', 4326);
+    DECLARE @b varbinary(max) = @g.STAsBinary();
+    DECLARE @g2 geography = geography::STMPointFromWKB(@b, 0);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid SRID)~~
+
+
+-- Wrong type: POINT WKB
+BEGIN TRY
+    DECLARE @g geography = geography::STPointFromText('POINT(50 30)', 4326);
+    DECLARE @b varbinary(max) = @g.STAsBinary();
+    DECLARE @g2 geography = geography::STMPointFromWKB(@b, 4326);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has ST_Points)~~
+
+
+-- Wrong type: LINESTRING WKB
+BEGIN TRY
+    DECLARE @g geography = geography::STLineFromText('LINESTRING(50 30, 60 40)', 4326);
+    DECLARE @b varbinary(max) = @g.STAsBinary();
+    DECLARE @g2 geography = geography::STMPointFromWKB(@b, 4326);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has ST_LineStrings)~~
+
+
+-- Wrong type: POLYGON WKB
+BEGIN TRY
+    DECLARE @g geography = geography::STPolyFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))', 4326);
+    DECLARE @b varbinary(max) = @g.STAsBinary();
+    DECLARE @g2 geography = geography::STMPointFromWKB(@b, 4326);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has ST_Polygons)~~
 

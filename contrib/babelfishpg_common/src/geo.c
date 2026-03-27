@@ -12,6 +12,8 @@
 #define FLAGS_GET_Z(flags)           ((flags) & POINTFLAG_Z)
 #define FLAGS_GET_M(flags)           ((flags) & POINTFLAG_M)
 
+typedef void (*PointFormatter)(StringInfoData *, POINT);
+
 text*
 geo_wkt_rewrite(text* input_text)
 {
@@ -389,6 +391,36 @@ format_postgis_point_coordinates(StringInfoData *output, POINT p)
     }
 }
 
+/*  pfree(pa->points); pfree(pa); pattern */
+static void
+free_point_array(PointArray *pa)
+{
+    if (!pa)
+        return;
+    if (pa->points)
+        pfree(pa->points);
+    pfree(pa);
+}
+
+/*  Replaces the repeated for-loop that formats points */
+static void
+append_formatted_points(StringInfoData *output, PointArray *pa, bool wrap_each, PointFormatter formatter)
+{
+    for (int i = 0; i < pa->count; i++)
+    {
+        if (wrap_each)
+            appendStringInfoChar(output, '(');
+
+        formatter(output, pa->points[i]);
+
+        if (wrap_each)
+            appendStringInfoChar(output, ')');
+
+        if (i < pa->count - 1)
+            appendStringInfoString(output, ", ");
+    }
+}
+
 /*
  * Converts a PointArray to a PostGIS-compatible LINESTRING WKT representation
  * Determines the appropriate dimension type (Z, M, ZM, etc.) based on the points,
@@ -674,16 +706,12 @@ rewrite_multipoint_wkt(PointArray *pa)
     DimensionType type;
     StringInfoData output;
 
-    if (!pa) 
-        return NULL;
-
-    if (pa->count == 0)
+    if (!pa || pa->count == 0)
     {
-        if (pa->points)
-            pfree(pa->points);
-        pfree(pa);
+        free_point_array(pa);
         return pstrdup("MULTIPOINT EMPTY");
     }
+
     initStringInfo(&output);
     
     type = determine_ptarray_type(pa);
@@ -697,22 +725,11 @@ rewrite_multipoint_wkt(PointArray *pa)
     
     transform_points(pa, type);
 
-    for (int i = 0; i < pa->count; i++) 
-    {
-        POINT p = pa->points[i];
-        
-        appendStringInfoChar(&output, '(');
-        format_tsql_point_coordinates(&output, p);  
-        appendStringInfoChar(&output, ')');
-
-        if (i < pa->count - 1) 
-            appendStringInfoString(&output, ", ");
-    }
+    append_formatted_points(&output, pa, true, format_tsql_point_coordinates);
 
     appendStringInfoChar(&output, ')');
 
-    pfree(pa->points);
-    pfree(pa);
+    free_point_array(pa);
     
     return output.data;
 }
@@ -725,32 +742,19 @@ rewrite_dim_multipoint_wkt(PointArray *pa)
 
     if (!pa || pa->count == 0)
     {
-        if (pa) {
-            pfree(pa->points);
-            pfree(pa);
-        }
+        free_point_array(pa);
         return pstrdup("MULTIPOINT EMPTY");
     }
 
     initStringInfo(&output);
+    
     appendStringInfoString(&output, "MULTIPOINT(");
 
-    for (int i = 0; i < pa->count; i++) 
-    {
-        POINT p = pa->points[i];
-        
-        appendStringInfoChar(&output, '(');
-        format_postgis_point_coordinates(&output, p);
-        appendStringInfoChar(&output, ')');
-
-        if (i < pa->count - 1) 
-            appendStringInfoString(&output, ", ");
-    }
+    append_formatted_points(&output, pa, true, format_postgis_point_coordinates);
 
     appendStringInfoChar(&output, ')');
 
-    pfree(pa->points);
-    pfree(pa);
+    free_point_array(pa);
     
     return output.data;
 }
