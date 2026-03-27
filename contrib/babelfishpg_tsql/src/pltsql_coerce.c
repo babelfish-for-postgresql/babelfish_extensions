@@ -514,29 +514,6 @@ is_tsql_binary_family_datatype(Oid oid)
 	return false;
 }
 
-// /* Returns true if the oid belongs to sql_variant datatype */
-// static bool
-// is_sql_variant_type(Oid oid)
-// {
-// 	HeapTuple	tuple;
-// 	bool		result = false;
-
-// 	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(oid));
-// 	if (HeapTupleIsValid(tuple))
-// 	{
-// 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tuple);
-// 		Oid			type_nsoid = typtup->typnamespace;
-// 		char	   *type_name = NameStr(typtup->typname);
-// 		char	   *type_nsname = get_namespace_name(type_nsoid);
-
-// 		if (strcmp(type_nsname, "sys") == 0 && strcmp(type_name, "sql_variant") == 0)
-// 			result = true;
-
-// 		ReleaseSysCache(tuple);
-// 	}
-
-// 	return result;
-// }
 
 static CoercionPathType
 tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext ccontext, Oid *funcid)
@@ -3205,8 +3182,8 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 	 * non-char types, and the other branch (e.g. bit) would cause an early
 	 * return of InvalidOid before sql_variant is ever seen.
 	 */
-	if (is_case_expr)
-	{
+	// if (is_case_expr)
+	// {
 		foreach(lc, exprs)
 		{
 			Node	*expr = (Node *) lfirst(lc);
@@ -3219,7 +3196,7 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 				return type;
 			}
 		}
-	}
+	// }
 
 	/* Find a common type based on precedence. NULLs are ignored, and make 
 	 * string literals varchars. If a type besides CHAR, NCHAR, VARCHAR, 
