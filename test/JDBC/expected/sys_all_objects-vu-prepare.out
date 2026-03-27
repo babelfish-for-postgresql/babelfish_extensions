@@ -56,3 +56,7 @@ CREATE FUNCTION sys_all_objects_vu_prepare_1_7_if_2(@arg1 varchar(5), @arg2 varc
 RETURNS TABLE AS RETURN
 (SELECT @arg1 as a, @arg2 as b)
 GO
+
+-- Table type
+CREATE TYPE sys_all_objects_vu_prepare_tt_1 AS TABLE (c1 int, c2 varchar(10));
+GO
