@@ -975,6 +975,34 @@ ntext
 ~~END~~
 
 
+-- Empty element name without ELEMENTS (attribute-centric) - should error
+SELECT 1 AS a, 2 AS b FOR XML RAW('');
+GO
+~~START~~
+ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Row tag omission (empty row tag name) cannot be used with attribute-centric FOR XML serialization.)~~
+
+
+-- All NULLs under attribute mode (no ELEMENTS)
+SELECT NULL AS a, NULL AS b FOR XML RAW;
+GO
+~~START~~
+ntext
+<row/>
+~~END~~
+
+
+-- All NULLs with empty element name and ELEMENTS
+SELECT NULL AS a, NULL AS b FOR XML RAW(''), ELEMENTS;
+GO
+~~START~~
+ntext
+
+~~END~~
+
+
 -- Element name with spaces
 SELECT 1 AS a FOR XML RAW('element name'), ELEMENTS;
 GO
