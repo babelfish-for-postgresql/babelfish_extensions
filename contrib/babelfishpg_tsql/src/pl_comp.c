@@ -201,7 +201,27 @@ recheck:
 		if (function->fn_xmin == HeapTupleHeaderGetRawXmin(procTup->t_data) &&
 			ItemPointerEquals(&function->fn_tid, &procTup->t_self) &&
 			function->exec_codes_valid)
-			function_valid = true;
+		{
+			if (function->from_cache)
+			{
+				/*
+				 * For functions loaded from persistent cache, also verify
+				 * babelfish_function_ext hasn't changed (e.g., antlr_cache_enabled
+				 * toggled via sys.enable_routine_parse_cache()).
+				 */
+				HeapTuple bbftup = get_bbf_function_tuple_from_proctuple(procTup);
+				if (HeapTupleIsValid(bbftup))
+				{
+					if (function->bbf_ext_xmin == HeapTupleHeaderGetRawXmin(bbftup->t_data) &&
+						ItemPointerEquals(&function->bbf_ext_tid, &bbftup->t_self))
+						function_valid = true;
+					heap_freetuple(bbftup);
+				}
+				/* else: tuple gone or not found, invalidate */
+			}
+			else
+				function_valid = true;
+		}
 		else
 		{
 			/*
@@ -329,6 +349,9 @@ do_compile(FunctionCallInfo fcinfo,
 	char	   *tbl_typ = NULL;	/* Name of the output table variable's type */
 	int		   *typmods = NULL; /* typmod of each argument if available */
 	CompileContext *cmpl_ctx = create_compile_context();
+	bool		cache_enabled_for_func = false;
+	TransactionId bbf_ext_xmin = InvalidTransactionId;
+	ItemPointerData bbf_ext_tid;
 
 	/*
 	 * Setup the scanner input and error info.  We assume that this function
@@ -390,6 +413,8 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fn_oid = fcinfo->flinfo->fn_oid;
 	function->fn_xmin = HeapTupleHeaderGetRawXmin(procTup->t_data);
 	function->fn_tid = procTup->t_self;
+	function->bbf_ext_xmin = InvalidTransactionId;
+	ItemPointerSetInvalid(&function->bbf_ext_tid);
 	function->fn_input_collation = fcinfo->fncollation;
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1; /* set up for no OUT param */
@@ -918,7 +943,9 @@ do_compile(FunctionCallInfo fcinfo,
 	{
 		ANTLR_result result;
 		PLtsql_cached_parse_result *cached_result = NULL;
-		
+
+		ItemPointerSetInvalid(&bbf_ext_tid);
+
 		/*
 		 * Try to restore cached parse result from previous compilation.
 		 * This allows us to skip expensive ANTLR parsing.
@@ -926,7 +953,10 @@ do_compile(FunctionCallInfo fcinfo,
 		 */
 		if (!forValidator)
 		{
-			cached_result = pltsql_restore_func_parse_result(procTup);
+			cached_result = pltsql_restore_func_parse_result(procTup,
+															 &cache_enabled_for_func,
+															 &bbf_ext_xmin,
+															 &bbf_ext_tid);
 			
 			if (cached_result)
 			{
@@ -1134,8 +1164,19 @@ skip_antlr_parsing:
 	 * handles cache writes for DDL. Calling both in the same transaction causes
 	 * "tuple already updated by self" errors.
 	 */
-	if (!forValidator && pltsql_enable_routine_parse_cache && !function->from_cache)
+	if (!forValidator && !function->from_cache &&
+		(pltsql_enable_routine_parse_cache || cache_enabled_for_func))
 		pltsql_update_func_cache_entry(procTup, function);
+
+	/*
+	 * Store babelfish_function_ext xmin/tid for cross-session invalidation.
+	 * This was captured by pltsql_restore_func_parse_result (even on cache miss).
+	 */
+	if (TransactionIdIsValid(bbf_ext_xmin))
+	{
+		function->bbf_ext_xmin = bbf_ext_xmin;
+		function->bbf_ext_tid = bbf_ext_tid;
+	}
 
 	/* Debug dump for completed functions */
 	if (pltsql_DumpExecTree || pltsql_trace_tree)

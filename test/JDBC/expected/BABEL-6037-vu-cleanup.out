@@ -40,6 +40,8 @@ PRINT 'Dropped: dbo.newsession_proc';
 GO
 
 -- Drop Test 8: renamed_cache_proc procedure (if it still exists)
+DROP PROCEDURE IF EXISTS dbo.rename_cache_proc;
+GO
 DROP PROCEDURE IF EXISTS dbo.renamed_cache_proc;
 GO
 
@@ -63,6 +65,24 @@ GO
 
 -- Drop Test 13: MSTVF
 DROP FUNCTION IF EXISTS dbo.babel_6037_mstvf;
+GO
+
+-- Per-function cache control test procedures
+DROP PROCEDURE IF EXISTS dbo.perfunc_cache_sig;
+GO
+DROP PROCEDURE IF EXISTS dbo.perfunc_cache_name;
+GO
+DROP PROCEDURE IF EXISTS dbo.perfunc_guc_override;
+GO
+DROP PROCEDURE IF EXISTS dbo.perfunc_alter_test;
+GO
+DROP PROCEDURE IF EXISTS dbo.perfunc_drop_test;
+GO
+DROP PROCEDURE IF EXISTS dbo.perfunc_default_test;
+GO
+DROP PROCEDURE IF EXISTS test_cache_schema.perfunc_custom_schema;
+GO
+DROP SCHEMA IF EXISTS test_cache_schema;
 GO
 
 PRINT 'Cleanup completed successfully';

@@ -281,7 +281,8 @@ typedef FormData_bbf_servers_def *Form_bbf_servers_def;
 #define Anum_bbf_function_ext_antlr_parse_tree_datums 12
 #define Anum_bbf_function_ext_antlr_parse_tree_modify_date 13
 #define Anum_bbf_function_ext_antlr_parse_tree_bbf_version 14
-#define BBF_FUNCTION_EXT_NUM_COLS 14
+#define Anum_bbf_function_ext_antlr_cache_enabled 15
+#define BBF_FUNCTION_EXT_NUM_COLS 15
 #define FLAG_IS_ANSI_NULLS_ON (1<<0)
 #define FLAG_USES_QUOTED_IDENTIFIER (1<<1)
 #define FLAG_CREATED_WITH_RECOMPILE (1<<2)

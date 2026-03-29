@@ -6503,3 +6503,178 @@ bbf_check_member_has_direct_priv_to_grant_role(Oid member, Oid role)
 	ReleaseSysCacheList(memlist);
 	return false;
 }
+
+/*
+ * Helper: update antlr_cache_enabled flag and optionally clear cache columns
+ * in babelfish_function_ext for a given bbf function tuple.
+ */
+static void
+update_bbf_function_cache_enabled(HeapTuple bbffunctuple, bool enable_flag)
+{
+	Relation	rel;
+	TupleDesc	dsc;
+	HeapTuple	newtup;
+	Datum		new_record[BBF_FUNCTION_EXT_NUM_COLS];
+	bool		new_record_nulls[BBF_FUNCTION_EXT_NUM_COLS];
+	bool		new_record_replaces[BBF_FUNCTION_EXT_NUM_COLS];
+
+	rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
+	dsc = RelationGetDescr(rel);
+
+	MemSet(new_record, 0, sizeof(new_record));
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
+
+	/* Set antlr_cache_enabled */
+	new_record[Anum_bbf_function_ext_antlr_cache_enabled - 1] = BoolGetDatum(enable_flag);
+	new_record_replaces[Anum_bbf_function_ext_antlr_cache_enabled - 1] = true;
+
+	/* If disabling, NULL out the 4 cache columns for immediate invalidation */
+	if (!enable_flag)
+	{
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
+	}
+
+	newtup = heap_modify_tuple(bbffunctuple, dsc,
+							   new_record, new_record_nulls, new_record_replaces);
+	CatalogTupleUpdate(rel, &newtup->t_self, newtup);
+
+	heap_freetuple(newtup);
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * enable_routine_parse_cache
+ *
+ * SQL-callable: sys.enable_routine_parse_cache(func_identifier TEXT, enable_flag BOOLEAN)
+ *
+ * Enables or disables ANTLR parse result caching for a specific function.
+ *
+ * func_identifier formats:
+ *   'schema.funcname'              — unique function (no overloads)
+ *   'funcname'                     — defaults to dbo schema
+ *   'schema.funcname(argtypes)'    — disambiguate overloads, e.g. 'dbo.myProc("sys"."varchar")'
+ *
+ * Uses PROCNAMENSPSIGNATURE syscache (funcname, nspname, funcsignature).
+ * When no arg types given, uses 2-key list lookup; errors if ambiguous.
+ */
+PG_FUNCTION_INFO_V1(enable_routine_parse_cache);
+Datum
+enable_routine_parse_cache(PG_FUNCTION_ARGS)
+{
+	text	   *func_id_text = PG_GETARG_TEXT_PP(0);
+	bool		enable_flag = PG_GETARG_BOOL(1);
+	char	   *func_id = text_to_cstring(func_id_text);
+	char	   *dot;
+	char	   *schema_name;
+	char	   *func_part;
+	char	   *funcname_str;
+	char	   *paren;
+	NameData	nsp_name;
+	NameData	funcname_data;
+
+	/* Split schema from func_part on first dot */
+	dot = strchr(func_id, '.');
+	if (dot != NULL)
+	{
+		*dot = '\0';
+		schema_name = func_id;
+		func_part = dot + 1;
+	}
+	else
+	{
+		schema_name = "dbo";
+		func_part = func_id;
+	}
+
+	/* Extract bare funcname (everything before '(' if present) */
+	funcname_str = pstrdup(func_part);
+	paren = strchr(funcname_str, '(');
+	if (paren != NULL)
+		*paren = '\0';
+
+	/* Convert logical schema name (e.g. 'dbo') to physical (e.g. 'master_dbo') */
+	{
+		char	   *cur_db = get_cur_db_name();
+		char	   *physical_schema = get_physical_schema_name(cur_db, schema_name);
+
+		namestrcpy(&nsp_name, physical_schema);
+		pfree(cur_db);
+		pfree(physical_schema);
+	}
+	namestrcpy(&funcname_data, funcname_str);
+
+	if (strchr(func_part, '(') != NULL)
+	{
+		/* Full signature provided — exact 3-key lookup */
+		HeapTuple	bbffunctuple;
+
+		bbffunctuple = SearchSysCache3(PROCNAMENSPSIGNATURE,
+									   NameGetDatum(&funcname_data),
+									   NameGetDatum(&nsp_name),
+									   CStringGetTextDatum(func_part));
+
+		if (!HeapTupleIsValid(bbffunctuple))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("function \"%s\" not found in schema \"%s\"",
+							func_part, schema_name),
+					 errhint("Use sys.babelfish_get_pltsql_function_signature(oid) to find the exact signature.")));
+
+		{
+			HeapTuple	copytup = heap_copytuple(bbffunctuple);
+
+			ReleaseSysCache(bbffunctuple);
+			update_bbf_function_cache_enabled(copytup, enable_flag);
+			heap_freetuple(copytup);
+		}
+	}
+	else
+	{
+		/* No arg types — 2-key list lookup */
+		CatCList   *catlist;
+
+		catlist = SearchSysCacheList2(PROCNAMENSPSIGNATURE,
+									  NameGetDatum(&funcname_data),
+									  NameGetDatum(&nsp_name));
+
+		if (catlist->n_members == 0)
+		{
+			ReleaseSysCacheList(catlist);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("function \"%s\" not found in schema \"%s\"",
+							funcname_str, schema_name)));
+		}
+		else if (catlist->n_members > 1)
+		{
+			ReleaseSysCacheList(catlist);
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+					 errmsg("multiple overloads of \"%s\" exist in schema \"%s\"",
+							funcname_str, schema_name),
+					 errhint("Specify the full signature, e.g. 'dbo.%s(integer)'. "
+							 "Use sys.babelfish_get_pltsql_function_signature(oid) to find the exact signature.",
+							 funcname_str)));
+		}
+		else
+		{
+			HeapTuple	copytup = heap_copytuple(&catlist->members[0]->tuple);
+
+			ReleaseSysCacheList(catlist);
+			update_bbf_function_cache_enabled(copytup, enable_flag);
+			heap_freetuple(copytup);
+		}
+	}
+
+	pfree(funcname_str);
+	pfree(func_id);
+	PG_RETURN_BOOL(enable_flag);
+}

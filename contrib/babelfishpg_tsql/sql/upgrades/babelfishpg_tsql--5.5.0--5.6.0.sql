@@ -232,10 +232,19 @@ $$
 $$;
 
 -- BABELFISH_FUNCTION_EXT
+SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_text TEXT DEFAULT NULL;
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_datums TEXT DEFAULT NULL;
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_modify_date SYS.DATETIME DEFAULT NULL;
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_bbf_version TEXT DEFAULT NULL;
+ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_cache_enabled BOOL DEFAULT false;
+RESET allow_system_table_mods;
+
+CREATE OR REPLACE FUNCTION sys.enable_routine_parse_cache(
+    IN func_identifier TEXT,
+    IN enable_flag BOOLEAN
+) RETURNS BOOLEAN
+AS 'babelfishpg_tsql', 'enable_routine_parse_cache' LANGUAGE C;
 
 -- Please add your SQLs here
 

@@ -45,6 +45,7 @@ CREATE TABLE sys.babelfish_function_ext (
 	antlr_parse_tree_datums TEXT DEFAULT NULL, -- Native PG nodeToString() serialized datums array
   antlr_parse_tree_modify_date SYS.DATETIME DEFAULT NULL,
 	antlr_parse_tree_bbf_version TEXT DEFAULT NULL,
+	antlr_cache_enabled BOOL DEFAULT false,
 	PRIMARY KEY(funcname, nspname, funcsignature)
 );
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;

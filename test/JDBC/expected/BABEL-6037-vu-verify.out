@@ -600,5 +600,546 @@ int#!#varchar
 ~~END~~
 
 
+-- === Test 14: Enable/disable cache with full signature: schema.func(argtypes) ===
+PRINT '=== Test 14: Per-function cache with full signature ===';
+GO
+
+-- Verify antlr_cache_enabled defaults to false
+SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_cache_sig' AND nspname = 'master_dbo';
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+-- Enable cache with schema.funcname(argtypes)
+SELECT sys.enable_routine_parse_cache('dbo.perfunc_cache_sig(integer)', true);
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Verify antlr_cache_enabled is now true
+SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_cache_sig' AND nspname = 'master_dbo';
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Turn global GUC on and execute
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+EXEC dbo.perfunc_cache_sig @val = 4;
+GO
+~~START~~
+int
+20
+~~END~~
+
+
+-- Disable cache with full signature
+SELECT sys.enable_routine_parse_cache('dbo.perfunc_cache_sig(integer)', false);
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+-- Verify antlr_cache_enabled is now false
+SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_cache_sig' AND nspname = 'master_dbo';
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+-- Verify cache columns are NULLed out (immediate invalidation)
+SELECT
+    CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
+    CASE WHEN antlr_parse_tree_bbf_version IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS bbf_version
+FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_cache_sig' AND nspname = 'master_dbo';
+GO
+~~START~~
+varchar#!#varchar
+NULL#!#NULL
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+
+-- === Test 15: Enable/disable with schema.funcname (no args) and funcname only (dbo default) ===
+PRINT '=== Test 15: Per-function cache with simple name and no-schema default ===';
+GO
+
+-- Enable with schema.funcname (no arg types, 2-key lookup)
+SELECT sys.enable_routine_parse_cache('dbo.perfunc_cache_name', true);
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Verify antlr_cache_enabled is now true
+SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_cache_name' AND nspname = 'master_dbo';
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Execute with global GUC on
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+EXEC dbo.perfunc_cache_name @val = 7;
+GO
+~~START~~
+int
+17
+~~END~~
+
+
+-- Disable with schema.funcname
+SELECT sys.enable_routine_parse_cache('dbo.perfunc_cache_name', false);
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+-- Verify disabled
+SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_cache_name' AND nspname = 'master_dbo';
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+-- Re-enable using just funcname (no schema, should default to dbo)
+SELECT sys.enable_routine_parse_cache('perfunc_cache_name', true);
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Verify enabled again
+SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_cache_name' AND nspname = 'master_dbo';
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Disable using just funcname
+SELECT sys.enable_routine_parse_cache('perfunc_cache_name', false);
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+
+-- === Test 16: Global GUC off + per-function enable interaction ===
+PRINT '=== Test 16: GUC off + per-function flag interaction ===';
+GO
+
+-- Enable per-function cache using no-schema form
+SELECT sys.enable_routine_parse_cache('perfunc_guc_override', true);
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Verify antlr_cache_enabled is true
+SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_guc_override' AND nspname = 'master_dbo';
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Keep global GUC OFF
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+-- Execute with GUC off (falls back to ANTLR, cache columns stay NULL)
+EXEC dbo.perfunc_guc_override @val = 9;
+GO
+~~START~~
+int
+27
+~~END~~
+
+
+-- Verify cache columns are still NULL (GUC was off during CREATE, no cache populated)
+SELECT
+    CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text
+FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_guc_override' AND nspname = 'master_dbo';
+GO
+~~START~~
+varchar
+NULL
+~~END~~
+
+
+-- Turn GUC on, per-function flag is true, cache should get populated on exec
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+EXEC dbo.perfunc_guc_override @val = 11;
+GO
+~~START~~
+int
+33
+~~END~~
+
+
+-- Turn GUC off again, per-function=true alone should still allow retrieval
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+EXEC dbo.perfunc_guc_override @val = 13;
+GO
+~~START~~
+int
+39
+~~END~~
+
+
+
+-- === Test 17: Default behavior (antlr_cache_enabled = false) ===
+PRINT '=== Test 17: Default behavior (antlr_cache_enabled = false) ===';
+GO
+
+-- Verify antlr_cache_enabled defaults to false
+SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_default_test' AND nspname = 'master_dbo';
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+-- With global GUC on, the global GUC alone should still allow caching
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+EXEC dbo.perfunc_default_test @val = 1;
+GO
+~~START~~
+int
+101
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+
+-- === Test 18: Invalid function identifier handling ===
+PRINT '=== Test 18: Invalid function identifier handling ===';
+GO
+
+-- Non-existent function with full signature (should error)
+SELECT sys.enable_routine_parse_cache('dbo.nonexistent_proc(integer)', true);
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function "nonexistent_proc(integer)" not found in schema "dbo")~~
+
+
+-- Non-existent function with schema.name (should error)
+SELECT sys.enable_routine_parse_cache('dbo.nonexistent_proc', true);
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function "nonexistent_proc" not found in schema "dbo")~~
+
+
+-- Non-existent function with just name, no schema (should default to dbo and error)
+SELECT sys.enable_routine_parse_cache('nonexistent_proc', true);
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function "nonexistent_proc" not found in schema "dbo")~~
+
+
+
+-- === Test 19: ALTER procedure preserves per-function flag ===
+PRINT '=== Test 19: ALTER preserves per-function flag ===';
+GO
+
+-- Enable per-function cache
+SELECT sys.enable_routine_parse_cache('dbo.perfunc_alter_test', true);
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Turn GUC on and execute to populate cache
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+EXEC dbo.perfunc_alter_test @val = 5;
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+-- ALTER the procedure
+ALTER PROCEDURE dbo.perfunc_alter_test
+    @val INT
+AS
+BEGIN
+    SELECT @val + 1000 AS altered_result;
+END;
+GO
+
+-- Verify antlr_cache_enabled is still true after ALTER
+SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_alter_test' AND nspname = 'master_dbo';
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Execute altered procedure
+EXEC dbo.perfunc_alter_test @val = 5;
+GO
+~~START~~
+int
+1005
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+
+-- === Test 20: DROP procedure removes per-function flag ===
+PRINT '=== Test 20: DROP removes per-function flag ===';
+GO
+
+-- Enable per-function cache
+SELECT sys.enable_routine_parse_cache('dbo.perfunc_drop_test', true);
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Verify antlr_cache_enabled is true
+SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_drop_test' AND nspname = 'master_dbo';
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- DROP the procedure
+DROP PROCEDURE dbo.perfunc_drop_test;
+GO
+
+-- Verify the babelfish_function_ext row is gone
+SELECT COUNT(*) AS row_count FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_drop_test' AND nspname = 'master_dbo';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+-- === Test 21: Custom schema test ===
+PRINT '=== Test 21: Custom schema per-function cache ===';
+GO
+
+-- Enable cache using custom schema.funcname
+SELECT sys.enable_routine_parse_cache('test_cache_schema.perfunc_custom_schema', true);
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Verify antlr_cache_enabled is true
+SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_custom_schema' AND nspname = 'test_cache_schema';
+GO
+~~START~~
+bit
+~~END~~
+
+
+-- Execute with GUC on
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+EXEC test_cache_schema.perfunc_custom_schema @val = 3;
+GO
+~~START~~
+int
+53
+~~END~~
+
+
+-- Disable cache
+SELECT sys.enable_routine_parse_cache('test_cache_schema.perfunc_custom_schema', false);
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+-- Verify disabled
+SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_custom_schema' AND nspname = 'test_cache_schema';
+GO
+~~START~~
+bit
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+-- Wrong schema: function exists in test_cache_schema but not in dbo (should error)
+SELECT sys.enable_routine_parse_cache('dbo.perfunc_custom_schema', true);
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function "perfunc_custom_schema" not found in schema "dbo")~~
+
+
+-- Wrong schema: function exists in dbo but not in test_cache_schema (should error)
+SELECT sys.enable_routine_parse_cache('test_cache_schema.perfunc_cache_sig', true);
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function "perfunc_cache_sig" not found in schema "test_cache_schema")~~
+
+
+
 PRINT '=== All verification tests completed ===';
 GO

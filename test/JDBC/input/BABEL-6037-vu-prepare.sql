@@ -1,6 +1,7 @@
--- BABEL-6037 POC Test - Prepare
--- Creates test procedures for parse tree serialization/deserialization testing
+-- BABEL-6037
+-- Creates test procedures for ANTLR parse tree serialization/deserialization
 
+-- 1. SESSION-LEVEL GUC `babelfishpg_tsql.enable_routine_parse_cache`
 SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
 GO
 
@@ -249,6 +250,74 @@ END;
 GO
 
 SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+
+-- 2. Function-specific guc function `sys.enable_routine_parse_cache(<FUNC_IDENTIFIER>, <BOOL>);`
+
+-- Test 14: Per-function cache enable/disable with full signature
+CREATE PROCEDURE dbo.perfunc_cache_sig
+    @val INT
+AS
+BEGIN
+    SELECT @val * 5 AS result;
+END;
+GO
+
+-- Test 15: Per-function cache enable/disable with simple name (no arg types)
+CREATE PROCEDURE dbo.perfunc_cache_name
+    @val INT
+AS
+BEGIN
+    SELECT @val + 10 AS result;
+END;
+GO
+
+-- Test 16: Global GUC off + per-function enable interaction
+CREATE PROCEDURE dbo.perfunc_guc_override
+    @val INT
+AS
+BEGIN
+    SELECT @val * 3 AS result;
+END;
+GO
+
+-- Test 17: ALTER preserves per-function flag
+CREATE PROCEDURE dbo.perfunc_alter_test
+    @val INT
+AS
+BEGIN
+    SELECT @val + 1 AS original_result;
+END;
+GO
+
+-- Test 18: DROP removes per-function flag
+CREATE PROCEDURE dbo.perfunc_drop_test
+    @val INT
+AS
+BEGIN
+    SELECT @val * 2 AS result;
+END;
+GO
+
+-- Test 19: Default behavior (antlr_cache_enabled = false by default)
+CREATE PROCEDURE dbo.perfunc_default_test
+    @val INT
+AS
+BEGIN
+    SELECT @val + 100 AS result;
+END;
+GO
+
+-- Test 20: Custom schema test
+CREATE SCHEMA test_cache_schema;
+GO
+
+CREATE PROCEDURE test_cache_schema.perfunc_custom_schema
+    @val INT
+AS
+BEGIN
+    SELECT @val + 50 AS result;
+END;
 GO
 
 PRINT 'All test procedures created successfully';
