@@ -2177,8 +2177,9 @@ write_child_wkb(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32_t pt_
 }
 
 /*
- /* Calculate WKB size for child geometry */
+ * Calculate WKB size for child geometry
  */
+
 static uint32_t
 calculate_child_wkb_size(uint8 parent_type, uint32_t child_npoints, GeometryData *geom_data, uint32_t fig_start, uint32_t fig_end, bool has_z, bool has_m)
 {
