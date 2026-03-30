@@ -33,8 +33,6 @@ Datum
 get_tsql_temp_table_attributes(PG_FUNCTION_ARGS)
 {
 	char	   *input;
-	char	   *db_name;
-	char	   *schema_name;
 	char	   *object_name;
 	Oid			relid = InvalidOid;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
@@ -61,15 +59,13 @@ get_tsql_temp_table_attributes(PG_FUNCTION_ARGS)
 
 	input = text_to_cstring(PG_GETARG_VARCHAR_PP(0));
 
-	/* Parse the table name */
-	downcase_truncate_split_object_name(input, NULL, &db_name, &schema_name, &object_name);
+	/* Parse the table name - only need object_name */
+	downcase_truncate_split_object_name(input, NULL, NULL, NULL, &object_name);
 	pfree(input);
 
 	/* Must be a temp table (starts with #) */
 	if (object_name[0] != '#')
 	{
-		pfree(db_name);
-		pfree(schema_name);
 		pfree(object_name);
 		PG_RETURN_NULL();
 	}
@@ -93,8 +89,6 @@ get_tsql_temp_table_attributes(PG_FUNCTION_ARGS)
 			relid = get_relname_relid(object_name, temp_ns);
 	}
 
-	pfree(db_name);
-	pfree(schema_name);
 	pfree(object_name);
 
 	if (!OidIsValid(relid))
@@ -118,14 +112,14 @@ get_tsql_temp_table_attributes(PG_FUNCTION_ARGS)
 
 	if (is_enr)
 	{
-		/* ENR path: return tuples directly from ENR cache */
+		/* ENR path: copy tuples from ENR cache */
 		ListCell   *lc;
 
 		foreach(lc, enr->md.cattups[ENR_CATTUP_ATTRIBUTE])
 		{
 			HeapTuple	tup = (HeapTuple) lfirst(lc);
 
-			tuplestore_puttuple(tupstore, tup);
+			tuplestore_puttuple(tupstore, heap_copytuple(tup));
 		}
 	}
 	else
@@ -171,8 +165,6 @@ Datum
 is_temp_table_name(PG_FUNCTION_ARGS)
 {
 	char	   *input;
-	char	   *db_name;
-	char	   *schema_name;
 	char	   *object_name;
 	bool		result = false;
 
@@ -181,16 +173,14 @@ is_temp_table_name(PG_FUNCTION_ARGS)
 
 	input = text_to_cstring(PG_GETARG_VARCHAR_PP(0));
 
-	/* Parse the name to extract object_name */
-	downcase_truncate_split_object_name(input, NULL, &db_name, &schema_name, &object_name);
+	/* Parse the name to extract object_name only */
+	downcase_truncate_split_object_name(input, NULL, NULL, NULL, &object_name);
 	pfree(input);
 
 	/* Check if object_name starts with # */
 	if (object_name[0] == '#')
 		result = true;
 
-	pfree(db_name);
-	pfree(schema_name);
 	pfree(object_name);
 
 	PG_RETURN_BOOL(result);
