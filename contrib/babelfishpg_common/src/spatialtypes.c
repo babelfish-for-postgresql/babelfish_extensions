@@ -1128,7 +1128,6 @@ get_geometry_from_wkb(PG_FUNCTION_ARGS)
 
 /*
  * Converts WKB binary to geography with SRID and latitude validation.
- * Mirrors get_geography_from_text but for WKB input.
  */
 Datum
 get_geography_from_wkb(PG_FUNCTION_ARGS)
@@ -2109,10 +2108,8 @@ handle_point_coordinates(GeometryData *geom_data, uint8 *result_data)
         memcpy(dst, src + m_offset, COORD_SIZE);
     }
 }
-/* 
- * Helper: get WKB type code with dimension encoding.
- * PostGIS convention: +1000 for Z, +2000 for M, +3000 for ZM
- */
+/* Get WKB type code with PostGIS dimension encoding (+1000 Z, +2000 M, +3000 ZM) */
+
 static inline uint32_t
 get_wkb_type(uint32_t base_type, bool has_z, bool has_m)
 {
@@ -2122,11 +2119,7 @@ get_wkb_type(uint32_t base_type, bool has_z, bool has_m)
     return base_type;
 }
 
-/*
- * Write a single interleaved point (XY [Z] [M]) from CLR columnar layout.
- * Reusable by all child WKB writers (Point, LineString, Polygon).
- * Returns: bytes written
- */
+/* Write interleaved point (XY [Z] [M]) from CLR columnar layout */
 static uint32_t
 write_interleaved_point(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32_t pt_idx, bool has_z, bool has_m)
 {
@@ -2153,7 +2146,6 @@ write_interleaved_point(uint8 *dst, uint8 *src_base, uint32_t total_points, uint
 
 /*
  * Write a single WKB Point child from CLR columnar data.
- * Returns: bytes written
  */
 static uint32_t
 write_wkb_point_child(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32_t pt_idx, bool has_z, bool has_m)
@@ -2168,10 +2160,8 @@ write_wkb_point_child(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32
     return pos;
 }
 
-/*
- * Dispatch: write one child WKB entry based on parent multi-type.
- * Returns: bytes written.
- */
+
+/* Write child WKB entry based on parent multi-type */
 static uint32_t
 write_child_wkb(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32_t pt_start, uint32_t child_npoints, uint8 parent_type, GeometryData *geom_data, uint32_t fig_start, uint32_t fig_end, bool has_z, bool has_m)
 {
@@ -2187,7 +2177,7 @@ write_child_wkb(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32_t pt_
 }
 
 /*
- * Calculate WKB size for one child geometry.
+ /* Calculate WKB size for child geometry */
  */
 static uint32_t
 calculate_child_wkb_size(uint8 parent_type, uint32_t child_npoints, GeometryData *geom_data, uint32_t fig_start, uint32_t fig_end, bool has_z, bool has_m)
@@ -2205,9 +2195,8 @@ calculate_child_wkb_size(uint8 parent_type, uint32_t child_npoints, GeometryData
     }
 }
 
-/*
- * Get child geometry info (point range, figure range) for a given child index.
- */
+/* Get child geometry point and figure ranges */
+
 
 static void
 get_child_info(GeometryData *geom_data, uint32_t child_idx,
@@ -2234,10 +2223,6 @@ get_child_info(GeometryData *geom_data, uint32_t child_idx,
 
 /*
  * Convert CLR multi-geometry binary to PostGIS WKB.
-  Designed to support
- * MultiLineString, MultiPolygon in future with no changes
- * to this function — only add cases to write_child_wkb()
- * and calculate_child_wkb_size().
  */
 static bytea*
 handle_multi_to_postgis(GeometryData *geom_data)
