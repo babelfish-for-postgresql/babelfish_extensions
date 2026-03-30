@@ -1531,6 +1531,12 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		else if (!IsTransactionBlockActive())
 		{
 			/*
+			 * Variable for skip_abort decision.
+			 * Declared at block start for C90 compliance.
+			 */
+			bool skip_abort = false;
+
+			/*
 			 * In case of no transaction, rollback the whole transaction to
 			 * match auto commit behavior.
 			 *
@@ -1547,7 +1553,6 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			 * Otherwise, the temp table will be left behind and cause
 			 * "relation already exists" errors on subsequent INSERT EXEC.
 			 */
-			bool skip_abort = false;
 			
 			/*
 			 * Only skip abort for INSERT EXEC if there's a TRY-CATCH that

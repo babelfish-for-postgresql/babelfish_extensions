@@ -130,6 +130,81 @@ static void insertexec_shutdown(DestReceiver *self);
 static void insertexec_destroy(DestReceiver *self);
 
 /*
+ * Parse a T-SQL table name into schema and table components.
+ * Handles 1-part (table), 2-part (schema.table), and 3-part (db.schema.table) names.
+ * 
+ * Parameters:
+ *   target_table - The input table name (e.g., "dbo.orders" or "mydb.dbo.orders")
+ *   schema_name_out - Output: logical schema name (caller must pfree)
+ *   table_name_out - Output: table name (caller must pfree)
+ *   physical_schema_out - Output: physical schema name (caller must pfree), or NULL if not needed
+ *   get_physical - If true, also compute the physical schema name
+ * 
+ * Returns true if parsing succeeded, false otherwise.
+ * Caller is responsible for freeing the output strings.
+ */
+static bool
+parse_insert_exec_table_name(const char *target_table,
+							 char **schema_name_out,
+							 char **table_name_out,
+							 char **physical_schema_out,
+							 bool get_physical)
+{
+	char	   *target_copy;
+	char	   *dot_pos;
+	char	   *second_dot;
+	char	   *schema_name = NULL;
+	char	   *table_name = NULL;
+
+	if (target_table == NULL)
+		return false;
+
+	target_copy = pstrdup(target_table);
+
+	/* Find the last dot to separate schema from table */
+	dot_pos = strrchr(target_copy, '.');
+	if (dot_pos != NULL)
+	{
+		*dot_pos = '\0';
+		table_name = pstrdup(dot_pos + 1);
+
+		/* Check if there's another dot (db.schema.table) */
+		second_dot = strrchr(target_copy, '.');
+		if (second_dot != NULL)
+		{
+			/* db.schema.table - schema is after the second dot */
+			schema_name = pstrdup(second_dot + 1);
+		}
+		else
+		{
+			/* schema.table */
+			schema_name = pstrdup(target_copy);
+		}
+	}
+	else
+	{
+		/* Just table name, use dbo as default */
+		table_name = pstrdup(target_copy);
+		schema_name = pstrdup("dbo");
+	}
+	pfree(target_copy);
+
+	*schema_name_out = schema_name;
+	*table_name_out = table_name;
+
+	if (get_physical && physical_schema_out != NULL)
+	{
+		*physical_schema_out = get_physical_schema_name(get_cur_db_name(), schema_name);
+	}
+	else if (physical_schema_out != NULL)
+	{
+		*physical_schema_out = NULL;
+	}
+
+	return true;
+}
+
+/*
  * Set the global INSERT EXEC context with target table info.
  * Called from ANTLR parser when INSERT EXEC is detected.
  * This is called BEFORE temp table creation - just stores the target info.
@@ -361,9 +436,6 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 	char	   *schema_name = NULL;
 	char	   *table_name = NULL;
 	char	   *physical_schema = NULL;
-	char	   *target_copy;
-	char	   *dot_pos;
-	char	   *second_dot;
 	Relation	rel;
 	TupleDesc	tupdesc;
 	int			i;
@@ -380,38 +452,11 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 	}
 
 	/* Parse schema and table name from target_table */
-	target_copy = pstrdup(target_table);
-	
-	/* Find the last dot to separate schema from table */
-	dot_pos = strrchr(target_copy, '.');
-	if (dot_pos != NULL)
+	if (!parse_insert_exec_table_name(target_table, &schema_name, &table_name,
+									  &physical_schema, true))
 	{
-		*dot_pos = '\0';
-		table_name = pstrdup(dot_pos + 1);
-		
-		/* Check if there's another dot (db.schema.table) */
-		second_dot = strrchr(target_copy, '.');
-		if (second_dot != NULL)
-		{
-			/* db.schema.table - schema is after the second dot */
-			schema_name = pstrdup(second_dot + 1);
-		}
-		else
-		{
-			/* schema.table */
-			schema_name = pstrdup(target_copy);
-		}
+		return;
 	}
-	else
-	{
-		/* Just table name, use dbo as default */
-		table_name = pstrdup(target_copy);
-		schema_name = pstrdup("dbo");
-	}
-	pfree(target_copy);
-	
-	/* Convert logical schema name to physical schema name */
-	physical_schema = get_physical_schema_name(get_cur_db_name(), schema_name);
 	
 	/* Create RangeVar and get the relation OID */
 	rv = makeRangeVar(physical_schema, table_name, -1);
@@ -1188,9 +1233,6 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 	char	   *schema_name = NULL;
 	char	   *table_name = NULL;
 	char	   *physical_schema = NULL;
-	char	   *dot_pos;
-	char	   *second_dot;
-	char	   *target_copy;
 
 	elog(DEBUG1, "INSERT-EXEC: create_insert_exec_temp_table called with target='%s'",
 		 target_table ? target_table : "NULL");
@@ -1226,41 +1268,15 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 		/* Temp table or table variable - no schema needed */
 		table_name = pstrdup(target_table);
 		schema_name = NULL;
+		physical_schema = NULL;
 	}
 	else
 	{
-		target_copy = pstrdup(target_table);
-		
-		/* Find the last dot to separate schema from table */
-		dot_pos = strrchr(target_copy, '.');
-		if (dot_pos != NULL)
+		if (!parse_insert_exec_table_name(target_table, &schema_name, &table_name,
+										  &physical_schema, true))
 		{
-			*dot_pos = '\0';
-			table_name = pstrdup(dot_pos + 1);
-			
-			/* Check if there's another dot (db.schema.table) */
-			second_dot = strrchr(target_copy, '.');
-			if (second_dot != NULL)
-			{
-				/* db.schema.table - schema is after the second dot */
-				schema_name = pstrdup(second_dot + 1);
-			}
-			else
-			{
-				/* schema.table */
-				schema_name = pstrdup(target_copy);
-			}
+			elog(ERROR, "INSERT-EXEC: Failed to parse target table name: %s", target_table);
 		}
-		else
-		{
-			/* Just table name, use dbo as default */
-			table_name = pstrdup(target_copy);
-			schema_name = pstrdup("dbo");
-		}
-		pfree(target_copy);
-		
-		/* Convert logical schema name to physical schema name */
-		physical_schema = get_physical_schema_name(get_cur_db_name(), schema_name);
 	}
 
 	initStringInfo(&create_stmt);
@@ -1744,9 +1760,6 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		char	   *flush_table_name = NULL;
 		char	   *flush_physical_schema = NULL;
 		char	   *pg_table_ref;
-		char	   *target_copy;
-		char	   *dot_pos;
-		char	   *second_dot;
 		
 		initStringInfo(&col_query);
 		initStringInfo(&non_identity_cols);
@@ -1778,38 +1791,9 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		}
 		else
 		{
-			target_copy = pstrdup(target_table);
-			
-			/* Find the last dot to separate schema from table */
-			dot_pos = strrchr(target_copy, '.');
-			if (dot_pos != NULL)
-			{
-				*dot_pos = '\0';
-				flush_table_name = pstrdup(dot_pos + 1);
-				
-				/* Check if there's another dot (db.schema.table) */
-				second_dot = strrchr(target_copy, '.');
-				if (second_dot != NULL)
-				{
-					/* db.schema.table - schema is after the second dot */
-					flush_schema_name = pstrdup(second_dot + 1);
-				}
-				else
-				{
-					/* schema.table */
-					flush_schema_name = pstrdup(target_copy);
-				}
-			}
-			else
-			{
-				/* Just table name, use dbo as default */
-				flush_table_name = pstrdup(target_copy);
-				flush_schema_name = pstrdup("dbo");
-			}
-			pfree(target_copy);
-			
-			/* Convert logical schema name to physical schema name */
-			flush_physical_schema = get_physical_schema_name(get_cur_db_name(), flush_schema_name);
+			/* Parse schema and table name using helper function */
+			(void) parse_insert_exec_table_name(target_table, &flush_schema_name,
+												&flush_table_name, &flush_physical_schema, true);
 			
 			/* Build the PostgreSQL table reference */
 			pg_table_ref = psprintf("%s.%s", flush_physical_schema, flush_table_name);
