@@ -711,34 +711,23 @@ pltsql_get_insert_exec_target_table(void)
 }
 
 /*
+ * Get the target table OID for INSERT EXEC.
+ * This is the OID of the actual target table (not the temp table).
+ * Used for schema-qualified DROP TABLE checks.
+ */
+Oid
+pltsql_get_insert_exec_target_rel_oid(void)
+{
+	return insert_exec_target_rel_oid;
+}
+
+/*
  * Get the column list for INSERT EXEC.
  */
 const char *
 pltsql_get_insert_exec_column_list(void)
 {
 	return insert_exec_column_list;
-}
-
-/*
- * Increment TRY-CATCH depth when entering a TRY block during INSERT EXEC.
- * NOTE: This function is now a no-op. TRY-CATCH detection is done via err_ctx_stack.
- * Kept for API compatibility but does nothing.
- */
-void
-pltsql_insert_exec_enter_trycatch(void)
-{
-	/* No-op: TRY-CATCH detection is done via err_ctx_stack in pltsql_insert_exec_in_trycatch() */
-}
-
-/*
- * Decrement TRY-CATCH depth when exiting a TRY block during INSERT EXEC.
- * NOTE: This function is now a no-op. TRY-CATCH detection is done via err_ctx_stack.
- * Kept for API compatibility but does nothing.
- */
-void
-pltsql_insert_exec_exit_trycatch(void)
-{
-	/* No-op: TRY-CATCH detection is done via err_ctx_stack in pltsql_insert_exec_in_trycatch() */
 }
 
 /*
@@ -2088,137 +2077,6 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		pfree(saved_column_list);
 }
 
-/*
- * Flush all rows from the temp table to the target table.
- * This is the final step of INSERT EXEC - move data from buffer to target.
- * When no column list is specified, we need to explicitly list non-IDENTITY
- * columns to avoid column count mismatch.
- */
-void
-flush_temp_table_to_target(PLtsql_execstate *estate)
-{
-	char			temp_table_name[NAMEDATALEN];
-	StringInfoData	flush_query;
-	int				rc;
-
-	if (!OidIsValid(estate->insert_exec_temp_table_oid) ||
-		estate->insert_exec_target_table == NULL)
-	{
-		return;
-	}
-
-	snprintf(temp_table_name, sizeof(temp_table_name),
-			 "#insert_exec_buf_%d", MyProcPid);
-
-	initStringInfo(&flush_query);
-	
-	if (estate->insert_exec_column_list != NULL)
-	{
-		/* User specified columns - use them directly */
-		appendStringInfo(&flush_query,
-			"INSERT INTO %s (%s) SELECT * FROM %s",
-			estate->insert_exec_target_table,
-			estate->insert_exec_column_list,
-			temp_table_name);
-	}
-	else
-	{
-		/*
-		 * No column list specified - we need to build one excluding
-		 * IDENTITY and computed columns to match the temp table structure.
-		 */
-		StringInfoData col_query;
-		StringInfoData non_identity_cols;
-		bool		first_col = true;
-		int			proc_count;
-		uint64		i;
-		
-		initStringInfo(&col_query);
-		initStringInfo(&non_identity_cols);
-		
-		appendStringInfo(&col_query,
-			"SELECT a.attname "
-			"FROM pg_attribute a "
-			"JOIN pg_class c ON a.attrelid = c.oid "
-			"WHERE c.relname = '%s' "
-			"AND a.attnum > 0 "
-			"AND NOT a.attisdropped "
-			"AND a.attidentity = '' "
-			"AND a.attgenerated = '' "
-			"ORDER BY a.attnum",
-			estate->insert_exec_target_table);
-		
-		rc = SPI_execute(col_query.data, true, 0);
-		if (rc != SPI_OK_SELECT)
-		{
-			pfree(col_query.data);
-			pfree(non_identity_cols.data);
-			/* Fall back to simple INSERT */
-			appendStringInfo(&flush_query,
-				"INSERT INTO %s SELECT * FROM %s",
-				estate->insert_exec_target_table,
-				temp_table_name);
-		}
-		else
-		{
-			proc_count = SPI_processed;
-			
-			if (proc_count == 0)
-			{
-				/* No columns found, fall back */
-				pfree(col_query.data);
-				pfree(non_identity_cols.data);
-				appendStringInfo(&flush_query,
-					"INSERT INTO %s SELECT * FROM %s",
-					estate->insert_exec_target_table,
-					temp_table_name);
-			}
-			else
-			{
-				/* Build column list */
-				for (i = 0; i < proc_count; i++)
-				{
-					char *colname = SPI_getvalue(SPI_tuptable->vals[i], 
-												 SPI_tuptable->tupdesc, 1);
-					if (colname != NULL)
-					{
-						if (!first_col)
-							appendStringInfoString(&non_identity_cols, ", ");
-						appendStringInfoString(&non_identity_cols, colname);
-						first_col = false;
-					}
-				}
-				
-				SPI_freetuptable(SPI_tuptable);
-				pfree(col_query.data);
-				
-				appendStringInfo(&flush_query,
-					"INSERT INTO %s (%s) SELECT * FROM %s",
-					estate->insert_exec_target_table,
-					non_identity_cols.data,
-					temp_table_name);
-				
-				pfree(non_identity_cols.data);
-			}
-		}
-	}
-
-	elog(DEBUG1, "INSERT-EXEC: Flushing temp table to target: %s", flush_query.data);
-
-	rc = SPI_execute(flush_query.data, false, 0);
-	if (rc != SPI_OK_INSERT)
-		elog(ERROR, "INSERT-EXEC: Failed to flush temp table to target: %s",
-			 SPI_result_code_string(rc));
-
-	/* Update rowcount */
-	estate->eval_processed = SPI_processed;
-	exec_set_rowcount(SPI_processed);
-	exec_set_found(estate, SPI_processed > 0);
-
-	pfree(flush_query.data);
-	SPI_freetuptable(SPI_tuptable);
-}
-
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
 PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
@@ -2759,12 +2617,6 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 	MemoryContext stmt_mcontext;
 
 	/*
-	 * Track TRY-CATCH depth for INSERT EXEC.
-	 * This is used as a fallback when exec_state_call_stack is NULL.
-	 */
-	pltsql_insert_exec_enter_trycatch();
-
-	/*
 	 * Check if INSERT EXEC is active at the start of the TRY block.
 	 * If so, we need special handling to preserve INSERT EXEC data
 	 * when a statement-terminating error occurs.
@@ -2897,7 +2749,7 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
 
-		elog(LOG, "INSERT-EXEC TRY-CATCH cleanup: checking if active, is_stmt_terminating=%d, insert_exec_was_active=%d",
+		elog(DEBUG1, "INSERT-EXEC TRY-CATCH cleanup: checking if active, is_stmt_terminating=%d, insert_exec_was_active=%d",
 			 is_stmt_terminating, insert_exec_was_active);
 
 		/*
@@ -2915,7 +2767,7 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 		{
 			Oid temp_oid = pltsql_get_insert_exec_temp_table_oid();
 			
-			elog(LOG, "INSERT-EXEC TRY-CATCH cleanup: is_stmt_terminating=%d, insert_exec_was_active=%d, temp_oid=%u",
+			elog(DEBUG1, "INSERT-EXEC TRY-CATCH cleanup: is_stmt_terminating=%d, insert_exec_was_active=%d, temp_oid=%u",
 				 is_stmt_terminating, insert_exec_was_active, temp_oid);
 			
 			/* Close target table and release lock first */
@@ -2930,17 +2782,17 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 			 */
 			if (is_stmt_terminating && insert_exec_was_active && OidIsValid(temp_oid))
 			{
-				elog(LOG, "INSERT-EXEC TRY-CATCH cleanup: dropping temp table");
+				elog(DEBUG1, "INSERT-EXEC TRY-CATCH cleanup: dropping temp table");
 				drop_insert_exec_temp_table(temp_oid);
 			}
 		}
 		else if (pltsql_insert_exec_active())
 		{
-			elog(LOG, "INSERT-EXEC TRY-CATCH cleanup: INSERT EXEC active but TRY-CATCH is inside procedure, not cleaning up");
+			elog(DEBUG1, "INSERT-EXEC TRY-CATCH cleanup: INSERT EXEC active but TRY-CATCH is inside procedure, not cleaning up");
 		}
 		else
 		{
-			elog(LOG, "INSERT-EXEC TRY-CATCH cleanup: INSERT EXEC not active");
+			elog(DEBUG1, "INSERT-EXEC TRY-CATCH cleanup: INSERT EXEC not active");
 		}
 
 		/*
@@ -2993,11 +2845,6 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 	PG_END_TRY();
 
 	Assert(save_cur_error == estate->cur_error->error);
-
-	/*
-	 * Decrement TRY-CATCH depth for INSERT EXEC tracking.
-	 */
-	pltsql_insert_exec_exit_trycatch();
 
 	estate->err_text = NULL;
 

@@ -1545,11 +1545,6 @@ typedef struct PLtsql_execstate
 	 */
 	bool		insert_exec;
 
-	/* INSERT EXEC temp table buffering fields */
-	Oid			insert_exec_temp_table_oid;		/* OID of temp table for buffering */
-	char	   *insert_exec_target_table;		/* Final target table name */
-	char	   *insert_exec_column_list;		/* Column list for final INSERT (NULL = all) */
-
 	List	   *explain_infos;
 	instr_time	planning_start;
 	instr_time	planning_end;
@@ -2409,9 +2404,8 @@ extern bool pltsql_insert_exec_flush_in_progress(void);
 extern int pltsql_get_insert_exec_base_tran_count(void);
 extern Oid pltsql_get_insert_exec_temp_table_oid(void);
 extern const char *pltsql_get_insert_exec_target_table(void);
+extern Oid pltsql_get_insert_exec_target_rel_oid(void);
 extern const char *pltsql_get_insert_exec_column_list(void);
-extern void pltsql_insert_exec_enter_trycatch(void);
-extern void pltsql_insert_exec_exit_trycatch(void);
 extern bool pltsql_insert_exec_in_trycatch(void);
 extern bool pltsql_insert_exec_should_cleanup_on_trycatch(void);
 extern Oid pltsql_get_and_clear_insert_exec_temp_table_for_cleanup(void);
@@ -2426,7 +2420,6 @@ extern bool pltsql_insert_exec_verify_schema(void);
 extern DestReceiver *CreateInsertExecDestReceiver(Oid temp_table_oid);
 extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list);
 extern void drop_insert_exec_temp_table(Oid temp_table_oid);
-extern void flush_temp_table_to_target(PLtsql_execstate *estate);
 extern void flush_insert_exec_temp_table(PLtsql_execstate *estate);
 
 #define NUM_DB_OBJECTS 11

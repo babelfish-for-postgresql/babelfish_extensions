@@ -824,59 +824,65 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 		}
 		case T_DropStmt:
 		{
-			/*
-			 * Check if DROP TABLE is trying to drop the INSERT EXEC target table.
-			 * SQL Server error 556: "cannot DROP TABLE because it is being used 
-			 * by active queries in this session"
-			 */
-			DropStmt *stmt = (DropStmt *) parsetree;
-			
-			if (stmt->removeType == OBJECT_TABLE && pltsql_insert_exec_active())
+			DropStmt *drop = (DropStmt *) parsetree;
+			if (drop->removeType == OBJECT_TABLE && pltsql_insert_exec_active())
 			{
-				const char *target_table = pltsql_get_insert_exec_target_table();
-				
-				if (target_table != NULL)
+				Oid target_oid = pltsql_get_insert_exec_target_rel_oid();
+
+				if (OidIsValid(target_oid))
 				{
-					ListCell *cell;
-					
-					foreach(cell, stmt->objects)
+					/*
+					 * Regular table: use OID comparison so schema-qualified names
+					 * like schema1.orders and schema2.orders are distinguished.
+					 */
+					ListCell *lc;
+					foreach(lc, drop->objects)
 					{
-						List *names = (List *) lfirst(cell);
-						char *table_name = NULL;
-						
-						/* Get the table name from the list (last element) */
-						if (list_length(names) > 0)
+						List     *names    = lfirst_node(List, lc);
+						RangeVar *rv       = makeRangeVarFromNameList(names);
+						Oid       drop_oid = RangeVarGetRelid(rv, NoLock, true /* missing_ok */);
+
+						if (OidIsValid(drop_oid) && drop_oid == target_oid)
+							ereport(ERROR,
+									(errcode(ERRCODE_OBJECT_IN_USE),
+									 errmsg("cannot %s \"%s\" because it is "
+											"being used by active queries in "
+											"this session",
+											"DROP TABLE", get_rel_name(drop_oid))));
+					}
+				}
+				else
+				{
+					/*
+					 * Temp table / table variable: session-local, no persistent OID.
+					 * Fall back to unqualified name comparison (safe over-block).
+					 */
+					const char *target      = pltsql_get_insert_exec_target_table();
+					const char *dot         = target ? strrchr(target, '.') : NULL;
+					const char *unqualified = dot ? (dot + 1) : target;
+					ListCell   *lc;
+
+					if (unqualified != NULL)
+					{
+						foreach(lc, drop->objects)
 						{
-							table_name = strVal(llast(names));
-						}
-						
-						if (table_name != NULL)
-						{
-							/*
-							 * Compare table names (case-insensitive for temp tables).
-							 * The target_table might include schema prefix, so we need
-							 * to compare just the table name part.
-							 */
-							const char *target_name = strrchr(target_table, '.');
-							if (target_name != NULL)
-								target_name++;  /* Skip the dot */
-							else
-								target_name = target_table;
-							
-							if (pg_strcasecmp(table_name, target_name) == 0)
-							{
+							List *names   = lfirst_node(List, lc);
+							char *relname = strVal(llast(names));
+
+							if (pg_strcasecmp(relname, unqualified) == 0)
 								ereport(ERROR,
 										(errcode(ERRCODE_OBJECT_IN_USE),
-										 errmsg("cannot %s \"%s\" because it is being used by active queries in this session",
-												"DROP TABLE", table_name)));
-							}
+										 errmsg("cannot %s \"%s\" because it is "
+												"being used by active queries in "
+												"this session",
+												"DROP TABLE", relname)));
 						}
 					}
 				}
 			}
-			/* Let the default handler process the DROP */
 			break;
 		}
+
 		default:
 			return false;
 			break;
