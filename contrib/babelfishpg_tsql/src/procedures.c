@@ -5112,3 +5112,4 @@ tsql_openxml_get_colpattern(PG_FUNCTION_ARGS)
 	
 	PG_RETURN_TEXT_P(cstring_to_text(xpath_expr));
 }
+
