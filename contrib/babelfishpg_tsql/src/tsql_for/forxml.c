@@ -19,8 +19,7 @@
 #include "utils/typcache.h"
 #include "catalog/pg_type.h"
 #include "catalog/namespace.h"
-
-#include <regex.h>
+#include "catalog/pg_collation.h"
 
 #include "tsql_for.h"
 
@@ -143,6 +142,10 @@ tsql_query_to_xml_text_ffunc(PG_FUNCTION_ARGS)
 {
 	StringInfo	res = for_xml_ffunc(fcinfo);
 
+	/* return NULL if empty result (i.e. no rows) */
+	if (res->len == 0)
+		PG_RETURN_NULL();
+
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(res->data, res->len));
 }
 
@@ -150,37 +153,48 @@ static StringInfo
 for_xml_ffunc(PG_FUNCTION_ARGS)
 {
 	StringInfo	res = makeStringInfo();
-	char	   *state = ((StringInfo) PG_GETARG_POINTER(0))->data;
+	char	   *state;
+
+	if (PG_ARGISNULL(0))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("unexpected null state in FOR XML processing")));
+
+	state = ((StringInfo) PG_GETARG_POINTER(0))->data;
 
 	if (state[0] == '{')		/* '{' indicates that root was specified, so
 								 * add the corresponding end tag */
 	{
-		/* set up regex to match first tag */
-		char	   *pattern = "<([^\\/>]+)[\\/]*>";
-		regex_t		preg;
-		regmatch_t	match,
-					pmatch[1];
-		StringInfoData root;
+		/*
+		 * Using PostgreSQL's textregexsubstr() to extract the root tag name.
+		 * simpler than manual regex handling and leverages PostgreSQL's 
+		 * cached regex compilation and proper memory management.
+		 */
+		text	   *state_text = cstring_to_text(state);
+		text	   *pattern_text = cstring_to_text("<([^\\/>]+)[\\/]*>");
+		Datum		root_tag_datum;
+		text	   *root_tag_text;
+		char	   *root_tag;
 
-		if (regcomp(&preg, pattern, REG_EXTENDED) != 0)
+		/* Extract the root tag name using textregexsubstr */
+		root_tag_datum = DirectFunctionCall2Coll(textregexsubstr, 
+											 C_COLLATION_OID,
+											 PointerGetDatum(state_text),
+											 PointerGetDatum(pattern_text));
+
+		if (DatumGetPointer(root_tag_datum) == NULL)
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("unexpected error parsing xml root tag")));
+		}
 
-		if (regexec(&preg, state, 1, pmatch, 0) != 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("unexpected error parsing xml root tag")));
+		root_tag_text = DatumGetTextPP(root_tag_datum);
+		root_tag = text_to_cstring(root_tag_text);
 
-		match = pmatch[0];
-		/* we will be bashing the string in state, so copy it into res first */
+		/* Copy state content (skip the '{' marker) and add closing tag */
 		appendStringInfoString(res, state + 1);
-
-		/* copy the root tag */
-		state[match.rm_eo - 1] = '\0';
-		initStringInfo(&root);
-		appendStringInfoString(&root, state + match.rm_so + 1);
-		appendStringInfo(res, "</%s>", root.data);
+		appendStringInfo(res, "</%s>", root_tag);
 	}
 	else
 	{
@@ -201,7 +215,8 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 	TupleDesc       tupdesc;
 	HeapTupleData   tmptup;
 	HeapTuple       tuple;
-
+	bool            allnull = true;
+	
 	td = DatumGetHeapTupleHeader(record);
 
 	/* Extract rowtype info and find a tupdesc */
@@ -214,19 +229,34 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 	tmptup.t_data = td;
 	tuple = &tmptup;
 
-	/* Output opening tag */
-	if (elements)
+	/*
+	 * Empty element name without ELEMENTS mode is not allowed — attribute-centric
+	 * serialization requires a row tag name.
+	 */
+	if (element_name[0] == '\0' && !elements)
 	{
-		/* ELEMENTS mode: <row><col>value</col></row> */
-		if (xsinil)
-			appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
-		else
-			appendStringInfo(state, "<%s>", element_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION),
+				 errmsg("Row tag omission (empty row tag name) cannot be used "
+						"with attribute-centric FOR XML serialization.")));
 	}
-	else
+
+	/* Output opening tag (only when element_name is non-empty) */
+	if (element_name[0] != '\0')
 	{
-		/* ATTRIBUTES mode: <row col="value"/> */
-		appendStringInfo(state, "<%s", element_name);
+		if (elements)
+		{
+			/* ELEMENTS mode: <row><col>value</col></row> */
+			if (xsinil)
+				appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
+			else
+				appendStringInfo(state, "<%s>", element_name);
+		}
+		else
+		{
+			/* ATTRIBUTES mode: <row col="value"/> */
+			appendStringInfo(state, "<%s", element_name);
+		}
 	}
 
 	for (int i = 0; i < tupdesc->natts; i++)
@@ -251,6 +281,7 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 			/* ELEMENTS mode output */
 			if (!isnull)
 			{
+				allnull = false;
 				/* Normal element: <col>value</col> */
 				appendStringInfo(state, "<%s>%s</%s>",
 								 colname,
@@ -259,6 +290,7 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 			}
 			else if (xsinil)
 			{
+				allnull = false;
 				/* XSINIL: <col xsi:nil="true"/> */
 				appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
 			}
@@ -278,7 +310,29 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 
 	/* Output closing tag */
 	if (elements)
-		appendStringInfo(state, "</%s>", element_name);
+	{
+		if (element_name[0] == '\0')
+		{
+			/*
+			 * Empty element name with ELEMENTS: no wrapper tag needed.
+			 * Just output the child elements directly, same as PATH('').
+			 */
+		}
+		else if (allnull)
+		{
+			/*
+			 * If all column values are NULL, produce a self-closing element
+			 * like TSQL does: <row/>. Replace the '>' in the already
+			 * appended opening tag with '/' and append '>'.
+			 */
+			state->data[state->len - 1] = '/';
+			appendStringInfoChar(state, '>');
+		}
+		else
+		{
+			appendStringInfo(state, "</%s>", element_name);
+		}
+	}
 	else
 		appendStringInfoString(state, "/>");
 
@@ -313,7 +367,7 @@ validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tup
 			seen_non_att_centric = true;
 	}
 
-	if(seen_att_centric && element_name[0] == '\0')
+	if(seen_att_centric && (element_name && strlen(element_name) == 0))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION),
@@ -331,14 +385,15 @@ static void
 tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil)
 {
 	HeapTupleHeader td;
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc;
-	HeapTupleData tmptup;
-	HeapTuple	tuple;
-	bool		allnull = true;
-	bool		has_att_centric = false;
-	bool		first = true;
+	Oid             tupType;
+	int32           tupTypmod;
+	TupleDesc       tupdesc;
+	HeapTupleData   tmptup;
+	HeapTuple       tuple;
+	bool            allnull = true;
+	bool            has_att_centric = false;
+	bool            first = true;
+	int             inital_state_len = state->len;
 
 	td = DatumGetHeapTupleHeader(record);
 
@@ -358,7 +413,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 	 * each tuple is either contained in a "row" tag, or standalone if the
 	 * element_name is an empty string
 	 */
-	if (element_name[0] != '\0')
+	if (element_name && strlen(element_name) > 0)
 	{
 		/* if "''" is the input path, ignore it per TSQL behavior */
 		if (has_att_centric)
@@ -420,7 +475,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 				else
 				{
 					/* When PATH('') is used with XSINIL, add xmlns to each element */
-					if (element_name[0] == '\0' && xsinil)
+					if ((element_name && strlen(element_name) == 0) && xsinil)
 						appendStringInfo(state, "<%s " XML_XMLNS_XSI ">%s</%s>",
 										 colname,
 										 map_sql_value_to_xml_value(colval, datatype_oid, true),
@@ -453,7 +508,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 				if (strncmp(NameStr(att->attname), "?column?", 8) != 0)
 				{
 					/* When PATH('') is used with XSINIL, add xmlns to each element */
-					if (element_name[0] == '\0')
+					if (element_name && strlen(element_name) == 0)
 						appendStringInfo(state, "<%s " XML_XMLNS_XSI " " XML_XSI_NIL "/>", colname);
 					else
 						appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
@@ -462,24 +517,32 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 		}
 	}
 
-	if (allnull)
-	{
-		/*
-		 * If all the column values are nulls, this element should be
-		 * <element_name/>, modify the already appended <element_name> to
-		 * <element_name/>.
-		 */
-		state->data[state->len - 1] = '/';
-		appendStringInfoString(state, ">");
-	}
-	else if (element_name[0] != '\0')
+	if (element_name && strlen(element_name) > 0)
 	{
 		if (has_att_centric && first)
 		{
 			appendStringInfoString(state, "/>");
 		}
 		else
-			appendStringInfo(state, "</%s>", element_name);
+		{
+			if (allnull)
+			{
+				/*
+				 * At this point, state = <output from previous rows> + '<element_name>'
+				 * 
+				 * If all the column values are nulls, this element should be
+				 * <element_name/>, modify the already appended <element_name> to
+				 * <element_name/>.
+				 */
+				if (state->len > inital_state_len)	// sanity check, should always be true
+				{
+					state->data[state->len - 1] = '/';
+					appendStringInfoString(state, ">");
+				}
+			}
+			else
+				appendStringInfo(state, "</%s>", element_name);
+		}
 	}
 	ReleaseTupleDesc(tupdesc);
 }

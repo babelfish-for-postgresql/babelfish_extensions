@@ -1293,6 +1293,9 @@ c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
 create or replace view sys.all_objects as
+WITH tt_internal AS MATERIALIZED (
+  SELECT typrelid FROM sys.table_types_internal
+)
 select 
     name collate sys.database_default
   , cast (object_id as integer) 
@@ -1327,7 +1330,7 @@ select
   , 0 as is_published
   , 0 as is_schema_published
 from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
-left join sys.table_types_internal tt on t.oid = tt.typrelid
+left join tt_internal tt on t.oid = tt.typrelid
 left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
 where t.relpersistence in ('p', 'u', 't')
@@ -1352,7 +1355,7 @@ select
   , 0 as is_published
   , 0 as is_schema_published
 from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
-left join sys.table_types_internal tt on t.oid = tt.typrelid
+left join tt_internal tt on t.oid = tt.typrelid
 left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
 where t.relpersistence in ('p', 'u', 't')
