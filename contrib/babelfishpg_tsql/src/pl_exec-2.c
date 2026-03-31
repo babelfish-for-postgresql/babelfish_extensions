@@ -121,19 +121,6 @@ clean_format_type_string(const char *coltype)
  * TABLE_INSERT_FROZEN flag to preserve MVCC semantics.
  */
 
-/* Global context for INSERT EXEC - needed for nested procedure calls */
-static Oid insert_exec_temp_table_oid = InvalidOid;
-static char *insert_exec_target_table = NULL;
-static char *insert_exec_column_list = NULL;
-static int insert_exec_base_tran_count = 0;  /* NestedTranCount when INSERT EXEC started */
-static int insert_exec_saved_nested_tran_count = 0;  /* Original NestedTranCount to restore on cleanup */
-static bool insert_exec_flush_in_progress = false;  /* True during flush phase to block commit_stmt */
-static int insert_exec_call_stack_depth = 0;  /* Call stack depth when INSERT EXEC was started */
-static bool insert_exec_incremented_tran_count = false;  /* True if INSERT EXEC incremented NestedTranCount */
-static bool insert_exec_had_error = false;  /* True if INSERT EXEC had an error - used to skip trancount mismatch check */
-static bool insert_exec_pending_drop = false;  /* True if temp table needs to be dropped when SPI is available */
-static Oid insert_exec_target_rel_oid = InvalidOid;  /* OID of target table - lock held to detect schema changes */
-
 /*
  * Schema signature for detecting schema changes during INSERT EXEC.
  * We store the column count and column type OIDs at the start of INSERT EXEC,
@@ -147,7 +134,41 @@ typedef struct InsertExecSchemaSignature
 	int32	   *atttypmods;		/* Array of column type modifiers */
 } InsertExecSchemaSignature;
 
-static InsertExecSchemaSignature *insert_exec_schema_sig = NULL;
+/*
+ * Global context for INSERT EXEC - bundled into a single struct for cleaner code.
+ * This context is needed for nested procedure calls during INSERT EXEC.
+ */
+typedef struct InsertExecContext
+{
+	Oid			temp_table_oid;			/* OID of temp table for buffering */
+	char	   *target_table;			/* Target table name */
+	char	   *column_list;			/* Column list for INSERT */
+	int			base_tran_count;		/* NestedTranCount when INSERT EXEC started */
+	int			saved_nested_tran_count;/* Original NestedTranCount to restore on cleanup */
+	bool		flush_in_progress;		/* True during flush phase to block commit_stmt */
+	int			call_stack_depth;		/* Call stack depth when INSERT EXEC was started */
+	bool		incremented_tran_count;	/* True if INSERT EXEC incremented NestedTranCount */
+	bool		had_error;				/* True if INSERT EXEC had an error */
+	bool		pending_drop;			/* True if temp table needs to be dropped when SPI is available */
+	Oid			target_rel_oid;			/* OID of target table - lock held to detect schema changes */
+	InsertExecSchemaSignature *schema_sig;	/* Schema signature for detecting changes */
+} InsertExecContext;
+
+/* Initialize the global INSERT EXEC context */
+static InsertExecContext insert_exec_ctx = {
+	.temp_table_oid = InvalidOid,
+	.target_table = NULL,
+	.column_list = NULL,
+	.base_tran_count = 0,
+	.saved_nested_tran_count = 0,
+	.flush_in_progress = false,
+	.call_stack_depth = 0,
+	.incremented_tran_count = false,
+	.had_error = false,
+	.pending_drop = false,
+	.target_rel_oid = InvalidOid,
+	.schema_sig = NULL
+};
 
 /* DestReceiver struct for INSERT EXEC */
 typedef struct
@@ -256,21 +277,21 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 	int depth = 0;
 	
 	/* Clear any previous context */
-	if (insert_exec_target_table)
+	if (insert_exec_ctx.target_table)
 	{
-		pfree(insert_exec_target_table);
-		insert_exec_target_table = NULL;
+		pfree(insert_exec_ctx.target_table);
+		insert_exec_ctx.target_table = NULL;
 	}
-	if (insert_exec_column_list)
+	if (insert_exec_ctx.column_list)
 	{
-		pfree(insert_exec_column_list);
-		insert_exec_column_list = NULL;
+		pfree(insert_exec_ctx.column_list);
+		insert_exec_ctx.column_list = NULL;
 	}
 	
 	/* Allocate in TopMemoryContext so strings survive error handling */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-	insert_exec_target_table = target_table ? pstrdup(target_table) : NULL;
-	insert_exec_column_list = column_list ? pstrdup(column_list) : NULL;
+	insert_exec_ctx.target_table = target_table ? pstrdup(target_table) : NULL;
+	insert_exec_ctx.column_list = column_list ? pstrdup(column_list) : NULL;
 	MemoryContextSwitchTo(oldcontext);
 	
 	/* Record the call stack depth when INSERT EXEC was started */
@@ -280,7 +301,7 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 		depth++;
 		cur = cur->next;
 	}
-	insert_exec_call_stack_depth = depth;
+	insert_exec_ctx.call_stack_depth = depth;
 	
 	/*
 	 * Record the NestedTranCount when INSERT EXEC started.
@@ -292,7 +313,7 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 	 * but doesn't start a real transaction. If an error occurs, we need to restore
 	 * NestedTranCount to its original value.
 	 */
-	insert_exec_saved_nested_tran_count = NestedTranCount;
+	insert_exec_ctx.saved_nested_tran_count = NestedTranCount;
 	
 	/*
 	 * In SQL Server, INSERT EXEC implicitly starts a transaction if there isn't one already.
@@ -302,18 +323,18 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 	 * We simulate this by only incrementing NestedTranCount if it's currently 0.
 	 * The base_tran_count is the @@TRANCOUNT value that the procedure sees at start.
 	 */
-	insert_exec_incremented_tran_count = false;
+	insert_exec_ctx.incremented_tran_count = false;
 	if (NestedTranCount == 0)
 	{
 		NestedTranCount = 1;
-		insert_exec_incremented_tran_count = true;
+		insert_exec_ctx.incremented_tran_count = true;
 		
 		/* Update the protocol plugin with the new NestedTranCount */
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
 			(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
 	}
 	
-	insert_exec_base_tran_count = NestedTranCount;
+	insert_exec_ctx.base_tran_count = NestedTranCount;
 }
 
 /*
@@ -323,7 +344,7 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 void
 pltsql_set_insert_exec_context(Oid temp_table_oid)
 {
-	insert_exec_temp_table_oid = temp_table_oid;
+	insert_exec_ctx.temp_table_oid = temp_table_oid;
 }
 
 /*
@@ -347,30 +368,30 @@ pltsql_clear_insert_exec_context(void)
 	 * 1. We didn't increment it
 	 * 2. If COMMIT was called inside, the decrement should persist
 	 */
-	if (insert_exec_target_table != NULL && insert_exec_incremented_tran_count)
+	if (insert_exec_ctx.target_table != NULL && insert_exec_ctx.incremented_tran_count)
 	{
-		NestedTranCount = insert_exec_saved_nested_tran_count;
+		NestedTranCount = insert_exec_ctx.saved_nested_tran_count;
 		
 		/* Update the protocol plugin with the restored NestedTranCount */
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
 			(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
 	}
 	
-	insert_exec_temp_table_oid = InvalidOid;
-	insert_exec_base_tran_count = 0;  /* Reset base transaction count */
-	insert_exec_saved_nested_tran_count = 0;  /* Reset saved nested tran count */
-	insert_exec_call_stack_depth = 0;  /* Reset call stack depth */
-	insert_exec_incremented_tran_count = false;  /* Reset incremented flag */
-	/* Note: We do NOT reset insert_exec_had_error here - it's reset by pltsql_insert_exec_clear_error_flag() */
-	if (insert_exec_target_table)
+	insert_exec_ctx.temp_table_oid = InvalidOid;
+	insert_exec_ctx.base_tran_count = 0;
+	insert_exec_ctx.saved_nested_tran_count = 0;
+	insert_exec_ctx.call_stack_depth = 0;
+	insert_exec_ctx.incremented_tran_count = false;
+	/* Note: We do NOT reset insert_exec_ctx.had_error here - it's reset by pltsql_insert_exec_clear_error_flag() */
+	if (insert_exec_ctx.target_table)
 	{
-		pfree(insert_exec_target_table);
-		insert_exec_target_table = NULL;
+		pfree(insert_exec_ctx.target_table);
+		insert_exec_ctx.target_table = NULL;
 	}
-	if (insert_exec_column_list)
+	if (insert_exec_ctx.column_list)
 	{
-		pfree(insert_exec_column_list);
-		insert_exec_column_list = NULL;
+		pfree(insert_exec_ctx.column_list);
+		insert_exec_ctx.column_list = NULL;
 	}
 }
 
@@ -382,7 +403,7 @@ pltsql_clear_insert_exec_context(void)
 void
 pltsql_insert_exec_set_error_flag(void)
 {
-	insert_exec_had_error = true;
+	insert_exec_ctx.had_error = true;
 }
 
 /*
@@ -392,7 +413,7 @@ pltsql_insert_exec_set_error_flag(void)
 bool
 pltsql_insert_exec_had_error(void)
 {
-	return insert_exec_had_error;
+	return insert_exec_ctx.had_error;
 }
 
 /*
@@ -402,7 +423,7 @@ pltsql_insert_exec_had_error(void)
 void
 pltsql_insert_exec_clear_error_flag(void)
 {
-	insert_exec_had_error = false;
+	insert_exec_ctx.had_error = false;
 }
 
 /*
@@ -412,7 +433,7 @@ pltsql_insert_exec_clear_error_flag(void)
 void
 pltsql_insert_exec_set_pending_drop(void)
 {
-	insert_exec_pending_drop = true;
+	insert_exec_ctx.pending_drop = true;
 }
 
 /*
@@ -424,25 +445,25 @@ pltsql_insert_exec_set_pending_drop(void)
 void
 pltsql_insert_exec_check_pending_drop(void)
 {
-	if (insert_exec_pending_drop)
+	if (insert_exec_ctx.pending_drop)
 	{
 		char		temp_table_name[NAMEDATALEN];
 		StringInfoData drop_stmt;
 		int			rc;
 
 		snprintf(temp_table_name, sizeof(temp_table_name),
-				 "#insert_exec_buf_%d", MyProcPid);
+				 "__insert_exec_buf_%d", MyProcPid);
 
 		initStringInfo(&drop_stmt);
 		appendStringInfo(&drop_stmt, "DROP TABLE IF EXISTS %s", temp_table_name);
 
 		rc = SPI_execute(drop_stmt.data, false, 0);
 		if (rc != SPI_OK_UTILITY)
-			elog(WARNING, "failed to drop pending INSERT EXEC temp table: %s",
-				 SPI_result_code_string(rc));
+			elog(WARNING, "failed to drop pending INSERT EXEC temp table %s: %s",
+				 temp_table_name, SPI_result_code_string(rc));
 
 		pfree(drop_stmt.data);
-		insert_exec_pending_drop = false;
+		insert_exec_ctx.pending_drop = false;
 	}
 }
 
@@ -537,7 +558,7 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 	}
 	PG_END_TRY();
 	
-	insert_exec_target_rel_oid = relid;
+	insert_exec_ctx.target_rel_oid = relid;
 	
 	/*
 	 * Capture the schema signature of the target table.
@@ -561,7 +582,7 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 		FlushErrorState();
 		elog(DEBUG1, "INSERT-EXEC: Could not open target table OID %u for schema capture, skipping",
 			 relid);
-		insert_exec_target_rel_oid = InvalidOid;
+		insert_exec_ctx.target_rel_oid = InvalidOid;
 		return;
 	}
 	PG_END_TRY();
@@ -572,30 +593,30 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 	
 	/* Free any previous schema signature */
-	if (insert_exec_schema_sig != NULL)
+	if (insert_exec_ctx.schema_sig != NULL)
 	{
-		if (insert_exec_schema_sig->atttypids)
-			pfree(insert_exec_schema_sig->atttypids);
-		if (insert_exec_schema_sig->atttypmods)
-			pfree(insert_exec_schema_sig->atttypmods);
-		pfree(insert_exec_schema_sig);
-		insert_exec_schema_sig = NULL;
+		if (insert_exec_ctx.schema_sig->atttypids)
+			pfree(insert_exec_ctx.schema_sig->atttypids);
+		if (insert_exec_ctx.schema_sig->atttypmods)
+			pfree(insert_exec_ctx.schema_sig->atttypmods);
+		pfree(insert_exec_ctx.schema_sig);
+		insert_exec_ctx.schema_sig = NULL;
 	}
 	
-	insert_exec_schema_sig = palloc(sizeof(InsertExecSchemaSignature));
-	insert_exec_schema_sig->natts = tupdesc->natts;
-	insert_exec_schema_sig->atttypids = palloc(tupdesc->natts * sizeof(Oid));
-	insert_exec_schema_sig->atttypmods = palloc(tupdesc->natts * sizeof(int32));
+	insert_exec_ctx.schema_sig = palloc(sizeof(InsertExecSchemaSignature));
+	insert_exec_ctx.schema_sig->natts = tupdesc->natts;
+	insert_exec_ctx.schema_sig->atttypids = palloc(tupdesc->natts * sizeof(Oid));
+	insert_exec_ctx.schema_sig->atttypmods = palloc(tupdesc->natts * sizeof(int32));
 	
 	for (i = 0; i < tupdesc->natts; i++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
-		insert_exec_schema_sig->atttypids[i] = attr->atttypid;
-		insert_exec_schema_sig->atttypmods[i] = attr->atttypmod;
+		insert_exec_ctx.schema_sig->atttypids[i] = attr->atttypid;
+		insert_exec_ctx.schema_sig->atttypmods[i] = attr->atttypmod;
 	}
 	
 	elog(DEBUG1, "INSERT-EXEC: Captured schema signature for target table OID %u with %d columns",
-		 relid, insert_exec_schema_sig->natts);
+		 relid, insert_exec_ctx.schema_sig->natts);
 	
 	MemoryContextSwitchTo(oldcontext);
 	
@@ -617,7 +638,7 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 void
 pltsql_insert_exec_close_target_table(void)
 {
-	if (OidIsValid(insert_exec_target_rel_oid))
+	if (OidIsValid(insert_exec_ctx.target_rel_oid))
 	{
 		/*
 		 * Only release the lock if we're not in an aborted transaction state.
@@ -628,7 +649,7 @@ pltsql_insert_exec_close_target_table(void)
 			MemoryContext oldcontext = CurrentMemoryContext;
 			PG_TRY();
 			{
-				UnlockRelationOid(insert_exec_target_rel_oid, RowExclusiveLock);
+				UnlockRelationOid(insert_exec_ctx.target_rel_oid, RowExclusiveLock);
 			}
 			PG_CATCH();
 			{
@@ -639,22 +660,22 @@ pltsql_insert_exec_close_target_table(void)
 				MemoryContextSwitchTo(oldcontext);
 				FlushErrorState();
 				elog(DEBUG1, "INSERT-EXEC: Could not unlock target table OID %u, ignoring",
-					 insert_exec_target_rel_oid);
+					 insert_exec_ctx.target_rel_oid);
 			}
 			PG_END_TRY();
 		}
-		insert_exec_target_rel_oid = InvalidOid;
+		insert_exec_ctx.target_rel_oid = InvalidOid;
 	}
 	
 	/* Free the schema signature */
-	if (insert_exec_schema_sig != NULL)
+	if (insert_exec_ctx.schema_sig != NULL)
 	{
-		if (insert_exec_schema_sig->atttypids)
-			pfree(insert_exec_schema_sig->atttypids);
-		if (insert_exec_schema_sig->atttypmods)
-			pfree(insert_exec_schema_sig->atttypmods);
-		pfree(insert_exec_schema_sig);
-		insert_exec_schema_sig = NULL;
+		if (insert_exec_ctx.schema_sig->atttypids)
+			pfree(insert_exec_ctx.schema_sig->atttypids);
+		if (insert_exec_ctx.schema_sig->atttypmods)
+			pfree(insert_exec_ctx.schema_sig->atttypmods);
+		pfree(insert_exec_ctx.schema_sig);
+		insert_exec_ctx.schema_sig = NULL;
 	}
 }
 
@@ -679,7 +700,7 @@ pltsql_insert_exec_verify_schema(void)
 	MemoryContext oldcontext;
 	
 	/* If no schema signature was captured, skip the check */
-	if (insert_exec_schema_sig == NULL || !OidIsValid(insert_exec_target_rel_oid))
+	if (insert_exec_ctx.schema_sig == NULL || !OidIsValid(insert_exec_ctx.target_rel_oid))
 		return true;
 	
 	/*
@@ -690,7 +711,7 @@ pltsql_insert_exec_verify_schema(void)
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
 	{
-		rel = table_open(insert_exec_target_rel_oid, NoLock);  /* Already have lock */
+		rel = table_open(insert_exec_ctx.target_rel_oid, NoLock);  /* Already have lock */
 	}
 	PG_CATCH();
 	{
@@ -701,7 +722,7 @@ pltsql_insert_exec_verify_schema(void)
 		MemoryContextSwitchTo(oldcontext);
 		FlushErrorState();
 		elog(DEBUG1, "INSERT-EXEC: Could not open target table OID %u for schema verification, skipping check",
-			 insert_exec_target_rel_oid);
+			 insert_exec_ctx.target_rel_oid);
 		return true;
 	}
 	PG_END_TRY();
@@ -709,10 +730,10 @@ pltsql_insert_exec_verify_schema(void)
 	tupdesc = RelationGetDescr(rel);
 	
 	/* Check if column count changed */
-	if (tupdesc->natts != insert_exec_schema_sig->natts)
+	if (tupdesc->natts != insert_exec_ctx.schema_sig->natts)
 	{
 		elog(DEBUG1, "INSERT-EXEC: Schema changed - column count: original=%d, current=%d",
-			 insert_exec_schema_sig->natts, tupdesc->natts);
+			 insert_exec_ctx.schema_sig->natts, tupdesc->natts);
 		schema_changed = true;
 	}
 	else
@@ -721,11 +742,11 @@ pltsql_insert_exec_verify_schema(void)
 		for (i = 0; i < tupdesc->natts; i++)
 		{
 			Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
-			if (attr->atttypid != insert_exec_schema_sig->atttypids[i] ||
-				attr->atttypmod != insert_exec_schema_sig->atttypmods[i])
+			if (attr->atttypid != insert_exec_ctx.schema_sig->atttypids[i] ||
+				attr->atttypmod != insert_exec_ctx.schema_sig->atttypmods[i])
 			{
 				elog(DEBUG1, "INSERT-EXEC: Schema changed - column %d type: original=%u, current=%u",
-					 i, insert_exec_schema_sig->atttypids[i], attr->atttypid);
+					 i, insert_exec_ctx.schema_sig->atttypids[i], attr->atttypid);
 				schema_changed = true;
 				break;
 			}
@@ -747,7 +768,7 @@ pltsql_insert_exec_verify_schema(void)
 bool
 pltsql_insert_exec_active(void)
 {
-	return (insert_exec_target_table != NULL);
+	return (insert_exec_ctx.target_table != NULL);
 }
 
 /*
@@ -758,7 +779,7 @@ pltsql_insert_exec_active(void)
 bool
 pltsql_insert_exec_flush_in_progress(void)
 {
-	return insert_exec_flush_in_progress;
+	return insert_exec_ctx.flush_in_progress;
 }
 
 /*
@@ -769,7 +790,7 @@ pltsql_insert_exec_flush_in_progress(void)
 int
 pltsql_get_insert_exec_base_tran_count(void)
 {
-	return insert_exec_base_tran_count;
+	return insert_exec_ctx.base_tran_count;
 }
 
 /*
@@ -778,7 +799,7 @@ pltsql_get_insert_exec_base_tran_count(void)
 Oid
 pltsql_get_insert_exec_temp_table_oid(void)
 {
-	return insert_exec_temp_table_oid;
+	return insert_exec_ctx.temp_table_oid;
 }
 
 /*
@@ -787,7 +808,7 @@ pltsql_get_insert_exec_temp_table_oid(void)
 const char *
 pltsql_get_insert_exec_target_table(void)
 {
-	return insert_exec_target_table;
+	return insert_exec_ctx.target_table;
 }
 
 /*
@@ -798,7 +819,7 @@ pltsql_get_insert_exec_target_table(void)
 Oid
 pltsql_get_insert_exec_target_rel_oid(void)
 {
-	return insert_exec_target_rel_oid;
+	return insert_exec_ctx.target_rel_oid;
 }
 
 /*
@@ -807,7 +828,7 @@ pltsql_get_insert_exec_target_rel_oid(void)
 const char *
 pltsql_get_insert_exec_column_list(void)
 {
-	return insert_exec_column_list;
+	return insert_exec_ctx.column_list;
 }
 
 /*
@@ -819,7 +840,7 @@ pltsql_insert_exec_in_trycatch(void)
 {
 	PLExecStateCallStack *cur;
 	
-	if (insert_exec_target_table == NULL)
+	if (insert_exec_ctx.target_table == NULL)
 		return false;
 	
 	/* Check the call stack for any active TRY-CATCH blocks */
@@ -862,7 +883,7 @@ pltsql_insert_exec_should_cleanup_on_trycatch(void)
 	PLExecStateCallStack *cur;
 	int current_depth = 0;
 	
-	if (insert_exec_target_table == NULL)
+	if (insert_exec_ctx.target_table == NULL)
 		return false;
 	
 	/* Get current call stack depth */
@@ -880,7 +901,7 @@ pltsql_insert_exec_should_cleanup_on_trycatch(void)
 	 * If current depth is equal to or less than INSERT EXEC depth, the
 	 * TRY-CATCH is at the same level or higher, so clean up.
 	 */
-	return current_depth <= insert_exec_call_stack_depth;
+	return current_depth <= insert_exec_ctx.call_stack_depth;
 }
 
 /*
@@ -895,8 +916,8 @@ pltsql_insert_exec_should_cleanup_on_trycatch(void)
 Oid
 pltsql_get_and_clear_insert_exec_temp_table_for_cleanup(void)
 {
-	Oid temp_oid = insert_exec_temp_table_oid;
-	insert_exec_temp_table_oid = InvalidOid;
+	Oid temp_oid = insert_exec_ctx.temp_table_oid;
+	insert_exec_ctx.temp_table_oid = InvalidOid;
 	return temp_oid;
 }
 
@@ -1261,7 +1282,6 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 {
 	StringInfoData create_stmt;
 	StringInfoData col_query;
-	StringInfoData drop_stmt;
 	int			rc;
 	Oid			temp_table_oid;
 	char		temp_table_name[NAMEDATALEN];
@@ -1272,26 +1292,30 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 	elog(DEBUG1, "INSERT-EXEC: create_insert_exec_temp_table called with target='%s'",
 		 target_table ? target_table : "NULL");
 
-	/* Generate unique temp table name using backend PID */
-	snprintf(temp_table_name, sizeof(temp_table_name),
-			 "#insert_exec_buf_%d", MyProcPid);
-
 	/*
-	 * Always try to drop any existing temp table with this name first.
-	 * This handles the case where a previous INSERT EXEC failed and couldn't
-	 * clean up its temp table (e.g., error during type coercion in insertexec_receive).
-	 * Using DROP TABLE IF EXISTS is safe and ensures we start with a clean slate.
+	 * Generate temp table name using backend PID.
+	 * We use PostgreSQL temp tables (not Babelfish temp tables with # prefix)
+	 * because they are more stable and don't have ENR-related issues.
+	 * The name pattern __insert_exec_buf_<pid> is unique enough that collision
+	 * with user tables is extremely unlikely. We use DROP TABLE IF EXISTS
+	 * to clean up any leftover table from a previous failed INSERT EXEC.
 	 */
-	initStringInfo(&drop_stmt);
-	appendStringInfo(&drop_stmt, "DROP TABLE IF EXISTS %s", temp_table_name);
-	rc = SPI_execute(drop_stmt.data, false, 0);
-	pfree(drop_stmt.data);
+	snprintf(temp_table_name, sizeof(temp_table_name),
+			 "__insert_exec_buf_%d", MyProcPid);
+
+	elog(DEBUG1, "INSERT-EXEC: Using temp table name: %s", temp_table_name);
+
+	/* Drop any existing temp table with this name (cleanup from previous failed INSERT EXEC) */
+	initStringInfo(&create_stmt);
+	appendStringInfo(&create_stmt, "DROP TABLE IF EXISTS %s", temp_table_name);
+	rc = SPI_execute(create_stmt.data, false, 0);
 	if (rc != SPI_OK_UTILITY)
 		elog(WARNING, "failed to drop existing INSERT EXEC temp table: %s",
 			 SPI_result_code_string(rc));
+	pfree(create_stmt.data);
 
-	/* Reset the pending drop flag since we just cleaned up */
-	insert_exec_pending_drop = false;
+	/* Reset the pending drop flag */
+	insert_exec_ctx.pending_drop = false;
 
 	/*
 	 * Parse schema and table name from target_table.
@@ -1688,7 +1712,7 @@ drop_insert_exec_temp_table(Oid temp_table_oid)
 
 	/* Get the table name from OID */
 	snprintf(temp_table_name, sizeof(temp_table_name),
-			 "#insert_exec_buf_%d", MyProcPid);
+			 "__insert_exec_buf_%d", MyProcPid);
 
 	initStringInfo(&drop_stmt);
 	appendStringInfo(&drop_stmt, "DROP TABLE IF EXISTS %s", temp_table_name);
@@ -1704,7 +1728,7 @@ drop_insert_exec_temp_table(Oid temp_table_oid)
 /*
  * Flush all rows from the temp table to the target table using global context.
  * This version is called from exec_stmt_exec when INSERT EXEC context is active.
- * It uses the global insert_exec_target_table and insert_exec_column_list.
+ * It uses the global insert_exec_ctx.target_table and insert_exec_ctx.column_list.
  *
  * CRITICAL: The flush is wrapped in its own subtransaction that commits
  * immediately. This ensures that if an error occurs AFTER INSERT EXEC completes
@@ -1764,7 +1788,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		saved_column_list = pstrdup(column_list);
 
 	snprintf(temp_table_name, sizeof(temp_table_name),
-			 "#insert_exec_buf_%d", MyProcPid);
+			 "__insert_exec_buf_%d", MyProcPid);
 
 	initStringInfo(&flush_query);
 	
@@ -1938,7 +1962,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	 * INSTEAD OF Trigger Support:
 	 * We temporarily clear the INSERT EXEC context before the flush INSERT
 	 * so that the INSERT behaves like a normal INSERT and fires INSTEAD OF
-	 * triggers properly. We set insert_exec_flush_in_progress to block
+	 * triggers properly. We set insert_exec_ctx.flush_in_progress to block
 	 * commit_stmt inside triggers during the flush.
 	 * We also use BeginCompositeTriggers/EndCompositeTriggers to ensure
 	 * trigger events are properly queued and fired.
@@ -1954,7 +1978,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		 * This ensures commit_stmt is still blocked inside triggers
 		 * even though pltsql_insert_exec_active() will return false.
 		 */
-		insert_exec_flush_in_progress = true;
+		insert_exec_ctx.flush_in_progress = true;
 		
 		/*
 		 * Temporarily clear just the target table pointer so that
@@ -1968,7 +1992,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		 * 
 		 * We save the pointer and restore it after the flush.
 		 */
-		insert_exec_target_table = NULL;
+		insert_exec_ctx.target_table = NULL;
 		
 		/*
 		 * Open a composite trigger nesting level to properly handle
@@ -2027,14 +2051,14 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		composite_triggers_started = false;
 		
 		/* Clear the flush flag after successful flush */
-		insert_exec_flush_in_progress = false;
+		insert_exec_ctx.flush_in_progress = false;
 		
 		/*
 		 * Restore the target table pointer. This is needed because after
 		 * the flush, the caller will call pltsql_clear_insert_exec_context()
-		 * which expects insert_exec_target_table to be set.
+		 * which expects insert_exec_ctx.target_table to be set.
 		 */
-		insert_exec_target_table = saved_target_table;
+		insert_exec_ctx.target_table = saved_target_table;
 		saved_target_table = NULL;  /* Don't free it, we're using it */
 
 		/* Commit the flush subtransaction - this "locks in" the data */
@@ -2055,10 +2079,10 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		}
 		
 		/* Clear the flush flag on error */
-		insert_exec_flush_in_progress = false;
+		insert_exec_ctx.flush_in_progress = false;
 		
 		/* Restore the target table pointer on error */
-		insert_exec_target_table = saved_target_table;
+		insert_exec_ctx.target_table = saved_target_table;
 		saved_target_table = NULL;  /* Don't free it, we're using it */
 		
 		/*

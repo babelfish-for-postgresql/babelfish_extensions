@@ -1172,8 +1172,6 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_tsql_select_assign_stmt; /* T-SQL SELECT-assign (i.e.
 											 * SELECT @a=1) */
 	bool		insert_exec;	/* INSERT-EXEC stmt? */
-	char	   *insert_exec_target;	/* Target table for INSERT-EXEC */
-	char	   *insert_exec_columns;	/* Column list for INSERT-EXEC */
 	bool		is_cross_db;	/* cross database reference */
 	bool		is_ddl;			/* DDL statement? */
 	char	   *schema_name;	/* Schema specified */

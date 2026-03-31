@@ -5143,8 +5143,6 @@ makeExecSql(ParserRuleContext *ctx)
 	stmt->need_to_push_result = false;
 	stmt->is_tsql_select_assign_stmt = false;
 	stmt->insert_exec = false;
-	stmt->insert_exec_target = NULL;
-	stmt->insert_exec_columns = NULL;
 
 	return (PLtsql_stmt *) stmt;
 }
@@ -6209,8 +6207,6 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			stmt->need_to_push_result = false;
 			stmt->is_tsql_select_assign_stmt = false;
 			stmt->insert_exec = false;
-			stmt->insert_exec_target = NULL;
-			stmt->insert_exec_columns = NULL;
 
 			attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
 			return (PLtsql_stmt *) stmt;
@@ -6265,8 +6261,6 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 				stmt->need_to_push_result = false;
 				stmt->is_tsql_select_assign_stmt = false;
 				stmt->insert_exec = false;
-				stmt->insert_exec_target = NULL;
-				stmt->insert_exec_columns = NULL;
 
 				attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
 				return (PLtsql_stmt *) stmt;
