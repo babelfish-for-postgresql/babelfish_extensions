@@ -23,38 +23,76 @@
 
 #include "tsql_for.h"
 
+/* State structure for FOR XML AUTO */
+typedef struct forxml_auto_state
+{
+	/* Metadata cache - populated on first row */
+	bool			metadata_cached;
+	int				num_columns;
+	int			   *nest_levels;		/* nest_levels[i] = level for column i */
+	char		  **table_aliases;		/* table_aliases[i] = table name for column i */
+	char		  **column_names;		/* column_names[i] = original col name */
+
+	/* State for XML generation */
+	int				max_depth;			/* Maximum nesting depth seen */
+	char		  **prev_values;		/* Previous row values for comparison */
+	int			   *open_element_levels; /* Track which levels have open elements */
+	bool			first_row;			/* Is this the first row? */
+	bool			has_root;			/* Is there a ROOT wrapper? */
+} forxml_auto_state;
+
+/*
+ * Wrapper struct for FOR XML aggregate state.
+ * Holds both the XML output buffer and AUTO mode state.
+ */
+typedef struct forxml_state
+{
+	StringInfo			xml_output;		/* Accumulated XML output */
+	forxml_auto_state  *auto_state;		/* AUTO mode state, NULL for other modes */
+} forxml_state;
+
 static StringInfo for_xml_ffunc(PG_FUNCTION_ARGS);
 static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil);
 static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil);
+static void tsql_row_to_xml_auto(StringInfo state, Datum record, bool binary_base64, bool elements, bool xsinil, forxml_auto_state *auto_state);
 static void update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, bool binary_base64, int i);
+
+/* Helper functions for XML AUTO */
+static void xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str, int num_cols);
+static char* xml_auto_get_column_value_as_string(HeapTuple tuple, TupleDesc tupdesc, int col_idx);
+static int find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc);
+static void close_elements_to_level(StringInfo state, forxml_auto_state *auto_state, int target_level);
+static void output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil);
+static bool validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tupdesc);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_xml_sfunc);
 
 Datum
 tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 {
+	forxml_state *fstate;
 	StringInfo	state;
 	Datum		record = PG_GETARG_DATUM(1);
 	int			mode = PG_GETARG_INT32(2);
 	char	   *element_name = PG_ARGISNULL(3) ? "row" : text_to_cstring(PG_GETARG_TEXT_PP(3));
 	bool		binary_base64 = PG_GETARG_BOOL(4);
-	bool 		elements = false;
-	bool 		xsinil = false;
+	bool		elements = false;
+	bool		xsinil = false;
 	char	   *root_name;
 
 	MemoryContext agg_context;
 	MemoryContext old_context;
 
 	/*
- 	* Backward compatibility: Check if ELEMENTS parameters are provided.
- 	* Old 6-argument version (deprecated_in_5_6_0): state, rec, mode, element_name, binary_base64, root_name
- 	* New 8-argument version (5.6.0+): adds elements, xsinil parameters
- 	*/
-	if (PG_NARGS() > 8)
+	 * Backward compatibility: Check if ELEMENTS parameters are provided.
+	 * Old 6-argument version (deprecated_in_5_6_0): state, rec, mode, element_name, binary_base64, root_name
+	 * New 9-argument version (5.6.0+): adds elements, xsinil, auto_metadata parameters
+	 */
+	if (PG_NARGS() > 9)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				 errmsg("too many arguments")));
-	
+
 	if (PG_NARGS() > 6)
 	{
 		elements = PG_GETARG_BOOL(6);
@@ -68,37 +106,87 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(0))
 	{
 		/* first time setup */
-		state = makeStringInfo();
+		fstate = (forxml_state *) palloc0(sizeof(forxml_state));
+		fstate->xml_output = makeStringInfo();
+		fstate->auto_state = NULL;
+		state = fstate->xml_output;
 		root_name = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(5));
 		if (root_name != NULL && strlen(root_name) > 0)
-
+		{
 			/*
-			 * we need to add an extra token to the beginning so that the
-			 * finalfunc knows there is a root element
+			 * We need to add an extra token to the beginning so that the
+			 * finalfunc knows there is a root element.
 			 */
-			appendStringInfo(state, "{<%s>", root_name);
+			if (xsinil)
+				appendStringInfo(state, "{<%s " XML_XMLNS_XSI ">", root_name);
+			else
+				appendStringInfo(state, "{<%s>", root_name);
+		}
+
+		/* For AUTO mode, initialize auto_state with metadata from parameter */
+		if (mode == TSQL_FORXML_AUTO && PG_NARGS() > 8 && !PG_ARGISNULL(8))
+		{
+			char *auto_metadata = text_to_cstring(PG_GETARG_TEXT_PP(8));
+			if (strlen(auto_metadata) > 0)
+			{
+				forxml_auto_state *auto_st = (forxml_auto_state *) palloc0(sizeof(forxml_auto_state));
+				auto_st->first_row = true;
+				auto_st->has_root = (root_name != NULL && strlen(root_name) > 0);
+				fstate->auto_state = auto_st;
+
+				/* Parse metadata now so it's ready for the first row */
+				{
+					HeapTupleHeader td = DatumGetHeapTupleHeader(record);
+					Oid tupType = HeapTupleHeaderGetTypeId(td);
+					int32 tupTypmod = HeapTupleHeaderGetTypMod(td);
+					TupleDesc tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+					xml_auto_parse_metadata(auto_st, auto_metadata, tupdesc->natts);
+					ReleaseTupleDesc(tupdesc);
+				}
+			}
+		}
 	}
 	else
 	{
-		state = (StringInfo) PG_GETARG_POINTER(0);
+		fstate = (forxml_state *) PG_GETARG_POINTER(0);
+		state = fstate->xml_output;
 	}
+
 	switch (mode)
 	{
 		case TSQL_FORXML_RAW:	/* FOR XML RAW */
 			tsql_row_to_xml_raw(state, record, element_name, binary_base64, elements, xsinil);
 			break;
-		case TSQL_FORXML_AUTO:
+		case TSQL_FORXML_AUTO:	/* FOR XML AUTO */
+			{
+				forxml_auto_state *auto_state = fstate->auto_state;
 
-			/*
-			 * TODO FOR XML AUTO: element_name should be set to relation name
-			 * of the attribute value being processed, but relation id/name is
-			 * not provided by aggregate functions. We need to make relation
-			 * id available in aggregate functions in order to support AUTO
-			 * mode.
-			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("AUTO mode is not supported")));
+				if (auto_state == NULL)
+				{
+					/* First row and no metadata from parameter - parse from arg */
+					char *auto_metadata = "";
+					if (PG_NARGS() > 8 && !PG_ARGISNULL(8))
+						auto_metadata = text_to_cstring(PG_GETARG_TEXT_PP(8));
+
+					auto_state = (forxml_auto_state *) palloc0(sizeof(forxml_auto_state));
+					auto_state->first_row = true;
+					fstate->auto_state = auto_state;
+
+					/* Parse metadata string if provided */
+					if (strlen(auto_metadata) > 0)
+					{
+						/* Count columns from record to know array sizes */
+						HeapTupleHeader td = DatumGetHeapTupleHeader(record);
+						Oid tupType = HeapTupleHeaderGetTypeId(td);
+						int32 tupTypmod = HeapTupleHeaderGetTypMod(td);
+						TupleDesc tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+						xml_auto_parse_metadata(auto_state, auto_metadata, tupdesc->natts);
+						ReleaseTupleDesc(tupdesc);
+					}
+				}
+
+				tsql_row_to_xml_auto(state, record, binary_base64, elements, xsinil, auto_state);
+			}
 			break;
 		case TSQL_FORXML_PATH:	/* FOR XML PATH */
 			tsql_row_to_xml_path(state, record, element_name, binary_base64, xsinil);
@@ -122,7 +210,7 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 
 	MemoryContextSwitchTo(old_context);
 
-	PG_RETURN_POINTER(state);
+	PG_RETURN_POINTER(fstate);
 }
 
 PG_FUNCTION_INFO_V1(tsql_query_to_xml_ffunc);
@@ -153,6 +241,7 @@ static StringInfo
 for_xml_ffunc(PG_FUNCTION_ARGS)
 {
 	StringInfo	res = makeStringInfo();
+	forxml_state *fstate;
 	char	   *state;
 
 	if (PG_ARGISNULL(0))
@@ -160,7 +249,15 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("unexpected null state in FOR XML processing")));
 
-	state = ((StringInfo) PG_GETARG_POINTER(0))->data;
+	fstate = (forxml_state *) PG_GETARG_POINTER(0);
+
+	/* Handle AUTO mode: close remaining open elements */
+	if (fstate->auto_state != NULL)
+	{
+		close_elements_to_level(fstate->xml_output, fstate->auto_state, 0);
+	}
+
+	state = fstate->xml_output->data;
 
 	if (state[0] == '{')		/* '{' indicates that root was specified, so
 								 * add the corresponding end tag */
@@ -171,7 +268,7 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 		 * cached regex compilation and proper memory management.
 		 */
 		text	   *state_text = cstring_to_text(state);
-		text	   *pattern_text = cstring_to_text("<([^\\/>]+)[\\/]*>");
+		text	   *pattern_text = cstring_to_text("<([^ />]+)[^>]*>");
 		Datum		root_tag_datum;
 		text	   *root_tag_text;
 		char	   *root_tag;
@@ -194,6 +291,13 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 
 		/* Copy state content (skip the '{' marker) and add closing tag */
 		appendStringInfoString(res, state + 1);
+
+		/* Trim root_tag at first space (handles XSINIL namespace in opening tag) */
+		{
+			char *space = strchr(root_tag, ' ');
+			if (space)
+				*space = '\0';
+		}
 		appendStringInfo(res, "</%s>", root_tag);
 	}
 	else
@@ -301,9 +405,9 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 
 /*
  * validate_attribute_centric_col_names_xml
- *	Check if the tupdesc has attribute-centric columns and if present 
- *	check the following - 
- *	1. all of them are present in the starting of attribute list before any non-attribute-centric column , 
+ *	Check if the tupdesc has attribute-centric columns and if present
+ *	check the following -
+ *	1. all of them are present in the starting of attribute list before any non-attribute-centric column,
  *	2. the element_name to be not NULL for tupdesc having attribute-centric columns.
  */
 static bool
@@ -451,10 +555,10 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 		else if (xsinil)
 		{
 			/*
-     		* XSINIL: Output NULL columns with xsi:nil="true".
-     		* Skip attribute-centric columns (prefixed with '@') as
-     		* xsi:nil is only valid on XML elements, not on attributes.
-     		*/
+			 * XSINIL: Output NULL columns with xsi:nil="true".
+			 * Skip attribute-centric columns (prefixed with '@') as
+			 * xsi:nil is only valid on XML elements, not on attributes.
+			 */
 			if (NameStr(att->attname)[0] != '@')
 			{
 				allnull = false;
@@ -576,4 +680,421 @@ update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_o
 			*datatype_oid = CSTRINGOID;
 		}
 	}
+}
+
+/*
+ * Unescape _x002E_ back to literal '.' in a string.
+ * The metadata uses escape_period=true to avoid dot delimiter collisions,
+ * but the source dialect outputs dots literally in XML names, so we reverse it.
+ */
+static char *
+unescape_period(const char *str)
+{
+	StringInfoData buf;
+	const char *p = str;
+
+	initStringInfo(&buf);
+	while (*p)
+	{
+		if (strncmp(p, "_x002E_", 7) == 0)
+		{
+			appendStringInfoChar(&buf, '.');
+			p += 7;
+		}
+		else
+		{
+			appendStringInfoChar(&buf, *p);
+			p++;
+		}
+	}
+	return buf.data;
+}
+
+/*
+ * Parse metadata string for XML AUTO mode.
+ * Format: "level.table.colname,level.table.colname,..."
+ * e.g. "1.c.CustomerID,1.c.Name,2.o.OrderID,2.o.Amount"
+ */
+static void
+xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str, int num_cols)
+{
+	char *str_copy;
+	char *token;
+	char *saveptr;
+	int col_idx = 0;
+
+	auto_state->num_columns = num_cols;
+	auto_state->nest_levels = (int *) palloc0(num_cols * sizeof(int));
+	auto_state->table_aliases = (char **) palloc0(num_cols * sizeof(char *));
+	auto_state->column_names = (char **) palloc0(num_cols * sizeof(char *));
+	auto_state->prev_values = (char **) palloc0(num_cols * sizeof(char *));
+	auto_state->max_depth = 0;
+
+	str_copy = pstrdup(metadata_str);
+
+	/* Parse comma-separated entries (names are pre-escaped, no commas in them) */
+	token = strtok_r(str_copy, ",", &saveptr);
+	while (token != NULL && col_idx < num_cols)
+	{
+		/* Each token is "level.table.colname" */
+		char *entry_copy = pstrdup(token);
+		char *dot1 = strchr(entry_copy, '.');
+		if (dot1 != NULL)
+		{
+			char *dot2 = strchr(dot1 + 1, '.');
+			if (dot2 != NULL)
+			{
+				*dot1 = '\0';
+				*dot2 = '\0';
+
+				auto_state->nest_levels[col_idx] = atoi(entry_copy);
+				auto_state->table_aliases[col_idx] = unescape_period(dot1 + 1);
+				auto_state->column_names[col_idx] = unescape_period(dot2 + 1);
+
+				if (auto_state->nest_levels[col_idx] > auto_state->max_depth)
+					auto_state->max_depth = auto_state->nest_levels[col_idx];
+			}
+		}
+		pfree(entry_copy);
+
+		col_idx++;
+		token = strtok_r(NULL, ",", &saveptr);
+	}
+
+	pfree(str_copy);
+
+	/* Allocate array to track open elements at each level */
+	auto_state->open_element_levels = (int *) palloc0((auto_state->max_depth + 1) * sizeof(int));
+
+	auto_state->metadata_cached = true;
+}
+
+/*
+ * Get column value as string for comparison.
+ * Returns a palloc'd copy of the string, or NULL if the column is null.
+ */
+static char*
+xml_auto_get_column_value_as_string(HeapTuple tuple, TupleDesc tupdesc, int col_idx)
+{
+	Datum colval;
+	bool isnull;
+	Form_pg_attribute att = TupleDescAttr(tupdesc, col_idx);
+	Oid datatype_oid = att->atttypid;
+
+	colval = heap_getattr(tuple, col_idx + 1, tupdesc, &isnull);
+	if (isnull)
+		return NULL;
+
+	return pstrdup(map_sql_value_to_xml_value(colval, datatype_oid, true));
+}
+
+/*
+ * Find the first nesting level where current row differs from previous row.
+ * Returns the level number where change first occurs.
+ * Returns max_depth+1 if nothing changed.
+ * Returns 1 if this is the first row.
+ */
+static int
+find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc)
+{
+	int i;
+	int first_change = auto_state->max_depth + 1;
+
+	if (auto_state->first_row)
+		return 1;
+
+	for (i = 0; i < auto_state->num_columns; i++)
+	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+		int level = auto_state->nest_levels[i];
+		char *curr_val;
+		char *prev_val;
+
+		if (att->attisdropped || level == 0)
+			continue;
+
+		curr_val = xml_auto_get_column_value_as_string(tuple, tupdesc, i);
+		prev_val = auto_state->prev_values[i];
+
+		if ((curr_val == NULL && prev_val != NULL) ||
+			(curr_val != NULL && prev_val == NULL) ||
+			(curr_val != NULL && prev_val != NULL && strcmp(curr_val, prev_val) != 0))
+		{
+			if (level < first_change)
+				first_change = level;
+		}
+
+		if (curr_val != NULL)
+			pfree(curr_val);
+	}
+
+	return first_change;
+}
+
+/*
+ * Close XML elements down to target_level (exclusive).
+ * If target_level = 0, close all open elements.
+ */
+static void
+close_elements_to_level(StringInfo state, forxml_auto_state *auto_state, int target_level)
+{
+	int level;
+
+	if (auto_state == NULL)
+		return;
+
+	for (level = auto_state->max_depth; level > target_level; level--)
+	{
+		if (auto_state->open_element_levels[level] > 0)
+		{
+			for (int i = 0; i < auto_state->num_columns; i++)
+			{
+				if (auto_state->nest_levels[i] == level && auto_state->table_aliases[i] != NULL)
+				{
+					appendStringInfo(state, "</%s>", auto_state->table_aliases[i]);
+					auto_state->open_element_levels[level] = 0;
+					break;
+				}
+			}
+		}
+	}
+
+	if (target_level > 0 && auto_state->open_element_levels[target_level] > 0)
+	{
+		for (int i = 0; i < auto_state->num_columns; i++)
+		{
+			if (auto_state->nest_levels[i] == target_level && auto_state->table_aliases[i] != NULL)
+			{
+				appendStringInfo(state, "</%s>", auto_state->table_aliases[i]);
+				auto_state->open_element_levels[target_level] = 0;
+				break;
+			}
+		}
+	}
+}
+
+/*
+ * Output XML for current row in AUTO mode.
+ *
+ * Algorithm:
+ * 1. Find the first level where values changed from previous row
+ * 2. Close open elements from deepest back to the changed level
+ * 3. For each level from changed level to max_depth:
+ *    a. Open element tag with table alias
+ *    b. Add all column attributes for that level
+ *    c. If this is the deepest level with columns in this row, self-close
+ *    d. Otherwise close the opening tag with ">" to allow children
+ * 4. Store current values for next row comparison
+ */
+static void
+output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil)
+{
+	int first_changed_level;
+	int deepest_level_in_row = 0;
+
+	/* Determine the deepest level that has columns in this row */
+	for (int i = 0; i < auto_state->num_columns; i++)
+	{
+		if (auto_state->nest_levels[i] > deepest_level_in_row)
+			deepest_level_in_row = auto_state->nest_levels[i];
+	}
+
+	/* Find where this row differs from previous */
+	first_changed_level = find_first_changed_level(auto_state, tuple, tupdesc);
+
+	/*
+	 * If no visible column changed (all values identical to previous row),
+	 * we still need to emit the deepest-level element again. The expected
+	 * behavior is one leaf element per input row regardless of duplicate values.
+	 */
+	if (!auto_state->first_row && first_changed_level > deepest_level_in_row)
+		first_changed_level = deepest_level_in_row;
+
+	/* Close elements that have changed */
+	if (!auto_state->first_row && first_changed_level <= auto_state->max_depth)
+	{
+		for (int level = auto_state->max_depth; level >= first_changed_level; level--)
+		{
+			if (auto_state->open_element_levels[level] > 0)
+			{
+				for (int j = 0; j < auto_state->num_columns; j++)
+				{
+					if (auto_state->nest_levels[j] == level && auto_state->table_aliases[j] != NULL)
+					{
+						appendStringInfo(state, "</%s>", auto_state->table_aliases[j]);
+						auto_state->open_element_levels[level] = 0;
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	/*
+	 * Always emit all levels down to deepest_level_in_row, even if all
+	 * columns at a level are NULL.  The expected behavior is to emit empty
+	 * self-closing elements for all-NULL levels (e.g. LEFT JOIN with no
+	 * matching rows still produces <o><i/></o> rather than skipping those
+	 * levels).
+	 */
+
+	/* Output elements for each level from first_changed_level to deepest */
+	for (int level = first_changed_level; level <= deepest_level_in_row; level++)
+	{
+		char *table_alias = NULL;
+		bool has_columns_at_level = false;
+
+		/* Find the table alias for this level */
+		for (int i = 0; i < auto_state->num_columns; i++)
+		{
+			if (auto_state->nest_levels[i] == level && auto_state->table_aliases[i] != NULL)
+			{
+				if (!has_columns_at_level)
+					table_alias = auto_state->table_aliases[i];
+				has_columns_at_level = true;
+			}
+		}
+
+		if (!has_columns_at_level || table_alias == NULL)
+			continue;
+
+		/* Open element tag */
+		if (elements && xsinil && !auto_state->has_root && level == 1)
+			appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", table_alias);
+		else if (elements)
+			appendStringInfo(state, "<%s>", table_alias);
+		else
+			appendStringInfo(state, "<%s", table_alias);
+
+		/* Add all columns for this level */
+		for (int i = 0; i < auto_state->num_columns; i++)
+		{
+			Datum colval;
+			bool isnull;
+			Oid datatype_oid;
+			Form_pg_attribute att;
+
+			if (auto_state->nest_levels[i] != level)
+				continue;
+
+			att = TupleDescAttr(tupdesc, i);
+			if (att->attisdropped)
+				continue;
+
+			colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
+			datatype_oid = att->atttypid;
+			update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, false, i);
+
+			if (elements)
+			{
+				/* ELEMENTS mode: <colname>value</colname> */
+				if (!isnull)
+				{
+					appendStringInfo(state, "<%s>%s</%s>",
+									auto_state->column_names[i],
+									map_sql_value_to_xml_value(colval, datatype_oid, true),
+									auto_state->column_names[i]);
+				}
+				else if (xsinil)
+				{
+					appendStringInfo(state, "<%s " XML_XSI_NIL "/>",
+									auto_state->column_names[i]);
+				}
+				/* else: ABSENT mode - skip NULL columns */
+			}
+			else
+			{
+				/* ATTRIBUTES mode: col="value" */
+				if (!isnull)
+				{
+					appendStringInfo(state, " %s=\"%s\"",
+									auto_state->column_names[i],
+									map_sql_value_to_xml_value(colval, datatype_oid, true));
+				}
+			}
+		}
+
+		/* Close or self-close the element tag */
+		if (elements)
+		{
+			/* In ELEMENTS mode, tag is already closed with ">", leave open for children or close */
+			if (level == deepest_level_in_row)
+				appendStringInfo(state, "</%s>", table_alias);
+			/* else: leave open for child elements */
+		}
+		else
+		{
+			/* In ATTRIBUTES mode, close the opening tag */
+			if (level == deepest_level_in_row)
+				appendStringInfoString(state, "/>");
+			else
+				appendStringInfoString(state, ">");
+		}
+
+		/* Mark this level as open */
+		auto_state->open_element_levels[level] = 1;
+	}
+
+	/* Store current values for next row comparison */
+	for (int i = 0; i < auto_state->num_columns; i++)
+	{
+		char *val;
+
+		if (auto_state->nest_levels[i] == 0)
+			continue;
+
+		val = xml_auto_get_column_value_as_string(tuple, tupdesc, i);
+
+		if (auto_state->prev_values[i] != NULL)
+			pfree(auto_state->prev_values[i]);
+		auto_state->prev_values[i] = val;
+	}
+
+	/* The deepest output level was self-closed, so mark it as not open */
+	if (deepest_level_in_row > 0)
+		auto_state->open_element_levels[deepest_level_in_row] = 0;
+
+	auto_state->first_row = false;
+}
+
+/*
+ * Map an SQL row to XML in AUTO mode.
+ *
+ * Metadata is passed via the auto_metadata parameter (9th arg to aggregate).
+ * Format: "level.table.colname,level.table.colname,..."
+ * Column names stay original (not encoded).
+ */
+static void
+tsql_row_to_xml_auto(StringInfo state, Datum record, bool binary_base64, bool elements, bool xsinil, forxml_auto_state *auto_state)
+{
+	HeapTupleHeader td;
+	Oid tupType;
+	int32 tupTypmod;
+	TupleDesc tupdesc;
+	HeapTupleData tmptup;
+	HeapTuple tuple;
+
+	td = DatumGetHeapTupleHeader(record);
+
+	tupType = HeapTupleHeaderGetTypeId(td);
+	tupTypmod = HeapTupleHeaderGetTypMod(td);
+	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+
+	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+	tmptup.t_data = td;
+	tuple = &tmptup;
+
+	/* First row: parse metadata if not already done */
+	if (!auto_state->metadata_cached)
+	{
+		/* Metadata should have been parsed in sfunc init; if not, error */
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("FOR XML AUTO metadata not initialized")));
+	}
+
+	/* Generate hierarchical XML output */
+	output_row_xml(state, auto_state, tuple, tupdesc, elements, xsinil);
+
+	ReleaseTupleDesc(tupdesc);
 }

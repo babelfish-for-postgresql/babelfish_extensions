@@ -3274,7 +3274,6 @@ tsql_for_xml_clause:
 			| TSQL_FOR XML_P TSQL_AUTO tsql_xml_common_directives
 			{
 				TSQL_ForClause *n = (TSQL_ForClause *) palloc(sizeof(TSQL_ForClause));
-				TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_XML_OPTION_AUTO);
 				n->mode = TSQL_FORXML_AUTO;
 				n->elementName = NULL;
 				n->commonDirectives = $4;

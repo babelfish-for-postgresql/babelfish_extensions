@@ -80,6 +80,7 @@
 #include "utils/varlena.h"
 #include "utils/guc.h"
 #include "utils/hsearch.h"
+#include "utils/xml.h"
 
 #include "common/hashfn.h"
 
@@ -229,6 +230,20 @@ static bool jsonAutoWalker(Node *node, JsonAutoContext *jsonAutoCtx);
 static TargetEntry* buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te);
 static char *string_to_fixed_hash(const char *input);
 static void modifyColumnEntries(Query *origQuery, Alias *wrapperRteAlias, JsonAutoContext *jsonAutoCtx);
+
+/* FOR XML AUTO support */
+typedef struct XmlAutoContext
+{
+	List *cteList;
+	HTAB *ctenameIdxHash;
+} XmlAutoContext;
+
+static bool handleForXmlAuto(Query *query, XmlAutoContext *xmlAutoCtx);
+static bool isXmlAuto(List* target);
+void checkForXmlAuto(Query *query);
+static bool xmlAutoWalker(Node *node, XmlAutoContext *xmlAutoCtx);
+static void buildXmlAutoMetadata(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias, XmlAutoContext *xmlAutoCtx);
+extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_concat_null_yields_null;
@@ -1133,6 +1148,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 
 	(void) mark_outside_view((Query*) query);
 	checkForJsonAuto(query);
+	checkForXmlAuto(query);
 
 	if (query->commandType == CMD_INSERT)
 	{
@@ -2052,6 +2068,572 @@ static bool jsonAutoWalker(Node *node, JsonAutoContext *jsonAutoCtx)
 		return handleForJsonAuto((Query*) node, jsonAutoCtx);
 	}
 	return expression_tree_walker(node, jsonAutoWalker, (void *) jsonAutoCtx);
+}
+
+/*
+ * ============================================================================
+ * FOR XML AUTO support functions
+ * ============================================================================
+ */
+
+/*
+ * isXmlAuto - Check if a target list represents a FOR XML AUTO query
+ *
+ * The wrapper query has a target entry named "xml" containing a FuncExpr
+ * wrapping an Aggref. The Aggref's 3rd argument (index 2) is the mode,
+ * which is TSQL_FORXML_AUTO (value 1).
+ */
+static bool
+isXmlAuto(List* target)
+{
+	if (target != NULL && list_length(target) > 0)
+	{
+		ListCell *lc = list_nth_cell(target, 0);
+		if (lc != NULL && nodeTag(lfirst(lc)) == T_TargetEntry)
+		{
+			TargetEntry *te = lfirst_node(TargetEntry, lc);
+			if (te && te->resname && strcmp(te->resname, "xml") == 0 && te->expr != NULL && nodeTag(te->expr) == T_FuncExpr)
+			{
+				List *args = ((FuncExpr *) te->expr)->args;
+				if (args != NULL && list_length(args) > 0)
+				{
+					Node *firstArg = linitial(args);
+					if (nodeTag(firstArg) == T_Aggref)
+					{
+						Aggref *agg = (Aggref *) firstArg;
+						List *aggargs = agg->args;
+						if (aggargs != NULL && list_length(aggargs) > 1 && nodeTag(lsecond(aggargs)) == T_TargetEntry)
+						{
+							TargetEntry *te2 = lsecond_node(TargetEntry, aggargs);
+							if (te2->expr != NULL && nodeTag(te2->expr) == T_Const)
+							{
+								Const *c = (Const *) te2->expr;
+								if (c->constvalue == 1) /* TSQL_FORXML_AUTO */
+									return true;
+							}
+						}
+					}
+					else if (nodeTag(firstArg) == T_FuncExpr)
+					{
+						/* The aggregate might be nested inside another FuncExpr (e.g. type coercion) */
+						FuncExpr *innerFunc = (FuncExpr *) firstArg;
+						List *innerArgs = innerFunc->args;
+						if (innerArgs != NULL && list_length(innerArgs) > 0)
+						{
+							Node *innerFirst = linitial(innerArgs);
+							if (nodeTag(innerFirst) == T_Aggref)
+							{
+								Aggref *agg = (Aggref *) innerFirst;
+								List *aggargs = agg->args;
+								if (aggargs != NULL && list_length(aggargs) > 1 && nodeTag(lsecond(aggargs)) == T_TargetEntry)
+								{
+									TargetEntry *te2 = lsecond_node(TargetEntry, aggargs);
+									if (te2->expr != NULL && nodeTag(te2->expr) == T_Const)
+									{
+										Const *c = (Const *) te2->expr;
+										if (c->constvalue == 1) /* TSQL_FORXML_AUTO */
+											return true;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return false;
+}
+
+/*
+ * handleForXmlAuto - Process FOR XML AUTO queries
+ *
+ * Similar to handleForJsonAuto but for XML AUTO mode.
+ * Instead of renaming columns, builds a metadata string and injects it
+ * into the aggregate's 9th argument (auto_metadata Const node).
+ */
+static bool
+handleForXmlAuto(Query *wrapperQuery, XmlAutoContext *xmlAutoCtx)
+{
+	Query			   *origQuery;
+	List			   *wrapperTarget = wrapperQuery->targetList;
+	List			   *wrapperRtable;
+	List			   *origqRtable;
+	ListCell		   *lc;
+	Alias			   *wrapperRteAlias;
+	RangeTblEntry	   *wrapperRte = NULL;
+	bool				hasValidSrc = false;
+
+	if (!isXmlAuto(wrapperTarget))
+		return false;
+
+	wrapperRtable = (List *) wrapperQuery->rtable;
+	if (wrapperRtable != NULL && list_length(wrapperRtable) > 0)
+		wrapperRte = linitial_node(RangeTblEntry, wrapperRtable);
+
+	Assert(wrapperRtable != NULL && wrapperRte != NULL);
+
+	wrapperRteAlias = (Alias *)wrapperRte->eref;
+	origQuery = wrapperRte->subquery;
+	Assert(origQuery != NULL);
+
+	/* Count valid sources in original query */
+	origqRtable = (List *)origQuery->rtable;
+	if (origqRtable != NULL && list_length(origqRtable) > 0)
+	{
+		foreach(lc, origqRtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+			if (rte->rtekind == RTE_RELATION || rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE)
+			{
+				hasValidSrc = true;
+				break;
+			}
+			else if (rte->rtekind == RTE_FUNCTION)
+			{
+				RangeTblFunction	   *rteFunc;
+				FuncExpr			   *funcExpr;
+				HeapTuple				procTuple;
+				Form_pg_proc			procForm;
+				bool					isSystemFunction = false;
+				Oid						funcId;
+				Oid						sysNamespaceOid;
+
+				if (rte->functions && list_length(rte->functions) > 0)
+				{
+					rteFunc = (RangeTblFunction *) linitial(rte->functions);
+					funcExpr = (FuncExpr *) rteFunc->funcexpr;
+					funcId = funcExpr->funcid;
+
+					procTuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcId));
+					if (HeapTupleIsValid(procTuple))
+					{
+						procForm = (Form_pg_proc) GETSTRUCT(procTuple);
+						sysNamespaceOid = get_namespace_oid("sys", true);
+						if (procForm->pronamespace == PG_CATALOG_NAMESPACE ||
+							(OidIsValid(sysNamespaceOid) && procForm->pronamespace == sysNamespaceOid))
+							isSystemFunction = true;
+						ReleaseSysCache(procTuple);
+
+						if (!isSystemFunction)
+						{
+							hasValidSrc = true;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (hasValidSrc)
+		buildXmlAutoMetadata(wrapperQuery, origQuery, wrapperRteAlias, xmlAutoCtx);
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				errmsg("FOR XML AUTO requires at least one table for "
+					"generating XML elements. Use FOR XML PATH or add a FROM"
+					" clause with a table name.")));
+
+	return true;
+}
+
+/*
+ * buildXmlAutoMetadata - Build metadata string for XML AUTO columns
+ *
+ * Instead of renaming columns (like JSON AUTO does), this builds a metadata
+ * string like "1.c.CustomerID,1.c.Name,2.o.OrderID" and injects it into
+ * the aggregate's 9th argument (auto_metadata Const node).
+ */
+static void
+buildXmlAutoMetadata(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias, XmlAutoContext *xmlAutoCtx)
+{
+	/* Nesting variables */
+	char			   *curMaxUsedKey = "temp";
+	int					curMaxUsedLevel = 1;
+	bool				nestingLevel1Used = false;
+	char			   *recursiveCTEFallbackAlias = NULL;
+
+	int					targetIterIdx = 0;
+
+	/* CTE processing variables */
+	HTAB			   *ctenameIdxHash = xmlAutoCtx->ctenameIdxHash;
+	ListCell		   *cteLc;
+	CommonTableExpr	   *cteEntry;
+	CtenameIdx		   *cteHashEntry;
+	List			   *cteList = xmlAutoCtx->cteList;
+	HASHCTL				cteHashCtl;
+	int					cteIdx = 0;
+
+	/* Alias-to-level mapping variables */
+	HTAB			   *RTEAliasNestHash;
+	RTEAliasEntry	   *rteHashEntry;
+	HASHCTL				rteXMLHashCtl;
+	bool				found;
+
+	/* Target entry iteration */
+	List			   *origTargetList = origQuery->targetList;
+	ListCell		   *lc;
+
+	/* Metadata string builder */
+	StringInfoData		metadataStr;
+
+	/* Aggref for injecting metadata */
+	TargetEntry		   *wrapperTe;
+	FuncExpr		   *wrapperFunc;
+	Aggref			   *agg;
+	TargetEntry		   *metadataArgTe;
+	Const			   *metadataConst;
+
+	initStringInfo(&metadataStr);
+
+	/* Initialize CTE hash if needed */
+	if (ctenameIdxHash == NULL && cteList != NULL)
+	{
+		memset(&cteHashCtl, 0, sizeof(cteHashCtl));
+		cteHashCtl.keysize = NAMEDATALEN;
+		cteHashCtl.entrysize = sizeof(CtenameIdx);
+		cteHashCtl.hcxt = CurrentMemoryContext;
+		ctenameIdxHash = hash_create("ctenameIdxHash",
+									 FORJSON_INITIAL_HASH_SIZE,
+									 &cteHashCtl,
+									 HASH_ELEM | HASH_STRINGS);
+
+		foreach(cteLc, cteList)
+		{
+			cteEntry = (CommonTableExpr *) lfirst(cteLc);
+			cteHashEntry = (CtenameIdx *) hash_search(ctenameIdxHash,
+													  cteEntry->ctename,
+													  HASH_ENTER,
+													  &found);
+			Assert(!found);
+			strcpy(cteHashEntry->ctename, cteEntry->ctename);
+			cteHashEntry->idx_in_ctelist = cteIdx;
+			cteIdx++;
+		}
+	}
+
+	/* Initialize RTE alias-to-nesting-level hash table */
+	memset(&rteXMLHashCtl, 0, sizeof(rteXMLHashCtl));
+	rteXMLHashCtl.keysize = NAMEDATALEN;
+	rteXMLHashCtl.entrysize = sizeof(RTEAliasEntry);
+	rteXMLHashCtl.hcxt = CurrentMemoryContext;
+	RTEAliasNestHash = hash_create("RTEAliasNestHash",
+								   FORJSON_INITIAL_HASH_SIZE,
+								   &rteXMLHashCtl,
+								   HASH_ELEM | HASH_STRINGS);
+
+	/*
+	 * Pre-scan: find the first base table (RTE_RELATION) alias in the
+	 * original query. Used as fallback for recursive CTE columns when
+	 * joined with base tables.
+	 */
+	{
+		ListCell *preLc;
+		foreach(preLc, origQuery->rtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(preLc);
+			if (rte->rtekind == RTE_RELATION)
+			{
+				recursiveCTEFallbackAlias = rte->eref->aliasname;
+				break;
+			}
+		}
+	}
+
+	/* Process each target entry to determine nesting structure */
+	foreach(lc, origTargetList)
+	{
+		TargetEntry		   *outermostTargetEntry;
+		TargetEntry		   *curTargetEntry;
+		RangeTblEntry	   *matchedSrc = NULL;
+		char			   *matchedSrcAlias;
+		char			   *hashedFullSrcPath;
+		Query			   *curQuery;
+		StringInfoData		fullSrcPath;
+		bool				matchedSrcCTEIsRecursive = false;
+		bool				atOutermostLayer = true;
+
+		Var				   *curVar = NULL;
+		int					varNo;
+		int					varLevelsUp;
+		int					varAttNo;
+
+		int					assignedLevel;
+		char			   *assignedAlias;
+
+		initStringInfo(&fullSrcPath);
+
+		if (!lc || !lfirst(lc))
+			continue;
+
+		outermostTargetEntry = castNode(TargetEntry, lfirst(lc));
+
+		if (outermostTargetEntry->resjunk)
+			continue;
+
+		if (outermostTargetEntry->expr == NULL)
+			continue;
+
+		/* Set up initial state for recursive unwrapping */
+		curTargetEntry = outermostTargetEntry;
+		curQuery = origQuery;
+		atOutermostLayer = true;
+		matchedSrcCTEIsRecursive = false;
+
+		/* Recursively unwrap CTE/subquery chains to find ultimate source */
+		while (nodeTag(curTargetEntry->expr) == T_Var)
+		{
+			curVar = castNode(Var, curTargetEntry->expr);
+			varNo = curVar->varno;
+			varAttNo = curVar->varattno;
+			matchedSrc = list_nth(curQuery->rtable, varNo - 1);
+
+			if (fullSrcPath.len != 0)
+				appendStringInfo(&fullSrcPath, ".");
+			appendStringInfo(&fullSrcPath, "%s", matchedSrc->eref->aliasname);
+
+			if (matchedSrc->rtekind == RTE_CTE && (matchedSrc->alias != NULL || !atOutermostLayer))
+			{
+				cteHashEntry = (CtenameIdx *) hash_search(ctenameIdxHash,
+														  matchedSrc->ctename,
+														  HASH_FIND,
+														  &found);
+				Assert(found);
+				cteEntry = (CommonTableExpr *) list_nth(cteList, cteHashEntry->idx_in_ctelist);
+				if (cteEntry->cterecursive)
+				{
+					matchedSrcCTEIsRecursive = true;
+
+					/*
+					 * Look for a base table sibling in the current query's
+					 * rtable. When a recursive CTE is joined with a base
+					 * table inside a wrapper CTE, we prefer the base table
+					 * alias as the element name.
+					 */
+					{
+						ListCell *sibLc;
+						foreach(sibLc, curQuery->rtable)
+						{
+							RangeTblEntry *sibRte = (RangeTblEntry *) lfirst(sibLc);
+							if (sibRte->rtekind == RTE_RELATION)
+							{
+								recursiveCTEFallbackAlias = sibRte->eref->aliasname;
+								break;
+							}
+						}
+					}
+
+					break;
+				}
+				curQuery = castNode(Query, cteEntry->ctequery);
+				curTargetEntry = (TargetEntry *) list_nth(curQuery->targetList, varAttNo - 1);
+			}
+			else if (!atOutermostLayer && matchedSrc->rtekind == RTE_SUBQUERY)
+			{
+				curQuery = matchedSrc->subquery;
+				curTargetEntry = (TargetEntry *) list_nth(curQuery->targetList, varAttNo - 1);
+			}
+			else
+				break;
+
+			if (atOutermostLayer)
+				atOutermostLayer = false;
+		}
+
+		/* Determine nesting level and alias for this column */
+		assignedLevel = curMaxUsedLevel;
+		assignedAlias = curMaxUsedKey;
+
+		if (nodeTag(curTargetEntry->expr) == T_Var)
+		{
+			varLevelsUp = curVar->varlevelsup;
+
+			if (varLevelsUp > 0 ||
+				(matchedSrc->rtekind == RTE_CTE && matchedSrcCTEIsRecursive))
+			{
+				assignedLevel = curMaxUsedLevel;
+				if (matchedSrc->rtekind == RTE_CTE && matchedSrcCTEIsRecursive)
+					assignedAlias = recursiveCTEFallbackAlias ? recursiveCTEFallbackAlias : matchedSrc->eref->aliasname;
+				else
+					assignedAlias = curMaxUsedKey;
+			}
+			else
+			{
+				hashedFullSrcPath = string_to_fixed_hash(fullSrcPath.data);
+				matchedSrcAlias = matchedSrc->eref->aliasname;
+
+				rteHashEntry = (RTEAliasEntry *)hash_search(RTEAliasNestHash,
+															hashedFullSrcPath,
+															HASH_FIND,
+															&found);
+				if (found)
+				{
+					assignedLevel = rteHashEntry->json_nest_level;
+					assignedAlias = matchedSrcAlias;
+				}
+				else
+				{
+					if (curMaxUsedLevel == 1 && !nestingLevel1Used)
+						nestingLevel1Used = true;
+					else
+						curMaxUsedLevel++;
+					curMaxUsedKey = matchedSrcAlias;
+
+					rteHashEntry = (RTEAliasEntry *)hash_search(RTEAliasNestHash,
+																hashedFullSrcPath,
+																HASH_ENTER,
+																&found);
+					Assert(!found);
+					strcpy(rteHashEntry->alias_name, hashedFullSrcPath);
+					rteHashEntry->json_nest_level = curMaxUsedLevel;
+
+					assignedLevel = curMaxUsedLevel;
+					assignedAlias = matchedSrcAlias;
+				}
+				pfree(hashedFullSrcPath);
+			}
+		}
+
+		/* Get the original column name, resolving bbf_original_name for long names */
+		{
+			char *colname = outermostTargetEntry->resname;
+			if (colname == NULL || !strcmp(colname, "\?column\?"))
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("column expressions and data sources without names or aliases cannot be formatted as XML text using FOR XML clause. Add alias to the unnamed column or table")));
+			}
+
+			/*
+			 * If the column comes from a base table and the user did NOT
+			 * provide a column alias, look up the original (un-truncated)
+			 * name from pg_attribute.attoptions.  Babelfish stores it as
+			 * bbf_original_name=<name> when the identifier exceeds
+			 * NAMEDATALEN and gets MD5-hashed.
+			 *
+			 * We detect "no alias" by checking if resname matches the
+			 * lowercased base column name (attname).  If they differ,
+			 * the user provided an alias and we should use it as-is.
+			 */
+			if (matchedSrc != NULL && matchedSrc->rtekind == RTE_RELATION &&
+				curVar != NULL && curVar->varattno > 0)
+			{
+				HeapTuple	attTuple;
+
+				attTuple = SearchSysCache2(ATTNUM,
+										   ObjectIdGetDatum(matchedSrc->relid),
+										   Int16GetDatum(curVar->varattno));
+				if (HeapTupleIsValid(attTuple))
+				{
+					Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(attTuple);
+					char *baseColName = NameStr(att->attname);
+
+					/* Only use bbf_original_name if user didn't provide an alias */
+					if (pg_strcasecmp(colname, baseColName) == 0)
+					{
+						Datum		attOptDatum;
+						bool		attOptIsNull;
+
+						attOptDatum = SysCacheGetAttr(ATTNUM, attTuple,
+													  Anum_pg_attribute_attoptions,
+													  &attOptIsNull);
+						if (!attOptIsNull)
+						{
+							ArrayType  *attoptions = DatumGetArrayTypeP(attOptDatum);
+							char	   *origName = get_value_by_name_from_array(
+								attoptions, ATTOPTION_BBF_ORIGINAL_NAME);
+							if (origName != NULL)
+								colname = origName;
+						}
+					}
+					ReleaseSysCache(attTuple);
+				}
+			}
+
+			/* Escape alias and column name for XML (_xHHHH_ encoding).
+			 * Use escape_period=true so dots become _x002E_ in metadata,
+			 * preventing collision with the dot field separator. */
+			{
+				char *escapedAlias = map_sql_identifier_to_xml_name(assignedAlias, true, true);
+				char *escapedColname = map_sql_identifier_to_xml_name(colname, true, true);
+
+				if (metadataStr.len > 0)
+					appendStringInfoChar(&metadataStr, ',');
+				appendStringInfo(&metadataStr, "%d.%s.%s", assignedLevel, escapedAlias, escapedColname);
+			}
+		}
+
+		targetIterIdx++;
+	}
+
+	/* Now inject the metadata string into the aggregate's 8th argument.
+	 *
+	 * The wrapperQuery's targetList has the aggregate call:
+	 * wrapperTarget[0] -> TargetEntry -> FuncExpr -> args[0] -> Aggref
+	 * The Aggref's args list has auto_metadata as the 8th entry (index 7).
+	 */
+	{
+		List *wTarget = wrapperQuery->targetList;
+		wrapperTe = linitial_node(TargetEntry, wTarget);
+		wrapperFunc = (FuncExpr *) wrapperTe->expr;
+		agg = linitial_node(Aggref, wrapperFunc->args);
+
+		if (list_length(agg->args) >= 8)
+		{
+			metadataArgTe = (TargetEntry *) list_nth(agg->args, 7);
+			metadataConst = (Const *) metadataArgTe->expr;
+
+			/* Replace the empty string with our metadata */
+			metadataConst->constvalue = CStringGetTextDatum(metadataStr.data);
+			metadataConst->constisnull = false;
+		}
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("FOR XML AUTO: unexpected aggregate argument count %d, expected >= 8",
+							list_length(agg->args))));
+		}
+	}
+
+	/* Cleanup */
+	hash_destroy(RTEAliasNestHash);
+}
+
+void checkForXmlAuto(Query *query)
+{
+	XmlAutoContext *xmlAutoCtx;
+	if (query == NULL) return;
+
+	xmlAutoCtx = (XmlAutoContext *) palloc(sizeof(XmlAutoContext));
+	xmlAutoCtx->cteList = NULL;
+	xmlAutoCtx->ctenameIdxHash = NULL;
+
+	xmlAutoWalker((Node *)query, xmlAutoCtx);
+
+	hash_destroy(xmlAutoCtx->ctenameIdxHash);
+	pfree(xmlAutoCtx);
+	return;
+}
+
+static bool xmlAutoWalker(Node *node, XmlAutoContext *xmlAutoCtx)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Query)) {
+		Query *q = (Query *)node;
+
+		if (q->cteList != NULL)
+			xmlAutoCtx->cteList = q->cteList;
+
+		/* First walk inner queries recursively */
+		query_tree_walker(q, xmlAutoWalker, (void *) xmlAutoCtx, 0);
+
+		/* Then check if this layer has FOR XML AUTO and handle it */
+		return handleForXmlAuto(q, xmlAutoCtx);
+	}
+	return expression_tree_walker(node, xmlAutoWalker, (void *) xmlAutoCtx);
 }
 
 static bool
