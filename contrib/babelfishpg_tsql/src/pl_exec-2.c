@@ -65,6 +65,8 @@ clean_format_type_string(const char *coltype)
 	
 	result = pstrdup(coltype);
 	
+	elog(DEBUG1, "INSERT-EXEC: clean_format_type_string input: '%s'", result);
+	
 	/* Strip " without time zone" suffix if present */
 	suffix_pos = strstr(result, " without time zone");
 	if (suffix_pos != NULL)
@@ -74,6 +76,39 @@ clean_format_type_string(const char *coltype)
 	suffix_pos = strstr(result, " with time zone");
 	if (suffix_pos != NULL)
 		*suffix_pos = '\0';
+	
+	/*
+	 * Handle VARCHAR(MAX), NVARCHAR(MAX), and VARBINARY(MAX).
+	 * When format_type() returns "sys.varchar", "sys.nvarchar", or "sys.varbinary"
+	 * without a length modifier (no parentheses), it means the type is (MAX).
+	 * We need to append "(max)" for the CREATE TABLE statement.
+	 * 
+	 * Note: format_type() may return:
+	 * - Qualified names: sys.varchar, sys."varchar"
+	 * - Unqualified names: varchar, "varchar" (when sys is in search_path)
+	 * The quoted versions appear because varchar/nvarchar are reserved words.
+	 */
+	if (strchr(result, '(') == NULL &&
+		(strcmp(result, "sys.varchar") == 0 ||
+		 strcmp(result, "sys.\"varchar\"") == 0 ||
+		 strcmp(result, "varchar") == 0 ||
+		 strcmp(result, "\"varchar\"") == 0 ||
+		 strcmp(result, "sys.nvarchar") == 0 ||
+		 strcmp(result, "sys.\"nvarchar\"") == 0 ||
+		 strcmp(result, "nvarchar") == 0 ||
+		 strcmp(result, "\"nvarchar\"") == 0 ||
+		 strcmp(result, "sys.varbinary") == 0 ||
+		 strcmp(result, "sys.\"varbinary\"") == 0 ||
+		 strcmp(result, "varbinary") == 0 ||
+		 strcmp(result, "\"varbinary\"") == 0))
+	{
+		char *new_result = psprintf("%s(max)", result);
+		elog(DEBUG1, "INSERT-EXEC: Appending (max) to type: '%s' -> '%s'", result, new_result);
+		pfree(result);
+		result = new_result;
+	}
+	
+	elog(DEBUG1, "INSERT-EXEC: clean_format_type_string output: '%s'", result);
 	
 	return result;
 }
