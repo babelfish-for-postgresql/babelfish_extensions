@@ -20,3 +20,19 @@ varchar
 equal
 ~~END~~
 
+
+SELECT type, type_desc FROM sys.all_objects WHERE name LIKE '%sys_all_objects_vu_prepare_tt_1%' ORDER BY name;
+GO
+~~START~~
+char#!#nvarchar
+TT#!#TABLE_TYPE
+~~END~~
+
+
+SELECT name, type, type_desc FROM sys.all_objects WHERE name = 'sys_all_objects_vu_prepare_t1';
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+sys_all_objects_vu_prepare_t1#!#U #!#USER_TABLE
+~~END~~
+
