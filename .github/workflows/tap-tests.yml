@@ -8,6 +8,8 @@ jobs:
       NEW_INSTALL_DIR: psql_target
       ENGINE_BRANCH_OLD: BABEL_2_6_STABLE__PG_14_9
       EXTENSION_BRANCH_OLD: BABEL_2_6_STABLE
+      INSTALL_DIR_15: psql15
+      ENGINE_BRANCH_15: BABEL_3_9_STABLE__PG_15_12
 
     runs-on: ubuntu-22.04
     steps:
@@ -36,9 +38,17 @@ jobs:
           sudo -E apt-get install krb5-admin-server krb5-kdc krb5-user libkrb5-dev -y -qq
         shell: bash
 
+      - name: Build Modified Postgres using ${{env.ENGINE_BRANCH_15}}
+        id: build-modified-postgres-15
+        if: always() && steps.install-kerberos-dependencies.outcome == 'success'
+        uses: ./.github/composite-actions/build-modified-postgres
+        with:
+          engine_branch: ${{env.ENGINE_BRANCH_15}}
+          install_dir: ${{env.INSTALL_DIR_15}}
+
       - name: Build Modified Postgres using ${{env.ENGINE_BRANCH_OLD}}
         id: build-modified-postgres-old
-        if: always() && steps.install-kerberos-dependencies.outcome == 'success'
+        if: always() && steps.build-modified-postgres-15.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           engine_branch: ${{env.ENGINE_BRANCH_OLD}}
@@ -133,6 +143,7 @@ jobs:
           export PG_CONFIG=~/${{env.NEW_INSTALL_DIR}}/bin/pg_config
           export PATH=/opt/mssql-tools/bin:$PATH
           export oldinstall=$HOME/${{env.OLD_INSTALL_DIR}}
+          export installdir15=$HOME/${{env.INSTALL_DIR_15}}
 
           cd contrib/babelfishpg_tds
           make installcheck PROVE_TESTS="t/001_tdspasswd.pl t/002_tdskerberos.pl t/003_bbfextnotloaded.pl t/004_bbfdumprestore.pl"
