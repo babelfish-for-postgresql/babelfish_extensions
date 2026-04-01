@@ -124,8 +124,6 @@ GO
 EXEC dbo.samesession_proc @test = '21';
 GO
 
--- TODO: Test persistent cache invalidation with RENAME PROCEDURE
--- RENAME invalidates cache entries which should be updated
 
 -- Test persistent cache invalidation with DROP PROCEDURE
 -- DROP invalidates cache and should remove cache entries
@@ -622,6 +620,55 @@ GO
 
 -- Wrong schema: function exists in dbo but not in test_cache_schema (should error)
 SELECT sys.enable_routine_parse_cache('test_cache_schema.perfunc_cache_sig', true);
+GO
+
+
+-- === Test 22: Parse cache validation (cached tree vs ANTLR comparison) ===
+PRINT '=== Test 22: Parse cache validation ===';
+GO
+
+-- Enable validation GUC — next cache-hit EXEC will compare cached vs ANTLR trees
+SELECT set_config('babelfishpg_tsql.validate_parse_cache', 'on', false);
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+
+-- Execute the validation procedure (triggers cached vs ANTLR comparison)
+EXEC dbo.validate_cache_proc @input = 0, @name = 'test';
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+
+-- Disable validation GUC
+SELECT set_config('babelfishpg_tsql.validate_parse_cache', 'off', false);
+GO
+
+
+-- === Test 23: Proc created with cache OFF, executed with cache ON ===
+PRINT '=== Test 23: Cache populated at EXEC time ===';
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+
+-- First exec: cache is empty (created with GUC off), ANTLR parses, cache gets populated
+EXEC dbo.nocache_create_proc @val = 'exec1';
+GO
+
+-- Second exec: should use cached result
+EXEC dbo.nocache_create_proc @val = 'exec2';
+GO
+
+-- Verify cache was populated by the first exec
+SELECT
+    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
+FROM sys.babelfish_function_ext
+WHERE funcname = 'nocache_create_proc' AND nspname = 'master_dbo';
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
 GO
 
 

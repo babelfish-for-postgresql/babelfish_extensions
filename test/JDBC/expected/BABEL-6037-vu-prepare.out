@@ -332,5 +332,78 @@ BEGIN
 END;
 GO
 
+-- Test 22: Validation procedure with complex statement types
+-- Used with pltsql_validate_parse_cache GUC to compare cached vs ANTLR trees
+SELECT set_config('babelfishpg_tsql.validate_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+
+
+
+
+
+
+
+CREATE PROCEDURE dbo.validate_cache_proc
+    @input INT,
+    @name VARCHAR(50)
+AS
+BEGIN
+    DECLARE @counter INT;
+    DECLARE @result VARCHAR(100);
+    DECLARE @flag BIT;
+    SET @counter = 0;
+    SET @flag = 1;
+    -- IF/ELSE
+    IF @input > 10
+        SET @result = 'large';
+    ELSE
+        SET @result = 'small';
+    -- WHILE loop
+    WHILE @counter < @input
+    BEGIN
+        SET @counter = @counter + 1;
+        IF @counter = 5
+            BREAK;
+    END;
+    -- TRY/CATCH
+    BEGIN TRY
+        SELECT @counter / @input AS division_result;
+    END TRY
+    BEGIN CATCH
+        PRINT 'Error caught';
+    END CATCH;
+    -- GOTO
+    IF @flag = 0
+        GOTO skip_section;
+    SELECT @result AS final_result, @counter AS final_counter, @name AS input_name;
+    skip_section:
+    PRINT 'validate_cache_proc completed';
+END;
+GO
+
 PRINT 'All test procedures created successfully';
+GO
+
+-- Test 23: Procedure created with cache OFF, executed with cache ON in verify
+-- Tests that pltsql_update_func_cache_entry populates cache at EXEC time
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+CREATE PROCEDURE dbo.nocache_create_proc
+    @val TEXT
+AS
+BEGIN
+    SELECT @val AS result;
+END;
 GO

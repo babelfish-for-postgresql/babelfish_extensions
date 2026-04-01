@@ -4522,6 +4522,38 @@ pltsql_fill_cache_columns(PLtsql_function *function, Datum modify_date,
 	}
 
 	/* Both serializations succeeded — fill the columns */
+
+	/* CREATE-time round-trip validation: deserialize and compare with original */
+	if (pltsql_validate_parse_cache && function != NULL && function->action != NULL)
+	{
+		extern bool pltsql_compare_parse_trees(PLtsql_stmt_block *tree_a,
+											   PLtsql_stmt_block *tree_b);
+		PLtsql_stmt_block *roundtrip = NULL;
+
+		PG_TRY();
+		{
+			roundtrip = (PLtsql_stmt_block *) stringToNode(tree_str);
+		}
+		PG_CATCH();
+		{
+			FlushErrorState();
+			roundtrip = NULL;
+		}
+		PG_END_TRY();
+
+		if (roundtrip != NULL)
+		{
+			bool match = pltsql_compare_parse_trees(function->action, roundtrip);
+			elog(LOG, "pltsql_validate_parse_cache[%s]: %s ANTLR parse tree validation at CREATE/ALTER",
+				 match ? "PASS" : "FAIL", function->fn_signature);
+		}
+		else
+		{
+			elog(WARNING, "pltsql_validate_parse_cache[FAIL]: %s ANTLR parse tree validation encountered deserialization error at CREATE/ALTER",
+				 function->fn_signature);
+		}
+	}
+
 	new_record[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = CStringGetTextDatum(tree_str);
 	new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = false;
 	new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;

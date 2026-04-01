@@ -19,6 +19,7 @@
 
 #include "postgres.h"
 
+#include "miscadmin.h"
 #include "nodes/nodes.h"
 #include "nodes/bitmapset.h"
 #include "nodes/readfuncs.h"
@@ -30,7 +31,7 @@
 #include "src/pltsql-2.h"
 
 /* ----------------------------------------------------------------
- *  Helper macros (from outfuncs.c / readfuncs.c internals)
+ *  Helper macros (from outfuncs.c / readfuncs.c / equalfuncs.c internals)
  * ----------------------------------------------------------------
  */
 
@@ -200,5 +201,146 @@ pltsql_nullable_string(const char *token, int length)
 /* MATCH macro for readfuncs switch dispatch */
 #define MATCH(tokname, namelen) \
 	(length == namelen && memcmp(token, tokname, namelen) == 0)
+
+
+/*
+ * equalfuncs.c macros are not in a header, so we redefine the ones we need.
+ * These match the definitions in postgresql_modified_for_babelfish/src/backend/nodes/equalfuncs.c exactly.
+ */
+	
+
+/* Compare a simple scalar field (int, float, bool, enum, etc) */
+#define COMPARE_SCALAR_FIELD(fldname) \
+	do { \
+		if (a->fldname != b->fldname) \
+			return false; \
+	} while (0)
+
+/* Compare a field that is a pointer to some kind of Node or Node tree.
+ * Uses pltsql_equal_nodes_or_equal() to handle both PLtsql and PG node types. */
+extern bool pltsql_equal_node(const void *a, const void *b);
+
+static inline bool
+pltsql_equal_nodes_or_equal(const void *a, const void *b)
+{
+	if (a == b)
+		return true;
+	if (a == NULL || b == NULL)
+		return (a == b);
+
+	if (nodeTag(a) != nodeTag(b))
+		return false;
+
+	check_stack_depth();
+
+	/* PLtsql node tags are in range 1000-1079 */
+	if ((int) nodeTag(a) >= 1000 && (int) nodeTag(a) <= 1079)
+		return pltsql_equal_node(a, b);
+
+	/* Lists (all variants): walk elements and check each */
+	if (IsA(a, List) || IsA(a, IntList) || IsA(a, OidList) || IsA(a, XidList))
+	{
+		if(IsA(b, List) || IsA(b, IntList) || IsA(b, OidList) || IsA(b, XidList))
+		{
+			const List *la = (const List *) a;
+			const List *lb = (const List *) b;
+			const ListCell *lca, *lcb;
+
+			if (list_length(la) != list_length(lb))
+				return false;
+
+			forboth(lca, la, lcb, lb)
+			{
+				if (!pltsql_equal_nodes_or_equal(lfirst(lca), lfirst(lcb)))
+					return false;
+			}
+			return true;
+		}
+		else
+			return false;
+	}
+
+	/* Fall back to PG's equal() for standard node types */
+	return equal(a, b);
+}
+
+#define COMPARE_NODE_FIELD(fldname) \
+	do { \
+		if (!pltsql_equal_nodes_or_equal(a->fldname, b->fldname)) \
+			return false; \
+	} while (0)
+
+/* Compare a field that is a pointer to a Bitmapset */
+#define COMPARE_BITMAPSET_FIELD(fldname) \
+	do { \
+		if (!bms_equal(a->fldname, b->fldname)) \
+			return false; \
+	} while (0)
+
+/* Compare a field that is a pointer to a C string, or perhaps NULL */
+#define COMPARE_STRING_FIELD(fldname) \
+	do { \
+		if (!equalstr(a->fldname, b->fldname)) \
+			return false; \
+	} while (0)
+
+/* Macro for comparing string fields that might be NULL */
+#define equalstr(a, b)	\
+	(((a) != NULL && (b) != NULL) ? (strcmp(a, b) == 0) : (a) == (b))
+
+/* Compare a field that is an inline array */
+#define COMPARE_ARRAY_FIELD(fldname) \
+	do { \
+		if (memcmp(a->fldname, b->fldname, sizeof(a->fldname)) != 0) \
+			return false; \
+	} while (0)
+
+/* Compare a field that is a pointer to a simple palloc'd object of size sz */
+#define COMPARE_POINTER_FIELD(fldname, sz) \
+	do { \
+		if (memcmp(a->fldname, b->fldname, (sz)) != 0) \
+			return false; \
+	} while (0)
+
+/* Compare a parse location field (this is a no-op, per note above) */
+#define COMPARE_LOCATION_FIELD(fldname) \
+	((void) 0)
+
+/* Compare a CoercionForm field (also a no-op, per comment in primnodes.h) */
+#define COMPARE_COERCIONFORM_FIELD(fldname) \
+	((void) 0)
+
+/*
+ * Logging COMPARE macros for equalfuncs — log field name and node type on mismatch.
+ * Used by generated pltsql_equalfuncs_gen.c for detailed diff reporting.
+ */
+#define COMPARE_SCALAR_FIELD_LOG(fldname, nodename) \
+	do { \
+		if (a->fldname != b->fldname) { \
+			elog(LOG, "pltsql_equal: %s.%s differs (a=%d, b=%d)", \
+				 nodename, CppAsString(fldname), (int)(a->fldname), (int)(b->fldname)); \
+			return false; \
+		} \
+	} while (0)
+
+#define COMPARE_STRING_FIELD_LOG(fldname, nodename) \
+	do { \
+		if (!equalstr(a->fldname, b->fldname)) { \
+			elog(LOG, "pltsql_equal: %s.%s differs (a=%s, b=%s)", \
+				 nodename, CppAsString(fldname), \
+				 a->fldname ? a->fldname : "<null>", \
+				 b->fldname ? b->fldname : "<null>"); \
+			return false; \
+		} \
+	} while (0)
+
+#define COMPARE_NODE_FIELD_LOG(fldname, nodename) \
+	do { \
+		if (!pltsql_equal_nodes_or_equal(a->fldname, b->fldname)) { \
+			elog(LOG, "pltsql_equal: %s.%s (node field) differs", \
+				 nodename, CppAsString(fldname)); \
+			return false; \
+		} \
+	} while (0)
 
 #endif /* PLTSQL_SERIALIZE_MACROS_H */

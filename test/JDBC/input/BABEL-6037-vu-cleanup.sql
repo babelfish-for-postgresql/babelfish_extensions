@@ -84,6 +84,10 @@ DROP PROCEDURE IF EXISTS test_cache_schema.perfunc_custom_schema;
 GO
 DROP SCHEMA IF EXISTS test_cache_schema;
 GO
+DROP PROCEDURE IF EXISTS dbo.validate_cache_proc;
+GO
+DROP PROCEDURE IF EXISTS dbo.nocache_create_proc;
+GO
 
 PRINT 'Cleanup completed successfully';
 GO

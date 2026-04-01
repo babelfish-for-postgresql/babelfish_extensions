@@ -665,8 +665,176 @@ close $nth;
 my $node_includes = qq{#include "pltsql_serialize_macros.h"\n};
 
 
-# PLtsql extension: we don't generate copyfuncs or equalfuncs
-# (engine handles copy/equal for PLtsql nodes via no_copy_equal attribute).
+# copyfuncs.c, equalfuncs.c
+# PLtsql extension: we only generate equalfuncs (no copyfuncs needed).
+# Used for parse tree validation (comparing ANTLR-compiled tree vs deserialized tree).
+# (PoC) NOTE: We intentionally ignore @no_equal here because all PLtsql nodes are marked
+# no_copy_equal (to prevent the engine from generating copy/equal for them).
+# We still want our own extension-side equality for validation purposes.
+
+push @output_files, 'pltsql_equalfuncs_gen.c';
+open my $eff, '>', "$output_path/pltsql_equalfuncs_gen.c$tmpext" or die $!;
+push @output_files, 'pltsql_equalfuncs_switch.c';
+open my $efs, '>', "$output_path/pltsql_equalfuncs_switch.c$tmpext" or die $!;
+
+printf $eff $header_comment, 'pltsql_equalfuncs_gen.c';
+printf $efs $header_comment, 'pltsql_equalfuncs_switch.c';
+
+print $eff $node_includes;
+
+foreach my $n (@node_types)
+{
+	next if elem $n, @abstract_types;
+	next if elem $n, @nodetag_only;
+	# (PoC) Intentionally NOT checking @no_equal — see comment above.
+
+	print $efs "\t\tcase T_${n}:\n"
+	  . "\t\t\tretval = _equal${n}(a, b);\n"
+	  . "\t\t\tif (!retval)\n"
+	  . "\t\t\t\telog(WARNING, \"pltsql_equal_node: mismatch in ${n}\");\n"
+	  . "\t\t\tbreak;\n";
+
+	next if elem $n, @custom_copy_equal;
+	next if elem $n, @custom_read_write;
+	next if elem $n, @special_read_write;
+
+	print $eff "
+static bool
+_equal${n}(const $n *a, const $n *b)
+{
+";
+
+	my %previous_fields;
+
+	foreach my $f (@{ $node_type_info{$n}->{fields} })
+	{
+		my $t = $node_type_info{$n}->{field_types}{$f};
+		my @a = @{ $node_type_info{$n}->{field_attrs}{$f} };
+		my $equal_ignore = 0;
+
+		my $array_size_field;
+		my $equal_as_scalar = 0;
+		foreach my $a (@a)
+		{
+			if ($a =~ /^array_size\(([\w.]+)\)$/)
+			{
+				$array_size_field = $1;
+			}
+			elsif ($a eq 'equal_as_scalar')
+			{
+				$equal_as_scalar = 1;
+			}
+			elsif ($a eq 'equal_ignore' || $a eq 'read_write_ignore')
+			{
+				$equal_ignore = 1;
+			}
+		}
+
+		next if $equal_ignore;
+
+		# Skip lineno — line numbers differ between cached (CREATE-time)
+		# and ANTLR (EXEC-time) compilation due to source offset differences.
+		next if $f eq 'lineno';
+
+		# Skip varno/dno/itemno and named dno-reference fields — datum
+		# numbering differs between validator (CREATE) and runtime (EXEC)
+		# compilation contexts. Fields like curvar, cursor_handleno,
+		# prepared_handleno, and return_code_dno store datum numbers under
+		# different names but have the same dno-offset issue.
+		next if $f eq 'dno';
+		next if $f eq 'varno';
+		next if $f eq 'itemno';
+		next if $f eq 'retvarno';
+		next if $f eq 'curvar';
+		next if $f eq 'cursor_handleno';
+		next if $f eq 'prepared_handleno';
+		next if $f eq 'return_code_dno';
+
+		if ($equal_as_scalar)
+		{
+			print $eff "\tCOMPARE_SCALAR_FIELD_LOG($f, \"$n\");\n";
+			$previous_fields{$f} = 1;
+			next;
+		}
+
+		if ($t eq 'char*')
+		{
+			print $eff "\tCOMPARE_STRING_FIELD_LOG($f, \"$n\");\n";
+		}
+		elsif ($t eq 'Bitmapset*' || $t eq 'Relids')
+		{
+			print $eff "\tCOMPARE_BITMAPSET_FIELD($f);\n";
+		}
+		elsif ($t eq 'ParseLoc')
+		{
+			print $eff "\tCOMPARE_LOCATION_FIELD($f);\n";
+		}
+		elsif (elem $t, @scalar_types or elem $t, @enum_types)
+		{
+			print $eff "\tCOMPARE_SCALAR_FIELD_LOG($f, \"$n\");\n";
+		}
+		elsif ($t =~ /^(\w+)\*$/ and elem $1, @scalar_types)
+		{
+			my $tt = $1;
+			if (!defined $array_size_field)
+			{
+				die "no array size defined for $n.$f of type $t\n";
+			}
+			if ($node_type_info{$n}->{field_types}{$array_size_field} eq
+				'List*')
+			{
+				print $eff
+				  "\tCOMPARE_POINTER_FIELD($f, list_length(a->$array_size_field) * sizeof($tt));\n";
+			}
+			else
+			{
+				print $eff
+				  "\tCOMPARE_POINTER_FIELD($f, a->$array_size_field * sizeof($tt));\n";
+			}
+		}
+		elsif ($t eq 'function pointer')
+		{
+			print $eff "\tCOMPARE_SCALAR_FIELD_LOG($f, \"$n\");\n";
+		}
+		elsif (($t =~ /^(\w+)\*$/ or $t =~ /^struct\s+(\w+)\*$/)
+			and elem $1, @node_types)
+		{
+			print $eff "\tCOMPARE_NODE_FIELD_LOG($f, \"$n\");\n";
+		}
+		elsif ($t =~ /^([A-Z]\w+)\*$/)
+		{
+			print $eff "\tCOMPARE_NODE_FIELD_LOG($f, \"$n\");\n";
+		}
+		elsif ($t =~ /^\w+\[\w+\]$/)
+		{
+			print $eff "\tCOMPARE_ARRAY_FIELD($f);\n";
+		}
+		elsif (($t =~ /^(\w+)\*\*$/ or $t =~ /^struct\s+(\w+)\*\*$/)
+			and elem($1, @node_types))
+		{
+			print $eff "\t/* skip node array field $f */\n";
+		}
+		elsif ($t eq 'void*')
+		{
+			print $eff "\tCOMPARE_SCALAR_FIELD_LOG($f, \"$n\");\n";
+		}
+		else
+		{
+			die
+			  "could not handle type \"$t\" in struct \"$n\" field \"$f\"\n";
+		}
+
+		$previous_fields{$f} = 1;
+	}
+
+	print $eff "
+\treturn true;
+}
+";
+}
+
+close $eff;
+close $efs;
 
 
 # outfuncs.c, readfuncs.c

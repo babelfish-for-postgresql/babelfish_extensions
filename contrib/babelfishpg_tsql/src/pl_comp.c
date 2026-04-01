@@ -353,6 +353,11 @@ do_compile(FunctionCallInfo fcinfo,
 	TransactionId bbf_ext_xmin = InvalidTransactionId;
 	ItemPointerData bbf_ext_tid;
 
+	/* saved for validate_parse_cache ANTLR parse tree comparison */
+	PLtsql_stmt_block *validation_cached_tree = NULL;  
+	PLtsql_datum **validation_cached_datums = NULL;
+	int validation_cached_ndatums = 0;
+
 	/*
 	 * Setup the scanner input and error info.  We assume that this function
 	 * cannot be invoked recursively, so there's no need to save and restore
@@ -535,14 +540,6 @@ do_compile(FunctionCallInfo fcinfo,
 												 typmod,
 												 function->fn_input_collation,
 												 NULL);
-
-				// /* Debug logging for populateTaxInvDetails parameters */
-				// if (function->fn_signature && 
-				// 	strstr(function->fn_signature, "populatetaxinvdetails") != NULL)
-				// {
-				// 	elog(NOTICE, "Creating param %d: argtypeid=%u, typmod=%d, argdtype->typoid=%u, argdtype->typname=%s",
-				// 		 i, argtypeid, typmod, argdtype->typoid, argdtype->typname);
-				// }
 
 				/* Disallow pseudotype argument */
 				/* (note we already replaced polymorphic types) */
@@ -962,7 +959,7 @@ do_compile(FunctionCallInfo fcinfo,
 			{
 				int		ci;
 
-				elog(LOG, "do_compile: Using cached parse result (ndatums=%d), skipping ANTLR parsing", cached_result->ndatums);
+				elog(LOG, "pltsql_enable_routine_parse_cache[PASS]: %s (ndatums=%d), retrieved cached parse tree results, skipping ANTLR parsing", function->fn_signature, cached_result->ndatums);
 				pltsql_parse_result = cached_result->parse_tree;
 				
 				/* Populate global datums from cache - pltsql_finish_datums() will copy to function */
@@ -1075,7 +1072,27 @@ do_compile(FunctionCallInfo fcinfo,
 				pfree(cached_result);
 				
 				parse_rc = 0;
-				goto skip_antlr_parsing;
+
+				/*
+				 * Debug mode: save the cached tree and fall through to
+				 * ANTLR so both paths get identical post-processing. Compare
+				 * after function hash table insert.
+				 */
+				if (pltsql_validate_parse_cache)
+				{
+					validation_cached_tree = pltsql_parse_result;
+					validation_cached_datums = pltsql_Datums;
+					validation_cached_ndatums = pltsql_nDatums;
+					function->from_cache = false;
+					elog(LOG, "pltsql_validate_parse_cache[INFO]: %s validating cached tree against ANTLR at EXEC",
+						 function->fn_signature);
+					/* fall through to normal ANTLR parsing below */
+				}
+				else
+				{
+					/* Debug GUC is OFF, use cached results and skip ANTLR parsing */
+					goto skip_antlr_parsing;
+				}
 			}
 		}
 		
@@ -1186,6 +1203,66 @@ skip_antlr_parsing:
 	 * add it to the hash table
 	 */
 	pltsql_HashTableInsert(function, hashkey);
+
+	/*
+	 * Parse cache validation: compare cached (deserialized) tree against
+	 * fresh ANTLR compilation. Both trees have been through identical
+	 * post-processing at this point. Gated behind validate_parse_cache GUC.
+	 */
+	if (pltsql_validate_parse_cache && validation_cached_tree != NULL)
+	{
+		extern bool pltsql_compare_parse_trees(PLtsql_stmt_block *tree_a,
+											   PLtsql_stmt_block *tree_b);
+		extern bool pltsql_equal_node(const void *a, const void *b);
+
+		bool trees_match = pltsql_compare_parse_trees(validation_cached_tree,
+													  function->action);
+
+		elog(LOG, "pltsql_validate_parse_cache[%s]: %s ANTLR parse tree comparison at EXEC",
+			 trees_match ? "PASS" : "FAIL", function->fn_signature);
+
+		/*
+		 * Datum array comparison: cached vs ANTLR-compiled.
+		 *
+		 * The runtime do_compile parameter loop may create an extra $N
+		 * placeholder datum for text-type parameters (inputCollId handling),
+		 * causing the ANTLR datum array to have 1 more entry than the cached
+		 * (validator-compiled) array. This offset is benign: the cache-hit
+		 * path re-derives found_varno/fetch_status_varno by refname scan.
+		 * We compare the overlapping datums using the generated equality
+		 * functions (which skip lineno/dno/varno/itemno fields).
+		 */
+		{
+			int antlr_ndatums = function->ndatums;
+			PLtsql_datum **antlr_datums = function->datums;
+			int max_d = Max(validation_cached_ndatums, antlr_ndatums);
+			int datum_index;
+			int datum_mismatches = 0;
+
+			for (datum_index = 0; datum_index < max_d; datum_index++)
+			{
+				PLtsql_datum *dc = (datum_index < validation_cached_ndatums) ? validation_cached_datums[datum_index] : NULL;
+				PLtsql_datum *da = (datum_index < antlr_ndatums) ? antlr_datums[datum_index] : NULL;
+
+				if (dc == NULL && da == NULL)
+					continue;
+				if (dc == NULL || da == NULL || !pltsql_equal_node(dc, da))
+				{
+					datum_mismatches++;
+					elog(LOG, "pltsql_validate_parse_cache[DIFF]: %s has mismatched datum[%d] %s at EXEC (cached_tag=%d, antlr_tag=%d)",
+						 function->fn_signature, datum_index,
+						 (dc == NULL) ? "extra in antlr" : (da == NULL) ? "extra in cached" : "mismatch",
+						 dc ? (int) nodeTag(dc) : -1,
+						 da ? (int) nodeTag(da) : -1);
+				}
+			}
+
+			elog(LOG, "pltsql_validate_parse_cache[%s]: %s PLtsql Datums comparison at EXEC (cached=%d, antlr=%d, mismatches=%d)",
+				 (datum_mismatches == 0) ? "PASS" : "DIFF",
+				 function->fn_signature,
+				 validation_cached_ndatums, antlr_ndatums, datum_mismatches);
+		}
+	}
 
 	/*
 	 * Pop the error context stack

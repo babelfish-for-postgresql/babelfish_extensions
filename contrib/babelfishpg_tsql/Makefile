@@ -94,13 +94,15 @@ PLTSQL_SER_DIR = src/pltsql_serialize
 PLTSQL_SER_HEADERS = $(PLTSQL_SER_DIR)/pltsql_serializable_1.h $(PLTSQL_SER_DIR)/pltsql_serializable_2.h
 PLTSQL_GEN_SCRIPT = $(PLTSQL_SER_DIR)/gen_pltsql_node_support.pl
 
-$(PLTSQL_SER_DIR)/pltsql_nodetags.h $(PLTSQL_SER_DIR)/pltsql_outfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_readfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_outfuncs_switch.c $(PLTSQL_SER_DIR)/pltsql_readfuncs_switch.c: $(PLTSQL_SER_HEADERS) $(PLTSQL_GEN_SCRIPT)
+$(PLTSQL_SER_DIR)/pltsql_nodetags.h $(PLTSQL_SER_DIR)/pltsql_outfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_readfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_outfuncs_switch.c $(PLTSQL_SER_DIR)/pltsql_readfuncs_switch.c $(PLTSQL_SER_DIR)/pltsql_equalfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_equalfuncs_switch.c: $(PLTSQL_SER_HEADERS) $(PLTSQL_GEN_SCRIPT)
 	$(PERL) $(PLTSQL_GEN_SCRIPT) --outdir $(PLTSQL_SER_DIR) $(PLTSQL_SER_HEADERS)
 
 # Wrapper .c files #include the generated .c files (mirroring engine pattern)
 # so we compile the wrappers, not the gen files directly.
 OBJS += $(PLTSQL_SER_DIR)/pltsql_outfuncs.o
 OBJS += $(PLTSQL_SER_DIR)/pltsql_readfuncs.o
+OBJS += $(PLTSQL_SER_DIR)/pltsql_equalfuncs.o
+OBJS += $(PLTSQL_SER_DIR)/pltsql_compare.o
 
 # pltsql_nodetags.h must be generated before any .o that includes pltsql.h
 # The first OBJS entry (src/pl_gram.o) triggers this via implicit ordering,
@@ -110,6 +112,7 @@ src/pl_gram.o: $(PLTSQL_SER_DIR)/pltsql_nodetags.h
 # Wrapper .o depends on generated .c files (included via #include)
 $(PLTSQL_SER_DIR)/pltsql_outfuncs.o: $(PLTSQL_SER_DIR)/pltsql_outfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_outfuncs_switch.c
 $(PLTSQL_SER_DIR)/pltsql_readfuncs.o: $(PLTSQL_SER_DIR)/pltsql_readfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_readfuncs_switch.c
+$(PLTSQL_SER_DIR)/pltsql_equalfuncs.o: $(PLTSQL_SER_DIR)/pltsql_equalfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_equalfuncs_switch.c
 
 PG_CXXFLAGS += -g -Werror -Wfloat-conversion
 PG_CXXFLAGS += -Wno-deprecated -Wno-error=attributes -Wno-suggest-attribute=format # disable some warnings from ANTLR runtime header

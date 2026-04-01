@@ -73,6 +73,7 @@ char	   *pltsql_host_service_pack_level = NULL;
 bool		pltsql_enable_create_alter_view_from_pg = false;
 bool		pltsql_enable_alter_owner_from_pg = false;
 bool		pltsql_enable_routine_parse_cache = false;
+bool		pltsql_validate_parse_cache = false;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -1144,6 +1145,19 @@ define_custom_variables(void)
 							 gettext_noop("Enables caching of ANTLR parse results for stored procedures across sessions"),
 							 NULL,
 							 &pltsql_enable_routine_parse_cache,
+							 false,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/*
+	 * Debug GUC: when enabled, every cache-hit compilation also runs ANTLR
+	 * and compares the two parse trees field-by-field. Logs PASS/FAIL.
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.validate_parse_cache",
+							 gettext_noop("When enabled, validates cached parse trees against fresh ANTLR compilation"),
+							 NULL,
+							 &pltsql_validate_parse_cache,
 							 false,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,

@@ -19,6 +19,7 @@ extern bool pltsql_fmtonly;
 extern bool pltsql_enable_create_alter_view_from_pg;
 extern bool	pltsql_enable_alter_owner_from_pg;
 extern bool pltsql_enable_routine_parse_cache;
+extern bool pltsql_validate_parse_cache;
 extern bool pltsql_enable_linked_servers;
 extern bool pltsql_enable_ownership_chaining;
 extern bool pltsql_allow_windows_login;
