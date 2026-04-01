@@ -65,20 +65,29 @@ my $tsql_newnode = new TDSNode($newnode);
 $tsql_newnode->init_tsql('test_master', 'testdb');
 $newnode->stop;
 
+# Setup pg16 node
+my $node16 =
+  PostgreSQL::Test::Cluster->new('node_16',
+	install_path => $ENV{installdir16});
+
+my $newbindir = $newnode->config_data('--bindir');
+my $oldbindir = $oldnode->config_data('--bindir');
+my $bindir16 = $node16->config_data('--bindir');
+
 # Dump global objects using pg_dumpall. Note that we
 # need to use dump utilities from the new node here.
 $oldnode->start;
 my @dumpall_command = (
-	'pg_dumpall', '--database', 'testdb', '--username', 'test_master',
+	$bindir16 . '/pg_dumpall', '--database', 'testdb', '--username', 'test_master',
 	'--port', $oldnode->port, '--roles-only', '--quote-all-identifiers',
 	'--verbose', '--no-role-passwords', '--file', $dump1_file);
-$newnode->command_ok(\@dumpall_command, 'Dump global objects.');
+$node16->command_ok(\@dumpall_command, 'Dump global objects.');
 # Dump Babelfish database using pg_dump.
 my @dump_command = (
-	'pg_dump', '--username', 'test_master', '--quote-all-identifiers',
+	$bindir16 . '/pg_dump', '--username', 'test_master', '--quote-all-identifiers',
 	'--port', $oldnode->port, '--verbose', '--dbname', 'testdb',
 	'--file', $dump2_file);
-$newnode->command_ok(\@dump_command, 'Dump Babelfish database.');
+$node16->command_ok(\@dump_command, 'Dump Babelfish database.');
 $oldnode->stop;
 
 # Retore the dumped files on the new server.
@@ -88,7 +97,7 @@ $newnode->start;
 # dump/restore is not yet supported.
 $newnode->command_fails_like(
 	[
-		'psql',
+		$newbindir . '/psql',
 		'-d',         'testdb',
 		'-U',         'test_master',
 		'-p',         $newnode->port,
@@ -101,7 +110,7 @@ $newnode->command_fails_like(
 # Similarly, restore of dump file should also cause a failure.
 $newnode->command_fails_like(
 	[
-		'psql',
+		$newbindir . '/psql',
 		'-d',         'testdb',
 		'-U',         'test_master',
 		'-p',         $newnode->port,
@@ -117,7 +126,7 @@ $oldnode->start;
 
 $oldnode->command_fails_like(
 	[
-		'psql',
+		$oldbindir . '/psql',
 		'-d',         'testdb',
 		'-U',         'test_master',
 		'-p',         $oldnode->port,
@@ -129,7 +138,7 @@ $oldnode->command_fails_like(
 
 $oldnode->command_fails_like(
 	[
-		'psql',
+		$oldbindir . '/psql',
 		'-d',         'testdb',
 		'-U',         'test_master',
 		'-p',         $oldnode->port,
@@ -162,14 +171,14 @@ $tsql_newnode2->init_tsql('test_master', 'testdb', 'multi-db');
 # Dump global objects using pg_dumpall. Note that we
 # need to use dump utilities from the new node here.
 @dumpall_command = (
-	'pg_dumpall', '--database', 'testdb', '--username', 'test_master',
+	$newbindir . '/pg_dumpall', '--database', 'testdb', '--username', 'test_master',
 	'--port', $newnode2->port, '--roles-only', '--quote-all-identifiers',
 	'--verbose', '--no-role-passwords', '--file', $dump3_file);
 $newnode2->command_ok(\@dumpall_command, 'Dump global objects.');
 # Dump Babelfish database using pg_dump. Let's dump with the custom format
 # this time so that we cover pg_restore as well.
 @dump_command = (
-	'pg_dump', '--username', 'test_master', '--quote-all-identifiers',
+	$newbindir . '/pg_dump', '--username', 'test_master', '--quote-all-identifiers',
 	'--port', $newnode2->port, '--verbose', '--dbname', 'testdb',
 	'--format', 'custom', '--file', $dump4_file);
 $newnode2->command_ok(\@dump_command, 'Dump Babelfish database.');
@@ -182,7 +191,7 @@ $newnode->start;
 # dump/restore is not yet supported.
 $newnode->command_fails_like(
 	[
-		'psql',
+		$newbindir . '/psql',
 		'-d',         'testdb',
 		'-U',         'test_master',
 		'-p',         $newnode->port,
@@ -195,7 +204,7 @@ $newnode->command_fails_like(
 # Similarly, restore of dump file should also cause a failure.
 $newnode->command_fails_like(
 	[
-		'pg_restore',
+		$newbindir . '/pg_restore',
 		'-d',         'testdb',
 		'-U',         'test_master',
 		'-p',         $newnode->port,
@@ -213,13 +222,13 @@ $newnode->start;
 
 # Dump global objects using pg_dumpall.
 @dumpall_command = (
-	'pg_dumpall', '--database', 'postgres', '--port', $newnode->port,
+	$newbindir . '/pg_dumpall', '--database', 'postgres', '--port', $newnode->port,
 	'--roles-only', '--quote-all-identifiers', '--verbose',
 	'--no-role-passwords', '--file', $dump1_file);
 $newnode->command_ok(\@dumpall_command, 'Dump global objects.');
 # Dump Babelfish database using pg_dump.
 @dump_command = (
-	'pg_dump', '--quote-all-identifiers', '--port', $newnode->port,
+	$newbindir . '/pg_dump', '--quote-all-identifiers', '--port', $newnode->port,
 	'--verbose', '--dbname', 'postgres',
 	'--file', $dump2_file);
 $newnode->command_ok(\@dump_command, 'Dump non-Babelfish (postgres db) database.');
