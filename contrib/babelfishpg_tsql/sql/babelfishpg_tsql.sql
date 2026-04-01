@@ -803,21 +803,21 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
 -- Function to get pg_attribute rows for #temp tables (ENR and non-ENR)
-CREATE OR REPLACE FUNCTION sys.babelfish_get_temp_table_attributes(IN table_name sys.varchar(4000))
+CREATE OR REPLACE FUNCTION sys.babelfish_get_temp_table_attributes(IN table_name sys.nvarchar(4000))
 RETURNS SETOF pg_catalog.pg_attribute
 AS 'babelfishpg_tsql', 'get_tsql_temp_table_attributes'
 LANGUAGE C STABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.babelfish_get_temp_table_attributes(IN sys.varchar(4000)) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.babelfish_get_temp_table_attributes(IN sys.nvarchar(4000)) TO PUBLIC;
 
 -- Function to check if a name refers to a #temp table
-CREATE OR REPLACE FUNCTION sys.is_temp_table_name(IN name sys.varchar(4000))
+CREATE OR REPLACE FUNCTION sys.is_temp_table_name(IN name sys.nvarchar(4000))
 RETURNS BOOLEAN
 AS 'babelfishpg_tsql', 'is_temp_table_name'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.is_temp_table_name(IN sys.varchar(4000)) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.is_temp_table_name(IN sys.nvarchar(4000)) TO PUBLIC;
 
 -- Wrapper function for sp_tablecollations_100 that uses the babelfish_get_temp_table_attributes function
-CREATE OR REPLACE FUNCTION sys.sp_tablecollations_100_enr(IN table_name sys.varchar(4000))
+CREATE OR REPLACE FUNCTION sys.sp_tablecollations_100_enr(IN table_name sys.nvarchar(4000))
 RETURNS TABLE(colid INT, name sys.varchar, collation_name sys.nvarchar(128))
 AS $$
     SELECT 
@@ -830,7 +830,7 @@ AS $$
     ORDER BY a.attnum;
 $$
 LANGUAGE SQL STABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.sp_tablecollations_100_enr(IN sys.varchar(4000)) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.sp_tablecollations_100_enr(IN sys.nvarchar(4000)) TO PUBLIC;
 
 -- We are limited by what postgres procedures can return here, but IEW may not
 -- need it for initial compatibility
