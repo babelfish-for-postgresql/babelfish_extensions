@@ -36,7 +36,6 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/fmgroids.h"
-#include "utils/lsyscache.h"
 #include "utils/formatting.h"
 #include "pltsql_instr.h"
 #include "pltsql.h"
@@ -56,7 +55,6 @@
 #include "catalog.h"
 #include "catalog/toasting.h"
 #include "extendedproperty.h"
-#include "collation.h"
 #include "multidb.h"
 #include "session.h"
 #include "rolecmds.h"
@@ -5112,4 +5110,3 @@ tsql_openxml_get_colpattern(PG_FUNCTION_ARGS)
 	
 	PG_RETURN_TEXT_P(cstring_to_text(xpath_expr));
 }
-
