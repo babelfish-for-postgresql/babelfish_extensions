@@ -238,6 +238,41 @@ DEALLOCATE implicit_tran_cursor;
 SELECT @@TRANCOUNT;
 GO
 
+-- Select from system view should start implicit transaction
+SELECT @@TRANCOUNT
+SELECT DISTINCT 'OK' FROM pg_stat_activity
+SELECT @@TRANCOUNT
+IF @@TRANCOUNT > 0 COMMIT
+GO
+
+-- Subquery in FROM should not error
+SELECT @@TRANCOUNT
+SELECT * FROM (SELECT 1 AS x) sub
+SELECT @@TRANCOUNT
+IF @@TRANCOUNT > 0 COMMIT
+GO
+
+-- Set-returning function in FROM should not error
+SELECT @@TRANCOUNT
+SELECT * FROM generate_series(1, 3)
+SELECT @@TRANCOUNT
+IF @@TRANCOUNT > 0 COMMIT
+GO
+
+-- CTE should not error
+SELECT @@TRANCOUNT
+WITH cte AS (SELECT 1 AS x) SELECT * FROM cte
+SELECT @@TRANCOUNT
+IF @@TRANCOUNT > 0 COMMIT
+GO
+
+-- VALUES clause in FROM should not error
+SELECT @@TRANCOUNT
+SELECT * FROM (VALUES (1), (2), (3)) AS t(x)
+SELECT @@TRANCOUNT
+IF @@TRANCOUNT > 0 COMMIT
+GO
+
 -- Cleanup
 SET IMPLICIT_TRANSACTIONS OFF
 GO
