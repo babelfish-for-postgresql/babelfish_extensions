@@ -1638,7 +1638,7 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 				if (relMetaDataInfo->partName[1] == NULL)
 				{
 					if (physical_schema_name != NULL)
-						relMetaDataInfo->partName[1] = strdup(physical_schema_name);
+						relMetaDataInfo->partName[1] = pstrdup(physical_schema_name);
 					else
 						relMetaDataInfo->partName[1] = NULL;
 				}
