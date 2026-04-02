@@ -188,6 +188,7 @@ PG_FUNCTION_INFO_V1(object_schema_name);
 PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
 PG_FUNCTION_INFO_V1(objectproperty_internal);
+PG_FUNCTION_INFO_V1(objectpropertyex_internal);
 PG_FUNCTION_INFO_V1(sysutcdatetime);
 PG_FUNCTION_INFO_V1(getutcdate);
 PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
@@ -4319,6 +4320,286 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 	return is_ms_shipped;
 }
 
+/*
+ * resolve_object_type - Resolve an object_id to its ObjectPropertyType, schema,
+ * and name via direct catalog lookups (pg_class, pg_proc, pg_attrdef,
+ * pg_constraint).  Does not touch sys.all_objects.
+ *
+ * Returns true if the object was found and passes namespace validation.
+ */
+static bool
+resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
+                                        char **out_object_name)
+{
+        Oid                     schema_id = InvalidOid;
+        Oid                     user_id = GetUserId();
+        HeapTuple       tuple;
+        int                     type = 0;
+        char       *object_name = NULL;
+        char       *nspname = NULL;
+        bool            found = false;
+
+        /* pg_class */
+        tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(object_id));
+        if (HeapTupleIsValid(tuple))
+        {
+                Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
+
+                found = true;
+                object_name = pstrdup(NameStr(pg_class->relname));
+
+                if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
+                        schema_id = get_rel_namespace(object_id);
+
+                if ((pg_class->relpersistence == 'p' || pg_class->relpersistence == 'u' || pg_class->relpersistence == 't') &&
+                                (pg_class->relkind == 'r'))
+                {
+                        HeapTuple       tp;
+                        tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(pg_class->reltype));
+                        if (HeapTupleIsValid(tp))
+                        {
+                                Form_pg_type typform = (Form_pg_type) GETSTRUCT(tp);
+
+                                if (typform->typtype == 'c')
+                                {
+                                        Relation        depRel;
+                                        ScanKeyData key[2];
+                                        SysScanDesc scan;
+                                        HeapTuple       tup;
+
+                                        depRel = table_open(DependRelationId, AccessShareLock);
+
+                                        ScanKeyInit(&key[0],
+                                                                Anum_pg_depend_objid,
+                                                                BTEqualStrategyNumber, F_OIDEQ,
+                                                                ObjectIdGetDatum(typform->typrelid));
+                                        ScanKeyInit(&key[1],
+                                                                Anum_pg_depend_refobjid,
+                                                                BTEqualStrategyNumber, F_OIDEQ,
+                                                                ObjectIdGetDatum(typform->oid));
+
+                                        scan = systable_beginscan(depRel, InvalidOid, false,
+                                                                                        NULL, 2, key);
+
+                                        if (HeapTupleIsValid(tup = systable_getnext(scan)))
+                                        {
+                                                Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+
+                                                if (depform->deptype == 'i')
+                                                        type = OBJECT_TYPE_TABLE_TYPE;
+                                        }
+
+                                        systable_endscan(scan);
+                                        table_close(depRel, AccessShareLock);
+                                }
+                                ReleaseSysCache(tp);
+                        }
+                        if (type == 0 || type != OBJECT_TYPE_TABLE_TYPE)
+                                type = OBJECT_TYPE_TABLE;
+                }
+                else if (pg_class->relkind == 'v')
+                        type = OBJECT_TYPE_VIEW;
+                else if (pg_class->relkind == 's')
+                        type = OBJECT_TYPE_SEQUENCE_OBJECT;
+
+                ReleaseSysCache(tuple);
+        }
+
+        /* pg_proc */
+        if (!found)
+        {
+                tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
+                if (HeapTupleIsValid(tuple))
+                {
+                        if (object_aclcheck(ProcedureRelationId, object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+                        {
+                                Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
+
+                                found = true;
+                                object_name = pstrdup(NameStr(procform->proname));
+                                schema_id = tsql_get_proc_nsp_oid(object_id);
+
+                                if (procform->prokind == 'p')
+                                        type = OBJECT_TYPE_TSQL_STORED_PROCEDURE;
+                                else if (procform->prokind == 'a')
+                                        type = OBJECT_TYPE_AGGREGATE_FUNCTION;
+                                else
+                                {
+                                        char    *temp = format_type_extended(procform->prorettype, -1, FORMAT_TYPE_ALLOW_INVALID);
+
+                                        if (pg_strcasecmp(temp, "trigger") == 0)
+                                                type = OBJECT_TYPE_TSQL_DML_TRIGGER;
+                                        else if (procform->proretset)
+                                        {
+                                                HeapTuple       tp;
+                                                tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(procform->prorettype));
+                                                if (HeapTupleIsValid(tp))
+                                                {
+                                                        Form_pg_type typeform = (Form_pg_type) GETSTRUCT(tp);
+
+                                                        if (typeform->typtype == 'c')
+                                                                type = OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION;
+                                                        else
+                                                                type = OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION;
+
+                                                        ReleaseSysCache(tp);
+                                                }
+                                        }
+                                        else
+                                                type = OBJECT_TYPE_TSQL_SCALAR_FUNCTION;
+
+                                        pfree(temp);
+                                }
+                        }
+                        ReleaseSysCache(tuple);
+                }
+        }
+
+        /* pg_attrdef */
+        if (!found)
+        {
+                Relation        attrdefrel;
+                ScanKeyData key;
+                SysScanDesc attrscan;
+
+                attrdefrel = table_open(AttrDefaultRelationId, AccessShareLock);
+                ScanKeyInit(&key,
+                                        Anum_pg_attrdef_oid,
+                                        BTEqualStrategyNumber, F_OIDEQ,
+                                        ObjectIdGetDatum(object_id));
+
+                attrscan = systable_beginscan(attrdefrel, AttrDefaultOidIndexId, true,
+                                                                        NULL, 1, &key);
+
+                tuple = systable_getnext(attrscan);
+                if (HeapTupleIsValid(tuple))
+                {
+                        Form_pg_attrdef atdform = (Form_pg_attrdef) GETSTRUCT(tuple);
+                        Relation        attrRel;
+                        ScanKeyData key[2];
+                        SysScanDesc scan;
+                        HeapTuple       tup;
+
+                        if (pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_SELECT) == ACLCHECK_OK &&
+                                pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_INSERT) == ACLCHECK_OK &&
+                                pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_UPDATE) == ACLCHECK_OK &&
+                                pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_REFERENCES) == ACLCHECK_OK)
+                        {
+                                attrRel = table_open(AttributeRelationId, AccessShareLock);
+
+                                ScanKeyInit(&key[0],
+                                                        Anum_pg_attribute_attrelid,
+                                                        BTEqualStrategyNumber, F_OIDEQ,
+                                                        ObjectIdGetDatum(atdform->adrelid));
+                                ScanKeyInit(&key[1],
+                                                        Anum_pg_attribute_attnum,
+                                                        BTEqualStrategyNumber, F_INT2EQ,
+                                                        Int16GetDatum(atdform->adnum));
+
+                                scan = systable_beginscan(attrRel, AttributeRelidNumIndexId, true,
+                                                                                NULL, 2, key);
+
+                                if (HeapTupleIsValid(tup = systable_getnext(scan)))
+                                {
+                                        Form_pg_attribute attrform = (Form_pg_attribute) GETSTRUCT(tup);
+
+                                        if (attrform->atthasdef && !attrform->attgenerated)
+                                        {
+                                                found = true;
+                                                object_name = pstrdup(NameStr(attrform->attname));
+                                                type = OBJECT_TYPE_DEFAULT_CONSTRAINT;
+                                                if (pg_class_aclcheck(atdform->adrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
+                                                        schema_id = get_rel_namespace(atdform->adrelid);
+                                        }
+                                }
+
+                                systable_endscan(scan);
+                                table_close(attrRel, AccessShareLock);
+                        }
+                }
+                systable_endscan(attrscan);
+                table_close(attrdefrel, AccessShareLock);
+        }
+
+        /* pg_constraint */
+        if (!found)
+        {
+                tuple = SearchSysCache1(CONSTROID, ObjectIdGetDatum(object_id));
+                if (HeapTupleIsValid(tuple))
+                {
+                        Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+
+                        found = true;
+                        object_name = pstrdup(NameStr(con->conname));
+                        schema_id = tsql_get_constraint_nsp_oid(object_id, user_id);
+
+                        if (con->contype == 'f')
+                                type = OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT;
+                        else if (con->contype == 'p')
+                                type = OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT;
+                        else if (con->contype == 'c' && con->conrelid != 0)
+                                type = OBJECT_TYPE_CHECK_CONSTRAINT;
+
+                        ReleaseSysCache(tuple);
+                }
+        }
+
+        if (!schema_id || object_aclcheck(NamespaceRelationId, schema_id, user_id, ACL_USAGE) != ACLCHECK_OK)
+        {
+                if (object_name)
+                        pfree(object_name);
+                return false;
+        }
+
+        nspname = get_namespace_name(schema_id);
+
+        if (!(nspname && pg_strcasecmp(nspname, "sys") == 0) &&
+                (!nspname || pg_strcasecmp(nspname, "pg_catalog") == 0 ||
+                pg_strcasecmp(nspname, "pg_toast") == 0 ||
+                pg_strcasecmp(nspname, "public") == 0))
+        {
+                if (nspname)
+                        pfree(nspname);
+                if (object_name)
+                        pfree(object_name);
+                return false;
+        }
+
+        pfree(nspname);
+
+        *out_type = type;
+        *out_schema_id = schema_id;
+        *out_object_name = object_name;
+        return true;
+}
+
+/*
+ * Map ObjectPropertyType enum to the T-SQL 2-char type code
+ * as used in sys.all_objects.
+ */
+static const char *
+object_type_to_code(int type)
+{
+	switch (type)
+	{
+		case OBJECT_TYPE_TABLE:								return "U ";
+		case OBJECT_TYPE_VIEW:								return "V ";
+		case OBJECT_TYPE_SEQUENCE_OBJECT:					return "SO";
+		case OBJECT_TYPE_TABLE_TYPE:						return "TT";
+		case OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT:			return "F ";
+		case OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT:			return "PK";
+		case OBJECT_TYPE_CHECK_CONSTRAINT:					return "C ";
+		case OBJECT_TYPE_DEFAULT_CONSTRAINT:				return "D ";
+		case OBJECT_TYPE_TSQL_STORED_PROCEDURE:				return "P ";
+		case OBJECT_TYPE_AGGREGATE_FUNCTION:				return "AF";
+		case OBJECT_TYPE_TSQL_DML_TRIGGER:					return "TR";
+		case OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION:		return "TF";
+		case OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION:	return "IF";
+		case OBJECT_TYPE_TSQL_SCALAR_FUNCTION:				return "FN";
+		default:											return NULL;
+	}
+}
+
 Datum
 objectproperty_internal(PG_FUNCTION_ARGS)
 {
@@ -4356,7 +4637,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 		object_name = NameStr(pg_class->relname);
 
-		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
+		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE | ACL_TRIGGER) == ACLCHECK_OK)
 			schema_id = get_rel_namespace(object_id);
 
 		/* 
@@ -4931,6 +5212,91 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		pfree(property);
 
 	PG_RETURN_NULL();
+}
+
+/*
+ * objectpropertyex_internal
+ *
+ * Uses resolve_object_type() for existence check + database scoping instead of
+ * materializing sys.all_objects.  For 'basetype', maps the resolved type to the
+ * 2-char T-SQL type code.  For all other properties, delegates to
+ * objectproperty_internal.
+ */
+Datum
+objectpropertyex_internal(PG_FUNCTION_ARGS)
+{
+        Oid                     object_id;
+        char       *property;
+        int                     type = 0;
+        Oid                     schema_id = InvalidOid;
+        char       *object_name = NULL;
+        char       *nspname;
+
+        if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
+                PG_RETURN_NULL();
+
+        object_id = (Oid) PG_GETARG_INT32(0);
+        property = text_to_cstring(PG_GETARG_TEXT_P(1));
+        property = downcase_identifier(property, strlen(property), false, true);
+        remove_trailing_spaces(property);
+
+        if (!resolve_object_type(object_id, &type, &schema_id, &object_name))
+        {
+                pfree(property);
+                PG_RETURN_NULL();
+        }
+
+        /* Database scoping: match sys.all_objects dbid filter */
+        nspname = get_namespace_name(schema_id);
+        if (!(nspname && pg_strcasecmp(nspname, "sys") == 0) &&
+                !is_schema_from_db(schema_id, get_cur_db_id()))
+        {
+                pfree(property);
+                if (nspname)
+                        pfree(nspname);
+                if (object_name)
+                        pfree(object_name);
+                PG_RETURN_NULL();
+        }
+        if (nspname)
+                pfree(nspname);
+        if (object_name)
+                pfree(object_name);
+
+        /* BaseType: return the 2-char type code as sql_variant */
+        if (pg_strcasecmp(property, "basetype") == 0)
+        {
+                const char *type_code = object_type_to_code(type);
+
+                pfree(property);
+                if (type_code)
+                {
+                        VarChar *vch = (*common_utility_plugin_ptr->tsql_varchar_input)(type_code, strlen(type_code), -1);
+                        PG_RETURN_BYTEA_P((*common_utility_plugin_ptr->convertVarcharToSQLVariantByteA)(vch, PG_GET_COLLATION()));
+                }
+                PG_RETURN_NULL();
+        }
+
+        /* All other properties: delegate to objectproperty_internal, wrap as sql_variant */
+        {
+                Datum   result;
+                LOCAL_FCINFO(inner_fcinfo, 2);
+
+                pfree(property);
+
+                InitFunctionCallInfoData(*inner_fcinfo, NULL, 2, InvalidOid, NULL, NULL);
+                inner_fcinfo->args[0].value = PG_GETARG_DATUM(0);
+                inner_fcinfo->args[0].isnull = false;
+                inner_fcinfo->args[1].value = PG_GETARG_DATUM(1);
+                inner_fcinfo->args[1].isnull = false;
+
+                result = objectproperty_internal(inner_fcinfo);
+
+                if (inner_fcinfo->isnull)
+                        PG_RETURN_NULL();
+
+                PG_RETURN_BYTEA_P((*common_utility_plugin_ptr->convertIntToSQLVariantByteA)(DatumGetInt32(result)));
+        }
 }
 
 PG_FUNCTION_INFO_V1(bbf_pivot);

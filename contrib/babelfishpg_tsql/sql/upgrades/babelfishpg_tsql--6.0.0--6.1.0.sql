@@ -767,6 +767,14 @@ left join sys.shipped_objects_not_in_sys nis on nis.name = ('TT_' || tt.name || 
 ) ot;
 GRANT SELECT ON sys.all_objects TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
+    id INT,
+    property SYS.VARCHAR
+)
+RETURNS SYS.SQL_VARIANT AS
+'babelfishpg_tsql', 'objectpropertyex_internal'
+LANGUAGE C STABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
