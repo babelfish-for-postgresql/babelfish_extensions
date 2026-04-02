@@ -3311,7 +3311,26 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 
 		/* Check if arg is NULL literal */
 		if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull)
+		{
+			/*
+			 * Even for NULL literals, consider the type for precedence if it
+			 * is sql_variant. sql_variant has the highest precedence and can
+			 * hold any type, so it should always win regardless of NULL value.
+			 * Without this, COALESCE(CAST(NULL AS sql_variant), varchar_val)
+			 * would skip sql_variant and pick varchar as common type, then
+			 * fail trying to coerce sql_variant to varchar.
+			 */
+			if ((*common_utility_plugin_ptr->is_tsql_sqlvariant_datatype)(ptype))
+			{
+				temp_precedence = tsql_get_type_precedence(ptype);
+				if (commontype == InvalidOid || temp_precedence < curr_precedence)
+				{
+					commontype = ptype;
+					curr_precedence = temp_precedence;
+				}
+			}
 			continue;
+		}
 
 		/* If the arg is non-null string literal */
 		if (ptype == UNKNOWNOID)
