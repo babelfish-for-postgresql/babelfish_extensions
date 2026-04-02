@@ -100,7 +100,7 @@ _readPLtsql_nsitem(void)
 
 	/* Read prev (recursive) */
 	token = pg_strtok(&length);		/* skip :prev */
-	prev = (PLtsql_nsitem *) nodeRead(NULL, 0);
+	prev = (PLtsql_nsitem *) pltsql_nodeRead(NULL, 0);
 
 	/* Read name */
 	token = pg_strtok(&length);		/* skip :name */
@@ -176,7 +176,7 @@ _readPLtsql_expr(void)
 	/* ns: read the namespace chain */
 	token = pg_strtok(&length);		/* skip :ns */
 	(void) token;
-	local_node->ns = (PLtsql_nsitem *) nodeRead(NULL, 0);
+	local_node->ns = (PLtsql_nsitem *) pltsql_nodeRead(NULL, 0);
 
 	/* expr_simple_*: all read_write_ignore, already zeroed by makeNode */
 	READ_STRING_FIELD(itvf_query);
@@ -251,7 +251,7 @@ _readPLtsql_row(void)
 	/* default_val: PLtsql_expr pointer */
 	token = pg_strtok(&length);		/* skip :default_val */
 	(void) token;
-	local_node->default_val = (PLtsql_expr *) nodeRead(NULL, 0);
+	local_node->default_val = (PLtsql_expr *) pltsql_nodeRead(NULL, 0);
 
 	/* rowtupdesc: read_write_ignore, already NULL from makeNode */
 	READ_INT_FIELD(nfields);

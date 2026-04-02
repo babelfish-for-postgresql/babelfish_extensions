@@ -10,9 +10,6 @@
  * _out/_read switch files, and delegate standard PG node types to the
  * engine public outNode() / nodeRead() functions.
  *
- * This eliminates the need for outNode_hook / parseNodeString_hook in
- * the PG engine, achieving complete decoupling.
- *
  * Adapted from PG outfuncs.c, read.c, and readfuncs.c dispatch logic.
  *
  *-------------------------------------------------------------------------
@@ -38,6 +35,8 @@ extern void *pltsql_stringToNode(const char *str);
 extern void pltsql_outNode(StringInfo str, const void *obj);
 
 static void pltsql_outList(StringInfo str, const List *node);
+extern void *pltsql_nodeRead(const char *token, int tok_len);
+static Node *pltsql_parseNodeString(void);
 
 /*
  * Forward declarations for generated/hand-written _out* functions.
@@ -49,12 +48,19 @@ extern void _outPLtsql_expr(StringInfo str, const PLtsql_expr *node);
 extern void _outPLtsql_row(StringInfo str, const PLtsql_row *node);
 extern void _outPLtsql_recfield(StringInfo str, const PLtsql_recfield *node);
 
+/* Forward declarations for hand-written _read* functions (pltsql_node_stubs.c) */
+extern PLtsql_nsitem *_readPLtsql_nsitem(void);
+extern PLtsql_expr *_readPLtsql_expr(void);
+extern PLtsql_row *_readPLtsql_row(void);
+extern PLtsql_recfield *_readPLtsql_recfield(void);
+
 /*
- * Pull in the generated static _out* functions.
+ * Pull in the generated static _out* and _read* functions.
  * These must be in the same compilation unit as the switch that calls them.
  */
 #include "pltsql_serialize_macros.h"
 #include "pltsql_outfuncs_gen.c"
+#include "pltsql_readfuncs_gen.c"
 
 
 /* ----------------------------------------------------------------
@@ -187,3 +193,271 @@ pltsql_nodeToString(const void *obj)
 }
 
 /* End of write-side functions */
+
+
+/* ================================================================
+ * DESERIALIZE (READ) SIDE
+ * ================================================================
+ */
+
+/*
+ * Token type constants (from PG read.c, not in any public header).
+ * Used by pltsql_tokenType() below.
+ */
+#define PLTSQL_RIGHT_PAREN	(1000000 + 1)
+#define PLTSQL_LEFT_PAREN	(1000000 + 2)
+#define PLTSQL_LEFT_BRACE	(1000000 + 3)
+#define PLTSQL_OTHER_TOKEN	(1000000 + 4)
+
+/*
+ * pltsql_tokenType - classify a token from pg_strtok.
+ *
+ * Replica of PG static nodeTokenType() in read.c.
+ * Returns T_Integer, T_Float, T_Boolean, T_String, T_BitString,
+ * or one of the PLTSQL_LEFT_BRACE/PLTSQL_LEFT_PAREN/etc constants.
+ */
+static NodeTag
+pltsql_tokenType(const char *token, int length)
+{
+	const char *numptr;
+	int			numlen;
+
+	numptr = token;
+	numlen = length;
+	if (*numptr == '+' || *numptr == '-')
+		numptr++, numlen--;
+	if ((numlen > 0 && isdigit((unsigned char) *numptr)) ||
+		(numlen > 1 && *numptr == '.' && isdigit((unsigned char) numptr[1])))
+	{
+		char	   *endptr;
+
+		errno = 0;
+		(void) strtol(token, &endptr, 10);
+		if (endptr != token + length || errno == ERANGE)
+			return T_Float;
+		return T_Integer;
+	}
+	else if (*token == '(')
+		return (NodeTag) PLTSQL_LEFT_PAREN;
+	else if (*token == ')')
+		return (NodeTag) PLTSQL_RIGHT_PAREN;
+	else if (*token == '{')
+		return (NodeTag) PLTSQL_LEFT_BRACE;
+	else if ((length == 4 && strncmp(token, "true", 4) == 0) ||
+			 (length == 5 && strncmp(token, "false", 5) == 0))
+		return T_Boolean;
+	else if (*token == '"' && length > 1 && token[length - 1] == '"')
+		return T_String;
+	else if (*token == 'b' || *token == 'x')
+		return T_BitString;
+	else if (*token == '0' && length > 1 && (token[1] == 'x' || token[1] == 'X'))
+		return T_TSQL_HexString;
+	else
+		return (NodeTag) PLTSQL_OTHER_TOKEN;
+}
+
+/*
+ * pltsql_parseNodeString - read a node type name and dispatch.
+ *
+ * Adapted from PG parseNodeString() in readfuncs.c.
+ * Tries PLtsql node names first (via generated switch), then falls
+ * back to PG parseNodeString() for standard PG types.
+ */
+static Node *
+pltsql_parseNodeString(void)
+{
+	READ_TEMP_LOCALS();
+
+	check_stack_depth();
+
+	token = pg_strtok(&length);
+
+	/* Try PLtsql node types first */
+#define MATCH(tokname, namelen) \
+	(length == namelen && memcmp(token, tokname, namelen) == 0)
+
+#include "pltsql_readfuncs_switch.c"
+
+#undef MATCH
+
+	/* Not a PLtsql node - delegate to PG parseNodeString().
+	 * Push back the token by resetting pg_strtok to the token position. */
+	if (token != NULL)
+		pg_strtok_init(token);
+
+	return parseNodeString();
+}
+
+/*
+ * pltsql_nodeRead - read a serialized node from pg_strtok state.
+ *
+ * Adapted from PG nodeRead() in read.c.
+ * Routes '{' tokens through pltsql_parseNodeString() (which handles
+ * both PLtsql and PG types), and '(' list tokens through our own
+ * list reader. Everything else delegates to PG nodeRead().
+ */
+void *
+pltsql_nodeRead(const char *token, int tok_len)
+{
+	Node	   *result;
+	NodeTag		type;
+
+	if (token == NULL)
+	{
+		token = pg_strtok(&tok_len);
+		if (token == NULL)
+			return NULL;
+	}
+
+	type = pltsql_tokenType(token, tok_len);
+
+	switch ((int) type)
+	{
+		case PLTSQL_LEFT_BRACE:
+			result = pltsql_parseNodeString();
+			token = pg_strtok(&tok_len);
+			if (token == NULL || token[0] != '}')
+				elog(ERROR, "did not find '}' at end of input node");
+			break;
+
+		case PLTSQL_LEFT_PAREN:
+			{
+				List	   *l = NIL;
+
+				token = pg_strtok(&tok_len);
+				if (token == NULL)
+					elog(ERROR, "unterminated List structure");
+
+				if (tok_len == 1 && token[0] == 'i')
+				{
+					for (;;)
+					{
+						int val;
+						char *endptr;
+						token = pg_strtok(&tok_len);
+						if (token == NULL)
+							elog(ERROR, "unterminated List structure");
+						if (token[0] == ')')
+							break;
+						val = (int) strtol(token, &endptr, 10);
+						if (endptr != token + tok_len)
+							elog(ERROR, "unrecognized integer: \"%.*s\"", tok_len, token);
+						l = lappend_int(l, val);
+					}
+					result = (Node *) l;
+				}
+				else if (tok_len == 1 && token[0] == 'o')
+				{
+					for (;;)
+					{
+						Oid val;
+						char *endptr;
+						token = pg_strtok(&tok_len);
+						if (token == NULL)
+							elog(ERROR, "unterminated List structure");
+						if (token[0] == ')')
+							break;
+						val = (Oid) strtoul(token, &endptr, 10);
+						if (endptr != token + tok_len)
+							elog(ERROR, "unrecognized OID: \"%.*s\"", tok_len, token);
+						l = lappend_oid(l, val);
+					}
+					result = (Node *) l;
+				}
+				else if (tok_len == 1 && token[0] == 'x')
+				{
+					for (;;)
+					{
+						TransactionId val;
+						char *endptr;
+						token = pg_strtok(&tok_len);
+						if (token == NULL)
+							elog(ERROR, "unterminated List structure");
+						if (token[0] == ')')
+							break;
+						val = (TransactionId) strtoul(token, &endptr, 10);
+						if (endptr != token + tok_len)
+							elog(ERROR, "unrecognized Xid: \"%.*s\"", tok_len, token);
+						l = lappend_xid(l, val);
+					}
+					result = (Node *) l;
+				}
+				else if (tok_len == 1 && token[0] == 'b')
+				{
+					Bitmapset *bms = NULL;
+					for (;;)
+					{
+						int val;
+						char *endptr;
+						token = pg_strtok(&tok_len);
+						if (token == NULL)
+							elog(ERROR, "unterminated Bitmapset structure");
+						if (tok_len == 1 && token[0] == ')')
+							break;
+						val = (int) strtol(token, &endptr, 10);
+						if (endptr != token + tok_len)
+							elog(ERROR, "unrecognized integer: \"%.*s\"", tok_len, token);
+						bms = bms_add_member(bms, val);
+					}
+					result = (Node *) bms;
+				}
+				else
+				{
+					/* Node list: walk elements through our reader */
+					for (;;)
+					{
+						if (token[0] == ')')
+							break;
+						l = lappend(l, pltsql_nodeRead(token, tok_len));
+						token = pg_strtok(&tok_len);
+						if (token == NULL)
+							elog(ERROR, "unterminated List structure");
+					}
+					result = (Node *) l;
+				}
+				break;
+			}
+
+		case PLTSQL_RIGHT_PAREN:
+			elog(ERROR, "unexpected right parenthesis");
+			result = NULL;
+			break;
+
+		case PLTSQL_OTHER_TOKEN:
+			if (tok_len == 0)
+				result = NULL;	/* "<>" = null pointer */
+			else
+			{
+				elog(ERROR, "unrecognized token: \"%.*s\"", tok_len, token);
+				result = NULL;
+			}
+			break;
+
+		default:
+			/* Value types (Integer, Float, Boolean, String, etc.)
+			 * - delegate to PG nodeRead() */
+			result = (Node *) nodeRead(token, tok_len);
+			break;
+	}
+
+	return (void *) result;
+}
+
+/*
+ * pltsql_stringToNode - deserialize a PLtsql node tree from a string.
+ *
+ * Public entry point. Sets up pg_strtok state via pg_strtok_init(),
+ * then calls pltsql_nodeRead() to parse the tree.
+ */
+void *
+pltsql_stringToNode(const char *str)
+{
+	void	   *retval;
+
+	/* Point tokenizer at our string */
+	pg_strtok_init(str);
+
+	retval = pltsql_nodeRead(NULL, 0);
+
+	return retval;
+}

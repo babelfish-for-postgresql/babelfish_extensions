@@ -116,10 +116,17 @@ extern void pltsql_outNode(StringInfo str, const void *obj);
 	token = pg_strtok(&length);		/* get field value */ \
 	local_node->fldname = (enumtype) atoi(token)
 
+/*
+ * READ_NODE_FIELD - read a child node field.
+ * Routes through pltsql_nodeRead() so PLtsql nodes inside Lists and
+ * nested fields are handled by our extension dispatcher.
+ */
+extern void *pltsql_nodeRead(const char *token, int tok_len);
+
 #define READ_NODE_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \
 	(void) token; \
-	local_node->fldname = nodeRead(NULL, 0)
+	local_node->fldname = pltsql_nodeRead(NULL, 0)
 
 #define READ_BITMAPSET_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \

@@ -4536,7 +4536,7 @@ pltsql_fill_cache_columns(PLtsql_function *function, Datum modify_date,
 
 		PG_TRY();
 		{
-			roundtrip = (PLtsql_stmt_block *) stringToNode(tree_str);
+			roundtrip = (PLtsql_stmt_block *) pltsql_stringToNode(tree_str);
 		}
 		PG_CATCH();
 		{
@@ -4830,7 +4830,7 @@ pltsql_restore_func_parse_result(HeapTuple proctup,
 
 		PG_TRY();
 		{
-			block = (PLtsql_stmt_block *) stringToNode(str);
+			block = (PLtsql_stmt_block *) pltsql_stringToNode(str);
 		}
 		PG_CATCH();
 		{
@@ -4864,7 +4864,7 @@ pltsql_restore_func_parse_result(HeapTuple proctup,
 
 		PG_TRY();
 		{
-			datum_list = (List *) stringToNode(datums_text);
+			datum_list = (List *) pltsql_stringToNode(datums_text);
 		}
 		PG_CATCH();
 		{

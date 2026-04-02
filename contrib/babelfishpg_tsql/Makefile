@@ -99,10 +99,10 @@ $(PLTSQL_SER_DIR)/pltsql_nodetags.h $(PLTSQL_SER_DIR)/pltsql_outfuncs_gen.c $(PL
 
 # Wrapper .c files #include the generated .c files (mirroring engine pattern)
 # so we compile the wrappers, not the gen files directly.
-OBJS += $(PLTSQL_SER_DIR)/pltsql_outfuncs.o
-OBJS += $(PLTSQL_SER_DIR)/pltsql_readfuncs.o
+# pltsql_outfuncs and pltsql_readfuncs: generated code now included by pltsql_nodeio.c
 OBJS += $(PLTSQL_SER_DIR)/pltsql_equalfuncs.o
 OBJS += $(PLTSQL_SER_DIR)/pltsql_compare.o
+OBJS += $(PLTSQL_SER_DIR)/pltsql_nodeio.o
 
 # pltsql_nodetags.h must be generated before any .o that includes pltsql.h
 # The first OBJS entry (src/pl_gram.o) triggers this via implicit ordering,
@@ -110,8 +110,7 @@ OBJS += $(PLTSQL_SER_DIR)/pltsql_compare.o
 src/pl_gram.o: $(PLTSQL_SER_DIR)/pltsql_nodetags.h
 
 # Wrapper .o depends on generated .c files (included via #include)
-$(PLTSQL_SER_DIR)/pltsql_outfuncs.o: $(PLTSQL_SER_DIR)/pltsql_outfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_outfuncs_switch.c
-$(PLTSQL_SER_DIR)/pltsql_readfuncs.o: $(PLTSQL_SER_DIR)/pltsql_readfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_readfuncs_switch.c
+$(PLTSQL_SER_DIR)/pltsql_nodeio.o: $(PLTSQL_SER_DIR)/pltsql_outfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_outfuncs_switch.c $(PLTSQL_SER_DIR)/pltsql_readfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_readfuncs_switch.c
 $(PLTSQL_SER_DIR)/pltsql_equalfuncs.o: $(PLTSQL_SER_DIR)/pltsql_equalfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_equalfuncs_switch.c
 
 PG_CXXFLAGS += -g -Werror -Wfloat-conversion
