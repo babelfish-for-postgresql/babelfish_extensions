@@ -4348,7 +4348,7 @@ resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
                 found = true;
                 object_name = pstrdup(NameStr(pg_class->relname));
 
-                if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
+                if (pg_class_aclcheck(object_id, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE | ACL_TRIGGER) == ACLCHECK_OK)
                         schema_id = get_rel_namespace(object_id);
 
                 if ((pg_class->relpersistence == 'p' || pg_class->relpersistence == 'u' || pg_class->relpersistence == 't') &&
@@ -4637,7 +4637,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 		object_name = NameStr(pg_class->relname);
 
-		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE | ACL_TRIGGER) == ACLCHECK_OK)
+		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
 			schema_id = get_rel_namespace(object_id);
 
 		/* 
