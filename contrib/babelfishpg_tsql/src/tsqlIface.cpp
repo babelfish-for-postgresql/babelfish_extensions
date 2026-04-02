@@ -3009,7 +3009,7 @@ public:
 		clear_rewritten_query_fragment();
 
 		/* Now we can prepend SELECT to rewritten search_condition */
-		expr->query = strdup((std::string("SELECT ") + std::string(expr->query)).c_str());
+		expr->query = pstrdup((std::string("SELECT ") + std::string(expr->query)).c_str());
 		return expr;
 	}
 
