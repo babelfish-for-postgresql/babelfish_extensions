@@ -60,9 +60,16 @@
 	appendStringInfo(str, " :" CppAsString(fldname) " %d", \
 					 (int) node->fldname)
 
+/*
+ * WRITE_NODE_FIELD — serialize a child node field.
+ * Routes through pltsql_outNode() so PLtsql nodes inside Lists and
+ * nested fields are handled by our extension dispatcher, not PG's outNode().
+ */
+extern void pltsql_outNode(StringInfo str, const void *obj);
+
 #define WRITE_NODE_FIELD(fldname) \
 	(appendStringInfoString(str, " :" CppAsString(fldname) " "), \
-	 outNode(str, node->fldname))
+	 pltsql_outNode(str, node->fldname))
 
 #define WRITE_BITMAPSET_FIELD(fldname) \
 	(appendStringInfoString(str, " :" CppAsString(fldname) " "), \

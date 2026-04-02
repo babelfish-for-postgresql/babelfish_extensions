@@ -6155,8 +6155,8 @@ _PG_init(void)
 
 	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
 
-	/* PLtsql node serialization hooks */
-	outNode_hook = pltsql_outNode;
+	/* PLtsql node serialization: read-side hook only.
+	 * Write side is handled by pltsql_nodeToString() in pltsql_nodeio.c. */
 	parseNodeString_hook = pltsql_parseNodeString;
 
 	inited = true;

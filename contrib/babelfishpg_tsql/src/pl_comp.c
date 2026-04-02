@@ -357,6 +357,7 @@ do_compile(FunctionCallInfo fcinfo,
 	PLtsql_stmt_block *validation_cached_tree = NULL;  
 	PLtsql_datum **validation_cached_datums = NULL;
 	int validation_cached_ndatums = 0;
+	MemoryContext validation_cxt = NULL;
 
 	/*
 	 * Setup the scanner input and error info.  We assume that this function
@@ -950,10 +951,28 @@ do_compile(FunctionCallInfo fcinfo,
 		 */
 		if (!forValidator)
 		{
+			MemoryContext save_cxt = CurrentMemoryContext;
+
+			/*
+			 * When validation GUC is on, restore the cached tree into a
+			 * separate memory context so ANTLR re-parsing (which reuses
+			 * func_cxt) does not overwrite the cached node pointers.
+			 */
+			if (pltsql_validate_parse_cache)
+			{
+				validation_cxt = AllocSetContextCreate(func_cxt,
+													   "PLtsql validation",
+													   ALLOCSET_DEFAULT_SIZES);
+				MemoryContextSwitchTo(validation_cxt);
+			}
+
 			cached_result = pltsql_restore_func_parse_result(procTup,
 															 &cache_enabled_for_func,
 															 &bbf_ext_xmin,
 															 &bbf_ext_tid);
+
+			/* Restore original context */
+			MemoryContextSwitchTo(save_cxt);
 			
 			if (cached_result)
 			{
@@ -1263,6 +1282,19 @@ skip_antlr_parsing:
 				 validation_cached_ndatums, antlr_ndatums, datum_mismatches);
 		}
 	}
+
+	/* Free the validation memory context (cached tree data no longer needed) */
+	// if (validation_cxt != NULL)
+	// {
+	// 	MemoryContextDelete(validation_cxt);
+	// 	validation_cxt = NULL;
+	// }
+	/*
+	 * Keep validation_cxt alive — it is a child of func_cxt and will be
+	 * cleaned up when the function is evicted from the hash table.
+	 * Deleting it here would risk freeing memory that the ANTLR tree
+	 * might reference (e.g., shared interned strings).
+	 */
 
 	/*
 	 * Pop the error context stack

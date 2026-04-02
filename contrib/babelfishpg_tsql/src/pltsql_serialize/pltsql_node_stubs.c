@@ -66,9 +66,9 @@ _outPLtsql_nsitem(StringInfo str, const PLtsql_nsitem *node)
 	WRITE_ENUM_FIELD(itemtype, PLtsql_nsitem_type);
 	WRITE_INT_FIELD(itemno);
 
-	/* Serialize prev as a nested node (recursive, via outNode for proper bracing) */
+	/* Serialize prev as a nested node (recursive, via pltsql_outNode for proper bracing) */
 	appendStringInfoString(str, " :prev ");
-	outNode(str, node->prev);
+	pltsql_outNode(str, node->prev);
 
 	/* Serialize flexible array member as a string */
 	appendStringInfoString(str, " :name ");
@@ -155,7 +155,7 @@ _outPLtsql_expr(StringInfo str, const PLtsql_expr *node)
 
 	/* ns: serialize the namespace chain */
 	appendStringInfoString(str, " :ns ");
-	outNode(str, node->ns);
+	pltsql_outNode(str, node->ns);
 
 	/* expr_simple_*: all read_write_ignore */
 	WRITE_STRING_FIELD(itvf_query);
@@ -213,7 +213,7 @@ _outPLtsql_row(StringInfo str, const PLtsql_row *node)
 
 	/* default_val is a PLtsql_expr pointer */
 	appendStringInfoString(str, " :default_val ");
-	outNode(str, node->default_val);
+	pltsql_outNode(str, node->default_val);
 
 	/* rowtupdesc: read_write_ignore */
 	WRITE_INT_FIELD(nfields);

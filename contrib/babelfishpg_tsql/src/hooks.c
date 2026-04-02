@@ -105,6 +105,10 @@
 #include "extendedproperty.h"
 #include "utils/xml.h"
 
+/* PLtsql serialization — extension-side dispatch (pltsql_nodeio.c) */
+extern char *pltsql_nodeToString(const void *obj);
+extern void *pltsql_stringToNode(const char *str);
+
 #ifdef USE_LIBXML
 #include <libxml/tree.h>
 #include <libxml/xpath.h>
@@ -4472,7 +4476,7 @@ pltsql_fill_cache_columns(PLtsql_function *function, Datum modify_date,
 	/* Serialize parse tree */
 	PG_TRY();
 	{
-		tree_str = nodeToString(function->action);
+		tree_str = pltsql_nodeToString(function->action);
 	}
 	PG_CATCH();
 	{
@@ -4500,7 +4504,7 @@ pltsql_fill_cache_columns(PLtsql_function *function, Datum modify_date,
 		{
 			PG_TRY();
 			{
-				datums_str = nodeToString(datum_list);
+				datums_str = pltsql_nodeToString(datum_list);
 			}
 			PG_CATCH();
 			{
