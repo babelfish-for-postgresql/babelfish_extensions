@@ -1636,8 +1636,13 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 				 * schema name only assuming its shared schema.
 				 */
 				if (relMetaDataInfo->partName[1] == NULL)
-					relMetaDataInfo->partName[1] = strdup(physical_schema_name);
-
+				{
+					if (physical_schema_name != NULL)
+						relMetaDataInfo->partName[1] = pstrdup(physical_schema_name);
+					else
+						relMetaDataInfo->partName[1] = NULL;
+				}
+				
 				if (physical_schema_name)
 					pfree(physical_schema_name);
 
