@@ -235,7 +235,7 @@ $$;
 
 -- Deprecate and drop old aggregates first (they depend on the function)
 
--- Deprecate and drop old aggregate (6 args) - tsql_select_for_xml_agg
+-- Deprecate and drop old aggregate (5 args) - tsql_select_for_xml_agg
 DO $$
 DECLARE
     exception_message text;
