@@ -247,8 +247,8 @@ pltsql_equal_nodes_or_equal(const void *a, const void *b)
 
 	check_stack_depth();
 
-	/* PLtsql node tags are in range 1000-1079 */
-	if ((int) nodeTag(a) >= 1000 && (int) nodeTag(a) <= 1079)
+	/* PLtsql node tags start at PLTSQL_NODETAG_START (defined in pltsql_nodetags.h) */
+	if ((int) nodeTag(a) >= PLTSQL_NODETAG_START)
 		return pltsql_equal_node(a, b);
 
 	/* Lists (all variants): walk elements and check each */

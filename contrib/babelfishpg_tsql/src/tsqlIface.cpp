@@ -2983,10 +2983,27 @@ public:
 	void exitExecute_body_batch(TSqlParser::Execute_body_batchContext *ctx) override
 	{
 		in_execute_body_batch = false;
-		PLtsql_stmt_exec *stmt = (PLtsql_stmt_exec *) getPLtsql_fragment(ctx);
-		PLtsql_expr_query_mutator mutator(stmt->expr, ctx);
-		add_rewritten_query_fragment_to_mutator(&mutator); 
-		mutator.run();
+		PLtsql_stmt *stmt = (PLtsql_stmt *) getPLtsql_fragment(ctx);
+
+		/*
+		 * The query mutator only applies to PLtsql_stmt_exec (regular EXEC
+		 * of a user procedure), which has an expr field containing the
+		 * rewritable query text.
+		 *
+		 * System procedures (sp_executesql, sp_cursor*, etc.) are handled by
+		 * makeSpStatement() and return PLtsql_stmt_exec_sp, which has a
+		 * different struct layout and no expr field. We must not cast to
+		 * PLtsql_stmt_exec in that case — the field offsets differ, especially
+		 * now that NodeTag was added as the first field of all PLtsql statement
+		 * structs for enable_routine_parse_cache serialization support.
+		 */
+		if (stmt->cmd_type == PLTSQL_STMT_EXEC)
+		{
+			PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) stmt;
+			PLtsql_expr_query_mutator mutator(exec_stmt->expr, ctx);
+			add_rewritten_query_fragment_to_mutator(&mutator);
+			mutator.run();
+		}
 		clear_rewritten_query_fragment();
 	}
 

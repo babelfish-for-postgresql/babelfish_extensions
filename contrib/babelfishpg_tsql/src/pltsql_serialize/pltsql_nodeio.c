@@ -71,10 +71,7 @@ extern PLtsql_recfield *_readPLtsql_recfield(void);
 static inline bool
 is_pltsql_node(const void *obj)
 {
-	int tag = (int) nodeTag(obj);
-
-	return (tag >= (int) T_PLtsql_type &&
-			tag <= (int) T_PLtsql_stmt_restore_ctx_partial);
+	return ((int) nodeTag(obj) >= PLTSQL_NODETAG_START);
 }
 
 

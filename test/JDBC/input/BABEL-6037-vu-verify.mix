@@ -1,5 +1,8 @@
+-- tsql
 -- BABEL-6037 POC Test - Verify
 -- Tests procedure execution with parse tree caching
+-- Runs in a new session (.mix) so the PLtsql hash table is empty and
+-- do_compile is called for each function, exercising the cache read/write paths.
 --
 -- Cache layers (see BABEL-6037 design):
 --   CREATE/ALTER: compiles the procedure, serializes parse tree to babelfish_func_ext (persistent cache)
@@ -47,9 +50,9 @@ GO
 EXEC dbo.proc_param_supported @input_val = 20;
 GO
 
-PRINT '=== Test 4: Procedure with unsupported node type ===';
+PRINT '=== Test 4: Procedure with sp_executesql ===';
 GO
--- Serialization skipped at CREATE time; each new session falls back to full ANTLR recompile
+-- Tests serialization of system procedure call nodes
 PRINT 'exec 1: proc_param_unsupported';
 GO
 EXEC dbo.proc_param_unsupported @max = 3;
@@ -446,6 +449,10 @@ GO
 PRINT '=== Test 16: GUC off + per-function flag interaction ===';
 GO
 
+-- Verify antlr_cache_enabled is initially false
+SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_guc_override' AND nspname = 'master_dbo';
+
 -- Enable per-function cache using no-schema form
 SELECT sys.enable_routine_parse_cache('perfunc_guc_override', true);
 GO
@@ -459,18 +466,18 @@ GO
 SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
 GO
 
--- Execute with GUC off (falls back to ANTLR, cache columns stay NULL)
+-- Execute with GUC off but per-function flag is true — cache gets populated
 EXEC dbo.perfunc_guc_override @val = 9;
 GO
 
--- Verify cache columns are still NULL (GUC was off during CREATE, no cache populated)
+-- Verify cache is populated (per-function flag overrides session GUC for cache writes)
 SELECT
     CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_guc_override' AND nspname = 'master_dbo';
 GO
 
--- Turn GUC on, per-function flag is true, cache should get populated on exec
+-- Turn GUC on, per-function flag is true, cache was populated on previous exec
 SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
 GO
 
@@ -484,6 +491,18 @@ GO
 EXEC dbo.perfunc_guc_override @val = 13;
 GO
 
+-- Disable per-function cache using schema form
+SELECT sys.enable_routine_parse_cache('dbo.perfunc_guc_override', false);
+GO
+
+-- Verify antlr_cache_enabled is false
+SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_guc_override' AND nspname = 'master_dbo';
+GO
+
+-- session cache would be populated but invalidated by turned off gucs. Reparses ANTLR
+EXEC dbo.perfunc_guc_override @val = 14;
+GO
 
 -- === Test 17: Default behavior (antlr_cache_enabled = false) ===
 PRINT '=== Test 17: Default behavior (antlr_cache_enabled = false) ===';

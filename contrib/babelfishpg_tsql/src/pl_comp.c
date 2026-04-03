@@ -341,7 +341,7 @@ do_compile(FunctionCallInfo fcinfo,
 	char	  **argnames;
 	char	   *argmodes;
 	int		   *in_arg_varnos = NULL;
-	PLtsql_variable **out_arg_variables;
+	PLtsql_variable **out_arg_variables = NULL;
 	MemoryContext func_cxt;
 
 	/* Special handling is needed for Multi-Statement Table-Valued Functions. */
@@ -1201,15 +1201,18 @@ skip_antlr_parsing:
 	 * "tuple already updated by self" errors.
 	 */
 	if (!forValidator && !function->from_cache &&
-		(pltsql_enable_routine_parse_cache || cache_enabled_for_func))
-		pltsql_update_func_cache_entry(procTup, function);
-
-	/*
-	 * Store babelfish_function_ext xmin/tid for cross-session invalidation.
-	 * This was captured by pltsql_restore_func_parse_result (even on cache miss).
-	 */
-	if (TransactionIdIsValid(bbf_ext_xmin))
+		(pltsql_enable_routine_parse_cache || cache_enabled_for_func)){
+			elog(LOG, "pltsql_enable_routine_parse_cache[INFO]: %s ANTLR parse result used to re-populate cache at EXEC (session guc=%s, func cache_enabled=%s)",
+				 function->fn_signature,
+				 pltsql_enable_routine_parse_cache ? "on" : "off",
+				 cache_enabled_for_func ? "on" : "off");
+			pltsql_update_func_cache_entry(procTup, function);
+			/* pltsql_update_func_cache_entry sets function->bbf_ext_xmin/tid
+			 * with the post-write tuple identity, so skip the stale assignment below. */
+		}
+	else if (TransactionIdIsValid(bbf_ext_xmin))
 	{
+		/* No cache write — use the xmin/tid captured by pltsql_restore_func_parse_result */
 		function->bbf_ext_xmin = bbf_ext_xmin;
 		function->bbf_ext_tid = bbf_ext_tid;
 	}

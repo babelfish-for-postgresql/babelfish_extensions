@@ -109,9 +109,8 @@ END;
 GO
 
 
--- Test 4: Procedure with unsupported node type (EXEC_SP / sp_executesql)
--- PLTSQL_STMT_EXEC_SP is not in pltsql_is_serializable; triggers PLTSQL_SERIAL_UNSUPPORTED
--- Each new session falls back to full ANTLR recompile instead of using persistent cache
+-- Test 4: Procedure with sp_executesql (system procedure call node)
+-- Tests serialization of PLtsql_stmt_exec_sp nodes
 CREATE PROCEDURE dbo.proc_param_unsupported
     @max INT
 AS

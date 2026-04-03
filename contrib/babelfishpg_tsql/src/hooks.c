@@ -4684,6 +4684,13 @@ pltsql_update_func_cache_entry(HeapTuple proctup, PLtsql_function *function)
 							   new_record, new_record_nulls, new_record_replaces);
 	CatalogTupleUpdate(rel, &newtup->t_self, newtup);
 
+	/*
+	 * Update function's bbf_ext tracking fields with the post-write tuple
+	 * identity so the hash table validity check sees the current state.
+	 */
+	function->bbf_ext_xmin = HeapTupleHeaderGetRawXmin(newtup->t_data);
+	function->bbf_ext_tid = newtup->t_self;
+
 	heap_freetuple(oldtup);
 	heap_freetuple(newtup);
 	table_close(rel, RowExclusiveLock);
