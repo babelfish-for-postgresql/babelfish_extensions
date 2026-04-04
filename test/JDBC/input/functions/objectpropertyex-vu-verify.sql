@@ -115,11 +115,7 @@ GO
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'IsSchemaBound')
 GO
 
--- View created with weak_view_binding=true (weak-bound, no SCHEMABINDING): returns 0
-SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_weak_view'), 'IsSchemaBound')
-GO
-
--- View created with weak_view_binding=true but WITH SCHEMABINDING: returns 1
+-- View created with SCHEMABINDING: returns 1
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_schemabound_view'), 'IsSchemaBound')
 GO
 

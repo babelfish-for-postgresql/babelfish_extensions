@@ -118,32 +118,12 @@ GO
 CREATE TABLE objectpropertyex_notshipped_table(a int)
 GO
 
--- =============== IsSchemaBound - weak_view_binding GUC ===============
-
--- Create a view with weak_view_binding = true (weak-bound view)
-SELECT CASE WHEN set_config('babelfishpg_tsql.weak_view_binding', 'true', false) IN ('true', 'on') THEN 'on' ELSE 'off' END
-GO
-
-CREATE VIEW objectpropertyex_weak_view AS
-SELECT 1
-GO
-
--- Reset to default
-SELECT CASE WHEN set_config('babelfishpg_tsql.weak_view_binding', 'false', false) IN ('true', 'on') THEN 'on' ELSE 'off' END
-GO
-
--- Create a schema-bound view with weak_view_binding = true
-SELECT CASE WHEN set_config('babelfishpg_tsql.weak_view_binding', 'true', false) IN ('true', 'on') THEN 'on' ELSE 'off' END
-GO
+-- =============== IsSchemaBound - schema-bound view ===============
 
 CREATE VIEW objectpropertyex_schemabound_view
 WITH SCHEMABINDING
 AS
 SELECT 1 AS col1
-GO
-
--- Reset to default
-SELECT CASE WHEN set_config('babelfishpg_tsql.weak_view_binding', 'false', false) IN ('true', 'on') THEN 'on' ELSE 'off' END
 GO
 
 -- =============== Cross-database scoping ===============

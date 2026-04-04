@@ -25,12 +25,9 @@ GO
 DROP FUNCTION objectpropertyex_noschemabound_fn
 GO
 
--- =============== IsSchemaBound - weak_view_binding GUC ===============
+-- =============== IsSchemaBound - schema-bound view ===============
 
 DROP VIEW objectpropertyex_schemabound_view
-GO
-
-DROP VIEW objectpropertyex_weak_view
 GO
 
 -- =============== BaseType - additional object types ===============

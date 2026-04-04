@@ -32,3 +32,100 @@ GO
 -- Setup
 CREATE TABLE objectpropertyex_specialinput_table(a int)
 GO
+
+-- =============== BaseType - additional object types ===============
+
+-- Trigger
+CREATE TABLE objectpropertyex_trigger_table(a int)
+GO
+
+CREATE TRIGGER objectpropertyex_test_trigger ON objectpropertyex_trigger_table
+AFTER INSERT AS
+BEGIN
+    SELECT 1
+END
+GO
+
+-- Constraints: PK, FK, CHECK, DEFAULT
+CREATE TABLE objectpropertyex_constraint_table(
+    a int,
+    b int DEFAULT 42,
+    c int CHECK (c > 0),
+    CONSTRAINT objectpropertyex_pk PRIMARY KEY (a)
+)
+GO
+
+CREATE TABLE objectpropertyex_fk_table(
+    x int,
+    CONSTRAINT objectpropertyex_fk FOREIGN KEY (x) REFERENCES objectpropertyex_constraint_table(a)
+)
+GO
+
+-- Sequence
+CREATE SEQUENCE objectpropertyex_test_seq START WITH 1
+GO
+
+-- Inline table-valued function
+CREATE FUNCTION objectpropertyex_itvf()
+RETURNS TABLE
+AS
+RETURN (SELECT 1 AS col1)
+GO
+
+-- Multi-statement table-valued function
+CREATE FUNCTION objectpropertyex_tvf()
+RETURNS @result TABLE (col1 int)
+AS
+BEGIN
+    INSERT @result VALUES (1)
+    RETURN
+END
+GO
+
+-- =============== Properties test objects ===============
+
+-- IsSchemaBound
+CREATE FUNCTION objectpropertyex_schemabound_fn()
+RETURNS int
+WITH SCHEMABINDING
+BEGIN
+    RETURN 1
+END
+GO
+
+CREATE FUNCTION objectpropertyex_noschemabound_fn()
+RETURNS int
+BEGIN
+    RETURN 1
+END
+GO
+
+-- IsIndexed
+CREATE TABLE objectpropertyex_indexed_table(a int)
+GO
+
+CREATE INDEX objectpropertyex_idx ON objectpropertyex_indexed_table(a)
+GO
+
+CREATE TABLE objectpropertyex_noindex_table(a int)
+GO
+
+-- IsDefaultCnst
+CREATE TABLE objectpropertyex_default_table(a int DEFAULT 10)
+GO
+
+-- IsMSShipped
+CREATE TABLE objectpropertyex_notshipped_table(a int)
+GO
+
+-- =============== IsSchemaBound - schema-bound view ===============
+
+CREATE VIEW objectpropertyex_schemabound_view
+WITH SCHEMABINDING
+AS
+SELECT 1 AS col1
+GO
+
+-- =============== Cross-database scoping ===============
+CREATE DATABASE objectpropertyex_otherdb
+GO

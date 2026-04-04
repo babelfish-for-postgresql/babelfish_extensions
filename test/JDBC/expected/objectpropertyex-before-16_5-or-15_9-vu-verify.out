@@ -94,3 +94,434 @@ sql_variant
 U 
 ~~END~~
 
+
+
+-- =============== NULL input handling ===============
+SELECT OBJECTPROPERTYEX(NULL, 'BaseType')
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), NULL)
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+SELECT OBJECTPROPERTYEX(NULL, NULL)
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+
+-- =============== BaseType - additional object types ===============
+-- Trigger
+SELECT OBJECTPROPERTYEX(
+    (SELECT object_id FROM sys.triggers WHERE name = 'objectpropertyex_test_trigger'),
+    'BaseType')
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+-- Primary key constraint
+SELECT OBJECTPROPERTYEX(
+    (SELECT object_id FROM sys.key_constraints WHERE name = 'objectpropertyex_pk'),
+    'BaseType')
+GO
+~~START~~
+sql_variant
+PK
+~~END~~
+
+
+-- Foreign key constraint
+SELECT OBJECTPROPERTYEX(
+    (SELECT object_id FROM sys.foreign_keys WHERE name = 'objectpropertyex_fk'),
+    'BaseType')
+GO
+~~START~~
+sql_variant
+F 
+~~END~~
+
+
+-- Check constraint
+SELECT OBJECTPROPERTYEX(
+    (SELECT object_id FROM sys.check_constraints WHERE name LIKE '%objectpropertyex_constraint_table%' AND parent_column_id = (SELECT column_id FROM sys.columns WHERE name = 'c' AND object_id = OBJECT_ID('objectpropertyex_constraint_table'))),
+    'BaseType')
+GO
+~~START~~
+sql_variant
+C 
+~~END~~
+
+
+-- Default constraint
+SELECT OBJECTPROPERTYEX(
+    (SELECT object_id FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('objectpropertyex_constraint_table') AND parent_column_id = (SELECT column_id FROM sys.columns WHERE name = 'b' AND object_id = OBJECT_ID('objectpropertyex_constraint_table'))),
+    'BaseType')
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+-- Sequence
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_test_seq'), 'BaseType')
+GO
+~~START~~
+sql_variant
+AF
+~~END~~
+
+
+-- Inline table-valued function
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_itvf'), 'BaseType')
+GO
+~~START~~
+sql_variant
+IF
+~~END~~
+
+
+-- Multi-statement table-valued function
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_tvf'), 'BaseType')
+GO
+~~START~~
+sql_variant
+TF
+~~END~~
+
+
+
+-- =============== IsSchemaBound ===============
+-- Schema-bound function should return 0 (hardcoded for non-view objects)
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_schemabound_fn'), 'IsSchemaBound')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+-- Non-schema-bound function should return 0
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_noschemabound_fn'), 'IsSchemaBound')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+-- View created with default weak_view_binding=false (strong-bound): returns 1
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'IsSchemaBound')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+-- View created with SCHEMABINDING: returns 1
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_schemabound_view'), 'IsSchemaBound')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+-- Table - IsSchemaBound not applicable, should return NULL
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsSchemaBound')
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+-- Stored procedure
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_proc'), 'IsSchemaBound')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+
+-- =============== IsIndexed ===============
+-- Table with index
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_indexed_table'), 'IsIndexed')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+-- Table without index
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_noindex_table'), 'IsIndexed')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+-- Non-table object - should return 0
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'IsIndexed')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+
+-- =============== IsDefaultCnst ===============
+-- Default constraint
+SELECT OBJECTPROPERTYEX(
+    (SELECT object_id FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('objectpropertyex_default_table')),
+    'IsDefaultCnst')
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+-- Non-default object
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsDefaultCnst')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+
+-- =============== IsMSShipped ===============
+-- User-created table should not be MS shipped
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_notshipped_table'), 'IsMSShipped')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+-- System object should be MS shipped
+SELECT OBJECTPROPERTYEX(OBJECT_ID('sys.objects'), 'IsMSShipped')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+
+-- =============== Type-checking properties ===============
+-- IsTable
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsTable')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'IsTable')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+-- IsView
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'IsView')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsView')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+-- IsUserTable
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsUserTable')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'IsUserTable')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+-- IsProcedure
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_proc'), 'IsProcedure')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsProcedure')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+-- IsScalarFunction
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_function'), 'IsScalarFunction')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_proc'), 'IsScalarFunction')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+-- IsTableFunction
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_tvf'), 'IsTableFunction')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsTableFunction')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+-- IsInlineFunction
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_itvf'), 'IsInlineFunction')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_tvf'), 'IsInlineFunction')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+-- IsPrimaryKey
+SELECT OBJECTPROPERTYEX(
+    (SELECT object_id FROM sys.key_constraints WHERE name = 'objectpropertyex_pk'),
+    'IsPrimaryKey')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsPrimaryKey')
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+
+-- =============== ExecIsQuotedIdentOn / ExecIsAnsiNullsOn ===============
+-- These return 1 for applicable objects (procs, functions, views, triggers)
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_proc'), 'ExecIsQuotedIdentOn')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_function'), 'ExecIsAnsiNullsOn')
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+-- Not applicable to tables - should return NULL
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'ExecIsQuotedIdentOn')
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'ExecIsAnsiNullsOn')
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+
+-- =============== Cross-database scoping ===============
+-- Object from another database should return NULL in current database context
+USE objectpropertyex_otherdb
+GO
+
+-- Object from default database should not be visible here
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'BaseType')
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+USE master
+GO
