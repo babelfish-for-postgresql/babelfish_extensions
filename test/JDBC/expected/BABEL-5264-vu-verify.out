@@ -1,6 +1,7 @@
+-- tsql
 
--- BABEL-5264: Test sp_tablecollations_100 functions for BCP temp table support
--- Test 1: Basic test of sys.sp_tablecollations_100_enr and tempdb.dbo.sp_tablecollations_100
+-- BABEL-5264: Tests for sp_tablecollations_100 and babelfish_get_temp_table_attributes functions required for BCP support
+-- Basic test of sys.sp_tablecollations_100_enr and tempdb.dbo.sp_tablecollations_100
 CREATE TABLE #collTest1(id int, name varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS, description nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
 GO
 
@@ -27,7 +28,7 @@ int#!#varchar#!#binary#!#nvarchar
 DROP TABLE #collTest1
 GO
 
--- Test 2: Test with various column types
+-- Test with various column types
 CREATE TABLE #collTest2(
     a int,
     b text COLLATE SQL_Latin1_General_CP1_CI_AS,
@@ -73,11 +74,10 @@ int#!#varchar#!#binary#!#nvarchar
 DROP TABLE #collTest2
 GO
 
--- Test 3: Test with different table name formats
+-- Test with different table name formats
 CREATE TABLE #collTest3(col1 varchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
 GO
 
--- With hash prefix
 SELECT * FROM sys.sp_tablecollations_100_enr('#collTest3')
 GO
 ~~START~~
@@ -86,7 +86,6 @@ int#!#varchar#!#nvarchar
 ~~END~~
 
 
--- With schema prefix
 SELECT * FROM sys.sp_tablecollations_100_enr('.[#collTest3]')
 GO
 ~~START~~
@@ -95,7 +94,6 @@ int#!#varchar#!#nvarchar
 ~~END~~
 
 
--- With brackets
 SELECT * FROM sys.sp_tablecollations_100_enr('[#collTest3]')
 GO
 ~~START~~
@@ -107,7 +105,7 @@ int#!#varchar#!#nvarchar
 DROP TABLE #collTest3
 GO
 
--- Test 4: Test with non-existent table (should return empty)
+-- Non-existent table check
 SELECT * FROM sys.sp_tablecollations_100_enr('#nonExistentTable')
 GO
 ~~START~~
@@ -115,7 +113,7 @@ int#!#varchar#!#nvarchar
 ~~END~~
 
 
--- Test 5: Test with multiple temp tables
+-- Test with multiple temp tables
 CREATE TABLE #multiTest1(a varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS)
 GO
 
@@ -144,7 +142,7 @@ GO
 DROP TABLE #multiTest2
 GO
 
--- Test 6: Temp table with different collations and case sensitivity
+-- Temp table with different collations
 CREATE TABLE #collTest6(
     col_ci varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS,
     col_cs varchar(50) COLLATE SQL_Latin1_General_CP1_CS_AS,
@@ -175,7 +173,7 @@ int#!#varchar#!#binary#!#nvarchar
 DROP TABLE #collTest6
 GO
 
--- Test 7: Temp table with no character columns (all numeric/binary)
+-- Temp table with no character columns
 CREATE TABLE #noCharCols(
     id int,
     amount bigint,
@@ -212,7 +210,7 @@ int#!#varchar#!#binary#!#nvarchar
 DROP TABLE #noCharCols
 GO
 
--- Test 8: Temp table with dropped column
+-- Temp table with dropped column
 CREATE TABLE #droppedCol(
     id int,
     col_to_drop varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS,
@@ -244,11 +242,7 @@ int#!#varchar#!#binary#!#nvarchar
 DROP TABLE #droppedCol
 GO
 
-
--- =====================================================
--- Non-ENR Temp Table Tests (using UDT to force non-ENR)
--- =====================================================
--- Test 9: Basic non-ENR temp table test
+-- Non-ENR temp table tests (using UDT to force non-ENR)
 CREATE TABLE #nonEnrTest1(id int, name dbo.TestVarcharType1 COLLATE SQL_Latin1_General_CP1_CI_AS, description nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
 GO
 
@@ -275,7 +269,6 @@ int#!#varchar#!#binary#!#nvarchar
 DROP TABLE #nonEnrTest1
 GO
 
--- Test 10: Non-ENR with various column types
 CREATE TABLE #nonEnrTest2(
     a int,
     b dbo.TestVarcharType2 COLLATE SQL_Latin1_General_CP1_CI_AS,
@@ -309,7 +302,6 @@ int#!#varchar#!#binary#!#nvarchar
 DROP TABLE #nonEnrTest2
 GO
 
--- Test 11: Non-ENR with different collations
 CREATE TABLE #nonEnrTest3(
     col_default dbo.TestVarcharType3 COLLATE SQL_Latin1_General_CP1_CI_AS,
     col_ci varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS,
@@ -340,7 +332,6 @@ int#!#varchar#!#binary#!#nvarchar
 DROP TABLE #nonEnrTest3
 GO
 
--- Test 12: Non-ENR with no character columns
 CREATE TABLE #nonEnrNoChar(
     id dbo.TestIntType,
     amount bigint,
@@ -371,7 +362,6 @@ int#!#varchar#!#binary#!#nvarchar
 DROP TABLE #nonEnrNoChar
 GO
 
--- Test 13: Non-ENR with dropped column
 CREATE TABLE #nonEnrDropped(
     id int,
     col_to_drop dbo.TestVarcharType4 COLLATE SQL_Latin1_General_CP1_CI_AS,
@@ -401,4 +391,196 @@ int#!#varchar#!#binary#!#nvarchar
 
 
 DROP TABLE #nonEnrDropped
+GO
+
+-- NULL table name check
+SELECT * FROM sys.sp_tablecollations_100_enr(NULL)
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+~~END~~
+
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes(NULL)
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Empty string table name check
+SELECT * FROM sys.sp_tablecollations_100_enr('')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+~~END~~
+
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Non-existent temp table check
+SELECT * FROM sys.sp_tablecollations_100_enr('#this_temp_table_does_not_exist')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+~~END~~
+
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#this_temp_table_does_not_exist')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Whitespace-only table name check
+SELECT * FROM sys.sp_tablecollations_100_enr('   ')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+~~END~~
+
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('   ')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Hash-only table name check
+SELECT * FROM sys.sp_tablecollations_100_enr('#')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+~~END~~
+
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- UDF calling temp table functions
+CREATE FUNCTION dbo.babel5264_test_func(@tablename varchar(256))
+RETURNS TABLE
+AS
+RETURN (SELECT * FROM sys.sp_tablecollations_100_enr(@tablename))
+GO
+
+CREATE TABLE #funcTest(col1 varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS)
+GO
+
+SELECT * FROM dbo.babel5264_test_func('#funcTest')
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#col1#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+DROP TABLE #funcTest
+GO
+
+DROP FUNCTION dbo.babel5264_test_func
+GO
+
+-- psql
+-- PG dialect on non-TDS connection (should return empty)
+SELECT * FROM sys.sp_tablecollations_100_enr('#nonexistent_temp');
+GO
+~~START~~
+int4#!#"sys"."varchar"#!#"sys"."varchar"
+~~END~~
+
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#nonexistent_temp');
+GO
+~~START~~
+int8
+0
+~~END~~
+
+
+SELECT * FROM sys.sp_tablecollations_100_enr(NULL);
+GO
+~~START~~
+int4#!#"sys"."varchar"#!#"sys"."varchar"
+~~END~~
+
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes(NULL);
+GO
+~~START~~
+int8
+0
+~~END~~
+
+
+-- tsql
+-- PG dialect on TDS connection (should return results)
+CREATE TABLE #pgDialectTdsTest(col1 varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS, col2 nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
+GO
+
+SELECT COUNT(*) AS tsql_result_count FROM sys.sp_tablecollations_100_enr('#pgDialectTdsTest')
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT COUNT(*) AS tsql_attr_count FROM sys.babelfish_get_temp_table_attributes('#pgDialectTdsTest')
+GO
+~~START~~
+int
+8
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false)
+GO
+~~START~~
+text
+postgres
+~~END~~
+
+
+SELECT COUNT(*) AS pg_dialect_tds_result_count FROM sys.sp_tablecollations_100_enr('#pgDialectTdsTest')
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT COUNT(*) AS pg_dialect_tds_attr_count FROM sys.babelfish_get_temp_table_attributes('#pgDialectTdsTest')
+GO
+~~START~~
+int
+8
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.sql_dialect', 'tsql', false)
+GO
+~~START~~
+text
+tsql
+~~END~~
+
+
+DROP TABLE #pgDialectTdsTest
 GO
