@@ -266,8 +266,82 @@ GO
 DROP FUNCTION dbo.babel5264_test_func
 GO
 
+-- Insert into table from sp_tablecollations_100_enr
+CREATE TABLE #insertTest(col1 varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS, col2 nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
+GO
+
+CREATE TABLE #collResult(colid int, name varchar(256), collation_name nvarchar(128))
+GO
+
+INSERT INTO #collResult SELECT * FROM sys.sp_tablecollations_100_enr('#insertTest')
+GO
+
+SELECT * FROM #collResult
+GO
+
+DROP TABLE #collResult
+GO
+
+DROP TABLE #insertTest
+GO
+
+-- T-SQL proc calling temp table functions
+CREATE TABLE #procTest(col1 varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS, col2 nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
+GO
+
+EXEC dbo.babel5264_test_tsql_proc '#procTest'
+GO
+
+DROP TABLE #procTest
+GO
+
 -- psql
--- PG dialect on non-TDS connection (should return empty)
+-- PG dialect on non-TDS connection (should return empty even with real PG temp table)
+CREATE TEMP TABLE pg_temp_test(id int, name varchar(50), description text);
+GO
+
+INSERT INTO pg_temp_test VALUES (1, 'test', 'description');
+GO
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('pg_temp_test');
+GO
+
+SELECT * FROM sys.sp_tablecollations_100_enr('pg_temp_test');
+GO
+
+-- Insert specific columns from babelfish_get_temp_table_attributes (should insert 0 rows)
+CREATE TEMP TABLE pg_attr_result(attrelid oid, attname name, attnum smallint, attcollation oid);
+GO
+
+INSERT INTO pg_attr_result SELECT attrelid, attname, attnum, attcollation FROM sys.babelfish_get_temp_table_attributes('pg_temp_test');
+GO
+
+SELECT COUNT(*) AS inserted_rows FROM pg_attr_result;
+GO
+
+DROP TABLE pg_attr_result;
+GO
+
+-- Insert from sp_tablecollations_100_enr (should insert 0 rows)
+CREATE TEMP TABLE pg_coll_result(colid int, name varchar, collation_name varchar);
+GO
+
+INSERT INTO pg_coll_result SELECT * FROM sys.sp_tablecollations_100_enr('pg_temp_test');
+GO
+
+SELECT COUNT(*) AS inserted_rows FROM pg_coll_result;
+GO
+
+DROP TABLE pg_coll_result;
+GO
+
+DROP TABLE pg_temp_test;
+GO
+
+-- Test via PL/pgSQL procedure (should return 0 for both functions)
+CALL test_pg_temp_table_proc();
+GO
+
 SELECT * FROM sys.sp_tablecollations_100_enr('#nonexistent_temp');
 GO
 

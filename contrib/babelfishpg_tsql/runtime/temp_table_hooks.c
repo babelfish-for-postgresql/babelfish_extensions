@@ -60,62 +60,64 @@ get_tsql_temp_table_attributes(PG_FUNCTION_ARGS)
 		 * Only process in T-SQL dialect or TDS connection. In PG dialect from
 		 * non-TDS connection, return empty result set.
 		 */
-		if (sql_dialect == SQL_DIALECT_TSQL ||
-			(is_bbf_tds_connection_hook && is_bbf_tds_connection_hook()))
+		if (sql_dialect != SQL_DIALECT_TSQL &&
+			!(is_bbf_tds_connection_hook && is_bbf_tds_connection_hook()))
+			goto done;
+
+		/* Resolve table name to OID via object_id() */
+		if (!PG_ARGISNULL(0))
 		{
-			/* Resolve table name to OID via object_id() */
-			if (!PG_ARGISNULL(0))
+			LOCAL_FCINFO(locfcinfo, 2);
+			FmgrInfo	flinfo;
+
+			MemSet(&flinfo, 0, sizeof(flinfo));
+			flinfo.fn_addr = object_id;
+			flinfo.fn_nargs = 2;
+			flinfo.fn_mcxt = CurrentMemoryContext;
+
+			InitFunctionCallInfoData(*locfcinfo, &flinfo, 2, InvalidOid, NULL, NULL);
+			locfcinfo->args[0].value = PG_GETARG_DATUM(0);
+			locfcinfo->args[0].isnull = false;
+			locfcinfo->args[1].value = (Datum) 0;
+			locfcinfo->args[1].isnull = true;
+
+			relid = DatumGetObjectId(FunctionCallInvoke(locfcinfo));
+			if (locfcinfo->isnull)
+				relid = InvalidOid;
+		}
+
+		/* Populate tuplestore if valid OID */
+		if (OidIsValid(relid))
+		{
+			EphemeralNamedRelation enr = GetENRTempTableWithOid(relid, false);
+
+			if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 			{
-				LOCAL_FCINFO(locfcinfo, 2);
-				FmgrInfo	flinfo;
-
-				MemSet(&flinfo, 0, sizeof(flinfo));
-				flinfo.fn_addr = object_id;
-				flinfo.fn_nargs = 2;
-				flinfo.fn_mcxt = CurrentMemoryContext;
-
-				InitFunctionCallInfoData(*locfcinfo, &flinfo, 2, InvalidOid, NULL, NULL);
-				locfcinfo->args[0].value = PG_GETARG_DATUM(0);
-				locfcinfo->args[0].isnull = false;
-				locfcinfo->args[1].value = (Datum) 0;
-				locfcinfo->args[1].isnull = true;
-
-				relid = DatumGetObjectId(FunctionCallInvoke(locfcinfo));
-				if (locfcinfo->isnull)
-					relid = InvalidOid;
+				/* ENR path: use cached tuples */
+				ListCell *lc;
+				foreach(lc, enr->md.cattups[ENR_CATTUP_ATTRIBUTE])
+					tuplestore_puttuple(rsinfo->setResult,
+										heap_copytuple((HeapTuple) lfirst(lc)));
 			}
-
-			/* Populate tuplestore if valid OID */
-			if (OidIsValid(relid))
+			else if (isTempNamespace(get_rel_namespace(relid)))
 			{
-				EphemeralNamedRelation enr = GetENRTempTableWithOid(relid, false);
+				/* Non-ENR temp table path: scan pg_attribute */
+				ScanKeyData skey[1];
+				SysScanDesc scan;
+				HeapTuple	tup;
 
-				if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
-				{
-					/* ENR path: use cached tuples */
-					ListCell *lc;
-					foreach(lc, enr->md.cattups[ENR_CATTUP_ATTRIBUTE])
-						tuplestore_puttuple(rsinfo->setResult,
-											heap_copytuple((HeapTuple) lfirst(lc)));
-				}
-				else if (isTempNamespace(get_rel_namespace(relid)))
-				{
-					/* Non-ENR temp table path: scan pg_attribute */
-					ScanKeyData skey[1];
-					SysScanDesc scan;
-					HeapTuple	tup;
-
-					ScanKeyInit(&skey[0], Anum_pg_attribute_attrelid,
-								BTEqualStrategyNumber, F_OIDEQ, ObjectIdGetDatum(relid));
-					scan = systable_beginscan(attrel, AttributeRelidNumIndexId,
-											  true, NULL, 1, skey);
-					while (HeapTupleIsValid(tup = systable_getnext(scan)))
-						tuplestore_puttuple(rsinfo->setResult, tup);
-					systable_endscan(scan);
-				}
-				/* Regular tables: return empty result set */
+				ScanKeyInit(&skey[0], Anum_pg_attribute_attrelid,
+							BTEqualStrategyNumber, F_OIDEQ, ObjectIdGetDatum(relid));
+				scan = systable_beginscan(attrel, AttributeRelidNumIndexId,
+										  true, NULL, 1, skey);
+				while (HeapTupleIsValid(tup = systable_getnext(scan)))
+					tuplestore_puttuple(rsinfo->setResult, tup);
+				systable_endscan(scan);
 			}
 		}
+
+done:
+		;	/* empty statement for label */
 	}
 	PG_FINALLY();
 	{

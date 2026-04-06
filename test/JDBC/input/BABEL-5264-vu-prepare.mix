@@ -11,3 +11,40 @@ CREATE TYPE dbo.TestVarcharType4 FROM varchar(50)
 GO
 CREATE TYPE dbo.TestIntType FROM int
 GO
+
+-- Create T-SQL proc to test temp table functions
+CREATE PROCEDURE dbo.babel5264_test_tsql_proc @tablename varchar(256)
+AS
+BEGIN
+    SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes(@tablename)
+    SELECT * FROM sys.sp_tablecollations_100_enr(@tablename)
+    EXEC tempdb.dbo.sp_tablecollations_100 @tablename
+END
+GO
+
+-- psql
+-- Create PL/pgSQL procedure to test temp table functions from PG side
+CREATE OR REPLACE PROCEDURE test_pg_temp_table_proc()
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    attr_count bigint;
+    coll_count bigint;
+BEGIN
+    -- Create a PG temp table
+    CREATE TEMP TABLE pg_proc_temp_test(id int, name varchar(50), description text);
+    INSERT INTO pg_proc_temp_test VALUES (1, 'test', 'description');
+    
+    -- Test babelfish_get_temp_table_attributes (should return 0)
+    SELECT COUNT(*) INTO attr_count FROM sys.babelfish_get_temp_table_attributes('pg_proc_temp_test');
+    RAISE NOTICE 'babelfish_get_temp_table_attributes count: %', attr_count;
+    
+    -- Test sp_tablecollations_100_enr (should return 0)
+    SELECT COUNT(*) INTO coll_count FROM sys.sp_tablecollations_100_enr('pg_proc_temp_test');
+    RAISE NOTICE 'sp_tablecollations_100_enr count: %', coll_count;
+    
+    -- Cleanup
+    DROP TABLE pg_proc_temp_test;
+END;
+$$;
+GO

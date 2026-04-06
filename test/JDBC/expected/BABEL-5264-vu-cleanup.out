@@ -11,3 +11,11 @@ DROP TYPE IF EXISTS dbo.TestVarcharType4
 GO
 DROP TYPE IF EXISTS dbo.TestIntType
 GO
+
+DROP PROCEDURE IF EXISTS dbo.babel5264_test_tsql_proc
+GO
+
+-- psql
+-- Cleanup PL/pgSQL procedure
+DROP PROCEDURE IF EXISTS test_pg_temp_table_proc();
+GO
