@@ -2717,7 +2717,7 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 		FunctionParameter *p;
 
 		p = (FunctionParameter *) lfirst(lc);
-		args->argnames[i] = p->name;
+		args->argnames[i] = pstrdup(p->name);
 		args->argmodes[i] = p->mode;
 
 		/*
@@ -2763,11 +2763,16 @@ InlineCodeBlockArgs *
 clone_inline_args(InlineCodeBlockArgs *args)
 {
 	InlineCodeBlockArgs *clone;
+	int			i;
 
 	clone = create_args(args->numargs);
 	memcpy(clone->argtypes, args->argtypes, sizeof(Oid) * args->numargs);
 	memcpy(clone->argtypmods, args->argtypmods, sizeof(int32) * args->numargs);
-	memcpy(clone->argnames, args->argnames, sizeof(char *) * args->numargs);
+
+	/* Deep copy argument names */
+	for (i = 0; i < args->numargs; i++)
+		clone->argnames[i] = args->argnames[i] ? pstrdup(args->argnames[i]) : NULL;
+
 	memcpy(clone->argmodes, args->argmodes, sizeof(char) * args->numargs);
 
 	return clone;
