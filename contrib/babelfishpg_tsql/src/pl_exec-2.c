@@ -15,6 +15,7 @@
 #include "catalog/pg_proc.h"
 #include "commands/proclang.h"
 #include "commands/trigger.h"
+#include "executor/executor.h"
 #include "executor/tstoreReceiver.h"
 #include "executor/tuptable.h"
 #include "miscadmin.h"
@@ -177,6 +178,11 @@ typedef struct
 	Oid			temp_table_oid;	/* OID of temp table to insert into */
 	TupleDesc	typeinfo;		/* tuple descriptor from startup */
 	uint64		rows_inserted;	/* count of rows inserted */
+	/* Coercion infrastructure using expression evaluation */
+	ExprContext *econtext;		/* expression context for coercion */
+	ExprState **cast_exprstates;/* array of coercion expression states (NULL if no coercion needed) */
+	int			natts;			/* number of attributes */
+	bool		needs_coercion;	/* true if any column needs coercion */
 } DR_insertexec;
 
 /* Forward declarations for DestReceiver callbacks */
@@ -950,6 +956,11 @@ CreateInsertExecDestReceiver(Oid temp_table_oid)
  * We DO validate that the number of columns in the result set matches
  * the temp table structure. If there's a mismatch, we raise an error
  * similar to SQL Server's error 213.
+ * 
+ * We also build coercion expressions for columns that need type conversion.
+ * This uses PostgreSQL's expression evaluation infrastructure (ExecInitExpr,
+ * ExecEvalExpr) rather than manual coercion, which is cleaner and handles
+ * all edge cases properly.
  */
 static void
 insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
@@ -959,6 +970,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	TupleDesc	temp_tupdesc;
 	int			result_natts;
 	int			temp_natts;
+	int			i;
 
 	/* Just store the tuple descriptor for later use */
 	myState->typeinfo = typeinfo;
@@ -977,14 +989,124 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	temp_rel = table_open(myState->temp_table_oid, AccessShareLock);
 	temp_tupdesc = RelationGetDescr(temp_rel);
 	temp_natts = temp_tupdesc->natts;
-	table_close(temp_rel, AccessShareLock);
 	
 	if (result_natts != temp_natts)
 	{
+		table_close(temp_rel, AccessShareLock);
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("Column name or number of supplied values does not match table definition.")));
 	}
+
+	/*
+	 * Build coercion expressions for columns that need type conversion.
+	 * We use CaseTestExpr as a placeholder for the input value, then
+	 * coerce_to_target_type() to build the coercion expression tree.
+	 * This approach is modeled after exec_cast_value() in pl_exec.c.
+	 */
+	myState->natts = temp_natts;
+	myState->needs_coercion = false;
+	myState->cast_exprstates = (ExprState **) palloc0(temp_natts * sizeof(ExprState *));
+	
+	for (i = 0; i < temp_natts; i++)
+	{
+		Form_pg_attribute src_att = TupleDescAttr(typeinfo, i);
+		Form_pg_attribute tgt_att = TupleDescAttr(temp_tupdesc, i);
+		
+		/* Check if coercion is needed for this column */
+		if (src_att->atttypid != tgt_att->atttypid ||
+			(src_att->atttypmod != tgt_att->atttypmod && tgt_att->atttypmod != -1))
+		{
+			CaseTestExpr *placeholder;
+			Node	   *cast_expr;
+			
+			myState->needs_coercion = true;
+			
+			/*
+			 * Create a CaseTestExpr as placeholder for the input value.
+			 * This is the standard pattern used by PostgreSQL's coercion system.
+			 */
+			placeholder = makeNode(CaseTestExpr);
+			placeholder->typeId = src_att->atttypid;
+			placeholder->typeMod = src_att->atttypmod;
+			placeholder->collation = src_att->attcollation;
+			
+			/*
+			 * Build the coercion expression using coerce_to_target_type().
+			 * We use ASSIGNMENT coercion which matches SQL Server's implicit
+			 * conversion behavior for INSERT statements.
+			 */
+			cast_expr = coerce_to_target_type(NULL,
+											  (Node *) placeholder,
+											  src_att->atttypid,
+											  tgt_att->atttypid,
+											  tgt_att->atttypmod,
+											  COERCION_ASSIGNMENT,
+											  COERCE_IMPLICIT_CAST,
+											  -1);
+			
+			/*
+			 * If coerce_to_target_type() returns NULL, there's no direct
+			 * coercion path. Fall back to I/O coercion (convert to text
+			 * and back), which handles most SQL Server implicit conversions.
+			 */
+			if (cast_expr == NULL)
+			{
+				CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
+				
+				iocoerce->arg = (Expr *) placeholder;
+				iocoerce->resulttype = tgt_att->atttypid;
+				iocoerce->resultcollid = InvalidOid;
+				iocoerce->coerceformat = COERCE_IMPLICIT_CAST;
+				iocoerce->location = -1;
+				cast_expr = (Node *) iocoerce;
+				
+				/* Apply typmod coercion if needed */
+				if (tgt_att->atttypmod != -1)
+					cast_expr = coerce_to_target_type(NULL,
+													  cast_expr,
+													  tgt_att->atttypid,
+													  tgt_att->atttypid,
+													  tgt_att->atttypmod,
+													  COERCION_ASSIGNMENT,
+													  COERCE_IMPLICIT_CAST,
+													  -1);
+			}
+			
+			if (cast_expr == NULL)
+			{
+				table_close(temp_rel, AccessShareLock);
+				ereport(ERROR,
+						(errcode(ERRCODE_CANNOT_COERCE),
+						 errmsg("cannot convert type %s to %s",
+								format_type_be(src_att->atttypid),
+								format_type_be(tgt_att->atttypid))));
+			}
+			
+			/*
+			 * Check if this is a no-op RelabelType coercion.
+			 * If so, we don't need to evaluate an expression.
+			 */
+			if (IsA(cast_expr, RelabelType) &&
+				((RelabelType *) cast_expr)->arg == (Expr *) placeholder)
+			{
+				/* No-op coercion - leave cast_exprstates[i] as NULL */
+				myState->cast_exprstates[i] = NULL;
+			}
+			else
+			{
+				/* Initialize the expression for execution */
+				myState->cast_exprstates[i] = ExecInitExpr((Expr *) cast_expr, NULL);
+			}
+		}
+		/* else: no coercion needed, cast_exprstates[i] stays NULL */
+	}
+	
+	/* Create expression context if we need coercion */
+	if (myState->needs_coercion)
+		myState->econtext = CreateStandaloneExprContext();
+	
+	table_close(temp_rel, AccessShareLock);
 }
 
 /*
@@ -994,9 +1116,9 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
  * tuple. This is less efficient than keeping the relation open, but it
  * ensures we don't hold relation handles across subtransaction boundaries.
  * 
- * Performs type coercion when source and target types differ. This is needed
- * because SQL Server implicitly converts types during INSERT EXEC (e.g., INT
- * to VARCHAR), but PostgreSQL's table_tuple_insert doesn't do this.
+ * Performs type coercion when source and target types differ using
+ * PostgreSQL's expression evaluation infrastructure. The coercion expressions
+ * were built during insertexec_startup.
  */
 static bool
 insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
@@ -1005,10 +1127,7 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	Relation	temp_rel;
 	CommandId	cid;
 	TupleDesc	temp_tupdesc;
-	TupleDesc	src_tupdesc;
-	int			natts;
 	int			i;
-	bool		needs_coercion = false;
 	TupleTableSlot *insert_slot;
 
 	/*
@@ -1020,29 +1139,8 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	cid = GetCurrentCommandId(true);
 	
 	temp_tupdesc = RelationGetDescr(temp_rel);
-	src_tupdesc = myState->typeinfo;
-	natts = temp_tupdesc->natts;
 	
-	/*
-	 * Check if any column needs type coercion.
-	 * We compare the type OIDs and typmods of source and target columns.
-	 * Even if types are the same, we need coercion if typmods differ
-	 * (e.g., varchar(max) to varchar(10)) to enforce length constraints.
-	 */
-	for (i = 0; i < natts; i++)
-	{
-		Form_pg_attribute src_att = TupleDescAttr(src_tupdesc, i);
-		Form_pg_attribute tgt_att = TupleDescAttr(temp_tupdesc, i);
-		
-		if (src_att->atttypid != tgt_att->atttypid ||
-			(src_att->atttypmod != tgt_att->atttypmod && tgt_att->atttypmod != -1))
-		{
-			needs_coercion = true;
-			break;
-		}
-	}
-	
-	if (needs_coercion)
+	if (myState->needs_coercion)
 	{
 		/*
 		 * Create a new slot with the temp table's tuple descriptor and
@@ -1050,153 +1148,42 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 		 */
 		Datum	   *values;
 		bool	   *nulls;
+		ExprContext *econtext = myState->econtext;
 		
-		values = (Datum *) palloc(natts * sizeof(Datum));
-		nulls = (bool *) palloc(natts * sizeof(bool));
+		values = (Datum *) palloc(myState->natts * sizeof(Datum));
+		nulls = (bool *) palloc(myState->natts * sizeof(bool));
 		
 		/* Make sure the source slot is materialized */
 		slot_getallattrs(slot);
 		
-		for (i = 0; i < natts; i++)
+		/* Reset per-tuple memory context for expression evaluation */
+		ResetExprContext(econtext);
+		
+		for (i = 0; i < myState->natts; i++)
 		{
-			Form_pg_attribute src_att = TupleDescAttr(src_tupdesc, i);
-			Form_pg_attribute tgt_att = TupleDescAttr(temp_tupdesc, i);
-			
 			if (slot->tts_isnull[i])
 			{
 				values[i] = (Datum) 0;
 				nulls[i] = true;
 			}
-			else if (src_att->atttypid == tgt_att->atttypid &&
-					 (src_att->atttypmod == tgt_att->atttypmod || tgt_att->atttypmod == -1))
-			{
-				/* Same type and compatible typmod, no coercion needed */
-				values[i] = slot->tts_values[i];
-				nulls[i] = false;
-			}
-			else if (src_att->atttypid == tgt_att->atttypid)
+			else if (myState->cast_exprstates[i] != NULL)
 			{
 				/*
-				 * Same type but different typmod - need to apply length/precision constraint.
-				 * Use find_typmod_coercion_function to get the typmod coercion function.
+				 * This column needs coercion. Use expression evaluation
+				 * with CaseTestExpr pattern - set caseValue_datum to the
+				 * input value and evaluate the coercion expression.
 				 */
-				Oid			funcid;
-				CoercionPathType pathtype;
+				econtext->caseValue_datum = slot->tts_values[i];
+				econtext->caseValue_isNull = false;
 				
-				pathtype = find_typmod_coercion_function(tgt_att->atttypid, &funcid);
-				
-				if (pathtype == COERCION_PATH_FUNC && OidIsValid(funcid))
-				{
-					/* Apply the typmod coercion function */
-					int nargs = get_func_nargs(funcid);
-					switch (nargs)
-					{
-						case 2:
-							values[i] = OidFunctionCall2Coll(funcid,
-															 tgt_att->attcollation,
-															 slot->tts_values[i],
-															 Int32GetDatum(tgt_att->atttypmod));
-							break;
-						case 3:
-							values[i] = OidFunctionCall3Coll(funcid,
-															 tgt_att->attcollation,
-															 slot->tts_values[i],
-															 Int32GetDatum(tgt_att->atttypmod),
-															 BoolGetDatum(false));
-							break;
-						default:
-							/* Unexpected - just copy the value */
-							values[i] = slot->tts_values[i];
-					}
-				}
-				else
-				{
-					/* No typmod coercion function - just copy the value */
-					values[i] = slot->tts_values[i];
-				}
-				nulls[i] = false;
+				values[i] = ExecEvalExpr(myState->cast_exprstates[i],
+										 econtext,
+										 &nulls[i]);
 			}
 			else
 			{
-				/*
-				 * Different types - use PostgreSQL's coercion system.
-				 * This properly handles SQL Server's implicit type conversions
-				 * (e.g., INT to DATETIME, VARCHAR to INT, etc.)
-				 */
-				Oid			funcid;
-				CoercionPathType pathtype;
-				Oid			typioparam;
-				bool		isVarlena;
-				int			nargs;
-				
-				pathtype = find_coercion_pathway(tgt_att->atttypid, src_att->atttypid,
-												 COERCION_ASSIGNMENT, &funcid);
-				
-				switch (pathtype)
-				{
-					case COERCION_PATH_FUNC:
-						/* Use the cast function */
-						nargs = get_func_nargs(funcid);
-						switch (nargs)
-						{
-							case 1:
-								values[i] = OidFunctionCall1Coll(funcid, 
-																 tgt_att->attcollation,
-																 slot->tts_values[i]);
-								break;
-							case 2:
-								values[i] = OidFunctionCall2Coll(funcid,
-																 tgt_att->attcollation,
-																 slot->tts_values[i],
-																 Int32GetDatum(tgt_att->atttypmod));
-								break;
-							case 3:
-								values[i] = OidFunctionCall3Coll(funcid,
-																 tgt_att->attcollation,
-																 slot->tts_values[i],
-																 Int32GetDatum(tgt_att->atttypmod),
-																 BoolGetDatum(false));
-								break;
-							default:
-								elog(ERROR, "unsupported number of arguments (%d) for cast function", nargs);
-						}
-						break;
-						
-					case COERCION_PATH_COERCEVIAIO:
-						/* Convert via I/O functions (text representation) */
-						{
-							Oid			src_typoutput;
-							Oid			tgt_typinput;
-							char	   *str_value;
-							
-							getTypeOutputInfo(src_att->atttypid, &src_typoutput, &isVarlena);
-							str_value = OidOutputFunctionCall(src_typoutput, slot->tts_values[i]);
-							
-							getTypeInputInfo(tgt_att->atttypid, &tgt_typinput, &typioparam);
-							values[i] = OidInputFunctionCall(tgt_typinput, str_value,
-															 typioparam, tgt_att->atttypmod);
-							pfree(str_value);
-						}
-						break;
-						
-					case COERCION_PATH_RELABELTYPE:
-						/* Binary compatible - just copy the value */
-						values[i] = slot->tts_values[i];
-						break;
-						
-					case COERCION_PATH_ARRAYCOERCE:
-						/* Array coercion - not expected for INSERT EXEC */
-						elog(ERROR, "array coercion not supported in INSERT EXEC");
-						break;
-						
-					case COERCION_PATH_NONE:
-					default:
-						ereport(ERROR,
-								(errcode(ERRCODE_CANNOT_COERCE),
-								 errmsg("cannot convert type %s to %s",
-										format_type_be(src_att->atttypid),
-										format_type_be(tgt_att->atttypid))));
-				}
+				/* No coercion needed for this column - copy directly */
+				values[i] = slot->tts_values[i];
 				nulls[i] = false;
 			}
 		}
@@ -1206,7 +1193,7 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 		ExecStoreVirtualTuple(insert_slot);
 		
 		/* Copy values into the slot */
-		for (i = 0; i < natts; i++)
+		for (i = 0; i < myState->natts; i++)
 		{
 			insert_slot->tts_values[i] = values[i];
 			insert_slot->tts_isnull[i] = nulls[i];
@@ -1247,12 +1234,19 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 /*
  * insertexec_shutdown --- executor end for INSERT EXEC receiver
  * 
- * Nothing to do here since we close the relation after each tuple.
+ * Clean up the expression context used for type coercion.
  */
 static void
 insertexec_shutdown(DestReceiver *self)
 {
-	/* Nothing to clean up - relation is closed after each tuple */
+	DR_insertexec *myState = (DR_insertexec *) self;
+	
+	/* Free the expression context if we created one */
+	if (myState->econtext != NULL)
+	{
+		FreeExprContext(myState->econtext, true);
+		myState->econtext = NULL;
+	}
 }
 
 /*
@@ -1261,6 +1255,15 @@ insertexec_shutdown(DestReceiver *self)
 static void
 insertexec_destroy(DestReceiver *self)
 {
+	DR_insertexec *myState = (DR_insertexec *) self;
+	
+	/* Free the cast expression states array if allocated */
+	if (myState->cast_exprstates != NULL)
+	{
+		pfree(myState->cast_exprstates);
+		myState->cast_exprstates = NULL;
+	}
+	
 	pfree(self);
 }
 
