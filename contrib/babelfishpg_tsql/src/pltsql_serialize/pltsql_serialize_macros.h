@@ -5,9 +5,9 @@
  *
  * These macros are defined inside PostgreSQL's outfuncs.c / readfuncs.c
  * and are NOT exposed in any public header.  We replicate them here so
- * that both pltsql_node_stubs.c (hand-written) and the generated
- * pltsql_outfuncs_gen.c / pltsql_readfuncs_gen.c can share a single
- * definition.
+ * that both pltsql_outfuncs_stubs.c / pltsql_readfuncs_stubs.c
+ * (hand-written) and the generated pltsql_outfuncs_gen.c /
+ * pltsql_readfuncs_gen.c can share a single definition.
  *
  * This file also provides pltsql_nullable_string() and helper macros
  * (booltostr, atoui, strtobool) that match readfuncs.c internals.
@@ -158,8 +158,9 @@ pltsql_nullable_string(const char *token, int length)
 }
 
 /*
- * Additional macros needed by generated code (not used by pltsql_node_stubs.c
- * but required by pltsql_outfuncs_gen.c / pltsql_readfuncs_gen.c).
+ * Additional macros needed by generated code (not used by
+ * pltsql_outfuncs_stubs.c / pltsql_readfuncs_stubs.c but required by
+ * pltsql_outfuncs_gen.c / pltsql_readfuncs_gen.c).
  */
 #define WRITE_OID_FIELD(fldname) \
 	appendStringInfo(str, " :" CppAsString(fldname) " %u", node->fldname)

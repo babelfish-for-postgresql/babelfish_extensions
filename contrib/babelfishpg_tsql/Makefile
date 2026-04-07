@@ -87,7 +87,8 @@ export ANTLR4_RUNTIME_INCLUDE_DIR=/usr/local/include/antlr4-runtime
 export ANTLR4_RUNTIME_LIB_DIR=/usr/local/lib
 
 OBJS += src/pltsql_bulkcopy.o
-OBJS += src/pltsql_serialize/pltsql_node_stubs.o
+OBJS += src/pltsql_serialize/pltsql_outfuncs_stubs.o
+OBJS += src/pltsql_serialize/pltsql_readfuncs_stubs.o
 
 # PLtsql serialization code generation (babelfishpg_tsql.enable_routine_parse_cache)
 PLTSQL_SER_DIR = src/pltsql_serialize
@@ -101,7 +102,6 @@ $(PLTSQL_SER_DIR)/pltsql_nodetags.h $(PLTSQL_SER_DIR)/pltsql_outfuncs_gen.c $(PL
 # so we compile the wrappers, not the gen files directly.
 # pltsql_outfuncs and pltsql_readfuncs: generated code now included by pltsql_nodeio.c
 OBJS += $(PLTSQL_SER_DIR)/pltsql_equalfuncs.o
-OBJS += $(PLTSQL_SER_DIR)/pltsql_compare.o
 OBJS += $(PLTSQL_SER_DIR)/pltsql_nodeio.o
 
 # pltsql_nodetags.h must be generated before any .o that includes pltsql.h

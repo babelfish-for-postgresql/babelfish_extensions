@@ -601,6 +601,40 @@ int#!#varchar
 ~~END~~
 
 
+PRINT '=== Test 13b: ITVF ===';
+GO
+PRINT 'exec 1: babel_6037_itvf';
+GO
+SELECT * FROM dbo.babel_6037_itvf(10);
+GO
+~~START~~
+int#!#varchar
+10#!#inline
+~~END~~
+
+PRINT 'exec 2: babel_6037_itvf';
+GO
+SELECT * FROM dbo.babel_6037_itvf(20);
+GO
+~~START~~
+int#!#varchar
+20#!#inline
+~~END~~
+
+
+-- Verify ext cache was updated with ANTLR parse tree result
+SELECT
+    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
+FROM sys.babelfish_function_ext
+WHERE funcname IN ('babel_6037_mstvf', 'babel_6037_itvf') AND nspname = 'master_dbo';
+GO
+~~START~~
+varchar
+CACHED
+CACHED
+~~END~~
+
+
 -- === Test 14: Enable/disable cache with full signature: schema.func(argtypes) ===
 PRINT '=== Test 14: Per-function cache with full signature ===';
 GO
@@ -1269,6 +1303,267 @@ GO
 ~~START~~
 varchar
 CACHED
+~~END~~
+
+
+
+-- === Test 24: Overloaded procedures ===
+PRINT '=== Test 24: Overloaded procedures ===';
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SELECT sys.enable_routine_parse_cache('overload_cache_proc', true);
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Verify only the default dbo overload has per-function flag column enabled
+SELECT funcsignature, nspname, CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status, antlr_cache_enabled
+FROM sys.babelfish_function_ext
+WHERE funcname = 'overload_cache_proc'
+ORDER BY funcsignature;
+GO
+~~START~~
+text#!#varchar#!#varchar#!#bit
+overload_cache_proc("sys"."varchar")#!#master_dbo#!#NOT CACHED#!#1
+overload_cache_proc(integer, "sys"."varchar")#!#master_test_cache_schema#!#NOT CACHED#!#0
+~~END~~
+
+
+-- NULL function test on GUC function - expect error
+DECLARE @sig VARCHAR(200) = NULL;
+SELECT sys.enable_routine_parse_cache(@sig, true);
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function identifier cannot be NULL)~~
+
+
+-- Enabled cache_enabled for other overloaded procedure as well
+DECLARE @sig VARCHAR(200);
+SELECT @sig = funcsignature FROM sys.babelfish_function_ext
+WHERE funcname = 'overload_cache_proc' AND nspname = 'master_test_cache_schema';
+SELECT @sig;
+SELECT sys.enable_routine_parse_cache('test_cache_schema.'+ @sig, true);
+GO
+~~START~~
+varchar
+overload_cache_proc(integer, "sys"."varchar")
+~~END~~
+
+~~START~~
+bit
+1
+~~END~~
+
+
+
+-- Alternatively:
+-- SELECT sys.enable_routine_parse_cache('test_cache_schema.'+(SELECT TOP 1 funcsignature FROM sys.babelfish_function_ext
+-- WHERE funcname = 'overload_cache_proc' AND nspname = 'master_test_cache_schema'), true);
+-- GO
+-- Execute dbo schema overload
+EXEC dbo.overload_cache_proc @val = 'hello';
+GO
+~~START~~
+varchar
+hello
+~~END~~
+
+
+-- Execute test schema overload
+EXEC test_cache_schema.overload_cache_proc @val = 1, @msg = 'world';
+GO
+~~START~~
+int#!#varchar
+1#!#world
+~~END~~
+
+
+SELECT
+    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
+    antlr_cache_enabled 
+FROM sys.babelfish_function_ext
+WHERE funcname = 'overload_cache_proc';
+GO
+~~START~~
+varchar#!#bit
+CACHED#!#1
+CACHED#!#1
+~~END~~
+
+
+-- reset cache_enabled columns
+SELECT sys.enable_routine_parse_cache('overload_cache_proc', false);
+GO
+~~START~~
+bit
+0
+~~END~~
+
+SELECT sys.enable_routine_parse_cache('test_cache_schema.overload_cache_proc', false);
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+-- === Test 25: Nested EXEC — cached proc calling cached proc ===
+PRINT '=== Test 25: Nested EXEC ===';
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+-- Execute outer proc (which calls inner proc)
+EXEC dbo.outer_cached_proc @y = 42;
+GO
+~~START~~
+int
+42
+~~END~~
+
+~~START~~
+int
+142
+~~END~~
+
+
+-- Verify both are cached
+SELECT funcname,
+    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
+FROM sys.babelfish_function_ext
+WHERE funcname IN ('inner_cached_proc', 'outer_cached_proc') AND nspname = 'master_dbo'
+ORDER BY funcname;
+GO
+~~START~~
+varchar#!#varchar
+inner_cached_proc#!#CACHED
+outer_cached_proc#!#CACHED
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+
+-- === Test 26: Altered/renamed dependency ===
+PRINT '=== Test 26: Altered/renamed dependency ===';
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+-- First exec: uses cached proc from CREATE time
+EXEC dbo.dep_rename_proc;
+GO
+~~START~~
+int#!#varchar
+1#!#original
+~~END~~
+
+
+-- ALTER the dependency table (add new column)
+ALTER TABLE dbo.dep_rename_table ADD description VARCHAR(100);
+GO
+
+-- Exec after ALTER: should still work (proc selects specific columns)
+EXEC dbo.dep_rename_proc;
+GO
+~~START~~
+int#!#varchar
+1#!#original
+~~END~~
+
+
+-- RENAME column of dependency table (rename queried column)
+EXEC sp_rename 'dep_rename_table.val', 'value', 'COLUMN';
+GO
+
+-- Exec after column rename: should fail (column "val" no longer exists)
+EXEC dbo.dep_rename_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "val" does not exist)~~
+
+
+-- Rename the dependency table
+EXEC sp_rename 'dep_rename_table', 'dep_renameD_table', 'OBJECT';
+GO
+
+-- Exec after table rename: should fail (table "dep_rename_table" no longer exists)
+EXEC dbo.dep_rename_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.dep_rename_table" does not exist)~~
+
+
+-- Rename back
+EXEC sp_rename 'dbo.dep_renameD_table', 'dep_rename_table', 'OBJECT';
+GO
+EXEC sp_rename 'dep_rename_table.value', 'val', 'COLUMN';
+GO
+
+SELECT
+    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
+    antlr_cache_enabled 
+FROM sys.babelfish_function_ext
+WHERE funcname = 'dep_rename_proc';
+GO
+~~START~~
+varchar#!#bit
+CACHED#!#0
+~~END~~
+
+
+-- Exec after rename back: should work again
+EXEC dbo.dep_rename_proc;
+GO
+~~START~~
+int#!#varchar
+1#!#original
+~~END~~
+
+
+SELECT
+    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
+    antlr_cache_enabled 
+FROM sys.babelfish_function_ext
+WHERE funcname = 'dep_rename_proc';
+GO
+~~START~~
+varchar#!#bit
+CACHED#!#0
 ~~END~~
 
 

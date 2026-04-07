@@ -1,37 +1,36 @@
 /*-------------------------------------------------------------------------
  *
  * pltsql_equalfuncs.c
- *    Wrapper for PLtsql node equality comparison (equalfuncs).
+ *    PLtsql node equality comparison and parse tree comparison.
  *
  * Mirrors the engine's equalfuncs.c pattern: includes the generated
  * static _equal* functions (pltsql_equalfuncs_gen.c) and the switch
  * dispatch fragment (pltsql_equalfuncs_switch.c).
  *
- * Provides pltsql_equal_node() as the public entry point for comparing
- * PLtsql node types field-by-field.
+ * Public entry points:
+ *   pltsql_equal_node()          — per-node equality dispatch; switches
+ *                                  on NodeTag and calls the appropriate
+ *                                  generated or hand-written _equal*
+ *   pltsql_compare_parse_trees() — top-level harness for comparing two
+ *                                  complete PLtsql_stmt_block trees;
+ *                                  called by hooks.c and pl_comp.c
  *
- * Used for parse tree validation (PoC testing): comparing an ANTLR-compiled
- * tree against a serialized-then-deserialized tree to verify round-trip
- * correctness.
+ * Also contains hand-written _equal* stubs for custom_read_write nodes
+ * (PLtsql_expr, PLtsql_row, PLtsql_recfield, PLtsql_nsitem) that skip
+ * fields known to differ between CREATE-time and EXEC-time contexts
+ * (e.g., dno, lineno, itemno).
  *
  *-------------------------------------------------------------------------
  */
-#include "pltsql_serialize_macros.h"
-
-/* Forward declaration */
-extern bool pltsql_equal_node(const void *a, const void *b);
+#include "pltsql_serialize_macros.h" /* COMPARE_* macros, pltsql_equal_nodes_or_equal() */
+#include "pltsql_serialize.h"        /* forward declaration for pltsql_compare_parse_trees */
 
 /*
- * Stub equality functions for custom_read_write / special_read_write nodes.
+ * Stub equality functions for custom_read_write nodes.
  * These are referenced by the generated switch but skipped from gen code.
- * For PoC validation, compare via serialized string representation.
+ * List comparison is handled by pltsql_equal_nodes_or_equal() in the
+ * macros header, so no _equalList stub is needed here.
  */
-static bool
-_equalList(const List *a, const List *b)
-{
-	return pltsql_equal_nodes_or_equal(a, b);
-}
-
 static bool
 _equalPLtsql_expr(const PLtsql_expr *a, const PLtsql_expr *b)
 {
@@ -142,4 +141,42 @@ pltsql_equal_node(const void *a, const void *b)
 	}
 
 	return retval;
+}
+
+/*
+ * pltsql_compare_parse_trees
+ *    Compare two complete PLtsql_stmt_block parse trees for structural equality.
+ *
+ * Top-level entry point called by hooks.c and pl_comp.c for validation.
+ * Delegates to pltsql_equal_node() for the actual per-node comparison.
+ * Gated behind babelfishpg_tsql.validate_parse_cache GUC.
+ *
+ * Arguments:
+ *   tree_a — first PLtsql_stmt_block parse tree to compare
+ *   tree_b — second PLtsql_stmt_block parse tree to compare
+ *
+ * Returns true if both trees are structurally equal.
+ * Returns false on any mismatch or NULL difference.
+ * Panic logs if exactly one tree is NULL (indicates a caller bug).
+ */
+bool
+pltsql_compare_parse_trees(PLtsql_stmt_block *tree_a,
+                           PLtsql_stmt_block *tree_b)
+{
+	if (tree_a == NULL && tree_b == NULL)
+		return true;
+	if (tree_a == NULL || tree_b == NULL)
+	{
+		/*
+		 * This function is only called from internal validation paths
+		 * (validate_parse_cache GUC). A NULL tree here means a bug in
+		 * the caller — both trees should always be non-NULL when we
+		 * reach this point.
+		 */
+		elog(PANIC, "pltsql_validate_parse_cache[FAIL]: pltsql_compare_parse_trees: one tree is NULL (tree_a=%p, tree_b=%p)",
+			 (void *) tree_a, (void *) tree_b);
+		return false;
+	}
+
+	return pltsql_equal_node(tree_a, tree_b);
 }

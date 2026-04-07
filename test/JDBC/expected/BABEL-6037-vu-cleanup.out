@@ -66,6 +66,9 @@ GO
 -- Drop Test 13: MSTVF
 DROP FUNCTION IF EXISTS dbo.babel_6037_mstvf;
 GO
+-- Drop Test 13b: ITVF
+DROP FUNCTION IF EXISTS dbo.babel_6037_itvf;
+GO
 
 -- Per-function cache control test procedures
 DROP PROCEDURE IF EXISTS dbo.perfunc_cache_sig;
@@ -82,11 +85,25 @@ DROP PROCEDURE IF EXISTS dbo.perfunc_default_test;
 GO
 DROP PROCEDURE IF EXISTS test_cache_schema.perfunc_custom_schema;
 GO
-DROP SCHEMA IF EXISTS test_cache_schema;
-GO
 DROP PROCEDURE IF EXISTS dbo.validate_cache_proc;
 GO
 DROP PROCEDURE IF EXISTS dbo.nocache_create_proc;
+GO
+DROP PROCEDURE IF EXISTS dbo.overload_cache_proc;
+GO
+DROP PROCEDURE IF EXISTS test_cache_schema.overload_cache_proc;
+GO
+DROP SCHEMA IF EXISTS test_cache_schema;
+GO
+DROP PROCEDURE IF EXISTS dbo.inner_cached_proc;
+GO
+DROP PROCEDURE IF EXISTS dbo.outer_cached_proc;
+GO
+DROP PROCEDURE IF EXISTS dbo.dep_rename_proc;
+GO
+DROP TABLE IF EXISTS dbo.dep_rename_table;
+GO
+DROP TABLE IF EXISTS dbo.dep_renamed_table;
 GO
 
 PRINT 'Cleanup completed successfully';

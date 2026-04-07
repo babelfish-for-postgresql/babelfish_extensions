@@ -161,7 +161,8 @@ push @special_read_write, qw(List);
 # .funcs.c but need case statements in .switch.c.
 my @custom_copy_equal;
 
-# node types with custom read/write implementations (in pltsql_node_stubs.c)
+# node types with custom read/write implementations
+# (in pltsql_outfuncs_stubs.c / pltsql_readfuncs_stubs.c)
 my @custom_read_write;
 
 # Similarly for custom query jumble implementation.
@@ -667,12 +668,11 @@ close $nth;
 my $node_includes = qq{#include "pltsql_serialize_macros.h"\n};
 
 
-# copyfuncs.c, equalfuncs.c
-# PLtsql extension: we only generate equalfuncs (no copyfuncs needed).
-# Used for parse tree validation (comparing ANTLR-compiled tree vs deserialized tree).
-# (PoC) NOTE: We intentionally ignore @no_equal here because all PLtsql nodes are marked
-# no_copy_equal (to prevent the engine from generating copy/equal for them).
-# We still want our own extension-side equality for validation purposes.
+# equalfuncs.c
+# PLtsql extension: generate equalfuncs for parse tree validation 
+# (comparing ANTLR-compiled tree vs deserialized tree when 
+# `babelfish_tsql.validate_parse_cache` debug GUC is ON).
+# No copyfuncs needed — serialize/deserialize serves as deep copy.
 
 push @output_files, 'pltsql_equalfuncs_gen.c';
 open my $eff, '>', "$output_path/pltsql_equalfuncs_gen.c$tmpext" or die $!;
@@ -688,7 +688,7 @@ foreach my $n (@node_types)
 {
 	next if elem $n, @abstract_types;
 	next if elem $n, @nodetag_only;
-	# (PoC) Intentionally NOT checking @no_equal — see comment above.
+	next if elem $n, @no_equal;
 
 	print $efs "\t\tcase T_${n}:\n"
 	  . "\t\t\tretval = _equal${n}(a, b);\n"

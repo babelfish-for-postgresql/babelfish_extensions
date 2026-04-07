@@ -248,6 +248,15 @@ BEGIN
 END;
 GO
 
+-- Test 13b: Inline table-valued function (ITVF)
+-- ITVFs use itvf_query on PLtsql_expr for the inline SELECT.
+-- The cache must preserve itvf_query so the runtime can use it.
+CREATE FUNCTION dbo.babel_6037_itvf(@in_val INT)
+RETURNS TABLE
+AS
+RETURN SELECT @in_val AS id, 'inline' AS val;
+GO
+
 SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
 GO
 
@@ -383,4 +392,60 @@ AS
 BEGIN
     SELECT @val AS result;
 END;
+GO
+
+-- Test 24: Overloaded procedures — same name, different schemas and signatures
+-- Verify each overload is cached independently
+CREATE PROCEDURE dbo.overload_cache_proc
+    @val VARCHAR(50)
+AS
+BEGIN
+    SELECT @val AS result;
+END;
+GO
+
+CREATE PROCEDURE test_cache_schema.overload_cache_proc
+    @val INT,
+    @msg VARCHAR(50)
+AS
+BEGIN
+    SELECT @val AS num, @msg AS text_result;
+END;
+GO
+
+-- Test 25: Nested EXEC — cached proc calling another cached proc
+CREATE PROCEDURE dbo.inner_cached_proc
+    @x INT
+AS
+BEGIN
+    SELECT @x + 100 AS inner_result;
+END;
+GO
+
+CREATE PROCEDURE dbo.outer_cached_proc
+    @y INT
+AS
+BEGIN
+    SELECT @y AS outer_input;
+    EXEC dbo.inner_cached_proc @x = @y;
+END;
+GO
+
+-- Test 26: Altered/renamed dependency
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+
+CREATE TABLE dbo.dep_rename_table (id INT, val VARCHAR(50));
+GO
+INSERT INTO dbo.dep_rename_table VALUES (1, 'original');
+GO
+
+CREATE PROCEDURE dbo.dep_rename_proc
+AS
+BEGIN
+    SELECT id, val FROM dbo.dep_rename_table;
+END;
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
 GO

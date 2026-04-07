@@ -2,23 +2,31 @@
 /*-------------------------------------------------------------------------
  *
  * pltsql_serializable_2.h
- *    Annotated PLtsql node definitions for code generation
+ *    Annotated PLtsql node definitions for code generation (mirrors pltsql-2.h).
  *
- * This file contains PLtsql node struct definitions from pltsql-2.h with 
- * additional pg_node_attr() annotations for use with gen_pltsql_support.pl to 
- * generate serialization and deserialization code for caching ANTLR parse tree.
+ * This file mirrors the struct definitions from pltsql-2.h with additional
+ * pg_node_attr() annotations. It is read as text input by
+ * gen_pltsql_node_support.pl to generate serialization, deserialization,
+ * and equality code in order to support procedure ANTLR parse tree caching.
+ * Refer: GUCs `enable_routine_parse_cache` and `validate_parse_cache`
+ *
+ * Relationship to pltsql_serializable_1.h:
+ *   pltsql_serializable_1.h — mirrors pltsql.h (core PLtsql types:
+ *                              PLtsql_expr, PLtsql_var, PLtsql_row,
+ *                              PLtsql_stmt_block, PLtsql_stmt_if, etc.)
+ *   pltsql_serializable_2.h — mirrors pltsql-2.h (Babelfish-specific
+ *                              statement types: PLtsql_stmt_exec,
+ *                              PLtsql_stmt_exec_sp, PLtsql_stmt_throw, etc.)
  *
  * NOTES:
- *  - This file is used by gen_pltsql_support.pl to generate:
- *    * pltsql_serialize_gen.c
- *    * pltsql_deserialize_gen.c
- *  - Annotations follow PostgreSQL's gen_node_support.pl pattern
- *
- * Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
+ *  - This file is NOT compiled by the C compiler.
+ *  - Annotations follow PostgreSQL's gen_node_support.pl pattern.
+ *  - When pltsql-2.h struct definitions change, this file must be updated
+ *    to match (keeping the pg_node_attr annotations).
  *
  * IDENTIFICATION
- *    src/pl/pltsql/src/pltsql_serializable_2.h
+ *    src/pl/pltsql/src/pltsql_serializable_2.h 
+ *    (mirrors babelfish_extensions/contrib/babelfishpg_tsql/src/pltsql-2.h)
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +73,7 @@
  */
 typedef struct PLtsql_stmt_print
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -78,7 +86,7 @@ typedef struct PLtsql_stmt_print
  */
 typedef struct PLtsql_stmt_kill
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -91,7 +99,7 @@ typedef struct PLtsql_stmt_kill
  */
 typedef struct PLtsql_stmt_init
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -104,7 +112,7 @@ typedef struct PLtsql_stmt_init
  */
 typedef struct PLtsql_stmt_try_catch
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -121,7 +129,7 @@ typedef struct PLtsql_stmt_try_catch
  */
 typedef struct PLtsql_stmt_query_set
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -132,7 +140,7 @@ typedef struct PLtsql_stmt_query_set
 
 typedef struct PLtsql_stmt_push_result
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -145,7 +153,7 @@ typedef struct PLtsql_stmt_push_result
  */
 typedef struct PLtsql_stmt_exec
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -168,7 +176,7 @@ typedef struct PLtsql_stmt_exec
 
 typedef struct tsql_exec_param
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	const char *name;
 	PLtsql_expr *expr;
@@ -205,7 +213,7 @@ typedef enum PLtsql_sp_type_code
 
 typedef struct PLtsql_stmt_exec_sp
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -233,7 +241,7 @@ typedef struct PLtsql_stmt_exec_sp
  */
 typedef struct PLtsql_stmt_decl_table
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -245,7 +253,7 @@ typedef struct PLtsql_stmt_decl_table
 
 typedef struct PLtsql_stmt_exec_batch
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -254,7 +262,7 @@ typedef struct PLtsql_stmt_exec_batch
 
 typedef struct PLtsql_stmt_raiserror
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -267,7 +275,7 @@ typedef struct PLtsql_stmt_raiserror
 
 typedef struct PLtsql_stmt_throw
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -279,7 +287,7 @@ typedef struct PLtsql_stmt_throw
  */
 typedef struct PLtsql_stmt_deallocate
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -291,7 +299,7 @@ typedef struct PLtsql_stmt_deallocate
  */
 typedef struct PLtsql_stmt_decl_cursor
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -307,13 +315,13 @@ extern bool is_cursor_datatype(Oid oid);
  */
 typedef struct PLtsql_stmt_goto
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
 	PLtsql_expr *cond;			/* conditional GOTO */
-	int32		target_pc; /* int32_t in pltsql-2.h */
+	int32		target_pc pg_node_attr(equal_ignore); /* runtime-resolved at gen_exec_code->resolve_labels, differs between CREATE/EXEC */
 	char	   *target_label;
 } PLtsql_stmt_goto;
 
@@ -322,7 +330,7 @@ typedef struct PLtsql_stmt_goto
  */
 typedef struct PLtsql_stmt_label
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -334,7 +342,7 @@ typedef struct PLtsql_stmt_label
  */
 typedef struct PLtsql_stmt_usedb
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -346,11 +354,11 @@ typedef struct PLtsql_stmt_usedb
  */
 typedef struct PLtsql_stmt_save_ctx
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
-	int32		target_pc; /* int32_t in pltsql-2.h */
+	int32		target_pc pg_node_attr(equal_ignore); /* runtime-resolved at gen_exec_code->resolve_labels, differs between CREATE/EXEC */
 	char	   *target_label;
 } PLtsql_stmt_save_ctx;
 
@@ -359,7 +367,7 @@ typedef struct PLtsql_stmt_save_ctx
  */
 typedef struct PLtsql_stmt_restore_ctx_full
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
@@ -370,7 +378,7 @@ typedef struct PLtsql_stmt_restore_ctx_full
  */
 typedef struct PLtsql_stmt_restore_ctx_partial
 {
-	pg_node_attr(no_copy_equal, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type cmd_type;
 	int			lineno;

@@ -41,6 +41,7 @@
 
 #include "pltsql.h"
 #include "pltsql-2.h"
+#include "pltsql_serialize/pltsql_serialize.h"
 #include "hooks.h"
 #include "analyzer.h"
 #include "catalog.h"
@@ -1191,14 +1192,14 @@ skip_antlr_parsing:
 
 	/*
 	 * Re-populate the cross-session cache in babelfish_function_ext if we
-	 * fresh ANTLR parse (not restored from cache) so future sessions can skip parsing.
+	 * have a fresh ANTLR parse (not restored from bbf function_ext cache) 
+	 * so first time routine execution in future sessions can skip parsing.
 	 * This covers:
 	 *   - MVU: version mismatch rejected old cache, fresh parse needs storing
 	 *   - Rename: cache was NULLed, fresh parse needs storing
 	 *   - First exec with empty cache (e.g., created with GUC off, now on)
-	 * Skip during CREATE/ALTER (forValidator path) — pltsql_store_func_default_positions
-	 * handles cache writes for DDL. Calling both in the same transaction causes
-	 * "tuple already updated by self" errors.
+	 * Skip during CREATE/ALTER (forValidator path) to avoid conflicts with subsequent
+	 * call of pltsql_store_func_default_positions that handles cache writes for DDL.
 	 */
 	if (!forValidator && !function->from_cache &&
 		(pltsql_enable_routine_parse_cache || cache_enabled_for_func)){
@@ -1233,12 +1234,15 @@ skip_antlr_parsing:
 	 */
 	if (pltsql_validate_parse_cache && validation_cached_tree != NULL)
 	{
-		extern bool pltsql_compare_parse_trees(PLtsql_stmt_block *tree_a,
-											   PLtsql_stmt_block *tree_b);
-		extern bool pltsql_equal_node(const void *a, const void *b);
+		bool trees_match;
+		int antlr_ndatums;
+		PLtsql_datum **antlr_datums;
+		int max_d;
+		int datum_index;
+		int datum_mismatches = 0;
 
-		bool trees_match = pltsql_compare_parse_trees(validation_cached_tree,
-													  function->action);
+		trees_match = pltsql_compare_parse_trees(validation_cached_tree,
+												 function->action);
 
 		elog(LOG, "pltsql_validate_parse_cache[%s]: %s ANTLR parse tree comparison at EXEC",
 			 trees_match ? "PASS" : "FAIL", function->fn_signature);
@@ -1254,50 +1258,34 @@ skip_antlr_parsing:
 		 * We compare the overlapping datums using the generated equality
 		 * functions (which skip lineno/dno/varno/itemno fields).
 		 */
+		antlr_ndatums = function->ndatums;
+		antlr_datums = function->datums;
+		max_d = Max(validation_cached_ndatums, antlr_ndatums);
+
+		for (datum_index = 0; datum_index < max_d; datum_index++)
 		{
-			int antlr_ndatums = function->ndatums;
-			PLtsql_datum **antlr_datums = function->datums;
-			int max_d = Max(validation_cached_ndatums, antlr_ndatums);
-			int datum_index;
-			int datum_mismatches = 0;
+			PLtsql_datum *dc = (datum_index < validation_cached_ndatums) ? validation_cached_datums[datum_index] : NULL;
+			PLtsql_datum *da = (datum_index < antlr_ndatums) ? antlr_datums[datum_index] : NULL;
 
-			for (datum_index = 0; datum_index < max_d; datum_index++)
+			if (dc == NULL && da == NULL)
+				continue;
+			if (dc == NULL || da == NULL || !pltsql_equal_node(dc, da))
 			{
-				PLtsql_datum *dc = (datum_index < validation_cached_ndatums) ? validation_cached_datums[datum_index] : NULL;
-				PLtsql_datum *da = (datum_index < antlr_ndatums) ? antlr_datums[datum_index] : NULL;
-
-				if (dc == NULL && da == NULL)
-					continue;
-				if (dc == NULL || da == NULL || !pltsql_equal_node(dc, da))
-				{
-					datum_mismatches++;
-					elog(LOG, "pltsql_validate_parse_cache[DIFF]: %s has mismatched datum[%d] %s at EXEC (cached_tag=%d, antlr_tag=%d)",
-						 function->fn_signature, datum_index,
-						 (dc == NULL) ? "extra in antlr" : (da == NULL) ? "extra in cached" : "mismatch",
-						 dc ? (int) nodeTag(dc) : -1,
-						 da ? (int) nodeTag(da) : -1);
-				}
+				datum_mismatches++;
+				elog(LOG, "pltsql_validate_parse_cache[DIFF]: %s has mismatched datum[%d] %s at EXEC (cached_tag=%d, antlr_tag=%d)",
+					 function->fn_signature, datum_index,
+					 (dc == NULL) ? "extra in antlr" : (da == NULL) ? "extra in cached" : "mismatch",
+					 dc ? (int) nodeTag(dc) : -1,
+					 da ? (int) nodeTag(da) : -1);
 			}
-
-			elog(LOG, "pltsql_validate_parse_cache[%s]: %s PLtsql Datums comparison at EXEC (cached=%d, antlr=%d, mismatches=%d)",
-				 (datum_mismatches == 0) ? "PASS" : "DIFF",
-				 function->fn_signature,
-				 validation_cached_ndatums, antlr_ndatums, datum_mismatches);
 		}
+
+		elog(LOG, "pltsql_validate_parse_cache[%s]: %s PLtsql Datums comparison at EXEC (cached=%d, antlr=%d, mismatches=%d)",
+			 (datum_mismatches == 0) ? "PASS" : "DIFF",
+			 function->fn_signature,
+			 validation_cached_ndatums, antlr_ndatums, datum_mismatches);
 	}
 
-	/* Free the validation memory context (cached tree data no longer needed) */
-	// if (validation_cxt != NULL)
-	// {
-	// 	MemoryContextDelete(validation_cxt);
-	// 	validation_cxt = NULL;
-	// }
-	/*
-	 * Keep validation_cxt alive — it is a child of func_cxt and will be
-	 * cleaned up when the function is evicted from the hash table.
-	 * Deleting it here would risk freeing memory that the ANTLR tree
-	 * might reference (e.g., shared interned strings).
-	 */
 
 	/*
 	 * Pop the error context stack

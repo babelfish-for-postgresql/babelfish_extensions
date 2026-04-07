@@ -26,39 +26,32 @@
 #include "src/pltsql-2.h"
 
 /*
- * Forward declarations for functions defined in this file.
- * pltsql_nodeToString and pltsql_stringToNode are the public API.
- * The rest are static helpers.
+ * pltsql_serialize.h: public API (pltsql_nodeToString, pltsql_stringToNode)
+ * pltsql_serialize_macros.h: internal macros + pltsql_outNode, pltsql_nodeRead
  */
-extern char *pltsql_nodeToString(const void *obj);
-extern void *pltsql_stringToNode(const char *str);
-extern void pltsql_outNode(StringInfo str, const void *obj);
+#include "pltsql_serialize.h"
+#include "pltsql_serialize_macros.h"
 
+/* Static helpers defined in this file */
 static void pltsql_outList(StringInfo str, const List *node);
-extern void *pltsql_nodeRead(const char *token, int tok_len);
 static Node *pltsql_parseNodeString(void);
 
 /*
- * Forward declarations for generated/hand-written _out* functions.
- * These are defined in pltsql_outfuncs.c (which #includes the generated
- * pltsql_outfuncs_gen.c and pltsql_outfuncs_switch.c).
+ * Forward declarations for hand-written _out* / _read* stub functions.
+ * Defined in pltsql_outfuncs_stubs.c / pltsql_readfuncs_stubs.c.
+ * Needed here because the generated switch files (included below) call them.
  */
 extern void _outPLtsql_nsitem(StringInfo str, const PLtsql_nsitem *node);
 extern void _outPLtsql_expr(StringInfo str, const PLtsql_expr *node);
 extern void _outPLtsql_row(StringInfo str, const PLtsql_row *node);
 extern void _outPLtsql_recfield(StringInfo str, const PLtsql_recfield *node);
 
-/* Forward declarations for hand-written _read* functions (pltsql_node_stubs.c) */
 extern PLtsql_nsitem *_readPLtsql_nsitem(void);
 extern PLtsql_expr *_readPLtsql_expr(void);
 extern PLtsql_row *_readPLtsql_row(void);
 extern PLtsql_recfield *_readPLtsql_recfield(void);
 
-/*
- * Pull in the generated static _out* and _read* functions.
- * These must be in the same compilation unit as the switch that calls them.
- */
-#include "pltsql_serialize_macros.h"
+/* Pull in the generated static _out* and _read* functions. */
 #include "pltsql_outfuncs_gen.c"
 #include "pltsql_readfuncs_gen.c"
 

@@ -6569,24 +6569,42 @@ PG_FUNCTION_INFO_V1(enable_routine_parse_cache);
 Datum
 enable_routine_parse_cache(PG_FUNCTION_ARGS)
 {
-	text	   *func_id_text = PG_GETARG_TEXT_PP(0);
-	bool		enable_flag = PG_GETARG_BOOL(1);
-	char	   *func_id = text_to_cstring(func_id_text);
-	char	   *dot;
+	text	   *func_id_text;
+	bool		enable_flag;
+	char	   *func_id;
 	char	   *schema_name;
 	char	   *func_part;
 	char	   *funcname_str;
 	char	   *paren;
+	char	   *first_dot;
+	char	   *first_paren;
+	char	   *cur_db;
+	char	   *physical_schema;
 	NameData	nsp_name;
 	NameData	funcname_data;
 
-	/* Split schema from func_part on first dot */
-	dot = strchr(func_id, '.');
-	if (dot != NULL)
+	if (PG_ARGISNULL(0))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("function identifier cannot be NULL")));
+
+	func_id_text = PG_GETARG_TEXT_PP(0);
+	enable_flag = PG_GETARG_BOOL(1);
+	func_id = text_to_cstring(func_id_text);
+
+	/*
+	 * Split schema from func_part on the first dot that appears BEFORE any
+	 * opening parenthesis. Dots inside the signature (e.g., "sys"."varchar")
+	 * must not be treated as schema separators.
+	 */
+	first_dot = strchr(func_id, '.');
+	first_paren = strchr(func_id, '(');
+
+	if (first_dot != NULL && (first_paren == NULL || first_dot < first_paren))
 	{
-		*dot = '\0';
+		*first_dot = '\0';
 		schema_name = func_id;
-		func_part = dot + 1;
+		func_part = first_dot + 1;
 	}
 	else
 	{
@@ -6601,20 +6619,19 @@ enable_routine_parse_cache(PG_FUNCTION_ARGS)
 		*paren = '\0';
 
 	/* Convert logical schema name (e.g. 'dbo') to physical (e.g. 'master_dbo') */
-	{
-		char	   *cur_db = get_cur_db_name();
-		char	   *physical_schema = get_physical_schema_name(cur_db, schema_name);
+	cur_db = get_cur_db_name();
+	physical_schema = get_physical_schema_name(cur_db, schema_name);
 
-		namestrcpy(&nsp_name, physical_schema);
-		pfree(cur_db);
-		pfree(physical_schema);
-	}
+	namestrcpy(&nsp_name, physical_schema);
+	pfree(cur_db);
+	pfree(physical_schema);
 	namestrcpy(&funcname_data, funcname_str);
 
 	if (strchr(func_part, '(') != NULL)
 	{
 		/* Full signature provided — exact 3-key lookup */
 		HeapTuple	bbffunctuple;
+		HeapTuple	copytup;
 
 		bbffunctuple = SearchSysCache3(PROCNAMENSPSIGNATURE,
 									   NameGetDatum(&funcname_data),
@@ -6628,13 +6645,10 @@ enable_routine_parse_cache(PG_FUNCTION_ARGS)
 							func_part, schema_name),
 					 errhint("Use sys.babelfish_get_pltsql_function_signature(oid) to find the exact signature.")));
 
-		{
-			HeapTuple	copytup = heap_copytuple(bbffunctuple);
-
-			ReleaseSysCache(bbffunctuple);
-			update_bbf_function_cache_enabled(copytup, enable_flag);
-			heap_freetuple(copytup);
-		}
+		copytup = heap_copytuple(bbffunctuple);
+		ReleaseSysCache(bbffunctuple);
+		update_bbf_function_cache_enabled(copytup, enable_flag);
+		heap_freetuple(copytup);
 	}
 	else
 	{
