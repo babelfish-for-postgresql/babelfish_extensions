@@ -2399,6 +2399,8 @@ extern void pltsql_set_insert_exec_context(Oid temp_table_oid);
 extern void pltsql_clear_insert_exec_context(void);
 extern bool pltsql_insert_exec_active(void);
 extern bool pltsql_insert_exec_flush_in_progress(void);
+extern void pltsql_insert_exec_set_flush_in_progress(bool in_progress);
+extern void pltsql_insert_exec_set_target_table(const char *target_table);
 extern int pltsql_get_insert_exec_base_tran_count(void);
 extern Oid pltsql_get_insert_exec_temp_table_oid(void);
 extern const char *pltsql_get_insert_exec_target_table(void);
@@ -2415,6 +2417,11 @@ extern void pltsql_insert_exec_check_pending_drop(void);
 extern void pltsql_insert_exec_open_target_table(const char *target_table);
 extern void pltsql_insert_exec_close_target_table(void);
 extern bool pltsql_insert_exec_verify_schema(void);
+extern bool parse_insert_exec_table_name(const char *target_table,
+										 char **schema_name_out,
+										 char **table_name_out,
+										 char **physical_schema_out,
+										 bool get_physical);
 extern DestReceiver *CreateInsertExecDestReceiver(Oid temp_table_oid);
 extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list);
 extern void drop_insert_exec_temp_table(Oid temp_table_oid);

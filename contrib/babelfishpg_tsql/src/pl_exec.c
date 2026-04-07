@@ -5304,6 +5304,376 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	return PLTSQL_RC_OK;
 }
 
+/*
+ * Flush all rows from the temp table to the target table using global context.
+ * This version is called from exec_stmt_exec when INSERT EXEC context is active.
+ * It uses the global insert_exec_ctx.target_table and insert_exec_ctx.column_list.
+ *
+ * This function routes the flush INSERT through exec_stmt_execsql to reuse
+ * the standard SQL execution path, which handles:
+ * - Trigger execution via BeginCompositeTriggers/EndCompositeTriggers
+ * - Rowcount and FOUND variable updates
+ * - Proper transaction handling
+ *
+ * CRITICAL: The flush is wrapped in its own subtransaction that commits
+ * immediately. This ensures that if an error occurs AFTER INSERT EXEC completes
+ * (e.g., SELECT 1/0 in the same TRY block), the TRY-CATCH rollback won't undo
+ * the already-flushed data. This matches SQL Server behavior where INSERT EXEC
+ * data is preserved even when subsequent errors occur in the same TRY block.
+ */
+void
+flush_insert_exec_temp_table(PLtsql_execstate *estate)
+{
+	char			temp_table_name[NAMEDATALEN];
+	StringInfoData	flush_query;
+	int				rc;
+	const char		*target_table = pltsql_get_insert_exec_target_table();
+	const char		*column_list = pltsql_get_insert_exec_column_list();
+	Oid				temp_oid = pltsql_get_insert_exec_temp_table_oid();
+	MemoryContext	oldcontext = CurrentMemoryContext;
+	ResourceOwner	oldowner = CurrentResourceOwner;
+	volatile bool	subtxn_started = false;
+	
+	/* Save INSERT EXEC context to restore after flush */
+	char		   *saved_target_table = NULL;
+	
+	/* Security context for ownership chaining */
+	Oid				flush_save_userid = InvalidOid;
+	int				flush_save_sec_context = 0;
+	volatile bool	flush_switched_context = false;
+	
+	/* For exec_stmt_execsql */
+	PLtsql_stmt_execsql flush_stmt;
+	PLtsql_expr		flush_expr;
+
+	if (!OidIsValid(temp_oid) || target_table == NULL)
+	{
+		return;
+	}
+	
+	/*
+	 * Verify that the target table schema hasn't changed since INSERT EXEC started.
+	 * If the executed procedure altered the target table's schema (e.g., ALTER TABLE
+	 * ADD COLUMN), we must raise SQL Server error 556:
+	 * "INSERT EXEC failed because the stored procedure altered the schema of the target table."
+	 */
+	if (!pltsql_insert_exec_verify_schema())
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("INSERT EXEC failed because the stored procedure altered the schema of the target table.")));
+	}
+	
+	/*
+	 * Save the INSERT EXEC context info before clearing it.
+	 * We need to temporarily clear the context so that the flush INSERT
+	 * behaves like a normal INSERT and fires INSTEAD OF triggers properly.
+	 */
+	saved_target_table = pstrdup(target_table);
+
+	snprintf(temp_table_name, sizeof(temp_table_name),
+			 "__insert_exec_buf_%d", MyProcPid);
+
+	initStringInfo(&flush_query);
+	
+	if (column_list != NULL)
+	{
+		/* User specified columns - use them directly */
+		appendStringInfo(&flush_query,
+			"INSERT INTO %s (%s) SELECT * FROM %s",
+			target_table,
+			column_list,
+			temp_table_name);
+	}
+	else
+	{
+		/*
+		 * No column list specified - we need to build one excluding
+		 * IDENTITY and computed columns to match the temp table structure.
+		 * 
+		 * Parse the target table name to get the physical schema and table name
+		 * for the catalog query.
+		 */
+		StringInfoData col_query;
+		StringInfoData non_identity_cols;
+		bool		first_col = true;
+		int			proc_count;
+		uint64		i;
+		char	   *flush_schema_name = NULL;
+		char	   *flush_table_name = NULL;
+		char	   *flush_physical_schema = NULL;
+		char	   *pg_table_ref;
+		
+		initStringInfo(&col_query);
+		initStringInfo(&non_identity_cols);
+		
+		/*
+		 * Parse schema and table name from target_table.
+		 * Format can be: "table", "schema.table", or "db.schema.table"
+		 * For temp tables, use pg_class join since regclass cast may not
+		 * resolve temp tables correctly in all contexts.
+		 */
+		if (target_table[0] == '#')
+		{
+			/* 
+			 * Temp table - use pg_class join to find the table.
+			 * This is more reliable than regclass cast for temp tables
+			 * because it doesn't depend on search_path resolution.
+			 */
+			appendStringInfo(&col_query,
+				"SELECT a.attname "
+				"FROM pg_attribute a "
+				"JOIN pg_class c ON a.attrelid = c.oid "
+				"WHERE c.relname = '%s' "
+				"AND a.attnum > 0 "
+				"AND NOT a.attisdropped "
+				"AND a.attidentity = '' "
+				"AND a.attgenerated = '' "
+				"ORDER BY a.attnum",
+				target_table);
+		}
+		else
+		{
+			/* Parse schema and table name using helper function */
+			(void) parse_insert_exec_table_name(target_table, &flush_schema_name,
+												&flush_table_name, &flush_physical_schema, true);
+			
+			/* Build the PostgreSQL table reference */
+			pg_table_ref = psprintf("%s.%s", flush_physical_schema, flush_table_name);
+			
+			if (flush_schema_name)
+				pfree(flush_schema_name);
+			if (flush_table_name)
+				pfree(flush_table_name);
+			if (flush_physical_schema)
+				pfree(flush_physical_schema);
+			
+			appendStringInfo(&col_query,
+				"SELECT a.attname "
+				"FROM pg_attribute a "
+				"WHERE a.attrelid = '%s'::regclass "
+				"AND a.attnum > 0 "
+				"AND NOT a.attisdropped "
+				"AND a.attidentity = '' "
+				"AND a.attgenerated = '' "
+				"ORDER BY a.attnum",
+				pg_table_ref);
+			
+			pfree(pg_table_ref);
+		}
+		
+		rc = SPI_execute(col_query.data, true, 0);
+		if (rc != SPI_OK_SELECT)
+		{
+			pfree(col_query.data);
+			pfree(non_identity_cols.data);
+			/* Fall back to simple INSERT */
+			appendStringInfo(&flush_query,
+				"INSERT INTO %s SELECT * FROM %s",
+				target_table,
+				temp_table_name);
+		}
+		else
+		{
+			proc_count = SPI_processed;
+			
+			if (proc_count == 0)
+			{
+				/* No columns found, fall back */
+				pfree(col_query.data);
+				pfree(non_identity_cols.data);
+				appendStringInfo(&flush_query,
+					"INSERT INTO %s SELECT * FROM %s",
+					target_table,
+					temp_table_name);
+			}
+			else
+			{
+				/* Build column list */
+				for (i = 0; i < proc_count; i++)
+				{
+					char *colname = SPI_getvalue(SPI_tuptable->vals[i], 
+												 SPI_tuptable->tupdesc, 1);
+					if (colname != NULL)
+					{
+						if (!first_col)
+							appendStringInfoString(&non_identity_cols, ", ");
+						appendStringInfoString(&non_identity_cols, colname);
+						first_col = false;
+					}
+				}
+				
+				SPI_freetuptable(SPI_tuptable);
+				pfree(col_query.data);
+				
+				appendStringInfo(&flush_query,
+					"INSERT INTO %s (%s) SELECT * FROM %s",
+					target_table,
+					non_identity_cols.data,
+					temp_table_name);
+				
+				pfree(non_identity_cols.data);
+			}
+		}
+	}
+
+	elog(DEBUG1, "INSERT-EXEC: Flushing temp table to target: %s", flush_query.data);
+
+	/*
+	 * Execute the flush INSERT in its own subtransaction that commits
+	 * immediately. This is critical for TRY-CATCH behavior.
+	 *
+	 * We route through exec_stmt_execsql to reuse the standard SQL execution
+	 * path which handles triggers, rowcount, and FOUND properly.
+	 */
+	PG_TRY();
+	{
+		BeginInternalSubTransaction("insert_exec_flush");
+		subtxn_started = true;
+		MemoryContextSwitchTo(oldcontext);
+
+		/*
+		 * Set the flush flag BEFORE clearing the target table pointer.
+		 * This ensures commit_stmt is still blocked inside triggers
+		 * even though pltsql_insert_exec_active() will return false.
+		 */
+		pltsql_insert_exec_set_flush_in_progress(true);
+		
+		/*
+		 * Temporarily clear just the target table pointer so that
+		 * pltsql_insert_exec_active() returns false. This allows the
+		 * flush INSERT to behave like a normal INSERT and fire INSTEAD OF
+		 * triggers properly.
+		 */
+		pltsql_insert_exec_set_target_table(NULL);
+
+		/*
+		 * OWNERSHIP CHAINING FIX:
+		 * Switch to the procedure owner's identity before executing the flush INSERT.
+		 */
+		if (estate && estate->func && OidIsValid(estate->func->fn_oid))
+		{
+			GetUserIdAndSecContext(&flush_save_userid, &flush_save_sec_context);
+			SetUserIdAndSecContext(get_func_owner(estate->func->fn_oid),
+								   flush_save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+			flush_switched_context = true;
+		}
+
+		/*
+		 * Build a minimal PLtsql_stmt_execsql structure for exec_stmt_execsql.
+		 * This allows us to reuse the standard SQL execution path which handles
+		 * triggers, rowcount, and FOUND properly.
+		 */
+		memset(&flush_stmt, 0, sizeof(flush_stmt));
+		memset(&flush_expr, 0, sizeof(flush_expr));
+		
+		flush_expr.query = flush_query.data;
+		flush_expr.plan = NULL;
+		flush_expr.paramnos = NULL;
+		flush_expr.rwparam = -1;
+		flush_expr.func = estate->func;
+		flush_expr.ns = NULL;
+		
+		flush_stmt.cmd_type = PLTSQL_STMT_EXECSQL;
+		flush_stmt.lineno = 0;
+		flush_stmt.sqlstmt = &flush_expr;
+		flush_stmt.mod_stmt = true;  /* This is an INSERT statement */
+		flush_stmt.into = false;
+		flush_stmt.strict = false;
+		flush_stmt.txn_data = NULL;
+		flush_stmt.target = NULL;
+		flush_stmt.mod_stmt_tablevar = false;
+		flush_stmt.need_to_push_result = false;
+		flush_stmt.is_tsql_select_assign_stmt = false;
+		flush_stmt.insert_exec = false;  /* This flush INSERT is not itself an INSERT EXEC */
+		flush_stmt.is_cross_db = false;
+		flush_stmt.is_ddl = false;
+		flush_stmt.schema_name = NULL;
+		flush_stmt.db_name = NULL;
+		flush_stmt.is_create_view = false;
+		flush_stmt.is_set_tran_isolation = false;
+		flush_stmt.original_query = NULL;
+		flush_stmt.is_schemabinding = false;
+		
+		/* Execute through exec_stmt_execsql - this handles triggers, rowcount, FOUND */
+		rc = exec_stmt_execsql(estate, &flush_stmt);
+		
+		/* Free the plan if one was created */
+		if (flush_expr.plan != NULL)
+		{
+			SPI_freeplan(flush_expr.plan);
+			flush_expr.plan = NULL;
+		}
+		
+		/* Restore security context immediately after execution */
+		if (flush_switched_context)
+		{
+			SetUserIdAndSecContext(flush_save_userid, flush_save_sec_context);
+			flush_switched_context = false;
+		}
+		
+		if (rc != PLTSQL_RC_OK)
+			elog(ERROR, "INSERT-EXEC: Failed to flush temp table to target");
+		
+		/* Clear the flush flag after successful flush */
+		pltsql_insert_exec_set_flush_in_progress(false);
+		
+		/*
+		 * Restore the target table pointer. This is needed because after
+		 * the flush, the caller will call pltsql_clear_insert_exec_context()
+		 * which expects the target_table to be set.
+		 */
+		pltsql_insert_exec_set_target_table(saved_target_table);
+
+		/* Commit the flush subtransaction - this "locks in" the data */
+		ReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+
+		elog(DEBUG1, "INSERT-EXEC: Flush committed via exec_stmt_execsql");
+	}
+	PG_CATCH();
+	{
+		/* Restore security context on error if it was switched */
+		if (flush_switched_context)
+		{
+			SetUserIdAndSecContext(flush_save_userid, flush_save_sec_context);
+			flush_switched_context = false;
+		}
+		
+		/* Free the plan if one was created */
+		if (flush_expr.plan != NULL)
+		{
+			SPI_freeplan(flush_expr.plan);
+			flush_expr.plan = NULL;
+		}
+		
+		/* Clear the flush flag on error */
+		pltsql_insert_exec_set_flush_in_progress(false);
+		
+		/* Restore the target table pointer on error */
+		pltsql_insert_exec_set_target_table(saved_target_table);
+		
+		/* Roll back the flush subtransaction on error */
+		if (subtxn_started)
+		{
+			RollbackAndReleaseCurrentSubTransaction();
+		}
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+
+		pfree(flush_query.data);
+		if (saved_target_table)
+			pfree(saved_target_table);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	pfree(flush_query.data);
+	if (saved_target_table)
+		pfree(saved_target_table);
+}
+
 static void
 updateColumnUpdatedList(Query *query)
 {
