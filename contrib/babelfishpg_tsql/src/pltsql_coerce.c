@@ -3173,6 +3173,28 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 	ListCell	*lc;
 	bool		is_case_expr = (strlen(context) == 4 && strncmp(context, "CASE", 4) == 0);
 
+	/*
+	* If any branch is sql_variant, return sql_variant directly. sql_variant 
+	* has the highest TSQL type precedence (0) and can hold any type, so it 
+	* is always the correct common type when present. We must check this 
+	* before the main loop because the loop bails out on non-char types, 
+	* and the other branch (e.g. bit) would cause an early return of 
+	* InvalidOid before sql_variant is ever seen.
+	*/
+	foreach(lc, exprs)
+	{
+		Node	*expr = (Node *) lfirst(lc);
+		Oid		type = exprType(expr);
+
+		if ((*common_utility_plugin_ptr->is_tsql_sqlvariant_datatype)(type))
+		{
+			if (which_expr)
+				*which_expr = expr;
+			return type;
+		}
+	}
+
+
 	/* Find a common type based on precedence. NULLs are ignored, and make 
 	 * string literals varchars. If a type besides CHAR, NCHAR, VARCHAR, 
 	 * or NVARCHAR is present, let engine handle finding the type.
@@ -3286,7 +3308,26 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 
 		/* Check if arg is NULL literal */
 		if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull)
+		{
+			/*
+			 * Even for NULL literals, consider the type for precedence if it
+			 * is sql_variant. sql_variant has the highest precedence and can
+			 * hold any type, so it should always win regardless of NULL value.
+			 * Without this, COALESCE(CAST(NULL AS sql_variant), varchar_val)
+			 * would skip sql_variant and pick varchar as common type, then
+			 * fail trying to coerce sql_variant to varchar.
+			 */
+			if ((*common_utility_plugin_ptr->is_tsql_sqlvariant_datatype)(ptype))
+			{
+				temp_precedence = tsql_get_type_precedence(ptype);
+				if (commontype == InvalidOid || temp_precedence < curr_precedence)
+				{
+					commontype = ptype;
+					curr_precedence = temp_precedence;
+				}
+			}
 			continue;
+		}
 
 		/* If the arg is non-null string literal */
 		if (ptype == UNKNOWNOID)
