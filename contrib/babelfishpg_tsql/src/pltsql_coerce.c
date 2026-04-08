@@ -3174,13 +3174,12 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 	bool		is_case_expr = (strlen(context) == 4 && strncmp(context, "CASE", 4) == 0);
 
 	/*
-	* If any branch is sql_variant, return sql_variant directly. sql_variant 
-	* has the highest TSQL type precedence (0) and can hold any type, so it 
-	* is always the correct common type when present. We must check this 
-	* before the main loop because the loop bails out on non-char types, 
-	* and the other branch (e.g. bit) would cause an early return of 
-	* InvalidOid before sql_variant is ever seen.
-	*/
+	 * If any branch is sql_variant, return it directly since it has 
+	 * the highest precedence and can hold any type. We must check this 
+	 * before the main loop because the loop bails out on non-char types, 
+	 * and the other branch (e.g. bit) would cause an early return of 
+	 * InvalidOid before sql_variant is ever seen.
+	 */
 	foreach(lc, exprs)
 	{
 		Node	*expr = (Node *) lfirst(lc);
@@ -3310,39 +3309,16 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 		if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull)
 		{
 			/*
-			 * Even for NULL literals, consider the type for precedence if it
-			 * is sql_variant. sql_variant has the highest precedence and can
-			 * hold any type, so it should always win regardless of NULL value.
-			 * Without this, COALESCE(CAST(NULL AS sql_variant), varchar_val)
-			 * would skip sql_variant and pick varchar as common type, then
-			 * fail trying to coerce sql_variant to varchar.
+			 * Consider sql_variant type even for NULL literals since it has highest
+			 * precedence so it should always win regardless of NULL value.
 			 */
-			if ((*common_utility_plugin_ptr->is_tsql_sqlvariant_datatype)(ptype))
-			{
-				temp_precedence = tsql_get_type_precedence(ptype);
-				if (commontype == InvalidOid || temp_precedence < curr_precedence)
-				{
-					commontype = ptype;
-					curr_precedence = temp_precedence;
-				}
-			}
-			continue;
+			if (!(*common_utility_plugin_ptr->is_tsql_sqlvariant_datatype)(ptype))
+				continue;
 		}
 
 		/* If the arg is non-null string literal */
 		if (ptype == UNKNOWNOID)
-		{
-			Oid curr_oid = get_sys_varcharoid();
-			temp_precedence = tsql_get_type_precedence(curr_oid);
-			if (commontype == InvalidOid 
-				|| temp_precedence < curr_precedence)
-			{
-				commontype = curr_oid;
-				curr_precedence = temp_precedence;
-			}
-			
-			continue;
-		}
+			ptype = get_sys_varcharoid();
 
 		temp_precedence = tsql_get_type_precedence(ptype);
 
