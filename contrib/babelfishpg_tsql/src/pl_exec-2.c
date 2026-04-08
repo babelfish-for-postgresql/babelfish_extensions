@@ -178,9 +178,10 @@ typedef struct
 	Oid			temp_table_oid;	/* OID of temp table to insert into */
 	TupleDesc	typeinfo;		/* tuple descriptor from startup */
 	uint64		rows_inserted;	/* count of rows inserted */
-	/* Coercion infrastructure using expression evaluation */
-	ExprContext *econtext;		/* expression context for coercion */
-	ExprState **cast_exprstates;/* array of coercion expression states (NULL if no coercion needed) */
+	/* Coercion infrastructure using ExecProject */
+	ExprContext *econtext;		/* expression context for projection */
+	ProjectionInfo *proj_info;	/* projection info for type coercion (NULL if no coercion needed) */
+	TupleTableSlot *proj_slot;	/* result slot for projection */
 	int			natts;			/* number of attributes */
 	bool		needs_coercion;	/* true if any column needs coercion */
 } DR_insertexec;
@@ -1011,10 +1012,13 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	int			result_natts;
 	int			temp_natts;
 	int			i;
+	List	   *target_list = NIL;
 
 	/* Just store the tuple descriptor for later use */
 	myState->typeinfo = typeinfo;
 	myState->rows_inserted = 0;
+	myState->proj_info = NULL;
+	myState->proj_slot = NULL;
 
 	/*
 	 * Validate column count: the number of columns in the result set
@@ -1039,37 +1043,43 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	}
 
 	/*
-	 * Build coercion expressions for columns that need type conversion.
-	 * We use CaseTestExpr as a placeholder for the input value, then
-	 * coerce_to_target_type() to build the coercion expression tree.
-	 * This approach is modeled after exec_cast_value() in pl_exec.c.
+	 * Build a target list for projection with type coercion.
+	 * We use Var nodes to reference the input tuple columns, with coercion
+	 * expressions wrapped around them when type conversion is needed.
+	 * This allows us to use ExecProject for efficient tuple projection.
 	 */
 	myState->natts = temp_natts;
 	myState->needs_coercion = false;
-	myState->cast_exprstates = (ExprState **) palloc0(temp_natts * sizeof(ExprState *));
 	
 	for (i = 0; i < temp_natts; i++)
 	{
 		Form_pg_attribute src_att = TupleDescAttr(typeinfo, i);
 		Form_pg_attribute tgt_att = TupleDescAttr(temp_tupdesc, i);
+		Var		   *var;
+		Node	   *expr;
+		TargetEntry *tle;
+		
+		/*
+		 * Create a Var node referencing the input tuple column.
+		 * We use OUTER_VAR as the varno since we'll set ecxt_outertuple
+		 * to point to the input slot.
+		 */
+		var = makeVar(OUTER_VAR,
+					  i + 1,				/* attnum is 1-based */
+					  src_att->atttypid,
+					  src_att->atttypmod,
+					  src_att->attcollation,
+					  0);					/* varlevelsup */
+		
+		expr = (Node *) var;
 		
 		/* Check if coercion is needed for this column */
 		if (src_att->atttypid != tgt_att->atttypid ||
 			(src_att->atttypmod != tgt_att->atttypmod && tgt_att->atttypmod != -1))
 		{
-			CaseTestExpr *placeholder;
 			Node	   *cast_expr;
 			
 			myState->needs_coercion = true;
-			
-			/*
-			 * Create a CaseTestExpr as placeholder for the input value.
-			 * This is the standard pattern used by PostgreSQL's coercion system.
-			 */
-			placeholder = makeNode(CaseTestExpr);
-			placeholder->typeId = src_att->atttypid;
-			placeholder->typeMod = src_att->atttypmod;
-			placeholder->collation = src_att->attcollation;
 			
 			/*
 			 * Build the coercion expression using coerce_to_target_type().
@@ -1077,7 +1087,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 			 * conversion behavior for INSERT statements.
 			 */
 			cast_expr = coerce_to_target_type(NULL,
-											  (Node *) placeholder,
+											  expr,
 											  src_att->atttypid,
 											  tgt_att->atttypid,
 											  tgt_att->atttypmod,
@@ -1094,7 +1104,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 			{
 				CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
 				
-				iocoerce->arg = (Expr *) placeholder;
+				iocoerce->arg = (Expr *) expr;
 				iocoerce->resulttype = tgt_att->atttypid;
 				iocoerce->resultcollid = InvalidOid;
 				iocoerce->coerceformat = COERCE_IMPLICIT_CAST;
@@ -1123,28 +1133,37 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 								format_type_be(tgt_att->atttypid))));
 			}
 			
-			/*
-			 * Check if this is a no-op RelabelType coercion.
-			 * If so, we don't need to evaluate an expression.
-			 */
-			if (IsA(cast_expr, RelabelType) &&
-				((RelabelType *) cast_expr)->arg == (Expr *) placeholder)
-			{
-				/* No-op coercion - leave cast_exprstates[i] as NULL */
-				myState->cast_exprstates[i] = NULL;
-			}
-			else
-			{
-				/* Initialize the expression for execution */
-				myState->cast_exprstates[i] = ExecInitExpr((Expr *) cast_expr, NULL);
-			}
+			expr = cast_expr;
 		}
-		/* else: no coercion needed, cast_exprstates[i] stays NULL */
+		
+		/* Create a TargetEntry for this column */
+		tle = makeTargetEntry((Expr *) expr,
+							  i + 1,		/* resno is 1-based */
+							  NULL,			/* resname */
+							  false);		/* resjunk */
+		target_list = lappend(target_list, tle);
 	}
 	
-	/* Create expression context if we need coercion */
+	/* Create expression context and projection info if we need coercion */
 	if (myState->needs_coercion)
+	{
+		TupleDesc	proj_tupdesc;
+		
 		myState->econtext = CreateStandaloneExprContext();
+		
+		/* Create a copy of the temp table's tuple descriptor for the result slot */
+		proj_tupdesc = CreateTupleDescCopy(temp_tupdesc);
+		
+		/* Create the result slot for projection */
+		myState->proj_slot = MakeSingleTupleTableSlot(proj_tupdesc, &TTSOpsVirtual);
+		
+		/* Build the projection info */
+		myState->proj_info = ExecBuildProjectionInfo(target_list,
+													 myState->econtext,
+													 myState->proj_slot,
+													 NULL,		/* no parent PlanState */
+													 typeinfo);	/* input descriptor */
+	}
 	
 	table_close(temp_rel, AccessShareLock);
 }
@@ -1157,8 +1176,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
  * ensures we don't hold relation handles across subtransaction boundaries.
  * 
  * Performs type coercion when source and target types differ using
- * PostgreSQL's expression evaluation infrastructure. The coercion expressions
- * were built during insertexec_startup.
+ * ExecProject for efficient tuple projection.
  */
 static bool
 insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
@@ -1166,8 +1184,6 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	DR_insertexec *myState = (DR_insertexec *) self;
 	Relation	temp_rel;
 	CommandId	cid;
-	TupleDesc	temp_tupdesc;
-	int			i;
 	TupleTableSlot *insert_slot;
 
 	/*
@@ -1178,77 +1194,31 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	temp_rel = table_open(myState->temp_table_oid, RowExclusiveLock);
 	cid = GetCurrentCommandId(true);
 	
-	temp_tupdesc = RelationGetDescr(temp_rel);
-	
 	if (myState->needs_coercion)
 	{
-		/*
-		 * Create a new slot with the temp table's tuple descriptor and
-		 * copy values with type coercion where needed.
-		 */
-		Datum	   *values;
-		bool	   *nulls;
 		ExprContext *econtext = myState->econtext;
-		
-		values = (Datum *) palloc(myState->natts * sizeof(Datum));
-		nulls = (bool *) palloc(myState->natts * sizeof(bool));
-		
-		/* Make sure the source slot is materialized */
-		slot_getallattrs(slot);
 		
 		/* Reset per-tuple memory context for expression evaluation */
 		ResetExprContext(econtext);
 		
-		for (i = 0; i < myState->natts; i++)
-		{
-			if (slot->tts_isnull[i])
-			{
-				values[i] = (Datum) 0;
-				nulls[i] = true;
-			}
-			else if (myState->cast_exprstates[i] != NULL)
-			{
-				/*
-				 * This column needs coercion. Use expression evaluation
-				 * with CaseTestExpr pattern - set caseValue_datum to the
-				 * input value and evaluate the coercion expression.
-				 */
-				econtext->caseValue_datum = slot->tts_values[i];
-				econtext->caseValue_isNull = false;
-				
-				values[i] = ExecEvalExpr(myState->cast_exprstates[i],
-										 econtext,
-										 &nulls[i]);
-			}
-			else
-			{
-				/* No coercion needed for this column - copy directly */
-				values[i] = slot->tts_values[i];
-				nulls[i] = false;
-			}
-		}
+		/*
+		 * Set up the input slot for projection.
+		 * ExecProject will read from ecxt_outertuple (we used OUTER_VAR in the Var nodes).
+		 */
+		econtext->ecxt_outertuple = slot;
 		
-		/* Create a slot for the temp table and store the converted values */
-		insert_slot = MakeSingleTupleTableSlot(temp_tupdesc, &TTSOpsVirtual);
-		ExecStoreVirtualTuple(insert_slot);
+		/*
+		 * Project the tuple with type coercion.
+		 * ExecProject evaluates the target list and stores the result in proj_slot.
+		 */
+		insert_slot = ExecProject(myState->proj_info);
 		
-		/* Copy values into the slot */
-		for (i = 0; i < myState->natts; i++)
-		{
-			insert_slot->tts_values[i] = values[i];
-			insert_slot->tts_isnull[i] = nulls[i];
-		}
-		
-		/* Insert the coerced tuple */
+		/* Insert the projected tuple */
 		table_tuple_insert(temp_rel,
 						   insert_slot,
 						   cid,
 						   0,
 						   NULL);
-		
-		ExecDropSingleTupleTableSlot(insert_slot);
-		pfree(values);
-		pfree(nulls);
 	}
 	else
 	{
@@ -1274,12 +1244,19 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 /*
  * insertexec_shutdown --- executor end for INSERT EXEC receiver
  * 
- * Clean up the expression context used for type coercion.
+ * Clean up the expression context and projection slot used for type coercion.
  */
 static void
 insertexec_shutdown(DestReceiver *self)
 {
 	DR_insertexec *myState = (DR_insertexec *) self;
+	
+	/* Free the projection slot if we created one */
+	if (myState->proj_slot != NULL)
+	{
+		ExecDropSingleTupleTableSlot(myState->proj_slot);
+		myState->proj_slot = NULL;
+	}
 	
 	/* Free the expression context if we created one */
 	if (myState->econtext != NULL)
@@ -1297,12 +1274,8 @@ insertexec_destroy(DestReceiver *self)
 {
 	DR_insertexec *myState = (DR_insertexec *) self;
 	
-	/* Free the cast expression states array if allocated */
-	if (myState->cast_exprstates != NULL)
-	{
-		pfree(myState->cast_exprstates);
-		myState->cast_exprstates = NULL;
-	}
+	/* proj_info is allocated in the expression context, no need to free separately */
+	myState->proj_info = NULL;
 	
 	pfree(self);
 }
