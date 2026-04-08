@@ -23,6 +23,8 @@ babelfish_extensions/
 
 All commands run from the workspace root (parent of both `babelfish_extensions` and `postgresql_modified_for_babelfish`).
 
+For detailed prerequisites (ICU, ANTLR, cmake, etc.) and manual build steps, see `contrib/README.md`. The `dev-tools.sh` script automates most of this workflow.
+
 ### First-time setup
 ```bash
 ./babelfish_extensions/dev-tools.sh initpg    # Build PostgreSQL engine
