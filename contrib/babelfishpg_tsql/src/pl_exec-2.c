@@ -2763,14 +2763,13 @@ InlineCodeBlockArgs *
 clone_inline_args(InlineCodeBlockArgs *args)
 {
 	InlineCodeBlockArgs *clone;
-	int			i;
 
 	clone = create_args(args->numargs);
 	memcpy(clone->argtypes, args->argtypes, sizeof(Oid) * args->numargs);
 	memcpy(clone->argtypmods, args->argtypmods, sizeof(int32) * args->numargs);
 
 	/* Deep copy argument names */
-	for (i = 0; i < args->numargs; i++)
+	for (int i = 0; i < args->numargs; i++)
 		clone->argnames[i] = args->argnames[i] ? pstrdup(args->argnames[i]) : NULL;
 
 	memcpy(clone->argmodes, args->argmodes, sizeof(char) * args->numargs);
