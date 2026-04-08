@@ -1550,9 +1550,9 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 			{
 				pfree(col_query.data);
 				pfree(non_identity_cols.data);
-				/* Fall back to SELECT * INTO */
+				/* Fall back to CREATE TEMP TABLE AS SELECT */
 				appendStringInfo(&create_stmt, 
-					"SELECT * INTO %s FROM %s WHERE 1=0",
+					"CREATE TEMP TABLE %s AS SELECT * FROM %s WHERE 1=0",
 					temp_table_name, target_table);
 			}
 			else
@@ -1561,11 +1561,11 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 				
 				if (proc_count == 0)
 				{
-					/* No columns found, fall back to SELECT * INTO */
+					/* No columns found, fall back to CREATE TEMP TABLE AS SELECT */
 					pfree(col_query.data);
 					pfree(non_identity_cols.data);
 					appendStringInfo(&create_stmt, 
-						"SELECT * INTO %s FROM %s WHERE 1=0",
+						"CREATE TEMP TABLE %s AS SELECT * FROM %s WHERE 1=0",
 						temp_table_name, target_table);
 				}
 				else
@@ -1588,8 +1588,8 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 					pfree(col_query.data);
 					
 					appendStringInfo(&create_stmt, 
-						"SELECT %s INTO %s FROM %s WHERE 1=0",
-						non_identity_cols.data, temp_table_name, target_table);
+						"CREATE TEMP TABLE %s AS SELECT %s FROM %s WHERE 1=0",
+						temp_table_name, non_identity_cols.data, target_table);
 					
 					pfree(non_identity_cols.data);
 				}
@@ -1698,8 +1698,9 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 
 	/* 
 	 * Execute the statement to create temp table.
-	 * For temp tables, we use SELECT ... INTO which returns SPI_OK_SELINTO.
-	 * For regular tables, we use CREATE TEMP TABLE which returns SPI_OK_UTILITY.
+	 * We use CREATE TEMP TABLE AS SELECT which returns SPI_OK_SELINTO.
+	 * For regular tables with explicit column definitions, we use 
+	 * CREATE TEMP TABLE which returns SPI_OK_UTILITY.
 	 */
 	rc = SPI_execute(create_stmt.data, false, 0);
 	if (rc != SPI_OK_UTILITY && rc != SPI_OK_SELINTO)
