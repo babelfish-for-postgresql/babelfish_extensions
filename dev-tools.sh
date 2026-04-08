@@ -164,16 +164,16 @@ init_db() {
     sleep 1
     bin/pg_ctl -c -D data/ -l logfile start
     cd data
-    sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" postgresql.conf
-    sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'/g" postgresql.conf
-    sudo echo "host    all             all             0.0.0.0/0            trust" >> pg_hba.conf
+    sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" postgresql.conf
+    sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'/g" postgresql.conf
+    echo "host    all             all             0.0.0.0/0            trust" >> pg_hba.conf
     restart $1
 }
 
 init_pghint() {
     cd $1
     if [ ! -d "./pg_hint_plan" ]; then
-        git clone --depth 1 --branch REL17_1_7_0 https://github.com/ossc-db/pg_hint_plan.git
+        git clone --depth 1 --branch REL18_1_8_0 https://github.com/ossc-db/pg_hint_plan.git
     fi
     cd pg_hint_plan
     export PATH=$2/postgres/bin:$PATH
@@ -186,7 +186,7 @@ init_pg() {
     ./configure --prefix=$2/postgres/ --without-readline --without-zlib --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
     make -j 4
     make install
-    cd contrib && make && sudo make install
+    cd contrib && make && make install
     cp "/usr/local/lib/libantlr4-runtime.so.4.13.2" $2/postgres/lib/
     init_pghint $1 $2
 }
@@ -257,7 +257,7 @@ run_pgindent() {
     git clone https://git.postgresql.org/git/pg_bsd_indent.git
     cd pg_bsd_indent/
     make PG_CONFIG=$1/postgres/bin/pg_config
-    sudo cp pg_bsd_indent /usr/local/bin
+    cp pg_bsd_indent $1/postgres/bin/
 
     cd $1/babelfish_extensions
 
@@ -293,7 +293,7 @@ init_lcov(){
         git clone --depth 1 --branch v1.16 https://github.com/linux-test-project/lcov.git
     fi
     cd lcov
-    sudo make PREFIX=/usr install
+    make PREFIX=$1/postgres install
     export PATH=$PATH:/usr/bin/lcov
     export PATH=$PATH:/usr/bin/gcov
     export PATH=$PATH:/usr/bin/genhtml
@@ -305,8 +305,8 @@ init_pg_coverage(){
     ./configure --prefix=$2/postgres/ --without-readline --without-zlib --enable-coverage --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
     make -j 4
     make install
-    cd contrib && make && sudo make install
-    sudo cp "/usr/local/lib/libantlr4-runtime.so.4.13.2" $2/postgres/lib/
+    cd contrib && make && make install
+    cp "/usr/local/lib/libantlr4-runtime.so.4.13.2" $2/postgres/lib/
     init_pghint $1 $2
 }
 

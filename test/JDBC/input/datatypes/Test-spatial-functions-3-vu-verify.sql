@@ -1,3 +1,892 @@
+--Makevalid-functions-test
+USE TestSpatialFunc3_DB;
+go
+
+
+-- VIEW SELECT
+
+SELECT * FROM TestSpatialFunc3_GeomMetrics_MakeValid_View ORDER BY ID;
+go
+
+SELECT * FROM TestSpatialFunc3_GeogMetrics_MakeValid_View ORDER BY ID;
+go
+
+SELECT * FROM TestSpatialFunc3_GeomMetrics_Area_View ORDER BY ID;
+go
+
+SELECT * FROM TestSpatialFunc3_GeogMetrics_Area_View ORDER BY ID;
+go
+
+-- WHERE CLAUSE
+
+SELECT ID, GeomID, GeomData.STIsValid() AS BeforeValid,
+       GeomData.MakeValid().STIsValid() AS AfterValid
+FROM TestSpatialFunc3_GeomMetrics
+WHERE GeomData.STIsValid() = 0
+ORDER BY ID;
+go
+
+
+SELECT * FROM TestSpatialFunc3_GeomMetrics_MakeValid_View
+WHERE IsValidBefore = 0
+ORDER BY ID;
+go
+
+SELECT * FROM TestSpatialFunc3_GeomMetrics_MakeValid_View
+WHERE TypeAfter = 'Point'
+ORDER BY ID;
+go
+
+-- ORDER BY
+SELECT ID, GeomData.MakeValid().STArea() AS AreaAfter
+FROM TestSpatialFunc3_GeomMetrics
+WHERE GeomData IS NOT NULL
+ORDER BY GeomData.MakeValid().STArea() DESC, ID ASC;
+go
+
+SELECT * FROM TestSpatialFunc3_GeomMetrics_Area_View
+ORDER BY AreaAfter DESC, ID ASC;
+go
+
+SELECT * FROM TestSpatialFunc3_GeogMetrics_Area_View
+ORDER BY AreaAfter DESC, ID ASC;
+go
+
+-- GROUP BY
+SELECT GeomData.STIsValid() AS IsValid, COUNT(*) AS Cnt
+FROM TestSpatialFunc3_GeomMetrics
+WHERE GeomData IS NOT NULL
+GROUP BY GeomData.STIsValid()
+ORDER BY IsValid;
+go
+
+SELECT GeomID, COUNT(*) AS Cnt,
+       SUM(CAST(GeomData.MakeValid().STArea() AS FLOAT)) AS TotalArea
+FROM TestSpatialFunc3_GeomMetrics
+WHERE GeomData IS NOT NULL
+GROUP BY GeomID
+ORDER BY GeomID;
+go
+
+-- JOIN
+
+SELECT g.ID AS GeomRowID, gg.ID AS GeogRowID,
+       g.GeomID, g.GeomData.MakeValid().STIsValid() AS GeomValid,
+       gg.GeogData.MakeValid().STIsValid() AS GeogValid
+FROM TestSpatialFunc3_GeomMetrics g
+JOIN TestSpatialFunc3_GeogMetrics gg ON g.GeomID = gg.GeogID
+WHERE g.GeomData IS NOT NULL AND gg.GeogData IS NOT NULL
+ORDER BY g.ID, gg.ID;
+go
+
+SELECT gv.ID, gv.TypeAfter AS GeomType, ggv.TypeAfter AS GeogType
+FROM TestSpatialFunc3_GeomMetrics_MakeValid_View gv
+JOIN TestSpatialFunc3_GeogMetrics_MakeValid_View ggv ON gv.ID = ggv.ID
+WHERE gv.IsValidAfter IS NOT NULL AND ggv.IsValidAfter IS NOT NULL
+ORDER BY gv.ID;
+go
+
+
+SELECT v.ID, v.TypeAfter, g.MetricValue
+FROM TestSpatialFunc3_GeomMetrics_MakeValid_View v
+JOIN TestSpatialFunc3_GeomMetrics g ON v.ID = g.ID
+ORDER BY v.ID;
+go
+
+
+-- CTE
+
+-- CTE from view
+WITH ViewCTE AS (
+    SELECT ID, TypeAfter, IsValidAfter
+    FROM TestSpatialFunc3_GeomMetrics_MakeValid_View
+    WHERE IsValidBefore IS NOT NULL
+)
+SELECT * FROM ViewCTE WHERE TypeAfter = 'Point' ORDER BY ID;
+go
+
+-- LAG/LEAD on validity
+SELECT ID, GeomData.STIsValid() AS IsValid,
+       LAG(GeomData.STIsValid()) OVER (ORDER BY ID) AS PrevValid,
+       LEAD(GeomData.STIsValid()) OVER (ORDER BY ID) AS NextValid
+FROM TestSpatialFunc3_GeomMetrics
+WHERE GeomData IS NOT NULL
+ORDER BY ID;
+go
+
+-- NESTED FUNCTIONS
+
+SELECT ID, GeomData.MakeValid().STIsValid() AS AlwaysValid
+FROM TestSpatialFunc3_GeomMetrics
+WHERE GeomData IS NOT NULL
+ORDER BY ID;
+go
+
+-- =============================================
+-- CASE STATEMENT
+-- =============================================
+
+SELECT ID,
+    CASE
+        WHEN GeomData.MakeValid().STArea() > 50 THEN 'Large'
+        WHEN GeomData.MakeValid().STArea() > 0 THEN 'Small'
+        ELSE 'No Area'
+    END AS SizeCategory
+FROM TestSpatialFunc3_GeomMetrics
+WHERE GeomData IS NOT NULL
+
+ORDER BY ID;
+go
+
+USE MASTER;
+
+--NULL geometry
+
+DECLARE @g geometry;
+SET @g = NULL;
+SELECT @g.MakeValid() AS result;
+go
+
+--EMPTY geometry
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POINT EMPTY', 0);
+SELECT @g.MakeValid().STAsText() AS result;
+go
+
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON EMPTY', 0);
+SELECT @g.MakeValid().STAsText() AS result;
+go
+
+--with valid point
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POINT(10 20)', 0);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+go
+
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POINT(10 20)', 4326);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STSrid AS srid;
+go
+
+--valid polygon
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 0);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+go
+
+-- self-intersecting polygon
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0);
+SELECT @g.STIsValid() AS before_valid, @g.MakeValid().STIsValid() AS after_valid;
+go
+
+--complex self-intersecting polygon
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 5 5, 10 0, 10 10, 5 5, 0 10, 0 0))', 0);
+SELECT @g.STIsValid() AS before_valid, @g.MakeValid().STIsValid() AS after_valid;
+go
+
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('LINESTRING(0 0, 10 10, 20 20, 30 10)', 0);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+go
+
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
+SELECT @g.STSrid AS original_srid, @g.MakeValid().STSrid AS fixed_srid;
+go
+
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0);
+SELECT @g.MakeValid().STArea() AS area;
+go
+
+DECLARE @g geometry;
+SET @g = geometry::Point(10, 20, 0);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+go
+
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0);
+SELECT @g . MakeValid ( ) . STIsValid ( ) AS is_valid;
+go
+
+--Test chained MakeValid calls
+DECLARE @g geometry;
+SET @g = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0);
+SELECT @g.MakeValid().MakeValid().STIsValid() AS is_valid;
+go
+
+-- Geography tests start here
+
+-- Test MakeValid with NULL geography
+DECLARE @g geography;
+SET @g = NULL;
+SELECT @g.MakeValid() AS result;
+go
+
+-- Test MakeValid with empty geography 
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POINT EMPTY', 4326);
+SELECT @g.MakeValid().STAsText() AS result;
+go
+
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POLYGON EMPTY', 4326);
+SELECT @g.MakeValid().STAsText() AS result;
+go
+
+-- Test MakeValid with valid geography point
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POINT(-122.349 47.651)', 4326);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+go
+
+DECLARE @g geography;
+SET @g = geography::Point(47.651, -122.349, 4326);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+go
+
+-- Test MakeValid with valid geography polygon
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 4326);
+SELECT @g.MakeValid().STAsText() AS result, @g.MakeValid().STIsValid() AS is_valid;
+go
+
+-- Test MakeValid with invalid geography polygon
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
+SELECT @g.STIsValid() AS before_valid, @g.MakeValid().STIsValid() AS after_valid;
+go
+
+-- Test MakeValid with complex invalid geography polygon
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POLYGON((0 0, 5 5, 10 0, 10 10, 5 5, 0 10, 0 0))', 4326);
+SELECT @g.STIsValid() AS before_valid, @g.MakeValid().STIsValid() AS after_valid;
+go
+
+-- Test MakeValid with geography area calculation
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
+SELECT @g.MakeValid().STArea() AS area;
+go
+
+
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
+SELECT @g . MakeValid ( ) . STIsValid ( ) AS is_valid;
+go
+
+-- Test chained MakeValid calls on geography
+DECLARE @g geography;
+SET @g = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
+SELECT @g.MakeValid().MakeValid().STIsValid() AS is_valid;
+go
+
+-- Table-based tests for geometry
+SELECT ID, Description, GeomColumn.MakeValid().STAsText() AS MadeValid FROM TestSpatialFunc3_MakeValidGeomTemp ORDER BY ID;
+go
+
+SELECT ID, Description, GeomColumn.STIsValid() AS BeforeValid, GeomColumn.MakeValid().STIsValid() AS AfterValid FROM TestSpatialFunc3_MakeValidGeomTemp ORDER BY ID;
+go
+
+SELECT ID, Description, GeomColumn.MakeValid().STArea() AS Area FROM TestSpatialFunc3_MakeValidGeomTemp ORDER BY ID;
+go
+
+SELECT ID, Description, GeomColumn.STSrid AS BeforeSRID, GeomColumn.MakeValid().STSrid AS AfterSRID FROM TestSpatialFunc3_MakeValidGeomTemp ORDER BY ID;
+go
+
+SELECT ID, Description, GeomColumn.MakeValid().STIsEmpty() AS IsEmpty FROM TestSpatialFunc3_MakeValidGeomTemp ORDER BY ID;
+go
+
+SELECT ID, Description, GeomColumn.MakeValid().STDimension() AS Dimension FROM TestSpatialFunc3_MakeValidGeomTemp ORDER BY ID;
+go
+
+-- Table-based tests for geography
+SELECT ID, Description, GeogColumn.MakeValid().STAsText() AS MadeValid FROM TestSpatialFunc3_MakeValidGeogTemp ORDER BY ID;
+go
+
+SELECT ID, Description, GeogColumn.STIsValid() AS BeforeValid, GeogColumn.MakeValid().STIsValid() AS AfterValid FROM TestSpatialFunc3_MakeValidGeogTemp ORDER BY ID;
+go
+
+SELECT ID, Description, GeogColumn.MakeValid().STArea() AS Area FROM TestSpatialFunc3_MakeValidGeogTemp ORDER BY ID;
+go
+
+SELECT ID, Description, GeogColumn.MakeValid().STIsEmpty() AS IsEmpty FROM TestSpatialFunc3_MakeValidGeogTemp ORDER BY ID;
+go
+
+SELECT ID, Description, GeogColumn.MakeValid().STDimension() AS Dimension FROM TestSpatialFunc3_MakeValidGeogTemp ORDER BY ID;
+go
+
+-- View-based tests
+SELECT * FROM TestSpatialFunc3_MakeValidGeomView1 ORDER BY ID;
+go
+
+SELECT * FROM TestSpatialFunc3_MakeValidGeomView2 ORDER BY ID;
+go
+
+SELECT * FROM TestSpatialFunc3_MakeValidGeomView3 ORDER BY ID;
+go
+
+SELECT * FROM TestSpatialFunc3_MakeValidGeomView5 ORDER BY ID;
+go
+
+SELECT * FROM TestSpatialFunc3_MakeValidGeogView1 ORDER BY ID;
+go
+
+SELECT * FROM TestSpatialFunc3_MakeValidGeogView2 ORDER BY ID;
+go
+
+SELECT * FROM TestSpatialFunc3_MakeValidGeogView3 ORDER BY ID;
+go
+
+DECLARE @nullGeom geometry;
+DECLARE @validGeom geometry = geometry::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 0);
+SELECT 'MakeValid NULL' AS Test, @nullGeom.MakeValid() AS Result;
+SELECT 'MakeValid Valid' AS Test, @validGeom.MakeValid().STIsValid() AS Result;
+go
+
+DECLARE @nullGeog geography;
+DECLARE @validGeog geography = geography::STGeomFromText('POLYGON((0 0, 10 10, 10 0, 0 10, 0 0))', 4326);
+SELECT 'MakeValid NULL' AS Test, @nullGeog.MakeValid() AS Result;
+SELECT 'MakeValid Valid' AS Test, @validGeog.MakeValid().STIsValid() AS Result;
+go
+
+-- Test MakeValid on invalid geometry records only
+SELECT ID, Description, GeomColumn.STIsValid() AS BeforeValid, GeomColumn.MakeValid().STIsValid() AS AfterValid 
+FROM TestSpatialFunc3_MakeValidGeomTemp 
+WHERE GeomColumn.STIsValid() = 0 
+ORDER BY ID;
+go
+
+-- Test MakeValid on valid geometry records only
+SELECT ID, Description, GeomColumn.MakeValid().STAsText() AS MadeValid 
+FROM TestSpatialFunc3_MakeValidGeomTemp 
+WHERE GeomColumn.STIsValid() = 1 
+ORDER BY ID;
+go
+
+-- Test MakeValid on NULL geometry records
+SELECT ID, Description, GeomColumn.MakeValid() AS MadeValid 
+FROM TestSpatialFunc3_MakeValidGeomTemp 
+WHERE GeomColumn IS NULL 
+ORDER BY ID;
+go
+
+-- Test MakeValid on invalid geography records only
+SELECT ID, Description, GeogColumn.STIsValid() AS BeforeValid, GeogColumn.MakeValid().STIsValid() AS AfterValid 
+FROM TestSpatialFunc3_MakeValidGeogTemp 
+WHERE GeogColumn.STIsValid() = 0 
+ORDER BY ID;
+go
+
+SELECT ID, Description, GeogColumn.MakeValid().STAsText() AS MadeValid 
+FROM TestSpatialFunc3_MakeValidGeogTemp 
+WHERE GeogColumn.STIsValid() = 1 
+ORDER BY ID;
+GO
+
+-- Edge case tests
+
+-- Test MakeValid with duplicate points in linestring
+DECLARE @g geometry = geometry::STGeomFromText('LINESTRING(0 0, 0 0, 10 10, 10 10, 20 20)', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with self-intersecting linestring
+DECLARE @g geometry = geometry::STGeomFromText('LINESTRING(0 0, 10 10, 10 0, 0 10)', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with polygon containing disconnected hole
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0, 0 0), (20 20, 20 25, 25 25, 25 20, 20 20))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with overlapping holes in polygon
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 0 20, 20 20, 20 0, 0 0), (2 2, 2 10, 10 10, 10 2, 2 2), (5 5, 5 15, 15 15, 15 5, 5 5))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with valid polygon containing hole
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 0 20, 20 20, 20 0, 0 0), (5 5, 15 5, 15 15, 5 15, 5 5))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with polygon having spike
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 5 5.0001, 10 10, 0 10, 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with degenerate 
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 0, 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+DECLARE @g geometry = geometry::STGeomFromText('LINESTRING(5 5, 5 5)', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with 3D point
+DECLARE @g geometry = geometry::STGeomFromText('POINT(10 20 30)', 0);
+SELECT @g.MakeValid().STAsText(), @g.MakeValid().HasZ;
+go
+
+-- Test MakeValid with point having M coordinate
+DECLARE @g geometry = geometry::STGeomFromText('POINT(10 20 NULL 40)', 0);
+SELECT @g.MakeValid().STAsText(), @g.MakeValid().HasM;
+go
+
+-- Test MakeValid with 3D linestring
+DECLARE @g geometry = geometry::STGeomFromText('LINESTRING(0 0 0, 10 10 10, 20 20 20)', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with 3D polygon
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0 0, 10 10 10, 10 0 5, 0 10 5, 0 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with very large coordinates
+DECLARE @g geometry = geometry::STGeomFromText('POINT(1000000000 1000000000)', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with very small coordinates
+DECLARE @g geometry = geometry::STGeomFromText('POINT(0.000000001 0.000000001)', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with all negative coordinates
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((-10 -10, -10 10, 10 10, 10 -10, -10 -10))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((-5 -5, -5 5, 5 5, 5 -5, -5 -5))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with polygon of identical points
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((5 5, 5 5, 5 5, 5 5))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with polygon having repeated vertex
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 5 0, 10 0, 5 0, 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with simple valid polygon
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))', 0); 
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with complex self-intersecting polygon
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 5 10, 10 0, 10 10, 5 10, 0 10, 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with nearly closed polygon
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 0 10, 10 10, 10 0.0000001, 10 0, 0 0))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with geography crossing dateline
+DECLARE @g geography = geography::STGeomFromText('LINESTRING(170 0, -170 0)', 4326);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with geography near pole
+DECLARE @g geography = geography::Point(89.999, 0, 4326);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- Test MakeValid with inline geometry construction
+SELECT geometry::STGeomFromText('POLYGON((0 0,10 10,10 0,0 10,0 0))', 0).MakeValid().STAsText();
+go
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 0 20, 20 20, 20 0, 0 0), (5 5, 15 5, 15 15, 5 15, 5 5))', 0);
+SELECT @g.MakeValid().STAsText();
+go
+
+-- CTE with MakeValid validation
+WITH ValidGeometries AS (
+    SELECT ID, Description, 
+           GeomColumn.MakeValid() AS ValidGeom,
+           GeomColumn.STIsValid() AS OriginalValid,
+           GeomColumn.MakeValid().STIsValid() AS MadeValid
+    FROM TestSpatialFunc3_MakeValidGeomTemp
+    WHERE GeomColumn IS NOT NULL
+)
+SELECT ID, Description, OriginalValid, MadeValid,
+       ValidGeom.STAsText() AS ValidGeomText
+FROM ValidGeometries
+WHERE OriginalValid = 0
+ORDER BY ID;
+go
+
+-- Window functions with MakeValid
+SELECT ID, Description,
+       GeomColumn.MakeValid().STArea() AS Area,
+       ROW_NUMBER() OVER (ORDER BY GeomColumn.MakeValid().STArea() DESC) AS AreaRank
+FROM TestSpatialFunc3_MakeValidGeomTemp
+WHERE GeomColumn IS NOT NULL AND GeomColumn.MakeValid().STArea() > 0
+ORDER BY AreaRank;
+go
+
+--boundary testcases
+DECLARE @g geometry = geometry::STGeomFromText('POINT(-180 -90)', 4326);
+SELECT @g.MakeValid().STAsText() AS BoundaryPoint;
+go
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 1 0, 0 0, 0 0))', 0);
+SELECT @g.MakeValid().STArea() AS ZeroArea;
+go
+
+-- Error Handling Tests
+
+DECLARE @g geometry;
+BEGIN TRY
+    SET @g = geometry::STGeomFromText('INVALID_GEOMETRY', 0);
+    SELECT @g.MakeValid().STAsText() AS Result;
+END TRY
+BEGIN CATCH
+    SELECT 'Error handled' AS Result;
+END CATCH;
+go
+
+DECLARE @g geometry = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10.00000001, 0 0))', 0);
+SELECT @g.MakeValid().STIsValid() AS TinyDifferenceValid;
+go
+
+SELECT * FROM TestSpatialFunc3_MakeValidGeomView4 ORDER BY ID;
+go
+
+--STNumPoints()
+
+USE TestSTNumPoints_DB;
+GO
+
+-- View tests
+SELECT * FROM STNumPoints_geom_view_db ORDER BY ID;
+go
+SELECT * FROM STNumPoints_geog_view_db ORDER BY ID;
+go
+
+-- JOIN test (geom + geog, both DB tables)
+SELECT g.ID, g.geom_type, gg.geog_type,
+       g.geom.STNumPoints() AS geom_pts, gg.geog.STNumPoints() AS geog_pts
+FROM STNumPoints_geom_test_db g
+JOIN STNumPoints_geog_test_db gg ON g.ID = gg.ID
+ORDER BY g.ID;
+go
+
+-- CTE test
+WITH PointCTE AS (
+    SELECT ID, geom_type, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test_db
+)
+SELECT * FROM PointCTE WHERE num_points > 0 ORDER BY num_points DESC, geom_type;
+go
+
+-- CTE with Window Functions
+WITH RankedGeom AS (
+    SELECT ID, geom_type, geom.STNumPoints() AS num_points,
+           ROW_NUMBER() OVER (ORDER BY geom.STNumPoints() DESC, ID) AS row_num,
+           RANK() OVER (ORDER BY geom.STNumPoints() DESC, ID) AS rnk,
+           SUM(geom.STNumPoints()) OVER () AS total_pts
+    FROM STNumPoints_geom_test_db
+)
+SELECT * FROM RankedGeom ORDER BY row_num;
+go
+
+-- GROUP BY test
+SELECT geom_type, COUNT(*) AS cnt, SUM(geom.STNumPoints()) AS total_pts
+FROM STNumPoints_geom_test_db
+GROUP BY geom_type
+ORDER BY total_pts DESC, geom_type;
+go
+
+-- ORDER BY test
+SELECT ID, geom_type, geom.STNumPoints() AS num_points
+FROM STNumPoints_geom_test_db
+ORDER BY num_points DESC, ID ASC;
+go
+
+-- Nested functions test
+SELECT ID, geom_type,
+       ABS(geom.STNumPoints() - 5) AS diff_from_5,
+       COALESCE(NULLIF(geom.STNumPoints(), 0), -1) AS pts_or_neg1
+FROM STNumPoints_geom_test_db
+ORDER BY ID;
+go
+
+-- Test STNumPoints() on geometry table with various geometry types
+SELECT 
+    ID,
+    geom_type,
+    geom.STNumPoints() AS actual_result,
+    CASE ID
+        WHEN 1 THEN 1     
+        WHEN 2 THEN 1     
+        WHEN 3 THEN 1     
+        WHEN 4 THEN 2      
+        WHEN 5 THEN 3      
+        WHEN 6 THEN 5      
+        WHEN 7 THEN 4      
+        WHEN 8 THEN 5      
+        WHEN 9 THEN 10    
+        WHEN 10 THEN 0    
+        WHEN 11 THEN 0     
+        WHEN 12 THEN 0    
+        WHEN 13 THEN 1     
+        WHEN 14 THEN 0     
+        WHEN 15 THEN 0    
+        WHEN 16 THEN 0     
+    END AS expected_result
+FROM STNumPoints_geom_test_db
+ORDER BY ID;
+
+-- Test STNumPoints() with STPointFromText
+DECLARE @point geometry;
+SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT @point.STNumPoints();
+go
+
+DECLARE @point geometry;
+SET @point = geometry::Point(22.34900, -47.65100, 4326);
+SELECT @point.STNumPoints ( );
+go
+
+USE MASTER;
+go
+
+-- Test STNumPoints() on geography table with various geography types
+SELECT 
+    ID,
+    geog_type,
+    geog.STNumPoints() AS actual_result,
+    CASE ID
+        WHEN 1 THEN 1
+        WHEN 2 THEN 1
+        WHEN 3 THEN 2
+        WHEN 4 THEN 3
+        WHEN 5 THEN 5
+        WHEN 6 THEN 4
+        WHEN 7 THEN 5
+        WHEN 8 THEN 0
+        WHEN 9 THEN 0
+        WHEN 10 THEN 1     
+
+        WHEN 11 THEN 0     
+        WHEN 12 THEN 0     
+    END AS expected_result
+FROM STNumPoints_geog_test
+ORDER BY ID;
+go
+
+DECLARE @point geography;
+SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
+SELECT @point.STNumPoints();
+go
+
+DECLARE @point geography;
+SET @point = geography::Point(47.65100, -122.34900, 4326);
+SELECT @point . STNumPoints ( );
+go
+
+-- Test STNumPoints() on NULL geometry
+DECLARE @nullGeom geometry;
+SELECT @nullGeom.STNumPoints() AS null_geometry_result;
+go
+
+-- Test STNumPoints() on empty point 
+DECLARE @g geometry;  
+SET @g = geometry::STGeomFromText('POINT EMPTY', 0);  
+SELECT @g.STNumPoints() AS empty_point_geometry;
+go
+
+DECLARE @g geography;  
+SET @g = geography::STGeomFromText('POINT EMPTY', 4326);  
+SELECT @g.STNumPoints() AS empty_point_geography;
+go
+
+-- Test STNumPoints() with CAST from VARCHAR
+SELECT CAST(CAST('POINT EMPTY' AS VARCHAR(100)) AS geography).STNumPoints() AS cast_varchar_result;
+go
+
+-- Test STNumPoints() with CAST from CHAR
+SELECT CAST(CAST('POINT EMPTY' AS CHAR(100)) AS geography).STNumPoints() AS cast_char_result;
+go
+
+-- Test STNumPoints() via geometry view
+SELECT * FROM STNumPoints_geom_view ORDER BY ID;
+go
+
+-- Test STNumPoints() via geography view
+SELECT * FROM STNumPoints_geog_view ORDER BY ID;
+go
+
+-- Test STNumPoints() with different SRIDs for geometry
+DECLARE @point1 geometry = geometry::STPointFromText('POINT(-122.349 47.651)', 4326);
+DECLARE @point2 geometry = geometry::STPointFromText('POINT(-122.349 47.651)', 0);
+DECLARE @point3 geometry = geometry::STPointFromText('POINT(-122.349 47.651)', 999999);
+SELECT 
+    @point1.STNumPoints() AS srid_4326,
+    @point2.STNumPoints() AS srid_0,
+    @point3.STNumPoints() AS srid_999999;
+go
+
+-- Test STNumPoints() with different SRIDs for geography
+DECLARE @point1 geography = geography::STPointFromText('POINT(-122.349 47.651)', 4326);
+DECLARE @point2 geography = geography::STPointFromText('POINT(-122.349 47.651)', 4204);
+SELECT 
+    @point1.STNumPoints() AS srid_4326,
+    @point2.STNumPoints() AS srid_4204;
+go
+
+-- Test STNumPoints() on LineString
+DECLARE @line geometry;
+SET @line = geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 0);
+SELECT @line.STNumPoints();
+go
+
+-- Test STNumPoints() on simple Polygon
+DECLARE @poly geometry;
+SET @poly = geometry::STGeomFromText('POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))', 0);
+SELECT @poly.STNumPoints();
+go
+
+-- Test STNumPoints() on Polygon with hole
+DECLARE @poly geometry;
+SET @poly = geometry::STGeomFromText('POLYGON((0 0, 10 0, 10 10, 0 10, 0 0), (2 2, 8 2, 8 8, 2 8, 2 2))', 0);
+SELECT @poly.STNumPoints();
+go
+
+-- Test STNumPoints() on Point with Z coordinate (geometry)
+DECLARE @pointZ geometry;
+SET @pointZ = geometry::STGeomFromText('POINT(0 0 5)', 0);
+SELECT @pointZ.STNumPoints();
+go
+
+-- Test STNumPoints() on Point with Z coordinate (geography)
+DECLARE @pointZ geography;
+SET @pointZ = geography::STGeomFromText('POINT(-122.34 47.65 100)', 4326);
+SELECT @pointZ.STNumPoints();
+go
+
+-- Test STNumPoints() on Point with M coordinate
+DECLARE @pointM geometry;
+SET @pointM = geometry::STGeomFromText('POINT(0 0 NULL 5)', 0);
+SELECT @pointM.STNumPoints();
+go
+
+-- Test STNumPoints() on LineString with Z coordinates
+DECLARE @lineZ geometry;
+SET @lineZ = geometry::STGeomFromText('LINESTRING(0 0 0, 1 1 1, 2 2 2)', 0);
+SELECT @lineZ.STNumPoints();
+go
+
+-- UNION test
+(SELECT 'geometry' AS source, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test WHERE ID <= 3)
+UNION ALL
+(SELECT 'geography' AS source, geog.STNumPoints() AS num_points FROM STNumPoints_geog_test WHERE ID <= 3)
+ORDER BY source, num_points;
+go
+
+
+SELECT g1.ID, g1.geom_type, g1.geom.STNumPoints() AS geom_points,
+       g2.ID, g2.geog_type, g2.geog.STNumPoints() AS geog_points
+FROM STNumPoints_geom_test g1
+JOIN STNumPoints_geog_test g2 ON g1.geom.STNumPoints() = g2.geog.STNumPoints()
+WHERE g1.ID <= 5 AND g2.ID <= 5
+ORDER BY g1.geom.STNumPoints(), g1.ID, g2.ID;
+go
+
+-- Geometry WHERE/ORDER BY/GROUP BY tests
+SELECT ID, geom_type FROM STNumPoints_geom_test WHERE geom.STNumPoints() BETWEEN 2 AND 5 ORDER BY ID;
+go
+SELECT geom.STNumPoints() AS num_points, COUNT(*) AS count FROM STNumPoints_geom_test GROUP BY geom.STNumPoints() HAVING COUNT(*) > 1 ORDER BY num_points;
+go
+
+-- Geography WHERE/ORDER BY/GROUP BY tests
+SELECT ID, geog_type FROM STNumPoints_geog_test WHERE geog.STNumPoints() BETWEEN 2 AND 5 ORDER BY ID;
+go
+SELECT geog.STNumPoints() AS num_points, COUNT(*) AS count FROM STNumPoints_geog_test GROUP BY geog.STNumPoints() HAVING COUNT(*) > 1 ORDER BY num_points;
+go
+
+-- Geometry CTE test
+WITH GeomCTE AS (
+    SELECT ID, geom_type, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test
+)
+SELECT * FROM GeomCTE WHERE num_points > 0 ORDER BY num_points, ID;
+go
+
+-- Geometry Window test
+SELECT ID, geom_type, geom.STNumPoints() AS num_points,
+       ROW_NUMBER() OVER (ORDER BY geom.STNumPoints() DESC) AS row_num
+FROM STNumPoints_geom_test ORDER BY row_num;
+go
+
+-- Geography CTE test
+WITH GeogCTE AS (
+    SELECT ID, geog_type, geog.STNumPoints() AS num_points FROM STNumPoints_geog_test
+)
+SELECT * FROM GeogCTE WHERE num_points > 0 ORDER BY num_points, ID;
+go
+
+-- Geography Window test
+SELECT ID, geog_type, geog.STNumPoints() AS num_points,
+       ROW_NUMBER() OVER (ORDER BY geog.STNumPoints() DESC, ID) AS row_num
+FROM STNumPoints_geog_test ORDER BY row_num;
+go
+
+-- View tests
+SELECT * FROM STNumPoints_geom_view ORDER BY ID;
+go
+SELECT * FROM STNumPoints_geog_view ORDER BY ID;
+go
+
+-- JOIN test (geom + geog, both MASTER tables)
+SELECT g.ID, g.geom_type, gg.geog_type,
+       g.geom.STNumPoints() AS geom_pts, gg.geog.STNumPoints() AS geog_pts
+FROM STNumPoints_geom_test g
+JOIN STNumPoints_geog_test gg ON g.ID = gg.ID
+ORDER BY g.ID;
+go
+
+-- CTE with Window Functions
+WITH RankedGeom AS (
+    SELECT ID, geom_type, geom.STNumPoints() AS num_points,
+           ROW_NUMBER() OVER (ORDER BY geom.STNumPoints() DESC) AS row_num,
+           RANK() OVER (ORDER BY geom.STNumPoints() DESC) AS rnk,
+           SUM(geom.STNumPoints()) OVER () AS total_pts
+    FROM STNumPoints_geom_test
+)
+SELECT * FROM RankedGeom ORDER BY row_num;
+go
+
+-- GROUP BY test
+SELECT geom_type, COUNT(*) AS cnt, SUM(geom.STNumPoints()) AS total_pts
+FROM STNumPoints_geom_test
+GROUP BY geom_type
+ORDER BY total_pts DESC, geom_type;
+go
+
+-- ORDER BY test
+SELECT ID, geom_type, geom.STNumPoints() AS num_points
+FROM STNumPoints_geom_test
+ORDER BY num_points DESC, ID ASC;
+go
+
+-- Nested functions test
+SELECT ID, geom_type,
+       ABS(geom.STNumPoints() - 5) AS diff_from_5,
+       COALESCE(NULLIF(geom.STNumPoints(), 0), -1) AS pts_or_neg1
+FROM STNumPoints_geom_test
+ORDER BY ID;
+go
+
 --Parse functions test 
 
 -- geometry::Parse with POINT
@@ -47,7 +936,7 @@ go
 SELECT ID, geometry::Parse(GeomColumn.STAsText()).STAsText() AS ParsedGeom FROM TestGeospatialParse_GeomTemp3 ORDER BY ID;
 go
 
-SELECT ID, geography::Parse(GeogColumn.STAsText()).STAsText() AS ParsedGeog FROM TestGeospatialParse_GeogTemp ORDER BY ID;
+SELECT ID, geography::Parse(GeogColumn.STAsText()).STAsText() AS ParsedGeog FROM TestGeospatialParse_GeogTemp3 ORDER BY ID;
 go
 
 -- Parse with STEquals in WHERE clause
@@ -58,7 +947,7 @@ go
 
 DECLARE @searchText NVARCHAR(MAX);
 SET @searchText = 'POINT(3.0 4.0)';
-SELECT ID FROM TestGeospatialParse_GeogTemp WHERE geography::Parse(@searchText).STEquals(GeogColumn) = 1 ORDER BY ID;
+SELECT ID FROM TestGeospatialParse_GeogTemp3 WHERE geography::Parse(@searchText).STEquals(GeogColumn) = 1 ORDER BY ID;
 go
 
 -- Parse with JOIN and STIntersects
@@ -81,23 +970,24 @@ go
 DECLARE @refText NVARCHAR(MAX);
 SET @refText = 'POINT(3.0 4.0)';
 WITH ParseCTE AS (
-    SELECT ID, geometry::Parse(@refText).STDistance(GeomColumn) AS Distance 
+    SELECT ID, CAST(geometry::Parse(@refText).STDistance(GeomColumn) AS NUMERIC(20,6)) AS Distance  
     FROM TestGeospatialParse_GeomTemp3
 )
-SELECT * FROM ParseCTE WHERE Distance < 10.0 ORDER BY Distance;
+SELECT * FROM ParseCTE WHERE Distance < 10.0 ORDER BY Distance, ID;
 go
+
 
 -- Parse with cross-database query (geometry)
 DECLARE @refText NVARCHAR(MAX);
 SET @refText = 'POINT(3.0 4.0)';
-SELECT ID, geometry::Parse(@refText).STDistance(GeomColumn) AS Distance 
-FROM TestGeospatialParse_DB.dbo.TestGeospatialParse_GeometryTable3ORDER BY ID;
+SELECT ID, CAST(geometry::Parse(@refText).STDistance(GeomColumn) AS NUMERIC(20,6)) AS Distance 
+FROM TestGeospatialParse_DB.dbo.TestGeospatialParse_GeometryTable3 ORDER BY ID;
 go
 
 -- Parse with cross-database query (geography)
 DECLARE @refText NVARCHAR(MAX);
 SET @refText = 'POINT(3.0 4.0)';
-SELECT ID, geography::Parse(@refText).STDistance(GeogColumn) AS Distance 
+SELECT ID, CAST(geography::Parse(@refText).STDistance(GeogColumn) AS NUMERIC(20,6)) AS Distance 
 FROM TestGeospatialParse_DB.dbo.TestGeospatialParse_GeographyTable3 ORDER BY ID;
 go
 
@@ -254,13 +1144,18 @@ SELECT geography::Parse('lineString(0 0, 1 1)').STAsText();
 go
 
 -- UNION with Parse
-SELECT geometry::Parse('POINT(1 2)').STAsText() AS geom
-UNION
-SELECT geometry::Parse('POINT(3 4)').STAsText()
-UNION
-SELECT geometry::Parse('NULL').STAsText();
-ORDER BY geom DESC;
+-- UNION with Parse
+SELECT * FROM (
+    SELECT geometry::Parse('POINT(1 2)').STAsText() AS geom
+    UNION
+    SELECT geometry::Parse('POINT(3 4)').STAsText() AS geom
+    UNION
+    SELECT geometry::Parse('NULL').STAsText() AS geom
+) t
+ORDER BY CASE WHEN geom IS NULL THEN 1 ELSE 0 END, geom DESC;
 go
+
+
 
 -- GROUP BY with spatial type
 SELECT GeomColumn.STGeometryType() AS GeomType, 
@@ -272,8 +1167,8 @@ go
 
 -- Window function with Parse
 SELECT ID, 
-       geometry::Parse('POINT(0 0)').STDistance(GeomColumn) AS Distance,
-       ROW_NUMBER() OVER (ORDER BY geometry::Parse('POINT(0 0)').STDistance(GeomColumn)) AS RowNum
+       CAST(geometry::Parse('POINT(0 0)').STDistance(GeomColumn) AS NUMERIC(20,6)) AS Distance,
+       ROW_NUMBER() OVER (ORDER BY geometry::Parse('POINT(0 0)').STDistance(GeomColumn), ID) AS RowNum
 FROM TestGeospatialParse_GeomTemp3;
 go
 
@@ -907,7 +1802,7 @@ DECLARE @geom geometry = geometry::STGeomFromText('LINESTRING(0 0, 10 10)', 4326
 DECLARE @geog geography = geography::STGeomFromText('POINT(-122.34 47.65)', 4326);
 SELECT 'Geometry' AS Source, @geom.STGeometryType() AS Type
 UNION ALL
-SELECT 'Geography', @geog.STGeometryType();
+SELECT 'Geography', @geog.STGeometryType()
 ORDER BY Source;
 go
 
