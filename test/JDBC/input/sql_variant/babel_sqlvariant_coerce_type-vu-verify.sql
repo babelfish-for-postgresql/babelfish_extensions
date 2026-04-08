@@ -389,84 +389,112 @@ GO
 
 
 -- 4a. sql_variant in 1st SELECT
+SELECT col FROM (
 SELECT CAST(1 AS sql_variant) AS col
 UNION ALL
 SELECT CAST(0 AS bit) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(1 AS sql_variant) AS col
 UNION ALL
 SELECT CAST(100 AS int) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST('hello' AS sql_variant) AS col
 UNION ALL
 SELECT CAST('world' AS varchar(50)) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(3.14 AS sql_variant) AS col
 UNION ALL
 SELECT CAST(2.71 AS float) AS col
+) t ORDER BY col
 GO
 
 -- 4b. sql_variant in 2nd SELECT
+SELECT col FROM (
 SELECT CAST(0 AS bit) AS col
 UNION ALL
 SELECT CAST(1 AS sql_variant) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(100 AS int) AS col
 UNION ALL
 SELECT CAST(1 AS sql_variant) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST('world' AS varchar(50)) AS col
 UNION ALL
 SELECT CAST('hello' AS sql_variant) AS col
+) t ORDER BY col
 GO
 
 -- 4c. sql_variant in 3rd SELECT (multi-UNION)
+SELECT col FROM (
 SELECT CAST(0 AS bit) AS col
 UNION ALL
 SELECT CAST(100 AS int) AS col
 UNION ALL
 SELECT CAST(1 AS sql_variant) AS col
+) t ORDER BY col
 GO
 
 -- 4d. sql_variant in 1st, other types follow
+SELECT col FROM (
 SELECT CAST(1 AS sql_variant) AS col
 UNION ALL
 SELECT CAST(0 AS bit) AS col
 UNION ALL
 SELECT CAST(100 AS int) AS col
+) t ORDER BY col
 GO
 
 -- 4e. NULL sql_variant in UNION ALL
+SELECT col FROM (
 SELECT CAST(NULL AS sql_variant) AS col
 UNION ALL
 SELECT CAST(0 AS bit) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(0 AS bit) AS col
 UNION ALL
 SELECT CAST(NULL AS sql_variant) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(NULL AS sql_variant) AS col
 UNION ALL
 SELECT CAST(100 AS int) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(NULL AS sql_variant) AS col
 UNION ALL
 SELECT CAST('hello' AS varchar(50)) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(0 AS bit) AS col
 UNION ALL
 SELECT CAST(100 AS int) AS col
 UNION ALL
 SELECT CAST(NULL AS sql_variant) AS col
+) t ORDER BY col
 GO
 
 
@@ -474,49 +502,65 @@ GO
 
 
 -- 5a. sql_variant in 1st SELECT
+SELECT col FROM (
 SELECT CAST(1 AS sql_variant) AS col
 UNION
 SELECT CAST(0 AS bit) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(1 AS sql_variant) AS col
 UNION
 SELECT CAST(100 AS int) AS col
+) t ORDER BY col
 GO
 
 -- 5b. sql_variant in 2nd SELECT
+SELECT col FROM (
 SELECT CAST(0 AS bit) AS col
 UNION
 SELECT CAST(1 AS sql_variant) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(100 AS int) AS col
 UNION
 SELECT CAST(1 AS sql_variant) AS col
+) t ORDER BY col
 GO
 
 -- 5c. sql_variant in last of multi-UNION
+SELECT col FROM (
 SELECT CAST(0 AS bit) AS col
 UNION
 SELECT CAST(100 AS int) AS col
 UNION
 SELECT CAST(1 AS sql_variant) AS col
+) t ORDER BY col
 GO
 
 -- 5d. NULL sql_variant in UNION
+SELECT col FROM (
 SELECT CAST(NULL AS sql_variant) AS col
 UNION
 SELECT CAST(0 AS bit) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(0 AS bit) AS col
 UNION
 SELECT CAST(NULL AS sql_variant) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(NULL AS sql_variant) AS col
 UNION
 SELECT CAST(100 AS int) AS col
+) t ORDER BY col
 GO
 
 
@@ -524,49 +568,65 @@ GO
 
 
 -- 6a. sql_variant in 1st SELECT
+SELECT col FROM (
 SELECT CAST(1 AS sql_variant) AS col
 INTERSECT
 SELECT CAST(0 AS bit) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(1 AS sql_variant) AS col
 INTERSECT
 SELECT CAST(100 AS int) AS col
+) t ORDER BY col
 GO
 
 -- 6b. sql_variant in 2nd SELECT
+SELECT col FROM (
 SELECT CAST(0 AS bit) AS col
 INTERSECT
 SELECT CAST(1 AS sql_variant) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(100 AS int) AS col
 INTERSECT
 SELECT CAST(1 AS sql_variant) AS col
+) t ORDER BY col
 GO
 
 -- 6c. sql_variant in last of multi-INTERSECT
+SELECT col FROM (
 SELECT CAST(0 AS bit) AS col
 INTERSECT
 SELECT CAST(100 AS int) AS col
 INTERSECT
 SELECT CAST(1 AS sql_variant) AS col
+) t ORDER BY col
 GO
 
 -- 6d. NULL sql_variant in INTERSECT
+SELECT col FROM (
 SELECT CAST(NULL AS sql_variant) AS col
 INTERSECT
 SELECT CAST(0 AS bit) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(0 AS bit) AS col
 INTERSECT
 SELECT CAST(NULL AS sql_variant) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(NULL AS sql_variant) AS col
 INTERSECT
 SELECT CAST(100 AS int) AS col
+) t ORDER BY col
 GO
 
 
@@ -574,59 +634,79 @@ GO
 
 
 -- 7a. sql_variant in 1st SELECT
+SELECT col FROM (
 SELECT CAST(1 AS sql_variant) AS col
 EXCEPT
 SELECT CAST(0 AS bit) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(1 AS sql_variant) AS col
 EXCEPT
 SELECT CAST(100 AS int) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST('hello' AS sql_variant) AS col
 EXCEPT
 SELECT CAST('world' AS varchar(50)) AS col
+) t ORDER BY col
 GO
 
 -- 7b. sql_variant in 2nd SELECT
+SELECT col FROM (
 SELECT CAST(0 AS bit) AS col
 EXCEPT
 SELECT CAST(1 AS sql_variant) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(100 AS int) AS col
 EXCEPT
 SELECT CAST(1 AS sql_variant) AS col
+) t ORDER BY col
 GO
 
 -- 7c. sql_variant in last of multi-EXCEPT
+SELECT col FROM (
 SELECT CAST(0 AS bit) AS col
 EXCEPT
 SELECT CAST(100 AS int) AS col
 EXCEPT
 SELECT CAST(1 AS sql_variant) AS col
+) t ORDER BY col
 GO
 
 -- 7d. NULL sql_variant in EXCEPT
+SELECT col FROM (
 SELECT CAST(NULL AS sql_variant) AS col
 EXCEPT
 SELECT CAST(0 AS bit) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(0 AS bit) AS col
 EXCEPT
 SELECT CAST(NULL AS sql_variant) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(NULL AS sql_variant) AS col
 EXCEPT
 SELECT CAST(100 AS int) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST(NULL AS sql_variant) AS col
 EXCEPT
 SELECT CAST('hello' AS varchar(50)) AS col
+) t ORDER BY col
 GO
 
 
@@ -637,32 +717,32 @@ GO
 SELECT * FROM (VALUES
   (CAST(1 AS sql_variant)),
   (CAST(0 AS bit))
-) AS t(col)
+) AS t(col) ORDER BY col
 GO
 
 SELECT * FROM (VALUES
   (CAST(1 AS sql_variant)),
   (CAST(100 AS int))
-) AS t(col)
+) AS t(col) ORDER BY col
 GO
 
 SELECT * FROM (VALUES
   (CAST('hello' AS sql_variant)),
   (CAST('world' AS varchar(50)))
-) AS t(col)
+) AS t(col) ORDER BY col
 GO
 
 -- 8b. sql_variant in 2nd row
 SELECT * FROM (VALUES
   (CAST(0 AS bit)),
   (CAST(1 AS sql_variant))
-) AS t(col)
+) AS t(col) ORDER BY col
 GO
 
 SELECT * FROM (VALUES
   (CAST(100 AS int)),
   (CAST(1 AS sql_variant))
-) AS t(col)
+) AS t(col) ORDER BY col
 GO
 
 -- 8c. sql_variant in 3rd row
@@ -670,7 +750,7 @@ SELECT * FROM (VALUES
   (CAST(0 AS bit)),
   (CAST(100 AS int)),
   (CAST(1 AS sql_variant))
-) AS t(col)
+) AS t(col) ORDER BY col
 GO
 
 -- 8d. sql_variant in 1st row, multiple other types follow
@@ -679,7 +759,7 @@ SELECT * FROM (VALUES
   (CAST(0 AS bit)),
   (CAST(100 AS int)),
   (CAST('hello' AS varchar(50)))
-) AS t(col)
+) AS t(col) ORDER BY col
 GO
 
 -- 8e. sql_variant in last row
@@ -688,39 +768,39 @@ SELECT * FROM (VALUES
   (CAST(100 AS int)),
   (CAST('hello' AS varchar(50))),
   (CAST(1 AS sql_variant))
-) AS t(col)
+) AS t(col) ORDER BY col
 GO
 
 -- 8f. NULL sql_variant in VALUES
 SELECT * FROM (VALUES
   (CAST(NULL AS sql_variant)),
   (CAST(0 AS bit))
-) AS t(col)
+) AS t(col) ORDER BY col
 GO
 
 SELECT * FROM (VALUES
   (CAST(0 AS bit)),
   (CAST(NULL AS sql_variant))
-) AS t(col)
+) AS t(col) ORDER BY col
 GO
 
 SELECT * FROM (VALUES
   (CAST(NULL AS sql_variant)),
   (CAST(100 AS int))
-) AS t(col)
+) AS t(col) ORDER BY col
 GO
 
 SELECT * FROM (VALUES
   (CAST(NULL AS sql_variant)),
   (CAST('hello' AS varchar(50)))
-) AS t(col)
+) AS t(col) ORDER BY col
 GO
 
 SELECT * FROM (VALUES
   (CAST(0 AS bit)),
   (CAST(100 AS int)),
   (CAST(NULL AS sql_variant))
-) AS t(col)
+) AS t(col) ORDER BY col
 GO
 
 
@@ -743,21 +823,25 @@ GO
 SELECT CASE WHEN 1 = 1 THEN CAST(1 AS int) ELSE CAST(2 AS int) END AS result
 GO
 
-SELECT CAST('abc' AS varchar(10)) AS col UNION ALL SELECT CAST('def' AS varchar(10)) AS col
+SELECT CAST('abc' AS varchar(10)) AS col UNION ALL SELECT CAST('def' AS varchar(10)) AS col ORDER BY col
 GO
 
 
 -- 11. REGRESSION: UNION with char types (must be unchanged)
 
 
+SELECT col FROM (
 SELECT CAST('abc' AS varchar(10)) AS col
 UNION ALL
 SELECT CAST('def' AS nvarchar(10)) AS col
+) t ORDER BY col
 GO
 
+SELECT col FROM (
 SELECT CAST('abc' AS char(10)) AS col
 UNION ALL
 SELECT CAST('def' AS nchar(10)) AS col
+) t ORDER BY col
 GO
 
 
