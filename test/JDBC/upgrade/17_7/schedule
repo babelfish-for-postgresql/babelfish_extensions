@@ -224,7 +224,6 @@ forjson-nesting
 forjsonauto
 format
 format-dep
-forxml
 forxml-path
 forxml-subquery
 fulltextserviceproperty

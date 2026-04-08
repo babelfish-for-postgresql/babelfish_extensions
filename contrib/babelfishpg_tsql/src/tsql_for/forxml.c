@@ -15,6 +15,7 @@
 #include "parser/parser.h"
 #include "utils/builtins.h"
 #include "utils/xml.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 #include "catalog/pg_type.h"
@@ -32,6 +33,11 @@ typedef struct forxml_auto_state
 	int			   *nest_levels;		/* nest_levels[i] = level for column i */
 	char		  **table_aliases;		/* table_aliases[i] = table name for column i */
 	char		  **column_names;		/* column_names[i] = original col name */
+
+	/* Output function cache - populated on first row for fast type conversion */
+	FmgrInfo	   *out_finfo;			/* Cached output function info per column */
+	Oid			   *base_types;			/* Base type OID per column (after domain flattening) */
+	bool			out_funcs_cached;	/* Whether output functions have been cached */
 
 	/* State for XML generation */
 	int				max_depth;			/* Maximum nesting depth seen */
@@ -59,10 +65,12 @@ static void update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid
 
 /* Helper functions for XML AUTO */
 static void xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str, int num_cols);
-static char* xml_auto_get_column_value_as_string(HeapTuple tuple, TupleDesc tupdesc, int col_idx);
+static char* xml_auto_get_column_value_as_string(HeapTuple tuple, TupleDesc tupdesc, int col_idx, forxml_auto_state *auto_state);
 static int find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc);
 static void close_elements_to_level(StringInfo state, forxml_auto_state *auto_state, int target_level);
 static void output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil);
+static char *cached_value_to_xml_string(Datum value, int col_idx, forxml_auto_state *auto_state, Oid orig_type);
+static void init_output_func_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
 static bool validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tupdesc);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_xml_sfunc);
@@ -770,6 +778,11 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 	auto_state->prev_values = (char **) palloc0(num_cols * sizeof(char *));
 	auto_state->max_depth = 0;
 
+	/* Output function cache arrays — populated on first row in cached_value_to_xml_string */
+	auto_state->out_finfo = (FmgrInfo *) palloc0(num_cols * sizeof(FmgrInfo));
+	auto_state->base_types = (Oid *) palloc0(num_cols * sizeof(Oid));
+	auto_state->out_funcs_cached = false;
+
 	str_copy = pstrdup(metadata_str);
 
 	/* Parse comma-separated entries (names are pre-escaped, no commas in them) */
@@ -812,9 +825,10 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 /*
  * Get column value as string for comparison.
  * Returns a palloc'd copy of the string, or NULL if the column is null.
+ * Uses cached output functions when available for fast conversion.
  */
 static char*
-xml_auto_get_column_value_as_string(HeapTuple tuple, TupleDesc tupdesc, int col_idx)
+xml_auto_get_column_value_as_string(HeapTuple tuple, TupleDesc tupdesc, int col_idx, forxml_auto_state *auto_state)
 {
 	Datum colval;
 	bool isnull;
@@ -824,6 +838,10 @@ xml_auto_get_column_value_as_string(HeapTuple tuple, TupleDesc tupdesc, int col_
 	colval = heap_getattr(tuple, col_idx + 1, tupdesc, &isnull);
 	if (isnull)
 		return NULL;
+
+	/* Use cached path if output functions are already cached */
+	if (auto_state != NULL && auto_state->out_funcs_cached)
+		return pstrdup(cached_value_to_xml_string(colval, col_idx, auto_state, datatype_oid));
 
 	return pstrdup(map_sql_value_to_xml_value(colval, datatype_oid, true));
 }
@@ -853,7 +871,7 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 		if (att->attisdropped || level == 0)
 			continue;
 
-		curr_val = xml_auto_get_column_value_as_string(tuple, tupdesc, i);
+		curr_val = xml_auto_get_column_value_as_string(tuple, tupdesc, i, auto_state);
 		prev_val = auto_state->prev_values[i];
 
 		if ((curr_val == NULL && prev_val != NULL) ||
@@ -914,6 +932,82 @@ close_elements_to_level(StringInfo state, forxml_auto_state *auto_state, int tar
 }
 
 /*
+ * cached_value_to_xml_string
+ *
+ * Fast path for converting a column value to its XML string representation.
+ * Requires that init_output_func_cache() has been called first to populate
+ * the per-column cache.
+ *
+ * Types that need special XSD formatting (bool, date, timestamp, bytea, xml,
+ * arrays) fall back to the full map_sql_value_to_xml_value().
+ */
+static char *
+cached_value_to_xml_string(Datum value, int col_idx, forxml_auto_state *auto_state, Oid orig_type)
+{
+	Oid base_type;
+
+	/*
+	 * CSTRINGOID means update_tsql_datatype_and_val already converted the
+	 * value to a formatted C string (e.g. datetime → "2023-07-04T00:00:00").
+	 * Just XML-escape it directly.
+	 */
+	if (orig_type == CSTRINGOID)
+		return escape_xml(DatumGetCString(value));
+
+	base_type = auto_state->base_types[col_idx];
+
+	/*
+	 * Types requiring special XSD formatting — fall back to the full
+	 * map_sql_value_to_xml_value which handles them correctly.
+	 */
+	switch (base_type)
+	{
+		case BOOLOID:
+		case DATEOID:
+		case TIMESTAMPOID:
+		case TIMESTAMPTZOID:
+		case BYTEAOID:
+		case XMLOID:
+			return map_sql_value_to_xml_value(value, orig_type, true);
+		default:
+			break;
+	}
+
+	/* Array domains also need the full path */
+	if (type_is_array_domain(orig_type))
+		return map_sql_value_to_xml_value(value, orig_type, true);
+
+	/* Fast path: use cached FmgrInfo directly, then escape for XML */
+	return escape_xml(OutputFunctionCall(&auto_state->out_finfo[col_idx], value));
+}
+
+/*
+ * Initialize the output function cache for all columns.
+ * Must be called once with a valid TupleDesc before using cached_value_to_xml_string.
+ */
+static void
+init_output_func_cache(forxml_auto_state *auto_state, TupleDesc tupdesc)
+{
+	for (int i = 0; i < auto_state->num_columns; i++)
+	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+		Oid base_type;
+		Oid typeOut;
+		bool isvarlena;
+
+		if (att->attisdropped)
+			continue;
+
+		base_type = getBaseType(att->atttypid);
+		auto_state->base_types[i] = base_type;
+
+		getTypeOutputInfo(base_type, &typeOut, &isvarlena);
+		fmgr_info(typeOut, &auto_state->out_finfo[i]);
+	}
+	auto_state->out_funcs_cached = true;
+}
+
+/*
  * Output XML for current row in AUTO mode.
  *
  * Algorithm:
@@ -931,6 +1025,10 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 {
 	int first_changed_level;
 	int deepest_level_in_row = 0;
+
+	/* Initialize output function cache on first row (covers all columns) */
+	if (!auto_state->out_funcs_cached)
+		init_output_func_cache(auto_state, tupdesc);
 
 	/* Determine the deepest level that has columns in this row */
 	for (int i = 0; i < auto_state->num_columns; i++)
@@ -1030,9 +1128,16 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 				/* ELEMENTS mode: <colname>value</colname> */
 				if (!isnull)
 				{
+					/*
+					 * If update_tsql_datatype_and_val changed the type (e.g. datetime
+					 * to CSTRINGOID), the value is already formatted — use the slow path.
+					 */
+					char *val_str = (datatype_oid != att->atttypid)
+						? map_sql_value_to_xml_value(colval, datatype_oid, true)
+						: cached_value_to_xml_string(colval, i, auto_state, datatype_oid);
 					appendStringInfo(state, "<%s>%s</%s>",
 									auto_state->column_names[i],
-									map_sql_value_to_xml_value(colval, datatype_oid, true),
+									val_str,
 									auto_state->column_names[i]);
 				}
 				else if (xsinil)
@@ -1047,9 +1152,12 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 				/* ATTRIBUTES mode: col="value" */
 				if (!isnull)
 				{
+					char *val_str = (datatype_oid != att->atttypid)
+						? map_sql_value_to_xml_value(colval, datatype_oid, true)
+						: cached_value_to_xml_string(colval, i, auto_state, datatype_oid);
 					appendStringInfo(state, " %s=\"%s\"",
 									auto_state->column_names[i],
-									map_sql_value_to_xml_value(colval, datatype_oid, true));
+									val_str);
 				}
 			}
 		}
@@ -1083,7 +1191,7 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 		if (auto_state->nest_levels[i] == 0)
 			continue;
 
-		val = xml_auto_get_column_value_as_string(tuple, tupdesc, i);
+		val = xml_auto_get_column_value_as_string(tuple, tupdesc, i, auto_state);
 
 		if (auto_state->prev_values[i] != NULL)
 			pfree(auto_state->prev_values[i]);

@@ -158,7 +158,6 @@ column_domain_usage
 constraint_column_usage
 datepart
 datetime2fromparts
-forxml
 fulltextserviceproperty
 HAS_DBACCESS
 indexproperty

@@ -207,7 +207,6 @@ forjson-datatypes
 forjson-subquery
 format
 format-dep
-forxml
 forxml-path
 forxml-subquery
 fulltextserviceproperty

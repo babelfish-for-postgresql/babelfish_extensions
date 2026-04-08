@@ -221,7 +221,6 @@ forjson-nesting
 forjsonauto-before-16_5
 format
 format-dep
-forxml
 forxml-path
 forxml-subquery
 fulltextserviceproperty
