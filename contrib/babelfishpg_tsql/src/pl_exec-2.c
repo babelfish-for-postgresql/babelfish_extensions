@@ -481,14 +481,13 @@ pltsql_insert_exec_check_pending_drop(void)
  * we verify the schema hasn't changed. If it has, we raise SQL Server error 556:
  * "INSERT EXEC failed because the stored procedure altered the schema of the target table."
  * 
- * IMPORTANT: We only acquire a lock, not hold the Relation pointer open.
- * Holding a Relation pointer across subtransaction boundaries causes issues
- * with resource owners and relcache invalidation, especially in upgrade tests
- * where table OIDs may change.
+ * For regular tables:
+ * - Acquire RowExclusiveLock to block concurrent sessions from modifying the table
+ * - Capture schema signature for verification at flush time
  * 
- * For temp tables and table variables (starting with # or @), we don't need
- * to lock them because they're session-local and can't be modified by
- * other sessions.
+ * For temp tables and table variables (starting with # or @):
+ * - Only capture schema signature (no lock needed - they're session-local)
+ * - The schema verification at flush time will detect DROP/ALTER
  */
 void
 pltsql_insert_exec_open_target_table(const char *target_table)
@@ -502,88 +501,97 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 	TupleDesc	tupdesc;
 	int			i;
 	MemoryContext oldcontext;
+	bool		is_temp_table;
 
 	elog(DEBUG1, "INSERT-EXEC: open_target_table called with target='%s'", 
 		 target_table ? target_table : "NULL");
 
-	/* Skip for temp tables and table variables */
-	if (target_table == NULL || target_table[0] == '#' || target_table[0] == '@')
-	{
-		elog(DEBUG1, "INSERT-EXEC: Skipping schema capture for temp table or table variable");
+	if (target_table == NULL)
 		return;
-	}
 
-	/* Parse schema and table name from target_table */
-	if (!parse_insert_exec_table_name(target_table, &schema_name, &table_name,
-									  &physical_schema, true))
+	is_temp_table = (target_table[0] == '#' || target_table[0] == '@');
+
+	if (is_temp_table)
 	{
-		return;
+		/*
+		 * Temp table or table variable - resolve using RangeVarGetRelid.
+		 * We don't need to lock because they're session-local.
+		 */
+		rv = makeRangeVar(NULL, pstrdup(target_table), -1);
+		relid = RangeVarGetRelid(rv, NoLock, true);
+		
+		if (!OidIsValid(relid))
+		{
+			elog(DEBUG1, "INSERT-EXEC: Temp table '%s' not found, skipping schema capture",
+				 target_table);
+			return;
+		}
+		
+		/* Store the OID for schema verification (no lock for temp tables) */
+		insert_exec_ctx.target_rel_oid = relid;
 	}
-	
-	/* Create RangeVar and get the relation OID */
-	rv = makeRangeVar(physical_schema, table_name, -1);
-	relid = RangeVarGetRelid(rv, NoLock, true);
-	
-	if (schema_name)
-		pfree(schema_name);
-	if (table_name)
-		pfree(table_name);
-	if (physical_schema)
-		pfree(physical_schema);
-	
-	if (!OidIsValid(relid))
+	else
 	{
-		/* Table doesn't exist - will be caught later during flush */
-		return;
+		/* Regular table - parse schema and table name */
+		if (!parse_insert_exec_table_name(target_table, &schema_name, &table_name,
+										  &physical_schema, true))
+		{
+			return;
+		}
+		
+		/* Create RangeVar and get the relation OID */
+		rv = makeRangeVar(physical_schema, table_name, -1);
+		relid = RangeVarGetRelid(rv, NoLock, true);
+		
+		if (schema_name)
+			pfree(schema_name);
+		if (table_name)
+			pfree(table_name);
+		if (physical_schema)
+			pfree(physical_schema);
+		
+		if (!OidIsValid(relid))
+		{
+			/* Table doesn't exist - will be caught later during flush */
+			return;
+		}
+		
+		/*
+		 * Acquire RowExclusiveLock on the target table.
+		 * This lock will be held until the end of the transaction.
+		 * It blocks concurrent sessions from modifying the table.
+		 * Note: Same-session DROP/ALTER is still allowed by PostgreSQL,
+		 * but we detect it via schema verification at flush time.
+		 */
+		oldcontext = CurrentMemoryContext;
+		PG_TRY();
+		{
+			LockRelationOid(relid, RowExclusiveLock);
+		}
+		PG_CATCH();
+		{
+			MemoryContextSwitchTo(oldcontext);
+			FlushErrorState();
+			elog(DEBUG1, "INSERT-EXEC: Could not lock target table OID %u, skipping schema capture",
+				 relid);
+			return;
+		}
+		PG_END_TRY();
+		
+		insert_exec_ctx.target_rel_oid = relid;
 	}
 	
 	/*
-	 * Acquire RowExclusiveLock on the target table.
-	 * This lock will be held until the end of the transaction (or until
-	 * explicitly released).
-	 * 
-	 * In major version upgrade scenarios, the OID might become stale between
-	 * RangeVarGetRelid and here. We wrap this in PG_TRY to handle such cases.
+	 * Capture the schema signature of the target table.
+	 * This is used to detect DROP/ALTER at flush time.
 	 */
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
 	{
-		LockRelationOid(relid, RowExclusiveLock);
+		rel = table_open(relid, NoLock);
 	}
 	PG_CATCH();
 	{
-		/* 
-		 * Could not lock relation - likely stale OID from upgrade scenario.
-		 * Skip the schema capture and let the flush handle the error.
-		 */
-		MemoryContextSwitchTo(oldcontext);
-		FlushErrorState();
-		elog(DEBUG1, "INSERT-EXEC: Could not lock target table OID %u, skipping schema capture",
-			 relid);
-		return;
-	}
-	PG_END_TRY();
-	
-	insert_exec_ctx.target_rel_oid = relid;
-	
-	/*
-	 * Capture the schema signature of the target table.
-	 * We open the relation briefly to get the tuple descriptor, then close it.
-	 * The lock we acquired above will remain held.
-	 * 
-	 * In major version upgrade scenarios, the OID might become stale. We wrap
-	 * this in PG_TRY to handle such cases gracefully.
-	 */
-	PG_TRY();
-	{
-		rel = table_open(relid, NoLock);  /* Already have RowExclusiveLock */
-	}
-	PG_CATCH();
-	{
-		/* 
-		 * Could not open relation - likely stale OID from upgrade scenario.
-		 * Clear the OID and skip the schema capture.
-		 */
 		MemoryContextSwitchTo(oldcontext);
 		FlushErrorState();
 		elog(DEBUG1, "INSERT-EXEC: Could not open target table OID %u for schema capture, skipping",
@@ -621,36 +629,37 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 		insert_exec_ctx.schema_sig->atttypmods[i] = attr->atttypmod;
 	}
 	
-	elog(DEBUG1, "INSERT-EXEC: Captured schema signature for target table OID %u with %d columns",
-		 relid, insert_exec_ctx.schema_sig->natts);
+	elog(DEBUG1, "INSERT-EXEC: Captured schema signature for %s table OID %u with %d columns",
+		 is_temp_table ? "temp" : "regular", relid, insert_exec_ctx.schema_sig->natts);
 	
 	MemoryContextSwitchTo(oldcontext);
 	
-	table_close(rel, NoLock);  /* Keep the lock */
+	table_close(rel, NoLock);  /* Keep the lock (if any) */
 }
 
 /*
  * Close the target table that was held open during INSERT EXEC.
  * Called after the flush completes or on error cleanup.
  * 
- * Note: We only release the lock if we're not in an aborted transaction state.
- * If the transaction was aborted (e.g., due to COMMIT without BEGIN TRAN error),
- * the lock has already been released by the transaction abort, and trying to
- * unlock it would cause an error.
+ * For regular tables: Release the RowExclusiveLock we acquired.
+ * For temp tables: Just clear the OID (no lock was acquired).
  * 
- * In major version upgrade scenarios, the OID may be stale, so we wrap the
- * unlock in a PG_TRY block to handle errors gracefully.
+ * Note: We only release the lock if we're not in an aborted transaction state.
+ * If the transaction was aborted, the lock has already been released.
  */
 void
 pltsql_insert_exec_close_target_table(void)
 {
 	if (OidIsValid(insert_exec_ctx.target_rel_oid))
 	{
+		const char *target = pltsql_get_insert_exec_target_table();
+		bool is_temp_table = (target != NULL && (target[0] == '#' || target[0] == '@'));
+		
 		/*
-		 * Only release the lock if we're not in an aborted transaction state.
-		 * In an aborted transaction, all locks have already been released.
+		 * Only release the lock for regular tables (not temp tables).
+		 * Temp tables don't have locks to release.
 		 */
-		if (!IsAbortedTransactionBlockState())
+		if (!is_temp_table && !IsAbortedTransactionBlockState())
 		{
 			MemoryContext oldcontext = CurrentMemoryContext;
 			PG_TRY();
@@ -659,10 +668,6 @@ pltsql_insert_exec_close_target_table(void)
 			}
 			PG_CATCH();
 			{
-				/* 
-				 * Could not unlock - likely stale OID from upgrade scenario
-				 * or relation was dropped. Just ignore the error.
-				 */
 				MemoryContextSwitchTo(oldcontext);
 				FlushErrorState();
 				elog(DEBUG1, "INSERT-EXEC: Could not unlock target table OID %u, ignoring",
@@ -710,9 +715,9 @@ pltsql_insert_exec_verify_schema(void)
 		return true;
 	
 	/*
-	 * Try to open the relation. In major version upgrade scenarios, the OID
-	 * may be stale (table was recreated with a different OID). In that case,
-	 * we skip the schema check - the actual INSERT will validate the data.
+	 * Try to open the relation. If we can't open it, the table was likely
+	 * dropped by the executed procedure - this is a schema change that should
+	 * trigger error 556.
 	 */
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
@@ -722,14 +727,14 @@ pltsql_insert_exec_verify_schema(void)
 	PG_CATCH();
 	{
 		/* 
-		 * Could not open relation - likely stale OID from upgrade scenario.
-		 * Skip the schema check and let the INSERT validate the data.
+		 * Could not open relation - table was dropped or OID is stale.
+		 * This is a schema change, return false to trigger error 556.
 		 */
 		MemoryContextSwitchTo(oldcontext);
 		FlushErrorState();
-		elog(DEBUG1, "INSERT-EXEC: Could not open target table OID %u for schema verification, skipping check",
+		elog(DEBUG1, "INSERT-EXEC: Could not open target table OID %u - table was dropped or altered",
 			 insert_exec_ctx.target_rel_oid);
-		return true;
+		return false;  /* Schema changed - table no longer exists */
 	}
 	PG_END_TRY();
 	

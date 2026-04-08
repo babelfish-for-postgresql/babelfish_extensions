@@ -822,67 +822,6 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 			}
 			break;
 		}
-		case T_DropStmt:
-		{
-			DropStmt *drop = (DropStmt *) parsetree;
-			if (drop->removeType == OBJECT_TABLE && pltsql_insert_exec_active())
-			{
-				Oid target_oid = pltsql_get_insert_exec_target_rel_oid();
-
-				if (OidIsValid(target_oid))
-				{
-					/*
-					 * Regular table: use OID comparison so schema-qualified names
-					 * like schema1.orders and schema2.orders are distinguished.
-					 */
-					ListCell *lc;
-					foreach(lc, drop->objects)
-					{
-						List     *names    = lfirst_node(List, lc);
-						RangeVar *rv       = makeRangeVarFromNameList(names);
-						Oid       drop_oid = RangeVarGetRelid(rv, NoLock, true /* missing_ok */);
-
-						if (OidIsValid(drop_oid) && drop_oid == target_oid)
-							ereport(ERROR,
-									(errcode(ERRCODE_OBJECT_IN_USE),
-									 errmsg("cannot %s \"%s\" because it is "
-											"being used by active queries in "
-											"this session",
-											"DROP TABLE", get_rel_name(drop_oid))));
-					}
-				}
-				else
-				{
-					/*
-					 * Temp table / table variable: session-local, no persistent OID.
-					 * Fall back to unqualified name comparison (safe over-block).
-					 */
-					const char *target      = pltsql_get_insert_exec_target_table();
-					const char *dot         = target ? strrchr(target, '.') : NULL;
-					const char *unqualified = dot ? (dot + 1) : target;
-					ListCell   *lc;
-
-					if (unqualified != NULL)
-					{
-						foreach(lc, drop->objects)
-						{
-							List *names   = lfirst_node(List, lc);
-							char *relname = strVal(llast(names));
-
-							if (pg_strcasecmp(relname, unqualified) == 0)
-								ereport(ERROR,
-										(errcode(ERRCODE_OBJECT_IN_USE),
-										 errmsg("cannot %s \"%s\" because it is "
-												"being used by active queries in "
-												"this session",
-												"DROP TABLE", relname)));
-						}
-					}
-				}
-			}
-			break;
-		}
-
 		default:
 			return false;
 			break;

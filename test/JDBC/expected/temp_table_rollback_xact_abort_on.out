@@ -4632,7 +4632,7 @@ INSERT INTO #insert_exec_drop_target EXEC p_insert_exec_drop_table
 GO
 ~~ERROR (Code: 556)~~
 
-~~ERROR (Message: cannot DROP TABLE "#insert_exec_drop_target" because it is being used by active queries in this session)~~
+~~ERROR (Message: INSERT EXEC failed because the stored procedure altered the schema of the target table.)~~
 
 
 -- Table should still exist with original data since DROP failed
