@@ -338,6 +338,38 @@ GO
 DROP TABLE pg_temp_test;
 GO
 
+-- Test PG temp table with # in name
+CREATE TEMP TABLE "#pg_hash_temp"(id int, name varchar(50));
+GO
+
+INSERT INTO "#pg_hash_temp" VALUES (1, 'test');
+GO
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#pg_hash_temp');
+GO
+
+SELECT * FROM sys.sp_tablecollations_100_enr('#pg_hash_temp');
+GO
+
+DROP TABLE "#pg_hash_temp";
+GO
+
+-- Test PG regular table with # in name (should return empty - not a T-SQL temp table)
+CREATE TABLE "#pg_hash_regular"(id int, name varchar(50));
+GO
+
+INSERT INTO "#pg_hash_regular" VALUES (1, 'test');
+GO
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#pg_hash_regular');
+GO
+
+SELECT * FROM sys.sp_tablecollations_100_enr('#pg_hash_regular');
+GO
+
+DROP TABLE "#pg_hash_regular";
+GO
+
 -- Test via PL/pgSQL procedure (should return 0 for both functions)
 CALL test_pg_temp_table_proc();
 GO
