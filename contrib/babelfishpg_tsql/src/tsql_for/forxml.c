@@ -731,7 +731,7 @@ update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_o
 /*
  * Unescape _x002E_ back to literal '.' in a string.
  * The metadata uses escape_period=true to avoid dot delimiter collisions,
- * but the TSQL outputs dots literally in XML names, so we reverse it.
+ * but T-SQL outputs dots literally in XML names, so we reverse it.
  */
 static char *
 unescape_period(const char *str)
