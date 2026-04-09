@@ -92,10 +92,10 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	MemoryContext old_context;
 
 	/*
-	 * Backward compatibility: Check if ELEMENTS parameters are provided.
-	 * Old 6-argument version (deprecated_in_5_6_0): state, rec, mode, element_name, binary_base64, root_name
-	 * New 9-argument version (5.6.0+): adds elements, xsinil, auto_metadata parameters
-	 */
+	* Backward compatibility: Check if ELEMENTS parameters are provided.
+	* Old 6-argument version (deprecated_in_5_6_0): state, rec, mode, element_name, binary_base64, root_name
+	* New 9-argument version (5.6.0+): adds elements, xsinil, auto_metadata parameters
+	*/
 	if (PG_NARGS() > 9)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
@@ -106,7 +106,6 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		elements = PG_GETARG_BOOL(6);
 		xsinil = PG_GETARG_BOOL(7);
 	}
-
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 	old_context = MemoryContextSwitchTo(agg_context);
@@ -159,7 +158,6 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		fstate = (forxml_state *) PG_GETARG_POINTER(0);
 		state = fstate->xml_output;
 	}
-
 	switch (mode)
 	{
 		case TSQL_FORXML_RAW:	/* FOR XML RAW */
@@ -603,10 +601,10 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 		else if (xsinil)
 		{
 			/*
-			 * XSINIL: Output NULL columns with xsi:nil="true".
-			 * Skip attribute-centric columns (prefixed with '@') as
-			 * xsi:nil is only valid on XML elements, not on attributes.
-			 */
+			* XSINIL: Output NULL columns with xsi:nil="true".
+			* Skip attribute-centric columns (prefixed with '@') as
+			* xsi:nil is only valid on XML elements, not on attributes.
+			*/
 			if (NameStr(att->attname)[0] != '@')
 			{
 				allnull = false;
@@ -733,7 +731,7 @@ update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_o
 /*
  * Unescape _x002E_ back to literal '.' in a string.
  * The metadata uses escape_period=true to avoid dot delimiter collisions,
- * but the source dialect outputs dots literally in XML names, so we reverse it.
+ * but the TSQL outputs dots literally in XML names, so we reverse it.
  */
 static char *
 unescape_period(const char *str)
@@ -1210,7 +1208,6 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
  *
  * Metadata is passed via the auto_metadata parameter (9th arg to aggregate).
  * Format: "level.table.colname,level.table.colname,..."
- * Column names stay original (not encoded).
  */
 static void
 tsql_row_to_xml_auto(StringInfo state, Datum record, bool binary_base64, bool elements, bool xsinil, forxml_auto_state *auto_state)

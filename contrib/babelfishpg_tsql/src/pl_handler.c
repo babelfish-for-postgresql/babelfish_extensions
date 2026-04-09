@@ -2148,9 +2148,11 @@ isXmlAuto(List* target)
 /*
  * handleForXmlAuto - Process FOR XML AUTO queries
  *
- * Similar to handleForJsonAuto but for XML AUTO mode.
- * Instead of renaming columns, builds a metadata string and injects it
- * into the aggregate's 9th argument (auto_metadata Const node).
+ * Validates that the query has at least one valid source table, then walks
+ * the query tree to build nesting metadata. The metadata string encodes
+ * each column's nesting level and source table alias, which is injected
+ * into the aggregate's 9th argument (auto_metadata Const node) for use
+ * at execution time by the XML AUTO output functions.
  */
 static bool
 handleForXmlAuto(Query *wrapperQuery, XmlAutoContext *xmlAutoCtx)
@@ -2239,11 +2241,17 @@ handleForXmlAuto(Query *wrapperQuery, XmlAutoContext *xmlAutoCtx)
 }
 
 /*
- * buildXmlAutoMetadata - Build metadata string for XML AUTO columns
+ * buildXmlAutoMetadata - Build metadata string for XML AUTO nesting
  *
- * Instead of renaming columns (like JSON AUTO does), this builds a metadata
- * string like "1.c.CustomerID,1.c.Name,2.o.OrderID" and injects it into
- * the aggregate's 9th argument (auto_metadata Const node).
+ * Walks the query tree to determine which table each column belongs to and
+ * at what nesting level. Produces a comma-separated metadata string like
+ * "1.c.CustomerID,1.c.Name,2.o.OrderID" where each entry is
+ * "level.tableAlias.columnName". This metadata is injected into the
+ * aggregate's 9th argument (auto_metadata Const node) and later parsed
+ * at runtime by xml_auto_parse_metadata() to drive hierarchical XML output.
+ *
+ * The metadata is built at plan time (once per query) rather than at
+ * execution time, avoiding per-row overhead for table/column resolution.
  */
 static void
 buildXmlAutoMetadata(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias, XmlAutoContext *xmlAutoCtx)
