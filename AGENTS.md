@@ -6,8 +6,10 @@
 babelfish_extensions/
 ├── contrib/
 │   ├── babelfishpg_tsql/     # T-SQL language support
+│   │   └── src/              # Core: pl_exec.c, pl_comp.c, hooks.c, tsqlIface.cpp
 │   ├── babelfishpg_tds/      # TDS protocol support
-│   ├── babelfishpg_common/   # Shared data types (geometry, geography, money, etc.)
+│   │   └── src/backend/tds/  # TDS protocol handlers
+│   ├── babelfishpg_common/   # Shared data types (geometry, geography, etc.)
 │   ├── babelfishpg_money/    # money type
 │   └── babelfishpg_unit/     # Unit testing framework
 ├── test/
@@ -16,14 +18,35 @@ babelfish_extensions/
 │   ├── python/               # Python driver tests + isolation tests (.spec)
 │   ├── dotnet/               # .NET driver tests
 │   └── odbc/                 # ODBC driver tests
+├── .github/
+│   └── pull_request_template.md  # PR description template
 └── dev-tools.sh              # Developer build and test script
 ```
 
+## Workspace Setup
+
+Both repos must be in the same parent directory (the workspace root):
+```
+<workspace>/
+├── postgresql_modified_for_babelfish/   # Engine source
+├── babelfish_extensions/                # Extensions source
+└── postgres/                            # Built PostgreSQL (created by initpg)
+```
+
+All commands below run from the workspace root.
+
+For first-time environment setup (dependencies, ANTLR, cmake), see `contrib/README.md`.
+
+## Branch Naming
+
+| Type | Extensions | Engine |
+|---|---|---|
+| Dev | `BABEL_{major}_X_DEV` | `BABEL_{major}_X_DEV__PG_{pg_major}_X` |
+| Stable | `BABEL_{major}_{minor}_STABLE` | `BABEL_{major}_{minor}_STABLE__PG_{pg_major}_{pg_minor}` |
+
+Both repos must be on matching branches. List branches from GitHub to find the latest stable for a given version.
+
 ## Build and Test
-
-All commands run from the workspace root (parent of both `babelfish_extensions` and `postgresql_modified_for_babelfish`).
-
-For detailed prerequisites (ICU, ANTLR, cmake, etc.) and manual build steps, see `contrib/README.md`. The `dev-tools.sh` script automates most of this workflow.
 
 ### First-time setup
 ```bash
@@ -32,31 +55,69 @@ For detailed prerequisites (ICU, ANTLR, cmake, etc.) and manual build steps, see
 ./babelfish_extensions/dev-tools.sh initbbf   # Initialize Babelfish
 ```
 
+### Verify setup
+
+Verify both PostgreSQL and TDS endpoints:
+```bash
+# PostgreSQL endpoint
+./postgres/bin/psql -U babelfish_user -d babelfish_db -c "SELECT 1"
+
+# TDS endpoint (sqlcmd or Python)
+sqlcmd -S localhost -U babelfish_user -P 12345678 -Q "SELECT 1"
+# or
+python3 -c "import pymssql; c = pymssql.connect('localhost','babelfish_user','12345678','master'); c.cursor().execute('SELECT 1'); print('OK')"
+```
+
 ### Daily development
 ```bash
-./babelfish_extensions/dev-tools.sh buildbbf  # Build extensions + restart DB
-./babelfish_extensions/dev-tools.sh buildall  # Build PG + extensions + restart DB
-./babelfish_extensions/dev-tools.sh run_pgindent  # Format code (required before PR)
+./babelfish_extensions/dev-tools.sh buildbbf      # Build extensions + restart DB
+./babelfish_extensions/dev-tools.sh buildall      # Build PG + extensions + restart DB
+./babelfish_extensions/dev-tools.sh run_pgindent "" path/to/file.c # Format a single file (required before PR)
+./babelfish_extensions/dev-tools.sh run_pgindent                   # Format all extensions
 ```
 
 ### Running tests
+
+`dev-tools.sh` supports JDBC tests:
 ```bash
-./babelfish_extensions/dev-tools.sh test normal                          # All JDBC tests (multi-db)
-./babelfish_extensions/dev-tools.sh test normal single-db                # Single-db mode
-./babelfish_extensions/dev-tools.sh test upgrade multi-db test/JDBC/upgrade/15_11  # Upgrade tests
+./babelfish_extensions/dev-tools.sh test normal                  # Full run (multi-db)
+./babelfish_extensions/dev-tools.sh test normal single-db        # Full run (single-db)
+./babelfish_extensions/dev-tools.sh test prepare multi-db <dir>  # Schedule-based vu-prepare
+./babelfish_extensions/dev-tools.sh test verify multi-db <dir>   # Schedule-based vu-verify
 ```
+
+For running a single test, see `test/JDBC/README.md`.
+
+For other frameworks (Python, .NET, ODBC), see their respective directories under `test/`.
 
 ### Upgrade testing
 ```bash
-./babelfish_extensions/dev-tools.sh minor_version_upgrade SOURCE_WS     # ALTER EXTENSION UPDATE
-./babelfish_extensions/dev-tools.sh pg_upgrade SOURCE_WS TARGET_WS      # Major version upgrade
+./babelfish_extensions/dev-tools.sh minor_version_upgrade <source_ws>
+./babelfish_extensions/dev-tools.sh pg_upgrade <source_ws>
 ```
 
-## PR Checklist
+## Feature Branch
 
-- [ ] `run_pgindent` applied
-- [ ] `test normal` passes in both multi-db and single-db modes
-- [ ] Upgrade tests pass if DDL or catalog changed
-- [ ] `test/python/expected/upgrade_validation/expected_dependency.out` updated if new functions added
-- [ ] PR description includes JIRA link, change summary, test scenarios covered, breaking changes
-- [ ] Two senior engineer approvals obtained
+Create a feature branch from the target dev branch. Never commit directly to dev branches.
+```bash
+git checkout -b <JIRA-ID>-short-description BABEL_{major}_X_DEV
+```
+
+## Pre-Commit Checklist
+
+- [ ] `buildbbf` succeeds
+- [ ] Modified/added tests pass locally
+- [ ] `run_pgindent` applied on modified `.c` and `.h` files; only commit pgindent changes on lines you modified, discard unrelated formatting changes from pre-existing code
+- [ ] `expected_dependency.out` updated if new functions added
+
+## Commit
+
+- [ ] `git commit --signoff`
+
+## Pre-PR Checklist
+
+- [ ] GitHub Actions pass after push
+
+## PR
+
+- [ ] Fill `.github/pull_request_template.md` accordingly
