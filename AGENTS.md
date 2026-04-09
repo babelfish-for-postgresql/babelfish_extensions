@@ -72,7 +72,8 @@ python3 -c "import pymssql; c = pymssql.connect('localhost','babelfish_user','12
 ```bash
 ./babelfish_extensions/dev-tools.sh buildbbf      # Build extensions + restart DB
 ./babelfish_extensions/dev-tools.sh buildall      # Build PG + extensions + restart DB
-./babelfish_extensions/dev-tools.sh run_pgindent  # Format code (required before PR)
+./babelfish_extensions/dev-tools.sh run_pgindent "" path/to/file.c # Format a single file (required before PR)
+./babelfish_extensions/dev-tools.sh run_pgindent                   # Format all extensions
 ```
 
 ### Running tests
@@ -95,11 +96,18 @@ For other frameworks (Python, .NET, ODBC), see their respective directories unde
 ./babelfish_extensions/dev-tools.sh pg_upgrade <source_ws>
 ```
 
+## Feature Branch
+
+Create a feature branch from the target dev branch. Never commit directly to dev branches.
+```bash
+git checkout -b <JIRA-ID>-short-description BABEL_{major}_X_DEV
+```
+
 ## Pre-Commit Checklist
 
 - [ ] `buildbbf` succeeds
 - [ ] Modified/added tests pass locally
-- [ ] `run_pgindent` applied
+- [ ] `run_pgindent` applied on modified `.c` and `.h` files; only commit pgindent changes on lines you modified, discard unrelated formatting changes from pre-existing code
 - [ ] `expected_dependency.out` updated if new functions added
 
 ## Commit
