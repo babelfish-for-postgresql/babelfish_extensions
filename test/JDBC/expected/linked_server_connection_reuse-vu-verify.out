@@ -1,0 +1,440 @@
+
+-- tsql
+-- Connection reuse verification:
+-- This case snapshots remote-session state into dbo.ls_pool_observations
+-- after each linked-server RPC or metadata change.
+-- backend_pid identifies which remote backend handled the call, while
+-- session_count shows how many active sessions exist for ls_pool_remote.
+-- Expected outcome: repeated RPCs reuse one backend; login/server changes
+-- force one reconnect and then reuse the replacement backend; timeout should
+-- drop the old session, create a fresh backend on the next success, and then
+-- reuse that fresh backend on the following call.
+-- Switch the session to master before running the verification script.
+USE master;
+GO
+
+-- Remove any observation rows left by prior runs of this scenario.
+-- Clear only the rows written by this scenario so each run is independent.
+DELETE FROM dbo.ls_pool_observations
+WHERE stage IN
+(
+        'initial',
+        'reuse_1',
+        'reuse_2',
+        'reuse_3',
+        'before_mapping_change',
+        'after_mapping_change',
+        'after_mapping_change_again',
+        'before_server_change',
+        'after_server_change',
+        'after_server_change_again',
+        'before_timeout',
+        'after_timeout',
+        'after_timeout_again'
+);
+GO
+
+-- psql currentSchema=master_dbo,public
+-- Snapshot the initial remote-session count before any linked-server call.
+-- Record the baseline before any linked-server RPC has been issued.
+INSERT INTO ls_pool_observations(stage, backend_pid, session_count)
+SELECT 'initial', MIN(pid), COUNT(*)
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ls_pool_remote'
+    AND backend_type = 'client backend'
+    AND usesysid IS NOT NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+
+-- tsql
+-- Case 1: steady-state reuse.
+-- Repeated EXEC calls should keep one remote session alive and keep reusing
+-- the same backend pid.
+-- Issue the first steady-state remote procedure call.
+EXEC ls_pool_svr.master.dbo.rp_pool_noop;
+GO
+
+-- psql currentSchema=master_dbo,public
+-- Snapshot the remote session after the first steady-state call.
+INSERT INTO ls_pool_observations(stage, backend_pid, session_count)
+SELECT 'reuse_1', MIN(pid), COUNT(*)
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ls_pool_remote'
+    AND backend_type = 'client backend'
+    AND usesysid IS NOT NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql
+-- Issue the second steady-state remote procedure call.
+EXEC ls_pool_svr.master.dbo.rp_pool_noop;
+GO
+
+-- psql currentSchema=master_dbo,public
+-- Snapshot the remote session after the second steady-state call.
+INSERT INTO ls_pool_observations(stage, backend_pid, session_count)
+SELECT 'reuse_2', MIN(pid), COUNT(*)
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ls_pool_remote'
+    AND backend_type = 'client backend'
+    AND usesysid IS NOT NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql
+-- Issue the third steady-state remote procedure call.
+EXEC ls_pool_svr.master.dbo.rp_pool_noop;
+GO
+
+-- psql currentSchema=master_dbo,public
+-- Snapshot the remote session after the third steady-state call.
+INSERT INTO ls_pool_observations(stage, backend_pid, session_count)
+SELECT 'reuse_3', MIN(pid), COUNT(*)
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ls_pool_remote'
+    AND backend_type = 'client backend'
+    AND usesysid IS NOT NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql
+-- Summarize steady-state behavior:
+-- 1) no remote session before the first call,
+-- 2) exactly one remote session after each call,
+-- 3) the same remote backend pid reused across calls.
+-- Assert that steady-state calls reuse a single remote backend.
+SELECT CASE
+                     WHEN (SELECT session_count FROM dbo.ls_pool_observations WHERE stage = 'initial') = 0
+                     THEN 1 ELSE 0
+             END AS initial_state_clean,
+             CASE
+                     WHEN (SELECT session_count FROM dbo.ls_pool_observations WHERE stage = 'reuse_1') = 1
+                        AND (SELECT session_count FROM dbo.ls_pool_observations WHERE stage = 'reuse_2') = 1
+                        AND (SELECT session_count FROM dbo.ls_pool_observations WHERE stage = 'reuse_3') = 1
+                     THEN 1 ELSE 0
+             END AS repeated_exec_pool_healthy,
+             CASE
+                     WHEN (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'reuse_1') =
+                                (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'reuse_2')
+                        AND (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'reuse_2') =
+                                (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'reuse_3')
+                     THEN 1 ELSE 0
+             END AS repeated_exec_reused;
+GO
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+
+-- Capture the current remote backend before changing linked-login metadata.
+-- Issue another no-op call to record the pre-change remote backend.
+EXEC ls_pool_svr.master.dbo.rp_pool_noop;
+GO
+
+-- psql currentSchema=master_dbo,public
+-- Snapshot the remote session immediately before login mapping changes.
+INSERT INTO ls_pool_observations(stage, backend_pid, session_count)
+SELECT 'before_mapping_change', MIN(pid), COUNT(*)
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ls_pool_remote'
+    AND backend_type = 'client backend'
+    AND usesysid IS NOT NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+
+-- tsql
+-- Case 2: linked-login mapping invalidation.
+-- Rebuilding the login mapping should force one reconnect, then later calls
+-- should reuse the replacement backend.
+-- Drop the existing linked-login mapping for the test server.
+EXEC sp_droplinkedsrvlogin @rmtsrvname = 'ls_pool_svr', @locallogin = NULL;
+GO
+
+-- Recreate the linked-login mapping with the remote credentials.
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'ls_pool_svr', @useself = 'FALSE', @rmtuser = 'ls_pool_remote', @rmtpassword = 'Password_pool_remote_123';
+GO
+
+-- Execute the first remote call after the login mapping change.
+EXEC ls_pool_svr.master.dbo.rp_pool_noop;
+GO
+
+-- psql currentSchema=master_dbo,public
+-- Snapshot the remote session after the first post-mapping-change call.
+INSERT INTO ls_pool_observations(stage, backend_pid, session_count)
+SELECT 'after_mapping_change', MIN(pid), COUNT(*)
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ls_pool_remote'
+    AND backend_type = 'client backend'
+    AND usesysid IS NOT NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql
+-- Execute the second remote call after the login mapping change.
+EXEC ls_pool_svr.master.dbo.rp_pool_noop;
+GO
+
+-- psql currentSchema=master_dbo,public
+-- Snapshot the remote session after the second post-mapping-change call.
+INSERT INTO ls_pool_observations(stage, backend_pid, session_count)
+SELECT 'after_mapping_change_again', MIN(pid), COUNT(*)
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ls_pool_remote'
+    AND backend_type = 'client backend'
+    AND usesysid IS NOT NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql
+-- Assert case 2:
+-- pool health returns to one session, the first post-change call reconnects,
+-- and the second post-change call reuses the new backend pid.
+-- Assert that login mapping invalidation causes one reconnect and then reuse.
+SELECT CASE
+                     WHEN (SELECT session_count FROM dbo.ls_pool_observations WHERE stage = 'after_mapping_change') = 1
+                        AND (SELECT session_count FROM dbo.ls_pool_observations WHERE stage = 'after_mapping_change_again') = 1
+                     THEN 1 ELSE 0
+             END AS mapping_change_pool_healthy,
+             CASE
+                     WHEN (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'before_mapping_change') <>
+                                (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'after_mapping_change')
+                     THEN 1 ELSE 0
+             END AS mapping_change_reconnected,
+             CASE
+                     WHEN (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'after_mapping_change') =
+                                (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'after_mapping_change_again')
+                     THEN 1 ELSE 0
+             END AS mapping_change_reused_again;
+GO
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+
+
+-- Case 3: linked-server object invalidation.
+-- Recreating the server object should also force one reconnect, then later
+-- calls should reuse the replacement backend.
+-- Capture the current remote backend before replacing the linked-server
+-- catalog object itself.
+-- Issue a no-op call so the current remote backend is active before replacement.
+EXEC ls_pool_svr.master.dbo.rp_pool_noop;
+GO
+
+-- psql currentSchema=master_dbo,public
+-- Snapshot the remote session immediately before recreating the server object.
+INSERT INTO ls_pool_observations(stage, backend_pid, session_count)
+SELECT 'before_server_change', MIN(pid), COUNT(*)
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ls_pool_remote'
+    AND backend_type = 'client backend'
+    AND usesysid IS NOT NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql
+-- Drop and recreate the linked server, then verify that server metadata
+-- invalidation forces one reconnect and later calls reuse the new backend.
+-- Drop the linked-server object and all attached logins.
+EXEC sp_dropserver @server = 'ls_pool_svr', @droplogins = 'droplogins';
+GO
+
+-- Recreate the linked-server object
+EXEC sp_addlinkedserver @server = N'ls_pool_svr', @srvproduct = N'', @provider = N'tds_fdw', @datasrc = N'babelfish_test', @catalog = N'master';
+GO
+
+-- Recreate the linked-login mapping for the recreated server object.
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'ls_pool_svr', @useself = 'FALSE', @rmtuser = 'ls_pool_remote', @rmtpassword = 'Password_pool_remote_123';
+GO
+
+-- Re-enable inbound RPC execution on the recreated linked server.
+EXEC sp_serveroption @server = 'ls_pool_svr', @optname = 'rpc', @optvalue = 'true';
+GO
+
+-- Re-enable outbound RPC execution on the recreated linked server.
+EXEC sp_serveroption @server = 'ls_pool_svr', @optname = 'rpc out', @optvalue = 'true';
+GO
+
+-- Execute the first remote call after recreating the server object.
+EXEC ls_pool_svr.master.dbo.rp_pool_noop;
+GO
+
+-- psql currentSchema=master_dbo,public
+-- Snapshot the remote session after the first post-server-change call.
+INSERT INTO ls_pool_observations(stage, backend_pid, session_count)
+SELECT 'after_server_change', MIN(pid), COUNT(*)
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ls_pool_remote'
+    AND backend_type = 'client backend'
+    AND usesysid IS NOT NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql
+-- Execute the second remote call after recreating the server object.
+EXEC ls_pool_svr.master.dbo.rp_pool_noop;
+GO
+
+-- psql currentSchema=master_dbo,public
+-- Snapshot the remote session after the second post-server-change call.
+INSERT INTO ls_pool_observations(stage, backend_pid, session_count)
+SELECT 'after_server_change_again', MIN(pid), COUNT(*)
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ls_pool_remote'
+    AND backend_type = 'client backend'
+    AND usesysid IS NOT NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql
+-- Assert case 3:
+-- pool health returns to one session, the first post-recreate call
+-- reconnects, and the second post-recreate call reuses the new backend pid.
+-- Assert that server invalidation causes one reconnect and then reuse.
+SELECT CASE
+                     WHEN (SELECT session_count FROM dbo.ls_pool_observations WHERE stage = 'after_server_change') = 1
+                        AND (SELECT session_count FROM dbo.ls_pool_observations WHERE stage = 'after_server_change_again') = 1
+                     THEN 1 ELSE 0
+             END AS server_change_pool_healthy,
+             CASE
+                     WHEN (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'before_server_change') <>
+                                (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'after_server_change')
+                     THEN 1 ELSE 0
+             END AS server_change_reconnected,
+             CASE
+                     WHEN (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'after_server_change') =
+                                (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'after_server_change_again')
+                     THEN 1 ELSE 0
+             END AS server_change_reused_again;
+GO
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+
+-- Case 4: timeout invalidation.
+-- A timeout should make the old remote connection unusable. The next
+-- successful call should reconnect, and the following call should reuse the
+-- recovered backend.
+-- Capture the current remote backend before forcing a timeout on the same
+-- linked server.
+-- Issue a no-op call so the timeout test starts from an active reusable session.
+EXEC ls_pool_svr.master.dbo.rp_pool_noop;
+GO
+
+-- psql currentSchema=master_dbo,public
+-- Snapshot the remote session immediately before forcing the timeout.
+INSERT INTO ls_pool_observations(stage, backend_pid, session_count)
+SELECT 'before_timeout', MIN(pid), COUNT(*)
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ls_pool_remote'
+    AND backend_type = 'client backend'
+    AND usesysid IS NOT NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql
+-- Force a remote timeout. The next successful call should run on a fresh
+-- connection, and the call after that should be able to reuse it again.
+-- Set the linked-server query timeout low enough to force the sleep proc to fail.
+EXEC sp_serveroption @server = 'ls_pool_svr', @optname = 'query timeout', @optvalue = '1';
+GO
+
+-- Execute the sleeping remote procedure to trigger a timeout.
+EXEC ls_pool_svr.master.dbo.rp_pool_sleep;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Query timeout expired)~~
+
+
+-- Restore the linked-server query timeout after the forced timeout.
+EXEC sp_serveroption @server = 'ls_pool_svr', @optname = 'query timeout', @optvalue = '0';
+GO
+
+-- psql currentSchema=master_dbo,public
+-- Wait for the timed-out remote call to finish on the remote side before
+-- opening the replacement connection and taking the next snapshot.
+SELECT pg_sleep(5);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+-- Execute the first successful remote call after the timeout.
+EXEC ls_pool_svr.master.dbo.rp_pool_noop;
+GO
+
+-- psql currentSchema=master_dbo,public
+-- Snapshot the remote session after the first successful post-timeout call.
+INSERT INTO ls_pool_observations(stage, backend_pid, session_count)
+SELECT 'after_timeout', MIN(pid), COUNT(*)
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ls_pool_remote'
+    AND backend_type = 'client backend'
+    AND usesysid IS NOT NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql
+-- Execute the second successful remote call after the timeout.
+EXEC ls_pool_svr.master.dbo.rp_pool_noop;
+GO
+
+-- psql currentSchema=master_dbo,public
+-- Snapshot the remote session after the second successful post-timeout call.
+INSERT INTO ls_pool_observations(stage, backend_pid, session_count)
+SELECT 'after_timeout_again', MIN(pid), COUNT(*)
+FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ls_pool_remote'
+    AND backend_type = 'client backend'
+    AND usesysid IS NOT NULL;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql
+-- Assert case 4:
+-- pool health returns after recovery, the first successful post-timeout call
+-- reconnects, and the next call reuses that recovered backend pid.
+-- Assert that timeout recovery reconnects once and then resumes reuse.
+SELECT CASE
+                     WHEN (SELECT session_count FROM dbo.ls_pool_observations WHERE stage = 'after_timeout') = 1
+                        AND (SELECT session_count FROM dbo.ls_pool_observations WHERE stage = 'after_timeout_again') = 1
+                     THEN 1 ELSE 0
+             END AS timeout_pool_healthy,
+             CASE
+                     WHEN (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'before_timeout') <>
+                                (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'after_timeout')
+                     THEN 1 ELSE 0
+             END AS timeout_reconnected,
+             CASE
+                     WHEN (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'after_timeout') =
+                                (SELECT backend_pid FROM dbo.ls_pool_observations WHERE stage = 'after_timeout_again')
+                     THEN 1 ELSE 0
+             END AS timeout_reused_again;
+GO
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~

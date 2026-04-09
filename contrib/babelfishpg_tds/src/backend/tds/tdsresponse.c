@@ -2593,6 +2593,16 @@ TdsSendDone(int token, int status, int curcmd, uint64_t nprocessed)
 	markErrorFlag = false;
 }
 
+/* TODO: 注释风格和上面保持一致
+ * Preserve the existing TDS DONEINPROC framing for synthetic boundaries
+ * between visible remote rowsets inside one RemoteProcStmt execution.
+ */
+void
+TdsEmitRowsetBoundary(uint64_t rowcount)
+{
+	TdsSendDone(TDS_TOKEN_DONEINPROC, TDS_DONE_MORE, TDS_CMD_SELECT, rowcount);
+}
+
 int
 TdsFlush(void)
 {

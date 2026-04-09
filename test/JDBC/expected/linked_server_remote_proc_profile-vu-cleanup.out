@@ -1,0 +1,11 @@
+-- tsql
+USE master;
+GO
+
+IF OBJECT_ID('dbo.rp_profile_out', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.rp_profile_out;
+GO
+
+IF EXISTS (SELECT 1 FROM sys.servers WHERE name = 'ls_svr')
+    EXEC sp_dropserver @server = 'ls_svr', @droplogins = 'droplogins';
+GO

@@ -4,7 +4,7 @@ GO
 
 -- tsql
 -- Add localhost as linked server
-EXEC sp_addlinkedserver  @server = N'bbf_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+EXEC sp_addlinkedserver  @server = N'bbf_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost,11433', @catalog=N'master'
 GO
 
 -- Add jdbc_user as linked server login
@@ -27,7 +27,7 @@ EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server_2', @useself = 'FALSE', @rmt
 GO
 
 -- Test sp_serveroption procedure
-EXEC sp_addlinkedserver  @server = N'bbf_server_1', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+EXEC sp_addlinkedserver  @server = N'bbf_server_1', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost,11433', @catalog=N'master'
 GO
 
 -- Add jdbc_user as linked server login

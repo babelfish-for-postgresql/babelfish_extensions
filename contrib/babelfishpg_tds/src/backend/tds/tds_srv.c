@@ -277,6 +277,7 @@ pe_tds_init(ClientSocket *client_sock)
 
 	pltsql_plugin_handler_ptr->send_info = &TdsSendInfo;
 	pltsql_plugin_handler_ptr->send_done = &TdsSendDone;
+	pltsql_plugin_handler_ptr->emit_rowset_boundary = &TdsEmitRowsetBoundary;
 	pltsql_plugin_handler_ptr->send_env_change = &TdsSendEnvChange;
 	pltsql_plugin_handler_ptr->send_env_change_binary = &TdsSendEnvChangeBinary;
 	pltsql_plugin_handler_ptr->get_tsql_error = &get_tsql_error_details;

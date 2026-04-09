@@ -2,6 +2,16 @@
 -- tsql
 -- Here we run all the datatype related prepare scripts
 
+-- OPENQUERY should fail when linked server has no credential-bearing mapping
+EXEC sp_addlinkedserver  @server = N'bbf_server_no_login', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost,11433', @catalog=N'master'
+GO
+
+SELECT * FROM OPENQUERY(bbf_server_no_login, 'SELECT 1')
+GO
+
+EXEC sp_dropserver @server = 'bbf_server_no_login', @droplogins = 'droplogins'
+GO
+
 -- bigint
 include#!#input/datatypes/TestBigInt-vu-prepare.txt
 

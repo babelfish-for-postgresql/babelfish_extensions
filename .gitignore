@@ -44,4 +44,4 @@ contrib/babelfishpg_tsql/src/fts_scan.c
 contrib/babelfishpg_tsql/src/pl_gram.c
 contrib/babelfishpg_tsql/src/pl_gram.h
 contrib/babelfishpg_tsql/src/pl_gram.output
-
+contrib/babelfishpg_tsql/antlr/.antlr/

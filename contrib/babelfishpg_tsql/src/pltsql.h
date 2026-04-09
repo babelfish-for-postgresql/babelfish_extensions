@@ -26,6 +26,7 @@
 #include "commands/trigger.h"
 #include "collation.h"
 #include "executor/spi.h"
+#include "foreign/remoteproc_var.h"
 #include "libpq/libpq-be.h"
 #include "optimizer/planner.h"
 #include "utils/expandedrecord.h"
@@ -1640,6 +1641,7 @@ typedef struct error_map_details_t
  *
  * send_info - send INFO token
  * send_done - send DONE token
+ * emit_rowset_boundary - emit a synthetic client-visible rowset boundary
  * get_tsql_error - to get tsql error details from PG error
  *
  * Also when pltsql extension is loaded, we initialize the following callbacks
@@ -1681,6 +1683,11 @@ typedef struct PLtsql_protocol_plugin
 							  char *message, int line_no);
 	void		(*send_done) (int tag, int status,
 							  int curcmd, uint64_t nprocessed);
+	/*
+	 * Emit a synthetic boundary between visible rowsets within one running
+	 * statement. Normal statement completion continues to use stmt_end.
+	 */
+	void		(*emit_rowset_boundary) (uint64_t rowcount);
 	void		(*send_env_change) (int envid, const char *new_val, const char *old_val);
 	void		(*send_env_change_binary) (int envid, void *newValue, int newNbytes, void *oldValue, int oldNbytes);
 	bool		(*get_tsql_error) (ErrorData *edata,
@@ -2053,6 +2060,7 @@ extern PLtsql_function *pltsql_compile_inline(char *proc_source,
 											  InlineCodeBlockArgs *args);
 extern void pltsql_parser_setup(struct ParseState *pstate,
 								PLtsql_expr *expr);
+extern RemoteProcVarHook *pltsql_get_remote_proc_var_hook(void);
 extern bool pltsql_parse_word(char *word1, const char *yytxt,
 							  PLwdatum *wdatum, PLword *word);
 extern bool pltsql_parse_dblword(char *word1, char *word2,

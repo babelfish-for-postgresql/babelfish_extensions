@@ -121,9 +121,16 @@ runs:
           ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "$query" > ~/upgrade/domains_file.txt
 
           # Get the list of all foreign servers in a file
-          query="SELECT fs.srvname, fs.srvoptions, um.umoptions, so.query_timeout, so.connect_timeout \
+              query="SELECT fs.srvname, fs.srvoptions, um.umoptions, opts.query_timeout, opts.connect_timeout, opts.rpc_enabled, opts.rpc_out_enabled \
                 FROM pg_foreign_server fs \
-                INNER JOIN sys.babelfish_server_options so ON fs.srvname = so.servername \
+                INNER JOIN pg_dblink l ON l.dblserver = fs.oid \
+                LEFT JOIN LATERAL ( \
+                SELECT COALESCE(MAX(CASE WHEN o.option_name = 'query_timeout' THEN o.option_value ELSE NULL END), '') AS query_timeout, \
+                   COALESCE(MAX(CASE WHEN o.option_name = 'connect_timeout' THEN o.option_value ELSE NULL END), '') AS connect_timeout, \
+                   COALESCE(MAX(CASE WHEN o.option_name = 'rpc' THEN o.option_value ELSE NULL END), '') AS rpc_enabled, \
+                   COALESCE(MAX(CASE WHEN o.option_name = 'rpc out' THEN o.option_value ELSE NULL END), '') AS rpc_out_enabled \
+                  FROM pg_catalog.pg_options_to_table(COALESCE(l.dbloptions, ARRAY[]::text[])) o \
+                ) opts ON true \
                 LEFT JOIN pg_user_mappings um ON fs.srvname = um.srvname;"
           ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "$query" > ~/upgrade/servers_file.txt
 
@@ -261,13 +268,15 @@ runs:
           done < <(tail -n +3 ~/upgrade/users_file.txt | head -n -2)
 
           # Re-create foreign servers and user mappings
-          while IFS='|' read -r name soptions uoptions qt ct; do
+          while IFS='|' read -r name soptions uoptions qt ct rpc rpcout; do
             # Remove leading and trailing spaces
             srvname="$(echo "${name}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
             srvoptions="$(echo "${soptions}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
             umappings="$(echo "${uoptions}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
             query_timeout="$(echo "${qt}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
             connect_timeout="$(echo "${ct}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            rpc_enabled="$(echo "${rpc}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            rpc_out_enabled="$(echo "${rpcout}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 
             # Form the create linked server query
             query="EXEC sp_addlinkedserver  @server = N'$srvname', @provider=N'tds_fdw'"
@@ -293,11 +302,17 @@ runs:
             sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "$query;"
 
             # Update the query_timeout and connect_timeout
-            if [[ "$query_timeout" -ne 0 ]]; then
+            if [[ -n "$query_timeout" && "$query_timeout" -ne 0 ]]; then
               sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "EXEC sp_serveroption @server='$srvname', @optname='query timeout', @optvalue='$query_timeout';"
             fi
-            if [[ "$connect_timeout" -ne 0 ]]; then
+            if [[ -n "$connect_timeout" && "$connect_timeout" -ne 0 ]]; then
               sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "EXEC sp_serveroption @server='$srvname', @optname='connect timeout', @optvalue='$connect_timeout';"
+            fi
+            if [[ -n "$rpc_enabled" ]]; then
+              sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "EXEC sp_serveroption @server='$srvname', @optname='rpc', @optvalue='$rpc_enabled';"
+            fi
+            if [[ -n "$rpc_out_enabled" ]]; then
+              sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "EXEC sp_serveroption @server='$srvname', @optname='rpc out', @optvalue='$rpc_out_enabled';"
             fi
 
             if [ "$umappings" == '' ]; then

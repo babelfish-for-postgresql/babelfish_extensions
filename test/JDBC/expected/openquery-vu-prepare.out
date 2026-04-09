@@ -4,7 +4,7 @@ GO
 
 -- tsql
 -- Add localhost as linked server
-EXEC sp_addlinkedserver  @server = N'bbf_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+EXEC sp_addlinkedserver  @server = N'bbf_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost,11433', @catalog=N'master'
 GO
 
 -- Add jdbc_user as linked server login
@@ -27,7 +27,7 @@ EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server_2', @useself = 'FALSE', @rmt
 GO
 
 -- Test sp_serveroption procedure
-EXEC sp_addlinkedserver  @server = N'bbf_server_1', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+EXEC sp_addlinkedserver  @server = N'bbf_server_1', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost,11433', @catalog=N'master'
 GO
 
 -- Add jdbc_user as linked server login
@@ -54,7 +54,7 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='invalid option', @optvalu
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option provided for sp_serveroption. Only 'query timeout' and 'connect timeout' are currently supported.)~~
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
 
 
 -- sp_serveroption with server as NULL. Should throw error
@@ -100,14 +100,14 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option value for query timeout)~~
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
 
 
 EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='-55'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option value for connect timeout)~~
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
 
 
 -- sp_serveroption with float optvalue. should throw error
@@ -115,14 +115,14 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option value for query timeout)~~
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
 
 
 EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='1.0001'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option value for connect timeout)~~
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
 
 
 -- sp_serveroption with optvalue greater than INT_MAX. should throw error
@@ -130,14 +130,14 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: query timeout value provided is out of range)~~
+~~ERROR (Message: The conversion of the nvarchar value '2147483648' overflowed an int column.)~~
 
 
 EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='2147483648'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: connect timeout value provided is out of range)~~
+~~ERROR (Message: The conversion of the nvarchar value '2147483648' overflowed an int column.)~~
 
 
 -- sp_serveroption with optvalue containing characters other than 0-9. should throw error
@@ -145,14 +145,14 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option value for query timeout)~~
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
 
 
 EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='0abcsdejc'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option value for connect timeout)~~
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
 
 
 -- sp_serveroption with optvalue = INT_MAX
@@ -199,14 +199,14 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option value for query timeout)~~
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
 
 
 EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='++6'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option value for connect timeout)~~
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
 
 
 -- sp_serveroption with optvalue empty. should throw error
@@ -214,14 +214,14 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option value for query timeout)~~
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
 
 
 EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue=''
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option value for connect timeout)~~
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
 
 
 -- check the value of query timeout and connect timeout from sys.servers
@@ -306,14 +306,14 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='  query timeout', @optval
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option provided for sp_serveroption. Only 'query timeout' and 'connect timeout' are currently supported.)~~
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
 
 
 EXEC sp_serveroption @server='bbf_server_2', @optname='  connect timeout', @optvalue='1'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option provided for sp_serveroption. Only 'query timeout' and 'connect timeout' are currently supported.)~~
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
 
 
 -- ignore leading spaces in @optvalue argument
@@ -336,10 +336,6 @@ SELECT * FROM sys.babelfish_inconsistent_metadata(true) where schema_name='pg_ca
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#jsonb
-name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
-name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
-name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
-name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
 ~~END~~
 
 

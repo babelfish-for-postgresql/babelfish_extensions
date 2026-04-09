@@ -1,0 +1,25 @@
+-- tsql
+USE master;
+GO
+
+IF OBJECT_ID('dbo.rp_pool_noop', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.rp_pool_noop;
+GO
+
+IF OBJECT_ID('dbo.rp_pool_sleep', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.rp_pool_sleep;
+GO
+
+IF OBJECT_ID('dbo.ls_pool_observations', 'U') IS NOT NULL
+    DROP TABLE dbo.ls_pool_observations;
+GO
+
+IF EXISTS (SELECT 1 FROM sys.servers WHERE name = 'ls_pool_svr')
+    EXEC sp_dropserver @server = 'ls_pool_svr', @droplogins = 'droplogins';
+GO
+
+-- Expected: the connection-reuse test leaves an active linked-server session
+-- logged in as ls_pool_remote, so DROP LOGIN is rejected here.
+IF EXISTS (SELECT 1 FROM sys.server_principals WHERE name = 'ls_pool_remote')
+    DROP LOGIN ls_pool_remote;
+GO

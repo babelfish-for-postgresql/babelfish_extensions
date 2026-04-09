@@ -1,7 +1,7 @@
 # SET THIS CONNECTION STRING TO GENERATE THE EXPECTED OUTPUT FILE
 URL = localhost
-tsql_port = 1433
-psql_port = 5432
+tsql_port = 11433
+psql_port = 55432
 databaseName = master
 physicalDatabaseName = babelfish_db
 user = jdbc_user

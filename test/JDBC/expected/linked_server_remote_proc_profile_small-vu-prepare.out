@@ -1,0 +1,51 @@
+-- psql
+SET client_min_messages TO error;
+GO
+
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+GO
+
+GRANT USAGE ON FOREIGN DATA WRAPPER tds_fdw TO PUBLIC;
+GO
+
+-- tsql
+USE master;
+GO
+
+IF EXISTS (SELECT 1 FROM sys.servers WHERE name = 'ls_svr')
+    EXEC sp_dropserver @server = 'ls_svr', @droplogins = 'droplogins';
+GO
+
+EXEC sp_addlinkedserver  @server = N'ls_svr', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost,11433', @catalog=N'master';
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'ls_svr', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+EXEC sp_serveroption @server='ls_svr', @optname='rpc', @optvalue='true'
+GO
+
+EXEC sp_serveroption @server='ls_svr', @optname='rpc out', @optvalue='true'
+GO
+
+IF OBJECT_ID('dbo.rp_profile_small', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.rp_profile_small;
+GO
+
+CREATE PROCEDURE dbo.rp_profile_small
+    @x int,
+    @y int OUTPUT
+AS
+BEGIN
+    SELECT @x AS payload_value;
+    SET @y = @x + 1;
+END;
+GO
+
+SELECT name, data_source FROM sys.servers WHERE name = 'ls_svr';
+GO
+~~START~~
+varchar#!#nvarchar
+ls_svr#!#localhost
+~~END~~
+

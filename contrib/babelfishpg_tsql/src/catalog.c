@@ -82,12 +82,6 @@ Oid			bbf_view_def_oid;
 Oid			bbf_view_def_idx_oid;
 
 /*****************************************
- *			LINKED_SERVERS_DEF
- *****************************************/
-Oid			bbf_servers_def_oid;
-Oid			bbf_servers_def_idx_oid;
-
-/*****************************************
  *			FUNCTION_EXT
  *****************************************/
 Oid			bbf_function_ext_oid;
@@ -265,10 +259,6 @@ init_catalog(PG_FUNCTION_ARGS)
 	bbf_schema_perms_oid = get_relname_relid(BBF_SCHEMA_PERMS_TABLE_NAME, sys_schema_oid);
 	bbf_schema_perms_idx_oid = get_relname_relid(BBF_SCHEMA_PERMS_IDX_NAME, sys_schema_oid);
 
-	/* bbf_servers_def */
-	bbf_servers_def_oid = get_relname_relid(BBF_SERVERS_DEF_TABLE_NAME, sys_schema_oid);
-	bbf_servers_def_idx_oid = get_relname_relid(BBF_SERVERS_DEF_IDX_NAME, sys_schema_oid);
-
 	/* bbf_extended_properties */
 	bbf_extended_properties_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_TABLE_NAME, sys_schema_oid);
 	bbf_extended_properties_idx_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_IDX_NAME, sys_schema_oid);
@@ -334,7 +324,7 @@ IsPLtsqlExtendedCatalog(Oid relationId)
 	if (!babelfish_dump_restore && (relationId == sysdatabases_oid ||
 		relationId == bbf_function_ext_oid || relationId == namespace_ext_oid ||
 		relationId == bbf_authid_login_ext_oid || relationId == bbf_authid_user_ext_oid ||
-		relationId == bbf_view_def_oid || relationId == bbf_servers_def_oid ||
+		relationId == bbf_view_def_oid ||
 		relationId == bbf_schema_perms_oid || relationId == bbf_domain_mapping_oid ||
 		relationId == bbf_extended_properties_oid || relationId == bbf_assemblies_oid ||
 		relationId == bbf_configurations_oid || relationId == bbf_helpcollation_oid ||
@@ -1366,74 +1356,6 @@ clean_up_bbf_view_def(int16 dbid)
 }
 
 /*****************************************
- *			LINKED_SERVERS_DEF
- *****************************************/
-
-Oid
-get_bbf_servers_def_oid()
-{
-	if (!OidIsValid(bbf_servers_def_oid))
-		bbf_servers_def_oid = get_relname_relid(BBF_SERVERS_DEF_TABLE_NAME,
-											 get_namespace_oid("sys", false));
-
-	return bbf_servers_def_oid;
-}
-
-Oid
-get_bbf_servers_def_idx_oid()
-{
-	if (!OidIsValid(bbf_servers_def_idx_oid))
-		bbf_servers_def_idx_oid = get_relname_relid(BBF_SERVERS_DEF_IDX_NAME,
-											 get_namespace_oid("sys", false));
-
-	return bbf_servers_def_idx_oid;
-}
-
-int
-get_timeout_from_server_name(char *servername, int attnum)
-{
-	Relation	bbf_servers_def_rel;
-	HeapTuple	tuple;
-	ScanKeyData	key;
-	TableScanDesc	scan;
-	int		timeout = 0;
-
-	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
-										 RowExclusiveLock);
-
-	ScanKeyInit(&key,
-				Anum_bbf_servers_def_servername,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(servername));
-
-	scan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
-
-	tuple = heap_getnext(scan, ForwardScanDirection);
-	if (HeapTupleIsValid(tuple))
-	{
-		bool	isNull;
-		timeout = DatumGetInt32(heap_getattr(tuple, attnum,
-														 RelationGetDescr(bbf_servers_def_rel), &isNull));
-		if (isNull)
-			timeout = 0;
-	}
-
-	table_endscan(scan);
-	table_close(bbf_servers_def_rel, RowExclusiveLock);
-	return timeout;
-}
-
-void
-clean_up_bbf_server_def()
-{
-	/* Fetch the relation */
-	Relation bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), AccessExclusiveLock);
-	/* Truncate the relation */
-	heap_truncate_one_rel(bbf_servers_def_rel);
-	table_close(bbf_servers_def_rel, AccessExclusiveLock);
-}
-
-/*****************************************
  *			FUNCTION_EXT
  *****************************************/
 
@@ -1973,7 +1895,6 @@ static Datum get_function_nspname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_perms_schema_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc);
-static Datum get_server_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_partition_function_dbname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_partition_scheme_dbname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_partition_depend_dbname(HeapTuple tuple, TupleDesc dsc);
@@ -2132,13 +2053,6 @@ Rule		must_match_rules_schema_permission[] =
 	"pg_authid", "rolname", NULL, get_perms_grantee_name, NULL, check_exist, NULL}
 };
 
-/* babelfish_server_options */
-Rule		must_match_rules_srv_options[] =
-{
-	{"<servername> in babelfish_server_options must also exist in pg_foreign_server",
-	"pg_foreign_server", "srvname", NULL, get_server_name, NULL, check_exist, NULL}
-};
-
 /*
  * For consistency of the "dbid" column in partition catalogs, we search on the "name" column
  * in babelfish_sysdatabases instead of "dbid". The metadata consistency framework does not
@@ -2264,7 +2178,6 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 	size_t		num_must_match_rules_user = sizeof(must_match_rules_user) / sizeof(must_match_rules_user[0]);
 	size_t		num_must_match_rules_function = sizeof(must_match_rules_function) / sizeof(must_match_rules_function[0]);
 	size_t		num_must_match_rules_schema_permission = sizeof(must_match_rules_schema_permission) / sizeof(must_match_rules_schema_permission[0]);
-	size_t		num_must_match_rules_srv_options = sizeof(must_match_rules_srv_options) / sizeof(must_match_rules_srv_options[0]);
 	size_t		num_must_match_rules_partition_function = sizeof(must_match_rules_partition_function) / sizeof(must_match_rules_partition_function[0]);
 	size_t		num_must_match_rules_partition_scheme = sizeof(must_match_rules_partition_scheme) / sizeof(must_match_rules_partition_scheme[0]);
 	size_t		num_must_match_rules_partition_depend = sizeof(must_match_rules_partition_depend) / sizeof(must_match_rules_partition_depend[0]);
@@ -2299,9 +2212,6 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 		||
 		!(check_must_match_rules(must_match_rules_schema_permission, num_must_match_rules_schema_permission,
 								 bbf_schema_perms_oid, res_tupstore, res_tupdesc))
-		||
-		!(check_must_match_rules(must_match_rules_srv_options, num_must_match_rules_srv_options,
-								 bbf_servers_def_oid, res_tupstore, res_tupdesc))
 		||
 		!(check_must_match_rules(must_match_rules_partition_function, num_must_match_rules_partition_function,
 								 bbf_partition_function_oid, res_tupstore, res_tupdesc))
@@ -2628,16 +2538,6 @@ get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc)
 	truncate_identifier(grantee_name, strlen(grantee_name), false);
 
 	return CStringGetDatum(grantee_name);
-}
-
-static Datum
-get_server_name(HeapTuple tuple, TupleDesc dsc)
-{
-	Form_bbf_servers_def	srv_def = ((Form_bbf_servers_def) GETSTRUCT(tuple));
-	const text 		*srv_name = &(srv_def->servername);
-	char 			*servername = text_to_cstring(srv_name);
-
-	return CStringGetDatum(servername);
 }
 
 static Datum

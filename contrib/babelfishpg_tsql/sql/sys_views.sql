@@ -3524,11 +3524,11 @@ SELECT
                   else NULL
                   end, ',')
           from unnest(f.srvoptions) as option) as sys.sysname) AS catalog,
-  CAST(s.connect_timeout as int) AS connect_timeout,
-  CAST(s.query_timeout as int) AS query_timeout,
+  CAST(d.connect_timeout as int) AS connect_timeout,
+  CAST(d.query_timeout as int) AS query_timeout,
   CAST(1 as sys.bit) AS is_linked,
   CAST(0 as sys.bit) AS is_remote_login_enabled,
-  CAST(0 as sys.bit) AS is_rpc_out_enabled,
+  CAST(d.rpc_out_enabled as sys.bit) AS is_rpc_out_enabled,
   CAST(1 as sys.bit) AS is_data_access_enabled,
   CAST(0 as sys.bit) AS is_collation_compatible,
   CAST(1 as sys.bit) AS uses_remote_collation,
@@ -3544,7 +3544,23 @@ SELECT
   CAST(0 as sys.bit) AS is_rda_server
 FROM pg_foreign_server AS f
 LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
-LEFT JOIN sys.babelfish_server_options AS s on f.srvname = s.servername
+LEFT JOIN pg_dblink AS l ON l.dblserver = f.oid
+LEFT JOIN LATERAL
+(
+  SELECT COALESCE(MAX(CASE
+                        WHEN o.option_name = 'connect_timeout' THEN o.option_value::int
+                        ELSE NULL
+                      END), 0) AS connect_timeout,
+         COALESCE(MAX(CASE
+                        WHEN o.option_name = 'query_timeout' THEN o.option_value::int
+                        ELSE NULL
+                      END), 0) AS query_timeout,
+         COALESCE(MAX(CASE
+                        WHEN o.option_name = 'rpc out' AND pg_catalog.lower(o.option_value) = 'true' THEN 1
+                        ELSE NULL
+                      END), 0) AS rpc_out_enabled
+    FROM pg_catalog.pg_options_to_table(COALESCE(l.dbloptions, ARRAY[]::text[])) AS o
+) AS d ON true
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.servers TO PUBLIC;
 

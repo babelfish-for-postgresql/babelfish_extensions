@@ -49,9 +49,8 @@ public class HandleException {
                         bw.write("Error: " + e.getErrorCode() + "\n");
                         bw.write("SQL State: " + e.getSQLState() + "\n");
                         bw.write("Error message: "+ e.getMessage() + "\n");
-
-                        bw.close();
-                        System.exit(0);
+                        bw.flush();
+                        throw new RuntimeException("Remote server connection dropped with SQLState 08S01", e);
                     }
                     String errorMsg = e.getMessage();
                     //Do not print ClientConnectionId as part of error message

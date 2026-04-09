@@ -64,6 +64,8 @@
 #include "session.h"
 #include "catalog.h"
 
+extern PLtsql_execstate *get_current_tsql_estate(void);
+
 uint64		rowcount_var = 0;
 List	   *columns_updated_list = NIL;
 static char *original_query_string = NULL;
@@ -4440,6 +4442,9 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 void
 exec_eval_cleanup(PLtsql_execstate *estate)
 {
+	SimpleEcontextStackEntry *entry;
+	bool		econtext_live = false;
+
 	/* Clear result of a full SPI_execute */
 	if (estate->eval_tuptable != NULL)
 		SPI_freetuptable(estate->eval_tuptable);
@@ -4450,7 +4455,21 @@ exec_eval_cleanup(PLtsql_execstate *estate)
 	 * also clears any short-lived allocations done via get_eval_mcontext.
 	 */
 	if (estate->eval_econtext != NULL)
-		ResetExprContext(estate->eval_econtext);
+	{
+		for (entry = simple_econtext_stack; entry != NULL; entry = entry->next)
+		{
+			if (entry->stack_econtext == estate->eval_econtext)
+			{
+				econtext_live = true;
+				break;
+			}
+		}
+
+		if (econtext_live)
+			ResetExprContext(estate->eval_econtext);
+		else
+			estate->eval_econtext = NULL;
+	}
 }
 
 /*
@@ -10539,6 +10558,26 @@ pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, Er
 
 PG_FUNCTION_INFO_V1(pltsql_assign_var);
 
+static bool pltsql_remote_proc_resolve_var(const char *varname,
+									 Oid *vartype,
+									 int32 *vartypmod,
+									 Datum *value,
+									 bool *isnull,
+									 void **varref);
+
+/*
+ * Callback for RemoteProcVarHook::assign_var.
+ *
+ * varref is an opaque handle produced by pltsql_remote_proc_resolve_var().
+ * The callback decodes the datum index and assigns the value into the
+ * corresponding PL/tsql datum in the current execution estate.
+ */
+static bool pltsql_remote_proc_assign_var(void *varref,
+									Oid valtype,
+									int32 valtypmod,
+									Datum value,
+									bool isnull);
+
 /*
  * pltsql_assign_var - Helper function to update local variables dynamically during execution.
  * Any statement which updates local variables as part of TargetList will be re-written using
@@ -10581,4 +10620,150 @@ pltsql_assign_var(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_DATUM(data);
+}
+
+/*
+ * pltsql_get_remote_proc_var_hook
+ *
+ * Return the PL/tsql implementation of RemoteProcVarHook callbacks used by
+ * utility-layer remote procedure execution.
+ *
+ * The returned hook is process-lifetime static storage and exposes:
+ *   - resolve_var: map local variable name to current value/type plus handle
+ *   - assign_var: write remote OUTPUT values back to local variables
+ */
+RemoteProcVarHook *
+pltsql_get_remote_proc_var_hook(void)
+{
+	static RemoteProcVarHook hook = {
+		.resolve_var = pltsql_remote_proc_resolve_var,
+		.assign_var = pltsql_remote_proc_assign_var
+	};
+
+	return &hook;
+}
+
+/*
+ * pltsql_remote_proc_resolve_var
+ *
+ * Resolve a T-SQL local variable name to its current value/type, and
+ * optionally return an opaque handle for later assignment.
+ *
+ * This is used by the utility-layer remote procedure execution path when
+ * processing OUTPUT arguments such as "@y = @y OUTPUT".
+ */
+static bool
+pltsql_remote_proc_resolve_var(const char *varname,
+							Oid *vartype,
+							int32 *vartypmod,
+							Datum *value,
+							bool *isnull,
+							void **varref)
+{
+	PLtsql_execstate *estate;
+	int			dno = -1;
+	int			i;
+	PLtsql_datum *datum;
+	int16		typlen;
+	bool		typbyval;
+
+	/* Reject empty variable names early. */
+	if (varname == NULL || varname[0] == '\0')
+		return false;
+
+	/* Must run inside an active PL/tsql execution estate. */
+	estate = get_current_tsql_estate();
+	if (estate == NULL || estate->datums == NULL)
+		return false;
+
+	/*
+	 * Resolve by case-insensitive refname lookup over scalar and table
+	 * variables.  We intentionally skip other datum kinds (record, row, etc.).
+	 */
+	for (i = 0; i < estate->ndatums; i++)
+	{
+		PLtsql_datum *candidate = estate->datums[i];
+		PLtsql_variable *var;
+
+		if (candidate == NULL)
+			continue;
+		if (candidate->dtype != PLTSQL_DTYPE_VAR &&
+			candidate->dtype != PLTSQL_DTYPE_TBL)
+			continue;
+
+		var = (PLtsql_variable *) candidate;
+		if (var->refname == NULL)
+			continue;
+
+		if (pg_strcasecmp(var->refname, varname) == 0)
+		{
+			dno = i;
+			break;
+		}
+	}
+
+	if (dno < 0)
+		return false;
+
+	/* Evaluate current variable value/type in executor context. */
+	datum = estate->datums[dno];
+	exec_eval_datum(estate, datum, vartype, vartypmod, value, isnull);
+
+	/*
+	 * Copy pass-by-reference values so callers can safely retain them beyond
+	 * transient evaluation memory contexts.
+	 */
+	if (!*isnull)
+	{
+		get_typlenbyval(*vartype, &typlen, &typbyval);
+		*value = datumCopy(*value, typbyval, typlen);
+	}
+
+	/* Return an opaque handle for later OUTPUT assignment. */
+	if (varref != NULL)
+		*varref = (void *) (intptr_t) (dno + 1);
+
+	return true;
+}
+
+/*
+ * pltsql_remote_proc_assign_var
+ *
+ * Assign an OUTPUT value from remote-procedure execution back to a local
+ * PL/tsql datum identified by the opaque varref handle.
+ */
+static bool
+pltsql_remote_proc_assign_var(void *varref,
+							Oid valtype,
+							int32 valtypmod,
+							Datum value,
+							bool isnull)
+{
+	PLtsql_execstate *estate;
+	PLtsql_datum *target;
+	intptr_t	dno_encoded;
+	int			dno;
+
+	/* NULL handle means there is nothing to assign. */
+	if (varref == NULL)
+		return false;
+
+	/* Decode handle (encoded as dno + 1) back to datum index. */
+	dno_encoded = (intptr_t) varref;
+	dno = (int) dno_encoded - 1;
+
+	/* Validate current estate and decoded index bounds. */
+	estate = get_current_tsql_estate();
+	if (estate == NULL)
+		return false;
+	if (dno < 0 || dno >= estate->ndatums)
+		return false;
+
+	target = estate->datums[dno];
+	if (valtype == InvalidOid)
+		valtype = UNKNOWNOID;
+
+	/* Reuse normal assignment/coercion rules for PL/tsql datums. */
+	exec_assign_value(estate, target, value, isnull, valtype, valtypmod);
+	return true;
 }

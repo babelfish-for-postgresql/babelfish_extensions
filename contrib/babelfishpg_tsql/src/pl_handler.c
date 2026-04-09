@@ -19,6 +19,7 @@
 #include "access/relation.h"
 #include "access/htup_details.h"
 #include "access/parallel.h"
+#include "access/reloptions.h"
 #include "access/table.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
@@ -30,6 +31,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_default_acl.h"
+#include "catalog/pg_dblink.h"
 #include "catalog/pg_shdepend.h"
 #include "commands/createas.h"
 #include "catalog/pg_namespace.h"
@@ -45,6 +47,7 @@
 #include "common/md5.h"
 #include "common/string.h"
 #include "funcapi.h"
+#include "foreign/foreign.h"
 #include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -188,6 +191,10 @@ static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *q
 											   ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 static void validateUserAndRole(char *name);
+static void pltsql_remote_proc_pre_exec_auth_hook(Oid userid,
+											 const char *dblinkname,
+											 Oid serverid,
+											 const struct RemoteProcStmt *stmt);
 
 static void bbf_ExecDropStmt(DropStmt *stmt);
 
@@ -315,6 +322,9 @@ static relname_lookup_hook_type prev_relname_lookup_hook = NULL;
 static ProcessUtility_hook_type prev_ProcessUtility = NULL;
 static get_func_language_oids_hook_type prev_get_func_language_oids_hook = NULL;
 static tsql_has_linked_srv_permissions_hook_type prev_tsql_has_linked_srv_permissions_hook = NULL;
+static remote_proc_pre_exec_auth_hook_type prev_remote_proc_pre_exec_auth_hook = NULL;
+static remote_proc_result_set_boundary_hook_type prev_remote_proc_result_set_boundary_hook = NULL;
+static remote_proc_return_status_hook_type prev_remote_proc_return_status_hook = NULL;
 plansource_complete_hook_type prev_plansource_complete_hook = NULL;
 plansource_revalidate_hook_type prev_plansource_revalidate_hook = NULL;
 planner_node_transformer_hook_type prev_planner_node_transformer_hook = NULL;
@@ -326,6 +336,71 @@ static void
 set_procid(Oid oid)
 {
 	procid_var = oid;
+}
+
+/*
+ * Compatibility-layer pre-dispatch authorization for remote procedures.
+ *
+ * This hook owns SQL Server-compatible linked-server policy checks and error
+ * messages, while core utility code remains policy-agnostic.
+ */
+static void
+pltsql_remote_proc_pre_exec_auth_hook(Oid userid,
+								   const char *dblinkname,
+								   Oid serverid,
+								   const struct RemoteProcStmt *stmt)
+{
+	List	   *dblink_options;
+	bool		rpc_out_enabled;
+
+	dblink_options = GetDatabaseLinkOptionsByName(dblinkname, false);
+
+	rpc_out_enabled = get_dblink_option_bool(dblink_options, "rpc out", true);
+	if (!rpc_out_enabled)
+		rpc_out_enabled = get_dblink_option_bool(dblink_options, "rpc_out", false);
+
+	/*
+	 * RemoteProcStmt represents an outbound linked-server RPC
+	 * (<server>.<database>.<schema>.<procedure>), so SQL Server-compatible
+	 * gating is controlled solely by "rpc out".  The "rpc" option remains
+	 * reserved for inbound remote->local semantics and is not enforced here.
+	 */
+	if (stmt != NULL && !rpc_out_enabled)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("rpc out is disabled for linked server \"%s\"", dblinkname)));
+}
+
+/*
+ * Request a client-visible boundary between visible remote rowsets when the
+ * current client path can represent multiple result sets. This is separate
+ * from stmt_end because the surrounding RemoteProcStmt is still running.
+ */
+static void
+pltsql_remote_proc_result_set_boundary_hook(uint64 rowcount)
+{
+	if (!pltsql_protocol_plugin_ptr || !*pltsql_protocol_plugin_ptr)
+		return;
+
+	if (!(*pltsql_protocol_plugin_ptr)->is_tds_client ||
+		(*pltsql_protocol_plugin_ptr)->emit_rowset_boundary == NULL)
+		return;
+
+	(*pltsql_protocol_plugin_ptr)->emit_rowset_boundary(rowcount);
+}
+
+/*
+ * Cache the final remote procedure status in the shared EXEC return-code
+ * slot so later assignment logic can treat remote and local EXEC paths the
+ * same way.
+ */
+static void
+pltsql_remote_proc_return_status_hook(int32 return_status, bool isnull)
+{
+	if (isnull)
+		pltsql_proc_return_code = 0;
+	else
+		pltsql_proc_return_code = return_status;
 }
 
 static bool
@@ -5379,19 +5454,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 	call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 
-	/* Cleanup babelfish_server_options catalog when tds_fdw extension is dropped */
-	if (sql_dialect == SQL_DIALECT_PG && nodeTag(parsetree) == T_DropStmt)
-	{
-		DropStmt   *drop_stmt = (DropStmt *) parsetree;
-		if (drop_stmt != NULL && drop_stmt->removeType == OBJECT_EXTENSION)
-		{
-			char *ext_name = strVal(lfirst(list_head(drop_stmt->objects)));
-			if ((strcmp(ext_name, "tds_fdw") == 0) && drop_stmt->behavior == DROP_CASCADE)
-			{
-				clean_up_bbf_server_def();
-			}
-		}
-	}
 }
 
 static void
@@ -5938,6 +6000,12 @@ _PG_init(void)
 	/* Set up a rendezvous point with optional instrumentation plugin */
 	pltsql_plugin_ptr = (PLtsql_plugin **) find_rendezvous_variable("PLtsql_plugin");
 	pltsql_instr_plugin_ptr = (PLtsql_instr_plugin **) find_rendezvous_variable("PLtsql_instr_plugin");
+	{
+		RemoteProcVarHook **remote_proc_var_hook_ptr;
+
+		remote_proc_var_hook_ptr = (RemoteProcVarHook **) find_rendezvous_variable("remote_proc_var_hook");
+		*remote_proc_var_hook_ptr = pltsql_get_remote_proc_var_hook();
+	}
 
 	/* Set up a rendezvous point with optional protocol plugin */
 	pltsql_protocol_plugin_ptr = (PLtsql_protocol_plugin **)
@@ -6086,6 +6154,16 @@ _PG_init(void)
 	get_func_language_oids_hook = get_func_language_oids;
 	coalesce_typmod_hook = coalesce_typmod_hook_impl;
 
+	prev_remote_proc_pre_exec_auth_hook = remote_proc_pre_exec_auth_hook;
+	remote_proc_pre_exec_auth_hook = pltsql_remote_proc_pre_exec_auth_hook;
+
+	/* Preserve TDS-visible rowset boundaries and EXEC return status in Babelfish. */
+	prev_remote_proc_result_set_boundary_hook = remote_proc_result_set_boundary_hook;
+	remote_proc_result_set_boundary_hook = pltsql_remote_proc_result_set_boundary_hook;
+
+	prev_remote_proc_return_status_hook = remote_proc_return_status_hook;
+	remote_proc_return_status_hook = pltsql_remote_proc_return_status_hook;
+
 	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
 
 	inited = true;
@@ -6114,6 +6192,9 @@ _PG_fini(void)
 	non_tsql_proc_entry_hook = prev_non_tsql_proc_entry_hook;
 	get_func_language_oids_hook = prev_get_func_language_oids_hook;
 	tsql_has_linked_srv_permissions_hook = prev_tsql_has_linked_srv_permissions_hook;
+	remote_proc_pre_exec_auth_hook = prev_remote_proc_pre_exec_auth_hook;
+	remote_proc_result_set_boundary_hook = prev_remote_proc_result_set_boundary_hook;
+	remote_proc_return_status_hook = prev_remote_proc_return_status_hook;
 
 	UninstallExtendedHooks();
 }

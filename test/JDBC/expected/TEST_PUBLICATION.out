@@ -39,7 +39,6 @@ sys.babelfish_partition_depend
 sys.babelfish_partition_function
 sys.babelfish_partition_scheme
 sys.babelfish_schema_permissions
-sys.babelfish_server_options
 sys.babelfish_sysdatabases
 sys.babelfish_syslanguages
 sys.babelfish_view_def

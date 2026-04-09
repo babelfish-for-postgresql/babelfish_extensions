@@ -75,6 +75,24 @@ using namespace std;
 using namespace antlr4;
 using namespace tree;
 
+static bool
+is_execute_proc_name_context(antlr4::ParserRuleContext *ctx)
+{
+	for (antlr4::tree::ParseTree *p = ctx; p != nullptr; p = p->parent)
+	{
+		auto *prc = dynamic_cast<antlr4::ParserRuleContext *>(p);
+		if (prc == nullptr)
+			continue;
+
+		if (dynamic_cast<TSqlParser::Execute_statementContext *>(prc) != nullptr ||
+			dynamic_cast<TSqlParser::Execute_bodyContext *>(prc) != nullptr ||
+			dynamic_cast<TSqlParser::Execute_body_batchContext *>(prc) != nullptr)
+			return true;
+	}
+
+	return false;
+}
+
 class TsqlUnsupportedFeatureHandlerImpl : public TsqlUnsupportedFeatureHandler
 {
 public:
@@ -1497,7 +1515,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_database_sc
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx)
 {
-	if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.funcname */
+	if (ctx->DOT().size() >= 3 && ctx->server && !is_execute_proc_name_context(ctx)) /* server.db.schema.funcname */
 		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
 
 	if (ctx->DOT().empty())

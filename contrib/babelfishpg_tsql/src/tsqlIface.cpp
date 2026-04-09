@@ -201,6 +201,11 @@ static bool does_object_name_need_delimiter(TSqlParser::IdContext *id);
 static std::string delimit_identifier(TSqlParser::IdContext *id);
 static bool does_msg_exceeds_params_limit(const std::string& msg);
 static std::string getIDName(TerminalNode *dq, TerminalNode *sb, TerminalNode *id);
+static void extract_func_proc_name_parts(TSqlParser::Func_proc_name_server_database_schemaContext *ctx,
+										 std::string &server_name,
+										 std::string &db_name,
+										 std::string &schema_name,
+										 std::string &proc_name);
 static ANTLR_result antlr_parse_query(const char *sourceText, bool useSSLParsing);
 std::string rewriteDoubleQuotedString(const std::string strDoubleQuoted);
 std::string escapeDoubleQuotes(const std::string strWithDoubleQuote);
@@ -385,6 +390,21 @@ stripQuoteFromId(std::string s)
 		return s.substr(1,s.length()-2);
 	}
 	return s;
+}
+
+static void
+extract_func_proc_name_parts(TSqlParser::Func_proc_name_server_database_schemaContext *ctx,
+							 std::string &server_name,
+							 std::string &db_name,
+							 std::string &schema_name,
+							 std::string &proc_name)
+	{
+	Assert(ctx);
+
+	server_name = (ctx->server ? stripQuoteFromId(ctx->server) : "");
+	db_name = (ctx->database ? stripQuoteFromId(ctx->database) : "");
+	schema_name = (ctx->schema ? stripQuoteFromId(ctx->schema) : "");
+	proc_name = (ctx->procedure ? stripQuoteFromId(ctx->procedure) : "");
 }
 
 static int
@@ -1963,14 +1983,11 @@ public:
 			
 			ctx_name       = body->func_proc_name_server_database_schema();
 			if (ctx_name) 
-			{				
-				if (ctx_name->database)
-				{
-					db_name = stripQuoteFromId(ctx_name->database);
-					is_cross_db = true;
-				}
-				if (ctx_name->schema)
-					schema_name = stripQuoteFromId(ctx_name->schema);
+			{
+				std::string server_name;
+				std::string proc_name;
+				extract_func_proc_name_parts(ctx_name, server_name, db_name, schema_name, proc_name);
+				is_cross_db = !db_name.empty();
 			}
 		}
 
@@ -6897,6 +6914,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	std::string schema_name;
 	std::string proc_name;
 	std::string db_name;
+	std::string server_name;
 	std::string name;		
 	int lineno = getLineNo(ctx);
 	int return_code_dno = -1;	
@@ -6949,6 +6967,8 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	
 	if (ctx_name) 
 	{
+		extract_func_proc_name_parts(ctx_name, server_name, db_name, schema_name, proc_name);
+
 		// Get the name of procedure being executed, and split up in parts
 		name = ::getFullText(ctx_name);
 		name_length = ctx_name->stop->getStopIndex() - ctx_name->start->getStartIndex() + 1;
@@ -6957,25 +6977,11 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		// Original position of the name
 		namePos = ctx_name->start->getStartIndex();		
 		
-		if (ctx_name->database)
-		{
-			db_name = stripQuoteFromId(ctx_name->database);
-		}
-
-		if (ctx_name->schema)
-		{
-			schema_name = stripQuoteFromId(ctx_name->schema);
-		}
-		
-		if (ctx_name->procedure)
-		{
-			proc_name = stripQuoteFromId(ctx_name->procedure);
-		}
-		
 		// Note: previous code performed rewriting here for procedure names with leading dots (EXEC ..proc1)
 		// This is now performed in exitFunc_proc_name_server_database_schema() which is called via the mutator (previously, it wasn't).
 
-		if ((!proc_name.empty() && pg_strncasecmp(proc_name.c_str(), "sp_", 3) == 0) &&
+		if (server_name.empty() &&
+			(!proc_name.empty() && pg_strncasecmp(proc_name.c_str(), "sp_", 3) == 0) &&
 			(schema_name.empty() || pg_strcasecmp(schema_name.c_str(), "dbo") == 0))
 		{
 			/*
@@ -6985,7 +6991,8 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 			name.replace(name.begin(), name.end(), proc_name);
 			name_length = proc_name.length();
 		}
-		else if (is_sp_proc(proc_name) && !schema_name.empty() && pg_strcasecmp(schema_name.c_str(), "sys") == 0)
+		else if (server_name.empty() &&
+				 is_sp_proc(proc_name) && !schema_name.empty() && pg_strcasecmp(schema_name.c_str(), "sys") == 0)
 		{
 			/*
 			 * These sys.sp_procs do not actually exists in sys schema
@@ -7017,7 +7024,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		}
 	}
 			
-	if (is_sp_proc(name))
+	if (server_name.empty() && is_sp_proc(name))
 	{
 		// If this is one of the special stored procs, exit here
 		return makeSpStatement(name, func_proc_args, lineno, return_code_dno);
@@ -8910,10 +8917,15 @@ rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getData
 		std::string name = ::getFullText(ctx);
 		if (ctx->DOT().size() == 3)
 		{
-			// We can assume servername is null (because tsqlCommonMutator::exitFull_object_name handles that case)
-			// so we can remove the first leading dot. The remaining name should be handled the same way as with two dots.
-			name = name.substr(1);
-			must_rewrite = true;  // Make sure to rewrite because we stripped off the initial dot
+			/*
+			 * For forms like ".db.schema.obj" (omitted server), strip only the leading dot.
+			 * For valid 4-part names like "server.db.schema.obj", do not strip anything.
+			 */
+			if (!name.empty() && name[0] == '.')
+			{
+				name = name.substr(1);
+				must_rewrite = true;
+			}
 		}
 
 		auto database = getDatabase(ctx);

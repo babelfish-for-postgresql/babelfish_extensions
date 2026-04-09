@@ -2,10 +2,15 @@
 #include "funcapi.h"
 #include "varatt.h"
 
+#include "access/reloptions.h"
+#include "catalog/pg_dblink.h"
+#include "catalog/pg_user_mapping.h"
+#include "commands/defrem.h"
 #include "foreign/foreign.h"
 #include "libpq/pqformat.h"
 #include "tsearch/ts_locale.h"
 #include "utils/builtins.h"
+#include "utils/syscache.h"
 #include "miscadmin.h"
 
 #include "pltsql.h"
@@ -52,7 +57,6 @@ static int
 linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state, int severity, char *error_msg, char *svr_name, char *proc_name, int line)
 {
 	StringInfoData buf;
-
 	initStringInfo(&buf);
 
 	/*
@@ -732,6 +736,107 @@ ValidateLinkedServerDataSource(char *data_src)
 				 errmsg("Only fully qualified domain name or IP address are allowed as data source")));
 }
 
+static UserMapping *
+get_user_mapping_if_exists(Oid userid, Oid serverid)
+{
+	Datum		datum;
+	HeapTuple	tp;
+	bool		isnull;
+	UserMapping *mapping;
+
+	tp = SearchSysCache2(USERMAPPINGUSERSERVER,
+							 ObjectIdGetDatum(userid),
+							 ObjectIdGetDatum(serverid));
+	if (!HeapTupleIsValid(tp))
+		return NULL;
+
+	mapping = (UserMapping *) palloc(sizeof(UserMapping));
+	mapping->umid = ((Form_pg_user_mapping) GETSTRUCT(tp))->oid;
+	mapping->userid = userid;
+	mapping->serverid = serverid;
+
+	datum = SysCacheGetAttr(USERMAPPINGUSERSERVER,
+						   tp,
+						   Anum_pg_user_mapping_umoptions,
+						   &isnull);
+	if (isnull)
+		mapping->options = NIL;
+	else
+		mapping->options = untransformRelOptions(datum);
+
+	ReleaseSysCache(tp);
+
+	return mapping;
+}
+
+static bool
+mapping_has_required_credentials(UserMapping *mapping, char **username, char **password)
+{
+	ListCell   *option;
+
+	*username = NULL;
+	*password = NULL;
+
+	if (mapping == NULL)
+		return false;
+
+	foreach(option, mapping->options)
+	{
+		DefElem    *element = (DefElem *) lfirst(option);
+		char	   *value;
+
+		if (strcmp(element->defname, "username") == 0)
+		{
+			value = defGetString(element);
+			if (value && strlen(value) > 0)
+				*username = value;
+		}
+		else if (strcmp(element->defname, "password") == 0)
+		{
+			value = defGetString(element);
+			if (value && strlen(value) > 0)
+				*password = value;
+		}
+	}
+
+	return (*username != NULL && *password != NULL);
+}
+
+/*
+ * Resolve the credential-bearing mapping to use for a linked-server login.
+ *
+ * Prefer a mapping owned by the current user. If that mapping is missing, or
+ * if it does not contain both username and password, fall back to the PUBLIC
+ * mapping for the same server. Leave the output pointers NULL if no usable
+ * mapping exists.
+ */
+static UserMapping *
+resolve_credential_mapping(Oid userid, Oid serverid, char **username, char **password)
+{
+	UserMapping *mapping;
+
+	/* Prefer a mapping specific to the current user. */
+	mapping = get_user_mapping_if_exists(userid, serverid);
+	if (mapping_has_required_credentials(mapping, username, password))
+		return mapping;
+
+	/*
+	 * If the caller is not already PUBLIC, fall back to the shared PUBLIC
+	 * mapping for the server.
+	 */
+	if (OidIsValid(userid))
+	{
+		mapping = get_user_mapping_if_exists(InvalidOid, serverid);
+		if (mapping_has_required_credentials(mapping, username, password))
+			return mapping;
+	}
+
+	/* No credential-bearing mapping was found in either lookup path. */
+	*username = NULL;
+	*password = NULL;
+	return NULL;
+}
+
 static void
 linked_server_establish_connection(char *servername, LinkedServerProcess * lsproc, bool isTesting)
 {
@@ -742,7 +847,12 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 	LinkedServerLogin login;
 	ListCell	*option;
 	char	*data_src = NULL;
+	char	*endpoint = NULL;
 	char	*database = NULL;
+	char	*port = NULL;
+	char	*remote_username = NULL;
+	char	*remote_password = NULL;
+	List	*dblink_options = NIL;
 	int	query_timeout = 0;
 	int	connect_timeout = 0;
 
@@ -762,13 +872,17 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 					 errmsg("Error fetching foreign server with servername '%s'", servername)
 					 ));
 
-		mapping = GetUserMapping(GetUserId(), server->serverid);
+		mapping = resolve_credential_mapping(GetUserId(), server->serverid,
+											 &remote_username, &remote_password);
 
 		if (mapping == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					 errmsg("Error fetching user mapping with servername '%s'", servername)
+					 errmsg("No credential-bearing linked-server login mapping exists for server \"%s\"", servername),
+					 errdetail("Configure a linked login with both remote user and password using sp_addlinkedsrvlogin.")
 					 ));
+
+		dblink_options = GetDatabaseLinkOptionsByName(servername, false);
 
 		if (LINKED_SERVER_INIT() == FAIL)
 			ereport(ERROR,
@@ -780,49 +894,37 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 		LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
 
 		login = LINKED_SERVER_LOGIN();
+		LINKED_SERVER_DEBUG("LINKED SERVER: Setting user as \"%s\" in login request", remote_username);
+		LINKED_SERVER_SET_USER(login, remote_username);
+		LINKED_SERVER_DEBUG("LINKED SERVER: Setting password in login request");
+		LINKED_SERVER_SET_PWD(login, remote_password);
 
-		/* options in user mapping should be the username and password */
-		foreach(option, mapping->options)
-		{
-			DefElem    *element = (DefElem *) lfirst(option);
-
-			if (strcmp(element->defname, "username") == 0)
-			{
-				LINKED_SERVER_DEBUG("LINKED SERVER: Setting user as \"%s\" in login request", defGetString(element));
-				LINKED_SERVER_SET_USER(login, defGetString(element));
-			}
-			else if (strcmp(element->defname, "password") == 0)
-			{
-				LINKED_SERVER_DEBUG("LINKED SERVER: Setting password in login request");
-				LINKED_SERVER_SET_PWD(login, defGetString(element));
-			}
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						 errmsg("Unrecognized option \"%s\" for user mapping", element->defname)
-						 ));
-		}
-
-		/* fetch connect timeout from the servername */
-		connect_timeout = get_timeout_from_server_name(servername, Anum_bbf_servers_def_connect_timeout);
+		/* fetch connect timeout from the linked-server dblink options */
+		connect_timeout = get_dblink_option_int(dblink_options,
+									 "connect_timeout",
+									 0);
 
 		/*
-		 * fetch query timeout from the servername
+		 * fetch query timeout from the linked-server dblink options.
 		 * Don't fetch when testing connection as query timeout is not required
 		 */
 		if(!isTesting)
-			query_timeout = get_timeout_from_server_name(servername, Anum_bbf_servers_def_query_timeout);
+			query_timeout = get_dblink_option_int(dblink_options,
+									  "query_timeout",
+									  0);
 
 		LINKED_SERVER_SET_APP(login);
 		LINKED_SERVER_SET_VERSION(login);
 
-		/* options in foreign server should be the servername and database */
+		/* options in foreign server should be the servername, optional port and database */
 		foreach(option, server->options)
 		{
 			DefElem    *element = (DefElem *) lfirst(option);
 
 			if (strcmp(element->defname, "servername") == 0)
 				data_src = defGetString(element);
+			else if (strcmp(element->defname, "port") == 0)
+				port = defGetString(element);
 			else if (strcmp(element->defname, "database") == 0)
 				database = defGetString(element);
 			else
@@ -833,6 +935,11 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 		}
 
 		ValidateLinkedServerDataSource(data_src);
+
+		if (port && strlen(port) > 0)
+			endpoint = psprintf("%s:%s", data_src, port);
+		else
+			endpoint = data_src;
 
 		if (database && strlen(database) > 0)
 		{
@@ -846,13 +953,13 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 			LINKED_SERVER_SET_CONNECT_TIMEOUT(connect_timeout);
 		}
 
-		LINKED_SERVER_DEBUG("LINKED SERVER: Connecting to remote server \"%s\"", data_src);
+		LINKED_SERVER_DEBUG("LINKED SERVER: Connecting to remote server \"%s\"", endpoint);
 
-		*lsproc = LINKED_SERVER_OPEN(login, data_src);
+		*lsproc = LINKED_SERVER_OPEN(login, endpoint);
 		if (!(*lsproc))
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					 errmsg("Unable to connect to \"%s\"", data_src)));
+					 errmsg("Unable to connect to \"%s\"", endpoint)));
 
 		LINKED_SERVER_FREELOGIN(login);
 

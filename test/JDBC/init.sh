@@ -1,3 +1,4 @@
+#!/bin/bash
 # Default values
 parallel_query_mode=false
 

@@ -836,6 +836,9 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	volatile LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
 	volatile int rc;
+	bool		is_callstmt = false;
+	bool		is_remoteprocstmt = false;
+	bool		push_exec_result_to_client = false;
 	SimpleEcontextStackEntry *topEntry;
 	SPIExecuteOptions options;
 	char 	*save_db_name = get_cur_db_name();
@@ -900,6 +903,8 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * return-type.
 		 */
 		query = linitial_node(Query, ((CachedPlanSource *) linitial(plan->plancache_list))->query_list);
+		is_callstmt = (query->utilityStmt != NULL && IsA(query->utilityStmt, CallStmt));
+		is_remoteprocstmt = (query->utilityStmt != NULL && IsA(query->utilityStmt, RemoteProcStmt));
 
 		if (query->commandType == CMD_SELECT)
 		{
@@ -953,7 +958,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * associated with the procedure's output arguments.  Then we can use
 		 * exec_move_row() to do the assignments.
 		 */
-		if (stmt->is_call && stmt->target == NULL)
+		if (stmt->is_call && stmt->target == NULL && is_callstmt)
 		{
 			Node	   *node;
 			FuncExpr   *funcexpr;
@@ -1171,7 +1176,9 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			node = linitial_node(Query,
 								 ((CachedPlanSource *) linitial(plan->plancache_list))->query_list)->utilityStmt;
 			if (node == NULL || !IsA(node, CallStmt))
-				elog(ERROR, "query for CALL statement is not a CallStmt");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("INSERT ... EXECUTE is only supported for local procedures")));
 
 			tss = tuplestore_begin_heap(false, false, work_mem);
 			dest = CreateTuplestoreDestReceiver();
@@ -1187,6 +1194,31 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 		paramLI = setup_param_list(estate, expr);
 
+		/*
+		 * For EXEC that returns a rowset (e.g. linked-server/system procedures)
+		 * and does not require local OUT-parameter row assignment, push rows to
+		 * client directly via DestRemote.
+		 */
+		if (!estate->insert_exec && !is_scalar_func && (is_callstmt || is_remoteprocstmt))
+		{
+			/*
+			 * RemoteProcStmt handles OUTPUT assignment in utility/FDW path,
+			 * so rowset should always be forwarded to client.
+			 */
+			if (is_remoteprocstmt)
+				push_exec_result_to_client = true;
+			else
+			{
+				PLtsql_row *target_row = NULL;
+
+				if (stmt->target != NULL && stmt->target->dtype == PLTSQL_DTYPE_ROW)
+					target_row = (PLtsql_row *) stmt->target;
+
+				if (target_row == NULL || target_row->nfields == 0)
+					push_exec_result_to_client = true;
+			}
+		}
+
 		before_lxid = MyProc->vxid.lxid;
 		topEntry = simple_econtext_stack;
 
@@ -1195,7 +1227,10 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		options.read_only = estate->readonly_func;
 		options.allow_nonatomic = true;
 
-		rc = SPI_execute_plan_extended(expr->plan, &options);
+		if (push_exec_result_to_client)
+			rc = execute_plan_and_push_result(estate, expr, paramLI);
+		else
+			rc = SPI_execute_plan_extended(expr->plan, &options);
 
 		after_lxid = MyProc->vxid.lxid;
 
@@ -1241,6 +1276,11 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			}
 			else
 			{
+				/*
+				 * Non-scalar EXEC paths, including linked-server RPC, publish the
+				 * procedure status through pltsql_proc_return_code rather than a
+				 * one-row scalar result.
+				 */
 				exec_assign_value(estate, (PLtsql_datum *) return_code, Int32GetDatum(pltsql_proc_return_code), false, INT4OID, 0);
 			}
 		}
@@ -1301,7 +1341,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	 * Check result rowcount; if there's one row, assign procedure's output
 	 * values back to the appropriate variables.
 	 */
-	if (SPI_processed == 1)
+	if (!push_exec_result_to_client && is_callstmt && SPI_processed == 1)
 	{
 		SPITupleTable *tuptab = SPI_tuptable;
 
@@ -1311,7 +1351,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		if (tuptab != NULL)
 			exec_move_row(estate, stmt->target, tuptab->vals[0], tuptab->tupdesc);
 	}
-	else if (SPI_processed > 1)
+	else if (!push_exec_result_to_client && is_callstmt && SPI_processed > 1)
 		elog(ERROR, "procedure call returned more than one row");
 
 	exec_eval_cleanup(estate);
@@ -3817,8 +3857,43 @@ execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamL
 	uint64		processed = 0;
 	DestReceiver *receiver;
 	QueryCompletion qc;
+	SPIExecuteOptions options;
+	int			rc;
 
 	Assert(expr->plan != NULL); /* should be prepared already */
+
+	/*
+	 * Non-cursor plans (e.g. Utility RemoteProcStmt) can return rowsets at
+	 * runtime while having no static resultDesc. In that case, avoid
+	 * SPI_cursor_open_with_paramlist()/SPI_is_cursor_plan and stream results
+	 * directly through SPI_execute_plan_extended with a remote receiver.
+	 */
+	if (!SPI_is_cursor_plan(expr->plan))
+	{
+		receiver = CreateDestReceiver(DestRemote);
+		SetRemoteDestReceiverParams(receiver, ActivePortal);
+
+		memset(&options, 0, sizeof(options));
+		options.params = paramLI;
+		options.read_only = estate->readonly_func;
+		options.allow_nonatomic = true;
+		options.dest = receiver;
+
+		rc = SPI_execute_plan_extended(expr->plan, &options);
+
+		receiver->rDestroy(receiver);
+
+		if (rc < 0)
+			elog(ERROR, "SPI_execute_plan_extended failed executing query \"%s\": %s",
+				 expr->query, SPI_result_code_string(rc));
+
+		estate->eval_processed = SPI_processed;
+		exec_set_rowcount(SPI_processed);
+		exec_set_found(estate, SPI_processed != 0);
+
+		return rc;
+	}
+
 	portal = SPI_cursor_open_with_paramlist(NULL, expr->plan, paramLI, estate->readonly_func);
 
 	if (portal == NULL)
@@ -3852,7 +3927,6 @@ execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamL
 	}
 
 	receiver->rDestroy(receiver);
-	exec_eval_cleanup(estate);
 	SPI_cursor_close(portal);
 
 	return SPI_OK_SELECT;

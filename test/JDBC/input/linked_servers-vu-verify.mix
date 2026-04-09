@@ -15,6 +15,194 @@ GO
 SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
 GO
 
+-- psql
+-- Verify owner/auth/dependency metadata is created through core dblink path
+SELECT (SELECT COUNT(*) FROM pg_dblink l JOIN pg_roles r ON l.dblowner = r.oid WHERE l.dblname = 'mssql_server' AND r.rolname = current_user) AS owner_matches_current_user,
+             (SELECT COUNT(*) FROM pg_dblink WHERE dblname = 'mssql_server' AND dblauth = 'c') AS authmode_current_user,
+             (SELECT COUNT(*) FROM pg_depend d
+                        JOIN pg_foreign_server s ON d.classid = 'pg_foreign_server'::regclass AND d.objid = s.oid
+                        JOIN pg_dblink l ON d.refclassid = 'pg_dblink'::regclass AND d.refobjid = l.oid
+                    WHERE l.dblname = 'mssql_server' AND s.srvname = 'mssql_server' AND d.deptype = 'i') AS server_internal_dep_count
+GO
+
+-- psql
+-- Verify SQL Server-style host,port endpoint is normalized into foreign-server options
+SELECT (SELECT COUNT(*)
+                            FROM pg_foreign_server s,
+                                     LATERAL pg_options_to_table(s.srvoptions) AS o
+                         WHERE s.srvname = 'mssql_server5'
+                             AND o.option_name = 'servername'
+                             AND o.option_value = 'localhost') AS host_option_rows,
+                         (SELECT COUNT(*)
+                                FROM pg_foreign_server s,
+                                         LATERAL pg_options_to_table(s.srvoptions) AS o
+                             WHERE s.srvname = 'mssql_server5'
+                                 AND o.option_name = 'port'
+                             AND o.option_value = '11433') AS port_option_rows,
+                         (SELECT COUNT(*)
+                                FROM pg_foreign_server s,
+                                         LATERAL pg_options_to_table(s.srvoptions) AS o
+                             WHERE s.srvname = 'mssql_server5'
+                                 AND o.option_name = 'servername'
+                             AND o.option_value = 'localhost,11433') AS unsplit_servername_rows,
+                         (SELECT COUNT(*) FROM pg_foreign_server WHERE srvname = 'mssql_server6') AS invalid_endpoint_server_rows
+GO
+
+-- tsql user=linked_server_login_861 password=password_861
+-- Non-owner should not be able to alter/drop linked server dblink metadata
+EXEC sp_serveroption @server='mssql_server1', @optname='query timeout', @optvalue='9'
+GO
+
+EXEC sp_dropserver @server = 'mssql_server1', @droplogins = 'droplogins'
+GO
+
+-- psql
+-- Verify failed synchronization does not persist partial pg_dblink changes
+SELECT (SELECT COUNT(*) FROM pg_dblink WHERE dblname = 'mssql_server1') AS dblink_rows_after_failed_sync,
+             (SELECT COUNT(*) FROM pg_depend d
+                        JOIN pg_foreign_server s ON d.classid = 'pg_foreign_server'::regclass AND d.objid = s.oid
+                        JOIN pg_dblink l ON d.refclassid = 'pg_dblink'::regclass AND d.refobjid = l.oid
+                    WHERE l.dblname = 'mssql_server1' AND s.srvname = 'mssql_server1' AND d.deptype = 'i') AS server_dep_rows_after_failed_sync,
+             (SELECT COUNT(*) FROM pg_dblink l,
+                     LATERAL pg_options_to_table(l.dbloptions) AS o
+                 WHERE l.dblname = 'mssql_server1' AND o.option_name = 'query_timeout' AND o.option_value = '9') AS failed_option_update_rows
+GO
+
+-- tsql
+-- Generic sp_serveroption contract tests belong with linked-server metadata/option verification, not remote-proc execution coverage.
+EXEC sp_serveroption @server='mssql_server', @optname='RpC OuT  ', @optvalue='false';
+GO
+
+-- psql
+SELECT COUNT(*) AS rpc_out_false_rows
+FROM pg_dblink l,
+         LATERAL pg_options_to_table(l.dbloptions) AS o
+WHERE l.dblname = 'mssql_server'
+    AND o.option_name = 'rpc out'
+    AND o.option_value = 'false';
+GO
+
+-- tsql
+EXEC sp_serveroption @server='mssql_server', @optname='rpc out', @optvalue='true';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='RpC  ', @optvalue='false';
+GO
+
+-- psql
+SELECT COUNT(*) AS rpc_false_rows
+FROM pg_dblink l,
+         LATERAL pg_options_to_table(l.dbloptions) AS o
+WHERE l.dblname = 'mssql_server'
+    AND o.option_name = 'rpc'
+    AND o.option_value = 'false';
+GO
+
+-- tsql
+EXEC sp_serveroption @server='mssql_server', @optname='rpc', @optvalue='true';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='QueRY TiMeOut   ', @optvalue='1';
+GO
+
+SELECT name, query_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='0';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='ConNect TimeOut   ', @optvalue='2';
+GO
+
+SELECT name, connect_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='connect timeout', @optvalue='0';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='rpc', @optvalue='not_bool';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='rpc out', @optvalue='not_bool';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='+';
+GO
+
+SELECT name, query_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='+2';
+GO
+
+SELECT name, query_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='00001';
+GO
+
+SELECT name, query_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='+0042';
+GO
+
+SELECT name, query_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='connect timeout', @optvalue='+3';
+GO
+
+SELECT name, connect_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='2147483647';
+GO
+
+SELECT name, query_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='0';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='connect timeout', @optvalue='0';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='-1';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='2147483648';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='++1';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='   ';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='1a';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='connect timeout', @optvalue='1.0';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='rpc invalid', @optvalue='true';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query_timeout', @optvalue='1';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='connect_timeout', @optvalue='1';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='rpc_out', @optvalue='true';
+GO
+
+-- tsql
+
 -- Try to call sp_helplinkedsrvlogin with server name = NULL and login name = NULL. Should return all mappings
 SET NOCOUNT ON
 DECLARE @sp_helplinkedsrvlogin_var table(a sysname, b sysname NULL, c smallint, d sysname NULL)
@@ -89,6 +277,23 @@ GO
 EXEC sp_dropserver @server = 'mssql_server', @droplogins = 'definitely_invalid'
 GO
 
+-- psql
+-- Direct DROP SERVER on a linked-server implementation server should fail via INTERNAL dependency
+DROP SERVER mssql_server4
+GO
+
+-- psql
+-- Plain PostgreSQL foreign servers that are not backed by pg_dblink should remain directly droppable
+CREATE SERVER plain_pg_server FOREIGN DATA WRAPPER tds_fdw OPTIONS (servername 'localhost', database 'master')
+GO
+
+DROP SERVER plain_pg_server
+GO
+
+SELECT COUNT(*) AS plain_server_rows FROM pg_foreign_server WHERE srvname = 'plain_pg_server'
+GO
+
+-- tsql
 -- Dropping a server without droplogins should also drop the server and the linked login and modifying the case of servername
 EXEC sp_dropserver @server = 'MSSQL_server', @droplogins = NULL
 GO
@@ -99,6 +304,19 @@ GO
 SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE s.name = 'mssql_server'
 GO
 
+-- psql
+-- Verify dblink row and dependency are removed through core drop path
+SELECT (SELECT COUNT(*) FROM pg_dblink WHERE dblname = 'mssql_server') AS dblink_rows,
+             (SELECT COUNT(*) FROM pg_foreign_server WHERE srvname = 'mssql_server') AS server_rows,
+             (SELECT COUNT(*) FROM pg_user_mapping m
+                        JOIN pg_foreign_server s ON m.umserver = s.oid
+                    WHERE s.srvname = 'mssql_server') AS mapping_rows,
+             (SELECT COUNT(*) FROM pg_depend d
+                        JOIN pg_foreign_server s ON d.classid = 'pg_foreign_server'::regclass AND d.objid = s.oid
+                    WHERE d.refclassid = 'pg_dblink'::regclass AND s.srvname = 'mssql_server') AS dangling_server_dep_rows
+GO
+
+-- tsql
 -- Dropping a server with droplogins should drop the linked logins as well. Also call sp_dropserver from master.dbo schema
 EXEC master.dbo.sp_dropserver @server = 'mssql_server2', @droplogins = 'droplogins'
 GO
@@ -126,7 +344,7 @@ EXEC sp_testlinkedserver 'test_server'
 GO
 
 -- Testing the connection to a existing linked server using the server name with leading spaces (should throw error)
-EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost,11433', @catalog=N'master'
 GO
 
 EXEC sp_testlinkedserver ' test_server'
@@ -144,7 +362,7 @@ EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
 GO
 
 -- Testing the connection to a linked server whose data source is incorrect (should throw error)
-EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhos', @catalog=N'master'
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhos,11433', @catalog=N'master'
 GO
 
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
@@ -157,7 +375,7 @@ EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
 GO
 
 -- Testing the connection to a linked server whose catalog name is incorrect (should throw error)
-EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'maste'
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost,11433', @catalog=N'maste'
 GO
 
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
@@ -170,7 +388,7 @@ EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
 GO
 
 -- Testing the connection to a linked server whose all parameters has been set correctly (should pass)
-EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost,11433', @catalog=N'master'
 GO
 
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'

@@ -1,0 +1,350 @@
+-- tsql
+USE master;
+GO
+
+SELECT name, data_source FROM sys.servers WHERE name = 'ls_svr';
+GO
+~~START~~
+varchar#!#nvarchar
+ls_svr#!#localhost
+~~END~~
+
+
+EXEC ls_svr.master.dbo.rp_basic;
+GO
+~~START~~
+text
+100
+~~END~~
+
+
+EXECUTE ls_svr.master.dbo.rp_basic;
+GO
+~~START~~
+text
+100
+~~END~~
+
+
+DECLARE @out int;
+EXEC ls_svr.master.dbo.rp_out @x=41, @y=@out OUTPUT;
+SELECT @out AS out_value;
+GO
+~~START~~
+int
+42
+~~END~~
+
+
+DECLARE @out_positional int;
+EXEC ls_svr.master.dbo.rp_out 5, @out_positional OUTPUT;
+SELECT @out_positional AS out_value_positional;
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+DECLARE @input_only int = 7;
+DECLARE @out_from_input int;
+EXEC ls_svr.master.dbo.rp_out @input_only, @out_from_input OUTPUT;
+SELECT @input_only AS input_value_after_call, @out_from_input AS out_value_from_input;
+GO
+~~START~~
+int#!#int
+7#!#8
+~~END~~
+
+
+DECLARE @status_exec int;
+DECLARE @status_execute int;
+EXEC @status_exec = ls_svr.master.dbo.rp_status @x=11;
+EXECUTE @status_execute = ls_svr.master.dbo.rp_status @x=11;
+SELECT @status_exec AS status_exec, @status_execute AS status_execute;
+GO
+~~START~~
+int#!#int
+16#!#16
+~~END~~
+
+
+EXEC ls_svr.master.dbo.rp_bit @flag=1;
+GO
+~~START~~
+text
+1
+~~END~~
+
+
+EXEC ls_svr.master.dbo.rp_varchar_param @val='benchmark-test-string';
+GO
+~~START~~
+text
+benchmark-test-string
+~~END~~
+
+
+EXEC ls_svr.master.dbo.rp_datetime_param @val='2025-01-15 10:30:00.000';
+GO
+~~START~~
+text
+2025-01-15 18:30:00+08
+~~END~~
+
+
+EXEC ls_svr.master.dbo.rp_float_param @val=3.14159;
+GO
+~~START~~
+text
+3.1415899999999999
+~~END~~
+
+
+EXEC ls_svr.master.dbo.rp_null_param @p1=NULL, @p2=NULL, @p3=NULL, @p4=NULL;
+GO
+~~START~~
+text#!#text#!#text#!#text
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+DECLARE @large_string varchar(max) = REPLICATE('A', 4000);
+EXEC ls_svr.master.dbo.rp_large_string @val=@large_string;
+GO
+~~START~~
+text
+4000
+~~END~~
+
+
+EXEC ls_svr.master.dbo.rp_multi;
+GO
+~~START~~
+text#!#text
+1#!#first
+~~END~~
+
+~~START~~
+text#!#text
+2#!#second
+~~END~~
+
+
+EXEC ls_svr.master.dbo.rp_multi_mismatch;
+GO
+~~START~~
+text#!#text
+1#!#first
+~~END~~
+
+~~START~~
+text#!#text#!#text
+2#!#second#!#extra
+~~END~~
+
+
+DECLARE @multi_out int;
+DECLARE @multi_rc int;
+EXEC @multi_rc = ls_svr.master.dbo.rp_multi_out_status @x=41, @y=@multi_out OUTPUT;
+SELECT @multi_out AS out_value_after_multi, @multi_rc AS return_status_after_multi;
+GO
+~~START~~
+text#!#text
+1#!#first
+~~END~~
+
+~~START~~
+text#!#text
+2#!#second
+~~END~~
+
+~~START~~
+int#!#int
+42#!#46
+~~END~~
+
+
+BEGIN TRANSACTION;
+EXEC ls_svr.master.dbo.rp_txn_insert @tag=5001;
+COMMIT TRANSACTION;
+SELECT COUNT(*) AS count_after_local_commit
+FROM dbo.rp_txn_log
+WHERE tag = 5001;
+GO
+~~START~~
+text
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+BEGIN TRANSACTION;
+EXEC ls_svr.master.dbo.rp_txn_insert @tag=5002;
+ROLLBACK TRANSACTION;
+SELECT COUNT(*) AS count_after_local_rollback
+FROM dbo.rp_txn_log
+WHERE tag = 5002;
+GO
+~~START~~
+text
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+BEGIN DISTRIBUTED TRANSACTION;
+EXEC ls_svr.master.dbo.rp_txn_insert @tag=5003;
+COMMIT TRANSACTION;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "DISTRIBUTED")~~
+
+
+BEGIN DISTRIBUTED TRANSACTION;
+EXEC ls_svr.master.dbo.rp_txn_insert @tag=5004;
+ROLLBACK TRANSACTION;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "DISTRIBUTED")~~
+
+
+EXEC sp_serveroption @server='ls_svr', @optname='rpc out', @optvalue='false'
+GO
+
+EXEC ls_svr.master.sys.sp_helpdb;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: rpc out is disabled for linked server "ls_svr")~~
+
+
+EXEC ls_svr.master.dbo.rp_basic;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: rpc out is disabled for linked server "ls_svr")~~
+
+
+EXEC sp_serveroption @server='ls_svr', @optname='rpc out', @optvalue='true'
+GO
+
+EXEC sp_serveroption @server='ls_svr', @optname='rpc', @optvalue='false'
+GO
+
+EXEC ls_svr.master.dbo.rp_basic;
+GO
+~~START~~
+text
+100
+~~END~~
+
+
+EXEC sp_serveroption @server='ls_svr', @optname='rpc', @optvalue='true'
+GO
+
+EXEC sp_serveroption @server='ls_svr', @optname='rpc out', @optvalue='false'
+GO
+
+DECLARE @rc_blocked int;
+EXEC @rc_blocked = ls_svr.master.dbo.rp_status @x=7;
+SELECT @rc_blocked AS return_status_when_rpc_out_false;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: rpc out is disabled for linked server "ls_svr")~~
+
+
+DECLARE @out_blocked int;
+EXEC ls_svr.master.dbo.rp_out @x=41, @y=@out_blocked OUTPUT;
+SELECT @out_blocked AS out_value_when_rpc_out_false;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: rpc out is disabled for linked server "ls_svr")~~
+
+
+EXECUTE ls_svr.master.dbo.rp_basic;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: rpc out is disabled for linked server "ls_svr")~~
+
+
+EXEC sp_serveroption @server='ls_svr', @optname='rpc out', @optvalue='true'
+GO
+
+EXEC sp_serveroption @server='ls_svr', @optname='query timeout', @optvalue='1'
+GO
+
+EXEC ls_svr.master.dbo.rp_sleep;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Query timeout expired)~~
+
+
+EXEC sp_serveroption @server='ls_svr', @optname='query timeout', @optvalue='0'
+GO
+
+EXEC ls_svr.master.dbo.rp_basic;
+GO
+~~START~~
+text
+100
+~~END~~
+
+
+EXEC sp_droplinkedsrvlogin @rmtsrvname = 'ls_svr', @locallogin = NULL
+GO
+
+-- psql
+SELECT COUNT(*) AS linked_server_rows_after_drop
+FROM pg_dblink l
+WHERE l.dblname = 'ls_svr';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'ls_svr';
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#varchar
+~~END~~
+
+
+SELECT name, data_source FROM sys.servers WHERE name = 'ls_svr';
+GO
+~~START~~
+varchar#!#nvarchar
+ls_svr#!#localhost
+~~END~~
+
+
+EXEC ls_svr.master.dbo.rp_basic;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: No credential-bearing linked-server login mapping exists for server "ls_svr")~~
+
+
+EXEC ls_svr_missing.master.dbo.rp_basic;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: linked server "ls_svr_missing" does not exist)~~
+

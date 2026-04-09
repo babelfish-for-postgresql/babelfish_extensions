@@ -9,6 +9,8 @@ mssql_server#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server1#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server2#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server3#!##!#tds_fdw#!#mssql_server2\ABC#!#<NULL>#!#master#!#1
+mssql_server4#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
+mssql_server5#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 ~~END~~
 
 
@@ -21,6 +23,8 @@ mssql_server#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server1#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server2#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server3#!##!#tds_fdw#!#mssql_server2\ABC#!#<NULL>#!#master#!#1
+mssql_server4#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
+mssql_server5#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 ~~END~~
 
 
@@ -33,6 +37,8 @@ mssql_server#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server1#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server2#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server3#!##!#tds_fdw#!#mssql_server2\ABC#!#<NULL>#!#master#!#1
+mssql_server4#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
+mssql_server5#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 ~~END~~
 
 
@@ -55,6 +61,319 @@ mssql_server2#!#only_user_no_password
 mssql_server3#!#<NULL>
 ~~END~~
 
+
+-- psql
+-- Verify owner/auth/dependency metadata is created through core dblink path
+SELECT (SELECT COUNT(*) FROM pg_dblink l JOIN pg_roles r ON l.dblowner = r.oid WHERE l.dblname = 'mssql_server' AND r.rolname = current_user) AS owner_matches_current_user,
+             (SELECT COUNT(*) FROM pg_dblink WHERE dblname = 'mssql_server' AND dblauth = 'c') AS authmode_current_user,
+             (SELECT COUNT(*) FROM pg_depend d
+                        JOIN pg_foreign_server s ON d.classid = 'pg_foreign_server'::regclass AND d.objid = s.oid
+                        JOIN pg_dblink l ON d.refclassid = 'pg_dblink'::regclass AND d.refobjid = l.oid
+                    WHERE l.dblname = 'mssql_server' AND s.srvname = 'mssql_server' AND d.deptype = 'i') AS server_internal_dep_count
+GO
+~~START~~
+int8#!#int8#!#int8
+0#!#1#!#1
+~~END~~
+
+
+-- psql
+-- Verify SQL Server-style host,port endpoint is normalized into foreign-server options
+SELECT (SELECT COUNT(*)
+                            FROM pg_foreign_server s,
+                                     LATERAL pg_options_to_table(s.srvoptions) AS o
+                         WHERE s.srvname = 'mssql_server5'
+                             AND o.option_name = 'servername'
+                             AND o.option_value = 'localhost') AS host_option_rows,
+                         (SELECT COUNT(*)
+                                FROM pg_foreign_server s,
+                                         LATERAL pg_options_to_table(s.srvoptions) AS o
+                             WHERE s.srvname = 'mssql_server5'
+                                 AND o.option_name = 'port'
+                             AND o.option_value = '11433') AS port_option_rows,
+                         (SELECT COUNT(*)
+                                FROM pg_foreign_server s,
+                                         LATERAL pg_options_to_table(s.srvoptions) AS o
+                             WHERE s.srvname = 'mssql_server5'
+                                 AND o.option_name = 'servername'
+                             AND o.option_value = 'localhost,11433') AS unsplit_servername_rows,
+                         (SELECT COUNT(*) FROM pg_foreign_server WHERE srvname = 'mssql_server6') AS invalid_endpoint_server_rows
+GO
+~~START~~
+int8#!#int8#!#int8#!#int8
+1#!#1#!#0#!#0
+~~END~~
+
+
+-- tsql user=linked_server_login_861 password=password_861
+-- Non-owner should not be able to alter/drop linked server dblink metadata
+EXEC sp_serveroption @server='mssql_server1', @optname='query timeout', @optvalue='9'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of database link "mssql_server1")~~
+
+
+EXEC sp_dropserver @server = 'mssql_server1', @droplogins = 'droplogins'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of database link "mssql_server1")~~
+
+
+-- psql
+-- Verify failed synchronization does not persist partial pg_dblink changes
+SELECT (SELECT COUNT(*) FROM pg_dblink WHERE dblname = 'mssql_server1') AS dblink_rows_after_failed_sync,
+             (SELECT COUNT(*) FROM pg_depend d
+                        JOIN pg_foreign_server s ON d.classid = 'pg_foreign_server'::regclass AND d.objid = s.oid
+                        JOIN pg_dblink l ON d.refclassid = 'pg_dblink'::regclass AND d.refobjid = l.oid
+                    WHERE l.dblname = 'mssql_server1' AND s.srvname = 'mssql_server1' AND d.deptype = 'i') AS server_dep_rows_after_failed_sync,
+             (SELECT COUNT(*) FROM pg_dblink l,
+                     LATERAL pg_options_to_table(l.dbloptions) AS o
+                 WHERE l.dblname = 'mssql_server1' AND o.option_name = 'query_timeout' AND o.option_value = '9') AS failed_option_update_rows
+GO
+~~START~~
+int8#!#int8#!#int8
+1#!#1#!#0
+~~END~~
+
+
+-- tsql
+-- Generic sp_serveroption contract tests belong with linked-server metadata/option verification, not remote-proc execution coverage.
+EXEC sp_serveroption @server='mssql_server', @optname='RpC OuT  ', @optvalue='false';
+GO
+
+-- psql
+SELECT COUNT(*) AS rpc_out_false_rows
+FROM pg_dblink l,
+         LATERAL pg_options_to_table(l.dbloptions) AS o
+WHERE l.dblname = 'mssql_server'
+    AND o.option_name = 'rpc out'
+    AND o.option_value = 'false';
+GO
+~~START~~
+int8
+1
+~~END~~
+
+
+-- tsql
+EXEC sp_serveroption @server='mssql_server', @optname='rpc out', @optvalue='true';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='RpC  ', @optvalue='false';
+GO
+
+-- psql
+SELECT COUNT(*) AS rpc_false_rows
+FROM pg_dblink l,
+         LATERAL pg_options_to_table(l.dbloptions) AS o
+WHERE l.dblname = 'mssql_server'
+    AND o.option_name = 'rpc'
+    AND o.option_value = 'false';
+GO
+~~START~~
+int8
+1
+~~END~~
+
+
+-- tsql
+EXEC sp_serveroption @server='mssql_server', @optname='rpc', @optvalue='true';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='QueRY TiMeOut   ', @optvalue='1';
+GO
+
+SELECT name, query_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+~~START~~
+varchar#!#int
+mssql_server#!#1
+~~END~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='0';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='ConNect TimeOut   ', @optvalue='2';
+GO
+
+SELECT name, connect_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+~~START~~
+varchar#!#int
+mssql_server#!#2
+~~END~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='connect timeout', @optvalue='0';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='rpc', @optvalue='not_bool';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='rpc out', @optvalue='not_bool';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='+';
+GO
+
+SELECT name, query_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+~~START~~
+varchar#!#int
+mssql_server#!#0
+~~END~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='+2';
+GO
+
+SELECT name, query_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+~~START~~
+varchar#!#int
+mssql_server#!#2
+~~END~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='00001';
+GO
+
+SELECT name, query_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+~~START~~
+varchar#!#int
+mssql_server#!#1
+~~END~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='+0042';
+GO
+
+SELECT name, query_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+~~START~~
+varchar#!#int
+mssql_server#!#42
+~~END~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='connect timeout', @optvalue='+3';
+GO
+
+SELECT name, connect_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+~~START~~
+varchar#!#int
+mssql_server#!#3
+~~END~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='2147483647';
+GO
+
+SELECT name, query_timeout FROM sys.servers WHERE name = 'mssql_server';
+GO
+~~START~~
+varchar#!#int
+mssql_server#!#2147483647
+~~END~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='0';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='connect timeout', @optvalue='0';
+GO
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='-1';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='2147483648';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of the nvarchar value '2147483648' overflowed an int column.)~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='++1';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='   ';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='1a';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='connect timeout', @optvalue='1.0';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='rpc invalid', @optvalue='true';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='query_timeout', @optvalue='1';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='connect_timeout', @optvalue='1';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
+
+
+EXEC sp_serveroption @server='mssql_server', @optname='rpc_out', @optvalue='true';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.)~~
+
+
+-- tsql
 
 -- Try to call sp_helplinkedsrvlogin with server name = NULL and login name = NULL. Should return all mappings
 SET NOCOUNT ON
@@ -126,6 +445,8 @@ mssql_server#!#tds_fdw#!##!#localhost#!#<NULL>#!#<NULL>#!#master
 mssql_server1#!#tds_fdw#!##!#localhost#!#<NULL>#!#<NULL>#!#master
 mssql_server2#!#tds_fdw#!##!#localhost#!#<NULL>#!#<NULL>#!#master
 mssql_server3#!#tds_fdw#!##!#mssql_server2\ABC#!#<NULL>#!#<NULL>#!#master
+mssql_server4#!#tds_fdw#!##!#localhost#!#<NULL>#!#<NULL>#!#master
+mssql_server5#!#tds_fdw#!##!#localhost#!#<NULL>#!#<NULL>#!#master
 ~~END~~
 
 
@@ -193,9 +514,37 @@ EXEC sp_dropserver @server = 'mssql_server', @droplogins = 'definitely_invalid'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid parameter value for @droplogins specified in procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.)~~
+~~ERROR (Message: Invalid parameter value for @droplogins specified in procedure 'sys.sp_dropserver', acceptable values are 'droplogins', 'droplogin', or NULL.)~~
 
 
+-- psql
+-- Direct DROP SERVER on a linked-server implementation server should fail via INTERNAL dependency
+DROP SERVER mssql_server4
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: cannot drop server mssql_server4 because database link mssql_server4 requires it
+  Hint: You can drop database link mssql_server4 instead.
+    Server SQLState: 2BP01)~~
+
+
+-- psql
+-- Plain PostgreSQL foreign servers that are not backed by pg_dblink should remain directly droppable
+CREATE SERVER plain_pg_server FOREIGN DATA WRAPPER tds_fdw OPTIONS (servername 'localhost', database 'master')
+GO
+
+DROP SERVER plain_pg_server
+GO
+
+SELECT COUNT(*) AS plain_server_rows FROM pg_foreign_server WHERE srvname = 'plain_pg_server'
+GO
+~~START~~
+int8
+0
+~~END~~
+
+
+-- tsql
 -- Dropping a server without droplogins should also drop the server and the linked login and modifying the case of servername
 EXEC sp_dropserver @server = 'MSSQL_server', @droplogins = NULL
 GO
@@ -214,6 +563,24 @@ varchar#!#varchar
 ~~END~~
 
 
+-- psql
+-- Verify dblink row and dependency are removed through core drop path
+SELECT (SELECT COUNT(*) FROM pg_dblink WHERE dblname = 'mssql_server') AS dblink_rows,
+             (SELECT COUNT(*) FROM pg_foreign_server WHERE srvname = 'mssql_server') AS server_rows,
+             (SELECT COUNT(*) FROM pg_user_mapping m
+                        JOIN pg_foreign_server s ON m.umserver = s.oid
+                    WHERE s.srvname = 'mssql_server') AS mapping_rows,
+             (SELECT COUNT(*) FROM pg_depend d
+                        JOIN pg_foreign_server s ON d.classid = 'pg_foreign_server'::regclass AND d.objid = s.oid
+                    WHERE d.refclassid = 'pg_dblink'::regclass AND s.srvname = 'mssql_server') AS dangling_server_dep_rows
+GO
+~~START~~
+int8#!#int8#!#int8#!#int8
+0#!#0#!#0#!#0
+~~END~~
+
+
+-- tsql
 -- Dropping a server with droplogins should drop the linked logins as well. Also call sp_dropserver from master.dbo schema
 EXEC master.dbo.sp_dropserver @server = 'mssql_server2', @droplogins = 'droplogins'
 GO
@@ -261,7 +628,7 @@ GO
 
 
 -- Testing the connection to a existing linked server using the server name with leading spaces (should throw error)
-EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost,11433', @catalog=N'master'
 GO
 
 EXEC sp_testlinkedserver ' test_server'
@@ -284,14 +651,14 @@ EXEC sp_testlinkedserver 'test_server'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: user mapping not found for user "master_dbo", server "test_server")~~
+~~ERROR (Message: No credential-bearing linked-server login mapping exists for server "test_server")~~
 
 
 EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
 GO
 
 -- Testing the connection to a linked server whose data source is incorrect (should throw error)
-EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhos', @catalog=N'master'
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhos,11433', @catalog=N'master'
 GO
 
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
@@ -308,7 +675,7 @@ EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
 GO
 
 -- Testing the connection to a linked server whose catalog name is incorrect (should throw error)
-EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'maste'
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost,11433', @catalog=N'maste'
 GO
 
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
@@ -325,7 +692,7 @@ EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
 GO
 
 -- Testing the connection to a linked server whose all parameters has been set correctly (should pass)
-EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost,11433', @catalog=N'master'
 GO
 
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
@@ -358,7 +725,7 @@ EXEC sp_enum_oledb_providers
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-TDS_FDW#!#{b4e3f6da-c847-4d8f-7e8a-be928019208c}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.4
+TDS_FDW#!#{95894e3b-539d-844c-2e37-5ee606e4ee42}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.5
 ~~END~~
 
 
@@ -367,7 +734,7 @@ EXEC master.dbo.sp_enum_oledb_providers
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-TDS_FDW#!#{b4e3f6da-c847-4d8f-7e8a-be928019208c}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.4
+TDS_FDW#!#{95894e3b-539d-844c-2e37-5ee606e4ee42}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.5
 ~~END~~
 
 
@@ -376,6 +743,6 @@ EXEC master.sys.sp_enum_oledb_providers
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-TDS_FDW#!#{b4e3f6da-c847-4d8f-7e8a-be928019208c}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.4
+TDS_FDW#!#{95894e3b-539d-844c-2e37-5ee606e4ee42}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.5
 ~~END~~
 

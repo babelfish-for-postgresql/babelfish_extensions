@@ -1,0 +1,97 @@
+-- psql currentSchema=master_dbo,public
+-- Connection reuse setup:
+-- Create a dedicated linked server, remote login, helper procedures,
+-- and an observation table used by the verify phase.
+SET client_min_messages TO error;
+GO
+
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+GO
+
+GRANT USAGE ON FOREIGN DATA WRAPPER tds_fdw TO PUBLIC;
+GO
+
+-- tsql
+USE master;
+GO
+
+-- Remove leftovers from a previous run so the verify phase starts clean.
+IF EXISTS (SELECT 1 FROM sys.servers WHERE name = 'ls_pool_svr')
+    EXEC sp_dropserver @server = 'ls_pool_svr', @droplogins = 'droplogins';
+GO
+
+IF OBJECT_ID('dbo.rp_pool_noop', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.rp_pool_noop;
+GO
+
+IF OBJECT_ID('dbo.rp_pool_sleep', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.rp_pool_sleep;
+GO
+
+IF OBJECT_ID('dbo.ls_pool_observations', 'U') IS NOT NULL
+    DROP TABLE dbo.ls_pool_observations;
+GO
+
+IF EXISTS (SELECT 1 FROM sys.server_principals WHERE name = 'ls_pool_remote')
+    DROP LOGIN ls_pool_remote;
+GO
+
+-- Create the remote login identity that will appear in pg_stat_activity.
+CREATE LOGIN ls_pool_remote WITH PASSWORD = 'Password_pool_remote_123';
+GO
+
+-- Register the linked server and enable outbound RPC execution.
+EXEC sp_addlinkedserver @server = N'ls_pool_svr', @srvproduct = N'', @provider = N'tds_fdw', @datasrc = N'babelfish_test', @catalog = N'master';
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'ls_pool_svr', @useself = 'FALSE', @rmtuser = 'ls_pool_remote', @rmtpassword = 'Password_pool_remote_123';
+GO
+
+EXEC sp_serveroption @server = 'ls_pool_svr', @optname = 'rpc', @optvalue = 'true';
+GO
+
+EXEC sp_serveroption @server = 'ls_pool_svr', @optname = 'rpc out', @optvalue = 'true';
+GO
+
+-- Store one observation row per stage so the verify script can compare
+-- backend pid reuse and reconnect behavior.
+CREATE TABLE dbo.ls_pool_observations
+(
+    stage sys.sysname PRIMARY KEY,
+    backend_pid int NULL,
+    session_count int NOT NULL
+);
+GO
+
+-- Helper RPC that should be cheap enough to exercise connection reuse.
+CREATE PROCEDURE dbo.rp_pool_noop
+AS
+BEGIN
+    SET NOCOUNT ON;
+END;
+GO
+
+-- Helper RPC that intentionally times out so the verify phase can assert
+-- that failed connections are dropped before reuse resumes.
+CREATE PROCEDURE dbo.rp_pool_sleep
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT CAST(pg_sleep(5) AS text) AS slept;
+END;
+GO
+
+GRANT EXECUTE ON OBJECT::dbo.rp_pool_noop TO PUBLIC;
+GO
+
+GRANT EXECUTE ON OBJECT::dbo.rp_pool_sleep TO PUBLIC;
+GO
+
+-- Echo the linked server endpoint so the harness confirms setup succeeded.
+SELECT name, data_source FROM sys.servers WHERE name = 'ls_pool_svr';
+GO
+~~START~~
+varchar#!#nvarchar
+ls_pool_svr#!#babelfish_test
+~~END~~
+

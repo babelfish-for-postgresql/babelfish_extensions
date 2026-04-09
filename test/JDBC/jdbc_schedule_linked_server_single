@@ -1,0 +1,16 @@
+# Linked-server remote-proc core JDBC run
+linked_servers-vu-prepare
+linked_servers-vu-verify
+linked_servers-vu-cleanup
+
+openquery-vu-prepare
+openquery-vu-verify
+openquery-vu-cleanup
+
+linked_server_remote_proc_exec-vu-prepare
+linked_server_remote_proc_exec-vu-verify
+linked_server_remote_proc_exec-vu-cleanup
+
+linked_server_connection_reuse-vu-prepare
+linked_server_connection_reuse-vu-verify
+linked_server_connection_reuse-vu-cleanup

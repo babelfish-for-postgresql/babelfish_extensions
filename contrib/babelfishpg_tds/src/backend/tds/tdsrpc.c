@@ -152,6 +152,7 @@ static void SPExecute(TDSRequestSP req);
 static void SPPrepExec(TDSRequestSP req);
 static void SPCustomType(TDSRequestSP req);
 static void SPUnprepare(TDSRequestSP req);
+static void RenderRpcProcedureNameForExecute(StringInfo out, const char *raw_name);
 static void TDSLogStatementCursorHandler(TDSRequestSP req, char *stmt, int option);
 static void LogStatementNoError(const char *header, const int handle, const char *msg, const uint16 nparams);
 
@@ -910,6 +911,7 @@ DeclareSPVariables(TDSRequestSP req, FunctionCallInfo *fcinfo)
 	Oid			atttypid;
 	Oid			atttypmod;
 	int			attcollation;
+	StringInfoData procname;
 
 	/*
 	 * The return type is not sent by the client.  So, we first look up the
@@ -918,8 +920,11 @@ DeclareSPVariables(TDSRequestSP req, FunctionCallInfo *fcinfo)
 	 * procedure the return type will be always an integer in case of babel,
 	 * and if it's a UDF, we just fetch the return type from catalog.
 	 */
+	initStringInfo(&procname);
+	RenderRpcProcedureNameForExecute(&procname, req->name.data);
+
 	pltsql_plugin_handler_ptr->pltsql_read_procedure_info(
-														  &req->name,
+														  &procname,
 														  &req->isStoredProcedure,
 														  &atttypid,
 														  &atttypmod,
@@ -2023,6 +2028,7 @@ FillStoredProcedureCallFromParameterToken(TDSRequestSP req, StringInfo inBuf)
 	int			numParams;
 	ParameterToken token = NULL;
 	StringInfo	name;
+	StringInfoData procname;
 
 	Assert(req->queryParameter == NULL);
 
@@ -2031,8 +2037,11 @@ FillStoredProcedureCallFromParameterToken(TDSRequestSP req, StringInfo inBuf)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		elog(ERROR, "sql dialect is not set to TSQL");
 
+	initStringInfo(&procname);
+	RenderRpcProcedureNameForExecute(&procname, req->name.data);
+
 	paramno = 0;
-	appendStringInfo(inBuf, "EXECUTE @p%d = %s ", paramno, req->name.data);
+	appendStringInfo(inBuf, "EXECUTE @p%d = %s ", paramno, procname.data);
 	paramno++;
 
 	if (numParams > 0)
@@ -2066,6 +2075,69 @@ FillStoredProcedureCallFromParameterToken(TDSRequestSP req, StringInfo inBuf)
 	}
 
 	appendStringInfoCharMacro(inBuf, '\0');
+}
+
+/*
+ * RenderRpcProcedureNameForExecute - normalize an RPC procedure name for EXECUTE.
+ *
+ * If the incoming name is not already quoted, render each dot-separated
+ * identifier segment using SQL Server-style brackets. Any right bracket in a
+ * segment is escaped by doubling it.
+ *
+ * If the input appears malformed (for example, empty segments) we fall back to
+ * the original raw name to avoid changing semantics unexpectedly.
+ */
+static void
+RenderRpcProcedureNameForExecute(StringInfo out, const char *raw_name)
+{
+	const char *segment_start;
+	const char *segment_end;
+
+	resetStringInfo(out);
+
+	if (raw_name == NULL || raw_name[0] == '\0')
+		return;
+
+	if (strchr(raw_name, '[') != NULL || strchr(raw_name, '"') != NULL)
+	{
+		appendStringInfoString(out, raw_name);
+		return;
+	}
+
+	segment_start = raw_name;
+
+	while (*segment_start != '\0')
+	{
+		segment_end = strchr(segment_start, '.');
+
+		if (segment_end == NULL)
+			segment_end = segment_start + strlen(segment_start);
+
+		if (segment_end == segment_start)
+		{
+			resetStringInfo(out);
+			appendStringInfoString(out, raw_name);
+			return;
+		}
+
+		if (out->len > 0)
+			appendStringInfoChar(out, '.');
+
+		appendStringInfoChar(out, '[');
+		while (segment_start < segment_end)
+		{
+			if (*segment_start == ']')
+				appendStringInfoChar(out, ']');
+			appendStringInfoChar(out, *segment_start);
+			segment_start++;
+		}
+		appendStringInfoChar(out, ']');
+
+		if (*segment_end == '\0')
+			break;
+
+		segment_start = segment_end + 1;
+	}
 }
 
 /*

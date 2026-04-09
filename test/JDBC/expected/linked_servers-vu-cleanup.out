@@ -1,13 +1,53 @@
-DROP LOGIN linked_server_login_861
+-- tsql
+USE master;
 GO
 
-DROP FUNCTION sys_linked_servers_vu_prepare__sys_servers_func
+IF OBJECT_ID('dbo.sys_linked_servers_vu_prepare__sys_servers_func', 'IF') IS NOT NULL
+        DROP FUNCTION dbo.sys_linked_servers_vu_prepare__sys_servers_func
 GO
 
-DROP VIEW sys_linked_servers_vu_prepare__sys_servers_view
+IF OBJECT_ID('dbo.sys_linked_servers_vu_prepare__sys_servers_view', 'V') IS NOT NULL
+        DROP VIEW dbo.sys_linked_servers_vu_prepare__sys_servers_view
 GO
 
-DROP VIEW sys_linked_servers_vu_prepare__sys_linked_logins_view
+IF OBJECT_ID('dbo.sys_linked_servers_vu_prepare__sys_linked_logins_view', 'V') IS NOT NULL
+        DROP VIEW dbo.sys_linked_servers_vu_prepare__sys_linked_logins_view
+GO
+
+IF EXISTS (SELECT 1 FROM sys.servers WHERE name = 'mssql_server')
+        EXEC sp_dropserver @server = 'mssql_server', @droplogins = 'droplogins'
+GO
+
+IF EXISTS (SELECT 1 FROM sys.servers WHERE name = 'mssql_server1')
+        EXEC sp_dropserver @server = 'mssql_server1', @droplogins = 'droplogins'
+GO
+
+IF EXISTS (SELECT 1 FROM sys.servers WHERE name = 'hello.world.com')
+        EXEC sp_dropserver @server = 'hello.world.com', @droplogins = 'droplogins'
+GO
+
+IF EXISTS (SELECT 1 FROM sys.servers WHERE name = 'mssql_server2')
+        EXEC sp_dropserver @server = 'mssql_server2', @droplogins = 'droplogins'
+GO
+
+IF EXISTS (SELECT 1 FROM sys.servers WHERE name = 'mssql_server3')
+        EXEC sp_dropserver @server = 'mssql_server3', @droplogins = 'droplogins'
+GO
+
+IF EXISTS (SELECT 1 FROM sys.servers WHERE name = 'mssql_server4')
+        EXEC sp_dropserver @server = 'mssql_server4', @droplogins = 'droplogins'
+GO
+
+IF EXISTS (SELECT 1 FROM sys.servers WHERE name = 'mssql_server5')
+        EXEC sp_dropserver @server = 'mssql_server5', @droplogins = 'droplogins'
+GO
+
+IF EXISTS (SELECT 1 FROM sys.servers WHERE name = 'mssql_server6')
+        EXEC sp_dropserver @server = 'mssql_server6', @droplogins = 'droplogins'
+GO
+
+IF EXISTS (SELECT 1 FROM sys.server_principals WHERE name = 'linked_server_login_861')
+        DROP LOGIN linked_server_login_861
 GO
 
 -- psql

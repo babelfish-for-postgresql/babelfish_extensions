@@ -1,13 +1,3 @@
--- Try to create linked server without tds_fdw installed (Should throw error)
-EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master';
-GO
-
--- Install the TDS_FDW extension to enable linked_servers
-
--- psql
-CREATE EXTENSION IF NOT EXISTS tds_fdw;
-GO
-
 -- tsql
 -- Try to create linked server without a valid a provider being available (Should throw error)
 EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'wrong_provider', @datasrc=N'localhost', @catalog=N'master'
@@ -43,6 +33,14 @@ GO
 
 -- Try to create linked server with data source of the form 'servername\\instancename' (Will throw error when we try to connect to it)
 EXEC sp_addlinkedserver  @server = N'mssql_server3', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'mssql_server2\ABC', @catalog=N'master'
+GO
+
+-- Create linked server with SQL Server-style host,port endpoint
+EXEC sp_addlinkedserver  @server = N'mssql_server5', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost,11433', @catalog=N'master'
+GO
+
+-- Try to create linked server with malformed host,port endpoint (Should throw error)
+EXEC sp_addlinkedserver  @server = N'mssql_server6', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost,abc', @catalog=N'master'
 GO
 
 -- Create a linked server with invalid @rmtsrvname (Should throw error)
@@ -102,7 +100,7 @@ GO
 
 -- tsql    user=linked_server_login_861    password=password_861
 
--- Creation of linked_server should fail since only sysadmin will have privilege to create linked server
--- This will change once T-SQL ALTER ANY LINKED SERVER permission is implemented in babelfish
+-- Creation of linked_server should succeed because init_babelfish pre-creates tds_fdw
+-- and grants USAGE on the foreign-data wrapper to PUBLIC
 EXEC sp_addlinkedserver  @server = N'mssql_server4', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
 GO

@@ -2587,17 +2587,36 @@ tsql_output_into_target_columns:
 					'(' insert_column_list ')'						{ $$ = $2; }
 		;
 
+tsql_exec_keyword:
+			TSQL_EXEC	{}
+			| EXECUTE	{}
+		;
+
 tsql_output_ExecStmt:
-			TSQL_EXEC tsql_opt_return tsql_func_name tsql_actual_args
+			tsql_exec_keyword tsql_return_target tsql_func_name tsql_actual_args
 				{
 					List *name = $3;
 					List *args = $4;
 					CallStmt *n;
+					bool is_remote_proc;
 					ListCell *lc;
+
+					is_remote_proc = (list_length(name) == 4);
 
 					foreach(lc, args)
 					{
 						Node *node = lfirst(lc);
+
+						if (!is_remote_proc && IsA(node, NamedArgExpr))
+						{
+							NamedArgExpr *na = castNode(NamedArgExpr, node);
+
+							if (na->name == NULL && na->argnumber == -2)
+							{
+								node = (Node *) na->arg;
+								lfirst(lc) = node;
+							}
+						}
 						if (node->type == T_RowExpr)
 						{
 							RowExpr *row_expr = (RowExpr *) node;
@@ -2608,10 +2627,71 @@ tsql_output_ExecStmt:
 						}
 					}
 
-					n = makeNode(CallStmt);
-					n->funccall = makeFuncCall(name, args, COERCE_EXPLICIT_CALL, @1);
+					if (is_remote_proc)
+					{
+						RemoteProcStmt *r = makeNode(RemoteProcStmt);
+						r->remote_name = name;
+						r->args = args;
+						r->return_var = $2;
+						r->location = @1;
+						$$ = (Node *) r;
+					}
+					else
+					{
+						n = makeNode(CallStmt);
+						n->funccall = makeFuncCall(name, args, COERCE_EXPLICIT_CALL, @1);
+						$$ = (Node *) n;
+					}
+				}
+			| tsql_exec_keyword tsql_func_name tsql_actual_args
+				{
+					List *name = $2;
+					List *args = $3;
+					CallStmt *n;
+					bool is_remote_proc;
+					ListCell *lc;
 
-					$$ = (Node *) n;
+					is_remote_proc = (list_length(name) == 4);
+
+					foreach(lc, args)
+					{
+						Node *node = lfirst(lc);
+
+						if (!is_remote_proc && IsA(node, NamedArgExpr))
+						{
+							NamedArgExpr *na = castNode(NamedArgExpr, node);
+
+							if (na->name == NULL && na->argnumber == -2)
+							{
+								node = (Node *) na->arg;
+								lfirst(lc) = node;
+							}
+						}
+						if (node->type == T_RowExpr)
+						{
+							RowExpr *row_expr = (RowExpr *) node;
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("Row Expression argument not supported"),
+									 parser_errposition(row_expr->location)));
+						}
+					}
+
+					if (is_remote_proc)
+					{
+						RemoteProcStmt *r = makeNode(RemoteProcStmt);
+						r->remote_name = name;
+						r->args = args;
+						r->return_var = NULL;
+						r->location = @1;
+						$$ = (Node *) r;
+					}
+					else
+					{
+						n = makeNode(CallStmt);
+						n->funccall = makeFuncCall(name, args, COERCE_EXPLICIT_CALL, @1);
+						$$ = (Node *) n;
+					}
 				}
 		;
 
@@ -2993,16 +3073,30 @@ tsql_InsertStmt:
 		;
 
 tsql_ExecStmt:
-			TSQL_EXEC tsql_opt_return tsql_func_name tsql_actual_args
+			tsql_exec_keyword tsql_return_target tsql_func_name tsql_actual_args
 				{
 					List *name = $3;
 					List *args = $4;
 					CallStmt *n;
+					bool is_remote_proc;
 					ListCell *lc;
+
+					is_remote_proc = (list_length(name) == 4);
 
 					foreach(lc, args)
 					{
 						Node *node = lfirst(lc);
+
+						if (!is_remote_proc && IsA(node, NamedArgExpr))
+						{
+							NamedArgExpr *na = castNode(NamedArgExpr, node);
+
+							if (na->name == NULL && na->argnumber == -2)
+							{
+								node = (Node *) na->arg;
+								lfirst(lc) = node;
+							}
+						}
 						if (node->type == T_RowExpr)
 						{
 							RowExpr *row_expr = (RowExpr *) node;
@@ -3013,21 +3107,46 @@ tsql_ExecStmt:
 						}
 					}
 
-					n = makeNode(CallStmt);
-					n->funccall = makeFuncCall(name, args, COERCE_EXPLICIT_CALL, @1);
-
-					$$ = (Node *) n;
+					if (is_remote_proc)
+					{
+						RemoteProcStmt *r = makeNode(RemoteProcStmt);
+						r->remote_name = name;
+						r->args = args;
+						r->return_var = $2;
+						r->location = @1;
+						$$ = (Node *) r;
+					}
+					else
+					{
+						n = makeNode(CallStmt);
+						n->funccall = makeFuncCall(name, args, COERCE_EXPLICIT_CALL, @1);
+						$$ = (Node *) n;
+					}
 				}
-			| EXECUTE tsql_opt_return tsql_func_name tsql_actual_args
+			| tsql_exec_keyword tsql_func_name tsql_actual_args
 				{
-					List *name = $3;
-					List *args = $4;
+					List *name = $2;
+					List *args = $3;
 					CallStmt *n;
+					bool is_remote_proc;
 					ListCell *lc;
+
+					is_remote_proc = (list_length(name) == 4);
 
 					foreach(lc, args)
 					{
 						Node *node = lfirst(lc);
+
+						if (!is_remote_proc && IsA(node, NamedArgExpr))
+						{
+							NamedArgExpr *na = castNode(NamedArgExpr, node);
+
+							if (na->name == NULL && na->argnumber == -2)
+							{
+								node = (Node *) na->arg;
+								lfirst(lc) = node;
+							}
+						}
 						if (node->type == T_RowExpr)
 						{
 							RowExpr *row_expr = (RowExpr *) node;
@@ -3038,20 +3157,23 @@ tsql_ExecStmt:
 						}
 					}
 
-					n = makeNode(CallStmt);
-					n->funccall = makeFuncCall(name, args, COERCE_EXPLICIT_CALL, @1);
-
-					$$ = (Node *) n;
+					if (is_remote_proc)
+					{
+						RemoteProcStmt *r = makeNode(RemoteProcStmt);
+						r->remote_name = name;
+						r->args = args;
+						r->return_var = NULL;
+						r->location = @1;
+						$$ = (Node *) r;
+					}
+					else
+					{
+						n = makeNode(CallStmt);
+						n->funccall = makeFuncCall(name, args, COERCE_EXPLICIT_CALL, @1);
+						$$ = (Node *) n;
+					}
 				}
-			| TSQL_EXEC '(' Sconst ')'
-				{
-					DoStmt *n = makeNode(DoStmt);
-					n->args = list_make1(makeDefElem("as",
-													 (Node *)makeString($3),
-													 @3));
-					$$ = (Node *) n;
-				}
-			| EXECUTE '(' Sconst ')'
+			| tsql_exec_keyword '(' Sconst ')'
 				{
 					DoStmt *n = makeNode(DoStmt);
 					n->args = list_make1(makeDefElem("as",
@@ -3060,10 +3182,14 @@ tsql_ExecStmt:
 					$$ = (Node *) n;
 				}
 		;
-
-tsql_opt_return:
-			PARAM '='
-			| /* EMPTY */
+tsql_return_target:
+			ColId '='
+				{
+					ColumnRef *cr = makeNode(ColumnRef);
+					cr->fields = list_make1(makeString($1));
+					cr->location = @1;
+					$$ = (Node *) cr;
+				}
 		;
 
 tsql_actual_args: tsql_actual_arg
@@ -3094,15 +3220,36 @@ tsql_actual_arg: ColId '=' a_expr tsql_opt_output
 					{
 						NamedArgExpr *na = makeNode(NamedArgExpr);
 
-						na->name = $1;   /* FIXME: record $4 somewhere - probably need a new Node type */
+						na->name = $1;
 						na->arg = (Expr *) $3;
-						na->argnumber = -1;		/* until determined */
+						/*
+						 * Keep a parser-level marker for T-SQL OUTPUT args.
+						 * -1: regular arg (default)
+						 * -2: OUTPUT/OUT arg
+						 */
+						na->argnumber = $4 ? -2 : -1;
 						na->location = @1;
 						$$ = (Node *) na;
 					}
 				| a_expr tsql_opt_output
 					{
-						$$ = $1; /* FIXME: record $2 somewhere - probably need a new Node type */
+						if ($2)
+						{
+							NamedArgExpr *na = makeNode(NamedArgExpr);
+
+							na->name = NULL;
+							na->arg = (Expr *) $1;
+							/*
+							 * Reuse the existing parser-level OUTPUT marker for
+							 * positional remote-proc arguments. A NULL name keeps
+							 * this distinct from ordinary named notation.
+							 */
+							na->argnumber = -2;
+							na->location = @1;
+							$$ = (Node *) na;
+						}
+						else
+							$$ = $1;
 					}
 		;
 

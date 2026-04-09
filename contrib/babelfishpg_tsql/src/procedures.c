@@ -12,11 +12,15 @@
 #include "access/printtup.h"
 #include "access/relation.h"
 #include "access/table.h"
+#include "access/reloptions.h"
 #include "access/xact.h"
 #include "access/heapam.h"
+#include "catalog/dependency.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_dblink.h"
 #include "catalog/pg_foreign_server.h"
+#include "catalog/pg_user_mapping.h"
 #include "catalog/indexing.h"
 #include "commands/defrem.h"
 #include "commands/prepare.h"
@@ -88,6 +92,28 @@ PG_FUNCTION_INFO_V1(sp_xml_removedocument);
 PG_FUNCTION_INFO_V1(tsql_openxml_get_colpattern);
 PG_FUNCTION_INFO_V1(tsql_openxml_get_xmldoc);
 
+typedef enum SpServerOptionType
+{
+	SP_SERVEROPTION_TYPE_BOOL,
+	SP_SERVEROPTION_TYPE_SECONDS
+} SpServerOptionType;
+
+typedef enum SpServerOptionSecondsParseStatus
+{
+	SP_SERVEROPTION_SECONDS_PARSE_SUCCESS,
+	SP_SERVEROPTION_SECONDS_PARSE_INVALID,
+	SP_SERVEROPTION_SECONDS_PARSE_OVERFLOW
+} SpServerOptionSecondsParseStatus;
+
+typedef char *(*SpServerOptionCanonicalizeValueFn)(const char *optvalue);
+
+typedef struct SpServerOptionDef
+{
+	const char *name;
+	const char *normalized_name;
+	SpServerOptionType option_type;
+} SpServerOptionDef;
+
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
 extern void read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr);
@@ -98,8 +124,30 @@ static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname);
-static void update_bbf_server_options(char *servername, char *optname, char *optvalue, bool isInsert);
-static void clean_up_bbf_server_option(char *servername);
+static void append_linked_server_datasrc_options(List **server_options,
+										const char *data_src);
+static void create_pg_dblink_for_linked_server(char *servername, const char *fdwname,
+								   char *data_src, char *catalog);
+static const char *sp_serveroption_canonicalize_name(const char *optname);
+static char *sp_serveroption_canonicalize_bool_value(const char *optvalue);
+static SpServerOptionSecondsParseStatus sp_serveroption_parse_seconds_value(const char *value,
+							 int32 *parsed_value);
+static char *sp_serveroption_canonicalize_seconds_value(const char *optvalue);
+static char *sp_serveroption_canonicalize_value(const char *optname, const char *optvalue);
+static const SpServerOptionDef *sp_serveroption_lookup(const char *optname, bool is_internal_lookup);
+
+static const SpServerOptionDef sp_serveroption_defs[] =
+{
+	{"query timeout", "query_timeout", SP_SERVEROPTION_TYPE_SECONDS},
+	{"connect timeout", "connect_timeout", SP_SERVEROPTION_TYPE_SECONDS},
+	{"rpc", "rpc", SP_SERVEROPTION_TYPE_BOOL},
+	{"rpc out", "rpc out", SP_SERVEROPTION_TYPE_BOOL}
+};
+static const SpServerOptionCanonicalizeValueFn sp_serveroption_canonicalizers[] =
+{
+	[SP_SERVEROPTION_TYPE_BOOL] = sp_serveroption_canonicalize_bool_value,
+	[SP_SERVEROPTION_TYPE_SECONDS] = sp_serveroption_canonicalize_seconds_value,
+};
 static void rename_extended_property(ObjectType objtype,
 									 const char *var_schema_name,
 									 const char *var_major_name,
@@ -132,10 +180,6 @@ int          get_next_xml_handle_counter(void);
 void         create_xml_handle_temp_table(void);
 void         delete_xml_handle_entry(int  handle);
 int          insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
-
-/* server options and their default values for babelfish_server_options catalog insert */
-char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
-char	   * srvOptions_optvalue[BBF_SERVERS_DEF_NUM_COLS - 1] = {"0", "0"};
 
 Datum
 sp_unprepare(PG_FUNCTION_ARGS)
@@ -2738,161 +2782,254 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 	return res;
 }
 
-static void
-update_bbf_server_options(char *servername, char *optname, char *optvalue, bool isInsert)
+static const char *
+sp_serveroption_canonicalize_name(const char *optname)
 {
-	Relation	bbf_servers_def_rel;
-	TupleDesc	bbf_servers_def_rel_dsc;
-	Datum		new_record[BBF_SERVERS_DEF_NUM_COLS];
-	bool		new_record_nulls[BBF_SERVERS_DEF_NUM_COLS];
-	bool		new_record_repl[BBF_SERVERS_DEF_NUM_COLS];
-	ScanKeyData		key;
-	HeapTuple		tuple, old_tuple;
-	TableScanDesc	tblscan;
-	int		nargs = BBF_SERVERS_DEF_NUM_COLS - 1;
+	const SpServerOptionDef *option_def;
+	char	   *normalized_optname;
 
-	MemSet(new_record_repl, false, sizeof(new_record_repl));
+	if (optname == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.")));
 
-	/* need not check for optname and optvalue when isInsert = true */
-	if(isInsert)
+	normalized_optname = lowerstr(optname);
+	remove_trailing_spaces(normalized_optname);
+	option_def = sp_serveroption_lookup(normalized_optname, false);
+	pfree(normalized_optname);
+
+	if (option_def != NULL)
+		return option_def->normalized_name;
+	
+	ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.")));
+
+	return NULL;
+}
+
+static const SpServerOptionDef *
+sp_serveroption_lookup(const char *optname, bool is_internal_lookup)
+{
+	int			i;
+	const SpServerOptionDef *matched = NULL;
+
+	if (optname == NULL)
+		return NULL;
+
+	for (i = 0; i < lengthof(sp_serveroption_defs); i++)
 	{
-		for(int i = 0; i < nargs; i++)
+		if (strcmp(optname, sp_serveroption_defs[i].name) == 0 ||
+			(is_internal_lookup &&
+			 strcmp(optname, sp_serveroption_defs[i].normalized_name) == 0))
 		{
-			/* check required to allow only timeout server options inside the if block */
-			if((strlen(srvOptions_optname[i]) == 13 && strncmp(srvOptions_optname[i], "query timeout", 13) == 0) || (strlen(srvOptions_optname[i]) == 15 && strncmp(srvOptions_optname[i], "connect timeout", 15) == 0))
-			{
-				int32	timeout = atoi(srvOptions_optvalue[i]);
-				if(strlen(srvOptions_optname[i]) == 13 && strncmp(srvOptions_optname[i], "query timeout", 13) == 0)
-					new_record[Anum_bbf_servers_def_query_timeout - 1] = Int32GetDatum(timeout);
-				else
-					new_record[Anum_bbf_servers_def_connect_timeout - 1] = Int32GetDatum(timeout);
-			}
-		}
-	}
-	else
-	{
-		if (optname && ((strlen(optname) == 13 && strncmp(optname, "query timeout", 13) == 0 ) || (strlen(optname) == 15 && strncmp(optname, "connect timeout", 15) == 0)))
-		{
-			int32	timeout;
-
-			/* we throw error when optvalue == NULL or empty */
-			if (strlen(optvalue) == 0)
-				ereport(ERROR,
-					(errcode(ERRCODE_FDW_ERROR),
-					errmsg("Invalid option value for %s", optname)));
-
-			if (optvalue[0] == '+')
-				optvalue++;
-
-			if (strspn(optvalue, "0123456789") != strlen(optvalue))
-				ereport(ERROR,
-					(errcode(ERRCODE_FDW_ERROR),
-					errmsg("Invalid option value for %s", optname)));
-			else
-				timeout = atoi(optvalue);
-
-			if (timeout < 0)
-				ereport(ERROR,
-					(errcode(ERRCODE_FDW_ERROR),
-					errmsg("%s value provided is out of range",optname)));
-
-			if(strlen(optname) == 13 && strncmp(optname, "query timeout", 13) == 0)
-			{
-				new_record_repl[Anum_bbf_servers_def_query_timeout - 1] = true;
-				new_record[Anum_bbf_servers_def_query_timeout - 1] = Int32GetDatum(timeout);
-			}
-			else
-			{
-				new_record_repl[Anum_bbf_servers_def_connect_timeout - 1] = true;
-				new_record[Anum_bbf_servers_def_connect_timeout - 1] = Int32GetDatum(timeout);
-			}
-		}
-		else
-		{
-			ereport(ERROR,
-				(errcode(ERRCODE_FDW_ERROR),
-				 errmsg("Invalid option provided for sp_serveroption")));
+			matched = &sp_serveroption_defs[i];
+			break;
 		}
 	}
 
-	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),RowExclusiveLock);
-	bbf_servers_def_rel_dsc = RelationGetDescr(bbf_servers_def_rel);
+	return matched;
+}
 
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-	new_record[Anum_bbf_servers_def_servername - 1] = CStringGetTextDatum(servername);
+static char *
+sp_serveroption_canonicalize_bool_value(const char *optvalue)
+{
+	bool		bool_value;
 
-	if(isInsert)
+	/* Accept SQL Server-style truthy spellings, store as bool text. */
+	if (!parse_bool(optvalue, &bool_value))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.")));
+
+	return pstrdup(bool_value ? "true" : "false");
+}
+
+static SpServerOptionSecondsParseStatus
+sp_serveroption_parse_seconds_value(const char *value, int32 *parsed_value)
+{
+	const char *ptr;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
+
+	if (*value == '\0')
+		return SP_SERVEROPTION_SECONDS_PARSE_INVALID;
+
+	ptr = value;
+	if (*ptr == '+')
 	{
-		tuple = heap_form_tuple(bbf_servers_def_rel_dsc,
-								new_record, new_record_nulls);
-		CatalogTupleInsert(bbf_servers_def_rel, tuple);
+		ptr++;
+		if (*ptr == '\0')
+		{
+			*parsed_value = 0;
+			return SP_SERVEROPTION_SECONDS_PARSE_SUCCESS;
+		}
 	}
-	else
+	else if (!isdigit((unsigned char) *ptr))
+		return SP_SERVEROPTION_SECONDS_PARSE_INVALID;
+
+	for (; *ptr != '\0'; ptr++)
 	{
-		ScanKeyInit(&key,
-					Anum_bbf_servers_def_servername,
-					BTEqualStrategyNumber, F_TEXTEQ,
-					CStringGetTextDatum(servername));
-		tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
-		old_tuple = heap_getnext(tblscan, ForwardScanDirection);
-
-		if (!old_tuple)
-		{
-			table_endscan(tblscan);
-			table_close(bbf_servers_def_rel, RowExclusiveLock);
-			ereport(ERROR,
-					(errcode(ERRCODE_FDW_ERROR),
-					errmsg("The server '%s' does not exist. Use sp_linkedservers to show available servers.", servername)));
-		}
-
-		for(int i = 1; i < BBF_SERVERS_DEF_NUM_COLS; i++)
-		{
-			if(!new_record_repl[i])
-			{
-				bool isNull;
-				new_record[i] = heap_getattr(old_tuple, i+1,
-												RelationGetDescr(bbf_servers_def_rel), &isNull);
-			}
-		}
-
-		tuple = heap_modify_tuple(old_tuple, bbf_servers_def_rel_dsc,
-									new_record, new_record_nulls, new_record_repl);
-
-		CatalogTupleUpdate(bbf_servers_def_rel, &tuple->t_self, tuple);
-		table_endscan(tblscan);
-
+		if (!isdigit((unsigned char) *ptr))
+			return SP_SERVEROPTION_SECONDS_PARSE_INVALID;
 	}
 
-	heap_freetuple(tuple);
-	table_close(bbf_servers_def_rel, RowExclusiveLock);
+	*parsed_value = pg_strtoint32_safe(value, (Node *) &escontext);
+	if (escontext.error_occurred)
+		return SP_SERVEROPTION_SECONDS_PARSE_OVERFLOW;
 
+	return SP_SERVEROPTION_SECONDS_PARSE_SUCCESS;
+}
+
+static char *
+sp_serveroption_canonicalize_seconds_value(const char *optvalue)
+{
+	int32		seconds_value;
+	SpServerOptionSecondsParseStatus parse_status;
+
+	parse_status = sp_serveroption_parse_seconds_value(optvalue, &seconds_value);
+	if (parse_status == SP_SERVEROPTION_SECONDS_PARSE_INVALID)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.")));
+
+	if (parse_status == SP_SERVEROPTION_SECONDS_PARSE_OVERFLOW)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("The conversion of the nvarchar value '%s' overflowed an int column.", optvalue)));
+
+	return psprintf("%d", seconds_value);
+}
+
+static char *
+sp_serveroption_canonicalize_value(const char *optname, const char *optvalue)
+{
+	const SpServerOptionDef *option_def;
+	SpServerOptionCanonicalizeValueFn canonicalize_value_fn;
+	char	   *normalized_optvalue;
+	char	   *canonical_value;
+	char	   *start;
+
+	if (optvalue == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.")));
+
+	option_def = sp_serveroption_lookup(optname, true);
+	if (option_def == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("An invalid parameter or option was specified for procedure 'sys.sp_serveroption'.")));
+
+	normalized_optvalue = pstrdup(optvalue);
+	remove_trailing_spaces(normalized_optvalue);
+
+	start = normalized_optvalue;
+	while (*start != '\0' && isspace((unsigned char) *start))
+		start++;
+
+	if (start != normalized_optvalue)
+		memmove(normalized_optvalue, start, strlen(start) + 1);
+
+	if (option_def->option_type < 0 ||
+		option_def->option_type >= lengthof(sp_serveroption_canonicalizers))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Unhandled option type for procedure 'sys.sp_serveroption'.")));
+
+	canonicalize_value_fn = sp_serveroption_canonicalizers[option_def->option_type];
+	if (canonicalize_value_fn == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Unhandled option type for procedure 'sys.sp_serveroption'.")));
+
+	canonical_value = canonicalize_value_fn(normalized_optvalue);
+	pfree(normalized_optvalue);
+	return canonical_value;
+
+	return NULL;
 }
 
 static void
-clean_up_bbf_server_option(char *servername)
+validate_bbf_server_option_entry_exists(const char *servername)
 {
-	Relation		bbf_servers_def_rel;
-	HeapTuple		scantup;
-	ScanKeyData		key;
-	TableScanDesc		tblscan;
+	if (!OidIsValid(get_foreign_server_oid(servername, true)))
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				errmsg("The server '%s' does not exist. Use sp_linkedservers to show available servers.", servername)));
+}
 
-	/* Fetch the relation */
-	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), RowExclusiveLock);
+static void
+append_linked_server_datasrc_options(List **server_options, const char *data_src)
+{
+	const char *port_separator;
+	const char *port_value;
+	char	   *server_host;
 
-	/* Search and drop the definition */
-	ScanKeyInit(&key,
-				Anum_bbf_servers_def_servername,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(servername));
+	if (data_src == NULL)
+		return;
 
-	tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
-	scantup = heap_getnext(tblscan, ForwardScanDirection);
-	if (HeapTupleIsValid(scantup))
+	port_separator = strchr(data_src, ',');
+	if (port_separator == NULL)
 	{
-		CatalogTupleDelete(bbf_servers_def_rel, &scantup->t_self);
+		/* Keep simple @datasrc as servername; no implicit port default here. */
+		*server_options = lappend(*server_options,
+							  makeDefElem("servername",
+									 (Node *) makeString(pstrdup(data_src)),
+									 -1));
+		return;
 	}
-	table_endscan(tblscan);
-	table_close(bbf_servers_def_rel, RowExclusiveLock);
+
+	port_value = port_separator + 1;
+	server_host = pnstrdup(data_src, port_separator - data_src);
+
+	if (server_host[0] == '\0' ||
+		port_value[0] == '\0' ||
+		strspn(port_value, "0123456789") != strlen(port_value))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Invalid port value in @datasrc. Expected host,port with a numeric port.")));
+
+	/* Persist host and port separately so FDW/server options stay canonical. */
+	*server_options = lappend(*server_options,
+						  makeDefElem("servername",
+								 (Node *) makeString(server_host),
+								 -1));
+	*server_options = lappend(*server_options,
+						  makeDefElem("port",
+								 (Node *) makeString(pstrdup(port_value)),
+								 -1));
+}
+
+static void
+create_pg_dblink_for_linked_server(char *servername, const char *fdwname,
+								   char *data_src, char *catalog)
+{
+	DatabaseLinkCreateArgs *args;
+	List		*server_options = NIL;
+	List		*dblink_options = NIL;
+
+	if (fdwname == NULL || fdwname[0] == '\0')
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("FDW name cannot be NULL for linked server creation")));
+
+	append_linked_server_datasrc_options(&server_options, data_src);
+
+	if (catalog)
+		server_options = lappend(server_options,
+							 makeDefElem("database",
+									(Node *) makeString(pstrdup(catalog)),
+									-1));
+
+	args = palloc0(sizeof(DatabaseLinkCreateArgs));
+	args->dblinkname = servername;
+	args->if_not_exists = false;
+	args->authmode = DBLINK_AUTH_CURRENT_USER;
+	args->fdwname = pstrdup(fdwname);
+	args->server_options = server_options;
+	args->dblink_options = dblink_options;
+
+	(void) CreateDatabaseLink(args);
 }
 
 Datum
@@ -2904,8 +3041,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	char	   *data_src = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
 	char	   *provstr = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(5));
 	char	   *catalog = PG_ARGISNULL(6) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(6));
-
-	StringInfoData query;
+	const char *fdwname = NULL;
 
 	bool		provider_warning = false,
 				provstr_warning = false;
@@ -2928,6 +3064,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 		 * in such a case, also doubles up as the linked server data source.
 		 */
 		data_src = pstrdup(linked_server);
+		fdwname = "tds_fdw";
 	}
 	else
 	{
@@ -2940,11 +3077,14 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 			 * indicating internally, we will be using tds_fdw
 			 */
 			provider_warning = true;
+			fdwname = "tds_fdw";
 		}
 		else if (!provider || (strlen(provider) != 7) || (strncmp(provider, "tds_fdw", 7) != 0))
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_ERROR),
 					 errmsg("Unsupported provider '%s'. Supported provider is 'tds_fdw'", provider)));
+		else
+			fdwname = provider;
 
 		if (provstr != NULL)
 		{
@@ -2953,44 +3093,12 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 		}
 	}
 
-	initStringInfo(&query);
+	if (OidIsValid(get_foreign_server_oid(linked_server, true)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("server \"%s\" already exists", linked_server)));
 
-	/*
-	 * We prepare the following query to create a foreign server. This will be
-	 * executed using ProcessUtility():
-	 *
-	 * CREATE SERVER <server name> FOREIGN DATA WRAPPER tds_fdw OPTIONS
-	 * (servername '<remote data source endpoint>', database '<catalog name>')
-	 *
-	 */
-	appendStringInfo(&query, "CREATE SERVER \"%s\" FOREIGN DATA WRAPPER tds_fdw ", linked_server);
-
-	/* Add the relevant options */
-	if (data_src || catalog)
-	{
-		appendStringInfoString(&query, "OPTIONS ( ");
-
-		/*
-		 * The servername option is required for foreign server creation, but
-		 * we leave it to the FDW's validator function to check for that
-		 */
-		if (data_src)
-			appendStringInfo(&query, "servername '%s' ", data_src);
-
-		if (catalog)
-		{
-			if (data_src)
-				appendStringInfoString(&query, ", ");
-
-			appendStringInfo(&query, "database '%s' ", catalog);
-		}
-
-		appendStringInfoString(&query, ")");
-	}
-
-	exec_utility_cmd_helper(query.data);
-
-	update_bbf_server_options(linked_server, NULL, NULL, true);
+	create_pg_dblink_for_linked_server(linked_server, fdwname, data_src, catalog);
 
 	/* We throw warnings only if foreign server object creation succeeds */
 	if (provider_warning)
@@ -3017,8 +3125,6 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	if (catalog)
 		pfree(catalog);
 
-	pfree(query.data);
-
 	return (Datum) 0;
 }
 
@@ -3032,8 +3138,9 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	char	   *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(4));
 	Oid 		save_userid;
 	int 		save_sec_context;
-
-	StringInfoData query;
+	CreateUserMappingStmt *stmt;
+	RoleSpec   *mapping_role;
+	List		*um_options = NIL;
 
 	if (!pltsql_enable_linked_servers)
 		ereport(ERROR,
@@ -3056,8 +3163,6 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("Only @locallogin = NULL is supported. Configuring remote server access specific to local login is not yet supported")));
 
-	initStringInfo(&query);
-
 	/*
 	 * check privileges for login
 	 * allow if has privileges of sysadmin or securityadmin.
@@ -3068,41 +3173,24 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("User does not have permission to perform this action.")));
 
-	/*
-	 * We prepare the following query to create a user mapping. This will be
-	 * executed using ProcessUtility():
-	 *
-	 * CREATE USER MAPPING FOR PUBLIC SERVER <servername> OPTIONS
-	 * (username '<remote server user name>', password '<remote server user
-	 * password>')
-	 *
-	 */
-	appendStringInfo(&query, "CREATE USER MAPPING FOR PUBLIC SERVER \"%s\" ", servername);
+	if (username)
+		um_options = lappend(um_options,
+						 makeDefElem("username", (Node *) makeString(pstrdup(username)), -1));
+	if (password)
+		um_options = lappend(um_options,
+						 makeDefElem("password", (Node *) makeString(pstrdup(password)), -1));
 
-	/*
-	 * Add the relevant options
-	 *
-	 * The username and password options are required for user mapping
-	 * creation, (according to tds_fdw documentation) but we leave it to the
-	 * FDW's validator function to check for that
-	 */
-	if (username || password)
-	{
-		appendStringInfoString(&query, "OPTIONS ( ");
+	mapping_role = makeNode(RoleSpec);
+	mapping_role->roletype = ROLESPEC_PUBLIC;
+	mapping_role->rolename = NULL;
+	mapping_role->location = -1;
 
-		if (username)
-			appendStringInfo(&query, "username '%s' ", username);
+	stmt = makeNode(CreateUserMappingStmt);
+	stmt->user = mapping_role;
+	stmt->servername = pstrdup(servername);
+	stmt->options = um_options;
+	stmt->if_not_exists = false;
 
-		if (password)
-		{
-			if (username)
-				appendStringInfoString(&query, ", ");
-
-			appendStringInfo(&query, "password '%s' ", password);
-		}
-
-		appendStringInfoString(&query, ")");
-	}
 	/*
 	* We have performed all the permissions checks.
 	* Set current user to bbf_role_admin for mapping permissions.
@@ -3112,7 +3200,7 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
-		exec_utility_cmd_helper(query.data);
+		(void) CreateUserMapping(stmt);
 	}
 	PG_FINALLY();
 	{
@@ -3132,8 +3220,6 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	if (password)
 		pfree(password);
 
-	pfree(query.data);
-
 	return (Datum) 0;
 }
 
@@ -3144,8 +3230,8 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	char	   *locallogin = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(1));
 	Oid 		save_userid;
 	int 		save_sec_context;
-
-	StringInfoData query;
+	DropUserMappingStmt *drop_stmt;
+	RoleSpec   *public_role;
 
 	if (!pltsql_enable_linked_servers)
 		ereport(ERROR,
@@ -3177,7 +3263,14 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	/* Check if servername is valid */
 	get_foreign_server_oid(servername, false);
 
-	initStringInfo(&query);
+	public_role = makeNode(RoleSpec);
+	public_role->roletype = ROLESPEC_PUBLIC;
+	public_role->rolename = NULL;
+	public_role->location = -1;
+
+	drop_stmt = makeNode(DropUserMappingStmt);
+	drop_stmt->servername = pstrdup(servername);
+	drop_stmt->missing_ok = true;
 
 	/*
 	* We have performed all the permissions checks.
@@ -3188,28 +3281,8 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
-		/*
-		* We prepare the following queries to drop a linked server login. This will
-		* be executed using ProcessUtility():
-		*
-		* DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER @SERVERNAME
-		* DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER @SERVERNAME
-		*
-		* Linked logins were first implemented as PG USER MAPPINGs for the CURRENT_USER which
-		* was not entirely correct because T-SQL linked logins are not user or login specific.
-		* To address this we now create user mapping for the PG PUBLIC role internally.
-		*
-		* To ensure sp_droplinkedsrvlogin works in accordance with both the older and newer
-		* implementation of linked logins, we try to drop USER MAPPINGs for both the CURRENT_USER
-		* and PUBLIC PG roles.
-		*/
-		appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER \"%s\"", servername);
-		exec_utility_cmd_helper(query.data);
-
-		resetStringInfo(&query);
-
-		appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER \"%s\"", servername);
-		exec_utility_cmd_helper(query.data);
+		drop_stmt->user = public_role;
+		(void) RemoveUserMapping(drop_stmt);
 	}
 
 	PG_FINALLY();
@@ -3224,8 +3297,6 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	if (servername)
 		pfree(servername);
 
-	pfree(query.data);
-
 	return (Datum) 0;
 }
 
@@ -3234,8 +3305,18 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 {
 	char	   *linked_srv = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
 	char	   *droplogins = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_BPCHAR_PP(1)));
-
-	StringInfoData query;
+	ObjectAddress dblinkaddress;
+	ObjectAddress umaddress;
+	HeapTuple	tup;
+	HeapTuple	umtup;
+	Form_pg_dblink dblform;
+	Form_pg_user_mapping umform;
+	TableScanDesc umscan;
+	Relation	umrel;
+	List	   *mapping_oids = NIL;
+	ListCell   *lc;
+	Oid		dblinkid;
+	Oid		serverid;
 
 	if (!pltsql_enable_linked_servers)
 		ereport(ERROR,
@@ -3247,37 +3328,10 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FDW_ERROR),
 				 errmsg("@server parameter cannot be NULL")));
 
-	initStringInfo(&query);
-
-	/*
-	 * We prepare the following query to drop foreign server. This will be
-	 * executed using ProcessUtility():
-	 *
-	 * DROP SERVER <servername> CASCADE
-	 *
-	 * linked logins along with server are dropped if @droplogins = 'NULL' or
-	 * @droplogins = 'droplogins' so we add CASCADE.
-	 */
-	if ((droplogins == NULL) || ((strlen(droplogins) == 10) && (strncmp(droplogins, "droplogins", 10) == 0)))
+	if (droplogins != NULL &&
+		strncmp(droplogins, "droplogins", 10) != 0 &&
+		strncmp(droplogins, "droplogin", 9) != 0)
 	{
-		/* Remove the server entry from sys.babelfish_server_options catalog */
-		appendStringInfo(&query, "DROP SERVER \"%s\" CASCADE", linked_srv);
-
-		exec_utility_cmd_helper(query.data);
-		clean_up_bbf_server_option(linked_srv);
-		pfree(query.data);
-
-		if (linked_srv)
-			pfree(linked_srv);
-
-		if (droplogins)
-			pfree(droplogins);
-
-	}
-	else
-	{
-		pfree(query.data);
-
 		if (linked_srv)
 			pfree(linked_srv);
 
@@ -3286,8 +3340,65 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_ERROR),
-				 errmsg("Invalid parameter value for @droplogins specified in procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.")));
+				 errmsg("Invalid parameter value for @droplogins specified in procedure 'sys.sp_dropserver', acceptable values are 'droplogins', 'droplogin', or NULL.")));
 	}
+
+	/* preserve existing missing-server error semantics */
+	dblinkid = get_dblink_oid(linked_srv, true);
+	if (!OidIsValid(dblinkid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("server \"%s\" does not exist", linked_srv)));
+
+	tup = SearchSysCache1(DBLINKOID, ObjectIdGetDatum(dblinkid));
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for database link %u", dblinkid);
+
+	dblform = (Form_pg_dblink) GETSTRUCT(tup);
+	serverid = dblform->dblserver;
+	if (!object_ownercheck(DbLinkRelationId, dblform->oid, GetUserId()))
+	{
+		ReleaseSysCache(tup);
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be owner of database link \"%s\"",
+						linked_srv)));
+	}
+	ReleaseSysCache(tup);
+
+	if (droplogins != NULL)
+	{
+		/*
+		 * When @droplogins is specified, explicitly remove linked-logins
+		 * before dropping the linked-server root object.
+		 */
+		umrel = table_open(UserMappingRelationId, RowExclusiveLock);
+		umscan = table_beginscan_catalog(umrel, 0, NULL);
+		while ((umtup = heap_getnext(umscan, ForwardScanDirection)) != NULL)
+		{
+			umform = (Form_pg_user_mapping) GETSTRUCT(umtup);
+
+			if (umform->umserver == serverid)
+				mapping_oids = lappend_oid(mapping_oids, umform->oid);
+		}
+		table_endscan(umscan);
+		table_close(umrel, RowExclusiveLock);
+
+		foreach(lc, mapping_oids)
+		{
+			ObjectAddressSet(umaddress, UserMappingRelationId, lfirst_oid(lc));
+			performDeletion(&umaddress, DROP_RESTRICT, 0);
+		}
+	}
+
+	ObjectAddressSet(dblinkaddress, DbLinkRelationId, dblinkid);
+	performDeletion(&dblinkaddress, DROP_RESTRICT, 0);
+
+	if (linked_srv)
+		pfree(linked_srv);
+
+	if (droplogins)
+		pfree(droplogins);
 
 	return (Datum) 0;
 }
@@ -3297,8 +3408,11 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 {
 	char *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
 	char *optionname = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
+	char *newoptionname = optionname;
 	char *optionvalue = PG_ARGISNULL(2) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(2)));
 	char *newoptionvalue = optionvalue;
+	const char *canonical_optionname;
+	char *canonical_optionvalue;
 
 	if(!pltsql_enable_linked_servers)
 		ereport(ERROR,
@@ -3322,19 +3436,17 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 
 	/* we need to ignore trailing spaces in all the arguments */
 	remove_trailing_spaces(servername);
-	remove_trailing_spaces(optionname);
-	remove_trailing_spaces(newoptionvalue);
 
-	/* we need to ignore leading spaces in optionvalue argument */
-	while (*newoptionvalue != '\0' && isspace((unsigned char) *newoptionvalue))
-		newoptionvalue++;
+	/* preserve existing invalid-server error semantics for sp_serveroption */
+	validate_bbf_server_option_entry_exists(servername);
+	canonical_optionname = sp_serveroption_canonicalize_name(newoptionname);
+	canonical_optionvalue = sp_serveroption_canonicalize_value(canonical_optionname,
+												   newoptionvalue);
 
-	if (optionname && ((strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0 ) || (strlen(optionname) == 15 && strncmp(optionname, "connect timeout", 15) == 0)))
-		update_bbf_server_options(servername, optionname, newoptionvalue, false);
-	else
-		ereport(ERROR,
-			(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Invalid option provided for sp_serveroption. Only 'query timeout' and 'connect timeout' are currently supported.")));
+	(void) AlterDatabaseLinkOptions(servername, canonical_optionname,
+								   canonical_optionvalue);
+
+	pfree(canonical_optionvalue);
 
 	if(servername)
 		pfree(servername);

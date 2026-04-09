@@ -112,8 +112,8 @@ GO
 EXEC sp_serveroption @server='bbf_server_2', @optname='connect timeout', @optvalue='1'
 GO
 
--- check if the linked servers added above are reflected in babelfish_server_options catalog
-SELECT servername, query_timeout, connect_timeout FROM babelfish_server_options WHERE servername = 'bbf_server' OR servername = 'bbf_server_1' OR servername = 'bbf_server_2' order by servername
+-- check if the linked servers added above are reflected in sys.servers
+SELECT name AS servername, query_timeout, connect_timeout FROM sys.servers WHERE name = 'bbf_server' OR name = 'bbf_server_1' OR name = 'bbf_server_2' order by name
 GO
 
 -- Create a view dependent on OPENQUERY

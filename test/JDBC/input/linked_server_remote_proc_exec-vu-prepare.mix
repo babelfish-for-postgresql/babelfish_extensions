@@ -1,0 +1,213 @@
+-- psql
+SET client_min_messages TO error;
+GO
+
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+GO
+
+GRANT USAGE ON FOREIGN DATA WRAPPER tds_fdw TO PUBLIC;
+GO
+
+-- tsql
+USE master;
+GO
+
+IF EXISTS (SELECT 1 FROM sys.servers WHERE name = 'ls_svr')
+    EXEC sp_dropserver @server = 'ls_svr', @droplogins = 'droplogins';
+GO
+
+EXEC sp_addlinkedserver  @server = N'ls_svr', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost,11433', @catalog=N'master';
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'ls_svr', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+EXEC sp_serveroption @server='ls_svr', @optname='rpc', @optvalue='true'
+GO
+
+EXEC sp_serveroption @server='ls_svr', @optname='rpc out', @optvalue='true'
+GO
+
+-- psql
+SELECT (SELECT COUNT(*)
+       FROM pg_foreign_server s,
+           LATERAL pg_options_to_table(s.srvoptions) AS o
+       WHERE s.srvname = 'ls_svr'
+        AND o.option_name = 'servername'
+        AND o.option_value = 'localhost') AS host_option_rows,
+      (SELECT COUNT(*)
+       FROM pg_foreign_server s,
+           LATERAL pg_options_to_table(s.srvoptions) AS o
+       WHERE s.srvname = 'ls_svr'
+        AND o.option_name = 'port'
+        AND o.option_value = '11433') AS port_option_rows,
+      (SELECT COUNT(*)
+       FROM pg_foreign_server s,
+           LATERAL pg_options_to_table(s.srvoptions) AS o
+       WHERE s.srvname = 'ls_svr'
+        AND o.option_name = 'servername'
+        AND o.option_value = 'localhost,11433') AS unsplit_servername_rows,
+      (SELECT COUNT(*)
+       FROM pg_dblink l,
+           LATERAL pg_options_to_table(l.dbloptions) AS o
+       WHERE l.dblname = 'ls_svr'
+        AND o.option_name = 'rpc'
+        AND o.option_value = 'true') AS rpc_true_count,
+      (SELECT COUNT(*)
+       FROM pg_dblink l,
+           LATERAL pg_options_to_table(l.dbloptions) AS o
+       WHERE l.dblname = 'ls_svr'
+        AND o.option_name IN ('rpc out', 'rpc_out')
+        AND o.option_value = 'true') AS rpc_out_true_count,
+      (SELECT COUNT(*)
+       FROM pg_user_mapping m
+       JOIN pg_foreign_server s ON s.oid = m.umserver
+       WHERE s.srvname = 'ls_svr') AS mapping_rows;
+GO
+
+-- tsql
+SELECT name, data_source FROM sys.servers WHERE name = 'ls_svr';
+GO
+
+IF OBJECT_ID('dbo.rp_txn_log', 'U') IS NOT NULL
+    DROP TABLE dbo.rp_txn_log;
+GO
+
+CREATE TABLE dbo.rp_txn_log
+(
+    id int IDENTITY(1,1) PRIMARY KEY,
+    tag int NOT NULL
+);
+GO
+
+CREATE PROCEDURE dbo.rp_basic
+AS
+BEGIN
+    SELECT 100 AS val;
+END;
+GO
+
+CREATE PROCEDURE dbo.rp_out
+    @x int,
+    @y int OUTPUT
+AS
+BEGIN
+    SET @y = @x + 1;
+END;
+GO
+
+CREATE PROCEDURE dbo.rp_status
+    @x int
+AS
+BEGIN
+    RETURN @x + 5;
+END;
+GO
+
+CREATE PROCEDURE dbo.rp_multi
+AS
+BEGIN
+    SELECT 1 AS rs, 'first' AS label;
+    SELECT 2 AS rs, 'second' AS label;
+END;
+GO
+
+CREATE PROCEDURE dbo.rp_multi_mismatch
+AS
+BEGIN
+    SELECT 1 AS rs, 'first' AS label;
+    SELECT 2 AS rs, 'second' AS label, 'extra' AS extra_label;
+END;
+GO
+
+CREATE PROCEDURE dbo.rp_multi_out_status
+    @x int,
+    @y int OUTPUT
+AS
+BEGIN
+    SELECT 1 AS rs, 'first' AS label;
+    SELECT 2 AS rs, 'second' AS label;
+    SET @y = @x + 1;
+    RETURN @x + 5;
+END;
+GO
+
+CREATE PROCEDURE dbo.rp_bit
+    @flag bit
+AS
+BEGIN
+    SELECT @flag AS flag;
+END;
+GO
+
+CREATE PROCEDURE dbo.rp_varchar_param
+    @val varchar(255)
+AS
+BEGIN
+    SELECT @val AS result;
+END;
+GO
+
+CREATE PROCEDURE dbo.rp_datetime_param
+    @val datetime
+AS
+BEGIN
+    SELECT @val AS result;
+END;
+GO
+
+CREATE PROCEDURE dbo.rp_float_param
+    @val float
+AS
+BEGIN
+    SELECT @val AS result;
+END;
+GO
+
+CREATE PROCEDURE dbo.rp_null_param
+    @p1 int,
+    @p2 varchar(100),
+    @p3 datetime,
+    @p4 float
+AS
+BEGIN
+    SELECT @p1 AS p1, @p2 AS p2, @p3 AS p3, @p4 AS p4;
+END;
+GO
+
+CREATE PROCEDURE dbo.rp_large_string
+    @val varchar(max)
+AS
+BEGIN
+    SELECT LEN(@val) AS str_len;
+END;
+GO
+
+CREATE PROCEDURE dbo.rp_bin
+    @payload varbinary(16)
+AS
+BEGIN
+    SELECT @payload AS payload;
+END;
+GO
+
+CREATE PROCEDURE dbo.rp_txn_insert
+    @tag int
+AS
+BEGIN
+    INSERT INTO dbo.rp_txn_log(tag)
+    VALUES(@tag);
+
+    SELECT COUNT(*) AS tag_count
+    FROM dbo.rp_txn_log
+    WHERE tag = @tag;
+END;
+GO
+
+CREATE PROCEDURE dbo.rp_sleep
+AS
+BEGIN
+    SELECT CAST(pg_sleep(5) AS text) AS slept;
+END;
+GO
+

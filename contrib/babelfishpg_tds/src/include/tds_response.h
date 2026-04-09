@@ -67,6 +67,7 @@ extern void TdsSendInfo(int number, int state, int class,
 						char *message, int line_no);
 extern void TdsSendDone(int tag, int status,
 						int curcmd, uint64_t nprocessed);
+extern void TdsEmitRowsetBoundary(uint64_t rowcount);
 extern void SendColumnMetadataToken(int natts, bool sendRowStat);
 extern void SendTabNameToken(void);
 extern void SendColInfoToken(int natts, bool sendRowStat);

@@ -330,10 +330,22 @@ public class TestQueryFile {
             }
             else {
                 try {
+                    if (connection_bbl.isClosed()) {
+                        connection_bbl = null;
+                        return;
+                    }
                     connection_bbl.createStatement().execute("EXEC sys.sp_reset_connection");
                 }
-                catch (Exception e) {
-                    e.printStackTrace();
+                catch (SQLException e) {
+                    String sqlState = e.getSQLState();
+                    String errorMessage = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
+
+                    if ("08S01".equals(sqlState) || errorMessage.contains("connection is closed")) {
+                        connection_bbl = null;
+                        return;
+                    }
+
+                    logger.error("Failed to reset JDBC connection", e);
                 }
                 return;
             }
@@ -341,12 +353,24 @@ public class TestQueryFile {
         else {
             try {
                 if (connection_bbl != null) {
+                    if (connection_bbl.isClosed()) {
+                        connection_bbl = null;
+                        return;
+                    }
                     connection_bbl.close();
                 }
                 connection_bbl = null;
             }
-            catch (Exception e) {
-                e.printStackTrace();
+            catch (SQLException e) {
+                String sqlState = e.getSQLState();
+                String errorMessage = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
+
+                if ("08S01".equals(sqlState) || errorMessage.contains("connection is closed")) {
+                    connection_bbl = null;
+                    return;
+                }
+
+                logger.error("Failed to close JDBC connection", e);
             }
             return;
         }
