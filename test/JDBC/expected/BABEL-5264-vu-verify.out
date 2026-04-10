@@ -532,7 +532,7 @@ EXEC dbo.babel5264_test_tsql_proc '#procTest'
 GO
 ~~START~~
 int
-8
+2
 ~~END~~
 
 ~~START~~
@@ -724,7 +724,7 @@ SELECT COUNT(*) AS tsql_attr_count FROM sys.babelfish_get_temp_table_attributes(
 GO
 ~~START~~
 int
-8
+2
 ~~END~~
 
 
@@ -748,7 +748,7 @@ SELECT COUNT(*) AS pg_dialect_tds_attr_count FROM sys.babelfish_get_temp_table_a
 GO
 ~~START~~
 int
-8
+2
 ~~END~~
 
 

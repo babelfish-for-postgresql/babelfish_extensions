@@ -17,16 +17,13 @@
 #include "catalog/pg_attribute.h"
 #include "fmgr.h"
 #include "funcapi.h"
-#include "parser/parser.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/queryenvironment.h"
 
 #include "../src/pltsql.h"
 #include "../src/multidb.h"
-
-extern Datum object_id(PG_FUNCTION_ARGS);
+#include "functions.h"
 
 PG_FUNCTION_INFO_V1(get_tsql_temp_table_attributes);
 PG_FUNCTION_INFO_V1(is_temp_table_name);
@@ -38,63 +35,58 @@ PG_FUNCTION_INFO_V1(is_temp_table_name);
  * Uses object_id() to resolve table name to OID, then retrieves attributes
  * from ENR cache or pg_attribute catalog.
  *
- * This function only works on TDS connections (Babelfish context).
+ * This function only works on TDS connections.
  * Returns empty result set when called from non-TDS connections.
  */
 Datum
 get_tsql_temp_table_attributes(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	LOCAL_FCINFO(locfcinfo, 2);
 	Relation	attrel;
 	Oid			relid = InvalidOid;
-	Datum		tablename;
-	bool		tablename_isnull;
-	FmgrInfo	flinfo;
+	Datum		tablename = PG_GETARG_DATUM(0);
+	bool		tablename_isnull = PG_ARGISNULL(0);
 
-	/* Extract arguments into local variables */
-	tablename = PG_GETARG_DATUM(0);
-	tablename_isnull = PG_ARGISNULL(0);
-
-	/* Initialize FmgrInfo for object_id call */
-	MemSet(&flinfo, 0, sizeof(flinfo));
-	flinfo.fn_addr = object_id;
-	flinfo.fn_nargs = 2;
-	flinfo.fn_mcxt = CurrentMemoryContext;
+	/* Setup SRF using pg_attribute's tuple descriptor */
+	attrel = table_open(AttributeRelationId, AccessShareLock);
+	rsinfo->expectedDesc = RelationGetDescr(attrel);
+	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC | MAT_SRF_BLESS);
 
 	/* Only process on TDS connections. Return empty result set otherwise. */
-	if (!(is_bbf_tds_connection_hook && is_bbf_tds_connection_hook()))
+	if (!is_bbf_tds_connection_hook())
 	{
-		attrel = table_open(AttributeRelationId, AccessShareLock);
-		rsinfo->expectedDesc = RelationGetDescr(attrel);
-		InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC | MAT_SRF_BLESS);
 		table_close(attrel, AccessShareLock);
-		return (Datum) 0;
+		PG_RETURN_NULL();
 	}
 
-	attrel = table_open(AttributeRelationId, AccessShareLock);
+	/* Resolve table name to OID via object_id(name, NULL). */
+	if (!tablename_isnull)
+	{
+		InitFunctionCallInfoData(*locfcinfo, NULL, 2, InvalidOid, NULL, NULL);
+		locfcinfo->args[0].value = tablename;
+		locfcinfo->args[0].isnull = false;
+		locfcinfo->args[1].value = (Datum) 0;
+		locfcinfo->args[1].isnull = true;
+
+		PG_TRY();
+		{
+			Datum result = object_id(locfcinfo);
+			if (!locfcinfo->isnull)
+				relid = DatumGetObjectId(result);
+		}
+		PG_CATCH();
+		{
+			/* object_id threw an error - return empty result set */
+			FlushErrorState();
+			table_close(attrel, AccessShareLock);
+			PG_RETURN_NULL();
+		}
+		PG_END_TRY();
+	}
 
 	PG_TRY();
 	{
-		/* Setup SRF using pg_attribute's tuple descriptor */
-		rsinfo->expectedDesc = RelationGetDescr(attrel);
-		InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC | MAT_SRF_BLESS);
-
-		/* Resolve table name to OID via object_id() */
-		if (!tablename_isnull)
-		{
-			LOCAL_FCINFO(locfcinfo, 2);
-
-			InitFunctionCallInfoData(*locfcinfo, &flinfo, 2, InvalidOid, NULL, NULL);
-			locfcinfo->args[0].value = tablename;
-			locfcinfo->args[0].isnull = false;
-			locfcinfo->args[1].value = (Datum) 0;
-			locfcinfo->args[1].isnull = true;
-
-			relid = DatumGetObjectId(FunctionCallInvoke(locfcinfo));
-			if (locfcinfo->isnull)
-				relid = InvalidOid;
-		}
-
 		/* Populate tuplestore if valid OID */
 		if (OidIsValid(relid))
 		{
@@ -105,8 +97,13 @@ get_tsql_temp_table_attributes(PG_FUNCTION_ARGS)
 				/* ENR path: use cached tuples */
 				ListCell *lc;
 				foreach(lc, enr->md.cattups[ENR_CATTUP_ATTRIBUTE])
-					tuplestore_puttuple(rsinfo->setResult,
-										heap_copytuple((HeapTuple) lfirst(lc)));
+				{
+					HeapTuple	tup = (HeapTuple) lfirst(lc);
+					Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tup);
+
+					if (att->attnum > 0)
+						tuplestore_puttuple(rsinfo->setResult, heap_copytuple(tup));
+				}
 			}
 			else if (isTempNamespace(get_rel_namespace(relid)))
 			{
@@ -120,7 +117,12 @@ get_tsql_temp_table_attributes(PG_FUNCTION_ARGS)
 				scan = systable_beginscan(attrel, AttributeRelidNumIndexId,
 										  true, NULL, 1, skey);
 				while (HeapTupleIsValid(tup = systable_getnext(scan)))
-					tuplestore_puttuple(rsinfo->setResult, tup);
+				{
+					Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tup);
+
+					if (att->attnum > 0)
+						tuplestore_puttuple(rsinfo->setResult, tup);
+				}
 				systable_endscan(scan);
 			}
 		}
@@ -131,7 +133,7 @@ get_tsql_temp_table_attributes(PG_FUNCTION_ARGS)
 	}
 	PG_END_TRY();
 
-	return (Datum) 0;
+	PG_RETURN_NULL();
 }
 
 /*
@@ -139,6 +141,7 @@ get_tsql_temp_table_attributes(PG_FUNCTION_ARGS)
  *		Returns true if the object name starts with #.
  *
  * Handles four-part qualified names with quoted identifiers or brackets.
+ * Only works on TDS connections, returns false otherwise.
  */
 Datum
 is_temp_table_name(PG_FUNCTION_ARGS)
@@ -146,6 +149,10 @@ is_temp_table_name(PG_FUNCTION_ARGS)
 	char   *input;
 	char   *object_name;
 	bool	result;
+
+	/* Only process on TDS connections */
+	if (!is_bbf_tds_connection_hook())
+		PG_RETURN_BOOL(false);
 
 	/* Validate argument at the start */
 	if (PG_ARGISNULL(0))
