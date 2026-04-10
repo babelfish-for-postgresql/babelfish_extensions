@@ -19,7 +19,9 @@ babelfish_extensions/
 │   ├── dotnet/               # .NET driver tests
 │   └── odbc/                 # ODBC driver tests
 ├── .github/
-│   └── pull_request_template.md  # PR description template
+│   ├── scripts/
+│   │   └── install-deps.sh        # First-time dependency installer
+│   └── pull_request_template.md   # PR description template
 └── dev-tools.sh              # Developer build and test script
 ```
 
@@ -35,8 +37,6 @@ Both repos must be in the same parent directory (the workspace root):
 
 All commands below run from the workspace root.
 
-For first-time environment setup (dependencies, ANTLR, cmake), see `contrib/README.md`.
-
 ## Branch Naming
 
 | Type | Extensions | Engine |
@@ -49,10 +49,18 @@ Both repos must be on matching branches. List branches from GitHub to find the l
 ## Build and Test
 
 ### First-time setup
+
+Install dependencies (or see `contrib/README.md` for manual steps):
 ```bash
-./babelfish_extensions/dev-tools.sh initpg    # Build PostgreSQL engine
-./babelfish_extensions/dev-tools.sh initdb    # Initialize data directory
-./babelfish_extensions/dev-tools.sh initbbf   # Initialize Babelfish
+./.github/scripts/install-deps.sh
+```
+
+Build and initialize:
+```bash
+./babelfish_extensions/dev-tools.sh initpg      # Build PostgreSQL engine
+./babelfish_extensions/dev-tools.sh initdb       # Init data directory (restart may fail — expected)
+./babelfish_extensions/dev-tools.sh buildbbf     # Build extensions + restart
+./babelfish_extensions/dev-tools.sh initbbf      # Initialize Babelfish (creates jdbc_user / babelfish_db)
 ```
 
 ### Verify setup
@@ -60,20 +68,20 @@ Both repos must be on matching branches. List branches from GitHub to find the l
 Verify both PostgreSQL and TDS endpoints:
 ```bash
 # PostgreSQL endpoint
-./postgres/bin/psql -U babelfish_user -d babelfish_db -c "SELECT 1"
+psql -U jdbc_user -d babelfish_db -c "SELECT 1"
 
 # TDS endpoint (sqlcmd or Python)
-sqlcmd -S localhost -U babelfish_user -P 12345678 -Q "SELECT 1"
+sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT 1"
 # or
-python3 -c "import pymssql; c = pymssql.connect('localhost','babelfish_user','12345678','master'); c.cursor().execute('SELECT 1'); print('OK')"
+python3 -c "import pymssql; c = pymssql.connect('localhost','jdbc_user','12345678','master'); c.cursor().execute('SELECT 1'); print('OK')"
 ```
 
 ### Daily development
 ```bash
 ./babelfish_extensions/dev-tools.sh buildbbf      # Build extensions + restart DB
 ./babelfish_extensions/dev-tools.sh buildall      # Build PG + extensions + restart DB
-./babelfish_extensions/dev-tools.sh run_pgindent "" path/to/file.c # Format a single file (required before PR)
-./babelfish_extensions/dev-tools.sh run_pgindent                   # Format all extensions
+./babelfish_extensions/dev-tools.sh run_pgindent "" path/to/file.c  # Format a single file
+./babelfish_extensions/dev-tools.sh run_pgindent                    # Format all extensions
 ```
 
 ### Running tests
