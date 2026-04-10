@@ -18,12 +18,15 @@
 #include "fmgr.h"
 #include "funcapi.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/queryenvironment.h"
 
 #include "../src/pltsql.h"
 #include "../src/multidb.h"
 #include "functions.h"
+
+#define OBJECT_TYPE	"u"
 
 PG_FUNCTION_INFO_V1(get_tsql_temp_table_attributes);
 PG_FUNCTION_INFO_V1(is_temp_table_name);
@@ -36,44 +39,30 @@ PG_FUNCTION_INFO_V1(is_temp_table_name);
  * from ENR cache or pg_attribute catalog.
  *
  * This function only works on TDS connections.
- * Returns empty result set when called from non-TDS connections.
  */
 Datum
 get_tsql_temp_table_attributes(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	LOCAL_FCINFO(locfcinfo, 2);
 	Relation	attrel;
 	Oid			relid = InvalidOid;
 	Datum		tablename = PG_GETARG_DATUM(0);
-	bool		tablename_isnull = PG_ARGISNULL(0);
 
 	/* Setup SRF using pg_attribute's tuple descriptor */
 	attrel = table_open(AttributeRelationId, AccessShareLock);
 	rsinfo->expectedDesc = RelationGetDescr(attrel);
 	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC | MAT_SRF_BLESS);
 
-	/* Only process on TDS connections. Return empty result set otherwise. */
+	/* Only process on TDS connections */
 	if (!is_bbf_tds_connection_hook())
-	{
-		table_close(attrel, AccessShareLock);
-		PG_RETURN_NULL();
-	}
+		elog(ERROR, "function is only supported on TDS connections");
 
-	/* Resolve table name to OID via object_id(name, NULL). */
-	if (!tablename_isnull)
+	/* Resolve table name to OID via object_id() */
+	if (!PG_ARGISNULL(0))
 	{
-		InitFunctionCallInfoData(*locfcinfo, NULL, 2, InvalidOid, NULL, NULL);
-		locfcinfo->args[0].value = tablename;
-		locfcinfo->args[0].isnull = false;
-		locfcinfo->args[1].value = (Datum) 0;
-		locfcinfo->args[1].isnull = true;
-
 		PG_TRY();
 		{
-			Datum result = object_id(locfcinfo);
-			if (!locfcinfo->isnull)
-				relid = DatumGetObjectId(result);
+			relid = DatumGetObjectId(DirectFunctionCall2(object_id, tablename, CStringGetTextDatum(OBJECT_TYPE)));
 		}
 		PG_CATCH();
 		{
@@ -85,46 +74,47 @@ get_tsql_temp_table_attributes(PG_FUNCTION_ARGS)
 		PG_END_TRY();
 	}
 
+	/* Return empty if table not found */
+	if (!OidIsValid(relid))
+	{
+		table_close(attrel, AccessShareLock);
+		PG_RETURN_NULL();
+	}
+
 	PG_TRY();
 	{
-		/* Populate tuplestore if valid OID */
-		if (OidIsValid(relid))
+		EphemeralNamedRelation enr = GetENRTempTableWithOid(relid, false);
+
+		if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 		{
-			EphemeralNamedRelation enr = GetENRTempTableWithOid(relid, false);
-
-			if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
+			/* ENR path: use cached tuples, skip system attributes */
+			ListCell *lc;
+			foreach(lc, enr->md.cattups[ENR_CATTUP_ATTRIBUTE])
 			{
-				/* ENR path: use cached tuples */
-				ListCell *lc;
-				foreach(lc, enr->md.cattups[ENR_CATTUP_ATTRIBUTE])
-				{
-					HeapTuple	tup = (HeapTuple) lfirst(lc);
-					Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tup);
+				HeapTuple	tup = (HeapTuple) lfirst(lc);
+				Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tup);
 
-					if (att->attnum > 0)
-						tuplestore_puttuple(rsinfo->setResult, heap_copytuple(tup));
-				}
+				if (att->attnum > 0)
+					tuplestore_puttuple(rsinfo->setResult, heap_copytuple(tup));
 			}
-			else if (isTempNamespace(get_rel_namespace(relid)))
+		}
+		else if (isTempNamespace(get_rel_namespace(relid)))
+		{
+			/* Non-ENR temp table path: scan pg_attribute, skip system attributes */
+			ScanKeyData skey[1];
+			SysScanDesc scan;
+			HeapTuple	tup;
+
+			ScanKeyInit(&skey[0], Anum_pg_attribute_attrelid, BTEqualStrategyNumber, F_OIDEQ, ObjectIdGetDatum(relid));
+			scan = systable_beginscan(attrel, AttributeRelidNumIndexId, true, NULL, 1, skey);
+			while (HeapTupleIsValid(tup = systable_getnext(scan)))
 			{
-				/* Non-ENR temp table path: scan pg_attribute */
-				ScanKeyData skey[1];
-				SysScanDesc scan;
-				HeapTuple	tup;
+				Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tup);
 
-				ScanKeyInit(&skey[0], Anum_pg_attribute_attrelid,
-							BTEqualStrategyNumber, F_OIDEQ, ObjectIdGetDatum(relid));
-				scan = systable_beginscan(attrel, AttributeRelidNumIndexId,
-										  true, NULL, 1, skey);
-				while (HeapTupleIsValid(tup = systable_getnext(scan)))
-				{
-					Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tup);
-
-					if (att->attnum > 0)
-						tuplestore_puttuple(rsinfo->setResult, tup);
-				}
-				systable_endscan(scan);
+				if (att->attnum > 0)
+					tuplestore_puttuple(rsinfo->setResult, tup);
 			}
+			systable_endscan(scan);
 		}
 	}
 	PG_FINALLY();

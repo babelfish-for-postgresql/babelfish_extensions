@@ -563,17 +563,18 @@ GO
 
 SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('pg_temp_test');
 GO
-~~START~~
-int8
-0
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function is only supported on TDS connections
+    Server SQLState: XX000)~~
 
 
 SELECT * FROM sys.sp_tablecollations_100_enr('pg_temp_test');
 GO
-~~START~~
-int4#!#"sys"."varchar"#!#"sys"."varchar"
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function is only supported on TDS connections
+    Server SQLState: XX000)~~
 
 
 -- Insert specific columns from babelfish_get_temp_table_attributes (should insert 0 rows)
@@ -582,6 +583,11 @@ GO
 
 INSERT INTO pg_attr_result SELECT attrelid, attname, attnum, attcollation FROM sys.babelfish_get_temp_table_attributes('pg_temp_test');
 GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function is only supported on TDS connections
+    Server SQLState: XX000)~~
+
 
 SELECT COUNT(*) AS inserted_rows FROM pg_attr_result;
 GO
@@ -600,6 +606,11 @@ GO
 
 INSERT INTO pg_coll_result SELECT * FROM sys.sp_tablecollations_100_enr('pg_temp_test');
 GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function is only supported on TDS connections
+    Server SQLState: XX000)~~
+
 
 SELECT COUNT(*) AS inserted_rows FROM pg_coll_result;
 GO
@@ -626,17 +637,18 @@ GO
 
 SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#pg_hash_temp');
 GO
-~~START~~
-int8
-0
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function is only supported on TDS connections
+    Server SQLState: XX000)~~
 
 
 SELECT * FROM sys.sp_tablecollations_100_enr('#pg_hash_temp');
 GO
-~~START~~
-int4#!#"sys"."varchar"#!#"sys"."varchar"
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function is only supported on TDS connections
+    Server SQLState: XX000)~~
 
 
 DROP TABLE "#pg_hash_temp";
@@ -653,17 +665,18 @@ GO
 
 SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#pg_hash_regular');
 GO
-~~START~~
-int8
-0
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function is only supported on TDS connections
+    Server SQLState: XX000)~~
 
 
 SELECT * FROM sys.sp_tablecollations_100_enr('#pg_hash_regular');
 GO
-~~START~~
-int4#!#"sys"."varchar"#!#"sys"."varchar"
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function is only supported on TDS connections
+    Server SQLState: XX000)~~
 
 
 DROP TABLE "#pg_hash_regular";
@@ -672,39 +685,44 @@ GO
 -- Test via PL/pgSQL procedure (should return 0 for both functions)
 CALL test_pg_temp_table_proc();
 GO
-~~WARNING (Code: 0)~~
+~~ERROR (Code: 0)~~
 
-~~WARNING (Message: babelfish_get_temp_table_attributes count: 0  Server SQLState: 00000)~~~~WARNING (Message: sp_tablecollations_100_enr count: 0  Server SQLState: 00000)~~
+~~ERROR (Message: ERROR: function is only supported on TDS connections
+  Where: SQL statement "SELECT COUNT(*)                 FROM sys.babelfish_get_temp_table_attributes('pg_proc_temp_test')"
+PL/pgSQL function test_pg_temp_table_proc() line 11 at SQL statement
+    Server SQLState: XX000)~~
 
 
 SELECT * FROM sys.sp_tablecollations_100_enr('#nonexistent_temp');
 GO
-~~START~~
-int4#!#"sys"."varchar"#!#"sys"."varchar"
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function is only supported on TDS connections
+    Server SQLState: XX000)~~
 
 
 SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#nonexistent_temp');
 GO
-~~START~~
-int8
-0
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function is only supported on TDS connections
+    Server SQLState: XX000)~~
 
 
 SELECT * FROM sys.sp_tablecollations_100_enr(NULL);
 GO
-~~START~~
-int4#!#"sys"."varchar"#!#"sys"."varchar"
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function is only supported on TDS connections
+    Server SQLState: XX000)~~
 
 
 SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes(NULL);
 GO
-~~START~~
-int8
-0
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function is only supported on TDS connections
+    Server SQLState: XX000)~~
 
 
 -- tsql
