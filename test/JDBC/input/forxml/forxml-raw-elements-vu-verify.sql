@@ -414,6 +414,18 @@ GO
 SELECT 1 AS a, 2 AS b FOR XML RAW(''), ELEMENTS;
 GO
 
+-- Empty element name without ELEMENTS (attribute-centric) - should error
+SELECT 1 AS a, 2 AS b FOR XML RAW('');
+GO
+
+-- All NULLs under attribute mode (no ELEMENTS)
+SELECT NULL AS a, NULL AS b FOR XML RAW;
+GO
+
+-- All NULLs with empty element name and ELEMENTS
+SELECT NULL AS a, NULL AS b FOR XML RAW(''), ELEMENTS;
+GO
+
 -- Element name with spaces
 SELECT 1 AS a FOR XML RAW('element name'), ELEMENTS;
 GO

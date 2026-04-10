@@ -4606,6 +4606,7 @@ is_query_using_regular_relation_walker(Node *node, void *context)
         RangeTblEntry *rte = (RangeTblEntry *) node;
 		if (rte->rtekind == RTE_RELATION && rte->relkind == 'r')
 			return true;
+		return false;
     }
     
     if (IsA(node, Query))
