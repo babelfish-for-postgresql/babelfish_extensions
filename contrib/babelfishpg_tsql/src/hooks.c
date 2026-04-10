@@ -4479,9 +4479,9 @@ pltsql_fill_cache_columns(PLtsql_function *function, Datum modify_date,
 	}
 	PG_CATCH();
 	{
-		FlushErrorState();
-		tree_str = NULL;
-		elog(LOG, "pltsql_fill_cache_columns: nodeToString failed for parse tree");
+		elog(LOG, "pltsql_enable_routine_parse_cache[FAIL]: %s parse tree serialization failed",
+			 function->fn_signature);
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
@@ -4503,9 +4503,9 @@ pltsql_fill_cache_columns(PLtsql_function *function, Datum modify_date,
 		}
 		PG_CATCH();
 		{
-			FlushErrorState();
-			datums_str = NULL;
-			elog(LOG, "pltsql_fill_cache_columns: nodeToString failed for datums");
+			elog(LOG, "pltsql_enable_routine_parse_cache[FAIL]: %s datums serialization failed",
+				 function->fn_signature);
+			PG_RE_THROW();
 		}
 		PG_END_TRY();
 
@@ -4532,8 +4532,9 @@ pltsql_fill_cache_columns(PLtsql_function *function, Datum modify_date,
 		}
 		PG_CATCH();
 		{
-			FlushErrorState();
-			roundtrip = NULL;
+			elog(LOG, "pltsql_validate_parse_cache[FAIL]: %s validation parse tree deserialization failed",
+				 function->fn_signature);
+			PG_RE_THROW();
 		}
 		PG_END_TRY();
 
@@ -4833,9 +4834,8 @@ pltsql_restore_func_parse_result(HeapTuple proctup,
 	}
 	PG_CATCH();
 	{
-		FlushErrorState();
-		block = NULL;
-		elog(LOG, "pltsql_restore_func_parse_result: stringToNode failed for parse tree");
+		elog(LOG, "pltsql_enable_routine_parse_cache[FAIL]: parse tree deserialization failed");
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
@@ -4866,9 +4866,8 @@ pltsql_restore_func_parse_result(HeapTuple proctup,
 		}
 		PG_CATCH();
 		{
-			FlushErrorState();
-			datum_list = NIL;
-			elog(LOG, "pltsql_restore_func_parse_result: stringToNode failed for datums");
+			elog(LOG, "pltsql_enable_routine_parse_cache[FAIL]: datums deserialization failed");
+			PG_RE_THROW();
 		}
 		PG_END_TRY();
 

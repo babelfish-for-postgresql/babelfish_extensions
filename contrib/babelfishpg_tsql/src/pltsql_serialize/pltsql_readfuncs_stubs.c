@@ -37,7 +37,6 @@
  * Required by -Werror=missing-prototypes.
  */
 extern PLtsql_nsitem *_readPLtsql_nsitem(void);
-extern PLtsql_expr *_readPLtsql_expr(void);
 extern PLtsql_row *_readPLtsql_row(void);
 extern PLtsql_recfield *_readPLtsql_recfield(void);
 
@@ -97,36 +96,6 @@ _readPLtsql_nsitem(void)
 		result->name[0] = '\0';
 
 	return result;
-}
-
-/* ----------------------------------------------------------------
- *                    PLtsql_expr (custom_read_write)
- *
- * Has many read_write_ignore fields (runtime-only: plan, func,
- * expr_simple_*). Only deserializes: query, paramnos, rwparam, ns,
- * itvf_query.
- * ----------------------------------------------------------------
- */
-PLtsql_expr *
-_readPLtsql_expr(void)
-{
-	READ_LOCALS(PLtsql_expr);
-
-	READ_STRING_FIELD(query);
-	/* plan: read_write_ignore, init to NULL (palloc0 via makeNode) */
-	READ_BITMAPSET_FIELD(paramnos);
-	READ_INT_FIELD(rwparam);
-	/* func: read_write_ignore, already NULL from makeNode */
-
-	/* ns: read the namespace chain */
-	token = pg_strtok(&length);		/* skip :ns */
-	(void) token;
-	local_node->ns = (PLtsql_nsitem *) pltsql_nodeRead(NULL, 0);
-
-	/* expr_simple_*: all read_write_ignore, already zeroed by makeNode */
-	READ_STRING_FIELD(itvf_query);
-
-	READ_DONE();
 }
 
 /* ----------------------------------------------------------------

@@ -24,6 +24,11 @@ extern void *pltsql_stringToNode(const char *str);
 extern bool pltsql_compare_parse_trees(PLtsql_stmt_block *tree_a,
                                        PLtsql_stmt_block *tree_b);
 
+/* Datum array comparison for validation (pltsql_equalfuncs.c) */
+extern void pltsql_compare_datum_arrays(const char *fn_signature,
+                                        PLtsql_datum **cached_datums, int cached_ndatums,
+                                        PLtsql_datum **antlr_datums, int antlr_ndatums);
+
 /* Per-node equality dispatch (pltsql_equalfuncs.c) */
 extern bool pltsql_equal_node(const void *a, const void *b);
 

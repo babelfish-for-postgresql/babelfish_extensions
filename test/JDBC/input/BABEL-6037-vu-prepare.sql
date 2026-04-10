@@ -449,3 +449,19 @@ GO
 
 SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
 GO
+
+-- Test 27: Corrupt cache deserialization test
+-- Create a simple function whose cache we'll corrupt in verify to test deserialization error handling
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+
+CREATE FUNCTION dbo.corrupt_cache_test_func(@x INT)
+RETURNS INT
+AS
+BEGIN
+    RETURN @x + 100;
+END;
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO

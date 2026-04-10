@@ -206,25 +206,51 @@ recheck:
 			if (function->from_cache)
 			{
 				/*
-				 * For functions loaded from persistent cache, also verify
-				 * babelfish_function_ext hasn't changed (e.g., antlr_cache_enabled
-				 * toggled via sys.enable_routine_parse_cache()).
+				 * For functions loaded from persistent cache, verify:
+				 * 1. babelfish_function_ext hasn't changed (e.g., antlr_cache_enabled
+				 *    toggled via sys.enable_routine_parse_cache() from another session).
+				 * 2. Caching is still enabled — either session GUC or per-function flag.
+				 *    If both are off, evict the cache-loaded function and recompile from ANTLR.
 				 */
 				HeapTuple bbftup = get_bbf_function_tuple_from_proctuple(procTup);
 				if (HeapTupleIsValid(bbftup))
 				{
 					if (function->bbf_ext_xmin == HeapTupleHeaderGetRawXmin(bbftup->t_data) &&
 						ItemPointerEquals(&function->bbf_ext_tid, &bbftup->t_self))
-						function_valid = true;
+					{
+						/*
+						 * bbf_ext tuple unchanged. If session GUC is on, function is valid.
+						 * If session GUC is off, check per-function cache_enabled flag —
+						 * only invalidate if both are off (user wants no caching at all). and does not want to use deserializaed cached result from hashtable
+						 */
+						if (pltsql_enable_routine_parse_cache)
+							function_valid = true;
+						else
+						{
+							bool	isnull;
+							Datum	cache_flag = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbftup,
+																 Anum_bbf_function_ext_antlr_cache_enabled, &isnull);
+							if (!isnull && DatumGetBool(cache_flag))
+								function_valid = true;
+							/* else: both GUC and per-func GUC column off — invalidate */
+						}
+					}
 					heap_freetuple(bbftup);
+
+					if (!function_valid)
+						/* bbf_ext changed or caching disabled — invalidate */
+						goto invalidate_function;
 				}
-				/* else: tuple gone or not found, invalidate */
+				else
+					/* tuple gone or not found — invalidate */
+					goto invalidate_function;
 			}
 			else
 				function_valid = true;
 		}
 		else
 		{
+invalidate_function:
 			/*
 			 * Nope, so remove it from hashtable and try to drop associated
 			 * storage (if not done already).
@@ -1114,6 +1140,11 @@ do_compile(FunctionCallInfo fcinfo,
 					goto skip_antlr_parsing;
 				}
 			}
+			else
+			{
+				/* No cached parse result — clear bbf_ext_xmin */
+				bbf_ext_xmin = InvalidTransactionId;
+			}
 		}
 		
 		/* No cache hit - do ANTLR parsing */
@@ -1234,56 +1265,15 @@ skip_antlr_parsing:
 	 */
 	if (pltsql_validate_parse_cache && validation_cached_tree != NULL)
 	{
-		bool trees_match;
-		int antlr_ndatums;
-		PLtsql_datum **antlr_datums;
-		int max_d;
-		int datum_index;
-		int datum_mismatches = 0;
-
-		trees_match = pltsql_compare_parse_trees(validation_cached_tree,
-												 function->action);
+		bool trees_match = pltsql_compare_parse_trees(validation_cached_tree,
+													  function->action);
 
 		elog(LOG, "pltsql_validate_parse_cache[%s]: %s ANTLR parse tree comparison at EXEC",
 			 trees_match ? "PASS" : "FAIL", function->fn_signature);
 
-		/*
-		 * Datum array comparison: cached vs ANTLR-compiled.
-		 *
-		 * The runtime do_compile parameter loop may create an extra $N
-		 * placeholder datum for text-type parameters (inputCollId handling),
-		 * causing the ANTLR datum array to have 1 more entry than the cached
-		 * (validator-compiled) array. This offset is benign: the cache-hit
-		 * path re-derives found_varno/fetch_status_varno by refname scan.
-		 * We compare the overlapping datums using the generated equality
-		 * functions (which skip lineno/dno/varno/itemno fields).
-		 */
-		antlr_ndatums = function->ndatums;
-		antlr_datums = function->datums;
-		max_d = Max(validation_cached_ndatums, antlr_ndatums);
-
-		for (datum_index = 0; datum_index < max_d; datum_index++)
-		{
-			PLtsql_datum *dc = (datum_index < validation_cached_ndatums) ? validation_cached_datums[datum_index] : NULL;
-			PLtsql_datum *da = (datum_index < antlr_ndatums) ? antlr_datums[datum_index] : NULL;
-
-			if (dc == NULL && da == NULL)
-				continue;
-			if (dc == NULL || da == NULL || !pltsql_equal_node(dc, da))
-			{
-				datum_mismatches++;
-				elog(LOG, "pltsql_validate_parse_cache[DIFF]: %s has mismatched datum[%d] %s at EXEC (cached_tag=%d, antlr_tag=%d)",
-					 function->fn_signature, datum_index,
-					 (dc == NULL) ? "extra in antlr" : (da == NULL) ? "extra in cached" : "mismatch",
-					 dc ? (int) nodeTag(dc) : -1,
-					 da ? (int) nodeTag(da) : -1);
-			}
-		}
-
-		elog(LOG, "pltsql_validate_parse_cache[%s]: %s PLtsql Datums comparison at EXEC (cached=%d, antlr=%d, mismatches=%d)",
-			 (datum_mismatches == 0) ? "PASS" : "DIFF",
-			 function->fn_signature,
-			 validation_cached_ndatums, antlr_ndatums, datum_mismatches);
+		pltsql_compare_datum_arrays(function->fn_signature,
+									validation_cached_datums, validation_cached_ndatums,
+									function->datums, function->ndatums);
 	}
 
 
@@ -3463,10 +3453,12 @@ pltsql_HashTableLookup(PLtsql_func_hashkey *func_key)
 											NULL);
 	if (hentry)
 	{
-		/* If GUC is disabled and function was loaded from cache, return NULL to force re-parse */
+		/* If GUC is disabled and function was loaded from cache, evict and force re-parse */
 		if (!pltsql_enable_routine_parse_cache && hentry->function->from_cache)
 		{
-			elog(DEBUG1, "pltsql_HashTableLookup: GUC disabled, invalidating cached function %u", (unsigned int) func_key->funcOid);
+			/* TODO: also check per-function cache_enabled flag before evicting */
+			elog(DEBUG1, "pltsql_HashTableLookup: procedure parse cache GUC disabled, invalidating cached function %u", (unsigned int) func_key->funcOid);			
+			delete_function(hentry->function);
 			return NULL;
 		}
 		

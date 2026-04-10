@@ -36,7 +36,6 @@
  * Required by -Werror=missing-prototypes.
  */
 extern void _outPLtsql_nsitem(StringInfo str, const PLtsql_nsitem *node);
-extern void _outPLtsql_expr(StringInfo str, const PLtsql_expr *node);
 extern void _outPLtsql_row(StringInfo str, const PLtsql_row *node);
 extern void _outPLtsql_recfield(StringInfo str, const PLtsql_recfield *node);
 
@@ -51,12 +50,6 @@ extern void _outPLtsql_recfield(StringInfo str, const PLtsql_recfield *node);
 void
 _outPLtsql_nsitem(StringInfo str, const PLtsql_nsitem *node)
 {
-	if (node == NULL)
-	{
-		appendStringInfoString(str, "<>");
-		return;
-	}
-
 	/* Note: outNode() already writes the opening '{' before calling us */
 	WRITE_NODE_TYPE("PLTSQL_NSITEM");
 	WRITE_ENUM_FIELD(itemtype, PLtsql_nsitem_type);
@@ -74,40 +67,6 @@ _outPLtsql_nsitem(StringInfo str, const PLtsql_nsitem *node)
 }
 
 /* ----------------------------------------------------------------
- *                    PLtsql_expr (custom_read_write)
- *
- * Has many read_write_ignore fields (runtime-only: plan, func,
- * expr_simple_*). Only serializes: query, paramnos, rwparam, ns,
- * itvf_query.
- * ----------------------------------------------------------------
- */
-void
-_outPLtsql_expr(StringInfo str, const PLtsql_expr *node)
-{
-	if (node == NULL)
-	{
-		appendStringInfoString(str, "<>");
-		return;
-	}
-
-	/* Note: outNode() already writes the opening '{' before calling us */
-	WRITE_NODE_TYPE("PLTSQL_EXPR");
-	WRITE_STRING_FIELD(query);
-	/* plan: read_write_ignore */
-	WRITE_BITMAPSET_FIELD(paramnos);
-	WRITE_INT_FIELD(rwparam);
-	/* func: read_write_ignore */
-
-	/* ns: serialize the namespace chain */
-	appendStringInfoString(str, " :ns ");
-	pltsql_outNode(str, node->ns);
-
-	/* expr_simple_*: all read_write_ignore */
-	WRITE_STRING_FIELD(itvf_query);
-	/* Note: outNode() writes the closing '}' after we return */
-}
-
-/* ----------------------------------------------------------------
  *                    PLtsql_row (custom_read_write)
  *
  * Has string array (fieldnames) and int array (varnos) with
@@ -118,12 +77,6 @@ void
 _outPLtsql_row(StringInfo str, const PLtsql_row *node)
 {
 	int			i;
-
-	if (node == NULL)
-	{
-		appendStringInfoString(str, "<>");
-		return;
-	}
 
 	/* Note: outNode() already writes the opening '{' before calling us */
 	WRITE_NODE_TYPE("PLTSQL_ROW");
@@ -169,12 +122,6 @@ _outPLtsql_row(StringInfo str, const PLtsql_row *node)
 void
 _outPLtsql_recfield(StringInfo str, const PLtsql_recfield *node)
 {
-	if (node == NULL)
-	{
-		appendStringInfoString(str, "<>");
-		return;
-	}
-
 	WRITE_NODE_TYPE("PLTSQL_RECFIELD");
 	WRITE_ENUM_FIELD(dtype, PLtsql_datum_type);
 	WRITE_INT_FIELD(dno);

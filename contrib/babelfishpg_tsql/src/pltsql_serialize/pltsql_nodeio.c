@@ -42,12 +42,10 @@ static Node *pltsql_parseNodeString(void);
  * Needed here because the generated switch files (included below) call them.
  */
 extern void _outPLtsql_nsitem(StringInfo str, const PLtsql_nsitem *node);
-extern void _outPLtsql_expr(StringInfo str, const PLtsql_expr *node);
 extern void _outPLtsql_row(StringInfo str, const PLtsql_row *node);
 extern void _outPLtsql_recfield(StringInfo str, const PLtsql_recfield *node);
 
 extern PLtsql_nsitem *_readPLtsql_nsitem(void);
-extern PLtsql_expr *_readPLtsql_expr(void);
 extern PLtsql_row *_readPLtsql_row(void);
 extern PLtsql_recfield *_readPLtsql_recfield(void);
 

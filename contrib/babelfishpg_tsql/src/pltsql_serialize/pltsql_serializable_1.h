@@ -103,16 +103,13 @@ typedef struct TupleDescData *TupleDesc;
 typedef struct ExprState ExprState;  /* from nodes/execnodes.h - too heavy to include */
 
 /*
- * Prototypes for custom_read_write functions in pltsql_node_stubs.c.
+ * Prototypes for custom_read_write functions in pltsql_outfuncs_stubs.c / pltsql_readfuncs_stubs.c.
  * These are called by the generated outfuncs.switch.c / readfuncs.switch.c.
  */
-struct PLtsql_expr;
 struct PLtsql_nsitem;
 struct PLtsql_row;
 struct PLtsql_recfield;
 
-extern void _outPLtsql_expr(StringInfo str, const struct PLtsql_expr *node);
-extern struct PLtsql_expr *_readPLtsql_expr(void);
 extern void _outPLtsql_nsitem(StringInfo str, const struct PLtsql_nsitem *node);
 extern struct PLtsql_nsitem *_readPLtsql_nsitem(void);
 extern void _outPLtsql_row(StringInfo str, const struct PLtsql_row *node);
@@ -373,25 +370,25 @@ typedef struct PLtsql_type
  */
 typedef struct PLtsql_expr
 {
-	pg_node_attr(custom_read_write, no_copy, no_query_jumble)
+	pg_node_attr(no_copy, no_query_jumble)
 	NodeTag		type;
-	char	   *query;
+	char	   *query pg_node_attr(equal_ignore);  /* contains embedded dno values that differ between CREATE/EXEC */
 	SPIPlanPtr	plan pg_node_attr(read_write_ignore, read_as(NULL));
-	Bitmapset  *paramnos;		/* all dnos referenced by this query */
-	int			rwparam;		/* dno of read/write param, or -1 if none */
+	Bitmapset  *paramnos pg_node_attr(equal_ignore);  /* all dnos referenced by this query */ /* dno-based bitmapset, differs between CREATE/EXEC */
+	int			rwparam pg_node_attr(equal_ignore);    /* dno of read/write param, or -1 if none*/ /* differs between CREATE/EXEC */
 
 	/* function containing this expr (not set until we first parse query) */
 	struct PLtsql_function *func pg_node_attr(read_write_ignore, read_as(NULL));
 
-	/* namespace chain visible to this expr */
-	struct PLtsql_nsitem *ns;
+	/* namespace chain visible to this expr — chain length differs between CREATE/EXEC */
+	struct PLtsql_nsitem *ns pg_node_attr(equal_ignore);
 
-	/* fields for "simple expression" fast-path execution: */
-	Expr	   *expr_simple_expr;	/* NULL means not a simple expr */
-	int			expr_simple_generation; /* plancache generation we checked */
-	Oid			expr_simple_type;	/* result type Oid, if simple */
-	int32		expr_simple_typmod; /* result typmod, if simple */
-	bool		expr_simple_mutable;	/* true if simple expr is mutable */
+	/* fields for "simple expression" fast-path execution (all runtime-only): */
+	Expr	   *expr_simple_expr pg_node_attr(read_write_ignore, equal_ignore, read_as(NULL)); /* NULL means not a simple expr */
+	int			expr_simple_generation pg_node_attr(read_write_ignore, equal_ignore, read_as(0));  /* plancache generation we checked */
+	Oid			expr_simple_type pg_node_attr(read_write_ignore, equal_ignore, read_as(0)); /* result type Oid, if simple */ /* read_as(InvalidOid) */
+	int32		expr_simple_typmod pg_node_attr(read_write_ignore, equal_ignore, read_as(0)); /* result typmod, if simple */
+	bool		expr_simple_mutable pg_node_attr(read_write_ignore, equal_ignore, read_as(false)); /* true if simple expr is mutable */
 
 	/*
 	 * if expr is simple AND prepared in current transaction,
@@ -399,9 +396,9 @@ typedef struct PLtsql_expr
 	 * seeing if expr_simple_lxid matches current LXID.  (If not,
 	 * expr_simple_state probably points at garbage!)
 	 */
-	ExprState  *expr_simple_state;	/* eval tree for expr_simple_expr */
-	bool		expr_simple_in_use; /* true if eval tree is active */
-	LocalTransactionId expr_simple_lxid;
+	ExprState  *expr_simple_state pg_node_attr(read_write_ignore, equal_ignore, read_as(NULL));	   /* eval tree for expr_simple_expr */
+	bool		expr_simple_in_use pg_node_attr(read_write_ignore, equal_ignore, read_as(false));  /* true if eval tree is active */
+	LocalTransactionId expr_simple_lxid pg_node_attr(read_write_ignore, equal_ignore, read_as(0)); /* lxid of cur. transaction */ /* read_as(InvalidLocalTransactionId)*/
 
 	/* here for itvf? queries with all idents replaced with NULLs */
 	char	   *itvf_query;

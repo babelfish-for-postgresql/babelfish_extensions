@@ -847,6 +847,33 @@ GO
 SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
 GO
 
+-- Test 27: Corrupt cache deserialization error handling
+-- Corrupt the cached parse tree text by prepending invalid data,
+-- then exec the function — should get an error (not silent failure) psql user=babel_6037_sysadmin password=12345678
+
+-- psql
+-- Corrupt the cache entry directly via psql (sysadmin has UPDATE permission) 
+SET allow_system_table_mods = ON;
+UPDATE sys.babelfish_function_ext SET antlr_parse_tree_text = '<>CORRUPTED'
+WHERE funcname = 'corrupt_cache_test_func' AND nspname = 'master_dbo';
+SET allow_system_table_mods = OFF;
+GO
+
+-- tsql
+-- Enable cache and try to execute — deserialization should fail with error
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+
+-- This should error because the cached tree is corrupt
+SELECT dbo.corrupt_cache_test_func(5);
+GO
+
+-- After disabling cache, function should work normally via ANTLR
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+
+SELECT dbo.corrupt_cache_test_func(5);
+GO
 
 PRINT '=== All verification tests completed ===';
 GO

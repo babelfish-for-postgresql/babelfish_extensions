@@ -32,41 +32,6 @@
  * macros header, so no _equalList stub is needed here.
  */
 static bool
-_equalPLtsql_expr(const PLtsql_expr *a, const PLtsql_expr *b)
-{
-	if (a == NULL && b == NULL) return true;
-	if (a == NULL || b == NULL) return false;
-	if (a->query == NULL && b->query == NULL) return true;
-	if (a->query == NULL || b->query == NULL) return false;
-
-	/*
-	 * Skip query, paramnos, rwparam, and ns comparison.
-	 *
-	 * query: contains embedded dno values (e.g. "pltsql_assign_var(3, ...)")
-	 *   that differ between cached (CREATE-time) and ANTLR (EXEC-time) trees
-	 *   due to datum numbering offsets. The query text is derived from the
-	 *   same source code so it's semantically identical.
-	 *
-	 * paramnos: Bitmapset of datum numbers referenced by the expression.
-	 *   Since dno numbering differs between CREATE and EXEC contexts, the
-	 *   bitmapset values differ even though they reference equivalent datums.
-	 *
-	 * rwparam: dno of the read-write parameter, same dno offset issue.
-	 *
-	 * ns: PLtsql_nsitem namespace chain. Each nsitem contains an itemno
-	 *   field (which is a dno reference). Although _equalPLtsql_nsitem skips
-	 *   itemno, the EXEC-time do_compile creates additional namespace entries
-	 *   for extra $N placeholder datums, making the chain lengths differ.
-	 *
-	 * itvf_query: safe to compare — contains the rewritten ITVF query string
-	 *   which does not embed dno values.
-	 */
-	COMPARE_STRING_FIELD(itvf_query);
-
-	return true;
-}
-
-static bool
 _equalPLtsql_row(const PLtsql_row *a, const PLtsql_row *b)
 {
 	if (a == NULL && b == NULL) return true;
@@ -179,4 +144,82 @@ pltsql_compare_parse_trees(PLtsql_stmt_block *tree_a,
 	}
 
 	return pltsql_equal_node(tree_a, tree_b);
+}
+
+/*
+ * pltsql_compare_datum_arrays
+ *    Compare two datum arrays using a two-pointer walk.
+ *
+ * The ANTLR EXEC-time compilation creates duplicate datums for local
+ * variables (the cached array from CREATE has them once, ANTLR re-parse
+ * appends them again). A naive positional comparison would cascade a
+ * single extra datum into N false mismatches. The ANTLR datums array is
+ * always >= cached in length.
+ *
+ * This uses lookahead: On mismatch, try skipping one ANTLR datum to resynchronize 
+ * equality check (handles the duplicate case). Reports genuine mismatches separately
+ * from extra (duplicate) ANTLR datums.
+ */
+void
+pltsql_compare_datum_arrays(const char *fn_signature,
+                            PLtsql_datum **cached_datums, int cached_ndatums,
+                            PLtsql_datum **antlr_datums, int antlr_ndatums)
+{
+	int		ci = 0;				/* cached index */
+	int		ai = 0;				/* antlr index */
+	int		mismatches = 0;
+	int		extra_antlr = 0;
+
+	while (ci < cached_ndatums && ai < antlr_ndatums)
+	{
+		PLtsql_datum *dc = cached_datums[ci];
+		PLtsql_datum *da = antlr_datums[ai];
+
+		if (dc == NULL && da == NULL)
+		{
+			ci++;
+			ai++;
+			continue;
+		}
+
+		if (dc != NULL && da != NULL && pltsql_equal_node(dc, da))
+		{
+			ci++;
+			ai++;
+			continue;
+		}
+
+		/* Mismatch — try skipping one ANTLR datum to resync */
+		if (ai + 1 < antlr_ndatums && dc != NULL &&
+			pltsql_equal_node(dc, antlr_datums[ai + 1]))
+		{
+			extra_antlr++;
+			ai++;
+			continue;
+		}
+
+		/* Genuine mismatch — advance both */
+		mismatches++;
+		elog(DEBUG1, "pltsql_validate_parse_cache[DIFF]: %s datum mismatch "
+			 "at cached[%d] vs antlr[%d] (cached_tag=%d, antlr_tag=%d)",
+			 fn_signature, ci, ai,
+			 dc ? (int) nodeTag(dc) : -1,
+			 da ? (int) nodeTag(da) : -1);
+		ci++;
+		ai++;
+	}
+
+	/* Remaining unmatched ANTLR datums at the tail (expected duplicates) */
+	extra_antlr += (antlr_ndatums - ai);
+
+	/* Remaining unmatched cached datums would be unexpected */
+	if (ci < cached_ndatums)
+		mismatches += (cached_ndatums - ci);
+
+	elog(LOG, "pltsql_validate_parse_cache[%s]: %s PLtsql Datums comparison "
+		 "at EXEC (cached=%d, antlr=%d, mismatches=%d, extra_antlr=%d)",
+		 (mismatches == 0) ? "PASS" : "DIFF",
+		 fn_signature,
+		 cached_ndatums, antlr_ndatums,
+		 mismatches, extra_antlr);
 }

@@ -3666,6 +3666,10 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
 	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
 	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
+    /* Note: antlr_cache_enabled is intentionally NOT reset here — it is a per-function
+	 * policy flag (user's intent), not cache state. Cache data is invalidated but the
+	 * policy is preserved so re-population happens on next EXEC if GUC/flag allow it. 
+	 */
 
 	new_tuple = heap_modify_tuple(usertuple,
 								  bbf_func_ext_dsc,

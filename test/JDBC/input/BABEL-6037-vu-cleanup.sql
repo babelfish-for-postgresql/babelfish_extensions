@@ -105,6 +105,8 @@ DROP TABLE IF EXISTS dbo.dep_rename_table;
 GO
 DROP TABLE IF EXISTS dbo.dep_renamed_table;
 GO
+DROP FUNCTION IF EXISTS dbo.corrupt_cache_test_func;
+GO
 
 PRINT 'Cleanup completed successfully';
 GO
