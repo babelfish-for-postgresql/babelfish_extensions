@@ -5324,7 +5324,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 void
 flush_insert_exec_temp_table(PLtsql_execstate *estate)
 {
-	char			temp_table_name[NAMEDATALEN];
+	const char		*temp_table_name;
 	StringInfoData	flush_query;
 	int				rc;
 	const char		*target_table = pltsql_get_insert_exec_target_table();
@@ -5371,8 +5371,12 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	 */
 	saved_target_table = pstrdup(target_table);
 
-	snprintf(temp_table_name, sizeof(temp_table_name),
-			 "__insert_exec_buf_%d", MyProcPid);
+	/* Get the dynamically chosen temp table name from the context */
+	temp_table_name = pltsql_get_insert_exec_temp_table_name();
+	if (temp_table_name == NULL)
+	{
+		elog(ERROR, "INSERT-EXEC: No temp table name stored, cannot flush");
+	}
 
 	initStringInfo(&flush_query);
 	

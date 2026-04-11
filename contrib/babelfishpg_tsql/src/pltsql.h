@@ -2406,6 +2406,7 @@ extern Oid pltsql_get_insert_exec_temp_table_oid(void);
 extern const char *pltsql_get_insert_exec_target_table(void);
 extern Oid pltsql_get_insert_exec_target_rel_oid(void);
 extern const char *pltsql_get_insert_exec_column_list(void);
+extern const char *pltsql_get_insert_exec_temp_table_name(void);
 extern bool pltsql_insert_exec_in_trycatch(void);
 extern bool pltsql_insert_exec_should_cleanup_on_trycatch(void);
 extern Oid pltsql_get_and_clear_insert_exec_temp_table_for_cleanup(void);

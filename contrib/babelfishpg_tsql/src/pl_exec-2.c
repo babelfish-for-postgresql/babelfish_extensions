@@ -142,6 +142,7 @@ typedef struct InsertExecSchemaSignature
 typedef struct InsertExecContext
 {
 	Oid			temp_table_oid;			/* OID of temp table for buffering */
+	char	   *temp_table_name;		/* Name of temp table for buffering (dynamically chosen) */
 	char	   *target_table;			/* Target table name */
 	char	   *column_list;			/* Column list for INSERT */
 	int			base_tran_count;		/* NestedTranCount when INSERT EXEC started */
@@ -158,6 +159,7 @@ typedef struct InsertExecContext
 /* Initialize the global INSERT EXEC context */
 static InsertExecContext insert_exec_ctx = {
 	.temp_table_oid = InvalidOid,
+	.temp_table_name = NULL,
 	.target_table = NULL,
 	.column_list = NULL,
 	.base_tran_count = 0,
@@ -400,6 +402,11 @@ pltsql_clear_insert_exec_context(void)
 		pfree(insert_exec_ctx.column_list);
 		insert_exec_ctx.column_list = NULL;
 	}
+	if (insert_exec_ctx.temp_table_name)
+	{
+		pfree(insert_exec_ctx.temp_table_name);
+		insert_exec_ctx.temp_table_name = NULL;
+	}
 }
 
 /*
@@ -452,24 +459,22 @@ pltsql_insert_exec_set_pending_drop(void)
 void
 pltsql_insert_exec_check_pending_drop(void)
 {
-	if (insert_exec_ctx.pending_drop)
+	if (insert_exec_ctx.pending_drop && insert_exec_ctx.temp_table_name != NULL)
 	{
-		char		temp_table_name[NAMEDATALEN];
 		StringInfoData drop_stmt;
 		int			rc;
 
-		snprintf(temp_table_name, sizeof(temp_table_name),
-				 "__insert_exec_buf_%d", MyProcPid);
-
 		initStringInfo(&drop_stmt);
-		appendStringInfo(&drop_stmt, "DROP TABLE IF EXISTS %s", temp_table_name);
+		appendStringInfo(&drop_stmt, "DROP TABLE IF EXISTS %s", insert_exec_ctx.temp_table_name);
 
 		rc = SPI_execute(drop_stmt.data, false, 0);
 		if (rc != SPI_OK_UTILITY)
 			elog(WARNING, "failed to drop pending INSERT EXEC temp table %s: %s",
-				 temp_table_name, SPI_result_code_string(rc));
+				 insert_exec_ctx.temp_table_name, SPI_result_code_string(rc));
 
 		pfree(drop_stmt.data);
+		pfree(insert_exec_ctx.temp_table_name);
+		insert_exec_ctx.temp_table_name = NULL;
 		insert_exec_ctx.pending_drop = false;
 	}
 }
@@ -876,6 +881,16 @@ const char *
 pltsql_get_insert_exec_column_list(void)
 {
 	return insert_exec_ctx.column_list;
+}
+
+/*
+ * Get the temp table name for INSERT EXEC.
+ * This is the dynamically chosen name with suffix (e.g., __insert_exec_buf_12345_1).
+ */
+const char *
+pltsql_get_insert_exec_temp_table_name(void)
+{
+	return insert_exec_ctx.temp_table_name;
 }
 
 /*
@@ -1304,31 +1319,59 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 	char	   *schema_name = NULL;
 	char	   *table_name = NULL;
 	char	   *physical_schema = NULL;
+	Oid			temp_nsp_oid;
+	int			suffix = 1;
+	MemoryContext oldcontext;
 
 	elog(DEBUG1, "INSERT-EXEC: create_insert_exec_temp_table called with target='%s'",
 		 target_table ? target_table : "NULL");
 
 	/*
-	 * Generate temp table name using backend PID.
+	 * Generate a unique temp table name using backend PID and a suffix.
 	 * We use PostgreSQL temp tables (not Babelfish temp tables with # prefix)
 	 * because they are more stable and don't have ENR-related issues.
-	 * The name pattern __insert_exec_buf_<pid> is unique enough that collision
-	 * with user tables is extremely unlikely. We use DROP TABLE IF EXISTS
-	 * to clean up any leftover table from a previous failed INSERT EXEC.
+	 * 
+	 * Instead of using DROP TABLE IF EXISTS (which could accidentally drop a
+	 * customer's temp table with the same name), we use a suffix approach
+	 * similar to PostgreSQL's ChooseConstraintName: try _1, _2, etc. until
+	 * we find an available name.
 	 */
-	snprintf(temp_table_name, sizeof(temp_table_name),
-			 "__insert_exec_buf_%d", MyProcPid);
+	temp_nsp_oid = LookupNamespaceNoError("pg_temp");
+
+	for (;;)
+	{
+		Oid existing_relid;
+
+		snprintf(temp_table_name, sizeof(temp_table_name),
+				 "__insert_exec_buf_%d_%d", MyProcPid, suffix);
+
+		/*
+		 * Check if a table with this name already exists in pg_temp.
+		 * If temp namespace doesn't exist yet, the name is definitely available.
+		 */
+		if (!OidIsValid(temp_nsp_oid))
+			break;
+
+		existing_relid = get_relname_relid(temp_table_name, temp_nsp_oid);
+		if (!OidIsValid(existing_relid))
+			break;  /* Name is available */
+
+		/* Name is taken, try the next suffix */
+		suffix++;
+
+		/* Safety check to prevent infinite loop */
+		if (suffix > 10000)
+			elog(ERROR, "INSERT-EXEC: Could not find available temp table name after 10000 attempts");
+	}
 
 	elog(DEBUG1, "INSERT-EXEC: Using temp table name: %s", temp_table_name);
 
-	/* Drop any existing temp table with this name (cleanup from previous failed INSERT EXEC) */
-	initStringInfo(&create_stmt);
-	appendStringInfo(&create_stmt, "DROP TABLE IF EXISTS %s", temp_table_name);
-	rc = SPI_execute(create_stmt.data, false, 0);
-	if (rc != SPI_OK_UTILITY)
-		elog(WARNING, "failed to drop existing INSERT EXEC temp table: %s",
-			 SPI_result_code_string(rc));
-	pfree(create_stmt.data);
+	/* Store the temp table name in the context for later cleanup */
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	if (insert_exec_ctx.temp_table_name != NULL)
+		pfree(insert_exec_ctx.temp_table_name);
+	insert_exec_ctx.temp_table_name = pstrdup(temp_table_name);
+	MemoryContextSwitchTo(oldcontext);
 
 	/* Reset the pending drop flag */
 	insert_exec_ctx.pending_drop = false;
@@ -1719,27 +1762,34 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 
 /*
  * Drop the INSERT EXEC temp table.
+ * Uses the stored temp table name from the INSERT EXEC context.
  */
 void
 drop_insert_exec_temp_table(Oid temp_table_oid)
 {
-	char		temp_table_name[NAMEDATALEN];
 	StringInfoData drop_stmt;
 	int			rc;
 
-	/* Get the table name from OID */
-	snprintf(temp_table_name, sizeof(temp_table_name),
-			 "__insert_exec_buf_%d", MyProcPid);
+	/* Use the stored temp table name from the context */
+	if (insert_exec_ctx.temp_table_name == NULL)
+	{
+		elog(WARNING, "INSERT-EXEC: No temp table name stored, cannot drop");
+		return;
+	}
 
 	initStringInfo(&drop_stmt);
-	appendStringInfo(&drop_stmt, "DROP TABLE IF EXISTS %s", temp_table_name);
+	appendStringInfo(&drop_stmt, "DROP TABLE IF EXISTS %s", insert_exec_ctx.temp_table_name);
 
 	rc = SPI_execute(drop_stmt.data, false, 0);
 	if (rc != SPI_OK_UTILITY)
-		elog(WARNING, "failed to drop INSERT EXEC temp table: %s",
-			 SPI_result_code_string(rc));
+		elog(WARNING, "failed to drop INSERT EXEC temp table %s: %s",
+			 insert_exec_ctx.temp_table_name, SPI_result_code_string(rc));
 
 	pfree(drop_stmt.data);
+
+	/* Clear the stored temp table name */
+	pfree(insert_exec_ctx.temp_table_name);
+	insert_exec_ctx.temp_table_name = NULL;
 }
 
 /* helper function to get current T-SQL estate */
