@@ -9924,6 +9924,12 @@ void
 pltsql_xact_cb(XactEvent event, void *arg)
 {
 	/*
+	 * Reset top transaction name to avoid dangling pointer after
+	 * transaction memory context is destroyed.
+	 */
+	ResetTopTransactionName();
+
+	/*
 	 * If we are doing a clean transaction shutdown, free the EState (so that
 	 * any remaining resources will be released correctly). In an abort, we
 	 * expect the regular abort recovery procedures to release everything of
