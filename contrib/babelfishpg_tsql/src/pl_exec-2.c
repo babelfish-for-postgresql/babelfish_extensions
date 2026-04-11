@@ -1373,6 +1373,20 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 	insert_exec_ctx.temp_table_name = pstrdup(temp_table_name);
 	MemoryContextSwitchTo(oldcontext);
 
+	/*
+	 * Drop any existing temp table with this name. This handles the case where
+	 * get_relname_relid didn't find the table due to catalog cache issues, but
+	 * the table actually exists. Since we're using our specific naming pattern
+	 * (__insert_exec_buf_PID_N), this won't accidentally drop customer tables.
+	 */
+	initStringInfo(&create_stmt);
+	appendStringInfo(&create_stmt, "DROP TABLE IF EXISTS %s", temp_table_name);
+	rc = SPI_execute(create_stmt.data, false, 0);
+	if (rc != SPI_OK_UTILITY)
+		elog(WARNING, "failed to drop existing INSERT EXEC temp table: %s",
+			 SPI_result_code_string(rc));
+	pfree(create_stmt.data);
+
 	/* Reset the pending drop flag */
 	insert_exec_ctx.pending_drop = false;
 
@@ -3421,19 +3435,18 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			 * This must be done AFTER the flush completes.
 			 */
 			pltsql_insert_exec_close_target_table();
-			
-			/*
-			 * Clear the INSERT EXEC context AFTER the flush completes.
-			 * This ensures the flush INSERT has access to target table info.
-			 */
-			pltsql_clear_insert_exec_context();
 		}
 		PG_CATCH();
 		{
-			/* Close target table and clear context before re-throwing */
+			/* 
+			 * Close target table and drop temp table before clearing context.
+			 * IMPORTANT: drop_insert_exec_temp_table must be called BEFORE
+			 * pltsql_clear_insert_exec_context because clear_context frees
+			 * the temp_table_name that drop needs.
+			 */
 			pltsql_insert_exec_close_target_table();
-			pltsql_clear_insert_exec_context();
 			drop_insert_exec_temp_table(insert_exec_temp_oid);
+			pltsql_clear_insert_exec_context();
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
@@ -3441,6 +3454,9 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		/*
 		 * Drop temp table in separate subtransaction.
 		 * This isolates DROP failures from the main transaction.
+		 * 
+		 * IMPORTANT: This must be done BEFORE pltsql_clear_insert_exec_context
+		 * because clear_context frees the temp_table_name that drop needs.
 		 */
 		BeginInternalSubTransaction(NULL);
 		MemoryContextSwitchTo(oldcontext);
@@ -3462,6 +3478,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			elog(DEBUG1, "INSERT-EXEC: Failed to drop temp table, will be cleaned up at transaction end");
 		}
 		PG_END_TRY();
+		
+		/*
+		 * Clear the INSERT EXEC context AFTER the drop completes.
+		 * This must be last because it frees temp_table_name which drop needs.
+		 */
+		pltsql_clear_insert_exec_context();
 	}
 
 	return PLTSQL_RC_OK;
@@ -3839,19 +3861,18 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			 * This must be done AFTER the flush completes.
 			 */
 			pltsql_insert_exec_close_target_table();
-			
-			/*
-			 * Clear the INSERT EXEC context AFTER the flush completes.
-			 * This ensures the flush INSERT has access to target table info.
-			 */
-			pltsql_clear_insert_exec_context();
 		}
 		PG_CATCH();
 		{
-			/* Close target table and clear context before re-throwing */
+			/* 
+			 * Close target table and drop temp table before clearing context.
+			 * IMPORTANT: drop_insert_exec_temp_table must be called BEFORE
+			 * pltsql_clear_insert_exec_context because clear_context frees
+			 * the temp_table_name that drop needs.
+			 */
 			pltsql_insert_exec_close_target_table();
-			pltsql_clear_insert_exec_context();
 			drop_insert_exec_temp_table(insert_exec_temp_oid);
+			pltsql_clear_insert_exec_context();
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
@@ -3876,6 +3897,11 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		}
 		PG_END_TRY();
 		
+		/*
+		 * Clear the INSERT EXEC context AFTER the drop completes.
+		 * This must be last because it frees temp_table_name which drop needs.
+		 */
+		pltsql_clear_insert_exec_context();
 	}
 	
 	/* Free old_db_name which was allocated in TopMemoryContext */
@@ -4658,19 +4684,18 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						 * This must be done AFTER the flush completes.
 						 */
 						pltsql_insert_exec_close_target_table();
-						
-						/*
-						 * Clear the INSERT EXEC context AFTER the flush completes.
-						 * This ensures the flush INSERT has access to target table info.
-						 */
-						pltsql_clear_insert_exec_context();
 					}
 					PG_CATCH();
 					{
-						/* Close target table and clear context before re-throwing */
+						/* 
+						 * Close target table and drop temp table before clearing context.
+						 * IMPORTANT: drop_insert_exec_temp_table must be called BEFORE
+						 * pltsql_clear_insert_exec_context because clear_context frees
+						 * the temp_table_name that drop needs.
+						 */
 						pltsql_insert_exec_close_target_table();
-						pltsql_clear_insert_exec_context();
 						drop_insert_exec_temp_table(insert_exec_temp_oid);
+						pltsql_clear_insert_exec_context();
 						PG_RE_THROW();
 					}
 					PG_END_TRY();
@@ -4694,6 +4719,12 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						FlushErrorState();
 					}
 					PG_END_TRY();
+					
+					/*
+					 * Clear the INSERT EXEC context AFTER the drop completes.
+					 * This must be last because it frees temp_table_name which drop needs.
+					 */
+					pltsql_clear_insert_exec_context();
 				}
 				
 				break;
