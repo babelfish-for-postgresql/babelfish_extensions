@@ -3341,6 +3341,7 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
     uint32_t metadata_size;
     bytea *result;
     uint8 *result_data;
+    bool needs_npoints;
 
     /* Calculate total size needed for result bytea */
     total_size = SRID_SIZE + GEOM_TYPE_SIZE + geom_data->coord_size;
@@ -3357,7 +3358,7 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
      *   - Polygon (always has npoints field)
      *   - MultiPoint (always has npoints field)
      */
-    bool needs_npoints = 
+    needs_npoints = 
     (geom_data->postgis_geom_type == LINE_TYPE && geom_data->npoints > 2) ||
     ((geom_data->postgis_geom_type == POLYGON_TYPE || geom_data->postgis_geom_type == MULTIPOINT_TYPE) && !geom_data->is_empty);
 
