@@ -5378,7 +5378,11 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	
 	if (column_list != NULL)
 	{
-		/* User specified columns - use them directly */
+		/*
+		 * User specified columns - use them directly.
+		 * The temp table was created with columns in the same order as the
+		 * user's column list, so SELECT * gives values in the correct order.
+		 */
 		appendStringInfo(&flush_query,
 			"INSERT INTO %s (%s) SELECT * FROM %s",
 			target_table,
@@ -5388,133 +5392,20 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	else
 	{
 		/*
-		 * No column list specified - we need to build one excluding
-		 * IDENTITY and computed columns to match the temp table structure.
+		 * No column list specified - use INSERT ... SELECT * which auto-skips
+		 * IDENTITY and computed columns. Both SQL Server and Babelfish support
+		 * this behavior: when the source column count matches the number of
+		 * non-generated columns in the target, IDENTITY/computed columns are
+		 * automatically excluded from the INSERT.
 		 * 
-		 * Parse the target table name to get the physical schema and table name
-		 * for the catalog query.
+		 * The temp table was created with only non-identity/computed columns
+		 * (via pg_attribute query in create_insert_exec_temp_table), so
+		 * SELECT * from it gives exactly the right number of columns.
 		 */
-		StringInfoData col_query;
-		StringInfoData non_identity_cols;
-		bool		first_col = true;
-		int			proc_count;
-		uint64		i;
-		char	   *flush_schema_name = NULL;
-		char	   *flush_table_name = NULL;
-		char	   *flush_physical_schema = NULL;
-		char	   *pg_table_ref;
-		
-		initStringInfo(&col_query);
-		initStringInfo(&non_identity_cols);
-		
-		/*
-		 * Parse schema and table name from target_table.
-		 * Format can be: "table", "schema.table", or "db.schema.table"
-		 * For temp tables, use pg_class join since regclass cast may not
-		 * resolve temp tables correctly in all contexts.
-		 */
-		if (target_table[0] == '#')
-		{
-			/* 
-			 * Temp table - use pg_class join to find the table.
-			 * This is more reliable than regclass cast for temp tables
-			 * because it doesn't depend on search_path resolution.
-			 */
-			appendStringInfo(&col_query,
-				"SELECT a.attname "
-				"FROM pg_attribute a "
-				"JOIN pg_class c ON a.attrelid = c.oid "
-				"WHERE c.relname = '%s' "
-				"AND a.attnum > 0 "
-				"AND NOT a.attisdropped "
-				"AND a.attidentity = '' "
-				"AND a.attgenerated = '' "
-				"ORDER BY a.attnum",
-				target_table);
-		}
-		else
-		{
-			/* Parse schema and table name using helper function */
-			(void) parse_insert_exec_table_name(target_table, &flush_schema_name,
-												&flush_table_name, &flush_physical_schema, true);
-			
-			/* Build the PostgreSQL table reference */
-			pg_table_ref = psprintf("%s.%s", flush_physical_schema, flush_table_name);
-			
-			if (flush_schema_name)
-				pfree(flush_schema_name);
-			if (flush_table_name)
-				pfree(flush_table_name);
-			if (flush_physical_schema)
-				pfree(flush_physical_schema);
-			
-			appendStringInfo(&col_query,
-				"SELECT a.attname "
-				"FROM pg_attribute a "
-				"WHERE a.attrelid = '%s'::regclass "
-				"AND a.attnum > 0 "
-				"AND NOT a.attisdropped "
-				"AND a.attidentity = '' "
-				"AND a.attgenerated = '' "
-				"ORDER BY a.attnum",
-				pg_table_ref);
-			
-			pfree(pg_table_ref);
-		}
-		
-		rc = SPI_execute(col_query.data, true, 0);
-		if (rc != SPI_OK_SELECT)
-		{
-			pfree(col_query.data);
-			pfree(non_identity_cols.data);
-			/* Fall back to simple INSERT */
-			appendStringInfo(&flush_query,
-				"INSERT INTO %s SELECT * FROM %s",
-				target_table,
-				temp_table_name);
-		}
-		else
-		{
-			proc_count = SPI_processed;
-			
-			if (proc_count == 0)
-			{
-				/* No columns found, fall back */
-				pfree(col_query.data);
-				pfree(non_identity_cols.data);
-				appendStringInfo(&flush_query,
-					"INSERT INTO %s SELECT * FROM %s",
-					target_table,
-					temp_table_name);
-			}
-			else
-			{
-				/* Build column list */
-				for (i = 0; i < proc_count; i++)
-				{
-					char *colname = SPI_getvalue(SPI_tuptable->vals[i], 
-												 SPI_tuptable->tupdesc, 1);
-					if (colname != NULL)
-					{
-						if (!first_col)
-							appendStringInfoString(&non_identity_cols, ", ");
-						appendStringInfoString(&non_identity_cols, colname);
-						first_col = false;
-					}
-				}
-				
-				SPI_freetuptable(SPI_tuptable);
-				pfree(col_query.data);
-				
-				appendStringInfo(&flush_query,
-					"INSERT INTO %s (%s) SELECT * FROM %s",
-					target_table,
-					non_identity_cols.data,
-					temp_table_name);
-				
-				pfree(non_identity_cols.data);
-			}
-		}
+		appendStringInfo(&flush_query,
+			"INSERT INTO %s SELECT * FROM %s",
+			target_table,
+			temp_table_name);
 	}
 
 	elog(DEBUG1, "INSERT-EXEC: Flushing temp table to target: %s", flush_query.data);
