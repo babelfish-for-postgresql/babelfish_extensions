@@ -391,7 +391,7 @@ format_postgis_point_coordinates(StringInfoData *output, POINT p)
     }
 }
 
-/*  pfree(pa->points); pfree(pa); pattern */
+
 static void
 free_point_array(PointArray *pa)
 {
@@ -701,7 +701,7 @@ rewrite_dim_polygon_query(PointArrayList *pal)
 }
 
 char* 
-rewrite_multipoint_wkt(PointArray *pa) 
+rewrite_multipoint_wkt(PointArray *pa)
 {
     DimensionType type;
     StringInfoData output;

@@ -1,7 +1,8 @@
 -------------------------------------------------------
 ---- Include changes related to spatial types here ----
 -------------------------------------------------------
---geometry
+--Geometry
+
 CREATE OR REPLACE FUNCTION sys.MakeValid(geom sys.GEOMETRY)
     RETURNS sys.GEOMETRY
     AS $$
@@ -21,7 +22,8 @@ CREATE OR REPLACE FUNCTION sys.STMakeValid_helper(sys.GEOMETRY)
         AS '$libdir/postgis-3','ST_MakeValid'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
---geography 
+--Geography 
+
 CREATE OR REPLACE FUNCTION sys.MakeValid(geog sys.GEOGRAPHY)
     RETURNS sys.GEOGRAPHY
     AS $$ 
@@ -42,7 +44,7 @@ CREATE OR REPLACE FUNCTION sys.makevalid_helper(geog sys.GEOGRAPHY)
     LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 --STNumPoints
--- geometry
+-- Geometry
 
 CREATE OR REPLACE FUNCTION sys.STNumPoints(geom sys.GEOMETRY)
     RETURNS integer
@@ -82,6 +84,7 @@ CREATE OR REPLACE FUNCTION sys.STNumPoints_helper(sys.GEOGRAPHY)
     
 --parse
 --Geometry 
+
 CREATE OR REPLACE FUNCTION sys.Geometry__Parse(geometry_tagged_text sys.NVARCHAR)
     RETURNS sys.GEOMETRY
     AS $$
@@ -95,6 +98,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__Parse(geometry_tagged_text sys.NVARCHAR
     $$ LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
 
 --Geography
+
 CREATE OR REPLACE FUNCTION sys.Geography__Parse(geography_tagged_text sys.NVARCHAR)
     RETURNS sys.GEOGRAPHY
     AS $$
@@ -109,6 +113,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__Parse(geography_tagged_text sys.NVARCH
 
 --STGeomType
 --Geometry
+
 CREATE OR REPLACE FUNCTION sys.STGeometryType(geom sys.GEOMETRY)
 	RETURNS sys.NVARCHAR(4000)
 	AS $$
@@ -150,8 +155,8 @@ CREATE OR REPLACE FUNCTION sys.STGeometryType(geog sys.GEOGRAPHY)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
---geometry
 --STMPointFromText
+--Geometry
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromText(sys.NVARCHAR, srid integer)
     RETURNS sys.GEOMETRY
@@ -166,7 +171,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromText(sys.NVARCHAR, srid int
             RETURN NULL;
         END IF;
 
-        geom = sys.geomfromtext_helper($1::text, $2);
+        geom = sys.geomfromtext_helper($1, $2);
         Geomtype = sys.ST_GeometryType(geom);
 
         IF Geomtype = 'ST_MultiPoint' THEN
@@ -177,8 +182,8 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromText(sys.NVARCHAR, srid int
     END;
     $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
---Geography 
 --STMPointFromText
+--Geography 
 
 CREATE OR REPLACE FUNCTION sys.Geography__STMPointFromText(sys.NVARCHAR, srid integer)
     RETURNS sys.GEOGRAPHY
@@ -193,7 +198,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STMPointFromText(sys.NVARCHAR, srid in
             RETURN NULL;
         END IF;
 
-        geog = sys.geogfromtext_helper($1::text, $2);
+        geog = sys.geogfromtext_helper($1, $2);
         Geomtype = sys.ST_GeometryType(geog);
 
         IF Geomtype = 'ST_MultiPoint' THEN
@@ -204,6 +209,8 @@ CREATE OR REPLACE FUNCTION sys.Geography__STMPointFromText(sys.NVARCHAR, srid in
     END;
     $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
+--STMPointFromWKB
+--Geography
 
 CREATE OR REPLACE FUNCTION sys.Geography__STMPointFromWKB(sys.VARBINARY, srid integer)
     RETURNS sys.GEOGRAPHY
@@ -224,7 +231,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STMPointFromWKB(sys.VARBINARY, srid in
         IF Geomtype = 'ST_MultiPoint' THEN
             RETURN geog;
         ELSE
-            RAISE EXCEPTION 'Expected "MULTIPOINT" at Position 1. The input has %s', Geomtype;
+            RAISE EXCEPTION 'Expected "MULTIPOINT" at position 1. The input has %', Geomtype;
         END IF;
     END;
     $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -234,7 +241,7 @@ CREATE OR REPLACE FUNCTION sys.geogfromwkb_helper(bytea, integer)
     AS 'babelfishpg_common', 'get_geography_from_wkb'
     LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
 
-
+--Geometry
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromWKB(sys.VARBINARY, srid integer)
     RETURNS sys.GEOMETRY
@@ -255,7 +262,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromWKB(sys.VARBINARY, srid int
         IF Geomtype = 'ST_MultiPoint' THEN
             RETURN geom;
         ELSE
-            RAISE EXCEPTION 'Expected "MULTIPOINT" at Position 1. The input has %s', Geomtype;
+            RAISE EXCEPTION 'Expected "MULTIPOINT" at position 1. The input has %', Geomtype;
         END IF;
     END;
     $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;

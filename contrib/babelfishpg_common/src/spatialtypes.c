@@ -26,7 +26,7 @@ static void load_functions();
 #define POINT_TYPE       1  /* Identifier for Point geometry type */
 #define LINE_TYPE        2  /* Identifier for Linestring geometry type */
 #define POLYGON_TYPE     3  /* Identifier for Polygon geometry type */
-#define MULTIPOINT_TYPE  4   /* Identifier for MultiPoint geometry type */
+#define MULTIPOINT_TYPE  4  /* Identifier for MultiPoint geometry type */
 
 #define DEFAULT_GEOGRAPHY_SRID 4326
 #define DEFAULT_GEOMETRY_SRID  0
@@ -49,8 +49,8 @@ static void load_functions();
 #define EMPTY_POINT_TYPE_LASTBYTE       0x01    /* Type identifier for empty point */
 #define EMPTY_LINE_TYPE_LASTBYTE        0x02    /* Type identifier for empty linestring */
 #define EMPTY_POLYGON_TYPE_LASTBYTE     0x03    /* Type identifier for empty polygon */
-#define EMPTY_MULTIPOINT_TYPE_LASTBYTE  0x04  /* Type identifier for empty Multipoint */
-#define NPOINTS_SIZE                 4       /* Size of no. of points data (4 bytes ) */
+#define EMPTY_MULTIPOINT_TYPE_LASTBYTE  0x04    /* Type identifier for empty Multipoint */
+#define NPOINTS_SIZE                 4          /* Size of no. of points data (4 bytes ) */
 
 #define SRID_FLAG_POS     4     /* Position of SRID flag in binary data */
 #define SRID_MASK         0x20  /* Bitmask for SRID presence flag */
@@ -153,6 +153,11 @@ static void load_functions();
 #define INVALID_POINT_3D_FLAG       0x09    /* P+Z (no V) —  3D Point */
 #define INVALID_POINT_2DM_FLAG      0x0A    /* P+M (no V) — 2DM Point */
 #define INVALID_POINT_3DM_FLAG      0x0B    /* P+Z+M (no V) —  3DM Point */
+
+#define POSTGIS_HEADER_POINT       "\x01\x01\x00\x00\x20"
+#define POSTGIS_HEADER_LINESTRING  "\x01\x02\x00\x00\x20"
+#define POSTGIS_HEADER_POLYGON     "\x01\x03\x00\x00\x20"
+#define POSTGIS_HEADER_MULTIPOINT  "\x01\x04\x00\x00\x20"
 
 #define SHAPE_TYPE_OFFSET (HEADER_SIZE + NPOINTS_SIZE + COUNT_FIELD_SIZE + COUNT_FIELD_SIZE + sizeof(int32_t) + sizeof(uint32_t))
 
@@ -1177,7 +1182,7 @@ get_geography_from_wkb(PG_FUNCTION_ARGS)
     PG_RETURN_DATUM(geom_datum);
 }
 
-/* This fusnction creates a geography point (only 2D) */
+/* This function creates a geography point (only 2D) */
 Datum
 geography_point(PG_FUNCTION_ARGS)
 {
@@ -2163,7 +2168,7 @@ write_wkb_point_child(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32
 
 /* Write child WKB entry based on parent multi-type */
 static uint32_t
-write_child_wkb(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32_t pt_start, uint32_t child_npoints, uint8 parent_type, GeometryData *geom_data, uint32_t fig_start, uint32_t fig_end, bool has_z, bool has_m)
+write_child_wkb(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32_t pt_start, uint8 parent_type, bool has_z, bool has_m)
 {
     switch (parent_type)
     {
@@ -2181,7 +2186,7 @@ write_child_wkb(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32_t pt_
  */
 
 static uint32_t
-calculate_child_wkb_size(uint8 parent_type, uint32_t child_npoints, GeometryData *geom_data, uint32_t fig_start, uint32_t fig_end, bool has_z, bool has_m)
+calculate_child_wkb_size(uint8 parent_type, bool has_z, bool has_m)
 {
     uint32_t coord_per_point = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0)  + (has_m ? COORD_SIZE : 0);
 
@@ -2261,11 +2266,11 @@ handle_multi_to_postgis(GeometryData *geom_data)
         uint32_t pt_start, child_npoints, fig_start, fig_end;
         get_child_info(geom_data, i + 1, &pt_start, &child_npoints, &fig_start, &fig_end);
 
-        result_size += calculate_child_wkb_size(geom_data->geom_name, child_npoints, geom_data, fig_start, fig_end, has_z, has_m);
+        result_size += calculate_child_wkb_size(geom_data->geom_name, has_z, has_m);
     }
 
     /* Build PostGIS header */
-    memcpy(postgis_header, "\x01\x04\x00\x00\x20", POSTGIS_HEADER_SIZE);
+    memcpy(postgis_header, POSTGIS_HEADER_MULTIPOINT, POSTGIS_HEADER_SIZE);
     postgis_header[1] = postgis_type_byte;
     if (geom_data->dimension_flag <= MAX_DIMENSION_FLAG)
         postgis_header[HEADER_DIMENSION_POS] = DIMENSION_HEADERS[geom_data->dimension_flag];
@@ -2288,7 +2293,7 @@ handle_multi_to_postgis(GeometryData *geom_data)
         uint32_t pt_start, child_npoints, fig_start, fig_end;
         get_child_info(geom_data, i + 1, &pt_start, &child_npoints, &fig_start, &fig_end);
 
-        offset += write_child_wkb(result_data + offset, src, geom_data->npoints, pt_start, child_npoints, geom_data->geom_name, geom_data, fig_start, fig_end, has_z, has_m);
+        offset += write_child_wkb(result_data + offset, src, geom_data->npoints, pt_start, geom_data->geom_name, has_z, has_m);
     }
 
     return result;
@@ -2298,7 +2303,7 @@ handle_multi_to_postgis(GeometryData *geom_data)
 static bytea*
 handle_non_empty_geometry_bytea(GeometryData *geom_data)
 {
-    uint8 postgis_header[POSTGIS_HEADER_SIZE] = "\x01\x01\x00\x00\x20";
+    uint8 postgis_header[POSTGIS_HEADER_SIZE] = POSTGIS_HEADER_POINT;
     bytea *result;
     uint8 *result_data;
     uint32_t new_data_size;
@@ -2321,11 +2326,11 @@ handle_non_empty_geometry_bytea(GeometryData *geom_data)
             new_data_size = calculate_point_size(geom_data);
             break;
         case LINE_TYPE:
-            postgis_header[1] = 0x02;
+            postgis_header[1] = LINE_TYPE;
             new_data_size = calculate_linestring_size(geom_data);
             break;
         case POLYGON_TYPE:
-            postgis_header[1] = 0x03;
+            postgis_header[1] = POLYGON_TYPE;
             new_data_size = calculate_polygon_size(geom_data);
             break;
          case MULTIPOINT_TYPE:
@@ -2365,7 +2370,7 @@ handle_non_empty_geometry_bytea(GeometryData *geom_data)
 static bytea*
 create_empty_point(GeometryData *geom_data)
 {
-    uint8 postgis_header[POSTGIS_HEADER_SIZE] = "\x01\x01\x00\x00\x20";
+    uint8 postgis_header[POSTGIS_HEADER_SIZE] = POSTGIS_HEADER_POINT;
     bytea *result = (bytea *) palloc0(VARHDRSZ + POSTGIS_HEADER_SIZE + SRID_SIZE + COORD_SIZE * 2);
     uint8 *result_data;
     
@@ -2384,7 +2389,7 @@ create_empty_point(GeometryData *geom_data)
 static bytea*
 create_empty_geometry(GeometryData *geom_data)
 {
-    uint8 postgis_header[POSTGIS_HEADER_SIZE] = "\x01\x02\x00\x00\x20"; /* keeping default as linestring, will be modified as per other geometries */
+    uint8 postgis_header[POSTGIS_HEADER_SIZE] = POSTGIS_HEADER_LINESTRING; /* keeping default as linestring, will be modified as per other geometries */
     bytea *result = (bytea *) palloc0(VARHDRSZ + POSTGIS_HEADER_SIZE + SRID_SIZE + EMPTY_GEOM_DATA_SIZE);
     uint8 *result_data;
 
@@ -3352,9 +3357,13 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
      *   - Polygon (always has npoints field)
      *   - MultiPoint (always has npoints field)
      */
-    if ((geom_data->postgis_geom_type == LINE_TYPE && geom_data->npoints > 2) ||(geom_data->postgis_geom_type == POLYGON_TYPE && !geom_data->is_empty) || (geom_data->postgis_geom_type == MULTIPOINT_TYPE && !geom_data->is_empty))
+    bool needs_npoints = 
+    (geom_data->postgis_geom_type == LINE_TYPE && geom_data->npoints > 2) ||
+    ((geom_data->postgis_geom_type == POLYGON_TYPE || geom_data->postgis_geom_type == MULTIPOINT_TYPE) && !geom_data->is_empty);
+
+    if (needs_npoints)
     {
-        total_size += NPOINTS_SIZE;
+    total_size += NPOINTS_SIZE;
     }
 
     /* Add CLR metadata */

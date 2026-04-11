@@ -326,13 +326,13 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromText(sys.NVARCHAR, srid int
             RETURN NULL;
         END IF;
 
-        geom = sys.geomfromtext_helper($1::text, $2);
+        geom = sys.geomfromtext_helper($1, $2);
         Geomtype = sys.ST_GeometryType(geom);
 
         IF Geomtype = 'ST_MultiPoint' THEN
             RETURN geom;
         ELSE
-            RAISE EXCEPTION 'Expected "MULTIPOINT" at Position 1. The input has %s', $1;
+            RAISE EXCEPTION 'Expected "MULTIPOINT" at position 1. The input has %', $1;
         END IF;
     END;
     $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -356,7 +356,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromWKB(sys.VARBINARY, srid int
         IF Geomtype = 'ST_MultiPoint' THEN
             RETURN geom;
         ELSE
-            RAISE EXCEPTION 'Expected "MULTIPOINT" at Position 1. The input has %s', Geomtype;
+            RAISE EXCEPTION 'Expected "MULTIPOINT" at position 1. The input has %', Geomtype;
         END IF;
     END;
     $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;

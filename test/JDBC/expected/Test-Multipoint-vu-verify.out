@@ -1470,7 +1470,7 @@ SELECT geometry::STMPointFromText('LINESTRING(1 2, 3 4)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has LINESTRING(1 2, 3 4)s)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has LINESTRING(1 2, 3 4))~~
 
 
 -- TC-MP-104: STMPointFromText — Wrong geometry type POINT (should ERROR)
@@ -1478,7 +1478,7 @@ SELECT geometry::STMPointFromText('POINT(1 2)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has POINT(1 2)s)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has POINT(1 2))~~
 
 
 -- TC-MP-105: STMPointFromText — Wrong geometry type POLYGON (should ERROR)
@@ -1486,7 +1486,7 @@ SELECT geometry::STMPointFromText('POLYGON((0 0, 1 0, 1 1, 0 0))', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has POLYGON((0 0, 1 0, 1 1, 0 0))s)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has POLYGON((0 0, 1 0, 1 1, 0 0)))~~
 
 
 -- TC-MP-106: STMPointFromText — NULL input
@@ -1516,7 +1516,7 @@ GO
 geometry
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has ST_LineStrings)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has ST_LineString)~~
 
 
 -- TC-MP-109: STMPointFromWKB — NULL
@@ -2327,7 +2327,7 @@ SELECT geography::STMPointFromText('POINT(45 90)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has POINT(45 90)s)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has POINT(45 90))~~
 
 
 -- TC-MP-178: Geography STMPointFromText — NULL input
@@ -16016,7 +16016,7 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has POINT(1 2)s)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has POINT(1 2))~~
 
 
 -- Wrong type: LINESTRING
@@ -16029,7 +16029,7 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has LINESTRING(0 0, 1 1)s)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has LINESTRING(0 0, 1 1))~~
 
 
 -- Wrong type: POLYGON
@@ -16042,7 +16042,7 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))s)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has POLYGON((0 0, 1 0, 1 1, 0 1, 0 0)))~~
 
 
 -- Invalid WKT
@@ -16264,7 +16264,7 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has POINT(50 30)s)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has POINT(50 30))~~
 
 
 -- Wrong type: LINESTRING
@@ -16277,7 +16277,7 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has LINESTRING(50 30, 60 40)s)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has LINESTRING(50 30, 60 40))~~
 
 
 -- Geography binary round-trip
@@ -16459,7 +16459,7 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has ST_Points)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has ST_Point)~~
 
 
 -- Wrong type: LINESTRING WKB
@@ -16474,7 +16474,7 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has ST_LineStrings)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has ST_LineString)~~
 
 
 -- Wrong type: POLYGON WKB
@@ -16489,7 +16489,7 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has ST_Polygons)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has ST_Polygon)~~
 
 
 -- Invalid SRID (negative)
@@ -16668,7 +16668,7 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has ST_Points)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has ST_Point)~~
 
 
 -- Wrong type: LINESTRING WKB
@@ -16683,7 +16683,7 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has ST_LineStrings)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has ST_LineString)~~
 
 
 -- Wrong type: POLYGON WKB
@@ -16698,5 +16698,5 @@ END CATCH
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "MULTIPOINT" at Position 1. The input has ST_Polygons)~~
+~~ERROR (Message: Expected "MULTIPOINT" at position 1. The input has ST_Polygon)~~
 
