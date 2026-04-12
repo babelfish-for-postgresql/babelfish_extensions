@@ -5352,6 +5352,23 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	}
 	
 	/*
+	 * Check if an error occurred during INSERT EXEC that should prevent flush.
+	 * 
+	 * SQL Server behavior: Column mismatch errors (213) cause all rows to be
+	 * rolled back, even if caught by TRY-CATCH. This is different from
+	 * data-level errors like division by zero, which only affect the current
+	 * row and allow previously inserted rows to be kept.
+	 * 
+	 * The error flag is set by pltsql_insert_exec_validate_column_count_from_query()
+	 * when a column mismatch is detected.
+	 */
+	if (pltsql_insert_exec_had_error())
+	{
+		elog(DEBUG1, "INSERT-EXEC: Skipping flush due to previous error (column mismatch)");
+		return;
+	}
+	
+	/*
 	 * Verify that the target table schema hasn't changed since INSERT EXEC started.
 	 * If the executed procedure altered the target table's schema (e.g., ALTER TABLE
 	 * ADD COLUMN), we must raise SQL Server error 556:

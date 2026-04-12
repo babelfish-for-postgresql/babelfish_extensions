@@ -668,6 +668,29 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			exec_stmt_return_query(estate, (PLtsql_stmt_return_query *) stmt);
 			break;
 		case PLTSQL_STMT_EXECSQL:
+			/*
+			 * For INSERT EXEC, validate column count BEFORE executing the query.
+			 * 
+			 * SQL Server validates column count at the metadata level BEFORE
+			 * evaluating expressions. This means column mismatch errors (213)
+			 * take priority over runtime errors like division by zero (8134).
+			 * 
+			 * In PostgreSQL, plan preparation calls eval_const_expressions()
+			 * which evaluates constant expressions like 1/0, causing runtime
+			 * errors to occur before we can validate column count.
+			 * 
+			 * By calling the validation function here, we parse the query and
+			 * count columns WITHOUT evaluating expressions, allowing us to
+			 * detect column mismatches before any runtime errors can occur.
+			 */
+			if (pltsql_insert_exec_active())
+			{
+				PLtsql_stmt_execsql *execsql_stmt = (PLtsql_stmt_execsql *) stmt;
+				if (execsql_stmt->sqlstmt && execsql_stmt->sqlstmt->query)
+				{
+					pltsql_insert_exec_validate_column_count_from_query(execsql_stmt->sqlstmt->query);
+				}
+			}
 			exec_stmt_execsql(estate, (PLtsql_stmt_execsql *) stmt);
 			break;
 		case PLTSQL_STMT_OPEN:
@@ -1184,6 +1207,22 @@ abort_execution(PLtsql_execstate *estate, ErrorData *edata, bool *terminate_batc
 
 	if (is_xact_abort_on_error(estate) &&
 		!ignore_xact_abort_error(edata->sqlerrcode, override_flag))
+		return true;
+
+	/*
+	 * INSERT EXEC column mismatch errors must be re-thrown.
+	 * 
+	 * SQL Server behavior: When a column mismatch error (213) occurs during
+	 * INSERT EXEC, all rows (including DML done before the error) are rolled
+	 * back. This is different from other "ignorable" errors like division by
+	 * zero, which only affect the current row.
+	 * 
+	 * The error flag is set by pltsql_insert_exec_validate_column_count_from_query()
+	 * when a column mismatch is detected. We need to re-throw the error so it
+	 * propagates to the subtransaction's PG_CATCH in exec_stmt_exec, which will
+	 * roll back all changes made by the procedure.
+	 */
+	if (pltsql_insert_exec_active() && pltsql_insert_exec_had_error())
 		return true;
 
 	return false;
@@ -1834,6 +1873,28 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 						{
 							drop_insert_exec_temp_table(temp_oid);
 						}
+					}
+					else if (pltsql_insert_exec_active())
+					{
+						/*
+						 * TRY-CATCH is inside the procedure being executed.
+						 * The INSERT EXEC is still in progress, so we should NOT
+						 * clean up the context. However, we need to clear the error
+						 * flag so that the flush will happen when the procedure
+						 * completes successfully.
+						 * 
+						 * SQL Server behavior: When an error is caught by TRY-CATCH
+						 * inside the procedure, the rows inserted before the error
+						 * should be kept. This applies to ALL errors, including
+						 * column mismatch errors (213).
+						 * 
+						 * The error flag was set to skip the flush for column mismatch
+						 * errors that are NOT caught by TRY-CATCH. Since the error IS
+						 * caught by TRY-CATCH inside the procedure, we clear the flag
+						 * to allow the flush to happen.
+						 */
+						elog(DEBUG1, "INSERT-EXEC: Error caught by inner TRY-CATCH, clearing error flag to allow flush");
+						pltsql_insert_exec_clear_error_flag();
 					}
 
 					/* Goto error handling blocks */

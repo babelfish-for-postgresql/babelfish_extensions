@@ -2418,6 +2418,7 @@ extern void pltsql_insert_exec_check_pending_drop(void);
 extern void pltsql_insert_exec_open_target_table(const char *target_table);
 extern void pltsql_insert_exec_close_target_table(void);
 extern bool pltsql_insert_exec_verify_schema(void);
+extern bool pltsql_insert_exec_validate_column_count_from_query(const char *query_string);
 extern bool parse_insert_exec_table_name(const char *target_table,
 										 char **schema_name_out,
 										 char **table_name_out,

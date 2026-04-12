@@ -802,13 +802,15 @@ END CATCH
 GO
 INSERT INTO insert_exec_trycatch1 EXEC insert_exec_ptrycatch1;
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Column name or number of supplied values does not match table definition.)~~
 
 SELECT COUNT(*) AS row_count FROM insert_exec_trycatch1;
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 DROP PROCEDURE insert_exec_ptrycatch1;
