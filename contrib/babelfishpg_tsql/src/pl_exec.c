@@ -10208,6 +10208,24 @@ pltsql_estate_cleanup(void)
 									top_es_entry->estate->stmt_mcontext_parent);
 	pfree(exec_state_call_stack);
 	exec_state_call_stack = top_es_entry;
+	
+	/*
+	 * Clear stale INSERT EXEC context when the call stack becomes empty.
+	 * This handles the case where INSERT EXEC context was set but not properly
+	 * cleaned up due to an error. When the call stack becomes empty, we know
+	 * that any existing INSERT EXEC context is stale and should be cleared.
+	 * 
+	 * This is a safety net to prevent INSERT EXEC context from leaking between
+	 * batches or tests. The primary cleanup should happen in the PG_CATCH blocks
+	 * of exec_stmt_exec, exec_stmt_exec_batch, and exec_stmt_exec_sp, but this
+	 * ensures cleanup even if those paths are not taken.
+	 */
+	if (exec_state_call_stack == NULL && pltsql_insert_exec_active())
+	{
+		elog(DEBUG1, "INSERT-EXEC: Clearing stale context in pltsql_estate_cleanup (call stack empty)");
+		pltsql_insert_exec_close_target_table();
+		pltsql_clear_insert_exec_context();
+	}
 }
 
 /*

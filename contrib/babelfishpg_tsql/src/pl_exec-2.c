@@ -26,6 +26,7 @@
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/plancache.h"
+#include "utils/syscache.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "pltsql_bulkcopy.h"
@@ -156,7 +157,11 @@ typedef struct InsertExecContext
 	bool		pending_drop;			/* True if temp table needs to be dropped when SPI is available */
 	Oid			target_rel_oid;			/* OID of target table - lock held to detect schema changes */
 	InsertExecSchemaSignature *schema_sig;	/* Schema signature for detecting changes */
+	uint64		execution_id;			/* Unique ID for this INSERT EXEC execution */
 } InsertExecContext;
+
+/* Counter for generating unique execution IDs */
+static uint64 insert_exec_execution_counter = 0;
 
 /* Initialize the global INSERT EXEC context */
 static InsertExecContext insert_exec_ctx = {
@@ -172,7 +177,8 @@ static InsertExecContext insert_exec_ctx = {
 	.had_error = false,
 	.pending_drop = false,
 	.target_rel_oid = InvalidOid,
-	.schema_sig = NULL
+	.schema_sig = NULL,
+	.execution_id = 0
 };
 
 /* DestReceiver struct for INSERT EXEC */
@@ -315,6 +321,12 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 	insert_exec_ctx.call_stack_depth = depth;
 	
 	/*
+	 * Store a unique execution ID for this INSERT EXEC. This is used to detect
+	 * if the INSERT EXEC context is stale (from a previous execution).
+	 */
+	insert_exec_ctx.execution_id = ++insert_exec_execution_counter;
+	
+	/*
 	 * Record the NestedTranCount when INSERT EXEC started.
 	 * In SQL Server, INSERT EXEC implicitly starts a transaction, so @@TRANCOUNT=1.
 	 * When the procedure does BEGIN TRAN, it becomes @@TRANCOUNT=2, allowing COMMIT.
@@ -370,6 +382,10 @@ pltsql_set_insert_exec_context(Oid temp_table_oid)
 void
 pltsql_clear_insert_exec_context(void)
 {
+	elog(DEBUG1, "INSERT-EXEC: pltsql_clear_insert_exec_context() called, target_table='%s', temp_table_oid=%u",
+		 insert_exec_ctx.target_table ? insert_exec_ctx.target_table : "NULL",
+		 insert_exec_ctx.temp_table_oid);
+	
 	/*
 	 * Only restore NestedTranCount if INSERT EXEC incremented it.
 	 * This handles the case where INSERT EXEC started with @@TRANCOUNT=0
@@ -393,6 +409,7 @@ pltsql_clear_insert_exec_context(void)
 	insert_exec_ctx.saved_nested_tran_count = 0;
 	insert_exec_ctx.call_stack_depth = 0;
 	insert_exec_ctx.incremented_tran_count = false;
+	insert_exec_ctx.execution_id = 0;
 	/* Note: We do NOT reset insert_exec_ctx.had_error here - it's reset by pltsql_insert_exec_clear_error_flag() */
 	if (insert_exec_ctx.target_table)
 	{
@@ -981,6 +998,128 @@ pltsql_insert_exec_active(void)
 }
 
 /*
+ * Check if we're actually inside the INSERT EXEC execution context.
+ * This is more strict than pltsql_insert_exec_active() - it also checks
+ * that the temp table OID is still valid.
+ * 
+ * This is used to prevent stale INSERT EXEC context from affecting
+ * queries that are NOT part of the current INSERT EXEC. For example,
+ * if a previous test set up INSERT EXEC context but didn't clean it up,
+ * subsequent tests would see pltsql_insert_exec_active() as true but
+ * pltsql_insert_exec_in_execution() as false because the temp table
+ * would have been dropped.
+ * 
+ * NOTE: This function is intentionally conservative. It may return false
+ * even when we ARE inside INSERT EXEC (e.g., if the temp table hasn't been
+ * created yet). This is acceptable because the column validation will still
+ * happen later during the actual INSERT.
+ */
+bool
+pltsql_insert_exec_in_execution(void)
+{
+	PLExecStateCallStack *cur;
+	int current_depth = 0;
+	Oid temp_table_oid;
+	
+	if (insert_exec_ctx.target_table == NULL)
+		return false;
+	
+	/*
+	 * If call_stack_depth is 0, the context was never properly set or was
+	 * cleared. This shouldn't happen if target_table is set, but check anyway.
+	 */
+	if (insert_exec_ctx.call_stack_depth == 0)
+		return false;
+	
+	/*
+	 * Check if the temp table OID is valid. If the INSERT EXEC context is
+	 * stale (from a previous execution), the temp table would have been
+	 * dropped and the OID would be invalid.
+	 */
+	temp_table_oid = insert_exec_ctx.temp_table_oid;
+	if (!OidIsValid(temp_table_oid))
+		return false;
+	
+	/*
+	 * Additional check: verify the temp table actually exists.
+	 * The OID might still be "valid" (non-zero) but the table could have been
+	 * dropped due to transaction rollback. This happens when INSERT EXEC fails
+	 * and the transaction is rolled back - the temp table is dropped but the
+	 * OID in the context is not cleared.
+	 * 
+	 * We use SearchSysCacheExists1 to check if the relation exists without
+	 * opening it (which would fail if it doesn't exist).
+	 */
+	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(temp_table_oid)))
+	{
+		elog(DEBUG1, "INSERT-EXEC: Temp table OID %u no longer exists, context is stale", temp_table_oid);
+		return false;
+	}
+	
+	/*
+	 * Get current call stack depth and check if any estate in the stack
+	 * is associated with INSERT EXEC (either old or new approach).
+	 */
+	cur = exec_state_call_stack;
+	while (cur != NULL)
+	{
+		current_depth++;
+		/*
+		 * Check if this estate is part of INSERT EXEC:
+		 * - Old approach: estate->insert_exec is true
+		 * - New approach: pltsql_insert_exec_active() is true AND we're at
+		 *   or below the call stack depth where INSERT EXEC was started
+		 */
+		if (cur->estate && cur->estate->insert_exec)
+		{
+			/* Found an estate with insert_exec set - we're definitely in INSERT EXEC */
+			return true;
+		}
+		cur = cur->next;
+	}
+	
+	/*
+	 * If current_depth is 0, we're not inside any PL/tsql execution,
+	 * so we can't be inside INSERT EXEC execution either.
+	 * 
+	 * IMPORTANT: This also handles the case where the INSERT EXEC context
+	 * is stale from a previous batch. When a new batch starts, the call
+	 * stack is empty (depth 0), so we return false here. This prevents
+	 * stale context from affecting subsequent batches.
+	 */
+	if (current_depth == 0)
+		return false;
+	
+	/*
+	 * No estate has insert_exec set. This could mean:
+	 * 1. We're using the new DestReceiver approach (estate->insert_exec is not set)
+	 * 2. The context is stale from a previous execution
+	 * 
+	 * To distinguish, check if the current call stack depth is consistent with
+	 * the INSERT EXEC context. If we're at a shallower level than when INSERT
+	 * EXEC started, the context is stale.
+	 * 
+	 * Note: We use < instead of <= because the INSERT EXEC statement itself
+	 * is at call_stack_depth, and the called procedure is at call_stack_depth+1.
+	 */
+	if (current_depth < insert_exec_ctx.call_stack_depth)
+		return false;  /* Context is stale - we've returned from INSERT EXEC */
+	
+	/*
+	 * We're at or below the INSERT EXEC call stack depth, and the temp table
+	 * OID is valid. This is likely a valid INSERT EXEC execution using the new
+	 * DestReceiver approach.
+	 * 
+	 * Final check: verify the execution_id is non-zero. If it's zero, the
+	 * context was cleared but not fully reset (shouldn't happen, but be safe).
+	 */
+	if (insert_exec_ctx.execution_id == 0)
+		return false;
+	
+	return true;
+}
+
+/*
  * Check if INSERT EXEC flush is in progress.
  * During flush, we temporarily clear the INSERT EXEC context to allow
  * INSTEAD OF triggers to fire, but we still need to block commit_stmt.
@@ -1122,12 +1261,17 @@ pltsql_insert_exec_in_trycatch(void)
 /*
  * Check if we should clean up INSERT EXEC context when a TRY-CATCH catches an error.
  * 
- * This is used in the sigsetjmp handler to determine if we should clean up the
- * INSERT EXEC context. We should only clean up if the TRY-CATCH that catches
- * the error is at the same level or higher than where INSERT EXEC was started.
+ * This is used in the sigsetjmp handler (iterative_exec.c) to determine if we should
+ * clean up the INSERT EXEC context. We should only clean up if the TRY-CATCH that
+ * catches the error is at the same level or higher than where INSERT EXEC was started.
  * 
  * If the TRY-CATCH is inside the procedure being executed (deeper call stack),
  * we should NOT clean up because the INSERT EXEC is still in progress.
+ * 
+ * IMPORTANT: This function is called from the sigsetjmp handler AFTER a TRY-CATCH
+ * has caught the error. At this point, we know there IS a TRY-CATCH that caught
+ * the error. The question is whether it's inside the procedure (don't clean up)
+ * or at the same level or higher (clean up).
  * 
  * Returns true if we should clean up, false otherwise.
  */
@@ -1244,6 +1388,17 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	if (result_natts != temp_natts)
 	{
 		table_close(temp_rel, AccessShareLock);
+		/*
+		 * Set the error flag BEFORE throwing the error. This ensures that
+		 * even if TRY-CATCH catches the error, the flush will be skipped
+		 * and the error will be re-thrown.
+		 * 
+		 * SQL Server behavior: Column mismatch errors cause all rows to be
+		 * rolled back, even if caught by TRY-CATCH. This is different from
+		 * data-level errors like division by zero, which only affect the
+		 * current row and allow previously inserted rows to be kept.
+		 */
+		pltsql_insert_exec_set_error_flag();
 		/*
 		 * Use ERRCODE_DATATYPE_MISMATCH to avoid the error mapping in
 		 * error_mapping.txt. The mapping for ERRCODE_FEATURE_NOT_SUPPORTED
@@ -1999,9 +2154,10 @@ drop_insert_exec_temp_table(Oid temp_table_oid)
 
 	pfree(drop_stmt.data);
 
-	/* Clear the stored temp table name */
+	/* Clear the stored temp table name and OID */
 	pfree(insert_exec_ctx.temp_table_name);
 	insert_exec_ctx.temp_table_name = NULL;
+	insert_exec_ctx.temp_table_oid = InvalidOid;
 }
 
 /* helper function to get current T-SQL estate */
@@ -3555,6 +3711,17 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * IMPORTANT: We MUST clear the INSERT EXEC context even if other cleanup
 		 * fails. Otherwise, subsequent queries will see pltsql_insert_exec_active()
 		 * as true and try to use the stale temp table OID.
+		 * 
+		 * We also need to clean up if this INSERT EXEC statement failed during setup
+		 * (before insert_exec_setup_done was set to TRUE). This handles the case where
+		 * the context was set by pltsql_set_insert_exec_context_info() but an error
+		 * occurred before insert_exec_setup_done was set to TRUE (e.g., during temp
+		 * table creation). Without this cleanup, the context would leak and affect
+		 * subsequent queries.
+		 * 
+		 * NOTE: We only clean up if the active context's target table matches this
+		 * statement's target table. This ensures we don't accidentally clear the
+		 * outer INSERT EXEC context when a nested INSERT EXEC fails.
 		 */
 		if (insert_exec_setup_done)
 		{
@@ -3570,6 +3737,26 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			
 			/* Always clear the context, even if close_target_table failed */
 			pltsql_clear_insert_exec_context();
+		}
+		else if (stmt->insert_exec && stmt->insert_exec_target != NULL && pltsql_insert_exec_active())
+		{
+			/*
+			 * This is an INSERT EXEC statement that failed during setup (before
+			 * insert_exec_setup_done was set to TRUE). We need to clean up the
+			 * partially initialized context, but ONLY if this statement is the
+			 * one that set the context.
+			 * 
+			 * Compare the target table names to ensure we only clean up if THIS
+			 * statement set the context. If a nested INSERT EXEC fails, the outer
+			 * INSERT EXEC context should remain active.
+			 */
+			const char *active_target = pltsql_get_insert_exec_target_table();
+			if (active_target != NULL && strcmp(active_target, stmt->insert_exec_target) == 0)
+			{
+				pltsql_insert_exec_set_error_flag();
+				pltsql_insert_exec_close_target_table();
+				pltsql_clear_insert_exec_context();
+			}
 		}
 		
 		if (strcmp(get_current_pltsql_db_name(), save_db_name) != 0)
@@ -4002,6 +4189,17 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		 * cannot be used in an error context (transaction is aborted).
 		 * We set the pending drop flag so the temp table will be dropped at the
 		 * next opportunity when SPI is available.
+		 * 
+		 * We also need to clean up if this INSERT EXEC statement failed during setup
+		 * (before insert_exec_setup_done was set to TRUE). This handles the case where
+		 * the context was set by pltsql_set_insert_exec_context_info() but an error
+		 * occurred before insert_exec_setup_done was set to TRUE (e.g., during temp
+		 * table creation). Without this cleanup, the context would leak and affect
+		 * subsequent queries.
+		 * 
+		 * NOTE: We only clean up if the active context's target table matches this
+		 * statement's target table. This ensures we don't accidentally clear the
+		 * outer INSERT EXEC context when a nested INSERT EXEC fails.
 		 */
 		if (insert_exec_setup_done)
 		{
@@ -4017,6 +4215,26 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			
 			/* Always clear the context to prevent stale state */
 			pltsql_clear_insert_exec_context();
+		}
+		else if (stmt->insert_exec && stmt->insert_exec_target != NULL && pltsql_insert_exec_active())
+		{
+			/*
+			 * This is an INSERT EXEC statement that failed during setup (before
+			 * insert_exec_setup_done was set to TRUE). We need to clean up the
+			 * partially initialized context, but ONLY if this statement is the
+			 * one that set the context.
+			 * 
+			 * Compare the target table names to ensure we only clean up if THIS
+			 * statement set the context. If a nested INSERT EXEC fails, the outer
+			 * INSERT EXEC context should remain active.
+			 */
+			const char *active_target = pltsql_get_insert_exec_target_table();
+			if (active_target != NULL && strcmp(active_target, stmt->insert_exec_target) == 0)
+			{
+				pltsql_insert_exec_set_error_flag();
+				pltsql_insert_exec_close_target_table();
+				pltsql_clear_insert_exec_context();
+			}
 		}
 		
 		/* Restore GUC and scope identity settings before re-throwing */
@@ -4866,6 +5084,17 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					 * cannot be used in an error context (transaction is aborted).
 					 * The temp table will be automatically cleaned up when the transaction
 					 * rolls back.
+					 * 
+					 * We also need to clean up if this INSERT EXEC statement failed during setup
+					 * (before insert_exec_setup_done was set to TRUE). This handles the case where
+					 * the context was set by pltsql_set_insert_exec_context_info() but an error
+					 * occurred before insert_exec_setup_done was set to TRUE (e.g., during temp
+					 * table creation). Without this cleanup, the context would leak and affect
+					 * subsequent queries.
+					 * 
+					 * NOTE: We only clean up if the active context's target table matches this
+					 * statement's target table. This ensures we don't accidentally clear the
+					 * outer INSERT EXEC context when a nested INSERT EXEC fails.
 					 */
 					if (insert_exec_setup_done)
 					{
@@ -4881,6 +5110,26 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						
 						/* Always clear the context to prevent stale state */
 						pltsql_clear_insert_exec_context();
+					}
+					else if (stmt->insert_exec && stmt->insert_exec_target != NULL && pltsql_insert_exec_active())
+					{
+						/*
+						 * This is an INSERT EXEC statement that failed during setup (before
+						 * insert_exec_setup_done was set to TRUE). We need to clean up the
+						 * partially initialized context, but ONLY if this statement is the
+						 * one that set the context.
+						 * 
+						 * Compare the target table names to ensure we only clean up if THIS
+						 * statement set the context. If a nested INSERT EXEC fails, the outer
+						 * INSERT EXEC context should remain active.
+						 */
+						const char *active_target = pltsql_get_insert_exec_target_table();
+						if (active_target != NULL && strcmp(active_target, stmt->insert_exec_target) == 0)
+						{
+							pltsql_insert_exec_set_error_flag();
+							pltsql_insert_exec_close_target_table();
+							pltsql_clear_insert_exec_context();
+						}
 					}
 					pltsql_revert_guc(save_nestlevel);
 					pltsql_revert_last_scope_identity(scope_level);

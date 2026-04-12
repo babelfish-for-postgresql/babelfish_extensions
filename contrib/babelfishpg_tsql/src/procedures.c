@@ -1254,7 +1254,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						if (list_length(sublist) != num_target_attnums)
 						{
 							ereport(ERROR,
-									(errcode(ERRCODE_DATATYPE_MISMATCH),
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 									errmsg("Column name or number of supplied values does not match table definition.")));
 						}
 						foreach(sublc, sublist)

@@ -6247,6 +6247,21 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 		pltsql_non_tsql_proc_entry_count = 0;
 		Assert(pltsql_sys_func_entry_count == 0);
 
+		/*
+		 * Clear stale INSERT EXEC context at the end of each batch.
+		 * This is a safety net to ensure the context is cleared even if
+		 * the cleanup in exec_stmt_exec's PG_CATCH didn't run for some reason.
+		 * 
+		 * We only clear when exec_state_call_stack == NULL, which means we're
+		 * at the end of a top-level batch. This ensures we don't accidentally
+		 * clear the context during a legitimate INSERT EXEC operation.
+		 */
+		if (pltsql_insert_exec_active())
+		{
+			elog(DEBUG1, "INSERT-EXEC: Clearing stale context at end of batch in terminate_batch");
+			pltsql_clear_insert_exec_context();
+		}
+
 		if (pltsql_snapshot_portal != NULL)
 		{
 			/* Must be active portal, otherwise should not be installed */

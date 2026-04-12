@@ -44,6 +44,9 @@ static void process_antlr_parsing_time(PLtsql_execstate *estate);
 static void process_explain(PLtsql_execstate *estate, bool *show_antlr_parsing_time);
 static void process_explain_analyze(PLtsql_execstate *estate, bool *show_antlr_parsing_time);
 
+/* Forward declaration for is_part_of_pltsql_trycatch_block */
+static bool is_part_of_pltsql_trycatch_block(PLtsql_execstate *estate);
+
 extern PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
 extern void prepare_format_string(StringInfo buf, char *msg_string, int nargs,
 								  Datum *args, Oid *argtypes, bool *argisnull);
@@ -682,8 +685,22 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			 * By calling the validation function here, we parse the query and
 			 * count columns WITHOUT evaluating expressions, allowing us to
 			 * detect column mismatches before any runtime errors can occur.
+			 * 
+			 * For the OLD tuple-store approach (estate->insert_exec), we always
+			 * do early validation.
+			 * 
+			 * For the NEW DestReceiver approach, we only do early validation
+			 * when the SELECT is inside a TRY block. This is because:
+			 * 1. System procedures like sp_columns have internal SELECT statements
+			 *    that are NOT inside TRY blocks and have different column counts
+			 * 2. User procedures with TRY-CATCH need early validation to ensure
+			 *    column mismatch errors take priority over runtime errors
+			 * 3. Without early validation, runtime errors (like division by zero)
+			 *    would be caught by TRY-CATCH before column mismatch is detected
 			 */
-			if (pltsql_insert_exec_active())
+			if (estate->insert_exec ||
+				(pltsql_insert_exec_active() && pltsql_insert_exec_in_execution() &&
+				 is_part_of_pltsql_trycatch_block(estate)))
 			{
 				PLtsql_stmt_execsql *execsql_stmt = (PLtsql_stmt_execsql *) stmt;
 				if (execsql_stmt->sqlstmt && execsql_stmt->sqlstmt->query)
@@ -1201,28 +1218,33 @@ abort_execution(PLtsql_execstate *estate, ErrorData *edata, bool *terminate_batc
 	if (exec_state_call_stack->error_data.rethrow_error)
 		return true;
 
+	/*
+	 * INSERT EXEC column mismatch errors must be re-thrown BEFORE checking
+	 * for TRY-CATCH blocks.
+	 * 
+	 * SQL Server behavior: When a column mismatch error (213) occurs during
+	 * INSERT EXEC, all rows (including DML done before the error) are rolled
+	 * back, even if the error occurs inside a TRY-CATCH block. This is
+	 * different from other "ignorable" errors like division by zero, which
+	 * only affect the current row and can be caught by TRY-CATCH.
+	 * 
+	 * The error flag is set by:
+	 * 1. pltsql_insert_exec_validate_column_count_from_query() - early validation
+	 * 2. insertexec_startup() - runtime validation in DestReceiver
+	 * 
+	 * We need to re-throw the error so it propagates to the subtransaction's
+	 * PG_CATCH in exec_stmt_exec, which will roll back all changes made by
+	 * the procedure.
+	 */
+	if (pltsql_insert_exec_active() && pltsql_insert_exec_had_error())
+		return true;
+
 	/* Any error inside try catch block */
 	if (is_part_of_pltsql_trycatch_block(estate))
 		return true;
 
 	if (is_xact_abort_on_error(estate) &&
 		!ignore_xact_abort_error(edata->sqlerrcode, override_flag))
-		return true;
-
-	/*
-	 * INSERT EXEC column mismatch errors must be re-thrown.
-	 * 
-	 * SQL Server behavior: When a column mismatch error (213) occurs during
-	 * INSERT EXEC, all rows (including DML done before the error) are rolled
-	 * back. This is different from other "ignorable" errors like division by
-	 * zero, which only affect the current row.
-	 * 
-	 * The error flag is set by pltsql_insert_exec_validate_column_count_from_query()
-	 * when a column mismatch is detected. We need to re-throw the error so it
-	 * propagates to the subtransaction's PG_CATCH in exec_stmt_exec, which will
-	 * roll back all changes made by the procedure.
-	 */
-	if (pltsql_insert_exec_active() && pltsql_insert_exec_had_error())
 		return true;
 
 	return false;
@@ -1547,12 +1569,33 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 * TRY-CATCH (if any) is at the same level or higher than INSERT EXEC.
 		 * If the TRY-CATCH is inside the procedure being executed, we should NOT
 		 * clean up because the INSERT EXEC is still in progress.
+		 * 
+		 * EXCEPTION: For nested INSERT EXEC errors, we ALWAYS clean up regardless
+		 * of call stack depth. This is a batch-terminating error that will abort
+		 * the INSERT EXEC operation, so the context must be cleared to prevent it
+		 * from leaking to subsequent queries in the same session.
+		 * 
+		 * We check for nested INSERT EXEC errors by looking for:
+		 * - ERRCODE_PROGRAM_LIMIT_EXCEEDED (54000)
+		 * - Error message containing "nested INSERT"
 		 */
-		if (pltsql_insert_exec_active() && pltsql_insert_exec_should_cleanup_on_trycatch())
 		{
-			elog(DEBUG1, "TSQL TXN TSQL semantics : Cleaning up INSERT EXEC context on error (no inner TRY-CATCH)");
-			pltsql_insert_exec_close_target_table();
-			pltsql_clear_insert_exec_context();
+			bool insert_exec_active = pltsql_insert_exec_active();
+			bool should_cleanup_trycatch = pltsql_insert_exec_should_cleanup_on_trycatch();
+			bool is_nested_insert_exec_error = (edata->sqlerrcode == ERRCODE_PROGRAM_LIMIT_EXCEEDED &&
+											   edata->message != NULL &&
+											   strstr(edata->message, "nested INSERT") != NULL);
+			
+			elog(DEBUG1, "INSERT-EXEC cleanup check: active=%d, should_cleanup_trycatch=%d, is_nested_error=%d, sqlerrcode=%d, message='%s'",
+				 insert_exec_active, should_cleanup_trycatch, is_nested_insert_exec_error,
+				 edata->sqlerrcode, edata->message ? edata->message : "NULL");
+			
+			if (insert_exec_active && (should_cleanup_trycatch || is_nested_insert_exec_error))
+			{
+				elog(DEBUG1, "TSQL TXN TSQL semantics : Cleaning up INSERT EXEC context on error (no inner TRY-CATCH or nested INSERT EXEC error)");
+				pltsql_insert_exec_close_target_table();
+				pltsql_clear_insert_exec_context();
+			}
 		}
 
 		if (internal_sp_started &&
@@ -1878,23 +1921,27 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 					{
 						/*
 						 * TRY-CATCH is inside the procedure being executed.
-						 * The INSERT EXEC is still in progress, so we should NOT
-						 * clean up the context. However, we need to clear the error
-						 * flag so that the flush will happen when the procedure
-						 * completes successfully.
+						 * The INSERT EXEC is still in progress.
 						 * 
-						 * SQL Server behavior: When an error is caught by TRY-CATCH
-						 * inside the procedure, the rows inserted before the error
-						 * should be kept. This applies to ALL errors, including
-						 * column mismatch errors (213).
+						 * For column mismatch errors (had_error flag is set), we should
+						 * re-throw the error. SQL Server behavior: Column mismatch errors
+						 * cause all rows to be rolled back, even if caught by TRY-CATCH.
 						 * 
-						 * The error flag was set to skip the flush for column mismatch
-						 * errors that are NOT caught by TRY-CATCH. Since the error IS
-						 * caught by TRY-CATCH inside the procedure, we clear the flag
-						 * to allow the flush to happen.
+						 * For other errors (division by zero, etc.), we allow the error
+						 * to be caught by TRY-CATCH so that the flush will happen when
+						 * the procedure completes. SQL Server behavior: When a non-column-
+						 * mismatch error is caught by TRY-CATCH inside the procedure, the
+						 * rows inserted before the error should be kept.
 						 */
-						elog(DEBUG1, "INSERT-EXEC: Error caught by inner TRY-CATCH, clearing error flag to allow flush");
-						pltsql_insert_exec_clear_error_flag();
+						if (pltsql_insert_exec_had_error())
+						{
+							elog(DEBUG1, "INSERT-EXEC: Column mismatch error caught by inner TRY-CATCH, re-throwing");
+							ReThrowError(estate->cur_error->error);
+						}
+						else
+						{
+							elog(DEBUG1, "INSERT-EXEC: Non-column-mismatch error caught by inner TRY-CATCH, allowing flush");
+						}
 					}
 
 					/* Goto error handling blocks */
