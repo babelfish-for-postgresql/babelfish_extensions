@@ -177,7 +177,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromText(sys.NVARCHAR, srid int
         IF Geomtype = 'ST_MultiPoint' THEN
             RETURN geom;
         ELSE
-            RAISE EXCEPTION 'Expected "MULTIPOINT" at Position 1. The input has %s', $1;
+            RAISE EXCEPTION 'Expected "MULTIPOINT" at position 1. The input has %', $1;
         END IF;
     END;
     $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
@@ -204,7 +204,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STMPointFromText(sys.NVARCHAR, srid in
         IF Geomtype = 'ST_MultiPoint' THEN
             RETURN geog;
         ELSE
-            RAISE EXCEPTION 'Expected "MULTIPOINT" at Position 1. The input has %s', $1;
+            RAISE EXCEPTION 'Expected "MULTIPOINT" at position 1. The input has %', $1;
         END IF;
     END;
     $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;

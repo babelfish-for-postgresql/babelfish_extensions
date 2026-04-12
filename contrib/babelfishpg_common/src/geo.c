@@ -458,15 +458,8 @@ rewrite_linestring_query(PointArray *pa)
     transform_points(pa, type);
 
     /* Add each point's coordinates to the WKT string */
-    for (int i = 0; i < pa->count; i++) 
-    {
-        POINT p = pa->points[i];
-        format_tsql_point_coordinates(&output, p);
+    append_formatted_points(&output, pa, false, format_tsql_point_coordinates);
 
-        /* Add comma between points, except after the last point */
-        if (i < pa->count - 1) 
-            appendStringInfoString(&output, ", ");
-    }
 
     /* Close parenthesis */
     appendStringInfoChar(&output, ')');
@@ -499,15 +492,8 @@ rewrite_dim_linestring_query(PointArray *pa)
     appendStringInfoChar(&output, '(');
 
     /* Add each point's coordinates to the WKT string */
-    for (int i = 0; i < pa->count; i++) 
-    {
-        POINT p = pa->points[i];
-        format_postgis_point_coordinates(&output, p);
+    append_formatted_points(&output, pa, false, format_postgis_point_coordinates);
 
-        /* Add comma between points, except after the last point */
-        if (i < pa->count - 1) 
-            appendStringInfoString(&output, ", ");
-    }
     
     /* Close parenthesis */
     appendStringInfoChar(&output, ')');
