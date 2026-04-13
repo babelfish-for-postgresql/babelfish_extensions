@@ -9915,7 +9915,7 @@ txn_clean_estate(bool commit)
 }
 
 /*
- * pltsql_xact_cb --- post-transaction-commit-or-abort cleanup
+ * pltsql_xact_cb --- transaction event callback for cleanup
  *
  * If a simple-expression EState was created in the current transaction,
  * it has to be cleaned up.
@@ -9927,7 +9927,10 @@ pltsql_xact_cb(XactEvent event, void *arg)
 	 * Reset top transaction name to avoid dangling pointer after
 	 * transaction memory context is destroyed.
 	 */
-	ResetTopTransactionName();
+	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_ABORT)
+	{
+		ResetTopTransactionName();
+	}
 
 	/*
 	 * If we are doing a clean transaction shutdown, free the EState (so that
