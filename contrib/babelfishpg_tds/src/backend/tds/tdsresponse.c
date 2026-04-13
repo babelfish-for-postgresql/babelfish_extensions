@@ -1640,7 +1640,7 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 					if (physical_schema_name != NULL)
 						relMetaDataInfo->partName[1] = pstrdup(physical_schema_name);
 					else
-						relMetaDataInfo->partName[1] = NULL;
+						relMetaDataInfo->partName[1] = pstrdup("");
 				}
 				
 				if (physical_schema_name)
@@ -2216,7 +2216,6 @@ TdsSendRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt,
 	SendColumnMetadataToken(typeinfo->natts, false);
 	if (relMetaDataInfoList != NIL)
     {
-        SendTabNameToken();
         SendColInfoToken(typeinfo->natts, false);
     }
 }
