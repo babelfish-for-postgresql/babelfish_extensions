@@ -107,6 +107,12 @@ DROP TABLE IF EXISTS dbo.dep_renamed_table;
 GO
 DROP FUNCTION IF EXISTS dbo.corrupt_cache_test_func;
 GO
+DROP PROCEDURE IF EXISTS dbo.version_mismatch;
+GO
+DROP USER IF EXISTS babel_6037_nonowner;
+GO
+DROP LOGIN babel_6037_nonowner;
+GO
 
 PRINT 'Cleanup completed successfully';
 GO

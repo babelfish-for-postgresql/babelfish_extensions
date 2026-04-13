@@ -307,7 +307,7 @@ BEGIN
 END;
 GO
 
--- Test 19: Default behavior (antlr_cache_enabled = false by default)
+-- Test 19: Default behavior (antlr_cache_enabled = NULL by default, follows session GUC)
 CREATE PROCEDURE dbo.perfunc_default_test
     @val INT
 AS
@@ -464,4 +464,30 @@ END;
 GO
 
 SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+
+-- Test 28: Version mismatch — cached parse tree with a higher bbf_version
+-- Create a simple procedure with cache ON so the parse tree and bbf_version get populated.
+-- In verify, we'll update bbf_version to a higher value and exec — should skip cache and ANTLR re-parse.
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+GO
+
+CREATE PROCEDURE dbo.version_mismatch
+    @val INT
+AS
+BEGIN
+    SELECT @val + 1 AS result;
+END;
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+GO
+
+-- Create a non-owner login/user to test permission denial
+CREATE LOGIN babel_6037_nonowner WITH PASSWORD = '12345678';
+GO
+CREATE USER babel_6037_nonowner FOR LOGIN babel_6037_nonowner;
+GO
+-- Grant EXECUTE so non-owner can see the function via sys.object_id but cannot change cache settings
+GRANT EXECUTE ON dbo.perfunc_default_test TO babel_6037_nonowner;
 GO

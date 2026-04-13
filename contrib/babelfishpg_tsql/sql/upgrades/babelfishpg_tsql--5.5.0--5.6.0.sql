@@ -237,11 +237,11 @@ ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_datums TEXT DEFAULT NULL;
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_modify_date SYS.DATETIME DEFAULT NULL;
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_bbf_version TEXT DEFAULT NULL;
-ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_cache_enabled BOOL DEFAULT false;
+ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_cache_enabled BOOL DEFAULT NULL;
 RESET allow_system_table_mods;
 
 CREATE OR REPLACE FUNCTION sys.enable_routine_parse_cache(
-    IN func_identifier TEXT,
+    IN funcoid OID,
     IN enable_flag BOOLEAN
 ) RETURNS BOOLEAN
 AS 'babelfishpg_tsql', 'enable_routine_parse_cache' LANGUAGE C;

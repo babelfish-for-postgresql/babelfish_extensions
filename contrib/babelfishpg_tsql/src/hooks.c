@@ -4332,35 +4332,36 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;
 
 	/*
-	 * Explicitly set antlr_cache_enabled to false for new INSERTs.
+	 * Explicitly set antlr_cache_enabled to NULL for new INSERTs (follow session GUC).
 	 * For UPDATEs (ALTER), new_record_replaces is set to false below
 	 * so the existing value is preserved by heap_modify_tuple.
 	 */
-	new_record[Anum_bbf_function_ext_antlr_cache_enabled - 1] = BoolGetDatum(false);
+	new_record_nulls[Anum_bbf_function_ext_antlr_cache_enabled - 1] = true;
 	new_record_replaces[Anum_bbf_function_ext_antlr_cache_enabled - 1] = false; /* preserve on ALTER */
 
 	/*
 	 * Store serialized ANTLR parse result for cross-session caching.
 	 * Look up the compiled function and serialize its parse tree.
 	 *
-	 * Combined check: session GUC OR per-function antlr_cache_enabled flag.
-	 * For INSERT (new function), antlr_cache_enabled defaults to false so we only
-	 * serialize if session GUC is on. For UPDATE (ALTER), we also check the
-	 * existing tuple's antlr_cache_enabled flag.
+	 * babelfish_function_ext.antlr_cache_enabled column:
+	 *   NULL  → follow session GUC (default for new functions)
+	 *   true  → force cache on
+	 *   false → force cache off (kill switch, never cache)
 	 */
-	do_cache = pltsql_enable_routine_parse_cache; /* session GUC override */
+	do_cache = pltsql_enable_routine_parse_cache; /* session GUC default */
 
 	/*
 	 * Peek at existing tuple to check per-function flag (for ALTER case).
-	 * We fetch oldtup early here; it will be re-used below for INSERT/UPDATE.
+	 * Per-function flag overrides session GUC when non-NULL.
 	 */
 	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
-	if (!do_cache && HeapTupleIsValid(oldtup))
+	if (HeapTupleIsValid(oldtup))
 	{
 		bool	isnull;
 		Datum	cache_flag = SysCacheGetAttr(PROCNAMENSPSIGNATURE, oldtup,
 											 Anum_bbf_function_ext_antlr_cache_enabled, &isnull);
-		do_cache = (!isnull && DatumGetBool(cache_flag));
+		if (!isnull)
+			do_cache = DatumGetBool(cache_flag); /* per-function overrides GUC */
 	}
 
 	if (!do_cache)
@@ -4641,11 +4642,14 @@ pltsql_update_func_cache_entry(HeapTuple proctup, PLtsql_function *function)
 	if (!HeapTupleIsValid(oldtup))
 		return;
 
-	/* Combined check: session GUC OR per-function flag */
+	/* Function specific cache control: antlr_cache_enabled column: NULL=follow GUC, true=force on, false=force off */
 	cache_flag = SysCacheGetAttr(PROCNAMENSPSIGNATURE, oldtup,
 								 Anum_bbf_function_ext_antlr_cache_enabled, &isnull);
-	func_cache_enabled = (!isnull && DatumGetBool(cache_flag));
-	if (!pltsql_enable_routine_parse_cache && !func_cache_enabled)
+	if (!isnull)
+		func_cache_enabled = DatumGetBool(cache_flag); /* per-function overrides GUC */
+	else
+		func_cache_enabled = pltsql_enable_routine_parse_cache; /* NULL → follow GUC */
+	if (!func_cache_enabled)
 	{
 		heap_freetuple(oldtup);
 		return;
@@ -4756,13 +4760,16 @@ pltsql_restore_func_parse_result(HeapTuple proctup,
 	*out_bbf_ext_xmin = HeapTupleHeaderGetRawXmin(bbffunctuple->t_data);
 	*out_bbf_ext_tid = bbffunctuple->t_self;
 
-	/* Read per-function cache flag */
+	/* Function specific cache control: antlr_cache_enabled column: NULL=follow GUC, true=on, false=off */
 	cache_flag = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbffunctuple,
 								 Anum_bbf_function_ext_antlr_cache_enabled, &isnull);
-	*out_cache_enabled = (!isnull && DatumGetBool(cache_flag));
+	if (!isnull)
+		*out_cache_enabled = DatumGetBool(cache_flag); /* per-function overrides GUC */
+	else
+		*out_cache_enabled = pltsql_enable_routine_parse_cache; /* NULL → follow GUC */
 
-	/* Combined check: session GUC OR per-function flag */
-	if (!pltsql_enable_routine_parse_cache && !(*out_cache_enabled))
+	/* Check resolved cache flag */
+	if (!(*out_cache_enabled))
 	{
 		elog(DEBUG1, "Parse result cache retrieval skipped: neither session GUC nor per-function flag enabled");
 		heap_freetuple(bbffunctuple);

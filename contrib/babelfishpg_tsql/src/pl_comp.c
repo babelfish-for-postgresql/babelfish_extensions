@@ -209,8 +209,8 @@ recheck:
 				 * For functions loaded from persistent cache, verify:
 				 * 1. babelfish_function_ext hasn't changed (e.g., antlr_cache_enabled
 				 *    toggled via sys.enable_routine_parse_cache() from another session).
-				 * 2. Caching is still enabled — either session GUC or per-function flag.
-				 *    If both are off, evict the cache-loaded function and recompile from ANTLR.
+				 * 2. Caching is still enabled — check antlr_cache_enabled column:
+				 *    NULL=follow session GUC, true=force on, false=force off.
 				 */
 				HeapTuple bbftup = get_bbf_function_tuple_from_proctuple(procTup);
 				if (HeapTupleIsValid(bbftup))
@@ -219,21 +219,21 @@ recheck:
 						ItemPointerEquals(&function->bbf_ext_tid, &bbftup->t_self))
 					{
 						/*
-						 * bbf_ext tuple unchanged. If session GUC is on, function is valid.
-						 * If session GUC is off, check per-function cache_enabled flag —
-						 * only invalidate if both are off (user wants no caching at all). and does not want to use deserializaed cached result from hashtable
+						 * bbf_ext tuple unchanged. Resolve antlr_cache_enabled column:
+						 * non-NULL overrides session GUC, NULL follows it.
 						 */
-						if (pltsql_enable_routine_parse_cache)
-							function_valid = true;
+						bool	isnull;
+						bool	resolved_cache;
+						Datum	cache_flag = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbftup,
+															 Anum_bbf_function_ext_antlr_cache_enabled, &isnull);
+						if (!isnull)
+							resolved_cache = DatumGetBool(cache_flag);
 						else
-						{
-							bool	isnull;
-							Datum	cache_flag = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbftup,
-																 Anum_bbf_function_ext_antlr_cache_enabled, &isnull);
-							if (!isnull && DatumGetBool(cache_flag))
-								function_valid = true;
-							/* else: both GUC and per-func GUC column off — invalidate */
-						}
+							resolved_cache = pltsql_enable_routine_parse_cache;
+
+						if (resolved_cache)
+							function_valid = true;
+						/* else: resolved to off — invalidate */
 					}
 					heap_freetuple(bbftup);
 
@@ -1231,6 +1231,11 @@ skip_antlr_parsing:
 	 *   - First exec with empty cache (e.g., created with GUC off, now on)
 	 * Skip during CREATE/ALTER (forValidator path) to avoid conflicts with subsequent
 	 * call of pltsql_store_func_default_positions that handles cache writes for DDL.
+	 */
+	/*
+	 * Re-populate the cross-session cache if we have a fresh ANTLR parse.
+	 * Function specific guc (bbf_func_ext.antlr_cache_enabled) is already resolved by
+	 * pltsql_restore_func_parse_result (NULL→follow GUC, true/false→override).
 	 */
 	if (!forValidator && !function->from_cache &&
 		(pltsql_enable_routine_parse_cache || cache_enabled_for_func)){
@@ -3453,11 +3458,22 @@ pltsql_HashTableLookup(PLtsql_func_hashkey *func_key)
 											NULL);
 	if (hentry)
 	{
-		/* If GUC is disabled and function was loaded from cache, evict and force re-parse */
+		/*
+		 * If session GUC is off and function was loaded from persistent cache,
+		 * evict it so do_compile re-parses from ANTLR.
+		 *
+		 * Per-function cache_enabled is not checked here to avoid an expensive
+		 * syscache lookup on every function call. Instead, pltsql_compile's
+		 * bbf_ext xmin check detects when cache_enabled is toggled (the column
+		 * update changes the tuple xmin) and invalidates from_cache=true entries
+		 * across all sessions. For from_cache=false entries (ANTLR-compiled),
+		 * no eviction is needed — the function was compiled correctly from ANTLR,
+		 * and the kill switch prevents future cache writes/reads.
+		 */
 		if (!pltsql_enable_routine_parse_cache && hentry->function->from_cache)
 		{
-			/* TODO: also check per-function cache_enabled flag before evicting */
-			elog(DEBUG1, "pltsql_HashTableLookup: procedure parse cache GUC disabled, invalidating cached function %u", (unsigned int) func_key->funcOid);			
+			elog(DEBUG1, "pltsql_HashTableLookup: enable_routine_parse_cache GUC disabled, evicting cached function %u",
+				 (unsigned int) func_key->funcOid);
 			delete_function(hentry->function);
 			return NULL;
 		}

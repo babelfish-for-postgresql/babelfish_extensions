@@ -5313,9 +5313,10 @@ AS 'babelfishpg_tsql', 'openxml_simple'
 LANGUAGE C IMMUTABLE;
 
 
--- Function-specific ANTLR parse tree cache GUC control
+-- Function-specific ANTLR parse tree cache GUC control across sessions
+-- antlr_cache_enabled column: true = force on, false = force off (kill switch), NULL = follow session GUC (default)
 CREATE OR REPLACE FUNCTION sys.enable_routine_parse_cache(
-    IN func_identifier TEXT,
+    IN funcoid OID,
     IN enable_flag BOOLEAN
 ) RETURNS BOOLEAN
 AS 'babelfishpg_tsql', 'enable_routine_parse_cache' LANGUAGE C;

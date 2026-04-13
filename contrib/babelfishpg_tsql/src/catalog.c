@@ -23,6 +23,7 @@
 #include "parser/scansup.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/acl.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/formatting.h"
@@ -6509,11 +6510,22 @@ bbf_check_member_has_direct_priv_to_grant_role(Oid member, Oid role)
 }
 
 /*
- * Helper: update antlr_cache_enabled flag and optionally clear cache columns
- * in babelfish_function_ext for a given bbf function tuple.
+ * Helper: update antlr_cache_enabled flag in babelfish_function_ext.
+ * Optionally, clear cache columns in babelfish_function_ext for a given bbf function tuple.
+ *
+ * Input:
+ *   bbffunctuple       - HeapTuple from babelfish_function_ext to update
+ *   enable_flag        - boolean indicating desired cache state
+ *   enable_flag_isnull - if true, reset to NULL (follow session GUC default)
+ *
+ * babelfish_function_ext.cache_enabled column semantics:
+ *   enable_flag_isnull=true  → set column to NULL (follow session GUC, default)
+ *   enable_flag=true         → set column to true (force cache on)
+ *   enable_flag=false        → set column to false (kill switch) + NULL out cache columns
+ *
  */
 static void
-update_bbf_function_cache_enabled(HeapTuple bbffunctuple, bool enable_flag)
+update_bbf_function_cache_enabled(HeapTuple bbffunctuple, bool enable_flag, bool enable_flag_isnull)
 {
 	Relation	rel;
 	TupleDesc	dsc;
@@ -6529,12 +6541,19 @@ update_bbf_function_cache_enabled(HeapTuple bbffunctuple, bool enable_flag)
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
 
-	/* Set antlr_cache_enabled */
-	new_record[Anum_bbf_function_ext_antlr_cache_enabled - 1] = BoolGetDatum(enable_flag);
+	/* Set antlr_cache_enabled: NULL, true, or false */
+	if (enable_flag_isnull)
+		new_record_nulls[Anum_bbf_function_ext_antlr_cache_enabled - 1] = true;
+	else
+		new_record[Anum_bbf_function_ext_antlr_cache_enabled - 1] = BoolGetDatum(enable_flag);
 	new_record_replaces[Anum_bbf_function_ext_antlr_cache_enabled - 1] = true;
 
-	/* If disabling, NULL out the 4 cache columns for immediate invalidation */
-	if (!enable_flag)
+	/*
+	 * If explicitly disabling (kill switch), NULL out the 4 cache columns
+	 * for immediate invalidation. Resetting to NULL (default) does NOT
+	 * clear cache — the cached data may still be valid under session GUC.
+	 */
+	if (!enable_flag_isnull && !enable_flag)
 	{
 		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
 		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
@@ -6557,142 +6576,67 @@ update_bbf_function_cache_enabled(HeapTuple bbffunctuple, bool enable_flag)
 /*
  * enable_routine_parse_cache
  *
- * SQL-callable: sys.enable_routine_parse_cache(func_identifier TEXT, enable_flag BOOLEAN)
+ * SQL-callable: sys.enable_routine_parse_cache(funcoid OID, enable_flag BOOLEAN)
  *
  * Enables or disables ANTLR parse result caching for a specific function.
  *
- * func_identifier formats:
- *   'schema.funcname'              — unique function (no overloads)
- *   'funcname'                     — defaults to dbo schema
- *   'schema.funcname(argtypes)'    — disambiguate overloads, e.g. 'dbo.myProc("sys"."varchar")'
+ *   enable_flag = true  → force cache on for this function
+ *   enable_flag = false → force cache off (kill switch)
+ *   enable_flag = NULL  → reset to default (follow session GUC)
  *
- * Uses PROCNAMENSPSIGNATURE syscache (funcname, nspname, funcsignature).
- * When no arg types given, uses 2-key list lookup; errors if ambiguous.
+ * Requires function OID as input. Use:
+ *   SELECT oid FROM pg_proc WHERE proname = 'myfunc';
+ *
  */
 PG_FUNCTION_INFO_V1(enable_routine_parse_cache);
 Datum
 enable_routine_parse_cache(PG_FUNCTION_ARGS)
 {
-	text	   *func_id_text;
-	bool		enable_flag;
-	char	   *func_id;
-	char	   *schema_name;
-	char	   *func_part;
-	char	   *funcname_str;
-	char	   *paren;
-	char	   *first_dot;
-	char	   *first_paren;
-	char	   *cur_db;
-	char	   *physical_schema;
-	NameData	nsp_name;
-	NameData	funcname_data;
+	Oid			funcoid;
+	bool		enable_flag = false;
+	bool		enable_flag_isnull;
+	HeapTuple	proctup;
+	HeapTuple	bbffunctuple;
+	HeapTuple	copytup;
 
 	if (PG_ARGISNULL(0))
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("function identifier cannot be NULL")));
+				 errmsg("function OID cannot be NULL")));
 
-	func_id_text = PG_GETARG_TEXT_PP(0);
-	enable_flag = PG_GETARG_BOOL(1);
-	func_id = text_to_cstring(func_id_text);
+	funcoid = PG_GETARG_OID(0);
+	enable_flag_isnull = PG_ARGISNULL(1);
+	if (!enable_flag_isnull)
+		enable_flag = PG_GETARG_BOOL(1);
 
-	/*
-	 * Split schema from func_part on the first dot that appears BEFORE any
-	 * opening parenthesis. Dots inside the signature (e.g., "sys"."varchar")
-	 * must not be treated as schema separators.
-	 */
-	first_dot = strchr(func_id, '.');
-	first_paren = strchr(func_id, '(');
+	/* Verify the function exists in pg_proc */
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+	if (!HeapTupleIsValid(proctup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("function with OID %u does not exist", funcoid)));
 
-	if (first_dot != NULL && (first_paren == NULL || first_dot < first_paren))
-	{
-		*first_dot = '\0';
-		schema_name = func_id;
-		func_part = first_dot + 1;
-	}
-	else
-	{
-		schema_name = "dbo";
-		func_part = func_id;
-	}
+	/* Verify the caller owns the function or is sysadmin */
+	if (!object_ownercheck(ProcedureRelationId, funcoid, GetUserId()) &&
+		!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
+		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION,
+					   NameStr(((Form_pg_proc) GETSTRUCT(proctup))->proname));
 
-	/* Extract bare funcname (everything before '(' if present) */
-	funcname_str = pstrdup(func_part);
-	paren = strchr(funcname_str, '(');
-	if (paren != NULL)
-		*paren = '\0';
+	/* Look up the corresponding babelfish_function_ext entry */
+	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctup);
+	ReleaseSysCache(proctup);
 
-	/* Convert logical schema name (e.g. 'dbo') to physical (e.g. 'master_dbo') */
-	cur_db = get_cur_db_name();
-	physical_schema = get_physical_schema_name(cur_db, schema_name);
+	if (!HeapTupleIsValid(bbffunctuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("function with OID %u not found in babelfish_function_ext", funcoid)));
 
-	namestrcpy(&nsp_name, physical_schema);
-	pfree(cur_db);
-	pfree(physical_schema);
-	namestrcpy(&funcname_data, funcname_str);
+	copytup = heap_copytuple(bbffunctuple);
+	heap_freetuple(bbffunctuple);
+	update_bbf_function_cache_enabled(copytup, enable_flag, enable_flag_isnull);
+	heap_freetuple(copytup);
 
-	if (strchr(func_part, '(') != NULL)
-	{
-		/* Full signature provided — exact 3-key lookup */
-		HeapTuple	bbffunctuple;
-		HeapTuple	copytup;
-
-		bbffunctuple = SearchSysCache3(PROCNAMENSPSIGNATURE,
-									   NameGetDatum(&funcname_data),
-									   NameGetDatum(&nsp_name),
-									   CStringGetTextDatum(func_part));
-
-		if (!HeapTupleIsValid(bbffunctuple))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("function \"%s\" not found in schema \"%s\"",
-							func_part, schema_name),
-					 errhint("Use sys.babelfish_get_pltsql_function_signature(oid) to find the exact signature.")));
-
-		copytup = heap_copytuple(bbffunctuple);
-		ReleaseSysCache(bbffunctuple);
-		update_bbf_function_cache_enabled(copytup, enable_flag);
-		heap_freetuple(copytup);
-	}
-	else
-	{
-		/* No arg types — 2-key list lookup */
-		CatCList   *catlist;
-
-		catlist = SearchSysCacheList2(PROCNAMENSPSIGNATURE,
-									  NameGetDatum(&funcname_data),
-									  NameGetDatum(&nsp_name));
-
-		if (catlist->n_members == 0)
-		{
-			ReleaseSysCacheList(catlist);
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("function \"%s\" not found in schema \"%s\"",
-							funcname_str, schema_name)));
-		}
-		else if (catlist->n_members > 1)
-		{
-			ReleaseSysCacheList(catlist);
-			ereport(ERROR,
-					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-					 errmsg("multiple overloads of \"%s\" exist in schema \"%s\"",
-							funcname_str, schema_name),
-					 errhint("Specify the full signature, e.g. 'dbo.%s(integer)'. "
-							 "Use sys.babelfish_get_pltsql_function_signature(oid) to find the exact signature.",
-							 funcname_str)));
-		}
-		else
-		{
-			HeapTuple	copytup = heap_copytuple(&catlist->members[0]->tuple);
-
-			ReleaseSysCacheList(catlist);
-			update_bbf_function_cache_enabled(copytup, enable_flag);
-			heap_freetuple(copytup);
-		}
-	}
-
-	pfree(funcname_str);
-	pfree(func_id);
+	if (enable_flag_isnull)
+		PG_RETURN_NULL();
 	PG_RETURN_BOOL(enable_flag);
 }
