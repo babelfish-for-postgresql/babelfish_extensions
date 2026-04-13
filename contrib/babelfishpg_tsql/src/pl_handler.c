@@ -6505,7 +6505,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		if (get_cur_db_id() != saved_dbid)
 			set_cur_user_db_and_path(get_db_name((saved_dbid)), false);
 		if (saved_search_path != NULL && strcmp(saved_search_path, namespace_search_path) != 0
-			&& !IsAbortedTransactionBlockState())
+			&& !IsAbortedTransactionBlockState() && !IsInParallelMode())
 		{
 			pltsql_check_search_path = false;
 			SetConfigOption("search_path", saved_search_path,

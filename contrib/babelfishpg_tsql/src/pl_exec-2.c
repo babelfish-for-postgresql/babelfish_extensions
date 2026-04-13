@@ -3,6 +3,7 @@
 
 #include "funcapi.h"
 
+#include "access/parallel.h"
 #include "access/table.h"
 #include "parser/parser.h"
 #include "access/tableam.h"
@@ -1518,6 +1519,19 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	}
 	
 	table_close(temp_rel, AccessShareLock);
+
+	/*
+	 * Pre-assign the transaction ID here, BEFORE parallel mode starts.
+	 * This is critical for parallel query support: insertexec_receive() is called
+	 * during parallel execution (inside ExecutePlan), and table_tuple_insert()
+	 * internally calls GetCurrentTransactionId(). If no XID exists yet,
+	 * GetCurrentTransactionId() calls AssignTransactionId() which fails during
+	 * parallel mode with "cannot assign transaction IDs during a parallel operation".
+	 * 
+	 * By ensuring a transaction ID exists here in rStartup (which is called before
+	 * ExecutePlan and thus before EnterParallelMode), we avoid this restriction.
+	 */
+	(void) GetCurrentTransactionId();  /* Ensure XID is assigned before parallel mode */
 }
 
 /*
@@ -7551,6 +7565,16 @@ set_search_path_for_sp_procs(char *schema)
 {
 	char 		*dbo_schema = get_dbo_schema_name(get_current_pltsql_db_name());
 	char 		*new_search_path;
+
+	/*
+	 * Skip setting search_path if in parallel mode - parallel workers cannot
+	 * set GUC parameters. This is needed for INSERT EXEC with parallel query.
+	 */
+	if (IsParallelWorker() || IsInParallelMode())
+	{
+		pfree(dbo_schema);
+		return;
+	}
 
 	if (schema != NULL && strcmp(schema, "dbo") == 0)
 		new_search_path = psprintf("%s, sys, pg_catalog, %s",

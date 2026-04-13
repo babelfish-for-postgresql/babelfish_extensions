@@ -3,6 +3,7 @@
 #include "miscadmin.h"
 #include "varatt.h"
 
+#include "access/parallel.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
@@ -247,17 +248,24 @@ set_search_path_for_user_schema(const char *db_name, const char *user)
 		pfree(current_db_search_path);
 	current_db_search_path = MemoryContextStrdup(TopMemoryContext, path);
 
-	/* set search path default so transaction rollback does not affect it */
-	SetConfigOption("search_path", path,
-					PGC_SUSET, PGC_S_SESSION);
 	/*
-	 * Incase of error inside parallel worker we could reach here before transaction
-	 * abort. Do not try to set_config since it will fail inside a parallel worker
-	 * This function is used in code path where error is never expected
+	 * Skip setting search_path if in parallel mode - parallel workers cannot
+	 * set GUC parameters. This is needed for INSERT EXEC with parallel query.
 	 */
-	if (!IsAbortedTransactionBlockState())
+	if (!IsInParallelMode())
+	{
+		/* set search path default so transaction rollback does not affect it */
 		SetConfigOption("search_path", path,
-						PGC_SUSET, PGC_S_DATABASE_USER);
+						PGC_SUSET, PGC_S_SESSION);
+		/*
+		 * Incase of error inside parallel worker we could reach here before transaction
+		 * abort. Do not try to set_config since it will fail inside a parallel worker
+		 * This function is used in code path where error is never expected
+		 */
+		if (!IsAbortedTransactionBlockState())
+			SetConfigOption("search_path", path,
+							PGC_SUSET, PGC_S_DATABASE_USER);
+	}
 	
 	pfree(path);
 	pfree(dbo_schema_name);
