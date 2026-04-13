@@ -2214,7 +2214,11 @@ TdsSendRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt,
 	}
 
 	SendColumnMetadataToken(typeinfo->natts, false);
-	SendColInfoToken(typeinfo->natts, false);
+	if (relMetaDataInfoList != NIL)
+    {
+        SendTabNameToken();
+        SendColInfoToken(typeinfo->natts, false);
+    }
 }
 
 bool
