@@ -2728,10 +2728,9 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 								 * or if the INSERT itself is an INSERT-EXEC
 								 * and it just returned error.
 								 * 
-								 * Check both estate->insert_exec (old approach)
-								 * and pltsql_insert_exec_active() (new DestReceiver approach).
+								 * Check pltsql_insert_exec_active() (DestReceiver approach).
 								 */
-								row_count_valid = !estate->insert_exec &&
+								row_count_valid = 
 									!(pltsql_plugin_handler_ptr->pltsql_insert_exec_active &&
 									  pltsql_plugin_handler_ptr->pltsql_insert_exec_active()) &&
 									!(markErrorFlag &&
@@ -2740,14 +2739,14 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 							else if (plansource->commandTag == CMDTAG_UPDATE)
 							{
 								command_type = TDS_CMD_UPDATE;
-								row_count_valid = !estate->insert_exec &&
+								row_count_valid = 
 									!(pltsql_plugin_handler_ptr->pltsql_insert_exec_active &&
 									  pltsql_plugin_handler_ptr->pltsql_insert_exec_active());
 							}
 							else if (plansource->commandTag == CMDTAG_DELETE)
 							{
 								command_type = TDS_CMD_DELETE;
-								row_count_valid = !estate->insert_exec &&
+								row_count_valid = 
 									!(pltsql_plugin_handler_ptr->pltsql_insert_exec_active &&
 									  pltsql_plugin_handler_ptr->pltsql_insert_exec_active());
 							}
@@ -2759,7 +2758,7 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 							else if (plansource->commandTag == CMDTAG_SELECT)
 							{
 								command_type = TDS_CMD_SELECT;
-								row_count_valid = !estate->insert_exec &&
+								row_count_valid = 
 									!(pltsql_plugin_handler_ptr->pltsql_insert_exec_active &&
 									  pltsql_plugin_handler_ptr->pltsql_insert_exec_active());
 							}

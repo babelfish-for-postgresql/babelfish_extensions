@@ -1057,24 +1057,12 @@ pltsql_insert_exec_in_execution(void)
 	}
 	
 	/*
-	 * Get current call stack depth and check if any estate in the stack
-	 * is associated with INSERT EXEC (either old or new approach).
+	 * Get current call stack depth.
 	 */
 	cur = exec_state_call_stack;
 	while (cur != NULL)
 	{
 		current_depth++;
-		/*
-		 * Check if this estate is part of INSERT EXEC:
-		 * - Old approach: estate->insert_exec is true
-		 * - New approach: pltsql_insert_exec_active() is true AND we're at
-		 *   or below the call stack depth where INSERT EXEC was started
-		 */
-		if (cur->estate && cur->estate->insert_exec)
-		{
-			/* Found an estate with insert_exec set - we're definitely in INSERT EXEC */
-			return true;
-		}
 		cur = cur->next;
 	}
 	
@@ -1091,13 +1079,9 @@ pltsql_insert_exec_in_execution(void)
 		return false;
 	
 	/*
-	 * No estate has insert_exec set. This could mean:
-	 * 1. We're using the new DestReceiver approach (estate->insert_exec is not set)
-	 * 2. The context is stale from a previous execution
-	 * 
-	 * To distinguish, check if the current call stack depth is consistent with
-	 * the INSERT EXEC context. If we're at a shallower level than when INSERT
-	 * EXEC started, the context is stale.
+	 * Check if the current call stack depth is consistent with the INSERT EXEC
+	 * context. If we're at a shallower level than when INSERT EXEC started,
+	 * the context is stale.
 	 * 
 	 * Note: We use < instead of <= because the INSERT EXEC statement itself
 	 * is at call_stack_depth, and the called procedure is at call_stack_depth+1.
@@ -1107,7 +1091,7 @@ pltsql_insert_exec_in_execution(void)
 	
 	/*
 	 * We're at or below the INSERT EXEC call stack depth, and the temp table
-	 * OID is valid. This is likely a valid INSERT EXEC execution using the new
+	 * OID is valid. This is likely a valid INSERT EXEC execution using the
 	 * DestReceiver approach.
 	 * 
 	 * Final check: verify the execution_id is non-zero. If it's zero, the
@@ -2195,7 +2179,6 @@ static int	exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltex
 static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
 static int	exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_function *stmt);
 static int	exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_scheme *stmt);
-static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
 extern Datum pltsql_inline_handler(PG_FUNCTION_ARGS);
@@ -2971,13 +2954,6 @@ exec_stmt_push_result(PLtsql_execstate *estate,
 
 	Assert(stmt->query != NULL);
 
-	/* 
-	 * Handle naked SELECT stmt differently for INSERT ... EXECUTE.
-	 * Skip the old tuple store approach if our new DestReceiver approach is active.
-	 */
-	if (estate->insert_exec && !pltsql_insert_exec_active())
-		return exec_stmt_insert_execute_select(estate, stmt->query);
-
 	exec_run_select(estate, stmt->query, &portal);
 
 	/*
@@ -3144,10 +3120,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		Oid			rettype;	/* used for scalar function */
 		int32		rettypmod;	/* used for scalar function */
 		bool		is_scalar_func;
-
-		/* for EXEC as part of inline code under INSERT ... EXECUTE */
-		Tuplestorestate *tss;
-		DestReceiver *dest;
 
 		/*
 		 * INSERT EXEC DestReceiver approach:
@@ -3490,37 +3462,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			stmt->target = (PLtsql_variable *) row;
 		}
 
-		if (estate->insert_exec)
-		{
-			/*
-			 * For EXEC under INSERT ... EXECUTE, get the expected TupleDesc,
-			 * create a DestReceiver and pass both to the CallStmt so that it
-			 * will know to accumulate result rows and send them back here.
-			 */
-
-			Node	   *node;
-			CallStmt   *callstmt;
-
-			/*
-			 * Get the parsed CallStmt
-			 */
-			node = linitial_node(Query,
-								 ((CachedPlanSource *) linitial(plan->plancache_list))->query_list)->utilityStmt;
-			if (node == NULL || !IsA(node, CallStmt))
-				elog(ERROR, "query for CALL statement is not a CallStmt");
-
-			tss = tuplestore_begin_heap(false, false, work_mem);
-			dest = CreateTuplestoreDestReceiver();
-			SetTuplestoreDestReceiverParams(dest, tss, CurrentMemoryContext, false, NULL, NULL);
-			dest->rStartup(dest, -1, estate->rsi->expectedDesc);
-
-			callstmt = (CallStmt *) node;
-			callstmt->relation = InvalidOid;
-			callstmt->attrnos = NULL;
-			callstmt->retdesc = (void *) estate->rsi->expectedDesc;
-			callstmt->dest = (void *) dest;
-		}
-
 		paramLI = setup_param_list(estate, expr);
 
 		before_lxid = MyProc->vxid.lxid;
@@ -3666,33 +3607,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			{
 				exec_assign_value(estate, (PLtsql_datum *) return_code, Int32GetDatum(pltsql_proc_return_code), false, INT4OID, 0);
 			}
-		}
-
-		if (estate->insert_exec)
-		{
-			/*
-			 * For EXEC under INSERT ... EXECUTE, get the rows sent back by
-			 * the CallStmt, and store them into estate->tuple_store so that
-			 * at the end of function execution they will be sent to the right
-			 * place.
-			 */
-			TupleTableSlot *slot = MakeSingleTupleTableSlot(estate->rsi->expectedDesc,
-															&TTSOpsMinimalTuple);
-
-			if (estate->tuple_store == NULL)
-				exec_init_tuple_store(estate);
-
-			for (;;)
-			{
-				if (!tuplestore_gettupleslot(tss, true, false, slot))
-					break;
-				tuplestore_puttupleslot(estate->tuple_store, slot);
-				ExecClearTuple(slot);
-			}
-			ExecDropSingleTupleTableSlot(slot);
-
-			dest->rShutdown(dest);
-			dest->rDestroy(dest);
 		}
 	}
 	PG_CATCH();
@@ -6195,74 +6109,6 @@ bool called_from_tsql_insert_exec()
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return false;
 	return called_from_tsql_insert_execute;
-}
-
-/*
- * For naked SELECT stmt in INSERT ... EXECUTE, instead of pushing the result to
- * the client, we accumulate the result in estate->tuple_store (similar to
- * exec_stmt_return_query). Finally the EXECUTE stmt will return the result to
- * the INSERT stmt as rows to insert.
- */
-static int
-exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
-{
-	Portal		portal;
-	uint64		processed = 0;
-	TupleConversionMap *tupmap;
-	MemoryContext oldcontext;
-
-	if (estate->tuple_store == NULL)
-		exec_init_tuple_store(estate);
-
-	Assert(query != NULL);
-	exec_run_select(estate, query, &portal);
-
-	/* Use eval_mcontext for tuple conversion work */
-	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
-
-	called_from_tsql_insert_execute = true;
-	tupmap = convert_tuples_by_position(portal->tupDesc,
-										estate->tuple_store_desc,
-										gettext_noop("structure of query does not match function result type"));
-	called_from_tsql_insert_execute = false;
-	while (true)
-	{
-		uint64		i;
-
-		SPI_cursor_fetch(portal, true, 50);
-
-		/* SPI will have changed CurrentMemoryContext */
-		MemoryContextSwitchTo(get_eval_mcontext(estate));
-
-		if (SPI_processed == 0)
-			break;
-
-		for (i = 0; i < SPI_processed; i++)
-		{
-			HeapTuple	tuple = SPI_tuptable->vals[i];
-
-			if (tupmap)
-			{
-				called_from_tsql_insert_execute = true;
-				tuple = execute_attr_map_tuple(tuple, tupmap);
-				called_from_tsql_insert_execute = false;
-			}
-			tuplestore_puttuple(estate->tuple_store, tuple);
-			if (tupmap)
-				heap_freetuple(tuple);
-			processed++;
-		}
-
-		SPI_freetuptable(SPI_tuptable);
-	}
-
-	SPI_freetuptable(SPI_tuptable);
-	SPI_cursor_close(portal);
-
-	MemoryContextSwitchTo(oldcontext);
-	exec_eval_cleanup(estate);
-
-	return PLTSQL_RC_OK;
 }
 
 int

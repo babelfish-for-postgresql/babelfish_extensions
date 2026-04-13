@@ -128,8 +128,7 @@ PLTsqlProcessTransaction(Node *parsetree,
 			{
 				/*
 				 * Block COMMIT during INSERT EXEC if it would make @@TRANCOUNT = 0.
-				 * Check both the old estate->insert_exec flag and the new 
-				 * pltsql_insert_exec_active() for the DestReceiver approach.
+				 * Check pltsql_insert_exec_active() for the DestReceiver approach.
 				 * SQL Server Error 3916.
 				 *
 				 * In SQL Server, COMMIT inside INSERT EXEC is only allowed if the
@@ -147,15 +146,6 @@ PLTsqlProcessTransaction(Node *parsetree,
 							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
 				}
-				else if ((exec_state_call_stack &&
-						  exec_state_call_stack->estate &&
-						  exec_state_call_stack->estate->insert_exec) &&
-						 NestedTranCount <= 1)
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
-				}
 
 				PLTsqlCommitTransaction(qc, stmt->chain);
 			}
@@ -165,14 +155,10 @@ PLTsqlProcessTransaction(Node *parsetree,
 			{
 				/*
 				 * Block ROLLBACK (and ROLLBACK TO SAVEPOINT) during INSERT EXEC.
-				 * Check both the old estate->insert_exec flag and the new 
-				 * pltsql_insert_exec_active() for the DestReceiver approach.
+				 * Check pltsql_insert_exec_active() for the DestReceiver approach.
 				 * SQL Server Error 3915.
 				 */
-				if ((exec_state_call_stack &&
-					 exec_state_call_stack->estate &&
-					 exec_state_call_stack->estate->insert_exec) ||
-					pltsql_insert_exec_active())
+				if (pltsql_insert_exec_active())
 					ereport(ERROR,
 							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 							 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));

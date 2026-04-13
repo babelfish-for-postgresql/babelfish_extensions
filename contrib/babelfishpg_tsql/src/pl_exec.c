@@ -712,11 +712,8 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 
 		fcinfo->isnull = estate.retisnull;
 
-		if (estate.retisset || estate.insert_exec)
+		if (estate.retisset)
 		{
-			int16 typLen;
-			bool typByVal;
-			MemoryContext oldcontext;
 			ReturnSetInfo *rsi = estate.rsi;
 
 			/* Check caller can handle a set result */
@@ -736,50 +733,6 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 				oldcxt = MemoryContextSwitchTo(estate.tuple_store_cxt);
 				rsi->setDesc = CreateTupleDescCopy(estate.tuple_store_desc);
 				MemoryContextSwitchTo(oldcxt);
-			}
-
-			/* Obtain output parameters for Insert Execute */
-			if (estate.insert_exec)
-			{
-				/* Switch to function's memory context */
-				oldcontext = MemoryContextSwitchTo(estate.func->fn_cxt);
-
-				if (OidIsValid(estate.rettype))
-				{
-					/* Get return type properties */
-					get_typlenbyval(estate.rettype, &typLen, &typByVal);
-
-					if (typByVal)
-					{
-						execute_call_insert_exec_retval = estate.retval;
-					}
-					else
-					{
-						/* Pass-by-reference, need to copy the data */
-						execute_call_insert_exec_retval = datumCopy(estate.retval,
-																	typByVal,
-																	typLen);
-					}
-				}
-				else
-				{
-					/* For cases where rettype is not properly set, handle gracefully */
-					typLen = -1;    /* Variable length */
-					typByVal = false; /* Pass by reference */
-					
-					/* Only proceed if we have a valid return value */
-					if (estate.retval != (Datum) 0)
-					{
-						execute_call_insert_exec_retval = estate.retval;
-					}
-					else
-					{
-						/* Skip the exec_move_row_from_datum call entirely */
-						execute_call_insert_exec_retval = (Datum) 0;
-					}
-				}
-				MemoryContextSwitchTo(oldcontext);
-
 			}
 
 			estate.retval = (Datum) 0;
@@ -4388,14 +4341,6 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	estate->plugin_info = NULL;
 
 	estate->nestlevel = -1;
-
-	/*
-	 * When executing a procedure or inline code block, if a ReturnSetInfo is
-	 * passed in, then it's invoked by INSERT ... EXECUTE.
-	 */
-	estate->insert_exec = (func->fn_prokind == PROKIND_PROCEDURE ||
-						   strcmp(func->fn_signature, "inline_code_block") == 0)
-		&& rsi;
 	
 	estate->explain_infos = NIL;
 
@@ -4853,7 +4798,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	{
 		if ((stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK ||
 			 stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK_TO) &&
-			(estate->insert_exec || pltsql_insert_exec_active()))
+			pltsql_insert_exec_active())
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_TRANSACTION_ROLLBACK),
@@ -4865,18 +4810,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	{
 		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
 		/* Skip tuple store approach if our DestReceiver approach is active */
-		if (stmt->need_to_push_result && estate->insert_exec && !pltsql_insert_exec_active())
-		{
-			int			ret = exec_stmt_insert_execute_select(estate, expr);
-
-			if (is_cross_db)
-			{
-				if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-					set_cur_user_db_and_path(cur_dbname, true);
-			}
-			return ret;
-		}
-
 		if (expr->plan && expr->plan->oneshot)
 		{
 			SPI_freeplan(expr->plan);
@@ -4908,18 +4841,15 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/* Check for nested INSERT EXECUTE statements */
 		if (stmt->insert_exec)
 		{
-			/* Walk existing stack for any parent insert exec */
-			PLExecStateCallStack *cur = exec_state_call_stack;
-			while (cur != NULL)
+			/* 
+			 * Check if INSERT EXEC is already active (new DestReceiver approach).
+			 * This detects nested INSERT EXEC statements.
+			 */
+			if (pltsql_insert_exec_active())
 			{
-				/* Found parent insert exec - this is a nested INSERT EXECUTE */
-				if (cur->estate->insert_exec)
-				{
-					ereport(ERROR,
-						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						errmsg("nested INSERT ... EXECUTE statements are not allowed")));
-				}
-				cur = cur->next;
+				ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					errmsg("nested INSERT ... EXECUTE statements are not allowed")));
 			}
 		}
 
@@ -5274,7 +5204,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		if ((!pltsql_disable_batch_auto_commit || (stmt->txn_data != NULL)) &&
 			support_tsql_trans &&
 			(enable_txn_in_triggers || estate->trigdata == NULL) &&
-			!ro_func && !estate->insert_exec &&
+			!ro_func &&
 			!pltsql_insert_exec_active() &&
 			!pltsql_insert_exec_flush_in_progress())
 		{
@@ -6765,7 +6695,7 @@ exec_stmt_rollback(PLtsql_execstate *estate, PLtsql_stmt_rollback *stmt)
 	 * Block ROLLBACK during INSERT EXEC.
 	 * SQL Server Error 3915: "Cannot use the ROLLBACK statement within an INSERT-EXEC statement."
 	 */
-	if (estate->insert_exec || pltsql_insert_exec_active())
+	if (pltsql_insert_exec_active())
 		ereport(ERROR,
 				(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 				 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));

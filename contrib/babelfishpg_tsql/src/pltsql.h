@@ -1537,12 +1537,6 @@ typedef struct PLtsql_execstate
 
 	int			tsql_trigger_flags;
 
-	/*
-	 * A same procedure can be invoked by either normal EXECUTE or INSERT ...
-	 * EXECUTE, and can behave differently.
-	 */
-	bool		insert_exec;
-
 	List	   *explain_infos;
 	instr_time	planning_start;
 	instr_time	planning_end;

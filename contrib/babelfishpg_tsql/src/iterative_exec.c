@@ -686,11 +686,8 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			 * count columns WITHOUT evaluating expressions, allowing us to
 			 * detect column mismatches before any runtime errors can occur.
 			 * 
-			 * For the OLD tuple-store approach (estate->insert_exec), we always
-			 * do early validation.
-			 * 
-			 * For the NEW DestReceiver approach, we only do early validation
-			 * when the SELECT is inside a TRY block. This is because:
+			 * We only do early validation when the SELECT is inside a TRY block.
+			 * This is because:
 			 * 1. System procedures like sp_columns have internal SELECT statements
 			 *    that are NOT inside TRY blocks and have different column counts
 			 * 2. User procedures with TRY-CATCH need early validation to ensure
@@ -698,9 +695,8 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			 * 3. Without early validation, runtime errors (like division by zero)
 			 *    would be caught by TRY-CATCH before column mismatch is detected
 			 */
-			if (estate->insert_exec ||
-				(pltsql_insert_exec_active() && pltsql_insert_exec_in_execution() &&
-				 is_part_of_pltsql_trycatch_block(estate)))
+			if (pltsql_insert_exec_active() && pltsql_insert_exec_in_execution() &&
+				is_part_of_pltsql_trycatch_block(estate))
 			{
 				PLtsql_stmt_execsql *execsql_stmt = (PLtsql_stmt_execsql *) stmt;
 				if (execsql_stmt->sqlstmt && execsql_stmt->sqlstmt->query)
