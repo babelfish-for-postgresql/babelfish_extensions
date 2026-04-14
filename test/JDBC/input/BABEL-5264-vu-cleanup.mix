@@ -1,21 +1,20 @@
 -- tsql
--- BABEL-5264: Cleanup for sp_tablecollations_100 tests
--- Cleanup UDTs created for non-ENR tests
+-- BABEL-5264: Cleanup
+
+DROP PROCEDURE IF EXISTS dbo.babel5264_test_proc
+GO
+
+DROP PROCEDURE IF EXISTS dbo.babel5264_test_view_proc
+GO
+
+DROP PROCEDURE IF EXISTS dbo.babel5264_test_func_proc
+GO
+
 DROP TYPE IF EXISTS dbo.TestVarcharType1
 GO
+
 DROP TYPE IF EXISTS dbo.TestVarcharType2
 GO
-DROP TYPE IF EXISTS dbo.TestVarcharType3
-GO
-DROP TYPE IF EXISTS dbo.TestVarcharType4
-GO
+
 DROP TYPE IF EXISTS dbo.TestIntType
-GO
-
-DROP PROCEDURE IF EXISTS dbo.babel5264_test_tsql_proc
-GO
-
--- psql
--- Cleanup PL/pgSQL procedure
-DROP PROCEDURE IF EXISTS test_pg_temp_table_proc();
 GO

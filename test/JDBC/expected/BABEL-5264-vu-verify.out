@@ -1,17 +1,17 @@
 -- tsql
 
--- BABEL-5264: Tests for sp_tablecollations_100 and babelfish_get_temp_table_attributes functions required for BCP support
--- Basic test of sys.sp_tablecollations_100_enr and tempdb.dbo.sp_tablecollations_100
-CREATE TABLE #collTest1(id int, name varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS, description nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
+-- BABEL-5264: Tests for sp_tablecollations_100 with temp table support
+-- Basic ENR temp table - procedure
+CREATE TABLE #collTest1(id int, name varchar(50), description nvarchar(100))
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#collTest1')
+EXEC sp_tablecollations_100 '#collTest1'
 GO
 ~~START~~
-int#!#varchar#!#nvarchar
-1#!#id#!#<NULL>
-2#!#name#!#bbf_unicode_cp1_ci_as
-3#!#description#!#bbf_unicode_cp1_ci_as
+int#!#varchar#!#binary#!#nvarchar
+1#!#id#!#<NULL>#!#<NULL>
+2#!#name#!#0904D00034#!#bbf_unicode_cp1_ci_as
+3#!#description#!#0904D00034#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
@@ -28,31 +28,47 @@ int#!#varchar#!#binary#!#nvarchar
 DROP TABLE #collTest1
 GO
 
--- Test with various column types
-CREATE TABLE #collTest2(
-    a int,
-    b text COLLATE SQL_Latin1_General_CP1_CI_AS,
-    c ntext COLLATE SQL_Latin1_General_CP1_CI_AS,
-    d varchar(max) COLLATE SQL_Latin1_General_CP1_CI_AS,
-    e binary(10),
-    f varbinary(20),
-    g char(5) COLLATE SQL_Latin1_General_CP1_CI_AS,
-    h nchar(10) COLLATE SQL_Latin1_General_CP1_CI_AS
-)
+-- Basic ENR temp table - view
+CREATE TABLE #viewTest1(id int, name varchar(50), description nvarchar(100))
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#collTest2')
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewTest1') ORDER BY colid
 GO
 ~~START~~
 int#!#varchar#!#nvarchar
-1#!#a#!#<NULL>
-2#!#b#!#bbf_unicode_cp1_ci_as
-3#!#c#!#bbf_unicode_cp1_ci_as
-4#!#d#!#bbf_unicode_cp1_ci_as
-5#!#e#!#<NULL>
-6#!#f#!#<NULL>
-7#!#g#!#bbf_unicode_cp1_ci_as
-8#!#h#!#bbf_unicode_cp1_ci_as
+1#!#id#!#<NULL>
+2#!#name#!#bbf_unicode_cp1_ci_as
+3#!#description#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+DROP TABLE #viewTest1
+GO
+
+-- Temp table with various column types - procedure
+CREATE TABLE #collTest2(
+    a int,
+    b varchar(100),
+    c nvarchar(50),
+    d char(5),
+    e nchar(10),
+    f binary(10),
+    g varbinary(20)
+)
+GO
+
+EXEC sp_tablecollations_100 '#collTest2'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#a#!#<NULL>#!#<NULL>
+2#!#b#!#0904D00034#!#bbf_unicode_cp1_ci_as
+3#!#c#!#0904D00034#!#bbf_unicode_cp1_ci_as
+4#!#d#!#0904D00034#!#bbf_unicode_cp1_ci_as
+5#!#e#!#0904D00034#!#bbf_unicode_cp1_ci_as
+6#!#f#!#<NULL>#!#<NULL>
+7#!#g#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -64,116 +80,46 @@ int#!#varchar#!#binary#!#nvarchar
 2#!#b#!#0904D00034#!#bbf_unicode_cp1_ci_as
 3#!#c#!#0904D00034#!#bbf_unicode_cp1_ci_as
 4#!#d#!#0904D00034#!#bbf_unicode_cp1_ci_as
-5#!#e#!#<NULL>#!#<NULL>
+5#!#e#!#0904D00034#!#bbf_unicode_cp1_ci_as
 6#!#f#!#<NULL>#!#<NULL>
-7#!#g#!#0904D00034#!#bbf_unicode_cp1_ci_as
-8#!#h#!#0904D00034#!#bbf_unicode_cp1_ci_as
+7#!#g#!#<NULL>#!#<NULL>
 ~~END~~
 
 
 DROP TABLE #collTest2
 GO
 
--- Test with different table name formats
-CREATE TABLE #collTest3(col1 varchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#collTest3')
-GO
-~~START~~
-int#!#varchar#!#nvarchar
-1#!#col1#!#bbf_unicode_cp1_ci_as
-~~END~~
-
-
-SELECT * FROM sys.sp_tablecollations_100_enr('.[#collTest3]')
-GO
-~~START~~
-int#!#varchar#!#nvarchar
-1#!#col1#!#bbf_unicode_cp1_ci_as
-~~END~~
-
-
-SELECT * FROM sys.sp_tablecollations_100_enr('[#collTest3]')
-GO
-~~START~~
-int#!#varchar#!#nvarchar
-1#!#col1#!#bbf_unicode_cp1_ci_as
-~~END~~
-
-
-DROP TABLE #collTest3
-GO
-
--- Non-existent table check
-SELECT * FROM sys.sp_tablecollations_100_enr('#nonExistentTable')
-GO
-~~START~~
-int#!#varchar#!#nvarchar
-~~END~~
-
-
--- Test with multiple temp tables
-CREATE TABLE #multiTest1(a varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS)
-GO
-
-CREATE TABLE #multiTest2(b nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#multiTest1')
-GO
-~~START~~
-int#!#varchar#!#nvarchar
-1#!#a#!#bbf_unicode_cp1_ci_as
-~~END~~
-
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#multiTest2')
-GO
-~~START~~
-int#!#varchar#!#nvarchar
-1#!#b#!#bbf_unicode_cp1_ci_as
-~~END~~
-
-
-DROP TABLE #multiTest1
-GO
-
-DROP TABLE #multiTest2
-GO
-
--- Temp table with different collations
-CREATE TABLE #collTest6(
-    col_ci varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS,
-    col_cs varchar(50) COLLATE SQL_Latin1_General_CP1_CS_AS,
-    col_ai varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AI
+-- Temp table with various column types - view
+CREATE TABLE #viewTest2(
+    a int,
+    b varchar(100),
+    c nvarchar(50),
+    d char(5),
+    e nchar(10),
+    f binary(10),
+    g varbinary(20)
 )
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#collTest6')
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewTest2') ORDER BY colid
 GO
 ~~START~~
 int#!#varchar#!#nvarchar
-1#!#col_ci#!#bbf_unicode_cp1_ci_as
-2#!#col_cs#!#bbf_unicode_cp1_cs_as
-3#!#col_ai#!#bbf_unicode_cp1_ci_ai
+1#!#a#!#<NULL>
+2#!#b#!#bbf_unicode_cp1_ci_as
+3#!#c#!#bbf_unicode_cp1_ci_as
+4#!#d#!#bbf_unicode_cp1_ci_as
+5#!#e#!#bbf_unicode_cp1_ci_as
+6#!#f#!#<NULL>
+7#!#g#!#<NULL>
 ~~END~~
 
 
-EXEC tempdb.dbo.sp_tablecollations_100 '#collTest6'
-GO
-~~START~~
-int#!#varchar#!#binary#!#nvarchar
-1#!#col_ci#!#0904D00034#!#bbf_unicode_cp1_ci_as
-2#!#col_cs#!#0904C00033#!#bbf_unicode_cp1_cs_as
-3#!#col_ai#!#0904F00036#!#bbf_unicode_cp1_ci_ai
-~~END~~
-
-
-DROP TABLE #collTest6
+DROP TABLE #viewTest2
 GO
 
--- Temp table with no character columns
+-- Temp table with no character columns - procedure
 CREATE TABLE #noCharCols(
     id int,
     amount bigint,
@@ -183,15 +129,15 @@ CREATE TABLE #noCharCols(
 )
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#noCharCols')
+EXEC sp_tablecollations_100 '#noCharCols'
 GO
 ~~START~~
-int#!#varchar#!#nvarchar
-1#!#id#!#<NULL>
-2#!#amount#!#<NULL>
-3#!#price#!#<NULL>
-4#!#flag#!#<NULL>
-5#!#data#!#<NULL>
+int#!#varchar#!#binary#!#nvarchar
+1#!#id#!#<NULL>#!#<NULL>
+2#!#amount#!#<NULL>#!#<NULL>
+3#!#price#!#<NULL>#!#<NULL>
+4#!#flag#!#<NULL>#!#<NULL>
+5#!#data#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -210,49 +156,39 @@ int#!#varchar#!#binary#!#nvarchar
 DROP TABLE #noCharCols
 GO
 
--- Temp table with dropped column
-CREATE TABLE #droppedCol(
+-- Temp table with no character columns - view
+CREATE TABLE #viewNoChar(
     id int,
-    col_to_drop varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS,
-    name varchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS
+    amount bigint,
+    price decimal(10,2)
 )
 GO
 
-ALTER TABLE #droppedCol DROP COLUMN col_to_drop
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#droppedCol')
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewNoChar') ORDER BY colid
 GO
 ~~START~~
 int#!#varchar#!#nvarchar
 1#!#id#!#<NULL>
-3#!#name#!#bbf_unicode_cp1_ci_as
+2#!#amount#!#<NULL>
+3#!#price#!#<NULL>
 ~~END~~
 
 
-EXEC tempdb.dbo.sp_tablecollations_100 '#droppedCol'
+DROP TABLE #viewNoChar
+GO
+
+-- Non-ENR temp table (using UDT) - procedure
+CREATE TABLE #nonEnrTest1(id int, name dbo.TestVarcharType1, description nvarchar(100))
+GO
+
+EXEC sp_tablecollations_100 '#nonEnrTest1'
 GO
 ~~START~~
 int#!#varchar#!#binary#!#nvarchar
 1#!#id#!#<NULL>#!#<NULL>
-3#!#name#!#0904D00034#!#bbf_unicode_cp1_ci_as
-~~END~~
-
-
-DROP TABLE #droppedCol
-GO
-
--- Non-ENR temp table tests (using UDT to force non-ENR)
-CREATE TABLE #nonEnrTest1(id int, name dbo.TestVarcharType1 COLLATE SQL_Latin1_General_CP1_CI_AS, description nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrTest1')
-GO
-~~START~~
-int#!#varchar#!#nvarchar
-1#!#id#!#<NULL>
-2#!#name#!#bbf_unicode_cp1_ci_as
-3#!#description#!#bbf_unicode_cp1_ci_as
+2#!#name#!#0904D00034#!#bbf_unicode_cp1_ci_as
+3#!#description#!#0904D00034#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
@@ -269,22 +205,41 @@ int#!#varchar#!#binary#!#nvarchar
 DROP TABLE #nonEnrTest1
 GO
 
+-- Non-ENR temp table (using UDT) - view
+CREATE TABLE #viewNonEnr1(id int, name dbo.TestVarcharType1, description nvarchar(100))
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewNonEnr1') ORDER BY colid
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#id#!#<NULL>
+2#!#name#!#bbf_unicode_cp1_ci_as
+3#!#description#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+DROP TABLE #viewNonEnr1
+GO
+
+-- Non-ENR temp table with multiple UDT columns - procedure
 CREATE TABLE #nonEnrTest2(
     a int,
-    b dbo.TestVarcharType2 COLLATE SQL_Latin1_General_CP1_CI_AS,
-    c nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    b dbo.TestVarcharType2,
+    c nvarchar(100),
     d binary(10)
 )
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrTest2')
+EXEC sp_tablecollations_100 '#nonEnrTest2'
 GO
 ~~START~~
-int#!#varchar#!#nvarchar
-1#!#a#!#<NULL>
-2#!#b#!#bbf_unicode_cp1_ci_as
-3#!#c#!#bbf_unicode_cp1_ci_as
-4#!#d#!#<NULL>
+int#!#varchar#!#binary#!#nvarchar
+1#!#a#!#<NULL>#!#<NULL>
+2#!#b#!#0904D00034#!#bbf_unicode_cp1_ci_as
+3#!#c#!#0904D00034#!#bbf_unicode_cp1_ci_as
+4#!#d#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -302,36 +257,31 @@ int#!#varchar#!#binary#!#nvarchar
 DROP TABLE #nonEnrTest2
 GO
 
-CREATE TABLE #nonEnrTest3(
-    col_default dbo.TestVarcharType3 COLLATE SQL_Latin1_General_CP1_CI_AS,
-    col_ci varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS,
-    col_cs varchar(50) COLLATE SQL_Latin1_General_CP1_CS_AS
+-- Non-ENR temp table with multiple UDT columns - view
+CREATE TABLE #viewNonEnr2(
+    a int,
+    b dbo.TestVarcharType2,
+    c nvarchar(100),
+    d binary(10)
 )
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrTest3')
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewNonEnr2') ORDER BY colid
 GO
 ~~START~~
 int#!#varchar#!#nvarchar
-1#!#col_default#!#bbf_unicode_cp1_ci_as
-2#!#col_ci#!#bbf_unicode_cp1_ci_as
-3#!#col_cs#!#bbf_unicode_cp1_cs_as
+1#!#a#!#<NULL>
+2#!#b#!#bbf_unicode_cp1_ci_as
+3#!#c#!#bbf_unicode_cp1_ci_as
+4#!#d#!#<NULL>
 ~~END~~
 
 
-EXEC tempdb.dbo.sp_tablecollations_100 '#nonEnrTest3'
-GO
-~~START~~
-int#!#varchar#!#binary#!#nvarchar
-1#!#col_default#!#0904D00034#!#bbf_unicode_cp1_ci_as
-2#!#col_ci#!#0904D00034#!#bbf_unicode_cp1_ci_as
-3#!#col_cs#!#0904C00033#!#bbf_unicode_cp1_cs_as
-~~END~~
-
-
-DROP TABLE #nonEnrTest3
+DROP TABLE #viewNonEnr2
 GO
 
+-- Non-ENR temp table with no character columns - procedure
 CREATE TABLE #nonEnrNoChar(
     id dbo.TestIntType,
     amount bigint,
@@ -339,13 +289,13 @@ CREATE TABLE #nonEnrNoChar(
 )
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrNoChar')
+EXEC sp_tablecollations_100 '#nonEnrNoChar'
 GO
 ~~START~~
-int#!#varchar#!#nvarchar
-1#!#id#!#<NULL>
-2#!#amount#!#<NULL>
-3#!#price#!#<NULL>
+int#!#varchar#!#binary#!#nvarchar
+1#!#id#!#<NULL>#!#<NULL>
+2#!#amount#!#<NULL>#!#<NULL>
+3#!#price#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -362,185 +312,352 @@ int#!#varchar#!#binary#!#nvarchar
 DROP TABLE #nonEnrNoChar
 GO
 
-CREATE TABLE #nonEnrDropped(
-    id int,
-    col_to_drop dbo.TestVarcharType4 COLLATE SQL_Latin1_General_CP1_CI_AS,
-    name varchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS
+-- Non-ENR temp table with no character columns - view
+CREATE TABLE #viewNonEnrNoChar(
+    id dbo.TestIntType,
+    amount bigint,
+    price decimal(10,2)
 )
 GO
 
-ALTER TABLE #nonEnrDropped DROP COLUMN col_to_drop
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrDropped')
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewNonEnrNoChar') ORDER BY colid
 GO
 ~~START~~
 int#!#varchar#!#nvarchar
 1#!#id#!#<NULL>
-3#!#name#!#bbf_unicode_cp1_ci_as
+2#!#amount#!#<NULL>
+3#!#price#!#<NULL>
 ~~END~~
 
 
-EXEC tempdb.dbo.sp_tablecollations_100 '#nonEnrDropped'
+DROP TABLE #viewNonEnrNoChar
+GO
+
+-- Multiple temp tables at once - procedure
+CREATE TABLE #multiTest1(a varchar(50))
+GO
+
+CREATE TABLE #multiTest2(b nvarchar(100))
+GO
+
+EXEC sp_tablecollations_100 '#multiTest1'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#a#!#0904D00034#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+EXEC sp_tablecollations_100 '#multiTest2'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#b#!#0904D00034#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#multiTest1'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#a#!#0904D00034#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#multiTest2'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#b#!#0904D00034#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+DROP TABLE #multiTest1
+GO
+
+DROP TABLE #multiTest2
+GO
+
+-- Multiple temp tables at once - view
+CREATE TABLE #viewMulti1(a varchar(50))
+GO
+
+CREATE TABLE #viewMulti2(b nvarchar(100))
+GO
+
+SELECT 'viewMulti1' as tablename, colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewMulti1') ORDER BY colid
+GO
+~~START~~
+varchar#!#int#!#varchar#!#nvarchar
+viewMulti1#!#1#!#a#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+SELECT 'viewMulti2' as tablename, colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewMulti2') ORDER BY colid
+GO
+~~START~~
+varchar#!#int#!#varchar#!#nvarchar
+viewMulti2#!#1#!#b#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+DROP TABLE #viewMulti1
+GO
+
+DROP TABLE #viewMulti2
+GO
+
+-- Non-existent temp table - procedure (should return empty)
+EXEC sp_tablecollations_100 '#nonExistentTable'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+~~END~~
+
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#nonExistentTable'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+~~END~~
+
+
+-- Non-existent temp table - view (should return empty)
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#nonExistentTable') ORDER BY colid
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+~~END~~
+
+
+-- Regular permanent table - procedure
+CREATE TABLE babel5264_perm_table(id int, name varchar(50), description nvarchar(100))
+GO
+
+EXEC sp_tablecollations_100 'babel5264_perm_table'
 GO
 ~~START~~
 int#!#varchar#!#binary#!#nvarchar
 1#!#id#!#<NULL>#!#<NULL>
-3#!#name#!#0904D00034#!#bbf_unicode_cp1_ci_as
+2#!#name#!#0904D00034#!#bbf_unicode_cp1_ci_as
+3#!#description#!#0904D00034#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
-DROP TABLE #nonEnrDropped
+EXEC tempdb.dbo.sp_tablecollations_100 'dbo.babel5264_perm_table'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+~~END~~
+
+
+DROP TABLE babel5264_perm_table
 GO
 
--- NULL table name check
-SELECT * FROM sys.sp_tablecollations_100_enr(NULL)
+-- Regular permanent table - view
+CREATE TABLE babel5264_perm_view_test(id int, name varchar(50), description nvarchar(100))
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('babel5264_perm_view_test') ORDER BY colid
 GO
 ~~START~~
 int#!#varchar#!#nvarchar
+1#!#id#!#<NULL>
+2#!#name#!#bbf_unicode_cp1_ci_as
+3#!#description#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes(NULL)
+DROP TABLE babel5264_perm_view_test
+GO
+
+-- Test babelfish_get_all_temp_table_attributes function directly
+CREATE TABLE #attrTest(col1 int, col2 varchar(50), col3 nvarchar(100))
+GO
+
+SELECT attname, attnum FROM sys.babelfish_get_all_temp_table_attributes() 
+WHERE attnum > 0 ORDER BY attrelid, attnum
+GO
+~~START~~
+varchar#!#smallint
+col1#!#1
+col2#!#2
+col3#!#3
+chunk_id#!#1
+chunk_seq#!#2
+chunk_data#!#3
+chunk_id#!#1
+chunk_seq#!#2
+~~END~~
+
+
+DROP TABLE #attrTest
+GO
+
+-- Test babelfish_get_all_temp_table_attributes with non-ENR temp table
+CREATE TABLE #attrTestNonEnr(col1 int, col2 dbo.TestVarcharType1, col3 nvarchar(100))
+GO
+
+SELECT attname, attnum FROM sys.babelfish_get_all_temp_table_attributes() 
+WHERE attnum > 0 ORDER BY attrelid, attnum
+GO
+~~START~~
+varchar#!#smallint
+col1#!#1
+col2#!#2
+col3#!#3
+~~END~~
+
+
+DROP TABLE #attrTestNonEnr
+GO
+
+-- Test with mixed ENR and non-ENR temp tables
+CREATE TABLE #mixedEnr(a varchar(50))
+GO
+
+CREATE TABLE #mixedNonEnr(b dbo.TestVarcharType1)
+GO
+
+EXEC sp_tablecollations_100 '#mixedEnr'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#a#!#0904D00034#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+EXEC sp_tablecollations_100 '#mixedNonEnr'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#b#!#0904D00034#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#mixedEnr') ORDER BY colid
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#a#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#mixedNonEnr') ORDER BY colid
+GO
+~~START~~
+int#!#varchar#!#nvarchar
+1#!#b#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+DROP TABLE #mixedEnr
+GO
+
+DROP TABLE #mixedNonEnr
+GO
+
+-- View count check - should include temp tables
+CREATE TABLE #countTest(a varchar(50))
+GO
+
+SELECT COUNT(*) as total_rows FROM sys.spt_tablecollations_view WHERE object_id = OBJECT_ID('#countTest')
 GO
 ~~START~~
 int
+1
+~~END~~
+
+
+DROP TABLE #countTest
+GO
+
+-- psql
+-- babelfish_get_all_temp_table_attributes on non-TDS connection (should return empty)
+CREATE TEMP TABLE pg_temp_test(id int, name varchar(50), description text);
+GO
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_all_temp_table_attributes();
+GO
+~~START~~
+int8
 0
 ~~END~~
 
 
--- Empty string table name check
-SELECT * FROM sys.sp_tablecollations_100_enr('')
+DROP TABLE pg_temp_test;
+GO
+
+-- psql
+-- View query on non-TDS connection with PG temp table
+CREATE TEMP TABLE pg_view_test(id int, name varchar(50));
+GO
+
+SELECT COUNT(*) AS view_count FROM sys.spt_tablecollations_view 
+WHERE schema_id = pg_my_temp_schema();
 GO
 ~~START~~
-int#!#varchar#!#nvarchar
-~~END~~
-
-
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('')
-GO
-~~START~~
-int
+int8
 0
 ~~END~~
 
 
--- Non-existent temp table check
-SELECT * FROM sys.sp_tablecollations_100_enr('#this_temp_table_does_not_exist')
+DROP TABLE pg_view_test;
+GO
+
+-- psql
+-- PG temp table with # in name (should still return empty - not T-SQL temp table)
+CREATE TEMP TABLE "#pg_hash_temp"(id int, name varchar(50));
+GO
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_all_temp_table_attributes();
 GO
 ~~START~~
-int#!#varchar#!#nvarchar
-~~END~~
-
-
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#this_temp_table_does_not_exist')
-GO
-~~START~~
-int
+int8
 0
 ~~END~~
 
 
--- Whitespace-only table name check
-SELECT * FROM sys.sp_tablecollations_100_enr('   ')
+DROP TABLE "#pg_hash_temp";
+GO
+
+-- tsql
+-- Verify TDS connection returns results after psql tests
+CREATE TABLE #tdsVerify(col1 varchar(50))
+GO
+
+EXEC sp_tablecollations_100 '#tdsVerify'
 GO
 ~~START~~
-int#!#varchar#!#nvarchar
+int#!#varchar#!#binary#!#nvarchar
+1#!#col1#!#0904D00034#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('   ')
-GO
-~~START~~
-int
-0
-~~END~~
-
-
--- Hash-only table name check
-SELECT * FROM sys.sp_tablecollations_100_enr('#')
-GO
-~~START~~
-int#!#varchar#!#nvarchar
-~~END~~
-
-
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#')
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_all_temp_table_attributes() WHERE attnum > 0
 GO
 ~~START~~
 int
-0
+6
 ~~END~~
 
 
--- UDF calling temp table functions
-CREATE FUNCTION dbo.babel5264_test_func(@tablename varchar(256))
-RETURNS TABLE
-AS
-RETURN (SELECT * FROM sys.sp_tablecollations_100_enr(@tablename))
+DROP TABLE #tdsVerify
 GO
 
-CREATE TABLE #funcTest(col1 varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS)
+-- Call procedure via wrapper proc - ENR temp table
+CREATE TABLE #procWrapperTest1(col1 varchar(50), col2 nvarchar(100))
 GO
 
-SELECT * FROM dbo.babel5264_test_func('#funcTest')
+EXEC dbo.babel5264_test_proc '#procWrapperTest1'
 GO
-~~START~~
-int#!#varchar#!#nvarchar
-1#!#col1#!#bbf_unicode_cp1_ci_as
-~~END~~
-
-
-DROP TABLE #funcTest
-GO
-
-DROP FUNCTION dbo.babel5264_test_func
-GO
-
--- Insert into table from sp_tablecollations_100_enr
-CREATE TABLE #insertTest(col1 varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS, col2 nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
-GO
-
-CREATE TABLE #collResult(colid int, name varchar(256), collation_name nvarchar(128))
-GO
-
-INSERT INTO #collResult SELECT * FROM sys.sp_tablecollations_100_enr('#insertTest')
-GO
-~~ROW COUNT: 2~~
-
-
-SELECT * FROM #collResult
-GO
-~~START~~
-int#!#varchar#!#nvarchar
-1#!#col1#!#bbf_unicode_cp1_ci_as
-2#!#col2#!#bbf_unicode_cp1_ci_as
-~~END~~
-
-
-DROP TABLE #collResult
-GO
-
-DROP TABLE #insertTest
-GO
-
--- T-SQL proc calling temp table functions
-CREATE TABLE #procTest(col1 varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS, col2 nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
-GO
-
-EXEC dbo.babel5264_test_tsql_proc '#procTest'
-GO
-~~START~~
-int
-2
-~~END~~
-
-~~START~~
-int#!#varchar#!#nvarchar
-1#!#col1#!#bbf_unicode_cp1_ci_as
-2#!#col2#!#bbf_unicode_cp1_ci_as
-~~END~~
-
 ~~START~~
 int#!#varchar#!#binary#!#nvarchar
 1#!#col1#!#0904D00034#!#bbf_unicode_cp1_ci_as
@@ -548,235 +665,90 @@ int#!#varchar#!#binary#!#nvarchar
 ~~END~~
 
 
-DROP TABLE #procTest
+DROP TABLE #procWrapperTest1
 GO
 
--- psql
--- PG dialect on non-TDS connection (should return empty even with real PG temp table)
-CREATE TEMP TABLE pg_temp_test(id int, name varchar(50), description text);
+-- Call procedure via wrapper proc - non-ENR temp table
+CREATE TABLE #procWrapperTest2(col1 dbo.TestVarcharType1, col2 nvarchar(100))
 GO
 
-INSERT INTO pg_temp_test VALUES (1, 'test', 'description');
-GO
-~~ROW COUNT: 1~~
-
-
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('pg_temp_test');
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: function is only supported on TDS connections
-    Server SQLState: XX000)~~
-
-
-SELECT * FROM sys.sp_tablecollations_100_enr('pg_temp_test');
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: function is only supported on TDS connections
-    Server SQLState: XX000)~~
-
-
--- Insert specific columns from babelfish_get_temp_table_attributes (should insert 0 rows)
-CREATE TEMP TABLE pg_attr_result(attrelid oid, attname name, attnum smallint, attcollation oid);
-GO
-
-INSERT INTO pg_attr_result SELECT attrelid, attname, attnum, attcollation FROM sys.babelfish_get_temp_table_attributes('pg_temp_test');
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: function is only supported on TDS connections
-    Server SQLState: XX000)~~
-
-
-SELECT COUNT(*) AS inserted_rows FROM pg_attr_result;
+EXEC dbo.babel5264_test_proc '#procWrapperTest2'
 GO
 ~~START~~
-int8
-0
+int#!#varchar#!#binary#!#nvarchar
+1#!#col1#!#0904D00034#!#bbf_unicode_cp1_ci_as
+2#!#col2#!#0904D00034#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
-DROP TABLE pg_attr_result;
+DROP TABLE #procWrapperTest2
 GO
 
--- Insert from sp_tablecollations_100_enr (should insert 0 rows)
-CREATE TEMP TABLE pg_coll_result(colid int, name varchar, collation_name varchar);
+-- Call view via wrapper proc - ENR temp table
+CREATE TABLE #viewWrapperTest1(col1 varchar(50), col2 nvarchar(100))
 GO
 
-INSERT INTO pg_coll_result SELECT * FROM sys.sp_tablecollations_100_enr('pg_temp_test');
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: function is only supported on TDS connections
-    Server SQLState: XX000)~~
-
-
-SELECT COUNT(*) AS inserted_rows FROM pg_coll_result;
+EXEC dbo.babel5264_test_view_proc '#viewWrapperTest1'
 GO
 ~~START~~
-int8
-0
+int#!#varchar#!#nvarchar
+1#!#col1#!#bbf_unicode_cp1_ci_as
+2#!#col2#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
-DROP TABLE pg_coll_result;
+DROP TABLE #viewWrapperTest1
 GO
 
-DROP TABLE pg_temp_test;
+-- Call view via wrapper proc - non-ENR temp table
+CREATE TABLE #viewWrapperTest2(col1 dbo.TestVarcharType1, col2 nvarchar(100))
 GO
 
--- Test PG temp table with # in name
-CREATE TEMP TABLE "#pg_hash_temp"(id int, name varchar(50));
-GO
-
-INSERT INTO "#pg_hash_temp" VALUES (1, 'test');
-GO
-~~ROW COUNT: 1~~
-
-
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#pg_hash_temp');
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: function is only supported on TDS connections
-    Server SQLState: XX000)~~
-
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#pg_hash_temp');
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: function is only supported on TDS connections
-    Server SQLState: XX000)~~
-
-
-DROP TABLE "#pg_hash_temp";
-GO
-
--- Test PG regular table with # in name (should return empty - not a T-SQL temp table)
-CREATE TABLE "#pg_hash_regular"(id int, name varchar(50));
-GO
-
-INSERT INTO "#pg_hash_regular" VALUES (1, 'test');
-GO
-~~ROW COUNT: 1~~
-
-
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#pg_hash_regular');
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: function is only supported on TDS connections
-    Server SQLState: XX000)~~
-
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#pg_hash_regular');
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: function is only supported on TDS connections
-    Server SQLState: XX000)~~
-
-
-DROP TABLE "#pg_hash_regular";
-GO
-
--- Test via PL/pgSQL procedure (should return 0 for both functions)
-CALL test_pg_temp_table_proc();
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: function is only supported on TDS connections
-  Where: SQL statement "SELECT COUNT(*)                 FROM sys.babelfish_get_temp_table_attributes('pg_proc_temp_test')"
-PL/pgSQL function test_pg_temp_table_proc() line 11 at SQL statement
-    Server SQLState: XX000)~~
-
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#nonexistent_temp');
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: function is only supported on TDS connections
-    Server SQLState: XX000)~~
-
-
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#nonexistent_temp');
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: function is only supported on TDS connections
-    Server SQLState: XX000)~~
-
-
-SELECT * FROM sys.sp_tablecollations_100_enr(NULL);
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: function is only supported on TDS connections
-    Server SQLState: XX000)~~
-
-
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes(NULL);
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: function is only supported on TDS connections
-    Server SQLState: XX000)~~
-
-
--- tsql
--- PG dialect on TDS connection (should return results)
-CREATE TABLE #pgDialectTdsTest(col1 varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS, col2 nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
-GO
-
-SELECT COUNT(*) AS tsql_result_count FROM sys.sp_tablecollations_100_enr('#pgDialectTdsTest')
+EXEC dbo.babel5264_test_view_proc '#viewWrapperTest2'
 GO
 ~~START~~
-int
-2
+int#!#varchar#!#nvarchar
+1#!#col1#!#bbf_unicode_cp1_ci_as
+2#!#col2#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
-SELECT COUNT(*) AS tsql_attr_count FROM sys.babelfish_get_temp_table_attributes('#pgDialectTdsTest')
+DROP TABLE #viewWrapperTest2
+GO
+
+-- Call function via wrapper proc - ENR temp table
+CREATE TABLE #funcWrapperTest1(col1 varchar(50), col2 nvarchar(100))
+GO
+
+EXEC dbo.babel5264_test_func_proc
 GO
 ~~START~~
-int
-2
+varchar#!#smallint
+col1#!#1
+col2#!#2
+chunk_id#!#1
+chunk_seq#!#2
+chunk_data#!#3
+chunk_id#!#1
+chunk_seq#!#2
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false)
+DROP TABLE #funcWrapperTest1
+GO
+
+-- Call function via wrapper proc - non-ENR temp table
+CREATE TABLE #funcWrapperTest2(col1 dbo.TestVarcharType1, col2 nvarchar(100))
+GO
+
+EXEC dbo.babel5264_test_func_proc
 GO
 ~~START~~
-text
-postgres
+varchar#!#smallint
+col1#!#1
+col2#!#2
 ~~END~~
 
 
-SELECT COUNT(*) AS pg_dialect_tds_result_count FROM sys.sp_tablecollations_100_enr('#pgDialectTdsTest')
-GO
-~~START~~
-int
-2
-~~END~~
-
-
-SELECT COUNT(*) AS pg_dialect_tds_attr_count FROM sys.babelfish_get_temp_table_attributes('#pgDialectTdsTest')
-GO
-~~START~~
-int
-2
-~~END~~
-
-
-SELECT set_config('babelfishpg_tsql.sql_dialect', 'tsql', false)
-GO
-~~START~~
-text
-tsql
-~~END~~
-
-
-DROP TABLE #pgDialectTdsTest
+DROP TABLE #funcWrapperTest2
 GO

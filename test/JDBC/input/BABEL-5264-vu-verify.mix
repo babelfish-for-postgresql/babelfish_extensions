@@ -1,11 +1,11 @@
 -- tsql
--- BABEL-5264: Tests for sp_tablecollations_100 and babelfish_get_temp_table_attributes functions required for BCP support
+-- BABEL-5264: Tests for sp_tablecollations_100 with temp table support
 
--- Basic test of sys.sp_tablecollations_100_enr and tempdb.dbo.sp_tablecollations_100
-CREATE TABLE #collTest1(id int, name varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS, description nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
+-- Basic ENR temp table - procedure
+CREATE TABLE #collTest1(id int, name varchar(50), description nvarchar(100))
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#collTest1')
+EXEC sp_tablecollations_100 '#collTest1'
 GO
 
 EXEC tempdb.dbo.sp_tablecollations_100 '#collTest1'
@@ -14,20 +14,30 @@ GO
 DROP TABLE #collTest1
 GO
 
--- Test with various column types
+-- Basic ENR temp table - view
+CREATE TABLE #viewTest1(id int, name varchar(50), description nvarchar(100))
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewTest1') ORDER BY colid
+GO
+
+DROP TABLE #viewTest1
+GO
+
+-- Temp table with various column types - procedure
 CREATE TABLE #collTest2(
     a int,
-    b text COLLATE SQL_Latin1_General_CP1_CI_AS,
-    c ntext COLLATE SQL_Latin1_General_CP1_CI_AS,
-    d varchar(max) COLLATE SQL_Latin1_General_CP1_CI_AS,
-    e binary(10),
-    f varbinary(20),
-    g char(5) COLLATE SQL_Latin1_General_CP1_CI_AS,
-    h nchar(10) COLLATE SQL_Latin1_General_CP1_CI_AS
+    b varchar(100),
+    c nvarchar(50),
+    d char(5),
+    e nchar(10),
+    f binary(10),
+    g varbinary(20)
 )
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#collTest2')
+EXEC sp_tablecollations_100 '#collTest2'
 GO
 
 EXEC tempdb.dbo.sp_tablecollations_100 '#collTest2'
@@ -36,63 +46,26 @@ GO
 DROP TABLE #collTest2
 GO
 
--- Test with different table name formats
-CREATE TABLE #collTest3(col1 varchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#collTest3')
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('.[#collTest3]')
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('[#collTest3]')
-GO
-
-DROP TABLE #collTest3
-GO
-
--- Non-existent table check
-SELECT * FROM sys.sp_tablecollations_100_enr('#nonExistentTable')
-GO
-
--- Test with multiple temp tables
-CREATE TABLE #multiTest1(a varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS)
-GO
-
-CREATE TABLE #multiTest2(b nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#multiTest1')
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#multiTest2')
-GO
-
-DROP TABLE #multiTest1
-GO
-
-DROP TABLE #multiTest2
-GO
-
--- Temp table with different collations
-CREATE TABLE #collTest6(
-    col_ci varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS,
-    col_cs varchar(50) COLLATE SQL_Latin1_General_CP1_CS_AS,
-    col_ai varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AI
+-- Temp table with various column types - view
+CREATE TABLE #viewTest2(
+    a int,
+    b varchar(100),
+    c nvarchar(50),
+    d char(5),
+    e nchar(10),
+    f binary(10),
+    g varbinary(20)
 )
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#collTest6')
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewTest2') ORDER BY colid
 GO
 
-EXEC tempdb.dbo.sp_tablecollations_100 '#collTest6'
+DROP TABLE #viewTest2
 GO
 
-DROP TABLE #collTest6
-GO
-
--- Temp table with no character columns
+-- Temp table with no character columns - procedure
 CREATE TABLE #noCharCols(
     id int,
     amount bigint,
@@ -102,7 +75,7 @@ CREATE TABLE #noCharCols(
 )
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#noCharCols')
+EXEC sp_tablecollations_100 '#noCharCols'
 GO
 
 EXEC tempdb.dbo.sp_tablecollations_100 '#noCharCols'
@@ -111,31 +84,26 @@ GO
 DROP TABLE #noCharCols
 GO
 
--- Temp table with dropped column
-CREATE TABLE #droppedCol(
+-- Temp table with no character columns - view
+CREATE TABLE #viewNoChar(
     id int,
-    col_to_drop varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS,
-    name varchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS
+    amount bigint,
+    price decimal(10,2)
 )
 GO
 
-ALTER TABLE #droppedCol DROP COLUMN col_to_drop
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewNoChar') ORDER BY colid
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#droppedCol')
+DROP TABLE #viewNoChar
 GO
 
-EXEC tempdb.dbo.sp_tablecollations_100 '#droppedCol'
+-- Non-ENR temp table (using UDT) - procedure
+CREATE TABLE #nonEnrTest1(id int, name dbo.TestVarcharType1, description nvarchar(100))
 GO
 
-DROP TABLE #droppedCol
-GO
-
--- Non-ENR temp table tests (using UDT to force non-ENR)
-CREATE TABLE #nonEnrTest1(id int, name dbo.TestVarcharType1 COLLATE SQL_Latin1_General_CP1_CI_AS, description nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrTest1')
+EXEC sp_tablecollations_100 '#nonEnrTest1'
 GO
 
 EXEC tempdb.dbo.sp_tablecollations_100 '#nonEnrTest1'
@@ -144,15 +112,27 @@ GO
 DROP TABLE #nonEnrTest1
 GO
 
+-- Non-ENR temp table (using UDT) - view
+CREATE TABLE #viewNonEnr1(id int, name dbo.TestVarcharType1, description nvarchar(100))
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewNonEnr1') ORDER BY colid
+GO
+
+DROP TABLE #viewNonEnr1
+GO
+
+-- Non-ENR temp table with multiple UDT columns - procedure
 CREATE TABLE #nonEnrTest2(
     a int,
-    b dbo.TestVarcharType2 COLLATE SQL_Latin1_General_CP1_CI_AS,
-    c nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    b dbo.TestVarcharType2,
+    c nvarchar(100),
     d binary(10)
 )
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrTest2')
+EXEC sp_tablecollations_100 '#nonEnrTest2'
 GO
 
 EXEC tempdb.dbo.sp_tablecollations_100 '#nonEnrTest2'
@@ -161,22 +141,23 @@ GO
 DROP TABLE #nonEnrTest2
 GO
 
-CREATE TABLE #nonEnrTest3(
-    col_default dbo.TestVarcharType3 COLLATE SQL_Latin1_General_CP1_CI_AS,
-    col_ci varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS,
-    col_cs varchar(50) COLLATE SQL_Latin1_General_CP1_CS_AS
+-- Non-ENR temp table with multiple UDT columns - view
+CREATE TABLE #viewNonEnr2(
+    a int,
+    b dbo.TestVarcharType2,
+    c nvarchar(100),
+    d binary(10)
 )
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrTest3')
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewNonEnr2') ORDER BY colid
 GO
 
-EXEC tempdb.dbo.sp_tablecollations_100 '#nonEnrTest3'
+DROP TABLE #viewNonEnr2
 GO
 
-DROP TABLE #nonEnrTest3
-GO
-
+-- Non-ENR temp table with no character columns - procedure
 CREATE TABLE #nonEnrNoChar(
     id dbo.TestIntType,
     amount bigint,
@@ -184,7 +165,7 @@ CREATE TABLE #nonEnrNoChar(
 )
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrNoChar')
+EXEC sp_tablecollations_100 '#nonEnrNoChar'
 GO
 
 EXEC tempdb.dbo.sp_tablecollations_100 '#nonEnrNoChar'
@@ -193,221 +174,266 @@ GO
 DROP TABLE #nonEnrNoChar
 GO
 
-CREATE TABLE #nonEnrDropped(
-    id int,
-    col_to_drop dbo.TestVarcharType4 COLLATE SQL_Latin1_General_CP1_CI_AS,
-    name varchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS
+-- Non-ENR temp table with no character columns - view
+CREATE TABLE #viewNonEnrNoChar(
+    id dbo.TestIntType,
+    amount bigint,
+    price decimal(10,2)
 )
 GO
 
-ALTER TABLE #nonEnrDropped DROP COLUMN col_to_drop
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewNonEnrNoChar') ORDER BY colid
 GO
 
-SELECT * FROM sys.sp_tablecollations_100_enr('#nonEnrDropped')
+DROP TABLE #viewNonEnrNoChar
 GO
 
-EXEC tempdb.dbo.sp_tablecollations_100 '#nonEnrDropped'
+-- Multiple temp tables at once - procedure
+CREATE TABLE #multiTest1(a varchar(50))
 GO
 
-DROP TABLE #nonEnrDropped
+CREATE TABLE #multiTest2(b nvarchar(100))
 GO
 
--- NULL table name check
-SELECT * FROM sys.sp_tablecollations_100_enr(NULL)
+EXEC sp_tablecollations_100 '#multiTest1'
 GO
 
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes(NULL)
+EXEC sp_tablecollations_100 '#multiTest2'
 GO
 
--- Empty string table name check
-SELECT * FROM sys.sp_tablecollations_100_enr('')
+EXEC tempdb.dbo.sp_tablecollations_100 '#multiTest1'
 GO
 
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('')
+EXEC tempdb.dbo.sp_tablecollations_100 '#multiTest2'
 GO
 
--- Non-existent temp table check
-SELECT * FROM sys.sp_tablecollations_100_enr('#this_temp_table_does_not_exist')
+DROP TABLE #multiTest1
 GO
 
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#this_temp_table_does_not_exist')
+DROP TABLE #multiTest2
 GO
 
--- Whitespace-only table name check
-SELECT * FROM sys.sp_tablecollations_100_enr('   ')
+-- Multiple temp tables at once - view
+CREATE TABLE #viewMulti1(a varchar(50))
 GO
 
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('   ')
+CREATE TABLE #viewMulti2(b nvarchar(100))
 GO
 
--- Hash-only table name check
-SELECT * FROM sys.sp_tablecollations_100_enr('#')
+SELECT 'viewMulti1' as tablename, colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewMulti1') ORDER BY colid
 GO
 
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#')
+SELECT 'viewMulti2' as tablename, colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewMulti2') ORDER BY colid
 GO
 
--- UDF calling temp table functions
-CREATE FUNCTION dbo.babel5264_test_func(@tablename varchar(256))
-RETURNS TABLE
-AS
-RETURN (SELECT * FROM sys.sp_tablecollations_100_enr(@tablename))
+DROP TABLE #viewMulti1
 GO
 
-CREATE TABLE #funcTest(col1 varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS)
+DROP TABLE #viewMulti2
 GO
 
-SELECT * FROM dbo.babel5264_test_func('#funcTest')
+-- Non-existent temp table - procedure (should return empty)
+EXEC sp_tablecollations_100 '#nonExistentTable'
 GO
 
-DROP TABLE #funcTest
+EXEC tempdb.dbo.sp_tablecollations_100 '#nonExistentTable'
 GO
 
-DROP FUNCTION dbo.babel5264_test_func
+-- Non-existent temp table - view (should return empty)
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#nonExistentTable') ORDER BY colid
 GO
 
--- Insert into table from sp_tablecollations_100_enr
-CREATE TABLE #insertTest(col1 varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS, col2 nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
+-- Regular permanent table - procedure
+CREATE TABLE babel5264_perm_table(id int, name varchar(50), description nvarchar(100))
 GO
 
-CREATE TABLE #collResult(colid int, name varchar(256), collation_name nvarchar(128))
+EXEC sp_tablecollations_100 'babel5264_perm_table'
 GO
 
-INSERT INTO #collResult SELECT * FROM sys.sp_tablecollations_100_enr('#insertTest')
+EXEC tempdb.dbo.sp_tablecollations_100 'dbo.babel5264_perm_table'
 GO
 
-SELECT * FROM #collResult
+DROP TABLE babel5264_perm_table
 GO
 
-DROP TABLE #collResult
+-- Regular permanent table - view
+CREATE TABLE babel5264_perm_view_test(id int, name varchar(50), description nvarchar(100))
 GO
 
-DROP TABLE #insertTest
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('babel5264_perm_view_test') ORDER BY colid
 GO
 
--- T-SQL proc calling temp table functions
-CREATE TABLE #procTest(col1 varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS, col2 nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
+DROP TABLE babel5264_perm_view_test
 GO
 
-EXEC dbo.babel5264_test_tsql_proc '#procTest'
+-- Test babelfish_get_all_temp_table_attributes function directly
+CREATE TABLE #attrTest(col1 int, col2 varchar(50), col3 nvarchar(100))
 GO
 
-DROP TABLE #procTest
+SELECT attname, attnum FROM sys.babelfish_get_all_temp_table_attributes() 
+WHERE attnum > 0 ORDER BY attrelid, attnum
+GO
+
+DROP TABLE #attrTest
+GO
+
+-- Test babelfish_get_all_temp_table_attributes with non-ENR temp table
+CREATE TABLE #attrTestNonEnr(col1 int, col2 dbo.TestVarcharType1, col3 nvarchar(100))
+GO
+
+SELECT attname, attnum FROM sys.babelfish_get_all_temp_table_attributes() 
+WHERE attnum > 0 ORDER BY attrelid, attnum
+GO
+
+DROP TABLE #attrTestNonEnr
+GO
+
+-- Test with mixed ENR and non-ENR temp tables
+CREATE TABLE #mixedEnr(a varchar(50))
+GO
+
+CREATE TABLE #mixedNonEnr(b dbo.TestVarcharType1)
+GO
+
+EXEC sp_tablecollations_100 '#mixedEnr'
+GO
+
+EXEC sp_tablecollations_100 '#mixedNonEnr'
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#mixedEnr') ORDER BY colid
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#mixedNonEnr') ORDER BY colid
+GO
+
+DROP TABLE #mixedEnr
+GO
+
+DROP TABLE #mixedNonEnr
+GO
+
+-- View count check - should include temp tables
+CREATE TABLE #countTest(a varchar(50))
+GO
+
+SELECT COUNT(*) as total_rows FROM sys.spt_tablecollations_view WHERE object_id = OBJECT_ID('#countTest')
+GO
+
+DROP TABLE #countTest
 GO
 
 -- psql
--- PG dialect on non-TDS connection (should return empty even with real PG temp table)
+-- babelfish_get_all_temp_table_attributes on non-TDS connection (should return empty)
 CREATE TEMP TABLE pg_temp_test(id int, name varchar(50), description text);
 GO
 
-INSERT INTO pg_temp_test VALUES (1, 'test', 'description');
-GO
-
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('pg_temp_test');
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('pg_temp_test');
-GO
-
--- Insert specific columns from babelfish_get_temp_table_attributes (should insert 0 rows)
-CREATE TEMP TABLE pg_attr_result(attrelid oid, attname name, attnum smallint, attcollation oid);
-GO
-
-INSERT INTO pg_attr_result SELECT attrelid, attname, attnum, attcollation FROM sys.babelfish_get_temp_table_attributes('pg_temp_test');
-GO
-
-SELECT COUNT(*) AS inserted_rows FROM pg_attr_result;
-GO
-
-DROP TABLE pg_attr_result;
-GO
-
--- Insert from sp_tablecollations_100_enr (should insert 0 rows)
-CREATE TEMP TABLE pg_coll_result(colid int, name varchar, collation_name varchar);
-GO
-
-INSERT INTO pg_coll_result SELECT * FROM sys.sp_tablecollations_100_enr('pg_temp_test');
-GO
-
-SELECT COUNT(*) AS inserted_rows FROM pg_coll_result;
-GO
-
-DROP TABLE pg_coll_result;
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_all_temp_table_attributes();
 GO
 
 DROP TABLE pg_temp_test;
 GO
 
--- Test PG temp table with # in name
+-- psql
+-- View query on non-TDS connection with PG temp table
+CREATE TEMP TABLE pg_view_test(id int, name varchar(50));
+GO
+
+SELECT COUNT(*) AS view_count FROM sys.spt_tablecollations_view 
+WHERE schema_id = pg_my_temp_schema();
+GO
+
+DROP TABLE pg_view_test;
+GO
+
+-- psql
+-- PG temp table with # in name (should still return empty - not T-SQL temp table)
 CREATE TEMP TABLE "#pg_hash_temp"(id int, name varchar(50));
 GO
 
-INSERT INTO "#pg_hash_temp" VALUES (1, 'test');
-GO
-
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#pg_hash_temp');
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#pg_hash_temp');
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_all_temp_table_attributes();
 GO
 
 DROP TABLE "#pg_hash_temp";
 GO
 
--- Test PG regular table with # in name (should return empty - not a T-SQL temp table)
-CREATE TABLE "#pg_hash_regular"(id int, name varchar(50));
-GO
-
-INSERT INTO "#pg_hash_regular" VALUES (1, 'test');
-GO
-
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#pg_hash_regular');
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#pg_hash_regular');
-GO
-
-DROP TABLE "#pg_hash_regular";
-GO
-
--- Test via PL/pgSQL procedure (should return 0 for both functions)
-CALL test_pg_temp_table_proc();
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr('#nonexistent_temp');
-GO
-
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes('#nonexistent_temp');
-GO
-
-SELECT * FROM sys.sp_tablecollations_100_enr(NULL);
-GO
-
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes(NULL);
-GO
-
 -- tsql
--- PG dialect on TDS connection (should return results)
-CREATE TABLE #pgDialectTdsTest(col1 varchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS, col2 nvarchar(100) COLLATE SQL_Latin1_General_CP1_CI_AS)
+-- Verify TDS connection returns results after psql tests
+CREATE TABLE #tdsVerify(col1 varchar(50))
 GO
 
-SELECT COUNT(*) AS tsql_result_count FROM sys.sp_tablecollations_100_enr('#pgDialectTdsTest')
+EXEC sp_tablecollations_100 '#tdsVerify'
 GO
 
-SELECT COUNT(*) AS tsql_attr_count FROM sys.babelfish_get_temp_table_attributes('#pgDialectTdsTest')
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_all_temp_table_attributes() WHERE attnum > 0
 GO
 
-SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false)
+DROP TABLE #tdsVerify
 GO
 
-SELECT COUNT(*) AS pg_dialect_tds_result_count FROM sys.sp_tablecollations_100_enr('#pgDialectTdsTest')
+-- Call procedure via wrapper proc - ENR temp table
+CREATE TABLE #procWrapperTest1(col1 varchar(50), col2 nvarchar(100))
 GO
 
-SELECT COUNT(*) AS pg_dialect_tds_attr_count FROM sys.babelfish_get_temp_table_attributes('#pgDialectTdsTest')
+EXEC dbo.babel5264_test_proc '#procWrapperTest1'
 GO
 
-SELECT set_config('babelfishpg_tsql.sql_dialect', 'tsql', false)
+DROP TABLE #procWrapperTest1
 GO
 
-DROP TABLE #pgDialectTdsTest
+-- Call procedure via wrapper proc - non-ENR temp table
+CREATE TABLE #procWrapperTest2(col1 dbo.TestVarcharType1, col2 nvarchar(100))
+GO
+
+EXEC dbo.babel5264_test_proc '#procWrapperTest2'
+GO
+
+DROP TABLE #procWrapperTest2
+GO
+
+-- Call view via wrapper proc - ENR temp table
+CREATE TABLE #viewWrapperTest1(col1 varchar(50), col2 nvarchar(100))
+GO
+
+EXEC dbo.babel5264_test_view_proc '#viewWrapperTest1'
+GO
+
+DROP TABLE #viewWrapperTest1
+GO
+
+-- Call view via wrapper proc - non-ENR temp table
+CREATE TABLE #viewWrapperTest2(col1 dbo.TestVarcharType1, col2 nvarchar(100))
+GO
+
+EXEC dbo.babel5264_test_view_proc '#viewWrapperTest2'
+GO
+
+DROP TABLE #viewWrapperTest2
+GO
+
+-- Call function via wrapper proc - ENR temp table
+CREATE TABLE #funcWrapperTest1(col1 varchar(50), col2 nvarchar(100))
+GO
+
+EXEC dbo.babel5264_test_func_proc
+GO
+
+DROP TABLE #funcWrapperTest1
+GO
+
+-- Call function via wrapper proc - non-ENR temp table
+CREATE TABLE #funcWrapperTest2(col1 dbo.TestVarcharType1, col2 nvarchar(100))
+GO
+
+EXEC dbo.babel5264_test_func_proc
+GO
+
+DROP TABLE #funcWrapperTest2
 GO

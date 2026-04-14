@@ -40,17 +40,21 @@ PG_FUNCTION_INFO_V1(get_all_temp_table_attributes);
 Datum
 get_all_temp_table_attributes(PG_FUNCTION_ARGS)
 {
-	Relation	attrel = table_open(AttributeRelationId, AccessShareLock);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	List	   *enrList = get_namedRelList();
 	ListCell   *lc, *lcoid;
-	List	   *non_enr_tables = getRelationsInNamespace(get_myTempNamespace(), RELKIND_RELATION);
+	Relation	attrel;
+	List	   *enrList;
+	List	   *non_enr_tables;
 
 	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC | MAT_SRF_BLESS);
 
 	/* Only process on TDS connections */
 	if (!IS_TDS_CONN())
 		PG_RETURN_NULL();
+
+	attrel = table_open(AttributeRelationId, AccessShareLock);
+	enrList = get_namedRelList();
+	non_enr_tables = getRelationsInNamespace(get_myTempNamespace(), RELKIND_RELATION);
 
 	foreach(lc, enrList)
 	{

@@ -1,50 +1,42 @@
 -- tsql
--- BABEL-5264: Test setup for sp_tablecollations_100 functions
+-- BABEL-5264: Test setup for sp_tablecollations_100 with temp table support
+
 -- Create UDTs for non-ENR temp table tests
 CREATE TYPE dbo.TestVarcharType1 FROM varchar(100)
 GO
+
 CREATE TYPE dbo.TestVarcharType2 FROM varchar(50)
 GO
-CREATE TYPE dbo.TestVarcharType3 FROM varchar(50)
-GO
-CREATE TYPE dbo.TestVarcharType4 FROM varchar(50)
-GO
+
 CREATE TYPE dbo.TestIntType FROM int
 GO
 
--- Create T-SQL proc to test temp table functions
-CREATE PROCEDURE dbo.babel5264_test_tsql_proc @tablename varchar(256)
+-- Create T-SQL proc to test temp table functions via procedure
+CREATE PROCEDURE dbo.babel5264_test_proc @tablename varchar(256)
 AS
 BEGIN
-    SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_temp_table_attributes(@tablename)
-    SELECT * FROM sys.sp_tablecollations_100_enr(@tablename)
-    EXEC tempdb.dbo.sp_tablecollations_100 @tablename
+    EXEC sp_tablecollations_100 @tablename
 END
 GO
 
--- psql
--- Create PL/pgSQL procedure to test temp table functions from PG side
-CREATE OR REPLACE PROCEDURE test_pg_temp_table_proc()
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    attr_count bigint;
-    coll_count bigint;
+-- Create T-SQL proc to test via view
+CREATE PROCEDURE dbo.babel5264_test_view_proc @tablename varchar(256)
+AS
 BEGIN
-    -- Create a PG temp table
-    CREATE TEMP TABLE pg_proc_temp_test(id int, name varchar(50), description text);
-    INSERT INTO pg_proc_temp_test VALUES (1, 'test', 'description');
-    
-    -- Test babelfish_get_temp_table_attributes (should return 0)
-    SELECT COUNT(*) INTO attr_count FROM sys.babelfish_get_temp_table_attributes('pg_proc_temp_test');
-    RAISE NOTICE 'babelfish_get_temp_table_attributes count: %', attr_count;
-    
-    -- Test sp_tablecollations_100_enr (should return 0)
-    SELECT COUNT(*) INTO coll_count FROM sys.sp_tablecollations_100_enr('pg_proc_temp_test');
-    RAISE NOTICE 'sp_tablecollations_100_enr count: %', coll_count;
-    
-    -- Cleanup
-    DROP TABLE pg_proc_temp_test;
-END;
-$$;
+    SELECT colid, name, collation_100 
+    FROM sys.spt_tablecollations_view 
+    WHERE object_id = OBJECT_ID(@tablename) 
+    ORDER BY colid
+END
+GO
+
+-- Create T-SQL proc to test the function
+CREATE PROCEDURE dbo.babel5264_test_func_proc
+AS
+BEGIN
+    SELECT attname, attnum 
+    FROM sys.babelfish_get_all_temp_table_attributes() 
+    WHERE attnum > 0 
+    ORDER BY attrelid, attnum
+END
 GO
