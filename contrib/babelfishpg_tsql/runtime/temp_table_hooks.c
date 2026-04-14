@@ -15,147 +15,79 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_attribute.h"
+#include "catalog/pg_class.h"
 #include "fmgr.h"
 #include "funcapi.h"
+#include "miscadmin.h"
+#include "utils/aclchk_internal.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/queryenvironment.h"
 
+#include "../src/hooks.h"
 #include "../src/pltsql.h"
 #include "../src/multidb.h"
-#include "functions.h"
 
-#define OBJECT_TYPE	"u"
-
-PG_FUNCTION_INFO_V1(get_tsql_temp_table_attributes);
-PG_FUNCTION_INFO_V1(is_temp_table_name);
+PG_FUNCTION_INFO_V1(get_all_temp_table_attributes);
 
 /*
- * get_tsql_temp_table_attributes
- *		Returns pg_attribute rows for a temp table.
- *
- * Uses object_id() to resolve table name to OID, then retrieves attributes
- * from ENR cache or pg_attribute catalog.
+ * get_all_temp_table_attributes
+ *		Returns pg_attribute rows for all temp tables (ENR and non-ENR).
  *
  * This function only works on TDS connections.
  */
 Datum
-get_tsql_temp_table_attributes(PG_FUNCTION_ARGS)
+get_all_temp_table_attributes(PG_FUNCTION_ARGS)
 {
+	Relation	attrel = table_open(AttributeRelationId, AccessShareLock);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	Relation	attrel;
-	Oid			relid = InvalidOid;
-	Datum		tablename = PG_GETARG_DATUM(0);
+	List	   *enrList = get_namedRelList();
+	ListCell   *lc, *lcoid;
+	List	   *non_enr_tables = getRelationsInNamespace(get_myTempNamespace(), RELKIND_RELATION);
 
-	/* Setup SRF using pg_attribute's tuple descriptor */
-	attrel = table_open(AttributeRelationId, AccessShareLock);
-	rsinfo->expectedDesc = RelationGetDescr(attrel);
 	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC | MAT_SRF_BLESS);
 
 	/* Only process on TDS connections */
-	if (!is_bbf_tds_connection_hook())
-		elog(ERROR, "function is only supported on TDS connections");
-
-	/* Resolve table name to OID via object_id() */
-	if (!PG_ARGISNULL(0))
-	{
-		PG_TRY();
-		{
-			relid = DatumGetObjectId(DirectFunctionCall2(object_id, tablename, CStringGetTextDatum(OBJECT_TYPE)));
-		}
-		PG_CATCH();
-		{
-			/* object_id threw an error - return empty result set */
-			FlushErrorState();
-			table_close(attrel, AccessShareLock);
-			PG_RETURN_NULL();
-		}
-		PG_END_TRY();
-	}
-
-	/* Return empty if table not found */
-	if (!OidIsValid(relid))
-	{
-		table_close(attrel, AccessShareLock);
+	if (!IS_TDS_CONN())
 		PG_RETURN_NULL();
-	}
 
-	PG_TRY();
+	foreach(lc, enrList)
 	{
-		EphemeralNamedRelation enr = GetENRTempTableWithOid(relid, false);
+		EphemeralNamedRelation enr = (EphemeralNamedRelation) lfirst(lc);
 
 		if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 		{
-			/* ENR path: use cached tuples, skip system attributes */
-			ListCell *lc;
-			foreach(lc, enr->md.cattups[ENR_CATTUP_ATTRIBUTE])
-			{
-				HeapTuple	tup = (HeapTuple) lfirst(lc);
-				Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tup);
+			List *attList = enr->md.cattups[ENR_CATTUP_ATTRIBUTE];
+			ListCell *attlc;
 
-				if (att->attnum > 0)
+			foreach(attlc, attList)
+			{
+				HeapTuple	tup = (HeapTuple) lfirst(attlc);
+
+				if (tup != NULL)
 					tuplestore_puttuple(rsinfo->setResult, heap_copytuple(tup));
 			}
 		}
-		else if (isTempNamespace(get_rel_namespace(relid)))
-		{
-			/* Non-ENR temp table path: scan pg_attribute, skip system attributes */
-			ScanKeyData skey[1];
-			SysScanDesc scan;
-			HeapTuple	tup;
-
-			ScanKeyInit(&skey[0], Anum_pg_attribute_attrelid, BTEqualStrategyNumber, F_OIDEQ, ObjectIdGetDatum(relid));
-			scan = systable_beginscan(attrel, AttributeRelidNumIndexId, true, NULL, 1, skey);
-			while (HeapTupleIsValid(tup = systable_getnext(scan)))
-			{
-				Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tup);
-
-				if (att->attnum > 0)
-					tuplestore_puttuple(rsinfo->setResult, tup);
-			}
-			systable_endscan(scan);
-		}
 	}
-	PG_FINALLY();
+
+	foreach(lcoid, non_enr_tables)
 	{
-		table_close(attrel, AccessShareLock);
+		Oid relid = (Oid) lfirst_oid(lcoid);
+		ScanKeyData attskey[1];
+		SysScanDesc attscan;
+		HeapTuple	atttup;
+
+		ScanKeyInit(&attskey[0], Anum_pg_attribute_attrelid,
+					BTEqualStrategyNumber, F_OIDEQ, ObjectIdGetDatum(relid));
+		attscan = systable_beginscan(attrel, AttributeRelidNumIndexId,
+									 true, NULL, 1, attskey);
+		while (HeapTupleIsValid(atttup = systable_getnext(attscan)))
+		{
+			tuplestore_puttuple(rsinfo->setResult, atttup);
+		}
+		systable_endscan(attscan);
 	}
-	PG_END_TRY();
-
+	table_close(attrel, AccessShareLock);
 	PG_RETURN_NULL();
-}
-
-/*
- * is_temp_table_name
- *		Returns true if the object name starts with #.
- *
- * Handles four-part qualified names with quoted identifiers or brackets.
- * Only works on TDS connections, returns false otherwise.
- */
-Datum
-is_temp_table_name(PG_FUNCTION_ARGS)
-{
-	char   *input;
-	char   *object_name;
-	bool	result;
-
-	/* Only process on TDS connections */
-	if (!is_bbf_tds_connection_hook())
-		PG_RETURN_BOOL(false);
-
-	/* Validate argument at the start */
-	if (PG_ARGISNULL(0))
-		PG_RETURN_BOOL(false);
-
-	/* Extract argument into local variable */
-	input = text_to_cstring(PG_GETARG_VARCHAR_PP(0));
-
-	downcase_truncate_split_object_name(input, NULL, NULL, NULL, &object_name);
-	pfree(input);
-
-	result = (object_name[0] == '#');
-	pfree(object_name);
-
-	PG_RETURN_BOOL(result);
 }

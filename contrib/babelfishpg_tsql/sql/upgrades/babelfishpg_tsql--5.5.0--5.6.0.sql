@@ -760,72 +760,51 @@ left join sys.shipped_objects_not_in_sys nis on nis.name = ('TT_' || tt.name || 
 ) ot;
 GRANT SELECT ON sys.all_objects TO PUBLIC;
 
--- Function to get pg_attribute rows for #temp tables (ENR and non-ENR)
-CREATE OR REPLACE FUNCTION sys.babelfish_get_temp_table_attributes(IN table_name sys.nvarchar(4000))
+-- Returns pg_attribute rows for all temp tables (ENR and non-ENR).
+CREATE OR REPLACE FUNCTION sys.babelfish_get_all_temp_table_attributes()
 RETURNS SETOF pg_catalog.pg_attribute
-AS 'babelfishpg_tsql', 'get_tsql_temp_table_attributes'
+AS 'babelfishpg_tsql', 'get_all_temp_table_attributes'
 LANGUAGE C STABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.babelfish_get_temp_table_attributes(IN sys.nvarchar(4000)) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.babelfish_get_all_temp_table_attributes() TO PUBLIC;
 
--- Function to check if a name refers to a #temp table
-CREATE OR REPLACE FUNCTION sys.is_temp_table_name(IN name sys.nvarchar(4000))
-RETURNS BOOLEAN
-AS 'babelfishpg_tsql', 'is_temp_table_name'
-LANGUAGE C IMMUTABLE PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.is_temp_table_name(IN sys.nvarchar(4000)) TO PUBLIC;
-
--- Wrapper function for sp_tablecollations_100 that uses the babelfish_get_temp_table_attributes function
-CREATE OR REPLACE FUNCTION sys.sp_tablecollations_100_enr(IN table_name sys.nvarchar(4000))
-RETURNS TABLE(colid INT, name sys.varchar, collation_name sys.nvarchar(128))
-AS $$
-    SELECT 
-        CAST(a.attnum AS INT) AS colid,
-        CAST(a.attname AS sys.varchar) AS name,
-        CAST(c.collname AS sys.nvarchar(128)) AS collation_name
-    FROM sys.babelfish_get_temp_table_attributes(table_name) a
-    LEFT JOIN pg_catalog.pg_collation c ON a.attcollation = c.oid
-    WHERE a.attnum > 0 AND NOT a.attisdropped
-    ORDER BY a.attnum;
-$$
-LANGUAGE SQL STABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.sp_tablecollations_100_enr(IN sys.nvarchar(4000)) TO PUBLIC;
-
--- We are limited by what postgres procedures can return here, but IEW may not
--- need it for initial compatibility
--- Modified to handle #temp tables using sp_tablecollations_100_enr function
-CREATE OR REPLACE PROCEDURE sys.sp_tablecollations_100
-(
-    IN "@object" nvarchar(4000)
-)
-AS $$
-BEGIN
-    -- Check if this is a #temp table 
-    IF sys.is_temp_table_name(@object) = 1
-    BEGIN
-        -- Use ENR function for temp tables
-        SELECT
-            t.colid AS colid,
-            t.name AS name,
-            CAST(CollationProperty(t.collation_name, 'tdscollation') AS sys.binary(5)) AS tds_collation,
-            t.collation_name AS collation
-        FROM sys.sp_tablecollations_100_enr(@object) t
-        ORDER BY t.colid;
-    END
-    ELSE
-    BEGIN
-        -- Existing logic for regular tables
-        SELECT
-            s_tcv.colid AS colid,
-            s_tcv.name AS name,
-            s_tcv.tds_collation_100 AS tds_collation,
-            s_tcv.collation_100 AS collation
-        FROM sys.spt_tablecollations_view s_tcv
-        WHERE s_tcv.object_id = (SELECT sys.object_id(@object))
-        ORDER BY colid;
-    END
-END;
-$$
-LANGUAGE 'pltsql';
+-- View for sp_tablecollations_100 that includes both permanent tables and temp tables.
+-- Permanent tables come from sys.all_columns, temp tables come from the babelfish_get_all_temp_table_attributes() function. 
+CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
+    SELECT
+        c.object_id                      AS object_id,
+        CAST(p.relnamespace AS int)      AS schema_id,
+        c.column_id                      AS colid,
+        CAST(c.name AS sys.varchar)      AS name,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_100
+    FROM
+        sys.all_columns c
+        INNER JOIN pg_catalog.pg_class p ON (c.object_id = p.oid)
+    WHERE
+        c.is_sparse = 0
+    UNION ALL
+    -- Temp tables from ENR and non-ENR sources
+    SELECT
+        a.attrelid                       AS object_id,
+        CAST(pg_my_temp_schema() AS int) AS schema_id,
+        a.attnum                         AS colid,
+        CAST(CAST(a.attname AS sys.sysname) AS sys.varchar) AS name,
+        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_28,
+        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_90,
+        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_100,
+        CAST(coll.collname AS nvarchar(128)) AS collation_28,
+        CAST(coll.collname AS nvarchar(128)) AS collation_90,
+        CAST(coll.collname AS nvarchar(128)) AS collation_100
+    FROM
+        sys.babelfish_get_all_temp_table_attributes() a
+        LEFT JOIN pg_catalog.pg_collation coll ON (a.attcollation = coll.oid)
+    WHERE
+        a.attnum > 0 AND NOT a.attisdropped;
+GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
