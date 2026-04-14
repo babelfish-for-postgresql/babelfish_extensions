@@ -38,14 +38,14 @@ typedef struct PLtsql_cached_parse_result
 	PLtsql_datum **datums;          /* Array of datums (variables, etc.) */
 } PLtsql_cached_parse_result;
 
-extern PLtsql_cached_parse_result *pltsql_restore_func_parse_result(HeapTuple proctup,
+extern PLtsql_cached_parse_result *pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
 																	bool *out_cache_enabled,
 																	TransactionId *out_bbf_ext_xmin,
 																	ItemPointerData *out_bbf_ext_tid);
-extern void pltsql_fill_cache_columns(PLtsql_function *function, Datum modify_date,
+extern void pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function, Datum modify_date,
 									  Datum *new_record, bool *new_record_nulls,
 									  bool *new_record_replaces);
-extern void pltsql_update_func_cache_entry(HeapTuple proctup, PLtsql_function *function);
+extern void pltsql_update_func_antlr_parse_cache(HeapTuple proctup, PLtsql_function *function);
 extern void alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, 
                                                     List *parameters,
                                                     int objtypeInt);

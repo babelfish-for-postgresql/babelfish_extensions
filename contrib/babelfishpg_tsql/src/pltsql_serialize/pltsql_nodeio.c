@@ -2,14 +2,6 @@
  *
  * pltsql_nodeio.c
  *    Extension-side node serialization/deserialization dispatch.
- *
- * Provides pltsql_nodeToString() and pltsql_stringToNode() as the public
- * API for serializing/deserializing PLtsql parse trees.
- *
- * These functions handle PLtsql node types directly via the generated
- * _out/_read switch files, and delegate standard PG node types to the
- * engine public outNode() / nodeRead() functions.
- *
  * Adapted from PG outfuncs.c, read.c, and readfuncs.c dispatch logic.
  *
  *-------------------------------------------------------------------------

@@ -3,10 +3,10 @@
 #include "pg_config_manual.h"
 
 /*
- * IMPORTANT: Any struct changes here (adding/removing fields, reordering)
+ * IMPORTANT: Any struct changes here (new, adding/removing fields, reordering)
  * must also be reflected in pltsql_serializable_2.h in
- * postgresql_modified_for_babelfish/src/include/pltsql/ to keep the
- * ANTLR parse tree serialization in sync.
+ * src/pltsql_serialize/ to keep the ANTLR parse tree serialization for 
+ * procedure caching in sync (babelfishpg_tsql.enable_antlr_parse_cache).
  */
 
 /*

@@ -2,21 +2,13 @@
 /*-------------------------------------------------------------------------
  *
  * pltsql_serializable_2.h
- *    Annotated PLtsql node definitions for code generation (mirrors pltsql-2.h).
+ *    Annotated copy of pltsql-2.h for antlr parse cache code generation.
  *
- * This file mirrors the struct definitions from pltsql-2.h with additional
- * pg_node_attr() annotations. It is read as text input by
- * gen_pltsql_node_support.pl to generate serialization, deserialization,
- * and equality code in order to support procedure ANTLR parse tree caching.
- * Refer: GUCs `enable_routine_parse_cache` and `validate_parse_cache`
- *
- * Relationship to pltsql_serializable_1.h:
- *   pltsql_serializable_1.h — mirrors pltsql.h (core PLtsql types:
- *                              PLtsql_expr, PLtsql_var, PLtsql_row,
- *                              PLtsql_stmt_block, PLtsql_stmt_if, etc.)
- *   pltsql_serializable_2.h — mirrors pltsql-2.h (Babelfish-specific
- *                              statement types: PLtsql_stmt_exec,
- *                              PLtsql_stmt_exec_sp, PLtsql_stmt_throw, etc.)
+ * Structs here mirror pltsql-2.h with pg_node_attr() annotations added.
+ * Read by gen_pltsql_node_support.pl to generate serialization,
+ * deserialization, and equality functions in order to support routine 
+ * ANTLR parse tree caching.
+ * Refer: GUCs `enable_antlr_parse_cache` and `validate_antlr_parse_cache`
  *
  * NOTES:
  *  - This file is NOT compiled by the C compiler.
@@ -25,24 +17,10 @@
  *    to match (keeping the pg_node_attr annotations).
  *
  * IDENTIFICATION
- *    src/pl/pltsql/src/pltsql_serializable_2.h 
+ *    contrib/babelfishpg_tsql/src/pltsql_serialize/pltsql_serializable_2.h 
  *    (mirrors babelfish_extensions/contrib/babelfishpg_tsql/src/pltsql-2.h)
  *
  *-------------------------------------------------------------------------
- */
-
-/*
- * NOTE: This file is NOT compiled by the C compiler.
- * It is read as text input by gen_pltsql_support.pl, which parses the
- * struct definitions and pg_node_attr() annotations to generate
- * pltsql_outfuncs_gen.c and pltsql_readfuncs_gen.c.
- *
- * The generated .c files will #include "pltsql.h" and "pltsql-2.h"
- * and operate on the real runtime struct types directly.
- *
- * The struct definitions here MUST match pltsql-2.h exactly
- * (same field names, same types, same order) — the only additions are
- * pg_node_attr() annotations which compile to nothing in C.
  */
 
 /*

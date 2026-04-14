@@ -12,11 +12,20 @@
 --   2nd exec in session: pltsql hash table hit
 -- SET BABELFISH_STATISTICS PROFILE ON;
 -- GO
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
 on
+~~END~~
+
+
+-- Baseline cache stats (new session, all zeros)
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+0#!#0#!#0#!#0#!#0
 ~~END~~
 
 
@@ -40,6 +49,16 @@ GO
 ~~START~~
 int
 1
+~~END~~
+
+
+-- Stats after Test 1: 2 execs
+-- expect hits=2 (1 cache restore from bbf_ext + 1 hash table from_cache hit)
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+2#!#0#!#0#!#0#!#0
 ~~END~~
 
 
@@ -156,6 +175,16 @@ doubled_val#!#400
 ~~END~~
 
 
+-- Stats after Tests 1-5: 10 execs total (5 procs × 2 each)
+-- expect hits=10 (5 cache restores + 5 hash table from_cache hits), misses=0, writes=0
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+10#!#0#!#0#!#0#!#0
+~~END~~
+
+
 PRINT '=== Test 6: Same session - CREATE, EXEC, ALTER, DROP (samesession_proc) ===';
 GO
 -- CREATE compiles and serializes parse tree to babelfish_func_ext; also populates pltsql hash table
@@ -171,6 +200,16 @@ BEGIN
     SELECT @num * 3 AS tripled;
 END;
 GO
+
+-- Stats for Test 6: after procedure creation
+-- expect inserts=+1 
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+10#!#0#!#1#!#0#!#0
+~~END~~
+
 
 -- pltsql hash table miss due to lookup-hashkey mismatch (inputCollId field) (Day-1 bug for parameterized procedures with text types)
 -- Should deserialize from babelfish_func_ext
@@ -194,6 +233,16 @@ int
 ~~END~~
 
 
+-- Stats for Test 6: after executions
+-- expect hits=+2
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+12#!#0#!#1#!#0#!#0
+~~END~~
+
+
 -- Test persistent cache invalidation with ALTER PROCEDURE
 -- ALTER recompiles and re-serializes to babelfish_func_ext
 PRINT 'alter: samesession_proc';
@@ -208,6 +257,16 @@ BEGIN
     PRINT 'samesession_proc altered';
 END;
 GO
+
+-- Stats for Test 6: after ALTER PROC
+-- expects write=+1, evictions still 0 doesn't happen until execute
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+12#!#0#!#2#!#0#!#0
+~~END~~
+
 
 -- pltsql hash table miss after ALTER, should deserialize from updated cache
 PRINT 'exec 1 after alter: samesession_proc';
@@ -228,6 +287,15 @@ int#!#int
 63#!#121
 ~~END~~
 
+
+-- Stats for Test 6: executions after ALTER PROC
+-- expects hits=+2 (1 cache restore + 1 hash table reuse), evictions=+1 (ALTER changed fn_xmin, old from_cache entry evicted)
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+14#!#0#!#2#!#1#!#0
+~~END~~
 
 
 -- Test persistent cache invalidation with DROP PROCEDURE
@@ -267,6 +335,16 @@ GO
 ~~START~~
 int
 99
+~~END~~
+
+
+-- Stats for Test 7: 2 executions of procedure cached in previous session
+-- expects hits=+2
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+16#!#0#!#2#!#1#!#0
 ~~END~~
 
 
@@ -320,7 +398,7 @@ GO
 ~~ERROR (Message: procedure dbo.oldsession_proc(@value => unknown) does not exist)~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -337,11 +415,20 @@ GO
 EXEC sp_rename 'dbo.rename_cache_proc', 'renamed_cache_proc', 'object';
 GO
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
 on
+~~END~~
+
+
+-- Stats for Test 8: stats before execution caching after proc rename
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+18#!#0#!#3#!#2#!#0
 ~~END~~
 
 
@@ -368,11 +455,32 @@ int
 ~~END~~
 
 
-
-PRINT '=== Test 9: ALTER with GUC off, then EXEC with GUC on ===';
+-- Stats for Test 8: stats after execution caching after proc rename
+-- expects hits=+1 (after write), cache_miss=+1 (first exec after function renamed) and writes=+1 (caches new ANTLR result)
+SELECT * FROM sys.antlr_parse_cache_stats();
 GO
--- alter_guc_proc was created with GUC off (cache is NULL)
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+~~START~~
+int#!#int#!#int#!#int#!#int
+19#!#1#!#4#!#2#!#0
+~~END~~
+
+
+-- === Test 9: ALTER with GUC off — hash table reuse, no persistent cache activity ===
+-- ALTER populates hash table via validator. Execs reuse it. Cache only populated in new session.
+PRINT '=== Test 9: ALTER with GUC off, EXEC with GUC on ===';
+GO
+
+-- Stats for Test 9: Begin
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+19#!#1#!#4#!#2#!#0
+~~END~~
+
+
+-- alter_guc_proc was created with GUC off in prepare (no cache populated)
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -380,7 +488,8 @@ off
 ~~END~~
 
 
--- ALTER with GUC off: cache columns stay NULL
+-- ALTER with GUC off: validator compiles via ANTLR, inserts into hash table,
+-- but pltsql_fill_cache_columns skips cache write (GUC off + antlr_parse_cache_enabled=NULL)
 PRINT 'alter: alter_guc_proc (GUC off)';
 GO
 ALTER PROCEDURE dbo.alter_guc_proc
@@ -391,8 +500,11 @@ BEGIN
 END;
 GO
 
--- Turn GUC on and execute: cache miss (NULL), ANTLR parses, cache gets populated
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+-- Turn GUC on and execute: hash table already has the function from ALTER,
+-- so pltsql_compile reuses it (function_valid=true). do_compile does NOT run.
+-- No persistent cache miss, hit, or write — the hash table entry is from ANTLR, not cache.
+-- Cache would only be populated in a NEW session (hash table empty → do_compile → write).
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
@@ -400,7 +512,7 @@ on
 ~~END~~
 
 
-PRINT 'exec 1: alter_guc_proc (GUC on after ALTER with GUC off)';
+PRINT 'exec 1: alter_guc_proc (hash table reuse from ALTER, no cache activity)';
 GO
 EXEC dbo.alter_guc_proc @val = 5;
 GO
@@ -410,7 +522,7 @@ int
 ~~END~~
 
 
--- Second exec: should use cached result
+-- Second exec: same hash table reuse, still no cache activity
 PRINT 'exec 2: alter_guc_proc';
 GO
 EXEC dbo.alter_guc_proc @val = 10;
@@ -421,10 +533,28 @@ int
 ~~END~~
 
 
+-- Stats for Test 9: End
+-- expect no change (all activity was hash table, not persistent cache)
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+19#!#1#!#4#!#2#!#0
+~~END~~
+
 
 PRINT '=== Test 10: Altered dependency - drop/recreate table used by cached proc ===';
 GO
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+-- Stats for Test 10: Begin
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+19#!#1#!#4#!#2#!#0
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
@@ -432,7 +562,7 @@ on
 ~~END~~
 
 
--- First exec: ANTLR parses (cache was NULL from GUC-off CREATE), populates cache
+-- First exec: cache hit (created with GUC on, cached tree exists), restores from bbf_ext
 PRINT 'exec 1: dep_table_proc (original table)';
 GO
 EXEC dbo.dep_table_proc;
@@ -444,6 +574,15 @@ int#!#varchar
 ~~END~~
 
 
+-- Stats: expects hits=+1 (cache restore from bbf_ext)
+SELECT cache_hits FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int
+20
+~~END~~
+
+
 -- Drop the dependency table and execute (expect failure)
 PRINT 'drop dependency dep_test_table';
 GO
@@ -452,7 +591,7 @@ GO
 
 -- Exec with GUC on: cached parse tree is no longer valid,
 -- but should fail during execution when table not found
-PRINT 'exec 2-a: dep_table_proc (after table drop, GUC on)';
+PRINT 'exec 2: dep_table_proc (after table drop, GUC on)';
 GO
 EXEC dbo.dep_table_proc;
 GO
@@ -461,22 +600,14 @@ GO
 ~~ERROR (Message: relation "dbo.dep_test_table" does not exist)~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+-- Stats: expects hits=+1 (hash reuse, from_cache=true, bbf_ext_xmin valid)
+-- exec 2 errors at runtime (table dropped) but compilation reuses cached entry
+SELECT * FROM sys.antlr_parse_cache_stats();
 GO
 ~~START~~
-text
-off
+int#!#int#!#int#!#int#!#int
+21#!#1#!#4#!#2#!#0
 ~~END~~
-
--- Exec with GUC on: cached parse tree is still valid,
--- but should fail during execution when table not found
-PRINT 'exec 2-b: dep_table_proc (after table drop, GUC off)';
-GO
-EXEC dbo.dep_table_proc;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "dbo.dep_test_table" does not exist)~~
 
 
 -- recreate the dependency table with different schema
@@ -489,15 +620,8 @@ GO
 ~~ROW COUNT: 1~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
-GO
-~~START~~
-text
-on
-~~END~~
-
--- Exec with GUC on: cached parse tree is still valid (SELECT * is resolved at execution),
--- but the result should reflect the new table schema
+-- Exec with GUC on: hash table still has from_cache=true entry (fn_xmin unchanged),
+-- result should reflect the new table schema (SELECT * resolved at execution)
 PRINT 'exec 3-a: dep_table_proc (after table recreate, GUC on)';
 GO
 EXEC dbo.dep_table_proc;
@@ -508,8 +632,17 @@ int#!#varchar#!#int
 ~~END~~
 
 
--- Now test with GUC off
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+-- Stats: expects hits=+1 (hash reuse, from_cache=true, bbf_ext_xmin valid)
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+22#!#1#!#4#!#2#!#0
+~~END~~
+
+
+-- Now test with GUC off — should evict the from_cache entry
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -517,7 +650,7 @@ off
 ~~END~~
 
 
-PRINT 'exec 3-b: dep_table_proc (after table recreate, GUC off)';
+PRINT 'exec 3-b: dep_table_proc (after table recreate, GUC off, evicts session function entry)';
 GO
 EXEC dbo.dep_table_proc;
 GO
@@ -526,6 +659,14 @@ int#!#varchar#!#int
 10#!#Charlie#!#999
 ~~END~~
 
+
+-- Stats: expects evictions=+1 (GUC off evicted from_cache entry from hash table)
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+22#!#1#!#4#!#3#!#0
+~~END~~
 
 
 PRINT '=== Test 11: Procedure with single OUT parameter ===';
@@ -639,8 +780,8 @@ CACHED
 PRINT '=== Test 14: Per-function cache with OID ===';
 GO
 
--- Verify antlr_cache_enabled defaults to NULL (follow session GUC)
-SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+-- Verify antlr_parse_cache_enabled defaults to NULL (follow session GUC)
+SELECT antlr_parse_cache_enabled FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_cache_sig' AND nspname = 'master_dbo';
 GO
 ~~START~~
@@ -650,7 +791,7 @@ bit
 
 
 -- Enable cache with OID
-SELECT sys.enable_routine_parse_cache(sys.object_id('dbo.perfunc_cache_sig'), true);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_cache_sig'), true);
 GO
 ~~START~~
 bit
@@ -658,8 +799,8 @@ bit
 ~~END~~
 
 
--- Verify antlr_cache_enabled is now true
-SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+-- Verify antlr_parse_cache_enabled is now true
+SELECT antlr_parse_cache_enabled FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_cache_sig' AND nspname = 'master_dbo';
 GO
 ~~START~~
@@ -669,11 +810,20 @@ bit
 
 
 -- Turn global GUC on and execute
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
 on
+~~END~~
+
+
+-- Stats for Test 14: Enabled (per-func=true, GUC=on, but cache empty — created with GUC off)
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+22#!#1#!#4#!#3#!#0
 ~~END~~
 
 
@@ -685,8 +835,18 @@ int
 ~~END~~
 
 
+-- Stats for Test 14: after exec
+-- expects hits=+0, misses=+1 and writes=+1 (ANTLR parsed, cache populated at EXEC)
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+22#!#2#!#5#!#3#!#0
+~~END~~
+
+
 -- Disable cache with OID
-SELECT sys.enable_routine_parse_cache(sys.object_id('dbo.perfunc_cache_sig'), false);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_cache_sig'), false);
 GO
 ~~START~~
 bit
@@ -694,8 +854,18 @@ bit
 ~~END~~
 
 
--- Verify antlr_cache_enabled is now false
-SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+-- Stats for Test 14: after per-func set to false (kill switch)
+-- expects: evictions=+1 (cache columns NULLed out by kill switch)
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+22#!#2#!#5#!#4#!#0
+~~END~~
+
+
+-- Verify antlr_parse_cache_enabled is now false
+SELECT antlr_parse_cache_enabled FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_cache_sig' AND nspname = 'master_dbo';
 GO
 ~~START~~
@@ -717,7 +887,7 @@ NULL#!#NULL
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -731,7 +901,7 @@ PRINT '=== Test 15: Mid-session per-func toggle (true→false→true) ===';
 GO
 
 -- Start with per-func=true, GUC off
-SELECT sys.enable_routine_parse_cache(sys.object_id('dbo.perfunc_cache_name'), true);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_cache_name'), true);
 GO
 ~~START~~
 bit
@@ -739,7 +909,7 @@ bit
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -759,7 +929,7 @@ int
 -- Verify cache is populated
 SELECT
     CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
-    antlr_cache_enabled
+    antlr_parse_cache_enabled
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_cache_name' AND nspname = 'master_dbo';
 GO
@@ -779,7 +949,7 @@ int
 
 
 -- Now set per-func=false (kill switch) — NULLs cache columns, changes bbf_ext xmin
-SELECT sys.enable_routine_parse_cache(sys.object_id('dbo.perfunc_cache_name'), false);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_cache_name'), false);
 GO
 ~~START~~
 bit
@@ -790,7 +960,7 @@ bit
 -- Verify cache NULLed and flag is false
 SELECT
     CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
-    antlr_cache_enabled
+    antlr_parse_cache_enabled
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_cache_name' AND nspname = 'master_dbo';
 GO
@@ -814,7 +984,7 @@ int
 -- Verify cache stays NULL (kill switch prevents re-population)
 SELECT
     CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
-    antlr_cache_enabled
+    antlr_parse_cache_enabled
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_cache_name' AND nspname = 'master_dbo';
 GO
@@ -827,7 +997,7 @@ NULL#!#0
 -- Re-enable per-func=true — but same session hash table still has the function,
 -- so do_compile won't run and cache won't be re-populated yet.
 -- Force a new session to verify cache gets populated on fresh compile.
-SELECT sys.enable_routine_parse_cache(sys.object_id('dbo.perfunc_cache_name'), true);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_cache_name'), true);
 GO
 ~~START~~
 bit
@@ -839,7 +1009,7 @@ bit
 
 -- tsql
 -- New session: hash table is empty, do_compile runs, ext cache gets populated
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -858,7 +1028,7 @@ int
 -- Verify cache is populated again (fresh do_compile in new session)
 SELECT
     CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
-    antlr_cache_enabled
+    antlr_parse_cache_enabled
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_cache_name' AND nspname = 'master_dbo';
 GO
@@ -869,7 +1039,7 @@ NOT NULL#!#1
 
 
 -- Clean up: reset to false
-SELECT sys.enable_routine_parse_cache(sys.object_id('dbo.perfunc_cache_name'), false);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_cache_name'), false);
 GO
 ~~START~~
 bit
@@ -877,7 +1047,7 @@ bit
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -886,12 +1056,12 @@ off
 
 
 
--- === Test 16: Default behavior (antlr_cache_enabled = NULL, follows session GUC) ===
+-- === Test 16: Default behavior (antlr_parse_cache_enabled = NULL, follows session GUC) ===
 PRINT '=== Test 16: Default behavior (per-func NULL = follow session GUC) ===';
 GO
 
--- Verify antlr_cache_enabled defaults to NULL (follow session GUC)
-SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+-- Verify antlr_parse_cache_enabled defaults to NULL (follow session GUC)
+SELECT antlr_parse_cache_enabled FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_default_test' AND nspname = 'master_dbo';
 GO
 ~~START~~
@@ -901,7 +1071,7 @@ bit
 
 
 -- With global GUC on, NULL per-func follows GUC → cache gets populated
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
@@ -929,7 +1099,7 @@ NOT NULL
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -942,7 +1112,7 @@ PRINT '=== Test 17: NULL reset (per-func NULL = follow GUC) ===';
 GO
 
 -- Set per-func flag to NULL explicitly (should already be NULL, but test the API)
-SELECT sys.enable_routine_parse_cache(sys.object_id('dbo.perfunc_default_test'), NULL);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_default_test'), NULL);
 GO
 ~~START~~
 bit
@@ -950,8 +1120,8 @@ bit
 ~~END~~
 
 
--- Verify antlr_cache_enabled is NULL
-SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+-- Verify antlr_parse_cache_enabled is NULL
+SELECT antlr_parse_cache_enabled FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_default_test' AND nspname = 'master_dbo';
 GO
 ~~START~~
@@ -961,7 +1131,7 @@ bit
 
 
 -- GUC ON, per-func NULL — should follow GUC and populate cache
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
@@ -994,7 +1164,7 @@ PRINT '=== Test 17b: Per-func true (force on, GUC off = still cached) ===';
 GO
 
 -- Turn GUC OFF first
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -1003,7 +1173,7 @@ off
 
 
 -- Set per-func to true (force on)
-SELECT sys.enable_routine_parse_cache(sys.object_id('dbo.perfunc_default_test'), true);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_default_test'), true);
 GO
 ~~START~~
 bit
@@ -1011,8 +1181,8 @@ bit
 ~~END~~
 
 
--- Verify antlr_cache_enabled is true
-SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+-- Verify antlr_parse_cache_enabled is true
+SELECT antlr_parse_cache_enabled FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_default_test' AND nspname = 'master_dbo';
 GO
 ~~START~~
@@ -1047,7 +1217,7 @@ PRINT '=== Test 17c: Kill switch (per-func false + GUC on = no cache) ===';
 GO
 
 -- Set per-func to false (kill switch) — also NULLs out cache columns
-SELECT sys.enable_routine_parse_cache(sys.object_id('dbo.perfunc_default_test'), false);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_default_test'), false);
 GO
 ~~START~~
 bit
@@ -1055,8 +1225,8 @@ bit
 ~~END~~
 
 
--- Verify antlr_cache_enabled is false
-SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+-- Verify antlr_parse_cache_enabled is false
+SELECT antlr_parse_cache_enabled FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_default_test' AND nspname = 'master_dbo';
 GO
 ~~START~~
@@ -1078,7 +1248,7 @@ NULL
 
 
 -- Turn GUC ON — per-func false should still block caching
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
@@ -1106,7 +1276,7 @@ NULL
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -1120,7 +1290,7 @@ PRINT '=== Test 18: Invalid function identifier handling ===';
 GO
 
 -- Non-existent function OID (should error)
-SELECT sys.enable_routine_parse_cache(99999999, true);
+SELECT sys.enable_antlr_parse_cache(99999999, true);
 GO
 ~~START~~
 bit
@@ -1135,7 +1305,7 @@ GO
 
 -- tsql      user=babel_6037_nonowner password=12345678
 -- Non-owner tries to toggle cache on a function they don't own (should error)
-SELECT sys.enable_routine_parse_cache(sys.object_id('dbo.perfunc_default_test'), true);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_default_test'), true);
 GO
 ~~START~~
 bit
@@ -1152,7 +1322,7 @@ PRINT '=== Test 19: ALTER preserves per-function flag ===';
 GO
 
 -- Enable per-function cache
-SELECT sys.enable_routine_parse_cache(sys.object_id('dbo.perfunc_alter_test'), true);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_alter_test'), true);
 GO
 ~~START~~
 bit
@@ -1161,7 +1331,7 @@ bit
 
 
 -- Turn GUC on and execute to populate cache
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
@@ -1186,8 +1356,8 @@ BEGIN
 END;
 GO
 
--- Verify antlr_cache_enabled is still true after ALTER
-SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+-- Verify antlr_parse_cache_enabled is still true after ALTER
+SELECT antlr_parse_cache_enabled FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_alter_test' AND nspname = 'master_dbo';
 GO
 ~~START~~
@@ -1205,7 +1375,7 @@ int
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -1219,7 +1389,7 @@ PRINT '=== Test 20: DROP removes per-function flag ===';
 GO
 
 -- Enable per-function cache
-SELECT sys.enable_routine_parse_cache(sys.object_id('dbo.perfunc_drop_test'), true);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_drop_test'), true);
 GO
 ~~START~~
 bit
@@ -1227,8 +1397,8 @@ bit
 ~~END~~
 
 
--- Verify antlr_cache_enabled is true
-SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+-- Verify antlr_parse_cache_enabled is true
+SELECT antlr_parse_cache_enabled FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_drop_test' AND nspname = 'master_dbo';
 GO
 ~~START~~
@@ -1257,7 +1427,7 @@ PRINT '=== Test 21: Custom schema per-function cache ===';
 GO
 
 -- Enable cache using OID for custom schema function
-SELECT sys.enable_routine_parse_cache(sys.object_id('test_cache_schema.perfunc_custom_schema'), true);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('test_cache_schema.perfunc_custom_schema'), true);
 GO
 ~~START~~
 bit
@@ -1265,8 +1435,8 @@ bit
 ~~END~~
 
 
--- Verify antlr_cache_enabled is true
-SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+-- Verify antlr_parse_cache_enabled is true
+SELECT antlr_parse_cache_enabled FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_custom_schema' AND nspname = 'test_cache_schema';
 GO
 ~~START~~
@@ -1275,7 +1445,7 @@ bit
 
 
 -- Execute with GUC on
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
@@ -1292,7 +1462,7 @@ int
 
 
 -- Disable cache
-SELECT sys.enable_routine_parse_cache(sys.object_id('test_cache_schema.perfunc_custom_schema'), false);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('test_cache_schema.perfunc_custom_schema'), false);
 GO
 ~~START~~
 bit
@@ -1301,7 +1471,7 @@ bit
 
 
 -- Verify disabled
-SELECT antlr_cache_enabled FROM sys.babelfish_function_ext
+SELECT antlr_parse_cache_enabled FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_custom_schema' AND nspname = 'test_cache_schema';
 GO
 ~~START~~
@@ -1309,7 +1479,7 @@ bit
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -1323,7 +1493,7 @@ PRINT '=== Test 22: Parse cache validation ===';
 GO
 
 -- Enable validation GUC — next cache-hit EXEC will compare cached vs ANTLR trees
-SELECT set_config('babelfishpg_tsql.validate_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.validate_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
@@ -1331,7 +1501,7 @@ on
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
@@ -1352,7 +1522,7 @@ small#!#0#!#test
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -1361,7 +1531,7 @@ off
 
 
 -- Disable validation GUC
-SELECT set_config('babelfishpg_tsql.validate_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.validate_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -1374,7 +1544,7 @@ off
 PRINT '=== Test 23: Cache populated at EXEC time ===';
 GO
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
@@ -1417,7 +1587,7 @@ CACHED
 PRINT '=== Test 24: Overloaded procedures ===';
 GO
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -1425,7 +1595,7 @@ off
 ~~END~~
 
 
-SELECT sys.enable_routine_parse_cache(sys.object_id('dbo.overload_cache_proc'), true);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.overload_cache_proc'), true);
 GO
 ~~START~~
 bit
@@ -1434,7 +1604,7 @@ bit
 
 
 -- Verify only the default dbo overload has per-function flag column enabled
-SELECT funcsignature, nspname, CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status, antlr_cache_enabled
+SELECT funcsignature, nspname, CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status, antlr_parse_cache_enabled
 FROM sys.babelfish_function_ext
 WHERE funcname = 'overload_cache_proc'
 ORDER BY funcsignature;
@@ -1447,17 +1617,17 @@ overload_cache_proc(integer, "sys"."varchar")#!#master_test_cache_schema#!#NOT C
 
 
 -- NULL OID test on GUC function - expect error
-SELECT sys.enable_routine_parse_cache(CAST(NULL AS OID), true);
+SELECT sys.enable_antlr_parse_cache(CAST(NULL AS OID), true);
 GO
 ~~START~~
 bit
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function OID cannot be NULL)~~
+~~ERROR (Message: routine ID cannot be NULL)~~
 
 
--- Enabled cache_enabled for other overloaded procedure as well using OID
-SELECT sys.enable_routine_parse_cache(sys.object_id('test_cache_schema.overload_cache_proc'), true);
+-- Enabled antlr_parse_cache_enabled for other overloaded procedure as well using OID
+SELECT sys.enable_antlr_parse_cache(sys.object_id('test_cache_schema.overload_cache_proc'), true);
 GO
 ~~START~~
 bit
@@ -1487,7 +1657,7 @@ int#!#varchar
 
 SELECT
     CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
-    antlr_cache_enabled 
+    antlr_parse_cache_enabled 
 FROM sys.babelfish_function_ext
 WHERE funcname = 'overload_cache_proc';
 GO
@@ -1498,15 +1668,15 @@ CACHED#!#1
 ~~END~~
 
 
--- reset cache_enabled columns
-SELECT sys.enable_routine_parse_cache(sys.object_id('dbo.overload_cache_proc'), false);
+-- reset antlr_parse_cache_enabled columns
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.overload_cache_proc'), false);
 GO
 ~~START~~
 bit
 0
 ~~END~~
 
-SELECT sys.enable_routine_parse_cache(sys.object_id('test_cache_schema.overload_cache_proc'), false);
+SELECT sys.enable_antlr_parse_cache(sys.object_id('test_cache_schema.overload_cache_proc'), false);
 GO
 ~~START~~
 bit
@@ -1518,7 +1688,7 @@ bit
 PRINT '=== Test 25: Nested EXEC ===';
 GO
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
@@ -1554,7 +1724,7 @@ outer_cached_proc#!#CACHED
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -1567,7 +1737,7 @@ off
 PRINT '=== Test 26: Altered/renamed dependency ===';
 GO
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
@@ -1629,7 +1799,7 @@ GO
 
 SELECT
     CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
-    antlr_cache_enabled 
+    antlr_parse_cache_enabled 
 FROM sys.babelfish_function_ext
 WHERE funcname = 'dep_rename_proc';
 GO
@@ -1650,7 +1820,7 @@ int#!#varchar
 
 SELECT
     CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
-    antlr_cache_enabled 
+    antlr_parse_cache_enabled 
 FROM sys.babelfish_function_ext
 WHERE funcname = 'dep_rename_proc';
 GO
@@ -1660,7 +1830,7 @@ CACHED#!#<NULL>
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -1684,11 +1854,20 @@ GO
 
 -- tsql
 -- Enable cache and try to execute — deserialization should fail with error
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
 on
+~~END~~
+
+
+-- Stats for Test 27: Before Deserialization error
+SELECT cache_errors FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int
+0
 ~~END~~
 
 
@@ -1702,8 +1881,18 @@ int
 ~~ERROR (Message: unrecognized token: "<>CORRUPTED")~~
 
 
+-- Stats for Test 27: After Deserialization error
+-- expects: errors=+1
+SELECT cache_errors FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 -- After disabling cache, function should work normally via ANTLR
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
@@ -1752,7 +1941,7 @@ GO
 -- New session: hash table is empty, do_compile runs, reads cache entry,
 -- detects version mismatch (99.99.0 != current), skips cache, ANTLR re-parses.
 -- Procedure should still execute correctly.
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
 text
@@ -1781,7 +1970,39 @@ CACHED#!#CURRENT
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+-- === Test 29: DBCC CHECKIDENT procedure with cache on (unsupported node)===
+PRINT '=== Test 29: DBCC CHECKIDENT with cache on ===';
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+CREATE TABLE dbo.dbcc_test_table (id INT IDENTITY(1,1), val VARCHAR(50));
+GO
+
+CREATE PROCEDURE dbo.dbcc_checkident_proc
+AS
+    DBCC CHECKIDENT('dbo.dbcc_test_table', RESEED, 100);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: pltsql_outNode: unrecognized PLtsql node type: 1041)~~
+
+
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text

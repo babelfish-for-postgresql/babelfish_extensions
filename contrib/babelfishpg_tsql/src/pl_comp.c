@@ -67,6 +67,13 @@ bool		pltsql_check_syntax = false;
 
 PLtsql_function *pltsql_curr_compile;
 
+/* Session-level routine antlr parse cache statistics */
+int pltsql_antlr_parse_cache_stat_hits = 0;
+int pltsql_antlr_parse_cache_stat_misses = 0;
+int pltsql_antlr_parse_cache_stat_writes = 0;
+int pltsql_antlr_parse_cache_stat_evictions = 0;
+int pltsql_antlr_parse_cache_stat_errors = 0;
+
 /* A context appropriate for short-term allocs during compilation */
 MemoryContext pltsql_compile_tmp_cxt;
 
@@ -207,9 +214,9 @@ recheck:
 			{
 				/*
 				 * For functions loaded from persistent cache, verify:
-				 * 1. babelfish_function_ext hasn't changed (e.g., antlr_cache_enabled
-				 *    toggled via sys.enable_routine_parse_cache() from another session).
-				 * 2. Caching is still enabled — check antlr_cache_enabled column:
+				 * 1. babelfish_function_ext hasn't changed (e.g., antlr_parse_cache_enabled
+				 *    toggled via sys.enable_antlr_parse_cache() from another session).
+				 * 2. Caching is still enabled — check antlr_parse_cache_enabled column:
 				 *    NULL=follow session GUC, true=force on, false=force off.
 				 */
 				HeapTuple bbftup = get_bbf_function_tuple_from_proctuple(procTup);
@@ -219,34 +226,46 @@ recheck:
 						ItemPointerEquals(&function->bbf_ext_tid, &bbftup->t_self))
 					{
 						/*
-						 * bbf_ext tuple unchanged. Resolve antlr_cache_enabled column:
+						 * bbf_ext tuple unchanged. Resolve antlr_parse_cache_enabled column:
 						 * non-NULL overrides session GUC, NULL follows it.
 						 */
 						bool	isnull;
 						bool	resolved_cache;
 						Datum	cache_flag = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbftup,
-															 Anum_bbf_function_ext_antlr_cache_enabled, &isnull);
+															 Anum_bbf_function_ext_antlr_parse_cache_enabled, &isnull);
 						if (!isnull)
 							resolved_cache = DatumGetBool(cache_flag);
 						else
-							resolved_cache = pltsql_enable_routine_parse_cache;
+							resolved_cache = pltsql_enable_antlr_parse_cache;
 
 						if (resolved_cache)
+						{
 							function_valid = true;
+							pltsql_antlr_parse_cache_stat_hits++;
+						}
 						/* else: resolved to off — invalidate */
 					}
 					heap_freetuple(bbftup);
 
 					if (!function_valid)
+					{
 						/* bbf_ext changed or caching disabled — invalidate */
 						goto invalidate_function;
+					}
 				}
 				else
+				{
 					/* tuple gone or not found — invalidate */
 					goto invalidate_function;
+				}
 			}
 			else
+			{
 				function_valid = true;
+				/* Count as cache hit if function is backed by persistent cache */
+				if (TransactionIdIsValid(function->bbf_ext_xmin))
+					pltsql_antlr_parse_cache_stat_hits++;
+			}
 		}
 		else
 		{
@@ -259,6 +278,8 @@ invalidate_function:
 			 * PLtsql_function struct itself could have been allocated in the same
 			 * context, so we avoid accessing struct fields after the delete call.
 			 */
+			if (function->from_cache)
+				pltsql_antlr_parse_cache_stat_evictions++;
 			function_in_use = function->use_count != 0;
 			delete_function(function);
 
@@ -376,7 +397,7 @@ do_compile(FunctionCallInfo fcinfo,
 	char	   *tbl_typ = NULL;	/* Name of the output table variable's type */
 	int		   *typmods = NULL; /* typmod of each argument if available */
 	CompileContext *cmpl_ctx = create_compile_context();
-	bool		cache_enabled_for_func = false;
+	bool		antlr_parse_cache_enabled_for_func = false;
 	TransactionId bbf_ext_xmin = InvalidTransactionId;
 	ItemPointerData bbf_ext_tid;
 
@@ -972,8 +993,8 @@ do_compile(FunctionCallInfo fcinfo,
 		ItemPointerSetInvalid(&bbf_ext_tid);
 
 		/*
-		 * Try to restore cached parse result from previous compilation.
-		 * This allows us to skip expensive ANTLR parsing.
+		 * Try to restore cached parse result from previous compilation (pltsql_enable_antlr_parse_cache).
+		 * This allows us to skip expensive ANTLR parsing for new session execution of routines.
 		 * Skip during validation (forValidator=true) as we're just checking syntax.
 		 */
 		if (!forValidator)
@@ -985,7 +1006,7 @@ do_compile(FunctionCallInfo fcinfo,
 			 * separate memory context so ANTLR re-parsing (which reuses
 			 * func_cxt) does not overwrite the cached node pointers.
 			 */
-			if (pltsql_validate_parse_cache)
+			if (pltsql_validate_antlr_parse_cache)
 			{
 				validation_cxt = AllocSetContextCreate(func_cxt,
 													   "PLtsql validation",
@@ -993,8 +1014,8 @@ do_compile(FunctionCallInfo fcinfo,
 				MemoryContextSwitchTo(validation_cxt);
 			}
 
-			cached_result = pltsql_restore_func_parse_result(procTup,
-															 &cache_enabled_for_func,
+			cached_result = pltsql_restore_antlr_parse_cache_result(procTup,
+															 &antlr_parse_cache_enabled_for_func,
 															 &bbf_ext_xmin,
 															 &bbf_ext_tid);
 
@@ -1005,7 +1026,8 @@ do_compile(FunctionCallInfo fcinfo,
 			{
 				int		ci;
 
-				elog(LOG, "pltsql_enable_routine_parse_cache[PASS]: %s (ndatums=%d), retrieved cached parse tree results, skipping ANTLR parsing", function->fn_signature, cached_result->ndatums);
+				elog(LOG, "pltsql_enable_antlr_parse_cache[PASS]: %s (ndatums=%d), retrieved cached parse tree results, skipping ANTLR parsing", function->fn_signature, cached_result->ndatums);
+				pltsql_antlr_parse_cache_stat_hits++;
 				pltsql_parse_result = cached_result->parse_tree;
 				
 				/* Populate global datums from cache - pltsql_finish_datums() will copy to function */
@@ -1124,13 +1146,13 @@ do_compile(FunctionCallInfo fcinfo,
 				 * ANTLR so both paths get identical post-processing. Compare
 				 * after function hash table insert.
 				 */
-				if (pltsql_validate_parse_cache)
+				if (pltsql_validate_antlr_parse_cache)
 				{
 					validation_cached_tree = pltsql_parse_result;
 					validation_cached_datums = pltsql_Datums;
 					validation_cached_ndatums = pltsql_nDatums;
 					function->from_cache = false;
-					elog(LOG, "pltsql_validate_parse_cache[INFO]: %s validating cached tree against ANTLR at EXEC",
+					elog(LOG, "pltsql_validate_antlr_parse_cache[INFO]: %s validating cached tree against ANTLR at EXEC",
 						 function->fn_signature);
 					/* fall through to normal ANTLR parsing below */
 				}
@@ -1144,6 +1166,9 @@ do_compile(FunctionCallInfo fcinfo,
 			{
 				/* No cached parse result — clear bbf_ext_xmin */
 				bbf_ext_xmin = InvalidTransactionId;
+				/* Only count as miss if caching was enabled but cache was empty/invalid */
+				if (antlr_parse_cache_enabled_for_func)
+					pltsql_antlr_parse_cache_stat_misses++;
 			}
 		}
 		
@@ -1222,34 +1247,33 @@ skip_antlr_parsing:
 	pltsql_finish_datums(function);
 
 	/*
-	 * Re-populate the cross-session cache in babelfish_function_ext if we
-	 * have a fresh ANTLR parse (not restored from bbf function_ext cache) 
-	 * so first time routine execution in future sessions can skip parsing.
+	 * If antlr parse result caching enabled through `enable_antlr_parse_cache` GUC,
+	 * re-populate the antlr parse cache columns in babelfish_function_ext when we
+	 * have a fresh ANTLR parse (not restored from bbf_function_ext cache) so that
+	 * first-time routine execution in future sessions can skip ANTLR parsing.
 	 * This covers:
 	 *   - MVU: version mismatch rejected old cache, fresh parse needs storing
-	 *   - Rename: cache was NULLed, fresh parse needs storing
+	 *   - Rename proc: cache was NULLed, fresh parse needs storing
 	 *   - First exec with empty cache (e.g., created with GUC off, now on)
-	 * Skip during CREATE/ALTER (forValidator path) to avoid conflicts with subsequent
-	 * call of pltsql_store_func_default_positions that handles cache writes for DDL.
-	 */
-	/*
-	 * Re-populate the cross-session cache if we have a fresh ANTLR parse.
-	 * Function specific guc (bbf_func_ext.antlr_cache_enabled) is already resolved by
-	 * pltsql_restore_func_parse_result (NULL→follow GUC, true/false→override).
+	 *
+	 * Skip during CREATE/ALTER (forValidator) to avoid conflicts with
+	 * pltsql_store_func_default_positions that handles cache writes for DDL.
 	 */
 	if (!forValidator && !function->from_cache &&
-		(pltsql_enable_routine_parse_cache || cache_enabled_for_func)){
-			elog(LOG, "pltsql_enable_routine_parse_cache[INFO]: %s ANTLR parse result used to re-populate cache at EXEC (session guc=%s, func cache_enabled=%s)",
+		(pltsql_enable_antlr_parse_cache || antlr_parse_cache_enabled_for_func)){
+			elog(LOG, "pltsql_enable_antlr_parse_cache[INFO]: %s ANTLR parse result used to re-populate cache at EXEC (session guc=%s, func cache_enabled=%s)",
 				 function->fn_signature,
-				 pltsql_enable_routine_parse_cache ? "on" : "off",
-				 cache_enabled_for_func ? "on" : "off");
-			pltsql_update_func_cache_entry(procTup, function);
-			/* pltsql_update_func_cache_entry sets function->bbf_ext_xmin/tid
-			 * with the post-write tuple identity, so skip the stale assignment below. */
+				 pltsql_enable_antlr_parse_cache ? "on" : "off",
+				 antlr_parse_cache_enabled_for_func ? "on" : "off");
+			pltsql_update_func_antlr_parse_cache(procTup, function);
+			/*
+			 * pltsql_update_func_antlr_parse_cache sets function->bbf_ext_xmin/tid
+			 * with the post-write tuple identity, so skip the stale assignment below.
+			 */
 		}
 	else if (TransactionIdIsValid(bbf_ext_xmin))
 	{
-		/* No cache write — use the xmin/tid captured by pltsql_restore_func_parse_result */
+		/* No cache write — use the xmin/tid captured by pltsql_restore_antlr_parse_cache_result */
 		function->bbf_ext_xmin = bbf_ext_xmin;
 		function->bbf_ext_tid = bbf_ext_tid;
 	}
@@ -1268,12 +1292,12 @@ skip_antlr_parsing:
 	 * fresh ANTLR compilation. Both trees have been through identical
 	 * post-processing at this point. Gated behind validate_parse_cache GUC.
 	 */
-	if (pltsql_validate_parse_cache && validation_cached_tree != NULL)
+	if (pltsql_validate_antlr_parse_cache && validation_cached_tree != NULL)
 	{
 		bool trees_match = pltsql_compare_parse_trees(validation_cached_tree,
 													  function->action);
 
-		elog(LOG, "pltsql_validate_parse_cache[%s]: %s ANTLR parse tree comparison at EXEC",
+		elog(LOG, "pltsql_validate_antlr_parse_cache[%s]: %s ANTLR parse tree comparison at EXEC",
 			 trees_match ? "PASS" : "FAIL", function->fn_signature);
 
 		pltsql_compare_datum_arrays(function->fn_signature,
@@ -3459,10 +3483,11 @@ pltsql_HashTableLookup(PLtsql_func_hashkey *func_key)
 	if (hentry)
 	{
 		/*
-		 * If session GUC is off and function was loaded from persistent cache,
-		 * evict it so do_compile re-parses from ANTLR.
+		 * If GUC enable_antlr_parse_cache is off and function was loaded from
+		 * persistent cache(from_cache), evict it so do_compile re-parses via ANTLR.
 		 *
-		 * Per-function cache_enabled is not checked here to avoid an expensive
+		 * Per-function antlr_parse_cache_enabled column from catalog table
+		 * babelfish_function_ext is not checked here to avoid an expensive
 		 * syscache lookup on every function call. Instead, pltsql_compile's
 		 * bbf_ext xmin check detects when cache_enabled is toggled (the column
 		 * update changes the tuple xmin) and invalidates from_cache=true entries
@@ -3470,14 +3495,15 @@ pltsql_HashTableLookup(PLtsql_func_hashkey *func_key)
 		 * no eviction is needed — the function was compiled correctly from ANTLR,
 		 * and the kill switch prevents future cache writes/reads.
 		 */
-		if (!pltsql_enable_routine_parse_cache && hentry->function->from_cache)
+		if (!pltsql_enable_antlr_parse_cache && hentry->function->from_cache)
 		{
-			elog(DEBUG1, "pltsql_HashTableLookup: enable_routine_parse_cache GUC disabled, evicting cached function %u",
+			elog(DEBUG1, "pltsql_enable_antlr_parse_cache[INFO]: function with id %u evicted from session cache due to disabled GUC",
 				 (unsigned int) func_key->funcOid);
+			pltsql_antlr_parse_cache_stat_evictions++;
 			delete_function(hentry->function);
 			return NULL;
 		}
-		
+
 		return hentry->function;
 	}
 	else

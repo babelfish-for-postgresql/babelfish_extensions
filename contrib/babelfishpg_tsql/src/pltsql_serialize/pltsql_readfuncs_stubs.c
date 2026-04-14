@@ -1,22 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pltsql_readfuncs_stubs.c
- *    Custom _read (deserialization) implementations for PLtsql
- *    custom_read_write nodes.
- *
- * These functions implement deserialization for PLtsql node types that are
- * marked pg_node_attr(custom_read_write) in pltsql_serializable.h:
- *   - PLtsql_expr: has runtime-only fields that must be skipped
- *   - PLtsql_nsitem: has FLEXIBLE_ARRAY_MEMBER requiring special allocation
- *   - PLtsql_row: has string/int arrays requiring custom handling
- *   - PLtsql_recfield: has inline struct (finfo) that gen_node_support.pl
- *     cannot handle
- *
- * The corresponding _out (serialization) functions are in
- * pltsql_outfuncs_stubs.c.
- *
- * These are called by the generated pltsql_readfuncs_switch.c dispatch code
- * when pltsql_nodeRead() encounters these types.
+ *    Custom deserialization for PLtsql custom_read_write nodes.
  *
  *-------------------------------------------------------------------------
  */

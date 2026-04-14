@@ -1,8 +1,8 @@
 -- BABEL-6037
 -- Creates test procedures for ANTLR parse tree serialization/deserialization
 
--- 1. SESSION-LEVEL GUC `babelfishpg_tsql.enable_routine_parse_cache`
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+-- 1. SESSION-LEVEL GUC `babelfishpg_tsql.enable_antlr_parse_cache`
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 
 -- Test 1: Simple procedure without arguments
@@ -257,10 +257,10 @@ AS
 RETURN SELECT @in_val AS id, 'inline' AS val;
 GO
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 
--- 2. Function-specific guc function `sys.enable_routine_parse_cache(<FUNC_IDENTIFIER>, <BOOL>);`
+-- 2. Function-specific guc function `sys.enable_antlr_parse_cache(<FUNC_OID>, <BOOL>);`
 
 -- Test 14: Per-function cache enable/disable with full signature
 CREATE PROCEDURE dbo.perfunc_cache_sig
@@ -307,7 +307,7 @@ BEGIN
 END;
 GO
 
--- Test 19: Default behavior (antlr_cache_enabled = NULL by default, follows session GUC)
+-- Test 19: Default behavior (antlr_parse_cache_enabled = NULL by default, follows session GUC)
 CREATE PROCEDURE dbo.perfunc_default_test
     @val INT
 AS
@@ -329,8 +329,8 @@ END;
 GO
 
 -- Test 22: Validation procedure with complex statement types
--- Used with pltsql_validate_parse_cache GUC to compare cached vs ANTLR trees
-SELECT set_config('babelfishpg_tsql.validate_parse_cache', 'on', false);
+-- Used with pltsql_validate_antlr_parse_cache GUC to compare cached vs ANTLR trees
+SELECT set_config('babelfishpg_tsql.validate_antlr_parse_cache', 'on', false);
 GO
 
 CREATE PROCEDURE dbo.validate_cache_proc
@@ -383,7 +383,7 @@ GO
 
 -- Test 23: Procedure created with cache OFF, executed with cache ON in verify
 -- Tests that pltsql_update_func_cache_entry populates cache at EXEC time
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 
 CREATE PROCEDURE dbo.nocache_create_proc
@@ -432,7 +432,7 @@ END;
 GO
 
 -- Test 26: Altered/renamed dependency
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 
 CREATE TABLE dbo.dep_rename_table (id INT, val VARCHAR(50));
@@ -447,12 +447,12 @@ BEGIN
 END;
 GO
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 
 -- Test 27: Corrupt cache deserialization test
 -- Create a simple function whose cache we'll corrupt in verify to test deserialization error handling
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 
 CREATE FUNCTION dbo.corrupt_cache_test_func(@x INT)
@@ -463,13 +463,13 @@ BEGIN
 END;
 GO
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 
 -- Test 28: Version mismatch — cached parse tree with a higher bbf_version
 -- Create a simple procedure with cache ON so the parse tree and bbf_version get populated.
 -- In verify, we'll update bbf_version to a higher value and exec — should skip cache and ANTLR re-parse.
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'on', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 
 CREATE PROCEDURE dbo.version_mismatch
@@ -480,7 +480,7 @@ BEGIN
 END;
 GO
 
-SELECT set_config('babelfishpg_tsql.enable_routine_parse_cache', 'off', false);
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 
 -- Create a non-owner login/user to test permission denial

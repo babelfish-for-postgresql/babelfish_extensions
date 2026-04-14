@@ -24,6 +24,7 @@
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/acl.h"
+#include "funcapi.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/formatting.h"
@@ -3656,9 +3657,11 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 		new_record_repl_func_ext[Anum_bbf_function_ext_orig_name - 1] = true;
 	}
 
-	/* Invalidate cached parse tree — procedure name is embedded in the parse tree namespace stack */
-	/* Alternatively, if guc enabled, explore if worth looking up session cache PLtsql_HashTable for
-	 * updated parse tree result and serialize and re-populate babelfish_function_ext's antlr_parse_tree column */
+	/*
+	 * Invalidate antlr parse cache — procedure name is embedded in the
+	 * parse tree namespace stack. Cache will be re-populated on next EXEC
+	 * if enable_antlr_parse_cache GUC/flag allow it.
+	 */
 	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
 	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
 	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
@@ -3667,9 +3670,9 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
 	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
 	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
-    /* Note: antlr_cache_enabled is intentionally NOT reset here — it is a per-function
-	 * policy flag (user's intent), not cache state. Cache data is invalidated but the
-	 * policy is preserved so re-population happens on next EXEC if GUC/flag allow it. 
+	/*
+	 * antlr_parse_cache_enabled column is intentionally NOT reset here — it is
+	 * a per-function policy flag across sessions (user's intent), not cache state.
 	 */
 
 	new_tuple = heap_modify_tuple(usertuple,
@@ -6510,22 +6513,22 @@ bbf_check_member_has_direct_priv_to_grant_role(Oid member, Oid role)
 }
 
 /*
- * Helper: update antlr_cache_enabled flag in babelfish_function_ext.
+ * Helper: update antlr_parse_cache_enabled column in babelfish_function_ext.
  * Optionally, clear cache columns in babelfish_function_ext for a given bbf function tuple.
  *
  * Input:
- *   bbffunctuple       - HeapTuple from babelfish_function_ext to update
- *   enable_flag        - boolean indicating desired cache state
- *   enable_flag_isnull - if true, reset to NULL (follow session GUC default)
+ *   bbffunctuple              - HeapTuple from babelfish_function_ext to update
+ *   use_antlr_parse_cache     - boolean indicating desired cache state
+ *   use_cache_isnull          - if true, reset to NULL (follow session GUC default)
  *
- * babelfish_function_ext.cache_enabled column semantics:
- *   enable_flag_isnull=true  → set column to NULL (follow session GUC, default)
- *   enable_flag=true         → set column to true (force cache on)
- *   enable_flag=false        → set column to false (kill switch) + NULL out cache columns
+ * babelfish_function_ext.antlr_parse_cache_enabled column semantics:
+ *   use_cache_isnull=true          → set column to NULL (follow session GUC, default)
+ *   use_antlr_parse_cache=true     → set column to true (force cache on)
+ *   use_antlr_parse_cache=false    → set column to false (kill switch) + NULL out cache columns
  *
  */
 static void
-update_bbf_function_cache_enabled(HeapTuple bbffunctuple, bool enable_flag, bool enable_flag_isnull)
+update_bbf_function_antlr_parse_cache(HeapTuple bbffunctuple, bool use_antlr_parse_cache, bool use_cache_isnull)
 {
 	Relation	rel;
 	TupleDesc	dsc;
@@ -6541,19 +6544,19 @@ update_bbf_function_cache_enabled(HeapTuple bbffunctuple, bool enable_flag, bool
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
 
-	/* Set antlr_cache_enabled: NULL, true, or false */
-	if (enable_flag_isnull)
-		new_record_nulls[Anum_bbf_function_ext_antlr_cache_enabled - 1] = true;
+	/* Set antlr_parse_cache_enabled: NULL, true, or false */
+	if (use_cache_isnull)
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_cache_enabled - 1] = true;
 	else
-		new_record[Anum_bbf_function_ext_antlr_cache_enabled - 1] = BoolGetDatum(enable_flag);
-	new_record_replaces[Anum_bbf_function_ext_antlr_cache_enabled - 1] = true;
+		new_record[Anum_bbf_function_ext_antlr_parse_cache_enabled - 1] = BoolGetDatum(use_antlr_parse_cache);
+	new_record_replaces[Anum_bbf_function_ext_antlr_parse_cache_enabled - 1] = true;
 
 	/*
 	 * If explicitly disabling (kill switch), NULL out the 4 cache columns
 	 * for immediate invalidation. Resetting to NULL (default) does NOT
 	 * clear cache — the cached data may still be valid under session GUC.
 	 */
-	if (!enable_flag_isnull && !enable_flag)
+	if (!use_cache_isnull && !use_antlr_parse_cache)
 	{
 		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
 		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
@@ -6563,6 +6566,7 @@ update_bbf_function_cache_enabled(HeapTuple bbffunctuple, bool enable_flag, bool
 		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
 		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
 		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
+		pltsql_antlr_parse_cache_stat_evictions++;
 	}
 
 	newtup = heap_modify_tuple(bbffunctuple, dsc,
@@ -6574,9 +6578,9 @@ update_bbf_function_cache_enabled(HeapTuple bbffunctuple, bool enable_flag, bool
 }
 
 /*
- * enable_routine_parse_cache
+ * enable_antlr_parse_cache
  *
- * SQL-callable: sys.enable_routine_parse_cache(funcoid OID, enable_flag BOOLEAN)
+ * SQL-callable: sys.enable_antlr_parse_cache(routine_id OID, enable_flag BOOLEAN)
  *
  * Enables or disables ANTLR parse result caching for a specific function.
  *
@@ -6588,13 +6592,13 @@ update_bbf_function_cache_enabled(HeapTuple bbffunctuple, bool enable_flag, bool
  *   SELECT oid FROM pg_proc WHERE proname = 'myfunc';
  *
  */
-PG_FUNCTION_INFO_V1(enable_routine_parse_cache);
+PG_FUNCTION_INFO_V1(enable_antlr_parse_cache);
 Datum
-enable_routine_parse_cache(PG_FUNCTION_ARGS)
+enable_antlr_parse_cache(PG_FUNCTION_ARGS)
 {
-	Oid			funcoid;
-	bool		enable_flag = false;
-	bool		enable_flag_isnull;
+	Oid			routine_id;
+	bool		use_antlr_parse_cache = false;
+	bool		use_cache_isnull;
 	HeapTuple	proctup;
 	HeapTuple	bbffunctuple;
 	HeapTuple	copytup;
@@ -6602,22 +6606,22 @@ enable_routine_parse_cache(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(0))
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("function OID cannot be NULL")));
+				 errmsg("routine ID cannot be NULL")));
 
-	funcoid = PG_GETARG_OID(0);
-	enable_flag_isnull = PG_ARGISNULL(1);
-	if (!enable_flag_isnull)
-		enable_flag = PG_GETARG_BOOL(1);
+	routine_id = PG_GETARG_OID(0);
+	use_cache_isnull = PG_ARGISNULL(1);
+	if (!use_cache_isnull)
+		use_antlr_parse_cache = PG_GETARG_BOOL(1);
 
 	/* Verify the function exists in pg_proc */
-	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(routine_id));
 	if (!HeapTupleIsValid(proctup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("function with OID %u does not exist", funcoid)));
+				 errmsg("function with OID %u does not exist", routine_id)));
 
 	/* Verify the caller owns the function or is sysadmin */
-	if (!object_ownercheck(ProcedureRelationId, funcoid, GetUserId()) &&
+	if (!object_ownercheck(ProcedureRelationId, routine_id, GetUserId()) &&
 		!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION,
 					   NameStr(((Form_pg_proc) GETSTRUCT(proctup))->proname));
@@ -6629,14 +6633,49 @@ enable_routine_parse_cache(PG_FUNCTION_ARGS)
 	if (!HeapTupleIsValid(bbffunctuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("function with OID %u not found in babelfish_function_ext", funcoid)));
+				 errmsg("function with OID %u not found in babelfish_function_ext", routine_id)));
 
 	copytup = heap_copytuple(bbffunctuple);
 	heap_freetuple(bbffunctuple);
-	update_bbf_function_cache_enabled(copytup, enable_flag, enable_flag_isnull);
+	update_bbf_function_antlr_parse_cache(copytup, use_antlr_parse_cache, use_cache_isnull);
 	heap_freetuple(copytup);
 
-	if (enable_flag_isnull)
+	if (use_cache_isnull)
 		PG_RETURN_NULL();
-	PG_RETURN_BOOL(enable_flag);
+	PG_RETURN_BOOL(use_antlr_parse_cache);
+}
+
+/*
+ * antlr_parse_cache_stats
+ *
+ * SQL-callable: SELECT * FROM sys.antlr_parse_cache_stats()
+ *
+ * Returns session-level routine antlr parse cache statistics (per-session counters).
+ * Counters reset when the backend connection starts.
+ */
+PG_FUNCTION_INFO_V1(antlr_parse_cache_stats);
+Datum
+antlr_parse_cache_stats(PG_FUNCTION_ARGS)
+{
+	TupleDesc	tupdesc;
+	Datum		values[5];
+	bool		nulls[5] = {false, false, false, false, false};
+	HeapTuple	result;
+
+	tupdesc = CreateTemplateTupleDesc(5);
+	TupleDescInitEntry(tupdesc, 1, "cache_hits", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, 2, "cache_misses", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, 3, "cache_writes", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, 4, "cache_evictions", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, 5, "cache_errors", INT4OID, -1, 0);
+	tupdesc = BlessTupleDesc(tupdesc);
+
+	values[0] = Int32GetDatum(pltsql_antlr_parse_cache_stat_hits);
+	values[1] = Int32GetDatum(pltsql_antlr_parse_cache_stat_misses);
+	values[2] = Int32GetDatum(pltsql_antlr_parse_cache_stat_writes);
+	values[3] = Int32GetDatum(pltsql_antlr_parse_cache_stat_evictions);
+	values[4] = Int32GetDatum(pltsql_antlr_parse_cache_stat_errors);
+
+	result = heap_form_tuple(tupdesc, values, nulls);
+	PG_RETURN_DATUM(HeapTupleGetDatum(result));
 }

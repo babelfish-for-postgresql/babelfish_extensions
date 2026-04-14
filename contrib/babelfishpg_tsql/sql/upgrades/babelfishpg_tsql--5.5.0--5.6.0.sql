@@ -237,14 +237,23 @@ ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_datums TEXT DEFAULT NULL;
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_modify_date SYS.DATETIME DEFAULT NULL;
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_bbf_version TEXT DEFAULT NULL;
-ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_cache_enabled BOOL DEFAULT NULL;
+ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_cache_enabled BOOL DEFAULT NULL;
 RESET allow_system_table_mods;
 
-CREATE OR REPLACE FUNCTION sys.enable_routine_parse_cache(
-    IN funcoid OID,
-    IN enable_flag BOOLEAN
+CREATE OR REPLACE FUNCTION sys.enable_antlr_parse_cache(
+    IN routine_id OID,
+    IN use_antlr_parse_cache BOOLEAN
 ) RETURNS BOOLEAN
-AS 'babelfishpg_tsql', 'enable_routine_parse_cache' LANGUAGE C;
+AS 'babelfishpg_tsql', 'enable_antlr_parse_cache' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION sys.antlr_parse_cache_stats(
+    OUT cache_hits INT,
+    OUT cache_misses INT,
+    OUT cache_writes INT,
+    OUT cache_evictions INT,
+    OUT cache_errors INT
+) RETURNS RECORD
+AS 'babelfishpg_tsql', 'antlr_parse_cache_stats' LANGUAGE C;
 
 -- Please add your SQLs here
 

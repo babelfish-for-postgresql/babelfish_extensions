@@ -3,10 +3,10 @@
  * pltsql.h		- Definitions for the PL/tsql
  *			  procedural language
  *
- * IMPORTANT: Any struct changes here (adding/removing fields, reordering)
+ * IMPORTANT: Any struct changes here (new, adding/removing fields, reordering)
  * must also be reflected in pltsql_serializable_1.h in
  * src/pltsql_serialize/ to keep the ANTLR parse tree serialization for 
- * procedure caching in sync (babelfishpg_tsql.enable_routine_parse_cache).
+ * procedure caching in sync (babelfishpg_tsql.enable_antlr_parse_cache).
  *
  * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -1410,7 +1410,7 @@ typedef struct PLtsql_function
 	/* function body parsetree */
 	PLtsql_stmt_block *action;
 
-	/* Track if this function was loaded from ANTLR parse result cache */
+	/* Track if this function was loaded from antlr parse cache */
 	bool		from_cache;
 
 	/* these fields change when the function is used */

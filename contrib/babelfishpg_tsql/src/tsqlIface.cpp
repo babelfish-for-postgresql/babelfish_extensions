@@ -2995,7 +2995,7 @@ public:
 		 * different struct layout and no expr field. We must not cast to
 		 * PLtsql_stmt_exec in that case — the field offsets differ, especially
 		 * now that NodeTag was added as the first field of all PLtsql statement
-		 * structs for enable_routine_parse_cache serialization support.
+		 * structs for enable_antlr_parse_cache serialization support.
 		 */
 		if (stmt->cmd_type == PLTSQL_STMT_EXEC)
 		{

@@ -3,27 +3,10 @@
  * pltsql_equalfuncs.c
  *    PLtsql node equality comparison and parse tree comparison.
  *
- * Mirrors the engine's equalfuncs.c pattern: includes the generated
- * static _equal* functions (pltsql_equalfuncs_gen.c) and the switch
- * dispatch fragment (pltsql_equalfuncs_switch.c).
- *
- * Public entry points:
- *   pltsql_equal_node()          — per-node equality dispatch; switches
- *                                  on NodeTag and calls the appropriate
- *                                  generated or hand-written _equal*
- *   pltsql_compare_parse_trees() — top-level harness for comparing two
- *                                  complete PLtsql_stmt_block trees;
- *                                  called by hooks.c and pl_comp.c
- *
- * Also contains hand-written _equal* stubs for custom_read_write nodes
- * (PLtsql_expr, PLtsql_row, PLtsql_recfield, PLtsql_nsitem) that skip
- * fields known to differ between CREATE-time and EXEC-time contexts
- * (e.g., dno, lineno, itemno).
- *
  *-------------------------------------------------------------------------
  */
-#include "pltsql_serialize_macros.h" /* COMPARE_* macros, pltsql_equal_nodes_or_equal() */
-#include "pltsql_serialize.h"        /* forward declaration for pltsql_compare_parse_trees */
+#include "pltsql_serialize_macros.h"
+#include "pltsql_serialize.h"
 
 /*
  * Stub equality functions for custom_read_write nodes.
@@ -99,9 +82,8 @@ pltsql_equal_node(const void *a, const void *b)
 #include "pltsql_equalfuncs_switch.c"
 
 		default:
-			/* Unknown PLtsql node type — cannot compare */
-			retval = false;
-			elog(DEBUG1, "pltsql_equal_node: unknown PLtsql node type: %d", (int) nodeTag(a));
+			elog(ERROR, "pltsql_equal_node: unknown PLtsql node type: %d", (int) nodeTag(a));
+			retval = false;	/* unreachable, keeps compiler quiet */
 			break;
 	}
 
@@ -138,7 +120,7 @@ pltsql_compare_parse_trees(PLtsql_stmt_block *tree_a,
 		 * the caller — both trees should always be non-NULL when we
 		 * reach this point.
 		 */
-		elog(PANIC, "pltsql_validate_parse_cache[FAIL]: pltsql_compare_parse_trees: one tree is NULL (tree_a=%p, tree_b=%p)",
+		elog(PANIC, "pltsql_validate_antlr_parse_cache[FAIL]: pltsql_compare_parse_trees: one tree is NULL (tree_a=%p, tree_b=%p)",
 			 (void *) tree_a, (void *) tree_b);
 		return false;
 	}
@@ -200,7 +182,7 @@ pltsql_compare_datum_arrays(const char *fn_signature,
 
 		/* Genuine mismatch — advance both */
 		mismatches++;
-		elog(DEBUG1, "pltsql_validate_parse_cache[DIFF]: %s datum mismatch "
+		elog(DEBUG1, "pltsql_validate_antlr_parse_cache[DIFF]: %s datum mismatch "
 			 "at cached[%d] vs antlr[%d] (cached_tag=%d, antlr_tag=%d)",
 			 fn_signature, ci, ai,
 			 dc ? (int) nodeTag(dc) : -1,
@@ -216,7 +198,7 @@ pltsql_compare_datum_arrays(const char *fn_signature,
 	if (ci < cached_ndatums)
 		mismatches += (cached_ndatums - ci);
 
-	elog(LOG, "pltsql_validate_parse_cache[%s]: %s PLtsql Datums comparison "
+	elog(LOG, "pltsql_validate_antlr_parse_cache[%s]: %s PLtsql Datums comparison "
 		 "at EXEC (cached=%d, antlr=%d, mismatches=%d, extra_antlr=%d)",
 		 (mismatches == 0) ? "PASS" : "DIFF",
 		 fn_signature,

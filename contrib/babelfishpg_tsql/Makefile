@@ -90,7 +90,7 @@ OBJS += src/pltsql_bulkcopy.o
 OBJS += src/pltsql_serialize/pltsql_outfuncs_stubs.o
 OBJS += src/pltsql_serialize/pltsql_readfuncs_stubs.o
 
-# PLtsql serialization code generation (babelfishpg_tsql.enable_routine_parse_cache)
+# PLtsql serialization code generation (GUC babelfishpg_tsql.enable_antlr_parse_cache)
 PLTSQL_SER_DIR = src/pltsql_serialize
 PLTSQL_SER_HEADERS = $(PLTSQL_SER_DIR)/pltsql_serializable_1.h $(PLTSQL_SER_DIR)/pltsql_serializable_2.h
 PLTSQL_GEN_SCRIPT = $(PLTSQL_SER_DIR)/gen_pltsql_node_support.pl
