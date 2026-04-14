@@ -5293,10 +5293,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	 * when a column mismatch is detected.
 	 */
 	if (pltsql_insert_exec_had_error())
-	{
-		elog(DEBUG1, "INSERT-EXEC: Skipping flush due to previous error (column mismatch)");
 		return;
-	}
 	
 	/*
 	 * Verify that the target table schema hasn't changed since INSERT EXEC started.
@@ -5358,8 +5355,6 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 			target_table,
 			temp_table_name);
 	}
-
-	elog(DEBUG1, "INSERT-EXEC: Flushing temp table to target: %s", flush_query.data);
 
 	/*
 	 * Execute the flush INSERT in its own subtransaction that commits
@@ -5471,8 +5466,6 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
-
-		elog(DEBUG1, "INSERT-EXEC: Flush committed via exec_stmt_execsql");
 	}
 	PG_CATCH();
 	{
@@ -10152,7 +10145,6 @@ pltsql_estate_cleanup(void)
 	 */
 	if (exec_state_call_stack == NULL && pltsql_insert_exec_active())
 	{
-		elog(DEBUG1, "INSERT-EXEC: Clearing stale context in pltsql_estate_cleanup (call stack empty)");
 		pltsql_insert_exec_close_target_table();
 		pltsql_clear_insert_exec_context();
 	}

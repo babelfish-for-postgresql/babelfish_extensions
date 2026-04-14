@@ -6257,10 +6257,7 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 		 * clear the context during a legitimate INSERT EXEC operation.
 		 */
 		if (pltsql_insert_exec_active())
-		{
-			elog(DEBUG1, "INSERT-EXEC: Clearing stale context at end of batch in terminate_batch");
 			pltsql_clear_insert_exec_context();
-		}
 
 		if (pltsql_snapshot_portal != NULL)
 		{

@@ -70,8 +70,6 @@ clean_format_type_string(const char *coltype)
 	
 	result = pstrdup(coltype);
 	
-	elog(DEBUG1, "INSERT-EXEC: clean_format_type_string input: '%s'", result);
-	
 	/* Strip " without time zone" suffix if present */
 	suffix_pos = strstr(result, " without time zone");
 	if (suffix_pos != NULL)
@@ -108,12 +106,9 @@ clean_format_type_string(const char *coltype)
 		 strcmp(result, "\"varbinary\"") == 0))
 	{
 		char *new_result = psprintf("%s(max)", result);
-		elog(DEBUG1, "INSERT-EXEC: Appending (max) to type: '%s' -> '%s'", result, new_result);
 		pfree(result);
 		result = new_result;
 	}
-	
-	elog(DEBUG1, "INSERT-EXEC: clean_format_type_string output: '%s'", result);
 	
 	return result;
 }
@@ -383,10 +378,6 @@ pltsql_set_insert_exec_context(Oid temp_table_oid)
 void
 pltsql_clear_insert_exec_context(void)
 {
-	elog(DEBUG1, "INSERT-EXEC: pltsql_clear_insert_exec_context() called, target_table='%s', temp_table_oid=%u",
-		 insert_exec_ctx.target_table ? insert_exec_ctx.target_table : "NULL",
-		 insert_exec_ctx.temp_table_oid);
-	
 	/*
 	 * Only restore NestedTranCount if INSERT EXEC incremented it.
 	 * This handles the case where INSERT EXEC started with @@TRANCOUNT=0
@@ -529,9 +520,6 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 	MemoryContext oldcontext;
 	bool		is_temp_table;
 
-	elog(DEBUG1, "INSERT-EXEC: open_target_table called with target='%s'", 
-		 target_table ? target_table : "NULL");
-
 	if (target_table == NULL)
 		return;
 
@@ -547,11 +535,7 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 		relid = RangeVarGetRelid(rv, NoLock, true);
 		
 		if (!OidIsValid(relid))
-		{
-			elog(DEBUG1, "INSERT-EXEC: Temp table '%s' not found, skipping schema capture",
-				 target_table);
 			return;
-		}
 		
 		/* Store the OID for schema verification (no lock for temp tables) */
 		insert_exec_ctx.target_rel_oid = relid;
@@ -598,8 +582,6 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 		{
 			MemoryContextSwitchTo(oldcontext);
 			FlushErrorState();
-			elog(DEBUG1, "INSERT-EXEC: Could not lock target table OID %u, skipping schema capture",
-				 relid);
 			return;
 		}
 		PG_END_TRY();
@@ -620,8 +602,6 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 	{
 		MemoryContextSwitchTo(oldcontext);
 		FlushErrorState();
-		elog(DEBUG1, "INSERT-EXEC: Could not open target table OID %u for schema capture, skipping",
-			 relid);
 		insert_exec_ctx.target_rel_oid = InvalidOid;
 		return;
 	}
@@ -654,9 +634,6 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 		insert_exec_ctx.schema_sig->atttypids[i] = attr->atttypid;
 		insert_exec_ctx.schema_sig->atttypmods[i] = attr->atttypmod;
 	}
-	
-	elog(DEBUG1, "INSERT-EXEC: Captured schema signature for %s table OID %u with %d columns",
-		 is_temp_table ? "temp" : "regular", relid, insert_exec_ctx.schema_sig->natts);
 	
 	MemoryContextSwitchTo(oldcontext);
 	
@@ -696,8 +673,7 @@ pltsql_insert_exec_close_target_table(void)
 			{
 				MemoryContextSwitchTo(oldcontext);
 				FlushErrorState();
-				elog(DEBUG1, "INSERT-EXEC: Could not unlock target table OID %u, ignoring",
-					 insert_exec_ctx.target_rel_oid);
+				/* Ignore unlock failures - table may have been dropped */
 			}
 			PG_END_TRY();
 		}
@@ -758,8 +734,6 @@ pltsql_insert_exec_verify_schema(void)
 		 */
 		MemoryContextSwitchTo(oldcontext);
 		FlushErrorState();
-		elog(DEBUG1, "INSERT-EXEC: Could not open target table OID %u - table was dropped or altered",
-			 insert_exec_ctx.target_rel_oid);
 		return false;  /* Schema changed - table no longer exists */
 	}
 	PG_END_TRY();
@@ -769,8 +743,6 @@ pltsql_insert_exec_verify_schema(void)
 	/* Check if column count changed */
 	if (tupdesc->natts != insert_exec_ctx.schema_sig->natts)
 	{
-		elog(DEBUG1, "INSERT-EXEC: Schema changed - column count: original=%d, current=%d",
-			 insert_exec_ctx.schema_sig->natts, tupdesc->natts);
 		schema_changed = true;
 	}
 	else
@@ -782,16 +754,11 @@ pltsql_insert_exec_verify_schema(void)
 			if (attr->atttypid != insert_exec_ctx.schema_sig->atttypids[i] ||
 				attr->atttypmod != insert_exec_ctx.schema_sig->atttypmods[i])
 			{
-				elog(DEBUG1, "INSERT-EXEC: Schema changed - column %d type: original=%u, current=%u",
-					 i, insert_exec_ctx.schema_sig->atttypids[i], attr->atttypid);
 				schema_changed = true;
 				break;
 			}
 		}
 	}
-	
-	if (!schema_changed)
-		elog(DEBUG1, "INSERT-EXEC: Schema unchanged, %d columns verified", tupdesc->natts);
 	
 	table_close(rel, NoLock);  /* Keep the lock */
 	
@@ -955,9 +922,6 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	}
 	PG_END_TRY();
 	
-	elog(DEBUG1, "INSERT-EXEC: Early column count validation - query has %d columns, temp table has %d columns",
-		 query_natts, temp_natts);
-	
 	/* Check for column count mismatch */
 	if (query_natts != temp_natts)
 	{
@@ -1052,10 +1016,7 @@ pltsql_insert_exec_in_execution(void)
 	 * opening it (which would fail if it doesn't exist).
 	 */
 	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(temp_table_oid)))
-	{
-		elog(DEBUG1, "INSERT-EXEC: Temp table OID %u no longer exists, context is stale", temp_table_oid);
 		return false;
-	}
 	
 	/*
 	 * Get current call stack depth.
@@ -1674,9 +1635,6 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 	int			suffix = 1;
 	MemoryContext oldcontext;
 
-	elog(DEBUG1, "INSERT-EXEC: create_insert_exec_temp_table called with target='%s'",
-		 target_table ? target_table : "NULL");
-
 	/*
 	 * Generate a unique temp table name using backend PID and a suffix.
 	 * We use PostgreSQL temp tables (not Babelfish temp tables with # prefix)
@@ -1714,8 +1672,6 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 		if (suffix > 10000)
 			elog(ERROR, "INSERT-EXEC: Could not find available temp table name after 10000 attempts");
 	}
-
-	elog(DEBUG1, "INSERT-EXEC: Using temp table name: %s", temp_table_name);
 
 	/* Store the temp table name in the context for later cleanup */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
@@ -1855,8 +1811,6 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 			pfree(pg_table_ref);
 			pfree(col_names_sql.data);
 			
-			elog(DEBUG1, "INSERT-EXEC: Column query for column_list: %s", col_query.data);
-			
 			rc = SPI_execute(col_query.data, false, 0);
 			if (rc != SPI_OK_SELECT)
 			{
@@ -1867,7 +1821,6 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 			}
 			
 			proc_count = SPI_processed;
-			elog(DEBUG1, "INSERT-EXEC: Column query returned %d rows", proc_count);
 			
 			if (proc_count == 0)
 			{
@@ -2040,8 +1993,6 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 			
 			pfree(pg_table_ref);
 			
-			elog(DEBUG1, "INSERT-EXEC: Column query: %s", col_query.data);
-			
 			rc = SPI_execute(col_query.data, false, 0);
 			if (rc != SPI_OK_SELECT)
 			{
@@ -2052,7 +2003,6 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 			}
 			
 			proc_count = SPI_processed;
-			elog(DEBUG1, "INSERT-EXEC: Column query returned %d rows", proc_count);
 			
 			if (proc_count == 0)
 			{
@@ -2102,8 +2052,6 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 	if (physical_schema)
 		pfree(physical_schema);
 
-	elog(DEBUG1, "INSERT-EXEC: Creating temp table: %s", create_stmt.data);
-
 	/* 
 	 * Execute the statement to create temp table.
 	 * We use CREATE TEMP TABLE AS SELECT which returns SPI_OK_SELINTO.
@@ -2138,7 +2086,7 @@ drop_insert_exec_temp_table(Oid temp_table_oid)
 	/* Use the stored temp table name from the context */
 	if (insert_exec_ctx.temp_table_name == NULL)
 	{
-		elog(WARNING, "INSERT-EXEC: No temp table name stored, cannot drop");
+		elog(DEBUG1, "INSERT-EXEC: No temp table name stored, cannot drop");
 		return;
 	}
 
@@ -2829,9 +2777,6 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
 
-		elog(DEBUG1, "INSERT-EXEC TRY-CATCH cleanup: checking if active, is_stmt_terminating=%d, insert_exec_was_active=%d",
-			 is_stmt_terminating, insert_exec_was_active);
-
 		/*
 		 * Clean up INSERT EXEC context ONLY if the TRY-CATCH that caught the
 		 * error is at the same level or higher than where INSERT EXEC was started.
@@ -2847,32 +2792,21 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 		{
 			Oid temp_oid = pltsql_get_insert_exec_temp_table_oid();
 			
-			elog(DEBUG1, "INSERT-EXEC TRY-CATCH cleanup: is_stmt_terminating=%d, insert_exec_was_active=%d, temp_oid=%u",
-				 is_stmt_terminating, insert_exec_was_active, temp_oid);
-			
 			/* Close target table and release lock first */
 			pltsql_insert_exec_close_target_table();
-			
-			/* Clear the INSERT EXEC context */
-			pltsql_clear_insert_exec_context();
 			
 			/*
 			 * If subtransaction was released (not rolled back), drop the temp table.
 			 * When rolled back, the temp table is already gone.
+			 * IMPORTANT: drop_insert_exec_temp_table must be called BEFORE
+			 * pltsql_clear_insert_exec_context because clear_context frees
+			 * the temp_table_name that drop needs.
 			 */
 			if (is_stmt_terminating && insert_exec_was_active && OidIsValid(temp_oid))
-			{
-				elog(DEBUG1, "INSERT-EXEC TRY-CATCH cleanup: dropping temp table");
 				drop_insert_exec_temp_table(temp_oid);
-			}
-		}
-		else if (pltsql_insert_exec_active())
-		{
-			elog(DEBUG1, "INSERT-EXEC TRY-CATCH cleanup: INSERT EXEC active but TRY-CATCH is inside procedure, not cleaning up");
-		}
-		else
-		{
-			elog(DEBUG1, "INSERT-EXEC TRY-CATCH cleanup: INSERT EXEC not active");
+			
+			/* Clear the INSERT EXEC context AFTER dropping temp table */
+			pltsql_clear_insert_exec_context();
 		}
 
 		/*
@@ -3149,8 +3083,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * at the subtransaction level, so they won't be cleaned up if a nested
 		 * subtransaction (e.g., inner TRY/CATCH) rolls back.
 		 */
-		elog(DEBUG1, "INSERT-EXEC: exec_stmt_exec - insert_exec=%d, insert_exec_target='%s'",
-			 stmt->insert_exec, stmt->insert_exec_target ? stmt->insert_exec_target : "NULL");
 		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
 		{
 			/*
@@ -3820,7 +3752,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			MemoryContextSwitchTo(oldcontext);
 			CurrentResourceOwner = oldowner;
 			FlushErrorState();
-			elog(DEBUG1, "INSERT-EXEC: Failed to drop temp table, will be cleaned up at transaction end");
+			/* Temp table will be cleaned up at transaction end */
 		}
 		PG_END_TRY();
 		

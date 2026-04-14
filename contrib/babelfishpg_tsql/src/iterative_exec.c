@@ -1582,13 +1582,8 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 											   edata->message != NULL &&
 											   strstr(edata->message, "nested INSERT") != NULL);
 			
-			elog(DEBUG1, "INSERT-EXEC cleanup check: active=%d, should_cleanup_trycatch=%d, is_nested_error=%d, sqlerrcode=%d, message='%s'",
-				 insert_exec_active, should_cleanup_trycatch, is_nested_insert_exec_error,
-				 edata->sqlerrcode, edata->message ? edata->message : "NULL");
-			
 			if (insert_exec_active && (should_cleanup_trycatch || is_nested_insert_exec_error))
 			{
-				elog(DEBUG1, "TSQL TXN TSQL semantics : Cleaning up INSERT EXEC context on error (no inner TRY-CATCH or nested INSERT EXEC error)");
 				pltsql_insert_exec_close_target_table();
 				pltsql_clear_insert_exec_context();
 			}
@@ -1642,7 +1637,6 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 				if (pltsql_insert_exec_in_trycatch())
 				{
 					skip_abort = true;
-					elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback during INSERT EXEC (TRY-CATCH will handle)");
 				}
 				else
 				{
@@ -1652,7 +1646,6 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 					 * aborts. We just clear the context here - the temp table
 					 * will be dropped by the transaction abort.
 					 */
-					elog(DEBUG1, "TSQL TXN TSQL semantics : INSERT EXEC active but no TRY-CATCH, clearing context for cleanup");
 					pltsql_insert_exec_close_target_table();
 					pltsql_clear_insert_exec_context();
 				}
@@ -1703,7 +1696,6 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 					MemoryContextSwitchTo(estate->stmt_mcontext_parent);
 				else
 					MemoryContextSwitchTo(cur_ctxt);
-				elog(DEBUG1, "TSQL TXN TSQL semantics : Skip transaction rollback during INSERT EXEC, cleaned up snapshots");
 				RESUME_INTERRUPTS();
 			}
 		}
@@ -1899,8 +1891,6 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 					{
 						Oid temp_oid = pltsql_get_insert_exec_temp_table_oid();
 						
-						elog(DEBUG1, "INSERT-EXEC: Cleaning up after error caught by TRY-CATCH, temp_oid=%u", temp_oid);
-						
 						/* Close target table and release lock first */
 						pltsql_insert_exec_close_target_table();
 						
@@ -1909,9 +1899,7 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 						
 						/* Drop the temp table if it exists */
 						if (OidIsValid(temp_oid))
-						{
 							drop_insert_exec_temp_table(temp_oid);
-						}
 					}
 					else if (pltsql_insert_exec_active())
 					{
@@ -1930,14 +1918,7 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 						 * rows inserted before the error should be kept.
 						 */
 						if (pltsql_insert_exec_had_error())
-						{
-							elog(DEBUG1, "INSERT-EXEC: Column mismatch error caught by inner TRY-CATCH, re-throwing");
 							ReThrowError(estate->cur_error->error);
-						}
-						else
-						{
-							elog(DEBUG1, "INSERT-EXEC: Non-column-mismatch error caught by inner TRY-CATCH, allowing flush");
-						}
 					}
 
 					/* Goto error handling blocks */
