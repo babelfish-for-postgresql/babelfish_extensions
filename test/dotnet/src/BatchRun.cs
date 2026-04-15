@@ -312,11 +312,11 @@ namespace BabelfishDotnetFramework
 								stCount--;
 							}
 						}
-						/* Case for SqlBulkCopy to ENR temp table (standard temp table) */
-						else if (strLine.ToLowerInvariant().StartsWith("sqlbulkcopy_enr"))
+						/* Case for SqlBulkCopy to temp table (both ENR and non-ENR) */
+						else if (strLine.ToLowerInvariant().StartsWith("sqlbulkcopy_temptable"))
 						{
 							testUtils.PrintToLogsOrConsole("######################################################################", logger, "information");
-							testUtils.PrintToLogsOrConsole("################# SqlBulkCopy ENR Temp Table Test ###################", logger, "information");
+							testUtils.PrintToLogsOrConsole("################# SqlBulkCopy Temp Table Test #######################", logger, "information");
 							testUtils.PrintToLogsOrConsole("######################################################################\n", logger, "information");
 							
 							var result = strLine.Split("#!#", StringSplitOptions.RemoveEmptyEntries);
@@ -327,34 +327,11 @@ namespace BabelfishDotnetFramework
 								int rowCount = result.Length >= 3 ? int.Parse(result[2].Trim()) : 5;
 								
 								testUtils.PrintToLogsOrConsole($"Temp Table: {tempTableName}, Rows: {rowCount}", logger, "information");
-								testFlag &= testUtils.SqlBulkCopyEnrTempTable(bblCnn, tempTableName, rowCount, testName, logger, ref stCount);
+								testFlag &= testUtils.SqlBulkCopyTempTable(bblCnn, tempTableName, rowCount, testName, logger, ref stCount);
 							}
 							else
 							{
-								testUtils.PrintToLogsOrConsole("Invalid format. Use: sqlbulkcopy_enr#!##TempTableName#!#rowCount", logger, "error");
-								stCount--;
-							}
-						}
-						/* Case for SqlBulkCopy to Non-ENR temp table (temp table using UDT) */
-						else if (strLine.ToLowerInvariant().StartsWith("sqlbulkcopy_nonenr"))
-						{
-							testUtils.PrintToLogsOrConsole("######################################################################", logger, "information");
-							testUtils.PrintToLogsOrConsole("############## SqlBulkCopy Non-ENR Temp Table Test ##################", logger, "information");
-							testUtils.PrintToLogsOrConsole("######################################################################\n", logger, "information");
-							
-							var result = strLine.Split("#!#", StringSplitOptions.RemoveEmptyEntries);
-							
-							if (result.Length >= 2)
-							{
-								string tempTableName = result[1].Trim();
-								int rowCount = result.Length >= 3 ? int.Parse(result[2].Trim()) : 5;
-								
-								testUtils.PrintToLogsOrConsole($"Temp Table: {tempTableName}, Rows: {rowCount}", logger, "information");
-								testFlag &= testUtils.SqlBulkCopyNonEnrTempTable(bblCnn, tempTableName, rowCount, testName, logger, ref stCount);
-							}
-							else
-							{
-								testUtils.PrintToLogsOrConsole("Invalid format. Use: sqlbulkcopy_nonenr#!##TempTableName#!#rowCount", logger, "error");
+								testUtils.PrintToLogsOrConsole("Invalid format. Use: sqlbulkcopy_temptable#!##TempTableName#!#rowCount", logger, "error");
 								stCount--;
 							}
 						}

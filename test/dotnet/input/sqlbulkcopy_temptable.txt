@@ -5,19 +5,19 @@
 
 # Test 1: Basic ENR Temp Table
 Create table #EnrTempTable1(id int, name varchar(50))
-sqlbulkcopy_enr#!##EnrTempTable1#!#5
+sqlbulkcopy_temptable#!##EnrTempTable1#!#5
 Select * from #EnrTempTable1 order by id
 drop table #EnrTempTable1
 
 # Test 2: ENR Temp Table with more rows
 Create table #EnrTempTable2(id int, name varchar(50))
-sqlbulkcopy_enr#!##EnrTempTable2#!#10
+sqlbulkcopy_temptable#!##EnrTempTable2#!#10
 Select count(*) as row_count from #EnrTempTable2
 drop table #EnrTempTable2
 
 # Test 3: ENR Temp Table - verify data integrity
 Create table #EnrTempTable3(id int, name varchar(50))
-sqlbulkcopy_enr#!##EnrTempTable3#!#3
+sqlbulkcopy_temptable#!##EnrTempTable3#!#3
 Select id, name from #EnrTempTable3 order by id
 drop table #EnrTempTable3
 
@@ -26,25 +26,20 @@ drop table #EnrTempTable3
 # Test 4: Non-ENR Temp Table (using UDT)
 BEGIN TRY CREATE TYPE dbo.BcpTestVarcharType FROM VARCHAR(100) END TRY BEGIN CATCH END CATCH
 Create table #NonEnrTempTable4(id int, name dbo.BcpTestVarcharType)
-sqlbulkcopy_nonenr#!##NonEnrTempTable4#!#5
+sqlbulkcopy_temptable#!##NonEnrTempTable4#!#5
 Select * from #NonEnrTempTable4 order by id
 drop table #NonEnrTempTable4
 
 # Test 5: Non-ENR Temp Table with more rows
 BEGIN TRY CREATE TYPE dbo.BcpTestVarcharType2 FROM VARCHAR(100) END TRY BEGIN CATCH END CATCH
 Create table #NonEnrTempTable5(id int, name dbo.BcpTestVarcharType2)
-sqlbulkcopy_nonenr#!##NonEnrTempTable5#!#10
+sqlbulkcopy_temptable#!##NonEnrTempTable5#!#10
 Select count(*) as row_count from #NonEnrTempTable5
 drop table #NonEnrTempTable5
 
-# SECTION 3: Verify sp_tablecollations_100 procedures
+# SECTION 3: Verify sp_tablecollations_100 procedure works with temp tables
 
-# Test 6: Check sys.sp_tablecollations_100_enr returns correct info
-Create table #collTest6(id int, name varchar(50), description nvarchar(100))
-Select * from sys.sp_tablecollations_100_enr('#collTest6')
-drop table #collTest6
-
-# Test 7: Check tempdb.dbo.sp_tablecollations_100 procedure
+# Test 6: Check tempdb.dbo.sp_tablecollations_100 procedure
 Create table #collTest7(a int, b varchar(30), c nvarchar(30), d char(10))
 exec tempdb.dbo.sp_tablecollations_100 '#collTest7'
 drop table #collTest7

@@ -836,17 +836,18 @@ CREATE OR REPLACE PROCEDURE sys.sp_tablecollations_100
     IN "@object" nvarchar(4000)
 )
 AS $$
-    BEGIN
-        -- Existing logic for regular tables
-        SELECT
-            s_tcv.colid AS colid,
-            s_tcv.name AS name,
-            s_tcv.tds_collation_100 AS tds_collation,
-            s_tcv.collation_100 AS collation
-        FROM sys.spt_tablecollations_view s_tcv
-        WHERE s_tcv.object_id = (SELECT sys.object_id(@object))
-        ORDER BY colid;
-    END;
+BEGIN
+    select
+        s_tcv.colid         AS colid,
+        s_tcv.name          AS name,
+        s_tcv.tds_collation_100 AS tds_collation,
+        s_tcv.collation_100 AS collation
+    from
+        sys.spt_tablecollations_view s_tcv
+    where
+        s_tcv.object_id = (SELECT sys.object_id(@object))
+    order by colid;
+END;
 $$
 LANGUAGE 'pltsql';
 

@@ -138,6 +138,7 @@ typedef enum PltsqlInitPrivsOptions
 /*****************************************
  * 			General Hooks
  *****************************************/
+ 
 static bool is_bbf_tds_connection(void);
 
 /*****************************************

@@ -2,7 +2,7 @@
 -- BABEL-5264: Tests for sp_tablecollations_100 with temp table support
 
 -- Basic ENR temp table - procedure
-CREATE TABLE #collTest1(id int, name varchar(50), description nvarchar(100))
+CREATE TABLE #collTest1(id int, name varchar(50) collate bbf_unicode_cp1_ci_as, description nvarchar(100) collate bbf_unicode_cp1_ci_ai)
 GO
 
 EXEC sp_tablecollations_100 '#collTest1'
@@ -15,7 +15,7 @@ DROP TABLE #collTest1
 GO
 
 -- Basic ENR temp table - view
-CREATE TABLE #viewTest1(id int, name varchar(50), description nvarchar(100))
+CREATE TABLE #viewTest1(id int, name varchar(50) collate bbf_unicode_cp1_ci_ai, description nvarchar(100) collate bbf_unicode_cp1_ci_as)
 GO
 
 SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
@@ -28,10 +28,10 @@ GO
 -- Temp table with various column types - procedure
 CREATE TABLE #collTest2(
     a int,
-    b varchar(100),
-    c nvarchar(50),
-    d char(5),
-    e nchar(10),
+    b varchar(100) collate bbf_unicode_cp1_ci_as,
+    c nvarchar(50) collate bbf_unicode_cp1_ci_ai,
+    d char(5) collate bbf_unicode_cp1_ci_as,
+    e nchar(10) collate bbf_unicode_cp1_ci_ai,
     f binary(10),
     g varbinary(20)
 )
@@ -49,10 +49,10 @@ GO
 -- Temp table with various column types - view
 CREATE TABLE #viewTest2(
     a int,
-    b varchar(100),
-    c nvarchar(50),
-    d char(5),
-    e nchar(10),
+    b varchar(100) collate bbf_unicode_cp1_ci_ai,
+    c nvarchar(50) collate bbf_unicode_cp1_ci_as,
+    d char(5) collate bbf_unicode_cp1_ci_ai,
+    e nchar(10) collate bbf_unicode_cp1_ci_as,
     f binary(10),
     g varbinary(20)
 )
@@ -100,7 +100,7 @@ DROP TABLE #viewNoChar
 GO
 
 -- Non-ENR temp table (using UDT) - procedure
-CREATE TABLE #nonEnrTest1(id int, name dbo.TestVarcharType1, description nvarchar(100))
+CREATE TABLE #nonEnrTest1(id int, name dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_as, description nvarchar(100) collate bbf_unicode_cp1_ci_as)
 GO
 
 EXEC sp_tablecollations_100 '#nonEnrTest1'
@@ -113,7 +113,7 @@ DROP TABLE #nonEnrTest1
 GO
 
 -- Non-ENR temp table (using UDT) - view
-CREATE TABLE #viewNonEnr1(id int, name dbo.TestVarcharType1, description nvarchar(100))
+CREATE TABLE #viewNonEnr1(id int, name dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_ai, description nvarchar(100) collate bbf_unicode_cp1_ci_ai)
 GO
 
 SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
@@ -126,8 +126,8 @@ GO
 -- Non-ENR temp table with multiple UDT columns - procedure
 CREATE TABLE #nonEnrTest2(
     a int,
-    b dbo.TestVarcharType2,
-    c nvarchar(100),
+    b dbo.TestVarcharType2 collate bbf_unicode_cp1_ci_ai,
+    c nvarchar(100) collate bbf_unicode_cp1_ci_as,
     d binary(10)
 )
 GO
@@ -144,8 +144,8 @@ GO
 -- Non-ENR temp table with multiple UDT columns - view
 CREATE TABLE #viewNonEnr2(
     a int,
-    b dbo.TestVarcharType2,
-    c nvarchar(100),
+    b dbo.TestVarcharType2 collate bbf_unicode_cp1_ci_as,
+    c nvarchar(100) collate bbf_unicode_cp1_ci_ai,
     d binary(10)
 )
 GO
@@ -190,10 +190,10 @@ DROP TABLE #viewNonEnrNoChar
 GO
 
 -- Multiple temp tables at once - procedure
-CREATE TABLE #multiTest1(a varchar(50))
+CREATE TABLE #multiTest1(a varchar(50) collate bbf_unicode_cp1_ci_as)
 GO
 
-CREATE TABLE #multiTest2(b nvarchar(100))
+CREATE TABLE #multiTest2(b nvarchar(100) collate bbf_unicode_cp1_ci_ai)
 GO
 
 EXEC sp_tablecollations_100 '#multiTest1'
@@ -215,10 +215,10 @@ DROP TABLE #multiTest2
 GO
 
 -- Multiple temp tables at once - view
-CREATE TABLE #viewMulti1(a varchar(50))
+CREATE TABLE #viewMulti1(a varchar(50) collate bbf_unicode_cp1_ci_ai)
 GO
 
-CREATE TABLE #viewMulti2(b nvarchar(100))
+CREATE TABLE #viewMulti2(b nvarchar(100) collate bbf_unicode_cp1_ci_as)
 GO
 
 SELECT 'viewMulti1' as tablename, colid, name, collation_100 FROM sys.spt_tablecollations_view 
@@ -248,7 +248,7 @@ WHERE object_id = OBJECT_ID('#nonExistentTable') ORDER BY colid
 GO
 
 -- Regular permanent table - procedure
-CREATE TABLE babel5264_perm_table(id int, name varchar(50), description nvarchar(100))
+CREATE TABLE babel5264_perm_table(id int, name varchar(50) collate bbf_unicode_cp1_ci_as, description nvarchar(100) collate bbf_unicode_cp1_ci_ai)
 GO
 
 EXEC sp_tablecollations_100 'babel5264_perm_table'
@@ -261,7 +261,7 @@ DROP TABLE babel5264_perm_table
 GO
 
 -- Regular permanent table - view
-CREATE TABLE babel5264_perm_view_test(id int, name varchar(50), description nvarchar(100))
+CREATE TABLE babel5264_perm_view_test(id int, name varchar(50) collate bbf_unicode_cp1_ci_ai, description nvarchar(100) collate bbf_unicode_cp1_ci_as)
 GO
 
 SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
@@ -272,7 +272,7 @@ DROP TABLE babel5264_perm_view_test
 GO
 
 -- Test babelfish_get_all_temp_table_attributes function directly
-CREATE TABLE #attrTest(col1 int, col2 varchar(50), col3 nvarchar(100))
+CREATE TABLE #attrTest(col1 int, col2 varchar(50) collate bbf_unicode_cp1_ci_as, col3 nvarchar(100) collate bbf_unicode_cp1_ci_as)
 GO
 
 SELECT attname, attnum FROM sys.babelfish_get_all_temp_table_attributes() 
@@ -283,7 +283,7 @@ DROP TABLE #attrTest
 GO
 
 -- Test babelfish_get_all_temp_table_attributes with non-ENR temp table
-CREATE TABLE #attrTestNonEnr(col1 int, col2 dbo.TestVarcharType1, col3 nvarchar(100))
+CREATE TABLE #attrTestNonEnr(col1 int, col2 dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_ai, col3 nvarchar(100) collate bbf_unicode_cp1_ci_ai)
 GO
 
 SELECT attname, attnum FROM sys.babelfish_get_all_temp_table_attributes() 
@@ -294,10 +294,10 @@ DROP TABLE #attrTestNonEnr
 GO
 
 -- Test with mixed ENR and non-ENR temp tables
-CREATE TABLE #mixedEnr(a varchar(50))
+CREATE TABLE #mixedEnr(a varchar(50) collate bbf_unicode_cp1_ci_as)
 GO
 
-CREATE TABLE #mixedNonEnr(b dbo.TestVarcharType1)
+CREATE TABLE #mixedNonEnr(b dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_ai)
 GO
 
 EXEC sp_tablecollations_100 '#mixedEnr'
@@ -321,7 +321,7 @@ DROP TABLE #mixedNonEnr
 GO
 
 -- View count check - should include temp tables
-CREATE TABLE #countTest(a varchar(50))
+CREATE TABLE #countTest(a varchar(50) collate bbf_unicode_cp1_ci_as)
 GO
 
 SELECT COUNT(*) as total_rows FROM sys.spt_tablecollations_view WHERE object_id = OBJECT_ID('#countTest')
@@ -366,7 +366,7 @@ GO
 
 -- tsql
 -- Verify TDS connection returns results after psql tests
-CREATE TABLE #tdsVerify(col1 varchar(50))
+CREATE TABLE #tdsVerify(col1 varchar(50) collate bbf_unicode_cp1_ci_ai)
 GO
 
 EXEC sp_tablecollations_100 '#tdsVerify'
@@ -379,7 +379,7 @@ DROP TABLE #tdsVerify
 GO
 
 -- Call procedure via wrapper proc - ENR temp table
-CREATE TABLE #procWrapperTest1(col1 varchar(50), col2 nvarchar(100))
+CREATE TABLE #procWrapperTest1(col1 varchar(50) collate bbf_unicode_cp1_ci_as, col2 nvarchar(100) collate bbf_unicode_cp1_ci_ai)
 GO
 
 EXEC dbo.babel5264_test_proc '#procWrapperTest1'
@@ -389,7 +389,7 @@ DROP TABLE #procWrapperTest1
 GO
 
 -- Call procedure via wrapper proc - non-ENR temp table
-CREATE TABLE #procWrapperTest2(col1 dbo.TestVarcharType1, col2 nvarchar(100))
+CREATE TABLE #procWrapperTest2(col1 dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_ai, col2 nvarchar(100) collate bbf_unicode_cp1_ci_as)
 GO
 
 EXEC dbo.babel5264_test_proc '#procWrapperTest2'
@@ -399,7 +399,7 @@ DROP TABLE #procWrapperTest2
 GO
 
 -- Call view via wrapper proc - ENR temp table
-CREATE TABLE #viewWrapperTest1(col1 varchar(50), col2 nvarchar(100))
+CREATE TABLE #viewWrapperTest1(col1 varchar(50) collate bbf_unicode_cp1_ci_as, col2 nvarchar(100) collate bbf_unicode_cp1_ci_as)
 GO
 
 EXEC dbo.babel5264_test_view_proc '#viewWrapperTest1'
@@ -409,7 +409,7 @@ DROP TABLE #viewWrapperTest1
 GO
 
 -- Call view via wrapper proc - non-ENR temp table
-CREATE TABLE #viewWrapperTest2(col1 dbo.TestVarcharType1, col2 nvarchar(100))
+CREATE TABLE #viewWrapperTest2(col1 dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_ai, col2 nvarchar(100) collate bbf_unicode_cp1_ci_ai)
 GO
 
 EXEC dbo.babel5264_test_view_proc '#viewWrapperTest2'
@@ -419,7 +419,7 @@ DROP TABLE #viewWrapperTest2
 GO
 
 -- Call function via wrapper proc - ENR temp table
-CREATE TABLE #funcWrapperTest1(col1 varchar(50), col2 nvarchar(100))
+CREATE TABLE #funcWrapperTest1(col1 varchar(50) collate bbf_unicode_cp1_ci_ai, col2 nvarchar(100) collate bbf_unicode_cp1_ci_as)
 GO
 
 EXEC dbo.babel5264_test_func_proc
@@ -429,7 +429,7 @@ DROP TABLE #funcWrapperTest1
 GO
 
 -- Call function via wrapper proc - non-ENR temp table
-CREATE TABLE #funcWrapperTest2(col1 dbo.TestVarcharType1, col2 nvarchar(100))
+CREATE TABLE #funcWrapperTest2(col1 dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_as, col2 nvarchar(100) collate bbf_unicode_cp1_ci_ai)
 GO
 
 EXEC dbo.babel5264_test_func_proc

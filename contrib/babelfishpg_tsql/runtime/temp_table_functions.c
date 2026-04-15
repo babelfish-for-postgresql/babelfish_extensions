@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * temp_table_hooks.c
+ * temp_table_functions.c
  *	  Functions for handling temp table attribute lookups
  *
  *-------------------------------------------------------------------------
@@ -25,9 +25,9 @@
 #include "utils/lsyscache.h"
 #include "utils/queryenvironment.h"
 
-#include "../src/hooks.h"
-#include "../src/pltsql.h"
-#include "../src/multidb.h"
+#include "src/hooks.h"
+#include "src/pltsql.h"
+#include "src/multidb.h"
 
 PG_FUNCTION_INFO_V1(get_all_temp_table_attributes);
 
