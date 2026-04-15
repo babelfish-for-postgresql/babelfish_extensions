@@ -2214,7 +2214,9 @@ TdsSendRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt,
 	}
 
 	SendColumnMetadataToken(typeinfo->natts, false);
-	if (relMetaDataInfoList != NIL)
+	if (relMetaDataInfoList != NIL && pltsql_plugin_handler_ptr &&
+		pltsql_plugin_handler_ptr->pltsql_no_browsetable &&
+		(*pltsql_plugin_handler_ptr->pltsql_no_browsetable))
     {
         SendColInfoToken(typeinfo->natts, false);
     }
