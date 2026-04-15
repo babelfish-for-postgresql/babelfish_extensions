@@ -308,7 +308,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: '17.9',
+      version: '17.10',
       upgrade-type: null
     },
     { 
