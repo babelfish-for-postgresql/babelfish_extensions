@@ -71,6 +71,7 @@ cd $SCRIPT_DIR
 cd ..
 CUR_WS=$PWD
 export PATH=$CUR_WS/postgres/bin:$PATH
+export LD_LIBRARY_PATH=$CUR_WS/postgres/lib:$LD_LIBRARY_PATH
 echo "Current Workspace: $CUR_WS"
 
 TARGET_WS=$2
