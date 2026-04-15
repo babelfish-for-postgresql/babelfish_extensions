@@ -39,6 +39,16 @@ typedef struct forxml_auto_state
 	Oid			   *base_types;			/* Base type OID per column (after domain flattening) */
 	bool			out_funcs_cached;	/* Whether output functions have been cached */
 
+	/*
+	 * T-SQL datatype conversion cache - populated on first row.
+	 * Caches the result of update_tsql_datatype_and_val's SPI_gettype +
+	 * get_namespace_oid + GetSysCacheOid2 lookups per column.
+	 * 0 = no conversion needed, 1 = datetime/smalldatetime/datetime2,
+	 * 2 = datetimeoffset
+	 */
+	int			   *tsql_convert_type;	/* Per-column T-SQL conversion type */
+	bool			tsql_types_cached;	/* Whether T-SQL type cache is populated */
+
 	/* State for XML generation */
 	int				max_depth;			/* Maximum nesting depth seen */
 	char		  **prev_values;		/* Previous row values for comparison */
@@ -71,6 +81,8 @@ static void close_elements_to_level(StringInfo state, forxml_auto_state *auto_st
 static void output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil);
 static char *cached_value_to_xml_string(Datum value, int col_idx, forxml_auto_state *auto_state, Oid orig_type);
 static void init_output_func_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
+static void init_tsql_type_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
+static void cached_update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, int col_idx, forxml_auto_state *auto_state);
 static bool validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tupdesc);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_xml_sfunc);
@@ -781,6 +793,10 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 	auto_state->base_types = (Oid *) palloc0(num_cols * sizeof(Oid));
 	auto_state->out_funcs_cached = false;
 
+	/* T-SQL type conversion cache — populated on first row */
+	auto_state->tsql_convert_type = (int *) palloc0(num_cols * sizeof(int));
+	auto_state->tsql_types_cached = false;
+
 	str_copy = pstrdup(metadata_str);
 
 	/* Parse comma-separated entries (names are pre-escaped, no commas in them) */
@@ -845,7 +861,11 @@ xml_auto_get_column_value_as_string(HeapTuple tuple, TupleDesc tupdesc, int col_
 }
 
 /*
- * Find the first nesting level where current row differs from previous row.
+ * Find the first nesting level where current row differs from previous row,
+ * and update prev_values with the current row's values in the same pass.
+ * This avoids a separate "store prev values" loop and saves one value
+ * conversion per column per row.
+ *
  * Returns the level number where change first occurs.
  * Returns max_depth+1 if nothing changed.
  * Returns 1 if this is the first row.
@@ -880,8 +900,10 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 				first_change = level;
 		}
 
-		if (curr_val != NULL)
-			pfree(curr_val);
+		/* Update prev_values in the same pass to avoid a separate loop */
+		if (auto_state->prev_values[i] != NULL)
+			pfree(auto_state->prev_values[i]);
+		auto_state->prev_values[i] = curr_val;
 	}
 
 	return first_change;
@@ -1006,6 +1028,80 @@ init_output_func_cache(forxml_auto_state *auto_state, TupleDesc tupdesc)
 }
 
 /*
+ * Initialize the T-SQL datatype conversion cache for all columns.
+ * Determines once per column whether it needs special T-SQL datetime formatting,
+ * avoiding repeated SPI_gettype + get_namespace_oid + GetSysCacheOid2 lookups.
+ *
+ * tsql_convert_type values: 0 = no conversion, 1 = datetime, 2 = datetimeoffset
+ */
+static void
+init_tsql_type_cache(forxml_auto_state *auto_state, TupleDesc tupdesc)
+{
+	Oid nspoid = get_namespace_oid("sys", true);
+
+	for (int i = 0; i < auto_state->num_columns; i++)
+	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+		char *typename;
+		Oid tsql_datatype_oid;
+
+		if (att->attisdropped)
+			continue;
+
+		typename = SPI_gettype(tupdesc, i + 1);
+		if (typename == NULL)
+			continue;
+
+		tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+											CStringGetDatum(typename),
+											ObjectIdGetDatum(nspoid));
+
+		if (tsql_datatype_oid == att->atttypid)
+		{
+			if (strcmp(typename, "datetime") == 0 ||
+				strcmp(typename, "smalldatetime") == 0 ||
+				strcmp(typename, "datetime2") == 0)
+				auto_state->tsql_convert_type[i] = 1;
+			else if (strcmp(typename, "datetimeoffset") == 0)
+				auto_state->tsql_convert_type[i] = 2;
+		}
+	}
+	auto_state->tsql_types_cached = true;
+}
+
+/*
+ * Cached version of update_tsql_datatype_and_val for AUTO mode.
+ * Uses pre-computed tsql_convert_type to skip catalog lookups on every row.
+ */
+static void
+cached_update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc,
+									Oid *datatype_oid, Datum *colval,
+									int col_idx, forxml_auto_state *auto_state)
+{
+	int convert_type = auto_state->tsql_convert_type[col_idx];
+
+	if (convert_type == 1)
+	{
+		/* datetime / smalldatetime / datetime2 */
+		char *val = SPI_getvalue(tuple, tupdesc, col_idx + 1);
+		StringInfo format_output = makeStringInfo();
+		tsql_for_datetime_format(format_output, val);
+		*colval = CStringGetDatum(format_output->data);
+		*datatype_oid = CSTRINGOID;
+	}
+	else if (convert_type == 2)
+	{
+		/* datetimeoffset */
+		char *val = SPI_getvalue(tuple, tupdesc, col_idx + 1);
+		StringInfo format_output = makeStringInfo();
+		tsql_for_datetimeoffset_format(format_output, val);
+		*colval = CStringGetDatum(format_output->data);
+		*datatype_oid = CSTRINGOID;
+	}
+	/* else: convert_type == 0, no conversion needed */
+}
+
+/*
  * Output XML for current row in AUTO mode.
  *
  * Algorithm:
@@ -1027,6 +1123,10 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 	/* Initialize output function cache on first row (covers all columns) */
 	if (!auto_state->out_funcs_cached)
 		init_output_func_cache(auto_state, tupdesc);
+
+	/* Initialize T-SQL type conversion cache on first row */
+	if (!auto_state->tsql_types_cached)
+		init_tsql_type_cache(auto_state, tupdesc);
 
 	/* Determine the deepest level that has columns in this row */
 	for (int i = 0; i < auto_state->num_columns; i++)
@@ -1119,7 +1219,7 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 
 			colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 			datatype_oid = att->atttypid;
-			update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, false, i);
+			cached_update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, i, auto_state);
 
 			if (elements)
 			{
@@ -1181,19 +1281,17 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 		auto_state->open_element_levels[level] = 1;
 	}
 
-	/* Store current values for next row comparison */
-	for (int i = 0; i < auto_state->num_columns; i++)
+	/* prev_values already updated in find_first_changed_level */
+
+	/* On first row, store values since find_first_changed_level skips comparison */
+	if (auto_state->first_row)
 	{
-		char *val;
-
-		if (auto_state->nest_levels[i] == 0)
-			continue;
-
-		val = xml_auto_get_column_value_as_string(tuple, tupdesc, i, auto_state);
-
-		if (auto_state->prev_values[i] != NULL)
-			pfree(auto_state->prev_values[i]);
-		auto_state->prev_values[i] = val;
+		for (int i = 0; i < auto_state->num_columns; i++)
+		{
+			if (auto_state->nest_levels[i] == 0)
+				continue;
+			auto_state->prev_values[i] = xml_auto_get_column_value_as_string(tuple, tupdesc, i, auto_state);
+		}
 	}
 
 	/* The deepest output level was self-closed, so mark it as not open */
