@@ -54,12 +54,11 @@ get_all_temp_table_attributes(PG_FUNCTION_ARGS)
 
 	attrel = table_open(AttributeRelationId, AccessShareLock);
 	enrList = get_namedRelList();
-	non_enr_tables = getRelationsInNamespace(get_myTempNamespace(), RELKIND_RELATION);
+	non_enr_tables = getRelationsInNamespace(GetTempNamespace(), RELKIND_RELATION);
 
 	foreach(lc, enrList)
 	{
 		EphemeralNamedRelation enr = (EphemeralNamedRelation) lfirst(lc);
-
 		if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 		{
 			List *attList = enr->md.cattups[ENR_CATTUP_ATTRIBUTE];
@@ -68,7 +67,6 @@ get_all_temp_table_attributes(PG_FUNCTION_ARGS)
 			foreach(attlc, attList)
 			{
 				HeapTuple	tup = (HeapTuple) lfirst(attlc);
-
 				if (tup != NULL)
 					tuplestore_puttuple(rsinfo->setResult, heap_copytuple(tup));
 			}
@@ -82,10 +80,8 @@ get_all_temp_table_attributes(PG_FUNCTION_ARGS)
 		SysScanDesc attscan;
 		HeapTuple	atttup;
 
-		ScanKeyInit(&attskey[0], Anum_pg_attribute_attrelid,
-					BTEqualStrategyNumber, F_OIDEQ, ObjectIdGetDatum(relid));
-		attscan = systable_beginscan(attrel, AttributeRelidNumIndexId,
-									 true, NULL, 1, attskey);
+		ScanKeyInit(&attskey[0], Anum_pg_attribute_attrelid, BTEqualStrategyNumber, F_OIDEQ, ObjectIdGetDatum(relid));
+		attscan = systable_beginscan(attrel, AttributeRelidNumIndexId, true, NULL, 1, attskey);
 		while (HeapTupleIsValid(atttup = systable_getnext(attscan)))
 		{
 			tuplestore_puttuple(rsinfo->setResult, atttup);

@@ -40,3 +40,34 @@ BEGIN
     ORDER BY attrelid, attnum
 END
 GO
+
+-- psql
+-- Create PL/pgSQL procedure that creates a temp table (non-ENR)
+CREATE OR REPLACE PROCEDURE sys.psql_temp_proc()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    CREATE TEMP TABLE IF NOT EXISTS "#temp1"(a int, b varchar(50), c text);
+END;
+$$;
+GO
+
+-- Create PL/pgSQL procedure that creates a regular table
+CREATE OR REPLACE PROCEDURE sys.psql_reg_proc()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    CREATE TABLE IF NOT EXISTS perm1 (a int, b varchar(50), c text);
+END;
+$$;
+GO
+
+-- Create PL/pgSQL procedure that creates a regular table with # in name
+CREATE OR REPLACE PROCEDURE sys.psql_hash_proc()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    CREATE TABLE IF NOT EXISTS "#table1"(a int, b varchar(50), c text);
+END;
+$$;
+GO

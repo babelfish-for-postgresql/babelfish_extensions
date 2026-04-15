@@ -437,3 +437,52 @@ GO
 
 DROP TABLE #funcWrapperTest2
 GO
+
+-- Test PL/pgSQL procedure that creates temp table (non-ENR)
+EXEC sys.psql_temp_proc
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#temp1') ORDER BY colid
+GO
+
+EXEC sp_tablecollations_100 '#temp1'
+GO
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#temp1'
+GO
+
+SELECT attname, attnum FROM sys.babelfish_get_all_temp_table_attributes() 
+WHERE attnum > 0 ORDER BY attrelid, attnum
+GO
+
+DROP TABLE "#temp1"
+GO
+
+-- Test PL/pgSQL procedure that creates regular table
+EXEC sys.psql_reg_proc
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('perm1') ORDER BY colid
+GO
+
+EXEC sp_tablecollations_100 'perm1'
+GO
+
+DROP TABLE perm1
+GO
+
+-- Test PL/pgSQL procedure that creates regular table with # in name
+EXEC sys.psql_hash_proc
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#table1') ORDER BY colid
+GO
+
+EXEC sp_tablecollations_100 '#table1'
+GO
+
+DROP TABLE "#table1"
+GO
