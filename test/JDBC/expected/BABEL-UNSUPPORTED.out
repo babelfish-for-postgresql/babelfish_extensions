@@ -242,7 +242,7 @@ select current_setting('babelfishpg_tsql.no_browsetable');
 GO
 ~~START~~
 text
-on
+off
 ~~END~~
 
 
