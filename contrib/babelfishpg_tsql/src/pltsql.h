@@ -2396,7 +2396,6 @@ extern bool pltsql_insert_exec_in_execution(void);
 extern bool pltsql_insert_exec_flush_in_progress(void);
 extern void pltsql_insert_exec_set_flush_in_progress(bool in_progress);
 extern void pltsql_insert_exec_set_target_table(const char *target_table);
-extern int pltsql_get_insert_exec_base_tran_count(void);
 extern Oid pltsql_get_insert_exec_temp_table_oid(void);
 extern const char *pltsql_get_insert_exec_target_table(void);
 extern Oid pltsql_get_insert_exec_target_rel_oid(void);

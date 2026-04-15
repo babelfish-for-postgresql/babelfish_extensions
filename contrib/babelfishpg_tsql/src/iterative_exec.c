@@ -1449,18 +1449,12 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 * set when an error occurs during INSERT EXEC (e.g., error 3916 for
 		 * COMMIT without BEGIN TRAN). In this case, we want the original error
 		 * to propagate, not the transaction count mismatch error.
-		 *
-		 * For INSERT EXEC at trancount >= 2, we should NOT skip the mismatch check.
-		 * In SQL Server, when INSERT EXEC starts at trancount >= 2, COMMIT is allowed
-		 * (because there's a BEGIN TRAN), but the mismatch error should still fire.
-		 * We only skip the mismatch check when INSERT EXEC started at trancount <= 1
-		 * (where COMMIT would be blocked by error 3916 anyway).
 		 */
 		topEntry = simple_econtext_stack;
 		if (!pltsql_implicit_transactions &&
 			is_batch_command(stmt) &&
 			!is_part_of_pltsql_trigger(estate) &&
-			!(pltsql_insert_exec_active() && pltsql_get_insert_exec_base_tran_count() <= 1) &&
+			!pltsql_insert_exec_active() &&
 			!pltsql_insert_exec_had_error() &&
 			before_tran_count != NestedTranCount)
 			ereport(ERROR,

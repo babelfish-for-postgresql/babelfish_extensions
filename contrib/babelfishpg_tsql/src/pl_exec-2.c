@@ -144,11 +144,8 @@ typedef struct InsertExecContext
 	char	   *temp_table_name;		/* Name of temp table for buffering (dynamically chosen) */
 	char	   *target_table;			/* Target table name */
 	char	   *column_list;			/* Column list for INSERT */
-	int			base_tran_count;		/* NestedTranCount when INSERT EXEC started */
-	int			saved_nested_tran_count;/* Original NestedTranCount to restore on cleanup */
 	bool		flush_in_progress;		/* True during flush phase to block commit_stmt */
 	int			call_stack_depth;		/* Call stack depth when INSERT EXEC was started */
-	bool		incremented_tran_count;	/* True if INSERT EXEC incremented NestedTranCount */
 	bool		had_error;				/* True if INSERT EXEC had an error */
 	bool		pending_drop;			/* True if temp table needs to be dropped when SPI is available */
 	Oid			target_rel_oid;			/* OID of target table - lock held to detect schema changes */
@@ -165,11 +162,8 @@ static InsertExecContext insert_exec_ctx = {
 	.temp_table_name = NULL,
 	.target_table = NULL,
 	.column_list = NULL,
-	.base_tran_count = 0,
-	.saved_nested_tran_count = 0,
 	.flush_in_progress = false,
 	.call_stack_depth = 0,
-	.incremented_tran_count = false,
 	.had_error = false,
 	.pending_drop = false,
 	.target_rel_oid = InvalidOid,
@@ -314,6 +308,10 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 		depth++;
 		cur = cur->next;
 	}
+	/*
+	 * Record the call stack depth when INSERT EXEC was started.
+	 * This is used to detect stale INSERT EXEC context.
+	 */
 	insert_exec_ctx.call_stack_depth = depth;
 	
 	/*
@@ -321,39 +319,6 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 	 * if the INSERT EXEC context is stale (from a previous execution).
 	 */
 	insert_exec_ctx.execution_id = ++insert_exec_execution_counter;
-	
-	/*
-	 * Record the NestedTranCount when INSERT EXEC started.
-	 * In SQL Server, INSERT EXEC implicitly starts a transaction, so @@TRANCOUNT=1.
-	 * When the procedure does BEGIN TRAN, it becomes @@TRANCOUNT=2, allowing COMMIT.
-	 * 
-	 * Save the original NestedTranCount so we can restore it on cleanup.
-	 * This is needed because during INSERT EXEC, BEGIN TRAN increments NestedTranCount
-	 * but doesn't start a real transaction. If an error occurs, we need to restore
-	 * NestedTranCount to its original value.
-	 */
-	insert_exec_ctx.saved_nested_tran_count = NestedTranCount;
-	
-	/*
-	 * In SQL Server, INSERT EXEC implicitly starts a transaction if there isn't one already.
-	 * - If @@TRANCOUNT=0 before INSERT EXEC, it becomes 1 (implicit transaction)
-	 * - If @@TRANCOUNT>=1 before INSERT EXEC, it stays the same (already in a transaction)
-	 * 
-	 * We simulate this by only incrementing NestedTranCount if it's currently 0.
-	 * The base_tran_count is the @@TRANCOUNT value that the procedure sees at start.
-	 */
-	insert_exec_ctx.incremented_tran_count = false;
-	if (NestedTranCount == 0)
-	{
-		NestedTranCount = 1;
-		insert_exec_ctx.incremented_tran_count = true;
-		
-		/* Update the protocol plugin with the new NestedTranCount */
-		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
-			(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
-	}
-	
-	insert_exec_ctx.base_tran_count = NestedTranCount;
 }
 
 /*
@@ -370,37 +335,14 @@ pltsql_set_insert_exec_context(Oid temp_table_oid)
  * Clear the global INSERT EXEC context.
  * Called when exiting INSERT EXEC context.
  * 
- * We only restore NestedTranCount if INSERT EXEC incremented it (from 0 to 1).
- * If COMMIT was called inside INSERT EXEC (and allowed because @@TRANCOUNT > 1),
- * the decrement should persist so that the transaction count mismatch warning
- * is generated.
+ * EXPERIMENT: Removed transaction count restoration.
+ * We're testing if skipping auto-commit is sufficient.
  */
 void
 pltsql_clear_insert_exec_context(void)
 {
-	/*
-	 * Only restore NestedTranCount if INSERT EXEC incremented it.
-	 * This handles the case where INSERT EXEC started with @@TRANCOUNT=0
-	 * and we incremented it to 1 for the implicit transaction.
-	 * 
-	 * If INSERT EXEC started with @@TRANCOUNT>=1, we don't restore because:
-	 * 1. We didn't increment it
-	 * 2. If COMMIT was called inside, the decrement should persist
-	 */
-	if (insert_exec_ctx.target_table != NULL && insert_exec_ctx.incremented_tran_count)
-	{
-		NestedTranCount = insert_exec_ctx.saved_nested_tran_count;
-		
-		/* Update the protocol plugin with the restored NestedTranCount */
-		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
-			(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
-	}
-	
 	insert_exec_ctx.temp_table_oid = InvalidOid;
-	insert_exec_ctx.base_tran_count = 0;
-	insert_exec_ctx.saved_nested_tran_count = 0;
 	insert_exec_ctx.call_stack_depth = 0;
-	insert_exec_ctx.incremented_tran_count = false;
 	insert_exec_ctx.execution_id = 0;
 	/* Note: We do NOT reset insert_exec_ctx.had_error here - it's reset by pltsql_insert_exec_clear_error_flag() */
 	if (insert_exec_ctx.target_table)
@@ -1109,17 +1051,6 @@ pltsql_insert_exec_set_target_table(const char *target_table)
 	{
 		insert_exec_ctx.target_table = NULL;
 	}
-}
-
-/*
- * Get the base transaction count for INSERT EXEC.
- * This is the NestedTranCount + 1 when INSERT EXEC started.
- * Used to determine if COMMIT is allowed during INSERT EXEC.
- */
-int
-pltsql_get_insert_exec_base_tran_count(void)
-{
-	return insert_exec_ctx.base_tran_count;
 }
 
 /*
