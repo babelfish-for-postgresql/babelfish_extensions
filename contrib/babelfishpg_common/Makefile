@@ -69,7 +69,8 @@ GENERATED_UPGRADES = \
     sql/$(EXTENSION)--4.6.0--4.7.0.sql \
     sql/$(EXTENSION)--4.7.0--4.8.0.sql \
     sql/$(EXTENSION)--4.8.0--4.9.0.sql \
-    sql/$(EXTENSION)--4.9.0--4.10.0.sql
+    sql/$(EXTENSION)--4.9.0--4.10.0.sql \
+    sql/$(EXTENSION)--4.10.0--4.11.0.sql
 
 ifdef PREV_EXTVERSION
 DATA = sql/$(EXTENSION)--$(PREV_EXTVERSION).sql
@@ -157,6 +158,9 @@ ifeq (,$(filter $(FLAG_TO_CHECK),$(PG_CPPFLAGS)))
 
     sql/$(EXTENSION)--4.9.0--4.10.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D PREV_VERSION=4.9.0 -D CUR_VERSION=4.10.0 $< | sed 's/^# /-- /g' > $@
+
+    sql/$(EXTENSION)--4.10.0--4.11.0.sql: sql/upgrades/babelfishpg_upgrades.in
+		cpp -D PREV_VERSION=4.10.0 -D CUR_VERSION=4.11.0 $< | sed 's/^# /-- /g' > $@
 else
 # The flag is present build the .in file including the spatial type files
     sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
@@ -200,6 +204,9 @@ else
 
     sql/$(EXTENSION)--4.9.0--4.10.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=4.9.0 -D CUR_VERSION=4.10.0 $< | sed 's/^# /-- /g' > $@
+
+    sql/$(EXTENSION)--4.10.0--4.11.0.sql: sql/upgrades/babelfishpg_upgrades.in
+		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=4.10.0 -D CUR_VERSION=4.11.0 $< | sed 's/^# /-- /g' > $@
 
 endif
 
