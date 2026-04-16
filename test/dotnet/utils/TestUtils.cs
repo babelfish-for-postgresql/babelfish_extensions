@@ -34,22 +34,43 @@ namespace BabelfishDotnetFramework
 			}
 		}
 
-		public bool insertBulkCopy(DbConnection bblCnn, DbCommand bblCmd, String sourceTable, String destinationTable, Logger logger, ref int stCount)
+		public bool insertBulkCopy(DbConnection bblCnn, DbCommand bblCmd, String sourceTable, String destinationTable, Logger logger, ref int stCount, bool useSameConnection = false)
 		{
 			bblCmd.CommandText = "Select * from " + sourceTable;
 			DbDataReader reader = null;
 			try
 			{
-				/* To Enforce Reset Connection. */
-				reader = bblCmd.ExecuteReader();
-				using (SqlConnection destinationConnection =
-                       new SqlConnection(ConfigSetup.BblConnectionString))
+				if (useSameConnection)
 				{
-					destinationConnection.Open();
+					/* 
+					 * Use same connection for temp tables as they are session-scoped.
+					 * Load data into DataTable first since we can't have open reader while bulk copying on the same connection.
+					 */
+					reader = bblCmd.ExecuteReader();
+					DataTable dataTable = new DataTable();
+					dataTable.Load(reader);
+					reader.Close();
+					reader = null;
 
-					SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection);
-					bulkCopy.DestinationTableName = destinationTable;
-					bulkCopy.WriteToServer(reader);
+					using (SqlBulkCopy bulkCopy = new SqlBulkCopy((SqlConnection)bblCnn))
+					{
+						bulkCopy.DestinationTableName = destinationTable;
+						bulkCopy.WriteToServer(dataTable);
+					}
+				}
+				else
+				{
+					/* To Enforce Reset Connection. */
+					reader = bblCmd.ExecuteReader();
+					using (SqlConnection destinationConnection =
+						   new SqlConnection(ConfigSetup.BblConnectionString))
+					{
+						destinationConnection.Open();
+
+						SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection);
+						bulkCopy.DestinationTableName = destinationTable;
+						bulkCopy.WriteToServer(reader);
+					}
 				}
 			}
 			catch (Exception e)
@@ -63,7 +84,7 @@ namespace BabelfishDotnetFramework
 			}
 			finally
 			{
-				reader.Close();
+				reader?.Close();
 			}
 			return true;
 		}
@@ -705,41 +726,5 @@ namespace BabelfishDotnetFramework
 			}
 		}
 
-		/* Test SqlBulkCopy to temp table (both ENR and non-ENR) */
-		public bool SqlBulkCopyTempTable(DbConnection bblCnn, string tempTableName, int rowCount,
-			string testName, Logger logger, ref int stCount)
-		{
-			using var file = new StreamWriter(Path.Combine(ConfigSetup.OutputFolder, testName + ".out"), true);
-			file.WriteLine($"#Q#SqlBulkCopy to temp table: {tempTableName}");
-
-			try
-			{
-				/* Prepare test data */
-				var table = new DataTable();
-				table.Columns.Add("id", typeof(int));
-				table.Columns.Add("name", typeof(string));
-
-				for (int i = 0; i < rowCount; i++)
-					table.Rows.Add(i, $"Name{i}");
-
-				/* Bulk copy using same connection (required for temp tables) */
-				using (var bulkCopy = new SqlBulkCopy((SqlConnection)bblCnn))
-				{
-					bulkCopy.DestinationTableName = tempTableName;
-					bulkCopy.WriteToServer(table);
-				}
-
-				file.WriteLine($"SUCCESS: Inserted {rowCount} rows into temp table");
-				PrintToLogsOrConsole($"SqlBulkCopy to temp table {tempTableName} succeeded", logger, "information");
-				return true;
-			}
-			catch (Exception e)
-			{
-				file.WriteLine($"#E#{e.Message}");
-				PrintToLogsOrConsole($"SqlBulkCopy to temp table {tempTableName} failed: {e.Message}", logger, "error");
-				stCount--;
-				return false;
-			}
-		}
 	}
 }

@@ -327,7 +327,27 @@ namespace BabelfishDotnetFramework
 								int rowCount = result.Length >= 3 ? int.Parse(result[2].Trim()) : 5;
 								
 								testUtils.PrintToLogsOrConsole($"Temp Table: {tempTableName}, Rows: {rowCount}", logger, "information");
-								testFlag &= testUtils.SqlBulkCopyTempTable(bblCnn, tempTableName, rowCount, testName, logger, ref stCount);
+								
+								/* Create a permanent table as source with test data */
+								string sourceTable = "BcpSourceTable_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+								
+								using (var tempCmd = testUtils.CreateDbCommand(null, bblCnn))
+								{
+									tempCmd.CommandText = $"CREATE TABLE {sourceTable}(id int, name varchar(50))";
+									tempCmd.ExecuteNonQuery();
+									
+									for (int row = 0; row < rowCount; row++)
+									{
+										tempCmd.CommandText = $"INSERT INTO {sourceTable} VALUES({row}, 'Name{row}')";
+										tempCmd.ExecuteNonQuery();
+									}
+									
+									/* Use insertBulkCopy with same connection for temp tables */
+									testFlag &= testUtils.insertBulkCopy(bblCnn, tempCmd, sourceTable, tempTableName, logger, ref stCount, true);
+									
+									tempCmd.CommandText = $"DROP TABLE {sourceTable}";
+									tempCmd.ExecuteNonQuery();
+								}
 							}
 							else
 							{

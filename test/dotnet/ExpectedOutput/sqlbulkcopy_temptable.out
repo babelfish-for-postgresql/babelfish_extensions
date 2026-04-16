@@ -1,6 +1,6 @@
+#Q#CREATE TYPE dbo.BcpTestVarcharType FROM VARCHAR(100)
+#Q#CREATE TYPE dbo.BcpTestVarcharType2 FROM VARCHAR(100)
 #Q#Create table #EnrTempTable1(id int, name varchar(50))
-#Q#SqlBulkCopy to temp table: #EnrTempTable1
-SUCCESS: Inserted 5 rows into temp table
 #Q#Select * from #EnrTempTable1 order by id
 #D#int#!#varchar
 0#!#Name0
@@ -10,25 +10,18 @@ SUCCESS: Inserted 5 rows into temp table
 4#!#Name4
 #Q#drop table #EnrTempTable1
 #Q#Create table #EnrTempTable2(id int, name varchar(50))
-#Q#SqlBulkCopy to temp table: #EnrTempTable2
-SUCCESS: Inserted 10 rows into temp table
 #Q#Select count(*) as row_count from #EnrTempTable2
 #D#int
 10
 #Q#drop table #EnrTempTable2
 #Q#Create table #EnrTempTable3(id int, name varchar(50))
-#Q#SqlBulkCopy to temp table: #EnrTempTable3
-SUCCESS: Inserted 3 rows into temp table
 #Q#Select id, name from #EnrTempTable3 order by id
 #D#int#!#varchar
 0#!#Name0
 1#!#Name1
 2#!#Name2
 #Q#drop table #EnrTempTable3
-#Q#BEGIN TRY CREATE TYPE dbo.BcpTestVarcharType FROM VARCHAR(100) END TRY BEGIN CATCH END CATCH
 #Q#Create table #NonEnrTempTable4(id int, name dbo.BcpTestVarcharType)
-#Q#SqlBulkCopy to temp table: #NonEnrTempTable4
-SUCCESS: Inserted 5 rows into temp table
 #Q#Select * from #NonEnrTempTable4 order by id
 #D#int#!#varchar
 0#!#Name0
@@ -37,10 +30,7 @@ SUCCESS: Inserted 5 rows into temp table
 3#!#Name3
 4#!#Name4
 #Q#drop table #NonEnrTempTable4
-#Q#BEGIN TRY CREATE TYPE dbo.BcpTestVarcharType2 FROM VARCHAR(100) END TRY BEGIN CATCH END CATCH
 #Q#Create table #NonEnrTempTable5(id int, name dbo.BcpTestVarcharType2)
-#Q#SqlBulkCopy to temp table: #NonEnrTempTable5
-SUCCESS: Inserted 10 rows into temp table
 #Q#Select count(*) as row_count from #NonEnrTempTable5
 #D#int
 10

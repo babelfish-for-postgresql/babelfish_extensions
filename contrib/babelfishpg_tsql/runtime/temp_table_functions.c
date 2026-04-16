@@ -59,10 +59,16 @@ get_all_temp_table_attributes(PG_FUNCTION_ARGS)
 	foreach(lc, enrList)
 	{
 		EphemeralNamedRelation enr = (EphemeralNamedRelation) lfirst(lc);
+		List *attList;
+		ListCell *attlc;
+
 		if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 		{
-			List *attList = enr->md.cattups[ENR_CATTUP_ATTRIBUTE];
-			ListCell *attlc;
+			/* skipping toast tables */
+			if (OidIsValid(get_toast_parent_oid(enr->md.name)))
+				continue;
+
+			attList = enr->md.cattups[ENR_CATTUP_ATTRIBUTE];
 
 			foreach(attlc, attList)
 			{
