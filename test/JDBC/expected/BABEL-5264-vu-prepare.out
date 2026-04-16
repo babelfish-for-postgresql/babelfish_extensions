@@ -43,7 +43,7 @@ GO
 
 -- psql
 -- Create PL/pgSQL procedure that creates a temp table (non-ENR)
-CREATE OR REPLACE PROCEDURE sys.psql_temp_proc()
+CREATE OR REPLACE PROCEDURE master_dbo.psql_temp_proc()
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -53,7 +53,7 @@ $$;
 GO
 
 -- Create PL/pgSQL procedure that creates a regular table
-CREATE OR REPLACE PROCEDURE sys.psql_reg_proc()
+CREATE OR REPLACE PROCEDURE master_dbo.psql_reg_proc()
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -63,7 +63,7 @@ $$;
 GO
 
 -- Create PL/pgSQL procedure that creates a regular table with # in name
-CREATE OR REPLACE PROCEDURE sys.psql_hash_proc()
+CREATE OR REPLACE PROCEDURE master_dbo.psql_hash_proc()
 LANGUAGE plpgsql
 AS $$
 BEGIN

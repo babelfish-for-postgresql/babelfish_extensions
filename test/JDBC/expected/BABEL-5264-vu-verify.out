@@ -754,7 +754,7 @@ DROP TABLE #funcWrapperTest2
 GO
 
 -- Test PL/pgSQL procedure that creates temp table (non-ENR)
-EXEC sys.psql_temp_proc
+EXEC dbo.psql_temp_proc
 GO
 
 SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
@@ -803,7 +803,7 @@ DROP TABLE "#temp1"
 GO
 
 -- Test PL/pgSQL procedure that creates regular table
-EXEC sys.psql_reg_proc
+EXEC dbo.psql_reg_proc
 GO
 
 SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
@@ -831,7 +831,7 @@ DROP TABLE perm1
 GO
 
 -- Test PL/pgSQL procedure that creates regular table with # in name
-EXEC sys.psql_hash_proc
+EXEC dbo.psql_hash_proc
 GO
 
 SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 

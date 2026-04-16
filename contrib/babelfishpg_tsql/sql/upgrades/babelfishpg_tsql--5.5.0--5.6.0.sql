@@ -788,6 +788,7 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         c.is_sparse = 0
     UNION ALL
     -- Temp tables from ENR and non-ENR sources
+    -- We use pg_my_temp_schema() because all temp tables share the same temp namespace
     SELECT
         CAST(a.attrelid AS int)          AS object_id,
         CAST(pg_my_temp_schema() AS int) AS schema_id,

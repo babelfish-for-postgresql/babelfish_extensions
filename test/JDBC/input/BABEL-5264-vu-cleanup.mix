@@ -21,11 +21,11 @@ GO
 
 -- psql
 -- Cleanup psql procedures
-DROP PROCEDURE IF EXISTS sys.psql_temp_proc();
+DROP PROCEDURE IF EXISTS master_dbo.psql_temp_proc();
 GO
 
-DROP PROCEDURE IF EXISTS sys.psql_reg_proc();
+DROP PROCEDURE IF EXISTS master_dbo.psql_reg_proc();
 GO
 
-DROP PROCEDURE IF EXISTS sys.psql_hash_proc();
+DROP PROCEDURE IF EXISTS master_dbo.psql_hash_proc();
 GO
