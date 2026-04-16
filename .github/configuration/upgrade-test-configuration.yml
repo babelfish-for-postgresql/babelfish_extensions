@@ -169,19 +169,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: '17.10',
-      upgrade-type: null
-    },
-    { 
-      version: target.latest,
-      upgrade-type: major
-    }
-  ]
-},
-{
-  upgrade-path: [
-    {
-      version: 18.3,
+      version: 17.9,
       upgrade-type: null
     },
     { 
@@ -297,18 +285,6 @@ upgrade-version: [{
   upgrade-path: [
     {
       version: '16.14',
-      upgrade-type: null
-    },
-    { 
-      version: target.latest,
-      upgrade-type: major
-    }
-  ]
-},
-{
-  upgrade-path: [
-    {
-      version: '17.10',
       upgrade-type: null
     },
     { 
