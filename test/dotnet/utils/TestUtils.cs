@@ -669,7 +669,6 @@ namespace BabelfishDotnetFramework
 				return null;
 			}
 		}
-
 		public void FillSchemaTest(DbConnection conn, DbTransaction transaction, string query, 
 			string testName, Logger logger, ref int stCount)
 		{
@@ -725,6 +724,5 @@ namespace BabelfishDotnetFramework
 				stCount--;
 			}
 		}
-
 	}
 }
