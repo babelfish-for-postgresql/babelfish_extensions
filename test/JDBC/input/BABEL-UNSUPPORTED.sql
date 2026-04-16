@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- sla 50000
 -- default value was changed from 'strict' to 'ignore'.
 -- to minimize touching test, test 'strict' first.
@@ -115,6 +116,11 @@ select current_setting('babelfishpg_tsql.showplan_xml');
 GO
 
 SET NO_BROWSETABLE OFF;
+GO
+select current_setting('babelfishpg_tsql.no_browsetable');
+GO
+
+SET NO_BROWSETABLE ON;
 GO
 select current_setting('babelfishpg_tsql.no_browsetable');
 GO
