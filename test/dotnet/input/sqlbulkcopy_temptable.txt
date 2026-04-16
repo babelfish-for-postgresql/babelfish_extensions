@@ -1,51 +1,55 @@
 # SqlBulkCopy to Temp Table Tests
 # Tests the sp_tablecollations_100 implementation for BCP to temp tables
+# Uses insertBulk with sameConnection parameter for temp tables
 
 # Create UDTs for non-ENR tests (UDT columns cause temp tables to be non-ENR)
 CREATE TYPE dbo.BcpTestVarcharType FROM VARCHAR(100)
 CREATE TYPE dbo.BcpTestVarcharType2 FROM VARCHAR(100)
 
+# Create source table for bulk copy tests
+CREATE TABLE BcpSourceTable(id int, name varchar(50))
+INSERT INTO BcpSourceTable VALUES(0, 'Name0')
+INSERT INTO BcpSourceTable VALUES(1, 'Name1')
+INSERT INTO BcpSourceTable VALUES(2, 'Name2')
+INSERT INTO BcpSourceTable VALUES(3, 'Name3')
+INSERT INTO BcpSourceTable VALUES(4, 'Name4')
+
 # SECTION 1: SqlBulkCopy to ENR Temp Tables
 
 # Test 1: Basic ENR Temp Table
-Create table #EnrTempTable1(id int, name varchar(50))
-sqlbulkcopy_temptable#!##EnrTempTable1#!#5
-Select * from #EnrTempTable1 order by id
-drop table #EnrTempTable1
+CREATE TABLE #EnrTempTable1(id int, name varchar(50))
+insertBulk#!#BcpSourceTable#!##EnrTempTable1#!#sameConnection
+SELECT * FROM #EnrTempTable1 ORDER BY id
+DROP TABLE #EnrTempTable1
 
-# Test 2: ENR Temp Table with more rows
-Create table #EnrTempTable2(id int, name varchar(50))
-sqlbulkcopy_temptable#!##EnrTempTable2#!#10
-Select count(*) as row_count from #EnrTempTable2
-drop table #EnrTempTable2
-
-# Test 3: ENR Temp Table - verify data integrity
-Create table #EnrTempTable3(id int, name varchar(50))
-sqlbulkcopy_temptable#!##EnrTempTable3#!#3
-Select id, name from #EnrTempTable3 order by id
-drop table #EnrTempTable3
+# Test 2: ENR Temp Table - verify data integrity
+CREATE TABLE #EnrTempTable2(id int, name varchar(50))
+insertBulk#!#BcpSourceTable#!##EnrTempTable2#!#sameConnection
+SELECT COUNT(*) AS row_count FROM #EnrTempTable2
+DROP TABLE #EnrTempTable2
 
 # SECTION 2: SqlBulkCopy to Non-ENR Temp Tables
 
-# Test 4: Non-ENR Temp Table (using UDT)
-Create table #NonEnrTempTable4(id int, name dbo.BcpTestVarcharType)
-sqlbulkcopy_temptable#!##NonEnrTempTable4#!#5
-Select * from #NonEnrTempTable4 order by id
-drop table #NonEnrTempTable4
+# Test 3: Non-ENR Temp Table (using UDT)
+CREATE TABLE #NonEnrTempTable3(id int, name dbo.BcpTestVarcharType)
+insertBulk#!#BcpSourceTable#!##NonEnrTempTable3#!#sameConnection
+SELECT * FROM #NonEnrTempTable3 ORDER BY id
+DROP TABLE #NonEnrTempTable3
 
-# Test 5: Non-ENR Temp Table with more rows
-Create table #NonEnrTempTable5(id int, name dbo.BcpTestVarcharType2)
-sqlbulkcopy_temptable#!##NonEnrTempTable5#!#10
-Select count(*) as row_count from #NonEnrTempTable5
-drop table #NonEnrTempTable5
+# Test 4: Non-ENR Temp Table - verify data integrity
+CREATE TABLE #NonEnrTempTable4(id int, name dbo.BcpTestVarcharType2)
+insertBulk#!#BcpSourceTable#!##NonEnrTempTable4#!#sameConnection
+SELECT COUNT(*) AS row_count FROM #NonEnrTempTable4
+DROP TABLE #NonEnrTempTable4
 
 # SECTION 3: Verify sp_tablecollations_100 procedure works with temp tables
 
-# Test 6: Check tempdb.dbo.sp_tablecollations_100 procedure
-Create table #collTest7(a int, b varchar(30), c nvarchar(30), d char(10))
-exec tempdb.dbo.sp_tablecollations_100 '#collTest7'
-drop table #collTest7
+# Test 5: Check tempdb.dbo.sp_tablecollations_100 procedure
+CREATE TABLE #collTest5(a int, b varchar(30), c nvarchar(30), d char(10))
+EXEC tempdb.dbo.sp_tablecollations_100 '#collTest5'
+DROP TABLE #collTest5
 
-# Cleanup: Drop UDTs created for non-ENR tests
+# Cleanup
+DROP TABLE BcpSourceTable
 DROP TYPE IF EXISTS dbo.BcpTestVarcharType
 DROP TYPE IF EXISTS dbo.BcpTestVarcharType2

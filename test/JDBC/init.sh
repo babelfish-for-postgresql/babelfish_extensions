@@ -31,7 +31,6 @@ ALTER USER jdbc_user CREATEDB;
 \c babelfish_db
 ALTER SYSTEM SET babelfishpg_tsql.database_name = 'babelfish_db';
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-ALTER SYSTEM SET babelfishpg_tsql.server_collation_name = 'bbf_unicode_cp1_ci_as';
 SELECT pg_reload_conf();
 \c babelfish_db
 show babelfishpg_tsql.database_name;
@@ -54,7 +53,6 @@ ALTER USER jdbc_user CREATEDB;
 \c babelfish_db
 ALTER SYSTEM SET babelfishpg_tsql.database_name = 'babelfish_db';
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-ALTER SYSTEM SET babelfishpg_tsql.server_collation_name = 'bbf_unicode_cp1_ci_as';
 ALTER SYSTEM SET parallel_setup_cost = 0;
 ALTER SYSTEM SET parallel_tuple_cost = 0;
 ALTER SYSTEM SET min_parallel_index_scan_size = 0;

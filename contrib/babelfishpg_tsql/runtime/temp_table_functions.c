@@ -44,7 +44,7 @@ get_all_temp_table_attributes(PG_FUNCTION_ARGS)
 	ListCell   *lc, *lcoid;
 	Relation	attrel;
 	List	   *enrList;
-	List	   *non_enr_tables;
+	List	   *nonEnrList;
 
 	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC | MAT_SRF_BLESS);
 
@@ -53,8 +53,8 @@ get_all_temp_table_attributes(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	attrel = table_open(AttributeRelationId, AccessShareLock);
-	enrList = get_namedRelList();
-	non_enr_tables = getRelationsInNamespace(GetTempNamespace(), RELKIND_RELATION);
+	enrList = get_namedRelListByRelkind(RELKIND_RELATION);
+	nonEnrList = getRelationsInNamespace(GetTempNamespace(), RELKIND_RELATION);
 
 	foreach(lc, enrList)
 	{
@@ -62,24 +62,17 @@ get_all_temp_table_attributes(PG_FUNCTION_ARGS)
 		List *attList;
 		ListCell *attlc;
 
-		if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
+		attList = enr->md.cattups[ENR_CATTUP_ATTRIBUTE];
+
+		foreach(attlc, attList)
 		{
-			/* skipping toast tables */
-			if (OidIsValid(get_toast_parent_oid(enr->md.name)))
-				continue;
-
-			attList = enr->md.cattups[ENR_CATTUP_ATTRIBUTE];
-
-			foreach(attlc, attList)
-			{
-				HeapTuple	tup = (HeapTuple) lfirst(attlc);
-				if (tup != NULL)
-					tuplestore_puttuple(rsinfo->setResult, heap_copytuple(tup));
-			}
+			HeapTuple	tup = (HeapTuple) lfirst(attlc);
+			if (tup != NULL)
+				tuplestore_puttuple(rsinfo->setResult, heap_copytuple(tup));
 		}
 	}
 
-	foreach(lcoid, non_enr_tables)
+	foreach(lcoid, nonEnrList)
 	{
 		Oid relid = (Oid) lfirst_oid(lcoid);
 		ScanKeyData attskey[1];
@@ -94,6 +87,8 @@ get_all_temp_table_attributes(PG_FUNCTION_ARGS)
 		}
 		systable_endscan(attscan);
 	}
+
+	list_free(enrList);
 	table_close(attrel, AccessShareLock);
 	PG_RETURN_NULL();
 }

@@ -215,7 +215,8 @@ namespace BabelfishDotnetFramework
 								$"########################## INSERT BULK:- {strLine} ##########################", logger, "information");
 							string sourceTable = result[1];
 							string destinationTable = result[2];
-							testFlag &= testUtils.insertBulkCopy(bblCnn, bblCmd, sourceTable, destinationTable, logger, ref stCount);
+							bool sameConnection = result.Length > 3 && result[3].Trim().ToLowerInvariant() == "sameconnection";
+							testFlag &= testUtils.insertBulkCopy(bblCnn, bblCmd, sourceTable, destinationTable, logger, ref stCount, sameConnection);
 						}
 						else if (strLine.ToLowerInvariant().StartsWith("traninsertbulk"))
 						{
@@ -309,49 +310,6 @@ namespace BabelfishDotnetFramework
 							else
 							{
 								testUtils.PrintToLogsOrConsole("Invalid format. Use: fillschema_test#!#tablename OR fillschema_test#!#SELECT * FROM table", logger, "error");
-								stCount--;
-							}
-						}
-						/* Case for SqlBulkCopy to temp table (both ENR and non-ENR) */
-						else if (strLine.ToLowerInvariant().StartsWith("sqlbulkcopy_temptable"))
-						{
-							testUtils.PrintToLogsOrConsole("######################################################################", logger, "information");
-							testUtils.PrintToLogsOrConsole("################# SqlBulkCopy Temp Table Test #######################", logger, "information");
-							testUtils.PrintToLogsOrConsole("######################################################################\n", logger, "information");
-							
-							var result = strLine.Split("#!#", StringSplitOptions.RemoveEmptyEntries);
-							
-							if (result.Length >= 2)
-							{
-								string tempTableName = result[1].Trim();
-								int rowCount = result.Length >= 3 ? int.Parse(result[2].Trim()) : 5;
-								
-								testUtils.PrintToLogsOrConsole($"Temp Table: {tempTableName}, Rows: {rowCount}", logger, "information");
-								
-								/* Create a permanent table as source with test data */
-								string sourceTable = "BcpSourceTable_" + Guid.NewGuid().ToString("N").Substring(0, 8);
-								
-								using (var tempCmd = testUtils.CreateDbCommand(null, bblCnn))
-								{
-									tempCmd.CommandText = $"CREATE TABLE {sourceTable}(id int, name varchar(50))";
-									tempCmd.ExecuteNonQuery();
-									
-									for (int row = 0; row < rowCount; row++)
-									{
-										tempCmd.CommandText = $"INSERT INTO {sourceTable} VALUES({row}, 'Name{row}')";
-										tempCmd.ExecuteNonQuery();
-									}
-									
-									/* Use insertBulkCopy with same connection for temp tables */
-									testFlag &= testUtils.insertBulkCopy(bblCnn, tempCmd, sourceTable, tempTableName, logger, ref stCount, true);
-									
-									tempCmd.CommandText = $"DROP TABLE {sourceTable}";
-									tempCmd.ExecuteNonQuery();
-								}
-							}
-							else
-							{
-								testUtils.PrintToLogsOrConsole("Invalid format. Use: sqlbulkcopy_temptable#!##TempTableName#!#rowCount", logger, "error");
 								stCount--;
 							}
 						}
