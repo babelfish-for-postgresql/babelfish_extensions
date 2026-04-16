@@ -636,3 +636,7 @@ ignore#!#test_constraint_like_before_17_8-or-16_12-vu-prepare
 ignore#!#test_constraint_like_before_17_8-or-16_12-vu-verify
 ignore#!#test_constraint_like_before_17_8-or-16_12-vu-cleanup
 
+
+#TDS fault injection framework is meant for internal testing only. So, ignore tds_faultinjection tests in stable branch
+ignore#!#tds_faultinjection
+ignore#!#babel_tds_fault_injection
