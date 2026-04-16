@@ -6,44 +6,17 @@
  *
  * Structs here mirror pltsql-2.h with pg_node_attr() annotations added.
  * Read by gen_pltsql_node_support.pl to generate serialization,
- * deserialization, and equality functions in order to support routine 
- * ANTLR parse tree caching.
- * Refer: GUCs `enable_antlr_parse_cache` and `validate_antlr_parse_cache`
+ * deserialization, and equality functions for antlr parse tree caching.
  *
- * NOTES:
- *  - This file is NOT compiled by the C compiler.
- *  - Annotations follow PostgreSQL's gen_node_support.pl pattern.
- *  - When pltsql-2.h struct definitions change, this file must be updated
- *    to match (keeping the pg_node_attr annotations).
+ * This file is NOT compiled by the C compiler. When pltsql-2.h struct
+ * definitions change, this file must be updated to match.
+ * See pltsql_serializable_1.h header for pg_node_attr annotation guide.
  *
  * IDENTIFICATION
- *    contrib/babelfishpg_tsql/src/pltsql_serialize/pltsql_serializable_2.h 
- *    (mirrors babelfish_extensions/contrib/babelfishpg_tsql/src/pltsql-2.h)
+ *    contrib/babelfishpg_tsql/src/pltsql_serialize/pltsql_serializable_2.h
+ *    (mirrors contrib/babelfishpg_tsql/src/pltsql-2.h)
  *
  *-------------------------------------------------------------------------
- */
-
-/*
- * Annotation Guide:
- * 
- * Struct-level attributes (placed after opening brace):
- *   - custom_read_write: Struct has custom serialization/deserialization logic
- *   - no_copy: Don't generate copy support
- *   - no_equal: Don't generate equal support
- *   - special_read_write: Special handling for read/write
- *
- * Field-level attributes (placed after field declaration):
- *   - read_write_ignore: Skip this field during serialization/deserialization
- *   - array_size(field): Specifies the field that contains array size
- *   - copy_as(expr): Use custom expression for copying
- *   - read_as(expr): Use custom expression for reading
- *   - equal_ignore: Skip this field during equality comparison
- *
- * Special handling notes:
- *   - PLtsql_variable* references: Store dno (datum number) instead of pointer
- *   - PLtsql_expr*: Serialize query string, paramnos, and other metadata
- *   - List*: Serialize list length and elements
- *   - Flexible arrays: Use array_size() annotation
  */
 
 /*

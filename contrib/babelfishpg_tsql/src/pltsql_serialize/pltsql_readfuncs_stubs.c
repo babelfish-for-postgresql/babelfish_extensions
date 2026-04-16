@@ -163,3 +163,41 @@ _readPLtsql_recfield(void)
 
 	READ_DONE();
 }
+
+
+/* ----------------------------------------------------------------
+ *                    PLtsql_stmt_dbcc (custom_read_write)
+ *
+ * Contains a union (PLtsql_dbcc_stmt_data) keyed by dbcc_stmt_type.
+ * Currently only PLTSQL_DBCC_CHECKIDENT is supported.
+ * ----------------------------------------------------------------
+ */
+extern PLtsql_stmt_dbcc *_readPLtsql_stmt_dbcc(void);
+
+PLtsql_stmt_dbcc *
+_readPLtsql_stmt_dbcc(void)
+{
+	READ_LOCALS(PLtsql_stmt_dbcc);
+
+	READ_ENUM_FIELD(cmd_type, PLtsql_stmt_type);
+	READ_INT_FIELD(lineno);
+	READ_INT_FIELD(dbcc_stmt_type);
+
+	switch (local_node->dbcc_stmt_type)
+	{
+		case PLTSQL_DBCC_CHECKIDENT:
+			READ_STRING_FIELD(dbcc_stmt_data.dbcc_checkident.db_name);
+			READ_STRING_FIELD(dbcc_stmt_data.dbcc_checkident.schema_name);
+			READ_STRING_FIELD(dbcc_stmt_data.dbcc_checkident.table_name);
+			READ_BOOL_FIELD(dbcc_stmt_data.dbcc_checkident.is_reseed);
+			READ_STRING_FIELD(dbcc_stmt_data.dbcc_checkident.new_reseed_value);
+			READ_BOOL_FIELD(dbcc_stmt_data.dbcc_checkident.no_infomsgs);
+			break;
+		default:
+			elog(ERROR, "_readPLtsql_stmt_dbcc: unsupported dbcc_stmt_type %d",
+				 local_node->dbcc_stmt_type);
+			break;
+	}
+
+	READ_DONE();
+}

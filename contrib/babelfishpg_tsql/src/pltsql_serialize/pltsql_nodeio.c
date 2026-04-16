@@ -36,10 +36,12 @@ static Node *pltsql_parseNodeString(void);
 extern void _outPLtsql_nsitem(StringInfo str, const PLtsql_nsitem *node);
 extern void _outPLtsql_row(StringInfo str, const PLtsql_row *node);
 extern void _outPLtsql_recfield(StringInfo str, const PLtsql_recfield *node);
+extern void _outPLtsql_stmt_dbcc(StringInfo str, const PLtsql_stmt_dbcc *node);
 
 extern PLtsql_nsitem *_readPLtsql_nsitem(void);
 extern PLtsql_row *_readPLtsql_row(void);
 extern PLtsql_recfield *_readPLtsql_recfield(void);
+extern PLtsql_stmt_dbcc *_readPLtsql_stmt_dbcc(void);
 
 /* Pull in the generated static _out* and _read* functions. */
 #include "pltsql_outfuncs_gen.c"

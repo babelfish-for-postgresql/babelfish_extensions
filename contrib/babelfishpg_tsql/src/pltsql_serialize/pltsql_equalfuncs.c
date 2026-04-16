@@ -50,6 +50,30 @@ _equalPLtsql_nsitem(const PLtsql_nsitem *a, const PLtsql_nsitem *b)
 	return true;
 }
 
+static bool
+_equalPLtsql_stmt_dbcc(const PLtsql_stmt_dbcc *a, const PLtsql_stmt_dbcc *b)
+{
+	COMPARE_SCALAR_FIELD(cmd_type);
+	COMPARE_SCALAR_FIELD(dbcc_stmt_type);
+
+	switch (a->dbcc_stmt_type)
+	{
+		case PLTSQL_DBCC_CHECKIDENT:
+			COMPARE_STRING_FIELD(dbcc_stmt_data.dbcc_checkident.db_name);
+			COMPARE_STRING_FIELD(dbcc_stmt_data.dbcc_checkident.schema_name);
+			COMPARE_STRING_FIELD(dbcc_stmt_data.dbcc_checkident.table_name);
+			COMPARE_SCALAR_FIELD(dbcc_stmt_data.dbcc_checkident.is_reseed);
+			COMPARE_STRING_FIELD(dbcc_stmt_data.dbcc_checkident.new_reseed_value);
+			COMPARE_SCALAR_FIELD(dbcc_stmt_data.dbcc_checkident.no_infomsgs);
+			break;
+		default:
+			elog(ERROR, "_equalPLtsql_stmt_dbcc: unsupported dbcc_stmt_type %d",
+				 a->dbcc_stmt_type);
+			return false;
+	}
+	return true;
+}
+
 /* Pull in the generated static _equal* functions */
 #include "pltsql_equalfuncs_gen.c"
 

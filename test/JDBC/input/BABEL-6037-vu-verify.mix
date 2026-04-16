@@ -1077,7 +1077,7 @@ GO
 SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 
--- === Test 29: DBCC CHECKIDENT procedure with cache on (unsupported node)===
+-- === Test 29: DBCC CHECKIDENT procedure with cache on ===
 PRINT '=== Test 29: DBCC CHECKIDENT with cache on ===';
 GO
 
@@ -1087,7 +1087,7 @@ GO
 CREATE TABLE dbo.dbcc_test_table (id INT IDENTITY(1,1), val VARCHAR(50));
 GO
 
--- Stats for Test 29: BEFORE create procedure with the only unsupported PLtsql node
+-- Stats for Test 29: BEFORE create procedure with DBCC node
 SELECT cache_writes, cache_errors FROM sys.antlr_parse_cache_stats();
 GO
 
@@ -1096,12 +1096,25 @@ AS
     DBCC CHECKIDENT('dbo.dbcc_test_table', RESEED, 100);
 GO
 
--- Stats for Test 29: AFTER create procedure with the only unsupported PLtsql node
--- expects only increment to cache_errors
+-- Stats for Test 29: AFTER create procedure with DBCC node
+-- expects cache_writes=+1 (DBCC serialization now supported)
 SELECT cache_writes, cache_errors FROM sys.antlr_parse_cache_stats();
 GO
 
-SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
+-- Execute the DBCC procedure to verify it works from cache
+EXEC dbo.dbcc_checkident_proc;
+GO
+
+
+-- === Test 30: Verify GUC is visible in sp_babelfish_configure ===
+PRINT '=== Test 30: sp_babelfish_configure shows enable_antlr_parse_cache ===';
+GO
+
+EXEC sp_babelfish_configure 'enable_antlr_parse_cache', 'off';
+GO
+
+-- Verify current_setting reflects the GUC value (should be 'off')
+SELECT current_setting('babelfishpg_tsql.enable_antlr_parse_cache') AS current_value;
 GO
 
 PRINT '=== All verification tests completed ===';

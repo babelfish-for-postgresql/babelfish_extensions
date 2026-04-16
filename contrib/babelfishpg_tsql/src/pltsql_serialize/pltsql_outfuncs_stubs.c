@@ -116,3 +116,38 @@ _outPLtsql_recfield(StringInfo str, const PLtsql_recfield *node)
 	/* rectupledescid: runtime cache, skip */
 	/* finfo: runtime cache, skip */
 }
+
+
+/* ----------------------------------------------------------------
+ *                    PLtsql_stmt_dbcc (custom_read_write)
+ *
+ * Contains a union (PLtsql_dbcc_stmt_data) keyed by dbcc_stmt_type.
+ * Currently only PLTSQL_DBCC_CHECKIDENT is supported.
+ * ----------------------------------------------------------------
+ */
+extern void _outPLtsql_stmt_dbcc(StringInfo str, const PLtsql_stmt_dbcc *node);
+
+void
+_outPLtsql_stmt_dbcc(StringInfo str, const PLtsql_stmt_dbcc *node)
+{
+	WRITE_NODE_TYPE("PLTSQL_STMT_DBCC");
+	WRITE_ENUM_FIELD(cmd_type, PLtsql_stmt_type);
+	WRITE_INT_FIELD(lineno);
+	WRITE_INT_FIELD(dbcc_stmt_type);
+
+	switch (node->dbcc_stmt_type)
+	{
+		case PLTSQL_DBCC_CHECKIDENT:
+			WRITE_STRING_FIELD(dbcc_stmt_data.dbcc_checkident.db_name);
+			WRITE_STRING_FIELD(dbcc_stmt_data.dbcc_checkident.schema_name);
+			WRITE_STRING_FIELD(dbcc_stmt_data.dbcc_checkident.table_name);
+			WRITE_BOOL_FIELD(dbcc_stmt_data.dbcc_checkident.is_reseed);
+			WRITE_STRING_FIELD(dbcc_stmt_data.dbcc_checkident.new_reseed_value);
+			WRITE_BOOL_FIELD(dbcc_stmt_data.dbcc_checkident.no_infomsgs);
+			break;
+		default:
+			elog(ERROR, "_outPLtsql_stmt_dbcc: unsupported dbcc_stmt_type %d",
+				 node->dbcc_stmt_type);
+			break;
+	}
+}

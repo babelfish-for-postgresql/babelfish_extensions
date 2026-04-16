@@ -5,88 +5,46 @@
  *
  * Structs here mirror pltsql.h with pg_node_attr() annotations added.
  * Read by gen_pltsql_node_support.pl to generate serialization,
- * deserialization, and equality functions in order to support routine 
- * ANTLR parse tree caching.
- * Refer: GUCs `enable_antlr_parse_cache` and `validate_antlr_parse_cache`
+ * deserialization, and equality functions for antlr parse tree caching.
  *
- * NOTES:
- *  - This file is NOT compiled by the C compiler.
- *  - Annotations follow PostgreSQL's gen_node_support.pl pattern.
- *  - When pltsql.h struct definitions change, this file must be updated
- *    to match (keeping the pg_node_attr annotations).
+ * This file is NOT compiled by the C compiler. When pltsql.h struct
+ * definitions change, this file must be updated to match.
+ *
+ * pg_node_attr annotations:
+ *   Struct-level: custom_read_write, no_copy, no_equal, no_query_jumble
+ *   Field-level:  read_write_ignore, read_as(), array_size(), equal_ignore
+ * Refer postgresql_modified_for_babelfish/src/include/nodes/nodes.h for more details
+ *
+ * Most nodes use pg_node_attr(no_copy, no_query_jumble) — only _out,
+ * _read, and _equal are generated. Deep copy is handled by
+ * serialize/deserialize into a separate memory context.
  *
  * IDENTIFICATION
- *    contrib/babelfishpg_tsql/src/pltsql_serialize/pltsql_serializable_1.h 
- *    (mirrors babelfish_extensions/contrib/babelfishpg_tsql/src/pltsql.h)
+ *    contrib/babelfishpg_tsql/src/pltsql_serialize/pltsql_serializable_1.h
+ *    (mirrors contrib/babelfishpg_tsql/src/pltsql.h)
  *
  *-------------------------------------------------------------------------
  */
 
 /*
- * Annotation Guide:
- * 
- * Struct-level attributes (placed after opening brace):
- *   - custom_read_write: Struct has custom serialization/deserialization logic
- *   - no_copy: Don't generate copy support
- *   - no_equal: Don't generate equal support
- *   - special_read_write: Special handling for read/write
- *
- * Field-level attributes (placed after field declaration):
- *   - read_write_ignore: Skip this field during serialization/deserialization
- *   - array_size(field): Specifies the field that contains array size
- *   - copy_as(expr): Use custom expression for copying
- *   - read_as(expr): Use custom expression for reading
- *   - equal_ignore: Skip this field during equality comparison
- *
- * Special handling notes:
- *   - PLtsql_variable* references: Store dno (datum number) instead of pointer
- *   - PLtsql_expr*: Serialize query string, paramnos, and other metadata
- *   - List*: Serialize list length and elements
- *   - Flexible arrays: Use array_size() annotation
- */
-
-/* Note:
- * Most nodes in this file are annotated with pg_node_attr(no_copy, no_query_jumble) 
- *
- * Reason:
- * pg_node_attr(no_copy, no_query_jumble) tells the generator: don't generate copy or jumble functions for this struct. Only generate _out, _read and _equal.
- * PLtsql nodes are never used in PG's query planner/optimizer, so _copy is never called on them by PG internals.
- * Query jumbling is for PG's prepared statement cache, not relevant to PLtsql nodes.
- * Deep copy is not needed because serialize/deserialize into a separate memory context achieves the same result.
- * _out functions ARE generated and used for serializing PLtsql parse trees into string representation for caching.
- * _read functions ARE generated and used for deserializing cached string representation back into PLtsql parse trees.
- * _equal functions ARE generated and used for parse tree validation (comparing cached vs ANTLR-compiled trees).
-*/
-
-/*
- * Forward declarations for PLtsql types referenced before their definition.
- */
-// typedef struct PLtsql_expr PLtsql_expr;
-// typedef struct PLtsql_exception_block PLtsql_exception_block;
-// typedef struct PLtsql_condition PLtsql_condition;
-// typedef struct PLtsql_type PLtsql_type;
-// typedef struct PLtsql_variable PLtsql_variable;
-// typedef struct PLtsql_txn_data PLtsql_txn_data;
-
-/*
  * Forward declarations for external PG types referenced in struct fields.
- * These are all pointer fields, so the compiler only needs to know they exist.
  */
 typedef struct SPIPlanData *SPIPlanPtr;
 typedef struct ExpandedRecordHeader ExpandedRecordHeader;
-#include "utils/expandedrecord.h"  /* needed for ExpandedRecordFieldInfo (inline struct in PLtsql_recfield) */
+#include "utils/expandedrecord.h"
 struct TypeCacheEntry;
 typedef struct TypeCacheEntry TypeCacheEntry;
 typedef struct TupleDescData *TupleDesc;
-typedef struct ExprState ExprState;  /* from nodes/execnodes.h - too heavy to include */
+typedef struct ExprState ExprState;
 
 /*
- * Prototypes for custom_read_write functions in pltsql_outfuncs_stubs.c / pltsql_readfuncs_stubs.c.
- * These are called by the generated outfuncs.switch.c / readfuncs.switch.c.
+ * Forward declarations and prototypes for custom_read_write stub functions.
+ * Called by the generated switch files included in pltsql_nodeio.c.
  */
 struct PLtsql_nsitem;
 struct PLtsql_row;
 struct PLtsql_recfield;
+struct PLtsql_stmt_dbcc;
 
 extern void _outPLtsql_nsitem(StringInfo str, const struct PLtsql_nsitem *node);
 extern struct PLtsql_nsitem *_readPLtsql_nsitem(void);
@@ -94,8 +52,11 @@ extern void _outPLtsql_row(StringInfo str, const struct PLtsql_row *node);
 extern struct PLtsql_row *_readPLtsql_row(void);
 extern void _outPLtsql_recfield(StringInfo str, const struct PLtsql_recfield *node);
 extern struct PLtsql_recfield *_readPLtsql_recfield(void);
-#include "nodes/lockoptions.h"     /* for LockClauseStrength etc */
-#include "nodes/parsenodes.h"      /* for FetchDirection, TransactionStmtKind, TypeName */
+extern void _outPLtsql_stmt_dbcc(StringInfo str, const struct PLtsql_stmt_dbcc *node);
+extern struct PLtsql_stmt_dbcc *_readPLtsql_stmt_dbcc(void);
+
+#include "nodes/lockoptions.h"
+#include "nodes/parsenodes.h"
 
 
 /*
@@ -1068,17 +1029,34 @@ typedef struct PLtsql_stmt_insert_bulk
 } PLtsql_stmt_insert_bulk;
 
 /*
- * DBCC statement — nodetag_only because PLtsql_dbcc_stmt_data is a union
- * that gen_node_support.pl cannot parse. Only the NodeTag enum is generated.
- * Procedures containing DBCC will fall back to ANTLR parse.
+ * DBCC statement type
+ */
+typedef union PLtsql_dbcc_stmt_data
+{
+	struct dbcc_checkident
+	{
+		// TODO: NodeTag		type;
+		char	*db_name;
+		char	*schema_name;
+		char	*table_name;
+		bool	is_reseed;
+		char	*new_reseed_value;
+		bool	no_infomsgs;
+	} dbcc_checkident;
+
+} PLtsql_dbcc_stmt_data;
+
+/*
+ * DBCC statement
  */
 typedef struct PLtsql_stmt_dbcc
 {
-	pg_node_attr(nodetag_only)
+	pg_node_attr(custom_read_write, no_copy, no_query_jumble)
 	NodeTag		type;
 	PLtsql_stmt_type	cmd_type;
 	int	lineno;
 	PLtsql_dbcc_stmt_type	dbcc_stmt_type;
+	PLtsql_dbcc_stmt_data	dbcc_stmt_data;
 } PLtsql_stmt_dbcc;
 
 /*
