@@ -189,7 +189,7 @@ init_pg() {
     make -j 4
     make install
     cd contrib && make && make install
-    cp "/usr/local/lib64/libantlr4-runtime.so.4.13.2" $2/postgres/lib/
+    cp "/usr/local/lib/libantlr4-runtime.so.4.13.2" $2/postgres/lib/
     init_pghint $1 $2
 }
 
@@ -291,7 +291,7 @@ init_pg_coverage(){
     make -j 4
     make install
     cd contrib && make && make install
-    cp "/usr/local/lib64/libantlr4-runtime.so.4.13.2" $2/postgres/lib/
+    cp "/usr/local/lib/libantlr4-runtime.so.4.13.2" $2/postgres/lib/
     init_pghint $1 $2
 }
 

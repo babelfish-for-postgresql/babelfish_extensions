@@ -4201,7 +4201,11 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	PLtsql_function *function = NULL;
 	bool		do_cache;
 
-	/* Disallow extended catalog lookup during restore */
+	/* Only for TDS connections with T-SQL dialect */
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+		return;
+
+	/* Disallow during restore */
 	if (babelfish_dump_restore)
 		return;
 	/* Fetch the object details from function */
@@ -4368,7 +4372,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	{
 		elog(DEBUG1, "Parse result caching skipped for function %u: neither session GUC nor per-function flag enabled",
 			 address.objectId);
-		pltsql_fill_antlr_parse_cache_columns(NULL, (Datum) 0,
+		pltsql_fill_antlr_parse_cache_columns(NULL,
 								  new_record, new_record_nulls, new_record_replaces);
 	}
 	else
@@ -4396,7 +4400,6 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		function = pltsql_HashTableLookup(&hashkey);
 
 		pltsql_fill_antlr_parse_cache_columns(function,
-								  new_record[Anum_bbf_function_ext_modify_date - 1],
 								  new_record, new_record_nulls, new_record_replaces);
 	}
 
@@ -4441,10 +4444,10 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
  * pltsql_fill_antlr_parse_cache_columns
  *      Serialize a compiled function's ANTLR parse tree and datums into catalog record arrays (sys.babelfish_function_ext).
  *
- * This is a reusable helper called from both CREATE/ALTER (via pltsql_store_func_default_positions)
- * and EXEC-time cache repopulation (via pltsql_update_func_antlr_parse_cache) for routines. It fills the
- * ANTLR parse cache columns: antlr_parse_tree_text, antlr_parse_tree_datums, antlr_parse_tree_modify_date,
- * and antlr_parse_tree_bbf_version.
+ * This is a reusable helper called from both CREATE/ALTER (via pltsql_store_func_default_positions) and
+ * EXEC-time cache repopulation (via pltsql_update_func_antlr_parse_cache) for routines. It fills the ANTLR
+ * parse cache columns: antlr_parse_tree_text, antlr_parse_tree_datums and antlr_parse_tree_bbf_version,
+ * skipping antlr_parse_cache_enabled.
  *
  * Does no catalog I/O — only serializes nodes and populates the caller's Datum/nulls/replaces arrays.
  * Uses PG_TRY/PG_CATCH around nodeToString to handle serialization failures gracefully.
@@ -4454,13 +4457,12 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
  *
  * Parameters:
  *   function          - Compiled PLtsql_function (NULL to clear cache columns)
- *   modify_date       - Datum for antlr_parse_tree_modify_date (ignored if function is NULL)
  *   new_record        - Caller's Datum array (BBF_FUNCTION_EXT_NUM_COLS)
  *   new_record_nulls  - Caller's nulls array
  *   new_record_replaces - Caller's replaces array
  */
 void
-pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function, Datum modify_date,
+pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function,
 						  Datum *new_record, bool *new_record_nulls,
 						  bool *new_record_replaces)
 {
@@ -4573,9 +4575,6 @@ pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function, Datum modify_da
 		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
 	}
 
-	new_record[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = modify_date;
-	new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
-
 	new_record[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = CStringGetTextDatum(BABELFISH_VERSION_STR);
 	new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = false;
 	new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
@@ -4590,8 +4589,6 @@ null_out:
 		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
 		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
 		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
-		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
-		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
 		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
 		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
 	}
@@ -4624,11 +4621,14 @@ pltsql_update_func_antlr_parse_cache(HeapTuple proctup, PLtsql_function *functio
 	Datum		new_record[BBF_FUNCTION_EXT_NUM_COLS];
 	bool		new_record_nulls[BBF_FUNCTION_EXT_NUM_COLS];
 	bool		new_record_replaces[BBF_FUNCTION_EXT_NUM_COLS];
-	Datum		modify_date;
 	bool		snapshot_pushed = false;
 	bool		isnull;
 	Datum		cache_flag;
 	bool		func_antlr_parse_cache_enabled;
+
+	/* Only for TDS connections with T-SQL dialect */
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+		return;
 
 	if (babelfish_dump_restore)
 		return;
@@ -4679,14 +4679,7 @@ pltsql_update_func_antlr_parse_cache(HeapTuple proctup, PLtsql_function *functio
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
 
-	/* 
-	 * Use current timestamp for antlr_parse_tree_modify_date 
-	 * (when the cache was rewritten for antlr_parse_tree columns) 
-	 */
-	/* [TODO]: Would it be more accurate to include Timezone as well GetSQLCurrentTimestamp)? */
-	modify_date = TimestampGetDatum(GetSQLLocalTimestamp(3));
-
-	pltsql_fill_antlr_parse_cache_columns(function, modify_date,
+	pltsql_fill_antlr_parse_cache_columns(function,
 							  new_record, new_record_nulls, new_record_replaces);
 
 	newtup = heap_modify_tuple(oldtup, dsc,
@@ -4718,9 +4711,8 @@ pltsql_update_func_antlr_parse_cache(HeapTuple proctup, PLtsql_function *functio
  *
  * Validation checks (all must pass for a cache hit):
  *   1. Session GUC `enable_antlr_parse_cache` OR per-function antlr_parse_cache_enabled flag is on
- *   2. antlr_parse_tree_bbf_version colummn value matches current BABELFISH_VERSION_STR (detects MVU)
- *   3. antlr_parse_tree_modify_date >= modify_date (detects guc-disabled ALTER after caching)
- *   4. antlr_parse_tree_text is not NULL and deserializes successfully
+ *   2. antlr_parse_tree_bbf_version column value matches current BABELFISH_VERSION_STR (detects MVU)
+ *   3. antlr_parse_tree_text is not NULL and deserializes successfully
  *
  * Parameters:
  *   proctup            - HeapTuple from pg_proc for the function
@@ -4744,15 +4736,16 @@ pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
 	char	   *str;
 	PLtsql_cached_parse_result *result = NULL;
 	Datum		cache_flag;
-	Datum		parse_tree_modify_datum;
-	Timestamp	modify_ts;
-	Timestamp	cache_modify_ts;
 	PLtsql_stmt_block *block = NULL;
 
 	/* Initialize output parameters */
 	*out_cache_enabled = false;
 	*out_bbf_ext_xmin = InvalidTransactionId;
 	ItemPointerSetInvalid(out_bbf_ext_tid);
+
+	/* Only for TDS connections with T-SQL dialect */
+	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
+		return NULL;
 
 	/* Disallow during restore */
 	if (babelfish_dump_restore)
@@ -4805,29 +4798,6 @@ pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
 		return NULL;
 	}
 	pfree(str);
-
-	/* Validate antlr_parse_tree_modify_date is the same as or later than the modify_date representing function entry */
-	attr = SysCacheGetAttrNotNull(PROCNAMENSPSIGNATURE, bbffunctuple,
-								  Anum_bbf_function_ext_modify_date);
-	parse_tree_modify_datum = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbffunctuple,
-											  Anum_bbf_function_ext_antlr_parse_tree_modify_date, &isnull);
-
-	if (isnull)
-	{
-		elog(DEBUG1, "pltsql_restore_antlr_parse_cache_result: missing antlr_parse_tree_modify_date, skipping cache");
-		heap_freetuple(bbffunctuple);
-		return NULL;
-	}
-
-	modify_ts = DatumGetTimestamp(attr);
-	cache_modify_ts = DatumGetTimestamp(parse_tree_modify_datum);
-
-	if (modify_ts > cache_modify_ts)
-	{
-		elog(DEBUG1, "pltsql_restore_antlr_parse_cache_result: modify_date newer than cache, skipping");
-		heap_freetuple(bbffunctuple);
-		return NULL;
-	}
 
 	/* Deserialize parse tree from antlr_parse_tree_text */
 	attr = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbffunctuple,

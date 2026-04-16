@@ -1993,13 +1993,32 @@ on
 CREATE TABLE dbo.dbcc_test_table (id INT IDENTITY(1,1), val VARCHAR(50));
 GO
 
+-- Stats for Test 29: BEFORE create procedure with the only unsupported PLtsql node
+SELECT cache_writes, cache_errors FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int
+1#!#0
+~~END~~
+
+
 CREATE PROCEDURE dbo.dbcc_checkident_proc
 AS
     DBCC CHECKIDENT('dbo.dbcc_test_table', RESEED, 100);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: pltsql_outNode: unrecognized PLtsql node type: 1041)~~
+~~ERROR (Message: pltsql_outNode: unrecognized PLtsql node type: 10041)~~
+
+
+-- Stats for Test 29: AFTER create procedure with the only unsupported PLtsql node
+-- expects only increment to cache_errors
+SELECT cache_writes, cache_errors FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
 
 
 SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);

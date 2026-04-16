@@ -8,36 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-# all
-  # feature main tests
-babelfish_function_ext-vu-prepare
-babelfish_function_ext-vu-verify
-babelfish_function_ext-vu-cleanup
-BABEL-6037-vu-prepare
-BABEL-6037-vu-verify
-BABEL-6037-vu-cleanup
-# babel_output_in_dml
-# Datetime2
-# BABEL-1000
-# BABEL-1299
-# BABEL-1381
-# BABEL-1400
-# BABEL-2392
-# BABEL-3092
-# BABEL-662
-# Test-scope-identity
-# BABEL-3201-vu-prepare
-# BABEL-3201-vu-verify
-# BABEL-3201-vu-cleanup
-# sqlcmd -S localhost -U jdbc_user -P 12345678 -i ./test/JDBC/input/BABEL-6037-cache-localvars-vu-prepare.sql -o ./test/JDBC/output/BABEL-6037-cache-localvars-vu-prepare.out
-# sqlcmd -S localhost -U jdbc_user -P 12345678 -i ./test/JDBC/input/BABEL-6037-cache-localvars-vu-verify.sql -o ./test/JDBC/output/BABEL-6037-cache-localvars-vu-verify.out
-# sqlcmd -S localhost -U jdbc_user -P 12345678 -i ./test/JDBC/input/BABEL-6037-cache-localvars-vu-cleanup.sql -o ./test/JDBC/output/BABEL-6037-cache-localvars-vu-cleanup.out
-  # corrupted heap, active snapshot trigger test with OUTPUT
-
-  # varying in_arg_varnos 
-
-  # functions with IN, OUT args
-
+all
 
 # These tests are ignored since latest changes with UTF-16<->binary conversion
 # They show the previous behavior of the conversion functions

@@ -17,8 +17,6 @@
 static bool
 _equalPLtsql_row(const PLtsql_row *a, const PLtsql_row *b)
 {
-	if (a == NULL && b == NULL) return true;
-	if (a == NULL || b == NULL) return false;
 	COMPARE_SCALAR_FIELD(dtype);
 	/* skip dno — datum numbering differs between CREATE/EXEC contexts */
 	/*COMPARE_SCALAR_FIELD(dno);*/
@@ -32,8 +30,6 @@ _equalPLtsql_row(const PLtsql_row *a, const PLtsql_row *b)
 static bool
 _equalPLtsql_recfield(const PLtsql_recfield *a, const PLtsql_recfield *b)
 {
-	if (a == NULL && b == NULL) return true;
-	if (a == NULL || b == NULL) return false;
 	COMPARE_SCALAR_FIELD(dtype);
 	/* skip dno */
 	/*COMPARE_SCALAR_FIELD(dno);*/
@@ -46,8 +42,6 @@ _equalPLtsql_recfield(const PLtsql_recfield *a, const PLtsql_recfield *b)
 static bool
 _equalPLtsql_nsitem(const PLtsql_nsitem *a, const PLtsql_nsitem *b)
 {
-	if (a == NULL && b == NULL) return true;
-	if (a == NULL || b == NULL) return false;
 	COMPARE_SCALAR_FIELD(itemtype);
 	/* skip itemno — datum numbering differs between CREATE/EXEC contexts */
 	/*COMPARE_SCALAR_FIELD(itemno);*/

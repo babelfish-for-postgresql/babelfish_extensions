@@ -42,9 +42,10 @@ extern PLtsql_cached_parse_result *pltsql_restore_antlr_parse_cache_result(HeapT
 																	bool *out_cache_enabled,
 																	TransactionId *out_bbf_ext_xmin,
 																	ItemPointerData *out_bbf_ext_tid);
-extern void pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function, Datum modify_date,
-									  Datum *new_record, bool *new_record_nulls,
-									  bool *new_record_replaces);
+extern void pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function,
+												  Datum *new_record,
+												  bool *new_record_nulls, 
+												  bool *new_record_replaces);
 extern void pltsql_update_func_antlr_parse_cache(HeapTuple proctup, PLtsql_function *function);
 extern void alter_bbf_schema_permissions_catalog(ObjectWithArgs *owa, 
                                                     List *parameters,

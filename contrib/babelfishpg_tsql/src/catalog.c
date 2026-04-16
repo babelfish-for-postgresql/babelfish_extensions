@@ -3666,8 +3666,6 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
 	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
 	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
-	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
-	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
 	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
 	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
 	/*
@@ -6562,8 +6560,6 @@ update_bbf_function_antlr_parse_cache(HeapTuple bbffunctuple, bool use_antlr_par
 		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
 		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
 		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
-		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
-		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_modify_date - 1] = true;
 		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
 		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
 		pltsql_antlr_parse_cache_stat_evictions++;
