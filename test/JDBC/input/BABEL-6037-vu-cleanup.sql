@@ -117,6 +117,10 @@ DROP PROCEDURE IF EXISTS dbo.dbcc_checkident_proc;
 GO
 DROP TABLE IF EXISTS dbo.dbcc_test_table;
 GO
+DROP TRIGGER IF EXISTS dbo.trg_cache_test;
+GO
+DROP TABLE IF EXISTS dbo.trigger_cache_test;
+GO
 
 PRINT 'Cleanup completed successfully';
 GO

@@ -1839,21 +1839,9 @@ off
 
 
 
--- psql
--- Test 27: Corrupt cache deserialization error handling
--- Corrupt the cached parse tree text by prepending invalid data,
--- then exec the function — should get an error (not silent failure)
--- Corrupt the cache entry directly via psql (sysadmin has UPDATE permission) 
-SET allow_system_table_mods = ON;
-UPDATE sys.babelfish_function_ext SET antlr_parse_tree_text = '<>CORRUPTED'
-WHERE funcname = 'corrupt_cache_test_func' AND nspname = 'master_dbo';
-SET allow_system_table_mods = OFF;
-GO
-~~ROW COUNT: 1~~
-
-
--- tsql
--- Enable cache and try to execute — deserialization should fail with error
+-- Test 27: Error handling for cache deserialization failures at EXEC time
+-- Test 27a: EXEC-time datums deserialization error
+-- Test 27b: EXEC-time parse tree deserialization error
 SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 ~~START~~
@@ -1862,7 +1850,18 @@ on
 ~~END~~
 
 
--- Stats for Test 27: Before Deserialization error
+-- psql
+-- Test 27a: Corrupt datums and test
+SET allow_system_table_mods = ON;
+UPDATE sys.babelfish_function_ext SET antlr_parse_tree_datums = '<>CORRUPTED_DATUMS'
+WHERE funcname = 'corrupt_cache_test_func' AND nspname = 'master_dbo';
+SET allow_system_table_mods = OFF;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql
+-- Stats before datums deserialization error
 SELECT cache_errors FROM sys.antlr_parse_cache_stats();
 GO
 ~~START~~
@@ -1871,23 +1870,61 @@ int
 ~~END~~
 
 
--- This should error because the cached tree is corrupt
+-- This should error
 SELECT dbo.corrupt_cache_test_func(5);
 GO
 ~~START~~
 int
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: unrecognized token: "<>CORRUPTED")~~
+~~ERROR (Message: failed to restore cached ANTLR parse tree, unrecognized token: "<>CORRUPTED_DATUMS")~~
 
 
--- Stats for Test 27: After Deserialization error
--- expects: errors=+1
+-- Stats after datums deserialization error (expects: errors=+1)
 SELECT cache_errors FROM sys.antlr_parse_cache_stats();
 GO
 ~~START~~
 int
 1
+~~END~~
+
+
+-- psql
+-- Test 27b: Corrupt parse tree and test
+SET allow_system_table_mods = ON;
+UPDATE sys.babelfish_function_ext SET antlr_parse_tree_text = '<>CORRUPTED_TREE'
+WHERE funcname = 'corrupt_cache_test_func' AND nspname = 'master_dbo';
+SET allow_system_table_mods = OFF;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql
+-- Stats before parse tree deserialization error
+SELECT cache_errors FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- This should error: "failed to restore cached ANTLR parse tree" (parse tree deserialization)
+SELECT dbo.corrupt_cache_test_func(5);
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: failed to restore cached ANTLR parse tree, unrecognized token: "<>CORRUPTED_TREE")~~
+
+
+-- Stats after parse tree deserialization error (expects: errors=+1)
+SELECT cache_errors FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int
+2
 ~~END~~
 
 
@@ -2022,20 +2059,126 @@ EXEC dbo.dbcc_checkident_proc;
 GO
 
 
--- === Test 30: Verify GUC is visible in sp_babelfish_configure ===
-PRINT '=== Test 30: sp_babelfish_configure shows enable_antlr_parse_cache ===';
+-- === Test 30: Trigger function cache behavior ===
+PRINT '=== Test 30: Trigger function with cache on ===';
 GO
 
-EXEC sp_babelfish_configure 'enable_antlr_parse_cache', 'off';
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+0#!#1#!#2#!#0#!#0
+~~END~~
+
+
+-- Create a table and trigger with cache GUC on
+CREATE TABLE dbo.trigger_cache_test (id INT, val VARCHAR(50));
 GO
 
--- Verify current_setting reflects the GUC value (should be 'off')
-SELECT current_setting('babelfishpg_tsql.enable_antlr_parse_cache') AS current_value;
+CREATE TRIGGER dbo.trg_cache_test
+ON dbo.trigger_cache_test
+AFTER INSERT
+AS
+BEGIN
+    PRINT 'trigger fired';
+END;
+GO
+
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+0#!#1#!#2#!#0#!#0
+~~END~~
+
+
+-- Check if the trigger's underlying function has a cache entry
+SELECT funcname,
+    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
+FROM sys.babelfish_function_ext
+WHERE funcname = 'trg_cache_test' AND nspname = 'master_dbo';
+GO
+~~START~~
+varchar#!#varchar
+trg_cache_test#!#NOT CACHED
+~~END~~
+
+
+-- Fire the trigger
+INSERT INTO dbo.trigger_cache_test VALUES (1, 'test');
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: trigger fired  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+
+-- Check cache after trigger execution — triggers are cached at EXEC time via do_compile
+SELECT funcname,
+    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
+FROM sys.babelfish_function_ext
+WHERE funcname = 'trg_cache_test' AND nspname = 'master_dbo';
+GO
+~~START~~
+varchar#!#varchar
+trg_cache_test#!#CACHED
+~~END~~
+
+
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+0#!#2#!#3#!#0#!#0
+~~END~~
+
+
+-- Check if the trigger's underlying function has a cache entry
+SELECT funcname,
+    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
+FROM sys.babelfish_function_ext
+WHERE funcname = 'trg_cache_test' AND nspname = 'master_dbo';
+GO
+~~START~~
+varchar#!#varchar
+trg_cache_test#!#CACHED
+~~END~~
+
+
+-- Fire the trigger again
+INSERT INTO dbo.trigger_cache_test VALUES (1, 'test');
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: trigger fired  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+1#!#2#!#3#!#0#!#0
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 ~~START~~
 text
 off
 ~~END~~
+
 
 
 PRINT '=== All verification tests completed ===';

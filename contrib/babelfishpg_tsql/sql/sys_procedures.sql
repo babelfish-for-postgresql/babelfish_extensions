@@ -108,8 +108,7 @@ CREATE OR REPLACE VIEW sys.babelfish_configurations_view as
           name collate "C" like 'babelfishpg_tsql.escape_hatch_%' OR
           name collate "C" = 'babelfishpg_tsql.enable_pg_hint' OR
           name collate "C" like 'babelfishpg_tsql.isolation_level_%' OR
-          name collate "C" = 'babelfishpg_tsql.weak_view_binding' OR
-          name collate "C" = 'babelfishpg_tsql.enable_antlr_parse_cache';
+          name collate "C" = 'babelfishpg_tsql.weak_view_binding';
 GRANT SELECT on sys.babelfish_configurations_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_babelfish_configure(IN "@option_name" varchar(128),  IN "@option_value" varchar(128), IN "@option_scope" varchar(128))

@@ -1139,11 +1139,13 @@ define_custom_variables(void)
 							 NULL, NULL, NULL);
 
 	/*
-	 * Enable/disable procedure ANTLR parse result caching for cross-session (sys.babelfish_function_ext->antlr_parse_tree) performance optimization.
+	 * Enable/disable persistent caching of ANTLR parse result for routines and triggers for cross-session performance optimization.
 	 */
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_antlr_parse_cache",
-							 gettext_noop("Enables caching of ANTLR parse results for stored procedures across sessions"),
-							 NULL,
+							 gettext_noop("Enables persistent caching of ANTLR parser results for faster execution of large routines "
+										  "and triggers in new sessions."),
+							 gettext_noop("When enabled in session or at server level, prior to routine creation or execution, "
+										  "parsed results are cached and reused across sessions. "),
 							 &pltsql_enable_antlr_parse_cache,
 							 false,
 							 PGC_USERSET,
@@ -1151,12 +1153,13 @@ define_custom_variables(void)
 							 NULL, NULL, NULL);
 
 	/*
-	 * Debug GUC: when enabled, every cache-hit compilation also runs ANTLR
-	 * and compares the two parse trees field-by-field. Logs PASS/FAIL.
+	 * Debugging GUC: when enabled, every routine/trigger execution invokes comparison of ANTLR-compiled and cached parse trees. Logs PASS/FAIL.
 	 */
 	DefineCustomBoolVariable("babelfishpg_tsql.validate_antlr_parse_cache",
-							 gettext_noop("When enabled, validates cached parse trees against fresh ANTLR compilation"),
-							 NULL,
+							 gettext_noop("GUC for validation of cached ANTLR parser results on creation or execution of routines and triggers."),
+							 gettext_noop("When enabled, routine executions that use cached parse results also run a fresh "
+										  "ANTLR parse and compare the two. Results are logged to the server log. "
+										  "Use sys.antlr_parse_cache_stats() to check for cache hits, writes or errors."),
 							 &pltsql_validate_antlr_parse_cache,
 							 false,
 							 PGC_USERSET,

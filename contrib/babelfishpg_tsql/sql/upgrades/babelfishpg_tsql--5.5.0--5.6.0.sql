@@ -254,18 +254,6 @@ CREATE OR REPLACE FUNCTION sys.antlr_parse_cache_stats(
 ) RETURNS RECORD
 AS 'babelfishpg_tsql', 'antlr_parse_cache_stats' LANGUAGE C;
 
--- Add enable_antlr_parse_cache GUC to sp_babelfish_configure
-CREATE OR REPLACE VIEW sys.babelfish_configurations_view as
-    SELECT *
-    FROM pg_catalog.pg_settings
-    WHERE name collate "C" like 'babelfishpg_tsql.explain_%' OR
-          name collate "C" like 'babelfishpg_tsql.escape_hatch_%' OR
-          name collate "C" = 'babelfishpg_tsql.enable_pg_hint' OR
-          name collate "C" like 'babelfishpg_tsql.isolation_level_%' OR
-          name collate "C" = 'babelfishpg_tsql.weak_view_binding' OR
-          name collate "C" = 'babelfishpg_tsql.enable_antlr_parse_cache';
-GRANT SELECT on sys.babelfish_configurations_view TO PUBLIC;
-
 -- Please add your SQLs here
 
 -- Deprecate and drop old aggregates first (they depend on the function)

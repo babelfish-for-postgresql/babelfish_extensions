@@ -4471,6 +4471,7 @@ pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function,
 	char	   *datums_str = NULL;
 	List	   *datum_list = NIL;
 	bool		success = false;
+	MemoryContext oldcontext = CurrentMemoryContext;
 
 	if (function == NULL || function->action == NULL)
 		goto null_out;
@@ -4482,10 +4483,20 @@ pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function,
 	}
 	PG_CATCH();
 	{
-		elog(LOG, "pltsql_enable_antlr_parse_cache[FAIL]: %s parse tree serialization failed",
-			 function->fn_signature);
+		ErrorData  *edata;
+		MemoryContext ectx;
+
+		ectx = MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
 		pltsql_antlr_parse_cache_stat_errors++;
-		PG_RE_THROW();
+		elog(LOG, "pltsql_enable_antlr_parse_cache[FAIL]: %s parse tree serialization failed: %s",
+			 function->fn_signature, edata->message);
+
+		MemoryContextSwitchTo(ectx);
+		ereport(ERROR,
+				(errcode(edata->sqlerrcode),
+				 errmsg("failed to cache ANTLR parse tree, %s", edata->message)));
 	}
 	PG_END_TRY();
 
@@ -4507,10 +4518,20 @@ pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function,
 		}
 		PG_CATCH();
 		{
-			elog(LOG, "pltsql_enable_antlr_parse_cache[FAIL]: %s datums serialization failed",
-				 function->fn_signature);
+			ErrorData  *edata;
+			MemoryContext ectx;
+
+			ectx = MemoryContextSwitchTo(oldcontext);
+			edata = CopyErrorData();
+			FlushErrorState();
 			pltsql_antlr_parse_cache_stat_errors++;
-			PG_RE_THROW();
+			elog(LOG, "pltsql_enable_antlr_parse_cache[FAIL]: %s datums serialization failed: %s",
+				 function->fn_signature, edata->message);
+
+			MemoryContextSwitchTo(ectx);
+			ereport(ERROR,
+					(errcode(edata->sqlerrcode),
+					 errmsg("failed to cache ANTLR parse tree, %s", edata->message)));
 		}
 		PG_END_TRY();
 
@@ -4537,10 +4558,20 @@ pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function,
 		}
 		PG_CATCH();
 		{
-			elog(LOG, "pltsql_validate_antlr_parse_cache[FAIL]: %s validation parse tree deserialization failed",
-				 function->fn_signature);
+			ErrorData  *edata;
+			MemoryContext ectx;
+
+			ectx = MemoryContextSwitchTo(oldcontext);
+			edata = CopyErrorData();
+			FlushErrorState();
 			pltsql_antlr_parse_cache_stat_errors++;
-			PG_RE_THROW();
+			elog(LOG, "pltsql_validate_antlr_parse_cache[FAIL]: %s validation parse tree deserialization failed: %s",
+				 function->fn_signature, edata->message);
+
+			MemoryContextSwitchTo(ectx);
+			ereport(ERROR,
+					(errcode(edata->sqlerrcode),
+					 errmsg("failed to validate cached ANTLR parse tree, %s", edata->message)));
 		}
 		PG_END_TRY();
 
@@ -4737,6 +4768,7 @@ pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
 	PLtsql_cached_parse_result *result = NULL;
 	Datum		cache_flag;
 	PLtsql_stmt_block *block = NULL;
+	MemoryContext oldcontext = CurrentMemoryContext;
 
 	/* Initialize output parameters */
 	*out_cache_enabled = false;
@@ -4817,9 +4849,20 @@ pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
 	}
 	PG_CATCH();
 	{
-		elog(LOG, "pltsql_enable_antlr_parse_cache[FAIL]: parse tree deserialization failed");
+		ErrorData  *edata;
+		MemoryContext ectx;
+
+		ectx = MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
 		pltsql_antlr_parse_cache_stat_errors++;
-		PG_RE_THROW();
+		elog(LOG, "pltsql_enable_antlr_parse_cache[FAIL]: parse tree deserialization failed: %s",
+			 edata->message);
+
+		MemoryContextSwitchTo(ectx);
+		ereport(ERROR,
+				(errcode(edata->sqlerrcode),
+				 errmsg("failed to restore cached ANTLR parse tree, %s", edata->message)));
 	}
 	PG_END_TRY();
 
@@ -4850,9 +4893,22 @@ pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
 		}
 		PG_CATCH();
 		{
-			elog(LOG, "pltsql_enable_antlr_parse_cache[FAIL]: datums deserialization failed");
+			ErrorData  *edata;
+			MemoryContext ectx;
+
+			ectx = MemoryContextSwitchTo(oldcontext);
+			edata = CopyErrorData();
+			FlushErrorState();
 			pltsql_antlr_parse_cache_stat_errors++;
-			PG_RE_THROW();
+
+			/* Log original internal error for debugging */
+			elog(LOG, "pltsql_enable_antlr_parse_cache[FAIL]: datums deserialization failed: %s",
+				 edata->message);
+
+			MemoryContextSwitchTo(ectx);
+			ereport(ERROR,
+					(errcode(edata->sqlerrcode),
+					 errmsg("failed to restore cached ANTLR parse tree, %s", edata->message)));
 		}
 		PG_END_TRY();
 
