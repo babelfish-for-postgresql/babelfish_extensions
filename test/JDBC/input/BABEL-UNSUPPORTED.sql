@@ -119,6 +119,11 @@ GO
 select current_setting('babelfishpg_tsql.no_browsetable');
 GO
 
+SET NO_BROWSETABLE ON;
+GO
+select current_setting('babelfishpg_tsql.no_browsetable');
+GO
+
 -- these statement will be ignored silently
 SET STATISTICS IO ON;
 GO
