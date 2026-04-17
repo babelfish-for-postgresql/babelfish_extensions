@@ -783,6 +783,14 @@ $$
 LANGUAGE 'pltsql';
 GRANT ALL on PROCEDURE sys.sp_describe_first_result_set TO PUBLIC;
 
+-- Returns pg_attribute rows for ENR temp tables.
+CREATE OR REPLACE FUNCTION sys.babelfish_get_enr_temp_table_attributes()
+RETURNS SETOF pg_catalog.pg_attribute
+AS 'babelfishpg_tsql', 'get_enr_temp_table_attributes'
+LANGUAGE C STABLE PARALLEL UNSAFE;
+GRANT EXECUTE ON FUNCTION sys.babelfish_get_enr_temp_table_attributes() TO PUBLIC;
+
+-- Permanent tables come from sys.all_columns, temp tables from ENR function and non-ENR pg_attribute.
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     SELECT
         c.object_id                      AS object_id,
@@ -799,7 +807,44 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         sys.all_columns c
         INNER JOIN pg_catalog.pg_class p ON (c.object_id = p.oid)
     WHERE
-        c.is_sparse = 0;
+        c.is_sparse = 0
+    UNION ALL
+    -- ENR temp tables
+    SELECT
+        CAST(a.attrelid AS int)          AS object_id,
+        CAST(pg_my_temp_schema() AS int) AS schema_id,
+        CAST(a.attnum AS int)            AS colid,
+        CAST(CAST(a.attname AS sys.sysname) AS sys.varchar) AS name,
+        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_28,
+        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_90,
+        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_100,
+        CAST(coll.collname AS nvarchar(128)) AS collation_28,
+        CAST(coll.collname AS nvarchar(128)) AS collation_90,
+        CAST(coll.collname AS nvarchar(128)) AS collation_100
+    FROM
+        sys.babelfish_get_enr_temp_table_attributes() a
+        LEFT JOIN pg_catalog.pg_collation coll ON (a.attcollation = coll.oid)
+    WHERE
+        a.attnum > 0 AND NOT a.attisdropped
+    UNION ALL
+    -- Non-ENR temp tables
+    SELECT
+        CAST(a.attrelid AS int)          AS object_id,
+        CAST(pg_my_temp_schema() AS int) AS schema_id,
+        CAST(a.attnum AS int)            AS colid,
+        CAST(CAST(a.attname AS sys.sysname) AS sys.varchar) AS name,
+        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_28,
+        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_90,
+        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_100,
+        CAST(coll.collname AS nvarchar(128)) AS collation_28,
+        CAST(coll.collname AS nvarchar(128)) AS collation_90,
+        CAST(coll.collname AS nvarchar(128)) AS collation_100
+    FROM
+        pg_catalog.pg_attribute a
+        INNER JOIN pg_catalog.pg_class c ON a.attrelid = c.oid AND c.relnamespace = pg_my_temp_schema()
+        LEFT JOIN pg_catalog.pg_collation coll ON (a.attcollation = coll.oid)
+    WHERE
+        a.attnum > 0 AND NOT a.attisdropped;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
 -- We are limited by what postgres procedures can return here, but IEW may not
