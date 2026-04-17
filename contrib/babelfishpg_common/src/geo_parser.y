@@ -27,6 +27,8 @@ static int      scanbuflen;
 %type <pointarray> ptarray ptarraym ptarrayzm ptarrayz
 %type <pointarraylist> ringlist ringlistm ringlistz ringlistzm
 %type <str> geospatial_query point_query linestring_query polygon_query 
+%type <str> multipoint_query
+%type <pointarray> mpoint_list mpoint_list_z mpoint_list_m mpoint_list_zm
 
 %start geospatial_query
 %define api.prefix geo_yy
@@ -39,6 +41,7 @@ geospatial_query:
     linestring_query { $$ = $1; *result = $$;  }
     | point_query { $$ = $1; *result = $$;  }
     | polygon_query { $$ = $1; *result = $$;  }
+    | multipoint_query { $$ = $1; *result = $$;  }
     ;
 
 point_query:
@@ -228,6 +231,92 @@ coordinate:
         { $$ = create_point($1, $2, $3, 0, 1, 0); }
     | DOUBLE_TOK DOUBLE_TOK NULL_TOK DOUBLE_TOK 
         { $$ = create_point($1, $2, 0, $4, 0, 1); }
+    ;
+
+multipoint_query:
+    MPOINT_TOK LPAREN mpoint_list RPAREN
+        { $$ = rewrite_multipoint_wkt($3); }
+    | MPOINT_TOK LPAREN ptarray RPAREN
+        { $$ = rewrite_multipoint_wkt($3); }      
+    | MPOINT_TOK EMPTY_TOK
+        { $$ = pstrdup("MULTIPOINT EMPTY"); }
+    | MPOINT_TOK Z_TOK LPAREN mpoint_list_z RPAREN
+        { $$ = rewrite_dim_multipoint_wkt($4); }  
+    | MPOINT_TOK M_TOK LPAREN mpoint_list_m RPAREN
+        { $$ = rewrite_dim_multipoint_wkt($4); }  
+    | MPOINT_TOK ZM_TOK LPAREN mpoint_list_zm RPAREN
+        { $$ = rewrite_dim_multipoint_wkt($4); } 
+    | MPOINT_TOK Z_TOK LPAREN ptarrayz RPAREN
+        { $$ = rewrite_dim_multipoint_wkt($4); }
+    | MPOINT_TOK M_TOK LPAREN ptarraym RPAREN
+        { $$ = rewrite_dim_multipoint_wkt($4); }
+    | MPOINT_TOK ZM_TOK LPAREN ptarrayzm RPAREN
+        { $$ = rewrite_dim_multipoint_wkt($4); } 
+    ;
+
+
+/* 2D MULTIPOINT: MULTIPOINT((x y), (x y), ...) */
+mpoint_list:
+    LPAREN coordinate RPAREN
+        {
+            PointArray *pa = palloc(sizeof(PointArray));
+            init_point_array(pa);
+            add_point(pa, $2);
+            $$ = pa;
+        }
+    | mpoint_list COMMA_TOK LPAREN coordinate RPAREN
+        {
+            add_point($1, $4);
+            $$ = $1;
+        }
+    ;
+
+/* Z MULTIPOINT: MULTIPOINT Z((x y z), (x y z), ...) */
+mpoint_list_z:
+    LPAREN coordz RPAREN
+        {
+            PointArray *pa = palloc(sizeof(PointArray));
+            init_point_array(pa);
+            add_point(pa, $2);
+            $$ = pa;
+        }
+    | mpoint_list_z COMMA_TOK LPAREN coordz RPAREN
+        {
+            add_point($1, $4);
+            $$ = $1;
+        }
+    ;
+
+/* M MULTIPOINT: MULTIPOINT M((x y m), (x y m), ...) */
+mpoint_list_m:
+    LPAREN coordm RPAREN
+        {
+            PointArray *pa = palloc(sizeof(PointArray));
+            init_point_array(pa);
+            add_point(pa, $2);
+            $$ = pa;
+        }
+    | mpoint_list_m COMMA_TOK LPAREN coordm RPAREN
+        {
+            add_point($1, $4);
+            $$ = $1;
+        }
+    ;
+
+/* ZM MULTIPOINT: MULTIPOINT ZM((x y z m), (x y z m), ...) */
+mpoint_list_zm:
+    LPAREN coordzm RPAREN
+        {
+            PointArray *pa = palloc(sizeof(PointArray));
+            init_point_array(pa);
+            add_point(pa, $2);
+            $$ = pa;
+        }
+    | mpoint_list_zm COMMA_TOK LPAREN coordzm RPAREN
+        {
+            add_point($1, $4);
+            $$ = $1;
+        }
     ;
 
 %%
