@@ -53,7 +53,7 @@ get_all_temp_table_attributes(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	attrel = table_open(AttributeRelationId, AccessShareLock);
-	enrList = get_namedRelListByRelkind(RELKIND_RELATION);
+	enrList = getEnrByRelkind(RELKIND_RELATION);
 	nonEnrList = getRelationsInNamespace(GetTempNamespace(), RELKIND_RELATION);
 
 	foreach(lc, enrList)
