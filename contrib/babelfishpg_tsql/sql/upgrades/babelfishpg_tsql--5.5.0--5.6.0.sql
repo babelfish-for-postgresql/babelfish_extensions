@@ -825,9 +825,6 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         a.attnum > 0 AND NOT a.attisdropped;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
--- Drop old function after views are updated
-DROP FUNCTION IF EXISTS sys.babelfish_get_all_temp_table_attributes();
-
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
