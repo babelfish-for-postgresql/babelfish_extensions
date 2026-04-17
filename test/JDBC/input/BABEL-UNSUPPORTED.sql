@@ -1,4 +1,3 @@
--- parallel_query_expected
 -- sla 50000
 -- default value was changed from 'strict' to 'ignore'.
 -- to minimize touching test, test 'strict' first.
