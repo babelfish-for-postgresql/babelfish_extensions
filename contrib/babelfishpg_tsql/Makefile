@@ -30,7 +30,6 @@ OBJS += src/cursor.o
 OBJS += src/applock.o
 OBJS += src/pltsql_coerce.o
 OBJS += runtime/functions.o
-OBJS += runtime/temp_table_functions.o
 OBJS += src/err_handler.o
 OBJS += src/pltsql_function_probin_handler.o
 OBJS += src/pltsql_utils.o
@@ -80,6 +79,7 @@ OBJS += src/fts.o
 OBJS += src/fts_parser.o
 OBJS += src/pltsql_partition.o
 OBJS += src/bbf_parallel_query.o
+OBJS += src/temp_table.o
 
 export ANTLR4_JAVA_BIN=java
 export ANTLR4_RUNTIME_LIB=-lantlr4-runtime

@@ -35,7 +35,7 @@ CREATE PROCEDURE dbo.babel5264_test_func_proc
 AS
 BEGIN
     SELECT attname, attnum 
-    FROM sys.babelfish_get_all_temp_table_attributes() 
+    FROM sys.babelfish_get_enr_temp_table_attributes() 
     WHERE attnum > 0 
     ORDER BY attrelid, attnum
 END

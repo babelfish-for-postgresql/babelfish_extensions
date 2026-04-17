@@ -238,22 +238,22 @@ GO
 DROP TABLE babel5264_perm_view_test
 GO
 
--- Test babelfish_get_all_temp_table_attributes function directly
+-- Test babelfish_get_enr_temp_table_attributes function directly (ENR temp table)
 CREATE TABLE #attrTest(col1 int, col2 varchar(50) collate bbf_unicode_cp1_ci_as, col3 nvarchar(100) collate bbf_unicode_cp1_ci_as)
 GO
 
-SELECT attname, attnum FROM sys.babelfish_get_all_temp_table_attributes() 
+SELECT attname, attnum FROM sys.babelfish_get_enr_temp_table_attributes() 
 WHERE attnum > 0 ORDER BY attrelid, attnum
 GO
 
 DROP TABLE #attrTest
 GO
 
--- Test babelfish_get_all_temp_table_attributes with non-ENR temp table
+-- Test babelfish_get_enr_temp_table_attributes with non-ENR temp table
 CREATE TABLE #attrTestNonEnr(col1 int, col2 dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_ai, col3 nvarchar(100) collate bbf_unicode_cp1_ci_ai)
 GO
 
-SELECT attname, attnum FROM sys.babelfish_get_all_temp_table_attributes() 
+SELECT attname, attnum FROM sys.babelfish_get_enr_temp_table_attributes() 
 WHERE attnum > 0 ORDER BY attrelid, attnum
 GO
 
@@ -298,11 +298,11 @@ DROP TABLE #countTest
 GO
 
 -- psql
--- babelfish_get_all_temp_table_attributes on non-TDS connection
+-- babelfish_get_enr_temp_table_attributes on non-TDS connection
 CREATE TEMP TABLE pg_temp_test(id int, name varchar(50), description text);
 GO
 
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_all_temp_table_attributes();
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_enr_temp_table_attributes();
 GO
 
 DROP TABLE pg_temp_test;
@@ -321,11 +321,11 @@ DROP TABLE pg_view_test;
 GO
 
 -- psql
--- PG temp table with # in name (should still return empty - not T-SQL temp table)
+-- PG temp table with # in name
 CREATE TEMP TABLE "#pg_hash_temp"(id int, name varchar(50));
 GO
 
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_all_temp_table_attributes();
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_enr_temp_table_attributes();
 GO
 
 DROP TABLE "#pg_hash_temp";
@@ -339,7 +339,7 @@ GO
 EXEC sp_tablecollations_100 '#tdsVerify'
 GO
 
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_all_temp_table_attributes() WHERE attnum > 0
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_enr_temp_table_attributes() WHERE attnum > 0
 GO
 
 DROP TABLE #tdsVerify
@@ -416,8 +416,7 @@ GO
 EXEC sp_tablecollations_100 '#temp1'
 GO
 
-SELECT attname, attnum FROM sys.babelfish_get_all_temp_table_attributes() 
-WHERE attnum > 0 ORDER BY attrelid, attnum
+SELECT COUNT(*) AS enr_attr_count FROM sys.babelfish_get_enr_temp_table_attributes() WHERE attnum > 0
 GO
 
 DROP TABLE "#temp1"

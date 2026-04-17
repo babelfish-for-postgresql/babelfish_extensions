@@ -390,11 +390,11 @@ int#!#varchar#!#nvarchar
 DROP TABLE babel5264_perm_view_test
 GO
 
--- Test babelfish_get_all_temp_table_attributes function directly
+-- Test babelfish_get_enr_temp_table_attributes function directly (ENR temp table)
 CREATE TABLE #attrTest(col1 int, col2 varchar(50) collate bbf_unicode_cp1_ci_as, col3 nvarchar(100) collate bbf_unicode_cp1_ci_as)
 GO
 
-SELECT attname, attnum FROM sys.babelfish_get_all_temp_table_attributes() 
+SELECT attname, attnum FROM sys.babelfish_get_enr_temp_table_attributes() 
 WHERE attnum > 0 ORDER BY attrelid, attnum
 GO
 ~~START~~
@@ -408,18 +408,15 @@ col3#!#3
 DROP TABLE #attrTest
 GO
 
--- Test babelfish_get_all_temp_table_attributes with non-ENR temp table
+-- Test babelfish_get_enr_temp_table_attributes with non-ENR temp table
 CREATE TABLE #attrTestNonEnr(col1 int, col2 dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_ai, col3 nvarchar(100) collate bbf_unicode_cp1_ci_ai)
 GO
 
-SELECT attname, attnum FROM sys.babelfish_get_all_temp_table_attributes() 
+SELECT attname, attnum FROM sys.babelfish_get_enr_temp_table_attributes() 
 WHERE attnum > 0 ORDER BY attrelid, attnum
 GO
 ~~START~~
 varchar#!#smallint
-col1#!#1
-col2#!#2
-col3#!#3
 ~~END~~
 
 
@@ -489,11 +486,11 @@ DROP TABLE #countTest
 GO
 
 -- psql
--- babelfish_get_all_temp_table_attributes on non-TDS connection
+-- babelfish_get_enr_temp_table_attributes on non-TDS connection
 CREATE TEMP TABLE pg_temp_test(id int, name varchar(50), description text);
 GO
 
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_all_temp_table_attributes();
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_enr_temp_table_attributes();
 GO
 ~~START~~
 int8
@@ -514,7 +511,7 @@ WHERE schema_id = pg_my_temp_schema();
 GO
 ~~START~~
 int8
-0
+2
 ~~END~~
 
 
@@ -522,11 +519,11 @@ DROP TABLE pg_view_test;
 GO
 
 -- psql
--- PG temp table with # in name (should still return empty - not T-SQL temp table)
+-- PG temp table with # in name
 CREATE TEMP TABLE "#pg_hash_temp"(id int, name varchar(50));
 GO
 
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_all_temp_table_attributes();
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_enr_temp_table_attributes();
 GO
 ~~START~~
 int8
@@ -550,7 +547,7 @@ int#!#varchar#!#binary#!#nvarchar
 ~~END~~
 
 
-SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_all_temp_table_attributes() WHERE attnum > 0
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_enr_temp_table_attributes() WHERE attnum > 0
 GO
 ~~START~~
 int
@@ -649,8 +646,6 @@ EXEC dbo.babel5264_test_func_proc
 GO
 ~~START~~
 varchar#!#smallint
-col1#!#1
-col2#!#2
 ~~END~~
 
 
@@ -682,14 +677,11 @@ int#!#varchar#!#binary#!#nvarchar
 ~~END~~
 
 
-SELECT attname, attnum FROM sys.babelfish_get_all_temp_table_attributes() 
-WHERE attnum > 0 ORDER BY attrelid, attnum
+SELECT COUNT(*) AS enr_attr_count FROM sys.babelfish_get_enr_temp_table_attributes() WHERE attnum > 0
 GO
 ~~START~~
-varchar#!#smallint
-a#!#1
-b#!#2
-c#!#3
+int
+0
 ~~END~~
 
 

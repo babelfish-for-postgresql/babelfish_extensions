@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * temp_table_functions.c
+ * temp_table.c
  *	  Functions for handling temp table attribute lookups
  *
  *-------------------------------------------------------------------------
@@ -29,22 +29,47 @@
 #include "src/pltsql.h"
 #include "src/multidb.h"
 
-PG_FUNCTION_INFO_V1(get_all_temp_table_attributes);
+/*
+ * getEnrByRelkind
+ *
+ * Returns a list of ENRs filtered by relkind.
+ */
+static List *
+getEnrByRelkind(char relkind)
+{
+	List			   *result = NIL;
+	QueryEnvironment   *qe = currentQueryEnv;
+	ListCell		   *lc;
+
+	while (qe)
+	{
+		foreach(lc, qe->namedRelList)
+		{
+			EphemeralNamedRelation enr = (EphemeralNamedRelation) lfirst(lc);
+
+			if (get_rel_relkind(enr->md.reliddesc) == relkind)
+				result = lappend(result, enr);
+		}
+		qe = qe->parentEnv;
+	}
+	return result;
+}
+
+
+PG_FUNCTION_INFO_V1(get_enr_temp_table_attributes);
 
 /*
- * get_all_temp_table_attributes
- *		Returns pg_attribute rows for all temp tables (ENR and non-ENR).
+ * get_enr_temp_table_attributes
+ *		Returns pg_attribute rows for ENR temp tables only.
  *
  * This function only works on TDS connections.
  */
 Datum
-get_all_temp_table_attributes(PG_FUNCTION_ARGS)
+get_enr_temp_table_attributes(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	ListCell   *lc, *lcoid;
-	Relation	attrel;
+	ListCell   *lc;
 	List	   *enrList;
-	List	   *nonEnrList;
 
 	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC | MAT_SRF_BLESS);
 
@@ -52,43 +77,24 @@ get_all_temp_table_attributes(PG_FUNCTION_ARGS)
 	if (!IS_TDS_CONN())
 		PG_RETURN_NULL();
 
-	attrel = table_open(AttributeRelationId, AccessShareLock);
 	enrList = getEnrByRelkind(RELKIND_RELATION);
-	nonEnrList = getRelationsInNamespace(GetTempNamespace(), RELKIND_RELATION);
 
 	foreach(lc, enrList)
 	{
 		EphemeralNamedRelation enr = (EphemeralNamedRelation) lfirst(lc);
-		List *attList;
-		ListCell *attlc;
-
-		attList = enr->md.cattups[ENR_CATTUP_ATTRIBUTE];
+		List	   *attList = enr->md.cattups[ENR_CATTUP_ATTRIBUTE];
+		ListCell   *attlc;
 
 		foreach(attlc, attList)
 		{
 			HeapTuple	tup = (HeapTuple) lfirst(attlc);
+
 			if (tup != NULL)
 				tuplestore_puttuple(rsinfo->setResult, heap_copytuple(tup));
 		}
 	}
 
-	foreach(lcoid, nonEnrList)
-	{
-		Oid relid = (Oid) lfirst_oid(lcoid);
-		ScanKeyData attskey[1];
-		SysScanDesc attscan;
-		HeapTuple	atttup;
-
-		ScanKeyInit(&attskey[0], Anum_pg_attribute_attrelid, BTEqualStrategyNumber, F_OIDEQ, ObjectIdGetDatum(relid));
-		attscan = systable_beginscan(attrel, AttributeRelidNumIndexId, true, NULL, 1, attskey);
-		while (HeapTupleIsValid(atttup = systable_getnext(attscan)))
-		{
-			tuplestore_puttuple(rsinfo->setResult, atttup);
-		}
-		systable_endscan(attscan);
-	}
-
 	list_free(enrList);
-	table_close(attrel, AccessShareLock);
 	PG_RETURN_NULL();
 }
+
