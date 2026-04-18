@@ -281,7 +281,7 @@ Primary Key Columns:
 
 Table Columns:
 Column: class_id
-  - Is Primary Key: True
+  - Is Primary Key: False
   - Data Type: System.Int32
   - Allow Null: False
 Column: class_name
@@ -297,7 +297,7 @@ Column: room_number
   - Data Type: System.Int32
   - Allow Null: True
 Primary Key Columns:
-- class_id
+- None
 #Q#DROP TABLE IF EXISTS dbo.cclass
 #Q#DROP TABLE IF EXISTS new_cclass
 #Q#CREATE TABLE new_cclass ( class_id INT NOT NULL PRIMARY KEY, class_name VARCHAR(50) NOT NULL, teacher_name VARCHAR(100) NULL )

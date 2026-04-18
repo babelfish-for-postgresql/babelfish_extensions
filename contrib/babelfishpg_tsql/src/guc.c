@@ -368,10 +368,6 @@ check_no_browsetable(bool *newval, void **extra, GucSource source)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("OFF setting is not allowed for option NO_BROWSETABLE. please use babelfishpg_tsql.escape_hatch_session_settings to ignore")));
 	}
-	else if (escape_hatch_session_settings == EH_IGNORE)
-	{
-		*newval = true;			/* overwrite to a default value */
-	}
 	return true;
 }
 
