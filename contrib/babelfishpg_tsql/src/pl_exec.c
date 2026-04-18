@@ -9837,7 +9837,7 @@ pltsql_eval_txn_data(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt, Cached
 		if (txn_name != NULL)
 		{
 			pfree(txnStmt->savepoint_name);
-			txnStmt->savepoint_name = pstrdup(txn_name);
+			txnStmt->savepoint_name = MemoryContextStrdup(cachedPlanSource->query_context, txn_name);
 		}
 	}
 
