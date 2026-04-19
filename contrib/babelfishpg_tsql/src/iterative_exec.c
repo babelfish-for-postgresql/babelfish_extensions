@@ -1456,18 +1456,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 * check so it doesn't affect subsequent batches.
 		 */
 		topEntry = simple_econtext_stack;
-		
-		/* Debug logging for INSERT EXEC implicit transaction */
-		if (is_batch_command(stmt) && before_tran_count != NestedTranCount)
-		{
-			elog(WARNING, "TSQL TXN Mismatch check: implicit_txn=%d, insert_exec_active=%d, had_error=%d, started_implicit_txn=%d, before=%u, after=%u",
-				 pltsql_implicit_transactions,
-				 pltsql_insert_exec_active(),
-				 pltsql_insert_exec_had_error(),
-				 pltsql_insert_exec_started_implicit_txn(),
-				 before_tran_count, NestedTranCount);
-		}
-		
+
 		if (!pltsql_implicit_transactions &&
 			is_batch_command(stmt) &&
 			!is_part_of_pltsql_trigger(estate) &&
