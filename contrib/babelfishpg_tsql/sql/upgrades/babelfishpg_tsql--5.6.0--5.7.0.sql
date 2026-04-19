@@ -65,6 +65,62 @@ $$;
  * final behaviour.
  */
 
+CREATE OR REPLACE VIEW sys.all_sql_modules AS
+WITH all_sql_modules_cte AS MATERIALIZED (
+SELECT
+     CAST(t1.object_id as int)
+    ,CAST(t1.definition as sys.nvarchar)
+    ,CAST(t1.uses_ansi_nulls as sys.bit)
+    ,CAST(t1.uses_quoted_identifier as sys.bit)
+    ,CAST(t1.is_schema_bound as sys.bit)
+    ,CAST(t1.uses_database_collation as sys.bit)
+    ,CAST(t1.is_recompiled as sys.bit)
+    ,CAST(t1.null_on_null_input as sys.bit)
+    ,CAST(t1.execute_as_principal_id as int)
+    ,CAST(t1.uses_native_compilation as sys.bit)
+FROM sys.all_sql_modules_internal t1
+)
+SELECT * FROM all_sql_modules_cte;
+GRANT SELECT ON sys.all_sql_modules TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.system_sql_modules AS
+WITH system_sql_modules_cte AS MATERIALIZED ( 
+SELECT
+     CAST(t1.object_id as int)
+    ,CAST(t1.definition as sys.nvarchar)
+    ,CAST(t1.uses_ansi_nulls as sys.bit)
+    ,CAST(t1.uses_quoted_identifier as sys.bit)
+    ,CAST(t1.is_schema_bound as sys.bit)
+    ,CAST(t1.uses_database_collation as sys.bit)
+    ,CAST(t1.is_recompiled as sys.bit)
+    ,CAST(t1.null_on_null_input as sys.bit)
+    ,CAST(t1.execute_as_principal_id as int)
+    ,CAST(t1.uses_native_compilation as sys.bit)
+FROM sys.all_sql_modules_internal t1
+WHERE t1.is_ms_shipped = 1
+)
+SELECT * FROM system_sql_modules_cte;
+GRANT SELECT ON sys.system_sql_modules TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sql_modules AS
+WITH sql_modules_cte AS MATERIALIZED (
+SELECT
+     CAST(t1.object_id as int)
+    ,CAST(t1.definition as sys.nvarchar)
+    ,CAST(t1.uses_ansi_nulls as sys.bit)
+    ,CAST(t1.uses_quoted_identifier as sys.bit)
+    ,CAST(t1.is_schema_bound as sys.bit)
+    ,CAST(t1.uses_database_collation as sys.bit)
+    ,CAST(t1.is_recompiled as sys.bit)
+    ,CAST(t1.null_on_null_input as sys.bit)
+    ,CAST(t1.execute_as_principal_id as int)
+    ,CAST(t1.uses_native_compilation as sys.bit)
+FROM sys.all_sql_modules_internal t1
+WHERE t1.is_ms_shipped = 0
+)
+SELECT * FROM sql_modules_cte;
+GRANT SELECT ON sys.sql_modules TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
