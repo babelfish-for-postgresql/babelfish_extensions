@@ -127,29 +127,19 @@ PLTsqlProcessTransaction(Node *parsetree,
 		case TRANS_STMT_COMMIT:
 			{
 				/*
-				 * Block COMMIT during INSERT EXEC if NestedTranCount <= 0.
+				 * Block COMMIT during INSERT EXEC if NestedTranCount <= 1.
 				 * 
 				 * In SQL Server, INSERT EXEC implicitly makes @@TRANCOUNT = 1.
 				 * COMMIT is only blocked if it would make @@TRANCOUNT go from 1 to 0.
 				 * If the procedure did BEGIN TRAN first (@@TRANCOUNT = 2), then
 				 * COMMIT is allowed (@@TRANCOUNT goes from 2 to 1).
 				 * 
-				 * In Babelfish without @@TRANCOUNT manipulation:
-				 * - @@TRANCOUNT stays at 0 during INSERT EXEC
-				 * - If procedure does BEGIN TRAN, @@TRANCOUNT = 1
-				 * - COMMIT after BEGIN TRAN: @@TRANCOUNT = 1 -> 0, should be allowed
-				 * - COMMIT without BEGIN TRAN: @@TRANCOUNT = 0, will fail
-				 * 
-				 * So we only need to block COMMIT if NestedTranCount <= 0.
 				 * SQL Server Error 3916.
 				 */
-				if ((pltsql_insert_exec_active() || pltsql_insert_exec_flush_in_progress()) &&
-					NestedTranCount <= 0)
-				{
+				if (pltsql_insert_exec_active() && NestedTranCount <= 1)
 					ereport(ERROR,
 							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
-				}
 
 				PLTsqlCommitTransaction(qc, stmt->chain);
 			}
@@ -162,11 +152,9 @@ PLTsqlProcessTransaction(Node *parsetree,
 				 * SQL Server Error 3915.
 				 */
 				if (pltsql_insert_exec_active())
-				{
 					ereport(ERROR,
 							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 							 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
-				}
 				PLTsqlRollbackTransaction(txnName, qc, stmt->chain);
 			}
 			break;
@@ -810,33 +798,15 @@ PLTsqlStartTransaction(char *txnName)
 	elog(DEBUG2, "TSQL TXN Start transaction %d", NestedTranCount);
 	if (!IsTransactionBlockActive())
 	{
-		/*
-		 * During INSERT EXEC, we're inside a subtransaction, not a real transaction block.
-		 * IsTransactionBlockActive() returns false, but we should NOT call BeginTransactionBlock()
-		 * because we're already inside a subtransaction. We just need to increment NestedTranCount
-		 * to simulate SQL Server's @@TRANCOUNT behavior.
-		 */
-		if (!pltsql_insert_exec_active())
-		{
-			/*
-			 * In normal operation, NestedTranCount should be 0 when starting a new transaction.
-			 * However, after certain error conditions (like INSERT EXEC errors), NestedTranCount
-			 * might not be properly reset. We reset it here to ensure consistent behavior.
-			 */
-			if (NestedTranCount != 0)
-			{
-				elog(DEBUG2, "TSQL TXN Resetting NestedTranCount from %d to 0", NestedTranCount);
-				NestedTranCount = 0;
-			}
-			BeginTransactionBlock();
+		Assert(NestedTranCount == 0);
+		BeginTransactionBlock();
 
-			/*
-			 * set transaction name in savepoint field. It is needed to
-			 * distinguish rollback vs rollback to savepoint requests.
-			 */
-			if (txnName != NULL)
-				SetTopTransactionName(txnName);
-		}
+		/*
+		 * set transaction name in savepoint field. It is needed to
+		 * distinguish rollback vs rollback to savepoint requests.
+		 */
+		if (txnName != NULL)
+			SetTopTransactionName(txnName);
 	}
 	++NestedTranCount;
 
@@ -848,43 +818,16 @@ void
 PLTsqlCommitTransaction(QueryCompletion *qc, bool chain)
 {
 	elog(DEBUG2, "TSQL TXN Commit transaction %d", NestedTranCount);
-
 	if (NestedTranCount <= 1)
 	{
-		/*
-		 * During INSERT EXEC, we skip BeginTransactionBlock() in PLTsqlStartTransaction
-		 * because we're already inside a subtransaction. Similarly, we must skip
-		 * EndTransactionBlock() here because there's no actual transaction block to end.
-		 * 
-		 * Without this check, PostgreSQL would crash with:
-		 * "FATAL: EndTransactionBlock: unexpected state STARTED"
-		 * because it expects TBLOCK_INPROGRESS but finds TBLOCK_STARTED.
-		 * 
-		 * This mirrors SQL Server's behavior where:
-		 * - INSERT EXEC implicitly makes @@TRANCOUNT = 1
-		 * - BEGIN TRAN inside procedure makes @@TRANCOUNT = 2
-		 * - COMMIT makes @@TRANCOUNT go from 2 to 1 (allowed)
-		 * 
-		 * In Babelfish without @@TRANCOUNT manipulation:
-		 * - @@TRANCOUNT stays at 0 during INSERT EXEC
-		 * - BEGIN TRAN makes @@TRANCOUNT = 1
-		 * - COMMIT makes @@TRANCOUNT go from 1 to 0 (allowed, just decrement)
-		 */
-		if (pltsql_insert_exec_active())
+		RequireTransactionBlock(true, "COMMIT");
+		if (!EndTransactionBlock(chain))
 		{
-			NestedTranCount = 0;
+			/* report unsuccessful commit in QueryCompletion */
+			if (qc)
+				qc->commandTag = CMDTAG_ROLLBACK;
 		}
-		else
-		{
-			RequireTransactionBlock(true, "COMMIT");
-			if (!EndTransactionBlock(chain))
-			{
-				/* report unsuccessful commit in QueryCompletion */
-				if (qc)
-					qc->commandTag = CMDTAG_ROLLBACK;
-			}
-			NestedTranCount = 0;
-		}
+		NestedTranCount = 0;
 	}
 	else
 	{

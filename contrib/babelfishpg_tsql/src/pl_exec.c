@@ -4841,7 +4841,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/* Check for nested INSERT EXECUTE statements */
 		if (stmt->insert_exec)
 		{
-			/* 
+			/*
 			 * Check if INSERT EXEC is already active (new DestReceiver approach).
 			 * This detects nested INSERT EXEC statements.
 			 */
@@ -5188,13 +5188,13 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * Always commit to match auto commit behavior for each statement
 		 * inside batch or procedure, but not user-defined function or
 		 * procedure invoked by INSERT ... EXECUTE.
-		 * 
+		 *
 		 * Also skip commit when INSERT EXEC is globally active (even if this
 		 * estate doesn't have insert_exec set, e.g., inside a trigger fired
 		 * during INSERT EXEC). Committing inside a trigger during INSERT EXEC
 		 * would orphan the SPI portal's snapshot, causing "portal snapshots
 		 * did not account for all active snapshots" error.
-		 * 
+		 *
 		 * Also skip commit when INSERT EXEC flush is in progress. During flush,
 		 * we temporarily clear the INSERT EXEC context to allow INSTEAD OF
 		 * triggers to fire, but we still need to block commit_stmt inside
@@ -5263,15 +5263,15 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	MemoryContext	oldcontext = CurrentMemoryContext;
 	ResourceOwner	oldowner = CurrentResourceOwner;
 	volatile bool	subtxn_started = false;
-	
+
 	/* Save INSERT EXEC context to restore after flush */
 	char		   *saved_target_table = NULL;
-	
+
 	/* Security context for ownership chaining */
 	Oid				flush_save_userid = InvalidOid;
 	int				flush_save_sec_context = 0;
 	volatile bool	flush_switched_context = false;
-	
+
 	/* For exec_stmt_execsql */
 	PLtsql_stmt_execsql flush_stmt;
 	PLtsql_expr		flush_expr;
@@ -5280,21 +5280,21 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	{
 		return;
 	}
-	
+
 	/*
 	 * Check if an error occurred during INSERT EXEC that should prevent flush.
-	 * 
+	 *
 	 * SQL Server behavior: Column mismatch errors (213) cause all rows to be
 	 * rolled back, even if caught by TRY-CATCH. This is different from
 	 * data-level errors like division by zero, which only affect the current
 	 * row and allow previously inserted rows to be kept.
-	 * 
+	 *
 	 * The error flag is set by pltsql_insert_exec_validate_column_count_from_query()
 	 * when a column mismatch is detected.
 	 */
 	if (pltsql_insert_exec_had_error())
 		return;
-	
+
 	/*
 	 * Verify that the target table schema hasn't changed since INSERT EXEC started.
 	 * If the executed procedure altered the target table's schema (e.g., ALTER TABLE
@@ -5307,7 +5307,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("INSERT EXEC failed because the stored procedure altered the schema of the target table.")));
 	}
-	
+
 	/*
 	 * Save the INSERT EXEC context info before clearing it.
 	 * We need to temporarily clear the context so that the flush INSERT
@@ -5323,7 +5323,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	}
 
 	initStringInfo(&flush_query);
-	
+
 	if (column_list != NULL)
 	{
 		/*
@@ -5345,7 +5345,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		 * this behavior: when the source column count matches the number of
 		 * non-generated columns in the target, IDENTITY/computed columns are
 		 * automatically excluded from the INSERT.
-		 * 
+		 *
 		 * The temp table was created with only non-identity/computed columns
 		 * (via pg_attribute query in create_insert_exec_temp_table), so
 		 * SELECT * from it gives exactly the right number of columns.
@@ -5375,7 +5375,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		 * even though pltsql_insert_exec_active() will return false.
 		 */
 		pltsql_insert_exec_set_flush_in_progress(true);
-		
+
 		/*
 		 * Temporarily clear just the target table pointer so that
 		 * pltsql_insert_exec_active() returns false. This allows the
@@ -5403,14 +5403,14 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		 */
 		memset(&flush_stmt, 0, sizeof(flush_stmt));
 		memset(&flush_expr, 0, sizeof(flush_expr));
-		
+
 		flush_expr.query = flush_query.data;
 		flush_expr.plan = NULL;
 		flush_expr.paramnos = NULL;
 		flush_expr.rwparam = -1;
 		flush_expr.func = estate->func;
 		flush_expr.ns = NULL;
-		
+
 		flush_stmt.cmd_type = PLTSQL_STMT_EXECSQL;
 		flush_stmt.lineno = 0;
 		flush_stmt.sqlstmt = &flush_expr;
@@ -5431,30 +5431,30 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		flush_stmt.is_set_tran_isolation = false;
 		flush_stmt.original_query = NULL;
 		flush_stmt.is_schemabinding = false;
-		
+
 		/* Execute through exec_stmt_execsql - this handles triggers, rowcount, FOUND */
 		rc = exec_stmt_execsql(estate, &flush_stmt);
-		
+
 		/* Free the plan if one was created */
 		if (flush_expr.plan != NULL)
 		{
 			SPI_freeplan(flush_expr.plan);
 			flush_expr.plan = NULL;
 		}
-		
+
 		/* Restore security context immediately after execution */
 		if (flush_switched_context)
 		{
 			SetUserIdAndSecContext(flush_save_userid, flush_save_sec_context);
 			flush_switched_context = false;
 		}
-		
+
 		if (rc != PLTSQL_RC_OK)
 			elog(ERROR, "INSERT-EXEC: Failed to flush temp table to target");
-		
+
 		/* Clear the flush flag after successful flush */
 		pltsql_insert_exec_set_flush_in_progress(false);
-		
+
 		/*
 		 * Restore the target table pointer. This is needed because after
 		 * the flush, the caller will call pltsql_clear_insert_exec_context()
@@ -5475,20 +5475,20 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 			SetUserIdAndSecContext(flush_save_userid, flush_save_sec_context);
 			flush_switched_context = false;
 		}
-		
+
 		/* Free the plan if one was created */
 		if (flush_expr.plan != NULL)
 		{
 			SPI_freeplan(flush_expr.plan);
 			flush_expr.plan = NULL;
 		}
-		
+
 		/* Clear the flush flag on error */
 		pltsql_insert_exec_set_flush_in_progress(false);
-		
+
 		/* Restore the target table pointer on error */
 		pltsql_insert_exec_set_target_table(saved_target_table);
-		
+
 		/* Roll back the flush subtransaction on error */
 		if (subtxn_started)
 		{
@@ -10131,13 +10131,13 @@ pltsql_estate_cleanup(void)
 									top_es_entry->estate->stmt_mcontext_parent);
 	pfree(exec_state_call_stack);
 	exec_state_call_stack = top_es_entry;
-	
+
 	/*
 	 * Clear stale INSERT EXEC context when the call stack becomes empty.
 	 * This handles the case where INSERT EXEC context was set but not properly
 	 * cleaned up due to an error. When the call stack becomes empty, we know
 	 * that any existing INSERT EXEC context is stale and should be cleared.
-	 * 
+	 *
 	 * This is a safety net to prevent INSERT EXEC context from leaking between
 	 * batches or tests. The primary cleanup should happen in the PG_CATCH blocks
 	 * of exec_stmt_exec, exec_stmt_exec_batch, and exec_stmt_exec_sp, but this

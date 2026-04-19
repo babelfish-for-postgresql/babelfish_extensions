@@ -183,7 +183,7 @@ CREATE TABLE insert_exec_types (
 );
 GO
 CREATE PROCEDURE insert_exec_ptypes AS
-    SELECT 
+    SELECT
         123,
         9223372036854775807,
         12345.67,
@@ -259,7 +259,7 @@ GO
 -- C3: INSERT EXEC with sp_executesql inside procedure
 CREATE TABLE insert_exec_spexec (a INT);
 GO
-CREATE PROCEDURE insert_exec_pspexec AS 
+CREATE PROCEDURE insert_exec_pspexec AS
     EXEC sp_executesql N'SELECT 777';
 GO
 INSERT INTO insert_exec_spexec EXEC insert_exec_pspexec;
@@ -349,7 +349,7 @@ CREATE TABLE insert_exec_custdata (
     city VARCHAR(100)
 );
 GO
-INSERT INTO insert_exec_custdata VALUES 
+INSERT INTO insert_exec_custdata VALUES
     (N'GREAL', N'Great Lakes Food Market', N'Eugene');
 GO
 CREATE PROCEDURE insert_exec_pcust AS
@@ -441,7 +441,7 @@ GO
 -- G2: INSERT EXEC with UNION ALL
 CREATE TABLE insert_exec_union (a INT);
 GO
-CREATE PROCEDURE insert_exec_punion AS 
+CREATE PROCEDURE insert_exec_punion AS
     SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3;
 GO
 INSERT INTO insert_exec_union EXEC insert_exec_punion;
@@ -543,7 +543,7 @@ GO
 -- H4: INSERT EXEC with Transaction Inside Procedure
 CREATE TABLE insert_exec_txn4 (a INT);
 GO
-CREATE PROCEDURE insert_exec_ptxn4 AS 
+CREATE PROCEDURE insert_exec_ptxn4 AS
 BEGIN TRY
     BEGIN TRANSACTION;
     SELECT 555;
@@ -584,7 +584,7 @@ GO
 -- I2: TRY/CATCH with Successful Execution
 CREATE TABLE insert_exec_trycatch2 (a INT);
 GO
-CREATE PROCEDURE insert_exec_ptrycatch2 AS 
+CREATE PROCEDURE insert_exec_ptrycatch2 AS
 BEGIN TRY
     SELECT 100;
     SELECT 200;

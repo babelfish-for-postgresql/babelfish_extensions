@@ -673,19 +673,19 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 		case PLTSQL_STMT_EXECSQL:
 			/*
 			 * For INSERT EXEC, validate column count BEFORE executing the query.
-			 * 
+			 *
 			 * SQL Server validates column count at the metadata level BEFORE
 			 * evaluating expressions. This means column mismatch errors (213)
 			 * take priority over runtime errors like division by zero (8134).
-			 * 
+			 *
 			 * In PostgreSQL, plan preparation calls eval_const_expressions()
 			 * which evaluates constant expressions like 1/0, causing runtime
 			 * errors to occur before we can validate column count.
-			 * 
+			 *
 			 * By calling the validation function here, we parse the query and
 			 * count columns WITHOUT evaluating expressions, allowing us to
 			 * detect column mismatches before any runtime errors can occur.
-			 * 
+			 *
 			 * We only do early validation when the SELECT is inside a TRY block.
 			 * This is because:
 			 * 1. System procedures like sp_columns have internal SELECT statements
@@ -1217,17 +1217,17 @@ abort_execution(PLtsql_execstate *estate, ErrorData *edata, bool *terminate_batc
 	/*
 	 * INSERT EXEC column mismatch errors must be re-thrown BEFORE checking
 	 * for TRY-CATCH blocks.
-	 * 
+	 *
 	 * SQL Server behavior: When a column mismatch error (213) occurs during
 	 * INSERT EXEC, all rows (including DML done before the error) are rolled
 	 * back, even if the error occurs inside a TRY-CATCH block. This is
 	 * different from other "ignorable" errors like division by zero, which
 	 * only affect the current row and can be caught by TRY-CATCH.
-	 * 
+	 *
 	 * The error flag is set by:
 	 * 1. pltsql_insert_exec_validate_column_count_from_query() - early validation
 	 * 2. insertexec_startup() - runtime validation in DestReceiver
-	 * 
+	 *
 	 * We need to re-throw the error so it propagates to the subtransaction's
 	 * PG_CATCH in exec_stmt_exec, which will roll back all changes made by
 	 * the procedure.
@@ -1402,7 +1402,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		need_savepoint_for_insert_exec_trycatch = insert_exec_active && in_trycatch;
 		txn_active_or_insert_exec_trycatch = IsTransactionBlockActive() || need_savepoint_for_insert_exec_trycatch;
 
-		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && txn_active_or_insert_exec_trycatch && !is_set_tran_isolation(stmt) && 
+		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && txn_active_or_insert_exec_trycatch && !is_set_tran_isolation(stmt) &&
 			(!insert_exec_active || in_trycatch) && !IsParallelWorker())
 		{
 			elog(DEBUG5, "TSQL TXN Start internal savepoint");
@@ -1449,17 +1449,51 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 * set when an error occurs during INSERT EXEC (e.g., error 3916 for
 		 * COMMIT without BEGIN TRAN). In this case, we want the original error
 		 * to propagate, not the transaction count mismatch error.
+		 *
+		 * Also skip this check if INSERT EXEC started an implicit transaction.
+		 * The implicit transaction stays open and will be committed by the
+		 * normal auto-commit mechanism. We clear the flag after skipping the
+		 * check so it doesn't affect subsequent batches.
 		 */
 		topEntry = simple_econtext_stack;
+		
+		/* Debug logging for INSERT EXEC implicit transaction */
+		if (is_batch_command(stmt) && before_tran_count != NestedTranCount)
+		{
+			elog(WARNING, "TSQL TXN Mismatch check: implicit_txn=%d, insert_exec_active=%d, had_error=%d, started_implicit_txn=%d, before=%u, after=%u",
+				 pltsql_implicit_transactions,
+				 pltsql_insert_exec_active(),
+				 pltsql_insert_exec_had_error(),
+				 pltsql_insert_exec_started_implicit_txn(),
+				 before_tran_count, NestedTranCount);
+		}
+		
 		if (!pltsql_implicit_transactions &&
 			is_batch_command(stmt) &&
 			!is_part_of_pltsql_trigger(estate) &&
 			!pltsql_insert_exec_active() &&
 			!pltsql_insert_exec_had_error() &&
+			!pltsql_insert_exec_started_implicit_txn() &&
 			before_tran_count != NestedTranCount)
 			ereport(ERROR,
 					(errcode(ERRCODE_T_R_INTEGRITY_CONSTRAINT_VIOLATION),
 					 errmsg("Transaction count after execution indicates a mismatch number of BEGIN and COMMIT statements. Previous count %u current count %u", before_tran_count, NestedTranCount)));
+
+		/*
+		 * Clear the INSERT EXEC implicit transaction flag after the check.
+		 * This ensures the flag doesn't affect subsequent batches.
+		 *
+		 * IMPORTANT: Only clear the flag if we're NOT inside an INSERT EXEC context.
+		 * If we're inside INSERT EXEC (e.g., executing a statement inside the called
+		 * procedure), we should NOT clear the flag - it needs to persist until the
+		 * INSERT EXEC statement itself completes.
+		 *
+		 * The flag will be cleared when the INSERT EXEC statement's mismatch check
+		 * happens (at which point pltsql_insert_exec_active() will be false because
+		 * pltsql_clear_insert_exec_context() was called at the end of exec_stmt_exec).
+		 */
+		if (pltsql_insert_exec_started_implicit_txn() && !pltsql_insert_exec_active())
+			pltsql_insert_exec_clear_implicit_txn_flag();
 	}
 	PG_CATCH();
 	{
@@ -1545,26 +1579,26 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		/*
 		 * Clean up INSERT EXEC context on error, but ONLY if there's no TRY-CATCH
 		 * inside the procedure that will handle the error.
-		 * 
+		 *
 		 * This must be done early, before any transaction handling, to ensure
 		 * the INSERT EXEC state is cleared regardless of the transaction state.
-		 * 
+		 *
 		 * Without this cleanup, if INSERT EXEC fails inside an explicit transaction
 		 * (e.g., BEGIN TRAN; INSERT INTO t EXEC proc; where proc does COMMIT without
 		 * BEGIN TRAN), the INSERT EXEC context remains set. Subsequent queries then
 		 * see pltsql_insert_exec_active() as true and try to use stale OIDs, causing
 		 * "could not open relation with OID" errors in major version upgrade tests.
-		 * 
+		 *
 		 * We use pltsql_insert_exec_should_cleanup_on_trycatch() to check if the
 		 * TRY-CATCH (if any) is at the same level or higher than INSERT EXEC.
 		 * If the TRY-CATCH is inside the procedure being executed, we should NOT
 		 * clean up because the INSERT EXEC is still in progress.
-		 * 
+		 *
 		 * EXCEPTION: For nested INSERT EXEC errors, we ALWAYS clean up regardless
 		 * of call stack depth. This is a batch-terminating error that will abort
 		 * the INSERT EXEC operation, so the context must be cleared to prevent it
 		 * from leaking to subsequent queries in the same session.
-		 * 
+		 *
 		 * We check for nested INSERT EXEC errors by looking for:
 		 * - ERRCODE_PROGRAM_LIMIT_EXCEEDED (54000)
 		 * - Error message containing "nested INSERT"
@@ -1575,7 +1609,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			bool is_nested_insert_exec_error = (edata->sqlerrcode == ERRCODE_PROGRAM_LIMIT_EXCEEDED &&
 											   edata->message != NULL &&
 											   strstr(edata->message, "nested INSERT") != NULL);
-			
+
 			if (insert_exec_active && (should_cleanup_trycatch || is_nested_insert_exec_error))
 			{
 				pltsql_insert_exec_close_target_table();
@@ -1620,7 +1654,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			 * Otherwise, the temp table will be left behind and cause
 			 * "relation already exists" errors on subsequent INSERT EXEC.
 			 */
-			
+
 			/*
 			 * Only skip abort for INSERT EXEC if there's a TRY-CATCH that
 			 * will catch the error. If no TRY-CATCH, clean up INSERT EXEC
@@ -1644,7 +1678,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 					pltsql_clear_insert_exec_context();
 				}
 			}
-			
+
 			if (!skip_abort)
 			{
 				HOLD_INTERRUPTS();
@@ -1865,17 +1899,17 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 
 					/*
 					 * Clean up INSERT EXEC context if active.
-					 * 
+					 *
 					 * When an error occurs during INSERT EXEC and is caught by TRY-CATCH,
 					 * the PG_CATCH in exec_stmt_exec leaves the INSERT EXEC context intact
 					 * so we can drop the temp table here (SPI is available after TRY-CATCH).
-					 * 
+					 *
 					 * We drop the temp table here because:
 					 * 1. SPI is available (we're in a valid transaction state after TRY-CATCH)
 					 * 2. The error has been caught and execution will continue to the CATCH block
 					 * 3. If we don't drop it, subsequent INSERT EXEC statements will fail
 					 *    with "relation already exists"
-					 * 
+					 *
 					 * We only clean up if the TRY-CATCH is at the same level or higher than
 					 * where INSERT EXEC was started. If the TRY-CATCH is inside the procedure
 					 * being executed (deeper call stack), we should NOT clean up because the
@@ -1884,13 +1918,13 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 					if (pltsql_insert_exec_should_cleanup_on_trycatch())
 					{
 						Oid temp_oid = pltsql_get_insert_exec_temp_table_oid();
-						
+
 						/* Close target table and release lock first */
 						pltsql_insert_exec_close_target_table();
-						
+
 						/* Clear the INSERT EXEC context */
 						pltsql_clear_insert_exec_context();
-						
+
 						/* Drop the temp table if it exists */
 						if (OidIsValid(temp_oid))
 							drop_insert_exec_temp_table(temp_oid);
@@ -1900,11 +1934,11 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 						/*
 						 * TRY-CATCH is inside the procedure being executed.
 						 * The INSERT EXEC is still in progress.
-						 * 
+						 *
 						 * For column mismatch errors (had_error flag is set), we should
 						 * re-throw the error. SQL Server behavior: Column mismatch errors
 						 * cause all rows to be rolled back, even if caught by TRY-CATCH.
-						 * 
+						 *
 						 * For other errors (division by zero, etc.), we allow the error
 						 * to be caught by TRY-CATCH so that the flush will happen when
 						 * the procedure completes. SQL Server behavior: When a non-column-

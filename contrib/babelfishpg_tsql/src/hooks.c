@@ -811,9 +811,9 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 			 * 4. INSERT EXEC is active and it's a COMMIT (to block with error 3916)
 			 * 5. INSERT EXEC is active and it's a BEGIN TRAN (to properly track NestedTranCount)
 			 */
-			if (NestedTranCount > 0 || 
+			if (NestedTranCount > 0 ||
 				(sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()) ||
-				(pltsql_insert_exec_active() && 
+				(pltsql_insert_exec_active() &&
 				 (stmt->kind == TRANS_STMT_ROLLBACK || stmt->kind == TRANS_STMT_ROLLBACK_TO ||
 				  stmt->kind == TRANS_STMT_COMMIT || stmt->kind == TRANS_STMT_BEGIN)))
 			{

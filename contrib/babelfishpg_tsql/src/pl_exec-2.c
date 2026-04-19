@@ -51,11 +51,11 @@
 
 /*
  * Helper function to clean up type strings from format_type().
- * 
+ *
  * PostgreSQL's format_type() can return type strings with suffixes like
  * "without time zone" for certain datetime types (e.g., "smalldatetime(0) without time zone").
  * These suffixes are not valid in CREATE TABLE statements, so we need to strip them.
- * 
+ *
  * Returns a newly allocated string with the suffix removed, or a copy of the
  * original string if no suffix is found.
  */
@@ -64,28 +64,28 @@ clean_format_type_string(const char *coltype)
 {
 	char *result;
 	char *suffix_pos;
-	
+
 	if (coltype == NULL)
 		return NULL;
-	
+
 	result = pstrdup(coltype);
-	
+
 	/* Strip " without time zone" suffix if present */
 	suffix_pos = strstr(result, " without time zone");
 	if (suffix_pos != NULL)
 		*suffix_pos = '\0';
-	
+
 	/* Also strip " with time zone" suffix if present (for completeness) */
 	suffix_pos = strstr(result, " with time zone");
 	if (suffix_pos != NULL)
 		*suffix_pos = '\0';
-	
+
 	/*
 	 * Handle VARCHAR(MAX), NVARCHAR(MAX), and VARBINARY(MAX).
 	 * When format_type() returns "sys.varchar", "sys.nvarchar", or "sys.varbinary"
 	 * without a length modifier (no parentheses), it means the type is (MAX).
 	 * We need to append "(max)" for the CREATE TABLE statement.
-	 * 
+	 *
 	 * Note: format_type() may return:
 	 * - Qualified names: sys.varchar, sys."varchar"
 	 * - Unqualified names: varchar, "varchar" (when sys is in search_path)
@@ -109,13 +109,13 @@ clean_format_type_string(const char *coltype)
 		pfree(result);
 		result = new_result;
 	}
-	
+
 	return result;
 }
 
 /*
  * INSERT EXEC DestReceiver implementation
- * 
+ *
  * This DestReceiver writes tuples to a temp table for INSERT EXEC buffering.
  * Modeled after CreateTransientRelDestReceiver in matview.c but without
  * TABLE_INSERT_FROZEN flag to preserve MVCC semantics.
@@ -151,6 +151,7 @@ typedef struct InsertExecContext
 	Oid			target_rel_oid;			/* OID of target table - lock held to detect schema changes */
 	InsertExecSchemaSignature *schema_sig;	/* Schema signature for detecting changes */
 	uint64		execution_id;			/* Unique ID for this INSERT EXEC execution */
+	bool		started_implicit_txn;	/* True if INSERT EXEC started an implicit transaction */
 } InsertExecContext;
 
 /* Counter for generating unique execution IDs */
@@ -168,7 +169,8 @@ static InsertExecContext insert_exec_ctx = {
 	.pending_drop = false,
 	.target_rel_oid = InvalidOid,
 	.schema_sig = NULL,
-	.execution_id = 0
+	.execution_id = 0,
+	.started_implicit_txn = false
 };
 
 /* DestReceiver struct for INSERT EXEC */
@@ -195,14 +197,14 @@ static void insertexec_destroy(DestReceiver *self);
 /*
  * Parse a T-SQL table name into schema and table components.
  * Handles 1-part (table), 2-part (schema.table), and 3-part (db.schema.table) names.
- * 
+ *
  * Parameters:
  *   target_table - The input table name (e.g., "dbo.orders" or "mydb.dbo.orders")
  *   schema_name_out - Output: logical schema name (caller must pfree)
  *   table_name_out - Output: table name (caller must pfree)
  *   physical_schema_out - Output: physical schema name (caller must pfree), or NULL if not needed
  *   get_physical - If true, also compute the physical schema name
- * 
+ *
  * Returns true if parsing succeeded, false otherwise.
  * Caller is responsible for freeing the output strings.
  */
@@ -271,7 +273,7 @@ parse_insert_exec_table_name(const char *target_table,
  * Set the global INSERT EXEC context with target table info.
  * Called from ANTLR parser when INSERT EXEC is detected.
  * This is called BEFORE temp table creation - just stores the target info.
- * 
+ *
  * IMPORTANT: We allocate in TopMemoryContext so the strings survive
  * error handling (PG_CATCH blocks). The current memory context may be
  * reset during error processing, which would corrupt these pointers.
@@ -282,7 +284,7 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 	MemoryContext oldcontext;
 	PLExecStateCallStack *cur;
 	int depth = 0;
-	
+
 	/* Clear any previous context */
 	if (insert_exec_ctx.target_table)
 	{
@@ -294,13 +296,13 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 		pfree(insert_exec_ctx.column_list);
 		insert_exec_ctx.column_list = NULL;
 	}
-	
+
 	/* Allocate in TopMemoryContext so strings survive error handling */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 	insert_exec_ctx.target_table = target_table ? pstrdup(target_table) : NULL;
 	insert_exec_ctx.column_list = column_list ? pstrdup(column_list) : NULL;
 	MemoryContextSwitchTo(oldcontext);
-	
+
 	/* Record the call stack depth when INSERT EXEC was started */
 	cur = exec_state_call_stack;
 	while (cur != NULL)
@@ -313,7 +315,7 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 	 * This is used to detect stale INSERT EXEC context.
 	 */
 	insert_exec_ctx.call_stack_depth = depth;
-	
+
 	/*
 	 * Store a unique execution ID for this INSERT EXEC. This is used to detect
 	 * if the INSERT EXEC context is stale (from a previous execution).
@@ -334,9 +336,6 @@ pltsql_set_insert_exec_context(Oid temp_table_oid)
 /*
  * Clear the global INSERT EXEC context.
  * Called when exiting INSERT EXEC context.
- * 
- * EXPERIMENT: Removed transaction count restoration.
- * We're testing if skipping auto-commit is sufficient.
  */
 void
 pltsql_clear_insert_exec_context(void)
@@ -394,6 +393,42 @@ pltsql_insert_exec_clear_error_flag(void)
 }
 
 /*
+ * Set the flag indicating INSERT EXEC started an implicit transaction.
+ * This flag persists even after the INSERT EXEC context is cleared,
+ * so it can be used to skip the transaction count mismatch check.
+ */
+void
+pltsql_insert_exec_set_implicit_txn_flag(void)
+{
+	elog(DEBUG4, "TSQL TXN Setting implicit txn flag for INSERT EXEC (was %d, setting to true)",
+		 insert_exec_ctx.started_implicit_txn);
+	insert_exec_ctx.started_implicit_txn = true;
+	elog(DEBUG4, "TSQL TXN After setting implicit txn flag: %d", insert_exec_ctx.started_implicit_txn);
+}
+
+/*
+ * Check if INSERT EXEC started an implicit transaction.
+ * Used to skip the transaction count mismatch check.
+ */
+bool
+pltsql_insert_exec_started_implicit_txn(void)
+{
+	elog(DEBUG4, "TSQL TXN Checking implicit txn flag: %d", insert_exec_ctx.started_implicit_txn);
+	return insert_exec_ctx.started_implicit_txn;
+}
+
+/*
+ * Clear the flag indicating INSERT EXEC started an implicit transaction.
+ * Called after the transaction count mismatch check has been skipped.
+ */
+void
+pltsql_insert_exec_clear_implicit_txn_flag(void)
+{
+	elog(DEBUG4, "TSQL TXN Clearing implicit txn flag (was %d)", insert_exec_ctx.started_implicit_txn);
+	insert_exec_ctx.started_implicit_txn = false;
+}
+
+/*
  * Set the pending drop flag.
  * Called when an error occurs and we can't drop the temp table immediately.
  */
@@ -434,16 +469,16 @@ pltsql_insert_exec_check_pending_drop(void)
 
 /*
  * Open and hold the target table during INSERT EXEC execution.
- * 
+ *
  * This function captures the schema signature (column count and types) of the
  * target table at the start of INSERT EXEC. Before flushing data to the target,
  * we verify the schema hasn't changed. If it has, we raise SQL Server error 556:
  * "INSERT EXEC failed because the stored procedure altered the schema of the target table."
- * 
+ *
  * For regular tables:
  * - Acquire RowExclusiveLock to block concurrent sessions from modifying the table
  * - Capture schema signature for verification at flush time
- * 
+ *
  * For temp tables and table variables (starting with # or @):
  * - Only capture schema signature (no lock needed - they're session-local)
  * - The schema verification at flush time will detect DROP/ALTER
@@ -475,10 +510,10 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 		 */
 		rv = makeRangeVar(NULL, pstrdup(target_table), -1);
 		relid = RangeVarGetRelid(rv, NoLock, true);
-		
+
 		if (!OidIsValid(relid))
 			return;
-		
+
 		/* Store the OID for schema verification (no lock for temp tables) */
 		insert_exec_ctx.target_rel_oid = relid;
 	}
@@ -490,24 +525,24 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 		{
 			return;
 		}
-		
+
 		/* Create RangeVar and get the relation OID */
 		rv = makeRangeVar(physical_schema, table_name, -1);
 		relid = RangeVarGetRelid(rv, NoLock, true);
-		
+
 		if (schema_name)
 			pfree(schema_name);
 		if (table_name)
 			pfree(table_name);
 		if (physical_schema)
 			pfree(physical_schema);
-		
+
 		if (!OidIsValid(relid))
 		{
 			/* Table doesn't exist - will be caught later during flush */
 			return;
 		}
-		
+
 		/*
 		 * Acquire RowExclusiveLock on the target table.
 		 * This lock will be held until the end of the transaction.
@@ -527,10 +562,10 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 			return;
 		}
 		PG_END_TRY();
-		
+
 		insert_exec_ctx.target_rel_oid = relid;
 	}
-	
+
 	/*
 	 * Capture the schema signature of the target table.
 	 * This is used to detect DROP/ALTER at flush time.
@@ -548,12 +583,12 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 		return;
 	}
 	PG_END_TRY();
-	
+
 	tupdesc = RelationGetDescr(rel);
-	
+
 	/* Allocate schema signature in TopMemoryContext so it survives error handling */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-	
+
 	/* Free any previous schema signature */
 	if (insert_exec_ctx.schema_sig != NULL)
 	{
@@ -564,31 +599,31 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 		pfree(insert_exec_ctx.schema_sig);
 		insert_exec_ctx.schema_sig = NULL;
 	}
-	
+
 	insert_exec_ctx.schema_sig = palloc(sizeof(InsertExecSchemaSignature));
 	insert_exec_ctx.schema_sig->natts = tupdesc->natts;
 	insert_exec_ctx.schema_sig->atttypids = palloc(tupdesc->natts * sizeof(Oid));
 	insert_exec_ctx.schema_sig->atttypmods = palloc(tupdesc->natts * sizeof(int32));
-	
+
 	for (i = 0; i < tupdesc->natts; i++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 		insert_exec_ctx.schema_sig->atttypids[i] = attr->atttypid;
 		insert_exec_ctx.schema_sig->atttypmods[i] = attr->atttypmod;
 	}
-	
+
 	MemoryContextSwitchTo(oldcontext);
-	
+
 	table_close(rel, NoLock);  /* Keep the lock (if any) */
 }
 
 /*
  * Close the target table that was held open during INSERT EXEC.
  * Called after the flush completes or on error cleanup.
- * 
+ *
  * For regular tables: Release the RowExclusiveLock we acquired.
  * For temp tables: Just clear the OID (no lock was acquired).
- * 
+ *
  * Note: We only release the lock if we're not in an aborted transaction state.
  * If the transaction was aborted, the lock has already been released.
  */
@@ -599,7 +634,7 @@ pltsql_insert_exec_close_target_table(void)
 	{
 		const char *target = pltsql_get_insert_exec_target_table();
 		bool is_temp_table = (target != NULL && (target[0] == '#' || target[0] == '@'));
-		
+
 		/*
 		 * Only release the lock for regular tables (not temp tables).
 		 * Temp tables don't have locks to release.
@@ -621,7 +656,7 @@ pltsql_insert_exec_close_target_table(void)
 		}
 		insert_exec_ctx.target_rel_oid = InvalidOid;
 	}
-	
+
 	/* Free the schema signature */
 	if (insert_exec_ctx.schema_sig != NULL)
 	{
@@ -637,10 +672,10 @@ pltsql_insert_exec_close_target_table(void)
 /*
  * Verify that the target table schema hasn't changed since INSERT EXEC started.
  * Returns true if schema is unchanged, false if it has changed.
- * 
+ *
  * This is called before flushing data to the target table to detect if the
  * executed procedure altered the target table's schema (SQL Server error 556).
- * 
+ *
  * Note: In major version upgrade scenarios, the OID captured at INSERT EXEC start
  * may become stale. We handle this gracefully by skipping the check if we can't
  * open the relation - the actual INSERT will validate the data anyway.
@@ -653,11 +688,11 @@ pltsql_insert_exec_verify_schema(void)
 	int			i;
 	bool		schema_changed = false;
 	MemoryContext oldcontext;
-	
+
 	/* If no schema signature was captured, skip the check */
 	if (insert_exec_ctx.schema_sig == NULL || !OidIsValid(insert_exec_ctx.target_rel_oid))
 		return true;
-	
+
 	/*
 	 * Try to open the relation. If we can't open it, the table was likely
 	 * dropped by the executed procedure - this is a schema change that should
@@ -670,7 +705,7 @@ pltsql_insert_exec_verify_schema(void)
 	}
 	PG_CATCH();
 	{
-		/* 
+		/*
 		 * Could not open relation - table was dropped or OID is stale.
 		 * This is a schema change, return false to trigger error 556.
 		 */
@@ -679,9 +714,9 @@ pltsql_insert_exec_verify_schema(void)
 		return false;  /* Schema changed - table no longer exists */
 	}
 	PG_END_TRY();
-	
+
 	tupdesc = RelationGetDescr(rel);
-	
+
 	/* Check if column count changed */
 	if (tupdesc->natts != insert_exec_ctx.schema_sig->natts)
 	{
@@ -701,9 +736,9 @@ pltsql_insert_exec_verify_schema(void)
 			}
 		}
 	}
-	
+
 	table_close(rel, NoLock);  /* Keep the lock */
-	
+
 	return !schema_changed;
 }
 
@@ -715,20 +750,20 @@ static bool
 target_list_contains_star(List *targetList)
 {
 	ListCell *lc;
-	
+
 	foreach(lc, targetList)
 	{
 		ResTarget *rt = (ResTarget *) lfirst(lc);
-		
+
 		if (rt == NULL || !IsA(rt, ResTarget))
 			continue;
-		
+
 		/* Check if the value is a ColumnRef with A_Star */
 		if (rt->val != NULL && IsA(rt->val, ColumnRef))
 		{
 			ColumnRef *cref = (ColumnRef *) rt->val;
 			ListCell *field_lc;
-			
+
 			foreach(field_lc, cref->fields)
 			{
 				Node *field = (Node *) lfirst(field_lc);
@@ -737,7 +772,7 @@ target_list_contains_star(List *targetList)
 			}
 		}
 	}
-	
+
 	return false;
 }
 
@@ -752,13 +787,13 @@ count_select_target_columns(SelectStmt *stmt)
 {
 	if (stmt == NULL)
 		return -1;
-	
+
 	/* For set operations (UNION, INTERSECT, EXCEPT), check the left branch */
 	if (stmt->op != SETOP_NONE)
 	{
 		return count_select_target_columns(stmt->larg);
 	}
-	
+
 	/* For a simple SELECT, count the target list */
 	if (stmt->targetList != NULL)
 	{
@@ -769,28 +804,28 @@ count_select_target_columns(SelectStmt *stmt)
 		 */
 		if (target_list_contains_star(stmt->targetList))
 			return -1;
-		
+
 		return list_length(stmt->targetList);
 	}
-	
+
 	return -1;
 }
 
 /*
  * Validate column count from a query string BEFORE plan preparation.
- * 
+ *
  * SQL Server validates column count at the metadata level BEFORE evaluating
  * expressions. This means column mismatch errors (213) take priority over
  * runtime errors like division by zero (8134).
- * 
+ *
  * In PostgreSQL, plan preparation calls eval_const_expressions() which evaluates
  * constant expressions like 1/0, causing runtime errors to occur before we can
  * validate column count.
- * 
+ *
  * This function parses the query string and counts the target list columns
  * WITHOUT evaluating expressions, allowing us to detect column mismatches
  * before any runtime errors can occur.
- * 
+ *
  * Returns true if validation passes (or cannot be performed), false if column
  * count mismatch is detected.
  */
@@ -806,16 +841,16 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	TupleDesc	temp_tupdesc;
 	int			temp_natts;
 	MemoryContext oldcontext;
-	
+
 	/* Only validate if INSERT EXEC is active */
 	if (!pltsql_insert_exec_active())
 		return true;
-	
+
 	/* Get the temp table OID */
 	temp_table_oid = pltsql_get_insert_exec_temp_table_oid();
 	if (!OidIsValid(temp_table_oid))
 		return true;  /* No temp table yet, skip validation */
-	
+
 	/* Parse the query string */
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
@@ -830,23 +865,23 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 		return true;
 	}
 	PG_END_TRY();
-	
+
 	/* We expect exactly one statement */
 	if (list_length(parsetree_list) != 1)
 		return true;  /* Multiple statements, let normal path handle it */
-	
+
 	raw_stmt = (RawStmt *) linitial(parsetree_list);
 	stmt = raw_stmt->stmt;
-	
+
 	/* Check if it's a SELECT statement */
 	if (!IsA(stmt, SelectStmt))
 		return true;  /* Not a SELECT, let normal path handle it */
-	
+
 	/* Count target list columns */
 	query_natts = count_select_target_columns((SelectStmt *) stmt);
 	if (query_natts < 0)
 		return true;  /* Could not determine column count */
-	
+
 	/* Get temp table column count */
 	PG_TRY();
 	{
@@ -863,21 +898,21 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 		return true;
 	}
 	PG_END_TRY();
-	
+
 	/* Check for column count mismatch */
 	if (query_natts != temp_natts)
 	{
 		/*
 		 * Set the error flag BEFORE throwing the error. This ensures that
 		 * even if TRY-CATCH catches the error, the flush will be skipped.
-		 * 
+		 *
 		 * SQL Server behavior: Column mismatch errors cause all rows to be
 		 * rolled back, even if caught by TRY-CATCH. This is different from
 		 * data-level errors like division by zero, which only affect the
 		 * current row and allow previously inserted rows to be kept.
 		 */
 		pltsql_insert_exec_set_error_flag();
-		
+
 		/*
 		 * Use ERRCODE_DATATYPE_MISMATCH to avoid the error mapping in
 		 * error_mapping.txt. The mapping for ERRCODE_FEATURE_NOT_SUPPORTED
@@ -890,7 +925,7 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 				 errmsg("Column name or number of supplied values does not match table definition.")));
 		return false;  /* Not reached, but for clarity */
 	}
-	
+
 	return true;
 }
 
@@ -908,14 +943,14 @@ pltsql_insert_exec_active(void)
  * Check if we're actually inside the INSERT EXEC execution context.
  * This is more strict than pltsql_insert_exec_active() - it also checks
  * that the temp table OID is still valid.
- * 
+ *
  * This is used to prevent stale INSERT EXEC context from affecting
  * queries that are NOT part of the current INSERT EXEC. For example,
  * if a previous test set up INSERT EXEC context but didn't clean it up,
  * subsequent tests would see pltsql_insert_exec_active() as true but
  * pltsql_insert_exec_in_execution() as false because the temp table
  * would have been dropped.
- * 
+ *
  * NOTE: This function is intentionally conservative. It may return false
  * even when we ARE inside INSERT EXEC (e.g., if the temp table hasn't been
  * created yet). This is acceptable because the column validation will still
@@ -927,17 +962,17 @@ pltsql_insert_exec_in_execution(void)
 	PLExecStateCallStack *cur;
 	int current_depth = 0;
 	Oid temp_table_oid;
-	
+
 	if (insert_exec_ctx.target_table == NULL)
 		return false;
-	
+
 	/*
 	 * If call_stack_depth is 0, the context was never properly set or was
 	 * cleared. This shouldn't happen if target_table is set, but check anyway.
 	 */
 	if (insert_exec_ctx.call_stack_depth == 0)
 		return false;
-	
+
 	/*
 	 * Check if the temp table OID is valid. If the INSERT EXEC context is
 	 * stale (from a previous execution), the temp table would have been
@@ -946,20 +981,20 @@ pltsql_insert_exec_in_execution(void)
 	temp_table_oid = insert_exec_ctx.temp_table_oid;
 	if (!OidIsValid(temp_table_oid))
 		return false;
-	
+
 	/*
 	 * Additional check: verify the temp table actually exists.
 	 * The OID might still be "valid" (non-zero) but the table could have been
 	 * dropped due to transaction rollback. This happens when INSERT EXEC fails
 	 * and the transaction is rolled back - the temp table is dropped but the
 	 * OID in the context is not cleared.
-	 * 
+	 *
 	 * We use SearchSysCacheExists1 to check if the relation exists without
 	 * opening it (which would fail if it doesn't exist).
 	 */
 	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(temp_table_oid)))
 		return false;
-	
+
 	/*
 	 * Get current call stack depth.
 	 */
@@ -969,11 +1004,11 @@ pltsql_insert_exec_in_execution(void)
 		current_depth++;
 		cur = cur->next;
 	}
-	
+
 	/*
 	 * If current_depth is 0, we're not inside any PL/tsql execution,
 	 * so we can't be inside INSERT EXEC execution either.
-	 * 
+	 *
 	 * IMPORTANT: This also handles the case where the INSERT EXEC context
 	 * is stale from a previous batch. When a new batch starts, the call
 	 * stack is empty (depth 0), so we return false here. This prevents
@@ -981,29 +1016,29 @@ pltsql_insert_exec_in_execution(void)
 	 */
 	if (current_depth == 0)
 		return false;
-	
+
 	/*
 	 * Check if the current call stack depth is consistent with the INSERT EXEC
 	 * context. If we're at a shallower level than when INSERT EXEC started,
 	 * the context is stale.
-	 * 
+	 *
 	 * Note: We use < instead of <= because the INSERT EXEC statement itself
 	 * is at call_stack_depth, and the called procedure is at call_stack_depth+1.
 	 */
 	if (current_depth < insert_exec_ctx.call_stack_depth)
 		return false;  /* Context is stale - we've returned from INSERT EXEC */
-	
+
 	/*
 	 * We're at or below the INSERT EXEC call stack depth, and the temp table
 	 * OID is valid. This is likely a valid INSERT EXEC execution using the
 	 * DestReceiver approach.
-	 * 
+	 *
 	 * Final check: verify the execution_id is non-zero. If it's zero, the
 	 * context was cleared but not fully reset (shouldn't happen, but be safe).
 	 */
 	if (insert_exec_ctx.execution_id == 0)
 		return false;
-	
+
 	return true;
 }
 
@@ -1040,7 +1075,7 @@ pltsql_insert_exec_set_target_table(const char *target_table)
 	{
 		pfree(insert_exec_ctx.target_table);
 	}
-	
+
 	if (target_table != NULL)
 	{
 		MemoryContext oldcontext = MemoryContextSwitchTo(TopMemoryContext);
@@ -1109,10 +1144,10 @@ bool
 pltsql_insert_exec_in_trycatch(void)
 {
 	PLExecStateCallStack *cur;
-	
+
 	if (insert_exec_ctx.target_table == NULL)
 		return false;
-	
+
 	/* Check the call stack for any active TRY-CATCH blocks */
 	cur = exec_state_call_stack;
 	while (cur != NULL)
@@ -1131,25 +1166,25 @@ pltsql_insert_exec_in_trycatch(void)
 		}
 		cur = cur->next;
 	}
-	
+
 	return false;
 }
 
 /*
  * Check if we should clean up INSERT EXEC context when a TRY-CATCH catches an error.
- * 
+ *
  * This is used in the sigsetjmp handler (iterative_exec.c) to determine if we should
  * clean up the INSERT EXEC context. We should only clean up if the TRY-CATCH that
  * catches the error is at the same level or higher than where INSERT EXEC was started.
- * 
+ *
  * If the TRY-CATCH is inside the procedure being executed (deeper call stack),
  * we should NOT clean up because the INSERT EXEC is still in progress.
- * 
+ *
  * IMPORTANT: This function is called from the sigsetjmp handler AFTER a TRY-CATCH
  * has caught the error. At this point, we know there IS a TRY-CATCH that caught
  * the error. The question is whether it's inside the procedure (don't clean up)
  * or at the same level or higher (clean up).
- * 
+ *
  * Returns true if we should clean up, false otherwise.
  */
 bool
@@ -1157,10 +1192,10 @@ pltsql_insert_exec_should_cleanup_on_trycatch(void)
 {
 	PLExecStateCallStack *cur;
 	int current_depth = 0;
-	
+
 	if (insert_exec_ctx.target_table == NULL)
 		return false;
-	
+
 	/* Get current call stack depth */
 	cur = exec_state_call_stack;
 	while (cur != NULL)
@@ -1168,11 +1203,11 @@ pltsql_insert_exec_should_cleanup_on_trycatch(void)
 		current_depth++;
 		cur = cur->next;
 	}
-	
+
 	/*
 	 * If current depth is greater than INSERT EXEC depth, the TRY-CATCH
 	 * is inside the procedure being executed, so don't clean up.
-	 * 
+	 *
 	 * If current depth is equal to or less than INSERT EXEC depth, the
 	 * TRY-CATCH is at the same level or higher, so clean up.
 	 */
@@ -1183,7 +1218,7 @@ pltsql_insert_exec_should_cleanup_on_trycatch(void)
  * Get and clear the temp table OID for INSERT EXEC cleanup.
  * Called from iterative_exec.c after TRY-CATCH catches an error.
  * Returns the temp table OID that needs to be dropped, or InvalidOid if none.
- * 
+ *
  * This is used when an error occurs during INSERT EXEC and is caught by TRY-CATCH.
  * The PG_CATCH in exec_stmt_exec clears the INSERT EXEC context but leaves the
  * temp table OID for iterative_exec.c to drop.
@@ -1216,16 +1251,16 @@ CreateInsertExecDestReceiver(Oid temp_table_oid)
 
 /*
  * insertexec_startup --- executor startup for INSERT EXEC receiver
- * 
+ *
  * We do NOT open the relation here. Instead, we open/close it for each
  * tuple in insertexec_receive. This ensures the relation handle doesn't
  * become invalid if a subtransaction rollback happens during procedure
  * execution (e.g., inner TRY/CATCH blocks).
- * 
+ *
  * We DO validate that the number of columns in the result set matches
  * the temp table structure. If there's a mismatch, we raise an error
  * similar to SQL Server's error 213.
- * 
+ *
  * We also build coercion expressions for columns that need type conversion.
  * This uses PostgreSQL's expression evaluation infrastructure (ExecInitExpr,
  * ExecEvalExpr) rather than manual coercion, which is cleaner and handles
@@ -1251,17 +1286,17 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	/*
 	 * Validate column count: the number of columns in the result set
 	 * must match the number of columns in the temp table.
-	 * 
-	 * SQL Server error 213: "Column name or number of supplied values 
+	 *
+	 * SQL Server error 213: "Column name or number of supplied values
 	 * does not match table definition."
 	 */
 	result_natts = typeinfo->natts;
-	
+
 	/* Open temp table to get its tuple descriptor */
 	temp_rel = table_open(myState->temp_table_oid, AccessShareLock);
 	temp_tupdesc = RelationGetDescr(temp_rel);
 	temp_natts = temp_tupdesc->natts;
-	
+
 	if (result_natts != temp_natts)
 	{
 		table_close(temp_rel, AccessShareLock);
@@ -1269,7 +1304,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		 * Set the error flag BEFORE throwing the error. This ensures that
 		 * even if TRY-CATCH catches the error, the flush will be skipped
 		 * and the error will be re-thrown.
-		 * 
+		 *
 		 * SQL Server behavior: Column mismatch errors cause all rows to be
 		 * rolled back, even if caught by TRY-CATCH. This is different from
 		 * data-level errors like division by zero, which only affect the
@@ -1295,7 +1330,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 */
 	myState->natts = temp_natts;
 	myState->needs_coercion = false;
-	
+
 	for (i = 0; i < temp_natts; i++)
 	{
 		Form_pg_attribute src_att = TupleDescAttr(typeinfo, i);
@@ -1303,7 +1338,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		Var		   *var;
 		Node	   *expr;
 		TargetEntry *tle;
-		
+
 		/*
 		 * Create a Var node referencing the input tuple column.
 		 * We use OUTER_VAR as the varno since we'll set ecxt_outertuple
@@ -1315,17 +1350,17 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 					  src_att->atttypmod,
 					  src_att->attcollation,
 					  0);					/* varlevelsup */
-		
+
 		expr = (Node *) var;
-		
+
 		/* Check if coercion is needed for this column */
 		if (src_att->atttypid != tgt_att->atttypid ||
 			(src_att->atttypmod != tgt_att->atttypmod && tgt_att->atttypmod != -1))
 		{
 			Node	   *cast_expr;
-			
+
 			myState->needs_coercion = true;
-			
+
 			/*
 			 * Build the coercion expression using coerce_to_target_type().
 			 * We use ASSIGNMENT coercion which matches SQL Server's implicit
@@ -1339,7 +1374,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 											  COERCION_ASSIGNMENT,
 											  COERCE_IMPLICIT_CAST,
 											  -1);
-			
+
 			/*
 			 * If coerce_to_target_type() returns NULL, there's no direct
 			 * coercion path. Fall back to I/O coercion (convert to text
@@ -1348,14 +1383,14 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 			if (cast_expr == NULL)
 			{
 				CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
-				
+
 				iocoerce->arg = (Expr *) expr;
 				iocoerce->resulttype = tgt_att->atttypid;
 				iocoerce->resultcollid = InvalidOid;
 				iocoerce->coerceformat = COERCE_IMPLICIT_CAST;
 				iocoerce->location = -1;
 				cast_expr = (Node *) iocoerce;
-				
+
 				/* Apply typmod coercion if needed */
 				if (tgt_att->atttypmod != -1)
 					cast_expr = coerce_to_target_type(NULL,
@@ -1367,7 +1402,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 													  COERCE_IMPLICIT_CAST,
 													  -1);
 			}
-			
+
 			if (cast_expr == NULL)
 			{
 				table_close(temp_rel, AccessShareLock);
@@ -1377,10 +1412,10 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 								format_type_be(src_att->atttypid),
 								format_type_be(tgt_att->atttypid))));
 			}
-			
+
 			expr = cast_expr;
 		}
-		
+
 		/* Create a TargetEntry for this column */
 		tle = makeTargetEntry((Expr *) expr,
 							  i + 1,		/* resno is 1-based */
@@ -1388,20 +1423,20 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 							  false);		/* resjunk */
 		target_list = lappend(target_list, tle);
 	}
-	
+
 	/* Create expression context and projection info if we need coercion */
 	if (myState->needs_coercion)
 	{
 		TupleDesc	proj_tupdesc;
-		
+
 		myState->econtext = CreateStandaloneExprContext();
-		
+
 		/* Create a copy of the temp table's tuple descriptor for the result slot */
 		proj_tupdesc = CreateTupleDescCopy(temp_tupdesc);
-		
+
 		/* Create the result slot for projection */
 		myState->proj_slot = MakeSingleTupleTableSlot(proj_tupdesc, &TTSOpsVirtual);
-		
+
 		/* Build the projection info */
 		myState->proj_info = ExecBuildProjectionInfo(target_list,
 													 myState->econtext,
@@ -1409,7 +1444,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 													 NULL,		/* no parent PlanState */
 													 typeinfo);	/* input descriptor */
 	}
-	
+
 	table_close(temp_rel, AccessShareLock);
 
 	/*
@@ -1419,7 +1454,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 * internally calls GetCurrentTransactionId(). If no XID exists yet,
 	 * GetCurrentTransactionId() calls AssignTransactionId() which fails during
 	 * parallel mode with "cannot assign transaction IDs during a parallel operation".
-	 * 
+	 *
 	 * By ensuring a transaction ID exists here in rStartup (which is called before
 	 * ExecutePlan and thus before EnterParallelMode), we avoid this restriction.
 	 */
@@ -1428,11 +1463,11 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 
 /*
  * insertexec_receive --- receive one tuple and insert into temp table
- * 
+ *
  * Opens the relation, inserts the tuple, and closes the relation for each
  * tuple. This is less efficient than keeping the relation open, but it
  * ensures we don't hold relation handles across subtransaction boundaries.
- * 
+ *
  * Performs type coercion when source and target types differ using
  * ExecProject for efficient tuple projection.
  */
@@ -1451,26 +1486,26 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	 */
 	temp_rel = table_open(myState->temp_table_oid, RowExclusiveLock);
 	cid = GetCurrentCommandId(true);
-	
+
 	if (myState->needs_coercion)
 	{
 		ExprContext *econtext = myState->econtext;
-		
+
 		/* Reset per-tuple memory context for expression evaluation */
 		ResetExprContext(econtext);
-		
+
 		/*
 		 * Set up the input slot for projection.
 		 * ExecProject will read from ecxt_outertuple (we used OUTER_VAR in the Var nodes).
 		 */
 		econtext->ecxt_outertuple = slot;
-		
+
 		/*
 		 * Project the tuple with type coercion.
 		 * ExecProject evaluates the target list and stores the result in proj_slot.
 		 */
 		insert_slot = ExecProject(myState->proj_info);
-		
+
 		/* Insert the projected tuple */
 		table_tuple_insert(temp_rel,
 						   insert_slot,
@@ -1501,21 +1536,21 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 
 /*
  * insertexec_shutdown --- executor end for INSERT EXEC receiver
- * 
+ *
  * Clean up the expression context and projection slot used for type coercion.
  */
 static void
 insertexec_shutdown(DestReceiver *self)
 {
 	DR_insertexec *myState = (DR_insertexec *) self;
-	
+
 	/* Free the projection slot if we created one */
 	if (myState->proj_slot != NULL)
 	{
 		ExecDropSingleTupleTableSlot(myState->proj_slot);
 		myState->proj_slot = NULL;
 	}
-	
+
 	/* Free the expression context if we created one */
 	if (myState->econtext != NULL)
 	{
@@ -1531,10 +1566,10 @@ static void
 insertexec_destroy(DestReceiver *self)
 {
 	DR_insertexec *myState = (DR_insertexec *) self;
-	
+
 	/* proj_info is allocated in the expression context, no need to free separately */
 	myState->proj_info = NULL;
-	
+
 	pfree(self);
 }
 
@@ -1544,7 +1579,7 @@ insertexec_destroy(DestReceiver *self)
  * IDENTITY and computed columns are excluded since procedure results
  * won't include them.
  * Returns the OID of the created temp table.
- * 
+ *
  * OWNERSHIP CHAINING FIX:
  * We use catalog queries (pg_attribute) to get column definitions instead of
  * SELECT ... INTO ... FROM target_table. This avoids requiring SELECT permission
@@ -1570,7 +1605,7 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 	 * Generate a unique temp table name using backend PID and a suffix.
 	 * We use PostgreSQL temp tables (not Babelfish temp tables with # prefix)
 	 * because they are more stable and don't have ENR-related issues.
-	 * 
+	 *
 	 * Instead of using DROP TABLE IF EXISTS (which could accidentally drop a
 	 * customer's temp table with the same name), we use a suffix approach
 	 * similar to PostgreSQL's ChooseConstraintName: try _1, _2, etc. until
@@ -1650,22 +1685,22 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 	}
 
 	initStringInfo(&create_stmt);
-	
+
 	if (column_list != NULL)
 	{
 		/*
 		 * User specified columns - create temp table with only those columns.
-		 * 
+		 *
 		 * For temp tables and table variables (physical_schema == NULL), we can
 		 * use SELECT ... INTO because they're always owned by the current user.
-		 * 
+		 *
 		 * For regular tables, we need to use pg_attribute to get column definitions
 		 * to avoid needing SELECT permission (ownership chaining fix).
 		 */
 		if (physical_schema == NULL)
 		{
 			/* Temp table or table variable - use SELECT ... INTO */
-			appendStringInfo(&create_stmt, 
+			appendStringInfo(&create_stmt,
 				"SELECT %s INTO %s FROM %s WHERE 1=0",
 				column_list, temp_table_name, target_table);
 		}
@@ -1685,17 +1720,17 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 			char	   *col_name;
 			char	   *saveptr;
 			StringInfoData col_names_sql;
-			
+
 			initStringInfo(&col_query);
 			initStringInfo(&col_defs);
 			initStringInfo(&col_names_sql);
-			
+
 			pg_table_ref = psprintf("%s.%s", physical_schema, table_name);
-			
+
 			/*
 			 * Parse the column_list to build a SQL IN clause.
 			 * column_list is like "c, a" - we need to convert to ('c', 'a')
-			 * 
+			 *
 			 * IMPORTANT: We lowercase the column names because pg_attribute stores
 			 * column names in lowercase (for unquoted identifiers), and we compare
 			 * using lower(a.attname) IN (...). Both sides must be lowercase.
@@ -1724,7 +1759,7 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 			}
 			appendStringInfoChar(&col_names_sql, ')');
 			pfree(col_list_copy);
-			
+
 			/*
 			 * Query to get column definitions for the specified columns.
 			 * We use CASE to preserve the order from the column_list.
@@ -1738,10 +1773,10 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 				"AND lower(a.attname) IN %s "
 				"ORDER BY a.attnum",
 				pg_table_ref, col_names_sql.data);
-			
+
 			pfree(pg_table_ref);
 			pfree(col_names_sql.data);
-			
+
 			rc = SPI_execute(col_query.data, false, 0);
 			if (rc != SPI_OK_SELECT)
 			{
@@ -1750,9 +1785,9 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 				elog(ERROR, "failed to query target table columns for INSERT EXEC: %s",
 					 SPI_result_code_string(rc));
 			}
-			
+
 			proc_count = SPI_processed;
-			
+
 			if (proc_count == 0)
 			{
 				pfree(col_query.data);
@@ -1765,9 +1800,9 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 				first_col = true;
 				for (i = 0; i < proc_count; i++)
 				{
-					char *colname = SPI_getvalue(SPI_tuptable->vals[i], 
+					char *colname = SPI_getvalue(SPI_tuptable->vals[i],
 												 SPI_tuptable->tupdesc, 1);
-					char *coltype_raw = SPI_getvalue(SPI_tuptable->vals[i], 
+					char *coltype_raw = SPI_getvalue(SPI_tuptable->vals[i],
 												 SPI_tuptable->tupdesc, 2);
 					if (colname != NULL && coltype_raw != NULL)
 					{
@@ -1779,15 +1814,15 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 						pfree(coltype);
 					}
 				}
-				
+
 				SPI_freetuptable(SPI_tuptable);
 				pfree(col_query.data);
-				
+
 				/* Create temp table with explicit column definitions */
-				appendStringInfo(&create_stmt, 
+				appendStringInfo(&create_stmt,
 					"CREATE TEMP TABLE %s (%s)",
 					temp_table_name, col_defs.data);
-				
+
 				pfree(col_defs.data);
 			}
 		}
@@ -1796,12 +1831,12 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 	{
 		/*
 		 * Create temp table excluding IDENTITY and computed columns.
-		 * 
+		 *
 		 * For temp tables (target starts with #) and table variables (start with @),
 		 * use SELECT * INTO ... FROM ... WHERE 1=0 because they are always owned by
 		 * the current user and we don't need to worry about SELECT permission.
 		 * Also, querying pg_attribute for temp tables can be unreliable in some SPI contexts.
-		 * 
+		 *
 		 * For regular tables, query pg_attribute for column definitions to avoid
 		 * needing SELECT permission on the target table (ownership chaining fix).
 		 */
@@ -1817,10 +1852,10 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 			bool		first_col = true;
 			int			proc_count;
 			uint64		i;
-			
+
 			initStringInfo(&col_query);
 			initStringInfo(&non_identity_cols);
-			
+
 			/*
 			 * Query to get non-IDENTITY, non-computed column names.
 			 * Use pg_class join to find the temp table.
@@ -1836,27 +1871,27 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 				"AND a.attgenerated = '' "
 				"ORDER BY a.attnum",
 				table_name);
-			
+
 			rc = SPI_execute(col_query.data, false, 0);
 			if (rc != SPI_OK_SELECT)
 			{
 				pfree(col_query.data);
 				pfree(non_identity_cols.data);
 				/* Fall back to CREATE TEMP TABLE AS SELECT */
-				appendStringInfo(&create_stmt, 
+				appendStringInfo(&create_stmt,
 					"CREATE TEMP TABLE %s AS SELECT * FROM %s WHERE 1=0",
 					temp_table_name, target_table);
 			}
 			else
 			{
 				proc_count = SPI_processed;
-				
+
 				if (proc_count == 0)
 				{
 					/* No columns found, fall back to CREATE TEMP TABLE AS SELECT */
 					pfree(col_query.data);
 					pfree(non_identity_cols.data);
-					appendStringInfo(&create_stmt, 
+					appendStringInfo(&create_stmt,
 						"CREATE TEMP TABLE %s AS SELECT * FROM %s WHERE 1=0",
 						temp_table_name, target_table);
 				}
@@ -1865,7 +1900,7 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 					/* Build column list from query results */
 					for (i = 0; i < proc_count; i++)
 					{
-						char *colname = SPI_getvalue(SPI_tuptable->vals[i], 
+						char *colname = SPI_getvalue(SPI_tuptable->vals[i],
 													 SPI_tuptable->tupdesc, 1);
 						if (colname != NULL)
 						{
@@ -1875,14 +1910,14 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 							first_col = false;
 						}
 					}
-					
+
 					SPI_freetuptable(SPI_tuptable);
 					pfree(col_query.data);
-					
-					appendStringInfo(&create_stmt, 
+
+					appendStringInfo(&create_stmt,
 						"CREATE TEMP TABLE %s AS SELECT %s FROM %s WHERE 1=0",
 						temp_table_name, non_identity_cols.data, target_table);
-					
+
 					pfree(non_identity_cols.data);
 				}
 			}
@@ -1898,17 +1933,17 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 			int			proc_count;
 			uint64		i;
 			char	   *pg_table_ref;
-			
+
 			initStringInfo(&col_query);
 			initStringInfo(&col_defs);
-			
+
 			pg_table_ref = psprintf("%s.%s", physical_schema, table_name);
-			
+
 			/*
 			 * Query to get non-IDENTITY, non-computed column definitions.
 			 * attidentity = '' means not an identity column
 			 * attgenerated = '' means not a generated/computed column
-			 * 
+			 *
 			 * Use regclass cast to properly resolve the table.
 			 */
 			appendStringInfo(&col_query,
@@ -1921,9 +1956,9 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 				"AND a.attgenerated = '' "
 				"ORDER BY a.attnum",
 				pg_table_ref);
-			
+
 			pfree(pg_table_ref);
-			
+
 			rc = SPI_execute(col_query.data, false, 0);
 			if (rc != SPI_OK_SELECT)
 			{
@@ -1932,9 +1967,9 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 				elog(ERROR, "failed to query target table columns: %s",
 					 SPI_result_code_string(rc));
 			}
-			
+
 			proc_count = SPI_processed;
-			
+
 			if (proc_count == 0)
 			{
 				/* No non-identity columns found - this shouldn't happen normally */
@@ -1947,9 +1982,9 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 				/* Build column definitions from query results */
 				for (i = 0; i < proc_count; i++)
 				{
-					char *colname = SPI_getvalue(SPI_tuptable->vals[i], 
+					char *colname = SPI_getvalue(SPI_tuptable->vals[i],
 												 SPI_tuptable->tupdesc, 1);
-					char *coltype_raw = SPI_getvalue(SPI_tuptable->vals[i], 
+					char *coltype_raw = SPI_getvalue(SPI_tuptable->vals[i],
 												 SPI_tuptable->tupdesc, 2);
 					if (colname != NULL && coltype_raw != NULL)
 					{
@@ -1961,20 +1996,20 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 						pfree(coltype);
 					}
 				}
-				
+
 				SPI_freetuptable(SPI_tuptable);
 				pfree(col_query.data);
-				
+
 				/* Create temp table with explicit column definitions */
-				appendStringInfo(&create_stmt, 
+				appendStringInfo(&create_stmt,
 					"CREATE TEMP TABLE %s (%s)",
 					temp_table_name, col_defs.data);
-				
+
 				pfree(col_defs.data);
 			}
 		}
 	}
-	
+
 	/* Clean up parsed names */
 	if (table_name)
 		pfree(table_name);
@@ -1983,10 +2018,10 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list)
 	if (physical_schema)
 		pfree(physical_schema);
 
-	/* 
+	/*
 	 * Execute the statement to create temp table.
 	 * We use CREATE TEMP TABLE AS SELECT which returns SPI_OK_SELINTO.
-	 * For regular tables with explicit column definitions, we use 
+	 * For regular tables with explicit column definitions, we use
 	 * CREATE TEMP TABLE which returns SPI_OK_UTILITY.
 	 */
 	rc = SPI_execute(create_stmt.data, false, 0);
@@ -2711,21 +2746,21 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 		/*
 		 * Clean up INSERT EXEC context ONLY if the TRY-CATCH that caught the
 		 * error is at the same level or higher than where INSERT EXEC was started.
-		 * 
+		 *
 		 * If the TRY-CATCH is inside the procedure being executed by INSERT EXEC
 		 * (deeper call stack), we should NOT clean up because the INSERT EXEC
 		 * is still in progress and the data should be preserved.
-		 * 
+		 *
 		 * This matches SQL Server behavior where TRY-CATCH inside a procedure
 		 * can catch errors without affecting the outer INSERT EXEC operation.
 		 */
 		if (pltsql_insert_exec_active() && pltsql_insert_exec_should_cleanup_on_trycatch())
 		{
 			Oid temp_oid = pltsql_get_insert_exec_temp_table_oid();
-			
+
 			/* Close target table and release lock first */
 			pltsql_insert_exec_close_target_table();
-			
+
 			/*
 			 * If subtransaction was released (not rolled back), drop the temp table.
 			 * When rolled back, the temp table is already gone.
@@ -2735,7 +2770,7 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 			 */
 			if (is_stmt_terminating && insert_exec_was_active && OidIsValid(temp_oid))
 				drop_insert_exec_temp_table(temp_oid);
-			
+
 			/* Clear the INSERT EXEC context AFTER dropping temp table */
 			pltsql_clear_insert_exec_context();
 		}
@@ -2838,7 +2873,7 @@ exec_stmt_push_result(PLtsql_execstate *estate,
 	/*
 	 * When INSERT EXEC is active (new DestReceiver approach), redirect results
 	 * to the temp table instead of sending to client.
-	 * 
+	 *
 	 * Column count validation is handled by:
 	 * 1. pltsql_insert_exec_validate_column_count_from_query() - validates BEFORE
 	 *    plan preparation to ensure column mismatch errors take priority over
@@ -2972,7 +3007,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 	/* whether procedure was created WITH RECOMPILE */
 	bool created_with_recompile = false;
-	
+
 	/* INSERT EXEC handling - temp table lifecycle */
 	bool insert_exec_setup_done = false;
 	Oid insert_exec_temp_oid = InvalidOid;
@@ -3005,10 +3040,10 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * If this is an INSERT EXEC statement (set by parser), create temp table here.
 		 * The DestReceiver will redirect procedure output to this temp table.
 		 * After procedure completes, we flush temp table to target and cleanup.
-		 * 
+		 *
 		 * This is inside PG_TRY so that errors (including nested INSERT EXEC)
 		 * can be caught by T-SQL TRY/CATCH.
-		 * 
+		 *
 		 * IMPORTANT: We create the temp table in a subtransaction and immediately
 		 * release it. This ensures the temp table's storage files are "committed"
 		 * at the subtransaction level, so they won't be cleaned up if a nested
@@ -3027,10 +3062,45 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
 			}
-			
+
+			/*
+			 * Start implicit transaction for INSERT EXEC if not already in one.
+			 * This matches SQL Server behavior where INSERT EXEC implicitly starts
+			 * a transaction, making @@TRANCOUNT = 1 inside the executed procedure.
+			 *
+			 * The transaction is committed at the end of INSERT EXEC by the
+			 * normal auto-commit mechanism. COMMIT/ROLLBACK are blocked during
+			 * INSERT EXEC by PLTsqlProcessTransaction().
+			 *
+			 * We set TSQL_TRAN_STARTED so that commit_stmt knows to commit the
+			 * T-SQL transaction when the INSERT EXEC statement completes.
+			 *
+			 * IMPORTANT: We do NOT start implicit transactions when INSERT EXEC
+			 * is used inside a function. Functions cannot commit/rollback transactions,
+			 * so starting one would cause "portal snapshots did not account for all
+			 * active snapshots" errors when we try to commit at the end.
+			 */
+			{
+				bool in_function = (estate->func &&
+									estate->func->fn_oid != InvalidOid &&
+									estate->func->fn_prokind == PROKIND_FUNCTION &&
+									estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER);
+
+				if (!pltsql_disable_batch_auto_commit &&
+					pltsql_support_tsql_transactions() &&
+					!IsTransactionBlockActive() &&
+					!in_function)
+				{
+					elog(DEBUG4, "TSQL TXN Start internal transaction for INSERT EXEC");
+					pltsql_start_txn();
+					pltsql_insert_exec_set_implicit_txn_flag();
+					estate->tsql_trigger_flags |= TSQL_TRAN_STARTED;
+				}
+			}
+
 			/* Set global context info for flush function */
 			pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
-			
+
 			/*
 			 * Open and hold the target table during INSERT EXEC execution.
 			 * This is critical for detecting schema alterations (SQL Server error 556).
@@ -3038,14 +3108,14 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			 * will detect if the procedure tries to ALTER TABLE on the target.
 			 */
 			pltsql_insert_exec_open_target_table(stmt->insert_exec_target);
-			
+
 			/* Create temp table based on target table structure - NO subtransaction wrapper */
-			insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
+			insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target,
 																 stmt->insert_exec_columns);
-			
+
 			/* Set global context so DestReceiver knows where to write */
 			pltsql_set_insert_exec_context(insert_exec_temp_oid);
-			
+
 			insert_exec_setup_done = true;
 		}
 
@@ -3353,11 +3423,11 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * For INSERT EXEC, wrap the procedure execution in a subtransaction.
 		 * This ensures that if an error occurs (e.g., COMMIT without BEGIN TRAN),
 		 * all changes made by the procedure are rolled back.
-		 * 
+		 *
 		 * In SQL Server, INSERT EXEC runs in an implicit transaction context,
 		 * so if COMMIT is called without BEGIN TRAN, error 3916 is thrown and
 		 * all changes are rolled back.
-		 * 
+		 *
 		 * OWNERSHIP CHAINING FIX:
 		 * We also switch the security context to the procedure owner's identity
 		 * before executing the inner procedure. This ensures that the EXECUTE
@@ -3384,7 +3454,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				 * OWNERSHIP CHAINING FIX:
 				 * Switch to the procedure owner's identity before executing the inner procedure.
 				 * This ensures the EXECUTE permission check uses the procedure owner's identity.
-				 * 
+				 *
 				 * Only switch context if we're inside a procedure (estate->func->fn_oid is valid).
 				 * For top-level batches, no ownership chaining is needed.
 				 */
@@ -3488,28 +3558,28 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	}
 	PG_CATCH();
 	{
-		/* 
+		/*
 		 * Cleanup INSERT EXEC state on error.
-		 * 
+		 *
 		 * We set the error flag and clear the INSERT EXEC context. The error flag
 		 * is used to skip the transaction count mismatch check in iterative_exec.c.
-		 * 
+		 *
 		 * We cannot call drop_insert_exec_temp_table() here because SPI_execute
 		 * cannot be used in an error context (transaction is aborted).
 		 * We set the pending drop flag so the temp table will be dropped at the
 		 * next opportunity when SPI is available.
-		 * 
+		 *
 		 * IMPORTANT: We MUST clear the INSERT EXEC context even if other cleanup
 		 * fails. Otherwise, subsequent queries will see pltsql_insert_exec_active()
 		 * as true and try to use the stale temp table OID.
-		 * 
+		 *
 		 * We also need to clean up if this INSERT EXEC statement failed during setup
 		 * (before insert_exec_setup_done was set to TRUE). This handles the case where
 		 * the context was set by pltsql_set_insert_exec_context_info() but an error
 		 * occurred before insert_exec_setup_done was set to TRUE (e.g., during temp
 		 * table creation). Without this cleanup, the context would leak and affect
 		 * subsequent queries.
-		 * 
+		 *
 		 * NOTE: We only clean up if the active context's target table matches this
 		 * statement's target table. This ensures we don't accidentally clear the
 		 * outer INSERT EXEC context when a nested INSERT EXEC fails.
@@ -3518,14 +3588,21 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		{
 			pltsql_insert_exec_set_error_flag();
 			pltsql_insert_exec_set_pending_drop();
-			
+
+			/*
+			 * Clear the implicit transaction flag since the transaction will be
+			 * rolled back due to the error. If we don't clear this, subsequent
+			 * INSERT EXEC statements might try to commit a non-existent transaction.
+			 */
+			pltsql_insert_exec_clear_implicit_txn_flag();
+
 			/*
 			 * Close target table. This function already checks
 			 * IsAbortedTransactionBlockState() and skips the unlock if
 			 * the transaction is aborted.
 			 */
 			pltsql_insert_exec_close_target_table();
-			
+
 			/* Always clear the context, even if close_target_table failed */
 			pltsql_clear_insert_exec_context();
 		}
@@ -3536,7 +3613,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			 * insert_exec_setup_done was set to TRUE). We need to clean up the
 			 * partially initialized context, but ONLY if this statement is the
 			 * one that set the context.
-			 * 
+			 *
 			 * Compare the target table names to ensure we only clean up if THIS
 			 * statement set the context. If a nested INSERT EXEC fails, the outer
 			 * INSERT EXEC context should remain active.
@@ -3545,11 +3622,13 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			if (active_target != NULL && strcmp(active_target, stmt->insert_exec_target) == 0)
 			{
 				pltsql_insert_exec_set_error_flag();
+				/* Clear implicit txn flag for setup failures too */
+				pltsql_insert_exec_clear_implicit_txn_flag();
 				pltsql_insert_exec_close_target_table();
 				pltsql_clear_insert_exec_context();
 			}
 		}
-		
+
 		if (strcmp(get_current_pltsql_db_name(), save_db_name) != 0)
 			set_cur_user_db_and_path(save_db_name, false);
 
@@ -3566,7 +3645,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			expr->plan = NULL;
 			SPI_freeplan(plan);
 		}
-		
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -3616,14 +3695,14 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	/*
 	 * INSERT EXEC DestReceiver approach: Flush temp table to target
 	 * and cleanup after procedure execution completes.
-	 * 
+	 *
 	 * Execute the flush INSERT directly without a subtransaction wrapper.
 	 * This matches the QTM branch behavior and ensures that:
 	 * 1. Data flushed to the target table is committed at the current
 	 *    transaction level (not nested in a subtransaction)
 	 * 2. If an error occurs AFTER INSERT EXEC completes (e.g., SELECT 1/0),
 	 *    the TRY-CATCH rollback won't undo the already-flushed data
-	 * 
+	 *
 	 * NOTE: We must NOT clear the INSERT EXEC context before the flush,
 	 * because flush_insert_exec_temp_table needs the target table info.
 	 * We clear it AFTER the flush completes.
@@ -3632,12 +3711,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	{
 		MemoryContext oldcontext = CurrentMemoryContext;
 		ResourceOwner oldowner = CurrentResourceOwner;
-		
+
 		PG_TRY();
 		{
 			/* Flush temp table to target table */
 			flush_insert_exec_temp_table(estate);
-			
+
 			/*
 			 * Close the target table that was held open during INSERT EXEC.
 			 * This must be done AFTER the flush completes.
@@ -3646,29 +3725,33 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		}
 		PG_CATCH();
 		{
-			/* 
+			/*
 			 * Close target table and drop temp table before clearing context.
 			 * IMPORTANT: drop_insert_exec_temp_table must be called BEFORE
 			 * pltsql_clear_insert_exec_context because clear_context frees
 			 * the temp_table_name that drop needs.
+			 *
+			 * Also clear the implicit transaction flag since the transaction
+			 * will be rolled back due to the flush error.
 			 */
 			pltsql_insert_exec_close_target_table();
 			drop_insert_exec_temp_table(insert_exec_temp_oid);
+			pltsql_insert_exec_clear_implicit_txn_flag();
 			pltsql_clear_insert_exec_context();
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
-		
+
 		/*
 		 * Drop temp table in separate subtransaction.
 		 * This isolates DROP failures from the main transaction.
-		 * 
+		 *
 		 * IMPORTANT: This must be done BEFORE pltsql_clear_insert_exec_context
 		 * because clear_context frees the temp_table_name that drop needs.
 		 */
 		BeginInternalSubTransaction(NULL);
 		MemoryContextSwitchTo(oldcontext);
-		
+
 		PG_TRY();
 		{
 			drop_insert_exec_temp_table(insert_exec_temp_oid);
@@ -3686,12 +3769,72 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			/* Temp table will be cleaned up at transaction end */
 		}
 		PG_END_TRY();
-		
+
 		/*
 		 * Clear the INSERT EXEC context AFTER the drop completes.
 		 * This must be last because it frees temp_table_name which drop needs.
 		 */
 		pltsql_clear_insert_exec_context();
+
+		/*
+		 * Commit the implicit transaction that was started for INSERT EXEC.
+		 *
+		 * The implicit transaction must be committed explicitly here because
+		 * commit_stmt() is only called for PLTSQL_STMT_EXECSQL statements,
+		 * not for PLTSQL_STMT_EXEC statements. Without this explicit commit,
+		 * the transaction would remain open and eventually be rolled back,
+		 * causing all INSERT EXEC data to be lost.
+		 *
+		 * We follow the same pattern as commit_stmt() in pl_exec.c:
+		 * 1. HoldPinnedPortals() - Hold portals to make sure cursors work
+		 * 2. PLTsqlCommitTransaction() - Commit the T-SQL transaction
+		 * 3. CommitTransactionCommand() / StartTransactionCommand() - Commit PG transaction
+		 * 4. Recreate econtext if simple_econtext_stack is NULL
+		 *
+		 * After committing, we clear the implicit_txn flag since the transaction
+		 * is now committed and there's no mismatch to skip.
+		 */
+		if (pltsql_insert_exec_started_implicit_txn())
+		{
+			SimpleEcontextStackEntry *commitTopEntry = simple_econtext_stack;
+
+			elog(DEBUG4, "TSQL TXN Commit implicit transaction for INSERT EXEC");
+
+			/* Hold portals to make sure that cursors work */
+			HoldPinnedPortals();
+
+			/* Commit the T-SQL transaction */
+			PLTsqlCommitTransaction(NULL, false);
+
+			if (!IsTransactionBlockActive())
+			{
+				ForgetPortalSnapshots();
+			}
+
+			CommitTransactionCommand();
+			StartTransactionCommand();
+			MemoryContextSwitchTo(oldcontext);
+
+			/*
+			 * A null econtext stack indicates commit/rollback.
+			 * Make simple_eval_estate null so that a new value is assigned in
+			 * pltsql_create_econtext.
+			 */
+			if (estate->use_shared_simple_eval_state && simple_econtext_stack == NULL)
+				estate->simple_eval_estate = NULL;
+
+			/*
+			 * Recreate econtext if a transaction event is detected
+			 */
+			if (simple_econtext_stack == NULL || commitTopEntry != simple_econtext_stack)
+				pltsql_create_econtext(estate);
+
+			/* Clear the implicit txn flag since we've committed */
+			pltsql_insert_exec_clear_implicit_txn_flag();
+		}
+
+		/* Clear the TSQL_TRAN_STARTED flag */
+		estate->tsql_trigger_flags &= ~TSQL_TRAN_STARTED;
 	}
 
 	return PLTSQL_RC_OK;
@@ -3868,13 +4011,13 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	char	   *old_db_name;
 	char	   *cur_db_name = NULL;
 	MemoryContext saved_context;
-	
+
 	/* INSERT EXEC handling - temp table lifecycle */
 	bool insert_exec_setup_done = false;
 	Oid insert_exec_temp_oid = InvalidOid;
 
 	LOCAL_FCINFO(fcinfo, 1);
-	
+
 	/*
 	 * Allocate old_db_name in TopMemoryContext so it survives any memory
 	 * context switches during nested EXECUTE calls.
@@ -3904,7 +4047,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		 * If this is an INSERT EXEC statement (set by parser), create temp table here.
 		 * The procedure output will be redirected to this temp table.
 		 * After procedure completes, we flush temp table to target and cleanup.
-		 * 
+		 *
 		 * This is inside PG_TRY so that errors (including nested INSERT EXEC)
 		 * can be caught by T-SQL TRY/CATCH.
 		 */
@@ -3921,10 +4064,22 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
 			}
-			
+
+			/*
+			 * NOTE: For exec_stmt_exec_batch (dynamic SQL), we do NOT start an
+			 * implicit transaction. Dynamic SQL has different transaction semantics
+			 * than stored procedure calls. The dynamic SQL batch runs in the current
+			 * transaction context (auto-commit mode), and starting an implicit
+			 * transaction can cause snapshot issues when errors occur during the flush.
+			 *
+			 * The implicit transaction feature is only needed for stored procedure
+			 * calls (exec_stmt_exec and exec_stmt_exec_sp) where we want @@TRANCOUNT = 1
+			 * inside the executed procedure.
+			 */
+
 			/* Set global context info for flush function */
 			pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
-			
+
 			/*
 			 * Open and hold the target table during INSERT EXEC execution.
 			 * This is critical for detecting schema alterations (SQL Server error 556).
@@ -3932,14 +4087,14 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			 * will detect if the procedure tries to ALTER TABLE on the target.
 			 */
 			pltsql_insert_exec_open_target_table(stmt->insert_exec_target);
-			
+
 			/* Create temp table based on target table structure */
-			insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
+			insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target,
 																 stmt->insert_exec_columns);
-			
+
 			/* Set global context so DestReceiver knows where to write */
 			pltsql_set_insert_exec_context(insert_exec_temp_oid);
-			
+
 			insert_exec_setup_done = true;
 		}
 
@@ -3966,28 +4121,28 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	}
 	PG_CATCH();
 	{
-		/* 
+		/*
 		 * Cleanup INSERT EXEC state on error.
-		 * 
+		 *
 		 * IMPORTANT: We MUST clear the INSERT EXEC context immediately, even if
 		 * we're inside a TRY-CATCH block. This is because:
 		 * 1. The temp table may have been dropped due to transaction abort
 		 * 2. Between this PG_CATCH and the TRY-CATCH handler, other code might
 		 *    check pltsql_insert_exec_active() and try to use the stale temp table OID
 		 * 3. This leads to "could not open relation with OID" errors
-		 * 
+		 *
 		 * We cannot call drop_insert_exec_temp_table() here because SPI_execute
 		 * cannot be used in an error context (transaction is aborted).
 		 * We set the pending drop flag so the temp table will be dropped at the
 		 * next opportunity when SPI is available.
-		 * 
+		 *
 		 * We also need to clean up if this INSERT EXEC statement failed during setup
 		 * (before insert_exec_setup_done was set to TRUE). This handles the case where
 		 * the context was set by pltsql_set_insert_exec_context_info() but an error
 		 * occurred before insert_exec_setup_done was set to TRUE (e.g., during temp
 		 * table creation). Without this cleanup, the context would leak and affect
 		 * subsequent queries.
-		 * 
+		 *
 		 * NOTE: We only clean up if the active context's target table matches this
 		 * statement's target table. This ensures we don't accidentally clear the
 		 * outer INSERT EXEC context when a nested INSERT EXEC fails.
@@ -3996,14 +4151,21 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		{
 			pltsql_insert_exec_set_error_flag();
 			pltsql_insert_exec_set_pending_drop();
-			
+
+			/*
+			 * Clear the implicit transaction flag since the transaction will be
+			 * rolled back due to the error. If we don't clear this, subsequent
+			 * INSERT EXEC statements might try to commit a non-existent transaction.
+			 */
+			pltsql_insert_exec_clear_implicit_txn_flag();
+
 			/*
 			 * Close target table. This function already checks
 			 * IsAbortedTransactionBlockState() and skips the unlock if
 			 * the transaction is aborted.
 			 */
 			pltsql_insert_exec_close_target_table();
-			
+
 			/* Always clear the context to prevent stale state */
 			pltsql_clear_insert_exec_context();
 		}
@@ -4014,7 +4176,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			 * insert_exec_setup_done was set to TRUE). We need to clean up the
 			 * partially initialized context, but ONLY if this statement is the
 			 * one that set the context.
-			 * 
+			 *
 			 * Compare the target table names to ensure we only clean up if THIS
 			 * statement set the context. If a nested INSERT EXEC fails, the outer
 			 * INSERT EXEC context should remain active.
@@ -4023,15 +4185,17 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			if (active_target != NULL && strcmp(active_target, stmt->insert_exec_target) == 0)
 			{
 				pltsql_insert_exec_set_error_flag();
+				/* Clear implicit txn flag for setup failures too */
+				pltsql_insert_exec_clear_implicit_txn_flag();
 				pltsql_insert_exec_close_target_table();
 				pltsql_clear_insert_exec_context();
 			}
 		}
-		
+
 		/* Restore GUC and scope identity settings before re-throwing */
 		pltsql_revert_guc(save_nestlevel);
 		pltsql_revert_last_scope_identity(scope_level);
-		
+
 		/*
 		 * Restore database context on error. This ensures that when an error
 		 * occurs inside a nested EXECUTE, the database context is properly
@@ -4042,10 +4206,10 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		{
 			set_cur_user_db_and_path(old_db_name, false);
 		}
-		
+
 		/* Free old_db_name which was allocated in TopMemoryContext */
 		pfree(old_db_name);
-		
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -4076,11 +4240,11 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		pltsql_create_econtext(estate);
 	}
 	exec_eval_cleanup(estate);
-	
+
 	/*
-	 * INSERT EXEC: Flush temp table to target and cleanup after 
+	 * INSERT EXEC: Flush temp table to target and cleanup after
 	 * dynamic SQL execution completes.
-	 * 
+	 *
 	 * Execute the flush INSERT directly without a subtransaction wrapper.
 	 * Clear the INSERT EXEC context BEFORE the flush so that subsequent
 	 * statements don't see the INSERT EXEC as active.
@@ -4089,12 +4253,12 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	{
 		MemoryContext oldcontext = CurrentMemoryContext;
 		ResourceOwner oldowner = CurrentResourceOwner;
-		
+
 		PG_TRY();
 		{
 			/* Flush temp table to target table - no subtransaction wrapper */
 			flush_insert_exec_temp_table(estate);
-			
+
 			/*
 			 * Close the target table that was held open during INSERT EXEC.
 			 * This must be done AFTER the flush completes.
@@ -4103,23 +4267,27 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		}
 		PG_CATCH();
 		{
-			/* 
+			/*
 			 * Close target table and drop temp table before clearing context.
 			 * IMPORTANT: drop_insert_exec_temp_table must be called BEFORE
 			 * pltsql_clear_insert_exec_context because clear_context frees
 			 * the temp_table_name that drop needs.
+			 *
+			 * Also clear the implicit transaction flag since the transaction
+			 * will be rolled back due to the flush error.
 			 */
 			pltsql_insert_exec_close_target_table();
 			drop_insert_exec_temp_table(insert_exec_temp_oid);
+			pltsql_insert_exec_clear_implicit_txn_flag();
 			pltsql_clear_insert_exec_context();
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
-		
+
 		/* Drop temp table in separate subtransaction */
 		BeginInternalSubTransaction(NULL);
 		MemoryContextSwitchTo(oldcontext);
-		
+
 		PG_TRY();
 		{
 			drop_insert_exec_temp_table(insert_exec_temp_oid);
@@ -4135,17 +4303,67 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			FlushErrorState();
 		}
 		PG_END_TRY();
-		
+
 		/*
 		 * Clear the INSERT EXEC context AFTER the drop completes.
 		 * This must be last because it frees temp_table_name which drop needs.
 		 */
 		pltsql_clear_insert_exec_context();
+
+		/*
+		 * NOTE: For exec_stmt_exec_batch (dynamic SQL), we do NOT start an
+		 * implicit transaction, so there's nothing to commit here. The commit
+		 * code below will be skipped because pltsql_insert_exec_started_implicit_txn()
+		 * will return false.
+		 */
+		if (pltsql_insert_exec_started_implicit_txn())
+		{
+			SimpleEcontextStackEntry *commitTopEntry = simple_econtext_stack;
+			/* Reassign oldcontext - already declared in outer scope */
+			oldcontext = CurrentMemoryContext;
+
+			elog(DEBUG4, "TSQL TXN Commit implicit transaction for INSERT EXEC (exec_batch)");
+
+			/* Hold portals to make sure that cursors work */
+			HoldPinnedPortals();
+
+			/* Commit the T-SQL transaction */
+			PLTsqlCommitTransaction(NULL, false);
+
+			if (!IsTransactionBlockActive())
+			{
+				ForgetPortalSnapshots();
+			}
+
+			CommitTransactionCommand();
+			StartTransactionCommand();
+			MemoryContextSwitchTo(oldcontext);
+
+			/*
+			 * A null econtext stack indicates commit/rollback.
+			 * Make simple_eval_estate null so that a new value is assigned in
+			 * pltsql_create_econtext.
+			 */
+			if (estate->use_shared_simple_eval_state && simple_econtext_stack == NULL)
+				estate->simple_eval_estate = NULL;
+
+			/*
+			 * Recreate econtext if a transaction event is detected
+			 */
+			if (simple_econtext_stack == NULL || commitTopEntry != simple_econtext_stack)
+				pltsql_create_econtext(estate);
+
+			/* Clear the implicit txn flag since we've committed */
+			pltsql_insert_exec_clear_implicit_txn_flag();
+
+			/* Clear the TSQL_TRAN_STARTED flag */
+			estate->tsql_trigger_flags &= ~TSQL_TRAN_STARTED;
+		}
 	}
-	
+
 	/* Free old_db_name which was allocated in TopMemoryContext */
 	pfree(old_db_name);
-	
+
 	return PLTSQL_RC_OK;
 }
 
@@ -4758,7 +4976,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				/* INSERT EXEC handling - temp table lifecycle */
 				bool insert_exec_setup_done = false;
 				Oid insert_exec_temp_oid = InvalidOid;
-				
+
 				batch = exec_eval_expr(estate, stmt->query, &isnull1, &restype1, &restypmod1);
 				if (isnull1)
 				{
@@ -4809,7 +5027,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					 * If this is an INSERT EXEC statement (set by parser), create temp table here.
 					 * The procedure output will be redirected to this temp table.
 					 * After procedure completes, we flush temp table to target and cleanup.
-					 * 
+					 *
 					 * This is inside PG_TRY so that errors (including nested INSERT EXEC)
 					 * can be caught by T-SQL TRY/CATCH.
 					 */
@@ -4826,10 +5044,45 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 									(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 									 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
 						}
-						
+
+						/*
+						 * Start implicit transaction for INSERT EXEC if not already in one.
+						 * This matches SQL Server behavior where INSERT EXEC implicitly starts
+						 * a transaction, making @@TRANCOUNT = 1 inside the executed procedure.
+						 *
+						 * The transaction is committed at the end of INSERT EXEC by the
+						 * normal auto-commit mechanism. COMMIT/ROLLBACK are blocked during
+						 * INSERT EXEC by PLTsqlProcessTransaction().
+						 *
+						 * We set TSQL_TRAN_STARTED so that commit_stmt knows to commit the
+						 * T-SQL transaction when the INSERT EXEC statement completes.
+						 *
+						 * IMPORTANT: We do NOT start implicit transactions when INSERT EXEC
+						 * is used inside a function. Functions cannot commit/rollback transactions,
+						 * so starting one would cause "portal snapshots did not account for all
+						 * active snapshots" errors when we try to commit at the end.
+						 */
+						{
+							bool in_function = (estate->func &&
+												estate->func->fn_oid != InvalidOid &&
+												estate->func->fn_prokind == PROKIND_FUNCTION &&
+												estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER);
+
+							if (!pltsql_disable_batch_auto_commit &&
+								pltsql_support_tsql_transactions() &&
+								!IsTransactionBlockActive() &&
+								!in_function)
+							{
+								elog(DEBUG4, "TSQL TXN Start internal transaction for INSERT EXEC");
+								pltsql_start_txn();
+								pltsql_insert_exec_set_implicit_txn_flag();
+								estate->tsql_trigger_flags |= TSQL_TRAN_STARTED;
+							}
+						}
+
 						/* Set global context info for flush function */
 						pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
-						
+
 						/*
 						 * Open and hold the target table during INSERT EXEC execution.
 						 * This is critical for detecting schema alterations (SQL Server error 556).
@@ -4837,14 +5090,14 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						 * will detect if the procedure tries to ALTER TABLE on the target.
 						 */
 						pltsql_insert_exec_open_target_table(stmt->insert_exec_target);
-						
+
 						/* Create temp table based on target table structure */
-						insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target, 
+						insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target,
 																			 stmt->insert_exec_columns);
-						
+
 						/* Set global context so DestReceiver knows where to write */
 						pltsql_set_insert_exec_context(insert_exec_temp_oid);
-						
+
 						insert_exec_setup_done = true;
 					}
 
@@ -4861,28 +5114,28 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				}
 				PG_CATCH();
 				{
-					/* 
+					/*
 					 * Cleanup INSERT EXEC state on error.
-					 * 
+					 *
 					 * IMPORTANT: We MUST clear the INSERT EXEC context immediately, even if
 					 * we're inside a TRY-CATCH block. This is because:
 					 * 1. The temp table may have been dropped due to transaction abort
 					 * 2. Between this PG_CATCH and the TRY-CATCH handler, other code might
 					 *    check pltsql_insert_exec_active() and try to use the stale temp table OID
 					 * 3. This leads to "could not open relation with OID" errors
-					 * 
+					 *
 					 * We cannot call drop_insert_exec_temp_table() here because SPI_execute
 					 * cannot be used in an error context (transaction is aborted).
 					 * The temp table will be automatically cleaned up when the transaction
 					 * rolls back.
-					 * 
+					 *
 					 * We also need to clean up if this INSERT EXEC statement failed during setup
 					 * (before insert_exec_setup_done was set to TRUE). This handles the case where
 					 * the context was set by pltsql_set_insert_exec_context_info() but an error
 					 * occurred before insert_exec_setup_done was set to TRUE (e.g., during temp
 					 * table creation). Without this cleanup, the context would leak and affect
 					 * subsequent queries.
-					 * 
+					 *
 					 * NOTE: We only clean up if the active context's target table matches this
 					 * statement's target table. This ensures we don't accidentally clear the
 					 * outer INSERT EXEC context when a nested INSERT EXEC fails.
@@ -4891,14 +5144,21 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					{
 						pltsql_insert_exec_set_error_flag();
 						pltsql_insert_exec_set_pending_drop();
-						
+
+						/*
+						 * Clear the implicit transaction flag since the transaction will be
+						 * rolled back due to the error. If we don't clear this, subsequent
+						 * INSERT EXEC statements might try to commit a non-existent transaction.
+						 */
+						pltsql_insert_exec_clear_implicit_txn_flag();
+
 						/*
 						 * Close target table. This function already checks
 						 * IsAbortedTransactionBlockState() and skips the unlock if
 						 * the transaction is aborted.
 						 */
 						pltsql_insert_exec_close_target_table();
-						
+
 						/* Always clear the context to prevent stale state */
 						pltsql_clear_insert_exec_context();
 					}
@@ -4909,7 +5169,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						 * insert_exec_setup_done was set to TRUE). We need to clean up the
 						 * partially initialized context, but ONLY if this statement is the
 						 * one that set the context.
-						 * 
+						 *
 						 * Compare the target table names to ensure we only clean up if THIS
 						 * statement set the context. If a nested INSERT EXEC fails, the outer
 						 * INSERT EXEC context should remain active.
@@ -4918,6 +5178,8 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						if (active_target != NULL && strcmp(active_target, stmt->insert_exec_target) == 0)
 						{
 							pltsql_insert_exec_set_error_flag();
+							/* Clear implicit txn flag for setup failures too */
+							pltsql_insert_exec_clear_implicit_txn_flag();
 							pltsql_insert_exec_close_target_table();
 							pltsql_clear_insert_exec_context();
 						}
@@ -4927,14 +5189,14 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					PG_RE_THROW();
 				}
 				PG_END_TRY();
-				
+
 				pltsql_revert_guc(save_nestlevel);
 				pltsql_revert_last_scope_identity(scope_level);
-				
+
 				/*
-				 * INSERT EXEC: Flush temp table to target and cleanup after 
+				 * INSERT EXEC: Flush temp table to target and cleanup after
 				 * sp_executesql execution completes.
-				 * 
+				 *
 				 * Execute the flush INSERT directly without a subtransaction wrapper.
 				 * Clear the INSERT EXEC context AFTER the flush so that the flush
 				 * has access to target table info.
@@ -4943,12 +5205,12 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				{
 					MemoryContext oldcontext = CurrentMemoryContext;
 					ResourceOwner oldowner = CurrentResourceOwner;
-					
+
 					PG_TRY();
 					{
 						/* Flush temp table to target table - no subtransaction wrapper */
 						flush_insert_exec_temp_table(estate);
-						
+
 						/*
 						 * Close the target table that was held open during INSERT EXEC.
 						 * This must be done AFTER the flush completes.
@@ -4957,23 +5219,27 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					}
 					PG_CATCH();
 					{
-						/* 
+						/*
 						 * Close target table and drop temp table before clearing context.
 						 * IMPORTANT: drop_insert_exec_temp_table must be called BEFORE
 						 * pltsql_clear_insert_exec_context because clear_context frees
 						 * the temp_table_name that drop needs.
+						 *
+						 * Also clear the implicit transaction flag since the transaction
+						 * will be rolled back due to the flush error.
 						 */
 						pltsql_insert_exec_close_target_table();
 						drop_insert_exec_temp_table(insert_exec_temp_oid);
+						pltsql_insert_exec_clear_implicit_txn_flag();
 						pltsql_clear_insert_exec_context();
 						PG_RE_THROW();
 					}
 					PG_END_TRY();
-					
+
 					/* Drop temp table in separate subtransaction */
 					BeginInternalSubTransaction(NULL);
 					MemoryContextSwitchTo(oldcontext);
-					
+
 					PG_TRY();
 					{
 						drop_insert_exec_temp_table(insert_exec_temp_oid);
@@ -4989,14 +5255,74 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						FlushErrorState();
 					}
 					PG_END_TRY();
-					
+
 					/*
 					 * Clear the INSERT EXEC context AFTER the drop completes.
 					 * This must be last because it frees temp_table_name which drop needs.
 					 */
 					pltsql_clear_insert_exec_context();
+
+					/*
+					 * Commit the implicit transaction that was started for INSERT EXEC.
+					 *
+					 * The implicit transaction must be committed explicitly here because
+					 * commit_stmt() is only called for PLTSQL_STMT_EXECSQL statements,
+					 * not for PLTSQL_STMT_EXEC_BATCH statements. Without this explicit commit,
+					 * the transaction would remain open and eventually be rolled back,
+					 * causing all INSERT EXEC data to be lost.
+					 *
+					 * We follow the same pattern as commit_stmt() in pl_exec.c:
+					 * 1. HoldPinnedPortals() - Hold portals to make sure cursors work
+					 * 2. PLTsqlCommitTransaction() - Commit the T-SQL transaction
+					 * 3. CommitTransactionCommand() / StartTransactionCommand() - Commit PG transaction
+					 * 4. Recreate econtext if simple_econtext_stack is NULL
+					 *
+					 * After committing, we clear the implicit_txn flag since the transaction
+					 * is now committed and there's no mismatch to skip.
+					 */
+					if (pltsql_insert_exec_started_implicit_txn())
+					{
+						SimpleEcontextStackEntry *commitTopEntry = simple_econtext_stack;
+
+						elog(DEBUG4, "TSQL TXN Commit implicit transaction for INSERT EXEC (exec_sp)");
+
+						/* Hold portals to make sure that cursors work */
+						HoldPinnedPortals();
+
+						/* Commit the T-SQL transaction */
+						PLTsqlCommitTransaction(NULL, false);
+
+						if (!IsTransactionBlockActive())
+						{
+							ForgetPortalSnapshots();
+						}
+
+						CommitTransactionCommand();
+						StartTransactionCommand();
+						MemoryContextSwitchTo(oldcontext);
+
+						/*
+						 * A null econtext stack indicates commit/rollback.
+						 * Make simple_eval_estate null so that a new value is assigned in
+						 * pltsql_create_econtext.
+						 */
+						if (estate->use_shared_simple_eval_state && simple_econtext_stack == NULL)
+							estate->simple_eval_estate = NULL;
+
+						/*
+						 * Recreate econtext if a transaction event is detected
+						 */
+						if (simple_econtext_stack == NULL || commitTopEntry != simple_econtext_stack)
+							pltsql_create_econtext(estate);
+
+						/* Clear the implicit txn flag since we've committed */
+						pltsql_insert_exec_clear_implicit_txn_flag();
+					}
+
+					/* Clear the TSQL_TRAN_STARTED flag */
+					estate->tsql_trigger_flags &= ~TSQL_TRAN_STARTED;
 				}
-				
+
 				break;
 			}
 		case PLTSQL_EXEC_SP_EXECUTE:
@@ -5981,6 +6307,14 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 	return PLTSQL_RC_OK;
 }
 
+/*
+ * Hook function called from PostgreSQL's attmap.c and tupconvert.c to check
+ * if we're inside a T-SQL INSERT EXEC operation.
+ *
+ * This always returns false because the DestReceiver approach handles type
+ * coercion internally using coerce_to_target_type() and CoerceViaIO, so we
+ * don't need to skip the type check in attmap.c.
+ */
 bool called_from_tsql_insert_exec()
 {
 	if (sql_dialect != SQL_DIALECT_TSQL)

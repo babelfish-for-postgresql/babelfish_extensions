@@ -6251,7 +6251,7 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 		 * Clear stale INSERT EXEC context at the end of each batch.
 		 * This is a safety net to ensure the context is cleared even if
 		 * the cleanup in exec_stmt_exec's PG_CATCH didn't run for some reason.
-		 * 
+		 *
 		 * We only clear when exec_state_call_stack == NULL, which means we're
 		 * at the end of a top-level batch. This ensures we don't accidentally
 		 * clear the context during a legitimate INSERT EXEC operation.

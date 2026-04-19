@@ -1631,19 +1631,19 @@ public:
 	{
 		PLtsql_stmt *old_stmt = getPLtsql_fragment(ctx);
 		ParserRuleContext *container = peekContainer();
-		
+
 		if (old_stmt && container)
 		{
 			List *siblings = getCode(container);
-			
+
 			if (pltsql_enable_antlr_detailed_log)
 				std::cout << "    replacing stmt (" << (void *) old_stmt << ") with (" << (void *) new_stmt << ") in container(" << (void *) container << ")" << std::endl;
-			
+
 			// Remove old statement and add new one
 			siblings = list_delete_ptr(siblings, old_stmt);
 			siblings = lappend(siblings, new_stmt);
 			setCode(container, siblings);
-			
+
 			// Update the fragment mapping
 			attachPLtsql_fragment(ctx, new_stmt);
 		}
@@ -2024,7 +2024,7 @@ public:
 			
 			/* Create the EXEC statement - could be PLtsql_stmt_exec or PLtsql_stmt_exec_batch */
 			PLtsql_stmt *base_stmt = makeExecuteStatement(ctxES);
-			
+
 			/* Extract target table name and schema */
 			std::string target_table;
 			std::string target_schema;
@@ -2047,7 +2047,7 @@ public:
 						tbl_schema = stripQuoteFromId(ddl_object->full_object_name()->schema);
 					if (ddl_object->full_object_name()->database)
 						tbl_db = stripQuoteFromId(ddl_object->full_object_name()->database);
-					
+
 					/*
 					 * Check if this is a temp table (starts with #).
 					 * Temp tables don't need schema prefix - they're in pg_temp schema.
@@ -2093,7 +2093,7 @@ public:
 						column_list += stripQuoteFromId(ids.back());
 				}
 			}
-			
+
 			/* Set INSERT EXEC fields based on the actual statement type */
 			if (base_stmt->cmd_type == PLTSQL_STMT_EXEC)
 			{
@@ -2125,7 +2125,7 @@ public:
 				if (!column_list.empty())
 					exec_sp_stmt->insert_exec_columns = pstrdup(column_list.c_str());
 			}
-			
+
 			/*
 			 * Apply rewriting to the EXEC statement's expression.
 			 * This is needed to convert double-quoted strings to single-quoted strings
@@ -2152,16 +2152,16 @@ public:
 				add_rewritten_query_fragment_to_mutator(&mutator);
 				mutator.run();
 			}
-			
+
 			/* Replace the PLtsql_stmt_execsql with the exec statement in the container */
 			replaceGraftedStatement(ctx, base_stmt);
-			
+
 			/* Clear the mutator since we're not using the execsql statement */
 			statementMutator.reset();
 			clear_rewritten_query_fragment();
 			return;
 		}
-		
+
 		/* For non-INSERT-EXEC statements, continue with normal processing */
 		stmt->insert_exec = false;
 
