@@ -804,7 +804,7 @@ SELECT * FROM (VALUES
 GO
 
 
--- 9. REGRESSION: char-only CASE (must be unchanged)
+-- 9. Char-only CASE: verify char type precedence is unaffected
 
 
 SELECT CASE WHEN 1 = 1 THEN CAST('abc' AS varchar(10)) ELSE CAST('def' AS nvarchar(10)) END AS result
@@ -817,7 +817,7 @@ SELECT CASE WHEN 1 = 1 THEN CAST('abc' AS varchar(10)) ELSE CAST('def' AS text) 
 GO
 
 
--- 10. REGRESSION: matching types (must be unchanged)
+-- 10. Matching types: same-type branches resolve correctly
 
 
 SELECT CASE WHEN 1 = 1 THEN CAST(1 AS int) ELSE CAST(2 AS int) END AS result
@@ -827,7 +827,7 @@ SELECT CAST('abc' AS varchar(10)) AS col UNION ALL SELECT CAST('def' AS varchar(
 GO
 
 
--- 11. REGRESSION: UNION with char types (must be unchanged)
+-- 11. UNION with char types: char type precedence is unaffected
 
 
 SELECT col FROM (
@@ -845,11 +845,81 @@ SELECT CAST('def' AS nchar(10)) AS col
 GO
 
 
--- 12. REGRESSION: incompatible types should still error
+-- 12. Incompatible types: should still error
 
 
 SELECT CASE WHEN 1 = 1 THEN CAST('2025-01-01' AS date) ELSE CAST(100 AS numeric(10,2)) END AS result
 GO
 
 SELECT CASE WHEN 1 = 1 THEN CAST('12:00:00' AS time) ELSE CAST(100 AS numeric(10,2)) END AS result
+GO
+
+
+-- 13. sql_variant against additional data types
+
+
+-- 13a. sql_variant with date/time types
+SELECT CASE WHEN 1 = 1 THEN CAST(1 AS sql_variant) ELSE CAST('2025-01-01' AS date) END AS result
+GO
+
+SELECT CASE WHEN 1 = 1 THEN CAST(1 AS sql_variant) ELSE CAST('2025-01-01 12:00:00' AS datetime) END AS result
+GO
+
+SELECT CASE WHEN 1 = 1 THEN CAST(1 AS sql_variant) ELSE CAST('12:30:00' AS time) END AS result
+GO
+
+-- 13b. sql_variant with money types
+SELECT CASE WHEN 1 = 1 THEN CAST(1 AS sql_variant) ELSE CAST(100.00 AS money) END AS result
+GO
+
+SELECT CASE WHEN 1 = 1 THEN CAST(1 AS sql_variant) ELSE CAST(50.00 AS smallmoney) END AS result
+GO
+
+-- 13c. sql_variant with integer subtypes
+SELECT CASE WHEN 1 = 1 THEN CAST(1 AS sql_variant) ELSE CAST(100 AS bigint) END AS result
+GO
+
+SELECT CASE WHEN 1 = 1 THEN CAST(1 AS sql_variant) ELSE CAST(10 AS smallint) END AS result
+GO
+
+SELECT CASE WHEN 1 = 1 THEN CAST(1 AS sql_variant) ELSE CAST(5 AS tinyint) END AS result
+GO
+
+-- 13d. sql_variant with uniqueidentifier
+SELECT CASE WHEN 1 = 1 THEN CAST(1 AS sql_variant) ELSE CAST('6F9619FF-8B86-D011-B42D-00C04FC964FF' AS uniqueidentifier) END AS result
+GO
+
+-- 13e. COALESCE with additional data types
+SELECT COALESCE(CAST(NULL AS sql_variant), CAST('2025-01-01' AS date)) AS result
+GO
+
+SELECT COALESCE(CAST(NULL AS sql_variant), CAST(100.00 AS money)) AS result
+GO
+
+SELECT COALESCE(CAST(NULL AS sql_variant), CAST(100 AS bigint)) AS result
+GO
+
+-- 13f. UNION with additional data types
+SELECT col FROM (
+SELECT CAST(1 AS sql_variant) AS col
+UNION ALL
+SELECT CAST(100.00 AS money) AS col
+) t ORDER BY col
+GO
+
+SELECT col FROM (
+SELECT CAST(1 AS sql_variant) AS col
+UNION ALL
+SELECT CAST('2025-01-01' AS date) AS col
+) t ORDER BY col
+GO
+
+
+-- 14. Other system functions returning sql_variant
+
+
+SELECT CASE WHEN 1 = 1 THEN SESSIONPROPERTY('ANSI_NULLS') ELSE CAST(0 AS int) END AS result
+GO
+
+SELECT COALESCE(SERVERPROPERTY('Edition'), CAST('unknown' AS varchar(50))) AS result
 GO

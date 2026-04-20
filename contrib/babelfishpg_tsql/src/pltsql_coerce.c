@@ -3184,6 +3184,10 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 	{
 		Node	*expr = (Node *) lfirst(lc);
 		Oid		type = exprType(expr);
+		Oid		base = get_immediate_base_type_of_UDT_internal(type);
+
+		if (OidIsValid(base))
+			type = base;
 
 		if ((*common_utility_plugin_ptr->is_tsql_sqlvariant_datatype)(type))
 		{
@@ -3192,7 +3196,6 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 			return type;
 		}
 	}
-
 
 	/* Find a common type based on precedence. NULLs are ignored, and make 
 	 * string literals varchars. If a type besides CHAR, NCHAR, VARCHAR, 
@@ -3305,14 +3308,22 @@ select_common_type_for_coalesce_function(ParseState *pstate, List *exprs)
 		pexpr = (Node *) lfirst(lc);
 		ptype = exprType(pexpr);
 
-		/* Check if arg is NULL literal */
+		/*
+		 * Check if arg is a NULL literal. At parse time, NULL literals are
+		 * always Const nodes; other expressions that may evaluate to NULL at
+		 * runtime still carry a valid type OID here.
+		 */
 		if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull)
 		{
 			/*
 			 * Consider sql_variant type even for NULL literals since it has highest
 			 * precedence so it should always win regardless of NULL value.
+			 * Also check UDTs based on sql_variant.
 			 */
-			if (!(*common_utility_plugin_ptr->is_tsql_sqlvariant_datatype)(ptype))
+			Oid		base = get_immediate_base_type_of_UDT_internal(ptype);
+			Oid		check_type = OidIsValid(base) ? base : ptype;
+
+			if (!(*common_utility_plugin_ptr->is_tsql_sqlvariant_datatype)(check_type))
 				continue;
 		}
 
