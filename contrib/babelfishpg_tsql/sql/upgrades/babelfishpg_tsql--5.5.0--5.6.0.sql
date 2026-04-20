@@ -762,7 +762,7 @@ GRANT SELECT ON sys.all_objects TO PUBLIC;
 
 -- Returns pg_attribute rows for ENR temp tables.
 CREATE OR REPLACE FUNCTION sys.babelfish_get_enr_temp_table_attributes()
-RETURNS SETOF pg_catalog.pg_attribute
+RETURNS SETOF record
 AS 'babelfishpg_tsql', 'get_enr_temp_table_attributes'
 LANGUAGE C STABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.babelfish_get_enr_temp_table_attributes() TO PUBLIC;
