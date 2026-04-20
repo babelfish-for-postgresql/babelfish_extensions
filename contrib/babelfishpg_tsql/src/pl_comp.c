@@ -1026,7 +1026,7 @@ do_compile(FunctionCallInfo fcinfo,
 			{
 				int		ci;
 
-				elog(LOG, "pltsql_enable_antlr_parse_cache[PASS]: %s (ndatums=%d), retrieved cached parse tree results, skipping ANTLR parsing", function->fn_signature, cached_result->ndatums);
+				elog(DEBUG1, "pltsql_enable_antlr_parse_cache[PASS]: %s (ndatums=%d), retrieved cached parse tree results, skipping ANTLR parsing", function->fn_signature, cached_result->ndatums);
 				pltsql_antlr_parse_cache_stat_hits++;
 				pltsql_parse_result = cached_result->parse_tree;
 				
@@ -1152,7 +1152,7 @@ do_compile(FunctionCallInfo fcinfo,
 					validation_cached_datums = pltsql_Datums;
 					validation_cached_ndatums = pltsql_nDatums;
 					function->from_cache = false;
-					elog(LOG, "pltsql_validate_antlr_parse_cache[INFO]: %s validating cached tree against ANTLR at EXEC",
+					elog(DEBUG1, "pltsql_validate_antlr_parse_cache[INFO]: %s validating cached tree against ANTLR at EXEC",
 						 function->fn_signature);
 					/* fall through to normal ANTLR parsing below */
 				}
@@ -1260,8 +1260,9 @@ skip_antlr_parsing:
 	 * pltsql_store_func_default_positions that handles cache writes for DDL.
 	 */
 	if (!forValidator && !function->from_cache &&
-		(pltsql_enable_antlr_parse_cache || antlr_parse_cache_enabled_for_func)){
-			elog(LOG, "pltsql_enable_antlr_parse_cache[INFO]: %s ANTLR parse result used to re-populate cache at EXEC (session guc=%s, func cache_enabled=%s)",
+		(pltsql_enable_antlr_parse_cache || antlr_parse_cache_enabled_for_func))
+	{
+			elog(DEBUG1, "pltsql_enable_antlr_parse_cache[INFO]: %s ANTLR parse result used to re-populate cache at EXEC (session guc=%s, func cache_enabled=%s)",
 				 function->fn_signature,
 				 pltsql_enable_antlr_parse_cache ? "on" : "off",
 				 antlr_parse_cache_enabled_for_func ? "on" : "off");
@@ -1270,7 +1271,7 @@ skip_antlr_parsing:
 			 * pltsql_update_func_antlr_parse_cache sets function->bbf_ext_xmin/tid
 			 * with the post-write tuple identity, so skip the stale assignment below.
 			 */
-		}
+	}
 	else if (TransactionIdIsValid(bbf_ext_xmin))
 	{
 		/* No cache write — use the xmin/tid captured by pltsql_restore_antlr_parse_cache_result */
@@ -1297,7 +1298,7 @@ skip_antlr_parsing:
 		bool trees_match = pltsql_compare_parse_trees(validation_cached_tree,
 													  function->action);
 
-		elog(LOG, "pltsql_validate_antlr_parse_cache[%s]: %s ANTLR parse tree comparison at EXEC",
+		elog(DEBUG1, "pltsql_validate_antlr_parse_cache[%s]: %s ANTLR parse tree comparison at EXEC",
 			 trees_match ? "PASS" : "FAIL", function->fn_signature);
 
 		pltsql_compare_datum_arrays(function->fn_signature,

@@ -216,7 +216,7 @@ pltsql_compare_datum_arrays(const char *fn_signature,
 	if (ci < cached_ndatums)
 		mismatches += (cached_ndatums - ci);
 
-	elog(LOG, "pltsql_validate_antlr_parse_cache[%s]: %s PLtsql Datums comparison "
+	elog(DEBUG1, "pltsql_validate_antlr_parse_cache[%s]: %s PLtsql Datums comparison "
 		 "at EXEC (cached=%d, antlr=%d, mismatches=%d, extra_antlr=%d)",
 		 (mismatches == 0) ? "PASS" : "DIFF",
 		 fn_signature,

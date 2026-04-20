@@ -4490,7 +4490,7 @@ pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function,
 		edata = CopyErrorData();
 		FlushErrorState();
 		pltsql_antlr_parse_cache_stat_errors++;
-		elog(LOG, "pltsql_enable_antlr_parse_cache[FAIL]: %s parse tree serialization failed: %s",
+		elog(DEBUG1, "pltsql_enable_antlr_parse_cache[FAIL]: %s parse tree serialization failed: %s",
 			 function->fn_signature, edata->message);
 
 		MemoryContextSwitchTo(ectx);
@@ -4525,7 +4525,7 @@ pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function,
 			edata = CopyErrorData();
 			FlushErrorState();
 			pltsql_antlr_parse_cache_stat_errors++;
-			elog(LOG, "pltsql_enable_antlr_parse_cache[FAIL]: %s datums serialization failed: %s",
+			elog(DEBUG1, "pltsql_enable_antlr_parse_cache[FAIL]: %s datums serialization failed: %s",
 				 function->fn_signature, edata->message);
 
 			MemoryContextSwitchTo(ectx);
@@ -4565,7 +4565,7 @@ pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function,
 			edata = CopyErrorData();
 			FlushErrorState();
 			pltsql_antlr_parse_cache_stat_errors++;
-			elog(LOG, "pltsql_validate_antlr_parse_cache[FAIL]: %s validation parse tree deserialization failed: %s",
+			elog(DEBUG1, "pltsql_validate_antlr_parse_cache[FAIL]: %s validation parse tree deserialization failed: %s",
 				 function->fn_signature, edata->message);
 
 			MemoryContextSwitchTo(ectx);
@@ -4578,7 +4578,7 @@ pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function,
 		if (roundtrip != NULL)
 		{
 			bool match = pltsql_compare_parse_trees(function->action, roundtrip);
-			elog(LOG, "pltsql_validate_antlr_parse_cache[%s]: %s ANTLR parse tree validation at CREATE/ALTER",
+			elog(DEBUG1, "pltsql_validate_antlr_parse_cache[%s]: %s ANTLR parse tree validation at CREATE/ALTER",
 				 match ? "PASS" : "FAIL", function->fn_signature);
 		}
 		else
@@ -4856,7 +4856,7 @@ pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
 		edata = CopyErrorData();
 		FlushErrorState();
 		pltsql_antlr_parse_cache_stat_errors++;
-		elog(LOG, "pltsql_enable_antlr_parse_cache[FAIL]: parse tree deserialization failed: %s",
+		elog(DEBUG1, "pltsql_enable_antlr_parse_cache[FAIL]: parse tree deserialization failed: %s",
 			 edata->message);
 
 		MemoryContextSwitchTo(ectx);
@@ -4902,7 +4902,7 @@ pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
 			pltsql_antlr_parse_cache_stat_errors++;
 
 			/* Log original internal error for debugging */
-			elog(LOG, "pltsql_enable_antlr_parse_cache[FAIL]: datums deserialization failed: %s",
+			elog(DEBUG1, "pltsql_enable_antlr_parse_cache[FAIL]: datums deserialization failed: %s",
 				 edata->message);
 
 			MemoryContextSwitchTo(ectx);
