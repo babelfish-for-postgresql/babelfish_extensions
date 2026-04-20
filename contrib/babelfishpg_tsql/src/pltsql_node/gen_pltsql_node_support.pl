@@ -668,7 +668,7 @@ close $nth;
 # PLtsql extension: hardcode includes for extension headers instead of
 # auto-generating from input file paths.
 # my $node_includes = qq{#include "src/pltsql.h"\n#include "src/pltsql-2.h"\n};
-my $node_includes = qq{#include "pltsql_serialize_macros.h"\n};
+my $node_includes = qq{#include "pltsql_node_macros.h"\n};
 
 
 # equalfuncs.c

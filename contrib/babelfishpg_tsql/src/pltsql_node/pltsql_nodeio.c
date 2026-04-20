@@ -19,10 +19,10 @@
 
 /*
  * pltsql_serialize.h: public API (pltsql_nodeToString, pltsql_stringToNode)
- * pltsql_serialize_macros.h: internal macros + pltsql_outNode, pltsql_nodeRead
+ * pltsql_node_macros.h: internal macros + pltsql_outNode, pltsql_nodeRead
  */
 #include "pltsql_serialize.h"
-#include "pltsql_serialize_macros.h"
+#include "pltsql_node_macros.h"
 
 /* Static helpers defined in this file */
 static void pltsql_outList(StringInfo str, const List *node);

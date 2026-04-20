@@ -5,7 +5,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "pltsql_serialize_macros.h"
+#include "pltsql_node_macros.h"
 #include "pltsql_serialize.h"
 
 /*

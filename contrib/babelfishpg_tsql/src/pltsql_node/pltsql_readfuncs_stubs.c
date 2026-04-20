@@ -15,7 +15,7 @@
 #include "src/pltsql.h"
 #include "src/pltsql-2.h"
 
-#include "pltsql_serialize_macros.h"
+#include "pltsql_node_macros.h"
 
 /*
  * Forward declarations for custom_read_write _read functions.

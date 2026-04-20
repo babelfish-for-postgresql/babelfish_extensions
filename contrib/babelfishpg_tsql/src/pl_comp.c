@@ -41,7 +41,7 @@
 
 #include "pltsql.h"
 #include "pltsql-2.h"
-#include "pltsql_serialize/pltsql_serialize.h"
+#include "pltsql_node/pltsql_serialize.h"
 #include "hooks.h"
 #include "analyzer.h"
 #include "catalog.h"

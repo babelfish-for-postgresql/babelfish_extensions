@@ -91,7 +91,7 @@
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "pltsql.h"
-#include "pltsql_serialize/pltsql_serialize.h"
+#include "pltsql_node/pltsql_serialize.h"
 #include "pltsql_permissions.h"
 #include "pl_explain.h"
 #include "catalog.h"

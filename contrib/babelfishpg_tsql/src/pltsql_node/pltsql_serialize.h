@@ -4,10 +4,10 @@
  *    Public API for PLtsql node serialization, deserialization, and
  *    comparison.
  *
- * Include this header from files outside the pltsql_serialize/ directory
+ * Include this header from files outside the pltsql_node/ directory
  * that need to call serialization or comparison functions. This avoids
  * pulling in the internal WRITE_/READ_/COMPARE_ macros from
- * pltsql_serialize_macros.h.
+ * pltsql_node_macros.h.
  *
  *-------------------------------------------------------------------------
  */

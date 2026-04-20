@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
- * pltsql_serialize_macros.h
- *    Shared WRITE_/READ_ macro definitions for PLtsql serialization.
+ * pltsql_node_macros.h
+ *    Shared WRITE_/READ_ macro definitions for PLtsql node serialization.
  *
  * These macros are defined inside PostgreSQL's outfuncs.c / readfuncs.c
  * and are NOT exposed in any public header.  We replicate them here so
@@ -14,8 +14,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef PLTSQL_SERIALIZE_MACROS_H
-#define PLTSQL_SERIALIZE_MACROS_H
+#ifndef PLTSQL_NODE_MACROS_H
+#define PLTSQL_NODE_MACROS_H
 
 #include "postgres.h"
 
@@ -358,4 +358,4 @@ pltsql_equal_nodes_or_equal(const void *a, const void *b)
 		} \
 	} while (0)
 
-#endif /* PLTSQL_SERIALIZE_MACROS_H */
+#endif /* PLTSQL_NODE_MACROS_H */
