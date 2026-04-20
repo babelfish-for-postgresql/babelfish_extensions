@@ -11,7 +11,7 @@ GO
 EXEC tempdb.dbo.sp_tablecollations_100 '#collTest1'
 GO
 
-SELECT attname, attnum, attcollation from sys.enr_temp_table_attributes_view
+SELECT attname, attnum, attlen from sys.enr_temp_table_attributes_view
 GO
 
 DROP TABLE #collTest1
@@ -79,7 +79,7 @@ GO
 EXEC sp_tablecollations_100 '#noCharCols'
 GO
 
-SELECT attname, attnum, attcollation from sys.enr_temp_table_attributes_view
+SELECT attname, attnum, attlen from sys.enr_temp_table_attributes_view
 GO
 
 DROP TABLE #noCharCols
@@ -106,7 +106,7 @@ GO
 EXEC sp_tablecollations_100 '#nonEnrTest1'
 GO
 
-SELECT attname, attnum, attcollation from sys.enr_temp_table_attributes_view
+SELECT attname, attnum, attlen from sys.enr_temp_table_attributes_view
 GO
 
 DROP TABLE #nonEnrTest1
