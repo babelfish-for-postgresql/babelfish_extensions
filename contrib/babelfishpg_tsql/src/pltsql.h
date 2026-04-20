@@ -2425,6 +2425,7 @@ extern DestReceiver *CreateInsertExecDestReceiver(Oid temp_table_oid);
 extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list);
 extern void drop_insert_exec_temp_table(Oid temp_table_oid);
 extern void flush_insert_exec_temp_table(PLtsql_execstate *estate);
+extern void setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
 
 #define NUM_DB_OBJECTS 11
 
