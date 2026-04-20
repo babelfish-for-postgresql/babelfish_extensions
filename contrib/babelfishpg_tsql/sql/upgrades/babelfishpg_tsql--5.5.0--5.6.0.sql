@@ -792,7 +792,7 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     FROM
         sys.all_columns c
         INNER JOIN pg_catalog.pg_class p ON (c.object_id = p.oid)
-        sys.enr_temp_table_attributes_view a
+    WHERE
         c.is_sparse = 0
     UNION ALL
     -- ENR temp tables
@@ -800,7 +800,7 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         CAST(a.attrelid AS int)          AS object_id,
         CAST(pg_my_temp_schema() AS int) AS schema_id,
         CAST(a.attnum AS int)            AS colid,
-        sys.enr_temp_table_attributes_view a
+        CAST(CAST(a.attname AS sys.sysname) AS sys.varchar) AS name,
         CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_28,
         CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_90,
         CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_100,
