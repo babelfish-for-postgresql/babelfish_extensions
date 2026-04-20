@@ -34,22 +34,43 @@ namespace BabelfishDotnetFramework
 			}
 		}
 
-		public bool insertBulkCopy(DbConnection bblCnn, DbCommand bblCmd, String sourceTable, String destinationTable, Logger logger, ref int stCount)
+		public bool insertBulkCopy(DbConnection bblCnn, DbCommand bblCmd, String sourceTable, String destinationTable, Logger logger, ref int stCount, bool useSameConnection = false)
 		{
 			bblCmd.CommandText = "Select * from " + sourceTable;
 			DbDataReader reader = null;
 			try
 			{
-				/* To Enforce Reset Connection. */
-				reader = bblCmd.ExecuteReader();
-				using (SqlConnection destinationConnection =
-                       new SqlConnection(ConfigSetup.BblConnectionString))
+				if (useSameConnection)
 				{
-					destinationConnection.Open();
+					/* 
+					 * Use same connection for temp tables as they are session-scoped.
+					 * Load data into DataTable first since we can't have open reader while bulk copying on the same connection.
+					 */
+					reader = bblCmd.ExecuteReader();
+					DataTable dataTable = new DataTable();
+					dataTable.Load(reader);
+					reader.Close();
+					reader = null;
 
-					SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection);
-					bulkCopy.DestinationTableName = destinationTable;
-					bulkCopy.WriteToServer(reader);
+					using (SqlBulkCopy bulkCopy = new SqlBulkCopy((SqlConnection)bblCnn))
+					{
+						bulkCopy.DestinationTableName = destinationTable;
+						bulkCopy.WriteToServer(dataTable);
+					}
+				}
+				else
+				{
+					/* To Enforce Reset Connection. */
+					reader = bblCmd.ExecuteReader();
+					using (SqlConnection destinationConnection =
+						   new SqlConnection(ConfigSetup.BblConnectionString))
+					{
+						destinationConnection.Open();
+
+						SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection);
+						bulkCopy.DestinationTableName = destinationTable;
+						bulkCopy.WriteToServer(reader);
+					}
 				}
 			}
 			catch (Exception e)
@@ -63,7 +84,7 @@ namespace BabelfishDotnetFramework
 			}
 			finally
 			{
-				reader.Close();
+				reader?.Close();
 			}
 			return true;
 		}
