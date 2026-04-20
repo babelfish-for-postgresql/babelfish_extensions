@@ -916,3 +916,29 @@ INNER JOIN (
 ORDER BY e.emp_name
 FOR XML RAW, ELEMENTS;
 GO
+
+GO
+
+-- ============================================
+-- SECTION: RAW('') with ELEMENTS XSINIL - xmlns:xsi namespace on each element
+-- ============================================
+
+-- RAW('') with ELEMENTS XSINIL - namespace should appear on each element
+SELECT * FROM forxml_raw_elements_t1 WHERE id = 3 FOR XML RAW(''), ELEMENTS XSINIL;
+GO
+
+-- RAW('') with ELEMENTS XSINIL - UNION ALL with NULLs
+SELECT 1 AS a, NULL AS b UNION ALL SELECT NULL AS a, 2 AS b FOR XML RAW(''), ELEMENTS XSINIL;
+GO
+
+-- RAW('') with ELEMENTS XSINIL and ROOT
+SELECT 1 AS a, NULL AS b FOR XML RAW(''), ELEMENTS XSINIL, ROOT('data');
+GO
+
+-- RAW('') with ELEMENTS XSINIL - all NULLs
+SELECT NULL AS a, NULL AS b FOR XML RAW(''), ELEMENTS XSINIL;
+GO
+
+-- RAW('') with ELEMENTS XSINIL - no NULLs (namespace still on each element)
+SELECT 1 AS a, 2 AS b FOR XML RAW(''), ELEMENTS XSINIL;
+GO

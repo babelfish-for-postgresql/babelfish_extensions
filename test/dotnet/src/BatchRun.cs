@@ -215,7 +215,8 @@ namespace BabelfishDotnetFramework
 								$"########################## INSERT BULK:- {strLine} ##########################", logger, "information");
 							string sourceTable = result[1];
 							string destinationTable = result[2];
-							testFlag &= testUtils.insertBulkCopy(bblCnn, bblCmd, sourceTable, destinationTable, logger, ref stCount);
+							bool sameConnection = result.Length > 3 && result[3].Trim().ToLowerInvariant() == "sameconnection";
+							testFlag &= testUtils.insertBulkCopy(bblCnn, bblCmd, sourceTable, destinationTable, logger, ref stCount, sameConnection);
 						}
 						else if (strLine.ToLowerInvariant().StartsWith("traninsertbulk"))
 						{

@@ -672,6 +672,7 @@ BABEL-4271
 comparison_op_index_scan
 Test-Linestring
 Test-Polygon
+Test-Multipoint
 BABEL-5788
 BABEL-1664
 sys-fn_varbintohexstr
@@ -682,3 +683,4 @@ forxml-raw-elements
 forxml-raw-elements-1gb-limit
 forxml-path-elements
 forxml-auto
+BABEL-5264

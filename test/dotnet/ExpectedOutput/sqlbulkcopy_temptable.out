@@ -1,0 +1,50 @@
+#Q#CREATE TYPE dbo.BcpTestVarcharType FROM VARCHAR(100)
+#Q#CREATE TYPE dbo.BcpTestVarcharType2 FROM VARCHAR(100)
+#Q#CREATE TABLE BcpSourceTable(id int, name varchar(50))
+#Q#INSERT INTO BcpSourceTable VALUES(0, 'Name0')
+#Q#INSERT INTO BcpSourceTable VALUES(1, 'Name1')
+#Q#INSERT INTO BcpSourceTable VALUES(2, 'Name2')
+#Q#INSERT INTO BcpSourceTable VALUES(3, 'Name3')
+#Q#INSERT INTO BcpSourceTable VALUES(4, 'Name4')
+#Q#CREATE TABLE #EnrTempTable1(id int, name varchar(50))
+#Q#SELECT * FROM #EnrTempTable1 ORDER BY id
+#D#int#!#varchar
+0#!#Name0
+1#!#Name1
+2#!#Name2
+3#!#Name3
+4#!#Name4
+#Q#DROP TABLE #EnrTempTable1
+#Q#CREATE TABLE #EnrTempTable2(id int, name varchar(50))
+#Q#SELECT COUNT(*) AS row_count FROM #EnrTempTable2
+#D#int
+5
+#Q#DROP TABLE #EnrTempTable2
+#Q#CREATE TABLE #NonEnrTempTable3(id int, name dbo.BcpTestVarcharType)
+#Q#SELECT * FROM #NonEnrTempTable3 ORDER BY id
+#D#int#!#varchar
+0#!#Name0
+1#!#Name1
+2#!#Name2
+3#!#Name3
+4#!#Name4
+#Q#DROP TABLE #NonEnrTempTable3
+#Q#CREATE TABLE #NonEnrTempTable4(id int, name dbo.BcpTestVarcharType2)
+#Q#SELECT COUNT(*) AS row_count FROM #NonEnrTempTable4
+#D#int
+5
+#Q#DROP TABLE #NonEnrTempTable4
+#Q#CREATE TABLE #collTest5(a int, b varchar(30), c nvarchar(30), d char(10))
+#Q#EXEC tempdb.dbo.sp_tablecollations_100 '#collTest5'
+#D#int#!#varchar#!#binary#!#nvarchar
+1#!#a#!#
+2#!#b#!#94208052#!#
+bbf_unicode_cp1_ci_as
+3#!#c#!#94208052#!#
+bbf_unicode_cp1_ci_as
+4#!#d#!#94208052#!#
+bbf_unicode_cp1_ci_as
+#Q#DROP TABLE #collTest5
+#Q#DROP TABLE BcpSourceTable
+#Q#DROP TYPE IF EXISTS dbo.BcpTestVarcharType
+#Q#DROP TYPE IF EXISTS dbo.BcpTestVarcharType2

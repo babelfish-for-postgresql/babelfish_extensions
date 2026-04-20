@@ -590,6 +590,120 @@ int
 ~~END~~
 
 
+-- Select from system view should start implicit transaction
+SELECT @@TRANCOUNT
+SELECT DISTINCT 'OK' FROM pg_stat_activity
+SELECT @@TRANCOUNT
+IF @@TRANCOUNT > 0 COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+text
+OK
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+-- Subquery in FROM should not error
+SELECT @@TRANCOUNT
+SELECT * FROM (SELECT 1 AS x) sub
+SELECT @@TRANCOUNT
+IF @@TRANCOUNT > 0 COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+
+-- Set-returning function in FROM should not error
+SELECT @@TRANCOUNT
+SELECT * FROM generate_series(1, 3)
+SELECT @@TRANCOUNT
+IF @@TRANCOUNT > 0 COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+
+-- CTE should not error
+SELECT @@TRANCOUNT
+WITH cte AS (SELECT 1 AS x) SELECT * FROM cte
+SELECT @@TRANCOUNT
+IF @@TRANCOUNT > 0 COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+
+-- VALUES clause in FROM should not error
+SELECT @@TRANCOUNT
+SELECT * FROM (VALUES (1), (2), (3)) AS t(x)
+SELECT @@TRANCOUNT
+IF @@TRANCOUNT > 0 COMMIT
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+
 -- Cleanup
 SET IMPLICIT_TRANSACTIONS OFF
 GO

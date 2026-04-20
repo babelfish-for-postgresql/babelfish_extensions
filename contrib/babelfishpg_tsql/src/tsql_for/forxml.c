@@ -404,17 +404,26 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 			if (!isnull)
 			{
 				allnull = false;
-				/* Normal element: <col>value</col> */
-				appendStringInfo(state, "<%s>%s</%s>",
-								 colname,
-								 map_sql_value_to_xml_value(colval, datatype_oid, true),
-								 colname);
+				/* When RAW('') is used with XSINIL, add xmlns to each element */
+				if ((element_name && strlen(element_name) == 0) && xsinil)
+					appendStringInfo(state, "<%s " XML_XMLNS_XSI ">%s</%s>",
+									 colname,
+									 map_sql_value_to_xml_value(colval, datatype_oid, true),
+									 colname);
+				else
+					appendStringInfo(state, "<%s>%s</%s>",
+									 colname,
+									 map_sql_value_to_xml_value(colval, datatype_oid, true),
+									 colname);
 			}
 			else if (xsinil)
 			{
 				allnull = false;
-				/* XSINIL: <col xsi:nil="true"/> */
-				appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
+				/* When RAW('') is used with XSINIL, add xmlns to each element */
+				if (element_name && strlen(element_name) == 0)
+					appendStringInfo(state, "<%s " XML_XMLNS_XSI " " XML_XSI_NIL "/>", colname);
+				else
+					appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
 			}
 			/* else: ABSENT - skip NULL columns (do nothing) */
 		}
