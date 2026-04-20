@@ -762,17 +762,18 @@ GRANT SELECT ON sys.all_objects TO PUBLIC;
 
 -- Returns pg_attribute rows for ENR temp tables.
 CREATE OR REPLACE FUNCTION sys.babelfish_get_enr_temp_table_attributes()
-RETURNS SETOF record
+RETURNS SETOF pg_catalog.pg_attribute
 AS 'babelfishpg_tsql', 'get_enr_temp_table_attributes'
 LANGUAGE C STABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.babelfish_get_enr_temp_table_attributes() TO PUBLIC;
 
 --View for babelfish_get_enr_temp_table_attributes() used by spt_tablecollations_view
 CREATE OR REPLACE VIEW sys.enr_temp_table_attributes_view as
-	SELECT attrelid, attname, atttypid, attlen, attnum, attcacheoff, atttypmod, attndims, attbyval, 
-	attalign, attstorage, attcompression, attnotnull, atthasdef, atthasmissing, attidentity, attgenerated, 
-	attisdropped, attislocal, attinhcount, attcollation, attstattarget, 
-	attacl, attoptions, attfdwoptions  FROM sys.babelfish_get_enr_temp_table_attributes();
+	  SELECT attrelid, attname, atttypid, attlen, attnum, attcacheoff, atttypmod, attndims, attbyval, 
+		  attalign, attstorage, attcompression, attnotnull, atthasdef, atthasmissing, attidentity, attgenerated,
+	    attisdropped, attislocal, attinhcount, attcollation, attstattarget,
+		  attacl, attoptions, attfdwoptions  FROM sys.babelfish_get_enr_temp_table_attributes()
+	  WHERE attnum > 0 AND NOT attisdropped;
 GRANT SELECT ON sys.enr_temp_table_attributes_view TO PUBLIC;
 
 -- Permanent tables come from sys.all_columns, temp tables from ENR function and non-ENR pg_attribute.
@@ -791,7 +792,7 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     FROM
         sys.all_columns c
         INNER JOIN pg_catalog.pg_class p ON (c.object_id = p.oid)
-    WHERE
+        sys.enr_temp_table_attributes_view a
         c.is_sparse = 0
     UNION ALL
     -- ENR temp tables
@@ -799,7 +800,7 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         CAST(a.attrelid AS int)          AS object_id,
         CAST(pg_my_temp_schema() AS int) AS schema_id,
         CAST(a.attnum AS int)            AS colid,
-        CAST(CAST(a.attname AS sys.sysname) AS sys.varchar) AS name,
+        sys.enr_temp_table_attributes_view a
         CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_28,
         CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_90,
         CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_100,
