@@ -810,8 +810,6 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     FROM
         sys.enr_temp_table_attributes_view a
         LEFT JOIN pg_catalog.pg_collation coll ON (a.attcollation = coll.oid)
-    WHERE
-        a.attnum > 0 AND NOT a.attisdropped
     UNION ALL
     -- Non-ENR temp tables
     SELECT
