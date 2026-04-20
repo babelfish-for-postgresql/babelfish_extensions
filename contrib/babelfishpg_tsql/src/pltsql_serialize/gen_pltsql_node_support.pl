@@ -9,7 +9,7 @@
 # Does NOT generate nodetags.h, copyfuncs, equalfuncs, or queryjumblefuncs
 # (the engine handles those).
 #
-# Input:  pltsql_serializable_1.h, pltsql_serializable_2.h
+# Input:  pltsql.h, pltsql-2.h
 # Output: pltsql_outfuncs_gen.c, pltsql_readfuncs_gen.c
 #
 # Invoked by the extension Makefile during build.
@@ -22,12 +22,12 @@
 # Changes to gen_pltsql_node_support.pl (from the engine original):
 
 # - Replaced use FindBin / use Catalog with inline RenameTempFile sub
-# - @all_input_files — only pltsql_serializable_1.h and pltsql_serializable_2.h
+# - @all_input_files — pltsql.h and pltsql-2.h (main headers with pg_node_attr annotations)
 # - @nodetag_only_files — empty (none of our files are nodetag-only)
 # - $last_nodetag / $last_nodetag_no — set to undef (engine handles ABI check)
 # - @extra_tags — empty (PG-specific)
 # - $infile path stripping — uses basename() instead of s!.*src/include/!!
-# - Added skips for #include, extern, // lines during parsing (serializable headers have these)
+# - Added skips for #include, extern, // lines during parsing (main headers have these)
 # - PLtsql enum types moved from @scalar_types to @enum_types (outfuncs needs WRITE_ENUM_FIELD)
 # - Added PG enums FetchDirection, LockClauseStrength to @enum_types
 # - Removed nodetags.h generation section
@@ -79,10 +79,10 @@ sub elem
 # able to make this list the only copy.  For now, we just check that
 # it matches the list of files passed on the command line.
 #
-# The two PLtsql serializable headers — order matters for struct processing.
+# The two PLtsql headers with pg_node_attr() annotations — order matters for struct processing.
 my @all_input_files = qw(
-  pltsql_serializable_1.h
-  pltsql_serializable_2.h
+  pltsql.h
+  pltsql-2.h
 );
 
 # Nodes from these input files are automatically treated as nodetag_only.
@@ -101,7 +101,7 @@ my @nodetag_only_files;
 # ABI stability during development.
 
 my $last_nodetag = 'PLtsql_stmt_restore_ctx_partial';
-my $last_nodetag_no = 10079;
+my $last_nodetag_no = 10081;
 
 # output file names
 my @output_files;
@@ -126,9 +126,12 @@ my @special_read_write;
 # node types we don't want any support functions for, just node tags
 my @nodetag_only;
 
+# PLtsql extension: structs that have NodeTag but shouldn't be serialized
+push @nodetag_only, qw(InlineCodeBlockArgs PLtsql_function);
+
 # types that are copied by straight assignment
 my @scalar_types = qw(
-  bits32 bool char double int int8 int16 int32 int64 long uint8 uint16 uint32 uint64
+  bits32 bool char double int int8 int16 int32 int32_t int64 long uint8 uint16 uint32 uint64
   AclMode AttrNumber Cardinality Cost Index Oid RelFileNumber Selectivity Size StrategyNumber SubTransactionId TimeLineID XLogRecPtr
 );
 
@@ -177,7 +180,7 @@ push @scalar_types, qw(QualCost);
 
 # PLtsql-specific enum types (defined in pltsql.h/pltsql-2.h).
 # The engine discovers these by parsing typedef enum lines in headers;
-# we must pre-declare them since we only parse PLtsql serializable headers.
+# we must pre-declare them since we only parse PLtsql main headers (not all PG headers).
 push @enum_types, qw(
   PLtsql_stmt_type PLtsql_datum_type PLtsql_nsitem_type
   PLtsql_promise_type PLtsql_type_type PLtsql_dbcc_stmt_type
@@ -246,7 +249,7 @@ foreach my $infile (@ARGV)
 		$line =~ s/\s*$//;
 		next if $line eq '';
 		next if $line =~ /^#(define|ifdef|endif)/;
-		# PLtsql extension: serializable headers have #include, extern, and
+		# PLtsql extension: main headers have #include, extern, and
 		# C++ comment lines that PG node headers don't — skip them.
 		next if $line =~ /^#include\b/;
 		next if $line =~ /^extern\b/;

@@ -92,7 +92,7 @@ OBJS += src/pltsql_serialize/pltsql_readfuncs_stubs.o
 
 # PLtsql serialization code generation (GUC babelfishpg_tsql.enable_antlr_parse_cache)
 PLTSQL_SER_DIR = src/pltsql_serialize
-PLTSQL_SER_HEADERS = $(PLTSQL_SER_DIR)/pltsql_serializable_1.h $(PLTSQL_SER_DIR)/pltsql_serializable_2.h
+PLTSQL_SER_HEADERS = src/pltsql.h src/pltsql-2.h
 PLTSQL_GEN_SCRIPT = $(PLTSQL_SER_DIR)/gen_pltsql_node_support.pl
 
 $(PLTSQL_SER_DIR)/pltsql_nodetags.h $(PLTSQL_SER_DIR)/pltsql_outfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_readfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_outfuncs_switch.c $(PLTSQL_SER_DIR)/pltsql_readfuncs_switch.c $(PLTSQL_SER_DIR)/pltsql_equalfuncs_gen.c $(PLTSQL_SER_DIR)/pltsql_equalfuncs_switch.c: $(PLTSQL_SER_HEADERS) $(PLTSQL_GEN_SCRIPT)
