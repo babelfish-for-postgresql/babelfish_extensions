@@ -1303,6 +1303,15 @@ bit
 PRINT '=== Test 18b: Ownership check (non-owner denied) ===';
 GO
 
+-- Create a non-owner login/user to test permission denial
+CREATE LOGIN babel_6037_nonowner WITH PASSWORD = '12345678';
+GO
+CREATE USER babel_6037_nonowner FOR LOGIN babel_6037_nonowner;
+GO
+-- Grant EXECUTE so non-owner can see the function via sys.object_id but cannot change cache settings
+GRANT EXECUTE ON dbo.perfunc_default_test TO babel_6037_nonowner;
+GO
+
 -- tsql      user=babel_6037_nonowner password=12345678
 -- Non-owner tries to toggle cache on a function they don't own (should error)
 SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_default_test'), true);
@@ -2169,6 +2178,116 @@ GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
 1#!#2#!#3#!#0#!#0
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+
+-- === Test 31: Procedure with geometry datatype parameter ===
+PRINT '=== Test 31: Procedure with geometry datatype parameter ===';
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+-- Reset stats
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+1#!#2#!#3#!#0#!#0
+~~END~~
+
+
+-- Test 31: Procedure with geometry parameter and text parameter
+CREATE PROCEDURE test_geometry_cache
+    @geom geometry,
+    @label VARCHAR(50)
+AS
+BEGIN
+    DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
+    DECLARE @point2 geometry = @geom;
+    -- Test geometry operations
+    SELECT @label AS test_label, @point1.STX AS point1_x, @point1.STY AS point1_y;
+    SELECT @label AS test_label, @point2.STX AS point2_x, @point2.STY AS point2_y;
+    SELECT @label AS test_label, CAST(@point1.STDistance(@point2) AS numeric(20, 6)) AS distance;
+END;
+GO
+
+-- Check stats after CREATE (should have cache_writes = 1)
+SELECT cache_writes FROM sys.antlr_parse_cache_stats();
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+-- Verify cache was populated
+SELECT funcname,
+    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'cached' ELSE 'not cached' END AS cache_status
+FROM sys.babelfish_function_ext
+WHERE funcname = 'test_geometry_cache' AND nspname = 'master_dbo';
+GO
+~~START~~
+varchar#!#varchar
+test_geometry_cache#!#cached
+~~END~~
+
+
+-- First execution (hash table miss, restore ext cached result)
+PRINT 'exec 1: test_geometry_cache';
+GO
+DECLARE @g geometry = geometry::Point(3.0, 4.0, 4326);
+EXEC test_geometry_cache @geom = @g, @label = 'exec1';
+GO
+~~START~~
+varchar#!#float#!#float
+exec1#!#1.0#!#2.0
+~~END~~
+
+~~START~~
+varchar#!#float#!#float
+exec1#!#3.0#!#4.0
+~~END~~
+
+~~START~~
+varchar#!#numeric
+exec1#!#2.828427
+~~END~~
+
+
+-- Second execution (hash table hit, test zero distance)
+PRINT 'exec 2: test_geometry_cache';
+GO
+DECLARE @g geometry = geometry::Point(1.0, 2.0, 4326);
+EXEC test_geometry_cache @geom = @g, @label = 'exec2';
+GO
+~~START~~
+varchar#!#float#!#float
+exec2#!#1.0#!#2.0
+~~END~~
+
+~~START~~
+varchar#!#float#!#float
+exec2#!#1.0#!#2.0
+~~END~~
+
+~~START~~
+varchar#!#numeric
+exec2#!#0.000000
 ~~END~~
 
 

@@ -482,12 +482,3 @@ GO
 
 SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
-
--- Create a non-owner login/user to test permission denial
-CREATE LOGIN babel_6037_nonowner WITH PASSWORD = '12345678';
-GO
-CREATE USER babel_6037_nonowner FOR LOGIN babel_6037_nonowner;
-GO
--- Grant EXECUTE so non-owner can see the function via sys.object_id but cannot change cache settings
-GRANT EXECUTE ON dbo.perfunc_default_test TO babel_6037_nonowner;
-GO

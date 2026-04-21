@@ -122,5 +122,9 @@ GO
 DROP TABLE IF EXISTS dbo.trigger_cache_test;
 GO
 
+-- Drop Test 31: Procedure with geometry datatype parameter
+DROP PROCEDURE IF EXISTS dbo.test_geometry_cache;
+GO
+
 PRINT 'Cleanup completed successfully';
 GO
