@@ -25,7 +25,7 @@ int#!#varchar#!#binary#!#nvarchar
 ~~END~~
 
 
-SELECT attname, attnum from sys.enr_temp_table_attributes_view
+SELECT attname, attnum from sys.temp_table_attributes_view
 GO
 ~~START~~
 varchar#!#smallint
@@ -145,7 +145,7 @@ int#!#varchar#!#binary#!#nvarchar
 ~~END~~
 
 
-SELECT attname, attnum from sys.enr_temp_table_attributes_view
+SELECT attname, attnum from sys.temp_table_attributes_view
 GO
 ~~START~~
 varchar#!#smallint
@@ -195,10 +195,13 @@ int#!#varchar#!#binary#!#nvarchar
 ~~END~~
 
 
-SELECT attname, attnum from sys.enr_temp_table_attributes_view
+SELECT attname, attnum from sys.temp_table_attributes_view
 GO
 ~~START~~
 varchar#!#smallint
+id#!#1
+name#!#2
+description#!#3
 ~~END~~
 
 
