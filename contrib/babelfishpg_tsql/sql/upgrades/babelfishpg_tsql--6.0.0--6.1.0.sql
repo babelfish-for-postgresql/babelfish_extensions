@@ -774,6 +774,15 @@ AS 'babelfishpg_tsql', 'get_enr_temp_table_attributes'
 LANGUAGE C STABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.babelfish_get_enr_temp_table_attributes() TO PUBLIC;
 
+--View for babelfish_get_enr_temp_table_attributes() used by spt_tablecollations_view
+CREATE OR REPLACE VIEW sys.enr_temp_table_attributes_view as
+	SELECT attrelid, attname, atttypid, attlen, attnum, atttypmod, attndims, attbyval, 
+		attalign, attstorage, attcompression, attnotnull, atthasdef, atthasmissing, attidentity, attgenerated,
+	    attisdropped, attislocal, attinhcount, attcollation, attstattarget,
+		attacl, attoptions, attfdwoptions  FROM sys.babelfish_get_enr_temp_table_attributes()
+	WHERE attnum > 0 AND NOT attisdropped;
+GRANT SELECT ON sys.enr_temp_table_attributes_view TO PUBLIC;
+
 -- Permanent tables come from sys.all_columns, temp tables from ENR function and non-ENR pg_attribute.
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     SELECT
@@ -806,10 +815,8 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         CAST(coll.collname AS nvarchar(128)) AS collation_90,
         CAST(coll.collname AS nvarchar(128)) AS collation_100
     FROM
-        sys.babelfish_get_enr_temp_table_attributes() a
+        sys.enr_temp_table_attributes_view a
         LEFT JOIN pg_catalog.pg_collation coll ON (a.attcollation = coll.oid)
-    WHERE
-        a.attnum > 0 AND NOT a.attisdropped
     UNION ALL
     -- Non-ENR temp tables
     SELECT

@@ -11,6 +11,9 @@ GO
 EXEC tempdb.dbo.sp_tablecollations_100 '#collTest1'
 GO
 
+SELECT attname, attnum, attlen from sys.enr_temp_table_attributes_view
+GO
+
 DROP TABLE #collTest1
 GO
 
@@ -76,6 +79,9 @@ GO
 EXEC sp_tablecollations_100 '#noCharCols'
 GO
 
+SELECT attname, attnum, attlen from sys.enr_temp_table_attributes_view
+GO
+
 DROP TABLE #noCharCols
 GO
 
@@ -98,6 +104,9 @@ CREATE TABLE #nonEnrTest1(id int, name dbo.TestVarcharType1 collate bbf_unicode_
 GO
 
 EXEC sp_tablecollations_100 '#nonEnrTest1'
+GO
+
+SELECT attname, attnum, attlen from sys.enr_temp_table_attributes_view
 GO
 
 DROP TABLE #nonEnrTest1
