@@ -1,0 +1,31 @@
+-- tsql
+
+-- BABEL-5264: Cleanup
+DROP PROCEDURE IF EXISTS dbo.babel5264_test_proc
+GO
+
+DROP PROCEDURE IF EXISTS dbo.babel5264_test_view_proc
+GO
+
+DROP PROCEDURE IF EXISTS dbo.babel5264_test_func_proc
+GO
+
+DROP TYPE IF EXISTS dbo.TestVarcharType1
+GO
+
+DROP TYPE IF EXISTS dbo.TestVarcharType2
+GO
+
+DROP TYPE IF EXISTS dbo.TestIntType
+GO
+
+-- psql
+-- Cleanup psql procedures
+DROP PROCEDURE IF EXISTS master_dbo.psql_temp_proc();
+GO
+
+DROP PROCEDURE IF EXISTS master_dbo.psql_reg_proc();
+GO
+
+DROP PROCEDURE IF EXISTS master_dbo.psql_hash_proc();
+GO

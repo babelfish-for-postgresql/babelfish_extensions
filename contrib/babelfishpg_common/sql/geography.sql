@@ -228,6 +228,60 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(sys.NVARCHAR, integer)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.Geography__STMPointFromText(sys.NVARCHAR, srid integer)
+    RETURNS sys.GEOGRAPHY
+    AS $$
+    DECLARE
+        Geomtype text;
+        geog sys.GEOGRAPHY;
+    BEGIN
+        IF $2 IS NULL THEN
+            RAISE EXCEPTION '''geography::STMPointFromText'' failed because parameter 2 is not allowed to be null.';
+        ELSIF $1 IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        geog = sys.geogfromtext_helper($1, $2);
+        Geomtype = sys.ST_GeometryType(geog);
+
+        IF Geomtype = 'ST_MultiPoint' THEN
+            RETURN geog;
+        ELSE
+            RAISE EXCEPTION 'Expected "MULTIPOINT" at position 1. The input has %', $1;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+
+CREATE OR REPLACE FUNCTION sys.Geography__STMPointFromWKB(sys.VARBINARY, srid integer)
+    RETURNS sys.GEOGRAPHY
+    AS $$
+    DECLARE
+        Geomtype text;
+        geog sys.GEOGRAPHY;
+    BEGIN
+        IF $2 IS NULL THEN
+            RAISE EXCEPTION '''geography::STMPointFromWKB'' failed because parameter 2 is not allowed to be null.';
+        ELSIF $1 IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        geog = sys.geogfromwkb_helper($1::bytea, $2);
+        Geomtype = sys.ST_GeometryType(geog);
+
+        IF Geomtype = 'ST_MultiPoint' THEN
+            RETURN geog;
+        ELSE
+            RAISE EXCEPTION 'Expected "MULTIPOINT" at position 1. The input has %', Geomtype;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geogfromwkb_helper(bytea, integer)
+    RETURNS sys.GEOGRAPHY
+    AS 'babelfishpg_common', 'get_geography_from_wkb'
+    LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
 	RETURNS sys.NVARCHAR
 	AS $$

@@ -1781,6 +1781,8 @@ typedef struct PLtsql_protocol_plugin
 
 	bool	   *pltsql_is_fmtonly_stmt;
 
+	bool	   *pltsql_no_browsetable;
+
 	char	   *(*pltsql_get_user_for_database) (const char *db_name);
 
 	void		(*switch_database_context) (const char *dbname);

@@ -1640,7 +1640,7 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 				if (relMetaDataInfo->partName[1] == NULL)
 				{
 					if (physical_schema_name != NULL)
-						relMetaDataInfo->partName[1] = strdup(physical_schema_name);
+						relMetaDataInfo->partName[1] = pstrdup(physical_schema_name);
 					else
 						relMetaDataInfo->partName[1] = NULL;
 				}
@@ -2216,7 +2216,12 @@ TdsSendRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt,
 	}
 
 	SendColumnMetadataToken(typeinfo->natts, false);
-	SendColInfoToken(typeinfo->natts, false);
+	if (relMetaDataInfoList != NIL && pltsql_plugin_handler_ptr &&
+		pltsql_plugin_handler_ptr->pltsql_no_browsetable &&
+		(*pltsql_plugin_handler_ptr->pltsql_no_browsetable))
+    {
+        SendColInfoToken(typeinfo->natts, false);
+    }
 }
 
 bool

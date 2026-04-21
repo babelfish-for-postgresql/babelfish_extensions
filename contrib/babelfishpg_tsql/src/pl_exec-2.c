@@ -95,7 +95,6 @@ static bool is_char_identstart(char c);
 static bool is_char_identpart(char c);
 
 void		read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr);
-bool  		called_from_tsql_insert_exec(void);
 void		cache_inline_args(PLtsql_function *func, InlineCodeBlockArgs *args);
 InlineCodeBlockArgs *create_args(int numargs);
 InlineCodeBlockArgs *clone_inline_args(InlineCodeBlockArgs *args);
@@ -135,7 +134,6 @@ extern SPIPlanPtr prepare_stmt_exec(PLtsql_execstate *estate, PLtsql_function *f
 extern int	sp_prepare_count;
 
 BulkCopyStmt *cstmt = NULL;
-bool		called_from_tsql_insert_execute = false;
 
 int			insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
 int			insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
@@ -3791,7 +3789,7 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 		FunctionParameter *p;
 
 		p = (FunctionParameter *) lfirst(lc);
-		args->argnames[i] = p->name;
+		args->argnames[i] = pstrdup(p->name);
 		args->argmodes[i] = p->mode;
 
 		/*
@@ -3841,7 +3839,11 @@ clone_inline_args(InlineCodeBlockArgs *args)
 	clone = create_args(args->numargs);
 	memcpy(clone->argtypes, args->argtypes, sizeof(Oid) * args->numargs);
 	memcpy(clone->argtypmods, args->argtypmods, sizeof(int32) * args->numargs);
-	memcpy(clone->argnames, args->argnames, sizeof(char *) * args->numargs);
+
+	/* Deep copy argument names */
+	for (int i = 0; i < args->numargs; i++)
+		clone->argnames[i] = args->argnames[i] ? pstrdup(args->argnames[i]) : NULL;
+
 	memcpy(clone->argmodes, args->argmodes, sizeof(char) * args->numargs);
 
 	return clone;
@@ -4282,21 +4284,6 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 		PopActiveSnapshot();
 	}
 	return PLTSQL_RC_OK;
-}
-
-/*
- * Hook function called from PostgreSQL's attmap.c and tupconvert.c to check
- * if we're inside a T-SQL INSERT EXEC operation.
- *
- * This always returns false because the DestReceiver approach handles type
- * coercion internally using coerce_to_target_type() and CoerceViaIO, so we
- * don't need to skip the type check in attmap.c.
- */
-bool called_from_tsql_insert_exec()
-{
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return false;
-	return called_from_tsql_insert_execute;
 }
 
 int

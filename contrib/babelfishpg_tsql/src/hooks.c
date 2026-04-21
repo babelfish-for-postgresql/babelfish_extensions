@@ -240,7 +240,6 @@ static void pltsql_ExecUpdateResultTypeTL(PlanState *planstate, TupleDesc desc);
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
 
-extern bool called_from_tsql_insert_exec();
 extern bool called_for_tsql_itvf_func();
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
@@ -375,7 +374,6 @@ static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 static get_bbf_admin_oid_hook_type prev_get_bbf_admin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
 static transform_tsql_select_stmt_hook_type pre_transform_tsql_select_stmt_hook = NULL;
-static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 static called_for_tsql_itvf_func_hook_type prev_called_for_tsql_itvf_func_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
 static pltsql_pgstat_end_function_usage_hook_type prev_pltsql_pgstat_end_function_usage_hook = NULL;
@@ -599,9 +597,6 @@ InstallExtendedHooks(void)
 	prev_optimize_explicit_cast_hook = optimize_explicit_cast_hook;
 	optimize_explicit_cast_hook = optimize_explicit_cast;
 
-	pre_called_from_tsql_insert_exec_hook = called_from_tsql_insert_exec_hook;
-	called_from_tsql_insert_exec_hook = called_from_tsql_insert_exec;
-
 	prev_called_for_tsql_itvf_func_hook = called_for_tsql_itvf_func_hook;
 	called_for_tsql_itvf_func_hook = called_for_tsql_itvf_func;
 
@@ -734,7 +729,6 @@ UninstallExtendedHooks(void)
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
 	transform_tsql_select_stmt_hook = pre_transform_tsql_select_stmt_hook;
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
-	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 	called_for_tsql_itvf_func_hook = prev_called_for_tsql_itvf_func_hook;
 	pltsql_pgstat_end_function_usage_hook = prev_pltsql_pgstat_end_function_usage_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = prev_pltsql_unique_constraint_nulls_ordering_hook;
