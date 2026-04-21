@@ -923,3 +923,65 @@ GO
 
 SELECT COALESCE(SERVERPROPERTY('Edition'), CAST('unknown' AS varchar(50))) AS result
 GO
+
+
+-- 15. UDT vs sql_variant tests
+
+
+-- 15a. CASE: sql_variant vs UDT(int)
+SELECT CASE WHEN 1 = 1 THEN CAST(1 AS sql_variant) ELSE CAST(100 AS babel_sqlvariant_udt_int) END AS result
+GO
+
+SELECT CASE WHEN 1 = 1 THEN CAST(100 AS babel_sqlvariant_udt_int) ELSE CAST(1 AS sql_variant) END AS result
+GO
+
+-- 15b. CASE: UDT based on sql_variant vs other type
+SELECT CASE WHEN 1 = 1 THEN CAST(1 AS babel_sqlvariant_udt_sv) ELSE CAST(0 AS bit) END AS result
+GO
+
+SELECT CASE WHEN 1 = 1 THEN CAST(0 AS bit) ELSE CAST(1 AS babel_sqlvariant_udt_sv) END AS result
+GO
+
+-- 15c. COALESCE: sql_variant vs UDT(int)
+SELECT COALESCE(CAST(NULL AS sql_variant), CAST(100 AS babel_sqlvariant_udt_int)) AS result
+GO
+
+SELECT COALESCE(CAST(100 AS babel_sqlvariant_udt_int), CAST(1 AS sql_variant)) AS result
+GO
+
+-- 15d. COALESCE: UDT based on sql_variant vs other type
+SELECT COALESCE(CAST(NULL AS babel_sqlvariant_udt_sv), CAST(0 AS bit)) AS result
+GO
+
+SELECT COALESCE(CAST(0 AS bit), CAST(1 AS babel_sqlvariant_udt_sv)) AS result
+GO
+
+-- 15e. UNION: sql_variant vs UDT(int)
+SELECT col FROM (
+SELECT CAST(1 AS sql_variant) AS col
+UNION ALL
+SELECT CAST(100 AS babel_sqlvariant_udt_int) AS col
+) t ORDER BY col
+GO
+
+SELECT col FROM (
+SELECT CAST(100 AS babel_sqlvariant_udt_int) AS col
+UNION ALL
+SELECT CAST(1 AS sql_variant) AS col
+) t ORDER BY col
+GO
+
+-- 15f. UNION: UDT based on sql_variant vs other type
+SELECT col FROM (
+SELECT CAST(1 AS babel_sqlvariant_udt_sv) AS col
+UNION ALL
+SELECT CAST(0 AS bit) AS col
+) t ORDER BY col
+GO
+
+SELECT col FROM (
+SELECT CAST(0 AS bit) AS col
+UNION ALL
+SELECT CAST(1 AS babel_sqlvariant_udt_sv) AS col
+) t ORDER BY col
+GO

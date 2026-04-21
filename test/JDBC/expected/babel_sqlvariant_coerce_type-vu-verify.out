@@ -1757,3 +1757,127 @@ sql_variant
 Standard Edition
 ~~END~~
 
+
+
+
+
+-- 15. UDT vs sql_variant tests
+-- 15a. CASE: sql_variant vs UDT(int)
+SELECT CASE WHEN 1 = 1 THEN CAST(1 AS sql_variant) ELSE CAST(100 AS babel_sqlvariant_udt_int) END AS result
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+SELECT CASE WHEN 1 = 1 THEN CAST(100 AS babel_sqlvariant_udt_int) ELSE CAST(1 AS sql_variant) END AS result
+GO
+~~START~~
+sql_variant
+100
+~~END~~
+
+
+-- 15b. CASE: UDT based on sql_variant vs other type
+SELECT CASE WHEN 1 = 1 THEN CAST(1 AS babel_sqlvariant_udt_sv) ELSE CAST(0 AS bit) END AS result
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+SELECT CASE WHEN 1 = 1 THEN CAST(0 AS bit) ELSE CAST(1 AS babel_sqlvariant_udt_sv) END AS result
+GO
+~~START~~
+sql_variant
+false
+~~END~~
+
+
+-- 15c. COALESCE: sql_variant vs UDT(int)
+SELECT COALESCE(CAST(NULL AS sql_variant), CAST(100 AS babel_sqlvariant_udt_int)) AS result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: COALESCE could not convert type sql_variant to babel_sqlvariant_udt_int)~~
+
+
+SELECT COALESCE(CAST(100 AS babel_sqlvariant_udt_int), CAST(1 AS sql_variant)) AS result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: COALESCE could not convert type sql_variant to babel_sqlvariant_udt_int)~~
+
+
+-- 15d. COALESCE: UDT based on sql_variant vs other type
+SELECT COALESCE(CAST(NULL AS babel_sqlvariant_udt_sv), CAST(0 AS bit)) AS result
+GO
+~~START~~
+sql_variant
+false
+~~END~~
+
+
+SELECT COALESCE(CAST(0 AS bit), CAST(1 AS babel_sqlvariant_udt_sv)) AS result
+GO
+~~START~~
+sql_variant
+false
+~~END~~
+
+
+-- 15e. UNION: sql_variant vs UDT(int)
+SELECT col FROM (
+SELECT CAST(1 AS sql_variant) AS col
+UNION ALL
+SELECT CAST(100 AS babel_sqlvariant_udt_int) AS col
+) t ORDER BY col
+GO
+~~START~~
+sql_variant
+1
+100
+~~END~~
+
+
+SELECT col FROM (
+SELECT CAST(100 AS babel_sqlvariant_udt_int) AS col
+UNION ALL
+SELECT CAST(1 AS sql_variant) AS col
+) t ORDER BY col
+GO
+~~START~~
+sql_variant
+1
+100
+~~END~~
+
+
+-- 15f. UNION: UDT based on sql_variant vs other type
+SELECT col FROM (
+SELECT CAST(1 AS babel_sqlvariant_udt_sv) AS col
+UNION ALL
+SELECT CAST(0 AS bit) AS col
+) t ORDER BY col
+GO
+~~START~~
+sql_variant
+false
+1
+~~END~~
+
+
+SELECT col FROM (
+SELECT CAST(0 AS bit) AS col
+UNION ALL
+SELECT CAST(1 AS babel_sqlvariant_udt_sv) AS col
+) t ORDER BY col
+GO
+~~START~~
+sql_variant
+false
+1
+~~END~~
+

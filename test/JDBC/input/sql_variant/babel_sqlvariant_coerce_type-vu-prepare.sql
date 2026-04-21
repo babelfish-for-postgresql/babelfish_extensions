@@ -34,3 +34,11 @@ SELECT id,
    END AS case_result
 FROM babel_case_sqlvariant_t1
 GO
+
+-- UDT based on int for testing sql_variant vs UDT
+CREATE TYPE babel_sqlvariant_udt_int FROM int;
+GO
+
+-- UDT based on sql_variant for testing UDT-on-sql_variant
+CREATE TYPE babel_sqlvariant_udt_sv FROM sql_variant;
+GO
