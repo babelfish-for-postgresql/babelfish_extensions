@@ -1799,16 +1799,18 @@ false
 -- 15c. COALESCE: sql_variant vs UDT(int)
 SELECT COALESCE(CAST(NULL AS sql_variant), CAST(100 AS babel_sqlvariant_udt_int)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to babel_sqlvariant_udt_int)~~
+~~START~~
+sql_variant
+100
+~~END~~
 
 
 SELECT COALESCE(CAST(100 AS babel_sqlvariant_udt_int), CAST(1 AS sql_variant)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to babel_sqlvariant_udt_int)~~
+~~START~~
+sql_variant
+100
+~~END~~
 
 
 -- 15d. COALESCE: UDT based on sql_variant vs other type
