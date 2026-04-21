@@ -200,7 +200,7 @@ pltsql_compare_datum_arrays(const char *fn_signature,
 
 		/* Genuine mismatch — advance both */
 		mismatches++;
-		elog(DEBUG1, "pltsql_validate_antlr_parse_cache[DIFF]: %s datum mismatch "
+		elog(WARNING, "pltsql_validate_antlr_parse_cache[DIFF]: %s datum mismatch "
 			 "at cached[%d] vs antlr[%d] (cached_tag=%d, antlr_tag=%d)",
 			 fn_signature, ci, ai,
 			 dc ? (int) nodeTag(dc) : -1,
@@ -216,7 +216,7 @@ pltsql_compare_datum_arrays(const char *fn_signature,
 	if (ci < cached_ndatums)
 		mismatches += (cached_ndatums - ci);
 
-	elog(DEBUG1, "pltsql_validate_antlr_parse_cache[%s]: %s PLtsql Datums comparison "
+	elog((mismatches == 0) ? DEBUG1 : WARNING, "pltsql_validate_antlr_parse_cache[%s]: %s PLtsql Datums comparison "
 		 "at EXEC (cached=%d, antlr=%d, mismatches=%d, extra_antlr=%d)",
 		 (mismatches == 0) ? "PASS" : "DIFF",
 		 fn_signature,
