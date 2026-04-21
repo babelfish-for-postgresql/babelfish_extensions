@@ -769,11 +769,8 @@ GRANT EXECUTE ON FUNCTION sys.babelfish_get_enr_temp_table_attributes() TO PUBLI
 
 --View for babelfish_get_enr_temp_table_attributes() used by spt_tablecollations_view
 CREATE OR REPLACE VIEW sys.enr_temp_table_attributes_view as
-	  SELECT attrelid, attname, atttypid, attlen, attnum, attcacheoff, atttypmod, attndims, attbyval, 
-		  attalign, attstorage, attcompression, attnotnull, atthasdef, atthasmissing, attidentity, attgenerated,
-	    attisdropped, attislocal, attinhcount, attcollation, attstattarget,
-		  attacl, attoptions, attfdwoptions  FROM sys.babelfish_get_enr_temp_table_attributes()
-	  WHERE attnum > 0 AND NOT attisdropped;
+  SELECT attrelid, attnum, attname, attcollation, attisdropped
+  FROM sys.babelfish_get_enr_temp_table_attributes()	  WHERE attnum > 0 AND NOT attisdropped;
 GRANT SELECT ON sys.enr_temp_table_attributes_view TO PUBLIC;
 
 -- Permanent tables come from sys.all_columns, temp tables from ENR function and non-ENR pg_attribute.
