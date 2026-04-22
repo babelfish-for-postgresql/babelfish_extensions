@@ -340,16 +340,14 @@ BEGIN
 END;
 GO
 
+-- psql
 -- Test 22: Validation procedure with complex statement types
 -- Used with pltsql_validate_antlr_parse_cache GUC to compare cached vs ANTLR trees
-SELECT set_config('babelfishpg_tsql.validate_antlr_parse_cache', 'on', false);
+-- Note: validation GUC is SUSET (superuser only), so we set it at database level
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.validate_antlr_parse_cache = on;
 GO
-~~START~~
-text
-on
-~~END~~
 
-
+-- tsql
 
 
 
@@ -395,9 +393,12 @@ BEGIN
 END;
 GO
 
-PRINT 'All test procedures created successfully';
+-- psql
+-- Turn off validation GUC after procedure creation (will be turned on again in verify for testing)
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.validate_antlr_parse_cache = off;
 GO
 
+-- tsql
 -- Test 23: Procedure created with cache OFF, executed with cache ON in verify
 -- Tests that pltsql_update_func_cache_entry populates cache at EXEC time
 SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
@@ -536,3 +537,6 @@ text
 off
 ~~END~~
 
+
+PRINT 'All test procedures created successfully';
+GO

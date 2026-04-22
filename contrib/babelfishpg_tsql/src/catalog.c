@@ -6597,7 +6597,6 @@ enable_antlr_parse_cache(PG_FUNCTION_ARGS)
 	bool		use_cache_isnull;
 	HeapTuple	proctup;
 	HeapTuple	bbffunctuple;
-	HeapTuple	copytup;
 
 	if (PG_ARGISNULL(0))
 		ereport(ERROR,
@@ -6629,12 +6628,10 @@ enable_antlr_parse_cache(PG_FUNCTION_ARGS)
 	if (!HeapTupleIsValid(bbffunctuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("function with OID %u not found in babelfish_function_ext", routine_id)));
+				 errmsg("function with OID %u is not a TSQL function", routine_id)));
 
-	copytup = heap_copytuple(bbffunctuple);
+	update_bbf_function_antlr_parse_cache(bbffunctuple, use_antlr_parse_cache, use_cache_isnull);
 	heap_freetuple(bbffunctuple);
-	update_bbf_function_antlr_parse_cache(copytup, use_antlr_parse_cache, use_cache_isnull);
-	heap_freetuple(copytup);
 
 	if (use_cache_isnull)
 		PG_RETURN_NULL();

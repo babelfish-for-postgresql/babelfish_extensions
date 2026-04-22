@@ -1139,13 +1139,11 @@ define_custom_variables(void)
 							 NULL, NULL, NULL);
 
 	/*
-	 * Enable/disable persistent caching of ANTLR parse result for routines and triggers for cross-session performance optimization.
+	 * Enable/disable persistent caching of ANTLR parse result for routines for cross-session performance optimization.
 	 */
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_antlr_parse_cache",
-							 gettext_noop("Enables persistent caching of ANTLR parser results for faster execution of large routines "
-										  "and triggers in new sessions."),
-							 gettext_noop("When enabled in session or at server level, prior to routine creation or execution, "
-										  "parsed results are cached and reused across sessions. "),
+							 gettext_noop("Enables persistent caching of ANTLR parser results for faster execution of routines."),
+							 gettext_noop("When enabled, ANTLR parsed results are reused from cache for routines."),
 							 &pltsql_enable_antlr_parse_cache,
 							 false,
 							 PGC_USERSET,
@@ -1162,7 +1160,7 @@ define_custom_variables(void)
 										  "Use sys.antlr_parse_cache_stats() to check for cache hits, writes or errors."),
 							 &pltsql_validate_antlr_parse_cache,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
