@@ -790,21 +790,16 @@ AS 'babelfishpg_tsql', 'get_enr_temp_table_attributes'
 LANGUAGE C STABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.babelfish_get_enr_temp_table_attributes() TO PUBLIC;
 
--- View for temp table attributes
-CREATE OR REPLACE VIEW sys.temp_table_attributes_view AS
-    -- ENR temp tables
+-- SQL wrapper function to return required columns
+CREATE OR REPLACE FUNCTION sys.babelfish_get_enr_temp_table_attributes_internal()
+RETURNS TABLE ( attrelid oid, attnum smallint, attname name, attcollation oid ) 
+AS $$
     SELECT attrelid, attnum, attname, attcollation
     FROM sys.babelfish_get_enr_temp_table_attributes()
-    WHERE attnum > 0 AND NOT attisdropped
-    UNION ALL
-    -- Non-ENR temp tables
-    SELECT a.attrelid, a.attnum, a.attname, a.attcollation
-    FROM pg_catalog.pg_attribute a
-    INNER JOIN pg_catalog.pg_class c ON a.attrelid = c.oid AND c.relnamespace = pg_my_temp_schema()
-    WHERE a.attnum > 0 AND NOT a.attisdropped;
-GRANT SELECT ON sys.temp_table_attributes_view TO PUBLIC;
+    WHERE attnum > 0 AND NOT attisdropped;
+$$ LANGUAGE SQL STABLE;
 
--- Permanent tables come from sys.all_columns, temp tables from temp_table_attributes_view.
+-- Permanent tables come from sys.all_columns, temp tables from ENR function and non-ENR pg_attribute.
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     SELECT
         c.object_id                      AS object_id,
@@ -823,6 +818,7 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     WHERE
         c.is_sparse = 0
     UNION ALL
+	-- ENR temp tables
     SELECT
         CAST(a.attrelid AS int)          AS object_id,
         CAST(pg_my_temp_schema() AS int) AS schema_id,
@@ -835,8 +831,27 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         CAST(coll.collname AS nvarchar(128)) AS collation_90,
         CAST(coll.collname AS nvarchar(128)) AS collation_100
     FROM
-        sys.temp_table_attributes_view a
-        LEFT JOIN pg_catalog.pg_collation coll ON (a.attcollation = coll.oid);
+        sys.babelfish_get_enr_temp_table_attributes_internal() a
+        LEFT JOIN pg_catalog.pg_collation coll ON (a.attcollation = coll.oid)
+	UNION ALL
+	-- Non-ENR temp tables
+	SELECT
+		CAST(a.attrelid AS int)          AS object_id,
+		CAST(pg_my_temp_schema() AS int) AS schema_id,
+		CAST(a.attnum AS int)            AS colid,
+		CAST(CAST(a.attname AS sys.sysname) AS sys.varchar) AS name,
+		CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_28,
+		CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_90,
+		CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_100,
+		CAST(coll.collname AS nvarchar(128)) AS collation_28,
+		CAST(coll.collname AS nvarchar(128)) AS collation_90,
+		CAST(coll.collname AS nvarchar(128)) AS collation_100
+	FROM
+		pg_catalog.pg_attribute a
+		INNER JOIN pg_catalog.pg_class c ON a.attrelid = c.oid AND c.relnamespace = pg_my_temp_schema()
+		LEFT JOIN pg_catalog.pg_collation coll ON (a.attcollation = coll.oid)
+	WHERE
+		a.attnum > 0 AND NOT a.attisdropped;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
 -- We are limited by what postgres procedures can return here, but IEW may not
