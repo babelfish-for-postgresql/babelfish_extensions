@@ -1051,7 +1051,10 @@ FROM dbo.GetXmlSingleCustomerOrders('ALFKI') f
 FOR XML AUTO, ELEMENTS;
 GO
 
-
+-- 13.6 CTE wrapping a table-valued function
+;WITH cte_func AS (SELECT * FROM dbo.GetXmlCustomerOrders())
+SELECT CustomerID, CompanyName FROM cte_func WHERE CustomerID = 'ALFKI' FOR XML AUTO;
+GO
 
 
 

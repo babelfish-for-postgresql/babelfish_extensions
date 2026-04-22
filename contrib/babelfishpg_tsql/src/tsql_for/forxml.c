@@ -143,9 +143,16 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		}
 
 		/* For AUTO mode, initialize auto_state with metadata from parameter */
-		if (mode == TSQL_FORXML_AUTO && PG_NARGS() > 8 && !PG_ARGISNULL(8))
+		if (mode == TSQL_FORXML_AUTO)
 		{
-			char *auto_metadata = text_to_cstring(PG_GETARG_TEXT_PP(8));
+			char *auto_metadata;
+
+			if (PG_NARGS() <= 8 || PG_ARGISNULL(8))
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("FOR XML AUTO requires metadata parameter (9th argument)")));
+
+			auto_metadata = text_to_cstring(PG_GETARG_TEXT_PP(8));
 			if (strlen(auto_metadata) > 0)
 			{
 				forxml_auto_state *auto_st = (forxml_auto_state *) palloc0(sizeof(forxml_auto_state));
@@ -180,28 +187,9 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 				forxml_auto_state *auto_state = fstate->auto_state;
 
 				if (auto_state == NULL)
-				{
-					/* First row and no metadata from parameter - parse from arg */
-					char *auto_metadata = "";
-					if (PG_NARGS() > 8 && !PG_ARGISNULL(8))
-						auto_metadata = text_to_cstring(PG_GETARG_TEXT_PP(8));
-
-					auto_state = (forxml_auto_state *) palloc0(sizeof(forxml_auto_state));
-					auto_state->first_row = true;
-					fstate->auto_state = auto_state;
-
-					/* Parse metadata string if provided */
-					if (strlen(auto_metadata) > 0)
-					{
-						/* Count columns from record to know array sizes */
-						HeapTupleHeader td = DatumGetHeapTupleHeader(record);
-						Oid tupType = HeapTupleHeaderGetTypeId(td);
-						int32 tupTypmod = HeapTupleHeaderGetTypMod(td);
-						TupleDesc tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-						xml_auto_parse_metadata(auto_state, auto_metadata, tupdesc->natts);
-						ReleaseTupleDesc(tupdesc);
-					}
-				}
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("FOR XML AUTO state not initialized")));
 
 				tsql_row_to_xml_auto(state, record, binary_base64, elements, xsinil, auto_state);
 			}
@@ -763,7 +751,7 @@ unescape_period(const char *str)
 	initStringInfo(&buf);
 	while (*p)
 	{
-		if (strncmp(p, "_x002E_", 7) == 0)
+		if (strlen(p) >= 7 && strncmp(p, "_x002E_", 7) == 0)
 		{
 			appendStringInfoChar(&buf, '.');
 			p += 7;
@@ -838,6 +826,12 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 	}
 
 	pfree(str_copy);
+
+	if (col_idx != num_cols)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("FOR XML AUTO metadata entry count (%d) does not match column count (%d)",
+						col_idx, num_cols)));
 
 	/* Allocate array to track open elements at each level */
 	auto_state->open_element_levels = (int *) palloc0((auto_state->max_depth + 1) * sizeof(int));
@@ -1097,6 +1091,7 @@ cached_update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc,
 		tsql_for_datetime_format(format_output, val);
 		*colval = CStringGetDatum(format_output->data);
 		*datatype_oid = CSTRINGOID;
+		pfree(format_output);	/* free StringInfo struct, data is kept via colval */
 	}
 	else if (convert_type == 2)
 	{
@@ -1106,6 +1101,7 @@ cached_update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc,
 		tsql_for_datetimeoffset_format(format_output, val);
 		*colval = CStringGetDatum(format_output->data);
 		*datatype_oid = CSTRINGOID;
+		pfree(format_output);	/* free StringInfo struct, data is kept via colval */
 	}
 	/* else: convert_type == 0, no conversion needed */
 }
