@@ -2000,7 +2000,7 @@ public:
 			}
 
 			/*
-			 * SQL Server error 483: The OUTPUT clause cannot be used in an INSERT...EXEC statement.
+			 * The OUTPUT clause cannot be used in an INSERT...EXEC statement.
 			 * Check for OUTPUT clause and throw error if present.
 			 */
 			if (ctx->insert_statement()->output_clause())

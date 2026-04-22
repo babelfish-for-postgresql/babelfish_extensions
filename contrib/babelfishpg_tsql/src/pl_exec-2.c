@@ -676,7 +676,7 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 		 * Check if this is a statement-terminating error.
 		 * Statement-terminating errors (like division by zero) should NOT
 		 * roll back previous statements' work in the TRY block.
-		 * This matches SQL Server behavior.
+		 * This matches expected behavior.
 		 */
 		(void) get_tsql_error_code(edata, &last_error);
 		is_stmt_terminating = is_ignorable_error(edata->sqlerrcode, 0);
@@ -688,7 +688,7 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 		 * 2. This preserves all work done before the error
 		 * 3. The CATCH block still runs to handle the error
 		 *
-		 * This matches SQL Server behavior where INSERT EXEC data is preserved
+		 * This matches expected behavior where INSERT EXEC data is preserved
 		 * even when a subsequent statement-terminating error occurs in the
 		 * same TRY block.
 		 *
@@ -726,7 +726,7 @@ exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt)
 		 * (deeper call stack), we should NOT clean up because the INSERT EXEC
 		 * is still in progress and the data should be preserved.
 		 *
-		 * This matches SQL Server behavior where TRY-CATCH inside a procedure
+		 * This matches expected behavior where TRY-CATCH inside a procedure
 		 * can catch errors without affecting the outer INSERT EXEC operation.
 		 */
 		if (pltsql_insert_exec_active() && pltsql_insert_exec_should_cleanup_on_trycatch())
@@ -1027,9 +1027,8 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
 		{
 			/*
-			 * Check for nested INSERT EXEC - SQL Server error 8164.
+			 * Check for nested INSERT EXEC.
 			 * If INSERT EXEC context is already active, this is a nested call.
-			 * Use same error code and message as old code path for consistency.
 			 */
 			if (pltsql_insert_exec_active())
 			{
@@ -1040,7 +1039,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 			/*
 			 * Start implicit transaction for INSERT EXEC if not already in one.
-			 * This matches SQL Server behavior where INSERT EXEC implicitly starts
+			 * This matches expected behavior where INSERT EXEC implicitly starts
 			 * a transaction, making @@TRANCOUNT = 1 inside the executed procedure.
 			 *
 			 * The transaction is committed at the end of INSERT EXEC by the
@@ -1078,7 +1077,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 			/*
 			 * Open and hold the target table during INSERT EXEC execution.
-			 * This is critical for detecting schema alterations (SQL Server error 556).
+			 * This is critical for detecting schema alterations.
 			 * By holding the target table open, PostgreSQL's CheckTableNotInUse()
 			 * will detect if the procedure tries to ALTER TABLE on the target.
 			 */
@@ -1399,8 +1398,8 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * This ensures that if an error occurs (e.g., COMMIT without BEGIN TRAN),
 		 * all changes made by the procedure are rolled back.
 		 *
-		 * In SQL Server, INSERT EXEC runs in an implicit transaction context,
-		 * so if COMMIT is called without BEGIN TRAN, error 3916 is thrown and
+		 * In T-SQL, INSERT EXEC runs in an implicit transaction context,
+		 * so if COMMIT is called without BEGIN TRAN, an error is thrown and
 		 * all changes are rolled back.
 		 *
 		 * OWNERSHIP CHAINING FIX:
@@ -2029,9 +2028,8 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
 		{
 			/*
-			 * Check for nested INSERT EXEC - SQL Server error 8164.
+			 * Check for nested INSERT EXEC.
 			 * If INSERT EXEC context is already active, this is a nested call.
-			 * Use same error code and message as old code path for consistency.
 			 */
 			if (pltsql_insert_exec_active())
 			{
@@ -2057,7 +2055,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 			/*
 			 * Open and hold the target table during INSERT EXEC execution.
-			 * This is critical for detecting schema alterations (SQL Server error 556).
+			 * This is critical for detecting schema alterations.
 			 * By holding the target table open, PostgreSQL's CheckTableNotInUse()
 			 * will detect if the procedure tries to ALTER TABLE on the target.
 			 */
@@ -3009,9 +3007,8 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					if (stmt->insert_exec && stmt->insert_exec_target != NULL)
 					{
 						/*
-						 * Check for nested INSERT EXEC - SQL Server error 8164.
+						 * Check for nested INSERT EXEC.
 						 * If INSERT EXEC context is already active, this is a nested call.
-						 * Use same error code and message as old code path for consistency.
 						 */
 						if (pltsql_insert_exec_active())
 						{
@@ -3022,7 +3019,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 
 						/*
 						 * Start implicit transaction for INSERT EXEC if not already in one.
-						 * This matches SQL Server behavior where INSERT EXEC implicitly starts
+						 * This matches expected behavior where INSERT EXEC implicitly starts
 						 * a transaction, making @@TRANCOUNT = 1 inside the executed procedure.
 						 *
 						 * The transaction is committed at the end of INSERT EXEC by the
@@ -3060,7 +3057,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 
 						/*
 						 * Open and hold the target table during INSERT EXEC execution.
-						 * This is critical for detecting schema alterations (SQL Server error 556).
+						 * This is critical for detecting schema alterations.
 						 * By holding the target table open, PostgreSQL's CheckTableNotInUse()
 						 * will detect if the procedure tries to ALTER TABLE on the target.
 						 */

@@ -201,7 +201,7 @@ clean_format_type_string(const char *coltype)
  * Schema signature for detecting schema changes during INSERT EXEC.
  * We store the column count and column type OIDs at the start of INSERT EXEC,
  * then verify they haven't changed before flushing data to the target table.
- * This detects ALTER TABLE operations that would cause SQL Server error 556.
+ * This detects ALTER TABLE operations that would cause a schema change error.
  */
 typedef struct InsertExecSchemaSignature
 {
@@ -548,7 +548,7 @@ pltsql_insert_exec_check_pending_drop(void)
  *
  * This function captures the schema signature (column count and types) of the
  * target table at the start of INSERT EXEC. Before flushing data to the target,
- * we verify the schema hasn't changed. If it has, we raise SQL Server error 556:
+ * we verify the schema hasn't changed. If it has, we raise an error:
  * "INSERT EXEC failed because the stored procedure altered the schema of the target table."
  *
  * For regular tables:
@@ -750,7 +750,7 @@ pltsql_insert_exec_close_target_table(void)
  * Returns true if schema is unchanged, false if it has changed.
  *
  * This is called before flushing data to the target table to detect if the
- * executed procedure altered the target table's schema (SQL Server error 556).
+ * executed procedure altered the target table's schema.
  *
  * Note: In major version upgrade scenarios, the OID captured at INSERT EXEC start
  * may become stale. We handle this gracefully by skipping the check if we can't
@@ -771,8 +771,7 @@ pltsql_insert_exec_verify_schema(void)
 
 	/*
 	 * Try to open the relation. If we can't open it, the table was likely
-	 * dropped by the executed procedure - this is a schema change that should
-	 * trigger error 556.
+	 * dropped by the executed procedure - this is a schema change error.
 	 */
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
@@ -783,7 +782,7 @@ pltsql_insert_exec_verify_schema(void)
 	{
 		/*
 		 * Could not open relation - table was dropped or OID is stale.
-		 * This is a schema change, return false to trigger error 556.
+		 * This is a schema change, return false to trigger the error.
 		 */
 		MemoryContextSwitchTo(oldcontext);
 		FlushErrorState();
@@ -890,9 +889,9 @@ count_select_target_columns(SelectStmt *stmt)
 /*
  * Validate column count from a query string BEFORE plan preparation.
  *
- * SQL Server validates column count at the metadata level BEFORE evaluating
- * expressions. This means column mismatch errors (213) take priority over
- * runtime errors like division by zero (8134).
+ * T-SQL validates column count at the metadata level BEFORE evaluating
+ * expressions. This means column mismatch errors take priority over
+ * runtime errors like division by zero.
  *
  * In PostgreSQL, plan preparation calls eval_const_expressions() which evaluates
  * constant expressions like 1/0, causing runtime errors to occur before we can
@@ -982,7 +981,7 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 		 * Set the error flag BEFORE throwing the error. This ensures that
 		 * even if TRY-CATCH catches the error, the flush will be skipped.
 		 *
-		 * SQL Server behavior: Column mismatch errors cause all rows to be
+		 * Expected behavior: Column mismatch errors cause all rows to be
 		 * rolled back, even if caught by TRY-CATCH. This is different from
 		 * data-level errors like division by zero, which only affect the
 		 * current row and allow previously inserted rows to be kept.
@@ -991,10 +990,8 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 
 		/*
 		 * Use ERRCODE_DATATYPE_MISMATCH to avoid the error mapping in
-		 * error_mapping.txt. The mapping for ERRCODE_FEATURE_NOT_SUPPORTED
-		 * with this message maps to SQL_ERROR_213, but we want to keep the
-		 * unmapped error code (33557097) for consistency with the existing
-		 * behavior in the flush function.
+		 * error_mapping.txt. We want to keep the internal error code for
+		 * test compatibility.
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1335,7 +1332,7 @@ CreateInsertExecDestReceiver(Oid temp_table_oid)
  *
  * We DO validate that the number of columns in the result set matches
  * the temp table structure. If there's a mismatch, we raise an error
- * similar to SQL Server's error 213.
+ * for column count mismatch.
  *
  * We also build coercion expressions for columns that need type conversion.
  * This uses PostgreSQL's expression evaluation infrastructure (ExecInitExpr,
@@ -1362,9 +1359,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	/*
 	 * Validate column count: the number of columns in the result set
 	 * must match the number of columns in the temp table.
-	 *
-	 * SQL Server error 213: "Column name or number of supplied values
-	 * does not match table definition."
+	 * "Column name or number of supplied values does not match table definition."
 	 */
 	result_natts = typeinfo->natts;
 
@@ -1381,7 +1376,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		 * even if TRY-CATCH catches the error, the flush will be skipped
 		 * and the error will be re-thrown.
 		 *
-		 * SQL Server behavior: Column mismatch errors cause all rows to be
+		 * Expected behavior: Column mismatch errors cause all rows to be
 		 * rolled back, even if caught by TRY-CATCH. This is different from
 		 * data-level errors like division by zero, which only affect the
 		 * current row and allow previously inserted rows to be kept.
@@ -1389,9 +1384,8 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		pltsql_insert_exec_set_error_flag();
 		/*
 		 * Use ERRCODE_DATATYPE_MISMATCH to avoid the error mapping in
-		 * error_mapping.txt. The mapping for ERRCODE_FEATURE_NOT_SUPPORTED
-		 * with this message maps to SQL_ERROR_213, but we want to keep the
-		 * unmapped error code (33557097) for consistency with existing tests.
+		 * error_mapping.txt. We want to keep the internal error code for
+		 * test compatibility.
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1439,7 +1433,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 
 			/*
 			 * Build the coercion expression using coerce_to_target_type().
-			 * We use ASSIGNMENT coercion which matches SQL Server's implicit
+			 * We use ASSIGNMENT coercion which matches T-SQL's implicit
 			 * conversion behavior for INSERT statements.
 			 */
 			cast_expr = coerce_to_target_type(NULL,
@@ -1454,7 +1448,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 			/*
 			 * If coerce_to_target_type() returns NULL, there's no direct
 			 * coercion path. Fall back to I/O coercion (convert to text
-			 * and back), which handles most SQL Server implicit conversions.
+			 * and back), which handles most T-SQL implicit conversions.
 			 */
 			if (cast_expr == NULL)
 			{
@@ -2301,7 +2295,7 @@ setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_s
  * CRITICAL: The flush is wrapped in its own subtransaction that commits
  * immediately. This ensures that if an error occurs AFTER INSERT EXEC completes
  * (e.g., SELECT 1/0 in the same TRY block), the TRY-CATCH rollback won't undo
- * the already-flushed data. This matches SQL Server behavior where INSERT EXEC
+ * the already-flushed data. This matches expected behavior where INSERT EXEC
  * data is preserved even when subsequent errors occur in the same TRY block.
  */
 void
@@ -2337,7 +2331,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	/*
 	 * Check if an error occurred during INSERT EXEC that should prevent flush.
 	 *
-	 * SQL Server behavior: Column mismatch errors (213) cause all rows to be
+	 * Expected behavior: Column mismatch errors cause all rows to be
 	 * rolled back, even if caught by TRY-CATCH. This is different from
 	 * data-level errors like division by zero, which only affect the current
 	 * row and allow previously inserted rows to be kept.
@@ -2351,7 +2345,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	/*
 	 * Verify that the target table schema hasn't changed since INSERT EXEC started.
 	 * If the executed procedure altered the target table's schema (e.g., ALTER TABLE
-	 * ADD COLUMN), we must raise SQL Server error 556:
+	 * ADD COLUMN), we must raise an error:
 	 * "INSERT EXEC failed because the stored procedure altered the schema of the target table."
 	 */
 	if (!pltsql_insert_exec_verify_schema())
@@ -2394,10 +2388,10 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 	{
 		/*
 		 * No column list specified - use INSERT ... SELECT * which auto-skips
-		 * IDENTITY and computed columns. Both SQL Server and Babelfish support
-		 * this behavior: when the source column count matches the number of
-		 * non-generated columns in the target, IDENTITY/computed columns are
-		 * automatically excluded from the INSERT.
+		 * IDENTITY and computed columns. T-SQL supports this behavior: when
+		 * the source column count matches the number of non-generated columns
+		 * in the target, IDENTITY/computed columns are automatically excluded
+		 * from the INSERT.
 		 *
 		 * The temp table was created with only non-identity/computed columns
 		 * (via pg_attribute query in create_insert_exec_temp_table), so

@@ -4648,7 +4648,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	/*
 	 * Block ROLLBACK (and ROLLBACK TO SAVEPOINT) during INSERT EXEC.
-	 * SQL Server Error 3915: "Cannot use the ROLLBACK statement within an INSERT-EXEC statement."
+	 * ROLLBACK is not allowed within an INSERT-EXEC statement.
 	 * Check this early before any SPI execution.
 	 */
 	if (stmt->txn_data != NULL)
@@ -6268,7 +6268,7 @@ exec_stmt_rollback(PLtsql_execstate *estate, PLtsql_stmt_rollback *stmt)
 {
 	/*
 	 * Block ROLLBACK during INSERT EXEC.
-	 * SQL Server Error 3915: "Cannot use the ROLLBACK statement within an INSERT-EXEC statement."
+	 * ROLLBACK is not allowed within an INSERT-EXEC statement.
 	 */
 	if (pltsql_insert_exec_active())
 		ereport(ERROR,

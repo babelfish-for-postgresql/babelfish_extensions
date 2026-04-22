@@ -129,12 +129,10 @@ PLTsqlProcessTransaction(Node *parsetree,
 				/*
 				 * Block COMMIT during INSERT EXEC if NestedTranCount <= 1.
 				 * 
-				 * In SQL Server, INSERT EXEC implicitly makes @@TRANCOUNT = 1.
-				 * COMMIT is only blocked if it would make @@TRANCOUNT go from 1 to 0.
-				 * If the procedure did BEGIN TRAN first (@@TRANCOUNT = 2), then
-				 * COMMIT is allowed (@@TRANCOUNT goes from 2 to 1).
-				 * 
-				 * SQL Server Error 3916.
+				 * INSERT EXEC implicitly makes @@TRANCOUNT = 1. COMMIT is only
+				 * blocked if it would make @@TRANCOUNT go from 1 to 0. If the
+				 * procedure did BEGIN TRAN first (@@TRANCOUNT = 2), then COMMIT
+				 * is allowed (@@TRANCOUNT goes from 2 to 1).
 				 */
 				if (pltsql_insert_exec_active() && NestedTranCount <= 1)
 					ereport(ERROR,
@@ -149,7 +147,7 @@ PLTsqlProcessTransaction(Node *parsetree,
 			{
 				/*
 				 * Block ROLLBACK during INSERT EXEC.
-				 * SQL Server Error 3915.
+				 * ROLLBACK is not allowed within an INSERT-EXEC statement.
 				 */
 				if (pltsql_insert_exec_active())
 					ereport(ERROR,

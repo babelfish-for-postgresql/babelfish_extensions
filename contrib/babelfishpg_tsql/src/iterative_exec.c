@@ -674,9 +674,9 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			/*
 			 * For INSERT EXEC, validate column count BEFORE executing the query.
 			 *
-			 * SQL Server validates column count at the metadata level BEFORE
-			 * evaluating expressions. This means column mismatch errors (213)
-			 * take priority over runtime errors like division by zero (8134).
+			 * Expected behavior: column count is validated at the metadata level
+			 * BEFORE evaluating expressions. This means column mismatch errors
+			 * take priority over runtime errors like division by zero.
 			 *
 			 * In PostgreSQL, plan preparation calls eval_const_expressions()
 			 * which evaluates constant expressions like 1/0, causing runtime
@@ -1218,11 +1218,11 @@ abort_execution(PLtsql_execstate *estate, ErrorData *edata, bool *terminate_batc
 	 * INSERT EXEC column mismatch errors must be re-thrown BEFORE checking
 	 * for TRY-CATCH blocks.
 	 *
-	 * SQL Server behavior: When a column mismatch error (213) occurs during
-	 * INSERT EXEC, all rows (including DML done before the error) are rolled
-	 * back, even if the error occurs inside a TRY-CATCH block. This is
-	 * different from other "ignorable" errors like division by zero, which
-	 * only affect the current row and can be caught by TRY-CATCH.
+	 * Expected behavior: When a column mismatch error occurs during INSERT
+	 * EXEC, all rows (including DML done before the error) are rolled back,
+	 * even if the error occurs inside a TRY-CATCH block. This is different
+	 * from other "ignorable" errors like division by zero, which only affect
+	 * the current row and can be caught by TRY-CATCH.
 	 *
 	 * The error flag is set by:
 	 * 1. pltsql_insert_exec_validate_column_count_from_query() - early validation
@@ -1446,9 +1446,9 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 *    INSERT EXEC completes and flushes to the target table
 		 *
 		 * Also skip this check if INSERT EXEC had an error. The error flag is
-		 * set when an error occurs during INSERT EXEC (e.g., error 3916 for
-		 * COMMIT without BEGIN TRAN). In this case, we want the original error
-		 * to propagate, not the transaction count mismatch error.
+		 * set when an error occurs during INSERT EXEC (e.g., COMMIT without
+		 * BEGIN TRAN). In this case, we want the original error to propagate,
+		 * not the transaction count mismatch error.
 		 *
 		 * Also skip this check if INSERT EXEC started an implicit transaction.
 		 * The implicit transaction stays open and will be committed by the
@@ -1793,8 +1793,8 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 	/*
 	 * Clear the INSERT EXEC error flag at the start of each batch.
 	 * This flag is used to skip the transaction count mismatch check when
-	 * an error occurs during INSERT EXEC (e.g., error 3916 for COMMIT without
-	 * BEGIN TRAN). The flag should only affect the current INSERT EXEC operation,
+	 * an error occurs during INSERT EXEC (e.g., COMMIT without BEGIN TRAN).
+	 * The flag should only affect the current INSERT EXEC operation,
 	 * not subsequent batches.
 	 */
 	pltsql_insert_exec_clear_error_flag();
@@ -1925,12 +1925,12 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 						 * The INSERT EXEC is still in progress.
 						 *
 						 * For column mismatch errors (had_error flag is set), we should
-						 * re-throw the error. SQL Server behavior: Column mismatch errors
+						 * re-throw the error. Expected behavior: Column mismatch errors
 						 * cause all rows to be rolled back, even if caught by TRY-CATCH.
 						 *
 						 * For other errors (division by zero, etc.), we allow the error
 						 * to be caught by TRY-CATCH so that the flush will happen when
-						 * the procedure completes. SQL Server behavior: When a non-column-
+						 * the procedure completes. Expected behavior: When a non-column-
 						 * mismatch error is caught by TRY-CATCH inside the procedure, the
 						 * rows inserted before the error should be kept.
 						 */
