@@ -280,7 +280,7 @@ END;
 $$;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_sfunc_deprecated_in_5_6_0');
 
--- Create new function with ELEMENTS and AUTO metadata parameters (9 args)
+-- Create new function with ELEMENTS parameters (8 args: state + 7 user args)
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
     state INTERNAL,
     rec ANYELEMENT,
@@ -289,13 +289,12 @@ CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
     binary_base64 boolean,
     root_name text,
     elements boolean,
-    xsinil boolean,
-    auto_metadata text
+    xsinil boolean
 ) RETURNS INTERNAL
 AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
 LANGUAGE C STABLE;
 
--- Create new aggregate with ELEMENTS and AUTO metadata parameters (8 user args)
+-- Create new aggregate with ELEMENTS parameters (7 user args)
 CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
     rec ANYELEMENT,
     mode int,
@@ -303,15 +302,14 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
     binary_base64 boolean,
     root_name text,
     elements boolean,
-    xsinil boolean,
-    auto_metadata text)
+    xsinil boolean)
 (
     STYPE = INTERNAL,
     SFUNC = tsql_query_to_xml_sfunc,
     FINALFUNC = tsql_query_to_xml_ffunc
 );
 
--- Create new aggregate with ELEMENTS and AUTO metadata parameters (8 user args)
+-- Create new aggregate with ELEMENTS parameters (7 user args)
 CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     rec ANYELEMENT,
     mode int,
@@ -319,8 +317,7 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     binary_base64 boolean,
     root_name text,
     elements boolean,
-    xsinil boolean,
-    auto_metadata text)
+    xsinil boolean)
 (
     STYPE = INTERNAL,
     SFUNC = tsql_query_to_xml_sfunc,

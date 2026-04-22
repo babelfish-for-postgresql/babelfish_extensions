@@ -222,7 +222,7 @@ forjson-nesting
 forjsonauto
 format
 format-dep
-forxml
+forxml-before-17_10-or-18_4
 forxml-path
 forxml-subquery
 fulltextserviceproperty
