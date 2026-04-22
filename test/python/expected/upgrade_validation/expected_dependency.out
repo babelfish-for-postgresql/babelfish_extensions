@@ -1010,5 +1010,4 @@ View sys.spt_tablecollations_view
 View sys.synonyms
 View sys.syscharsets
 View sys.syslanguages
-View sys.temp_table_attributes_view
 View sys.xml_schema_collections
