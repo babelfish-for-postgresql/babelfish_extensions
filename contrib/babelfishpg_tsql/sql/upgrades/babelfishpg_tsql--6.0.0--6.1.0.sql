@@ -774,14 +774,14 @@ AS 'babelfishpg_tsql', 'get_enr_temp_table_attributes'
 LANGUAGE C STABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.babelfish_get_enr_temp_table_attributes() TO PUBLIC;
 
---View for babelfish_get_enr_temp_table_attributes() used by spt_tablecollations_view
-CREATE OR REPLACE VIEW sys.enr_temp_table_attributes_view as
-	SELECT attrelid, attname, atttypid, attlen, attnum, atttypmod, attndims, attbyval, 
-		attalign, attstorage, attcompression, attnotnull, atthasdef, atthasmissing, attidentity, attgenerated,
-	    attisdropped, attislocal, attinhcount, attcollation, attstattarget,
-		attacl, attoptions, attfdwoptions  FROM sys.babelfish_get_enr_temp_table_attributes()
-	WHERE attnum > 0 AND NOT attisdropped;
-GRANT SELECT ON sys.enr_temp_table_attributes_view TO PUBLIC;
+-- SQL wrapper function to return required columns
+CREATE OR REPLACE FUNCTION sys.babelfish_get_enr_temp_table_attributes_internal()
+RETURNS TABLE ( attrelid oid, attnum smallint, attname name, attcollation oid ) 
+AS $$
+    SELECT attrelid, attnum, attname, attcollation
+    FROM sys.babelfish_get_enr_temp_table_attributes()
+    WHERE attnum > 0 AND NOT attisdropped;
+$$ LANGUAGE SQL STABLE;
 
 -- Permanent tables come from sys.all_columns, temp tables from ENR function and non-ENR pg_attribute.
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
@@ -802,7 +802,7 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     WHERE
         c.is_sparse = 0
     UNION ALL
-    -- ENR temp tables
+	-- ENR temp tables
     SELECT
         CAST(a.attrelid AS int)          AS object_id,
         CAST(pg_my_temp_schema() AS int) AS schema_id,
@@ -815,27 +815,27 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         CAST(coll.collname AS nvarchar(128)) AS collation_90,
         CAST(coll.collname AS nvarchar(128)) AS collation_100
     FROM
-        sys.enr_temp_table_attributes_view a
+        sys.babelfish_get_enr_temp_table_attributes_internal() a
         LEFT JOIN pg_catalog.pg_collation coll ON (a.attcollation = coll.oid)
-    UNION ALL
-    -- Non-ENR temp tables
-    SELECT
-        CAST(a.attrelid AS int)          AS object_id,
-        CAST(pg_my_temp_schema() AS int) AS schema_id,
-        CAST(a.attnum AS int)            AS colid,
-        CAST(CAST(a.attname AS sys.sysname) AS sys.varchar) AS name,
-        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_28,
-        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_90,
-        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_100,
-        CAST(coll.collname AS nvarchar(128)) AS collation_28,
-        CAST(coll.collname AS nvarchar(128)) AS collation_90,
-        CAST(coll.collname AS nvarchar(128)) AS collation_100
-    FROM
-        pg_catalog.pg_attribute a
-        INNER JOIN pg_catalog.pg_class c ON a.attrelid = c.oid AND c.relnamespace = pg_my_temp_schema()
-        LEFT JOIN pg_catalog.pg_collation coll ON (a.attcollation = coll.oid)
-    WHERE
-        a.attnum > 0 AND NOT a.attisdropped;
+	UNION ALL
+	-- Non-ENR temp tables
+	SELECT
+		CAST(a.attrelid AS int)          AS object_id,
+		CAST(pg_my_temp_schema() AS int) AS schema_id,
+		CAST(a.attnum AS int)            AS colid,
+		CAST(CAST(a.attname AS sys.sysname) AS sys.varchar) AS name,
+		CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_28,
+		CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_90,
+		CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_100,
+		CAST(coll.collname AS nvarchar(128)) AS collation_28,
+		CAST(coll.collname AS nvarchar(128)) AS collation_90,
+		CAST(coll.collname AS nvarchar(128)) AS collation_100
+	FROM
+		pg_catalog.pg_attribute a
+		INNER JOIN pg_catalog.pg_class c ON a.attrelid = c.oid AND c.relnamespace = pg_my_temp_schema()
+		LEFT JOIN pg_catalog.pg_collation coll ON (a.attcollation = coll.oid)
+	WHERE
+		a.attnum > 0 AND NOT a.attisdropped;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
