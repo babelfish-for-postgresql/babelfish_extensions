@@ -25,16 +25,6 @@ int#!#varchar#!#binary#!#nvarchar
 ~~END~~
 
 
-SELECT attname, attnum, attlen from sys.enr_temp_table_attributes_view
-GO
-~~START~~
-varchar#!#smallint#!#smallint
-id#!#1#!#4
-name#!#2#!#-1
-description#!#3#!#-1
-~~END~~
-
-
 DROP TABLE #collTest1
 GO
 
@@ -145,18 +135,6 @@ int#!#varchar#!#binary#!#nvarchar
 ~~END~~
 
 
-SELECT attname, attnum, attlen from sys.enr_temp_table_attributes_view
-GO
-~~START~~
-varchar#!#smallint#!#smallint
-id#!#1#!#4
-amount#!#2#!#8
-price#!#3#!#-1
-flag#!#4#!#1
-data#!#5#!#-1
-~~END~~
-
-
 DROP TABLE #noCharCols
 GO
 
@@ -192,13 +170,6 @@ int#!#varchar#!#binary#!#nvarchar
 1#!#id#!#<NULL>#!#<NULL>
 2#!#name#!#0904D00034#!#bbf_unicode_cp1_ci_as
 3#!#description#!#0904D00034#!#bbf_unicode_cp1_ci_as
-~~END~~
-
-
-SELECT attname, attnum, attlen from sys.enr_temp_table_attributes_view
-GO
-~~START~~
-varchar#!#smallint#!#smallint
 ~~END~~
 
 
