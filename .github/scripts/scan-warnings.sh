@@ -49,8 +49,8 @@ if [[ "$SNAPSHOT_ACTIVE_COUNT" -ne 44 ]]; then
     ERROR_FOUND=true
 fi
 
-if [[ "$LEAK_COUNT" -ne 416 ]]; then
-    echo "Error: Expected 416 leak warnings, but found $LEAK_COUNT"
+if [[ "$LEAK_COUNT" -ne 30 ]]; then
+    echo "Error: Expected 30 leak warnings, but found $LEAK_COUNT"
     ERROR_FOUND=true
 fi
 
@@ -63,3 +63,9 @@ fi
 echo "Warning counts are as expected:"
 echo "Snapshot 'still active' warnings: $SNAPSHOT_ACTIVE_COUNT"
 echo "Leak warnings: $LEAK_COUNT"
+
+# Print all leak warnings with context for debugging
+echo ""
+echo "========== LEAK WARNINGS WITH CONTEXT =========="
+grep -B10 "WARNING:.*resource was not closed\|WARNING:.*leak" "$LOG_FILE" | grep -v "^--$" || echo "No leak warnings found"
+echo "========== END LEAK WARNINGS =========="
