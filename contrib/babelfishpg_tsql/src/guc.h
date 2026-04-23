@@ -20,6 +20,7 @@ extern bool pltsql_enable_create_alter_view_from_pg;
 extern bool	pltsql_enable_alter_owner_from_pg;
 extern bool pltsql_enable_antlr_parse_cache;
 extern bool pltsql_validate_antlr_parse_cache;
+extern bool pltsql_force_antlr_cache_testing;
 
 /* Session-level routine antlr parse cache statistics */
 extern int pltsql_antlr_parse_cache_stat_hits;

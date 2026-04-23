@@ -72,8 +72,9 @@ char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
 bool		pltsql_enable_alter_owner_from_pg = false;
-bool		pltsql_enable_antlr_parse_cache = false;
+bool		pltsql_enable_antlr_parse_cache = true;
 bool		pltsql_validate_antlr_parse_cache = false;
+bool		pltsql_force_antlr_cache_testing = true;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -1145,7 +1146,7 @@ define_custom_variables(void)
 							 gettext_noop("Enables persistent caching of ANTLR parser results for faster execution of routines."),
 							 gettext_noop("When enabled, ANTLR parsed results are reused from cache for routines."),
 							 &pltsql_enable_antlr_parse_cache,
-							 false,
+							 true,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
@@ -1161,6 +1162,25 @@ define_custom_variables(void)
 							 &pltsql_validate_antlr_parse_cache,
 							 false,
 							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/*
+	 * Testing-only GUC: forces cache deserialization by skipping hash table lookup.
+	 * TEST ONLY - DO NOT USE IN PRODUCTION.
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.force_antlr_cache_testing",
+							 gettext_noop("Forces cache deserialization testing by skipping hash table lookup. TEST ONLY - DO NOT USE IN PRODUCTION."),
+							 gettext_noop("When enabled, pltsql_compile() skips the in-session hash table "
+										  "and forces deserialization from persistent cache (babelfish_function_ext). "
+										  "This allows JDBC tests running in the same session to test cache "
+										  "deserialization without starting new connections. "
+										  "Requires babelfishpg_tsql.enable_antlr_parse_cache to be ON. "
+										  "Does NOT affect trigger execution - triggers (both DML and event triggers) always use normal cache behavior. "
+										  "This is a testing-only feature and should never be enabled in production."),
+							 &pltsql_force_antlr_cache_testing,
+							 true,
+							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 

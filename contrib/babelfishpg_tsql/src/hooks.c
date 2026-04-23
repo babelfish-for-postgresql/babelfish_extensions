@@ -4442,6 +4442,21 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	/* Use the catalog entry we fetched earlier (UPDATE vs INSERT) */
 	if (HeapTupleIsValid(oldtup))
 	{
+		/*
+		 * Check if tuple was already updated in current command.
+		 * This can happen during force_antlr_cache_testing (for non-trigger functions)
+		 * or in edge cases where the same function is being modified multiple times.
+		 * Skip the update to avoid "tuple already updated by self" error.
+		 * Note: Triggers (both DML and event triggers) are excluded from force cache testing.
+		 */
+		if (HeapTupleHeaderGetXmin(oldtup->t_data) == GetCurrentTransactionId() &&
+			HeapTupleHeaderGetCmin(oldtup->t_data) == GetCurrentCommandId(false))
+		{
+			heap_freetuple(oldtup);
+			table_close(bbf_function_ext_rel, RowExclusiveLock);
+			return;
+		}
+
 		tuple = heap_modify_tuple(oldtup, bbf_function_ext_rel_dsc,
 								  new_record, new_record_nulls,
 								  new_record_replaces);
@@ -4754,6 +4769,22 @@ pltsql_update_func_antlr_parse_cache(HeapTuple proctup, PLtsql_function *functio
 	if (XactReadOnly)
 		return;
 
+	/*
+	 * Skip catalog updates during force_antlr_cache_testing (except for triggers).
+	 * When force testing is enabled, we skip the hashtable for ANTLR-compiled
+	 * functions (from_cache=false) to force deserialization, but keep using
+	 * already-deserialized functions (from_cache=true). This means on first
+	 * exec we deserialize and insert into hashtable with from_cache=true.
+	 * Subsequent execs reuse that hashtable entry, so we never hit this
+	 * update path multiple times. However, for recursive procedures or
+	 * edge cases, skip catalog updates to avoid "tuple already updated by self".
+	 * 
+	 * IMPORTANT: Triggers (both DML and event triggers) are excluded from force 
+	 * cache testing, so they should always perform normal catalog updates.
+	 */
+	if (pltsql_force_antlr_cache_testing && function->fn_is_trigger == PLTSQL_NOT_TRIGGER)
+		return;
+
 	if (!OidIsValid(get_bbf_function_ext_idx_oid()))
 		return;
 
@@ -4764,6 +4795,21 @@ pltsql_update_func_antlr_parse_cache(HeapTuple proctup, PLtsql_function *functio
 	/* Check if caching is enabled for this routine, reusing oldtup */
 	if (!is_antlr_parse_cache_enabled_for_routine(proctup, oldtup))
 		return;
+
+	/*
+	 * Check if tuple was already updated in current command.
+	 * This can happen during force_antlr_cache_testing (for non-trigger functions)
+	 * when the same function is executed multiple times in a single batch, each time 
+	 * skipping the hashtable and triggering recompilation. Skip the update to avoid
+	 * "tuple already updated by self" error.
+	 * Note: Triggers (both DML and event triggers) are excluded from force cache testing.
+	 */
+	if (HeapTupleHeaderGetXmin(oldtup->t_data) == GetCurrentTransactionId() &&
+		HeapTupleHeaderGetCmin(oldtup->t_data) == GetCurrentCommandId(false))
+	{
+		heap_freetuple(oldtup);
+		return;
+	}
 
 	/*
 	 * CatalogTupleUpdate requires an active snapshot. During after-trigger

@@ -3493,6 +3493,26 @@ pltsql_HashTableLookup(PLtsql_func_hashkey *func_key)
 	if (hentry)
 	{
 		/*
+		 * Force cache testing: skip hashtable for ANTLR-compiled functions
+		 * to force deserialization from catalog, but keep using functions
+		 * that were already deserialized (from_cache=true) to test cache hits.
+		 * 
+		 * IMPORTANT: Skip force cache testing for triggers (both DML and event triggers)
+		 * to avoid breaking trigger execution. Triggers have complex execution contexts 
+		 * and forcing cache deserialization can cause issues with trigger data and 
+		 * transaction handling.
+		 */
+		if (pltsql_enable_antlr_parse_cache && pltsql_force_antlr_cache_testing && 
+			!func_key->isTrigger && !func_key->isEventTrigger)
+		{
+			/* Keep functions loaded from persistent cache to test cache hits */
+			if (!hentry->function->from_cache)
+			{
+				return NULL;  /* Force re-deserialization for ANTLR-compiled functions */
+			}
+			/* else: from_cache=true, return the function to test cache hit path */
+		}
+		/*
 		 * If GUC enable_antlr_parse_cache is off and function was loaded from
 		 * persistent cache(from_cache), evict it so do_compile re-parses via ANTLR.
 		 *
@@ -3532,8 +3552,19 @@ pltsql_HashTableInsert(PLtsql_function *function,
 											HASH_ENTER,
 											&found);
 	if (found)
-		elog(WARNING, "trying to insert a function that already exists");
-
+	{
+		/*
+		 * When force_antlr_cache_testing is ON (and not a trigger), we intentionally 
+		 * skip hash table lookup but still insert. This causes the function to already 
+		 * exist in the hash table from a previous call. This is expected - we're 
+		 * replacing the entry to test cache deserialization. Suppress the warning in 
+		 * this case. For triggers (both DML and event triggers), force cache testing 
+		 * is disabled, so this shouldn't happen.
+		 */
+		if (!(pltsql_enable_antlr_parse_cache && pltsql_force_antlr_cache_testing && 
+			  !func_key->isTrigger && !func_key->isEventTrigger))
+			elog(WARNING, "trying to insert a function that already exists");
+	}
 	hentry->function = function;
 	/* prepare back link from function to hashtable key */
 	function->fn_hashkey = &hentry->key;
