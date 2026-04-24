@@ -436,7 +436,7 @@ GO
 
 -- Verify ext cache was updated with ANTLR parse tree result
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
+    CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
 FROM sys.babelfish_function_ext
 WHERE funcname IN ('babel_6037_mstvf', 'babel_6037_itvf') AND nspname = 'master_dbo';
 GO
@@ -491,8 +491,8 @@ GO
 
 -- Verify cache columns are NULLed out (immediate invalidation)
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
-    CASE WHEN antlr_parse_tree_bbf_version IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS bbf_version
+    CASE WHEN antlr_parse_cache_tree IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
+    CASE WHEN antlr_parse_cache_bbf_version IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS bbf_version
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_cache_sig' AND nspname = 'master_dbo';
 GO
@@ -518,7 +518,7 @@ GO
 
 -- Verify cache is populated
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
+    CASE WHEN antlr_parse_cache_tree IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
     antlr_parse_cache_enabled
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_cache_name' AND nspname = 'master_dbo';
@@ -534,7 +534,7 @@ GO
 
 -- Verify cache NULLed and flag is false
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
+    CASE WHEN antlr_parse_cache_tree IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
     antlr_parse_cache_enabled
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_cache_name' AND nspname = 'master_dbo';
@@ -548,7 +548,7 @@ GO
 
 -- Verify cache stays NULL (kill switch prevents re-population)
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
+    CASE WHEN antlr_parse_cache_tree IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
     antlr_parse_cache_enabled
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_cache_name' AND nspname = 'master_dbo';
@@ -572,7 +572,7 @@ GO
 
 -- Verify cache is populated again (fresh do_compile in new session)
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
+    CASE WHEN antlr_parse_cache_tree IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text,
     antlr_parse_cache_enabled
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_cache_name' AND nspname = 'master_dbo';
@@ -604,7 +604,7 @@ GO
 
 -- Verify cache columns are populated (NULL follows GUC which is ON)
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text
+    CASE WHEN antlr_parse_cache_tree IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_default_test' AND nspname = 'master_dbo';
 GO
@@ -634,7 +634,7 @@ GO
 
 -- Verify cache IS populated (NULL follows GUC which is ON)
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text
+    CASE WHEN antlr_parse_cache_tree IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_default_test' AND nspname = 'master_dbo';
 GO
@@ -662,7 +662,7 @@ GO
 
 -- Verify cache IS populated (per-func true overrides GUC off)
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text
+    CASE WHEN antlr_parse_cache_tree IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_default_test' AND nspname = 'master_dbo';
 GO
@@ -682,7 +682,7 @@ GO
 
 -- Verify cache columns were NULLed out by the kill switch
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text
+    CASE WHEN antlr_parse_cache_tree IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_default_test' AND nspname = 'master_dbo';
 GO
@@ -696,7 +696,7 @@ GO
 
 -- Verify cache is still NOT populated (kill switch prevents re-population)
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text
+    CASE WHEN antlr_parse_cache_tree IS NULL THEN 'NULL' ELSE 'NOT NULL' END AS tree_text
 FROM sys.babelfish_function_ext
 WHERE funcname = 'perfunc_default_test' AND nspname = 'master_dbo';
 GO
@@ -872,7 +872,7 @@ GO
 
 -- Verify cache was populated by the first exec
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
+    CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
 FROM sys.babelfish_function_ext
 WHERE funcname = 'nocache_create_proc' AND nspname = 'master_dbo';
 GO
@@ -889,7 +889,7 @@ SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.overload_cache_proc'), tr
 GO
 
 -- Verify only the default dbo overload has per-function flag column enabled
-SELECT funcsignature, nspname, CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status, antlr_parse_cache_enabled
+SELECT funcsignature, nspname, CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status, antlr_parse_cache_enabled
 FROM sys.babelfish_function_ext
 WHERE funcname = 'overload_cache_proc'
 ORDER BY funcsignature;
@@ -914,7 +914,7 @@ EXEC test_cache_schema.overload_cache_proc @val = 1, @msg = 'world';
 GO
 
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
+    CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
     antlr_parse_cache_enabled 
 FROM sys.babelfish_function_ext
 WHERE funcname = 'overload_cache_proc';
@@ -939,7 +939,7 @@ GO
 
 -- Verify both are cached
 SELECT funcname,
-    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
+    CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
 FROM sys.babelfish_function_ext
 WHERE funcname IN ('inner_cached_proc', 'outer_cached_proc') AND nspname = 'master_dbo'
 ORDER BY funcname;
@@ -991,7 +991,7 @@ EXEC sp_rename 'dep_rename_table.value', 'val', 'COLUMN';
 GO
 
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
+    CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
     antlr_parse_cache_enabled 
 FROM sys.babelfish_function_ext
 WHERE funcname = 'dep_rename_proc';
@@ -1002,7 +1002,7 @@ EXEC dbo.dep_rename_proc;
 GO
 
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
+    CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
     antlr_parse_cache_enabled 
 FROM sys.babelfish_function_ext
 WHERE funcname = 'dep_rename_proc';
@@ -1021,7 +1021,7 @@ GO
 -- psql
 -- Test 27a: Corrupt datums and test
 SET allow_system_table_mods = ON;
-UPDATE sys.babelfish_function_ext SET antlr_parse_tree_datums = '<>CORRUPTED_DATUMS'
+UPDATE sys.babelfish_function_ext SET antlr_parse_cache_datums = '<>CORRUPTED_DATUMS'
 WHERE funcname = 'corrupt_cache_test_func' AND nspname = 'master_dbo';
 SET allow_system_table_mods = OFF;
 GO
@@ -1042,7 +1042,7 @@ GO
 -- psql
 -- Test 27b: Corrupt parse tree and test
 SET allow_system_table_mods = ON;
-UPDATE sys.babelfish_function_ext SET antlr_parse_tree_text = '<>CORRUPTED_TREE'
+UPDATE sys.babelfish_function_ext SET antlr_parse_cache_tree = '<>CORRUPTED_TREE'
 WHERE funcname = 'corrupt_cache_test_func' AND nspname = 'master_dbo';
 SET allow_system_table_mods = OFF;
 GO
@@ -1073,7 +1073,7 @@ GO
 
 -- Verify cache is populated
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
+    CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
 FROM sys.babelfish_function_ext
 WHERE funcname = 'version_mismatch' AND nspname = 'master_dbo';
 GO
@@ -1081,7 +1081,7 @@ GO
 -- psql
 -- Update bbf_version to a higher version to simulate a version change
 SET allow_system_table_mods = ON;
-UPDATE sys.babelfish_function_ext SET antlr_parse_tree_bbf_version = '99.99.0'
+UPDATE sys.babelfish_function_ext SET antlr_parse_cache_bbf_version = '99.99.0'
 WHERE funcname = 'version_mismatch' AND nspname = 'master_dbo';
 SET allow_system_table_mods = OFF;
 GO
@@ -1101,8 +1101,8 @@ GO
 
 -- Verify the cache was re-populated with the current bbf_version (not 99.99.0)
 SELECT
-    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
-    CASE WHEN antlr_parse_tree_bbf_version = '99.99.0' THEN 'STALE' ELSE 'CURRENT' END AS version_status
+    CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
+    CASE WHEN antlr_parse_cache_bbf_version = '99.99.0' THEN 'STALE' ELSE 'CURRENT' END AS version_status
 FROM sys.babelfish_function_ext
 WHERE funcname = 'version_mismatch' AND nspname = 'master_dbo';
 GO
@@ -1168,7 +1168,7 @@ GO
 
 -- Check if the trigger's underlying function has a cache entry
 SELECT funcname,
-    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
+    CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
 FROM sys.babelfish_function_ext
 WHERE funcname = 'trg_cache_test' AND nspname = 'master_dbo';
 GO
@@ -1179,7 +1179,7 @@ GO
 
 -- Check cache after trigger execution — triggers are not cached
 SELECT funcname,
-    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
+    CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
 FROM sys.babelfish_function_ext
 WHERE funcname = 'trg_cache_test' AND nspname = 'master_dbo';
 GO
@@ -1190,7 +1190,7 @@ GO
 
 -- Check if the trigger's underlying function has a cache entry
 SELECT funcname,
-    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
+    CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
 FROM sys.babelfish_function_ext
 WHERE funcname = 'trg_cache_test' AND nspname = 'master_dbo';
 GO
@@ -1239,7 +1239,7 @@ GO
 
 -- Verify cache was populated
 SELECT funcname,
-    CASE WHEN antlr_parse_tree_text IS NOT NULL THEN 'cached' ELSE 'not cached' END AS cache_status
+    CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'cached' ELSE 'not cached' END AS cache_status
 FROM sys.babelfish_function_ext
 WHERE funcname = 'test_geometry_cache' AND nspname = 'master_dbo';
 GO
