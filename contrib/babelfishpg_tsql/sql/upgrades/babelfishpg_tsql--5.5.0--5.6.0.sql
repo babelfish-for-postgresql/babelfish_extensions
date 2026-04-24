@@ -233,9 +233,9 @@ $$;
 
 -- BABELFISH_FUNCTION_EXT
 SET allow_system_table_mods = on;
-ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_text TEXT DEFAULT NULL;
-ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_datums TEXT DEFAULT NULL;
-ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_tree_bbf_version TEXT DEFAULT NULL;
+ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_cache_tree TEXT DEFAULT NULL;
+ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_cache_datums TEXT DEFAULT NULL;
+ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_cache_bbf_version TEXT DEFAULT NULL;
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_cache_enabled BOOL DEFAULT NULL;
 RESET allow_system_table_mods;
 

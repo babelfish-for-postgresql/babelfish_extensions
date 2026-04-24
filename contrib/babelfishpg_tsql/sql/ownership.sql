@@ -41,9 +41,9 @@ CREATE TABLE sys.babelfish_function_ext (
 	create_date SYS.DATETIME NOT NULL,
 	modify_date SYS.DATETIME NOT NULL,
 	definition sys.NTEXT DEFAULT NULL,
-	antlr_parse_tree_text TEXT DEFAULT NULL, -- Native PG nodeToString() serialized parse tree
-	antlr_parse_tree_datums TEXT DEFAULT NULL, -- Native PG nodeToString() serialized datums array
-	antlr_parse_tree_bbf_version TEXT DEFAULT NULL,
+	antlr_parse_cache_tree TEXT DEFAULT NULL, -- Native PG nodeToString() serialized parse tree
+	antlr_parse_cache_datums TEXT DEFAULT NULL, -- Native PG nodeToString() serialized datums array
+	antlr_parse_cache_bbf_version TEXT DEFAULT NULL,
 	antlr_parse_cache_enabled BOOL DEFAULT NULL, -- Toggled by sys.enable_antlr_parse_cache function
 	PRIMARY KEY(funcname, nspname, funcsignature)
 );

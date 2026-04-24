@@ -4173,46 +4173,46 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 /*
  * Helper function to determine if ANTLR parse cache is enabled for a routine.
  * 
- * Returns true if caching should be used, false otherwise.
+ * Parameters:
+ *   proctup - pg_proc tuple (must be valid)
+ *   bbftup  - babelfish_function_ext tuple
+ *
+ * Returns true if antlr parse caching should be used, false otherwise.
  * 
  * Decision logic:
- * 1. Triggers are never cached (complex hashkey requirements)
+ * 1. Triggers are not cached currently
  * 2. If per-function flag is set (not NULL), use that value (babelfish_function_ext[antlr_cache_enabled])
  * 3. Otherwise, follow the session GUC (pltsql_enable_antlr_parse_cache)
  * 
- * Note: This function does NOT check for TDS connection, dump/restore mode,
- * or read-only transactions - those checks should be done by the caller.
+ * Note: This function does NOT check for TDS connection, dump/restore mode, read-only
+ * transactions, or tuple validity/freeing - those checks should be done by the caller.
  */
 static bool
-is_antlr_parse_cache_enabled_for_routine(HeapTuple proctup)
+is_antlr_parse_cache_enabled_for_routine(HeapTuple proctup, HeapTuple bbftup)
 {
 	Form_pg_proc procStruct;
-	HeapTuple	bbftup;
 	Datum		cache_flag;
 	bool		isnull;
-	bool		result;
 
-	/* Triggers are never cached - they have complex hashkey requirements */
+	/* Triggers are not cached currently */
 	procStruct = (Form_pg_proc) GETSTRUCT(proctup);
 	if (procStruct->prorettype == TRIGGEROID)
 		return false;
 
-	/* Look up the per-function cache flag in babelfish_function_ext */
-	bbftup = get_bbf_function_tuple_from_proctuple(proctup);
+	/*
+	 * If bbftup is NULL, this is a new function (CREATE, not ALTER).
+	 * Return the session GUC value since there's no per-function override yet.
+	 */
 	if (!HeapTupleIsValid(bbftup))
-		return pltsql_enable_antlr_parse_cache; /* No catalog entry, follow GUC */
+		return pltsql_enable_antlr_parse_cache;
 
 	cache_flag = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbftup,
 								 Anum_bbf_function_ext_antlr_parse_cache_enabled,
 								 &isnull);
 
 	if (!isnull)
-		result = DatumGetBool(cache_flag); /* per-function overrides GUC */
-	else
-		result = pltsql_enable_antlr_parse_cache; /* NULL - follow GUC */
-
-	heap_freetuple(bbftup);
-	return result;
+		return DatumGetBool(cache_flag);	/* per-function column overrides session GUC */
+	return pltsql_enable_antlr_parse_cache;	/* default to session GUC */
 }
 
 /*
@@ -4384,11 +4384,14 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	new_record_nulls[Anum_bbf_function_ext_antlr_parse_cache_enabled - 1] = true;
 	new_record_replaces[Anum_bbf_function_ext_antlr_parse_cache_enabled - 1] = false; /* preserve on ALTER */
 
+	/* Fetch catalog entry once - we'll reuse it for cache check and UPDATE/INSERT */
+	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
+
 	/*
 	 * Store serialized ANTLR parse result for cross-session caching.
 	 * Look up the compiled function and serialize its parse tree.
 	 */
-	do_cache = is_antlr_parse_cache_enabled_for_routine(proctup);
+	do_cache = is_antlr_parse_cache_enabled_for_routine(proctup, oldtup);
 	
 	if (!do_cache)
 	{
@@ -4436,9 +4439,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		}
 	}
 
-	/* Check if catalog entry already exists (UPDATE vs INSERT) */
-	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
-
+	/* Use the catalog entry we fetched earlier (UPDATE vs INSERT) */
 	if (HeapTupleIsValid(oldtup))
 	{
 		tuple = heap_modify_tuple(oldtup, bbf_function_ext_rel_dsc,
@@ -4586,7 +4587,7 @@ deserialize_with_error_handling(const char *str,
  *
  * This is a reusable helper called from both CREATE/ALTER (via pltsql_store_func_default_positions) and
  * EXEC-time cache repopulation (via pltsql_update_func_antlr_parse_cache) for routines. It fills the ANTLR
- * parse cache columns: antlr_parse_tree_text, antlr_parse_tree_datums and antlr_parse_tree_bbf_version,
+ * parse cache columns: antlr_parse_cache_tree, antlr_parse_cache_datums and antlr_parse_cache_bbf_version,
  * skipping antlr_parse_cache_enabled.
  *
  * Does no catalog I/O — only serializes nodes and populates the caller's Datum/nulls/replaces arrays.
@@ -4676,27 +4677,27 @@ pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function,
 		}
 	}
 
-	new_record[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = CStringGetTextDatum(tree_str);
-	new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = false;
-	new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
+	new_record[Anum_bbf_function_ext_antlr_parse_cache_tree - 1] = CStringGetTextDatum(tree_str);
+	new_record_nulls[Anum_bbf_function_ext_antlr_parse_cache_tree - 1] = false;
+	new_record_replaces[Anum_bbf_function_ext_antlr_parse_cache_tree - 1] = true;
 	pfree(tree_str);
 
 	if (datums_str != NULL)
 	{
-		new_record[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = CStringGetTextDatum(datums_str);
-		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = false;
-		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
+		new_record[Anum_bbf_function_ext_antlr_parse_cache_datums - 1] = CStringGetTextDatum(datums_str);
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_cache_datums - 1] = false;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_cache_datums - 1] = true;
 		pfree(datums_str);
 	}
 	else
 	{
-		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
-		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_cache_datums - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_cache_datums - 1] = true;
 	}
 
-	new_record[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = CStringGetTextDatum(BABELFISH_VERSION_STR);
-	new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = false;
-	new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
+	new_record[Anum_bbf_function_ext_antlr_parse_cache_bbf_version - 1] = CStringGetTextDatum(BABELFISH_VERSION_STR);
+	new_record_nulls[Anum_bbf_function_ext_antlr_parse_cache_bbf_version - 1] = false;
+	new_record_replaces[Anum_bbf_function_ext_antlr_parse_cache_bbf_version - 1] = true;
 
 	success = true;
 	pltsql_antlr_parse_cache_stat_writes++;
@@ -4704,12 +4705,12 @@ pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function,
 null_out:
 	if (!success)
 	{
-		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
-		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
-		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
-		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
-		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
-		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_cache_tree - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_cache_tree - 1] = true;
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_cache_datums - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_cache_datums - 1] = true;
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_cache_bbf_version - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_cache_bbf_version - 1] = true;
 	}
 }
 
@@ -4764,8 +4765,8 @@ pltsql_update_func_antlr_parse_cache(HeapTuple proctup, PLtsql_function *functio
 	if (!HeapTupleIsValid(oldtup))
 		return;
 
-	/* Check if caching is enabled for this routine */
-	if (!is_antlr_parse_cache_enabled_for_routine(proctup))
+	/* Check if caching is enabled for this routine, reusing oldtup */
+	if (!is_antlr_parse_cache_enabled_for_routine(proctup, oldtup))
 		return;
 
 	/*
@@ -4818,8 +4819,8 @@ pltsql_update_func_antlr_parse_cache(HeapTuple proctup, PLtsql_function *functio
  *
  * Validation checks (all must pass for a cache hit):
  *   1. Session GUC `enable_antlr_parse_cache` OR per-function antlr_parse_cache_enabled flag is on
- *   2. antlr_parse_tree_bbf_version column value matches current BABELFISH_VERSION_STR (detects MVU)
- *   3. antlr_parse_tree_text is not NULL and deserializes successfully
+ *   2. antlr_parse_cache_bbf_version column value matches current BABELFISH_VERSION_STR (detects MVU)
+ *   3. antlr_parse_cache_tree is not NULL and deserializes successfully
  *
  * Parameters:
  *   proctup            - HeapTuple from pg_proc for the function
@@ -4858,17 +4859,19 @@ pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
 	if (babelfish_dump_restore)
 		return NULL;
 
-	/* Check if caching is enabled for this routine or is a trigger */
-	*out_cache_enabled = is_antlr_parse_cache_enabled_for_routine(proctup);
-	if (!(*out_cache_enabled))
-	{
-		elog(DEBUG1, "Parse result cache retrieval skipped: caching disabled for this routine");
-		return NULL;
-	}
-
+	/* Fetch the babelfish_function_ext tuple. */
 	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctup);
 	if (!HeapTupleIsValid(bbffunctuple))
 		return NULL;
+
+	/* Check if caching is enabled, reusing the tuple we just fetched */
+	*out_cache_enabled = is_antlr_parse_cache_enabled_for_routine(proctup, bbffunctuple);
+	if (!(*out_cache_enabled))
+	{
+		elog(DEBUG1, "Parse result cache retrieval skipped: caching disabled for this routine");
+		heap_freetuple(bbffunctuple);
+		return NULL;
+	}
 
 	/* Always capture xmin/tid for the caller (used for hash invalidation) */
 	*out_bbf_ext_xmin = HeapTupleHeaderGetRawXmin(bbffunctuple->t_data);
@@ -4880,7 +4883,7 @@ pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
 	 * Babelfish release (e.g., pre-MVU) and the serialization format may differ.
 	 */
 	attr = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbffunctuple,
-							Anum_bbf_function_ext_antlr_parse_tree_bbf_version, &isnull);
+							Anum_bbf_function_ext_antlr_parse_cache_bbf_version, &isnull);
 	if (isnull)
 	{
 		elog(DEBUG1, "pltsql_restore_antlr_parse_cache_result: no bbf_version, skipping cache");
@@ -4898,9 +4901,9 @@ pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
 	}
 	pfree(str);
 
-	/* Deserialize parse tree from antlr_parse_tree_text */
+	/* Deserialize parse tree text from antlr_parse_cache_tree column */
 	attr = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbffunctuple,
-							Anum_bbf_function_ext_antlr_parse_tree_text, &isnull);
+							Anum_bbf_function_ext_antlr_parse_cache_tree, &isnull);
 	if (isnull)
 	{
 		/* No cached parse tree found */
@@ -4929,9 +4932,9 @@ pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
 	result->datums = NULL;
 	pfree(str);
 
-	/* Deserialize datums from antlr_parse_tree_datums */
+	/* Deserialize datums from antlr_parse_cache_datums column text */
 	attr = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbffunctuple,
-							Anum_bbf_function_ext_antlr_parse_tree_datums, &isnull);
+							Anum_bbf_function_ext_antlr_parse_cache_datums, &isnull);
 	if (!isnull)
 	{
 		char   *datums_text = TextDatumGetCString(attr);

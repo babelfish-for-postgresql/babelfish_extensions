@@ -3662,12 +3662,12 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	 * parse tree namespace stack. Cache will be re-populated on next EXEC
 	 * if enable_antlr_parse_cache GUC/flag allow it.
 	 */
-	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
-	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
-	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
-	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
-	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
-	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
+	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_cache_tree - 1] = true;
+	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_cache_tree - 1] = true;
+	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_cache_datums - 1] = true;
+	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_cache_datums - 1] = true;
+	new_record_nulls_func_ext[Anum_bbf_function_ext_antlr_parse_cache_bbf_version - 1] = true;
+	new_record_repl_func_ext[Anum_bbf_function_ext_antlr_parse_cache_bbf_version - 1] = true;
 	/*
 	 * antlr_parse_cache_enabled column is intentionally NOT reset here — it is
 	 * a per-function policy flag across sessions (user's intent), not cache state.
@@ -6556,12 +6556,12 @@ update_bbf_function_antlr_parse_cache(HeapTuple bbffunctuple, bool use_antlr_par
 	 */
 	if (!use_cache_isnull && !use_antlr_parse_cache)
 	{
-		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
-		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_text - 1] = true;
-		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
-		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_datums - 1] = true;
-		new_record_nulls[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
-		new_record_replaces[Anum_bbf_function_ext_antlr_parse_tree_bbf_version - 1] = true;
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_cache_tree - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_cache_tree - 1] = true;
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_cache_datums - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_cache_datums - 1] = true;
+		new_record_nulls[Anum_bbf_function_ext_antlr_parse_cache_bbf_version - 1] = true;
+		new_record_replaces[Anum_bbf_function_ext_antlr_parse_cache_bbf_version - 1] = true;
 		pltsql_antlr_parse_cache_stat_evictions++;
 	}
 
