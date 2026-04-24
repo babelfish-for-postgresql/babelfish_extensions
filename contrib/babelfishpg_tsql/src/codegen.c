@@ -4,6 +4,8 @@
 #include "codegen.h"
 #include "dynavec.h"
 #include "dynastack.h"
+#include "pltsql_node/pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
+											 * by gen_pltsql_node_support.pl */
 #include "utils/elog.h"
 #include "utils/lsyscache.h"
 

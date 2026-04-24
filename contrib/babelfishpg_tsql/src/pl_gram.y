@@ -16,6 +16,7 @@
 #include "postgres.h"
 #include "pltsql.h"
 #include "pltsql-2.h"
+#include "pltsql_node/pltsql_nodetags.h"
 
 #include "catalog/namespace.h"
 #include "catalog/pg_proc.h"

@@ -41,6 +41,8 @@
 
 #include "pltsql.h"
 #include "pltsql-2.h"
+#include "pltsql_node/pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
+											 * by gen_pltsql_node_support.pl */
 #include "pltsql_node/pltsql_serialize.h"
 #include "hooks.h"
 #include "analyzer.h"

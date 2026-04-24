@@ -29,6 +29,8 @@
 
 #include "src/pltsql.h"
 #include "src/pltsql-2.h"
+#include "pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
+								 * by gen_pltsql_node_support.pl */
 
 /* ----------------------------------------------------------------
  *  Helper macros (from outfuncs.c / readfuncs.c / equalfuncs.c internals)

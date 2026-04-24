@@ -56,6 +56,8 @@
 #include "utils/formatting.h"
 
 #include "pltsql.h"
+#include "pltsql_node/pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
+											 * by gen_pltsql_node_support.pl */
 #include "access/xact.h"
 #include "err_handler.h"
 #include "iterative_exec.h"
