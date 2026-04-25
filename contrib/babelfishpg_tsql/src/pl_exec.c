@@ -4663,6 +4663,30 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		}
 	}
 
+	/*
+	 * For INSERT EXEC, validate column count BEFORE plan preparation.
+	 *
+	 * Column count must be validated at the metadata level BEFORE evaluating
+	 * expressions, so column mismatch errors take priority over runtime errors
+	 * like division by zero. PostgreSQL's plan preparation calls
+	 * eval_const_expressions() which would evaluate 1/0 before we can check
+	 * column count.
+	 *
+	 * We only do early validation when inside a TRY block because:
+	 * 1. System procedures (e.g., sp_columns) have internal SELECTs with
+	 *    different column counts that are NOT inside TRY blocks
+	 * 2. User procedures with TRY-CATCH need early validation to ensure
+	 *    column mismatch errors are not masked by runtime errors
+	 */
+	if (pltsql_insert_exec_active() && pltsql_insert_exec_in_execution() &&
+		is_part_of_pltsql_trycatch_block(estate))
+	{
+		if (stmt->sqlstmt && stmt->sqlstmt->query)
+		{
+			pltsql_insert_exec_validate_column_count_from_query(stmt->sqlstmt->query);
+		}
+	}
+
 	PG_TRY();
 	{
 		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
@@ -4705,7 +4729,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			if (pltsql_insert_exec_active())
 			{
 				ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					(errcode(ERRCODE_SYNTAX_ERROR),
 					errmsg("nested INSERT ... EXECUTE statements are not allowed")));
 			}
 		}

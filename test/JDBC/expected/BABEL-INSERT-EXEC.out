@@ -43,9 +43,17 @@ DROP PROCEDURE IF EXISTS insert_exec_ptrycatch1;
 DROP PROCEDURE IF EXISTS insert_exec_ptrycatch2;
 DROP PROCEDURE IF EXISTS insert_exec_ptrycatch3;
 DROP PROCEDURE IF EXISTS insert_exec_ptrycatch4;
+DROP PROCEDURE IF EXISTS insert_exec_ptrycatch5_inner;
+DROP PROCEDURE IF EXISTS insert_exec_ptrycatch5_outer;
+DROP PROCEDURE IF EXISTS insert_exec_ptrycatch6_inner;
+DROP PROCEDURE IF EXISTS insert_exec_ptrycatch6_outer;
 DROP PROCEDURE IF EXISTS insert_exec_perr2;
 DROP PROCEDURE IF EXISTS insert_exec_plarge;
 DROP PROCEDURE IF EXISTS insert_exec_poutput;
+DROP PROCEDURE IF EXISTS insert_exec_ptrancount1;
+DROP PROCEDURE IF EXISTS insert_exec_ptrancount2;
+DROP PROCEDURE IF EXISTS insert_exec_ptrancount3;
+DROP PROCEDURE IF EXISTS insert_exec_ptrancount4;
 GO
 DROP TABLE IF EXISTS insert_exec_t1;
 DROP TABLE IF EXISTS insert_exec_t2;
@@ -79,9 +87,15 @@ DROP TABLE IF EXISTS insert_exec_trycatch1;
 DROP TABLE IF EXISTS insert_exec_trycatch2;
 DROP TABLE IF EXISTS insert_exec_trycatch3;
 DROP TABLE IF EXISTS insert_exec_trycatch4;
+DROP TABLE IF EXISTS insert_exec_trycatch5;
+DROP TABLE IF EXISTS insert_exec_trycatch6;
 DROP TABLE IF EXISTS insert_exec_err2;
 DROP TABLE IF EXISTS insert_exec_large;
 DROP TABLE IF EXISTS insert_exec_output;
+DROP TABLE IF EXISTS insert_exec_trancount1;
+DROP TABLE IF EXISTS insert_exec_trancount2;
+DROP TABLE IF EXISTS insert_exec_trancount3;
+DROP TABLE IF EXISTS insert_exec_trancount4;
 GO
 -- ============================================================================
 -- Category A: Basic INSERT EXEC Scenarios
@@ -911,6 +925,84 @@ int
 DROP PROCEDURE insert_exec_ptrycatch4;
 DROP TABLE insert_exec_trycatch4;
 GO
+-- I5: Nested Procedure with TRY/CATCH - Success Case
+-- Tests that internal savepoints work correctly when a nested procedure
+-- has TRY-CATCH that catches an error. The inner proc catches the error
+-- and continues, outer proc should see all rows.
+CREATE TABLE insert_exec_trycatch5 (val INT);
+GO
+CREATE PROCEDURE insert_exec_ptrycatch5_inner AS
+BEGIN TRY
+    SELECT 10;
+    SELECT 1/0;  -- Error caught by inner TRY-CATCH
+    SELECT 20;   -- Not reached
+END TRY
+BEGIN CATCH
+    SELECT 30;   -- Error handler runs
+END CATCH
+SELECT 40;       -- Continues after TRY-CATCH
+GO
+CREATE PROCEDURE insert_exec_ptrycatch5_outer AS
+    SELECT 1;
+    EXEC insert_exec_ptrycatch5_inner;
+    SELECT 2;
+GO
+INSERT INTO insert_exec_trycatch5 EXEC insert_exec_ptrycatch5_outer;
+GO
+~~ROW COUNT: 5~~
+
+SELECT * FROM insert_exec_trycatch5 ORDER BY val;
+GO
+~~START~~
+int
+1
+2
+10
+30
+40
+~~END~~
+
+DROP PROCEDURE insert_exec_ptrycatch5_outer;
+DROP PROCEDURE insert_exec_ptrycatch5_inner;
+DROP TABLE insert_exec_trycatch5;
+GO
+-- I6: Nested Procedure with TRY/CATCH - Failure Case (THROW re-raises)
+-- Tests that when inner proc re-throws an error, it propagates correctly
+-- and all rows are rolled back as expected for INSERT EXEC.
+CREATE TABLE insert_exec_trycatch6 (val INT);
+GO
+CREATE PROCEDURE insert_exec_ptrycatch6_inner AS
+BEGIN TRY
+    SELECT 10;
+    SELECT 1/0;  -- Error occurs
+END TRY
+BEGIN CATCH
+    SELECT 20;   -- Error handler runs
+    THROW;       -- Re-throw the error
+END CATCH
+GO
+CREATE PROCEDURE insert_exec_ptrycatch6_outer AS
+    SELECT 1;
+    EXEC insert_exec_ptrycatch6_inner;
+    SELECT 2;    -- Not reached due to re-thrown error
+GO
+INSERT INTO insert_exec_trycatch6 EXEC insert_exec_ptrycatch6_outer;
+GO
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+SELECT COUNT(*) AS row_count FROM insert_exec_trycatch6;
+GO
+~~START~~
+int
+0
+~~END~~
+
+DROP PROCEDURE insert_exec_ptrycatch6_outer;
+DROP PROCEDURE insert_exec_ptrycatch6_inner;
+DROP TABLE insert_exec_trycatch6;
+GO
 
 -- ============================================================================
 -- Category J: Error Handling
@@ -994,6 +1086,112 @@ int
 
 DROP PROCEDURE insert_exec_poutput;
 DROP TABLE insert_exec_output;
+GO
+-- ============================================================================
+-- Category M: Transaction State Visibility (@@TRANCOUNT)
+-- Tests that transaction state is correctly visible inside nested procedures
+-- during INSERT EXEC execution.
+-- ============================================================================
+-- M1: @@TRANCOUNT visibility - no explicit transaction
+CREATE TABLE insert_exec_trancount1 (trancount_val INT);
+GO
+CREATE PROCEDURE insert_exec_ptrancount1 AS
+    SELECT @@TRANCOUNT;
+GO
+INSERT INTO insert_exec_trancount1 EXEC insert_exec_ptrancount1;
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM insert_exec_trancount1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+DROP PROCEDURE insert_exec_ptrancount1;
+DROP TABLE insert_exec_trancount1;
+GO
+-- M2: @@TRANCOUNT visibility - with explicit transaction
+CREATE TABLE insert_exec_trancount2 (trancount_val INT);
+GO
+CREATE PROCEDURE insert_exec_ptrancount2 AS
+    SELECT @@TRANCOUNT;
+GO
+BEGIN TRANSACTION;
+INSERT INTO insert_exec_trancount2 EXEC insert_exec_ptrancount2;
+COMMIT;
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM insert_exec_trancount2;
+GO
+~~START~~
+int
+1
+~~END~~
+
+DROP PROCEDURE insert_exec_ptrancount2;
+DROP TABLE insert_exec_trancount2;
+GO
+-- M3: @@TRANCOUNT changes inside procedure
+-- Tests that BEGIN TRAN/COMMIT inside the proc correctly updates @@TRANCOUNT
+CREATE TABLE insert_exec_trancount3 (trancount_val INT);
+GO
+CREATE PROCEDURE insert_exec_ptrancount3 AS
+    SELECT @@TRANCOUNT;
+    BEGIN TRANSACTION;
+    SELECT @@TRANCOUNT;
+    COMMIT;
+    SELECT @@TRANCOUNT;
+GO
+INSERT INTO insert_exec_trancount3 EXEC insert_exec_ptrancount3;
+GO
+~~ROW COUNT: 3~~
+
+SELECT * FROM insert_exec_trancount3 ORDER BY trancount_val;
+GO
+~~START~~
+int
+1
+1
+2
+~~END~~
+
+DROP PROCEDURE insert_exec_ptrancount3;
+DROP TABLE insert_exec_trancount3;
+GO
+-- M4: Multiple nested transactions with @@TRANCOUNT
+CREATE TABLE insert_exec_trancount4 (trancount_val INT);
+GO
+CREATE PROCEDURE insert_exec_ptrancount4 AS
+    SELECT @@TRANCOUNT;
+    BEGIN TRANSACTION;
+    SELECT @@TRANCOUNT;
+    BEGIN TRANSACTION;
+    SELECT @@TRANCOUNT;
+    COMMIT;
+    SELECT @@TRANCOUNT;
+    COMMIT;
+    SELECT @@TRANCOUNT;
+GO
+INSERT INTO insert_exec_trancount4 EXEC insert_exec_ptrancount4;
+GO
+~~ROW COUNT: 5~~
+
+SELECT * FROM insert_exec_trancount4 ORDER BY trancount_val;
+GO
+~~START~~
+int
+1
+1
+2
+2
+3
+~~END~~
+
+DROP PROCEDURE insert_exec_ptrancount4;
+DROP TABLE insert_exec_trancount4;
 GO
 -- ============================================================================
 -- Cleanup verification

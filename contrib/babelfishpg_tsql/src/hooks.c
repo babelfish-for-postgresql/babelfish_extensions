@@ -801,9 +801,9 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 			 * Call PLTsqlProcessTransaction when:
 			 * 1. NestedTranCount > 0 (explicit transaction)
 			 * 2. TSQL dialect and no active transaction block
-			 * 3. INSERT EXEC is active and it's a ROLLBACK (to block with error 3915)
-			 * 4. INSERT EXEC is active and it's a COMMIT (to block with error 3916)
-			 * 5. INSERT EXEC is active and it's a BEGIN TRAN (to properly track NestedTranCount)
+			 * 3. INSERT EXEC is active - transaction statements inside the executed
+			 *    procedure must be routed through PLTsqlProcessTransaction where
+			 *    ROLLBACK/COMMIT blocking and NestedTranCount tracking are handled.
 			 */
 			if (NestedTranCount > 0 ||
 				(sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()) ||

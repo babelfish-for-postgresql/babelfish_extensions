@@ -45,7 +45,7 @@ static void process_explain(PLtsql_execstate *estate, bool *show_antlr_parsing_t
 static void process_explain_analyze(PLtsql_execstate *estate, bool *show_antlr_parsing_time);
 
 /* Forward declaration for is_part_of_pltsql_trycatch_block */
-static bool is_part_of_pltsql_trycatch_block(PLtsql_execstate *estate);
+bool is_part_of_pltsql_trycatch_block(PLtsql_execstate *estate);
 
 extern PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
 extern void prepare_format_string(StringInfo buf, char *msg_string, int nargs,
@@ -671,39 +671,6 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			exec_stmt_return_query(estate, (PLtsql_stmt_return_query *) stmt);
 			break;
 		case PLTSQL_STMT_EXECSQL:
-			/*
-			 * For INSERT EXEC, validate column count BEFORE executing the query.
-			 *
-			 * Expected behavior: column count is validated at the metadata level
-			 * BEFORE evaluating expressions. This means column mismatch errors
-			 * take priority over runtime errors like division by zero.
-			 *
-			 * In PostgreSQL, plan preparation calls eval_const_expressions()
-			 * which evaluates constant expressions like 1/0, causing runtime
-			 * errors to occur before we can validate column count.
-			 *
-			 * By calling the validation function here, we parse the query and
-			 * count columns WITHOUT evaluating expressions, allowing us to
-			 * detect column mismatches before any runtime errors can occur.
-			 *
-			 * We only do early validation when the SELECT is inside a TRY block.
-			 * This is because:
-			 * 1. System procedures like sp_columns have internal SELECT statements
-			 *    that are NOT inside TRY blocks and have different column counts
-			 * 2. User procedures with TRY-CATCH need early validation to ensure
-			 *    column mismatch errors take priority over runtime errors
-			 * 3. Without early validation, runtime errors (like division by zero)
-			 *    would be caught by TRY-CATCH before column mismatch is detected
-			 */
-			if (pltsql_insert_exec_active() && pltsql_insert_exec_in_execution() &&
-				is_part_of_pltsql_trycatch_block(estate))
-			{
-				PLtsql_stmt_execsql *execsql_stmt = (PLtsql_stmt_execsql *) stmt;
-				if (execsql_stmt->sqlstmt && execsql_stmt->sqlstmt->query)
-				{
-					pltsql_insert_exec_validate_column_count_from_query(execsql_stmt->sqlstmt->query);
-				}
-			}
 			exec_stmt_execsql(estate, (PLtsql_stmt_execsql *) stmt);
 			break;
 		case PLTSQL_STMT_OPEN:
@@ -976,7 +943,6 @@ create_error_ctx(PLtsql_execstate *estate, int target_pc)
  * not consider PG_TRY/PG_CATCH in code or C based
  * procedures/functions
  */
-static
 bool
 is_part_of_pltsql_trycatch_block(PLtsql_execstate *estate)
 {
@@ -1589,13 +1555,13 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 * from leaking to subsequent queries in the same session.
 		 *
 		 * We check for nested INSERT EXEC errors by looking for:
-		 * - ERRCODE_PROGRAM_LIMIT_EXCEEDED (54000)
+		 * - ERRCODE_SYNTAX_ERROR (42601)
 		 * - Error message containing "nested INSERT"
 		 */
 		{
 			bool insert_exec_active = pltsql_insert_exec_active();
 			bool should_cleanup_trycatch = pltsql_insert_exec_should_cleanup_on_trycatch();
-			bool is_nested_insert_exec_error = (edata->sqlerrcode == ERRCODE_PROGRAM_LIMIT_EXCEEDED &&
+			bool is_nested_insert_exec_error = (edata->sqlerrcode == ERRCODE_SYNTAX_ERROR &&
 											   edata->message != NULL &&
 											   strstr(edata->message, "nested INSERT") != NULL);
 

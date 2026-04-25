@@ -187,6 +187,6 @@ XX000 ERRCODE_INTERNAL_ERROR	"The table-valued parameter \"%s\" must be declared
 22008 ERRCODE_DATETIME_VALUE_OUT_OF_RANGE	"Adding a value to a \'%s\' column caused an overflow." SQL_ERROR_517 16
 42P01 ERRCODE_UNDEFINED_TABLE	"FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name."		SQL_ERROR_13600	16
 42P01 ERRCODE_FEATURE_NOT_SUPPORTED	"sub-select and values for json auto are not currently supported."		SQL_ERROR_13600	16
-54000 ERRCODE_PROGRAM_LIMIT_EXCEEDED	"nested INSERT ... EXECUTE statements are not allowed"	SQL_ERROR_8164	16
+42601 ERRCODE_SYNTAX_ERROR	"nested INSERT ... EXECUTE statements are not allowed"	SQL_ERROR_8164	16
 0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"INSERT EXEC failed because the stored procedure altered the schema of the target table."	SQL_ERROR_556	16
 

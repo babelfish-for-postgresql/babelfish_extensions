@@ -2428,6 +2428,7 @@ extern Oid create_insert_exec_temp_table(const char *target_table, const char *c
 extern void drop_insert_exec_temp_table(Oid temp_table_oid);
 extern void flush_insert_exec_temp_table(PLtsql_execstate *estate);
 extern void setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
+extern bool is_part_of_pltsql_trycatch_block(PLtsql_execstate *estate);
 
 #define NUM_DB_OBJECTS 11
 

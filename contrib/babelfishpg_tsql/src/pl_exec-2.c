@@ -529,7 +529,7 @@ exec_stmt_query_set(PLtsql_execstate *estate,
 			break;
 		case SPI_ERROR_TRANSACTION:
 			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("unsupported transaction command in PL/tsql")));
 			break;
 
@@ -846,15 +846,9 @@ exec_stmt_push_result(PLtsql_execstate *estate,
 	exec_run_select(estate, stmt->query, &portal);
 
 	/*
-	 * When INSERT EXEC is active (new DestReceiver approach), redirect results
-	 * to the temp table instead of sending to client.
-	 *
-	 * Column count validation is handled by:
-	 * 1. pltsql_insert_exec_validate_column_count_from_query() - validates BEFORE
-	 *    plan preparation to ensure column mismatch errors take priority over
-	 *    runtime errors like division by zero
-	 * 2. insertexec_startup() - validates when DestReceiver starts, as a safety
-	 *    net for cases like SELECT * where early validation can't determine count
+	 * When INSERT EXEC is active, redirect results to the temp table
+	 * instead of sending to client. Column count is validated early
+	 * (in exec_stmt_execsql) and again in insertexec_startup().
 	 */
 	if (pltsql_insert_exec_active())
 	{
@@ -902,15 +896,6 @@ exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_result *stmt
 	int			rc = 0;
 
 	Assert(stmt->query != NULL);
-
-	/*
-	 * Column count validation for INSERT EXEC is handled by:
-	 * 1. pltsql_insert_exec_validate_column_count_from_query() - validates BEFORE
-	 *    plan preparation to ensure column mismatch errors take priority over
-	 *    runtime errors like division by zero
-	 * 2. insertexec_startup() - validates when DestReceiver starts, as a safety
-	 *    net for cases like SELECT * where early validation can't determine count
-	 */
 
 	/*
 	 * Put the query and paramlist into the portal
@@ -1033,7 +1018,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			if (pltsql_insert_exec_active())
 			{
 				ereport(ERROR,
-						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
 			}
 
@@ -1585,22 +1570,13 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			/*
 			 * This is an INSERT EXEC statement that failed during setup (before
 			 * insert_exec_setup_done was set to TRUE). We need to clean up the
-			 * partially initialized context, but ONLY if this statement is the
-			 * one that set the context.
-			 *
-			 * Compare the target table names to ensure we only clean up if THIS
-			 * statement set the context. If a nested INSERT EXEC fails, the outer
-			 * INSERT EXEC context should remain active.
+			 * partially initialized context.
 			 */
-			const char *active_target = pltsql_get_insert_exec_target_table();
-			if (active_target != NULL && strcmp(active_target, stmt->insert_exec_target) == 0)
-			{
-				pltsql_insert_exec_set_error_flag();
-				/* Clear implicit txn flag for setup failures too */
-				pltsql_insert_exec_clear_implicit_txn_flag();
-				pltsql_insert_exec_close_target_table();
-				pltsql_clear_insert_exec_context();
-			}
+			pltsql_insert_exec_set_error_flag();
+			/* Clear implicit txn flag for setup failures too */
+			pltsql_insert_exec_clear_implicit_txn_flag();
+			pltsql_insert_exec_close_target_table();
+			pltsql_clear_insert_exec_context();
 		}
 
 		if (strcmp(get_current_pltsql_db_name(), save_db_name) != 0)
@@ -2034,7 +2010,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			if (pltsql_insert_exec_active())
 			{
 				ereport(ERROR,
-						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
 			}
 
@@ -2147,22 +2123,13 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			/*
 			 * This is an INSERT EXEC statement that failed during setup (before
 			 * insert_exec_setup_done was set to TRUE). We need to clean up the
-			 * partially initialized context, but ONLY if this statement is the
-			 * one that set the context.
-			 *
-			 * Compare the target table names to ensure we only clean up if THIS
-			 * statement set the context. If a nested INSERT EXEC fails, the outer
-			 * INSERT EXEC context should remain active.
+			 * partially initialized context.
 			 */
-			const char *active_target = pltsql_get_insert_exec_target_table();
-			if (active_target != NULL && strcmp(active_target, stmt->insert_exec_target) == 0)
-			{
-				pltsql_insert_exec_set_error_flag();
-				/* Clear implicit txn flag for setup failures too */
-				pltsql_insert_exec_clear_implicit_txn_flag();
-				pltsql_insert_exec_close_target_table();
-				pltsql_clear_insert_exec_context();
-			}
+			pltsql_insert_exec_set_error_flag();
+			/* Clear implicit txn flag for setup failures too */
+			pltsql_insert_exec_clear_implicit_txn_flag();
+			pltsql_insert_exec_close_target_table();
+			pltsql_clear_insert_exec_context();
 		}
 
 		/* Restore GUC and scope identity settings before re-throwing */
@@ -2541,10 +2508,10 @@ evaluate_sp_cursor_param_values(PLtsql_execstate *estate, int paramno, List *par
 		PLtsql_expr *expr = p->expr;
 
 		if (p->name != NULL)
-			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
 							errmsg("named argument is not supported in sp_cursoropen yet")));
 		if (p->mode != FUNC_PARAM_IN)
-			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
 							errmsg("output argument is not supported in sp_cursoropen yet")));
 
 		(*values)[i] = exec_eval_expr(estate, expr, &isnull, &rettype, &rettypmod);
@@ -3013,7 +2980,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						if (pltsql_insert_exec_active())
 						{
 							ereport(ERROR,
-									(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
 						}
 
@@ -3139,22 +3106,13 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						/*
 						 * This is an INSERT EXEC statement that failed during setup (before
 						 * insert_exec_setup_done was set to TRUE). We need to clean up the
-						 * partially initialized context, but ONLY if this statement is the
-						 * one that set the context.
-						 *
-						 * Compare the target table names to ensure we only clean up if THIS
-						 * statement set the context. If a nested INSERT EXEC fails, the outer
-						 * INSERT EXEC context should remain active.
+						 * partially initialized context.
 						 */
-						const char *active_target = pltsql_get_insert_exec_target_table();
-						if (active_target != NULL && strcmp(active_target, stmt->insert_exec_target) == 0)
-						{
-							pltsql_insert_exec_set_error_flag();
-							/* Clear implicit txn flag for setup failures too */
-							pltsql_insert_exec_clear_implicit_txn_flag();
-							pltsql_insert_exec_close_target_table();
-							pltsql_clear_insert_exec_context();
-						}
+						pltsql_insert_exec_set_error_flag();
+						/* Clear implicit txn flag for setup failures too */
+						pltsql_insert_exec_clear_implicit_txn_flag();
+						pltsql_insert_exec_close_target_table();
+						pltsql_clear_insert_exec_context();
 					}
 					pltsql_revert_guc(save_nestlevel);
 					pltsql_revert_last_scope_identity(scope_level);
@@ -4816,15 +4774,6 @@ execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamL
 
 	Assert(expr->plan != NULL); /* should be prepared already */
 
-	/*
-	 * Column count validation for INSERT EXEC is handled by:
-	 * 1. pltsql_insert_exec_validate_column_count_from_query() - validates BEFORE
-	 *    plan preparation to ensure column mismatch errors take priority over
-	 *    runtime errors like division by zero
-	 * 2. insertexec_startup() - validates when DestReceiver starts, as a safety
-	 *    net for cases like SELECT * where early validation can't determine count
-	 */
-
 	portal = SPI_cursor_open_with_paramlist(NULL, expr->plan, paramLI, estate->readonly_func);
 
 	if (portal == NULL)
@@ -5484,7 +5433,7 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 	}
 	else if ((*common_utility_plugin_ptr->is_tsql_sqlvariant_datatype) (typ->typoid))
 		ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			(errcode(ERRCODE_SYNTAX_ERROR),
 				errmsg("The type '%s' is not yet supported for partition function in Babelfish.", tsql_typename)));
 
 	type_is_collatable = OidIsValid(typ->collation);
