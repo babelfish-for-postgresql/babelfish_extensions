@@ -146,7 +146,7 @@ static bool prev_insert_bulk_keep_nulls = false;
 static bool prev_insert_bulk_check_constraints = false;
 
 /* return a underlying node if n is implicit casting and underlying node is a certain type of node */
-static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
+Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
 
 /* Enclose a user-defined @@var or @var# name in delimiters */
 static char *delimit_tsql_atatuservar(const char *src);
@@ -3428,7 +3428,7 @@ exec_eval_int(PLtsql_execstate *estate,
 	return DatumGetInt32(exprdatum);
 }
 
-static Node *
+Node *
 get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype)
 {
 	FuncExpr   *funcexpr = NULL;

@@ -4692,7 +4692,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	PG_TRY();
 	{
-		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
 		if (expr->plan && expr->plan->oneshot)
 		{
 			SPI_freeplan(expr->plan);
@@ -5069,16 +5068,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * inside batch or procedure, but not user-defined function or
 		 * procedure invoked by INSERT ... EXECUTE.
 		 *
-		 * Also skip commit when INSERT EXEC is globally active (even if this
-		 * estate doesn't have insert_exec set, e.g., inside a trigger fired
-		 * during INSERT EXEC). Committing inside a trigger during INSERT EXEC
-		 * would orphan the SPI portal's snapshot, causing "portal snapshots
-		 * did not account for all active snapshots" error.
-		 *
-		 * Also skip commit when INSERT EXEC flush is in progress. During flush,
-		 * we temporarily clear the INSERT EXEC context to allow INSTEAD OF
-		 * triggers to fire, but we still need to block commit_stmt inside
-		 * those triggers.
+		 * Also skip commit during INSERT EXEC or its flush phase to avoid
+		 * orphaning SPI portal snapshots.
 		 */
 		/* TODO To let procedure call from PSQL work with old semantics */
 		if ((!pltsql_disable_batch_auto_commit || (stmt->txn_data != NULL)) &&
@@ -9739,13 +9730,8 @@ pltsql_estate_cleanup(void)
 
 	/*
 	 * Clear stale INSERT EXEC context when the call stack becomes empty.
-	 * This handles the case where INSERT EXEC context was set but not properly
-	 * cleaned up due to an error. When the call stack becomes empty, we know
-	 * that any existing INSERT EXEC context is stale and should be cleared.
-	 *
-	 * This is a safety net to prevent INSERT EXEC context from leaking between
-	 * batches or tests. The primary cleanup should happen in the PG_CATCH blocks
-	 * of exec_stmt_exec, exec_stmt_exec_batch, and exec_stmt_exec_sp, but this
+	 * This is a safety net to prevent context from leaking between batches.
+	 * Primary cleanup happens in exec_stmt_exec error handlers, but this
 	 * ensures cleanup even if those paths are not taken.
 	 */
 	if (exec_state_call_stack == NULL && pltsql_insert_exec_active())

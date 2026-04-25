@@ -54,76 +54,8 @@
 #include "utils/builtins.h"
 #include "utils/varlena.h"
 
-/* Forward declaration for static helper function from pl_exec-2.c */
-static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
-
 /* Forward declaration for exec_stmt_execsql from pl_exec.c */
 extern int exec_stmt_execsql(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
-
-/*
- * Helper function to get underlying node from implicit casting.
- * Copied from pl_exec-2.c since it's a static function there.
- */
-static Node *
-get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype)
-{
-	FuncExpr   *funcexpr = NULL;
-
-	if (nodeTag(n) == underlying_nodetype)
-		return n;
-
-	if (IsA(n, FuncExpr))
-		funcexpr = (FuncExpr *) n;
-	else if (IsA(n, CoerceToDomain))
-	{
-		CoerceToDomain *c = (CoerceToDomain *) n;
-
-		if (c->coercionformat == COERCE_IMPLICIT_CAST)
-			return get_underlying_node_from_implicit_casting((Node *) c->arg, underlying_nodetype);
-		else
-			return NULL;
-	}
-	else if (IsA(n, CoerceViaIO))
-	{
-		CoerceViaIO *c = (CoerceViaIO *) n;
-
-		if (c->coerceformat == COERCE_IMPLICIT_CAST)
-			return get_underlying_node_from_implicit_casting((Node *) c->arg, underlying_nodetype);
-		else
-			return NULL;
-	}
-
-	if (!funcexpr)
-		return NULL;
-	if (funcexpr->funcformat != COERCE_IMPLICIT_CAST)
-		return NULL;
-	if (funcexpr->args == NULL)
-		return NULL;
-	if (list_length(funcexpr->args) < 1)
-		return NULL;
-	if (list_length(funcexpr->args) > 3)
-		return NULL;
-
-	if (nodeTag(linitial(funcexpr->args)) == underlying_nodetype)
-		return linitial(funcexpr->args);
-
-	if (!IsA(linitial(funcexpr->args), FuncExpr))
-		return NULL;
-	funcexpr = (FuncExpr *) linitial(funcexpr->args);
-	if (funcexpr->funcformat != COERCE_IMPLICIT_CAST)
-		return NULL;
-	if (funcexpr->args == NULL)
-		return NULL;
-	if (list_length(funcexpr->args) < 1)
-		return NULL;
-	if (list_length(funcexpr->args) > 3)
-		return NULL;
-
-	if (nodeTag(linitial(funcexpr->args)) == underlying_nodetype)
-		return linitial(funcexpr->args);
-
-	return NULL;
-}
 
 /*
  * Helper function to clean up type strings from format_type().

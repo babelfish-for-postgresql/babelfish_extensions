@@ -2440,6 +2440,9 @@ extern void flush_insert_exec_temp_table(PLtsql_execstate *estate);
 extern void setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
 extern bool is_part_of_pltsql_trycatch_block(PLtsql_execstate *estate);
 
+/* Helper to unwrap implicit casts from a node */
+extern Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
+
 #define NUM_DB_OBJECTS 11
 
 extern const char *shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2];
