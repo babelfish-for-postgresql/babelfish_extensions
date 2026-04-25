@@ -2225,6 +2225,7 @@ extern void pltsql_start_txn(void);
 extern void pltsql_commit_txn(void);
 extern void pltsql_rollback_txn(void);
 extern void pltsql_abort_any_transaction(void);
+extern void commit_stmt(PLtsql_execstate *estate, bool txnStarted);
 extern bool pltsql_get_errdata(int *tsql_error_code, int *tsql_error_severity, int *tsql_error_state);
 extern void pltsql_eval_txn_data(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt, CachedPlanSource *cachedPlanSource);
 extern bool is_sysname_column(ColumnDef *coldef);
@@ -2418,6 +2419,15 @@ extern void pltsql_insert_exec_open_target_table(const char *target_table);
 extern void pltsql_insert_exec_close_target_table(void);
 extern bool pltsql_insert_exec_verify_schema(void);
 extern bool pltsql_insert_exec_validate_column_count_from_query(const char *query_string);
+
+/* INSERT EXEC helper functions for code consolidation */
+extern bool insert_exec_setup(PLtsql_execstate *estate,
+							  const char *target_table,
+							  const char *column_list,
+							  bool start_implicit_txn,
+							  Oid *temp_table_oid_out);
+extern void insert_exec_error_cleanup(bool setup_done);
+extern void insert_exec_success_cleanup(PLtsql_execstate *estate, Oid temp_table_oid);
 extern bool parse_insert_exec_table_name(const char *target_table,
 										 char **schema_name_out,
 										 char **table_name_out,
