@@ -1103,11 +1103,7 @@ pltsql_insert_exec_in_execution(void)
 
 	/*
 	 * We're at or below the INSERT EXEC call stack depth, and the temp table
-	 * OID is valid. This is likely a valid INSERT EXEC execution using the
-	 * DestReceiver approach.
-	 *
-	 * Final check: verify the execution_id is non-zero. If it's zero, the
-	 * context was cleared but not fully reset (shouldn't happen, but be safe).
+	 * OID is valid. Final check: verify the execution_id is non-zero.
 	 */
 	if (insert_exec_ctx.execution_id == 0)
 		return false;

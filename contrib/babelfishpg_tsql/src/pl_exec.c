@@ -274,6 +274,9 @@ static MemoryContext get_stmt_mcontext(PLtsql_execstate *estate);
 static void push_stmt_mcontext(PLtsql_execstate *estate);
 static void pop_stmt_mcontext(PLtsql_execstate *estate);
 
+/* Forward declaration for commit_stmt - used by pl_exec-2.c */
+void		commit_stmt(PLtsql_execstate *estate, bool txnStarted);
+
 static int	exec_stmt_block(PLtsql_execstate *estate,
 							PLtsql_stmt_block *block);
 static int	exec_stmts(PLtsql_execstate *estate,
@@ -4415,7 +4418,7 @@ execute_txn_command(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
  * is recreated when needed for cases like commit/
  * rollbck/rollback to savepoint
  */
-static void
+void
 commit_stmt(PLtsql_execstate *estate, bool txnStarted)
 {
 	SimpleEcontextStackEntry *topEntry = simple_econtext_stack;
@@ -4690,7 +4693,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	PG_TRY();
 	{
 		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
-		/* Skip tuple store approach if our DestReceiver approach is active */
 		if (expr->plan && expr->plan->oneshot)
 		{
 			SPI_freeplan(expr->plan);
@@ -4722,10 +4724,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/* Check for nested INSERT EXECUTE statements */
 		if (stmt->insert_exec)
 		{
-			/*
-			 * Check if INSERT EXEC is already active (new DestReceiver approach).
-			 * This detects nested INSERT EXEC statements.
-			 */
+			/* Nested INSERT EXEC is not allowed */
 			if (pltsql_insert_exec_active())
 			{
 				ereport(ERROR,

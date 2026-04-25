@@ -2732,8 +2732,6 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 								 * is inside the procedure of an INSERT-EXEC,
 								 * or if the INSERT itself is an INSERT-EXEC
 								 * and it just returned error.
-								 *
-								 * Check pltsql_insert_exec_active() (DestReceiver approach).
 								 */
 								row_count_valid =
 									!(pltsql_plugin_handler_ptr->pltsql_insert_exec_active &&
