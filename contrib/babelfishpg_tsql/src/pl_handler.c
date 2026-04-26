@@ -6253,7 +6253,7 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 		 * This is a safety net to prevent context from leaking between batches.
 		 */
 		if (pltsql_insert_exec_active())
-			pltsql_clear_insert_exec_context();
+			pltsql_insert_exec_reset_all();
 
 		if (pltsql_snapshot_portal != NULL)
 		{

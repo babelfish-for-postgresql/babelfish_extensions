@@ -9736,8 +9736,7 @@ pltsql_estate_cleanup(void)
 	 */
 	if (exec_state_call_stack == NULL && pltsql_insert_exec_active())
 	{
-		pltsql_insert_exec_close_target_table();
-		pltsql_clear_insert_exec_context();
+		pltsql_insert_exec_reset_all();
 	}
 }
 
@@ -9782,6 +9781,14 @@ pltsql_xact_cb(XactEvent event, void *arg)
 	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_ABORT)
 	{
 		ResetTopTransactionName();
+
+		/*
+		 * Clean up INSERT EXEC context on transaction end. This is a safety
+		 * net for timeouts, interrupts, and other cases where normal cleanup
+		 * paths are bypassed. On commit, any remaining context is stale.
+		 */
+		if (pltsql_insert_exec_active())
+			pltsql_insert_exec_reset_all();
 	}
 
 	/*

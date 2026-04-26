@@ -2792,13 +2792,13 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 				 * The row count is set in flush_insert_exec_temp_table().
 				 */
 				if (stmt->cmd_type == PLTSQL_STMT_EXEC &&
-					((PLtsql_stmt_exec *) stmt)->insert_exec)
+					((PLtsql_stmt_exec *) stmt)->insert_exec.is_insert_exec)
 				{
 					command_type = TDS_CMD_INSERT;
 					row_count_valid = true;
 				}
 				else if (stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH &&
-					((PLtsql_stmt_exec_batch *) stmt)->insert_exec)
+					((PLtsql_stmt_exec_batch *) stmt)->insert_exec.is_insert_exec)
 				{
 					command_type = TDS_CMD_INSERT;
 					row_count_valid = true;

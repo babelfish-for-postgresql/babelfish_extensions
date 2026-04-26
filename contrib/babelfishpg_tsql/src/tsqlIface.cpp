@@ -2005,13 +2005,13 @@ public:
 			 */
 			if (ctx->insert_statement()->output_clause())
 			{
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED,
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 					"The OUTPUT clause cannot be used in an INSERT...EXEC statement.",
 					getLineAndPos(ctx->insert_statement()->output_clause()));
 			}
 
 			/*
-			 * INSERT EXEC redesign: Instead of creating a PLtsql_stmt_execsql for
+			 *Instead of creating a PLtsql_stmt_execsql for
 			 * "INSERT INTO t EXEC p", we create a PLtsql_stmt_exec for just "EXEC p"
 			 * and set the INSERT EXEC fields. This allows exec_stmt_exec to handle
 			 * the temp table lifecycle and avoids parser-level issues.
@@ -2050,14 +2050,16 @@ public:
 
 					/*
 					 * Check if this is a temp table (starts with #).
-					 * Temp tables don't need schema prefix - they're in pg_temp schema.
+					 * In PostgreSQL, temp tables live in pg_temp schema, not user
+					 * schemas like dbo. We strip any schema prefix the user may have
+					 * provided (e.g., dbo.#temp) since it's not meaningful for temp tables.
 					 */
 					if (!tbl_name.empty() && tbl_name[0] == '#')
 					{
 						target_table = tbl_name;
-						target_schema = "";  /* Temp tables don't need schema */
+						target_schema = "";  /* Temp tables use pg_temp, not user schemas */
 					}
-					/* Build table reference - always include schema for proper resolution */
+					/* Build table reference with explicit schema if provided */
 					else if (!tbl_db.empty())
 					{
 						target_table = tbl_db + "." + (tbl_schema.empty() ? "dbo" : tbl_schema) + "." + tbl_name;
@@ -2070,9 +2072,12 @@ public:
 					}
 					else
 					{
-						/* No schema specified - use dbo as default and include in target */
-						target_table = "dbo." + tbl_name;
-						target_schema = "dbo";
+						/*
+						 * No schema specified - don't hardcode dbo. Let the search path
+						 * resolve the table, which respects the user's default schema.
+						 */
+						target_table = tbl_name;
+						target_schema = "";
 					}
 				}
 			}
@@ -2099,31 +2104,31 @@ public:
 			{
 				/* Procedure call: EXEC proc_name */
 				PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) base_stmt;
-				exec_stmt->insert_exec = true;
+				exec_stmt->insert_exec.is_insert_exec = true;
 				if (!target_table.empty())
-					exec_stmt->insert_exec_target = pstrdup(target_table.c_str());
+					exec_stmt->insert_exec.target = pstrdup(target_table.c_str());
 				if (!column_list.empty())
-					exec_stmt->insert_exec_columns = pstrdup(column_list.c_str());
+					exec_stmt->insert_exec.columns = pstrdup(column_list.c_str());
 			}
 			else if (base_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
 			{
 				/* Dynamic SQL: EXEC(@variable) or EXEC('string') */
 				PLtsql_stmt_exec_batch *exec_batch_stmt = (PLtsql_stmt_exec_batch *) base_stmt;
-				exec_batch_stmt->insert_exec = true;
+				exec_batch_stmt->insert_exec.is_insert_exec = true;
 				if (!target_table.empty())
-					exec_batch_stmt->insert_exec_target = pstrdup(target_table.c_str());
+					exec_batch_stmt->insert_exec.target = pstrdup(target_table.c_str());
 				if (!column_list.empty())
-					exec_batch_stmt->insert_exec_columns = pstrdup(column_list.c_str());
+					exec_batch_stmt->insert_exec.columns = pstrdup(column_list.c_str());
 			}
 			else if (base_stmt->cmd_type == PLTSQL_STMT_EXEC_SP)
 			{
 				/* System stored procedure: EXEC sp_executesql, sp_execute, sp_prepexec */
 				PLtsql_stmt_exec_sp *exec_sp_stmt = (PLtsql_stmt_exec_sp *) base_stmt;
-				exec_sp_stmt->insert_exec = true;
+				exec_sp_stmt->insert_exec.is_insert_exec = true;
 				if (!target_table.empty())
-					exec_sp_stmt->insert_exec_target = pstrdup(target_table.c_str());
+					exec_sp_stmt->insert_exec.target = pstrdup(target_table.c_str());
 				if (!column_list.empty())
-					exec_sp_stmt->insert_exec_columns = pstrdup(column_list.c_str());
+					exec_sp_stmt->insert_exec.columns = pstrdup(column_list.c_str());
 			}
 
 			/*

@@ -58,14 +58,8 @@
 extern int exec_stmt_execsql(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
 
 /*
- * Helper function to clean up type strings from format_type().
- *
- * PostgreSQL's format_type() can return type strings with suffixes like
- * "without time zone" for certain datetime types (e.g., "smalldatetime(0) without time zone").
- * These suffixes are not valid in CREATE TABLE statements, so we need to strip them.
- *
- * Returns a newly allocated string with the suffix removed, or a copy of the
- * original string if no suffix is found.
+ * Strip timezone suffixes from format_type() output that are invalid in
+ * CREATE TABLE statements (e.g., "without time zone").
  */
 static char *
 clean_format_type_string(const char *coltype)
@@ -89,15 +83,7 @@ clean_format_type_string(const char *coltype)
 		*suffix_pos = '\0';
 
 	/*
-	 * Handle VARCHAR(MAX), NVARCHAR(MAX), and VARBINARY(MAX).
-	 * When format_type() returns "sys.varchar", "sys.nvarchar", or "sys.varbinary"
-	 * without a length modifier (no parentheses), it means the type is (MAX).
-	 * We need to append "(max)" for the CREATE TABLE statement.
-	 *
-	 * Note: format_type() may return:
-	 * - Qualified names: sys.varchar, sys."varchar"
-	 * - Unqualified names: varchar, "varchar" (when sys is in search_path)
-	 * The quoted versions appear because varchar/nvarchar are reserved words.
+	 * Append "(max)" for varchar/nvarchar/varbinary without length modifier.
 	 */
 	if (strchr(result, '(') == NULL &&
 		(strcmp(result, "sys.varchar") == 0 ||
@@ -122,18 +108,12 @@ clean_format_type_string(const char *coltype)
 }
 
 /*
- * INSERT EXEC DestReceiver implementation
- *
- * This DestReceiver writes tuples to a temp table for INSERT EXEC buffering.
- * Modeled after CreateTransientRelDestReceiver in matview.c but without
- * TABLE_INSERT_FROZEN flag to preserve MVCC semantics.
+ * DestReceiver that writes tuples to a temp table for INSERT EXEC buffering.
  */
 
 /*
- * Schema signature for detecting schema changes during INSERT EXEC.
- * We store the column count and column type OIDs at the start of INSERT EXEC,
- * then verify they haven't changed before flushing data to the target table.
- * This detects ALTER TABLE operations that would cause a schema change error.
+ * Schema signature (column count and types) captured at INSERT EXEC start,
+ * used to detect ALTER TABLE operations before flushing to the target.
  */
 typedef struct InsertExecSchemaSignature
 {
@@ -203,18 +183,8 @@ static void insertexec_shutdown(DestReceiver *self);
 static void insertexec_destroy(DestReceiver *self);
 
 /*
- * Parse a T-SQL table name into schema and table components.
- * Handles 1-part (table), 2-part (schema.table), and 3-part (db.schema.table) names.
- *
- * Parameters:
- *   target_table - The input table name (e.g., "dbo.orders" or "mydb.dbo.orders")
- *   schema_name_out - Output: logical schema name (caller must pfree)
- *   table_name_out - Output: table name (caller must pfree)
- *   physical_schema_out - Output: physical schema name (caller must pfree), or NULL if not needed
- *   get_physical - If true, also compute the physical schema name
- *
- * Returns true if parsing succeeded, false otherwise.
- * Caller is responsible for freeing the output strings.
+ * Parse a T-SQL table name (1-part, 2-part, or 3-part) into schema and table.
+ * Returns true on success. Caller must pfree the output strings.
  */
 bool
 parse_insert_exec_table_name(const char *target_table,
@@ -256,7 +226,11 @@ parse_insert_exec_table_name(const char *target_table,
 	}
 	else
 	{
-		/* Just table name, use dbo as default */
+		/*
+		 * Just table name, no schema specified - default to dbo for now.
+		 * TODO: Ideally we should respect the user's default schema,
+		 * but that requires changes to how ownership chaining works.
+		 */
 		table_name = pstrdup(target_copy);
 		schema_name = pstrdup("dbo");
 	}
@@ -343,7 +317,9 @@ pltsql_set_insert_exec_context(Oid temp_table_oid)
 
 /*
  * Clear the global INSERT EXEC context.
- * Called when exiting INSERT EXEC context.
+ * Called when exiting INSERT EXEC context normally.
+ * Note: Does not clear had_error or started_implicit_txn flags, which are
+ * needed for post-cleanup transaction count mismatch checks.
  */
 void
 pltsql_clear_insert_exec_context(void)
@@ -351,7 +327,8 @@ pltsql_clear_insert_exec_context(void)
 	insert_exec_ctx.temp_table_oid = InvalidOid;
 	insert_exec_ctx.call_stack_depth = 0;
 	insert_exec_ctx.execution_id = 0;
-	/* Note: We do NOT reset insert_exec_ctx.had_error here - it's reset by pltsql_insert_exec_clear_error_flag() */
+	insert_exec_ctx.flush_in_progress = false;
+	insert_exec_ctx.pending_drop = false;
 	if (insert_exec_ctx.target_table)
 	{
 		pfree(insert_exec_ctx.target_table);
@@ -367,6 +344,24 @@ pltsql_clear_insert_exec_context(void)
 		pfree(insert_exec_ctx.temp_table_name);
 		insert_exec_ctx.temp_table_name = NULL;
 	}
+}
+
+/*
+ * Full reset of INSERT EXEC context for safety net cleanup paths.
+ * Called when stale context is detected (e.g., empty call stack, batch end).
+ * Unlike pltsql_clear_insert_exec_context(), this also clears the error and
+ * implicit transaction flags, and releases target table resources.
+ */
+void
+pltsql_insert_exec_reset_all(void)
+{
+	/* Release target table lock and free schema signature */
+	pltsql_insert_exec_close_target_table();
+
+	/* Clear all context fields including flags */
+	pltsql_clear_insert_exec_context();
+	insert_exec_ctx.had_error = false;
+	insert_exec_ctx.started_implicit_txn = false;
 }
 
 /*
@@ -476,20 +471,10 @@ pltsql_insert_exec_check_pending_drop(void)
 }
 
 /*
- * Open and hold the target table during INSERT EXEC execution.
- *
- * This function captures the schema signature (column count and types) of the
- * target table at the start of INSERT EXEC. Before flushing data to the target,
- * we verify the schema hasn't changed. If it has, we raise an error:
- * "INSERT EXEC failed because the stored procedure altered the schema of the target table."
- *
- * For regular tables:
- * - Acquire RowExclusiveLock to block concurrent sessions from modifying the table
- * - Capture schema signature for verification at flush time
- *
- * For temp tables and table variables (starting with # or @):
- * - Only capture schema signature (no lock needed - they're session-local)
- * - The schema verification at flush time will detect DROP/ALTER
+ * Capture schema signature and lock target table for schema change detection.
+ * We record column count and types at INSERT EXEC start, then verify they
+ * haven't changed before flushing. Regular tables get RowExclusiveLock to
+ * block concurrent DDL; temp tables only get schema captured (session-local).
  */
 void
 pltsql_insert_exec_open_target_table(const char *target_table)
@@ -819,22 +804,19 @@ count_select_target_columns(SelectStmt *stmt)
 }
 
 /*
- * Validate column count from a query string BEFORE plan preparation.
+ * Validate column count from query string BEFORE plan preparation.
  *
- * T-SQL validates column count at the metadata level BEFORE evaluating
- * expressions. This means column mismatch errors take priority over
- * runtime errors like division by zero.
+ * T-SQL requires column mismatch errors to take priority over runtime errors
+ * like division by zero. PostgreSQL's plan preparation evaluates constant
+ * expressions, so we parse and count columns here without evaluation.
  *
- * In PostgreSQL, plan preparation calls eval_const_expressions() which evaluates
- * constant expressions like 1/0, causing runtime errors to occur before we can
- * validate column count.
+ * This is an OPTIMIZATION for early error detection, not a correctness
+ * requirement. If we can't determine the column count (SELECT *, complex
+ * queries, parse errors), we skip early validation and let the normal
+ * execution path handle it - the DestReceiver will still catch mismatches.
  *
- * This function parses the query string and counts the target list columns
- * WITHOUT evaluating expressions, allowing us to detect column mismatches
- * before any runtime errors can occur.
- *
- * Returns true if validation passes (or cannot be performed), false if column
- * count mismatch is detected.
+ * Returns true if validation passes OR cannot be performed (defer to normal path).
+ * Returns false only if column count mismatch is definitively detected.
  */
 bool
 pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
@@ -849,16 +831,14 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	int			temp_natts;
 	MemoryContext oldcontext;
 
-	/* Only validate if INSERT EXEC is active */
-	if (!pltsql_insert_exec_active())
-		return true;
+	/* Caller must ensure INSERT EXEC is active before calling */
+	Assert(pltsql_insert_exec_active());
 
-	/* Get the temp table OID */
+	/* Temp table must exist - caller checks pltsql_insert_exec_in_execution() */
 	temp_table_oid = pltsql_get_insert_exec_temp_table_oid();
-	if (!OidIsValid(temp_table_oid))
-		return true;  /* No temp table yet, skip validation */
+	Assert(OidIsValid(temp_table_oid));
 
-	/* Parse the query string */
+	/* Parse the query string - if parsing fails, defer to normal execution */
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
 	{
@@ -866,28 +846,31 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	}
 	PG_CATCH();
 	{
-		/* If parsing fails, let the normal path handle the error */
 		MemoryContextSwitchTo(oldcontext);
 		FlushErrorState();
-		return true;
+		return true;  /* Parse error - normal path will report it */
 	}
 	PG_END_TRY();
 
-	/* We expect exactly one statement */
+	/* Only handle single-statement queries */
 	if (list_length(parsetree_list) != 1)
-		return true;  /* Multiple statements, let normal path handle it */
+		return true;  /* Multiple statements, defer to runtime */
 
 	raw_stmt = (RawStmt *) linitial(parsetree_list);
 	stmt = raw_stmt->stmt;
 
-	/* Check if it's a SELECT statement */
+	/* Only validate SELECT statements */
 	if (!IsA(stmt, SelectStmt))
-		return true;  /* Not a SELECT, let normal path handle it */
+		return true;  /* Not a SELECT (e.g., EXEC), defer to runtime */
 
-	/* Count target list columns */
+	/*
+	 * Count target list columns. Returns -1 for SELECT *, complex queries,
+	 * or when column count can't be determined statically. In those cases,
+	 * skip early validation - the DestReceiver will catch mismatches at runtime.
+	 */
 	query_natts = count_select_target_columns((SelectStmt *) stmt);
 	if (query_natts < 0)
-		return true;  /* Could not determine column count */
+		return true;  /* Can't determine count statically, defer to runtime */
 
 	/* Get temp table column count */
 	PG_TRY();
@@ -945,21 +928,10 @@ pltsql_insert_exec_active(void)
 }
 
 /*
- * Check if we're actually inside the INSERT EXEC execution context.
- * This is more strict than pltsql_insert_exec_active() - it also checks
- * that the temp table OID is still valid.
- *
- * This is used to prevent stale INSERT EXEC context from affecting
- * queries that are NOT part of the current INSERT EXEC. For example,
- * if a previous test set up INSERT EXEC context but didn't clean it up,
- * subsequent tests would see pltsql_insert_exec_active() as true but
- * pltsql_insert_exec_in_execution() as false because the temp table
- * would have been dropped.
- *
- * NOTE: This function is intentionally conservative. It may return false
- * even when we ARE inside INSERT EXEC (e.g., if the temp table hasn't been
- * created yet). This is acceptable because the column validation will still
- * happen later during the actual INSERT.
+ * Stricter check than pltsql_insert_exec_active() - also verifies the temp
+ * table still exists. Returns false if context is stale (e.g., temp table
+ * was dropped after rollback). May return false early in INSERT EXEC before
+ * temp table is created, which is fine - validation happens later anyway.
  */
 bool
 pltsql_insert_exec_in_execution(void)
@@ -1172,21 +1144,10 @@ pltsql_insert_exec_in_trycatch(void)
 }
 
 /*
- * Check if we should clean up INSERT EXEC context when a TRY-CATCH catches an error.
- *
- * This is used in the sigsetjmp handler (iterative_exec.c) to determine if we should
- * clean up the INSERT EXEC context. We should only clean up if the TRY-CATCH that
- * catches the error is at the same level or higher than where INSERT EXEC was started.
- *
- * If the TRY-CATCH is inside the procedure being executed (deeper call stack),
- * we should NOT clean up because the INSERT EXEC is still in progress.
- *
- * IMPORTANT: This function is called from the sigsetjmp handler AFTER a TRY-CATCH
- * has caught the error. At this point, we know there IS a TRY-CATCH that caught
- * the error. The question is whether it's inside the procedure (don't clean up)
- * or at the same level or higher (clean up).
- *
- * Returns true if we should clean up, false otherwise.
+ * Called from sigsetjmp handler when TRY-CATCH catches an error.
+ * Returns true if we should clean up INSERT EXEC context - only when the
+ * TRY-CATCH is at or above the INSERT EXEC level. If TRY-CATCH is inside
+ * the executed procedure (deeper stack), INSERT EXEC is still in progress.
  */
 bool
 pltsql_insert_exec_should_cleanup_on_trycatch(void)

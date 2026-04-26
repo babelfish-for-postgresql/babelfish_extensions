@@ -2394,6 +2394,7 @@ extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags
 extern void pltsql_set_insert_exec_context_info(const char *target_table, const char *column_list);
 extern void pltsql_set_insert_exec_context(Oid temp_table_oid);
 extern void pltsql_clear_insert_exec_context(void);
+extern void pltsql_insert_exec_reset_all(void);
 extern bool pltsql_insert_exec_active(void);
 extern bool pltsql_insert_exec_in_execution(void);
 extern bool pltsql_insert_exec_flush_in_progress(void);

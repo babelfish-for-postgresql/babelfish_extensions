@@ -999,9 +999,9 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * Setup INSERT EXEC: create temp table to capture procedure output.
 		 * After procedure completes, temp table is flushed to target table.
 		 */
-		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
+		if (stmt->insert_exec.is_insert_exec && stmt->insert_exec.target != NULL)
 		{
-			insert_exec_setup(estate, stmt->insert_exec_target, stmt->insert_exec_columns,
+			insert_exec_setup(estate, stmt->insert_exec.target, stmt->insert_exec.columns,
 							  true, &insert_exec_temp_oid);
 			insert_exec_setup_done = true;
 		}
@@ -1083,7 +1083,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 																																									 * function */
 			&& !is_scalar_func /* in case of EXEC on scalar function, it is
 								 * allowed in T-SQL. do not throw an error */
-			&& !stmt->insert_exec) /* INSERT EXEC into table variable is allowed in functions */
+			&& !stmt->insert_exec.is_insert_exec) /* INSERT EXEC into table variable is allowed in functions */
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -1717,9 +1717,9 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		 * Setup INSERT EXEC: create temp table to capture procedure output.
 		 * No implicit transaction for dynamic SQL (different semantics than stored procs).
 		 */
-		if (stmt->insert_exec && stmt->insert_exec_target != NULL)
+		if (stmt->insert_exec.is_insert_exec && stmt->insert_exec.target != NULL)
 		{
-			insert_exec_setup(estate, stmt->insert_exec_target, stmt->insert_exec_columns,
+			insert_exec_setup(estate, stmt->insert_exec.target, stmt->insert_exec.columns,
 							  false, &insert_exec_temp_oid);
 			insert_exec_setup_done = true;
 		}
@@ -2465,7 +2465,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					 * This is inside PG_TRY so that errors (including nested INSERT EXEC)
 					 * can be caught by T-SQL TRY/CATCH.
 					 */
-					if (stmt->insert_exec && stmt->insert_exec_target != NULL)
+					if (stmt->insert_exec.is_insert_exec && stmt->insert_exec.target != NULL)
 					{
 						/*
 						 * Check for nested INSERT EXEC.
@@ -2514,7 +2514,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						}
 
 						/* Set global context info for flush function */
-						pltsql_set_insert_exec_context_info(stmt->insert_exec_target, stmt->insert_exec_columns);
+						pltsql_set_insert_exec_context_info(stmt->insert_exec.target, stmt->insert_exec.columns);
 
 						/*
 						 * Open and hold the target table during INSERT EXEC execution.
@@ -2522,11 +2522,11 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						 * By holding the target table open, PostgreSQL's CheckTableNotInUse()
 						 * will detect if the procedure tries to ALTER TABLE on the target.
 						 */
-						pltsql_insert_exec_open_target_table(stmt->insert_exec_target);
+						pltsql_insert_exec_open_target_table(stmt->insert_exec.target);
 
 						/* Create temp table based on target table structure */
-						insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec_target,
-																			 stmt->insert_exec_columns);
+						insert_exec_temp_oid = create_insert_exec_temp_table(stmt->insert_exec.target,
+																			 stmt->insert_exec.columns);
 
 						/* Set global context so DestReceiver knows where to write */
 						pltsql_set_insert_exec_context(insert_exec_temp_oid);
@@ -2595,7 +2595,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						/* Always clear the context to prevent stale state */
 						pltsql_clear_insert_exec_context();
 					}
-					else if (stmt->insert_exec && stmt->insert_exec_target != NULL && pltsql_insert_exec_active())
+					else if (stmt->insert_exec.is_insert_exec && stmt->insert_exec.target != NULL && pltsql_insert_exec_active())
 					{
 						/*
 						 * This is an INSERT EXEC statement that failed during setup (before
