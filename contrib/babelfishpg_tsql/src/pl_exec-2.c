@@ -2547,67 +2547,8 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				}
 				PG_CATCH();
 				{
-					/*
-					 * Cleanup INSERT EXEC state on error.
-					 *
-					 * IMPORTANT: We MUST clear the INSERT EXEC context immediately, even if
-					 * we're inside a TRY-CATCH block. This is because:
-					 * 1. The temp table may have been dropped due to transaction abort
-					 * 2. Between this PG_CATCH and the TRY-CATCH handler, other code might
-					 *    check pltsql_insert_exec_active() and try to use the stale temp table OID
-					 * 3. This leads to "could not open relation with OID" errors
-					 *
-					 * We cannot call drop_insert_exec_temp_table() here because SPI_execute
-					 * cannot be used in an error context (transaction is aborted).
-					 * The temp table will be automatically cleaned up when the transaction
-					 * rolls back.
-					 *
-					 * We also need to clean up if this INSERT EXEC statement failed during setup
-					 * (before insert_exec_setup_done was set to TRUE). This handles the case where
-					 * the context was set by pltsql_set_insert_exec_context_info() but an error
-					 * occurred before insert_exec_setup_done was set to TRUE (e.g., during temp
-					 * table creation). Without this cleanup, the context would leak and affect
-					 * subsequent queries.
-					 *
-					 * NOTE: We only clean up if the active context's target table matches this
-					 * statement's target table. This ensures we don't accidentally clear the
-					 * outer INSERT EXEC context when a nested INSERT EXEC fails.
-					 */
-					if (insert_exec_setup_done)
-					{
-						pltsql_insert_exec_set_error_flag();
-						pltsql_insert_exec_set_pending_drop();
-
-						/*
-						 * Clear the implicit transaction flag since the transaction will be
-						 * rolled back due to the error. If we don't clear this, subsequent
-						 * INSERT EXEC statements might try to commit a non-existent transaction.
-						 */
-						pltsql_insert_exec_clear_implicit_txn_flag();
-
-						/*
-						 * Close target table. This function already checks
-						 * IsAbortedTransactionBlockState() and skips the unlock if
-						 * the transaction is aborted.
-						 */
-						pltsql_insert_exec_close_target_table();
-
-						/* Always clear the context to prevent stale state */
-						pltsql_clear_insert_exec_context();
-					}
-					else if (stmt->insert_exec.is_insert_exec && stmt->insert_exec.target != NULL && pltsql_insert_exec_active())
-					{
-						/*
-						 * This is an INSERT EXEC statement that failed during setup (before
-						 * insert_exec_setup_done was set to TRUE). We need to clean up the
-						 * partially initialized context.
-						 */
-						pltsql_insert_exec_set_error_flag();
-						/* Clear implicit txn flag for setup failures too */
-						pltsql_insert_exec_clear_implicit_txn_flag();
-						pltsql_insert_exec_close_target_table();
-						pltsql_clear_insert_exec_context();
-					}
+					/* Cleanup INSERT EXEC state on error */
+					insert_exec_error_cleanup(insert_exec_setup_done);
 					pltsql_revert_guc(save_nestlevel);
 					pltsql_revert_last_scope_identity(scope_level);
 					PG_RE_THROW();
@@ -2617,91 +2558,9 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				pltsql_revert_guc(save_nestlevel);
 				pltsql_revert_last_scope_identity(scope_level);
 
-				/*
-				 * INSERT EXEC: Flush temp table to target and cleanup after
-				 * sp_executesql execution completes.
-				 *
-				 * Execute the flush INSERT directly without a subtransaction wrapper.
-				 * Clear the INSERT EXEC context AFTER the flush so that the flush
-				 * has access to target table info.
-				 */
+				/* Flush temp table to target and cleanup after sp_executesql completes */
 				if (insert_exec_setup_done)
-				{
-					MemoryContext oldcontext = CurrentMemoryContext;
-					ResourceOwner oldowner = CurrentResourceOwner;
-
-					PG_TRY();
-					{
-						/* Flush temp table to target table - no subtransaction wrapper */
-						flush_insert_exec_temp_table(estate);
-
-						/*
-						 * Close the target table that was held open during INSERT EXEC.
-						 * This must be done AFTER the flush completes.
-						 */
-						pltsql_insert_exec_close_target_table();
-					}
-					PG_CATCH();
-					{
-						/*
-						 * Close target table and drop temp table before clearing context.
-						 * IMPORTANT: drop_insert_exec_temp_table must be called BEFORE
-						 * pltsql_clear_insert_exec_context because clear_context frees
-						 * the temp_table_name that drop needs.
-						 *
-						 * Also clear the implicit transaction flag since the transaction
-						 * will be rolled back due to the flush error.
-						 */
-						pltsql_insert_exec_close_target_table();
-						drop_insert_exec_temp_table(insert_exec_temp_oid);
-						pltsql_insert_exec_clear_implicit_txn_flag();
-						pltsql_clear_insert_exec_context();
-						PG_RE_THROW();
-					}
-					PG_END_TRY();
-
-					/* Drop temp table in separate subtransaction */
-					BeginInternalSubTransaction(NULL);
-					MemoryContextSwitchTo(oldcontext);
-
-					PG_TRY();
-					{
-						drop_insert_exec_temp_table(insert_exec_temp_oid);
-						ReleaseCurrentSubTransaction();
-						MemoryContextSwitchTo(oldcontext);
-						CurrentResourceOwner = oldowner;
-					}
-					PG_CATCH();
-					{
-						/* DROP failed - log warning but don't fail the INSERT EXEC */
-						RollbackAndReleaseCurrentSubTransaction();
-						MemoryContextSwitchTo(oldcontext);
-						CurrentResourceOwner = oldowner;
-						elog(WARNING, "INSERT EXEC: failed to drop temp table, will be cleaned up at transaction end");
-						FlushErrorState();
-					}
-					PG_END_TRY();
-
-					/*
-					 * Clear the INSERT EXEC context AFTER the drop completes.
-					 * This must be last because it frees temp_table_name which drop needs.
-					 */
-					pltsql_clear_insert_exec_context();
-
-					/*
-					 * Commit the implicit transaction that was started for INSERT EXEC.
-					 * Reuses commit_stmt() to avoid duplicating transaction commit logic.
-					 */
-					if (pltsql_insert_exec_started_implicit_txn())
-					{
-						elog(DEBUG4, "TSQL TXN Commit implicit transaction for INSERT EXEC (exec_sp)");
-						commit_stmt(estate, true);
-						pltsql_insert_exec_clear_implicit_txn_flag();
-					}
-
-					/* Clear the TSQL_TRAN_STARTED flag */
-					estate->tsql_trigger_flags &= ~TSQL_TRAN_STARTED;
-				}
+					insert_exec_success_cleanup(estate, insert_exec_temp_oid);
 
 				break;
 			}
