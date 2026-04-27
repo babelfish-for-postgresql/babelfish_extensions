@@ -111,6 +111,8 @@ typedef struct PLtsql_stmt_exec
 	char	   *db_name;
 	char	   *proc_name;
 	char	   *schema_name;
+
+	InsertExecInfo insert_exec;	/* INSERT EXEC info */
 		
 	bool		exec_with_recompile; /* forced recompile through EXECUTE */	
 } PLtsql_stmt_exec;
@@ -170,6 +172,8 @@ typedef struct PLtsql_stmt_exec_sp
 	PLtsql_expr *opt2;
 	PLtsql_expr *opt3;
 	List	   *stropt;
+
+	InsertExecInfo insert_exec;	/* INSERT EXEC info */
 } PLtsql_stmt_exec_sp;
 
 /*
@@ -194,6 +198,8 @@ typedef struct PLtsql_stmt_exec_batch
 	PLtsql_stmt_type cmd_type;
 	int			lineno pg_node_attr(equal_ignore);
 	PLtsql_expr *expr;
+
+	InsertExecInfo insert_exec;	/* INSERT EXEC info */
 } PLtsql_stmt_exec_batch;
 
 typedef struct PLtsql_stmt_raiserror
