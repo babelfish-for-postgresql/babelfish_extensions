@@ -44,7 +44,7 @@ typedef struct forxml_auto_state
 	 * Caches the result of update_tsql_datatype_and_val's SPI_gettype +
 	 * get_namespace_oid + GetSysCacheOid2 lookups per column.
 	 * 0 = no conversion needed, 1 = datetime/smalldatetime/datetime2,
-	 * 2 = datetimeoffset
+	 * 2 = datetimeoffset, 3 = binary/varbinary/image/timestamp/rowversion
 	 */
 	int			   *tsql_convert_type;	/* Per-column T-SQL conversion type */
 	bool			tsql_types_cached;	/* Whether T-SQL type cache is populated */
@@ -56,6 +56,7 @@ typedef struct forxml_auto_state
 	int			   *open_element_levels; /* Track which levels have open elements */
 	bool			first_row;			/* Is this the first row? */
 	bool			has_root;			/* Is there a ROOT wrapper? */
+	bool			binary_base64;		/* BINARY BASE64 option flag */
 } forxml_auto_state;
 
 /*
@@ -159,6 +160,7 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 				forxml_auto_state *auto_st = (forxml_auto_state *) palloc0(sizeof(forxml_auto_state));
 				auto_st->first_row = true;
 				auto_st->has_root = (root_name != NULL && strlen(root_name) > 0);
+				auto_st->binary_base64 = binary_base64;
 				fstate->auto_state = auto_st;
 
 				/* Parse metadata now so it's ready for the first row */
@@ -748,11 +750,12 @@ unescape_period(const char *str)
 {
 	StringInfoData buf;
 	const char *p = str;
+	const char *end = str + strlen(str);
 
 	initStringInfo(&buf);
 	while (*p)
 	{
-		if (strlen(p) >= 7 && strncmp(p, "_x002E_", 7) == 0)
+		if ((end - p) >= 7 && strncmp(p, "_x002E_", 7) == 0)
 		{
 			appendStringInfoChar(&buf, '.');
 			p += 7;
@@ -812,7 +815,14 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 				*dot1 = '\0';
 				*dot2 = '\0';
 
-				auto_state->nest_levels[col_idx] = atoi(entry_copy);
+				{
+					long level = strtol(entry_copy, NULL, 10);
+					if (level < 1 || level > num_cols)
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+								 errmsg("FOR XML AUTO metadata has invalid level %ld", level)));
+					auto_state->nest_levels[col_idx] = (int) level;
+				}
 				auto_state->table_aliases[col_idx] = unescape_period(dot1 + 1);
 				auto_state->column_names[col_idx] = unescape_period(dot2 + 1);
 
@@ -1043,7 +1053,8 @@ init_output_func_cache(forxml_auto_state *auto_state, TupleDesc tupdesc)
  * Determines once per column whether it needs special T-SQL datetime formatting,
  * avoiding repeated SPI_gettype + get_namespace_oid + GetSysCacheOid2 lookups.
  *
- * tsql_convert_type values: 0 = no conversion, 1 = datetime, 2 = datetimeoffset
+ * tsql_convert_type values: 0 = no conversion, 1 = datetime, 2 = datetimeoffset,
+ * 3 = binary types (error when binary_base64 is set)
  */
 static void
 init_tsql_type_cache(forxml_auto_state *auto_state, TupleDesc tupdesc)
@@ -1075,6 +1086,12 @@ init_tsql_type_cache(forxml_auto_state *auto_state, TupleDesc tupdesc)
 				auto_state->tsql_convert_type[i] = 1;
 			else if (strcmp(typename, "datetimeoffset") == 0)
 				auto_state->tsql_convert_type[i] = 2;
+			else if (strcmp(typename, "binary") == 0 ||
+					 strcmp(typename, "varbinary") == 0 ||
+					 strcmp(typename, "image") == 0 ||
+					 strcmp(typename, "timestamp") == 0 ||
+					 strcmp(typename, "rowversion") == 0)
+				auto_state->tsql_convert_type[i] = 3;
 		}
 	}
 	auto_state->tsql_types_cached = true;
@@ -1110,6 +1127,13 @@ cached_update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc,
 		*colval = CStringGetDatum(format_output->data);
 		*datatype_oid = CSTRINGOID;
 		pfree(format_output);	/* free StringInfo struct, data is kept via colval */
+	}
+	else if (convert_type == 3 && auto_state->binary_base64)
+	{
+		/* binary / varbinary / image / timestamp / rowversion */
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("option binary base64 is not supported")));
 	}
 	/* else: convert_type == 0, no conversion needed */
 }

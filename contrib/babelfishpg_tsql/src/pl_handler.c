@@ -1770,7 +1770,7 @@ buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 {
 	char nest[NAMEDATALEN];
 	StringInfo new_resname = makeStringInfo();
-	sprintf(nest, "%d", nestLevel);
+	snprintf(nest, sizeof(nest), "%d", nestLevel);
 	if(te->resname == NULL || !strcmp(te->resname, "\?column\?")) {
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2241,6 +2241,8 @@ static bool forAutoWalker(Node *node, ForAutoContext *ctx)
 	if (IsA(node, Query))
 	{
 		Query *q = (Query *)node;
+		List *savedCteList = ctx->cteList;
+		HTAB *savedCtenameIdxHash = ctx->ctenameIdxHash;
 
 		if (q->cteList != NULL)
 		{
@@ -2252,9 +2254,6 @@ static bool forAutoWalker(Node *node, ForAutoContext *ctx)
 			ctx->cteList = q->cteList;
 
 			/* Build CTE hash table here so it's ready for processAutoColumns */
-			if (ctx->ctenameIdxHash != NULL)
-				hash_destroy(ctx->ctenameIdxHash);
-
 			memset(&cteHashCtl, 0, sizeof(cteHashCtl));
 			cteHashCtl.keysize = NAMEDATALEN;
 			cteHashCtl.entrysize = sizeof(CtenameIdx);
@@ -2287,8 +2286,17 @@ static bool forAutoWalker(Node *node, ForAutoContext *ctx)
 
 		/* Then check if this layer has FOR JSON AUTO or FOR XML AUTO */
 		if (handleForAuto(q, ctx, FOR_AUTO_JSON))
+		{
+			ctx->cteList = savedCteList;
+			ctx->ctenameIdxHash = savedCtenameIdxHash;
 			return true;
-		return handleForAuto(q, ctx, FOR_AUTO_XML);
+		}
+		{
+			bool result = handleForAuto(q, ctx, FOR_AUTO_XML);
+			ctx->cteList = savedCteList;
+			ctx->ctenameIdxHash = savedCtenameIdxHash;
+			return result;
+		}
 	}
 	return expression_tree_walker(node, forAutoWalker, (void *) ctx);
 }
