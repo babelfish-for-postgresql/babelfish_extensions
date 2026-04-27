@@ -866,6 +866,10 @@ xml_auto_get_column_value_as_string(HeapTuple tuple, TupleDesc tupdesc, int col_
 	if (isnull)
 		return NULL;
 
+	/* Apply T-SQL datetime formatting if needed (same path as output_row_xml) */
+	if (auto_state != NULL && auto_state->tsql_types_cached)
+		cached_update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, col_idx, auto_state);
+
 	/* Use cached path if output functions are already cached */
 	if (auto_state != NULL && auto_state->out_funcs_cached)
 		return pstrdup(cached_value_to_xml_string(colval, col_idx, auto_state, datatype_oid));
