@@ -100,6 +100,9 @@ CREATE TABLE forxmlauto_t_dot_cols (
 );
 GO
 
+CREATE TABLE [_x002E_tbl] (id INT, val VARCHAR(20));
+GO
+
 CREATE TABLE forxmlauto_t_space_cols (
     [first name] VARCHAR(20),
     [last name] VARCHAR(20)
@@ -206,6 +209,11 @@ INSERT INTO forxmlauto_t_dot_cols VALUES (2, NULL);
 GO
 ~~ROW COUNT: 1~~
 
+~~ROW COUNT: 1~~
+
+
+INSERT INTO [_x002E_tbl] VALUES (1, 'hello');
+GO
 ~~ROW COUNT: 1~~
 
 

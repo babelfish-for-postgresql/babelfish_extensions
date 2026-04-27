@@ -100,6 +100,9 @@ CREATE TABLE forxmlauto_t_dot_cols (
 );
 GO
 
+CREATE TABLE [_x002E_tbl] (id INT, val VARCHAR(20));
+GO
+
 CREATE TABLE forxmlauto_t_space_cols (
     [first name] VARCHAR(20),
     [last name] VARCHAR(20)
@@ -175,6 +178,9 @@ GO
 
 INSERT INTO forxmlauto_t_dot_cols VALUES (1, 'Delta');
 INSERT INTO forxmlauto_t_dot_cols VALUES (2, NULL);
+GO
+
+INSERT INTO [_x002E_tbl] VALUES (1, 'hello');
 GO
 
 INSERT INTO forxmlauto_t_space_cols VALUES ('John', 'Doe');

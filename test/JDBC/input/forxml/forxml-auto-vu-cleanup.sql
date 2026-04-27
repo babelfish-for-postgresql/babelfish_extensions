@@ -41,3 +41,5 @@ DROP TABLE IF EXISTS forxmlauto_t_space_cols;
 GO
 DROP TABLE IF EXISTS [forxmlauto_t_mixed,special.table];
 GO
+DROP TABLE IF EXISTS [_x002E_tbl];
+GO

@@ -1582,6 +1582,7 @@ isForAuto(List *target, ForAutoMode mode)
 	int mode_value = (mode == FOR_AUTO_JSON) ? 0 : 1;
 	const char *agg_name1 = (mode == FOR_AUTO_JSON) ? "tsql_select_for_json_agg" : "tsql_select_for_xml_agg";
 	const char *agg_name2 = (mode == FOR_AUTO_JSON) ? "tsql_select_for_json_text_agg" : "tsql_select_for_xml_text_agg";
+	Aggref *agg = NULL;
 
 	/*
 	 * The query structure we're looking for:
@@ -1608,9 +1609,22 @@ isForAuto(List *target, ForAutoMode mode)
 				if (args != NULL && list_length(args) > 0)
 				{
 					Node *firstArg = linitial(args);
+
+					/* Extract Aggref: either direct or nested inside a FuncExpr (TYPE case) */
 					if (nodeTag(firstArg) == T_Aggref)
+						agg = (Aggref *) firstArg;
+					else if (nodeTag(firstArg) == T_FuncExpr)
 					{
-						Aggref *agg = (Aggref *) firstArg;
+						FuncExpr *innerFunc = (FuncExpr *) firstArg;
+						List *innerArgs = innerFunc->args;
+						if (innerArgs != NULL && list_length(innerArgs) > 0 &&
+							nodeTag(linitial(innerArgs)) == T_Aggref)
+							agg = (Aggref *) linitial(innerArgs);
+					}
+
+					/* Validate the Aggref is the expected FOR AUTO aggregate */
+					if (agg != NULL)
+					{
 						char *funcname = get_func_name(agg->aggfnoid);
 						List *aggargs = agg->args;
 						if (funcname == NULL ||
@@ -1625,36 +1639,6 @@ isForAuto(List *target, ForAutoMode mode)
 								Const *c = (Const *) te2->expr;
 								if (c->consttype == INT4OID && c->constvalue == mode_value)
 									return true;
-							}
-						}
-					}
-					else if (nodeTag(firstArg) == T_FuncExpr)
-					{
-						/* Aggregate may be nested inside another FuncExpr (e.g. type coercion) */
-						FuncExpr *innerFunc = (FuncExpr *) firstArg;
-						List *innerArgs = innerFunc->args;
-						if (innerArgs != NULL && list_length(innerArgs) > 0)
-						{
-							Node *innerFirst = linitial(innerArgs);
-							if (nodeTag(innerFirst) == T_Aggref)
-							{
-								Aggref *agg = (Aggref *) innerFirst;
-								char *funcname = get_func_name(agg->aggfnoid);
-								List *aggargs = agg->args;
-								if (funcname == NULL ||
-									(strcmp(funcname, agg_name1) != 0 && strcmp(funcname, agg_name2) != 0))
-									return false;
-								if (aggargs != NULL && list_length(aggargs) > 1 &&
-									nodeTag(lsecond(aggargs)) == T_TargetEntry)
-								{
-									TargetEntry *te2 = lsecond_node(TargetEntry, aggargs);
-									if (te2->expr != NULL && nodeTag(te2->expr) == T_Const)
-									{
-										Const *c = (Const *) te2->expr;
-										if (c->consttype == INT4OID && c->constvalue == mode_value)
-											return true;
-									}
-								}
 							}
 						}
 					}
@@ -1690,12 +1674,21 @@ handleForAuto(Query *wrapperQuery, ForAutoContext *ctx, ForAutoMode mode)
 	if (wrapperRtable != NULL && list_length(wrapperRtable) > 0)
 		wrapperRte = linitial_node(RangeTblEntry, wrapperRtable);
 
-	Assert(wrapperRtable != NULL && wrapperRte != NULL);
-	Assert(wrapperRte->rtekind == RTE_SUBQUERY);
+	if (wrapperRtable == NULL || wrapperRte == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("FOR AUTO: wrapper query has no range table entries")));
+	if (wrapperRte->rtekind != RTE_SUBQUERY)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("FOR AUTO: expected RTE_SUBQUERY in wrapper query")));
 
 	wrapperRteAlias = (Alias *)wrapperRte->eref;
 	origQuery = wrapperRte->subquery;
-	Assert(origQuery != NULL);
+	if (origQuery == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("FOR AUTO: wrapper subquery is NULL")));
 
 	/* Count valid sources in original query */
 	origqRtable = (List *)origQuery->rtable;
@@ -1803,19 +1796,101 @@ string_to_fixed_hash(const char *input)
 }
 
 /*
+ * appendXmlAutoMetadataEntry - Build one entry in the XML AUTO metadata string.
+ *
+ * Resolves the original column name (looking up bbf_original_name from
+ * pg_attribute if needed), escapes alias and column name for XML, and
+ * appends "level.alias.colname" to the metadata StringInfo.
+ */
+static void
+appendXmlAutoMetadataEntry(StringInfo metadataStr, TargetEntry *te, int level,
+						   char *alias, RangeTblEntry *matchedSrc, Var *curVar)
+{
+	char *colname = te->resname;
+
+	if (colname == NULL || !strcmp(colname, "\?column\?"))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("column expressions and data sources without names or aliases cannot be formatted as XML text using FOR XML clause. Add alias to the unnamed column or table")));
+	}
+
+	/*
+	 * If the column comes from a base table and the user did NOT provide a
+	 * column alias, look up the original (un-truncated) name from
+	 * pg_attribute.attoptions (bbf_original_name).
+	 */
+	if (matchedSrc != NULL && matchedSrc->rtekind == RTE_RELATION &&
+		curVar != NULL && curVar->varattno > 0)
+	{
+		HeapTuple	attTuple;
+
+		attTuple = SearchSysCache2(ATTNUM,
+								   ObjectIdGetDatum(matchedSrc->relid),
+								   Int16GetDatum(curVar->varattno));
+		if (HeapTupleIsValid(attTuple))
+		{
+			Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(attTuple);
+			char *baseColName = NameStr(att->attname);
+
+			if (pg_strcasecmp(colname, baseColName) == 0)
+			{
+				Datum		attOptDatum;
+				bool		attOptIsNull;
+
+				attOptDatum = SysCacheGetAttr(ATTNUM, attTuple,
+											  Anum_pg_attribute_attoptions,
+											  &attOptIsNull);
+				if (!attOptIsNull)
+				{
+					ArrayType  *attoptions = DatumGetArrayTypeP(attOptDatum);
+					char	   *origName = get_value_by_name_from_array(
+						attoptions, ATTOPTION_BBF_ORIGINAL_NAME);
+					if (origName != NULL)
+						colname = origName;
+				}
+			}
+			ReleaseSysCache(attTuple);
+		}
+	}
+
+	{
+		char *escapedAlias = map_sql_identifier_to_xml_name(alias, true, true);
+		char *escapedColname = map_sql_identifier_to_xml_name(colname, true, true);
+
+		if (metadataStr->len > 0)
+			appendStringInfoChar(metadataStr, ',');
+		appendStringInfo(metadataStr, "%d.%s.%s", level, escapedAlias, escapedColname);
+	}
+}
+
+/*
  * processAutoColumns - Unified column processing for FOR JSON/XML AUTO
  *
  * Walks the query tree to determine which table each column belongs to and
- * at what nesting level. For JSON AUTO, encodes metadata by renaming target
- * entry resnames. For XML AUTO, builds a metadata string and injects it
- * into the aggregate's 9th argument.
+ * at what nesting level.
  *
- * Algorithm:
- * 1. Build CTE name-to-index hash table
+ * Algorithm (shared):
+ * 1. CTE name-to-index hash table (built in forAutoWalker)
  * 2. Build RTE alias-to-nesting-level hash table
  * 3. For each target entry, recursively unwrap CTE/subquery chains to find
  *    the ultimate source table, then assign a nesting level
- * 4. Encode the nesting metadata (mode-specific)
+ * 4. Encode the nesting metadata (mode-specific, see below)
+ *
+ * Unwrapping differences between modes:
+ * - XML AUTO: For recursive CTEs, looks for a base table sibling in the
+ *   current query's rtable as fallback alias for the element name.
+ * - JSON AUTO: Handles nested FOR JSON AUTO subqueries (SubLink) by
+ *   wrapping them in CoerceViaIO for JSON type coercion.
+ * - Both modes skip RTE_FUNCTION sources and use the most recently
+ *   assigned level for computed expressions (non-Var).
+ *
+ * Metadata representation:
+ * - JSON AUTO: Rewrites target entry resnames in-place via buildJsonEntry(),
+ *   embedding level and alias into the column name for the JSON sfunc.
+ * - XML AUTO: Builds a comma-separated metadata string
+ *   ("level.alias.colname,...") with XML-escaped names, and injects it
+ *   into the aggregate's 9th argument for use at execution time.
  */
 static void
 processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias, ForAutoContext *ctx, ForAutoMode mode)
@@ -1828,14 +1903,11 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 
 	int					targetIterIdx = 0;
 
-	/* CTE processing variables */
-	HTAB			   *ctenameIdxHash = ctx->ctenameIdxHash;
-	ListCell		   *cteLc;
-	CommonTableExpr	   *cteEntry;
-	CtenameIdx		   *cteHashEntry;
-	List			   *cteList = ctx->cteList;
-	HASHCTL				cteHashCtl;
-	int					cteIdx = 0;
+	/* CTE hash is already initialized in forAutoWalker */
+	HTAB *ctenameIdxHash = ctx->ctenameIdxHash;
+	List *cteList = ctx->cteList;
+	CommonTableExpr *cteEntry;
+	CtenameIdx *cteHashEntry;
 
 	/* Alias-to-level mapping variables */
 	HTAB			   *RTEAliasNestHash;
@@ -1851,36 +1923,6 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 	StringInfoData		metadataStr;
 	if (mode == FOR_AUTO_XML)
 		initStringInfo(&metadataStr);
-
-	/* Initialize CTE hash if needed */
-	if (ctenameIdxHash == NULL && cteList != NULL)
-	{
-		memset(&cteHashCtl, 0, sizeof(cteHashCtl));
-		cteHashCtl.keysize = NAMEDATALEN;
-		cteHashCtl.entrysize = sizeof(CtenameIdx);
-		cteHashCtl.hcxt = CurrentMemoryContext;
-		ctenameIdxHash = hash_create("ctenameIdxHash",
-									 FORJSON_INITIAL_HASH_SIZE,
-									 &cteHashCtl,
-									 HASH_ELEM | HASH_STRINGS);
-
-		foreach(cteLc, cteList)
-		{
-			cteEntry = (CommonTableExpr *) lfirst(cteLc);
-			cteHashEntry = (CtenameIdx *) hash_search(ctenameIdxHash,
-													  cteEntry->ctename,
-													  HASH_ENTER,
-													  &found);
-			if (found)
-				ereport(ERROR,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-						 errmsg("duplicate CTE name \"%s\" in FOR AUTO processing",
-								cteEntry->ctename)));
-			strcpy(cteHashEntry->ctename, cteEntry->ctename);
-			cteHashEntry->idx_in_ctelist = cteIdx;
-			cteIdx++;
-		}
-	}
 
 	/* Initialize RTE alias-to-nesting-level hash table */
 	memset(&rteHashCtl, 0, sizeof(rteHashCtl));
@@ -2008,14 +2050,20 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 				}
 				curQuery = castNode(Query, cteEntry->ctequery);
 				if (varAttNo < 1 || varAttNo > list_length(curQuery->targetList))
-					break;
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("FOR AUTO: varAttNo %d out of range for CTE target list (length %d)",
+									varAttNo, list_length(curQuery->targetList))));
 				curTargetEntry = (TargetEntry *) list_nth(curQuery->targetList, varAttNo - 1);
 			}
 			else if (!atOutermostLayer && matchedSrc->rtekind == RTE_SUBQUERY)
 			{
 				curQuery = matchedSrc->subquery;
 				if (varAttNo < 1 || varAttNo > list_length(curQuery->targetList))
-					break;
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("FOR AUTO: varAttNo %d out of range for subquery target list (length %d)",
+									varAttNo, list_length(curQuery->targetList))));
 				curTargetEntry = (TargetEntry *) list_nth(curQuery->targetList, varAttNo - 1);
 			}
 			else
@@ -2115,62 +2163,8 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 		}
 		else
 		{
-			/* XML AUTO: resolve original column name and build metadata string */
-			char *colname = outermostTargetEntry->resname;
-			if (colname == NULL || !strcmp(colname, "\?column\?"))
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("column expressions and data sources without names or aliases cannot be formatted as XML text using FOR XML clause. Add alias to the unnamed column or table")));
-			}
-
-			/*
-			 * If the column comes from a base table and the user did NOT
-			 * provide a column alias, look up the original (un-truncated)
-			 * name from pg_attribute.attoptions (bbf_original_name).
-			 */
-			if (matchedSrc != NULL && matchedSrc->rtekind == RTE_RELATION &&
-				curVar != NULL && curVar->varattno > 0)
-			{
-				HeapTuple	attTuple;
-
-				attTuple = SearchSysCache2(ATTNUM,
-										   ObjectIdGetDatum(matchedSrc->relid),
-										   Int16GetDatum(curVar->varattno));
-				if (HeapTupleIsValid(attTuple))
-				{
-					Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(attTuple);
-					char *baseColName = NameStr(att->attname);
-
-					if (pg_strcasecmp(colname, baseColName) == 0)
-					{
-						Datum		attOptDatum;
-						bool		attOptIsNull;
-
-						attOptDatum = SysCacheGetAttr(ATTNUM, attTuple,
-													  Anum_pg_attribute_attoptions,
-													  &attOptIsNull);
-						if (!attOptIsNull)
-						{
-							ArrayType  *attoptions = DatumGetArrayTypeP(attOptDatum);
-							char	   *origName = get_value_by_name_from_array(
-								attoptions, ATTOPTION_BBF_ORIGINAL_NAME);
-							if (origName != NULL)
-								colname = origName;
-						}
-					}
-					ReleaseSysCache(attTuple);
-				}
-			}
-
-			{
-				char *escapedAlias = map_sql_identifier_to_xml_name(assignedAlias, true, true);
-				char *escapedColname = map_sql_identifier_to_xml_name(colname, true, true);
-
-				if (metadataStr.len > 0)
-					appendStringInfoChar(&metadataStr, ',');
-				appendStringInfo(&metadataStr, "%d.%s.%s", assignedLevel, escapedAlias, escapedColname);
-			}
+			appendXmlAutoMetadataEntry(&metadataStr, outermostTargetEntry, assignedLevel,
+									   assignedAlias, matchedSrc, curVar);
 		}
 
 		targetIterIdx++;
@@ -2249,7 +2243,44 @@ static bool forAutoWalker(Node *node, ForAutoContext *ctx)
 		Query *q = (Query *)node;
 
 		if (q->cteList != NULL)
+		{
+			HASHCTL		cteHashCtl;
+			ListCell   *cteLc;
+			int			cteIdx = 0;
+			bool		found;
+
 			ctx->cteList = q->cteList;
+
+			/* Build CTE hash table here so it's ready for processAutoColumns */
+			if (ctx->ctenameIdxHash != NULL)
+				hash_destroy(ctx->ctenameIdxHash);
+
+			memset(&cteHashCtl, 0, sizeof(cteHashCtl));
+			cteHashCtl.keysize = NAMEDATALEN;
+			cteHashCtl.entrysize = sizeof(CtenameIdx);
+			cteHashCtl.hcxt = CurrentMemoryContext;
+			ctx->ctenameIdxHash = hash_create("ctenameIdxHash",
+											  FORJSON_INITIAL_HASH_SIZE,
+											  &cteHashCtl,
+											  HASH_ELEM | HASH_STRINGS);
+
+			foreach(cteLc, q->cteList)
+			{
+				CommonTableExpr *cteEntry = (CommonTableExpr *) lfirst(cteLc);
+				CtenameIdx *cteHashEntry = (CtenameIdx *) hash_search(ctx->ctenameIdxHash,
+																	  cteEntry->ctename,
+																	  HASH_ENTER,
+																	  &found);
+				if (found)
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("duplicate CTE name \"%s\" in FOR AUTO processing",
+									cteEntry->ctename)));
+				strcpy(cteHashEntry->ctename, cteEntry->ctename);
+				cteHashEntry->idx_in_ctelist = cteIdx;
+				cteIdx++;
+			}
+		}
 
 		/* First walk inner queries recursively */
 		query_tree_walker(q, forAutoWalker, (void *) ctx, 0);

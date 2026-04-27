@@ -51,6 +51,7 @@ typedef struct forxml_auto_state
 
 	/* State for XML generation */
 	int				max_depth;			/* Maximum nesting depth seen */
+	char		  **level_to_alias;		/* level_to_alias[level] = table alias for that level */
 	char		  **prev_values;		/* Previous row values for comparison */
 	int			   *open_element_levels; /* Track which levels have open elements */
 	bool			first_row;			/* Is this the first row? */
@@ -836,6 +837,15 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 	/* Allocate array to track open elements at each level */
 	auto_state->open_element_levels = (int *) palloc0((auto_state->max_depth + 1) * sizeof(int));
 
+	/* Build level-to-alias lookup array for O(1) access */
+	auto_state->level_to_alias = (char **) palloc0((auto_state->max_depth + 1) * sizeof(char *));
+	for (int i = 0; i < num_cols; i++)
+	{
+		int lvl = auto_state->nest_levels[i];
+		if (lvl > 0 && auto_state->level_to_alias[lvl] == NULL)
+			auto_state->level_to_alias[lvl] = auto_state->table_aliases[i];
+	}
+
 	auto_state->metadata_cached = true;
 }
 
@@ -928,28 +938,22 @@ close_elements_to_level(StringInfo state, forxml_auto_state *auto_state, int tar
 	{
 		if (auto_state->open_element_levels[level] > 0)
 		{
-			for (int i = 0; i < auto_state->num_columns; i++)
+			char *alias = auto_state->level_to_alias[level];
+			if (alias != NULL)
 			{
-				if (auto_state->nest_levels[i] == level && auto_state->table_aliases[i] != NULL)
-				{
-					appendStringInfo(state, "</%s>", auto_state->table_aliases[i]);
-					auto_state->open_element_levels[level] = 0;
-					break;
-				}
+				appendStringInfo(state, "</%s>", alias);
+				auto_state->open_element_levels[level] = 0;
 			}
 		}
 	}
 
 	if (target_level > 0 && auto_state->open_element_levels[target_level] > 0)
 	{
-		for (int i = 0; i < auto_state->num_columns; i++)
+		char *alias = auto_state->level_to_alias[target_level];
+		if (alias != NULL)
 		{
-			if (auto_state->nest_levels[i] == target_level && auto_state->table_aliases[i] != NULL)
-			{
-				appendStringInfo(state, "</%s>", auto_state->table_aliases[i]);
-				auto_state->open_element_levels[target_level] = 0;
-				break;
-			}
+			appendStringInfo(state, "</%s>", alias);
+			auto_state->open_element_levels[target_level] = 0;
 		}
 	}
 }
@@ -1182,19 +1186,8 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 	/* Output elements for each level from first_changed_level to deepest */
 	for (int level = first_changed_level; level <= deepest_level_in_row; level++)
 	{
-		char *table_alias = NULL;
-		bool has_columns_at_level = false;
-
-		/* Find the table alias for this level */
-		for (int i = 0; i < auto_state->num_columns; i++)
-		{
-			if (auto_state->nest_levels[i] == level && auto_state->table_aliases[i] != NULL)
-			{
-				if (!has_columns_at_level)
-					table_alias = auto_state->table_aliases[i];
-				has_columns_at_level = true;
-			}
-		}
+		char *table_alias = auto_state->level_to_alias[level];
+		bool has_columns_at_level = (table_alias != NULL);
 
 		if (!has_columns_at_level || table_alias == NULL)
 			continue;

@@ -596,6 +596,16 @@ WHERE long_alias_name.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
 
+-- 6.14 CTE with name longer than 63 characters (truncated by parser)
+;WITH this_is_a_very_long_cte_name_that_exceeds_sixty_three_characters_in_length AS (
+    SELECT CustomerID, CompanyName FROM forxmlauto_t_customers
+)
+SELECT c.CustomerID, c.CompanyName
+FROM this_is_a_very_long_cte_name_that_exceeds_sixty_three_characters_in_length c
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+
 
 
 -- ============================================
@@ -1386,5 +1396,9 @@ GO
 SELECT q.[col.one], q.[col.two]
 FROM forxmlauto_t_dot_cols q
 FOR XML AUTO, ROOT('Data');
+GO
+
+-- 19.13 Identifier containing literal _x002E_ (tests double-escaping)
+SELECT * FROM [_x002E_tbl] FOR XML AUTO;
 GO
 
