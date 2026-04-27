@@ -767,6 +767,15 @@ AS 'babelfishpg_tsql', 'get_enr_temp_table_attributes'
 LANGUAGE C STABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.babelfish_get_enr_temp_table_attributes() TO PUBLIC;
 
+-- SQL wrapper function to return required columns
+CREATE OR REPLACE FUNCTION sys.babelfish_get_enr_temp_table_attributes_internal()
+RETURNS TABLE ( attrelid oid, attnum smallint, attname name, attcollation oid ) 
+AS $$
+    SELECT attrelid, attnum, attname, attcollation
+    FROM sys.babelfish_get_enr_temp_table_attributes()
+    WHERE attnum > 0 AND NOT attisdropped;
+$$ LANGUAGE SQL STABLE;
+
 -- Permanent tables come from sys.all_columns, temp tables from ENR function and non-ENR pg_attribute.
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     SELECT
@@ -786,7 +795,7 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     WHERE
         c.is_sparse = 0
     UNION ALL
-    -- ENR temp tables
+	-- ENR temp tables
     SELECT
         CAST(a.attrelid AS int)          AS object_id,
         CAST(pg_my_temp_schema() AS int) AS schema_id,
@@ -799,30 +808,84 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         CAST(coll.collname AS nvarchar(128)) AS collation_90,
         CAST(coll.collname AS nvarchar(128)) AS collation_100
     FROM
-        sys.babelfish_get_enr_temp_table_attributes() a
+        sys.babelfish_get_enr_temp_table_attributes_internal() a
         LEFT JOIN pg_catalog.pg_collation coll ON (a.attcollation = coll.oid)
-    WHERE
-        a.attnum > 0 AND NOT a.attisdropped
-    UNION ALL
-    -- Non-ENR temp tables
-    SELECT
-        CAST(a.attrelid AS int)          AS object_id,
-        CAST(pg_my_temp_schema() AS int) AS schema_id,
-        CAST(a.attnum AS int)            AS colid,
-        CAST(CAST(a.attname AS sys.sysname) AS sys.varchar) AS name,
-        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_28,
-        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_90,
-        CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_100,
-        CAST(coll.collname AS nvarchar(128)) AS collation_28,
-        CAST(coll.collname AS nvarchar(128)) AS collation_90,
-        CAST(coll.collname AS nvarchar(128)) AS collation_100
-    FROM
-        pg_catalog.pg_attribute a
-        INNER JOIN pg_catalog.pg_class c ON a.attrelid = c.oid AND c.relnamespace = pg_my_temp_schema()
-        LEFT JOIN pg_catalog.pg_collation coll ON (a.attcollation = coll.oid)
-    WHERE
-        a.attnum > 0 AND NOT a.attisdropped;
+	UNION ALL
+	-- Non-ENR temp tables
+	SELECT
+		CAST(a.attrelid AS int)          AS object_id,
+		CAST(pg_my_temp_schema() AS int) AS schema_id,
+		CAST(a.attnum AS int)            AS colid,
+		CAST(CAST(a.attname AS sys.sysname) AS sys.varchar) AS name,
+		CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_28,
+		CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_90,
+		CAST(CollationProperty(coll.collname,'tdscollation') AS binary(5)) AS tds_collation_100,
+		CAST(coll.collname AS nvarchar(128)) AS collation_28,
+		CAST(coll.collname AS nvarchar(128)) AS collation_90,
+		CAST(coll.collname AS nvarchar(128)) AS collation_100
+	FROM
+		pg_catalog.pg_attribute a
+		INNER JOIN pg_catalog.pg_class c ON a.attrelid = c.oid AND c.relnamespace = pg_my_temp_schema()
+		LEFT JOIN pg_catalog.pg_collation coll ON (a.attcollation = coll.oid)
+	WHERE
+		a.attnum > 0 AND NOT a.attisdropped;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.all_sql_modules AS
+WITH all_sql_modules_cte AS MATERIALIZED (
+SELECT
+     CAST(t1.object_id as int)
+    ,CAST(t1.definition as sys.nvarchar)
+    ,CAST(t1.uses_ansi_nulls as sys.bit)
+    ,CAST(t1.uses_quoted_identifier as sys.bit)
+    ,CAST(t1.is_schema_bound as sys.bit)
+    ,CAST(t1.uses_database_collation as sys.bit)
+    ,CAST(t1.is_recompiled as sys.bit)
+    ,CAST(t1.null_on_null_input as sys.bit)
+    ,CAST(t1.execute_as_principal_id as int)
+    ,CAST(t1.uses_native_compilation as sys.bit)
+FROM sys.all_sql_modules_internal t1
+)
+SELECT * FROM all_sql_modules_cte;
+GRANT SELECT ON sys.all_sql_modules TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.system_sql_modules AS
+WITH system_sql_modules_cte AS MATERIALIZED ( 
+SELECT
+     CAST(t1.object_id as int)
+    ,CAST(t1.definition as sys.nvarchar)
+    ,CAST(t1.uses_ansi_nulls as sys.bit)
+    ,CAST(t1.uses_quoted_identifier as sys.bit)
+    ,CAST(t1.is_schema_bound as sys.bit)
+    ,CAST(t1.uses_database_collation as sys.bit)
+    ,CAST(t1.is_recompiled as sys.bit)
+    ,CAST(t1.null_on_null_input as sys.bit)
+    ,CAST(t1.execute_as_principal_id as int)
+    ,CAST(t1.uses_native_compilation as sys.bit)
+FROM sys.all_sql_modules_internal t1
+WHERE t1.is_ms_shipped = 1
+)
+SELECT * FROM system_sql_modules_cte;
+GRANT SELECT ON sys.system_sql_modules TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sql_modules AS
+WITH sql_modules_cte AS MATERIALIZED (
+SELECT
+     CAST(t1.object_id as int)
+    ,CAST(t1.definition as sys.nvarchar)
+    ,CAST(t1.uses_ansi_nulls as sys.bit)
+    ,CAST(t1.uses_quoted_identifier as sys.bit)
+    ,CAST(t1.is_schema_bound as sys.bit)
+    ,CAST(t1.uses_database_collation as sys.bit)
+    ,CAST(t1.is_recompiled as sys.bit)
+    ,CAST(t1.null_on_null_input as sys.bit)
+    ,CAST(t1.execute_as_principal_id as int)
+    ,CAST(t1.uses_native_compilation as sys.bit)
+FROM sys.all_sql_modules_internal t1
+WHERE t1.is_ms_shipped = 0
+)
+SELECT * FROM sql_modules_cte;
+GRANT SELECT ON sys.sql_modules TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
