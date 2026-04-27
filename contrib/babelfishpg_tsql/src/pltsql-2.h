@@ -3,6 +3,17 @@
 #include "pg_config_manual.h"
 
 /*
+ * INSERT EXEC info - shared by PLtsql_stmt_exec, PLtsql_stmt_exec_sp,
+ * and PLtsql_stmt_exec_batch.
+ */
+typedef struct InsertExecInfo
+{
+	bool		is_insert_exec;		/* Is this INSERT EXEC? */
+	char	   *target;				/* Target table for INSERT-EXEC */
+	char	   *columns;			/* Column list for INSERT-EXEC */
+} InsertExecInfo;
+
+/*
  * PRINT statement
  */
 typedef struct
@@ -90,6 +101,8 @@ typedef struct PLtsql_stmt_exec
 	char	   *db_name;
 	char	   *proc_name;
 	char	   *schema_name;
+
+	InsertExecInfo insert_exec;	/* INSERT EXEC info */
 		
 	bool		exec_with_recompile; /* forced recompile through EXECUTE */	
 } PLtsql_stmt_exec;
@@ -145,6 +158,8 @@ typedef struct PLtsql_stmt_exec_sp
 	PLtsql_expr *opt2;
 	PLtsql_expr *opt3;
 	List	   *stropt;
+
+	InsertExecInfo insert_exec;	/* INSERT EXEC info */
 } PLtsql_stmt_exec_sp;
 
 /*
@@ -165,6 +180,8 @@ typedef struct PLtsql_stmt_exec_batch
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *expr;
+
+	InsertExecInfo insert_exec;	/* INSERT EXEC info */
 } PLtsql_stmt_exec_batch;
 
 typedef struct PLtsql_stmt_raiserror
