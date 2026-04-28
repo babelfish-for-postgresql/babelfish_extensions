@@ -1,0 +1,487 @@
+-- tsql
+-- BABEL-5264: Tests for sp_tablecollations_100 with temp table support
+
+-- Basic ENR temp table
+CREATE TABLE #collTest1(id int, name varchar(50) collate bbf_unicode_cp1_ci_as, description nvarchar(100) collate bbf_unicode_cp1_ci_ai)
+GO
+
+EXEC sp_tablecollations_100 '#collTest1'
+GO
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#collTest1'
+GO
+
+DROP TABLE #collTest1
+GO
+
+CREATE TABLE #viewTest1(id int, name varchar(50) collate bbf_unicode_cp1_ci_ai, description nvarchar(100) collate bbf_unicode_cp1_ci_as)
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewTest1') ORDER BY colid
+GO
+
+EXEC tempdb.dbo.sp_tablecollations_100 '#viewTest1'
+GO
+
+DROP TABLE #viewTest1
+GO
+
+-- Temp table with various column types
+CREATE TABLE #collTest2(
+    a int,
+    b varchar(100) collate bbf_unicode_cp1_ci_as,
+    c nvarchar(50) collate bbf_unicode_cp1_ci_ai,
+    d char(5) collate bbf_unicode_cp1_ci_as,
+    e nchar(10) collate bbf_unicode_cp1_ci_ai,
+    f binary(10),
+    g varbinary(20)
+)
+GO
+
+EXEC sp_tablecollations_100 '#collTest2'
+GO
+
+DROP TABLE #collTest2
+GO
+
+CREATE TABLE #viewTest2(
+    a int,
+    b varchar(100) collate bbf_unicode_cp1_ci_ai,
+    c nvarchar(50) collate bbf_unicode_cp1_ci_as,
+    d char(5) collate bbf_unicode_cp1_ci_ai,
+    e nchar(10) collate bbf_unicode_cp1_ci_as,
+    f binary(10),
+    g varbinary(20)
+)
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewTest2') ORDER BY colid
+GO
+
+DROP TABLE #viewTest2
+GO
+
+-- Temp table with no character columns
+CREATE TABLE #noCharCols(
+    id int,
+    amount bigint,
+    price decimal(10,2),
+    flag bit,
+    data binary(8)
+)
+GO
+
+EXEC sp_tablecollations_100 '#noCharCols'
+GO
+
+DROP TABLE #noCharCols
+GO
+
+CREATE TABLE #viewNoChar(
+    id int,
+    amount bigint,
+    price decimal(10,2)
+)
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewNoChar') ORDER BY colid
+GO
+
+DROP TABLE #viewNoChar
+GO
+
+-- Non-ENR temp table
+CREATE TABLE #nonEnrTest1(id int, name dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_as, description nvarchar(100) collate bbf_unicode_cp1_ci_as)
+GO
+
+EXEC sp_tablecollations_100 '#nonEnrTest1'
+GO
+
+DROP TABLE #nonEnrTest1
+GO
+
+CREATE TABLE #viewNonEnr1(id int, name dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_ai, description nvarchar(100) collate bbf_unicode_cp1_ci_ai)
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewNonEnr1') ORDER BY colid
+GO
+
+DROP TABLE #viewNonEnr1
+GO
+
+-- Non-ENR temp table with multiple UDT columns
+CREATE TABLE #nonEnrTest2(
+    a int,
+    b dbo.TestVarcharType2 collate bbf_unicode_cp1_ci_ai,
+    c nvarchar(100) collate bbf_unicode_cp1_ci_as,
+    d binary(10)
+)
+GO
+
+EXEC sp_tablecollations_100 '#nonEnrTest2'
+GO
+
+DROP TABLE #nonEnrTest2
+GO
+
+CREATE TABLE #viewNonEnr2(
+    a int,
+    b dbo.TestVarcharType2 collate bbf_unicode_cp1_ci_as,
+    c nvarchar(100) collate bbf_unicode_cp1_ci_ai,
+    d binary(10)
+)
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewNonEnr2') ORDER BY colid
+GO
+
+DROP TABLE #viewNonEnr2
+GO
+
+-- Non-ENR temp table with no character columns
+CREATE TABLE #nonEnrNoChar(
+    id dbo.TestIntType,
+    amount bigint,
+    price decimal(10,2)
+)
+GO
+
+EXEC sp_tablecollations_100 '#nonEnrNoChar'
+GO
+
+DROP TABLE #nonEnrNoChar
+GO
+
+CREATE TABLE #viewNonEnrNoChar(
+    id dbo.TestIntType,
+    amount bigint,
+    price decimal(10,2)
+)
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewNonEnrNoChar') ORDER BY colid
+GO
+
+DROP TABLE #viewNonEnrNoChar
+GO
+
+-- Multiple temp tables at once
+CREATE TABLE #multiTest1(a varchar(50) collate bbf_unicode_cp1_ci_as)
+GO
+
+CREATE TABLE #multiTest2(b nvarchar(100) collate bbf_unicode_cp1_ci_ai)
+GO
+
+EXEC sp_tablecollations_100 '#multiTest1'
+GO
+
+EXEC sp_tablecollations_100 '#multiTest2'
+GO
+
+DROP TABLE #multiTest1
+GO
+
+DROP TABLE #multiTest2
+GO
+
+CREATE TABLE #viewMulti1(a varchar(50) collate bbf_unicode_cp1_ci_ai)
+GO
+
+CREATE TABLE #viewMulti2(b nvarchar(100) collate bbf_unicode_cp1_ci_as)
+GO
+
+SELECT 'viewMulti1' as tablename, colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewMulti1') ORDER BY colid
+GO
+
+SELECT 'viewMulti2' as tablename, colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#viewMulti2') ORDER BY colid
+GO
+
+DROP TABLE #viewMulti1
+GO
+
+DROP TABLE #viewMulti2
+GO
+
+-- Non-existent temp table
+EXEC sp_tablecollations_100 '#nonExistentTable'
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#nonExistentTable') ORDER BY colid
+GO
+
+-- Regular permanent table
+CREATE TABLE babel5264_perm_table(id int, name varchar(50) collate bbf_unicode_cp1_ci_as, description nvarchar(100) collate bbf_unicode_cp1_ci_ai)
+GO
+
+EXEC sp_tablecollations_100 'babel5264_perm_table'
+GO
+
+DROP TABLE babel5264_perm_table
+GO
+
+CREATE TABLE babel5264_perm_view_test(id int, name varchar(50) collate bbf_unicode_cp1_ci_ai, description nvarchar(100) collate bbf_unicode_cp1_ci_as)
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('babel5264_perm_view_test') ORDER BY colid
+GO
+
+DROP TABLE babel5264_perm_view_test
+GO
+
+-- Test babelfish_get_enr_temp_table_attributes function directly (ENR temp table)
+CREATE TABLE #attrTest(col1 int, col2 varchar(50) collate bbf_unicode_cp1_ci_as, col3 nvarchar(100) collate bbf_unicode_cp1_ci_as)
+GO
+
+SELECT attname, attnum FROM sys.babelfish_get_enr_temp_table_attributes() 
+WHERE attnum > 0 ORDER BY attrelid, attnum
+GO
+
+DROP TABLE #attrTest
+GO
+
+-- Test babelfish_get_enr_temp_table_attributes with non-ENR temp table
+CREATE TABLE #attrTestNonEnr(col1 int, col2 dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_ai, col3 nvarchar(100) collate bbf_unicode_cp1_ci_ai)
+GO
+
+SELECT attname, attnum FROM sys.babelfish_get_enr_temp_table_attributes() 
+WHERE attnum > 0 ORDER BY attrelid, attnum
+GO
+
+DROP TABLE #attrTestNonEnr
+GO
+
+-- Test with mixed ENR and non-ENR temp tables
+CREATE TABLE #mixedEnr(a varchar(50) collate bbf_unicode_cp1_ci_as)
+GO
+
+CREATE TABLE #mixedNonEnr(b dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_ai)
+GO
+
+EXEC sp_tablecollations_100 '#mixedEnr'
+GO
+
+EXEC sp_tablecollations_100 '#mixedNonEnr'
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#mixedEnr') ORDER BY colid
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#mixedNonEnr') ORDER BY colid
+GO
+
+DROP TABLE #mixedEnr
+GO
+
+DROP TABLE #mixedNonEnr
+GO
+
+-- View count check - should include temp tables
+CREATE TABLE #countTest(a varchar(50) collate bbf_unicode_cp1_ci_as)
+GO
+
+SELECT COUNT(*) as total_rows FROM sys.spt_tablecollations_view WHERE object_id = OBJECT_ID('#countTest')
+GO
+
+DROP TABLE #countTest
+GO
+
+-- psql
+-- babelfish_get_enr_temp_table_attributes on non-TDS connection
+CREATE TEMP TABLE pg_temp_test(id int, name varchar(50), description text);
+GO
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_enr_temp_table_attributes();
+GO
+
+DROP TABLE pg_temp_test;
+GO
+
+-- psql
+-- View query on non-TDS connection with PG temp table
+CREATE TEMP TABLE pg_view_test(id int, name varchar(50));
+GO
+
+SELECT COUNT(*) AS view_count FROM sys.spt_tablecollations_view 
+WHERE schema_id = pg_my_temp_schema();
+GO
+
+DROP TABLE pg_view_test;
+GO
+
+-- psql
+-- PG temp table with # in name
+CREATE TEMP TABLE "#pg_hash_temp"(id int, name varchar(50));
+GO
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_enr_temp_table_attributes();
+GO
+
+DROP TABLE "#pg_hash_temp";
+GO
+
+-- tsql
+-- Verify TDS connection returns results after psql tests
+CREATE TABLE #tdsVerify(col1 varchar(50) collate bbf_unicode_cp1_ci_ai)
+GO
+
+EXEC sp_tablecollations_100 '#tdsVerify'
+GO
+
+SELECT COUNT(*) AS attr_count FROM sys.babelfish_get_enr_temp_table_attributes() WHERE attnum > 0
+GO
+
+DROP TABLE #tdsVerify
+GO
+
+-- Call procedure via wrapper proc - ENR temp table
+CREATE TABLE #procWrapperTest1(col1 varchar(50) collate bbf_unicode_cp1_ci_as, col2 nvarchar(100) collate bbf_unicode_cp1_ci_ai)
+GO
+
+EXEC dbo.babel5264_test_proc '#procWrapperTest1'
+GO
+
+DROP TABLE #procWrapperTest1
+GO
+
+-- Call procedure via wrapper proc - non-ENR temp table
+CREATE TABLE #procWrapperTest2(col1 dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_ai, col2 nvarchar(100) collate bbf_unicode_cp1_ci_as)
+GO
+
+EXEC dbo.babel5264_test_proc '#procWrapperTest2'
+GO
+
+DROP TABLE #procWrapperTest2
+GO
+
+-- Call view via wrapper proc - ENR temp table
+CREATE TABLE #viewWrapperTest1(col1 varchar(50) collate bbf_unicode_cp1_ci_as, col2 nvarchar(100) collate bbf_unicode_cp1_ci_as)
+GO
+
+EXEC dbo.babel5264_test_view_proc '#viewWrapperTest1'
+GO
+
+DROP TABLE #viewWrapperTest1
+GO
+
+-- Call view via wrapper proc - non-ENR temp table
+CREATE TABLE #viewWrapperTest2(col1 dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_ai, col2 nvarchar(100) collate bbf_unicode_cp1_ci_ai)
+GO
+
+EXEC dbo.babel5264_test_view_proc '#viewWrapperTest2'
+GO
+
+DROP TABLE #viewWrapperTest2
+GO
+
+-- Call function via wrapper proc - ENR temp table
+CREATE TABLE #funcWrapperTest1(col1 varchar(50) collate bbf_unicode_cp1_ci_ai, col2 nvarchar(100) collate bbf_unicode_cp1_ci_as)
+GO
+
+EXEC dbo.babel5264_test_func_proc
+GO
+
+DROP TABLE #funcWrapperTest1
+GO
+
+-- Call function via wrapper proc - non-ENR temp table
+CREATE TABLE #funcWrapperTest2(col1 dbo.TestVarcharType1 collate bbf_unicode_cp1_ci_as, col2 nvarchar(100) collate bbf_unicode_cp1_ci_ai)
+GO
+
+EXEC dbo.babel5264_test_func_proc
+GO
+
+DROP TABLE #funcWrapperTest2
+GO
+
+-- Test PL/pgSQL procedure that creates temp table (non-ENR)
+EXEC dbo.psql_temp_proc
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#temp1') ORDER BY colid
+GO
+
+EXEC sp_tablecollations_100 '#temp1'
+GO
+
+SELECT COUNT(*) AS enr_attr_count FROM sys.babelfish_get_enr_temp_table_attributes() WHERE attnum > 0
+GO
+
+DROP TABLE "#temp1"
+GO
+
+-- Test PL/pgSQL procedure that creates regular table
+EXEC dbo.psql_reg_proc
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('perm1') ORDER BY colid
+GO
+
+EXEC sp_tablecollations_100 'perm1'
+GO
+
+DROP TABLE perm1
+GO
+
+-- Test PL/pgSQL procedure that creates regular table with # in name
+EXEC dbo.psql_hash_proc
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#table1') ORDER BY colid
+GO
+
+EXEC sp_tablecollations_100 '#table1'
+GO
+
+DROP TABLE "#table1"
+GO
+
+-- Test with multiple collations
+CREATE TABLE #multiCollationTest(
+    col1 varchar(50) collate "default",
+    col2 varchar(50) collate Latin1_General_CI_AS,
+    col3 nvarchar(50) collate Latin1_General_CS_AS,
+    col4 char(20) collate bbf_unicode_cp1_ci_as,
+    col5 nchar(20) collate bbf_unicode_cp1_ci_ai,
+    col6 text collate bbf_unicode_cp1_cs_as,
+    col7 ntext collate Polish_CI_AS,
+    col8 varchar(max) collate Polish_CS_AS,
+    col9 nvarchar(max) collate Modern_Spanish_CI_AS,
+    col10 char(30) collate Modern_Spanish_CS_AS,
+    col11 nchar(30) collate Traditional_Spanish_CI_AS,
+    col12 text collate French_CI_AS,
+    col13 ntext collate French_CS_AS,
+    col14 varchar(100) collate Greek_CI_AS,
+    col15 nvarchar(100) collate Cyrillic_General_CI_AS,
+    col16 char(50) collate Hebrew_CI_AS,
+    col17 nchar(50) collate Thai_CI_AS,
+    col18 varchar(max) collate Japanese_CI_AS,
+    col19 nvarchar(max) collate Korean_Wansung_CI_AS,
+    col20 text collate Chinese_PRC_CI_AS,
+    col21 ntext collate Vietnamese_CI_AS
+)
+GO
+
+EXEC sp_tablecollations_100 '#multiCollationTest'
+GO
+
+SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view 
+WHERE object_id = OBJECT_ID('#multiCollationTest') ORDER BY colid
+GO
+
+DROP TABLE #multiCollationTest
+GO
