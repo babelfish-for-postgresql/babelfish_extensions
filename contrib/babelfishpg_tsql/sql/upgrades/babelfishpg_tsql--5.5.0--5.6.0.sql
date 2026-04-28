@@ -235,7 +235,7 @@ $$;
 
 -- Deprecate and drop old aggregates first (they depend on the function)
 
--- Deprecate and drop old aggregate (5 args) - tsql_select_for_xml_agg
+-- Deprecate and drop old aggregate (6 args) - tsql_select_for_xml_agg
 DO $$
 DECLARE
     exception_message text;
@@ -250,7 +250,7 @@ END;
 $$;
 
 CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_agg_deprecated_in_5_6_0', 'anyelement, integer, text, boolean, text');
--- Deprecate and drop old aggregate (5 args) - tsql_select_for_xml_text_agg
+-- Deprecate and drop old aggregate (6 args) - tsql_select_for_xml_text_agg
 DO $$
 DECLARE
     exception_message text;
@@ -280,7 +280,7 @@ END;
 $$;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_sfunc_deprecated_in_5_6_0');
 
--- Create new function with ELEMENTS parameters (8 args: state + 7 user args)
+-- Create new function with ELEMENTS parameters (8 args)
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
     state INTERNAL,
     rec ANYELEMENT,
@@ -294,7 +294,7 @@ CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
 AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
 LANGUAGE C STABLE;
 
--- Create new aggregate with ELEMENTS parameters (7 user args)
+-- Create new aggregate with ELEMENTS parameters (8 args)
 CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
     rec ANYELEMENT,
     mode int,
@@ -309,7 +309,7 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
     FINALFUNC = tsql_query_to_xml_ffunc
 );
 
--- Create new aggregate with ELEMENTS parameters (7 user args)
+-- Create new aggregate with ELEMENTS parameters (8 args)
 CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     rec ANYELEMENT,
     mode int,
