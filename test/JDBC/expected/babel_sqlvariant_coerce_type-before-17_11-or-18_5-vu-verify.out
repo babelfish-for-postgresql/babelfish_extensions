@@ -10,9 +10,10 @@
 -- 1a. sql_variant in 1st branch (THEN), other type in ELSE
 SELECT CASE WHEN 1 = 1 THEN CAST(1 AS sql_variant) ELSE CAST(0 AS bit) END AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+1
+~~END~~
 
 
 SELECT CASE WHEN 1 = 1 THEN CAST(1 AS sql_variant) ELSE CAST(0 AS int) END AS result
@@ -41,9 +42,10 @@ hello
 
 SELECT CASE WHEN 1 = 1 THEN CAST(3.14 AS sql_variant) ELSE CAST(2.71 AS float) END AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type sql_variant to double precision)~~
+~~START~~
+sql_variant
+3.14
+~~END~~
 
 
 SELECT CASE WHEN 1 = 1 THEN CAST(100 AS sql_variant) ELSE CAST(200.50 AS numeric(10,2)) END AS result
@@ -109,9 +111,10 @@ SELECT CASE 2
    ELSE CAST('default' AS varchar(50))
 END AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+second
+~~END~~
 
 
 -- 1e. sql_variant in 3rd WHEN of multi-branch CASE
@@ -122,9 +125,10 @@ SELECT CASE 3
    ELSE CAST('default' AS varchar(50))
 END AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+third
+~~END~~
 
 
 -- 1f. sql_variant in last branch (ELSE) of multi-branch CASE
@@ -164,9 +168,10 @@ SELECT CASE 3
    ELSE CAST('default' AS varchar(50))
 END AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+third
+~~END~~
 
 
 -- 1f4. 5 WHENs + ELSE: sql_variant in middle (3rd) WHEN
@@ -207,9 +212,10 @@ SELECT CASE 2
    ELSE CAST('default' AS varchar(50))
 END AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+<NULL>
+~~END~~
 
 
 -- 1f7. 4 WHENs + ELSE: NULL sql_variant in 3rd WHEN
@@ -221,9 +227,10 @@ SELECT CASE 3
    ELSE CAST('default' AS varchar(50))
 END AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+<NULL>
+~~END~~
 
 
 -- 1f8. 3 WHENs + ELSE: NULL sql_variant in ELSE
@@ -248,9 +255,10 @@ SELECT CASE
    ELSE CAST(3.14 AS float)
 END AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type "bit" to double precision)~~
+~~START~~
+sql_variant
+found
+~~END~~
 
 
 -- 1f10. Searched CASE with 4 conditions: sql_variant in 3rd WHEN
@@ -262,9 +270,10 @@ SELECT CASE
    ELSE CAST('default' AS varchar(50))
 END AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+found
+~~END~~
 
 
 -- 1f11. Searched CASE: sql_variant in ELSE with 3 WHENs
@@ -284,16 +293,18 @@ fallback
 -- 1g. SERVERPROPERTY returns sql_variant (original reported queries)
 SELECT CASE WHEN 1 = 1 THEN SERVERPROPERTY('IsFullTextInstalled') ELSE CAST(0 AS bit) END AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+0
+~~END~~
 
 
 SELECT CASE WHEN SERVERPROPERTY('EngineEdition') = 8 THEN SERVERPROPERTY('IsFullTextInstalled') ELSE CAST(0 AS bit) END AS test_result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+false
+~~END~~
 
 
 -- 1h. sql_variant with untyped NULL branches
@@ -316,9 +327,10 @@ sql_variant
 -- 1i. NULL sql_variant (CAST(NULL AS sql_variant)) in different positions
 SELECT CASE WHEN 1 = 1 THEN CAST(NULL AS sql_variant) ELSE CAST(0 AS bit) END AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+<NULL>
+~~END~~
 
 
 SELECT CASE WHEN 1 = 1 THEN CAST(0 AS bit) ELSE CAST(NULL AS sql_variant) END AS result
@@ -381,9 +393,11 @@ sql_variant
 -- 1k. CASE using table columns with sql_variant
 SELECT CASE WHEN id = 1 THEN sv_col ELSE CAST(0 AS bit) END AS result FROM babel_case_sqlvariant_t1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+1
+false
+~~END~~
 
 
 SELECT CASE WHEN id = 1 THEN CAST(0 AS bit) ELSE sv_col END AS result FROM babel_case_sqlvariant_t1
@@ -699,69 +713,78 @@ sql_variant
 -- 3f. NULL sql_variant as 1st arg (tests COALESCE NULL-skipping fix)
 SELECT COALESCE(CAST(NULL AS sql_variant), CAST(0 AS bit)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+false
+~~END~~
 
 
 SELECT COALESCE(CAST(NULL AS sql_variant), CAST(100 AS int)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to integer)~~
+~~START~~
+sql_variant
+100
+~~END~~
 
 
 SELECT COALESCE(CAST(NULL AS sql_variant), CAST('hello' AS varchar(50))) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to "varchar")~~
+~~START~~
+sql_variant
+hello
+~~END~~
 
 
 SELECT COALESCE(CAST(NULL AS sql_variant), CAST(3.14 AS float)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to double precision)~~
+~~START~~
+sql_variant
+3.14
+~~END~~
 
 
 SELECT COALESCE(CAST(NULL AS sql_variant), CAST(NULL AS bit), CAST(100 AS int)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to integer)~~
+~~START~~
+sql_variant
+100
+~~END~~
 
 
 -- 3g. NULL sql_variant in middle position
 SELECT COALESCE(CAST(0 AS bit), CAST(NULL AS sql_variant), CAST(100 AS int)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to integer)~~
+~~START~~
+sql_variant
+false
+~~END~~
 
 
 -- 3h. NULL sql_variant as last arg
 SELECT COALESCE(CAST(0 AS bit), CAST(100 AS int), CAST(NULL AS sql_variant)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to integer)~~
+~~START~~
+sql_variant
+false
+~~END~~
 
 
 -- 3i. All NULL sql_variant
 SELECT COALESCE(CAST(NULL AS sql_variant), CAST(NULL AS sql_variant)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: At least one of the arguments to COALESCE must be a non-NULL constant)~~
+~~START~~
+sql_variant
+<NULL>
+~~END~~
 
 
 -- 3j. NULL sql_variant with NULL other types
 SELECT COALESCE(CAST(NULL AS sql_variant), CAST(NULL AS int), CAST(1 AS bit)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+true
+~~END~~
 
 
 
@@ -828,9 +851,11 @@ UNION ALL
 SELECT CAST(1 AS sql_variant) AS col
 ) t ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UNION could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+false
+1
+~~END~~
 
 
 SELECT col FROM (
@@ -868,9 +893,12 @@ UNION ALL
 SELECT CAST(1 AS sql_variant) AS col
 ) t ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UNION could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+false
+1
+100
+~~END~~
 
 
 -- 4d. sql_variant in 1st, other types follow
@@ -910,9 +938,11 @@ UNION ALL
 SELECT CAST(NULL AS sql_variant) AS col
 ) t ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UNION could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+<NULL>
+false
+~~END~~
 
 
 SELECT col FROM (
@@ -949,9 +979,12 @@ UNION ALL
 SELECT CAST(NULL AS sql_variant) AS col
 ) t ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UNION could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+<NULL>
+false
+100
+~~END~~
 
 
 
@@ -992,9 +1025,11 @@ UNION
 SELECT CAST(1 AS sql_variant) AS col
 ) t ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UNION could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+false
+1
+~~END~~
 
 
 SELECT col FROM (
@@ -1019,9 +1054,12 @@ UNION
 SELECT CAST(1 AS sql_variant) AS col
 ) t ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UNION could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+false
+1
+100
+~~END~~
 
 
 -- 5d. NULL sql_variant in UNION
@@ -1044,9 +1082,11 @@ UNION
 SELECT CAST(NULL AS sql_variant) AS col
 ) t ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UNION could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+<NULL>
+false
+~~END~~
 
 
 SELECT col FROM (
@@ -1096,9 +1136,9 @@ INTERSECT
 SELECT CAST(1 AS sql_variant) AS col
 ) t ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: INTERSECT could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+~~END~~
 
 
 SELECT col FROM (
@@ -1121,9 +1161,9 @@ INTERSECT
 SELECT CAST(1 AS sql_variant) AS col
 ) t ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: INTERSECT could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+~~END~~
 
 
 -- 6d. NULL sql_variant in INTERSECT
@@ -1144,9 +1184,9 @@ INTERSECT
 SELECT CAST(NULL AS sql_variant) AS col
 ) t ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: INTERSECT could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+~~END~~
 
 
 SELECT col FROM (
@@ -1208,9 +1248,10 @@ EXCEPT
 SELECT CAST(1 AS sql_variant) AS col
 ) t ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: EXCEPT could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+false
+~~END~~
 
 
 SELECT col FROM (
@@ -1234,9 +1275,9 @@ EXCEPT
 SELECT CAST(1 AS sql_variant) AS col
 ) t ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: EXCEPT could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+~~END~~
 
 
 -- 7d. NULL sql_variant in EXCEPT
@@ -1258,9 +1299,10 @@ EXCEPT
 SELECT CAST(NULL AS sql_variant) AS col
 ) t ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: EXCEPT could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+false
+~~END~~
 
 
 SELECT col FROM (
@@ -1334,9 +1376,11 @@ SELECT * FROM (VALUES
   (CAST(1 AS sql_variant))
 ) AS t(col) ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: VALUES could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+false
+1
+~~END~~
 
 
 SELECT * FROM (VALUES
@@ -1358,9 +1402,12 @@ SELECT * FROM (VALUES
   (CAST(1 AS sql_variant))
 ) AS t(col) ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: VALUES could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+false
+1
+100
+~~END~~
 
 
 -- 8d. sql_variant in 1st row, multiple other types follow
@@ -1388,9 +1435,13 @@ SELECT * FROM (VALUES
   (CAST(1 AS sql_variant))
 ) AS t(col) ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: VALUES could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+hello
+false
+1
+100
+~~END~~
 
 
 -- 8f. NULL sql_variant in VALUES
@@ -1411,9 +1462,11 @@ SELECT * FROM (VALUES
   (CAST(NULL AS sql_variant))
 ) AS t(col) ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: VALUES could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+<NULL>
+false
+~~END~~
 
 
 SELECT * FROM (VALUES
@@ -1446,9 +1499,12 @@ SELECT * FROM (VALUES
   (CAST(NULL AS sql_variant))
 ) AS t(col) ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: VALUES could not convert type sql_variant to "bit")~~
+~~START~~
+sql_variant
+<NULL>
+false
+100
+~~END~~
 
 
 
@@ -1631,23 +1687,26 @@ sql_variant
 -- 13e. COALESCE with additional data types
 SELECT COALESCE(CAST(NULL AS sql_variant), CAST('2025-01-01' AS date)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to date)~~
+~~START~~
+sql_variant
+2025-01-01
+~~END~~
 
 
 SELECT COALESCE(CAST(NULL AS sql_variant), CAST(100.00 AS money)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to money)~~
+~~START~~
+sql_variant
+100.0000
+~~END~~
 
 
 SELECT COALESCE(CAST(NULL AS sql_variant), CAST(100 AS bigint)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to bigint)~~
+~~START~~
+sql_variant
+100
+~~END~~
 
 
 -- 13f. UNION with additional data types
@@ -1721,9 +1780,10 @@ sql_variant
 -- 15b. CASE: UDT based on sql_variant vs other type
 SELECT CASE WHEN 1 = 1 THEN CAST(1 AS babel_sqlvariant_udt_sv) ELSE CAST(0 AS bit) END AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CASE/WHEN could not convert type babel_sqlvariant_udt_sv to "bit")~~
+~~START~~
+sql_variant
+1
+~~END~~
 
 
 SELECT CASE WHEN 1 = 1 THEN CAST(0 AS bit) ELSE CAST(1 AS babel_sqlvariant_udt_sv) END AS result
@@ -1737,16 +1797,18 @@ false
 -- 15c. COALESCE: sql_variant vs UDT(int)
 SELECT COALESCE(CAST(NULL AS sql_variant), CAST(100 AS babel_sqlvariant_udt_int)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to babel_sqlvariant_udt_int)~~
+~~START~~
+sql_variant
+100
+~~END~~
 
 
 SELECT COALESCE(CAST(100 AS babel_sqlvariant_udt_int), CAST(1 AS sql_variant)) AS result
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: COALESCE could not convert type sql_variant to babel_sqlvariant_udt_int)~~
+~~START~~
+sql_variant
+100
+~~END~~
 
 
 -- 15d. COALESCE: UDT based on sql_variant vs other type
@@ -1813,7 +1875,9 @@ UNION ALL
 SELECT CAST(1 AS babel_sqlvariant_udt_sv) AS col
 ) t ORDER BY col
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UNION could not convert type babel_sqlvariant_udt_sv to "bit")~~
+~~START~~
+sql_variant
+false
+1
+~~END~~
 
