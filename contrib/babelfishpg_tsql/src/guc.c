@@ -956,8 +956,8 @@ define_custom_variables(void)
 							 NULL,
 							 &pltsql_enable_new_insert_exec,
 							 false,
-							 PGC_USERSET,
-							 GUC_NOT_IN_SAMPLE,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
 	DefineCustomBoolVariable("babelfishpg_tsql.noexec",
