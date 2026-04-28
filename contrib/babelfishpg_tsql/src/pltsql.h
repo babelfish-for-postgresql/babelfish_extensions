@@ -2390,6 +2390,57 @@ extern bool 	is_numeric_datatype(Oid typid);
  */
 extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
 
+/*
+ * INSERT EXEC functions (pl_insert_exec.c)
+ */
+extern void pltsql_set_insert_exec_context_info(const char *target_table, const char *column_list);
+extern void pltsql_set_insert_exec_context(Oid temp_table_oid);
+extern void pltsql_clear_insert_exec_context(void);
+extern void pltsql_insert_exec_reset_all(void);
+extern bool pltsql_insert_exec_active(void);
+extern bool pltsql_insert_exec_in_execution(void);
+extern bool pltsql_insert_exec_flush_in_progress(void);
+extern void pltsql_insert_exec_set_flush_in_progress(bool in_progress);
+extern void pltsql_insert_exec_set_target_table(const char *target_table);
+extern Oid pltsql_get_insert_exec_temp_table_oid(void);
+extern const char *pltsql_get_insert_exec_target_table(void);
+extern Oid pltsql_get_insert_exec_target_rel_oid(void);
+extern const char *pltsql_get_insert_exec_column_list(void);
+extern const char *pltsql_get_insert_exec_temp_table_name(void);
+extern bool pltsql_insert_exec_in_trycatch(void);
+extern bool pltsql_insert_exec_should_cleanup_on_trycatch(void);
+extern Oid pltsql_get_and_clear_insert_exec_temp_table_for_cleanup(void);
+extern void pltsql_insert_exec_set_error_flag(void);
+extern bool pltsql_insert_exec_had_error(void);
+extern void pltsql_insert_exec_clear_error_flag(void);
+extern void pltsql_insert_exec_set_implicit_txn_flag(void);
+extern bool pltsql_insert_exec_started_implicit_txn(void);
+extern void pltsql_insert_exec_clear_implicit_txn_flag(void);
+extern void pltsql_insert_exec_set_pending_drop(void);
+extern void pltsql_insert_exec_check_pending_drop(void);
+extern void pltsql_insert_exec_open_target_table(const char *target_table);
+extern void pltsql_insert_exec_close_target_table(void);
+extern bool pltsql_insert_exec_verify_schema(void);
+extern bool pltsql_insert_exec_validate_column_count_from_query(const char *query_string);
+
+/* INSERT EXEC helper functions */
+extern bool insert_exec_setup(PLtsql_execstate *estate,
+							  const char *target_table,
+							  const char *column_list,
+							  Oid *temp_table_oid_out,
+							  DestReceiver **dest_out);
+extern void insert_exec_error_cleanup(bool setup_done);
+extern void insert_exec_success_cleanup(PLtsql_execstate *estate, Oid temp_table_oid);
+extern bool parse_insert_exec_table_name(const char *target_table,
+										 char **schema_name_out,
+										 char **table_name_out,
+										 char **physical_schema_out,
+										 bool get_physical);
+extern DestReceiver *CreateInsertExecDestReceiver(Oid temp_table_oid);
+extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list);
+extern void drop_insert_exec_temp_table(Oid temp_table_oid);
+extern void flush_insert_exec_temp_table(PLtsql_execstate *estate);
+
 #define NUM_DB_OBJECTS 11
 
 extern const char *shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2];
