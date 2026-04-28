@@ -1632,7 +1632,11 @@ public:
 		PLtsql_stmt *old_stmt = getPLtsql_fragment(ctx);
 		ParserRuleContext *container = peekContainer();
 
-		if (old_stmt && container)
+		/* Container must be valid to graft statements */
+		if (!container)
+			return;
+
+		if (old_stmt)
 		{
 			List *siblings = getCode(container);
 
@@ -2027,22 +2031,23 @@ public:
 			/* Create the EXEC statement - could be PLtsql_stmt_exec or PLtsql_stmt_exec_batch */
 			PLtsql_stmt *base_stmt = makeExecuteStatement(ctxES);
 
-			/* Extract target table name and schema */
-			std::string target_table;
-			std::string target_schema;
+			/*
+			 * Extract target table components separately to prevent SQL injection.
+			 * Each component (db, schema, table) is stored individually so the executor
+			 * can properly quote them when building queries.
+			 */
+			std::string tbl_db, tbl_schema, tbl_name;
 			auto ddl_object = ctx->insert_statement()->ddl_object();
 			if (ddl_object)
 			{
 				if (ddl_object->local_id())
 				{
-					/* Table variable like @tablevar - use as-is, no schema needed */
-					target_table = ::getFullText(ddl_object->local_id());
-					target_schema = "";  /* Table variables don't need schema */
+					/* Table variable like @tablevar - use as-is */
+					tbl_name = ::getFullText(ddl_object->local_id());
 				}
 				else if (ddl_object->full_object_name())
 				{
-					/* Regular table or temp table - extract name and schema separately */
-					std::string tbl_name, tbl_schema, tbl_db;
+					/* Regular table or temp table - extract components separately */
 					if (ddl_object->full_object_name()->object_name)
 						tbl_name = stripQuoteFromId(ddl_object->full_object_name()->object_name);
 					if (ddl_object->full_object_name()->schema)
@@ -2051,84 +2056,60 @@ public:
 						tbl_db = stripQuoteFromId(ddl_object->full_object_name()->database);
 
 					/*
-					 * Temp tables (starting with #) use pg_temp schema, so strip
+					 * Temp tables (starting with #) use pg_temp schema, so clear
 					 * any user-provided schema prefix like dbo.#temp.
 					 */
 					if (!tbl_name.empty() && tbl_name[0] == '#')
 					{
-						target_table = tbl_name;
-						target_schema = "";  /* Temp tables use pg_temp, not user schemas */
-					}
-					/* Build table reference with explicit schema if provided */
-					else if (!tbl_db.empty())
-					{
-						target_table = tbl_db + "." + (tbl_schema.empty() ? "dbo" : tbl_schema) + "." + tbl_name;
-						target_schema = tbl_schema.empty() ? "dbo" : tbl_schema;
-					}
-					else if (!tbl_schema.empty())
-					{
-						target_table = tbl_schema + "." + tbl_name;
-						target_schema = tbl_schema;
-					}
-					else
-					{
-						/*
-						 * No schema specified - don't hardcode dbo. Let the search path
-						 * resolve the table, which respects the user's default schema.
-						 */
-						target_table = tbl_name;
-						target_schema = "";
+						tbl_schema.clear();
+						tbl_db.clear();
 					}
 				}
 			}
 
-			/* Extract column list */
-			std::string column_list;
+			/* Extract column list as a List of column name strings */
+			List *column_list = NIL;
 			auto column_list_ctx = ctx->insert_statement()->insert_column_name_list();
 			if (column_list_ctx)
 			{
-				bool first = true;
 				for (auto col : column_list_ctx->col)
 				{
-					if (!first)
-						column_list += ", ";
-					first = false;
 					auto ids = col->id();
-					if (!ids.empty())
-						column_list += stripQuoteFromId(ids.back());
+					if (!ids.empty() && ids.back() != nullptr)
+					{
+						std::string col_name = stripQuoteFromId(ids.back());
+						column_list = lappend(column_list, pstrdup(col_name.c_str()));
+					}
 				}
 			}
+
+			/*
+			 * Helper lambda to set InsertExecInfo fields.
+			 * This avoids code duplication across the three statement types.
+			 */
+			auto setInsertExecInfo = [&](InsertExecInfo *info) {
+				info->is_insert_exec = true;
+				info->target_db = tbl_db.empty() ? NULL : pstrdup(tbl_db.c_str());
+				info->target_schema = tbl_schema.empty() ? NULL : pstrdup(tbl_schema.c_str());
+				info->target_table = tbl_name.empty() ? NULL : pstrdup(tbl_name.c_str());
+				info->columns = column_list;
+			};
 
 			/* Set INSERT EXEC fields based on the actual statement type */
 			if (base_stmt->cmd_type == PLTSQL_STMT_EXEC)
 			{
-				/* Procedure call: EXEC proc_name */
 				PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) base_stmt;
-				exec_stmt->insert_exec.is_insert_exec = true;
-				if (!target_table.empty())
-					exec_stmt->insert_exec.target = pstrdup(target_table.c_str());
-				if (!column_list.empty())
-					exec_stmt->insert_exec.columns = pstrdup(column_list.c_str());
+				setInsertExecInfo(&exec_stmt->insert_exec);
 			}
 			else if (base_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
 			{
-				/* Dynamic SQL: EXEC(@variable) or EXEC('string') */
 				PLtsql_stmt_exec_batch *exec_batch_stmt = (PLtsql_stmt_exec_batch *) base_stmt;
-				exec_batch_stmt->insert_exec.is_insert_exec = true;
-				if (!target_table.empty())
-					exec_batch_stmt->insert_exec.target = pstrdup(target_table.c_str());
-				if (!column_list.empty())
-					exec_batch_stmt->insert_exec.columns = pstrdup(column_list.c_str());
+				setInsertExecInfo(&exec_batch_stmt->insert_exec);
 			}
 			else if (base_stmt->cmd_type == PLTSQL_STMT_EXEC_SP)
 			{
-				/* System stored procedure: EXEC sp_executesql, sp_execute, sp_prepexec */
 				PLtsql_stmt_exec_sp *exec_sp_stmt = (PLtsql_stmt_exec_sp *) base_stmt;
-				exec_sp_stmt->insert_exec.is_insert_exec = true;
-				if (!target_table.empty())
-					exec_sp_stmt->insert_exec.target = pstrdup(target_table.c_str());
-				if (!column_list.empty())
-					exec_sp_stmt->insert_exec.columns = pstrdup(column_list.c_str());
+				setInsertExecInfo(&exec_sp_stmt->insert_exec);
 			}
 
 			/*
@@ -2136,6 +2117,10 @@ public:
 			 * This is needed to convert double-quoted strings to single-quoted strings
 			 * (e.g., "master" -> 'master') which is required for PostgreSQL compatibility.
 			 * Without this, double-quoted strings would be interpreted as column references.
+			 *
+			 * Note: PLTSQL_STMT_EXEC_SP (sp_executesql, etc.) does not need rewriting here
+			 * because its SQL string parameter is already handled as a string literal, not
+			 * as an expression that could contain double-quoted identifiers.
 			 */
 			if (base_stmt->cmd_type == PLTSQL_STMT_EXEC)
 			{
@@ -2148,10 +2133,6 @@ public:
 			{
 				PLtsql_stmt_exec_batch *exec_batch_stmt = (PLtsql_stmt_exec_batch *) base_stmt;
 				PLtsql_expr_query_mutator mutator(exec_batch_stmt->expr, ctxES);
-				/*
-				 * For dynamic SQL, rewrite the entire expression - no need to limit
-				 * the rewriting range since the expression is the full SQL string.
-				 */
 				add_rewritten_query_fragment_to_mutator(&mutator);
 				mutator.run();
 			}
