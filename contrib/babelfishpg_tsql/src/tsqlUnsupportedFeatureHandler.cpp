@@ -1520,9 +1520,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitId(TSqlParser::IdContext *
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitXml_func_arg(TSqlParser::Xml_func_argContext *ctx)
 {
-	if (ctx->QUERY())
-		handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML QUERY", getLineAndPos(ctx));
-	else if (ctx->MODIFY())
+	if (ctx->MODIFY())
 		handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML MODIFY", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }

@@ -1048,7 +1048,7 @@ public:
 
 	void exitXml_func_arg(TSqlParser::Xml_func_argContext *ctx) override
 	{
-		if (ctx->EXIST() || ctx->VALUE())
+		if (ctx->EXIST() || ctx->VALUE() || ctx->QUERY())
 		{
 			size_t startPosition = ctx->start->getStartIndex();
 			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "bbf_xml")));
