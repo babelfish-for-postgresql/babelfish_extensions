@@ -231,7 +231,7 @@ typedef struct ForAutoContext
 } ForAutoContext;
 
 static bool isForAuto(List *target, ForAutoMode mode);
-static bool handleForAuto(Query *query, ForAutoContext *ctx, ForAutoMode mode);
+static bool handleForAuto(Query *query, ForAutoContext *ctx);
 void checkForAuto(Query *query);
 static bool forAutoWalker(Node *node, ForAutoContext *ctx);
 static TargetEntry* buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te);
@@ -1652,11 +1652,20 @@ isForAuto(List *target, ForAutoMode mode)
 /*
  * handleForAuto - Process FOR JSON/XML AUTO queries
  *
- * Validates that the query has at least one valid source table, then walks
- * the query tree to build nesting metadata.
+ * @param wrapperQuery: The outer query containing FOR AUTO clause
+ * @param ctx: Context for processing FOR AUTO clause
+ *        ->cteList: cteList set in the tree walker
+ *        ->ctenameIdxHash: Hash table containing CTE names and their indices.
+ * @return: true if it's a FOR AUTO query, false if not
+ *
+ * Validates that the query has at least one valid source table and processes
+ * the target columns for nesting. Follows T-SQL behavior by reporting
+ * "at least one table" error when no valid sources are found.
+ *
+ * Valid source types: RTE_RELATION, RTE_SUBQUERY, RTE_CTE, user-defined RTE_FUNCTION
  */
 static bool
-handleForAuto(Query *wrapperQuery, ForAutoContext *ctx, ForAutoMode mode)
+handleForAuto(Query *wrapperQuery, ForAutoContext *ctx)
 {
 	Query			   *origQuery;
 	List			   *wrapperTarget = wrapperQuery->targetList;
@@ -1666,8 +1675,14 @@ handleForAuto(Query *wrapperQuery, ForAutoContext *ctx, ForAutoMode mode)
 	Alias			   *wrapperRteAlias;
 	RangeTblEntry	   *wrapperRte = NULL;
 	bool				hasValidSrc = false;
+	ForAutoMode			mode;
 
-	if (!isForAuto(wrapperTarget, mode))
+	/* Detect mode: try JSON AUTO first, then XML AUTO */
+	if (isForAuto(wrapperTarget, FOR_AUTO_JSON))
+		mode = FOR_AUTO_JSON;
+	else if (isForAuto(wrapperTarget, FOR_AUTO_XML))
+		mode = FOR_AUTO_XML;
+	else
 		return false;
 
 	wrapperRtable = (List *) wrapperQuery->rtable;
@@ -1712,17 +1727,19 @@ handleForAuto(Query *wrapperQuery, ForAutoContext *ctx, ForAutoMode mode)
 				Oid						funcId;
 				Oid						sysNamespaceOid;
 
+				/* Get the first function from the RTE_FUNCTION */
 				if (rte->functions && list_length(rte->functions) > 0)
 				{
 					rteFunc = (RangeTblFunction *) linitial(rte->functions);
 					funcExpr = (FuncExpr *) rteFunc->funcexpr;
 					funcId = funcExpr->funcid;
 
+					/* Look up function info to check namespace */
 					procTuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcId));
 					if (HeapTupleIsValid(procTuple))
 					{
 						procForm = (Form_pg_proc) GETSTRUCT(procTuple);
-						sysNamespaceOid = get_namespace_oid("sys", false);
+						sysNamespaceOid = get_namespace_oid("sys", true);
 						if (procForm->pronamespace == PG_CATALOG_NAMESPACE ||
 							(OidIsValid(sysNamespaceOid) && procForm->pronamespace == sysNamespaceOid))
 							isSystemFunction = true;
@@ -1768,7 +1785,7 @@ handleForAuto(Query *wrapperQuery, ForAutoContext *ctx, ForAutoMode mode)
 static TargetEntry*
 buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 {
-	char nest[NAMEDATALEN];
+	char nest[NAMEDATALEN]; // check size appropriate
 	StringInfo new_resname = makeStringInfo();
 	snprintf(nest, sizeof(nest), "%d", nestLevel);
 	if(te->resname == NULL || !strcmp(te->resname, "\?column\?")) {
@@ -1776,6 +1793,8 @@ buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table")));
 	} 
+	// Adding JSONAUTOALIAS prevents us from modifying
+	// a column more than once
 	appendStringInfoString(new_resname, "JSONAUTOALIAS.");
 	appendStringInfoString(new_resname, nest);
 	appendStringInfoChar(new_resname, '.');
@@ -1790,9 +1809,52 @@ static char *
 string_to_fixed_hash(const char *input)
 {
 	Datum hash_val = hash_any_extended((unsigned char *)input, strlen(input), 0);
-	char *result = palloc(17);
+	char *result = palloc(17); // 16 hex chars + null terminator
 	snprintf(result, 17, "%016lx", DatumGetUInt64(hash_val));
 	return result;
+}
+
+/*
+ * get_bbf_original_colname - Look up the original (un-truncated) column name
+ * from pg_attribute.attoptions (bbf_original_name).
+ *
+ * @param relid: OID of the relation
+ * @param attnum: attribute number of the column
+ * @param colname: current column name (used for alias detection via case-insensitive compare)
+ * @return: original column name if found and no user alias, NULL otherwise
+ */
+static char *
+get_bbf_original_colname(Oid relid, int16 attnum, const char *colname)
+{
+	HeapTuple	attTuple;
+	char	   *origName = NULL;
+
+	attTuple = SearchSysCache2(ATTNUM,
+							   ObjectIdGetDatum(relid),
+							   Int16GetDatum(attnum));
+	if (HeapTupleIsValid(attTuple))
+	{
+		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(attTuple);
+		char *baseColName = NameStr(att->attname);
+
+		/* Only look up original name if user did not provide a column alias */
+		if (pg_strcasecmp(colname, baseColName) == 0)
+		{
+			Datum		attOptDatum;
+			bool		attOptIsNull;
+
+			attOptDatum = SysCacheGetAttr(ATTNUM, attTuple,
+										  Anum_pg_attribute_attoptions,
+										  &attOptIsNull);
+			if (!attOptIsNull)
+			{
+				ArrayType  *attoptions = DatumGetArrayTypeP(attOptDatum);
+				origName = get_value_by_name_from_array(attoptions, ATTOPTION_BBF_ORIGINAL_NAME);
+			}
+		}
+		ReleaseSysCache(attTuple);
+	}
+	return origName;
 }
 
 /*
@@ -1807,6 +1869,8 @@ appendXmlAutoMetadataEntry(StringInfo metadataStr, TargetEntry *te, int level,
 						   char *alias, RangeTblEntry *matchedSrc, Var *curVar)
 {
 	char *colname = te->resname;
+	char *escapedAlias;
+	char *escapedColname;
 
 	if (colname == NULL || !strcmp(colname, "\?column\?"))
 	{
@@ -1823,45 +1887,17 @@ appendXmlAutoMetadataEntry(StringInfo metadataStr, TargetEntry *te, int level,
 	if (matchedSrc != NULL && matchedSrc->rtekind == RTE_RELATION &&
 		curVar != NULL && curVar->varattno > 0)
 	{
-		HeapTuple	attTuple;
-
-		attTuple = SearchSysCache2(ATTNUM,
-								   ObjectIdGetDatum(matchedSrc->relid),
-								   Int16GetDatum(curVar->varattno));
-		if (HeapTupleIsValid(attTuple))
-		{
-			Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(attTuple);
-			char *baseColName = NameStr(att->attname);
-
-			if (pg_strcasecmp(colname, baseColName) == 0)
-			{
-				Datum		attOptDatum;
-				bool		attOptIsNull;
-
-				attOptDatum = SysCacheGetAttr(ATTNUM, attTuple,
-											  Anum_pg_attribute_attoptions,
-											  &attOptIsNull);
-				if (!attOptIsNull)
-				{
-					ArrayType  *attoptions = DatumGetArrayTypeP(attOptDatum);
-					char	   *origName = get_value_by_name_from_array(
-						attoptions, ATTOPTION_BBF_ORIGINAL_NAME);
-					if (origName != NULL)
-						colname = origName;
-				}
-			}
-			ReleaseSysCache(attTuple);
-		}
+		char *origName = get_bbf_original_colname(matchedSrc->relid, curVar->varattno, colname);
+		if (origName != NULL)
+			colname = origName;
 	}
 
-	{
-		char *escapedAlias = map_sql_identifier_to_xml_name(alias, true, true);
-		char *escapedColname = map_sql_identifier_to_xml_name(colname, true, true);
+	escapedAlias = map_sql_identifier_to_xml_name(alias, true, true);
+	escapedColname = map_sql_identifier_to_xml_name(colname, true, true);
 
-		if (metadataStr->len > 0)
-			appendStringInfoChar(metadataStr, ',');
-		appendStringInfo(metadataStr, "%d.%s.%s", level, escapedAlias, escapedColname);
-	}
+	if (metadataStr->len > 0)
+		appendStringInfoChar(metadataStr, ',');
+	appendStringInfo(metadataStr, "%d.%s.%s", level, escapedAlias, escapedColname);
 }
 
 /*
@@ -1896,26 +1932,27 @@ static void
 processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias, ForAutoContext *ctx, ForAutoMode mode)
 {
 	/* Nesting variables */
-	char			   *curMaxUsedKey = "temp";
-	int					curMaxUsedLevel = 1;
-	bool				nestingLevel1Used = false;
+	char			   *curMaxUsedKey = "temp";	/* Current nesting key for non-source entries */
+	int					curMaxUsedLevel = 1;	/* Current maximum nesting level */
+	bool				nestingLevel1Used = false;	/* Whether level 1 has been assigned */
 	char			   *recursiveCTEFallbackAlias = NULL;
 
+	/* Target entries iteration index */
 	int					targetIterIdx = 0;
 
 	/* CTE hash is already initialized in forAutoWalker */
-	HTAB *ctenameIdxHash = ctx->ctenameIdxHash;
-	List *cteList = ctx->cteList;
-	CommonTableExpr *cteEntry;
-	CtenameIdx *cteHashEntry;
+	HTAB			   *ctenameIdxHash = ctx->ctenameIdxHash;	/* CTE name-to-index mapping */
+	List			   *cteList = ctx->cteList;
+	CommonTableExpr	   *cteEntry;
+	CtenameIdx		   *cteHashEntry;
 
 	/* Alias-to-level mapping variables */
-	HTAB			   *RTEAliasNestHash;
+	HTAB			   *RTEAliasNestHash;	/* RTE alias-to-nesting-level mapping */
 	RTEAliasEntry	   *rteHashEntry;
 	HASHCTL				rteHashCtl;
 	bool				found;
 
-	/* Target entry iteration */
+	/* target entry iteration variables */
 	List			   *origTargetList = origQuery->targetList;
 	ListCell		   *lc;
 
@@ -2100,10 +2137,14 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 			varLevelsUp = curVar->varlevelsup;
 
 			/*
-			 * Don't use source alias for:
-			 * - outer source references (varLevelsUp > 0)
-			 * - RTE_FUNCTION (JSON AUTO only)
-			 * - recursive CTEs
+			 * Don't use source alias for functions or outer source
+			 * 1. if T_Var is referencing from outer sources
+			 * 2. if source is a RTE_FUNCTION
+			 * 3. if source is a RTE_CTE after the previous unwrapping loop
+			 *    - either this CTE is at outermost layer w/o an alias assigned
+			 *      => we want to use this CTE's ctename as nesting key
+			 *    - or this CTE is a recursive CTE
+			 *      => we don't want to use this CTE's ctename as nesting key
 			 */
 			if (varLevelsUp > 0 ||
 				(mode == FOR_AUTO_JSON && matchedSrc->rtekind == RTE_FUNCTION) ||
@@ -2286,9 +2327,7 @@ static bool forAutoWalker(Node *node, ForAutoContext *ctx)
 		query_tree_walker(q, forAutoWalker, (void *) ctx, 0);
 
 		/* Then check if this layer has FOR JSON AUTO or FOR XML AUTO */
-		if (handleForAuto(q, ctx, FOR_AUTO_JSON))
-			return true;
-		return handleForAuto(q, ctx, FOR_AUTO_XML);
+		return handleForAuto(q, ctx);
 	}
 	return expression_tree_walker(node, forAutoWalker, (void *) ctx);
 }

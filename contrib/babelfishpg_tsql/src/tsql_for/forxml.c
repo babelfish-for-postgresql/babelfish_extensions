@@ -281,6 +281,7 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 		Datum		root_tag_datum;
 		text	   *root_tag_text;
 		char	   *root_tag;
+		char	   *space;
 
 		/* Extract the root tag name using textregexsubstr */
 		root_tag_datum = DirectFunctionCall2Coll(textregexsubstr, 
@@ -302,11 +303,9 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 		appendStringInfoString(res, state + 1);
 
 		/* Trim root_tag at first space (handles XSINIL namespace in opening tag) */
-		{
-			char *space = strchr(root_tag, ' ');
-			if (space)
-				*space = '\0';
-		}
+		space = strchr(root_tag, ' ');
+		if (space)
+			*space = '\0';
 		appendStringInfo(res, "</%s>", root_tag);
 	}
 	else
@@ -463,9 +462,9 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 
 /*
  * validate_attribute_centric_col_names_xml
- *	Check if the tupdesc has attribute-centric columns and if present
+ *	Check if the tupdesc has attribute-centric columns and if present 
  *	check the following -
- *	1. all of them are present in the starting of attribute list before any non-attribute-centric column,
+ *	1. all of them are present in the starting of attribute list before any non-attribute-centric column ,
  *	2. the element_name to be not NULL for tupdesc having attribute-centric columns.
  */
 static bool
@@ -1155,7 +1154,7 @@ static void
 output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil)
 {
 	int first_changed_level;
-	int deepest_level_in_row = 0;
+	int deepest_level_in_row = auto_state->max_depth;
 
 	/* Initialize output function cache on first row (covers all columns) */
 	if (!auto_state->out_funcs_cached)
@@ -1164,13 +1163,6 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 	/* Initialize T-SQL type conversion cache on first row */
 	if (!auto_state->tsql_types_cached)
 		init_tsql_type_cache(auto_state, tupdesc);
-
-	/* Determine the deepest level that has columns in this row */
-	for (int i = 0; i < auto_state->num_columns; i++)
-	{
-		if (auto_state->nest_levels[i] > deepest_level_in_row)
-			deepest_level_in_row = auto_state->nest_levels[i];
-	}
 
 	/* Find where this row differs from previous */
 	first_changed_level = find_first_changed_level(auto_state, tuple, tupdesc);
@@ -1329,9 +1321,6 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 
 /*
  * Map an SQL row to XML in AUTO mode.
- *
- * Metadata is passed via the auto_metadata parameter (9th arg to aggregate).
- * Format: "level.table.colname,level.table.colname,..."
  */
 static void
 tsql_row_to_xml_auto(StringInfo state, Datum record, bool binary_base64, bool elements, bool xsinil, forxml_auto_state *auto_state)
