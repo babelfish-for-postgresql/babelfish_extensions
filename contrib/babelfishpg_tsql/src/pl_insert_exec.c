@@ -1150,7 +1150,6 @@ pltsql_get_and_clear_insert_exec_temp_table_for_cleanup(void)
  * =============================================================================
  * These functions are placeholders that allow the code to compile.
  * They will be replaced with real implementations in later PRs:
- *   - PR4: create_insert_exec_temp_table, drop_insert_exec_temp_table
  *   - PR5: flush_insert_exec_temp_table, insert_exec_setup,
  *          insert_exec_error_cleanup, insert_exec_success_cleanup
  * =============================================================================
@@ -1444,24 +1443,390 @@ insertexec_destroy(DestReceiver *self)
 }
 
 /*
- * STUB: Create a temp table for INSERT EXEC buffering.
- * Real implementation in PR4 (Temp Table Create/Drop).
+ * Create a temp table for INSERT EXEC buffering.
+ *
+ * Creates a PostgreSQL temp table (not Babelfish #temp) with schema matching
+ * the target table. Uses a unique name pattern __insert_exec_buf_PID_N to avoid
+ * conflicts. For regular tables, queries pg_attribute to get column definitions
+ * (avoids needing SELECT permission for ownership chaining).
  */
 Oid
 create_insert_exec_temp_table(const char *target_table, const char *column_list, const char *schema_name_in)
 {
-	/* STUB: Returns InvalidOid - real implementation in PR4 */
-	return InvalidOid;
+	StringInfoData create_stmt;
+	StringInfoData col_query;
+	int			rc;
+	Oid			temp_table_oid;
+	char		temp_table_name[NAMEDATALEN];
+	char	   *schema_name = NULL;
+	char	   *table_name = NULL;
+	char	   *physical_schema = NULL;
+	Oid			temp_nsp_oid;
+	int			suffix = 1;
+	MemoryContext oldcontext;
+
+	/*
+	 * Generate a unique temp table name using backend PID and a suffix.
+	 * We use PostgreSQL temp tables (not Babelfish temp tables with # prefix)
+	 * because they are more stable and don't have ENR-related issues.
+	 */
+	temp_nsp_oid = LookupNamespaceNoError("pg_temp");
+
+	for (;;)
+	{
+		Oid existing_relid;
+
+		snprintf(temp_table_name, sizeof(temp_table_name),
+				 "__insert_exec_buf_%d_%d", MyProcPid, suffix);
+
+		/*
+		 * Check if a table with this name already exists in pg_temp.
+		 * If temp namespace doesn't exist yet, the name is definitely available.
+		 */
+		if (!OidIsValid(temp_nsp_oid))
+			break;
+
+		existing_relid = get_relname_relid(temp_table_name, temp_nsp_oid);
+		if (!OidIsValid(existing_relid))
+			break;  /* Name is available */
+
+		suffix++;
+
+		if (suffix > 10000)
+			elog(ERROR, "INSERT-EXEC: Could not find available temp table name after 10000 attempts");
+	}
+
+	/* Store the temp table name in the context for later cleanup */
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	if (insert_exec_ctx.temp_table_name != NULL)
+		pfree(insert_exec_ctx.temp_table_name);
+	insert_exec_ctx.temp_table_name = pstrdup(temp_table_name);
+	MemoryContextSwitchTo(oldcontext);
+
+	/*
+	 * Drop any existing temp table with this name. This handles catalog cache
+	 * issues where get_relname_relid didn't find the table but it exists.
+	 */
+	initStringInfo(&create_stmt);
+	appendStringInfo(&create_stmt, "DROP TABLE IF EXISTS %s",
+					 quote_identifier(temp_table_name));
+	rc = SPI_execute(create_stmt.data, false, 0);
+	if (rc != SPI_OK_UTILITY)
+		elog(WARNING, "failed to drop existing INSERT EXEC temp table: %s",
+			 SPI_result_code_string(rc));
+	pfree(create_stmt.data);
+
+	insert_exec_ctx.pending_drop = false;
+
+	/*
+	 * Parse schema and table name from target_table.
+	 * For temp tables (starting with #), we don't need schema parsing.
+	 */
+	if (target_table[0] == '#' || target_table[0] == '@')
+	{
+		table_name = pstrdup(target_table);
+		schema_name = NULL;
+		physical_schema = NULL;
+	}
+	else
+	{
+		if (!parse_insert_exec_table_name(target_table, &schema_name, &table_name,
+										  &physical_schema, true))
+		{
+			elog(ERROR, "INSERT-EXEC: Failed to parse target table name: %s", target_table);
+		}
+	}
+
+	initStringInfo(&create_stmt);
+
+	if (column_list != NULL)
+	{
+		/*
+		 * User specified columns - create temp table with only those columns.
+		 * For temp tables, use SELECT INTO. For regular tables, query pg_attribute
+		 * to avoid needing SELECT permission (ownership chaining fix).
+		 */
+		if (physical_schema == NULL)
+		{
+			/*
+			 * Temp table or table variable target - use SELECT INTO.
+			 * Quote identifiers to prevent SQL injection.
+			 */
+			appendStringInfo(&create_stmt,
+				"SELECT %s INTO %s FROM %s WHERE 1=0",
+				column_list,
+				quote_identifier(temp_table_name),
+				quote_identifier(target_table));
+		}
+		else
+		{
+			StringInfoData col_defs;
+			bool		first_col = true;
+			int			proc_count;
+			int			i;
+			RangeVar   *target_rv;
+			Oid			target_relid;
+			char	   *col_list_copy;
+			char	   *col_name;
+			char	   *saveptr;
+			StringInfoData col_names_sql;
+
+			initStringInfo(&col_query);
+			initStringInfo(&col_defs);
+			initStringInfo(&col_names_sql);
+
+			/*
+			 * Resolve target table OID to avoid SQL injection via regclass.
+			 * Using OID directly is safer than string interpolation.
+			 */
+			target_rv = makeRangeVar(physical_schema, table_name, -1);
+			target_relid = RangeVarGetRelid(target_rv, AccessShareLock, false);
+
+			/*
+			 * Parse column_list to build SQL IN clause. Lowercase column names
+			 * to match pg_attribute storage.
+			 *
+			 * Note: strtok_r splits on both comma and space, so quoted identifiers
+			 * with embedded spaces in the column list are not supported.
+			 */
+			col_list_copy = pstrdup(column_list);
+			first_col = true;
+			appendStringInfoChar(&col_names_sql, '(');
+			col_name = strtok_r(col_list_copy, ", ", &saveptr);
+			while (col_name != NULL)
+			{
+				while (*col_name == ' ' || *col_name == '\t')
+					col_name++;
+				if (*col_name != '\0')
+				{
+					char *lower_col_name;
+					if (!first_col)
+						appendStringInfoString(&col_names_sql, ", ");
+					lower_col_name = downcase_identifier(col_name, strlen(col_name), false, false);
+					appendStringInfoString(&col_names_sql, quote_literal_cstr(lower_col_name));
+					pfree(lower_col_name);
+					first_col = false;
+				}
+				col_name = strtok_r(NULL, ", ", &saveptr);
+			}
+			appendStringInfoChar(&col_names_sql, ')');
+			pfree(col_list_copy);
+
+			appendStringInfo(&col_query,
+				"SELECT a.attname, format_type(a.atttypid, a.atttypmod) as coltype "
+				"FROM pg_attribute a "
+				"WHERE a.attrelid = %u "
+				"AND a.attnum > 0 "
+				"AND NOT a.attisdropped "
+				"AND lower(a.attname) IN %s "
+				"ORDER BY a.attnum",
+				target_relid, col_names_sql.data);
+
+			pfree(col_names_sql.data);
+
+			rc = SPI_execute(col_query.data, false, 0);
+			if (rc != SPI_OK_SELECT)
+			{
+				pfree(col_query.data);
+				pfree(col_defs.data);
+				elog(ERROR, "failed to query target table columns for INSERT EXEC: %s",
+					 SPI_result_code_string(rc));
+			}
+
+			proc_count = (int) SPI_processed;
+			if (proc_count == 0)
+			{
+				pfree(col_query.data);
+				pfree(col_defs.data);
+				elog(ERROR, "INSERT-EXEC: No matching columns found in target table");
+			}
+
+			first_col = true;
+			for (i = 0; i < proc_count; i++)
+			{
+				HeapTuple	tuple = SPI_tuptable->vals[i];
+				TupleDesc	tupdesc = SPI_tuptable->tupdesc;
+				char	   *attname = SPI_getvalue(tuple, tupdesc, 1);
+				char	   *coltype = SPI_getvalue(tuple, tupdesc, 2);
+
+				/* Defensive: SPI_getvalue returns NULL for SQL NULL */
+				if (attname == NULL || coltype == NULL)
+				{
+					if (attname) pfree(attname);
+					if (coltype) pfree(coltype);
+					pfree(col_query.data);
+					pfree(col_defs.data);
+					elog(ERROR, "INSERT-EXEC: NULL column name or type from pg_attribute");
+				}
+
+				if (!first_col)
+					appendStringInfoString(&col_defs, ", ");
+				appendStringInfo(&col_defs, "%s %s", quote_identifier(attname), coltype);
+				first_col = false;
+
+				pfree(attname);
+				pfree(coltype);
+			}
+
+			appendStringInfo(&create_stmt, "CREATE TEMP TABLE %s (%s)",
+							 quote_identifier(temp_table_name), col_defs.data);
+
+			pfree(col_query.data);
+			pfree(col_defs.data);
+		}
+	}
+	else
+	{
+		/*
+		 * No column list - create temp table with all columns from target.
+		 * For temp tables, use SELECT INTO. For regular tables, query pg_attribute.
+		 */
+		if (physical_schema == NULL)
+		{
+			/*
+			 * Temp table or table variable target - use SELECT INTO.
+			 * Quote identifiers to prevent SQL injection.
+			 */
+			appendStringInfo(&create_stmt,
+				"SELECT * INTO %s FROM %s WHERE 1=0",
+				quote_identifier(temp_table_name),
+				quote_identifier(target_table));
+		}
+		else
+		{
+			StringInfoData col_defs;
+			bool		first_col = true;
+			int			proc_count;
+			int			i;
+			RangeVar   *target_rv;
+			Oid			target_relid;
+
+			initStringInfo(&col_query);
+			initStringInfo(&col_defs);
+
+			/*
+			 * Resolve target table OID to avoid SQL injection via regclass.
+			 * Using OID directly is safer than string interpolation.
+			 */
+			target_rv = makeRangeVar(physical_schema, table_name, -1);
+			target_relid = RangeVarGetRelid(target_rv, AccessShareLock, false);
+
+			appendStringInfo(&col_query,
+				"SELECT a.attname, format_type(a.atttypid, a.atttypmod) as coltype "
+				"FROM pg_attribute a "
+				"WHERE a.attrelid = %u "
+				"AND a.attnum > 0 "
+				"AND NOT a.attisdropped "
+				"ORDER BY a.attnum",
+				target_relid);
+
+			rc = SPI_execute(col_query.data, false, 0);
+			if (rc != SPI_OK_SELECT)
+			{
+				pfree(col_query.data);
+				pfree(col_defs.data);
+				elog(ERROR, "failed to query target table columns for INSERT EXEC: %s",
+					 SPI_result_code_string(rc));
+			}
+
+			proc_count = (int) SPI_processed;
+			if (proc_count == 0)
+			{
+				pfree(col_query.data);
+				pfree(col_defs.data);
+				elog(ERROR, "INSERT-EXEC: Target table has no columns");
+			}
+
+			first_col = true;
+			for (i = 0; i < proc_count; i++)
+			{
+				HeapTuple	tuple = SPI_tuptable->vals[i];
+				TupleDesc	tupdesc = SPI_tuptable->tupdesc;
+				char	   *attname = SPI_getvalue(tuple, tupdesc, 1);
+				char	   *coltype = SPI_getvalue(tuple, tupdesc, 2);
+
+				/* Defensive: SPI_getvalue returns NULL for SQL NULL */
+				if (attname == NULL || coltype == NULL)
+				{
+					if (attname) pfree(attname);
+					if (coltype) pfree(coltype);
+					pfree(col_query.data);
+					pfree(col_defs.data);
+					elog(ERROR, "INSERT-EXEC: NULL column name or type from pg_attribute");
+				}
+
+				if (!first_col)
+					appendStringInfoString(&col_defs, ", ");
+				appendStringInfo(&col_defs, "%s %s", quote_identifier(attname), coltype);
+				first_col = false;
+
+				pfree(attname);
+				pfree(coltype);
+			}
+
+			appendStringInfo(&create_stmt, "CREATE TEMP TABLE %s (%s)",
+							 quote_identifier(temp_table_name), col_defs.data);
+
+			pfree(col_query.data);
+			pfree(col_defs.data);
+		}
+	}
+
+	if (schema_name) pfree(schema_name);
+	if (table_name) pfree(table_name);
+	if (physical_schema) pfree(physical_schema);
+
+	rc = SPI_execute(create_stmt.data, false, 0);
+	pfree(create_stmt.data);
+
+	if (rc != SPI_OK_UTILITY && rc != SPI_OK_SELINTO)
+		elog(ERROR, "failed to create INSERT EXEC temp table: %s", SPI_result_code_string(rc));
+
+	/* Get the OID of the newly created temp table */
+	temp_nsp_oid = LookupNamespaceNoError("pg_temp");
+	if (!OidIsValid(temp_nsp_oid))
+		elog(ERROR, "INSERT-EXEC: pg_temp namespace not found after creating temp table");
+
+	temp_table_oid = get_relname_relid(temp_table_name, temp_nsp_oid);
+	if (!OidIsValid(temp_table_oid))
+		elog(ERROR, "INSERT-EXEC: Could not find temp table %s after creation", temp_table_name);
+
+	return temp_table_oid;
 }
 
 /*
- * STUB: Drop the temp table used for INSERT EXEC buffering.
- * Real implementation in PR4 (Temp Table Create/Drop).
+ * Drop the INSERT EXEC temp table.
+ * Uses the stored temp table name from the INSERT EXEC context.
  */
 void
 drop_insert_exec_temp_table(Oid temp_table_oid)
 {
-	/* STUB: Does nothing - real implementation in PR4 */
+	StringInfoData drop_stmt;
+	int			rc;
+
+	/* Parameter kept for interface consistency; we drop by name from context */
+	(void) temp_table_oid;
+
+	if (insert_exec_ctx.temp_table_name == NULL)
+	{
+		elog(DEBUG1, "INSERT-EXEC: No temp table name stored, cannot drop");
+		return;
+	}
+
+	initStringInfo(&drop_stmt);
+	appendStringInfo(&drop_stmt, "DROP TABLE IF EXISTS %s",
+					 quote_identifier(insert_exec_ctx.temp_table_name));
+
+	rc = SPI_execute(drop_stmt.data, false, 0);
+	if (rc != SPI_OK_UTILITY)
+		elog(WARNING, "failed to drop INSERT EXEC temp table %s: %s",
+			 insert_exec_ctx.temp_table_name, SPI_result_code_string(rc));
+
+	pfree(drop_stmt.data);
+
+	pfree(insert_exec_ctx.temp_table_name);
+	insert_exec_ctx.temp_table_name = NULL;
+	insert_exec_ctx.temp_table_oid = InvalidOid;
 }
 
 /*
