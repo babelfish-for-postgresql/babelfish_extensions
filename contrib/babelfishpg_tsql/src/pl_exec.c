@@ -322,7 +322,7 @@ static int	exec_stmt_raise(PLtsql_execstate *estate,
 							PLtsql_stmt_raise *stmt);
 static int	exec_stmt_assert(PLtsql_execstate *estate,
 							 PLtsql_stmt_assert *stmt);
-static int	exec_stmt_execsql(PLtsql_execstate *estate,
+int	exec_stmt_execsql(PLtsql_execstate *estate,
 							  PLtsql_stmt_execsql *stmt);
 static void updateColumnUpdatedList(Query *query);
 static int	exec_stmt_dynexecute(PLtsql_execstate *estate,
@@ -4474,7 +4474,7 @@ execute_txn_command(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
  * is recreated when needed for cases like commit/
  * rollbck/rollback to savepoint
  */
-static void
+void
 commit_stmt(PLtsql_execstate *estate, bool txnStarted)
 {
 	SimpleEcontextStackEntry *topEntry = simple_econtext_stack;
@@ -4805,7 +4805,7 @@ setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_s
  * needs to use that, fix those callers to push/pop stmt_mcontext.
  * ----------
  */
-static int
+int
 exec_stmt_execsql(PLtsql_execstate *estate,
 				  PLtsql_stmt_execsql *stmt)
 {

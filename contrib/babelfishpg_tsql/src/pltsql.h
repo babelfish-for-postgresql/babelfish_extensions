@@ -2424,6 +2424,12 @@ extern void pltsql_insert_exec_close_target_table(void);
 extern bool pltsql_insert_exec_verify_schema(void);
 extern bool pltsql_insert_exec_validate_column_count_from_query(const char *query_string);
 
+/* Transaction helper - used by INSERT EXEC for implicit transaction commit */
+extern void commit_stmt(PLtsql_execstate *estate, bool txnStarted);
+
+/* SQL execution helper - used by INSERT EXEC for flush */
+extern int exec_stmt_execsql(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
+
 /* INSERT EXEC helper functions */
 extern bool insert_exec_setup(PLtsql_execstate *estate,
                               const char *target_table,
