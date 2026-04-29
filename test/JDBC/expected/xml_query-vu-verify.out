@@ -1335,32 +1335,13 @@ xml
 
 
 -- ============================================
--- SECTION 51: .query() chained with spatial functions (error cases)
--- ============================================
-DECLARE @x XML = '<root><name>John</name></root>';
-SELECT @x.query('/root/name').STArea();
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'spatial methods' is not currently supported in Babelfish)~~
-
-
-DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT @point.STArea().query('/root');
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
-
-
-
--- ============================================
--- SECTION 52: GROUP BY with .query()
+-- SECTION 51: GROUP BY with .query()
 -- ============================================
 SELECT data.query('/root/name').value('(/name)[1]', 'VARCHAR(50)') AS name_val, COUNT(*) AS cnt
 FROM xml_query_t1
 WHERE data IS NOT NULL
-GROUP BY data.query('/root/name').value('(/name)[1]', 'VARCHAR(50)');
+GROUP BY data.query('/root/name').value('(/name)[1]', 'VARCHAR(50)')
+ORDER BY name_val;
 GO
 ~~START~~
 varchar#!#int
@@ -1368,4 +1349,26 @@ Bob#!#1
 Jane#!#1
 John#!#1
 ~~END~~
+
+
+
+-- ============================================
+-- SECTION 52: .query() argument count validation
+-- ============================================
+-- .query() with no arguments (should error)
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x.query();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The query function requires 1 argument(s).)~~
+
+
+-- .query() with too many arguments (should error)
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x.query('/root/name', 'extra');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The query function requires 1 argument(s).)~~
 

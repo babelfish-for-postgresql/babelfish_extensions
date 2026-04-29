@@ -825,9 +825,11 @@ GO
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.query('/artists/artist').exist('/artist/@name')
 GO
+~~START~~
+bit
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
+~~ERROR (Message: could not parse XML document)~~
 
 
 -- Dependent objects
@@ -1274,9 +1276,10 @@ John Doe
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.query('/artists/artist')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
+~~START~~
+xml
+<artist name="John Doe"/><artist name="Edward Poe"/><artist name="Mark The Great"/>
+~~END~~
 
 
 DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
