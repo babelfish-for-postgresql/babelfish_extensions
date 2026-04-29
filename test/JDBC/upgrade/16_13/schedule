@@ -660,4 +660,4 @@ test_output_clause
 update_with_var
 string_aggregate
 babel_convert_with_style
-babel_sqlvariant_coerce_type-before-17_11-or-18_5
+babel_sqlvariant_coerce_type_before_16_14-or-17_10-or-18_4

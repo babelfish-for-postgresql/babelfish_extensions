@@ -3169,10 +3169,10 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 	bool		is_case_expr = (strlen(context) == 4 && strncmp(context, "CASE", 4) == 0);
 
 	/*
-	 * If any branch is sql_variant, return it directly since it has 
-	 * the highest precedence and can hold any type. We must check this 
-	 * before the main loop because the loop bails out on non-char types, 
-	 * and the other branch (e.g. bit) would cause an early return of 
+	 * If any branch is sql_variant, return it directly since it has
+	 * the highest precedence and can hold any type. We must check this
+	 * before the main loop because the loop bails out on non-char types,
+	 * and the other branch (e.g. bit) would cause an early return of
 	 * InvalidOid before sql_variant is ever seen.
 	 */
 	foreach(lc, exprs)
