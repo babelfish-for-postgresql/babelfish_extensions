@@ -1,0 +1,203 @@
+-- psql
+-- Create tds_fdw extension for linked server support
+-- Suppress warnings for idempotent CREATE EXTENSION
+SET client_min_messages TO 'error';
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+SET client_min_messages TO 'notice';
+GO
+
+-- tsql
+
+-- ========================================
+-- Transaction Behavior and Error Handling Tests
+-- for Remote Procedure Execution (PR #4292)
+-- ========================================
+-- Clean up any existing test objects from previous runs
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_NoParams;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_SingleInt;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_OutputSingle;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_OutputMultiple;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_InOut;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_ReturnCode;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_Raiserror16;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_DivByZero;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_ConversionError;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_WithInsert;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_InnerRaiserror;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_NestedError;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_ReturnAfterError;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_PrintOnly;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_WithBeginTran;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_WithCommit;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_WithRollback;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_WithSaveTran;
+GO
+
+-- Create linked server for transaction/error tests
+EXEC sp_addlinkedserver @server = N'bbf_rpe_txn', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master';
+GO
+
+-- Add login mapping
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_rpe_txn', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678';
+GO
+
+-- Enable RPC out (required for remote procedure execution)
+EXEC sp_serveroption 'bbf_rpe_txn', 'rpc out', 'true';
+GO
+
+
+-- ========================================
+-- Test Procedures
+-- ========================================
+-- Basic no-params procedure
+CREATE PROCEDURE rpe_txn_sp_NoParams
+AS BEGIN
+    SELECT 'Hello from remote' AS message, 42 AS number;
+END;
+GO
+
+-- Single INT parameter
+CREATE PROCEDURE rpe_txn_sp_SingleInt @value INT
+AS BEGIN
+    SELECT @value AS input_value, @value * 2 AS doubled;
+END;
+GO
+
+-- OUTPUT parameter test
+CREATE PROCEDURE rpe_txn_sp_OutputSingle @input INT, @output INT OUTPUT
+AS BEGIN
+    SET @output = @input * 2;
+    SELECT @output AS calculated_value;
+END;
+GO
+
+-- Multiple OUTPUT parameters
+CREATE PROCEDURE rpe_txn_sp_OutputMultiple @a INT, @b INT, @sum INT OUTPUT, @product INT OUTPUT
+AS BEGIN
+    SET @sum = @a + @b;
+    SET @product = @a * @b;
+    SELECT @sum AS sum_result, @product AS product_result;
+END;
+GO
+
+-- INOUT parameter
+CREATE PROCEDURE rpe_txn_sp_InOut @counter INT OUTPUT
+AS BEGIN
+    SET @counter = @counter + 100;
+    SELECT @counter AS new_value;
+END;
+GO
+
+-- Return code test
+CREATE PROCEDURE rpe_txn_sp_ReturnCode @value INT
+AS BEGIN
+    IF @value > 0
+        RETURN 1;
+    ELSE IF @value < 0
+        RETURN -1;
+    ELSE
+        RETURN 0;
+END;
+GO
+
+-- RAISERROR severity 16 (user error)
+CREATE PROCEDURE rpe_txn_sp_Raiserror16
+AS BEGIN
+    RAISERROR('Test error severity 16', 16, 1);
+END;
+GO
+
+-- Division by zero runtime error
+CREATE PROCEDURE rpe_txn_sp_DivByZero
+AS BEGIN
+    DECLARE @x INT = 1;
+    DECLARE @y INT = 0;
+    SELECT @x / @y AS result;
+END;
+GO
+
+-- Type conversion error
+CREATE PROCEDURE rpe_txn_sp_ConversionError
+AS BEGIN
+    DECLARE @x INT = CAST('not_a_number' AS INT);
+    SELECT @x AS result;
+END;
+GO
+
+-- Procedure with INSERT (should fail SELECT-only validation)
+CREATE PROCEDURE rpe_txn_sp_WithInsert
+AS BEGIN
+    CREATE TABLE #temp (id INT);
+    INSERT INTO #temp VALUES (1);
+    SELECT * FROM #temp;
+END;
+GO
+
+-- Inner procedure that raises error (for nested error test)
+CREATE PROCEDURE rpe_txn_sp_InnerRaiserror
+AS BEGIN
+    RAISERROR('Error from inner procedure', 16, 1);
+END;
+GO
+
+-- Outer procedure that calls inner (nested error propagation)
+CREATE PROCEDURE rpe_txn_sp_NestedError
+AS BEGIN
+    SELECT 'Before inner call' AS status;
+    EXEC dbo.rpe_txn_sp_InnerRaiserror;
+    SELECT 'After inner call (should not reach)' AS status;
+END;
+GO
+
+-- Procedure that returns result then errors
+CREATE PROCEDURE rpe_txn_sp_ReturnAfterError
+AS BEGIN
+    SELECT 'Result before error' AS result;
+    RAISERROR('Error after returning data', 16, 1);
+END;
+GO
+
+-- PRINT-only procedure (no result set, no error)
+CREATE PROCEDURE rpe_txn_sp_PrintOnly
+AS BEGIN
+    PRINT 'This is a PRINT message only';
+END;
+GO
+
+-- Procedure expecting INT parameter (for type mismatch test)
+CREATE PROCEDURE rpe_txn_sp_IntParam @id INT
+AS BEGIN
+    SELECT @id AS int_value, @id * 10 AS multiplied;
+END;
+GO
+
+-- Procedures with transaction control statements (should be blocked by ANTLR validation)
+CREATE PROCEDURE rpe_txn_sp_WithBeginTran
+AS BEGIN
+    BEGIN TRAN;
+    SELECT 1 AS val;
+    COMMIT;
+END;
+GO
+
+CREATE PROCEDURE rpe_txn_sp_WithCommit
+AS BEGIN
+    SELECT 1 AS val;
+    COMMIT TRANSACTION;
+END;
+GO
+
+CREATE PROCEDURE rpe_txn_sp_WithRollback
+AS BEGIN
+    SELECT 1 AS val;
+    ROLLBACK TRANSACTION;
+END;
+GO
+
+CREATE PROCEDURE rpe_txn_sp_WithSaveTran
+AS BEGIN
+    SAVE TRANSACTION sp1;
+    SELECT 1 AS val;
+END;
+GO
+

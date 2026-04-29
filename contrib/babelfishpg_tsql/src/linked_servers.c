@@ -6,7 +6,9 @@
 #include "libpq/pqformat.h"
 #include "tsearch/ts_locale.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "miscadmin.h"
+#include "catalog/pg_type.h"
 
 #include "pltsql.h"
 #include "linked_servers.h"
@@ -21,6 +23,14 @@
 
 #define LINKED_SERVER_DEBUG(...)	elog(DEBUG1, __VA_ARGS__)
 #define LINKED_SERVER_DEBUG_FINER(...)	elog(DEBUG2, __VA_ARGS__)
+
+/*
+ * Note: FreeTDS handles UTF-8 to UTF-16 LE conversion internally when we
+ * use XSYBNVARCHAR/XSYBNCHAR types with dbrpcparam(). We configure the
+ * client charset to UTF-8 via DBSETLCHARSET in linked_server_establish_connection()
+ * so that FreeTDS correctly converts multi-byte UTF-8 characters (e.g., CJK,
+ * Arabic, emoji) to UTF-16 LE for the TDS protocol wire format.
+ */
 
 PG_FUNCTION_INFO_V1(openquery_internal);
 PG_FUNCTION_INFO_V1(sp_testlinkedserver_internal);
@@ -47,6 +57,22 @@ Oid		tdsTypeToOid(int datatype);
 int		tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int scale);
 Datum		getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len);
 static bool 	isQueryTimeout;
+
+/*
+ * RPC Error Capture State — must be inside #ifdef ENABLE_TDS_LIB since
+ * they reference TDS-specific types and are used by functions that are
+ * only compiled when the TDS client library is available.
+ */
+static bool     rpc_error_capture_mode = false;
+static bool     rpc_error_captured = false;
+static int      rpc_error_code = 0;
+static int      rpc_error_state = 0;
+static int      rpc_error_severity = 0;
+static char    *rpc_error_msg = NULL;
+static char    *rpc_error_svr_name = NULL;
+static char    *rpc_error_proc_name = NULL;
+static int      rpc_error_line = 0;
+static char    *rpc_error_linked_server_name = NULL;  /* configured linked server name */
 
 static int
 linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state, int severity, char *error_msg, char *svr_name, char *proc_name, int line)
@@ -79,9 +105,31 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 	appendStringInfo(&buf, "Line: %i, Level: %i", line, severity);
 
 	if (severity > 10)
+	{
+		/*
+		 * In RPC error capture mode, save error details for later formatting
+		 * as SQL Server error 7215. Only capture the first error (subsequent
+		 * errors from the same execution are ignored).
+		 * OPENQUERY uses the default path (rpc_error_capture_mode = false).
+		 */
+		if (rpc_error_capture_mode && !rpc_error_captured)
+		{
+			rpc_error_captured = true;
+			rpc_error_code = error_code;
+			rpc_error_state = state;
+			rpc_error_severity = severity;
+			rpc_error_msg = error_msg ? MemoryContextStrdup(TopMemoryContext, error_msg) : NULL;
+			rpc_error_svr_name = svr_name ? MemoryContextStrdup(TopMemoryContext, svr_name) : NULL;
+			rpc_error_proc_name = proc_name ? MemoryContextStrdup(TopMemoryContext, proc_name) : NULL;
+			rpc_error_line = line;
+			pfree(buf.data);
+			return 0;  /* Don't throw — let RPC caller format the error */
+		}
+
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 				 errmsg("%s", buf.data)));
+	}
 	else
 	{
 		/*
@@ -186,6 +234,36 @@ linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error
 		isQueryTimeout = true;
 		return LS_INT_CANCEL;
 	} 
+
+	/*
+	 * In RPC error capture mode, if we already captured an error from
+	 * msg_handler, throw the captured error immediately instead of the
+	 * generic DB error 20018 ("General SQL server error"). This ensures
+	 * the error aborts execution (preventing partial results from leaking
+	 * through) while preserving the SQL Server-compatible error 7215 format.
+	 * OPENQUERY is unaffected (capture mode defaults to false).
+	 */
+	if (rpc_error_capture_mode && rpc_error_captured)
+	{
+		StringInfoData errbuf;
+
+		pfree(buf.data);
+		initStringInfo(&errbuf);
+		appendStringInfo(&errbuf,
+			"Could not execute statement on remote server '%s'.",
+			rpc_error_linked_server_name ? rpc_error_linked_server_name : "unknown");
+		if (rpc_error_msg)
+		{
+			appendStringInfo(&errbuf, " [Msg %d, Level %d, State %d, Line %d]",
+				rpc_error_code, rpc_error_severity,
+				rpc_error_state, rpc_error_line);
+			appendStringInfo(&errbuf, " %s", rpc_error_msg);
+		}
+		linked_server_clear_rpc_error();
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+				 errmsg("%s", errbuf.data)));
+	}
 
 	ereport(ERROR,
 			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -732,7 +810,7 @@ ValidateLinkedServerDataSource(char *data_src)
 				 errmsg("Only fully qualified domain name or IP address are allowed as data source")));
 }
 
-static void
+void
 linked_server_establish_connection(char *servername, LinkedServerProcess * lsproc, bool isTesting)
 {
 	/* Get the foreign server and user mapping */
@@ -745,6 +823,11 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 	char	*database = NULL;
 	int	query_timeout = 0;
 	int	connect_timeout = 0;
+
+	/* LOG: Function entry with context - proves this function was called */
+	LINKED_SERVER_DEBUG("Establishing connection to server: %s (%s)", 
+	     servername ? servername : "NULL",
+	     isTesting ? "testing" : "execution");
 
 	if (!pltsql_enable_linked_servers)
 		ereport(ERROR,
@@ -762,6 +845,8 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 					 errmsg("Error fetching foreign server with servername '%s'", servername)
 					 ));
 
+		/* LOG: Foreign server retrieved successfully */
+
 		mapping = GetUserMapping(GetUserId(), server->serverid);
 
 		if (mapping == NULL)
@@ -770,11 +855,15 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 					 errmsg("Error fetching user mapping with servername '%s'", servername)
 					 ));
 
+		/* LOG: User mapping retrieved successfully */
+
 		if (LINKED_SERVER_INIT() == FAIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("Failed to initialize TDS client library environment")
 					 ));
+
+		/* LOG: TDS library initialization successful */
 
 		LINKED_SERVER_ERR_HANDLE(linked_server_err_handler);
 		LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
@@ -815,6 +904,7 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 
 		LINKED_SERVER_SET_APP(login);
 		LINKED_SERVER_SET_VERSION(login);
+		LINKED_SERVER_SET_CHARSET(login, "UTF-8");
 
 		/* options in foreign server should be the servername and database */
 		foreach(option, server->options)
@@ -846,13 +936,25 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 			LINKED_SERVER_SET_CONNECT_TIMEOUT(connect_timeout);
 		}
 
+		/* LOG: Connection parameters configured */
+		LINKED_SERVER_DEBUG("LINKED SERVER: Connection parameters - data_source: %s, database: %s, connect_timeout: %d, query_timeout: %d",
+		     data_src ? data_src : "NULL", 
+		     database ? database : "(none)", 
+		     connect_timeout, 
+		     query_timeout);
+
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connecting to remote server \"%s\"", data_src);
+		
+		/* LOG: Initiating TDS connection */
 
 		*lsproc = LINKED_SERVER_OPEN(login, data_src);
 		if (!(*lsproc))
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("Unable to connect to \"%s\"", data_src)));
+
+		/* LOG: Connection successful */
+		LINKED_SERVER_DEBUG("LINKED SERVER: TDS connection established successfully to: %s", data_src);
 
 		LINKED_SERVER_FREELOGIN(login);
 
@@ -862,11 +964,18 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 		}
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connected to remote server");
+		
+		/* LOG: Connection ready */
 	}
 	PG_CATCH();
 	{
 		HOLD_INTERRUPTS();
 		LINKED_SERVER_DEBUG("LINKED SERVER: Failed to establish connection to remote server due to error");
+		
+		/* LOG: Connection failed */
+		LINKED_SERVER_DEBUG("Failed to establish connection to server: %s", 
+		     servername ? servername : "NULL");
+		
 		RESUME_INTERRUPTS();
 
 		PG_RE_THROW();
@@ -925,12 +1034,17 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Executing query against remote server");
 
+		/* LOG: Metadata query execution starting */
+		LINKED_SERVER_DEBUG("Executing metadata query on remote server");
+
 		/* Execute the query on remote server */
 		if (LINKED_SERVER_EXEC_QUERY(lsproc) == FAIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("error executing query \"%s\" against remote server", buf.data)
 					 ));
+
+		/* LOG: Metadata query execution successful */
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Begin fetching results from remote server");
 
@@ -1092,6 +1206,9 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 					}
 
 					*tupdesc = BlessTupleDesc(*tupdesc);
+					
+					/* LOG: Metadata retrieval complete */
+					LINKED_SERVER_DEBUG("Metadata retrieval complete - %d columns", numrows);
 				}
 				else
 				{
@@ -1168,6 +1285,9 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Executing query against remote server");
 
+		/* LOG: Query execution starting */
+		LINKED_SERVER_DEBUG("Executing query on remote server");
+
 		/* Execute the query on remote server */
 		if (LINKED_SERVER_EXEC_QUERY(lsproc) == FAIL)
 		{
@@ -1184,7 +1304,9 @@ openquery_imp(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("error executing query \"%s\" against remote server", query)
 					 ));
-		}		
+		}
+
+		/* LOG: Query execution successful */
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Begin fetching results from remote server");
 
@@ -1297,9 +1419,14 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 				LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Finished fetching results. Fetched %d rows", rowcount);
 
+				/* LOG: Result set summary */
+				LINKED_SERVER_DEBUG("Result set retrieved - %d columns, %d rows", colcount, rowcount);
+
 				tuplestore_donestoring(tupstore);
 			}
 		}
+		
+		/* LOG: Query completed with results */
 	}
 	PG_FINALLY();
 	{
@@ -1315,6 +1442,908 @@ openquery_imp(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 
 	return (Datum) 0;
+}
+
+/*
+ * Map PostgreSQL/Babelfish type OID to TDS type for RPC parameter binding.
+ *
+ * Babelfish type OIDs are resolved at runtime, so they cannot be used in
+ * switch/case labels (C requires constant expressions). We use the cached
+ * is_tsql_*_datatype() functions from the common utility plugin (typecode.c)
+ * which perform lazy-cached OID lookups internally — avoiding the overhead
+ * of repeated syscache queries on every call.
+ *
+ * For the few types without dedicated is_tsql_*_datatype() functions
+ * (float, real, datetime, uniqueidentifier), we use get_tsql_datatype_oid()
+ * which scans the pre-initialized type_infos[] array (also no syscache).
+ */
+int
+get_tds_type_from_pg_oid(Oid pgtype)
+{
+	/*
+	 * Check for Babelfish-specific types using cached is_tsql_*_datatype()
+	 * functions from the common utility plugin. Each function uses a
+	 * lazy-initialized static OID variable internally (see typecode.c),
+	 * so the syscache is consulted at most once per type per session.
+	 */
+	if (common_utility_plugin_ptr)
+	{
+		/* String types */
+		if (common_utility_plugin_ptr->is_tsql_varchar_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_varchar_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_nvarchar_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(pgtype))
+			return LS_TYPE_NVARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_bpchar_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(pgtype))
+			return LS_TYPE_CHAR;
+		if (common_utility_plugin_ptr->is_tsql_nchar_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_nchar_datatype)(pgtype))
+			return LS_TYPE_NCHAR;
+
+		/* Integer types */
+		if (common_utility_plugin_ptr->is_tsql_int_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_int_datatype)(pgtype))
+			return LS_TYPE_INT4;
+		if (common_utility_plugin_ptr->is_tsql_bigint_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_bigint_datatype)(pgtype))
+			return LS_TYPE_INT8;
+		if (common_utility_plugin_ptr->is_tsql_tinyint_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(pgtype))
+			return LS_TYPE_INT1;
+
+		/* Floating point types (no dedicated is_tsql_* — use cached array lookup) */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid)
+		{
+			if (pgtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("float"))
+				return LS_TYPE_FLOAT;
+			if (pgtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("real"))
+				return LS_TYPE_REAL;
+		}
+
+		/* Boolean type */
+		if (common_utility_plugin_ptr->is_tsql_bit_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_bit_datatype)(pgtype))
+			return LS_TYPE_BIT;
+
+		/* Binary types */
+		if (common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(pgtype))
+			return LS_TYPE_VARBINARY;
+		if (common_utility_plugin_ptr->is_tsql_sys_binary_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(pgtype))
+			return LS_TYPE_BINARY;
+
+		/* DateTime types — send as ISO string, server will parse */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid &&
+			pgtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("datetime"))
+			return LS_TYPE_VARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_smalldatetime_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_datetime2_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_datetime2_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+
+		/* Numeric/Decimal — send as string, server will convert */
+		if (common_utility_plugin_ptr->is_tsql_decimal_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_decimal_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+
+		/* Money types — send as string, server will convert */
+		if (common_utility_plugin_ptr->is_tsql_money_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_money_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_smallmoney_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+
+		/* Uniqueidentifier — send as string (GUID format) */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid &&
+			pgtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("uniqueidentifier"))
+			return LS_TYPE_VARCHAR;
+	}
+
+	/* Standard PostgreSQL types (compile-time OIDs, switch is appropriate) */
+	switch (pgtype)
+	{
+		case INT2OID:
+			return LS_TYPE_INT2;
+		case INT4OID:
+			return LS_TYPE_INT4;
+		case INT8OID:
+			return LS_TYPE_INT8;
+		case FLOAT4OID:
+			return LS_TYPE_REAL;
+		case FLOAT8OID:
+			return LS_TYPE_FLOAT;
+		case NUMERICOID:
+			return LS_TYPE_VARCHAR;
+		case BOOLOID:
+			return LS_TYPE_BIT;
+		case TEXTOID:
+			return LS_TYPE_TEXT;
+		case VARCHAROID:
+			return LS_TYPE_VARCHAR;
+		case BPCHAROID:
+			return LS_TYPE_CHAR;
+		case DATEOID:
+			return LS_TYPE_VARCHAR;
+		case TIMEOID:
+			return LS_TYPE_VARCHAR;
+		case TIMESTAMPOID:
+			return LS_TYPE_DATETIME;
+		case BYTEAOID:
+			return LS_TYPE_VARBINARY;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("PostgreSQL type OID %u is not supported for remote procedure parameters", pgtype)));
+	}
+
+	return 0;  /* Should not reach here */
+}
+
+/*
+ * Helper: Convert a text/varchar Datum to raw TDS bytes (no null terminator).
+ * Used for all string-like types (varchar, nvarchar, char, nchar, text, etc.)
+ *
+ * FreeTDS handles UTF-8 to UTF-16 encoding conversion internally when
+ * XSYBNVARCHAR/XSYBNCHAR types are used with dbrpcparam(). We send
+ * UTF-8 data and FreeTDS converts it as needed for the TDS wire format.
+ *
+ * Note: Do NOT include null terminator in output — it causes conversion
+ * errors in FreeTDS when passed via dbrpcparam.
+ */
+static void
+datum_text_to_tds_bytes(Datum value, void **data_out, DBINT *len_out)
+{
+	char *str = TextDatumGetCString(value);
+
+	*len_out = strlen(str);
+	*data_out = palloc(*len_out);
+	memcpy(*data_out, str, *len_out);
+	pfree(str);
+}
+
+/*
+ * Helper: Convert any Datum to TDS bytes via its type output function.
+ * The value is serialized to its text representation and sent as a string;
+ * the remote server will parse and convert to the appropriate type.
+ *
+ * Used for types that are complex to send in native TDS binary format
+ * (numeric, decimal, money, smallmoney, datetime variants, etc.)
+ */
+static void
+datum_output_to_tds_bytes(Datum value, Oid valtype, void **data_out, DBINT *len_out)
+{
+	Oid		typoutput;
+	bool	typIsVarlena;
+	char   *str;
+
+	getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
+	str = OidOutputFunctionCall(typoutput, value);
+	*len_out = strlen(str);
+	*data_out = palloc(*len_out);
+	memcpy(*data_out, str, *len_out);
+	pfree(str);
+}
+
+/*
+ * Convert a Datum value to raw bytes suitable for TDS RPC parameter binding.
+ * Returns palloc'd buffer containing the data.
+ *
+ * Uses cached is_tsql_*_datatype() functions from the common utility plugin
+ * (typecode.c) to identify Babelfish types without repeated syscache lookups.
+ * Standard PostgreSQL types use a switch statement on compile-time OIDs.
+ *
+ * Note on tds_typeio.h: The TDS type I/O functions in babelfishpg_tds
+ * (TdsSendType*, TdsRecvType*) handle server-side TDS protocol I/O — they
+ * write/read TDS wire format bytes to/from the protocol stream buffer.
+ * This function handles client-side conversion — it produces raw C values
+ * (int32, float8, char*) for FreeTDS dbrpcparam() which has a different API
+ * contract. The two cannot be shared due to both the cross-extension boundary
+ * (babelfishpg_tds vs babelfishpg_tsql) and the fundamentally different
+ * output format requirements.
+ */
+void
+convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnull,
+						   void **data_out, DBINT *len_out)
+{
+	if (isnull)
+	{
+		*data_out = NULL;
+		*len_out = 0;
+		return;
+	}
+
+	/*
+	 * Check for Babelfish-specific types using cached is_tsql_*_datatype()
+	 * functions from the common utility plugin. Each function uses a
+	 * lazy-initialized static OID variable internally (see typecode.c),
+	 * so the syscache is consulted at most once per type per session.
+	 */
+	if (common_utility_plugin_ptr)
+	{
+		/*
+		 * String types (varchar, nvarchar, char, nchar) — send as UTF-8.
+		 * FreeTDS handles encoding conversion internally for nvarchar/nchar.
+		 */
+		if ((common_utility_plugin_ptr->is_tsql_nvarchar_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_nchar_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_varchar_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_varchar_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_bpchar_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(valtype)))
+		{
+			datum_text_to_tds_bytes(value, data_out, len_out);
+			return;
+		}
+
+		/* Babelfish FLOAT (8 bytes) */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid &&
+			valtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("float"))
+		{
+			*len_out = sizeof(LS_DBFLT8);
+			*data_out = palloc(*len_out);
+			*((LS_DBFLT8 *)*data_out) = DatumGetFloat8(value);
+			return;
+		}
+
+		/* Babelfish REAL (4 bytes) */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid &&
+			valtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("real"))
+		{
+			*len_out = sizeof(LS_DBREAL);
+			*data_out = palloc(*len_out);
+			*((LS_DBREAL *)*data_out) = DatumGetFloat4(value);
+			return;
+		}
+
+		/* Babelfish BIT */
+		if (common_utility_plugin_ptr->is_tsql_bit_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_bit_datatype)(valtype))
+		{
+			*len_out = sizeof(LS_DBBOOL);
+			*data_out = palloc(*len_out);
+			*((LS_DBBOOL *)*data_out) = DatumGetBool(value) ? 1 : 0;
+			return;
+		}
+
+		/* Babelfish TINYINT (unsigned 0-255, stored internally as int2) */
+		if (common_utility_plugin_ptr->is_tsql_tinyint_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(valtype))
+		{
+			*len_out = sizeof(unsigned char);
+			*data_out = palloc(*len_out);
+			*((unsigned char *)*data_out) = (unsigned char) DatumGetInt16(value);
+			return;
+		}
+
+		/* Babelfish VARBINARY/BINARY */
+		if ((common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_sys_binary_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(valtype)))
+		{
+			bytea *bytes = DatumGetByteaPP(value);
+
+			*len_out = VARSIZE_ANY_EXHDR(bytes);
+			*data_out = palloc(*len_out);
+			memcpy(*data_out, VARDATA_ANY(bytes), *len_out);
+			return;
+		}
+
+		/*
+		 * Types sent as string representation — the remote server parses
+		 * and converts to the appropriate native type:
+		 *   numeric, decimal, money, smallmoney,
+		 *   datetime, datetime2, smalldatetime, date, datetimeoffset, time
+		 */
+		if ((common_utility_plugin_ptr->is_tsql_decimal_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_decimal_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_money_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_money_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_smallmoney_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_datetime2_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_datetime2_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_smalldatetime_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype)(valtype)))
+		{
+			datum_output_to_tds_bytes(value, valtype, data_out, len_out);
+			return;
+		}
+
+		/* datetime, date, time — no dedicated is_tsql_* function, use cached array */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid)
+		{
+			Oid datetime_oid = (*common_utility_plugin_ptr->get_tsql_datatype_oid)("datetime");
+			Oid numeric_oid = (*common_utility_plugin_ptr->get_tsql_datatype_oid)("numeric");
+
+			if (valtype == datetime_oid || valtype == numeric_oid)
+			{
+				datum_output_to_tds_bytes(value, valtype, data_out, len_out);
+				return;
+			}
+		}
+	}
+
+	/* Standard PostgreSQL types (compile-time OIDs, switch is appropriate) */
+	switch (valtype)
+	{
+		case BOOLOID:
+			{
+				*len_out = sizeof(LS_DBBOOL);
+				*data_out = palloc(*len_out);
+				*((LS_DBBOOL *)*data_out) = DatumGetBool(value) ? 1 : 0;
+			}
+			break;
+
+		case INT2OID:
+			{
+				*len_out = sizeof(LS_DBSMALLINT);
+				*data_out = palloc(*len_out);
+				*((LS_DBSMALLINT *)*data_out) = DatumGetInt16(value);
+			}
+			break;
+
+		case INT4OID:
+			{
+				*len_out = sizeof(LS_DBINT);
+				*data_out = palloc(*len_out);
+				*((LS_DBINT *)*data_out) = DatumGetInt32(value);
+			}
+			break;
+
+		case INT8OID:
+			{
+				*len_out = sizeof(int64);
+				*data_out = palloc(*len_out);
+				*((int64 *)*data_out) = DatumGetInt64(value);
+			}
+			break;
+
+		case FLOAT4OID:
+			{
+				*len_out = sizeof(LS_DBREAL);
+				*data_out = palloc(*len_out);
+				*((LS_DBREAL *)*data_out) = DatumGetFloat4(value);
+			}
+			break;
+
+		case FLOAT8OID:
+			{
+				*len_out = sizeof(LS_DBFLT8);
+				*data_out = palloc(*len_out);
+				*((LS_DBFLT8 *)*data_out) = DatumGetFloat8(value);
+			}
+			break;
+
+		case TEXTOID:
+		case VARCHAROID:
+		case BPCHAROID:
+			datum_text_to_tds_bytes(value, data_out, len_out);
+			break;
+
+		case BYTEAOID:
+			{
+				bytea *bytes = DatumGetByteaPP(value);
+
+				*len_out = VARSIZE_ANY_EXHDR(bytes);
+				*data_out = palloc(*len_out);
+				memcpy(*data_out, VARDATA_ANY(bytes), *len_out);
+			}
+			break;
+
+		default:
+			datum_output_to_tds_bytes(value, valtype, data_out, len_out);
+			break;
+	}
+}
+
+/*
+ * Helper function to compare two procedure references for equality
+ */
+static bool
+match_procedure_reference(const char *s1, const char *d1, const char *sc1, const char *p1,
+						 const char *s2, const char *d2, const char *sc2, const char *p2)
+{
+	/* Server name comparison (case-insensitive, NULL means current server) */
+	if (s1 && s2)
+	{
+		if (pg_strcasecmp(s1, s2) != 0)
+			return false;
+	}
+	else if (s1 || s2)
+	{
+		/* One is NULL, one is not - treat as different unless explicitly same server */
+		return false;
+	}
+	
+	/* Database name comparison (case-insensitive) */
+	if (d1 && d2)
+	{
+		if (pg_strcasecmp(d1, d2) != 0)
+			return false;
+	}
+	else if (d1 || d2)
+		return false;
+	
+	/* Schema name comparison (case-insensitive) */
+	if (sc1 && sc2)
+	{
+		if (pg_strcasecmp(sc1, sc2) != 0)
+			return false;
+	}
+	else if (sc1 || sc2)
+		return false;
+	
+	/* Procedure name comparison (case-insensitive, required) */
+	if (!p1 || !p2)
+		return false;
+	
+	return pg_strcasecmp(p1, p2) == 0;
+}
+
+/*
+ * Check if a procedure reference exists in the visited list (circular reference detection)
+ */
+static bool
+is_circular_reference(List *visited_procs,
+					 const char *server_name,
+					 const char *database_name,
+					 const char *schema_name,
+					 const char *procedure_name)
+{
+	ListCell *cell;
+	
+	foreach(cell, visited_procs)
+	{
+		NestedProcedureInfo *visited = (NestedProcedureInfo *) lfirst(cell);
+		
+		if (match_procedure_reference(
+				visited->server_name, visited->database_name,
+				visited->schema_name, visited->procedure_name,
+				server_name, database_name, schema_name, procedure_name))
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+/*
+ * Check if a procedure has already been validated (skip redundant validation)
+ * Uses the same match logic as is_circular_reference but for validated list
+ */
+static bool
+is_already_validated(List *validated_procs,
+					const char *server_name,
+					const char *database_name,
+					const char *schema_name,
+					const char *procedure_name)
+{
+	ListCell *cell;
+	
+	foreach(cell, validated_procs)
+	{
+		NestedProcedureInfo *validated = (NestedProcedureInfo *) lfirst(cell);
+		
+		if (match_procedure_reference(
+				validated->server_name, validated->database_name,
+				validated->schema_name, validated->procedure_name,
+				server_name, database_name, schema_name, procedure_name))
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+/*
+ * Recursively validate a remote procedure and all its nested procedure calls
+ * 
+ * visited_procs: Per-branch list for circular reference detection (sees ancestors only)
+ * validated_procs_ptr: Global list to avoid redundant re-validation (pointer for modification)
+ */
+static void
+validate_remote_procedure_recursive(const char *server_name,
+								   const char *database_name,
+								   const char *schema_name,
+								   const char *procedure_name,
+								   int depth,
+								   List *visited_procs,
+								   List **validated_procs_ptr)
+{
+	LINKED_SERVER_RETCODE erc;
+	StringInfoData query;
+	char *definition = NULL;
+	int colcount = 0;
+	LinkedServerProcess validation_lsproc = NULL;
+	List *nested_calls = NIL;
+	ListCell *cell;
+	NestedProcedureInfo *current;  /* C90: declare at top of function */
+
+	/* Initialize query.data to NULL so PG_FINALLY can safely check it */
+	query.data = NULL;
+	
+	/* Check recursion depth limit (matches pl_exec.c MAX_EXEC_DEPTH_LIMIT) */
+	if (depth > 32)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("Maximum recursion depth (32) exceeded while validating remote procedure %s.%s.%s.%s",
+						server_name, database_name, schema_name, procedure_name),
+				 errhint("Check for circular procedure references or excessive nesting")));
+	}
+	
+	/* Check for circular reference (in current call stack) */
+	if (is_circular_reference(visited_procs, server_name, database_name, schema_name, procedure_name))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_RECURSION),
+				 errmsg("Circular procedure reference detected: %s.%s.%s.%s",
+						server_name, database_name, schema_name, procedure_name),
+				 errhint("Procedure calls itself directly or indirectly")));
+	}
+	
+	/* Skip if already validated (avoid redundant connections) */
+	if (is_already_validated(*validated_procs_ptr, server_name, database_name, schema_name, procedure_name))
+	{
+		LINKED_SERVER_DEBUG("SELECT-only validation: Skipping %s.%s.%s.%s - already validated",
+		     server_name, database_name, schema_name, procedure_name);
+		return;
+	}
+	
+	/* Add current procedure to both lists */
+	current = (NestedProcedureInfo *) palloc(sizeof(NestedProcedureInfo));
+	current->server_name = server_name ? pstrdup(server_name) : NULL;
+	current->database_name = database_name ? pstrdup(database_name) : NULL;
+	current->schema_name = schema_name ? pstrdup(schema_name) : NULL;
+	current->procedure_name = pstrdup(procedure_name);
+	
+	/* Add to visited (per-branch) for circular detection */
+	visited_procs = lappend(visited_procs, current);
+	
+	/* Add to validated (global) to prevent re-validation */
+	*validated_procs_ptr = lappend(*validated_procs_ptr, current);
+	
+	/*
+	 * Fetch procedure definition from remote server
+	 * (Reusing existing pattern from current implementation)
+	 */
+	PG_TRY();
+	{
+		/* Establish separate connection for validation query */
+		linked_server_establish_connection((char *)server_name, &validation_lsproc, false);
+		
+		/*
+		 * Build query to fetch procedure definition from sys.sql_modules.
+		 * Use bracket-quoting for identifiers and escape single quotes in
+		 * string literals to prevent SQL injection (reviewer comment #90:
+		 * procedure names with ' are valid in T-SQL via [] quoting).
+		 */
+		initStringInfo(&query);
+		appendStringInfo(&query,
+			"SELECT m.definition "
+			"FROM [%s].sys.sql_modules m "
+			"JOIN [%s].sys.objects o ON m.object_id = o.object_id "
+			"WHERE o.name = N'",
+			database_name, database_name);
+		/* Escape single quotes in procedure_name */
+		for (int i = 0; procedure_name[i] != '\0'; i++)
+		{
+			appendStringInfoChar(&query, procedure_name[i]);
+			if (procedure_name[i] == '\'')
+				appendStringInfoChar(&query, '\'');
+		}
+		appendStringInfoString(&query, "' AND SCHEMA_NAME(o.schema_id) = N'");
+		/* Escape single quotes in schema_name */
+		for (int i = 0; schema_name[i] != '\0'; i++)
+		{
+			appendStringInfoChar(&query, schema_name[i]);
+			if (schema_name[i] == '\'')
+				appendStringInfoChar(&query, '\'');
+		}
+		appendStringInfoString(&query, "' AND o.type IN ('P', 'PC')");
+		
+		LINKED_SERVER_DEBUG("SELECT-only validation: Fetching definition for %s.%s.%s.%s (depth=%d)",
+			 server_name, database_name, schema_name, procedure_name, depth);
+		
+		/* Execute query */
+		if (LINKED_SERVER_PUT_CMD(validation_lsproc, query.data) != SUCCEED)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					 errmsg("Failed to send query to fetch procedure definition for %s", procedure_name)));
+		
+		if (LINKED_SERVER_EXEC_QUERY(validation_lsproc) == FAIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					 errmsg("Failed to execute query to fetch procedure definition for %s", procedure_name)));
+		
+		/* Get results */
+		if ((erc = LINKED_SERVER_RESULTS(validation_lsproc)) == FAIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					 errmsg("Failed to get results from procedure definition query")));
+		
+		colcount = LINKED_SERVER_NUM_COLS(validation_lsproc);
+		
+		if (colcount > 0)
+		{
+			/* Fetch definition without buffer binding (handles nvarchar(max)) */
+			if (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
+			{
+				void *data = LINKED_SERVER_DATA(validation_lsproc, 1);
+				int data_len = LINKED_SERVER_DATA_LEN(validation_lsproc, 1);
+				
+				if (data && data_len > 0)
+				{
+					definition = (char *)palloc(data_len + 1);
+					memcpy(definition, data, data_len);
+					definition[data_len] = '\0';
+				}
+			}
+			
+			/* Consume remaining rows */
+			while (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
+				;
+		}
+		
+		/* Consume remaining result sets */
+		while (LINKED_SERVER_RESULTS(validation_lsproc) != NO_MORE_RESULTS)
+		{
+			while (LINKED_SERVER_NEXT_ROW(validation_lsproc) != NO_MORE_ROWS)
+				;
+		}
+	}
+	PG_FINALLY();
+	{
+		/* Close validation connection */
+		if (validation_lsproc)
+		{
+			LINKED_SERVER_CANCEL(validation_lsproc);
+			LINKED_SERVER_CLOSE(validation_lsproc);
+		}
+	}
+	PG_END_TRY();
+
+	if (definition == NULL)
+	{
+		pfree(query.data);
+		query.data = NULL;
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("Could not fetch definition for remote procedure %s.%s.%s.%s",
+						server_name, database_name, schema_name, procedure_name),
+				 errhint("Ensure the procedure exists and you have permission to view its definition")));
+	}
+	
+	
+	/*
+	 * Validate this procedure with ANTLR (SELECT-only check) and
+	 * extract nested procedure calls from the same parse.
+	 * This replaces the old extract_nested_procedure_calls() C string
+	 * parser which was inferior (case-sensitive, matched inside strings/comments).
+	 */
+	PG_TRY();
+	{
+		validate_remote_procedure_select_only_antlr(
+			definition,
+			server_name,
+			database_name,
+			schema_name,
+			procedure_name,
+			&nested_calls);
+		
+	}
+	PG_CATCH();
+	{
+		/* Clean up before re-throwing */
+		if (definition)
+			pfree(definition);
+		if (query.data)
+			pfree(query.data);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	
+	LINKED_SERVER_DEBUG("SELECT-only validation: Found %d nested procedure calls in %s",
+	     list_length(nested_calls), procedure_name);
+	
+	/* Recursively validate each nested procedure */
+	foreach(cell, nested_calls)
+	{
+		NestedProcedureInfo *nested = (NestedProcedureInfo *) lfirst(cell);
+		List *child_visited;  /* Fresh copy for each child to prevent false circular detection */
+		
+		/* Inherit parent values for unspecified parts */
+		const char *nested_server = nested->server_name ? nested->server_name : server_name;
+		const char *nested_db = nested->database_name ? nested->database_name : database_name;
+		const char *nested_schema = nested->schema_name ? nested->schema_name : schema_name;
+		
+		LINKED_SERVER_DEBUG("SELECT-only validation: Validating nested %s.%s.%s.%s (depth=%d)",
+		     nested_server, nested_db, nested_schema, nested->procedure_name, depth + 1);
+		
+		/*
+		 * Create a copy of visited_procs for each child branch.
+		 * This prevents false circular reference detection when the same procedure
+		 * is called multiple times by the same parent (e.g., EXEC sp_A; EXEC sp_A;).
+		 * Each branch should only see its ancestors, not its siblings.
+		 */
+		child_visited = list_copy(visited_procs);
+		
+		/* Recursive call with the isolated copy but shared validated list */
+		validate_remote_procedure_recursive(
+			nested_server,
+			nested_db,
+			nested_schema,
+			nested->procedure_name,
+			depth + 1,
+			child_visited,
+			validated_procs_ptr);
+		
+		/* Free the copy (contents are shallow but that's OK since we don't modify entries) */
+		list_free(child_visited);
+	}
+	
+	/* Clean up - free definition and query.data on all paths */
+	if (definition)
+		pfree(definition);
+	if (query.data)
+		pfree(query.data);
+	if (nested_calls)
+		list_free_deep(nested_calls);
+}
+
+/*
+ * Validate that a remote stored procedure contains only SELECT statements.
+ * This function fetches the procedure definition from the remote server and
+ * performs static analysis to detect forbidden DML/DDL statements.
+ * 
+ * This is the entry point that initiates recursive validation of the procedure
+ * and all nested procedure calls.
+ *
+ * Throws ERROR if the procedure or any nested procedures contain non-SELECT statements.
+ */
+void
+validate_procedure_select_only(const char *server_name,
+							   const char *database_name,
+							   const char *schema_name,
+							   const char *procedure_name)
+{
+	List *visited_procs = NIL;   /* Per-branch list for circular detection */
+	List *validated_procs = NIL; /* Global list to skip redundant validation */
+	
+	LINKED_SERVER_DEBUG("SELECT-only validation: Starting for %s.%s.%s.%s",
+		 server_name, database_name, schema_name, procedure_name);
+	
+	/* Start recursive validation at depth 0 with empty lists */
+	validate_remote_procedure_recursive(
+		server_name,
+		database_name,
+		schema_name,
+		procedure_name,
+		0,
+		visited_procs,
+		&validated_procs);
+	
+	/* Clean up both lists */
+	list_free_deep(visited_procs);
+	list_free_deep(validated_procs);
+	
+}
+
+/*
+ * RPC Error Capture API
+ *
+ * These functions allow the RPC execution path (pl_exec-2.c) to:
+ * 1. Enable capture mode before RPC execution
+ * 2. Check if a remote error was captured
+ * 3. Format and throw a SQL Server-compatible error 7215
+ * 4. Clean up captured state
+ *
+ * The OPENQUERY path never enables capture mode, so it is unaffected.
+ */
+void
+linked_server_set_rpc_error_mode(bool enable, const char *server_name)
+{
+	rpc_error_capture_mode = enable;
+	if (enable)
+	{
+		/* Clear any stale state when entering capture mode */
+		linked_server_clear_rpc_error();
+		/* Store the configured linked server name for error formatting */
+		if (server_name)
+			rpc_error_linked_server_name = MemoryContextStrdup(TopMemoryContext, server_name);
+	}
+}
+
+bool
+linked_server_has_rpc_error(void)
+{
+	return rpc_error_captured;
+}
+
+/*
+ * Format and throw SQL Server error 7215:
+ *   "Could not execute statement on remote server '<name>'."
+ *
+ * The captured remote error details (Msg #, Level, State, Line, message)
+ * are appended to provide full context, matching SQL Server's behavior
+ * of wrapping the original error inside error 7215.
+ *
+ * Uses ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION (HV004) which maps to
+ * SQL_ERROR_7215 via error_mapping.txt when the message matches the
+ * keyword "Could not execute statement on remote server".
+ */
+void
+linked_server_throw_rpc_error(const char *linked_server_name)
+{
+	StringInfoData buf;
+
+	initStringInfo(&buf);
+
+	appendStringInfo(&buf,
+		"Could not execute statement on remote server '%s'.",
+		linked_server_name);
+
+	/* Append captured remote error details */
+	if (rpc_error_msg)
+	{
+		appendStringInfo(&buf, " [Msg %d, Level %d, State %d, Line %d]",
+			rpc_error_code, rpc_error_severity,
+			rpc_error_state, rpc_error_line);
+		appendStringInfo(&buf, " %s", rpc_error_msg);
+	}
+
+	linked_server_clear_rpc_error();
+
+	ereport(ERROR,
+			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+			 errmsg("%s", buf.data)));
+}
+
+void
+linked_server_clear_rpc_error(void)
+{
+	rpc_error_captured = false;
+	rpc_error_code = 0;
+	rpc_error_state = 0;
+	rpc_error_severity = 0;
+	rpc_error_line = 0;
+
+	if (rpc_error_msg)
+	{
+		pfree(rpc_error_msg);
+		rpc_error_msg = NULL;
+	}
+	if (rpc_error_svr_name)
+	{
+		pfree(rpc_error_svr_name);
+		rpc_error_svr_name = NULL;
+	}
+	if (rpc_error_proc_name)
+	{
+		pfree(rpc_error_proc_name);
+		rpc_error_proc_name = NULL;
+	}
+	if (rpc_error_linked_server_name)
+	{
+		pfree(rpc_error_linked_server_name);
+		rpc_error_linked_server_name = NULL;
+	}
 }
 
 #endif
@@ -1377,4 +2406,3 @@ sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 
 }
-

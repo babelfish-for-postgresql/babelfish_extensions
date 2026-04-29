@@ -1,0 +1,26 @@
+-- tsql
+-- Clean up test procedures
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_NoParams;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_SingleInt;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_OutputSingle;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_OutputMultiple;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_InOut;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_ReturnCode;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_Raiserror16;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_DivByZero;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_ConversionError;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_WithInsert;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_InnerRaiserror;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_NestedError;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_ReturnAfterError;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_PrintOnly;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_IntParam;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_WithBeginTran;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_WithCommit;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_WithRollback;
+DROP PROCEDURE IF EXISTS dbo.rpe_txn_sp_WithSaveTran;
+GO
+
+-- Drop linked servers and login mappings
+EXEC sp_dropserver 'bbf_rpe_txn', 'droplogins';
+GO

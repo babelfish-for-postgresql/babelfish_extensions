@@ -86,6 +86,8 @@ typedef DBPROCESS * LinkedServerProcess;
 #define LINKED_SERVER_RESULTS(process)			dbresults(process)
 #define LINKED_SERVER_NUM_COLS(process)			dbnumcols(process)
 #define LINKED_SERVER_NEXT_ROW(process)			dbnextrow(process)
+#define LINKED_SERVER_CANCEL(process)			dbcancel(process)
+#define LINKED_SERVER_CLOSE(process)			dbclose(process)
 #define LINKED_SERVER_EXIT(void)			dbexit(void)
 #define LINKED_SERVER_DATA(process, index)		dbdata(process, index)
 #define LINKED_SERVER_DATA_LEN(process, index)		dbdatlen(process, index)
@@ -100,15 +102,71 @@ typedef DBPROCESS * LinkedServerProcess;
 #define LINKED_SERVER_SET_PWD(login, password)		DBSETLPWD(login, password)
 #define LINKED_SERVER_SET_APP(login)			DBSETLAPP(login, "babelfish_linked_server")
 #define LINKED_SERVER_SET_VERSION(login)		DBSETLVERSION(login, DBVERSION_74)
+#define LINKED_SERVER_SET_CHARSET(login, cs)		DBSETLCHARSET(login, cs)
 #define LINKED_SERVER_SET_DBNAME(login, dbname)		DBSETLDBNAME(login, dbname)
 #define LINKED_SERVER_SET_QUERY_TIMEOUT(timeout) 	dbsettime(timeout)
 #define LINKED_SERVER_SET_CONNECT_TIMEOUT(timeout) dbsetlogintime(timeout)
+
+/* RPC (Remote Procedure Call) macros for secure parameter binding */
+#define LINKED_SERVER_RPC_INIT(process, procname)	dbrpcinit(process, procname, 0)
+#define LINKED_SERVER_RPC_PARAM(process, name, status, type, maxlen, datalen, value) \
+					dbrpcparam(process, name, status, type, maxlen, datalen, value)
+#define LINKED_SERVER_RPC_SEND(process)		dbrpcsend(process)
+#define LINKED_SERVER_RPC_EXEC(process)			dbsqlok(process)
+
+/* RPC OUTPUT parameter retrieval macros */
+#define LINKED_SERVER_NUM_RETS(process)			dbnumrets(process)
+#define LINKED_SERVER_RET_NAME(process, retnum)		dbretname(process, retnum)
+#define LINKED_SERVER_RET_DATA(process, retnum)		dbretdata(process, retnum)
+#define LINKED_SERVER_RET_LEN(process, retnum)		dbretlen(process, retnum)
+#define LINKED_SERVER_RET_TYPE(process, retnum)		dbrettype(process, retnum)
+#define LINKED_SERVER_RET_STATUS(process)			dbretstatus(process)
 
 #define LS_NTBSTRINGBING	NTBSTRINGBIND
 #define	LS_INTBIND		INTBIND
 
 #define LS_BYTE			BYTE
 #define LS_TYPEINFO		DBTYPEINFO
+
+/* ====================================================================
+ * TDS Type Abstraction Layer
+ * These macros wrap FreeTDS type constants to allow for potential
+ * future migration to alternative TDS client libraries.
+ * ==================================================================== */
+
+/* RPC Parameter Types - used in get_tds_type_from_pg_oid() */
+#define LS_TYPE_VARCHAR      SYBVARCHAR
+#define LS_TYPE_NVARCHAR     XSYBNVARCHAR
+#define LS_TYPE_CHAR         SYBCHAR
+#define LS_TYPE_NCHAR        XSYBNCHAR
+#define LS_TYPE_TEXT         SYBTEXT
+#define LS_TYPE_NTEXT        SYBNTEXT
+#define LS_TYPE_INT1         SYBINT1
+#define LS_TYPE_INT2         SYBINT2
+#define LS_TYPE_INT4         SYBINT4
+#define LS_TYPE_INT8         SYBINT8
+#define LS_TYPE_FLOAT        SYBFLT8
+#define LS_TYPE_REAL         SYBREAL
+#define LS_TYPE_BIT          SYBBIT
+#define LS_TYPE_DATETIME     SYBDATETIME
+#define LS_TYPE_DATETIME4    SYBDATETIME4
+#define LS_TYPE_DATETIME2    SYBMSDATETIME2
+#define LS_TYPE_DATE         SYBMSDATE
+#define LS_TYPE_TIME         SYBMSTIME
+#define LS_TYPE_NUMERIC      SYBNUMERIC
+#define LS_TYPE_DECIMAL      SYBDECIMAL
+#define LS_TYPE_VARBINARY    SYBVARBINARY
+#define LS_TYPE_BINARY       SYBBINARY
+#define LS_TYPE_UNIQUE       SYBUNIQUE
+#define LS_TYPE_DATETIMEOFFSET SYBMSDATETIMEOFFSET
+
+/* FreeTDS data types used in dbrpcparam and type conversions */
+#define LS_DBFLT8            DBFLT8
+#define LS_DBREAL            DBREAL
+#define LS_DBINT             DBINT
+#define LS_DBSMALLINT        DBSMALLINT
+#define LS_DBBOOL            DBBOOL
+#define LS_DBDATETIME        DBDATETIME
 
 #else
 typedef int *LinkedServerLogin;
@@ -126,6 +184,8 @@ typedef int *LinkedServerProcess;
 #define LINKED_SERVER_RESULTS(process)			((void)0)
 #define LINKED_SERVER_NUM_COLS(process)			((void)0)
 #define LINKED_SERVER_NEXT_ROW(process)			((void)0)
+#define LINKED_SERVER_CANCEL(process)			((void)0)
+#define LINKED_SERVER_CLOSE(process)			((void)0)
 #define LINKED_SERVER_EXIT(void)			((void)0)
 #define LINKED_SERVER_DATA(process, index)		((void)0)
 #define LINKED_SERVER_DATA_LEN(process, index)		((void)0)
@@ -140,9 +200,25 @@ typedef int *LinkedServerProcess;
 #define LINKED_SERVER_SET_PWD(login, password)          ((void)0)
 #define LINKED_SERVER_SET_APP(login)                    ((void)0)
 #define LINKED_SERVER_SET_VERSION(login)                ((void)0)
+#define LINKED_SERVER_SET_CHARSET(login, cs)            ((void)0)
 #define LINKED_SERVER_SET_DBNAME(login, dbname)         ((void)0)
 #define LINKED_SERVER_SET_QUERY_TIMEOUT(timeout) 	((void)0)
 #define LINKED_SERVER_SET_CONNECT_TIMEOUT(timeout)	((void)0)
+
+/* RPC (Remote Procedure Call) stubs - no-op when TDS library is not available */
+#define LINKED_SERVER_RPC_INIT(process, procname)	((void)0)
+#define LINKED_SERVER_RPC_PARAM(process, name, status, type, maxlen, datalen, value) \
+										((void)0)
+#define LINKED_SERVER_RPC_SEND(process)			((void)0)
+#define LINKED_SERVER_RPC_EXEC(process)			((void)0)
+
+/* RPC OUTPUT parameter retrieval stubs */
+#define LINKED_SERVER_NUM_RETS(process)			(0)
+#define LINKED_SERVER_RET_NAME(process, retnum)		(NULL)
+#define LINKED_SERVER_RET_DATA(process, retnum)		(NULL)
+#define LINKED_SERVER_RET_LEN(process, retnum)		(0)
+#define LINKED_SERVER_RET_TYPE(process, retnum)		(0)
+#define LINKED_SERVER_RET_STATUS(process)		(0)
 
 #define LS_NTBSTRINGBING	0
 #define	LS_INTBIND		0
@@ -150,4 +226,88 @@ typedef int *LinkedServerProcess;
 #define LS_BYTE			unsigned char
 #define LS_TYPEINFO		int
 
+/* TDS Type Abstraction Layer stubs */
+#define LS_TYPE_VARCHAR      0
+#define LS_TYPE_NVARCHAR     0
+#define LS_TYPE_CHAR         0
+#define LS_TYPE_NCHAR        0
+#define LS_TYPE_TEXT         0
+#define LS_TYPE_NTEXT        0
+#define LS_TYPE_INT1         0
+#define LS_TYPE_INT2         0
+#define LS_TYPE_INT4         0
+#define LS_TYPE_INT8         0
+#define LS_TYPE_FLOAT        0
+#define LS_TYPE_REAL         0
+#define LS_TYPE_BIT          0
+#define LS_TYPE_DATETIME     0
+#define LS_TYPE_DATETIME4    0
+#define LS_TYPE_DATETIME2    0
+#define LS_TYPE_DATE         0
+#define LS_TYPE_TIME         0
+#define LS_TYPE_NUMERIC      0
+#define LS_TYPE_DECIMAL      0
+#define LS_TYPE_VARBINARY    0
+#define LS_TYPE_BINARY       0
+#define LS_TYPE_UNIQUE       0
+#define LS_TYPE_DATETIMEOFFSET 0
+
+/* FreeTDS data type stubs */
+#define LS_DBFLT8            double
+#define LS_DBREAL            float
+#define LS_DBINT             int
+#define LS_DBSMALLINT        short
+#define LS_DBBOOL            unsigned char
+#define LS_DBDATETIME        int
+
+typedef int LINKED_SERVER_RETCODE;
+
+#endif
+
+/* Debug macros */
+#define LINKED_SERVER_DEBUG(...)	elog(DEBUG1, __VA_ARGS__)
+#define LINKED_SERVER_DEBUG_FINER(...)	elog(DEBUG2, __VA_ARGS__)
+
+/* Function declarations */
+#ifdef ENABLE_TDS_LIB
+extern void linked_server_establish_connection(char *servername, LinkedServerProcess *lsproc, bool isTesting);
+extern int tdsTypeStrToTypeId(char *datatype);
+extern Oid tdsTypeToOid(int datatype);
+extern int tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int scale);
+extern Datum getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len);
+
+/* Helper functions for RPC parameter binding (used by pl_exec-2.c) */
+extern int get_tds_type_from_pg_oid(Oid pgtype);
+extern void convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnull,
+									   void **data_out, DBINT *len_out);
+
+/* Structure for tracking nested procedure calls found during validation */
+typedef struct NestedProcedureInfo
+{
+	char *server_name;      /* NULL if same server as parent */
+	char *database_name;    /* NULL if current database */
+	char *schema_name;      /* NULL if default schema */
+	char *procedure_name;   /* Required */
+} NestedProcedureInfo;
+
+/* SELECT-only validation for remote procedures */
+extern void validate_procedure_select_only(const char *server_name,
+										   const char *database_name,
+										   const char *schema_name,
+										   const char *procedure_name);
+
+/* RPC error capture — capture remote server errors for SQL Server-style formatting */
+extern void linked_server_set_rpc_error_mode(bool enable, const char *server_name);
+extern bool linked_server_has_rpc_error(void);
+extern void linked_server_throw_rpc_error(const char *linked_server_name);
+extern void linked_server_clear_rpc_error(void);
+
+/* ANTLR-based SELECT-only validation (also extracts nested procedure calls) */
+extern void validate_remote_procedure_select_only_antlr(
+	const char *definition,
+	const char *server_name,
+	const char *database_name,
+	const char *schema_name,
+	const char *procedure_name,
+	List **nested_procs_out);
 #endif

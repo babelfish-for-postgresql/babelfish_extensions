@@ -1,0 +1,17 @@
+-- psql
+SET client_min_messages = 'error';
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+GO
+
+-- tsql
+-- Add localhost as linked server for remote procedure execution upgrade test
+EXEC sp_addlinkedserver @server = N'bbf_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+-- Add jdbc_user as linked server login
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+-- Enable RPC out option (new in 5.5.0)
+EXEC sp_serveroption 'bbf_server', 'rpc out', 'true'
+GO

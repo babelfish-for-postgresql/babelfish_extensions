@@ -330,8 +330,8 @@ initTsqlSyscache()
 bool
 IsPLtsqlExtendedCatalog(Oid relationId)
 {
-	/* Skip during Babelfish restore */
-	if (!babelfish_dump_restore && (relationId == sysdatabases_oid ||
+	/* Skip during Babelfish restore or extension creation/upgrade */
+	if (!babelfish_dump_restore && !creating_extension && (relationId == sysdatabases_oid ||
 		relationId == bbf_function_ext_oid || relationId == namespace_ext_oid ||
 		relationId == bbf_authid_login_ext_oid || relationId == bbf_authid_user_ext_oid ||
 		relationId == bbf_view_def_oid || relationId == bbf_servers_def_oid ||
@@ -1421,6 +1421,42 @@ get_timeout_from_server_name(char *servername, int attnum)
 	table_endscan(scan);
 	table_close(bbf_servers_def_rel, AccessShareLock);
 	return timeout;
+}
+
+bool
+get_rpc_out_option(char *servername)
+{
+	Relation	bbf_servers_def_rel;
+	HeapTuple	tuple;
+	ScanKeyData	key;
+	TableScanDesc	scan;
+	bool		rpc_out_enabled = false;  /* Default to disabled */
+
+	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
+										 AccessShareLock);
+
+	ScanKeyInit(&key,
+				Anum_bbf_servers_def_servername,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(servername));
+
+	scan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
+
+	tuple = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tuple))
+	{
+		bool	isNull;
+		rpc_out_enabled = DatumGetBool(heap_getattr(tuple, 
+													 Anum_bbf_servers_def_rpc_out,
+													 RelationGetDescr(bbf_servers_def_rel), 
+													 &isNull));
+		if (isNull)
+			rpc_out_enabled = false;  /* Default if NULL */
+	}
+
+	table_endscan(scan);
+	table_close(bbf_servers_def_rel, AccessShareLock);
+	return rpc_out_enabled;
 }
 
 void

@@ -2,6 +2,7 @@
 #include "pltsql-2.h"
 
 #include "funcapi.h"
+#include "tsearch/ts_locale.h"
 
 #include "access/table.h"
 #include "access/attmap.h"
@@ -11,6 +12,8 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "commands/proclang.h"
+#include "executor/executor.h"
+#include "executor/tuptable.h"
 #include "executor/tstoreReceiver.h"
 #include "nodes/parsenodes.h"
 #include "utils/acl.h"
@@ -30,8 +33,10 @@
 #include "session.h"
 #include "parser/scansup.h"
 #include "parser/parse_oper.h"
+#include "parser/parser.h"
 #include "src/include/lib/qunique.h"
 #include "utils/varlena.h"
+#include "linked_servers.h"
 
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
@@ -826,6 +831,519 @@ exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_result *stmt
 	return rc;
 }
 
+#ifdef ENABLE_TDS_LIB
+
+/*
+ * Validate SQL identifier to prevent SQL injection attacks.
+ * Checks for dangerous characters and validates identifier length.
+ */
+static void
+validate_sql_identifier(const char *identifier, const char *context)
+{
+	const char *p;
+	
+	if (!identifier || *identifier == '\0')
+		return;  /* NULL or empty is acceptable (will use defaults) */
+	
+	/* Check for SQL injection characters */
+	for (p = identifier; *p; p++)
+	{
+		/* Reject dangerous characters that could enable SQL injection */
+		if (*p == '\'' || *p == ';' || *p == '-' || *p == '/' || *p == '*' || *p == '\\')
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("Invalid %s: contains illegal character '%c'", 
+							context, *p),
+					 errhint("Identifiers cannot contain quotes, semicolons, dashes, or comment characters.")));
+	}
+	
+	/* Check length (T-SQL identifier max = 128 characters) */
+	if (strlen(identifier) > 128)
+		ereport(ERROR,
+				(errcode(ERRCODE_NAME_TOO_LONG),
+				 errmsg("Invalid %s: identifier exceeds maximum length of 128 characters", 
+						context)));
+}
+
+/*
+ * Execute a remote stored procedure using TDS RPC parameter binding.
+ * This uses proper parameter binding instead of string concatenation
+ * to prevent SQL injection vulnerabilities.
+ */
+static int
+execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
+{
+	LinkedServerProcess lsproc = NULL;
+	LINKED_SERVER_RETCODE erc;
+	char *full_proc_name;
+	int colcount = 0;
+	int rowcount = 0;
+	TupleDesc tupdesc = NULL;
+	Tuplestorestate *tupstore = NULL;
+	Portal portal = NULL;
+	DestReceiver *receiver = NULL;
+	QueryCompletion qc;
+	ListCell *lc;
+	List *param_data_buffers = NIL;  /* Track parameter buffers for deferred cleanup */
+	
+	/*
+	 * Validate all identifiers before using them to prevent SQL injection attacks.
+	 * This must happen BEFORE constructing the full procedure name or making any SQL queries.
+	 */
+	validate_sql_identifier(stmt->proc_name, "procedure name");
+	validate_sql_identifier(stmt->schema_name, "schema name");
+	validate_sql_identifier(stmt->db_name, "database name");
+	
+	/*
+	 * Build the full procedure name: database.schema.procedure
+	 * 
+	 * Database context is handled by linked_server_establish_connection():
+	 * - The database is configured when creating the linked server via sp_addlinkedserver
+	 * - It's stored in pg_foreign_server.srvoptions as 'database=<dbname>'
+	 * - linked_server_establish_connection() extracts it and calls LINKED_SERVER_SET_DBNAME()
+	 * - The TDS connection is established with the correct database context
+	 * 
+	 * This matches the existing OPENQUERY implementation which also relies on
+	 * linked_server_establish_connection() for database context.
+	 */
+	full_proc_name = psprintf("%s.%s.%s",
+							 stmt->db_name ? stmt->db_name : get_cur_db_name(),
+							 stmt->schema_name ? stmt->schema_name : "dbo",
+							 stmt->proc_name);
+	
+	LINKED_SERVER_DEBUG("Executing remote procedure: %s", full_proc_name);
+	
+	PG_TRY();
+	{
+		/*
+		 * PHASE 1: Validate procedure contains only SELECT statements
+		 * This will establish a temporary connection, fetch the definition, validate it, and close
+		 */
+		LINKED_SERVER_DEBUG("SELECT-only validation: Validating procedure %s", full_proc_name);
+		
+		/*
+		 * Call the ANTLR-based validation function from linked_servers.c.
+		 * validate_procedure_select_only() manages its own connections internally —
+		 * each recursive level opens a connection, fetches the procedure definition,
+		 * validates it, closes the connection, then recurses into nested calls.
+		 */
+		validate_procedure_select_only(stmt->server_name,
+									   stmt->db_name ? stmt->db_name : get_cur_db_name(),
+									   stmt->schema_name ? stmt->schema_name : "dbo",
+									   stmt->proc_name);
+		
+		/*
+		 * PHASE 2: Open fresh TDS connection for RPC execution
+		 * Clean connection with no SQL query history
+		 */
+		Assert(lsproc == NULL);  /* Sanity check - RPC connection must be clean */
+
+		/*
+		 * Enable RPC error capture mode before establishing the connection.
+		 * This causes linked_server_msg_handler() to capture remote server
+		 * errors instead of immediately throwing, so we can format them as
+		 * SQL Server error 7215 ("Could not execute statement on remote server").
+		 * OPENQUERY is unaffected (it never calls this function).
+		 */
+		linked_server_set_rpc_error_mode(true, stmt->server_name);
+		linked_server_establish_connection(stmt->server_name, &lsproc, false);
+
+		/* Initialize RPC call on clean connection */
+		if (LINKED_SERVER_RPC_INIT(lsproc, full_proc_name) != SUCCEED)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					 errmsg("Failed to initialize RPC call for procedure %s", full_proc_name)));
+		
+		
+		/* Bind each parameter */
+		foreach(lc, stmt->params)
+		{
+			tsql_exec_param *p = (tsql_exec_param *) lfirst(lc);
+			Datum val;
+			bool isnull;
+			Oid valtype;
+			int32 valtypmod;
+			int tds_type;
+			void *param_data = NULL;
+			DBINT param_len = 0;
+			BYTE param_status = 0;
+			DBINT maxlen;  /* FreeTDS maxlen for nullable types */
+			
+			/* Evaluate parameter expression */
+			val = exec_eval_expr(estate, p->expr, &isnull, &valtype, &valtypmod);
+			
+			/* Get TDS type for this parameter */
+			tds_type = get_tds_type_from_pg_oid(valtype);
+			
+			/* DEBUG: Log before conversion */
+			
+			/* Convert Datum to raw bytes */
+			convert_datum_to_tds_bytes(val, valtype, valtypmod, isnull, 
+									   &param_data, &param_len);
+			
+			/* Determine parameter status flags */
+			if (p->mode == FUNC_PARAM_OUT || p->mode == FUNC_PARAM_INOUT)
+				param_status = DBRPCRETURN;
+			
+			/*
+			 * Determine proper maxlen for FreeTDS.
+			 * Only set explicit maxlen for types that require it.
+			 * FreeTDS handles INT/DATETIME maxlen automatically based on nullability.
+			 */
+			maxlen = -1;  /* Default for most types */
+			
+			switch (tds_type) {
+				case LS_TYPE_UNIQUE:      /* UNIQUEIDENTIFIER - Always 16 bytes */
+					maxlen = 16;
+					break;
+				/* All other types: Use -1 (let FreeTDS handle it) */
+				default:
+					maxlen = -1;
+					break;
+			}
+			
+			/* DEBUG: Log parameter details before dbrpcparam call */
+			LINKED_SERVER_DEBUG_FINER("RPC param: name=%s, tds_type=%d, maxlen=%d, len=%d, isnull=%d",
+				 p->name ? p->name : "(positional)", tds_type, maxlen, param_len, isnull);
+			
+			
+			/* Bind the parameter */
+			if (LINKED_SERVER_RPC_PARAM(lsproc,
+										p->name,        /* parameter name (can be NULL for positional) */
+										param_status,   /* status flags */
+										tds_type,       /* TDS data type */
+										maxlen,         /* maxlen (calculated based on type) */
+										param_len,      /* actual data length */
+										(BYTE *)param_data) != SUCCEED)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						 errmsg("Failed to bind parameter %s for procedure %s",
+								p->name ? p->name : "(unnamed)", full_proc_name)));
+			}
+			
+			/*
+			 * CRITICAL: Do NOT free param_data here!
+			 * FreeTDS dbrpcparam() does NOT copy the data - it only stores the pointer.
+			 * The actual data is sent to the server when dbrpcsend() is called.
+			 * We must keep the buffers alive until after dbrpcsend() completes.
+			 * Track buffer for deferred cleanup after RPC send.
+			 */
+			if (param_data)
+				param_data_buffers = lappend(param_data_buffers, param_data);
+		}
+		
+		
+		/* Send the RPC call */
+		if (LINKED_SERVER_RPC_SEND(lsproc) != SUCCEED)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					 errmsg("Failed to send RPC call for procedure %s", full_proc_name)));
+		
+		
+		/*
+		 * NOW it's safe to free parameter data buffers - dbrpcsend() has transmitted the data.
+		 * This fixes the use-after-free bug where buffers were freed before data was sent.
+		 */
+		if (param_data_buffers != NIL)
+		{
+			ListCell *buf_cell;
+			foreach(buf_cell, param_data_buffers)
+			{
+				void *buf = lfirst(buf_cell);
+				if (buf)
+					pfree(buf);
+			}
+			list_free(param_data_buffers);
+			param_data_buffers = NIL;
+		}
+		
+		/* Execute the RPC */
+		if (LINKED_SERVER_RPC_EXEC(lsproc) == FAIL)
+		{
+			/*
+			 * Check if the msg_handler captured a remote error (SQL Server error 7215).
+			 * If so, format it as "Could not execute statement on remote server '<name>'."
+			 * Otherwise, fall through to the generic error.
+			 */
+			if (linked_server_has_rpc_error())
+				linked_server_throw_rpc_error(stmt->server_name);
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					 errmsg("Failed to execute remote procedure %s", full_proc_name)));
+		}
+		
+		/*
+		 * Check for captured RPC error after successful execution.
+		 * Some errors (e.g., RAISERROR in the procedure body) may be reported
+		 * via the msg_handler during result processing rather than causing
+		 * LINKED_SERVER_RPC_EXEC to return FAIL.
+		 */
+		if (linked_server_has_rpc_error())
+			linked_server_throw_rpc_error(stmt->server_name);
+		
+		/* Get first result set (procedures may return multiple result sets) */
+		if ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
+		{
+			if (erc == FAIL)
+				ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						 errmsg("Failed to get results from remote procedure")));
+			
+			colcount = LINKED_SERVER_NUM_COLS(lsproc);
+			
+			if (colcount > 0)
+			{
+				int i;
+				void *val[MAX_COLS_SELECT];
+				
+				/* Procedure returned a result set */
+				LINKED_SERVER_DEBUG("Remote RPC result set with %d columns", colcount);
+				
+				/* Build TupleDesc from column metadata */
+				tupdesc = CreateTemplateTupleDesc(colcount);
+				
+				for (i = 0; i < colcount; i++)
+				{
+					Oid tdsTypeOid;
+					int coltype = LINKED_SERVER_COL_TYPE(lsproc, i + 1);
+					char *colname = LINKED_SERVER_COL_NAME(lsproc, i + 1);
+					int collen = LINKED_SERVER_COL_LEN(lsproc, i + 1);
+					LS_TYPEINFO *typinfo = LINKED_SERVER_COL_TYPEINFO(lsproc, i + 1);
+					
+					tdsTypeOid = tdsTypeToOid(coltype);
+					
+					TupleDescInitEntry(tupdesc, (AttrNumber) (i + 1), colname, tdsTypeOid,
+									 tdsTypeTypmod(coltype, collen, false, typinfo->precision, typinfo->scale), 0);
+				}
+				tupdesc = BlessTupleDesc(tupdesc);
+				
+				/* Create tuplestore to accumulate results */
+				tupstore = tuplestore_begin_heap(true, false, work_mem);
+				
+				/* Fetch all rows from TDS and store in tuplestore */
+				while (LINKED_SERVER_NEXT_ROW(lsproc) != NO_MORE_ROWS)
+				{
+					Datum *values = (Datum *) palloc0(sizeof(Datum) * colcount);
+					bool *nulls = (bool *) palloc0(sizeof(bool) * colcount);
+					
+					for (i = 0; i < colcount; i++)
+					{
+						int coltype = LINKED_SERVER_COL_TYPE(lsproc, i + 1);
+						int datalen = LINKED_SERVER_DATA_LEN(lsproc, i + 1);
+						
+						val[i] = LINKED_SERVER_DATA(lsproc, i + 1);
+						
+						if (val[i] == NULL)
+							nulls[i] = true;
+						else
+							values[i] = getDatumFromBytePtr(lsproc, val[i], coltype, datalen);
+					}
+					
+					/* Add row to tuplestore */
+					tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+					
+					rowcount++;
+					
+					pfree(values);
+					pfree(nulls);
+				}
+				
+				LINKED_SERVER_DEBUG("Remote RPC fetched %d rows", rowcount);
+				
+				/* Finalize tuplestore */
+				tuplestore_donestoring(tupstore);
+				
+				/* Push active snapshot for SPI operations */
+				PushActiveSnapshot(GetTransactionSnapshot());
+				
+				/* Create a Portal to wrap the tuplestore for sending to client */
+				portal = SPI_cursor_open_with_args(NULL, "SELECT 1", 0, NULL, NULL, NULL, true, 0);
+				if (portal == NULL)
+				{
+					PopActiveSnapshot();
+					elog(ERROR, "could not create portal for remote procedure results");
+				}
+				
+				/* Replace portal's tuple source with our tuplestore */
+				portal->holdStore = tupstore;
+				portal->tupDesc = tupdesc;
+				
+				/* Send results to client via Portal */
+				receiver = CreateDestReceiver(DestRemote);
+				SetRemoteDestReceiverParams(receiver, portal);
+				
+				PortalRun(portal,
+						  FETCH_ALL,
+						  true,
+						  true,
+						  receiver,
+						  receiver,
+						  &qc);
+				
+				
+				receiver->rDestroy(receiver);
+				
+				/* Clear holdStore to prevent Portal from trying to free it */
+				portal->holdStore = NULL;
+				
+				SPI_cursor_close(portal);
+				
+				/* Pop active snapshot */
+				PopActiveSnapshot();
+				
+				/* Manually clean up tuplestore */
+				tuplestore_end(tupstore);
+			}
+		}
+		
+		/*
+		 * PHASE 3: Retrieve OUTPUT parameter values
+		 * FreeTDS stores OUTPUT parameter values that can be retrieved after
+		 * all result sets have been processed.
+		 */
+		{
+			int num_rets = LINKED_SERVER_NUM_RETS(lsproc);
+			
+			if (num_rets > 0)
+			{
+				int ret_idx;
+				ListCell *lc_out;
+				int param_idx;
+				
+				LINKED_SERVER_DEBUG("Retrieving %d OUTPUT parameter values", num_rets);
+				
+				/*
+				 * Iterate through the stmt->params list to find OUTPUT parameters
+				 * and match them with returned values by name or position.
+				 */
+				param_idx = 0;
+				foreach(lc_out, stmt->params)
+				{
+					tsql_exec_param *p = (tsql_exec_param *) lfirst(lc_out);
+					
+					if (p->mode == FUNC_PARAM_OUT || p->mode == FUNC_PARAM_INOUT)
+					{
+						/* Find matching return value by name or position */
+						for (ret_idx = 1; ret_idx <= num_rets; ret_idx++)
+						{
+							char *ret_name = LINKED_SERVER_RET_NAME(lsproc, ret_idx);
+							bool name_matches = false;
+							
+							/* Check if names match (ignoring @ prefix) */
+							if (p->name && ret_name)
+							{
+								const char *param_name = p->name;
+								const char *ret_name_cmp = ret_name;
+								if (param_name[0] == '@')
+									param_name++;
+								if (ret_name_cmp[0] == '@')
+									ret_name_cmp++;
+								if (pg_strcasecmp(param_name, ret_name_cmp) == 0)
+									name_matches = true;
+							}
+							
+							if (name_matches || (p->name == NULL && ret_idx == param_idx + 1))
+							{
+								BYTE *ret_data = LINKED_SERVER_RET_DATA(lsproc, ret_idx);
+								int ret_len = LINKED_SERVER_RET_LEN(lsproc, ret_idx);
+								int ret_type = LINKED_SERVER_RET_TYPE(lsproc, ret_idx);
+								
+								LINKED_SERVER_DEBUG_FINER("OUTPUT param %s: type=%d, len=%d, data=%s",
+									 p->name ? p->name : "(positional)",
+									 ret_type, ret_len,
+									 ret_data ? "present" : "NULL");
+								
+								if (p->varno >= 0)
+								{
+									PLtsql_datum *target = estate->datums[p->varno];
+									
+									if (ret_data == NULL)
+									{
+										/* NULL value returned */
+										exec_assign_value(estate, target, (Datum) 0, true,
+														  InvalidOid, -1);
+									}
+									else
+									{
+										/* Convert TDS data to PostgreSQL Datum */
+										Datum ret_datum = getDatumFromBytePtr(lsproc, ret_data, ret_type, ret_len);
+										Oid target_type = InvalidOid;
+										int32 target_typmod = -1;
+										
+										/* Get target type info */
+										if (target->dtype == PLTSQL_DTYPE_VAR)
+										{
+											PLtsql_var *var = (PLtsql_var *) target;
+											target_type = var->datatype->typoid;
+											target_typmod = var->datatype->atttypmod;
+										}
+										
+										/* Assign the value */
+										exec_assign_value(estate, target, ret_datum, false,
+														  target_type != InvalidOid ? target_type : tdsTypeToOid(ret_type),
+														  target_typmod);
+									}
+								}
+								break;  /* Found match, move to next OUTPUT param */
+							}
+						}
+					}
+					param_idx++;
+				}
+			}
+		}
+		
+		/* Set row count and found status */
+		exec_set_rowcount(rowcount);
+		exec_set_found(estate, rowcount != 0);
+		
+		/*
+		 * PHASE 4: Capture the remote procedure's return status.
+		 * In TDS protocol, dbretstatus() returns the RETURN value from the
+		 * remote stored procedure (the value in "RETURN <n>").
+		 * Store it in pltsql_proc_return_code so the caller can read it.
+		 */
+		pltsql_proc_return_code = LINKED_SERVER_RET_STATUS(lsproc);
+
+		LINKED_SERVER_DEBUG("Remote procedure completed, return status=%d", pltsql_proc_return_code);
+	}
+	PG_FINALLY();
+	{
+		/* Clean up parameter buffers if error occurred before RPC send completed */
+		if (param_data_buffers != NIL)
+		{
+			ListCell *buf_cell;
+			foreach(buf_cell, param_data_buffers)
+			{
+				void *buf = lfirst(buf_cell);
+				if (buf)
+					pfree(buf);
+			}
+			list_free(param_data_buffers);
+			param_data_buffers = NIL;
+		}
+		
+		/* Clean up RPC connection */
+		if (lsproc)
+		{
+			LINKED_SERVER_CANCEL(lsproc);
+			LINKED_SERVER_CLOSE(lsproc);
+			lsproc = NULL;
+		}
+		
+		/* Always disable RPC error capture mode and clean up captured state */
+		linked_server_set_rpc_error_mode(false, NULL);
+		
+		if (full_proc_name)
+			pfree(full_proc_name);
+	}
+	PG_END_TRY();
+	
+	return PLTSQL_RC_OK;
+}
+#endif
+
 /*
  * Execute an EXEC statement (equivalent to CALL)
  */
@@ -842,6 +1360,62 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 	/* whether procedure was created WITH RECOMPILE */
 	bool created_with_recompile = false;		
+
+	/*
+	 * Check if this is a remote procedure call via linked server.
+	 * If server_name is set, this is a 4-part name like: server.db.schema.proc
+	 */
+	
+	if (stmt->server_name != NULL)
+	{
+		/* Check if linked servers are enabled */
+		if (!pltsql_enable_linked_servers)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Linked servers are not enabled")));
+
+		/* Check if remote procedure execution is enabled */
+		if (!pltsql_enable_remote_proc_exec)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Remote procedure execution via four-part names is not enabled"),
+					 errhint("Execute: SET babelfishpg_tsql.enable_remote_proc_exec = true")));
+
+		/* Check if RPC out option is enabled for this server */
+	if (!get_rpc_out_option(stmt->server_name))
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("Server '%s' is not configured for RPC OUT.", stmt->server_name),
+					 errhint("Execute: EXEC sp_serveroption '%s', 'rpc out', 'true'", 
+							 stmt->server_name)));
+		
+		
+		/* Execute remote procedure using secure TDS RPC parameter binding */
+#ifdef ENABLE_TDS_LIB
+		{
+			int remote_rc;
+			
+			remote_rc = execute_remote_procedure_rpc(estate, stmt);
+			
+			/* Handle return code if specified */
+			if (stmt->return_code_dno >= 0)
+			{
+				PLtsql_var *return_code = (PLtsql_var *) estate->datums[stmt->return_code_dno];
+				/* Use the actual return status from the remote procedure (set by execute_remote_procedure_rpc) */
+				exec_assign_value(estate, (PLtsql_datum *) return_code, Int32GetDatum(pltsql_proc_return_code), false, INT4OID, 0);
+			}
+			
+			return remote_rc;
+		}
+#else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+				 errmsg("Remote procedure execution requires TDS client library. "
+						"Recompile with ENABLE_TDS_LIB flag.")));
+		return PLTSQL_RC_OK;  /* Unreachable but keeps compiler happy */
+#endif
+	}
+	
 
 	/*
 	 * We need to disable the explain gucs incase of sp_reset_connection

@@ -49,6 +49,23 @@ extern "C" {
 
 #include "guc.h"
 
+/*
+ * Do NOT include "linked_servers.h" here — it pulls in sybdb.h (FreeTDS)
+ * which defines macros (ON, FAIL, SUCCEED, TRUE, FALSE, etc.) that corrupt
+ * the ANTLR-generated parser code compiled in this translation unit.
+ * Instead, forward-declare only what we need.
+ */
+#ifdef ENABLE_TDS_LIB
+/* Forward declaration of NestedProcedureInfo from linked_servers.h */
+typedef struct NestedProcedureInfo
+{
+	char *server_name;
+	char *database_name;
+	char *schema_name;
+	char *procedure_name;
+} NestedProcedureInfo;
+#endif
+
 #endif
 
 #ifdef LOG // maybe already defined in elog.h, which is conflicted with grammar token LOG
@@ -66,6 +83,16 @@ extern "C"
 	ANTLR_result antlr_parser_cpp(const char *sourceText);
 
 	void report_antlr_error(ANTLR_result result);
+
+#ifdef ENABLE_TDS_LIB
+	void validate_remote_procedure_select_only_antlr(
+		const char *definition,
+		const char *server_name,
+		const char *database_name,
+		const char *schema_name,
+		const char *procedure_name,
+		List **nested_procs_out);
+#endif
 
 	extern PLtsql_type *parse_datatype(const char *string, int location);
 	extern bool is_tsql_text_ntext_or_image_datatype(Oid oid);
@@ -849,6 +876,159 @@ clear_tables_info()
  */
 
 ////////////////////////////////////////////////////////////////////////////////
+// Remote Procedure SELECT-only Validator
+////////////////////////////////////////////////////////////////////////////////
+class RemoteProcedureSelectOnlyValidator : public TSqlParserBaseVisitor
+{
+private:
+	bool has_forbidden_statement;
+	std::string forbidden_statement_type;
+	std::pair<int,int> error_location;
+	
+	/* Track nested procedure calls for recursive validation */
+	struct NestedProcInfo {
+		std::string server_name;
+		std::string database_name;
+		std::string schema_name;
+		std::string procedure_name;
+	};
+	std::vector<NestedProcInfo> nested_procedures;
+	
+public:
+	explicit RemoteProcedureSelectOnlyValidator() 
+		: has_forbidden_statement(false), forbidden_statement_type(""), error_location(0, 0) {}
+	
+	// Block INSERT
+	antlrcpp::Any visitInsert_statement(TSqlParser::Insert_statementContext *ctx) override {
+		has_forbidden_statement = true;
+		forbidden_statement_type = "INSERT";
+		error_location = getLineAndPos(ctx);
+		return nullptr;
+	}
+	
+	// Block UPDATE
+	antlrcpp::Any visitUpdate_statement(TSqlParser::Update_statementContext *ctx) override {
+		has_forbidden_statement = true;
+		forbidden_statement_type = "UPDATE";
+		error_location = getLineAndPos(ctx);
+		return nullptr;
+	}
+	
+	// Block DELETE
+	antlrcpp::Any visitDelete_statement(TSqlParser::Delete_statementContext *ctx) override {
+		has_forbidden_statement = true;
+		forbidden_statement_type = "DELETE";
+		error_location = getLineAndPos(ctx);
+		return nullptr;
+	}
+	
+	// Block MERGE
+	antlrcpp::Any visitMerge_statement(TSqlParser::Merge_statementContext *ctx) override {
+		has_forbidden_statement = true;
+		forbidden_statement_type = "MERGE";
+		error_location = getLineAndPos(ctx);
+		return nullptr;
+	}
+	
+	// Block ALL CREATE TABLE (including temp tables)
+	antlrcpp::Any visitCreate_table(TSqlParser::Create_tableContext *ctx) override {
+		has_forbidden_statement = true;
+		forbidden_statement_type = "CREATE TABLE";
+		error_location = getLineAndPos(ctx);
+		return nullptr;
+	}
+	
+	// Block DDL statements
+	antlrcpp::Any visitDdl_statement(TSqlParser::Ddl_statementContext *ctx) override {
+		if (ctx->drop_table() || ctx->drop_view() || ctx->drop_procedure() ||
+			ctx->drop_function() || ctx->alter_table() || ctx->alter_database() ||
+			ctx->truncate_table() || ctx->alter_index() || ctx->drop_index()) {
+			has_forbidden_statement = true;
+			forbidden_statement_type = "DDL";
+			error_location = getLineAndPos(ctx);
+			return nullptr;
+		}
+		return visitChildren(ctx);
+	}
+	
+	// Block transaction control statements (BEGIN TRAN, COMMIT, ROLLBACK, SAVE TRAN)
+	antlrcpp::Any visitTransaction_statement(TSqlParser::Transaction_statementContext *ctx) override {
+		if (has_forbidden_statement)
+			return nullptr;  // Already found a forbidden statement, don't overwrite
+		has_forbidden_statement = true;
+		if (ctx->COMMIT())
+			forbidden_statement_type = "COMMIT TRANSACTION";
+		else if (ctx->ROLLBACK())
+			forbidden_statement_type = "ROLLBACK TRANSACTION";
+		else if (ctx->SAVE())
+			forbidden_statement_type = "SAVE TRANSACTION";
+		else
+			forbidden_statement_type = "BEGIN TRANSACTION";
+		error_location = getLineAndPos(ctx);
+		return nullptr;
+	}
+
+	// Block dynamic SQL: EXEC('string') and sp_executesql
+	// Also track nested procedure calls for recursive validation
+	antlrcpp::Any visitExecute_statement(TSqlParser::Execute_statementContext *ctx) override {
+		if (ctx->execute_body() && ctx->execute_body()->LR_BRACKET()) {
+			// EXEC(@var) or EXEC('string')
+			has_forbidden_statement = true;
+			forbidden_statement_type = "EXECUTE(string)";
+			error_location = getLineAndPos(ctx);
+			return nullptr;
+		}
+		
+		// Check if executing sp_executesql or other dynamic SQL procedures
+		// Also extract nested procedure calls for recursive validation
+		if (ctx->execute_body() && ctx->execute_body()->func_proc_name_server_database_schema()) {
+			auto func_ctx = ctx->execute_body()->func_proc_name_server_database_schema();
+			if (func_ctx->procedure) {
+				std::string proc_name = stripQuoteFromId(func_ctx->procedure);
+				
+				// Block dynamic SQL procedures
+				if (string_matches(proc_name.c_str(), "sp_executesql") ||
+				    string_matches(proc_name.c_str(), "sp_execute") ||
+				    string_matches(proc_name.c_str(), "sp_prepexec") ||
+				    string_matches(proc_name.c_str(), "sp_cursorprepexec") ||
+				    string_matches(proc_name.c_str(), "sp_prepare") ||
+				    string_matches(proc_name.c_str(), "sp_cursorprepare")) {
+					has_forbidden_statement = true;
+					forbidden_statement_type = "EXECUTE(string)";
+					error_location = getLineAndPos(ctx);
+					return nullptr;
+				}
+				
+				// Extract nested procedure call for recursive validation
+				NestedProcInfo info;
+				if (func_ctx->server)
+					info.server_name = stripQuoteFromId(func_ctx->server);
+				if (func_ctx->database)
+					info.database_name = stripQuoteFromId(func_ctx->database);
+				if (func_ctx->schema)
+					info.schema_name = stripQuoteFromId(func_ctx->schema);
+				info.procedure_name = proc_name;
+				
+				nested_procedures.push_back(info);
+			}
+		}
+		
+		// Allow EXEC proc_name - continue visiting
+		return visitChildren(ctx);
+	}
+	
+	// Check if validation failed
+	bool hasForbiddenStatement() const { return has_forbidden_statement; }
+	const char* getStatementType() const { return forbidden_statement_type.c_str(); }
+	std::pair<int,int> getLocation() const { return error_location; }
+	
+	// Accessor for nested procedures
+	const std::vector<NestedProcInfo>& getNestedProcedures() const { 
+		return nested_procedures; 
+	}
+};
+
+////////////////////////////////////////////////////////////////////////////////
 // tsql Common Mutator
 ////////////////////////////////////////////////////////////////////////////////
 class tsqlCommonMutator : public TSqlParserBaseListener
@@ -992,6 +1172,23 @@ public:
 		if (ctx->func_proc_name_server_database_schema())
 		{
 			auto fpnsds = ctx->func_proc_name_server_database_schema();
+
+			/* Reject 4-part function calls (server.database.schema.function) - these are not supported */
+			if (fpnsds->server)
+			{
+				/* Check if this is an XML method call - give a specific error message */
+				std::string proc_name = stripQuoteFromId(fpnsds->procedure);
+				bool is_xml_method = (pg_strcasecmp(proc_name.c_str(), "exist") == 0) ||
+				                     (pg_strcasecmp(proc_name.c_str(), "value") == 0) ||
+				                     (pg_strcasecmp(proc_name.c_str(), "query") == 0) ||
+				                     (pg_strcasecmp(proc_name.c_str(), "nodes") == 0) ||
+				                     (pg_strcasecmp(proc_name.c_str(), "modify") == 0);
+
+				if (is_xml_method)
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "XML method calls with schema-qualified column references (schema.table.column.method) are not currently supported in Babelfish", getLineAndPos(ctx));
+				else
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
+			}
 
 			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */
 			{
@@ -4129,6 +4326,82 @@ void report_antlr_error(ANTLR_result r)
 }
 
 #pragma GCC diagnostic pop
+
+#ifdef ENABLE_TDS_LIB
+void
+validate_remote_procedure_select_only_antlr(
+	const char *definition,
+	const char *server_name,
+	const char *database_name,
+	const char *schema_name,
+	const char *procedure_name,
+	List **nested_procs_out)
+{
+	try {
+		/* Initialize output parameter */
+		if (nested_procs_out)
+			*nested_procs_out = NIL;
+
+		// Parse T-SQL procedure body using ANTLR
+		MyInputStream stream(definition);
+		TSqlLexer lexer(&stream);
+		CommonTokenStream tokens(&lexer);
+		TSqlParser parser(&tokens);
+		
+		// Parse as T-SQL batch
+		tree::ParseTree *tree = parser.tsql_file();
+		
+		// Validate with our SELECT-only visitor
+		RemoteProcedureSelectOnlyValidator validator;
+		validator.visit(tree);
+		
+		// Throw error if forbidden statements found
+		if (validator.hasForbiddenStatement()) {
+			ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Remote procedure contains %s statement", 
+						validator.getStatementType()),
+				 errdetail("Procedure %s.%s.%s.%s contains %s operation which is not allowed",
+						  server_name, database_name, schema_name, procedure_name,
+						  validator.getStatementType()),
+				 errhint("Only procedures containing SELECT statements are allowed for linked server execution")));
+		}
+
+		/*
+		 * Convert C++ vector of nested procedure calls to PostgreSQL List*.
+		 * This replaces the old extract_nested_procedure_calls() C string parser
+		 * which was inferior because it could match EXEC inside string literals,
+		 * comments, and was case-sensitive for keyword matching.
+		 */
+		if (nested_procs_out)
+		{
+			List *result = NIL;
+			for (const auto &np : validator.getNestedProcedures())
+			{
+				NestedProcedureInfo *info = (NestedProcedureInfo *) palloc(sizeof(NestedProcedureInfo));
+				info->server_name = np.server_name.empty() ? NULL : pstrdup(np.server_name.c_str());
+				info->database_name = np.database_name.empty() ? NULL : pstrdup(np.database_name.c_str());
+				info->schema_name = np.schema_name.empty() ? NULL : pstrdup(np.schema_name.c_str());
+				info->procedure_name = pstrdup(np.procedure_name.c_str());
+				result = lappend(result, info);
+			}
+			*nested_procs_out = result;
+		}
+	}
+	catch (PGErrorWrapperException &e) {
+		ereport(ERROR,
+			(errcode(e.get_errcode()),
+			 errmsg("%s", e.get_errmsg())));
+	}
+	catch (...) {
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("Failed to parse remote procedure %s.%s.%s.%s definition",
+					server_name, database_name, schema_name, procedure_name)));
+	}
+}
+#endif /* ENABLE_TDS_LIB */
+
 } // extern "C"
 
 template <class T>
@@ -6955,6 +7228,8 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		}
 	}
 	
+	std::string server_name;
+	
 	if (ctx_name) 
 	{
 		// Get the name of procedure being executed, and split up in parts
@@ -6964,6 +7239,11 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		
 		// Original position of the name
 		namePos = ctx_name->start->getStartIndex();		
+		
+		if (ctx_name->server)
+		{
+			server_name = stripQuoteFromId(ctx_name->server);
+		}
 		
 		if (ctx_name->database)
 		{
@@ -7042,6 +7322,12 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	result->exec_with_recompile = exec_with_recompile;	
 
 	// Handle name parts
+	if (!server_name.empty())
+	{
+		elog(DEBUG1, "DEBUG_PARSER: Setting result->server_name to: %s", server_name.c_str());
+		result->server_name = pstrdup(downcase_truncate_identifier(server_name.c_str(), server_name.length(), true));
+		elog(DEBUG1, "DEBUG_PARSER: result->server_name set to: %s", result->server_name);
+	}
 	if (!proc_name.empty())
 	{
 		result->proc_name = pstrdup(downcase_truncate_identifier(proc_name.c_str(), proc_name.length(), true));
@@ -9437,7 +9723,33 @@ handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 	/* Handles rewrite of geospatial function calls */
 	if (ctx->spatial_proc_name_server_database_schema())
 	{
-		if (ctx->spatial_proc_name_server_database_schema()->schema) throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
+		/*
+		 * 4-part names in function call context: distinguish between XML method calls
+		 * (schema.table.xmlcolumn.method) and remote procedure calls (server.db.schema.func).
+		 * Both are unsupported in function-call context but deserve different error messages.
+		 */
+		if (ctx->spatial_proc_name_server_database_schema()->schema)
+		{
+			std::string method_name;
+			if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg())
+				method_name = ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg());
+			else if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_no_arg())
+				method_name = ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_no_arg());
+			else if (ctx->spatial_proc_name_server_database_schema()->column)
+				method_name = stripQuoteFromId(ctx->spatial_proc_name_server_database_schema()->column);
+
+			/* Check if this is an XML method - give a specific error message */
+			bool is_xml_method = (pg_strcasecmp(method_name.c_str(), "exist") == 0) ||
+			                     (pg_strcasecmp(method_name.c_str(), "value") == 0) ||
+			                     (pg_strcasecmp(method_name.c_str(), "query") == 0) ||
+			                     (pg_strcasecmp(method_name.c_str(), "nodes") == 0) ||
+			                     (pg_strcasecmp(method_name.c_str(), "modify") == 0);
+
+			if (is_xml_method)
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "XML method calls with schema-qualified column references (schema.table.column.method) are not currently supported in Babelfish", getLineAndPos(ctx));
+			else
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
+		}
 
 		/* This if-elseIf clause rewrites the query in case of geospatial function calls */
 		if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg() && ctx->function_arg_list())

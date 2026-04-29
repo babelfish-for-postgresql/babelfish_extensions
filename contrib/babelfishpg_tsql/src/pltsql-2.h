@@ -87,6 +87,7 @@ typedef struct PLtsql_stmt_exec
 	/* indicates whether we're executing a scalar UDF using EXEC keyword */
 	bool		is_scalar_func;
 	bool		is_cross_db;	/* cross database reference */
+	char	   *server_name;	/* linked server name for 4-part names */
 	char	   *db_name;
 	char	   *proc_name;
 	char	   *schema_name;
