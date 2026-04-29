@@ -87,7 +87,7 @@ jobs:
 
       - name: Restart Engine
         id: restart-db-engine
-        if: always()
+        if: always() && steps.install-extensions.outcome == 'success'
         run: |
           ~/psql/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
 
