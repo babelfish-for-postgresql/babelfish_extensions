@@ -1,3 +1,9 @@
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
+GO
+
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
+
 create table babel_4606 (a int primary key, b int)
 go
 
@@ -20,6 +26,12 @@ go
 create table babel_4606_2 (a int primary key, b int)
 go
 
+-- tsql
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
+GO
+
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
 insert into babel_4606_2 (a, b) values (1,7),(2,8),(3,9),(4,10),(5,11),(6,12)
 go
 

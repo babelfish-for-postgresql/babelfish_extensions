@@ -1,3 +1,9 @@
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
+GO
+
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
+
 INSERT INTO babel_2884_vu_prepare_persons
 (PersonName, PersonLastName )
 VALUES

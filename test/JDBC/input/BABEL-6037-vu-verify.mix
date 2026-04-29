@@ -12,7 +12,12 @@
 -- SET BABELFISH_STATISTICS PROFILE ON;
 -- GO
 
+-- Enable ANTLR parse cache for testing
 SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
+GO
+
+-- Ensure force cache testing is OFF (we want normal cache behavior)
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
 GO
 
 -- Baseline cache stats (new session, all zeros)
@@ -564,6 +569,9 @@ GO
 
 -- tsql
 -- New session: hash table is empty, do_compile runs, ext cache gets populated
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
+
 SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 
@@ -728,10 +736,15 @@ GO
 
 -- tsql      user=babel_6037_nonowner password=12345678
 -- Non-owner tries to toggle cache on a function they don't own (should error)
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
+
 SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_default_test'), true);
 GO
 
 -- tsql
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
 
 
 -- === Test 19: ALTER procedure preserves per-function flag ===
@@ -838,6 +851,9 @@ ALTER DATABASE babelfish_db SET babelfishpg_tsql.validate_antlr_parse_cache = on
 GO
 
 -- tsql
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
+
 SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 
@@ -855,6 +871,9 @@ GO
 
 
 -- tsql
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
+
 -- === Test 23: Proc created with cache OFF, executed with cache ON ===
 PRINT '=== Test 23: Cache populated at EXEC time ===';
 GO
@@ -1028,6 +1047,9 @@ GO
 
 -- tsql
 -- Stats before datums deserialization error
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
+
 SELECT cache_errors FROM sys.antlr_parse_cache_stats();
 GO
 
@@ -1049,6 +1071,9 @@ GO
 
 -- tsql
 -- Stats before parse tree deserialization error
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
+
 SELECT cache_errors FROM sys.antlr_parse_cache_stats();
 GO
 
@@ -1093,6 +1118,9 @@ GO
 -- New session: hash table is empty, do_compile runs, reads cache entry,
 -- detects version mismatch (99.99.0 != current), skips cache, ANTLR re-parses.
 -- Procedure should still execute correctly.
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
+
 SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
 GO
 

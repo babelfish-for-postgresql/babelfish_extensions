@@ -10,6 +10,15 @@ on
 ~~END~~
 
 
+-- Ensure force cache testing is OFF (we want normal cache behavior)
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
 -- Test 1: Simple procedure without arguments
 -- This tests basic serialization with minimal complexity
 CREATE PROCEDURE dbo.small_proc
@@ -348,6 +357,14 @@ ALTER DATABASE babelfish_db SET babelfishpg_tsql.validate_antlr_parse_cache = on
 GO
 
 -- tsql
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
 
 
 
@@ -399,6 +416,14 @@ ALTER DATABASE babelfish_db SET babelfishpg_tsql.validate_antlr_parse_cache = of
 GO
 
 -- tsql
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
 -- Test 23: Procedure created with cache OFF, executed with cache ON in verify
 -- Tests that pltsql_update_func_cache_entry populates cache at EXEC time
 SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);

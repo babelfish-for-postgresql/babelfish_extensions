@@ -1,3 +1,9 @@
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
+GO
+
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
+GO
+
 create schema error_mapping;
 GO
 
@@ -45,6 +51,13 @@ begin
 INSERT INTO t3617 values (1)
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
+GO
+
+-- tsql
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
+GO
+
+SELECT set_config('babelfishpg_tsql.force_antlr_cache_testing', 'off', false);
 GO
 
 exec error_mapping.ErrorHandling1;
