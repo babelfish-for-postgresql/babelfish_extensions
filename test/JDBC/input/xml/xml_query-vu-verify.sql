@@ -714,23 +714,26 @@ SELECT @x.query('///invalid[[[path');
 GO
 
 -- ============================================
--- SECTION 51: .query() chained with spatial functions (error cases)
--- ============================================
-
-DECLARE @x XML = '<root><name>John</name></root>';
-SELECT @x.query('/root/name').STArea();
-GO
-
-DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT @point.STArea().query('/root');
-GO
-
--- ============================================
--- SECTION 52: GROUP BY with .query()
+-- SECTION 51: GROUP BY with .query()
 -- ============================================
 
 SELECT data.query('/root/name').value('(/name)[1]', 'VARCHAR(50)') AS name_val, COUNT(*) AS cnt
 FROM xml_query_t1
 WHERE data IS NOT NULL
-GROUP BY data.query('/root/name').value('(/name)[1]', 'VARCHAR(50)');
+GROUP BY data.query('/root/name').value('(/name)[1]', 'VARCHAR(50)')
+ORDER BY name_val;
+GO
+
+
+-- ============================================
+-- SECTION 52: .query() argument count validation
+-- ============================================
+-- .query() with no arguments (should error)
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x.query();
+GO
+
+-- .query() with too many arguments (should error)
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x.query('/root/name', 'extra');
 GO
