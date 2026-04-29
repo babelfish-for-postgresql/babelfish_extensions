@@ -85,6 +85,12 @@ jobs:
         if: always() && steps.install-extensions.outcome == 'success'
         uses: ./.github/composite-actions/install-and-run-odbc
 
+      - name: Restart Engine
+        id: restart-db-engine
+        if: always()
+        run: |
+          ~/psql/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
+
       - name: Drop and re-create Babelfish database
         id: re-install-extensions-2
         if: always() && steps.install-extensions.outcome == 'success'
