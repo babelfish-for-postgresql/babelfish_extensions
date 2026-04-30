@@ -1078,10 +1078,11 @@ ssl_external_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 {
 	/* same prompt as OpenSSL uses internally */
 	const char *prompt = "Enter PEM pass phrase:";
+	const char *cmd = userdata;
 
 	Assert(rwflag == 0);
 
-	return run_ssl_passphrase_command(prompt, ssl_is_server_start, buf, size);
+	return run_ssl_passphrase_command(cmd, prompt, ssl_is_server_start, buf, size);
 }
 
 /*
