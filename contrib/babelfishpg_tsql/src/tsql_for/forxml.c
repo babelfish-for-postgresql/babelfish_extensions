@@ -74,10 +74,40 @@ static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *elem
 static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil);
 static void tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state);
 static void update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, bool binary_base64, int i);
+static char *tsql_escape_xml(const char *str);
 
 /* Helper functions for XML AUTO */
 static void xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str, int num_cols);
 static char* xml_auto_get_column_value_as_string(HeapTuple tuple, TupleDesc tupdesc, int col_idx, forxml_auto_state *auto_state);
+
+/*
+ * tsql_escape_xml
+ *
+ * T-SQL variant of XML escaping for attribute values. PostgreSQL's
+ * escape_xml() (used internally by map_sql_value_to_xml_value and
+ * cached_value_to_xml_string) handles &, <, >, \r but not ". T-SQL
+ * escapes " as &quot; in FOR XML attribute-value output (RAW, AUTO,
+ * PATH). This helper adds the " → &quot; substitution on top of the
+ * already XML-escaped value to match T-SQL behavior without touching
+ * the engine's escape_xml().
+ */
+static char *
+tsql_escape_xml(const char *str)
+{
+	StringInfoData buf;
+	const char *p;
+
+	initStringInfo(&buf);
+	for (p = str; *p; p++)
+	{
+		if (*p == '"')
+			appendStringInfoString(&buf, "&quot;");
+		else
+			appendStringInfoChar(&buf, *p);
+	}
+	return buf.data;
+}
+
 static int find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc);
 static void close_elements_to_level(StringInfo state, forxml_auto_state *auto_state, int target_level);
 static void output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil);
@@ -424,7 +454,7 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 			{
 				appendStringInfo(state, " %s=\"%s\"",
 								 colname,
-								 map_sql_value_to_xml_value(colval, datatype_oid, true));
+								 tsql_escape_xml(map_sql_value_to_xml_value(colval, datatype_oid, true)));
 			}
 		}
 	}
@@ -578,7 +608,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 			{
 				appendStringInfo(state, " %s=\"%s\"",
 								 NameStr(att->attname)+1,
-								 map_sql_value_to_xml_value(colval, datatype_oid, true));
+								 tsql_escape_xml(map_sql_value_to_xml_value(colval, datatype_oid, true)));
 			}
 			else
 			{
@@ -815,7 +845,12 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 				*dot2 = '\0';
 
 				{
-					long level = strtol(entry_copy, NULL, 10);
+					char *endptr;
+					long level = strtol(entry_copy, &endptr, 10);
+					if (endptr == entry_copy || *endptr != '\0')
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+								 errmsg("FOR XML AUTO metadata has non-numeric level: \"%s\"", entry_copy)));
 					if (level < 1 || level > num_cols)
 						ereport(ERROR,
 								(errcode(ERRCODE_INTERNAL_ERROR),
@@ -1092,6 +1127,8 @@ init_tsql_type_cache(forxml_auto_state *auto_state, TupleDesc tupdesc)
 					 strcmp(typename, "rowversion") == 0)
 				auto_state->tsql_convert_type[i] = 3;
 		}
+
+		pfree(typename);
 	}
 	auto_state->tsql_types_cached = true;
 }
@@ -1273,7 +1310,7 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 						: cached_value_to_xml_string(colval, i, auto_state, datatype_oid);
 					appendStringInfo(state, " %s=\"%s\"",
 									auto_state->column_names[i],
-									val_str);
+									tsql_escape_xml(val_str));
 				}
 			}
 		}

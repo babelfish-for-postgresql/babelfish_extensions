@@ -2236,8 +2236,14 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 		if (list_length(agg->args) >= 8)
 		{
 			TargetEntry *metadataArgTe = (TargetEntry *) list_nth(agg->args, 7);
-			Const *metadataConst = (Const *) metadataArgTe->expr;
+			Const *metadataConst;
 
+			if (!IsA(metadataArgTe->expr, Const))
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("FOR XML AUTO: expected Const node for metadata argument")));
+
+			metadataConst = (Const *) metadataArgTe->expr;
 			metadataConst->constvalue = CStringGetTextDatum(metadataStr.data);
 			metadataConst->constisnull = false;
 		}
