@@ -32,6 +32,7 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "executor/executor.h"
+#include "executor/spi_priv.h"
 #include "executor/tstoreReceiver.h"
 #include "executor/tuptable.h"
 #include "miscadmin.h"
@@ -50,7 +51,6 @@
 #include "session.h"
 #include "parser/scansup.h"
 #include "parser/parse_oper.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/varlena.h"
 
@@ -75,17 +75,13 @@ typedef struct InsertExecSchemaSignature
 /*
  * Global context for INSERT EXEC - bundled into a single struct for cleaner code.
  * This context is needed for nested procedure calls during INSERT EXEC.
- *
- * Note: target_table and column_list use a legacy string interface. The parser
- * stores these as separate components in InsertExecInfo; the executor will use
- * those fields with quote_identifier() for SQL safety.
  */
 typedef struct InsertExecContext
 {
 	Oid			temp_table_oid;			/* OID of temp table for buffering */
 	char	   *temp_table_name;		/* Name of temp table for buffering (dynamically chosen) */
-	char	   *target_table;			/* Target table name (legacy interface) */
-	char	   *column_list;			/* Column list for INSERT (legacy interface, see note above) */
+	char	   *target_table;			/* Target table name */
+	char	   *column_list;			/* Column list for INSERT */
 	bool		flush_in_progress;		/* True during flush phase to block commit_stmt */
 	int			call_stack_depth;		/* Call stack depth when INSERT EXEC was started */
 	bool		had_error;				/* True if INSERT EXEC had an error */
@@ -116,12 +112,8 @@ static InsertExecContext insert_exec_ctx = {
 };
 
 /*
- * Parse tsql table name (1-part, 2-part, or 3-part) into schema and table.
+ * Parse a T-SQL table name (1-part, 2-part, or 3-part) into schema and table.
  * Returns true on success. Caller must pfree the output strings.
- *
- * Note: Uses simple strrchr splitting - doesn't handle bracket-quoted identifiers
- * or cross-database names. The parser already handles these cases and stores
- * components separately in InsertExecInfo. Unqualified names default to "dbo".
  */
 bool
 parse_insert_exec_table_name(const char *target_table,
@@ -135,7 +127,6 @@ parse_insert_exec_table_name(const char *target_table,
 	char	   *second_dot;
 	char	   *schema_name = NULL;
 	char	   *table_name = NULL;
-	const char *cur_db;
 
 	if (target_table == NULL)
 		return false;
@@ -153,11 +144,7 @@ parse_insert_exec_table_name(const char *target_table,
 		second_dot = strrchr(target_copy, '.');
 		if (second_dot != NULL)
 		{
-			/*
-			 * db.schema.table - schema is after the second dot.
-			 * Note: database part is ignored - we always resolve against
-			 * the current database. Cross-database INSERT EXEC is not supported.
-			 */
+			/* db.schema.table - schema is after the second dot */
 			schema_name = pstrdup(second_dot + 1);
 		}
 		else
@@ -169,9 +156,9 @@ parse_insert_exec_table_name(const char *target_table,
 	else
 	{
 		/*
-		 * Just table name, no schema specified - default to dbo.
-		 * This matches T-SQL behavior where dbo is the default schema
-		 * for unqualified object references.
+		 * Just table name, no schema specified - default to dbo for now.
+		 * TODO: Ideally we should respect the user's default schema,
+		 * but that requires changes to how ownership chaining works.
 		 */
 		table_name = pstrdup(target_copy);
 		schema_name = pstrdup("dbo");
@@ -183,11 +170,7 @@ parse_insert_exec_table_name(const char *target_table,
 
 	if (get_physical && physical_schema_out != NULL)
 	{
-		cur_db = get_cur_db_name();
-		if (cur_db != NULL)
-			*physical_schema_out = get_physical_schema_name((char *) cur_db, schema_name);
-		else
-			*physical_schema_out = NULL;
+		*physical_schema_out = get_physical_schema_name(get_cur_db_name(), schema_name);
 	}
 	else if (physical_schema_out != NULL)
 	{
@@ -349,9 +332,10 @@ pltsql_insert_exec_clear_error_flag(void)
 void
 pltsql_insert_exec_set_implicit_txn_flag(void)
 {
-	elog(DEBUG4, "TSQL TXN INSERT EXEC implicit txn flag: %d -> true",
+	elog(DEBUG4, "TSQL TXN Setting implicit txn flag for INSERT EXEC (was %d, setting to true)",
 		 insert_exec_ctx.started_implicit_txn);
 	insert_exec_ctx.started_implicit_txn = true;
+	elog(DEBUG4, "TSQL TXN After setting implicit txn flag: %d", insert_exec_ctx.started_implicit_txn);
 }
 
 /*
@@ -361,6 +345,7 @@ pltsql_insert_exec_set_implicit_txn_flag(void)
 bool
 pltsql_insert_exec_started_implicit_txn(void)
 {
+	elog(DEBUG4, "TSQL TXN Checking implicit txn flag: %d", insert_exec_ctx.started_implicit_txn);
 	return insert_exec_ctx.started_implicit_txn;
 }
 
@@ -371,8 +356,7 @@ pltsql_insert_exec_started_implicit_txn(void)
 void
 pltsql_insert_exec_clear_implicit_txn_flag(void)
 {
-	elog(DEBUG4, "TSQL TXN INSERT EXEC implicit txn flag: %d -> false",
-		 insert_exec_ctx.started_implicit_txn);
+	elog(DEBUG4, "TSQL TXN Clearing implicit txn flag (was %d)", insert_exec_ctx.started_implicit_txn);
 	insert_exec_ctx.started_implicit_txn = false;
 }
 
@@ -400,23 +384,8 @@ pltsql_insert_exec_check_pending_drop(void)
 		StringInfoData drop_stmt;
 		int			rc;
 
-		/*
-		 * Defensive check: temp table names are internally generated with a known
-		 * prefix. If this doesn't match, something is wrong - skip the drop.
-		 */
-		if (strncmp(insert_exec_ctx.temp_table_name, "#__insert_exec_buf_", 19) != 0)
-		{
-			elog(WARNING, "unexpected INSERT EXEC temp table name format: %s",
-				 insert_exec_ctx.temp_table_name);
-			pfree(insert_exec_ctx.temp_table_name);
-			insert_exec_ctx.temp_table_name = NULL;
-			insert_exec_ctx.pending_drop = false;
-			return;
-		}
-
 		initStringInfo(&drop_stmt);
-		appendStringInfo(&drop_stmt, "DROP TABLE IF EXISTS %s",
-						 quote_identifier(insert_exec_ctx.temp_table_name));
+		appendStringInfo(&drop_stmt, "DROP TABLE IF EXISTS %s", insert_exec_ctx.temp_table_name);
 
 		rc = SPI_execute(drop_stmt.data, false, 0);
 		if (rc != SPI_OK_UTILITY)
@@ -435,9 +404,6 @@ pltsql_insert_exec_check_pending_drop(void)
  * We record column count and types at INSERT EXEC start, then verify they
  * haven't changed before flushing. Regular tables get RowExclusiveLock to
  * block concurrent DDL; temp tables only get schema captured (session-local).
- *
- * For regular tables, we check INSERT permission early to fail fast rather
- * than executing the procedure and buffering data only to fail at flush.
  */
 void
 pltsql_insert_exec_open_target_table(const char *target_table)
@@ -500,19 +466,11 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 		}
 
 		/*
-		 * Check INSERT permission on the target table early. This prevents
-		 * executing the procedure and buffering data only to fail at flush.
-		 * Note: ownership chaining may allow the INSERT at flush time even
-		 * if this check fails, but failing early is safer and matches SQL
-		 * Server behavior for most cases.
-		 */
-		if (pg_class_aclcheck(relid, GetUserId(), ACL_INSERT) != ACLCHECK_OK)
-			aclcheck_error(ACLCHECK_NO_PRIV, OBJECT_TABLE, target_table);
-
-		/*
 		 * Acquire RowExclusiveLock on the target table.
 		 * This lock will be held until the end of the transaction.
 		 * It blocks concurrent sessions from modifying the table.
+		 * Note: Same-session DROP/ALTER is still allowed by PostgreSQL,
+		 * but we detect it via schema verification at flush time.
 		 */
 		oldcontext = CurrentMemoryContext;
 		PG_TRY();
@@ -521,10 +479,6 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 		}
 		PG_CATCH();
 		{
-			/*
-			 * If we can't lock, skip schema capture. Permission was already
-			 * checked above, so this is likely a lock timeout or similar.
-			 */
 			MemoryContextSwitchTo(oldcontext);
 			FlushErrorState();
 			return;
@@ -545,10 +499,6 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 	}
 	PG_CATCH();
 	{
-		/*
-		 * Best-effort: if we can't open the table, skip schema capture.
-		 * The flush operation will report the proper error.
-		 */
 		MemoryContextSwitchTo(oldcontext);
 		FlushErrorState();
 		insert_exec_ctx.target_rel_oid = InvalidOid;
@@ -557,18 +507,6 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 	PG_END_TRY();
 
 	tupdesc = RelationGetDescr(rel);
-
-	/*
-	 * Defensive check: ensure natts is valid before allocating arrays.
-	 * PostgreSQL caps this at MaxTupleAttributeNumber (1664), but check
-	 * anyway to guard against corrupt catalogs or buggy extensions.
-	 */
-	if (tupdesc->natts < 0 || tupdesc->natts > MaxTupleAttributeNumber)
-	{
-		table_close(rel, NoLock);
-		elog(WARNING, "invalid target table attribute count: %d", tupdesc->natts);
-		return;
-	}
 
 	/* Allocate schema signature in TopMemoryContext so it survives error handling */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
@@ -584,10 +522,10 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 		insert_exec_ctx.schema_sig = NULL;
 	}
 
-	insert_exec_ctx.schema_sig = palloc0(sizeof(InsertExecSchemaSignature));
+	insert_exec_ctx.schema_sig = palloc(sizeof(InsertExecSchemaSignature));
 	insert_exec_ctx.schema_sig->natts = tupdesc->natts;
-	insert_exec_ctx.schema_sig->atttypids = palloc0(tupdesc->natts * sizeof(Oid));
-	insert_exec_ctx.schema_sig->atttypmods = palloc0(tupdesc->natts * sizeof(int32));
+	insert_exec_ctx.schema_sig->atttypids = palloc(tupdesc->natts * sizeof(Oid));
+	insert_exec_ctx.schema_sig->atttypmods = palloc(tupdesc->natts * sizeof(int32));
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
@@ -607,6 +545,9 @@ pltsql_insert_exec_open_target_table(const char *target_table)
  *
  * For regular tables: Release the RowExclusiveLock we acquired.
  * For temp tables: Just clear the OID (no lock was acquired).
+ *
+ * Note: We only release the lock if we're not in an aborted transaction state.
+ * If the transaction was aborted, the lock has already been released.
  */
 void
 pltsql_insert_exec_close_target_table(void)
@@ -656,6 +597,10 @@ pltsql_insert_exec_close_target_table(void)
  *
  * This is called before flushing data to the target table to detect if the
  * executed procedure altered the target table's schema.
+ *
+ * Note: In major version upgrade scenarios, the OID captured at INSERT EXEC start
+ * may become stale. We handle this gracefully by skipping the check if we can't
+ * open the relation - the actual INSERT will validate the data anyway.
  */
 bool
 pltsql_insert_exec_verify_schema(void)
@@ -788,11 +733,19 @@ count_select_target_columns(SelectStmt *stmt)
 }
 
 /*
- * Validate column count from query string BEFORE plan preparation. tsql requires
- * column mismatch errors to take priority over runtime errors (e.g., division by zero),
- * so we parse and count columns here without evaluation. If count cannot be determined
- * (SELECT *, complex queries, parse errors), we defer to the DestReceiver validation.
- * Returns true if validation passes or cannot be performed; false only on definite mismatch.
+ * Validate column count from query string BEFORE plan preparation.
+ *
+ * T-SQL requires column mismatch errors to take priority over runtime errors
+ * like division by zero. PostgreSQL's plan preparation evaluates constant
+ * expressions, so we parse and count columns here without evaluation.
+ *
+ * This is an OPTIMIZATION for early error detection, not a correctness
+ * requirement. If we can't determine the column count (SELECT *, complex
+ * queries, parse errors), we skip early validation and let the normal
+ * execution path handle it - the DestReceiver will still catch mismatches.
+ *
+ * Returns true if validation passes OR cannot be performed (defer to normal path).
+ * Returns false only if column count mismatch is definitively detected.
  */
 bool
 pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
@@ -814,11 +767,7 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	temp_table_oid = pltsql_get_insert_exec_temp_table_oid();
 	Assert(OidIsValid(temp_table_oid));
 
-	/*
-	 * Parse the query string. For syntax errors, defer to normal execution
-	 * which will report the error properly. For other errors (e.g., OOM),
-	 * re-throw since they indicate a serious problem.
-	 */
+	/* Parse the query string - if parsing fails, defer to normal execution */
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
 	{
@@ -826,23 +775,9 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	}
 	PG_CATCH();
 	{
-		ErrorData  *edata;
-
 		MemoryContextSwitchTo(oldcontext);
-		edata = CopyErrorData();
 		FlushErrorState();
-
-		/*
-		 * Only swallow syntax errors - these will be reported properly by
-		 * the normal execution path. Re-throw other errors like OOM.
-		 */
-		if (edata->sqlerrcode != ERRCODE_SYNTAX_ERROR &&
-			edata->sqlerrcode != ERRCODE_FEATURE_NOT_SUPPORTED)
-		{
-			ReThrowError(edata);
-		}
-		FreeErrorData(edata);
-		return true;  /* Syntax error - normal path will report it */
+		return true;  /* Parse error - normal path will report it */
 	}
 	PG_END_TRY();
 
@@ -887,9 +822,13 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	if (query_natts != temp_natts)
 	{
 		/*
-		 * Set error flag BEFORE throwing so flush is skipped even if TRY-CATCH
-		 * catches it. Column mismatch errors roll back all rows, unlike data-level
-		 * errors (e.g., division by zero) which only affect the current row.
+		 * Set the error flag BEFORE throwing the error. This ensures that
+		 * even if TRY-CATCH catches the error, the flush will be skipped.
+		 *
+		 * Expected behavior: Column mismatch errors cause all rows to be
+		 * rolled back, even if caught by TRY-CATCH. This is different from
+		 * data-level errors like division by zero, which only affect the
+		 * current row and allow previously inserted rows to be kept.
 		 */
 		pltsql_insert_exec_set_error_flag();
 
@@ -918,9 +857,10 @@ pltsql_insert_exec_active(void)
 }
 
 /*
- * Check if INSERT EXEC is actively in execution with a valid temp table.
- * Unlike pltsql_insert_exec_active(), this also verifies the temp table exists.
- * Returns false if context is not set, temp table was dropped, or not yet created.
+ * Stricter check than pltsql_insert_exec_active() - also verifies the temp
+ * table still exists. Returns false if context is stale (e.g., temp table
+ * was dropped after rollback). May return false early in INSERT EXEC before
+ * temp table is created, which is fine - validation happens later anyway.
  */
 bool
 pltsql_insert_exec_in_execution(void)
@@ -949,8 +889,14 @@ pltsql_insert_exec_in_execution(void)
 		return false;
 
 	/*
-	 * Verify temp table still exists - OID may be stale if table was dropped
-	 * after rollback. Use syscache check to avoid errors from opening missing relation.
+	 * Additional check: verify the temp table actually exists.
+	 * The OID might still be "valid" (non-zero) but the table could have been
+	 * dropped due to transaction rollback. This happens when INSERT EXEC fails
+	 * and the transaction is rolled back - the temp table is dropped but the
+	 * OID in the context is not cleared.
+	 *
+	 * We use SearchSysCacheExists1 to check if the relation exists without
+	 * opening it (which would fail if it doesn't exist).
 	 */
 	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(temp_table_oid)))
 		return false;
@@ -966,8 +912,13 @@ pltsql_insert_exec_in_execution(void)
 	}
 
 	/*
-	 * Empty call stack (depth 0) means no PL/tsql execution in progress.
-	 * Also handles stale context from previous batches - new batch starts with empty stack.
+	 * If current_depth is 0, we're not inside any PL/tsql execution,
+	 * so we can't be inside INSERT EXEC execution either.
+	 *
+	 * IMPORTANT: This also handles the case where the INSERT EXEC context
+	 * is stale from a previous batch. When a new batch starts, the call
+	 * stack is empty (depth 0), so we return false here. This prevents
+	 * stale context from affecting subsequent batches.
 	 */
 	if (current_depth == 0)
 		return false;
@@ -976,6 +927,9 @@ pltsql_insert_exec_in_execution(void)
 	 * Check if the current call stack depth is consistent with the INSERT EXEC
 	 * context. If we're at a shallower level than when INSERT EXEC started,
 	 * the context is stale.
+	 *
+	 * Note: We use < instead of <= because the INSERT EXEC statement itself
+	 * is at call_stack_depth, and the called procedure is at call_stack_depth+1.
 	 */
 	if (current_depth < insert_exec_ctx.call_stack_depth)
 		return false;  /* Context is stale - we've returned from INSERT EXEC */
