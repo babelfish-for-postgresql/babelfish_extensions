@@ -5,18 +5,12 @@
 /*
  * INSERT EXEC info - shared by PLtsql_stmt_exec, PLtsql_stmt_exec_sp,
  * and PLtsql_stmt_exec_batch.
- *
- * Table identifiers are stored separately (not pre-concatenated) to allow
- * the executor to properly quote each component when building queries,
- * preventing SQL injection from crafted identifiers.
  */
 typedef struct InsertExecInfo
 {
 	bool		is_insert_exec;		/* Is this INSERT EXEC? */
-	char	   *target_db;			/* Database name (or NULL) */
-	char	   *target_schema;		/* Schema name (or NULL) */
-	char	   *target_table;		/* Table name */
-	List	   *columns;			/* List of column name strings (char *) */
+	char	   *target;				/* Target table for INSERT-EXEC */
+	char	   *columns;			/* Column list for INSERT-EXEC */
 } InsertExecInfo;
 
 /*
