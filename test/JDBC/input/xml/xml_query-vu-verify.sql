@@ -654,6 +654,16 @@ DECLARE @x XML = '<root><child><![CDATA[<data>Hello World</data>]]></child></roo
 SELECT @x.query('/root/child');
 GO
 
+-- Empty CDATA
+DECLARE @x XML = '<root><![CDATA[]]></root>';
+SELECT @x.query('/root');
+GO
+
+-- CDATA mixed with regular text
+DECLARE @x XML = '<root>before<![CDATA[<inside>]]>after</root>';
+SELECT @x.query('/root');
+GO
+
 -- ============================================
 -- SECTION 45: XML fragments
 -- ============================================

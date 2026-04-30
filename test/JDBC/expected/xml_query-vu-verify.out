@@ -1238,7 +1238,27 @@ SELECT @x.query('/root/child');
 GO
 ~~START~~
 xml
-<child><![CDATA[<data>Hello World</data>]]></child>
+<child>&lt;data&gt;Hello World&lt;/data&gt;</child>
+~~END~~
+
+
+-- Empty CDATA
+DECLARE @x XML = '<root><![CDATA[]]></root>';
+SELECT @x.query('/root');
+GO
+~~START~~
+xml
+<root/>
+~~END~~
+
+
+-- CDATA mixed with regular text
+DECLARE @x XML = '<root>before<![CDATA[<inside>]]>after</root>';
+SELECT @x.query('/root');
+GO
+~~START~~
+xml
+<root>before&lt;inside&gt;after</root>
 ~~END~~
 
 

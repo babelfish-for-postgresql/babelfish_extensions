@@ -680,6 +680,28 @@ strip_whitespace_text_nodes(xmlNodePtr node)
 				xmlFreeNode(child);
 			}
 		}
+		else if (child->type == XML_CDATA_SECTION_NODE)
+		{
+			/*
+			 * Replace CDATA sections with regular text nodes.
+			 * T-SQL normalizes CDATA to escaped entity references.
+			 * libxml2 will automatically escape <, >, & when serializing
+			 * a regular text node.
+			 * If CDATA content is empty, remove the node entirely so the
+			 * parent element serializes as self-closing (matching T-SQL).
+			 */
+			if (child->content == NULL || child->content[0] == '\0')
+			{
+				xmlUnlinkNode(child);
+				xmlFreeNode(child);
+			}
+			else
+			{
+				xmlNodePtr text_node = xmlNewText(child->content);
+				xmlReplaceNode(child, text_node);
+				xmlFreeNode(child);
+			}
+		}
 		else
 		{
 			/* Recurse into element children */
