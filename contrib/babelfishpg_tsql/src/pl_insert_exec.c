@@ -1168,7 +1168,7 @@ CreateInsertExecDestReceiver(Oid temp_table_oid)
 	self->pub.rStartup = insertexec_startup;
 	self->pub.rShutdown = insertexec_shutdown;
 	self->pub.rDestroy = insertexec_destroy;
-	self->pub.mydest = DestNone;  /* no standard dest type fits; avoids miscast risks */
+	self->pub.mydest = DestTransientRel;  /* reuse existing dest type */
 	self->temp_table_oid = temp_table_oid;
 
 	return (DestReceiver *) self;
@@ -1177,10 +1177,13 @@ CreateInsertExecDestReceiver(Oid temp_table_oid)
 /*
  * insertexec_startup --- executor startup for INSERT EXEC receiver
  *
- * Validates column count matches temp table and builds coercion expressions
- * for type conversion. We open/close the relation per-tuple in insertexec_receive
- * to avoid holding stale handles across subtransaction boundaries.
+ * Relation is opened/closed per-tuple in insertexec_receive to avoid
+ * invalid handles after subtransaction rollbacks (e.g., TRY/CATCH).
+ *
+ * Validates column count matches the temp table and builds coercion
+ * expressions for type conversion using PostgreSQL's ExecInitExpr/ExecEvalExpr.
  */
+
 static void
 insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
@@ -1192,15 +1195,20 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	int			i;
 	List	   *target_list = NIL;
 
-	/* Store the tuple descriptor for later use */
+	/* Just store the tuple descriptor for later use */
 	myState->typeinfo = typeinfo;
 	myState->rows_inserted = 0;
 	myState->proj_info = NULL;
 	myState->proj_slot = NULL;
 
-	/* Validate column count matches temp table */
+	/*
+	 * Validate column count: the number of columns in the result set
+	 * must match the number of columns in the temp table.
+	 * "Column name or number of supplied values does not match table definition."
+	 */
 	result_natts = typeinfo->natts;
 
+	/* Open temp table to get its tuple descriptor */
 	temp_rel = table_open(myState->temp_table_oid, AccessShareLock);
 	temp_tupdesc = RelationGetDescr(temp_rel);
 	temp_natts = temp_tupdesc->natts;
@@ -1208,11 +1216,12 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	if (result_natts != temp_natts)
 	{
 		table_close(temp_rel, AccessShareLock);
-		/*
-		 * Set error flag BEFORE throwing so flush is skipped even if TRY-CATCH
-		 * catches it. Column mismatch errors roll back all rows, unlike data-level
-		 * errors (e.g., division by zero) which only affect the current row.
-		 */
+	/*
+ 	 * Set error flag BEFORE throwing to skip flush and re-throw even if
+ 	 * TRY-CATCH catches it. Column mismatch errors roll back all rows,
+ 	 * unlike data errors (e.g., divide by zero) which only affect current row.
+ 	*/
+
 		pltsql_insert_exec_set_error_flag();
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1233,15 +1242,15 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 
 		/* Create Var node referencing input tuple column (OUTER_VAR for ecxt_outertuple) */
 		var = makeVar(OUTER_VAR,
-					  i + 1,			/* attnum is 1-based */
+					  i + 1,				/* attnum is 1-based */
 					  src_att->atttypid,
 					  src_att->atttypmod,
 					  src_att->attcollation,
-					  0);				/* varlevelsup */
+					  0);					/* varlevelsup */
 
 		expr = (Node *) var;
 
-		/* Check if coercion is needed */
+		/* Check if coercion is needed for this column */
 		if (src_att->atttypid != tgt_att->atttypid ||
 			(src_att->atttypmod != tgt_att->atttypmod && tgt_att->atttypmod != -1))
 		{
@@ -1310,8 +1319,14 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		TupleDesc	proj_tupdesc;
 
 		myState->econtext = CreateStandaloneExprContext();
+
+		/* Create a copy of the temp table's tuple descriptor for the result slot */
 		proj_tupdesc = CreateTupleDescCopy(temp_tupdesc);
+
+		/* Create the result slot for projection */
 		myState->proj_slot = MakeSingleTupleTableSlot(proj_tupdesc, &TTSOpsVirtual);
+
+		/* Build the projection info */
 		myState->proj_info = ExecBuildProjectionInfo(target_list,
 													 myState->econtext,
 													 myState->proj_slot,
@@ -1322,23 +1337,17 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	table_close(temp_rel, AccessShareLock);
 
 	/*
-	 * Pre-assign transaction ID before parallel mode starts. This is critical
-	 * for parallel query: insertexec_receive calls table_tuple_insert which
-	 * needs a transaction ID, but AssignTransactionId fails during parallel mode.
-	 */
-	(void) GetCurrentTransactionId();
+ 	 * Pre-assign XID before parallel mode starts. table_tuple_insert() calls
+ 	 * GetCurrentTransactionId() which fails in parallel mode if no XID exists.
+ 	 * rStartup runs before EnterParallelMode, so assigning here avoids the error.
+ 	*/
+
+	(void) GetCurrentTransactionId();  /* Ensure XID is assigned before parallel mode */
 }
 
 /*
  * insertexec_receive --- receive one tuple and insert into temp table
- *
- * Opens/closes the relation for each tuple to avoid holding stale handles
- * across subtransaction boundaries (e.g., inner TRY/CATCH blocks).
- *
- * Note: Each open acquires RowExclusiveLock but we don't release it (NoLock
- * on close), accumulating lock refs. For temp tables this is fine - no shared
- * memory contention - but could be optimized to open once in startup if needed.
- */
+*/
 static bool
 insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 {
@@ -1355,21 +1364,41 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	{
 		ExprContext *econtext = myState->econtext;
 
+		/* Reset per-tuple memory context for expression evaluation */
 		ResetExprContext(econtext);
+
+		/*
+		 * Set up the input slot for projection.
+		 * ExecProject will read from ecxt_outertuple (we used OUTER_VAR in the Var nodes).
+		 */
 		econtext->ecxt_outertuple = slot;
 
 		/* Project tuple with type coercion */
 		insert_slot = ExecProject(myState->proj_info);
 
-		table_tuple_insert(temp_rel, insert_slot, cid, 0, NULL);
+		/* Insert the projected tuple */
+		table_tuple_insert(temp_rel,
+						   insert_slot,
+						   cid,
+						   0,
+						   NULL);
 	}
 	else
 	{
-		/* No coercion needed - insert directly */
-		table_tuple_insert(temp_rel, slot, cid, 0, NULL);
+		/*
+		 * No coercion needed - insert directly.
+		 * table_tuple_insert handles slot type conversion if needed.
+		 */
+		table_tuple_insert(temp_rel,
+						   slot,
+						   cid,
+						   0,  /* no special options - preserve MVCC */
+						   NULL);  /* no bulk insert state */
 	}
 
+	/* Close relation immediately - don't hold across subtransaction boundaries */
 	table_close(temp_rel, NoLock);
+
 	myState->rows_inserted++;
 
 	return true;
@@ -1377,18 +1406,22 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 
 /*
  * insertexec_shutdown --- executor end for INSERT EXEC receiver
+ *
+ * Clean up the expression context and projection slot used for type coercion.
  */
 static void
 insertexec_shutdown(DestReceiver *self)
 {
 	DR_insertexec *myState = (DR_insertexec *) self;
 
+	/* Free the projection slot if we created one */
 	if (myState->proj_slot != NULL)
 	{
 		ExecDropSingleTupleTableSlot(myState->proj_slot);
 		myState->proj_slot = NULL;
 	}
 
+	/* Free the expression context if we created one */
 	if (myState->econtext != NULL)
 	{
 		FreeExprContext(myState->econtext, true);
@@ -1404,11 +1437,9 @@ insertexec_destroy(DestReceiver *self)
 {
 	DR_insertexec *myState = (DR_insertexec *) self;
 
-	/* Defensive: ensure resources are freed even if shutdown was skipped */
-	if (myState->proj_slot != NULL || myState->econtext != NULL)
-		insertexec_shutdown(self);
+	/* proj_info is allocated in the expression context, no need to free separately */
+	myState->proj_info = NULL;
 
-	myState->proj_info = NULL;  /* allocated in expression context */
 	pfree(self);
 }
 
