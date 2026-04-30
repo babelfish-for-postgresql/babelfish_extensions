@@ -1176,7 +1176,9 @@ define_custom_variables(void)
 										  "This allows JDBC tests running in the same session to test cache "
 										  "deserialization without starting new connections. "
 										  "Requires babelfishpg_tsql.enable_antlr_parse_cache to be ON. "
-										  "Does NOT affect trigger execution - triggers (both DML and event triggers) always use normal cache behavior. "
+										  "Does NOT affect: (1) trigger execution - triggers (both DML and event triggers) "
+										  "always use normal cache behavior, (2) SP_PREPARE/SP_EXECUTE batches - these "
+										  "use in-session hash table only and have no catalog entries. "
 										  "This is a testing-only feature and should never be enabled in production."),
 							 &pltsql_force_antlr_cache_testing,
 							 true,

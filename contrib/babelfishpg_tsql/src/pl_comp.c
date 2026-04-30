@@ -3497,13 +3497,15 @@ pltsql_HashTableLookup(PLtsql_func_hashkey *func_key)
 		 * to force deserialization from catalog, but keep using functions
 		 * that were already deserialized (from_cache=true) to test cache hits.
 		 * 
-		 * IMPORTANT: Skip force cache testing for triggers (both DML and event triggers)
-		 * to avoid breaking trigger execution. Triggers have complex execution contexts 
-		 * and forcing cache deserialization can cause issues with trigger data and 
-		 * transaction handling.
+		 * IMPORTANT: Skip force cache testing for:
+		 * 1. Triggers (both DML and event triggers) - complex execution contexts
+		 * 2. SP_PREPARE batches - identified by inputCollation == -1 (set by cache_compiled_batch).
+		 *    These batches must survive in hash table between SP_PREPARE and SP_EXECUTE calls
+		 *    and have no catalog entries.
 		 */
 		if (pltsql_enable_antlr_parse_cache && pltsql_force_antlr_cache_testing && 
-			!func_key->isTrigger && !func_key->isEventTrigger)
+			!func_key->isTrigger && !func_key->isEventTrigger &&
+			func_key->inputCollation != -1)  /* Exclude SP_PREPARE batches (inputCollation == -1) */
 		{
 			/* Keep functions loaded from persistent cache to test cache hits */
 			if (!hentry->function->from_cache)
