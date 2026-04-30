@@ -306,7 +306,7 @@ SELECT data.query('/root') FROM xml_query_t10 WHERE id = 2;
 GO
 ~~START~~
 xml
-<root>   </root>
+<root/>
 ~~END~~
 
 

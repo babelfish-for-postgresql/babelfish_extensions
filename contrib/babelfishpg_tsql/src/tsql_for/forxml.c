@@ -11,6 +11,7 @@
 #include "fmgr.h"
 #include "utils/guc.h"
 #include "lib/stringinfo.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "parser/parser.h"
 #include "utils/builtins.h"
@@ -20,6 +21,11 @@
 #include "catalog/pg_type.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_collation.h"
+
+#ifdef USE_LIBXML
+#include <libxml/tree.h>
+#include <libxml/parser.h>
+#endif
 
 #include "tsql_for.h"
 
@@ -626,3 +632,158 @@ update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_o
 		}
 	}
 }
+
+#ifdef USE_LIBXML
+/*
+ * strip_whitespace_text_nodes
+ *
+ * Recursively walk the DOM tree and remove text nodes that contain
+ * only whitespace characters (spaces, tabs, newlines).
+ */
+static void
+strip_whitespace_text_nodes(xmlNodePtr node)
+{
+	xmlNodePtr	child;
+	xmlNodePtr	next;
+
+	if (node == NULL)
+		return;
+
+	child = node->children;
+	while (child != NULL)
+	{
+		next = child->next;
+
+		if (child->type == XML_TEXT_NODE)
+		{
+			/* Check if text content is whitespace-only */
+			xmlChar *content = child->content;
+			bool	 all_whitespace = true;
+
+			if (content != NULL)
+			{
+				while (*content != '\0')
+				{
+					if (*content != ' ' && *content != '\t' &&
+						*content != '\n' && *content != '\r')
+					{
+						all_whitespace = false;
+						break;
+					}
+					content++;
+				}
+			}
+
+			if (all_whitespace)
+			{
+				xmlUnlinkNode(child);
+				xmlFreeNode(child);
+			}
+		}
+		else
+		{
+			/* Recurse into element children */
+			strip_whitespace_text_nodes(child);
+		}
+
+		child = next;
+	}
+}
+
+/*
+ * bbf_xml_strip_whitespace_text_nodes
+ *
+ * Strips whitespace-only text nodes from an XML value to match T-SQL behavior.
+ * T-SQL strips these nodes at XML parse time; PostgreSQL preserves them.
+ *
+ * Parses the XML into a DOM tree, walks it to remove whitespace-only text
+ * nodes, then serializes the cleaned DOM back to text.
+ */
+PG_FUNCTION_INFO_V1(bbf_xml_strip_whitespace_text_nodes);
+
+Datum
+bbf_xml_strip_whitespace_text_nodes(PG_FUNCTION_ARGS)
+{
+	xmltype    *xml_input = PG_GETARG_XML_P(0);
+	xmlDocPtr	doc = NULL;
+	xmlChar    *result_buf = NULL;
+	int			result_len;
+	text	   *result;
+	xmlParserCtxtPtr ctxt;
+	char	   *xml_str;
+	int			xml_len;
+
+	xmlInitParser();
+
+	/*
+	 * Parse the XML using xmlCtxtReadMemory. We don't use XML_PARSE_NOBLANKS
+	 * because it only works with DTDs. Instead we strip whitespace-only
+	 * text nodes manually after parsing.
+	 *
+	 * Use XML_PARSE_NOERROR | XML_PARSE_NOWARNING to suppress libxml2
+	 * error output. If parsing fails (e.g. XML fragments, DOCTYPE),
+	 * we return the input unchanged and let the caller handle the error.
+	 */
+	ctxt = xmlNewParserCtxt();
+	if (ctxt == NULL)
+		PG_RETURN_XML_P(xml_input);
+
+	xml_str = text_to_cstring((text *) xml_input);
+	xml_len = strlen(xml_str);
+
+	doc = xmlCtxtReadMemory(ctxt, xml_str, xml_len,
+							NULL, "UTF-8",
+							XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
+	xmlFreeParserCtxt(ctxt);
+	pfree(xml_str);
+
+	if (doc == NULL || xmlDocGetRootElement(doc) == NULL)
+	{
+		if (doc != NULL)
+			xmlFreeDoc(doc);
+		PG_RETURN_XML_P(xml_input);
+	}
+
+	/* Walk the DOM tree and remove whitespace-only text nodes */
+	strip_whitespace_text_nodes(xmlDocGetRootElement(doc));
+
+	/* Serialize the cleaned DOM back to text */
+	xmlDocDumpMemoryEnc(doc, &result_buf, &result_len, "UTF-8");
+	xmlFreeDoc(doc);
+
+	if (result_buf == NULL)
+	{
+		PG_RETURN_XML_P(xml_input);
+	}
+
+	/*
+	 * xmlDocDumpMemoryEnc may prepend an XML declaration like
+	 * '<?xml version="1.0" encoding="UTF-8"?>\n'. T-SQL does not include
+	 * this, so strip it if present.
+	 */
+	{
+		char   *buf = (char *) result_buf;
+		int		len = result_len;
+
+		if (len > 5 && strncmp(buf, "<?xml", 5) == 0)
+		{
+			char *end = strstr(buf, "?>");
+			if (end != NULL)
+			{
+				end += 2; /* skip past "?>" */
+				/* skip optional newline after declaration */
+				if (*end == '\n')
+					end++;
+				len -= (end - buf);
+				buf = end;
+			}
+		}
+
+		result = cstring_to_text_with_len(buf, len);
+	}
+
+	xmlFree(result_buf);
+
+	PG_RETURN_XML_P((xmltype *) result);
+}
+#endif /* USE_LIBXML */
