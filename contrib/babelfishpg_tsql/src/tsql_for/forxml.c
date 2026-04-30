@@ -713,18 +713,20 @@ strip_whitespace_text_nodes(xmlNodePtr node)
 }
 
 /*
- * bbf_xml_strip_whitespace_text_nodes
+ * bbf_xml_normalize
  *
- * Strips whitespace-only text nodes from an XML value to match T-SQL behavior.
- * T-SQL strips these nodes at XML parse time; PostgreSQL preserves them.
+ * Normalizes an XML value to match T-SQL behavior:
+ * 1. Strips whitespace-only text nodes (T-SQL strips these at parse time)
+ * 2. Converts CDATA sections to regular text (T-SQL normalizes CDATA to
+ *    escaped entity references)
  *
- * Parses the XML into a DOM tree, walks it to remove whitespace-only text
- * nodes, then serializes the cleaned DOM back to text.
+ * Parses the XML into a DOM tree, walks it to apply normalizations,
+ * then serializes the cleaned DOM back to text.
  */
-PG_FUNCTION_INFO_V1(bbf_xml_strip_whitespace_text_nodes);
+PG_FUNCTION_INFO_V1(bbf_xml_normalize);
 
 Datum
-bbf_xml_strip_whitespace_text_nodes(PG_FUNCTION_ARGS)
+bbf_xml_normalize(PG_FUNCTION_ARGS)
 {
 	xmltype    *xml_input = PG_GETARG_XML_P(0);
 	xmlDocPtr	doc = NULL;
