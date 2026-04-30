@@ -2186,7 +2186,7 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 						ereport(ERROR,
 								(errcode(ERRCODE_INTERNAL_ERROR),
 								 errmsg("duplicate alias entry in FOR AUTO processing")));
-					strcpy(rteHashEntry->alias_name, hashedFullSrcPath);
+					strlcpy(rteHashEntry->alias_name, hashedFullSrcPath, NAMEDATALEN);
 					rteHashEntry->json_nest_level = curMaxUsedLevel;
 
 					assignedLevel = curMaxUsedLevel;
@@ -2317,7 +2317,7 @@ static bool forAutoWalker(Node *node, ForAutoContext *ctx)
 							(errcode(ERRCODE_INTERNAL_ERROR),
 							 errmsg("duplicate CTE name \"%s\" in FOR AUTO processing",
 									cteEntry->ctename)));
-				strcpy(cteHashEntry->ctename, cteEntry->ctename);
+				strlcpy(cteHashEntry->ctename, cteEntry->ctename, NAMEDATALEN);
 				cteHashEntry->idx_in_ctelist = cteIdx;
 				cteIdx++;
 			}

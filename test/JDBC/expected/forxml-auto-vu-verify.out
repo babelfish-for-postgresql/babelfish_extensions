@@ -1522,6 +1522,24 @@ ntext
 ~~END~~
 
 
+-- 12.11 View with FOR XML AUTO, TYPE inside (tsql_select_for_xml_agg)
+SELECT * FROM forxmlauto_v_xml_type;
+GO
+~~START~~
+xml
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></c>
+~~END~~
+
+
+-- 12.12 View with FOR XML AUTO without TYPE inside (tsql_select_for_xml_text_agg)
+SELECT * FROM forxmlauto_v_xml_text;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></c>
+~~END~~
+
+
 
 
 -- ============================================
@@ -1575,8 +1593,34 @@ ntext
 ~~END~~
 
 
+-- 13.5 Procedure with JOIN returning FOR XML AUTO
+EXEC dbo.GetXmlAutoJoin;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"><od ProductID="1" Quantity="12"/><od ProductID="2" Quantity="10"/></o></c>
+~~END~~
 
--- 13.5 Function with ELEMENTS mode
+
+-- 13.6 Procedure with ELEMENTS returning FOR XML AUTO
+EXEC dbo.GetXmlAutoElements;
+GO
+~~START~~
+ntext
+<c><CustomerID>ALFKI</CustomerID><CompanyName>Alfreds Inc</CompanyName><o><OrderID>10248</OrderID><TotalAmount>440.0000</TotalAmount></o></c>
+~~END~~
+
+
+-- 13.7 Scalar function returning FOR XML AUTO, TYPE
+SELECT dbo.GetXmlAutoScalar('ALFKI');
+GO
+~~START~~
+xml
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
+
+
+-- 13.8 Function with ELEMENTS mode
 SELECT f.CustomerID, f.CompanyName, f.OrderID, f.TotalAmount
 FROM dbo.GetXmlSingleCustomerOrders('ALFKI') f
 FOR XML AUTO, ELEMENTS;
@@ -1587,7 +1631,7 @@ ntext
 ~~END~~
 
 
--- 13.6 CTE wrapping a table-valued function
+-- 13.9 CTE wrapping a table-valued function
 ;WITH cte_func AS (SELECT * FROM dbo.GetXmlCustomerOrders())
 SELECT CustomerID, CompanyName FROM cte_func WHERE CustomerID = 'ALFKI' FOR XML AUTO;
 GO

@@ -72,7 +72,7 @@ typedef struct forxml_state
 static StringInfo for_xml_ffunc(PG_FUNCTION_ARGS);
 static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil);
 static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil);
-static void tsql_row_to_xml_auto(StringInfo state, Datum record, bool binary_base64, bool elements, bool xsinil, forxml_auto_state *auto_state);
+static void tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state);
 static void update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, bool binary_base64, int i);
 
 /* Helper functions for XML AUTO */
@@ -194,7 +194,7 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 							(errcode(ERRCODE_INTERNAL_ERROR),
 							 errmsg("FOR XML AUTO state not initialized")));
 
-				tsql_row_to_xml_auto(state, record, binary_base64, elements, xsinil, auto_state);
+				tsql_row_to_xml_auto(state, record, elements, xsinil, auto_state);
 			}
 			break;
 		case TSQL_FORXML_PATH:	/* FOR XML PATH */
@@ -1323,7 +1323,7 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
  * Map an SQL row to XML in AUTO mode.
  */
 static void
-tsql_row_to_xml_auto(StringInfo state, Datum record, bool binary_base64, bool elements, bool xsinil, forxml_auto_state *auto_state)
+tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state)
 {
 	HeapTupleHeader td;
 	Oid tupType;

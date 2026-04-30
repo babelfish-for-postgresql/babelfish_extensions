@@ -218,6 +218,24 @@ FROM forxmlauto_v_customer_orders v
 JOIN forxmlauto_t_order_details od ON v.OrderID = od.OrderID;
 GO
 
+-- View with FOR XML AUTO, TYPE (dependent on tsql_select_for_xml_agg)
+CREATE VIEW forxmlauto_v_xml_type AS
+SELECT (SELECT c.CustomerID, c.CompanyName, o.OrderID
+        FROM forxmlauto_t_customers c
+        JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+        WHERE c.CustomerID = 'ALFKI'
+        FOR XML AUTO, TYPE) AS xml_result;
+GO
+
+-- View with FOR XML AUTO without TYPE (dependent on tsql_select_for_xml_text_agg)
+CREATE VIEW forxmlauto_v_xml_text AS
+SELECT (SELECT c.CustomerID, c.CompanyName, o.OrderID
+        FROM forxmlauto_t_customers c
+        JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+        WHERE c.CustomerID = 'ALFKI'
+        FOR XML AUTO) AS xml_result;
+GO
+
 -- ============================================
 -- SECTION: Functions
 -- ============================================
@@ -253,5 +271,44 @@ BEGIN
     JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
     WHERE c.CustomerID = @CustID
     FOR XML AUTO, ROOT('CustomerOrders');
+END;
+GO
+
+CREATE PROCEDURE dbo.GetXmlAutoJoin
+AS
+BEGIN
+    SELECT c.CustomerID, c.CompanyName, o.OrderID, od.ProductID, od.Quantity
+    FROM forxmlauto_t_customers c
+    JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+    JOIN forxmlauto_t_order_details od ON o.OrderID = od.OrderID
+    WHERE c.CustomerID = 'ALFKI'
+    FOR XML AUTO;
+END;
+GO
+
+CREATE PROCEDURE dbo.GetXmlAutoElements
+AS
+BEGIN
+    SELECT c.CustomerID, c.CompanyName, o.OrderID, o.TotalAmount
+    FROM forxmlauto_t_customers c
+    JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+    WHERE c.CustomerID = 'ALFKI'
+    FOR XML AUTO, ELEMENTS;
+END;
+GO
+
+CREATE FUNCTION dbo.GetXmlAutoScalar(@CustID NCHAR(5))
+RETURNS XML
+AS
+BEGIN
+    DECLARE @result XML;
+    SET @result = (
+        SELECT c.CustomerID, c.CompanyName, o.OrderID, o.TotalAmount
+        FROM forxmlauto_t_customers c
+        JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+        WHERE c.CustomerID = @CustID
+        FOR XML AUTO, TYPE
+    );
+    RETURN @result;
 END;
 GO

@@ -3,15 +3,25 @@ DROP FUNCTION IF EXISTS dbo.GetXmlCustomerOrders;
 GO
 DROP FUNCTION IF EXISTS dbo.GetXmlSingleCustomerOrders;
 GO
+DROP FUNCTION IF EXISTS dbo.GetXmlAutoScalar;
+GO
 
 -- Drop procedures
 DROP PROCEDURE IF EXISTS dbo.GetXmlAutoResult;
+GO
+DROP PROCEDURE IF EXISTS dbo.GetXmlAutoJoin;
+GO
+DROP PROCEDURE IF EXISTS dbo.GetXmlAutoElements;
 GO
 
 -- Drop views (order matters: nested view first)
 DROP VIEW IF EXISTS forxmlauto_v_order_summary;
 GO
 DROP VIEW IF EXISTS forxmlauto_v_customer_orders;
+GO
+DROP VIEW IF EXISTS forxmlauto_v_xml_type;
+GO
+DROP VIEW IF EXISTS forxmlauto_v_xml_text;
 GO
 
 -- Drop tables
