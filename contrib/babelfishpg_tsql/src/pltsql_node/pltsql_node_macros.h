@@ -334,7 +334,7 @@ pltsql_equal_nodes_or_equal(const void *a, const void *b)
 #define COMPARE_SCALAR_FIELD_LOG(fldname, nodename) \
 	do { \
 		if (a->fldname != b->fldname) { \
-			elog(LOG, "pltsql_equal: %s.%s differs (a=%d, b=%d)", \
+			elog(DEBUG1, "pltsql_equal: %s.%s differs (a=%d, b=%d)", \
 				 nodename, CppAsString(fldname), (int)(a->fldname), (int)(b->fldname)); \
 			return false; \
 		} \
@@ -343,7 +343,7 @@ pltsql_equal_nodes_or_equal(const void *a, const void *b)
 #define COMPARE_STRING_FIELD_LOG(fldname, nodename) \
 	do { \
 		if (!equalstr(a->fldname, b->fldname)) { \
-			elog(LOG, "pltsql_equal: %s.%s differs (a=%s, b=%s)", \
+			elog(DEBUG1, "pltsql_equal: %s.%s differs (a=%s, b=%s)", \
 				 nodename, CppAsString(fldname), \
 				 a->fldname ? a->fldname : "<null>", \
 				 b->fldname ? b->fldname : "<null>"); \
@@ -354,7 +354,7 @@ pltsql_equal_nodes_or_equal(const void *a, const void *b)
 #define COMPARE_NODE_FIELD_LOG(fldname, nodename) \
 	do { \
 		if (!pltsql_equal_nodes_or_equal(a->fldname, b->fldname)) { \
-			elog(LOG, "pltsql_equal: %s.%s (node field) differs", \
+			elog(DEBUG1, "pltsql_equal: %s.%s (node field) differs", \
 				 nodename, CppAsString(fldname)); \
 			return false; \
 		} \

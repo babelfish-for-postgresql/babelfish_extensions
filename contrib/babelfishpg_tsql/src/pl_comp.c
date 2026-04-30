@@ -1121,7 +1121,14 @@ do_compile(FunctionCallInfo fcinfo,
 							row->rowtupdesc = CreateTemplateTupleDesc(row->nfields);
 							for (fi = 0; fi < row->nfields; fi++)
 							{
-								PLtsql_var *fvar = (PLtsql_var *) cached_result->datums[row->varnos[fi]];
+								PLtsql_var *fvar;
+
+								/* Validate varno bounds before accessing datums array (incase stale/corrupted) */
+								if (row->varnos[fi] < 0 || row->varnos[fi] >= cached_result->ndatums)
+									elog(ERROR, "cached row varno %d out of range (ndatums=%d)",
+										 row->varnos[fi], cached_result->ndatums);
+
+								fvar = (PLtsql_var *) cached_result->datums[row->varnos[fi]];
 
 								TupleDescInitEntry(row->rowtupdesc, fi + 1,
 												   row->fieldnames[fi],
@@ -1264,15 +1271,15 @@ skip_antlr_parsing:
 	if (!forValidator && !function->from_cache &&
 		(pltsql_enable_antlr_parse_cache || antlr_parse_cache_enabled_for_func))
 	{
-			elog(DEBUG1, "pltsql_enable_antlr_parse_cache[INFO]: %s ANTLR parse result used to re-populate cache at EXEC (session guc=%s, func cache_enabled=%s)",
-				 function->fn_signature,
-				 pltsql_enable_antlr_parse_cache ? "on" : "off",
-				 antlr_parse_cache_enabled_for_func ? "on" : "off");
-			pltsql_update_func_antlr_parse_cache(procTup, function);
-			/*
-			 * pltsql_update_func_antlr_parse_cache sets function->bbf_ext_xmin/tid
-			 * with the post-write tuple identity, so skip the stale assignment below.
-			 */
+		elog(DEBUG1, "pltsql_enable_antlr_parse_cache[INFO]: %s ANTLR parse result used to re-populate cache at EXEC (session guc=%s, func cache_enabled=%s)",
+			 function->fn_signature,
+			 pltsql_enable_antlr_parse_cache ? "on" : "off",
+			 antlr_parse_cache_enabled_for_func ? "on" : "off");
+		pltsql_update_func_antlr_parse_cache(procTup, function);
+		/*
+		 * pltsql_update_func_antlr_parse_cache sets function->bbf_ext_xmin/tid
+		 * with the post-write tuple identity, so skip the stale assignment below.
+		 */
 	}
 	else if (TransactionIdIsValid(bbf_ext_xmin))
 	{

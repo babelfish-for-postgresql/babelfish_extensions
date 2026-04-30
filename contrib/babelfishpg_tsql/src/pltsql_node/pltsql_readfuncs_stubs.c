@@ -45,6 +45,8 @@ _readPLtsql_nsitem(void)
 	PLtsql_nsitem *result;
 	int			name_len;
 
+	check_stack_depth();
+
 	/* Read itemtype */
 	token = pg_strtok(&length);		/* skip :itemtype */
 	token = pg_strtok(&length);		/* get value */
@@ -66,6 +68,10 @@ _readPLtsql_nsitem(void)
 
 	/* Allocate with extra space for flexible array member */
 	name_len = name_str ? strlen(name_str) : 0;
+
+	/* Bounds check name_len to prevent excessively large allocation. */
+	if (name_len > NAMEDATALEN * 10)
+		elog(ERROR, "_readPLtsql_nsitem: name too long");
 
 	result = (PLtsql_nsitem *) palloc0(offsetof(PLtsql_nsitem, name) + name_len + 1);
 	NodeSetTag(result, T_PLtsql_nsitem);
@@ -112,6 +118,10 @@ _readPLtsql_row(void)
 	/* rowtupdesc: read_write_ignore, already NULL from makeNode */
 	READ_INT_FIELD(nfields);
 
+	/* Bounds check nfields to prevent integer overflow in palloc. */
+	if (local_node->nfields < 0 || local_node->nfields > MaxAllocSize / sizeof(char *))
+		elog(ERROR, "_readPLtsql_row: nfields %d out of range", local_node->nfields);
+
 	/* fieldnames: string array */
 	token = pg_strtok(&length);		/* skip :fieldnames */
 	if (local_node->nfields > 0)
@@ -120,6 +130,8 @@ _readPLtsql_row(void)
 		for (i = 0; i < local_node->nfields; i++)
 		{
 			token = pg_strtok(&length);
+			if (token == NULL)
+				elog(ERROR, "_readPLtsql_row: unexpected end of input reading fieldnames[%d]", i);
 			local_node->fieldnames[i] = pltsql_nullable_string(token, length);
 		}
 	}
@@ -132,6 +144,8 @@ _readPLtsql_row(void)
 		for (i = 0; i < local_node->nfields; i++)
 		{
 			token = pg_strtok(&length);
+			if (token == NULL)
+				elog(ERROR, "_readPLtsql_row: unexpected end of input reading varnos[%d]", i);
 			local_node->varnos[i] = atoi(token);
 		}
 	}

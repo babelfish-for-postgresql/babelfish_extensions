@@ -4180,7 +4180,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
  * Returns true if antlr parse caching should be used, false otherwise.
  * 
  * Decision logic:
- * 1. Triggers are not cached currently
+ * 1. DML triggers and event triggers are not cached (complex context-dependent execution)
  * 2. If per-function flag is set (not NULL), use that value (babelfish_function_ext[antlr_cache_enabled])
  * 3. Otherwise, follow the session GUC (pltsql_enable_antlr_parse_cache)
  * 
@@ -4194,9 +4194,9 @@ is_antlr_parse_cache_enabled_for_routine(HeapTuple proctup, HeapTuple bbftup)
 	Datum		cache_flag;
 	bool		isnull;
 
-	/* Triggers are not cached currently */
+	/* Triggers and event triggers are not cached currently */
 	procStruct = (Form_pg_proc) GETSTRUCT(proctup);
-	if (procStruct->prorettype == TRIGGEROID)
+	if (procStruct->prorettype == TRIGGEROID || procStruct->prorettype == EVENT_TRIGGEROID)
 		return false;
 
 	/*
@@ -4508,16 +4508,14 @@ serialize_with_error_handling(const void *obj,
 	PG_CATCH();
 	{
 		ErrorData  *edata;
-		MemoryContext ectx;
 
-		ectx = MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(oldcontext);
 		edata = CopyErrorData();
 		FlushErrorState();
 		pltsql_antlr_parse_cache_stat_errors++;
 		elog(WARNING, "pltsql_enable_antlr_parse_cache[FAIL]: %s %s serialization failed: %s",
 			 fn_signature, description, edata->message);
 
-		MemoryContextSwitchTo(ectx);
 		ereport(ERROR,
 				(errcode(edata->sqlerrcode),
 				 errmsg("failed to cache ANTLR parse tree, %s", edata->message)));
@@ -4562,16 +4560,14 @@ deserialize_with_error_handling(const char *str,
 	PG_CATCH();
 	{
 		ErrorData  *edata;
-		MemoryContext ectx;
 
-		ectx = MemoryContextSwitchTo(oldcontext);
+		MemoryContextSwitchTo(oldcontext);
 		edata = CopyErrorData();
 		FlushErrorState();
 		pltsql_antlr_parse_cache_stat_errors++;
 		elog(WARNING, "%s[FAIL]: %s deserialization failed: %s",
 			 guc_name, description, edata->message);
 
-		MemoryContextSwitchTo(ectx);
 		ereport(ERROR,
 				(errcode(edata->sqlerrcode),
 				 errmsg("failed to %s cached ANTLR parse tree, %s", error_action, edata->message)));
