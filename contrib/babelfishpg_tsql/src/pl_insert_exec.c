@@ -58,6 +58,56 @@
 extern int exec_stmt_execsql(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
 
 /*
+ * Strip timezone suffixes from format_type() output that are invalid in
+ * CREATE TABLE statements (e.g., "without time zone").
+ */
+static char *
+clean_format_type_string(const char *coltype)
+{
+	char *result;
+	char *suffix_pos;
+
+	if (coltype == NULL)
+		return NULL;
+
+	result = pstrdup(coltype);
+
+	/* Strip " without time zone" suffix if present */
+	suffix_pos = strstr(result, " without time zone");
+	if (suffix_pos != NULL)
+		*suffix_pos = '\0';
+
+	/* Also strip " with time zone" suffix if present (for completeness) */
+	suffix_pos = strstr(result, " with time zone");
+	if (suffix_pos != NULL)
+		*suffix_pos = '\0';
+
+	/*
+	 * Append "(max)" for varchar/nvarchar/varbinary without length modifier.
+	 */
+	if (strchr(result, '(') == NULL &&
+		(strcmp(result, "sys.varchar") == 0 ||
+		 strcmp(result, "sys.\"varchar\"") == 0 ||
+		 strcmp(result, "varchar") == 0 ||
+		 strcmp(result, "\"varchar\"") == 0 ||
+		 strcmp(result, "sys.nvarchar") == 0 ||
+		 strcmp(result, "sys.\"nvarchar\"") == 0 ||
+		 strcmp(result, "nvarchar") == 0 ||
+		 strcmp(result, "\"nvarchar\"") == 0 ||
+		 strcmp(result, "sys.varbinary") == 0 ||
+		 strcmp(result, "sys.\"varbinary\"") == 0 ||
+		 strcmp(result, "varbinary") == 0 ||
+		 strcmp(result, "\"varbinary\"") == 0))
+	{
+		char *new_result = psprintf("%s(max)", result);
+		pfree(result);
+		result = new_result;
+	}
+
+	return result;
+}
+
+/*
  * DestReceiver struct for INSERT EXEC - captures procedure output into a temp table.
  */
 typedef struct
