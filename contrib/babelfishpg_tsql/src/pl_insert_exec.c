@@ -1970,24 +1970,32 @@ drop_insert_exec_temp_table(Oid temp_table_oid)
 void
 flush_insert_exec_temp_table(PLtsql_execstate *estate)
 {
-	const char		   *temp_table_name;
-	StringInfoData		flush_query;
-	int					rc;
-	const char		   *target_table = pltsql_get_insert_exec_target_table();
-	const char		   *column_list = pltsql_get_insert_exec_column_list();
-	Oid					temp_oid = pltsql_get_insert_exec_temp_table_oid();
-	MemoryContext		oldcontext = CurrentMemoryContext;
-	ResourceOwner		oldowner = CurrentResourceOwner;
-	volatile bool		subtxn_started = false;
-	char			   *saved_target_table = NULL;
-	Oid					flush_save_userid = InvalidOid;
-	int					flush_save_sec_context = 0;
-	volatile bool		flush_switched_context = false;
+	const char		*temp_table_name;
+	StringInfoData	flush_query;
+	int				rc;
+	const char		*target_table = pltsql_get_insert_exec_target_table();
+	const char		*column_list = pltsql_get_insert_exec_column_list();
+	Oid				temp_oid = pltsql_get_insert_exec_temp_table_oid();
+	MemoryContext	oldcontext = CurrentMemoryContext;
+	ResourceOwner	oldowner = CurrentResourceOwner;
+	volatile bool	subtxn_started = false;
+
+	/* Save INSERT EXEC context to restore after flush */
+	char		   *saved_target_table = NULL;
+
+	/* Security context for ownership chaining */
+	Oid				flush_save_userid = InvalidOid;
+	int				flush_save_sec_context = 0;
+	volatile bool	flush_switched_context = false;
+
+	/* For exec_stmt_execsql */
 	PLtsql_stmt_execsql flush_stmt;
-	PLtsql_expr			flush_expr;
+	PLtsql_expr		flush_expr;
 
 	if (!OidIsValid(temp_oid) || target_table == NULL)
+	{
 		return;
+	}
 
 	/*
 	 * Check if an error occurred during INSERT EXEC that should prevent flush.
@@ -2007,27 +2015,50 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 				 errmsg("INSERT EXEC failed because the stored procedure altered the schema of the target table.")));
 	}
 
+	/*
+	 * Save the INSERT EXEC context info before clearing it.
+	 * We need to temporarily clear the context so that the flush INSERT
+	 * behaves like a normal INSERT and fires INSTEAD OF triggers properly.
+	 */
 	saved_target_table = pstrdup(target_table);
 
+	/* Get the dynamically chosen temp table name from the context */
 	temp_table_name = pltsql_get_insert_exec_temp_table_name();
 	if (temp_table_name == NULL)
+	{
 		elog(ERROR, "INSERT-EXEC: No temp table name stored, cannot flush");
+	}
 
 	initStringInfo(&flush_query);
 
 	if (column_list != NULL)
 	{
+		/*
+		 * User specified columns - use them directly.
+		 * The temp table was created with columns in the same order as the
+		 * user's column list, so SELECT * gives values in the correct order.
+		 */
 		appendStringInfo(&flush_query,
 			"INSERT INTO %s (%s) SELECT * FROM %s",
-			target_table, column_list, temp_table_name);
+			target_table,
+			column_list,
+			temp_table_name);
 	}
 	else
 	{
 		appendStringInfo(&flush_query,
 			"INSERT INTO %s SELECT * FROM %s",
-			target_table, temp_table_name);
+			target_table,
+			temp_table_name);
 	}
 
+	/*
+	 * Execute the flush INSERT in its own subtransaction that commits
+	 * immediately. This is critical for TRY-CATCH behavior.
+	 *
+	 * We route through exec_stmt_execsql to reuse the standard SQL execution
+	 * path which handles triggers, rowcount, and FOUND properly.
+	 */
 	PG_TRY();
 	{
 		BeginInternalSubTransaction("insert_exec_flush");
@@ -2060,7 +2091,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		flush_stmt.cmd_type = PLTSQL_STMT_EXECSQL;
 		flush_stmt.lineno = 0;
 		flush_stmt.sqlstmt = &flush_expr;
-		flush_stmt.mod_stmt = true;
+		flush_stmt.mod_stmt = true;  /* This is an INSERT statement */
 		flush_stmt.into = false;
 		flush_stmt.strict = false;
 		flush_stmt.txn_data = NULL;
@@ -2068,7 +2099,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		flush_stmt.mod_stmt_tablevar = false;
 		flush_stmt.need_to_push_result = false;
 		flush_stmt.is_tsql_select_assign_stmt = false;
-		flush_stmt.insert_exec = false;
+		flush_stmt.insert_exec = false;  /* This flush INSERT is not itself an INSERT EXEC */
 		flush_stmt.is_cross_db = false;
 		flush_stmt.is_ddl = false;
 		flush_stmt.schema_name = NULL;
@@ -2078,14 +2109,17 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		flush_stmt.original_query = NULL;
 		flush_stmt.is_schemabinding = false;
 
+		/* Execute through exec_stmt_execsql - this handles triggers, rowcount, FOUND */
 		rc = exec_stmt_execsql(estate, &flush_stmt);
 
+		/* Free the plan if one was created */
 		if (flush_expr.plan != NULL)
 		{
 			SPI_freeplan(flush_expr.plan);
 			flush_expr.plan = NULL;
 		}
 
+		/* Restore security context immediately after execution */
 		if (flush_switched_context)
 		{
 			SetUserIdAndSecContext(flush_save_userid, flush_save_sec_context);
@@ -2095,33 +2129,42 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
 		if (rc != PLTSQL_RC_OK)
 			elog(ERROR, "INSERT-EXEC: Failed to flush temp table to target");
 
+		/* Clear the flush flag after successful flush */
 		pltsql_insert_exec_set_flush_in_progress(false);
 		pltsql_insert_exec_set_target_table(saved_target_table);
 
+		/* Commit the flush subtransaction - this "locks in" the data */
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
 	}
 	PG_CATCH();
 	{
+		/* Restore security context on error if it was switched */
 		if (flush_switched_context)
 		{
 			SetUserIdAndSecContext(flush_save_userid, flush_save_sec_context);
 			flush_switched_context = false;
 		}
 
+		/* Free the plan if one was created */
 		if (flush_expr.plan != NULL)
 		{
 			SPI_freeplan(flush_expr.plan);
 			flush_expr.plan = NULL;
 		}
 
+		/* Clear the flush flag on error */
 		pltsql_insert_exec_set_flush_in_progress(false);
+
+		/* Restore the target table pointer on error */
 		pltsql_insert_exec_set_target_table(saved_target_table);
 
+		/* Roll back the flush subtransaction on error */
 		if (subtxn_started)
+		{
 			RollbackAndReleaseCurrentSubTransaction();
-
+		}
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
 
@@ -2155,6 +2198,7 @@ insert_exec_setup(PLtsql_execstate *estate,
 {
 	Oid temp_table_oid;
 
+	/* Initialize output */
 	*temp_table_oid_out = InvalidOid;
 
 	/* Check for nested INSERT EXEC */
@@ -2167,6 +2211,8 @@ insert_exec_setup(PLtsql_execstate *estate,
 
 	/*
 	 * Start implicit transaction for INSERT EXEC if requested and not already in one.
+	 * This is used for stored procedure calls (exec_stmt_exec) but not for
+	 * dynamic SQL (exec_stmt_exec_batch) which has different transaction semantics.
 	 */
 	if (start_implicit_txn)
 	{
@@ -2187,10 +2233,16 @@ insert_exec_setup(PLtsql_execstate *estate,
 		}
 	}
 
+	/* Set global context info for flush function */
 	pltsql_set_insert_exec_context_info(target_table, column_list);
+
+	/* Hold target table open to detect schema alterations during execution */
 	pltsql_insert_exec_open_target_table(target_table);
 
+	/* Create temp table based on target table structure */
 	temp_table_oid = create_insert_exec_temp_table(target_table, column_list);
+
+	/* Set global context so DestReceiver knows where to write */
 	pltsql_set_insert_exec_context(temp_table_oid);
 
 	*temp_table_oid_out = temp_table_oid;
@@ -2199,6 +2251,9 @@ insert_exec_setup(PLtsql_execstate *estate,
 
 /*
  * insert_exec_error_cleanup - Clean up INSERT EXEC state on error.
+ *
+ * Sets error/pending-drop flags, clears implicit transaction flag,
+ * closes target table, and clears the context.
  */
 void
 insert_exec_error_cleanup(bool setup_done)
@@ -2213,6 +2268,7 @@ insert_exec_error_cleanup(bool setup_done)
 	}
 	else if (pltsql_insert_exec_active())
 	{
+		/* Cleanup partially initialized context from setup failure */
 		pltsql_insert_exec_set_error_flag();
 		pltsql_insert_exec_clear_implicit_txn_flag();
 		pltsql_insert_exec_close_target_table();
@@ -2232,13 +2288,24 @@ insert_exec_success_cleanup(PLtsql_execstate *estate, Oid temp_table_oid)
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ResourceOwner oldowner = CurrentResourceOwner;
 
+	/*
+	 * Flush temp table to target table and cleanup after procedure completes.
+	 */
 	PG_TRY();
 	{
+		/* Flush temp table to target table */
 		flush_insert_exec_temp_table(estate);
+
+		/* Close target table after flush completes */
 		pltsql_insert_exec_close_target_table();
 	}
 	PG_CATCH();
 	{
+		/*
+		 * Close target table and drop temp table before clearing context.
+		 * Also clear the implicit transaction flag since the transaction
+		 * will be rolled back due to the flush error.
+		 */
 		pltsql_insert_exec_close_target_table();
 		drop_insert_exec_temp_table(temp_table_oid);
 		pltsql_insert_exec_clear_implicit_txn_flag();
@@ -2260,6 +2327,7 @@ insert_exec_success_cleanup(PLtsql_execstate *estate, Oid temp_table_oid)
 	}
 	PG_CATCH();
 	{
+		/* DROP failed - log warning but don't fail the INSERT EXEC */
 		RollbackAndReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
@@ -2268,8 +2336,15 @@ insert_exec_success_cleanup(PLtsql_execstate *estate, Oid temp_table_oid)
 	}
 	PG_END_TRY();
 
+	/*
+	 * Clear the INSERT EXEC context AFTER the drop completes.
+	 * This must be last because it frees temp_table_name which drop needs.
+	 */
 	pltsql_clear_insert_exec_context();
 
+	/*
+	 * Commit the implicit transaction that was started for INSERT EXEC.
+	 */
 	if (pltsql_insert_exec_started_implicit_txn())
 	{
 		elog(DEBUG4, "TSQL TXN Commit implicit transaction for INSERT EXEC");
@@ -2277,5 +2352,6 @@ insert_exec_success_cleanup(PLtsql_execstate *estate, Oid temp_table_oid)
 		pltsql_insert_exec_clear_implicit_txn_flag();
 	}
 
+	/* Clear the TSQL_TRAN_STARTED flag */
 	estate->tsql_trigger_flags &= ~TSQL_TRAN_STARTED;
 }
