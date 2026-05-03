@@ -1325,6 +1325,64 @@ bit
 
 -- tsql
 
+-- === Test 18c: Owner can change cache settings ===
+PRINT '=== Test 18c: Owner can change cache settings ===';
+GO
+
+-- Owner (dbo) enables cache for their function
+SELECT sys.enable_antlr_parse_cache(sys.object_id('dbo.perfunc_default_test'), true);
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Verify cache was enabled
+SELECT antlr_parse_cache_enabled 
+FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_default_test' AND nspname = 'master_dbo';
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- === Test 18d: Sysadmin can change cache settings for any function ===
+PRINT '=== Test 18d: Sysadmin can change cache settings ===';
+GO
+
+-- Create a sysadmin login and add to sysadmin role
+CREATE LOGIN babel_6037_sysadmin WITH PASSWORD = '12345678';
+GO
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_6037_sysadmin;
+GO
+
+-- tsql      user=babel_6037_sysadmin password=12345678
+-- Sysadmin disables cache for a function they don't own (should succeed)
+DECLARE @oid INT = sys.object_id('dbo.perfunc_default_test');
+SELECT sys.enable_antlr_parse_cache(@oid, false);
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+-- tsql
+
+-- Verify cache was disabled by sysadmin
+SELECT antlr_parse_cache_enabled 
+FROM sys.babelfish_function_ext
+WHERE funcname = 'perfunc_default_test' AND nspname = 'master_dbo';
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
 
 -- === Test 19: ALTER procedure preserves per-function flag ===
 PRINT '=== Test 19: ALTER preserves per-function flag ===';

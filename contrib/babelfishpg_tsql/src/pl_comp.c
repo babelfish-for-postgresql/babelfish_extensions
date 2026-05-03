@@ -216,8 +216,10 @@ recheck:
 			{
 				/*
 				 * For functions loaded from persistent cache, verify:
-				 * 1. babelfish_function_ext hasn't changed (e.g., antlr_parse_cache_enabled
-				 *    toggled via sys.enable_antlr_parse_cache() from another session).
+				 * 1. babelfish_function_ext hasn't changed (xmin/tid check detects
+				 *    catalog updates, e.g., antlr_parse_cache_enabled toggled via
+				 *    sys.enable_antlr_parse_cache() from another session). This avoids
+				 *    expensive per-call syscache lookups in pltsql_HashTableLookup.
 				 * 2. Caching is still enabled — check antlr_parse_cache_enabled column:
 				 *    NULL=follow session GUC, true=force on, false=force off.
 				 */
@@ -1028,7 +1030,6 @@ do_compile(FunctionCallInfo fcinfo,
 			{
 				int		ci;
 
-				elog(DEBUG1, "pltsql_enable_antlr_parse_cache[PASS]: %s (ndatums=%d), retrieved cached parse tree results, skipping ANTLR parsing", function->fn_signature, cached_result->ndatums);
 				pltsql_antlr_parse_cache_stat_hits++;
 				pltsql_parse_result = cached_result->parse_tree;
 				
@@ -1161,8 +1162,6 @@ do_compile(FunctionCallInfo fcinfo,
 					validation_cached_datums = pltsql_Datums;
 					validation_cached_ndatums = pltsql_nDatums;
 					function->from_cache = false;
-					elog(DEBUG1, "pltsql_validate_antlr_parse_cache[INFO]: %s validating cached tree against ANTLR at EXEC",
-						 function->fn_signature);
 					/* fall through to normal ANTLR parsing below */
 				}
 				else
@@ -1268,19 +1267,8 @@ skip_antlr_parsing:
 	 * Skip during CREATE/ALTER (forValidator) to avoid conflicts with
 	 * pltsql_store_func_default_positions that handles cache writes for DDL.
 	 */
-	if (!forValidator && !function->from_cache &&
-		(pltsql_enable_antlr_parse_cache || antlr_parse_cache_enabled_for_func))
-	{
-		elog(DEBUG1, "pltsql_enable_antlr_parse_cache[INFO]: %s ANTLR parse result used to re-populate cache at EXEC (session guc=%s, func cache_enabled=%s)",
-			 function->fn_signature,
-			 pltsql_enable_antlr_parse_cache ? "on" : "off",
-			 antlr_parse_cache_enabled_for_func ? "on" : "off");
+	if (!forValidator && !function->from_cache)
 		pltsql_update_func_antlr_parse_cache(procTup, function);
-		/*
-		 * pltsql_update_func_antlr_parse_cache sets function->bbf_ext_xmin/tid
-		 * with the post-write tuple identity, so skip the stale assignment below.
-		 */
-	}
 	else if (TransactionIdIsValid(bbf_ext_xmin))
 	{
 		/* No cache write — use the xmin/tid captured by pltsql_restore_antlr_parse_cache_result */
@@ -3493,22 +3481,15 @@ pltsql_HashTableLookup(PLtsql_func_hashkey *func_key)
 	if (hentry)
 	{
 		/*
-		 * If GUC enable_antlr_parse_cache is off and function was loaded from
+		 * If GUC enable_antlr_parse_cache is off and function was loaded from ext
 		 * persistent cache(from_cache), evict it so do_compile re-parses via ANTLR.
 		 *
-		 * Per-function antlr_parse_cache_enabled column from catalog table
-		 * babelfish_function_ext is not checked here to avoid an expensive
-		 * syscache lookup on every function call. Instead, pltsql_compile's
-		 * bbf_ext xmin check detects when cache_enabled is toggled (the column
-		 * update changes the tuple xmin) and invalidates from_cache=true entries
-		 * across all sessions. For from_cache=false entries (ANTLR-compiled),
-		 * no eviction is needed — the function was compiled correctly from ANTLR,
-		 * and the kill switch prevents future cache writes/reads.
+		 * Note: Per-function antlr_parse_cache_enabled column is not checked here
+		 * to avoid expensive syscache lookup on every call. Instead, pltsql_compile
+		 * uses xmin check to detect catalog changes and invalidate stale entries.
 		 */
 		if (!pltsql_enable_antlr_parse_cache && hentry->function->from_cache)
 		{
-			elog(DEBUG1, "pltsql_enable_antlr_parse_cache[INFO]: function with id %u evicted from session cache due to disabled GUC",
-				 (unsigned int) func_key->funcOid);
 			pltsql_antlr_parse_cache_stat_evictions++;
 			delete_function(hentry->function);
 			return NULL;

@@ -113,6 +113,8 @@ DROP USER IF EXISTS babel_6037_nonowner;
 GO
 DROP LOGIN babel_6037_nonowner;
 GO
+DROP LOGIN babel_6037_sysadmin;
+GO
 DROP PROCEDURE IF EXISTS dbo.dbcc_checkident_proc;
 GO
 DROP TABLE IF EXISTS dbo.dbcc_test_table;

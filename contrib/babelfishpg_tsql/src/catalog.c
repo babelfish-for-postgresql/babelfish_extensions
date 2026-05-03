@@ -6617,7 +6617,7 @@ enable_antlr_parse_cache(PG_FUNCTION_ARGS)
 
 	/* Verify the caller owns the function or is sysadmin */
 	if (!object_ownercheck(ProcedureRelationId, routine_id, GetUserId()) &&
-		!has_privs_of_role(GetUserId(), get_role_oid("sysadmin", false)))
+		!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION,
 					   NameStr(((Form_pg_proc) GETSTRUCT(proctup))->proname));
 
