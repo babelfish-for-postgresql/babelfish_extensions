@@ -2100,41 +2100,41 @@ public:
 						column_list += ", ";
 					first = false;
 					auto ids = col->id();
-					if (!ids.empty())
+					if (!ids.empty() && ids.back() != nullptr)
 						column_list += stripQuoteFromId(ids.back());
 				}
 			}
+
+			/*
+			 * Helper lambda to set INSERT EXEC fields on the statement.
+			 * This avoids duplicating the same 5-line block for each statement type.
+			 */
+			auto setInsertExecInfo = [&](InsertExecInfo *info) {
+				info->is_insert_exec = true;
+				if (!target_table.empty())
+					info->target = pstrdup(target_table.c_str());
+				if (!column_list.empty())
+					info->columns = pstrdup(column_list.c_str());
+			};
 
 			/* Set INSERT EXEC fields based on the actual statement type */
 			if (base_stmt->cmd_type == PLTSQL_STMT_EXEC)
 			{
 				/* Procedure call: EXEC proc_name */
 				PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) base_stmt;
-				exec_stmt->insert_exec.is_insert_exec = true;
-				if (!target_table.empty())
-				exec_stmt->insert_exec.target = pstrdup(target_table.c_str());
-				if (!column_list.empty())
-					exec_stmt->insert_exec.columns = pstrdup(column_list.c_str());
+				setInsertExecInfo(&exec_stmt->insert_exec);
 			}
 			else if (base_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
 			{
 				/* Dynamic SQL: EXEC(@variable) or EXEC('string') */
 				PLtsql_stmt_exec_batch *exec_batch_stmt = (PLtsql_stmt_exec_batch *) base_stmt;
-				exec_batch_stmt->insert_exec.is_insert_exec = true;
-				if (!target_table.empty())
-				exec_batch_stmt->insert_exec.target = pstrdup(target_table.c_str());
-				if (!column_list.empty())
-					exec_batch_stmt->insert_exec.columns = pstrdup(column_list.c_str());
+				setInsertExecInfo(&exec_batch_stmt->insert_exec);
 			}
 			else if (base_stmt->cmd_type == PLTSQL_STMT_EXEC_SP)
 			{
 				/* System stored procedure: EXEC sp_executesql, sp_execute, sp_prepexec */
 				PLtsql_stmt_exec_sp *exec_sp_stmt = (PLtsql_stmt_exec_sp *) base_stmt;
-				exec_sp_stmt->insert_exec.is_insert_exec = true;
-				if (!target_table.empty())
-					exec_sp_stmt->insert_exec.target = pstrdup(target_table.c_str());
-				if (!column_list.empty())
-					exec_sp_stmt->insert_exec.columns = pstrdup(column_list.c_str());
+				setInsertExecInfo(&exec_sp_stmt->insert_exec);
 			}
 
 			/*
