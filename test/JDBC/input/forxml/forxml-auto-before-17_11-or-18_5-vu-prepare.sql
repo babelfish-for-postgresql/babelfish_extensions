@@ -1,0 +1,314 @@
+-- ============================================
+-- SECTION: Base Tables
+-- ============================================
+
+CREATE TABLE forxmlauto_t_categories (
+    CategoryID INT PRIMARY KEY,
+    CategoryName NVARCHAR(100),
+    Description NVARCHAR(200),
+    ParentCategoryID INT
+);
+GO
+
+CREATE TABLE forxmlauto_t_customers (
+    CustomerID NCHAR(5) PRIMARY KEY,
+    CompanyName NVARCHAR(100),
+    ContactName NVARCHAR(100),
+    ContactTitle NVARCHAR(50),
+    Region NVARCHAR(50),
+    Country NVARCHAR(50),
+    Phone NVARCHAR(20),
+    IsActive BIT DEFAULT 1
+);
+GO
+
+CREATE TABLE forxmlauto_t_orders (
+    OrderID INT PRIMARY KEY,
+    CustomerID NCHAR(5),
+    OrderDate DATETIME,
+    ShipAddress NVARCHAR(100),
+    ShipCity NVARCHAR(50),
+    ShipCountry NVARCHAR(50),
+    TotalAmount MONEY,
+    Status NVARCHAR(20)
+);
+GO
+
+CREATE TABLE forxmlauto_t_products (
+    ProductID INT PRIMARY KEY,
+    ProductName NVARCHAR(100),
+    UnitPrice MONEY,
+    CategoryID INT,
+    UnitsInStock INT,
+    Discontinued BIT DEFAULT 0,
+    LastUpdated DATETIME DEFAULT GETDATE()
+);
+GO
+
+CREATE TABLE forxmlauto_t_order_details (
+    OrderDetailID INT PRIMARY KEY,
+    OrderID INT,
+    ProductID INT,
+    Quantity INT,
+    UnitPrice MONEY,
+    Discount DECIMAL(3,2) DEFAULT 0.00
+);
+GO
+
+CREATE TABLE forxmlauto_t_multibyte (
+    ID INT PRIMARY KEY,
+    JapaneseName NVARCHAR(100),
+    ChineseName NVARCHAR(100),
+    KoreanName NVARCHAR(100),
+    EmojiCol NVARCHAR(100),
+    MixedContent NVARCHAR(200)
+);
+GO
+
+CREATE TABLE forxmlauto_t_longnames (
+    ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength INT,
+    ShortCol INT,
+    AnotherVeryLongColumnNameThatExceedsSixtyThreeCharactersForTesting NVARCHAR(50)
+);
+GO
+
+-- ============================================
+-- SECTION: Special Character Tables
+-- ============================================
+
+CREATE TABLE [forxmlauto_t_comma,table] (
+    ID INT PRIMARY KEY,
+    Val VARCHAR(20)
+);
+GO
+
+CREATE TABLE [forxmlauto_t_dot.table] (
+    ID INT PRIMARY KEY,
+    Val VARCHAR(20)
+);
+GO
+
+CREATE TABLE forxmlauto_t_comma_cols (
+    [col,one] INT PRIMARY KEY,
+    [col,two] VARCHAR(20)
+);
+GO
+
+CREATE TABLE forxmlauto_t_dot_cols (
+    [col.one] INT PRIMARY KEY,
+    [col.two] VARCHAR(20)
+);
+GO
+
+CREATE TABLE [_x002E_tbl] (id INT, val VARCHAR(20));
+GO
+
+CREATE TABLE forxmlauto_t_space_cols (
+    [first name] VARCHAR(20),
+    [last name] VARCHAR(20)
+);
+GO
+
+CREATE TABLE [forxmlauto_t_mixed,special.table] (
+    [col.one] INT PRIMARY KEY,
+    [val,two] VARCHAR(20)
+);
+GO
+
+-- ============================================
+-- SECTION: Data
+-- ============================================
+
+INSERT INTO forxmlauto_t_categories (CategoryID, CategoryName, Description, ParentCategoryID) VALUES
+(1, 'Beverages', 'Soft drinks, coffees, teas', NULL),
+(2, 'Coffee', 'Various coffee brands', 1),
+(3, 'Tea', 'Various tea brands', 1),
+(4, 'Electronics', 'Electronic equipment', NULL),
+(5, 'Computers', 'Computer equipment', 4);
+GO
+
+INSERT INTO forxmlauto_t_customers (CustomerID, CompanyName, ContactName, ContactTitle, Region, Country, Phone) VALUES
+('ALFKI', 'Alfreds Inc', 'Maria Anders', 'Sales Rep', 'WA', 'USA', '030-0074321'),
+('BERGS', N'Berglunds snabbköp', N'Christina Berglund', 'Administrator', NULL, 'Sweden', '0921-12 34 65'),
+('CONSH', 'Consolidated Holdings', 'Elizabeth Brown', 'Sales Manager', 'LA', 'USA', '(171) 555-2282');
+GO
+
+INSERT INTO forxmlauto_t_orders (OrderID, CustomerID, OrderDate, ShipAddress, ShipCity, ShipCountry, TotalAmount, Status) VALUES
+(10248, 'ALFKI', '2023-07-04', '23 Tsawassen Blvd.', 'Seattle', 'USA', 440.00, 'Shipped'),
+(10249, 'BERGS', '2023-07-05', N'Luisenstr. 48', 'Mannheim', 'Germany', 1863.40, 'Pending'),
+(10250, 'CONSH', '2023-07-06', 'Berkeley Gardens', 'London', 'UK', 1552.60, 'Delivered');
+GO
+
+INSERT INTO forxmlauto_t_products (ProductID, ProductName, UnitPrice, CategoryID, UnitsInStock) VALUES
+(1, 'Chai', 18.00, 3, 39),
+(2, 'Coffee Beans', 19.00, 2, 17),
+(3, 'Laptop', 1200.00, 5, 10),
+(4, 'Green Tea', 10.00, 3, 25);
+GO
+
+INSERT INTO forxmlauto_t_order_details (OrderDetailID, OrderID, ProductID, Quantity, UnitPrice, Discount) VALUES
+(1, 10248, 1, 12, 18.00, 0.00),
+(2, 10248, 2, 10, 19.00, 0.05),
+(3, 10249, 3, 5, 1200.00, 0.00),
+(4, 10250, 1, 20, 18.00, 0.10),
+(5, 10250, 4, 15, 10.00, 0.00);
+GO
+
+INSERT INTO forxmlauto_t_multibyte (ID, JapaneseName, ChineseName, KoreanName, EmojiCol, MixedContent) VALUES
+(1, N'東京タワー', N'北京市', N'서울시', N'🎉🌟', N'Hello世界Мир'),
+(2, N'大阪城', N'上海市', N'부산시', N'🚀💡', N'Café résumé naïve'),
+(3, N'富士山', N'広州市', N'인천시', N'❤️🎵', N'Ñoño über straße');
+GO
+
+INSERT INTO forxmlauto_t_longnames VALUES (1, 100, 'Hello');
+INSERT INTO forxmlauto_t_longnames VALUES (2, 200, 'World');
+GO
+
+INSERT INTO [forxmlauto_t_comma,table] VALUES (1, 'hello');
+INSERT INTO [forxmlauto_t_comma,table] VALUES (2, 'world');
+GO
+
+INSERT INTO [forxmlauto_t_dot.table] VALUES (1, 'Alpha');
+INSERT INTO [forxmlauto_t_dot.table] VALUES (2, 'Beta');
+GO
+
+INSERT INTO forxmlauto_t_comma_cols VALUES (1, 'Gamma');
+INSERT INTO forxmlauto_t_comma_cols VALUES (2, NULL);
+GO
+
+INSERT INTO forxmlauto_t_dot_cols VALUES (1, 'Delta');
+INSERT INTO forxmlauto_t_dot_cols VALUES (2, NULL);
+GO
+
+INSERT INTO [_x002E_tbl] VALUES (1, 'hello');
+GO
+
+INSERT INTO forxmlauto_t_space_cols VALUES ('John', 'Doe');
+INSERT INTO forxmlauto_t_space_cols VALUES ('Jane', NULL);
+GO
+
+INSERT INTO [forxmlauto_t_mixed,special.table] VALUES (1, 'Test');
+INSERT INTO [forxmlauto_t_mixed,special.table] VALUES (2, NULL);
+GO
+
+-- ============================================
+-- SECTION: Views
+-- ============================================
+
+CREATE VIEW forxmlauto_v_customer_orders AS
+SELECT
+    c.CustomerID,
+    c.CompanyName,
+    c.Country,
+    o.OrderID,
+    o.OrderDate,
+    o.TotalAmount
+FROM forxmlauto_t_customers c
+INNER JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID;
+GO
+
+CREATE VIEW forxmlauto_v_order_summary AS
+SELECT
+    v.CompanyName,
+    v.OrderID,
+    v.TotalAmount,
+    od.ProductID,
+    od.Quantity
+FROM forxmlauto_v_customer_orders v
+JOIN forxmlauto_t_order_details od ON v.OrderID = od.OrderID;
+GO
+
+-- View with FOR XML AUTO, TYPE (dependent on tsql_select_for_xml_agg)
+CREATE VIEW forxmlauto_v_xml_type AS
+SELECT (SELECT c.CustomerID, c.CompanyName, o.OrderID
+        FROM forxmlauto_t_customers c
+        JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+        WHERE c.CustomerID = 'ALFKI'
+        FOR XML AUTO, TYPE) AS xml_result;
+GO
+
+-- View with FOR XML AUTO without TYPE (dependent on tsql_select_for_xml_text_agg)
+CREATE VIEW forxmlauto_v_xml_text AS
+SELECT (SELECT c.CustomerID, c.CompanyName, o.OrderID
+        FROM forxmlauto_t_customers c
+        JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+        WHERE c.CustomerID = 'ALFKI'
+        FOR XML AUTO) AS xml_result;
+GO
+
+-- ============================================
+-- SECTION: Functions
+-- ============================================
+
+CREATE FUNCTION dbo.GetXmlCustomerOrders()
+RETURNS TABLE
+AS RETURN (
+    SELECT c.CustomerID, c.CompanyName, o.OrderID, o.TotalAmount
+    FROM forxmlauto_t_customers c
+    JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+);
+GO
+
+CREATE FUNCTION dbo.GetXmlSingleCustomerOrders(@CustID NCHAR(5))
+RETURNS TABLE
+AS RETURN (
+    SELECT c.CustomerID, c.CompanyName, o.OrderID, o.TotalAmount
+    FROM forxmlauto_t_customers c
+    JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+    WHERE c.CustomerID = @CustID
+);
+GO
+
+-- ============================================
+-- SECTION: Procedures
+-- ============================================
+
+CREATE PROCEDURE dbo.GetXmlAutoResult @CustID NCHAR(5)
+AS
+BEGIN
+    SELECT c.CustomerID, c.CompanyName, o.OrderID, o.TotalAmount
+    FROM forxmlauto_t_customers c
+    JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+    WHERE c.CustomerID = @CustID
+    FOR XML AUTO, ROOT('CustomerOrders');
+END;
+GO
+
+CREATE PROCEDURE dbo.GetXmlAutoJoin
+AS
+BEGIN
+    SELECT c.CustomerID, c.CompanyName, o.OrderID, od.ProductID, od.Quantity
+    FROM forxmlauto_t_customers c
+    JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+    JOIN forxmlauto_t_order_details od ON o.OrderID = od.OrderID
+    WHERE c.CustomerID = 'ALFKI'
+    FOR XML AUTO;
+END;
+GO
+
+CREATE PROCEDURE dbo.GetXmlAutoElements
+AS
+BEGIN
+    SELECT c.CustomerID, c.CompanyName, o.OrderID, o.TotalAmount
+    FROM forxmlauto_t_customers c
+    JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+    WHERE c.CustomerID = 'ALFKI'
+    FOR XML AUTO, ELEMENTS;
+END;
+GO
+
+CREATE FUNCTION dbo.GetXmlAutoScalar(@CustID NCHAR(5))
+RETURNS XML
+AS
+BEGIN
+    DECLARE @result XML;
+    SET @result = (
+        SELECT c.CustomerID, c.CompanyName, o.OrderID, o.TotalAmount
+        FROM forxmlauto_t_customers c
+        JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+        WHERE c.CustomerID = @CustID
+        FOR XML AUTO, TYPE
+    );
+    RETURN @result;
+END;
+GO

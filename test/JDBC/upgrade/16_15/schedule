@@ -223,6 +223,7 @@ forjsonauto
 format
 format-dep
 forxml-before-17_10-or-18_4
+forxml-auto-before-17_11-or-18_5
 forxml-path
 forxml-subquery
 fulltextserviceproperty
