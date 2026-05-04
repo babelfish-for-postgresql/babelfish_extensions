@@ -8,10 +8,10 @@ FROM forxmlauto_t_customers c
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc" Country="USA"/>
+~~END~~
 
 
 
@@ -21,10 +21,10 @@ FROM forxmlauto_t_customers
 WHERE CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI" CompanyName="Alfreds Inc" Country="USA"/>
+~~END~~
 
 
 
@@ -36,10 +36,10 @@ WHERE c.CustomerID = 'ALFKI'
 ORDER BY c.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
 
 
 
@@ -52,10 +52,10 @@ WHERE c.CustomerID = 'ALFKI'
 ORDER BY c.CustomerID, o.OrderID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI"><o OrderID="10248"><od ProductID="1" Quantity="12"/><od ProductID="2" Quantity="10"/></o></c>
+~~END~~
 
 
 
@@ -67,10 +67,10 @@ WHERE c.CustomerID = 'ALFKI'
 ORDER BY c.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
 
 
 
@@ -82,10 +82,10 @@ WHERE c.CustomerID = 'ALFKI'
 ORDER BY c.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<o OrderID="10248" TotalAmount="440.0000"><c CustomerID="ALFKI" CompanyName="Alfreds Inc"/></o>
+~~END~~
 
 
 
@@ -97,10 +97,10 @@ AND c.CustomerID = 'ALFKI'
 ORDER BY c.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
 
 
 
@@ -110,10 +110,10 @@ FROM forxmlauto_t_customers c
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
 
 
 
@@ -123,10 +123,9 @@ FROM forxmlauto_t_customers c
 WHERE c.CustomerID = 'ZZZZZ'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+~~END~~
 
 
 
@@ -135,10 +134,10 @@ SELECT TOP 2 c.CustomerID, c.CompanyName
 FROM forxmlauto_t_customers c
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"/><c CustomerID="BERGS" CompanyName="Berglunds snabbköp"/>
+~~END~~
 
 
 
@@ -148,10 +147,10 @@ FROM forxmlauto_t_customers c
 ORDER BY c.Country
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c Country="Sweden"/><c Country="USA"/>
+~~END~~
 
 
 
@@ -162,10 +161,10 @@ JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 WHERE o.TotalAmount > 1000
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="BERGS" CompanyName="Berglunds snabbköp"><o OrderID="10249"/></c><c CustomerID="CONSH" CompanyName="Consolidated Holdings"><o OrderID="10250"/></c>
+~~END~~
 
 
 
@@ -179,10 +178,10 @@ FROM forxmlauto_t_customers c
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO, ELEMENTS;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c><CustomerID>ALFKI</CustomerID><CompanyName>Alfreds Inc</CompanyName></c>
+~~END~~
 
 
 
@@ -194,10 +193,10 @@ WHERE c.CustomerID = 'ALFKI'
 ORDER BY c.CustomerID
 FOR XML AUTO, ELEMENTS;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c><CustomerID>ALFKI</CustomerID><CompanyName>Alfreds Inc</CompanyName><o><OrderID>10248</OrderID><TotalAmount>440.0000</TotalAmount></o></c>
+~~END~~
 
 
 
@@ -210,10 +209,10 @@ WHERE c.CustomerID = 'ALFKI'
 ORDER BY c.CustomerID, o.OrderID
 FOR XML AUTO, ELEMENTS;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c><CustomerID>ALFKI</CustomerID><o><OrderID>10248</OrderID><od><ProductID>1</ProductID><Quantity>12</Quantity></od><od><ProductID>2</ProductID><Quantity>10</Quantity></od></o></c>
+~~END~~
 
 
 
@@ -224,10 +223,10 @@ JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 ORDER BY c.CustomerID
 FOR XML AUTO, ROOT('CustomerOrders');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<CustomerOrders><c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></c><c CustomerID="BERGS" CompanyName="Berglunds snabbköp"><o OrderID="10249"/></c><c CustomerID="CONSH" CompanyName="Consolidated Holdings"><o OrderID="10250"/></c></CustomerOrders>
+~~END~~
 
 
 
@@ -236,10 +235,10 @@ SELECT c.CustomerID, c.CompanyName
 FROM forxmlauto_t_customers c
 FOR XML AUTO, ROOT;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<root><c CustomerID="ALFKI" CompanyName="Alfreds Inc"/><c CustomerID="BERGS" CompanyName="Berglunds snabbköp"/><c CustomerID="CONSH" CompanyName="Consolidated Holdings"/></root>
+~~END~~
 
 
 
@@ -251,10 +250,10 @@ WHERE c.CustomerID = 'ALFKI'
 ORDER BY c.CustomerID
 FOR XML AUTO, ROOT('Data'), ELEMENTS;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<Data><c><CustomerID>ALFKI</CustomerID><CompanyName>Alfreds Inc</CompanyName><o><OrderID>10248</OrderID><TotalAmount>440.0000</TotalAmount></o></c></Data>
+~~END~~
 
 
 
@@ -263,10 +262,10 @@ SELECT c.CustomerID, c.Region, c.Phone
 FROM forxmlauto_t_customers c
 FOR XML AUTO, ELEMENTS XSINIL;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>ALFKI</CustomerID><Region>WA</Region><Phone>030-0074321</Phone></c><c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>BERGS</CustomerID><Region xsi:nil="true"/><Phone>0921-12 34 65</Phone></c><c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>CONSH</CustomerID><Region>LA</Region><Phone>(171) 555-2282</Phone></c>
+~~END~~
 
 
 
@@ -275,10 +274,10 @@ SELECT c.CustomerID, c.Region, c.Phone
 FROM forxmlauto_t_customers c
 FOR XML AUTO, ROOT('Data'), ELEMENTS XSINIL;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><c><CustomerID>ALFKI</CustomerID><Region>WA</Region><Phone>030-0074321</Phone></c><c><CustomerID>BERGS</CustomerID><Region xsi:nil="true"/><Phone>0921-12 34 65</Phone></c><c><CustomerID>CONSH</CustomerID><Region>LA</Region><Phone>(171) 555-2282</Phone></c></Data>
+~~END~~
 
 
 
@@ -288,10 +287,10 @@ FROM forxmlauto_t_customers c
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO, ELEMENTS XSINIL;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>ALFKI</CustomerID><CompanyName>Alfreds Inc</CompanyName></c>
+~~END~~
 
 
 
@@ -302,10 +301,10 @@ JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO, ELEMENTS XSINIL;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>ALFKI</CustomerID><o><OrderID>10248</OrderID><TotalAmount>440.0000</TotalAmount></o></c>
+~~END~~
 
 
 
@@ -314,10 +313,10 @@ SELECT c.CustomerID, c.Region, c.Phone
 FROM forxmlauto_t_customers c
 FOR XML AUTO, ELEMENTS ABSENT;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c><CustomerID>ALFKI</CustomerID><Region>WA</Region><Phone>030-0074321</Phone></c><c><CustomerID>BERGS</CustomerID><Phone>0921-12 34 65</Phone></c><c><CustomerID>CONSH</CustomerID><Region>LA</Region><Phone>(171) 555-2282</Phone></c>
+~~END~~
 
 
 
@@ -328,10 +327,10 @@ JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 ORDER BY c.CustomerID
 FOR XML AUTO, ROOT('AllData'), ELEMENTS XSINIL;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<AllData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><c><CustomerID>ALFKI</CustomerID><Region>WA</Region><o><OrderID>10248</OrderID></o></c><c><CustomerID>BERGS</CustomerID><Region xsi:nil="true"/><o><OrderID>10249</OrderID></o></c><c><CustomerID>CONSH</CustomerID><Region>LA</Region><o><OrderID>10250</OrderID></o></c></AllData>
+~~END~~
 
 
 
@@ -344,10 +343,10 @@ SELECT c.CustomerID, c.Region, c.Phone
 FROM forxmlauto_t_customers c
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" Region="WA" Phone="030-0074321"/><c CustomerID="BERGS" Phone="0921-12 34 65"/><c CustomerID="CONSH" Region="LA" Phone="(171) 555-2282"/>
+~~END~~
 
 
 
@@ -358,10 +357,10 @@ LEFT JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 ORDER BY c.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI"><o OrderID="10248" TotalAmount="440.0000"/></c><c CustomerID="BERGS"><o OrderID="10249" TotalAmount="1863.4000"/></c><c CustomerID="CONSH"><o OrderID="10250" TotalAmount="1552.6000"/></c>
+~~END~~
 
 
 
@@ -371,10 +370,10 @@ FROM forxmlauto_t_customers c
 WHERE c.CustomerID = 'BERGS'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="BERGS"/>
+~~END~~
 
 
 
@@ -383,10 +382,10 @@ SELECT c.CustomerID, c.Region, c.Phone
 FROM forxmlauto_t_customers c
 FOR XML AUTO, ELEMENTS;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c><CustomerID>ALFKI</CustomerID><Region>WA</Region><Phone>030-0074321</Phone></c><c><CustomerID>BERGS</CustomerID><Phone>0921-12 34 65</Phone></c><c><CustomerID>CONSH</CustomerID><Region>LA</Region><Phone>(171) 555-2282</Phone></c>
+~~END~~
 
 
 
@@ -395,10 +394,10 @@ SELECT c.CustomerID, c.Region, c.Phone
 FROM forxmlauto_t_customers c
 FOR XML AUTO, ELEMENTS XSINIL;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>ALFKI</CustomerID><Region>WA</Region><Phone>030-0074321</Phone></c><c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>BERGS</CustomerID><Region xsi:nil="true"/><Phone>0921-12 34 65</Phone></c><c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>CONSH</CustomerID><Region>LA</Region><Phone>(171) 555-2282</Phone></c>
+~~END~~
 
 
 
@@ -412,10 +411,10 @@ FROM forxmlauto_t_products p
 INNER JOIN forxmlauto_t_categories c ON p.CategoryID = c.CategoryID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<p ProductName="Chai" UnitPrice="18.0000"><c CategoryName="Tea"/></p><p ProductName="Coffee Beans" UnitPrice="19.0000"><c CategoryName="Coffee"/></p><p ProductName="Laptop" UnitPrice="1200.0000"><c CategoryName="Computers"/></p><p ProductName="Green Tea" UnitPrice="10.0000"><c CategoryName="Tea"/></p>
+~~END~~
 
 
 
@@ -425,10 +424,10 @@ FROM forxmlauto_t_customers c
 LEFT JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CompanyName="Alfreds Inc" ContactName="Maria Anders"><o OrderID="10248" TotalAmount="440.0000"/></c><c CompanyName="Berglunds snabbköp" ContactName="Christina Berglund"><o OrderID="10249" TotalAmount="1863.4000"/></c><c CompanyName="Consolidated Holdings" ContactName="Elizabeth Brown"><o OrderID="10250" TotalAmount="1552.6000"/></c>
+~~END~~
 
 
 
@@ -438,10 +437,10 @@ FROM forxmlauto_t_customers c
 RIGHT JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CompanyName="Alfreds Inc"><o OrderID="10248" Status="Shipped"/></c><c CompanyName="Berglunds snabbköp"><o OrderID="10249" Status="Pending"/></c><c CompanyName="Consolidated Holdings"><o OrderID="10250" Status="Delivered"/></c>
+~~END~~
 
 
 
@@ -452,10 +451,10 @@ FULL OUTER JOIN forxmlauto_t_products p ON c.CategoryID = p.CategoryID
 ORDER BY c.CategoryName, p.ProductName
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CategoryName="Beverages"><p/></c><c CategoryName="Coffee"><p ProductName="Coffee Beans" UnitPrice="19.0000"/></c><c CategoryName="Computers"><p ProductName="Laptop" UnitPrice="1200.0000"/></c><c CategoryName="Electronics"><p/></c><c CategoryName="Tea"><p ProductName="Chai" UnitPrice="18.0000"/><p ProductName="Green Tea" UnitPrice="10.0000"/></c>
+~~END~~
 
 
 
@@ -466,10 +465,10 @@ CROSS JOIN forxmlauto_t_categories cat
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CompanyName="Alfreds Inc"><cat CategoryName="Beverages"/><cat CategoryName="Coffee"/><cat CategoryName="Tea"/><cat CategoryName="Electronics"/><cat CategoryName="Computers"/></c>
+~~END~~
 
 
 
@@ -479,10 +478,10 @@ FROM forxmlauto_t_customers c1
 JOIN forxmlauto_t_customers c2 ON c1.Country = c2.Country AND c1.CustomerID < c2.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c1 ParentID="ALFKI"><c2 ChildID="CONSH"/></c1>
+~~END~~
 
 
 
@@ -493,10 +492,10 @@ LEFT JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID AND o.TotalAmount
 ORDER BY c.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o/></c><c CustomerID="BERGS" CompanyName="Berglunds snabbköp"><o/></c><c CustomerID="CONSH" CompanyName="Consolidated Holdings"><o/></c>
+~~END~~
 
 
 
@@ -509,10 +508,10 @@ LEFT JOIN forxmlauto_t_products p ON od.ProductID = p.ProductID AND p.UnitPrice 
 WHERE c.CustomerID = 'ALFKI' AND od.OrderDetailID = 1
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI"><o OrderID="10248"><p><od OrderDetailID="1"/></p></o></c>
+~~END~~
 
 
 
@@ -527,10 +526,10 @@ CROSS APPLY (
 ) oa
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><oa OrderID="10248" TotalAmount="440.0000"/></c><c CustomerID="BERGS" CompanyName="Berglunds snabbköp"><oa OrderID="10249" TotalAmount="1863.4000"/></c><c CustomerID="CONSH" CompanyName="Consolidated Holdings"><oa OrderID="10250" TotalAmount="1552.6000"/></c>
+~~END~~
 
 
 
@@ -545,10 +544,10 @@ OUTER APPLY (
 ) oa
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><oa/></c><c CustomerID="BERGS" CompanyName="Berglunds snabbköp"><oa/></c><c CustomerID="CONSH" CompanyName="Consolidated Holdings"><oa/></c>
+~~END~~
 
 
 
@@ -563,10 +562,10 @@ JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 ORDER BY c.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI"><o OrderID="10248"/></c><c CustomerID="BERGS"><o OrderID="10249"/></c><c CustomerID="CONSH"><o OrderID="10250"/></c>
+~~END~~
 
 
 
@@ -576,10 +575,10 @@ FROM forxmlauto_t_categories c
 JOIN forxmlauto_t_products p ON c.CategoryID = p.CategoryID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CategoryName="Tea"><p ProductName="Chai"/></c><c CategoryName="Coffee"><p ProductName="Coffee Beans"/></c><c CategoryName="Computers"><p ProductName="Laptop"/></c><c CategoryName="Tea"><p ProductName="Green Tea"/></c>
+~~END~~
 
 
 
@@ -590,10 +589,10 @@ JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 ORDER BY c.CustomerID DESC
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="CONSH"><o OrderID="10250"/></c><c CustomerID="BERGS"><o OrderID="10249"/></c><c CustomerID="ALFKI"><o OrderID="10248"/></c>
+~~END~~
 
 
 
@@ -604,10 +603,10 @@ JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 ORDER BY o.OrderID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></c><c CustomerID="BERGS" CompanyName="Berglunds snabbköp"><o OrderID="10249"/></c><c CustomerID="CONSH" CompanyName="Consolidated Holdings"><o OrderID="10250"/></c>
+~~END~~
 
 
 
@@ -627,10 +626,10 @@ JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 ORDER BY c.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></forxmlauto_t_customers><forxmlauto_t_customers CustomerID="CONSH" CompanyName="Consolidated Holdings"><o OrderID="10250"/></forxmlauto_t_customers>
+~~END~~
 
 
 
@@ -642,10 +641,10 @@ SELECT c.CustomerID, c.CompanyName
 FROM CustomerCTE c
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI" CompanyName="Alfreds Inc"/><forxmlauto_t_customers CustomerID="BERGS" CompanyName="Berglunds snabbköp"/><forxmlauto_t_customers CustomerID="CONSH" CompanyName="Consolidated Holdings"/>
+~~END~~
 
 
 
@@ -657,10 +656,10 @@ SELECT CustomerCTE.CustomerID, CustomerCTE.CompanyName
 FROM CustomerCTE
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<customercte CustomerID="ALFKI" CompanyName="Alfreds Inc"/><customercte CustomerID="BERGS" CompanyName="Berglunds snabbköp"/><customercte CustomerID="CONSH" CompanyName="Consolidated Holdings"/>
+~~END~~
 
 
 
@@ -677,10 +676,10 @@ JOIN cte2 O ON C.CustomerID = O.CustomerID
 WHERE C.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI"><forxmlauto_t_orders OrderID="10248"/></forxmlauto_t_customers>
+~~END~~
 
 
 
@@ -699,10 +698,10 @@ JOIN forxmlauto_t_orders O ON C.CustomerID = O.CustomerID
 WHERE C.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></forxmlauto_t_customers>
+~~END~~
 
 
 
@@ -721,10 +720,10 @@ FROM category_hierarchy ch
 ORDER BY ch.Level, ch.CategoryName
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<ch CategoryName="Beverages" Level="0"/><ch CategoryName="Electronics" Level="0"/><ch CategoryName="Coffee" Level="1"/><ch CategoryName="Computers" Level="1"/><ch CategoryName="Tea" Level="1"/>
+~~END~~
 
 
 
@@ -739,10 +738,10 @@ WHERE c.CustomerID = 'ALFKI'
 ORDER BY c.CustomerID
 FOR XML AUTO, ELEMENTS;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<forxmlauto_t_customers><CustomerID>ALFKI</CustomerID><CompanyName>Alfreds Inc</CompanyName><o><OrderID>10248</OrderID></o></forxmlauto_t_customers>
+~~END~~
 
 
 
@@ -756,10 +755,10 @@ JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 ORDER BY c.CustomerID
 FOR XML AUTO, ROOT('Data'), ELEMENTS XSINIL;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><forxmlauto_t_customers><CustomerID>ALFKI</CustomerID><Region>WA</Region><o><OrderID>10248</OrderID></o></forxmlauto_t_customers><forxmlauto_t_customers><CustomerID>BERGS</CustomerID><Region xsi:nil="true"/><o><OrderID>10249</OrderID></o></forxmlauto_t_customers><forxmlauto_t_customers><CustomerID>CONSH</CustomerID><Region>LA</Region><o><OrderID>10250</OrderID></o></forxmlauto_t_customers></Data>
+~~END~~
 
 
 
@@ -776,10 +775,10 @@ WHERE c.CustomerID = 'ALFKI'
 ORDER BY c.CustomerID, o.OrderID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"><d ProductID="1" Quantity="12"/><d ProductID="2" Quantity="10"/></o></forxmlauto_t_customers>
+~~END~~
 
 
 -- 6.10 Recursive CTE without alias (uses CTE name)
@@ -797,10 +796,10 @@ FROM category_hierarchy
 ORDER BY category_hierarchy.Level, category_hierarchy.CategoryName
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<category_hierarchy CategoryName="Beverages" Level="0"/><category_hierarchy CategoryName="Electronics" Level="0"/><category_hierarchy CategoryName="Coffee" Level="1"/><category_hierarchy CategoryName="Computers" Level="1"/><category_hierarchy CategoryName="Tea" Level="1"/>
+~~END~~
 
 
 -- 6.11 Recursive CTE joined with base table
@@ -819,10 +818,10 @@ JOIN forxmlauto_t_products p ON ch.CategoryID = p.CategoryID
 ORDER BY p.ProductName
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<p ProductName="Chai" UnitPrice="18.0000" CategoryName="Tea" Level="1"/><p ProductName="Coffee Beans" UnitPrice="19.0000" CategoryName="Coffee" Level="1"/><p ProductName="Green Tea" UnitPrice="10.0000" CategoryName="Tea" Level="1"/><p ProductName="Laptop" UnitPrice="1200.0000" CategoryName="Computers" Level="1"/>
+~~END~~
 
 
 -- 6.12 Nested CTE: outer non-recursive + inner recursive
@@ -849,10 +848,10 @@ FROM combined cb
 WHERE cb.ProductName = 'Laptop'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<p CategoryName="Computers" ProductName="Laptop"/>
+~~END~~
 
 
 -- 6.13 Nested CTE with long alias names
@@ -870,10 +869,10 @@ FROM cte_outer long_alias_name
 WHERE long_alias_name.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></c>
+~~END~~
 
 
 -- 6.14 CTE with name longer than 63 characters (truncated by parser)
@@ -885,10 +884,10 @@ FROM this_is_a_very_long_cte_name_that_exceeds_sixty_three_characters_in_length 
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
 
 
 
@@ -907,10 +906,10 @@ JOIN forxmlauto_t_orders o ON sub.CustomerID = o.CustomerID
 ORDER BY sub.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<sub CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></sub><sub CustomerID="CONSH" CompanyName="Consolidated Holdings"><o OrderID="10250"/></sub>
+~~END~~
 
 
 
@@ -924,10 +923,10 @@ JOIN (
 ) AS sub2 ON sub1.CustomerID = sub2.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<sub1 CustomerID="CONSH" CompanyName="Consolidated Holdings"><sub2 TotalAmount="1552.6000"/></sub1>
+~~END~~
 
 
 
@@ -941,10 +940,10 @@ JOIN forxmlauto_t_orders o ON outer_q.CustomerID = o.CustomerID
 WHERE outer_q.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<outer_q CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></outer_q>
+~~END~~
 
 
 
@@ -958,10 +957,10 @@ WHERE c.CustomerID = 'ALFKI'
 ORDER BY c.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc" OrderCount="1"><o OrderID="10248"/></c>
+~~END~~
 
 
 
@@ -975,10 +974,10 @@ FROM (
 WHERE combined.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<combined CustomerID="ALFKI" Source="Active"/>
+~~END~~
 
 
 
@@ -988,10 +987,10 @@ FROM forxmlauto_t_customers c
 WHERE c.CustomerID IN (SELECT CustomerID FROM forxmlauto_t_orders WHERE TotalAmount > 1000)
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="BERGS" CompanyName="Berglunds snabbköp"/><c CustomerID="CONSH" CompanyName="Consolidated Holdings"/>
+~~END~~
 
 
 
@@ -1002,20 +1001,20 @@ JOIN (SELECT CustomerID, TotalAmount FROM forxmlauto_t_orders WHERE TotalAmount 
 ON o.CustomerID = c.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<o CustomerID="CONSH" CompanyName="Consolidated Holdings"><c CustomerID="CONSH" TotalAmount="1552.6000"/></o>
+~~END~~
 
 
 
 -- 7.8 VALUES clause as source
 SELECT * FROM (VALUES (1,2)) AS z(x,y) FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<z x="1" y="2"/>
+~~END~~
 
 
 
@@ -1030,10 +1029,10 @@ JOIN forxmlauto_t_products p ON c.CategoryID = p.CategoryID
 WHERE c.CategoryID = 2
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CategoryName="Coffee"><p ProductName="Coffee Beans" DoubledPrice="38.0000"/></c>
+~~END~~
 
 
 
@@ -1044,10 +1043,10 @@ JOIN forxmlauto_t_products p ON c.CategoryID = p.CategoryID
 WHERE c.CategoryID = 2
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CategoryName="Coffee"><p ProductName="Coffee Beans" Tier="Premium" CatalogYear="2024"/></c>
+~~END~~
 
 
 
@@ -1058,10 +1057,10 @@ JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CompanyName="Alfreds Inc"><o TotalAmount="440.0000" FixedDate="2023-01-01T12:00:00"/></c>
+~~END~~
 
 
 
@@ -1071,10 +1070,10 @@ SELECT c.CustomerID, c.CompanyName,
 FROM forxmlauto_t_customers c
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc" Region="WA"/><c CustomerID="BERGS" CompanyName="Berglunds snabbköp" Region="Unknown"/><c CustomerID="CONSH" CompanyName="Consolidated Holdings" Region="LA"/>
+~~END~~
 
 
 
@@ -1088,10 +1087,10 @@ JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CompanyName="Alfreds Inc"><o TotalAmount="440.0000" ValueTier="Low"/></c>
+~~END~~
 
 
 
@@ -1104,10 +1103,10 @@ GROUP BY c.CustomerID, c.CompanyName
 ORDER BY c.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc" OrderCount="1" TotalAmount="440.0000"/><c CustomerID="BERGS" CompanyName="Berglunds snabbköp" OrderCount="1" TotalAmount="1863.4000"/><c CustomerID="CONSH" CompanyName="Consolidated Holdings" OrderCount="1" TotalAmount="1552.6000"/>
+~~END~~
 
 
 
@@ -1120,10 +1119,10 @@ HAVING COUNT(o.OrderID) >= 1
 ORDER BY c.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc" OrderCount="1"/><c CustomerID="BERGS" CompanyName="Berglunds snabbköp" OrderCount="1"/><c CustomerID="CONSH" CompanyName="Consolidated Holdings" OrderCount="1"/>
+~~END~~
 
 
 
@@ -1138,10 +1137,10 @@ JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI"><o OrderDate="2023-07-04T00:00:00"/></c>
+~~END~~
 
 
 
@@ -1152,10 +1151,10 @@ JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI"><o TotalAmount="440.0000"/></c>
+~~END~~
 
 
 
@@ -1164,10 +1163,10 @@ SELECT p.ProductName, p.Discontinued
 FROM forxmlauto_t_products p
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<p ProductName="Chai" Discontinued="0"/><p ProductName="Coffee Beans" Discontinued="0"/><p ProductName="Laptop" Discontinued="0"/><p ProductName="Green Tea" Discontinued="0"/>
+~~END~~
 
 
 
@@ -1177,10 +1176,10 @@ FROM forxmlauto_t_order_details od
 WHERE od.OrderDetailID IN (1, 2)
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<od OrderDetailID="1" Discount="0.00"/><od OrderDetailID="2" Discount="0.05"/>
+~~END~~
 
 
 
@@ -1190,10 +1189,10 @@ FROM forxmlauto_t_customers c
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI"/>
+~~END~~
 
 
 
@@ -1207,10 +1206,10 @@ FROM forxmlauto_t_multibyte m
 WHERE m.ID = 1
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<m ID="1" JapaneseName="東京タワー" ChineseName="北京市"/>
+~~END~~
 
 
 
@@ -1220,10 +1219,10 @@ FROM forxmlauto_t_multibyte m
 WHERE m.ID = 1
 FOR XML AUTO, ELEMENTS;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<m><ID>1</ID><JapaneseName>東京タワー</JapaneseName><ChineseName>北京市</ChineseName><KoreanName>서울시</KoreanName></m>
+~~END~~
 
 
 
@@ -1232,10 +1231,10 @@ SELECT m.ID, m.JapaneseName
 FROM forxmlauto_t_multibyte m
 FOR XML AUTO, ROOT('データ');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<データ><m ID="1" JapaneseName="東京タワー"/><m ID="2" JapaneseName="大阪城"/><m ID="3" JapaneseName="富士山"/></データ>
+~~END~~
 
 
 
@@ -1245,10 +1244,10 @@ FROM forxmlauto_t_multibyte m
 WHERE m.ID = 1
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<m ID="1" EmojiCol="🎉🌟"/>
+~~END~~
 
 
 
@@ -1257,10 +1256,10 @@ SELECT m.ID, m.MixedContent
 FROM forxmlauto_t_multibyte m
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<m ID="1" MixedContent="Hello世界Мир"/><m ID="2" MixedContent="Café résumé naïve"/><m ID="3" MixedContent="Ñoño über straße"/>
+~~END~~
 
 
 
@@ -1270,10 +1269,10 @@ FROM forxmlauto_t_multibyte 東京
 WHERE 東京.ID = 1
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<東京 ID="1" JapaneseName="東京タワー"/>
+~~END~~
 
 
 
@@ -1283,10 +1282,10 @@ FROM forxmlauto_t_multibyte m
 WHERE m.ID = 1
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<m ID="1" 名前="東京タワー"/>
+~~END~~
 
 
 
@@ -1297,10 +1296,10 @@ CROSS JOIN forxmlauto_t_customers c
 WHERE m.ID = 1 AND c.CustomerID = 'BERGS'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<m ID="1" JapaneseName="東京タワー"><c CompanyName="Berglunds snabbköp"/></m>
+~~END~~
 
 
 
@@ -1310,10 +1309,10 @@ FROM forxmlauto_t_multibyte m
 WHERE m.ID = 1
 FOR XML AUTO, ELEMENTS XSINIL;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<m xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><JapaneseName>東京タワー</JapaneseName><ChineseName>北京市</ChineseName></m>
+~~END~~
 
 
 
@@ -1323,10 +1322,10 @@ FROM forxmlauto_t_customers c
 WHERE c.CustomerID = 'BERGS'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="BERGS" CompanyName="Berglunds snabbköp"/>
+~~END~~
 
 
 
@@ -1340,7 +1339,10 @@ FOR XML AUTO;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
+~~ERROR (Message: FOR XML AUTO requires at least one table for generating XML elements. Use FOR XML PATH or add a FROM clause with a table name.)~~
+
+
+
 
 -- 11.2 Quotes in attribute values
 SELECT 1 AS ID, 'He said "hello"' AS Quote
@@ -1348,7 +1350,10 @@ FOR XML AUTO;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
+~~ERROR (Message: FOR XML AUTO requires at least one table for generating XML elements. Use FOR XML PATH or add a FROM clause with a table name.)~~
+
+
+
 
 -- 11.3 Special characters in ELEMENTS mode
 SELECT 1 AS ID, 'Tom & Jerry' AS Name, '5 < 10' AS Comparison
@@ -1356,7 +1361,11 @@ FOR XML AUTO, ELEMENTS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
+~~ERROR (Message: FOR XML AUTO requires at least one table for generating XML elements. Use FOR XML PATH or add a FROM clause with a table name.)~~
+
+
+
+
 
 -- ============================================
 -- SECTION 12: Views
@@ -1367,10 +1376,10 @@ FROM forxmlauto_v_customer_orders v
 WHERE v.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<v CompanyName="Alfreds Inc" OrderID="10248" TotalAmount="440.0000"/>
+~~END~~
 
 
 
@@ -1380,10 +1389,10 @@ FROM forxmlauto_v_customer_orders
 WHERE forxmlauto_v_customer_orders.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<forxmlauto_v_customer_orders CompanyName="Alfreds Inc" OrderID="10248"/>
+~~END~~
 
 
 
@@ -1394,10 +1403,10 @@ JOIN forxmlauto_v_customer_orders cv ON o.OrderID = cv.OrderID
 WHERE cv.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<o OrderID="10248"><cv CompanyName="Alfreds Inc" TotalAmount="440.0000"/></o>
+~~END~~
 
 
 
@@ -1407,10 +1416,10 @@ FROM forxmlauto_v_order_summary vs
 WHERE vs.CompanyName = 'Alfreds Inc'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<vs CompanyName="Alfreds Inc" OrderID="10248" ProductID="1" Quantity="12"/><vs CompanyName="Alfreds Inc" OrderID="10248" ProductID="2" Quantity="10"/>
+~~END~~
 
 
 
@@ -1420,10 +1429,10 @@ FROM forxmlauto_v_order_summary
 WHERE forxmlauto_v_order_summary.CompanyName = 'Alfreds Inc'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<forxmlauto_v_order_summary CompanyName="Alfreds Inc" OrderID="10248" ProductID="1"/><forxmlauto_v_order_summary CompanyName="Alfreds Inc" OrderID="10248" ProductID="2"/>
+~~END~~
 
 
 
@@ -1434,10 +1443,10 @@ JOIN forxmlauto_v_order_summary vs ON c.CompanyName = vs.CompanyName
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI"><vs CompanyName="Alfreds Inc" OrderID="10248" ProductID="1"/><vs CompanyName="Alfreds Inc" OrderID="10248" ProductID="2"/></c>
+~~END~~
 
 
 
@@ -1448,10 +1457,10 @@ JOIN forxmlauto_v_order_summary v2 ON v1.OrderID = v2.OrderID
 WHERE v1.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<v1 CompanyName="Alfreds Inc" OrderID="10248"><v2 ProductID="1" Quantity="12"/><v2 ProductID="2" Quantity="10"/></v1>
+~~END~~
 
 
 
@@ -1467,10 +1476,10 @@ FROM customer_orders_cte cte
 WHERE cte.CompanyName = 'Alfreds Inc'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CompanyName="Alfreds Inc"><o OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
 
 
 
@@ -1480,10 +1489,10 @@ FROM forxmlauto_v_customer_orders v
 WHERE v.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<v CompanyName="Alfreds Inc" OrderID="10248" TotalAmount="440.0000"/>
+~~END~~
 
 
 
@@ -1494,10 +1503,10 @@ JOIN forxmlauto_v_customer_orders v ON c.CustomerID = v.CustomerID
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI"><v OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
 
 
 
@@ -1507,10 +1516,10 @@ FROM forxmlauto_v_order_summary vs
 WHERE vs.CompanyName = 'Alfreds Inc'
 FOR XML AUTO, ELEMENTS;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<vs><CompanyName>Alfreds Inc</CompanyName><OrderID>10248</OrderID><ProductID>1</ProductID></vs><vs><CompanyName>Alfreds Inc</CompanyName><OrderID>10248</OrderID><ProductID>2</ProductID></vs>
+~~END~~
 
 
 -- 12.11 View with FOR XML AUTO, TYPE inside (tsql_select_for_xml_agg)
@@ -1518,8 +1527,7 @@ SELECT * FROM forxmlauto_v_xml_type;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~ERROR (Message: relation "forxmlauto_v_xml_type" does not exist)~~
 
 
 -- 12.12 View with FOR XML AUTO without TYPE inside (tsql_select_for_xml_text_agg)
@@ -1527,8 +1535,7 @@ SELECT * FROM forxmlauto_v_xml_text;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~ERROR (Message: relation "forxmlauto_v_xml_text" does not exist)~~
 
 
 
@@ -1542,10 +1549,10 @@ FROM dbo.GetXmlCustomerOrders() f
 WHERE f.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<f CustomerID="ALFKI" CompanyName="Alfreds Inc" OrderID="10248" TotalAmount="440.0000"/>
+~~END~~
 
 
 
@@ -1554,10 +1561,10 @@ SELECT f.CustomerID, f.CompanyName, f.OrderID, f.TotalAmount
 FROM dbo.GetXmlSingleCustomerOrders('ALFKI') f
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<f CustomerID="ALFKI" CompanyName="Alfreds Inc" OrderID="10248" TotalAmount="440.0000"/>
+~~END~~
 
 
 
@@ -1568,10 +1575,10 @@ JOIN dbo.GetXmlCustomerOrders() f ON c.CustomerID = f.CustomerID
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CompanyName="Alfreds Inc"><f OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
 
 
 
@@ -1580,8 +1587,7 @@ EXEC dbo.GetXmlAutoResult @CustID = 'ALFKI';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~ERROR (Message: procedure dbo.getxmlautoresult(@custid => unknown) does not exist)~~
 
 
 -- 13.5 Procedure with JOIN returning FOR XML AUTO
@@ -1589,8 +1595,7 @@ EXEC dbo.GetXmlAutoJoin;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~ERROR (Message: procedure dbo.getxmlautojoin() does not exist)~~
 
 
 -- 13.6 Procedure with ELEMENTS returning FOR XML AUTO
@@ -1598,8 +1603,7 @@ EXEC dbo.GetXmlAutoElements;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~ERROR (Message: procedure dbo.getxmlautoelements() does not exist)~~
 
 
 -- 13.7 Scalar function returning FOR XML AUTO, TYPE
@@ -1607,8 +1611,7 @@ SELECT dbo.GetXmlAutoScalar('ALFKI');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~ERROR (Message: function dbo.getxmlautoscalar(unknown) does not exist)~~
 
 
 -- 13.8 Function with ELEMENTS mode
@@ -1616,20 +1619,20 @@ SELECT f.CustomerID, f.CompanyName, f.OrderID, f.TotalAmount
 FROM dbo.GetXmlSingleCustomerOrders('ALFKI') f
 FOR XML AUTO, ELEMENTS;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<f><CustomerID>ALFKI</CustomerID><CompanyName>Alfreds Inc</CompanyName><OrderID>10248</OrderID><TotalAmount>440.0000</TotalAmount></f>
+~~END~~
 
 
 -- 13.9 CTE wrapping a table-valued function
 ;WITH cte_func AS (SELECT * FROM dbo.GetXmlCustomerOrders())
 SELECT CustomerID, CompanyName FROM cte_func WHERE CustomerID = 'ALFKI' FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<cte_func CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
 
 
 
@@ -1651,9 +1654,7 @@ VALUES (
 SELECT * FROM #XmlResults;
 DROP TABLE #XmlResults;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
+~~ROW COUNT: 1~~
 
 ~~START~~
 int#!#nvarchar
@@ -1673,10 +1674,10 @@ SET @xml = (
 );
 SELECT @xml;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+nvarchar
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
 
 
 
@@ -1696,10 +1697,10 @@ SET @xml = (
 );
 SELECT @xml.value('(/Result/c/@CustomerID)[1]', 'NCHAR(5)') AS CustID;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+nchar
+ALFKI
+~~END~~
 
 
 
@@ -1713,10 +1714,10 @@ SET @xml = (
 );
 SELECT @xml.value('(/Result/c/CustomerID)[1]', 'NCHAR(5)') AS CustID;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+nchar
+ALFKI
+~~END~~
 
 
 
@@ -1731,7 +1732,10 @@ FOR XML AUTO;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
+~~ERROR (Message: FOR XML AUTO requires at least one table for generating XML elements. Use FOR XML PATH or add a FROM clause with a table name.)~~
+
+
+
 
 -- 16.2 FOR XML AUTO with only system function as source
 SELECT s.value
@@ -1740,7 +1744,11 @@ FOR XML AUTO;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
+~~ERROR (Message: FOR XML AUTO requires at least one table for generating XML elements. Use FOR XML PATH or add a FROM clause with a table name.)~~
+
+
+
+
 
 -- ============================================
 -- SECTION 17: Boundary Cases for Element Names
@@ -1751,10 +1759,10 @@ FROM forxmlauto_t_customers x
 WHERE x.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<x CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
 
 
 
@@ -1765,10 +1773,10 @@ FROM forxmlauto_t_customers VeryLongAliasNameForCustomerTable
 WHERE VeryLongAliasNameForCustomerTable.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<verylongaliasnameforcustomertable CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
 
 
 
@@ -1778,10 +1786,10 @@ FROM forxmlauto_t_customers [1stTable]
 WHERE [1stTable].CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<_x0031_sttable CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
 
 
 
@@ -1791,10 +1799,10 @@ FROM forxmlauto_t_customers [Customer Table]
 WHERE [Customer Table].CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<customer_x0020_table CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
 
 
 
@@ -1804,10 +1812,10 @@ FROM forxmlauto_t_customers [cust-data]
 WHERE [cust-data].CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<cust-data CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
 
 
 
@@ -1819,10 +1827,10 @@ WHERE c.CustomerID = 'ALFKI'
 ORDER BY c.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" o="Alfreds Inc"><o OrderID="10248"/></c>
+~~END~~
 
 
 
@@ -1834,10 +1842,10 @@ WHERE c.CustomerID = 'ALFKI'
 ORDER BY c.CustomerID
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc" ContactName="Maria Anders" ContactTitle="Sales Rep" Region="WA" Country="USA" Phone="030-0074321" IsActive="1"><o OrderID="10248" CustomerID="ALFKI" OrderDate="2023-07-04T00:00:00" ShipAddress="23 Tsawassen Blvd." ShipCity="Seattle" ShipCountry="USA" TotalAmount="440.0000" Status="Shipped"/></c>
+~~END~~
 
 
 
@@ -1851,10 +1859,10 @@ SELECT t.ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLeng
 FROM forxmlauto_t_longnames t
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<t ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength="1" ShortCol="100"/><t ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength="2" ShortCol="200"/>
+~~END~~
 
 
 
@@ -1864,10 +1872,10 @@ SELECT t.ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLeng
 FROM forxmlauto_t_longnames t
 FOR XML AUTO, ELEMENTS;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<t><ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength>1</ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength><ShortCol>100</ShortCol></t><t><ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength>2</ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength><ShortCol>200</ShortCol></t>
+~~END~~
 
 
 
@@ -1880,10 +1888,10 @@ CROSS JOIN forxmlauto_t_longnames t
 WHERE c.CustomerID = 'ALFKI' AND t.ShortCol = 100
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><t ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength="1" ShortCol="100"/></c>
+~~END~~
 
 
 
@@ -1895,10 +1903,10 @@ JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI"><o ThisIsAVeryLongColumnAliasThatMe112b864c5987f288f7a6d00d553a231="10248"/></c>
+~~END~~
 
 
 
@@ -1909,10 +1917,10 @@ FROM forxmlauto_t_customers VeryLongTableAliasNameThatExceedsSixtyThreeCharacter
 WHERE VeryLongTableAliasNameThatExceedsSixtyThreeCharacters.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<verylongtablealiasnamethatexceedssixtythreecharacters CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
 
 
 
@@ -1926,10 +1934,10 @@ JOIN forxmlauto_t_orders VeryLongOrderAliasNameThatMightCauseTruncation
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI"><verylongorderaliasnamethatmightcausetruncation OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
 
 
 
@@ -1942,10 +1950,10 @@ JOIN forxmlauto_t_orders ThisIsAThirtyCharacterAliasNam
 WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI"><thisisathirtycharacteraliasnam ThisIsAlsoAThirtyCharColumnName="10248"/></c>
+~~END~~
 
 
 
@@ -1958,10 +1966,10 @@ CROSS JOIN forxmlauto_t_longnames t
 WHERE c.CustomerID = 'ALFKI' AND t.ShortCol = 100
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<c CustomerID="ALFKI"><t ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength="1" AnotherVeryLongColumnNameThatExceedsSixtyThreeCharactersForTesting="Hello"/></c>
+~~END~~
 
 
 
@@ -1971,10 +1979,10 @@ SELECT t.ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLeng
 FROM forxmlauto_t_longnames t
 FOR XML AUTO, ELEMENTS XSINIL;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<t xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength>1</ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength><ShortCol>100</ShortCol></t><t xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength>2</ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength><ShortCol>200</ShortCol></t>
+~~END~~
 
 
 
@@ -1987,10 +1995,10 @@ SELECT t.ID, t.Val
 FROM [forxmlauto_t_comma,table] t
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<t ID="1" Val="hello"/><t ID="2" Val="world"/>
+~~END~~
 
 
 
@@ -1999,10 +2007,10 @@ SELECT ID, Val
 FROM [forxmlauto_t_comma,table]
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<forxmlauto_t_comma_x002C_table ID="1" Val="hello"/><forxmlauto_t_comma_x002C_table ID="2" Val="world"/>
+~~END~~
 
 
 
@@ -2011,10 +2019,10 @@ SELECT t.ID, t.Val
 FROM [forxmlauto_t_dot.table] t
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<t ID="1" Val="Alpha"/><t ID="2" Val="Beta"/>
+~~END~~
 
 
 
@@ -2023,10 +2031,10 @@ SELECT ID, Val
 FROM [forxmlauto_t_dot.table]
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<forxmlauto_t_dot.table ID="1" Val="Alpha"/><forxmlauto_t_dot.table ID="2" Val="Beta"/>
+~~END~~
 
 
 
@@ -2035,10 +2043,10 @@ SELECT q.[col,one], q.[col,two]
 FROM forxmlauto_t_comma_cols q
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<q col_x002C_one="1" col_x002C_two="Gamma"/><q col_x002C_one="2"/>
+~~END~~
 
 
 
@@ -2047,10 +2055,10 @@ SELECT q.[col.one], q.[col.two]
 FROM forxmlauto_t_dot_cols q
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<q col.one="1" col.two="Delta"/><q col.one="2"/>
+~~END~~
 
 
 
@@ -2059,10 +2067,10 @@ SELECT q.[first name], q.[last name]
 FROM forxmlauto_t_space_cols q
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<q first_x0020_name="John" last_x0020_name="Doe"/><q first_x0020_name="Jane"/>
+~~END~~
 
 
 
@@ -2071,10 +2079,10 @@ SELECT t.[col.one], t.[val,two]
 FROM [forxmlauto_t_mixed,special.table] t
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<t col.one="1" val_x002C_two="Test"/><t col.one="2"/>
+~~END~~
 
 
 
@@ -2084,10 +2092,10 @@ FROM [forxmlauto_t_comma,table] p
 JOIN forxmlauto_t_comma_cols c ON p.ID = c.[col,one]
 FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<p ID="1" Val="hello"><c col_x002C_one="1" col_x002C_two="Gamma"/></p><p ID="2" Val="world"><c col_x002C_one="2"/></p>
+~~END~~
 
 
 
@@ -2099,7 +2107,10 @@ FOR XML AUTO, ELEMENTS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
+~~ERROR (Message: column q.col,one does not exist)~~
+
+
+
 
 -- 19.11 Special characters with ELEMENTS XSINIL
 SELECT q.[col,one], q.[col,two]
@@ -2107,10 +2118,10 @@ FROM forxmlauto_t_comma_cols q
 WHERE q.[col,one] = 2
 FOR XML AUTO, ELEMENTS XSINIL;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<q xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><col_x002C_one>2</col_x002C_one><col_x002C_two xsi:nil="true"/></q>
+~~END~~
 
 
 
@@ -2119,18 +2130,18 @@ SELECT q.[col.one], q.[col.two]
 FROM forxmlauto_t_dot_cols q
 FOR XML AUTO, ROOT('Data');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<Data><q col.one="1" col.two="Delta"/><q col.one="2"/></Data>
+~~END~~
 
 
 -- 19.13 Identifier containing literal _x002E_ (tests double-escaping)
 SELECT * FROM [_x002E_tbl] FOR XML AUTO;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
-
+~~START~~
+ntext
+<_x005F_x002e_tbl id="1" val="hello"/>
+~~END~~
 
 
