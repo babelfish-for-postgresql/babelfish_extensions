@@ -14,6 +14,7 @@
 #include "miscadmin.h"
 #include "parser/parser.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/xml.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -49,10 +50,31 @@ typedef struct forxml_auto_state
 	int			   *tsql_convert_type;	/* Per-column T-SQL conversion type */
 	bool			tsql_types_cached;	/* Whether T-SQL type cache is populated */
 
+	/*
+	 * Equality-operator cache for sibling-group detection.  Populated on the
+	 * first row.  Grouping in FOR XML AUTO must follow T-SQL semantics, which
+	 * uses the column's type+collation equality, not byte equality of the
+	 * serialized form (e.g. two rows whose parent column differs only in
+	 * letter case under a case-insensitive collation must be merged).
+	 * For types with no default btree equality (xml, json, etc.) we fall
+	 * back to strcmp on the serialized form.
+	 */
+	FmgrInfo	   *eq_finfo;			/* Per-column equality FmgrInfo */
+	Oid			   *eq_collation;		/* Collation to pass to eq operator */
+	bool		   *has_eq_op;			/* Does the column's type have a usable eq op? */
+	int16		   *type_typlen;		/* typlen of column's base type (for datumCopy) */
+	bool		   *type_typbyval;		/* typbyval of column's base type (for datumCopy) */
+	bool			eq_cache_init;		/* Whether equality cache has been populated */
+
+	/* Previous row values, stored as Datums for type-aware comparison. */
+	Datum		   *prev_datums;		/* datumCopy'd previous values */
+	bool		   *prev_isnull;		/* Per-column null flag for prev row */
+	char		  **prev_str_values;	/* Fallback serialized prev values (only set for no-eq-op types) */
+	bool		   *prev_has_value;		/* Whether prev_datums[i]/prev_str_values[i] has been set */
+
 	/* State for XML generation */
 	int				max_depth;			/* Maximum nesting depth seen */
 	char		  **level_to_alias;		/* level_to_alias[level] = table alias for that level */
-	char		  **prev_values;		/* Previous row values for comparison */
 	int			   *open_element_levels; /* Track which levels have open elements */
 	bool			first_row;			/* Is this the first row? */
 	bool			has_root;			/* Is there a ROOT wrapper? */
@@ -114,6 +136,7 @@ static void output_row_xml(StringInfo state, forxml_auto_state *auto_state, Heap
 static char *cached_value_to_xml_string(Datum value, int col_idx, forxml_auto_state *auto_state, Oid orig_type);
 static void init_output_func_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
 static void init_tsql_type_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
+static void init_eq_op_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
 static void cached_update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, int col_idx, forxml_auto_state *auto_state);
 static bool validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tupdesc);
 
@@ -311,7 +334,6 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 		Datum		root_tag_datum;
 		text	   *root_tag_text;
 		char	   *root_tag;
-		char	   *space;
 
 		/* Extract the root tag name using textregexsubstr */
 		root_tag_datum = DirectFunctionCall2Coll(textregexsubstr, 
@@ -331,11 +353,6 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 
 		/* Copy state content (skip the '{' marker) and add closing tag */
 		appendStringInfoString(res, state + 1);
-
-		/* Trim root_tag at first space (handles XSINIL namespace in opening tag) */
-		space = strchr(root_tag, ' ');
-		if (space)
-			*space = '\0';
 		appendStringInfo(res, "</%s>", root_tag);
 	}
 	else
@@ -815,7 +832,13 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 	auto_state->nest_levels = (int *) palloc0(num_cols * sizeof(int));
 	auto_state->table_aliases = (char **) palloc0(num_cols * sizeof(char *));
 	auto_state->column_names = (char **) palloc0(num_cols * sizeof(char *));
-	auto_state->prev_values = (char **) palloc0(num_cols * sizeof(char *));
+
+	/* Storage for per-column previous-row tracking (for sibling-group detection) */
+	auto_state->prev_datums = (Datum *) palloc0(num_cols * sizeof(Datum));
+	auto_state->prev_isnull = (bool *) palloc0(num_cols * sizeof(bool));
+	auto_state->prev_str_values = (char **) palloc0(num_cols * sizeof(char *));
+	auto_state->prev_has_value = (bool *) palloc0(num_cols * sizeof(bool));
+
 	auto_state->max_depth = 0;
 
 	/* Output function cache arrays — populated on first row in cached_value_to_xml_string */
@@ -923,9 +946,14 @@ xml_auto_get_column_value_as_string(HeapTuple tuple, TupleDesc tupdesc, int col_
 
 /*
  * Find the first nesting level where current row differs from previous row,
- * and update prev_values with the current row's values in the same pass.
- * This avoids a separate "store prev values" loop and saves one value
- * conversion per column per row.
+ * and update per-column previous-value state in the same pass.
+ *
+ * Comparison uses the column type's equality operator under the column's
+ * collation so that grouping follows T-SQL semantics (e.g. two rows whose
+ * parent column differs only in letter case under a case-insensitive
+ * collation must be merged into one parent element).  For types without a
+ * default btree equality (xml, json, ...) we fall back to strcmp on the
+ * serialized form, which is what the engine was doing before.
  *
  * Returns the level number where change first occurs.
  * Returns max_depth+1 if nothing changed.
@@ -944,27 +972,89 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 	{
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 		int level = auto_state->nest_levels[i];
-		char *curr_val;
-		char *prev_val;
+		Datum curr_datum;
+		bool curr_isnull;
+		bool changed = false;
 
 		if (att->attisdropped || level == 0)
 			continue;
 
-		curr_val = xml_auto_get_column_value_as_string(tuple, tupdesc, i, auto_state);
-		prev_val = auto_state->prev_values[i];
+		curr_datum = heap_getattr(tuple, i + 1, tupdesc, &curr_isnull);
 
-		if ((curr_val == NULL && prev_val != NULL) ||
-			(curr_val != NULL && prev_val == NULL) ||
-			(curr_val != NULL && prev_val != NULL && strcmp(curr_val, prev_val) != 0))
+		/* NULL handling: two NULLs are equal, exactly one NULL is different */
+		if (curr_isnull && auto_state->prev_isnull[i])
 		{
-			if (level < first_change)
-				first_change = level;
+			changed = false;
+		}
+		else if (curr_isnull != auto_state->prev_isnull[i])
+		{
+			changed = true;
+		}
+		else if (auto_state->has_eq_op[i])
+		{
+			/*
+			 * Type-aware equality via the column's eq operator under the
+			 * column's collation.  Matches T-SQL grouping semantics.
+			 */
+			Datum eq;
+
+			eq = FunctionCall2Coll(&auto_state->eq_finfo[i],
+									auto_state->eq_collation[i],
+									auto_state->prev_datums[i],
+									curr_datum);
+			changed = !DatumGetBool(eq);
+		}
+		else
+		{
+			/*
+			 * Fallback for types with no default btree equality: compare
+			 * the serialized XML-string form.
+			 */
+			char *curr_str = xml_auto_get_column_value_as_string(tuple, tupdesc, i, auto_state);
+			char *prev_str = auto_state->prev_str_values[i];
+
+			if ((curr_str == NULL) != (prev_str == NULL) ||
+				(curr_str != NULL && strcmp(curr_str, prev_str) != 0))
+				changed = true;
+
+			/* Update cached prev string */
+			if (auto_state->prev_str_values[i] != NULL)
+				pfree(auto_state->prev_str_values[i]);
+			auto_state->prev_str_values[i] = curr_str;
 		}
 
-		/* Update prev_values in the same pass to avoid a separate loop */
-		if (auto_state->prev_values[i] != NULL)
-			pfree(auto_state->prev_values[i]);
-		auto_state->prev_values[i] = curr_val;
+		if (changed && level < first_change)
+			first_change = level;
+
+		/*
+		 * Update prev Datum for eq-op columns.  For pass-by-reference types
+		 * we must datumCopy into the aggregate context, since the source
+		 * tuple will be reclaimed before the next row.  For pass-by-value
+		 * types the Datum itself is the value.
+		 */
+		if (auto_state->has_eq_op[i])
+		{
+			if (auto_state->prev_has_value[i] &&
+				!auto_state->prev_isnull[i] &&
+				!auto_state->type_typbyval[i])
+			{
+				pfree(DatumGetPointer(auto_state->prev_datums[i]));
+			}
+
+			if (curr_isnull)
+			{
+				auto_state->prev_datums[i] = (Datum) 0;
+			}
+			else
+			{
+				auto_state->prev_datums[i] = datumCopy(curr_datum,
+														auto_state->type_typbyval[i],
+														auto_state->type_typlen[i]);
+			}
+		}
+
+		auto_state->prev_isnull[i] = curr_isnull;
+		auto_state->prev_has_value[i] = true;
 	}
 
 	return first_change;
@@ -1081,6 +1171,65 @@ init_output_func_cache(forxml_auto_state *auto_state, TupleDesc tupdesc)
 	}
 	auto_state->out_funcs_cached = true;
 }
+
+/*
+ * Initialize the equality-operator cache for all columns.
+ *
+ * Used by find_first_changed_level to detect sibling-group boundaries in
+ * FOR XML AUTO the same way T-SQL does: via the column type's equality
+ * operator under the column's collation, not byte equality of the
+ * serialized output.  For types without a default btree equality we mark
+ * the column as eq-less and fall back to strcmp at compare time.
+ */
+static void
+init_eq_op_cache(forxml_auto_state *auto_state, TupleDesc tupdesc)
+{
+	auto_state->eq_finfo = (FmgrInfo *) palloc0(auto_state->num_columns * sizeof(FmgrInfo));
+	auto_state->eq_collation = (Oid *) palloc0(auto_state->num_columns * sizeof(Oid));
+	auto_state->has_eq_op = (bool *) palloc0(auto_state->num_columns * sizeof(bool));
+	auto_state->type_typlen = (int16 *) palloc0(auto_state->num_columns * sizeof(int16));
+	auto_state->type_typbyval = (bool *) palloc0(auto_state->num_columns * sizeof(bool));
+
+	for (int i = 0; i < auto_state->num_columns; i++)
+	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+		Oid base_type;
+		TypeCacheEntry *tce;
+
+		if (att->attisdropped)
+			continue;
+
+		base_type = auto_state->base_types[i];
+		if (base_type == InvalidOid)
+			base_type = getBaseType(att->atttypid);
+
+		/* Capture typlen/typbyval for later datumCopy of prev row value */
+		get_typlenbyval(base_type,
+						&auto_state->type_typlen[i],
+						&auto_state->type_typbyval[i]);
+
+		/* Look up the type's default equality operator and its FmgrInfo */
+		tce = lookup_type_cache(base_type, TYPECACHE_EQ_OPR_FINFO);
+		if (OidIsValid(tce->eq_opr_finfo.fn_oid))
+		{
+			fmgr_info(tce->eq_opr_finfo.fn_oid, &auto_state->eq_finfo[i]);
+			auto_state->has_eq_op[i] = true;
+			/*
+			 * Use the column's declared collation for the comparison, so
+			 * case-insensitive and accent-insensitive collations group as
+			 * T-SQL does.
+			 */
+			auto_state->eq_collation[i] = att->attcollation;
+		}
+		else
+		{
+			auto_state->has_eq_op[i] = false;
+		}
+	}
+
+	auto_state->eq_cache_init = true;
+}
+
 
 /*
  * Initialize the T-SQL datatype conversion cache for all columns.
@@ -1200,6 +1349,13 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 	/* Initialize T-SQL type conversion cache on first row */
 	if (!auto_state->tsql_types_cached)
 		init_tsql_type_cache(auto_state, tupdesc);
+
+	/*
+	 * Initialize equality-operator cache on first row.  Depends on
+	 * base_types[] from init_output_func_cache, so must run after it.
+	 */
+	if (!auto_state->eq_cache_init)
+		init_eq_op_cache(auto_state, tupdesc);
 
 	/* Find where this row differs from previous */
 	first_changed_level = find_first_changed_level(auto_state, tuple, tupdesc);
@@ -1336,16 +1492,39 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 		auto_state->open_element_levels[level] = 1;
 	}
 
-	/* prev_values already updated in find_first_changed_level */
+	/* prev state already updated in find_first_changed_level */
 
-	/* On first row, store values since find_first_changed_level skips comparison */
+	/* On first row, capture prev state since find_first_changed_level skipped it */
 	if (auto_state->first_row)
 	{
 		for (int i = 0; i < auto_state->num_columns; i++)
 		{
-			if (auto_state->nest_levels[i] == 0)
+			Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+			Datum curr_datum;
+			bool curr_isnull;
+
+			if (att->attisdropped || auto_state->nest_levels[i] == 0)
 				continue;
-			auto_state->prev_values[i] = xml_auto_get_column_value_as_string(tuple, tupdesc, i, auto_state);
+
+			curr_datum = heap_getattr(tuple, i + 1, tupdesc, &curr_isnull);
+
+			if (auto_state->has_eq_op[i])
+			{
+				if (curr_isnull)
+					auto_state->prev_datums[i] = (Datum) 0;
+				else
+					auto_state->prev_datums[i] = datumCopy(curr_datum,
+															auto_state->type_typbyval[i],
+															auto_state->type_typlen[i]);
+			}
+			else
+			{
+				/* Fallback path: cache serialized form for strcmp */
+				auto_state->prev_str_values[i] = xml_auto_get_column_value_as_string(tuple, tupdesc, i, auto_state);
+			}
+
+			auto_state->prev_isnull[i] = curr_isnull;
+			auto_state->prev_has_value[i] = true;
 		}
 	}
 
