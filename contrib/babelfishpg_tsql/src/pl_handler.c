@@ -1588,10 +1588,10 @@ isForAuto(List *target, ForAutoMode mode)
 	 * The query structure we're looking for:
 	 *
 	 * TargetEntry (resname = "xml" or "json")
-	 *   -> FuncExpr (wrapper function: xml/json output)
-	 *        -> args[0]: Aggref (tsql_select_for_xml_agg or tsql_select_for_xml_text_agg)
-	 *             -> args[1]: TargetEntry
-	 *                  -> expr: Const (INT4, value = mode: 0=JSON_AUTO, 1=XML_AUTO)
+	 * -> FuncExpr (wrapper function: xml/json output)
+	 * -> args[0]: Aggref (tsql_select_for_xml_agg or tsql_select_for_xml_text_agg)
+	 * -> args[1]: TargetEntry
+	 * -> expr: Const (INT4, value = mode: 0=JSON_AUTO, 1=XML_AUTO)
 	 *
 	 * The Aggref may also be nested inside another FuncExpr (type coercion).
 	 */
