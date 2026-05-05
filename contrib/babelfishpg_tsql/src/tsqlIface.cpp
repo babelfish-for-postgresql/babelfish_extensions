@@ -1659,11 +1659,16 @@ public:
 			// Update the fragment mapping
 			attachPLtsql_fragment(ctx, new_stmt);
 		}
-		else if (new_stmt && container)
+		else if (new_stmt)
 		{
-			// No old statement, just graft the new one
-			graft(new_stmt, container);
-			attachPLtsql_fragment(ctx, new_stmt);
+			/* Parser state error if container is NULL - INSERT EXEC statement would be lost */
+			Assert(container != NULL);
+			if (container)
+			{
+				// No old statement, just graft the new one
+				graft(new_stmt, container);
+				attachPLtsql_fragment(ctx, new_stmt);
+			}
 		}
 	}
 
