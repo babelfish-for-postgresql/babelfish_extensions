@@ -1625,8 +1625,10 @@ public:
 		setCode(container, list_delete_ptr(siblings, stmt));
 	}
 
-	// Replace a grafted statement with a new one
-	// Used for INSERT EXEC where we replace PLtsql_stmt_execsql with PLtsql_stmt_exec
+	/*
+	 * Replace a grafted statement with a new one.
+	 * Used for INSERT EXEC where we replace PLtsql_stmt_execsql with PLtsql_stmt_exec
+	 */
 	void replaceGraftedStatement(ParserRuleContext *ctx, PLtsql_stmt *new_stmt)
 	{
 		PLtsql_stmt *old_stmt = getPLtsql_fragment(ctx);
@@ -1641,7 +1643,7 @@ public:
 			if (pltsql_enable_antlr_detailed_log)
 				std::cout << "    replacing stmt (" << (void *) old_stmt << ") with (" << (void *) new_stmt << ") in container(" << (void *) container << ")" << std::endl;
 
-			// Find the position of the old statement
+			/* Find the position of the old statement */
 			foreach(lc, siblings)
 			{
 				if (lfirst(lc) == old_stmt)
@@ -1649,24 +1651,24 @@ public:
 				pos++;
 			}
 
-			// Remove old statement and insert new one at the same position
+			/* Remove old statement and insert new one at the same position */
 			siblings = list_delete_ptr(siblings, old_stmt);
 			siblings = list_insert_nth(siblings, pos, new_stmt);
 			setCode(container, siblings);
 
-			// Update the fragment mapping
+			/* Update the fragment mapping */
+			attachPLtsql_fragment(ctx, new_stmt);
+		}
+		else if (new_stmt && container)
+		{
+			/* No old statement, just graft the new one */
+			graft(new_stmt, container);
 			attachPLtsql_fragment(ctx, new_stmt);
 		}
 		else if (new_stmt)
 		{
-			/* Parser state error if container is NULL - INSERT EXEC statement would be lost */
-			Assert(container != NULL);
-			if (container)
-			{
-				// No old statement, just graft the new one
-				graft(new_stmt, container);
-				attachPLtsql_fragment(ctx, new_stmt);
-			}
+			/* container is NULL - broken parser state, INSERT EXEC statement would be lost */
+			Assert(false);
 		}
 	}
 
