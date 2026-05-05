@@ -34,6 +34,7 @@ extern bool pltsql_allow_windows_login;
 extern bool pltsql_allow_fulltext_parser;
 extern bool pltsql_weak_view_binding;
 extern bool pltsql_no_browsetable;
+extern bool pltsql_enable_new_insert_exec;
 extern char *pltsql_psql_logical_babelfish_db_name;
 extern int  pltsql_isolation_level_repeatable_read;
 extern int  pltsql_isolation_level_serializable;
