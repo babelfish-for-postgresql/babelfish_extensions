@@ -1,5 +1,8 @@
 -- single_db_mode_expected
 -- sla 60000
+SET BABELFISH_STATISTICS PROFILE on
+GO
+
 CREATE TABLE fpn_table (a int, b varchar(10))
 GO
 

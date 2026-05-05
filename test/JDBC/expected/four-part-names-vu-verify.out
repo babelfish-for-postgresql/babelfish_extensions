@@ -1,3 +1,6 @@
+SET BABELFISH_STATISTICS PROFILE on
+GO
+
 CREATE TABLE fpn_table (a int, b varchar(10))
 GO
 
@@ -5,6 +8,19 @@ SELECT * FROM bbf_fpn_server.master.dbo.fpn_table
 GO
 ~~START~~
 int#!#varchar
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table')
+Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=102.936..102.936 rows=0 loops=1)
+Planning Time: 0.051 ms
+Execution Time: 348.580 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 68.132 ms
 ~~END~~
 
 
@@ -15,11 +31,52 @@ INSERT INTO fpn_table VALUES (4, 'four')
 GO
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 1~~
+~~START~~
+text
+Query Text: INSERT INTO fpn_table VALUES (1, 'one')
+Insert on fpn_table  (cost=0.00..0.01 rows=0 width=0) (actual time=0.124..0.125 rows=0 loops=1)
+  ->  Result  (cost=0.00..0.01 rows=1 width=36) (actual time=0.007..0.008 rows=1 loops=1)
+Planning Time: 0.074 ms
+Execution Time: 0.180 ms
+~~END~~
 
 ~~ROW COUNT: 1~~
 
+~~START~~
+text
+Query Text: INSERT INTO fpn_table VALUES (2, 'two')
+Insert on fpn_table  (cost=0.00..0.01 rows=0 width=0) (actual time=0.014..0.014 rows=0 loops=1)
+  ->  Result  (cost=0.00..0.01 rows=1 width=36) (actual time=0.001..0.001 rows=1 loops=1)
+Planning Time: 0.026 ms
+Execution Time: 0.049 ms
+~~END~~
+
 ~~ROW COUNT: 1~~
+
+~~START~~
+text
+Query Text: INSERT INTO fpn_table VALUES (3, 'three')
+Insert on fpn_table  (cost=0.00..0.01 rows=0 width=0) (actual time=0.017..0.017 rows=0 loops=1)
+  ->  Result  (cost=0.00..0.01 rows=1 width=36) (actual time=0.001..0.001 rows=1 loops=1)
+Planning Time: 0.034 ms
+Execution Time: 0.055 ms
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+Query Text: INSERT INTO fpn_table VALUES (4, 'four')
+Insert on fpn_table  (cost=0.00..0.01 rows=0 width=0) (actual time=0.013..0.013 rows=0 loops=1)
+  ->  Result  (cost=0.00..0.01 rows=1 width=36) (actual time=0.001..0.001 rows=1 loops=1)
+Planning Time: 0.025 ms
+Execution Time: 0.042 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 13.159 ms
+~~END~~
 
 
 -- server_name.database_name.schema_name.object_name (table)
@@ -33,6 +90,19 @@ int#!#varchar
 4#!#four
 ~~END~~
 
+~~START~~
+text
+Query Text: SELECT a, b FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table')
+Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=100.349..100.352 rows=4 loops=1)
+Planning Time: 0.036 ms
+Execution Time: 344.557 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 17.220 ms
+~~END~~
+
 
 -- server_name.database_name.schema_name.object_name (view)
 SELECT * FROM bbf_fpn_server.master.sys.data_spaces
@@ -40,6 +110,19 @@ GO
 ~~START~~
 nvarchar#!#int#!#char#!#nvarchar#!#bit#!#bit
 PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.sys.data_spaces')
+Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=102) (actual time=108.522..108.524 rows=1 loops=1)
+Planning Time: 0.038 ms
+Execution Time: 369.201 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.334 ms
 ~~END~~
 
 
@@ -54,6 +137,19 @@ int#!#varchar
 5#!#four
 ~~END~~
 
+~~START~~
+text
+Query Text: SELECT a + 1, b FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master..fpn_table')
+Function Scan on openquery_internal  (cost=0.00..12.50 rows=1000 width=42) (actual time=85.283..85.287 rows=4 loops=1)
+Planning Time: 0.316 ms
+Execution Time: 318.556 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 30.151 ms
+~~END~~
+
 
 -- server_name..schema_name.object_name
 SELECT * FROM bbf_fpn_server..sys.data_spaces
@@ -61,6 +157,19 @@ GO
 ~~START~~
 nvarchar#!#int#!#char#!#nvarchar#!#bit#!#bit
 PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM .sys.data_spaces')
+Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=102) (actual time=91.824..91.826 rows=1 loops=1)
+Planning Time: 0.038 ms
+Execution Time: 338.409 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 8.628 ms
 ~~END~~
 
 
@@ -73,6 +182,19 @@ int#!#varchar
 4#!#owt
 6#!#eerht
 8#!#ruof
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT a*2, REVERSE(b) FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM ..fpn_table')
+Function Scan on openquery_internal  (cost=0.00..262.50 rows=1000 width=36) (actual time=78.983..78.996 rows=4 loops=1)
+Planning Time: 0.021 ms
+Execution Time: 304.632 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 40.895 ms
 ~~END~~
 
 
@@ -154,6 +276,19 @@ int#!#varchar
 4#!#four
 ~~END~~
 
+~~START~~
+text
+Query Text: SELECT * FROM four_part_names_vu_verify_view
+Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=102.198..102.201 rows=4 loops=1)
+Planning Time: 0.073 ms
+Execution Time: 343.486 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.387 ms
+~~END~~
+
 
 -- INSERT INTO ... SELECT
 CREATE TABLE fpn_table_insert_into (a int, b varchar(10))
@@ -162,6 +297,22 @@ GO
 INSERT INTO fpn_table_insert_into SELECT * FROM bbf_fpn_server.master.dbo.fpn_table WHERE a < 4
 GO
 ~~ROW COUNT: 3~~
+
+~~START~~
+text
+Query Text: INSERT INTO fpn_table_insert_into SELECT * FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table') WHERE a < 4
+Insert on fpn_table_insert_into  (cost=0.00..13.33 rows=0 width=0) (actual time=100.913..100.914 rows=0 loops=1)
+  ->  Function Scan on openquery_internal  (cost=0.00..13.33 rows=333 width=36) (actual time=100.729..100.739 rows=3 loops=1)
+        Filter: ((a)::integer < 4)
+        Rows Removed by Filter: 1
+Planning Time: 0.056 ms
+Execution Time: 341.545 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 9.235 ms
+~~END~~
 
 
 SELECT * FROM fpn_table_insert_into
@@ -173,10 +324,36 @@ int#!#varchar
 3#!#three
 ~~END~~
 
+~~START~~
+text
+Query Text: SELECT * FROM fpn_table_insert_into
+Seq Scan on fpn_table_insert_into  (cost=0.00..22.70 rows=1270 width=36) (actual time=0.008..0.009 rows=3 loops=1)
+Planning Time: 0.077 ms
+Execution Time: 0.093 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.185 ms
+~~END~~
+
 
 -- SELECT INTO
 SELECT * INTO fpn_table_select_into FROM bbf_fpn_server.master.dbo.fpn_table
 GO
+~~START~~
+text
+Query Text: SELECT * INTO fpn_table_select_into FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table')
+Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=101.574..101.578 rows=4 loops=1)
+Planning Time: 0.040 ms
+Execution Time: 344.546 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.254 ms
+~~END~~
+
 
 SELECT * FROM fpn_table_select_into
 GO
@@ -186,6 +363,19 @@ int#!#varchar
 2#!#two
 3#!#three
 4#!#four
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM fpn_table_select_into
+Seq Scan on fpn_table_select_into  (cost=0.00..21.60 rows=1160 width=42) (actual time=0.008..0.009 rows=4 loops=1)
+Planning Time: 0.081 ms
+Execution Time: 0.083 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.173 ms
 ~~END~~
 
 
@@ -203,6 +393,32 @@ int#!#varchar#!#int#!#varchar
 3#!#three#!#3#!#three
 ~~END~~
 
+~~START~~
+text
+Query Text: SELECT fpn_table.*, t2.*
+FROM fpn_table_insert_into fpn_table
+LEFT JOIN 
+openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table') t2
+ON fpn_table.a = t2.a
+Merge Right Join  (cost=148.00..248.25 rows=6350 width=78) (actual time=102.211..102.218 rows=3 loops=1)
+  Merge Cond: ((t2.a)::integer = fpn_table.a)
+  ->  Sort  (cost=59.83..62.33 rows=1000 width=42) (actual time=102.159..102.160 rows=4 loops=1)
+        Sort Key: t2.a
+        Sort Method: quicksort  Memory: 25kB
+        ->  Function Scan on openquery_internal t2  (cost=0.00..10.00 rows=1000 width=42) (actual time=102.104..102.108 rows=4 loops=1)
+  ->  Sort  (cost=88.17..91.35 rows=1270 width=36) (actual time=0.041..0.042 rows=3 loops=1)
+        Sort Key: fpn_table.a
+        Sort Method: quicksort  Memory: 25kB
+        ->  Seq Scan on fpn_table_insert_into fpn_table  (cost=0.00..22.70 rows=1270 width=36) (actual time=0.024..0.025 rows=3 loops=1)
+Planning Time: 0.446 ms
+Execution Time: 346.500 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 49.347 ms
+~~END~~
+
 
 SELECT fpn_table.a, t2.*
 FROM bbf_fpn_server.master.dbo.fpn_table fpn_table
@@ -216,6 +432,32 @@ int#!#int#!#varchar
 2#!#2#!#two
 3#!#3#!#three
 4#!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT fpn_table.a, t2.*
+FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table') fpn_table
+LEFT JOIN 
+fpn_table_insert_into t2
+ON fpn_table.a = t2.a
+Merge Left Join  (cost=148.00..248.25 rows=6350 width=40) (actual time=100.586..100.593 rows=4 loops=1)
+  Merge Cond: ((fpn_table.a)::integer = t2.a)
+  ->  Sort  (cost=59.83..62.33 rows=1000 width=4) (actual time=100.544..100.545 rows=4 loops=1)
+        Sort Key: fpn_table.a
+        Sort Method: quicksort  Memory: 25kB
+        ->  Function Scan on openquery_internal fpn_table  (cost=0.00..10.00 rows=1000 width=4) (actual time=100.532..100.536 rows=4 loops=1)
+  ->  Sort  (cost=88.17..91.35 rows=1270 width=36) (actual time=0.034..0.035 rows=3 loops=1)
+        Sort Key: t2.a
+        Sort Method: quicksort  Memory: 25kB
+        ->  Seq Scan on fpn_table_insert_into t2  (cost=0.00..22.70 rows=1270 width=36) (actual time=0.017..0.019 rows=3 loops=1)
+Planning Time: 0.117 ms
+Execution Time: 343.551 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 6.613 ms
 ~~END~~
 
 
@@ -234,6 +476,32 @@ int#!#varchar#!#int#!#varchar
 4#!#four#!#<NULL>#!#<NULL>
 ~~END~~
 
+~~START~~
+text
+Query Text: SELECT fpn_table.*, t2.a, t2.b
+FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table') fpn_table
+LEFT JOIN 
+openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table_insert_into') t2
+ON fpn_table.a = t2.a
+Merge Left Join  (cost=119.66..199.66 rows=5000 width=84) (actual time=199.141..199.149 rows=4 loops=1)
+  Merge Cond: ((fpn_table.a)::integer = (t2.a)::integer)
+  ->  Sort  (cost=59.83..62.33 rows=1000 width=42) (actual time=100.179..100.182 rows=4 loops=1)
+        Sort Key: fpn_table.a
+        Sort Method: quicksort  Memory: 25kB
+        ->  Function Scan on openquery_internal fpn_table  (cost=0.00..10.00 rows=1000 width=42) (actual time=100.161..100.165 rows=4 loops=1)
+  ->  Sort  (cost=59.83..62.33 rows=1000 width=42) (actual time=98.950..98.951 rows=3 loops=1)
+        Sort Key: t2.a
+        Sort Method: quicksort  Memory: 25kB
+        ->  Function Scan on openquery_internal t2  (cost=0.00..10.00 rows=1000 width=42) (actual time=98.931..98.934 rows=3 loops=1)
+Planning Time: 0.089 ms
+Execution Time: 682.775 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 9.992 ms
+~~END~~
+
 
 -- UPDATE on local table with JOIN containing remote table
 UPDATE Table_A
@@ -249,6 +517,36 @@ Table_A.a < 3
 GO
 ~~ROW COUNT: 2~~
 
+~~START~~
+text
+Query Text: UPDATE Table_A
+SET
+Table_A.a = Table_B.a + 100,
+Table_A.b = Table_B.b + CAST(Table_B.a AS varchar(5))
+FROM
+fpn_table_insert_into AS Table_A
+INNER JOIN openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table') AS Table_B
+ON Table_A.a = Table_B.a
+WHERE
+Table_A.a < 3
+Update on fpn_table_insert_into table_a  (cost=31.17..149.04 rows=0 width=0) (actual time=100.885..100.888 rows=0 loops=1)
+  ->  Hash Join  (cost=31.17..149.04 rows=2115 width=108) (actual time=100.824..100.838 rows=2 loops=1)
+        Hash Cond: ((table_b.a)::integer = table_a.a)
+        ->  Function Scan on openquery_internal table_b  (cost=0.00..10.00 rows=1000 width=108) (actual time=100.724..100.729 rows=4 loops=1)
+        ->  Hash  (cost=25.88..25.88 rows=423 width=10) (actual time=0.034..0.034 rows=2 loops=1)
+              Buckets: 1024  Batches: 1  Memory Usage: 9kB
+              ->  Seq Scan on fpn_table_insert_into table_a  (cost=0.00..25.88 rows=423 width=10) (actual time=0.026..0.029 rows=2 loops=1)
+                    Filter: (a < 3)
+                    Rows Removed by Filter: 1
+Planning Time: 0.300 ms
+Execution Time: 343.253 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 31.262 ms
+~~END~~
+
 
 SELECT * FROM fpn_table_insert_into
 GO
@@ -257,6 +555,19 @@ int#!#varchar
 3#!#three
 101#!#one1
 102#!#two2
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM fpn_table_insert_into
+Seq Scan on fpn_table_insert_into  (cost=0.00..22.70 rows=1270 width=36) (actual time=0.011..0.012 rows=3 loops=1)
+Planning Time: 0.032 ms
+Execution Time: 0.103 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.179 ms
 ~~END~~
 
 
@@ -271,6 +582,37 @@ WHERE
 GO
 ~~ROW COUNT: 2~~
 
+~~START~~
+text
+Query Text: DELETE Table_A
+FROM
+fpn_table_select_into AS Table_A
+INNER JOIN openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table') AS Table_B
+ON Table_A.a = Table_B.a
+WHERE
+(Table_A.a + Table_B.a) % 4 = 0
+Delete on fpn_table_select_into table_a  (cost=140.47..275.97 rows=0 width=0) (actual time=100.492..100.494 rows=0 loops=1)
+  ->  Merge Join  (cost=140.47..275.97 rows=29 width=34) (actual time=100.436..100.444 rows=2 loops=1)
+        Merge Cond: ((table_b.a)::integer = (table_a.a)::integer)
+        Join Filter: ((((table_a.a)::integer + (table_b.a)::integer) % 4) = 0)
+        Rows Removed by Join Filter: 2
+        ->  Sort  (cost=59.83..62.33 rows=1000 width=32) (actual time=100.382..100.383 rows=4 loops=1)
+              Sort Key: table_b.a
+              Sort Method: quicksort  Memory: 25kB
+              ->  Function Scan on openquery_internal table_b  (cost=0.00..10.00 rows=1000 width=32) (actual time=100.363..100.368 rows=4 loops=1)
+        ->  Sort  (cost=80.64..83.54 rows=1160 width=10) (actual time=0.038..0.039 rows=4 loops=1)
+              Sort Key: table_a.a
+              Sort Method: quicksort  Memory: 25kB
+              ->  Seq Scan on fpn_table_select_into table_a  (cost=0.00..21.60 rows=1160 width=10) (actual time=0.024..0.026 rows=4 loops=1)
+Planning Time: 0.117 ms
+Execution Time: 342.416 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 16.488 ms
+~~END~~
+
 
 SELECT * FROM fpn_table_select_into
 GO
@@ -278,6 +620,19 @@ GO
 int#!#varchar
 1#!#one
 3#!#three
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM fpn_table_select_into
+Seq Scan on fpn_table_select_into  (cost=0.00..21.60 rows=1160 width=42) (actual time=0.010..0.010 rows=2 loops=1)
+Planning Time: 0.025 ms
+Execution Time: 0.077 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.163 ms
 ~~END~~
 
 
@@ -294,6 +649,27 @@ int
 2
 ~~END~~
 
+~~START~~
+text
+Query Text: WITH cte_table_for_fpn (a)
+AS
+(
+        SELECT a from openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table')
+)
+SELECT AVG(a) FROM cte_table_for_fpn
+Aggregate  (cost=32.51..32.52 rows=1 width=4) (actual time=101.605..101.607 rows=1 loops=1)
+  CTE cte_table_for_fpn
+    ->  Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=4) (actual time=101.537..101.541 rows=4 loops=1)
+  ->  CTE Scan on cte_table_for_fpn  (cost=0.00..20.00 rows=1000 width=4) (actual time=101.541..101.547 rows=4 loops=1)
+Planning Time: 0.129 ms
+Execution Time: 344.983 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 35.893 ms
+~~END~~
+
 
 -- In Subquery
 SELECT * FROM fpn_table_insert_into WHERE a > (SELECT MAX(a) FROM bbf_fpn_server.master.dbo.fpn_table)
@@ -304,6 +680,24 @@ int#!#varchar
 102#!#two2
 ~~END~~
 
+~~START~~
+text
+Query Text: SELECT * FROM fpn_table_insert_into WHERE a > (SELECT MAX(a) FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table'))
+Seq Scan on fpn_table_insert_into  (cost=12.51..38.39 rows=423 width=36) (actual time=101.772..101.775 rows=2 loops=1)
+  Filter: (a > (InitPlan 1).col1)
+  Rows Removed by Filter: 1
+  InitPlan 1
+    ->  Aggregate  (cost=12.50..12.51 rows=1 width=4) (actual time=101.745..101.745 rows=1 loops=1)
+          ->  Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=4) (actual time=101.729..101.731 rows=4 loops=1)
+Planning Time: 240.879 ms
+Execution Time: 344.612 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 27.423 ms
+~~END~~
+
 
 SELECT * FROM fpn_table_select_into WHERE b IN (SELECT b FROM bbf_fpn_server.master.dbo.fpn_table)
 GO
@@ -311,6 +705,32 @@ GO
 int#!#varchar
 1#!#one
 3#!#three
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM fpn_table_select_into WHERE b IN (SELECT b FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table'))
+Merge Join  (cost=153.12..178.32 rows=580 width=42) (actual time=101.264..101.459 rows=2 loops=1)
+  Merge Cond: (((fpn_table_select_into.b)::sql_variant) = (((openquery_internal.b)::sql_variant))::sql_variant)
+  ->  Sort  (cost=80.64..83.54 rows=1160 width=42) (actual time=0.218..0.220 rows=2 loops=1)
+        Sort Key: ((fpn_table_select_into.b)::sql_variant) COLLATE "default"
+        Sort Method: quicksort  Memory: 25kB
+        ->  Seq Scan on fpn_table_select_into  (cost=0.00..21.60 rows=1160 width=42) (actual time=0.067..0.081 rows=2 loops=1)
+  ->  Sort  (cost=72.48..72.98 rows=200 width=38) (actual time=100.884..100.885 rows=3 loops=1)
+        Sort Key: ((openquery_internal.b)::sql_variant) COLLATE "default"
+        Sort Method: quicksort  Memory: 25kB
+        ->  Unique  (cost=59.83..64.83 rows=200 width=38) (actual time=100.544..100.724 rows=4 loops=1)
+              ->  Sort  (cost=59.83..62.33 rows=1000 width=38) (actual time=100.542..100.543 rows=4 loops=1)
+                    Sort Key: ((openquery_internal.b)::sql_variant)
+                    Sort Method: quicksort  Memory: 25kB
+                    ->  Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=38) (actual time=99.908..99.963 rows=4 loops=1)
+Planning Time: 0.673 ms
+Execution Time: 345.240 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 5.751 ms
 ~~END~~
 
 
@@ -325,6 +745,24 @@ int#!#varchar
 102#!#<NULL>
 ~~END~~
 
+~~START~~
+text
+Query Text: SELECT a, (SELECT b from openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table') where b = t.b) as c
+FROM fpn_table_insert_into t
+Seq Scan on fpn_table_insert_into t  (cost=0.00..15900.88 rows=1270 width=42) (actual time=102.671..102.684 rows=3 loops=1)
+  SubPlan 1
+    ->  Function Scan on openquery_internal  (cost=0.00..12.50 rows=5 width=38) (actual time=34.217..34.217 rows=0 loops=3)
+          Filter: ((b)::"varchar" = t.b)
+          Rows Removed by Filter: 4
+Planning Time: 0.106 ms
+Execution Time: 343.680 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 24.861 ms
+~~END~~
+
 
 -- In Correlated subquery
 SELECT * FROM fpn_table_insert_into WHERE EXISTS (SELECT * FROM bbf_fpn_server.master.dbo.fpn_table as fpn_table_alias WHERE fpn_table_alias.a = fpn_table_insert_into.a)
@@ -332,6 +770,27 @@ GO
 ~~START~~
 int#!#varchar
 3#!#three
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT * FROM fpn_table_insert_into WHERE EXISTS (SELECT * FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table') as fpn_table_alias WHERE fpn_table_alias.a = fpn_table_insert_into.a)
+Hash Join  (cost=17.00..50.10 rows=635 width=36) (actual time=102.977..102.985 rows=1 loops=1)
+  Hash Cond: (fpn_table_insert_into.a = (fpn_table_alias.a)::integer)
+  ->  Seq Scan on fpn_table_insert_into  (cost=0.00..22.70 rows=1270 width=36) (actual time=0.013..0.018 rows=3 loops=1)
+  ->  Hash  (cost=14.50..14.50 rows=200 width=4) (actual time=102.946..102.947 rows=4 loops=1)
+        Buckets: 1024  Batches: 1  Memory Usage: 9kB
+        ->  HashAggregate  (cost=12.50..14.50 rows=200 width=4) (actual time=102.935..102.938 rows=4 loops=1)
+              Group Key: (fpn_table_alias.a)::integer
+              Batches: 1  Memory Usage: 40kB
+              ->  Function Scan on openquery_internal fpn_table_alias  (cost=0.00..10.00 rows=1000 width=4) (actual time=102.918..102.922 rows=4 loops=1)
+Planning Time: 0.119 ms
+Execution Time: 344.908 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 17.422 ms
 ~~END~~
 
 
@@ -360,12 +819,47 @@ int#!#varchar
 4#!#four
 ~~END~~
 
+~~START~~
+text
+Query Text: SELECT * FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master..fpn_table')
+Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=84.989..84.991 rows=4 loops=1)
+Planning Time: 0.028 ms
+Execution Time: 313.884 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.105 ms
+~~END~~
+
 
 SELECT fpn_vu_prepare__fpn_func()
 GO
 ~~START~~
 int
 4
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT      sys.pltsql_assign_var(2, cast((COUNT(*)) as int)) FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table')
+Aggregate  (cost=12.50..12.52 rows=1 width=4) (actual time=101.232..101.233 rows=1 loops=1)
+  ->  Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=0) (actual time=101.162..101.165 rows=4 loops=1)
+Planning Time: 248.335 ms
+Execution Time: 342.075 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT fpn_vu_prepare__fpn_func()
+Result  (cost=0.00..0.26 rows=1 width=4) (actual time=837.345..837.347 rows=1 loops=1)
+Planning Time: 0.015 ms
+Execution Time: 837.390 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.352 ms
 ~~END~~
 
 
