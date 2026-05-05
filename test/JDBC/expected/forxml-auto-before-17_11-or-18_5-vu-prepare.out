@@ -378,3 +378,27 @@ GO
 
 ~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
 
+-- ============================================
+-- SECTION: Case-Insensitive Collation Tables
+-- ============================================
+CREATE TABLE forxmlauto_t_ci_parent (
+    pid VARCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    pname NVARCHAR(50)
+);
+GO
+
+CREATE TABLE forxmlauto_t_ci_child (
+    cid INT,
+    seq INT
+);
+GO
+
+INSERT INTO forxmlauto_t_ci_parent VALUES ('ABC', 'P1'), ('abc', 'P2');
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO forxmlauto_t_ci_child VALUES (10, 1), (20, 2);
+GO
+~~ROW COUNT: 2~~
+

@@ -396,6 +396,16 @@ FOR XML AUTO;
 GO
 
 
+-- 5.5 Case-insensitive collation on parent column
+-- CI-equal values (ABC and abc) must merge into one parent element
+-- to match T-SQL grouping behavior.
+SELECT p.pid, c.cid
+FROM forxmlauto_t_ci_parent p, forxmlauto_t_ci_child c
+ORDER BY p.pid, c.seq
+FOR XML AUTO;
+GO
+
+
 
 -- ============================================
 -- SECTION 6: CTEs
