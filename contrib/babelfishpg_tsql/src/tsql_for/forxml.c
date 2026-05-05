@@ -119,6 +119,15 @@ tsql_escape_xml(const char *str)
 	StringInfoData buf;
 	const char *p;
 
+	/*
+	 * Fast path: if no '"' is present, no substitution is needed.  The
+	 * caller will copy the bytes via appendStringInfo, so returning the
+	 * original pointer avoids a per-call palloc + byte-by-byte copy on
+	 * what is the common case for most data.
+	 */
+	if (strchr(str, '"') == NULL)
+		return (char *) str;
+
 	initStringInfo(&buf);
 	for (p = str; *p; p++)
 	{
@@ -305,6 +314,11 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 	StringInfo	res = makeStringInfo();
 	forxml_state *fstate;
 	char	   *state;
+	text	   *state_text;
+	text	   *pattern_text;
+	Datum		root_tag_datum;
+	text	   *root_tag_text;
+	char	   *root_tag;
 
 	if (PG_ARGISNULL(0))
 		ereport(ERROR,
@@ -329,11 +343,8 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 		 * simpler than manual regex handling and leverages PostgreSQL's 
 		 * cached regex compilation and proper memory management.
 		 */
-		text	   *state_text = cstring_to_text(state);
-		text	   *pattern_text = cstring_to_text("<([^ />]+)[^>]*>");
-		Datum		root_tag_datum;
-		text	   *root_tag_text;
-		char	   *root_tag;
+		state_text = cstring_to_text(state);
+		pattern_text = cstring_to_text("<([^ />]+)[^>]*>");
 
 		/* Extract the root tag name using textregexsubstr */
 		root_tag_datum = DirectFunctionCall2Coll(textregexsubstr, 
@@ -702,7 +713,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 				 * <element_name/>, modify the already appended <element_name> to
 				 * <element_name/>.
 				 */
-				if (state->len > inital_state_len)	// sanity check, should always be true
+				if (state->len > inital_state_len)	/* sanity check, should always be true */
 				{
 					state->data[state->len - 1] = '/';
 					appendStringInfoString(state, ">");

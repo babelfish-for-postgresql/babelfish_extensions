@@ -1785,7 +1785,7 @@ handleForAuto(Query *wrapperQuery, ForAutoContext *ctx)
 static TargetEntry*
 buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 {
-	char nest[NAMEDATALEN]; // check size appropriate
+	char nest[NAMEDATALEN]; /* check size appropriate */
 	StringInfo new_resname = makeStringInfo();
 	snprintf(nest, sizeof(nest), "%d", nestLevel);
 	if(te->resname == NULL || !strcmp(te->resname, "\?column\?")) {
@@ -1793,8 +1793,10 @@ buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table")));
 	} 
-	// Adding JSONAUTOALIAS prevents us from modifying
-	// a column more than once
+	/*
+	 * Adding JSONAUTOALIAS prevents us from modifying
+	 * a column more than once.
+	 */
 	appendStringInfoString(new_resname, "JSONAUTOALIAS.");
 	appendStringInfoString(new_resname, nest);
 	appendStringInfoChar(new_resname, '.');
@@ -1809,7 +1811,7 @@ static char *
 string_to_fixed_hash(const char *input)
 {
 	Datum hash_val = hash_any_extended((unsigned char *)input, strlen(input), 0);
-	char *result = palloc(17); // 16 hex chars + null terminator
+	char *result = palloc(17); /* 16 hex chars + null terminator */
 	snprintf(result, 17, "%016lx", DatumGetUInt64(hash_val));
 	return result;
 }
