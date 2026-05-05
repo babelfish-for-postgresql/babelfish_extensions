@@ -47,3 +47,15 @@ GO
 
 EXEC for_xml_path_p4
 GO
+
+-- BABEL-5364
+-- Crash causing query
+SELECT col1 from for_xml_path_all_null FOR XML PATH('')
+GO
+
+SELECT col1 from for_xml_path_all_null FOR XML PATH(''), ELEMENTS, TYPE
+GO
+
+SELECT Top 10 col1 from for_xml_path_all_null FOR XML PATH('element')
+GO
+

@@ -4606,6 +4606,7 @@ is_query_using_regular_relation_walker(Node *node, void *context)
         RangeTblEntry *rte = (RangeTblEntry *) node;
 		if (rte->rtekind == RTE_RELATION && rte->relkind == 'r')
 			return true;
+		return false;
     }
     
     if (IsA(node, Query))
@@ -9844,7 +9845,7 @@ pltsql_eval_txn_data(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt, Cached
 		if (txn_name != NULL)
 		{
 			pfree(txnStmt->savepoint_name);
-			txnStmt->savepoint_name = pstrdup(txn_name);
+			txnStmt->savepoint_name = MemoryContextStrdup(cachedPlanSource->query_context, txn_name);
 		}
 	}
 
@@ -9914,7 +9915,7 @@ txn_clean_estate(bool commit)
 }
 
 /*
- * pltsql_xact_cb --- post-transaction-commit-or-abort cleanup
+ * pltsql_xact_cb --- transaction event callback for cleanup
  *
  * If a simple-expression EState was created in the current transaction,
  * it has to be cleaned up.
@@ -9922,6 +9923,15 @@ txn_clean_estate(bool commit)
 void
 pltsql_xact_cb(XactEvent event, void *arg)
 {
+	/*
+	 * Reset top transaction name to avoid dangling pointer after
+	 * transaction memory context is destroyed.
+	 */
+	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_ABORT)
+	{
+		ResetTopTransactionName();
+	}
+
 	/*
 	 * If we are doing a clean transaction shutdown, free the EState (so that
 	 * any remaining resources will be released correctly). In an abort, we

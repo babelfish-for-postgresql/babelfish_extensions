@@ -4,3 +4,9 @@ GO
 select case when object_id([name]) = object_id then 'equal' else 'not equal' end
 from sys.all_objects where [name] = 'sys_all_objects_vu_prepare_1_3'
 go
+
+SELECT type, type_desc FROM sys.all_objects WHERE name LIKE '%sys_all_objects_vu_prepare_tt_1%' ORDER BY name;
+GO
+
+SELECT name, type, type_desc FROM sys.all_objects WHERE name = 'sys_all_objects_vu_prepare_t1';
+GO

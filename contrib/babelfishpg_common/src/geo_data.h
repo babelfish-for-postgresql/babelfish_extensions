@@ -79,5 +79,9 @@ char* rewrite_polygon_query(PointArrayList *pal);
 char* rewrite_dim_polygon_query(PointArrayList *pal);
 DimensionType determine_ring_type(PointArrayList *pal);
 
+char* rewrite_multipoint_wkt(PointArray *pa);
+char* rewrite_dim_multipoint_wkt(PointArray *pa);
+
+
 #endif /* GEO_DATA_H */
 

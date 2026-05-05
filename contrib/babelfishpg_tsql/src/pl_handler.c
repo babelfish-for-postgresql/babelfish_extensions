@@ -6042,6 +6042,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_generic_typmod = &probin_read_ret_typmod;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_logical_schema_name = &get_logical_schema_name;
 		(*pltsql_protocol_plugin_ptr)->pltsql_is_fmtonly_stmt = &pltsql_fmtonly;
+		(*pltsql_protocol_plugin_ptr)->pltsql_no_browsetable = &pltsql_no_browsetable;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_user_for_database = &get_user_for_database;
 		(*pltsql_protocol_plugin_ptr)->switch_database_context = &switch_database_context;
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_rows_per_batch = &get_insert_bulk_rows_per_batch;
@@ -6215,7 +6216,7 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 			 SPI_depth, current_spi_stack_depth);
 		
 	while (current_spi_stack_depth-- >= SPI_depth)
-		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+		if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	/*
@@ -6377,8 +6378,6 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	char 		*saved_search_path = MemoryContextStrdup(TopMemoryContext, namespace_search_path);
 	int16		saved_dbid = get_cur_db_id();
 
-	create_queryEnv2(CacheMemoryContext, false);
-
 	nonatomic = support_tsql_trans ||
 		(fcinfo->context &&
 		 IsA(fcinfo->context, CallContext) &&
@@ -6400,6 +6399,8 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	if ((rc = SPI_connect_ext(nonatomic ? SPI_OPT_NONATOMIC : 0)) != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 	PortalContext = savedPortalCxt;
+
+	create_queryEnv2(CacheMemoryContext, false);
 
 	SPI_setCurrentInternalTxnMode(true);
 	current_spi_stack_depth = SPI_get_depth();

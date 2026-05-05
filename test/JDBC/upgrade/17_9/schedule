@@ -669,7 +669,7 @@ update_with_var
 BABEL-4271
 comparison_op_index_scan
 Test-Linestring
-Test-Polygon
+Test-Polygon-before-17_9-or-18_3
 BABEL-5788
 BABEL-1664
 sys-fn_varbintohexstr
@@ -678,3 +678,4 @@ string_aggregate
 babel_convert_with_style
 forxml-raw-elements-before-17_9-or-18_3
 forxml-path-elements-before-17_10-or-18_4
+babel_sqlvariant_coerce_type
