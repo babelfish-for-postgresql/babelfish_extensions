@@ -1635,19 +1635,29 @@ public:
 		if (old_stmt && container)
 		{
 			List *siblings = getCode(container);
+			ListCell *lc;
+			int pos = 0;
 
 			if (pltsql_enable_antlr_detailed_log)
 				std::cout << "    replacing stmt (" << (void *) old_stmt << ") with (" << (void *) new_stmt << ") in container(" << (void *) container << ")" << std::endl;
 
-			// Remove old statement and add new one
+			// Find the position of the old statement
+			foreach(lc, siblings)
+			{
+				if (lfirst(lc) == old_stmt)
+					break;
+				pos++;
+			}
+
+			// Remove old statement and insert new one at the same position
 			siblings = list_delete_ptr(siblings, old_stmt);
-			siblings = lappend(siblings, new_stmt);
+			siblings = list_insert_nth(siblings, pos, new_stmt);
 			setCode(container, siblings);
 
 			// Update the fragment mapping
 			attachPLtsql_fragment(ctx, new_stmt);
 		}
-		else if (new_stmt)
+		else if (new_stmt && container)
 		{
 			// No old statement, just graft the new one
 			graft(new_stmt, container);
@@ -2017,7 +2027,7 @@ public:
 			}
 
 			/*
-			 *Instead of creating a PLtsql_stmt_execsql for
+			 * Instead of creating a PLtsql_stmt_execsql for
 			 * "INSERT INTO t EXEC p", we create a PLtsql_stmt_exec for just "EXEC p"
 			 * and set the INSERT EXEC fields. This allows exec_stmt_exec to handle
 			 * the temp table lifecycle and avoids parser-level issues.
@@ -2026,22 +2036,20 @@ public:
 			 * or PLtsql_stmt_exec_batch (for dynamic SQL like EXEC(@variable)). We need to
 			 * handle both cases and set the INSERT EXEC fields on the correct struct.
 			 */
-
 			TSqlParser::Execute_statementContext *ctxES = ctx->insert_statement()->insert_statement_value()->execute_statement();
+			
 			/* Create the EXEC statement - could be PLtsql_stmt_exec or PLtsql_stmt_exec_batch */
 			PLtsql_stmt *base_stmt = makeExecuteStatement(ctxES);
 
-			/* Extract target table name and schema */
+			/* Extract target table name */
 			std::string target_table;
-			std::string target_schema;
 			auto ddl_object = ctx->insert_statement()->ddl_object();
 			if (ddl_object)
 			{
 				if (ddl_object->local_id())
 				{
-					/* Table variable like @tablevar - use as-is, no schema needed */
+					/* Table variable like @tablevar - use as-is */
 					target_table = ::getFullText(ddl_object->local_id());
-					target_schema = "";  /* Table variables don't need schema */
 				}
 				else if (ddl_object->full_object_name())
 				{
@@ -2063,18 +2071,24 @@ public:
 					if (!tbl_name.empty() && tbl_name[0] == '#')
 					{
 						target_table = tbl_name;
-						target_schema = "";  /* Temp tables use pg_temp, not user schemas */
 					}
 					/* Build table reference with explicit schema if provided */
 					else if (!tbl_db.empty())
 					{
-						target_table = tbl_db + "." + (tbl_schema.empty() ? "dbo" : tbl_schema) + "." + tbl_name;
-						target_schema = tbl_schema.empty() ? "dbo" : tbl_schema;
+						/*
+						 * Three-part name: db..table or db.schema.table
+						 * When schema is empty (db..table), leave it empty and let the
+						 * executor resolve using the user's default schema, matching
+						 * T-SQL semantics.
+						 */
+						if (tbl_schema.empty())
+							target_table = tbl_db + ".." + tbl_name;
+						else
+							target_table = tbl_db + "." + tbl_schema + "." + tbl_name;
 					}
 					else if (!tbl_schema.empty())
 					{
 						target_table = tbl_schema + "." + tbl_name;
-						target_schema = tbl_schema;
 					}
 					else
 					{
@@ -2083,7 +2097,6 @@ public:
 						 * resolve the table, which respects the user's default schema.
 						 */
 						target_table = tbl_name;
-						target_schema = "";
 					}
 				}
 			}
@@ -2170,6 +2183,8 @@ public:
 			/* Clear the mutator since we're not using the execsql statement */
 			statementMutator.reset();
 			clear_rewritten_query_fragment();
+			clear_query_hints();
+			clear_tables_info();
 			return;
 		}
 		/*
