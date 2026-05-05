@@ -354,6 +354,8 @@ BEGIN
     RETURN @result;
 END;
 GO
+
+
 -- ============================================
 -- SECTION: Case-Insensitive Collation Tables
 -- ============================================
