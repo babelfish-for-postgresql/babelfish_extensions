@@ -1,0 +1,49 @@
+
+-- Test DATE to DATETIME2 cast with out-of-range dates (BABEL-4527)
+-- Out-of-range: year 999999 (exceeds datetime2 max of 9999-12-31)
+SELECT CAST(CAST('999999-12-31' AS DATE) AS datetime2);
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for datetime2)~~
+
+
+-- Out-of-range: year 10000 (just past valid range)
+SELECT CAST(CAST('10000-01-01' AS DATE) AS datetime2);
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for datetime2)~~
+
+
+-- Valid boundary: max datetime2 date
+SELECT CAST(CAST('9999-12-31' AS DATE) AS datetime2);
+GO
+~~START~~
+datetime2
+9999-12-31 00:00:00.0000000
+~~END~~
+
+
+-- Out-of-range: date before datetime2 min (PostgreSQL min date, 4714-11-24 BC)
+SELECT CAST(CAST('4714-11-24 BC' AS DATE) AS datetime2);
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for datetime2)~~
+
+
+-- Valid boundary: min datetime2 date
+SELECT CAST(CAST('0001-01-01' AS DATE) AS datetime2);
+GO
+~~START~~
+datetime2
+0001-01-01 00:00:00.0000000
+~~END~~
+
