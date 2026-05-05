@@ -859,34 +859,35 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 		/* Each token is "level.table.colname" */
 		char *entry_copy = pstrdup(token);
 		char *dot1 = strchr(entry_copy, '.');
-		if (dot1 != NULL)
+		char *dot2 = (dot1 != NULL) ? strchr(dot1 + 1, '.') : NULL;
+
+		if (dot1 == NULL || dot2 == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("FOR XML AUTO metadata entry has invalid format: \"%s\"", token)));
+
+		*dot1 = '\0';
+		*dot2 = '\0';
+
 		{
-			char *dot2 = strchr(dot1 + 1, '.');
-			if (dot2 != NULL)
-			{
-				*dot1 = '\0';
-				*dot2 = '\0';
-
-				{
-					char *endptr;
-					long level = strtol(entry_copy, &endptr, 10);
-					if (endptr == entry_copy || *endptr != '\0')
-						ereport(ERROR,
-								(errcode(ERRCODE_INTERNAL_ERROR),
-								 errmsg("FOR XML AUTO metadata has non-numeric level: \"%s\"", entry_copy)));
-					if (level < 1 || level > num_cols)
-						ereport(ERROR,
-								(errcode(ERRCODE_INTERNAL_ERROR),
-								 errmsg("FOR XML AUTO metadata has invalid level %ld", level)));
-					auto_state->nest_levels[col_idx] = (int) level;
-				}
-				auto_state->table_aliases[col_idx] = unescape_period(dot1 + 1);
-				auto_state->column_names[col_idx] = unescape_period(dot2 + 1);
-
-				if (auto_state->nest_levels[col_idx] > auto_state->max_depth)
-					auto_state->max_depth = auto_state->nest_levels[col_idx];
-			}
+			char *endptr;
+			long level = strtol(entry_copy, &endptr, 10);
+			if (endptr == entry_copy || *endptr != '\0')
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("FOR XML AUTO metadata has non-numeric level: \"%s\"", entry_copy)));
+			if (level < 1 || level > num_cols)
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("FOR XML AUTO metadata has invalid level %ld", level)));
+			auto_state->nest_levels[col_idx] = (int) level;
 		}
+		auto_state->table_aliases[col_idx] = unescape_period(dot1 + 1);
+		auto_state->column_names[col_idx] = unescape_period(dot2 + 1);
+
+		if (auto_state->nest_levels[col_idx] > auto_state->max_depth)
+			auto_state->max_depth = auto_state->nest_levels[col_idx];
+
 		pfree(entry_copy);
 
 		col_idx++;
@@ -1297,7 +1298,13 @@ cached_update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc,
 	{
 		/* datetime / smalldatetime / datetime2 */
 		char *val = SPI_getvalue(tuple, tupdesc, col_idx + 1);
-		StringInfo format_output = makeStringInfo();
+		StringInfo format_output;
+
+		/* SPI_getvalue returns NULL for a null column; nothing to format */
+		if (val == NULL)
+			return;
+
+		format_output = makeStringInfo();
 		tsql_for_datetime_format(format_output, val);
 		*colval = CStringGetDatum(format_output->data);
 		*datatype_oid = CSTRINGOID;
@@ -1307,7 +1314,12 @@ cached_update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc,
 	{
 		/* datetimeoffset */
 		char *val = SPI_getvalue(tuple, tupdesc, col_idx + 1);
-		StringInfo format_output = makeStringInfo();
+		StringInfo format_output;
+
+		if (val == NULL)
+			return;
+
+		format_output = makeStringInfo();
 		tsql_for_datetimeoffset_format(format_output, val);
 		*colval = CStringGetDatum(format_output->data);
 		*datatype_oid = CSTRINGOID;
@@ -1488,7 +1500,12 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 				appendStringInfoString(state, ">");
 		}
 
-		/* Mark this level as open */
+		/*
+		 * Mark this level as open.  The deepest level in this row is actually
+		 * closed in the same step (</alias> in ELEMENTS mode, /> in
+		 * ATTRIBUTES mode) and gets reset to 0 immediately after this loop;
+		 * we set it uniformly here for loop simplicity.
+		 */
 		auto_state->open_element_levels[level] = 1;
 	}
 
