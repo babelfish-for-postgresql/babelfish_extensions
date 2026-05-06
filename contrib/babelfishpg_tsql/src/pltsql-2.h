@@ -8,9 +8,11 @@
  */
 typedef struct InsertExecInfo
 {
-	bool		is_insert_exec;		/* Is this INSERT EXEC? */
-	char	   *target;				/* Target table for INSERT-EXEC */
-	char	   *columns;			/* Column list for INSERT-EXEC */
+    bool        is_insert_exec;     /* Is this INSERT EXEC? */
+    char       *target;             /* Target table name (bare name only, no schema/db prefix) */
+    char       *schema;             /* Schema name, or NULL if not specified */
+    char       *db_name;            /* Database name, or NULL if not specified */
+    char       *columns;            /* Column list for INSERT-EXEC */
 } InsertExecInfo;
 
 /*
