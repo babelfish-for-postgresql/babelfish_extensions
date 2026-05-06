@@ -445,9 +445,7 @@ TestSpatialPoint
 Test-spatial-functions
 Test-spatial-functions-2
 Test-spatial-functions-3
-Test-Spatial_Index-vu-prepare
-Test-Spatial_Index-vu-verify
-Test-Spatial_Index-vu-cleanup
+Test-Spatial_Index
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
