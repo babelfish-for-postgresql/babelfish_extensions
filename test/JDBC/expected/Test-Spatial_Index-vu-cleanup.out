@@ -1,0 +1,12 @@
+DROP TABLE IF EXISTS si_geom_tbl;
+
+DROP TABLE IF EXISTS si_geog_tbl;
+
+DROP TABLE IF EXISTS si_multi_tbl;
+
+DROP TABLE IF EXISTS si_view_tbl;
+
+DROP TABLE IF EXISTS si_ddl_tbl;
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_spatial_index', 'strict';
+

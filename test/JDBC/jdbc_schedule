@@ -8,7 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
+Test-pointZM-vu-verify
 
 # These tests are ignored since latest changes with UTF-16<->binary conversion
 # They show the previous behavior of the conversion functions

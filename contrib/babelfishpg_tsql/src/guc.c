@@ -1300,6 +1300,7 @@ int			pltsql_isolation_level_repeatable_read = ISOLATION_OFF;
 int 		pltsql_isolation_level_serializable = ISOLATION_OFF;
 int 		escape_hatch_identity_function = EH_STRICT;
 int 		escape_hatch_insert_bulk_options = EH_IGNORE;
+int 		escape_hatch_spatial_index = EH_STRICT;
 
 void
 define_escape_hatch_variables(void)
@@ -1402,6 +1403,18 @@ define_escape_hatch_variables(void)
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
+    /* spatial index */
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_spatial_index",
+							 gettext_noop("escape hatch for CREATE SPATIAL INDEX USING/WITH options; "
+										  "PostGIS GiST is self-tuning and cannot honor these parameters"),
+							 NULL,
+							 &escape_hatch_spatial_index,
+							 EH_STRICT,
+							 escape_hatch_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
 
 	/* compatibility_level */
 

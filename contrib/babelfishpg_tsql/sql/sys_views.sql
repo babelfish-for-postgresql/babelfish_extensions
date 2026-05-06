@@ -848,8 +848,8 @@ select
 			from unnest(I.reloptions) as option),
 			I.relname)
 		AS sys.sysname) AS name
-  , cast(case when X.indisclustered then 1 else 2 end as sys.tinyint) as type
-  , cast(case when X.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as sys.nvarchar(60)) as type_desc
+  , cast(case when X.indisclustered then 1 when am.amname = 'gist' and exists (select 1 from pg_attribute a2 join pg_type t2 on t2.oid = a2.atttypid where a2.attrelid = X.indrelid and a2.attnum = X.indkey[0] and t2.typname in ('geometry', 'geography')) then 4 else 2 end as sys.tinyint) as type
+  , cast(case when X.indisclustered then 'CLUSTERED' when am.amname = 'gist' and exists (select 1 from pg_attribute a2 join pg_type t2 on t2.oid = a2.atttypid where a2.attrelid = X.indrelid and a2.attnum = X.indkey[0] and t2.typname in ('geometry', 'geography')) then 'SPATIAL' else 'NONCLUSTERED' end as sys.nvarchar(60)) as type_desc
   , cast(X.indisunique as sys.bit) as is_unique
   , cast(case when ps.scheme_id is null then 1 else ps.scheme_id end as int) as data_space_id
   , cast(0 as sys.bit) as ignore_dup_key
@@ -868,6 +868,7 @@ select
 from pg_index X 
 inner join index_id_map imap on imap.indexrelid = X.indexrelid
 inner join pg_class I on I.oid = X.indexrelid
+inner join pg_am am ON am.oid = I.relam
 inner join pg_class ptbl on ptbl.oid = X.indrelid and ptbl.relispartition = false
 inner join pg_namespace nsp on nsp.oid = I.relnamespace
 left join sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
@@ -2907,31 +2908,76 @@ GRANT SELECT ON sys.selective_xml_index_paths TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.spatial_indexes
 AS
+WITH index_id_map AS MATERIALIZED (
+    SELECT indexrelid,
+           CASE WHEN indisclustered THEN 1
+                ELSE 1 + row_number() OVER (PARTITION BY indrelid ORDER BY indexrelid)
+           END AS index_id
+    FROM pg_index
+)
 SELECT 
-   object_id,
-   name,
-   index_id,
-   type,
-   type_desc,
-   is_unique,
-   data_space_id,
-   ignore_dup_key,
-   is_primary_key,
-   is_unique_constraint,
-   fill_factor,
-   is_padded,
-   is_disabled,
-   is_hypothetical,
-   allow_row_locks,
-   allow_page_locks,
-   CAST(1 as TINYINT) AS spatial_index_type,
-   CAST('' as NVARCHAR(60)) AS spatial_index_type_desc,
-   CAST('' as SYSNAME) AS tessellation_scheme,
-   has_filter,
-   filter_definition,
-   auto_created
-FROM sys.indexes WHERE FALSE;
+   i.indrelid::integer AS object_id,
+   COALESCE(
+       (SELECT string_agg(
+           CASE WHEN option ~~ 'bbf_original_rel_name=%' 
+                THEN substring(option, 23) 
+                ELSE NULL 
+           END, ',') 
+        FROM unnest(ic.reloptions) option), 
+       ic.relname::text
+   )::sys.sysname AS name,
+   imap.index_id::integer AS index_id,
+   CAST(4 AS sys.tinyint) AS type,
+   CAST('SPATIAL' AS sys.nvarchar(60)) AS type_desc,
+   CAST(0 AS sys.bit) AS is_unique,
+   CAST(1 AS integer) AS data_space_id,
+   CAST(0 AS sys.bit) AS ignore_dup_key,
+   CAST(0 AS sys.bit) AS is_primary_key,
+   CAST(0 AS sys.bit) AS is_unique_constraint,
+   CAST(0 AS sys.tinyint) AS fill_factor,
+   CAST(0 AS sys.bit) AS is_padded,
+   CAST(0 AS sys.bit) AS is_disabled,
+   CAST(0 AS sys.bit) AS is_hypothetical,
+   CAST(1 AS sys.bit) AS allow_row_locks,
+   CAST(1 AS sys.bit) AS allow_page_locks,
+   CAST(
+       CASE 
+           WHEN t.typname = 'geometry' THEN 1
+           WHEN t.typname = 'geography' THEN 2
+           ELSE 1
+       END AS sys.tinyint
+   ) AS spatial_index_type,
+   CAST(
+       CASE 
+           WHEN t.typname = 'geometry' THEN 'GEOMETRY'
+           WHEN t.typname = 'geography' THEN 'GEOGRAPHY'
+           ELSE 'GEOMETRY'
+       END AS sys.nvarchar(60)
+   ) AS spatial_index_type_desc,
+   CAST(
+       CASE 
+           WHEN t.typname = 'geometry' THEN 'GEOMETRY_GRID'
+           WHEN t.typname = 'geography' THEN 'GEOGRAPHY_GRID'
+           ELSE 'GEOMETRY_GRID'
+       END AS sys.sysname
+   ) AS tessellation_scheme,
+   CAST(0 AS sys.bit) AS has_filter,
+   CAST(NULL AS sys.nvarchar(4000)) AS filter_definition,
+   CAST(0 AS sys.bit) AS auto_created
+FROM pg_catalog.pg_index i
+JOIN index_id_map imap ON imap.indexrelid = i.indexrelid
+JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid
+JOIN pg_catalog.pg_class tc ON tc.oid = i.indrelid
+JOIN pg_catalog.pg_am am ON am.oid = ic.relam
+JOIN pg_catalog.pg_attribute a ON a.attrelid = i.indrelid 
+    AND a.attnum = i.indkey[0]
+JOIN pg_catalog.pg_type t ON t.oid = a.atttypid
+JOIN pg_catalog.pg_namespace tn ON tn.oid = tc.relnamespace
+WHERE am.amname = 'gist'
+  AND t.typname IN ('geometry', 'geography')
+  AND tn.nspname NOT IN ('pg_catalog', 'information_schema');
 GRANT SELECT ON sys.spatial_indexes TO PUBLIC;
+
 
 CREATE OR REPLACE VIEW sys.filetables
 AS
@@ -3125,27 +3171,52 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.plan_guides TO PUBLIC;
 
-CREATE OR REPLACE VIEW sys.spatial_index_tessellations 
+CREATE OR REPLACE VIEW sys.spatial_index_tessellations
 AS
+WITH index_id_map AS MATERIALIZED (
+    SELECT indexrelid,
+           CASE WHEN indisclustered THEN 1
+                ELSE 1 + row_number() OVER (PARTITION BY indrelid ORDER BY indexrelid)
+           END AS index_id
+    FROM pg_index
+)
 SELECT 
-    CAST(0 as int) AS object_id
-  , CAST(0 as int) AS index_id
-  , CAST('' as sys.sysname) AS tessellation_scheme
-  , CAST(0 as float(53)) AS bounding_box_xmin
-  , CAST(0 as float(53)) AS bounding_box_ymin
-  , CAST(0 as float(53)) AS bounding_box_xmax
-  , CAST(0 as float(53)) AS bounding_box_ymax
-  , CAST(0 as smallint) as level_1_grid
-  , CAST('' as sys.nvarchar(60)) AS level_1_grid_desc
-  , CAST(0 as smallint) as level_2_grid
-  , CAST('' as sys.nvarchar(60)) AS level_2_grid_desc
-  , CAST(0 as smallint) as level_3_grid
-  , CAST('' as sys.nvarchar(60)) AS level_3_grid_desc
-  , CAST(0 as smallint) as level_4_grid
-  , CAST('' as sys.nvarchar(60)) AS level_4_grid_desc
-  , CAST(0 as int) as cells_per_object
-WHERE FALSE;
+   i.indrelid::integer AS object_id,
+   imap.index_id::integer AS index_id,
+   CAST(
+       CASE 
+           WHEN t.typname = 'geometry' THEN 'GEOMETRY_GRID'
+           WHEN t.typname = 'geography' THEN 'GEOGRAPHY_GRID'
+           ELSE 'GEOMETRY_GRID'
+       END AS sys.sysname
+   ) AS tessellation_scheme,
+   CAST(NULL AS float(53)) AS bounding_box_xmin,
+   CAST(NULL AS float(53)) AS bounding_box_ymin,
+   CAST(NULL AS float(53)) AS bounding_box_xmax,
+   CAST(NULL AS float(53)) AS bounding_box_ymax,
+   CAST(NULL AS smallint) AS level_1_grid,
+   CAST(NULL AS sys.nvarchar(60)) AS level_1_grid_desc,
+   CAST(NULL AS smallint) AS level_2_grid,
+   CAST(NULL AS sys.nvarchar(60)) AS level_2_grid_desc,
+   CAST(NULL AS smallint) AS level_3_grid,
+   CAST(NULL AS sys.nvarchar(60)) AS level_3_grid_desc,
+   CAST(NULL AS smallint) AS level_4_grid,
+   CAST(NULL AS sys.nvarchar(60)) AS level_4_grid_desc,
+   CAST(NULL AS integer) AS cells_per_object
+FROM pg_catalog.pg_index i
+JOIN index_id_map imap ON imap.indexrelid = i.indexrelid
+JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid
+JOIN pg_catalog.pg_class tc ON tc.oid = i.indrelid
+JOIN pg_catalog.pg_am am ON am.oid = ic.relam
+JOIN pg_catalog.pg_attribute a ON a.attrelid = i.indrelid 
+    AND a.attnum = i.indkey[0]
+JOIN pg_catalog.pg_type t ON t.oid = a.atttypid
+JOIN pg_catalog.pg_namespace tn ON tn.oid = tc.relnamespace
+WHERE am.amname = 'gist'
+  AND t.typname IN ('geometry', 'geography')
+  AND tn.nspname NOT IN ('pg_catalog', 'information_schema');
 GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;
+
 
 CREATE OR REPLACE VIEW sys.asymmetric_keys
 AS

@@ -91,6 +91,7 @@ extern "C"
 	extern bool check_fulltext_exist(const char *schema_name, const char *table_name, const List *column_name);
 
 	extern int escape_hatch_showplan_all;
+	extern int escape_hatch_spatial_index;
 
 	/* To store the time spent in ANTLR parsing for the current batch */
 	extern instr_time antlr_parse_time;
@@ -153,6 +154,7 @@ static void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementC
 static bool post_process_create_table(TSqlParser::Create_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
+static bool post_process_create_spatial_index(TSqlParser::Create_spatial_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_type(TSqlParser::Create_typeContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, List *column_name = NULL, bool is_freetext_predicate = false);
@@ -192,6 +194,9 @@ template <class T> static void rewrite_geospatial_func_ref_no_arg_query_helper(T
 template <class T> static void rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t start_index, size_t arg_list_start_index, size_t arg_list_stop_index);
 template <class T> static void rewrite_function_call_dot_func_ref_args(T ctx);
 template <class T> static void rewrite_function_call_geospatial_func_ref_no_arg(T ctx);
+template <class T> static bool is_in_spatial_predicate_context(T ctx);
+template <class T> static bool is_spatial_predicate_eq_one(T ctx);
+template <class T> static bool extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &comp_value, bool &dist_on_lhs_out);
 static void handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx);
 static void handleXMLFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx);
 static void handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx);
@@ -2249,6 +2254,8 @@ public:
 			nop = post_process_alter_table(ctx->alter_table(), stmt, ctx);
 		else if (ctx->create_index())
 			nop = post_process_create_index(ctx->create_index(), stmt, ctx);
+		else if (ctx->create_spatial_index())
+            nop = post_process_create_spatial_index(ctx->create_spatial_index(), stmt, ctx);
 		else if (ctx->create_database())
 			nop = post_process_create_database(ctx->create_database(), stmt, ctx);
 		else if (ctx->create_type())
@@ -8129,6 +8136,31 @@ post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_exec
 	return false;
 }
 
+static bool
+post_process_create_spatial_index(TSqlParser::Create_spatial_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
+{
+
+	bool has_grid_clause = (ctx->spatial_grid_clause() != nullptr);
+	bool has_with_clause = (ctx->spatial_grid_option_clause() != nullptr);
+    
+	if ((has_grid_clause || has_with_clause) && escape_hatch_spatial_index == EH_STRICT)
+	{
+		throw PGErrorWrapperException(ERROR,ERRCODE_FEATURE_NOT_SUPPORTED,
+			"CREATE SPATIAL INDEX options (USING <grid>, BOUNDING_BOX, GRIDS, CELLS_PER_OBJECT, and standard WITH clause options) are not supported because Babelfish uses PostGIS GiST indexes which are self-tuning. Set babelfishpg_tsql.escape_hatch_spatial_index to 'ignore' to silently discard these options and create the index.",
+			getLineAndPos(ctx));
+	}
+
+	/* Remove USING clause (GEOMETRY_GRID, GEOGRAPHY_GRID, etc.) */
+	if (ctx->spatial_grid_clause())
+		removeCtxStringFromQuery(stmt->sqlstmt, ctx->spatial_grid_clause(), baseCtx);
+
+	/* Remove WITH clause (BOUNDING_BOX, CELLS_PER_OBJECT, GRIDS, etc.) */
+	if (ctx->spatial_grid_option_clause())
+		removeCtxStringFromQuery(stmt->sqlstmt, ctx->spatial_grid_option_clause(), baseCtx);
+
+	return false;
+}
+
 static antlr4::tree::TerminalNode *
 getCreateDatabaseOptionTobeRemoved(TSqlParser::Create_database_optionContext* o)
 {
@@ -9058,6 +9090,176 @@ extract_xml_value_typearg(TSqlParser::ExpressionContext *expression)
 	return typename_arg;
 }
 
+template<class T>
+static bool
+extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &comp_value, bool &dist_on_lhs_out)
+{
+    auto *parent = dynamic_cast<antlr4::ParserRuleContext *>(ctx->parent);
+    while (parent)
+    {
+        auto *pred = dynamic_cast<TSqlParser::PredicateContext *>(parent);
+        if (pred)
+        {
+            if (pred->comparison_operator() && pred->expression().size() >= 2)
+            {
+                std::string op = ::getFullText(pred->comparison_operator());
+                auto *lhs = pred->expression().front();
+                auto *rhs = pred->expression().back();
+
+                /*
+                 * Figure out which side of the comparison the STDistance call
+                 *  so the caller can decide whether pre-filter injection is safe for this predicate shape.
+                 */
+                size_t ctx_start = ctx->start->getStartIndex();
+                bool dist_on_lhs =(ctx_start >= lhs->start->getStartIndex() && ctx_start <= lhs->stop->getStopIndex());
+
+                if (dist_on_lhs && (op == "<" || op == "<="))
+                {
+                    comp_operator = op;
+                    comp_value = ::getFullText(rhs);
+                    dist_on_lhs_out = true;
+                    return true;
+                }
+
+                if (!dist_on_lhs && (op == ">" || op == ">="))
+                {
+                    comp_operator = (op == ">") ? "<" : "<=";
+                    comp_value = ::getFullText(lhs);
+                    dist_on_lhs_out = false;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /* Stop climbing if we leave the predicate area */
+        if (dynamic_cast<TSqlParser::Search_conditionContext *>(parent))
+            return false;
+
+        parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
+    }
+    return false;
+}
+
+
+
+static std::string
+maybe_inject_spatial_bbox_filter(const std::string &spatial_func_name, const std::string &col_ref, const std::string &rewritten_call)
+{
+    /* Only these methods benefit from && pre-filtering */
+    if (pg_strcasecmp(spatial_func_name.c_str(), "STIntersects") != 0 &&
+        pg_strcasecmp(spatial_func_name.c_str(), "STContains") != 0 &&
+        pg_strcasecmp(spatial_func_name.c_str(), "STWithin") != 0 &&
+        pg_strcasecmp(spatial_func_name.c_str(), "STOverlaps") != 0 &&
+        pg_strcasecmp(spatial_func_name.c_str(), "STTouches") != 0 &&
+        pg_strcasecmp(spatial_func_name.c_str(), "STEquals") != 0 &&
+        pg_strcasecmp(spatial_func_name.c_str(), "STCrosses") != 0)
+    {
+        return rewritten_call;
+    }
+
+    std::string col_ref_suffix = "," + col_ref + ")";
+    size_t suffix_pos = rewritten_call.rfind(col_ref_suffix);
+    size_t open_paren = rewritten_call.find('(');
+
+    if (suffix_pos != std::string::npos && open_paren != std::string::npos && suffix_pos > open_paren + 1)
+    {
+        std::string first_arg =
+            rewritten_call.substr(open_paren + 1, suffix_pos - open_paren - 1);
+
+        return col_ref + " OPERATOR(sys.&&) " + first_arg + " AND " + rewritten_call;
+    }
+
+    return rewritten_call;
+}
+
+
+static std::string
+maybe_inject_spatial_distance_filter(const std::string &col_ref, const std::string &first_arg, const std::string &distance_value, const std::string &rewritten_call)
+{
+    
+    std::string quoted_distance = distance_value;
+    if (!distance_value.empty() && distance_value.front() == '@')
+        quoted_distance = "\"" + distance_value + "\"";
+
+    return col_ref + " OPERATOR(sys.&&) sys.ST_Expand(" + first_arg + ", " + "CAST(" + quoted_distance + " AS float8)) AND " + rewritten_call;
+}
+
+
+template<class T>
+static bool
+is_spatial_predicate_eq_one(T ctx)
+{
+    auto *parent = dynamic_cast<antlr4::ParserRuleContext *>(ctx->parent);
+    while (parent)
+    {
+        auto *pred = dynamic_cast<TSqlParser::PredicateContext *>(parent);
+        if (pred)
+        {
+            if (pred->comparison_operator() && pred->expression().size() >= 2)
+            {
+                std::string op = ::getFullText(pred->comparison_operator());
+                if (op != "=")
+                    return false;
+
+                auto *lhs = pred->expression().front();
+                auto *rhs = pred->expression().back();
+
+                
+                size_t ctx_start = ctx->start->getStartIndex();
+                if (ctx_start < lhs->start->getStartIndex() ||
+                    ctx_start > lhs->stop->getStopIndex())
+                    return false;
+
+                std::string rhs_str = ::getFullText(rhs);
+                size_t first = rhs_str.find_first_not_of(" \t\n\r\f\v");
+                if (first == std::string::npos)
+                    return false;
+                size_t last = rhs_str.find_last_not_of(" \t\n\r\f\v");
+                rhs_str = rhs_str.substr(first, last - first + 1);
+
+                return rhs_str == "1";
+            }
+            return false;
+        }
+
+        /* Stop climbing if we leave the predicate area */
+        if (dynamic_cast<TSqlParser::Search_conditionContext *>(parent))
+            return false;
+
+        parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
+    }
+    return false;
+}
+
+/*
+ * Check if a parse tree node is inside a predicate context
+ * (WHERE, JOIN ON, HAVING) where injecting && is safe.
+ */
+template<class T>
+static bool
+is_in_spatial_predicate_context(T ctx)
+{
+	auto *parent = dynamic_cast<antlr4::ParserRuleContext *>(ctx->parent);
+	while (parent)
+	{
+		if (dynamic_cast<TSqlParser::Search_conditionContext *>(parent) ||
+			dynamic_cast<TSqlParser::PredicateContext *>(parent))
+			return true;
+		if (dynamic_cast<TSqlParser::Select_list_elemContext *>(parent) ||
+			dynamic_cast<TSqlParser::Expression_listContext *>(parent) ||
+			dynamic_cast<TSqlParser::Declare_localContext *>(parent) ||
+			dynamic_cast<TSqlParser::Set_statementContext *>(parent) ||
+			dynamic_cast<TSqlParser::Print_statementContext *>(parent) ||
+			dynamic_cast<TSqlParser::Update_elemContext *>(parent) ||
+		    dynamic_cast<TSqlParser::Insert_statementContext *>(parent) ||
+            dynamic_cast<TSqlParser::Return_statementContext *>(parent))
+			return false;
+		parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
+	}
+	return false;
+}
+
 /*
  * In this helper function we Rewrite the Query for XML and Geospatial Handling
  * For Func_Ref Functions with args (such as EXIST(arg), STDistance(arg)) : ColRef.Func_name(arg_list)  ->  Func_name(arg_list, ColRef)
@@ -9156,6 +9358,63 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	{
 		rewritten_exp = "cast(" + rewritten_exp + " as " + typename_arg + ")";
 	}
+	
+	if (method->spatial_methods()
+    	&& method->spatial_methods()->geospatial_func_arg()
+    	&& method->spatial_methods()->expression_list()
+    	&& !method->spatial_methods()->expression_list()->expression().empty()
+    	&& is_in_spatial_predicate_context(ctx)
+    	&& is_spatial_predicate_eq_one(ctx))
+	{
+    	std::string spatial_func_name =::getFullText(method->spatial_methods()->geospatial_func_arg());
+    	std::string col_ref = expr.substr(0, func_call_len + offset1 + 1);
+
+   		rewritten_exp = maybe_inject_spatial_bbox_filter( spatial_func_name, col_ref, rewritten_exp);
+    }
+   
+
+    if (method->spatial_methods()
+        && method->spatial_methods()->geospatial_func_arg()
+        && method->spatial_methods()->expression_list()
+        && !method->spatial_methods()->expression_list()->expression().empty()
+        && is_in_spatial_predicate_context(ctx))
+    {
+        std::string spatial_func_name =
+            ::getFullText(method->spatial_methods()->geospatial_func_arg());
+
+        if (pg_strcasecmp(spatial_func_name.c_str(), "STDistance") == 0)
+        {
+            std::string comp_operator;
+            std::string comp_value;
+            bool dist_on_lhs = false;
+
+           
+            if (extract_distance_predicate_info(ctx, comp_operator, comp_value, dist_on_lhs)
+                && dist_on_lhs)
+            {
+                std::string col_ref = expr.substr(0, func_call_len + offset1 + 1);
+
+            
+                std::string col_ref_suffix = "," + col_ref + ")";
+                size_t suffix_pos = rewritten_exp.rfind(col_ref_suffix);
+                size_t open_paren = rewritten_exp.find('(');
+
+                if (suffix_pos != std::string::npos
+                    && open_paren != std::string::npos
+                    && suffix_pos > open_paren + 1)
+                {
+                    std::string first_arg =
+                        rewritten_exp.substr(open_paren + 1,
+                                             suffix_pos - open_paren - 1);
+
+                    rewritten_exp = maybe_inject_spatial_distance_filter(
+                        col_ref, first_arg, comp_value, rewritten_exp);
+                }
+            }
+        }
+    }
+  
+
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
 }
 
@@ -9405,6 +9664,58 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	{
 		rewritten_func = "cast(" + rewritten_func + " as " + typename_arg + ")";
 	}
+	if (ctx->spatial_proc_name_server_database_schema()
+    	&& ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()
+    	&& ctx->function_arg_list()
+    	&& !ctx->function_arg_list()->expression().empty()
+    	&& is_in_spatial_predicate_context(ctx)
+    	&& is_spatial_predicate_eq_one(ctx))
+	{
+    	std::string spatial_func_name =::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg());
+         std::string col_ref = expr.substr(0, col_len + offset1 + 1);
+
+       rewritten_func = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, rewritten_func);
+    }
+
+	if (ctx->spatial_proc_name_server_database_schema()
+        && ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()
+        && ctx->function_arg_list()
+        && !ctx->function_arg_list()->expression().empty()
+        && is_in_spatial_predicate_context(ctx))
+    {
+        std::string spatial_func_name =
+            ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg());
+
+        if (pg_strcasecmp(spatial_func_name.c_str(), "STDistance") == 0)
+        {
+            std::string comp_operator;
+            std::string comp_value;
+            bool dist_on_lhs = false;
+
+        
+            if (extract_distance_predicate_info(ctx, comp_operator, comp_value, dist_on_lhs)
+                && dist_on_lhs)
+            {
+                std::string col_ref = expr.substr(0, col_len + offset1 + 1);
+
+
+                std::string col_ref_suffix = "," + col_ref + ")";
+                size_t suffix_pos = rewritten_func.rfind(col_ref_suffix);
+                size_t open_paren = rewritten_func.find('(');
+
+                if (suffix_pos != std::string::npos
+                    && open_paren != std::string::npos
+                    && suffix_pos > open_paren + 1)
+                {
+                    std::string first_arg =
+                        rewritten_func.substr(open_paren + 1, suffix_pos - open_paren - 1);
+
+                    rewritten_func = maybe_inject_spatial_distance_filter(
+                        col_ref, first_arg, comp_value, rewritten_func);
+                }
+            }
+        }
+    }
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
 }
 
