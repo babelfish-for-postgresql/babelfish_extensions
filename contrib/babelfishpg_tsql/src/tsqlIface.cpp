@@ -1626,6 +1626,37 @@ public:
 	}
 
 	/*
+	 * Apply expression rewriting for INSERT EXEC statements.
+	 * Converts double-quoted strings to single-quoted strings
+	 * (e.g., "master" -> 'master') for PostgreSQL compatibility.
+	 * PLTSQL_STMT_EXEC_SP does not need rewriting — system SP arguments
+	 * are explicit typed parameters, not general SQL expressions.
+	*/
+	void applyInsertExecRewriting(PLtsql_stmt *base_stmt,
+                               TSqlParser::Execute_statementContext *ctxES)
+	{
+    	if (base_stmt->cmd_type == PLTSQL_STMT_EXEC)
+    	{
+        	PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) base_stmt;
+        	PLtsql_expr_query_mutator mutator(exec_stmt->expr, ctxES);
+        	add_rewritten_query_fragment_to_mutator(&mutator);
+        	mutator.run();
+    	}
+		else if (base_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
+		{
+			PLtsql_stmt_exec_batch *exec_batch_stmt = (PLtsql_stmt_exec_batch *) base_stmt;
+			PLtsql_expr_query_mutator mutator(exec_batch_stmt->expr, ctxES);
+			/*
+			* We don't call markSelectFragment here — selectFragmentOffsets was
+			* recorded with ctx->parent as key, not ctxES. For dynamic SQL in
+			* INSERT EXEC, we rewrite the entire expression string.
+			*/
+			add_rewritten_query_fragment_to_mutator(&mutator);
+			mutator.run();
+		}
+	}
+
+	/*
 	 * Replace a grafted statement with a new one.
 	 * Used for INSERT EXEC where we replace PLtsql_stmt_execsql with PLtsql_stmt_exec
 	 */
@@ -1659,17 +1690,16 @@ public:
 			/* Update the fragment mapping */
 			attachPLtsql_fragment(ctx, new_stmt);
 		}
-		else if (new_stmt && container)
+		else
 		{
-			/* No old statement, just graft the new one */
-			graft(new_stmt, container);
-			attachPLtsql_fragment(ctx, new_stmt);
+    		/*
+    		 * old_stmt is always set for INSERT EXEC — exitDml_statement attaches
+    		 * a PLtsql_stmt_execsql fragment before this function is called.
+    		* Reaching here means a broken parser state.
+    		*/
+    		Assert(false);
 		}
-		else if (new_stmt)
-		{
-			/* container is NULL - broken parser state, INSERT EXEC statement would be lost */
-			Assert(false);
-		}
+
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -2048,20 +2078,18 @@ public:
 			/* Create the EXEC statement - could be PLtsql_stmt_exec or PLtsql_stmt_exec_batch */
 			PLtsql_stmt *base_stmt = makeExecuteStatement(ctxES);
 
-			/* Extract target table name */
-			std::string target_table;
+			/* Extract target table name, schema, and database separately */
+			std::string tbl_name, tbl_schema, tbl_db;
 			auto ddl_object = ctx->insert_statement()->ddl_object();
 			if (ddl_object)
 			{
 				if (ddl_object->local_id())
 				{
-					/* Table variable like @tablevar - use as-is */
-					target_table = ::getFullText(ddl_object->local_id());
+					/* Table variable like @tablevar - no schema or db */
+					tbl_name = ::getFullText(ddl_object->local_id());
 				}
 				else if (ddl_object->full_object_name())
 				{
-					/* Regular table or temp table - extract name and schema separately */
-					std::string tbl_name, tbl_schema, tbl_db;
 					if (ddl_object->full_object_name()->object_name)
 						tbl_name = stripQuoteFromId(ddl_object->full_object_name()->object_name);
 					if (ddl_object->full_object_name()->schema)
@@ -2070,40 +2098,13 @@ public:
 						tbl_db = stripQuoteFromId(ddl_object->full_object_name()->database);
 
 					/*
-					 * Check if this is a temp table (starts with #).
-					 * In PostgreSQL, temp tables live in pg_temp schema, not user
-					 * schemas like dbo. We strip any schema prefix the user may have
-					 * provided (e.g., dbo.#temp) since it's not meaningful for temp tables.
-					 */
+					* Temp tables live in pg_temp, not user schemas. Strip any schema
+					* prefix the user may have provided (e.g., dbo.#temp).
+					*/
 					if (!tbl_name.empty() && tbl_name[0] == '#')
 					{
-						target_table = tbl_name;
-					}
-					/* Build table reference with explicit schema if provided */
-					else if (!tbl_db.empty())
-					{
-						/*
-						 * Three-part name: db..table or db.schema.table
-						 * When schema is empty (db..table), leave it empty and let the
-						 * executor resolve using the user's default schema, matching
-						 * T-SQL semantics.
-						 */
-						if (tbl_schema.empty())
-							target_table = tbl_db + ".." + tbl_name;
-						else
-							target_table = tbl_db + "." + tbl_schema + "." + tbl_name;
-					}
-					else if (!tbl_schema.empty())
-					{
-						target_table = tbl_schema + "." + tbl_name;
-					}
-					else
-					{
-						/*
-						 * No schema specified - don't hardcode dbo. Let the search path
-						 * resolve the table, which respects the user's default schema.
-						 */
-						target_table = tbl_name;
+						tbl_schema.clear();
+						tbl_db.clear();
 					}
 				}
 			}
@@ -2120,10 +2121,21 @@ public:
 						column_list += ", ";
 					first = false;
 					auto ids = col->id();
+					/* A column reference always has at least one identifier token per grammar */
+        			Assert(!ids.empty());
 					if (!ids.empty() && ids.back() != nullptr)
 						column_list += stripQuoteFromId(ids.back());
 				}
 			}
+
+			/*
+			 * target_table must be set for INSERT EXEC — if it's empty here,
+			 * the parse tree is malformed (ddl_object missing or has no object name).
+			 */
+			if (tbl_name.empty())
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+					"INSERT EXEC requires a valid target table",
+					getLineAndPos(ctx->insert_statement()->ddl_object()));
 
 			/*
 			 * Helper lambda to set INSERT EXEC fields on the statement.
@@ -2131,8 +2143,11 @@ public:
 			 */
 			auto setInsertExecInfo = [&](InsertExecInfo *info) {
 				info->is_insert_exec = true;
-				if (!target_table.empty())
-					info->target = pstrdup(target_table.c_str());
+				info->target = pstrdup(tbl_name.c_str());
+				if (!tbl_schema.empty())
+					info->schema = pstrdup(tbl_schema.c_str());
+				if (!tbl_db.empty())
+					info->db_name = pstrdup(tbl_db.c_str());
 				if (!column_list.empty())
 					info->columns = pstrdup(column_list.c_str());
 			};
@@ -2157,32 +2172,7 @@ public:
 				setInsertExecInfo(&exec_sp_stmt->insert_exec);
 			}
 
-			/*
-			 * Apply rewriting to the EXEC statement's expression.
-			 * This is needed to convert double-quoted strings to single-quoted strings
-			 * (e.g., "master" -> 'master') which is required for PostgreSQL compatibility.
-			 * Without this, double-quoted strings would be interpreted as column references.
-			 */
-			if (base_stmt->cmd_type == PLTSQL_STMT_EXEC)
-			{
-				PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) base_stmt;
-				PLtsql_expr_query_mutator mutator(exec_stmt->expr, ctxES);
-				add_rewritten_query_fragment_to_mutator(&mutator);
-				mutator.run();
-			}
-			else if (base_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
-			{
-				PLtsql_stmt_exec_batch *exec_batch_stmt = (PLtsql_stmt_exec_batch *) base_stmt;
-				PLtsql_expr_query_mutator mutator(exec_batch_stmt->expr, ctxES);
-				/*
-				 * Note: We don't call markSelectFragment here because the selectFragmentOffsets
-				 * was recorded with ctx->parent as the key in makeExecuteStatement, not ctxES.
-				 * For INSERT EXEC with dynamic SQL, we don't need to limit the rewriting range
-				 * since the expression is the entire dynamic SQL string.
-				 */
-				add_rewritten_query_fragment_to_mutator(&mutator);
-				mutator.run();
-			}
+			applyInsertExecRewriting(base_stmt, ctxES);
 
 			/* Replace the PLtsql_stmt_execsql with the exec statement in the container */
 			replaceGraftedStatement(ctx, base_stmt);
