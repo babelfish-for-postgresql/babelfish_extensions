@@ -261,7 +261,8 @@ EXEC dbo.renamed_cache_proc @val = 7;
 GO
 
 -- Stats for Test 8: stats after execution caching after proc rename
--- expects hits=+1 (after write), cache_miss=+1 (first exec after function renamed) and writes=+1 (caches new ANTLR result)
+-- expects cache_miss=+1 (first exec after function renamed) and writes=+1 (caches new ANTLR result)
+-- (exec 2 reuses hash-table entry but from_cache=false (antlr parse), so no hit counted)
 SELECT * FROM sys.antlr_parse_cache_stats();
 GO
 
@@ -345,7 +346,7 @@ GO
 EXEC dbo.dep_table_proc;
 GO
 
--- Stats: expects hits=+1 (hash reuse, from_cache=true, bbf_ext_xmin valid)
+-- Stats: expects hits=+1 (hash reuse, from_cache=true)
 -- exec 2 errors at runtime (table dropped) but compilation reuses cached entry
 SELECT * FROM sys.antlr_parse_cache_stats();
 GO
@@ -365,7 +366,7 @@ GO
 EXEC dbo.dep_table_proc;
 GO
 
--- Stats: expects hits=+1 (hash reuse, from_cache=true, bbf_ext_xmin valid)
+-- Stats: expects hits=+1 (hash reuse, from_cache=true)
 SELECT * FROM sys.antlr_parse_cache_stats();
 GO
 

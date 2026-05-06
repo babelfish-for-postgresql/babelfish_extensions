@@ -4174,7 +4174,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
  * Check if ANTLR parse cache is enabled for a routine.
  * Returns true if cross-session caching should be used, false otherwise.
  */
-static bool
+bool
 is_antlr_parse_cache_enabled_for_routine(HeapTuple proctup, HeapTuple bbftup)
 {
 	Form_pg_proc procStruct;
@@ -4192,6 +4192,16 @@ is_antlr_parse_cache_enabled_for_routine(HeapTuple proctup, HeapTuple bbftup)
 	/* Triggers and event triggers are not cached currently */
 	procStruct = (Form_pg_proc) GETSTRUCT(proctup);
 	if (procStruct->prorettype == TRIGGEROID || procStruct->prorettype == EVENT_TRIGGEROID)
+		return false;
+
+	/*
+	 * ITVFs (Inline Table-Valued Functions) are not cached due to datum layout mismatch.
+	 * ITVFs have their pg_proc entry rewritten after validation to inject TABLE columns,
+	 * causing CREATE-time and EXEC-time datum layouts to differ.
+	 */
+	if (procStruct->prokind == PROKIND_FUNCTION &&
+		procStruct->proretset &&
+		get_typtype(procStruct->prorettype) != TYPTYPE_COMPOSITE)
 		return false;
 
 	/*
@@ -4395,7 +4405,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		 * dump/restore mode, neither session GUC nor per-function flag enabled, or is a trigger.
 		 */
 		pltsql_fill_antlr_parse_cache_columns(NULL,
-								  new_record, new_record_nulls, new_record_replaces);
+											  new_record, new_record_nulls, new_record_replaces);
 	}
 	else
 	{
@@ -4405,24 +4415,24 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		 * of text-type arguments is not evaluated during CREATE).
 		 */
 		MemSet(&hashkey, 0, sizeof(PLtsql_func_hashkey));
-			hashkey.funcOid = address.objectId;
-			hashkey.isTrigger = false;
-			hashkey.isEventTrigger = false;
-			hashkey.trigOid = 0;
-			hashkey.inputCollation = 0;
+		hashkey.funcOid = address.objectId;
+		hashkey.isTrigger = false;
+		hashkey.isEventTrigger = false;
+		hashkey.trigOid = 0;
+		hashkey.inputCollation = 0;
 
-			if (form_proctup->pronargs > 0)
-			{
-				/* Copy argument types from proc tuple */
-				memcpy(hashkey.argtypes, form_proctup->proargtypes.values,
-					   form_proctup->pronargs * sizeof(Oid));
-			}
+		if (form_proctup->pronargs > 0)
+		{
+			/* Copy argument types from proc tuple */
+			memcpy(hashkey.argtypes, form_proctup->proargtypes.values,
+				   form_proctup->pronargs * sizeof(Oid));
+		}
 
-			/* Look up the compiled function in the hash table */
-			function = pltsql_HashTableLookup(&hashkey);
+		/* Look up the compiled function in the hash table */
+		function = pltsql_HashTableLookup(&hashkey);
 
-			pltsql_fill_antlr_parse_cache_columns(function,
-									  new_record, new_record_nulls, new_record_replaces);
+		pltsql_fill_antlr_parse_cache_columns(function,
+											  new_record, new_record_nulls, new_record_replaces);
 	}
 
 	/* Use the catalog entry we fetched earlier (UPDATE vs INSERT) */
@@ -4587,10 +4597,10 @@ pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function,
 		PLtsql_stmt_block *roundtrip = NULL;
 
 		roundtrip = (PLtsql_stmt_block *) deserialize_with_error_handling(tree_str,
-																		   "validation parse tree",
-																		   "pltsql_validate_antlr_parse_cache",
-																		   "validate",
-																		   oldcontext);
+																		  "validation parse tree",
+																		  "pltsql_validate_antlr_parse_cache",
+																		  "validate",
+																		  oldcontext);
 
 		if (roundtrip != NULL)
 		{
@@ -4683,13 +4693,6 @@ pltsql_update_func_antlr_parse_cache(HeapTuple proctup, PLtsql_function *functio
 							   new_record, new_record_nulls, new_record_replaces);
 	CatalogTupleUpdate(rel, &newtup->t_self, newtup);
 
-	/*
-	 * Update function's bbf_ext tracking fields with the post-write tuple
-	 * identity so the hash table validity check sees the current state.
-	 */
-	function->bbf_ext_xmin = HeapTupleHeaderGetRawXmin(newtup->t_data);
-	function->bbf_ext_tid = newtup->t_self;
-
 	heap_freetuple(oldtup);
 	heap_freetuple(newtup);
 	table_close(rel, RowExclusiveLock);
@@ -4704,9 +4707,7 @@ pltsql_update_func_antlr_parse_cache(HeapTuple proctup, PLtsql_function *functio
  */
 PLtsql_cached_parse_result *
 pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
-								 bool *out_cache_enabled,
-								 TransactionId *out_bbf_ext_xmin,
-								 ItemPointerData *out_bbf_ext_tid)
+								 bool *out_cache_enabled)
 {
 	HeapTuple	bbffunctuple = NULL;
 	Datum		attr;
@@ -4718,8 +4719,6 @@ pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
 
 	/* Initialize output parameters */
 	*out_cache_enabled = false;
-	*out_bbf_ext_xmin = InvalidTransactionId;
-	ItemPointerSetInvalid(out_bbf_ext_tid);
 
 	/* Only for TDS connections with T-SQL dialect */
 	if (sql_dialect != SQL_DIALECT_TSQL || !IS_TDS_CONN())
@@ -4738,10 +4737,6 @@ pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
 	*out_cache_enabled = is_antlr_parse_cache_enabled_for_routine(proctup, bbffunctuple);
 	if (!(*out_cache_enabled))
 		goto cleanup;
-
-	/* Always capture xmin/tid for the caller (used for hash invalidation) */
-	*out_bbf_ext_xmin = HeapTupleHeaderGetRawXmin(bbffunctuple->t_data);
-	*out_bbf_ext_tid = bbffunctuple->t_self;
 
 	/*
 	 * Check 1: bbf_version must match current BABELFISH_VERSION_STR.

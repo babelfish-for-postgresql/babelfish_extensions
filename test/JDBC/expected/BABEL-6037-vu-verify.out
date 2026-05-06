@@ -456,12 +456,13 @@ int
 
 
 -- Stats for Test 8: stats after execution caching after proc rename
--- expects hits=+1 (after write), cache_miss=+1 (first exec after function renamed) and writes=+1 (caches new ANTLR result)
+-- expects cache_miss=+1 (first exec after function renamed) and writes=+1 (caches new ANTLR result)
+-- (exec 2 reuses hash-table entry but from_cache=false (antlr parse), so no hit counted)
 SELECT * FROM sys.antlr_parse_cache_stats();
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
-19#!#1#!#4#!#2#!#0
+18#!#1#!#4#!#2#!#0
 ~~END~~
 
 
@@ -475,7 +476,7 @@ SELECT * FROM sys.antlr_parse_cache_stats();
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
-19#!#1#!#4#!#2#!#0
+18#!#1#!#4#!#2#!#0
 ~~END~~
 
 
@@ -539,7 +540,7 @@ SELECT * FROM sys.antlr_parse_cache_stats();
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
-19#!#1#!#4#!#2#!#0
+18#!#1#!#4#!#2#!#0
 ~~END~~
 
 
@@ -550,7 +551,7 @@ SELECT * FROM sys.antlr_parse_cache_stats();
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
-19#!#1#!#4#!#2#!#0
+18#!#1#!#4#!#2#!#0
 ~~END~~
 
 
@@ -579,7 +580,7 @@ SELECT cache_hits FROM sys.antlr_parse_cache_stats();
 GO
 ~~START~~
 int
-20
+19
 ~~END~~
 
 
@@ -600,13 +601,13 @@ GO
 ~~ERROR (Message: relation "dbo.dep_test_table" does not exist)~~
 
 
--- Stats: expects hits=+1 (hash reuse, from_cache=true, bbf_ext_xmin valid)
+-- Stats: expects hits=+1 (hash reuse, from_cache=true)
 -- exec 2 errors at runtime (table dropped) but compilation reuses cached entry
 SELECT * FROM sys.antlr_parse_cache_stats();
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
-21#!#1#!#4#!#2#!#0
+20#!#1#!#4#!#2#!#0
 ~~END~~
 
 
@@ -632,12 +633,12 @@ int#!#varchar#!#int
 ~~END~~
 
 
--- Stats: expects hits=+1 (hash reuse, from_cache=true, bbf_ext_xmin valid)
+-- Stats: expects hits=+1 (hash reuse, from_cache=true)
 SELECT * FROM sys.antlr_parse_cache_stats();
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
-22#!#1#!#4#!#2#!#0
+21#!#1#!#4#!#2#!#0
 ~~END~~
 
 
@@ -665,7 +666,7 @@ SELECT * FROM sys.antlr_parse_cache_stats();
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
-22#!#1#!#4#!#3#!#0
+21#!#1#!#4#!#3#!#0
 ~~END~~
 
 
@@ -772,7 +773,7 @@ GO
 ~~START~~
 varchar
 CACHED
-CACHED
+NOT CACHED
 ~~END~~
 
 
@@ -823,7 +824,7 @@ SELECT * FROM sys.antlr_parse_cache_stats();
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
-22#!#1#!#4#!#3#!#0
+21#!#1#!#4#!#3#!#0
 ~~END~~
 
 
@@ -841,7 +842,7 @@ SELECT * FROM sys.antlr_parse_cache_stats();
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
-22#!#2#!#5#!#3#!#0
+21#!#2#!#5#!#3#!#0
 ~~END~~
 
 
@@ -860,7 +861,7 @@ SELECT * FROM sys.antlr_parse_cache_stats();
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int
-22#!#2#!#5#!#4#!#0
+21#!#2#!#5#!#4#!#0
 ~~END~~
 
 

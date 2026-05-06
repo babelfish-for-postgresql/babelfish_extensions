@@ -1053,7 +1053,6 @@ typedef union PLtsql_dbcc_stmt_data
 {
 	struct dbcc_checkident
 	{
-		// TODO: NodeTag		type;
 		char	*db_name;
 		char	*schema_name;
 		char	*table_name;
@@ -1416,8 +1415,6 @@ typedef struct PLtsql_function
 	Oid			fn_oid;
 	TransactionId fn_xmin;
 	ItemPointerData fn_tid;
-	TransactionId bbf_ext_xmin;		/* xmin of babelfish_function_ext tuple at compile time */
-	ItemPointerData bbf_ext_tid;	/* ctid of babelfish_function_ext tuple at compile time */
 	PLtsql_trigtype fn_is_trigger;
 	Oid			fn_input_collation;
 	PLtsql_func_hashkey *fn_hashkey;	/* back-link to hashtable key */

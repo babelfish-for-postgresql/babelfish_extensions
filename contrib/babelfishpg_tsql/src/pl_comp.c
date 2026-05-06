@@ -215,60 +215,30 @@ recheck:
 			if (function->from_cache)
 			{
 				/*
-				 * For functions loaded from persistent cache, verify:
-				 * 1. babelfish_function_ext hasn't changed (xmin/tid check detects
-				 *    catalog updates, e.g., antlr_parse_cache_enabled toggled via
-				 *    sys.enable_antlr_parse_cache() from another session). This avoids
-				 *    expensive per-call syscache lookups in pltsql_HashTableLookup.
-				 * 2. Caching is still enabled — check antlr_parse_cache_enabled column:
-				 *    NULL=follow session GUC, true=force on, false=force off.
+				 * For functions loaded from persistent cache, verify caching is
+				 * still enabled by consulting is_antlr_parse_cache_enabled_for_routine()
+				 * which reads the per-function antlr_parse_cache_enabled column and
+				 * falls back to the session GUC.
+				 *
+				 * A concurrent session toggling the per-function flag via
+				 * sys.enable_antlr_parse_cache() is picked up here via syscache.
+				 * ALTER/DROP of the function is already caught by the pg_proc
+				 * xmin/tid check above and forces a fresh compile.
 				 */
-				HeapTuple bbftup = get_bbf_function_tuple_from_proctuple(procTup);
-				if (HeapTupleIsValid(bbftup))
+				if (is_antlr_parse_cache_enabled_for_routine(procTup, NULL))
 				{
-					if (function->bbf_ext_xmin == HeapTupleHeaderGetRawXmin(bbftup->t_data) &&
-						ItemPointerEquals(&function->bbf_ext_tid, &bbftup->t_self))
-					{
-						/*
-						 * bbf_ext tuple unchanged. Resolve antlr_parse_cache_enabled column:
-						 * non-NULL overrides session GUC, NULL follows it.
-						 */
-						bool	isnull;
-						bool	resolved_cache;
-						Datum	cache_flag = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbftup,
-															 Anum_bbf_function_ext_antlr_parse_cache_enabled, &isnull);
-						if (!isnull)
-							resolved_cache = DatumGetBool(cache_flag);
-						else
-							resolved_cache = pltsql_enable_antlr_parse_cache;
-
-						if (resolved_cache)
-						{
-							function_valid = true;
-							pltsql_antlr_parse_cache_stat_hits++;
-						}
-						/* else: resolved to off — invalidate */
-					}
-					heap_freetuple(bbftup);
-
-					if (!function_valid)
-					{
-						/* bbf_ext changed or caching disabled — invalidate */
-						goto invalidate_function;
-					}
+					function_valid = true;
+					pltsql_antlr_parse_cache_stat_hits++;
 				}
 				else
 				{
-					/* tuple gone or not found — invalidate */
+					/* caching disabled for this routine — invalidate */
 					goto invalidate_function;
 				}
 			}
 			else
 			{
 				function_valid = true;
-				/* Count as cache hit if function is backed by persistent cache */
-				if (TransactionIdIsValid(function->bbf_ext_xmin))
-					pltsql_antlr_parse_cache_stat_hits++;
 			}
 		}
 		else
@@ -402,8 +372,6 @@ do_compile(FunctionCallInfo fcinfo,
 	int		   *typmods = NULL; /* typmod of each argument if available */
 	CompileContext *cmpl_ctx = create_compile_context();
 	bool		antlr_parse_cache_enabled_for_func = false;
-	TransactionId bbf_ext_xmin = InvalidTransactionId;
-	ItemPointerData bbf_ext_tid;
 
 	/* saved for validate_parse_cache ANTLR parse tree comparison */
 	PLtsql_stmt_block *validation_cached_tree = NULL;  
@@ -471,8 +439,6 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fn_oid = fcinfo->flinfo->fn_oid;
 	function->fn_xmin = HeapTupleHeaderGetRawXmin(procTup->t_data);
 	function->fn_tid = procTup->t_self;
-	function->bbf_ext_xmin = InvalidTransactionId;
-	ItemPointerSetInvalid(&function->bbf_ext_tid);
 	function->fn_input_collation = fcinfo->fncollation;
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1; /* set up for no OUT param */
@@ -994,8 +960,6 @@ do_compile(FunctionCallInfo fcinfo,
 		ANTLR_result result;
 		PLtsql_cached_parse_result *cached_result = NULL;
 
-		ItemPointerSetInvalid(&bbf_ext_tid);
-
 		/*
 		 * Try to restore cached parse result from previous compilation (pltsql_enable_antlr_parse_cache).
 		 * This allows us to skip expensive ANTLR parsing for new session execution of routines.
@@ -1019,9 +983,7 @@ do_compile(FunctionCallInfo fcinfo,
 			}
 
 			cached_result = pltsql_restore_antlr_parse_cache_result(procTup,
-															 &antlr_parse_cache_enabled_for_func,
-															 &bbf_ext_xmin,
-															 &bbf_ext_tid);
+															 &antlr_parse_cache_enabled_for_func);
 
 			/* Restore original context */
 			MemoryContextSwitchTo(save_cxt);
@@ -1039,52 +1001,6 @@ do_compile(FunctionCallInfo fcinfo,
 				
 				/* Mark that this function was loaded from persistent cache */
 				function->from_cache = true;
-
-				/*
-				 * Re-derive found_varno and fetch_status_varno from cached
-				 * datums by scanning refnames.
-				 *
-				 * The cache was serialized from the validator-compiled function
-				 * which may have a different datum layout than what do_compile
-				 * built above (e.g., for ITVFs the validator serializes BEFORE
-				 * pg_proc is updated with TABLE-mode columns, so the cache has
-				 * fewer datums than the runtime parameter loop creates).
-				 * Scanning by refname makes us layout-independent.
-				 *
-				 * in_arg_varnos is NOT re-derived here — the parameter loop
-				 * above already set it correctly from pg_proc metadata, and
-				 * scanning '@'-prefixed refnames would also match local
-				 * variables, overflowing the pronargs-sized buffer.
-				 */
-				function->found_varno = -1;
-				function->fetch_status_varno = -1;
-
-				for (ci = 0; ci < cached_result->ndatums; ci++)
-				{
-					PLtsql_datum *d = cached_result->datums[ci];
-
-					if (d->dtype == PLTSQL_DTYPE_VAR)
-					{
-						PLtsql_var *v = (PLtsql_var *) d;
-
-						if (v->refname && strcmp(v->refname, "found") == 0)
-							function->found_varno = d->dno;
-						else if (v->refname && strcmp(v->refname, "@@fetch_status") == 0)
-							function->fetch_status_varno = d->dno;
-					}
-				}
-
-				/*
-				 * Do NOT re-derive in_arg_varnos from cached datums.
-				 * The parameter loop above already populated in_arg_varnos
-				 * correctly from pg_proc metadata. Re-scanning cached datums
-				 * for '@'-prefixed refnames would also match local variables
-				 * (e.g. @sql, @precision), overflowing the in_arg_varnos
-				 * buffer which is sized for pronargs only.
-				 */
-
-				Assert(function->found_varno >= 0);
-				Assert(function->fetch_status_varno >= 0);
 
 				/*
 				 * Re-derive out_param_varno from cached datums.
@@ -1172,8 +1088,7 @@ do_compile(FunctionCallInfo fcinfo,
 			}
 			else
 			{
-				/* No cached parse result — clear bbf_ext_xmin */
-				bbf_ext_xmin = InvalidTransactionId;
+				/* No cached parse result */
 				/* Only count as miss if caching was enabled but cache was empty/invalid */
 				if (antlr_parse_cache_enabled_for_func)
 					pltsql_antlr_parse_cache_stat_misses++;
@@ -1269,12 +1184,6 @@ skip_antlr_parsing:
 	 */
 	if (!forValidator && !function->from_cache)
 		pltsql_update_func_antlr_parse_cache(procTup, function);
-	else if (TransactionIdIsValid(bbf_ext_xmin))
-	{
-		/* No cache write — use the xmin/tid captured by pltsql_restore_antlr_parse_cache_result */
-		function->bbf_ext_xmin = bbf_ext_xmin;
-		function->bbf_ext_tid = bbf_ext_tid;
-	}
 
 	/* Debug dump for completed functions */
 	if (pltsql_DumpExecTree || pltsql_trace_tree)
@@ -3486,7 +3395,8 @@ pltsql_HashTableLookup(PLtsql_func_hashkey *func_key)
 		 *
 		 * Note: Per-function antlr_parse_cache_enabled column is not checked here
 		 * to avoid expensive syscache lookup on every call. Instead, pltsql_compile
-		 * uses xmin check to detect catalog changes and invalidate stale entries.
+		 * calls is_antlr_parse_cache_enabled_for_routine() to detect per-function
+		 * overrides or concurrent toggles and invalidates stale entries.
 		 */
 		if (!pltsql_enable_antlr_parse_cache && hentry->function->from_cache)
 		{

@@ -39,9 +39,8 @@ typedef struct PLtsql_cached_parse_result
 } PLtsql_cached_parse_result;
 
 extern PLtsql_cached_parse_result *pltsql_restore_antlr_parse_cache_result(HeapTuple proctup,
-																	bool *out_cache_enabled,
-																	TransactionId *out_bbf_ext_xmin,
-																	ItemPointerData *out_bbf_ext_tid);
+																	bool *out_cache_enabled);
+extern bool is_antlr_parse_cache_enabled_for_routine(HeapTuple proctup, HeapTuple bbftup);
 extern void pltsql_fill_antlr_parse_cache_columns(PLtsql_function *function,
 												  Datum *new_record,
 												  bool *new_record_nulls, 
