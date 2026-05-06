@@ -1,8 +1,122 @@
 SET BABELFISH_STATISTICS PROFILE on
 GO
 
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP0 - Start' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP0 - Start#!#2026-05-06 04:46:11.780
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.178 ms
+Execution Time: 0.065 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.038..0.038 rows=1 loops=1)
+  Filter: ((spec_culture)::text = 'EN_US'::text COLLATE "C")
+  Rows Removed by Filter: 24
+Planning Time: 0.432 ms
+Execution Time: 0.143 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.01 rows=1 width=32) (actual time=0.011..0.012 rows=1 loops=1)
+Planning Time: 0.051 ms
+Execution Time: 0.037 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP0 - Start' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=15.163..15.163 rows=1 loops=1)
+Planning Time: 0.027 ms
+Execution Time: 3.640 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 95.999 ms
+~~END~~
+
+
 CREATE TABLE fpn_table (a int, b varchar(10))
 GO
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP1 - After CREATE TABLE' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP1 - After CREATE TABLE#!#2026-05-06 04:46:11.833
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.050 ms
+Execution Time: 0.037 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.030..0.030 rows=1 loops=1)
+  Filter: ((spec_culture)::text = 'EN_US'::text COLLATE "C")
+  Rows Removed by Filter: 24
+Planning Time: 0.037 ms
+Execution Time: 0.081 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.01 rows=1 width=32) (actual time=0.008..0.008 rows=1 loops=1)
+Planning Time: 0.037 ms
+Execution Time: 0.026 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP1 - After CREATE TABLE' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.896..0.896 rows=1 loops=1)
+Planning Time: 0.037 ms
+Execution Time: 0.277 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.304 ms
+~~END~~
+
 
 SELECT * FROM bbf_fpn_server.master.dbo.fpn_table
 GO
@@ -13,14 +127,71 @@ int#!#varchar
 ~~START~~
 text
 Query Text: SELECT * FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table')
-Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=102.936..102.936 rows=0 loops=1)
-Planning Time: 0.051 ms
-Execution Time: 348.580 ms
+Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=100.531..100.531 rows=0 loops=1)
+Planning Time: 0.031 ms
+Execution Time: 355.621 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 68.132 ms
+Babelfish T-SQL Batch Parsing Time: 42.573 ms
+~~END~~
+
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP2 - After SELECT empty remote' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP2 - After SELECT empty remote#!#2026-05-06 04:46:12.490
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.048 ms
+Execution Time: 0.033 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.029..0.029 rows=1 loops=1)
+  Filter: ((spec_culture)::text = 'EN_US'::text COLLATE "C")
+  Rows Removed by Filter: 24
+Planning Time: 0.035 ms
+Execution Time: 0.081 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.01 rows=1 width=32) (actual time=0.008..0.008 rows=1 loops=1)
+Planning Time: 0.038 ms
+Execution Time: 0.026 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP2 - After SELECT empty remote' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.891..0.892 rows=1 loops=1)
+Planning Time: 0.038 ms
+Execution Time: 0.265 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.394 ms
 ~~END~~
 
 
@@ -34,10 +205,10 @@ GO
 ~~START~~
 text
 Query Text: INSERT INTO fpn_table VALUES (1, 'one')
-Insert on fpn_table  (cost=0.00..0.01 rows=0 width=0) (actual time=0.124..0.125 rows=0 loops=1)
-  ->  Result  (cost=0.00..0.01 rows=1 width=36) (actual time=0.007..0.008 rows=1 loops=1)
-Planning Time: 0.074 ms
-Execution Time: 0.180 ms
+Insert on fpn_table  (cost=0.00..0.01 rows=0 width=0) (actual time=0.144..0.144 rows=0 loops=1)
+  ->  Result  (cost=0.00..0.01 rows=1 width=36) (actual time=0.001..0.001 rows=1 loops=1)
+Planning Time: 0.032 ms
+Execution Time: 0.181 ms
 ~~END~~
 
 ~~ROW COUNT: 1~~
@@ -45,10 +216,10 @@ Execution Time: 0.180 ms
 ~~START~~
 text
 Query Text: INSERT INTO fpn_table VALUES (2, 'two')
-Insert on fpn_table  (cost=0.00..0.01 rows=0 width=0) (actual time=0.014..0.014 rows=0 loops=1)
+Insert on fpn_table  (cost=0.00..0.01 rows=0 width=0) (actual time=0.013..0.013 rows=0 loops=1)
   ->  Result  (cost=0.00..0.01 rows=1 width=36) (actual time=0.001..0.001 rows=1 loops=1)
 Planning Time: 0.026 ms
-Execution Time: 0.049 ms
+Execution Time: 0.042 ms
 ~~END~~
 
 ~~ROW COUNT: 1~~
@@ -56,10 +227,10 @@ Execution Time: 0.049 ms
 ~~START~~
 text
 Query Text: INSERT INTO fpn_table VALUES (3, 'three')
-Insert on fpn_table  (cost=0.00..0.01 rows=0 width=0) (actual time=0.017..0.017 rows=0 loops=1)
+Insert on fpn_table  (cost=0.00..0.01 rows=0 width=0) (actual time=0.013..0.013 rows=0 loops=1)
   ->  Result  (cost=0.00..0.01 rows=1 width=36) (actual time=0.001..0.001 rows=1 loops=1)
-Planning Time: 0.034 ms
-Execution Time: 0.055 ms
+Planning Time: 0.024 ms
+Execution Time: 0.041 ms
 ~~END~~
 
 ~~ROW COUNT: 1~~
@@ -67,19 +238,75 @@ Execution Time: 0.055 ms
 ~~START~~
 text
 Query Text: INSERT INTO fpn_table VALUES (4, 'four')
-Insert on fpn_table  (cost=0.00..0.01 rows=0 width=0) (actual time=0.013..0.013 rows=0 loops=1)
+Insert on fpn_table  (cost=0.00..0.01 rows=0 width=0) (actual time=0.012..0.012 rows=0 loops=1)
   ->  Result  (cost=0.00..0.01 rows=1 width=36) (actual time=0.001..0.001 rows=1 loops=1)
 Planning Time: 0.025 ms
-Execution Time: 0.042 ms
+Execution Time: 0.040 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 13.159 ms
+Babelfish T-SQL Batch Parsing Time: 5.376 ms
 ~~END~~
 
 
--- server_name.database_name.schema_name.object_name (table)
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP3 - After INSERTs' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP3 - After INSERTs#!#2026-05-06 04:46:12.507
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.042 ms
+Execution Time: 0.029 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.028..0.029 rows=1 loops=1)
+  Filter: ((spec_culture)::text = 'EN_US'::text COLLATE "C")
+  Rows Removed by Filter: 24
+Planning Time: 0.033 ms
+Execution Time: 0.074 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.01 rows=1 width=32) (actual time=0.007..0.007 rows=1 loops=1)
+Planning Time: 0.035 ms
+Execution Time: 0.025 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP3 - After INSERTs' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.795..0.796 rows=1 loops=1)
+Planning Time: 0.035 ms
+Execution Time: 0.241 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.364 ms
+~~END~~
+
+
 SELECT a, b FROM bbf_fpn_server.master.dbo.fpn_table
 GO
 ~~START~~
@@ -93,18 +320,74 @@ int#!#varchar
 ~~START~~
 text
 Query Text: SELECT a, b FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table')
-Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=100.349..100.352 rows=4 loops=1)
-Planning Time: 0.036 ms
-Execution Time: 344.557 ms
+Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=99.278..99.280 rows=4 loops=1)
+Planning Time: 0.032 ms
+Execution Time: 357.005 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 17.220 ms
+Babelfish T-SQL Batch Parsing Time: 11.549 ms
 ~~END~~
 
 
--- server_name.database_name.schema_name.object_name (view)
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP4 - After SELECT remote table' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP4 - After SELECT remote table#!#2026-05-06 04:46:13.137
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.000..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.048 ms
+Execution Time: 0.031 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.028..0.028 rows=1 loops=1)
+  Filter: ((spec_culture)::text = 'EN_US'::text COLLATE "C")
+  Rows Removed by Filter: 24
+Planning Time: 0.034 ms
+Execution Time: 0.077 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.01 rows=1 width=32) (actual time=0.007..0.008 rows=1 loops=1)
+Planning Time: 0.038 ms
+Execution Time: 0.025 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP4 - After SELECT remote table' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.875..0.875 rows=1 loops=1)
+Planning Time: 0.038 ms
+Execution Time: 0.258 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.373 ms
+~~END~~
+
+
 SELECT * FROM bbf_fpn_server.master.sys.data_spaces
 GO
 ~~START~~
@@ -115,18 +398,74 @@ PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
 ~~START~~
 text
 Query Text: SELECT * FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.sys.data_spaces')
-Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=102) (actual time=108.522..108.524 rows=1 loops=1)
-Planning Time: 0.038 ms
-Execution Time: 369.201 ms
+Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=102) (actual time=104.127..104.129 rows=1 loops=1)
+Planning Time: 0.031 ms
+Execution Time: 362.818 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.334 ms
+Babelfish T-SQL Batch Parsing Time: 0.234 ms
 ~~END~~
 
 
--- server_name.database_name..object_name
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP5 - After SELECT remote view' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP5 - After SELECT remote view#!#2026-05-06 04:46:13.760
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.035 ms
+Execution Time: 0.031 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.027..0.027 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.027 ms
+Execution Time: 0.079 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.020..0.021 rows=1 loops=1)
+Planning Time: 0.027 ms
+Execution Time: 0.040 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP5 - After SELECT remote view' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.953..0.954 rows=1 loops=1)
+Planning Time: 0.027 ms
+Execution Time: 0.262 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.377 ms
+~~END~~
+
+
 SELECT a + 1, b FROM bbf_fpn_server.master..fpn_table
 GO
 ~~START~~
@@ -140,18 +479,74 @@ int#!#varchar
 ~~START~~
 text
 Query Text: SELECT a + 1, b FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master..fpn_table')
-Function Scan on openquery_internal  (cost=0.00..12.50 rows=1000 width=42) (actual time=85.283..85.287 rows=4 loops=1)
-Planning Time: 0.316 ms
-Execution Time: 318.556 ms
+Function Scan on openquery_internal  (cost=0.00..12.50 rows=1000 width=42) (actual time=85.836..85.840 rows=4 loops=1)
+Planning Time: 0.032 ms
+Execution Time: 323.225 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 30.151 ms
+Babelfish T-SQL Batch Parsing Time: 30.619 ms
 ~~END~~
 
 
--- server_name..schema_name.object_name
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP6 - After SELECT db..object' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP6 - After SELECT db..object#!#2026-05-06 04:46:14.360
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.049 ms
+Execution Time: 0.031 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.029..0.029 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.049 ms
+Execution Time: 0.080 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.020 rows=1 loops=1)
+Planning Time: 0.049 ms
+Execution Time: 0.039 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP6 - After SELECT db..object' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.802..0.802 rows=1 loops=1)
+Planning Time: 0.049 ms
+Execution Time: 0.261 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.401 ms
+~~END~~
+
+
 SELECT * FROM bbf_fpn_server..sys.data_spaces
 GO
 ~~START~~
@@ -162,18 +557,74 @@ PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
 ~~START~~
 text
 Query Text: SELECT * FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM .sys.data_spaces')
-Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=102) (actual time=91.824..91.826 rows=1 loops=1)
-Planning Time: 0.038 ms
-Execution Time: 338.409 ms
+Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=102) (actual time=94.011..94.013 rows=1 loops=1)
+Planning Time: 0.031 ms
+Execution Time: 338.927 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 8.628 ms
+Babelfish T-SQL Batch Parsing Time: 8.318 ms
 ~~END~~
 
 
--- server_name...object_name
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP7 - After SELECT ..schema.object' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP7 - After SELECT ..schema.object#!#2026-05-06 04:46:14.957
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.045 ms
+Execution Time: 0.032 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.030..0.030 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.045 ms
+Execution Time: 0.082 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.020..0.022 rows=1 loops=1)
+Planning Time: 0.045 ms
+Execution Time: 0.040 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP7 - After SELECT ..schema.object' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.789..0.790 rows=1 loops=1)
+Planning Time: 0.045 ms
+Execution Time: 0.263 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.378 ms
+~~END~~
+
+
 SELECT a*2, REVERSE(b) FROM bbf_fpn_server...fpn_table
 GO
 ~~START~~
@@ -187,18 +638,74 @@ int#!#varchar
 ~~START~~
 text
 Query Text: SELECT a*2, REVERSE(b) FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM ..fpn_table')
-Function Scan on openquery_internal  (cost=0.00..262.50 rows=1000 width=36) (actual time=78.983..78.996 rows=4 loops=1)
+Function Scan on openquery_internal  (cost=0.00..262.50 rows=1000 width=36) (actual time=80.217..80.232 rows=4 loops=1)
 Planning Time: 0.021 ms
-Execution Time: 304.632 ms
+Execution Time: 312.315 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 40.895 ms
+Babelfish T-SQL Batch Parsing Time: 26.379 ms
 ~~END~~
 
 
--- Invalid server name (Should throw error)
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP8 - After SELECT ...object' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP8 - After SELECT ...object#!#2026-05-06 04:46:15.537
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.047 ms
+Execution Time: 0.031 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.026..0.027 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.047 ms
+Execution Time: 0.075 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.021 rows=1 loops=1)
+Planning Time: 0.047 ms
+Execution Time: 0.038 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP8 - After SELECT ...object' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.761..0.761 rows=1 loops=1)
+Planning Time: 0.047 ms
+Execution Time: 0.259 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.365 ms
+~~END~~
+
+
 SELECT * FROM invalid_server.master.dbo.fpn_table
 GO
 ~~ERROR (Code: 33557097)~~
@@ -206,7 +713,63 @@ GO
 ~~ERROR (Message: server "invalid_server" does not exist)~~
 
 
--- Invalid database name (Should throw error)
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP9 - After invalid server' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP9 - After invalid server#!#2026-05-06 04:46:15.540
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.037 ms
+Execution Time: 0.028 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.021..0.021 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.037 ms
+Execution Time: 0.063 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.016..0.018 rows=1 loops=1)
+Planning Time: 0.037 ms
+Execution Time: 0.035 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP9 - After invalid server' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.617..0.617 rows=1 loops=1)
+Planning Time: 0.037 ms
+Execution Time: 0.223 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.215 ms
+~~END~~
+
+
 SELECT * FROM bbf_fpn_server.invalid_db.dbo.fpn_table
 GO
 ~~ERROR (Code: 33557097)~~
@@ -214,7 +777,63 @@ GO
 ~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "invalid_db_dbo.fpn_table" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
 
 
--- Invalid schema name (Should throw error)
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP10 - After invalid db' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP10 - After invalid db#!#2026-05-06 04:46:15.720
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.048 ms
+Execution Time: 0.038 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.035..0.036 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.048 ms
+Execution Time: 0.097 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.020 rows=1 loops=1)
+Planning Time: 0.048 ms
+Execution Time: 0.041 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP10 - After invalid db' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.816..0.816 rows=1 loops=1)
+Planning Time: 0.048 ms
+Execution Time: 0.274 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.326 ms
+~~END~~
+
+
 SELECT * FROM bbf_fpn_server.master.invalid_schema.fpn_table
 GO
 ~~ERROR (Code: 33557097)~~
@@ -222,7 +841,63 @@ GO
 ~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "invalid_schema.fpn_table" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
 
 
--- Invalid object name (Should throw error)
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP11 - After invalid schema' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP11 - After invalid schema#!#2026-05-06 04:46:15.890
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.057 ms
+Execution Time: 0.044 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.035..0.035 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.057 ms
+Execution Time: 0.094 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.022..0.023 rows=1 loops=1)
+Planning Time: 0.057 ms
+Execution Time: 0.046 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP11 - After invalid schema' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.900..0.900 rows=1 loops=1)
+Planning Time: 0.057 ms
+Execution Time: 0.292 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.362 ms
+~~END~~
+
+
 SELECT * FROM bbf_fpn_server.master.dbo.invalid_fpn_table
 GO
 ~~ERROR (Code: 33557097)~~
@@ -230,7 +905,63 @@ GO
 ~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "dbo.invalid_fpn_table" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
 
 
--- four part object is a procedure (Should throw error)
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP12 - After invalid object' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP12 - After invalid object#!#2026-05-06 04:46:16.060
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.049 ms
+Execution Time: 0.037 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.030..0.031 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.049 ms
+Execution Time: 0.082 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.018..0.019 rows=1 loops=1)
+Planning Time: 0.049 ms
+Execution Time: 0.038 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP12 - After invalid object' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.802..0.803 rows=1 loops=1)
+Planning Time: 0.049 ms
+Execution Time: 0.259 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.354 ms
+~~END~~
+
+
 EXEC bbf_fpn_server.master.dbo.sp_linkedserver
 GO
 ~~ERROR (Code: 33557097)~~
@@ -238,7 +969,63 @@ GO
 ~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
 
 
--- INSERT should not work with four-part object name
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP13 - After EXEC error' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP13 - After EXEC error#!#2026-05-06 04:46:16.067
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.040 ms
+Execution Time: 0.028 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.024..0.024 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.040 ms
+Execution Time: 0.069 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.016..0.017 rows=1 loops=1)
+Planning Time: 0.040 ms
+Execution Time: 0.035 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP13 - After EXEC error' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.653..0.653 rows=1 loops=1)
+Planning Time: 0.040 ms
+Execution Time: 0.232 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.220 ms
+~~END~~
+
+
 INSERT INTO bbf_fpn_server.master.dbo.fpn_table VALUES (5, 'five')
 GO
 ~~ERROR (Code: 33557097)~~
@@ -246,7 +1033,63 @@ GO
 ~~ERROR (Message: INSERT on a 4-part object name is not yet supported in Babelfish)~~
 
 
--- UPDATE should not work with four-part object name
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP14 - After INSERT error' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP14 - After INSERT error#!#2026-05-06 04:46:16.067
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.036 ms
+Execution Time: 0.026 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.020..0.020 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.036 ms
+Execution Time: 0.060 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.015..0.016 rows=1 loops=1)
+Planning Time: 0.036 ms
+Execution Time: 0.033 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP14 - After INSERT error' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.566..0.566 rows=1 loops=1)
+Planning Time: 0.036 ms
+Execution Time: 0.208 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.161 ms
+~~END~~
+
+
 UPDATE bbf_fpn_server.master.dbo.fpn_table SET b = 'Update one' WHERE a = 1
 GO
 ~~ERROR (Code: 33557097)~~
@@ -254,7 +1097,63 @@ GO
 ~~ERROR (Message: UPDATE on a 4-part object name is not yet supported in Babelfish)~~
 
 
--- DELETE should not work with four-part object name
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP15 - After UPDATE error' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP15 - After UPDATE error#!#2026-05-06 04:46:16.183
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.039 ms
+Execution Time: 0.029 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.021..0.021 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.039 ms
+Execution Time: 0.063 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.016..0.017 rows=1 loops=1)
+Planning Time: 0.039 ms
+Execution Time: 0.035 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP15 - After UPDATE error' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.656..0.657 rows=1 loops=1)
+Planning Time: 0.039 ms
+Execution Time: 0.217 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.369 ms
+~~END~~
+
+
 DELETE FROM bbf_fpn_server.master.dbo.fpn_table WHERE a = 1
 GO
 ~~ERROR (Code: 33557097)~~
@@ -262,9 +1161,122 @@ GO
 ~~ERROR (Message: DELETE on a 4-part object name is not yet supported in Babelfish)~~
 
 
--- CREATE VIEW using four-part names
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP16 - After DELETE error' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP16 - After DELETE error#!#2026-05-06 04:46:16.227
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.000..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.038 ms
+Execution Time: 0.027 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.021..0.021 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.038 ms
+Execution Time: 0.063 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.015..0.017 rows=1 loops=1)
+Planning Time: 0.038 ms
+Execution Time: 0.035 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP16 - After DELETE error' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.617..0.617 rows=1 loops=1)
+Planning Time: 0.038 ms
+Execution Time: 0.262 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.182 ms
+~~END~~
+
+
 CREATE VIEW four_part_names_vu_verify_view AS SELECT * FROM bbf_fpn_server.master.dbo.fpn_table
 GO
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP17 - After CREATE VIEW' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP17 - After CREATE VIEW#!#2026-05-06 04:46:16.987
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.047 ms
+Execution Time: 0.039 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.028..0.028 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.047 ms
+Execution Time: 0.078 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.020 rows=1 loops=1)
+Planning Time: 0.047 ms
+Execution Time: 0.040 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP17 - After CREATE VIEW' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.757..0.757 rows=1 loops=1)
+Planning Time: 0.047 ms
+Execution Time: 0.257 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.387 ms
+~~END~~
+
 
 SELECT * FROM four_part_names_vu_verify_view
 GO
@@ -279,20 +1291,133 @@ int#!#varchar
 ~~START~~
 text
 Query Text: SELECT * FROM four_part_names_vu_verify_view
-Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=102.198..102.201 rows=4 loops=1)
-Planning Time: 0.073 ms
-Execution Time: 343.486 ms
+Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=99.901..99.904 rows=4 loops=1)
+Planning Time: 0.033 ms
+Execution Time: 352.023 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.387 ms
+Babelfish T-SQL Batch Parsing Time: 0.180 ms
 ~~END~~
 
 
--- INSERT INTO ... SELECT
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP18 - After SELECT from view' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP18 - After SELECT from view#!#2026-05-06 04:46:17.343
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.050 ms
+Execution Time: 0.033 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.031..0.031 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.050 ms
+Execution Time: 0.084 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.020 rows=1 loops=1)
+Planning Time: 0.050 ms
+Execution Time: 0.040 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP18 - After SELECT from view' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.889..0.889 rows=1 loops=1)
+Planning Time: 0.050 ms
+Execution Time: 0.326 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.400 ms
+~~END~~
+
+
 CREATE TABLE fpn_table_insert_into (a int, b varchar(10))
 GO
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP19 - After CREATE TABLE insert_into' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP19 - After CREATE TABLE insert_into#!#2026-05-06 04:46:17.350
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.038 ms
+Execution Time: 0.028 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.022..0.022 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.038 ms
+Execution Time: 0.064 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.016..0.017 rows=1 loops=1)
+Planning Time: 0.038 ms
+Execution Time: 0.035 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP19 - After CREATE TABLE insert_into' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.625..0.626 rows=1 loops=1)
+Planning Time: 0.038 ms
+Execution Time: 0.226 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.230 ms
+~~END~~
+
 
 INSERT INTO fpn_table_insert_into SELECT * FROM bbf_fpn_server.master.dbo.fpn_table WHERE a < 4
 GO
@@ -301,17 +1426,74 @@ GO
 ~~START~~
 text
 Query Text: INSERT INTO fpn_table_insert_into SELECT * FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table') WHERE a < 4
-Insert on fpn_table_insert_into  (cost=0.00..13.33 rows=0 width=0) (actual time=100.913..100.914 rows=0 loops=1)
-  ->  Function Scan on openquery_internal  (cost=0.00..13.33 rows=333 width=36) (actual time=100.729..100.739 rows=3 loops=1)
+Insert on fpn_table_insert_into  (cost=0.00..13.33 rows=0 width=0) (actual time=101.976..101.977 rows=0 loops=1)
+  ->  Function Scan on openquery_internal  (cost=0.00..13.33 rows=333 width=36) (actual time=101.788..101.798 rows=3 loops=1)
         Filter: ((a)::integer < 4)
         Rows Removed by Filter: 1
 Planning Time: 0.056 ms
-Execution Time: 341.545 ms
+Execution Time: 354.092 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.235 ms
+Babelfish T-SQL Batch Parsing Time: 8.974 ms
+~~END~~
+
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP20 - After INSERT INTO SELECT' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP20 - After INSERT INTO SELECT#!#2026-05-06 04:46:17.970
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.049 ms
+Execution Time: 0.031 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.028..0.029 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.049 ms
+Execution Time: 0.078 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.020..0.022 rows=1 loops=1)
+Planning Time: 0.049 ms
+Execution Time: 0.041 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP20 - After INSERT INTO SELECT' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.819..0.819 rows=1 loops=1)
+Planning Time: 0.049 ms
+Execution Time: 0.270 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.438 ms
 ~~END~~
 
 
@@ -327,31 +1509,144 @@ int#!#varchar
 ~~START~~
 text
 Query Text: SELECT * FROM fpn_table_insert_into
-Seq Scan on fpn_table_insert_into  (cost=0.00..22.70 rows=1270 width=36) (actual time=0.008..0.009 rows=3 loops=1)
-Planning Time: 0.077 ms
-Execution Time: 0.093 ms
+Seq Scan on fpn_table_insert_into  (cost=0.00..22.70 rows=1270 width=36) (actual time=0.009..0.010 rows=3 loops=1)
+Planning Time: 0.055 ms
+Execution Time: 0.073 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.185 ms
+Babelfish T-SQL Batch Parsing Time: 0.099 ms
 ~~END~~
 
 
--- SELECT INTO
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP21 - After SELECT fpn_table_insert_into' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP21 - After SELECT fpn_table_insert_into#!#2026-05-06 04:46:17.973
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.036 ms
+Execution Time: 0.027 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.021..0.022 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.036 ms
+Execution Time: 0.064 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.015..0.016 rows=1 loops=1)
+Planning Time: 0.036 ms
+Execution Time: 0.034 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP21 - After SELECT fpn_table_insert_into' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.612..0.612 rows=1 loops=1)
+Planning Time: 0.036 ms
+Execution Time: 0.219 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.193 ms
+~~END~~
+
+
 SELECT * INTO fpn_table_select_into FROM bbf_fpn_server.master.dbo.fpn_table
 GO
 ~~START~~
 text
 Query Text: SELECT * INTO fpn_table_select_into FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table')
-Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=101.574..101.578 rows=4 loops=1)
-Planning Time: 0.040 ms
-Execution Time: 344.546 ms
+Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=99.993..99.997 rows=4 loops=1)
+Planning Time: 0.029 ms
+Execution Time: 353.346 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.254 ms
+Babelfish T-SQL Batch Parsing Time: 0.193 ms
+~~END~~
+
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP22 - After SELECT INTO' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP22 - After SELECT INTO#!#2026-05-06 04:46:18.590
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.049 ms
+Execution Time: 0.032 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.029..0.029 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.049 ms
+Execution Time: 0.078 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.020..0.021 rows=1 loops=1)
+Planning Time: 0.049 ms
+Execution Time: 0.040 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP22 - After SELECT INTO' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.794..0.794 rows=1 loops=1)
+Planning Time: 0.049 ms
+Execution Time: 0.261 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.407 ms
 ~~END~~
 
 
@@ -369,17 +1664,73 @@ int#!#varchar
 text
 Query Text: SELECT * FROM fpn_table_select_into
 Seq Scan on fpn_table_select_into  (cost=0.00..21.60 rows=1160 width=42) (actual time=0.008..0.009 rows=4 loops=1)
-Planning Time: 0.081 ms
-Execution Time: 0.083 ms
+Planning Time: 0.084 ms
+Execution Time: 0.078 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.173 ms
+Babelfish T-SQL Batch Parsing Time: 0.093 ms
 ~~END~~
 
 
--- JOIN between local and remote table
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP23 - After SELECT fpn_table_select_into' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP23 - After SELECT fpn_table_select_into#!#2026-05-06 04:46:18.593
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.000..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.036 ms
+Execution Time: 0.027 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.020..0.020 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.036 ms
+Execution Time: 0.061 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.015..0.016 rows=1 loops=1)
+Planning Time: 0.036 ms
+Execution Time: 0.035 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP23 - After SELECT fpn_table_select_into' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.591..0.592 rows=1 loops=1)
+Planning Time: 0.036 ms
+Execution Time: 0.223 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.198 ms
+~~END~~
+
+
 SELECT fpn_table.*, t2.*
 FROM fpn_table_insert_into fpn_table
 LEFT JOIN 
@@ -400,23 +1751,80 @@ FROM fpn_table_insert_into fpn_table
 LEFT JOIN 
 openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table') t2
 ON fpn_table.a = t2.a
-Merge Right Join  (cost=148.00..248.25 rows=6350 width=78) (actual time=102.211..102.218 rows=3 loops=1)
+Merge Right Join  (cost=148.00..248.25 rows=6350 width=78) (actual time=103.713..103.720 rows=3 loops=1)
   Merge Cond: ((t2.a)::integer = fpn_table.a)
-  ->  Sort  (cost=59.83..62.33 rows=1000 width=42) (actual time=102.159..102.160 rows=4 loops=1)
+  ->  Sort  (cost=59.83..62.33 rows=1000 width=42) (actual time=103.669..103.671 rows=4 loops=1)
         Sort Key: t2.a
         Sort Method: quicksort  Memory: 25kB
-        ->  Function Scan on openquery_internal t2  (cost=0.00..10.00 rows=1000 width=42) (actual time=102.104..102.108 rows=4 loops=1)
-  ->  Sort  (cost=88.17..91.35 rows=1270 width=36) (actual time=0.041..0.042 rows=3 loops=1)
+        ->  Function Scan on openquery_internal t2  (cost=0.00..10.00 rows=1000 width=42) (actual time=103.630..103.634 rows=4 loops=1)
+  ->  Sort  (cost=88.17..91.35 rows=1270 width=36) (actual time=0.035..0.036 rows=3 loops=1)
         Sort Key: fpn_table.a
         Sort Method: quicksort  Memory: 25kB
-        ->  Seq Scan on fpn_table_insert_into fpn_table  (cost=0.00..22.70 rows=1270 width=36) (actual time=0.024..0.025 rows=3 loops=1)
-Planning Time: 0.446 ms
-Execution Time: 346.500 ms
+        ->  Seq Scan on fpn_table_insert_into fpn_table  (cost=0.00..22.70 rows=1270 width=36) (actual time=0.021..0.022 rows=3 loops=1)
+Planning Time: 0.430 ms
+Execution Time: 357.971 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 49.347 ms
+Babelfish T-SQL Batch Parsing Time: 47.961 ms
+~~END~~
+
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP24 - After JOIN local+remote' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP24 - After JOIN local+remote#!#2026-05-06 04:46:19.257
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.045 ms
+Execution Time: 0.030 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.026..0.026 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.045 ms
+Execution Time: 0.073 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.020..0.021 rows=1 loops=1)
+Planning Time: 0.045 ms
+Execution Time: 0.039 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP24 - After JOIN local+remote' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.795..0.796 rows=1 loops=1)
+Planning Time: 0.045 ms
+Execution Time: 0.281 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.372 ms
 ~~END~~
 
 
@@ -441,27 +1849,83 @@ FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table') 
 LEFT JOIN 
 fpn_table_insert_into t2
 ON fpn_table.a = t2.a
-Merge Left Join  (cost=148.00..248.25 rows=6350 width=40) (actual time=100.586..100.593 rows=4 loops=1)
+Merge Left Join  (cost=148.00..248.25 rows=6350 width=40) (actual time=100.290..100.297 rows=4 loops=1)
   Merge Cond: ((fpn_table.a)::integer = t2.a)
-  ->  Sort  (cost=59.83..62.33 rows=1000 width=4) (actual time=100.544..100.545 rows=4 loops=1)
+  ->  Sort  (cost=59.83..62.33 rows=1000 width=4) (actual time=100.249..100.250 rows=4 loops=1)
         Sort Key: fpn_table.a
         Sort Method: quicksort  Memory: 25kB
-        ->  Function Scan on openquery_internal fpn_table  (cost=0.00..10.00 rows=1000 width=4) (actual time=100.532..100.536 rows=4 loops=1)
-  ->  Sort  (cost=88.17..91.35 rows=1270 width=36) (actual time=0.034..0.035 rows=3 loops=1)
+        ->  Function Scan on openquery_internal fpn_table  (cost=0.00..10.00 rows=1000 width=4) (actual time=100.236..100.241 rows=4 loops=1)
+  ->  Sort  (cost=88.17..91.35 rows=1270 width=36) (actual time=0.033..0.034 rows=3 loops=1)
         Sort Key: t2.a
         Sort Method: quicksort  Memory: 25kB
         ->  Seq Scan on fpn_table_insert_into t2  (cost=0.00..22.70 rows=1270 width=36) (actual time=0.017..0.019 rows=3 loops=1)
-Planning Time: 0.117 ms
-Execution Time: 343.551 ms
+Planning Time: 0.095 ms
+Execution Time: 352.086 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.613 ms
+Babelfish T-SQL Batch Parsing Time: 6.335 ms
 ~~END~~
 
 
--- JOIN between two remote tables
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP25 - After JOIN remote+local' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP25 - After JOIN remote+local#!#2026-05-06 04:46:19.873
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.046 ms
+Execution Time: 0.031 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.030..0.030 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.046 ms
+Execution Time: 0.077 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.020 rows=1 loops=1)
+Planning Time: 0.046 ms
+Execution Time: 0.040 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP25 - After JOIN remote+local' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.804..0.805 rows=1 loops=1)
+Planning Time: 0.046 ms
+Execution Time: 0.279 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.384 ms
+~~END~~
+
+
 SELECT fpn_table.*, t2.a, t2.b
 FROM bbf_fpn_server.master.dbo.fpn_table fpn_table
 LEFT JOIN 
@@ -483,27 +1947,83 @@ FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table') 
 LEFT JOIN 
 openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table_insert_into') t2
 ON fpn_table.a = t2.a
-Merge Left Join  (cost=119.66..199.66 rows=5000 width=84) (actual time=199.141..199.149 rows=4 loops=1)
+Merge Left Join  (cost=119.66..199.66 rows=5000 width=84) (actual time=197.474..197.481 rows=4 loops=1)
   Merge Cond: ((fpn_table.a)::integer = (t2.a)::integer)
-  ->  Sort  (cost=59.83..62.33 rows=1000 width=42) (actual time=100.179..100.182 rows=4 loops=1)
+  ->  Sort  (cost=59.83..62.33 rows=1000 width=42) (actual time=99.337..99.338 rows=4 loops=1)
         Sort Key: fpn_table.a
         Sort Method: quicksort  Memory: 25kB
-        ->  Function Scan on openquery_internal fpn_table  (cost=0.00..10.00 rows=1000 width=42) (actual time=100.161..100.165 rows=4 loops=1)
-  ->  Sort  (cost=59.83..62.33 rows=1000 width=42) (actual time=98.950..98.951 rows=3 loops=1)
+        ->  Function Scan on openquery_internal fpn_table  (cost=0.00..10.00 rows=1000 width=42) (actual time=99.319..99.322 rows=4 loops=1)
+  ->  Sort  (cost=59.83..62.33 rows=1000 width=42) (actual time=98.125..98.126 rows=3 loops=1)
         Sort Key: t2.a
         Sort Method: quicksort  Memory: 25kB
-        ->  Function Scan on openquery_internal t2  (cost=0.00..10.00 rows=1000 width=42) (actual time=98.931..98.934 rows=3 loops=1)
-Planning Time: 0.089 ms
-Execution Time: 682.775 ms
+        ->  Function Scan on openquery_internal t2  (cost=0.00..10.00 rows=1000 width=42) (actual time=98.108..98.111 rows=3 loops=1)
+Planning Time: 0.087 ms
+Execution Time: 704.818 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 9.992 ms
+Babelfish T-SQL Batch Parsing Time: 9.079 ms
 ~~END~~
 
 
--- UPDATE on local table with JOIN containing remote table
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP26 - After JOIN remote+remote' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP26 - After JOIN remote+remote#!#2026-05-06 04:46:21.093
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.048 ms
+Execution Time: 0.031 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.029..0.029 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.048 ms
+Execution Time: 0.075 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.020..0.021 rows=1 loops=1)
+Planning Time: 0.048 ms
+Execution Time: 0.040 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP26 - After JOIN remote+remote' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.778..0.779 rows=1 loops=1)
+Planning Time: 0.048 ms
+Execution Time: 0.262 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.355 ms
+~~END~~
+
+
 UPDATE Table_A
 SET
 Table_A.a = Table_B.a + 100,
@@ -529,22 +2049,79 @@ INNER JOIN openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_ta
 ON Table_A.a = Table_B.a
 WHERE
 Table_A.a < 3
-Update on fpn_table_insert_into table_a  (cost=31.17..149.04 rows=0 width=0) (actual time=100.885..100.888 rows=0 loops=1)
-  ->  Hash Join  (cost=31.17..149.04 rows=2115 width=108) (actual time=100.824..100.838 rows=2 loops=1)
+Update on fpn_table_insert_into table_a  (cost=31.17..149.04 rows=0 width=0) (actual time=99.402..99.405 rows=0 loops=1)
+  ->  Hash Join  (cost=31.17..149.04 rows=2115 width=108) (actual time=99.339..99.353 rows=2 loops=1)
         Hash Cond: ((table_b.a)::integer = table_a.a)
-        ->  Function Scan on openquery_internal table_b  (cost=0.00..10.00 rows=1000 width=108) (actual time=100.724..100.729 rows=4 loops=1)
-        ->  Hash  (cost=25.88..25.88 rows=423 width=10) (actual time=0.034..0.034 rows=2 loops=1)
+        ->  Function Scan on openquery_internal table_b  (cost=0.00..10.00 rows=1000 width=108) (actual time=99.243..99.249 rows=4 loops=1)
+        ->  Hash  (cost=25.88..25.88 rows=423 width=10) (actual time=0.032..0.032 rows=2 loops=1)
               Buckets: 1024  Batches: 1  Memory Usage: 9kB
-              ->  Seq Scan on fpn_table_insert_into table_a  (cost=0.00..25.88 rows=423 width=10) (actual time=0.026..0.029 rows=2 loops=1)
+              ->  Seq Scan on fpn_table_insert_into table_a  (cost=0.00..25.88 rows=423 width=10) (actual time=0.025..0.027 rows=2 loops=1)
                     Filter: (a < 3)
                     Rows Removed by Filter: 1
-Planning Time: 0.300 ms
-Execution Time: 343.253 ms
+Planning Time: 0.281 ms
+Execution Time: 353.832 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 31.262 ms
+Babelfish T-SQL Batch Parsing Time: 30.323 ms
+~~END~~
+
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP27 - After UPDATE with JOIN' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP27 - After UPDATE with JOIN#!#2026-05-06 04:46:21.737
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.047 ms
+Execution Time: 0.030 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.026..0.027 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.047 ms
+Execution Time: 0.075 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.020 rows=1 loops=1)
+Planning Time: 0.047 ms
+Execution Time: 0.039 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP27 - After UPDATE with JOIN' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.791..0.792 rows=1 loops=1)
+Planning Time: 0.047 ms
+Execution Time: 0.266 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.390 ms
 ~~END~~
 
 
@@ -561,17 +2138,73 @@ int#!#varchar
 text
 Query Text: SELECT * FROM fpn_table_insert_into
 Seq Scan on fpn_table_insert_into  (cost=0.00..22.70 rows=1270 width=36) (actual time=0.011..0.012 rows=3 loops=1)
-Planning Time: 0.032 ms
-Execution Time: 0.103 ms
+Planning Time: 0.028 ms
+Execution Time: 0.093 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.179 ms
+Babelfish T-SQL Batch Parsing Time: 0.102 ms
 ~~END~~
 
 
--- DELETE on local table with JOIN containing remote table
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP28 - After SELECT fpn_table_insert_into' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP28 - After SELECT fpn_table_insert_into#!#2026-05-06 04:46:21.740
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.037 ms
+Execution Time: 0.027 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.020..0.020 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.037 ms
+Execution Time: 0.059 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.015..0.016 rows=1 loops=1)
+Planning Time: 0.037 ms
+Execution Time: 0.034 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP28 - After SELECT fpn_table_insert_into' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.582..0.583 rows=1 loops=1)
+Planning Time: 0.037 ms
+Execution Time: 0.213 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.192 ms
+~~END~~
+
+
 DELETE Table_A
 FROM
 fpn_table_select_into AS Table_A
@@ -591,26 +2224,83 @@ INNER JOIN openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_ta
 ON Table_A.a = Table_B.a
 WHERE
 (Table_A.a + Table_B.a) % 4 = 0
-Delete on fpn_table_select_into table_a  (cost=140.47..275.97 rows=0 width=0) (actual time=100.492..100.494 rows=0 loops=1)
-  ->  Merge Join  (cost=140.47..275.97 rows=29 width=34) (actual time=100.436..100.444 rows=2 loops=1)
+Delete on fpn_table_select_into table_a  (cost=140.47..275.97 rows=0 width=0) (actual time=99.391..99.393 rows=0 loops=1)
+  ->  Merge Join  (cost=140.47..275.97 rows=29 width=34) (actual time=99.360..99.366 rows=2 loops=1)
         Merge Cond: ((table_b.a)::integer = (table_a.a)::integer)
         Join Filter: ((((table_a.a)::integer + (table_b.a)::integer) % 4) = 0)
         Rows Removed by Join Filter: 2
-        ->  Sort  (cost=59.83..62.33 rows=1000 width=32) (actual time=100.382..100.383 rows=4 loops=1)
+        ->  Sort  (cost=59.83..62.33 rows=1000 width=32) (actual time=99.310..99.311 rows=4 loops=1)
               Sort Key: table_b.a
               Sort Method: quicksort  Memory: 25kB
-              ->  Function Scan on openquery_internal table_b  (cost=0.00..10.00 rows=1000 width=32) (actual time=100.363..100.368 rows=4 loops=1)
-        ->  Sort  (cost=80.64..83.54 rows=1160 width=10) (actual time=0.038..0.039 rows=4 loops=1)
+              ->  Function Scan on openquery_internal table_b  (cost=0.00..10.00 rows=1000 width=32) (actual time=99.293..99.298 rows=4 loops=1)
+        ->  Sort  (cost=80.64..83.54 rows=1160 width=10) (actual time=0.035..0.036 rows=4 loops=1)
               Sort Key: table_a.a
               Sort Method: quicksort  Memory: 25kB
-              ->  Seq Scan on fpn_table_select_into table_a  (cost=0.00..21.60 rows=1160 width=10) (actual time=0.024..0.026 rows=4 loops=1)
-Planning Time: 0.117 ms
-Execution Time: 342.416 ms
+              ->  Seq Scan on fpn_table_select_into table_a  (cost=0.00..21.60 rows=1160 width=10) (actual time=0.022..0.025 rows=4 loops=1)
+Planning Time: 0.124 ms
+Execution Time: 350.940 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 16.488 ms
+Babelfish T-SQL Batch Parsing Time: 16.223 ms
+~~END~~
+
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP29 - After DELETE with JOIN' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP29 - After DELETE with JOIN#!#2026-05-06 04:46:22.367
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.058 ms
+Execution Time: 0.039 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.036..0.036 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.058 ms
+Execution Time: 0.097 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.020..0.021 rows=1 loops=1)
+Planning Time: 0.058 ms
+Execution Time: 0.043 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP29 - After DELETE with JOIN' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.991..0.992 rows=1 loops=1)
+Planning Time: 0.058 ms
+Execution Time: 0.312 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.394 ms
 ~~END~~
 
 
@@ -625,18 +2315,74 @@ int#!#varchar
 ~~START~~
 text
 Query Text: SELECT * FROM fpn_table_select_into
-Seq Scan on fpn_table_select_into  (cost=0.00..21.60 rows=1160 width=42) (actual time=0.010..0.010 rows=2 loops=1)
-Planning Time: 0.025 ms
-Execution Time: 0.077 ms
+Seq Scan on fpn_table_select_into  (cost=0.00..21.60 rows=1160 width=42) (actual time=0.011..0.012 rows=2 loops=1)
+Planning Time: 0.024 ms
+Execution Time: 0.078 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.163 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
--- In CTE
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP30 - After SELECT fpn_table_select_into' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP30 - After SELECT fpn_table_select_into#!#2026-05-06 04:46:22.367
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.039 ms
+Execution Time: 0.028 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.020..0.020 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.039 ms
+Execution Time: 0.061 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.015..0.017 rows=1 loops=1)
+Planning Time: 0.039 ms
+Execution Time: 0.035 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP30 - After SELECT fpn_table_select_into' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.596..0.596 rows=1 loops=1)
+Planning Time: 0.039 ms
+Execution Time: 0.211 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.209 ms
+~~END~~
+
+
 WITH cte_table_for_fpn (a)
 AS
 (
@@ -657,21 +2403,77 @@ AS
         SELECT a from openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table')
 )
 SELECT AVG(a) FROM cte_table_for_fpn
-Aggregate  (cost=32.51..32.52 rows=1 width=4) (actual time=101.605..101.607 rows=1 loops=1)
+Aggregate  (cost=32.51..32.52 rows=1 width=4) (actual time=99.160..99.161 rows=1 loops=1)
   CTE cte_table_for_fpn
-    ->  Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=4) (actual time=101.537..101.541 rows=4 loops=1)
-  ->  CTE Scan on cte_table_for_fpn  (cost=0.00..20.00 rows=1000 width=4) (actual time=101.541..101.547 rows=4 loops=1)
-Planning Time: 0.129 ms
-Execution Time: 344.983 ms
+    ->  Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=4) (actual time=99.098..99.102 rows=4 loops=1)
+  ->  CTE Scan on cte_table_for_fpn  (cost=0.00..20.00 rows=1000 width=4) (actual time=99.101..99.113 rows=4 loops=1)
+Planning Time: 0.122 ms
+Execution Time: 358.136 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 35.893 ms
+Babelfish T-SQL Batch Parsing Time: 35.209 ms
 ~~END~~
 
 
--- In Subquery
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP31 - After CTE' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP31 - After CTE#!#2026-05-06 04:46:23.017
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.048 ms
+Execution Time: 0.032 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.028..0.028 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.048 ms
+Execution Time: 0.078 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.020..0.021 rows=1 loops=1)
+Planning Time: 0.048 ms
+Execution Time: 0.040 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP31 - After CTE' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.789..0.789 rows=1 loops=1)
+Planning Time: 0.048 ms
+Execution Time: 0.273 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.429 ms
+~~END~~
+
+
 SELECT * FROM fpn_table_insert_into WHERE a > (SELECT MAX(a) FROM bbf_fpn_server.master.dbo.fpn_table)
 GO
 ~~START~~
@@ -683,19 +2485,76 @@ int#!#varchar
 ~~START~~
 text
 Query Text: SELECT * FROM fpn_table_insert_into WHERE a > (SELECT MAX(a) FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table'))
-Seq Scan on fpn_table_insert_into  (cost=12.51..38.39 rows=423 width=36) (actual time=101.772..101.775 rows=2 loops=1)
+Seq Scan on fpn_table_insert_into  (cost=12.51..38.39 rows=423 width=36) (actual time=100.077..100.080 rows=2 loops=1)
   Filter: (a > (InitPlan 1).col1)
   Rows Removed by Filter: 1
   InitPlan 1
-    ->  Aggregate  (cost=12.50..12.51 rows=1 width=4) (actual time=101.745..101.745 rows=1 loops=1)
-          ->  Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=4) (actual time=101.729..101.731 rows=4 loops=1)
-Planning Time: 240.879 ms
-Execution Time: 344.612 ms
+    ->  Aggregate  (cost=12.50..12.51 rows=1 width=4) (actual time=100.051..100.051 rows=1 loops=1)
+          ->  Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=4) (actual time=100.035..100.038 rows=4 loops=1)
+Planning Time: 254.420 ms
+Execution Time: 353.937 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 27.423 ms
+Babelfish T-SQL Batch Parsing Time: 26.000 ms
+~~END~~
+
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP32 - After subquery MAX' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP32 - After subquery MAX#!#2026-05-06 04:46:23.910
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.047 ms
+Execution Time: 0.031 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.029..0.029 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.047 ms
+Execution Time: 0.076 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.020..0.021 rows=1 loops=1)
+Planning Time: 0.047 ms
+Execution Time: 0.041 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP32 - After subquery MAX' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.796..0.797 rows=1 loops=1)
+Planning Time: 0.047 ms
+Execution Time: 0.275 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.385 ms
 ~~END~~
 
 
@@ -710,31 +2569,82 @@ int#!#varchar
 ~~START~~
 text
 Query Text: SELECT * FROM fpn_table_select_into WHERE b IN (SELECT b FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table'))
-Merge Join  (cost=153.12..178.32 rows=580 width=42) (actual time=101.264..101.459 rows=2 loops=1)
-  Merge Cond: (((fpn_table_select_into.b)::sql_variant) = (((openquery_internal.b)::sql_variant))::sql_variant)
-  ->  Sort  (cost=80.64..83.54 rows=1160 width=42) (actual time=0.218..0.220 rows=2 loops=1)
-        Sort Key: ((fpn_table_select_into.b)::sql_variant) COLLATE "default"
-        Sort Method: quicksort  Memory: 25kB
-        ->  Seq Scan on fpn_table_select_into  (cost=0.00..21.60 rows=1160 width=42) (actual time=0.067..0.081 rows=2 loops=1)
-  ->  Sort  (cost=72.48..72.98 rows=200 width=38) (actual time=100.884..100.885 rows=3 loops=1)
-        Sort Key: ((openquery_internal.b)::sql_variant) COLLATE "default"
-        Sort Method: quicksort  Memory: 25kB
-        ->  Unique  (cost=59.83..64.83 rows=200 width=38) (actual time=100.544..100.724 rows=4 loops=1)
-              ->  Sort  (cost=59.83..62.33 rows=1000 width=38) (actual time=100.542..100.543 rows=4 loops=1)
-                    Sort Key: ((openquery_internal.b)::sql_variant)
-                    Sort Method: quicksort  Memory: 25kB
-                    ->  Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=38) (actual time=99.908..99.963 rows=4 loops=1)
-Planning Time: 0.673 ms
-Execution Time: 345.240 ms
+Hash Join  (cost=17.00..48.10 rows=580 width=42) (actual time=100.465..100.473 rows=2 loops=1)
+  Hash Cond: ((fpn_table_select_into.b)::text = (openquery_internal.b)::text)
+  ->  Seq Scan on fpn_table_select_into  (cost=0.00..21.60 rows=1160 width=42) (actual time=0.015..0.020 rows=2 loops=1)
+  ->  Hash  (cost=14.50..14.50 rows=200 width=38) (actual time=100.435..100.436 rows=4 loops=1)
+        Buckets: 1024  Batches: 1  Memory Usage: 9kB
+        ->  HashAggregate  (cost=12.50..14.50 rows=200 width=38) (actual time=100.424..100.427 rows=4 loops=1)
+              Group Key: (openquery_internal.b)::text
+              Batches: 1  Memory Usage: 40kB
+              ->  Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=38) (actual time=100.383..100.387 rows=4 loops=1)
+Planning Time: 0.644 ms
+Execution Time: 357.396 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 5.751 ms
+Babelfish T-SQL Batch Parsing Time: 5.700 ms
 ~~END~~
 
 
--- In Subquery as a column
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP33 - After subquery IN' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP33 - After subquery IN#!#2026-05-06 04:46:24.533
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.054 ms
+Execution Time: 0.031 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.028..0.028 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.054 ms
+Execution Time: 0.075 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.020 rows=1 loops=1)
+Planning Time: 0.054 ms
+Execution Time: 0.039 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP33 - After subquery IN' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.834..0.834 rows=1 loops=1)
+Planning Time: 0.054 ms
+Execution Time: 0.259 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.384 ms
+~~END~~
+
+
 SELECT a, (SELECT b from bbf_fpn_server.master.dbo.fpn_table where b = t.b) as c
 FROM fpn_table_insert_into t
 GO
@@ -749,22 +2659,78 @@ int#!#varchar
 text
 Query Text: SELECT a, (SELECT b from openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table') where b = t.b) as c
 FROM fpn_table_insert_into t
-Seq Scan on fpn_table_insert_into t  (cost=0.00..15900.88 rows=1270 width=42) (actual time=102.671..102.684 rows=3 loops=1)
+Seq Scan on fpn_table_insert_into t  (cost=0.00..15900.88 rows=1270 width=42) (actual time=100.024..100.036 rows=3 loops=1)
   SubPlan 1
-    ->  Function Scan on openquery_internal  (cost=0.00..12.50 rows=5 width=38) (actual time=34.217..34.217 rows=0 loops=3)
+    ->  Function Scan on openquery_internal  (cost=0.00..12.50 rows=5 width=38) (actual time=33.335..33.335 rows=0 loops=3)
           Filter: ((b)::"varchar" = t.b)
           Rows Removed by Filter: 4
-Planning Time: 0.106 ms
-Execution Time: 343.680 ms
+Planning Time: 0.104 ms
+Execution Time: 353.975 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 24.861 ms
+Babelfish T-SQL Batch Parsing Time: 21.638 ms
 ~~END~~
 
 
--- In Correlated subquery
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP34 - After subquery as column' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP34 - After subquery as column#!#2026-05-06 04:46:25.167
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.048 ms
+Execution Time: 0.031 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.028..0.029 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.048 ms
+Execution Time: 0.076 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.021 rows=1 loops=1)
+Planning Time: 0.048 ms
+Execution Time: 0.039 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP34 - After subquery as column' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.812..0.813 rows=1 loops=1)
+Planning Time: 0.048 ms
+Execution Time: 0.258 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.402 ms
+~~END~~
+
+
 SELECT * FROM fpn_table_insert_into WHERE EXISTS (SELECT * FROM bbf_fpn_server.master.dbo.fpn_table as fpn_table_alias WHERE fpn_table_alias.a = fpn_table_insert_into.a)
 GO
 ~~START~~
@@ -775,30 +2741,142 @@ int#!#varchar
 ~~START~~
 text
 Query Text: SELECT * FROM fpn_table_insert_into WHERE EXISTS (SELECT * FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table') as fpn_table_alias WHERE fpn_table_alias.a = fpn_table_insert_into.a)
-Hash Join  (cost=17.00..50.10 rows=635 width=36) (actual time=102.977..102.985 rows=1 loops=1)
+Hash Join  (cost=17.00..50.10 rows=635 width=36) (actual time=99.625..99.634 rows=1 loops=1)
   Hash Cond: (fpn_table_insert_into.a = (fpn_table_alias.a)::integer)
-  ->  Seq Scan on fpn_table_insert_into  (cost=0.00..22.70 rows=1270 width=36) (actual time=0.013..0.018 rows=3 loops=1)
-  ->  Hash  (cost=14.50..14.50 rows=200 width=4) (actual time=102.946..102.947 rows=4 loops=1)
+  ->  Seq Scan on fpn_table_insert_into  (cost=0.00..22.70 rows=1270 width=36) (actual time=0.012..0.017 rows=3 loops=1)
+  ->  Hash  (cost=14.50..14.50 rows=200 width=4) (actual time=99.600..99.601 rows=4 loops=1)
         Buckets: 1024  Batches: 1  Memory Usage: 9kB
-        ->  HashAggregate  (cost=12.50..14.50 rows=200 width=4) (actual time=102.935..102.938 rows=4 loops=1)
+        ->  HashAggregate  (cost=12.50..14.50 rows=200 width=4) (actual time=99.591..99.593 rows=4 loops=1)
               Group Key: (fpn_table_alias.a)::integer
               Batches: 1  Memory Usage: 40kB
-              ->  Function Scan on openquery_internal fpn_table_alias  (cost=0.00..10.00 rows=1000 width=4) (actual time=102.918..102.922 rows=4 loops=1)
-Planning Time: 0.119 ms
-Execution Time: 344.908 ms
+              ->  Function Scan on openquery_internal fpn_table_alias  (cost=0.00..10.00 rows=1000 width=4) (actual time=99.576..99.579 rows=4 loops=1)
+Planning Time: 0.102 ms
+Execution Time: 352.921 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 17.422 ms
+Babelfish T-SQL Batch Parsing Time: 16.554 ms
 ~~END~~
 
 
--- Create procedure whose body contains four-part object name
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP35 - After correlated subquery' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP35 - After correlated subquery#!#2026-05-06 04:46:25.790
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.047 ms
+Execution Time: 0.031 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.028..0.028 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.047 ms
+Execution Time: 0.075 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.021 rows=1 loops=1)
+Planning Time: 0.047 ms
+Execution Time: 0.040 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP35 - After correlated subquery' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.778..0.778 rows=1 loops=1)
+Planning Time: 0.047 ms
+Execution Time: 0.262 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.407 ms
+~~END~~
+
+
 CREATE PROCEDURE fpn_vu_prepare__fpn_proc AS SELECT * FROM bbf_fpn_server.master..fpn_table
 GO
 
--- Create function whose body contains four-part object name
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP36 - After CREATE PROC' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP36 - After CREATE PROC#!#2026-05-06 04:46:25.803
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.039 ms
+Execution Time: 0.029 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.025..0.025 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.039 ms
+Execution Time: 0.072 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.017..0.018 rows=1 loops=1)
+Planning Time: 0.039 ms
+Execution Time: 0.037 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP36 - After CREATE PROC' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.673..0.673 rows=1 loops=1)
+Planning Time: 0.039 ms
+Execution Time: 0.241 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.318 ms
+~~END~~
+
+
 CREATE FUNCTION fpn_vu_prepare__fpn_func()
 RETURNS INT
 AS
@@ -808,6 +2886,63 @@ SELECT @i = COUNT(*) FROM bbf_fpn_server.master.dbo.fpn_table
 RETURN @i
 END
 GO
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP37 - After CREATE FUNC' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP37 - After CREATE FUNC#!#2026-05-06 04:46:25.840
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.039 ms
+Execution Time: 0.028 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.024..0.024 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.039 ms
+Execution Time: 0.070 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.016..0.017 rows=1 loops=1)
+Planning Time: 0.039 ms
+Execution Time: 0.034 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP37 - After CREATE FUNC' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.668..0.668 rows=1 loops=1)
+Planning Time: 0.039 ms
+Execution Time: 0.251 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.177 ms
+~~END~~
+
 
 EXEC fpn_vu_prepare__fpn_proc
 GO
@@ -822,14 +2957,71 @@ int#!#varchar
 ~~START~~
 text
 Query Text: SELECT * FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master..fpn_table')
-Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=84.989..84.991 rows=4 loops=1)
-Planning Time: 0.028 ms
-Execution Time: 313.884 ms
+Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=42) (actual time=85.732..85.735 rows=4 loops=1)
+Planning Time: 0.030 ms
+Execution Time: 327.138 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.105 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
+~~END~~
+
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP38 - After EXEC proc' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP38 - After EXEC proc#!#2026-05-06 04:46:26.410
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.049 ms
+Execution Time: 0.032 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.030..0.030 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.049 ms
+Execution Time: 0.081 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.020 rows=1 loops=1)
+Planning Time: 0.049 ms
+Execution Time: 0.040 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP38 - After EXEC proc' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.811..0.811 rows=1 loops=1)
+Planning Time: 0.049 ms
+Execution Time: 0.279 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.387 ms
 ~~END~~
 
 
@@ -843,44 +3035,148 @@ int
 ~~START~~
 text
 Query Text: SELECT      sys.pltsql_assign_var(2, cast((COUNT(*)) as int)) FROM openquery_internal('bbf_fpn_server', 'SELECT * FROM master.dbo.fpn_table')
-Aggregate  (cost=12.50..12.52 rows=1 width=4) (actual time=101.232..101.233 rows=1 loops=1)
-  ->  Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=0) (actual time=101.162..101.165 rows=4 loops=1)
-Planning Time: 248.335 ms
-Execution Time: 342.075 ms
+Aggregate  (cost=12.50..12.52 rows=1 width=4) (actual time=99.699..99.700 rows=1 loops=1)
+  ->  Function Scan on openquery_internal  (cost=0.00..10.00 rows=1000 width=0) (actual time=99.645..99.648 rows=4 loops=1)
+Planning Time: 253.789 ms
+Execution Time: 357.125 ms
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT fpn_vu_prepare__fpn_func()
-Result  (cost=0.00..0.26 rows=1 width=4) (actual time=837.345..837.347 rows=1 loops=1)
-Planning Time: 0.015 ms
-Execution Time: 837.390 ms
+Result  (cost=0.00..0.26 rows=1 width=4) (actual time=863.398..863.399 rows=1 loops=1)
+Planning Time: 0.012 ms
+Execution Time: 863.439 ms
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.352 ms
+Babelfish T-SQL Batch Parsing Time: 0.177 ms
 ~~END~~
 
 
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP39 - After SELECT func' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP39 - After SELECT func#!#2026-05-06 04:46:27.277
+~~END~~
 
--- Try SQL Injection
--- We cannot directly inject SQL because it will break T-SQL database identifier rules
--- We have to surround the SQL in double quotes ("") or square brackets ([]) if we want to even attempt that
--- All cases should throw an error
--- To allow identifiers be specified with double quotes
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.055 ms
+Execution Time: 0.038 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.029..0.029 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.055 ms
+Execution Time: 0.081 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.020..0.021 rows=1 loops=1)
+Planning Time: 0.055 ms
+Execution Time: 0.039 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP39 - After SELECT func' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.884..0.884 rows=1 loops=1)
+Planning Time: 0.055 ms
+Execution Time: 0.288 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.418 ms
+~~END~~
+
+
 SET QUOTED_IDENTIFIER ON
 GO
 
--- SQL Injection in server name
--- Try to inject SQL such that the final rewritten query looks like:
--- select * from openquery('bbf_fpn_server', 'select * from fpn_table') select * from openquery('bbf_fpn_server', 'select * from master.sys.databases')
--- Will throw error: servername is invalid
 select * from [bbf_fpn_server'', ''select * from fpn_table'') select * from openquery(''bbf_fpn_server].master.sys.databases
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: server "bbf_fpn_server', 'select * from fpn_table') select * from openquery('bbf_fpn_server" does not exist)~~
+
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP40 - After injection server []' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP40 - After injection server []#!#2026-05-06 04:46:27.287
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.040 ms
+Execution Time: 0.030 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.024..0.024 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.040 ms
+Execution Time: 0.070 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.017..0.018 rows=1 loops=1)
+Planning Time: 0.040 ms
+Execution Time: 0.037 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP40 - After injection server []' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.675..0.676 rows=1 loops=1)
+Planning Time: 0.040 ms
+Execution Time: 0.253 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.220 ms
+~~END~~
 
 
 select * from "bbf_fpn_server'', ''select * from fpn_table'') select * from openquery(''bbf_fpn_server".master.sys.databases
@@ -890,10 +3186,63 @@ GO
 ~~ERROR (Message: server "bbf_fpn_server', 'select * from fpn_table') select * from openquery('bbf_fpn_server" does not exist)~~
 
 
--- SQL Injection in database name
--- Try to inject SQL such that the final rewritten query looks like:
--- select * from openquery('bbf_fpn_server', 'select * from fpn_table') select * from openquery('bbf_fpn_server', 'select * from master.sys.databases')
--- Will throw error: database name is invalid
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP41 - After injection server ""' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP41 - After injection server ""#!#2026-05-06 04:46:27.293
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.038 ms
+Execution Time: 0.029 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.021..0.021 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.038 ms
+Execution Time: 0.062 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.016..0.017 rows=1 loops=1)
+Planning Time: 0.038 ms
+Execution Time: 0.036 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP41 - After injection server ""' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.597..0.597 rows=1 loops=1)
+Planning Time: 0.038 ms
+Execution Time: 0.229 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.168 ms
+~~END~~
+
+
 select * from bbf_fpn_server.[fpn_table'') select * from openquery(''bbf_fpn_server'', ''select * from master].sys.databases
 GO
 ~~START~~
@@ -901,6 +3250,63 @@ varchar#!#int#!#int#!#varbinary#!#datetime#!#tinyint#!#varchar#!#tinyint#!#nvarc
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: TDS client library error: Msg #: 911, Msg state: 1, Msg: database "fpn_table') select * from openq8c86d09e50d4f800f5a8c351ddbe1b23" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP42 - After injection db []' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP42 - After injection db []#!#2026-05-06 04:46:28.357
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.054 ms
+Execution Time: 0.054 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.032..0.032 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.054 ms
+Execution Time: 0.085 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.020..0.021 rows=1 loops=1)
+Planning Time: 0.054 ms
+Execution Time: 0.041 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP42 - After injection db []' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.809..0.810 rows=1 loops=1)
+Planning Time: 0.054 ms
+Execution Time: 0.260 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.365 ms
+~~END~~
 
 
 select * from bbf_fpn_server."fpn_table'') select * from openquery(''bbf_fpn_server'', ''select * from master".sys.databases
@@ -912,15 +3318,125 @@ varchar#!#int#!#int#!#varbinary#!#datetime#!#tinyint#!#varchar#!#tinyint#!#nvarc
 ~~ERROR (Message: TDS client library error: Msg #: 911, Msg state: 1, Msg: database "fpn_table') select * from openq8c86d09e50d4f800f5a8c351ddbe1b23" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
 
 
--- SQL Injection in schema name
--- Try to inject SQL such that the final rewritten query looks like:
--- select * from openquery('bbf_fpn_server', 'select * from master.sys.tables') select * from openquery('bbf_fpn_server', 'select * from master.sys.databases')
--- Will throw error: relation is invalid
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP43 - After injection db ""' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP43 - After injection db ""#!#2026-05-06 04:46:29.407
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.054 ms
+Execution Time: 0.038 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.033..0.033 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.054 ms
+Execution Time: 0.084 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.020..0.022 rows=1 loops=1)
+Planning Time: 0.054 ms
+Execution Time: 0.040 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP43 - After injection db ""' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.793..0.793 rows=1 loops=1)
+Planning Time: 0.054 ms
+Execution Time: 0.262 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.492 ms
+~~END~~
+
+
 select * from bbf_fpn_server.master.[sys.tables'') select * from openquery(''bbf_fpn_server'', ''select * from master.sys].databases
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "master_sys.tables') select * fr465ba21cd478dfdbfd9c4c52873fc1ec.databases" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP44 - After injection schema []' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP44 - After injection schema []#!#2026-05-06 04:46:29.593
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.048 ms
+Execution Time: 0.038 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.029..0.030 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.048 ms
+Execution Time: 0.080 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.020 rows=1 loops=1)
+Planning Time: 0.048 ms
+Execution Time: 0.039 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP44 - After injection schema []' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.777..0.777 rows=1 loops=1)
+Planning Time: 0.048 ms
+Execution Time: 0.263 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.339 ms
+~~END~~
 
 
 select * from bbf_fpn_server.master."sys.tables'') select * from openquery(''bbf_fpn_server'', ''select * from master.sys".databases
@@ -930,15 +3446,125 @@ GO
 ~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "master_sys.tables') select * fr465ba21cd478dfdbfd9c4c52873fc1ec.databases" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
 
 
--- SQL Injection in object name
--- Try to inject SQL such that the final rewritten query looks like:
--- select * from openquery('bbf_fpn_server', 'select * from master.sys.tables') select * from openquery('bbf_fpn_server', 'select * from master.sys.databases')
--- Will throw error: relation is invalid
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP45 - After injection schema ""' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP45 - After injection schema ""#!#2026-05-06 04:46:29.777
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.049 ms
+Execution Time: 0.038 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.030..0.030 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.049 ms
+Execution Time: 0.082 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.021 rows=1 loops=1)
+Planning Time: 0.049 ms
+Execution Time: 0.040 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP45 - After injection schema ""' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.840..0.841 rows=1 loops=1)
+Planning Time: 0.049 ms
+Execution Time: 0.275 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.346 ms
+~~END~~
+
+
 select * from bbf_fpn_server.master.sys.[tables'') select * from openquery(''bbf_fpn_server'', ''select * from master.sys.databases]
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "sys.tables') select * from openquer6fae7895a55a5b386bac33a1b4ac3386" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP46 - After injection object []' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP46 - After injection object []#!#2026-05-06 04:46:29.953
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.049 ms
+Execution Time: 0.037 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.029..0.029 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.049 ms
+Execution Time: 0.081 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.021 rows=1 loops=1)
+Planning Time: 0.049 ms
+Execution Time: 0.041 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP46 - After injection object []' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.776..0.776 rows=1 loops=1)
+Planning Time: 0.049 ms
+Execution Time: 0.273 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.324 ms
+~~END~~
 
 
 select * from bbf_fpn_server.master.sys."tables'') select * from openquery(''bbf_fpn_server'', ''select * from master.sys.databases"
@@ -948,6 +3574,63 @@ GO
 ~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "sys.tables') select * from openquer6fae7895a55a5b386bac33a1b4ac3386" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
 
 
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP47 - After injection object ""' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP47 - After injection object ""#!#2026-05-06 04:46:30.130
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.050 ms
+Execution Time: 0.038 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.029..0.029 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.050 ms
+Execution Time: 0.082 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.019..0.021 rows=1 loops=1)
+Planning Time: 0.050 ms
+Execution Time: 0.041 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP47 - After injection object ""' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.803..0.804 rows=1 loops=1)
+Planning Time: 0.050 ms
+Execution Time: 0.282 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.349 ms
+~~END~~
+
+
 DROP TABLE fpn_table_insert_into
 DROP TABLE fpn_table_select_into
 DROP TABLE fpn_table
@@ -955,3 +3638,60 @@ DROP VIEW four_part_names_vu_verify_view
 DROP PROCEDURE fpn_vu_prepare__fpn_proc
 DROP FUNCTION fpn_vu_prepare__fpn_func()
 GO
+
+DECLARE @t DATETIME = GETDATE()
+SELECT 'CP48 - After cleanup (END)' as cp, CONVERT(VARCHAR, @t, 121) as t
+GO
+~~START~~
+varchar#!#varchar
+CP48 - After cleanup (END)#!#2026-05-06 04:46:30.157
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                          FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2]
+Result  (cost=0.00..0.00 rows=0 width=0) (actual time=0.001..0.001 rows=0 loops=1)
+  One-Time Filter: false
+Planning Time: 0.043 ms
+Execution Time: 0.030 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT lang_data_jsonb
+                                                                   FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture
+Seq Scan on babelfish_syslanguages  (cost=0.00..13.61 rows=1 width=609) (actual time=0.025..0.026 rows=1 loops=1)
+  Filter: ((spec_culture)::text = ('EN_US'::character varying COLLATE "C")::text)
+  Rows Removed by Filter: 24
+Planning Time: 0.043 ms
+Execution Time: 0.073 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE)
+Result  (cost=0.00..0.02 rows=1 width=32) (actual time=0.016..0.018 rows=1 loops=1)
+Planning Time: 0.043 ms
+Execution Time: 0.037 ms
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT 'CP48 - After cleanup (END)' as cp, CONVERT(VARCHAR, "@t", 121) as t
+Result  (cost=0.00..0.26 rows=1 width=64) (actual time=0.696..0.696 rows=1 loops=1)
+Planning Time: 0.043 ms
+Execution Time: 0.248 ms
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.489 ms
+~~END~~
+
