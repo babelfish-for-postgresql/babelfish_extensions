@@ -2204,15 +2204,6 @@ public:
 			clear_tables_info();
 			return;
 		}
-		/*
-		 * LEGACY INSERT EXEC CODE PATH (GUC pltsql_enable_new_insert_exec = false)
-		 * This code is only needed when the new INSERT EXEC implementation is disabled.
-		 * When the GUC is true, we use PLtsql_stmt_exec instead of PLtsql_stmt_execsql,
-		 * and the cross-database handling is done differently.
-		 * TODO: Remove this block when the new INSERT EXEC implementation is stable
-		 * and the GUC default is flipped to true.
-		 */
-		stmt->insert_exec = is_insert_exec;
 
 		/* Extract db_name and schema_name for cross-database INSERT EXEC (legacy path only) */
 		if (is_insert_exec)
