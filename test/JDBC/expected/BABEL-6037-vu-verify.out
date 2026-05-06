@@ -768,7 +768,7 @@ int#!#varchar
 SELECT
     CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
 FROM sys.babelfish_function_ext
-WHERE funcname IN ('babel_6037_mstvf', 'babel_6037_itvf') AND nspname = 'master_dbo';
+WHERE funcname IN ('babel_6037_mstvf', 'babel_6037_itvf') AND nspname = 'master_dbo' ORDER BY funcname DESC;
 GO
 ~~START~~
 varchar
