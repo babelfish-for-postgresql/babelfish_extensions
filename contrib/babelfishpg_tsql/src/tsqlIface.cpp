@@ -9117,6 +9117,13 @@ extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &
                 {
                     comp_operator = op;
                     comp_value = ::getFullText(rhs);
+					 /* Reject property access like @var.STX as distance threshold */
+                    if (comp_value.find('.') != std::string::npos)
+                        return false;
+					/* Reject if STDistance is wrapped in CAST() — the LHS is not a bare STDistance call */
+                     std::string lhs_text = ::getFullText(lhs);
+    				if (pg_strncasecmp(lhs_text.c_str(), "CAST(", 5) == 0)
+        				return false;
                     dist_on_lhs_out = true;
                     return true;
                 }
@@ -9125,6 +9132,13 @@ extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &
                 {
                     comp_operator = (op == ">") ? "<" : "<=";
                     comp_value = ::getFullText(lhs);
+					 /* Reject property access like @var.STX as distance threshold */
+                    if (comp_value.find('.') != std::string::npos)
+                        return false;
+					/* Reject if STDistance is wrapped in CAST() — the RHS is not a bare STDistance call */
+                     std::string lhs_text = ::getFullText(lhs);
+    				if (pg_strncasecmp(lhs_text.c_str(), "CAST(", 5) == 0)
+        				return false;					
                     dist_on_lhs_out = false;
                     return true;
                 }
@@ -9253,7 +9267,9 @@ is_in_spatial_predicate_context(T ctx)
 			dynamic_cast<TSqlParser::Print_statementContext *>(parent) ||
 			dynamic_cast<TSqlParser::Update_elemContext *>(parent) ||
 		    dynamic_cast<TSqlParser::Insert_statementContext *>(parent) ||
-            dynamic_cast<TSqlParser::Return_statementContext *>(parent))
+            dynamic_cast<TSqlParser::Return_statementContext *>(parent) ||
+		    dynamic_cast<TSqlParser::Create_or_alter_procedureContext *>(parent) ||
+			dynamic_cast<TSqlParser::Create_or_alter_functionContext *>(parent))
 			return false;
 		parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
 	}
