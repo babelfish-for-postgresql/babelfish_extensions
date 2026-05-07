@@ -181,75 +181,6 @@ static InsertExecContext insert_exec_ctx = {
 };
 
 /*
- * Parse a T-SQL table name (1-part, 2-part, or 3-part) into schema and table.
- * Returns true on success. Caller must pfree the output strings.
- */
-bool
-parse_insert_exec_table_name(const char *target_table,
-							 char **schema_name_out,
-							 char **table_name_out,
-							 char **physical_schema_out,
-							 bool get_physical)
-{
-	char	   *target_copy;
-	char	   *dot_pos;
-	char	   *second_dot;
-	char	   *schema_name = NULL;
-	char	   *table_name = NULL;
-
-	if (target_table == NULL)
-		return false;
-
-	target_copy = pstrdup(target_table);
-
-	/* Find the last dot to separate schema from table */
-	dot_pos = strrchr(target_copy, '.');
-	if (dot_pos != NULL)
-	{
-		*dot_pos = '\0';
-		table_name = pstrdup(dot_pos + 1);
-
-		/* Check if there's another dot (db.schema.table) */
-		second_dot = strrchr(target_copy, '.');
-		if (second_dot != NULL)
-		{
-			/* db.schema.table - schema is after the second dot */
-			schema_name = pstrdup(second_dot + 1);
-		}
-		else
-		{
-			/* schema.table */
-			schema_name = pstrdup(target_copy);
-		}
-	}
-	else
-	{
-		/*
-		 * Just table name, no schema specified - default to dbo for now.
-		 * TODO: Ideally we should respect the user's default schema,
-		 * but that requires changes to how ownership chaining works.
-		 */
-		table_name = pstrdup(target_copy);
-		schema_name = pstrdup("dbo");
-	}
-	pfree(target_copy);
-
-	*schema_name_out = schema_name;
-	*table_name_out = table_name;
-
-	if (get_physical && physical_schema_out != NULL)
-	{
-		*physical_schema_out = get_physical_schema_name(get_cur_db_name(), schema_name);
-	}
-	else if (physical_schema_out != NULL)
-	{
-		*physical_schema_out = NULL;
-	}
-
-	return true;
-}
-
-/*
  * Set the global INSERT EXEC context with target table info.
  * Called from ANTLR parser when INSERT EXEC is detected.
  * This is called BEFORE temp table creation - just stores the target info.
@@ -1571,11 +1502,14 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 	}
 	else
 	{
-		if (!parse_insert_exec_table_name(target_table, &schema_name, &table_name,
-										  &physical_schema, true))
-		{
-			elog(ERROR, "INSERT-EXEC: Failed to parse target table name: %s", target_table);
-		}
+		table_name = pstrdup(target_table);
+		if (schema_name_in != NULL)
+			schema_name = pstrdup(schema_name_in);
+		else
+			schema_name = pstrdup("dbo");
+		physical_schema = get_physical_schema_name(get_cur_db_name(), schema_name);
+		if (physical_schema == NULL)
+			elog(ERROR, "INSERT-EXEC: Failed to resolve schema for target table: %s", target_table);
 	}
 
 	initStringInfo(&create_stmt);
@@ -2237,10 +2171,10 @@ insert_exec_setup(PLtsql_execstate *estate,
 	pltsql_set_insert_exec_context_info(target_table, column_list);
 
 	/* Hold target table open to detect schema alterations during execution */
-	pltsql_insert_exec_open_target_table(target_table);
+	pltsql_insert_exec_open_target_table(target_table, schema_name, db_name);
 
 	/* Create temp table based on target table structure */
-	temp_table_oid = create_insert_exec_temp_table(target_table, column_list);
+	temp_table_oid = create_insert_exec_temp_table(target_table, column_list, schema_name);
 
 	/* Set global context so DestReceiver knows where to write */
 	pltsql_set_insert_exec_context(temp_table_oid);
