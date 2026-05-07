@@ -5319,7 +5319,8 @@ CREATE OR REPLACE FUNCTION sys.enable_antlr_parse_cache(
     IN routine_id OID,
     IN use_antlr_parse_cache BOOLEAN
 ) RETURNS BOOLEAN
-AS 'babelfishpg_tsql', 'enable_antlr_parse_cache' LANGUAGE C;
+AS 'babelfishpg_tsql', 'enable_antlr_parse_cache'
+LANGUAGE C VOLATILE PARALLEL UNSAFE;
 
 -- Session-level routine antlr parse cache statistics
 CREATE OR REPLACE FUNCTION sys.antlr_parse_cache_stats(
@@ -5329,4 +5330,5 @@ CREATE OR REPLACE FUNCTION sys.antlr_parse_cache_stats(
     OUT cache_evictions INT,
     OUT cache_errors INT
 ) RETURNS RECORD
-AS 'babelfishpg_tsql', 'antlr_parse_cache_stats' LANGUAGE C;
+AS 'babelfishpg_tsql', 'antlr_parse_cache_stats'
+LANGUAGE C VOLATILE PARALLEL RESTRICTED;
