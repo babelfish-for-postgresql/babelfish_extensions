@@ -2180,11 +2180,42 @@ public:
 			/* Clear the mutator since we're not using the execsql statement */
 			statementMutator.reset();
 			clear_rewritten_query_fragment();
+			clear_query_hints();
+			clear_tables_info();
 			return;
 		}
+		/*
+		 * LEGACY INSERT EXEC CODE PATH (GUC pltsql_enable_new_insert_exec = false)
+		 * This code is only needed when the new INSERT EXEC implementation is disabled.
+		 * When the GUC is true, we use PLtsql_stmt_exec instead of PLtsql_stmt_execsql,
+		 * and the cross-database handling is done differently.
+		 * TODO: Remove this block when the new INSERT EXEC implementation is stable
+		 * and the GUC default is flipped to true.
+		 */
+		stmt->insert_exec = is_insert_exec;
 
-		/* For non-INSERT-EXEC statements, continue with normal processing */
-		stmt->insert_exec = false;
+		/* Extract db_name and schema_name for cross-database INSERT EXEC (legacy path only) */
+		if (is_insert_exec && !pltsql_enable_new_insert_exec)
+		{
+			TSqlParser::Func_proc_name_server_database_schemaContext *ctx_name = nullptr;
+			TSqlParser::Execute_bodyContext *body = nullptr;
+
+			TSqlParser::Execute_statementContext *ctxES = ctx->insert_statement()->insert_statement_value()->execute_statement();
+			body = ctxES->execute_body();
+			Assert(body);
+
+			ctx_name = body->func_proc_name_server_database_schema();
+			if (ctx_name)
+			{
+				if (ctx_name->database)
+				{
+					db_name = stripQuoteFromId(ctx_name->database);
+					is_cross_db = true;
+				}
+				if (ctx_name->schema)
+					schema_name = stripQuoteFromId(ctx_name->schema);
+			}
+		}
 
 		// record whether stmt is cross-db
 		if (is_cross_db)

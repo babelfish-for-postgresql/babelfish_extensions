@@ -2418,17 +2418,20 @@ extern bool pltsql_insert_exec_started_implicit_txn(void);
 extern void pltsql_insert_exec_clear_implicit_txn_flag(void);
 extern void pltsql_insert_exec_set_pending_drop(void);
 extern void pltsql_insert_exec_check_pending_drop(void);
-extern void pltsql_insert_exec_open_target_table(const char *target_table);
+extern void pltsql_insert_exec_open_target_table(const char *target_table,const char *schema_name_in,
+                                                  const char *db_name_in);
 extern void pltsql_insert_exec_close_target_table(void);
 extern bool pltsql_insert_exec_verify_schema(void);
 extern bool pltsql_insert_exec_validate_column_count_from_query(const char *query_string);
 
 /* INSERT EXEC helper functions */
 extern bool insert_exec_setup(PLtsql_execstate *estate,
-							  const char *target_table,
-							  const char *column_list,
-							  Oid *temp_table_oid_out,
-							  DestReceiver **dest_out);
+                              const char *target_table,
+                              const char *schema_name,
+                              const char *db_name,
+                              const char *column_list,
+                              bool start_implicit_txn,
+                              Oid *temp_table_oid_out);
 extern void insert_exec_error_cleanup(bool setup_done);
 extern void insert_exec_success_cleanup(PLtsql_execstate *estate, Oid temp_table_oid);
 extern bool parse_insert_exec_table_name(const char *target_table,
@@ -2437,7 +2440,9 @@ extern bool parse_insert_exec_table_name(const char *target_table,
 										 char **physical_schema_out,
 										 bool get_physical);
 extern DestReceiver *CreateInsertExecDestReceiver(Oid temp_table_oid);
-extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list);
+extern Oid create_insert_exec_temp_table(const char *target_table,
+                                          const char *column_list,
+                                          const char *schema_name_in);
 extern void drop_insert_exec_temp_table(Oid temp_table_oid);
 extern void flush_insert_exec_temp_table(PLtsql_execstate *estate);
 

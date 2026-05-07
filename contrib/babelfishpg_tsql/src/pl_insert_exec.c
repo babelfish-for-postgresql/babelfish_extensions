@@ -406,7 +406,9 @@ pltsql_insert_exec_check_pending_drop(void)
  * block concurrent DDL; temp tables only get schema captured (session-local).
  */
 void
-pltsql_insert_exec_open_target_table(const char *target_table)
+pltsql_insert_exec_open_target_table(const char *target_table,
+                                     const char *schema_name_in,
+                                     const char *db_name_in)
 {
 	RangeVar   *rv;
 	Oid			relid;
@@ -441,12 +443,12 @@ pltsql_insert_exec_open_target_table(const char *target_table)
 	}
 	else
 	{
-		/* Regular table - parse schema and table name */
-		if (!parse_insert_exec_table_name(target_table, &schema_name, &table_name,
-										  &physical_schema, true))
-		{
-			return;
-		}
+		table_name = pstrdup(target_table);
+		if (schema_name_in != NULL)
+			schema_name = pstrdup(schema_name_in);
+		else
+			schema_name = pstrdup("dbo");  /* default schema */
+		physical_schema = get_physical_schema_name(get_cur_db_name(), schema_name);
 
 		/* Create RangeVar and get the relation OID */
 		rv = makeRangeVar(physical_schema, table_name, -1);
@@ -1152,7 +1154,7 @@ CreateInsertExecDestReceiver(Oid temp_table_oid)
  * Real implementation in PR4 (Temp Table Create/Drop).
  */
 Oid
-create_insert_exec_temp_table(const char *target_table, const char *column_list)
+create_insert_exec_temp_table(const char *target_table, const char *column_list, const char *schema_name_in)
 {
 	/* STUB: Returns InvalidOid - real implementation in PR4 */
 	return InvalidOid;
@@ -1184,10 +1186,12 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate)
  */
 bool
 insert_exec_setup(PLtsql_execstate *estate,
-				  const char *target_table,
-				  const char *column_list,
-				  Oid *temp_table_oid_out,
-				  DestReceiver **dest_out)
+                  const char *target_table,
+                  const char *schema_name,
+                  const char *db_name,
+                  const char *column_list,
+                  bool start_implicit_txn,
+                  Oid *temp_table_oid_out)
 {
 	/* STUB: Returns false (setup not done) - real implementation in PR5 */
 	return false;
