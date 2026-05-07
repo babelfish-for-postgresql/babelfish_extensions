@@ -1628,37 +1628,6 @@ public:
 	}
 
 	/*
-	 * Apply expression rewriting for INSERT EXEC statements.
-	 * Converts double-quoted strings to single-quoted strings
-	 * (e.g., "master" -> 'master') for PostgreSQL compatibility.
-	 * PLTSQL_STMT_EXEC_SP does not need rewriting — system SP arguments
-	 * are explicit typed parameters, not general SQL expressions.
-	*/
-	void applyInsertExecRewriting(PLtsql_stmt *base_stmt,
-                               TSqlParser::Execute_statementContext *ctxES)
-	{
-    	if (base_stmt->cmd_type == PLTSQL_STMT_EXEC)
-    	{
-        	PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) base_stmt;
-        	PLtsql_expr_query_mutator mutator(exec_stmt->expr, ctxES);
-        	add_rewritten_query_fragment_to_mutator(&mutator);
-        	mutator.run();
-    	}
-		else if (base_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
-		{
-			PLtsql_stmt_exec_batch *exec_batch_stmt = (PLtsql_stmt_exec_batch *) base_stmt;
-			PLtsql_expr_query_mutator mutator(exec_batch_stmt->expr, ctxES);
-			/*
-			* We don't call markSelectFragment here — selectFragmentOffsets was
-			* recorded with ctx->parent as key, not ctxES. For dynamic SQL in
-			* INSERT EXEC, we rewrite the entire expression string.
-			*/
-			add_rewritten_query_fragment_to_mutator(&mutator);
-			mutator.run();
-		}
-	}
-
-	/*
 	 * Replace a grafted statement with a new one.
 	 * Used for INSERT EXEC where we replace PLtsql_stmt_execsql with PLtsql_stmt_exec
 	 */
@@ -2124,7 +2093,7 @@ public:
 					first = false;
 					auto ids = col->id();
 					/* A column reference always has at least one identifier token per grammar */
-        			Assert(!ids.empty());
+					Assert(!ids.empty());
 					if (!ids.empty() && ids.back() != nullptr)
 						column_list += stripQuoteFromId(ids.back());
 				}
@@ -2154,27 +2123,54 @@ public:
 					info->columns = pstrdup(column_list.c_str());
 			};
 
+			auto applyInsertExecInfo = [&](PLtsql_stmt *stmt) {
+				if (stmt->cmd_type == PLTSQL_STMT_EXEC)
+				{
+					PLtsql_stmt_exec *s = (PLtsql_stmt_exec *) stmt;
+					setInsertExecInfo(&s->insert_exec);
+				}
+				else if (stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
+				{
+					PLtsql_stmt_exec_batch *s = (PLtsql_stmt_exec_batch *) stmt;
+					setInsertExecInfo(&s->insert_exec);
+				}
+				else if (stmt->cmd_type == PLTSQL_STMT_EXEC_SP)
+				{
+					PLtsql_stmt_exec_sp *s = (PLtsql_stmt_exec_sp *) stmt;
+					setInsertExecInfo(&s->insert_exec);
+				}
+				else
+					Assert(false); /* INSERT EXEC can only target EXEC, EXEC_BATCH, or EXEC_SP */
+			};
+
 			/* Set INSERT EXEC fields based on the actual statement type */
+			applyInsertExecInfo(base_stmt);
+
 			if (base_stmt->cmd_type == PLTSQL_STMT_EXEC)
 			{
-				/* Procedure call: EXEC proc_name */
 				PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) base_stmt;
-				setInsertExecInfo(&exec_stmt->insert_exec);
+				PLtsql_expr_query_mutator mutator(exec_stmt->expr, ctxES);
+				add_rewritten_query_fragment_to_mutator(&mutator);
+				mutator.run();
 			}
 			else if (base_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
 			{
-				/* Dynamic SQL: EXEC(@variable) or EXEC('string') */
 				PLtsql_stmt_exec_batch *exec_batch_stmt = (PLtsql_stmt_exec_batch *) base_stmt;
-				setInsertExecInfo(&exec_batch_stmt->insert_exec);
-			}
-			else if (base_stmt->cmd_type == PLTSQL_STMT_EXEC_SP)
-			{
-				/* System stored procedure: EXEC sp_executesql, sp_execute, sp_prepexec */
-				PLtsql_stmt_exec_sp *exec_sp_stmt = (PLtsql_stmt_exec_sp *) base_stmt;
-				setInsertExecInfo(&exec_sp_stmt->insert_exec);
+				PLtsql_expr_query_mutator mutator(exec_batch_stmt->expr, ctxES);
+				/*
+				* We don't call markSelectFragment here — selectFragmentOffsets was
+				* recorded with ctx->parent as key, not ctxES. For dynamic SQL in
+				* INSERT EXEC, we rewrite the entire expression string.
+				*/
+				add_rewritten_query_fragment_to_mutator(&mutator);
+				mutator.run();
 			}
 
-			applyInsertExecRewriting(base_stmt, ctxES);
+			/*
+			* Note: PLTSQL_STMT_EXEC_SP (sp_executesql, sp_execute, sp_prepexec) does not
+			* need expression rewriting here — system SP arguments are explicit typed
+			* parameters, not general SQL expressions containing double-quoted identifiers.
+			*/
 
 			/* Replace the PLtsql_stmt_execsql with the exec statement in the container */
 			replaceGraftedStatement(ctx, base_stmt);
@@ -2205,10 +2201,10 @@ public:
 			TSqlParser::Execute_statementContext *ctxES = ctx->insert_statement()->insert_statement_value()->execute_statement();
 			body = ctxES->execute_body();
 			Assert(body);
-
-			ctx_name = body->func_proc_name_server_database_schema();
-			if (ctx_name)
-			{
+			
+			ctx_name       = body->func_proc_name_server_database_schema();
+			if (ctx_name) 
+			{				
 				if (ctx_name->database)
 				{
 					db_name = stripQuoteFromId(ctx_name->database);
