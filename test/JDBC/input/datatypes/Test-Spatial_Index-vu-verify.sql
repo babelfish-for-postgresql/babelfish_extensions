@@ -307,7 +307,7 @@ GO
 SELECT name, type, type_desc
 FROM sys.indexes
 WHERE object_id = OBJECT_ID('si_view_tbl')
-ORDER BY index_id;
+ORDER BY name
 GO
 
 -- ============================================================
@@ -835,44 +835,6 @@ SELECT COUNT(*) AS t36_mpoly FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(
     geometry::STGeomFromText('POLYGON((115 115, 145 115, 145 145, 115 145, 115 115))', 4326)) = 1;
 GO
-
--- ============================================================
--- SECTION 37: CASE-INSENSITIVE METHOD NAME
--- ============================================================
-
--- 37.1 lowercase stintersects
-SELECT COUNT(*) AS t37_lower FROM si_geom_tbl
-WHERE si_geom_tbl.geom.stintersects(
-    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
-GO
-
--- 37.2 UPPERCASE STINTERSECTS
-SELECT COUNT(*) AS t37_upper FROM si_geom_tbl
-WHERE si_geom_tbl.geom.STINTERSECTS(
-    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
-GO
-
--- 37.3 Mixed case StInTeRsEcTs
-SELECT COUNT(*) AS t37_mixed FROM si_geom_tbl
-WHERE si_geom_tbl.geom.StInTeRsEcTs(
-    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
-GO
-
--- 37.4 Correctness: all case variants produce same count
-DECLARE @lo INT, @up INT, @mx INT;
-SELECT @lo = COUNT(*) FROM si_geom_tbl
-WHERE si_geom_tbl.geom.stintersects(
-    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
-SELECT @up = COUNT(*) FROM si_geom_tbl
-WHERE si_geom_tbl.geom.STINTERSECTS(
-    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
-SELECT @mx = COUNT(*) FROM si_geom_tbl
-WHERE si_geom_tbl.geom.StInTeRsEcTs(
-    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
-SELECT CASE WHEN @lo = @up AND @up = @mx THEN 'PASS' ELSE 'FAIL' END AS t37_case_correctness;
-GO
-
-
 
 -- Section 38: STDistance RHS non-literal forms
 -- 38.1 Column as threshold

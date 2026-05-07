@@ -1403,7 +1403,7 @@ define_escape_hatch_variables(void)
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
-    /* spatial index */
+	/* spatial index */
 	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_spatial_index",
 							 gettext_noop("escape hatch for CREATE SPATIAL INDEX USING/WITH options; "
 										  "PostGIS GiST is self-tuning and cannot honor these parameters"),

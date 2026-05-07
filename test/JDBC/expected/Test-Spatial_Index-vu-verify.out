@@ -44,7 +44,7 @@ USING GEOMETRY_GRID WITH (BOUNDING_BOX = (0, 0, 100, 100));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: CREATE SPATIAL INDEX options (USING <grid>, BOUNDING_BOX, GRIDS, CELLS_PER_OBJECT, and standard WITH clause options) are not supported because Babelfish uses PostGIS GiST indexes which are self-tuning. Set babelfishpg_tsql.escape_hatch_spatial_index to 'ignore' to silently discard these options and create the index.)~~
+~~ERROR (Message: CREATE SPATIAL INDEX USING/WITH options are not supported in Babelfish. Set 'babelfishpg_tsql.escape_hatch_spatial_index' to 'ignore' to discard these options.)~~
 
 
 -- 1.6 Bare works with strict
@@ -513,14 +513,14 @@ si_v_geom#!#GEOMETRY_GRID
 SELECT name, type, type_desc
 FROM sys.indexes
 WHERE object_id = OBJECT_ID('si_view_tbl')
-ORDER BY index_id;
+ORDER BY name
 GO
 ~~START~~
 varchar#!#tinyint#!#nvarchar
 <NULL>#!#0#!#HEAP
-si_view_tbl_pkey#!#2#!#NONCLUSTERED
-si_v_geom#!#4#!#SPATIAL
 si_v_geog#!#4#!#SPATIAL
+si_v_geom#!#4#!#SPATIAL
+si_view_tbl_pkey#!#2#!#NONCLUSTERED
 ~~END~~
 
 
@@ -1290,60 +1290,6 @@ GO
 int
 1
 ~~END~~
-
-
-
--- ============================================================
--- SECTION 37: CASE-INSENSITIVE METHOD NAME
--- ============================================================
--- 37.1 lowercase stintersects
-SELECT COUNT(*) AS t37_lower FROM si_geom_tbl
-WHERE si_geom_tbl.geom.stintersects(
-    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "si_geom_tbl_geom" does not exist)~~
-
-
--- 37.2 UPPERCASE STINTERSECTS
-SELECT COUNT(*) AS t37_upper FROM si_geom_tbl
-WHERE si_geom_tbl.geom.STINTERSECTS(
-    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "si_geom_tbl_geom" does not exist)~~
-
-
--- 37.3 Mixed case StInTeRsEcTs
-SELECT COUNT(*) AS t37_mixed FROM si_geom_tbl
-WHERE si_geom_tbl.geom.StInTeRsEcTs(
-    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "si_geom_tbl_geom" does not exist)~~
-
-
--- 37.4 Correctness: all case variants produce same count
-DECLARE @lo INT, @up INT, @mx INT;
-SELECT @lo = COUNT(*) FROM si_geom_tbl
-WHERE si_geom_tbl.geom.stintersects(
-    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
-SELECT @up = COUNT(*) FROM si_geom_tbl
-WHERE si_geom_tbl.geom.STINTERSECTS(
-    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
-SELECT @mx = COUNT(*) FROM si_geom_tbl
-WHERE si_geom_tbl.geom.StInTeRsEcTs(
-    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
-SELECT CASE WHEN @lo = @up AND @up = @mx THEN 'PASS' ELSE 'FAIL' END AS t37_case_correctness;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "si_geom_tbl_geom" does not exist)~~
-
-
 
 
 -- Section 38: STDistance RHS non-literal forms

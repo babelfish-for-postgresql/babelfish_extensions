@@ -2973,9 +2973,10 @@ JOIN pg_catalog.pg_attribute a ON a.attrelid = i.indrelid
     AND a.attnum = i.indkey[0]
 JOIN pg_catalog.pg_type t ON t.oid = a.atttypid
 JOIN pg_catalog.pg_namespace tn ON tn.oid = tc.relnamespace
+LEFT JOIN sys.babelfish_namespace_ext ext ON (tn.nspname = ext.nspname AND ext.dbid = sys.db_id())
 WHERE am.amname = 'gist'
   AND t.typname IN ('geometry', 'geography')
-  AND tn.nspname NOT IN ('pg_catalog', 'information_schema');
+  AND (tn.nspname = 'sys' OR ext.nspname IS NOT NULL);
 GRANT SELECT ON sys.spatial_indexes TO PUBLIC;
 
 
@@ -3212,9 +3213,10 @@ JOIN pg_catalog.pg_attribute a ON a.attrelid = i.indrelid
     AND a.attnum = i.indkey[0]
 JOIN pg_catalog.pg_type t ON t.oid = a.atttypid
 JOIN pg_catalog.pg_namespace tn ON tn.oid = tc.relnamespace
+LEFT JOIN sys.babelfish_namespace_ext ext ON (tn.nspname = ext.nspname AND ext.dbid = sys.db_id())
 WHERE am.amname = 'gist'
   AND t.typname IN ('geometry', 'geography')
-  AND tn.nspname NOT IN ('pg_catalog', 'information_schema');
+  AND (tn.nspname = 'sys' OR ext.nspname IS NOT NULL);
 GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;
 
 
