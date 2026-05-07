@@ -69,8 +69,8 @@ typedef struct forxml_auto_state
 	/* Previous row values, stored as Datums for type-aware comparison. */
 	Datum		   *prev_datums;		/* datumCopy'd previous values */
 	bool		   *prev_isnull;		/* Per-column null flag for prev row */
-	char		  **prev_str_values;	/* Fallback serialized prev values (only set for no-eq-op types) */
-	bool		   *prev_has_value;		/* Whether prev_datums[i]/prev_str_values[i] has been set */
+	char		  **prev_str_values;	/* Fallback serialized prev values, used for
+										 * types without a default btree equality (e.g. xml, json) */
 
 	/* State for XML generation */
 	int				max_depth;			/* Maximum nesting depth seen */
@@ -100,7 +100,7 @@ static char *tsql_escape_xml(const char *str);
 
 /* Helper functions for XML AUTO */
 static void xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str, int num_cols);
-static char* xml_auto_get_column_value_as_string(HeapTuple tuple, TupleDesc tupdesc, int col_idx, forxml_auto_state *auto_state);
+static char* auto_column_to_xml_string(Datum colval, bool isnull, HeapTuple tuple, TupleDesc tupdesc, int col_idx, forxml_auto_state *auto_state);
 
 /*
  * tsql_escape_xml
@@ -848,7 +848,6 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 	auto_state->prev_datums = (Datum *) palloc0(num_cols * sizeof(Datum));
 	auto_state->prev_isnull = (bool *) palloc0(num_cols * sizeof(bool));
 	auto_state->prev_str_values = (char **) palloc0(num_cols * sizeof(char *));
-	auto_state->prev_has_value = (bool *) palloc0(num_cols * sizeof(bool));
 
 	auto_state->max_depth = 0;
 
@@ -929,31 +928,28 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 }
 
 /*
- * Get column value as string for comparison.
- * Returns a palloc'd copy of the string, or NULL if the column is null.
- * Uses cached output functions when available for fast conversion.
+ * auto_column_to_xml_string - Unified value-to-XML-text conversion for AUTO mode.
+ *
+ * Given a column's Datum and null flag, produces the XML-ready text string.
+ * Handles T-SQL datetime formatting, special XSD types, and the cached fast
+ * path internally.  Returns a palloc'd string, or NULL if the column is null.
+ *
+ * tuple/tupdesc are needed for the datetime formatting sub-path (SPI_getvalue).
  */
 static char*
-xml_auto_get_column_value_as_string(HeapTuple tuple, TupleDesc tupdesc, int col_idx, forxml_auto_state *auto_state)
+auto_column_to_xml_string(Datum colval, bool isnull, HeapTuple tuple, TupleDesc tupdesc, int col_idx, forxml_auto_state *auto_state)
 {
-	Datum colval;
-	bool isnull;
 	Form_pg_attribute att = TupleDescAttr(tupdesc, col_idx);
 	Oid datatype_oid = att->atttypid;
 
-	colval = heap_getattr(tuple, col_idx + 1, tupdesc, &isnull);
 	if (isnull)
 		return NULL;
 
-	/* Apply T-SQL datetime formatting if needed (same path as output_row_xml) */
+	/* Apply T-SQL datetime formatting if needed */
 	if (auto_state != NULL && auto_state->tsql_types_cached)
 		cached_update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, col_idx, auto_state);
 
-	/* Use cached path if output functions are already cached */
-	if (auto_state != NULL && auto_state->out_funcs_cached)
-		return pstrdup(cached_value_to_xml_string(colval, col_idx, auto_state, datatype_oid));
-
-	return pstrdup(map_sql_value_to_xml_value(colval, datatype_oid, true));
+	return cached_value_to_xml_string(colval, col_idx, auto_state, datatype_oid);
 }
 
 /*
@@ -1022,7 +1018,7 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 			 * Fallback for types with no default btree equality: compare
 			 * the serialized XML-string form.
 			 */
-			char *curr_str = xml_auto_get_column_value_as_string(tuple, tupdesc, i, auto_state);
+			char *curr_str = auto_column_to_xml_string(curr_datum, curr_isnull, tuple, tupdesc, i, auto_state);
 			char *prev_str = auto_state->prev_str_values[i];
 
 			if ((curr_str == NULL) != (prev_str == NULL) ||
@@ -1046,8 +1042,7 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 		 */
 		if (auto_state->has_eq_op[i])
 		{
-			if (auto_state->prev_has_value[i] &&
-				!auto_state->prev_isnull[i] &&
+			if (!auto_state->prev_isnull[i] &&
 				!auto_state->type_typbyval[i])
 			{
 				pfree(DatumGetPointer(auto_state->prev_datums[i]));
@@ -1066,7 +1061,6 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 		}
 
 		auto_state->prev_isnull[i] = curr_isnull;
-		auto_state->prev_has_value[i] = true;
 	}
 
 	return first_change;
@@ -1245,8 +1239,11 @@ init_eq_op_cache(forxml_auto_state *auto_state, TupleDesc tupdesc)
 
 /*
  * Initialize the T-SQL datatype conversion cache for all columns.
- * Determines once per column whether it needs special T-SQL datetime formatting,
- * avoiding repeated SPI_gettype + get_namespace_oid + GetSysCacheOid2 lookups.
+ * Determines once per column whether it needs special T-SQL datetime formatting.
+ *
+ * Looks up the OIDs of the known T-SQL types once, then compares each
+ * column's atttypid directly against those OIDs.  No per-column SPI_gettype
+ * or strcmp needed.
  *
  * tsql_convert_type values: 0 = no conversion, 1 = datetime, 2 = datetimeoffset,
  * 3 = binary types (error when binary_base64 is set)
@@ -1255,41 +1252,59 @@ static void
 init_tsql_type_cache(forxml_auto_state *auto_state, TupleDesc tupdesc)
 {
 	Oid nspoid = get_namespace_oid("sys", true);
+	Oid datetime_oid;
+	Oid smalldatetime_oid;
+	Oid datetime2_oid;
+	Oid datetimeoffset_oid;
+	Oid binary_oid;
+	Oid varbinary_oid;
+	Oid image_oid;
+	Oid bbf_timestamp_oid;
+	Oid rowversion_oid;
+
+	if (!OidIsValid(nspoid))
+	{
+		auto_state->tsql_types_cached = true;
+		return;
+	}
+
+	/* Look up known T-SQL type OIDs once */
+	datetime_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+								   CStringGetDatum("datetime"), ObjectIdGetDatum(nspoid));
+	smalldatetime_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+										CStringGetDatum("smalldatetime"), ObjectIdGetDatum(nspoid));
+	datetime2_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+									CStringGetDatum("datetime2"), ObjectIdGetDatum(nspoid));
+	datetimeoffset_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+										 CStringGetDatum("datetimeoffset"), ObjectIdGetDatum(nspoid));
+	binary_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+								 CStringGetDatum("binary"), ObjectIdGetDatum(nspoid));
+	varbinary_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+									CStringGetDatum("varbinary"), ObjectIdGetDatum(nspoid));
+	image_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+								CStringGetDatum("image"), ObjectIdGetDatum(nspoid));
+	bbf_timestamp_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+										CStringGetDatum("timestamp"), ObjectIdGetDatum(nspoid));
+	rowversion_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+									 CStringGetDatum("rowversion"), ObjectIdGetDatum(nspoid));
 
 	for (int i = 0; i < auto_state->num_columns; i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
-		char *typename;
-		Oid tsql_datatype_oid;
+		Oid typid;
 
 		if (att->attisdropped)
 			continue;
 
-		typename = SPI_gettype(tupdesc, i + 1);
-		if (typename == NULL)
-			continue;
+		typid = att->atttypid;
 
-		tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
-											CStringGetDatum(typename),
-											ObjectIdGetDatum(nspoid));
-
-		if (tsql_datatype_oid == att->atttypid)
-		{
-			if (strcmp(typename, "datetime") == 0 ||
-				strcmp(typename, "smalldatetime") == 0 ||
-				strcmp(typename, "datetime2") == 0)
-				auto_state->tsql_convert_type[i] = 1;
-			else if (strcmp(typename, "datetimeoffset") == 0)
-				auto_state->tsql_convert_type[i] = 2;
-			else if (strcmp(typename, "binary") == 0 ||
-					 strcmp(typename, "varbinary") == 0 ||
-					 strcmp(typename, "image") == 0 ||
-					 strcmp(typename, "timestamp") == 0 ||
-					 strcmp(typename, "rowversion") == 0)
-				auto_state->tsql_convert_type[i] = 3;
-		}
-
-		pfree(typename);
+		if (typid == datetime_oid || typid == smalldatetime_oid || typid == datetime2_oid)
+			auto_state->tsql_convert_type[i] = 1;
+		else if (typid == datetimeoffset_oid)
+			auto_state->tsql_convert_type[i] = 2;
+		else if (typid == binary_oid || typid == varbinary_oid || typid == image_oid ||
+				 typid == bbf_timestamp_oid || typid == rowversion_oid)
+			auto_state->tsql_convert_type[i] = 3;
 	}
 	auto_state->tsql_types_cached = true;
 }
@@ -1441,7 +1456,6 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 		{
 			Datum colval;
 			bool isnull;
-			Oid datatype_oid;
 			Form_pg_attribute att;
 
 			if (auto_state->nest_levels[i] != level)
@@ -1452,21 +1466,13 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 				continue;
 
 			colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
-			datatype_oid = att->atttypid;
-			cached_update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, i, auto_state);
 
 			if (elements)
 			{
 				/* ELEMENTS mode: <colname>value</colname> */
 				if (!isnull)
 				{
-					/*
-					 * If update_tsql_datatype_and_val changed the type (e.g. datetime
-					 * to CSTRINGOID), the value is already formatted — use the slow path.
-					 */
-					char *val_str = (datatype_oid != att->atttypid)
-						? map_sql_value_to_xml_value(colval, datatype_oid, true)
-						: cached_value_to_xml_string(colval, i, auto_state, datatype_oid);
+					char *val_str = auto_column_to_xml_string(colval, isnull, tuple, tupdesc, i, auto_state);
 					appendStringInfo(state, "<%s>%s</%s>",
 									auto_state->column_names[i],
 									val_str,
@@ -1484,9 +1490,7 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 				/* ATTRIBUTES mode: col="value" */
 				if (!isnull)
 				{
-					char *val_str = (datatype_oid != att->atttypid)
-						? map_sql_value_to_xml_value(colval, datatype_oid, true)
-						: cached_value_to_xml_string(colval, i, auto_state, datatype_oid);
+					char *val_str = auto_column_to_xml_string(colval, isnull, tuple, tupdesc, i, auto_state);
 					appendStringInfo(state, " %s=\"%s\"",
 									auto_state->column_names[i],
 									tsql_escape_xml(val_str));
@@ -1548,11 +1552,10 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 			else
 			{
 				/* Fallback path: cache serialized form for strcmp */
-				auto_state->prev_str_values[i] = xml_auto_get_column_value_as_string(tuple, tupdesc, i, auto_state);
+				auto_state->prev_str_values[i] = auto_column_to_xml_string(curr_datum, curr_isnull, tuple, tupdesc, i, auto_state);
 			}
 
 			auto_state->prev_isnull[i] = curr_isnull;
-			auto_state->prev_has_value[i] = true;
 		}
 	}
 
