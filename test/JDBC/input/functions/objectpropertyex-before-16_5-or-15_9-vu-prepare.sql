@@ -129,3 +129,28 @@ GO
 -- =============== Cross-database scoping ===============
 CREATE DATABASE objectpropertyex_otherdb
 GO
+
+-- =============== ACL tests ===============
+CREATE LOGIN objectpropertyex_test_login WITH PASSWORD = '12345678';
+GO
+
+CREATE USER objectpropertyex_test_user FOR LOGIN objectpropertyex_test_login;
+GO
+
+-- Grant only INSERT on one table (no SELECT)
+GRANT INSERT ON objectpropertyex_basetype_table TO objectpropertyex_test_user;
+GO
+
+-- Grant only UPDATE on another table
+GRANT UPDATE ON objectpropertyex_specialinput_table TO objectpropertyex_test_user;
+GO
+
+-- Grant only DELETE on trigger table
+GRANT DELETE ON objectpropertyex_trigger_table TO objectpropertyex_test_user;
+GO
+
+-- Grant only REFERENCES on noindex table
+GRANT REFERENCES ON objectpropertyex_noindex_table TO objectpropertyex_test_user;
+GO
+
+-- No permissions on objectpropertyex_basetype_view (for negative test)

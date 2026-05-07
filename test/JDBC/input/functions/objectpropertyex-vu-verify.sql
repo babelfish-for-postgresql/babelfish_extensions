@@ -251,3 +251,46 @@ GO
 
 USE master
 GO
+
+-- =============== Non-existent OID ===============
+
+SELECT OBJECTPROPERTYEX(999999999, 'BaseType')
+GO
+
+-- =============== Unknown property name ===============
+
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'NonExistentProperty')
+GO
+
+-- =============== IsTrigger ===============
+
+SELECT OBJECTPROPERTYEX(
+    (SELECT object_id FROM sys.triggers WHERE name = 'objectpropertyex_test_trigger'),
+    'IsTrigger')
+GO
+
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsTrigger')
+GO
+
+-- =============== ACL tests ===============
+
+-- tsql user=objectpropertyex_test_login password=12345678
+-- User with INSERT only should see BaseType (matches SQL Server behavior)
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'BaseType') AS basetype_insert_only;
+GO
+
+-- User with UPDATE only should see BaseType
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_specialinput_table'), 'BaseType') AS basetype_update_only;
+GO
+
+-- User with DELETE only should see BaseType
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_trigger_table'), 'BaseType') AS basetype_delete_only;
+GO
+
+-- User with REFERENCES only should see BaseType
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_noindex_table'), 'BaseType') AS basetype_references_only;
+GO
+
+-- User with no permission on this object should get NULL
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'BaseType') AS basetype_no_perm;
+GO

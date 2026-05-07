@@ -1129,7 +1129,7 @@ SELECT OBJECTPROPERTY(OBJECT_ID('objectproperty_vu_prepare_IsTrigger_trigger', '
 GO
 ~~START~~
 int
-<NULL>
+1
 ~~END~~
 
 

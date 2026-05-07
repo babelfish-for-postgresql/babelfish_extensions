@@ -1,3 +1,10 @@
+-- =============== ACL tests ===============
+DROP USER objectpropertyex_test_user
+GO
+
+DROP LOGIN objectpropertyex_test_login
+GO
+
 -- =============== Cross-database scoping ===============
 DROP DATABASE objectpropertyex_otherdb
 GO

@@ -92,6 +92,7 @@
 
 typedef enum
 {
+	OBJECT_TYPE_UNKNOWN = -1,
 	OBJECT_TYPE_AGGREGATE_FUNCTION,
 	OBJECT_TYPE_CHECK_CONSTRAINT,
 	OBJECT_TYPE_DEFAULT_CONSTRAINT,
@@ -4334,7 +4335,7 @@ resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
         Oid                     schema_id = InvalidOid;
         Oid                     user_id = GetUserId();
         HeapTuple       tuple;
-        int                     type = 0;
+        int                     type = OBJECT_TYPE_UNKNOWN;
         char       *object_name = NULL;
         char       *nspname = NULL;
         bool            found = false;
@@ -4348,7 +4349,7 @@ resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
                 found = true;
                 object_name = pstrdup(NameStr(pg_class->relname));
 
-                if (pg_class_aclcheck(object_id, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE | ACL_TRIGGER) == ACLCHECK_OK)
+                if (pg_class_aclcheck(object_id, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_REFERENCES) == ACLCHECK_OK)
                         schema_id = get_rel_namespace(object_id);
 
                 if ((pg_class->relpersistence == 'p' || pg_class->relpersistence == 'u' || pg_class->relpersistence == 't') &&
@@ -4394,12 +4395,12 @@ resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
                                 }
                                 ReleaseSysCache(tp);
                         }
-                        if (type == 0 || type != OBJECT_TYPE_TABLE_TYPE)
+                        if (type == OBJECT_TYPE_UNKNOWN || type != OBJECT_TYPE_TABLE_TYPE)
                                 type = OBJECT_TYPE_TABLE;
                 }
                 else if (pg_class->relkind == 'v')
                         type = OBJECT_TYPE_VIEW;
-                else if (pg_class->relkind == 's')
+                else if (pg_class->relkind == 'S')
                         type = OBJECT_TYPE_SEQUENCE_OBJECT;
 
                 ReleaseSysCache(tuple);
@@ -4455,6 +4456,37 @@ resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
                 }
         }
 
+        /* pg_trigger */
+        if (!found)
+        {
+                Relation    tgrel;
+                ScanKeyData key;
+                SysScanDesc tgscan;
+
+                tgrel = table_open(TriggerRelationId, AccessShareLock);
+                ScanKeyInit(&key,
+                            Anum_pg_trigger_oid,
+                            BTEqualStrategyNumber, F_OIDEQ,
+                            ObjectIdGetDatum(object_id));
+
+                tgscan = systable_beginscan(tgrel, TriggerOidIndexId, true,
+                                                                        NULL, 1, &key);
+
+                tuple = systable_getnext(tgscan);
+                if (HeapTupleIsValid(tuple))
+                {
+                        Form_pg_trigger tgform = (Form_pg_trigger) GETSTRUCT(tuple);
+
+                        found = true;
+                        object_name = pstrdup(NameStr(tgform->tgname));
+                        type = OBJECT_TYPE_TSQL_DML_TRIGGER;
+                        schema_id = get_rel_namespace(tgform->tgrelid);
+                }
+
+                systable_endscan(tgscan);
+                table_close(tgrel, AccessShareLock);
+        }
+
         /* pg_attrdef */
         if (!found)
         {
@@ -4476,14 +4508,11 @@ resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
                 {
                         Form_pg_attrdef atdform = (Form_pg_attrdef) GETSTRUCT(tuple);
                         Relation        attrRel;
-                        ScanKeyData key[2];
-                        SysScanDesc scan;
+                        ScanKeyData 	key[2];
+                        SysScanDesc 	scan;
                         HeapTuple       tup;
 
-                        if (pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_SELECT) == ACLCHECK_OK &&
-                                pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_INSERT) == ACLCHECK_OK &&
-                                pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_UPDATE) == ACLCHECK_OK &&
-                                pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_REFERENCES) == ACLCHECK_OK)
+                        if (pg_class_aclcheck(atdform->adrelid, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_REFERENCES) == ACLCHECK_OK)
                         {
                                 attrRel = table_open(AttributeRelationId, AccessShareLock);
 
@@ -4508,8 +4537,7 @@ resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
                                                 found = true;
                                                 object_name = pstrdup(NameStr(attrform->attname));
                                                 type = OBJECT_TYPE_DEFAULT_CONSTRAINT;
-                                                if (pg_class_aclcheck(atdform->adrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
-                                                        schema_id = get_rel_namespace(atdform->adrelid);
+                                                schema_id = get_rel_namespace(atdform->adrelid);
                                         }
                                 }
 
@@ -4635,9 +4663,9 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	{
 		Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
 
-		object_name = NameStr(pg_class->relname);
+		object_name = pstrdup(NameStr(pg_class->relname));
 
-		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
+		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_REFERENCES) == ACLCHECK_OK)
 			schema_id = get_rel_namespace(object_id);
 
 		/* 
@@ -4716,7 +4744,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			{
 				Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
 
-				object_name = NameStr(procform->proname);
+				object_name = pstrdup(NameStr(procform->proname));
 
 				schema_id = tsql_get_proc_nsp_oid(object_id);
 
@@ -4764,6 +4792,35 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			ReleaseSysCache(tuple);
 		}
 	}
+	/* pg_trigger */
+	if (!schema_id)
+	{
+		Relation	tgrel;
+		ScanKeyData key;
+		SysScanDesc tgscan;
+
+		tgrel = table_open(TriggerRelationId, AccessShareLock);
+		ScanKeyInit(&key,
+					Anum_pg_trigger_oid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(object_id));
+
+		tgscan = systable_beginscan(tgrel, TriggerOidIndexId, true,
+									NULL, 1, &key);
+
+		tuple = systable_getnext(tgscan);
+		if (HeapTupleIsValid(tuple))
+		{
+			Form_pg_trigger tgform = (Form_pg_trigger) GETSTRUCT(tuple);
+
+			object_name = pstrdup(NameStr(tgform->tgname));
+			type = OBJECT_TYPE_TSQL_DML_TRIGGER;
+			schema_id = get_rel_namespace(tgform->tgrelid);
+		}
+
+		systable_endscan(tgscan);
+		table_close(tgrel, AccessShareLock);
+	}
 	/* pg_attrdef */
 	if (!schema_id)
 	{
@@ -4794,10 +4851,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			SysScanDesc scan;
 			HeapTuple	tup;
 
-			if (pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_SELECT) &&
-				pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_INSERT) &&
-				pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_UPDATE) &&
-				pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_REFERENCES))
+			if (pg_class_aclcheck(atdform->adrelid, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_REFERENCES) == ACLCHECK_OK)
 			{
 				attrRel = table_open(AttributeRelationId, AccessShareLock);
 
@@ -4819,10 +4873,9 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 					if (attrform->atthasdef && !attrform->attgenerated)
 					{
-						object_name = NameStr(attrform->attname);
+						object_name = pstrdup(NameStr(attrform->attname));
 						type = OBJECT_TYPE_DEFAULT_CONSTRAINT;
-						if (pg_class_aclcheck(atdform->adrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
-							schema_id = get_rel_namespace(atdform->adrelid);
+						schema_id = get_rel_namespace(atdform->adrelid);
 					}
 				}
 
@@ -4842,7 +4895,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (HeapTupleIsValid(tuple))
 		{
 			Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
-			object_name = NameStr(con->conname);
+			object_name = pstrdup(NameStr(con->conname));
 			schema_id = tsql_get_constraint_nsp_oid(object_id, user_id);
 			/*
 			 * If the contype is 'f' on the pg_constraint object, then it is a Foreign key constraint
@@ -5197,9 +5250,9 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	else if (pg_strcasecmp(property, "istrigger") == 0)
 	{
 		/*
-		 * The type of the object should be OBJECT_TYPE_ASSEMBLY_DML_TRIGGER.
+		 * The type of the object should be a DML trigger.
 		 */
-		if (type == OBJECT_TYPE_ASSEMBLY_DML_TRIGGER)
+		if (type == OBJECT_TYPE_TSQL_DML_TRIGGER)
 		{
 			pfree(property);
 			PG_RETURN_INT32(1);
@@ -5225,10 +5278,10 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 Datum
 objectpropertyex_internal(PG_FUNCTION_ARGS)
 {
-        Oid                     object_id;
+        Oid        object_id;
         char       *property;
-        int                     type = 0;
-        Oid                     schema_id = InvalidOid;
+        int        type = OBJECT_TYPE_UNKNOWN;
+        Oid        schema_id = InvalidOid;
         char       *object_name = NULL;
         char       *nspname;
 
@@ -5284,6 +5337,7 @@ objectpropertyex_internal(PG_FUNCTION_ARGS)
 
                 pfree(property);
 
+                /* flinfo is NULL — objectproperty_internal must not dereference fcinfo->flinfo */
                 InitFunctionCallInfoData(*inner_fcinfo, NULL, 2, InvalidOid, NULL, NULL);
                 inner_fcinfo->args[0].value = PG_GETARG_DATUM(0);
                 inner_fcinfo->args[0].isnull = false;
