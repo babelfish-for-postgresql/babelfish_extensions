@@ -200,7 +200,7 @@ SELECT
        END AS sys.sysname
    ) AS tessellation_scheme,
    CAST(0 AS sys.bit) AS has_filter,
-   CAST(NULL AS sys.nvarchar(4000)) AS filter_definition,
+   CAST(NULL AS sys.nvarchar) AS filter_definition,
    CAST(0 AS sys.bit) AS auto_created
 FROM pg_catalog.pg_index i
 JOIN index_id_map imap ON imap.indexrelid = i.indexrelid

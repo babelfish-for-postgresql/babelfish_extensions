@@ -1,4 +1,5 @@
--- sla 10000
+-- sla 80000
+-- sla_for_parallel_query_enforced 80000
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_spatial_index', 'ignore';
 
 -- Geometry table with 1000 deterministic points
