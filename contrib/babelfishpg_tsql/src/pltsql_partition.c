@@ -926,7 +926,7 @@ bbf_alter_handle_partitioned_table(AlterTableStmt *stmt)
 	else if (is_partition_table)
 	{
 		char	*parent_table_name = get_rel_name(get_partition_parent(relid, false));
-		if (is_bbf_partitioned_table(dbid, logical_schemaname, parent_table_name))
+		if (is_bbf_partitioned_table(dbid, logical_schemaname, parent_table_name) && cmd->subtype != AT_ChangeOwner)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), 
 					errmsg("Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.")));

@@ -143,7 +143,7 @@ SELECT NULL AS a, NULL AS b FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row></row>
+<row/>
 ~~END~~
 
 
@@ -170,7 +170,7 @@ SELECT NULL AS a, NULL AS b, NULL AS c, NULL AS d FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row></row>
+<row/>
 ~~END~~
 
 
@@ -198,7 +198,7 @@ SELECT NULL AS a, NULL AS b FOR XML RAW, ELEMENTS ABSENT;
 GO
 ~~START~~
 ntext
-<row></row>
+<row/>
 ~~END~~
 
 
@@ -510,7 +510,7 @@ SELECT name, salary FROM forxml_raw_elements_t1 FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row><name>John</name><salary>50000</salary></row><row><name>Jane</name><salary>60000</salary></row><row><name>Bob</name></row><row><name>Alice</name><salary>70000</salary></row><row></row>
+<row><name>John</name><salary>50000</salary></row><row><name>Jane</name><salary>60000</salary></row><row><name>Bob</name></row><row><name>Alice</name><salary>70000</salary></row><row/>
 ~~END~~
 
 
@@ -950,7 +950,7 @@ SELECT CAST(NULL AS VARCHAR(10)) AS null_val FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row></row>
+<row/>
 ~~END~~
 
 
@@ -971,7 +971,34 @@ SELECT 1 AS a, 2 AS b FOR XML RAW(''), ELEMENTS;
 GO
 ~~START~~
 ntext
-<><a>1</a><b>2</b></>
+<a>1</a><b>2</b>
+~~END~~
+
+
+-- Empty element name without ELEMENTS (attribute-centric) - should error
+SELECT 1 AS a, 2 AS b FOR XML RAW('');
+GO
+~~START~~
+ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Row tag omission (empty row tag name) cannot be used with attribute-centric FOR XML serialization.)~~
+
+
+-- All NULLs under attribute mode (no ELEMENTS)
+SELECT NULL AS a, NULL AS b FOR XML RAW;
+GO
+~~START~~
+ntext
+<row/>
+~~END~~
+
+
+-- All NULLs with empty element name and ELEMENTS
+SELECT NULL AS a, NULL AS b FOR XML RAW(''), ELEMENTS;
+GO
+~~START~~
+ntext
 ~~END~~
 
 
@@ -1903,5 +1930,56 @@ GO
 ~~START~~
 ntext
 <row><emp_name>Alice</emp_name><salary>70000</salary><avg_salary>70000</avg_salary></row><row><emp_name>Bob</emp_name><salary>55000</salary><avg_salary>52500</avg_salary></row><row><emp_name>Diana</emp_name><avg_salary>52500</avg_salary></row><row><emp_name>Jane</emp_name><salary>60000</salary><avg_salary>60000</avg_salary></row><row><emp_name>John</emp_name><salary>50000</salary><avg_salary>52500</avg_salary></row>
+~~END~~
+
+
+GO
+
+
+-- ============================================
+-- SECTION: RAW('') with ELEMENTS XSINIL - xmlns:xsi namespace on each element
+-- ============================================
+-- RAW('') with ELEMENTS XSINIL - namespace should appear on each element
+SELECT * FROM forxml_raw_elements_t1 WHERE id = 3 FOR XML RAW(''), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<id xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">3</id><name xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">Bob</name><salary xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/><department xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">Finance</department>
+~~END~~
+
+
+-- RAW('') with ELEMENTS XSINIL - UNION ALL with NULLs
+SELECT 1 AS a, NULL AS b UNION ALL SELECT NULL AS a, 2 AS b FOR XML RAW(''), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">1</a><b xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/><a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/><b xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">2</b>
+~~END~~
+
+
+-- RAW('') with ELEMENTS XSINIL and ROOT
+SELECT 1 AS a, NULL AS b FOR XML RAW(''), ELEMENTS XSINIL, ROOT('data');
+GO
+~~START~~
+ntext
+<data><a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">1</a><b xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/></data>
+~~END~~
+
+
+-- RAW('') with ELEMENTS XSINIL - all NULLs
+SELECT NULL AS a, NULL AS b FOR XML RAW(''), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/><b xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+~~END~~
+
+
+-- RAW('') with ELEMENTS XSINIL - no NULLs (namespace still on each element)
+SELECT 1 AS a, 2 AS b FOR XML RAW(''), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">1</a><b xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">2</b>
 ~~END~~
 

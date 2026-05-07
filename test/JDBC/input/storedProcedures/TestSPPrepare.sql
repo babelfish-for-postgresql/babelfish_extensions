@@ -548,3 +548,155 @@ GO
 
 Drop table tblEmployees
 GO
+
+--- SP_PREPARE with named args
+CREATE TABLE handle (h int);
+DECLARE @handle int;
+EXEC SP_PREPARE @handle out, N'@a int, @b int', N'select @a, @b';
+INSERT INTO handle VALUES (@handle);
+EXEC SP_EXECUTE @handle, 1, 2;
+EXEC SP_EXECUTE @handle, @a = 1, @b = 2;
+EXEC SP_EXECUTE @handle, @b = 2, @a = 1;
+EXEC SP_EXECUTE @handle, 1, @b = 2;
+EXEC SP_EXECUTE @handle, 2, @a = 1; -- should error
+GO
+
+-- reuse handle
+DECLARE @handle int;
+SELECT @handle = h FROM handle;
+EXEC SP_EXECUTE @handle, 1, 2;
+EXEC SP_EXECUTE @handle, @a = 1, @b = 2;
+EXEC SP_EXECUTE @handle, @b = 2, @a = 1;
+EXEC SP_EXECUTE @handle, 1, @b = 2;
+EXEC SP_EXECUTE @handle, 2, @a = 1; -- should error
+EXEC SP_UNPREPARE @handle;
+GO
+
+--- SP_PREPARE with named args (reverse param order)
+DELETE FROM handle;
+DECLARE @handle int;
+EXEC SP_PREPARE @handle out, N'@b int, @a int', N'select @a, @b';
+INSERT INTO handle VALUES (@handle);
+EXEC SP_EXECUTE @handle, 2, 1;
+EXEC SP_EXECUTE @handle, @a = 1, @b = 2;
+EXEC SP_EXECUTE @handle, @b = 2, @a = 1;
+EXEC SP_EXECUTE @handle, 2, @a = 1;
+EXEC SP_EXECUTE @handle, 1, @b = 2; -- should error
+GO
+
+-- reuse handle
+DECLARE @handle int;
+SELECT @handle = h FROM handle;
+EXEC SP_EXECUTE @handle, 2, 1;
+EXEC SP_EXECUTE @handle, @a = 1, @b = 2;
+EXEC SP_EXECUTE @handle, @b = 2, @a = 1;
+EXEC SP_EXECUTE @handle, 2, @a = 1;
+EXEC SP_EXECUTE @handle, 1, @b = 2; -- should error
+EXEC SP_UNPREPARE @handle;
+GO
+
+-- mix order and types
+DECLARE @handle int;
+EXEC SP_PREPARE @handle out, N'@x int, @y varchar(20)', N'select @x, @y';
+EXEC SP_EXECUTE @handle, @x = 1, @y = 'first';
+EXEC SP_EXECUTE @handle, @y = 'second', @x = 2;
+EXEC SP_EXECUTE @handle, @x = 3, @y = 'third';
+EXEC SP_EXECUTE @handle, @y = 'fourth', @x = 4;
+EXEC SP_UNPREPARE @handle;
+GO
+
+--- case-insensitive matching
+DECLARE @handle int;
+EXEC SP_PREPARE @handle out, N'@Param1 int, @Param2 int', N'select @Param1, @Param2';
+EXEC SP_EXECUTE @handle, @param1 = 1, @PARAM2 = 2;
+EXEC SP_EXECUTE @handle, @param2 = 2, @PARAM1 = 1;
+EXEC SP_UNPREPARE @handle;
+GO
+
+--- SP_PREPARE with named OUTPUT params
+DECLARE @handle int;
+DECLARE @out_val int;
+EXEC SP_PREPARE @handle out, N'@a int, @b int output', N'set @b = @a * 2';
+EXEC SP_EXECUTE @handle, @a = 5, @b = @out_val output;
+SELECT @out_val;
+EXEC SP_EXECUTE @handle, @a = 7, @b = @out_val output;
+SELECT @out_val;
+EXEC SP_UNPREPARE @handle;
+GO
+
+--- SP_PREPEXEC with named args
+DELETE FROM handle;
+DECLARE @handle int;
+EXEC SP_PREPEXEC @handle out, N'@a int, @b int', N'select @a, @b', 1, 2;
+INSERT INTO handle VALUES (@handle);
+EXEC SP_EXECUTE @handle, 1, 2;
+EXEC SP_EXECUTE @handle, @a = 1, @b = 2;
+EXEC SP_EXECUTE @handle, @b = 2, @a = 1;
+EXEC SP_EXECUTE @handle, 1, @b = 2;
+EXEC SP_EXECUTE @handle, 2, @a = 1; -- should error
+GO
+
+-- reuse handle
+DECLARE @handle int;
+SELECT @handle = h FROM handle;
+EXEC SP_EXECUTE @handle, 1, 2;
+EXEC SP_EXECUTE @handle, @a = 1, @b = 2;
+EXEC SP_EXECUTE @handle, @b = 2, @a = 1;
+EXEC SP_EXECUTE @handle, 1, @b = 2;
+EXEC SP_EXECUTE @handle, 2, @a = 1; -- should error
+EXEC SP_UNPREPARE @handle;
+GO
+
+--- SP_PREPEXEC with named args (reverse param order)
+DELETE FROM handle;
+DECLARE @handle int;
+EXEC SP_PREPEXEC @handle out, N'@b int, @a int', N'select @a, @b', 2, 1;
+INSERT INTO handle VALUES (@handle);
+EXEC SP_EXECUTE @handle, 2, 1;
+EXEC SP_EXECUTE @handle, @a = 1, @b = 2;
+EXEC SP_EXECUTE @handle, @b = 2, @a = 1;
+EXEC SP_EXECUTE @handle, 2, @a = 1;
+EXEC SP_EXECUTE @handle, 1, @b = 2; -- should error
+GO
+
+-- reuse handle
+DECLARE @handle int;
+SELECT @handle = h FROM handle;
+EXEC SP_EXECUTE @handle, 2, 1;
+EXEC SP_EXECUTE @handle, @a = 1, @b = 2;
+EXEC SP_EXECUTE @handle, @b = 2, @a = 1;
+EXEC SP_EXECUTE @handle, 2, @a = 1;
+EXEC SP_EXECUTE @handle, 1, @b = 2; -- should error
+EXEC SP_UNPREPARE @handle;
+GO
+
+-- mix order and types
+DECLARE @handle int;
+EXEC SP_PREPEXEC @handle out, N'@x int, @y varchar(20)', N'select @x, @y', @y = 'zeroth', @x = 0;
+EXEC SP_EXECUTE @handle, @x = 1, @y = 'first';
+EXEC SP_EXECUTE @handle, @y = 'second', @x = 2;
+EXEC SP_EXECUTE @handle, @x = 3, @y = 'third';
+EXEC SP_EXECUTE @handle, @y = 'fourth', @x = 4;
+EXEC SP_UNPREPARE @handle;
+GO
+
+--- case-insensitive matching
+DECLARE @handle int;
+EXEC SP_PREPEXEC @handle out, N'@Param1 int, @Param2 int', N'select @Param1, @Param2', @pArAm1 = 1, @PaRaM2 = 2;
+EXEC SP_EXECUTE @handle, @param1 = 1, @PARAM2 = 2;
+EXEC SP_EXECUTE @handle, @param2 = 2, @PARAM1 = 1;
+EXEC SP_UNPREPARE @handle;
+GO
+
+--- SP_PREPEXEC with named OUTPUT params
+DECLARE @handle int;
+DECLARE @out_val int;
+EXEC SP_PREPEXEC @handle out, N'@a int, @b int output', N'set @b = @a * 2', @a = 5, @b = @out_val output;
+SELECT @out_val;
+EXEC SP_EXECUTE @handle, @a = 7, @b = @out_val output;
+SELECT @out_val;
+EXEC SP_UNPREPARE @handle;
+GO
+
+DROP TABLE handle;
+GO

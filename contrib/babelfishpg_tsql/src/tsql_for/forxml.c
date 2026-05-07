@@ -215,7 +215,8 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 	TupleDesc       tupdesc;
 	HeapTupleData   tmptup;
 	HeapTuple       tuple;
-
+	bool            allnull = true;
+	
 	td = DatumGetHeapTupleHeader(record);
 
 	/* Extract rowtype info and find a tupdesc */
@@ -228,19 +229,34 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 	tmptup.t_data = td;
 	tuple = &tmptup;
 
-	/* Output opening tag */
-	if (elements)
+	/*
+	 * Empty element name without ELEMENTS mode is not allowed — attribute-centric
+	 * serialization requires a row tag name.
+	 */
+	if (element_name[0] == '\0' && !elements)
 	{
-		/* ELEMENTS mode: <row><col>value</col></row> */
-		if (xsinil)
-			appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
-		else
-			appendStringInfo(state, "<%s>", element_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION),
+				 errmsg("Row tag omission (empty row tag name) cannot be used "
+						"with attribute-centric FOR XML serialization.")));
 	}
-	else
+
+	/* Output opening tag (only when element_name is non-empty) */
+	if (element_name[0] != '\0')
 	{
-		/* ATTRIBUTES mode: <row col="value"/> */
-		appendStringInfo(state, "<%s", element_name);
+		if (elements)
+		{
+			/* ELEMENTS mode: <row><col>value</col></row> */
+			if (xsinil)
+				appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
+			else
+				appendStringInfo(state, "<%s>", element_name);
+		}
+		else
+		{
+			/* ATTRIBUTES mode: <row col="value"/> */
+			appendStringInfo(state, "<%s", element_name);
+		}
 	}
 
 	for (int i = 0; i < tupdesc->natts; i++)
@@ -265,16 +281,27 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 			/* ELEMENTS mode output */
 			if (!isnull)
 			{
-				/* Normal element: <col>value</col> */
-				appendStringInfo(state, "<%s>%s</%s>",
-								 colname,
-								 map_sql_value_to_xml_value(colval, datatype_oid, true),
-								 colname);
+				allnull = false;
+				/* When RAW('') is used with XSINIL, add xmlns to each element */
+				if ((element_name && strlen(element_name) == 0) && xsinil)
+					appendStringInfo(state, "<%s " XML_XMLNS_XSI ">%s</%s>",
+									 colname,
+									 map_sql_value_to_xml_value(colval, datatype_oid, true),
+									 colname);
+				else
+					appendStringInfo(state, "<%s>%s</%s>",
+									 colname,
+									 map_sql_value_to_xml_value(colval, datatype_oid, true),
+									 colname);
 			}
 			else if (xsinil)
 			{
-				/* XSINIL: <col xsi:nil="true"/> */
-				appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
+				allnull = false;
+				/* When RAW('') is used with XSINIL, add xmlns to each element */
+				if (element_name && strlen(element_name) == 0)
+					appendStringInfo(state, "<%s " XML_XMLNS_XSI " " XML_XSI_NIL "/>", colname);
+				else
+					appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
 			}
 			/* else: ABSENT - skip NULL columns (do nothing) */
 		}
@@ -292,7 +319,29 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 
 	/* Output closing tag */
 	if (elements)
-		appendStringInfo(state, "</%s>", element_name);
+	{
+		if (element_name[0] == '\0')
+		{
+			/*
+			 * Empty element name with ELEMENTS: no wrapper tag needed.
+			 * Just output the child elements directly, same as PATH('').
+			 */
+		}
+		else if (allnull)
+		{
+			/*
+			 * If all column values are NULL, produce a self-closing element
+			 * like TSQL does: <row/>. Replace the '>' in the already
+			 * appended opening tag with '/' and append '>'.
+			 */
+			state->data[state->len - 1] = '/';
+			appendStringInfoChar(state, '>');
+		}
+		else
+		{
+			appendStringInfo(state, "</%s>", element_name);
+		}
+	}
 	else
 		appendStringInfoString(state, "/>");
 
