@@ -871,6 +871,8 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 		char *entry_copy = pstrdup(token);
 		char *dot1 = strchr(entry_copy, '.');
 		char *dot2 = (dot1 != NULL) ? strchr(dot1 + 1, '.') : NULL;
+		char *endptr;
+		long level;
 
 		if (dot1 == NULL || dot2 == NULL)
 			ereport(ERROR,
@@ -880,19 +882,17 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 		*dot1 = '\0';
 		*dot2 = '\0';
 
-		{
-			char *endptr;
-			long level = strtol(entry_copy, &endptr, 10);
-			if (endptr == entry_copy || *endptr != '\0')
-				ereport(ERROR,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-						 errmsg("FOR XML AUTO metadata has non-numeric level: \"%s\"", entry_copy)));
-			if (level < 1 || level > num_cols)
-				ereport(ERROR,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-						 errmsg("FOR XML AUTO metadata has invalid level %ld", level)));
-			auto_state->nest_levels[col_idx] = (int) level;
-		}
+		level = strtol(entry_copy, &endptr, 10);
+		if (endptr == entry_copy || *endptr != '\0')
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("FOR XML AUTO metadata has non-numeric level: \"%s\"", entry_copy)));
+		if (level < 1 || level > num_cols)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("FOR XML AUTO metadata has invalid level %ld", level)));
+		auto_state->nest_levels[col_idx] = (int) level;
+
 		auto_state->table_aliases[col_idx] = unescape_period(dot1 + 1);
 		auto_state->column_names[col_idx] = unescape_period(dot2 + 1);
 
