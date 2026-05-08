@@ -169,12 +169,14 @@ GO
 
 ~~ERROR (Message: schema "master_data" does not exist)~~
 
+
 CREATE VIEW xml_query_dep_view2 AS
 SELECT id, data.query('/root') AS root_xml FROM xml_query_t1;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: schema "master_data" does not exist)~~
+
 
 
 -- ============================================
@@ -190,6 +192,7 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
+
 
 CREATE PROCEDURE xml_query_proc2 @id INT
 AS
@@ -221,6 +224,7 @@ GO
 
 ~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
 
+
 CREATE FUNCTION xml_query_func2(@id INT)
 RETURNS XML
 AS
@@ -242,6 +246,7 @@ GO
 ~~ERROR (Message: schema "master_data" does not exist)~~
 
 
+
 -- ============================================
 -- SECTION: Computed column and check constraint
 -- ============================================
@@ -256,12 +261,14 @@ GO
 
 ~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
 
+
 -- change volatility to immutable for computed column use
 EXEC sys.sp_babelfish_volatility 'xml_query_wrapper', 'immutable';
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: function does not exist)~~
+
 
 CREATE TABLE xml_query_computed_t1 (
     id INT,
@@ -272,6 +279,7 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: function master_dbo.xml_query_wrapper(xml) does not exist)~~
+
 
 
 -- ============================================
@@ -294,6 +302,7 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: schema "master_data" does not exist)~~
+
 
 SET QUOTED_IDENTIFIER ON;
 GO
