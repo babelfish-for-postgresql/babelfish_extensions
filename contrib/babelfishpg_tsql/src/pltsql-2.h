@@ -12,7 +12,7 @@ typedef struct InsertExecInfo
     char       *target;             /* Target table name (bare name only, no schema/db prefix) */
     char       *schema;             /* Schema name, or NULL if not specified */
     char       *db_name;            /* Database name, or NULL if not specified */
-    char       *columns;            /* Column list for INSERT-EXEC */
+    List       *columns;            /* List of column name strings, or NIL */
 } InsertExecInfo;
 
 /*
