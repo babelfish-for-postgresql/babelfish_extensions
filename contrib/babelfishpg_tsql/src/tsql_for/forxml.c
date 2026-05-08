@@ -146,7 +146,7 @@ static char *cached_value_to_xml_string(Datum value, int col_idx, forxml_auto_st
 static void init_output_func_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
 static void init_tsql_type_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
 static void init_eq_op_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
-static void cached_update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, int col_idx, forxml_auto_state *auto_state);
+static void auto_preformat_value(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, int col_idx, forxml_auto_state *auto_state);
 static bool validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tupdesc);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_xml_sfunc);
@@ -945,9 +945,9 @@ auto_column_to_xml_string(Datum colval, bool isnull, HeapTuple tuple, TupleDesc 
 	if (isnull)
 		return NULL;
 
-	/* Apply T-SQL datetime formatting if needed */
+	/* Pre-format special types (datetime, XSD types, binary error) */
 	if (auto_state != NULL && auto_state->tsql_types_cached)
-		cached_update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, col_idx, auto_state);
+		auto_preformat_value(tuple, tupdesc, &datatype_oid, &colval, col_idx, auto_state);
 
 	return cached_value_to_xml_string(colval, col_idx, auto_state, datatype_oid);
 }
@@ -1106,49 +1106,22 @@ close_elements_to_level(StringInfo state, forxml_auto_state *auto_state, int tar
  * cached_value_to_xml_string
  *
  * Fast path for converting a column value to its XML string representation.
- * Requires that init_output_func_cache() has been called first to populate
- * the per-column cache.
- *
- * Types that need special XSD formatting (bool, date, timestamp, bytea, xml,
- * arrays) fall back to the full map_sql_value_to_xml_value().
+ * Requires that auto_preformat_value() has been called first to handle
+ * special types.  After pre-formatting, this function only sees either
+ * CSTRINGOID (already formatted) or normal types that just need their
+ * output function + XML escaping.
  */
 static char *
 cached_value_to_xml_string(Datum value, int col_idx, forxml_auto_state *auto_state, Oid orig_type)
 {
-	Oid base_type;
-
 	/*
-	 * CSTRINGOID means update_tsql_datatype_and_val already converted the
-	 * value to a formatted C string (e.g. datetime → "2023-07-04T00:00:00").
-	 * Just XML-escape it directly.
+	 * CSTRINGOID means auto_preformat_value already converted the value
+	 * to a formatted C string.  Just XML-escape it directly.
 	 */
 	if (orig_type == CSTRINGOID)
 		return escape_xml(DatumGetCString(value));
 
-	base_type = auto_state->base_types[col_idx];
-
-	/*
-	 * Types requiring special XSD formatting — fall back to the full
-	 * map_sql_value_to_xml_value which handles them correctly.
-	 */
-	switch (base_type)
-	{
-		case BOOLOID:
-		case DATEOID:
-		case TIMESTAMPOID:
-		case TIMESTAMPTZOID:
-		case BYTEAOID:
-		case XMLOID:
-			return map_sql_value_to_xml_value(value, orig_type, true);
-		default:
-			break;
-	}
-
-	/* Array domains also need the full path */
-	if (type_is_array_domain(orig_type))
-		return map_sql_value_to_xml_value(value, orig_type, true);
-
-	/* Fast path: use cached FmgrInfo directly, then escape for XML */
+	/* Normal types: use cached output function, then escape for XML */
 	return escape_xml(OutputFunctionCall(&auto_state->out_finfo[col_idx], value));
 }
 
@@ -1310,23 +1283,32 @@ init_tsql_type_cache(forxml_auto_state *auto_state, TupleDesc tupdesc)
 }
 
 /*
- * Cached version of update_tsql_datatype_and_val for AUTO mode.
- * Uses pre-computed tsql_convert_type to skip catalog lookups on every row.
+ * auto_preformat_value - Pre-format column values that need special handling.
+ *
+ * Handles all types that can't go through the simple OutputFunctionCall path:
+ * - T-SQL datetime types: format with T-SQL rules (T separator, offset)
+ * - T-SQL binary types with BINARY BASE64: error (not supported)
+ * - XSD special types (bool, date, timestamp, bytea, xml, arrays): format
+ *   via map_sql_value_to_xml_value which handles their XML Schema rules
+ *
+ * When a value is pre-formatted, colval is set to the formatted C string
+ * and datatype_oid is set to CSTRINGOID so the serialization step knows
+ * to just escape_xml it directly.
  */
 static void
-cached_update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc,
-									Oid *datatype_oid, Datum *colval,
-									int col_idx, forxml_auto_state *auto_state)
+auto_preformat_value(HeapTuple tuple, TupleDesc tupdesc,
+					 Oid *datatype_oid, Datum *colval,
+					 int col_idx, forxml_auto_state *auto_state)
 {
 	int convert_type = auto_state->tsql_convert_type[col_idx];
+	Oid base_type;
 
+	/* T-SQL datetime / smalldatetime / datetime2 */
 	if (convert_type == 1)
 	{
-		/* datetime / smalldatetime / datetime2 */
 		char *val = SPI_getvalue(tuple, tupdesc, col_idx + 1);
 		StringInfo format_output;
 
-		/* SPI_getvalue returns NULL for a null column; nothing to format */
 		if (val == NULL)
 			return;
 
@@ -1334,11 +1316,13 @@ cached_update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc,
 		tsql_for_datetime_format(format_output, val);
 		*colval = CStringGetDatum(format_output->data);
 		*datatype_oid = CSTRINGOID;
-		pfree(format_output);	/* free StringInfo struct, data is kept via colval */
+		pfree(format_output);
+		return;
 	}
-	else if (convert_type == 2)
+
+	/* T-SQL datetimeoffset */
+	if (convert_type == 2)
 	{
-		/* datetimeoffset */
 		char *val = SPI_getvalue(tuple, tupdesc, col_idx + 1);
 		StringInfo format_output;
 
@@ -1349,16 +1333,48 @@ cached_update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc,
 		tsql_for_datetimeoffset_format(format_output, val);
 		*colval = CStringGetDatum(format_output->data);
 		*datatype_oid = CSTRINGOID;
-		pfree(format_output);	/* free StringInfo struct, data is kept via colval */
+		pfree(format_output);
+		return;
 	}
-	else if (convert_type == 3 && auto_state->binary_base64)
+
+	/* T-SQL binary types with BINARY BASE64 directive */
+	if (convert_type == 3 && auto_state->binary_base64)
 	{
-		/* binary / varbinary / image / timestamp / rowversion */
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("option binary base64 is not supported")));
 	}
-	/* else: convert_type == 0, no conversion needed */
+
+	/*
+	 * XSD special types: bool, date, timestamp, timestamptz, bytea, xml,
+	 * and array domains need formatting that the simple OutputFunctionCall
+	 * path can't provide.  Use map_sql_value_to_xml_value and mark as
+	 * pre-formatted.
+	 */
+	base_type = auto_state->base_types[col_idx];
+	switch (base_type)
+	{
+		case BOOLOID:
+		case DATEOID:
+		case TIMESTAMPOID:
+		case TIMESTAMPTZOID:
+		case BYTEAOID:
+		case XMLOID:
+			*colval = CStringGetDatum(map_sql_value_to_xml_value(*colval, *datatype_oid, true));
+			*datatype_oid = CSTRINGOID;
+			return;
+		default:
+			break;
+	}
+
+	if (type_is_array_domain(*datatype_oid))
+	{
+		*colval = CStringGetDatum(map_sql_value_to_xml_value(*colval, *datatype_oid, true));
+		*datatype_oid = CSTRINGOID;
+		return;
+	}
+
+	/* Normal types: no pre-formatting needed, fast path handles them */
 }
 
 /*
