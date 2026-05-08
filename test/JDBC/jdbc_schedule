@@ -772,3 +772,6 @@ ignore#!#forxml-path-elements-before-17_10-or-18_4-vu-cleanup
 ignore#!#Test-Polygon-before-17_9-or-18_3-vu-prepare
 ignore#!#Test-Polygon-before-17_9-or-18_3-vu-verify
 ignore#!#Test-Polygon-before-17_9-or-18_3-vu-cleanup
+ignore#!#xml_query-before-17_12-or-18_5-vu-prepare
+ignore#!#xml_query-before-17_12-or-18_5-vu-verify
+ignore#!#xml_query-before-17_12-or-18_5-vu-cleanup
