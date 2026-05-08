@@ -16,6 +16,7 @@ CREATE VIEW enr_view AS
             ELSE relname
         END AS relname
     FROM sys.babelfish_get_enr_list()
+    ORDER BY relname COLLATE pg_c_utf8
 GO
 
 CREATE PROCEDURE object_id_outer_proc
@@ -35,7 +36,7 @@ go
 CREATE PROCEDURE enr_list_inner_proc
 as
     CREATE TABLE #tab_nest_level_0(a int)
-    SELECT relname FROM sys.babelfish_get_enr_list();
+    SELECT relname FROM sys.babelfish_get_enr_list() ORDER BY relname COLLATE pg_c_utf8;
 go
 
 -- Ensure to check before and after table is created.
@@ -98,5 +99,61 @@ AS
 BEGIN
 	CREATE INDEX idx ON #temptable5605(generate_series);
 	SELECT * FROM enr_view;
+END;
+GO
+
+CREATE FUNCTION custom_adder(@a INT, @b INT)
+RETURNS INT
+BEGIN
+	RETURN @a + @b;
+END;
+GO
+
+CREATE PROCEDURE p_def_cons
+AS
+BEGIN
+	DECLARE @tv_def_con TABLE(id INT PRIMARY KEY, a INT IDENTITY, b CHAR(1) DEFAULT 'F' CHECK (b IN ('T', 'F')));
+	INSERT INTO @tv_def_con(id, b) VALUES (1, 'T');
+	INSERT INTO @tv_def_con(id) VALUES (2);
+	INSERT INTO @tv_def_con(id, b) VALUES (3, 'A');
+	SELECT * FROM @tv_def_con;
+END;
+GO
+
+-- SP_EXECUTESQL index creation on temp tables
+CREATE PROCEDURE p_sp_executesql_index
+AS
+BEGIN
+    CREATE TABLE #sp_exec_temp (a INT, b VARCHAR(50));
+    INSERT INTO #sp_exec_temp VALUES (1, 'one'), (2, 'two'), (3, 'three');
+    
+    DECLARE @SQL NVARCHAR(MAX) = 'CREATE INDEX idx_sp_exec ON #sp_exec_temp(a)';
+    EXEC SP_EXECUTESQL @SQL;
+    
+    SELECT * FROM #sp_exec_temp WHERE a = 2;
+    
+    DROP INDEX idx_sp_exec ON #sp_exec_temp;
+    
+    SELECT * FROM #sp_exec_temp ORDER BY a;
+    
+    DROP TABLE #sp_exec_temp;
+END;
+GO
+
+-- SP_EXECUTESQL ALTER TABLE ADD column that creates toast table
+CREATE PROCEDURE p_sp_executesql_toast
+AS
+BEGIN
+    CREATE TABLE #sp_exec_toast_temp (a INT, b VARCHAR(10));
+    INSERT INTO #sp_exec_toast_temp VALUES (1, 'test');
+    
+    DECLARE @SQL NVARCHAR(MAX) = 'ALTER TABLE #sp_exec_toast_temp ADD large_col VARCHAR(MAX)';
+    EXEC SP_EXECUTESQL @SQL;
+    
+    UPDATE #sp_exec_toast_temp SET large_col = REPLICATE('x', 5000) WHERE a = 1;
+    
+    SELECT a, b, LEN(large_col) as large_col_len FROM #sp_exec_toast_temp;
+    
+    DROP TABLE #sp_exec_toast_temp;
 END;
 GO

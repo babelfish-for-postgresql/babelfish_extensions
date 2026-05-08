@@ -3941,10 +3941,13 @@ geospatial_func_no_arg
     : STASTEXT
     | STASBINARY
     | STAREA
+    | MAKEVALID
     | STDIMENSION
+    | STGEOMETRYTYPE   
     | STISCLOSED
     | STISEMPTY
     | STISVALID
+    | STNUMPOINTS
     ;
 
 geospatial_func_arg
@@ -3960,7 +3963,10 @@ geospatial_static_method
     | STPOINTFROMTEXT
     | STLINEFROMTEXT
     | STPOLYFROMTEXT
+    | STMPOINTFROMTEXT
+    | STMPOINTFROMWKB 
     | POINT
+    | PARSE
     ;
 
 hierarchyid_methods
@@ -3969,7 +3975,6 @@ hierarchyid_methods
 
 hierarchyid_static_method
     : GETROOT
-    | PARSE
     ;
 
 datatype_static_method
@@ -4724,6 +4729,7 @@ keyword
     | M
     | M_DOUBLE_QUOTE
     | M_SQBRACKET
+    | MAKEVALID
     | MANUAL
     | MARK
     | MASK
@@ -5080,12 +5086,16 @@ keyword
     | STDISJOINT 
     | STDISTANCE
     | STEQUALS
+    | STGEOMETRYTYPE 
     | STGEOMFROMTEXT
     | STINTERSECTS
     | STISCLOSED
     | STISEMPTY
     | STISVALID
     | STLINEFROMTEXT
+    | STMPOINTFROMTEXT
+    | STMPOINTFROMWKB
+    | STNUMPOINTS
     | STOP
     | STOPAT
     | STOPATMARK

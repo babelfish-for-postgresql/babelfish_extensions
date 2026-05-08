@@ -2043,10 +2043,9 @@ TdsProcessLogin(Port *port, bool loadedSsl)
 void
 TdsSetDbContext()
 {
-	char *dbname				= NULL;
-	char *useDbCommand			= NULL;
-	char *user 					= NULL;
-	MemoryContext oldContext	= CurrentMemoryContext;
+	char	   *dbname = NULL;
+	char	   *user = NULL;
+	MemoryContext oldContext = CurrentMemoryContext;
 
 	PG_TRY();
 	{
@@ -2069,11 +2068,6 @@ TdsSetDbContext()
 						(errcode(ERRCODE_UNDEFINED_DATABASE),
 							errmsg("database \"%s\" does not exist", loginInfo->database)));
 
-			/*
-			 * Any delimitated/quoted db name identifier requested in login
-			 * must be already handled before this point.
-			 */
-			useDbCommand = psprintf("USE [%s]", loginInfo->database);
 			dbname = pstrdup(loginInfo->database);
 		}
 		else
@@ -2088,8 +2082,6 @@ TdsSetDbContext()
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_DATABASE),
 							errmsg("could not find default database for user \"%s\"", loginInfo->username)));
-
-			useDbCommand = psprintf("USE [%s]", temp);
 			dbname = pstrdup(temp);
 			CommitTransactionCommand();
 			MemoryContextSwitchTo(oldContext);
@@ -2106,10 +2098,9 @@ TdsSetDbContext()
 						errmsg("Cannot open database \"%s\" requested by the login. The login failed", dbname)));
 
 		/*
-		 * loginInfo has a database name provided, so we execute a "USE
-		 * [<db_name>]" through pltsql inline handler.
+		 * Direct API invokation for switching database context.
 		 */
-		ExecuteSQLBatch(useDbCommand);
+		pltsql_plugin_handler_ptr->switch_database_context(dbname);
 		CommitTransactionCommand();
 	}
 	PG_CATCH();
@@ -2146,8 +2137,6 @@ TdsSetDbContext()
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	if (useDbCommand)
-		pfree(useDbCommand);
 	if (dbname)
 		pfree(dbname);
 }

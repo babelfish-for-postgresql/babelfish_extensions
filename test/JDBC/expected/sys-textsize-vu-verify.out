@@ -1,0 +1,26 @@
+-- default value
+SELECT @@textsize
+GO
+~~START~~
+int
+-1
+~~END~~
+
+
+-- used in expression
+SELECT CASE WHEN @@textsize >= -1 THEN 'valid' ELSE 'invalid' END
+GO
+~~START~~
+varchar
+valid
+~~END~~
+
+
+-- used with other @@ variables
+SELECT @@textsize, @@lock_timeout
+GO
+~~START~~
+int#!#int
+-1#!#-1
+~~END~~
+

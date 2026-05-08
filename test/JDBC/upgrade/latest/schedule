@@ -344,6 +344,7 @@ sys-indexes-dep
 sys-key_constraints
 sys-key_constraints-dep
 sys-lock_timeout
+sys-textsize
 sys-master_files
 sys-max_connections
 sys-nestlevel-dep
@@ -443,6 +444,7 @@ TestSmallMoney
 TestSpatialPoint
 Test-spatial-functions
 Test-spatial-functions-2
+Test-spatial-functions-3
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
@@ -670,8 +672,14 @@ BABEL-4271
 comparison_op_index_scan
 Test-Linestring
 Test-Polygon
+Test-Multipoint
 BABEL-5788
 BABEL-1664
 sys-fn_varbintohexstr
 babel_string_to_money_reg
 string_aggregate
+babel_convert_with_style
+forxml-raw-elements
+forxml-raw-elements-1gb-limit
+forxml-path-elements
+BABEL-5264

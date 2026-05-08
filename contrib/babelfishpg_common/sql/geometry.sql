@@ -313,6 +313,60 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPolyFromText(sys.NVARCHAR,srid intege
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromText(sys.NVARCHAR, srid integer)
+    RETURNS sys.GEOMETRY
+    AS $$
+    DECLARE
+        Geomtype text;
+        geom sys.GEOMETRY;
+    BEGIN
+        IF $2 IS NULL THEN
+            RAISE EXCEPTION '''geometry::STMPointFromText'' failed because parameter 2 is not allowed to be null.';
+        ELSIF $1 IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        geom = sys.geomfromtext_helper($1, $2);
+        Geomtype = sys.ST_GeometryType(geom);
+
+        IF Geomtype = 'ST_MultiPoint' THEN
+            RETURN geom;
+        ELSE
+            RAISE EXCEPTION 'Expected "MULTIPOINT" at position 1. The input has %', $1;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromWKB(sys.VARBINARY, srid integer)
+    RETURNS sys.GEOMETRY
+    AS $$
+    DECLARE
+        Geomtype text;
+        geom sys.GEOMETRY;
+    BEGIN
+        IF $2 IS NULL THEN
+            RAISE EXCEPTION '''geometry::STMPointFromWKB'' failed because parameter 2 is not allowed to be null.';
+        ELSIF $1 IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        geom = sys.geomfromwkb_helper($1::bytea, $2);
+        Geomtype = sys.ST_GeometryType(geom);
+
+        IF Geomtype = 'ST_MultiPoint' THEN
+            RETURN geom;
+        ELSE
+            RAISE EXCEPTION 'Expected "MULTIPOINT" at position 1. The input has %', Geomtype;
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+
+
+CREATE OR REPLACE FUNCTION sys.geomfromwkb_helper(bytea, integer)
+    RETURNS sys.GEOMETRY
+    AS 'babelfishpg_common', 'get_geometry_from_wkb'
+    LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.ST_GeometryType(sys.GEOMETRY)
 	RETURNS text
 	AS '$libdir/postgis-3', 'geometry_geometrytype'
@@ -427,7 +481,69 @@ CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	
+--STGeomType
+CREATE OR REPLACE FUNCTION sys.STGeometryType(geom sys.GEOMETRY)
+	RETURNS sys.NVARCHAR(4000)
+	AS $$
+	DECLARE
+		geom_type text;
+	BEGIN
+		IF STIsValid(geom) = 0 THEN
+			RAISE EXCEPTION 'This operation cannot be completed because the instance is not valid';
+		END IF;
+		
+		geom_type := sys.ST_GeometryType(geom);
+		
+		IF geom_type LIKE 'ST\_%' ESCAPE '\' THEN
+			RETURN substr(geom_type, 4);
+		END IF;
+		
+	 	RAISE EXCEPTION 'Unexpected geometry type format: %. Expected ST_* prefix.', geom_type;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
+--MAKE VALID
+CREATE OR REPLACE FUNCTION sys.MakeValid(geom sys.GEOMETRY)
+	RETURNS sys.GEOMETRY
+	AS $$
+	BEGIN
+    	IF sys.STIsEmpty(geom) = 1 THEN
+        	RETURN geom;
+    	ELSEIF sys.STIsValid(geom) = 1 THEN 
+        	RETURN geom;
+    	ELSE
+    		RETURN sys.STMakeValid_helper(geom);
+    	END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+--Parse
+CREATE OR REPLACE FUNCTION sys.Geometry__Parse(geometry_tagged_text sys.NVARCHAR)
+    RETURNS sys.GEOMETRY
+    AS $$
+    BEGIN
+	    IF UPPER(geometry_tagged_text COLLATE sys.DATABASE_DEFAULT) = 'NULL' THEN
+            RETURN NULL;
+        END IF;
+
+        RETURN sys.geomfromtext_helper(geometry_tagged_text, 0);
+    END;
+    $$ LANGUAGE plpgsql STRICT IMMUTABLE PARALLEL SAFE;
+
+--STNumPoints
+CREATE OR REPLACE FUNCTION sys.STNumPoints(geom sys.GEOMETRY)
+    RETURNS integer
+    AS $$
+    BEGIN
+        IF STIsValid(geom) = 0 THEN
+            RAISE EXCEPTION 'The geometry instance is not valid';
+        ELSE
+            RETURN sys.STNumPoints_helper(geom);
+        END IF;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+	
 -- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
@@ -622,7 +738,17 @@ CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOMETRY)
         RETURNS integer
         AS '$libdir/postgis-3','LWGEOM_dimension'
         LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+		
+CREATE OR REPLACE FUNCTION sys.STNumPoints_helper(sys.GEOMETRY)
+    RETURNS integer
+    AS '$libdir/postgis-3','LWGEOM_npoints'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.STMakeValid_helper(sys.GEOMETRY)
+        RETURNS sys.GEOMETRY
+        AS '$libdir/postgis-3','ST_MakeValid'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+		
 CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
         RETURNS sys.BIT
         AS '$libdir/postgis-3','ST_Intersects'

@@ -567,7 +567,7 @@ test_conv_string_to_time
 BABEL-3401
 BABEL-3820
 stuff
-PARTITION
+PARTITION-before-17_7
 BABEL-5071
 string_agg_within
 reverse
@@ -654,6 +654,8 @@ cast_datetime_to_binary-before-17_7-16_11
 BABEL-4271
 0_temp_oid_buffer_start
 comparison_op_index_scan-before-17_8-or-16_12
-
 BABEL-1664-before-16_10-or-17_6
 string_aggregate
+babel_convert_with_style
+forxml-raw-elements-before-17_9-or-18_3
+forxml-path-elements-before-17_10-or-18_4

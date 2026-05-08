@@ -1,0 +1,7 @@
+-- psql
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.temp_oid_buffer_size = 65536;
+GO
+
+-- tsql
+DROP TABLE perm_table;
+GO

@@ -69,3 +69,36 @@ GO
 
 DROP TYPE tv_nested_type
 GO
+
+DROP PROC p_tv_basic
+GO
+
+DROP PROC p_tv_delete
+GO
+
+DROP PROC p_tv_nested_outer
+GO
+
+DROP PROC p_tv_nested_inner
+GO
+
+DROP PROC p_tv_transaction
+GO
+
+DROP PROC p_tv_multiple
+GO
+
+DROP PROC p_tv_error_handling
+GO
+
+DROP PROC p_tv_conditional
+GO
+
+DROP PROC p_tv_mixed_with_temp
+GO
+
+DROP PROC p_tv_scope_outer
+GO
+
+DROP PROC p_tv_scope_inner
+GO

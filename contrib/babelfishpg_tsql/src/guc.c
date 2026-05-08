@@ -59,6 +59,7 @@ bool		pltsql_disable_batch_auto_commit = false;
 bool		pltsql_disable_internal_savepoint = false;
 bool		pltsql_disable_txn_in_triggers = false;
 bool		pltsql_recursive_triggers = false;
+bool		pltsql_enable_new_insert_exec = false;
 bool		pltsql_noexec = false;
 bool		pltsql_showplan_all = false;
 bool		pltsql_showplan_text = false;
@@ -368,10 +369,6 @@ check_no_browsetable(bool *newval, void **extra, GucSource source)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("OFF setting is not allowed for option NO_BROWSETABLE. please use babelfishpg_tsql.escape_hatch_session_settings to ignore")));
-	}
-	else if (escape_hatch_session_settings == EH_IGNORE)
-	{
-		*newval = true;			/* overwrite to a default value */
 	}
 	return true;
 }
@@ -951,6 +948,15 @@ define_custom_variables(void)
 							 &pltsql_recursive_triggers,
 							 false,
 							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_new_insert_exec",
+							 gettext_noop("Enables INSERT...EXEC redesign code path"),
+							 NULL,
+							 &pltsql_enable_new_insert_exec,
+							 false,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 

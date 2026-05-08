@@ -404,14 +404,6 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 								memcpy(value, &messageData[*offset], rowData->columnValues[i].len);
 								rowData->columnValues[i].data = value;
 								*offset += rowData->columnValues[i].len;
-								if (colmetadata[i].columnTdsType == TDS_TYPE_NVARCHAR)
-								{
-									StringInfo	tempStringInfo = palloc(sizeof(StringInfoData));
-
-									initStringInfo(tempStringInfo);
-									TdsUTF16toUTF8StringInfo(tempStringInfo, value, rowData->columnValues[i].len);
-									rowData->columnValues[i] = *tempStringInfo;
-								}
 							}
 							else
 							{
@@ -429,14 +421,6 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 								rowData->isNull[i] = 'n';
 							}
 							rowData->columnValues[i] = *(TdsGetPlpStringInfoBufferFromToken(messageData, temp));
-							if (colmetadata[i].columnTdsType == TDS_TYPE_NVARCHAR)
-							{
-								StringInfo	tempStringInfo = palloc(sizeof(StringInfoData));
-
-								initStringInfo(tempStringInfo);
-								TdsUTF16toUTF8StringInfo(tempStringInfo, rowData->columnValues[i].data, rowData->columnValues[i].len);
-								rowData->columnValues[i] = *tempStringInfo;
-							}
 							temp->isNull = false;
 						}
 					}

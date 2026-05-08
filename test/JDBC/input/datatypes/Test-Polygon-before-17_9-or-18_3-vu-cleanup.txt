@@ -1,0 +1,143 @@
+
+
+DROP TABLE  geometryAsVarcharpolygon
+
+DROP TABLE  geographyAsVarcharpolygon
+
+DROP TABLE  CharAsgeometrypolygon
+
+DROP TABLE  CharAsgeographypolygon
+
+DROP TABLE  VarCharAsgeometrypolygon
+
+DROP TABLE  VarcharAsgeographypolygon
+
+DROP TABLE  GeoVarCharAsgeometrypolygon
+
+DROP TABLE  GeoVarcharAsgeographypolygon
+
+DROP VIEW DimOfGeometrypolygon
+
+DROP VIEW AreaOfGeometrypolygon
+
+DROP VIEW TextFromGeometrypolygon
+
+DROP VIEW BinaryFromGeometrypolygon
+
+DROP VIEW SridFromGeometrypolygon
+
+DROP VIEW EmptyGeometrypolygon
+
+DROP VIEW ValidGeometrypolygon
+
+DROP VIEW ClosedGeometrypolygon
+
+DROP VIEW DisjointTempGeompolygon
+
+DROP VIEW DistanceTempGeompolygon
+
+DROP VIEW IntersectsTempGeompolygon
+
+DROP VIEW ContainTempGeompolygon
+
+DROP VIEW EqualsTempGeompolygon
+
+DROP VIEW equals_opgeompolygon
+
+DROP VIEW notequal_opgeompolygon
+
+DROP VIEW DisjointTempGeompolysr
+
+DROP VIEW DistanceTempGeompolysr
+
+DROP VIEW IntersectsTempGeompolysr
+
+DROP VIEW EqualsTempGeompolysr
+
+DROP VIEW ContainTempGeompolysr
+
+DROP VIEW equals_opgeompolysr
+
+DROP VIEW notequal_opgeompolysr
+
+DROP TABLE  geometryToByteapolygon
+
+DROP TABLE  geometryAsVarbinarypolygon
+
+DROP TABLE  CharAsVarbinaryGeompolygon
+
+DROP TABLE  VarbinaryAsgeometrypolygon
+
+
+DROP VIEW DimOfgeographypolygon
+
+DROP VIEW AreaOfgeographypolygon
+
+DROP VIEW TextFromgeographypolygon
+
+DROP VIEW BinaryFromgeographypolygon
+
+DROP VIEW SridFromgeographypolygon
+
+DROP VIEW Emptygeographypolygon
+
+DROP VIEW Validgeographypolygon
+
+DROP VIEW Closedgeographypolygon
+
+DROP VIEW DisjointTempGeogpolygon
+
+DROP VIEW DistanceTempGeogpolygon
+
+DROP VIEW IntersectsTempGeogpolygon
+
+DROP VIEW ContainTempGeogpolygon
+
+DROP VIEW EqualsTempGeogpolygon
+
+DROP VIEW DisjointTempGeogpolysr
+
+DROP VIEW DistanceTempGeogpolysr
+
+DROP VIEW IntersectsTempGeogpolysr
+
+DROP VIEW EqualsTempGeogpolysr
+
+DROP VIEW ContainTempGeogpolysr
+
+DROP VIEW equals_opgeogpolygon
+
+DROP VIEW notequal_opgeogpolygon
+
+DROP VIEW equals_opgeogpolysr
+
+DROP VIEW notequal_opgeogpolysr
+
+DROP VIEW PolygonGeogFromText
+
+DROP VIEW PolygonGeomFromText
+
+DROP TABLE  geographyToByteapolygon
+
+DROP TABLE  geographyAsVarbinarypolygon
+
+DROP TABLE  CharAsVarbinaryGeogpolygon
+
+DROP TABLE  VarbinaryAsgeographypolygon
+
+
+DROP TABLE geospatialpointgeom_polysr
+
+DROP TABLE GEOSPATIALPOLYGONGEOM_dt
+
+DROP TABLE GEOSPATIALPOLYGONGEOM_INVALID_dt
+
+DROP TABLE GEOSPATIALPOLYGONGEOG_INVALID_dt
+
+DROP TABLE geospatialpointxgeog_polysr
+
+DROP TABLE GEOSPATIALPOLYGONGEOG_dt
+
+DROP TABLE GEOSPATIAL_POLYGEOMRCV_dt
+
+DROP TABLE GEOSPATIAL_POLYGEOGRCV_dt

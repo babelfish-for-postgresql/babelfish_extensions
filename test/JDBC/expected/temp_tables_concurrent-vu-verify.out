@@ -43,3 +43,31 @@ int
 DROP TABLE #temp_table_t1
 DROP TABLE #temp_table_t2
 GO
+
+-- tsql user=templogin1 password=123
+CREATE TABLE #temptable1(a INT);
+GO
+
+-- tsql user=templogin2 password=123
+CREATE TABLE #temptable1(a INT);
+GO
+
+-- tsql user=templogin1 password=123
+BEGIN TRAN
+GO
+DROP TABLE #temptable1
+GO
+
+-- tsql user=templogin2 password=123
+BEGIN TRAN
+GO
+DROP TABLE #temptable1
+GO
+
+-- tsql user=templogin1 password=123
+COMMIT
+GO
+
+-- tsql user=templogin2 password=123
+ROLLBACK
+GO

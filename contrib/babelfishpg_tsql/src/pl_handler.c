@@ -49,6 +49,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/pg_list.h"
+#include "optimizer/optimizer.h"
 #include "parser/analyze.h"
 #include "parser/parser.h"
 #include "parser/parsetree.h"
@@ -196,6 +197,8 @@ static int isolation_to_int(char *isolation_level);
 static void bbf_set_tran_isolation(char *new_isolation_level_str);
 static void gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 							bool is_grant, Oid login_oid);
+
+static Node *pltsql_simplify_const_expression(PlannerInfo *root, Node *expr, int kind);
 
 typedef struct ColumnAclInfo
 {
@@ -5891,27 +5894,19 @@ pltsql_truncate_identifier_func(PG_FUNCTION_ARGS)
 {
 	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int			len = strlen(name);
-	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+	int			saved_dialect = sql_dialect;
 
 	PG_TRY();
 	{
 		/* this is BBF help function. use BBF truncation logic */
-		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		sql_dialect = SQL_DIALECT_TSQL;
 		truncate_identifier(name, len, false);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
-		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		PG_RE_THROW();
+		sql_dialect = saved_dialect;
 	}
 	PG_END_TRY();
-	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					  GUC_CONTEXT_CONFIG,
-					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	PG_RETURN_TEXT_P(cstring_to_text(name));
 }
@@ -6090,7 +6085,9 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_generic_typmod = &probin_read_ret_typmod;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_logical_schema_name = &get_logical_schema_name;
 		(*pltsql_protocol_plugin_ptr)->pltsql_is_fmtonly_stmt = &pltsql_fmtonly;
+		(*pltsql_protocol_plugin_ptr)->pltsql_no_browsetable = &pltsql_no_browsetable;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_user_for_database = &get_user_for_database;
+		(*pltsql_protocol_plugin_ptr)->switch_database_context = &switch_database_context;
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_rows_per_batch = &get_insert_bulk_rows_per_batch;
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_kilobytes_per_batch = &get_insert_bulk_kilobytes_per_batch;
 		(*pltsql_protocol_plugin_ptr)->tsql_varchar_input = common_utility_plugin_ptr->tsql_varchar_input;
@@ -6149,6 +6146,8 @@ _PG_init(void)
 
 	prev_planner_node_transformer_hook = planner_node_transformer_hook;
 	planner_node_transformer_hook = pltsql_planner_node_transformer;
+
+	eval_const_expressions_in_preprocess_hook = pltsql_simplify_const_expression;
 
 	prev_pltsql_nextval_hook = pltsql_nextval_hook;
 	pltsql_nextval_hook = pltsql_nextval_identity;
@@ -6260,7 +6259,7 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 			 SPI_depth, current_spi_stack_depth);
 		
 	while (current_spi_stack_depth-- >= SPI_depth)
-		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+		if ((rc = SPI_finish_safe()) != SPI_OK_FINISH)
 			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	/*
@@ -6422,8 +6421,6 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	char 		*saved_search_path = MemoryContextStrdup(TopMemoryContext, namespace_search_path);
 	int16		saved_dbid = get_cur_db_id();
 
-	create_queryEnv2(CacheMemoryContext, false);
-
 	nonatomic = support_tsql_trans ||
 		(fcinfo->context &&
 		 IsA(fcinfo->context, CallContext) &&
@@ -6445,6 +6442,8 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	if ((rc = SPI_connect_ext(nonatomic ? SPI_OPT_NONATOMIC : 0)) != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 	PortalContext = savedPortalCxt;
+
+	create_queryEnv2(CacheMemoryContext, false);
 
 	SPI_setCurrentInternalTxnMode(true);
 	current_spi_stack_depth = SPI_get_depth();
@@ -8232,4 +8231,31 @@ gen_command_grant_revoke_priv_to_role(StringInfo query, const char *rolename,
 				(revoke_createrole ? "nocreaterole" : ""), grant_createdb ? "createdb" : 
 					(revoke_createdb ? "nocreatedb" : ""));
 
+}
+
+Node *
+pltsql_simplify_const_expression(PlannerInfo *root,
+								Node *expr,
+								int kind)
+{
+	int		prev_expr_kind = saved_expr_kind;
+
+	if (expr == NULL)
+		return NULL;
+
+	PG_TRY();
+	{
+		if (kind == EXPRKIND_TARGET)
+		{
+			saved_expr_kind = EXPRKIND_TARGET;
+		}
+		expr = eval_const_expressions(root, expr);
+	}
+	PG_FINALLY();
+	{
+		saved_expr_kind = prev_expr_kind;
+	}
+	PG_END_TRY();
+
+	return expr;
 }

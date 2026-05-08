@@ -1,0 +1,82 @@
+# Geometry Views — Properties
+DROP VIEW IF EXISTS DimOfGeometrymultipoint;
+DROP VIEW IF EXISTS NumPointsOfGeometrymultipoint;
+DROP VIEW IF EXISTS TextFromGeometrymultipoint;
+DROP VIEW IF EXISTS BinaryFromGeometrymultipoint;
+DROP VIEW IF EXISTS SridFromGeometrymultipoint;
+DROP VIEW IF EXISTS EmptyGeometrymultipoint;
+DROP VIEW IF EXISTS ValidGeometrymultipoint;
+DROP VIEW IF EXISTS GeomTypeOfGeometrymultipoint;
+
+# Geometry Views — Spatial Operations (multipoint vs multipoint)
+DROP VIEW IF EXISTS DisjointTempGeommultipoint;
+DROP VIEW IF EXISTS DistanceTempGeommultipoint;
+DROP VIEW IF EXISTS IntersectsTempGeommultipoint;
+DROP VIEW IF EXISTS EqualsTempGeommultipoint;
+DROP VIEW IF EXISTS ContainTempGeommultipoint;
+DROP VIEW IF EXISTS equals_opgeommultipoint;
+DROP VIEW IF EXISTS notequal_opgeommultipoint;
+
+# Geometry Views — Spatial Operations (multipoint vs point/linestring)
+DROP VIEW IF EXISTS DisjointTempGeommpsr;
+DROP VIEW IF EXISTS DistanceTempGeommpsr;
+DROP VIEW IF EXISTS IntersectsTempGeommpsr;
+DROP VIEW IF EXISTS EqualsTempGeommpsr;
+DROP VIEW IF EXISTS ContainTempGeommpsr;
+DROP VIEW IF EXISTS equals_opgeommpsr;
+DROP VIEW IF EXISTS notequal_opgeommpsr;
+
+# Geometry Views — STMPointFromText
+DROP VIEW IF EXISTS MultipointGeomFromText;
+
+# Geography Views — Properties
+DROP VIEW IF EXISTS DimOfGeographymultipoint;
+DROP VIEW IF EXISTS NumPointsOfGeographymultipoint;
+DROP VIEW IF EXISTS TextFromGeographymultipoint;
+DROP VIEW IF EXISTS BinaryFromGeographymultipoint;
+DROP VIEW IF EXISTS SridFromGeographymultipoint;
+DROP VIEW IF EXISTS EmptyGeographymultipoint;
+DROP VIEW IF EXISTS ValidGeographymultipoint;
+DROP VIEW IF EXISTS GeomTypeOfGeographymultipoint;
+
+# Geography Views — Spatial Operations (multipoint vs multipoint)
+DROP VIEW IF EXISTS DisjointTempGeogmultipoint;
+DROP VIEW IF EXISTS DistanceTempGeogmultipoint;
+DROP VIEW IF EXISTS IntersectsTempGeogmultipoint;
+DROP VIEW IF EXISTS EqualsTempGeogmultipoint;
+DROP VIEW IF EXISTS equals_opgeogmultipoint;
+DROP VIEW IF EXISTS notequal_opgeogmultipoint;
+
+# Geography Views — Spatial Operations (multipoint vs point)
+DROP VIEW IF EXISTS DisjointTempGeogmpsr;
+DROP VIEW IF EXISTS DistanceTempGeogmpsr;
+DROP VIEW IF EXISTS IntersectsTempGeogmpsr;
+DROP VIEW IF EXISTS EqualsTempGeogmpsr;
+DROP VIEW IF EXISTS equals_opgeogmpsr;
+DROP VIEW IF EXISTS notequal_opgeogmpsr;
+
+# Geography Views — STMPointFromText
+DROP VIEW IF EXISTS MultipointGeogFromText;
+
+# Geometry Tables
+DROP TABLE IF EXISTS GEOSPATIALMULTIPOINTGEOM_dt;
+DROP TABLE IF EXISTS GEOSPATIALPOINTGEOM_mpsr;
+DROP TABLE IF EXISTS GEOSPATIALMULTIPOINTGEOM_INVALID_dt;
+DROP TABLE IF EXISTS geometryAsVarbinarymultipoint;
+DROP TABLE IF EXISTS geometryAsVarcharmultipoint;
+DROP TABLE IF EXISTS VarbinaryAsgeometrymultipoint;
+DROP TABLE IF EXISTS VarCharAsgeometrymultipoint;
+DROP TABLE IF EXISTS GeoVarCharAsgeometrymultipoint;
+
+# Geography Tables
+DROP TABLE IF EXISTS GEOSPATIALMULTIPOINTGEOG_dt;
+DROP TABLE IF EXISTS geospatialpointxgeog_mpsr;
+DROP TABLE IF EXISTS geographyAsVarbinarymultipoint;
+DROP TABLE IF EXISTS geographyAsVarcharmultipoint;
+DROP TABLE IF EXISTS VarCharAsgeographymultipoint;
+DROP TABLE IF EXISTS GeoVarCharAsgeographymultipoint;
+DROP TABLE IF EXISTS geographyToByteamultipoint;
+
+# Prepared Statement Tables
+DROP TABLE IF EXISTS GEOSPATIAL_MPGEOMRCV_dt;
+DROP TABLE IF EXISTS GEOSPATIAL_MPGEOGRCV_dt;

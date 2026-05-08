@@ -61,8 +61,8 @@ if [ ! $1 ]; then
     echo "  sum_coverage [TARGET_WS]"
     echo "      summarize code coverage"
     echo ""
-    echo "  run_pgindent [TARGET_WS]"
-    echo "      run pgindent"
+    echo "  run_pgindent [TARGET_WS] [PATH]"
+    echo "      format C code with pgindent; PATH is an optional file or directory to indent"
     exit 0
 fi
 
@@ -70,6 +70,8 @@ SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && 
 cd $SCRIPT_DIR
 cd ..
 CUR_WS=$PWD
+export PATH=$CUR_WS/postgres/bin:$PATH
+export LD_LIBRARY_PATH=$CUR_WS/postgres/lib:$LD_LIBRARY_PATH
 echo "Current Workspace: $CUR_WS"
 
 TARGET_WS=$2
@@ -155,7 +157,7 @@ build_bbf() {
 init_db() {
     cd $1/postgres
     rm -rf data
-    bin/initdb -D data/
+    bin/initdb -D data/ --locale=C --encoding=UTF8
     PID=$(ps -ef | grep postgres/bin/postgres | grep -v grep | awk '{print $2}')
     if [ $PID ]
     then
@@ -164,16 +166,16 @@ init_db() {
     sleep 1
     bin/pg_ctl -c -D data/ -l logfile start
     cd data
-    sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" postgresql.conf
-    sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'/g" postgresql.conf
-    sudo echo "host    all             all             0.0.0.0/0            trust" >> pg_hba.conf
+    sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" postgresql.conf
+    sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'/g" postgresql.conf
+    echo "host    all             all             0.0.0.0/0            trust" >> pg_hba.conf
     restart $1
 }
 
 init_pghint() {
     cd $1
     if [ ! -d "./pg_hint_plan" ]; then
-        git clone --depth 1 --branch REL17_1_7_0 https://github.com/ossc-db/pg_hint_plan.git
+        git clone --depth 1 --branch REL18_1_8_0 https://github.com/ossc-db/pg_hint_plan.git
     fi
     cd pg_hint_plan
     export PATH=$2/postgres/bin:$PATH
@@ -186,7 +188,7 @@ init_pg() {
     ./configure --prefix=$2/postgres/ --without-readline --without-zlib --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
     make -j 4
     make install
-    cd contrib && make && sudo make install
+    cd contrib && make && make install
     cp "/usr/local/lib/libantlr4-runtime.so.4.13.2" $2/postgres/lib/
     init_pghint $1 $2
 }
@@ -226,65 +228,48 @@ restore() {
 }
 
 run_pgindent() {
-    cd $1/postgres/lib
+    local ws=$1
+    local indent_path=$2
+    local pgindent=$ws/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent
+    local extensions=("babelfishpg_money" "babelfishpg_common" "babelfishpg_tds" "babelfishpg_tsql")
 
-    echo "dumping typedefs for babelfishpg_mpney to /tmp/babelfishpg_money.typedefs.."
-    objdump -W babelfishpg_money.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
-     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
-     next if $flds[-1] =~ /^DW_FORM_str/;\
-     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_money.typedefs
+    cd $ws/postgres/lib
+    for ext in "${extensions[@]}"; do
+        echo "Dumping typedefs for $ext..."
+        objdump -W ${ext}.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);
+         next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";
+         next if $flds[-1] =~ /^DW_FORM_str/;
+         print $flds[-1],"\n"; }'  | sort | uniq > /tmp/${ext}.typedefs
+    done
 
-    echo "dumping typedefs for babelfishpg_common to /tmp/babelfishpg_common.typedefs.."
-    objdump -W babelfishpg_common.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
-     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
-     next if $flds[-1] =~ /^DW_FORM_str/;\
-     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_common.typedefs
+    if [ ! -f "$ws/postgres/bin/pg_bsd_indent" ]; then
+        echo "Building pg_bsd_indent from in-tree source..."
+        cd $ws/postgresql_modified_for_babelfish/src/tools/pg_bsd_indent
+        make PG_CONFIG=$ws/postgres/bin/pg_config
+        cp pg_bsd_indent $ws/postgres/bin/
+    fi
 
-    echo "dumping typedefs for babelfishpg_tds to /tmp/babelfishpg_tds.typedefs.."
-    objdump -W babelfishpg_tds.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
-     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
-     next if $flds[-1] =~ /^DW_FORM_str/;\
-     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_tds.typedefs
-
-    echo "dumping typedefs for babelfishpg_tsql to /tmp/babelfishpg_tsql.typedefs.."
-    objdump -W babelfishpg_tsql.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
-     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
-     next if $flds[-1] =~ /^DW_FORM_str/;\
-     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_tsql.typedefs
-
-    cd $1
-    echo "Clone and build pg_bsd_indent which is required by pgindent..."
-    git clone https://git.postgresql.org/git/pg_bsd_indent.git
-    cd pg_bsd_indent/
-    make PG_CONFIG=$1/postgres/bin/pg_config
-    sudo cp pg_bsd_indent /usr/local/bin
-
-    cd $1/babelfish_extensions
-
-    echo ""
-    echo "Running pgindent on babelfishpg_money..."
-    cd contrib/babelfishpg_money
-    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_money.typedefs
-
-    echo ""
-    echo "Running pgindent on babelfishpg_common..."
-    cd ../babelfishpg_common
-    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_common.typedefs
+    if [ -n "$indent_path" ]; then
+        local typedefs=/tmp/babelfishpg_tsql.typedefs
+        for ext in "${extensions[@]}"; do
+            echo "$indent_path" | grep -q "$ext" && typedefs=/tmp/${ext}.typedefs && break
+        done
+        echo "Running pgindent on $indent_path..."
+        $pgindent --typedefs=$typedefs "$indent_path"
+    else
+        cd $ws/babelfish_extensions
+        for ext in "${extensions[@]}"; do
+            echo "Running pgindent on $ext..."
+            local extra=""
+            [ "$ext" == "babelfishpg_tsql" ] && extra="--exclude=exclude_file_from_pgindent"
+            cd contrib/$ext
+            $pgindent --typedefs=/tmp/${ext}.typedefs $extra
+            cd $ws/babelfish_extensions
+        done
+    fi
 
     echo ""
-    echo "Running pgindent on babelfishpg_tds..."
-    cd ../babelfishpg_tds
-    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tds.typedefs
-
-    echo ""
-    echo "Running pgindent on babelfishpg_tsql..."
-    cd ../babelfishpg_tsql
-    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tsql.typedefs --exclude="exclude_file_from_pgindent"
-
-    echo ""
-    echo "pgindent is ran successfully against $1."
-    echo "Please re-build all the extensions to make sure that there is no compilation error."
-    echo ""
+    echo "pgindent completed. Please re-build to verify no compilation errors."
 }
 
 init_lcov(){
@@ -293,7 +278,7 @@ init_lcov(){
         git clone --depth 1 --branch v1.16 https://github.com/linux-test-project/lcov.git
     fi
     cd lcov
-    sudo make PREFIX=/usr install
+    make PREFIX=$1/postgres install
     export PATH=$PATH:/usr/bin/lcov
     export PATH=$PATH:/usr/bin/gcov
     export PATH=$PATH:/usr/bin/genhtml
@@ -305,8 +290,8 @@ init_pg_coverage(){
     ./configure --prefix=$2/postgres/ --without-readline --without-zlib --enable-coverage --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
     make -j 4
     make install
-    cd contrib && make && sudo make install
-    sudo cp "/usr/local/lib/libantlr4-runtime.so.4.13.2" $2/postgres/lib/
+    cd contrib && make && make install
+    cp "/usr/local/lib/libantlr4-runtime.so.4.13.2" $2/postgres/lib/
     init_pghint $1 $2
 }
 
@@ -481,9 +466,11 @@ elif [ "$1" == "dumprestore" ]; then
     echo "Restored on target workspace ($TARGET_WS)!"
     exit 0
 elif [ "$1" == "run_pgindent" ]; then
+    INDENT_PATH=$3
+    [ -n "$INDENT_PATH" ] && INDENT_PATH=$(realpath "$INDENT_PATH")
     init_pg $TARGET_WS $TARGET_WS
     build_bbf $TARGET_WS $TARGET_WS
-    run_pgindent $TARGET_WS
+    run_pgindent $TARGET_WS $INDENT_PATH
 elif [ "$1" == "initpg_coverage" ]; then
     init_pg_coverage $TARGET_WS $TARGET_WS
     exit 0

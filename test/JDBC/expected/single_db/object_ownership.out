@@ -1140,3 +1140,181 @@ go
 -- psql
 drop user test_alter_owner_l1;
 go
+
+
+
+
+-- tsql
+-- Create users
+CREATE LOGIN partition_owner_l1 WITH PASSWORD = '123';
+GO
+
+CREATE USER partition_owner_u1 FOR LOGIN partition_owner_l1;
+GO
+
+CREATE LOGIN partition_owner_l2 WITH PASSWORD = '123';
+GO
+
+CREATE USER partition_owner_u2 FOR LOGIN partition_owner_l2;
+GO
+
+-- Create a schema owned by partition_owner_u1
+CREATE SCHEMA test_schema AUTHORIZATION partition_owner_u1;
+GO
+
+-- Create partition function
+CREATE PARTITION FUNCTION pf_test (int)
+AS RANGE RIGHT FOR VALUES (100, 500, 1000);
+GO
+
+-- Create partition scheme
+CREATE PARTITION SCHEME ps_test
+AS PARTITION pf_test
+ALL TO ([PRIMARY]);
+GO
+
+-- Create partitioned table in the user's schema
+CREATE TABLE test_schema.pt_test (
+    id INT,
+    value VARCHAR(50)
+) ON ps_test(id);
+GO
+
+-- Insert test data
+INSERT INTO test_schema.pt_test VALUES (50, 'Value 50');
+INSERT INTO test_schema.pt_test VALUES (200, 'Value 200');
+INSERT INTO test_schema.pt_test VALUES (750, 'Value 750');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Verify parent table
+SELECT name AS table_name FROM sys.tables WHERE name = 'pt_test';
+GO
+~~START~~
+varchar
+pt_test
+~~END~~
+
+
+-- psql
+-- Check the child partition tables exist
+SELECT schemaname, tablename 
+FROM pg_tables 
+WHERE tablename LIKE '%partition_%'
+  AND schemaname LIKE 'master_%test_schema'
+ORDER BY tablename;
+GO
+~~START~~
+name#!#name
+master_test_schema#!#130a1b1b4f7de7626fc5ad270e6878f1_partition_0
+master_test_schema#!#130a1b1b4f7de7626fc5ad270e6878f1_partition_1
+master_test_schema#!#130a1b1b4f7de7626fc5ad270e6878f1_partition_2
+master_test_schema#!#130a1b1b4f7de7626fc5ad270e6878f1_partition_3
+~~END~~
+
+
+-- Set GUC to allow ALTER OWNER from psql
+SET babelfishpg_tsql.enable_alter_owner_from_pg = true;
+GO
+
+-- First, change the partition table owner to partition_owner_u1 (as superuser)
+ALTER TABLE master_test_schema."130a1b1b4f7de7626fc5ad270e6878f1_partition_0" OWNER TO master_partition_owner_u1;
+GO
+
+-- Verify owner is now u1
+SELECT tablename, tableowner 
+FROM pg_tables 
+WHERE tablename = '130a1b1b4f7de7626fc5ad270e6878f1_partition_0'
+  AND schemaname LIKE 'master_%test_schema';
+GO
+~~START~~
+name#!#name
+130a1b1b4f7de7626fc5ad270e6878f1_partition_0#!#master_partition_owner_u1
+~~END~~
+
+
+-- Grant role membership so u1 can transfer ownership to u2
+GRANT master_partition_owner_u2 TO master_partition_owner_u1;
+GO
+
+-- Grant schema privileges: u1 needs USAGE to access objects, u2 needs CREATE as the new owner
+GRANT ALL ON SCHEMA master_test_schema TO master_partition_owner_u1;
+GO
+GRANT CREATE ON SCHEMA master_test_schema TO master_partition_owner_u2;
+GO
+
+-- Switch to partition_owner_u1 (non-superuser, table owner)
+SET SESSION AUTHORIZATION master_partition_owner_u1;
+GO
+
+-- Test: Change owner of child partition table as non-superuser owner
+-- This tests the fix: cmd->subtype != AT_ChangeOwner allows ownership change by non-superuser owner
+ALTER TABLE master_test_schema."130a1b1b4f7de7626fc5ad270e6878f1_partition_0" OWNER TO master_partition_owner_u2;
+GO
+
+-- Verify owner changed
+SELECT tablename, tableowner 
+FROM pg_tables 
+WHERE tablename = '130a1b1b4f7de7626fc5ad270e6878f1_partition_0'
+  AND schemaname LIKE 'master_%test_schema';
+GO
+~~START~~
+name#!#name
+130a1b1b4f7de7626fc5ad270e6878f1_partition_0#!#master_partition_owner_u2
+~~END~~
+
+
+-- Reset to superuser
+RESET SESSION AUTHORIZATION;
+GO
+
+-- Revoke the grants before cleanup
+REVOKE ALL ON SCHEMA master_test_schema FROM master_partition_owner_u1;
+GO
+REVOKE CREATE ON SCHEMA master_test_schema FROM master_partition_owner_u2;
+GO
+
+SET babelfishpg_tsql.enable_alter_owner_from_pg = false;
+GO
+
+-- tsql
+-- Verify data is still accessible
+SELECT * FROM test_schema.pt_test ORDER BY id;
+GO
+~~START~~
+int#!#varchar
+50#!#Value 50
+200#!#Value 200
+750#!#Value 750
+~~END~~
+
+
+-- Cleanup
+DROP TABLE test_schema.pt_test;
+GO
+
+DROP SCHEMA test_schema;
+GO
+
+DROP PARTITION SCHEME ps_test;
+GO
+
+DROP PARTITION FUNCTION pf_test;
+GO
+
+DROP USER partition_owner_u1;
+GO
+
+DROP LOGIN partition_owner_l1;
+GO
+
+DROP USER partition_owner_u2;
+GO
+
+DROP LOGIN partition_owner_l2;
+GO

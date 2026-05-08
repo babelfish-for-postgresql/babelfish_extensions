@@ -10067,9 +10067,10 @@ SELECT CASE 1
    WHEN 2 THEN 'بطاقة التسجيل - قياسية'
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+~~START~~
+varchar
+4V
+~~END~~
 
 
 SELECT CASE 1
@@ -10077,9 +10078,10 @@ SELECT CASE 1
    WHEN 2 THEN 'abc'
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+~~START~~
+varchar
+4V
+~~END~~
 
 
 SELECT CASE 2
@@ -10087,9 +10089,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST(0x123456 AS BABEL_CASE_EXPR_TEST_UDT)
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+~~START~~
+varchar
+4V
+~~END~~
 
 
 
@@ -10446,9 +10449,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST(0x123456 AS BABEL_CASE_EXPR_TEST_UDT)
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+~~START~~
+varchar
+abc
+~~END~~
 
 
 SELECT CASE 1
@@ -10469,9 +10473,10 @@ SELECT CASE 1
    WHEN 3 THEN CAST('char1' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+~~START~~
+varchar
+abc
+~~END~~
 
 
 SELECT CASE 1
@@ -10480,9 +10485,10 @@ SELECT CASE 1
    WHEN 3 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+~~START~~
+varchar
+abc
+~~END~~
 
 
 SELECT CASE 1
@@ -10514,9 +10520,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST(0x123456 AS BABEL_CASE_EXPR_TEST_UDT)
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+~~START~~
+varchar
+4V
+~~END~~
 
 
 SELECT CASE 2
@@ -10537,9 +10544,10 @@ SELECT CASE 2
    WHEN 3 THEN CAST('char1' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+~~START~~
+varchar
+4V
+~~END~~
 
 
 SELECT CASE 2
@@ -10548,9 +10556,10 @@ SELECT CASE 2
    WHEN 3 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+~~START~~
+varchar
+4V
+~~END~~
 
 
 SELECT CASE 2
@@ -10600,9 +10609,10 @@ SELECT CASE 1
    WHEN 2 THEN 'بطاقة التسجيل - قياسية'
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~START~~
+varchar
+4V
+~~END~~
 
 
 SELECT CASE 1
@@ -10610,9 +10620,10 @@ SELECT CASE 1
    WHEN 2 THEN 'abc'
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~START~~
+varchar
+4V
+~~END~~
 
 
 SELECT CASE 2
@@ -10620,9 +10631,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST(0x123456 AS BABEL_CASE_EXPR_TEST_UDT)
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~START~~
+varchar
+4V
+~~END~~
 
 
 SELECT CASE 1
@@ -10978,9 +10990,10 @@ SELECT CASE 1
    WHEN 2 THEN CAST(0x123456 AS BABEL_CASE_EXPR_TEST_UDT)
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~START~~
+varchar
+abc
+~~END~~
 
 
 SELECT CASE 1
@@ -11001,9 +11014,10 @@ SELECT CASE 1
    WHEN 3 THEN CAST('char1' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~START~~
+varchar
+abc
+~~END~~
 
 
 SELECT CASE 1
@@ -11012,9 +11026,10 @@ SELECT CASE 1
    WHEN 3 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~START~~
+varchar
+abc
+~~END~~
 
 
 SELECT CASE 1
@@ -11046,9 +11061,10 @@ SELECT CASE 2
    WHEN 2 THEN CAST(0x123456 AS BABEL_CASE_EXPR_TEST_UDT)
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~START~~
+varchar
+4V
+~~END~~
 
 
 SELECT CASE 2
@@ -11069,9 +11085,10 @@ SELECT CASE 2
    WHEN 3 THEN CAST('char1' AS CHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~START~~
+varchar
+4V
+~~END~~
 
 
 SELECT CASE 2
@@ -11080,9 +11097,10 @@ SELECT CASE 2
    WHEN 3 THEN CAST('char1' AS NCHAR(100))
 END AS RESULT
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+~~START~~
+varchar
+4V
+~~END~~
 
 
 SELECT CASE 2

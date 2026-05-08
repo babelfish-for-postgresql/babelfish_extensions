@@ -148,8 +148,9 @@ SELECT CONVERT(varchar(50), GETDATE(), 200);
 GO
 ~~START~~
 varchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 200 is not a valid style number when converting from DATETIME to a character string.)~~
 
 
 --tsql

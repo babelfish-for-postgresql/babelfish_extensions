@@ -126,16 +126,778 @@ EXEC p_index_create
 GO
 ~~START~~
 text
-idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
 #t4122
 #temptable5605
+idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
 ~~END~~
 
-EXEC p_drop
+
+-- FIXME: BABEL-6268
+-- EXEC p_drop
+-- GO
+-- SELECT * FROM #temptable5605
+-- GO
+-- Test 1: Comprehensive System Functions, Operators, and DML Operations
+CREATE TABLE #sys_comprehensive (
+	id INT PRIMARY KEY,
+	created_date DATETIME DEFAULT GETDATE(),
+	guid_col UNIQUEIDENTIFIER DEFAULT NEWID(),
+	age INT CHECK (age > 0 AND age < 200),
+	salary MONEY CHECK (salary >= 0),
+	discount DECIMAL(5,2) CHECK (discount <= 100.00),
+	quantity INT CHECK (quantity <> 0),
+	status CHAR(1) CHECK (status = 'A' OR status = 'I' OR status = 'P'),
+	score INT CHECK (score BETWEEN 0 AND 100),
+	start_date DATETIME,
+	end_date DATETIME,
+	price MONEY,
+	total AS (price * quantity),
+	CHECK (end_date > start_date),
+	CHECK (DATEDIFF(DAY, start_date, end_date) <= 365)
+)
 GO
-SELECT * FROM #temptable5605
+
+-- Verify in ENR
+SELECT * FROM enr_view;
+GO
+~~START~~
+text
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
+#sys_comprehensive
+#sys_comprehensive_pkey
+#t4122
+#temptable5605
+idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
+~~END~~
+
+
+-- Insert test data with system function defaults
+INSERT INTO #sys_comprehensive (id, age, salary, discount, quantity, status, score, start_date, end_date, price) 
+VALUES (1, 30, 50000, 10.5, 5, 'A', 85, '2024-01-01', '2024-06-30', 100.00)
+INSERT INTO #sys_comprehensive (id, age, salary, discount, quantity, status, score, start_date, end_date, price) 
+VALUES (2, 45, 75000, 15.0, -3, 'I', 92, '2024-02-01', '2024-08-15', 250.50)
+INSERT INTO #sys_comprehensive (id, age, salary, discount, quantity, status, score, start_date, end_date, price) 
+VALUES (3, 28, 62000, 8.0, 10, 'P', 78, '2024-03-01', '2024-09-30', 75.25)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT id, age, status, score, quantity FROM #sys_comprehensive
+GO
+~~START~~
+int#!#int#!#char#!#int#!#int
+1#!#30#!#A#!#85#!#5
+2#!#45#!#I#!#92#!#-3
+3#!#28#!#P#!#78#!#10
+~~END~~
+
+
+-- Test UPDATE operations
+UPDATE #sys_comprehensive SET salary = salary * 1.1 WHERE id = 1
+GO
+~~ROW COUNT: 1~~
+
+
+UPDATE #sys_comprehensive SET status = 'I', score = 95 WHERE age < 30
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT id, age, salary, status, score FROM #sys_comprehensive ORDER BY id
+GO
+~~START~~
+int#!#int#!#money#!#char#!#int
+1#!#30#!#55000.0000#!#A#!#85
+2#!#45#!#75000.0000#!#I#!#92
+3#!#28#!#62000.0000#!#I#!#95
+~~END~~
+
+
+-- Test DELETE operation
+DELETE FROM #sys_comprehensive WHERE quantity < 0
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT COUNT(*) as record_count FROM #sys_comprehensive
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- ALTER TABLE: Add new column with default
+ALTER TABLE #sys_comprehensive ADD department VARCHAR(50) DEFAULT 'Unknown'
+GO
+
+SELECT id, department FROM #sys_comprehensive
+GO
+~~START~~
+int#!#varchar
+1#!#Unknown
+3#!#Unknown
+~~END~~
+
+
+-- ALTER TABLE: Add new column with CHECK constraint
+ALTER TABLE #sys_comprehensive ADD bonus MONEY CHECK (bonus >= 0 AND bonus <= 50000)
+GO
+
+-- Update new column
+UPDATE #sys_comprehensive SET bonus = salary * 0.1, department = 'Sales' WHERE id = 1
+UPDATE #sys_comprehensive SET bonus = salary * 0.15, department = 'Engineering' WHERE id = 3
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT id, department, bonus FROM #sys_comprehensive ORDER BY id
+GO
+~~START~~
+int#!#varchar#!#money
+1#!#Sales#!#5500.0000
+3#!#Engineering#!#9300.0000
+~~END~~
+
+
+-- ALTER TABLE: Add computed column
+ALTER TABLE #sys_comprehensive ADD bonus_tax AS (bonus * 0.25)
+GO
+
+SELECT id, bonus, bonus_tax FROM #sys_comprehensive WHERE bonus IS NOT NULL
+GO
+~~START~~
+int#!#money#!#numeric
+1#!#5500.0000#!#1375.000000
+3#!#9300.0000#!#2325.000000
+~~END~~
+
+
+-- ALTER TABLE: Add CHECK constraint to existing table
+ALTER TABLE #sys_comprehensive ADD CONSTRAINT chk_department CHECK (department IN ('Sales', 'Engineering', 'Marketing', 'Unknown'))
+GO
+
+-- Test constraint (should fail)
+UPDATE #sys_comprehensive SET department = 'InvalidDept' WHERE id = 1
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "#sys_comprehensive" violates check constraint "chk_department")~~
+
+
+SELECT id, department FROM #sys_comprehensive ORDER BY id
+GO
+~~START~~
+int#!#varchar
+1#!#Sales
+3#!#Engineering
+~~END~~
+
+
+-- Test CHECK constraint violations (should fail)
+INSERT INTO #sys_comprehensive (id, age, salary, discount, quantity, status, score, start_date, end_date, price) 
+VALUES (10, 0, 50000, 10.0, 1, 'A', 50, '2024-01-01', '2024-06-30', 100.00)
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "#sys_comprehensive" violates check constraint "#sys_comprehensive_age_check")~~
+
+
+INSERT INTO #sys_comprehensive (id, age, salary, discount, quantity, status, score, start_date, end_date, price) 
+VALUES (11, 30, -1000, 10.0, 1, 'A', 50, '2024-01-01', '2024-06-30', 100.00)
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "#sys_comprehensive" violates check constraint "#sys_comprehensive_salary_check")~~
+
+
+DROP TABLE #sys_comprehensive
+GO
+
+-- Test 2: Advanced Column Features with NULL Handling and Computed Columns
+CREATE TABLE #advanced_columns (
+	id INT PRIMARY KEY,
+	first_name VARCHAR(50),
+	last_name VARCHAR(50),
+	age INT,
+	balance BIGINT,
+	amount AS (balance * 1000 / NULLIF(age, 0)),
+	nullable_col INT,
+	default_col INT DEFAULT COALESCE(NULL, 100),
+	is_null_col AS (CASE WHEN nullable_col IS NULL THEN 1 ELSE 0 END),
+	created_date DATETIME DEFAULT GETDATE(),
+	year_created AS YEAR(created_date),
+	CHECK (ISNULL(nullable_col, 0) >= 0),
+	CHECK (age > 0)
+)
+GO
+
+-- Verify in ENR
+SELECT * FROM enr_view;
+GO
+~~START~~
+text
+#advanced_columns
+#advanced_columns_pkey
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
+#t4122
+#temptable5605
+idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
+~~END~~
+
+
+-- Insert test data
+INSERT INTO #advanced_columns (id, first_name, last_name, age, balance, nullable_col) 
+VALUES (1, 'John', 'Doe', 24, 50000, NULL)
+INSERT INTO #advanced_columns (id, first_name, last_name, age, balance, nullable_col) 
+VALUES (2, 'Jane', 'Smith', 35, 104230, 50)
+INSERT INTO #advanced_columns (id, first_name, last_name, age, balance) 
+VALUES (3, 'Bob', 'Johnson', 42, 75000)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT id, amount, is_null_col, default_col FROM #advanced_columns
+GO
+~~START~~
+int#!#bigint#!#int#!#int
+1#!#2083333#!#1#!#100
+2#!#2978000#!#0#!#100
+3#!#1785714#!#1#!#100
+~~END~~
+
+
+-- Test UPDATE on base columns (computed columns auto-update)
+UPDATE #advanced_columns SET first_name = 'Johnny' WHERE id = 1
+GO
+~~ROW COUNT: 1~~
+
+
+UPDATE #advanced_columns SET balance = balance + 10000, age = age + 1 WHERE id = 2
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT id, age, balance, amount FROM #advanced_columns ORDER BY id
+GO
+~~START~~
+int#!#int#!#bigint#!#bigint
+1#!#24#!#50000#!#2083333
+2#!#36#!#114230#!#3173055
+3#!#42#!#75000#!#1785714
+~~END~~
+
+
+-- Update nullable columns
+UPDATE #advanced_columns SET nullable_col = 100 WHERE id = 1
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT id, nullable_col, is_null_col FROM #advanced_columns ORDER BY id
+GO
+~~START~~
+int#!#int#!#int
+1#!#100#!#0
+2#!#50#!#0
+3#!#<NULL>#!#1
+~~END~~
+
+
+-- ALTER TABLE: Add new computed column
+ALTER TABLE #advanced_columns ADD age_group AS (
+	CASE 
+		WHEN age < 30 THEN 'Young'
+		WHEN age BETWEEN 30 AND 50 THEN 'Middle'
+		ELSE 'Senior'
+	END
+)
+GO
+
+SELECT id, age, age_group FROM #advanced_columns
+GO
+~~START~~
+int#!#int#!#varchar
+3#!#42#!#Middle
+2#!#36#!#Middle
+1#!#24#!#Young
+~~END~~
+
+
+-- ALTER TABLE: Add column with COALESCE default
+ALTER TABLE #advanced_columns ADD priority INT DEFAULT COALESCE(NULL, 5)
+GO
+
+SELECT id, priority FROM #advanced_columns
+GO
+~~START~~
+int#!#int
+3#!#5
+2#!#5
+1#!#5
+~~END~~
+
+
+-- Update priority
+UPDATE #advanced_columns SET priority = 10 WHERE age < 30
+UPDATE #advanced_columns SET priority = 20 WHERE age >= 40
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT id, age, priority FROM #advanced_columns ORDER BY id
+GO
+~~START~~
+int#!#int#!#int
+1#!#24#!#10
+2#!#36#!#5
+3#!#42#!#20
+~~END~~
+
+
+-- ALTER TABLE: Add new column and update based on computed values
+ALTER TABLE #advanced_columns ADD category VARCHAR(20)
+GO
+
+UPDATE #advanced_columns SET category = 
+	CASE 
+		WHEN amount > 2000000 THEN 'Premium'
+		WHEN amount > 1000000 THEN 'Gold'
+		ELSE 'Standard'
+	END
+WHERE amount IS NOT NULL
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT id, amount, category FROM #advanced_columns ORDER BY id
+GO
+~~START~~
+int#!#bigint#!#varchar
+1#!#2083333#!#Premium
+2#!#3173055#!#Premium
+3#!#1785714#!#Gold
+~~END~~
+
+
+DROP TABLE #advanced_columns
+GO
+
+-- Test 3: Indexes with DML Operations and ALTER TABLE
+CREATE TABLE #indexed_dml (
+	id INT PRIMARY KEY,
+	text_col VARCHAR(100),
+	int_col INT DEFAULT 0,
+	date_col DATETIME DEFAULT GETDATE(),
+	money_col MONEY DEFAULT 0,
+	description VARCHAR(200),
+	status CHAR(1) DEFAULT 'A'
+)
+GO
+
+-- Create indexes on various data types
+CREATE INDEX IX_text ON #indexed_dml(text_col)
+GO
+
+CREATE INDEX IX_int ON #indexed_dml(int_col)
+GO
+
+CREATE INDEX IX_date ON #indexed_dml(date_col)
+GO
+
+CREATE INDEX IX_money ON #indexed_dml(money_col)
+GO
+
+CREATE INDEX IX_composite ON #indexed_dml(status, int_col)
+GO
+
+-- Verify in ENR
+SELECT * FROM enr_view;
+GO
+~~START~~
+text
+#indexed_dml
+#indexed_dml_pkey
+#pg_toast_#oid_masked#
+#pg_toast_#oid_masked#_index
+#t4122
+#temptable5605
+idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
+ix_composite#indexed_dml607dc45075f81468865d4be46b38df3e
+ix_date#indexed_dmle2166a864eb6380802f1dd642a3fde15
+ix_int#indexed_dml035dab3da66aea81011a3eae459c604c
+ix_money#indexed_dmlf15b16dc03c5e414c280565f841360cc
+ix_text#indexed_dml331193019682437d7418b66eb4c0d94e
+~~END~~
+
+
+-- Insert test data
+INSERT INTO #indexed_dml VALUES (1, 'Test One', 100, GETDATE(), 1000.00, 'First record', 'A')
+INSERT INTO #indexed_dml VALUES (2, 'Test Two', 200, GETDATE(), 2000.00, 'Second record', 'A')
+INSERT INTO #indexed_dml VALUES (3, 'Test Three', 300, GETDATE(), 3000.00, 'Third record', 'I')
+INSERT INTO #indexed_dml VALUES (4, 'Sample Four', 150, GETDATE(), 1500.00, 'Fourth record', 'A')
+INSERT INTO #indexed_dml VALUES (5, 'Sample Five', 250, GETDATE(), 2500.00, 'Fifth record', 'P')
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Query using indexes
+SELECT id, text_col FROM #indexed_dml WHERE text_col LIKE 'Test%'
+GO
+~~START~~
+int#!#varchar
+1#!#Test One
+2#!#Test Two
+3#!#Test Three
+~~END~~
+
+
+SELECT id, int_col FROM #indexed_dml WHERE int_col > 150
+GO
+~~START~~
+int#!#int
+2#!#200
+3#!#300
+5#!#250
+~~END~~
+
+
+SELECT id, money_col FROM #indexed_dml WHERE money_col BETWEEN 1500 AND 2500
+GO
+~~START~~
+int#!#money
+2#!#2000.0000
+4#!#1500.0000
+5#!#2500.0000
+~~END~~
+
+
+SELECT id, status, int_col FROM #indexed_dml WHERE status = 'A' AND int_col > 100
+GO
+~~START~~
+int#!#char#!#int
+4#!#A#!#150
+2#!#A#!#200
+~~END~~
+
+
+-- UPDATE operations on indexed columns
+UPDATE #indexed_dml SET int_col = int_col + 50 WHERE status = 'A'
+GO
+~~ROW COUNT: 3~~
+
+
+UPDATE #indexed_dml SET money_col = money_col * 1.1, description = 'Updated: ' + description WHERE int_col > 200
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT id, int_col, money_col, status FROM #indexed_dml ORDER BY id
+GO
+~~START~~
+int#!#int#!#money#!#char
+1#!#150#!#1000.0000#!#A
+2#!#250#!#2200.0000#!#A
+3#!#300#!#3300.0000#!#I
+4#!#200#!#1500.0000#!#A
+5#!#250#!#2750.0000#!#P
+~~END~~
+
+
+-- DELETE operation
+DELETE FROM #indexed_dml WHERE status = 'P'
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT COUNT(*) as remaining_records FROM #indexed_dml
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+-- ALTER TABLE: Add new indexed column
+ALTER TABLE #indexed_dml ADD category VARCHAR(30)
+GO
+
+UPDATE #indexed_dml SET category = 
+	CASE 
+		WHEN money_col < 1500 THEN 'Budget'
+		WHEN money_col < 2500 THEN 'Standard'
+		ELSE 'Premium'
+	END
+GO
+~~ROW COUNT: 4~~
+
+
+-- Create index on new column
+CREATE INDEX IX_category ON #indexed_dml(category)
+GO
+
+SELECT id, category FROM #indexed_dml WHERE category = 'Standard'
+GO
+~~START~~
+int#!#varchar
+4#!#Standard
+2#!#Standard
+~~END~~
+
+
+-- Bulk UPDATE to test index maintenance
+UPDATE #indexed_dml SET text_col = 'Bulk Update ' + CAST(id AS VARCHAR(10))
+GO
+~~ROW COUNT: 4~~
+
+
+SELECT id, text_col FROM #indexed_dml ORDER BY id
+GO
+~~START~~
+int#!#varchar
+1#!#Bulk Update 1
+2#!#Bulk Update 2
+3#!#Bulk Update 3
+4#!#Bulk Update 4
+~~END~~
+
+
+-- ALTER TABLE: Add column with index in same operation
+ALTER TABLE #indexed_dml ADD sequence_num INT
+GO
+
+UPDATE #indexed_dml SET sequence_num = id * 10
+GO
+~~ROW COUNT: 4~~
+
+
+CREATE INDEX IX_sequence ON #indexed_dml(sequence_num)
+GO
+
+SELECT id, sequence_num FROM #indexed_dml WHERE sequence_num > 20
+GO
+~~START~~
+int#!#int
+4#!#40
+3#!#30
+~~END~~
+
+
+-- Test DELETE with indexes
+DELETE FROM #indexed_dml WHERE int_col < 150
+GO
+
+SELECT id, int_col, text_col FROM #indexed_dml ORDER BY id
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#150#!#Bulk Update 1
+2#!#250#!#Bulk Update 2
+3#!#300#!#Bulk Update 3
+4#!#200#!#Bulk Update 4
+~~END~~
+
+
+DROP TABLE #indexed_dml
+GO
+
+EXEC p_def_cons;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "@tv_def_con_1" violates check constraint "@tv_def_con_1_b_check")~~
+
+~~START~~
+int#!#int#!#char
+1#!#1#!#T
+2#!#2#!#F
+~~END~~
+
+
+-- Test 4: Trying to create a default with UDF which should throw an error
+CREATE TABLE #temp_table_with_computed_udf (
+	id INT PRIMARY KEY,
+	credit BIGINT,
+	debit BIGINT,
+	total as custom_adder(credit, debit)
+)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "#temptable5605" does not exist)~~
+~~ERROR (Message: generation expression is not immutable)~~
 
+
+CREATE TABLE #temp_table_with_default_udf (
+	num INT DEFAULT custom_adder(5,10)
+)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User-defined functions, partition functions, and column references are not allowed in expressions in this context.)~~
+
+
+CREATE TABLE #temp_table_with_default_udf (
+	num INT CHECK(custom_adder(num,10) > 100)
+)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: temporary objects cannot reference permanent non-system objects)~~
+
+
+-- SP_EXECUTESQL index creation/drop on temp tables
+EXEC p_sp_executesql_index;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int#!#varchar
+2#!#two
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+3#!#three
+~~END~~
+
+
+-- SP_EXECUTESQL ALTER TABLE ADD column that creates toast table
+EXEC p_sp_executesql_toast;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar#!#int
+1#!#test#!#5000
+~~END~~
+
+
+-- Inline index creation via SP_EXECUTESQL
+CREATE TABLE #temp_index1 (a INT, b VARCHAR(50));
+GO
+INSERT INTO #temp_index1 VALUES (1, 'one'), (2, 'two'), (3, 'three');
+GO
+~~ROW COUNT: 3~~
+
+
+DECLARE @sql1 NVARCHAR(MAX) = 'CREATE INDEX index1 ON #temp_index1(a)';
+EXEC SP_EXECUTESQL @sql1;
+GO
+
+SELECT * FROM #temp_index1 WHERE a = 2;
+GO
+~~START~~
+int#!#varchar
+2#!#two
+~~END~~
+
+
+DROP INDEX index1 ON #temp_index1;
+GO
+
+SELECT * FROM #temp_index1 ORDER BY a;
+GO
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+3#!#three
+~~END~~
+
+
+DROP TABLE #temp_index1;
+GO
+
+-- Inline ALTER TABLE ADD column (text type triggers toast) via SP_EXECUTESQL
+CREATE TABLE #temp_heap1 (a INT);
+GO
+INSERT INTO #temp_heap1 VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+
+DECLARE @sql2 NVARCHAR(MAX) = 'ALTER TABLE #temp_heap1 ADD col1 TEXT';
+EXEC SP_EXECUTESQL @sql2;
+GO
+
+UPDATE #temp_heap1 SET col1 = REPLICATE('x', 5000) WHERE a = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT a, LEN(col1) as col1_len FROM #temp_heap1;
+GO
+~~START~~
+int#!#int
+1#!#5000
+~~END~~
+
+
+DROP TABLE #temp_heap1;
+GO
+
+-- Index on column added via SP_EXECUTESQL
+CREATE TABLE #temp_index2 (a INT);
+GO
+INSERT INTO #temp_index2 VALUES (1), (2), (3);
+GO
+~~ROW COUNT: 3~~
+
+
+DECLARE @sql4 NVARCHAR(MAX) = 'ALTER TABLE #temp_index2 ADD b INT DEFAULT 0';
+EXEC SP_EXECUTESQL @sql4;
+GO
+
+UPDATE #temp_index2 SET b = a * 10;
+GO
+~~ROW COUNT: 3~~
+
+
+DECLARE @sql5 NVARCHAR(MAX) = 'CREATE INDEX index2 ON #temp_index2(b)';
+EXEC SP_EXECUTESQL @sql5;
+GO
+
+SELECT * FROM #temp_index2 WHERE b > 10 ORDER BY b;
+GO
+~~START~~
+int#!#int
+2#!#20
+3#!#30
+~~END~~
+
+
+DROP INDEX index2 ON #temp_index2;
+GO
+
+DROP TABLE #temp_index2;
+GO

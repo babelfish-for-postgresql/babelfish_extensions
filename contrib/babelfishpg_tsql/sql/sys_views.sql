@@ -1293,6 +1293,9 @@ c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
 create or replace view sys.all_objects as
+WITH tt_internal AS MATERIALIZED (
+  SELECT typrelid FROM sys.table_types_internal
+)
 select 
     name collate sys.database_default
   , cast (object_id as integer) 
@@ -1327,7 +1330,7 @@ select
   , 0 as is_published
   , 0 as is_schema_published
 from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
-left join sys.table_types_internal tt on t.oid = tt.typrelid
+left join tt_internal tt on t.oid = tt.typrelid
 left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
 where t.relpersistence in ('p', 'u', 't')
@@ -1352,7 +1355,7 @@ select
   , 0 as is_published
   , 0 as is_schema_published
 from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
-left join sys.table_types_internal tt on t.oid = tt.typrelid
+left join tt_internal tt on t.oid = tt.typrelid
 left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
 where t.relpersistence in ('p', 'u', 't')
@@ -2029,6 +2032,7 @@ WHERE ao.type = 'TR';
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.all_sql_modules AS
+WITH all_sql_modules_cte AS MATERIALIZED (
 SELECT
      CAST(t1.object_id as int)
     ,CAST(t1.definition as sys.nvarchar)
@@ -2040,10 +2044,13 @@ SELECT
     ,CAST(t1.null_on_null_input as sys.bit)
     ,CAST(t1.execute_as_principal_id as int)
     ,CAST(t1.uses_native_compilation as sys.bit)
-FROM sys.all_sql_modules_internal t1;
+FROM sys.all_sql_modules_internal t1
+)
+SELECT * FROM all_sql_modules_cte;
 GRANT SELECT ON sys.all_sql_modules TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.system_sql_modules AS
+WITH system_sql_modules_cte AS MATERIALIZED ( 
 SELECT
      CAST(t1.object_id as int)
     ,CAST(t1.definition as sys.nvarchar)
@@ -2056,10 +2063,13 @@ SELECT
     ,CAST(t1.execute_as_principal_id as int)
     ,CAST(t1.uses_native_compilation as sys.bit)
 FROM sys.all_sql_modules_internal t1
-WHERE t1.is_ms_shipped = 1;
+WHERE t1.is_ms_shipped = 1
+)
+SELECT * FROM system_sql_modules_cte;
 GRANT SELECT ON sys.system_sql_modules TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sql_modules AS
+WITH sql_modules_cte AS MATERIALIZED (
 SELECT
      CAST(t1.object_id as int)
     ,CAST(t1.definition as sys.nvarchar)
@@ -2072,7 +2082,9 @@ SELECT
     ,CAST(t1.execute_as_principal_id as int)
     ,CAST(t1.uses_native_compilation as sys.bit)
 FROM sys.all_sql_modules_internal t1
-WHERE t1.is_ms_shipped = 0;
+WHERE t1.is_ms_shipped = 0
+)
+SELECT * FROM sql_modules_cte;
 GRANT SELECT ON sys.sql_modules TO PUBLIC;
 
 CREATE VIEW sys.syscharsets

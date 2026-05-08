@@ -69,6 +69,11 @@ runs:
           sed -i "/BABEL-404\>/d" upgrade/$base_dir/schedule
         fi
 
+        # Skip 1GB StringInfo limit test for dump/restore - causes out of memory
+        if [[ "${{ inputs.dump_restore }}" == 'true' ]];then
+          sed -i "/forxml-raw-elements-1gb-limit\>/d" upgrade/$base_dir/schedule
+        fi
+
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
           sed -i "s/\b$filename[ ]*\b$/$filename-vu-verify\\n$filename-vu-cleanup/g" upgrade/$base_dir/schedule
         done
