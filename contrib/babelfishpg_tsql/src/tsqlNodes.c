@@ -1,11 +1,13 @@
 #include "pltsql.h"
 #include "pltsql-2.h"
+#include "pltsql_node/pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
+											 * by gen_pltsql_node_support.pl */
 #include "tsqlNodes.h"
 
 PLtsql_expr *
 makeTsqlExpr(const char *fragment)
 {
-	PLtsql_expr *result = (PLtsql_expr *) palloc0(sizeof(*result));
+	PLtsql_expr *result = makeNode(PLtsql_expr);
 
 	result	  ->query = pstrdup(fragment);
 	result	  ->plan = NULL;
@@ -20,7 +22,7 @@ makeTsqlExpr(const char *fragment)
 PLtsql_stmt_while *
 makeWhileStmt(PLtsql_expr *cond)
 {
-	PLtsql_stmt_while *result = (PLtsql_stmt_while *) palloc0(sizeof(*result));
+	PLtsql_stmt_while *result = (PLtsql_stmt_while *) makeNode(PLtsql_stmt_while);
 
 	result	  ->cmd_type = PLTSQL_STMT_WHILE;
 	result	  ->cond = cond;
@@ -32,7 +34,7 @@ PLtsql_stmt_print *
 makePrintStmt(PLtsql_expr *expr)
 {
 
-	PLtsql_stmt_print *result = (PLtsql_stmt_print *) palloc0(sizeof(*result));
+	PLtsql_stmt_print *result = (PLtsql_stmt_print *) makeNode(PLtsql_stmt_print);
 
 	result	  ->cmd_type = PLTSQL_STMT_PRINT;
 	result	  ->exprs = list_make1(expr);

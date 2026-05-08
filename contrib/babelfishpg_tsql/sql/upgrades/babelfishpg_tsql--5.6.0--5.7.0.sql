@@ -58,6 +58,31 @@ $$
     end;
 $$;
 
+-- BABELFISH_FUNCTION_EXT (antlr_parse_cache)
+SET allow_system_table_mods = on;
+ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_cache_tree TEXT DEFAULT NULL;
+ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_cache_datums TEXT DEFAULT NULL;
+ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_cache_bbf_version TEXT DEFAULT NULL;
+ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_cache_enabled BOOL DEFAULT NULL;
+RESET allow_system_table_mods;
+
+CREATE OR REPLACE FUNCTION sys.enable_antlr_parse_cache(
+    IN routine_id OID,
+    IN use_antlr_parse_cache BOOLEAN
+) RETURNS BOOLEAN
+AS 'babelfishpg_tsql', 'enable_antlr_parse_cache'
+LANGUAGE C VOLATILE PARALLEL UNSAFE;
+
+CREATE OR REPLACE FUNCTION sys.antlr_parse_cache_stats(
+    OUT cache_hits INT,
+    OUT cache_misses INT,
+    OUT cache_writes INT,
+    OUT cache_evictions INT,
+    OUT cache_errors INT
+) RETURNS RECORD
+AS 'babelfishpg_tsql', 'antlr_parse_cache_stats'
+LANGUAGE C VOLATILE PARALLEL RESTRICTED;
+
 -- Please add your SQLs here
 /*
  * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
