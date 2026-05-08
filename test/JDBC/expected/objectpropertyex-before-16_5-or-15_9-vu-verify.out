@@ -141,7 +141,7 @@ SELECT OBJECTPROPERTYEX(
 GO
 ~~START~~
 sql_variant
-PK
+<NULL>
 ~~END~~
 
 
@@ -152,7 +152,7 @@ SELECT OBJECTPROPERTYEX(
 GO
 ~~START~~
 sql_variant
-F 
+<NULL>
 ~~END~~
 
 
@@ -460,7 +460,7 @@ SELECT OBJECTPROPERTYEX(
 GO
 ~~START~~
 sql_variant
-1
+<NULL>
 ~~END~~
 
 
