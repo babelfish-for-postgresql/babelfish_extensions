@@ -112,7 +112,7 @@ typedef struct PLtsql_stmt_exec
 	char	   *proc_name;
 	char	   *schema_name;
 
-	InsertExecInfo insert_exec;	/* INSERT EXEC info */
+	InsertExecInfo insert_exec;
 		
 	bool		exec_with_recompile; /* forced recompile through EXECUTE */	
 } PLtsql_stmt_exec;

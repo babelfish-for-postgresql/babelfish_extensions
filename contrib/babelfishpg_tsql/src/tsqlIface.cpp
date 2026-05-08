@@ -1636,41 +1636,35 @@ public:
 		PLtsql_stmt *old_stmt = getPLtsql_fragment(ctx);
 		ParserRuleContext *container = peekContainer();
 
-		if (old_stmt && container)
+		/*
+    	 * old_stmt is always set for INSERT EXEC — exitDml_statement attaches
+    	 * a PLtsql_stmt_execsql fragment before this function is called.
+    	 * Reaching here means a broken parser state.
+    	*/
+    	Assert(old_stmt != NULL && container != NULL);
+
+		List *siblings = getCode(container);
+		ListCell *lc;
+		int pos = 0;
+
+		if (pltsql_enable_antlr_detailed_log)
+			std::cout << "    replacing stmt (" << (void *) old_stmt << ") with (" << (void *) new_stmt << ") in container(" << (void *) container << ")" << std::endl;
+
+		/* Find the position of the old statement */
+		foreach(lc, siblings)
 		{
-			List *siblings = getCode(container);
-			ListCell *lc;
-			int pos = 0;
-
-			if (pltsql_enable_antlr_detailed_log)
-				std::cout << "    replacing stmt (" << (void *) old_stmt << ") with (" << (void *) new_stmt << ") in container(" << (void *) container << ")" << std::endl;
-
-			/* Find the position of the old statement */
-			foreach(lc, siblings)
-			{
-				if (lfirst(lc) == old_stmt)
-					break;
-				pos++;
-			}
-
-			/* Remove old statement and insert new one at the same position */
-			siblings = list_delete_ptr(siblings, old_stmt);
-			siblings = list_insert_nth(siblings, pos, new_stmt);
-			setCode(container, siblings);
-
-			/* Update the fragment mapping */
-			attachPLtsql_fragment(ctx, new_stmt);
-		}
-		else
-		{
-    		/*
-    		 * old_stmt is always set for INSERT EXEC — exitDml_statement attaches
-    		 * a PLtsql_stmt_execsql fragment before this function is called.
-    		* Reaching here means a broken parser state.
-    		*/
-    		Assert(false);
+			if (lfirst(lc) == old_stmt)
+				break;
+			pos++;
 		}
 
+		/* Remove old statement and insert new one at the same position */
+		siblings = list_delete_ptr(siblings, old_stmt);
+		siblings = list_insert_nth(siblings, pos, new_stmt);
+		setCode(container, siblings);
+
+		/* Update the fragment mapping */
+		attachPLtsql_fragment(ctx, new_stmt);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
