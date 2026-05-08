@@ -1,5 +1,7 @@
 
 #include "pltsql-2.h"
+#include "pltsql_node/pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
+											 * by gen_pltsql_node_support.pl */
 
 #include "funcapi.h"
 
@@ -1029,7 +1031,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			 */
 			oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
 
-			row = (PLtsql_row *) palloc0(sizeof(PLtsql_row));
+			row = makeNode(PLtsql_row);
 			row->dtype = PLTSQL_DTYPE_ROW;
 			row->refname = "(unnamed row)";
 			row->lineno = -1;
@@ -1449,7 +1451,7 @@ exec_stmt_return_table(PLtsql_execstate *estate, PLtsql_stmt_return_query *stmt)
 	 */
 	oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
 
-	expr = palloc0(sizeof(PLtsql_expr));
+	expr = makeNode(PLtsql_expr);
 	
 	/*
 	 * Add delimiters for valid T-SQL variable names like @@var or @var#
@@ -1613,7 +1615,7 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 			 * 3. Read parameter values, insert OUT parameter info in the row
 			 * Datum.
 			 */
-			row = (PLtsql_row *) palloc0(sizeof(PLtsql_row));
+			row = makeNode(PLtsql_row);
 			row->dtype = PLTSQL_DTYPE_ROW;
 			row->refname = "(unnamed row)";
 			row->lineno = -1;
