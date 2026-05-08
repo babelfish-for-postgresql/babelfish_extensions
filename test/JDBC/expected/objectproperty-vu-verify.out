@@ -1151,6 +1151,25 @@ int
 ~~END~~
 
 
+-- =============== Trigger properties ===============
+-- ExecIsAnsiNullsOn on trigger
+SELECT OBJECTPROPERTY(OBJECT_ID('objectproperty_vu_prepare_IsTrigger_trigger', 'TR'), 'ExecIsAnsiNullsOn')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- ExecIsQuotedIdentOn on trigger
+SELECT OBJECTPROPERTY(OBJECT_ID('objectproperty_vu_prepare_IsTrigger_trigger', 'TR'), 'ExecIsQuotedIdentOn')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 -- tsql user=objectproperty_login_1 password=12345678
 -- user does not have permission on the object (should return NULL)
 SELECT OBJECTPROPERTY(OBJECT_ID('IsTrigger_trigger', 'TR'), 'IsTrigger')
