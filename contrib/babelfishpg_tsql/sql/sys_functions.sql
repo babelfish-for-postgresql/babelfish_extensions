@@ -5315,3 +5315,23 @@ RETURNS table (
 AS 'babelfishpg_tsql', 'openxml_simple'
 LANGUAGE C IMMUTABLE;
 
+
+-- Routine-specific ANTLR parse tree cache GUC control across sessions (sets column in sys.babelfish_function_ext)
+-- antlr_parse_cache_enabled column: true = force on, false = force off (kill switch), NULL = follow session GUC (default)
+CREATE OR REPLACE FUNCTION sys.enable_antlr_parse_cache(
+    IN routine_id OID,
+    IN use_antlr_parse_cache BOOLEAN
+) RETURNS BOOLEAN
+AS 'babelfishpg_tsql', 'enable_antlr_parse_cache'
+LANGUAGE C VOLATILE PARALLEL UNSAFE;
+
+-- Session-level routine antlr parse cache statistics
+CREATE OR REPLACE FUNCTION sys.antlr_parse_cache_stats(
+    OUT cache_hits INT,
+    OUT cache_misses INT,
+    OUT cache_writes INT,
+    OUT cache_evictions INT,
+    OUT cache_errors INT
+) RETURNS RECORD
+AS 'babelfishpg_tsql', 'antlr_parse_cache_stats'
+LANGUAGE C VOLATILE PARALLEL RESTRICTED;

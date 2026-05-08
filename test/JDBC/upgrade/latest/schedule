@@ -685,3 +685,4 @@ forxml-path-elements
 forxml-auto
 babel_sqlvariant_coerce_type
 BABEL-5264
+BABEL-6037
