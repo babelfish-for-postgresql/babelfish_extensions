@@ -73,6 +73,8 @@ char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
 bool		pltsql_enable_alter_owner_from_pg = false;
+bool		pltsql_enable_antlr_parse_cache = false;
+bool		pltsql_validate_antlr_parse_cache = false;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -1134,6 +1136,32 @@ define_custom_variables(void)
 							 &pltsql_enable_alter_owner_from_pg,
 							 false,
 							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/*
+	 * Enable/disable persistent caching of ANTLR parse result for routines for cross-session performance optimization.
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_antlr_parse_cache",
+							 gettext_noop("Enables persistent caching of ANTLR parser results for faster execution of routines."),
+							 gettext_noop("When enabled, ANTLR parsed results are reused from cache for routines."),
+							 &pltsql_enable_antlr_parse_cache,
+							 false,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/*
+	 * Debugging GUC: when enabled, every routine/trigger execution invokes comparison of ANTLR-compiled and cached parse trees. Logs PASS/FAIL.
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.validate_antlr_parse_cache",
+							 gettext_noop("GUC for validation of cached ANTLR parser results on creation or execution of routines and triggers."),
+							 gettext_noop("When enabled, routine executions that use cached parse results also run a fresh "
+										  "ANTLR parse and compare the two. Results are logged to the server log. "
+										  "Use sys.antlr_parse_cache_stats() to check for cache hits, writes or errors."),
+							 &pltsql_validate_antlr_parse_cache,
+							 false,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 

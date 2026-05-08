@@ -86,6 +86,31 @@ export ANTLR4_RUNTIME_INCLUDE_DIR=/usr/local/include/antlr4-runtime
 export ANTLR4_RUNTIME_LIB_DIR=/usr/local/lib
 
 OBJS += src/pltsql_bulkcopy.o
+OBJS += src/pltsql_node/pltsql_outfuncs_stubs.o
+OBJS += src/pltsql_node/pltsql_readfuncs_stubs.o
+
+# PLtsql node support code generation (GUC babelfishpg_tsql.enable_antlr_parse_cache)
+PLTSQL_NODE_DIR = src/pltsql_node
+PLTSQL_NODE_HEADERS = src/pltsql.h src/pltsql-2.h
+PLTSQL_GEN_SCRIPT = $(PLTSQL_NODE_DIR)/gen_pltsql_node_support.pl
+
+$(PLTSQL_NODE_DIR)/pltsql_nodetags.h $(PLTSQL_NODE_DIR)/pltsql_outfuncs_gen.c $(PLTSQL_NODE_DIR)/pltsql_readfuncs_gen.c $(PLTSQL_NODE_DIR)/pltsql_outfuncs_switch.c $(PLTSQL_NODE_DIR)/pltsql_readfuncs_switch.c $(PLTSQL_NODE_DIR)/pltsql_equalfuncs_gen.c $(PLTSQL_NODE_DIR)/pltsql_equalfuncs_switch.c: $(PLTSQL_NODE_HEADERS) $(PLTSQL_GEN_SCRIPT)
+	$(PERL) $(PLTSQL_GEN_SCRIPT) --outdir $(PLTSQL_NODE_DIR) $(PLTSQL_NODE_HEADERS)
+
+# Wrapper .c files #include the generated .c files (mirroring engine pattern)
+# so we compile the wrappers, not the gen files directly.
+# pltsql_outfuncs and pltsql_readfuncs: generated code now included by pltsql_nodeio.c
+OBJS += $(PLTSQL_NODE_DIR)/pltsql_equalfuncs.o
+OBJS += $(PLTSQL_NODE_DIR)/pltsql_nodeio.o
+
+# pltsql_nodetags.h must be generated before any .o that includes pltsql.h
+# The first OBJS entry (src/pl_gram.o) triggers this via implicit ordering,
+# but we make it explicit for safety.
+src/pl_gram.o: $(PLTSQL_NODE_DIR)/pltsql_nodetags.h
+
+# Wrapper .o depends on generated .c files (included via #include)
+$(PLTSQL_NODE_DIR)/pltsql_nodeio.o: $(PLTSQL_NODE_DIR)/pltsql_outfuncs_gen.c $(PLTSQL_NODE_DIR)/pltsql_outfuncs_switch.c $(PLTSQL_NODE_DIR)/pltsql_readfuncs_gen.c $(PLTSQL_NODE_DIR)/pltsql_readfuncs_switch.c
+$(PLTSQL_NODE_DIR)/pltsql_equalfuncs.o: $(PLTSQL_NODE_DIR)/pltsql_equalfuncs_gen.c $(PLTSQL_NODE_DIR)/pltsql_equalfuncs_switch.c
 
 PG_CXXFLAGS += -g -Werror -Wfloat-conversion
 PG_CXXFLAGS += -Wno-deprecated -Wno-error=attributes -Wno-suggest-attribute=format # disable some warnings from ANTLR runtime header
