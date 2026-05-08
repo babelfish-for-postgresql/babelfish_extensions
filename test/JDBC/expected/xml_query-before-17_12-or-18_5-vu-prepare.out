@@ -167,14 +167,14 @@ SELECT id, data.query('/root/name') AS name_xml FROM xml_query_t1 WHERE id <= 2;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
+~~ERROR (Message: schema "master_data" does not exist)~~
 
 CREATE VIEW xml_query_dep_view2 AS
 SELECT id, data.query('/root') AS root_xml FROM xml_query_t1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
+~~ERROR (Message: schema "master_data" does not exist)~~
 
 
 -- ============================================
@@ -197,10 +197,6 @@ BEGIN
     SELECT data.query('/root/name') FROM xml_query_t1 WHERE id = @id;
 END;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
-
 
 CREATE PROCEDURE xml_query_proc3
 AS
@@ -209,10 +205,6 @@ BEGIN
 END;
 GO
 
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
 
 -- ============================================
 -- SECTION: Functions
@@ -238,10 +230,6 @@ BEGIN
     RETURN @result;
 END;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
-
 
 -- Inline table-valued function
 CREATE FUNCTION xml_query_itvf_func()
@@ -251,7 +239,7 @@ RETURN (SELECT id, data.query('/root/name') AS name_xml FROM xml_query_t1 WHERE 
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
+~~ERROR (Message: schema "master_data" does not exist)~~
 
 
 -- ============================================
@@ -283,7 +271,7 @@ CREATE TABLE xml_query_computed_t1 (
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function dbo.xml_query_wrapper(xml) does not exist)~~
+~~ERROR (Message: function master_dbo.xml_query_wrapper(xml) does not exist)~~
 
 
 -- ============================================
@@ -305,7 +293,7 @@ SELECT id, data.query('/root/name') AS name_xml FROM xml_query_t1 WHERE id = 1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
+~~ERROR (Message: schema "master_data" does not exist)~~
 
 SET QUOTED_IDENTIFIER ON;
 GO
