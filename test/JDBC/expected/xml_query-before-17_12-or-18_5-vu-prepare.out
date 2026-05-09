@@ -267,7 +267,7 @@ EXEC sys.sp_babelfish_volatility 'xml_query_wrapper', 'immutable';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function does not exist)~~
+~~ERROR (Message: procedure sys.sp_babelfish_volatility(unknown, unknown) does not exist)~~
 
 
 CREATE TABLE xml_query_computed_t1 (
