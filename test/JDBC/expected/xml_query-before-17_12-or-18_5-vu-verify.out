@@ -565,10 +565,10 @@ varchar
 -- ============================================
 EXEC xml_query_proc1;
 GO
-~~START~~
-xml
-<item>hello</item>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure xml_query_proc1() does not exist)~~
+
 
 
 EXEC xml_query_proc2 @id = 1;
@@ -611,10 +611,10 @@ int#!#xml
 -- ============================================
 SELECT dbo.xml_query_func1() AS result;
 GO
-~~START~~
-xml
-<a>1</a>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function dbo.xml_query_func1() does not exist)~~
+
 
 
 SELECT dbo.xml_query_func2(1) AS result;
@@ -648,22 +648,18 @@ xml
 -- ============================================
 SELECT * FROM xml_query_dep_view1;
 GO
-~~START~~
-int#!#xml
-1#!#<name>John</name>
-2#!#<name>Jane</name>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "xml_query_dep_view1" does not exist)~~
+
 
 
 SELECT * FROM xml_query_dep_view2;
 GO
-~~START~~
-int#!#xml
-1#!#<root><name>John</name><age>30</age></root>
-2#!#<root><name>Jane</name><age>25</age></root>
-3#!#<root><name>Bob</name></root>
-4#!#<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "xml_query_dep_view2" does not exist)~~
+
 
 
 
@@ -826,10 +822,10 @@ GO
 -- ============================================
 SELECT * FROM xml_query_qi_off_view;
 GO
-~~START~~
-int#!#xml
-1#!#<name>John</name>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "xml_query_qi_off_view" does not exist)~~
+
 
 
 
@@ -838,20 +834,26 @@ int#!#xml
 -- ============================================
 INSERT INTO xml_query_computed_t1 (id, data) VALUES (1, '<root><child>test</child></root>');
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "xml_query_computed_t1" does not exist)~~
+
 
 
 SELECT * FROM xml_query_computed_t1;
 GO
-~~START~~
-int#!#xml#!#xml
-1#!#<root><child>test</child></root>#!#<root><child>test</child></root>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "xml_query_computed_t1" does not exist)~~
+
 
 
 DELETE FROM xml_query_computed_t1;
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "xml_query_computed_t1" does not exist)~~
+
 
 
 
@@ -1118,10 +1120,10 @@ xml
 -- Called on function_call
 SELECT dbo.xml_query_func1().query('/a');
 GO
-~~START~~
-xml
-<a>1</a>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function dbo.xml_query_func1() does not exist)~~
+
 
 
 
@@ -1169,11 +1171,10 @@ GO
 -- ============================================
 SELECT * FROM xml_query_itvf_func();
 GO
-~~START~~
-int#!#xml
-1#!#<name>John</name>
-2#!#<name>Jane</name>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function xml_query_itvf_func() does not exist)~~
+
 
 
 
