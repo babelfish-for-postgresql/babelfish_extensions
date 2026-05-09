@@ -87,9 +87,9 @@ CREATE TABLE xml_query_t8 (id INT, data XML);
 INSERT INTO xml_query_t8 VALUES (1, N'<root><name>日本語</name></root>');
 INSERT INTO xml_query_t8 VALUES (2, N'<root><name>中文</name></root>');
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Message: column "data" is of type xml but expression is of type nvarchar)~~
 
 
 

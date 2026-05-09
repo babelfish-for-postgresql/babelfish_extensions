@@ -737,6 +737,54 @@ bbf_xml_normalize(PG_FUNCTION_ARGS)
 	char	   *xml_str;
 	int			xml_len;
 
+	/*
+	 * Fast path: most XML documents have no CDATA sections and no
+	 * whitespace-only text nodes.  A quick linear scan detects whether
+	 * normalization is needed; if not, the input is returned unchanged
+	 * avoiding the full XML parsing overhead.
+	 */
+	{
+		const char *raw = VARDATA_ANY(xml_input);
+		int			raw_len = VARSIZE_ANY_EXHDR(xml_input);
+		bool		needs_normalize = false;
+		int			i;
+
+		/* Check for CDATA sections */
+		for (i = 0; i <= raw_len - 9; i++)
+		{
+			if (raw[i] == '<' && memcmp(raw + i, "<![CDATA[", 9) == 0)
+			{
+				needs_normalize = true;
+				break;
+			}
+		}
+
+		/* Check for whitespace-only text nodes: '>' followed by only whitespace then '<' */
+		if (!needs_normalize)
+		{
+			for (i = 0; i < raw_len; i++)
+			{
+				if (raw[i] == '>')
+				{
+					int j = i + 1;
+					/* Skip whitespace */
+					while (j < raw_len && (raw[j] == ' ' || raw[j] == '\t' ||
+										   raw[j] == '\n' || raw[j] == '\r'))
+						j++;
+					/* If we hit '<' and skipped at least one whitespace char, it's a ws-only text node */
+					if (j < raw_len && raw[j] == '<' && j > i + 1)
+					{
+						needs_normalize = true;
+						break;
+					}
+				}
+			}
+		}
+
+		if (!needs_normalize)
+			PG_RETURN_XML_P(xml_input);
+	}
+
 	xmlInitParser();
 
 	/*
