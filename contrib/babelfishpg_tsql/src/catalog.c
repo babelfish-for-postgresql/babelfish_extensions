@@ -5205,18 +5205,13 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
 	
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
 		SetUserIdAndSecContext(save_userid, save_sec_context);
 		SetCurrentRoleId(prev_current_user, true);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
-	SetUserIdAndSecContext(save_userid, save_sec_context);
-	SetCurrentRoleId(prev_current_user, true);
 
 	if (!xactStarted)
 		CommitTransactionCommand();

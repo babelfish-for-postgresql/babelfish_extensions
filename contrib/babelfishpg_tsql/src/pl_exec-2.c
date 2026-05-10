@@ -1645,17 +1645,12 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 		if (fcinfo->isnull)
 			elog(ERROR, "pltsql_inline_handler failed");
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		/* Delete temporary tables as ENR */
 		pltsql_remove_current_query_env();
-
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	/* Delete temporary tables as ENR */
-	pltsql_remove_current_query_env();
 
 	after_lxid = MyProc->vxid.lxid;
 
@@ -1876,13 +1871,11 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 												paramno, args->numargs, args->argtypes,
 												values, nulls);
 				}
-				PG_CATCH();
+				PG_FINALLY();
 				{
 					disable_sp_cursor_find_param_hook();
-					PG_RE_THROW();
 				}
 				PG_END_TRY();
-				disable_sp_cursor_find_param_hook();
 
 				if (ret > 0)
 					ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
@@ -1930,13 +1923,11 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 												   (ccopt_null ? NULL : &ccopt),
 												   args->numargs, args->argtypes);
 				}
-				PG_CATCH();
+				PG_FINALLY();
 				{
 					disable_sp_cursor_find_param_hook();
-					PG_RE_THROW();
 				}
 				PG_END_TRY();
-				disable_sp_cursor_find_param_hook();
 
 				if (ret > 0)
 					ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
@@ -2038,13 +2029,11 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 													paramno, args->numargs,
 													args->argtypes, values, nulls);
 				}
-				PG_CATCH();
+				PG_FINALLY();
 				{
 					disable_sp_cursor_find_param_hook();
-					PG_RE_THROW();
 				}
 				PG_END_TRY();
-				disable_sp_cursor_find_param_hook();
 
 				if (ret > 0)
 					ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),

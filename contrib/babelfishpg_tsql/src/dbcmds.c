@@ -987,17 +987,12 @@ create_builtin_dbs(PG_FUNCTION_ARGS)
 		do_create_bbf_db(NULL, "master", NULL, sa_name);
 		do_create_bbf_db(NULL, "tempdb", NULL, sa_name);
 		do_create_bbf_db(NULL, "msdb", NULL, sa_name);
-		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
 	PG_RETURN_INT32(0);
@@ -1024,17 +1019,12 @@ create_msdb_if_not_exists(PG_FUNCTION_ARGS)
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		create_bbf_db_internal(NULL, "msdb", NULL, sa_name, 4);
-		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
 	PG_RETURN_INT32(0);
@@ -1095,17 +1085,12 @@ drop_all_dbs(PG_FUNCTION_ARGS)
 			if (!tuple)
 				all_db_dropped = true;
 		}
-		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
