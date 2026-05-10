@@ -5032,3 +5032,23 @@ CREATE SPATIAL INDEX si_v_geog ON si_view_tbl(geog) USING GEOGRAPHY_GRID WITH (G
 
 -- DDL error test table
 CREATE TABLE si_ddl_tbl (id INT IDENTITY PRIMARY KEY, name VARCHAR(100), geom sys.GEOMETRY);
+
+-- Multi-DB isolation setup for sys.spatial_indexes
+CREATE DATABASE si_multidb_a_;
+
+CREATE DATABASE si_multidb_b_;
+
+USE si_multidb_a_;
+
+CREATE TABLE t_multi (id int, geom geometry);
+
+CREATE SPATIAL INDEX sidx_multi_a_ ON t_multi(geom);
+
+USE si_multidb_b_;
+
+CREATE TABLE t_multi (id int, geom geometry);
+
+CREATE SPATIAL INDEX sidx_multi_b_ ON t_multi(geom);
+
+USE master;
+

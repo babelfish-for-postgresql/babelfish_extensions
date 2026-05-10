@@ -8,5 +8,12 @@ DROP TABLE IF EXISTS si_view_tbl;
 
 DROP TABLE IF EXISTS si_ddl_tbl;
 
+-- Multi-DB isolation teardown for sys.spatial_indexes
+USE master;
+
+DROP DATABASE si_multidb_a_;
+
+DROP DATABASE si_multidb_b_;
+
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_spatial_index', 'strict';
 

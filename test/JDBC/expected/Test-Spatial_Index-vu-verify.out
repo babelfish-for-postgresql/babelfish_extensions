@@ -593,7 +593,7 @@ PASS
 
 
 -- ============================================================
--- SECTION 12: DDL EDGE CASES (gap fill)
+-- SECTION 12: DDL EDGE CASES 
 -- ============================================================
 -- 12.1 DROP INDEX IF EXISTS on non-existent index (should succeed silently)
 DROP INDEX IF EXISTS si_never_created ON si_ddl_tbl;
@@ -609,7 +609,7 @@ GO
 
 
 -- ============================================================
--- SECTION 13: STIntersects WHITESPACE AND NOT (gap fill)
+-- SECTION 13: STIntersects WHITESPACE AND NOT 
 -- ============================================================
 -- 13.1 Tab + newline between tokens
 SELECT COUNT(*) AS t13_1 FROM si_geom_tbl
@@ -708,7 +708,7 @@ PASS
 
 
 -- ============================================================
--- SECTION 15: STContains SYMMETRY (gap fill)
+-- SECTION 15: STContains SYMMETRY 
 -- ============================================================
 -- 15.1 = 0
 SELECT COUNT(*) AS t15_eq0 FROM si_geom_tbl
@@ -750,7 +750,7 @@ PASS
 
 
 -- ============================================================
--- SECTION 16: NULL CONSERVATION (gap fill)
+-- SECTION 16: NULL CONSERVATION 
 -- ============================================================
 -- count(=1) + count(=0) + count(NULL geom) = total rows
 DECLARE @yes INT, @no INT, @nul INT, @tot INT;
@@ -772,7 +772,7 @@ PASS
 
 
 -- ============================================================
--- SECTION 17: SYSTEM VIEWS STABLE ORDER (gap fill)
+-- SECTION 17: SYSTEM VIEWS STABLE ORDER 
 -- ============================================================
 SELECT name, type, type_desc
 FROM sys.indexes
@@ -790,7 +790,7 @@ si_view_tbl_pkey#!#2#!#NONCLUSTERED
 
 
 -- ============================================================
--- SECTION 18: FORCED INDEX USE (gap fill)
+-- SECTION 18: FORCED INDEX USE 
 -- ============================================================
 -- 18.1 WITH (INDEX(si_v_geom)) forces named index; count must match seq scan
 DECLARE @seq INT, @idx INT;
@@ -810,7 +810,7 @@ PASS
 
 
 -- ============================================================
--- SECTION 19: CROSS-TYPE AND SRID EDGE CASES (gap fill)
+-- SECTION 19: CROSS-TYPE AND SRID EDGE CASES 
 -- ============================================================
 -- 19.1 geometry.STIntersects(geography) should error
 SELECT COUNT(*) AS t19_xtype FROM si_geom_tbl
@@ -835,7 +835,7 @@ int
 
 
 -- ============================================================
--- SECTION 20: EMPTY GEOMETRY (gap fill)
+-- SECTION 20: EMPTY GEOMETRY 
 -- ============================================================
 -- 20.1 Insert and query empty point
 INSERT INTO si_geom_tbl (geom) VALUES (geometry::STGeomFromText('POINT EMPTY', 4326));
@@ -1396,4 +1396,105 @@ GO
 varchar
 PASS
 ~~END~~
+
+
+
+-- Expected: PASS. Confirms rewriter doesn't inject where it shouldn't.
+-- to their declared default (EH_STRICT).
+-- 44.1 Confirm the non-default value set by vu-prepare is currently active
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_spatial_index';
+GO
+~~START~~
+text#!#text#!#text
+babelfishpg_tsql.escape_hatch_spatial_index#!#ignore#!#escape hatch for CREATE SPATIAL INDEX USING/WITH options; PostGIS GiST is self-tuning and cannot honor these parameters
+~~END~~
+
+
+-- 44.2 Trigger a TDS connection reset
+EXEC sys.sp_reset_connection;
+GO
+
+-- 44.3 Confirm the GUC reverted to its declared default ('strict')
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_spatial_index';
+GO
+~~START~~
+text#!#text#!#text
+babelfishpg_tsql.escape_hatch_spatial_index#!#strict#!#escape hatch for CREATE SPATIAL INDEX USING/WITH options; PostGIS GiST is self-tuning and cannot honor these parameters
+~~END~~
+
+
+-- 44.4 Restore the non-default value so the cleanup file runs in the expected state
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_spatial_index', 'ignore';
+GO
+
+
+-- ============================================================
+-- SECTION 45: sys.spatial_indexes multi-database isolation
+-- ============================================================
+-- 45.1 From si_multidb_a_ : only sidx_multi_a_ is visible
+USE si_multidb_a_;
+GO
+
+SELECT name AS t45_idx_in_a
+FROM sys.spatial_indexes
+WHERE name LIKE 'sidx_multi%'
+ORDER BY name;
+GO
+~~START~~
+varchar
+sidx_multi_a_
+~~END~~
+
+
+-- 45.2 From si_multidb_a_ : sidx_multi_b_ must NOT be visible
+SELECT COUNT(*) AS t45_b_leak_from_a
+FROM sys.spatial_indexes
+WHERE name = 'sidx_multi_b_';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- 45.3 From si_multidb_b_ : only sidx_multi_b_ is visible
+USE si_multidb_b_;
+GO
+
+SELECT name AS t45_idx_in_b
+FROM sys.spatial_indexes
+WHERE name LIKE 'sidx_multi%'
+ORDER BY name;
+GO
+~~START~~
+varchar
+sidx_multi_b_
+~~END~~
+
+
+-- 45.4 From si_multidb_b_ : sidx_multi_a_ must NOT be visible
+SELECT COUNT(*) AS t45_a_leak_from_b
+FROM sys.spatial_indexes
+WHERE name = 'sidx_multi_a_';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- 45.5 From master : neither cross-db spatial index is visible here
+USE master;
+GO
+
+SELECT COUNT(*) AS t45_master_leak
+FROM sys.spatial_indexes
+WHERE name IN ('sidx_multi_a_', 'sidx_multi_b_');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
 
