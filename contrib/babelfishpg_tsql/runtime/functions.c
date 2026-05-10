@@ -4477,10 +4477,13 @@ resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
                 {
                         Form_pg_trigger tgform = (Form_pg_trigger) GETSTRUCT(tuple);
 
-                        found = true;
-                        object_name = pstrdup(NameStr(tgform->tgname));
-                        type = OBJECT_TYPE_TSQL_DML_TRIGGER;
-                        schema_id = get_rel_namespace(tgform->tgrelid);
+                        if (pg_class_aclcheck(tgform->tgrelid, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_REFERENCES) == ACLCHECK_OK)
+                        {
+                                found = true;
+                                object_name = pstrdup(NameStr(tgform->tgname));
+                                type = OBJECT_TYPE_TSQL_DML_TRIGGER;
+                                schema_id = get_rel_namespace(tgform->tgrelid);
+                        }
                 }
 
                 systable_endscan(tgscan);
@@ -4773,7 +4776,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 						tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(procform->prorettype));
 						if (HeapTupleIsValid(tp))
 						{
-							Form_pg_type typeform = (Form_pg_type) GETSTRUCT(tuple);
+							Form_pg_type typeform = (Form_pg_type) GETSTRUCT(tp);
 
 							if (typeform->typtype == 'c')
 								type = OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION;
@@ -4813,9 +4816,12 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		{
 			Form_pg_trigger tgform = (Form_pg_trigger) GETSTRUCT(tuple);
 
-			object_name = pstrdup(NameStr(tgform->tgname));
-			type = OBJECT_TYPE_TSQL_DML_TRIGGER;
-			schema_id = get_rel_namespace(tgform->tgrelid);
+			if (pg_class_aclcheck(tgform->tgrelid, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_REFERENCES) == ACLCHECK_OK)
+			{
+				object_name = pstrdup(NameStr(tgform->tgname));
+				type = OBJECT_TYPE_TSQL_DML_TRIGGER;
+				schema_id = get_rel_namespace(tgform->tgrelid);
+			}
 		}
 
 		systable_endscan(tgscan);

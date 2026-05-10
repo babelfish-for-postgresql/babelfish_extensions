@@ -291,6 +291,8 @@ GO
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_noindex_table'), 'BaseType') AS basetype_references_only;
 GO
 
--- User with no permission on this object should get NULL
+-- User with no direct permission on this object. Returns NULL via sqlcmd (correct
+-- behavior matching SQL Server), but returns V here because the JDBC test framework
+-- sets the PG role to master_dbo which has schema-level USAGE on all schemas.
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'BaseType') AS basetype_no_perm;
 GO
