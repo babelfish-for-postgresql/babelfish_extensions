@@ -32,3 +32,6 @@ ignore#!#proc_ownership_chaining-vu-cleanup
 ignore#!#Test-spatial-functions-3-vu-prepare
 ignore#!#Test-spatial-functions-3-vu-verify
 ignore#!#Test-spatial-functions-3-vu-cleanup
+ignore#!#Test-Spatial_Index-vu-prepare
+ignore#!#Test-Spatial_Index-vu-verify
+ignore#!#Test-Spatial_Index-vu-cleanup
