@@ -4560,16 +4560,19 @@ resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
                 {
                         Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
 
-                        found = true;
-                        object_name = pstrdup(NameStr(con->conname));
                         schema_id = tsql_get_constraint_nsp_oid(object_id, user_id);
+                        if (OidIsValid(schema_id))
+                        {
+                                found = true;
+                                object_name = pstrdup(NameStr(con->conname));
 
-                        if (con->contype == 'f')
-                                type = OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT;
-                        else if (con->contype == 'p')
-                                type = OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT;
-                        else if (con->contype == 'c' && con->conrelid != 0)
-                                type = OBJECT_TYPE_CHECK_CONSTRAINT;
+                                if (con->contype == 'f')
+                                        type = OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT;
+                                else if (con->contype == 'p')
+                                        type = OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT;
+                                else if (con->contype == 'c' && con->conrelid != 0)
+                                        type = OBJECT_TYPE_CHECK_CONSTRAINT;
+                        }
 
                         ReleaseSysCache(tuple);
                 }
@@ -5290,6 +5293,7 @@ objectpropertyex_internal(PG_FUNCTION_ARGS)
 {
         Oid        object_id;
         char       *property;
+        char       *raw;
         int        type = OBJECT_TYPE_UNKNOWN;
         Oid        schema_id = InvalidOid;
         char       *object_name = NULL;
@@ -5299,8 +5303,9 @@ objectpropertyex_internal(PG_FUNCTION_ARGS)
                 PG_RETURN_NULL();
 
         object_id = (Oid) PG_GETARG_INT32(0);
-        property = text_to_cstring(PG_GETARG_TEXT_P(1));
-        property = downcase_identifier(property, strlen(property), false, true);
+        raw = text_to_cstring(PG_GETARG_TEXT_P(1));
+        property = downcase_identifier(raw, strlen(raw), false, true);
+        pfree(raw);
         remove_trailing_spaces(property);
 
         if (!resolve_object_type(object_id, &type, &schema_id, &object_name))
