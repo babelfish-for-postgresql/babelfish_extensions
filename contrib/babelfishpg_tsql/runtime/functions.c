@@ -4859,6 +4859,10 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 			if (pg_class_aclcheck(atdform->adrelid, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_REFERENCES) == ACLCHECK_OK)
 			{
+				/*
+				 * Any table-level privilege makes the default constraint visible,
+				 * matching T-SQL metadata visibility behavior.
+				 */
 				attrRel = table_open(AttributeRelationId, AccessShareLock);
 
 				ScanKeyInit(&key[0],
@@ -5340,11 +5344,14 @@ objectpropertyex_internal(PG_FUNCTION_ARGS)
         {
                 Datum   result;
                 LOCAL_FCINFO(inner_fcinfo, 2);
+                FmgrInfo flinfo;
 
                 pfree(property);
 
-                /* flinfo is NULL — objectproperty_internal must not dereference fcinfo->flinfo */
-                InitFunctionCallInfoData(*inner_fcinfo, NULL, 2, InvalidOid, NULL, NULL);
+                memset(&flinfo, 0, sizeof(FmgrInfo));
+                flinfo.fn_oid = InvalidOid;
+                flinfo.fn_mcxt = CurrentMemoryContext;
+                InitFunctionCallInfoData(*inner_fcinfo, &flinfo, 2, InvalidOid, NULL, NULL);
                 inner_fcinfo->args[0].value = PG_GETARG_DATUM(0);
                 inner_fcinfo->args[0].isnull = false;
                 inner_fcinfo->args[1].value = PG_GETARG_DATUM(1);
