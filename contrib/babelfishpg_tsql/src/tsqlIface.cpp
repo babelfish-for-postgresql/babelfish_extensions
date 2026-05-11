@@ -832,7 +832,6 @@ get_insert_exec_info(TSqlParser::Dml_statementContext *ctx)
 			"INSERT EXEC requires a valid target table",
 			getLineAndPos(ctx->insert_statement()->ddl_object()));
 
-	info->is_insert_exec = true;
 	info->target  = tbl_name;
 	info->schema  = tbl_schema;
 	info->db_name = tbl_db;
@@ -861,18 +860,18 @@ get_insert_exec_info(TSqlParser::Dml_statementContext *ctx)
 }
 
 /*
- * set_insert_exec_info - Apply an InsertExecInfo to the correct statement
- * type based on cmd_type.
+ * set_insert_exec_info - Apply an InsertExecInfo pointer to the correct
+ * statement type based on cmd_type.
  */
 static void
 set_insert_exec_info(PLtsql_stmt *stmt, InsertExecInfo *info)
 {
 	if (stmt->cmd_type == PLTSQL_STMT_EXEC)
-		((PLtsql_stmt_exec *) stmt)->insert_exec = *info;
+		((PLtsql_stmt_exec *) stmt)->insert_exec = info;
 	else if (stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
-		((PLtsql_stmt_exec_batch *) stmt)->insert_exec = *info;
+		((PLtsql_stmt_exec_batch *) stmt)->insert_exec = info;
 	else if (stmt->cmd_type == PLTSQL_STMT_EXEC_SP)
-		((PLtsql_stmt_exec_sp *) stmt)->insert_exec = *info;
+		((PLtsql_stmt_exec_sp *) stmt)->insert_exec = info;
 	else
 		Assert(false); /* INSERT EXEC can only target EXEC, EXEC_BATCH, or EXEC_SP */
 }
