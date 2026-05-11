@@ -173,7 +173,7 @@ typedef struct PLtsql_stmt_exec_sp
 	PLtsql_expr *opt3;
 	List	   *stropt;
 
-	InsertExecInfo insert_exec;	/* INSERT EXEC info */
+	InsertExecInfo insert_exec;
 } PLtsql_stmt_exec_sp;
 
 /*
@@ -199,7 +199,7 @@ typedef struct PLtsql_stmt_exec_batch
 	int			lineno pg_node_attr(equal_ignore);
 	PLtsql_expr *expr;
 
-	InsertExecInfo insert_exec;	/* INSERT EXEC info */
+	InsertExecInfo insert_exec;
 } PLtsql_stmt_exec_batch;
 
 typedef struct PLtsql_stmt_raiserror
