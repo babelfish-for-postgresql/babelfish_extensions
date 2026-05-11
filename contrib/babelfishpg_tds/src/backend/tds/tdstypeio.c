@@ -2332,10 +2332,20 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 	{
 		char	   *src;
 		int			nargs = token->tvpInfo->colCount * token->tvpInfo->rowCount;
-		Datum	   *values = palloc(nargs * sizeof(Datum));
-		char	   *nulls = palloc(nargs * sizeof(char));
-		Oid		   *argtypes = palloc(nargs * sizeof(Datum));
+		Datum	   *values;
+		char	   *nulls;
+		Oid		   *argtypes;
 		int			paramIndex = 0;
+
+		if (token->tvpInfo->colCount > 0 &&
+			token->tvpInfo->rowCount > MaxAllocSize / sizeof(Datum) / token->tvpInfo->colCount)
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("TVP row/column count too large")));
+
+		values = palloc(nargs * sizeof(Datum));
+		nulls = palloc(nargs * sizeof(char));
+		argtypes = palloc(nargs * sizeof(Oid));
 
 		query = " ";
 
