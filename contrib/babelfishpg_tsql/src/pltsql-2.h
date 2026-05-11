@@ -161,7 +161,7 @@ typedef struct PLtsql_stmt_exec_sp
 	PLtsql_expr *opt3;
 	List	   *stropt;
 
-	InsertExecInfo insert_exec;	/* INSERT EXEC info */
+	InsertExecInfo insert_exec;
 } PLtsql_stmt_exec_sp;
 
 /*
@@ -183,7 +183,7 @@ typedef struct PLtsql_stmt_exec_batch
 	int			lineno;
 	PLtsql_expr *expr;
 
-	InsertExecInfo insert_exec;	/* INSERT EXEC info */
+	InsertExecInfo insert_exec;
 } PLtsql_stmt_exec_batch;
 
 typedef struct PLtsql_stmt_raiserror

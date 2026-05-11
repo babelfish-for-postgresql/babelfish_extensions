@@ -390,55 +390,55 @@ stripQuoteFromId(std::string s)
 
 /*
  * extract_ddl_object_names - Extract table name, schema, and database
- * from a ddl_object parse context into output string references.
+ * from a ddl_object parse context. Names are downcased and truncated to match
+ * PostgreSQL identifier handling.
+ * Output pointers are set to NULL if the corresponding name is not present.
  * Returns true if a table name was found, false otherwise.
  */
 static bool
 extract_ddl_object_names(TSqlParser::Ddl_objectContext *ddl_object,
-                         std::string &table_name,
-                         std::string &schema_name,
-                         std::string &db_name)
+                         char **table_name,
+                         char **schema_name,
+                         char **db_name)
 {
-    if (!ddl_object)
-        return false;
+	*table_name = NULL;
+	*schema_name = NULL;
+	*db_name = NULL;
 
-    if (ddl_object->local_id())
-    {
-        table_name = ::getFullText(ddl_object->local_id());
-        return !table_name.empty();
-    }
-    else if (ddl_object->full_object_name())
-    {
-        if (ddl_object->full_object_name()->object_name)
-            table_name = stripQuoteFromId(ddl_object->full_object_name()->object_name);
-        if (ddl_object->full_object_name()->schema)
-            schema_name = stripQuoteFromId(ddl_object->full_object_name()->schema);
-        if (ddl_object->full_object_name()->database)
-            db_name = stripQuoteFromId(ddl_object->full_object_name()->database);
-        return !table_name.empty();
-    }
+	if (!ddl_object)
+		return false;
 
-    return false;
-}
+	if (ddl_object->local_id())
+	{
+		std::string tbl = ::getFullText(ddl_object->local_id());
+		if (!tbl.empty())
+			*table_name = downcase_truncate_identifier(tbl.c_str(), tbl.length(), true);
+		return (*table_name != NULL);
+	}
+	else if (ddl_object->full_object_name())
+	{
+		if (ddl_object->full_object_name()->object_name)
+		{
+			std::string tbl = stripQuoteFromId(ddl_object->full_object_name()->object_name);
+			if (!tbl.empty())
+				*table_name = downcase_truncate_identifier(tbl.c_str(), tbl.length(), true);
+		}
+		if (ddl_object->full_object_name()->schema)
+		{
+			std::string sch = stripQuoteFromId(ddl_object->full_object_name()->schema);
+			if (!sch.empty())
+				*schema_name = downcase_truncate_identifier(sch.c_str(), sch.length(), true);
+		}
+		if (ddl_object->full_object_name()->database)
+		{
+			std::string db = stripQuoteFromId(ddl_object->full_object_name()->database);
+			if (!db.empty())
+				*db_name = downcase_truncate_identifier(db.c_str(), db.length(), true);
+		}
+		return (*table_name != NULL);
+	}
 
-/*
- * build_column_name_list - Build a PostgreSQL List of column name strings
- * from a vector of raw column name strings. Each name is downcased and
- * truncated to match identifier handling elsewhere.
- */
-static List *
-build_column_name_list(const std::vector<std::string> &col_names)
-{
-    List *result = NIL;
-
-    for (const auto &col : col_names)
-    {
-        if (!col.empty())
-            result = lappend(result,
-                pstrdup(downcase_truncate_identifier(col.c_str(), col.length(), true)));
-    }
-
-    return result;
+	return false;
 }
 
 static int
@@ -807,50 +807,55 @@ add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator)
 static InsertExecInfo *
 get_insert_exec_info(TSqlParser::Dml_statementContext *ctx)
 {
-    InsertExecInfo *info = (InsertExecInfo *) palloc0(sizeof(InsertExecInfo));
-    std::string tbl_name, tbl_schema, tbl_db;
+	InsertExecInfo *info = (InsertExecInfo *) palloc0(sizeof(InsertExecInfo));
+	char *tbl_name = NULL;
+	char *tbl_schema = NULL;
+	char *tbl_db = NULL;
 
-    extract_ddl_object_names(ctx->insert_statement()->ddl_object(),
-                             tbl_name, tbl_schema, tbl_db);
+	extract_ddl_object_names(ctx->insert_statement()->ddl_object(),
+							 &tbl_name, &tbl_schema, &tbl_db);
 
-    /*
-     * Temp tables live in pg_temp, not user schemas. Strip any schema/db
-     * the user may have provided (e.g., dbo.#temp).
-     */
-    if (!tbl_name.empty() && tbl_name[0] == '#')
-    {
-        tbl_schema.clear();
-        tbl_db.clear();
-    }
+	/*
+	 * Temp tables live in pg_temp, not user schemas. Strip any schema/db
+	 * the user may have provided (e.g., dbo.#temp).
+	 */
+	if (tbl_name && tbl_name[0] == '#')
+	{
+		tbl_schema = NULL;
+		tbl_db = NULL;
+	}
 
-    if (tbl_name.empty())
-        throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
-            "INSERT EXEC requires a valid target table",
-            getLineAndPos(ctx->insert_statement()->ddl_object()));
+	if (!tbl_name)
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+			"INSERT EXEC requires a valid target table",
+			getLineAndPos(ctx->insert_statement()->ddl_object()));
 
-    info->is_insert_exec = true;
-    info->target  = pstrdup(downcase_truncate_identifier(tbl_name.c_str(), tbl_name.length(), true));
-    info->schema  = tbl_schema.empty() ? NULL : pstrdup(downcase_truncate_identifier(tbl_schema.c_str(), tbl_schema.length(), true));
-    info->db_name = tbl_db.empty()     ? NULL : pstrdup(downcase_truncate_identifier(tbl_db.c_str(), tbl_db.length(), true));
+	info->is_insert_exec = true;
+	info->target  = tbl_name;
+	info->schema  = tbl_schema;
+	info->db_name = tbl_db;
 
-    /* Build column list */
-    List *column_list = NIL;
-    auto column_list_ctx = ctx->insert_statement()->insert_column_name_list();
-    if (column_list_ctx)
-    {
-        std::vector<std::string> col_names;
-        for (auto col : column_list_ctx->col)
-        {
-            auto ids = col->id();
-            Assert(!ids.empty());
-            if (!ids.empty() && ids.back() != nullptr)
-                col_names.push_back(stripQuoteFromId(ids.back()));
-        }
-        column_list = build_column_name_list(col_names);
-    }
-    info->columns = column_list;
+	/* Build column list */
+	List *column_list = NIL;
+	auto column_list_ctx = ctx->insert_statement()->insert_column_name_list();
+	if (column_list_ctx)
+	{
+		for (auto col : column_list_ctx->col)
+		{
+			auto ids = col->id();
+			Assert(!ids.empty());
+			if (!ids.empty() && ids.back() != nullptr)
+			{
+				std::string col_name = stripQuoteFromId(ids.back());
+				if (!col_name.empty())
+					column_list = lappend(column_list,
+						downcase_truncate_identifier(col_name.c_str(), col_name.length(), true));
+			}
+		}
+	}
+	info->columns = column_list;
 
-    return info;
+	return info;
 }
 
 /*
@@ -860,14 +865,14 @@ get_insert_exec_info(TSqlParser::Dml_statementContext *ctx)
 static void
 set_insert_exec_info(PLtsql_stmt *stmt, InsertExecInfo *info)
 {
-    if (stmt->cmd_type == PLTSQL_STMT_EXEC)
-        ((PLtsql_stmt_exec *) stmt)->insert_exec = *info;
-    else if (stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
-        ((PLtsql_stmt_exec_batch *) stmt)->insert_exec = *info;
-    else if (stmt->cmd_type == PLTSQL_STMT_EXEC_SP)
-        ((PLtsql_stmt_exec_sp *) stmt)->insert_exec = *info;
-    else
-        Assert(false); /* INSERT EXEC can only target EXEC, EXEC_BATCH, or EXEC_SP */
+	if (stmt->cmd_type == PLTSQL_STMT_EXEC)
+		((PLtsql_stmt_exec *) stmt)->insert_exec = *info;
+	else if (stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
+		((PLtsql_stmt_exec_batch *) stmt)->insert_exec = *info;
+	else if (stmt->cmd_type == PLTSQL_STMT_EXEC_SP)
+		((PLtsql_stmt_exec_sp *) stmt)->insert_exec = *info;
+	else
+		Assert(false); /* INSERT EXEC can only target EXEC, EXEC_BATCH, or EXEC_SP */
 }
 
 /*
@@ -882,25 +887,25 @@ set_insert_exec_info(PLtsql_stmt *stmt, InsertExecInfo *info)
 static void
 apply_exec_expression_rewriting(PLtsql_stmt *stmt, ParserRuleContext *baseCtx)
 {
-    if (stmt->cmd_type == PLTSQL_STMT_EXEC)
-    {
-        PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) stmt;
-        PLtsql_expr_query_mutator mutator(exec_stmt->expr, baseCtx);
-        add_rewritten_query_fragment_to_mutator(&mutator);
-        mutator.run();
-    }
-    else if (stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
-    {
-        PLtsql_stmt_exec_batch *exec_batch_stmt = (PLtsql_stmt_exec_batch *) stmt;
-        PLtsql_expr_query_mutator mutator(exec_batch_stmt->expr, baseCtx);
-        /*
-         * We don't call markSelectFragment here — selectFragmentOffsets was
-         * recorded with ctx->parent as key, not baseCtx. For dynamic SQL in
-         * INSERT EXEC, we rewrite the entire expression string.
-         */
-        add_rewritten_query_fragment_to_mutator(&mutator);
-        mutator.run();
-    }
+	if (stmt->cmd_type == PLTSQL_STMT_EXEC)
+	{
+		PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) stmt;
+		PLtsql_expr_query_mutator mutator(exec_stmt->expr, baseCtx);
+		add_rewritten_query_fragment_to_mutator(&mutator);
+		mutator.run();
+	}
+	else if (stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
+	{
+		PLtsql_stmt_exec_batch *exec_batch_stmt = (PLtsql_stmt_exec_batch *) stmt;
+		PLtsql_expr_query_mutator mutator(exec_batch_stmt->expr, baseCtx);
+		/*
+		 * We don't call markSelectFragment here — selectFragmentOffsets was
+		 * recorded with ctx->parent as key, not baseCtx. For dynamic SQL in
+		 * INSERT EXEC, we rewrite the entire expression string.
+		 */
+		add_rewritten_query_fragment_to_mutator(&mutator);
+		mutator.run();
+	}
 }
 
 static void
@@ -2161,7 +2166,7 @@ public:
 
 	void exitDml_statement(TSqlParser::Dml_statementContext *ctx) override
 	{
-        if (ctx->bulk_insert_statement())
+    	if (ctx->bulk_insert_statement())
         {
             clear_rewritten_query_fragment();
             return;
@@ -6456,9 +6461,9 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 	std::vector<TSqlParser::Insert_bulk_column_definitionContext *> column_list = bulk_ctx->insert_bulk_column_definition();
 	std::vector<TSqlParser::Bulk_insert_optionContext *> option_list = bulk_ctx->bulk_insert_option();
 
-	std::string table_name;
-	std::string schema_name;
-	std::string db_name;
+	char *table_name = NULL;
+	char *schema_name = NULL;
+	char *db_name = NULL;
 	stmt->column_refs = NIL;
 
 	if (!bulk_ctx)
@@ -6469,33 +6474,22 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 	stmt->cmd_type = PLTSQL_STMT_INSERT_BULK;
 	if (bulk_ctx->ddl_object())
 	{
-		extract_ddl_object_names(bulk_ctx->ddl_object(), table_name, schema_name, db_name);
+		extract_ddl_object_names(bulk_ctx->ddl_object(), &table_name, &schema_name, &db_name);
 
-		if (!table_name.empty())
-		{
-			stmt->table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
-		}
-		if (!schema_name.empty())
-		{
-			stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
-		}
-		if (!db_name.empty())
-		{
-			stmt->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
-		}
+		stmt->table_name = table_name;
+		stmt->schema_name = schema_name;
+		stmt->db_name = db_name;
 
 		/* create a list of columns to insert into */
 		if (!column_list.empty())
 		{
-			std::vector<std::string> col_names;
 			for (size_t i = 0; i < column_list.size(); i++)
 			{
 				std::string column_refs;
 				column_refs = ::stripQuoteFromId(column_list[i]->simple_column_name()->id());
 				if (!column_refs.empty())
-					col_names.push_back(column_refs);
+					stmt->column_refs = lappend(stmt->column_refs , downcase_truncate_identifier(column_refs.c_str(), column_refs.length(), true));
 			}
-			stmt->column_refs = build_column_name_list(col_names);
 		}
 
 		if (!option_list.empty())
