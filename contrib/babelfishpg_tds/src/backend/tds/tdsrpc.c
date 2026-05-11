@@ -156,8 +156,105 @@ static void TDSLogStatementCursorHandler(TDSRequestSP req, char *stmt, int optio
 static void LogStatementNoError(const char *header, const int handle, const char *msg, const uint16 nparams);
 
 static InlineCodeBlockArgs *DeclareVariables(TDSRequestSP req, FunctionCallInfo *fcinfo, unsigned long options);
+static void cleanup_tvp_temp_tables(void);
 List	   *tvp_lookup_list = NIL;
 bool		lockForFaultInjection = false;
+
+/*
+ * cleanup_tvp_temp_tables - drop the session-local temp tables that
+ * TdsRecvTypeTable() created for this RPC's table-valued parameters, then
+ * reset tvp_lookup_list.
+ *
+ * Why this is needed: each TVP send creates a fresh temp table whose OID gets
+ * baked into the SP's cached plan at parse time (via the relname_lookup_hook
+ * tvp_lookup chain). Because nothing in the extension ever dropped those temp
+ * tables, the relation OID stayed valid across RPCs and PG's plan cache had
+ * no reason to invalidate. On the second sp_execute the cached plan kept
+ * reading from the FIRST batch's temp table, while every subsequent batch's
+ * fresh data was written into a brand new temp table the plan never touched.
+ * Dropping the relation here triggers PG's PlanCacheRelCallback, which marks
+ * dependent cached plans invalid; the next sp_execute then re-plans against
+ * the freshly created TVP temp table.
+ *
+ * Items whose tableName is NULL come from the composite-type path in
+ * DeclareSPVariables() and reference a real type relation (tableRelid),
+ * not a temp table -- those must not be dropped.
+ *
+ * Only called on success paths. Error paths just NIL the list because the
+ * surrounding transaction abort already discards any half-built temp tables.
+ */
+static void
+cleanup_tvp_temp_tables(void)
+{
+	ListCell   *lc;
+	bool		xactStarted;
+	bool		need_cleanup = false;
+	int			rc;
+
+	if (tvp_lookup_list == NIL)
+		return;
+
+	foreach(lc, tvp_lookup_list)
+	{
+		TvpLookupItem *item = (TvpLookupItem *) lfirst(lc);
+
+		if (item->tableName != NULL)
+		{
+			need_cleanup = true;
+			break;
+		}
+	}
+
+	if (!need_cleanup)
+	{
+		tvp_lookup_list = NIL;
+		return;
+	}
+
+	xactStarted = IsTransactionOrTransactionBlock();
+
+	/* DROP needs the postgres dialect, matching TdsRecvTypeTable. */
+	set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
+					  GUC_CONTEXT_CONFIG,
+					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	if (!xactStarted)
+		StartTransactionCommand();
+	PushActiveSnapshot(GetTransactionSnapshot());
+
+	if ((rc = SPI_connect()) < 0)
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		elog(ERROR, "SPI_connect() failed in TVP temp table cleanup with return code %d",
+			 rc);
+	}
+
+	foreach(lc, tvp_lookup_list)
+	{
+		TvpLookupItem *item = (TvpLookupItem *) lfirst(lc);
+
+		if (item->tableName != NULL)
+		{
+			char	   *query = psprintf("DROP TABLE IF EXISTS %s", item->tableName);
+
+			SPI_execute(query, false, 0);
+			pfree(query);
+		}
+	}
+
+	SPI_finish();
+	PopActiveSnapshot();
+	if (!xactStarted)
+		CommitTransactionCommand();
+
+	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+					  GUC_CONTEXT_CONFIG,
+					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	tvp_lookup_list = NIL;
+}
 
 static InlineCodeBlockArgs *
 CreateArgs(int nargs)
@@ -589,7 +686,7 @@ SPExecuteSQL(TDSRequestSP req)
 	 */
 	TDSLogDuration(s.data);
 	pfree(codeblock);
-	tvp_lookup_list = NIL;
+	cleanup_tvp_temp_tables();
 }
 
 static void
@@ -778,7 +875,7 @@ SPExecute(TDSRequestSP req)
 	TDSLogDuration(req->messageData);
 
 	pfree(codeblock);
-	tvp_lookup_list = NIL;
+	cleanup_tvp_temp_tables();
 }
 
 static void
@@ -893,7 +990,7 @@ SPPrepExec(TDSRequestSP req)
 	TDSLogDuration(s.data);
 
 	pfree(codeblock);
-	tvp_lookup_list = NIL;
+	cleanup_tvp_temp_tables();
 }
 
 /*
@@ -1116,7 +1213,7 @@ SPCustomType(TDSRequestSP req)
 	 */
 	TDSLogDuration(req->name.data);
 	pfree(codeblock);
-	tvp_lookup_list = NIL;
+	cleanup_tvp_temp_tables();
 }
 
 static void

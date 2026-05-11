@@ -1,0 +1,44 @@
+create type bbf_tvp_reuse_type as table (id int, v varchar(50))
+create table bbf_tvp_reuse_target (id int, v varchar(50))
+create procedure bbf_tvp_reuse_insert @t bbf_tvp_reuse_type readonly as begin insert into bbf_tvp_reuse_target select id, v from @t end
+
+prepst#!#EXEC bbf_tvp_reuse_insert ?#!#tvp|-|bbf_tvp_reuse_type|-|utils/tvp-reuse-batch1.csv|-|utils/tvp-reuse-batch1.csv
+~~ROW COUNT: 2~~
+
+prepst#!#exec#!#tvp|-|bbf_tvp_reuse_type|-|utils/tvp-reuse-batch2.csv|-|utils/tvp-reuse-batch2.csv
+~~ROW COUNT: 2~~
+
+prepst#!#exec#!#tvp|-|bbf_tvp_reuse_type|-|utils/tvp-reuse-batch3.csv|-|utils/tvp-reuse-batch3.csv
+~~ROW COUNT: 2~~
+
+prepst#!#exec#!#tvp|-|bbf_tvp_reuse_type|-|utils/tvp-reuse-batch4.csv|-|utils/tvp-reuse-batch4.csv
+~~ROW COUNT: 2~~
+
+prepst#!#exec#!#tvp|-|bbf_tvp_reuse_type|-|utils/tvp-reuse-batch5.csv|-|utils/tvp-reuse-batch5.csv
+~~ROW COUNT: 2~~
+
+
+select count(*) as total from bbf_tvp_reuse_target
+~~START~~
+int
+10
+~~END~~
+
+select id, v from bbf_tvp_reuse_target order by id
+~~START~~
+int#!#varchar
+1#!#a
+2#!#b
+3#!#c
+4#!#d
+5#!#e
+6#!#f
+7#!#g
+8#!#h
+9#!#i
+10#!#j
+~~END~~
+
+drop procedure bbf_tvp_reuse_insert
+drop table bbf_tvp_reuse_target
+drop type bbf_tvp_reuse_type
