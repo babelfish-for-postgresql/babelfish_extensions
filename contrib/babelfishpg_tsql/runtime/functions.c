@@ -4587,6 +4587,10 @@ resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
 
         nspname = get_namespace_name(schema_id);
 
+		/*
+		 * Skip database-scoping filter when not in a Babelfish session
+		 * (e.g., during pg_dump/restore where get_cur_db_id() returns InvalidOid).
+		 */
         if (!(nspname && pg_strcasecmp(nspname, "sys") == 0) &&
 			OidIsValid(get_cur_db_id()) && !is_schema_from_db(schema_id, get_cur_db_id()))
         {
@@ -4597,7 +4601,8 @@ resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
                 return false;
         }
 
-        pfree(nspname);
+        if (nspname)
+            pfree(nspname);
 
         *out_type = type;
         *out_schema_id = schema_id;
@@ -4951,6 +4956,10 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	 */
 	nspname = get_namespace_name(schema_id);
 
+	/*
+	 * Skip database-scoping filter when not in a Babelfish session
+	 * (e.g., during pg_dump/restore where get_cur_db_id() returns InvalidOid).
+	 */
 	if (!(nspname && pg_strcasecmp(nspname, "sys") == 0) &&
 		OidIsValid(get_cur_db_id()) && !is_schema_from_db(schema_id, get_cur_db_id()))
 	{
@@ -4963,7 +4972,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	pfree(nspname);
+	if (nspname)
+		pfree(nspname);
 
 	/* OwnerId */
 	if (pg_strcasecmp(property, "ownerid") == 0)
@@ -5006,9 +5016,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (type == OBJECT_TYPE_DEFAULT_CONSTRAINT)
 		{
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(1);
 		}
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(0);
 	}
 	/* ExecIsQuotedIdentOn, IsSchemaBound, ExecIsAnsiNullsOn */
@@ -5028,6 +5042,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			type == OBJECT_TYPE_RULE))
 		{
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_NULL();
 		}
 
@@ -5043,12 +5059,16 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 				check_is_tsql_view(object_id, &is_weak_view);
 
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(is_view ? ((int) !is_weak_view) : 0);
 		}
 		/*
 		 * For ExecIsQuotedIdentOn and ExecIsAnsiNullsOn, we hardcoded it to 1
 		 */
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(1);
 	}
 	/* TableFullTextPopulateStatus, TableHasVarDecimalStorageFormat */
@@ -5061,6 +5081,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (type == OBJECT_TYPE_TABLE)
 		{
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(0);
 		}
 		/*
@@ -5068,6 +5090,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		 * Hence, return NULL if the object is not a TABLE.
 		 */
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_NULL();		
 	}
 	/* IsMSShipped*/
@@ -5080,9 +5104,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (is_ms_shipped(object_name, type, schema_id))
 		{
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(1);
 		}
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(0);
 	}
 	/* IsDeterministic */
@@ -5092,6 +5120,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		 * Currently, we hardcoded the value to 0.
 		 */
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(0);
 	}
 	/* IsProcedure */
@@ -5103,9 +5133,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (type == OBJECT_TYPE_TSQL_STORED_PROCEDURE)
 		{
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(1);
 		}
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(0);
 	}
 	/* IsTable */
@@ -5119,9 +5153,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			type == OBJECT_TYPE_TABLE || type == OBJECT_TYPE_SYSTEM_BASE_TABLE)
 		{
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(1);
 		}
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(0);		
 	}
 	/* IsView */
@@ -5133,9 +5171,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (type == OBJECT_TYPE_VIEW)
 		{
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(1);
 		}
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(0);
 	}
 	/* IsUserView */
@@ -5147,9 +5189,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (type == OBJECT_TYPE_TABLE && is_ms_shipped(object_name, type, schema_id) == 0)
 		{
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(1);
 		}
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(0);
 	}
 	/* IsTableFunction */
@@ -5163,9 +5209,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			type == OBJECT_TYPE_ASSEMBLY_TABLE_VALUED_FUNCTION)
 		{
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(1);
 		}
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(0);	
 	}
 	/* IsInlineFunction */
@@ -5177,9 +5227,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (type == OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION)
 		{
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(1);
 		}
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(0);
 
 	}
@@ -5192,9 +5246,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (type == OBJECT_TYPE_TSQL_SCALAR_FUNCTION || type == OBJECT_TYPE_ASSEMBLY_SCALAR_FUNCTION)
 		{
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(1);
 		}
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(0);
 	}
 	/* IsPrimaryKey */
@@ -5206,9 +5264,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (type == OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT)
 		{
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(1);
 		}
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(0);
 	}
 	/* IsIndexed */
@@ -5246,12 +5308,16 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			systable_endscan(scan);
 			table_close(indRel, AccessShareLock);
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(1);
 		}
 
 		systable_endscan(scan);
 		table_close(indRel, AccessShareLock);
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 
 		PG_RETURN_INT32(0);
 	}
@@ -5262,6 +5328,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		 * Currently hardcoded to 0.
 		 */
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(0);
 	}
 	/* IsOBJECT_TYPE_RULE */
@@ -5271,6 +5339,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		 * Currently hardcoded to 0.
 		 */
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(0);
 	}
 	/* IsTrigger */
@@ -5282,14 +5352,20 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (type == OBJECT_TYPE_TSQL_DML_TRIGGER)
 		{
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(1);
 		}
 		pfree(property);
+		if (object_name) 
+			pfree(object_name);
 		PG_RETURN_INT32(0);
 	}
 	
 	if (property)
 		pfree(property);
+	if (object_name)
+		pfree(object_name);
 
 	PG_RETURN_NULL();
 }
