@@ -2216,7 +2216,7 @@ public:
 		stmt->insert_exec = is_insert_exec;
 
 		/* Extract db_name and schema_name for cross-database INSERT EXEC (legacy path only) */
-		if (is_insert_exec && !pltsql_enable_new_insert_exec)
+		if (is_insert_exec)
 		{
 			TSqlParser::Func_proc_name_server_database_schemaContext *ctx_name = nullptr;
 			TSqlParser::Execute_bodyContext *body = nullptr;
