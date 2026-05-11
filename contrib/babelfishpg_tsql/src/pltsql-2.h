@@ -8,7 +8,6 @@
  */
 typedef struct InsertExecInfo
 {
-    bool        is_insert_exec;     /* Is this INSERT EXEC? */
     char       *target;             /* Target table name (bare name only, no schema/db prefix) */
     char       *schema;             /* Schema name, or NULL if not specified */
     char       *db_name;            /* Database name, or NULL if not specified */
@@ -104,7 +103,7 @@ typedef struct PLtsql_stmt_exec
 	char	   *proc_name;
 	char	   *schema_name;
 
-	InsertExecInfo insert_exec;
+	InsertExecInfo *insert_exec;	/* NULL for plain EXEC, non-NULL for INSERT EXEC */
 		
 	bool		exec_with_recompile; /* forced recompile through EXECUTE */	
 } PLtsql_stmt_exec;
@@ -161,7 +160,7 @@ typedef struct PLtsql_stmt_exec_sp
 	PLtsql_expr *opt3;
 	List	   *stropt;
 
-	InsertExecInfo insert_exec;
+	InsertExecInfo *insert_exec;	/* NULL for plain EXEC, non-NULL for INSERT EXEC */
 } PLtsql_stmt_exec_sp;
 
 /*
@@ -183,7 +182,7 @@ typedef struct PLtsql_stmt_exec_batch
 	int			lineno;
 	PLtsql_expr *expr;
 
-	InsertExecInfo insert_exec;
+	InsertExecInfo *insert_exec;	/* NULL for plain EXEC, non-NULL for INSERT EXEC */
 } PLtsql_stmt_exec_batch;
 
 typedef struct PLtsql_stmt_raiserror
