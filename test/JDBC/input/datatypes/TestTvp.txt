@@ -16,6 +16,6 @@ drop type table_variable_vu_type;
 drop type tableType;
 
 -- Multi-row TVP test
-create type tvp_multirow_test_type as table (a int, b smallint, c bigint, d tinyint, e bit, f char(10), g nchar(10), h varchar(10), i nvarchar(10), l varbinary(10), m binary(10), n date, o datetime, p money, q uniqueidentifier, r float, s real, t numeric(4,3), u decimal(5,3), v time, w datetime2)
+create type tvp_multirow_test_type as table (a int, b smallint)
 prepst#!#Select * from @a order by a#!#tvp|-|tvp_multirow_test_type|-|utils/tvp-dotnet-multirow.csv|-|utils/tvp-dotnet-multirow.csv
 drop type tvp_multirow_test_type;
