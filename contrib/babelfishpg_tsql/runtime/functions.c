@@ -4395,7 +4395,7 @@ resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
                                 }
                                 ReleaseSysCache(tp);
                         }
-                        if (type == OBJECT_TYPE_UNKNOWN || type != OBJECT_TYPE_TABLE_TYPE)
+                        if (type != OBJECT_TYPE_TABLE_TYPE)
                                 type = OBJECT_TYPE_TABLE;
                 }
                 else if (pg_class->relkind == 'v')
@@ -4740,7 +4740,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		}
 		else if (pg_class->relkind == 'v')
 			type = OBJECT_TYPE_VIEW;
-		else if (pg_class->relkind == 's')
+		else if (pg_class->relkind == 'S')
 			type = OBJECT_TYPE_SEQUENCE_OBJECT;
 
 		ReleaseSysCache(tuple);
@@ -5373,10 +5373,9 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 /*
  * objectpropertyex_internal
  *
- * Uses resolve_object_type() for existence check + database scoping instead of
- * materializing sys.all_objects.  For 'basetype', maps the resolved type to the
- * 2-char T-SQL type code.  For all other properties, delegates to
- * objectproperty_internal.
+ * For 'basetype', uses resolve_object_type() for direct syscache lookups
+ * and maps the resolved type to the 2-char T-SQL type code.
+ * For all other properties, delegates directly to objectproperty_internal.
  */
 Datum
 objectpropertyex_internal(PG_FUNCTION_ARGS)
@@ -5397,21 +5396,21 @@ objectpropertyex_internal(PG_FUNCTION_ARGS)
         pfree(raw);
         remove_trailing_spaces(property);
 
-        if (!resolve_object_type(object_id, &type, &schema_id, &object_name))
-        {
-                pfree(property);
-                PG_RETURN_NULL();
-        }
-
-        /* resolve_object_type already handles database scoping via is_schema_from_db */
-        if (object_name)
-                pfree(object_name);
-
-        /* BaseType: return the 2-char type code as sql_variant */
+        /* BaseType: uses resolve_object_type for direct syscache lookup */
         if (pg_strcasecmp(property, "basetype") == 0)
         {
-                const char *type_code = object_type_to_code(type);
+                const char *type_code;
 
+                if (!resolve_object_type(object_id, &type, &schema_id, &object_name))
+                {
+                        pfree(property);
+                        PG_RETURN_NULL();
+                }
+
+                if (object_name)
+                        pfree(object_name);
+
+                type_code = object_type_to_code(type);
                 pfree(property);
                 if (type_code)
                 {
@@ -5421,7 +5420,7 @@ objectpropertyex_internal(PG_FUNCTION_ARGS)
                 PG_RETURN_NULL();
         }
 
-        /* All other properties: delegate to objectproperty_internal, wrap as sql_variant */
+        /* All other properties: delegates directly to objectproperty_internal (handles its own scoping) */
         {
                 Datum   result;
                 LOCAL_FCINFO(inner_fcinfo, 2);
