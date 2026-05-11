@@ -4646,7 +4646,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	char		*raw;
 	Oid		user_id = GetUserId();
 	HeapTuple	tuple;
-	int		type = 0;
+	int		type = OBJECT_TYPE_UNKNOWN;
 	char		*object_name = NULL;
 	char		*nspname = NULL;
 
@@ -4674,10 +4674,11 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	{
 		Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
 
-		object_name = pstrdup(NameStr(pg_class->relname));
-
 		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_REFERENCES) == ACLCHECK_OK)
+		{
+			object_name = pstrdup(NameStr(pg_class->relname));
 			schema_id = get_rel_namespace(object_id);
+		}
 
 		/* 
 		 * Get the type of the object 
@@ -4735,7 +4736,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			/*
 			 * If the object is not of Table type (TT), it should be user defined table (U)
 			 */
-			if (type == 0 || type != OBJECT_TYPE_TABLE_TYPE)
+			if (type != OBJECT_TYPE_TABLE_TYPE)
 				type = OBJECT_TYPE_TABLE;
 		}
 		else if (pg_class->relkind == 'v')
