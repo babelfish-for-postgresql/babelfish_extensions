@@ -1630,7 +1630,7 @@ use master
 go
 ~~START~~
 int
-1
+<NULL>
 ~~END~~
 
 
@@ -3265,7 +3265,7 @@ use master
 go
 ~~START~~
 int
-1
+<NULL>
 ~~END~~
 
 
