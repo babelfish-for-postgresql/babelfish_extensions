@@ -302,7 +302,14 @@ public class CompareResults {
                     || datatype.equalsIgnoreCase("varbinary")
                     || datatype.equalsIgnoreCase("timestamp")
                     || datatype.equalsIgnoreCase("udt")) {
-                return result;
+                /* convert hex strings to byte[] for binary/varbinary types */
+                int len = result.length();
+                byte[] bytes = new byte[len / 2];
+                for (int idx = 0; idx < len; idx += 2) {
+                    bytes[idx / 2] = (byte) ((Character.digit(result.charAt(idx), 16) << 4)
+                                           + Character.digit(result.charAt(idx + 1), 16));
+                }
+                return bytes;
             } else if (datatype.equalsIgnoreCase("decimal")
                     || datatype.equalsIgnoreCase("money")
                     || datatype.equalsIgnoreCase("smallmoney")
