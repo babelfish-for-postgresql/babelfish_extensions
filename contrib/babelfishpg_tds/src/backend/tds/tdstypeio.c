@@ -45,6 +45,7 @@
 #include "src/include/tds_typeio.h"
 #include "src/include/err_handler.h"
 #include "src/include/tds_instr.h"
+#include "common/int.h"
 
 #include "tds_data_map.c"		/* include tables that used to initialize
 								 * hashmaps */
@@ -2331,14 +2332,13 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 
 	{
 		char	   *src;
-		int			nargs = token->tvpInfo->colCount * token->tvpInfo->rowCount;
+		int			nargs;
 		Datum	   *values;
 		char	   *nulls;
 		Oid		   *argtypes;
 		int			paramIndex = 0;
 
-		if (token->tvpInfo->colCount > 0 &&
-			token->tvpInfo->rowCount > MaxAllocSize / sizeof(Datum) / token->tvpInfo->colCount)
+		if (pg_mul_s32_overflow(token->tvpInfo->colCount, token->tvpInfo->rowCount, &nargs))
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("TVP row/column count too large")));
