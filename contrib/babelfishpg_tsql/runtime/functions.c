@@ -4588,9 +4588,7 @@ resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
         nspname = get_namespace_name(schema_id);
 
         if (!(nspname && pg_strcasecmp(nspname, "sys") == 0) &&
-                (!nspname || pg_strcasecmp(nspname, "pg_catalog") == 0 ||
-                pg_strcasecmp(nspname, "pg_toast") == 0 ||
-                pg_strcasecmp(nspname, "public") == 0))
+			!is_schema_from_db(schema_id, get_cur_db_id()))
         {
                 if (nspname)
                         pfree(nspname);
@@ -4938,6 +4936,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	if (!schema_id || object_aclcheck(NamespaceRelationId, schema_id, user_id, ACL_USAGE) != ACLCHECK_OK)
 	{
 		pfree(property);
+		if (object_name)
+            pfree(object_name);
 		PG_RETURN_NULL();
 	}
 
@@ -4947,13 +4947,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	nspname = get_namespace_name(schema_id);
 
 	if (!(nspname && pg_strcasecmp(nspname, "sys") == 0) && 
-		(!nspname || pg_strcasecmp(nspname, "pg_catalog") == 0 ||
-		pg_strcasecmp(nspname, "pg_toast") == 0 ||
-		pg_strcasecmp(nspname, "public") == 0))
+ 		!is_schema_from_db(schema_id, get_cur_db_id()))
 	{
 		pfree(property);
 		if (nspname)
 			pfree(nspname);
+		if (object_name)
+            pfree(object_name);
 
 		PG_RETURN_NULL();
 	}
@@ -5355,6 +5355,7 @@ objectpropertyex_internal(PG_FUNCTION_ARGS)
 
                 memset(&flinfo, 0, sizeof(FmgrInfo));
                 flinfo.fn_oid = InvalidOid;
+				flinfo.fn_nargs = 2;
                 flinfo.fn_mcxt = CurrentMemoryContext;
                 InitFunctionCallInfoData(*inner_fcinfo, &flinfo, 2, InvalidOid, NULL, NULL);
                 inner_fcinfo->args[0].value = PG_GETARG_DATUM(0);
