@@ -4588,7 +4588,7 @@ resolve_object_type(Oid object_id, int *out_type, Oid *out_schema_id,
         nspname = get_namespace_name(schema_id);
 
         if (!(nspname && pg_strcasecmp(nspname, "sys") == 0) &&
-			!is_schema_from_db(schema_id, get_cur_db_id()))
+			OidIsValid(get_cur_db_id()) && !is_schema_from_db(schema_id, get_cur_db_id()))
         {
                 if (nspname)
                         pfree(nspname);
@@ -4638,6 +4638,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	Oid		object_id;
 	Oid		schema_id = InvalidOid;
 	char		*property;
+	char		*raw;
 	Oid		user_id = GetUserId();
 	HeapTuple	tuple;
 	int		type = 0;
@@ -4649,8 +4650,9 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	else
 	{
 		object_id = (Oid) PG_GETARG_INT32(0);
-		property = text_to_cstring(PG_GETARG_TEXT_P(1));
-		property = downcase_identifier(property, strlen(property), false, true);
+		raw = text_to_cstring(PG_GETARG_TEXT_P(1));
+		property = downcase_identifier(raw, strlen(raw), false, true);
+		pfree(raw);
 		remove_trailing_spaces(property);
 	}
 
@@ -4937,7 +4939,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	{
 		pfree(property);
 		if (object_name)
-            pfree(object_name);
+			pfree(object_name);
 		PG_RETURN_NULL();
 	}
 
@@ -4946,14 +4948,14 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	 */
 	nspname = get_namespace_name(schema_id);
 
-	if (!(nspname && pg_strcasecmp(nspname, "sys") == 0) && 
- 		!is_schema_from_db(schema_id, get_cur_db_id()))
+	if (!(nspname && pg_strcasecmp(nspname, "sys") == 0) &&
+		OidIsValid(get_cur_db_id()) && !is_schema_from_db(schema_id, get_cur_db_id()))
 	{
 		pfree(property);
 		if (nspname)
 			pfree(nspname);
 		if (object_name)
-            pfree(object_name);
+			pfree(object_name);
 
 		PG_RETURN_NULL();
 	}
@@ -5317,7 +5319,7 @@ objectpropertyex_internal(PG_FUNCTION_ARGS)
         /* Database scoping: match sys.all_objects dbid filter */
         nspname = get_namespace_name(schema_id);
         if (!(nspname && pg_strcasecmp(nspname, "sys") == 0) &&
-                !is_schema_from_db(schema_id, get_cur_db_id()))
+                OidIsValid(get_cur_db_id()) && !is_schema_from_db(schema_id, get_cur_db_id()))
         {
                 pfree(property);
                 if (nspname)
@@ -5355,7 +5357,7 @@ objectpropertyex_internal(PG_FUNCTION_ARGS)
 
                 memset(&flinfo, 0, sizeof(FmgrInfo));
                 flinfo.fn_oid = InvalidOid;
-				flinfo.fn_nargs = 2;
+                flinfo.fn_nargs = 2;
                 flinfo.fn_mcxt = CurrentMemoryContext;
                 InitFunctionCallInfoData(*inner_fcinfo, &flinfo, 2, InvalidOid, NULL, NULL);
                 inner_fcinfo->args[0].value = PG_GETARG_DATUM(0);
