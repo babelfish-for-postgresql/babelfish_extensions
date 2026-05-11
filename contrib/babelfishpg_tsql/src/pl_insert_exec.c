@@ -85,15 +85,10 @@ typedef struct InsertExecContext
 	bool		flush_in_progress;		/* True during flush phase to block commit_stmt */
 	PLExecStateCallStack *call_stack_entry;	/* Call stack entry when INSERT EXEC started */
 	bool		had_error;				/* True if INSERT EXEC had an error */
-	bool		pending_drop;			/* True if temp table needs to be dropped when SPI is available */
 	Oid			target_rel_oid;			/* OID of target table - lock held to detect schema changes */
 	InsertExecSchemaSignature *schema_sig;	/* Schema signature for detecting changes */
-	uint64		execution_id;			/* Unique ID for this INSERT EXEC execution */
 	bool		started_implicit_txn;	/* True if INSERT EXEC started an implicit transaction */
 } InsertExecContext;
-
-/* Counter for generating unique execution IDs */
-static uint64 insert_exec_execution_counter = 0;
 
 /* Initialize the global INSERT EXEC context */
 static InsertExecContext insert_exec_ctx = {
@@ -104,10 +99,8 @@ static InsertExecContext insert_exec_ctx = {
 	.flush_in_progress = false,
 	.call_stack_entry = NULL,
 	.had_error = false,
-	.pending_drop = false,
 	.target_rel_oid = InvalidOid,
 	.schema_sig = NULL,
-	.execution_id = 0,
 	.started_implicit_txn = false
 };
 
@@ -149,12 +142,6 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 	 * at the INSERT EXEC level or inside the executed procedure.
 	 */
 	insert_exec_ctx.call_stack_entry = exec_state_call_stack;
-
-	/*
-	 * Store a unique execution ID for this INSERT EXEC. This is used to detect
-	 * if the INSERT EXEC context is stale (from a previous execution).
-	 */
-	insert_exec_ctx.execution_id = ++insert_exec_execution_counter;
 }
 
 /*
@@ -178,9 +165,7 @@ pltsql_clear_insert_exec_context(void)
 {
 	insert_exec_ctx.temp_table_oid = InvalidOid;
 	insert_exec_ctx.call_stack_entry = NULL;
-	insert_exec_ctx.execution_id = 0;
 	insert_exec_ctx.flush_in_progress = false;
-	insert_exec_ctx.pending_drop = false;
 	if (insert_exec_ctx.target_table)
 	{
 		pfree(insert_exec_ctx.target_table);
@@ -281,45 +266,6 @@ pltsql_insert_exec_clear_implicit_txn_flag(void)
 {
 	elog(DEBUG4, "TSQL TXN Clearing implicit txn flag (was %d)", insert_exec_ctx.started_implicit_txn);
 	insert_exec_ctx.started_implicit_txn = false;
-}
-
-/*
- * Set the pending drop flag.
- * Called when an error occurs and we can't drop the temp table immediately.
- */
-void
-pltsql_insert_exec_set_pending_drop(void)
-{
-	insert_exec_ctx.pending_drop = true;
-}
-
-/*
- * Check and drop the pending temp table if needed.
- * Called at the start of each INSERT EXEC to clean up any leftover temp table.
- * This handles the case where a previous INSERT EXEC failed and couldn't
- * drop its temp table because SPI wasn't available in the error context.
- */
-void
-pltsql_insert_exec_check_pending_drop(void)
-{
-	if (insert_exec_ctx.pending_drop && insert_exec_ctx.temp_table_name != NULL)
-	{
-		StringInfoData drop_stmt;
-		int			rc;
-
-		initStringInfo(&drop_stmt);
-		appendStringInfo(&drop_stmt, "DROP TABLE IF EXISTS %s", insert_exec_ctx.temp_table_name);
-
-		rc = SPI_execute(drop_stmt.data, false, 0);
-		if (rc != SPI_OK_UTILITY)
-			elog(WARNING, "failed to drop pending INSERT EXEC temp table %s: %s",
-				 insert_exec_ctx.temp_table_name, SPI_result_code_string(rc));
-
-		pfree(drop_stmt.data);
-		pfree(insert_exec_ctx.temp_table_name);
-		insert_exec_ctx.temp_table_name = NULL;
-		insert_exec_ctx.pending_drop = false;
-	}
 }
 
 /*
@@ -479,7 +425,7 @@ pltsql_insert_exec_close_target_table(void)
 {
 	if (OidIsValid(insert_exec_ctx.target_rel_oid))
 	{
-		const char *target = pltsql_get_insert_exec_target_table();
+		const char *target = insert_exec_ctx.target_table;
 		bool is_temp_table = (target != NULL && (target[0] == '#' || target[0] == '@'));
 
 		/*
@@ -783,15 +729,13 @@ pltsql_insert_exec_active(void)
 
 /*
  * Stricter check than pltsql_insert_exec_active() - also verifies the temp
- * table still exists. Returns false if context is stale (e.g., temp table
- * was dropped after rollback). May return false early in INSERT EXEC before
- * temp table is created, which is fine - validation happens later anyway.
+ * table OID is valid. Returns false if context is stale or if temp table
+ * hasn't been created yet. Stale context is prevented by
+ * pltsql_clear_insert_exec_context() on every exit path.
  */
 bool
 pltsql_insert_exec_in_execution(void)
 {
-	Oid temp_table_oid;
-
 	/*
 	 * call_stack_entry non-NULL + target_table non-NULL = INSERT EXEC is live.
 	 * Stale context is prevented by pltsql_clear_insert_exec_context() on
@@ -805,18 +749,9 @@ pltsql_insert_exec_in_execution(void)
 
 	/*
 	 * Check if the temp table OID is valid. Returns false early in INSERT EXEC
-	 * before temp table is created.
+	 * before temp table is created, which is fine.
 	 */
-	temp_table_oid = insert_exec_ctx.temp_table_oid;
-	if (!OidIsValid(temp_table_oid))
-		return false;
-
-	/*
-	 * Safety net: verify the temp table actually exists in syscache.
-	 * This guards against edge cases where cleanup might be missed.
-	 * Can be removed once we're confident in cleanup coverage.
-	 */
-	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(temp_table_oid)))
+	if (!OidIsValid(insert_exec_ctx.temp_table_oid))
 		return false;
 
 	return true;
@@ -875,45 +810,6 @@ Oid
 pltsql_get_insert_exec_temp_table_oid(void)
 {
 	return insert_exec_ctx.temp_table_oid;
-}
-
-/*
- * Get the target table name for INSERT EXEC.
- */
-const char *
-pltsql_get_insert_exec_target_table(void)
-{
-	return insert_exec_ctx.target_table;
-}
-
-/*
- * Get the target table OID for INSERT EXEC.
- * This is the OID of the actual target table (not the temp table).
- * Used for schema-qualified DROP TABLE checks.
- */
-Oid
-pltsql_get_insert_exec_target_rel_oid(void)
-{
-	return insert_exec_ctx.target_rel_oid;
-}
-
-/*
- * Get the column list for INSERT EXEC.
- */
-const char *
-pltsql_get_insert_exec_column_list(void)
-{
-	return insert_exec_ctx.column_list;
-}
-
-/*
- * Get the temp table name for INSERT EXEC.
- * This is the dynamically chosen name with suffix (e.g., __insert_exec_buf_12345_1).
- */
-const char *
-pltsql_get_insert_exec_temp_table_name(void)
-{
-	return insert_exec_ctx.temp_table_name;
 }
 
 /*
