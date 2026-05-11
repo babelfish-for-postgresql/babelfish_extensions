@@ -83,7 +83,7 @@ typedef struct InsertExecContext
 	char	   *target_table;			/* Target table name */
 	char	   *column_list;			/* Column list for INSERT */
 	bool		flush_in_progress;		/* True during flush phase to block commit_stmt */
-	int			call_stack_depth;		/* Call stack depth when INSERT EXEC was started */
+	PLExecStateCallStack *call_stack_entry;	/* Call stack entry when INSERT EXEC started */
 	bool		had_error;				/* True if INSERT EXEC had an error */
 	bool		pending_drop;			/* True if temp table needs to be dropped when SPI is available */
 	Oid			target_rel_oid;			/* OID of target table - lock held to detect schema changes */
@@ -102,7 +102,7 @@ static InsertExecContext insert_exec_ctx = {
 	.target_table = NULL,
 	.column_list = NULL,
 	.flush_in_progress = false,
-	.call_stack_depth = 0,
+	.call_stack_entry = NULL,
 	.had_error = false,
 	.pending_drop = false,
 	.target_rel_oid = InvalidOid,
@@ -110,75 +110,6 @@ static InsertExecContext insert_exec_ctx = {
 	.execution_id = 0,
 	.started_implicit_txn = false
 };
-
-/*
- * Parse a T-SQL table name (1-part, 2-part, or 3-part) into schema and table.
- * Returns true on success. Caller must pfree the output strings.
- */
-bool
-parse_insert_exec_table_name(const char *target_table,
-							 char **schema_name_out,
-							 char **table_name_out,
-							 char **physical_schema_out,
-							 bool get_physical)
-{
-	char	   *target_copy;
-	char	   *dot_pos;
-	char	   *second_dot;
-	char	   *schema_name = NULL;
-	char	   *table_name = NULL;
-
-	if (target_table == NULL)
-		return false;
-
-	target_copy = pstrdup(target_table);
-
-	/* Find the last dot to separate schema from table */
-	dot_pos = strrchr(target_copy, '.');
-	if (dot_pos != NULL)
-	{
-		*dot_pos = '\0';
-		table_name = pstrdup(dot_pos + 1);
-
-		/* Check if there's another dot (db.schema.table) */
-		second_dot = strrchr(target_copy, '.');
-		if (second_dot != NULL)
-		{
-			/* db.schema.table - schema is after the second dot */
-			schema_name = pstrdup(second_dot + 1);
-		}
-		else
-		{
-			/* schema.table */
-			schema_name = pstrdup(target_copy);
-		}
-	}
-	else
-	{
-		/*
-		 * Just table name, no schema specified - default to dbo for now.
-		 * TODO: Ideally we should respect the user's default schema,
-		 * but that requires changes to how ownership chaining works.
-		 */
-		table_name = pstrdup(target_copy);
-		schema_name = pstrdup("dbo");
-	}
-	pfree(target_copy);
-
-	*schema_name_out = schema_name;
-	*table_name_out = table_name;
-
-	if (get_physical && physical_schema_out != NULL)
-	{
-		*physical_schema_out = get_physical_schema_name(get_cur_db_name(), schema_name);
-	}
-	else if (physical_schema_out != NULL)
-	{
-		*physical_schema_out = NULL;
-	}
-
-	return true;
-}
 
 /*
  * Set the global INSERT EXEC context with target table info.
@@ -193,8 +124,6 @@ void
 pltsql_set_insert_exec_context_info(const char *target_table, const char *column_list)
 {
 	MemoryContext oldcontext;
-	PLExecStateCallStack *cur;
-	int depth = 0;
 
 	/* Clear any previous context */
 	if (insert_exec_ctx.target_table)
@@ -214,18 +143,12 @@ pltsql_set_insert_exec_context_info(const char *target_table, const char *column
 	insert_exec_ctx.column_list = column_list ? pstrdup(column_list) : NULL;
 	MemoryContextSwitchTo(oldcontext);
 
-	/* Record the call stack depth when INSERT EXEC was started */
-	cur = exec_state_call_stack;
-	while (cur != NULL)
-	{
-		depth++;
-		cur = cur->next;
-	}
 	/*
-	 * Record the call stack depth when INSERT EXEC was started.
-	 * This is used to detect stale INSERT EXEC context.
+	 * Snapshot the call stack entry when INSERT EXEC starts.
+	 * This pointer comparison determines if an error occurred 
+	 * at the INSERT EXEC level or inside the executed procedure.
 	 */
-	insert_exec_ctx.call_stack_depth = depth;
+	insert_exec_ctx.call_stack_entry = exec_state_call_stack;
 
 	/*
 	 * Store a unique execution ID for this INSERT EXEC. This is used to detect
@@ -254,7 +177,7 @@ void
 pltsql_clear_insert_exec_context(void)
 {
 	insert_exec_ctx.temp_table_oid = InvalidOid;
-	insert_exec_ctx.call_stack_depth = 0;
+	insert_exec_ctx.call_stack_entry = NULL;
 	insert_exec_ctx.execution_id = 0;
 	insert_exec_ctx.flush_in_progress = false;
 	insert_exec_ctx.pending_drop = false;
@@ -867,80 +790,33 @@ pltsql_insert_exec_active(void)
 bool
 pltsql_insert_exec_in_execution(void)
 {
-	PLExecStateCallStack *cur;
-	int current_depth = 0;
 	Oid temp_table_oid;
 
+	/*
+	 * call_stack_entry non-NULL + target_table non-NULL = INSERT EXEC is live.
+	 * Stale context is prevented by pltsql_clear_insert_exec_context() on
+	 * every exit path.
+	 */
 	if (insert_exec_ctx.target_table == NULL)
 		return false;
 
-	/*
-	 * If call_stack_depth is 0, the context was never properly set or was
-	 * cleared. This shouldn't happen if target_table is set, but check anyway.
-	 */
-	if (insert_exec_ctx.call_stack_depth == 0)
+	if (insert_exec_ctx.call_stack_entry == NULL)
 		return false;
 
 	/*
-	 * Check if the temp table OID is valid. If the INSERT EXEC context is
-	 * stale (from a previous execution), the temp table would have been
-	 * dropped and the OID would be invalid.
+	 * Check if the temp table OID is valid. Returns false early in INSERT EXEC
+	 * before temp table is created.
 	 */
 	temp_table_oid = insert_exec_ctx.temp_table_oid;
 	if (!OidIsValid(temp_table_oid))
 		return false;
 
 	/*
-	 * Additional check: verify the temp table actually exists.
-	 * The OID might still be "valid" (non-zero) but the table could have been
-	 * dropped due to transaction rollback. This happens when INSERT EXEC fails
-	 * and the transaction is rolled back - the temp table is dropped but the
-	 * OID in the context is not cleared.
-	 *
-	 * We use SearchSysCacheExists1 to check if the relation exists without
-	 * opening it (which would fail if it doesn't exist).
+	 * Safety net: verify the temp table actually exists in syscache.
+	 * This guards against edge cases where cleanup might be missed.
+	 * Can be removed once we're confident in cleanup coverage.
 	 */
 	if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(temp_table_oid)))
-		return false;
-
-	/*
-	 * Get current call stack depth.
-	 */
-	cur = exec_state_call_stack;
-	while (cur != NULL)
-	{
-		current_depth++;
-		cur = cur->next;
-	}
-
-	/*
-	 * If current_depth is 0, we're not inside any PL/tsql execution,
-	 * so we can't be inside INSERT EXEC execution either.
-	 *
-	 * IMPORTANT: This also handles the case where the INSERT EXEC context
-	 * is stale from a previous batch. When a new batch starts, the call
-	 * stack is empty (depth 0), so we return false here. This prevents
-	 * stale context from affecting subsequent batches.
-	 */
-	if (current_depth == 0)
-		return false;
-
-	/*
-	 * Check if the current call stack depth is consistent with the INSERT EXEC
-	 * context. If we're at a shallower level than when INSERT EXEC started,
-	 * the context is stale.
-	 *
-	 * Note: We use < instead of <= because the INSERT EXEC statement itself
-	 * is at call_stack_depth, and the called procedure is at call_stack_depth+1.
-	 */
-	if (current_depth < insert_exec_ctx.call_stack_depth)
-		return false;  /* Context is stale - we've returned from INSERT EXEC */
-
-	/*
-	 * We're at or below the INSERT EXEC call stack depth, and the temp table
-	 * OID is valid. Final check: verify the execution_id is non-zero.
-	 */
-	if (insert_exec_ctx.execution_id == 0)
 		return false;
 
 	return true;
@@ -1083,45 +959,16 @@ pltsql_insert_exec_in_trycatch(void)
 bool
 pltsql_insert_exec_should_cleanup_on_trycatch(void)
 {
-	PLExecStateCallStack *cur;
-	int current_depth = 0;
-
 	if (insert_exec_ctx.target_table == NULL)
 		return false;
 
-	/* Get current call stack depth */
-	cur = exec_state_call_stack;
-	while (cur != NULL)
-	{
-		current_depth++;
-		cur = cur->next;
-	}
-
 	/*
-	 * If current depth is greater than INSERT EXEC depth, the TRY-CATCH
-	 * is inside the procedure being executed, so don't clean up.
-	 *
-	 * If current depth is equal to or less than INSERT EXEC depth, the
-	 * TRY-CATCH is at the same level or higher, so clean up.
+	 * If the call stack head is the same node as when INSERT EXEC started,
+	 * the error is at the INSERT EXEC level → clean up.
+	 * If it's a different (deeper) node, the error is inside the called
+	 * procedure → INSERT EXEC stays live.
 	 */
-	return current_depth <= insert_exec_ctx.call_stack_depth;
-}
-
-/*
- * Get and clear the temp table OID for INSERT EXEC cleanup.
- * Called from iterative_exec.c after TRY-CATCH catches an error.
- * Returns the temp table OID that needs to be dropped, or InvalidOid if none.
- *
- * This is used when an error occurs during INSERT EXEC and is caught by TRY-CATCH.
- * The PG_CATCH in exec_stmt_exec clears the INSERT EXEC context but leaves the
- * temp table OID for iterative_exec.c to drop.
- */
-Oid
-pltsql_get_and_clear_insert_exec_temp_table_for_cleanup(void)
-{
-	Oid temp_oid = insert_exec_ctx.temp_table_oid;
-	insert_exec_ctx.temp_table_oid = InvalidOid;
-	return temp_oid;
+	return exec_state_call_stack == insert_exec_ctx.call_stack_entry;
 }
 
 

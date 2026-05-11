@@ -2409,7 +2409,6 @@ extern const char *pltsql_get_insert_exec_column_list(void);
 extern const char *pltsql_get_insert_exec_temp_table_name(void);
 extern bool pltsql_insert_exec_in_trycatch(void);
 extern bool pltsql_insert_exec_should_cleanup_on_trycatch(void);
-extern Oid pltsql_get_and_clear_insert_exec_temp_table_for_cleanup(void);
 extern void pltsql_insert_exec_set_error_flag(void);
 extern bool pltsql_insert_exec_had_error(void);
 extern void pltsql_insert_exec_clear_error_flag(void);
@@ -2434,11 +2433,6 @@ extern bool insert_exec_setup(PLtsql_execstate *estate,
                               Oid *temp_table_oid_out);
 extern void insert_exec_error_cleanup(bool setup_done);
 extern void insert_exec_success_cleanup(PLtsql_execstate *estate, Oid temp_table_oid);
-extern bool parse_insert_exec_table_name(const char *target_table,
-										 char **schema_name_out,
-										 char **table_name_out,
-										 char **physical_schema_out,
-										 bool get_physical);
 extern DestReceiver *CreateInsertExecDestReceiver(Oid temp_table_oid);
 extern Oid create_insert_exec_temp_table(const char *target_table,
                                           const char *column_list,
