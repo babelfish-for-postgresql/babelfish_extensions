@@ -4908,24 +4908,27 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (HeapTupleIsValid(tuple))
 		{
 			Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
-			object_name = pstrdup(NameStr(con->conname));
 			schema_id = tsql_get_constraint_nsp_oid(object_id, user_id);
-			/*
-			 * If the contype is 'f' on the pg_constraint object, then it is a Foreign key constraint
-			 */
-			if (con->contype == 'f')
-				type = OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT;
-			/*
-			 * If the contype is 'p' on the pg_constraint object, then it is a Primary key constraint
-			 */
-			else if (con->contype == 'p')
-				type = OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT;
-			/*
-			 * Reimplemented the existing SQL .
-			 * If the contype is 'c' and conrelid is 0 on the pg_constraint object, then it is a Check constraint
-			 */
-			else if (con->contype == 'c' && con->conrelid != 0)
-				type = OBJECT_TYPE_CHECK_CONSTRAINT;
+			if (OidIsValid(schema_id))
+			{
+				object_name = pstrdup(NameStr(con->conname));
+				/*
+				 * If the contype is 'f' on the pg_constraint object, then it is a Foreign key constraint
+				 */
+				if (con->contype == 'f')
+					type = OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT;
+				/*
+				 * If the contype is 'p' on the pg_constraint object, then it is a Primary key constraint
+				 */
+				else if (con->contype == 'p')
+					type = OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT;
+				/*
+				 * Reimplemented the existing SQL .
+				 * If the contype is 'c' and conrelid is 0 on the pg_constraint object, then it is a Check constraint
+				 */
+				else if (con->contype == 'c' && con->conrelid != 0)
+					type = OBJECT_TYPE_CHECK_CONSTRAINT;
+			}
 			
 			ReleaseSysCache(tuple);
 		}
@@ -4984,9 +4987,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			else
 			{
 				pfree(property);
+				if (object_name) 
+					pfree(object_name);
 				PG_RETURN_NULL();
 			}
 			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(result);
 		}
 	}
@@ -5217,7 +5224,12 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		HeapTuple	tup;
 
 		if (type != OBJECT_TYPE_TABLE)
+		{
+			pfree(property);
+			if (object_name) 
+				pfree(object_name);
 			PG_RETURN_INT32(0);
+		}
 
 		indRel = table_open(IndexRelationId, AccessShareLock);
 
@@ -5299,7 +5311,6 @@ objectpropertyex_internal(PG_FUNCTION_ARGS)
         int        type = OBJECT_TYPE_UNKNOWN;
         Oid        schema_id = InvalidOid;
         char       *object_name = NULL;
-        char       *nspname;
 
         if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
                 PG_RETURN_NULL();
@@ -5316,20 +5327,7 @@ objectpropertyex_internal(PG_FUNCTION_ARGS)
                 PG_RETURN_NULL();
         }
 
-        /* Database scoping: match sys.all_objects dbid filter */
-        nspname = get_namespace_name(schema_id);
-        if (!(nspname && pg_strcasecmp(nspname, "sys") == 0) &&
-                OidIsValid(get_cur_db_id()) && !is_schema_from_db(schema_id, get_cur_db_id()))
-        {
-                pfree(property);
-                if (nspname)
-                        pfree(nspname);
-                if (object_name)
-                        pfree(object_name);
-                PG_RETURN_NULL();
-        }
-        if (nspname)
-                pfree(nspname);
+        /* resolve_object_type already handles database scoping via is_schema_from_db */
         if (object_name)
                 pfree(object_name);
 
