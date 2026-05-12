@@ -1,0 +1,21 @@
+create type tableType as table (a int, b smallint)
+create type table_variable_vu_type as table (a text not null, b int primary key, c int, d int)
+create proc table_variable_vu_proc1 (@x table_variable_vu_type readonly) as begin	select tvp.b from @x tvp end
+
+prepst#!#Select * from @a #!#tvp|-|tableType|-|utils/tvp-dotnet.csv|-|utils/tvp-dotnet.csv
+prepst#!#Select * from @a #!#tvp|-|tableType|-|utils/tvp-dotnet.csv|-|utils/tvp-dotnet.csv
+prepst#!#Select * from @a #!#tvp|-|tableType|-|utils/tvp-dotnet.csv|-|utils/tvp-dotnet.csv
+prepst#!#Select * from @a #!#tvp|-|tableType|-|utils/tvp-dotnet.csv|-|utils/tvp-dotnet.csv
+prepst#!#Select * from @a #!#tvp|-|tableType|-|utils/tvp-dotnet.csv|-|utils/tvp-dotnet.csv
+prepst#!#Select * from @a #!#tvp|-|tableType|-|utils/tvp-dotnet.csv|-|utils/tvp-dotnet.csv
+
+
+declare @var1 table_variable_vu_type insert into @var1 values ('1', 2, 3, 4) exec sp_executesql N'EXEC table_variable_vu_proc1 @x = @p0', N'@p0 table_variable_vu_type readonly', @p0=@var1
+drop procedure table_variable_vu_proc1;
+drop type table_variable_vu_type;
+drop type tableType;
+
+-- Multi-row TVP test
+create type tvp_multirow_test_type as table (a int, b smallint, c bigint, d tinyint, e bit, f char(10), g nchar(10), h varchar(10), i nvarchar(10), l varbinary(10), m binary(10), n date, o datetime, p money, q uniqueidentifier, r float, s real, t numeric(4,3), u decimal(5,3), v time, w datetime2)
+prepst#!#Select * from @a order by a#!#tvp|-|tvp_multirow_test_type|-|utils/tvp-dotnet-multirow.csv|-|utils/tvp-dotnet-multirow.csv
+drop type tvp_multirow_test_type;
