@@ -63,6 +63,7 @@ declare_escape_hatch(escape_hatch_ignore_dup_key);
 declare_escape_hatch(escape_hatch_rowversion);
 declare_escape_hatch(escape_hatch_checkpoint);
 declare_escape_hatch(escape_hatch_inline_function_option);
+declare_escape_hatch(escape_hatch_spatial_index);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
@@ -110,6 +111,7 @@ protected:
 		antlrcpp::Any visitCreate_table(TSqlParser::Create_tableContext *ctx) override;
 		antlrcpp::Any visitAlter_table(TSqlParser::Alter_tableContext *ctx) override;
 		antlrcpp::Any visitCreate_index(TSqlParser::Create_indexContext *ctx) override;
+		antlrcpp::Any visitCreate_spatial_index(TSqlParser::Create_spatial_indexContext *ctx) override {if ((ctx->spatial_grid_clause() || ctx->spatial_grid_option_clause()) && escape_hatch_spatial_index != EH_IGNORE) { throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "CREATE SPATIAL INDEX USING/WITH options are not supported in Babelfish. " "Set \'babelfishpg_tsql.escape_hatch_spatial_index\' to \'ignore\' to discard these options.", getLineAndPos(ctx)); } return visitChildren(ctx); }
 		antlrcpp::Any visitAlter_index(TSqlParser::Alter_indexContext *ctx) override;
 		antlrcpp::Any visitCreate_database(TSqlParser::Create_databaseContext *ctx) override;
 		antlrcpp::Any visitAlter_database(TSqlParser::Alter_databaseContext *ctx) override;

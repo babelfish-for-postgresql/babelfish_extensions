@@ -91,7 +91,6 @@ extern "C"
 	extern bool check_fulltext_exist(const char *schema_name, const char *table_name, const List *column_name);
 
 	extern int escape_hatch_showplan_all;
-	extern int escape_hatch_spatial_index;
 
 	/* To store the time spent in ANTLR parsing for the current batch */
 	extern instr_time antlr_parse_time;
@@ -8139,16 +8138,6 @@ post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_exec
 static bool
 post_process_create_spatial_index(TSqlParser::Create_spatial_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
 {
-	bool has_grid_clause = (ctx->spatial_grid_clause() != nullptr);
-	bool has_with_clause = (ctx->spatial_grid_option_clause() != nullptr);
-
-	if ((has_grid_clause || has_with_clause) && escape_hatch_spatial_index == EH_STRICT)
-	{
-		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED,
-			"CREATE SPATIAL INDEX USING/WITH options are not supported in Babelfish. "
-			"Set \'babelfishpg_tsql.escape_hatch_spatial_index\' to \'ignore\' to discard these options.",
-			getLineAndPos(ctx));
-	}
 
 	/* Remove USING clause (GEOMETRY_GRID, GEOGRAPHY_GRID, etc.) */
 	if (ctx->spatial_grid_clause())
@@ -9090,6 +9079,7 @@ extract_xml_value_typearg(TSqlParser::ExpressionContext *expression)
 	return typename_arg;
 }
 
+/* Find the comparison operator and threshold value around an STDistance call (e.g. `< 100`). */
 template<class T>
 static bool
 extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &comp_value, bool &dist_on_lhs_out)
@@ -9157,7 +9147,7 @@ extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &
 }
 
 
-
+/* Add a cheap bounding-box check (&&) before the spatial predicate so the GiST index can be used. */
 static std::string
 maybe_inject_spatial_bbox_filter(const std::string &spatial_func_name, const std::string &col_ref, const std::string &rewritten_call)
 {
@@ -9188,7 +9178,7 @@ maybe_inject_spatial_bbox_filter(const std::string &spatial_func_name, const std
 	return rewritten_call;
 }
 
-
+/* Add a bounding-box check using ST_Expand so the GiST index can filter by distance. */
 static std::string
 maybe_inject_spatial_distance_filter(const std::string &col_ref, const std::string &first_arg, const std::string &distance_value, const std::string &rewritten_call)
 {
@@ -9200,6 +9190,8 @@ maybe_inject_spatial_distance_filter(const std::string &col_ref, const std::stri
 }
 
 
+
+/* Check if the spatial call is in a `col.STFn(...) = 1` predicate (only this form gets index optimization). */
 template<class T>
 static bool
 is_spatial_predicate_eq_one(T ctx)
@@ -9375,6 +9367,7 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 		rewritten_exp = "cast(" + rewritten_exp + " as " + typename_arg + ")";
 	}
 	
+	/* Inject bbox pre-filter for spatial predicates like col.STIntersects(...) = 1 */
 	if (method->spatial_methods()
 		&& method->spatial_methods()->geospatial_func_arg()
 		&& method->spatial_methods()->expression_list()
@@ -9387,7 +9380,7 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 
 		rewritten_exp = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, rewritten_exp);
 	}
-
+	 /* Inject distance pre-filter for col.STDistance(...) < threshold */
 	if (method->spatial_methods()
 		&& method->spatial_methods()->geospatial_func_arg()
 		&& method->spatial_methods()->expression_list()
@@ -9676,6 +9669,8 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	{
 		rewritten_func = "cast(" + rewritten_func + " as " + typename_arg + ")";
 	}
+
+	/* Inject bbox pre-filter for spatial predicates like col.STIntersects(...) = 1 */
 	if (ctx->spatial_proc_name_server_database_schema()
 		&& ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()
 		&& ctx->function_arg_list()
@@ -9689,6 +9684,7 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 		rewritten_func = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, rewritten_func);
 	}
 
+	/* Inject distance pre-filter for col.STDistance(...) < threshold */
 	if (ctx->spatial_proc_name_server_database_schema()
 		&& ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()
 		&& ctx->function_arg_list()

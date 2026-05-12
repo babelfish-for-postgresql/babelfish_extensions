@@ -1,7 +1,10 @@
 -- ============================================================
 -- SECTION 1: DDL ERROR CASES
 -- ============================================================
-
+SELECT set_config('babelfishpg_tsql.explain_verbose', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
 -- 1.1 CREATE on non-spatial column (should error)
 CREATE SPATIAL INDEX si_bad ON si_ddl_tbl(name);
 GO
@@ -45,6 +48,9 @@ GO
 -- ============================================================
 
 -- 2.1 col.STIntersects(poly) = 1
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
 SELECT COUNT(*) AS t2_1 FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(
     geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
@@ -96,9 +102,14 @@ WHERE si_geom_tbl.geom.STIntersects(
 SELECT CASE WHEN @yes + @no = 1000 THEN 'PASS' ELSE 'FAIL' END AS t2_7;
 GO
 
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
 -- ============================================================
 -- SECTION 3: STDistance REWRITER
 -- ============================================================
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 
 SELECT COUNT(*) AS t3_lt FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < 100;
@@ -139,10 +150,14 @@ WHERE 100 > si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)
 SELECT CASE WHEN @lhs = @rhs THEN 'PASS' ELSE 'FAIL' END AS t3_correctness;
 GO
 
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
 -- ============================================================
 -- SECTION 4: STContains
 -- ============================================================
-
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 SELECT COUNT(*) AS t4_contains FROM si_geom_tbl
 WHERE geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)
     .STContains(si_geom_tbl.geom) = 1;
@@ -153,10 +168,14 @@ WHERE 1 = geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200,
     .STContains(si_geom_tbl.geom);
 GO
 
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
 -- ============================================================
 -- SECTION 5: QUERY CONTEXTS
 -- ============================================================
-
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 -- Alias
 SELECT COUNT(*) AS t5_alias FROM si_geom_tbl t
 WHERE t.geom.STIntersects(
@@ -200,9 +219,15 @@ SELECT TOP 3 id,
 FROM si_geom_tbl ORDER BY id;
 GO
 
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
 -- ============================================================
 -- SECTION 6: NULL AND EDGE DATA
 -- ============================================================
+
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 
 -- NULL row
 INSERT INTO si_geom_tbl (geom) VALUES (NULL);
@@ -226,9 +251,14 @@ WHERE si_geom_tbl.geom.STIntersects(
     geometry::STGeomFromText('POLYGON((450 450, 550 450, 550 550, 450 550, 450 450))', 4326)) = 1;
 GO
 
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
 -- ============================================================
 -- SECTION 7: MULTIPLE INDEXES
 -- ============================================================
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 
 SELECT COUNT(*) AS t7_g1 FROM si_multi_tbl
 WHERE si_multi_tbl.g1.STIntersects(
@@ -247,9 +277,14 @@ AND si_multi_tbl.g2.STIntersects(
     geometry::STGeomFromText('POLYGON((600 600, 700 600, 700 700, 600 700, 600 600))', 4326)) = 1;
 GO
 
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
 -- ============================================================
 -- SECTION 8: TRANSACTIONS
 -- ============================================================
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 
 SELECT COUNT(*) AS t8_baseline FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(
@@ -287,6 +322,9 @@ WHERE si_geom_tbl.geom.STIntersects(
     geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
 GO
 
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
 -- ============================================================
 -- SECTION 9: SYSTEM VIEWS
 -- ============================================================
@@ -313,6 +351,8 @@ GO
 -- ============================================================
 -- SECTION 10: GEOGRAPHY
 -- ============================================================
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 
 SELECT COUNT(*) AS t10_intersects FROM si_geog_tbl
 WHERE si_geog_tbl.geog.STIntersects(
@@ -338,9 +378,13 @@ WHERE 1 = si_geog_tbl.geog.STIntersects(
 SELECT CASE WHEN @g1 = @g2 THEN 'PASS' ELSE 'FAIL' END AS t10_correctness;
 GO
 
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
 -- ============================================================
 -- SECTION 11: INDEX + CORRECTNESS (indexed vs seq scan)
 -- ============================================================
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 
 DECLARE @a INT, @b INT;
 SELECT @a = COUNT(*) FROM si_geom_tbl
@@ -352,6 +396,9 @@ WHERE si_geom_tbl.geom.STIntersects(
 SELECT CASE WHEN @a = @b THEN 'PASS' ELSE 'FAIL' END AS t11_idx_correctness;
 GO
 
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
 -- ============================================================
 -- SECTION 12: DDL EDGE CASES 
 -- ============================================================
@@ -371,6 +418,8 @@ GO
 -- ============================================================
 -- SECTION 13: STIntersects WHITESPACE AND NOT 
 -- ============================================================
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 
 -- 13.1 Tab + newline between tokens
 SELECT COUNT(*) AS t13_1 FROM si_geom_tbl
@@ -398,9 +447,14 @@ WHERE si_geom_tbl.geom.STIntersects(
 SELECT CASE WHEN @not1 = @eq0 THEN 'PASS' ELSE 'FAIL' END AS t13_3;
 GO
 
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
 -- ============================================================
 -- SECTION 14: STDistance >= AND CORRECTNESS (gap fill)
 -- ============================================================
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 
 -- 14.1 >= 100
 SELECT COUNT(*) AS t14_ge FROM si_geom_tbl
@@ -432,9 +486,15 @@ WHERE 100 <= si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500
 SELECT CASE WHEN @ge = @rle THEN 'PASS' ELSE 'FAIL' END AS t14_4;
 GO
 
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
 -- ============================================================
 -- SECTION 15: STContains SYMMETRY 
 -- ============================================================
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
 
 -- 15.1 = 0
 SELECT COUNT(*) AS t15_eq0 FROM si_geom_tbl
@@ -459,10 +519,13 @@ WHERE 1 = geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200,
 SELECT CASE WHEN @c1 = @c1r THEN 'PASS' ELSE 'FAIL' END AS t15_3;
 GO
 
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
 -- ============================================================
 -- SECTION 16: NULL CONSERVATION 
 -- ============================================================
-
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 -- count(=1) + count(=0) + count(NULL geom) = total rows
 DECLARE @yes INT, @no INT, @nul INT, @tot INT;
 SELECT @yes = COUNT(*) FROM si_geom_tbl
@@ -486,9 +549,15 @@ WHERE object_id = OBJECT_ID('si_view_tbl')
 ORDER BY name;
 GO
 
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
 -- ============================================================
 -- SECTION 18: FORCED INDEX USE 
 -- ============================================================
+
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 
 -- 18.1 WITH (INDEX(si_v_geom)) forces named index; count must match seq scan
 DECLARE @seq INT, @idx INT;
@@ -501,9 +570,13 @@ WHERE si_view_tbl.geom.STIntersects(
 SELECT CASE WHEN @seq = @idx THEN 'PASS' ELSE 'FAIL' END AS t18_forced_idx;
 GO
 
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
 -- ============================================================
 -- SECTION 19: CROSS-TYPE AND SRID EDGE CASES 
 -- ============================================================
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 
 -- 19.1 geometry.STIntersects(geography) should error
 SELECT COUNT(*) AS t19_xtype FROM si_geom_tbl
@@ -515,6 +588,9 @@ GO
 SELECT COUNT(*) AS t19_srid FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(
     geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 0)) = 1;
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
 -- ============================================================
@@ -539,6 +615,8 @@ GO
 -- ============================================================
 -- SECTION 21: VARIABLE-BOUND PREDICATE (parameterized pattern)
 -- ============================================================
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 
 -- 21.1 Variable-bound polygon reused in predicate
 DECLARE @poly sys.GEOMETRY = geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326);
@@ -555,6 +633,9 @@ SELECT @l = COUNT(*) FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(
     geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
 SELECT CASE WHEN @v = @l THEN 'PASS' ELSE 'FAIL' END AS t21_var_correctness;
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
 -- ============================================================
@@ -625,7 +706,8 @@ GO
 -- ============================================================
 -- SECTION 24: LEFT JOIN WITH SPATIAL ON CLAUSE
 -- ============================================================
-
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 -- 24.1 LEFT JOIN with spatial predicate in ON
 SELECT COUNT(*) AS t24_left FROM si_geom_tbl a
 LEFT JOIN si_geom_tbl b
@@ -633,6 +715,9 @@ LEFT JOIN si_geom_tbl b
         geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1
    AND a.id = b.id
 WHERE a.id < 20;
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
 -- ============================================================
@@ -823,7 +908,8 @@ GO
 -- ============================================================
 -- SECTION 36: MULTI-GEOMETRY TYPES
 -- ============================================================
-
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 
 SELECT COUNT(*) AS t36_mpoint FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(
@@ -902,6 +988,9 @@ FROM (
   GROUP BY si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326))
 ) sub
 WHERE hit = 1;
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 -- Expected: PASS. Confirms rewriter doesn't inject where it shouldn't.
 

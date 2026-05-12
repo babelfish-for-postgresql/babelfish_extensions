@@ -807,6 +807,7 @@ CREATE OR REPLACE FUNCTION sys.M_helper(sys.GEOMETRY)
 
 
 -- box2df type for GiST internal storage
+CREATE TYPE sys.box2df;
 
 CREATE OR REPLACE FUNCTION sys.box2df_in(cstring)
     RETURNS sys.box2df
@@ -822,6 +823,7 @@ CREATE TYPE sys.box2df (
     internallength = 16,
     input = sys.box2df_in,
     output = sys.box2df_out,
+    storage = plain,
     alignment = double
 );
 
@@ -923,7 +925,8 @@ CREATE OR REPLACE FUNCTION sys.gserialized_gist_joinsel_2d(internal, oid, intern
 
 -- Spatial operators
 CREATE OPERATOR sys.&& (
-    LEFTARG = sys.GEOMETRY, RIGHTARG = sys.GEOMETRY,
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
     FUNCTION = sys.geometry_overlaps,
     COMMUTATOR = &&,
     RESTRICT = sys.gserialized_gist_sel_2d,
@@ -931,7 +934,8 @@ CREATE OPERATOR sys.&& (
 );
 
 CREATE OPERATOR sys.~ (
-    LEFTARG = sys.GEOMETRY, RIGHTARG = sys.GEOMETRY,
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
     FUNCTION = sys.geometry_contains,
     COMMUTATOR = @,
     RESTRICT = sys.gserialized_gist_sel_2d,
@@ -939,7 +943,8 @@ CREATE OPERATOR sys.~ (
 );
 
 CREATE OPERATOR sys.@ (
-    LEFTARG = sys.GEOMETRY, RIGHTARG = sys.GEOMETRY,
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
     FUNCTION = sys.geometry_within,
     COMMUTATOR = ~,
     RESTRICT = sys.gserialized_gist_sel_2d,
@@ -947,47 +952,75 @@ CREATE OPERATOR sys.@ (
 );
 
 CREATE OPERATOR sys.<< (
-    LEFTARG = sys.GEOMETRY, RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_left
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
+    FUNCTION = sys.geometry_left,
+    COMMUTATOR = >>,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
 
 CREATE OPERATOR sys.&< (
-    LEFTARG = sys.GEOMETRY, RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overleft
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
+    FUNCTION = sys.geometry_overleft,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
 
 CREATE OPERATOR sys.>> (
-    LEFTARG = sys.GEOMETRY, RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_right
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
+    FUNCTION = sys.geometry_right,
+    COMMUTATOR = <<,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
 
 CREATE OPERATOR sys.&> (
-    LEFTARG = sys.GEOMETRY, RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overright
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
+    FUNCTION = sys.geometry_overright,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
 
 CREATE OPERATOR sys.|>> (
-    LEFTARG = sys.GEOMETRY, RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_above
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
+    FUNCTION = sys.geometry_above,
+    COMMUTATOR = <<|,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
 
 CREATE OPERATOR sys.|&> (
-    LEFTARG = sys.GEOMETRY, RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overabove
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
+    FUNCTION = sys.geometry_overabove,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
-
 CREATE OPERATOR sys.<<| (
-    LEFTARG = sys.GEOMETRY, RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_below
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
+    FUNCTION = sys.geometry_below,
+    COMMUTATOR = |>>,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
 
 CREATE OPERATOR sys.&<| (
-    LEFTARG = sys.GEOMETRY, RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overbelow
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
+    FUNCTION = sys.geometry_overbelow,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
 
 CREATE OPERATOR sys.~= (
-    LEFTARG = sys.GEOMETRY, RIGHTARG = sys.GEOMETRY,
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
     FUNCTION = sys.geometry_same,
     COMMUTATOR = ~=,
     RESTRICT = sys.gserialized_gist_sel_2d,
@@ -995,7 +1028,8 @@ CREATE OPERATOR sys.~= (
 );
 
 CREATE OPERATOR sys.<-> (
-    LEFTARG = sys.GEOMETRY, RIGHTARG = sys.GEOMETRY,
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
     FUNCTION = sys.geometry_distance_centroid,
     COMMUTATOR = <->
 );
