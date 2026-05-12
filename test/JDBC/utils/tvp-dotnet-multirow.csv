@@ -1,0 +1,5 @@
+a-int,b-smallint,c-bigint,d-tinyint,e-bit,f-char-10,g-nchar-10,h-varchar-10,i-nvarchar-10,l-varbinary-10,m-varbinary-10,n-date,o-datetime,p-money,q-uniqueidentifier,r-float,s-real,t-numeric-4-3,u-decimal-5-3,v-time,w-datetime2
+1,1,100,10,TRUE,hello,world,foo,bar,0A1B,0C0D,2023-01-15,2023-01-15 08:30:00,100.50,ce8af10a-2709-43b0-9e4e-a02753929d17,3.14,2.71,1.234,12.345,08:30:00,2023-01-15 08:30:00
+2,<NULL>,200,<NULL>,FALSE,<NULL>,test,abc,<NULL>,<NULL>,1A2B,2024-06-20,<NULL>,<NULL>,a1b2c3d4-e5f6-7890-abcd-ef1234567890,<NULL>,1.41,<NULL>,99.999,12:00:00,2024-06-20 12:00:00
+3,3,<NULL>,30,<NULL>,data,<NULL>,xyz,nval,FFEE,<NULL>,<NULL>,2025-12-31 23:59:59,999.99,<NULL>,2.718,<NULL>,9.876,<NULL>,<NULL>,2025-12-31 23:59:59
+<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>,<NULL>
