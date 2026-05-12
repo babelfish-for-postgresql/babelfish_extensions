@@ -2200,26 +2200,14 @@ FetchTvpTypeOid(const ParameterToken token, char *tvpName)
 	char	   *query;
 
 	if ((rc = SPI_connect()) < 0)
-	{
-		/* Reset dialect. */
-		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		elog(ERROR, "SPI_connect() failed in TDS Listener "
 			 "with return code %d", rc);
-	}
 
 	query = psprintf("SELECT '%s'::regtype::oid", tvpName);
 
 	rc = SPI_execute(query, false, 1);
 	if (rc != SPI_OK_SELECT)
-	{
-		/* Reset dialect. */
-		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		elog(ERROR, "Failed to insert in the underlying table for table-valued parameter: %d", rc);
-	}
+		elog(ERROR, "Failed to fetch TVP type OID: %d", rc);
 	tupdesc = SPI_tuptable->tupdesc;
 	row = SPI_tuptable->vals[0];
 
@@ -2338,9 +2326,9 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		int			paramIndex = 0;
 
 		/*
-		 * pg_mul_s32_overflow guards colCount * rowCount. The subsequent
-		 * palloc_array calls use mul_size() internally, so the secondary
-		 * multiplications (nargs * sizeof(type)) are also overflow-safe.
+		 * pg_mul_s32_overflow guards colCount * rowCount, ensuring nargs
+		 * fits in int32. Since nargs <= INT32_MAX, the subsequent
+		 * palloc_array allocations cannot overflow on 64-bit systems.
 		 */
 		if (pg_mul_s32_overflow(token->tvpInfo->colCount, token->tvpInfo->rowCount, &nargs))
 			ereport(ERROR,
@@ -2451,14 +2439,8 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 
 			src = psprintf("Insert into %s values %s", finalTableName, query);
 			if ((rc = SPI_connect()) < 0)
-			{
-				/* Reset dialect. */
-				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-								  GUC_CONTEXT_CONFIG,
-								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "SPI_connect() failed in TDS Listener "
 					 "with return code %d", rc);
-			}
 
 			rc = SPI_execute_with_args(src,
 									   nargs, argtypes,

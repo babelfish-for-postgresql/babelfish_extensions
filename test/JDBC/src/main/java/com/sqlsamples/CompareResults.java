@@ -308,8 +308,11 @@ public class CompareResults {
                     throw new IllegalArgumentException("Hex string has odd length: " + result);
                 byte[] bytes = new byte[len / 2];
                 for (int idx = 0; idx < len; idx += 2) {
-                    bytes[idx / 2] = (byte) ((Character.digit(result.charAt(idx), 16) << 4)
-                                           + Character.digit(result.charAt(idx + 1), 16));
+                    int hi = Character.digit(result.charAt(idx), 16);
+                    int lo = Character.digit(result.charAt(idx + 1), 16);
+                    if (hi < 0 || lo < 0)
+                        throw new IllegalArgumentException("Invalid hex character in: " + result);
+                    bytes[idx / 2] = (byte) ((hi << 4) + lo);
                 }
                 return bytes;
             } else if (datatype.equalsIgnoreCase("decimal")
