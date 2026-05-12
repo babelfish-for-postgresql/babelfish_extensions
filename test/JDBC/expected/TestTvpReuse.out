@@ -39,6 +39,7 @@ int#!#varchar
 10#!#j
 ~~END~~
 
+
 drop procedure bbf_tvp_reuse_insert
 drop table bbf_tvp_reuse_target
 drop type bbf_tvp_reuse_type
