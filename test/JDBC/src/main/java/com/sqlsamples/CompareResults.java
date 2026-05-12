@@ -304,6 +304,8 @@ public class CompareResults {
                     || datatype.equalsIgnoreCase("udt")) {
                 /* convert hex strings to byte[] for binary/varbinary types */
                 int len = result.length();
+                if (len % 2 != 0)
+                    throw new IllegalArgumentException("Hex string has odd length: " + result);
                 byte[] bytes = new byte[len / 2];
                 for (int idx = 0; idx < len; idx += 2) {
                     bytes[idx / 2] = (byte) ((Character.digit(result.charAt(idx), 16) << 4)
