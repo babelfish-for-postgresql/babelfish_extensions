@@ -2343,9 +2343,9 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("TVP row/column count too large")));
 
-		values = palloc(nargs * sizeof(Datum));
-		nulls = palloc(nargs * sizeof(char));
-		argtypes = palloc(nargs * sizeof(Oid));
+		values = palloc_array(Datum, nargs);
+		nulls = palloc_array(char, nargs);
+		argtypes = palloc_array(Oid, nargs);
 
 		query = " ";
 
