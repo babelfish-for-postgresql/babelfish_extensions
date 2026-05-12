@@ -290,6 +290,7 @@ pltsql_insert_exec_open_target_table(const char *target_table,
 	if (target_table == NULL)
 		return;
 
+	oldcontext = CurrentMemoryContext;
 	is_temp_table = (target_table[0] == '#' || target_table[0] == '@');
 
 	if (is_temp_table)
@@ -340,7 +341,6 @@ pltsql_insert_exec_open_target_table(const char *target_table,
 		 * Note: Same-session DROP/ALTER is still allowed by PostgreSQL,
 		 * but we detect it via schema verification at flush time.
 		 */
-		oldcontext = CurrentMemoryContext;
 		PG_TRY();
 		{
 			LockRelationOid(relid, RowExclusiveLock);
@@ -360,7 +360,6 @@ pltsql_insert_exec_open_target_table(const char *target_table,
 	 * Capture the schema signature of the target table.
 	 * This is used to detect DROP/ALTER at flush time.
 	 */
-	oldcontext = CurrentMemoryContext;
 	PG_TRY();
 	{
 		rel = table_open(relid, NoLock);
@@ -404,7 +403,7 @@ pltsql_insert_exec_open_target_table(const char *target_table,
 
 	MemoryContextSwitchTo(oldcontext);
 
-	table_close(rel, NoLock);  /* Keep the lock (if any) */
+	table_close(rel, NoLock);  /* Keep the lock */
 }
 
 /*
@@ -624,14 +623,16 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	int			query_natts;
 	Oid			temp_table_oid;
 	Relation	temp_rel;
-	TupleDesc	temp_tupdesc;
 	int			temp_natts;
 	MemoryContext oldcontext;
 
 	/* Caller must ensure INSERT EXEC is active before calling */
 	Assert(pltsql_insert_exec_active());
 
-	/* Temp table must exist - caller checks pltsql_insert_exec_in_execution() */
+	/*
+	 * Assert temp table OID is valid - this function must only be called
+	 * after the temp table is created (pltsql_insert_exec_in_execution() is true).
+	 */
 	temp_table_oid = pltsql_get_insert_exec_temp_table_oid();
 	Assert(OidIsValid(temp_table_oid));
 
@@ -673,8 +674,7 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	PG_TRY();
 	{
 		temp_rel = table_open(temp_table_oid, AccessShareLock);
-		temp_tupdesc = RelationGetDescr(temp_rel);
-		temp_natts = temp_tupdesc->natts;
+		temp_natts = RelationGetDescr(temp_rel)->natts;
 		table_close(temp_rel, AccessShareLock);
 	}
 	PG_CATCH();
@@ -845,7 +845,7 @@ pltsql_insert_exec_in_trycatch(void)
 /*
  * Called from sigsetjmp handler when TRY-CATCH catches an error.
  * Returns true if we should clean up INSERT EXEC context - only when the
- * TRY-CATCH is at or above the INSERT EXEC level. If TRY-CATCH is inside
+ * TRY-CATCH is at the INSERT EXEC level. If the TRY-CATCH is inside
  * the executed procedure (deeper stack), INSERT EXEC is still in progress.
  */
 bool
