@@ -158,49 +158,68 @@ CREATE OPERATOR sys.@ (
 CREATE OPERATOR sys.<< (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_left
+    FUNCTION = sys.geometry_left,
+    COMMUTATOR = >>,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
 
 CREATE OPERATOR sys.&< (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overleft
+    FUNCTION = sys.geometry_overleft,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
 
 CREATE OPERATOR sys.>> (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_right
+    FUNCTION = sys.geometry_right,
+    COMMUTATOR = <<,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
 
 CREATE OPERATOR sys.&> (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overright
+    FUNCTION = sys.geometry_overright,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
 
 CREATE OPERATOR sys.|>> (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_above
+    FUNCTION = sys.geometry_above,
+    COMMUTATOR = <<|,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
 
 CREATE OPERATOR sys.|&> (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overabove
+    FUNCTION = sys.geometry_overabove,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
-
 CREATE OPERATOR sys.<<| (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_below
+    FUNCTION = sys.geometry_below,
+    COMMUTATOR = |>>,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
 
 CREATE OPERATOR sys.&<| (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overbelow
+    FUNCTION = sys.geometry_overbelow,
+    RESTRICT = sys.gserialized_gist_sel_2d,
+    JOIN = sys.gserialized_gist_joinsel_2d
 );
 
 CREATE OPERATOR sys.~= (
@@ -380,70 +399,71 @@ CREATE OPERATOR sys.@ (
 );
 
 CREATE OPERATOR sys.<< (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_left,
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_left,
     COMMUTATOR = >>,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
 
 CREATE OPERATOR sys.&< (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overleft,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_overleft,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
 
 CREATE OPERATOR sys.>> (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_right,
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_right,
     COMMUTATOR = <<,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
 
 CREATE OPERATOR sys.&> (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overright,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_overright,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
 
-
 CREATE OPERATOR sys.|>> (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_above,
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_above,
     COMMUTATOR = <<|,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
 
 CREATE OPERATOR sys.|&> (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overabove,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_overabove,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
+
 CREATE OPERATOR sys.<<| (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_below,
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_below,
     COMMUTATOR = |>>,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
+
 CREATE OPERATOR sys.&<| (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overbelow,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_overbelow,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
 CREATE OPERATOR sys.~= (
     LEFTARG = sys.GEOGRAPHY,

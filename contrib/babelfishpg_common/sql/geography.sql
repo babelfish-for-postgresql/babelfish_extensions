@@ -957,43 +957,71 @@ CREATE OPERATOR sys.@ (
 );
 
 CREATE OPERATOR sys.<< (
-    LEFTARG = sys.GEOGRAPHY, RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_left
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_left,
+    COMMUTATOR = >>,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
 
 CREATE OPERATOR sys.&< (
-    LEFTARG = sys.GEOGRAPHY, RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_overleft
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_overleft,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
 
 CREATE OPERATOR sys.>> (
-    LEFTARG = sys.GEOGRAPHY, RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_right
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_right,
+    COMMUTATOR = <<,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
 
 CREATE OPERATOR sys.&> (
-    LEFTARG = sys.GEOGRAPHY, RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_overright
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_overright,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
 
 CREATE OPERATOR sys.|>> (
-    LEFTARG = sys.GEOGRAPHY, RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_above
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_above,
+    COMMUTATOR = <<|,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
 
 CREATE OPERATOR sys.|&> (
-    LEFTARG = sys.GEOGRAPHY, RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_overabove
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_overabove,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
 
 CREATE OPERATOR sys.<<| (
-    LEFTARG = sys.GEOGRAPHY, RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_below
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_below,
+    COMMUTATOR = |>>,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
 
 CREATE OPERATOR sys.&<| (
-    LEFTARG = sys.GEOGRAPHY, RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_overbelow
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_overbelow,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
 );
 
 CREATE OPERATOR sys.~= (
