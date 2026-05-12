@@ -106,7 +106,7 @@ static InsertExecContext insert_exec_ctx = {
 
 /*
  * Set the global INSERT EXEC context with target table info.
- * Called from ANTLR parser when INSERT EXEC is detected.
+ * Called from the executor when an INSERT EXEC statement begins.
  * This is called BEFORE temp table creation - just stores the target info.
  *
  * IMPORTANT: We allocate in TopMemoryContext so the strings survive
@@ -157,8 +157,10 @@ pltsql_set_insert_exec_context(Oid temp_table_oid)
 /*
  * Clear the global INSERT EXEC context.
  * Called when exiting INSERT EXEC context normally.
- * Note: Does not clear had_error or started_implicit_txn flags, which are
- * needed for post-cleanup transaction count mismatch checks.
+ *
+ * Note: Does not clear had_error, started_implicit_txn, schema_sig, or
+ * target_rel_oid. Call pltsql_insert_exec_close_target_table() first to
+ * release the lock and free schema_sig before calling this function.
  */
 void
 pltsql_clear_insert_exec_context(void)
@@ -240,10 +242,7 @@ pltsql_insert_exec_clear_error_flag(void)
 void
 pltsql_insert_exec_set_implicit_txn_flag(void)
 {
-	elog(DEBUG4, "TSQL TXN Setting implicit txn flag for INSERT EXEC (was %d, setting to true)",
-		 insert_exec_ctx.started_implicit_txn);
 	insert_exec_ctx.started_implicit_txn = true;
-	elog(DEBUG4, "TSQL TXN After setting implicit txn flag: %d", insert_exec_ctx.started_implicit_txn);
 }
 
 /*
@@ -253,7 +252,6 @@ pltsql_insert_exec_set_implicit_txn_flag(void)
 bool
 pltsql_insert_exec_started_implicit_txn(void)
 {
-	elog(DEBUG4, "TSQL TXN Checking implicit txn flag: %d", insert_exec_ctx.started_implicit_txn);
 	return insert_exec_ctx.started_implicit_txn;
 }
 
@@ -264,7 +262,6 @@ pltsql_insert_exec_started_implicit_txn(void)
 void
 pltsql_insert_exec_clear_implicit_txn_flag(void)
 {
-	elog(DEBUG4, "TSQL TXN Clearing implicit txn flag (was %d)", insert_exec_ctx.started_implicit_txn);
 	insert_exec_ctx.started_implicit_txn = false;
 }
 
@@ -606,7 +603,7 @@ count_select_target_columns(SelectStmt *stmt)
 /*
  * Validate column count from query string BEFORE plan preparation.
  *
- * T-SQL requires column mismatch errors to take priority over runtime errors
+ * tsql requires column mismatch errors to take priority over runtime errors
  * like division by zero. PostgreSQL's plan preparation evaluates constant
  * expressions, so we parse and count columns here without evaluation.
  *
@@ -711,7 +708,6 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("Column name or number of supplied values does not match table definition.")));
-		return false;  /* Not reached, but for clarity */
 	}
 
 	return true;
