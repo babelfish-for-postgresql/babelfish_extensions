@@ -21,6 +21,10 @@ GO
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'BaseType')
 GO
 
+-- Table type
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_tt'), 'BaseType')
+GO
+
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'BaseType')
 GO
 

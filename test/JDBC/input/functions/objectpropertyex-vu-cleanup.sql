@@ -70,6 +70,9 @@ GO
 DROP TABLE objectpropertyex_basetype_table
 GO
 
+DROP TYPE objectpropertyex_basetype_tt
+GO
+
 DROP VIEW objectpropertyex_basetype_view
 GO
 

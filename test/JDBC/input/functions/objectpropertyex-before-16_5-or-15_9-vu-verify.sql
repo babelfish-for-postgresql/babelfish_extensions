@@ -21,6 +21,10 @@ GO
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'BaseType')
 GO
 
+-- Table type
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_tt'), 'BaseType')
+GO
+
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'BaseType')
 GO
 
@@ -66,12 +70,14 @@ SELECT OBJECTPROPERTYEX(
 GO
 
 -- Primary key constraint
+-- NULL expected: sys.key_constraints returns no rows on older databases, so subquery returns NULL
 SELECT OBJECTPROPERTYEX(
     (SELECT object_id FROM sys.key_constraints WHERE name = 'objectpropertyex_pk'),
     'BaseType')
 GO
 
 -- Foreign key constraint
+-- NULL expected: sys.foreign_keys returns no rows on older databases, so subquery returns NULL
 SELECT OBJECTPROPERTYEX(
     (SELECT object_id FROM sys.foreign_keys WHERE name = 'objectpropertyex_fk'),
     'BaseType')
@@ -215,6 +221,7 @@ SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_tvf'), 'IsInlineFunction')
 GO
 
 -- IsPrimaryKey
+-- NULL expected: sys.key_constraints returns no rows on older databases, so subquery returns NULL
 SELECT OBJECTPROPERTYEX(
     (SELECT object_id FROM sys.key_constraints WHERE name = 'objectpropertyex_pk'),
     'IsPrimaryKey')

@@ -35,6 +35,15 @@ U
 ~~END~~
 
 
+-- Table type
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_tt'), 'BaseType')
+GO
+~~START~~
+sql_variant
+TT
+~~END~~
+
+
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'BaseType')
 GO
 ~~START~~

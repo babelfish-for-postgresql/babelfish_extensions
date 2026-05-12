@@ -4686,64 +4686,64 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			 */
 			if ((pg_class->relpersistence == 'p' || pg_class->relpersistence == 'u' || pg_class->relpersistence == 't') &&
 					(pg_class->relkind == 'r'))
-		{
-			/* 
-			 * Check whether it is a Table type (TT) object.
-			 * The reltype of the pg_class object should be there in pg_type. The pg_type object found
-			 * should be of composite type (c) and the type of dependency should be DEPENDENCY_INTERNAL (i).
-			 * We scan pg_depend catalog to find the type of the dependency.
-			 */
-			HeapTuple tp;
-			tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(pg_class->reltype));
-			if(HeapTupleIsValid(tp))
 			{
-				Form_pg_type typform = (Form_pg_type) GETSTRUCT(tp);
-
-				if (typform->typtype == 'c')
+				/* 
+				 * Check whether it is a Table type (TT) object.
+				 * The reltype of the pg_class object should be there in pg_type. The pg_type object found
+				 * should be of composite type (c) and the type of dependency should be DEPENDENCY_INTERNAL (i).
+				 * We scan pg_depend catalog to find the type of the dependency.
+				 */
+				HeapTuple tp;
+				tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(pg_class->reltype));
+				if(HeapTupleIsValid(tp))
 				{
-					Relation	depRel;
-					ScanKeyData key[2];
-					SysScanDesc scan;
-					HeapTuple	tup;
+					Form_pg_type typform = (Form_pg_type) GETSTRUCT(tp);
 
-					depRel = table_open(DependRelationId, AccessShareLock);
-
-					ScanKeyInit(&key[0],
-								Anum_pg_depend_objid,
-								BTEqualStrategyNumber, F_OIDEQ,
-								ObjectIdGetDatum(typform->typrelid));
-					ScanKeyInit(&key[1],
-								Anum_pg_depend_refobjid,
-								BTEqualStrategyNumber, F_OIDEQ,
-								ObjectIdGetDatum(typform->oid));
-
-					scan = systable_beginscan(depRel, InvalidOid, false,
-							  				NULL, 2, key);
-
-					if (HeapTupleIsValid(tup = systable_getnext(scan)))
+					if (typform->typtype == 'c')
 					{
-						Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+						Relation	depRel;
+						ScanKeyData key[2];
+						SysScanDesc scan;
+						HeapTuple	tup;
 
-						if (depform->deptype == 'i')
-							type = OBJECT_TYPE_TABLE_TYPE;
+						depRel = table_open(DependRelationId, AccessShareLock);
+
+						ScanKeyInit(&key[0],
+									Anum_pg_depend_objid,
+									BTEqualStrategyNumber, F_OIDEQ,
+									ObjectIdGetDatum(typform->typrelid));
+						ScanKeyInit(&key[1],
+									Anum_pg_depend_refobjid,
+									BTEqualStrategyNumber, F_OIDEQ,
+									ObjectIdGetDatum(typform->oid));
+
+						scan = systable_beginscan(depRel, InvalidOid, false,
+								  				NULL, 2, key);
+
+						if (HeapTupleIsValid(tup = systable_getnext(scan)))
+						{
+							Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+
+							if (depform->deptype == 'i')
+								type = OBJECT_TYPE_TABLE_TYPE;
+						}
+
+						systable_endscan(scan);
+
+						table_close(depRel, AccessShareLock);
 					}
-
-					systable_endscan(scan);
-
-					table_close(depRel, AccessShareLock);
+					ReleaseSysCache(tp);
 				}
-				ReleaseSysCache(tp);
+				/*
+				 * If the object is not of Table type (TT), it should be user defined table (U)
+				 */
+				if (type != OBJECT_TYPE_TABLE_TYPE)
+					type = OBJECT_TYPE_TABLE;
 			}
-			/*
-			 * If the object is not of Table type (TT), it should be user defined table (U)
-			 */
-			if (type != OBJECT_TYPE_TABLE_TYPE)
-				type = OBJECT_TYPE_TABLE;
-		}
-		else if (pg_class->relkind == 'v')
-			type = OBJECT_TYPE_VIEW;
-		else if (pg_class->relkind == 'S')
-			type = OBJECT_TYPE_SEQUENCE_OBJECT;
+			else if (pg_class->relkind == 'v')
+				type = OBJECT_TYPE_VIEW;
+			else if (pg_class->relkind == 'S')
+				type = OBJECT_TYPE_SEQUENCE_OBJECT;
 		}
 
 		ReleaseSysCache(tuple);

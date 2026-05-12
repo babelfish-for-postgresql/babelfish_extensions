@@ -35,6 +35,15 @@ U
 ~~END~~
 
 
+-- Table type
+SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_tt'), 'BaseType')
+GO
+~~START~~
+sql_variant
+TT
+~~END~~
+
+
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'BaseType')
 GO
 ~~START~~
@@ -135,6 +144,7 @@ TR
 
 
 -- Primary key constraint
+-- NULL expected: sys.key_constraints returns no rows on older databases, so subquery returns NULL
 SELECT OBJECTPROPERTYEX(
     (SELECT object_id FROM sys.key_constraints WHERE name = 'objectpropertyex_pk'),
     'BaseType')
@@ -146,6 +156,7 @@ sql_variant
 
 
 -- Foreign key constraint
+-- NULL expected: sys.foreign_keys returns no rows on older databases, so subquery returns NULL
 SELECT OBJECTPROPERTYEX(
     (SELECT object_id FROM sys.foreign_keys WHERE name = 'objectpropertyex_fk'),
     'BaseType')
@@ -454,6 +465,7 @@ sql_variant
 
 
 -- IsPrimaryKey
+-- NULL expected: sys.key_constraints returns no rows on older databases, so subquery returns NULL
 SELECT OBJECTPROPERTYEX(
     (SELECT object_id FROM sys.key_constraints WHERE name = 'objectpropertyex_pk'),
     'IsPrimaryKey')

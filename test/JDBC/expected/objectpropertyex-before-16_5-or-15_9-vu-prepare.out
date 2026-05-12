@@ -10,6 +10,9 @@ GO
 CREATE TABLE objectpropertyex_basetype_table(a int)
 GO
 
+CREATE TYPE objectpropertyex_basetype_tt AS TABLE(a int)
+GO
+
 CREATE VIEW objectpropertyex_basetype_view AS
 SELECT 1
 GO
