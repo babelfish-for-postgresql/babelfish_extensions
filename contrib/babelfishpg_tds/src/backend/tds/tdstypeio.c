@@ -2297,6 +2297,9 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
+	PG_TRY();
+	{
+
 	if (!xactStarted)
 		StartTransactionCommand();
 	PushActiveSnapshot(GetTransactionSnapshot());
@@ -2318,10 +2321,6 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 
 	if (rc != SPI_OK_UTILITY)
 	{
-		/* Reset dialect. */
-		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		elog(ERROR, "Failed to create the underlying table for table-valued parameter: %d", rc);
 	}
 
@@ -2338,6 +2337,11 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		Oid		   *argtypes;
 		int			paramIndex = 0;
 
+		/*
+		 * pg_mul_s32_overflow guards colCount * rowCount. The subsequent
+		 * palloc_array calls use mul_size() internally, so the secondary
+		 * multiplications (nargs * sizeof(type)) are also overflow-safe.
+		 */
 		if (pg_mul_s32_overflow(token->tvpInfo->colCount, token->tvpInfo->rowCount, &nargs))
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -2463,10 +2467,6 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 
 			if (rc != SPI_OK_INSERT)
 			{
-				/* Reset dialect. */
-				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-								  GUC_CONTEXT_CONFIG,
-								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "Failed to insert in the underlying table for table-valued parameter: %d", rc);
 			}
 
@@ -2477,10 +2477,15 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		if (!xactStarted)
 			CommitTransactionCommand();
 
+	}
+	}
+	PG_FINALLY();
+	{
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
+	PG_END_TRY();
 
 	/* Free all the pointers. */
 	while (token->tvpInfo->rowData)
