@@ -80,13 +80,6 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
--- Normalize XML to match T-SQL behavior: strips whitespace-only text nodes
--- and converts CDATA sections to escaped entity references.
-CREATE OR REPLACE FUNCTION sys.bbf_xml_normalize(XML)
-RETURNS XML
-AS 'babelfishpg_tsql', 'bbf_xml_normalize'
-LANGUAGE C STABLE STRICT PARALLEL SAFE;
-
 -- helper functions for XML EXIST(xpath)
 CREATE OR REPLACE FUNCTION sys.bbf_xmlexist(TEXT, ANYELEMENT)
 RETURNS sys.BIT
@@ -116,7 +109,7 @@ BEGIN
         RAISE EXCEPTION 'SELECT failed because the following SET options have incorrect settings: ''QUOTED_IDENTIFIER''. Verify that SET options are correct for XML data type methods.';
     END IF;
 
-    RETURN xmlexists($1 passing by value sys.bbf_xml_normalize($2::xml));
+    RETURN xmlexists($1 passing by value $2);
 END
 $BODY$
 LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
@@ -150,20 +143,20 @@ BEGIN
         RAISE EXCEPTION 'SELECT failed because the following SET options have incorrect settings: ''QUOTED_IDENTIFIER''. Verify that SET options are correct for XML data type methods.';
     END IF;
 
-    result_set := xpath(xpath_pattern, sys.bbf_xml_normalize(xml_element::xml));
+    result_set := xpath(xpath_pattern, xml_element);
     IF (cardinality(result_set) > 1) THEN
         RAISE EXCEPTION 'XML Value result is not a single value.';
     ELSIF (cardinality(result_set) = 0) THEN
         RETURN NULL;
     ELSE
-        result := (xpath('string(' + xpath_pattern + ')', sys.bbf_xml_normalize(xml_element::xml)))[1];
+        result := (xpath('string(' + xpath_pattern + ')', xml_element))[1];
         result := pg_catalog.replace(result, '&lt;', '<');
         result := pg_catalog.replace(result, '&gt;', '>');
         result := pg_catalog.replace(result, '&apos;', '''');
         result := pg_catalog.replace(result, '&quot;', '"');
         result := pg_catalog.replace(result, '&amp;', '&');
         return result;
-    END IF; 
+    END IF;
 END
 $BODY$
 LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
@@ -197,7 +190,7 @@ BEGIN
         RAISE EXCEPTION 'SELECT failed because the following SET options have incorrect settings: ''QUOTED_IDENTIFIER''. Verify that SET options are correct for XML data type methods.';
     END IF;
 
-    result_set := xpath(xpath_pattern, sys.bbf_xml_normalize(xml_element::xml));
+    result_set := xpath(xpath_pattern, xml_element);
     IF (cardinality(result_set) = 0) THEN
         RETURN ''::xml;
     ELSE

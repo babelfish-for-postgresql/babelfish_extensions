@@ -306,7 +306,7 @@ SELECT data.query('/root') FROM xml_query_t10 WHERE id = 2;
 GO
 ~~START~~
 xml
-<root/>
+<root>   </root>
 ~~END~~
 
 
@@ -1238,7 +1238,7 @@ SELECT @x.query('/root/child');
 GO
 ~~START~~
 xml
-<child>&lt;data&gt;Hello World&lt;/data&gt;</child>
+<child><![CDATA[<data>Hello World</data>]]></child>
 ~~END~~
 
 
@@ -1248,7 +1248,7 @@ SELECT @x.query('/root');
 GO
 ~~START~~
 xml
-<root/>
+<root><![CDATA[]]></root>
 ~~END~~
 
 
@@ -1258,7 +1258,7 @@ SELECT @x.query('/root');
 GO
 ~~START~~
 xml
-<root>before&lt;inside&gt;after</root>
+<root>before<![CDATA[<inside>]]>after</root>
 ~~END~~
 
 
