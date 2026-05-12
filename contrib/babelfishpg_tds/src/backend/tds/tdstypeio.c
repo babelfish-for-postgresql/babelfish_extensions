@@ -2331,10 +2331,12 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 
 	{
 		char	   *src;
-		int			nargs = token->tvpInfo->colCount * token->tvpInfo->rowCount;
+		int			colCount = token->tvpInfo->colCount;
+		int			nargs = colCount * token->tvpInfo->rowCount;
 		Datum	   *values = palloc(nargs * sizeof(Datum));
 		char	   *nulls = palloc(nargs * sizeof(char));
 		Oid		   *argtypes = palloc(nargs * sizeof(Datum));
+		int			rowIdx = 0;
 
 		query = " ";
 
@@ -2349,76 +2351,85 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 			int			currentColumn = 0;
 			char	   *currentQuery = pstrdup(" ");
 
-			while (currentColumn != token->tvpInfo->colCount)
+			while (currentColumn != colCount)
 			{
+				/*
+				 * idx is the global parameter slot across all rows --
+				 * required so that values/nulls/argtypes for row N
+				 * don't overwrite row N-1, and so the generated
+				 * $N placeholders are unique per row*col.
+				 */
+				int			idx = rowIdx * colCount + currentColumn;
+
 				temp = &(row->columnValues[currentColumn]);
 				tempFuncInfo = TdsLookupTypeFunctionsByTdsId(colMetaData[currentColumn].columnTdsType, colMetaData[currentColumn].maxLen);
-				GetPgOid(argtypes[currentColumn], tempFuncInfo);
+				GetPgOid(argtypes[idx], tempFuncInfo);
 
 				if (row->isNull[currentColumn] != 'n')
 					switch (colMetaData[currentColumn].columnTdsType)
 					{
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_VARCHAR:
-							values[currentColumn] = TdsTypeVarcharToDatum(temp, colMetaData[currentColumn].encoding, colMetaData[currentColumn].columnTdsType);
+							values[idx] = TdsTypeVarcharToDatum(temp, colMetaData[currentColumn].encoding, colMetaData[currentColumn].columnTdsType);
 							break;
 						case TDS_TYPE_NCHAR:
 						case TDS_TYPE_NVARCHAR:
-							values[currentColumn] = TdsTypeNCharToDatum(temp);
+							values[idx] = TdsTypeNCharToDatum(temp);
 							break;
 						case TDS_TYPE_INTEGER:
 						case TDS_TYPE_BIT:
-							values[currentColumn] = TdsTypeIntegerToDatum(temp, colMetaData[currentColumn].maxLen);
+							values[idx] = TdsTypeIntegerToDatum(temp, colMetaData[currentColumn].maxLen);
 							break;
 						case TDS_TYPE_FLOAT:
-							values[currentColumn] = TdsTypeFloatToDatum(temp, colMetaData[currentColumn].maxLen);
+							values[idx] = TdsTypeFloatToDatum(temp, colMetaData[currentColumn].maxLen);
 							break;
 						case TDS_TYPE_NUMERICN:
 						case TDS_TYPE_DECIMALN:
-							values[currentColumn] = TdsTypeNumericToDatum(temp, colMetaData[currentColumn].scale);
+							values[idx] = TdsTypeNumericToDatum(temp, colMetaData[currentColumn].scale);
 							break;
 						case TDS_TYPE_VARBINARY:
 						case TDS_TYPE_BINARY:
-							values[currentColumn] = TdsTypeVarbinaryToDatum(temp);
-							argtypes[currentColumn] = tempFuncInfo->ttmtypeid;
+							values[idx] = TdsTypeVarbinaryToDatum(temp);
+							argtypes[idx] = tempFuncInfo->ttmtypeid;
 							break;
 						case TDS_TYPE_DATE:
-							values[currentColumn] = TdsTypeDateToDatum(temp);
+							values[idx] = TdsTypeDateToDatum(temp);
 							break;
 						case TDS_TYPE_TIME:
-							values[currentColumn] = TdsTypeTimeToDatum(temp, colMetaData[currentColumn].scale, temp->len);
+							values[idx] = TdsTypeTimeToDatum(temp, colMetaData[currentColumn].scale, temp->len);
 							break;
 						case TDS_TYPE_DATETIMEOFFSET:
-							values[currentColumn] = TdsTypeDatetimeoffsetToDatum(temp, colMetaData[currentColumn].scale, temp->len);
+							values[idx] = TdsTypeDatetimeoffsetToDatum(temp, colMetaData[currentColumn].scale, temp->len);
 							break;
 						case TDS_TYPE_DATETIME2:
-							values[currentColumn] = TdsTypeDatetime2ToDatum(temp, colMetaData[currentColumn].scale, temp->len);
+							values[idx] = TdsTypeDatetime2ToDatum(temp, colMetaData[currentColumn].scale, temp->len);
 							break;
 						case TDS_TYPE_DATETIMEN:
-							values[currentColumn] = TdsTypeDatetimeToDatum(temp);
+							values[idx] = TdsTypeDatetimeToDatum(temp);
 							break;
 						case TDS_TYPE_MONEYN:
-							values[currentColumn] = TdsTypeMoneyToDatum(temp);
+							values[idx] = TdsTypeMoneyToDatum(temp);
 							break;
 						case TDS_TYPE_XML:
-							values[currentColumn] = TdsTypeXMLToDatum(temp);
+							values[idx] = TdsTypeXMLToDatum(temp);
 							break;
 						case TDS_TYPE_UNIQUEIDENTIFIER:
-							values[currentColumn] = TdsTypeUIDToDatum(temp);
+							values[idx] = TdsTypeUIDToDatum(temp);
 							break;
 						case TDS_TYPE_SQLVARIANT:
-							values[currentColumn] = TdsTypeSqlVariantToDatum(temp);
+							values[idx] = TdsTypeSqlVariantToDatum(temp);
 							break;
 						case TDS_TYPE_CLRUDT:
-							values[currentColumn] = TdsTypeSpatialToDatum(temp, false);
-							break; 
+							values[idx] = TdsTypeSpatialToDatum(temp, false);
+							break;
 					}
 				/* Build a string for bind parameters. */
-				currentQuery = psprintf("%s,$%d", currentQuery, currentColumn + 1);
-				nulls[currentColumn] = row->isNull[currentColumn];
+				currentQuery = psprintf("%s,$%d", currentQuery, idx + 1);
+				nulls[idx] = row->isNull[currentColumn];
 				currentColumn++;
 			}
 			row = row->nextRow;
+			rowIdx++;
 			currentQuery[1] = ' ';	/* Convert the first ',' into a blank
 									 * space. */
 
