@@ -1626,8 +1626,10 @@ isForAuto(List *target, ForAutoMode mode)
 					if (agg != NULL)
 					{
 						char *funcname = get_func_name(agg->aggfnoid);
+						char *funcns = get_namespace_name(get_func_namespace(agg->aggfnoid));
 						List *aggargs = agg->args;
-						if (funcname == NULL ||
+						if (funcname == NULL || funcns == NULL ||
+							strcmp(funcns, "sys") != 0 ||
 							(strcmp(funcname, agg_name1) != 0 && strcmp(funcname, agg_name2) != 0))
 							return false;
 						if (aggargs != NULL && list_length(aggargs) > 1 &&
@@ -1812,7 +1814,7 @@ string_to_fixed_hash(const char *input)
 {
 	Datum hash_val = hash_any_extended((unsigned char *)input, strlen(input), 0);
 	char *result = palloc(17); /* 16 hex chars + null terminator */
-	snprintf(result, 17, "%016lx", DatumGetUInt64(hash_val));
+	snprintf(result, 17, "%016lx", (unsigned long) DatumGetUInt64(hash_val));
 	return result;
 }
 
@@ -1956,6 +1958,7 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 
 	/* target entry iteration variables */
 	List			   *origTargetList = origQuery->targetList;
+	StringInfoData		fullSrcPath;
 	ListCell		   *lc;
 
 	/* XML AUTO: metadata string builder */
@@ -1992,6 +1995,7 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 	}
 
 	/* Process each target entry to determine nesting structure */
+	initStringInfo(&fullSrcPath);
 	foreach(lc, origTargetList)
 	{
 		TargetEntry		   *outermostTargetEntry;
@@ -2000,7 +2004,6 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 		char			   *matchedSrcAlias;
 		char			   *hashedFullSrcPath;
 		Query			   *curQuery;
-		StringInfoData		fullSrcPath;
 		bool				matchedSrcCTEIsRecursive = false;
 		bool				atOutermostLayer = true;
 
@@ -2015,7 +2018,7 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 		/* JSON AUTO: wrapper alias column name reference */
 		String			   *colnameStr = NULL;
 
-		initStringInfo(&fullSrcPath);
+		resetStringInfo(&fullSrcPath);
 
 		if (!lc || !lfirst(lc))
 			continue;
@@ -2056,10 +2059,14 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 					ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR),
 							 errmsg("CTE hash not initialized for RTE_CTE source")));
-				cteHashEntry = (CtenameIdx *) hash_search(ctenameIdxHash,
-														  matchedSrc->ctename,
-														  HASH_FIND,
-														  &found);
+				{
+					char *hashedKey = string_to_fixed_hash(matchedSrc->ctename);
+					cteHashEntry = (CtenameIdx *) hash_search(ctenameIdxHash,
+															  hashedKey,
+															  HASH_FIND,
+															  &found);
+					pfree(hashedKey);
+				}
 				if (!found)
 					ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR),
@@ -2316,8 +2323,9 @@ static bool forAutoWalker(Node *node, ForAutoContext *ctx)
 			foreach(cteLc, q->cteList)
 			{
 				CommonTableExpr *cteEntry = (CommonTableExpr *) lfirst(cteLc);
+				char *hashedCteName = string_to_fixed_hash(cteEntry->ctename);
 				CtenameIdx *cteHashEntry = (CtenameIdx *) hash_search(ctx->ctenameIdxHash,
-																	  cteEntry->ctename,
+																	  hashedCteName,
 																	  HASH_ENTER,
 																	  &found);
 				if (found)
@@ -2325,14 +2333,24 @@ static bool forAutoWalker(Node *node, ForAutoContext *ctx)
 							(errcode(ERRCODE_INTERNAL_ERROR),
 							 errmsg("duplicate CTE name \"%s\" in FOR AUTO processing",
 									cteEntry->ctename)));
-				strlcpy(cteHashEntry->ctename, cteEntry->ctename, NAMEDATALEN);
+				strlcpy(cteHashEntry->ctename, hashedCteName, NAMEDATALEN);
 				cteHashEntry->idx_in_ctelist = cteIdx;
 				cteIdx++;
+				pfree(hashedCteName);
 			}
 		}
 
-		/* First walk inner queries recursively */
-		query_tree_walker(q, forAutoWalker, (void *) ctx, 0);
+		/* Save outer CTE context before recursing into inner queries */
+		{
+			List *savedCteList = ctx->cteList;
+			HTAB *savedCtenameIdxHash = ctx->ctenameIdxHash;
+
+			query_tree_walker(q, forAutoWalker, (void *) ctx, 0);
+
+			/* Restore so handleForAuto sees this query's CTEs */
+			ctx->cteList = savedCteList;
+			ctx->ctenameIdxHash = savedCtenameIdxHash;
+		}
 
 		/* Then check if this layer has FOR JSON AUTO or FOR XML AUTO */
 		return handleForAuto(q, ctx);

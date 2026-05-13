@@ -617,6 +617,31 @@ FOR XML AUTO;
 GO
 
 
+-- 6.15 Two CTEs with same first 63 chars but different suffix (hash collision test)
+;WITH aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_first AS (
+    SELECT CustomerID, CompanyName FROM forxmlauto_t_customers WHERE CustomerID = 'ALFKI'
+),
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_second AS (
+    SELECT OrderID, CustomerID FROM forxmlauto_t_orders WHERE CustomerID = 'ALFKI'
+)
+SELECT a.CustomerID, a.CompanyName, b.OrderID
+FROM aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_first a
+JOIN aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_second b ON a.CustomerID = b.CustomerID
+FOR XML AUTO;
+GO
+
+
+-- 6.16 Nested FOR XML AUTO with CTE at outer level (CTE context save/restore)
+;WITH outer_cte AS (
+    SELECT CustomerID, CompanyName FROM forxmlauto_t_customers WHERE CustomerID = 'ALFKI'
+)
+SELECT * FROM (
+    SELECT oc.CustomerID, oc.CompanyName FROM outer_cte oc FOR XML AUTO
+) sub(result)
+FOR XML AUTO;
+GO
+
+
 
 -- ============================================
 -- SECTION 7: Subqueries
@@ -1431,3 +1456,15 @@ GO
 SELECT * FROM [_x002E_tbl] FOR XML AUTO;
 GO
 
+
+-- ============================================
+-- SECTION 20: Transaction Boundary
+-- ============================================
+-- 20.1 FOR XML AUTO inside explicit transaction
+BEGIN TRAN;
+SELECT c.CustomerID, c.CompanyName
+FROM forxmlauto_t_customers c
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+COMMIT;
+GO
