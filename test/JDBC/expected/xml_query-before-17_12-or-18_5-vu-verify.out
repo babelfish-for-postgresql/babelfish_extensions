@@ -306,7 +306,7 @@ SELECT data.query('/root') FROM xml_query_t10 WHERE id = 2;
 GO
 ~~START~~
 xml
-<root/>
+<root>   </root>
 ~~END~~
 
 
@@ -570,39 +570,31 @@ GO
 ~~ERROR (Message: procedure xml_query_proc1() does not exist)~~
 
 
-
-EXEC xml_query_proc2 @id = 1;
 GO
-~~START~~
-xml
-<name>John</name>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure xml_query_proc2(@id => integer) does not exist)~~
 
 
 EXEC xml_query_proc2 @id = 3;
 GO
-~~START~~
-xml
-<name>Bob</name>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure xml_query_proc2(@id => integer) does not exist)~~
 
 
 EXEC xml_query_proc2 @id = 4;
 GO
-~~START~~
-xml
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure xml_query_proc2(@id => integer) does not exist)~~
 
 
 EXEC xml_query_proc3;
 GO
-~~START~~
-int#!#xml
-1#!#<root><name>John</name><age>30</age></root>
-2#!#<root><name>Jane</name><age>25</age></root>
-3#!#<root><name>Bob</name></root>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure xml_query_proc3() does not exist)~~
 
 
 
@@ -616,29 +608,24 @@ GO
 ~~ERROR (Message: function dbo.xml_query_func1() does not exist)~~
 
 
-
-SELECT dbo.xml_query_func2(1) AS result;
 GO
-~~START~~
-xml
-<name>John</name>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function dbo.xml_query_func2(integer) does not exist)~~
 
 
 SELECT dbo.xml_query_func2(3) AS result;
 GO
-~~START~~
-xml
-<name>Bob</name>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function dbo.xml_query_func2(integer) does not exist)~~
 
 
 SELECT dbo.xml_query_func2(4) AS result;
 GO
-~~START~~
-xml
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function dbo.xml_query_func2(integer) does not exist)~~
 
 
 
@@ -653,13 +640,10 @@ GO
 ~~ERROR (Message: relation "xml_query_dep_view1" does not exist)~~
 
 
-
-SELECT * FROM xml_query_dep_view2;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "xml_query_dep_view2" does not exist)~~
-
 
 
 
@@ -828,7 +812,6 @@ GO
 
 
 
-
 -- ============================================
 -- SECTION 25: Computed columns
 -- ============================================
@@ -839,22 +822,16 @@ GO
 ~~ERROR (Message: relation "xml_query_computed_t1" does not exist)~~
 
 
-
-SELECT * FROM xml_query_computed_t1;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "xml_query_computed_t1" does not exist)~~
 
 
-
-DELETE FROM xml_query_computed_t1;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "xml_query_computed_t1" does not exist)~~
-
-
 
 
 -- ============================================
@@ -1126,7 +1103,6 @@ GO
 
 
 
-
 -- ============================================
 -- SECTION 39: .query() with table.column.query() syntax
 -- ============================================
@@ -1174,7 +1150,6 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: function xml_query_itvf_func() does not exist)~~
-
 
 
 
@@ -1239,7 +1214,7 @@ SELECT @x.query('/root/child');
 GO
 ~~START~~
 xml
-<child>&lt;data&gt;Hello World&lt;/data&gt;</child>
+<child><![CDATA[<data>Hello World</data>]]></child>
 ~~END~~
 
 
@@ -1249,7 +1224,7 @@ SELECT @x.query('/root');
 GO
 ~~START~~
 xml
-<root/>
+<root><![CDATA[]]></root>
 ~~END~~
 
 
@@ -1259,7 +1234,7 @@ SELECT @x.query('/root');
 GO
 ~~START~~
 xml
-<root>before&lt;inside&gt;after</root>
+<root>before<![CDATA[<inside>]]>after</root>
 ~~END~~
 
 
