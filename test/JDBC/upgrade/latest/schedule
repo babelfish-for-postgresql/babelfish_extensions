@@ -684,3 +684,4 @@ forxml-raw-elements-1gb-limit
 forxml-path-elements
 xml_query
 BABEL-5264
+babel_sqlvariant_coerce_type
