@@ -823,14 +823,14 @@ get_insert_exec_info(TSqlParser::Dml_statementContext *ctx)
 	 */
 	if (tbl_name && tbl_name[0] == '#')
 	{
-		tbl_schema = NULL;
-		tbl_db = NULL;
+		if (tbl_schema) { pfree(tbl_schema); tbl_schema = NULL; }
+		if (tbl_db)     { pfree(tbl_db);     tbl_db = NULL; }
 	}
 
 	if (!tbl_name)
 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 			"INSERT EXEC requires a valid target table",
-			getLineAndPos(ctx->insert_statement()->ddl_object()));
+			getLineAndPos(ctx->insert_statement()));
 
 	info->target  = tbl_name;
 	info->schema  = tbl_schema;
@@ -1802,6 +1802,8 @@ public:
     	 * Reaching here means a broken parser state.
     	*/
     	Assert(old_stmt != NULL && container != NULL);
+		if (!old_stmt || !container)
+    		elog(ERROR, "INSERT EXEC: internal parser state error in replaceGraftedStatement");
 
 		List *siblings = getCode(container);
 		ListCell *lc;
@@ -1811,12 +1813,18 @@ public:
 			std::cout << "    replacing stmt (" << (void *) old_stmt << ") with (" << (void *) new_stmt << ") in container(" << (void *) container << ")" << std::endl;
 
 		/* Find the position of the old statement */
+		bool found = false;
 		foreach(lc, siblings)
 		{
-			if (lfirst(lc) == old_stmt)
-				break;
+			if (lfirst(lc) == old_stmt) 
+			{ 
+				found = true; 
+				break; 
+			}
 			pos++;
 		}
+		if (!found)
+			elog(ERROR, "INSERT EXEC: grafted statement not found in container");
 
 		/* Remove old statement and insert new one at the same position */
 		siblings = list_delete_ptr(siblings, old_stmt);
@@ -2198,7 +2206,10 @@ public:
 		 * When enabled, we create a PLtsql_stmt_exec instead of PLtsql_stmt_execsql,
 		 * which allows the executor to handle INSERT EXEC with the new DestReceiver
 		 * and temp table approach. When disabled, fall through to legacy behavior.
-		 */
+		 
+		 * Note: process_execsql_remove_unsupported_tokens() above populates
+ 		 * rewritten_query_fragment which handleInsertExec() depends on.
+		*/
 		if (is_insert_exec && pltsql_enable_new_insert_exec)
 		{
 			handleInsertExec(ctx);
