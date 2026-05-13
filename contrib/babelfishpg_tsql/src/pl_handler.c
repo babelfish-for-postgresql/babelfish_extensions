@@ -2347,9 +2347,12 @@ static bool forAutoWalker(Node *node, ForAutoContext *ctx)
 
 			query_tree_walker(q, forAutoWalker, (void *) ctx, 0);
 
-			/* Restore so handleForAuto sees this query's CTEs */
-			ctx->cteList = savedCteList;
-			ctx->ctenameIdxHash = savedCtenameIdxHash;
+			/* Only restore if this query had its own CTEs */
+			if (q->cteList != NULL)
+			{
+				ctx->cteList = savedCteList;
+				ctx->ctenameIdxHash = savedCtenameIdxHash;
+			}
 		}
 
 		/* Then check if this layer has FOR JSON AUTO or FOR XML AUTO */
