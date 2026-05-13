@@ -1304,9 +1304,6 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 			 SPI_result_code_string(rc));
 	pfree(create_stmt.data);
 
-	/* Reset the pending drop flag */
-	insert_exec_ctx.pending_drop = false;
-
 	/*
 	 * Parse schema and table name from target_table.
 	 * Format can be: "table", "schema.table", or "db.schema.table"
@@ -1321,11 +1318,14 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 	}
 	else
 	{
-		if (!parse_insert_exec_table_name(target_table, &schema_name, &table_name,
-										  &physical_schema, true))
-		{
-			elog(ERROR, "INSERT-EXEC: Failed to parse target table name: %s", target_table);
-		}
+		table_name = pstrdup(target_table);
+		if (schema_name_in != NULL)
+			schema_name = pstrdup(schema_name_in);
+		else
+			schema_name = pstrdup("dbo");
+		physical_schema = get_physical_schema_name(get_cur_db_name(), schema_name);
+		if (physical_schema == NULL)
+			elog(ERROR, "INSERT-EXEC: Failed to resolve schema for target table: %s", target_table);
 	}
 
 	initStringInfo(&create_stmt);
