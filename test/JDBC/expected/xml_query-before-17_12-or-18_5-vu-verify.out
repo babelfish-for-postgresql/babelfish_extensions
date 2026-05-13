@@ -570,6 +570,7 @@ GO
 ~~ERROR (Message: procedure xml_query_proc1() does not exist)~~
 
 
+EXEC xml_query_proc2 @id = 1;
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -608,6 +609,7 @@ GO
 ~~ERROR (Message: function dbo.xml_query_func1() does not exist)~~
 
 
+SELECT dbo.xml_query_func2(1) AS result;
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -640,6 +642,7 @@ GO
 ~~ERROR (Message: relation "xml_query_dep_view1" does not exist)~~
 
 
+SELECT * FROM xml_query_dep_view2;
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -822,16 +825,19 @@ GO
 ~~ERROR (Message: relation "xml_query_computed_t1" does not exist)~~
 
 
+SELECT * FROM xml_query_computed_t1;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "xml_query_computed_t1" does not exist)~~
 
 
+DELETE FROM xml_query_computed_t1;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "xml_query_computed_t1" does not exist)~~
+
 
 
 -- ============================================
