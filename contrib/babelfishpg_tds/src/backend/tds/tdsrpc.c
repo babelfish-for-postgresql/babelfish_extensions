@@ -190,6 +190,7 @@ cleanup_tvp_temp_tables(void)
 	bool		xactStarted;
 	bool		need_cleanup = false;
 	int			rc;
+	int			saved_dialect;
 
 	if (tvp_lookup_list == NIL)
 		return;
@@ -212,46 +213,44 @@ cleanup_tvp_temp_tables(void)
 	}
 
 	xactStarted = IsTransactionOrTransactionBlock();
+	saved_dialect = sql_dialect;
 
-	/* DROP needs the postgres dialect, matching TdsRecvTypeTable. */
-	set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
-					  GUC_CONTEXT_CONFIG,
-					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-
-	if (!xactStarted)
-		StartTransactionCommand();
-	PushActiveSnapshot(GetTransactionSnapshot());
-
-	if ((rc = SPI_connect()) < 0)
+	PG_TRY();
 	{
-		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		elog(ERROR, "SPI_connect() failed in TVP temp table cleanup with return code %d",
-			 rc);
-	}
+		/* DROP needs the postgres dialect, matching TdsRecvTypeTable. */
+		sql_dialect = SQL_DIALECT_PG;
 
-	foreach(lc, tvp_lookup_list)
-	{
-		TvpLookupItem *item = (TvpLookupItem *) lfirst(lc);
+		if (!xactStarted)
+			StartTransactionCommand();
+		PushActiveSnapshot(GetTransactionSnapshot());
 
-		if (item->tableName != NULL)
+		if ((rc = SPI_connect()) < 0)
+			elog(ERROR, "SPI_connect() failed in TVP temp table cleanup with return code %d",
+				 rc);
+
+		foreach(lc, tvp_lookup_list)
 		{
-			char	   *query = psprintf("DROP TABLE IF EXISTS %s", item->tableName);
+			TvpLookupItem *item = (TvpLookupItem *) lfirst(lc);
 
-			SPI_execute(query, false, 0);
-			pfree(query);
+			if (item->tableName != NULL)
+			{
+				char	   *query = psprintf("DROP TABLE IF EXISTS %s", item->tableName);
+
+				SPI_execute(query, false, 0);
+				pfree(query);
+			}
 		}
+
+		SPI_finish();
+		PopActiveSnapshot();
+		if (!xactStarted)
+			CommitTransactionCommand();
 	}
-
-	SPI_finish();
-	PopActiveSnapshot();
-	if (!xactStarted)
-		CommitTransactionCommand();
-
-	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-					  GUC_CONTEXT_CONFIG,
-					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	PG_FINALLY();
+	{
+		sql_dialect = saved_dialect;
+	}
+	PG_END_TRY();
 
 	tvp_lookup_list = NIL;
 }
