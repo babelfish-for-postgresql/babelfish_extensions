@@ -222,6 +222,13 @@ cleanup_tvp_temp_tables(void)
 
 		if (!xactStarted)
 			StartTransactionCommand();
+		/*
+		 * Required: keep an outer snapshot live across the
+		 * CommitTransactionCommand below, otherwise the rest of the RPC
+		 * fails with "cannot execute SQL without an outer snapshot or
+		 * portal". SPI_execute's internal push/pop only covers the SPI call.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
 
 		if ((rc = SPI_connect()) < 0)
 			elog(ERROR, "SPI_connect() failed in TVP temp table cleanup with return code %d",
@@ -241,6 +248,7 @@ cleanup_tvp_temp_tables(void)
 		}
 
 		SPI_finish();
+		PopActiveSnapshot();
 		if (!xactStarted)
 			CommitTransactionCommand();
 	}
