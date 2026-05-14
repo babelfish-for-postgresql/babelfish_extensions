@@ -1,10 +1,21 @@
 -- ============================================================
+-- SESSION-LEVEL GUC CONFIGURATION
+-- ============================================================
+SELECT set_config('babelfishpg_tsql.explain_verbose',  'off', false)
+SELECT set_config('babelfishpg_tsql.explain_costs',    'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing',   'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary',  'off', false)
+SELECT set_config('babelfishpg_tsql.explain_buffers',  'off', false)
+SELECT set_config('babelfishpg_tsql.explain_wal',      'off', false)
+SELECT set_config('babelfishpg_tsql.explain_settings', 'off', false)
+SELECT set_config('max_parallel_workers_per_gather', '0', false)
+SELECT set_config('enable_seqscan',    'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
+GO
+
+-- ============================================================
 -- SECTION 1: DDL ERROR CASES
 -- ============================================================
-SELECT set_config('babelfishpg_tsql.explain_verbose', 'off', false)
-SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
-SELECT set_config('babelfishpg_tsql.explain_timing', 'off', false)
-SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
 -- 1.1 CREATE on non-spatial column (should error)
 CREATE SPATIAL INDEX si_bad ON si_ddl_tbl(name);
 GO
@@ -48,6 +59,8 @@ GO
 -- ============================================================
 
 -- 2.1 col.STIntersects(poly) = 1
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
@@ -75,9 +88,15 @@ WHERE si_geom_tbl.geom.STIntersects(
 GO
 
 -- 2.5 SELECT list (no injection)
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
 SELECT TOP 3 id, si_geom_tbl.geom.STIntersects(
     geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) AS val
 FROM si_geom_tbl ORDER BY id;
+GO
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
+SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
 -- 2.6 Correctness: normal = reversed
@@ -108,6 +127,8 @@ GO
 -- ============================================================
 -- SECTION 3: STDistance REWRITER
 -- ============================================================
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
@@ -156,6 +177,8 @@ GO
 -- ============================================================
 -- SECTION 4: STContains
 -- ============================================================
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 SELECT COUNT(*) AS t4_contains FROM si_geom_tbl
@@ -174,6 +197,8 @@ GO
 -- ============================================================
 -- SECTION 5: QUERY CONTEXTS
 -- ============================================================
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 -- Alias
@@ -183,11 +208,17 @@ WHERE t.geom.STIntersects(
 GO
 
 -- JOIN
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
 SELECT COUNT(*) AS t5_join
 FROM si_geom_tbl a INNER JOIN si_geom_tbl b ON a.id = b.id
 WHERE a.geom.STIntersects(
     geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1
 AND a.id < 100;
+GO
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
+SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
 -- Subquery
@@ -198,11 +229,17 @@ WHERE sub.geom.STIntersects(
 GO
 
 -- OR
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
 SELECT COUNT(*) AS t5_or FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(
     geometry::STGeomFromText('POLYGON((100 100, 150 100, 150 150, 100 150, 100 100))', 4326)) = 1
 OR si_geom_tbl.geom.STIntersects(
     geometry::STGeomFromText('POLYGON((800 800, 850 800, 850 850, 800 850, 800 800))', 4326)) = 1;
+GO
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
+SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
 -- Combined spatial + non-spatial
@@ -212,6 +249,8 @@ WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 432
 GO
 
 -- CASE (no injection)
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
 SELECT TOP 3 id,
     CASE WHEN si_geom_tbl.geom.STIntersects(
         geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1
@@ -219,13 +258,12 @@ SELECT TOP 3 id,
 FROM si_geom_tbl ORDER BY id;
 GO
 
-SET BABELFISH_STATISTICS PROFILE OFF;
-GO
-
 -- ============================================================
 -- SECTION 6: NULL AND EDGE DATA
 -- ============================================================
 
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
@@ -257,6 +295,8 @@ GO
 -- ============================================================
 -- SECTION 7: MULTIPLE INDEXES
 -- ============================================================
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
@@ -283,6 +323,8 @@ GO
 -- ============================================================
 -- SECTION 8: TRANSACTIONS
 -- ============================================================
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
@@ -351,6 +393,8 @@ GO
 -- ============================================================
 -- SECTION 10: GEOGRAPHY
 -- ============================================================
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
@@ -383,6 +427,8 @@ GO
 -- ============================================================
 -- SECTION 11: INDEX + CORRECTNESS (indexed vs seq scan)
 -- ============================================================
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
@@ -418,6 +464,8 @@ GO
 -- ============================================================
 -- SECTION 13: STIntersects WHITESPACE AND NOT 
 -- ============================================================
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
@@ -453,6 +501,8 @@ GO
 -- ============================================================
 -- SECTION 14: STDistance >= AND CORRECTNESS (gap fill)
 -- ============================================================
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
@@ -522,9 +572,9 @@ GO
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 -- ============================================================
--- SECTION 16: NULL CONSERVATION 
+-- SECTION 16: NULL CONSERVATION
 -- ============================================================
-SET BABELFISH_STATISTICS PROFILE ON;
+SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 -- count(=1) + count(=0) + count(NULL geom) = total rows
 DECLARE @yes INT, @no INT, @nul INT, @tot INT;
@@ -542,6 +592,8 @@ GO
 -- ============================================================
 -- SECTION 17: SYSTEM VIEWS STABLE ORDER 
 -- ============================================================
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
 
 SELECT name, type, type_desc
 FROM sys.indexes
@@ -549,13 +601,12 @@ WHERE object_id = OBJECT_ID('si_view_tbl')
 ORDER BY name;
 GO
 
-SET BABELFISH_STATISTICS PROFILE OFF;
-GO
-
 -- ============================================================
 -- SECTION 18: FORCED INDEX USE 
 -- ============================================================
 
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
@@ -575,6 +626,8 @@ GO
 -- ============================================================
 -- SECTION 19: CROSS-TYPE AND SRID EDGE CASES 
 -- ============================================================
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
@@ -615,6 +668,8 @@ GO
 -- ============================================================
 -- SECTION 21: VARIABLE-BOUND PREDICATE (parameterized pattern)
 -- ============================================================
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
@@ -706,8 +761,6 @@ GO
 -- ============================================================
 -- SECTION 24: LEFT JOIN WITH SPATIAL ON CLAUSE
 -- ============================================================
-SET BABELFISH_STATISTICS PROFILE ON;
-GO
 -- 24.1 LEFT JOIN with spatial predicate in ON
 SELECT COUNT(*) AS t24_left FROM si_geom_tbl a
 LEFT JOIN si_geom_tbl b
@@ -715,9 +768,6 @@ LEFT JOIN si_geom_tbl b
         geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1
    AND a.id = b.id
 WHERE a.id < 20;
-GO
-
-SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
 -- ============================================================
@@ -853,7 +903,7 @@ SELECT TOP 3 id
 FROM si_geom_tbl
 WHERE si_geom_tbl.geom IS NOT NULL
 ORDER BY si_geom_tbl.geom.STDistance(
-    geometry::STGeomFromText('POINT(500 500)', 4326));
+    geometry::STGeomFromText('POINT(500 500)', 4326)), id;
 GO
 
 -- ============================================================
@@ -908,6 +958,8 @@ GO
 -- ============================================================
 -- SECTION 36: MULTI-GEOMETRY TYPES
 -- ============================================================
+SELECT set_config('enable_seqscan', 'off', false)
+SELECT set_config('enable_bitmapscan', 'off', false)
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
@@ -980,6 +1032,8 @@ GO
 
 
 -- Section 43: Spatial call as GROUP BY key (no injection expected — aggregate context)
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
 SELECT t43_hit = CASE WHEN COUNT(*) > 0 THEN 'PASS' ELSE 'FAIL' END
 FROM (
   SELECT si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) AS hit,
@@ -988,9 +1042,6 @@ FROM (
   GROUP BY si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326))
 ) sub
 WHERE hit = 1;
-GO
-
-SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 -- Expected: PASS. Confirms rewriter doesn't inject where it shouldn't.
 

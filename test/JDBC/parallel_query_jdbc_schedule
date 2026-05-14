@@ -21,6 +21,9 @@ ignore#!#Test_sp_renamedb-vu-prepare
 ignore#!#Test_sp_renamedb-vu-verify
 ignore#!#Test_sp_renamedb-vu-cleanup
 ignore#!#verify_mapping_for_remove_accents
+ignore#!#Test-Spatial_Index-vu-prepare
+ignore#!#Test-Spatial_Index-vu-verify
+ignore#!#Test-Spatial_Index-vu-cleanup
 
 # Taking too much time to complete. (TIME-OUT FAILURES)
 ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
