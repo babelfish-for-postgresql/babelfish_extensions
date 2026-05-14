@@ -1797,13 +1797,13 @@ public:
 		ParserRuleContext *container = peekContainer();
 
 		/*
-    	 * old_stmt is always set for INSERT EXEC — exitDml_statement attaches
-    	 * a PLtsql_stmt_execsql fragment before this function is called.
-    	 * Reaching here means a broken parser state.
-    	*/
-    	Assert(old_stmt != NULL && container != NULL);
+		 * old_stmt is always set for INSERT EXEC — exitDml_statement attaches
+		 * a PLtsql_stmt_execsql fragment before this function is called.
+		 * Reaching here means a broken parser state.
+		*/
+		Assert(old_stmt != NULL && container != NULL);
 		if (!old_stmt || !container)
-    		elog(ERROR, "INSERT EXEC: internal parser state error in replaceGraftedStatement");
+			elog(ERROR, "INSERT EXEC: internal parser state error in replaceGraftedStatement");
 
 		List *siblings = getCode(container);
 		ListCell *lc;
@@ -2206,9 +2206,9 @@ public:
 		 * When enabled, we create a PLtsql_stmt_exec instead of PLtsql_stmt_execsql,
 		 * which allows the executor to handle INSERT EXEC with the new DestReceiver
 		 * and temp table approach. When disabled, fall through to legacy behavior.
-		 
+		 *
 		 * Note: process_execsql_remove_unsupported_tokens() above populates
- 		 * rewritten_query_fragment which handleInsertExec() depends on.
+		 * rewritten_query_fragment which handleInsertExec() depends on.
 		*/
 		if (is_insert_exec && pltsql_enable_new_insert_exec)
 		{
