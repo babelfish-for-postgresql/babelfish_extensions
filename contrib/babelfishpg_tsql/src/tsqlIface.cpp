@@ -399,9 +399,9 @@ stripQuoteFromId(std::string s)
  */
 static bool
 extract_ddl_object_names(TSqlParser::Ddl_objectContext *ddl_object,
-                         char **table_name,
-                         char **schema_name,
-                         char **db_name)
+						 char **table_name,
+						 char **schema_name,
+						 char **db_name)
 {
 	*table_name = NULL;
 	*schema_name = NULL;
@@ -2175,11 +2175,11 @@ public:
 
 	void exitDml_statement(TSqlParser::Dml_statementContext *ctx) override
 	{
-    	if (ctx->bulk_insert_statement())
-        {
-            clear_rewritten_query_fragment();
-            return;
-        }
+		if (ctx->bulk_insert_statement())
+		{
+			clear_rewritten_query_fragment();
+			return;
+		}
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
 		Assert(stmt);
 		Assert(stmt->sqlstmt = statementMutator->expr);
@@ -2207,8 +2207,9 @@ public:
 		 * which allows the executor to handle INSERT EXEC with the new DestReceiver
 		 * and temp table approach. When disabled, fall through to legacy behavior.
 		 *
-		 * Note: process_execsql_remove_unsupported_tokens() above populates
-		 * rewritten_query_fragment which handleInsertExec() depends on.
+		 * Note : process_execsql_remove_unsupported_tokens() populates rewritten_query_fragment
+		 * which apply_exec_expression_rewriting() inside handleInsertExec() depends on.
+		 * Moving the check above it would break expression rewriting. 
 		*/
 		if (is_insert_exec && pltsql_enable_new_insert_exec)
 		{

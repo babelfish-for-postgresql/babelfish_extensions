@@ -10,6 +10,18 @@
  */
 
 /*
+ * INSERT EXEC info - shared by PLtsql_stmt_exec, PLtsql_stmt_exec_sp,
+ * and PLtsql_stmt_exec_batch.
+ */
+typedef struct InsertExecInfo
+{
+	char		*target;			/* Target table name (bare name only, no schema/db prefix) */
+	char		*schema;			/* Schema name, or NULL if not specified */
+	char		*db_name;			/* Database name, or NULL if not specified */
+	List		*columns;			/* List of column name strings, or NIL */
+} InsertExecInfo;
+
+/*
  * PRINT statement
  */
 typedef struct PLtsql_stmt_print
