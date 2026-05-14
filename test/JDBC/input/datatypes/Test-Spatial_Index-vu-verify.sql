@@ -310,14 +310,13 @@ WHERE si_multi_tbl.g2.STIntersects(
     geometry::STGeomFromText('POLYGON((600 600, 700 600, 700 700, 600 700, 600 600))', 4326)) = 1;
 GO
 
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
 SELECT COUNT(*) AS t7_both FROM si_multi_tbl
 WHERE si_multi_tbl.g1.STIntersects(
     geometry::STGeomFromText('POLYGON((50 50, 100 50, 100 100, 50 100, 50 50))', 4326)) = 1
 AND si_multi_tbl.g2.STIntersects(
     geometry::STGeomFromText('POLYGON((600 600, 700 600, 700 700, 600 700, 600 600))', 4326)) = 1;
-GO
-
-SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
 -- ============================================================

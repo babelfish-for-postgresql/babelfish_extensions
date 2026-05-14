@@ -1313,6 +1313,8 @@ Aggregate (actual rows=1 loops=1)
 ~~END~~
 
 
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
 SELECT COUNT(*) AS t7_both FROM si_multi_tbl
 WHERE si_multi_tbl.g1.STIntersects(
     geometry::STGeomFromText('POLYGON((50 50, 100 50, 100 100, 50 100, 50 50))', 4326)) = 1
@@ -1324,57 +1326,6 @@ int
 0
 ~~END~~
 
-~~START~~
-text
-Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
-  InitPlan 1
-    ->  Result (actual rows=1 loops=1)
-~~END~~
-
-~~START~~
-text
-Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
-  InitPlan 1
-    ->  Result (actual rows=1 loops=1)
-~~END~~
-
-~~START~~
-text
-Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
-  InitPlan 1
-    ->  Result (actual rows=1 loops=1)
-~~END~~
-
-~~START~~
-text
-Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
-  InitPlan 1
-    ->  Result (actual rows=1 loops=1)
-~~END~~
-
-~~START~~
-text
-Query Text: SELECT COUNT(*) AS t7_both FROM si_multi_tbl
-WHERE si_multi_tbl.g1 OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((50 50, 100 50, 100 100, 50 100, 50 50))', 4326) AND STIntersects(
-    geometry__STGeomFromText('POLYGON((50 50, 100 50, 100 100, 50 100, 50 50))', 4326),si_multi_tbl.g1) = 1
-AND si_multi_tbl.g2 OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((600 600, 700 600, 700 700, 600 700, 600 600))', 4326) AND STIntersects(
-    geometry__STGeomFromText('POLYGON((600 600, 700 600, 700 700, 600 700, 600 600))', 4326),si_multi_tbl.g2) = 1
-Aggregate (actual rows=1 loops=1)
-  ->  Index Scan using si_g2si_multi_tbl9aba3c2186c4da1be0c116d309bfb429 on si_multi_tbl (actual rows=0 loops=1)
-        Index Cond: (g2 && '0103000020E610000001000000050000000000000000C082400000000000C082400000000000E085400000000000C082400000000000E085400000000000E085400000000000C082400000000000E085400000000000C082400000000000C08240'::geometry)
-        Filter: ((g1 && '0103000020E610000001000000050000000000000000004940000000000000494000000000000059400000000000004940000000000000594000000000000059400000000000004940000000000000594000000000000049400000000000004940'::geometry) AND (stintersects('0103000020E610000001000000050000000000000000004940000000000000494000000000000059400000000000004940000000000000594000000000000059400000000000004940000000000000594000000000000049400000000000004940'::geometry, g1) = 1) AND (stintersects('0103000020E610000001000000050000000000000000C082400000000000C082400000000000E085400000000000C082400000000000E085400000000000E085400000000000C082400000000000E085400000000000C082400000000000C08240'::geometry, g2) = 1))
-        Rows Removed by Filter: 20
-~~END~~
-
-
-SET BABELFISH_STATISTICS PROFILE OFF;
-GO
 
 -- ============================================================
 -- SECTION 8: TRANSACTIONS
