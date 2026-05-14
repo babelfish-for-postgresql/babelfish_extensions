@@ -4818,12 +4818,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	Portal		portal = NULL;
 	ListCell   *lc;
 	bool		is_returning = false;
-
-	/*
-	 * Temporarily disable FMTONLY as it is causing issues with Import-Export.
-	 * Reenable if a use-case is found.
-	 */
-	bool		fmtonly_enabled = true;
 	CmdType		cmd = CMD_UNKNOWN;
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
 	bool		support_tsql_trans = pltsql_support_tsql_transactions();
@@ -4875,7 +4869,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			 * statements as exec statements that invoke
 			 * sp_describe_first_result_set.
 			 */
-			if (pltsql_fmtonly && !strcasestr(estate->func->fn_signature, "sp_describe_first_result_set") && fmtonly_enabled && strcasestr(stmt->sqlstmt->query, "SELECT *"))
+			if (pltsql_fmtonly && !strcasestr(estate->func->fn_signature, "sp_describe_first_result_set") && strcasestr(stmt->sqlstmt->query, "SELECT *"))
 			{
 				initStringInfo(&query);
 				appendStringInfo(&query, "SELECT TOP 0");

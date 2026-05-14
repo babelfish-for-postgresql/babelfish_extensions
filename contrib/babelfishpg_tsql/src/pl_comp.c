@@ -1230,13 +1230,11 @@ skip_antlr_parsing:
 		analyze(function, cmpl_ctx);
 		gen_exec_code(function, cmpl_ctx);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		destroy_compile_context(cmpl_ctx);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	destroy_compile_context(cmpl_ctx);
 
 	return function;
 }
@@ -1577,13 +1575,11 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 		analyze(function, cmpl_ctx);
 		gen_exec_code(function, cmpl_ctx);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		destroy_compile_context(cmpl_ctx);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	destroy_compile_context(cmpl_ctx);
 
 	return function;
 }

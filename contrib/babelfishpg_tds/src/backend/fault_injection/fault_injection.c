@@ -249,17 +249,12 @@ TriggerFault(FaultInjectorType_e type, void *arg)
 			TDS_DEBUG(TDS_DEBUG2, "Triggering fault: %s", entry->faultName);
 			(*(entry->fault_callback)) (arg, &(entry->num_occurrences));
 		}
-		PG_CATCH();
+		PG_FINALLY();
 		{
 			if (entry->num_occurrences == 0)
 				FaultInjectionDisableTest(entry);
-
-			PG_RE_THROW();
 		}
 		PG_END_TRY();
-
-		if (entry->num_occurrences == 0)
-			FaultInjectionDisableTest(entry);
 
 		return;
 	}
