@@ -249,173 +249,165 @@ GetTDSRequest(bool *resetProtocol)
 	TdsErrorContext->err_text = "Fetching TDS Request";
 	TdsErrorContext->spType = "Unknown (Pre-Parsing Request)";
 	TdsErrorContext->txnType = "Unknown (Pre-Parsing Request)";
-	PG_TRY();
+	/*
+	 * If we've saved the TDS request earlier, process the same instead of
+	 * trying to fetch a new request.
+	 */
+	if (resetCon != NULL)
+	{
+		messageType = resetCon->messageType;
+		status = resetCon->status;
+		appendBinaryStringInfo(&message, resetCon->message->data, resetCon->message->len);
+
+		/* cleanup and reset */
+		pfree(resetCon->message->data);
+		pfree(resetCon->message);
+		pfree(resetCon);
+		resetCon = NULL;
+	}
+	else
 	{
 		/*
-		 * If we've saved the TDS request earlier, process the same instead of
-		 * trying to fetch a new request.
+		 * If TdsRequestCtrl->request is not NULL then there are mutliple
+		 * RPCs in a Batch and we would restore the message Otherwise we
+		 * would fetch the next packet.]
 		 */
-		if (resetCon != NULL)
+		if (TdsRequestCtrl->request == NULL)
 		{
-			messageType = resetCon->messageType;
-			status = resetCon->status;
-			appendBinaryStringInfo(&message, resetCon->message->data, resetCon->message->len);
+			int			ret;
 
-			/* cleanup and reset */
-			pfree(resetCon->message->data);
-			pfree(resetCon->message);
-			pfree(resetCon);
-			resetCon = NULL;
+			/*
+			 * We should hold the interrupts untill we read the entire
+			 * request.
+			 */
+			HOLD_CANCEL_INTERRUPTS();
+			ret = TdsReadNextRequest(&message, &status, &messageType);
+			RESUME_CANCEL_INTERRUPTS();
+
+			if (ret != 0)
+			{
+				TdsErrorContext->reqType = 0;
+				TdsErrorContext->err_text = "EOF reached on TDS socket";
+				TDS_DEBUG(TDS_DEBUG1, "EOF on TDS socket");
+				pfree(message.data);
+				return NULL;
+			}
+			TdsErrorContext->err_text = "Fetching TDS Request";
+			TdsRequestCtrl->status = status;
 		}
 		else
-		{
-			/*
-			 * If TdsRequestCtrl->request is not NULL then there are mutliple
-			 * RPCs in a Batch and we would restore the message Otherwise we
-			 * would fetch the next packet.]
-			 */
-			if (TdsRequestCtrl->request == NULL)
-			{
-				int			ret;
+			RestoreRPCBatch(&message, &status, &messageType);
+	}
 
-				/*
-				 * We should hold the interrupts untill we read the entire
-				 * request.
-				 */
-				HOLD_CANCEL_INTERRUPTS();
-				ret = TdsReadNextRequest(&message, &status, &messageType);
-				RESUME_CANCEL_INTERRUPTS();
+	DebugPrintMessageData("Fetched message:", message);
 
-				if (ret != 0)
-				{
-					TdsErrorContext->reqType = 0;
-					TdsErrorContext->err_text = "EOF reached on TDS socket";
-					TDS_DEBUG(TDS_DEBUG1, "EOF on TDS socket");
-					pfree(message.data);
-					return NULL;
-				}
-				TdsErrorContext->err_text = "Fetching TDS Request";
-				TdsRequestCtrl->status = status;
-			}
-			else
-				RestoreRPCBatch(&message, &status, &messageType);
-		}
-
-		DebugPrintMessageData("Fetched message:", message);
-
-		TdsErrorContext->reqType = messageType;
+	TdsErrorContext->reqType = messageType;
 
 #ifdef FAULT_INJECTOR
-		{
-			TdsMessageWrapper wrapper;
+	{
+		TdsMessageWrapper wrapper;
 
-			wrapper.message = &message;
-			wrapper.messageType = messageType;
+		wrapper.message = &message;
+		wrapper.messageType = messageType;
 
-			FAULT_INJECT(PreParsingType, &wrapper);
-		}
+		FAULT_INJECT(PreParsingType, &wrapper);
+	}
 #endif
 
-		Assert(messageType != 0);
+	Assert(messageType != 0);
 
-		/*
-		 * If we have to reset the connection, we save the TDS request in top
-		 * memory context before exit so that we can process the request
-		 * later.
-		 */
-		if (status & TDS_PACKET_HEADER_STATUS_RESETCON)
-		{
-			MemoryContextSwitchTo(TopMemoryContext);
-
-			if (resetCon == NULL)
-				resetCon = palloc(sizeof(ResetConnectionData));
-
-			resetCon->message = makeStringInfo();
-			appendBinaryStringInfo(resetCon->message, message.data, message.len);
-			resetCon->messageType = messageType;
-			resetCon->status = (status & ~TDS_PACKET_HEADER_STATUS_RESETCON);
-
-			/*
-			 * Set resetTdsConnectionFlag to true so that we avoid
-			 * sending any env change token for the USE DB command
-			 * which will get executed.
-			 */
-			resetTdsConnectionFlag = true;
-			TdsSetDbContext();
-			resetTdsConnectionFlag = false;
-			ResetTDSConnection();
-
-			TdsErrorContext->err_text = "Fetching TDS Request";
-			*resetProtocol = true;
-			return NULL;
-		}
-
-		/*
-		 * XXX: We don't support the following feature.  But, throw an error
-		 * to detect the case in case we get such a request.
-		 */
-		if (status & TDS_PACKET_HEADER_STATUS_RESETCONSKIPTRAN)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("RESETCONSKIPTRAN is not supported")));
-
-		/* An attention request can also have message.len = 0. */
-		if (message.len == 0 && messageType != TDS_ATTENTION)
-		{
-			TDS_DEBUG(TDS_DEBUG1, "zero byte client message on TDS socket");
-			pfree(message.data);
-			return NULL;
-		}
-
-		/*
-		 * Enable statement timeout. Note we add this function here to include
-		 * the time taken by the protocol in the timeout.
-		 */
-		enable_statement_timeout();
-
-		/* Parse the packet */
-		switch (messageType)
-		{
-			case TDS_QUERY:		/* Simple SQL BATCH */
-				{
-					request = GetSQLBatchRequest(&message);
-
-					pfree(message.data);
-				}
-				break;
-			case TDS_RPC:		/* Remote procedure call */
-				{
-					request = GetRPCRequest(&message);
-				}
-				break;
-			case TDS_TXN:		/* Transaction management request */
-				{
-					request = GetTxnMgmtRequest(&message);
-				}
-				break;
-			case TDS_BULK_LOAD: /* Bulk Load request */
-				{
-					request = GetBulkLoadRequest(&message);
-				}
-				break;
-			case TDS_ATTENTION: /* Attention request */
-				{
-					/* Return an empty request with the attention type. */
-					request = palloc0(sizeof(TDSRequest));
-					request->reqType = TDS_REQUEST_ATTN;
-				}
-				break;
-			default:
-				DebugPrintMessageData("Ignored message", message);
-				elog(ERROR, "TDSRequest: ignoring request type 0x%02x",
-					 message.data[0]);
-		}
-	}
-	PG_CATCH();
+	/*
+	 * If we have to reset the connection, we save the TDS request in top
+	 * memory context before exit so that we can process the request
+	 * later.
+	 */
+	if (status & TDS_PACKET_HEADER_STATUS_RESETCON)
 	{
-		PG_RE_THROW();
+		MemoryContextSwitchTo(TopMemoryContext);
+
+		if (resetCon == NULL)
+			resetCon = palloc(sizeof(ResetConnectionData));
+
+		resetCon->message = makeStringInfo();
+		appendBinaryStringInfo(resetCon->message, message.data, message.len);
+		resetCon->messageType = messageType;
+		resetCon->status = (status & ~TDS_PACKET_HEADER_STATUS_RESETCON);
+
+		/*
+		 * Set resetTdsConnectionFlag to true so that we avoid
+		 * sending any env change token for the USE DB command
+		 * which will get executed.
+		 */
+		resetTdsConnectionFlag = true;
+		TdsSetDbContext();
+		resetTdsConnectionFlag = false;
+		ResetTDSConnection();
+
+		TdsErrorContext->err_text = "Fetching TDS Request";
+		*resetProtocol = true;
+		return NULL;
 	}
-	PG_END_TRY();
+
+	/*
+	 * XXX: We don't support the following feature.  But, throw an error
+	 * to detect the case in case we get such a request.
+	 */
+	if (status & TDS_PACKET_HEADER_STATUS_RESETCONSKIPTRAN)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("RESETCONSKIPTRAN is not supported")));
+
+	/* An attention request can also have message.len = 0. */
+	if (message.len == 0 && messageType != TDS_ATTENTION)
+	{
+		TDS_DEBUG(TDS_DEBUG1, "zero byte client message on TDS socket");
+		pfree(message.data);
+		return NULL;
+	}
+
+	/*
+	 * Enable statement timeout. Note we add this function here to include
+	 * the time taken by the protocol in the timeout.
+	 */
+	enable_statement_timeout();
+
+	/* Parse the packet */
+	switch (messageType)
+	{
+		case TDS_QUERY:		/* Simple SQL BATCH */
+			{
+				request = GetSQLBatchRequest(&message);
+
+				pfree(message.data);
+			}
+			break;
+		case TDS_RPC:		/* Remote procedure call */
+			{
+				request = GetRPCRequest(&message);
+			}
+			break;
+		case TDS_TXN:		/* Transaction management request */
+			{
+				request = GetTxnMgmtRequest(&message);
+			}
+			break;
+		case TDS_BULK_LOAD: /* Bulk Load request */
+			{
+				request = GetBulkLoadRequest(&message);
+			}
+			break;
+		case TDS_ATTENTION: /* Attention request */
+			{
+				/* Return an empty request with the attention type. */
+				request = palloc0(sizeof(TDSRequest));
+				request->reqType = TDS_REQUEST_ATTN;
+			}
+			break;
+		default:
+			DebugPrintMessageData("Ignored message", message);
+			elog(ERROR, "TDSRequest: ignoring request type 0x%02x",
+				 message.data[0]);
+	}
 
 	FAULT_INJECT(PostParsingType, request);
 

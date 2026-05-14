@@ -198,7 +198,7 @@ sp_prepare(PG_FUNCTION_ARGS)
 
 		execute_batch(estate, batch, args, NULL);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", old_dialect,
 						  GUC_CONTEXT_CONFIG,
@@ -207,17 +207,8 @@ sp_prepare(PG_FUNCTION_ARGS)
 						  true,
 						  0,
 						  false);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	set_config_option("babelfishpg_tsql.sql_dialect", old_dialect,
-					  GUC_CONTEXT_CONFIG,
-					  PGC_S_SESSION,
-					  GUC_ACTION_SAVE,
-					  true,
-					  0,
-					  false);
 
 	values[0] = Int32GetDatum(args->handle);
 
@@ -1734,22 +1725,14 @@ create_xp_qv_in_master_dbo_internal(PG_FUNCTION_ARGS)
 
 	pfree(dbo_scm);
 
-	PG_TRY();
-	{
-		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
-			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+	if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 
-		if ((rc = SPI_execute(query, false, 1)) < 0)
-			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+	if ((rc = SPI_execute(query, false, 1)) < 0)
+		elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
-		if ((rc = SPI_finish()) != SPI_OK_FINISH)
-			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
-	}
-	PG_CATCH();
-	{
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	if ((rc = SPI_finish()) != SPI_OK_FINISH)
+		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	PG_RETURN_INT32(0);
 }
@@ -1823,25 +1806,17 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 
 	pfree(dbo_scm);
 
-	PG_TRY();
-	{
-		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
-			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+	if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 
-		if ((rc = SPI_execute(query, false, 1)) < 0)
-			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+	if ((rc = SPI_execute(query, false, 1)) < 0)
+		elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
-		if ((rc = SPI_execute(query2, false, 1)) < 0)
-			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+	if ((rc = SPI_execute(query2, false, 1)) < 0)
+		elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
-		if ((rc = SPI_finish()) != SPI_OK_FINISH)
-			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
-	}
-	PG_CATCH();
-	{
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	if ((rc = SPI_finish()) != SPI_OK_FINISH)
+		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	PG_RETURN_INT32(0);
 }
@@ -2203,17 +2178,13 @@ sp_addrole(PG_FUNCTION_ARGS)
 			CommandCounterIncrement();
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					  GUC_CONTEXT_CONFIG,
-					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	PG_RETURN_VOID();
 }
 
@@ -2345,17 +2316,13 @@ sp_droprole(PG_FUNCTION_ARGS)
 			CommandCounterIncrement();
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					  GUC_CONTEXT_CONFIG,
-					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	PG_RETURN_VOID();
 }
 
@@ -2517,17 +2484,13 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 			CommandCounterIncrement();
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					  GUC_CONTEXT_CONFIG,
-					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	pfree(physical_member_name);
 	pfree(physical_role_name);
 	PG_RETURN_VOID();
@@ -2683,17 +2646,13 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 			CommandCounterIncrement();
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					  GUC_CONTEXT_CONFIG,
-					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	pfree(physical_name);
 	PG_RETURN_VOID();
 }
@@ -3534,7 +3493,6 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 				);
 		}
 
-		PG_TRY();
 		{
 			char		nulls = 0;
 			MemoryContext savedPortalCxt;
@@ -3577,11 +3535,6 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 			if ((rc = SPI_finish()) != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 		}
-		PG_CATCH();
-		{
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
 	}
 	else
 	{
@@ -3595,22 +3548,14 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 
 		query = psprintf("ALTER FUNCTION %s %s;", function_signature, volatility);
 
-		PG_TRY();
-		{
-			if ((rc = SPI_connect()) != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 
-			if ((rc = SPI_execute(query, false, 1)) < 0)
-				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+		if ((rc = SPI_execute(query, false, 1)) < 0)
+			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
-			if ((rc = SPI_finish()) != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
-		}
-		PG_CATCH();
-		{
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
+		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 	}
 
 	if (function_name)
@@ -3710,18 +3655,13 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 
 		rename_tsql_db(old_db_name, new_db_name);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 					GUC_CONTEXT_CONFIG,
 					PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					GUC_CONTEXT_CONFIG,
-					PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	if (old_db_name)
 		pfree(old_db_name);
@@ -3900,17 +3840,13 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		rename_extended_property(objtype_code, schema_name, curr_relname,
 								 obj_name, new_name);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					  GUC_CONTEXT_CONFIG,
-					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	PG_RETURN_VOID();
 }
 
@@ -4251,7 +4187,6 @@ sp_enum_oledb_providers_internal(PG_FUNCTION_ARGS)
 						") subquery;"
 			, str_toupper(provider_name, strlen(provider_name), C_COLLATION_OID), provider_name);
 
-	PG_TRY();
 	{
 		MemoryContext	savedPortalCxt;
 		SPIPlanPtr	plan;
@@ -4290,11 +4225,6 @@ sp_enum_oledb_providers_internal(PG_FUNCTION_ARGS)
 		if ((rc = SPI_finish()) != SPI_OK_FINISH)
 			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 	}
-	PG_CATCH();
-	{
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
 
 	PG_RETURN_VOID();
 }
