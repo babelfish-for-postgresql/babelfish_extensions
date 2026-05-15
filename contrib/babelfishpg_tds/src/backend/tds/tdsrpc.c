@@ -240,14 +240,19 @@ cleanup_tvp_temp_tables(void)
 
 			if (item->tableName != NULL)
 			{
-				char	   *query = psprintf("DROP TABLE IF EXISTS %s", item->tableName);
+				char	   *query = psprintf("DROP TABLE IF EXISTS %s",
+											 quote_identifier(item->tableName));
 
-				SPI_execute(query, false, 0);
+				if ((rc = SPI_execute(query, false, 0)) != SPI_OK_UTILITY)
+					elog(ERROR, "SPI_execute() failed in TVP temp table cleanup with return code %d",
+						 rc);
 				pfree(query);
 			}
 		}
 
-		SPI_finish();
+		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish() failed in TVP temp table cleanup with return code %d",
+				 rc);
 		PopActiveSnapshot();
 		if (!xactStarted)
 			CommitTransactionCommand();
