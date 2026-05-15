@@ -1581,9 +1581,11 @@ static void
 init_for_auto_agg_oids(void)
 {
 	List *funcname;
-	Oid sys_ns_oid = get_namespace_oid("sys", true);
 
-	if (sys_ns_oid == InvalidOid)
+	if (!OidIsValid(get_namespace_oid("sys", true)))
+		return;
+
+	if (creating_extension)
 		return;
 
 	funcname = list_make2(makeString("sys"), makeString("tsql_select_for_xml_agg"));
@@ -1620,9 +1622,10 @@ isForAuto(List *target, ForAutoMode mode)
 	Aggref *agg = NULL;
 
 	/* Prefetch aggregate OIDs on first call */
-	if (for_xml_agg_oid == InvalidOid)
+	if (for_xml_agg_oid == InvalidOid && for_json_agg_oid == InvalidOid)
 		init_for_auto_agg_oids();
 
+	/* If OIDs still not resolved (extension not yet created), fall back to name check */
 	if (mode == FOR_AUTO_JSON)
 	{
 		agg_oid1 = for_json_agg_oid;
@@ -1633,6 +1636,9 @@ isForAuto(List *target, ForAutoMode mode)
 		agg_oid1 = for_xml_agg_oid;
 		agg_oid2 = for_xml_text_agg_oid;
 	}
+
+	if (!OidIsValid(agg_oid1) && !OidIsValid(agg_oid2))
+		return false;
 
 	/*
 	 * The query structure we're looking for:
