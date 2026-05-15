@@ -1569,6 +1569,41 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
  */
 
 /*
+ * Cached OIDs for the FOR XML/JSON AUTO aggregate functions.
+ * Looked up once on first use to avoid repeated catalog lookups.
+ */
+static Oid for_xml_agg_oid = InvalidOid;
+static Oid for_xml_text_agg_oid = InvalidOid;
+static Oid for_json_agg_oid = InvalidOid;
+static Oid for_json_text_agg_oid = InvalidOid;
+
+static void
+init_for_auto_agg_oids(void)
+{
+	List *funcname;
+	Oid sys_ns_oid = get_namespace_oid("sys", true);
+
+	if (sys_ns_oid == InvalidOid)
+		return;
+
+	funcname = list_make2(makeString("sys"), makeString("tsql_select_for_xml_agg"));
+	for_xml_agg_oid = LookupFuncName(funcname, -1, NULL, true);
+	list_free(funcname);
+
+	funcname = list_make2(makeString("sys"), makeString("tsql_select_for_xml_text_agg"));
+	for_xml_text_agg_oid = LookupFuncName(funcname, -1, NULL, true);
+	list_free(funcname);
+
+	funcname = list_make2(makeString("sys"), makeString("tsql_select_for_json_agg"));
+	for_json_agg_oid = LookupFuncName(funcname, -1, NULL, true);
+	list_free(funcname);
+
+	funcname = list_make2(makeString("sys"), makeString("tsql_select_for_json_text_agg"));
+	for_json_text_agg_oid = LookupFuncName(funcname, -1, NULL, true);
+	list_free(funcname);
+}
+
+/*
  * isForAuto - Check if a target list represents a FOR JSON/XML AUTO query
  *
  * For JSON: checks resname == "json" and mode value == 0
@@ -1580,9 +1615,24 @@ isForAuto(List *target, ForAutoMode mode)
 {
 	const char *resname = (mode == FOR_AUTO_JSON) ? "json" : "xml";
 	int mode_value = (mode == FOR_AUTO_JSON) ? 0 : 1;
-	const char *agg_name1 = (mode == FOR_AUTO_JSON) ? "tsql_select_for_json_agg" : "tsql_select_for_xml_agg";
-	const char *agg_name2 = (mode == FOR_AUTO_JSON) ? "tsql_select_for_json_text_agg" : "tsql_select_for_xml_text_agg";
+	Oid agg_oid1;
+	Oid agg_oid2;
 	Aggref *agg = NULL;
+
+	/* Prefetch aggregate OIDs on first call */
+	if (for_xml_agg_oid == InvalidOid)
+		init_for_auto_agg_oids();
+
+	if (mode == FOR_AUTO_JSON)
+	{
+		agg_oid1 = for_json_agg_oid;
+		agg_oid2 = for_json_text_agg_oid;
+	}
+	else
+	{
+		agg_oid1 = for_xml_agg_oid;
+		agg_oid2 = for_xml_text_agg_oid;
+	}
 
 	/*
 	 * The query structure we're looking for:
@@ -1625,12 +1675,8 @@ isForAuto(List *target, ForAutoMode mode)
 					/* Validate the Aggref is the expected FOR AUTO aggregate */
 					if (agg != NULL)
 					{
-						char *funcname = get_func_name(agg->aggfnoid);
-						char *funcns = get_namespace_name(get_func_namespace(agg->aggfnoid));
 						List *aggargs = agg->args;
-						if (funcname == NULL || funcns == NULL ||
-							strcmp(funcns, "sys") != 0 ||
-							(strcmp(funcname, agg_name1) != 0 && strcmp(funcname, agg_name2) != 0))
+						if (agg->aggfnoid != agg_oid1 && agg->aggfnoid != agg_oid2)
 							return false;
 						if (aggargs != NULL && list_length(aggargs) > 1 &&
 							nodeTag(lsecond(aggargs)) == T_TargetEntry)

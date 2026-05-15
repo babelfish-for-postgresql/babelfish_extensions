@@ -1067,7 +1067,7 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 }
 
 /*
- * Close XML elements down to target_level (exclusive).
+ * Close XML elements down to and including target_level.
  * If target_level = 0, close all open elements.
  */
 static void
@@ -1454,9 +1454,8 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 	for (int level = first_changed_level; level <= deepest_level_in_row; level++)
 	{
 		char *table_alias = auto_state->level_to_alias[level];
-		bool has_columns_at_level = (table_alias != NULL);
 
-		if (!has_columns_at_level || table_alias == NULL)
+		if (table_alias == NULL)
 			continue;
 
 		/* Open element tag */
