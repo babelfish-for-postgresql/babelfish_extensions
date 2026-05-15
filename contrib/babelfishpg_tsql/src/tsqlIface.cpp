@@ -2210,7 +2210,7 @@ public:
 		 * Note : process_execsql_remove_unsupported_tokens() populates rewritten_query_fragment
 		 * which apply_exec_expression_rewriting() inside handleInsertExec() depends on.
 		 * Moving the check above it would break expression rewriting. 
-		*/
+		 */
 		if (is_insert_exec && pltsql_enable_new_insert_exec)
 		{
 			handleInsertExec(ctx);
