@@ -55,6 +55,7 @@
 #include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
+#include "parser/parse_func.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
@@ -1577,6 +1578,24 @@ static Oid for_xml_text_agg_oid = InvalidOid;
 static Oid for_json_agg_oid = InvalidOid;
 static Oid for_json_text_agg_oid = InvalidOid;
 
+/*
+ * lookup_func_oid_by_name - find a function OID by qualified name,
+ * matching any argument signature.  Uses FuncnameGetCandidates directly
+ * to avoid the LookupFuncName assertion (nargs=-1 with NULL argtypes
+ * is disallowed in PG17+).  Returns InvalidOid if not found or ambiguous.
+ */
+static Oid
+lookup_func_oid_by_name(List *funcname)
+{
+	FuncCandidateList clist;
+
+	clist = FuncnameGetCandidates(funcname, -1, NIL, false, false, false, true);
+	if (clist == NULL)
+		return InvalidOid;
+	/* If ambiguous (multiple matches), return first — these are unique names */
+	return clist->oid;
+}
+
 static void
 init_for_auto_agg_oids(void)
 {
@@ -1589,19 +1608,19 @@ init_for_auto_agg_oids(void)
 		return;
 
 	funcname = list_make2(makeString("sys"), makeString("tsql_select_for_xml_agg"));
-	for_xml_agg_oid = LookupFuncName(funcname, -1, NULL, true);
+	for_xml_agg_oid = lookup_func_oid_by_name(funcname);
 	list_free(funcname);
 
 	funcname = list_make2(makeString("sys"), makeString("tsql_select_for_xml_text_agg"));
-	for_xml_text_agg_oid = LookupFuncName(funcname, -1, NULL, true);
+	for_xml_text_agg_oid = lookup_func_oid_by_name(funcname);
 	list_free(funcname);
 
 	funcname = list_make2(makeString("sys"), makeString("tsql_select_for_json_agg"));
-	for_json_agg_oid = LookupFuncName(funcname, -1, NULL, true);
+	for_json_agg_oid = lookup_func_oid_by_name(funcname);
 	list_free(funcname);
 
 	funcname = list_make2(makeString("sys"), makeString("tsql_select_for_json_text_agg"));
-	for_json_text_agg_oid = LookupFuncName(funcname, -1, NULL, true);
+	for_json_text_agg_oid = lookup_func_oid_by_name(funcname);
 	list_free(funcname);
 }
 
@@ -1625,7 +1644,6 @@ isForAuto(List *target, ForAutoMode mode)
 	if (for_xml_agg_oid == InvalidOid && for_json_agg_oid == InvalidOid)
 		init_for_auto_agg_oids();
 
-	/* If OIDs still not resolved (extension not yet created), fall back to name check */
 	if (mode == FOR_AUTO_JSON)
 	{
 		agg_oid1 = for_json_agg_oid;
@@ -1637,6 +1655,7 @@ isForAuto(List *target, ForAutoMode mode)
 		agg_oid2 = for_xml_text_agg_oid;
 	}
 
+	/* If OIDs not resolved, fall back to false */
 	if (!OidIsValid(agg_oid1) && !OidIsValid(agg_oid2))
 		return false;
 
