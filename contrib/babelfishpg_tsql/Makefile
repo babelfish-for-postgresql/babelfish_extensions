@@ -80,6 +80,7 @@ OBJS += src/fts_parser.o
 OBJS += src/pltsql_partition.o
 OBJS += src/bbf_parallel_query.o
 OBJS += src/temp_table.o
+OBJS += src/xml_methods.o
 
 export ANTLR4_JAVA_BIN=java
 export ANTLR4_RUNTIME_LIB=-lantlr4-runtime
