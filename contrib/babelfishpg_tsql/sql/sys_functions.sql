@@ -167,12 +167,6 @@ RETURNS XML
 AS 'babelfishpg_tsql', 'bbf_xmlquery'
 LANGUAGE C STABLE STRICT PARALLEL SAFE;
 
--- helper function for XML QUERY(xpath) with namespace support
-CREATE OR REPLACE FUNCTION sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT, nsarray TEXT[][])
-RETURNS XML
-AS 'babelfishpg_tsql', 'bbf_xmlquery'
-LANGUAGE C STABLE STRICT PARALLEL SAFE;
-
 -- SELECT FOR JSON
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
     state INTERNAL,

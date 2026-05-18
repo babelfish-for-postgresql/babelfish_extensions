@@ -1302,7 +1302,7 @@ SELECT @x.query('/root');
 GO
 ~~START~~
 xml
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9451)~~
 
 ~~ERROR (Message: invalid XML content)~~
 
