@@ -881,6 +881,12 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 		*dot1 = '\0';
 		*dot2 = '\0';
 
+		/* Reject empty alias or column name to avoid malformed XML output */
+		if (*(dot1 + 1) == '\0' || *(dot2 + 1) == '\0')
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("FOR XML AUTO metadata entry has empty alias or column name: \"%s\"", token)));
+
 		level = strtol(entry_copy, &endptr, 10);
 		if (endptr == entry_copy || *endptr != '\0')
 			ereport(ERROR,
@@ -1492,6 +1498,7 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 									auto_state->column_names[i],
 									val_str,
 									auto_state->column_names[i]);
+					pfree(val_str);
 				}
 				else if (xsinil)
 				{
@@ -1506,9 +1513,14 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 				if (!isnull)
 				{
 					char *val_str = auto_column_to_xml_string(colval, isnull, tuple, tupdesc, i, auto_state);
+					char *escaped = tsql_escape_xml(val_str);
 					appendStringInfo(state, " %s=\"%s\"",
 									auto_state->column_names[i],
-									tsql_escape_xml(val_str));
+									escaped);
+					/* tsql_escape_xml may return val_str unchanged on the fast path */
+					if (escaped != val_str)
+						pfree(escaped);
+					pfree(val_str);
 				}
 			}
 		}

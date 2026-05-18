@@ -1571,12 +1571,22 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 
 /*
  * Cached OIDs for the FOR XML/JSON AUTO aggregate functions.
- * Looked up once on first use to avoid repeated catalog lookups.
+ * Reset by invalidate_for_auto_agg_oid_cache on pg_proc invalidation so an
+ * in-place ALTER EXTENSION UPDATE does not leave the cache stale.
  */
 static Oid for_xml_agg_oid = InvalidOid;
 static Oid for_xml_text_agg_oid = InvalidOid;
 static Oid for_json_agg_oid = InvalidOid;
 static Oid for_json_text_agg_oid = InvalidOid;
+
+static void
+invalidate_for_auto_agg_oid_cache(Datum arg, int cacheid, uint32 hashvalue)
+{
+	for_xml_agg_oid = InvalidOid;
+	for_xml_text_agg_oid = InvalidOid;
+	for_json_agg_oid = InvalidOid;
+	for_json_text_agg_oid = InvalidOid;
+}
 
 /*
  * lookup_func_oid_by_name - find a function OID by qualified name,
@@ -1885,7 +1895,7 @@ string_to_fixed_hash(const char *input)
 {
 	Datum hash_val = hash_any_extended((unsigned char *)input, strlen(input), 0);
 	char *result = palloc(17); /* 16 hex chars + null terminator */
-	snprintf(result, 17, "%016lx", (unsigned long) DatumGetUInt64(hash_val));
+	snprintf(result, 17, "%016" INT64_MODIFIER "x", DatumGetUInt64(hash_val));
 	return result;
 }
 
@@ -2324,6 +2334,10 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 						 errmsg("FOR XML AUTO: expected Const node for metadata argument")));
 
 			metadataConst = (Const *) metadataArgTe->expr;
+			if (metadataConst->consttype != TEXTOID)
+				ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("FOR XML AUTO: metadata argument is not text type")));
 			metadataConst->constvalue = CStringGetTextDatum(metadataStr.data);
 			metadataConst->constisnull = false;
 		}
@@ -6479,6 +6493,9 @@ _PG_init(void)
 
 	prev_plansource_revalidate_hook = plansource_revalidate_hook;
 	plansource_revalidate_hook = pltsql_check_guc_plan;
+
+	/* Reset FOR XML/JSON AUTO aggregate OID cache when pg_proc changes. */
+	CacheRegisterSyscacheCallback(PROCOID, invalidate_for_auto_agg_oid_cache, (Datum) 0);
 
 	prev_planner_node_transformer_hook = planner_node_transformer_hook;
 	planner_node_transformer_hook = pltsql_planner_node_transformer;
