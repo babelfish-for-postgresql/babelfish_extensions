@@ -87,25 +87,13 @@ get_tsql_type_name(Oid type_oid)
 }
 
 /*
- * Construct an empty TEXT[] namespace array for xpath() calls
- * when no namespace parameter is provided.
- * Matches PostgreSQL's built-in: xpath($1, $2, '{}'::text[])
- */
-static ArrayType *
-make_empty_namespace_array(void)
-{
-	return construct_empty_array(TEXTOID);
-}
-
-/*
  * bbf_xmlquery - C implementation of XML .query() method
  *
  * Signature:
  *   sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT)
- *   sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT, nsarray TEXT[][])
  *
  * Returns XML result of evaluating the XPath expression against the input.
- * Returns NULL if no nodes match.
+ * Returns empty XML if no nodes match.
  *
  * Validates:
  *   - Input must be XML type (or UDT based on XML)
@@ -167,12 +155,6 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 						"incorrect settings: 'QUOTED_IDENTIFIER'. Verify that "
 						"SET options are correct for XML data type methods.")));
 
-	/* Get namespace array: use provided one or empty */
-	if (PG_NARGS() > 2 && !PG_ARGISNULL(2))
-		namespaces = PG_GETARG_ARRAYTYPE_P(2);
-	else
-		namespaces = make_empty_namespace_array();
-
 	/*
 	 * T-SQL does not allow internal subset DTDs in XML typed values.
 	 */
@@ -184,15 +166,16 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 			pfree(xml_str);
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_XML_CONTENT),
-					 errmsg("invalid XML content")));
+					 errmsg("%s", "invalid XML content")));
 		}
 		pfree(xml_str);
 	}
 
 	/*
-	 * Call the built-in xpath(text, xml, text[][]) function directly.
-	 * Returns xml[] (array of XML fragments).
+	 * Call the built-in xpath(text, xml, text[][]) directly with an empty
+	 * namespace array. Returns xml[] (array of XML fragments).
 	 */
+	namespaces = construct_empty_array(TEXTOID);
 	xpath_result = DirectFunctionCall3Coll(xpath,
 										   InvalidOid,
 										   PointerGetDatum(xpath_expr),
