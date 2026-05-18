@@ -28,6 +28,32 @@ static void load_functions();
 #define POLYGON_TYPE     3  /* Identifier for Polygon geometry type */
 #define MULTIPOINT_TYPE  4  /* Identifier for MultiPoint geometry type */
 
+#define SRID_UNKNOWN_VAL    0
+#define GSERIALIZED_HDR_SIZE  8  /* offsetof(GSERIALIZED, data) */
+#define G_FLAGS_BBOX_BIT    0x04
+
+#define G_FLAGS_Z_BIT         0x01
+#define G_FLAGS_M_BIT         0x02
+#define G_FLAGS_GEODETIC_BIT  0x08
+#define G_FLAGS_EXTENDED_BIT  0x10  /* v2 only */
+#define G_FLAGS_VERSION_BIT   0x40  /* v2 sets this; v1 leaves it clear */
+
+#define LWTYPE_POINT             1
+#define LWTYPE_LINESTRING        2
+#define LWTYPE_POLYGON           3
+#define LWTYPE_MULTIPOINT        4
+#define LWTYPE_MULTILINESTRING   5
+#define LWTYPE_MULTIPOLYGON      6
+#define LWTYPE_COLLECTION        7
+#define LWTYPE_CIRCSTRING        8
+#define LWTYPE_COMPOUNDCURVE     9
+#define LWTYPE_CURVEPOLYGON     10
+#define LWTYPE_MULTICURVE       11
+#define LWTYPE_MULTISURFACE     12
+#define LWTYPE_NUMTYPES         13   /* one past largest known */
+
+#define GSERIALIZED_TYPE_SLICE_SIZE 64
+
 #define DEFAULT_GEOGRAPHY_SRID 4326
 #define DEFAULT_GEOMETRY_SRID  0
 #define MIN_GEOMETRY_LENGTH    22  /* Minimum length for geometry data which 2D POINT */
@@ -207,6 +233,9 @@ typedef struct
     uint8_t gflags; /* HasZ, HasM, HasBBox, IsGeodetic */
     uint8_t data[1]; /* See gserialized.txt */
 } GSERIALIZED;
+
+/* 2D bounding box for bbox-disjoint short-circuit */
+typedef struct { float xmin, xmax, ymin, ymax; } GBOX2D;
 
 /* Helper structure for bytea to geometry conversion */
 typedef struct 
@@ -451,25 +480,136 @@ typedef Datum (*st_geometryn_t)(PG_FUNCTION_ARGS);
 static st_geometryn_t st_geometryn_p;
 
 static void validate_geography_latitude(Datum geom_datum, bool is_flipped);
+static inline uint32_t gserialized_typecode(Datum datum);
+
+/* Spatial predicate function pointers for optimized C wrappers */
+typedef Datum (*postgis_predicate_fn_t)(PG_FUNCTION_ARGS);
+static postgis_predicate_fn_t st_intersects_op_p = NULL;
+static postgis_predicate_fn_t st_contains_op_p   = NULL;
+static postgis_predicate_fn_t st_equals_op_p     = NULL;
+static postgis_predicate_fn_t st_distance_op_p   = NULL;
+static postgis_predicate_fn_t st_disjoint_op_p   = NULL;
+
+/* Unary PostGIS function pointers for converted wrappers */
+typedef Datum (*postgis_unary_fn_t)(PG_FUNCTION_ARGS);
+static postgis_unary_fn_t st_area_p        = NULL;
+static postgis_unary_fn_t st_makevalid_p   = NULL;
+static postgis_unary_fn_t lwgeom_npoints_p = NULL;
+static postgis_unary_fn_t lwgeom_dim_p     = NULL;
+static postgis_unary_fn_t lwgeom_isclosed_p = NULL;
+static postgis_unary_fn_t geog_distance_ellipsoid_p = NULL;
+static postgis_unary_fn_t lwgeom_zmflag_p  = NULL;
+static postgis_unary_fn_t lwgeom_z_point_p = NULL;
+static postgis_unary_fn_t lwgeom_m_point_p = NULL;
+
+/* Flag for one-time PostGIS function pointer loading */
+static bool spatial_fns_loaded = false;
 
 PG_FUNCTION_INFO_V1(geometry_in);
 PG_FUNCTION_INFO_V1(geography_in);
 PG_FUNCTION_INFO_V1(get_geometry_from_text);
+PG_FUNCTION_INFO_V1(get_geography_from_text);
+PG_FUNCTION_INFO_V1(get_geometry_from_wkb);
+PG_FUNCTION_INFO_V1(get_geography_from_wkb);
 PG_FUNCTION_INFO_V1(charTogeom);
+PG_FUNCTION_INFO_V1(charTogeog);
+PG_FUNCTION_INFO_V1(geography_point);
 PG_FUNCTION_INFO_V1(geometry_from_bytea);
 PG_FUNCTION_INFO_V1(bytea_from_geometry);
 PG_FUNCTION_INFO_V1(geography_from_bytea);
 PG_FUNCTION_INFO_V1(bytea_from_geography);
-PG_FUNCTION_INFO_V1(get_geography_from_text);
-PG_FUNCTION_INFO_V1(charTogeog);
-PG_FUNCTION_INFO_V1(geography_point);
 PG_FUNCTION_INFO_V1(st_as_binary_geometry);
 PG_FUNCTION_INFO_V1(st_as_binary_geography);
 PG_FUNCTION_INFO_V1(st_as_text);
 PG_FUNCTION_INFO_V1(geometry_astext);
 PG_FUNCTION_INFO_V1(geometry_asbpchar);
-PG_FUNCTION_INFO_V1(get_geometry_from_wkb);
-PG_FUNCTION_INFO_V1(get_geography_from_wkb);
+
+/* --- Constructors --- */
+PG_FUNCTION_INFO_V1(bbf_geometry_stgeomfromtext);
+PG_FUNCTION_INFO_V1(bbf_geography_stgeomfromtext);
+PG_FUNCTION_INFO_V1(bbf_geometry_stpointfromtext);
+PG_FUNCTION_INFO_V1(bbf_geometry_stlinefromtext);
+PG_FUNCTION_INFO_V1(bbf_geometry_stpolyfromtext);
+PG_FUNCTION_INFO_V1(bbf_geometry_stmpointfromtext);
+PG_FUNCTION_INFO_V1(bbf_geography_stpointfromtext);
+PG_FUNCTION_INFO_V1(bbf_geography_stlinefromtext);
+PG_FUNCTION_INFO_V1(bbf_geography_stpolyfromtext);
+PG_FUNCTION_INFO_V1(bbf_geography_stmpointfromtext);
+PG_FUNCTION_INFO_V1(bbf_geometry_point);
+PG_FUNCTION_INFO_V1(bbf_geometry_parse);
+PG_FUNCTION_INFO_V1(bbf_geography_parse);
+PG_FUNCTION_INFO_V1(bbf_geometry_stmpointfromwkb);
+PG_FUNCTION_INFO_V1(bbf_geography_stmpointfromwkb);
+
+/* --- Geometry predicates --- */
+PG_FUNCTION_INFO_V1(bbf_st_intersects);
+PG_FUNCTION_INFO_V1(bbf_st_contains);
+PG_FUNCTION_INFO_V1(bbf_st_equals);
+PG_FUNCTION_INFO_V1(bbf_st_disjoint);
+PG_FUNCTION_INFO_V1(bbf_st_distance);
+
+/* --- Geography predicates --- */
+PG_FUNCTION_INFO_V1(bbf_geog_intersects);
+PG_FUNCTION_INFO_V1(bbf_geog_contains);
+PG_FUNCTION_INFO_V1(bbf_geog_equals);
+PG_FUNCTION_INFO_V1(bbf_geog_disjoint);
+PG_FUNCTION_INFO_V1(bbf_geog_distance);
+
+/* --- Unary geometry functions --- */
+PG_FUNCTION_INFO_V1(bbf_st_area);
+PG_FUNCTION_INFO_V1(bbf_st_numpoints);
+PG_FUNCTION_INFO_V1(bbf_st_dimension);
+PG_FUNCTION_INFO_V1(bbf_st_isclosed);
+PG_FUNCTION_INFO_V1(bbf_st_makevalid);
+PG_FUNCTION_INFO_V1(bbf_st_geometrytype);
+
+/* --- Unary geography functions --- */
+PG_FUNCTION_INFO_V1(bbf_geog_area);
+PG_FUNCTION_INFO_V1(bbf_geog_numpoints);
+PG_FUNCTION_INFO_V1(bbf_geog_dimension);
+PG_FUNCTION_INFO_V1(bbf_geog_isclosed);
+PG_FUNCTION_INFO_V1(bbf_geog_makevalid);
+
+/* --- Property accessors --- */
+PG_FUNCTION_INFO_V1(bbf_hasz);
+PG_FUNCTION_INFO_V1(bbf_hasm);
+PG_FUNCTION_INFO_V1(bbf_z);
+PG_FUNCTION_INFO_V1(bbf_m);
+
+/* --- Operator wrappers --- */
+PG_FUNCTION_INFO_V1(bbf_geom_op_equals);
+PG_FUNCTION_INFO_V1(bbf_geom_op_not_equals);
+PG_FUNCTION_INFO_V1(bbf_geog_op_equals);
+PG_FUNCTION_INFO_V1(bbf_geog_op_not_equals);
+
+/* --- Display wrappers (geometry/geography → text/varchar/bpchar) --- */
+PG_FUNCTION_INFO_V1(bbf_geog_astext);
+PG_FUNCTION_INFO_V1(bbf_geog_asbpchar);
+PG_FUNCTION_INFO_V1(bbf_geog_asvarchar);
+PG_FUNCTION_INFO_V1(bbf_geom_asvarchar);
+
+/* --- String-to-geometry/geography cast wrappers --- */
+PG_FUNCTION_INFO_V1(bbf_geom_from_bpchar);
+PG_FUNCTION_INFO_V1(bbf_geom_from_varchar);
+PG_FUNCTION_INFO_V1(bbf_geog_from_bpchar);
+PG_FUNCTION_INFO_V1(bbf_geog_from_varchar);
+
+/* --- Error-raising cast functions --- */
+PG_FUNCTION_INFO_V1(bbf_geom_to_text_error);
+PG_FUNCTION_INFO_V1(bbf_geog_to_text_error);
+PG_FUNCTION_INFO_V1(bbf_text_to_geom_error);
+PG_FUNCTION_INFO_V1(bbf_text_to_geog_error);
+
+/* --- Binary / varbinary cast wrappers --- */
+PG_FUNCTION_INFO_V1(bbf_geom_from_varbinary);
+PG_FUNCTION_INFO_V1(bbf_geom_to_varbinary);
+PG_FUNCTION_INFO_V1(bbf_geom_from_binary);
+PG_FUNCTION_INFO_V1(bbf_geom_to_binary);
+PG_FUNCTION_INFO_V1(bbf_geog_from_varbinary);
+PG_FUNCTION_INFO_V1(bbf_geog_to_varbinary);
+PG_FUNCTION_INFO_V1(bbf_geog_from_binary);
+PG_FUNCTION_INFO_V1(bbf_geog_to_binary);
+
 
 /*
  * Module to load external PostGIS functions
@@ -501,6 +641,21 @@ load_functions()
         st_interiorringn_p = (st_interiorringn_t) load_external_function("$libdir/postgis-3", "LWGEOM_interiorringn_polygon", true, NULL);
         st_numinteriorrings_p = (st_numinteriorrings_t) load_external_function("$libdir/postgis-3", "LWGEOM_numinteriorrings_polygon", true, NULL);
         st_geometryn_p = (st_geometryn_t) load_external_function("$libdir/postgis-3", "LWGEOM_geometryn_collection", true, NULL); 
+        st_numinteriorrings_p = (st_numinteriorrings_t) load_external_function("$libdir/postgis-3", "LWGEOM_numinteriorrings_polygon", true, NULL); 
+        st_intersects_op_p = (postgis_predicate_fn_t) load_external_function("$libdir/postgis-3", "ST_Intersects", true, NULL);
+        st_contains_op_p = (postgis_predicate_fn_t) load_external_function("$libdir/postgis-3", "within", true, NULL);
+        st_equals_op_p = (postgis_predicate_fn_t) load_external_function("$libdir/postgis-3", "ST_Equals", true, NULL);
+        st_distance_op_p = (postgis_predicate_fn_t) load_external_function("$libdir/postgis-3", "ST_Distance", true, NULL);
+        st_disjoint_op_p = (postgis_predicate_fn_t) load_external_function("$libdir/postgis-3", "disjoint", true, NULL);
+        st_area_p        = (postgis_unary_fn_t) load_external_function("$libdir/postgis-3", "ST_Area", true, NULL);
+        st_makevalid_p   = (postgis_unary_fn_t) load_external_function("$libdir/postgis-3", "ST_MakeValid", true, NULL);
+        lwgeom_npoints_p = (postgis_unary_fn_t) load_external_function("$libdir/postgis-3", "LWGEOM_npoints", true, NULL);
+        lwgeom_dim_p     = (postgis_unary_fn_t) load_external_function("$libdir/postgis-3", "LWGEOM_dimension", true, NULL);
+        lwgeom_isclosed_p = (postgis_unary_fn_t) load_external_function("$libdir/postgis-3", "LWGEOM_isclosed", true, NULL);
+        geog_distance_ellipsoid_p = (postgis_unary_fn_t) load_external_function("$libdir/postgis-3", "LWGEOM_distance_ellipsoid", true, NULL);
+        lwgeom_zmflag_p  = (postgis_unary_fn_t) load_external_function("$libdir/postgis-3", "LWGEOM_zmflag", true, NULL);
+        lwgeom_z_point_p = (postgis_unary_fn_t) load_external_function("$libdir/postgis-3", "LWGEOM_z_point", true, NULL);
+        lwgeom_m_point_p = (postgis_unary_fn_t) load_external_function("$libdir/postgis-3", "LWGEOM_m_point", true, NULL);
     }
 }
 
@@ -2655,8 +2810,24 @@ initialize_geom_data(Datum input_datum)
     
     /* Query PostGIS for geometry properties */
     geom_data->is_empty = DatumGetBool(call_postgis_func(st_isempty_p, input_datum));
-    geom_data->is_valid = DatumGetBool(call_postgis_func(st_isvalid_p, input_datum));
-    geom_data->npoints = DatumGetInt32(call_postgis_func(st_npoints_p, input_datum));
+
+    /*
+     * Point fast-path: a Point is always valid (no self-intersection possible)
+     * and has exactly 1 vertex (or 0 if empty). Skipping the GEOS validity pass
+     * and the npoints deserialization saves two full geometry walks per row on
+     * point-heavy workloads (CAST(point AS VARBINARY), STAsBinary(point), etc).
+     */
+    if (gserialized_typecode(input_datum) == LWTYPE_POINT)
+    {
+        geom_data->is_valid = true;
+        geom_data->npoints  = geom_data->is_empty ? 0 : 1;
+    }
+    else
+    {
+        geom_data->is_valid = DatumGetBool(call_postgis_func(st_isvalid_p, input_datum));
+        geom_data->npoints  = DatumGetInt32(call_postgis_func(st_npoints_p, input_datum));
+    }
+
     geom_data->byte = DatumGetByteaPP(call_postgis_func(lwgeom_to_bytea_p, input_datum));
     
     /* Extract binary data and metadata */
@@ -3748,5 +3919,1529 @@ geometry_asbpchar(PG_FUNCTION_ARGS)
     pfree(buf_padded);
     PG_RETURN_DATUM(res);
 }
+
+
+/* One-time session-level PostGIS function pointer resolution. */
+static inline void
+load_spatial_fns_once(void)
+{
+    if (likely(spatial_fns_loaded))
+        return;
+    load_functions();
+    spatial_fns_loaded = true;
+}
+
+static inline int32_t
+get_srid_from_header(const GSERIALIZED *g)
+{
+
+    int32_t srid = ((int32_t) g->srid[0] << 16)
+                 | ((int32_t) g->srid[1] << 8)
+                 |  (int32_t) g->srid[2];
+
+    return (srid == 0) ? SRID_UNKNOWN_VAL : srid;
+}
+
+/*
+ * Get GSERIALIZED header pointer with minimal I/O.
+ * For inline data: direct pointer cast.
+ * For external/compressed: fetch only first 8 bytes via SLICE.
+ */
+static inline GSERIALIZED *
+get_geometry_header(Datum datum)
+{
+    if (VARATT_IS_EXTENDED(datum))
+        return (GSERIALIZED *) PG_DETOAST_DATUM_SLICE(datum, 0, GSERIALIZED_HDR_SIZE);
+    else
+        return (GSERIALIZED *) DatumGetPointer(datum);
+}
+
+/*
+ * Check if two geometry/geography arguments have matching SRIDs.
+ * Uses header-only access — does NOT detoast the full geometry.
+ */
+static inline bool
+check_srids_match(FunctionCallInfo fcinfo)
+{
+    GSERIALIZED *h1 = get_geometry_header(PG_GETARG_DATUM(0));
+    GSERIALIZED *h2 = get_geometry_header(PG_GETARG_DATUM(1));
+    return (get_srid_from_header(h1) == get_srid_from_header(h2));
+}
+
+/* BBox-disjoint short-circuit: returns true if cached bboxes don't overlap. */
+
+static inline bool
+header_has_bbox(const GSERIALIZED *g)
+{
+    return (g->gflags & G_FLAGS_BBOX_BIT) != 0;
+}
+
+/*
+ * Fetch the cached 2D bbox from both operands. Returns false if either
+ * lacks a cached bbox — caller must fall back to the full PostGIS path.
+ */
+static inline bool
+fetch_bboxes(Datum a, Datum b, GBOX2D **out_a, GBOX2D **out_b)
+{
+    GSERIALIZED *ga, *gb;
+
+    if (VARATT_IS_EXTENDED(a))
+        ga = (GSERIALIZED *) PG_DETOAST_DATUM_SLICE(a, 0,
+                                                    GSERIALIZED_HDR_SIZE + sizeof(GBOX2D));
+    else
+        ga = (GSERIALIZED *) DatumGetPointer(a);
+
+    if (VARATT_IS_EXTENDED(b))
+        gb = (GSERIALIZED *) PG_DETOAST_DATUM_SLICE(b, 0,
+                                                    GSERIALIZED_HDR_SIZE + sizeof(GBOX2D));
+    else
+        gb = (GSERIALIZED *) DatumGetPointer(b);
+
+    if (!header_has_bbox(ga) || !header_has_bbox(gb))
+        return false;
+
+    *out_a = (GBOX2D *) ga->data;
+    *out_b = (GBOX2D *) gb->data;
+    return true;
+}
+
+static inline bool
+geom_bbox_disjoint(Datum a, Datum b)
+{
+    GBOX2D *ba, *bb;
+
+    if (!fetch_bboxes(a, b, &ba, &bb))
+        return false;
+
+    /* classic AABB-disjoint test */
+    return (ba->xmax < bb->xmin || bb->xmax < ba->xmin ||
+            ba->ymax < bb->ymin || bb->ymax < ba->ymin);
+}
+
+
+/*
+ * Geography variant: planar AABB test, but only when both bboxes are
+ * canonical (xmin <= xmax, ymin <= ymax). Wrapped bboxes (antimeridian
+ * or pole) fall back to PostGIS for correctness.
+ */
+static inline bool
+geog_bbox_disjoint_safe(Datum a, Datum b)
+{
+    GBOX2D *ba, *bb;
+
+    if (!fetch_bboxes(a, b, &ba, &bb))
+        return false;
+
+    /* Refuse to decide if either bbox is wrapped (non-canonical). */
+    if (ba->xmin > ba->xmax || ba->ymin > ba->ymax ||
+        bb->xmin > bb->xmax || bb->ymin > bb->ymax)
+        return false;
+
+    return (ba->xmax < bb->xmin || bb->xmax < ba->xmin ||
+            ba->ymax < bb->ymin || bb->ymax < ba->ymin);
+}
+
+/*
+ * Read the lwgeom type code from a GSERIALIZED without parsing the whole
+ * geometry. Handles both v1 and v2 GSERIALIZED layouts.
+ *
+ *   v1: data[]  = [bbox?][type:uint32][...]
+ *   v2: data[]  = [extended?][bbox?][type:uint32][...]
+ *
+ * The bbox length depends on dimensions and geodetic flag.
+ */
+static inline uint32_t
+gserialized_typecode(Datum datum)
+{
+    GSERIALIZED *g;
+    uint8_t      gflags;
+    const uint8_t *p;
+    uint32_t     type;
+
+    if (VARATT_IS_EXTENDED(datum))
+        g = (GSERIALIZED *) PG_DETOAST_DATUM_SLICE(datum, 0,
+                                                   GSERIALIZED_TYPE_SLICE_SIZE);
+    else
+        g = (GSERIALIZED *) DatumGetPointer(datum);
+
+    gflags = g->gflags;
+    p      = g->data;
+
+    /* v2 may carry an 8-byte "extended" block before the bbox */
+    if ((gflags & G_FLAGS_VERSION_BIT) && (gflags & G_FLAGS_EXTENDED_BIT))
+        p += 8;
+
+    /* bbox, if present: geodetic = 6 floats = 24 bytes; cartesian = 2*ndims floats */
+    if (gflags & G_FLAGS_BBOX_BIT)
+    {
+        if (gflags & G_FLAGS_GEODETIC_BIT)
+        {
+            p += 6 * sizeof(float);
+        }
+        else
+        {
+            int ndims = 2
+                      + ((gflags & G_FLAGS_Z_BIT) ? 1 : 0)
+                      + ((gflags & G_FLAGS_M_BIT) ? 1 : 0);
+            p += 2 * ndims * sizeof(float);
+        }
+    }
+
+    memcpy(&type, p, sizeof(uint32_t));
+    return type;
+}
+
+/*
+ * Trivially-valid shapes: a Point cannot be invalid by construction (a single
+ * coord, no self-intersection possible). Saves an ST_IsValid (full GEOS
+ * topology check) per row on point-on-polygon joins.
+ *
+ * NOTE: this preserves T-SQL semantics — STIsValid() on a POINT in SQL Server
+ * always returns 1.
+ */
+static inline bool
+is_trivially_valid(Datum geom)
+{
+    return gserialized_typecode(geom) == LWTYPE_POINT;
+}
+
+/*
+ * Validate a single geometry/geography datum. Throws error if invalid.
+ */
+static inline void
+check_validity_single(Datum geom, const char *type_name)
+{
+    LOCAL_FCINFO(fcinfo_valid, 1);
+
+    if (is_trivially_valid(geom))
+        return;
+
+    InitFunctionCallInfoData(*fcinfo_valid, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_valid->args[0].value = geom;
+    fcinfo_valid->args[0].isnull = false;
+    if (!DatumGetBool(st_isvalid_p(fcinfo_valid)))
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("The %s instance is not valid", type_name)));
+}
+
+/*
+ * Validate both arguments of a binary predicate.
+ * SQL Server validates both operands — valid.STIntersects(invalid) also errors.
+ */
+static inline void
+check_validity_both_geom(FunctionCallInfo fcinfo)
+{
+    check_validity_single(PG_GETARG_DATUM(0), "geometry");
+    check_validity_single(PG_GETARG_DATUM(1), "geometry");
+}
+
+static inline void
+check_validity_both_geog(FunctionCallInfo fcinfo)
+{
+    check_validity_single(PG_GETARG_DATUM(0), "geography");
+    check_validity_single(PG_GETARG_DATUM(1), "geography");
+}
+
+/* --- Geometry wrappers --- */
+
+Datum
+bbf_st_intersects(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+    if (!check_srids_match(fcinfo))
+        PG_RETURN_NULL();
+    check_validity_both_geom(fcinfo);
+    if (geom_bbox_disjoint(PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)))
+        PG_RETURN_BOOL(false);
+    return st_intersects_op_p(fcinfo);
+}
+
+Datum
+bbf_st_contains(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+    if (!check_srids_match(fcinfo))
+        PG_RETURN_NULL();
+    check_validity_both_geom(fcinfo);
+    return st_contains_op_p(fcinfo);
+}
+
+Datum
+bbf_st_equals(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+    if (!check_srids_match(fcinfo))
+        PG_RETURN_NULL();
+    check_validity_both_geom(fcinfo);
+    return st_equals_op_p(fcinfo);
+}
+
+Datum
+bbf_st_distance(PG_FUNCTION_ARGS)
+{
+    LOCAL_FCINFO(fcinfo_check, 1);
+
+    load_spatial_fns_once();
+    if (!check_srids_match(fcinfo))
+        PG_RETURN_NULL();
+
+    /* T-SQL: distance on an empty operand returns NULL. */
+    InitFunctionCallInfoData(*fcinfo_check, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_check->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_check->args[0].isnull = false;
+    if (DatumGetBool(st_isempty_p(fcinfo_check)))
+        PG_RETURN_NULL();
+    fcinfo_check->args[0].value = PG_GETARG_DATUM(1);
+    fcinfo_check->args[0].isnull = false;
+    if (DatumGetBool(st_isempty_p(fcinfo_check)))
+        PG_RETURN_NULL();
+
+    check_validity_both_geom(fcinfo);
+    return st_distance_op_p(fcinfo);
+}
+
+Datum
+bbf_st_disjoint(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+    if (!check_srids_match(fcinfo))
+        PG_RETURN_NULL();
+    check_validity_both_geom(fcinfo);
+    if (geom_bbox_disjoint(PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)))
+        PG_RETURN_BOOL(true);
+    return st_disjoint_op_p(fcinfo);
+}
+
+/* --- Geography wrappers --- */
+
+Datum
+bbf_geog_intersects(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+    if (!check_srids_match(fcinfo))
+        PG_RETURN_NULL();
+    check_validity_both_geog(fcinfo);
+    if (geog_bbox_disjoint_safe(PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)))
+        PG_RETURN_BOOL(false);
+    return st_intersects_op_p(fcinfo);
+}
+
+Datum
+bbf_geog_equals(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+    if (!check_srids_match(fcinfo))
+        PG_RETURN_NULL();
+    check_validity_both_geog(fcinfo);
+    return st_equals_op_p(fcinfo);
+}
+
+Datum
+bbf_geog_contains(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+    if (!check_srids_match(fcinfo))
+        PG_RETURN_NULL();
+    check_validity_both_geog(fcinfo);
+    if (geog_bbox_disjoint_safe(PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)))
+        PG_RETURN_BOOL(false);
+    return st_contains_op_p(fcinfo);
+}
+
+Datum
+bbf_geog_disjoint(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+    if (!check_srids_match(fcinfo))
+        PG_RETURN_NULL();
+    check_validity_both_geog(fcinfo);
+    if (geog_bbox_disjoint_safe(PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)))
+        PG_RETURN_BOOL(true);
+    return st_disjoint_op_p(fcinfo);
+}
+
+/* --- Unary wrappers (GEOMETRY + GEOGRAPHY) --- */
+
+Datum
+bbf_st_area(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+
+    /* Point fast path: area is always 0 and a Point is always valid → skip GEOS. */
+    if (gserialized_typecode(PG_GETARG_DATUM(0)) == LWTYPE_POINT)
+        PG_RETURN_FLOAT8(0.0);
+
+    check_validity_single(PG_GETARG_DATUM(0), "geometry");
+    return st_area_p(fcinfo);
+}
+
+Datum
+bbf_geog_area(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+
+    /* Same point fast-path as bbf_st_area. */
+    if (gserialized_typecode(PG_GETARG_DATUM(0)) == LWTYPE_POINT)
+        PG_RETURN_FLOAT8(0.0);
+
+    check_validity_single(PG_GETARG_DATUM(0), "geography");
+    return st_area_p(fcinfo);
+}
+
+Datum
+bbf_st_numpoints(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+
+    /* Point fast path: 0 if empty, else 1. Skips full deserialization. */
+    if (gserialized_typecode(PG_GETARG_DATUM(0)) == LWTYPE_POINT)
+    {
+        if (DatumGetBool(st_isempty_p(fcinfo)))
+            PG_RETURN_INT32(0);
+        PG_RETURN_INT32(1);
+    }
+
+    check_validity_single(PG_GETARG_DATUM(0), "geometry");
+    return lwgeom_npoints_p(fcinfo);
+}
+
+Datum
+bbf_geog_numpoints(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+
+    /* Same Point fast-path as bbf_st_numpoints. */
+    if (gserialized_typecode(PG_GETARG_DATUM(0)) == LWTYPE_POINT)
+    {
+        if (DatumGetBool(st_isempty_p(fcinfo)))
+            PG_RETURN_INT32(0);
+        PG_RETURN_INT32(1);
+    }
+
+    check_validity_single(PG_GETARG_DATUM(0), "geography");
+    return lwgeom_npoints_p(fcinfo);
+}
+
+   /*
+   * Dimension from typecode (no deserialization).
+   * Returns 0/1/2 for known types; -2 means caller falls back to PostGIS.
+   */
+static inline int32_t
+dimension_from_typecode(uint32_t tc)
+{
+    switch (tc)
+    {
+        case LWTYPE_POINT:
+        case LWTYPE_MULTIPOINT:
+            return 0;
+        case LWTYPE_LINESTRING:
+        case LWTYPE_MULTILINESTRING:
+        case LWTYPE_CIRCSTRING:
+        case LWTYPE_COMPOUNDCURVE:
+        case LWTYPE_MULTICURVE:
+            return 1;
+        case LWTYPE_POLYGON:
+        case LWTYPE_MULTIPOLYGON:
+        case LWTYPE_CURVEPOLYGON:
+        case LWTYPE_MULTISURFACE:
+            return 2;
+        default:
+            return -2;
+    }
+}
+
+Datum
+bbf_st_dimension(PG_FUNCTION_ARGS)
+{
+    int32_t dim;
+    uint32_t tc;
+
+    load_spatial_fns_once();
+
+    /* T-SQL returns -1 for empty geometries — must check first. */
+    if (DatumGetBool(st_isempty_p(fcinfo)))
+        PG_RETURN_INT32(-1);
+
+    tc = gserialized_typecode(PG_GETARG_DATUM(0));
+    dim = dimension_from_typecode(tc);
+
+    /* Point fast path: always valid, skip GEOS check. */
+    if (tc == LWTYPE_POINT)
+        PG_RETURN_INT32(0);
+
+    check_validity_single(PG_GETARG_DATUM(0), "geometry");
+
+    if (dim >= 0)
+        PG_RETURN_INT32(dim);
+
+    /* Collection / polyhedral / unknown: fall back to PostGIS for correctness. */
+    return lwgeom_dim_p(fcinfo);
+}
+
+Datum
+bbf_geog_dimension(PG_FUNCTION_ARGS)
+{
+    int32_t dim;
+    uint32_t tc;
+
+    load_spatial_fns_once();
+
+    /* T-SQL returns -1 for empty geographies — must check first. */
+    if (DatumGetBool(st_isempty_p(fcinfo)))
+        PG_RETURN_INT32(-1);
+
+    tc = gserialized_typecode(PG_GETARG_DATUM(0));
+    dim = dimension_from_typecode(tc);
+
+    /* Point fast-path: skip GEOS validity (Point is always valid). */
+    if (tc == LWTYPE_POINT)
+        PG_RETURN_INT32(0);
+
+    check_validity_single(PG_GETARG_DATUM(0), "geography");
+
+    if (dim >= 0)
+        PG_RETURN_INT32(dim);
+
+    /* Collection / polyhedral / unknown: fall back to PostGIS. */
+    return lwgeom_dim_p(fcinfo);
+}
+
+Datum
+bbf_st_isclosed(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+
+    /* T-SQL: STIsClosed returns 0 for Point geometries */
+    if (gserialized_typecode(PG_GETARG_DATUM(0)) == LWTYPE_POINT)
+        PG_RETURN_BOOL(false);
+
+    check_validity_single(PG_GETARG_DATUM(0), "geometry");
+    return lwgeom_isclosed_p(fcinfo);
+}
+
+Datum
+bbf_geog_isclosed(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+
+    /* T-SQL: STIsClosed returns 0 for Point geographies */
+    if (gserialized_typecode(PG_GETARG_DATUM(0)) == LWTYPE_POINT)
+        PG_RETURN_BOOL(false);
+
+    check_validity_single(PG_GETARG_DATUM(0), "geography");
+    return lwgeom_isclosed_p(fcinfo);
+}
+
+Datum
+bbf_st_makevalid(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+
+    if (DatumGetBool(st_isempty_p(fcinfo)))
+        PG_RETURN_DATUM(PG_GETARG_DATUM(0));
+
+    /* Skip ST_MakeValid for already-valid input — measurable win on all-valid data. */
+    if (DatumGetBool(st_isvalid_p(fcinfo)))
+        PG_RETURN_DATUM(PG_GETARG_DATUM(0));
+
+    return st_makevalid_p(fcinfo);
+}
+
+Datum
+bbf_geog_makevalid(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+
+    if (DatumGetBool(st_isempty_p(fcinfo)))
+        PG_RETURN_DATUM(PG_GETARG_DATUM(0));
+
+    /* Skip ST_MakeValid for already-valid input — measurable win on all-valid data. */
+    if (DatumGetBool(st_isvalid_p(fcinfo)))
+        PG_RETURN_DATUM(PG_GETARG_DATUM(0));
+
+    return st_makevalid_p(fcinfo);
+}
+
+/* Geography STDistance: flips lat/lon to lon/lat before calling PostGIS. */
+Datum
+bbf_geog_distance(PG_FUNCTION_ARGS)
+{
+    LOCAL_FCINFO(fcinfo_flip1, 1);
+    LOCAL_FCINFO(fcinfo_flip2, 1);
+    LOCAL_FCINFO(fcinfo_dist,  2);
+    LOCAL_FCINFO(fcinfo_empty, 1);
+    Datum flipped_a, flipped_b;
+
+    load_spatial_fns_once();
+
+    if (!check_srids_match(fcinfo))
+        PG_RETURN_NULL();
+
+    /* T-SQL: distance on an empty operand returns NULL. */
+    InitFunctionCallInfoData(*fcinfo_empty, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_empty->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_empty->args[0].isnull = false;
+    if (DatumGetBool(st_isempty_p(fcinfo_empty)))
+        PG_RETURN_NULL();
+    fcinfo_empty->args[0].value = PG_GETARG_DATUM(1);
+    fcinfo_empty->args[0].isnull = false;
+    if (DatumGetBool(st_isempty_p(fcinfo_empty)))
+        PG_RETURN_NULL();
+
+    check_validity_both_geog(fcinfo);
+
+    /* flip operand 0 */
+    InitFunctionCallInfoData(*fcinfo_flip1, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_flip1->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_flip1->args[0].isnull = false;
+    flipped_a = st_flipcoordinates_p(fcinfo_flip1);
+
+    /* flip operand 1 */
+    InitFunctionCallInfoData(*fcinfo_flip2, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_flip2->args[0].value = PG_GETARG_DATUM(1);
+    fcinfo_flip2->args[0].isnull = false;
+    flipped_b = st_flipcoordinates_p(fcinfo_flip2);
+
+    /* call LWGEOM_distance_ellipsoid on flipped operands */
+    InitFunctionCallInfoData(*fcinfo_dist, NULL, 2, InvalidOid, NULL, NULL);
+    fcinfo_dist->args[0].value = flipped_a;
+    fcinfo_dist->args[0].isnull = false;
+    fcinfo_dist->args[1].value = flipped_b;
+    fcinfo_dist->args[1].isnull = false;
+    return geog_distance_ellipsoid_p(fcinfo_dist);
+}
+
+/* --- Parse wrappers --- */
+
+Datum
+bbf_geometry_parse(PG_FUNCTION_ARGS)
+{
+    text *input_text = PG_GETARG_TEXT_PP(0);
+    char *input_str;
+    bool  is_null_literal;
+    LOCAL_FCINFO(fcinfo_local, 2);
+
+    load_spatial_fns_once();
+
+    /* Check for 'NULL' string (case-insensitive) */
+    input_str = text_to_cstring(input_text);
+    is_null_literal = (pg_strcasecmp(input_str, "NULL") == 0);
+    pfree(input_str);                                         /* free before any path that can throw */
+    if (is_null_literal)
+        PG_RETURN_NULL();
+
+    /* Delegate to get_geometry_from_text with SRID=0 */
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 2, PG_GET_COLLATION(), NULL, NULL);
+    fcinfo_local->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_local->args[0].isnull = false;
+    fcinfo_local->args[1].value = Int32GetDatum(0);
+    fcinfo_local->args[1].isnull = false;
+    return get_geometry_from_text(fcinfo_local);
+}
+
+Datum
+bbf_geography_parse(PG_FUNCTION_ARGS)
+{
+    text *input_text = PG_GETARG_TEXT_PP(0);
+    char *input_str;
+    bool  is_null_literal;
+    LOCAL_FCINFO(fcinfo_local, 2);
+
+    load_spatial_fns_once();
+
+    /* Check for 'NULL' string (case-insensitive) */
+    input_str = text_to_cstring(input_text);
+    is_null_literal = (pg_strcasecmp(input_str, "NULL") == 0);
+    pfree(input_str);                                         /* free before any path that can throw */
+    if (is_null_literal)
+        PG_RETURN_NULL();
+
+    /* Delegate to get_geography_from_text with SRID=4326 */
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 2, PG_GET_COLLATION(), NULL, NULL);
+    fcinfo_local->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_local->args[0].isnull = false;
+    fcinfo_local->args[1].value = Int32GetDatum(DEFAULT_GEOGRAPHY_SRID);
+    fcinfo_local->args[1].isnull = false;
+    return get_geography_from_text(fcinfo_local);
+}
+
+/* --- HasZ / HasM wrappers --- */
+
+Datum
+bbf_hasz(PG_FUNCTION_ARGS)
+{
+    int16 zmflag;
+
+    load_spatial_fns_once();
+    zmflag = DatumGetInt16(lwgeom_zmflag_p(fcinfo));
+
+    /* zmflag: 1=M, 2=Z, 3=ZM */
+    PG_RETURN_BOOL(zmflag == 2 || zmflag == 3);
+}
+
+Datum
+bbf_hasm(PG_FUNCTION_ARGS)
+{
+    int16 zmflag;
+
+    load_spatial_fns_once();
+    zmflag = DatumGetInt16(lwgeom_zmflag_p(fcinfo));
+
+    /* zmflag: 1=M, 2=Z, 3=ZM */
+    PG_RETURN_BOOL(zmflag == 1 || zmflag == 3);
+}
+
+/* --- Z / M coordinate accessors --- */
+
+Datum
+bbf_z(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+
+    /* Only return Z for Point types */
+    if (gserialized_typecode(PG_GETARG_DATUM(0)) != LWTYPE_POINT)
+        PG_RETURN_NULL();
+
+    return lwgeom_z_point_p(fcinfo);
+}
+
+Datum
+bbf_m(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+
+    /* Only return M for Point types */
+    if (gserialized_typecode(PG_GETARG_DATUM(0)) != LWTYPE_POINT)
+        PG_RETURN_NULL();
+
+    return lwgeom_m_point_p(fcinfo);
+}
+
+/* --- STGeometryType wrapper --- */
+
+Datum
+bbf_st_geometrytype(PG_FUNCTION_ARGS)
+{
+    /* T-SQL name (ST_ prefix stripped); mapped from header type code. */
+    static const char *const tsql_type_names[LWTYPE_NUMTYPES] = {
+        [LWTYPE_POINT]           = "Point",
+        [LWTYPE_LINESTRING]      = "LineString",
+        [LWTYPE_POLYGON]         = "Polygon",
+        [LWTYPE_MULTIPOINT]      = "MultiPoint",
+        [LWTYPE_MULTILINESTRING] = "MultiLineString",
+        [LWTYPE_MULTIPOLYGON]    = "MultiPolygon",
+        [LWTYPE_COLLECTION]      = "GeometryCollection",
+        [LWTYPE_CIRCSTRING]      = "CircularString",
+        [LWTYPE_COMPOUNDCURVE]   = "CompoundCurve",
+        [LWTYPE_CURVEPOLYGON]    = "CurvePolygon",
+        [LWTYPE_MULTICURVE]      = "MultiCurve",
+        [LWTYPE_MULTISURFACE]    = "MultiSurface",
+    };
+    uint32_t type_code;
+    const char *name;
+
+    load_spatial_fns_once();
+
+    /* Resolve type code; skip GEOS validity for Point (always valid). */
+    type_code = gserialized_typecode(PG_GETARG_DATUM(0));
+
+     /* Skip GEOS validity for Point (always valid); all other types go through st_isvalid. */
+    if (type_code != LWTYPE_POINT && !DatumGetBool(st_isvalid_p(fcinfo)))
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("This operation cannot be completed because the instance is not valid")));
+
+    if (type_code < LWTYPE_NUMTYPES && (name = tsql_type_names[type_code]) != NULL)
+        PG_RETURN_TEXT_P(cstring_to_text(name));
+
+    /*
+     * Fall back to PostGIS for any future/unknown type code so we keep
+     * working if PostGIS adds a type we don't know about yet.
+     */
+    {
+        char *geom_type = text_to_cstring(DatumGetTextP(geometry_type_p(fcinfo)));
+
+        if (strncmp(geom_type, "ST_", 3) == 0)
+        {
+            text *result = cstring_to_text(geom_type + 3);
+            pfree(geom_type);
+            PG_RETURN_TEXT_P(result);
+        }
+
+        ereport(ERROR,
+                (errcode(ERRCODE_INTERNAL_ERROR),
+                 errmsg("Unexpected geometry type format: %s. Expected ST_* prefix.", geom_type)));
+        PG_RETURN_NULL(); /* unreachable */
+    }
+}
+
+/* --- Operator wrappers (= and <>) for geometry/geography --- */
+
+   /*
+   * Delegate to bbf_st_equals / bbf_geog_equals.
+   *  =  : propagate NULL (T-SQL parity)
+   *  <> : map NULL -> TRUE
+   */
+
+Datum
+bbf_geom_op_equals(PG_FUNCTION_ARGS)
+{
+    Datum result = bbf_st_equals(fcinfo);
+
+
+    return result;
+}
+
+Datum
+bbf_geom_op_not_equals(PG_FUNCTION_ARGS)
+{
+    Datum result = bbf_st_equals(fcinfo);
+
+    if (fcinfo->isnull)
+    {
+        fcinfo->isnull = false;
+        PG_RETURN_BOOL(true);
+    }
+    PG_RETURN_BOOL(!DatumGetBool(result));
+}
+
+Datum
+bbf_geog_op_equals(PG_FUNCTION_ARGS)
+{
+    Datum result = bbf_geog_equals(fcinfo);
+
+    /* STRICT semantics: preserve NULL from the underlying STEquals. */
+    return result;
+}
+
+Datum
+bbf_geog_op_not_equals(PG_FUNCTION_ARGS)
+{
+    Datum result = bbf_geog_equals(fcinfo);
+
+    if (fcinfo->isnull)
+    {
+        fcinfo->isnull = false;
+        PG_RETURN_BOOL(true);
+    }
+    PG_RETURN_BOOL(!DatumGetBool(result));
+}
+
+Datum
+bbf_geog_astext(PG_FUNCTION_ARGS)
+{
+    LOCAL_FCINFO(fcinfo_flip, 1);
+    LOCAL_FCINFO(fcinfo_text, 1);
+    Datum flipped;
+
+    load_spatial_fns_once();
+
+    /* Flip coordinates (geography stores lat,lon; WKT needs lon,lat) */
+    InitFunctionCallInfoData(*fcinfo_flip, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_flip->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_flip->args[0].isnull = false;
+    flipped = st_flipcoordinates_p(fcinfo_flip);
+
+    /* Call the existing st_as_text C function */
+    InitFunctionCallInfoData(*fcinfo_text, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_text->args[0].value = flipped;
+    fcinfo_text->args[0].isnull = false;
+    return st_as_text(fcinfo_text);
+}
+
+/* Geography → bpchar cast: flip coordinates then format as text. */
+Datum
+bbf_geog_asbpchar(PG_FUNCTION_ARGS)
+{
+    LOCAL_FCINFO(fcinfo_flip, 1);
+    LOCAL_FCINFO(fcinfo_bp, 3);
+    Datum flipped;
+
+    load_spatial_fns_once();
+
+    /* Flip coordinates: geography (lat,lon) → (lon,lat) for display */
+    InitFunctionCallInfoData(*fcinfo_flip, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_flip->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_flip->args[0].isnull = false;
+    flipped = st_flipcoordinates_p(fcinfo_flip);
+
+    /* Delegate to geometry_asbpchar(flipped, maxlen, explicit) */
+    InitFunctionCallInfoData(*fcinfo_bp, NULL, 3, InvalidOid, NULL, NULL);
+    fcinfo_bp->args[0].value = flipped;
+    fcinfo_bp->args[0].isnull = false;
+    fcinfo_bp->args[1].value = PG_GETARG_DATUM(1);
+    fcinfo_bp->args[1].isnull = false;
+    fcinfo_bp->args[2].value = PG_GETARG_DATUM(2);
+    fcinfo_bp->args[2].isnull = false;
+    return geometry_asbpchar(fcinfo_bp);
+}
+
+/*
+ * Geography → varchar cast.
+ * Flips coordinates then gets text representation, with length validation.
+ */
+Datum
+bbf_geog_asvarchar(PG_FUNCTION_ARGS)
+{
+    LOCAL_FCINFO(fcinfo_flip, 1);
+    LOCAL_FCINFO(fcinfo_text, 1);
+    Datum flipped;
+    text *str_notation;
+    int32 maxlen = PG_GETARG_INT32(1);
+    int32 len;
+
+    load_spatial_fns_once();
+
+    /* Flip coordinates: geography (lat,lon) → (lon,lat) for display */
+    InitFunctionCallInfoData(*fcinfo_flip, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_flip->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_flip->args[0].isnull = false;
+    flipped = st_flipcoordinates_p(fcinfo_flip);
+
+    /* Get text representation via geometry_astext (same as GeographyAsTextvar_helper) */
+    InitFunctionCallInfoData(*fcinfo_text, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_text->args[0].value = flipped;
+    fcinfo_text->args[0].isnull = false;
+    str_notation = DatumGetTextP(geometry_astext(fcinfo_text));
+
+    /* Length check: pg_catalog.length(str) + 4 > maxlen */
+    len = VARSIZE_ANY_EXHDR(str_notation) + 4;
+    if (len > maxlen && maxlen != -1)
+        ereport(ERROR,
+                (errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+                 errmsg("There is insufficient result space to convert a geography value to varchar/nvarchar.")));
+
+    PG_RETURN_TEXT_P(str_notation);
+}
+
+/*
+ * Geometry::STGeomFromText(nvarchar, srid)
+ * - param 2 NULL → error
+ * - param 1 NULL → return NULL
+ * - otherwise delegate to get_geometry_from_text
+ */
+
+Datum
+bbf_geometry_stgeomfromtext(PG_FUNCTION_ARGS)
+{
+    /* $2 (SRID) must not be NULL */
+    if (PG_ARGISNULL(1))
+        ereport(ERROR,
+                (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+                 errmsg("'geometry::STGeomFromText' failed because parameter 2 is not allowed to be null.")));
+
+    /* $1 (WKT text) NULL → return NULL */
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+
+    /* Delegate to get_geometry_from_text($1::text, $2) */
+    return get_geometry_from_text(fcinfo);
+}
+
+
+Datum
+bbf_geography_stgeomfromtext(PG_FUNCTION_ARGS)
+{
+    /* $2 (SRID) must not be NULL */
+    if (PG_ARGISNULL(1))
+        ereport(ERROR,
+                (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+                 errmsg("'geography::STGeomFromText' failed because parameter 2 is not allowed to be null.")));
+
+    /* $1 (WKT text) NULL → return NULL */
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+
+    /* Delegate to get_geography_from_text($1::text, $2) */
+    return get_geography_from_text(fcinfo);
+}
+
+
+Datum
+bbf_geom_asvarchar(PG_FUNCTION_ARGS)
+{
+    LOCAL_FCINFO(fcinfo_text, 1);
+    Datum geom = PG_GETARG_DATUM(0);
+    int32 maxlen = PG_GETARG_INT32(1);
+    text *str_notation;
+    int32 len;
+
+    load_spatial_fns_once();
+
+    /* Get varchar representation via geometry_astext */
+    InitFunctionCallInfoData(*fcinfo_text, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_text->args[0].value = geom;
+    fcinfo_text->args[0].isnull = false;
+    str_notation = DatumGetTextP(geometry_astext(fcinfo_text));
+
+    /* Length check: pg_catalog.length(str) + 4 > maxlen */
+    len = VARSIZE_ANY_EXHDR(str_notation) + 4;
+    if (len > maxlen && maxlen != -1)
+        ereport(ERROR,
+                (errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+                 errmsg("There is insufficient result space to convert a geometry value to varchar/nvarchar.")));
+
+    PG_RETURN_TEXT_P(str_notation);
+}
+
+
+Datum
+bbf_geog_from_bpchar(PG_FUNCTION_ARGS)
+{
+    LOCAL_FCINFO(fcinfo_parse, 1);
+    LOCAL_FCINFO(fcinfo_flip, 1);
+    Datum geog;
+
+    load_spatial_fns_once();
+
+    /* Parse bpchar to geography via charTogeog */
+    InitFunctionCallInfoData(*fcinfo_parse, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_parse->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_parse->args[0].isnull = false;
+    geog = charTogeog(fcinfo_parse);
+
+    /* Flip coordinates (geography stores lat,lon) */
+    InitFunctionCallInfoData(*fcinfo_flip, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_flip->args[0].value = geog;
+    fcinfo_flip->args[0].isnull = false;
+    return st_flipcoordinates_p(fcinfo_flip);
+}
+
+
+/* varchar uses the same wire format as bpchar */
+Datum
+bbf_geog_from_varchar(PG_FUNCTION_ARGS)
+{
+    return bbf_geog_from_bpchar(fcinfo);
+}
+
+Datum
+bbf_geometry_point(PG_FUNCTION_ARGS)
+{
+    int32 srid;
+
+    load_spatial_fns_once();
+
+    if (PG_ARGISNULL(0))
+        ereport(ERROR,
+                (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+                 errmsg("'geometry::Point' failed because parameter 1 is not allowed to be null.")));
+    if (PG_ARGISNULL(1))
+        ereport(ERROR,
+                (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+                 errmsg("'geometry::Point' failed because parameter 2 is not allowed to be null.")));
+    if (PG_ARGISNULL(2))
+        ereport(ERROR,
+                (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+                 errmsg("'geometry::Point' failed because parameter 3 is not allowed to be null.")));
+
+    srid = PG_GETARG_INT32(2);
+    if (srid < 0 || srid > 999999)
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("SRID value should be between 0 and 999999")));
+
+    /* Delegate to ST_Point(x, y, srid) — GeomPoint_helper */
+    return st_point_p(fcinfo);
+}
+
+Datum
+bbf_geog_to_text_error(PG_FUNCTION_ARGS)
+{
+    ereport(ERROR,
+            (errcode(ERRCODE_CANNOT_COERCE),
+             errmsg("Explicit Conversion from data type sys.Geography to Text is not allowed.")));
+    PG_RETURN_NULL(); /* unreachable */
+}
+
+Datum
+bbf_text_to_geom_error(PG_FUNCTION_ARGS)
+{
+    bool is_explicit = PG_GETARG_BOOL(2);
+
+    if (is_explicit)
+        ereport(ERROR,
+                (errcode(ERRCODE_CANNOT_COERCE),
+                 errmsg("Explicit Conversion from data type Text to sys.Geometry is not allowed.")));
+    else
+        ereport(ERROR,
+                (errcode(ERRCODE_CANNOT_COERCE),
+                 errmsg("Implicit Conversion from data type Text to sys.Geometry is not allowed.")));
+    PG_RETURN_NULL(); /* unreachable */
+}
+
+
+Datum
+bbf_text_to_geog_error(PG_FUNCTION_ARGS)
+{
+    bool is_explicit = PG_GETARG_BOOL(2);
+
+    if (is_explicit)
+        ereport(ERROR,
+                (errcode(ERRCODE_CANNOT_COERCE),
+                 errmsg("Explicit Conversion from data type Text to sys.Geography is not allowed.")));
+    else
+        ereport(ERROR,
+                (errcode(ERRCODE_CANNOT_COERCE),
+                 errmsg("Implicit Conversion from data type Text to sys.Geography is not allowed.")));
+    PG_RETURN_NULL(); /* unreachable */
+}
+
+
+/* --- Geometry typed constructors --- */
+
+
+/*
+ * Build the 2-arg fcinfo used by all typed constructors below and call the
+ * underlying parser. Caller is responsible for the type-of-result check.
+ */
+static inline Datum
+parse_typed_constructor(FunctionCallInfo fcinfo,
+                        Datum (*parser)(FunctionCallInfo),
+                        const char *fn_label)
+{
+    LOCAL_FCINFO(fcinfo_local, 2);
+
+    if (PG_ARGISNULL(1))
+        ereport(ERROR,
+                (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+                 errmsg("'%s' failed because parameter 2 is not allowed to be null.",
+                        fn_label)));
+    if (PG_ARGISNULL(0))
+        return (Datum) 0;   /* sentinel; caller checks PG_ARGISNULL(0) again */
+
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 2, PG_GET_COLLATION(), NULL, NULL);
+    fcinfo_local->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_local->args[0].isnull = false;
+    fcinfo_local->args[1].value = PG_GETARG_DATUM(1);
+    fcinfo_local->args[1].isnull = false;
+    return parser(fcinfo_local);
+}
+
+Datum
+bbf_geometry_stpointfromtext(PG_FUNCTION_ARGS)
+{
+    Datum geom;
+
+    load_spatial_fns_once();
+
+    geom = parse_typed_constructor(fcinfo, get_geometry_from_text,
+                                   "geometry::STPointFromText");
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+
+    if (gserialized_typecode(geom) == LWTYPE_POINT)
+        PG_RETURN_DATUM(geom);
+
+    ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+             errmsg("Expected \"POINT\" at Position 1. The input has %s",
+                    text_to_cstring(PG_GETARG_TEXT_PP(0)))));
+    PG_RETURN_NULL();
+}
+
+
+Datum
+bbf_geometry_stlinefromtext(PG_FUNCTION_ARGS)
+{
+    Datum geom;
+
+    load_spatial_fns_once();
+
+    geom = parse_typed_constructor(fcinfo, get_geometry_from_text,
+                                   "geometry::STLineFromText");
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+
+    if (gserialized_typecode(geom) == LWTYPE_LINESTRING)
+        PG_RETURN_DATUM(geom);
+
+    ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+             errmsg("Expected \"LINESTRING\" at Position 1. The input has %s",
+                    text_to_cstring(PG_GETARG_TEXT_PP(0)))));
+    PG_RETURN_NULL();
+}
+
+
+Datum
+bbf_geometry_stpolyfromtext(PG_FUNCTION_ARGS)
+{
+    Datum geom;
+
+    load_spatial_fns_once();
+
+    geom = parse_typed_constructor(fcinfo, get_geometry_from_text,
+                                   "geometry::STPolyFromText");
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+
+    if (gserialized_typecode(geom) == LWTYPE_POLYGON)
+        PG_RETURN_DATUM(geom);
+
+    ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+             errmsg("Expected \"POLYGON\" at Position 1. The input has %s",
+                    text_to_cstring(PG_GETARG_TEXT_PP(0)))));
+    PG_RETURN_NULL();
+}
+
+Datum
+bbf_geometry_stmpointfromtext(PG_FUNCTION_ARGS)
+{
+    Datum geom;
+
+    load_spatial_fns_once();
+
+    geom = parse_typed_constructor(fcinfo, get_geometry_from_text,
+                                   "geometry::STMPointFromText");
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+
+    if (gserialized_typecode(geom) == LWTYPE_MULTIPOINT)
+        PG_RETURN_DATUM(geom);
+
+    ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+             errmsg("Expected \"MULTIPOINT\" at position 1. The input has %s",
+                    text_to_cstring(PG_GETARG_TEXT_PP(0)))));
+    PG_RETURN_NULL();
+}
+
+/* --- Geography typed constructors --- */
+
+
+Datum
+bbf_geography_stpointfromtext(PG_FUNCTION_ARGS)
+{
+    Datum geom;
+
+    load_spatial_fns_once();
+
+    geom = parse_typed_constructor(fcinfo, get_geography_from_text,
+                                   "geography::STPointFromText");
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+
+    if (gserialized_typecode(geom) == LWTYPE_POINT)
+        PG_RETURN_DATUM(geom);
+
+    ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+             errmsg("Expected \"POINT\" at Position 1. The input has %s",
+                    text_to_cstring(PG_GETARG_TEXT_PP(0)))));
+    PG_RETURN_NULL();
+}
+
+Datum
+bbf_geography_stlinefromtext(PG_FUNCTION_ARGS)
+{
+    Datum geom;
+
+    load_spatial_fns_once();
+
+    geom = parse_typed_constructor(fcinfo, get_geography_from_text,
+                                   "geography::STLineFromText");
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+
+    if (gserialized_typecode(geom) == LWTYPE_LINESTRING)
+        PG_RETURN_DATUM(geom);
+
+    ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+             errmsg("Expected \"LINESTRING\" at Position 1. The input has %s",
+                    text_to_cstring(PG_GETARG_TEXT_PP(0)))));
+    PG_RETURN_NULL();
+}
+
+Datum
+bbf_geography_stpolyfromtext(PG_FUNCTION_ARGS)
+{
+    Datum geom;
+
+    load_spatial_fns_once();
+
+    geom = parse_typed_constructor(fcinfo, get_geography_from_text,
+                                   "geography::STPolyFromText");
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+
+    if (gserialized_typecode(geom) == LWTYPE_POLYGON)
+        PG_RETURN_DATUM(geom);
+
+    ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+             errmsg("Expected \"POLYGON\" at Position 1. The input has %s",
+                    text_to_cstring(PG_GETARG_TEXT_PP(0)))));
+    PG_RETURN_NULL();
+}
+
+Datum
+bbf_geography_stmpointfromtext(PG_FUNCTION_ARGS)
+{
+    Datum geom;
+
+    load_spatial_fns_once();
+
+    geom = parse_typed_constructor(fcinfo, get_geography_from_text,
+                                   "geography::STMPointFromText");
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+
+    if (gserialized_typecode(geom) == LWTYPE_MULTIPOINT)
+        PG_RETURN_DATUM(geom);
+
+    ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+             errmsg("Expected \"MULTIPOINT\" at position 1. The input has %s",
+                    text_to_cstring(PG_GETARG_TEXT_PP(0)))));
+    PG_RETURN_NULL();
+}
+
+/* --- Cast wrappers: remaining PL/pgSQL → C conversions --- */
+
+/* GEOMETRY(bpchar) — bpchar to geometry cast */
+Datum
+bbf_geom_from_bpchar(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+    return charTogeom(fcinfo);
+}
+
+/* GEOMETRY(varchar) — varchar uses the same wire format as bpchar */
+Datum
+bbf_geom_from_varchar(PG_FUNCTION_ARGS)
+{
+    return bbf_geom_from_bpchar(fcinfo);
+}
+
+/* text(GEOMETRY) — error: explicit conversion not allowed */
+Datum
+bbf_geom_to_text_error(PG_FUNCTION_ARGS)
+{
+    ereport(ERROR,
+            (errcode(ERRCODE_CANNOT_COERCE),
+             errmsg("Explicit Conversion from data type sys.Geometry to Text is not allowed.")));
+    PG_RETURN_NULL();
+}
+
+/* GEOMETRY(bbf_varbinary) — varbinary has same internal format as bytea */
+Datum
+bbf_geom_from_varbinary(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+    return geometry_from_bytea(fcinfo);
+}
+
+/* bbf_varbinary(GEOMETRY, int, bool) — geometry to varbinary with length check */
+Datum
+bbf_geom_to_varbinary(PG_FUNCTION_ARGS)
+{
+    LOCAL_FCINFO(fcinfo_local, 1);
+    bytea *byte_result;
+    int32 byte_len;
+    int32 maxlen = PG_GETARG_INT32(1);
+
+    load_spatial_fns_once();
+
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_local->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_local->args[0].isnull = false;
+    byte_result = DatumGetByteaP(bytea_from_geometry(fcinfo_local));
+
+    byte_len = VARSIZE_ANY_EXHDR(byte_result) + 4;
+    if (byte_len > maxlen && maxlen != -1)
+        ereport(ERROR,
+                (errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+                 errmsg("Error converting sys.geometry to binary. The result would be truncated.")));
+
+    PG_RETURN_BYTEA_P(byte_result);
+}
+
+/* GEOMETRY(bbf_binary) — binary has same internal format as bytea */
+Datum
+bbf_geom_from_binary(PG_FUNCTION_ARGS)
+{
+    return bbf_geom_from_varbinary(fcinfo);
+}
+
+/* bbf_binary(GEOMETRY, int, bool) — geometry to fixed-length binary */
+Datum
+bbf_geom_to_binary(PG_FUNCTION_ARGS)
+{
+    LOCAL_FCINFO(fcinfo_local, 1);
+    bytea *byte_result;
+    int32 byte_len;
+    int32 target_len = PG_GETARG_INT32(1);
+
+    load_spatial_fns_once();
+
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_local->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_local->args[0].isnull = false;
+    byte_result = DatumGetByteaP(bytea_from_geometry(fcinfo_local));
+
+    byte_len = VARSIZE_ANY_EXHDR(byte_result) + 4;
+    if (byte_len == target_len)
+        PG_RETURN_BYTEA_P(byte_result);
+    else if (byte_len > target_len)
+        ereport(ERROR,
+                (errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+                 errmsg("Error converting sys.geometry to binary. The result would be truncated.")));
+    else
+        ereport(ERROR,
+                (errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+                 errmsg("Error converting sys.geometry to fixed length binary type. The result would be padded and cannot be converted back.")));
+    PG_RETURN_NULL();
+}
+
+/* Geometry__STMPointFromWKB — WKB to geometry with MultiPoint type validation */
+Datum
+bbf_geometry_stmpointfromwkb(PG_FUNCTION_ARGS)
+{
+    LOCAL_FCINFO(fcinfo_local, 2);
+    Datum geom;
+
+    load_spatial_fns_once();
+
+    if (PG_ARGISNULL(1))
+        ereport(ERROR,
+                (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+                 errmsg("'geometry::STMPointFromWKB' failed because parameter 2 is not allowed to be null.")));
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 2, InvalidOid, NULL, NULL);
+    fcinfo_local->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_local->args[0].isnull = false;
+    fcinfo_local->args[1].value = PG_GETARG_DATUM(1);
+    fcinfo_local->args[1].isnull = false;
+    geom = get_geometry_from_wkb(fcinfo_local);
+
+    if (gserialized_typecode(geom) == LWTYPE_MULTIPOINT)
+        PG_RETURN_DATUM(geom);
+
+    /* Type mismatch: format the same way the PL/pgSQL version did. */
+    {
+        LOCAL_FCINFO(fcinfo_name, 1);
+        char *geom_type;
+
+        InitFunctionCallInfoData(*fcinfo_name, NULL, 1, InvalidOid, NULL, NULL);
+        fcinfo_name->args[0].value = geom;
+        fcinfo_name->args[0].isnull = false;
+        geom_type = text_to_cstring(DatumGetTextP(geometry_type_p(fcinfo_name)));
+        ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("Expected \"MULTIPOINT\" at position 1. The input has %s",
+                        geom_type)));
+        PG_RETURN_NULL();
+    }
+}
+
+/* GEOGRAPHY(bbf_varbinary) — varbinary has same internal format as bytea */
+Datum
+bbf_geog_from_varbinary(PG_FUNCTION_ARGS)
+{
+    load_spatial_fns_once();
+    return geography_from_bytea(fcinfo);
+}
+
+/* bbf_varbinary(GEOGRAPHY, int, bool) — geography to varbinary with length check */
+Datum
+bbf_geog_to_varbinary(PG_FUNCTION_ARGS)
+{
+    LOCAL_FCINFO(fcinfo_local, 1);
+    bytea *byte_result;
+    int32 byte_len;
+    int32 maxlen = PG_GETARG_INT32(1);
+
+    load_spatial_fns_once();
+
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_local->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_local->args[0].isnull = false;
+    byte_result = DatumGetByteaP(bytea_from_geography(fcinfo_local));
+
+    byte_len = VARSIZE_ANY_EXHDR(byte_result) + 4;
+    if (byte_len > maxlen && maxlen != -1)
+        ereport(ERROR,
+                (errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+                 errmsg("Error converting sys.geography to binary. The result would be truncated.")));
+
+    PG_RETURN_BYTEA_P(byte_result);
+}
+
+/* GEOGRAPHY(bbf_binary) — binary has same internal format as bytea */
+Datum
+bbf_geog_from_binary(PG_FUNCTION_ARGS)
+{
+    return bbf_geog_from_varbinary(fcinfo);
+}
+
+/* bbf_binary(GEOGRAPHY, int, bool) — geography to fixed-length binary */
+Datum
+bbf_geog_to_binary(PG_FUNCTION_ARGS)
+{
+    LOCAL_FCINFO(fcinfo_local, 1);
+    bytea *byte_result;
+    int32 byte_len;
+    int32 target_len = PG_GETARG_INT32(1);
+
+    load_spatial_fns_once();
+
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo_local->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_local->args[0].isnull = false;
+    byte_result = DatumGetByteaP(bytea_from_geography(fcinfo_local));
+
+    byte_len = VARSIZE_ANY_EXHDR(byte_result) + 4;
+    if (byte_len == target_len)
+        PG_RETURN_BYTEA_P(byte_result);
+    else if (byte_len > target_len)
+        ereport(ERROR,
+                (errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+                 errmsg("Error converting sys.geography to binary. The result would be truncated.")));
+    else
+        ereport(ERROR,
+                (errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+                 errmsg("Error converting sys.geography to fixed length binary type. The result would be padded and cannot be converted back.")));
+    PG_RETURN_NULL();
+}
+
+/* Geography__STMPointFromWKB — WKB to geography with MultiPoint type validation */
+Datum
+bbf_geography_stmpointfromwkb(PG_FUNCTION_ARGS)
+{
+    LOCAL_FCINFO(fcinfo_local, 2);
+    Datum geog;
+
+    load_spatial_fns_once();
+
+    if (PG_ARGISNULL(1))
+        ereport(ERROR,
+                (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+                 errmsg("'geography::STMPointFromWKB' failed because parameter 2 is not allowed to be null.")));
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 2, InvalidOid, NULL, NULL);
+    fcinfo_local->args[0].value = PG_GETARG_DATUM(0);
+    fcinfo_local->args[0].isnull = false;
+    fcinfo_local->args[1].value = PG_GETARG_DATUM(1);
+    fcinfo_local->args[1].isnull = false;
+    geog = get_geography_from_wkb(fcinfo_local);
+
+    if (gserialized_typecode(geog) == LWTYPE_MULTIPOINT)
+        PG_RETURN_DATUM(geog);
+
+    /* Type mismatch: keep the same error format as the PL/pgSQL version. */
+    {
+        LOCAL_FCINFO(fcinfo_name, 1);
+        char *geom_type;
+
+        InitFunctionCallInfoData(*fcinfo_name, NULL, 1, InvalidOid, NULL, NULL);
+        fcinfo_name->args[0].value = geog;
+        fcinfo_name->args[0].isnull = false;
+        geom_type = text_to_cstring(DatumGetTextP(geometry_type_p(fcinfo_name)));
+        ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("Expected \"MULTIPOINT\" at position 1. The input has %s",
+                        geom_type)));
+        PG_RETURN_NULL();
+    }
+}
+
 
 #endif
