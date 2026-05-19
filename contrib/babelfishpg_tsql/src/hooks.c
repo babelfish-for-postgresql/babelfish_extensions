@@ -3645,6 +3645,19 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 
 	if (access == OAT_POST_CREATE)
 		change_object_owner_if_db_owner();
+
+	/*
+	 * Detect schema changes to the INSERT EXEC target table.
+	 * If the executed procedure alters the target table, we need to fail
+	 * the INSERT EXEC to prevent data corruption from schema mismatch.
+	 */
+	if (access == OAT_POST_ALTER && classId == RelationRelationId)
+	{
+		if (OidIsValid(insert_exec_ctx.target_rel_oid) && objectId == insert_exec_ctx.target_rel_oid)
+		{
+			insert_exec_ctx.is_target_relation_modified = true;
+		}
+	}
 }
 
 static void

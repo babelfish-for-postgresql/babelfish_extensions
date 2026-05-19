@@ -444,7 +444,7 @@ static pltsql_CastHashEntry *get_cast_hashentry(PLtsql_execstate *estate,
 static void exec_init_tuple_store(PLtsql_execstate *estate);
 static void exec_set_found(PLtsql_execstate *estate, bool state);
 static void exec_set_fetch_status(PLtsql_execstate *estate, int status);
-static void exec_set_rowcount(uint64 rowno);
+void exec_set_rowcount(uint64 rowno);
 static void exec_set_error(PLtsql_execstate *estate, int error, int pg_error, bool error_mapping_failed);
 static void pltsql_create_econtext(PLtsql_execstate *estate);
 static void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
@@ -9693,7 +9693,7 @@ exec_set_fetch_status(PLtsql_execstate *estate, int status)
 	fetch_status_var = status;
 }
 
-static void
+void
 exec_set_rowcount(uint64 rowno)
 {
 	rowcount_var = rowno;
