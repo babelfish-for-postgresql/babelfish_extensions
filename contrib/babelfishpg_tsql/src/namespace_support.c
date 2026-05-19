@@ -154,10 +154,6 @@ is_babelfish_namespace(PG_FUNCTION_ARGS)
 	if (!OidIsValid(ns_oid))
 		PG_RETURN_BOOL(false);
 
-	/* Always include the sys schema */
-	if (ns_oid == get_namespace_oid("sys", true))
-		PG_RETURN_BOOL(true);
-
 	cur_dbid = get_current_dbid();
 	if (!DbidIsValid(cur_dbid))
 		PG_RETURN_BOOL(false);
@@ -292,7 +288,7 @@ has_privilege_support(PG_FUNCTION_ARGS)
 {
 	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
 
-	if (sql_dialect != SQL_DIALECT_TSQL)
+	if (!DbidIsValid(get_current_dbid()))
 		PG_RETURN_POINTER(NULL);
 
 	if (IsA(rawreq, SupportRequestSelectivity))
