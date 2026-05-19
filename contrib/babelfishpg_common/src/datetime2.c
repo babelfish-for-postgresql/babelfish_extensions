@@ -9,6 +9,7 @@
 #include "postgres.h"
 
 #include "fmgr.h"
+#include "common/int.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
@@ -491,7 +492,22 @@ date_datetime2(PG_FUNCTION_ARGS)
 	else if (DATE_IS_NOEND(dateVal))
 		TIMESTAMP_NOEND(result);
 	else
-		result = dateVal * USECS_PER_DAY;
+	{
+		/*
+		 * Use overflow-safe multiplication to prevent int64 overflow.
+		 * dateVal * USECS_PER_DAY can overflow for dates outside the
+		 * valid datetime2 range (0001-01-01 to 9999-12-31).
+		 */
+		int64		product;
+
+		if (pg_mul_s64_overflow((int64) dateVal, USECS_PER_DAY, &product) ||
+			!IS_VALID_DATETIME2(product))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("data out of range for datetime2")));
+
+		result = (Timestamp) product;
+	}
 
 	PG_RETURN_TIMESTAMP(result);
 }
