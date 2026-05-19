@@ -448,13 +448,12 @@ from pg_attribute a
 inner join pg_class c on c.oid = a.attrelid
 inner join pg_type t on t.oid = a.atttypid
 inner join pg_namespace s on s.oid = c.relnamespace
-left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join pg_attrdef d on c.oid = d.adrelid and a.attnum = d.adnum
 left join pg_collation coll on coll.oid = a.attcollation
 , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
 where not a.attisdropped
-and (s.nspname = 'sys' or ext.nspname is not null)
+and (s.nspname = 'sys' or sys.is_babelfish_namespace(s.oid))
 -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
 and c.relkind in ('r', 'v', 'm', 'f', 'p')
 and c.relispartition = false
@@ -1331,11 +1330,10 @@ select
   , 0 as is_schema_published
 from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
 left join tt_internal tt on t.oid = tt.typrelid
-left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
 where t.relpersistence in ('p', 'u', 't')
 and t.relkind = 'r'
-and (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
+and (s.nspname = 'sys' or (nis.name is not null and sys.is_babelfish_namespace(s.oid)))
 and tt.typrelid is null
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
  
@@ -1356,13 +1354,12 @@ select
   , 0 as is_schema_published
 from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
 left join tt_internal tt on t.oid = tt.typrelid
-left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
 where t.relpersistence in ('p', 'u', 't')
 and (t.relkind = 'r' or t.relkind = 'p')
 and t.relispartition = false
 and s.nspname <> 'sys' and nis.name is null
-and ext.nspname is not null
+and sys.is_babelfish_namespace(s.oid)
 and tt.typrelid is null
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
  
@@ -1382,10 +1379,9 @@ select
   , 0 as is_published
   , 0 as is_schema_published
 from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
-left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'V'
 where t.relkind = 'v'
-and (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
+and (s.nspname = 'sys' or (nis.name is not null and sys.is_babelfish_namespace(s.oid)))
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- Details of user defined views
@@ -1403,11 +1399,10 @@ select
   , 0 as is_published
   , 0 as is_schema_published
 from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
-left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'V'
 where t.relkind = 'v'
 and s.nspname <> 'sys' and nis.name is null
-and ext.nspname is not null
+and sys.is_babelfish_namespace(s.oid)
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined and system foreign key constraints
@@ -1426,11 +1421,10 @@ select
   , 0 as is_schema_published
 from pg_constraint c
 inner join pg_namespace s on s.oid = c.connamespace
-left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'F'
 where 
 c.contype = 'f'
-and (s.nspname = 'sys' or ext.nspname is not null)
+and (s.nspname = 'sys' or sys.is_babelfish_namespace(s.oid))
 union all
 -- details of user defined and system primary key constraints
 select
@@ -1448,11 +1442,10 @@ select
   , 0 as is_schema_published
 from pg_constraint c
 inner join pg_namespace s on s.oid = c.connamespace
-left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'PK'
 where 
 c.contype = 'p'
-and (s.nspname = 'sys' or ext.nspname is not null)
+and (s.nspname = 'sys' or sys.is_babelfish_namespace(s.oid))
 union all
 -- details of system defined procedures
 select
@@ -1507,7 +1500,6 @@ from pg_proc p
 inner join pg_namespace s on s.oid = p.pronamespace
 inner join pg_catalog.pg_type t on t.oid = p.prorettype
 left join pg_trigger tr on tr.tgfoid = p.oid
-left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = p.proname and nis.schemaid = s.oid 
 and nis.type = (case p.prokind
       when 'p' then 'P'::char(2)
@@ -1525,12 +1517,59 @@ and nis.type = (case p.prokind
           else 'FN'::char(2)
         end
     end)
-where (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
+where (s.nspname = 'sys' or (nis.name is not null and sys.is_babelfish_namespace(s.oid)))
 and has_function_privilege(p.oid, 'EXECUTE')
 and p.proname != 'pltsql_call_handler'
  
 union all
--- details of user defined procedures
+-- details of user defined procedures (prokind='p', no pg_type join needed)
+select
+    p.proname::sys.sysname as name
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'P'::char(2) as type
+  , 'SQL_STORED_PROCEDURE'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_proc p
+inner join pg_namespace s on s.oid = p.pronamespace
+left join sys.shipped_objects_not_in_sys nis on nis.name = p.proname and nis.schemaid = s.oid and nis.type = 'P'::char(2)
+where p.prokind = 'p'
+and s.nspname <> 'sys' and nis.name is null
+and sys.is_babelfish_namespace(s.oid)
+and has_function_privilege(p.oid, 'EXECUTE')
+
+union all
+-- details of user defined scalar functions (prokind='f', not set-returning, no pg_type needed)
+select
+    p.proname::sys.sysname as name
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'FN'::char(2) as type
+  , 'SQL_SCALAR_FUNCTION'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_proc p
+inner join pg_namespace s on s.oid = p.pronamespace
+left join sys.shipped_objects_not_in_sys nis on nis.name = p.proname and nis.schemaid = s.oid and nis.type = 'FN'::char(2)
+where p.prokind = 'f'
+and not p.proretset
+and s.nspname <> 'sys' and nis.name is null
+and sys.is_babelfish_namespace(s.oid)
+and has_function_privilege(p.oid, 'EXECUTE')
+
+union all
+-- details of user defined table-valued functions, triggers, and aggregates (need pg_type)
 select
     p.proname::sys.sysname as name 
   , case
@@ -1543,7 +1582,6 @@ select
   		       else 0 end as int) 
     as parent_object_id
   , case p.prokind
-      when 'p' then 'P'::char(2)
       when 'a' then 'AF'::char(2)
       else
         case 
@@ -1559,7 +1597,6 @@ select
         end
     end as type
   , case p.prokind
-      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
       when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
       else
         case 
@@ -1583,10 +1620,8 @@ from pg_proc p
 inner join pg_namespace s on s.oid = p.pronamespace
 inner join pg_catalog.pg_type t on t.oid = p.prorettype
 left join pg_trigger tr on tr.tgfoid = p.oid
-left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = p.proname and nis.schemaid = s.oid 
 and nis.type = (case p.prokind
-      when 'p' then 'P'::char(2)
       when 'a' then 'AF'::char(2)
       else
         case 
@@ -1601,8 +1636,10 @@ and nis.type = (case p.prokind
           else 'FN'::char(2)
         end
     end)
-where s.nspname <> 'sys' and nis.name is null
-and ext.nspname is not null
+where p.prokind <> 'p'
+and (p.prokind = 'a' OR p.proretset OR tr.oid IS NOT NULL)
+and s.nspname <> 'sys' and nis.name is null
+and sys.is_babelfish_namespace(s.oid)
 and has_function_privilege(p.oid, 'EXECUTE')
  
 union all
@@ -1624,10 +1661,9 @@ from pg_catalog.pg_attrdef d
 inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
 inner join pg_class o on d.adrelid = o.oid
 inner join pg_namespace s on s.oid = o.relnamespace
-left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = ('DF_' || o.relname || '_' || d.oid) and nis.schemaid = s.oid and nis.type = 'D'
 where a.atthasdef = 't' and a.attgenerated = ''
-and (s.nspname = 'sys' or ext.nspname is not null)
+and (s.nspname = 'sys' or sys.is_babelfish_namespace(s.oid))
 and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
 union all
 -- details of all check constraints
@@ -1646,11 +1682,10 @@ select
   , 0 as is_schema_published
 from pg_catalog.pg_constraint as c
 inner join pg_namespace s on s.oid = c.connamespace
-left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'C'
 where 
 c.contype = 'c' and c.conrelid != 0
-and (s.nspname = 'sys' or ext.nspname is not null)
+and (s.nspname = 'sys' or sys.is_babelfish_namespace(s.oid))
 union all
 -- details of user defined and system defined sequence objects
 select
@@ -1668,10 +1703,9 @@ select
   , 0 as is_schema_published
 from pg_class p
 inner join pg_namespace s on s.oid = p.relnamespace
-left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = p.relname and nis.schemaid = s.oid and nis.type = 'SO'
 where p.relkind = 'S'
-and (s.nspname = 'sys' or ext.nspname is not null)
+and (s.nspname = 'sys' or sys.is_babelfish_namespace(s.oid))
 union all
 -- details of user defined table types
 select
@@ -1978,61 +2012,77 @@ from sys.objects s;
 GRANT SELECT ON sys.sysobjects TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
+-- Procedures and functions (from pg_proc directly)
 SELECT
-  ao.object_id AS object_id
-  , CAST(
-      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN COALESCE(f.definition, '')
-      WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
-      ELSE NULL
-      END
-    AS sys.nvarchar) AS definition
-  , CAST(1 as sys.bit)  AS uses_ansi_nulls
-  , CAST(1 as sys.bit)  AS uses_quoted_identifier
-  , CAST(0 as sys.bit)  AS is_schema_bound
-  , CAST(0 as sys.bit)  AS uses_database_collation
-  , CAST(0 as sys.bit)  AS is_recompiled
-  , CAST(ao.type IN ('P', 'FN', 'IN', 'TF', 'RF', 'IF') 
-        AND p.proisstrict 
-    AS sys.bit) as null_on_null_input
+  CAST(p.oid AS INT) AS object_id
+  , CAST(COALESCE(f.definition, '') AS sys.nvarchar) AS definition
+  , CAST(1 as sys.bit) AS uses_ansi_nulls
+  , CAST(1 as sys.bit) AS uses_quoted_identifier
+  , CAST(0 as sys.bit) AS is_schema_bound
+  , CAST(0 as sys.bit) AS uses_database_collation
+  , CAST(0 as sys.bit) AS is_recompiled
+  , CAST(p.proisstrict AS sys.bit) as null_on_null_input
   , null::integer as execute_as_principal_id
   , CAST(0 as sys.bit) as uses_native_compilation
-  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
-FROM sys.all_objects ao
-LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
-LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
-LEFT OUTER JOIN sys.babelfish_view_def bvd 
- on (
-      ext.orig_name = bvd.schema_name AND 
-      ext.dbid = bvd.dbid AND
-      ao.name = bvd.object_name 
-   )
-LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
-LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
-AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature COLLATE "C"
-WHERE ao.type in ('P', 'RF', 'V', 'FN', 'IF', 'TF', 'R')
+  , CAST(CASE WHEN s.nspname = 'sys' OR nis.name IS NOT NULL THEN 1 ELSE 0 END AS INT) as is_ms_shipped
+FROM pg_proc p
+INNER JOIN pg_namespace s ON s.oid = p.pronamespace
+LEFT JOIN sys.shipped_objects_not_in_sys nis ON nis.name = p.proname COLLATE "C" AND nis.schemaid = s.oid
+LEFT JOIN sys.babelfish_function_ext f ON p.proname::text = f.funcname COLLATE "C"
+  AND s.nspname::text = f.nspname COLLATE "C"
+  AND sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature COLLATE "C"
+WHERE p.prokind IN ('p', 'f', 'a')
+  AND p.proname <> 'pltsql_call_handler'
+  AND sys.is_babelfish_namespace(s.oid)
+  AND has_function_privilege(p.oid, 'EXECUTE')
 UNION ALL
+-- Views (from pg_class directly)
 SELECT
-  ao.object_id AS object_id
-  , CAST(COALESCE(f.definition, '') AS sys.nvarchar) AS definition
-  , CAST(1 as sys.bit)  AS uses_ansi_nulls
-  , CAST(1 as sys.bit)  AS uses_quoted_identifier
-  , CAST(0 as sys.bit)  AS is_schema_bound
-  , CAST(0 as sys.bit)  AS uses_database_collation
-  , CAST(0 as sys.bit)  AS is_recompiled
+  CAST(c.oid AS INT) AS object_id
+  , CAST(COALESCE(bvd.definition, '') AS sys.nvarchar) AS definition
+  , CAST(1 as sys.bit) AS uses_ansi_nulls
+  , CAST(1 as sys.bit) AS uses_quoted_identifier
+  , CAST(0 as sys.bit) AS is_schema_bound
+  , CAST(0 as sys.bit) AS uses_database_collation
+  , CAST(0 as sys.bit) AS is_recompiled
   , CAST(0 AS sys.bit) as null_on_null_input
   , null::integer as execute_as_principal_id
   , CAST(0 as sys.bit) as uses_native_compilation
-  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
-FROM sys.all_objects ao
-LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
-LEFT JOIN pg_trigger tr ON ao.object_id = CAST(tr.oid AS INT)
-LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
-AND sys.babelfish_get_pltsql_function_signature(tr.tgfoid) = f.funcsignature COLLATE "C"
-WHERE ao.type = 'TR';
+  , CAST(CASE WHEN s.nspname = 'sys' OR nis.name IS NOT NULL THEN 1 ELSE 0 END AS INT) as is_ms_shipped
+FROM pg_class c
+INNER JOIN pg_namespace s ON s.oid = c.relnamespace
+LEFT JOIN sys.shipped_objects_not_in_sys nis ON nis.name = c.relname COLLATE "C" AND nis.schemaid = s.oid AND nis.type = 'V'
+LEFT JOIN sys.babelfish_namespace_ext ext ON s.nspname::text = ext.nspname COLLATE "C" AND ext.dbid = sys.db_id()
+LEFT JOIN sys.babelfish_view_def bvd ON ext.orig_name = bvd.schema_name AND ext.dbid = bvd.dbid AND c.relname::text = bvd.object_name COLLATE "C"
+WHERE c.relkind = 'v'
+  AND sys.is_babelfish_namespace(s.oid)
+  AND has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+UNION ALL
+-- Triggers (from pg_trigger directly)
+SELECT
+  CAST(tr.oid AS INT) AS object_id
+  , CAST(COALESCE(f.definition, '') AS sys.nvarchar) AS definition
+  , CAST(1 as sys.bit) AS uses_ansi_nulls
+  , CAST(1 as sys.bit) AS uses_quoted_identifier
+  , CAST(0 as sys.bit) AS is_schema_bound
+  , CAST(0 as sys.bit) AS uses_database_collation
+  , CAST(0 as sys.bit) AS is_recompiled
+  , CAST(0 AS sys.bit) as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , CAST(0 as sys.bit) as uses_native_compilation
+  , CAST(CASE WHEN s.nspname = 'sys' OR nis.name IS NOT NULL THEN 1 ELSE 0 END AS INT) as is_ms_shipped
+FROM pg_trigger tr
+INNER JOIN pg_proc p ON p.oid = tr.tgfoid
+INNER JOIN pg_namespace s ON s.oid = p.pronamespace
+LEFT JOIN sys.shipped_objects_not_in_sys nis ON nis.name = p.proname COLLATE "C" AND nis.schemaid = s.oid AND nis.type = 'TR'
+LEFT JOIN sys.babelfish_function_ext f ON p.proname::text = f.funcname COLLATE "C"
+  AND s.nspname::text = f.nspname COLLATE "C"
+  AND sys.babelfish_get_pltsql_function_signature(tr.tgfoid) = f.funcsignature COLLATE "C"
+WHERE sys.is_babelfish_namespace(s.oid)
+  AND has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.all_sql_modules AS
-WITH all_sql_modules_cte AS MATERIALIZED (
 SELECT
      CAST(t1.object_id as int)
     ,CAST(t1.definition as sys.nvarchar)
@@ -2044,13 +2094,10 @@ SELECT
     ,CAST(t1.null_on_null_input as sys.bit)
     ,CAST(t1.execute_as_principal_id as int)
     ,CAST(t1.uses_native_compilation as sys.bit)
-FROM sys.all_sql_modules_internal t1
-)
-SELECT * FROM all_sql_modules_cte;
+FROM sys.all_sql_modules_internal t1;
 GRANT SELECT ON sys.all_sql_modules TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.system_sql_modules AS
-WITH system_sql_modules_cte AS MATERIALIZED ( 
 SELECT
      CAST(t1.object_id as int)
     ,CAST(t1.definition as sys.nvarchar)
@@ -2063,13 +2110,10 @@ SELECT
     ,CAST(t1.execute_as_principal_id as int)
     ,CAST(t1.uses_native_compilation as sys.bit)
 FROM sys.all_sql_modules_internal t1
-WHERE t1.is_ms_shipped = 1
-)
-SELECT * FROM system_sql_modules_cte;
+WHERE t1.is_ms_shipped = 1;
 GRANT SELECT ON sys.system_sql_modules TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sql_modules AS
-WITH sql_modules_cte AS MATERIALIZED (
 SELECT
      CAST(t1.object_id as int)
     ,CAST(t1.definition as sys.nvarchar)
@@ -2082,9 +2126,7 @@ SELECT
     ,CAST(t1.execute_as_principal_id as int)
     ,CAST(t1.uses_native_compilation as sys.bit)
 FROM sys.all_sql_modules_internal t1
-WHERE t1.is_ms_shipped = 0
-)
-SELECT * FROM sql_modules_cte;
+WHERE t1.is_ms_shipped = 0;
 GRANT SELECT ON sys.sql_modules TO PUBLIC;
 
 CREATE VIEW sys.syscharsets
