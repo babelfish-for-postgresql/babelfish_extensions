@@ -2,15 +2,8 @@
  *
  * pl_insert_exec.c
  *	  INSERT EXECUTE implementation for Babelfish PL/tsql
- *
- * This file contains all logic for the INSERT INTO <target> EXEC <proc>
- * statement redesign. It implements:
- *   - InsertExecContext: global state tracking for an active INSERT EXEC
- *   - DestReceiver (DR_insertexec): captures procedure output into a
- *     session-local temp table
- *   - Temp table lifecycle: creation, schema inference, flush, and drop
- *   - Context management accessors used across pl_exec.c, hooks.c, and
- *     the TDS layer
+It implements:
+ *	- Temp table lifecycle: creation, flush, and drop
  *
  *-------------------------------------------------------------------------
  */
@@ -35,8 +28,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
-/* Forward declaration for exec_set_rowcount - defined in pl_exec.c */
-extern void exec_set_rowcount(uint64 rowno);
+extern int execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, List *params);
 
 /*
  * Global INSERT EXEC context - defined in pltsql.h, declared here.
@@ -66,7 +58,7 @@ get_insertable_column_list(const char *table_name, const char *physical_schema)
 	/* Resolve the relation OID using RangeVar - works for both regular and temp tables */
 	rv = makeRangeVar(physical_schema ? pstrdup(physical_schema) : NULL,
 					  pstrdup(lower_table_name), -1);
-	relid = RangeVarGetRelid(rv, AccessShareLock, false);
+	relid = RangeVarGetRelid(rv, NoLock, false);
 
 	pfree(lower_table_name);
 
@@ -147,9 +139,6 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 	temp_table_name = ChooseRelationName("__insert_exec_buf", NULL, NULL,
 										 temp_nsp_oid, false);
 
-	if (temp_table_name == NULL)
-		elog(ERROR, "INSERT-EXEC: failed to generate temp table name for buffering");
-
 	/*
 	 * Parse schema and table name from target_table.
 	 * For temp tables (starting with #) and table variables (@),
@@ -172,25 +161,16 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 	 * non-computed column names.
 	 */
 	if (column_list != NULL)
-	{
 		select_cols = column_list;
-	}
 	else
-	{
-		cols_to_free = get_insertable_column_list(target_table, physical_schema);
-		select_cols = cols_to_free;
-	}
+		select_cols = cols_to_free = get_insertable_column_list(target_table, physical_schema);
+
 
 	/*
 	 * Build a fully qualified reference for the source table.
 	 * For temp tables and table variables, use the name directly.
 	 */
-	if (physical_schema != NULL)
-		qualified_target = psprintf("%s.%s",
-									quote_identifier(physical_schema),
-									quote_identifier(target_table));
-	else
-		qualified_target = pstrdup(quote_identifier(target_table));
+	qualified_target = quote_qualified_identifier(physical_schema, target_table);
 
 	/*
 	 * Create the temp buffer table by selecting the desired columns
@@ -235,85 +215,38 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 void
 flush_insert_exec_temp_table(PLtsql_execstate *estate,
 							 const char *target_table,
-							 const char *column_list)
+							 const char *column_list_str)
 {
 	char			*temp_table_name;
 	StringInfoData	flush_query;
-	int				rc;
 	Oid				temp_oid = insert_exec_ctx.temp_table_oid;
 
 	if (!OidIsValid(temp_oid) || target_table == NULL)
-	{
 		return;
-	}
 
 	/*
 	 * Verify target table schema hasn't changed since INSERT EXEC started.
 	 */
 	if (insert_exec_ctx.is_target_relation_modified)
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("INSERT EXEC failed because the stored procedure altered the schema of the target table.")));
-	}
 
 	/* Get the temp table name from its OID */
 	temp_table_name = get_rel_name(temp_oid);
 	if (temp_table_name == NULL)
-	{
 		elog(ERROR, "INSERT-EXEC: Could not find temp table with OID %u", temp_oid);
-	}
 
 	initStringInfo(&flush_query);
 
-	if (column_list != NULL)
-	{
-		/*
-		 * User specified columns - use them directly.
-		 * The temp table was created with columns in the same order as the
-		 * user's column list, so SELECT * gives values in the correct order.
-		 */
-		appendStringInfo(&flush_query,
-			"INSERT INTO %s (%s) SELECT * FROM %s",
-			quote_identifier(target_table),
-			column_list,
-			quote_identifier(temp_table_name));
-	}
-	else
-	{
-		appendStringInfo(&flush_query,
-			"INSERT INTO %s SELECT * FROM %s",
-			quote_identifier(target_table),
-			quote_identifier(temp_table_name));
-	}
+	appendStringInfo(&flush_query,
+      "INSERT INTO %s%s SELECT * FROM %s",
+      quote_identifier(target_table),
+      column_list_str ? column_list_str : "",
+      quote_identifier(temp_table_name));
 
-	/*
-	 * We route through exec_stmt_execsql to reuse the standard SQL execution
-	 * path which handles triggers, rowcount, and FOUND properly.
+	/* We route through execute_batch so the flush INSERT goes through
+	 * the exec_stmt_execsql, which handles triggers, errors, rowcount and FOUND properly.
 	 */
-	PG_TRY();
-	{
-		/* Execute the flush INSERT using SPI */
-		rc = SPI_execute(flush_query.data, false, 0);
-
-		/*
-   		 * SPI_execute returns SPI_OK_INSERT_RETURNING (not SPI_OK_INSERT) when
-   		 * the target table has IDENTITY INSERT ON. Accept both.
-   		 */
-		if (rc != SPI_OK_INSERT && rc != SPI_OK_INSERT_RETURNING)
-			elog(ERROR, "INSERT-EXEC: Failed to flush temp table to target");
-
-		/* Update rowcount for T-SQL compatibility */
-		estate->eval_processed = SPI_processed;
-		exec_set_rowcount(SPI_processed);
-	}
-	PG_CATCH();
-	{
-
-		pfree(flush_query.data);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
-	pfree(flush_query.data);
+	execute_batch(estate, flush_query.data, NULL, NULL);
 }
