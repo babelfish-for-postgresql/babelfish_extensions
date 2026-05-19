@@ -2034,7 +2034,7 @@ LEFT JOIN sys.babelfish_function_ext f ON p.proname::text = f.funcname COLLATE "
 WHERE p.prokind IN ('p', 'f', 'a')
   AND p.proname <> 'pltsql_call_handler'
   AND p.prorettype <> 'trigger'::regtype
-  AND sys.is_babelfish_namespace(s.oid)
+  AND (s.nspname = 'sys' OR sys.is_babelfish_namespace(s.oid))
   AND has_function_privilege(p.oid, 'EXECUTE')
 UNION ALL
 -- Views (from pg_class directly)
@@ -2056,7 +2056,7 @@ LEFT JOIN sys.shipped_objects_not_in_sys nis ON nis.name = c.relname COLLATE "C"
 LEFT JOIN sys.babelfish_namespace_ext ext ON s.nspname::text = ext.nspname COLLATE "C" AND ext.dbid = sys.db_id()
 LEFT JOIN sys.babelfish_view_def bvd ON ext.orig_name = bvd.schema_name AND ext.dbid = bvd.dbid AND c.relname::text = bvd.object_name COLLATE "C"
 WHERE c.relkind = 'v'
-  AND sys.is_babelfish_namespace(s.oid)
+  AND (s.nspname = 'sys' OR sys.is_babelfish_namespace(s.oid))
   AND has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 UNION ALL
 -- Triggers (from pg_trigger directly)
@@ -2079,7 +2079,7 @@ LEFT JOIN sys.shipped_objects_not_in_sys nis ON nis.name = p.proname COLLATE "C"
 LEFT JOIN sys.babelfish_function_ext f ON p.proname::text = f.funcname COLLATE "C"
   AND s.nspname::text = f.nspname COLLATE "C"
   AND sys.babelfish_get_pltsql_function_signature(tr.tgfoid) = f.funcsignature COLLATE "C"
-WHERE sys.is_babelfish_namespace(s.oid)
+WHERE (s.nspname = 'sys' OR sys.is_babelfish_namespace(s.oid))
   AND has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 
