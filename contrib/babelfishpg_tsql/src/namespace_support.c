@@ -154,6 +154,10 @@ is_babelfish_namespace(PG_FUNCTION_ARGS)
 	if (!OidIsValid(ns_oid))
 		PG_RETURN_BOOL(false);
 
+	/* Always include the sys schema */
+	if (ns_oid == get_namespace_oid("sys", true))
+		PG_RETURN_BOOL(true);
+
 	cur_dbid = get_current_dbid();
 	if (!DbidIsValid(cur_dbid))
 		PG_RETURN_BOOL(false);

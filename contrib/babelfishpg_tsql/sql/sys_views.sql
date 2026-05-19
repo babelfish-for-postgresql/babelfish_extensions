@@ -1564,6 +1564,7 @@ inner join pg_namespace s on s.oid = p.pronamespace
 left join sys.shipped_objects_not_in_sys nis on nis.name = p.proname and nis.schemaid = s.oid and nis.type = 'FN'::char(2)
 where p.prokind = 'f'
 and not p.proretset
+and p.prorettype <> 'trigger'::regtype
 and s.nspname <> 'sys' and nis.name is null
 and sys.is_babelfish_namespace(s.oid)
 and has_function_privilege(p.oid, 'EXECUTE')
@@ -2033,6 +2034,7 @@ LEFT JOIN sys.babelfish_function_ext f ON p.proname::text = f.funcname COLLATE "
   AND sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature COLLATE "C"
 WHERE p.prokind IN ('p', 'f', 'a')
   AND p.proname <> 'pltsql_call_handler'
+  AND p.prorettype <> 'trigger'::regtype
   AND sys.is_babelfish_namespace(s.oid)
   AND has_function_privilege(p.oid, 'EXECUTE')
 UNION ALL
