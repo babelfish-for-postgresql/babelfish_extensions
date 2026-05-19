@@ -476,6 +476,8 @@ GO
 
 -- Testing computed columns and constraints with quoted_identifier as OFF 
 -- Testing computed columns created on wrapper function of xml exist when quoted_identifier was ON
+SET QUOTED_IDENTIFIER ON
+GO
 INSERT INTO babel_5222_xml_exist_compcol1 VALUES (1, '<artist name="Rohit Bhagat" />')
 GO
 
@@ -498,6 +500,8 @@ GO
 
 -- Testing computed columns and constraints with quoted_identifier as OFF 
 -- Testing computed columns created on wrapper function of xml exist when quoted_identifier was OFF
+SET QUOTED_IDENTIFIER ON
+GO
 INSERT INTO babel_5222_xml_exist_compcol2 VALUES (1, '<artist name="Rohit Bhagat" />')
 GO
 
