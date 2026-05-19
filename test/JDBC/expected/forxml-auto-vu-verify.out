@@ -2201,6 +2201,24 @@ ntext
 ~~END~~
 
 
+-- 19.14 Column name containing literal _x002E_ (tests double-escaping at column level)
+SELECT id, [a_x002E_b] FROM forxmlauto_t_x002E_col FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxmlauto_t_x005F_x002e_col id="1" a_x005F_x002E_b="world"/>
+~~END~~
+
+
+-- 19.15 Column name containing literal _x002E_ — ELEMENTS mode
+SELECT id, [a_x002E_b] FROM forxmlauto_t_x002E_col FOR XML AUTO, ELEMENTS;
+GO
+~~START~~
+ntext
+<forxmlauto_t_x005F_x002e_col><id>1</id><a_x005F_x002E_b>world</a_x005F_x002E_b></forxmlauto_t_x005F_x002e_col>
+~~END~~
+
+
 
 -- ============================================
 -- SECTION 20: Transaction Boundary

@@ -1651,7 +1651,7 @@ isForAuto(List *target, ForAutoMode mode)
 	Aggref *agg = NULL;
 
 	/* Prefetch aggregate OIDs on first call */
-	if (for_xml_agg_oid == InvalidOid && for_json_agg_oid == InvalidOid)
+	if (!OidIsValid(for_xml_agg_oid) || !OidIsValid(for_json_agg_oid))
 		init_for_auto_agg_oids();
 
 	if (mode == FOR_AUTO_JSON)
@@ -2338,6 +2338,9 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 				ereport(ERROR,
 						(errcode(ERRCODE_INTERNAL_ERROR),
 						 errmsg("FOR XML AUTO: metadata argument is not text type")));
+			/* Free the placeholder Datum the parser put here before overwriting. */
+			if (!metadataConst->constisnull)
+				pfree(DatumGetPointer(metadataConst->constvalue));
 			metadataConst->constvalue = CStringGetTextDatum(metadataStr.data);
 			metadataConst->constisnull = false;
 		}
@@ -2425,20 +2428,8 @@ static bool forAutoWalker(Node *node, ForAutoContext *ctx)
 			}
 		}
 
-		/* Save outer CTE context before recursing into inner queries */
-		{
-			List *savedCteList = ctx->cteList;
-			HTAB *savedCtenameIdxHash = ctx->ctenameIdxHash;
-
-			query_tree_walker(q, forAutoWalker, (void *) ctx, 0);
-
-			/* Only restore if this query had its own CTEs */
-			if (q->cteList != NULL)
-			{
-				ctx->cteList = savedCteList;
-				ctx->ctenameIdxHash = savedCtenameIdxHash;
-			}
-		}
+		/* First walk inner queries recursively */
+		query_tree_walker(q, forAutoWalker, (void *) ctx, 0);
 
 		/* Then check if this layer has FOR JSON AUTO or FOR XML AUTO */
 		return handleForAuto(q, ctx);

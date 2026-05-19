@@ -1456,6 +1456,14 @@ GO
 SELECT * FROM [_x002E_tbl] FOR XML AUTO;
 GO
 
+-- 19.14 Column name containing literal _x002E_ (tests double-escaping at column level)
+SELECT id, [a_x002E_b] FROM forxmlauto_t_x002E_col FOR XML AUTO;
+GO
+
+-- 19.15 Column name containing literal _x002E_ — ELEMENTS mode
+SELECT id, [a_x002E_b] FROM forxmlauto_t_x002E_col FOR XML AUTO, ELEMENTS;
+GO
+
 
 -- ============================================
 -- SECTION 20: Transaction Boundary

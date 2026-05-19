@@ -798,9 +798,11 @@ update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_o
 }
 
 /*
- * Unescape _x002E_ back to literal '.' in a string.
- * The metadata uses escape_period=true to avoid dot delimiter collisions,
- * but T-SQL outputs dots literally in XML names, so we reverse it.
+ * Reverse the period escape applied to identifiers when the metadata string
+ * was built (escape_period=true was used so '.' could not collide with the
+ * metadata's '.' delimiter). Decodes "_x002E_" back to '.'. Leaves "_x005F_"
+ * sequences intact so an embedded "_x002E_" that is part of the producer's
+ * own escape encoding is not re-decoded.
  */
 static char *
 unescape_period(const char *str)
@@ -812,7 +814,13 @@ unescape_period(const char *str)
 	initStringInfo(&buf);
 	while (*p)
 	{
-		if ((end - p) >= 7 && strncmp(p, "_x002E_", 7) == 0)
+		if ((end - p) >= 7 && strncmp(p, "_x005F_", 7) == 0)
+		{
+			/* preserve as-is so the trailing "x..." is not re-interpreted */
+			appendBinaryStringInfo(&buf, p, 7);
+			p += 7;
+		}
+		else if ((end - p) >= 7 && strncmp(p, "_x002E_", 7) == 0)
 		{
 			appendStringInfoChar(&buf, '.');
 			p += 7;
@@ -864,7 +872,7 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 
 	/* Parse comma-separated entries (names are pre-escaped, no commas in them) */
 	token = strtok_r(str_copy, ",", &saveptr);
-	while (token != NULL && col_idx < num_cols)
+	while (token != NULL)
 	{
 		/* Each token is "level.table.colname" */
 		char *entry_copy = pstrdup(token);
@@ -872,6 +880,12 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 		char *dot2 = (dot1 != NULL) ? strchr(dot1 + 1, '.') : NULL;
 		char *endptr;
 		long level;
+
+		if (col_idx >= num_cols)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("FOR XML AUTO metadata has more entries than column count (%d)",
+							num_cols)));
 
 		if (dot1 == NULL || dot2 == NULL)
 			ereport(ERROR,
@@ -1322,7 +1336,6 @@ auto_preformat_value(HeapTuple tuple, TupleDesc tupdesc,
 		tsql_for_datetime_format(format_output, val);
 		*colval = CStringGetDatum(format_output->data);
 		*datatype_oid = CSTRINGOID;
-		pfree(format_output);
 		return;
 	}
 
@@ -1339,7 +1352,6 @@ auto_preformat_value(HeapTuple tuple, TupleDesc tupdesc,
 		tsql_for_datetimeoffset_format(format_output, val);
 		*colval = CStringGetDatum(format_output->data);
 		*datatype_oid = CSTRINGOID;
-		pfree(format_output);
 		return;
 	}
 
