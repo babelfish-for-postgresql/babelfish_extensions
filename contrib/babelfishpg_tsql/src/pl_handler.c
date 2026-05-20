@@ -1571,67 +1571,47 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 
 /*
  * Cached OIDs for the FOR XML/JSON AUTO aggregate functions.
- * Reset by invalidate_for_auto_agg_oid_cache on pg_proc invalidation so an
- * in-place ALTER EXTENSION UPDATE does not leave the cache stale.
+ * Populated lazily on first use via init_for_auto_agg_oids.
  */
 static Oid for_xml_agg_oid = InvalidOid;
 static Oid for_xml_text_agg_oid = InvalidOid;
 static Oid for_json_agg_oid = InvalidOid;
 static Oid for_json_text_agg_oid = InvalidOid;
 
-static void
-invalidate_for_auto_agg_oid_cache(Datum arg, int cacheid, uint32 hashvalue)
-{
-	for_xml_agg_oid = InvalidOid;
-	for_xml_text_agg_oid = InvalidOid;
-	for_json_agg_oid = InvalidOid;
-	for_json_text_agg_oid = InvalidOid;
-}
-
 /*
- * lookup_func_oid_by_name - find a function OID by qualified name,
- * matching any argument signature.  Uses FuncnameGetCandidates directly
- * to avoid the LookupFuncName assertion (nargs=-1 with NULL argtypes
- * is disallowed in PG17+).  Returns InvalidOid if not found or ambiguous.
+ * lookup_proc_oid_by_qualname - find a function OID by qualified name,
+ * ignoring the argument signature.  Wraps to_regproc() with a fcinfo
+ * shim that returns InvalidOid instead of SQL NULL on miss/ambiguous.
  */
 static Oid
-lookup_func_oid_by_name(List *funcname)
+lookup_proc_oid_by_qualname(const char *qualname)
 {
-	FuncCandidateList clist;
+	LOCAL_FCINFO(fcinfo, 1);
+	Datum		result;
 
-	clist = FuncnameGetCandidates(funcname, -1, NIL, false, false, false, true);
-	if (clist == NULL)
+	InitFunctionCallInfoData(*fcinfo, NULL, 1, InvalidOid, NULL, NULL);
+	fcinfo->args[0].value = CStringGetTextDatum(qualname);
+	fcinfo->args[0].isnull = false;
+
+	result = to_regproc(fcinfo);
+	if (fcinfo->isnull)
 		return InvalidOid;
-	/* If ambiguous (multiple matches), return first — these are unique names */
-	return clist->oid;
+	return DatumGetObjectId(result);
 }
 
 static void
 init_for_auto_agg_oids(void)
 {
-	List *funcname;
-
 	if (!OidIsValid(get_namespace_oid("sys", true)))
 		return;
 
 	if (creating_extension)
 		return;
 
-	funcname = list_make2(makeString("sys"), makeString("tsql_select_for_xml_agg"));
-	for_xml_agg_oid = lookup_func_oid_by_name(funcname);
-	list_free(funcname);
-
-	funcname = list_make2(makeString("sys"), makeString("tsql_select_for_xml_text_agg"));
-	for_xml_text_agg_oid = lookup_func_oid_by_name(funcname);
-	list_free(funcname);
-
-	funcname = list_make2(makeString("sys"), makeString("tsql_select_for_json_agg"));
-	for_json_agg_oid = lookup_func_oid_by_name(funcname);
-	list_free(funcname);
-
-	funcname = list_make2(makeString("sys"), makeString("tsql_select_for_json_text_agg"));
-	for_json_text_agg_oid = lookup_func_oid_by_name(funcname);
-	list_free(funcname);
+	for_xml_agg_oid = lookup_proc_oid_by_qualname("sys.tsql_select_for_xml_agg");
+	for_xml_text_agg_oid = lookup_proc_oid_by_qualname("sys.tsql_select_for_xml_text_agg");
+	for_json_agg_oid = lookup_proc_oid_by_qualname("sys.tsql_select_for_json_agg");
+	for_json_text_agg_oid = lookup_proc_oid_by_qualname("sys.tsql_select_for_json_text_agg");
 }
 
 /*
@@ -6484,9 +6464,6 @@ _PG_init(void)
 
 	prev_plansource_revalidate_hook = plansource_revalidate_hook;
 	plansource_revalidate_hook = pltsql_check_guc_plan;
-
-	/* Reset FOR XML/JSON AUTO aggregate OID cache when pg_proc changes. */
-	CacheRegisterSyscacheCallback(PROCOID, invalidate_for_auto_agg_oid_cache, (Datum) 0);
 
 	prev_planner_node_transformer_hook = planner_node_transformer_hook;
 	planner_node_transformer_hook = pltsql_planner_node_transformer;

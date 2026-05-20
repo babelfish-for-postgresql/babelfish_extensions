@@ -112,6 +112,9 @@ static char* auto_column_to_xml_string(Datum colval, bool isnull, HeapTuple tupl
  * PATH). This helper adds the " → &quot; substitution on top of the
  * already XML-escaped value to match T-SQL behavior without touching
  * the engine's escape_xml().
+ *
+ * Fast path returns the input unchanged. Callers must compare the
+ * result with the input and only pfree when they differ.
  */
 static char *
 tsql_escape_xml(const char *str)
@@ -140,7 +143,7 @@ tsql_escape_xml(const char *str)
 }
 
 static int find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc);
-static void close_elements_to_level(StringInfo state, forxml_auto_state *auto_state, int target_level);
+static void close_all_elements(StringInfo state, forxml_auto_state *auto_state);
 static void output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil);
 static char *cached_value_to_xml_string(Datum value, int col_idx, forxml_auto_state *auto_state, Oid orig_type);
 static void init_output_func_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
@@ -330,7 +333,7 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 	/* Handle AUTO mode: close remaining open elements */
 	if (fstate->auto_state != NULL)
 	{
-		close_elements_to_level(fstate->xml_output, fstate->auto_state, 0);
+		close_all_elements(fstate->xml_output, fstate->auto_state);
 	}
 
 	state = fstate->xml_output->data;
@@ -874,11 +877,12 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 	token = strtok_r(str_copy, ",", &saveptr);
 	while (token != NULL)
 	{
-		/* Each token is "level.table.colname" */
-		char *entry_copy = pstrdup(token);
-		char *dot1 = strchr(entry_copy, '.');
-		char *dot2 = (dot1 != NULL) ? strchr(dot1 + 1, '.') : NULL;
+		char *col_metadata;
+		char *dot1_loc_ptr;
+		char *dot2_loc_ptr;
 		char *endptr;
+		char *table_alias;
+		char *col_name;
 		long level;
 
 		if (col_idx >= num_cols)
@@ -887,38 +891,45 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 					 errmsg("FOR XML AUTO metadata has more entries than column count (%d)",
 							num_cols)));
 
-		if (dot1 == NULL || dot2 == NULL)
+		/* Splitting the col_metadata ("level.table_alias.col_name") with dot as delimiter */
+		col_metadata = pstrdup(token);
+		dot1_loc_ptr = strchr(col_metadata, '.');
+		dot2_loc_ptr = (dot1_loc_ptr != NULL) ? strchr(dot1_loc_ptr + 1, '.') : NULL;
+
+		if (dot1_loc_ptr == NULL || dot2_loc_ptr == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("FOR XML AUTO metadata entry has invalid format: \"%s\"", token)));
 
-		*dot1 = '\0';
-		*dot2 = '\0';
+		*dot1_loc_ptr = '\0';
+		*dot2_loc_ptr = '\0';
+		table_alias = dot1_loc_ptr + 1;
+		col_name = dot2_loc_ptr + 1;
 
 		/* Reject empty alias or column name to avoid malformed XML output */
-		if (*(dot1 + 1) == '\0' || *(dot2 + 1) == '\0')
+		if (*table_alias == '\0' || *col_name == '\0')
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("FOR XML AUTO metadata entry has empty alias or column name: \"%s\"", token)));
 
-		level = strtol(entry_copy, &endptr, 10);
-		if (endptr == entry_copy || *endptr != '\0')
+		level = strtol(col_metadata, &endptr, 10);
+		if (endptr == col_metadata || *endptr != '\0')
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("FOR XML AUTO metadata has non-numeric level: \"%s\"", entry_copy)));
+					 errmsg("FOR XML AUTO metadata has non-numeric level: \"%s\"", col_metadata)));
 		if (level < 1 || level > num_cols)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("FOR XML AUTO metadata has invalid level %ld", level)));
 		auto_state->nest_levels[col_idx] = (int) level;
 
-		auto_state->table_aliases[col_idx] = unescape_period(dot1 + 1);
-		auto_state->column_names[col_idx] = unescape_period(dot2 + 1);
+		auto_state->table_aliases[col_idx] = unescape_period(table_alias);
+		auto_state->column_names[col_idx] = unescape_period(col_name);
 
 		if (auto_state->nest_levels[col_idx] > auto_state->max_depth)
 			auto_state->max_depth = auto_state->nest_levels[col_idx];
 
-		pfree(entry_copy);
+		pfree(col_metadata);
 
 		col_idx++;
 		token = strtok_r(NULL, ",", &saveptr);
@@ -1059,25 +1070,24 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 		 * we must datumCopy into the aggregate context, since the source
 		 * tuple will be reclaimed before the next row.  For pass-by-value
 		 * types the Datum itself is the value.
+		 *
+		 * datumCopy first, free old after — keeps prev_datums[i] valid if
+		 * the copy throws.
 		 */
 		if (auto_state->has_eq_op[i])
 		{
+			Datum new_datum = (Datum) 0;
+
+			if (!curr_isnull)
+				new_datum = datumCopy(curr_datum,
+									  auto_state->type_typbyval[i],
+									  auto_state->type_typlen[i]);
+
 			if (!auto_state->prev_isnull[i] &&
 				!auto_state->type_typbyval[i])
-			{
 				pfree(DatumGetPointer(auto_state->prev_datums[i]));
-			}
 
-			if (curr_isnull)
-			{
-				auto_state->prev_datums[i] = (Datum) 0;
-			}
-			else
-			{
-				auto_state->prev_datums[i] = datumCopy(curr_datum,
-														auto_state->type_typbyval[i],
-														auto_state->type_typlen[i]);
-			}
+			auto_state->prev_datums[i] = new_datum;
 		}
 
 		auto_state->prev_isnull[i] = curr_isnull;
@@ -1087,18 +1097,17 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 }
 
 /*
- * Close XML elements down to and including target_level.
- * If target_level = 0, close all open elements.
+ * Close all open XML AUTO elements at the end of the result.
  */
 static void
-close_elements_to_level(StringInfo state, forxml_auto_state *auto_state, int target_level)
+close_all_elements(StringInfo state, forxml_auto_state *auto_state)
 {
 	int level;
 
 	if (auto_state == NULL)
 		return;
 
-	for (level = auto_state->max_depth; level > target_level; level--)
+	for (level = auto_state->max_depth; level > 0; level--)
 	{
 		if (auto_state->open_element_levels[level] > 0)
 		{
@@ -1108,16 +1117,6 @@ close_elements_to_level(StringInfo state, forxml_auto_state *auto_state, int tar
 				appendStringInfo(state, "</%s>", alias);
 				auto_state->open_element_levels[level] = 0;
 			}
-		}
-	}
-
-	if (target_level > 0 && auto_state->open_element_levels[target_level] > 0)
-	{
-		char *alias = auto_state->level_to_alias[target_level];
-		if (alias != NULL)
-		{
-			appendStringInfo(state, "</%s>", alias);
-			auto_state->open_element_levels[target_level] = 0;
 		}
 	}
 }
@@ -1257,6 +1256,7 @@ init_tsql_type_cache(forxml_auto_state *auto_state, TupleDesc tupdesc)
 
 	if (!OidIsValid(nspoid))
 	{
+		/* sys schema not present; cache as empty so we don't retry per row. */
 		auto_state->tsql_types_cached = true;
 		return;
 	}
@@ -1510,7 +1510,8 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 									auto_state->column_names[i],
 									val_str,
 									auto_state->column_names[i]);
-					pfree(val_str);
+					if (val_str != NULL)
+						pfree(val_str);
 				}
 				else if (xsinil)
 				{
@@ -1532,7 +1533,8 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 					/* tsql_escape_xml may return val_str unchanged on the fast path */
 					if (escaped != val_str)
 						pfree(escaped);
-					pfree(val_str);
+					if (val_str != NULL)
+						pfree(val_str);
 				}
 			}
 		}
