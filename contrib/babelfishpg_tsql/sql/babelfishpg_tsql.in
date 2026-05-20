@@ -26,11 +26,6 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 #include "fts_config.sql"
 #include "fts_contains_pgconfig.sql"
 
--- Create index on pg_constraint.conindid to speed up sys.indexes view queries
-SET allow_system_table_mods = on;
-CREATE INDEX IF NOT EXISTS pg_constraint_conindid_index ON pg_catalog.pg_constraint USING btree (conindid);
-RESET allow_system_table_mods;
-
 /*
  * Remove schema sys from search_path otherwise it causes BABEL-257 for some reason
  * Notice schema sys will be automatically added to implicitly-searched namespaces by
