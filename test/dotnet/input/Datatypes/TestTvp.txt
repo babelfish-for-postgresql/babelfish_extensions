@@ -44,6 +44,7 @@ create type t1 as table (a int)
 create procedure proc1 @t2 as t1 readonly as begin set nocount on; insert into t (a) select a from @t2 end
 storedproc#!#prep#!#proc1#!#tvp|-|t2|-| |-|../../../utils/tvp-test-dotnet.csv
 storedproc#!#prep#!#proc1#!#tvp|-|t2|-| |-|<null>
+storedproc#!#prep#!#proc1#!#tvp|-|t2|-| |-|../../../utils/tvp-test-dotnet-2.csv
 Select * from t
 
 # test with schema for type and without passing tvpTypeName
@@ -53,6 +54,7 @@ create type test_tvp1.t1 as table (a int)
 create procedure proc2 @t2 as test_tvp1.t1 readonly as begin set nocount on; insert into tab1 (a) select a from @t2 end
 storedproc#!#prep#!#proc2#!#tvp|-|t2|-| |-|../../../utils/tvp-test-dotnet.csv
 storedproc#!#prep#!#proc2#!#tvp|-|t2|-| |-|<null>
+storedproc#!#prep#!#proc2#!#tvp|-|t2|-| |-|../../../utils/tvp-test-dotnet-2.csv
 Select * from tab1
 
 # test with schema for proc and type in same schema and without passing tvpTypeName
@@ -60,6 +62,7 @@ create table t2(a int)
 create procedure test_tvp1.proc1 @t2 test_tvp1.t1 readonly as begin set nocount on; insert into t2 (a) select a from @t2 end
 storedproc#!#prep#!#test_tvp1.proc1#!#tvp|-|t2|-| |-|../../../utils/tvp-test-dotnet.csv
 storedproc#!#prep#!#test_tvp1.proc1#!#tvp|-|t2|-| |-|<null>
+storedproc#!#prep#!#test_tvp1.proc1#!#tvp|-|t2|-| |-|../../../utils/tvp-test-dotnet-2.csv
 Select * from t2
 
 # test with schema for proc and type in different schema and without passing tvpTypeName
@@ -68,6 +71,7 @@ create schema test_tvp2
 create procedure test_tvp2.proc2 @t2 as test_tvp1.t1 readonly as begin set nocount on; insert into t3 (a) select a from @t2 end
 storedproc#!#prep#!#test_tvp2.proc2#!#tvp|-|t2|-| |-|../../../utils/tvp-test-dotnet.csv
 storedproc#!#prep#!#test_tvp2.proc2#!#tvp|-|t2|-| |-|<null>
+storedproc#!#prep#!#test_tvp2.proc2#!#tvp|-|t2|-| |-|../../../utils/tvp-test-dotnet-2.csv
 Select * from t3
 
 # executing stored proc without passing tvp value for huge parameter name and without passing tvpTypeName
