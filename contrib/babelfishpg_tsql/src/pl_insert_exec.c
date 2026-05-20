@@ -138,13 +138,13 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 										 temp_nsp_oid, false);
 
 	/*
-	* Resolve the physical schema for the target table reference.
-	*
-	* Three cases per T-SQL semantics:
-	*	1. Temp table (#) — always in pg_temp
-	*	2. Schema explicitly specified — resolve to physical schema name
-	*	3. No schema specified — leave NULL, let search_path handle resolution
-	*/
+	 * Resolve the physical schema for the target table reference.
+	 *
+	 * Three cases per T-SQL semantics:
+	 *	1. Temp table (#) — always in pg_temp
+	 *	2. Schema explicitly specified — resolve to physical schema name
+	 *	3. No schema specified — leave NULL, let search_path handle resolution
+	 */
 	if (target_table[0] == '#')
 		physical_schema = pstrdup("pg_temp");
 	else if (schema_name_in != NULL)
@@ -155,8 +155,10 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 			elog(ERROR, "INSERT-EXEC: Failed to resolve schema for target table: %s",
 				target_table);
 	}
-	/* else: no schema specified, not a temp table — physical_schema stays NULL,
-	* search_path will resolve the target correctly */
+	/* 
+	 * else: no schema specified, not a temp table — physical_schema stays NULL,
+	 * search_path will resolve the target correctly
+	 */
 
 	/*
 	 * Determine the column list to SELECT.
@@ -173,12 +175,8 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 
 	/*
 	 * Build a fully qualified reference for the source table.
-	 * For temp tables and table variables, use the name directly.
 	 */
-	/* Use qualified reference only when schema is known */
-	qualified_target = (physical_schema != NULL)
-		? quote_qualified_identifier(physical_schema, target_table)
-		: pstrdup(quote_identifier(target_table));
+	qualified_target = quote_qualified_identifier(physical_schema, target_table);
 
 	/*
 	 * Create the temp buffer table by selecting the desired columns
@@ -224,14 +222,15 @@ void
 flush_insert_exec_temp_table(PLtsql_execstate *estate,
 							 const char *column_list_str)
 {
-	char			*temp_table_name;
+	char			*temp_name;
 	char			*relname;
 	char			*nspname;
+	Relation		temp_rel;
 	StringInfoData	flush_query;
 	Oid				temp_oid = insert_exec_ctx.temp_table_oid;
 
 	if (!OidIsValid(temp_oid) || !OidIsValid(insert_exec_ctx.target_rel_oid))
-    	return;
+		return;
 
 	relname = get_rel_name(insert_exec_ctx.target_rel_oid);
 	nspname = get_namespace_name(get_rel_namespace(insert_exec_ctx.target_rel_oid));
@@ -245,9 +244,10 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate,
 				 errmsg("INSERT EXEC failed because the stored procedure altered the schema of the target table")));
 
 	/* Get the temp table name from its OID */
-	temp_table_name = get_rel_name(temp_oid);
-	if (temp_table_name == NULL)
-		elog(ERROR, "INSERT-EXEC: Could not find temp table with OID %u", temp_oid);
+	temp_rel = table_open(temp_oid, NoLock);
+	temp_name = quote_qualified_identifier(get_namespace_name(RelationGetNamespace(temp_rel)),
+										  RelationGetRelationName(temp_rel));
+	table_close(temp_rel, NoLock);
 
 	initStringInfo(&flush_query);
 
@@ -255,7 +255,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate,
 		"INSERT INTO %s%s SELECT * FROM %s",
 		quote_qualified_identifier(nspname, relname),
 		column_list_str ? column_list_str : "",
-		quote_identifier(temp_table_name));
+		temp_name);
 
 	/* Route through execute_batch to handle triggers and errors properly. */
 	execute_batch(estate, flush_query.data, NULL, NULL);
