@@ -53,7 +53,10 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
+#include "optimizer/paths.h"
 #include "optimizer/planner.h"
+#include "optimizer/restrictinfo.h"
+#include "access/stratnum.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
@@ -395,6 +398,8 @@ ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
 #ifdef USE_LIBXML
 static openxml_set_namespaces_hook_type prev_openxml_set_namespaces_hook = NULL;
 #endif
+static match_opclause_to_indexcol_hook_type prev_match_opclause_to_indexcol_hook = NULL;
+static IndexClause *bbf_match_opclause_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo, int indexcol, IndexOptInfo *index);
 
 /*****************************************
  * 			Install / Uninstall
@@ -668,6 +673,9 @@ InstallExtendedHooks(void)
 	walk_view_rule_hook = mark_nodes_inside_view;
 
 	handle_target_view_hook = tsql_handle_target_view_hook;
+
+	prev_match_opclause_to_indexcol_hook = match_opclause_to_indexcol_hook;
+	match_opclause_to_indexcol_hook = bbf_match_opclause_to_indexcol;
 }
 
 void
@@ -765,6 +773,7 @@ UninstallExtendedHooks(void)
 	get_domain_typmodin_hook = NULL;
 	walk_view_rule_hook = NULL;
 	handle_target_view_hook = NULL;
+	match_opclause_to_indexcol_hook = prev_match_opclause_to_indexcol_hook;
 }
 
 /*****************************************
@@ -9288,4 +9297,99 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 	}
 
 	return expr;
+}
+
+/*
+ * bbf_match_opclause_to_indexcol
+ *
+ * Enables index usage for Babelfish type-cast patterns like (oid)::integer
+ * that prevent index matching because the cast changes the operator's type
+ * family. Rewrites the expression to use the column's native type:
+ *   (oid)::integer = value  =>  oid = value::oid
+ */
+static IndexClause *
+bbf_match_opclause_to_indexcol(PlannerInfo *root,
+							   RestrictInfo *rinfo,
+							   int indexcol,
+							   IndexOptInfo *index)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL)
+	{
+		OpExpr	   *clause;
+		Node	   *leftop;
+		Node	   *rightop;
+		IndexClause *iclause;
+		Oid			opfamily;
+		Index		index_relid;
+
+		if (!IsA(rinfo->clause, OpExpr))
+			goto not_matched;
+
+		clause = (OpExpr *) rinfo->clause;
+		if (list_length(clause->args) != 2)
+			goto not_matched;
+
+		leftop = (Node *) linitial(clause->args);
+		rightop = (Node *) lsecond(clause->args);
+		index_relid = index->rel->relid;
+		opfamily = index->opfamily[indexcol];
+
+		if (bms_is_member(index_relid, rinfo->right_relids) ||
+			contain_volatile_functions(rightop))
+			goto not_matched;
+
+		if (IsA(leftop, RelabelType))
+		{
+			RelabelType *relabel = (RelabelType *) leftop;
+			Node	   *inner_arg = (Node *) relabel->arg;
+			Oid			orig_type = exprType(inner_arg);
+			Oid			idx_op;
+
+			/*
+			 * Check that the RelabelType actually changes the type and that
+			 * the inner expression matches the index column.
+			 */
+			if (orig_type != relabel->resulttype &&
+				match_index_to_operand(inner_arg, indexcol, index))
+			{
+				/* Try same-type operator in the index's opfamily */
+				idx_op = get_opfamily_member(opfamily, orig_type, orig_type,
+											 BTEqualStrategyNumber);
+				if (OidIsValid(idx_op) &&
+					IsBinaryCoercible(relabel->resulttype, orig_type))
+				{
+					RelabelType *new_right = makeRelabelType((Expr *) copyObject(rightop),
+															orig_type, -1, InvalidOid,
+															COERCE_IMPLICIT_CAST);
+					OpExpr	   *new_clause = makeNode(OpExpr);
+					RestrictInfo *new_rinfo;
+
+					new_clause->opno = idx_op;
+					new_clause->opfuncid = get_opcode(idx_op);
+					new_clause->opresulttype = BOOLOID;
+					new_clause->opretset = false;
+					new_clause->opcollid = InvalidOid;
+					new_clause->inputcollid = clause->inputcollid;
+					new_clause->args = list_make2(inner_arg, new_right);
+					new_clause->location = clause->location;
+
+					new_rinfo = make_simple_restrictinfo(root, (Expr *) new_clause);
+
+					iclause = makeNode(IndexClause);
+					iclause->rinfo = rinfo;
+					iclause->indexquals = list_make1(new_rinfo);
+					iclause->lossy = false;
+					iclause->indexcol = indexcol;
+					iclause->indexcols = NIL;
+					return iclause;
+				}
+
+			}
+		}
+	}
+
+not_matched:
+	if (prev_match_opclause_to_indexcol_hook)
+		return prev_match_opclause_to_indexcol_hook(root, rinfo, indexcol, index);
+	return NULL;
 }
