@@ -42,37 +42,41 @@
 #Q#create procedure proc1 @t2 as t1 readonly as begin set nocount on; insert into t (a) select a from @t2 end
 #Q#proc1
 #Q#proc1
+#Q#proc1
 #Q#Select * from t
 #D#int
 5
-5
+7
 #Q#create table tab1(a int)
 #Q#create schema test_tvp1
 #Q#create type test_tvp1.t1 as table (a int)
 #Q#create procedure proc2 @t2 as test_tvp1.t1 readonly as begin set nocount on; insert into tab1 (a) select a from @t2 end
 #Q#proc2
 #Q#proc2
+#Q#proc2
 #Q#Select * from tab1
 #D#int
 5
-5
+7
 #Q#create table t2(a int)
 #Q#create procedure test_tvp1.proc1 @t2 test_tvp1.t1 readonly as begin set nocount on; insert into t2 (a) select a from @t2 end
+#Q#test_tvp1.proc1
 #Q#test_tvp1.proc1
 #Q#test_tvp1.proc1
 #Q#Select * from t2
 #D#int
 5
-5
+7
 #Q#create table t3(a int)
 #Q#create schema test_tvp2
 #Q#create procedure test_tvp2.proc2 @t2 as test_tvp1.t1 readonly as begin set nocount on; insert into t3 (a) select a from @t2 end
 #Q#test_tvp2.proc2
 #Q#test_tvp2.proc2
+#Q#test_tvp2.proc2
 #Q#Select * from t3
 #D#int
 5
-5
+7
 #Q#create table t4(a int)
 #Q#create procedure test_tvp2.proc3 @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong as t1 READONLY AS BEGIN insert into t4 select * from @this_tvp_parameter_name_is_very_loooooooooooooooooooooooooooooooooooooooooong END
 #Q#test_tvp2.proc3
