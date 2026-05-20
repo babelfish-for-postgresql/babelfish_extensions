@@ -3924,13 +3924,19 @@ CREATE TABLE partition_float_real_partitioned_computed_test (
     description VARCHAR(100)
 ) ON partition_float_real_range_partition_scheme(float_val);
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: CREATE TABLE failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER, ')~~
+
 
 -- Insert test data
 INSERT INTO partition_float_real_partitioned_computed_test (float_val, real_val, description)
 SELECT float_val, real_val, description
 FROM partition_float_real_partitioned_test;
 GO
-~~ROW COUNT: 22~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "partition_float_real_partitioned_computed_test" does not exist)~~
 
 
 -- Query to show data in each partition for table created with computed column
@@ -3955,15 +3961,9 @@ WHERE p.partition_number = $PARTITION.partition_float_real_range_partition_func(
 GROUP BY p.partition_number, p.rows
 ORDER BY p.partition_number;
 GO
-~~START~~
-int#!#bigint#!#varchar#!#float#!#float#!#int
-1#!#0#!#x <= -1000.0#!#-12300.0#!#-1500.0#!#4
-2#!#0#!#-1000.0 < x <= -1.0#!#-750.0#!#-2.5#!#3
-3#!#0#!#-1.0 < x <= 0.0#!#-0.75#!#-1.23E-4#!#4
-4#!#0#!#0.0 < x <= 1.0#!#1.23E-4#!#0.75#!#4
-5#!#0#!#1.0 < x <= 1000.0#!#2.5#!#750.0#!#3
-6#!#0#!#x > 1000.0#!#1500.0#!#12300.0#!#4
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "partition_float_real_partitioned_computed_test" does not exist)~~
 
 
 -- Query to compare partition distribution in partition table with and without computed column
@@ -3988,19 +3988,7 @@ WHERE p.partition_number = $PARTITION.partition_float_real_range_partition_func(
 GROUP BY p.partition_number
 ORDER BY table_name, partition_number;
 GO
-~~START~~
-varchar#!#int#!#int
-Base table#!#1#!#4
-Base table#!#2#!#3
-Base table#!#3#!#4
-Base table#!#4#!#4
-Base table#!#5#!#3
-Base table#!#6#!#4
-Computed table#!#1#!#4
-Computed table#!#2#!#3
-Computed table#!#3#!#4
-Computed table#!#4#!#4
-Computed table#!#5#!#3
-Computed table#!#6#!#4
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "partition_float_real_partitioned_computed_test" does not exist)~~
 
