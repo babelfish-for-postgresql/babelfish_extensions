@@ -9349,7 +9349,7 @@ bbf_match_opclause_to_indexcol(PlannerInfo *root,
 			 * Check that the RelabelType actually changes the type and that
 			 * the inner expression matches the index column.
 			 */
-			if (orig_type != relabel->resulttype &&
+			if (orig_type == OIDOID && relabel->resulttype == INT4OID &&
 				match_index_to_operand(inner_arg, indexcol, index))
 			{
 				/* Try same-type operator in the index's opfamily */

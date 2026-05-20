@@ -105,6 +105,11 @@ LANGUAGE C VOLATILE PARALLEL RESTRICTED;
  * final behaviour.
  */
 
+-- Create index on pg_constraint.conindid to speed up sys.indexes view queries
+SET allow_system_table_mods = on;
+CREATE INDEX IF NOT EXISTS pg_constraint_conindid_index ON pg_catalog.pg_constraint USING btree (conindid);
+RESET allow_system_table_mods;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
