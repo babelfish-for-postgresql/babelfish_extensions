@@ -1510,6 +1510,7 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 									auto_state->column_names[i],
 									val_str,
 									auto_state->column_names[i]);
+					/* Sanity check */
 					if (val_str != NULL)
 						pfree(val_str);
 				}
@@ -1533,6 +1534,7 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 					/* tsql_escape_xml may return val_str unchanged on the fast path */
 					if (escaped != val_str)
 						pfree(escaped);
+					/* Sanity check */
 					if (val_str != NULL)
 						pfree(val_str);
 				}
