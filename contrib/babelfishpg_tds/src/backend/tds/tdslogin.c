@@ -1962,31 +1962,23 @@ TdsProcessLogin(Port *port, bool loadedSsl)
 	TdsErrorContext->phase = 0;
 	TdsErrorContext->reqType = TDS_LOGIN7;
 
-	PG_TRY();
-	{
-		TdsErrorContext->err_text = "Parsing PreLogin Request";
-		/* Pre-Login */
-		rc = ParsePreLoginRequest();
-		if (rc < 0)
-			return rc;
+	TdsErrorContext->err_text = "Parsing PreLogin Request";
+	/* Pre-Login */
+	rc = ParsePreLoginRequest();
+	if (rc < 0)
+		return rc;
 
-		TdsErrorContext->err_text = "Make PreLogin Response";
+	TdsErrorContext->err_text = "Make PreLogin Response";
 
-		loadEncryption = MakePreLoginResponse(port, loadedSsl);
-		TdsFlush();
+	loadEncryption = MakePreLoginResponse(port, loadedSsl);
+	TdsFlush();
 
-		TdsErrorContext->err_text = "Setup SSL Handshake";
-		/* Setup the SSL handshake */
-		if (loadEncryption == TDS_ENCRYPT_ON ||
-			loadEncryption == TDS_ENCRYPT_OFF ||
-			loadEncryption == TDS_ENCRYPT_REQ)
-			rc = SecureOpenServer(port);
-	}
-	PG_CATCH();
-	{
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	TdsErrorContext->err_text = "Setup SSL Handshake";
+	/* Setup the SSL handshake */
+	if (loadEncryption == TDS_ENCRYPT_ON ||
+		loadEncryption == TDS_ENCRYPT_OFF ||
+		loadEncryption == TDS_ENCRYPT_REQ)
+		rc = SecureOpenServer(port);
 
 	/*
 	 * If SSL handshake failure has occurred then no need to go ahead with
@@ -1998,16 +1990,8 @@ TdsProcessLogin(Port *port, bool loadedSsl)
 	if (loadEncryption == TDS_ENCRYPT_ON)
 		TDSInstrumentation(INSTR_TDS_LOGIN_END_TO_END_ENCRYPT);
 
-	PG_TRY();
-	{
-		/* Login */
-		rc = ProcessLoginInternal(port);
-	}
-	PG_CATCH();
-	{
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	/* Login */
+	rc = ProcessLoginInternal(port);
 
 	TdsErrorContext->err_text = "";
 
