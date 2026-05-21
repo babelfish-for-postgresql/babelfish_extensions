@@ -1579,9 +1579,8 @@ static Oid for_json_agg_oid = InvalidOid;
 static Oid for_json_text_agg_oid = InvalidOid;
 
 /*
- * lookup_proc_oid_by_qualname - find a function OID by qualified name,
- * ignoring the argument signature.  Wraps to_regproc() with a fcinfo
- * shim that returns InvalidOid instead of SQL NULL on miss/ambiguous.
+ * lookup_proc_oid_by_qualname - resolve a qualified function name to its
+ * OID via to_regproc().  Errors if the name is missing or ambiguous.
  */
 static Oid
 lookup_proc_oid_by_qualname(const char *qualname)
@@ -1595,7 +1594,7 @@ lookup_proc_oid_by_qualname(const char *qualname)
 
 	result = to_regproc(fcinfo);
 	if (fcinfo->isnull)
-		return InvalidOid;
+		elog(ERROR, "could not find function \"%s\"", qualname);
 	return DatumGetObjectId(result);
 }
 
