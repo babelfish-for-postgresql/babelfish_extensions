@@ -455,4 +455,3 @@ DROP TABLE IF EXISTS partition_float_real_partitioned_computed_test;
 DROP PARTITION SCHEME partition_float_real_range_partition_scheme;
 DROP PARTITION FUNCTION partition_float_real_range_partition_func;
 GO
-

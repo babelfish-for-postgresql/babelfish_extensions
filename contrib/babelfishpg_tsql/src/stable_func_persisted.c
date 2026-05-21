@@ -22,6 +22,8 @@
 #include "pltsql.h"
 #include "stable_func_persisted.h"
 
+extern bool babelfish_dump_restore;
+
 /* GUC variables */
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_concat_null_yields_null;
@@ -202,11 +204,11 @@ Node * stable_persisted_hook(Node *expr)
     if (expr == NULL)
         return NULL;
     
-    if (sql_dialect != SQL_DIALECT_TSQL)
+    if (sql_dialect != SQL_DIALECT_TSQL && !babelfish_dump_restore)
         return expr;
     
-    /* Enforce GUC settings at CREATE time */
-    if (!check_persisted_gucs())
+    /* Enforce GUC settings at CREATE time (skip during dump/restore) */
+    if (!babelfish_dump_restore && !check_persisted_gucs())
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
                  errmsg("CREATE TABLE failed because the following SET options have incorrect settings: '%s'",
