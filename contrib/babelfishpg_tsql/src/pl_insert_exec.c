@@ -61,7 +61,7 @@ get_insertable_column_list(const char *table_name, const char *physical_schema)
 	pfree(lower_table_name);
 
 	if (!OidIsValid(relid))
-		elog(ERROR, "could not find relation for INSERT EXEC target table: %s",
+		elog(ERROR, "INSERT EXEC failed due to missing relation for target table \"%s\"",
 			table_name);
 
 	/* Open the relation */
@@ -92,13 +92,14 @@ get_insertable_column_list(const char *table_name, const char *physical_schema)
 		first_col = false;
 	}
 
+	/* release the lock acquired by RangeVarGetRelid */
 	table_close(rel, AccessShareLock);
 
 	/* Error if no insertable columns found */
 	if (first_col)
 	{
 		pfree(col_list.data);
-		elog(ERROR, "no insertable columns found for INSERT EXEC target table: %s",
+		elog(ERROR, "INSERT EXEC failed due to no insertable columns in target table \"%s\"",
 			table_name);
 	}
 
@@ -109,10 +110,11 @@ get_insertable_column_list(const char *table_name, const char *physical_schema)
 /*
  * Create a temp table for INSERT EXEC buffering.
  *
- * Creates a PostgreSQL temp table with schema matching
- * the target table. Uses ChooseRelationName to generate a unique name.
- * For regular tables, queries pg_attribute to get column definitions
- * (avoids needing SELECT permission for ownership chaining).
+ * Creates a PostgreSQL temp table with schema matching the target table.
+ * Uses ChooseRelationName to generate a unique name and ON COMMIT DROP
+ * for automatic cleanup. Column types are inferred from the target table
+ * via SELECT ... WITH NO DATA. The caller must have SELECT permission on
+ * the target table for this to succeed.
  */
 Oid
 create_insert_exec_temp_table(const char *target_table, const char *column_list, const char *schema_name_in)
@@ -132,7 +134,7 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 	 */
 	temp_nsp_oid = LookupNamespaceNoError("pg_temp");
 	if (!OidIsValid(temp_nsp_oid))
-		elog(ERROR, "INSERT-EXEC: pg_temp namespace not found");
+		elog(ERROR, "INSERT EXEC failed due to missing pg_temp namespace");
 
 	temp_table_name = ChooseRelationName("__insert_exec_buf", NULL, NULL,
 										 temp_nsp_oid, false);
@@ -152,7 +154,7 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 		/* User specified schema — resolve to physical name */
 		physical_schema = get_physical_schema_name(get_cur_db_name(), schema_name_in);
 		if (physical_schema == NULL)
-			elog(ERROR, "INSERT-EXEC: Failed to resolve schema for target table: %s",
+			elog(ERROR, "INSERT EXEC failed due to unresolvable schema for target table \"%s\"",
 				target_table);
 	}
 	/* 
@@ -198,7 +200,7 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 
 	rc = SPI_execute(create_stmt.data, false, 0);
 	if (rc != SPI_OK_UTILITY)
-		elog(ERROR, "failed to create INSERT EXEC temp table: %s",
+		elog(ERROR, "INSERT EXEC failed due to temp table creation error: %s",
 			 SPI_result_code_string(rc));
 
 	pfree(create_stmt.data);
@@ -206,7 +208,7 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 	/* Get the OID of the created temp table */
 	temp_table_oid = RelnameGetRelid(temp_table_name);
 	if (!OidIsValid(temp_table_oid))
-		elog(ERROR, "could not find INSERT EXEC temp table %s", temp_table_name);
+		elog(ERROR, "INSERT EXEC failed due to missing temp table \"%s\"", temp_table_name);
 
 	return temp_table_oid;
 }
@@ -236,6 +238,10 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate,
 	nspname = get_namespace_name(get_rel_namespace(insert_exec_ctx.target_rel_oid));
 
 	/*
+	 * TODO: Reset insert_exec_ctx here before erroring to prevent stale state
+	 * from affecting subsequent INSERT EXEC operations in the same session.
+	 * Cleanup will be added in the wiring PR alongside reset_insert_exec_context().
+	 *
 	 * Verify target table schema hasn't changed since INSERT EXEC started.
 	 */
 	if (insert_exec_ctx.is_target_relation_modified)
