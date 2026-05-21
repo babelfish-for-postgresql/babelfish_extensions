@@ -907,7 +907,7 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 		col_name = dot2_loc_ptr + 1;
 
 		/* Reject empty alias or column name to avoid malformed XML output */
-		if (*table_alias == '\0' || *col_name == '\0')
+		if (strlen(table_alias) == 0 || strlen(col_name) == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("FOR XML AUTO metadata entry has empty alias or column name: \"%s\"", token)));
@@ -1256,7 +1256,15 @@ init_tsql_type_cache(forxml_auto_state *auto_state, TupleDesc tupdesc)
 
 	if (!OidIsValid(nspoid))
 	{
-		/* sys schema not present; cache as empty so we don't retry per row. */
+		/*
+		 * sys schema is not present in this database, so there are no
+		 * T-SQL types to match against.  Mark the cache as populated so
+		 * we don't redo this lookup on every row, and return without
+		 * touching tsql_convert_type[].  The array was palloc0'd, so
+		 * every entry is already 0 ("no conversion"), which is the
+		 * correct fallback — each column will go through the regular
+		 * Postgres output function path.
+		 */
 		auto_state->tsql_types_cached = true;
 		return;
 	}

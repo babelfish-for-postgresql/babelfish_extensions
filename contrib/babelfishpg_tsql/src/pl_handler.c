@@ -1576,7 +1576,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 static Oid for_xml_agg_oid = InvalidOid;
 static Oid for_xml_text_agg_oid = InvalidOid;
 static Oid for_json_agg_oid = InvalidOid;
-static Oid for_json_text_agg_oid = InvalidOid;
 
 /*
  * lookup_proc_oid_by_qualname - resolve a qualified function name to its
@@ -1593,7 +1592,7 @@ lookup_proc_oid_by_qualname(const char *qualname)
 	fcinfo->args[0].isnull = false;
 
 	result = to_regproc(fcinfo);
-	if (fcinfo->isnull)
+	if (fcinfo->isnull || !OidIsValid(DatumGetObjectId(result)))
 		elog(ERROR, "could not find function \"%s\"", qualname);
 	return DatumGetObjectId(result);
 }
@@ -1610,7 +1609,6 @@ init_for_auto_agg_oids(void)
 	for_xml_agg_oid = lookup_proc_oid_by_qualname("sys.tsql_select_for_xml_agg");
 	for_xml_text_agg_oid = lookup_proc_oid_by_qualname("sys.tsql_select_for_xml_text_agg");
 	for_json_agg_oid = lookup_proc_oid_by_qualname("sys.tsql_select_for_json_agg");
-	for_json_text_agg_oid = lookup_proc_oid_by_qualname("sys.tsql_select_for_json_text_agg");
 }
 
 /*
@@ -1630,13 +1628,15 @@ isForAuto(List *target, ForAutoMode mode)
 	Aggref *agg = NULL;
 
 	/* Prefetch aggregate OIDs on first call */
-	if (!OidIsValid(for_xml_agg_oid) || !OidIsValid(for_json_agg_oid))
+	if (!OidIsValid(for_xml_agg_oid) ||
+		!OidIsValid(for_xml_text_agg_oid) ||
+		!OidIsValid(for_json_agg_oid))
 		init_for_auto_agg_oids();
 
 	if (mode == FOR_AUTO_JSON)
 	{
 		agg_oid1 = for_json_agg_oid;
-		agg_oid2 = for_json_text_agg_oid;
+		agg_oid2 = InvalidOid;	/* JSON mode has no text-variant aggregate */
 	}
 	else
 	{
