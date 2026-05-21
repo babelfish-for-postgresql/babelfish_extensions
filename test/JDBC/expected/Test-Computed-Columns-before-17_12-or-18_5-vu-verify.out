@@ -188,6 +188,7 @@ GO
 
 ~~ERROR (Message: generation expression is not immutable)~~
 
+
 --immutable expression
 CREATE TABLE computed_column_vu_prepare_t8
 (
