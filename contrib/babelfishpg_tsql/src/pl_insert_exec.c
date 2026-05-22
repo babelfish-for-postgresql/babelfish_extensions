@@ -56,7 +56,7 @@ get_insertable_column_list(const char *table_name, const char *physical_schema)
 	/* Resolve the relation OID using RangeVar - works for both regular and temp tables */
 	rv = makeRangeVar(physical_schema ? pstrdup(physical_schema) : NULL,
 					  pstrdup(lower_table_name), -1);
-	relid = RangeVarGetRelid(rv, AccessShareLock, true);
+	relid = RangeVarGetRelid(rv, NoLock, true);
 
 	pfree(lower_table_name);
 
@@ -65,7 +65,7 @@ get_insertable_column_list(const char *table_name, const char *physical_schema)
 			table_name);
 
 	/* Open the relation */
-	rel = table_open(relid, NoLock);
+	rel = table_open(relid, AccessShareLock);
 	tupdesc = RelationGetDescr(rel);
 
 	/* Iterate over columns and build the list */
@@ -265,4 +265,5 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate,
 
 	/* Route through execute_batch to handle triggers and errors properly. */
 	execute_batch(estate, flush_query.data, NULL, NULL);
+	pfree(flush_query.data);
 }
