@@ -1897,7 +1897,6 @@ TdsClientAuthentication(Port *port)
 		case uaBSD:
 		case uaLDAP:
 		case uaCert:
-		case uaRADIUS:
 			/* the above authentication methods are not supported for TDS */
 			{
 				char		hostinfo[NI_MAXHOST];
