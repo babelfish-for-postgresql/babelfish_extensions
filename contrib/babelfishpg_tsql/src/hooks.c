@@ -9302,10 +9302,10 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 /*
  * bbf_match_opclause_to_indexcol
  *
- * Enables index usage for Babelfish equality patterns like (oid)::integer = value
- * that prevent index matching because the cast changes the operator's type
- * family. Rewrites the expression to use the column's native type:
+ * Enables index usage for Babelfish equality patterns where an OID column
+ * is cast to integer, preventing index matching. Handles both operand orders:
  *   (oid)::integer = value  =>  oid = value::oid
+ *   value = (oid)::integer  =>  oid = value::oid
  */
 static IndexClause *
 bbf_match_opclause_to_indexcol(PlannerInfo *root,
@@ -9359,6 +9359,58 @@ bbf_match_opclause_to_indexcol(PlannerInfo *root,
 						new_clause->opcollid = InvalidOid;
 						new_clause->inputcollid = clause->inputcollid;
 						new_clause->args = list_make2(inner_arg, new_right);
+						new_clause->location = clause->location;
+
+						new_rinfo = make_simple_restrictinfo(root,
+															(Expr *) new_clause);
+
+						iclause = makeNode(IndexClause);
+						iclause->rinfo = rinfo;
+						iclause->indexquals = list_make1(new_rinfo);
+						iclause->lossy = false;
+						iclause->indexcol = indexcol;
+						iclause->indexcols = NIL;
+						return iclause;
+					}
+				}
+			}
+
+			/* Try right operand as the cast */
+			if (!bms_is_member(index->rel->relid, rinfo->left_relids) &&
+				!contain_volatile_functions(leftop) &&
+				IsA(rightop, RelabelType))
+			{
+				RelabelType *relabel = (RelabelType *) rightop;
+				Node	   *inner_arg = (Node *) relabel->arg;
+				Oid			orig_type = exprType(inner_arg);
+
+				if (orig_type == OIDOID && relabel->resulttype == INT4OID &&
+					match_index_to_operand(inner_arg, indexcol, index))
+				{
+					Oid			idx_op;
+
+					idx_op = get_opfamily_member(opfamily, orig_type, orig_type,
+												BTEqualStrategyNumber);
+					if (OidIsValid(idx_op) &&
+						IsBinaryCoercible(relabel->resulttype, orig_type))
+					{
+						RelabelType *new_left;
+						OpExpr	   *new_clause;
+						RestrictInfo *new_rinfo;
+						IndexClause *iclause;
+
+						new_left = makeRelabelType((Expr *) copyObject(leftop),
+												   orig_type, -1, InvalidOid,
+												   COERCE_IMPLICIT_CAST);
+
+						new_clause = makeNode(OpExpr);
+						new_clause->opno = idx_op;
+						new_clause->opfuncid = get_opcode(idx_op);
+						new_clause->opresulttype = BOOLOID;
+						new_clause->opretset = false;
+						new_clause->opcollid = InvalidOid;
+						new_clause->inputcollid = clause->inputcollid;
+						new_clause->args = list_make2(inner_arg, new_left);
 						new_clause->location = clause->location;
 
 						new_rinfo = make_simple_restrictinfo(root,
