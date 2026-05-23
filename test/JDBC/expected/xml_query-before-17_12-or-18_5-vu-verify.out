@@ -1284,9 +1284,8 @@ SELECT @x.query('/root');
 GO
 ~~START~~
 xml
-~~ERROR (Code: 9451)~~
-
-~~ERROR (Message: invalid XML content)~~
+<root>&internal;</root>
+~~END~~
 
 
 
