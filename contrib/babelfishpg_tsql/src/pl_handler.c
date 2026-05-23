@@ -1637,16 +1637,20 @@ isForAuto(List *target, ForAutoMode mode)
 	{
 		agg_oid1 = for_json_agg_oid;
 		agg_oid2 = InvalidOid;	/* JSON mode has no text-variant aggregate */
+
+		/* If the JSON aggregate isn't resolved yet, fall back to false */
+		if (!OidIsValid(agg_oid1))
+			return false;
 	}
 	else
 	{
 		agg_oid1 = for_xml_agg_oid;
 		agg_oid2 = for_xml_text_agg_oid;
-	}
 
-	/* If OIDs not resolved, fall back to false */
-	if (!OidIsValid(agg_oid1) && !OidIsValid(agg_oid2))
-		return false;
+		/* If neither XML aggregate is resolved yet, fall back to false */
+		if (!OidIsValid(agg_oid1) && !OidIsValid(agg_oid2))
+			return false;
+	}
 
 	/*
 	 * The query structure we're looking for:
