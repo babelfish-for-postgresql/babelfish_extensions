@@ -3866,17 +3866,13 @@ pltsql_text_name(PG_FUNCTION_ARGS)
 								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				n = (*cstr_to_name_hook) (VARDATA_ANY(s), len);
 			}
-			PG_CATCH();
+			PG_FINALLY();
 			{
 				set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 								  GUC_CONTEXT_CONFIG,
 								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-				PG_RE_THROW();
 			}
 			PG_END_TRY();
-			set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-							  GUC_CONTEXT_CONFIG,
-							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 			PG_RETURN_NAME(n);
 		}
@@ -3928,17 +3924,13 @@ pltsql_bpchar_name(PG_FUNCTION_ARGS)
 								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				n = (*cstr_to_name_hook) (VARDATA_ANY(s), len);
 			}
-			PG_CATCH();
+			PG_FINALLY();
 			{
 				set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 								  GUC_CONTEXT_CONFIG,
 								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-				PG_RE_THROW();
 			}
 			PG_END_TRY();
-			set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-							  GUC_CONTEXT_CONFIG,
-							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 			PG_RETURN_NAME(n);
 		}
