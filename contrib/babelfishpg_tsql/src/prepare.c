@@ -639,13 +639,11 @@ prepare_exec_codes(PLtsql_function *func, ExecCodes *exec_codes)
 					pltsql_destroy_econtext(&estate);
 					exec_eval_cleanup(&estate);
 				}
-				PG_CATCH();
+				PG_FINALLY();
 				{
 					pltsql_estate_cleanup();
-					PG_RE_THROW();
 				}
 				PG_END_TRY();
-				pltsql_estate_cleanup();
 				break;
 			}
 		case PLTSQL_STMT_EXEC:
@@ -659,13 +657,11 @@ prepare_exec_codes(PLtsql_function *func, ExecCodes *exec_codes)
 					pltsql_destroy_econtext(&estate);
 					exec_eval_cleanup(&estate);
 				}
-				PG_CATCH();
+				PG_FINALLY();
 				{
 					pltsql_estate_cleanup();
-					PG_RE_THROW();
 				}
 				PG_END_TRY();
-				pltsql_estate_cleanup();
 				break;
 			}
 		case PLTSQL_STMT_PUSH_RESULT:
@@ -682,14 +678,12 @@ prepare_exec_codes(PLtsql_function *func, ExecCodes *exec_codes)
 					pltsql_destroy_econtext(&estate);
 					exec_eval_cleanup(&estate);
 				}
-				PG_CATCH();
+				PG_FINALLY();
 				{
 					pltsql_estate_cleanup();
-					PG_RE_THROW();
 				}
 				PG_END_TRY();
 
-				pltsql_estate_cleanup();
 				break;
 			}
 		default:

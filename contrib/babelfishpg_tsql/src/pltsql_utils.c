@@ -392,16 +392,12 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 			}
 		}
 
-		PG_CATCH();
+		PG_FINALLY();
 		{
 			if (needCleanup)
 				EventTriggerEndCompleteQuery();
-			PG_RE_THROW();
 		}
 		PG_END_TRY();
-
-		if (needCleanup)
-			EventTriggerEndCompleteQuery();
 
 		return true;
 	}
@@ -2689,13 +2685,11 @@ exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant,
 						NULL);
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		SetUserIdAndSecContext(save_userid, save_sec_context);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 AclMode

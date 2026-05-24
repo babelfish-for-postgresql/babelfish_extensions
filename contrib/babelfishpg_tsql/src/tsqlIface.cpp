@@ -38,6 +38,8 @@ extern "C" {
 #else
 #include "pltsql.h"
 #include "pltsql-2.h"
+#include "pltsql_node/pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
+											 * by gen_pltsql_node_support.pl */
 #include "pl_explain.h"
 #include "session.h"
 #include "multidb.h"
@@ -119,6 +121,7 @@ PLtsql_stmt *makeCfl(TSqlParser::Cfl_statementContext *ctx, tsqlBuilder &builder
 PLtsql_stmt *makeSQL(ParserRuleContext *ctx);
 std::vector<PLtsql_stmt *> makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder);
 PLtsql_stmt *makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx);
+PLtsql_stmt *makeExecuteStatement(TSqlParser::Execute_statementContext *ctx);
 PLtsql_stmt *makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type);
 PLtsql_stmt *makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx);
 PLtsql_stmt *makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx);
@@ -385,6 +388,59 @@ stripQuoteFromId(std::string s)
 		return s.substr(1,s.length()-2);
 	}
 	return s;
+}
+
+/*
+ * extract_ddl_object_names - Extract table name, schema, and database
+ * from a ddl_object parse context. Names are downcased and truncated to match
+ * PostgreSQL identifier handling.
+ * Output pointers are set to NULL if the corresponding name is not present.
+ * Returns true if a table name was found, false otherwise.
+ */
+static bool
+extract_ddl_object_names(TSqlParser::Ddl_objectContext *ddl_object,
+						 char **table_name,
+						 char **schema_name,
+						 char **db_name)
+{
+	*table_name = NULL;
+	*schema_name = NULL;
+	*db_name = NULL;
+
+	if (!ddl_object)
+		return false;
+
+	if (ddl_object->local_id())
+	{
+		std::string tbl = ::getFullText(ddl_object->local_id());
+		if (!tbl.empty())
+			*table_name = downcase_truncate_identifier(tbl.c_str(), tbl.length(), true);
+		return (*table_name != NULL);
+	}
+	else if (ddl_object->full_object_name())
+	{
+		if (ddl_object->full_object_name()->object_name)
+		{
+			std::string tbl = stripQuoteFromId(ddl_object->full_object_name()->object_name);
+			if (!tbl.empty())
+				*table_name = downcase_truncate_identifier(tbl.c_str(), tbl.length(), true);
+		}
+		if (ddl_object->full_object_name()->schema)
+		{
+			std::string sch = stripQuoteFromId(ddl_object->full_object_name()->schema);
+			if (!sch.empty())
+				*schema_name = downcase_truncate_identifier(sch.c_str(), sch.length(), true);
+		}
+		if (ddl_object->full_object_name()->database)
+		{
+			std::string db = stripQuoteFromId(ddl_object->full_object_name()->database);
+			if (!db.empty())
+				*db_name = downcase_truncate_identifier(db.c_str(), db.length(), true);
+		}
+		return (*table_name != NULL);
+	}
+
+	return false;
 }
 
 static int
@@ -744,6 +800,113 @@ add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator)
 	Assert(mutator);
 	for (auto &entry : rewritten_query_fragment)
 		mutator->add(entry.first, entry.second.first, entry.second.second);
+}
+
+/*
+ * get_insert_exec_info - Extract all INSERT EXEC target info from the parse
+ * context and return a populated InsertExecInfo struct.
+ */
+static InsertExecInfo *
+get_insert_exec_info(TSqlParser::Dml_statementContext *ctx)
+{
+	InsertExecInfo *info = (InsertExecInfo *) palloc0(sizeof(InsertExecInfo));
+	char *tbl_name = NULL;
+	char *tbl_schema = NULL;
+	char *tbl_db = NULL;
+
+	extract_ddl_object_names(ctx->insert_statement()->ddl_object(),
+							 &tbl_name, &tbl_schema, &tbl_db);
+
+	/*
+	 * Temp tables live in pg_temp, not user schemas. Strip any schema/db
+	 * the user may have provided (e.g., dbo.#temp).
+	 */
+	if (tbl_name && tbl_name[0] == '#')
+	{
+		if (tbl_schema) { pfree(tbl_schema); tbl_schema = NULL; }
+		if (tbl_db)     { pfree(tbl_db);     tbl_db = NULL; }
+	}
+
+	if (!tbl_name)
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+			"INSERT EXEC requires a valid target table",
+			getLineAndPos(ctx->insert_statement()));
+
+	info->target  = tbl_name;
+	info->schema  = tbl_schema;
+	info->db_name = tbl_db;
+
+	/* Build column list */
+	List *column_list = NIL;
+	auto column_list_ctx = ctx->insert_statement()->insert_column_name_list();
+	if (column_list_ctx)
+	{
+		for (auto col : column_list_ctx->col)
+		{
+			auto ids = col->id();
+			Assert(!ids.empty());
+			if (!ids.empty() && ids.back() != nullptr)
+			{
+				std::string col_name = stripQuoteFromId(ids.back());
+				if (!col_name.empty())
+					column_list = lappend(column_list,
+						downcase_truncate_identifier(col_name.c_str(), col_name.length(), true));
+			}
+		}
+	}
+	info->columns = column_list;
+
+	return info;
+}
+
+/*
+ * set_insert_exec_info - Apply an InsertExecInfo pointer to the correct
+ * statement type based on cmd_type.
+ */
+static void
+set_insert_exec_info(PLtsql_stmt *stmt, InsertExecInfo *info)
+{
+	if (stmt->cmd_type == PLTSQL_STMT_EXEC)
+		((PLtsql_stmt_exec *) stmt)->insert_exec = info;
+	else if (stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
+		((PLtsql_stmt_exec_batch *) stmt)->insert_exec = info;
+	else if (stmt->cmd_type == PLTSQL_STMT_EXEC_SP)
+		((PLtsql_stmt_exec_sp *) stmt)->insert_exec = info;
+	else
+		Assert(false); /* INSERT EXEC can only target EXEC, EXEC_BATCH, or EXEC_SP */
+}
+
+/*
+ * apply_exec_expression_rewriting - Apply expression rewriting for EXEC
+ * and EXEC_BATCH statement types. This handles double-quoted identifier
+ * rewriting and other query mutations for the execute statement.
+ *
+ * Note: PLTSQL_STMT_EXEC_SP (sp_executesql, sp_execute, sp_prepexec) does
+ * not need expression rewriting — system SP arguments are explicit typed
+ * parameters, not general SQL expressions containing double-quoted identifiers.
+ */
+static void
+apply_exec_expression_rewriting(PLtsql_stmt *stmt, ParserRuleContext *baseCtx)
+{
+	if (stmt->cmd_type == PLTSQL_STMT_EXEC)
+	{
+		PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) stmt;
+		PLtsql_expr_query_mutator mutator(exec_stmt->expr, baseCtx);
+		add_rewritten_query_fragment_to_mutator(&mutator);
+		mutator.run();
+	}
+	else if (stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
+	{
+		PLtsql_stmt_exec_batch *exec_batch_stmt = (PLtsql_stmt_exec_batch *) stmt;
+		PLtsql_expr_query_mutator mutator(exec_batch_stmt->expr, baseCtx);
+		/*
+		 * We don't call markSelectFragment here — selectFragmentOffsets was
+		 * recorded with ctx->parent as key, not baseCtx. For dynamic SQL in
+		 * INSERT EXEC, we rewrite the entire expression string.
+		 */
+		add_rewritten_query_fragment_to_mutator(&mutator);
+		mutator.run();
+	}
 }
 
 static void
@@ -1624,6 +1787,54 @@ public:
 		setCode(container, list_delete_ptr(siblings, stmt));
 	}
 
+	/*
+	 * Replace a grafted statement with a new one.
+	 * Used for INSERT EXEC where we replace PLtsql_stmt_execsql with PLtsql_stmt_exec
+	 */
+	void replaceGraftedStatement(ParserRuleContext *ctx, PLtsql_stmt *new_stmt)
+	{
+		PLtsql_stmt *old_stmt = getPLtsql_fragment(ctx);
+		ParserRuleContext *container = peekContainer();
+
+		/*
+		 * old_stmt is always set for INSERT EXEC — exitDml_statement attaches
+		 * a PLtsql_stmt_execsql fragment before this function is called.
+		 * Reaching here means a broken parser state.
+		*/
+		Assert(old_stmt != NULL && container != NULL);
+		if (!old_stmt || !container)
+			elog(ERROR, "INSERT EXEC: internal parser state error in replaceGraftedStatement");
+
+		List *siblings = getCode(container);
+		ListCell *lc;
+		int pos = 0;
+
+		if (pltsql_enable_antlr_detailed_log)
+			std::cout << "    replacing stmt (" << (void *) old_stmt << ") with (" << (void *) new_stmt << ") in container(" << (void *) container << ")" << std::endl;
+
+		/* Find the position of the old statement */
+		bool found = false;
+		foreach(lc, siblings)
+		{
+			if (lfirst(lc) == old_stmt) 
+			{ 
+				found = true; 
+				break; 
+			}
+			pos++;
+		}
+		if (!found)
+			elog(ERROR, "INSERT EXEC: grafted statement not found in container");
+
+		/* Remove old statement and insert new one at the same position */
+		siblings = list_delete_ptr(siblings, old_stmt);
+		siblings = list_insert_nth(siblings, pos, new_stmt);
+		setCode(container, siblings);
+
+		/* Update the fragment mapping */
+		attachPLtsql_fragment(ctx, new_stmt);
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
 	// Container statement management
 	//////////////////////////////////////////////////////////////////////////////
@@ -1924,13 +2135,51 @@ public:
 		statementMutator = std::make_unique<PLtsql_expr_query_mutator>(stmt->sqlstmt, ctx);
 	}
 
+	/*
+	 * handleInsertExec - Handle the INSERT EXEC new code path.
+	 * Contains the entire INSERT EXEC logic for the new implementation.
+	 */
+	void handleInsertExec(TSqlParser::Dml_statementContext *ctx)
+	{
+		/* INSERT EXEC is not allowed in functions unless target is a table variable */
+		if (is_compiling_create_function())
+		{
+			auto ddl_object = ctx->insert_statement()->ddl_object();
+			if (ddl_object && !ddl_object->local_id())
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION,
+					"'INSERT EXEC' cannot be used within a function", getLineAndPos(ddl_object));
+		}
+
+		/* OUTPUT clause is not allowed with INSERT EXEC */
+		if (ctx->insert_statement()->output_clause())
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+				"The OUTPUT clause cannot be used in an INSERT...EXEC statement.",
+				getLineAndPos(ctx->insert_statement()->output_clause()));
+
+		TSqlParser::Execute_statementContext *ctxES =
+			ctx->insert_statement()->insert_statement_value()->execute_statement();
+
+		PLtsql_stmt *base_stmt = makeExecuteStatement(ctxES);
+
+		/* Extract INSERT EXEC info and apply to statement */
+		InsertExecInfo *info = get_insert_exec_info(ctx);
+		set_insert_exec_info(base_stmt, info);
+
+		/* Apply expression rewriting for EXEC and EXEC_BATCH statement types */
+		apply_exec_expression_rewriting(base_stmt, ctxES);
+
+		replaceGraftedStatement(ctx, base_stmt);
+		statementMutator.reset();
+		clear_rewritten_query_fragment();
+	}
+
 	void exitDml_statement(TSqlParser::Dml_statementContext *ctx) override
 	{
-        if (ctx->bulk_insert_statement())
-        {
-            clear_rewritten_query_fragment();
-            return;
-        }
+		if (ctx->bulk_insert_statement())
+		{
+			clear_rewritten_query_fragment();
+			return;
+		}
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
 		Assert(stmt);
 		Assert(stmt->sqlstmt = statementMutator->expr);
@@ -1947,12 +2196,40 @@ public:
 		process_execsql_remove_unsupported_tokens(ctx, statementMutator.get());
 
 		// record whether the stmt is an INSERT-EXEC stmt
-		stmt->insert_exec =
+		bool is_insert_exec =
 			ctx->insert_statement() &&
 			ctx->insert_statement()->insert_statement_value() &&
 			ctx->insert_statement()->insert_statement_value()->execute_statement();
 
-		if (stmt->insert_exec)
+		/*
+		 * New INSERT EXEC code path - gated behind GUC pltsql_enable_new_insert_exec.
+		 * When enabled, we create a PLtsql_stmt_exec instead of PLtsql_stmt_execsql,
+		 * which allows the executor to handle INSERT EXEC with the new DestReceiver
+		 * and temp table approach. When disabled, fall through to legacy behavior.
+		 *
+		 * Note : process_execsql_remove_unsupported_tokens() populates rewritten_query_fragment
+		 * which apply_exec_expression_rewriting() inside handleInsertExec() depends on.
+		 * Moving the check above it would break expression rewriting. 
+		 */
+		if (is_insert_exec && pltsql_enable_new_insert_exec)
+		{
+			handleInsertExec(ctx);
+			clear_query_hints();
+			clear_tables_info();
+			return;
+		}
+		/*
+		 * LEGACY INSERT EXEC CODE PATH (GUC pltsql_enable_new_insert_exec = false)
+		 * This code is only needed when the new INSERT EXEC implementation is disabled.
+		 * When the GUC is true, we use PLtsql_stmt_exec instead of PLtsql_stmt_execsql,
+		 * and the cross-database handling is done differently.
+		 * TODO: Remove this block when the new INSERT EXEC implementation is stable
+		 * and the GUC default is flipped to true.
+		 */
+		stmt->insert_exec = is_insert_exec;
+
+		/* Extract db_name and schema_name for cross-database INSERT EXEC (legacy path only) */
+		if (is_insert_exec)
 		{
 			TSqlParser::Func_proc_name_server_database_schemaContext *ctx_name = nullptr;
 			TSqlParser::Execute_bodyContext *body = nullptr;
@@ -2983,10 +3260,27 @@ public:
 	void exitExecute_body_batch(TSqlParser::Execute_body_batchContext *ctx) override
 	{
 		in_execute_body_batch = false;
-		PLtsql_stmt_exec *stmt = (PLtsql_stmt_exec *) getPLtsql_fragment(ctx);
-		PLtsql_expr_query_mutator mutator(stmt->expr, ctx);
-		add_rewritten_query_fragment_to_mutator(&mutator); 
-		mutator.run();
+		PLtsql_stmt *stmt = (PLtsql_stmt *) getPLtsql_fragment(ctx);
+
+		/*
+		 * The query mutator only applies to PLtsql_stmt_exec (regular EXEC
+		 * of a user procedure), which has an expr field containing the
+		 * rewritable query text.
+		 *
+		 * System procedures (sp_executesql, sp_cursor*, etc.) are handled by
+		 * makeSpStatement() and return PLtsql_stmt_exec_sp, which has a
+		 * different struct layout and no expr field. We must not cast to
+		 * PLtsql_stmt_exec in that case — the field offsets differ, especially
+		 * now that NodeTag was added as the first field of all PLtsql statement
+		 * structs for enable_antlr_parse_cache serialization support.
+		 */
+		if (stmt->cmd_type == PLTSQL_STMT_EXEC)
+		{
+			PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) stmt;
+			PLtsql_expr_query_mutator mutator(exec_stmt->expr, ctx);
+			add_rewritten_query_fragment_to_mutator(&mutator);
+			mutator.run();
+		}
 		clear_rewritten_query_fragment();
 	}
 
@@ -4467,7 +4761,7 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	// batch-level statment can be inputted in SQL batch only (by inline_handler) or has empty body. getLineNo() will not be affected by uninitialized pltsql_curr_compile_body_lineno.
 	Assert(pltsql_curr_compile->fn_oid == InvalidOid || ctx->SEMI());
 
-	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
+	PLtsql_stmt_block *result = makeNode(PLtsql_stmt_block);
 	result->cmd_type = PLTSQL_STMT_BLOCK;
 	result->lineno = getLineNo(ctx);
 	result->label = NULL;
@@ -4476,7 +4770,7 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	result->initvarnos = nullptr;
 	result->exceptions = nullptr;
 
-	PLtsql_stmt_init *init = (PLtsql_stmt_init *) palloc0(sizeof(*init));
+	PLtsql_stmt_init *init = (PLtsql_stmt_init *) makeNode(PLtsql_stmt_init);
 	init->cmd_type = PLTSQL_STMT_INIT;
 	init->lineno = getLineNo(ctx);
 	init->label = NULL;
@@ -4525,7 +4819,7 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 bool
 handleITVFBody(TSqlParser::Func_body_return_select_bodyContext *ctx)
 {
-	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
+	PLtsql_stmt_block *result = makeNode(PLtsql_stmt_block);
 	result->cmd_type = PLTSQL_STMT_BLOCK;
 	result->lineno = getLineNo(ctx);
 	result->label = NULL;
@@ -4941,7 +5235,7 @@ toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const st
 PLtsql_stmt *
 makeExecSql(ParserRuleContext *ctx)
 {
-	PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) palloc0(sizeof(*stmt));
+	PLtsql_stmt_execsql *stmt = makeNode(PLtsql_stmt_execsql);
 
 	stmt->cmd_type = PLTSQL_STMT_EXECSQL;
 	stmt->lineno = getLineNo(ctx);
@@ -4959,7 +5253,7 @@ makeExecSql(ParserRuleContext *ctx)
 PLtsql_expr *
 makeTsqlExpr(const std::string &fragment, bool addSelect)
 {
-    PLtsql_expr *result = (PLtsql_expr *) palloc0(sizeof(*result));
+    PLtsql_expr *result = makeNode(PLtsql_expr);
 
 	if (addSelect)
 		result->query = pstrdup((fragment_SELECT_prefix + delimitIfAtAtUserVarName(fragment)).c_str());
@@ -5195,14 +5489,14 @@ makeBatch(TSqlParser::Block_statementContext *ctx, tsqlBuilder &tsql)
 {
 	breakHere();
 	
-	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
+	PLtsql_stmt_block *result = makeNode(PLtsql_stmt_block);
 
 	result->cmd_type = PLTSQL_STMT_BLOCK;
 	result->lineno = getLineNo(ctx);
 	result->label = NULL;
 	result->body = NIL;
 
-	PLtsql_stmt_init *init = (PLtsql_stmt_init *) palloc0(sizeof(*init));
+	PLtsql_stmt_init *init = (PLtsql_stmt_init *) makeNode(PLtsql_stmt_init);
 
 	init->cmd_type = PLTSQL_STMT_INIT;
 	init->lineno = getLineNo(ctx);
@@ -5233,14 +5527,14 @@ makeBatch(TSqlParser::Tsql_fileContext *ctx, tsqlBuilder &builder)
 {
 	breakHere();
 	
-	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
+	PLtsql_stmt_block *result = makeNode(PLtsql_stmt_block);
 
 	result->cmd_type = PLTSQL_STMT_BLOCK;
 	result->lineno = getLineNo(ctx);
 	result->label = NULL;
 	result->body = NIL;
 
-    PLtsql_stmt_init *init = (PLtsql_stmt_init *) palloc0(sizeof(*init));
+    PLtsql_stmt_init *init = (PLtsql_stmt_init *) makeNode(PLtsql_stmt_init);
 
 	init->cmd_type = PLTSQL_STMT_INIT;
 	init->lineno = getLineNo(ctx);
@@ -5286,7 +5580,7 @@ makeBatch(TSqlParser::Tsql_fileContext *ctx, tsqlBuilder &builder)
 void *
 makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder)
 {
-	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
+	PLtsql_stmt_block *result = makeNode(PLtsql_stmt_block);
 
 	result->cmd_type = PLTSQL_STMT_BLOCK;
 	result->lineno = getLineNo(ctx);
@@ -5302,7 +5596,7 @@ makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder)
 PLtsql_stmt_block *
 makeEmptyBlockStmt(int lineno)
 {
-	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
+	PLtsql_stmt_block *result = makeNode(PLtsql_stmt_block);
 
 	result->cmd_type = PLTSQL_STMT_BLOCK;
 	result->lineno = lineno;
@@ -5320,7 +5614,7 @@ makeBreakStmt(TSqlParser::Break_statementContext *ctx)
 {
 	PLtsql_stmt_exit	*result;
 
-	result = (PLtsql_stmt_exit *) palloc0(sizeof(*result));
+	result = makeNode(PLtsql_stmt_exit);
 	
 	result->cmd_type = PLTSQL_STMT_EXIT;
 	result->is_exit  = true;
@@ -5336,7 +5630,7 @@ makeContinueStmt(TSqlParser::Continue_statementContext *ctx)
 {
 	PLtsql_stmt_exit	*result;
 
-	result = (PLtsql_stmt_exit *) palloc0(sizeof(*result));
+	result = makeNode(PLtsql_stmt_exit);
 	
 	result->cmd_type = PLTSQL_STMT_EXIT;
 	result->is_exit  = false;
@@ -5362,7 +5656,7 @@ makeGotoStmt(TSqlParser::Goto_statementContext *ctx)
 	if (ctx->GOTO() == nullptr)
 	{
 		// This is a statement label
-		PLtsql_stmt_label *result = (PLtsql_stmt_label *) palloc0(sizeof(*result));
+		PLtsql_stmt_label *result = makeNode(PLtsql_stmt_label);
 
 		result->cmd_type = PLTSQL_STMT_LABEL;
 		result->lineno = getLineNo(ctx);
@@ -5374,7 +5668,7 @@ makeGotoStmt(TSqlParser::Goto_statementContext *ctx)
 	else
 	{
 		// This is a GOTO statement
-		PLtsql_stmt_goto *result = (PLtsql_stmt_goto *) palloc0(sizeof(*result));
+		PLtsql_stmt_goto *result = makeNode(PLtsql_stmt_goto);
 	
 		result->cmd_type = PLTSQL_STMT_GOTO;
 		result->lineno = getLineNo(ctx);
@@ -5392,7 +5686,7 @@ makeIfStmt(TSqlParser::If_statementContext *ctx)
 {
 	// IF search_condition sql_clauses (ELSE sql_clauses)? ';'?
 	
-	PLtsql_stmt_if	*result = (PLtsql_stmt_if *) palloc0(sizeof(*result));
+	PLtsql_stmt_if	*result = makeNode(PLtsql_stmt_if);
 
 	result->cmd_type = PLTSQL_STMT_IF;
 	result->lineno = getLineNo(ctx);
@@ -5410,7 +5704,7 @@ makeIfStmt(TSqlParser::If_statementContext *ctx)
 void *
 makeReturnStmt(TSqlParser::Return_statementContext *ctx)
 {
-	PLtsql_stmt_return *result = (PLtsql_stmt_return *) palloc0(sizeof(*result));
+	PLtsql_stmt_return *result = makeNode(PLtsql_stmt_return);
 
 	result->cmd_type = PLTSQL_STMT_RETURN;
 	result->lineno = getLineNo(ctx);
@@ -5448,7 +5742,7 @@ makeReturnStmt(TSqlParser::Return_statementContext *ctx)
 void *
 makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool itvf)
 {
-	PLtsql_stmt_return_query *result = (PLtsql_stmt_return_query *) palloc0(sizeof(*result));
+	PLtsql_stmt_return_query *result = (PLtsql_stmt_return_query *) makeNode(PLtsql_stmt_return_query);
 
 	result->cmd_type = PLTSQL_STMT_RETURN_QUERY;
 	result->lineno =getLineNo(ctx);
@@ -5519,7 +5813,7 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 void *
 makeThrowStmt(TSqlParser::Throw_statementContext *ctx)
 {
-	PLtsql_stmt_throw *result = (PLtsql_stmt_throw *) palloc0(sizeof(*result));
+	PLtsql_stmt_throw *result = (PLtsql_stmt_throw *) makeNode(PLtsql_stmt_throw);
 
 	result->cmd_type = PLTSQL_STMT_THROW;
 	result->lineno = getLineNo(ctx);
@@ -5538,7 +5832,7 @@ makeThrowStmt(TSqlParser::Throw_statementContext *ctx)
 void *
 makeTryCatchStmt(TSqlParser::Try_catch_statementContext *ctx)
 {
-	PLtsql_stmt_try_catch *result = (PLtsql_stmt_try_catch *) palloc0(sizeof(*result));
+	PLtsql_stmt_try_catch *result = makeNode(PLtsql_stmt_try_catch);
 
 	result->cmd_type = PLTSQL_STMT_TRY_CATCH;
 	result->lineno = getLineNo(ctx);
@@ -5558,7 +5852,7 @@ makeWaitForStmt(TSqlParser::Waitfor_statementContext *ctx)
 void *
 makeWhileStmt(TSqlParser::While_statementContext *ctx)
 {
-	PLtsql_stmt_while *result = (PLtsql_stmt_while *) palloc0(sizeof(*result));
+	PLtsql_stmt_while *result = makeNode(PLtsql_stmt_while);
 	result->cmd_type = PLTSQL_STMT_WHILE;
 
 	/* We will populate result->cond during exitSearch_condition() */
@@ -5569,7 +5863,7 @@ makeWhileStmt(TSqlParser::While_statementContext *ctx)
 void *
 makePrintStmt(TSqlParser::Print_statementContext *ctx)
 {
-	PLtsql_stmt_print *result = (PLtsql_stmt_print *) palloc0(sizeof(*result));
+	PLtsql_stmt_print *result = makeNode(PLtsql_stmt_print);
 
 	result->cmd_type = PLTSQL_STMT_PRINT;
 	result->exprs = list_make1(makeTsqlExpr(ctx->expression(), true));
@@ -5581,7 +5875,7 @@ makePrintStmt(TSqlParser::Print_statementContext *ctx)
 void *
 makeRaiseErrorStmt(TSqlParser::Raiseerror_statementContext *ctx)
 {
-	PLtsql_stmt_raiserror *result = (PLtsql_stmt_raiserror *) palloc0(sizeof(*result));
+	PLtsql_stmt_raiserror *result = (PLtsql_stmt_raiserror *) makeNode(PLtsql_stmt_raiserror);
 
 	result->cmd_type = PLTSQL_STMT_RAISERROR;
 	result->lineno   = getLineNo(ctx);
@@ -5640,7 +5934,7 @@ makeRaiseErrorStmt(TSqlParser::Raiseerror_statementContext *ctx)
 PLtsql_stmt *
 makeInitializer(int varno, int lineno, TSqlParser::ExpressionContext *val)
 {
-	PLtsql_stmt_assign *result = (PLtsql_stmt_assign *) palloc0(sizeof(*result));
+	PLtsql_stmt_assign *result = makeNode(PLtsql_stmt_assign);
 
 	result->cmd_type = PLTSQL_STMT_ASSIGN;
 	result->lineno   = lineno;
@@ -5743,7 +6037,7 @@ makeDeclTableStmt(PLtsql_variable *var, PLtsql_type *type, int lineno)
 {
 	Assert(var->dtype == PLTSQL_DTYPE_TBL);
 
-	PLtsql_stmt_decl_table *result = (PLtsql_stmt_decl_table *) palloc0(sizeof(*result));
+	PLtsql_stmt_decl_table *result = (PLtsql_stmt_decl_table *) makeNode(PLtsql_stmt_decl_table);
 	result->cmd_type = PLTSQL_STMT_DECL_TABLE;
 	result->lineno = lineno;
 	result->dno = var->dno;
@@ -5930,7 +6224,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 	}
 	else if (ctx->CURSOR())
 	{
-		PLtsql_stmt_assign *result = (PLtsql_stmt_assign *) palloc0(sizeof(*result));
+		PLtsql_stmt_assign *result = makeNode(PLtsql_stmt_assign);
 		result->cmd_type = PLTSQL_STMT_ASSIGN;
 		result->lineno = getLineNo(ctx);
 
@@ -5981,7 +6275,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 
 		if (set_special_ctx->set_on_off_option().size() > 1)
 		{
-			PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) palloc0(sizeof(PLtsql_stmt_execsql));
+			PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) makeNode(PLtsql_stmt_execsql);
 			std::string query;
 			for (auto option : set_special_ctx->set_on_off_option())
 			{
@@ -6055,7 +6349,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 				if (pg_strncasecmp(param.c_str(), "NULL", 4) == 0 || param.length() == 0 || (pg_strncasecmp(param.c_str(), "0x", 2) == 0 && param.length() - 2 > 256))
 					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "SET CONTEXT_INFO option requires varbinary (128) NOT NULL parameter.", getLineAndPos(set_special_ctx->constant_LOCAL_ID()));
 
-				PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) palloc0(sizeof(PLtsql_stmt_execsql));
+				PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) makeNode(PLtsql_stmt_execsql);
 				std::string query;
 				query += "CALL sys.bbf_set_context_info(convert(varbinary(128), ";
 				query += param;
@@ -6132,7 +6426,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			/* build target variable for this GUC, so that in backend we can identify that target is GUC */
 			PLtsql_var *target_var = build_babelfish_guc_variable(guc_ctx);
 			/* assign expression to target */
-			PLtsql_stmt_assign *result = (PLtsql_stmt_assign *) palloc0(sizeof(*result));
+			PLtsql_stmt_assign *result = makeNode(PLtsql_stmt_assign);
 			result->cmd_type = PLTSQL_STMT_ASSIGN;
 			result->lineno   = getLineNo(ctx);
 			result->varno    = target_var->dno;
@@ -6160,7 +6454,7 @@ makeSetExplainModeStatement(TSqlParser::Set_statementContext *ctx, bool is_expla
 	if (!set_special_ctx)
 		return nullptr;
 
-	stmt = (PLtsql_stmt_set_explain_mode *) palloc0(sizeof(PLtsql_stmt_set_explain_mode));
+	stmt = (PLtsql_stmt_set_explain_mode *) makeNode(PLtsql_stmt_set_explain_mode);
 	on_off = getFullText(set_special_ctx->on_off());
 	len = on_off.length();
 
@@ -6192,14 +6486,14 @@ makeSetExplainModeStatement(TSqlParser::Set_statementContext *ctx, bool is_expla
 PLtsql_stmt *
 makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 {
-	PLtsql_stmt_insert_bulk *stmt = (PLtsql_stmt_insert_bulk *) palloc0(sizeof(*stmt));
+	PLtsql_stmt_insert_bulk *stmt = (PLtsql_stmt_insert_bulk *) makeNode(PLtsql_stmt_insert_bulk);
 	TSqlParser::Bulk_insert_statementContext *bulk_ctx = ctx->bulk_insert_statement();
 	std::vector<TSqlParser::Insert_bulk_column_definitionContext *> column_list = bulk_ctx->insert_bulk_column_definition();
 	std::vector<TSqlParser::Bulk_insert_optionContext *> option_list = bulk_ctx->bulk_insert_option();
 
-	std::string table_name;
-	std::string schema_name;
-	std::string db_name;
+	char *table_name = NULL;
+	char *schema_name = NULL;
+	char *db_name = NULL;
 	stmt->column_refs = NIL;
 
 	if (!bulk_ctx)
@@ -6210,31 +6504,11 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 	stmt->cmd_type = PLTSQL_STMT_INSERT_BULK;
 	if (bulk_ctx->ddl_object())
 	{
-		if (bulk_ctx->ddl_object()->local_id())
-		{
-			table_name = ::getFullText(bulk_ctx->ddl_object()->local_id()).c_str();
-		}
-		else if (bulk_ctx->ddl_object()->full_object_name())
-		{
-			if (bulk_ctx->ddl_object()->full_object_name()->object_name)
-				table_name = stripQuoteFromId(bulk_ctx->ddl_object()->full_object_name()->object_name);
-			if (bulk_ctx->ddl_object()->full_object_name()->schema)
-				schema_name = stripQuoteFromId(bulk_ctx->ddl_object()->full_object_name()->schema);
-			if (bulk_ctx->ddl_object()->full_object_name()->database)
-				db_name = stripQuoteFromId(bulk_ctx->ddl_object()->full_object_name()->database);
-		}
-		if (!table_name.empty())
-		{
-			stmt->table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
-		}
-		if (!schema_name.empty())
-		{
-			stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
-		}
-		if (!db_name.empty())
-		{
-			stmt->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
-		}
+		extract_ddl_object_names(bulk_ctx->ddl_object(), &table_name, &schema_name, &db_name);
+
+		stmt->table_name = table_name;
+		stmt->schema_name = schema_name;
+		stmt->db_name = db_name;
 
 		/* create a list of columns to insert into */
 		if (!column_list.empty())
@@ -6244,7 +6518,7 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 				std::string column_refs;
 				column_refs = ::stripQuoteFromId(column_list[i]->simple_column_name()->id());
 				if (!column_refs.empty())
-					stmt->column_refs = lappend(stmt->column_refs , pstrdup(downcase_truncate_identifier(column_refs.c_str(), column_refs.length(), true)));
+					stmt->column_refs = lappend(stmt->column_refs , downcase_truncate_identifier(column_refs.c_str(), column_refs.length(), true));
 			}
 		}
 
@@ -6309,7 +6583,7 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 
 	if (body->LR_BRACKET()) /* execute a character string */
 	{
-		PLtsql_stmt_exec_batch *result = (PLtsql_stmt_exec_batch *) palloc0(sizeof(*result));
+		PLtsql_stmt_exec_batch *result = (PLtsql_stmt_exec_batch *) makeNode(PLtsql_stmt_exec_batch);
 		result->cmd_type = PLTSQL_STMT_EXEC_BATCH;
 		result->lineno = getLineNo(ctx);
 
@@ -6397,7 +6671,7 @@ makeDeclareCursorStatement(TSqlParser::Declare_cursorContext *ctx)
 		curvar->isconst = true;
 	}
 
-	PLtsql_stmt_decl_cursor *result = (PLtsql_stmt_decl_cursor *) palloc0(sizeof(PLtsql_stmt_decl_cursor));
+	PLtsql_stmt_decl_cursor *result = (PLtsql_stmt_decl_cursor *) makeNode(PLtsql_stmt_decl_cursor);
 	result->cmd_type = PLTSQL_STMT_DECL_CURSOR;
 	result->lineno = getLineNo(ctx);
 	result->curvar = curvar->dno;
@@ -6415,7 +6689,7 @@ makeOpenCursorStatement(TSqlParser::Cursor_statementContext *ctx)
 	if (ctx->GLOBAL())
 		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", getLineAndPos(ctx->GLOBAL()));
 
-	PLtsql_stmt_open *result = (PLtsql_stmt_open *) palloc0(sizeof(PLtsql_stmt_open));
+	PLtsql_stmt_open *result = (PLtsql_stmt_open *) makeNode(PLtsql_stmt_open);
 	result->cmd_type = PLTSQL_STMT_OPEN;
 	result->lineno = getLineNo(ctx);
 	result->curvar = -1;
@@ -6430,7 +6704,7 @@ makeOpenCursorStatement(TSqlParser::Cursor_statementContext *ctx)
 PLtsql_stmt *
 makeFetchCursorStatement(TSqlParser::Fetch_cursorContext *ctx)
 {
-	PLtsql_stmt_fetch *result = (PLtsql_stmt_fetch *) palloc(sizeof(PLtsql_stmt_fetch));
+	PLtsql_stmt_fetch *result = (PLtsql_stmt_fetch *) makeNode(PLtsql_stmt_fetch);
 	result->cmd_type = PLTSQL_STMT_FETCH;
 	result->lineno = getLineNo(ctx);
 	result->target = NULL;
@@ -6481,7 +6755,7 @@ makeFetchCursorStatement(TSqlParser::Fetch_cursorContext *ctx)
 	if (localIDs.size() > 1024)
 		throw PGErrorWrapperException(ERROR, ERRCODE_PROGRAM_LIMIT_EXCEEDED, "too many INTO variables specified", getLineAndPos(ctx->LOCAL_ID()[0]));
 
-	PLtsql_row *row = (PLtsql_row *) palloc(sizeof(PLtsql_row));
+	PLtsql_row *row = (PLtsql_row *) makeNode(PLtsql_row);
 	row->dtype = PLTSQL_DTYPE_ROW;
 	row->refname = pstrdup("*internal*");
 	row->lineno = getLineNo(ctx);
@@ -6530,7 +6804,7 @@ makeCloseCursorStatement(TSqlParser::Cursor_statementContext *ctx)
 	if (ctx->GLOBAL())
 		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", getLineAndPos(ctx->GLOBAL()));
 
-	PLtsql_stmt_close *result = (PLtsql_stmt_close *) palloc0(sizeof(PLtsql_stmt_close));
+	PLtsql_stmt_close *result = (PLtsql_stmt_close *) makeNode(PLtsql_stmt_close);
 	result->cmd_type = PLTSQL_STMT_CLOSE;
 	result->lineno = getLineNo(ctx);
 	result->curvar = -1;
@@ -6547,7 +6821,7 @@ makeDeallocateCursorStatement(TSqlParser::Cursor_statementContext *ctx)
 	if (ctx->GLOBAL())
 		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", getLineAndPos(ctx->GLOBAL()));
 
-	PLtsql_stmt_deallocate *result = (PLtsql_stmt_deallocate *) palloc0(sizeof(PLtsql_stmt_deallocate));
+	PLtsql_stmt_deallocate *result = makeNode(PLtsql_stmt_deallocate);
 	result->cmd_type = PLTSQL_STMT_DEALLOCATE;
 	result->lineno = getLineNo(ctx);;
 	result->curvar = -1;
@@ -6579,7 +6853,7 @@ makeCursorStatement(TSqlParser::Cursor_statementContext *ctx)
 PLtsql_stmt *
 makeUseStatement(TSqlParser::Use_statementContext *ctx)
 {
-	PLtsql_stmt_usedb *result = (PLtsql_stmt_usedb *) palloc0(sizeof(PLtsql_stmt_usedb));
+	PLtsql_stmt_usedb *result = (PLtsql_stmt_usedb *) makeNode(PLtsql_stmt_usedb);
 	result->cmd_type = PLTSQL_STMT_USEDB;
 	result->lineno = getLineNo(ctx);
 
@@ -6599,7 +6873,7 @@ makeUseStatement(TSqlParser::Use_statementContext *ctx)
 PLtsql_stmt *
 makeKillStatement(TSqlParser::Kill_statementContext *ctx)
 {
-	PLtsql_stmt_kill *result = (PLtsql_stmt_kill *) palloc0(sizeof(*result));
+	PLtsql_stmt_kill *result = (PLtsql_stmt_kill *) makeNode(PLtsql_stmt_kill);
 
 	result->cmd_type = PLTSQL_STMT_KILL;
 	result->lineno = getLineNo(ctx);
@@ -6630,7 +6904,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 				auto single_perm = perm->single_permission();
 				if (single_perm->CONNECT())
 				{
-					PLtsql_stmt_grantdb *result = (PLtsql_stmt_grantdb *) palloc0(sizeof(PLtsql_stmt_grantdb));
+					PLtsql_stmt_grantdb *result = makeNode(PLtsql_stmt_grantdb);
 					result->cmd_type = PLTSQL_STMT_GRANTDB;
 					result->lineno = getLineNo(grant);
 					result->is_grant = true;
@@ -6658,7 +6932,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 		{
 			if (grant->principals() && grant->permissions())
 			{
-				PLtsql_stmt_grantschema *result = (PLtsql_stmt_grantschema *) palloc0(sizeof(PLtsql_stmt_grantschema));
+				PLtsql_stmt_grantschema *result = makeNode(PLtsql_stmt_grantschema);
 				result->cmd_type = PLTSQL_STMT_GRANTSCHEMA;
 				result->lineno = getLineNo(grant);
 				result->is_grant = true;
@@ -6723,7 +6997,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 				auto single_perm = perm->single_permission();
 				if (single_perm->CONNECT())
 				{
-					PLtsql_stmt_grantdb *result = (PLtsql_stmt_grantdb *) palloc0(sizeof(PLtsql_stmt_grantdb));
+					PLtsql_stmt_grantdb *result = makeNode(PLtsql_stmt_grantdb);
 					result->cmd_type = PLTSQL_STMT_GRANTDB;
 					result->lineno = getLineNo(revoke);
 					result->is_grant = false;
@@ -6753,7 +7027,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 		{
 			if (revoke->principals() && revoke->permissions())
 			{
-				PLtsql_stmt_grantschema *result = (PLtsql_stmt_grantschema *) palloc0(sizeof(PLtsql_stmt_grantschema));
+				PLtsql_stmt_grantschema *result = makeNode(PLtsql_stmt_grantschema);
 				result->cmd_type = PLTSQL_STMT_GRANTSCHEMA;
 				result->lineno = getLineNo(revoke);
 				result->is_grant = false;
@@ -6819,7 +7093,7 @@ makeTransactionStatement(TSqlParser::Transaction_statementContext *ctx)
 
 	PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) result;
 
-	stmt->txn_data = (PLtsql_txn_data *) palloc0(sizeof(PLtsql_txn_data));
+	stmt->txn_data = (PLtsql_txn_data *) makeNode(PLtsql_txn_data);
 	auto *localID = ctx->local_id();
 	if (localID)
 	{
@@ -7032,7 +7306,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	}
 	
 	// Build the statement
-	PLtsql_stmt_exec *result = (PLtsql_stmt_exec *) palloc0(sizeof(*result));
+	PLtsql_stmt_exec *result = (PLtsql_stmt_exec *) makeNode(PLtsql_stmt_exec);
 	result->cmd_type = PLTSQL_STMT_EXEC;
 	result->lineno = lineno;
 	result->is_call = true;
@@ -7137,7 +7411,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 PLtsql_stmt*
 makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 {
-	PLtsql_stmt_dbcc *stmt = (PLtsql_stmt_dbcc *) palloc0(sizeof(*stmt));
+	PLtsql_stmt_dbcc *stmt = makeNode(PLtsql_stmt_dbcc);
 
 	std::string	new_reseed_value;
 	std::string	input_str;
@@ -7259,7 +7533,7 @@ PLtsql_row *
 create_select_target_row(const char *refname, size_t nfields, int lineno)
 {
 	/* prepare target if it is not ready */
-	PLtsql_row *target = (PLtsql_row *) palloc0(sizeof(*target));
+	PLtsql_row *target = makeNode(PLtsql_row);
 	target->dtype = PLTSQL_DTYPE_ROW;
 	target->refname = (char *) refname;
 	target->lineno = lineno;
@@ -7971,7 +8245,7 @@ getDatabaseSchemaAndTableName(TSqlParser::Table_nameContext* tctx)
 PLtsql_stmt *
 makeCreatePartitionFunction(TSqlParser::Create_partition_functionContext *ctx)
 {
-	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) palloc(sizeof(PLtsql_stmt_partition_function));
+	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) makeNode(PLtsql_stmt_partition_function);
 	std::string typeStr = ::getFullText(ctx->data_type());
 	PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);
 	
@@ -8005,7 +8279,7 @@ return (PLtsql_stmt *) stmt;
 PLtsql_stmt *
 makeDropPartitionFunction(TSqlParser::Drop_partition_functionContext *ctx)
 {
-	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) palloc(sizeof(PLtsql_stmt_partition_function));
+	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) makeNode(PLtsql_stmt_partition_function);
 	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
 	stmt->lineno = getLineNo(ctx);
 	stmt->cmd_type = PLTSQL_STMT_PARTITION_FUNCTION;
@@ -8018,7 +8292,7 @@ makeDropPartitionFunction(TSqlParser::Drop_partition_functionContext *ctx)
 PLtsql_stmt *
 makeCreatePartitionScheme(TSqlParser::Create_partition_schemeContext *ctx)
 {
-	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) palloc(sizeof(PLtsql_stmt_partition_scheme));
+	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) makeNode(PLtsql_stmt_partition_scheme);
 	stmt->scheme_name = pstrdup(stripQuoteFromId(ctx->id()[0]).c_str());
 	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()[1]).c_str());
 	stmt->is_create = true;
@@ -8037,7 +8311,7 @@ makeCreatePartitionScheme(TSqlParser::Create_partition_schemeContext *ctx)
 PLtsql_stmt *
 makeDropPartitionScheme(TSqlParser::Drop_partition_schemeContext *ctx)
 {
-	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) palloc(sizeof(PLtsql_stmt_partition_scheme));
+	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) makeNode(PLtsql_stmt_partition_scheme);
 	stmt->is_create = false;
 	stmt->scheme_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
 	stmt->lineno = getLineNo(ctx);
@@ -8050,7 +8324,7 @@ makeDropPartitionScheme(TSqlParser::Drop_partition_schemeContext *ctx)
 PLtsql_stmt *
 makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx)
 {
-	PLtsql_stmt_fulltextindex *stmt = (PLtsql_stmt_fulltextindex *) palloc0(sizeof(PLtsql_stmt_fulltextindex));
+	PLtsql_stmt_fulltextindex *stmt = (PLtsql_stmt_fulltextindex *) makeNode(PLtsql_stmt_fulltextindex);
 	stmt->cmd_type = PLTSQL_STMT_FULLTEXTINDEX;
 	stmt->lineno = getLineNo(ctx);
 	stmt->is_create = true;
@@ -8098,7 +8372,7 @@ makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx)
 PLtsql_stmt *
 makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx)
 {
-	PLtsql_stmt_fulltextindex *stmt = (PLtsql_stmt_fulltextindex *) palloc0(sizeof(PLtsql_stmt_fulltextindex));
+	PLtsql_stmt_fulltextindex *stmt = (PLtsql_stmt_fulltextindex *) makeNode(PLtsql_stmt_fulltextindex);
 	stmt->cmd_type = PLTSQL_STMT_FULLTEXTINDEX;
 	stmt->lineno = getLineNo(ctx);
 	stmt->is_create = false;
@@ -8318,7 +8592,7 @@ build_cursor_variable(const char *curname, int lineno)
 	StringInfoData ds;
 	initStringInfo(&ds);
 	char		*cp1;
-	PLtsql_expr *curname_def = (PLtsql_expr *) palloc0(sizeof(PLtsql_expr));
+	PLtsql_expr *curname_def = makeNode(PLtsql_expr);
 	appendStringInfo(&ds, "SELECT ");
 	cp1 = curvar->refname;
 	/*
@@ -8406,7 +8680,7 @@ makeSpStatement(const std::string& name_str, TSqlParser::Execute_statement_argCo
 
 	std::vector<tsql_exec_param *> params;
 
-	PLtsql_stmt_exec_sp *result = (PLtsql_stmt_exec_sp *) palloc0(sizeof(*result));
+	PLtsql_stmt_exec_sp *result = (PLtsql_stmt_exec_sp *) makeNode(PLtsql_stmt_exec_sp);
 	result->cmd_type = PLTSQL_STMT_EXEC_SP;
 	result->lineno = lineno;
 	result->return_code_dno = return_code_dno;
@@ -8621,7 +8895,7 @@ makeSpParam(TSqlParser::Execute_statement_arg_namedContext *ctx)
 	TSqlParser::Execute_parameterContext *exec_param = ctx->execute_parameter();
 	Assert(exec_param && ctx->local_id());
 
-	tsql_exec_param *p = (tsql_exec_param *) palloc0(sizeof(*p));
+	tsql_exec_param *p = (tsql_exec_param *) makeNode(tsql_exec_param);
 	std::string targetText = ::getFullText(ctx->local_id());
 	p->name = pstrdup(targetText.c_str());
 	p->varno = -1;
@@ -8648,7 +8922,7 @@ makeSpParam(TSqlParser::Execute_statement_arg_unnamedContext *ctx)
 	TSqlParser::Execute_parameterContext *exec_param = ctx->execute_parameter();
 	Assert(exec_param);
 
-	tsql_exec_param *p = (tsql_exec_param *) palloc0(sizeof(*p));
+	tsql_exec_param *p = (tsql_exec_param *) makeNode(tsql_exec_param);
 	p->name = NULL;
 	p->varno = -1;
 	p->mode = FUNC_PARAM_IN;
@@ -9716,7 +9990,7 @@ escapeDoubleQuotes(const std::string strWithDoubleQuote)
 PLtsql_stmt *
 makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx)
 {
-	PLtsql_stmt_change_dbowner *result = (PLtsql_stmt_change_dbowner *) palloc0(sizeof(*result));
+	PLtsql_stmt_change_dbowner *result = makeNode(PLtsql_stmt_change_dbowner);
 
 	result->cmd_type = PLTSQL_STMT_CHANGE_DBOWNER;
 	result->lineno = getLineNo(ctx);
@@ -9735,7 +10009,7 @@ makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx)
 static PLtsql_stmt *
 makeAlterDatabaseStatement(TSqlParser::Alter_databaseContext *ctx)
 {
-	PLtsql_stmt_alter_db *result = (PLtsql_stmt_alter_db *) palloc0(sizeof(*result));
+	PLtsql_stmt_alter_db *result = makeNode(PLtsql_stmt_alter_db);
 
 	result->cmd_type = PLTSQL_STMT_ALTER_DB;
 	result->lineno = getLineNo(ctx);
