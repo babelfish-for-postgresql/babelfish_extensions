@@ -27,7 +27,7 @@ static int      scanbuflen;
 %type <pointarray> ptarray ptarraym ptarrayzm ptarrayz
 %type <pointarraylist> ringlist ringlistm ringlistz ringlistzm
 %type <str> geospatial_query point_query linestring_query polygon_query 
-%type <str> multipoint_query
+%type <str> multipoint_query multilinestring_query
 %type <pointarray> mpoint_list mpoint_list_z mpoint_list_m mpoint_list_zm
 
 %start geospatial_query
@@ -42,6 +42,7 @@ geospatial_query:
     | point_query { $$ = $1; *result = $$;  }
     | polygon_query { $$ = $1; *result = $$;  }
     | multipoint_query { $$ = $1; *result = $$;  }
+    | multilinestring_query { $$ = $1; *result = $$;  }
     ;
 
 point_query:
@@ -318,6 +319,20 @@ mpoint_list_zm:
             $$ = $1;
         }
     ;
+
+multilinestring_query:
+    MLINESTRING_TOK LPAREN ringlist RPAREN
+        { $$ = rewrite_multilinestring_query($3); }
+    | MLINESTRING_TOK EMPTY_TOK
+        { $$ = pstrdup("MULTILINESTRING EMPTY"); }
+    | MLINESTRING_TOK Z_TOK LPAREN ringlistz RPAREN
+        { $$ = rewrite_dim_multilinestring_query($4); }
+    | MLINESTRING_TOK M_TOK LPAREN ringlistm RPAREN
+        { $$ = rewrite_dim_multilinestring_query($4); }
+    | MLINESTRING_TOK ZM_TOK LPAREN ringlistzm RPAREN
+        { $$ = rewrite_dim_multilinestring_query($4); }
+    ;
+
 
 %%
 

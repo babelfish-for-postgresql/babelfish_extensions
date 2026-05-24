@@ -744,3 +744,92 @@ rewrite_dim_multipoint_wkt(PointArray *pa)
     
     return output.data;
 }
+
+/*
+ * Converts a PointArrayList to a PostGIS-compatible MULTILINESTRING WKT representation.
+ * Each ring in the PointArrayList becomes a child LineString.
+ */
+
+char* 
+rewrite_multilinestring_query(PointArrayList *pal) 
+{
+    StringInfoData output;
+    DimensionType type;
+
+    if (!pal || pal->count == 0) 
+        return pstrdup("MULTILINESTRING EMPTY");
+
+    initStringInfo(&output);
+    
+    /* Determine type from all linestrings */
+    type = determine_ring_type(pal);
+    
+    appendStringInfoString(&output, "MULTILINESTRING");
+    
+    if (type == M) 
+        appendStringInfoString(&output, " M");
+
+    appendStringInfoChar(&output, '(');
+    
+    /* Transform all points in all linestrings to conform to the determined type */
+    transform_polygon_points(pal, type);
+
+    for (int ring_idx = 0; ring_idx < pal->count; ring_idx++) 
+    {
+        PointArray *pa = pal->rings[ring_idx];
+        
+        appendStringInfoChar(&output, '(');
+        append_formatted_points(&output, pa, false, format_tsql_point_coordinates); 
+        appendStringInfoChar(&output, ')');
+        
+        if (ring_idx < pal->count - 1) 
+            appendStringInfoString(&output, ", ");
+
+        free_point_array(pa);
+    }
+
+    appendStringInfoChar(&output, ')');
+    
+    pfree(pal->rings);
+    pfree(pal);
+    
+    return output.data;
+}
+
+/*
+ * Converts a PointArrayList to a T-SQL compatible MULTILINESTRING WKT representation.
+ * Used for Z, M, ZM dimension variants coming from PostGIS format.
+ */
+char* 
+rewrite_dim_multilinestring_query(PointArrayList *pal) 
+{
+    StringInfoData output;
+
+    if (!pal || pal->count == 0) 
+        return pstrdup("MULTILINESTRING EMPTY");
+
+    initStringInfo(&output);
+    appendStringInfoString(&output, "MULTILINESTRING(");
+
+    for (int ring_idx = 0; ring_idx < pal->count; ring_idx++) 
+    {
+        PointArray *pa = pal->rings[ring_idx];
+        
+        appendStringInfoChar(&output, '(');
+        append_formatted_points(&output, pa, false, format_postgis_point_coordinates);
+        appendStringInfoChar(&output, ')');
+
+        if (ring_idx < pal->count - 1)
+            appendStringInfoString(&output, ", ");
+
+        free_point_array(pa);
+    }
+
+    appendStringInfoChar(&output, ')');
+    
+    pfree(pal->rings);
+    pfree(pal);
+    
+    return output.data;
+}
+
