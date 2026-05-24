@@ -11483,6 +11483,48 @@ EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_spatial_index', 'igno
 GO
 
 
+
+-- ============================================================
+-- SECTION 46: SELF-INTERSECTION (PR-claimed guard)
+-- ============================================================
+-- 46.1 col.STIntersects(col) = 1 — degenerate self-intersection.
+-- Equivalence check: the dot-method form must produce the same count as the
+-- explicit two-arg form, regardless of which plan path is taken.
+DECLARE @dot INT, @explicit INT;
+SELECT @dot = COUNT(*) FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STIntersects(si_geom_tbl.geom) = 1;
+SELECT @explicit = COUNT(*) FROM si_geom_tbl a INNER JOIN si_geom_tbl b ON a.id = b.id
+WHERE a.geom.STIntersects(b.geom) = 1;
+SELECT CASE WHEN @dot = @explicit THEN 'PASS' ELSE 'FAIL' END AS t46_self_intersect;
+GO
+~~START~~
+varchar
+PASS
+~~END~~
+
+
+
+-- ============================================================
+-- SECTION 47: COMPOUND @VARIABLE THRESHOLD IN STDistance
+-- ============================================================
+-- 47.1 STDistance(...) < @r + 10 — compound expression must not break
+-- the rewriter (previously the @-prefix quoting would emit "@r + 10" as
+-- a malformed identifier and fail at execution time).
+DECLARE @r FLOAT = 100;
+DECLARE @cnt_compound INT, @cnt_literal INT;
+SELECT @cnt_compound = COUNT(*) FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < @r + 10;
+SELECT @cnt_literal = COUNT(*) FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < 110;
+SELECT CASE WHEN @cnt_compound = @cnt_literal THEN 'PASS' ELSE 'FAIL' END AS t47_compound_threshold;
+GO
+~~START~~
+varchar
+PASS
+~~END~~
+
+
+
 -- ============================================================
 -- SECTION 45: sys.spatial_indexes multi-database isolation
 -- ============================================================

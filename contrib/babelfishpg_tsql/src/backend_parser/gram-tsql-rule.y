@@ -3598,40 +3598,40 @@ tsql_opt_columnstore:
  */
 
 opt_using_spatial_grid:
-        USING IDENT     { /* GEOMETRY_GRID, GEOGRAPHY_GRID, etc. - ignored */ }
-        | /* EMPTY */
-    ;
+			USING IDENT		{ /* GEOMETRY_GRID, GEOGRAPHY_GRID, etc. - ignored */ }
+			| /*EMPTY*/
+		;
 
 opt_spatial_with_options:
-        WITH_paren spatial_option_list ')'           {}
-        | /* EMPTY */                                {}
-    ;
+			WITH_paren spatial_option_list ')'			{}
+			| /*EMPTY*/									{}
+		;
 
 spatial_option_list:
-        spatial_option                               {}
-        | spatial_option_list ',' spatial_option     {}
-    ;
+			spatial_option								{}
+			| spatial_option_list ',' spatial_option	{}
+		;
 
 spatial_option:
-        IDENT '=' IDENT                             {}
-        | IDENT '=' ON                              {}
-        | IDENT '=' OFF                             {}
-        | IDENT '=' NONE                            {}
-        | IDENT '=' NumericOnly                     {}
-        | IDENT '=' '(' spatial_value_list ')'      {}
-    ;
+			IDENT '=' IDENT								{}
+			| IDENT '=' ON								{}
+			| IDENT '=' OFF								{}
+			| IDENT '=' NONE							{}
+			| IDENT '=' NumericOnly						{}
+			| IDENT '=' '(' spatial_value_list ')'		{}
+		;
 
 spatial_value_list:
-        spatial_value                               {}
-        | spatial_value_list ',' spatial_value       {}
-    ;
+			spatial_value								{}
+			| spatial_value_list ',' spatial_value		{}
+		;
 
 spatial_value:
-        IDENT                                       {}
-        | IDENT '=' IDENT                           {}
-        | IDENT '=' NumericOnly                     {}
-        | NumericOnly                               {}
-    ;
+			IDENT										{}
+			| IDENT '=' IDENT							{}
+			| IDENT '=' NumericOnly						{}
+			| NumericOnly								{}
+		;
 
 /*
  * NOTE: Only supporting the syntax for now

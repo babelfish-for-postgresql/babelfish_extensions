@@ -2254,7 +2254,7 @@ public:
 		else if (ctx->create_index())
 			nop = post_process_create_index(ctx->create_index(), stmt, ctx);
 		else if (ctx->create_spatial_index())
-            nop = post_process_create_spatial_index(ctx->create_spatial_index(), stmt, ctx);
+			nop = post_process_create_spatial_index(ctx->create_spatial_index(), stmt, ctx);
 		else if (ctx->create_database())
 			nop = post_process_create_database(ctx->create_database(), stmt, ctx);
 		else if (ctx->create_type())
@@ -9127,8 +9127,8 @@ extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &
 					if (comp_value.find('.') != std::string::npos)
 						return false;
 					/* Reject if STDistance is wrapped in CAST() - the RHS is not a bare STDistance call */
-					std::string lhs_text = ::getFullText(lhs);
-					if (pg_strncasecmp(lhs_text.c_str(), "CAST(", 5) == 0)
+					std::string rhs_text = ::getFullText(rhs);
+					if (pg_strncasecmp(rhs_text.c_str(), "CAST(", 5) == 0)
 						return false;
 					dist_on_lhs_out = false;
 					return true;
@@ -9178,64 +9178,132 @@ maybe_inject_spatial_bbox_filter(const std::string &spatial_func_name, const std
 	return rewritten_call;
 }
 
+/*
+ * A single T-SQL LOCAL_ID token: '@' followed by one or more identifier chars.
+ * Used to gate the @-prefix quoting below — compound expressions like
+ * "@var + 1" or "@@SPID" would otherwise be wrapped into a malformed quoted
+ * identifier ("@var + 1") and fail at execution time. For anything that is
+ * not a plain LOCAL_ID, the safe fallback is to skip the prefilter entirely.
+ */
+static bool
+is_single_local_id_token(const std::string &s)
+{
+	if (s.size() < 2 || s.front() != '@')
+		return false;
+	for (size_t i = 1; i < s.size(); ++i)
+	{
+		unsigned char c = static_cast<unsigned char>(s[i]);
+		if (!std::isalnum(c) && c != '_')
+			return false;
+	}
+	return true;
+}
+
 /* Add a bounding-box check using ST_Expand so the GiST index can filter by distance. */
 static std::string
 maybe_inject_spatial_distance_filter(const std::string &col_ref, const std::string &first_arg, const std::string &distance_value, const std::string &rewritten_call)
 {
 	std::string quoted_distance = distance_value;
 	if (!distance_value.empty() && distance_value.front() == '@')
+	{
+		if (!is_single_local_id_token(distance_value))
+			return rewritten_call;
 		quoted_distance = "\"" + distance_value + "\"";
+	}
 
 	return col_ref + " OPERATOR(sys.&&) sys.ST_Expand(" + first_arg + ", " + "CAST(" + quoted_distance + " AS float8)) AND " + rewritten_call;
 }
 
 
+/*
+ * Shared distance-prefilter dispatcher used by both rewrite_dot_func_ref_args_query_helper
+ * and rewrite_function_call_dot_func_ref_args. Verifies the predicate is
+ * STDistance(...) op threshold, extracts first_arg from the rewritten string,
+ * and delegates to maybe_inject_spatial_distance_filter.
+ */
+template<class T>
+static std::string
+maybe_inject_spatial_distance_filter_for_ctx(T ctx, const std::string &spatial_func_name, const std::string &col_ref, const std::string &rewritten_call)
+{
+	if (pg_strcasecmp(spatial_func_name.c_str(), "STDistance") != 0)
+		return rewritten_call;
 
-/* Check if the spatial call is in a `col.STFn(...) = 1` predicate (only this form gets index optimization). */
+	std::string comp_operator;
+	std::string comp_value;
+	bool dist_on_lhs = false;
+
+	if (!extract_distance_predicate_info(ctx, comp_operator, comp_value, dist_on_lhs)
+		|| !dist_on_lhs)
+		return rewritten_call;
+
+	std::string col_ref_suffix = "," + col_ref + ")";
+	size_t suffix_pos = rewritten_call.rfind(col_ref_suffix);
+	size_t open_paren = rewritten_call.find('(');
+
+	if (suffix_pos == std::string::npos
+		|| open_paren == std::string::npos
+		|| suffix_pos <= open_paren + 1)
+		return rewritten_call;
+
+	std::string first_arg =
+		rewritten_call.substr(open_paren + 1, suffix_pos - open_paren - 1);
+
+	return maybe_inject_spatial_distance_filter(col_ref, first_arg, comp_value, rewritten_call);
+}
+
+/*
+ * Check if the spatial call is in a `col.STFn(...) = 1` predicate (only this
+ * form gets index optimization).
+ *
+ * Known limitation: the reversed form `1 = col.STFn(...)` is NOT detected here
+ * and falls back to a sequential scan. Both forms return identical results, so
+ * this is a missed optimization, not a correctness issue. Users migrating
+ * legacy T-SQL that writes the literal on the LHS may notice the perf gap;
+ * rewriting the predicate as `col.STFn(...) = 1` restores the index push-down.
+ */
 template<class T>
 static bool
 is_spatial_predicate_eq_one(T ctx)
 {
-    auto *parent = dynamic_cast<antlr4::ParserRuleContext *>(ctx->parent);
-    while (parent)
-    {
-        auto *pred = dynamic_cast<TSqlParser::PredicateContext *>(parent);
-        if (pred)
-        {
-            if (pred->comparison_operator() && pred->expression().size() >= 2)
-            {
-                std::string op = ::getFullText(pred->comparison_operator());
-                if (op != "=")
-                    return false;
+	auto *parent = dynamic_cast<antlr4::ParserRuleContext *>(ctx->parent);
+	while (parent)
+	{
+		auto *pred = dynamic_cast<TSqlParser::PredicateContext *>(parent);
+		if (pred)
+		{
+			if (pred->comparison_operator() && pred->expression().size() >= 2)
+			{
+				std::string op = ::getFullText(pred->comparison_operator());
+				if (op != "=")
+					return false;
 
-                auto *lhs = pred->expression().front();
-                auto *rhs = pred->expression().back();
+				auto *lhs = pred->expression().front();
+				auto *rhs = pred->expression().back();
 
-                
-                size_t ctx_start = ctx->start->getStartIndex();
-                if (ctx_start < lhs->start->getStartIndex() ||
-                    ctx_start > lhs->stop->getStopIndex())
-                    return false;
+				size_t ctx_start = ctx->start->getStartIndex();
+				if (ctx_start < lhs->start->getStartIndex() ||
+					ctx_start > lhs->stop->getStopIndex())
+					return false;
 
-                std::string rhs_str = ::getFullText(rhs);
-                size_t first = rhs_str.find_first_not_of(" \t\n\r\f\v");
-                if (first == std::string::npos)
-                    return false;
-                size_t last = rhs_str.find_last_not_of(" \t\n\r\f\v");
-                rhs_str = rhs_str.substr(first, last - first + 1);
+				std::string rhs_str = ::getFullText(rhs);
+				size_t first = rhs_str.find_first_not_of(" \t\n\r\f\v");
+				if (first == std::string::npos)
+					return false;
+				size_t last = rhs_str.find_last_not_of(" \t\n\r\f\v");
+				rhs_str = rhs_str.substr(first, last - first + 1);
 
-                return rhs_str == "1";
-            }
-            return false;
-        }
+				return rhs_str == "1";
+			}
+			return false;
+		}
 
-        /* Stop climbing if we leave the predicate area */
-        if (dynamic_cast<TSqlParser::Search_conditionContext *>(parent))
-            return false;
+		/* Stop climbing if we leave the predicate area */
+		if (dynamic_cast<TSqlParser::Search_conditionContext *>(parent))
+			return false;
 
-        parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
-    }
-    return false;
+		parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
+	}
+	return false;
 }
 
 /*
@@ -9258,9 +9326,9 @@ is_in_spatial_predicate_context(T ctx)
 			dynamic_cast<TSqlParser::Set_statementContext *>(parent) ||
 			dynamic_cast<TSqlParser::Print_statementContext *>(parent) ||
 			dynamic_cast<TSqlParser::Update_elemContext *>(parent) ||
-		    dynamic_cast<TSqlParser::Insert_statementContext *>(parent) ||
-            dynamic_cast<TSqlParser::Return_statementContext *>(parent) ||
-		    dynamic_cast<TSqlParser::Create_or_alter_procedureContext *>(parent) ||
+			dynamic_cast<TSqlParser::Insert_statementContext *>(parent) ||
+			dynamic_cast<TSqlParser::Return_statementContext *>(parent) ||
+			dynamic_cast<TSqlParser::Create_or_alter_procedureContext *>(parent) ||
 			dynamic_cast<TSqlParser::Create_or_alter_functionContext *>(parent))
 			return false;
 		parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
@@ -9380,7 +9448,7 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 
 		rewritten_exp = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, rewritten_exp);
 	}
-	 /* Inject distance pre-filter for col.STDistance(...) < threshold */
+	/* Inject distance pre-filter for col.STDistance(...) < threshold */
 	if (method->spatial_methods()
 		&& method->spatial_methods()->geospatial_func_arg()
 		&& method->spatial_methods()->expression_list()
@@ -9389,35 +9457,10 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	{
 		std::string spatial_func_name =
 			::getFullText(method->spatial_methods()->geospatial_func_arg());
+		std::string col_ref = expr.substr(0, func_call_len + offset1 + 1);
 
-		if (pg_strcasecmp(spatial_func_name.c_str(), "STDistance") == 0)
-		{
-			std::string comp_operator;
-			std::string comp_value;
-			bool dist_on_lhs = false;
-
-			if (extract_distance_predicate_info(ctx, comp_operator, comp_value, dist_on_lhs)
-				&& dist_on_lhs)
-			{
-				std::string col_ref = expr.substr(0, func_call_len + offset1 + 1);
-
-				std::string col_ref_suffix = "," + col_ref + ")";
-				size_t suffix_pos = rewritten_exp.rfind(col_ref_suffix);
-				size_t open_paren = rewritten_exp.find('(');
-
-				if (suffix_pos != std::string::npos
-					&& open_paren != std::string::npos
-					&& suffix_pos > open_paren + 1)
-				{
-					std::string first_arg =
-						rewritten_exp.substr(open_paren + 1,
-											 suffix_pos - open_paren - 1);
-
-					rewritten_exp = maybe_inject_spatial_distance_filter(
-						col_ref, first_arg, comp_value, rewritten_exp);
-				}
-			}
-		}
+		rewritten_exp = maybe_inject_spatial_distance_filter_for_ctx(
+			ctx, spatial_func_name, col_ref, rewritten_exp);
 	}
 
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
@@ -9693,34 +9736,10 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	{
 		std::string spatial_func_name =
 			::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg());
+		std::string col_ref = expr.substr(0, col_len + offset1 + 1);
 
-		if (pg_strcasecmp(spatial_func_name.c_str(), "STDistance") == 0)
-		{
-			std::string comp_operator;
-			std::string comp_value;
-			bool dist_on_lhs = false;
-
-			if (extract_distance_predicate_info(ctx, comp_operator, comp_value, dist_on_lhs)
-				&& dist_on_lhs)
-			{
-				std::string col_ref = expr.substr(0, col_len + offset1 + 1);
-
-				std::string col_ref_suffix = "," + col_ref + ")";
-				size_t suffix_pos = rewritten_func.rfind(col_ref_suffix);
-				size_t open_paren = rewritten_func.find('(');
-
-				if (suffix_pos != std::string::npos
-					&& open_paren != std::string::npos
-					&& suffix_pos > open_paren + 1)
-				{
-					std::string first_arg =
-						rewritten_func.substr(open_paren + 1, suffix_pos - open_paren - 1);
-
-					rewritten_func = maybe_inject_spatial_distance_filter(
-						col_ref, first_arg, comp_value, rewritten_func);
-				}
-			}
-		}
+		rewritten_func = maybe_inject_spatial_distance_filter_for_ctx(
+			ctx, spatial_func_name, col_ref, rewritten_func);
 	}
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
 }
