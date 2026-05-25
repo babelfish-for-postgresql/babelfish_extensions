@@ -6124,7 +6124,6 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 	Datum	   *elems;
 	bool	   *nulls;
 	int			nitems;
-	const char *quoted_identifier;
 	StringInfoData buf;
 	int			i;
 
@@ -6155,10 +6154,7 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 	}
 
 	/* Check QUOTED_IDENTIFIER setting (required for XML methods in T-SQL) */
-	quoted_identifier = GetConfigOption("babelfishpg_tsql.quoted_identifier",
-										true, false);
-	if (quoted_identifier != NULL && strlen(quoted_identifier) == 3 &&
-		strncmp(quoted_identifier, "off", 3) == 0)
+	if (!pltsql_quoted_identifier)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("SELECT failed because the following SET options have "
