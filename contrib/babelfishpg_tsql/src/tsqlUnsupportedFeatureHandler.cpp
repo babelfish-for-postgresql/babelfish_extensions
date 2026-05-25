@@ -1123,7 +1123,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 || ctx->create_db_role()
 	 || ctx->create_fulltext_index()
 	 || ctx->create_index()
-	 || ctx->create_spatial_index()    
+	 || ctx->create_spatial_index()
 	 || ctx->create_login()
 	 || ctx->create_sequence()
 	 || (ctx->create_server_role() && pltsql_allow_antlr_to_unsupported_grammar_for_testing)

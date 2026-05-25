@@ -9434,30 +9434,22 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	{
 		rewritten_exp = "cast(" + rewritten_exp + " as " + typename_arg + ")";
 	}
-	
-	/* Inject bbox pre-filter for spatial predicates like col.STIntersects(...) = 1 */
-	if (method->spatial_methods()
-		&& method->spatial_methods()->geospatial_func_arg()
-		&& method->spatial_methods()->expression_list()
-		&& !method->spatial_methods()->expression_list()->expression().empty()
-		&& is_in_spatial_predicate_context(ctx)
-		&& is_spatial_predicate_eq_one(ctx))
-	{
-		std::string spatial_func_name = ::getFullText(method->spatial_methods()->geospatial_func_arg());
-		std::string col_ref = expr.substr(0, func_call_len + offset1 + 1);
 
-		rewritten_exp = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, rewritten_exp);
-	}
-	/* Inject distance pre-filter for col.STDistance(...) < threshold */
+	/* Inject spatial pre-filters (bbox / distance) for predicates like
+	 * col.STIntersects(...) = 1 or col.STDistance(...) < threshold.
+	 * The shared guard avoids repeated tree walks via is_in_spatial_predicate_context.
+	 */
 	if (method->spatial_methods()
 		&& method->spatial_methods()->geospatial_func_arg()
 		&& method->spatial_methods()->expression_list()
 		&& !method->spatial_methods()->expression_list()->expression().empty()
 		&& is_in_spatial_predicate_context(ctx))
 	{
-		std::string spatial_func_name =
-			::getFullText(method->spatial_methods()->geospatial_func_arg());
+		std::string spatial_func_name = ::getFullText(method->spatial_methods()->geospatial_func_arg());
 		std::string col_ref = expr.substr(0, func_call_len + offset1 + 1);
+
+		if (is_spatial_predicate_eq_one(ctx))
+			rewritten_exp = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, rewritten_exp);
 
 		rewritten_exp = maybe_inject_spatial_distance_filter_for_ctx(
 			ctx, spatial_func_name, col_ref, rewritten_exp);
@@ -9713,30 +9705,21 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 		rewritten_func = "cast(" + rewritten_func + " as " + typename_arg + ")";
 	}
 
-	/* Inject bbox pre-filter for spatial predicates like col.STIntersects(...) = 1 */
-	if (ctx->spatial_proc_name_server_database_schema()
-		&& ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()
-		&& ctx->function_arg_list()
-		&& !ctx->function_arg_list()->expression().empty()
-		&& is_in_spatial_predicate_context(ctx)
-		&& is_spatial_predicate_eq_one(ctx))
-	{
-		std::string spatial_func_name = ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg());
-		std::string col_ref = expr.substr(0, col_len + offset1 + 1);
-
-		rewritten_func = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, rewritten_func);
-	}
-
-	/* Inject distance pre-filter for col.STDistance(...) < threshold */
+	/* Inject spatial pre-filters (bbox / distance) for predicates like
+	 * col.STIntersects(...) = 1 or col.STDistance(...) < threshold.
+	 * The shared guard avoids repeated tree walks via is_in_spatial_predicate_context.
+	 */
 	if (ctx->spatial_proc_name_server_database_schema()
 		&& ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()
 		&& ctx->function_arg_list()
 		&& !ctx->function_arg_list()->expression().empty()
 		&& is_in_spatial_predicate_context(ctx))
 	{
-		std::string spatial_func_name =
-			::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg());
+		std::string spatial_func_name = ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg());
 		std::string col_ref = expr.substr(0, col_len + offset1 + 1);
+
+		if (is_spatial_predicate_eq_one(ctx))
+			rewritten_func = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, rewritten_func);
 
 		rewritten_func = maybe_inject_spatial_distance_filter_for_ctx(
 			ctx, spatial_func_name, col_ref, rewritten_func);
