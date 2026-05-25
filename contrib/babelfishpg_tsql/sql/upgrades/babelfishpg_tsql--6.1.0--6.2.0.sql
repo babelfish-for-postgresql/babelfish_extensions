@@ -78,6 +78,7 @@ CREATE OR REPLACE FUNCTION sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYE
 RETURNS XML
 AS 'babelfishpg_tsql', 'bbf_xmlquery'
 LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
 -- BABELFISH_FUNCTION_EXT (antlr_parse_cache)
 SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_cache_tree TEXT DEFAULT NULL;

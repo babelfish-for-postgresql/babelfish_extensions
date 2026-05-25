@@ -6201,12 +6201,13 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 	{
 		if (!nulls[i])
 		{
-			char *fragment = TextDatumGetCString(elems[i]);
+			text *fragment = DatumGetTextPP(elems[i]);
 
-			appendStringInfoString(&buf, fragment);
-			pfree(fragment);
+			appendBinaryStringInfo(&buf,
+								   VARDATA_ANY(fragment),
+								   VARSIZE_ANY_EXHDR(fragment));
 		}
 	}
 
-	PG_RETURN_XML_P((xmltype *) cstring_to_text(buf.data));
+	PG_RETURN_XML_P((xmltype *) cstring_to_text_with_len(buf.data, buf.len));
 }
