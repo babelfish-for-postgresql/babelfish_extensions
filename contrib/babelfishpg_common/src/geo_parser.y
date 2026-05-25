@@ -333,7 +333,6 @@ multilinestring_query:
         { $$ = rewrite_dim_multilinestring_query($4); }
     ;
 
-
 %%
 
 /* Include lexer after parser to avoid circular dependencies and ensure shared context */

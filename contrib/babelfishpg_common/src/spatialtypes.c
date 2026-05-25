@@ -27,7 +27,7 @@ static void load_functions();
 #define LINE_TYPE        2  /* Identifier for Linestring geometry type */
 #define POLYGON_TYPE     3  /* Identifier for Polygon geometry type */
 #define MULTIPOINT_TYPE  4  /* Identifier for MultiPoint geometry type */
-#define MULTILINESTRING_TYPE 5   /* Identifier for MultiLineString geometry type */
+#define MULTILINESTRING_TYPE 5  /* Identifier for MultiLineString geometry type */
 
 #define DEFAULT_GEOGRAPHY_SRID 4326
 #define DEFAULT_GEOMETRY_SRID  0
@@ -51,7 +51,7 @@ static void load_functions();
 #define EMPTY_LINE_TYPE_LASTBYTE             0x02    /* Type identifier for empty linestring */
 #define EMPTY_POLYGON_TYPE_LASTBYTE          0x03    /* Type identifier for empty polygon */
 #define EMPTY_MULTIPOINT_TYPE_LASTBYTE       0x04    /* Type identifier for empty Multipoint */
-#define EMPTY_MULTILINESTRING_TYPE_LASTBYTE  0x05  /* Type identifier for empty MultiLineString */
+#define EMPTY_MULTILINESTRING_TYPE_LASTBYTE  0x05    /* Type identifier for empty MultiLineString */
 #define NPOINTS_SIZE                 4          /* Size of no. of points data (4 bytes ) */
 
 #define SRID_FLAG_POS     4     /* Position of SRID flag in binary data */
@@ -132,7 +132,7 @@ static void load_functions();
 #define EMPTY_LINE_Bytes             "\x01\x02\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty linestring */
 #define EMPTY_POLYGON_Bytes          "\x01\x03\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty polygon */
 #define EMPTY_MULTIPOINT_Bytes       "\x01\x04\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty Multipoint */
-#define EMPTY_MULTILINESTRING_Binary "\x01\x05\x00\x00\x00\x00\x00\x00\x00"
+#define EMPTY_MULTILINESTRING_Bytes  "\x01\x05\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty MultiLineString */
 #define FIGURE_INTERIOR_RING  0x00
 #define FIGURE_STROKE         0x01
 #define FIGURE_EXTERIOR_RING  0x02
@@ -350,7 +350,7 @@ check_geom_type(const char *geom_type)
         strcmp(geom_type, "ST_LineString") != 0 &&
         strcmp(geom_type, "ST_Polygon") != 0 &&
         strcmp(geom_type, "ST_MultiPoint") != 0 &&
-        strcmp(geom_type, "ST_MultiLineString") != 0) 
+        strcmp(geom_type, "ST_MultiLineString") != 0)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -808,7 +808,7 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
 
             validate_geography_coord_pair(lat, lon);
         }
-    }else if (strcmp(geom_type, "ST_MultiLineString") == 0)
+    } else if (strcmp(geom_type, "ST_MultiLineString") == 0)
     {
         int num_geoms, geom_idx;
         float8 prev_lat = 0, prev_lon = 0;
@@ -1243,58 +1243,61 @@ get_geography_from_wkb(PG_FUNCTION_ARGS)
 }
 
 /*
- * Function pointer type for the underlying WKT/WKB-to-geometry converters.
+ * Common wrapper for MultiLineString WKT/WKB constructors.
  */
 static Datum
-multilinestring_wrapper(FunctionCallInfo fcinfo,geom_converter_fn converter,Oid collation,const char *fname)
+multilinestring_wrapper(FunctionCallInfo fcinfo, geom_converter_fn converter, Oid collation, const char *fname)
 {
-    Datum  geom_datum;
-    char  *geom_type;
+    Datum    geom_datum;
+    char    *geom_type;
     LOCAL_FCINFO(fcinfo_local, 2);
 
     if (PG_ARGISNULL(1))
-        ereport(ERROR,(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),errmsg("'%s' failed because parameter 2 is not allowed to be null.", fname)));
+        ereport(ERROR,
+                (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+                 errmsg("'%s' failed because parameter 2 is not allowed to be null.", fname)));
 
     if (PG_ARGISNULL(0))
         PG_RETURN_NULL();
 
     InitFunctionCallInfoData(*fcinfo_local, NULL, 2, collation, NULL, NULL);
-    UpdateFunctionCallInfo(fcinfo_local, 2,PG_GETARG_DATUM(0), PG_GETARG_DATUM(1));
+    UpdateFunctionCallInfo(fcinfo_local, 2, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1));
     geom_datum = converter(fcinfo_local);
 
     geom_type = GetGeometryTypeName(fcinfo_local, geom_datum);
     if (geom_type == NULL || strcmp(geom_type, "ST_MultiLineString") != 0)
-        ereport(ERROR,(errcode(ERRCODE_INVALID_PARAMETER_VALUE),errmsg("Expected \"MULTILINESTRING\" at position 1. The input has %s",geom_type ? geom_type : "(null)")));
-    pfree(geom_type);
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("Expected \"MULTILINESTRING\" at position 1. The input has %s", geom_type ? geom_type : "(null)")));
+
+    if (geom_type)
+        pfree(geom_type);
 
     PG_RETURN_DATUM(geom_datum);
 }
 
-
 Datum
 geometry_mlinestring_from_text(PG_FUNCTION_ARGS)
 {
-    return multilinestring_wrapper(fcinfo, get_geometry_from_text,PG_GET_COLLATION(),"geometry::STMLineFromText");
+    return multilinestring_wrapper(fcinfo, get_geometry_from_text, PG_GET_COLLATION(), "geometry::STMLineFromText");
 }
-
 
 Datum
 geography_mlinestring_from_text(PG_FUNCTION_ARGS)
 {
-    return multilinestring_wrapper(fcinfo, get_geography_from_text,InvalidOid,"geography::STMLineFromText");
+    return multilinestring_wrapper(fcinfo, get_geography_from_text, InvalidOid, "geography::STMLineFromText");
 }
 
 Datum
 geometry_mlinestring_from_wkb(PG_FUNCTION_ARGS)
 {
-    return multilinestring_wrapper(fcinfo, get_geometry_from_wkb,InvalidOid,"geometry::STMLineFromWKB");
+    return multilinestring_wrapper(fcinfo, get_geometry_from_wkb, InvalidOid, "geometry::STMLineFromWKB");
 }
-
 
 Datum
 geography_mlinestring_from_wkb(PG_FUNCTION_ARGS)
 {
-    return multilinestring_wrapper(fcinfo, get_geography_from_wkb, InvalidOid,"geography::STMLineFromWKB");
+    return multilinestring_wrapper(fcinfo, get_geography_from_wkb, InvalidOid, "geography::STMLineFromWKB");
 }
 
 /* This function creates a geography point (only 2D) */
@@ -2388,13 +2391,12 @@ handle_multi_to_postgis(GeometryData *geom_data)
     /* Determine PostGIS WKB type byte */
     switch (geom_data->geom_name)
     {
-        case MULTIPOINT_TYPE:     
-          postgis_type_byte = 0x04; 
-          break;
+        case MULTIPOINT_TYPE:
+            postgis_type_byte = 0x04;
+            break;
         case MULTILINESTRING_TYPE:
-          postgis_type_byte = 0x05;
-          break;
-
+            postgis_type_byte = 0x05;
+            break;
         default:
             THROW_VARBINARY_CONVERSION_ERROR();
             return NULL;
@@ -2478,8 +2480,8 @@ handle_non_empty_geometry_bytea(GeometryData *geom_data)
             postgis_header[1] = POLYGON_TYPE;
             new_data_size = calculate_polygon_size(geom_data);
             break;
-         case MULTIPOINT_TYPE:
-         case MULTILINESTRING_TYPE: 
+        case MULTIPOINT_TYPE:
+        case MULTILINESTRING_TYPE:
             return handle_multi_to_postgis(geom_data);
         default:
             THROW_VARBINARY_CONVERSION_ERROR();
@@ -3315,9 +3317,6 @@ write_clr_metadata(uint8 *dst, GeoDataInfo *geom_data, bool is_geography)
         case POLYGON_TYPE:
             return write_polygon_clr_metadata(dst, geom_data, is_geography);
 
-        case MULTILINESTRING_TYPE:
-            return write_multilinestring_clr_metadata(dst, geom_data, is_geography);
-
         default:
             return 0;  /* Points and 2-point lines have no metadata */
     }
@@ -3939,7 +3938,7 @@ st_as_binary_common(Datum input, bool is_geography)
         }
         else if (strcmp(geom_type, "ST_MultiLineString") == 0)
         {
-            memcpy(VARDATA(empty_geom), EMPTY_MULTILINESTRING_Binary, EMPTY_Binary_SIZE);
+            memcpy(VARDATA(empty_geom), EMPTY_MULTILINESTRING_Bytes, EMPTY_Binary_SIZE);
         }
         
         /* Free allocated memory and return the empty WKB */
