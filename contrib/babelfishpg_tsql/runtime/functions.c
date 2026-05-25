@@ -6168,13 +6168,15 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 	/*
 	 * Call the built-in xpath(text, xml, text[][]) directly with an empty
 	 * namespace array. Returns xml[] (array of XML fragments).
+	 *
+	 * TODO: when WITH XMLNAMESPACES is supported, populate this array with
+	 * the declared (prefix, uri) pairs from the active namespace context.
 	 */
 	namespaces = construct_empty_array(TEXTOID);
-	xpath_result = DirectFunctionCall3Coll(xpath,
-										   InvalidOid,
-										   PointerGetDatum(xpath_expr),
-										   xml_datum,
-										   PointerGetDatum(namespaces));
+	xpath_result = DirectFunctionCall3(xpath,
+									   PointerGetDatum(xpath_expr),
+									   xml_datum,
+									   PointerGetDatum(namespaces));
 
 	result_arr = DatumGetArrayTypeP(xpath_result);
 
