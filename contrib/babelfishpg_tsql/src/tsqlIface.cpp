@@ -9278,10 +9278,12 @@ is_single_local_id_token(const std::string &s)
  *
  * Known limitation (to be addressed in a follow-up PR): for sys.GEOGRAPHY columns,
  * STDistance returns meters but sys.ST_Expand(geography, ...) is currently bound
- * to the cartesian LWGEOM_expand which treats the distance as degrees. For
- * sub-meter thresholds this can shrink the bbox below the true metric radius
- * and exclude matching rows. Geography distance prefilter should either skip
- * injection or rebind to a geodetic expander.
+ * to the cartesian LWGEOM_expand which treats the distance as degrees. The bbox
+ * prefilter is always correct (no false negatives, since the original predicate
+ * is retained as a recheck) but is extremely unselective for geography — it
+ * expands by N degrees instead of N meters, producing a bbox far larger than
+ * needed. Geography distance prefilter should either skip injection or rebind
+ * to a geodetic expander for meaningful selectivity.
  */
 static std::string
 maybe_inject_spatial_distance_filter(const std::string &col_ref, const std::string &first_arg, const std::string &distance_value, const std::string &rewritten_call)
@@ -9811,6 +9813,7 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 		rewritten_func = maybe_inject_spatial_distance_filter_for_ctx(
 			ctx, spatial_func_name, col_ref, rewritten_func);
 	}
+
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
 }
 

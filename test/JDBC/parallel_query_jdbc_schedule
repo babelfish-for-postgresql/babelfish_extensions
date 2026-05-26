@@ -21,6 +21,7 @@ ignore#!#Test_sp_renamedb-vu-prepare
 ignore#!#Test_sp_renamedb-vu-verify
 ignore#!#Test_sp_renamedb-vu-cleanup
 ignore#!#verify_mapping_for_remove_accents
+# Plan-shape output (Workers Planned, Index Scan vs Parallel Bitmap Heap Scan) is non-deterministic in parallel mode.
 ignore#!#Test-Spatial_Index-vu-prepare
 ignore#!#Test-Spatial_Index-vu-verify
 ignore#!#Test-Spatial_Index-vu-cleanup
