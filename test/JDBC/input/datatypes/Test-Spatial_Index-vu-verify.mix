@@ -1,4 +1,6 @@
 -- single_db_mode_expected
+-- parallel_query_expected
+-- tsql
 -- ============================================================
 -- SESSION-LEVEL GUC CONFIGURATION
 -- ============================================================
@@ -13,6 +15,18 @@ SELECT set_config('max_parallel_workers_per_gather', '0', false)
 SELECT set_config('enable_seqscan',    'off', false)
 SELECT set_config('enable_bitmapscan', 'off', false)
 GO
+
+-- Refresh planner statistics so plan shape (Workers Planned, Index Scan vs
+-- Parallel Bitmap Heap Scan, per-worker row counts) is deterministic across
+-- runners with different CPU counts. Required for parallel-query mode.
+-- psql
+ANALYZE master_dbo.si_geom_tbl;
+ANALYZE master_dbo.si_geog_tbl;
+ANALYZE master_dbo.si_multi_tbl;
+ANALYZE master_dbo.si_view_tbl;
+GO
+
+-- tsql
 
 -- ============================================================
 -- SECTION 1: DDL ERROR CASES
@@ -819,6 +833,12 @@ CREATE SPATIAL INDEX si_geom ON si_geom_tbl(geom)
 USING GEOMETRY_GRID WITH (BOUNDING_BOX = (0, 0, 1000, 1000));
 GO
 
+-- Re-ANALYZE after index recreate so subsequent plan-capture queries are stable.
+-- psql
+ANALYZE master_dbo.si_geom_tbl;
+GO
+
+-- tsql
 DECLARE @after INT;
 SELECT @after = COUNT(*) FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(

@@ -8138,7 +8138,6 @@ post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_exec
 static bool
 post_process_create_spatial_index(TSqlParser::Create_spatial_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
 {
-
 	/* Remove USING clause (GEOMETRY_GRID, GEOGRAPHY_GRID, etc.) */
 	if (ctx->spatial_grid_clause())
 		removeCtxStringFromQuery(stmt->sqlstmt, ctx->spatial_grid_clause(), baseCtx);
@@ -9141,7 +9140,7 @@ extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &
 		auto *pred = dynamic_cast<TSqlParser::PredicateContext *>(parent);
 		if (pred)
 		{
-			if (pred->comparison_operator() && pred->expression().size() >= 2)
+			if (pred->comparison_operator() && pred->expression().size() == 2)
 			{
 				std::string op = ::getFullText(pred->comparison_operator());
 				auto *lhs = pred->expression().front();
@@ -9212,9 +9211,39 @@ extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &
 }
 
 
+/* Slice the first method argument out of the already-rewritten expression. */
+static std::string
+slice_first_arg_from_rewritten_expr(antlr4::ParserRuleContext *first_expr_node,
+									const std::string &expr,
+									int ctx_start,
+									int offset1,
+									const std::vector<std::pair<int, int>> &arg_offset_list)
+{
+	int first_arg_start_abs = first_expr_node->start->getStartIndex();
+	int first_arg_stop_abs = first_expr_node->stop->getStopIndex();
+
+	int start_off = 0;
+	int end_off = 0;
+	for (auto &p : arg_offset_list)
+	{
+		if (p.first < first_arg_start_abs) start_off += p.second;
+		if (p.first < first_arg_stop_abs)  end_off   += p.second;
+	}
+
+	int start_in_expr = first_arg_start_abs - ctx_start + offset1 + start_off;
+	int end_in_expr   = first_arg_stop_abs  - ctx_start + offset1 + end_off;
+
+	if (start_in_expr >= 0
+		&& end_in_expr >= start_in_expr
+		&& (size_t)end_in_expr < expr.size())
+		return expr.substr(start_in_expr, end_in_expr - start_in_expr + 1);
+
+	return "";
+}
+
 /* Add a cheap bounding-box check (&&) before the spatial predicate so the GiST index can be used. */
 static std::string
-maybe_inject_spatial_bbox_filter(const std::string &spatial_func_name, const std::string &col_ref, const std::string &rewritten_call)
+maybe_inject_spatial_bbox_filter(const std::string &spatial_func_name, const std::string &col_ref, const std::string &first_arg, const std::string &rewritten_call)
 {
 	/* Only these methods benefit from && pre-filtering */
 	if (pg_strcasecmp(spatial_func_name.c_str(), "STIntersects") != 0 &&
@@ -9228,28 +9257,10 @@ maybe_inject_spatial_bbox_filter(const std::string &spatial_func_name, const std
 		return rewritten_call;
 	}
 
-	/*
-	 * Extract first_arg by string-slicing rewritten_call. This is safe because
-	 * the rewriter constructs rewritten_call as `func(arg, col_ref)` and always
-	 * appends `,col_ref)` last — so rfind always lands on the outer boundary,
-	 * even when col_ref appears as a substring inside arg (nested calls,
-	 * self-intersect, WKT literals containing the column name). find('(')
-	 * returns the function's open paren since col_ref is a column reference
-	 * (no parens) and is appended after the function call.
-	 */
-	std::string col_ref_suffix = "," + col_ref + ")";
-	size_t suffix_pos = rewritten_call.rfind(col_ref_suffix);
-	size_t open_paren = rewritten_call.find('(');
+	if (first_arg.empty())
+		return rewritten_call;
 
-	if (suffix_pos != std::string::npos && open_paren != std::string::npos && suffix_pos > open_paren + 1)
-	{
-		std::string first_arg =
-			rewritten_call.substr(open_paren + 1, suffix_pos - open_paren - 1);
-
-		return col_ref + " OPERATOR(sys.&&) " + first_arg + " AND " + rewritten_call;
-	}
-
-	return rewritten_call;
+	return col_ref + " OPERATOR(sys.&&) " + first_arg + " AND " + rewritten_call;
 }
 
 /*
@@ -9276,7 +9287,7 @@ is_single_local_id_token(const std::string &s)
 /*
  * Add a bounding-box check using ST_Expand so the GiST index can filter by distance.
  *
- * Known limitation (to be addressed in a follow-up PR): for sys.GEOGRAPHY columns,
+ * Known limitation (TODO: BABEL-6465 — to be addressed in a follow-up PR): for sys.GEOGRAPHY columns,
  * STDistance returns meters but sys.ST_Expand(geography, ...) is currently bound
  * to the cartesian LWGEOM_expand which treats the distance as degrees. The bbox
  * prefilter is always correct (no false negatives, since the original predicate
@@ -9303,14 +9314,16 @@ maybe_inject_spatial_distance_filter(const std::string &col_ref, const std::stri
 /*
  * Shared distance-prefilter dispatcher used by both rewrite_dot_func_ref_args_query_helper
  * and rewrite_function_call_dot_func_ref_args. Verifies the predicate is
- * STDistance(...) op threshold, extracts first_arg from the rewritten string,
- * and delegates to maybe_inject_spatial_distance_filter.
+ * STDistance(...) op threshold and delegates to maybe_inject_spatial_distance_filter.
  */
 template<class T>
 static std::string
-maybe_inject_spatial_distance_filter_for_ctx(T ctx, const std::string &spatial_func_name, const std::string &col_ref, const std::string &rewritten_call)
+maybe_inject_spatial_distance_filter_for_ctx(T ctx, const std::string &spatial_func_name, const std::string &col_ref, const std::string &first_arg, const std::string &rewritten_call)
 {
 	if (pg_strcasecmp(spatial_func_name.c_str(), "STDistance") != 0)
+		return rewritten_call;
+
+	if (first_arg.empty())
 		return rewritten_call;
 
 	std::string comp_operator;
@@ -9320,24 +9333,6 @@ maybe_inject_spatial_distance_filter_for_ctx(T ctx, const std::string &spatial_f
 	if (!extract_distance_predicate_info(ctx, comp_operator, comp_value, dist_on_lhs)
 		|| !dist_on_lhs)
 		return rewritten_call;
-
-	/*
-	 * Extract first_arg by string-slicing rewritten_call. Safe for the same
-	 * reason as in maybe_inject_spatial_bbox_filter: the rewriter always
-	 * appends `,col_ref)` last, so rfind picks the outer boundary even when
-	 * col_ref appears inside arg.
-	 */
-	std::string col_ref_suffix = "," + col_ref + ")";
-	size_t suffix_pos = rewritten_call.rfind(col_ref_suffix);
-	size_t open_paren = rewritten_call.find('(');
-
-	if (suffix_pos == std::string::npos
-		|| open_paren == std::string::npos
-		|| suffix_pos <= open_paren + 1)
-		return rewritten_call;
-
-	std::string first_arg =
-		rewritten_call.substr(open_paren + 1, suffix_pos - open_paren - 1);
 
 	return maybe_inject_spatial_distance_filter(col_ref, first_arg, comp_value, rewritten_call);
 }
@@ -9362,7 +9357,7 @@ is_spatial_predicate_eq_one(T ctx)
 		auto *pred = dynamic_cast<TSqlParser::PredicateContext *>(parent);
 		if (pred)
 		{
-			if (pred->comparison_operator() && pred->expression().size() >= 2)
+			if (pred->comparison_operator() && pred->expression().size() == 2)
 			{
 				std::string op = ::getFullText(pred->comparison_operator());
 				if (op != "=")
@@ -9514,6 +9509,8 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 				expr = expr.substr(0, local_index) + "\"" + entry.second + "\"" + expr.substr(local_index + entry.second.size());
 				offset2 += 2;
 				local_id_end_offset += 2;
+				/* Record local_id quoting delta so first_arg slicing below sees it. */
+				arg_offset_list.push_back(std::make_pair((int)entry.first, 2));
 			}
 		}
 	}
@@ -9538,11 +9535,15 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 		std::string spatial_func_name = ::getFullText(method->spatial_methods()->geospatial_func_arg());
 		std::string col_ref = expr.substr(0, func_call_len + offset1 + 1);
 
+		std::string first_arg = slice_first_arg_from_rewritten_expr(
+			method->spatial_methods()->expression_list()->expression().front(),
+			expr, ctx->start->getStartIndex(), offset1, arg_offset_list);
+
 		if (is_spatial_predicate_eq_one(ctx))
-			rewritten_exp = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, rewritten_exp);
+			rewritten_exp = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, first_arg, rewritten_exp);
 
 		rewritten_exp = maybe_inject_spatial_distance_filter_for_ctx(
-			ctx, spatial_func_name, col_ref, rewritten_exp);
+			ctx, spatial_func_name, col_ref, first_arg, rewritten_exp);
 	}
 
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
@@ -9779,6 +9780,8 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 				expr = expr.substr(0, local_index) + "\"" + entry.second + "\"" + expr.substr(local_index + entry.second.size());
 				offset2 += 2;
 				local_id_end_offset += 2;
+				/* Record local_id quoting delta so first_arg slicing below sees it. */
+				arg_offset_list.push_back(std::make_pair((int)entry.first, 2));
 			}
 		}
 	}
@@ -9807,11 +9810,15 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 		std::string spatial_func_name = ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg());
 		std::string col_ref = expr.substr(0, col_len + offset1 + 1);
 
+		std::string first_arg = slice_first_arg_from_rewritten_expr(
+			ctx->function_arg_list()->expression().front(),
+			expr, ctx->start->getStartIndex(), offset1, arg_offset_list);
+
 		if (is_spatial_predicate_eq_one(ctx))
-			rewritten_func = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, rewritten_func);
+			rewritten_func = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, first_arg, rewritten_func);
 
 		rewritten_func = maybe_inject_spatial_distance_filter_for_ctx(
-			ctx, spatial_func_name, col_ref, rewritten_func);
+			ctx, spatial_func_name, col_ref, first_arg, rewritten_func);
 	}
 
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
