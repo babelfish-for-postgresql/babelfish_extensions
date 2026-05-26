@@ -5118,8 +5118,8 @@ unreserved_keyword:
 			| TSQL_SAVE
 			| TSQL_SCHEMABINDING
 			| TSQL_SERVER
-			| TSQL_SPATIAL
 			| TSQL_SID
+			| TSQL_SPATIAL
 			| TSQL_SS
 			| TSQL_SUBSTRING
 			| TSQL_TABLOCK

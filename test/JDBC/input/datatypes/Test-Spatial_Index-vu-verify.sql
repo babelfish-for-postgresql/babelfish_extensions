@@ -446,7 +446,7 @@ GO
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 -- ============================================================
--- SECTION 12: DDL EDGE CASES 
+-- SECTION 12: DDL EDGE CASES
 -- ============================================================
 
 -- 12.1 DROP INDEX IF EXISTS on non-existent index (should succeed silently)
@@ -462,7 +462,7 @@ DROP INDEX IF EXISTS si_ifex ON si_ddl_tbl;
 GO
 
 -- ============================================================
--- SECTION 13: STIntersects WHITESPACE AND NOT 
+-- SECTION 13: STIntersects WHITESPACE AND NOT
 -- ============================================================
 SELECT set_config('enable_seqscan', 'off', false)
 SELECT set_config('enable_bitmapscan', 'off', false)
@@ -541,7 +541,7 @@ SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
 -- ============================================================
--- SECTION 15: STContains SYMMETRY 
+-- SECTION 15: STContains SYMMETRY
 -- ============================================================
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
@@ -590,7 +590,7 @@ SELECT CASE WHEN @yes + @no + @nul = @tot THEN 'PASS' ELSE 'FAIL' END AS t16_con
 GO
 
 -- ============================================================
--- SECTION 17: SYSTEM VIEWS STABLE ORDER 
+-- SECTION 17: SYSTEM VIEWS STABLE ORDER
 -- ============================================================
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
@@ -602,7 +602,7 @@ ORDER BY name;
 GO
 
 -- ============================================================
--- SECTION 18: FORCED INDEX USE 
+-- SECTION 18: FORCED INDEX USE
 -- ============================================================
 
 SELECT set_config('enable_seqscan', 'off', false)
@@ -624,7 +624,7 @@ GO
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 -- ============================================================
--- SECTION 19: CROSS-TYPE AND SRID EDGE CASES 
+-- SECTION 19: CROSS-TYPE AND SRID EDGE CASES
 -- ============================================================
 SELECT set_config('enable_seqscan', 'off', false)
 SELECT set_config('enable_bitmapscan', 'off', false)
@@ -647,7 +647,7 @@ SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
 -- ============================================================
--- SECTION 20: EMPTY GEOMETRY 
+-- SECTION 20: EMPTY GEOMETRY
 -- ============================================================
 
 -- 20.1 Insert and query empty point
@@ -1065,10 +1065,10 @@ GO
 
 
 -- ============================================================
--- SECTION 46: SELF-INTERSECTION (PR-claimed guard)
+-- SECTION 37: SELF-INTERSECTION (PR-claimed guard)
 -- ============================================================
 
--- 46.1 col.STIntersects(col) = 1 — degenerate self-intersection.
+-- 37.1 col.STIntersects(col) = 1 — degenerate self-intersection.
 -- Equivalence check: the dot-method form must produce the same count as the
 -- explicit two-arg form, regardless of which plan path is taken.
 DECLARE @dot INT, @explicit INT;
@@ -1076,14 +1076,14 @@ SELECT @dot = COUNT(*) FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(si_geom_tbl.geom) = 1;
 SELECT @explicit = COUNT(*) FROM si_geom_tbl a INNER JOIN si_geom_tbl b ON a.id = b.id
 WHERE a.geom.STIntersects(b.geom) = 1;
-SELECT CASE WHEN @dot = @explicit THEN 'PASS' ELSE 'FAIL' END AS t46_self_intersect;
+SELECT CASE WHEN @dot = @explicit THEN 'PASS' ELSE 'FAIL' END AS t37_self_intersect;
 GO
 
 -- ============================================================
--- SECTION 47: COMPOUND @VARIABLE THRESHOLD IN STDistance
+-- SECTION 38: COMPOUND @VARIABLE THRESHOLD IN STDistance
 -- ============================================================
 
--- 47.1 STDistance(...) < @r + 10 — compound expression must not break
+-- 38.1 STDistance(...) < @r + 10 — compound expression must not break
 -- the rewriter (previously the @-prefix quoting would emit "@r + 10" as
 -- a malformed identifier and fail at execution time).
 DECLARE @r FLOAT = 100;
@@ -1092,50 +1092,50 @@ SELECT @cnt_compound = COUNT(*) FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < @r + 10;
 SELECT @cnt_literal = COUNT(*) FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < 110;
-SELECT CASE WHEN @cnt_compound = @cnt_literal THEN 'PASS' ELSE 'FAIL' END AS t47_compound_threshold;
+SELECT CASE WHEN @cnt_compound = @cnt_literal THEN 'PASS' ELSE 'FAIL' END AS t38_compound_threshold;
 GO
 
 
 -- ============================================================
--- SECTION 45: sys.spatial_indexes multi-database isolation
+-- SECTION 39: sys.spatial_indexes multi-database isolation
 -- ============================================================
--- 45.1 From si_multidb_a_ : only sidx_multi_a_ is visible
+-- 39.1 From si_multidb_a_ : only sidx_multi_a_ is visible
 USE si_multidb_a_;
 GO
 
-SELECT name AS t45_idx_in_a
+SELECT name AS t39_idx_in_a
 FROM sys.spatial_indexes
 WHERE name LIKE 'sidx_multi%'
 ORDER BY name;
 GO
 
--- 45.2 From si_multidb_a_ : sidx_multi_b_ must NOT be visible
-SELECT COUNT(*) AS t45_b_leak_from_a
+-- 39.2 From si_multidb_a_ : sidx_multi_b_ must NOT be visible
+SELECT COUNT(*) AS t39_b_leak_from_a
 FROM sys.spatial_indexes
 WHERE name = 'sidx_multi_b_';
 GO
 
--- 45.3 From si_multidb_b_ : only sidx_multi_b_ is visible
+-- 39.3 From si_multidb_b_ : only sidx_multi_b_ is visible
 USE si_multidb_b_;
 GO
 
-SELECT name AS t45_idx_in_b
+SELECT name AS t39_idx_in_b
 FROM sys.spatial_indexes
 WHERE name LIKE 'sidx_multi%'
 ORDER BY name;
 GO
 
--- 45.4 From si_multidb_b_ : sidx_multi_a_ must NOT be visible
-SELECT COUNT(*) AS t45_a_leak_from_b
+-- 39.4 From si_multidb_b_ : sidx_multi_a_ must NOT be visible
+SELECT COUNT(*) AS t39_a_leak_from_b
 FROM sys.spatial_indexes
 WHERE name = 'sidx_multi_a_';
 GO
 
--- 45.5 From master : neither cross-db spatial index is visible here
+-- 39.5 From master : neither cross-db spatial index is visible here
 USE master;
 GO
 
-SELECT COUNT(*) AS t45_master_leak
+SELECT COUNT(*) AS t39_master_leak
 FROM sys.spatial_indexes
 WHERE name IN ('sidx_multi_a_', 'sidx_multi_b_');
 GO

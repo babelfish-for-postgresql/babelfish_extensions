@@ -9079,6 +9079,57 @@ extract_xml_value_typearg(TSqlParser::ExpressionContext *expression)
 	return typename_arg;
 }
 
+/*
+ * True if s is a plain numeric literal (e.g. 100, 100.5, .5, 1e3, 1.5E-2).
+ * Used to distinguish a decimal threshold like 100.5 from a property access
+ * like @var.STX, both of which contain a '.'.
+ */
+static bool
+is_numeric_literal(const std::string &s)
+{
+	if (s.empty())
+		return false;
+
+	size_t i = 0;
+	if (s[i] == '+' || s[i] == '-')
+		++i;
+
+	bool seen_digit = false;
+	bool seen_dot = false;
+	for (; i < s.size(); ++i)
+	{
+		char c = s[i];
+		if (c >= '0' && c <= '9')
+		{
+			seen_digit = true;
+		}
+		else if (c == '.' && !seen_dot)
+		{
+			seen_dot = true;
+		}
+		else if ((c == 'e' || c == 'E') && seen_digit)
+		{
+			++i;
+			if (i < s.size() && (s[i] == '+' || s[i] == '-'))
+				++i;
+			bool seen_exp_digit = false;
+			for (; i < s.size(); ++i)
+			{
+				if (s[i] >= '0' && s[i] <= '9')
+					seen_exp_digit = true;
+				else
+					return false;
+			}
+			return seen_exp_digit;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	return seen_digit;
+}
+
 /* Find the comparison operator and threshold value around an STDistance call (e.g. `< 100`). */
 template<class T>
 static bool
@@ -9108,8 +9159,22 @@ extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &
 				{
 					comp_operator = op;
 					comp_value = ::getFullText(rhs);
-					/* Reject property access like @var.STX as distance threshold */
-					if (comp_value.find('.') != std::string::npos)
+					/*
+					 * Reject property access like @var.STX, but allow decimal
+					 * literals like 100.5.
+					 *
+					 * Known limitation (to be addressed in a follow-up PR):
+					 * arithmetic thresholds like `(2 * @f)` and bare-name
+					 * function calls like `GetRadius()` pass this check
+					 * (they contain no `.`) and get textually duplicated
+					 * into both the ST_Expand prefilter and the STDistance
+					 * recheck. For VOLATILE T-SQL UDFs, PostgreSQL cannot
+					 * CSE the call, so the UDF executes twice per row.
+					 * Tightening the check to numeric-literal-or-@var only
+					 * would close this hole but loses the prefilter for safe
+					 * arithmetic expressions like `(2 * @f)`.
+					 */
+					if (comp_value.find('.') != std::string::npos && !is_numeric_literal(comp_value))
 						return false;
 					/* Reject if STDistance is wrapped in CAST() - the LHS is not a bare STDistance call */
 					std::string lhs_text = ::getFullText(lhs);
@@ -9123,8 +9188,8 @@ extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &
 				{
 					comp_operator = (op == ">") ? "<" : "<=";
 					comp_value = ::getFullText(lhs);
-					/* Reject property access like @var.STX as distance threshold */
-					if (comp_value.find('.') != std::string::npos)
+					/* Same property-access guard as the dist-on-lhs branch; same VOLATILE-UDF limitation applies. */
+					if (comp_value.find('.') != std::string::npos && !is_numeric_literal(comp_value))
 						return false;
 					/* Reject if STDistance is wrapped in CAST() - the RHS is not a bare STDistance call */
 					std::string rhs_text = ::getFullText(rhs);
@@ -9163,6 +9228,15 @@ maybe_inject_spatial_bbox_filter(const std::string &spatial_func_name, const std
 		return rewritten_call;
 	}
 
+	/*
+	 * Extract first_arg by string-slicing rewritten_call. This is safe because
+	 * the rewriter constructs rewritten_call as `func(arg, col_ref)` and always
+	 * appends `,col_ref)` last — so rfind always lands on the outer boundary,
+	 * even when col_ref appears as a substring inside arg (nested calls,
+	 * self-intersect, WKT literals containing the column name). find('(')
+	 * returns the function's open paren since col_ref is a column reference
+	 * (no parens) and is appended after the function call.
+	 */
 	std::string col_ref_suffix = "," + col_ref + ")";
 	size_t suffix_pos = rewritten_call.rfind(col_ref_suffix);
 	size_t open_paren = rewritten_call.find('(');
@@ -9199,7 +9273,16 @@ is_single_local_id_token(const std::string &s)
 	return true;
 }
 
-/* Add a bounding-box check using ST_Expand so the GiST index can filter by distance. */
+/*
+ * Add a bounding-box check using ST_Expand so the GiST index can filter by distance.
+ *
+ * Known limitation (to be addressed in a follow-up PR): for sys.GEOGRAPHY columns,
+ * STDistance returns meters but sys.ST_Expand(geography, ...) is currently bound
+ * to the cartesian LWGEOM_expand which treats the distance as degrees. For
+ * sub-meter thresholds this can shrink the bbox below the true metric radius
+ * and exclude matching rows. Geography distance prefilter should either skip
+ * injection or rebind to a geodetic expander.
+ */
 static std::string
 maybe_inject_spatial_distance_filter(const std::string &col_ref, const std::string &first_arg, const std::string &distance_value, const std::string &rewritten_call)
 {
@@ -9236,6 +9319,12 @@ maybe_inject_spatial_distance_filter_for_ctx(T ctx, const std::string &spatial_f
 		|| !dist_on_lhs)
 		return rewritten_call;
 
+	/*
+	 * Extract first_arg by string-slicing rewritten_call. Safe for the same
+	 * reason as in maybe_inject_spatial_bbox_filter: the rewriter always
+	 * appends `,col_ref)` last, so rfind picks the outer boundary even when
+	 * col_ref appears inside arg.
+	 */
 	std::string col_ref_suffix = "," + col_ref + ")";
 	size_t suffix_pos = rewritten_call.rfind(col_ref_suffix);
 	size_t open_paren = rewritten_call.find('(');
@@ -9437,7 +9526,6 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 
 	/* Inject spatial pre-filters (bbox / distance) for predicates like
 	 * col.STIntersects(...) = 1 or col.STDistance(...) < threshold.
-	 * The shared guard avoids repeated tree walks via is_in_spatial_predicate_context.
 	 */
 	if (method->spatial_methods()
 		&& method->spatial_methods()->geospatial_func_arg()
@@ -9707,7 +9795,6 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 
 	/* Inject spatial pre-filters (bbox / distance) for predicates like
 	 * col.STIntersects(...) = 1 or col.STDistance(...) < threshold.
-	 * The shared guard avoids repeated tree walks via is_in_spatial_predicate_context.
 	 */
 	if (ctx->spatial_proc_name_server_database_schema()
 		&& ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()
