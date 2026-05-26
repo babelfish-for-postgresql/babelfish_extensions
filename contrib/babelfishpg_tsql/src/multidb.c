@@ -1,5 +1,6 @@
 #include "postgres.h"
 
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/parsenodes.h"
 #include "nodes/primnodes.h"
@@ -1194,6 +1195,17 @@ get_physical_schema_name_by_mode(char *db_name, const char *schema_name, Migrati
 	len = strlen(schema_name);
 	if (len == 0)
 		return NULL;
+
+	/* Validate original schema name against T-SQL 128-char limit */
+	if (pg_mbstrlen_with_len(schema_name, len) > 128)
+	{
+		int		cliplen = pg_mbcliplen(schema_name, len, 128);
+
+		ereport(ERROR,
+			(errcode(ERRCODE_NAME_TOO_LONG),
+			errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.",
+				cliplen, schema_name)));
+	}
 
 	/* always return a new copy */
 	len = len > MAX_BBF_NAMEDATALEND ? len : MAX_BBF_NAMEDATALEND;

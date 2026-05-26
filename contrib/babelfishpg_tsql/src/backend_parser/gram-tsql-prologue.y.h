@@ -6,6 +6,7 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
+#include "mb/pg_wchar.h"
 #include "parser/parse_type.h"
 #include "parser/scansup.h"
 #include "utils/builtins.h"

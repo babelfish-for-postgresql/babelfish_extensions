@@ -60,6 +60,17 @@ construct_unique_index_name(char *index_name, char *relation_name)
 	index_len = strlen(index_name);
 	relation_len = strlen(relation_name);
 
+	/* Validate original index name against T-SQL 128-char limit */
+	if (pg_mbstrlen_with_len(index_name, index_len) > 128)
+	{
+		int			cliplen = pg_mbcliplen(index_name, index_len, 128);
+
+		ereport(ERROR,
+			(errcode(ERRCODE_NAME_TOO_LONG),
+			errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.",
+				cliplen, index_name)));
+	}
+
 	success = pg_md5_hash(index_name, index_len, md5, &errstr);
 	if (unlikely(!success))
 	{							/* OOM */

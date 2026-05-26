@@ -4388,11 +4388,13 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 	 */
 
 	/* check if given name is exceeding the allowed limit */
-	if (strlen(partition_function_name) > 128)
+	if (pg_mbstrlen(partition_function_name) > 128)
 	{
+		int		cliplen = pg_mbcliplen(partition_function_name, strlen(partition_function_name), 128);
+
 		ereport(ERROR, 
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("The identifier that starts with '%.128s' is too long. Maximum length is 128.", partition_function_name)));
+				errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.", cliplen, partition_function_name)));
 	}
 
 	/*
@@ -4645,12 +4647,14 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 	 */
 
 	/* check if given name is exceeding the allowed limit */
-	if (strlen(partition_scheme_name) > 128)
+	if (pg_mbstrlen(partition_scheme_name) > 128)
 	{
+		int		cliplen = pg_mbcliplen(partition_scheme_name, strlen(partition_scheme_name), 128);
+
 		ereport(ERROR, 
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("The identifier that starts with '%.128s' is too long. Maximum length is 128.",
-						partition_scheme_name)));
+				errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.",
+						cliplen, partition_scheme_name)));
 	}
 
 	/* raise error if provided partition function doesn't exists in the current database */
