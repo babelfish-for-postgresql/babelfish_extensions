@@ -1,0 +1,2214 @@
+
+-- ============================================
+-- SECTION 1: Basic Queries
+-- ============================================
+-- 1.1 Single table — attribute mode (default)
+SELECT c.CustomerID, c.CompanyName, c.Country
+FROM forxmlauto_t_customers c
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc" Country="USA"/>
+~~END~~
+
+
+
+-- 1.2 Single table — no alias (uses table name)
+SELECT CustomerID, CompanyName, Country
+FROM forxmlauto_t_customers
+WHERE CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI" CompanyName="Alfreds Inc" Country="USA"/>
+~~END~~
+
+
+
+-- 1.3 Two tables — attribute mode
+SELECT c.CustomerID, c.CompanyName, o.OrderID, o.TotalAmount
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+ORDER BY c.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
+
+
+
+-- 1.4 Three tables — attribute mode
+SELECT c.CustomerID, o.OrderID, od.ProductID, od.Quantity
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+JOIN forxmlauto_t_order_details od ON o.OrderID = od.OrderID
+WHERE c.CustomerID = 'ALFKI'
+ORDER BY c.CustomerID, o.OrderID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI"><o OrderID="10248"><od ProductID="1" Quantity="12"/><od ProductID="2" Quantity="10"/></o></c>
+~~END~~
+
+
+
+-- 1.5 Two tables — interleaved columns
+SELECT c.CustomerID, o.OrderID, c.CompanyName, o.TotalAmount
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+ORDER BY c.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
+
+
+
+-- 1.6 Two tables — child columns first in SELECT (reversed nesting)
+SELECT o.OrderID, o.TotalAmount, c.CustomerID, c.CompanyName
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+ORDER BY c.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<o OrderID="10248" TotalAmount="440.0000"><c CustomerID="ALFKI" CompanyName="Alfreds Inc"/></o>
+~~END~~
+
+
+
+-- 1.7 Implicit join (comma syntax)
+SELECT c.CustomerID, c.CompanyName, o.OrderID, o.TotalAmount
+FROM forxmlauto_t_customers c, forxmlauto_t_orders o
+WHERE c.CustomerID = o.CustomerID
+AND c.CustomerID = 'ALFKI'
+ORDER BY c.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
+
+
+
+-- 1.8 Single row result
+SELECT c.CustomerID, c.CompanyName
+FROM forxmlauto_t_customers c
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
+
+
+
+-- 1.9 Empty result set
+SELECT c.CustomerID, c.CompanyName
+FROM forxmlauto_t_customers c
+WHERE c.CustomerID = 'ZZZZZ'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+~~END~~
+
+
+
+-- 1.10 TOP clause
+SELECT TOP 2 c.CustomerID, c.CompanyName
+FROM forxmlauto_t_customers c
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"/><c CustomerID="BERGS" CompanyName="Berglunds snabbköp"/>
+~~END~~
+
+
+
+-- 1.11 DISTINCT
+SELECT DISTINCT c.Country
+FROM forxmlauto_t_customers c
+ORDER BY c.Country
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c Country="Sweden"/><c Country="USA"/>
+~~END~~
+
+
+
+-- 1.12 WHERE on child table
+SELECT c.CustomerID, c.CompanyName, o.OrderID
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE o.TotalAmount > 1000
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="BERGS" CompanyName="Berglunds snabbköp"><o OrderID="10249"/></c><c CustomerID="CONSH" CompanyName="Consolidated Holdings"><o OrderID="10250"/></c>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 2: Directives
+-- ============================================
+-- 2.1 ELEMENTS mode — single table
+SELECT c.CustomerID, c.CompanyName
+FROM forxmlauto_t_customers c
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO, ELEMENTS;
+GO
+~~START~~
+ntext
+<c><CustomerID>ALFKI</CustomerID><CompanyName>Alfreds Inc</CompanyName></c>
+~~END~~
+
+
+
+-- 2.2 ELEMENTS mode — two tables
+SELECT c.CustomerID, c.CompanyName, o.OrderID, o.TotalAmount
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+ORDER BY c.CustomerID
+FOR XML AUTO, ELEMENTS;
+GO
+~~START~~
+ntext
+<c><CustomerID>ALFKI</CustomerID><CompanyName>Alfreds Inc</CompanyName><o><OrderID>10248</OrderID><TotalAmount>440.0000</TotalAmount></o></c>
+~~END~~
+
+
+
+-- 2.3 ELEMENTS mode — three tables
+SELECT c.CustomerID, o.OrderID, od.ProductID, od.Quantity
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+JOIN forxmlauto_t_order_details od ON o.OrderID = od.OrderID
+WHERE c.CustomerID = 'ALFKI'
+ORDER BY c.CustomerID, o.OrderID
+FOR XML AUTO, ELEMENTS;
+GO
+~~START~~
+ntext
+<c><CustomerID>ALFKI</CustomerID><o><OrderID>10248</OrderID><od><ProductID>1</ProductID><Quantity>12</Quantity></od><od><ProductID>2</ProductID><Quantity>10</Quantity></od></o></c>
+~~END~~
+
+
+
+-- 2.4 ROOT — with custom name
+SELECT c.CustomerID, c.CompanyName, o.OrderID
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+ORDER BY c.CustomerID
+FOR XML AUTO, ROOT('CustomerOrders');
+GO
+~~START~~
+ntext
+<CustomerOrders><c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></c><c CustomerID="BERGS" CompanyName="Berglunds snabbköp"><o OrderID="10249"/></c><c CustomerID="CONSH" CompanyName="Consolidated Holdings"><o OrderID="10250"/></c></CustomerOrders>
+~~END~~
+
+
+
+-- 2.5 ROOT — without name (defaults to 'root')
+SELECT c.CustomerID, c.CompanyName
+FROM forxmlauto_t_customers c
+FOR XML AUTO, ROOT;
+GO
+~~START~~
+ntext
+<root><c CustomerID="ALFKI" CompanyName="Alfreds Inc"/><c CustomerID="BERGS" CompanyName="Berglunds snabbköp"/><c CustomerID="CONSH" CompanyName="Consolidated Holdings"/></root>
+~~END~~
+
+
+
+-- 2.6 ROOT + ELEMENTS
+SELECT c.CustomerID, c.CompanyName, o.OrderID, o.TotalAmount
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+ORDER BY c.CustomerID
+FOR XML AUTO, ROOT('Data'), ELEMENTS;
+GO
+~~START~~
+ntext
+<Data><c><CustomerID>ALFKI</CustomerID><CompanyName>Alfreds Inc</CompanyName><o><OrderID>10248</OrderID><TotalAmount>440.0000</TotalAmount></o></c></Data>
+~~END~~
+
+
+
+-- 2.7 ELEMENTS XSINIL — without ROOT
+SELECT c.CustomerID, c.Region, c.Phone
+FROM forxmlauto_t_customers c
+FOR XML AUTO, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>ALFKI</CustomerID><Region>WA</Region><Phone>030-0074321</Phone></c><c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>BERGS</CustomerID><Region xsi:nil="true"/><Phone>0921-12 34 65</Phone></c><c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>CONSH</CustomerID><Region>LA</Region><Phone>(171) 555-2282</Phone></c>
+~~END~~
+
+
+
+-- 2.8 ELEMENTS XSINIL — with ROOT
+SELECT c.CustomerID, c.Region, c.Phone
+FROM forxmlauto_t_customers c
+FOR XML AUTO, ROOT('Data'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><c><CustomerID>ALFKI</CustomerID><Region>WA</Region><Phone>030-0074321</Phone></c><c><CustomerID>BERGS</CustomerID><Region xsi:nil="true"/><Phone>0921-12 34 65</Phone></c><c><CustomerID>CONSH</CustomerID><Region>LA</Region><Phone>(171) 555-2282</Phone></c></Data>
+~~END~~
+
+
+
+-- 2.9 ELEMENTS XSINIL — all non-null values
+SELECT c.CustomerID, c.CompanyName
+FROM forxmlauto_t_customers c
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>ALFKI</CustomerID><CompanyName>Alfreds Inc</CompanyName></c>
+~~END~~
+
+
+
+-- 2.10 ELEMENTS XSINIL — two tables with NULLs at child level
+SELECT c.CustomerID, o.OrderID, o.TotalAmount
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>ALFKI</CustomerID><o><OrderID>10248</OrderID><TotalAmount>440.0000</TotalAmount></o></c>
+~~END~~
+
+
+
+-- 2.11 ELEMENTS ABSENT (explicit, same as default)
+SELECT c.CustomerID, c.Region, c.Phone
+FROM forxmlauto_t_customers c
+FOR XML AUTO, ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<c><CustomerID>ALFKI</CustomerID><Region>WA</Region><Phone>030-0074321</Phone></c><c><CustomerID>BERGS</CustomerID><Phone>0921-12 34 65</Phone></c><c><CustomerID>CONSH</CustomerID><Region>LA</Region><Phone>(171) 555-2282</Phone></c>
+~~END~~
+
+
+
+-- 2.12 ROOT + ELEMENTS XSINIL (all directives combined)
+SELECT c.CustomerID, c.Region, o.OrderID
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+ORDER BY c.CustomerID
+FOR XML AUTO, ROOT('AllData'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<AllData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><c><CustomerID>ALFKI</CustomerID><Region>WA</Region><o><OrderID>10248</OrderID></o></c><c><CustomerID>BERGS</CustomerID><Region xsi:nil="true"/><o><OrderID>10249</OrderID></o></c><c><CustomerID>CONSH</CustomerID><Region>LA</Region><o><OrderID>10250</OrderID></o></c></AllData>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 3: NULL Handling
+-- ============================================
+-- 3.1 NULL in attribute mode — omitted by default
+SELECT c.CustomerID, c.Region, c.Phone
+FROM forxmlauto_t_customers c
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" Region="WA" Phone="030-0074321"/><c CustomerID="BERGS" Phone="0921-12 34 65"/><c CustomerID="CONSH" Region="LA" Phone="(171) 555-2282"/>
+~~END~~
+
+
+
+-- 3.2 NULL at child level — attribute mode
+SELECT c.CustomerID, o.OrderID, o.TotalAmount
+FROM forxmlauto_t_customers c
+LEFT JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+ORDER BY c.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI"><o OrderID="10248" TotalAmount="440.0000"/></c><c CustomerID="BERGS"><o OrderID="10249" TotalAmount="1863.4000"/></c><c CustomerID="CONSH"><o OrderID="10250" TotalAmount="1552.6000"/></c>
+~~END~~
+
+
+
+-- 3.3 All columns NULL at a level
+SELECT c.CustomerID, c.Region
+FROM forxmlauto_t_customers c
+WHERE c.CustomerID = 'BERGS'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="BERGS"/>
+~~END~~
+
+
+
+-- 3.4 ELEMENTS mode — NULL omitted
+SELECT c.CustomerID, c.Region, c.Phone
+FROM forxmlauto_t_customers c
+FOR XML AUTO, ELEMENTS;
+GO
+~~START~~
+ntext
+<c><CustomerID>ALFKI</CustomerID><Region>WA</Region><Phone>030-0074321</Phone></c><c><CustomerID>BERGS</CustomerID><Phone>0921-12 34 65</Phone></c><c><CustomerID>CONSH</CustomerID><Region>LA</Region><Phone>(171) 555-2282</Phone></c>
+~~END~~
+
+
+
+-- 3.5 ELEMENTS XSINIL — NULL included
+SELECT c.CustomerID, c.Region, c.Phone
+FROM forxmlauto_t_customers c
+FOR XML AUTO, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>ALFKI</CustomerID><Region>WA</Region><Phone>030-0074321</Phone></c><c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>BERGS</CustomerID><Region xsi:nil="true"/><Phone>0921-12 34 65</Phone></c><c xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerID>CONSH</CustomerID><Region>LA</Region><Phone>(171) 555-2282</Phone></c>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 4: JOIN Types
+-- ============================================
+-- 4.1 INNER JOIN
+SELECT p.ProductName, c.CategoryName, p.UnitPrice
+FROM forxmlauto_t_products p
+INNER JOIN forxmlauto_t_categories c ON p.CategoryID = c.CategoryID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<p ProductName="Chai" UnitPrice="18.0000"><c CategoryName="Tea"/></p><p ProductName="Coffee Beans" UnitPrice="19.0000"><c CategoryName="Coffee"/></p><p ProductName="Laptop" UnitPrice="1200.0000"><c CategoryName="Computers"/></p><p ProductName="Green Tea" UnitPrice="10.0000"><c CategoryName="Tea"/></p>
+~~END~~
+
+
+
+-- 4.2 LEFT JOIN
+SELECT c.CompanyName, c.ContactName, o.OrderID, o.TotalAmount
+FROM forxmlauto_t_customers c
+LEFT JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CompanyName="Alfreds Inc" ContactName="Maria Anders"><o OrderID="10248" TotalAmount="440.0000"/></c><c CompanyName="Berglunds snabbköp" ContactName="Christina Berglund"><o OrderID="10249" TotalAmount="1863.4000"/></c><c CompanyName="Consolidated Holdings" ContactName="Elizabeth Brown"><o OrderID="10250" TotalAmount="1552.6000"/></c>
+~~END~~
+
+
+
+-- 4.3 RIGHT JOIN
+SELECT c.CompanyName, o.OrderID, o.Status
+FROM forxmlauto_t_customers c
+RIGHT JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CompanyName="Alfreds Inc"><o OrderID="10248" Status="Shipped"/></c><c CompanyName="Berglunds snabbköp"><o OrderID="10249" Status="Pending"/></c><c CompanyName="Consolidated Holdings"><o OrderID="10250" Status="Delivered"/></c>
+~~END~~
+
+
+
+-- 4.4 FULL OUTER JOIN
+SELECT c.CategoryName, p.ProductName, p.UnitPrice
+FROM forxmlauto_t_categories c
+FULL OUTER JOIN forxmlauto_t_products p ON c.CategoryID = p.CategoryID
+ORDER BY c.CategoryName, p.ProductName
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CategoryName="Beverages"><p/></c><c CategoryName="Coffee"><p ProductName="Coffee Beans" UnitPrice="19.0000"/></c><c CategoryName="Computers"><p ProductName="Laptop" UnitPrice="1200.0000"/></c><c CategoryName="Electronics"><p/></c><c CategoryName="Tea"><p ProductName="Chai" UnitPrice="18.0000"/><p ProductName="Green Tea" UnitPrice="10.0000"/></c>
+~~END~~
+
+
+
+-- 4.5 CROSS JOIN
+SELECT c.CompanyName, cat.CategoryName
+FROM forxmlauto_t_customers c
+CROSS JOIN forxmlauto_t_categories cat
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CompanyName="Alfreds Inc"><cat CategoryName="Beverages"/><cat CategoryName="Coffee"/><cat CategoryName="Tea"/><cat CategoryName="Electronics"/><cat CategoryName="Computers"/></c>
+~~END~~
+
+
+
+-- 4.6 Self-join
+SELECT c1.CustomerID AS ParentID, c2.CustomerID AS ChildID
+FROM forxmlauto_t_customers c1
+JOIN forxmlauto_t_customers c2 ON c1.Country = c2.Country AND c1.CustomerID < c2.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c1 ParentID="ALFKI"><c2 ChildID="CONSH"/></c1>
+~~END~~
+
+
+
+-- 4.7 LEFT JOIN — all-NULL child level
+SELECT c.CustomerID, c.CompanyName, o.OrderID
+FROM forxmlauto_t_customers c
+LEFT JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID AND o.TotalAmount > 99999
+ORDER BY c.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o/></c><c CustomerID="BERGS" CompanyName="Berglunds snabbköp"><o/></c><c CustomerID="CONSH" CompanyName="Consolidated Holdings"><o/></c>
+~~END~~
+
+
+
+-- 4.8 LEFT JOIN with NULL intermediate levels
+SELECT c.CustomerID, o.OrderID, p.ProductName, od.OrderDetailID
+FROM forxmlauto_t_customers c
+LEFT JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+LEFT JOIN forxmlauto_t_order_details od ON o.OrderID = od.OrderID
+LEFT JOIN forxmlauto_t_products p ON od.ProductID = p.ProductID AND p.UnitPrice > 100
+WHERE c.CustomerID = 'ALFKI' AND od.OrderDetailID = 1
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI"><o OrderID="10248"><p><od OrderDetailID="1"/></p></o></c>
+~~END~~
+
+
+
+-- 4.9 CROSS APPLY (lateral join)
+SELECT c.CustomerID, c.CompanyName, oa.OrderID, oa.TotalAmount
+FROM forxmlauto_t_customers c
+CROSS APPLY (
+    SELECT TOP 1 o.OrderID, o.TotalAmount
+    FROM forxmlauto_t_orders o
+    WHERE o.CustomerID = c.CustomerID
+    ORDER BY o.OrderID
+) oa
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><oa OrderID="10248" TotalAmount="440.0000"/></c><c CustomerID="BERGS" CompanyName="Berglunds snabbköp"><oa OrderID="10249" TotalAmount="1863.4000"/></c><c CustomerID="CONSH" CompanyName="Consolidated Holdings"><oa OrderID="10250" TotalAmount="1552.6000"/></c>
+~~END~~
+
+
+
+-- 4.10 OUTER APPLY (lateral left join, no matching rows)
+SELECT c.CustomerID, c.CompanyName, oa.OrderID, oa.TotalAmount
+FROM forxmlauto_t_customers c
+OUTER APPLY (
+    SELECT TOP 1 o.OrderID, o.TotalAmount
+    FROM forxmlauto_t_orders o
+    WHERE o.CustomerID = c.CustomerID AND o.TotalAmount > 99999
+    ORDER BY o.OrderID
+) oa
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><oa/></c><c CustomerID="BERGS" CompanyName="Berglunds snabbköp"><oa/></c><c CustomerID="CONSH" CompanyName="Consolidated Holdings"><oa/></c>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 5: Ordering and Duplicate Parents
+-- ============================================
+-- 5.1 Ordered — parents appear once
+SELECT c.CustomerID, o.OrderID
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+ORDER BY c.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI"><o OrderID="10248"/></c><c CustomerID="BERGS"><o OrderID="10249"/></c><c CustomerID="CONSH"><o OrderID="10250"/></c>
+~~END~~
+
+
+
+-- 5.2 Unordered — parents may repeat
+SELECT c.CategoryName, p.ProductName
+FROM forxmlauto_t_categories c
+JOIN forxmlauto_t_products p ON c.CategoryID = p.CategoryID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CategoryName="Tea"><p ProductName="Chai"/></c><c CategoryName="Coffee"><p ProductName="Coffee Beans"/></c><c CategoryName="Computers"><p ProductName="Laptop"/></c><c CategoryName="Tea"><p ProductName="Green Tea"/></c>
+~~END~~
+
+
+
+-- 5.3 Reverse order
+SELECT c.CustomerID, o.OrderID
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+ORDER BY c.CustomerID DESC
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="CONSH"><o OrderID="10250"/></c><c CustomerID="BERGS"><o OrderID="10249"/></c><c CustomerID="ALFKI"><o OrderID="10248"/></c>
+~~END~~
+
+
+
+-- 5.4 ORDER BY on child column
+SELECT c.CustomerID, c.CompanyName, o.OrderID
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+ORDER BY o.OrderID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></c><c CustomerID="BERGS" CompanyName="Berglunds snabbköp"><o OrderID="10249"/></c><c CustomerID="CONSH" CompanyName="Consolidated Holdings"><o OrderID="10250"/></c>
+~~END~~
+
+
+
+-- 5.5 Case-insensitive collation on parent column
+-- CI-equal values (ABC and abc) must merge into one parent element
+-- to match T-SQL grouping behavior.
+SELECT p.pid, c.cid
+FROM forxmlauto_t_ci_parent p, forxmlauto_t_ci_child c
+ORDER BY p.pid, c.seq
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<p pid="ABC"><c cid="10"/><c cid="10"/><c cid="20"/><c cid="20"/></p>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 6: CTEs
+-- ============================================
+-- 6.1 Single CTE — base table reference
+;WITH usa_customers AS (
+    SELECT CustomerID, CompanyName, Country
+    FROM forxmlauto_t_customers
+    WHERE Country = 'USA'
+)
+SELECT c.CustomerID, c.CompanyName, o.OrderID
+FROM usa_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+ORDER BY c.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></forxmlauto_t_customers><forxmlauto_t_customers CustomerID="CONSH" CompanyName="Consolidated Holdings"><o OrderID="10250"/></forxmlauto_t_customers>
+~~END~~
+
+
+
+-- 6.2 CTE with alias
+;WITH CustomerCTE AS (
+    SELECT CustomerID, CompanyName FROM forxmlauto_t_customers
+)
+SELECT c.CustomerID, c.CompanyName
+FROM CustomerCTE c
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI" CompanyName="Alfreds Inc"/><forxmlauto_t_customers CustomerID="BERGS" CompanyName="Berglunds snabbköp"/><forxmlauto_t_customers CustomerID="CONSH" CompanyName="Consolidated Holdings"/>
+~~END~~
+
+
+
+-- 6.3 CTE without alias (uses CTE name)
+;WITH CustomerCTE AS (
+    SELECT CustomerID, CompanyName FROM forxmlauto_t_customers
+)
+SELECT CustomerCTE.CustomerID, CustomerCTE.CompanyName
+FROM CustomerCTE
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<customercte CustomerID="ALFKI" CompanyName="Alfreds Inc"/><customercte CustomerID="BERGS" CompanyName="Berglunds snabbköp"/><customercte CustomerID="CONSH" CompanyName="Consolidated Holdings"/>
+~~END~~
+
+
+
+-- 6.4 Multiple CTEs
+;WITH cte1 AS (
+    SELECT CustomerID, CompanyName FROM forxmlauto_t_customers
+),
+cte2 AS (
+    SELECT CustomerID, OrderID FROM forxmlauto_t_orders
+)
+SELECT C.CustomerID, O.OrderID
+FROM cte1 C
+JOIN cte2 O ON C.CustomerID = O.CustomerID
+WHERE C.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI"><forxmlauto_t_orders OrderID="10248"/></forxmlauto_t_customers>
+~~END~~
+
+
+
+-- 6.5 CTE with subquery inside
+;WITH cte AS (
+    SELECT CustomerID, CompanyName
+    FROM (
+        SELECT CustomerID, CompanyName, Country
+        FROM forxmlauto_t_customers
+        WHERE Country = 'USA'
+    ) AS usa_customers
+)
+SELECT C.CustomerID, C.CompanyName, O.OrderID
+FROM cte C
+JOIN forxmlauto_t_orders O ON C.CustomerID = O.CustomerID
+WHERE C.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></forxmlauto_t_customers>
+~~END~~
+
+
+
+-- 6.6 Recursive CTE
+;WITH category_hierarchy AS (
+    SELECT CategoryID, CategoryName, 0 AS Level
+    FROM forxmlauto_t_categories
+    WHERE ParentCategoryID IS NULL
+    UNION ALL
+    SELECT c.CategoryID, c.CategoryName, ch.Level + 1
+    FROM forxmlauto_t_categories c
+    INNER JOIN category_hierarchy ch ON c.ParentCategoryID = ch.CategoryID
+)
+SELECT ch.CategoryName, ch.Level
+FROM category_hierarchy ch
+ORDER BY ch.Level, ch.CategoryName
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<ch CategoryName="Beverages" Level="0"/><ch CategoryName="Electronics" Level="0"/><ch CategoryName="Coffee" Level="1"/><ch CategoryName="Computers" Level="1"/><ch CategoryName="Tea" Level="1"/>
+~~END~~
+
+
+
+-- 6.7 CTE + ELEMENTS
+;WITH CustomerCTE AS (
+    SELECT CustomerID, CompanyName FROM forxmlauto_t_customers
+)
+SELECT c.CustomerID, c.CompanyName, o.OrderID
+FROM CustomerCTE c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+ORDER BY c.CustomerID
+FOR XML AUTO, ELEMENTS;
+GO
+~~START~~
+ntext
+<forxmlauto_t_customers><CustomerID>ALFKI</CustomerID><CompanyName>Alfreds Inc</CompanyName><o><OrderID>10248</OrderID></o></forxmlauto_t_customers>
+~~END~~
+
+
+
+-- 6.8 CTE + ROOT + ELEMENTS XSINIL
+;WITH CustomerCTE AS (
+    SELECT CustomerID, CompanyName, Region FROM forxmlauto_t_customers
+)
+SELECT c.CustomerID, c.Region, o.OrderID
+FROM CustomerCTE c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+ORDER BY c.CustomerID
+FOR XML AUTO, ROOT('Data'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><forxmlauto_t_customers><CustomerID>ALFKI</CustomerID><Region>WA</Region><o><OrderID>10248</OrderID></o></forxmlauto_t_customers><forxmlauto_t_customers><CustomerID>BERGS</CustomerID><Region xsi:nil="true"/><o><OrderID>10249</OrderID></o></forxmlauto_t_customers><forxmlauto_t_customers><CustomerID>CONSH</CustomerID><Region>LA</Region><o><OrderID>10250</OrderID></o></forxmlauto_t_customers></Data>
+~~END~~
+
+
+
+-- 6.9 Three levels with mixed sources (CTE + table + subquery)
+;WITH CustomerCTE AS (
+    SELECT CustomerID, CompanyName FROM forxmlauto_t_customers
+)
+SELECT c.CustomerID, c.CompanyName, o.OrderID, d.ProductID, d.Quantity
+FROM CustomerCTE c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+JOIN (SELECT OrderDetailID, OrderID, ProductID, Quantity FROM forxmlauto_t_order_details) d
+  ON o.OrderID = d.OrderID
+WHERE c.CustomerID = 'ALFKI'
+ORDER BY c.CustomerID, o.OrderID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"><d ProductID="1" Quantity="12"/><d ProductID="2" Quantity="10"/></o></forxmlauto_t_customers>
+~~END~~
+
+
+-- 6.10 Recursive CTE without alias (uses CTE name)
+;WITH category_hierarchy AS (
+    SELECT CategoryID, CategoryName, 0 AS Level
+    FROM forxmlauto_t_categories
+    WHERE ParentCategoryID IS NULL
+    UNION ALL
+    SELECT c.CategoryID, c.CategoryName, ch.Level + 1
+    FROM forxmlauto_t_categories c
+    INNER JOIN category_hierarchy ch ON c.ParentCategoryID = ch.CategoryID
+)
+SELECT category_hierarchy.CategoryName, category_hierarchy.Level
+FROM category_hierarchy
+ORDER BY category_hierarchy.Level, category_hierarchy.CategoryName
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<category_hierarchy CategoryName="Beverages" Level="0"/><category_hierarchy CategoryName="Electronics" Level="0"/><category_hierarchy CategoryName="Coffee" Level="1"/><category_hierarchy CategoryName="Computers" Level="1"/><category_hierarchy CategoryName="Tea" Level="1"/>
+~~END~~
+
+
+-- 6.11 Recursive CTE joined with base table
+;WITH category_hierarchy AS (
+    SELECT CategoryID, CategoryName, 0 AS Level
+    FROM forxmlauto_t_categories
+    WHERE ParentCategoryID IS NULL
+    UNION ALL
+    SELECT c.CategoryID, c.CategoryName, ch.Level + 1
+    FROM forxmlauto_t_categories c
+    INNER JOIN category_hierarchy ch ON c.ParentCategoryID = ch.CategoryID
+)
+SELECT p.ProductName, p.UnitPrice, ch.CategoryName, ch.Level
+FROM category_hierarchy ch
+JOIN forxmlauto_t_products p ON ch.CategoryID = p.CategoryID
+ORDER BY p.ProductName
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<p ProductName="Chai" UnitPrice="18.0000" CategoryName="Tea" Level="1"/><p ProductName="Coffee Beans" UnitPrice="19.0000" CategoryName="Coffee" Level="1"/><p ProductName="Green Tea" UnitPrice="10.0000" CategoryName="Tea" Level="1"/><p ProductName="Laptop" UnitPrice="1200.0000" CategoryName="Computers" Level="1"/>
+~~END~~
+
+
+-- 6.12 Nested CTE: outer non-recursive + inner recursive
+;WITH order_cte AS (
+    SELECT OrderID, CustomerID, TotalAmount
+    FROM forxmlauto_t_orders
+),
+category_hierarchy AS (
+    SELECT CategoryID, CategoryName, 0 AS Level
+    FROM forxmlauto_t_categories
+    WHERE ParentCategoryID IS NULL
+    UNION ALL
+    SELECT c.CategoryID, c.CategoryName, ch.Level + 1
+    FROM forxmlauto_t_categories c
+    INNER JOIN category_hierarchy ch ON c.ParentCategoryID = ch.CategoryID
+),
+combined AS (
+    SELECT ch.CategoryName, ch.Level, p.ProductName
+    FROM category_hierarchy ch
+    JOIN forxmlauto_t_products p ON ch.CategoryID = p.CategoryID
+)
+SELECT cb.CategoryName, cb.ProductName
+FROM combined cb
+WHERE cb.ProductName = 'Laptop'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<p CategoryName="Computers" ProductName="Laptop"/>
+~~END~~
+
+
+-- 6.13 Nested CTE with long alias names
+;WITH cte_inner AS (
+    SELECT c.CustomerID, c.CompanyName, o.OrderID
+    FROM forxmlauto_t_customers c
+    JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+),
+cte_outer AS (
+    SELECT ci.CustomerID, ci.CompanyName, ci.OrderID
+    FROM cte_inner ci
+)
+SELECT long_alias_name.CustomerID, long_alias_name.CompanyName, long_alias_name.OrderID
+FROM cte_outer long_alias_name
+WHERE long_alias_name.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></c>
+~~END~~
+
+
+-- 6.14 CTE with name longer than 63 characters (truncated by parser)
+;WITH this_is_a_very_long_cte_name_that_exceeds_sixty_three_characters_in_length AS (
+    SELECT CustomerID, CompanyName FROM forxmlauto_t_customers
+)
+SELECT c.CustomerID, c.CompanyName
+FROM this_is_a_very_long_cte_name_that_exceeds_sixty_three_characters_in_length c
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
+
+
+
+-- 6.15 Two CTEs with same first 63 chars but different suffix (hash collision test)
+;WITH aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_first AS (
+    SELECT CustomerID, CompanyName FROM forxmlauto_t_customers WHERE CustomerID = 'ALFKI'
+),
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_second AS (
+    SELECT OrderID, CustomerID FROM forxmlauto_t_orders WHERE CustomerID = 'ALFKI'
+)
+SELECT a.CustomerID, a.CompanyName, b.OrderID
+FROM aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_first a
+JOIN aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_second b ON a.CustomerID = b.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxmlauto_t_customers CustomerID="ALFKI" CompanyName="Alfreds Inc"><forxmlauto_t_orders OrderID="10248"/></forxmlauto_t_customers>
+~~END~~
+
+
+
+-- 6.16 Nested FOR XML AUTO with CTE at outer level (CTE context save/restore)
+;WITH outer_cte AS (
+    SELECT CustomerID, CompanyName FROM forxmlauto_t_customers WHERE CustomerID = 'ALFKI'
+)
+SELECT * FROM (
+    SELECT oc.CustomerID, oc.CompanyName FROM outer_cte oc FOR XML AUTO
+) sub(result)
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<sub result="&lt;forxmlauto_t_customers CustomerID=&quot;ALFKI&quot; CompanyName=&quot;Alfreds Inc&quot;/&gt;"/>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 7: Subqueries
+-- ============================================
+-- 7.1 Subquery in FROM (derived table)
+SELECT sub.CustomerID, sub.CompanyName, o.OrderID
+FROM (
+    SELECT CustomerID, CompanyName
+    FROM forxmlauto_t_customers
+    WHERE Country = 'USA'
+) AS sub
+JOIN forxmlauto_t_orders o ON sub.CustomerID = o.CustomerID
+ORDER BY sub.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<sub CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></sub><sub CustomerID="CONSH" CompanyName="Consolidated Holdings"><o OrderID="10250"/></sub>
+~~END~~
+
+
+
+-- 7.2 Multiple subqueries in FROM
+SELECT sub1.CustomerID, sub1.CompanyName, sub2.TotalAmount
+FROM (
+    SELECT CustomerID, CompanyName FROM forxmlauto_t_customers WHERE Country = 'USA'
+) AS sub1
+JOIN (
+    SELECT CustomerID, TotalAmount FROM forxmlauto_t_orders WHERE TotalAmount > 500
+) AS sub2 ON sub1.CustomerID = sub2.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<sub1 CustomerID="CONSH" CompanyName="Consolidated Holdings"><sub2 TotalAmount="1552.6000"/></sub1>
+~~END~~
+
+
+
+-- 7.3 Nested subqueries
+SELECT outer_q.CustomerID, outer_q.CompanyName, o.OrderID
+FROM (
+    SELECT inner_q.CustomerID, inner_q.CompanyName
+    FROM (SELECT CustomerID, CompanyName FROM forxmlauto_t_customers) inner_q
+) outer_q
+JOIN forxmlauto_t_orders o ON outer_q.CustomerID = o.CustomerID
+WHERE outer_q.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<outer_q CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></outer_q>
+~~END~~
+
+
+
+-- 7.4 Scalar subquery in SELECT
+SELECT c.CustomerID, c.CompanyName,
+       (SELECT COUNT(*) FROM forxmlauto_t_orders o2 WHERE o2.CustomerID = c.CustomerID) AS OrderCount,
+       o.OrderID
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+ORDER BY c.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc" OrderCount="1"><o OrderID="10248"/></c>
+~~END~~
+
+
+
+-- 7.5 UNION subquery in FROM
+SELECT combined.CustomerID, combined.Source
+FROM (
+    SELECT CustomerID, 'Active' AS Source FROM forxmlauto_t_customers WHERE Country = 'USA'
+    UNION ALL
+    SELECT CustomerID, 'International' AS Source FROM forxmlauto_t_customers WHERE Country != 'USA'
+) AS combined
+WHERE combined.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<combined CustomerID="ALFKI" Source="Active"/>
+~~END~~
+
+
+
+-- 7.6 Subquery in WHERE clause
+SELECT c.CustomerID, c.CompanyName
+FROM forxmlauto_t_customers c
+WHERE c.CustomerID IN (SELECT CustomerID FROM forxmlauto_t_orders WHERE TotalAmount > 1000)
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="BERGS" CompanyName="Berglunds snabbköp"/><c CustomerID="CONSH" CompanyName="Consolidated Holdings"/>
+~~END~~
+
+
+
+-- 7.7 SELECT * FROM joined derived tables
+SELECT *
+FROM (SELECT CustomerID, CompanyName FROM forxmlauto_t_customers WHERE Country = 'USA') AS o
+JOIN (SELECT CustomerID, TotalAmount FROM forxmlauto_t_orders WHERE TotalAmount > 500) AS c
+ON o.CustomerID = c.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<o CustomerID="CONSH" CompanyName="Consolidated Holdings"><c CustomerID="CONSH" TotalAmount="1552.6000"/></o>
+~~END~~
+
+
+
+-- 7.8 VALUES clause as source
+SELECT * FROM (VALUES (1,2)) AS z(x,y) FOR XML AUTO;
+GO
+~~START~~
+ntext
+<z x="1" y="2"/>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 8: SELECT Clause Expressions
+-- ============================================
+-- 8.1 Operator expression
+SELECT c.CategoryName, p.ProductName, p.UnitPrice * 2 AS DoubledPrice
+FROM forxmlauto_t_categories c
+JOIN forxmlauto_t_products p ON c.CategoryID = p.CategoryID
+WHERE c.CategoryID = 2
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CategoryName="Coffee"><p ProductName="Coffee Beans" DoubledPrice="38.0000"/></c>
+~~END~~
+
+
+
+-- 8.2 Constant expression
+SELECT c.CategoryName, p.ProductName, 'Premium' AS Tier, 2024 AS CatalogYear
+FROM forxmlauto_t_categories c
+JOIN forxmlauto_t_products p ON c.CategoryID = p.CategoryID
+WHERE c.CategoryID = 2
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CategoryName="Coffee"><p ProductName="Coffee Beans" Tier="Premium" CatalogYear="2024"/></c>
+~~END~~
+
+
+
+-- 8.3 Function expression (CAST)
+SELECT c.CompanyName, o.TotalAmount, CAST('2023-01-01 12:00:00' AS DATETIME) AS FixedDate
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CompanyName="Alfreds Inc"><o TotalAmount="440.0000" FixedDate="2023-01-01T12:00:00"/></c>
+~~END~~
+
+
+
+-- 8.4 COALESCE expression
+SELECT c.CustomerID, c.CompanyName,
+       COALESCE(c.Region, 'Unknown') AS Region
+FROM forxmlauto_t_customers c
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc" Region="WA"/><c CustomerID="BERGS" CompanyName="Berglunds snabbköp" Region="Unknown"/><c CustomerID="CONSH" CompanyName="Consolidated Holdings" Region="LA"/>
+~~END~~
+
+
+
+-- 8.5 CASE WHEN expression
+SELECT c.CompanyName, o.TotalAmount,
+       CASE WHEN o.TotalAmount > 1500 THEN 'High'
+            WHEN o.TotalAmount > 500 THEN 'Medium'
+            ELSE 'Low' END AS ValueTier
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CompanyName="Alfreds Inc"><o TotalAmount="440.0000" ValueTier="Low"/></c>
+~~END~~
+
+
+
+-- 8.6 GROUP BY with aggregates
+SELECT c.CustomerID, c.CompanyName,
+       COUNT(o.OrderID) AS OrderCount, SUM(o.TotalAmount) AS TotalAmount
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+GROUP BY c.CustomerID, c.CompanyName
+ORDER BY c.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc" OrderCount="1" TotalAmount="440.0000"/><c CustomerID="BERGS" CompanyName="Berglunds snabbköp" OrderCount="1" TotalAmount="1863.4000"/><c CustomerID="CONSH" CompanyName="Consolidated Holdings" OrderCount="1" TotalAmount="1552.6000"/>
+~~END~~
+
+
+
+-- 8.7 HAVING clause
+SELECT c.CustomerID, c.CompanyName, COUNT(o.OrderID) AS OrderCount
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+GROUP BY c.CustomerID, c.CompanyName
+HAVING COUNT(o.OrderID) >= 1
+ORDER BY c.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc" OrderCount="1"/><c CustomerID="BERGS" CompanyName="Berglunds snabbköp" OrderCount="1"/><c CustomerID="CONSH" CompanyName="Consolidated Holdings" OrderCount="1"/>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 9: Data Types
+-- ============================================
+-- 9.1 DATETIME formatting
+SELECT c.CustomerID, o.OrderDate
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI"><o OrderDate="2023-07-04T00:00:00"/></c>
+~~END~~
+
+
+
+-- 9.2 MONEY type
+SELECT c.CustomerID, o.TotalAmount
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI"><o TotalAmount="440.0000"/></c>
+~~END~~
+
+
+
+-- 9.3 BIT type
+SELECT p.ProductName, p.Discontinued
+FROM forxmlauto_t_products p
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<p ProductName="Chai" Discontinued="0"/><p ProductName="Coffee Beans" Discontinued="0"/><p ProductName="Laptop" Discontinued="0"/><p ProductName="Green Tea" Discontinued="0"/>
+~~END~~
+
+
+
+-- 9.4 DECIMAL type
+SELECT od.OrderDetailID, od.Discount
+FROM forxmlauto_t_order_details od
+WHERE od.OrderDetailID IN (1, 2)
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<od OrderDetailID="1" Discount="0.00"/><od OrderDetailID="2" Discount="0.05"/>
+~~END~~
+
+
+
+-- 9.5 NCHAR with trailing spaces
+SELECT c.CustomerID
+FROM forxmlauto_t_customers c
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI"/>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 10: Multibyte Characters
+-- ============================================
+-- 10.1 Multibyte in attribute values
+SELECT m.ID, m.JapaneseName, m.ChineseName
+FROM forxmlauto_t_multibyte m
+WHERE m.ID = 1
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<m ID="1" JapaneseName="東京タワー" ChineseName="北京市"/>
+~~END~~
+
+
+
+-- 10.2 Multibyte in ELEMENTS mode
+SELECT m.ID, m.JapaneseName, m.ChineseName, m.KoreanName
+FROM forxmlauto_t_multibyte m
+WHERE m.ID = 1
+FOR XML AUTO, ELEMENTS;
+GO
+~~START~~
+ntext
+<m><ID>1</ID><JapaneseName>東京タワー</JapaneseName><ChineseName>北京市</ChineseName><KoreanName>서울시</KoreanName></m>
+~~END~~
+
+
+
+-- 10.3 Multibyte with ROOT
+SELECT m.ID, m.JapaneseName
+FROM forxmlauto_t_multibyte m
+FOR XML AUTO, ROOT('データ');
+GO
+~~START~~
+ntext
+<データ><m ID="1" JapaneseName="東京タワー"/><m ID="2" JapaneseName="大阪城"/><m ID="3" JapaneseName="富士山"/></データ>
+~~END~~
+
+
+
+-- 10.4 Emoji content
+SELECT m.ID, m.EmojiCol
+FROM forxmlauto_t_multibyte m
+WHERE m.ID = 1
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<m ID="1" EmojiCol="🎉🌟"/>
+~~END~~
+
+
+
+-- 10.5 Mixed multibyte content
+SELECT m.ID, m.MixedContent
+FROM forxmlauto_t_multibyte m
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<m ID="1" MixedContent="Hello世界Мир"/><m ID="2" MixedContent="Café résumé naïve"/><m ID="3" MixedContent="Ñoño über straße"/>
+~~END~~
+
+
+
+-- 10.6 Multibyte in table alias
+SELECT 東京.ID, 東京.JapaneseName
+FROM forxmlauto_t_multibyte 東京
+WHERE 東京.ID = 1
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<東京 ID="1" JapaneseName="東京タワー"/>
+~~END~~
+
+
+
+-- 10.7 Multibyte column alias
+SELECT m.ID, m.JapaneseName AS [名前]
+FROM forxmlauto_t_multibyte m
+WHERE m.ID = 1
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<m ID="1" 名前="東京タワー"/>
+~~END~~
+
+
+
+-- 10.8 Multibyte with two tables
+SELECT m.ID, m.JapaneseName, c.CompanyName
+FROM forxmlauto_t_multibyte m
+CROSS JOIN forxmlauto_t_customers c
+WHERE m.ID = 1 AND c.CustomerID = 'BERGS'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<m ID="1" JapaneseName="東京タワー"><c CompanyName="Berglunds snabbköp"/></m>
+~~END~~
+
+
+
+-- 10.9 Multibyte with ELEMENTS XSINIL
+SELECT m.ID, m.JapaneseName, m.ChineseName
+FROM forxmlauto_t_multibyte m
+WHERE m.ID = 1
+FOR XML AUTO, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<m xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><JapaneseName>東京タワー</JapaneseName><ChineseName>北京市</ChineseName></m>
+~~END~~
+
+
+
+-- 10.10 Existing multibyte data in regular tables
+SELECT c.CustomerID, c.CompanyName
+FROM forxmlauto_t_customers c
+WHERE c.CustomerID = 'BERGS'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="BERGS" CompanyName="Berglunds snabbköp"/>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 11: XML Special Characters (Escaping)
+-- ============================================
+-- 11.1 Ampersand, less-than, greater-than in values
+SELECT 1 AS ID, 'Tom & Jerry' AS Name, '5 < 10' AS Comparison, '10 > 5' AS ReverseComp
+FOR XML AUTO;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: FOR XML AUTO requires at least one table for generating XML elements. Use FOR XML PATH or add a FROM clause with a table name.)~~
+
+
+
+
+-- 11.2 Quotes in attribute values
+SELECT 1 AS ID, 'He said "hello"' AS Quote
+FOR XML AUTO;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: FOR XML AUTO requires at least one table for generating XML elements. Use FOR XML PATH or add a FROM clause with a table name.)~~
+
+
+
+
+-- 11.3 Special characters in ELEMENTS mode
+SELECT 1 AS ID, 'Tom & Jerry' AS Name, '5 < 10' AS Comparison
+FOR XML AUTO, ELEMENTS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: FOR XML AUTO requires at least one table for generating XML elements. Use FOR XML PATH or add a FROM clause with a table name.)~~
+
+
+
+
+
+-- ============================================
+-- SECTION 12: Views
+-- ============================================
+-- 12.1 View with alias
+SELECT v.CompanyName, v.OrderID, v.TotalAmount
+FROM forxmlauto_v_customer_orders v
+WHERE v.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<v CompanyName="Alfreds Inc" OrderID="10248" TotalAmount="440.0000"/>
+~~END~~
+
+
+
+-- 12.2 View without alias (uses view name as element)
+SELECT forxmlauto_v_customer_orders.CompanyName, forxmlauto_v_customer_orders.OrderID
+FROM forxmlauto_v_customer_orders
+WHERE forxmlauto_v_customer_orders.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxmlauto_v_customer_orders CompanyName="Alfreds Inc" OrderID="10248"/>
+~~END~~
+
+
+
+-- 12.3 View joined with table
+SELECT o.OrderID, cv.CompanyName, cv.TotalAmount
+FROM forxmlauto_t_orders o
+JOIN forxmlauto_v_customer_orders cv ON o.OrderID = cv.OrderID
+WHERE cv.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<o OrderID="10248"><cv CompanyName="Alfreds Inc" TotalAmount="440.0000"/></o>
+~~END~~
+
+
+
+-- 12.4 Nested view (view built on view) — with alias
+SELECT vs.CompanyName, vs.OrderID, vs.ProductID, vs.Quantity
+FROM forxmlauto_v_order_summary vs
+WHERE vs.CompanyName = 'Alfreds Inc'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<vs CompanyName="Alfreds Inc" OrderID="10248" ProductID="1" Quantity="12"/><vs CompanyName="Alfreds Inc" OrderID="10248" ProductID="2" Quantity="10"/>
+~~END~~
+
+
+
+-- 12.5 Nested view — without alias
+SELECT forxmlauto_v_order_summary.CompanyName, forxmlauto_v_order_summary.OrderID, forxmlauto_v_order_summary.ProductID
+FROM forxmlauto_v_order_summary
+WHERE forxmlauto_v_order_summary.CompanyName = 'Alfreds Inc'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxmlauto_v_order_summary CompanyName="Alfreds Inc" OrderID="10248" ProductID="1"/><forxmlauto_v_order_summary CompanyName="Alfreds Inc" OrderID="10248" ProductID="2"/>
+~~END~~
+
+
+
+-- 12.6 Nested view joined with table
+SELECT c.CustomerID, vs.CompanyName, vs.OrderID, vs.ProductID
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_v_order_summary vs ON c.CompanyName = vs.CompanyName
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI"><vs CompanyName="Alfreds Inc" OrderID="10248" ProductID="1"/><vs CompanyName="Alfreds Inc" OrderID="10248" ProductID="2"/></c>
+~~END~~
+
+
+
+-- 12.7 Two views joined together
+SELECT v1.CompanyName, v1.OrderID, v2.ProductID, v2.Quantity
+FROM forxmlauto_v_customer_orders v1
+JOIN forxmlauto_v_order_summary v2 ON v1.OrderID = v2.OrderID
+WHERE v1.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<v1 CompanyName="Alfreds Inc" OrderID="10248"><v2 ProductID="1" Quantity="12"/><v2 ProductID="2" Quantity="10"/></v1>
+~~END~~
+
+
+
+-- 12.8 View vs CTE — same data, different behavior
+-- CTE unwraps to base tables (two nesting levels)
+;WITH customer_orders_cte AS (
+    SELECT c.CompanyName, o.OrderID, o.TotalAmount
+    FROM forxmlauto_t_customers c
+    JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+)
+SELECT cte.CompanyName, cte.OrderID, cte.TotalAmount
+FROM customer_orders_cte cte
+WHERE cte.CompanyName = 'Alfreds Inc'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CompanyName="Alfreds Inc"><o OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
+
+
+
+-- View stays flat (one level)
+SELECT v.CompanyName, v.OrderID, v.TotalAmount
+FROM forxmlauto_v_customer_orders v
+WHERE v.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<v CompanyName="Alfreds Inc" OrderID="10248" TotalAmount="440.0000"/>
+~~END~~
+
+
+
+-- 12.9 Same table accessed directly AND through view
+SELECT c.CustomerID, v.OrderID, v.TotalAmount
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_v_customer_orders v ON c.CustomerID = v.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI"><v OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
+
+
+
+-- 12.10 View with ELEMENTS mode
+SELECT vs.CompanyName, vs.OrderID, vs.ProductID
+FROM forxmlauto_v_order_summary vs
+WHERE vs.CompanyName = 'Alfreds Inc'
+FOR XML AUTO, ELEMENTS;
+GO
+~~START~~
+ntext
+<vs><CompanyName>Alfreds Inc</CompanyName><OrderID>10248</OrderID><ProductID>1</ProductID></vs><vs><CompanyName>Alfreds Inc</CompanyName><OrderID>10248</OrderID><ProductID>2</ProductID></vs>
+~~END~~
+
+
+-- 12.11 View with FOR XML AUTO, TYPE inside (tsql_select_for_xml_agg)
+SELECT * FROM forxmlauto_v_xml_type;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "forxmlauto_v_xml_type" does not exist)~~
+
+
+-- 12.12 View with FOR XML AUTO without TYPE inside (tsql_select_for_xml_text_agg)
+SELECT * FROM forxmlauto_v_xml_text;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "forxmlauto_v_xml_text" does not exist)~~
+
+
+
+
+-- ============================================
+-- SECTION 13: Functions and Procedures
+-- ============================================
+-- 13.1 Table-valued function as source
+SELECT f.CustomerID, f.CompanyName, f.OrderID, f.TotalAmount
+FROM dbo.GetXmlCustomerOrders() f
+WHERE f.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<f CustomerID="ALFKI" CompanyName="Alfreds Inc" OrderID="10248" TotalAmount="440.0000"/>
+~~END~~
+
+
+
+-- 13.2 Table-valued function with parameter
+SELECT f.CustomerID, f.CompanyName, f.OrderID, f.TotalAmount
+FROM dbo.GetXmlSingleCustomerOrders('ALFKI') f
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<f CustomerID="ALFKI" CompanyName="Alfreds Inc" OrderID="10248" TotalAmount="440.0000"/>
+~~END~~
+
+
+
+-- 13.3 Function joined with table
+SELECT c.CompanyName, f.OrderID, f.TotalAmount
+FROM forxmlauto_t_customers c
+JOIN dbo.GetXmlCustomerOrders() f ON c.CustomerID = f.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CompanyName="Alfreds Inc"><f OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
+
+
+
+-- 13.4 Procedure returning FOR XML AUTO
+EXEC dbo.GetXmlAutoResult @CustID = 'ALFKI';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure dbo.getxmlautoresult(@custid => unknown) does not exist)~~
+
+
+-- 13.5 Procedure with JOIN returning FOR XML AUTO
+EXEC dbo.GetXmlAutoJoin;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure dbo.getxmlautojoin() does not exist)~~
+
+
+-- 13.6 Procedure with ELEMENTS returning FOR XML AUTO
+EXEC dbo.GetXmlAutoElements;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure dbo.getxmlautoelements() does not exist)~~
+
+
+-- 13.7 Scalar function returning FOR XML AUTO, TYPE
+SELECT dbo.GetXmlAutoScalar('ALFKI');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function dbo.getxmlautoscalar(unknown) does not exist)~~
+
+
+-- 13.8 Function with ELEMENTS mode
+SELECT f.CustomerID, f.CompanyName, f.OrderID, f.TotalAmount
+FROM dbo.GetXmlSingleCustomerOrders('ALFKI') f
+FOR XML AUTO, ELEMENTS;
+GO
+~~START~~
+ntext
+<f><CustomerID>ALFKI</CustomerID><CompanyName>Alfreds Inc</CompanyName><OrderID>10248</OrderID><TotalAmount>440.0000</TotalAmount></f>
+~~END~~
+
+
+-- 13.9 CTE wrapping a table-valued function
+;WITH cte_func AS (SELECT * FROM dbo.GetXmlCustomerOrders())
+SELECT CustomerID, CompanyName FROM cte_func WHERE CustomerID = 'ALFKI' FOR XML AUTO;
+GO
+~~START~~
+ntext
+<cte_func CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 14: SELECT INTO and INSERT
+-- ============================================
+-- 14.1 FOR XML AUTO inside INSERT
+CREATE TABLE #XmlResults (ID INT IDENTITY(1,1) PRIMARY KEY, XmlData NVARCHAR(MAX));
+INSERT INTO #XmlResults (XmlData)
+VALUES (
+    (SELECT c.CustomerID, c.CompanyName, o.OrderID
+     FROM forxmlauto_t_customers c
+     JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+     WHERE c.CustomerID = 'ALFKI'
+     ORDER BY c.CustomerID
+     FOR XML AUTO, ROOT('Result'))
+);
+SELECT * FROM #XmlResults;
+DROP TABLE #XmlResults;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#nvarchar
+1#!#<Result><c CustomerID="ALFKI" CompanyName="Alfreds Inc"><o OrderID="10248"/></c></Result>
+~~END~~
+
+
+
+
+-- 14.2 FOR XML AUTO result into variable
+DECLARE @xml NVARCHAR(MAX);
+SET @xml = (
+    SELECT c.CustomerID, c.CompanyName
+    FROM forxmlauto_t_customers c
+    WHERE c.CustomerID = 'ALFKI'
+    FOR XML AUTO
+);
+SELECT @xml;
+GO
+~~START~~
+nvarchar
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 15: XML Methods on Result
+-- ============================================
+-- 15.1 .value() on FOR XML AUTO result
+DECLARE @xml XML;
+SET @xml = (
+    SELECT c.CustomerID, c.CompanyName, o.OrderID
+    FROM forxmlauto_t_customers c
+    JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+    WHERE c.CustomerID = 'ALFKI'
+    ORDER BY c.CustomerID
+    FOR XML AUTO, ROOT('Result')
+);
+SELECT @xml.value('(/Result/c/@CustomerID)[1]', 'NCHAR(5)') AS CustID;
+GO
+~~START~~
+nchar
+ALFKI
+~~END~~
+
+
+
+-- 15.2 ELEMENTS mode with .value()
+DECLARE @xml XML;
+SET @xml = (
+    SELECT c.CustomerID, c.CompanyName
+    FROM forxmlauto_t_customers c
+    WHERE c.CustomerID = 'ALFKI'
+    FOR XML AUTO, ROOT('Result'), ELEMENTS
+);
+SELECT @xml.value('(/Result/c/CustomerID)[1]', 'NCHAR(5)') AS CustID;
+GO
+~~START~~
+nchar
+ALFKI
+~~END~~
+
+
+
+
+
+-- ============================================
+-- SECTION 16: Error Cases
+-- ============================================
+-- 16.1 FOR XML AUTO without any table
+SELECT 1 AS ID, 'test' AS Name
+FOR XML AUTO;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: FOR XML AUTO requires at least one table for generating XML elements. Use FOR XML PATH or add a FROM clause with a table name.)~~
+
+
+
+
+-- 16.2 FOR XML AUTO with only system function as source
+SELECT s.value
+FROM STRING_SPLIT('apple,banana,cherry', ',') AS s
+FOR XML AUTO;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: FOR XML AUTO requires at least one table for generating XML elements. Use FOR XML PATH or add a FROM clause with a table name.)~~
+
+
+
+
+
+-- ============================================
+-- SECTION 17: Boundary Cases for Element Names
+-- ============================================
+-- 17.1 Single character alias
+SELECT x.CustomerID, x.CompanyName
+FROM forxmlauto_t_customers x
+WHERE x.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<x CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
+
+
+
+-- 17.2 Very long alias
+SELECT VeryLongAliasNameForCustomerTable.CustomerID,
+       VeryLongAliasNameForCustomerTable.CompanyName
+FROM forxmlauto_t_customers VeryLongAliasNameForCustomerTable
+WHERE VeryLongAliasNameForCustomerTable.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<verylongaliasnameforcustomertable CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
+
+
+
+-- 17.3 Numeric-starting alias (quoted)
+SELECT [1stTable].CustomerID, [1stTable].CompanyName
+FROM forxmlauto_t_customers [1stTable]
+WHERE [1stTable].CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<_x0031_sttable CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
+
+
+
+-- 17.4 Alias with spaces (quoted)
+SELECT [Customer Table].CustomerID, [Customer Table].CompanyName
+FROM forxmlauto_t_customers [Customer Table]
+WHERE [Customer Table].CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<customer_x0020_table CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
+
+
+
+-- 17.5 Alias with special characters
+SELECT [cust-data].CustomerID, [cust-data].CompanyName
+FROM forxmlauto_t_customers [cust-data]
+WHERE [cust-data].CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<cust-data CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
+
+
+
+-- 17.6 Column alias that conflicts with table alias
+SELECT c.CustomerID, c.CompanyName AS o, o.OrderID
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+ORDER BY c.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" o="Alfreds Inc"><o OrderID="10248"/></c>
+~~END~~
+
+
+
+-- 17.7 SELECT * with AUTO
+SELECT *
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+ORDER BY c.CustomerID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc" ContactName="Maria Anders" ContactTitle="Sales Rep" Region="WA" Country="USA" Phone="030-0074321" IsActive="1"><o OrderID="10248" CustomerID="ALFKI" OrderDate="2023-07-04T00:00:00" ShipAddress="23 Tsawassen Blvd." ShipCity="Seattle" ShipCountry="USA" TotalAmount="440.0000" Status="Shipped"/></c>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 18: Long Column and Alias Names (> 64 characters)
+-- ============================================
+-- 18.1 Long column name — single table
+SELECT t.ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength,
+       t.ShortCol
+FROM forxmlauto_t_longnames t
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<t ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength="1" ShortCol="100"/><t ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength="2" ShortCol="200"/>
+~~END~~
+
+
+
+-- 18.2 Long column name — ELEMENTS mode
+SELECT t.ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength,
+       t.ShortCol
+FROM forxmlauto_t_longnames t
+FOR XML AUTO, ELEMENTS;
+GO
+~~START~~
+ntext
+<t><ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength>1</ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength><ShortCol>100</ShortCol></t><t><ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength>2</ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength><ShortCol>200</ShortCol></t>
+~~END~~
+
+
+
+-- 18.3 Long column name — two tables
+SELECT c.CustomerID, c.CompanyName,
+       t.ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength,
+       t.ShortCol
+FROM forxmlauto_t_customers c
+CROSS JOIN forxmlauto_t_longnames t
+WHERE c.CustomerID = 'ALFKI' AND t.ShortCol = 100
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"><t ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength="1" ShortCol="100"/></c>
+~~END~~
+
+
+
+-- 18.4 Long column alias
+SELECT c.CustomerID,
+       o.OrderID AS ThisIsAVeryLongColumnAliasThatMightExceedSixtyThreeCharacterLimit
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders o ON c.CustomerID = o.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI"><o ThisIsAVeryLongColumnAliasThatMe112b864c5987f288f7a6d00d553a231="10248"/></c>
+~~END~~
+
+
+
+-- 18.5 Long table alias
+SELECT VeryLongTableAliasNameThatExceedsSixtyThreeCharacters.CustomerID,
+       VeryLongTableAliasNameThatExceedsSixtyThreeCharacters.CompanyName
+FROM forxmlauto_t_customers VeryLongTableAliasNameThatExceedsSixtyThreeCharacters
+WHERE VeryLongTableAliasNameThatExceedsSixtyThreeCharacters.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<verylongtablealiasnamethatexceedssixtythreecharacters CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
+
+
+
+-- 18.6 Long table alias on child table
+SELECT c.CustomerID,
+       VeryLongOrderAliasNameThatMightCauseTruncation.OrderID,
+       VeryLongOrderAliasNameThatMightCauseTruncation.TotalAmount
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders VeryLongOrderAliasNameThatMightCauseTruncation
+  ON c.CustomerID = VeryLongOrderAliasNameThatMightCauseTruncation.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI"><verylongorderaliasnamethatmightcausetruncation OrderID="10248" TotalAmount="440.0000"/></c>
+~~END~~
+
+
+
+-- 18.7 Long table alias + long column alias combined
+SELECT c.CustomerID,
+       ThisIsAThirtyCharacterAliasNam.OrderID AS ThisIsAlsoAThirtyCharColumnName
+FROM forxmlauto_t_customers c
+JOIN forxmlauto_t_orders ThisIsAThirtyCharacterAliasNam
+  ON c.CustomerID = ThisIsAThirtyCharacterAliasNam.CustomerID
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI"><thisisathirtycharacteraliasnam ThisIsAlsoAThirtyCharColumnName="10248"/></c>
+~~END~~
+
+
+
+-- 18.8 Multiple long column names from different tables
+SELECT c.CustomerID,
+       t.ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength,
+       t.AnotherVeryLongColumnNameThatExceedsSixtyThreeCharactersForTesting
+FROM forxmlauto_t_customers c
+CROSS JOIN forxmlauto_t_longnames t
+WHERE c.CustomerID = 'ALFKI' AND t.ShortCol = 100
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI"><t ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength="1" AnotherVeryLongColumnNameThatExceedsSixtyThreeCharactersForTesting="Hello"/></c>
+~~END~~
+
+
+
+-- 18.9 Long column name with ELEMENTS XSINIL
+SELECT t.ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength,
+       t.ShortCol
+FROM forxmlauto_t_longnames t
+FOR XML AUTO, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<t xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength>1</ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength><ShortCol>100</ShortCol></t><t xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength>2</ThisIsAnExtremelyLongColumnNameThatGoesOnAndOnToTestTheLimitsOfNameLength><ShortCol>200</ShortCol></t>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 19: Quoted Identifiers and Special Characters in Names
+-- ============================================
+-- 19.1 Table name with comma — with alias
+SELECT t.ID, t.Val
+FROM [forxmlauto_t_comma,table] t
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<t ID="1" Val="hello"/><t ID="2" Val="world"/>
+~~END~~
+
+
+
+-- 19.2 Table name with comma — without alias
+SELECT ID, Val
+FROM [forxmlauto_t_comma,table]
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxmlauto_t_comma_x002C_table ID="1" Val="hello"/><forxmlauto_t_comma_x002C_table ID="2" Val="world"/>
+~~END~~
+
+
+
+-- 19.3 Table name with dot — with alias
+SELECT t.ID, t.Val
+FROM [forxmlauto_t_dot.table] t
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<t ID="1" Val="Alpha"/><t ID="2" Val="Beta"/>
+~~END~~
+
+
+
+-- 19.4 Table name with dot — without alias
+SELECT ID, Val
+FROM [forxmlauto_t_dot.table]
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxmlauto_t_dot.table ID="1" Val="Alpha"/><forxmlauto_t_dot.table ID="2" Val="Beta"/>
+~~END~~
+
+
+
+-- 19.5 Column name with comma
+SELECT q.[col,one], q.[col,two]
+FROM forxmlauto_t_comma_cols q
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<q col_x002C_one="1" col_x002C_two="Gamma"/><q col_x002C_one="2"/>
+~~END~~
+
+
+
+-- 19.6 Column name with dot
+SELECT q.[col.one], q.[col.two]
+FROM forxmlauto_t_dot_cols q
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<q col.one="1" col.two="Delta"/><q col.one="2"/>
+~~END~~
+
+
+
+-- 19.7 Column name with space
+SELECT q.[first name], q.[last name]
+FROM forxmlauto_t_space_cols q
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<q first_x0020_name="John" last_x0020_name="Doe"/><q first_x0020_name="Jane"/>
+~~END~~
+
+
+
+-- 19.8 Table and column both with special characters
+SELECT t.[col.one], t.[val,two]
+FROM [forxmlauto_t_mixed,special.table] t
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<t col.one="1" val_x002C_two="Test"/><t col.one="2"/>
+~~END~~
+
+
+
+-- 19.9 Two tables with special characters — nesting
+SELECT p.ID, p.Val, c.[col,one], c.[col,two]
+FROM [forxmlauto_t_comma,table] p
+JOIN forxmlauto_t_comma_cols c ON p.ID = c.[col,one]
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<p ID="1" Val="hello"><c col_x002C_one="1" col_x002C_two="Gamma"/></p><p ID="2" Val="world"><c col_x002C_one="2"/></p>
+~~END~~
+
+
+
+-- 19.10 Special characters with ELEMENTS
+SELECT q.[col,one], q.[col.two]
+FROM forxmlauto_t_dot_cols q
+WHERE q.[col.one] = 1
+FOR XML AUTO, ELEMENTS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column q.col,one does not exist)~~
+
+
+
+
+-- 19.11 Special characters with ELEMENTS XSINIL
+SELECT q.[col,one], q.[col,two]
+FROM forxmlauto_t_comma_cols q
+WHERE q.[col,one] = 2
+FOR XML AUTO, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<q xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><col_x002C_one>2</col_x002C_one><col_x002C_two xsi:nil="true"/></q>
+~~END~~
+
+
+
+-- 19.12 Special characters with ROOT
+SELECT q.[col.one], q.[col.two]
+FROM forxmlauto_t_dot_cols q
+FOR XML AUTO, ROOT('Data');
+GO
+~~START~~
+ntext
+<Data><q col.one="1" col.two="Delta"/><q col.one="2"/></Data>
+~~END~~
+
+
+-- 19.13 Identifier containing literal _x002E_ (tests double-escaping)
+SELECT * FROM [_x002E_tbl] FOR XML AUTO;
+GO
+~~START~~
+ntext
+<_x005F_x002e_tbl id="1" val="hello"/>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 20: Transaction Boundary
+-- ============================================
+-- 20.1 FOR XML AUTO inside explicit transaction
+BEGIN TRAN;
+SELECT c.CustomerID, c.CompanyName
+FROM forxmlauto_t_customers c
+WHERE c.CustomerID = 'ALFKI'
+FOR XML AUTO;
+COMMIT;
+GO
+~~START~~
+ntext
+<c CustomerID="ALFKI" CompanyName="Alfreds Inc"/>
+~~END~~
+

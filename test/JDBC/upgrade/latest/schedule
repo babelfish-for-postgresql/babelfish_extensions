@@ -682,6 +682,7 @@ babel_convert_with_style
 forxml-raw-elements
 forxml-raw-elements-1gb-limit
 forxml-path-elements
+forxml-auto
 babel_sqlvariant_coerce_type
 BABEL-5264
 BABEL-6037
