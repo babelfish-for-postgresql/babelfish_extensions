@@ -747,3 +747,46 @@ GO
 DECLARE @x XML = '<root><name>John</name></root>';
 SELECT @x.query('/root/name', 'extra');
 GO
+
+
+-- ============================================
+-- SECTION 53: Malformed XML inputs
+-- ============================================
+-- 1. Unclosed tag
+DECLARE @x XML = '<unclosed';
+SELECT @x.query('/r');
+GO
+
+-- 2. Mismatched tags
+DECLARE @x XML = '<a></b>';
+SELECT @x.query('/a');
+GO
+
+-- 3. Plain text (no elements)
+DECLARE @x XML = 'hello world';
+SELECT @x.query('/');
+GO
+
+-- 4. Empty string
+DECLARE @x XML = '';
+SELECT @x.query('/');
+GO
+
+-- 5. Bare ampersand (not an entity)
+DECLARE @x XML = '<r>a & b</r>';
+SELECT @x.query('/r');
+GO
+
+-- 6. Invalid name (starts with digit)
+DECLARE @x XML = '<1bad>x</1bad>';
+SELECT @x.query('/');
+GO
+
+-- 7. Direct call to bbf_xmlquery with malformed CAST
+SELECT sys.bbf_xmlquery('/r', CAST('<broken' AS XML));
+GO
+
+-- 8. Direct call with non-xml type (VARCHAR)
+DECLARE @v VARCHAR(20) = '<r/>';
+SELECT sys.bbf_xmlquery('/r', @v);
+GO

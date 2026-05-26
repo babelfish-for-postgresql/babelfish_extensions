@@ -1391,3 +1391,93 @@ GO
 
 ~~ERROR (Message: The query function requires 1 argument(s).)~~
 
+
+
+-- ============================================
+-- SECTION 53: Malformed XML inputs
+-- ============================================
+-- 1. Unclosed tag
+DECLARE @x XML = '<unclosed';
+SELECT @x.query('/r');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+-- 2. Mismatched tags
+DECLARE @x XML = '<a></b>';
+SELECT @x.query('/a');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+-- 3. Plain text (no elements)
+DECLARE @x XML = 'hello world';
+SELECT @x.query('/');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+-- 4. Empty string
+DECLARE @x XML = '';
+SELECT @x.query('/');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+-- 5. Bare ampersand (not an entity)
+DECLARE @x XML = '<r>a & b</r>';
+SELECT @x.query('/r');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+-- 6. Invalid name (starts with digit)
+DECLARE @x XML = '<1bad>x</1bad>';
+SELECT @x.query('/');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+-- 7. Direct call to bbf_xmlquery with malformed CAST
+SELECT sys.bbf_xmlquery('/r', CAST('<broken' AS XML));
+GO
+~~ERROR (Code: 9451)~~
+
+~~ERROR (Message: invalid XML content)~~
+
+
+-- 8. Direct call with non-xml type (VARCHAR)
+DECLARE @v VARCHAR(20) = '<r/>';
+SELECT sys.bbf_xmlquery('/r', @v);
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on varchar.)~~
+
+
