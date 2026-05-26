@@ -10568,7 +10568,7 @@ GO
 
 
 -- ============================================================
--- SECTION 20: EMPTY GEOMETRY 
+-- SECTION 20: EMPTY GEOMETRY
 -- ============================================================
 -- 20.1 Insert and query empty point
 INSERT INTO si_geom_tbl (geom) VALUES (geometry::STGeomFromText('POINT EMPTY', 4326));
