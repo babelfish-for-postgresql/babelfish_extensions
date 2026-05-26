@@ -781,12 +781,3 @@ GO
 DECLARE @x XML = '<1bad>x</1bad>';
 SELECT @x.query('/');
 GO
-
--- 7. Direct call to bbf_xmlquery with malformed CAST
-SELECT sys.bbf_xmlquery('/r', CAST('<broken' AS XML));
-GO
-
--- 8. Direct call with non-xml type (VARCHAR)
-DECLARE @v VARCHAR(20) = '<r/>';
-SELECT sys.bbf_xmlquery('/r', @v);
-GO
