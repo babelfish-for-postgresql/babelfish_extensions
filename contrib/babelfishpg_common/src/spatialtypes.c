@@ -13,6 +13,7 @@
 #include "utils/builtins.h"
 #include "utils/array.h"
 #include "utils/datum.h"
+#include "utils/memutils.h"
 #include "catalog/pg_type.h"
 #include "spatialtypes.h"
 
@@ -2338,8 +2339,15 @@ calculate_child_wkb_size(uint8 parent_type, uint32_t child_npoints, bool has_z, 
             return 5 + coord_per_point;
 
         case MULTILINESTRING_TYPE:
-            /* byte_order(1) + type(4) + npoints(4) + coords */
-            return 9 + child_npoints * coord_per_point;
+        {
+            /* byte_order(1) + type(4) + npoints(4) + coords.
+             * Use uint64 intermediate so a crafted varbinary with a huge
+             * child_npoints cannot overflow uint32 and yield a tiny palloc. */
+            uint64_t size = (uint64_t) 9 + (uint64_t) child_npoints * coord_per_point;
+            if (size > MaxAllocSize)
+                THROW_VARBINARY_CONVERSION_ERROR();
+            return (uint32_t) size;
+        }
 
         default:
             return 0;
@@ -2936,7 +2944,7 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                     geom_data->geom_type = VALID_3DMLINE_MP;  /* 0x07 */
                     geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;
                     break;
-                
+
                 case MULTILINESTRING_TYPE:
                     geom_data->geom_type = VALID_3DMLINE_MP;  /* 0x07 */
                     geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;

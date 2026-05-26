@@ -964,6 +964,304 @@ E6100000010404000000000000000000244000000000000024400000000000003440000000000000
 ~~END~~
 
 
+
+-- ============================================================================
+-- SECTION 17: MultiLineString — STMLineFromText / STMLineFromWKB
+-- ============================================================================
+-- TC-MLS-073: Geometry STMLineFromText — Basic 2D
+SELECT geometry::STMLineFromText('MULTILINESTRING((1 2, 3 4))', 4326);
+GO
+~~START~~
+geometry
+E6100000010402000000000000000000F03F00000000000000400000000000000840000000000000104001000000010000000002000000FFFFFFFF0000000005000000000000000002
+~~END~~
+
+
+SELECT CAST(CAST(geometry::STMLineFromText('MULTILINESTRING((1 2, 3 4))', 4326) AS varbinary(max)) AS geometry);
+GO
+~~START~~
+geometry
+E6100000010402000000000000000000F03F00000000000000400000000000000840000000000000104001000000010000000002000000FFFFFFFF0000000005000000000000000002
+~~END~~
+
+
+-- TC-MLS-074: Geometry STMLineFromText — Two LineStrings
+SELECT geometry::STMLineFromText('MULTILINESTRING((1 2, 3 4), (5 6, 7 8))', 4326);
+GO
+~~START~~
+geometry
+E6100000010404000000000000000000F03F000000000000004000000000000008400000000000001040000000000000144000000000000018400000000000001C400000000000002040020000000100000000010200000003000000FFFFFFFF0000000005000000000000000002000000000100000002
+~~END~~
+
+
+SELECT geometry::STMLineFromText('MULTILINESTRING((1 2, 3 4), (5 6, 7 8))', 4326).STAsText();
+GO
+~~START~~
+nvarchar
+MULTILINESTRING((1 2,3 4),(5 6,7 8))
+~~END~~
+
+
+-- TC-MLS-075: Geometry STMLineFromText — 3D (XYZ)
+SELECT geometry::STMLineFromText('MULTILINESTRING((1 2 3, 4 5 6))', 4326).STAsText();
+GO
+~~START~~
+nvarchar
+MULTILINESTRING((1 2,4 5))
+~~END~~
+
+
+-- TC-MLS-076: Geometry STMLineFromText — 4D (XYZM)
+SELECT geometry::STMLineFromText('MULTILINESTRING((1 2 3 4, 5 6 7 8))', 4326).STAsText();
+GO
+~~START~~
+nvarchar
+MULTILINESTRING((1 2,5 6))
+~~END~~
+
+
+-- TC-MLS-077: Geometry STMLineFromText — Empty
+SELECT geometry::STMLineFromText('MULTILINESTRING EMPTY', 4326);
+GO
+~~START~~
+geometry
+E61000000104000000000000000001000000FFFFFFFFFFFFFFFF05
+~~END~~
+
+
+SELECT geometry::STMLineFromText('MULTILINESTRING EMPTY', 4326).STAsText();
+GO
+~~START~~
+nvarchar
+MULTILINESTRING EMPTY
+~~END~~
+
+
+-- TC-MLS-078: Geometry STMLineFromText — Wrong geometry type LINESTRING (should ERROR)
+SELECT geometry::STMLineFromText('LINESTRING(1 2, 3 4)', 4326);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTILINESTRING" at position 1. The input has ST_LineString)~~
+
+
+-- TC-MLS-079: Geometry STMLineFromText — Wrong geometry type POINT (should ERROR)
+SELECT geometry::STMLineFromText('POINT(1 2)', 4326);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTILINESTRING" at position 1. The input has ST_Point)~~
+
+
+-- TC-MLS-080: Geometry STMLineFromText — Wrong geometry type POLYGON (should ERROR)
+SELECT geometry::STMLineFromText('POLYGON((0 0, 1 0, 1 1, 0 0))', 4326);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTILINESTRING" at position 1. The input has ST_Polygon)~~
+
+
+-- TC-MLS-081: Geometry STMLineFromText — Wrong geometry type MULTIPOINT (should ERROR)
+SELECT geometry::STMLineFromText('MULTIPOINT((1 2), (3 4))', 4326);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTILINESTRING" at position 1. The input has ST_MultiPoint)~~
+
+
+-- TC-MLS-082: Geometry STMLineFromText — NULL input → NULL
+SELECT geometry::STMLineFromText(NULL, 4326);
+GO
+~~START~~
+geometry
+<NULL>
+~~END~~
+
+
+-- TC-MLS-083: Geometry STMLineFromText — NULL SRID (should ERROR)
+SELECT geometry::STMLineFromText('MULTILINESTRING((1 2, 3 4))', NULL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geometry::STMLineFromText' failed because parameter 2 is not allowed to be null.)~~
+
+
+-- TC-MLS-084: Geometry STMLineFromWKB — Basic 2D round-trip
+DECLARE @wkb084 VARBINARY(MAX) = geometry::STGeomFromText('MULTILINESTRING((1 2, 3 4))', 4326).STAsBinary();
+SELECT geometry::STMLineFromWKB(@wkb084, 4326).STAsText();
+GO
+~~START~~
+nvarchar
+MULTILINESTRING((1 2,3 4))
+~~END~~
+
+
+-- TC-MLS-085: Geometry STMLineFromWKB — Two LineStrings round-trip
+DECLARE @wkb085 VARBINARY(MAX) = geometry::STGeomFromText('MULTILINESTRING((1 2, 3 4), (5 6, 7 8))', 4326).STAsBinary();
+SELECT geometry::STMLineFromWKB(@wkb085, 4326).STAsText();
+GO
+~~START~~
+nvarchar
+MULTILINESTRING((1 2,3 4),(5 6,7 8))
+~~END~~
+
+
+-- TC-MLS-086: Geometry STMLineFromWKB — Wrong type binary LINESTRING (should ERROR)
+DECLARE @wkb086 VARBINARY(MAX) = geometry::STGeomFromText('LINESTRING(1 2, 3 4)', 4326).STAsBinary();
+SELECT geometry::STMLineFromWKB(@wkb086, 4326);
+GO
+~~START~~
+geometry
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTILINESTRING" at position 1. The input has ST_LineString)~~
+
+
+-- TC-MLS-087: Geometry STMLineFromWKB — Wrong type binary MULTIPOINT (should ERROR)
+DECLARE @wkb087 VARBINARY(MAX) = geometry::STGeomFromText('MULTIPOINT((1 2), (3 4))', 4326).STAsBinary();
+SELECT geometry::STMLineFromWKB(@wkb087, 4326);
+GO
+~~START~~
+geometry
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTILINESTRING" at position 1. The input has ST_MultiPoint)~~
+
+
+-- TC-MLS-088: Geometry STMLineFromWKB — NULL input → NULL
+SELECT geometry::STMLineFromWKB(NULL, 4326);
+GO
+~~START~~
+geometry
+<NULL>
+~~END~~
+
+
+-- TC-MLS-089: Geometry STMLineFromWKB — NULL SRID (should ERROR)
+DECLARE @wkb089 VARBINARY(MAX) = geometry::STGeomFromText('MULTILINESTRING((1 2, 3 4))', 4326).STAsBinary();
+SELECT geometry::STMLineFromWKB(@wkb089, NULL);
+GO
+~~START~~
+geometry
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geometry::STMLineFromWKB' failed because parameter 2 is not allowed to be null.)~~
+
+
+-- TC-MLS-090: Geography STMLineFromText — Basic
+SELECT geography::STMLineFromText('MULTILINESTRING((10 10, 20 20))', 4326).STAsText();
+GO
+~~START~~
+nvarchar
+MULTILINESTRING((10 10,20 20))
+~~END~~
+
+
+-- TC-MLS-091: Geography STMLineFromText — Two LineStrings
+SELECT geography::STMLineFromText('MULTILINESTRING((10 10, 20 20), (30 30, 40 40))', 4326).STAsText();
+GO
+~~START~~
+nvarchar
+MULTILINESTRING((10 10,20 20),(30 30,40 40))
+~~END~~
+
+
+-- TC-MLS-092: Geography STMLineFromText — Empty
+SELECT geography::STMLineFromText('MULTILINESTRING EMPTY', 4326).STAsText();
+GO
+~~START~~
+nvarchar
+MULTILINESTRING EMPTY
+~~END~~
+
+
+-- TC-MLS-093: Geography STMLineFromText — Wrong type POINT (should ERROR)
+SELECT geography::STMLineFromText('POINT(45 90)', 4326);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTILINESTRING" at position 1. The input has ST_Point)~~
+
+
+-- TC-MLS-094: Geography STMLineFromText — Wrong type LINESTRING (should ERROR)
+SELECT geography::STMLineFromText('LINESTRING(10 10, 20 20)', 4326);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTILINESTRING" at position 1. The input has ST_LineString)~~
+
+
+-- TC-MLS-095: Geography STMLineFromText — Latitude > 90 (should ERROR)
+BEGIN TRY
+    SELECT geography::STMLineFromText('MULTILINESTRING((10 91, 20 20))', 4326);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_MESSAGE();
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
+
+
+-- TC-MLS-096: Geography STMLineFromText — NULL input → NULL
+SELECT geography::STMLineFromText(NULL, 4326);
+GO
+~~START~~
+geography
+<NULL>
+~~END~~
+
+
+-- TC-MLS-097: Geography STMLineFromText — NULL SRID (should ERROR)
+SELECT geography::STMLineFromText('MULTILINESTRING((10 10, 20 20))', NULL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geography::STMLineFromText' failed because parameter 2 is not allowed to be null.)~~
+
+
+-- TC-MLS-098: Geography STMLineFromWKB — Basic round-trip
+DECLARE @wkb098 VARBINARY(MAX) = geography::STGeomFromText('MULTILINESTRING((10 10, 20 20))', 4326).STAsBinary();
+SELECT geography::STMLineFromWKB(@wkb098, 4326).STAsText();
+GO
+~~START~~
+nvarchar
+MULTILINESTRING((10 10,20 20))
+~~END~~
+
+
+-- TC-MLS-099: Geography STMLineFromWKB — Wrong type binary POINT (should ERROR)
+DECLARE @wkb099 VARBINARY(MAX) = geography::STGeomFromText('POINT(45 50)', 4326).STAsBinary();
+SELECT geography::STMLineFromWKB(@wkb099, 4326);
+GO
+~~START~~
+geography
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected "MULTILINESTRING" at position 1. The input has ST_Point)~~
+
+
+-- TC-MLS-100: Geography STMLineFromWKB — NULL input → NULL
+SELECT geography::STMLineFromWKB(NULL, 4326);
+GO
+~~START~~
+geography
+<NULL>
+~~END~~
+
+
+-- TC-MLS-101: Geography STMLineFromWKB — NULL SRID (should ERROR)
+DECLARE @wkb101 VARBINARY(MAX) = geography::STGeomFromText('MULTILINESTRING((10 10, 20 20))', 4326).STAsBinary();
+SELECT geography::STMLineFromWKB(@wkb101, NULL);
+GO
+~~START~~
+geography
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'geography::STMLineFromWKB' failed because parameter 2 is not allowed to be null.)~~
+
+
 -- ============================================================================
 -- SECTION: Geometry MultiLineString Property Views
 -- ============================================================================
