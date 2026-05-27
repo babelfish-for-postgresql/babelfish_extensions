@@ -417,10 +417,17 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 	/* Output opening tag (only when element_name is non-empty) */
 	if (element_name[0] != '\0')
 	{
+		/*
+		 * When XSINIL is set, xmlns:xsi normally goes on the row tag.
+		 * If ROOT already declared it (state starts with '{'), suppress
+		 * the per-row declaration to match T-SQL behavior.
+		 */
+		bool root_has_xmlns = (state->len > 0 && state->data[0] == '{');
+
 		if (elements)
 		{
 			/* ELEMENTS mode: <row><col>value</col></row> */
-			if (xsinil)
+			if (xsinil && !root_has_xmlns)
 				appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
 			else
 				appendStringInfo(state, "<%s>", element_name);
@@ -593,21 +600,27 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 
 	/*
 	 * each tuple is either contained in a "row" tag, or standalone if the
-	 * element_name is an empty string
+	 * element_name is an empty string.
+	 *
+	 * When XSINIL is set, xmlns:xsi normally goes on the row tag.
+	 * If ROOT already declared it (state starts with '{'), suppress the
+	 * per-row declaration to match T-SQL behavior.
 	 */
 	if (element_name && strlen(element_name) > 0)
 	{
+		bool root_has_xmlns = (state->len > 0 && state->data[0] == '{');
+
 		/* if "''" is the input path, ignore it per TSQL behavior */
 		if (has_att_centric)
 		{
-			if (xsinil)
+			if (xsinil && !root_has_xmlns)
 				appendStringInfo(state, "<%s " XML_XMLNS_XSI, element_name);
 			else
 				appendStringInfo(state, "<%s", element_name);
 		}
 		else
 		{
-			if (xsinil)
+			if (xsinil && !root_has_xmlns)
 				appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
 			else
 				appendStringInfo(state, "<%s>", element_name);
