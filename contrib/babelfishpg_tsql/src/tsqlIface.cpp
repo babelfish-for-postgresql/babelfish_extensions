@@ -9346,6 +9346,7 @@ maybe_inject_spatial_distance_filter_for_ctx(T ctx, const std::string &spatial_f
  * this is a missed optimization, not a correctness issue. Users migrating
  * legacy T-SQL that writes the literal on the LHS may notice the perf gap;
  * rewriting the predicate as `col.STFn(...) = 1` restores the index push-down.
+ * Tracked in BABEL-6665.
  */
 template<class T>
 static bool
