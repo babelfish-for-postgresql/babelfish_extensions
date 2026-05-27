@@ -1,4 +1,6 @@
 -- parallel_query_expected
+SET QUOTED_IDENTIFIER ON
+GO
 ---------------------------------------------------
 --- Check for inconsistent metadata after upgrade
 ----------------------------------------------------

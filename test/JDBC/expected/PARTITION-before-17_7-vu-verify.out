@@ -1,3 +1,5 @@
+SET QUOTED_IDENTIFIER ON
+GO
 ---------------------------------------------------
 --- Check for inconsistent metadata after upgrade
 ----------------------------------------------------

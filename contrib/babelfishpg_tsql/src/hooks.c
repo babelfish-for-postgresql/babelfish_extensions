@@ -5896,7 +5896,7 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 		update_rte_perms_info_walker((Node *) parse, NULL);
 
 	/* Check GUCs for INSERT/UPDATE into tables with PERSISTED computed columns */
-	if (sql_dialect == SQL_DIALECT_TSQL && (parse->commandType == CMD_INSERT || parse->commandType == CMD_UPDATE))
+	if (sql_dialect == SQL_DIALECT_TSQL && (parse->commandType == CMD_INSERT || parse->commandType == CMD_UPDATE || parse->commandType == CMD_DELETE))
 	{
 		guc_check_insert_update(parse);
 	}

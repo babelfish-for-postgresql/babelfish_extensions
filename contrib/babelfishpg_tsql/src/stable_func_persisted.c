@@ -264,6 +264,33 @@ void guc_check_insert_update(Query *parse)
                  errmsg("INSERT/UPDATE failed because the following SET options have incorrect settings: '%s'", mismatched),
                  errhint("Verify that SET options are correct for use with indexed views and/or indexes on computed columns.")));
     }
+
+    if (!check_persisted_gucs())
+    {
+        Relation    rel;
+        List       *fk_list;
+        ListCell   *lc;
+
+        rel = relation_open(rte->relid, AccessShareLock);
+        fk_list = RelationGetFKeyList(rel);
+
+        foreach(lc, fk_list)
+        {
+            ForeignKeyCacheInfo *fk = (ForeignKeyCacheInfo *) lfirst(lc);
+
+            if (table_has_persisted_computed_cols(fk->confrelid))
+            {
+                relation_close(rel, AccessShareLock);
+                ereport(ERROR,
+                        (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+                         errmsg("INSERT/UPDATE failed because the following SET options have incorrect settings: '%s'",
+                                get_mismatched_persisted_gucs()),
+                         errhint("Verify that SET options are correct for use with indexed views and/or indexes on computed columns.")));
+            }
+        }
+
+        relation_close(rel, AccessShareLock);
+    }
 }
 
 typedef struct
@@ -282,17 +309,36 @@ query_rewrite_helper(Node *node, void *context)
         return NULL;
 
     if (IsA(node, Query))
-        return (Node *) query_tree_mutator((Query *) node, query_rewrite_helper, context, QTW_DONT_COPY_QUERY);
+        return node;
 
     if (IsA(node, Var))
     {
         Var *v = (Var *) node;
-        if (v->varno == ctx->varno && v->varattno == ctx->varattno)
+        if (v->varno == ctx->varno && v->varattno == ctx->varattno && v->varlevelsup == 0)
             return copyObject(ctx->expr);
         return node;
     }
 
     return expression_tree_mutator(node, query_rewrite_helper, context);
+}
+
+static bool
+sublink_rewrite_walker(Node *node, void *context)
+{
+    if (node == NULL)
+        return false;
+
+    if (IsA(node, SubLink))
+    {
+        SubLink *sl = (SubLink *) node;
+        if (sl->subselect)
+            query_rewrite_persisted(castNode(Query, sl->subselect));
+    }
+
+    if (IsA(node, Query))
+        return query_tree_walker((Query *) node, sublink_rewrite_walker, context, 0);
+
+    return expression_tree_walker(node, sublink_rewrite_walker, context);
 }
 
 void query_rewrite_persisted(Query *parse)
@@ -330,6 +376,8 @@ void query_rewrite_persisted(Query *parse)
             if (expr_generated == NULL)
                 continue;
 
+            ChangeVarNodes(expr_generated, 1, rindex, 0);
+
             ctx.varno = rindex;
             ctx.varattno = attr->attnum;
             ctx.expr = expr_generated;
@@ -346,4 +394,8 @@ void query_rewrite_persisted(Query *parse)
         if (cte->ctequery)
             query_rewrite_persisted(castNode(Query, cte->ctequery));
     }
+
+    /* Recurse into SubLink subqueries */
+    if (parse->hasSubLinks)
+        query_tree_walker(parse, sublink_rewrite_walker, NULL, 0);
 }
