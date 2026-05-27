@@ -113,7 +113,7 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER AGGREGATE sys.tsql_select_for_xml_agg(anyelement, integer, text, boolean, text, boolean, boolean)
-    RENAME TO tsql_select_for_xml_agg_deprecated_in_5_7_0;
+    RENAME TO tsql_select_for_xml_agg_deprecated_in_6_2_0;
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -129,7 +129,7 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER AGGREGATE sys.tsql_select_for_xml_text_agg(anyelement, integer, text, boolean, text, boolean, boolean)
-    RENAME TO tsql_select_for_xml_text_agg_deprecated_in_5_7_0;
+    RENAME TO tsql_select_for_xml_text_agg_deprecated_in_6_2_0;
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
@@ -145,7 +145,7 @@ DECLARE
     exception_message text;
 BEGIN
     ALTER FUNCTION sys.tsql_query_to_xml_sfunc(internal, anyelement, integer, text, boolean, text, boolean, boolean)
-    RENAME TO tsql_query_to_xml_sfunc_deprecated_in_5_7_0;
+    RENAME TO tsql_query_to_xml_sfunc_deprecated_in_6_2_0;
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
