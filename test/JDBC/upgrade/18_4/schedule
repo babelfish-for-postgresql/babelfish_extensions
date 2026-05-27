@@ -224,7 +224,6 @@ forjson-nesting
 forjsonauto
 format
 format-dep
-forxml
 forxml-path
 forxml-subquery
 fulltextserviceproperty
@@ -684,3 +683,4 @@ forxml-raw-elements-1gb-limit
 forxml-path-elements
 babel_sqlvariant_coerce_type
 forxml-auto-before-17_11-or-18_5
+forxml-before-17_10-or-18_4
