@@ -1542,6 +1542,7 @@ SELECT v1.CompanyName, v1.OrderID, v2.ProductID, v2.Quantity
 FROM forxmlauto_v_customer_orders v1
 JOIN forxmlauto_v_order_summary v2 ON v1.OrderID = v2.OrderID
 WHERE v1.CustomerID = 'ALFKI'
+ORDER BY v2.ProductID
 FOR XML AUTO;
 GO
 ~~START~~
