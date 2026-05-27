@@ -1,3 +1,4 @@
+-- tsql
 -- ============================================================
 -- SESSION-LEVEL GUC CONFIGURATION
 -- ============================================================
@@ -62,6 +63,18 @@ text
 off
 ~~END~~
 
+
+-- psql
+-- Refresh planner statistics so plan shape (Workers Planned, Index Scan vs
+-- Parallel Bitmap Heap Scan, per-worker row counts) is deterministic across
+-- runners with different CPU counts. Required for parallel-query mode.
+ANALYZE master_dbo.si_geom_tbl;
+ANALYZE master_dbo.si_geog_tbl;
+ANALYZE master_dbo.si_multi_tbl;
+ANALYZE master_dbo.si_view_tbl;
+GO
+
+-- tsql
 
 -- ============================================================
 -- SECTION 1: DDL ERROR CASES
@@ -168,8 +181,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t2_1 FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=11 loops=1)
@@ -267,8 +279,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t2_4 FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom)  =   1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=11 loops=1)
@@ -335,8 +346,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT      sys.pltsql_assign_var(2, cast((COUNT(*)) as int)) FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=11 loops=1)
@@ -404,8 +414,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT        sys.pltsql_assign_var(2, cast((COUNT(*)) as int)) FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=11 loops=1)
@@ -900,8 +909,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t5_alias FROM si_geom_tbl t
-WHERE t.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE t.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),t.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl t (actual rows=11 loops=1)
@@ -970,8 +978,7 @@ Result (actual rows=1 loops=1)
 text
 Query Text: SELECT COUNT(*) AS t5_subq
 FROM (SELECT id, geom FROM si_geom_tbl WHERE id < 500) sub
-WHERE sub.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE sub.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),sub.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=4 loops=1)
@@ -1126,8 +1133,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t6_null FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=11 loops=1)
@@ -1206,8 +1212,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t6_mixed FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((450 450, 550 450, 550 550, 450 550, 450 450))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((450 450, 550 450, 550 550, 450 550, 450 450))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((450 450, 550 450, 550 550, 450 550, 450 450))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=12 loops=1)
@@ -1265,8 +1270,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t7_g1 FROM si_multi_tbl
-WHERE si_multi_tbl.g1 OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((50 50, 100 50, 100 100, 50 100, 50 50))', 4326) AND STIntersects(
+WHERE si_multi_tbl.g1 OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((50 50, 100 50, 100 100, 50 100, 50 50))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((50 50, 100 50, 100 100, 50 100, 50 50))', 4326),si_multi_tbl.g1) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_g1si_multi_tblac743c163c34a46c79e40a92c302a0b0 on si_multi_tbl (actual rows=5 loops=1)
@@ -1303,8 +1307,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t7_g2 FROM si_multi_tbl
-WHERE si_multi_tbl.g2 OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((600 600, 700 600, 700 700, 600 700, 600 600))', 4326) AND STIntersects(
+WHERE si_multi_tbl.g2 OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((600 600, 700 600, 700 700, 600 700, 600 600))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((600 600, 700 600, 700 700, 600 700, 600 600))', 4326),si_multi_tbl.g2) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_g2si_multi_tbl9aba3c2186c4da1be0c116d309bfb429 on si_multi_tbl (actual rows=20 loops=1)
@@ -1373,8 +1376,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t8_baseline FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=12 loops=1)
@@ -1451,8 +1453,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t8_after_rollback FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=12 loops=1)
@@ -1505,8 +1506,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t8_after_del_rb FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=12 loops=1)
@@ -1565,8 +1565,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t8_after_commit FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=13 loops=1)
@@ -1667,8 +1666,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t10_intersects FROM si_geog_tbl
-WHERE si_geog_tbl.geog OPERATOR(sys.&&) 
-    geography__STGeomFromText('POLYGON((-50 -50, 50 -50, 50 50, -50 50, -50 -50))', 4326) AND STIntersects(
+WHERE si_geog_tbl.geog OPERATOR(sys.&&) geography__STGeomFromText('POLYGON((-50 -50, 50 -50, 50 50, -50 50, -50 -50))', 4326) AND STIntersects(
     geography__STGeomFromText('POLYGON((-50 -50, 50 -50, 50 50, -50 50, -50 -50))', 4326),si_geog_tbl.geog) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geogsi_geog_tbl729747c85e67e12519a1adc3c7c52715 on si_geog_tbl (actual rows=145 loops=1)
@@ -9770,8 +9768,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT       sys.pltsql_assign_var(2, cast((COUNT(*)) as int)) FROM si_geog_tbl
-WHERE si_geog_tbl.geog OPERATOR(sys.&&) 
-    geography__STGeomFromText('POLYGON((-50 -50, 50 -50, 50 50, -50 50, -50 -50))', 4326) AND STIntersects(
+WHERE si_geog_tbl.geog OPERATOR(sys.&&) geography__STGeomFromText('POLYGON((-50 -50, 50 -50, 50 50, -50 50, -50 -50))', 4326) AND STIntersects(
     geography__STGeomFromText('POLYGON((-50 -50, 50 -50, 50 50, -50 50, -50 -50))', 4326),si_geog_tbl.geog) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geogsi_geog_tbl729747c85e67e12519a1adc3c7c52715 on si_geog_tbl (actual rows=145 loops=1)
@@ -9858,8 +9855,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT      sys.pltsql_assign_var(2, cast((COUNT(*)) as int)) FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=13 loops=1)
@@ -9886,8 +9882,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT      sys.pltsql_assign_var(3, cast((COUNT(*)) as int)) FROM si_geom_tbl                
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=13 loops=1)
@@ -9974,8 +9969,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t13_1 FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom)	=
 1
 Aggregate (actual rows=1 loops=1)
@@ -10015,8 +10009,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t13_2 FROM si_geom_tbl
-WHERE NOT (si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE NOT (si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1)
   AND si_geom_tbl.geom IS NOT NULL
 Aggregate (actual rows=1 loops=1)
@@ -10057,8 +10050,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT         sys.pltsql_assign_var(2, cast((COUNT(*)) as int)) FROM si_geom_tbl
-WHERE NOT (si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE NOT (si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1)
   AND si_geom_tbl.geom IS NOT NULL
 Aggregate (actual rows=1 loops=1)
@@ -10444,8 +10436,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT        sys.pltsql_assign_var(2, cast((COUNT(*)) as int)) FROM si_view_tbl                
-WHERE si_view_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((0 0, 1000 0, 1000 1000, 0 1000, 0 0))', 4326) AND STIntersects(
+WHERE si_view_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((0 0, 1000 0, 1000 1000, 0 1000, 0 0))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((0 0, 1000 0, 1000 1000, 0 1000, 0 0))', 4326),si_view_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_v_geomsi_view_tbl903c50480fc951b298d4c86ac748a899 on si_view_tbl (actual rows=0 loops=1)
@@ -10472,8 +10463,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT/*+ indexscan(si_view_tbl si_v_geomsi_view_tbl903c50480fc951b298d4c86ac748a899) */        sys.pltsql_assign_var(3, cast((COUNT(*)) as int)) FROM si_view_tbl                        
-WHERE si_view_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((0 0, 1000 0, 1000 1000, 0 1000, 0 0))', 4326) AND STIntersects(
+WHERE si_view_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((0 0, 1000 0, 1000 1000, 0 1000, 0 0))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((0 0, 1000 0, 1000 1000, 0 1000, 0 0))', 4326),si_view_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_v_geomsi_view_tbl903c50480fc951b298d4c86ac748a899 on si_view_tbl (actual rows=0 loops=1)
@@ -10552,8 +10542,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t19_srid FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 0) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 0) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 0),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=0 loops=1)
@@ -10691,8 +10680,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT      sys.pltsql_assign_var(4, cast((COUNT(*)) as int)) FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=13 loops=1)
@@ -10889,6 +10877,12 @@ CREATE SPATIAL INDEX si_geom ON si_geom_tbl(geom)
 USING GEOMETRY_GRID WITH (BOUNDING_BOX = (0, 0, 1000, 1000));
 GO
 
+-- psql
+-- Re-ANALYZE after index recreate so subsequent plan-capture queries are stable.
+ANALYZE master_dbo.si_geom_tbl;
+GO
+
+-- tsql
 DECLARE @after INT;
 SELECT @after = COUNT(*) FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(
@@ -11131,8 +11125,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t36_mpoint FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=13 loops=1)
@@ -11170,8 +11163,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t36_mpoly FROM si_geom_tbl
-WHERE si_geom_tbl.geom OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((115 115, 145 115, 145 145, 115 145, 115 115))', 4326) AND STIntersects(
+WHERE si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((115 115, 145 115, 145 145, 115 145, 115 115))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((115 115, 145 115, 145 145, 115 145, 115 115))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=1 loops=1)
@@ -11313,8 +11305,7 @@ Result (actual rows=1 loops=1)
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t39_chain FROM si_geom_tbl
-WHERE MakeValid(si_geom_tbl.geom) OPERATOR(sys.&&) 
-    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
+WHERE MakeValid(si_geom_tbl.geom) OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326) AND STIntersects(
     geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),MakeValid(si_geom_tbl.geom)) = 1
 Aggregate (actual rows=1 loops=1)
   ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
