@@ -8,7 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-# all
+all
 
 
 # These tests are ignored since latest changes with UTF-16<->binary conversion
