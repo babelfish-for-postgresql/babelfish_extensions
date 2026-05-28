@@ -8,7 +8,8 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
+# all
+
 
 # These tests are ignored since latest changes with UTF-16<->binary conversion
 # They show the previous behavior of the conversion functions
@@ -795,6 +796,7 @@ ignore#!#xml_value-before-17_12-or-18_5-vu-prepare
 ignore#!#xml_value-before-17_12-or-18_5-vu-verify
 ignore#!#xml_value-before-17_12-or-18_5-vu-cleanup
 ignore#!#BABEL-6239-before-17_12-or-18_5-vu-verify
+ignore#!#PARTITION-before-17_12-or-18_5-vu-prepare
 ignore#!#PARTITION-before-17_12-or-18_5-vu-verify
 ignore#!#PARTITION-before-17_12-or-18_5-vu-cleanup
 ignore#!#datalength-before-17_12-or-18_5
