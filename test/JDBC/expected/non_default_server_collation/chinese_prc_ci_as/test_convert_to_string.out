@@ -5770,7 +5770,6 @@ CREATE TABLE convert_computed_binary (
 );
 GO
 
-
 -- Table with Computed Columns for Special Types
 CREATE TABLE convert_computed_special (
     ID INT IDENTITY(1,1),
@@ -6155,6 +6154,10 @@ DROP TABLE convert_computed_decimals;
 DROP TABLE convert_computed_integers;
 DROP TABLE convert_computed_special;
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "convert_computed_datetime" does not exist)~~
+
 ~~ERROR (Code: 3701)~~
 
 ~~ERROR (Message: table "convert_computed_decimals" does not exist)~~
