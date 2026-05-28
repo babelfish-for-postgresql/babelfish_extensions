@@ -1443,3 +1443,40 @@ xml
 
 ~~ERROR (Message: could not parse XML document)~~
 
+
+-- 7. Direct call to bbf_xmlquery with malformed CAST (unclosed tag)
+SELECT sys.bbf_xmlquery('/r', CAST('<broken' AS XML));
+GO
+~~ERROR (Code: 9451)~~
+
+~~ERROR (Message: invalid XML content)~~
+
+
+-- 8. Direct call to bbf_xmlquery with mismatched tags via CAST
+SELECT sys.bbf_xmlquery('/r', CAST('<a><b></a>' AS XML));
+GO
+~~ERROR (Code: 9451)~~
+
+~~ERROR (Message: invalid XML content)~~
+
+
+-- 9. Direct call with non-xml type (VARCHAR)
+DECLARE @v VARCHAR(20) = '<r/>';
+SELECT sys.bbf_xmlquery('/r', @v);
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on varchar.)~~
+
+
+-- 10. Direct call with non-xml type (INT)
+SELECT sys.bbf_xmlquery('/r', 42);
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on int.)~~
+
