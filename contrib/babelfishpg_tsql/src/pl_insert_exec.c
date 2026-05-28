@@ -48,6 +48,7 @@ typedef struct
 	ExprContext *econtext;		/* expression context for projection */
 	ProjectionInfo *proj_info;	/* projection info for coercion */
 	TupleTableSlot *proj_slot;	/* result slot for projection */
+	CommandId	cid;			/* command ID obtained once in startup, shared across all tuples */
 } DR_insertexec;
 
 /* Forward declarations for DestReceiver callbacks */
@@ -405,6 +406,9 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 												 NULL,		/* no parent PlanState */
 												 typeinfo);	/* input descriptor */
 
+	/* Obtain command ID once - all tuples share the same cid for MVCC consistency */
+	myState->cid = GetCurrentCommandId(true);
+
 	/* temp_rel stays open - closed in cleanup function */
 }
 
@@ -415,10 +419,7 @@ static bool
 insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_insertexec *myState = (DR_insertexec *) self;
-	CommandId	cid;
 	TupleTableSlot *insert_slot;
-
-	cid = GetCurrentCommandId(true);
 
 	/* Reset per-tuple memory context for expression evaluation */
 	ResetExprContext(myState->econtext);
@@ -430,7 +431,7 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	insert_slot = ExecProject(myState->proj_info);
 
 	/* Insert the projected tuple */
-	table_tuple_insert(myState->temp_rel, insert_slot, cid, 0, NULL);
+	table_tuple_insert(myState->temp_rel, insert_slot, myState->cid, 0, NULL);
 
 	return true;
 }
