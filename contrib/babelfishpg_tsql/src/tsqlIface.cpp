@@ -4156,7 +4156,7 @@ static void process_select_statement(
 		Assert(selectCtx->for_clause()->XML() || selectCtx->for_clause()->JSON());
 		if (selectCtx->for_clause()->XML()) // FOR XML
 		{
-			Assert(selectCtx->for_clause()->RAW() || selectCtx->for_clause()->PATH());
+			Assert(selectCtx->for_clause()->RAW() || selectCtx->for_clause()->PATH() || selectCtx->for_clause()->AUTO());
 		}
 		else // for JSON
 		{
