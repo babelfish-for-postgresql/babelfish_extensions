@@ -16,23 +16,20 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_attribute.h"
 #include "commands/defrem.h"
+#include "executor/executor.h"
+#include "executor/tuptable.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-#include "executor/tuptable.h"
 #include "nodes/parsenodes.h"
 #include "parser/parse_coerce.h"
+#include "parser/scansup.h"
 #include "tcop/dest.h"
 #include "utils/builtins.h"
-
-#include "executor/executor.h"
-#include "parser/scansup.h"
+#include "utils/lsyscache.h"
 
 #include "catalog.h"
 #include "multidb.h"
 #include "session.h"
-
-#include "utils/builtins.h"
-#include "utils/lsyscache.h"
 
 extern int execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, List *params);
 
@@ -43,7 +40,6 @@ typedef struct
 {
 	DestReceiver pub;			/* public fields */
 	Relation	temp_rel;		/* open relation, closed in cleanup */
-	TupleDesc	typeinfo;		/* tuple descriptor from startup */
 	/* Projection infrastructure — coerce_to_target_type is a no-op when types already match */
 	ExprContext *econtext;		/* expression context for projection */
 	ProjectionInfo *proj_info;	/* projection info for coercion */
@@ -329,13 +325,13 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	int			i;
 	List	   *target_list = NIL;
 
-	/* store the tuple descriptor for later use */
-	myState->typeinfo = typeinfo;
-
 	/*
 	 * Validate column count
 	 */
 	result_natts = typeinfo->natts;
+
+	if (!OidIsValid(insert_exec_ctx.temp_table_oid))
+		elog(ERROR, "INSERT EXEC failed due to missing temp table OID");
 
 	/* Open temp table to get its tuple descriptor */
 	myState->temp_rel = table_open(insert_exec_ctx.temp_table_oid, RowExclusiveLock);
@@ -420,6 +416,10 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_insertexec *myState = (DR_insertexec *) self;
 	TupleTableSlot *insert_slot;
+
+	Assert(myState->temp_rel != NULL);
+	Assert(myState->proj_info != NULL);
+	Assert(myState->econtext != NULL);
 
 	/* Reset per-tuple memory context for expression evaluation */
 	ResetExprContext(myState->econtext);
