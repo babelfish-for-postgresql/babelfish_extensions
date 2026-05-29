@@ -1251,13 +1251,38 @@ ProcessLoginInternal(Port *port)
 	loginInfo = request;
 
 	/*
-	 * Truncate given database and user names to length of a Postgres name.
-	 * This avoids lookup failures when overlength names are given.
+	 * Truncate user name to fit Postgres NAMEDATALEN using TSQL-aware
+	 * truncation (clip + MD5 hash) so the result matches the role name
+	 * stored in the pg catalog. We cannot use truncate_identifier_hook here
+	 * because babelfishpg_tsql is not yet loaded at this stage.
+	 * Database name truncation is handled later in TdsSetDbContext()
+	 * where the hook is available.
 	 */
-	if (strlen(port->database_name) >= NAMEDATALEN)
-		port->database_name[NAMEDATALEN - 1] = '\0';
 	if (strlen(port->user_name) >= NAMEDATALEN)
-		port->user_name[NAMEDATALEN - 1] = '\0';
+	{
+		int			len = strlen(port->user_name);
+		char		md5[33];
+		char		buf[NAMEDATALEN];
+		const char *errstr = NULL;
+		char	   *downcased = downcase_identifier(port->user_name, len, false, false);
+
+		if (!pg_md5_hash(downcased, strlen(downcased), md5, &errstr))
+			ereport(FATAL,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("could not compute %s hash: %s", "MD5", errstr)));
+
+		len = pg_mbcliplen(port->user_name, len, NAMEDATALEN - 32 - 1);
+		memcpy(buf, port->user_name, len);
+		memcpy(buf + len, md5, 32);
+		buf[len + 32] = '\0';
+
+		pfree(downcased);
+
+		pfree(port->user_name);
+		port->user_name = pstrdup(buf);
+		pfree(loginInfo->username);
+		loginInfo->username = pstrdup(buf);
+	}
 
 	/*
 	 * Done putting stuff in TopMemoryContext.
@@ -2043,6 +2068,8 @@ TdsSetDbContext()
 			 * SQL injection.
 			 */
 			StartTransactionCommand();
+			truncate_identifier(loginInfo->database,
+								strlen(loginInfo->database), false);
 			db_id = pltsql_plugin_handler_ptr->pltsql_get_database_oid(loginInfo->database);
 			CommitTransactionCommand();
 			MemoryContextSwitchTo(oldContext);

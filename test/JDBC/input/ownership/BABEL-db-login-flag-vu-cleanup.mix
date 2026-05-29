@@ -1,0 +1,31 @@
+-- single_db_mode_expected
+-- tsql
+-- Cleanup: drop all logins and databases created for long identifier tests
+
+-- Drop long logins
+DROP LOGIN long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr;
+GO
+
+DROP LOGIN Mixed_Case_Login_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXy;
+GO
+
+DROP LOGIN Lögïn_Tëst_Üsér_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñò;
+GO
+
+-- Drop boundary login
+DROP LOGIN boundary_test_login_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
+GO
+
+-- Drop case-insensitive test login
+DROP LOGIN Case_Insensitive_Long_Login_Test_AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZzAaBbCcDdEeFfGgHhIiJjKkLlMmNn;
+GO
+
+-- Drop long databases
+DROP DATABASE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
+GO
+
+DROP DATABASE Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV;
+GO
+
+DROP DATABASE Dätàbäsé_Tëst_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóô;
+GO
