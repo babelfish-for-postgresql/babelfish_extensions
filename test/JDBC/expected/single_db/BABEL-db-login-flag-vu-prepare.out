@@ -28,41 +28,4 @@ GO
 CREATE LOGIN Case_Insensitive_Long_Login_Test_AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZzAaBbCcDdEeFfGgHhIiJjKkLlMmNn WITH PASSWORD = '123';
 GO
 
--- Scenario 6: Long database with 128 lowercase chars
-CREATE DATABASE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
-GO
 
--- Scenario 7: Long database with 128 mixed-case chars (different name from Scenario 6)
--- Verifies case-insensitive database name lookup via truncate_identifier hook
-CREATE DATABASE Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Only one user database allowed under single-db mode. User database "long_identifier_database_test_a894fb1797d5bd72eca891e48e292b226" already exists)~~
-
-
--- Scenario 8: Long database with 128 multibyte chars
-CREATE DATABASE Dätàbäsé_Tëst_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóô;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Only one user database allowed under single-db mode. User database "long_identifier_database_test_a894fb1797d5bd72eca891e48e292b226" already exists)~~
-
-
--- Enable guest access on long databases so logins can connect without creating users
-USE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
-GO
-GRANT CONNECT TO guest;
-GO
-
-USE Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV;
-GO
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "mixed_case_database_test_xyzabc30cf92ced03f7ac92f201f0af44b2711" does not exist)~~
-
-GRANT CONNECT TO guest;
-GO
-
-USE master;
-GO

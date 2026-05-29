@@ -1,10 +1,43 @@
 -- single_db_mode_expected
 -- tsql
+-- Create long databases for connection tests
+CREATE DATABASE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
+GO
+
+CREATE DATABASE Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV;
+GO
+
+CREATE DATABASE Dätàbäsé_Tëst_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóô;
+GO
+
+-- Enable guest access on long databases so logins can connect without creating users
+USE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
+GO
+GRANT CONNECT TO guest;
+GO
+
+USE Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV;
+GO
+GRANT CONNECT TO guest;
+GO
+
+USE master;
+GO
+
 -- Verify ALTER LOGIN works with long identifiers
 ALTER LOGIN long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr WITH PASSWORD = '1234';
 GO
 
 ALTER LOGIN Mixed_Case_Login_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXy WITH PASSWORD = '1234';
+GO
+
+ALTER LOGIN Lögïn_Tëst_Üsér_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñò WITH PASSWORD = '123';
+GO
+
+ALTER LOGIN boundary_test_login_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa WITH PASSWORD = '123';
+GO
+
+ALTER LOGIN CASE_INSENSITIVE_LONG_LOGIN_TEST_AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXXYYZZAABBCCDDEEFFGGHHIIJJKKLLMMNN WITH PASSWORD = '123';
 GO
 
 -- Scenario 1: Authenticate with long login (128 chars, lowercase)
