@@ -1537,12 +1537,6 @@ typedef struct PLtsql_execstate
 
 	int			tsql_trigger_flags;
 
-	/*
-	 * A same procedure can be invoked by either normal EXECUTE or INSERT ...
-	 * EXECUTE, and can behave differently.
-	 */
-	bool		insert_exec;
-
 	List	   *explain_infos;
 	instr_time	planning_start;
 	instr_time	planning_end;
@@ -1824,6 +1818,9 @@ typedef struct PLtsql_protocol_plugin
 	Datum       (*sql_geometry_from_bytea) (PG_FUNCTION_ARGS);
 	
 	Datum       (*sql_geography_from_bytea) (PG_FUNCTION_ARGS);
+
+	/* INSERT EXEC support */
+	bool		(*pltsql_insert_exec_active) (void);
 
 	/* Session level GUCs */
 	bool		quoted_identifier;
@@ -2228,6 +2225,7 @@ extern void pltsql_start_txn(void);
 extern void pltsql_commit_txn(void);
 extern void pltsql_rollback_txn(void);
 extern void pltsql_abort_any_transaction(void);
+extern void commit_stmt(PLtsql_execstate *estate, bool txnStarted);
 extern bool pltsql_get_errdata(int *tsql_error_code, int *tsql_error_severity, int *tsql_error_state);
 extern void pltsql_eval_txn_data(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt, CachedPlanSource *cachedPlanSource);
 extern bool is_sysname_column(ColumnDef *coldef);
@@ -2389,6 +2387,69 @@ extern bool 	is_numeric_datatype(Oid typid);
  * Function in pltsql_ruleutils.c
  */
 extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
+
+/*
+ * INSERT EXEC functions (pl_insert_exec.c)
+ */
+extern void pltsql_set_insert_exec_context_info(const char *target_table, const char *column_list);
+extern void pltsql_set_insert_exec_context(Oid temp_table_oid);
+extern void pltsql_clear_insert_exec_context(void);
+extern void pltsql_insert_exec_reset_all(void);
+extern bool pltsql_insert_exec_active(void);
+extern bool pltsql_insert_exec_in_execution(void);
+extern bool pltsql_insert_exec_flush_in_progress(void);
+extern void pltsql_insert_exec_set_flush_in_progress(bool in_progress);
+extern Oid pltsql_get_insert_exec_temp_table_oid(void);
+extern bool pltsql_insert_exec_in_trycatch(void);
+extern bool pltsql_insert_exec_should_cleanup_on_trycatch(void);
+extern void pltsql_insert_exec_set_error_flag(void);
+extern bool pltsql_insert_exec_had_error(void);
+extern void pltsql_insert_exec_clear_error_flag(void);
+extern void pltsql_insert_exec_set_implicit_txn_flag(void);
+extern bool pltsql_insert_exec_started_implicit_txn(void);
+extern void pltsql_insert_exec_clear_implicit_txn_flag(void);
+extern void pltsql_insert_exec_open_target_table(const char *target_table,const char *schema_name_in,
+                                                  const char *db_name_in);
+extern void pltsql_insert_exec_close_target_table(void);
+extern bool pltsql_insert_exec_verify_schema(void);
+extern void pltsql_insert_exec_set_target_modified(void);
+extern Oid pltsql_insert_exec_get_target_rel_oid(void);
+extern bool pltsql_insert_exec_validate_column_count_from_query(const char *query_string);
+
+/* Transaction helper - used by INSERT EXEC for implicit transaction commit */
+extern void commit_stmt(PLtsql_execstate *estate, bool txnStarted);
+
+/* SQL execution helper - used by INSERT EXEC for flush */
+extern int exec_stmt_execsql(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
+
+/* INSERT EXEC helper functions */
+extern bool insert_exec_setup(PLtsql_execstate *estate,
+                              const char *target_table,
+                              const char *schema_name,
+                              const char *db_name,
+                              const char *column_list,
+                              bool start_implicit_txn,
+                              Oid *temp_table_oid_out);
+extern void insert_exec_error_cleanup(bool setup_done);
+extern void insert_exec_success_cleanup(PLtsql_execstate *estate, Oid temp_table_oid);
+extern bool parse_insert_exec_table_name(const char *target_table,
+										 char **schema_name_out,
+										 char **table_name_out,
+										 char **physical_schema_out,
+										 bool get_physical);
+extern DestReceiver *CreateInsertExecDestReceiver(Oid temp_table_oid);
+extern Oid create_insert_exec_temp_table(const char *target_table,
+                                          const char *column_list,
+                                          const char *schema_name_in);
+extern void drop_insert_exec_temp_table(Oid temp_table_oid);
+extern void flush_insert_exec_temp_table(PLtsql_execstate *estate);
+
+// extern void setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
+
+extern bool is_part_of_pltsql_trycatch_block(PLtsql_execstate *estate);
+
+/* Helper to unwrap implicit casts from a node */
+extern Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
 
 #define NUM_DB_OBJECTS 11
 

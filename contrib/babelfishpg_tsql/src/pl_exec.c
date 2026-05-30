@@ -274,6 +274,9 @@ static MemoryContext get_stmt_mcontext(PLtsql_execstate *estate);
 static void push_stmt_mcontext(PLtsql_execstate *estate);
 static void pop_stmt_mcontext(PLtsql_execstate *estate);
 
+/* Forward declaration for commit_stmt - used by pl_exec-2.c */
+void		commit_stmt(PLtsql_execstate *estate, bool txnStarted);
+
 static int	exec_stmt_block(PLtsql_execstate *estate,
 							PLtsql_stmt_block *block);
 static int	exec_stmts(PLtsql_execstate *estate,
@@ -322,7 +325,7 @@ static int	exec_stmt_raise(PLtsql_execstate *estate,
 							PLtsql_stmt_raise *stmt);
 static int	exec_stmt_assert(PLtsql_execstate *estate,
 							 PLtsql_stmt_assert *stmt);
-static int	exec_stmt_execsql(PLtsql_execstate *estate,
+int	exec_stmt_execsql(PLtsql_execstate *estate,
 							  PLtsql_stmt_execsql *stmt);
 static void updateColumnUpdatedList(Query *query);
 static int	exec_stmt_dynexecute(PLtsql_execstate *estate,
@@ -440,9 +443,9 @@ static pltsql_CastHashEntry *get_cast_hashentry(PLtsql_execstate *estate,
 												Oid srctype, int32 srctypmod,
 												Oid dsttype, int32 dsttypmod);
 static void exec_init_tuple_store(PLtsql_execstate *estate);
-static void exec_set_found(PLtsql_execstate *estate, bool state);
+void exec_set_found(PLtsql_execstate *estate, bool state);
 static void exec_set_fetch_status(PLtsql_execstate *estate, int status);
-static void exec_set_rowcount(uint64 rowno);
+void exec_set_rowcount(uint64 rowno);
 static void exec_set_error(PLtsql_execstate *estate, int error, int pg_error, bool error_mapping_failed);
 static void pltsql_create_econtext(PLtsql_execstate *estate);
 static void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
@@ -495,7 +498,7 @@ static void
 pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, ErrorContextCallback *plerrcontext);
 
 /* Function to set up row Datum */
-static void
+void
 setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
 
 static bool	called_for_tsql_itvf_function = false;
@@ -712,11 +715,8 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 
 		fcinfo->isnull = estate.retisnull;
 
-		if (estate.retisset || estate.insert_exec)
+		if (estate.retisset)
 		{
-			int16 typLen;
-			bool typByVal;
-			MemoryContext oldcontext;
 			ReturnSetInfo *rsi = estate.rsi;
 
 			/* Check caller can handle a set result */
@@ -736,50 +736,6 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 				oldcxt = MemoryContextSwitchTo(estate.tuple_store_cxt);
 				rsi->setDesc = CreateTupleDescCopy(estate.tuple_store_desc);
 				MemoryContextSwitchTo(oldcxt);
-			}
-
-			/* Obtain output parameters for Insert Execute */
-			if (estate.insert_exec)
-			{
-				/* Switch to function's memory context */
-				oldcontext = MemoryContextSwitchTo(estate.func->fn_cxt);
-
-				if (OidIsValid(estate.rettype))
-				{
-					/* Get return type properties */
-					get_typlenbyval(estate.rettype, &typLen, &typByVal);
-
-					if (typByVal)
-					{
-						execute_call_insert_exec_retval = estate.retval;
-					}
-					else
-					{
-						/* Pass-by-reference, need to copy the data */
-						execute_call_insert_exec_retval = datumCopy(estate.retval,
-																	typByVal,
-																	typLen);
-					}
-				}
-				else
-				{
-					/* For cases where rettype is not properly set, handle gracefully */
-					typLen = -1;    /* Variable length */
-					typByVal = false; /* Pass by reference */
-					
-					/* Only proceed if we have a valid return value */
-					if (estate.retval != (Datum) 0)
-					{
-						execute_call_insert_exec_retval = estate.retval;
-					}
-					else
-					{
-						/* Skip the exec_move_row_from_datum call entirely */
-						execute_call_insert_exec_retval = (Datum) 0;
-					}
-				}
-				MemoryContextSwitchTo(oldcontext);
-
 			}
 
 			estate.retval = (Datum) 0;
@@ -4388,14 +4344,6 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	estate->plugin_info = NULL;
 
 	estate->nestlevel = -1;
-
-	/*
-	 * When executing a procedure or inline code block, if a ReturnSetInfo is
-	 * passed in, then it's invoked by INSERT ... EXECUTE.
-	 */
-	estate->insert_exec = (func->fn_prokind == PROKIND_PROCEDURE ||
-						   strcmp(func->fn_signature, "inline_code_block") == 0)
-		&& rsi;
 	
 	estate->explain_infos = NIL;
 
@@ -4474,7 +4422,7 @@ execute_txn_command(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
  * is recreated when needed for cases like commit/
  * rollbck/rollback to savepoint
  */
-static void
+void
 commit_stmt(PLtsql_execstate *estate, bool txnStarted)
 {
 	SimpleEcontextStackEntry *topEntry = simple_econtext_stack;
@@ -4664,7 +4612,7 @@ is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
  * This is a helper to adapt logic from exec_stmt_call. It constructs a PLtsql_row to capture
  * output parameters from a procedure call within an INSERT EXECUTE context.
  */
-static void
+void
 setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 {
     CachedPlanSource *cachedPlanSource;
@@ -4805,7 +4753,7 @@ setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_s
  * needs to use that, fix those callers to push/pop stmt_mcontext.
  * ----------
  */
-static int
+int
 exec_stmt_execsql(PLtsql_execstate *estate,
 				  PLtsql_stmt_execsql *stmt)
 {
@@ -4845,21 +4793,43 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			set_cur_user_db_and_path(stmt->db_name, true, false);
 	}
 
+	/*
+	 * Block ROLLBACK (and ROLLBACK TO SAVEPOINT) during INSERT EXEC.
+	 * ROLLBACK is not allowed within an INSERT-EXEC statement.
+	 * Check this early before any SPI execution.
+	 */
+	if (stmt->txn_data != NULL)
+	{
+		if ((stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK ||
+			 stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK_TO) &&
+			pltsql_insert_exec_active())
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+					 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
+		}
+	}
+
+	/*
+	 * For INSERT EXEC, validate column count BEFORE plan preparation so
+	 * column mismatch errors take priority over runtime errors (e.g., 1/0).
+	 * PostgreSQL's eval_const_expressions() would evaluate expressions first.
+	 *
+	 * Only validate inside TRY blocks; system procedures like sp_columns
+	 * have internal SELECTs with varying column counts outside TRY blocks.
+ 	*/
+
+	if (pltsql_insert_exec_active() && pltsql_insert_exec_in_execution() &&
+		is_part_of_pltsql_trycatch_block(estate))
+	{
+		if (stmt->sqlstmt && stmt->sqlstmt->query)
+		{
+			pltsql_insert_exec_validate_column_count_from_query(stmt->sqlstmt->query);
+		}
+	}
+
 	PG_TRY();
 	{
-		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
-		if (stmt->need_to_push_result && estate->insert_exec)
-		{
-			int			ret = exec_stmt_insert_execute_select(estate, expr);
-
-			if (is_cross_db)
-			{
-				if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-					set_cur_user_db_and_path(cur_dbname, true, false);
-			}
-			return ret;
-		}
-
 		if (expr->plan && expr->plan->oneshot)
 		{
 			SPI_freeplan(expr->plan);
@@ -4891,18 +4861,12 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/* Check for nested INSERT EXECUTE statements */
 		if (stmt->insert_exec)
 		{
-			/* Walk existing stack for any parent insert exec */
-			PLExecStateCallStack *cur = exec_state_call_stack;
-			while (cur != NULL)
+			/* Nested INSERT EXEC is not allowed */
+			if (pltsql_insert_exec_active())
 			{
-				/* Found parent insert exec - this is a nested INSERT EXECUTE */
-				if (cur->estate->insert_exec)
-				{
-					ereport(ERROR,
-						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						errmsg("nested INSERT ... EXECUTE statements are not allowed")));
-				}
-				cur = cur->next;
+				ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("nested INSERT ... EXECUTE statements are not allowed")));
 			}
 		}
 
@@ -5241,12 +5205,17 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * Always commit to match auto commit behavior for each statement
 		 * inside batch or procedure, but not user-defined function or
 		 * procedure invoked by INSERT ... EXECUTE.
+		 *
+		 * Also skip commit during INSERT EXEC or its flush phase to avoid
+		 * orphaning SPI portal snapshots.
 		 */
 		/* TODO To let procedure call from PSQL work with old semantics */
 		if ((!pltsql_disable_batch_auto_commit || (stmt->txn_data != NULL)) &&
 			support_tsql_trans &&
 			(enable_txn_in_triggers || estate->trigdata == NULL) &&
-			!ro_func && !estate->insert_exec)
+			!ro_func &&
+			!pltsql_insert_exec_active() &&
+			!pltsql_insert_exec_flush_in_progress())
 		{
 			commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED));
 
@@ -6449,6 +6418,15 @@ exec_stmt_commit(PLtsql_execstate *estate, PLtsql_stmt_commit *stmt)
 static int
 exec_stmt_rollback(PLtsql_execstate *estate, PLtsql_stmt_rollback *stmt)
 {
+	/*
+	 * Block ROLLBACK during INSERT EXEC.
+	 * ROLLBACK is not allowed within an INSERT-EXEC statement.
+	 */
+	if (pltsql_insert_exec_active())
+		ereport(ERROR,
+				(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+				 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
+
 	SPI_rollback();
 	SPI_start_transaction();
 
@@ -9670,7 +9648,7 @@ contains_target_param(Node *node, int *target_dno)
  * exec_set_found			Set the global found variable to true/false
  * ----------
  */
-static void
+void
 exec_set_found(PLtsql_execstate *estate, bool state)
 {
 	PLtsql_var *var;
@@ -9697,7 +9675,7 @@ exec_set_fetch_status(PLtsql_execstate *estate, int status)
 	fetch_status_var = status;
 }
 
-static void
+void
 exec_set_rowcount(uint64 rowno)
 {
 	rowcount_var = rowno;
@@ -9887,6 +9865,17 @@ pltsql_estate_cleanup(void)
 									top_es_entry->estate->stmt_mcontext_parent);
 	pfree(exec_state_call_stack);
 	exec_state_call_stack = top_es_entry;
+
+	/*
+	 * Clear stale INSERT EXEC context when the call stack becomes empty.
+	 * This is a safety net to prevent context from leaking between batches.
+	 * Primary cleanup happens in exec_stmt_exec error handlers, but this
+	 * ensures cleanup even if those paths are not taken.
+	 */
+	if (exec_state_call_stack == NULL && pltsql_insert_exec_active())
+	{
+		pltsql_insert_exec_reset_all();
+	}
 }
 
 /*
@@ -9930,6 +9919,14 @@ pltsql_xact_cb(XactEvent event, void *arg)
 	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_ABORT)
 	{
 		ResetTopTransactionName();
+
+		/*
+		 * Clean up INSERT EXEC context on transaction end. This is a safety
+		 * net for timeouts, interrupts, and other cases where normal cleanup
+		 * paths are bypassed. On commit, any remaining context is stale.
+		 */
+		if (pltsql_insert_exec_active())
+			pltsql_insert_exec_reset_all();
 	}
 
 	/*

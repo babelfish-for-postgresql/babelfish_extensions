@@ -6114,6 +6114,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->sql_bytea_from_geography = common_utility_plugin_ptr->bytea_from_geography;
 		(*pltsql_protocol_plugin_ptr)->sql_geometry_from_bytea = common_utility_plugin_ptr->geometry_from_bytea;
 		(*pltsql_protocol_plugin_ptr)->sql_geography_from_bytea = common_utility_plugin_ptr->geography_from_bytea;
+		(*pltsql_protocol_plugin_ptr)->pltsql_insert_exec_active = &pltsql_insert_exec_active;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
@@ -6289,6 +6290,13 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 
 		pltsql_non_tsql_proc_entry_count = 0;
 		Assert(pltsql_sys_func_entry_count == 0);
+
+		/*
+		 * Clear stale INSERT EXEC context at the end of each top-level batch.
+		 * This is a safety net to prevent context from leaking between batches.
+		 */
+		if (pltsql_insert_exec_active())
+			pltsql_insert_exec_reset_all();
 
 		if (pltsql_snapshot_portal != NULL)
 		{
@@ -6533,7 +6541,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		if (get_cur_db_id() != saved_dbid)
 			set_cur_user_db_and_path(get_db_name((saved_dbid)), false, CALLED_AS_TRIGGER(fcinfo));
 		if (saved_search_path != NULL && strcmp(saved_search_path, namespace_search_path) != 0
-			&& !IsAbortedTransactionBlockState())
+			&& !IsAbortedTransactionBlockState() && !IsInParallelMode())
 		{
 			pltsql_check_search_path = false;
 			SetConfigOption("search_path", saved_search_path,

@@ -802,7 +802,20 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 		}
 		case T_TransactionStmt:
 		{
-			if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
+			TransactionStmt *stmt = (TransactionStmt *) parsetree;
+			/*
+			 * Call PLTsqlProcessTransaction when:
+			 * 1. NestedTranCount > 0 (explicit transaction)
+			 * 2. TSQL dialect and no active transaction block
+			 * 3. INSERT EXEC is active - transaction statements inside the executed
+			 *    procedure must be routed through PLTsqlProcessTransaction where
+			 *    ROLLBACK/COMMIT blocking and NestedTranCount tracking are handled.
+			 */
+			if (NestedTranCount > 0 ||
+				(sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()) ||
+				(pltsql_insert_exec_active() &&
+				 (stmt->kind == TRANS_STMT_ROLLBACK || stmt->kind == TRANS_STMT_ROLLBACK_TO ||
+				  stmt->kind == TRANS_STMT_COMMIT || stmt->kind == TRANS_STMT_BEGIN)))
 			{
 				PLTsqlProcessTransaction(parsetree, params, qc);
 				return true;
@@ -3610,6 +3623,20 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 			/* Call view dependency handling function */
 			handle_bbf_view_binding_on_object_drop(&obj, false);
 		}
+
+		/*
+		 * Detect DROP of the INSERT EXEC target table.
+		 * If the executed procedure drops the target table, we need to fail
+		 * the INSERT EXEC to prevent errors during flush.
+		 */
+		{
+			Oid target_rel_oid = pltsql_insert_exec_get_target_rel_oid();
+
+			if (OidIsValid(target_rel_oid) && objectId == target_rel_oid)
+			{
+				pltsql_insert_exec_set_target_modified();
+			}
+		}
 	}
 	if (access == OAT_DROP && classId == ProcedureRelationId)
 	{
@@ -3643,6 +3670,21 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 
 	if (access == OAT_POST_CREATE)
 		change_object_owner_if_db_owner();
+
+	/*
+	 * Detect schema changes to the INSERT EXEC target table.
+	 * If the executed procedure alters the target table, we need to fail
+	 * the INSERT EXEC to prevent data corruption from schema mismatch.
+	 */
+	if (access == OAT_POST_ALTER && classId == RelationRelationId)
+	{
+		Oid target_rel_oid = pltsql_insert_exec_get_target_rel_oid();
+
+		if (OidIsValid(target_rel_oid) && objectId == target_rel_oid)
+		{
+			pltsql_insert_exec_set_target_modified();
+		}
+	}
 }
 
 static void

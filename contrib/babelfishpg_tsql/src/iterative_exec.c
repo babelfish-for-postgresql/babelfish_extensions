@@ -1,5 +1,6 @@
 #include "access/xact.h"
 #include "commands/explain.h"
+#include "utils/snapmgr.h"
 #include "commands/explain_format.h"
 #include "commands/explain_state.h"
 #include "tcop/utility.h"
@@ -46,6 +47,9 @@ static void send_env_change_token_on_txn_abort(void);
 static void process_antlr_parsing_time(PLtsql_execstate *estate);
 static void process_explain(PLtsql_execstate *estate, bool *show_antlr_parsing_time);
 static void process_explain_analyze(PLtsql_execstate *estate, bool *show_antlr_parsing_time);
+
+/* Forward declaration for is_part_of_pltsql_trycatch_block */
+bool is_part_of_pltsql_trycatch_block(PLtsql_execstate *estate);
 
 extern PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
 extern void prepare_format_string(StringInfo buf, char *msg_string, int nargs,
@@ -943,7 +947,6 @@ create_error_ctx(PLtsql_execstate *estate, int target_pc)
  * not consider PG_TRY/PG_CATCH in code or C based
  * procedures/functions
  */
-static
 bool
 is_part_of_pltsql_trycatch_block(PLtsql_execstate *estate)
 {
@@ -1181,6 +1184,15 @@ abort_execution(PLtsql_execstate *estate, ErrorData *edata, bool *terminate_batc
 	if (exec_state_call_stack->error_data.rethrow_error)
 		return true;
 
+	/*
+	 * Re-throw INSERT EXEC column mismatch errors BEFORE TRY-CATCH check.
+	 * Unlike catchable errors, column mismatch rolls back ALL rows even
+	 * inside TRY-CATCH. Propagates to exec_stmt_exec's PG_CATCH for rollback.
+	*/
+
+	if (pltsql_insert_exec_active() && pltsql_insert_exec_had_error())
+		return true;
+
 	/* Any error inside try catch block */
 	if (is_part_of_pltsql_trycatch_block(estate))
 		return true;
@@ -1270,6 +1282,15 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 	PG_TRY();
 	{
 		/*
+		 * Variables for internal savepoint decision.
+		 * Declared at block start for C90 compliance.
+		 */
+		bool in_trycatch;
+		bool insert_exec_active;
+		bool need_savepoint_for_insert_exec_trycatch;
+		bool txn_active_or_insert_exec_trycatch;
+
+		/*
 		 * If no transaction is running, start implicit transaction for
 		 * qualified commands when implicit_transactions config option is on
 		 */
@@ -1288,14 +1309,38 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		estate->tsql_trigger_flags = 0;
 
 		/*
-		 * Start an internal savepoint if transaction block is active to
-		 * handle undo of failed command We do not start savepoint for batch
-		 * commands as error handling must be taken care of at statement
-		 * level. For statements inside an RO functions we do not start
-		 * savepoints and let the caller be responsible for handling the
-		 * error.
-		 */
-		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && IsTransactionBlockActive() && !is_set_tran_isolation(stmt))
+		 * Start internal savepoint in active txn blocks for undo. Skip for batch
+		 * commands, RO functions, and parallel workers.
+		 *
+		 * Skip during INSERT EXEC (outside TRY-CATCH): subtransaction rollback
+		 * deletes temp table storage. But DO use savepoints inside TRY-CATCH to
+		 * release index refs on caught errors (avoids "cannot DROP" errors).
+ 		*/
+
+
+		in_trycatch = is_part_of_pltsql_trycatch_block(estate);
+		insert_exec_active = pltsql_insert_exec_active();
+
+		/*
+		 * Fallback for cases where exec_state_call_stack is NULL
+		 * (parallel workers, or early-path INSERT EXEC SPI execution).
+		 * Use the TRY-CATCH depth tracked explicitly in INSERT EXEC context.
+		*/
+		if (!in_trycatch && insert_exec_active)
+			in_trycatch = pltsql_insert_exec_in_trycatch();
+
+		/*
+ 		 * Need internal savepoints when: 
+		 * (1) in transaction block and not in INSERT EXEC (or in INSERT EXEC with TRY-CATCH), or 
+		 * (2) INSERT EXEC with TRY-CATCH even without explicit transaction - required to release
+		 * index refs on caught errors, else DROP TABLE fails with "being used".
+		*/
+
+		need_savepoint_for_insert_exec_trycatch = insert_exec_active && in_trycatch;
+		txn_active_or_insert_exec_trycatch = IsTransactionBlockActive() || need_savepoint_for_insert_exec_trycatch;
+
+		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && txn_active_or_insert_exec_trycatch && !is_set_tran_isolation(stmt) &&
+			(!insert_exec_active || in_trycatch) && !IsParallelWorker())
 		{
 			elog(DEBUG5, "TSQL TXN Start internal savepoint");
 			BeginInternalSubTransaction(NULL);
@@ -1326,17 +1371,32 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		estate->impl_txn_type = PLTSQL_IMPL_TRAN_OFF;
 
 		/*
-		 * Handle transaction count mismatch for batch execution if
-		 * implicit_transaction config is off
-		 */
+		 * Handle txn count mismatch when implicit_transaction is off.
+		 * Skip during INSERT EXEC (txn count reconciled on completion),
+		 * on INSERT EXEC error (let original error propagate), or if
+		 * INSERT EXEC started implicit txn (stays open for auto-commit).
+ 		*/
+
+
 		topEntry = simple_econtext_stack;
+
 		if (!pltsql_implicit_transactions &&
 			is_batch_command(stmt) &&
 			!is_part_of_pltsql_trigger(estate) &&
+			!pltsql_insert_exec_active() &&
+			!pltsql_insert_exec_had_error() &&
+			!pltsql_insert_exec_started_implicit_txn() &&
 			before_tran_count != NestedTranCount)
 			ereport(ERROR,
 					(errcode(ERRCODE_T_R_INTEGRITY_CONSTRAINT_VIOLATION),
 					 errmsg("Transaction count after execution indicates a mismatch number of BEGIN and COMMIT statements. Previous count %u current count %u", before_tran_count, NestedTranCount)));
+
+		/*
+		 * Clear implicit txn flag only when NOT inside INSERT EXEC context.
+		*/
+
+		if (pltsql_insert_exec_started_implicit_txn() && !pltsql_insert_exec_active())
+			pltsql_insert_exec_clear_implicit_txn_flag();
 	}
 	PG_CATCH();
 	{
@@ -1370,7 +1430,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			}
 			else if (!IsTransactionBlockActive())
 			{
-				if (is_part_of_pltsql_trycatch_block(estate))
+				if (is_part_of_pltsql_trycatch_block(estate) && !pltsql_insert_exec_active())
 				{
 					HOLD_INTERRUPTS();
 					elog(DEBUG1, "TSQL TXN PG semantics : Rollback current transaction");
@@ -1418,6 +1478,28 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		edata = CopyErrorData();
 		error_mapped = get_tsql_error_code(edata, &last_error);
 		exec_set_error(estate, last_error, edata->sqlerrcode, !error_mapped);
+
+		/*
+		 * Clean up INSERT EXEC context on error (early, before txn handling)
+		 * if TRY-CATCH is at same level or higher. Don't clean up if TRY-CATCH
+		 * is inside the executed procedure. Always clean up for nested INSERT
+		 * EXEC errors (batch-terminating).
+ 		*/
+
+		{
+			bool insert_exec_active = pltsql_insert_exec_active();
+			bool should_cleanup_trycatch = pltsql_insert_exec_should_cleanup_on_trycatch();
+			bool is_nested_insert_exec_error = (edata->sqlerrcode == ERRCODE_SYNTAX_ERROR &&
+											   edata->message != NULL &&
+											   strstr(edata->message, "nested INSERT") != NULL);
+
+			if (insert_exec_active && (should_cleanup_trycatch || is_nested_insert_exec_error))
+			{
+				pltsql_insert_exec_close_target_table();
+				pltsql_clear_insert_exec_context();
+			}
+		}
+
 		if (internal_sp_started &&
 			before_lxid == MyProc->vxid.lxid &&
 			before_subtxn_id == GetCurrentSubTransactionId())
@@ -1433,17 +1515,69 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		else if (!IsTransactionBlockActive())
 		{
 			/*
-			 * In case of no transaction, rollback the whole transaction to
-			 * match auto commit behavior
+			 * Variable for skip_abort decision.
+			 * Declared at block start for C90 compliance.
 			 */
-			HOLD_INTERRUPTS();
-			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback current transaction");
-			/* Hold portals to make sure that cursors work */
-			HoldPinnedPortals();
-			AbortCurrentTransaction();
-			StartTransactionCommand();
-			MemoryContextSwitchTo(cur_ctxt);
-			RESUME_INTERRUPTS();
+			bool skip_abort = false;
+
+			/*
+			 * For auto-commit behavior, rollback the transaction when no
+			 * transaction block is active.
+			 *
+			 * Skip during INSERT EXEC if TRY-CATCH will catch the error, since
+			 * AbortCurrentTransaction deletes pending relations including the
+			 * temp table needed for buffering results.
+			*/
+
+			if (pltsql_insert_exec_active())
+			{
+				if (pltsql_insert_exec_in_trycatch())
+				{
+					skip_abort = true;
+				}
+				else
+				{
+					/* No TRY-CATCH: clear INSERT EXEC context; temp table drops on abort. */
+					pltsql_insert_exec_close_target_table();
+					pltsql_clear_insert_exec_context();
+				}
+			}
+
+			if (!skip_abort)
+			{
+				HOLD_INTERRUPTS();
+				elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback current transaction");
+				/* Hold portals to make sure that cursors work */
+				HoldPinnedPortals();
+				AbortCurrentTransaction();
+				StartTransactionCommand();
+				MemoryContextSwitchTo(cur_ctxt);
+				RESUME_INTERRUPTS();
+			}
+			else
+			{
+				/*
+				 * Since we skipped AbortCurrentTransaction() for INSERT EXEC, clean up
+				 * leaked SPI snapshots to avoid "portal snapshots did not account for
+				 * all active snapshots" errors. Also switch to stmt_mcontext_parent
+				 * to avoid deleting the current memory context during cleanup.
+				*/
+
+				HOLD_INTERRUPTS();
+				while (ActiveSnapshotSet())
+					PopActiveSnapshot();
+				if (pltsql_snapshot_portal != NULL)
+					pltsql_snapshot_portal->portalSnapshot = NULL;
+				/* 
+				 * Use stmt_mcontext_parent to avoid deleting the current
+				 * memory context during cleanup. 
+				*/
+				if (estate->stmt_mcontext_parent != NULL)
+					MemoryContextSwitchTo(estate->stmt_mcontext_parent);
+				else
+					MemoryContextSwitchTo(cur_ctxt);
+				RESUME_INTERRUPTS();
+			}
 		}
 		else if (estate->tsql_trigger_flags & TSQL_TRAN_STARTED)
 		{
@@ -1483,6 +1617,9 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 
 		handle_error(estate, stmt, edata, topEntry, terminate_batch, ro_func);
 
+		/* Clear the INSERT EXEC error flag after error handling is complete */
+		pltsql_insert_exec_clear_error_flag();
+
 		rc = PLTSQL_RC_OK;
 	}
 	PG_END_TRY();
@@ -1515,6 +1652,11 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 
 	if (!exec_codes)
 		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR), errmsg("Empty execution code")));
+
+	/*
+	 * Clear the INSERT EXEC error flag at the start of each batch.
+	 */
+	pltsql_insert_exec_clear_error_flag();
 
 
 	size = vec_size(exec_codes->codes);
@@ -1602,6 +1744,38 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 					estate->cur_error->number = exec_state_call_stack->error_data.error_number;
 					estate->cur_error->severity = exec_state_call_stack->error_data.error_severity;
 					estate->cur_error->state = exec_state_call_stack->error_data.error_state;
+
+					/*
+					 * Clean up INSERT EXEC context if active. Drop temp table here since
+					 * SPI is available after TRY-CATCH.
+					*/
+
+					if (pltsql_insert_exec_should_cleanup_on_trycatch())
+					{
+						Oid temp_oid = pltsql_get_insert_exec_temp_table_oid();
+
+						/* Close target table and release lock first */
+						pltsql_insert_exec_close_target_table();
+
+						/* Clear the INSERT EXEC context */
+						pltsql_clear_insert_exec_context();
+
+						/* Drop the temp table if it exists */
+						if (OidIsValid(temp_oid))
+							drop_insert_exec_temp_table(temp_oid);
+					}
+					else if (pltsql_insert_exec_active())
+					{
+						/*
+						 * TRY-CATCH is inside the executed procedure; INSERT EXEC still in progress.
+						 * Re-throw column mismatch errors (had_error flag) to roll back all rows.
+						 * Other errors (e.g., division by zero) are caught by TRY-CATCH, preserving
+						 * rows inserted before the error.
+						*/
+
+						if (pltsql_insert_exec_had_error())
+							ReThrowError(estate->cur_error->error);
+					}
 
 					/* Goto error handling blocks */
 					*pc = err_handler_pc - 1;	/* same as how goto handles PC */
