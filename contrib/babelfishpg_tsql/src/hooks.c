@@ -275,7 +275,7 @@ static bool is_bbf_db_ddladmin_operation(Oid namespaceId);
  * 			Planner Hook
  *****************************************/
 static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams);
-static void persisted_col_post_rewrite(Query *query);
+static Query *persisted_col_planner_rewrite(Query *query);
 
 /*****************************************
  * 			parser Hook
@@ -397,7 +397,6 @@ static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_
 static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
 static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
 static pre_QueryRewrite_hook_type prev_pre_QueryRewrite_hook = NULL;
-static post_QueryRewrite_hook_type prev_post_QueryRewrite_hook = NULL;
 ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
 ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
 #ifdef USE_LIBXML
@@ -680,8 +679,7 @@ InstallExtendedHooks(void)
 	prev_pre_QueryRewrite_hook = pre_QueryRewrite_hook;
 	pre_QueryRewrite_hook = repair_broken_views;
 
-	prev_post_QueryRewrite_hook = post_QueryRewrite_hook;
-	post_QueryRewrite_hook = persisted_col_post_rewrite;
+	persisted_col_rewrite_hook = persisted_col_planner_rewrite;
 
 	walk_view_rule_hook = mark_nodes_inside_view;
 
@@ -770,7 +768,7 @@ UninstallExtendedHooks(void)
 	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
 	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
 	pre_QueryRewrite_hook = prev_pre_QueryRewrite_hook;
-	post_QueryRewrite_hook = prev_post_QueryRewrite_hook;
+	persisted_col_rewrite_hook = NULL;
 	#ifdef USE_LIBXML
 	openxml_set_namespaces_hook = prev_openxml_set_namespaces_hook;
 	#endif
@@ -5875,15 +5873,17 @@ update_rte_perms_info_walker(Node *node, void *context)
 	return expression_tree_walker(node, update_rte_perms_info_walker, NULL);
 }
 
-/* Post-rewrite hook */
-static void
-persisted_col_post_rewrite(Query *query)
+/* Planner hook for persisted computed column re-evaluation */
+static Query *
+persisted_col_planner_rewrite(Query *query)
 {
 	if (sql_dialect != SQL_DIALECT_TSQL)
-		return;
+		return query;
 
 	if (!check_persisted_gucs())
 		query_rewrite_persisted(query);
+
+	return query;
 }
 
 static PlannedStmt *

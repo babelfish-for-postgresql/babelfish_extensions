@@ -162,7 +162,7 @@ has_unsafe_func_walker(Node *node, void *context)
                         pg_strcasecmp(funcname, "babelfish_conv_date_to_string") == 0 ||
                         pg_strcasecmp(funcname, "babelfish_conv_datetime_to_string") == 0)
                     {
-                        /* Check p_style_specified (5th arg, index 4) */
+                        /* Check p_style_specified */
                         if (list_length(f->args) >= 5)
                         {
                             Node *style_specified = (Node *) list_nth(f->args, 4);
@@ -322,25 +322,6 @@ query_rewrite_helper(Node *node, void *context)
     return expression_tree_mutator(node, query_rewrite_helper, context);
 }
 
-static bool
-sublink_rewrite_walker(Node *node, void *context)
-{
-    if (node == NULL)
-        return false;
-
-    if (IsA(node, SubLink))
-    {
-        SubLink *sl = (SubLink *) node;
-        if (sl->subselect)
-            query_rewrite_persisted(castNode(Query, sl->subselect));
-    }
-
-    if (IsA(node, Query))
-        return query_tree_walker((Query *) node, sublink_rewrite_walker, context, 0);
-
-    return expression_tree_walker(node, sublink_rewrite_walker, context);
-}
-
 void query_rewrite_persisted(Query *parse)
 {
     ListCell *lc;
@@ -353,9 +334,6 @@ void query_rewrite_persisted(Query *parse)
         TupleDesc tupdesc;
 
         rindex++;
-
-        if (rte->rtekind == RTE_SUBQUERY && rte->subquery)
-            query_rewrite_persisted(rte->subquery);
 
         if (rte->rtekind != RTE_RELATION)
             continue;
@@ -386,16 +364,4 @@ void query_rewrite_persisted(Query *parse)
         }
         relation_close(rel, AccessShareLock);
     }
-
-    /* Recurse into CTEs */
-    foreach(lc, parse->cteList)
-    {
-        CommonTableExpr *cte = lfirst_node(CommonTableExpr, lc);
-        if (cte->ctequery)
-            query_rewrite_persisted(castNode(Query, cte->ctequery));
-    }
-
-    /* Recurse into SubLink subqueries */
-    if (parse->hasSubLinks)
-        query_tree_walker(parse, sublink_rewrite_walker, NULL, 0);
 }
