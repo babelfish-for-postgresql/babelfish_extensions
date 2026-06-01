@@ -1519,14 +1519,14 @@ INSERT INTO babel_5223_xml_value_compcol1 VALUES (1, '<artist name="Rohit Bhagat
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: INSERT/UPDATE failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER, ')~~
+~~ERROR (Message: INSERT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER')~~
 
 
 INSERT INTO babel_5223_xml_value_compcol1 VALUES (2, '<artist />')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: INSERT/UPDATE failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER, ')~~
+~~ERROR (Message: INSERT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER')~~
 
 
 SELECT col_xml, comp_col FROM babel_5223_xml_value_compcol1 ORDER BY id
@@ -1569,14 +1569,14 @@ INSERT INTO babel_5223_xml_value_compcol2 VALUES (1, '<artist name="Rohit Bhagat
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: INSERT/UPDATE failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER, ')~~
+~~ERROR (Message: INSERT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER')~~
 
 
 INSERT INTO babel_5223_xml_value_compcol2 VALUES (2, '<artist />')
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: INSERT/UPDATE failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER, ')~~
+~~ERROR (Message: INSERT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER')~~
 
 
 SELECT col_xml, comp_col FROM babel_5223_xml_value_compcol2 ORDER BY id

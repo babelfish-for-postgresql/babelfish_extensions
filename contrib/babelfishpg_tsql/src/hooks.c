@@ -397,6 +397,7 @@ static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_
 static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
 static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
 static pre_QueryRewrite_hook_type prev_pre_QueryRewrite_hook = NULL;
+static persisted_col_rewrite_hook_type prev_persisted_col_rewrite_hook = NULL;
 ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
 ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
 #ifdef USE_LIBXML
@@ -679,6 +680,7 @@ InstallExtendedHooks(void)
 	prev_pre_QueryRewrite_hook = pre_QueryRewrite_hook;
 	pre_QueryRewrite_hook = repair_broken_views;
 
+	prev_persisted_col_rewrite_hook = persisted_col_rewrite_hook;
 	persisted_col_rewrite_hook = persisted_col_planner_rewrite;
 
 	walk_view_rule_hook = mark_nodes_inside_view;
@@ -768,7 +770,7 @@ UninstallExtendedHooks(void)
 	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
 	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
 	pre_QueryRewrite_hook = prev_pre_QueryRewrite_hook;
-	persisted_col_rewrite_hook = NULL;
+	persisted_col_rewrite_hook = prev_persisted_col_rewrite_hook;
 	#ifdef USE_LIBXML
 	openxml_set_namespaces_hook = prev_openxml_set_namespaces_hook;
 	#endif
@@ -5895,10 +5897,11 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 	if (IS_TDS_CLIENT() && !InSecurityRestrictedOperation())
 		update_rte_perms_info_walker((Node *) parse, NULL);
 
-	/* Check GUCs for INSERT/UPDATE into tables with PERSISTED computed columns */
-	if (sql_dialect == SQL_DIALECT_TSQL && (parse->commandType == CMD_INSERT || parse->commandType == CMD_UPDATE || parse->commandType == CMD_DELETE))
+	/* Check GUCs for DML into tables with PERSISTED computed columns */
+	if (sql_dialect == SQL_DIALECT_TSQL && !babelfish_dump_restore &&
+		(parse->commandType == CMD_INSERT || parse->commandType == CMD_UPDATE || parse->commandType == CMD_DELETE))
 	{
-		guc_check_insert_update(parse);
+		guc_check_dml(parse);
 	}
 
 	if (pltsql_explain_analyze)

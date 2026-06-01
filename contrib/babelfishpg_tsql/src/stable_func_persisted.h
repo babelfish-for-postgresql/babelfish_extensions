@@ -15,8 +15,8 @@ extern char *get_mismatched_persisted_gucs(void);
 /* Check if table has PERSISTED computed columns */
 extern bool table_has_persisted_computed_cols(Oid relid);
 
-/* Check GUCs for INSERT/UPDATE into tables with PERSISTED computed columns */
-extern void guc_check_insert_update(Query *parse);
+/* Check GUCs for DML into tables with PERSISTED computed columns */
+extern void guc_check_dml(Query *parse);
 
 /* Rewrite computed column references in SELECT when GUCs don't match */
 extern void query_rewrite_persisted(Query *parse);

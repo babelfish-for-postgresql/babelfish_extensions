@@ -3926,7 +3926,7 @@ CREATE TABLE partition_float_real_partitioned_computed_test (
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: CREATE TABLE failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER, ')~~
+~~ERROR (Message: CREATE TABLE failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER')~~
 
 
 -- Insert test data

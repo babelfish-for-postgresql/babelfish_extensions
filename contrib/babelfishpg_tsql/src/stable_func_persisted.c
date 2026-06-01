@@ -1,7 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * stable_func_persisted.c
- * POC to support deterministic STABLE functions in Computed Columns
+ * Support deterministic STABLE functions in PERSISTED computed columns.
+ *
+ * Enables whitelisted STABLE functions to be used in PERSISTED generated
+ * columns by bypassing PG's IMMUTABLE-only restriction. Enforces GUC
+ * settings at DDL and DML time, and re-evaluates the expression at SELECT
+ * time when session GUCs differ from defaults.
+ *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -116,6 +122,9 @@ char * get_mismatched_persisted_gucs(void)
         appendStringInfoString(&buf, "ANSI_WARNINGS, ");
     if (pltsql_numeric_roundabort)
         appendStringInfoString(&buf, "NUMERIC_ROUNDABORT, ");
+    
+    if (buf.len >= 2)
+        buf.data[buf.len - 2] = '\0';
     
     return buf.data;
 }
@@ -244,13 +253,26 @@ bool table_has_persisted_computed_cols(Oid relid)
     return found;
 }
 
-/* Check GUCs for INSERT/UPDATE into tables */
-void guc_check_insert_update(Query *parse)
+/* Check GUCs for DML into tables with PERSISTED computed columns */
+void guc_check_dml(Query *parse)
 {
     RangeTblEntry *rte;
+    const char *cmd;
 
     if (parse->resultRelation == 0)
         return;
+
+    switch (parse->commandType)
+    {
+        case CMD_INSERT: 
+            cmd = "INSERT"; break;
+        case CMD_UPDATE: 
+            cmd = "UPDATE"; break;
+        case CMD_DELETE: 
+            cmd = "DELETE"; break;
+        default: 
+            cmd = "DML"; break;
+    }
 
     rte = rt_fetch(parse->resultRelation, parse->rtable);
 
@@ -261,7 +283,7 @@ void guc_check_insert_update(Query *parse)
         char *mismatched = get_mismatched_persisted_gucs();
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-                 errmsg("INSERT/UPDATE failed because the following SET options have incorrect settings: '%s'", mismatched),
+                 errmsg("%s failed because the following SET options have incorrect settings: '%s'", cmd, mismatched),
                  errhint("Verify that SET options are correct for use with indexed views and/or indexes on computed columns.")));
     }
 
@@ -283,8 +305,8 @@ void guc_check_insert_update(Query *parse)
                 relation_close(rel, AccessShareLock);
                 ereport(ERROR,
                         (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-                         errmsg("INSERT/UPDATE failed because the following SET options have incorrect settings: '%s'",
-                                get_mismatched_persisted_gucs()),
+                         errmsg("%s failed because the following SET options have incorrect settings: '%s'",
+                                cmd, get_mismatched_persisted_gucs()),
                          errhint("Verify that SET options are correct for use with indexed views and/or indexes on computed columns.")));
             }
         }
