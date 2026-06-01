@@ -1518,7 +1518,7 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 		MemoryContext oldcxt;
 
 		oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
-		queryDesc->totaltime = InstrAlloc(1, INSTRUMENT_ALL, false);
+		queryDesc->totaltime = InstrAlloc(INSTRUMENT_ALL, false);
 		MemoryContextSwitchTo(oldcxt);
 	}
 }
