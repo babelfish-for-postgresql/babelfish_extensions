@@ -14,6 +14,7 @@
 
 #include "access/relation.h"
 #include "access/table.h"
+#include "catalog/heap.h"
 #include "catalog/pg_proc.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -29,6 +30,7 @@
 #include "stable_func_persisted.h"
 
 extern bool babelfish_dump_restore;
+extern persisted_col_hook_type prev_persisted_col_hook;
 
 /* GUC variables */
 extern bool pltsql_quoted_identifier;
@@ -53,13 +55,7 @@ static FuncEntry whitelist[] = {
     {"concat_ws", "sys"},
 
     /* Conversion functions */
-    {"babelfish_conv_date_to_string", "sys"},
-    {"babelfish_conv_datetime_to_string", "sys"},
     {"babelfish_conv_helper_to_varchar", "sys"},
-    {"babelfish_conv_to_varchar", "sys"},
-    {"babelfish_conv_time_to_string", "sys"},
-    {"babelfish_conv_money_to_string", "sys"},
-    {"babelfish_conv_float_to_string", "sys"},
 
     /* Numeric casting/rounding */
     {"babelfish_cast_floor_int", "sys"},
@@ -167,11 +163,9 @@ has_unsafe_func_walker(Node *node, void *context)
                      * Whitelisted STABLE — but check CONVERT for explicit style.
                      * CONVERT without style is non-deterministic.
                      */
-                    if (pg_strcasecmp(funcname, "babelfish_conv_helper_to_varchar") == 0 ||
-                        pg_strcasecmp(funcname, "babelfish_conv_date_to_string") == 0 ||
-                        pg_strcasecmp(funcname, "babelfish_conv_datetime_to_string") == 0)
+                    if (pg_strcasecmp(funcname, "babelfish_conv_helper_to_varchar") == 0)
                     {
-                        /* Check p_style_specified */
+                        /* Check p_style_specified (5th arg) */
                         if (list_length(f->args) >= 5)
                         {
                             Node *style_specified = (Node *) list_nth(f->args, 4);
@@ -214,7 +208,11 @@ Node * stable_persisted_hook(Node *expr)
         return NULL;
     
     if (sql_dialect != SQL_DIALECT_TSQL && !babelfish_dump_restore)
+    {
+        if (prev_persisted_col_hook)
+            return prev_persisted_col_hook(expr);
         return expr;
+    }
     
     /* Enforce GUC settings at CREATE time (skip during dump/restore) */
     if (!babelfish_dump_restore && !check_persisted_gucs())
@@ -262,6 +260,14 @@ void guc_check_dml(Query *parse)
     if (parse->resultRelation == 0)
         return;
 
+    rte = rt_fetch(parse->resultRelation, parse->rtable);
+
+    if (rte->rtekind != RTE_RELATION)
+        return;
+
+    if (check_persisted_gucs())
+        return;
+
     switch (parse->commandType)
     {
         case CMD_INSERT: 
@@ -274,20 +280,17 @@ void guc_check_dml(Query *parse)
             cmd = "DML"; break;
     }
 
-    rte = rt_fetch(parse->resultRelation, parse->rtable);
-
-    if (rte->rtekind == RTE_RELATION &&
-        table_has_persisted_computed_cols(rte->relid) &&
-        !check_persisted_gucs())
+    /* Check if the target table itself has persisted computed columns */
+    if (table_has_persisted_computed_cols(rte->relid))
     {
-        char *mismatched = get_mismatched_persisted_gucs();
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-                 errmsg("%s failed because the following SET options have incorrect settings: '%s'", cmd, mismatched),
+                 errmsg("%s failed because the following SET options have incorrect settings: '%s'",
+                        cmd, get_mismatched_persisted_gucs()),
                  errhint("Verify that SET options are correct for use with indexed views and/or indexes on computed columns.")));
     }
 
-    if (!check_persisted_gucs())
+    /* Check if any FK-referenced parent table has persisted computed columns */
     {
         Relation    rel;
         List       *fk_list;

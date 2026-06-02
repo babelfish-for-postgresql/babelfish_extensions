@@ -689,5 +689,9 @@ forxml-auto
 BABEL-5264
 BABEL-6037
 babel_sqlvariant_coerce_type
+<<<<<<< HEAD
 BABEL-login-db-long-identifiers
 persisted_comp_cols
+=======
+Persisted_Computed_Columns_test
+>>>>>>> 875c1352f (Removed some functions from whitelist and addressed the diff)

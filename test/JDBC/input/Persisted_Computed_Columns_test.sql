@@ -1,4 +1,3 @@
-
 -- Test PERSISTED computed columns with deterministic STABLE functions
 SET QUOTED_IDENTIFIER ON
 SET CONCAT_NULL_YIELDS_NULL ON
@@ -9,8 +8,8 @@ SET ARITHABORT ON
 SET NUMERIC_ROUNDABORT OFF
 GO
 
-
 -- DDL: Table creation with whitelisted functions
+
 -- String concatenation via + operator
 CREATE TABLE pcc_concat (
     id INT IDENTITY(1,1),
@@ -105,41 +104,25 @@ CREATE TABLE pcc_conv_money (
 )
 GO
 
-
 -- DDL: Should FAIL cases
+
 -- CONVERT without explicit style (non-deterministic)
 CREATE TABLE pcc_bad1 (d DATE, c AS CONVERT(VARCHAR(10), d) PERSISTED)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: generation expression is not immutable)~~
-
 
 -- GETDATE (volatile)
 CREATE TABLE pcc_bad2 (c AS GETDATE() PERSISTED)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: generation expression is not immutable)~~
-
 
 -- NEWID (volatile)
 CREATE TABLE pcc_bad3 (c AS NEWID() PERSISTED)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: generation expression is not immutable)~~
-
 
 -- QUOTED_IDENTIFIER OFF at CREATE time
 SET QUOTED_IDENTIFIER OFF
 GO
 CREATE TABLE pcc_bad4 (a VARCHAR(10), b VARCHAR(10), c AS (a+b) PERSISTED)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CREATE TABLE failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER')~~
-
 SET QUOTED_IDENTIFIER ON
 GO
 
@@ -148,86 +131,52 @@ SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 CREATE TABLE pcc_bad5 (a VARCHAR(10), b VARCHAR(10), c AS (a+b) PERSISTED)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CREATE TABLE failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
-
 -- Insert test data
+
 INSERT INTO pcc_concat (a, b) VALUES ('Hello', 'World')
 INSERT INTO pcc_concat (a, b) VALUES ('X', NULL)
 INSERT INTO pcc_concat (a, b) VALUES ('A', 'B')
 INSERT INTO pcc_concat (a, b) VALUES (NULL, 'test')
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
 
 INSERT INTO pcc_convert (d) VALUES ('2024-01-15'), ('2024-12-25')
 GO
-~~ROW COUNT: 2~~
-
 
 INSERT INTO pcc_multi (id, a, b) VALUES (1, 'Foo', 'Bar'), (2, 'P', NULL)
 GO
-~~ROW COUNT: 2~~
-
 
 INSERT INTO pcc_concatfn (first_name, last_name) VALUES ('John', 'Doe'), ('Jane', NULL)
 GO
-~~ROW COUNT: 2~~
-
 
 INSERT INTO pcc_cast (val) VALUES (123.4567), (99.9)
 GO
-~~ROW COUNT: 2~~
-
 
 INSERT INTO pcc_eomonth (d) VALUES ('2024-01-15'), ('2024-02-10')
 GO
-~~ROW COUNT: 2~~
-
 
 INSERT INTO pcc_concatws (a, b, c) VALUES ('one', 'two', 'three'), ('x', NULL, 'z')
 GO
-~~ROW COUNT: 2~~
-
 
 INSERT INTO pcc_datetrunc (dt) VALUES ('2024-03-15 10:30:45'), ('2024-07-22 08:15:00')
 GO
-~~ROW COUNT: 2~~
-
 
 INSERT INTO pcc_castbig (val) VALUES (123456.7890), (999999.9)
 GO
-~~ROW COUNT: 2~~
-
 
 INSERT INTO pcc_castsmall (val) VALUES (123.45), (32.1)
 GO
-~~ROW COUNT: 2~~
-
 
 INSERT INTO pcc_conv_money (m) VALUES (1234.56), (99999.99)
 GO
-~~ROW COUNT: 2~~
-
 
 -- Normal table (no computed cols)
 CREATE TABLE pcc_normal (id INT, val VARCHAR(50))
 GO
 INSERT INTO pcc_normal VALUES (1, 'test')
 GO
-~~ROW COUNT: 1~~
-
 
 -- View on pcc_concat
 CREATE VIEW pcc_view AS SELECT id, a, b, c FROM pcc_concat
@@ -252,28 +201,18 @@ GO
 INSERT INTO pcc_fk_parent (a, b) VALUES (1, 2), (5, 5)
 INSERT INTO pcc_fk_child VALUES (1, 3)
 GO
-~~ROW COUNT: 2~~
-
-~~ROW COUNT: 1~~
-
-
 
 -- DML GUC enforcement: INSERT / UPDATE / DELETE
+
 -- INSERT with correct GUCs (should PASS)
 INSERT INTO pcc_concat (a, b) VALUES ('New', 'Row')
 GO
-~~ROW COUNT: 1~~
-
 
 -- INSERT with CONCAT_NULL_YIELDS_NULL OFF (should FAIL)
 SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 INSERT INTO pcc_concat (a, b) VALUES ('Bad', 'Insert')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: INSERT failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
@@ -282,10 +221,6 @@ SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 UPDATE pcc_concat SET a = 'Changed' WHERE id = 1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UPDATE failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
@@ -294,10 +229,6 @@ SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 DELETE FROM pcc_concat WHERE id = 3
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: DELETE failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
@@ -306,10 +237,6 @@ SET QUOTED_IDENTIFIER OFF
 GO
 INSERT INTO pcc_concat (a, b) VALUES ('qi', 'off')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: INSERT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER')~~
-
 SET QUOTED_IDENTIFIER ON
 GO
 
@@ -319,10 +246,6 @@ SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 INSERT INTO pcc_concat (a, b) VALUES ('multi', 'guc')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: INSERT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER, CONCAT_NULL_YIELDS_NULL')~~
-
 SET QUOTED_IDENTIFIER ON
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
@@ -332,163 +255,69 @@ SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 INSERT INTO pcc_normal VALUES (2, 'no_computed_col')
 GO
-~~ROW COUNT: 1~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
-
 -- SELECT re-evaluation
+
 -- SELECT with correct GUCs (uses stored values)
 SELECT id, a, b, c FROM pcc_concat ORDER BY id
 GO
-~~START~~
-int#!#varchar#!#varchar#!#varchar
-1#!#Hello#!#World#!#HelloWorld
-2#!#X#!#<NULL>#!#<NULL>
-3#!#A#!#B#!#AB
-4#!#<NULL>#!#test#!#<NULL>
-5#!#New#!#Row#!#NewRow
-~~END~~
-
 
 -- SELECT with CONCAT_NULL_YIELDS_NULL OFF (re-evaluates)
 SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 SELECT id, a, b, c FROM pcc_concat ORDER BY id
 GO
-~~START~~
-int#!#varchar#!#varchar#!#varchar
-1#!#Hello#!#World#!#HelloWorld
-2#!#X#!#<NULL>#!#X
-3#!#A#!#B#!#AB
-4#!#<NULL>#!#test#!#test
-5#!#New#!#Row#!#NewRow
-~~END~~
-
 
 -- WHERE clause uses re-evaluated value
 SELECT id, a, b, c FROM pcc_concat WHERE c = 'X'
 GO
-~~START~~
-int#!#varchar#!#varchar#!#varchar
-2#!#X#!#<NULL>#!#X
-~~END~~
-
 
 -- COUNT with re-evaluation (all rows non-null with GUC OFF)
 SELECT COUNT(*) AS cnt FROM pcc_concat WHERE c IS NOT NULL
 GO
-~~START~~
-int
-5
-~~END~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
 -- COUNT with correct GUC (NULL rows stay NULL)
 SELECT COUNT(*) AS cnt FROM pcc_concat WHERE c IS NOT NULL
 GO
-~~START~~
-int
-3
-~~END~~
-
 
 -- Verify all whitelisted function outputs
 SELECT * FROM pcc_convert ORDER BY id
 GO
-~~START~~
-int#!#date#!#varchar
-1#!#2024-01-15#!#01/15/2024
-2#!#2024-12-25#!#12/25/2024
-~~END~~
-
 
 SELECT * FROM pcc_eomonth ORDER BY id
 GO
-~~START~~
-int#!#date#!#date
-1#!#2024-01-15#!#2024-01-31
-2#!#2024-02-10#!#2024-02-29
-~~END~~
-
 
 SELECT * FROM pcc_cast ORDER BY id
 GO
-~~START~~
-int#!#numeric#!#int
-1#!#123.4567#!#123
-2#!#99.9000#!#99
-~~END~~
-
 
 SELECT * FROM pcc_concatws ORDER BY id
 GO
-~~START~~
-int#!#varchar#!#varchar#!#varchar#!#varchar
-1#!#one#!#two#!#three#!#one-two-three
-2#!#x#!#<NULL>#!#z#!#x-z
-~~END~~
-
 
 SELECT * FROM pcc_datetrunc ORDER BY id
 GO
-~~START~~
-int#!#datetime#!#datetime
-1#!#2024-03-15 10:30:45.0#!#2024-03-01 00:00:00.0
-2#!#2024-07-22 08:15:00.0#!#2024-07-01 00:00:00.0
-~~END~~
-
 
 SELECT * FROM pcc_castbig ORDER BY id
 GO
-~~START~~
-int#!#numeric#!#bigint
-1#!#123456.7890#!#123456
-2#!#999999.9000#!#999999
-~~END~~
-
 
 SELECT * FROM pcc_castsmall ORDER BY id
 GO
-~~START~~
-int#!#numeric#!#smallint
-1#!#123.45#!#123
-2#!#32.10#!#32
-~~END~~
-
 
 SELECT * FROM pcc_conv_money ORDER BY id
 GO
-~~START~~
-int#!#money#!#varchar
-1#!#1234.5600#!#1,234.56
-2#!#99999.9900#!#99,999.99
-~~END~~
-
-
 
 -- Query plan verification (BABELFISH_SHOWPLAN_ALL)
+SELECT set_config('max_parallel_workers_per_gather', '0', false)
+GO
+
 -- Plan with GUC=ON (no re-evaluation, uses stored column)
 SET BABELFISH_SHOWPLAN_ALL ON
 GO
 SELECT COUNT(*) FROM pcc_concat WHERE c IS NOT NULL
 GO
-~~START~~
-text
-Query Text: SELECT COUNT(*) FROM pcc_concat WHERE c IS NOT NULL
-Aggregate  (cost=17.87..17.88 rows=1 width=4)
-  ->  Seq Scan on pcc_concat  (cost=0.00..16.30 rows=627 width=0)
-        Filter: (c IS NOT NULL)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.124 ms
-~~END~~
-
 SET BABELFISH_SHOWPLAN_ALL OFF
 GO
 
@@ -499,59 +328,31 @@ SET BABELFISH_SHOWPLAN_ALL ON
 GO
 SELECT COUNT(*) FROM pcc_concat WHERE c IS NOT NULL
 GO
-~~START~~
-text
-Query Text: SELECT COUNT(*) FROM pcc_concat WHERE c IS NOT NULL
-Aggregate  (cost=19.45..19.46 rows=1 width=4)
-  ->  Seq Scan on pcc_concat  (cost=0.00..17.88 rows=627 width=0)
-        Filter: ((babelfish_concat_wrapper((a)::text, (b)::text))::"varchar" IS NOT NULL)
-~~END~~
-
-~~START~~
-text
-Babelfish T-SQL Batch Parsing Time: 0.068 ms
-~~END~~
-
 SET BABELFISH_SHOWPLAN_ALL OFF
 GO
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
-
 -- Views
+
 -- View with correct GUCs
 SELECT COUNT(*) AS cnt FROM pcc_view WHERE c IS NOT NULL
 GO
-~~START~~
-int
-3
-~~END~~
-
 
 -- View with wrong GUC (re-evaluates through view)
 SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 SELECT COUNT(*) AS cnt FROM pcc_view WHERE c IS NOT NULL
 GO
-~~START~~
-int
-5
-~~END~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
-
 -- CTEs
+
 -- CTE with correct GUCs
 ;WITH cte AS (SELECT c FROM pcc_concat WHERE c IS NOT NULL)
 SELECT COUNT(*) AS cnt FROM cte
 GO
-~~START~~
-int
-3
-~~END~~
-
 
 -- CTE with wrong GUC (re-evaluates)
 SET CONCAT_NULL_YIELDS_NULL OFF
@@ -559,16 +360,11 @@ GO
 ;WITH cte AS (SELECT c FROM pcc_concat WHERE c IS NOT NULL)
 SELECT COUNT(*) AS cnt FROM cte
 GO
-~~START~~
-int
-5
-~~END~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
-
 -- INSERT...SELECT
+
 CREATE TABLE pcc_dst (val VARCHAR(50))
 GO
 
@@ -577,48 +373,26 @@ INSERT INTO pcc_dst SELECT c FROM pcc_concat WHERE a = 'Hello'
 SELECT * FROM pcc_dst
 DELETE FROM pcc_dst
 GO
-~~ROW COUNT: 1~~
-
-~~START~~
-varchar
-HelloWorld
-~~END~~
-
-~~ROW COUNT: 1~~
-
 
 -- INSERT...SELECT with wrong GUC (pcc_dst has no computed cols so INSERT passes)
 SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 INSERT INTO pcc_dst SELECT c FROM pcc_concat WHERE a = 'X'
 GO
-~~ROW COUNT: 1~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 SELECT * FROM pcc_dst
 DELETE FROM pcc_dst
 GO
-~~START~~
-varchar
-X
-~~END~~
-
-~~ROW COUNT: 1~~
-
-
 
 -- JOINs
+
 -- Self-JOIN with correct GUCs
 SELECT t1.id, t1.c, t2.id AS id2, t2.c AS c2
 FROM pcc_concat t1 JOIN pcc_concat t2 ON t1.c = t2.c
 WHERE t1.id < t2.id
 ORDER BY t1.id
 GO
-~~START~~
-int#!#varchar#!#int#!#varchar
-~~END~~
-
 
 -- Self-JOIN with wrong GUC (re-evaluates both sides)
 SET CONCAT_NULL_YIELDS_NULL OFF
@@ -628,10 +402,6 @@ FROM pcc_concat t1 JOIN pcc_concat t2 ON t1.c = t2.c
 WHERE t1.id < t2.id
 ORDER BY t1.id
 GO
-~~START~~
-int#!#varchar#!#int#!#varchar
-~~END~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
@@ -641,50 +411,32 @@ GO
 SELECT e.full_name, m.c, m.d
 FROM pcc_concatfn e JOIN pcc_multi m ON e.first_name = m.a
 GO
-~~START~~
-varchar#!#varchar#!#varchar
-~~END~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
-
 -- Subqueries
+
 SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 
 -- IN subquery
 SELECT id, a, b, c FROM pcc_concat WHERE c IN (SELECT c FROM pcc_concat WHERE a = 'X')
 GO
-~~START~~
-int#!#varchar#!#varchar#!#varchar
-2#!#X#!#<NULL>#!#X
-~~END~~
-
 
 -- Scalar subquery
 SELECT a, (SELECT MAX(c) FROM pcc_concat) AS max_c FROM pcc_concat WHERE a = 'X'
 GO
-~~START~~
-varchar#!#varchar
-X#!#X
-~~END~~
-
 
 -- EXISTS subquery
 SELECT t1.id, t1.c FROM pcc_concat t1
 WHERE EXISTS (SELECT 1 FROM pcc_multi t2 WHERE t1.c = t2.c)
 GO
-~~START~~
-int#!#varchar
-~~END~~
-
 
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
-
 -- UNION / GROUP BY / HAVING / ORDER BY
+
 SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 
@@ -693,74 +445,33 @@ SELECT c FROM pcc_concat WHERE a = 'X'
 UNION
 SELECT c FROM pcc_concat WHERE a = 'Hello'
 GO
-~~START~~
-varchar
-HelloWorld
-X
-~~END~~
-
 
 -- GROUP BY computed column
 SELECT c, COUNT(*) AS cnt FROM pcc_concat GROUP BY c ORDER BY c
 GO
-~~START~~
-varchar#!#int
-AB#!#1
-HelloWorld#!#1
-NewRow#!#1
-test#!#1
-X#!#1
-~~END~~
-
 
 -- HAVING on computed column
 SELECT c, COUNT(*) AS cnt FROM pcc_concat GROUP BY c HAVING c IS NOT NULL ORDER BY c
 GO
-~~START~~
-varchar#!#int
-AB#!#1
-HelloWorld#!#1
-NewRow#!#1
-test#!#1
-X#!#1
-~~END~~
-
 
 -- ORDER BY computed column
 SELECT id, a, b, c FROM pcc_concat ORDER BY c
 GO
-~~START~~
-int#!#varchar#!#varchar#!#varchar
-3#!#A#!#B#!#AB
-1#!#Hello#!#World#!#HelloWorld
-5#!#New#!#Row#!#NewRow
-4#!#<NULL>#!#test#!#test
-2#!#X#!#<NULL>#!#X
-~~END~~
-
 
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
-
 -- Foreign key interactions
+
 -- FK violation (value doesn't exist)
 INSERT INTO pcc_fk_child VALUES (2, 99)
 GO
-~~ERROR (Code: 547)~~
-
-~~ERROR (Message: insert or update on table "pcc_fk_child" violates foreign key constraint "fk_pcc_child")~~
-
 
 -- FK child INSERT with wrong GUC (parent has computed col)
 SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 INSERT INTO pcc_fk_child VALUES (3, 3)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: INSERT failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
@@ -769,10 +480,6 @@ SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 UPDATE pcc_fk_child SET parent_c = 10 WHERE id = 1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UPDATE failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
@@ -781,10 +488,6 @@ SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 DELETE FROM pcc_fk_child WHERE id = 1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: DELETE failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
@@ -793,16 +496,11 @@ SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 SELECT * FROM pcc_fk_child
 GO
-~~START~~
-int#!#int
-1#!#3
-~~END~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
-
 -- Bulk load re-evaluation (20 rows: 10 non-null, 10 null)
+
 CREATE TABLE pcc_bulk (
     id INT,
     a VARCHAR(20),
@@ -823,26 +521,6 @@ INSERT INTO pcc_bulk (id, a, b) VALUES (8, 'A8', 'B8')
 INSERT INTO pcc_bulk (id, a, b) VALUES (9, 'A9', 'B9')
 INSERT INTO pcc_bulk (id, a, b) VALUES (10, 'A10', 'B10')
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
 
 -- 10 null rows (c = NULL because b is NULL and CONCAT_NULL_YIELDS_NULL ON)
 INSERT INTO pcc_bulk (id, a, b) VALUES (11, 'X11', NULL)
@@ -856,51 +534,28 @@ INSERT INTO pcc_bulk (id, a, b) VALUES (18, 'X18', NULL)
 INSERT INTO pcc_bulk (id, a, b) VALUES (19, 'X19', NULL)
 INSERT INTO pcc_bulk (id, a, b) VALUES (20, 'X20', NULL)
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
 
 -- COUNT with GUC=ON (should be 10)
 SELECT COUNT(*) AS cnt FROM pcc_bulk WHERE c IS NOT NULL
 GO
-~~START~~
-int
-10
-~~END~~
-
 
 -- COUNT with GUC=OFF (should be 20 — all re-evaluated as non-null)
 SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 SELECT COUNT(*) AS cnt FROM pcc_bulk WHERE c IS NOT NULL
 GO
-~~START~~
-int
-20
-~~END~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
+-- Partition function and scheme
+CREATE PARTITION FUNCTION pcc_part_func (INT)
+AS RANGE RIGHT FOR VALUES (10, 20, 30, 40)
+GO
 
--- Partition tables (partition func/scheme from prepare)
+CREATE PARTITION SCHEME pcc_part_scheme
+AS PARTITION pcc_part_func ALL TO ([PRIMARY])
+GO
+
 -- Partitioned table with PERSISTED computed col (not partition key)
 CREATE TABLE pcc_part_persisted (
     id INT,
@@ -912,20 +567,9 @@ GO
 
 INSERT INTO pcc_part_persisted (id, a, b) VALUES (5, 1, 2), (15, 3, 4), (25, 5, 6), (35, 7, 8), (45, 9, 10)
 GO
-~~ROW COUNT: 5~~
-
 
 SELECT * FROM pcc_part_persisted ORDER BY id
 GO
-~~START~~
-int#!#int#!#int#!#int
-5#!#1#!#2#!#3
-15#!#3#!#4#!#7
-25#!#5#!#6#!#11
-35#!#7#!#8#!#15
-45#!#9#!#10#!#19
-~~END~~
-
 
 -- Partitioned table with CONCAT for re-evaluation
 CREATE TABLE pcc_part_concat (
@@ -940,36 +584,16 @@ INSERT INTO pcc_part_concat (id, first_name, last_name) VALUES
     (5, 'Alice', 'Adams'), (15, 'Bob', NULL), (25, 'Charlie', 'Clark'),
     (35, 'David', 'Davis'), (45, 'Eve', 'Evans')
 GO
-~~ROW COUNT: 5~~
-
 
 -- SELECT with correct GUCs on partitioned table
 SELECT * FROM pcc_part_concat ORDER BY id
 GO
-~~START~~
-int#!#varchar#!#varchar#!#varchar
-5#!#Alice#!#Adams#!#Alice Adams
-15#!#Bob#!#<NULL>#!#<NULL>
-25#!#Charlie#!#Clark#!#Charlie Clark
-35#!#David#!#Davis#!#David Davis
-45#!#Eve#!#Evans#!#Eve Evans
-~~END~~
-
 
 -- SELECT with wrong GUC on partitioned table (re-evaluates)
 SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 SELECT * FROM pcc_part_concat ORDER BY id
 GO
-~~START~~
-int#!#varchar#!#varchar#!#varchar
-5#!#Alice#!#Adams#!#Alice Adams
-15#!#Bob#!#<NULL>#!#Bob 
-25#!#Charlie#!#Clark#!#Charlie Clark
-35#!#David#!#Davis#!#David Davis
-45#!#Eve#!#Evans#!#Eve Evans
-~~END~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
@@ -978,30 +602,16 @@ SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 SELECT COUNT(*) AS non_null_cnt FROM pcc_part_concat WHERE full_name IS NOT NULL
 GO
-~~START~~
-int
-5
-~~END~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 SELECT COUNT(*) AS non_null_cnt FROM pcc_part_concat WHERE full_name IS NOT NULL
 GO
-~~START~~
-int
-4
-~~END~~
-
 
 -- INSERT with wrong GUC into partitioned table (should FAIL)
 SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 INSERT INTO pcc_part_persisted (id, a, b) VALUES (50, 11, 12)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: INSERT failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
@@ -1010,25 +620,12 @@ SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 DELETE FROM pcc_part_persisted WHERE id = 5
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: DELETE failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
 -- Verify data unchanged after failed DML on partitioned table
 SELECT * FROM pcc_part_persisted ORDER BY id
 GO
-~~START~~
-int#!#int#!#int#!#int
-5#!#1#!#2#!#3
-15#!#3#!#4#!#7
-25#!#5#!#6#!#11
-35#!#7#!#8#!#15
-45#!#9#!#10#!#19
-~~END~~
-
 
 -- Partitioned table with CONVERT
 CREATE TABLE pcc_part_convert (
@@ -1040,18 +637,9 @@ GO
 
 INSERT INTO pcc_part_convert (id, d) VALUES (5, '2024-01-15'), (15, '2024-06-20'), (25, '2024-12-25')
 GO
-~~ROW COUNT: 3~~
-
 
 SELECT * FROM pcc_part_convert ORDER BY id
 GO
-~~START~~
-int#!#date#!#varchar
-5#!#2024-01-15#!#01/15/2024
-15#!#2024-06-20#!#06/20/2024
-25#!#2024-12-25#!#12/25/2024
-~~END~~
-
 
 -- ALTER TABLE ADD PERSISTED computed col to partitioned table
 CREATE TABLE pcc_part_base (
@@ -1063,47 +651,26 @@ GO
 
 INSERT INTO pcc_part_base VALUES (5, 10, 20), (15, 30, 40)
 GO
-~~ROW COUNT: 2~~
-
 
 ALTER TABLE pcc_part_base ADD z AS (x + y) PERSISTED
 GO
 
 SELECT * FROM pcc_part_base ORDER BY id
 GO
-~~START~~
-int#!#int#!#int#!#int
-5#!#10#!#20#!#30
-15#!#30#!#40#!#70
-~~END~~
-
-
 
 -- Additional edge cases
+
 -- ALTER TABLE ADD computed column
 ALTER TABLE pcc_concat ADD d AS (b + a) PERSISTED
 GO
 SELECT id, a, b, c, d FROM pcc_concat ORDER BY id
 GO
-~~START~~
-int#!#varchar#!#varchar#!#varchar#!#varchar
-1#!#Hello#!#World#!#HelloWorld#!#WorldHello
-2#!#X#!#<NULL>#!#<NULL>#!#<NULL>
-3#!#A#!#B#!#AB#!#BA
-4#!#<NULL>#!#test#!#<NULL>#!#<NULL>
-5#!#New#!#Row#!#NewRow#!#RowNew
-~~END~~
-
 
 -- ALTER TABLE ADD computed col with wrong GUC (should FAIL)
 SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 ALTER TABLE pcc_concat ADD e AS (a + 'suffix') PERSISTED
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CREATE TABLE failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
-
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
@@ -1114,12 +681,54 @@ GO
 -- Verify data unchanged after all failed DMLs
 SELECT id, a, b, c FROM pcc_concat ORDER BY id
 GO
-~~START~~
-int#!#varchar#!#varchar#!#varchar
-1#!#Hello#!#World#!#HelloWorld
-2#!#X#!#<NULL>#!#<NULL>
-3#!#A#!#B#!#AB
-4#!#<NULL>#!#test#!#<NULL>
-5#!#New#!#Row#!#NewRow
-~~END~~
 
+-- Cleanup
+
+DROP VIEW IF EXISTS pcc_view
+GO
+DROP TABLE IF EXISTS pcc_fk_child
+GO
+DROP TABLE IF EXISTS pcc_fk_parent
+GO
+DROP TABLE IF EXISTS pcc_concat
+GO
+DROP TABLE IF EXISTS pcc_convert
+GO
+DROP TABLE IF EXISTS pcc_multi
+GO
+DROP TABLE IF EXISTS pcc_concatfn
+GO
+DROP TABLE IF EXISTS pcc_cast
+GO
+DROP TABLE IF EXISTS pcc_eomonth
+GO
+DROP TABLE IF EXISTS pcc_concatws
+GO
+DROP TABLE IF EXISTS pcc_datetrunc
+GO
+DROP TABLE IF EXISTS pcc_castbig
+GO
+DROP TABLE IF EXISTS pcc_castsmall
+GO
+DROP TABLE IF EXISTS pcc_conv_money
+GO
+DROP TABLE IF EXISTS pcc_normal
+GO
+DROP TABLE IF EXISTS pcc_dst
+GO
+DROP TABLE IF EXISTS pcc_bulk
+GO
+DROP TABLE IF EXISTS pcc_part_base
+GO
+DROP TABLE IF EXISTS pcc_part_convert
+GO
+DROP TABLE IF EXISTS pcc_part_concat
+GO
+DROP TABLE IF EXISTS pcc_part_persisted
+GO
+
+-- Partition scheme and function (must drop after tables)
+DROP PARTITION SCHEME pcc_part_scheme
+GO
+DROP PARTITION FUNCTION pcc_part_func
+GO
