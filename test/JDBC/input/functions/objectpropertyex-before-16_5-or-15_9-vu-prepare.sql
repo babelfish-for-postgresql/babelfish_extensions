@@ -133,6 +133,15 @@ GO
 CREATE DATABASE objectpropertyex_otherdb
 GO
 
+USE objectpropertyex_otherdb
+GO
+
+CREATE TABLE objectpropertyex_otherdb_table(a int)
+GO
+
+USE master
+GO
+
 -- =============== ACL tests ===============
 CREATE LOGIN objectpropertyex_test_login WITH PASSWORD = '12345678';
 GO
@@ -157,3 +166,48 @@ GRANT REFERENCES ON objectpropertyex_noindex_table TO objectpropertyex_test_user
 GO
 
 -- No permissions on objectpropertyex_basetype_view (for negative test)
+
+-- =============== Permission edge cases (OID helper) ===============
+CREATE TABLE objectpropertyex_perm_table(a int)
+GO
+
+CREATE TRIGGER objectpropertyex_perm_trigger ON objectpropertyex_perm_table INSTEAD OF INSERT
+AS
+BEGIN
+    SELECT * FROM objectpropertyex_perm_table
+END
+GO
+
+CREATE LOGIN objectpropertyex_perm_login WITH PASSWORD = '12345678'
+GO
+
+CREATE USER objectpropertyex_perm_user FOR LOGIN objectpropertyex_perm_login
+GO
+
+-- Store OIDs so restricted users can bypass OBJECT_ID() limitation
+CREATE TABLE objectpropertyex_oid_helper(name varchar(100), oid_val int)
+GO
+INSERT INTO objectpropertyex_oid_helper VALUES
+('basetype_table', OBJECT_ID('objectpropertyex_basetype_table')),
+('specialinput_table', OBJECT_ID('objectpropertyex_specialinput_table')),
+('trigger_table', OBJECT_ID('objectpropertyex_trigger_table')),
+('noindex_table', OBJECT_ID('objectpropertyex_noindex_table')),
+('basetype_view', OBJECT_ID('objectpropertyex_basetype_view')),
+('perm_table', OBJECT_ID('objectpropertyex_perm_table')),
+('perm_trigger', OBJECT_ID('objectpropertyex_perm_trigger', 'TR'))
+GO
+
+
+USE objectpropertyex_otherdb
+GO
+
+INSERT INTO master.dbo.objectpropertyex_oid_helper VALUES
+('otherdb_table', OBJECT_ID('objectpropertyex_otherdb_table'))
+GO
+
+USE master
+GO
+GRANT SELECT ON objectpropertyex_oid_helper TO objectpropertyex_perm_user
+GO
+GRANT SELECT ON objectpropertyex_oid_helper TO objectpropertyex_test_user
+GO

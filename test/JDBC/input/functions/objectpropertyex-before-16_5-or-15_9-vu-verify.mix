@@ -283,23 +283,109 @@ GO
 
 -- tsql user=objectpropertyex_test_login password=12345678
 -- User with INSERT only should see BaseType (matches SQL Server behavior)
-SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'BaseType') AS basetype_insert_only;
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='basetype_table'), 'BaseType') AS basetype_insert_only;
 GO
 
 -- User with UPDATE only should see BaseType
-SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_specialinput_table'), 'BaseType') AS basetype_update_only;
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='specialinput_table'), 'BaseType') AS basetype_update_only;
 GO
 
 -- User with DELETE only should see BaseType
-SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_trigger_table'), 'BaseType') AS basetype_delete_only;
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='trigger_table'), 'BaseType') AS basetype_delete_only;
 GO
 
 -- User with REFERENCES only should see BaseType
-SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_noindex_table'), 'BaseType') AS basetype_references_only;
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='noindex_table'), 'BaseType') AS basetype_references_only;
 GO
 
--- User with no direct permission on this object. Returns NULL via sqlcmd (correct
--- behavior matching SQL Server), but returns V here because the JDBC test framework
--- sets the PG role to master_dbo which has schema-level USAGE on all schemas.
-SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'BaseType') AS basetype_no_perm;
+-- User with no permission on this object should get NULL
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='basetype_view'), 'BaseType') AS basetype_no_perm;
+GO
+
+-- =============== Permission edge cases ===============
+-- tsql user=objectpropertyex_perm_login password=12345678
+-- No permissions: should return NULL
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_table'), 'BaseType')
+GO
+
+-- No permissions on parent table: trigger should return NULL
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_trigger'), 'BaseType')
+GO
+
+-- tsql
+-- Grant only SELECT
+GRANT SELECT ON objectpropertyex_perm_table TO objectpropertyex_perm_user
+GO
+
+-- tsql user=objectpropertyex_perm_login password=12345678
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_table'), 'BaseType')
+GO
+
+-- tsql
+REVOKE SELECT ON objectpropertyex_perm_table FROM objectpropertyex_perm_user
+GO
+GRANT INSERT ON objectpropertyex_perm_table TO objectpropertyex_perm_user
+GO
+
+-- tsql user=objectpropertyex_perm_login password=12345678
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_table'), 'BaseType')
+GO
+
+-- tsql
+REVOKE INSERT ON objectpropertyex_perm_table FROM objectpropertyex_perm_user
+GO
+GRANT UPDATE ON objectpropertyex_perm_table TO objectpropertyex_perm_user
+GO
+
+-- tsql user=objectpropertyex_perm_login password=12345678
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_table'), 'BaseType')
+GO
+
+-- tsql
+REVOKE UPDATE ON objectpropertyex_perm_table FROM objectpropertyex_perm_user
+GO
+GRANT DELETE ON objectpropertyex_perm_table TO objectpropertyex_perm_user
+GO
+
+-- tsql user=objectpropertyex_perm_login password=12345678
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_table'), 'BaseType')
+GO
+
+-- tsql
+REVOKE DELETE ON objectpropertyex_perm_table FROM objectpropertyex_perm_user
+GO
+GRANT REFERENCES ON objectpropertyex_perm_table TO objectpropertyex_perm_user
+GO
+
+-- tsql user=objectpropertyex_perm_login password=12345678
+-- REFERENCES only: table visible
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_table'), 'BaseType')
+GO
+
+-- REFERENCES on parent: trigger visible
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_trigger'), 'BaseType')
+GO
+
+-- tsql
+REVOKE REFERENCES ON objectpropertyex_perm_table FROM objectpropertyex_perm_user
+GO
+
+-- tsql user=objectpropertyex_perm_login password=12345678
+-- No permissions again: should return NULL
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_table'), 'BaseType')
+GO
+
+-- =============== Schema scoping tests ===============
+-- tsql
+-- sys schema object should always be visible
+SELECT OBJECTPROPERTYEX(OBJECT_ID('sys.objects'), 'BaseType') AS sys_always_visible
+GO
+
+
+-- information_schema object should be visible (shared schema)
+SELECT OBJECTPROPERTYEX(OBJECT_ID('information_schema.columns'), 'BaseType') AS info_schema_visible
+GO
+
+-- Object in another database should NOT be visible from master
+SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='otherdb_table'), 'BaseType') AS other_db_hidden
 GO

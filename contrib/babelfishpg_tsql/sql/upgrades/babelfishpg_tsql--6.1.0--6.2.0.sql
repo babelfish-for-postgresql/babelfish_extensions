@@ -81,14 +81,6 @@ RETURNS SYS.SQL_VARIANT AS
 'babelfishpg_tsql', 'objectpropertyex_internal'
 LANGUAGE C STABLE;
 
-CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
-    id INT,
-    property SYS.VARCHAR
-)
-RETURNS SYS.SQL_VARIANT AS
-'babelfishpg_tsql', 'objectpropertyex_internal'
-LANGUAGE C STABLE;
-
 -- BABELFISH_FUNCTION_EXT (antlr_parse_cache)
 SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_cache_tree TEXT DEFAULT NULL;

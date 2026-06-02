@@ -89,3 +89,16 @@ GO
 
 DROP SCHEMA objectpropertyex_ownerid_schema
 GO
+
+-- =============== Permission edge cases ===============
+DROP TABLE objectpropertyex_oid_helper
+GO
+
+DROP TABLE objectpropertyex_perm_table
+GO
+
+DROP USER objectpropertyex_perm_user
+GO
+
+DROP LOGIN objectpropertyex_perm_login
+GO
