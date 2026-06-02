@@ -769,6 +769,12 @@ ignore#!#forxml-raw-elements-before-17_9-or-18_3-vu-cleanup
 ignore#!#forxml-path-elements-before-17_10-or-18_4-vu-prepare
 ignore#!#forxml-path-elements-before-17_10-or-18_4-vu-verify
 ignore#!#forxml-path-elements-before-17_10-or-18_4-vu-cleanup
+ignore#!#forxml-before-17_11-or-18_5-vu-prepare
+ignore#!#forxml-before-17_11-or-18_5-vu-verify
+ignore#!#forxml-before-17_11-or-18_5-vu-cleanup
+ignore#!#forxml-auto-before-17_11-or-18_5-vu-prepare
+ignore#!#forxml-auto-before-17_11-or-18_5-vu-verify
+ignore#!#forxml-auto-before-17_11-or-18_5-vu-cleanup
 ignore#!#Test-Polygon-before-17_9-or-18_3-vu-prepare
 ignore#!#Test-Polygon-before-17_9-or-18_3-vu-verify
 ignore#!#Test-Polygon-before-17_9-or-18_3-vu-cleanup

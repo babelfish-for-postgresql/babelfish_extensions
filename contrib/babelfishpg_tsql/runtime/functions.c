@@ -4819,7 +4819,7 @@ objectproperty_helper(Oid object_id, const char *property, int *out_type,
 			if (object_name) 
 				pfree(object_name);
 			*is_null = true;
-				return 0;
+			return 0;
 		}
 
 		/*
@@ -4861,10 +4861,10 @@ objectproperty_helper(Oid object_id, const char *property, int *out_type,
 		 * These properties are only applicable if the type of the object is TABLE, 
 		 * Hence, return NULL if the object is not a TABLE.
 		 */
-		if (object_name) 
+		if (object_name)
 			pfree(object_name);
 		*is_null = true;
-				return 0;		
+		return 0;
 	}
 	/* IsMSShipped*/
 	else if (pg_strcasecmp(property, "ismsshipped") == 0)
