@@ -1,9 +1,9 @@
 -- tsql
-
 -- Test TSQL-aware identifier truncation for login and database names
 -- that exceed Postgres NAMEDATALEN (64 chars). TSQL allows up to 128 chars.
 -- The truncation uses clip + MD5 hash to produce a unique name that fits
 -- within NAMEDATALEN while preserving uniqueness.
+
 -- Scenario 1: Long login with 128 lowercase chars
 CREATE LOGIN long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr WITH PASSWORD = '123';
 GO

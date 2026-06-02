@@ -1,0 +1,169 @@
+-- single_db_mode_expected
+-- tsql
+-- Verify ALTER LOGIN works with long identifiers
+ALTER LOGIN long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr WITH PASSWORD = '1234';
+GO
+
+ALTER LOGIN Mixed_Case_Login_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXy WITH PASSWORD = '1234';
+GO
+
+ALTER LOGIN Lögïn_Tëst_Üsér_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñò WITH PASSWORD = '123';
+GO
+
+ALTER LOGIN boundary_test_login_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa WITH PASSWORD = '123';
+GO
+
+ALTER LOGIN CASE_INSENSITIVE_LONG_LOGIN_TEST_AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXXYYZZAABBCCDDEEFFGGHHIIJJKKLLMMNN WITH PASSWORD = '123';
+GO
+
+-- Scenario 1: Authenticate with long login (128 chars, lowercase)
+-- Verifies MD5 truncation in TdsProcessLogin produces correct role name
+-- tsql user=long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr password=1234
+select suser_name();
+go
+
+-- terminate-tsql-conn user=long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr password=1234
+
+-- Scenario 2: Authenticate with long login (128 chars, mixed case)
+-- Verifies that mixed-case input is downcased before MD5 hash computation
+-- tsql user=Mixed_Case_Login_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXy password=1234
+select suser_name();
+go
+
+-- terminate-tsql-conn user=Mixed_Case_Login_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXy password=1234
+
+-- Scenario 3: Authenticate with long login (128 chars, multibyte)
+-- Verifies pg_mbcliplen correctly handles multibyte character boundaries
+-- tsql user=Lögïn_Tëst_Üsér_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñò password=123
+select suser_name();
+go
+
+-- terminate-tsql-conn user=Lögïn_Tëst_Üsér_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñò password=123
+
+-- Scenario 4: Boundary - authenticate with exactly 64 char login
+-- This is the minimum length that triggers MD5 truncation (>= NAMEDATALEN)
+-- tsql user=boundary_test_login_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa password=123
+select suser_name();
+go
+
+-- terminate-tsql-conn user=boundary_test_login_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa password=123
+
+-- Scenario 5a: Case-insensitive auth - authenticate with all-lowercase
+-- Login was created as "Case_Insensitive_Long_Login_Test_AaBb...", authenticating with lowercase
+-- tsql user=case_insensitive_long_login_test_aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzzaabbccddeeffgghhiijjkkllmmnn password=123
+select suser_name();
+go
+
+-- terminate-tsql-conn user=case_insensitive_long_login_test_aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzzaabbccddeeffgghhiijjkkllmmnn password=123
+
+-- Scenario 5b: Case-insensitive auth - authenticate with all-uppercase
+-- Same login, authenticating with uppercase - should produce same MD5 hash
+-- tsql user=CASE_INSENSITIVE_LONG_LOGIN_TEST_AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXXYYZZAABBCCDDEEFFGGHHIIJJKKLLMMNN password=123
+select suser_name();
+go
+
+-- terminate-tsql-conn user=CASE_INSENSITIVE_LONG_LOGIN_TEST_AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXXYYZZAABBCCDDEEFFGGHHIIJJKKLLMMNN password=123
+
+-- Scenario 6: Authenticate with long database name (128 chars, lowercase)
+-- Verifies truncate_identifier hook in TdsSetDbContext works correctly
+-- tsql
+CREATE DATABASE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
+GO
+USE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
+GO
+GRANT CONNECT TO guest;
+GO
+USE master;
+GO
+
+-- tsql user=jdbc_user password=12345678 database=long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst
+select db_name();
+go
+
+-- terminate-tsql-conn user=jdbc_user password=12345678 database=long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst
+
+-- tsql
+DROP DATABASE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
+GO
+
+-- Scenario 7: Authenticate with long database name (128 chars, mixed case)
+-- Verifies case-insensitive database name lookup
+CREATE DATABASE Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV;
+GO
+USE Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV;
+GO
+GRANT CONNECT TO guest;
+GO
+USE master;
+GO
+
+-- tsql user=jdbc_user password=12345678 database=Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV
+select db_name();
+go
+
+-- terminate-tsql-conn user=jdbc_user password=12345678 database=Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV
+
+-- tsql
+DROP DATABASE Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV;
+GO
+
+-- Scenario 8: Authenticate with long database name (128 chars, multibyte)
+CREATE DATABASE Dätàbäsé_Tëst_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóô;
+GO
+USE Dätàbäsé_Tëst_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóô;
+GO
+GRANT CONNECT TO guest;
+GO
+USE master;
+GO
+
+-- tsql user=jdbc_user password=12345678 database=Dätàbäsé_Tëst_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóô
+select db_name();
+go
+
+-- terminate-tsql-conn user=jdbc_user password=12345678 database=Dätàbäsé_Tëst_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóô
+
+-- tsql
+DROP DATABASE Dätàbäsé_Tëst_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóô;
+GO
+
+-- Scenario 9: Combined - both long login AND long database
+-- Verifies both truncations work together in a single connection
+CREATE DATABASE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
+GO
+USE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
+GO
+GRANT CONNECT TO guest;
+GO
+USE master;
+GO
+
+-- tsql user=long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr password=1234 database=long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst
+select suser_name(), db_name();
+go
+
+-- terminate-tsql-conn user=long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr password=1234 database=long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst
+
+-- tsql
+DROP DATABASE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
+GO
+
+-- Scenario 10: Combined - both long login AND long database with mixed case
+CREATE DATABASE Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV;
+GO
+USE Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV;
+GO
+GRANT CONNECT TO guest;
+GO
+USE master;
+GO
+
+-- tsql user=Mixed_Case_Login_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXy password=1234 database=Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV
+select suser_name(), db_name();
+go
+
+-- terminate-tsql-conn user=Mixed_Case_Login_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXy password=1234 database=Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV
+
+-- tsql
+DROP DATABASE Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV;
+GO

@@ -1,7 +1,6 @@
--- single_db_mode_expected
 -- tsql
--- Cleanup: drop all logins and databases created for long identifier tests
 
+-- Cleanup: drop all logins and databases created for long identifier tests
 -- Drop long logins
 DROP LOGIN long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr;
 GO
@@ -18,14 +17,4 @@ GO
 
 -- Drop case-insensitive test login
 DROP LOGIN Case_Insensitive_Long_Login_Test_AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZzAaBbCcDdEeFfGgHhIiJjKkLlMmNn;
-GO
-
--- Drop long databases
-DROP DATABASE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
-GO
-
-DROP DATABASE Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV;
-GO
-
-DROP DATABASE Dätàbäsé_Tëst_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóô;
 GO
