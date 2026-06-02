@@ -2519,6 +2519,23 @@ extern bool 	is_numeric_datatype(Oid typid);
  */
 extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
 
+/*
+ * INSERT EXEC functions (pl_insert_exec.c)
+ */
+typedef struct InsertExecContext
+{
+	Oid			temp_table_oid;			/* OID of temp table for buffering */
+	Oid			target_rel_oid;			/* OID of target table - lock held to detect schema changes */
+	bool		is_target_relation_modified;	/* Set by bbf_object_access_hook when target table is altered */
+} InsertExecContext;
+
+extern InsertExecContext insert_exec_ctx;
+
+extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list, const char *schema_name_in);
+extern void flush_insert_exec_temp_table(PLtsql_execstate *estate,
+										 const char *column_list);
+extern DestReceiver *CreateInsertExecDestReceiver(void);
+
 #define NUM_DB_OBJECTS 11
 
 extern const char *shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2];

@@ -1400,9 +1400,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFor_clause(TSqlParser::For
 		handle(INSTR_UNSUPPORTED_TSQL_FOR_BROWSE_CLAUSE, "FOR BROWSE", getLineAndPos(ctx->BROWSE()));
 	if (ctx->XML())
 	{
-		// RAW and PATH is supported
-		if (ctx->AUTO())
-			handle(INSTR_UNSUPPORTED_TSQL_XML_OPTION_AUTO, "FOR XML AUTO mode", getLineAndPos(ctx->AUTO()));
+		// RAW, PATH, and AUTO are supported
 		if (ctx->EXPLICIT())
 			handle(INSTR_UNSUPPORTED_TSQL_XML_OPTION_EXPLICIT, "FOR XML EXPLICIT mode", getLineAndPos(ctx->EXPLICIT()));
 		if (!ctx->XMLDATA().empty())

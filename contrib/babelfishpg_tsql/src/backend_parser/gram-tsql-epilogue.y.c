@@ -1945,6 +1945,8 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause)
 						   root_name ? makeStringConst(root_name, -1) : makeStringConst("", -1));
 	func_args = lappend(func_args, makeBoolAConst(elements, -1));
 	func_args = lappend(func_args, makeBoolAConst(xsinil, -1));
+	/* 8th arg: auto_metadata placeholder (empty string, filled in by handleForXmlAuto) */
+	func_args = lappend(func_args, makeStringConst("", -1));
 	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
 
 	/*
