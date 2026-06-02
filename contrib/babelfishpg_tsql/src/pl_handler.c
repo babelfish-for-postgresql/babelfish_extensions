@@ -6229,11 +6229,11 @@ pltsql_cstr_to_name(char *s, int len)
 		if (sql_dialect == SQL_DIALECT_TSQL)
 		{
 			char		md5[MD5_HASH_LEN + 1];
+			bool		success;
+			const char *errstr = NULL;
 
 			/* Identifier should already be validated at the entry point */
 			Assert(pg_mbstrlen_with_len(s, len) <= 128);
-			bool		success;
-			const char *errstr = NULL;
 
 			if (tsql_is_database_or_server_collation_CI())
 			{
