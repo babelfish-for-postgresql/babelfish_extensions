@@ -681,3 +681,4 @@ forxml-raw-elements-1gb-limit
 forxml-path-elements
 babel_sqlvariant_coerce_type
 forxml-auto
+temp_table_long_name_enr

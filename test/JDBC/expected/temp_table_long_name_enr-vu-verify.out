@@ -1,0 +1,235 @@
+
+-- Direct creation tests (session-level, not inside a procedure)
+-- Scenario 1: Basic direct CREATE, INSERT, SELECT with ENR validation
+CREATE TABLE #temp_table_with_a_very_long_name_that_exceeds_namedatalen_limit (a INT, b VARCHAR(50))
+GO
+
+SELECT relname, LEN(relname) AS name_len FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#temp_table_with_a_very_long_name_that_exceeds%'
+GO
+~~START~~
+text#!#int
+#temp_table_with_a_very_long_name_that_exceeds_namedatalen_limit#!#64
+~~END~~
+
+
+INSERT INTO #temp_table_with_a_very_long_name_that_exceeds_namedatalen_limit VALUES (1, 'hello')
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM #temp_table_with_a_very_long_name_that_exceeds_namedatalen_limit
+GO
+~~START~~
+int#!#varchar
+1#!#hello
+~~END~~
+
+
+SELECT CASE WHEN OBJECT_ID('tempdb..#temp_table_with_a_very_long_name_that_exceeds_namedatalen_limit') IS NOT NULL THEN 'FOUND' ELSE 'NOT FOUND' END AS object_id_check
+GO
+~~START~~
+varchar
+FOUND
+~~END~~
+
+
+DROP TABLE #temp_table_with_a_very_long_name_that_exceeds_namedatalen_limit
+GO
+
+SELECT COUNT(*) AS enr_count_after_drop FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#temp_table_with_a_very_long_name_that_exceeds_namedatalen_limit%'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Scenario 2: Direct boundary test (64 bytes)
+CREATE TABLE #temp_table_name_just_over_the_namedatalen_boundary_of_64_bytess (y INT)
+GO
+
+INSERT INTO #temp_table_name_just_over_the_namedatalen_boundary_of_64_bytess VALUES (100)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT relname, LEN(relname) AS name_len FROM sys.babelfish_get_enr_list() WHERE relname LIKE '#temp_table_name_just_over%'
+GO
+~~START~~
+text#!#int
+#temp_table_name_just_over_the_namedatalen_boundary_of_64_bytess#!#64
+~~END~~
+
+
+SELECT * FROM #temp_table_name_just_over_the_namedatalen_boundary_of_64_bytess
+GO
+~~START~~
+int
+100
+~~END~~
+
+
+DROP TABLE #temp_table_name_just_over_the_namedatalen_boundary_of_64_bytess
+GO
+
+
+-- Procedure-based tests (validates behavior inside stored procedures)
+-- Scenario 3: Basic CREATE, INSERT, SELECT, DROP with ENR validation
+EXEC temp_long_name_enr_basic_proc
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#hello
+~~END~~
+
+~~START~~
+text#!#int
+#temp_table_with_a_very_long_name_that_exceeds_namedatalen_limit#!#64
+~~END~~
+
+~~START~~
+varchar
+FOUND
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+
+-- Scenario 2: ALTER TABLE on long-name temp table
+EXEC temp_long_name_enr_alter_proc
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#added
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+-- Scenario 3: Multiple references in one batch (self-join)
+EXEC temp_long_name_enr_join_proc
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#aaa
+~~END~~
+
+
+-- Scenario 4: Subquery referencing long-name temp table
+EXEC temp_long_name_enr_subquery_proc
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+20
+30
+~~END~~
+
+
+-- Scenario 5: INSERT...SELECT between two long-name temp tables
+EXEC temp_long_name_enr_insert_select_proc
+GO
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+2
+3
+~~END~~
+
+
+-- Scenario 6 & 7: Boundary tests (63 bytes and 64 bytes)
+EXEC temp_long_name_enr_boundary_proc
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+text#!#int
+#temp_table_name_exactly_at_the_namedatalen_boundary_of_63bytes#!#63
+~~END~~
+
+~~START~~
+int
+99
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text#!#int
+#temp_table_name_just_over_the_namedatalen_boundary_of_64_bytess#!#64
+~~END~~
+
+~~START~~
+int
+100
+~~END~~
+
+
+-- Scenario 8: Two long-name temp tables coexisting
+EXEC temp_long_name_enr_coexist_proc
+GO
+~~START~~
+text
+#temp_table_with_a_very_long_name_coexist_first_table_in_session
+#temp_table_with_a_very_long_name_coexist_second_table_in_session
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+
+-- Scenario 9: CREATE INDEX on long-name temp table
+EXEC temp_long_name_enr_index_proc
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#int
+2#!#200
+~~END~~
+
+
+-- Scenario 10: Recreate same long-name temp table after drop
+EXEC temp_long_name_enr_reuse_proc
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text#!#int
+#temp_table_with_a_very_long_name_that_exceeds_namedatalen_reuse#!#64
+~~END~~
+
+~~START~~
+int
+2
+~~END~~
+

@@ -3072,6 +3072,20 @@ bbf_table_var_lookup(const char *relname, Oid relnamespace)
 	else
 		relid = get_relname_relid(relname, relnamespace);
 
+	/*
+	 * For #temp tables with long names (>= NAMEDATALEN), get_relname_relid
+	 * fails because the syscache synthetic tuple stores the name in a Name
+	 * field (capped at NAMEDATALEN-1 = 63 chars), so the full-length name
+	 * doesn't match. Short temp table names fit in the Name field and are
+	 * found by get_relname_relid above without needing this fallback.
+	 */
+	if (!OidIsValid(relid) && relname[0] == '#')
+	{
+		EphemeralNamedRelation enr = get_ENR(currentQueryEnv, relname, true);
+		if (enr)
+			relid = enr->md.reliddesc;
+	}
+
 	/* estate not set up, or not a table variable */
 	if (!estate || strncmp(relname, "@", 1) != 0)
 		return relid;
