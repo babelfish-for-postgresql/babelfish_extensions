@@ -155,23 +155,3 @@ GO
 -- Store OIDs so restricted users can bypass OBJECT_ID() limitation
 CREATE TABLE objectpropertyex_oid_helper(name varchar(100), oid_val int)
 GO
-INSERT INTO objectpropertyex_oid_helper VALUES
-('basetype_table', OBJECT_ID('objectpropertyex_basetype_table')),
-('specialinput_table', OBJECT_ID('objectpropertyex_specialinput_table')),
-('trigger_table', OBJECT_ID('objectpropertyex_trigger_table')),
-('noindex_table', OBJECT_ID('objectpropertyex_noindex_table')),
-('basetype_view', OBJECT_ID('objectpropertyex_basetype_view')),
-('perm_table', OBJECT_ID('objectpropertyex_perm_table')),
-('perm_trigger', OBJECT_ID('objectpropertyex_perm_trigger', 'TR'))
-GO
-~~ROW COUNT: 7~~
-
-
--- psql
--- Store otherdb table OID via psql
-INSERT INTO objectpropertyex_oid_helper VALUES
-('otherdb_table', (SELECT oid FROM pg_class WHERE relname = 'objectpropertyex_otherdb_table'));
-GO
-~~ROW COUNT: 1~~
-
-
