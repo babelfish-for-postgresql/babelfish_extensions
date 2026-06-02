@@ -1,3 +1,28 @@
+-- tsql
+-- Create logins and users for permission testing
+CREATE LOGIN objectpropertyex_test_login WITH PASSWORD = '12345678';
+GO
+CREATE USER objectpropertyex_test_user FOR LOGIN objectpropertyex_test_login;
+GO
+CREATE LOGIN objectpropertyex_perm_login WITH PASSWORD = '12345678';
+GO
+CREATE USER objectpropertyex_perm_user FOR LOGIN objectpropertyex_perm_login;
+GO
+
+-- Grant permissions for ACL tests
+GRANT INSERT ON objectpropertyex_basetype_table TO objectpropertyex_test_user;
+GO
+GRANT UPDATE ON objectpropertyex_specialinput_table TO objectpropertyex_test_user;
+GO
+GRANT DELETE ON objectpropertyex_trigger_table TO objectpropertyex_test_user;
+GO
+GRANT REFERENCES ON objectpropertyex_noindex_table TO objectpropertyex_test_user;
+GO
+GRANT SELECT ON objectpropertyex_oid_helper TO objectpropertyex_perm_user;
+GO
+GRANT SELECT ON objectpropertyex_oid_helper TO objectpropertyex_test_user;
+GO
+
 -- sla 650000
 -- Check for correct case
 SELECT CASE

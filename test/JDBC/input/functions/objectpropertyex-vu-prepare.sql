@@ -142,31 +142,6 @@ GO
 USE master
 GO
 
--- =============== ACL tests ===============
-CREATE LOGIN objectpropertyex_test_login WITH PASSWORD = '12345678';
-GO
-
-CREATE USER objectpropertyex_test_user FOR LOGIN objectpropertyex_test_login;
-GO
-
--- Grant only INSERT on one table (no SELECT)
-GRANT INSERT ON objectpropertyex_basetype_table TO objectpropertyex_test_user;
-GO
-
--- Grant only UPDATE on another table
-GRANT UPDATE ON objectpropertyex_specialinput_table TO objectpropertyex_test_user;
-GO
-
--- Grant only DELETE on trigger table
-GRANT DELETE ON objectpropertyex_trigger_table TO objectpropertyex_test_user;
-GO
-
--- Grant only REFERENCES on noindex table
-GRANT REFERENCES ON objectpropertyex_noindex_table TO objectpropertyex_test_user;
-GO
-
--- No permissions on objectpropertyex_basetype_view (for negative test)
-
 -- =============== Permission edge cases (OID helper) ===============
 CREATE TABLE objectpropertyex_perm_table(a int)
 GO
@@ -177,13 +152,6 @@ BEGIN
     SELECT * FROM objectpropertyex_perm_table
 END
 GO
-
-CREATE LOGIN objectpropertyex_perm_login WITH PASSWORD = '12345678'
-GO
-
-CREATE USER objectpropertyex_perm_user FOR LOGIN objectpropertyex_perm_login
-GO
-
 -- Store OIDs so restricted users can bypass OBJECT_ID() limitation
 CREATE TABLE objectpropertyex_oid_helper(name varchar(100), oid_val int)
 GO
@@ -197,17 +165,10 @@ INSERT INTO objectpropertyex_oid_helper VALUES
 ('perm_trigger', OBJECT_ID('objectpropertyex_perm_trigger', 'TR'))
 GO
 
-
-USE objectpropertyex_otherdb
+-- psql
+-- Store otherdb table OID via psql
+INSERT INTO objectpropertyex_oid_helper VALUES
+('otherdb_table', (SELECT oid FROM pg_class WHERE relname = 'objectpropertyex_otherdb_table'));
 GO
 
-INSERT INTO master.dbo.objectpropertyex_oid_helper VALUES
-('otherdb_table', OBJECT_ID('objectpropertyex_otherdb_table'))
-GO
-
-USE master
-GO
-GRANT SELECT ON objectpropertyex_oid_helper TO objectpropertyex_perm_user
-GO
-GRANT SELECT ON objectpropertyex_oid_helper TO objectpropertyex_test_user
-GO
+-- tsql
