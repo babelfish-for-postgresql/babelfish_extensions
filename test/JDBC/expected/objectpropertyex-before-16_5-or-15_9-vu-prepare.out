@@ -206,7 +206,9 @@ GO
 INSERT INTO master.dbo.objectpropertyex_oid_helper VALUES
 ('otherdb_table', OBJECT_ID('objectpropertyex_otherdb_table'))
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cross DB query is not supported)~~
 
 
 USE master

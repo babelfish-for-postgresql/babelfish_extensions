@@ -726,7 +726,7 @@ SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE n
 GO
 ~~START~~
 sql_variant
-TR
+<NULL>
 ~~END~~
 
 
