@@ -378,4 +378,10 @@ extern void pltsql_convert_ident(const char *s, char **output, int numidents);
 extern PLtsql_expr *pltsql_read_expression(int until, const char *expected);
 extern RangeVar *pltsqlMakeRangeVarFromName(const char *identifier_val);
 
+/* INSERT EXEC setup/cleanup helpers (pl_insert_exec.c) - take InsertExecInfo */
+extern bool insert_exec_setup(PLtsql_execstate *estate,
+                                        InsertExecInfo *info,
+                                        bool start_implicit_txn);
+extern void insert_exec_success_cleanup(PLtsql_execstate *estate, InsertExecInfo *info);
+
 #endif

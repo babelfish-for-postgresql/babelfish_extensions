@@ -442,9 +442,9 @@ static pltsql_CastHashEntry *get_cast_hashentry(PLtsql_execstate *estate,
 												Oid srctype, int32 srctypmod,
 												Oid dsttype, int32 dsttypmod);
 static void exec_init_tuple_store(PLtsql_execstate *estate);
-static void exec_set_found(PLtsql_execstate *estate, bool state);
+void exec_set_found(PLtsql_execstate *estate, bool state);
 static void exec_set_fetch_status(PLtsql_execstate *estate, int status);
-static void exec_set_rowcount(uint64 rowno);
+void exec_set_rowcount(uint64 rowno);
 static void exec_set_error(PLtsql_execstate *estate, int error, int pg_error, bool error_mapping_failed);
 static void pltsql_create_econtext(PLtsql_execstate *estate);
 static void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
@@ -496,7 +496,7 @@ extern int
 static void
 pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, ErrorContextCallback *plerrcontext);
 
-/* Function to set up row Datum */
+/* Function to set up row Datum for INSERT EXEC (legacy path) */
 static void
 setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
 
@@ -740,7 +740,10 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 				MemoryContextSwitchTo(oldcxt);
 			}
 
-			/* Obtain output parameters for Insert Execute */
+			/*
+			 * Obtain output parameters for Insert Execute 
+			 * Note : It's insert-exec legacy codepath need to remove during cleanup.
+			 */
 			if (estate.insert_exec)
 			{
 				/* Switch to function's memory context */
@@ -4394,7 +4397,11 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	/*
 	 * When executing a procedure or inline code block, if a ReturnSetInfo is
 	 * passed in, then it's invoked by INSERT ... EXECUTE.
+	 * Note : It's used by legacy insert-exec codepath, need to remove during cleanup.
 	 */
+	if (pltsql_enable_new_insert_exec)
+		estate->insert_exec = false;
+	else
 	estate->insert_exec = (func->fn_prokind == PROKIND_PROCEDURE ||
 						   strcmp(func->fn_signature, "inline_code_block") == 0)
 		&& rsi;
@@ -4476,7 +4483,7 @@ execute_txn_command(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
  * is recreated when needed for cases like commit/
  * rollbck/rollback to savepoint
  */
-static void
+void
 commit_stmt(PLtsql_execstate *estate, bool txnStarted)
 {
 	SimpleEcontextStackEntry *topEntry = simple_econtext_stack;
@@ -4665,6 +4672,7 @@ is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
  *
  * This is a helper to adapt logic from exec_stmt_call. It constructs a PLtsql_row to capture
  * output parameters from a procedure call within an INSERT EXECUTE context.
+ * Used by the legacy INSERT EXEC path (GUC babelfishpg_tsql.enable_new_insert_exec = false).
  */
 static void
 setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
@@ -4841,10 +4849,33 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			set_cur_user_db_and_path(stmt->db_name, true, false);
 	}
 
+	/*
+	 * For INSERT EXEC (new path), validate column count BEFORE plan
+	 * preparation so column mismatch errors take priority over runtime errors
+	 * (e.g., 1/0). PostgreSQL's eval_const_expressions() would evaluate
+	 * expressions first.
+	 *
+	 * Only validate inside TRY blocks; system procedures like sp_columns
+	 * have internal SELECTs with varying column counts outside TRY blocks.
+	 */
+	if (pltsql_enable_new_insert_exec &&
+		pltsql_insert_exec_active() &&
+		is_part_of_pltsql_trycatch_block(estate))
+	{
+		if (stmt->sqlstmt && stmt->sqlstmt->query)
+		{
+			pltsql_insert_exec_validate_column_count_from_query(stmt->sqlstmt->query);
+		}
+	}
+
 	PG_TRY();
 	{
-		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
-		if (stmt->need_to_push_result && estate->insert_exec)
+		/*
+		 * Legacy INSERT EXEC path: handle naked SELECT stmt differently.
+		 * estate->insert_exec is only set when the new INSERT EXEC GUC is off.
+		 */
+		if (!pltsql_enable_new_insert_exec &&
+			stmt->need_to_push_result && estate->insert_exec)
 		{
 			int			ret = exec_stmt_insert_execute_select(estate, expr);
 
@@ -4884,28 +4915,36 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 */
 		paramLI = setup_param_list(estate, expr);
 
-		/* Check for nested INSERT EXECUTE statements */
-		if (stmt->insert_exec)
+		/*
+		 * Legacy INSERT EXEC path: nested-INSERT-EXEC check and output target
+		 * setup. estate->insert_exec / stmt->insert_exec are only set when the
+		 * new INSERT EXEC GUC is off.
+		 */
+		if (!pltsql_enable_new_insert_exec)
 		{
-			/* Walk existing stack for any parent insert exec */
-			PLExecStateCallStack *cur = exec_state_call_stack;
-			while (cur != NULL)
+			/* Check for nested INSERT EXECUTE statements */
+			if (stmt->insert_exec)
 			{
-				/* Found parent insert exec - this is a nested INSERT EXECUTE */
-				if (cur->estate->insert_exec)
+				/* Walk existing stack for any parent insert exec */
+				PLExecStateCallStack *cur = exec_state_call_stack;
+				while (cur != NULL)
 				{
-					ereport(ERROR,
-						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						errmsg("nested INSERT ... EXECUTE statements are not allowed")));
+					/* Found parent insert exec - this is a nested INSERT EXECUTE */
+					if (cur->estate->insert_exec)
+					{
+						ereport(ERROR,
+							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+							errmsg("nested INSERT ... EXECUTE statements are not allowed")));
+					}
+					cur = cur->next;
 				}
-				cur = cur->next;
 			}
-		}
 
-		/* Setup output target for procedure parameters */
-		if (stmt->insert_exec && stmt->target == NULL)
-		{
-			setup_procedure_output_target_for_insert_exec(estate, stmt);
+			/* Setup output target for procedure parameters */
+			if (stmt->insert_exec && stmt->target == NULL)
+			{
+				setup_procedure_output_target_for_insert_exec(estate, stmt);
+			}
 		}
 
 		/*
@@ -5082,8 +5121,12 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				break;
 		}
 
-		/* Update the output parameter */
-		if (stmt->insert_exec && stmt->target && execute_call_insert_exec_retval != (Datum) 0)
+		/*
+		 * Update the output parameter
+		 * Note : It's insert-exec legacy codepath, need to remove during cleanup.
+		 */
+		if (!pltsql_enable_new_insert_exec &&
+			stmt->insert_exec && stmt->target && execute_call_insert_exec_retval != (Datum) 0)
 		{
 			exec_move_row_from_datum(estate, stmt->target, execute_call_insert_exec_retval);
 		}
@@ -5237,12 +5280,20 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * Always commit to match auto commit behavior for each statement
 		 * inside batch or procedure, but not user-defined function or
 		 * procedure invoked by INSERT ... EXECUTE.
+		 *
+		 * Also skip commit during INSERT EXEC or its flush phase to avoid
+		 * orphaning SPI portal snapshots.
+		 *
+		 * INSERT EXEC detection differs by path: the new path uses the global
+		 * context (pltsql_insert_exec_active), the legacy path uses the
+		 * per-estate flag (estate->insert_exec).
 		 */
 		/* TODO To let procedure call from PSQL work with old semantics */
 		if ((!pltsql_disable_batch_auto_commit || (stmt->txn_data != NULL)) &&
 			support_tsql_trans &&
 			(enable_txn_in_triggers || estate->trigdata == NULL) &&
-			!ro_func && !estate->insert_exec)
+			!ro_func &&
+			(pltsql_enable_new_insert_exec ? !pltsql_insert_exec_active() : !estate->insert_exec))
 		{
 			commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED));
 
@@ -9666,7 +9717,7 @@ contains_target_param(Node *node, int *target_dno)
  * exec_set_found			Set the global found variable to true/false
  * ----------
  */
-static void
+void
 exec_set_found(PLtsql_execstate *estate, bool state)
 {
 	PLtsql_var *var;
@@ -9693,7 +9744,7 @@ exec_set_fetch_status(PLtsql_execstate *estate, int status)
 	fetch_status_var = status;
 }
 
-static void
+void
 exec_set_rowcount(uint64 rowno)
 {
 	rowcount_var = rowno;
@@ -9883,6 +9934,17 @@ pltsql_estate_cleanup(void)
 									top_es_entry->estate->stmt_mcontext_parent);
 	pfree(exec_state_call_stack);
 	exec_state_call_stack = top_es_entry;
+
+	/*
+	 * Clear stale INSERT EXEC context when the call stack becomes empty.
+	 * This is a safety net to prevent context from leaking between batches.
+	 * Primary cleanup happens in exec_stmt_exec error handlers, but this
+	 * ensures cleanup even if those paths are not taken.
+	 */
+	if (exec_state_call_stack == NULL && pltsql_insert_exec_active())
+	{
+		pltsql_insert_exec_reset_all();
+	}
 }
 
 /*
@@ -9926,6 +9988,14 @@ pltsql_xact_cb(XactEvent event, void *arg)
 	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_ABORT)
 	{
 		ResetTopTransactionName();
+
+		/*
+		 * Clean up INSERT EXEC context on transaction end. This is a safety
+		 * net for timeouts, interrupts, and other cases where normal cleanup
+		 * paths are bypassed. On commit, any remaining context is stale.
+		 */
+		if (pltsql_insert_exec_active())
+			pltsql_insert_exec_reset_all();
 	}
 
 	/*

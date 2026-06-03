@@ -4,6 +4,7 @@
  *	It implements:
  *	- Temp table lifecycle: creation, flush, and drop
  *	- Dest Receiver callback functions implementation
+ *	- InsertExecContext: global state tracking for an active INSERT EXEC
  *-------------------------------------------------------------------------
  */
 
@@ -11,27 +12,43 @@
 #include "pltsql.h"
 #include "pltsql-2.h"
 
+#include "funcapi.h"
+
+#include "access/parallel.h"
 #include "access/table.h"
+#include "access/heapam.h"
+#include "parser/parser.h"
+#include "access/tableam.h"
+#include "access/attmap.h"
+#include "access/tupconvert.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_attribute.h"
+#include "catalog/pg_namespace.h"
+#include "catalog/pg_proc.h"
 #include "commands/defrem.h"
 #include "executor/executor.h"
+#include "executor/spi_priv.h"
+#include "executor/tstoreReceiver.h"
 #include "executor/tuptable.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/parsenodes.h"
+#include "optimizer/optimizer.h"
 #include "parser/parse_coerce.h"
 #include "parser/scansup.h"
+#include "parser/parse_oper.h"
 #include "tcop/dest.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
+#include "utils/varlena.h"
+#include "storage/lmgr.h"
 
 #include "catalog.h"
 #include "multidb.h"
+#include "pltsql_permissions.h"
 #include "session.h"
-
-extern int execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, List *params);
 
 /*
  * DestReceiver struct for INSERT EXEC - captures procedure output into a temp table.
@@ -39,7 +56,6 @@ extern int execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockA
 typedef struct
 {
 	DestReceiver pub;			/* public fields */
-	Relation	temp_rel;		/* open relation, closed in cleanup */
 	/* Projection infrastructure — coerce_to_target_type is a no-op when types already match */
 	ExprContext *econtext;		/* expression context for projection */
 	ProjectionInfo *proj_info;	/* projection info for coercion */
@@ -57,6 +73,36 @@ static void insertexec_destroy(DestReceiver *self);
  * Global INSERT EXEC context - defined in pltsql.h, declared here.
  */
 InsertExecContext insert_exec_ctx;
+
+extern void exec_set_rowcount(uint64 rowno);
+extern void exec_set_found(PLtsql_execstate *estate, bool state);
+
+/*
+ * Build a comma-separated list of quoted column identifiers from the parser's
+ * List of column-name strings, for use in the temp table CREATE and the flush
+ * INSERT. Returns NULL (no explicit column list) when columns is NIL. The
+ * caller is responsible for pfree'ing the returned string.
+ */
+static char *
+build_quoted_column_list(List *columns)
+{
+	StringInfoData	cols;
+	ListCell	   *lc;
+	bool			first = true;
+
+	if (columns == NIL)
+		return NULL;
+
+	initStringInfo(&cols);
+	foreach(lc, columns)
+	{
+		if (!first)
+			appendStringInfoString(&cols, ", ");
+		first = false;
+		appendStringInfoString(&cols, quote_identifier((char *) lfirst(lc)));
+	}
+	return cols.data;
+}
 
 /*
  * Get a comma-separated list of non-IDENTITY, non-computed column names
@@ -132,6 +178,325 @@ get_insertable_column_list(const char *table_name, const char *physical_schema)
 }
 
 
+
+/*
+ * Set the global INSERT EXEC context with target table info.
+ * Called from ANTLR parser when INSERT EXEC is detected.
+ * This is called BEFORE temp table creation - just stores the target info.
+ */
+void
+pltsql_set_insert_exec_context_info(const char *target_table)
+{
+	insert_exec_ctx.target_table = target_table ? pstrdup(target_table) : NULL;
+	/*
+	 * Snapshot the call stack entry at INSERT EXEC start. Comparing this
+	 * pointer later tells us whether an error occurred at the INSERT EXEC
+	 * level or inside the executed procedure.
+	 */
+	insert_exec_ctx.call_stack_entry = exec_state_call_stack;
+}
+
+/*
+ * Reset the global INSERT EXEC context to a clean state.
+ *
+ * Releases the target table lock, frees the heap-allocated target table name,
+ * and zeroes every field. Used on both the normal exit and safety-net cleanup
+ * paths. The string must be pfree'd before the memset, or memset alone would
+ * leak it in TopMemoryContext.
+ */
+void
+pltsql_insert_exec_reset_all(void)
+{
+	/* Release target table lock */
+	pltsql_insert_exec_close_target_table();
+
+	/* Free heap-allocated target table name before zeroing its pointer */
+	if (insert_exec_ctx.target_table)
+		pfree(insert_exec_ctx.target_table);
+
+	/* Reset all fields to zero/NULL */
+	memset(&insert_exec_ctx, 0, sizeof(InsertExecContext));
+}
+
+/*
+ * Capture target table OID and lock for change detection.
+ * Regular tables get RowExclusiveLock to block concurrent DDL;
+ * temp tables only get OID captured (session-local).
+ *
+ * Schema changes are detected via is_target_relation_modified flag,
+ * which is set by the ObjectPostAlterHook when the target table is altered.
+ */
+void
+pltsql_insert_exec_open_target_table(const char *target_table,
+                                     const char *schema_name_in,
+                                     const char *db_name_in)
+{
+	RangeVar   *rv;
+	Oid			relid;
+	char	   *schema_name = NULL;
+	char	   *table_name = NULL;
+	char	   *physical_schema = NULL;
+	bool		is_temp_table;
+
+	if (target_table == NULL)
+		return;
+
+	is_temp_table = (target_table[0] == '#' || target_table[0] == '@');
+
+	if (is_temp_table)
+	{
+		/*
+		 * Temp table or table variable - resolve using RangeVarGetRelid.
+		 * We don't need to lock because they're session-local.
+		 */
+		rv = makeRangeVar(NULL, pstrdup(target_table), -1);
+		relid = RangeVarGetRelid(rv, NoLock, true);
+
+		if (!OidIsValid(relid))
+			return;
+
+		/* Store the OID for schema verification (no lock for temp tables) */
+		insert_exec_ctx.target_rel_oid = relid;
+	}
+	else
+	{
+		table_name = pstrdup(target_table);
+		if (schema_name_in != NULL)
+			schema_name = pstrdup(schema_name_in);
+		else
+			schema_name = pstrdup("dbo");  /* default schema */
+		/*
+		 * Resolve against the target's database when a 3-part name
+		 * (db..table) was used; otherwise the current database.
+		 */
+		physical_schema = get_physical_schema_name(
+			(db_name_in != NULL) ? (char *) db_name_in : get_cur_db_name(),
+			schema_name);
+
+		/* Create RangeVar and get the relation OID */
+		rv = makeRangeVar(physical_schema, table_name, -1);
+		relid = RangeVarGetRelid(rv, NoLock, true);
+
+		if (schema_name)
+			pfree(schema_name);
+		if (table_name)
+			pfree(table_name);
+		if (physical_schema)
+			pfree(physical_schema);
+
+		if (!OidIsValid(relid))
+		{
+			/* Table doesn't exist - will be caught later during flush */
+			return;
+		}
+
+		/*
+		 * Acquire RowExclusiveLock on the target table.
+		 * This lock will be held until the end of the transaction.
+		 * It blocks concurrent sessions from modifying the table.
+		 * Note: Same-session DROP/ALTER is still allowed by PostgreSQL,
+		 * but we detect it via is_target_relation_modified flag set by
+		 * ObjectPostAlterHook.
+		 */
+		PG_TRY();
+		{
+			LockRelationOid(relid, RowExclusiveLock);
+		}
+		PG_CATCH();
+		{
+			FlushErrorState();
+			return;
+		}
+		PG_END_TRY();
+
+		insert_exec_ctx.target_rel_oid = relid;
+	}
+
+	/* Initialize the modification flag to false */
+	insert_exec_ctx.is_target_relation_modified = false;
+}
+
+/*
+ * Close the target table that was held open during INSERT EXEC.
+ * Called after the flush completes or on error cleanup.
+ *
+ * For regular tables: Release the RowExclusiveLock we acquired.
+ * For temp tables: Just clear the OID (no lock was acquired).
+ *
+ * Note: We only release the lock if we're not in an aborted transaction state.
+ * If the transaction was aborted, the lock has already been released.
+ */
+void
+pltsql_insert_exec_close_target_table(void)
+{
+	if (OidIsValid(insert_exec_ctx.target_rel_oid))
+	{
+		const char *target = insert_exec_ctx.target_table;
+		bool is_temp_table = (target != NULL && (target[0] == '#' || target[0] == '@'));
+
+		/*
+		 * Only release the lock for regular tables (not temp tables).
+		 * Temp tables don't have locks to release.
+		 */
+		if (!is_temp_table && !IsAbortedTransactionBlockState())
+		{
+			PG_TRY();
+			{
+				UnlockRelationOid(insert_exec_ctx.target_rel_oid, RowExclusiveLock);
+			}
+			PG_CATCH();
+			{
+				FlushErrorState();
+				/* Ignore unlock failures - table may have been dropped */
+			}
+			PG_END_TRY();
+		}
+		insert_exec_ctx.target_rel_oid = InvalidOid;
+	}
+
+	/* Reset the modification flag */
+	insert_exec_ctx.is_target_relation_modified = false;
+}
+
+/*
+ * Validate column count from query string BEFORE plan preparation.
+ *
+ * T-SQL requires column-mismatch errors to take priority over runtime errors
+ * (e.g. division by zero) inside TRY-CATCH. PostgreSQL evaluates constant
+ * expressions during plan *preparation*, so we use SPI_prepare here, which
+ * parse-analyzes and rewrites the query (producing its result tuple
+ * descriptor) without planning it - hence without triggering constant folding.
+ * Comparing that descriptor's column count to the temp table lets the mismatch
+ * win over a constant-folded runtime error.
+ *
+ * If the result shape can't be determined (parse/analyze error, non
+ * row-returning statement such as EXEC, or multiple statements), we defer to
+ * the normal path - the DestReceiver still catches mismatches at runtime.
+ */
+void
+pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
+{
+	SPIPlanPtr		plan = NULL;
+	CachedPlanSource *plansource;
+	TupleDesc		result_desc;
+	int				query_natts;
+	Oid				temp_table_oid;
+	Relation		temp_rel;
+	TupleDesc		temp_tupdesc;
+	int				temp_natts;
+
+	/* Caller must ensure INSERT EXEC is active before calling */
+	Assert(pltsql_insert_exec_active());
+
+	/*
+	 * Temp table must exist. It is created during INSERT EXEC setup before any
+	 * procedure-body statement runs, so it is normally valid here; if it isn't
+	 * (context not fully set up yet), defer to the normal execution path.
+	 */
+	temp_table_oid = insert_exec_ctx.temp_table_oid;
+	if (!OidIsValid(temp_table_oid))
+		return;
+
+	/*
+	 * Parse-analyze the query to obtain its result descriptor. SPI_prepare
+	 * stops before planning, so constant expressions are not evaluated and a
+	 * runtime error like division by zero will not fire here. On any error,
+	 * defer to the normal execution path.
+	 */
+	PG_TRY();
+	{
+		plan = SPI_prepare(query_string, 0, NULL);
+	}
+	PG_CATCH();
+	{
+		FlushErrorState();
+		return;  /* Parse/analyze error - normal path will report it */
+	}
+	PG_END_TRY();
+
+	/* Expect exactly one analyzed statement with a known result shape */
+	if (plan == NULL || list_length(plan->plancache_list) != 1)
+	{
+		if (plan != NULL)
+			SPI_freeplan(plan);
+		return;  /* Multiple statements or unusable plan, defer to runtime */
+	}
+
+	plansource = (CachedPlanSource *) linitial(plan->plancache_list);
+	result_desc = plansource->resultDesc;
+
+	/*
+	 * resultDesc is NULL for statements that do not return tuples (e.g. EXEC).
+	 * In that case there is nothing to validate statically; defer to runtime.
+	 */
+	if (result_desc == NULL)
+	{
+		SPI_freeplan(plan);
+		return;
+	}
+
+	query_natts = result_desc->natts;
+	SPI_freeplan(plan);
+
+	/* Get temp table column count */
+	PG_TRY();
+	{
+		temp_rel = table_open(temp_table_oid, AccessShareLock);
+		temp_tupdesc = RelationGetDescr(temp_rel);
+		temp_natts = temp_tupdesc->natts;
+		table_close(temp_rel, AccessShareLock);
+	}
+	PG_CATCH();
+	{
+		FlushErrorState();
+		return;
+	}
+	PG_END_TRY();
+
+	/* Check for column count mismatch */
+	if (query_natts != temp_natts)
+	{
+		/*
+		 * A column mismatch must roll back all rows even when caught by
+		 * TRY-CATCH, unlike data-level errors (e.g. division by zero) which
+		 * only drop the current row.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("structure of query does not match function result type")));
+	}
+}
+
+/*
+ * Check if INSERT EXEC context is active (target table info is set).
+ * This returns true even before temp table is created.
+ */
+bool
+pltsql_insert_exec_active(void)
+{
+	return (insert_exec_ctx.target_table != NULL);
+}
+
+/*
+ * Called from the sigsetjmp handler when a TRY-CATCH catches an error during
+ * INSERT EXEC. Returns true if the error surfaced at the INSERT EXEC level
+ * (call-stack head matches where INSERT EXEC started), false if the catching
+ * TRY-CATCH is deeper inside the executed procedure - the caller uses the
+ * false case to re-throw a column-mismatch error past the inner handler.
+ */
+bool
+pltsql_insert_exec_error_at_trycatch_level(void)
+{
+	if (insert_exec_ctx.target_table == NULL)
+		return false;
+
+	/*
+	 * Same call-stack head as when INSERT EXEC started → error is at the
+	 * INSERT EXEC level. A deeper node → error is inside the called procedure.
+	 */
+	return exec_state_call_stack == insert_exec_ctx.call_stack_entry;
+}
+
 /*
  * Create a temp table for INSERT EXEC buffering.
  *
@@ -142,7 +507,7 @@ get_insertable_column_list(const char *table_name, const char *physical_schema)
  * the target table for this to succeed.
  */
 Oid
-create_insert_exec_temp_table(const char *target_table, const char *column_list, const char *schema_name_in)
+create_insert_exec_temp_table(const char *target_table, const char *column_list, const char *schema_name_in, const char *db_name_in)
 {
 	StringInfoData create_stmt;
 	int			rc;
@@ -158,10 +523,8 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 	 * Generate a unique temp table name using ChooseRelationName.
 	 */
 	temp_nsp_oid = LookupNamespaceNoError("pg_temp");
-	if (!OidIsValid(temp_nsp_oid))
-		elog(ERROR, "INSERT EXEC failed due to missing pg_temp namespace");
 
-	temp_table_name = ChooseRelationName("__insert_exec_buf", NULL, NULL,
+	temp_table_name = ChooseRelationName("__insert_exec_buf", NULL, "tmp",
 										 temp_nsp_oid, false);
 
 	/*
@@ -172,20 +535,16 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 	 *	2. Schema explicitly specified — resolve to physical schema name
 	 *	3. No schema specified — leave NULL, let search_path handle resolution
 	 */
-	if (target_table[0] == '#')
-		physical_schema = pstrdup("pg_temp");
-	else if (schema_name_in != NULL)
+	if (!(target_table[0] == '#' || target_table[0] == '@'))
 	{
-		/* User specified schema — resolve to physical name */
-		physical_schema = get_physical_schema_name(get_cur_db_name(), schema_name_in);
+		const char *sname = (schema_name_in != NULL) ? schema_name_in : "dbo";
+
+		physical_schema = get_physical_schema_name(
+			(db_name_in != NULL) ? (char *) db_name_in : get_cur_db_name(), sname);
 		if (physical_schema == NULL)
 			elog(ERROR, "INSERT EXEC failed due to unresolvable schema for target table \"%s\"",
 				target_table);
 	}
-	/* 
-	 * else: no schema specified, not a temp table — physical_schema stays NULL,
-	 * search_path will resolve the target correctly
-	 */
 
 	/*
 	 * Determine the column list to SELECT.
@@ -245,52 +604,86 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
  * Uses SPI_execute for the flush INSERT.
  * The flush is called while still inside the procedure's execution context.
  */
-void
-flush_insert_exec_temp_table(PLtsql_execstate *estate,
-							 const char *column_list_str)
+static void
+flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema,
+							 const char *target_db, const char *column_list_str)
 {
-	char			*temp_name;
-	char			*relname;
-	char			*nspname;
-	Relation		temp_rel;
 	StringInfoData	flush_query;
+	int				rc;
 	Oid				temp_oid = insert_exec_ctx.temp_table_oid;
+	const char	   *target_table = insert_exec_ctx.target_table;
+	const char	   *temp_name;
+	Relation		temp_rel;
+	char		   *qualified_target;
 
-	if (!OidIsValid(temp_oid) || !OidIsValid(insert_exec_ctx.target_rel_oid))
+	if (!OidIsValid(temp_oid) || target_table == NULL)
 		return;
 
-	relname = get_rel_name(insert_exec_ctx.target_rel_oid);
-	nspname = get_namespace_name(get_rel_namespace(insert_exec_ctx.target_rel_oid));
-
 	/*
-	 * TODO: Reset insert_exec_ctx here before erroring to prevent stale state
-	 * from affecting subsequent INSERT EXEC operations in the same session.
-	 * Cleanup will be added in the wiring PR alongside reset_insert_exec_context().
-	 *
-	 * Verify target table schema hasn't changed since INSERT EXEC started.
+	 * Use the same %s-placeholder format string as the TDS error_mapping entry
+	 * (ERRCODE_OBJECT_IN_USE -> 556). The TDS layer maps errors by the
+	 * untranslated errmsg format string, so hardcoding the rendered text would
+	 * not match and would fall back to the default code.
 	 */
 	if (insert_exec_ctx.is_target_relation_modified)
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("INSERT EXEC failed because the stored procedure altered the schema of the target table")));
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("cannot %s \"%s\" because it is being used by active queries in this session",
+						"DROP TABLE", target_table)));
 
-	/* Get the temp table name from its OID */
+	/*
+	 * Get the temp table name from its OID. Reference it by bare (unqualified)
+	 * name and let search_path resolve it - the physical temp namespace name
+	 * (e.g. pg_temp_0) is not resolvable as a schema under the T-SQL dialect.
+	 */
 	temp_rel = table_open(temp_oid, NoLock);
-	temp_name = quote_qualified_identifier(get_namespace_name(RelationGetNamespace(temp_rel)),
-										  RelationGetRelationName(temp_rel));
+	temp_name = quote_identifier(pstrdup(RelationGetRelationName(temp_rel)));
 	table_close(temp_rel, NoLock);
 
 	initStringInfo(&flush_query);
 
+	/*
+	 * For a cross-DB target (db..table), build the logical T-SQL name
+	 * (db.schema.table) and let Babelfish's normal cross-DB name rewriting
+	 * resolve it - the same path a plain "INSERT INTO db..table" takes.
+	 * Resolving the physical schema ourselves does not work because the
+	 * physical schema of another logical database is not visible as an
+	 * INSERT target under the T-SQL dialect. For same-DB and temp targets we
+	 * keep referencing the bare name (search_path resolves it).
+	 */
+	if (target_db != NULL)
+		qualified_target = psprintf("%s.%s.%s",
+									quote_identifier(target_db),
+									quote_identifier(target_schema ? target_schema : "dbo"),
+									quote_identifier(target_table));
+	else
+		qualified_target = pstrdup(quote_identifier(target_table));
+
 	appendStringInfo(&flush_query,
 		"INSERT INTO %s%s SELECT * FROM %s",
-		quote_qualified_identifier(nspname, relname),
-		column_list_str ? column_list_str : "",
+		qualified_target,
+		column_list_str ? psprintf(" (%s)", column_list_str) : "",
 		temp_name);
 
-	/* Route through execute_batch to handle triggers and errors properly. */
-	execute_batch(estate, flush_query.data, NULL, NULL);
+	pfree(qualified_target);
+
+	/* Route through SPI_execute to run the flush INSERT in the current
+	 * transaction/SPI context. execute_batch cannot be used here: it enters
+	 * pltsql_inline_handler as an independent batch that manages its own
+	 * transaction boundaries, which aborts when the flush runs mid-INSERT-EXEC
+	 * (notably for table-variable targets whose lifetime is tied to the
+	 * surrounding transaction). */
+	rc = SPI_execute(flush_query.data, false, 0);
+
 	pfree(flush_query.data);
+
+	if (rc != SPI_OK_INSERT && rc != SPI_OK_INSERT_RETURNING)
+		elog(ERROR, "INSERT EXEC failed due to error while flushing temp table to target table");
+
+	/* Update rowcount and FOUND for T-SQL compatibility */
+	estate->eval_processed = SPI_processed;
+	exec_set_rowcount(SPI_processed);
+	exec_set_found(estate, SPI_processed != 0);
 }
 
 /*
@@ -319,7 +712,9 @@ static void
 insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
 	DR_insertexec *myState = (DR_insertexec *) self;
+	Relation	temp_rel;
 	TupleDesc	temp_tupdesc;
+	TupleDesc	proj_tupdesc;
 	int			result_natts;
 	int			temp_natts;
 	int			i;
@@ -333,16 +728,17 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	if (!OidIsValid(insert_exec_ctx.temp_table_oid))
 		elog(ERROR, "INSERT EXEC failed due to missing temp table OID");
 
-	/* Open temp table to get its tuple descriptor */
-	myState->temp_rel = table_open(insert_exec_ctx.temp_table_oid, RowExclusiveLock);
-	temp_tupdesc = RelationGetDescr(myState->temp_rel);
+	/* Open temp table to read schema only - closed before startup returns */
+	temp_rel = table_open(insert_exec_ctx.temp_table_oid, AccessShareLock);
+	temp_tupdesc = RelationGetDescr(temp_rel);
 	temp_natts = temp_tupdesc->natts;
 
 	if (result_natts != temp_natts)
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("column name or number of supplied values does not match table definition")));
-
+				 errmsg("structure of query does not match function result type")));
+	}
 
 	for (i = 0; i < temp_natts; i++)
 	{
@@ -389,11 +785,17 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		target_list = lappend(target_list, tle);
 	}
 
+	/*
+	 * Copy the temp table descriptor before closing temp_rel.
+	 * INSERT EXEC must not hold a relation handle open
+	 * across the procedure's internal subtransaction boundaries.
+	 */
+	proj_tupdesc = CreateTupleDescCopy(temp_tupdesc);
+	table_close(temp_rel, AccessShareLock);
+
 	/* Create expression context and projection info */
 	myState->econtext = CreateStandaloneExprContext();
-
-	/* Pass temp_tupdesc directly - valid while temp_rel is held open */
-	myState->proj_slot = MakeSingleTupleTableSlot(temp_tupdesc, &TTSOpsVirtual);
+	myState->proj_slot = MakeSingleTupleTableSlot(proj_tupdesc, &TTSOpsVirtual);
 
 	/* Build the projection info */
 	myState->proj_info = ExecBuildProjectionInfo(target_list,
@@ -402,10 +804,15 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 												 NULL,		/* no parent PlanState */
 												 typeinfo);	/* input descriptor */
 
+	/*
+	 * Pre-assign XID before parallel mode starts. table_tuple_insert() calls
+	 * GetCurrentTransactionId() which fails in parallel mode if no XID exists.
+	 * rStartup runs before EnterParallelMode, so assigning here avoids the error.
+	 */
+	(void) GetCurrentTransactionId();
+
 	/* Obtain command ID once - all tuples share the same cid for MVCC consistency */
 	myState->cid = GetCurrentCommandId(true);
-
-	/* temp_rel stays open - closed in cleanup function */
 }
 
 /*
@@ -417,9 +824,13 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	DR_insertexec *myState = (DR_insertexec *) self;
 	TupleTableSlot *insert_slot;
 
-	Assert(myState->temp_rel != NULL);
+	Relation	temp_rel;
+
 	Assert(myState->proj_info != NULL);
 	Assert(myState->econtext != NULL);
+
+	/* Open temp table fresh for each tuple - avoids stale handles across subtransactions */
+	temp_rel = table_open(insert_exec_ctx.temp_table_oid, RowExclusiveLock);
 
 	/* Reset per-tuple memory context for expression evaluation */
 	ResetExprContext(myState->econtext);
@@ -431,7 +842,10 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	insert_slot = ExecProject(myState->proj_info);
 
 	/* Insert the projected tuple */
-	table_tuple_insert(myState->temp_rel, insert_slot, myState->cid, 0, NULL);
+	table_tuple_insert(temp_rel, insert_slot, myState->cid, 0, NULL);
+
+	/* Close immediately - do not hold open across subtransaction boundaries */
+	table_close(temp_rel, RowExclusiveLock);
 
 	return true;
 }
@@ -445,10 +859,6 @@ static void
 insertexec_shutdown(DestReceiver *self)
 {
 	DR_insertexec *myState = (DR_insertexec *) self;
-
-	Assert(myState->temp_rel != NULL);
-	table_close(myState->temp_rel, RowExclusiveLock);
-	myState->temp_rel = NULL;
 
 	Assert(myState->proj_slot != NULL);
 	ExecDropSingleTupleTableSlot(myState->proj_slot);
@@ -466,4 +876,120 @@ static void
 insertexec_destroy(DestReceiver *self)
 {
 	pfree(self);
+}
+
+/*
+ * insert_exec_setup - set up INSERT EXEC context and create the
+ * buffering temp table from parser-provided info. Returns false (no-op) when
+ * there is no INSERT EXEC info; otherwise sets up context, optionally starts
+ * an implicit transaction (stored procedure calls only).
+ */
+bool
+insert_exec_setup(PLtsql_execstate *estate,
+                            InsertExecInfo *info,
+                            bool start_implicit_txn)
+{
+	char	   *column_list = NULL;
+
+	if (info == NULL || info->target == NULL)
+		return false;
+
+	/* Check for nested INSERT EXEC */
+	if (pltsql_insert_exec_active())
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
+
+	/* Build the quoted column list (if any) for temp table creation */
+	column_list = build_quoted_column_list(info->columns);
+
+	/*
+	 * Start implicit transaction for INSERT EXEC if requested and not already in one.
+	 * This is used for stored procedure calls (exec_stmt_exec) but not for
+	 * dynamic SQL (exec_stmt_exec_batch) which has different transaction semantics.
+	 */
+	if (start_implicit_txn)
+	{
+		bool in_function = (estate->func &&
+							estate->func->fn_oid != InvalidOid &&
+							estate->func->fn_prokind == PROKIND_FUNCTION &&
+							estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER);
+
+		if (!pltsql_disable_batch_auto_commit &&
+			pltsql_support_tsql_transactions() &&
+			!IsTransactionBlockActive() &&
+			!in_function)
+		{
+			elog(DEBUG4, "TSQL TXN Start internal transaction for INSERT EXEC");
+			pltsql_start_txn();
+			estate->tsql_trigger_flags |= TSQL_TRAN_STARTED;
+		}
+	}
+
+	/* Record that INSERT EXEC is active (stores target name + call stack) */
+	pltsql_set_insert_exec_context_info(info->target);
+
+	/* Hold target table open to detect schema alterations during execution */
+	pltsql_insert_exec_open_target_table(info->target, info->schema, info->db_name);
+
+	/* Create temp table based on target table structure */
+	insert_exec_ctx.temp_table_oid = create_insert_exec_temp_table(info->target, column_list,
+												   info->schema, info->db_name);
+
+	if (column_list != NULL)
+		pfree(column_list);
+
+	return true;
+}
+
+/*
+ * insert_exec_success_cleanup - Clean up INSERT EXEC after successful execution.
+ *
+ * Flushes temp table to target, resets context, and commits the implicit
+ * transaction if one was started. The flush target name parts come from the
+ * parser-provided info: for a cross-DB target (db..table) the flush must use
+ * the logical T-SQL name (db.schema.table) so Babelfish's cross-DB rewriting
+ * resolves it; same-DB/temp targets are resolved by bare name via search_path,
+ * so schema/db are passed as NULL there.
+ */
+void
+insert_exec_success_cleanup(PLtsql_execstate *estate, InsertExecInfo *info)
+{
+	char	   *column_list = build_quoted_column_list(info->columns);
+	const char *flush_schema = (info->db_name != NULL) ? info->schema : NULL;
+
+	PG_TRY();
+	{
+		/* Flush temp table to target table */
+		flush_insert_exec_temp_table(estate, flush_schema, info->db_name, column_list);
+
+		/* Close target table after flush completes */
+		pltsql_insert_exec_close_target_table();
+	}
+	PG_CATCH();
+	{
+		/* Release target table lock and reset context before re-throwing. */
+		if (column_list != NULL)
+			pfree(column_list);
+		pltsql_insert_exec_reset_all();
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	if (column_list != NULL)
+		pfree(column_list);
+
+	/* Reset the INSERT EXEC context. */
+	pltsql_insert_exec_reset_all();
+
+	/*
+	 * Commit the implicit transaction that was started for INSERT EXEC.
+	 * TSQL_TRAN_STARTED marks that insert_exec_setup() opened it.
+	 */
+	if (estate->tsql_trigger_flags & TSQL_TRAN_STARTED)
+	{
+		elog(DEBUG4, "TSQL TXN Commit implicit transaction for INSERT EXEC");
+		commit_stmt(estate, true);
+		estate->tsql_trigger_flags &= ~TSQL_TRAN_STARTED;
+	}
 }
