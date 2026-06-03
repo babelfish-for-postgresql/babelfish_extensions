@@ -243,9 +243,7 @@ select
       when X.indisclustered then 1
       else 1 + (SELECT count(*) FROM pg_index x2
                 WHERE x2.indrelid = X.indrelid
-                AND x2.indexrelid < X.indexrelid
-                AND NOT x2.indisclustered
-                AND x2.indislive)
+                AND x2.indexrelid < X.indexrelid)
     end
     as int) as index_id
 from pg_index X
