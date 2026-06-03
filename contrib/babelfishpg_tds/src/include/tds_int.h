@@ -304,6 +304,7 @@ extern int	TdsProcessLogin(Port *port, bool LoadSsl);
 extern void TdsSendLoginAck(Port *port);
 extern uint32_t GetClientTDSVersion(void);
 extern char *get_tds_login_domainname(void);
+extern void tds_truncate_identifier(char *ident, int len, bool downcase);
 extern void TdsSetDbContext(void);
 extern void TdsResetLoginFlags(void);
 extern size_t GetAvailableBufferSize(void);
