@@ -1,0 +1,214 @@
+-- ============================================
+-- SECTION: Base Tables
+-- ============================================
+
+CREATE TABLE xml_query_t1 (id INT, data XML);
+INSERT INTO xml_query_t1 VALUES (1, '<root><name>John</name><age>30</age></root>');
+INSERT INTO xml_query_t1 VALUES (2, '<root><name>Jane</name><age>25</age></root>');
+INSERT INTO xml_query_t1 VALUES (3, '<root><name>Bob</name></root>');
+INSERT INTO xml_query_t1 VALUES (4, NULL);
+GO
+
+CREATE TABLE xml_query_t2 (id INT, data XML);
+INSERT INTO xml_query_t2 VALUES (1, '<employees><emp>Alice</emp><emp>Bob</emp></employees>');
+INSERT INTO xml_query_t2 VALUES (2, '<employees><emp>Charlie</emp></employees>');
+INSERT INTO xml_query_t2 VALUES (3, NULL);
+GO
+
+-- Table with various XML structures
+CREATE TABLE xml_query_t3 (id INT, data XML);
+INSERT INTO xml_query_t3 VALUES (1, '<catalog><book id="1"><title>SQL</title><price>29.99</price></book><book id="2"><title>XML</title><price>39.99</price></book></catalog>');
+INSERT INTO xml_query_t3 VALUES (2, '<catalog><book id="3"><title>C#</title><price>49.99</price></book></catalog>');
+INSERT INTO xml_query_t3 VALUES (3, '<catalog></catalog>');
+GO
+
+-- Table with attributes
+CREATE TABLE xml_query_t4 (id INT, data XML);
+INSERT INTO xml_query_t4 VALUES (1, '<root><item name="A" value="1"/><item name="B" value="2"/></root>');
+INSERT INTO xml_query_t4 VALUES (2, '<root><item name="C" value="3"/></root>');
+GO
+
+-- Table with namespaces
+CREATE TABLE xml_query_t5 (id INT, data XML);
+INSERT INTO xml_query_t5 VALUES (1, '<root xmlns:ns="http://example.com"><ns:child>Hello</ns:child></root>');
+GO
+
+-- Table with special characters
+CREATE TABLE xml_query_t6 (id INT, data XML);
+INSERT INTO xml_query_t6 VALUES (1, '<root><val>a &amp; b</val></root>');
+INSERT INTO xml_query_t6 VALUES (2, '<root><val>a &lt; b</val></root>');
+INSERT INTO xml_query_t6 VALUES (3, '<root><val>a &gt; b</val></root>');
+GO
+
+-- Table with nested XML
+CREATE TABLE xml_query_t7 (id INT, data XML);
+INSERT INTO xml_query_t7 VALUES (1, '<a><b><c><d>deep</d></c></b></a>');
+INSERT INTO xml_query_t7 VALUES (2, '<a><b>level2</b></a>');
+GO
+
+-- Table with unicode
+CREATE TABLE xml_query_t8 (id INT, data XML);
+INSERT INTO xml_query_t8 VALUES (1, N'<root><name>日本語</name></root>');
+INSERT INTO xml_query_t8 VALUES (2, N'<root><name>中文</name></root>');
+GO
+
+
+-- Table with mixed content
+CREATE TABLE xml_query_t9 (id INT, data XML);
+INSERT INTO xml_query_t9 VALUES (1, '<root>text<child>inner</child>more</root>');
+INSERT INTO xml_query_t9 VALUES (2, '<root><a>1</a><b>2</b><a>3</a></root>');
+GO
+
+-- Table with empty/whitespace XML
+CREATE TABLE xml_query_t10 (id INT, data XML);
+INSERT INTO xml_query_t10 VALUES (1, '<root></root>');
+INSERT INTO xml_query_t10 VALUES (2, '<root>   </root>');
+INSERT INTO xml_query_t10 VALUES (3, '<root/>');
+GO
+
+-- ============================================
+-- SECTION: UDT for type validation
+-- ============================================
+
+CREATE TYPE dbo.xml_query_xmlUDT FROM XML;
+GO
+
+CREATE TYPE dbo.xml_query_varcharUDT FROM VARCHAR(100);
+GO
+
+CREATE TYPE dbo.xml_query_imageUDT FROM IMAGE;
+GO
+
+-- Table with UDT columns
+CREATE TABLE xml_query_udt_t1 (id INT, data dbo.xml_query_xmlUDT);
+INSERT INTO xml_query_udt_t1 VALUES (1, '<root><child>UDT value</child></root>');
+GO
+
+-- Table with TEXT column
+CREATE TABLE xml_query_text_t1 (data TEXT);
+INSERT INTO xml_query_text_t1 VALUES ('<root><child>text col</child></root>');
+GO
+
+-- Table with UDT columns for different types
+CREATE TABLE xml_query_udt_t2 (
+    VarUDTColumn dbo.xml_query_varcharUDT,
+    ImageUDTColumn dbo.xml_query_imageUDT,
+    XmlUDTColumn dbo.xml_query_xmlUDT
+);
+INSERT INTO xml_query_udt_t2 VALUES (
+    '<root><child>varchar</child></root>',
+    CAST('<root><child>image</child></root>' AS IMAGE),
+    '<root><child>xml</child></root>'
+);
+GO
+
+-- ============================================
+-- SECTION: Dependent Views
+-- ============================================
+
+CREATE VIEW xml_query_dep_view1 AS
+SELECT id, data.query('/root/name') AS name_xml FROM xml_query_t1 WHERE id <= 2;
+GO
+
+CREATE VIEW xml_query_dep_view2 AS
+SELECT id, data.query('/root') AS root_xml FROM xml_query_t1;
+GO
+
+-- ============================================
+-- SECTION: Stored Procedures
+-- ============================================
+
+CREATE PROCEDURE xml_query_proc1
+AS
+BEGIN
+    DECLARE @x XML = '<data><item>hello</item></data>';
+    SELECT @x.query('/data/item');
+END;
+GO
+
+CREATE PROCEDURE xml_query_proc2 @id INT
+AS
+BEGIN
+    SELECT data.query('/root/name') FROM xml_query_t1 WHERE id = @id;
+END;
+GO
+
+CREATE PROCEDURE xml_query_proc3
+AS
+BEGIN
+    SELECT id, data.query('/root') AS result FROM xml_query_t1 WHERE data IS NOT NULL;
+END;
+GO
+
+-- ============================================
+-- SECTION: Functions
+-- ============================================
+
+CREATE FUNCTION xml_query_func1()
+RETURNS XML
+AS
+BEGIN
+    DECLARE @x XML = '<root><a>1</a><b>2</b></root>';
+    RETURN @x.query('/root/a');
+END;
+GO
+
+CREATE FUNCTION xml_query_func2(@id INT)
+RETURNS XML
+AS
+BEGIN
+    DECLARE @result XML;
+    SELECT @result = data.query('/root/name') FROM xml_query_t1 WHERE id = @id;
+    RETURN @result;
+END;
+GO
+
+-- Inline table-valued function
+CREATE FUNCTION xml_query_itvf_func()
+RETURNS TABLE
+AS
+RETURN (SELECT id, data.query('/root/name') AS name_xml FROM xml_query_t1 WHERE id <= 2);
+GO
+
+-- ============================================
+-- SECTION: Computed column and check constraint
+-- ============================================
+
+CREATE FUNCTION dbo.xml_query_wrapper(@xml XML)
+RETURNS XML
+AS
+BEGIN
+    RETURN @xml.query('/root');
+END;
+GO
+
+-- change volatility to immutable for computed column use
+EXEC sys.sp_babelfish_volatility 'xml_query_wrapper', 'immutable';
+GO
+
+CREATE TABLE xml_query_computed_t1 (
+    id INT,
+    data XML,
+    computed_col AS dbo.xml_query_wrapper(data)
+);
+GO
+
+-- ============================================
+-- SECTION: QUOTED_IDENTIFIER OFF test objects
+-- ============================================
+
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER');
+GO
+
+CREATE VIEW xml_query_qi_off_view AS
+SELECT id, data.query('/root/name') AS name_xml FROM xml_query_t1 WHERE id = 1;
+GO
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+SELECT SESSIONPROPERTY('QUOTED_IDENTIFIER');
+GO
