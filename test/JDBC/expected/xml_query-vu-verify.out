@@ -1,0 +1,1500 @@
+
+-- ============================================
+-- SECTION 1: Basic .query() on variables
+-- ============================================
+-- Extract a single child element
+DECLARE @x XML = '<root><name>John</name><age>30</age></root>';
+SELECT @x.query('/root/name');
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+-- Extract root element
+DECLARE @x XML = '<root><name>John</name><age>30</age></root>';
+SELECT @x.query('/root');
+GO
+~~START~~
+xml
+<root><name>John</name><age>30</age></root>
+~~END~~
+
+
+-- Extract multiple child elements
+DECLARE @x XML = '<root><a>1</a><b>2</b><c>3</c></root>';
+SELECT @x.query('/root/a');
+GO
+~~START~~
+xml
+<a>1</a>
+~~END~~
+
+
+-- Extract all children using wildcard
+DECLARE @x XML = '<root><a>1</a><b>2</b></root>';
+SELECT @x.query('/root/*');
+GO
+~~START~~
+xml
+<a>1</a><b>2</b>
+~~END~~
+
+
+-- XPath returning no match (empty result)
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x.query('/root/nonexistent');
+GO
+~~START~~
+xml
+
+~~END~~
+
+
+-- Extract text content
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x.query('/root/name/text()');
+GO
+~~START~~
+xml
+John
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 2: .query() on table columns
+-- ============================================
+-- Basic column query
+SELECT id, data.query('/root/name') FROM xml_query_t1 WHERE id = 1;
+GO
+~~START~~
+int#!#xml
+1#!#<name>John</name>
+~~END~~
+
+
+-- Query across multiple rows
+SELECT id, data.query('/root/name') FROM xml_query_t1 WHERE id <= 3;
+GO
+~~START~~
+int#!#xml
+1#!#<name>John</name>
+2#!#<name>Jane</name>
+3#!#<name>Bob</name>
+~~END~~
+
+
+-- Query on NULL XML column
+SELECT id, data.query('/root/name') FROM xml_query_t1 WHERE id = 4;
+GO
+~~START~~
+int#!#xml
+4#!#<NULL>
+~~END~~
+
+
+-- Query all rows including NULL
+SELECT id, data.query('/root') FROM xml_query_t1;
+GO
+~~START~~
+int#!#xml
+1#!#<root><name>John</name><age>30</age></root>
+2#!#<root><name>Jane</name><age>25</age></root>
+3#!#<root><name>Bob</name></root>
+4#!#<NULL>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 3: Multiple elements and repeated tags
+-- ============================================
+-- Multiple sibling elements with same name
+SELECT data.query('/employees/emp') FROM xml_query_t2 WHERE id = 1;
+GO
+~~START~~
+xml
+<emp>Alice</emp><emp>Bob</emp>
+~~END~~
+
+
+-- Positional access
+SELECT data.query('/employees/emp[1]') FROM xml_query_t2 WHERE id = 1;
+GO
+~~START~~
+xml
+<emp>Alice</emp>
+~~END~~
+
+
+SELECT data.query('/employees/emp[2]') FROM xml_query_t2 WHERE id = 1;
+GO
+~~START~~
+xml
+<emp>Bob</emp>
+~~END~~
+
+
+-- Out of range positional access
+SELECT data.query('/employees/emp[3]') FROM xml_query_t2 WHERE id = 1;
+GO
+~~START~~
+xml
+
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 4: Nested XML and deep paths
+-- ============================================
+-- Deep nested path
+SELECT data.query('/a/b/c/d') FROM xml_query_t7 WHERE id = 1;
+GO
+~~START~~
+xml
+<d>deep</d>
+~~END~~
+
+
+-- Partial path
+SELECT data.query('/a/b') FROM xml_query_t7 WHERE id = 1;
+GO
+~~START~~
+xml
+<b><c><d>deep</d></c></b>
+~~END~~
+
+
+-- Descendant axis
+DECLARE @x XML = '<a><b><c>deep</c></b></a>';
+SELECT @x.query('//c');
+GO
+~~START~~
+xml
+<c>deep</c>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 5: Attributes
+-- ============================================
+-- Query element with attributes
+SELECT data.query('/root/item[@name="A"]') FROM xml_query_t4 WHERE id = 1;
+GO
+~~START~~
+xml
+<item name="A" value="1"/>
+~~END~~
+
+
+-- Query all items
+SELECT data.query('/root/item') FROM xml_query_t4 WHERE id = 1;
+GO
+~~START~~
+xml
+<item name="A" value="1"/><item name="B" value="2"/>
+~~END~~
+
+
+-- Attribute predicate
+SELECT data.query('/root/item[@value="2"]') FROM xml_query_t4 WHERE id = 1;
+GO
+~~START~~
+xml
+<item name="B" value="2"/>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 6: Predicates and filters
+-- ============================================
+-- Element value predicate
+SELECT data.query('/catalog/book[price>30]') FROM xml_query_t3 WHERE id = 1;
+GO
+~~START~~
+xml
+<book id="2"><title>XML</title><price>39.99</price></book>
+~~END~~
+
+
+-- Attribute predicate
+SELECT data.query('/catalog/book[@id="1"]') FROM xml_query_t3 WHERE id = 1;
+GO
+~~START~~
+xml
+<book id="1"><title>SQL</title><price>29.99</price></book>
+~~END~~
+
+
+-- Multiple predicates
+SELECT data.query('/catalog/book[@id="2"]/title') FROM xml_query_t3 WHERE id = 1;
+GO
+~~START~~
+xml
+<title>XML</title>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 7: Special characters in XML values
+-- ============================================
+SELECT data.query('/root/val') FROM xml_query_t6 WHERE id = 1;
+GO
+~~START~~
+xml
+<val>a &amp; b</val>
+~~END~~
+
+
+SELECT data.query('/root/val') FROM xml_query_t6 WHERE id = 2;
+GO
+~~START~~
+xml
+<val>a &lt; b</val>
+~~END~~
+
+
+SELECT data.query('/root/val') FROM xml_query_t6 WHERE id = 3;
+GO
+~~START~~
+xml
+<val>a &gt; b</val>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 8: Unicode content
+-- ============================================
+SELECT data.query('/root/name') FROM xml_query_t8 WHERE id = 1;
+GO
+~~START~~
+xml
+<name>日本語</name>
+~~END~~
+
+
+SELECT data.query('/root/name') FROM xml_query_t8 WHERE id = 2;
+GO
+~~START~~
+xml
+<name>中文</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 9: Empty and whitespace XML
+-- ============================================
+-- Empty element
+SELECT data.query('/root') FROM xml_query_t10 WHERE id = 1;
+GO
+~~START~~
+xml
+<root/>
+~~END~~
+
+
+-- Whitespace content
+SELECT data.query('/root') FROM xml_query_t10 WHERE id = 2;
+GO
+~~START~~
+xml
+<root>   </root>
+~~END~~
+
+
+-- Self-closing element
+SELECT data.query('/root') FROM xml_query_t10 WHERE id = 3;
+GO
+~~START~~
+xml
+<root/>
+~~END~~
+
+
+-- Query child of empty element (no match)
+SELECT data.query('/root/child') FROM xml_query_t10 WHERE id = 1;
+GO
+~~START~~
+xml
+
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 10: Mixed content
+-- ============================================
+-- Element with mixed text and child nodes
+SELECT data.query('/root') FROM xml_query_t9 WHERE id = 1;
+GO
+~~START~~
+xml
+<root>text<child>inner</child>more</root>
+~~END~~
+
+
+-- Multiple elements with same name
+SELECT data.query('/root/a') FROM xml_query_t9 WHERE id = 2;
+GO
+~~START~~
+xml
+<a>1</a><a>3</a>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 11: .query() with variable assignment
+-- ============================================
+DECLARE @x XML = '<root><a>1</a><b>2</b></root>';
+DECLARE @result XML;
+SET @result = @x.query('/root/a');
+SELECT @result;
+GO
+~~START~~
+xml
+<a>1</a>
+~~END~~
+
+
+DECLARE @x XML = '<root><name>John</name></root>';
+DECLARE @result XML;
+SET @result = @x.query('/root/nonexistent');
+SELECT @result;
+GO
+~~START~~
+xml
+
+~~END~~
+
+
+-- Assign from table column
+DECLARE @result XML;
+SELECT @result = data.query('/root/name') FROM xml_query_t1 WHERE id = 1;
+SELECT @result;
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 12: .query() with NULL input
+-- ============================================
+-- NULL variable
+DECLARE @x XML = NULL;
+SELECT @x.query('/root');
+GO
+~~START~~
+xml
+<NULL>
+~~END~~
+
+
+-- NULL column
+SELECT data.query('/root') FROM xml_query_t1 WHERE id = 4;
+GO
+~~START~~
+xml
+<NULL>
+~~END~~
+
+
+-- NULL in expression
+SELECT data.query('/root/name') FROM xml_query_t2 WHERE id = 3;
+GO
+~~START~~
+xml
+<NULL>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 13: .query() in WHERE clause
+-- ============================================
+-- Using .query() result with .exist()
+SELECT id FROM xml_query_t1 WHERE data.query('/root/name').exist('/name') = 1;
+GO
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 14: .query() combined with other XML methods
+-- ============================================
+-- .query() then .value()
+DECLARE @x XML = '<root><name>John</name><age>30</age></root>';
+SELECT @x.query('/root/name').value('(/name)[1]', 'VARCHAR(50)');
+GO
+~~START~~
+varchar
+John
+~~END~~
+
+
+-- .query() then .exist()
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x.query('/root').exist('/root/name');
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+-- Chained on table column
+SELECT data.query('/root').value('(/root/name)[1]', 'VARCHAR(50)') FROM xml_query_t1 WHERE id = 1;
+GO
+~~START~~
+varchar
+John
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 15: .query() on FOR XML result
+-- ============================================
+-- .query() on FOR XML RAW result
+SELECT (SELECT 1 AS id, 'John' AS name FOR XML RAW, TYPE).query('/row');
+GO
+~~START~~
+xml
+<row id="1" name="John"/>
+~~END~~
+
+
+-- .query() on FOR XML PATH result
+SELECT (SELECT 1 AS id, 'John' AS name FOR XML PATH('emp'), TYPE).query('/emp/name');
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+-- .query() on FOR XML with ROOT
+SELECT (SELECT 1 AS id, 'John' AS name FOR XML RAW, ROOT('data'), TYPE).query('/data/row');
+GO
+~~START~~
+xml
+<row id="1" name="John"/>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 16: .query() in subqueries
+-- ============================================
+-- Subquery with .query()
+SELECT id, (SELECT data.query('/root/name')) AS name_xml
+FROM xml_query_t1 WHERE id <= 2;
+GO
+~~START~~
+int#!#xml
+1#!#<name>John</name>
+2#!#<name>Jane</name>
+~~END~~
+
+
+-- .query() in derived table
+SELECT sub.id, sub.name_xml
+FROM (SELECT id, data.query('/root/name') AS name_xml FROM xml_query_t1 WHERE id <= 2) sub;
+GO
+~~START~~
+int#!#xml
+1#!#<name>John</name>
+2#!#<name>Jane</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 17: .query() with CAST/CONVERT
+-- ============================================
+-- CAST result to VARCHAR
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT CAST(@x.query('/root/name') AS VARCHAR(MAX));
+GO
+~~START~~
+varchar
+<name>John</name>
+~~END~~
+
+
+-- CAST result to NVARCHAR
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT CAST(@x.query('/root/name') AS NVARCHAR(MAX));
+GO
+~~START~~
+nvarchar
+<name>John</name>
+~~END~~
+
+
+-- CONVERT result
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT CONVERT(VARCHAR(MAX), @x.query('/root/name'));
+GO
+~~START~~
+varchar
+<name>John</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 18: Stored Procedures
+-- ============================================
+EXEC xml_query_proc1;
+GO
+~~START~~
+xml
+<item>hello</item>
+~~END~~
+
+
+EXEC xml_query_proc2 @id = 1;
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+EXEC xml_query_proc2 @id = 3;
+GO
+~~START~~
+xml
+<name>Bob</name>
+~~END~~
+
+
+EXEC xml_query_proc2 @id = 4;
+GO
+~~START~~
+xml
+<NULL>
+~~END~~
+
+
+EXEC xml_query_proc3;
+GO
+~~START~~
+int#!#xml
+1#!#<root><name>John</name><age>30</age></root>
+2#!#<root><name>Jane</name><age>25</age></root>
+3#!#<root><name>Bob</name></root>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 19: Functions
+-- ============================================
+SELECT dbo.xml_query_func1() AS result;
+GO
+~~START~~
+xml
+<a>1</a>
+~~END~~
+
+
+SELECT dbo.xml_query_func2(1) AS result;
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+SELECT dbo.xml_query_func2(3) AS result;
+GO
+~~START~~
+xml
+<name>Bob</name>
+~~END~~
+
+
+SELECT dbo.xml_query_func2(4) AS result;
+GO
+~~START~~
+xml
+<NULL>
+~~END~~
+
+
+
+
+-- ============================================
+-- SECTION 20: Dependent Views
+-- ============================================
+SELECT * FROM xml_query_dep_view1;
+GO
+~~START~~
+int#!#xml
+1#!#<name>John</name>
+2#!#<name>Jane</name>
+~~END~~
+
+
+SELECT * FROM xml_query_dep_view2;
+GO
+~~START~~
+int#!#xml
+1#!#<root><name>John</name><age>30</age></root>
+2#!#<root><name>Jane</name><age>25</age></root>
+3#!#<root><name>Bob</name></root>
+4#!#<NULL>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 21: .query() on UDT columns
+-- ============================================
+-- XML UDT
+SELECT data.query('/root/child') FROM xml_query_udt_t1 WHERE id = 1;
+GO
+~~START~~
+xml
+<child>UDT value</child>
+~~END~~
+
+
+-- VARCHAR UDT (should error)
+SELECT VarUDTColumn.query('/root/child') FROM xml_query_udt_t2;
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on varchar.)~~
+
+
+-- IMAGE UDT (should error)
+SELECT ImageUDTColumn.query('/root/child') FROM xml_query_udt_t2;
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on image.)~~
+
+
+-- XML UDT
+SELECT XmlUDTColumn.query('/root/child') FROM xml_query_udt_t2;
+GO
+~~START~~
+xml
+<child>xml</child>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 22: Type validation errors
+-- ============================================
+-- .query() on non-XML type should error
+DECLARE @x VARCHAR(100) = '<root><name>John</name></root>';
+SELECT @x.query('/root');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on varchar.)~~
+
+
+-- .query() on INT should error
+DECLARE @x INT = 123;
+SELECT @x.query('/root');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on int.)~~
+
+
+-- .query() on NVARCHAR should error
+DECLARE @x NVARCHAR(100) = '<root><name>John</name></root>';
+SELECT @x.query('/root');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on nvarchar.)~~
+
+
+-- .query() on BIGINT should error
+DECLARE @x BIGINT = 1;
+SELECT @x.query('/root');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on bigint.)~~
+
+
+-- .query() on FLOAT should error
+DECLARE @x FLOAT = 1;
+SELECT @x.query('/root');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on float.)~~
+
+
+-- .query() on BIT should error
+DECLARE @x BIT = 1;
+SELECT @x.query('/root');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on bit.)~~
+
+
+-- .query() on DECIMAL should error
+DECLARE @x DECIMAL = 1;
+SELECT @x.query('/root');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on decimal.)~~
+
+
+-- .query() on TEXT column should error
+SELECT data.query('/root/child') FROM xml_query_text_t1;
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on text.)~~
+
+
+
+-- ============================================
+-- SECTION 23: QUOTED_IDENTIFIER OFF behavior
+-- ============================================
+-- .query() should error when QUOTED_IDENTIFIER is OFF
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x.query('/root/name');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+
+-- ============================================
+-- SECTION 24: Dependent view created with QUOTED_IDENTIFIER OFF
+-- ============================================
+SELECT * FROM xml_query_qi_off_view;
+GO
+~~START~~
+int#!#xml
+1#!#<name>John</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 25: Computed columns
+-- ============================================
+INSERT INTO xml_query_computed_t1 (id, data) VALUES (1, '<root><child>test</child></root>');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM xml_query_computed_t1;
+GO
+~~START~~
+int#!#xml#!#xml
+1#!#<root><child>test</child></root>#!#<root><child>test</child></root>
+~~END~~
+
+
+DELETE FROM xml_query_computed_t1;
+GO
+~~ROW COUNT: 1~~
+
+
+
+-- ============================================
+-- SECTION 26: .query() with various XPath expressions
+-- ============================================
+-- Self axis
+DECLARE @x XML = '<root><a>1</a></root>';
+SELECT @x.query('/root/a/self::a');
+GO
+~~START~~
+xml
+<a>1</a>
+~~END~~
+
+
+-- Parent axis (not supported in T-SQL, should error or return empty)
+DECLARE @x XML = '<root><a>1</a></root>';
+SELECT @x.query('/root/a/..');
+GO
+~~START~~
+xml
+<root><a>1</a></root>
+~~END~~
+
+
+-- Wildcard namespace
+DECLARE @x XML = '<root xmlns:ns="http://example.com"><ns:child>Hello</ns:child></root>';
+SELECT @x.query('/root/*');
+GO
+~~START~~
+xml
+<ns:child xmlns:ns="http://example.com">Hello</ns:child>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 27: .query() with large XML
+-- ============================================
+DECLARE @x XML = '<root>' + REPLICATE(CAST('<item>Data</item>' AS VARCHAR(MAX)), 100) + '</root>';
+SELECT @x.query('/root/item[1]');
+GO
+~~START~~
+xml
+<item>Data</item>
+~~END~~
+
+
+DECLARE @x XML = '<root>' + REPLICATE(CAST('<item>Data</item>' AS VARCHAR(MAX)), 100) + '</root>';
+SELECT @x.query('/root/item[last()]');
+GO
+~~START~~
+xml
+<item>Data</item>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 28: .query() with comments in XML
+-- ============================================
+DECLARE @x XML = '<root><!--comment--><name>John</name></root>';
+SELECT @x.query('/root/name');
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 29: .query() with whitespace variations
+-- ============================================
+DECLARE @x XML = '<root>
+    <name>John</name>
+    <age>30</age>
+</root>';
+SELECT @x.query('/root/name');
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 30: .query() with multiple calls on same variable
+-- ============================================
+DECLARE @x XML = '<root><a>1</a><b>2</b><c>3</c></root>';
+SELECT @x.query('/root/a'), @x.query('/root/b'), @x.query('/root/c');
+GO
+~~START~~
+xml#!#xml#!#xml
+<a>1</a>#!#<b>2</b>#!#<c>3</c>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 31: .query() in CASE expression
+-- ============================================
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT CASE WHEN @x.exist('/root/name') = 1 THEN @x.query('/root/name') ELSE CAST('<empty/>' AS XML) END;
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 32: .query() with JOIN
+-- ============================================
+SELECT t1.id, t1.data.query('/root/name') AS name_xml, t2.data.query('/employees/emp[1]') AS first_emp
+FROM xml_query_t1 t1
+INNER JOIN xml_query_t2 t2 ON t1.id = t2.id
+WHERE t1.id <= 2;
+GO
+~~START~~
+int#!#xml#!#xml
+1#!#<name>John</name>#!#<emp>Alice</emp>
+2#!#<name>Jane</name>#!#<emp>Charlie</emp>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 33: .query() with UNION
+-- ============================================
+SELECT data.query('/root/name') AS result FROM xml_query_t1 WHERE id = 1
+UNION ALL
+SELECT data.query('/root/name') AS result FROM xml_query_t1 WHERE id = 2;
+GO
+~~START~~
+xml
+<name>John</name>
+<name>Jane</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 34: .query() with ORDER BY
+-- ============================================
+SELECT id, data.query('/root/name') AS name_xml
+FROM xml_query_t1
+WHERE data IS NOT NULL
+ORDER BY id DESC;
+GO
+~~START~~
+int#!#xml
+3#!#<name>Bob</name>
+2#!#<name>Jane</name>
+1#!#<name>John</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 35: .query() with TOP
+-- ============================================
+SELECT TOP 2 id, data.query('/root/name') AS name_xml
+FROM xml_query_t1
+WHERE data IS NOT NULL
+ORDER BY id;
+GO
+~~START~~
+int#!#xml
+1#!#<name>John</name>
+2#!#<name>Jane</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 36: .query() returning empty string vs empty XML
+-- ============================================
+-- No match returns empty XML
+DECLARE @x XML = '<root><a>1</a></root>';
+SELECT @x.query('/root/b');
+GO
+~~START~~
+xml
+
+~~END~~
+
+
+-- Empty element
+DECLARE @x XML = '<root><a></a></root>';
+SELECT @x.query('/root/a');
+GO
+~~START~~
+xml
+<a/>
+~~END~~
+
+
+-- Self-closing element
+DECLARE @x XML = '<root><a/></root>';
+SELECT @x.query('/root/a');
+GO
+~~START~~
+xml
+<a/>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 37: Spaces in method call
+-- ============================================
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x  .  query  ( '/root/name'  );
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+SELECT data   . query    ('/root/name'  ) FROM xml_query_t1 WHERE id = 1;
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+SELECT xml_query_t1 .   data   . query    ('/root/name'  ) FROM xml_query_t1 WHERE id = 1;
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 38: .query() called on different expression types
+-- ============================================
+-- Called on subquery
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT (SELECT @x).query('/root/name');
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+-- Called on CAST expression
+SELECT (CAST('<root><name>John</name></root>' AS XML)).query('/root/name');
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+-- Called on function_call
+SELECT dbo.xml_query_func1().query('/a');
+GO
+~~START~~
+xml
+<a>1</a>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 39: .query() with table.column.query() syntax
+-- ============================================
+SELECT xml_query_t1.data.query('/root/name') FROM xml_query_t1 WHERE id = 1;
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+SELECT dbo.xml_query_t1.data.query('/root/name') FROM xml_query_t1 WHERE id = 1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
+
+
+
+-- ============================================
+-- SECTION 40: NULL xpath argument
+-- ============================================
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x.query(NULL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "query" must be a string literal.)~~
+
+
+DECLARE @x XML = NULL;
+SELECT @x.query(NULL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "query" must be a string literal.)~~
+
+
+
+-- ============================================
+-- SECTION 41: ITVF (inline table-valued function)
+-- ============================================
+SELECT * FROM xml_query_itvf_func();
+GO
+~~START~~
+int#!#xml
+1#!#<name>John</name>
+2#!#<name>Jane</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 42: XPath functions
+-- ============================================
+DECLARE @x XML = '<root><a>1</a><b>2</b></root>';
+SELECT @x.query('true()');
+GO
+~~START~~
+xml
+true
+~~END~~
+
+
+DECLARE @x XML = '<root><a>1</a><b>2</b></root>';
+SELECT @x.query('false()');
+GO
+~~START~~
+xml
+false
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 43: Case insensitivity of .query()
+-- ============================================
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x.QUERY('/root/name');
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x.Query('/root/name');
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x.qUeRy('/root/name');
+GO
+~~START~~
+xml
+<name>John</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 44: CDATA sections
+-- ============================================
+DECLARE @x XML = '<root><child><![CDATA[<data>Hello World</data>]]></child></root>';
+SELECT @x.query('/root/child');
+GO
+~~START~~
+xml
+<child><![CDATA[<data>Hello World</data>]]></child>
+~~END~~
+
+
+-- Empty CDATA
+DECLARE @x XML = '<root><![CDATA[]]></root>';
+SELECT @x.query('/root');
+GO
+~~START~~
+xml
+<root><![CDATA[]]></root>
+~~END~~
+
+
+-- CDATA mixed with regular text
+DECLARE @x XML = '<root>before<![CDATA[<inside>]]>after</root>';
+SELECT @x.query('/root');
+GO
+~~START~~
+xml
+<root>before<![CDATA[<inside>]]>after</root>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 45: XML fragments
+-- ============================================
+DECLARE @x XML = '<a>1</a><b>2</b>';
+SELECT @x.query('/a');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+
+-- ============================================
+-- SECTION 46: XML declaration with encoding
+-- ============================================
+DECLARE @x XML = N'<?xml version="1.0" encoding="UTF-8"?><root><name>Test</name></root>';
+SELECT @x.query('/root/name');
+GO
+~~START~~
+xml
+<name>Test</name>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 47: Internal entities (DOCTYPE)
+-- ============================================
+DECLARE @x XML = '<?xml version="1.0"?>
+<!DOCTYPE root [
+<!ENTITY internal "Hello World">
+]>
+<root>&internal;</root>';
+SELECT @x.query('/root');
+GO
+~~START~~
+xml
+<root>&internal;</root>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 48: Variable in XPath expression
+-- ============================================
+DECLARE @x XML = '<root><child1>Value1</child1><child2>Value2</child2></root>';
+DECLARE @element VARCHAR(20) = 'child1';
+SELECT @x.query(CONCAT('/root/', @element));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "query" must be a string literal.)~~
+
+
+
+-- ============================================
+-- SECTION 49: XML Digital Signatures
+-- ============================================
+DECLARE @x XML = '<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <child>Hello World</child>
+  <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+    <!-- Digital Signature details -->
+  </Signature>
+</root>';
+SELECT @x.query('/root/child');
+GO
+~~START~~
+xml
+<child>Hello World</child>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 50: Invalid XML Path value
+-- ============================================
+DECLARE @x XML = '<root><child>Hello</child></root>';
+SELECT @x.query('///invalid[[[path');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid XPath expression)~~
+
+
+
+-- ============================================
+-- SECTION 51: GROUP BY with .query()
+-- ============================================
+SELECT data.query('/root/name').value('(/name)[1]', 'VARCHAR(50)') AS name_val, COUNT(*) AS cnt
+FROM xml_query_t1
+WHERE data IS NOT NULL
+GROUP BY data.query('/root/name').value('(/name)[1]', 'VARCHAR(50)')
+ORDER BY name_val;
+GO
+~~START~~
+varchar#!#int
+Bob#!#1
+Jane#!#1
+John#!#1
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 52: .query() argument count validation
+-- ============================================
+-- .query() with no arguments (should error)
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x.query();
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The query function requires 1 argument(s).)~~
+
+
+-- .query() with too many arguments (should error)
+DECLARE @x XML = '<root><name>John</name></root>';
+SELECT @x.query('/root/name', 'extra');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The query function requires 1 argument(s).)~~
+
+
+
+-- ============================================
+-- SECTION 53: Malformed XML inputs
+-- ============================================
+-- 1. Unclosed tag
+DECLARE @x XML = '<unclosed';
+SELECT @x.query('/r');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+-- 2. Mismatched tags
+DECLARE @x XML = '<a></b>';
+SELECT @x.query('/a');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+-- 3. Plain text (no elements)
+DECLARE @x XML = 'hello world';
+SELECT @x.query('/');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+-- 4. Empty string
+DECLARE @x XML = '';
+SELECT @x.query('/');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+-- 5. Bare ampersand (not an entity)
+DECLARE @x XML = '<r>a & b</r>';
+SELECT @x.query('/r');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+-- 6. Invalid name (starts with digit)
+DECLARE @x XML = '<1bad>x</1bad>';
+SELECT @x.query('/');
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+-- 7. Direct call to bbf_xmlquery with malformed CAST (unclosed tag)
+SELECT sys.bbf_xmlquery('/r', CAST('<broken' AS XML));
+GO
+~~ERROR (Code: 9451)~~
+
+~~ERROR (Message: invalid XML content)~~
+
+
+-- 8. Direct call to bbf_xmlquery with mismatched tags via CAST
+SELECT sys.bbf_xmlquery('/r', CAST('<a><b></a>' AS XML));
+GO
+~~ERROR (Code: 9451)~~
+
+~~ERROR (Message: invalid XML content)~~
+
+
+-- 9. Direct call with non-xml type (VARCHAR)
+DECLARE @v VARCHAR(20) = '<r/>';
+SELECT sys.bbf_xmlquery('/r', @v);
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on varchar.)~~
+
+
+-- 10. Direct call with non-xml type (INT)
+SELECT sys.bbf_xmlquery('/r', 42);
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on int.)~~
+
