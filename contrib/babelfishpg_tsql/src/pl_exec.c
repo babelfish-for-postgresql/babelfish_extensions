@@ -442,9 +442,9 @@ static pltsql_CastHashEntry *get_cast_hashentry(PLtsql_execstate *estate,
 												Oid srctype, int32 srctypmod,
 												Oid dsttype, int32 dsttypmod);
 static void exec_init_tuple_store(PLtsql_execstate *estate);
-static void exec_set_found(PLtsql_execstate *estate, bool state);
+void exec_set_found(PLtsql_execstate *estate, bool state);
 static void exec_set_fetch_status(PLtsql_execstate *estate, int status);
-static void exec_set_rowcount(uint64 rowno);
+void exec_set_rowcount(uint64 rowno);
 static void exec_set_error(PLtsql_execstate *estate, int error, int pg_error, bool error_mapping_failed);
 static void pltsql_create_econtext(PLtsql_execstate *estate);
 static void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
@@ -4849,10 +4849,33 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			set_cur_user_db_and_path(stmt->db_name, true, false);
 	}
 
+	/*
+	 * For INSERT EXEC (new path), validate column count BEFORE plan
+	 * preparation so column mismatch errors take priority over runtime errors
+	 * (e.g., 1/0). PostgreSQL's eval_const_expressions() would evaluate
+	 * expressions first.
+	 *
+	 * Only validate inside TRY blocks; system procedures like sp_columns
+	 * have internal SELECTs with varying column counts outside TRY blocks.
+	 */
+	if (pltsql_enable_new_insert_exec &&
+		pltsql_insert_exec_active() &&
+		is_part_of_pltsql_trycatch_block(estate))
+	{
+		if (stmt->sqlstmt && stmt->sqlstmt->query)
+		{
+			pltsql_insert_exec_validate_column_count_from_query(stmt->sqlstmt->query);
+		}
+	}
+
 	PG_TRY();
 	{
-		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
-		if (stmt->need_to_push_result && estate->insert_exec)
+		/*
+		 * Legacy INSERT EXEC path: handle naked SELECT stmt differently.
+		 * estate->insert_exec is only set when the new INSERT EXEC GUC is off.
+		 */
+		if (!pltsql_enable_new_insert_exec &&
+			stmt->need_to_push_result && estate->insert_exec)
 		{
 			int			ret = exec_stmt_insert_execute_select(estate, expr);
 
@@ -5278,7 +5301,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			support_tsql_trans &&
 			(enable_txn_in_triggers || estate->trigdata == NULL) &&
 			!ro_func &&
-			!pltsql_insert_exec_active() && !estate->insert_exec)
+			(pltsql_enable_new_insert_exec ? !pltsql_insert_exec_active() : !estate->insert_exec))
 		{
 			commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED));
 
@@ -9702,7 +9725,7 @@ contains_target_param(Node *node, int *target_dno)
  * exec_set_found			Set the global found variable to true/false
  * ----------
  */
-static void
+void
 exec_set_found(PLtsql_execstate *estate, bool state)
 {
 	PLtsql_var *var;
@@ -9729,7 +9752,7 @@ exec_set_fetch_status(PLtsql_execstate *estate, int status)
 	fetch_status_var = status;
 }
 
-static void
+void
 exec_set_rowcount(uint64 rowno)
 {
 	rowcount_var = rowno;
@@ -9919,6 +9942,17 @@ pltsql_estate_cleanup(void)
 									top_es_entry->estate->stmt_mcontext_parent);
 	pfree(exec_state_call_stack);
 	exec_state_call_stack = top_es_entry;
+
+	/*
+	 * Clear stale INSERT EXEC context when the call stack becomes empty.
+	 * This is a safety net to prevent context from leaking between batches.
+	 * Primary cleanup happens in exec_stmt_exec error handlers, but this
+	 * ensures cleanup even if those paths are not taken.
+	 */
+	if (exec_state_call_stack == NULL && pltsql_insert_exec_active())
+	{
+		pltsql_insert_exec_reset_all();
+	}
 }
 
 /*
@@ -9964,11 +9998,9 @@ pltsql_xact_cb(XactEvent event, void *arg)
 		ResetTopTransactionName();
 
 		/*
-		 * Clean up INSERT EXEC context on transaction end. This is a signal that an
-		 * aborted INSERT EXEC has nothing to flush: on abort the buffer temp
-		 * table is gone, so clearing the context here makes the subsequent
-		 * flush a no-op (it early-returns on a NULL context) instead of
-		 * opening a dropped relation.
+		 * Clean up INSERT EXEC context on transaction end. This is a safety
+		 * net for timeouts, interrupts, and other cases where normal cleanup
+		 * paths are bypassed. On commit, any remaining context is stale.
 		 */
 		if (pltsql_insert_exec_active())
 			pltsql_insert_exec_reset_all();

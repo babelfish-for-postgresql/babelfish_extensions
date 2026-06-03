@@ -743,8 +743,11 @@ exec_stmt_push_result(PLtsql_execstate *estate,
 
 	Assert(stmt->query != NULL);
 
-	/* Handle naked SELECT stmt differently for INSERT ... EXECUTE (legacy path). */
-	if (estate->insert_exec)
+	/*
+	 * Legacy INSERT EXEC path: handle naked SELECT stmt differently.
+	 * estate->insert_exec is only set when the new INSERT EXEC GUC is off.
+	 */
+	if (!pltsql_enable_new_insert_exec && estate->insert_exec)
 		return exec_stmt_insert_execute_select(estate, stmt->query);
 
 	exec_run_select(estate, stmt->query, &portal);
@@ -753,7 +756,7 @@ exec_stmt_push_result(PLtsql_execstate *estate,
 	 * When INSERT EXEC is active (new path), redirect results to the temp
 	 * table instead of sending to client.
 	 */
-	if (pltsql_insert_exec_active())
+	if (pltsql_enable_new_insert_exec && pltsql_insert_exec_active())
 	{
 		receiver = CreateInsertExecDestReceiver();
 		receiver->rStartup(receiver, CMD_SELECT, portal->tupDesc);
@@ -812,7 +815,7 @@ exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_result *stmt
 	 * INSERT EXEC context check - redirect OUTPUT clause results to temp table
 	 * instead of sending to client.
 	 */
-	if (pltsql_insert_exec_active())
+	if (pltsql_enable_new_insert_exec && pltsql_insert_exec_active())
 	{
 		receiver = CreateInsertExecDestReceiver();
 		receiver->rStartup(receiver, CMD_SELECT, portal->tupDesc);
@@ -867,6 +870,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	/* whether procedure was created WITH RECOMPILE */
 	bool created_with_recompile = false;		
 
+	/* INSERT EXEC handling - temp table lifecycle */
+	bool insert_exec_setup_done = false;
+
+	/* set true at the end of the PG_TRY body to distinguish success from error in PG_FINALLY */
+	volatile bool exec_succeeded = false;
+
 	/*
 	 * We need to disable the explain gucs incase of sp_reset_connection
 	 * execution otherwise we will get explain output for it which is
@@ -898,8 +907,8 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * Setup INSERT EXEC (new path): create temp table to capture procedure
 		 * output. After procedure completes, temp table is flushed to target.
 		 */
-		if (stmt->insert_exec != NULL)
-			insert_exec_setup(estate, stmt->insert_exec, true);
+		if (pltsql_enable_new_insert_exec)
+			insert_exec_setup_done = insert_exec_setup(estate, stmt->insert_exec, true);
 
 		if (IS_TDS_CONN())
 		{
@@ -1191,7 +1200,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			stmt->target = (PLtsql_variable *) row;
 		}
 
-		if (estate->insert_exec)
+		if (!pltsql_enable_new_insert_exec && estate->insert_exec)
 		{
 			/*
 			 * For EXEC under INSERT ... EXECUTE, get the expected TupleDesc,
@@ -1283,7 +1292,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			}
 		}
 
-		if (estate->insert_exec)
+		if (!pltsql_enable_new_insert_exec && estate->insert_exec)
 		{
 			/*
 			 * For EXEC under INSERT ... EXECUTE, get the rows sent back by
@@ -1311,42 +1320,18 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			dest->rDestroy(dest);
 		}
 
-		if (rc < 0)
-			elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
-				 expr->query, SPI_result_code_string(rc));
-
-		/*
-		 * Check result rowcount; if there's one row, assign procedure's output
-		 * values back to the appropriate variables
-		 */
-		if (SPI_processed == 1)
-		{
-			SPITupleTable *tuptab = SPI_tuptable;
-
-			if (!stmt->target)
-				elog(ERROR, "DO statement returned a row");
-
-			if (tuptab != NULL)
-				exec_move_row(estate, stmt->target, tuptab->vals[0], tuptab->tupdesc);
-		}
-		else if (SPI_processed > 1)
-			elog(ERROR, "procedure call returned more than one row");
-
-		exec_eval_cleanup(estate);
-		SPI_freetuptable(SPI_tuptable);
-
-		if (stmt->insert_exec != NULL)
-			insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
+		exec_succeeded = true;
 	}
 	PG_FINALLY();
 	{
-		if (stmt->insert_exec != NULL)
+		/*
+		 * On the error path (new INSERT EXEC path only), tear down the temp
+		 * table context before re-throwing.
+		 */
+		if (!exec_succeeded &&
+			(insert_exec_setup_done || pltsql_insert_exec_active()))
 			pltsql_insert_exec_reset_all();
 
-		/*
-		 * Restore the database/user context if a cross-db EXEC switched it.
-		 * Runs on both success and error paths.
-		 */
 		if (strcmp(get_current_pltsql_db_name(), save_db_name) != 0)
 			set_cur_user_db_and_path(save_db_name, false, false);
 
@@ -1365,6 +1350,34 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		}
 	}
 	PG_END_TRY();
+
+	if (rc < 0)
+		elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
+			 expr->query, SPI_result_code_string(rc));
+
+	/*
+	 * Check result rowcount; if there's one row, assign procedure's output
+	 * values back to the appropriate variables.
+	 */
+	if (SPI_processed == 1)
+	{
+		SPITupleTable *tuptab = SPI_tuptable;
+
+		if (!stmt->target)
+			elog(ERROR, "DO statement returned a row");
+
+		if (tuptab != NULL)
+			exec_move_row(estate, stmt->target, tuptab->vals[0], tuptab->tupdesc);
+	}
+	else if (SPI_processed > 1)
+		elog(ERROR, "procedure call returned more than one row");
+
+	exec_eval_cleanup(estate);
+	SPI_freetuptable(SPI_tuptable);
+
+	/* Flush temp table to target table and cleanup after procedure completes */
+	if (insert_exec_setup_done)
+		insert_exec_success_cleanup(estate, stmt->insert_exec);
 
 	return PLTSQL_RC_OK;
 }
@@ -1540,6 +1553,11 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	char	   *old_db_name = get_cur_db_name();
 	char	   *cur_db_name = NULL;
 
+	/* INSERT EXEC handling - temp table lifecycle */
+	bool insert_exec_setup_done = false;
+
+	/* set true at the end of the PG_TRY body to distinguish success from error in PG_FINALLY */
+	volatile bool exec_succeeded = false;
 	LOCAL_FCINFO(fcinfo, 1);
 
 	/*
@@ -1562,8 +1580,8 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		 * output. No implicit transaction for dynamic SQL (different semantics
 		 * than stored procs).
 		 */
-		if (stmt->insert_exec != NULL)
-			insert_exec_setup(estate, stmt->insert_exec, false);
+		if (pltsql_enable_new_insert_exec)
+			insert_exec_setup_done = insert_exec_setup(estate, stmt->insert_exec, false);
 
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(estate, query, restype);
@@ -1586,12 +1604,13 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		if (fcinfo->isnull)
 			elog(ERROR, "pltsql_inline_handler failed");
 
-		if (stmt->insert_exec != NULL)
-			insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
+		exec_succeeded = true;
 	}
 	PG_FINALLY();
 	{
-		if (stmt->insert_exec != NULL)
+		/* On the error path (new INSERT EXEC path only), tear down the temp table context. */
+		if (!exec_succeeded &&
+			(insert_exec_setup_done || pltsql_insert_exec_active()))
 			pltsql_insert_exec_reset_all();
 
 		/* Restore past settings */
@@ -1620,6 +1639,10 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		pltsql_create_econtext(estate);
 	}
 	exec_eval_cleanup(estate);
+
+	/* Flush temp table to target and cleanup */
+	if (insert_exec_setup_done)
+		insert_exec_success_cleanup(estate, stmt->insert_exec);
 
 	return PLTSQL_RC_OK;
 }
@@ -2218,6 +2241,12 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				int			save_nestlevel;
 				int			scope_level;
 				InlineCodeBlockArgs *args = NULL;
+				
+				/* INSERT EXEC handling - temp table lifecycle */
+				bool insert_exec_setup_done = false;
+
+				/* set true at the end of the PG_TRY body to distinguish success from error in PG_FINALLY */
+				volatile bool exec_succeeded = false;
 
 				batch = exec_eval_expr(estate, stmt->query, &isnull1, &restype1, &restypmod1);
 				if (isnull1)
@@ -2270,8 +2299,8 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					 * The procedure output will be redirected to this temp table.
 					 * After procedure completes, we flush temp table to target and cleanup.
 					 */
-					if (stmt->insert_exec != NULL)
-						insert_exec_setup(estate, stmt->insert_exec, true);
+					if (pltsql_enable_new_insert_exec)
+						insert_exec_setup_done = insert_exec_setup(estate, stmt->insert_exec, true);
 
 					if (strcmp(batchstr, "") != 0)	/* check edge cases for
 													 * sp_executesql */
@@ -2284,18 +2313,23 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						exec_assign_value(estate, estate->datums[stmt->return_code_dno], Int32GetDatum(ret), false, INT4OID, 0);
 					}
 
-					if (stmt->insert_exec != NULL)
-						insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
+					exec_succeeded = true;
 				}
 				PG_FINALLY();
 				{
-					if (stmt->insert_exec != NULL)
+					/* On the error path (new INSERT EXEC path only), tear down the temp table context. */
+					if (!exec_succeeded &&
+						(insert_exec_setup_done || pltsql_insert_exec_active()))
 						pltsql_insert_exec_reset_all();
 
 					pltsql_revert_guc(save_nestlevel);
 					pltsql_revert_last_scope_identity(scope_level);
 				}
 				PG_END_TRY();
+
+				/* Flush temp table to target and cleanup after sp_executesql completes */
+				if (insert_exec_setup_done)
+					insert_exec_success_cleanup(estate, stmt->insert_exec);
 
 				break;
 			}
@@ -3903,7 +3937,7 @@ execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamL
 	{
 		receiver = None_Receiver;
 	}
-	else if (pltsql_insert_exec_active())
+	else if (pltsql_enable_new_insert_exec && pltsql_insert_exec_active())
 	{
 		/*
 		 * INSERT EXEC context is active (new path) - redirect results to temp
