@@ -112,6 +112,23 @@ GO
 SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 2 FOR XML PATH(''), ELEMENTS ABSENT;
 GO
 
+-- PATH('') with ROOT — xmlns:xsi declared on ROOT only,
+-- per-column declarations suppressed.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID IN (1,3) FOR XML PATH(''), ELEMENTS XSINIL, ROOT('Data');
+GO
+
+-- PATH('') with ROOT, mixed NULL columns.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH(''), ELEMENTS XSINIL, ROOT('Data');
+GO
+
+-- PATH('') with ROOT, directive order swapped.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 2 FOR XML PATH(''), ROOT('Data'), ELEMENTS XSINIL;
+GO
+
+-- PATH('') with ROOT and TYPE combined.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 2 FOR XML PATH(''), ELEMENTS XSINIL, ROOT('Data'), TYPE;
+GO
+
 -- ============================================
 -- SECTION 7: Multiple data types
 -- ============================================

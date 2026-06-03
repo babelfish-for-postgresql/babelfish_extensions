@@ -667,8 +667,13 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 				}
 				else
 				{
-					/* When PATH('') is used with XSINIL, add xmlns to each element */
-					if ((element_name && strlen(element_name) == 0) && xsinil)
+					/*
+					 * PATH('') + XSINIL emits xmlns:xsi on each column
+					 * element since there is no row tag to carry it.
+					 * When ROOT already declared it, suppress the per-column
+					 * declaration to match T-SQL behavior.
+					 */
+					if ((element_name && strlen(element_name) == 0) && xsinil && !has_root)
 						appendStringInfo(state, "<%s " XML_XMLNS_XSI ">%s</%s>",
 										 colname,
 										 map_sql_value_to_xml_value(colval, datatype_oid, true),
@@ -700,8 +705,13 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 
 				if (strncmp(NameStr(att->attname), "?column?", 8) != 0)
 				{
-					/* When PATH('') is used with XSINIL, add xmlns to each element */
-					if (element_name && strlen(element_name) == 0)
+					/*
+					 * PATH('') + XSINIL emits xmlns:xsi on each column
+					 * element since there is no row tag to carry it.
+					 * When ROOT already declared it, suppress the per-column
+					 * declaration to match T-SQL behavior.
+					 */
+					if (element_name && strlen(element_name) == 0 && !has_root)
 						appendStringInfo(state, "<%s " XML_XMLNS_XSI " " XML_XSI_NIL "/>", colname);
 					else
 						appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);

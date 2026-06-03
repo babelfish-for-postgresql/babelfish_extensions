@@ -242,6 +242,43 @@ ntext
 ~~END~~
 
 
+-- PATH('') with ROOT — xmlns:xsi declared on ROOT only,
+-- per-column declarations suppressed.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID IN (1,3) FOR XML PATH(''), ELEMENTS XSINIL, ROOT('Data');
+GO
+~~START~~
+ntext
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department><ID>3</ID><Name>Bob</Name><Department>IT</Department></Data>
+~~END~~
+
+
+-- PATH('') with ROOT, mixed NULL columns.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH(''), ELEMENTS XSINIL, ROOT('Data');
+GO
+~~START~~
+ntext
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/><ID>3</ID><Name>Bob</Name><Department>IT</Department><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Data>
+~~END~~
+
+
+-- PATH('') with ROOT, directive order swapped.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 2 FOR XML PATH(''), ROOT('Data'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Data>
+~~END~~
+
+
+-- PATH('') with ROOT and TYPE combined.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 2 FOR XML PATH(''), ELEMENTS XSINIL, ROOT('Data'), TYPE;
+GO
+~~START~~
+xml
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Data>
+~~END~~
+
+
 
 -- ============================================
 -- SECTION 7: Multiple data types
