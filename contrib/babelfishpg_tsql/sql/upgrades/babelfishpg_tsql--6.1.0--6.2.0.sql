@@ -224,27 +224,6 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     FINALFUNC = tsql_query_to_xml_text_ffunc
 );
 
-CREATE OR REPLACE FUNCTION sys._trunc_numeric_to_int8(In arg numeric)
-RETURNS INT8 AS $$
-BEGIN
-  RETURN pg_catalog.int8(trunc(arg));
-END;
-$$ LANGUAGE plpgsql STABLE;
-
-CREATE OR REPLACE FUNCTION sys._trunc_numeric_to_int4(In arg numeric)
-RETURNS INT4 AS $$
-BEGIN
-  RETURN pg_catalog.int4(trunc(arg));
-END;
-$$ LANGUAGE plpgsql STABLE;
-
-CREATE OR REPLACE FUNCTION sys._trunc_numeric_to_int2(In arg numeric)
-RETURNS INT2 AS $$
-BEGIN
-  RETURN pg_catalog.int2(trunc(arg));
-END;
-$$ LANGUAGE plpgsql STABLE;
-
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
