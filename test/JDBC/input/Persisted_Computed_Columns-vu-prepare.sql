@@ -46,14 +46,6 @@ CREATE TABLE pcc_concatfn (
 )
 GO
 
--- CAST to INT
-CREATE TABLE pcc_cast (
-    id INT IDENTITY(1,1),
-    val DECIMAL(10,4),
-    int_val AS CAST(val AS INT) PERSISTED
-)
-GO
-
 -- EOMONTH
 CREATE TABLE pcc_eomonth (
     id INT IDENTITY(1,1),
@@ -79,6 +71,15 @@ CREATE TABLE pcc_datetrunc (
     truncated AS DATETRUNC(month, dt) PERSISTED
 )
 GO
+
+-- CAST to INT
+CREATE TABLE pcc_cast (
+    id INT IDENTITY(1,1),
+    val DECIMAL(10,4),
+    int_val AS CAST(val AS INT) PERSISTED
+)
+GO
+
 
 -- CAST to BIGINT
 CREATE TABLE pcc_castbig (
@@ -157,9 +158,6 @@ GO
 INSERT INTO pcc_concatfn (first_name, last_name) VALUES ('John', 'Doe'), ('Jane', NULL)
 GO
 
-INSERT INTO pcc_cast (val) VALUES (123.4567), (99.9)
-GO
-
 INSERT INTO pcc_eomonth (d) VALUES ('2024-01-15'), ('2024-02-10')
 GO
 
@@ -167,6 +165,9 @@ INSERT INTO pcc_concatws (a, b, c) VALUES ('one', 'two', 'three'), ('x', NULL, '
 GO
 
 INSERT INTO pcc_datetrunc (dt) VALUES ('2024-03-15 10:30:45'), ('2024-07-22 08:15:00')
+GO
+
+INSERT INTO pcc_cast (val) VALUES (123.4567), (99.9)
 GO
 
 INSERT INTO pcc_castbig (val) VALUES (123456.7890), (999999.9)
