@@ -827,15 +827,6 @@ GRANT SELECT ON sys.identity_columns TO PUBLIC;
 
 create or replace view sys.indexes as
 -- Get all indexes from all system and user tables
-with index_id_map as MATERIALIZED(
-  select
-    indexrelid,
-    case
-      when indisclustered then 1
-      else 1+row_number() over(partition by indrelid order by indexrelid)
-    end as index_id
-  from pg_index
-)
 select
   cast(X.indrelid as int) as object_id
   , cast(
@@ -864,9 +855,17 @@ select
   , cast(0 as sys.bit) as has_filter
   , cast(null as sys.nvarchar) as filter_definition
   , cast(0 as sys.bit) as auto_created
-  , cast(imap.index_id as int) as index_id
-from pg_index X 
-inner join index_id_map imap on imap.indexrelid = X.indexrelid
+  , cast(
+    case
+      when X.indisclustered then 1
+      else 1 + (SELECT count(*) FROM pg_index x2
+                WHERE x2.indrelid = X.indrelid
+                AND x2.indexrelid < X.indexrelid
+                AND NOT x2.indisclustered
+                AND x2.indislive)
+    end
+    as int) as index_id
+from pg_index X
 inner join pg_class I on I.oid = X.indexrelid
 inner join pg_class ptbl on ptbl.oid = X.indrelid and ptbl.relispartition = false
 inner join pg_namespace nsp on nsp.oid = I.relnamespace
