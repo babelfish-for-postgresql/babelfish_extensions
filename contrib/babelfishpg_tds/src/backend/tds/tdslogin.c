@@ -1154,47 +1154,6 @@ TdsResetLoginFlags()
 }
 
 /*
- * tds_truncate_identifier - Truncate an identifier to fit NAMEDATALEN.
- *
- * Clips to (NAMEDATALEN - 33) characters and appends a 32-char MD5 hash.
- * If downcase is true, hash is computed from the downcased input.
- * Modifies ident in-place. No-op if len < NAMEDATALEN.
- */
-void
-tds_truncate_identifier(char *ident, int len, bool downcase)
-{
-	char		md5[33];
-	char		buf[NAMEDATALEN];
-	bool		success;
-	const char *errstr = NULL;
-
-	if (len < NAMEDATALEN)
-		return;
-
-	if (downcase)
-	{
-		char	   *downcased = downcase_identifier(ident, len, false, false);
-
-		success = pg_md5_hash(downcased, strlen(downcased), md5, &errstr);
-		pfree(downcased);
-	}
-	else
-		success = pg_md5_hash(ident, len, md5, &errstr);
-
-	if (unlikely(!success))
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("could not compute %s hash: %s", "MD5", errstr)));
-
-	len = pg_mbcliplen(ident, len, NAMEDATALEN - 32 - 1);
-	memcpy(buf, ident, len);
-	memcpy(buf + len, md5, 32);
-	buf[len + 32] = '\0';
-
-	memcpy(ident, buf, len + 32 + 1);
-}
-
-/*
  * ProcessLoginInternal - internal workhorse for processing login
  * request.
  *
@@ -1301,9 +1260,28 @@ ProcessLoginInternal(Port *port)
 	 */
 	if (strlen(port->user_name) >= NAMEDATALEN)
 	{
-		tds_truncate_identifier(port->user_name, strlen(port->user_name), true);
+		int			len = strlen(port->user_name);
+		char		md5[33];
+		char		buf[NAMEDATALEN];
+		const char *errstr = NULL;
+		char	   *downcased = downcase_identifier(port->user_name, len, false, false);
+
+		if (!pg_md5_hash(downcased, strlen(downcased), md5, &errstr))
+			ereport(FATAL,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("could not compute %s hash: %s", "MD5", errstr)));
+
+		len = pg_mbcliplen(port->user_name, len, NAMEDATALEN - 32 - 1);
+		memcpy(buf, port->user_name, len);
+		memcpy(buf + len, md5, 32);
+		buf[len + 32] = '\0';
+
+		pfree(downcased);
+
+		pfree(port->user_name);
+		port->user_name = pstrdup(buf);
 		pfree(loginInfo->username);
-		loginInfo->username = pstrdup(port->user_name);
+		loginInfo->username = pstrdup(buf);
 	}
 
 	/*

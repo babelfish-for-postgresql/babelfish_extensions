@@ -1953,8 +1953,6 @@ typedef struct PLtsql_protocol_plugin
 	
 	Datum       (*sql_geography_from_bytea) (PG_FUNCTION_ARGS);
 
-	void		(*truncate_identifier) (char *ident, int len, bool downcase);
-
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
