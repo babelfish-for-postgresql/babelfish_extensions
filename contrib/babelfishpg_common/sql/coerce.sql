@@ -68,7 +68,7 @@ $$ LANGUAGE plpgsql STABLE;
 CREATE OR REPLACE FUNCTION sys._trunc_numeric_to_int8(In arg numeric)
 RETURNS INT8 AS $$
 BEGIN
-  RETURN pg_catalog.int8(trunc(arg));
+  RETURN CAST(trunc(arg) AS INT8);
 END;
 $$ LANGUAGE plpgsql STABLE;
 
@@ -76,7 +76,7 @@ $$ LANGUAGE plpgsql STABLE;
 CREATE OR REPLACE FUNCTION sys._trunc_numeric_to_int4(In arg numeric)
 RETURNS INT4 AS $$
 BEGIN
-  RETURN pg_catalog.int4(trunc(arg));
+  RETURN CAST(trunc(arg) AS INT4);
 END;
 $$ LANGUAGE plpgsql STABLE;
 
@@ -84,7 +84,7 @@ $$ LANGUAGE plpgsql STABLE;
 CREATE OR REPLACE FUNCTION sys._trunc_numeric_to_int2(In arg numeric)
 RETURNS INT2 AS $$
 BEGIN
-  RETURN pg_catalog.int2(trunc(arg));
+  RETURN CAST(trunc(arg) AS INT2);
 END;
 $$ LANGUAGE plpgsql STABLE;
 
