@@ -1239,9 +1239,10 @@ varchar
 -- Using .query() method on XSINIL result
 SELECT (SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ROOT('Data'), ELEMENTS XSINIL, TYPE).query('/Data/Employee[1]') AS query_result;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
+~~START~~
+xml
+<Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee>
+~~END~~
 
 
 -- Using .exist() method on XSINIL result

@@ -1050,7 +1050,7 @@ public:
 
 	void exitXml_func_arg(TSqlParser::Xml_func_argContext *ctx) override
 	{
-		if (ctx->EXIST() || ctx->VALUE())
+		if (ctx->EXIST() || ctx->VALUE() || ctx->QUERY())
 		{
 			size_t startPosition = ctx->start->getStartIndex();
 			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "bbf_xml")));
@@ -9476,6 +9476,10 @@ validateXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSqlParser::E
 	/* XML VALUE function requires only 2 argument */
 	if (xml_func->VALUE() && (expr_list == NULL || expr_list->expression().size() != 2))
 		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The value function requires 2 argument(s).", getLineAndPos(xml_func));
+
+	/* XML QUERY function requires only 1 argument */
+	if (xml_func->QUERY() && (expr_list == NULL || expr_list->expression().size() != 1))
+		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The query function requires 1 argument(s).", getLineAndPos(xml_func));
 
 	/* Only String Literal is allowed as agument for XML Functions */
 	if (expr_list)
