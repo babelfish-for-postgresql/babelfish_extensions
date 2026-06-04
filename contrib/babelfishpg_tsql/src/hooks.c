@@ -81,6 +81,7 @@
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/ruleutils.h"
+#include "utils/selfuncs.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/numeric.h"
@@ -390,6 +391,8 @@ static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_
 static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
 static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
 static pre_QueryRewrite_hook_type prev_pre_QueryRewrite_hook = NULL;
+static opexpr_selectivity_hook_type prev_opexpr_selectivity_hook = NULL;
+static nulltest_selectivity_hook_type prev_nulltest_selectivity_hook = NULL;
 ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
 ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
 #ifdef USE_LIBXML
@@ -543,6 +546,13 @@ InstallExtendedHooks(void)
 
 	prev_planner_hook = planner_hook;
 	planner_hook = pltsql_planner_hook;
+
+	prev_opexpr_selectivity_hook = opexpr_selectivity_hook;
+	opexpr_selectivity_hook = babelfish_opexpr_selectivity_hook;
+
+	prev_nulltest_selectivity_hook = nulltest_selectivity_hook;
+	nulltest_selectivity_hook = babelfish_nulltest_selectivity_hook;
+	
 	prev_transform_check_constraint_expr_hook = transform_check_constraint_expr_hook;
 	transform_check_constraint_expr_hook = transform_like_in_add_constraint;
 
@@ -716,6 +726,8 @@ UninstallExtendedHooks(void)
 	pre_transform_openxml_columns_hook = prev_pre_transform_openxml_columns_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
+	opexpr_selectivity_hook = prev_opexpr_selectivity_hook;
+	nulltest_selectivity_hook = prev_nulltest_selectivity_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
 	validate_var_datatype_scale_hook = prev_validate_var_datatype_scale_hook;
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
@@ -9304,4 +9316,209 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 	}
 
 	return expr;
+}
+
+/*
+ * babelfish_opexpr_selectivity_hook
+ *
+ * Provides accurate selectivity estimation for OpExpr nodes that compare
+ * a CASE expression to a constant value. PostgreSQL's default behavior treats
+ * such expressions as opaque and applies a generic 0.5% selectivity, which
+ * causes severe row count misestimates in SSMS metadata queries.
+ *
+ * This hook decomposes the CASE into its branches, computes the selectivity
+ * of each branch condition using standard planner methods, and combines them
+ * using conditional probability to determine what fraction of rows produce
+ * the target constant value.
+ *
+ * Example pattern handled:
+ *   CAST(CASE WHEN is_ms_shipped=1 THEN 1
+ *             WHEN (SubPlan) IS NOT NULL THEN 1
+ *             ELSE 0 END AS bit) = 0
+ *
+ * Returns true if handled (writes selectivity to *selec), false otherwise.
+ */
+bool
+babelfish_opexpr_selectivity_hook(PlannerInfo *root,
+								  Node *clause,
+								  int varRelid,
+								  JoinType jointype,
+								  SpecialJoinInfo *sjinfo,
+								  bool use_extended_stats,
+								  Selectivity *selec)
+{
+	OpExpr	   *opclause = (OpExpr *) clause;
+	Node	   *left;
+	Node	   *right;
+	CaseExpr   *caseexpr = NULL;
+	Const	   *constval = NULL;
+
+	if (list_length(opclause->args) != 2)
+		return false;
+
+	left = (Node *) linitial(opclause->args);
+	right = (Node *) lsecond(opclause->args);
+
+	/* Strip RelabelType/CoerceViaIO/FuncExpr wrappers */
+	while (IsA(left, RelabelType))
+		left = (Node *) ((RelabelType *) left)->arg;
+	while (IsA(left, CoerceViaIO))
+		left = (Node *) ((CoerceViaIO *) left)->arg;
+	if (IsA(left, FuncExpr) && list_length(((FuncExpr *) left)->args) == 1)
+		left = (Node *) linitial(((FuncExpr *) left)->args);
+	while (IsA(left, RelabelType))
+		left = (Node *) ((RelabelType *) left)->arg;
+	while (IsA(left, CoerceViaIO))
+		left = (Node *) ((CoerceViaIO *) left)->arg;
+
+	if (IsA(left, CaseExpr) && IsA(right, Const))
+	{
+		caseexpr = (CaseExpr *) left;
+		constval = (Const *) right;
+	}
+	else if (IsA(right, CaseExpr) && IsA(left, Const))
+	{
+		caseexpr = (CaseExpr *) right;
+		constval = (Const *) left;
+	}
+
+	if (caseexpr && constval && !constval->constisnull)
+	{
+		Selectivity remaining = 1.0;  /* fraction of rows not yet caught by any branch */
+		Selectivity match_sel = 0.0;  /* accumulated probability of producing target value */
+		ListCell   *lc;
+		bool		else_matches = false;  /* does the ELSE result equal the target constant? */
+
+		/* Check if ELSE result matches target */
+		if (caseexpr->defresult)
+		{
+			Node *defres = (Node *) caseexpr->defresult;
+			while (IsA(defres, RelabelType))
+				defres = (Node *) ((RelabelType *) defres)->arg;
+			while (IsA(defres, CoerceViaIO))
+				defres = (Node *) ((CoerceViaIO *) defres)->arg;
+			if (IsA(defres, Const) && !((Const *) defres)->constisnull)
+			{
+				Const *dc = (Const *) defres;
+				if (dc->consttype == constval->consttype)
+					else_matches = (dc->constvalue == constval->constvalue);
+				else
+				{
+					int64 dv = 0, tv = 0;
+					if (dc->constlen <= 4)
+						dv = DatumGetInt32(dc->constvalue);
+					if (constval->constlen <= 4)
+						tv = DatumGetInt32(constval->constvalue);
+					else_matches = (dv == tv);
+				}
+			}
+		}
+
+		/* Compute branch selectivities using conditional probability */
+		foreach(lc, caseexpr->args)
+		{
+			CaseWhen *when = (CaseWhen *) lfirst(lc);
+			Selectivity branch_sel;
+			bool branch_matches_target = false;
+			Node *res = (Node *) when->result;
+
+			/* Strip wrappers from branch result to get the constant */
+			while (IsA(res, RelabelType))
+				res = (Node *) ((RelabelType *) res)->arg;
+			while (IsA(res, CoerceViaIO))
+				res = (Node *) ((CoerceViaIO *) res)->arg;
+
+			/* Check if this branch's result value equals the target constant */
+
+			if (IsA(res, Const) && !((Const *) res)->constisnull)
+			{
+				Const *rc = (Const *) res;
+				if (rc->consttype == constval->consttype)
+					branch_matches_target = (rc->constvalue == constval->constvalue);
+				else
+				{
+					int64 rv = 0, tv = 0;
+					if (rc->constlen <= 4)
+						rv = DatumGetInt32(rc->constvalue);
+					if (constval->constlen <= 4)
+						tv = DatumGetInt32(constval->constvalue);
+					branch_matches_target = (rv == tv);
+				}
+			}
+
+			branch_sel = clause_selectivity_ext(root,
+												(Node *) when->expr,
+												varRelid, jointype,
+												sjinfo, use_extended_stats);
+
+			/*
+			 * Accumulate selectivity: if this branch matches the target,
+			 * add (probability of reaching this branch × probability branch fires).
+			 * Then reduce 'remaining' by the fraction caught by this branch.
+			 */
+			if (branch_matches_target)
+				match_sel += remaining * branch_sel;
+
+			remaining *= (1.0 - branch_sel);
+		}
+
+		/* If ELSE matches target, all remaining rows (that didn't match any WHEN) contribute */
+		if (else_matches)
+			match_sel += remaining;
+
+		CLAMP_PROBABILITY(match_sel);
+		*selec = match_sel;
+		return true;
+	}
+
+	return false;
+}
+
+/*
+ * babelfish_nulltest_selectivity_hook
+ *
+ * Provides accurate selectivity for IS NULL / IS NOT NULL tests on SubPlan
+ * results. When no statistics are available (which is always the case for
+ * SubPlan outputs), PostgreSQL defaults to 99.5% for IS NOT NULL. This is
+ * wrong for SubPlans that return 0 rows (result is always NULL).
+ *
+ * This hook uses the SubPlan's already-computed plan_rows estimate to
+ * determine the probability: if the subquery returns 0 estimated rows,
+ * the result is NULL; if it returns rows, the result is NOT NULL.
+ *
+ * Example pattern handled:
+ *   (SELECT major_id FROM sys.extended_properties WHERE ...) IS NOT NULL
+ *
+ * Returns true if handled (writes selectivity to *selec), false otherwise.
+ */
+bool
+babelfish_nulltest_selectivity_hook(PlannerInfo *root,
+									NullTestType nulltesttype,
+									Node *arg,
+									int varRelid,
+									Selectivity *selec)
+{
+	if (IsA(arg, SubPlan))
+	{
+		SubPlan    *subplan = (SubPlan *) arg;
+		Plan	   *plan = (Plan *) list_nth(root->glob->subplans,
+											    subplan->plan_id - 1);
+
+		if (plan && plan->plan_rows <= 1.0)
+		{
+			*selec = (nulltesttype == IS_NULL) ? 1.0 : 0.0;
+		}
+		else if (plan)
+		{
+			double match_prob = Min(plan->plan_rows, 1.0);
+			*selec = (nulltesttype == IS_NULL) ? (1.0 - match_prob) : match_prob;
+		}
+		else
+		{
+			*selec = (nulltesttype == IS_NULL) ? 0.005 : 0.995;
+		}
+		return true;
+	}
+
+	return false;
 }
