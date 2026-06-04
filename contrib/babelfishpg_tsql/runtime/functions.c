@@ -6231,30 +6231,38 @@ is_table_type_oid(PG_FUNCTION_ARGS)
 				if (typform->typtype == 'c')
 				{
 					Relation	depRel;
-					ScanKeyData key[2];
+					ScanKeyData key[3];
 					SysScanDesc scan;
 					HeapTuple	deptup;
 
 					depRel = table_open(DependRelationId, AccessShareLock);
 
 					ScanKeyInit(&key[0],
+								Anum_pg_depend_classid,
+								BTEqualStrategyNumber, F_OIDEQ,
+								ObjectIdGetDatum(RelationRelationId));
+					ScanKeyInit(&key[1],
 								Anum_pg_depend_objid,
 								BTEqualStrategyNumber, F_OIDEQ,
 								ObjectIdGetDatum(typform->typrelid));
-					ScanKeyInit(&key[1],
-								Anum_pg_depend_refobjid,
-								BTEqualStrategyNumber, F_OIDEQ,
-								ObjectIdGetDatum(typform->oid));
+					ScanKeyInit(&key[2],
+								Anum_pg_depend_objsubid,
+								BTEqualStrategyNumber, F_INT4EQ,
+								Int32GetDatum(0));
 
-					scan = systable_beginscan(depRel, InvalidOid, false,
-											  NULL, 2, key);
+					scan = systable_beginscan(depRel, DependDependerIndexId, true,
+											  NULL, 3, key);
 
-					if (HeapTupleIsValid(deptup = systable_getnext(scan)))
+					while (HeapTupleIsValid(deptup = systable_getnext(scan)))
 					{
 						Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(deptup);
 
-						if (depform->deptype == 'i')
+						if (depform->deptype == 'i' &&
+							depform->refobjid == typform->oid)
+						{
 							result = true;
+							break;
+						}
 					}
 
 					systable_endscan(scan);
