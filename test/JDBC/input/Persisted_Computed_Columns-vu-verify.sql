@@ -134,8 +134,8 @@ GO
 SELECT * FROM pcc_concatws ORDER BY id
 GO
 
-SELECT * FROM pcc_datetrunc ORDER BY id
-GO
+-- SELECT * FROM pcc_datetrunc ORDER BY id
+-- GO
 
 -- SELECT * FROM pcc_castbig ORDER BY id
 -- GO

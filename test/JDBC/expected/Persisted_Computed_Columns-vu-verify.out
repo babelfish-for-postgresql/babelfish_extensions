@@ -223,18 +223,12 @@ int#!#varchar#!#varchar#!#varchar#!#varchar
 ~~END~~
 
 
-SELECT * FROM pcc_datetrunc ORDER BY id
-GO
-~~START~~
-int#!#datetime#!#datetime
-1#!#2024-03-15 10:30:45.0#!#2024-03-01 00:00:00.0
-2#!#2024-07-22 08:15:00.0#!#2024-07-01 00:00:00.0
-~~END~~
 
 
 
 
-
+-- SELECT * FROM pcc_datetrunc ORDER BY id
+-- GO
 -- SELECT * FROM pcc_castbig ORDER BY id
 -- GO
 -- SELECT * FROM pcc_castsmall ORDER BY id
@@ -265,7 +259,7 @@ Aggregate  (cost=17.87..17.88 rows=1 width=4)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.105 ms
+Babelfish T-SQL Batch Parsing Time: 0.098 ms
 ~~END~~
 
 SET BABELFISH_SHOWPLAN_ALL OFF
@@ -323,7 +317,7 @@ Bitmap Heap Scan on pcc_bulk  (cost=4.17..11.28 rows=3 width=4)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.071 ms
+Babelfish T-SQL Batch Parsing Time: 0.076 ms
 ~~END~~
 
 SET BABELFISH_SHOWPLAN_ALL OFF

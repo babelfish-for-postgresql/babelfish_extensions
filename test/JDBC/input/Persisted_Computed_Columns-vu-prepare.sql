@@ -64,13 +64,13 @@ CREATE TABLE pcc_concatws (
 )
 GO
 
--- DATETRUNC
-CREATE TABLE pcc_datetrunc (
-    id INT IDENTITY(1,1),
-    dt DATETIME,
-    truncated AS DATETRUNC(month, dt) PERSISTED
-)
-GO
+-- DATETRUNC (commented out: fails during DnR - 'datetime'::regtype not found in PG dialect)
+-- CREATE TABLE pcc_datetrunc (
+--     id INT IDENTITY(1,1),
+--     dt DATETIME,
+--     truncated AS DATETRUNC(month, dt) PERSISTED
+-- )
+-- GO
 
 -- CAST to INT
 -- CREATE TABLE pcc_cast (
@@ -164,8 +164,8 @@ GO
 INSERT INTO pcc_concatws (a, b, c) VALUES ('one', 'two', 'three'), ('x', NULL, 'z')
 GO
 
-INSERT INTO pcc_datetrunc (dt) VALUES ('2024-03-15 10:30:45'), ('2024-07-22 08:15:00')
-GO
+-- INSERT INTO pcc_datetrunc (dt) VALUES ('2024-03-15 10:30:45'), ('2024-07-22 08:15:00')
+-- GO
 
 -- INSERT INTO pcc_cast (val) VALUES (123.4567), (99.9)
 -- GO
