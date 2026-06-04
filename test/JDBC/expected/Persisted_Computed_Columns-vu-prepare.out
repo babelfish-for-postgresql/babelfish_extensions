@@ -101,7 +101,7 @@ GO
 CREATE TABLE pcc_conv_money (
     id INT IDENTITY(1,1),
     m MONEY,
-    formatted AS CONVERT(VARCHAR(30), m, 1) PERSISTED
+    formatted AS CONVERT(TEXT, m, 1) PERSISTED
 )
 GO
 
