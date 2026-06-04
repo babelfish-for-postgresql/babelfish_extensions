@@ -1241,7 +1241,7 @@ SELECT (SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('E
 GO
 ~~START~~
 xml
-<Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee>
+<Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee>
 ~~END~~
 
 
