@@ -741,6 +741,33 @@ ntext
 ~~END~~
 
 
+-- PATH (no parens) + XSINIL + ROOT: xmlns:xsi declared once on root.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 1 FOR XML PATH, ELEMENTS XSINIL, ROOT('Data');
+GO
+~~START~~
+ntext
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><ID>1</ID><Name>John</Name><Department>Sales</Department></row></Data>
+~~END~~
+
+
+-- PATH (no parens) + XSINIL + ROOT + TYPE.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 1 FOR XML PATH, ELEMENTS XSINIL, ROOT('Data'), TYPE;
+GO
+~~START~~
+xml
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><ID>1</ID><Name>John</Name><Department>Sales</Department></row></Data>
+~~END~~
+
+
+-- PATH (no parens) + XSINIL + ROOT, all-NULL row.
+SELECT NULL AS Col1, NULL AS Col2 FOR XML PATH, ELEMENTS XSINIL, ROOT('Data');
+GO
+~~START~~
+ntext
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><Col1 xsi:nil="true"/><Col2 xsi:nil="true"/></row></Data>
+~~END~~
+
+
 -- NULL in element name position
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH(NULL), ELEMENTS XSINIL;
 GO

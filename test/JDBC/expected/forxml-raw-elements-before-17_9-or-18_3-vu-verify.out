@@ -314,6 +314,24 @@ ntext
 ~~END~~
 
 
+-- RAW + XSINIL + ROOT + TYPE: xmlns:xsi declared once on the root element.
+SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL, ROOT('data'), TYPE;
+GO
+~~START~~
+xml
+<data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><a>1</a><b xsi:nil="true"/></row></data>
+~~END~~
+
+
+-- All-NULL row + XSINIL + ROOT: row tag still emitted (with xsi:nil on each col).
+SELECT NULL AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL, ROOT('data');
+GO
+~~START~~
+ntext
+<data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><a xsi:nil="true"/><b xsi:nil="true"/></row></data>
+~~END~~
+
+
 SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS, ROOT('MyRoot');
 GO
 ~~START~~

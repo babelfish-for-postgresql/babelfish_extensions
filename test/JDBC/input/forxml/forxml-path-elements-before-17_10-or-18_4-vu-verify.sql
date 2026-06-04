@@ -304,6 +304,18 @@ GO
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH, ELEMENTS XSINIL;
 GO
 
+-- PATH (no parens) + XSINIL + ROOT: xmlns:xsi declared once on root.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 1 FOR XML PATH, ELEMENTS XSINIL, ROOT('Data');
+GO
+
+-- PATH (no parens) + XSINIL + ROOT + TYPE.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 1 FOR XML PATH, ELEMENTS XSINIL, ROOT('Data'), TYPE;
+GO
+
+-- PATH (no parens) + XSINIL + ROOT, all-NULL row.
+SELECT NULL AS Col1, NULL AS Col2 FOR XML PATH, ELEMENTS XSINIL, ROOT('Data');
+GO
+
 -- NULL in element name position
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH(NULL), ELEMENTS XSINIL;
 GO
