@@ -658,3 +658,12 @@ GO
 -- Create index
 CREATE INDEX BABEL_5597_binary_ind ON BABEL_5597_binary_test (binary_col);
 GO
+
+CREATE TABLE abc11(
+    A int, 
+    B INT DEFAULT ( CAST(trunc(2.4) as INT4))
+)
+GO
+
+INSERT into abc11 (a) VALUES (1)
+GO
