@@ -241,7 +241,7 @@ select
   , cast(
     case
       when X.indisclustered then 1
-      else 1 + (SELECT count(*) FROM pg_index x2
+      else 2 + (SELECT count(*) FROM pg_index x2
                 WHERE x2.indrelid = X.indrelid
                 AND x2.indexrelid < X.indexrelid)
     end
