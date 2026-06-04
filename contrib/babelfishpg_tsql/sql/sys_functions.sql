@@ -3977,20 +3977,9 @@ LANGUAGE C VOLATILE STRICT;
  * If a table is dependent upon it's row type with dependency type
  * as DEPENDENCY_INTERNAL (i) then it's a T-SQL table type.
  */
-CREATE OR REPLACE FUNCTION sys.is_table_type(object_id oid) RETURNS bool AS
-$BODY$
-SELECT
-  EXISTS(
-    SELECT 1
-    FROM pg_catalog.pg_type pt
-    INNER JOIN pg_catalog.pg_depend dep
-    ON pt.typrelid = dep.objid AND pt.oid = dep.refobjid
-    join sys.schemas sch on pt.typnamespace = sch.schema_id
-    JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
-    WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id AND pc.relkind = 'r'
-    AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass);
-$BODY$
-LANGUAGE SQL STABLE STRICT;
+CREATE OR REPLACE FUNCTION sys.is_table_type(object_id oid) RETURNS bool
+AS 'babelfishpg_tsql', 'is_table_type_oid'
+LANGUAGE C STABLE STRICT;
 
 -- JSON Functions
 CREATE OR REPLACE FUNCTION sys.isjson(json_string text)
