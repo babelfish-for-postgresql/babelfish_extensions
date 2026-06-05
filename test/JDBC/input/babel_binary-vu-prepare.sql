@@ -659,11 +659,21 @@ GO
 CREATE INDEX BABEL_5597_binary_ind ON BABEL_5597_binary_test (binary_col);
 GO
 
-CREATE TABLE abc11(
-    A int, 
-    B INT DEFAULT ( CAST(trunc(2.4) as INT4))
+create table t11(a int);
+GO
+
+create trigger after_trig on t11 after insert as begin select cast(trunc(1.0) as int); end;
+GO
+
+insert into t11 values (1);
+GO
+
+CREATE TABLE t12 (
+    id int,
+    val DECIMAL(10,2),
+    CONSTRAINT chk_val CHECK (CAST(val AS INT) > 0)
 )
 GO
 
-INSERT into abc11 (a) VALUES (1)
+INSERT INTO t12 VALUES (1, 5.7)
 GO
