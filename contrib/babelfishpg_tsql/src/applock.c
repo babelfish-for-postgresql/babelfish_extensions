@@ -361,7 +361,6 @@ initApplockCache(void)
 	ctl.entrysize = sizeof(AppLockCacheEnt);
 	appLockCacheGlobal = (HTAB *) ShmemInitHash("Applock",
 												 /* table size */ 32,
-												 /* max table size */ 32,
 												&ctl,
 												HASH_ELEM | HASH_BLOBS);
 	LWLockRelease(AddinShmemInitLock);
