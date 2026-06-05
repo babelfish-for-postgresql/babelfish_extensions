@@ -39,7 +39,45 @@ GO
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
+-- Bulk load table (with index on computed column for index tests)
+CREATE TABLE pcc_bulk (
+    id INT,
+    a VARCHAR(20),
+    b VARCHAR(20),
+    c AS (a + b) PERSISTED
+)
+GO
+
+CREATE INDEX ix_pcc_bulk_c ON pcc_bulk(c)
+GO
+
 -- DML GUC enforcement: INSERT / UPDATE / DELETE
+
+-- Bulk: 10 non-null rows
+INSERT INTO pcc_bulk (id, a, b) VALUES (1, 'A1', 'B1')
+INSERT INTO pcc_bulk (id, a, b) VALUES (2, 'A2', 'B2')
+INSERT INTO pcc_bulk (id, a, b) VALUES (3, 'A3', 'B3')
+INSERT INTO pcc_bulk (id, a, b) VALUES (4, 'A4', 'B4')
+INSERT INTO pcc_bulk (id, a, b) VALUES (5, 'A5', 'B5')
+INSERT INTO pcc_bulk (id, a, b) VALUES (6, 'A6', 'B6')
+INSERT INTO pcc_bulk (id, a, b) VALUES (7, 'A7', 'B7')
+INSERT INTO pcc_bulk (id, a, b) VALUES (8, 'A8', 'B8')
+INSERT INTO pcc_bulk (id, a, b) VALUES (9, 'A9', 'B9')
+INSERT INTO pcc_bulk (id, a, b) VALUES (10, 'A10', 'B10')
+GO
+
+-- Bulk: 10 null rows (c = NULL because b is NULL and CONCAT_NULL_YIELDS_NULL ON)
+INSERT INTO pcc_bulk (id, a, b) VALUES (11, 'X11', NULL)
+INSERT INTO pcc_bulk (id, a, b) VALUES (12, 'X12', NULL)
+INSERT INTO pcc_bulk (id, a, b) VALUES (13, 'X13', NULL)
+INSERT INTO pcc_bulk (id, a, b) VALUES (14, 'X14', NULL)
+INSERT INTO pcc_bulk (id, a, b) VALUES (15, 'X15', NULL)
+INSERT INTO pcc_bulk (id, a, b) VALUES (16, 'X16', NULL)
+INSERT INTO pcc_bulk (id, a, b) VALUES (17, 'X17', NULL)
+INSERT INTO pcc_bulk (id, a, b) VALUES (18, 'X18', NULL)
+INSERT INTO pcc_bulk (id, a, b) VALUES (19, 'X19', NULL)
+INSERT INTO pcc_bulk (id, a, b) VALUES (20, 'X20', NULL)
+GO
 
 -- INSERT with correct GUCs (should PASS)
 INSERT INTO pcc_concat (a, b) VALUES ('New', 'Row')
