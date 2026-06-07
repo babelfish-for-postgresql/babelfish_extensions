@@ -1299,6 +1299,11 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_set_tran_isolation; /* SET TRANSACTION ISOLATION? */
 	char	   *original_query; /* Only for batch level statement. */
 	bool        is_schemabinding; /* Is schema binding? */
+	char	   *xml_namespace_decls;	/* Namespace declarations from WITH
+									 * XMLNAMESPACES, formatted as
+									 * 'xmlns:p1="u1" xmlns:p2="u2"' for
+									 * emission on FOR XML output elements.
+									 * NULL when no XMLNAMESPACES clause. */
 } PLtsql_stmt_execsql;
 
 /*

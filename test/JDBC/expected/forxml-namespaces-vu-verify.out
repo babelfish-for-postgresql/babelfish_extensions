@@ -1,0 +1,1117 @@
+
+
+-- ============================================
+-- WITH XMLNAMESPACES + FOR XML (RAW, PATH, AUTO)
+--
+-- Scope: WITH XMLNAMESPACES declares prefix-to-URI mappings for one
+-- statement. T-SQL emits xmlns:prefix="uri" attributes on the appropriate
+-- elements:
+--   - FOR XML RAW: on each row element
+--   - FOR XML PATH: on the outermost row element
+--   - FOR XML AUTO: on the outermost (table-named) element
+-- DEFAULT 'uri' emits xmlns="uri" 
+-- ============================================
+-- ============================================
+-- SECTION 1: FOR XML RAW
+-- ============================================
+-- 1.1 Basic single-prefix RAW with no prefix used in row/cols
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID, EmpName FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW;
+GO
+~~START~~
+ntext
+<row xmlns:ns1="http://example.com/ns1" EmpID="1" EmpName="Alice"/>
+~~END~~
+
+
+-- 1.2 RAW with named row, no prefix in row/cols
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID, EmpName FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('Emp');
+GO
+~~START~~
+ntext
+<Emp xmlns:ns1="http://example.com/ns1" EmpID="1" EmpName="Alice"/>
+~~END~~
+
+
+-- 1.3 RAW with prefixed row name, no prefix in cols
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID, EmpName FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" EmpID="1" EmpName="Alice"/>
+~~END~~
+
+
+-- 1.4 RAW with prefixed column aliases
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice"/>
+~~END~~
+
+
+-- 1.5 Multiple prefixes, each used in different columns
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1, 'http://example.com/ns2' AS ns2)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns2:Name]
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns2="http://example.com/ns2" xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns2:Name="Alice"/>
+~~END~~
+
+
+-- 1.6 DEFAULT namespace
+WITH XMLNAMESPACES(DEFAULT 'http://example.com/default')
+SELECT EmpID, EmpName FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW;
+GO
+~~START~~
+ntext
+<row xmlns="http://example.com/default" EmpID="1" EmpName="Alice"/>
+~~END~~
+
+
+-- 1.7 DEFAULT + prefix combined
+WITH XMLNAMESPACES(DEFAULT 'http://example.com/default', 'http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" xmlns="http://example.com/default" ns1:ID="1" EmpName="Alice"/>
+~~END~~
+
+
+-- 1.8 RAW + ELEMENTS
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('ns1:Emp'), ELEMENTS;
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1"><ns1:ID>1</ns1:ID><ns1:Name>Alice</ns1:Name></ns1:Emp>
+~~END~~
+
+
+-- 1.9 RAW + ELEMENTS XSINIL with NULL value
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name], Dept AS [ns1:Dept]
+FROM forxml_ns_employees WHERE EmpID = 3 FOR XML RAW('ns1:Emp'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><ns1:ID>3</ns1:ID><ns1:Name xsi:nil="true"/><ns1:Dept>HR</ns1:Dept></ns1:Emp>
+~~END~~
+
+
+-- 1.10 RAW + ELEMENTS ABSENT (NULLs dropped)
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name], Dept AS [ns1:Dept]
+FROM forxml_ns_employees WHERE EmpID = 3 FOR XML RAW('ns1:Emp'), ELEMENTS ABSENT;
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1"><ns1:ID>3</ns1:ID><ns1:Dept>HR</ns1:Dept></ns1:Emp>
+~~END~~
+
+
+-- 1.11 RAW + ROOT (unprefixed root)
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('ns1:Emp'), ROOT('Doc');
+GO
+~~START~~
+ntext
+<Doc xmlns:ns1="http://example.com/ns1"><ns1:Emp ns1:ID="1" ns1:Name="Alice"/></Doc>
+~~END~~
+
+
+-- 1.12 RAW + ROOT (prefixed root)
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('ns1:Emp'), ROOT('ns1:Doc');
+GO
+~~START~~
+ntext
+<ns1:Doc xmlns:ns1="http://example.com/ns1"><ns1:Emp ns1:ID="1" ns1:Name="Alice"/></ns1:Doc>
+~~END~~
+
+
+-- 1.13 RAW + TYPE
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('ns1:Emp'), TYPE;
+GO
+~~START~~
+xml
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice"/>
+~~END~~
+
+
+-- 1.14 RAW + ROOT + TYPE
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('ns1:Emp'), ROOT('ns1:Doc'), TYPE;
+GO
+~~START~~
+xml
+<ns1:Doc xmlns:ns1="http://example.com/ns1"><ns1:Emp ns1:ID="1" ns1:Name="Alice"/></ns1:Doc>
+~~END~~
+
+
+-- 1.15 RAW multi-row with namespaces
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice"/><ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="2" ns1:Name="Bob"/><ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="3"/><ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="4" ns1:Name="Diana"/>
+~~END~~
+
+
+-- 1.16 RAW with view as the source
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_view1 WHERE EmpID = 1 FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice"/>
+~~END~~
+
+
+-- 1.17 RAW with computed expression and prefixed alias
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID + 100 AS [ns1:OffsetID], UPPER(EmpName) AS [ns1:UpperName]
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:OffsetID="101" ns1:UpperName="ALICE"/>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 2: FOR XML PATH
+-- ============================================
+-- 2.1 PATH with prefix on row and column elements
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML PATH('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1"><ns1:ID>1</ns1:ID><ns1:Name>Alice</ns1:Name></ns1:Emp>
+~~END~~
+
+
+-- 2.2 PATH default row name with prefix on cols only
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML PATH;
+GO
+~~START~~
+ntext
+<row xmlns:ns1="http://example.com/ns1"><ns1:ID>1</ns1:ID><ns1:Name>Alice</ns1:Name></row>
+~~END~~
+
+
+-- 2.3 PATH with attribute-centric prefix (@)
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [@ns1:id], EmpName AS [ns1:Name]
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML PATH('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:id="1"><ns1:Name>Alice</ns1:Name></ns1:Emp>
+~~END~~
+
+
+-- 2.4 PATH + ROOT prefixed
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML PATH('ns1:Emp'), ROOT('ns1:Doc');
+GO
+~~START~~
+ntext
+<ns1:Doc xmlns:ns1="http://example.com/ns1"><ns1:Emp><ns1:ID>1</ns1:ID><ns1:Name>Alice</ns1:Name></ns1:Emp></ns1:Doc>
+~~END~~
+
+
+-- 2.5 PATH + ELEMENTS XSINIL with NULL
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name], Dept AS [ns1:Dept]
+FROM forxml_ns_employees WHERE EmpID = 3 FOR XML PATH('ns1:Emp'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><ns1:ID>3</ns1:ID><ns1:Name xsi:nil="true"/><ns1:Dept>HR</ns1:Dept></ns1:Emp>
+~~END~~
+
+
+-- 2.6 PATH + DEFAULT namespace
+WITH XMLNAMESPACES(DEFAULT 'http://example.com/default')
+SELECT EmpID AS ID, EmpName AS Name
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML PATH('Emp');
+GO
+~~START~~
+ntext
+<Emp xmlns="http://example.com/default"><ID>1</ID><Name>Alice</Name></Emp>
+~~END~~
+
+
+-- 2.7 PATH + DEFAULT + prefix
+WITH XMLNAMESPACES(DEFAULT 'http://example.com/default', 'http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML PATH('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" xmlns="http://example.com/default"><ns1:ID>1</ns1:ID><EmpName>Alice</EmpName></ns1:Emp>
+~~END~~
+
+
+-- 2.8 PATH + multiple prefixes
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1, 'http://example.com/ns2' AS ns2)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns2:Name]
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML PATH('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns2="http://example.com/ns2" xmlns:ns1="http://example.com/ns1"><ns1:ID>1</ns1:ID><ns2:Name>Alice</ns2:Name></ns1:Emp>
+~~END~~
+
+
+-- 2.9 PATH + ROOT + TYPE
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML PATH('ns1:Emp'), ROOT('ns1:Doc'), TYPE;
+GO
+~~START~~
+xml
+<ns1:Doc xmlns:ns1="http://example.com/ns1"><ns1:Emp><ns1:ID>1</ns1:ID><ns1:Name>Alice</ns1:Name></ns1:Emp></ns1:Doc>
+~~END~~
+
+
+-- 2.10 PATH multi-row
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees FOR XML PATH('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1"><ns1:ID>1</ns1:ID><ns1:Name>Alice</ns1:Name></ns1:Emp><ns1:Emp xmlns:ns1="http://example.com/ns1"><ns1:ID>2</ns1:ID><ns1:Name>Bob</ns1:Name></ns1:Emp><ns1:Emp xmlns:ns1="http://example.com/ns1"><ns1:ID>3</ns1:ID></ns1:Emp><ns1:Emp xmlns:ns1="http://example.com/ns1"><ns1:ID>4</ns1:ID><ns1:Name>Diana</ns1:Name></ns1:Emp>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 3: FOR XML AUTO
+-- ============================================
+-- 3.1 AUTO with prefixed table name
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT forxml_ns_employees.EmpID, forxml_ns_employees.EmpName
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxml_ns_employees xmlns:ns1="http://example.com/ns1" EmpID="1" EmpName="Alice"/>
+~~END~~
+
+
+-- 3.2 AUTO + ELEMENTS
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT forxml_ns_employees.EmpID, forxml_ns_employees.EmpName
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML AUTO, ELEMENTS;
+GO
+~~START~~
+ntext
+<forxml_ns_employees xmlns:ns1="http://example.com/ns1"><EmpID>1</EmpID><EmpName>Alice</EmpName></forxml_ns_employees>
+~~END~~
+
+
+-- 3.3 AUTO + ROOT
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT forxml_ns_employees.EmpID, forxml_ns_employees.EmpName
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML AUTO, ROOT('Doc');
+GO
+~~START~~
+ntext
+<Doc xmlns:ns1="http://example.com/ns1"><forxml_ns_employees EmpID="1" EmpName="Alice"/></Doc>
+~~END~~
+
+
+-- 3.4 AUTO + DEFAULT + prefix
+WITH XMLNAMESPACES(DEFAULT 'http://example.com/default', 'http://example.com/ns1' AS ns1)
+SELECT forxml_ns_employees.EmpID, forxml_ns_employees.EmpName
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxml_ns_employees xmlns:ns1="http://example.com/ns1" xmlns="http://example.com/default" EmpID="1" EmpName="Alice"/>
+~~END~~
+
+
+-- 3.5 AUTO + TYPE
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT forxml_ns_employees.EmpID, forxml_ns_employees.EmpName
+FROM forxml_ns_employees WHERE EmpID = 1 FOR XML AUTO, TYPE;
+GO
+~~START~~
+xml
+<forxml_ns_employees xmlns:ns1="http://example.com/ns1" EmpID="1" EmpName="Alice"/>
+~~END~~
+
+
+-- 3.6 AUTO + ELEMENTS XSINIL + NULL row
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT forxml_ns_employees.EmpID, forxml_ns_employees.EmpName, forxml_ns_employees.Dept
+FROM forxml_ns_employees WHERE EmpID = 3 FOR XML AUTO, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<forxml_ns_employees xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><EmpID>3</EmpID><EmpName xsi:nil="true"/><Dept>HR</Dept></forxml_ns_employees>
+~~END~~
+
+
+-- 3.7 AUTO multi-row
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT forxml_ns_employees.EmpID, forxml_ns_employees.EmpName
+FROM forxml_ns_employees FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxml_ns_employees xmlns:ns1="http://example.com/ns1" EmpID="1" EmpName="Alice"/><forxml_ns_employees xmlns:ns1="http://example.com/ns1" EmpID="2" EmpName="Bob"/><forxml_ns_employees xmlns:ns1="http://example.com/ns1" EmpID="3"/><forxml_ns_employees xmlns:ns1="http://example.com/ns1" EmpID="4" EmpName="Diana"/>
+~~END~~
+
+
+-- 3.8 AUTO with JOIN (parent-child nesting)
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT e.EmpID, e.EmpName, o.OrderID, o.Amount
+FROM forxml_ns_employees e
+JOIN forxml_ns_orders o ON e.EmpID = o.EmpID
+ORDER BY e.EmpID, o.OrderID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<e xmlns:ns1="http://example.com/ns1" EmpID="1" EmpName="Alice"><o OrderID="101" Amount="100.50"/><o OrderID="103"/></e><e xmlns:ns1="http://example.com/ns1" EmpID="2" EmpName="Bob"><o OrderID="102" Amount="200.00"/></e>
+~~END~~
+
+
+-- 3.9 AUTO with JOIN + ELEMENTS
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT e.EmpID, e.EmpName, o.OrderID, o.Amount
+FROM forxml_ns_employees e
+JOIN forxml_ns_orders o ON e.EmpID = o.EmpID
+ORDER BY e.EmpID, o.OrderID
+FOR XML AUTO, ELEMENTS;
+GO
+~~START~~
+ntext
+<e xmlns:ns1="http://example.com/ns1"><EmpID>1</EmpID><EmpName>Alice</EmpName><o><OrderID>101</OrderID><Amount>100.50</Amount></o><o><OrderID>103</OrderID></o></e><e xmlns:ns1="http://example.com/ns1"><EmpID>2</EmpID><EmpName>Bob</EmpName><o><OrderID>102</OrderID><Amount>200.00</Amount></o></e>
+~~END~~
+
+
+-- 3.10 AUTO with JOIN + ROOT
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT e.EmpID, e.EmpName, o.OrderID, o.Amount
+FROM forxml_ns_employees e
+JOIN forxml_ns_orders o ON e.EmpID = o.EmpID
+ORDER BY e.EmpID, o.OrderID
+FOR XML AUTO, ROOT('Doc');
+GO
+~~START~~
+ntext
+<Doc xmlns:ns1="http://example.com/ns1"><e EmpID="1" EmpName="Alice"><o OrderID="101" Amount="100.50"/><o OrderID="103"/></e><e EmpID="2" EmpName="Bob"><o OrderID="102" Amount="200.00"/></e></Doc>
+~~END~~
+
+
+-- 3.11 AUTO with LEFT JOIN, NULL children
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT e.EmpID, e.EmpName, o.OrderID, o.Amount
+FROM forxml_ns_employees e
+LEFT JOIN forxml_ns_orders o ON e.EmpID = o.EmpID
+ORDER BY e.EmpID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<e xmlns:ns1="http://example.com/ns1" EmpID="1" EmpName="Alice"><o OrderID="101" Amount="100.50"/><o OrderID="103"/></e><e xmlns:ns1="http://example.com/ns1" EmpID="2" EmpName="Bob"><o OrderID="102" Amount="200.00"/></e><e xmlns:ns1="http://example.com/ns1" EmpID="3"><o/></e><e xmlns:ns1="http://example.com/ns1" EmpID="4" EmpName="Diana"><o/></e>
+~~END~~
+
+
+-- 3.12 AUTO with CTE
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1),
+ActiveEmps AS (SELECT EmpID, EmpName FROM forxml_ns_employees WHERE Dept IS NOT NULL)
+SELECT a.EmpID, a.EmpName
+FROM ActiveEmps a
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<forxml_ns_employees xmlns:ns1="http://example.com/ns1" EmpID="1" EmpName="Alice"/><forxml_ns_employees xmlns:ns1="http://example.com/ns1" EmpID="2" EmpName="Bob"/><forxml_ns_employees xmlns:ns1="http://example.com/ns1" EmpID="3"/>
+~~END~~
+
+
+-- 3.13 AUTO with subquery in FROM
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT sub.EmpID, sub.EmpName
+FROM (SELECT EmpID, EmpName FROM forxml_ns_employees WHERE EmpID <= 2) sub
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<sub xmlns:ns1="http://example.com/ns1" EmpID="1" EmpName="Alice"/><sub xmlns:ns1="http://example.com/ns1" EmpID="2" EmpName="Bob"/>
+~~END~~
+
+
+-- 3.14 AUTO multi-table JOIN with ELEMENTS XSINIL
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT e.EmpID, e.EmpName, e.Dept, o.OrderID, o.Amount
+FROM forxml_ns_employees e
+LEFT JOIN forxml_ns_orders o ON e.EmpID = o.EmpID
+ORDER BY e.EmpID, o.OrderID
+FOR XML AUTO, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<e xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><EmpID>1</EmpID><EmpName>Alice</EmpName><Dept>Sales</Dept><o><OrderID>101</OrderID><Amount>100.50</Amount></o><o><OrderID>103</OrderID><Amount xsi:nil="true"/></o></e><e xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><EmpID>2</EmpID><EmpName>Bob</EmpName><Dept>IT</Dept><o><OrderID>102</OrderID><Amount>200.00</Amount></o></e><e xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><EmpID>3</EmpID><EmpName xsi:nil="true"/><Dept>HR</Dept><o><OrderID xsi:nil="true"/><Amount xsi:nil="true"/></o></e><e xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><EmpID>4</EmpID><EmpName>Diana</EmpName><Dept xsi:nil="true"/><o><OrderID xsi:nil="true"/><Amount xsi:nil="true"/></o></e>
+~~END~~
+
+
+-- 3.15 AUTO + DEFAULT ns + JOIN
+WITH XMLNAMESPACES(DEFAULT 'http://default.com', 'http://example.com/ns1' AS ns1)
+SELECT e.EmpID, e.EmpName, o.OrderID
+FROM forxml_ns_employees e
+JOIN forxml_ns_orders o ON e.EmpID = o.EmpID
+ORDER BY e.EmpID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<e xmlns:ns1="http://example.com/ns1" xmlns="http://default.com" EmpID="1" EmpName="Alice"><o OrderID="101"/><o OrderID="103"/></e><e xmlns:ns1="http://example.com/ns1" xmlns="http://default.com" EmpID="2" EmpName="Bob"><o OrderID="102"/></e>
+~~END~~
+
+
+-- 3.16 AUTO with JOIN + TYPE
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT e.EmpID, e.EmpName, o.OrderID
+FROM forxml_ns_employees e
+JOIN forxml_ns_orders o ON e.EmpID = o.EmpID
+ORDER BY e.EmpID
+FOR XML AUTO, TYPE;
+GO
+~~START~~
+xml
+<e xmlns:ns1="http://example.com/ns1" EmpID="1" EmpName="Alice"><o OrderID="101"/><o OrderID="103"/></e><e xmlns:ns1="http://example.com/ns1" EmpID="2" EmpName="Bob"><o OrderID="102"/></e>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 4: Validation / Error cases
+-- ============================================
+-- 4.1 Duplicate prefix declaration
+WITH XMLNAMESPACES('http://example.com/u1' AS ns1, 'http://example.com/u2' AS ns1)
+SELECT 1 AS [ns1:a] FOR XML RAW('ns1:Row');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Attempt to redefine namespace prefix 'ns1')~~
+
+
+-- 4.2 Multiple DEFAULT declarations
+WITH XMLNAMESPACES(DEFAULT 'http://a', DEFAULT 'http://b')
+SELECT 1 AS a FOR XML RAW;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Attempt to redefine namespace prefix 'default')~~
+
+
+-- 4.3 Reserved 'xmlns' prefix
+WITH XMLNAMESPACES('http://example.com' AS xmlns)
+SELECT 1 AS [xmlns:a] FOR XML RAW;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Prefix 'xmlns' used in WITH XMLNAMESPACES is reserved and cannot be used as a user-defined prefix.)~~
+
+
+-- 4.4 Empty URI
+WITH XMLNAMESPACES('' AS ns1)
+SELECT 1 AS [ns1:a] FOR XML RAW;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Empty URI is not allowed in WITH XMLNAMESPACES clause.)~~
+
+
+-- 4.5 Reserved 'xml' prefix re-bound to wrong URI
+WITH XMLNAMESPACES('http://wrong.uri' AS xml)
+SELECT 1 AS [xml:a] FOR XML RAW;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML namespace prefix 'xml' can only be associated with the URI http://www.w3.org/XML/1998/namespace. This URI cannot be used with other prefixes.)~~
+
+
+-- 4.6 The XML namespace URI bound to a non-xml prefix
+WITH XMLNAMESPACES('http://www.w3.org/XML/1998/namespace' AS notxml)
+SELECT 1 AS a FOR XML RAW;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML namespace prefix 'xml' can only be associated with the URI http://www.w3.org/XML/1998/namespace. This URI cannot be used with other prefixes.)~~
+
+
+-- 4.7 xsi prefix bound to xsi URI without XSINIL — alias should resolve
+WITH XMLNAMESPACES('http://www.w3.org/2001/XMLSchema-instance' AS xsi)
+SELECT 1 AS [xsi:a] FOR XML RAW;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:a="1"/>
+~~END~~
+
+
+-- 4.8 xsi prefix bound to xsi URI with XSINIL — must not duplicate xmlns:xsi
+WITH XMLNAMESPACES('http://www.w3.org/2001/XMLSchema-instance' AS xsi)
+SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 5: CTE / subquery combinations
+-- ============================================
+-- 5.1 WITH XMLNAMESPACES followed by CTE (must come before CTE)
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1),
+ns_cte AS (SELECT EmpID, EmpName FROM forxml_ns_employees WHERE EmpID = 1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name] FROM ns_cte FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice"/>
+~~END~~
+
+
+-- 5.2 Outer query with subquery that doesn't use namespaces
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM (SELECT EmpID, EmpName FROM forxml_ns_employees WHERE EmpID = 1) sub
+FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice"/>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 6: Mixed scalar types
+-- ============================================
+-- 6.1 numeric columns
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT OrderID AS [ns1:ID], Amount AS [ns1:Amt]
+FROM forxml_ns_orders WHERE OrderID = 101 FOR XML RAW('ns1:Order');
+GO
+~~START~~
+ntext
+<ns1:Order xmlns:ns1="http://example.com/ns1" ns1:ID="101" ns1:Amt="100.50"/>
+~~END~~
+
+
+-- 6.2 NULL numeric with XSINIL
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT OrderID AS [ns1:ID], Amount AS [ns1:Amt]
+FROM forxml_ns_orders WHERE OrderID = 103 FOR XML RAW('ns1:Order'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<ns1:Order xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><ns1:ID>103</ns1:ID><ns1:Amt xsi:nil="true"/></ns1:Order>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 7: All-NULL rows with XSINIL + namespaces
+-- ============================================
+-- 7.1 RAW
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT a AS [ns1:a], b AS [ns1:b] FROM forxml_ns_nullable WHERE a IS NULL AND b IS NULL
+FOR XML RAW('ns1:Row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<ns1:Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><ns1:a xsi:nil="true"/><ns1:b xsi:nil="true"/></ns1:Row>
+~~END~~
+
+
+-- 7.2 PATH
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT a AS [ns1:a], b AS [ns1:b] FROM forxml_ns_nullable WHERE a IS NULL AND b IS NULL
+FOR XML PATH('ns1:Row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<ns1:Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><ns1:a xsi:nil="true"/><ns1:b xsi:nil="true"/></ns1:Row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 8: View-based queries
+-- ============================================
+-- 8.1 SELECT FROM view with RAW
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT a AS [ns1:a], b AS [ns1:b] FROM forxml_ns_view2 FOR XML RAW('ns1:Row');
+GO
+~~START~~
+ntext
+<ns1:Row xmlns:ns1="http://example.com/ns1" ns1:a="1" ns1:b="val1"/><ns1:Row xmlns:ns1="http://example.com/ns1" ns1:a="2" ns1:b="val2"/>
+~~END~~
+
+
+-- 8.2 SELECT FROM view with PATH
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT a AS [ns1:a], b AS [ns1:b] FROM forxml_ns_view2 FOR XML PATH('ns1:Row');
+GO
+~~START~~
+ntext
+<ns1:Row xmlns:ns1="http://example.com/ns1"><ns1:a>1</ns1:a><ns1:b>val1</ns1:b></ns1:Row><ns1:Row xmlns:ns1="http://example.com/ns1"><ns1:a>2</ns1:a><ns1:b>val2</ns1:b></ns1:Row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 9: Special characters / unicode in URIs and values
+-- ============================================
+-- 9.1 URI with hash and percent characters
+WITH XMLNAMESPACES('http://example.com/path#section%20path' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/path#section%20path" ns1:ID="1"/>
+~~END~~
+
+
+-- 9.1b URI with ampersand (must be XML-escaped to &amp; in attribute value)
+WITH XMLNAMESPACES('http://example.com/path?q=v&more' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/path?q=v&amp;more" ns1:ID="1"/>
+~~END~~
+
+
+-- 9.1c URI with less-than (must be XML-escaped)
+WITH XMLNAMESPACES('http://example.com/<x>' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/&lt;x&gt;" ns1:ID="1"/>
+~~END~~
+
+
+-- 9.2 Long URI
+WITH XMLNAMESPACES('http://example.com/very/long/path/with/many/segments/that/goes/on/and/on/for/testing/purposes/only' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/very/long/path/with/many/segments/that/goes/on/and/on/for/testing/purposes/only" ns1:ID="1"/>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 10: Different data types
+-- ============================================
+-- 10.1 RAW with all data types prefixed
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT IntCol AS [ns1:Int], VarcharCol AS [ns1:Str], BitCol AS [ns1:Bit],
+       DecimalCol AS [ns1:Dec], DateCol AS [ns1:Dt]
+FROM forxml_ns_types WHERE IntCol = 100 FOR XML RAW('ns1:Row');
+GO
+~~START~~
+ntext
+<ns1:Row xmlns:ns1="http://example.com/ns1" ns1:Int="100" ns1:Str="Text1" ns1:Bit="1" ns1:Dec="99.99" ns1:Dt="2024-01-01"/>
+~~END~~
+
+
+-- 10.2 PATH with all data types and ELEMENTS XSINIL on NULL row
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT IntCol AS [ns1:Int], VarcharCol AS [ns1:Str], BitCol AS [ns1:Bit]
+FROM forxml_ns_types WHERE IntCol IS NULL AND VarcharCol IS NULL
+FOR XML PATH('ns1:Row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<ns1:Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><ns1:Int xsi:nil="true"/><ns1:Str xsi:nil="true"/><ns1:Bit xsi:nil="true"/></ns1:Row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 11: Special characters in values
+-- ============================================
+-- 11.1 Ampersand, less-than, quotes — RAW
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT ID AS [ns1:ID], Value AS [ns1:Value]
+FROM forxml_ns_special FOR XML RAW('ns1:Row');
+GO
+~~START~~
+ntext
+<ns1:Row xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Value="a &amp; b"/><ns1:Row xmlns:ns1="http://example.com/ns1" ns1:ID="2" ns1:Value="a &lt; b"/><ns1:Row xmlns:ns1="http://example.com/ns1" ns1:ID="3" ns1:Value="say &quot;hello&quot;"/><ns1:Row xmlns:ns1="http://example.com/ns1" ns1:ID="4" ns1:Value="&lt;tag&gt;x&lt;/tag&gt;"/>
+~~END~~
+
+
+-- 11.2 Embedded XML markup — PATH
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT ID AS [ns1:ID], Value AS [ns1:Value]
+FROM forxml_ns_special WHERE ID = 4 FOR XML PATH('ns1:Row');
+GO
+~~START~~
+ntext
+<ns1:Row xmlns:ns1="http://example.com/ns1"><ns1:ID>4</ns1:ID><ns1:Value>&lt;tag&gt;x&lt;/tag&gt;</ns1:Value></ns1:Row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 12: Unicode/multibyte values
+-- ============================================
+-- 12.1 Multibyte values in column with prefixed alias
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT ID AS [ns1:ID], Name AS [ns1:Name]
+FROM forxml_ns_unicode FOR XML RAW('ns1:Row');
+GO
+~~START~~
+ntext
+<ns1:Row xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="日本語"/><ns1:Row xmlns:ns1="http://example.com/ns1" ns1:ID="2" ns1:Name="中文"/><ns1:Row xmlns:ns1="http://example.com/ns1" ns1:ID="3" ns1:Name="한국어"/>
+~~END~~
+
+
+-- 12.2 Multibyte values with PATH ELEMENTS
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT ID AS [ns1:ID], Name AS [ns1:Name]
+FROM forxml_ns_unicode FOR XML PATH('ns1:Row'), ELEMENTS;
+GO
+~~START~~
+ntext
+<ns1:Row xmlns:ns1="http://example.com/ns1"><ns1:ID>1</ns1:ID><ns1:Name>日本語</ns1:Name></ns1:Row><ns1:Row xmlns:ns1="http://example.com/ns1"><ns1:ID>2</ns1:ID><ns1:Name>中文</ns1:Name></ns1:Row><ns1:Row xmlns:ns1="http://example.com/ns1"><ns1:ID>3</ns1:ID><ns1:Name>한국어</ns1:Name></ns1:Row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 13: ORDER BY / TOP / GROUP BY
+-- ============================================
+-- 13.1 ORDER BY prefixed alias
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees ORDER BY EmpID DESC FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="4" ns1:Name="Diana"/><ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="3"/><ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="2" ns1:Name="Bob"/><ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice"/>
+~~END~~
+
+
+-- 13.2 TOP with namespaces
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT TOP 2 EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees ORDER BY EmpID FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice"/><ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="2" ns1:Name="Bob"/>
+~~END~~
+
+
+-- 13.3 GROUP BY with COUNT and namespace
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT Dept AS [ns1:Dept], COUNT(*) AS [ns1:N]
+FROM forxml_ns_employees GROUP BY Dept ORDER BY Dept FOR XML RAW('ns1:Group');
+GO
+~~START~~
+ntext
+<ns1:Group xmlns:ns1="http://example.com/ns1" ns1:N="1"/><ns1:Group xmlns:ns1="http://example.com/ns1" ns1:Dept="HR" ns1:N="1"/><ns1:Group xmlns:ns1="http://example.com/ns1" ns1:Dept="IT" ns1:N="1"/><ns1:Group xmlns:ns1="http://example.com/ns1" ns1:Dept="Sales" ns1:N="1"/>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 14: WHERE clause variations
+-- ============================================
+-- 14.1 WHERE with IN
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees WHERE EmpID IN (1, 3) FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice"/><ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="3"/>
+~~END~~
+
+
+-- 14.2 WHERE with LIKE
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees WHERE EmpName LIKE 'A%' FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice"/>
+~~END~~
+
+
+-- 14.3 WHERE with IS NULL
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+FROM forxml_ns_employees WHERE Dept IS NULL FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="4" ns1:Name="Diana"/>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 15: UNION queries
+-- ============================================
+-- 15.1 UNION ALL with namespaces
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name] FROM forxml_ns_employees WHERE EmpID = 1
+UNION ALL
+SELECT EmpID, EmpName FROM forxml_ns_employees WHERE EmpID = 2
+FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice"/><ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="2" ns1:Name="Bob"/>
+~~END~~
+
+
+-- 15.2 UNION (distinct) with namespaces
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name] FROM forxml_ns_employees WHERE EmpID = 1
+UNION
+SELECT EmpID, EmpName FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice"/>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 16: Subqueries (correlated, in SELECT list)
+-- ============================================
+-- 16.1 Scalar subquery in SELECT list
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT e.EmpID AS [ns1:ID],
+       (SELECT COUNT(*) FROM forxml_ns_orders o WHERE o.EmpID = e.EmpID) AS [ns1:OrderCount]
+FROM forxml_ns_employees e WHERE e.EmpID <= 2 FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:OrderCount="2"/><ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="2" ns1:OrderCount="1"/>
+~~END~~
+
+
+-- 16.2 Subquery FOR XML returning XML inline (no TYPE — string concatenation)
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT e.EmpID AS [ns1:ID], e.EmpName AS [ns1:Name],
+       (SELECT TOP 1 o.OrderID FROM forxml_ns_orders o WHERE o.EmpID = e.EmpID ORDER BY o.OrderID) AS [ns1:FirstOrderID]
+FROM forxml_ns_employees e WHERE e.EmpID = 1
+FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice" ns1:FirstOrderID="101"/>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 17: SELECT INTO variable / SET assignment
+-- ============================================
+-- 17.1 SELECT INTO @var with namespaces
+DECLARE @x XML;
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT @x = (SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+             FROM forxml_ns_employees WHERE EmpID = 1
+             FOR XML RAW('ns1:Emp'), TYPE);
+SELECT @x;
+GO
+~~START~~
+xml
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice"/>
+~~END~~
+
+
+-- 17.2 NVARCHAR variable with namespaces
+DECLARE @s NVARCHAR(MAX);
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT @s = (SELECT EmpID AS [ns1:ID]
+             FROM forxml_ns_employees WHERE EmpID = 1
+             FOR XML RAW('ns1:Emp'));
+SELECT @s;
+GO
+~~START~~
+nvarchar
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1"/>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 18: XML methods on FOR XML result
+-- ============================================
+-- 18.1 .query() on FOR XML TYPE result
+DECLARE @x XML;
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT @x = (SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+             FROM forxml_ns_employees WHERE EmpID = 1
+             FOR XML RAW('ns1:Emp'), TYPE);
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT @x.query('/ns1:Emp');
+GO
+~~START~~
+xml
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1" ns1:Name="Alice"/>
+~~END~~
+
+
+-- 18.2 .value() on FOR XML TYPE result
+DECLARE @x XML;
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT @x = (SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name]
+             FROM forxml_ns_employees WHERE EmpID = 1
+             FOR XML PATH('ns1:Emp'), TYPE);
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT @x.value('(/ns1:Emp/ns1:Name)[1]', 'varchar(50)');
+GO
+~~START~~
+varchar
+Alice
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 19: JOIN queries with namespaces (extended)
+-- ============================================
+-- 19.1 INNER JOIN with prefixed columns from both tables — RAW
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT e.EmpID AS [ns1:EmpID], e.EmpName AS [ns1:EmpName],
+       o.OrderID AS [ns1:OrderID], o.Amount AS [ns1:Amount]
+FROM forxml_ns_employees e
+JOIN forxml_ns_orders o ON e.EmpID = o.EmpID
+ORDER BY e.EmpID, o.OrderID FOR XML RAW('ns1:Row');
+GO
+~~START~~
+ntext
+<ns1:Row xmlns:ns1="http://example.com/ns1" ns1:EmpID="1" ns1:EmpName="Alice" ns1:OrderID="101" ns1:Amount="100.50"/><ns1:Row xmlns:ns1="http://example.com/ns1" ns1:EmpID="1" ns1:EmpName="Alice" ns1:OrderID="103"/><ns1:Row xmlns:ns1="http://example.com/ns1" ns1:EmpID="2" ns1:EmpName="Bob" ns1:OrderID="102" ns1:Amount="200.00"/>
+~~END~~
+
+
+-- 19.2 LEFT JOIN PATH with ELEMENTS XSINIL
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT e.EmpID AS [ns1:EmpID], o.OrderID AS [ns1:OrderID]
+FROM forxml_ns_employees e
+LEFT JOIN forxml_ns_orders o ON e.EmpID = o.EmpID
+ORDER BY e.EmpID FOR XML PATH('ns1:Row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<ns1:Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><ns1:EmpID>1</ns1:EmpID><ns1:OrderID>101</ns1:OrderID></ns1:Row><ns1:Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><ns1:EmpID>1</ns1:EmpID><ns1:OrderID>103</ns1:OrderID></ns1:Row><ns1:Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><ns1:EmpID>2</ns1:EmpID><ns1:OrderID>102</ns1:OrderID></ns1:Row><ns1:Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><ns1:EmpID>3</ns1:EmpID><ns1:OrderID xsi:nil="true"/></ns1:Row><ns1:Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns1="http://example.com/ns1"><ns1:EmpID>4</ns1:EmpID><ns1:OrderID xsi:nil="true"/></ns1:Row>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 20: Custom row element name variations
+-- ============================================
+-- 20.1 RAW name with hyphens (NCName allows '-')
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML RAW('ns1:Emp-Record');
+GO
+~~START~~
+ntext
+<ns1:Emp-Record xmlns:ns1="http://example.com/ns1" ns1:ID="1"/>
+~~END~~
+
+
+-- 20.2 RAW name with underscores
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML RAW('ns1:Emp_Record');
+GO
+~~START~~
+ntext
+<ns1:Emp_Record xmlns:ns1="http://example.com/ns1" ns1:ID="1"/>
+~~END~~
+
+
+-- 20.3 PATH long element name
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML PATH('ns1:VeryLongElementNameUsedToTestBoundaryConditions');
+GO
+~~START~~
+ntext
+<ns1:VeryLongElementNameUsedToTestBoundaryConditions xmlns:ns1="http://example.com/ns1"><ns1:ID>1</ns1:ID></ns1:VeryLongElementNameUsedToTestBoundaryConditions>
+~~END~~
+
+
+
+-- ============================================
+-- SECTION 21: Empty result set
+-- ============================================
+-- 21.1 RAW with no rows returned
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 999
+FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+~~END~~
+
+
+-- 21.2 PATH with no rows + ROOT
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 999
+FOR XML PATH('ns1:Emp'), ROOT('ns1:Doc');
+GO
+~~START~~
+ntext
+~~END~~
+

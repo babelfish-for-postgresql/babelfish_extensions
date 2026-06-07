@@ -92,9 +92,9 @@ typedef struct forxml_state
 } forxml_state;
 
 static StringInfo for_xml_ffunc(PG_FUNCTION_ARGS);
-static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil);
-static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil);
-static void tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state);
+static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls);
+static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls);
+static void tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state, const char *ns_decls);
 static void update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, bool binary_base64, int i);
 static char *tsql_escape_xml(const char *str);
 
@@ -144,7 +144,7 @@ tsql_escape_xml(const char *str)
 
 static int find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc);
 static void close_all_elements(StringInfo state, forxml_auto_state *auto_state);
-static void output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil);
+static void output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil, const char *ns_decls);
 static char *cached_value_to_xml_string(Datum value, int col_idx, forxml_auto_state *auto_state, Oid orig_type);
 static void init_output_func_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
 static void init_tsql_type_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
@@ -153,6 +153,136 @@ static void auto_preformat_value(HeapTuple tuple, TupleDesc tupdesc, Oid *dataty
 static bool validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tupdesc);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_xml_sfunc);
+
+/*
+ * Returns true when ns_decls (a string built by build_xmlnamespace_decls_string)
+ * already includes a binding for the xsi prefix to the XMLSchema-instance URI.
+ *
+ * Used by row-tag emission paths to skip the per-row "xmlns:xsi=..." attribute
+ * that XSINIL normally adds, when the same declaration was contributed by the
+ * caller's WITH XMLNAMESPACES.
+ */
+static bool
+ns_decls_has_xsi(const char *ns_decls)
+{
+	if (ns_decls == NULL || ns_decls[0] == '\0')
+		return false;
+	return strstr(ns_decls, "xmlns:xsi=") != NULL;
+}
+
+/*
+ * Restore a colon in a column name when the part before it is a namespace
+ * prefix declared on this row.
+ *
+ * Column aliases of the form 'prefix:local' get colon-encoded by
+ * map_sql_identifier_to_xml_name to 'prefix_x003A_local' because ':' is not a
+ * NCName character. For aliases that reference a prefix declared via
+ * WITH XMLNAMESPACES (so ns_decls contains 'xmlns:prefix=...'), the colon must
+ * survive into the output. We rewrite the encoded form back in place.
+ *
+ * Returns the input pointer when no rewrite is needed (either no '_x003A_' is
+ * present or the prefix wasn't declared); otherwise returns a freshly
+ * palloc'd string.
+ */
+static char *
+restore_xml_prefix_colon(char *colname, const char *ns_decls)
+{
+	const char *enc = "_x003A_";
+	const size_t enc_len = 7;
+	char       *first;
+	StringInfoData decoded_prefix;
+	const char *p;
+	size_t      raw_prefix_len;
+	char       *needle;
+	const char *found;
+	char       *result;
+	char       *write;
+	const char *read;
+
+	if (colname == NULL || ns_decls == NULL || ns_decls[0] == '\0')
+		return colname;
+
+	first = strstr(colname, enc);
+	if (first == NULL)
+		return colname;
+
+	/* Raw prefix is the substring before the first encoded colon. */
+	raw_prefix_len = (size_t) (first - colname);
+	if (raw_prefix_len == 0)
+		return colname;
+
+	/*
+	 * Decode any _xNNNN_ escapes in the prefix.  PG's map_sql_identifier_to_xml_name
+	 * escapes non-NCName chars and also names starting with 'xml' (case-insensitive),
+	 * so the leading char of the prefix may appear as '_x0078_' or similar.
+	 */
+	initStringInfo(&decoded_prefix);
+	p = colname;
+	while (p < first)
+	{
+		if (p + 7 <= first &&
+			p[0] == '_' && p[1] == 'x' &&
+			isxdigit((unsigned char) p[2]) && isxdigit((unsigned char) p[3]) &&
+			isxdigit((unsigned char) p[4]) && isxdigit((unsigned char) p[5]) &&
+			p[6] == '_')
+		{
+			char hex[5];
+			long code;
+
+			memcpy(hex, p + 2, 4);
+			hex[4] = '\0';
+			code = strtol(hex, NULL, 16);
+			/* Only decode ASCII range; anything wider isn't a valid prefix character. */
+			if (code > 0 && code < 128)
+				appendStringInfoChar(&decoded_prefix, (char) code);
+			else
+				appendBinaryStringInfo(&decoded_prefix, p, 7);
+			p += 7;
+		}
+		else
+		{
+			appendStringInfoChar(&decoded_prefix, *p);
+			p++;
+		}
+	}
+
+	/* Look for 'xmlns:<decoded_prefix>=' in the declarations. */
+	needle = psprintf("xmlns:%s=", decoded_prefix.data);
+	found = strstr(ns_decls, needle);
+	pfree(needle);
+
+	if (found == NULL)
+	{
+		pfree(decoded_prefix.data);
+		return colname;
+	}
+
+	/*
+	 * Build the output: emit the decoded prefix, then ':', then continue
+	 * decoding the rest of colname, replacing _x003A_ with ':'.
+	 */
+	result = palloc(strlen(colname) + 1);
+	write = result;
+	memcpy(write, decoded_prefix.data, decoded_prefix.len);
+	write += decoded_prefix.len;
+	pfree(decoded_prefix.data);
+
+	*write++ = ':';
+	read = first + enc_len;
+	while (*read)
+	{
+		if (strncmp(read, enc, enc_len) == 0)
+		{
+			*write++ = ':';
+			read += enc_len;
+		}
+		else
+			*write++ = *read++;
+	}
+	*write = '\0';
+
+	return result;
+}
 
 Datum
 tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
@@ -166,16 +296,21 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	bool		elements = false;
 	bool		xsinil = false;
 	char	   *root_name;
+	char	   *ns_decls = NULL;
+	char	   *row_ns_decls;
+	bool		has_root;
 
 	MemoryContext agg_context;
 	MemoryContext old_context;
 
 	/*
-	* Backward compatibility: Check if ELEMENTS parameters are provided.
-	* Old 6-argument version (deprecated_in_5_6_0): state, rec, mode, element_name, binary_base64, root_name
-	* New 9-argument version (5.6.0+): adds elements, xsinil, auto_metadata parameters
+	* Backward compatibility: Check argument count.
+	* Old  6-argument version (deprecated_in_5_6_0): state, rec, mode, element_name, binary_base64, root_name
+	* 8-argument version  (5.6.0+):                  adds elements, xsinil
+	* 9-argument version  (FOR XML AUTO):            adds auto_metadata
+	* 10-argument version (WITH XMLNAMESPACES):      adds ns_decls
 	*/
-	if (PG_NARGS() > 9)
+	if (PG_NARGS() > 10)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				 errmsg("too many arguments")));
@@ -185,6 +320,15 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		elements = PG_GETARG_BOOL(6);
 		xsinil = PG_GETARG_BOOL(7);
 	}
+
+	/* Read namespace declarations from arg 9 (set by ANTLR layer for WITH XMLNAMESPACES) */
+	if (PG_NARGS() > 9 && !PG_ARGISNULL(9))
+	{
+		char *raw = text_to_cstring(PG_GETARG_TEXT_PP(9));
+		if (raw[0] != '\0')
+			ns_decls = raw;
+	}
+
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 	old_context = MemoryContextSwitchTo(agg_context);
@@ -201,10 +345,17 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		{
 			/*
 			 * We need to add an extra token to the beginning so that the
-			 * finalfunc knows there is a root element.
+			 * finalfunc knows there is a root element. When namespaces are
+			 * declared, emit them on the ROOT element.
 			 */
-			if (xsinil)
+			if (xsinil && ns_decls && !ns_decls_has_xsi(ns_decls))
+				appendStringInfo(state, "{<%s " XML_XMLNS_XSI " %s>", root_name, ns_decls);
+			else if (xsinil && ns_decls)
+				appendStringInfo(state, "{<%s %s>", root_name, ns_decls);
+			else if (xsinil)
 				appendStringInfo(state, "{<%s " XML_XMLNS_XSI ">", root_name);
+			else if (ns_decls)
+				appendStringInfo(state, "{<%s %s>", root_name, ns_decls);
 			else
 				appendStringInfo(state, "{<%s>", root_name);
 		}
@@ -237,6 +388,27 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 					xml_auto_parse_metadata(auto_st, auto_metadata, tupdesc->natts);
 					ReleaseTupleDesc(tupdesc);
 				}
+
+				/*
+				 * Restore prefix colons in column and table aliases when the
+				 * prefix matches a declared namespace. Done once after metadata
+				 * parsing so per-row emission stays cheap.
+				 */
+				if (ns_decls != NULL)
+				{
+					for (int i = 0; i < auto_st->num_columns; i++)
+					{
+						if (auto_st->column_names[i])
+							auto_st->column_names[i] = restore_xml_prefix_colon(auto_st->column_names[i], ns_decls);
+						if (auto_st->table_aliases[i])
+							auto_st->table_aliases[i] = restore_xml_prefix_colon(auto_st->table_aliases[i], ns_decls);
+					}
+					for (int level = 0; level <= auto_st->max_depth; level++)
+					{
+						if (auto_st->level_to_alias[level])
+							auto_st->level_to_alias[level] = restore_xml_prefix_colon(auto_st->level_to_alias[level], ns_decls);
+					}
+				}
 			}
 		}
 	}
@@ -245,10 +417,20 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		fstate = (forxml_state *) PG_GETARG_POINTER(0);
 		state = fstate->xml_output;
 	}
+
+	/*
+	 * If ROOT is present, namespace declarations were already emitted on
+	 * the root element. Don't pass them to row functions for re-emission.
+	 */
+	row_ns_decls = ns_decls;
+	has_root = (state->len > 0 && state->data[0] == '{');
+	if (has_root)
+		row_ns_decls = NULL;
+
 	switch (mode)
 	{
 		case TSQL_FORXML_RAW:	/* FOR XML RAW */
-			tsql_row_to_xml_raw(state, record, element_name, binary_base64, elements, xsinil);
+			tsql_row_to_xml_raw(state, record, element_name, binary_base64, elements, xsinil, row_ns_decls, ns_decls);
 			break;
 		case TSQL_FORXML_AUTO:	/* FOR XML AUTO */
 			{
@@ -259,11 +441,11 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 							(errcode(ERRCODE_INTERNAL_ERROR),
 							 errmsg("FOR XML AUTO state not initialized")));
 
-				tsql_row_to_xml_auto(state, record, elements, xsinil, auto_state);
+				tsql_row_to_xml_auto(state, record, elements, xsinil, auto_state, row_ns_decls);
 			}
 			break;
 		case TSQL_FORXML_PATH:	/* FOR XML PATH */
-			tsql_row_to_xml_path(state, record, element_name, binary_base64, xsinil);
+			tsql_row_to_xml_path(state, record, element_name, binary_base64, xsinil, row_ns_decls, ns_decls);
 			break;
 		case TSQL_FORXML_EXPLICIT:
 
@@ -380,7 +562,7 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
  * Map an SQL row to an XML element in RAW mode.
  */
 static void
-tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil)
+tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls)
 {
 	HeapTupleHeader td;
 	Oid             tupType;
@@ -420,15 +602,26 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 		if (elements)
 		{
 			/* ELEMENTS mode: <row><col>value</col></row> */
-			if (xsinil)
+			if (xsinil && ns_decls && !ns_decls_has_xsi(ns_decls))
+				appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s>", element_name, ns_decls);
+			else if (xsinil && ns_decls)
+				appendStringInfo(state, "<%s %s>", element_name, ns_decls);
+			else if (xsinil)
 				appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
+			else if (ns_decls)
+				appendStringInfo(state, "<%s %s>", element_name, ns_decls);
 			else
 				appendStringInfo(state, "<%s>", element_name);
 		}
 		else
 		{
 			/* ATTRIBUTES mode: <row col="value"/> */
-			appendStringInfo(state, "<%s", element_name);
+			if (xsinil && ns_decls && !ns_decls_has_xsi(ns_decls))
+				appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s", element_name, ns_decls);
+			else if (ns_decls)
+				appendStringInfo(state, "<%s %s", element_name, ns_decls);
+			else
+				appendStringInfo(state, "<%s", element_name);
 		}
 	}
 
@@ -444,6 +637,7 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 			continue;
 
 		colname = map_sql_identifier_to_xml_name(NameStr(att->attname), true, false);
+		colname = restore_xml_prefix_colon(colname, all_ns_decls);
 		colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 		datatype_oid = att->atttypid;
 
@@ -564,7 +758,7 @@ validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tup
  * Map an SQL row to an XML element in PATH mode.
  */
 static void
-tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil)
+tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls)
 {
 	HeapTupleHeader td;
 	Oid             tupType;
@@ -600,15 +794,27 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 		/* if "''" is the input path, ignore it per TSQL behavior */
 		if (has_att_centric)
 		{
-			if (xsinil)
+			if (xsinil && ns_decls && !ns_decls_has_xsi(ns_decls))
+				appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s", element_name, ns_decls);
+			else if (xsinil && ns_decls)
+				appendStringInfo(state, "<%s %s", element_name, ns_decls);
+			else if (xsinil)
 				appendStringInfo(state, "<%s " XML_XMLNS_XSI, element_name);
+			else if (ns_decls)
+				appendStringInfo(state, "<%s %s", element_name, ns_decls);
 			else
 				appendStringInfo(state, "<%s", element_name);
 		}
 		else
 		{
-			if (xsinil)
+			if (xsinil && ns_decls && !ns_decls_has_xsi(ns_decls))
+				appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s>", element_name, ns_decls);
+			else if (xsinil && ns_decls)
+				appendStringInfo(state, "<%s %s>", element_name, ns_decls);
+			else if (xsinil)
 				appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
+			else if (ns_decls)
+				appendStringInfo(state, "<%s %s>", element_name, ns_decls);
 			else
 				appendStringInfo(state, "<%s>", element_name);
 		}
@@ -627,6 +833,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 			continue;
 
 		colname = map_sql_identifier_to_xml_name(NameStr(att->attname), true, false);
+		colname = restore_xml_prefix_colon(colname, all_ns_decls);
 		colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 		datatype_oid = att->atttypid;
 
@@ -1417,7 +1624,7 @@ auto_preformat_value(HeapTuple tuple, TupleDesc tupdesc,
  * 4. Store current values for next row comparison
  */
 static void
-output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil)
+output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil, const char *ns_decls)
 {
 	int first_changed_level;
 	int deepest_level_in_row = auto_state->max_depth;
@@ -1485,10 +1692,20 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 			continue;
 
 		/* Open element tag */
-		if (elements && xsinil && !auto_state->has_root && level == 1)
+		if (elements && xsinil && ns_decls && !ns_decls_has_xsi(ns_decls) && !auto_state->has_root && level == 1)
+			appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s>", table_alias, ns_decls);
+		else if (elements && xsinil && ns_decls && !auto_state->has_root && level == 1)
+			appendStringInfo(state, "<%s %s>", table_alias, ns_decls);
+		else if (elements && xsinil && !auto_state->has_root && level == 1)
 			appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", table_alias);
+		else if (elements && ns_decls && !auto_state->has_root && level == 1)
+			appendStringInfo(state, "<%s %s>", table_alias, ns_decls);
 		else if (elements)
 			appendStringInfo(state, "<%s>", table_alias);
+		else if (xsinil && ns_decls && !ns_decls_has_xsi(ns_decls) && !auto_state->has_root && level == 1)
+			appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s", table_alias, ns_decls);
+		else if (ns_decls && !auto_state->has_root && level == 1)
+			appendStringInfo(state, "<%s %s", table_alias, ns_decls);
 		else
 			appendStringInfo(state, "<%s", table_alias);
 
@@ -1621,7 +1838,7 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
  * Map an SQL row to XML in AUTO mode.
  */
 static void
-tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state)
+tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state, const char *ns_decls)
 {
 	HeapTupleHeader td;
 	Oid tupType;
@@ -1650,7 +1867,7 @@ tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil,
 	}
 
 	/* Generate hierarchical XML output */
-	output_row_xml(state, auto_state, tuple, tupdesc, elements, xsinil);
+	output_row_xml(state, auto_state, tuple, tupdesc, elements, xsinil, ns_decls);
 
 	ReleaseTupleDesc(tupdesc);
 }

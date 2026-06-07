@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <functional>
 #include <iostream>
+#include <set>
 #include <strstream>
 #include <string>
 #include <string_view>
@@ -275,6 +276,17 @@ static std::map<size_t, pair<std::string, std::string>> rewritten_query_fragment
 // local_id can be rewritten in different ways in some cases (itvf), don't use rewritten_query_fragment.
 // TODO: incorporate local_id_positions with rewritten_query_fragment
 static std::map<size_t, std::string> local_id_positions;
+
+// XML namespace context: holds the PG array literal for the current statement's namespace bindings.
+// Set by enterDeclare_xmlnamespaces_statement / enterWith_expression when XMLNAMESPACES is present.
+// Cleared by clear_rewritten_query_fragment at statement boundaries.
+static std::string xmlnamespace_array_literal;
+// Space-separated 'xmlns:p="u"' string for FOR XML output emission. Set together
+// with xmlnamespace_array_literal.
+static std::string xmlnamespace_decls_for_forxml;
+// Set of prefixes declared via WITH XMLNAMESPACES (excluding DEFAULT). Used to
+// validate prefixed FOR XML column aliases like 'ns:ID' against the declared list.
+static std::set<std::string> xmlnamespace_declared_prefixes;
 	
 // For user-defined variables like @@var or @var# in the RETURN clause of an ITVF
 static std::map<size_t, std::string> local_id_positions_atatuservar;
@@ -738,6 +750,9 @@ clear_rewritten_query_fragment()
 {
 	rewritten_query_fragment.clear();
 	local_id_positions.clear();
+	xmlnamespace_array_literal.clear();
+	xmlnamespace_decls_for_forxml.clear();
+	xmlnamespace_declared_prefixes.clear();
 }
 
 static void
@@ -746,6 +761,287 @@ add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator)
 	Assert(mutator);
 	for (auto &entry : rewritten_query_fragment)
 		mutator->add(entry.first, entry.second.first, entry.second.second);
+}
+
+/*
+ * Build a PG text[][] array literal from a list of xml_declaration parse nodes.
+ * Each xml_declaration is either:
+ *   - 'uri' AS prefix  -> {"prefix", "uri"}
+ *   - DEFAULT 'uri'    -> {"", "uri"}
+ * Returns a string like: '{{"ns","http://example.com"},{"","http://default.com"}}'::text[][]
+ *
+ * Uses the string-form array literal (not ARRAY[...]) because T-SQL dialect
+ * treats square brackets as identifier delimiters.
+ */
+static std::string
+build_xmlnamespace_array_literal(const std::vector<TSqlParser::Xml_declarationContext *> &decls)
+{
+	if (decls.empty())
+		return "";
+
+	std::set<std::string> seen_prefixes;
+	bool has_default = false;
+	static const std::string xml_ns_uri = "http://www.w3.org/XML/1998/namespace";
+
+	std::string result = "'{{";
+	bool first = true;
+	for (auto *decl : decls)
+	{
+		if (!first)
+			result += "},{";
+		first = false;
+
+		if (decl->DEFAULT())
+		{
+			/* DEFAULT 'uri' */
+			std::string uri = ::getFullText(decl->char_string());
+			if (uri.size() >= 2 && uri.front() == '\'' && uri.back() == '\'')
+				uri = uri.substr(1, uri.size() - 2);
+
+			/* Rule 7: Empty URI */
+			if (uri.empty())
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+					"Empty URI is not allowed in WITH XMLNAMESPACES clause.", 0, 0);
+
+			/* Rule 2b: Duplicate DEFAULT */
+			if (has_default)
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+					"Attempt to redefine namespace prefix 'default'", 0, 0);
+			has_default = true;
+
+			/* Rule 5b: xml namespace URI cannot be used with other prefixes */
+			if (uri == xml_ns_uri)
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+					"XML namespace prefix 'xml' can only be associated with the URI "
+					"http://www.w3.org/XML/1998/namespace. "
+					"This URI cannot be used with other prefixes.", 0, 0);
+
+			result += "\"\"," "\"" + uri + "\"";
+		}
+		else
+		{
+			/* 'uri' AS prefix */
+			std::string uri = ::getFullText(decl->xml_namespace_uri);
+			if (uri.size() >= 2 && uri.front() == '\'' && uri.back() == '\'')
+				uri = uri.substr(1, uri.size() - 2);
+			std::string prefix = stripQuoteFromId(decl->id());
+
+			/* Rule 7: Empty URI */
+			if (uri.empty())
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+					"Empty URI is not allowed in WITH XMLNAMESPACES clause.", 0, 0);
+
+			/* Rule 1: NCName - no colon allowed in prefix */
+			for (size_t i = 0; i < prefix.size(); i++)
+			{
+				if (prefix[i] == ':')
+					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+						format_errmsg("Prefix '%s' used in WITH XMLNAMESPACES clause "
+							"contains an invalid XML identifier. ':'(0x003A) is the "
+							"first character at fault.", prefix.c_str()), 0, 0);
+			}
+
+			/* Rule 1: NCName - first character must be a letter or underscore */
+			if (!prefix.empty())
+			{
+				unsigned char c = (unsigned char) prefix[0];
+				bool valid_start = (c == '_') ||
+					(c >= 'A' && c <= 'Z') ||
+					(c >= 'a' && c <= 'z') ||
+					c >= 0x80;	/* allow non-ASCII bytes as a permissive
+								 * approximation of the XML NameStartChar set */
+				if (!valid_start)
+					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+						format_errmsg("Prefix '%s' used in WITH XMLNAMESPACES clause "
+							"contains an invalid XML identifier as defined by W3C "
+							"specification.", prefix.c_str()), 0, 0);
+			}
+
+			/* Rule 4: xmlns prefix forbidden */
+			if (prefix == "xmlns")
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+					"Prefix 'xmlns' used in WITH XMLNAMESPACES is reserved and "
+					"cannot be used as a user-defined prefix.", 0, 0);
+
+			/* Rule 5a: xml prefix can only use the xml namespace URI */
+			if (prefix == "xml" && uri != xml_ns_uri)
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+					"XML namespace prefix 'xml' can only be associated with the URI "
+					"http://www.w3.org/XML/1998/namespace. "
+					"This URI cannot be used with other prefixes.", 0, 0);
+
+			/* Rule 5b: xml namespace URI can only be bound to xml prefix */
+			if (uri == xml_ns_uri && prefix != "xml")
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+					"XML namespace prefix 'xml' can only be associated with the URI "
+					"http://www.w3.org/XML/1998/namespace. "
+					"This URI cannot be used with other prefixes.", 0, 0);
+
+			/* Rule 2: Duplicate prefix */
+			if (seen_prefixes.count(prefix) > 0)
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+					format_errmsg("Attempt to redefine namespace prefix '%s'",
+						prefix.c_str()), 0, 0);
+			seen_prefixes.insert(prefix);
+
+			result += "\"" + prefix + "\",\"" + uri + "\"";
+		}
+	}
+	result += "}}'::_text";
+	xmlnamespace_declared_prefixes = seen_prefixes;
+	return result;
+}
+
+/*
+ * Escape characters that have XML attribute-value significance: &, <, >, ".
+ * The single quote is left alone because we always wrap the URI in double
+ * quotes. Returns a copy with replacements; the input is not modified.
+ */
+static std::string
+xml_escape_attr_value(const std::string &in)
+{
+	std::string out;
+	out.reserve(in.size());
+	for (char c : in)
+	{
+		switch (c)
+		{
+			case '&':  out += "&amp;";  break;
+			case '<':  out += "&lt;";   break;
+			case '>':  out += "&gt;";   break;
+			case '"':  out += "&quot;"; break;
+			default:   out += c;        break;
+		}
+	}
+	return out;
+}
+
+/*
+ * Build a space-separated namespace declaration string from a list of
+ * xml_declaration parse tree nodes. Output format:
+ *   xmlns:prefix="uri" xmlns:prefix2="uri2"
+ * For DEFAULT, emits xmlns="uri".
+ *
+ * Declarations are emitted in REVERSE declaration order to match SQL Server's
+ * FOR XML output for WITH XMLNAMESPACES.
+ *
+ * The xsi prefix bound to http://www.w3.org/2001/XMLSchema-instance is
+ * skipped because XSINIL handling emits xmlns:xsi separately on each row;
+ * SQL Server avoids redeclaring it when both are specified.
+ *
+ * Caller is expected to have already validated declarations via
+ * build_xmlnamespace_array_literal, so this function performs no validation.
+ */
+static std::string
+build_xmlnamespace_decls_string(const std::vector<TSqlParser::Xml_declarationContext *> &decls)
+{
+	if (decls.empty())
+		return "";
+
+	std::string result;
+	for (auto it = decls.rbegin(); it != decls.rend(); ++it)
+	{
+		auto *decl = *it;
+		std::string uri;
+		std::string prefix;
+
+		if (decl->DEFAULT())
+		{
+			uri = ::getFullText(decl->char_string());
+		}
+		else
+		{
+			uri = ::getFullText(decl->xml_namespace_uri);
+			prefix = stripQuoteFromId(decl->id());
+		}
+
+		if (uri.size() >= 2 && uri.front() == '\'' && uri.back() == '\'')
+			uri = uri.substr(1, uri.size() - 2);
+
+		if (!result.empty())
+			result += " ";
+
+		std::string escaped_uri = xml_escape_attr_value(uri);
+
+		if (prefix.empty())
+			result += "xmlns=\"" + escaped_uri + "\"";
+		else
+			result += "xmlns:" + prefix + "=\"" + escaped_uri + "\"";
+	}
+	return result;
+}
+
+/*
+ * Validate prefixed FOR XML column aliases against declared namespace prefixes.
+ *
+ * For every SELECT list alias of the form 'prefix:local' (only the char_string
+ * form can carry a colon since 'id' aliases reject it), check that 'prefix' was
+ * declared via WITH XMLNAMESPACES. If not, raise SQL Server's error 6846 message.
+ *
+ * The check is skipped when the namespace context is empty (no WITH XMLNAMESPACES
+ * clause) — in that case the alias passes through unchanged and there is nothing
+ * to validate.
+ *
+ * Helper handles both alias positions in select_list_elem:
+ *   - SELECT col AS 'ns:Name'           -> expression_elem->as_column_alias
+ *   - SELECT 'ns:Name' = col            -> expression_elem->column_alias (left side)
+ */
+static void
+validate_forxml_column_alias_prefixes(TSqlParser::Select_listContext *selectList)
+{
+	if (xmlnamespace_declared_prefixes.empty() && xmlnamespace_decls_for_forxml.empty())
+		return;
+	if (!selectList)
+		return;
+
+	auto check_alias = [](TSqlParser::Column_aliasContext *alias_ctx) {
+		if (!alias_ctx || !alias_ctx->char_string())
+			return;	/* id-form aliases cannot contain a colon */
+
+		std::string raw = ::getFullText(alias_ctx->char_string());
+		/* strip surrounding quotes */
+		if (raw.size() >= 2 && (raw.front() == '\'' || raw.front() == '"'))
+			raw = raw.substr(1, raw.size() - 2);
+
+		size_t colon = raw.find(':');
+		if (colon == std::string::npos)
+			return;	/* unprefixed alias, nothing to check */
+
+		/*
+		 * PATH-mode path-expression aliases (e.g. 'English/@xml:lang') use
+		 * '/' to separate elements and '@' to mark attributes. Splitting on
+		 * the first colon would misidentify the prefix, so leave them to the
+		 * PATH alias parser.
+		 */
+		if (raw.find('/') != std::string::npos || raw.find('@') != std::string::npos)
+			return;
+
+		std::string prefix = raw.substr(0, colon);
+		if (prefix.empty())
+			return;	/* malformed (':local'); leave for downstream to error on */
+
+		if (xmlnamespace_declared_prefixes.count(prefix) == 0)
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+				format_errmsg("XML name space prefix '%s' declaration is missing "
+					"for FOR XML column name '%s'.",
+					prefix.c_str(), raw.c_str()), 0, 0);
+	};
+
+	for (auto *elem : selectList->select_list_elem())
+	{
+		if (!elem->expression_elem())
+			continue;
+
+		auto *exp_elem = elem->expression_elem();
+
+		/* alias on the right: expr AS 'ns:Name' */
+		if (exp_elem->as_column_alias())
+			check_alias(exp_elem->as_column_alias()->column_alias());
+
+		/* alias on the left: 'ns:Name' = expr */
+		if (exp_elem->column_alias())
+			check_alias(exp_elem->column_alias());
+	}
 }
 
 static void
@@ -1054,6 +1350,55 @@ public:
 		{
 			size_t startPosition = ctx->start->getStartIndex();
 			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "bbf_xml")));
+		}
+	}
+
+	void enterDeclare_xmlnamespaces_statement(TSqlParser::Declare_xmlnamespaces_statementContext *ctx) override
+	{
+		std::vector<TSqlParser::Xml_declarationContext *> decls;
+		for (auto *d : ctx->xml_dec)
+			decls.push_back(d);
+		xmlnamespace_array_literal = build_xmlnamespace_array_literal(decls);
+		xmlnamespace_decls_for_forxml = build_xmlnamespace_decls_string(decls);
+	}
+
+	void enterWith_expression(TSqlParser::With_expressionContext *ctx) override
+	{
+		if (ctx->XMLNAMESPACES())
+		{
+			std::vector<TSqlParser::Xml_declarationContext *> decls;
+			for (auto *d : ctx->xml_dec)
+				decls.push_back(d);
+			xmlnamespace_array_literal = build_xmlnamespace_array_literal(decls);
+			xmlnamespace_decls_for_forxml = build_xmlnamespace_decls_string(decls);
+
+			/*
+			 * Strip the XMLNAMESPACES clause from the SQL text sent to PG.
+			 * Grammar: WITH (XMLNAMESPACES(...) COMMA?)? (CTEs)*
+			 *
+			 * If CTEs follow, strip "XMLNAMESPACES(...) ," leaving "WITH cte AS(...)".
+			 * If no CTEs follow, strip "WITH XMLNAMESPACES(...)" entirely.
+			 */
+			size_t strip_start;
+			size_t strip_end;
+
+			if (!ctx->ctes.empty())
+			{
+				/* CTEs present: strip from XMLNAMESPACES token to just before first CTE */
+				strip_start = ctx->XMLNAMESPACES()->getSymbol()->getStartIndex();
+				strip_end = ctx->ctes[0]->start->getStartIndex();
+			}
+			else
+			{
+				/* No CTEs: strip from WITH to end of RR_BRACKET */
+				strip_start = ctx->WITH()->getSymbol()->getStartIndex();
+				strip_end = ctx->RR_BRACKET()->getSymbol()->getStopIndex() + 1;
+			}
+
+			std::string original_text = ctx->start->getInputStream()->getText(
+				antlr4::misc::Interval(strip_start, strip_end - 1));
+			rewritten_query_fragment.emplace(std::make_pair(strip_start,
+				std::make_pair(original_text, "")));
 		}
 	}
 
@@ -2423,6 +2768,50 @@ public:
 		//
 		// Please note that one "another_statement" may return a list of PLtsql_stmt
 		// in case of DECLARE multiple variable with initializers at a time.
+
+		if (ctx->declare_xmlnamespaces_statement())
+		{
+			/*
+			 * WITH XMLNAMESPACES (...) <DML>
+			 * Handle like enterDml_statement: create the stmt from the inner DML,
+			 * set up the mutator so the walker can collect rewrites as it descends.
+			 */
+			TSqlParser::Declare_xmlnamespaces_statementContext *xmlns_ctx = ctx->declare_xmlnamespaces_statement();
+
+			/* Capture namespace declarations */
+			std::vector<TSqlParser::Xml_declarationContext *> decls;
+			for (auto *d : xmlns_ctx->xml_dec)
+				decls.push_back(d);
+			xmlnamespace_array_literal = build_xmlnamespace_array_literal(decls);
+			xmlnamespace_decls_for_forxml = build_xmlnamespace_decls_string(decls);
+
+			/* Find the inner DML and create a PLtsql_stmt for it */
+			ParserRuleContext *inner_dml = nullptr;
+			if (xmlns_ctx->select_statement())
+				inner_dml = xmlns_ctx->select_statement();
+			else if (xmlns_ctx->insert_statement())
+				inner_dml = xmlns_ctx->insert_statement();
+			else if (xmlns_ctx->update_statement())
+				inner_dml = xmlns_ctx->update_statement();
+			else if (xmlns_ctx->delete_statement())
+				inner_dml = xmlns_ctx->delete_statement();
+			else if (xmlns_ctx->merge_statement())
+				inner_dml = xmlns_ctx->merge_statement();
+
+			if (inner_dml)
+			{
+				graft(makeSQL(inner_dml), peekContainer());
+				clear_rewritten_query_fragment();
+				/* Restore namespace context after clear */
+				xmlnamespace_array_literal = build_xmlnamespace_array_literal(decls);
+				xmlnamespace_decls_for_forxml = build_xmlnamespace_decls_string(decls);
+				PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(inner_dml);
+				Assert(stmt);
+				statementMutator = std::make_unique<PLtsql_expr_query_mutator>(stmt->sqlstmt, inner_dml);
+			}
+			return;
+		}
+
 		std::vector<PLtsql_stmt *> result = makeAnother(ctx, *this);
 		for (PLtsql_stmt *stmt : result)
 			graft(stmt, peekContainer());
@@ -2520,6 +2909,19 @@ public:
 			PLtsql_expr_query_mutator mutator(stmt->sqlstmt, ctx);
 			add_rewritten_query_fragment_to_mutator(&mutator);
 			mutator.run();
+		}
+		else if (ctx->declare_xmlnamespaces_statement())
+		{
+			/*
+			 * Apply the collected rewrites to the inner DML statement.
+			 * The statementMutator was set up in enterAnother_statement.
+			 */
+			if (statementMutator)
+			{
+				add_rewritten_query_fragment_to_mutator(statementMutator.get());
+				statementMutator->run();
+				statementMutator = nullptr;
+			}
 		}
 
 		// remove the offsets for processed fragments
@@ -3882,6 +4284,62 @@ static void process_select_statement(
 		if (selectCtx->for_clause()->XML()) // FOR XML
 		{
 			Assert(selectCtx->for_clause()->RAW() || selectCtx->for_clause()->PATH() || selectCtx->for_clause()->AUTO());
+
+			/*
+			 * Validate xsi prefix conflict with ELEMENTS XSINIL.
+			 * If XSINIL is specified and the user declared 'xsi' prefix via
+			 * WITH XMLNAMESPACES with a URI other than the schema-instance URI,
+			 * reject the statement.
+			 */
+			if (!xmlnamespace_array_literal.empty() && !selectCtx->for_clause()->XSINIL().empty())
+			{
+				/* Parse the namespace array literal to check for xsi prefix */
+				std::string ns_str = xmlnamespace_array_literal;
+				std::string xsi_uri = "http://www.w3.org/2001/XMLSchema-instance";
+				size_t pos = ns_str.find("\"xsi\"");
+				if (pos != std::string::npos)
+				{
+					/* Found xsi prefix — extract its URI and compare */
+					size_t uri_start = ns_str.find("\"", pos + 5) + 1;
+					size_t uri_end = ns_str.find("\"", uri_start);
+					if (uri_start != std::string::npos && uri_end != std::string::npos)
+					{
+						std::string declared_uri = ns_str.substr(uri_start, uri_end - uri_start);
+						if (declared_uri != xsi_uri)
+						{
+							throw PGErrorWrapperException(ERROR,
+								ERRCODE_SYNTAX_ERROR,
+								"Redefinition of 'xsi' XML namespace prefix is not supported "
+								"with ELEMENTS XSINIL option of FOR XML.",
+								0, 0);
+						}
+					}
+				}
+			}
+
+			/*
+			 * Validate prefixed FOR XML column aliases against the declared
+			 * namespace prefixes. SQL Server raises error 6846 when an alias
+			 * references a prefix not in the WITH XMLNAMESPACES declaration.
+			 */
+			TSqlParser::Query_specificationContext *qctx = get_query_specification(selectCtx);
+			if (qctx && qctx->select_list())
+				validate_forxml_column_alias_prefixes(qctx->select_list());
+
+			/*
+			 * Attach namespace declarations to the enclosing exec stmt so the
+			 * backend parser can include them as the last (10th) aggregate
+			 * argument when it builds the FOR XML aggregate call.
+			 */
+			if (!xmlnamespace_decls_for_forxml.empty() && mutator->ctx)
+			{
+				PLtsql_stmt *parentStmt = (PLtsql_stmt *) getPLtsql_fragment(mutator->ctx);
+				if (parentStmt && parentStmt->cmd_type == PLTSQL_STMT_EXECSQL)
+				{
+					PLtsql_stmt_execsql *execStmt = (PLtsql_stmt_execsql *) parentStmt;
+					execStmt->xml_namespace_decls = pstrdup(xmlnamespace_decls_for_forxml.c_str());
+				}
+			}
 		}
 		else // for JSON
 		{
@@ -4971,6 +5429,7 @@ makeExecSql(ParserRuleContext *ctx)
 	stmt->need_to_push_result = false;
 	stmt->is_tsql_select_assign_stmt = false;
 	stmt->insert_exec = false;
+	stmt->xml_namespace_decls = NULL;
 
 	return (PLtsql_stmt *) stmt;
 }
@@ -8831,8 +9290,7 @@ is_top_level_query_specification(TSqlParser::Query_specificationContext *ctx)
 	{
 		if (dynamic_cast<TSqlParser::Derived_tableContext *>(pctx) ||
 		    dynamic_cast<TSqlParser::SubqueryContext *>(pctx) ||
-		    dynamic_cast<TSqlParser::Common_table_expressionContext *>(pctx) ||
-		    dynamic_cast<TSqlParser::Declare_xmlnamespaces_statementContext *>(pctx)) // not supported in BBF. excluding it from top-level select statement just in case.
+		    dynamic_cast<TSqlParser::Common_table_expressionContext *>(pctx))
 			return false;
 
 		pctx = pctx->parent;
@@ -9171,6 +9629,13 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	keysToRemove.clear();
 	std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, func_call_len + offset1 + 1) + ")";
 
+	/* If XML namespace context is active, inject namespace array as extra argument */
+	if (method->xml_methods() && !xmlnamespace_array_literal.empty())
+	{
+		/* Insert namespace array before the closing ')' */
+		rewritten_exp = rewritten_exp.substr(0, rewritten_exp.size() - 1) + "," + xmlnamespace_array_literal + ")";
+	}
+
 	if (method->xml_methods() && method->xml_methods()->xml_func_arg()->VALUE())
 	{
 		rewritten_exp = "cast(" + rewritten_exp + " as " + typename_arg + ")";
@@ -9419,6 +9884,12 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	 * Rewriting the query as: table.col.Func_name(arg) -> Func_name(arg, table.col)
 	 */
 	std::string rewritten_func = expr.substr((int)func_start_index - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, col_len + offset1 + 1) + ")";
+
+	/* If XML namespace context is active, inject namespace array as extra argument */
+	if (ctx->xml_proc_name_table_column() && !xmlnamespace_array_literal.empty())
+	{
+		rewritten_func = rewritten_func.substr(0, rewritten_func.size() - 1) + "," + xmlnamespace_array_literal + ")";
+	}
 	
 	if (ctx->xml_proc_name_table_column() &&  ctx->xml_proc_name_table_column()->xml_func_arg()->VALUE())
 	{

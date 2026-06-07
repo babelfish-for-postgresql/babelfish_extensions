@@ -140,7 +140,7 @@ protected:
 		antlrcpp::Any visitSet_statement(TSqlParser::Set_statementContext *ctx) override;
 		antlrcpp::Any visitCursor_statement(TSqlParser::Cursor_statementContext *ctx) override;
 		antlrcpp::Any visitTransaction_statement(TSqlParser::Transaction_statementContext *ctx) override;
-		antlrcpp::Any visitDeclare_xmlnamespaces_statement(TSqlParser::Declare_xmlnamespaces_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_WITH_XMLNAMESPACES, "WITH XMLNAMESPACES", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitDeclare_xmlnamespaces_statement(TSqlParser::Declare_xmlnamespaces_statementContext *ctx) override { return visitChildren(ctx); }
 		antlrcpp::Any visitConversation_statement(TSqlParser::Conversation_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_CONVERSATION_STMT, "conversation statements", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitCreate_contract(TSqlParser::Create_contractContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_CONTRACT, "CREATE CONTRACT", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitCreate_queue(TSqlParser::Create_queueContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_QUEUE, "CREATE QUEUE", getLineAndPos(ctx)); return visitChildren(ctx); }
@@ -1436,9 +1436,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitGroup_by_item(TSqlParser::
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitWith_expression(TSqlParser::With_expressionContext *ctx)
 {
-	if (ctx->XMLNAMESPACES())
-		handle(INSTR_UNSUPPORTED_TSQL_WITH_XMLNAMESPACES, "WITH XMLNAMESPACES", getLineAndPos(ctx));
-
 	return visitChildren(ctx);
 }
 
