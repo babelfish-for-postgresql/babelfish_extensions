@@ -997,21 +997,39 @@ build_xmlnamespace_decls_string(const std::vector<TSqlParser::Xml_declarationCon
  *   - SELECT 'ns:Name' = col            -> expression_elem->column_alias (left side)
  */
 static void
-validate_forxml_column_alias_prefixes(TSqlParser::Select_listContext *selectList)
+validate_forxml_column_alias_prefixes(TSqlParser::Select_listContext *selectList, bool is_path)
 {
-	if (xmlnamespace_declared_prefixes.empty() && xmlnamespace_decls_for_forxml.empty())
+	/*
+	 * For PATH mode, T-SQL always validates prefixed aliases (and errors when
+	 * the prefix isn't declared) regardless of whether WITH XMLNAMESPACES is
+	 * present. For RAW/AUTO, validation only applies when declarations exist.
+	 */
+	if (!is_path && xmlnamespace_declared_prefixes.empty() && xmlnamespace_decls_for_forxml.empty())
 		return;
 	if (!selectList)
 		return;
 
 	auto check_alias = [](TSqlParser::Column_aliasContext *alias_ctx) {
-		if (!alias_ctx || !alias_ctx->char_string())
-			return;	/* id-form aliases cannot contain a colon */
+		if (!alias_ctx)
+			return;
 
-		std::string raw = ::getFullText(alias_ctx->char_string());
-		/* strip surrounding quotes */
-		if (raw.size() >= 2 && (raw.front() == '\'' || raw.front() == '"'))
-			raw = raw.substr(1, raw.size() - 2);
+		std::string raw;
+		if (alias_ctx->char_string())
+		{
+			raw = ::getFullText(alias_ctx->char_string());
+			/* strip surrounding quotes */
+			if (raw.size() >= 2 && (raw.front() == '\'' || raw.front() == '"'))
+				raw = raw.substr(1, raw.size() - 2);
+		}
+		else if (alias_ctx->id())
+		{
+			/* bracketed/quoted identifier: [ns:a], "ns:a" */
+			raw = stripQuoteFromId(alias_ctx->id());
+		}
+		else
+		{
+			return;
+		}
 
 		size_t colon = raw.find(':');
 		if (colon == std::string::npos)
@@ -4331,10 +4349,13 @@ static void process_select_statement(
 			 * Validate prefixed FOR XML column aliases against the declared
 			 * namespace prefixes. SQL Server raises error 6846 when an alias
 			 * references a prefix not in the WITH XMLNAMESPACES declaration.
+			 * PATH mode validates even without WITH XMLNAMESPACES; RAW/AUTO
+			 * only validate when declarations are present.
 			 */
 			TSqlParser::Query_specificationContext *qctx = get_query_specification(selectCtx);
 			if (qctx && qctx->select_list())
-				validate_forxml_column_alias_prefixes(qctx->select_list());
+				validate_forxml_column_alias_prefixes(qctx->select_list(),
+					selectCtx->for_clause()->PATH() != nullptr);
 
 			/*
 			 * Attach namespace declarations to the enclosing exec stmt so the

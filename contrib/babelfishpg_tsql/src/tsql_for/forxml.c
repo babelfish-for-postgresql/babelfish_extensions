@@ -399,24 +399,22 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 				}
 
 				/*
-				 * Restore prefix colons in column and table aliases when the
-				 * prefix matches a declared namespace. Done once after metadata
-				 * parsing so per-row emission stays cheap.
+				 * Restore prefix colons in column and table aliases. Done once
+				 * after metadata parsing so per-row emission stays cheap. The
+				 * helper handles NULL ns_decls (no WITH XMLNAMESPACES) by
+				 * restoring the colon for any prefixed alias, matching T-SQL.
 				 */
-				if (ns_decls != NULL)
+				for (int i = 0; i < auto_st->num_columns; i++)
 				{
-					for (int i = 0; i < auto_st->num_columns; i++)
-					{
-						if (auto_st->column_names[i])
-							auto_st->column_names[i] = restore_xml_prefix_colon(auto_st->column_names[i], ns_decls);
-						if (auto_st->table_aliases[i])
-							auto_st->table_aliases[i] = restore_xml_prefix_colon(auto_st->table_aliases[i], ns_decls);
-					}
-					for (int level = 0; level <= auto_st->max_depth; level++)
-					{
-						if (auto_st->level_to_alias[level])
-							auto_st->level_to_alias[level] = restore_xml_prefix_colon(auto_st->level_to_alias[level], ns_decls);
-					}
+					if (auto_st->column_names[i])
+						auto_st->column_names[i] = restore_xml_prefix_colon(auto_st->column_names[i], ns_decls);
+					if (auto_st->table_aliases[i])
+						auto_st->table_aliases[i] = restore_xml_prefix_colon(auto_st->table_aliases[i], ns_decls);
+				}
+				for (int level = 0; level <= auto_st->max_depth; level++)
+				{
+					if (auto_st->level_to_alias[level])
+						auto_st->level_to_alias[level] = restore_xml_prefix_colon(auto_st->level_to_alias[level], ns_decls);
 				}
 			}
 		}
