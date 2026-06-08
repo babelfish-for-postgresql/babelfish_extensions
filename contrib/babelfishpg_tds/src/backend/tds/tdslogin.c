@@ -1260,8 +1260,9 @@ ProcessLoginInternal(Port *port)
 	 */
 	if (strlen(port->user_name) >= NAMEDATALEN)
 	{
+#define MD5_HASH_LEN 32
 		int			len = strlen(port->user_name);
-		char		md5[33];
+		char		md5[MD5_HASH_LEN + 1];
 		char		buf[NAMEDATALEN];
 		const char *errstr = NULL;
 		char	   *downcased = downcase_identifier(port->user_name, len, false, false);
@@ -1271,10 +1272,11 @@ ProcessLoginInternal(Port *port)
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("could not compute %s hash: %s", "MD5", errstr)));
 
-		len = pg_mbcliplen(port->user_name, len, NAMEDATALEN - 32 - 1);
+		len = pg_mbcliplen(port->user_name, len, NAMEDATALEN - MD5_HASH_LEN - 1);
+		Assert(len + MD5_HASH_LEN < NAMEDATALEN);
 		memcpy(buf, port->user_name, len);
-		memcpy(buf + len, md5, 32);
-		buf[len + 32] = '\0';
+		memcpy(buf + len, md5, MD5_HASH_LEN);
+		buf[len + MD5_HASH_LEN] = '\0';
 
 		pfree(downcased);
 
@@ -1282,6 +1284,7 @@ ProcessLoginInternal(Port *port)
 		port->user_name = pstrdup(buf);
 		pfree(loginInfo->username);
 		loginInfo->username = pstrdup(buf);
+#undef MD5_HASH_LEN
 	}
 
 	/*
