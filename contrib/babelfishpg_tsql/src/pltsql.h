@@ -2534,6 +2534,7 @@ extern InsertExecContext insert_exec_ctx;
 extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list, const char *schema_name_in);
 extern void flush_insert_exec_temp_table(PLtsql_execstate *estate,
 										 const char *column_list);
+extern DestReceiver *CreateInsertExecDestReceiver(void);
 
 #define NUM_DB_OBJECTS 11
 
