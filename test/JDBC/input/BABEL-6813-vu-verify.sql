@@ -1,13 +1,13 @@
 -- BABEL-6813: Fix infinite CAST recursion and DATETRUNC regtype resolution
 
 -- Verify CAST(numeric AS INT) in CHECK constraints worked
-SELECT * FROM t1
+SELECT * FROM babel_6813_t1
 GO
 
-SELECT * FROM t2
+SELECT * FROM babel_6813_t2
 GO
 
-SELECT * FROM t3
+SELECT * FROM babel_6813_t3
 GO
 
 -- DATETRUNC tests with various datetime types
