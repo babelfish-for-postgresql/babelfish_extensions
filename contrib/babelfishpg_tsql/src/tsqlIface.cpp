@@ -9169,6 +9169,8 @@ extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &
 					 * into both the ST_Expand prefilter and the STDistance
 					 * recheck. For VOLATILE T-SQL UDFs, PostgreSQL cannot
 					 * CSE the call, so the UDF executes twice per row.
+					 * A non-deterministic threshold (random(), nextval(), a subquery)
+					 * can also differ between the two copies, silently dropping matching rows.
 					 * Tightening the check to numeric-literal-or-@var only
 					 * would close this hole but loses the prefilter for safe
 					 * arithmetic expressions like `(2 * @f)`.
@@ -9393,6 +9395,27 @@ is_spatial_predicate_eq_one(T ctx)
 	return false;
 }
 
+template<class T>
+static bool
+is_spatial_predicate_negated(T ctx)
+{
+	auto *parent = dynamic_cast<antlr4::ParserRuleContext *>(ctx->parent);
+	while (parent)
+	{
+		/* Stop at the innermost predicate_br and inspect only its NOT list. */
+		auto *pred_br = dynamic_cast<TSqlParser::Predicate_brContext *>(parent);
+		if (pred_br)
+			return !pred_br->NOT().empty();
+
+		/* Stop climbing if we leave the predicate area */
+		if (dynamic_cast<TSqlParser::Search_conditionContext *>(parent))
+			return false;
+
+		parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
+	}
+	return false;
+}
+
 /*
  * Check if a parse tree node is inside a predicate context
  * (WHERE, JOIN ON, HAVING) where injecting && is safe.
@@ -9531,7 +9554,8 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 		&& method->spatial_methods()->geospatial_func_arg()
 		&& method->spatial_methods()->expression_list()
 		&& !method->spatial_methods()->expression_list()->expression().empty()
-		&& is_in_spatial_predicate_context(ctx))
+		&& is_in_spatial_predicate_context(ctx)
+		&& !is_spatial_predicate_negated(ctx))
 	{
 		std::string spatial_func_name = ::getFullText(method->spatial_methods()->geospatial_func_arg());
 		std::string col_ref = expr.substr(0, func_call_len + offset1 + 1);
@@ -9806,7 +9830,8 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 		&& ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()
 		&& ctx->function_arg_list()
 		&& !ctx->function_arg_list()->expression().empty()
-		&& is_in_spatial_predicate_context(ctx))
+		&& is_in_spatial_predicate_context(ctx)
+		&& !is_spatial_predicate_negated(ctx))
 	{
 		std::string spatial_func_name = ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg());
 		std::string col_ref = expr.substr(0, col_len + offset1 + 1);

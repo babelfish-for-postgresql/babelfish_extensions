@@ -509,6 +509,37 @@ WHERE si_geom_tbl.geom.STIntersects(
 SELECT CASE WHEN @not1 = @eq0 THEN 'PASS' ELSE 'FAIL' END AS t13_3;
 GO
 
+SELECT COUNT(*) AS t13_4 FROM si_geom_tbl
+WHERE NOT si_geom_tbl.geom.STIntersects(
+    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1
+  AND si_geom_tbl.geom IS NOT NULL;
+GO
+
+-- 13.5 Bare NOT correctness: NOT col.STIntersects(poly) = 1 (no parens) == = 0
+DECLARE @not1np INT, @eq0np INT;
+SELECT @not1np = COUNT(*) FROM si_geom_tbl
+WHERE NOT si_geom_tbl.geom.STIntersects(
+    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1
+  AND si_geom_tbl.geom IS NOT NULL;
+SELECT @eq0np = COUNT(*) FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STIntersects(
+    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 0;
+SELECT CASE WHEN @not1np = @eq0np THEN 'PASS' ELSE 'FAIL' END AS t13_5;
+GO
+
+-- 13.6 Bare NOT on STDistance prefilter: NOT col.STDistance(pt) < 100
+-- Same guard for the ST_Expand distance prefilter under bare NOT.
+
+DECLARE @ndist INT, @gedist INT;
+SELECT @ndist = COUNT(*) FROM si_geom_tbl
+WHERE NOT si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < 100
+  AND si_geom_tbl.geom IS NOT NULL;
+SELECT @gedist = COUNT(*) FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) >= 100
+  AND si_geom_tbl.geom IS NOT NULL;
+SELECT CASE WHEN @ndist = @gedist THEN 'PASS' ELSE 'FAIL' END AS t13_6;
+GO
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -1085,10 +1116,10 @@ GO
 
 
 -- ============================================================
--- SECTION 37: SELF-INTERSECTION (PR-claimed guard)
+-- SECTION 45: SELF-INTERSECTION (PR-claimed guard)
 -- ============================================================
 
--- 37.1 col.STIntersects(col) = 1 — degenerate self-intersection.
+-- 45.1 col.STIntersects(col) = 1 — degenerate self-intersection.
 -- Equivalence check: the dot-method form must produce the same count as the
 -- explicit two-arg form, regardless of which plan path is taken.
 DECLARE @dot INT, @explicit INT;
@@ -1096,14 +1127,14 @@ SELECT @dot = COUNT(*) FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(si_geom_tbl.geom) = 1;
 SELECT @explicit = COUNT(*) FROM si_geom_tbl a INNER JOIN si_geom_tbl b ON a.id = b.id
 WHERE a.geom.STIntersects(b.geom) = 1;
-SELECT CASE WHEN @dot = @explicit THEN 'PASS' ELSE 'FAIL' END AS t37_self_intersect;
+SELECT CASE WHEN @dot = @explicit THEN 'PASS' ELSE 'FAIL' END AS t45_self_intersect;
 GO
 
 -- ============================================================
--- SECTION 38: COMPOUND @VARIABLE THRESHOLD IN STDistance
+-- SECTION 46: COMPOUND @VARIABLE THRESHOLD IN STDistance
 -- ============================================================
 
--- 38.1 STDistance(...) < @r + 10 — compound expression must not break
+-- 46.1 STDistance(...) < @r + 10 — compound expression must not break
 -- the rewriter (previously the @-prefix quoting would emit "@r + 10" as
 -- a malformed identifier and fail at execution time).
 DECLARE @r FLOAT = 100;
@@ -1112,50 +1143,50 @@ SELECT @cnt_compound = COUNT(*) FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < @r + 10;
 SELECT @cnt_literal = COUNT(*) FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < 110;
-SELECT CASE WHEN @cnt_compound = @cnt_literal THEN 'PASS' ELSE 'FAIL' END AS t38_compound_threshold;
+SELECT CASE WHEN @cnt_compound = @cnt_literal THEN 'PASS' ELSE 'FAIL' END AS t46_compound_threshold;
 GO
 
 
 -- ============================================================
--- SECTION 39: sys.spatial_indexes multi-database isolation
+-- SECTION 47: sys.spatial_indexes multi-database isolation
 -- ============================================================
--- 39.1 From si_multidb_a_ : only sidx_multi_a_ is visible
+-- 47.1 From si_multidb_a_ : only sidx_multi_a_ is visible
 USE si_multidb_a_;
 GO
 
-SELECT name AS t39_idx_in_a
+SELECT name AS t47_idx_in_a
 FROM sys.spatial_indexes
 WHERE name LIKE 'sidx_multi%'
 ORDER BY name;
 GO
 
--- 39.2 From si_multidb_a_ : sidx_multi_b_ must NOT be visible
-SELECT COUNT(*) AS t39_b_leak_from_a
+-- 47.2 From si_multidb_a_ : sidx_multi_b_ must NOT be visible
+SELECT COUNT(*) AS t47_b_leak_from_a
 FROM sys.spatial_indexes
 WHERE name = 'sidx_multi_b_';
 GO
 
--- 39.3 From si_multidb_b_ : only sidx_multi_b_ is visible
+-- 47.3 From si_multidb_b_ : only sidx_multi_b_ is visible
 USE si_multidb_b_;
 GO
 
-SELECT name AS t39_idx_in_b
+SELECT name AS t47_idx_in_b
 FROM sys.spatial_indexes
 WHERE name LIKE 'sidx_multi%'
 ORDER BY name;
 GO
 
--- 39.4 From si_multidb_b_ : sidx_multi_a_ must NOT be visible
-SELECT COUNT(*) AS t39_a_leak_from_b
+-- 47.4 From si_multidb_b_ : sidx_multi_a_ must NOT be visible
+SELECT COUNT(*) AS t47_a_leak_from_b
 FROM sys.spatial_indexes
 WHERE name = 'sidx_multi_a_';
 GO
 
--- 39.5 From master : neither cross-db spatial index is visible here
+-- 47.5 From master : neither cross-db spatial index is visible here
 USE master;
 GO
 
-SELECT COUNT(*) AS t39_master_leak
+SELECT COUNT(*) AS t47_master_leak
 FROM sys.spatial_indexes
 WHERE name IN ('sidx_multi_a_', 'sidx_multi_b_');
 GO

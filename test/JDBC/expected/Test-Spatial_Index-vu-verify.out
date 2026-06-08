@@ -10091,6 +10091,165 @@ Result (actual rows=1 loops=1)
 ~~END~~
 
 
+SELECT COUNT(*) AS t13_4 FROM si_geom_tbl
+WHERE NOT si_geom_tbl.geom.STIntersects(
+    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1
+  AND si_geom_tbl.geom IS NOT NULL;
+GO
+~~START~~
+int
+990
+~~END~~
+
+~~START~~
+text
+Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
+Result (actual rows=1 loops=1)
+  InitPlan 1
+    ->  Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT COUNT(*) AS t13_4 FROM si_geom_tbl
+WHERE NOT STIntersects(
+    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
+  AND si_geom_tbl.geom IS NOT NULL
+Aggregate (actual rows=1 loops=1)
+  ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=990 loops=1)
+        Index Cond: (geom IS NOT NULL)
+        Filter: (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) <> 1)
+        Rows Removed by Filter: 13
+~~END~~
+
+
+-- 13.5 Bare NOT correctness: NOT col.STIntersects(poly) = 1 (no parens) == = 0
+DECLARE @not1np INT, @eq0np INT;
+SELECT @not1np = COUNT(*) FROM si_geom_tbl
+WHERE NOT si_geom_tbl.geom.STIntersects(
+    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1
+  AND si_geom_tbl.geom IS NOT NULL;
+SELECT @eq0np = COUNT(*) FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STIntersects(
+    geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 0;
+SELECT CASE WHEN @not1np = @eq0np THEN 'PASS' ELSE 'FAIL' END AS t13_5;
+GO
+~~START~~
+text
+Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
+Result (actual rows=1 loops=1)
+  InitPlan 1
+    ->  Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT           sys.pltsql_assign_var(2, cast((COUNT(*)) as int)) FROM si_geom_tbl
+WHERE NOT STIntersects(
+    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
+  AND si_geom_tbl.geom IS NOT NULL
+Aggregate (actual rows=1 loops=1)
+  ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=990 loops=1)
+        Index Cond: (geom IS NOT NULL)
+        Filter: (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) <> 1)
+        Rows Removed by Filter: 13
+~~END~~
+
+~~START~~
+text
+Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
+Result (actual rows=1 loops=1)
+  InitPlan 1
+    ->  Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT          sys.pltsql_assign_var(3, cast((COUNT(*)) as int)) FROM si_geom_tbl
+WHERE STIntersects(
+    geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 0
+Aggregate (actual rows=1 loops=1)
+  ->  Seq Scan on si_geom_tbl (actual rows=990 loops=1)
+        Filter: (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 0)
+        Rows Removed by Filter: 14
+~~END~~
+
+~~START~~
+varchar
+PASS
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT CASE WHEN "@not1np" = "@eq0np" THEN 'PASS' ELSE 'FAIL' END AS t13_5
+Result (actual rows=1 loops=1)
+~~END~~
+
+
+
+-- 13.6 Bare NOT on STDistance prefilter: NOT col.STDistance(pt) < 100
+-- Same guard for the ST_Expand distance prefilter under bare NOT.
+DECLARE @ndist INT, @gedist INT;
+SELECT @ndist = COUNT(*) FROM si_geom_tbl
+WHERE NOT si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < 100
+  AND si_geom_tbl.geom IS NOT NULL;
+SELECT @gedist = COUNT(*) FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) >= 100
+  AND si_geom_tbl.geom IS NOT NULL;
+SELECT CASE WHEN @ndist = @gedist THEN 'PASS' ELSE 'FAIL' END AS t13_6;
+GO
+~~START~~
+text
+Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
+Result (actual rows=1 loops=1)
+  InitPlan 1
+    ->  Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT          sys.pltsql_assign_var(2, cast((COUNT(*)) as int)) FROM si_geom_tbl
+WHERE NOT STDistance(geometry__STGeomFromText('POINT(500 500)', 4326),si_geom_tbl.geom) < 100
+  AND si_geom_tbl.geom IS NOT NULL
+Aggregate (actual rows=1 loops=1)
+  ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=966 loops=1)
+        Index Cond: (geom IS NOT NULL)
+        Filter: (stdistance('0101000020E61000000000000000407F400000000000407F40'::geometry, geom) >= '100'::double precision)
+        Rows Removed by Filter: 37
+~~END~~
+
+~~START~~
+text
+Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
+Result (actual rows=1 loops=1)
+  InitPlan 1
+    ->  Result (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT           sys.pltsql_assign_var(3, cast((COUNT(*)) as int)) FROM si_geom_tbl
+WHERE STDistance(geometry__STGeomFromText('POINT(500 500)', 4326),si_geom_tbl.geom) >= 100
+  AND si_geom_tbl.geom IS NOT NULL
+Aggregate (actual rows=1 loops=1)
+  ->  Index Scan using si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f on si_geom_tbl (actual rows=966 loops=1)
+        Index Cond: (geom IS NOT NULL)
+        Filter: (stdistance('0101000020E61000000000000000407F400000000000407F40'::geometry, geom) >= '100'::double precision)
+        Rows Removed by Filter: 37
+~~END~~
+
+~~START~~
+varchar
+PASS
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT CASE WHEN "@ndist" = "@gedist" THEN 'PASS' ELSE 'FAIL' END AS t13_6
+Result (actual rows=1 loops=1)
+~~END~~
+
+
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 
@@ -11476,9 +11635,9 @@ GO
 
 
 -- ============================================================
--- SECTION 37: SELF-INTERSECTION (PR-claimed guard)
+-- SECTION 45: SELF-INTERSECTION (PR-claimed guard)
 -- ============================================================
--- 37.1 col.STIntersects(col) = 1 — degenerate self-intersection.
+-- 45.1 col.STIntersects(col) = 1 — degenerate self-intersection.
 -- Equivalence check: the dot-method form must produce the same count as the
 -- explicit two-arg form, regardless of which plan path is taken.
 DECLARE @dot INT, @explicit INT;
@@ -11486,7 +11645,7 @@ SELECT @dot = COUNT(*) FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(si_geom_tbl.geom) = 1;
 SELECT @explicit = COUNT(*) FROM si_geom_tbl a INNER JOIN si_geom_tbl b ON a.id = b.id
 WHERE a.geom.STIntersects(b.geom) = 1;
-SELECT CASE WHEN @dot = @explicit THEN 'PASS' ELSE 'FAIL' END AS t37_self_intersect;
+SELECT CASE WHEN @dot = @explicit THEN 'PASS' ELSE 'FAIL' END AS t45_self_intersect;
 GO
 ~~START~~
 varchar
@@ -11496,9 +11655,9 @@ PASS
 
 
 -- ============================================================
--- SECTION 38: COMPOUND @VARIABLE THRESHOLD IN STDistance
+-- SECTION 46: COMPOUND @VARIABLE THRESHOLD IN STDistance
 -- ============================================================
--- 38.1 STDistance(...) < @r + 10 — compound expression must not break
+-- 46.1 STDistance(...) < @r + 10 — compound expression must not break
 -- the rewriter (previously the @-prefix quoting would emit "@r + 10" as
 -- a malformed identifier and fail at execution time).
 DECLARE @r FLOAT = 100;
@@ -11507,7 +11666,7 @@ SELECT @cnt_compound = COUNT(*) FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < @r + 10;
 SELECT @cnt_literal = COUNT(*) FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < 110;
-SELECT CASE WHEN @cnt_compound = @cnt_literal THEN 'PASS' ELSE 'FAIL' END AS t38_compound_threshold;
+SELECT CASE WHEN @cnt_compound = @cnt_literal THEN 'PASS' ELSE 'FAIL' END AS t46_compound_threshold;
 GO
 ~~START~~
 varchar
@@ -11517,13 +11676,13 @@ PASS
 
 
 -- ============================================================
--- SECTION 39: sys.spatial_indexes multi-database isolation
+-- SECTION 47: sys.spatial_indexes multi-database isolation
 -- ============================================================
--- 39.1 From si_multidb_a_ : only sidx_multi_a_ is visible
+-- 47.1 From si_multidb_a_ : only sidx_multi_a_ is visible
 USE si_multidb_a_;
 GO
 
-SELECT name AS t39_idx_in_a
+SELECT name AS t47_idx_in_a
 FROM sys.spatial_indexes
 WHERE name LIKE 'sidx_multi%'
 ORDER BY name;
@@ -11534,8 +11693,8 @@ sidx_multi_a_
 ~~END~~
 
 
--- 39.2 From si_multidb_a_ : sidx_multi_b_ must NOT be visible
-SELECT COUNT(*) AS t39_b_leak_from_a
+-- 47.2 From si_multidb_a_ : sidx_multi_b_ must NOT be visible
+SELECT COUNT(*) AS t47_b_leak_from_a
 FROM sys.spatial_indexes
 WHERE name = 'sidx_multi_b_';
 GO
@@ -11545,11 +11704,11 @@ int
 ~~END~~
 
 
--- 39.3 From si_multidb_b_ : only sidx_multi_b_ is visible
+-- 47.3 From si_multidb_b_ : only sidx_multi_b_ is visible
 USE si_multidb_b_;
 GO
 
-SELECT name AS t39_idx_in_b
+SELECT name AS t47_idx_in_b
 FROM sys.spatial_indexes
 WHERE name LIKE 'sidx_multi%'
 ORDER BY name;
@@ -11560,8 +11719,8 @@ sidx_multi_b_
 ~~END~~
 
 
--- 39.4 From si_multidb_b_ : sidx_multi_a_ must NOT be visible
-SELECT COUNT(*) AS t39_a_leak_from_b
+-- 47.4 From si_multidb_b_ : sidx_multi_a_ must NOT be visible
+SELECT COUNT(*) AS t47_a_leak_from_b
 FROM sys.spatial_indexes
 WHERE name = 'sidx_multi_a_';
 GO
@@ -11571,11 +11730,11 @@ int
 ~~END~~
 
 
--- 39.5 From master : neither cross-db spatial index is visible here
+-- 47.5 From master : neither cross-db spatial index is visible here
 USE master;
 GO
 
-SELECT COUNT(*) AS t39_master_leak
+SELECT COUNT(*) AS t47_master_leak
 FROM sys.spatial_indexes
 WHERE name IN ('sidx_multi_a_', 'sidx_multi_b_');
 GO
