@@ -1,0 +1,24 @@
+-- BABEL-6813: Fix infinite CAST recursion and DATETRUNC regtype resolution
+
+-- Verify CAST(numeric AS INT) in CHECK constraints worked
+SELECT * FROM t1
+GO
+
+SELECT * FROM t2
+GO
+
+SELECT * FROM t3
+GO
+
+-- DATETRUNC tests with various datetime types
+SELECT DATETRUNC(year, CAST('2023-06-15 10:30:00' AS datetime))
+GO
+
+SELECT DATETRUNC(month, CAST('2023-06-15 10:30:00' AS smalldatetime))
+GO
+
+SELECT DATETRUNC(day, CAST('2023-06-15 10:30:00.1234567' AS datetime2))
+GO
+
+SELECT DATETRUNC(hour, CAST('2023-06-15 10:30:00.1234567 +05:30' AS datetimeoffset))
+GO
