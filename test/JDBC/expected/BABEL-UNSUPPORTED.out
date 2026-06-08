@@ -2573,10 +2573,9 @@ GO
 
 WITH XMLNAMESPACES ('test.com' AS n@s1) SELECT 'test' AS 'TestAttr' FOR XML RAW
 GO
-~~START~~
-ntext
-<row xmlns:n@s1="test.com" TestAttr="test"/>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Prefix 'n@s1' used in WITH XMLNAMESPACES clause contains an invalid XML identifier. '@'(0x0040) is the first character at fault.)~~
 
 WITH XMLNAMESPACES ('test.com' AS xmlns) SELECT 'test' AS 'TestAttr' FOR XML RAW
 GO
