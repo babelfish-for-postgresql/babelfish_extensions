@@ -1115,3 +1115,71 @@ GO
 ntext
 ~~END~~
 
+
+
+-- ============================================
+-- SECTION 22: Undeclared prefix in column alias (colon restoration)
+-- ============================================
+-- 22.1 RAW attribute mode - undeclared prefix
+SELECT 1 AS [ns:a] FOR XML RAW;
+GO
+~~START~~
+ntext
+<row ns:a="1"/>
+~~END~~
+
+
+-- 22.2 RAW ELEMENTS mode - undeclared prefix
+SELECT 1 AS [ns:a] FOR XML RAW, ELEMENTS;
+GO
+~~START~~
+ntext
+<row><ns:a>1</ns:a></row>
+~~END~~
+
+
+-- ============================================
+-- SECTION 23: Invalid prefix character validation in WITH XMLNAMESPACES
+-- ============================================
+-- 23.1 Special character in prefix - errors
+WITH XMLNAMESPACES('http://test.com' AS [n@s1]) SELECT 'val' AS x FOR XML RAW;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Prefix 'n@s1' used in WITH XMLNAMESPACES clause contains an invalid XML identifier. '@'(0x0040) is the first character at fault.)~~
+
+
+-- 23.2 Numeric first character - errors
+WITH XMLNAMESPACES('http://test.com' AS [1ns]) SELECT 'val' AS x FOR XML RAW;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Prefix '1ns' used in WITH XMLNAMESPACES clause contains an invalid XML identifier. '1'(0x0031) is the first character at fault.)~~
+
+
+-- 23.3 Hyphen first character - errors
+WITH XMLNAMESPACES('http://test.com' AS [-ns]) SELECT 'val' AS x FOR XML RAW;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Prefix '-ns' used in WITH XMLNAMESPACES clause contains an invalid XML identifier. '-'(0x002D) is the first character at fault.)~~
+
+
+-- 23.4 Hyphen mid-prefix - valid, passes
+WITH XMLNAMESPACES('http://test.com' AS [n-s1]) SELECT 'val' AS x FOR XML RAW;
+GO
+~~START~~
+ntext
+<row xmlns:n-s1="http://test.com" x="val"/>
+~~END~~
+
+
+-- 23.5 Digit mid-prefix - valid, passes
+WITH XMLNAMESPACES('http://test.com' AS [ns123]) SELECT 'val' AS x FOR XML RAW;
+GO
+~~START~~
+ntext
+<row xmlns:ns123="http://test.com" x="val"/>
+~~END~~
+
+

@@ -831,30 +831,40 @@ build_xmlnamespace_array_literal(const std::vector<TSqlParser::Xml_declarationCo
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 					"Empty URI is not allowed in WITH XMLNAMESPACES clause.", 0, 0);
 
-			/* Rule 1: NCName - no colon allowed in prefix */
+			/* Rule 1: NCName - prefix must be a valid XML NCName.
+			 *
+			 * NameStartChar: '_' | letter | non-ASCII byte (permissive proxy
+			 * for the W3C NameStartChar set).
+			 * NameChar: NameStartChar | digit | '-' | '.'.
+			 *
+			 * Report the first invalid character, mirroring SQL Server's
+			 * error message format. ':' is reported via its own message
+			 * because T-SQL's check is colon-specific.
+			 */
 			for (size_t i = 0; i < prefix.size(); i++)
 			{
-				if (prefix[i] == ':')
+				unsigned char c = (unsigned char) prefix[i];
+
+				if (c == ':')
 					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 						format_errmsg("Prefix '%s' used in WITH XMLNAMESPACES clause "
 							"contains an invalid XML identifier. ':'(0x003A) is the "
 							"first character at fault.", prefix.c_str()), 0, 0);
-			}
 
-			/* Rule 1: NCName - first character must be a letter or underscore */
-			if (!prefix.empty())
-			{
-				unsigned char c = (unsigned char) prefix[0];
-				bool valid_start = (c == '_') ||
+				bool is_name_start = (c == '_') ||
 					(c >= 'A' && c <= 'Z') ||
 					(c >= 'a' && c <= 'z') ||
-					c >= 0x80;	/* allow non-ASCII bytes as a permissive
-								 * approximation of the XML NameStartChar set */
-				if (!valid_start)
+					c >= 0x80;
+				bool is_name_char = is_name_start ||
+					(c >= '0' && c <= '9') ||
+					c == '-' || c == '.';
+
+				bool ok = (i == 0) ? is_name_start : is_name_char;
+				if (!ok)
 					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 						format_errmsg("Prefix '%s' used in WITH XMLNAMESPACES clause "
-							"contains an invalid XML identifier as defined by W3C "
-							"specification.", prefix.c_str()), 0, 0);
+							"contains an invalid XML identifier. '%c'(0x%04X) is the "
+							"first character at fault.", prefix.c_str(), c, c), 0, 0);
 			}
 
 			/* Rule 4: xmlns prefix forbidden */

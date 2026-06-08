@@ -673,3 +673,39 @@ WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
 SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 999
 FOR XML PATH('ns1:Emp'), ROOT('ns1:Doc');
 GO
+
+-- ============================================
+-- SECTION 22: Undeclared prefix in column alias (colon restoration)
+-- ============================================
+
+-- 22.1 RAW attribute mode - undeclared prefix
+SELECT 1 AS [ns:a] FOR XML RAW;
+GO
+
+-- 22.2 RAW ELEMENTS mode - undeclared prefix
+SELECT 1 AS [ns:a] FOR XML RAW, ELEMENTS;
+GO
+-- ============================================
+-- SECTION 23: Invalid prefix character validation in WITH XMLNAMESPACES
+-- ============================================
+
+-- 23.1 Special character in prefix - errors
+WITH XMLNAMESPACES('http://test.com' AS [n@s1]) SELECT 'val' AS x FOR XML RAW;
+GO
+
+-- 23.2 Numeric first character - errors
+WITH XMLNAMESPACES('http://test.com' AS [1ns]) SELECT 'val' AS x FOR XML RAW;
+GO
+
+-- 23.3 Hyphen first character - errors
+WITH XMLNAMESPACES('http://test.com' AS [-ns]) SELECT 'val' AS x FOR XML RAW;
+GO
+
+-- 23.4 Hyphen mid-prefix - valid, passes
+WITH XMLNAMESPACES('http://test.com' AS [n-s1]) SELECT 'val' AS x FOR XML RAW;
+GO
+
+-- 23.5 Digit mid-prefix - valid, passes
+WITH XMLNAMESPACES('http://test.com' AS [ns123]) SELECT 'val' AS x FOR XML RAW;
+GO
+

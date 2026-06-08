@@ -171,18 +171,22 @@ ns_decls_has_xsi(const char *ns_decls)
 }
 
 /*
- * Restore a colon in a column name when the part before it is a namespace
- * prefix declared on this row.
+ * Restore colons in a column name produced from a 'prefix:local' alias.
  *
- * Column aliases of the form 'prefix:local' get colon-encoded by
+ * Aliases of the form 'prefix:local' get colon-encoded by
  * map_sql_identifier_to_xml_name to 'prefix_x003A_local' because ':' is not a
- * NCName character. For aliases that reference a prefix declared via
- * WITH XMLNAMESPACES (so ns_decls contains 'xmlns:prefix=...'), the colon must
- * survive into the output. We rewrite the encoded form back in place.
+ * NCName character.  T-SQL preserves the colon in the output regardless of
+ * whether the prefix is bound by WITH XMLNAMESPACES, so we always restore it
+ * (provided there is at least one character before the encoded colon).
  *
- * Returns the input pointer when no rewrite is needed (either no '_x003A_' is
- * present or the prefix wasn't declared); otherwise returns a freshly
- * palloc'd string.
+ * When the prefix matches one declared in ns_decls, additional _xNNNN_
+ * escapes within the prefix are decoded too, so a declared 'xml' prefix
+ * (encoded by PG as '_x0078_ml') comes back as 'xml'.  Undeclared prefixes
+ * keep their raw encoded form, matching T-SQL which preserves whatever the
+ * alias encoded to.
+ *
+ * Returns the input pointer when no rewrite is needed (no '_x003A_' or empty
+ * prefix portion); otherwise returns a freshly palloc'd string.
  */
 static char *
 restore_xml_prefix_colon(char *colname, const char *ns_decls)
@@ -193,13 +197,12 @@ restore_xml_prefix_colon(char *colname, const char *ns_decls)
 	StringInfoData decoded_prefix;
 	const char *p;
 	size_t      raw_prefix_len;
-	char       *needle;
-	const char *found;
+	bool        prefix_declared = false;
 	char       *result;
 	char       *write;
 	const char *read;
 
-	if (colname == NULL || ns_decls == NULL || ns_decls[0] == '\0')
+	if (colname == NULL)
 		return colname;
 
 	first = strstr(colname, enc);
@@ -212,9 +215,9 @@ restore_xml_prefix_colon(char *colname, const char *ns_decls)
 		return colname;
 
 	/*
-	 * Decode any _xNNNN_ escapes in the prefix.  PG's map_sql_identifier_to_xml_name
-	 * escapes non-NCName chars and also names starting with 'xml' (case-insensitive),
-	 * so the leading char of the prefix may appear as '_x0078_' or similar.
+	 * Decode any _xNNNN_ escapes in the prefix to get its logical form.  We
+	 * use this to check for a matching xmlns:<prefix>= declaration; the
+	 * declarations always store the unescaped prefix name.
 	 */
 	initStringInfo(&decoded_prefix);
 	p = colname;
@@ -246,25 +249,31 @@ restore_xml_prefix_colon(char *colname, const char *ns_decls)
 		}
 	}
 
-	/* Look for 'xmlns:<decoded_prefix>=' in the declarations. */
-	needle = psprintf("xmlns:%s=", decoded_prefix.data);
-	found = strstr(ns_decls, needle);
-	pfree(needle);
-
-	if (found == NULL)
+	if (ns_decls != NULL && ns_decls[0] != '\0')
 	{
-		pfree(decoded_prefix.data);
-		return colname;
+		char       *needle = psprintf("xmlns:%s=", decoded_prefix.data);
+
+		prefix_declared = (strstr(ns_decls, needle) != NULL);
+		pfree(needle);
 	}
 
 	/*
-	 * Build the output: emit the decoded prefix, then ':', then continue
-	 * decoding the rest of colname, replacing _x003A_ with ':'.
+	 * Build the output: emit either the decoded prefix (when declared) or
+	 * the raw encoded prefix (when not), then ':', then the rest of the name
+	 * with subsequent _x003A_ sequences turned back into ':'.
 	 */
 	result = palloc(strlen(colname) + 1);
 	write = result;
-	memcpy(write, decoded_prefix.data, decoded_prefix.len);
-	write += decoded_prefix.len;
+	if (prefix_declared)
+	{
+		memcpy(write, decoded_prefix.data, decoded_prefix.len);
+		write += decoded_prefix.len;
+	}
+	else
+	{
+		memcpy(write, colname, raw_prefix_len);
+		write += raw_prefix_len;
+	}
 	pfree(decoded_prefix.data);
 
 	*write++ = ':';
