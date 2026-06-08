@@ -103,15 +103,6 @@ append_explain_info(QueryDesc *queryDesc, const char *queryString)
 	 */
 	oldcxt = MemoryContextSwitchTo(pltsql_estate->stmt_mcontext_parent);
 
-	if (queryDesc && queryDesc->totaltime)
-	{
-		/*
-		 * Make sure stats accumulation is done.  (Note: it's okay if several
-		 * levels of hook all do this.)
-		 */
-		InstrEndLoop(queryDesc->totaltime);
-	}
-
 	if (pltsql_estate->explain_infos)
 	{
 		ExplainInfo *last_einfo = (ExplainInfo *) llast(pltsql_estate->explain_infos);
