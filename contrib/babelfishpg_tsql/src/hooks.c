@@ -1503,24 +1503,20 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 		replace_params_in_plan_tree(queryDesc->plannedstmt->planTree, &context);
 	}
 
-	if (prev_ExecutorStart)
-		prev_ExecutorStart(queryDesc, ef);
-	else
-		standard_ExecutorStart(queryDesc, ef);
-
-	if (is_explain_analyze_mode() && !queryDesc->totaltime)
+	if (is_explain_analyze_mode() && !queryDesc->query_instr)
 	{
 		/*
 		 * Set up to track total elapsed time in ExecutorRun. Make sure the
 		 * space is allocated in the per-query context so it will go away at
 		 * ExecutorEnd.
 		 */
-		MemoryContext oldcxt;
-
-		oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
-		queryDesc->totaltime = InstrAlloc(INSTRUMENT_ALL);
-		MemoryContextSwitchTo(oldcxt);
+		queryDesc->query_instr_options |= INSTRUMENT_ALL;
 	}
+
+	if (prev_ExecutorStart)
+		prev_ExecutorStart(queryDesc, ef);
+	else
+		standard_ExecutorStart(queryDesc, ef);
 }
 
 static void
