@@ -6181,9 +6181,9 @@ pltsql_truncate_identifier(char *ident, int len, bool warn)
 		int		cliplen = pg_mbcliplen(ident, len, 128);
 
 		ereport(ERROR,
-			(errcode(ERRCODE_NAME_TOO_LONG),
-			errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.",
-				cliplen, ident)));
+				(errcode(ERRCODE_NAME_TOO_LONG),
+				 errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.",
+						cliplen, ident)));
 	}
 
 	if (tsql_is_database_or_server_collation_CI())

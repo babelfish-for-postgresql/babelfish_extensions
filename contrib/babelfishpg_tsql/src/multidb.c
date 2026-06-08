@@ -1202,9 +1202,9 @@ get_physical_schema_name_by_mode(char *db_name, const char *schema_name, Migrati
 		int		cliplen = pg_mbcliplen(schema_name, len, 128);
 
 		ereport(ERROR,
-			(errcode(ERRCODE_NAME_TOO_LONG),
-			errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.",
-				cliplen, schema_name)));
+				(errcode(ERRCODE_NAME_TOO_LONG),
+				 errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.",
+						cliplen, schema_name)));
 	}
 
 	/* always return a new copy */
