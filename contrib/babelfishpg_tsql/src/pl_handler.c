@@ -3079,7 +3079,7 @@ bbf_table_var_lookup(const char *relname, Oid relnamespace)
 	 * doesn't match. Short temp table names fit in the Name field and are
 	 * found by get_relname_relid above without needing this fallback.
 	 */
-	if (!OidIsValid(relid) && relname[0] == '#')
+	if (!OidIsValid(relid) && IS_TDS_CLIENT() && relname[0] == '#')
 	{
 		EphemeralNamedRelation enr = get_ENR(currentQueryEnv, relname, true);
 		if (enr)

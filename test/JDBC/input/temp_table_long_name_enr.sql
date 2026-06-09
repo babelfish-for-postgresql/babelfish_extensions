@@ -29,7 +29,8 @@ GO
 SELECT CASE WHEN OBJECT_ID('#long_temp_for_typed_object_id_test_exceeding_namedatalen_limit_x', 'U') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS test2_type_U
 GO
 
--- Type 'V' (view) should return NULL for a table
+-- Type 'V' (view) should ideally return NULL for a table, but OBJECT_ID type filtering
+-- for temp tables is a known pre-existing limitation (returns non-NULL regardless of type)
 SELECT CASE WHEN OBJECT_ID('#long_temp_for_typed_object_id_test_exceeding_namedatalen_limit_x', 'V') IS NULL THEN 'PASS' ELSE 'FAIL' END AS test2_type_V_null
 GO
 
