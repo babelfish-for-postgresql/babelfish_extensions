@@ -1162,6 +1162,41 @@ TdsResetLoginFlags()
  * Returns STATUS_OK or STATUS_ERROR, or might call ereport(FATAL) and
  * not return at all.
  */
+
+/*
+ * tds_truncate_identifier_md5
+ *
+ * Similar to pltsql_truncate_identifier, this is a TDS equivalent for
+ * cases where babelfishpg_tsql is not yet loaded (e.g., pre-auth user
+ * name truncation). Also reused for database name truncation.
+ */
+#define MD5_HASH_LEN 32
+
+static void
+tds_truncate_identifier_md5(char *ident, int len)
+{
+	char		md5[MD5_HASH_LEN + 1];
+	char		buf[NAMEDATALEN];
+	const char *errstr = NULL;
+	char	   *downcased = downcase_identifier(ident, len, false, false);
+
+	if (!pg_md5_hash(downcased, strlen(downcased), md5, &errstr))
+		ereport(FATAL,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not compute %s hash: %s", "MD5", errstr)));
+
+	len = pg_mbcliplen(ident, len, NAMEDATALEN - MD5_HASH_LEN - 1);
+	Assert(len + MD5_HASH_LEN < NAMEDATALEN);
+	memcpy(buf, ident, len);
+	memcpy(buf + len, md5, MD5_HASH_LEN);
+	buf[len + MD5_HASH_LEN] = '\0';
+
+	pfree(downcased);
+	memcpy(ident, buf, len + MD5_HASH_LEN + 1);
+}
+
+#undef MD5_HASH_LEN
+
 static int
 ProcessLoginInternal(Port *port)
 {
@@ -1260,31 +1295,10 @@ ProcessLoginInternal(Port *port)
 	 */
 	if (strlen(port->user_name) >= NAMEDATALEN)
 	{
-#define MD5_HASH_LEN 32
-		int			len = strlen(port->user_name);
-		char		md5[MD5_HASH_LEN + 1];
-		char		buf[NAMEDATALEN];
-		const char *errstr = NULL;
-		char	   *downcased = downcase_identifier(port->user_name, len, false, false);
+		tds_truncate_identifier_md5(port->user_name, strlen(port->user_name));
 
-		if (!pg_md5_hash(downcased, strlen(downcased), md5, &errstr))
-			ereport(FATAL,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("could not compute %s hash: %s", "MD5", errstr)));
-
-		len = pg_mbcliplen(port->user_name, len, NAMEDATALEN - MD5_HASH_LEN - 1);
-		Assert(len + MD5_HASH_LEN < NAMEDATALEN);
-		memcpy(buf, port->user_name, len);
-		memcpy(buf + len, md5, MD5_HASH_LEN);
-		buf[len + MD5_HASH_LEN] = '\0';
-
-		pfree(downcased);
-
-		pfree(port->user_name);
-		port->user_name = pstrdup(buf);
 		pfree(loginInfo->username);
-		loginInfo->username = pstrdup(buf);
-#undef MD5_HASH_LEN
+		loginInfo->username = pstrdup(port->user_name);
 	}
 
 	/*
@@ -2071,8 +2085,9 @@ TdsSetDbContext()
 			 * SQL injection.
 			 */
 			StartTransactionCommand();
-			truncate_identifier(loginInfo->database,
-								strlen(loginInfo->database), false);
+			if (strlen(loginInfo->database) >= NAMEDATALEN)
+				tds_truncate_identifier_md5(loginInfo->database,
+											strlen(loginInfo->database));
 			db_id = pltsql_plugin_handler_ptr->pltsql_get_database_oid(loginInfo->database);
 			CommitTransactionCommand();
 			MemoryContextSwitchTo(oldContext);
