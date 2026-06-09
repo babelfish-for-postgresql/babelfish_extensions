@@ -743,11 +743,8 @@ exec_stmt_push_result(PLtsql_execstate *estate,
 
 	Assert(stmt->query != NULL);
 
-	/*
-	 * Legacy INSERT EXEC path: handle naked SELECT stmt differently.
-	 * estate->insert_exec is only set when the new INSERT EXEC GUC is off.
-	 */
-	if (!pltsql_enable_new_insert_exec && estate->insert_exec)
+	/* Handle naked SELECT stmt differently for INSERT ... EXECUTE (legacy path). */
+	if (estate->insert_exec)
 		return exec_stmt_insert_execute_select(estate, stmt->query);
 
 	exec_run_select(estate, stmt->query, &portal);
@@ -756,7 +753,7 @@ exec_stmt_push_result(PLtsql_execstate *estate,
 	 * When INSERT EXEC is active (new path), redirect results to the temp
 	 * table instead of sending to client.
 	 */
-	if (pltsql_enable_new_insert_exec && pltsql_insert_exec_active())
+	if (pltsql_insert_exec_active())
 	{
 		receiver = CreateInsertExecDestReceiver();
 		receiver->rStartup(receiver, CMD_SELECT, portal->tupDesc);
@@ -815,7 +812,7 @@ exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_result *stmt
 	 * INSERT EXEC context check - redirect OUTPUT clause results to temp table
 	 * instead of sending to client.
 	 */
-	if (pltsql_enable_new_insert_exec && pltsql_insert_exec_active())
+	if (pltsql_insert_exec_active())
 	{
 		receiver = CreateInsertExecDestReceiver();
 		receiver->rStartup(receiver, CMD_SELECT, portal->tupDesc);
@@ -1200,7 +1197,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			stmt->target = (PLtsql_variable *) row;
 		}
 
-		if (!pltsql_enable_new_insert_exec && estate->insert_exec)
+		if (estate->insert_exec)
 		{
 			/*
 			 * For EXEC under INSERT ... EXECUTE, get the expected TupleDesc,
@@ -1292,7 +1289,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			}
 		}
 
-		if (!pltsql_enable_new_insert_exec && estate->insert_exec)
+		if (estate->insert_exec)
 		{
 			/*
 			 * For EXEC under INSERT ... EXECUTE, get the rows sent back by
@@ -3937,7 +3934,7 @@ execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamL
 	{
 		receiver = None_Receiver;
 	}
-	else if (pltsql_enable_new_insert_exec && pltsql_insert_exec_active())
+	else if (pltsql_insert_exec_active())
 	{
 		/*
 		 * INSERT EXEC context is active (new path) - redirect results to temp

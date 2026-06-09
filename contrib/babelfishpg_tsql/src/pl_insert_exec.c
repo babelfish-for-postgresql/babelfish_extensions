@@ -262,17 +262,15 @@ pltsql_set_insert_exec_context_info(const char *target_table)
 /*
  * Reset the global INSERT EXEC context to a clean state.
  *
- * Releases the target table lock, frees the heap-allocated target table name,
- * and zeroes every field. Used on both the normal exit and safety-net cleanup
- * paths. The string must be pfree'd before the memset, or memset alone would
- * leak it in TopMemoryContext.
+ * Frees the heap-allocated target table name and zeroes every field. Used on
+ * both the normal exit and safety-net cleanup paths. The target table's
+ * RowExclusiveLock is transaction-scoped and released automatically when the 
+ * implicit transaction commits or aborts. The string must be pfree'd before 
+ * the memset, or memset alone would leak it in TopMemoryContext.
  */
 void
 pltsql_insert_exec_reset_all(void)
 {
-	/* Release target table lock */
-	pltsql_insert_exec_close_target_table();
-
 	/* Free heap-allocated target table name before zeroing its pointer */
 	if (insert_exec_ctx.target_table)
 		pfree(insert_exec_ctx.target_table);
@@ -376,48 +374,6 @@ pltsql_insert_exec_open_target_table(const char *target_table,
 	}
 
 	/* Initialize the modification flag to false */
-	insert_exec_ctx.is_target_relation_modified = false;
-}
-
-/*
- * Close the target table that was held open during INSERT EXEC.
- * Called after the flush completes or on error cleanup.
- *
- * For regular tables: Release the RowExclusiveLock we acquired.
- * For temp tables: Just clear the OID (no lock was acquired).
- *
- * Note: We only release the lock if we're not in an aborted transaction state.
- * If the transaction was aborted, the lock has already been released.
- */
-void
-pltsql_insert_exec_close_target_table(void)
-{
-	if (OidIsValid(insert_exec_ctx.target_rel_oid))
-	{
-		const char *target = insert_exec_ctx.target_table;
-		bool is_temp_table = (target != NULL && (target[0] == '#' || target[0] == '@'));
-
-		/*
-		 * Only release the lock for regular tables (not temp tables).
-		 * Temp tables don't have locks to release.
-		 */
-		if (!is_temp_table && !IsAbortedTransactionBlockState())
-		{
-			PG_TRY();
-			{
-				UnlockRelationOid(insert_exec_ctx.target_rel_oid, RowExclusiveLock);
-			}
-			PG_CATCH();
-			{
-				FlushErrorState();
-				/* Ignore unlock failures - table may have been dropped */
-			}
-			PG_END_TRY();
-		}
-		insert_exec_ctx.target_rel_oid = InvalidOid;
-	}
-
-	/* Reset the modification flag */
 	insert_exec_ctx.is_target_relation_modified = false;
 }
 
@@ -1025,9 +981,6 @@ insert_exec_success_cleanup(PLtsql_execstate *estate, InsertExecInfo *info)
 	{
 		/* Flush temp table to target table */
 		flush_insert_exec_temp_table(estate, flush_schema, info->db_name, column_list);
-
-		/* Close target table after flush completes */
-		pltsql_insert_exec_close_target_table();
 	}
 	PG_CATCH();
 	{

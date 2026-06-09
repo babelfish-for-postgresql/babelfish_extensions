@@ -3622,17 +3622,6 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 			/* Call view dependency handling function */
 			handle_bbf_view_binding_on_object_drop(&obj, false);
 		}
-
-		/*
-		 * Detect DROP of the INSERT EXEC target table.
-		 * If the executed procedure drops the target table, we need to fail
-		 * the INSERT EXEC to prevent errors during flush.
-		 */
-		if (OidIsValid(insert_exec_ctx.target_rel_oid) &&
-			objectId == insert_exec_ctx.target_rel_oid)
-		{
-			insert_exec_ctx.is_target_relation_modified = true;
-		}
 	}
 	if (access == OAT_DROP && classId == ProcedureRelationId)
 	{
