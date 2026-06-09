@@ -1400,9 +1400,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFor_clause(TSqlParser::For
 		handle(INSTR_UNSUPPORTED_TSQL_FOR_BROWSE_CLAUSE, "FOR BROWSE", getLineAndPos(ctx->BROWSE()));
 	if (ctx->XML())
 	{
-		// RAW and PATH is supported
-		if (ctx->AUTO())
-			handle(INSTR_UNSUPPORTED_TSQL_XML_OPTION_AUTO, "FOR XML AUTO mode", getLineAndPos(ctx->AUTO()));
+		// RAW, PATH, and AUTO are supported
 		if (ctx->EXPLICIT())
 			handle(INSTR_UNSUPPORTED_TSQL_XML_OPTION_EXPLICIT, "FOR XML EXPLICIT mode", getLineAndPos(ctx->EXPLICIT()));
 		if (!ctx->XMLDATA().empty())
@@ -1520,10 +1518,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitId(TSqlParser::IdContext *
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitXml_func_arg(TSqlParser::Xml_func_argContext *ctx)
 {
-	if (ctx->QUERY())
-		handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML QUERY", getLineAndPos(ctx));
-	else if (ctx->MODIFY())
-		handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML MODIFY", getLineAndPos(ctx));
+	if (ctx->MODIFY())
+		handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 

@@ -3654,6 +3654,22 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 
 	if (access == OAT_POST_CREATE)
 		change_object_owner_if_db_owner();
+
+	/*
+	 * Detect schema changes to the INSERT EXEC target table and record them
+	 * via a flag rather than failing directly. This hook fires inside the DDL
+	 * execution context, not inside INSERT EXEC. Raising an error
+	 * here would propagate through the DDL stack and could be caught by a
+	 * TRY/CATCH block in the executing procedure, silently suppressing it.
+	 * The flag is checked at flush time in flush_insert_exec_temp_table, which
+	 * runs outside the procedure's execution context where the error cannot
+	 * be suppressed.
+	 */
+	if ((access == OAT_POST_ALTER || access == OAT_DROP) && classId == RelationRelationId)
+	{
+		if (OidIsValid(insert_exec_ctx.target_rel_oid) && objectId == insert_exec_ctx.target_rel_oid)
+			insert_exec_ctx.is_target_relation_modified = true;
+	}
 }
 
 static void

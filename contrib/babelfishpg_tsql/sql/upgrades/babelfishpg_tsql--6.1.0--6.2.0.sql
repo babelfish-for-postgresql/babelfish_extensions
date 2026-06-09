@@ -73,6 +73,12 @@ $$
     end;
 $$;
 
+-- helper function for XML QUERY(xpath)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT)
+RETURNS XML
+AS 'babelfishpg_tsql', 'bbf_xmlquery'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
 -- BABELFISH_FUNCTION_EXT (antlr_parse_cache)
 SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_cache_tree TEXT DEFAULT NULL;
@@ -104,6 +110,103 @@ LANGUAGE C VOLATILE PARALLEL RESTRICTED;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+
+-- Upgrade FOR XML aggregates from 7 args to 8 args (add auto_metadata)
+
+-- Deprecate and drop old aggregate (7 args) - tsql_select_for_xml_agg
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER AGGREGATE sys.tsql_select_for_xml_agg(anyelement, integer, text, boolean, text, boolean, boolean)
+    RENAME TO tsql_select_for_xml_agg_deprecated_in_6_2_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_agg_deprecated_in_5_7_0', 'anyelement, integer, text, boolean, text, boolean, boolean');
+
+-- Deprecate and drop old aggregate (7 args) - tsql_select_for_xml_text_agg
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER AGGREGATE sys.tsql_select_for_xml_text_agg(anyelement, integer, text, boolean, text, boolean, boolean)
+    RENAME TO tsql_select_for_xml_text_agg_deprecated_in_6_2_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_text_agg_deprecated_in_5_7_0', 'anyelement, integer, text, boolean, text, boolean, boolean');
+
+-- Deprecate and drop old function (8 args: state + 7 args) - after aggregates are gone
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.tsql_query_to_xml_sfunc(internal, anyelement, integer, text, boolean, text, boolean, boolean)
+    RENAME TO tsql_query_to_xml_sfunc_deprecated_in_6_2_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_sfunc_deprecated_in_5_7_0');
+
+-- Create new function with auto_metadata parameter (9 args: state + 8 args)
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
+    state INTERNAL,
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text,
+    elements boolean,
+    xsinil boolean,
+    auto_metadata text
+) RETURNS INTERNAL
+AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
+LANGUAGE C STABLE;
+
+-- Create new aggregate with auto_metadata parameter (8 args)
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text,
+    elements boolean,
+    xsinil boolean,
+    auto_metadata text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_ffunc
+);
+
+-- Create new aggregate with auto_metadata parameter (8 args)
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text,
+    elements boolean,
+    xsinil boolean,
+    auto_metadata text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_text_ffunc
+);
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

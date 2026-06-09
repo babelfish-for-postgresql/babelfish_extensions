@@ -146,7 +146,8 @@ BABEL-937
 forjson
 forjson-subquery
 forjson-datatypes
-forxml
+forxml-before-17_11-or-18_5
+forxml-auto-before-17_11-or-18_5
 forxml-path
 forxml-subquery
 BABEL-PROCID
