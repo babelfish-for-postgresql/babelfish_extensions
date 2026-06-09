@@ -182,6 +182,146 @@ GO
 CREATE TABLE #babel6434_test_temp_table_for_long_identifier_validation_that_exceeds_one_hundred_and_sixteen_charsxxxxxxxxxxxxxxxxxx (a int);
 GO
 
+-- TEMP TABLE with brackets (>116 chars - should fail)
+CREATE TABLE [#babel6434_test_temp_table_for_long_identifier_validation_that_exceeds_one_hundred_and_sixteen_charsxxxxxxxxxxxxxxxxxx] (a int);
+GO
+
+-- ============================================================
+-- BRACKETED IDENTIFIERS (>128 chars - should fail)
+-- ============================================================
+
+-- Table with brackets
+CREATE TABLE [babel6434_test_table_for_long_identifier_validation_that_exceeds_one_hundred_and_twenty_eight_characters_limit_in_babelfishxxxxxx] (a int);
+GO
+
+-- View with brackets
+CREATE VIEW [babel6434_test_view_for_long_identifier_validation_that_exceeds_one_hundred_and_twenty_eight_characters_limit_in_babelfish_xxxxxx] AS SELECT 1;
+GO
+
+-- Function with brackets
+CREATE FUNCTION [babel6434_test_function_for_long_identifier_validation_that_exceeds_one_hundred_twenty_eight_characters_limit_babelfishxxxxxxxxxx]() RETURNS INT AS BEGIN RETURN 1 END;
+GO
+
+-- Procedure with brackets
+CREATE PROCEDURE [babel6434_test_procedure_for_long_identifier_validation_that_exceeds_one_hundred_twenty_eight_characters_limit_babelfishxxxxxxxxx] AS BEGIN SELECT 1; END
+GO
+
+-- Column with brackets
+CREATE TABLE babel6434_bracket_col_test ([babel6434_test_column_for_long_identifier_validation_that_exceeds_one_hundred_twenty_eight_characters_limit_babelfish_xxxxxxxxxxx] int);
+GO
+
+-- Index with brackets
+CREATE TABLE babel6434_bracket_idx_test (a int);
+GO
+CREATE INDEX [babel6434_test_index_for_long_identifier_validation_that_exceeds_one_hundred_and_twenty_eight_characters_limit_babelfish_xxxxxxxx] ON babel6434_bracket_idx_test(a);
+GO
+DROP TABLE IF EXISTS babel6434_bracket_idx_test;
+GO
+
+-- Select Into with brackets
+CREATE TABLE babel6434_bracket_src (a int);
+GO
+SELECT * INTO [babel6434_test_selectinto_for_long_identifier_validation_that_exceeds_one_hundred_twenty_eight_characters_limit_babelfishxxxxxxxx] FROM babel6434_bracket_src;
+GO
+DROP TABLE IF EXISTS babel6434_bracket_src;
+GO
+
+-- Type with brackets
+CREATE TYPE [babel6434_test_type_for_long_identifier_validation_that_exceeds_one_hundred_and_twenty_eight_characters_limit_in_babelfish_xxxxxx] FROM INT;
+GO
+
+-- Trigger with brackets
+CREATE TABLE babel6434_bracket_trg_test (a int);
+GO
+CREATE TRIGGER [babel6434_test_trigger_for_long_identifier_validation_that_exceeds_one_hundred_twenty_eight_characters_limit_in_babelfishxxxxxxxx] ON babel6434_bracket_trg_test AFTER INSERT AS BEGIN END;
+GO
+DROP TABLE IF EXISTS babel6434_bracket_trg_test;
+GO
+
+-- Sequence with brackets
+CREATE SEQUENCE [babel6434_test_sequence_for_long_identifier_validation_that_exceeds_one_hundred_twenty_eight_characters_limit_babelfish_xxxxxxxxx];
+GO
+
+-- Primary Key Constraint with brackets
+CREATE TABLE babel6434_bracket_pk_test (id int, CONSTRAINT [babel6434_test_pk_constraint_for_long_identifier_validation_that_exceeds_one_hundred_twenty_eight_characters_limit_babelfishxxxxx] PRIMARY KEY (id));
+GO
+
+-- Check Constraint with brackets
+CREATE TABLE babel6434_bracket_chk_test (a int);
+GO
+ALTER TABLE babel6434_bracket_chk_test ADD CONSTRAINT [babel6434_test_check_constraint_for_long_identifier_validation_that_exceeds_one_hundred_twenty_eight_chars_limit_babelfishxxxxxxx] CHECK (a > 0);
+GO
+DROP TABLE IF EXISTS babel6434_bracket_chk_test;
+GO
+
+-- Unique Constraint with brackets
+CREATE TABLE babel6434_bracket_uq_test (c varchar(100));
+GO
+ALTER TABLE babel6434_bracket_uq_test ADD CONSTRAINT [babel6434_test_unique_constraint_for_long_identifier_validation_that_exceeds_one_hundred_twenty_eight_chars_limit_babelfishxxxxxx] UNIQUE (c);
+GO
+DROP TABLE IF EXISTS babel6434_bracket_uq_test;
+GO
+
+-- Schema with brackets
+CREATE SCHEMA [babel6434_test_schema_for_long_identifier_validation_that_exceeds_one_hundred_and_twenty_eight_characters_limit_babelfishxxxxxxxx];
+GO
+
+-- Table-Valued Function with brackets
+CREATE FUNCTION [babel6434_test_tvf_function_for_long_identifier_validation_that_exceeds_one_hundred_twenty_eight_characters_limit_babelfishxxxxxx]() RETURNS TABLE AS RETURN (SELECT 1 AS Value);
+GO
+
+-- Foreign Key Constraint with brackets
+CREATE TABLE babel6434_bracket_fk_ref (id int PRIMARY KEY);
+GO
+CREATE TABLE babel6434_bracket_fk_test (fk_id int, CONSTRAINT [babel6434_test_fk_constraint_for_long_identifier_validation_that_exceeds_one_hundred_twenty_eight_characters_limit_babelfishxxxxx] FOREIGN KEY (fk_id) REFERENCES babel6434_bracket_fk_ref(id));
+GO
+DROP TABLE IF EXISTS babel6434_bracket_fk_test;
+GO
+DROP TABLE IF EXISTS babel6434_bracket_fk_ref;
+GO
+
+-- Default Constraint with brackets
+CREATE TABLE babel6434_bracket_def_test (a int);
+GO
+ALTER TABLE babel6434_bracket_def_test ADD CONSTRAINT [babel6434_test_default_constraint_for_long_identifier_validation_that_exceeds_one_hundred_twenty_eight_chars_limit_bbfishxxxxxxxx] DEFAULT 0 FOR a;
+GO
+DROP TABLE IF EXISTS babel6434_bracket_def_test;
+GO
+
+-- Database with brackets
+CREATE DATABASE [babel6434_test_database_for_long_identifier_validation_that_exceeds_one_hundred_twenty_eight_characters_limit_babelfishxxxxxxxxxx];
+GO
+
+-- Login with brackets
+CREATE LOGIN [babel6434_test_login_for_long_identifier_validation_that_exceeds_one_hundred_and_twenty_eight_characters_limit_in_babelfishxxxxxx] WITH PASSWORD = '12345678';
+GO
+
+-- User with brackets
+CREATE USER [babel6434_test_user_for_long_identifier_validation_that_exceeds_one_hundred_and_twenty_eight_characters_limit_in_babelfishxxxxxxx];
+GO
+
+-- Role with brackets
+CREATE ROLE [babel6434_test_role_for_long_identifier_validation_that_exceeds_one_hundred_and_twenty_eight_characters_limit_in_babelfishxxxxxxx];
+GO
+
+-- Cursor with brackets
+DECLARE [babel6434_test_cursor_for_long_identifier_validation_that_exceeds_one_hundred_twenty_eight_characters_limit_babelfishxxxxxxxxxxxx] CURSOR FOR SELECT 1;
+GO
+
+-- Alias with brackets (>128 chars - should fail)
+SELECT 1 AS [babel6434_test_alias_for_long_identifier_validation_that_exceeds_one_hundred_and_twenty_eight_characters_limit_in_babelfishxxxxxx];
+GO
+
+-- Bracketed temp table with multibyte name (116 chars - should pass)
+CREATE TABLE [#babel6434_さささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささ] (a int);
+GO
+DROP TABLE IF EXISTS [#babel6434_さささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささ];
+GO
+
+-- Bracketed temp table with multibyte name (117 chars - should fail)
+CREATE TABLE [#babel6434_ささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささ] (a int);
+GO
+
 -- ============================================================
 -- ALIAS (>128 chars - should fail)
 -- ============================================================
@@ -205,7 +345,7 @@ GO
 CREATE FUNCTION babel6434_ううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううう() RETURNS INT AS BEGIN RETURN 1 END;
 GO
 
--- Temp table with multibyte name (116 chars - should pass)
+-- Temp table with multibyte name (116 chars - should pass, to be fixed with BABEL-6433 )
 CREATE TABLE #babel6434_さささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささ (a int);
 GO
 DROP TABLE IF EXISTS #babel6434_さささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささ;

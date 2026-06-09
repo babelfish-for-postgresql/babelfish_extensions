@@ -76,6 +76,7 @@
 					if (yyextra->literallen == 0)
 						yyerror("zero-length delimited identifier");
 					ident = litbufdup(yyscanner);
+					CHECK_LOCAL_TEMP_TABLE_LENGTH(ident);
 					if (yyextra->literallen >= NAMEDATALEN)
 						truncate_identifier(ident, yyextra->literallen, true);
 					yylval->str = ident;
@@ -152,16 +153,7 @@
 
 <tsql>{tsql_ttname}	{
 					SET_YYLLOC();
-					if (yytext[0] == '#' && yytext[1] != '#' &&
-						pg_mbstrlen(yytext) > 116)
-					{
-						int		cliplen = pg_mbcliplen(yytext, strlen(yytext), 116);
-
-						ereport(ERROR,
-								(errcode(ERRCODE_NAME_TOO_LONG),
-								 errmsg("The identifier that starts with '%.*s' is too long. Maximum length for local temporary table is 116.",
-										cliplen, yytext)));
-					}
+					CHECK_LOCAL_TEMP_TABLE_LENGTH(yytext);
 					yylval->str = pstrdup(yytext);
 					return IDENT;
 				}
