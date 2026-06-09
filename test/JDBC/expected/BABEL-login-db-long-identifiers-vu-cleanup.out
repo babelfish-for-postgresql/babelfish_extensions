@@ -18,3 +18,10 @@ GO
 -- Drop case-insensitive test login
 DROP LOGIN Case_Insensitive_Long_Login_Test_AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZzAaBbCcDdEeFfGgHhIiJjKkLlMmNn;
 GO
+
+-- Drop bracketed long logins
+DROP LOGIN [long_bracket_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstu];
+GO
+
+DROP LOGIN [Bracketed_Mixed_Case_Login_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsT];
+GO

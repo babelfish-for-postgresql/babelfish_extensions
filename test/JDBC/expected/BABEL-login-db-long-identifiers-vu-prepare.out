@@ -29,3 +29,11 @@ CREATE LOGIN Case_Insensitive_Long_Login_Test_AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQq
 GO
 
 
+
+-- Scenario 6: Bracketed long login with 128 chars (should pass)
+CREATE LOGIN [long_bracket_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstu] WITH PASSWORD = '123';
+GO
+
+-- Scenario 7: Bracketed long login with mixed case (128 chars, should pass)
+CREATE LOGIN [Bracketed_Mixed_Case_Login_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsT] WITH PASSWORD = '123';
+GO
