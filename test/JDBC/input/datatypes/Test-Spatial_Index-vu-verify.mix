@@ -1025,7 +1025,9 @@ WHERE si_geom_tbl.geom.STIntersects(
     geometry::STGeomFromText('POLYGON((115 115, 145 115, 145 145, 115 145, 115 115))', 4326)) = 1;
 GO
 
--- Section 38: STDistance RHS non-literal forms
+-- ============================================================
+-- SECTION 38: STDistance RHS NON-LITERAL FORMS
+-- ============================================================
 -- 38.1 Column as threshold
 ALTER TABLE si_geom_tbl ADD thr FLOAT NULL;
 GO
@@ -1051,7 +1053,9 @@ ALTER TABLE si_geom_tbl DROP COLUMN thr;
 GO
 
 
--- Section 39: Chained spatial methods
+-- ============================================================
+-- SECTION 39: CHAINED SPATIAL METHODS
+-- ============================================================
 SELECT COUNT(*) AS t39_chain FROM si_geom_tbl
 WHERE si_geom_tbl.geom.MakeValid().STIntersects(
     geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
@@ -1059,21 +1063,27 @@ GO
 -- Expected: should either work (count = 13) or produce a clean error
 -- Must NOT produce invalid SQL
 
--- Section 40: Two STIntersects on same column in one predicate
+-- ============================================================
+-- SECTION 40: TWO STIntersects ON SAME COLUMN IN ONE PREDICATE
+-- ============================================================
 SELECT COUNT(*) AS t40_two_spatial FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 300 100, 300 300, 100 300, 100 100))', 4326)) = 1
   AND si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((150 150, 250 150, 250 250, 150 250, 150 150))', 4326)) = 1;
 GO
 -- Expected: some int >= 0, both predicates should rewrite independently
 
--- Section 41: Schema-qualified column in predicate
+-- ============================================================
+-- SECTION 41: SCHEMA-QUALIFIED COLUMN IN PREDICATE
+-- ============================================================
 SELECT COUNT(*) AS t41_schema FROM master_dbo.si_geom_tbl
 WHERE master_dbo.si_geom_tbl.geom.STIntersects(
     geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
 GO
 -- Expected: 13 (same as unqualified). Catches col_ref extraction assuming 2-part name.
 
--- Section 42: Stress — large WKT polygon
+-- ============================================================
+-- SECTION 42: STRESS — LARGE WKT POLYGON
+-- ============================================================
 SELECT COUNT(*) AS t42_large_wkt FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(geometry::STGeomFromText(
   'POLYGON((100 100, 110 100, 120 100, 130 100, 140 100, 150 100, 160 100, 170 100, 180 100, 190 100, 200 100, 200 110, 200 120, 200 130, 200 140, 200 150, 200 160, 200 170, 200 180, 200 190, 200 200, 190 200, 180 200, 170 200, 160 200, 150 200, 140 200, 130 200, 120 200, 110 200, 100 200, 100 190, 100 180, 100 170, 100 160, 100 150, 100 140, 100 130, 100 120, 100 110, 100 100))',
@@ -1082,7 +1092,9 @@ GO
 -- Expected: 13 (same as simple 4-vertex polygon covering same area)
 
 
--- Section 43: Spatial call as GROUP BY key (no injection expected — aggregate context)
+-- ============================================================
+-- SECTION 43: SPATIAL CALL AS GROUP BY KEY (no injection expected — aggregate context)
+-- ============================================================
 SET BABELFISH_STATISTICS PROFILE OFF;
 GO
 SELECT t43_hit = CASE WHEN COUNT(*) > 0 THEN 'PASS' ELSE 'FAIL' END
@@ -1096,8 +1108,11 @@ WHERE hit = 1;
 GO
 -- Expected: PASS. Confirms rewriter doesn't inject where it shouldn't.
 
--- to their declared default (EH_STRICT).
-
+-- ============================================================
+-- SECTION 44: GUC RESET ON CONNECTION RESET
+-- Confirms session GUCs revert to their declared default (EH_STRICT)
+-- on sp_reset_connection.
+-- ============================================================
 -- 44.1 Confirm the non-default value set by vu-prepare is currently active
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_spatial_index';
 GO
@@ -1189,6 +1204,170 @@ GO
 SELECT COUNT(*) AS t47_master_leak
 FROM sys.spatial_indexes
 WHERE name IN ('sidx_multi_a_', 'sidx_multi_b_');
+GO
+
+-- ============================================================
+-- SECTION 48: NON-DETERMINISTIC THRESHOLD GUARD (STDistance prefilter)
+-- A volatile threshold (function call / subquery) is textually duplicated into
+-- both the ST_Expand prefilter and the STDistance recheck; if the two copies
+-- could diverge per row, matching rows are silently dropped. The injector must
+-- therefore SKIP the prefilter for such thresholds and fall back to the plain
+-- predicate. RAND() cannot be asserted on count, so these cases use deterministic
+-- thresholds that still take the rejection path (subquery / bare function call):
+-- the captured plan must show NO sys.&& / sys.ST_Expand, and the counts must
+-- match the literal-equivalent predicate.
+-- ============================================================
+-- Re-disable cost/timing in the plan output: SECTION 44's sp_reset_connection
+-- reverts these GUCs to their defaults, and cost/timing values are not
+-- deterministic across runs.
+SELECT set_config('babelfishpg_tsql.explain_costs',   'off', false)
+SELECT set_config('babelfishpg_tsql.explain_timing',  'off', false)
+SELECT set_config('babelfishpg_tsql.explain_summary', 'off', false)
+SELECT set_config('babelfishpg_tsql.explain_buffers', 'off', false)
+SELECT set_config('enable_seqscan', 'off', false)
+GO
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- 48.1 Subquery threshold: prefilter must NOT be injected (no &&/ST_Expand).
+SELECT COUNT(*) AS t48_subq FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < (SELECT 100);
+GO
+
+-- 48.2 Function-call threshold: prefilter must NOT be injected (no &&/ST_Expand).
+SELECT COUNT(*) AS t48_func FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < ABS(-100);
+GO
+
+-- 48.3 T-SQL session global (@@ROWCOUNT) buried in arithmetic: prefilter must
+-- NOT be injected. @@ROWCOUNT has no parens and is not a subquery, so it bypasses
+-- those checks and is caught by the dedicated @@-global guard. SELECT TOP 0 first
+-- pins @@ROWCOUNT = 0 so the threshold is a deterministic 100 (count == < 100).
+SELECT TOP 0 id FROM si_geom_tbl;
+SELECT COUNT(*) AS t48_global FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < 100 + @@ROWCOUNT;
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+-- 48.4 Correctness: every guarded form must equal the literal-threshold count.
+DECLARE @subq INT, @func INT, @glob INT, @lit INT;
+SELECT @subq = COUNT(*) FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < (SELECT 100);
+SELECT @func = COUNT(*) FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < ABS(-100);
+SELECT TOP 0 id FROM si_geom_tbl;
+SELECT @glob = COUNT(*) FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < 100 + @@ROWCOUNT;
+SELECT @lit = COUNT(*) FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STDistance(geometry::STGeomFromText('POINT(500 500)', 4326)) < 100;
+SELECT CASE WHEN @subq = @lit AND @func = @lit AND @glob = @lit THEN 'PASS' ELSE 'FAIL' END AS t48_equiv;
+GO
+
+-- ============================================================
+-- SECTION 49: PREDICATE-CONTEXT GUARD — no bbox injection inside CASE WHEN
+-- A spatial method inside a CASE WHEN branch is not index-sargable: PostgreSQL
+-- cannot push the && into an index scan inside a CASE expression. The injector
+-- must therefore skip the prefilter there (plan shows NO sys.&&), while a plain
+-- WHERE in the same statement must STILL inject. The decision is taken at the
+-- nearest enclosing search_condition, so a spatial predicate in a subquery's own
+-- WHERE stays eligible even when the subquery is nested inside an outer CASE.
+-- ============================================================
+SELECT set_config('enable_seqscan', 'off', false)
+GO
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
+
+-- 49.1 Plain WHERE: prefilter MUST be injected (baseline, sys.&& present).
+SELECT COUNT(*) AS t49_where FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
+GO
+
+-- 49.2 CASE WHEN in WHERE: prefilter must NOT be injected (no sys.&&).
+SELECT COUNT(*) AS t49_case FROM si_geom_tbl
+WHERE (CASE WHEN si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1 THEN 1 ELSE 0 END) = 1;
+GO
+
+-- 49.3 Spatial predicate in a subquery's own WHERE: prefilter MUST still inject
+-- (sys.&& present) — the nearest search_condition is the subquery's, not the CASE.
+SELECT COUNT(*) AS t49_subq FROM (
+  SELECT id FROM si_geom_tbl
+  WHERE si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1
+) sub;
+GO
+
+-- 49.4 IIF(...) — its condition is a search_condition but IIF compiles to a CASE,
+-- so it is not index-sargable: prefilter must NOT be injected (no sys.&&).
+SELECT COUNT(*) AS t49_iif FROM si_geom_tbl
+WHERE IIF(si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1, 1, 0) = 1;
+GO
+
+-- 49.5 Simple CASE (CASE <expr> WHEN ...): the spatial method is the switch
+-- expression, not a search_condition. Injection here is both useless and WRONG
+-- (it would splice a boolean AND into a scalar 'bit' position -> "argument of AND
+-- must be type boolean"). Must NOT inject; the query must run cleanly (no error).
+SELECT COUNT(*) AS t49_simplecase FROM si_geom_tbl
+WHERE (CASE si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) WHEN 1 THEN 1 ELSE 0 END) = 1;
+GO
+
+-- 49.6 CASE-like scalar functions (COALESCE / ISNULL / NULLIF) take the spatial
+-- method as a scalar argument, exactly like simple CASE: injection must NOT
+-- happen (no sys.&&) and the query must run cleanly. These previously errored
+-- with "argument of AND must be type boolean, not bit".
+SELECT COUNT(*) AS t49_coalesce FROM si_geom_tbl
+WHERE COALESCE(si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)), 0) = 1;
+GO
+SELECT COUNT(*) AS t49_isnull FROM si_geom_tbl
+WHERE ISNULL(si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)), 0) = 1;
+GO
+SELECT COUNT(*) AS t49_nullif FROM si_geom_tbl
+WHERE NULLIF(si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)), 0) = 1;
+GO
+
+-- 49.8 Arithmetic wrapper on the bit result (col.STIntersects(...) + 0): the
+-- method is not the direct comparison operand, so prefilter must NOT be injected
+-- (no sys.&&). This previously errored with "argument of AND must be type boolean,
+-- not integer".
+SELECT COUNT(*) AS t49_arith FROM si_geom_tbl
+WHERE (si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) + 0) = 1;
+GO
+
+-- 49.9 Parenthesized operand ((col.STIntersects(...)) = 1): the "= 1" sits OUTSIDE
+-- the parens, so injecting inside them would leave a bare "(col && arg) AND
+-- STIntersects(...)" that fails to type-check (boolean AND bit). Prefilter must
+-- therefore NOT be injected (no sys.&&); the bare predicate runs cleanly and
+-- returns the same count as the plain WHERE.
+SELECT COUNT(*) AS t49_paren FROM si_geom_tbl
+WHERE (si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326))) = 1;
+GO
+
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+
+-- 49.10 Correctness: every non-sargable wrapper form (CASE WHEN, IIF, simple CASE,
+-- COALESCE, ISNULL, NULLIF, arithmetic) AND the parenthesized direct form must all
+-- return the same count as the plain WHERE.
+DECLARE @w INT, @c INT, @i INT, @s INT, @co INT, @is INT, @nu INT, @ar INT, @pa INT;
+SELECT @w = COUNT(*) FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
+SELECT @c = COUNT(*) FROM si_geom_tbl
+WHERE (CASE WHEN si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1 THEN 1 ELSE 0 END) = 1;
+SELECT @i = COUNT(*) FROM si_geom_tbl
+WHERE IIF(si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1, 1, 0) = 1;
+SELECT @s = COUNT(*) FROM si_geom_tbl
+WHERE (CASE si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) WHEN 1 THEN 1 ELSE 0 END) = 1;
+SELECT @co = COUNT(*) FROM si_geom_tbl
+WHERE COALESCE(si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)), 0) = 1;
+SELECT @is = COUNT(*) FROM si_geom_tbl
+WHERE ISNULL(si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)), 0) = 1;
+SELECT @nu = COUNT(*) FROM si_geom_tbl
+WHERE NULLIF(si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)), 0) = 1;
+SELECT @ar = COUNT(*) FROM si_geom_tbl
+WHERE (si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) + 0) = 1;
+SELECT @pa = COUNT(*) FROM si_geom_tbl
+WHERE (si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326))) = 1;
+SELECT CASE WHEN @w = @c AND @w = @i AND @w = @s AND @w = @co AND @w = @is AND @w = @nu AND @w = @ar AND @w = @pa THEN 'PASS' ELSE 'FAIL' END AS t49_case_equiv;
 GO
 
 
