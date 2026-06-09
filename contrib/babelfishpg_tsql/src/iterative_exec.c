@@ -1115,6 +1115,22 @@ ignore_catch_block_for_unmapped_error(PLtsql_execstate *estate)
 	return false;
 }
 
+/*
+ * When a TRY-CATCH is inside the procedure executed by an INSERT EXEC, the
+ * INSERT EXEC is still in progress. Column/datatype mismatch errors must roll
+ * back every buffered row, so they bypass the CATCH block and are re-thrown.
+ */
+static
+bool
+ignore_catch_block_for_insert_exec(PLtsql_execstate *estate)
+{
+	if (pltsql_insert_exec_error_at_trycatch_level() || !pltsql_insert_exec_active())
+		return false;
+
+	return (estate->cur_error->error != NULL &&
+			estate->cur_error->error->sqlerrcode == ERRCODE_DATATYPE_MISMATCH);
+}
+
 /* Cases where transaction is no longer committable */
 static
 bool
@@ -1333,7 +1349,6 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		if (!pltsql_implicit_transactions &&
 			is_batch_command(stmt) &&
 			!is_part_of_pltsql_trigger(estate) &&
-			!pltsql_insert_exec_active() &&
 			before_tran_count != NestedTranCount)
 			ereport(ERROR,
 					(errcode(ERRCODE_T_R_INTEGRITY_CONSTRAINT_VIOLATION),
@@ -1371,7 +1386,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			}
 			else if (!IsTransactionBlockActive())
 			{
-				if (is_part_of_pltsql_trycatch_block(estate) && !pltsql_insert_exec_active())
+				if (is_part_of_pltsql_trycatch_block(estate))
 				{
 					HOLD_INTERRUPTS();
 					elog(DEBUG1, "TSQL TXN PG semantics : Rollback current transaction");
@@ -1604,20 +1619,9 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 					estate->cur_error->severity = exec_state_call_stack->error_data.error_severity;
 					estate->cur_error->state = exec_state_call_stack->error_data.error_state;
 
-					/*
-					 * If a TRY-CATCH is inside the executed procedure, INSERT
-					 * EXEC is still in progress. Re-throw column mismatch errors
-					 * to roll back all rows. Other errors (e.g., division by
-					 * zero) are caught by TRY-CATCH, preserving rows inserted
-					 * before the error.
-					 */
-					if (!pltsql_insert_exec_error_at_trycatch_level() &&
-						pltsql_insert_exec_active())
-					{
-						if (estate->cur_error->error != NULL &&
-							estate->cur_error->error->sqlerrcode == ERRCODE_DATATYPE_MISMATCH)
-							ReThrowError(estate->cur_error->error);
-					}
+					/* INSERT EXEC: re-throw errors that must abort the whole flush. */
+					if (ignore_catch_block_for_insert_exec(estate))
+						ReThrowError(estate->cur_error->error);
 
 					/* Goto error handling blocks */
 					*pc = err_handler_pc - 1;	/* same as how goto handles PC */

@@ -18,7 +18,6 @@
 #include "storage/lock.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
-#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/fmgroids.h"
@@ -134,24 +133,19 @@ PLTsqlProcessTransaction(Node *parsetree,
 				 * blocked if it would make @@TRANCOUNT go from 1 to 0. If the
 				 * procedure did BEGIN TRAN first (@@TRANCOUNT = 2), then COMMIT
 				 * is allowed (@@TRANCOUNT goes from 2 to 1).
+				 *
+				 * INSERT EXEC detection differs by path: the new path uses the
+				 * global context (pltsql_insert_exec_active), the legacy path
+				 * the per-estate flag (estate->insert_exec).
 				 */
-				if (pltsql_enable_new_insert_exec)
-				{
-					if (pltsql_insert_exec_active() && NestedTranCount <= 1)
-						ereport(ERROR,
-								(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-								 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
-				}
-				else
-				{
-					if (exec_state_call_stack &&
-						exec_state_call_stack->estate &&
-						exec_state_call_stack->estate->insert_exec &&
-						NestedTranCount <= 1)
-						ereport(ERROR,
-								(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-								 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
-				}
+				if (((pltsql_insert_exec_active()) ||
+					 (exec_state_call_stack &&
+					  exec_state_call_stack->estate &&
+					  exec_state_call_stack->estate->insert_exec)) &&
+					NestedTranCount <= 1)
+					ereport(ERROR,
+							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
 
 				PLTsqlCommitTransaction(qc, stmt->chain);
 			}
@@ -162,23 +156,18 @@ PLTsqlProcessTransaction(Node *parsetree,
 				/*
 				 * Block ROLLBACK during INSERT EXEC.
 				 * ROLLBACK is not allowed within an INSERT-EXEC statement.
+				 *
+				 * INSERT EXEC detection differs by path: the new path uses the
+				 * global context (pltsql_insert_exec_active), the legacy path
+				 * the per-estate flag (estate->insert_exec).
 				 */
-				if (pltsql_enable_new_insert_exec)
-				{
-					if (pltsql_insert_exec_active())
-						ereport(ERROR,
-								(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-								 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
-				}
-				else
-				{
-					if (exec_state_call_stack &&
-						exec_state_call_stack->estate &&
-						exec_state_call_stack->estate->insert_exec)
-						ereport(ERROR,
-								(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-								 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
-				}
+				if ((pltsql_insert_exec_active()) ||
+					(exec_state_call_stack &&
+					 exec_state_call_stack->estate &&
+					 exec_state_call_stack->estate->insert_exec))
+					ereport(ERROR,
+							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+							 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
 				PLTsqlRollbackTransaction(txnName, qc, stmt->chain);
 			}
 			break;

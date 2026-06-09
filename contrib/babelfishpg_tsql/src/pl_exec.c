@@ -4858,8 +4858,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	 * Only validate inside TRY blocks; system procedures like sp_columns
 	 * have internal SELECTs with varying column counts outside TRY blocks.
 	 */
-	if (pltsql_enable_new_insert_exec &&
-		pltsql_insert_exec_active() &&
+	if (pltsql_insert_exec_active() &&
 		is_part_of_pltsql_trycatch_block(estate))
 	{
 		if (stmt->sqlstmt && stmt->sqlstmt->query)
@@ -4870,12 +4869,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	PG_TRY();
 	{
-		/*
-		 * Legacy INSERT EXEC path: handle naked SELECT stmt differently.
-		 * estate->insert_exec is only set when the new INSERT EXEC GUC is off.
-		 */
-		if (!pltsql_enable_new_insert_exec &&
-			stmt->need_to_push_result && estate->insert_exec)
+		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
+		if (stmt->need_to_push_result && estate->insert_exec)
 		{
 			int			ret = exec_stmt_insert_execute_select(estate, expr);
 
@@ -5293,7 +5288,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			support_tsql_trans &&
 			(enable_txn_in_triggers || estate->trigdata == NULL) &&
 			!ro_func &&
-			(pltsql_enable_new_insert_exec ? !pltsql_insert_exec_active() : !estate->insert_exec))
+			!pltsql_insert_exec_active() && !estate->insert_exec)
 		{
 			commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED));
 
