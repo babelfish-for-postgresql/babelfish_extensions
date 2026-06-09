@@ -9318,7 +9318,8 @@ bbf_match_opclause_to_indexcol(PlannerInfo *root,
 		OpExpr	   *clause = (OpExpr *) rinfo->clause;
 
 		if (list_length(clause->args) == 2 &&
-			clause->opno == Int4EqualOperator)
+			clause->opno == Int4EqualOperator &&
+			index->opcintype[indexcol] == OIDOID)
 		{
 			Node	   *leftop = (Node *) linitial(clause->args);
 			Node	   *rightop = (Node *) lsecond(clause->args);
