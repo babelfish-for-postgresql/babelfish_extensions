@@ -1166,9 +1166,10 @@ TdsResetLoginFlags()
 /*
  * tds_truncate_identifier_md5
  *
- * Similar to pltsql_truncate_identifier, this is a TDS equivalent for
- * cases where babelfishpg_tsql is not yet loaded (e.g., pre-auth user
- * name truncation). Also reused for database name truncation.
+ * Truncate an identifier exceeding NAMEDATALEN using clip + MD5 hash,
+ * matching the behavior of pltsql_truncate_identifier for CI_AS collations.
+ * Used for pre-auth user name truncation (where the tsql hook is unavailable)
+ * and for database name truncation (for consistency with the stored form).
  */
 #define MD5_HASH_LEN 32
 
@@ -1178,7 +1179,11 @@ tds_truncate_identifier_md5(char *ident, int len)
 	char		md5[MD5_HASH_LEN + 1];
 	char		buf[NAMEDATALEN];
 	const char *errstr = NULL;
-	char	   *downcased = downcase_identifier(ident, len, false, false);
+	char	   *downcased;
+
+	Assert(len >= NAMEDATALEN);
+
+	downcased = downcase_identifier(ident, len, false, false);
 
 	if (!pg_md5_hash(downcased, strlen(downcased), md5, &errstr))
 		ereport(FATAL,
@@ -1290,8 +1295,7 @@ ProcessLoginInternal(Port *port)
 	 * truncation (clip + MD5 hash) so the result matches the role name
 	 * stored in the pg catalog. We cannot use truncate_identifier_hook here
 	 * because babelfishpg_tsql is not yet loaded at this stage.
-	 * Database name truncation is handled later in TdsSetDbContext()
-	 * where the hook is available.
+	 * Database name truncation is handled similarly in TdsSetDbContext().
 	 */
 	if (strlen(port->user_name) >= NAMEDATALEN)
 	{
