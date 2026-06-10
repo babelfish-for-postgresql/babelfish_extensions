@@ -2975,15 +2975,7 @@ downcase_truncate_split_object_name(char *four_part_object_name, char **server_n
 	truncate_tsql_identifier(temp_server_name);
 	truncate_tsql_identifier(temp_db_name);
 	truncate_tsql_identifier(temp_schema_name);
-	
-	/*
-	 * Do not truncate temp table names (starting with '#') since ENR stores the
-	 * full name. The {tsql_ttname} scanner rule preserves temp table names without
-	 * truncation, so the ENR entry uses the original untruncated name. Applying
-	 * hash-based truncation here would produce a name that doesn't match the ENR.
-	 */
-	if (!(IS_TDS_CLIENT() && temp_object_name[0] == '#'))
-		truncate_tsql_identifier(temp_object_name);
+	truncate_tsql_identifier(temp_object_name);
 
 	if (server_name != NULL)
 		*server_name = temp_server_name;

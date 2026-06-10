@@ -76,8 +76,7 @@
 					if (yyextra->literallen == 0)
 						yyerror("zero-length delimited identifier");
 					ident = litbufdup(yyscanner);
-					/* Skip truncation for #temp table names — ENR stores full name */
-					if (yyextra->literallen >= NAMEDATALEN && ident[0] != '#')
+					if (yyextra->literallen >= NAMEDATALEN)
 						truncate_identifier(ident, yyextra->literallen, true);
 					yylval->str = ident;
 					/* BABEL-1802 We removed definition of sys.smallint in order
