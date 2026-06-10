@@ -4332,6 +4332,7 @@ object_type_to_code(int type)
 		case OBJECT_TYPE_TABLE_TYPE:						return "TT";
 		case OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT:			return "F ";
 		case OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT:			return "PK";
+		case OBJECT_TYPE_UNIQUE_CONSTRAINT:					return "UQ";
 		case OBJECT_TYPE_CHECK_CONSTRAINT:					return "C ";
 		case OBJECT_TYPE_DEFAULT_CONSTRAINT:				return "D ";
 		case OBJECT_TYPE_TSQL_STORED_PROCEDURE:				return "P ";
@@ -4347,7 +4348,8 @@ object_type_to_code(int type)
 /*
  * get_object_from_pg_class - Look up object in pg_class (tables, views, sequences).
  *
- * Returns true if found. Populates type/schema_id, and object_name if non-NULL.
+ * Returns true if OID exists in this catalog (regardless of ACL result).
+ * Output params are only populated when ACL check passes.
  */
 static bool
 get_object_from_pg_class(Oid object_id, Oid user_id, int *type,
@@ -4511,7 +4513,8 @@ get_object_from_pg_proc(Oid object_id, Oid user_id, int *type,
 /*
  * get_object_from_pg_trigger - Look up object in pg_trigger (DML triggers).
  *
- * Returns true if found. Populates type/schema_id, and object_name if non-NULL.
+ * Returns true if OID exists in this catalog (regardless of ACL result).
+ * Output params are only populated when ACL check passes.
  */
 static bool
 get_object_from_pg_trigger(Oid object_id, Oid user_id, int *type,
@@ -4559,7 +4562,8 @@ get_object_from_pg_trigger(Oid object_id, Oid user_id, int *type,
 /*
  * get_object_from_pg_attrdef - Look up object in pg_attrdef (default constraints).
  *
- * Returns true if found. Populates type/schema_id, and object_name if non-NULL.
+ * Returns true if OID exists in this catalog (regardless of ACL result).
+ * Output params are only populated when ACL check passes.
  */
 static bool
 get_object_from_pg_attrdef(Oid object_id, Oid user_id, int *type,
@@ -4682,6 +4686,8 @@ get_object_from_pg_constraint(Oid object_id, Oid user_id, int *type,
 			 */
 			else if (con->contype == 'c' && con->conrelid != 0)
 				*type = OBJECT_TYPE_CHECK_CONSTRAINT;
+			else if (con->contype == 'u')
+				*type = OBJECT_TYPE_UNIQUE_CONSTRAINT;
 		}
 
 		ReleaseSysCache(tuple);
