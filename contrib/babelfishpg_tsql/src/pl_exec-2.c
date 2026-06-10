@@ -4392,8 +4392,8 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 	{
 		int		cliplen = pg_mbcliplen(partition_function_name, strlen(partition_function_name), 128);
 
-		ereport(ERROR, 
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		ereport(ERROR,
+				(errcode(ERRCODE_NAME_TOO_LONG),
 				 errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.",
 						cliplen, partition_function_name)));
 	}
