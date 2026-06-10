@@ -9387,7 +9387,9 @@ maybe_inject_spatial_distance_filter(const std::string &col_ref, const std::stri
 	}
 
 	/* Parenthesize only the && term; the comparison op/RHS is appended by the
-	 * surrounding predicate, so a full wrap would mis-bind it (see bbox filter note). */
+	 * surrounding predicate, so a full wrap would mis-bind it (see bbox filter note).
+	 * Result: (col OPERATOR(sys.&&) sys.ST_Expand(arg, CAST(d AS float8))) AND rewritten_call
+	 * (the trailing ")))" closes CAST, ST_Expand, and the && wrap respectively). */
 	return "(" + col_ref + " OPERATOR(sys.&&) sys.ST_Expand(" + first_arg + ", " + "CAST(" + quoted_distance + " AS float8))) AND " + rewritten_call;
 }
 

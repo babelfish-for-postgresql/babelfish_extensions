@@ -11819,21 +11819,29 @@ int
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t48_subq FROM si_geom_tbl
 WHERE STDistance(geometry__STGeomFromText('POINT(500 500)', 4326),si_geom_tbl.geom) < (SELECT 100)
-Aggregate (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
-  ->  Seq Scan on si_geom_tbl (actual rows=37 loops=1)
-        Filter: (stdistance('0101000020E61000000000000000407F400000000000407F40'::geometry, geom) < ((InitPlan 1).col1)::double precision)
-        Rows Removed by Filter: 968
+  ->  Aggregate (actual rows=1 loops=1)
+        ->  Seq Scan on si_geom_tbl (actual rows=37 loops=1)
+              Filter: (stdistance('0101000020E61000000000000000407F400000000000407F40'::geometry, geom) < ((InitPlan 1).col1)::double precision)
+              Rows Removed by Filter: 968
 ~~END~~
 
 
@@ -11849,19 +11857,27 @@ int
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t48_func FROM si_geom_tbl
 WHERE STDistance(geometry__STGeomFromText('POINT(500 500)', 4326),si_geom_tbl.geom) < ABS(-100)
-Aggregate (actual rows=1 loops=1)
-  ->  Seq Scan on si_geom_tbl (actual rows=37 loops=1)
-        Filter: (stdistance('0101000020E61000000000000000407F400000000000407F40'::geometry, geom) < '100'::double precision)
-        Rows Removed by Filter: 968
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Aggregate (actual rows=1 loops=1)
+        ->  Seq Scan on si_geom_tbl (actual rows=37 loops=1)
+              Filter: (stdistance('0101000020E61000000000000000407F400000000000407F40'::geometry, geom) < '100'::double precision)
+              Rows Removed by Filter: 968
 ~~END~~
 
 
@@ -11880,8 +11896,12 @@ int
 ~~START~~
 text
 Query Text: SELECT TOP 0 id FROM si_geom_tbl
-Limit (actual rows=0 loops=1)
-  ->  Seq Scan on si_geom_tbl (never executed)
+Gather (actual rows=0 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Limit (actual rows=0 loops=1)
+        ->  Seq Scan on si_geom_tbl (never executed)
 ~~END~~
 
 ~~START~~
@@ -11892,9 +11912,13 @@ int
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
@@ -11965,17 +11989,25 @@ int
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
@@ -11983,12 +12015,15 @@ text
 Query Text: SELECT COUNT(*) AS t49_where FROM si_geom_tbl
 WHERE (si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) AND STIntersects(geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
 Aggregate (actual rows=1 loops=1)
-  ->  Bitmap Heap Scan on si_geom_tbl (actual rows=13 loops=1)
-        Recheck Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
-        Filter: (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 1)
-        Heap Blocks: exact=3
-        ->  Bitmap Index Scan on si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f (actual rows=13 loops=1)
-              Index Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
+  ->  Gather (actual rows=13 loops=1)
+        Workers Planned: 3
+        Workers Launched: 3
+        ->  Parallel Bitmap Heap Scan on si_geom_tbl (actual rows=3 loops=4)
+              Recheck Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
+              Filter: (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 1)
+              Heap Blocks: exact=3
+              ->  Bitmap Index Scan on si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f (actual rows=13 loops=1)
+                    Index Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
 ~~END~~
 
 
@@ -12004,19 +12039,27 @@ int
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t49_case FROM si_geom_tbl
 WHERE (CASE WHEN STIntersects(geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1 THEN 1 ELSE 0 END) = 1
-Aggregate (actual rows=1 loops=1)
-  ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
-        Filter: (CASE WHEN (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 1) THEN 1 ELSE 0 END = 1)
-        Rows Removed by Filter: 992
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Aggregate (actual rows=1 loops=1)
+        ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
+              Filter: (CASE WHEN (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 1) THEN 1 ELSE 0 END = 1)
+              Rows Removed by Filter: 992
 ~~END~~
 
 
@@ -12035,17 +12078,25 @@ int
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
@@ -12055,12 +12106,15 @@ Query Text: SELECT COUNT(*) AS t49_subq FROM (
   WHERE (si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) AND STIntersects(geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
 ) sub
 Aggregate (actual rows=1 loops=1)
-  ->  Bitmap Heap Scan on si_geom_tbl (actual rows=13 loops=1)
-        Recheck Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
-        Filter: (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 1)
-        Heap Blocks: exact=3
-        ->  Bitmap Index Scan on si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f (actual rows=13 loops=1)
-              Index Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
+  ->  Gather (actual rows=13 loops=1)
+        Workers Planned: 3
+        Workers Launched: 3
+        ->  Parallel Bitmap Heap Scan on si_geom_tbl (actual rows=3 loops=4)
+              Recheck Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
+              Filter: (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 1)
+              Heap Blocks: exact=3
+              ->  Bitmap Index Scan on si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f (actual rows=13 loops=1)
+                    Index Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
 ~~END~~
 
 
@@ -12077,19 +12131,27 @@ int
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t49_iif FROM si_geom_tbl
 WHERE IIF(STIntersects(geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1, 1, 0) = 1
-Aggregate (actual rows=1 loops=1)
-  ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
-        Filter: (CASE WHEN (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 1) THEN 1 ELSE 0 END = 1)
-        Rows Removed by Filter: 992
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Aggregate (actual rows=1 loops=1)
+        ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
+              Filter: (CASE WHEN (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 1) THEN 1 ELSE 0 END = 1)
+              Rows Removed by Filter: 992
 ~~END~~
 
 
@@ -12108,19 +12170,27 @@ int
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t49_simplecase FROM si_geom_tbl
 WHERE (CASE STIntersects(geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) WHEN 1 THEN 1 ELSE 0 END) = 1
-Aggregate (actual rows=1 loops=1)
-  ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
-        Filter: (CASE stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) WHEN 1 THEN 1 ELSE 0 END = 1)
-        Rows Removed by Filter: 992
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Aggregate (actual rows=1 loops=1)
+        ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
+              Filter: (CASE stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) WHEN 1 THEN 1 ELSE 0 END = 1)
+              Rows Removed by Filter: 992
 ~~END~~
 
 
@@ -12139,19 +12209,27 @@ int
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t49_coalesce FROM si_geom_tbl
 WHERE COALESCE(STIntersects(geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom), 0) = 1
-Aggregate (actual rows=1 loops=1)
-  ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
-        Filter: (COALESCE((stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom))::integer, 0) = 1)
-        Rows Removed by Filter: 992
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Aggregate (actual rows=1 loops=1)
+        ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
+              Filter: (COALESCE((stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom))::integer, 0) = 1)
+              Rows Removed by Filter: 992
 ~~END~~
 
 SELECT COUNT(*) AS t49_isnull FROM si_geom_tbl
@@ -12165,19 +12243,27 @@ int
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t49_isnull FROM si_geom_tbl
 WHERE ISNULL(STIntersects(geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom), 0) = 1
-Aggregate (actual rows=1 loops=1)
-  ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
-        Filter: (COALESCE(stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom), '0'::"bit") = 1)
-        Rows Removed by Filter: 992
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Aggregate (actual rows=1 loops=1)
+        ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
+              Filter: (COALESCE(stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom), '0'::"bit") = 1)
+              Rows Removed by Filter: 992
 ~~END~~
 
 SELECT COUNT(*) AS t49_nullif FROM si_geom_tbl
@@ -12191,19 +12277,27 @@ int
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t49_nullif FROM si_geom_tbl
 WHERE NULLIF(STIntersects(geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom), 0) = 1
-Aggregate (actual rows=1 loops=1)
-  ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
-        Filter: (NULLIF(stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom), 0) = 1)
-        Rows Removed by Filter: 992
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Aggregate (actual rows=1 loops=1)
+        ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
+              Filter: (NULLIF(stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom), 0) = 1)
+              Rows Removed by Filter: 992
 ~~END~~
 
 
@@ -12222,19 +12316,27 @@ int
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t49_arith FROM si_geom_tbl
 WHERE (STIntersects(geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) + 0) = 1
-Aggregate (actual rows=1 loops=1)
-  ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
-        Filter: (((stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom))::integer + 0) = 1)
-        Rows Removed by Filter: 992
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Aggregate (actual rows=1 loops=1)
+        ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
+              Filter: (((stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom))::integer + 0) = 1)
+              Rows Removed by Filter: 992
 ~~END~~
 
 
@@ -12254,19 +12356,27 @@ int
 ~~START~~
 text
 Query Text: (SELECT sys.geomfromtext_helper($1::text, $2))
-Result (actual rows=1 loops=1)
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
   InitPlan 1
     ->  Result (actual rows=1 loops=1)
+  ->  Result (actual rows=1 loops=1)
 ~~END~~
 
 ~~START~~
 text
 Query Text: SELECT COUNT(*) AS t49_paren FROM si_geom_tbl
 WHERE (STIntersects(geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom)) = 1
-Aggregate (actual rows=1 loops=1)
-  ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
-        Filter: (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 1)
-        Rows Removed by Filter: 992
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Aggregate (actual rows=1 loops=1)
+        ->  Seq Scan on si_geom_tbl (actual rows=13 loops=1)
+              Filter: (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 1)
+              Rows Removed by Filter: 992
 ~~END~~
 
 
