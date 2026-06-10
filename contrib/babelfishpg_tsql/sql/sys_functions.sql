@@ -159,10 +159,16 @@ BEGIN
         result := pg_catalog.replace(result, '&quot;', '"');
         result := pg_catalog.replace(result, '&amp;', '&');
         return result;
-    END IF; 
+    END IF;
 END
 $BODY$
 LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
+
+-- helper function for XML QUERY(xpath)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT)
+RETURNS XML
+AS 'babelfishpg_tsql', 'bbf_xmlquery'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
 
 -- SELECT FOR JSON
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(

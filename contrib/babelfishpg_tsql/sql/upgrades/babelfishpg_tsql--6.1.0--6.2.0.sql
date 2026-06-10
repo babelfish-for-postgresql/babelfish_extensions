@@ -81,6 +81,12 @@ RETURNS SYS.SQL_VARIANT AS
 'babelfishpg_tsql', 'objectpropertyex_internal'
 LANGUAGE C STABLE;
 
+-- helper function for XML QUERY(xpath)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT)
+RETURNS XML
+AS 'babelfishpg_tsql', 'bbf_xmlquery'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
 -- BABELFISH_FUNCTION_EXT (antlr_parse_cache)
 SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_function_ext ADD COLUMN IF NOT EXISTS antlr_parse_cache_tree TEXT DEFAULT NULL;
