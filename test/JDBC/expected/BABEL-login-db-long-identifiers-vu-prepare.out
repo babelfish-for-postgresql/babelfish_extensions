@@ -1,0 +1,39 @@
+-- tsql
+
+-- Test TSQL-aware identifier truncation for login and database names
+-- that exceed Postgres NAMEDATALEN (64 chars). TSQL allows up to 128 chars.
+-- The truncation uses clip + MD5 hash to produce a unique name that fits
+-- within NAMEDATALEN while preserving uniqueness.
+-- Scenario 1: Long login with 128 lowercase chars
+CREATE LOGIN long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr WITH PASSWORD = '123';
+GO
+
+-- Scenario 2: Long login with 128 mixed-case chars (different name from Scenario 1)
+-- Verifies that MD5 hash is computed on the downcased version (case-insensitive)
+CREATE LOGIN Mixed_Case_Login_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXy WITH PASSWORD = '123';
+GO
+
+-- Scenario 3: Long login with 128 multibyte chars
+-- Verifies that pg_mbcliplen handles multibyte characters correctly
+CREATE LOGIN Lögïn_Tëst_Üsér_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñò WITH PASSWORD = '123';
+GO
+
+-- Scenario 4: Boundary - login with exactly 64 chars (minimum that triggers truncation)
+CREATE LOGIN boundary_test_login_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa WITH PASSWORD = '123';
+GO
+
+-- Scenario 5: Case-insensitive authentication test
+-- Create with mixed case, will authenticate with different cases to verify
+-- that the MD5 hash computed during login matches regardless of input case
+CREATE LOGIN Case_Insensitive_Long_Login_Test_AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZzAaBbCcDdEeFfGgHhIiJjKkLlMmNn WITH PASSWORD = '123';
+GO
+
+
+
+-- Scenario 6: Bracketed long login with 128 chars (should pass)
+CREATE LOGIN [long_bracket_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstu] WITH PASSWORD = '123';
+GO
+
+-- Scenario 7: Bracketed long login with mixed case (128 chars, should pass)
+CREATE LOGIN [Bracketed_Mixed_Case_Login_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsT] WITH PASSWORD = '123';
+GO
