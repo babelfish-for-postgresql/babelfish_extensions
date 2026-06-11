@@ -125,6 +125,12 @@ FOR JSON AUTO;
 GO
 
 -- long alias name test check
+SELECT id as "ThisIsAnExtremelyLongColumnNameThatExceedsTheNormalLimitForColumnNamesInMostDatabaseSystemsIncludingPostgreSQL.id"
+FROM forjson_auto_vu_t_users
+FOR JSON AUTO;
+GO
+
+-- greater than 128, should error out
 SELECT id as "ThisIsAnExtremelyLongColumnNameThatExceedsTheNormalLimitForColumnNamesInMostDatabaseSystemsIncludingPostgreSQLAndShouldTriggerOurHashKeyTruncationWarningWithoutCrashing.id"
 FROM forjson_auto_vu_t_users
 FOR JSON AUTO;

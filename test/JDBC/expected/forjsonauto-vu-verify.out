@@ -319,7 +319,7 @@ nvarchar
 
 
 -- long alias name test check
-SELECT id as "ThisIsAnExtremelyLongColumnNameThatExceedsTheNormalLimitForColumnNamesInMostDatabaseSystemsIncludingPostgreSQLAndShouldTriggerOurHashKeyTruncationWarningWithoutCrashing.id"
+SELECT id as "ThisIsAnExtremelyLongColumnNameThatExceedsTheNormalLimitForColumnNamesInMostDatabaseSystemsIncludingPostgreSQL.id"
 FROM forjson_auto_vu_t_users
 FOR JSON AUTO;
 GO
@@ -327,6 +327,16 @@ GO
 nvarchar
 [{"ThisIsAnExtremelyLongCo": 1}, {"ThisIsAnExtremelyLongCo": 1}, {"ThisIsAnExtremelyLongCo": 1}]
 ~~END~~
+
+
+-- greater than 128, should error out
+SELECT id as "ThisIsAnExtremelyLongColumnNameThatExceedsTheNormalLimitForColumnNamesInMostDatabaseSystemsIncludingPostgreSQLAndShouldTriggerOurHashKeyTruncationWarningWithoutCrashing.id"
+FROM forjson_auto_vu_t_users
+FOR JSON AUTO;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The identifier that starts with 'ThisIsAnExtremelyLongColumnNameThatExceedsTheNormalLimitForColumnNamesInMostDatabaseSystemsIncludingPostgreSQLAndShouldTriggerOu' is too long. Maximum length is 128.)~~
 
 
 -- ORDER BY with calculation - creates resjunk column
