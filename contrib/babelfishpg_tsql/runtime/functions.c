@@ -4679,7 +4679,8 @@ get_object_from_pg_constraint(Oid object_id, Oid user_id, int *type,
 	{
 		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
 
-		*schema_id = tsql_get_constraint_nsp_oid(object_id, user_id);
+		if(schema_id)
+			*schema_id = tsql_get_constraint_nsp_oid(object_id, user_id);
 		if (OidIsValid(*schema_id) && type)
 		{
 			if (object_name)
@@ -5068,7 +5069,8 @@ objectproperty_helper(Oid object_id, const char *property, int *out_type,
 	}
 
 	/* Unrecognized property (including basetype - handled by objectpropertyex_internal) */
-	*is_null = true;
+	if(is_null)
+		*is_null = true;
 	return 0;
 }
 
