@@ -128,7 +128,7 @@ GO
 text
 #t4122
 #temptable5605
-idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
+idx
 ~~END~~
 
 
@@ -168,7 +168,7 @@ text
 #sys_comprehensive_pkey
 #t4122
 #temptable5605
-idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
+idx
 ~~END~~
 
 
@@ -350,7 +350,7 @@ text
 #pg_toast_#oid_masked#_index
 #t4122
 #temptable5605
-idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
+idx
 ~~END~~
 
 
@@ -536,12 +536,12 @@ text
 #pg_toast_#oid_masked#_index
 #t4122
 #temptable5605
-idx#temptable56057f9bec28bc8902d45d905788d7aa59a1
-ix_composite#indexed_dml607dc45075f81468865d4be46b38df3e
-ix_date#indexed_dmle2166a864eb6380802f1dd642a3fde15
-ix_int#indexed_dml035dab3da66aea81011a3eae459c604c
-ix_money#indexed_dmlf15b16dc03c5e414c280565f841360cc
-ix_text#indexed_dml331193019682437d7418b66eb4c0d94e
+IX_composite
+IX_date
+IX_int
+IX_money
+IX_text
+idx
 ~~END~~
 
 

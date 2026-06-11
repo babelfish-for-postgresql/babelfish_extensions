@@ -574,7 +574,7 @@ GO
 ~~START~~
 int#!#varchar#!#binary#!#nvarchar
 1#!#id#!#<NULL>#!#<NULL>
-2#!#name#!#0904D00034#!#bbf_unicode_cp1_ci_as
+2#!#name#!#0904F00036#!#bbf_unicode_cp1_ci_ai
 ~~END~~
 
 

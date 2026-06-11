@@ -1,6 +1,6 @@
-
 -- Tests for temp tables with long identifiers (>= NAMEDATALEN / 64 chars)
 -- Validates OBJECT_ID, ALTER TABLE, DML, and DDL operations
+
 -- =============================================================================
 -- Test 1: Basic OBJECT_ID lookup (direct and tempdb-prefixed)
 -- =============================================================================
@@ -9,28 +9,13 @@ GO
 
 SELECT CASE WHEN OBJECT_ID('#temp_table_with_a_very_long_name_that_exceeds_namedatalen_limit') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS test1_object_id_direct
 GO
-~~START~~
-varchar
-PASS
-~~END~~
-
 
 SELECT CASE WHEN OBJECT_ID('tempdb..#temp_table_with_a_very_long_name_that_exceeds_namedatalen_limit') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS test1_object_id_tempdb
 GO
-~~START~~
-varchar
-PASS
-~~END~~
-
 
 -- Both should return the same OID
 SELECT CASE WHEN OBJECT_ID('#temp_table_with_a_very_long_name_that_exceeds_namedatalen_limit') = OBJECT_ID('tempdb..#temp_table_with_a_very_long_name_that_exceeds_namedatalen_limit') THEN 'PASS' ELSE 'FAIL' END AS test1_oid_match
 GO
-~~START~~
-varchar
-PASS
-~~END~~
-
 
 DROP TABLE #temp_table_with_a_very_long_name_that_exceeds_namedatalen_limit
 GO
@@ -43,21 +28,11 @@ GO
 
 SELECT CASE WHEN OBJECT_ID('#long_temp_for_typed_object_id_test_exceeding_namedatalen_limit_x', 'U') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS test2_type_U
 GO
-~~START~~
-varchar
-PASS
-~~END~~
-
 
 -- Type 'V' (view) should ideally return NULL for a table, but OBJECT_ID type filtering
 -- for temp tables is a known pre-existing limitation (returns non-NULL regardless of type)
 SELECT CASE WHEN OBJECT_ID('#long_temp_for_typed_object_id_test_exceeding_namedatalen_limit_x', 'V') IS NULL THEN 'PASS' ELSE 'FAIL' END AS test2_type_V_null
 GO
-~~START~~
-varchar
-FAIL
-~~END~~
-
 
 DROP TABLE #long_temp_for_typed_object_id_test_exceeding_namedatalen_limit_x
 GO
@@ -76,16 +51,9 @@ GO
 
 INSERT INTO #alter_test_temp_table_with_long_name_exceeding_sixty_four_chars (a, b) VALUES (1, 'hello')
 GO
-~~ROW COUNT: 1~~
-
 
 SELECT a, b, c FROM #alter_test_temp_table_with_long_name_exceeding_sixty_four_chars
 GO
-~~START~~
-int#!#varchar#!#int
-1#!#hello#!#0
-~~END~~
-
 
 DROP TABLE #alter_test_temp_table_with_long_name_exceeding_sixty_four_chars
 GO
@@ -101,16 +69,9 @@ GO
 
 INSERT INTO #drop_col_test_long_temp_table_name_exceeding_namedatalen_limit VALUES (1, 2)
 GO
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM #drop_col_test_long_temp_table_name_exceeding_namedatalen_limit
 GO
-~~START~~
-int#!#int
-1#!#2
-~~END~~
-
 
 DROP TABLE #drop_col_test_long_temp_table_name_exceeding_namedatalen_limit
 GO
@@ -127,24 +88,13 @@ GO
 -- Should succeed (val > 0)
 INSERT INTO #constraint_test_long_temp_table_name_that_exceeds_namedatalen VALUES (1, 10)
 GO
-~~ROW COUNT: 1~~
-
 
 -- Should fail (val = 0 violates constraint)
 INSERT INTO #constraint_test_long_temp_table_name_that_exceeds_namedatalen VALUES (2, 0)
 GO
-~~ERROR (Code: 547)~~
-
-~~ERROR (Message: new row for relation "#constraint_test_long_temp_table_name_that_exceeds_namedatalen" violates check constraint "chk_val")~~
-
 
 SELECT * FROM #constraint_test_long_temp_table_name_that_exceeds_namedatalen
 GO
-~~START~~
-int#!#int
-1#!#10
-~~END~~
-
 
 DROP TABLE #constraint_test_long_temp_table_name_that_exceeds_namedatalen
 GO
@@ -160,16 +110,9 @@ GO
 
 INSERT INTO #index_test_long_temp_table_name_that_definitely_exceeds_namedatalen VALUES (1, 'alice'), (2, 'bob')
 GO
-~~ROW COUNT: 2~~
-
 
 SELECT * FROM #index_test_long_temp_table_name_that_definitely_exceeds_namedatalen WHERE name = 'alice'
 GO
-~~START~~
-int#!#varchar
-1#!#alice
-~~END~~
-
 
 DROP TABLE #index_test_long_temp_table_name_that_definitely_exceeds_namedatalen
 GO
@@ -182,27 +125,15 @@ GO
 
 INSERT INTO #dml_test_long_temp_table_name_that_exceeds_namedatalen_limit_xx VALUES (1, 'one'), (2, 'two'), (3, 'three')
 GO
-~~ROW COUNT: 3~~
-
 
 UPDATE #dml_test_long_temp_table_name_that_exceeds_namedatalen_limit_xx SET val = 'TWO' WHERE id = 2
 GO
-~~ROW COUNT: 1~~
-
 
 DELETE FROM #dml_test_long_temp_table_name_that_exceeds_namedatalen_limit_xx WHERE id = 3
 GO
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM #dml_test_long_temp_table_name_that_exceeds_namedatalen_limit_xx ORDER BY id
 GO
-~~START~~
-int#!#varchar
-1#!#one
-2#!#TWO
-~~END~~
-
 
 DROP TABLE #dml_test_long_temp_table_name_that_exceeds_namedatalen_limit_xx
 GO
@@ -225,11 +156,6 @@ GO
 -- Should be gone now
 SELECT CASE WHEN OBJECT_ID('tempdb..#guard_pattern_long_temp_table_name_exceeding_namedatalen_limit') IS NULL THEN 'PASS' ELSE 'FAIL' END AS test8_dropped
 GO
-~~START~~
-varchar
-PASS
-~~END~~
-
 
 -- =============================================================================
 -- Test 9: Multiple long-name temp tables in same session
@@ -241,36 +167,17 @@ GO
 
 INSERT INTO #multi_first_long_temp_table_name_that_exceeds_namedatalen_limitx VALUES (1)
 GO
-~~ROW COUNT: 1~~
-
 INSERT INTO #multi_second_long_temp_table_name_that_exceeds_namedatalen_limit VALUES (2)
 GO
-~~ROW COUNT: 1~~
-
 
 SELECT a FROM #multi_first_long_temp_table_name_that_exceeds_namedatalen_limitx
 GO
-~~START~~
-int
-1
-~~END~~
-
 SELECT b FROM #multi_second_long_temp_table_name_that_exceeds_namedatalen_limit
 GO
-~~START~~
-int
-2
-~~END~~
-
 
 -- Verify OBJECT_IDs are different
 SELECT CASE WHEN OBJECT_ID('#multi_first_long_temp_table_name_that_exceeds_namedatalen_limitx') != OBJECT_ID('#multi_second_long_temp_table_name_that_exceeds_namedatalen_limit') THEN 'PASS' ELSE 'FAIL' END AS test9_different_oids
 GO
-~~START~~
-varchar
-PASS
-~~END~~
-
 
 DROP TABLE #multi_first_long_temp_table_name_that_exceeds_namedatalen_limitx
 GO
@@ -285,19 +192,12 @@ GO
 
 INSERT INTO #truncate_test_long_temp_table_name_exceeding_namedatalen_limit VALUES (1), (2), (3)
 GO
-~~ROW COUNT: 3~~
-
 
 TRUNCATE TABLE #truncate_test_long_temp_table_name_exceeding_namedatalen_limit
 GO
 
 SELECT COUNT(*) AS cnt FROM #truncate_test_long_temp_table_name_exceeding_namedatalen_limit
 GO
-~~START~~
-int
-0
-~~END~~
-
 
 DROP TABLE #truncate_test_long_temp_table_name_exceeding_namedatalen_limit
 GO
@@ -313,24 +213,12 @@ GO
 
 SELECT CASE WHEN OBJECT_ID('#short') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS test11_short
 GO
-~~START~~
-varchar
-PASS
-~~END~~
-
 
 INSERT INTO #short VALUES (1, 2)
 GO
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM #short
 GO
-~~START~~
-int#!#int
-1#!#2
-~~END~~
-
 
 DROP TABLE #short
 GO
@@ -346,11 +234,6 @@ GO
 
 SELECT CASE WHEN OBJECT_ID('#aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaA') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS test12_boundary
 GO
-~~START~~
-varchar
-PASS
-~~END~~
-
 
 DROP TABLE #aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaA
 GO
@@ -363,19 +246,9 @@ GO
 
 SELECT CASE WHEN OBJECT_ID('#bracket_long_temp_table_name_that_exceeds_namedatalen_limit_test') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS test13_bracket_objid
 GO
-~~START~~
-varchar
-PASS
-~~END~~
-
 
 SELECT CASE WHEN OBJECT_ID('tempdb..#bracket_long_temp_table_name_that_exceeds_namedatalen_limit_test') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS test13_bracket_tempdb
 GO
-~~START~~
-varchar
-PASS
-~~END~~
-
 
 DROP TABLE [#bracket_long_temp_table_name_that_exceeds_namedatalen_limit_test]
 GO
@@ -391,16 +264,9 @@ GO
 
 INSERT INTO [#bracket_alter_test_long_temp_name_exceeding_namedatalen_limit_xx] VALUES (1, 'bracketed')
 GO
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM [#bracket_alter_test_long_temp_name_exceeding_namedatalen_limit_xx]
 GO
-~~START~~
-int#!#varchar
-1#!#bracketed
-~~END~~
-
 
 DROP TABLE [#bracket_alter_test_long_temp_name_exceeding_namedatalen_limit_xx]
 GO
@@ -413,27 +279,15 @@ GO
 
 SELECT CASE WHEN OBJECT_ID('#BracketMixedCase_LongTempName_Exceeding_NameDataLen_Limit_TestXX') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS test15_mixed_case
 GO
-~~START~~
-varchar
-PASS
-~~END~~
-
 
 ALTER TABLE [#BracketMixedCase_LongTempName_Exceeding_NameDataLen_Limit_TestXX] ADD val INT
 GO
 
 INSERT INTO [#BracketMixedCase_LongTempName_Exceeding_NameDataLen_Limit_TestXX] VALUES (1, 100)
 GO
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM [#BracketMixedCase_LongTempName_Exceeding_NameDataLen_Limit_TestXX]
 GO
-~~START~~
-int#!#int
-1#!#100
-~~END~~
-
 
 DROP TABLE [#BracketMixedCase_LongTempName_Exceeding_NameDataLen_Limit_TestXX]
 GO
@@ -446,11 +300,6 @@ GO
 
 SELECT OBJECT_NAME(OBJECT_ID('#bracket_obj_name_test_long_temp_table_exceeding_namedatalen_limit')) AS test16_object_name_bracket
 GO
-~~START~~
-varchar
-#bracket_obj_name_test_long_temp_table_exceeding_namedatalen_limit
-~~END~~
-
 
 DROP TABLE [#bracket_obj_name_test_long_temp_table_exceeding_namedatalen_limit]
 GO
@@ -463,32 +312,15 @@ GO
 
 SELECT CASE WHEN OBJECT_ID('#テスト用の非常に長いテンポラリテーブル名前がNAMEDATALEN制限を超える場合のテスト') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS test17_multibyte_long
 GO
-~~START~~
-varchar
-PASS
-~~END~~
-
 
 SELECT OBJECT_NAME(OBJECT_ID('#テスト用の非常に長いテンポラリテーブル名前がNAMEDATALEN制限を超える場合のテスト')) AS test17_object_name
 GO
-~~START~~
-varchar
-#??????????????????????NAMEDATALEN????????????
-~~END~~
-
 
 INSERT INTO #テスト用の非常に長いテンポラリテーブル名前がNAMEDATALEN制限を超える場合のテスト VALUES (42)
 GO
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM #テスト用の非常に長いテンポラリテーブル名前がNAMEDATALEN制限を超える場合のテスト
 GO
-~~START~~
-int
-42
-~~END~~
-
 
 DROP TABLE #テスト用の非常に長いテンポラリテーブル名前がNAMEDATALEN制限を超える場合のテスト
 GO
@@ -501,11 +333,6 @@ GO
 
 SELECT CASE WHEN OBJECT_ID('#マルチバイト_ブラケット_長いテンポラリテーブル名前がNAMEDATALEN制限を超えるケース') IS NOT NULL THEN 'PASS' ELSE 'FAIL' END AS test18_bracket_multibyte
 GO
-~~START~~
-varchar
-PASS
-~~END~~
-
 
 DROP TABLE [#マルチバイト_ブラケット_長いテンポラリテーブル名前がNAMEDATALEN制限を超えるケース]
 GO
@@ -521,24 +348,12 @@ GO
 
 INSERT INTO #non_enr_long_temp_table_name_with_udt_dependency_exceeding_namedatalen_limit VALUES (1, 'udt_test')
 GO
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM #non_enr_long_temp_table_name_with_udt_dependency_exceeding_namedatalen_limit
 GO
-~~START~~
-int#!#varchar
-1#!#udt_test
-~~END~~
-
 
 SELECT OBJECT_NAME(OBJECT_ID('#non_enr_long_temp_table_name_with_udt_dependency_exceeding_namedatalen_limit')) AS test19_object_name
 GO
-~~START~~
-varchar
-#non_enr_long_temp_table_name_with_udt_dependency_exceeding_namedatalen_limit
-~~END~~
-
 
 DROP TABLE #non_enr_long_temp_table_name_with_udt_dependency_exceeding_namedatalen_limit
 GO
@@ -554,11 +369,6 @@ GO
 
 SELECT OBJECT_NAME(OBJECT_ID('#enr_object_name_test_long_temp_table_name_exceeding_namedatalen_lim')) AS test20_object_name
 GO
-~~START~~
-varchar
-#enr_object_name_test_long_temp_table_name_exceeding_namedatalen_lim
-~~END~~
-
 
 DROP TABLE #enr_object_name_test_long_temp_table_name_exceeding_namedatalen_lim
 GO
@@ -571,12 +381,6 @@ GO
 
 EXEC sp_tablecollations_100 '#sp_tablecoll_long_temp_table_name_exceeding_namedatalen_limit_test'
 GO
-~~START~~
-int#!#varchar#!#binary#!#nvarchar
-1#!#id#!#<NULL>#!#<NULL>
-2#!#name#!#0904D00034#!#bbf_unicode_cp1_ci_as
-~~END~~
-
 
 DROP TABLE #sp_tablecoll_long_temp_table_name_exceeding_namedatalen_limit_test
 GO
@@ -589,11 +393,6 @@ GO
 
 SELECT OBJECT_NAME(OBJECT_ID('#ShortMixedCase')) AS test22_case_preserved
 GO
-~~START~~
-varchar
-#ShortMixedCase
-~~END~~
-
 
 DROP TABLE #ShortMixedCase
 GO
@@ -606,11 +405,6 @@ GO
 
 SELECT OBJECT_NAME(OBJECT_ID('#BracketShort_MixedCase')) AS test23_bracket_case
 GO
-~~START~~
-varchar
-#BracketShort_MixedCase
-~~END~~
-
 
 DROP TABLE [#BracketShort_MixedCase]
 GO
@@ -626,11 +420,6 @@ GO
 
 SELECT OBJECT_NAME(OBJECT_ID('#non_enr_sys_tables_test_long_temp_name_exceeding_namedatalen_limit')) AS test24_object_name
 GO
-~~START~~
-varchar
-#non_enr_sys_tables_test_long_temp_name_exceeding_namedatalen_limit
-~~END~~
-
 
 DROP TABLE #non_enr_sys_tables_test_long_temp_name_exceeding_namedatalen_limit
 GO
@@ -649,11 +438,6 @@ GO
 
 SELECT OBJECT_NAME(OBJECT_ID('#non_enr_object_name_test_long_temp_table_exceeding_namedatalen_xx')) AS test25_object_name
 GO
-~~START~~
-varchar
-#non_enr_object_name_test_long_temp_table_exceeding_namedatalen_xx
-~~END~~
-
 
 DROP TABLE #non_enr_object_name_test_long_temp_table_exceeding_namedatalen_xx
 GO
@@ -672,11 +456,6 @@ GO
 
 SELECT relname FROM babelfish_get_enr_list() WHERE relname LIKE '#very_long_index%'
 GO
-~~START~~
-text
-#very_long_index_name_on_temp_table_exceeding_namedatalen_limit_xx
-~~END~~
-
 
 DROP TABLE #idx_test_tmp
 GO
@@ -695,12 +474,6 @@ GO
 
 SELECT relname FROM babelfish_get_enr_list() WHERE relname LIKE '#long_idx_%'
 GO
-~~START~~
-text
-#long_idx_first_column_name_exceeding_the_namedatalen_limit_test
-#long_idx_second_column_name_exceeding_the_namedatalen_limit_test
-~~END~~
-
 
 DROP TABLE #idx_multi_tmp
 GO
@@ -716,11 +489,6 @@ GO
 
 SELECT relname FROM babelfish_get_enr_list() WHERE relname LIKE 'MixedCase[_]Long[_]Index%'
 GO
-~~START~~
-text
-MixedCase_Long_Index_Name_On_Temp_Table_Exceeding_NameDataLen_Lim
-~~END~~
-
 
 DROP TABLE #idx_case_tmp
 GO
@@ -736,11 +504,6 @@ GO
 
 SELECT relname FROM babelfish_get_enr_list() WHERE relname LIKE 'インデックス名前%'
 GO
-~~START~~
-text
-??????????????????????????NAMEDATALEN??????
-~~END~~
-
 
 DROP TABLE #idx_mb_tmp
 GO
@@ -759,25 +522,13 @@ GO
 
 INSERT INTO #non_enr_idx_test VALUES (1, 100), (2, 200)
 GO
-~~ROW COUNT: 2~~
-
 
 SELECT * FROM #non_enr_idx_test WHERE a = 2
 GO
-~~START~~
-int#!#int
-2#!#200
-~~END~~
-
 
 -- Verify original name stored in reloptions
 SELECT CASE WHEN (SELECT array_to_string(reloptions, ',') FROM pg_class WHERE relname LIKE 'long_index_name_on_non_enr%') LIKE '%bbf_original_rel_name=long_index_name_on_non_enr_temp_table_exceeding_namedatalen_limit%' THEN 'PASS' ELSE 'FAIL' END AS test30_reloption
 GO
-~~START~~
-varchar
-PASS
-~~END~~
-
 
 DROP TABLE #non_enr_idx_test
 GO
@@ -793,27 +544,12 @@ GO
 
 SELECT * FROM #select_into_long_temp_table_name_exceeding_namedatalen_limit_xx
 GO
-~~START~~
-int#!#varchar
-1#!#hello
-~~END~~
-
 
 SELECT OBJECT_NAME(OBJECT_ID('#select_into_long_temp_table_name_exceeding_namedatalen_limit_xx')) AS test31_select_into
 GO
-~~START~~
-varchar
-#select_into_long_temp_table_name_exceeding_namedatalen_limit_xx
-~~END~~
-
 
 SELECT relname FROM babelfish_get_enr_list() WHERE relname LIKE '#select_into_long%'
 GO
-~~START~~
-text
-#select_into_long_temp_table_name_exceeding_namedatalen_limit_xx
-~~END~~
-
 
 DROP TABLE #select_into_long_temp_table_name_exceeding_namedatalen_limit_xx
 GO

@@ -75,3 +75,7 @@ GO
 -- Scenario 12: Recreate same long-name temp table after drop
 EXEC temp_long_name_enr_reuse_proc
 GO
+
+-- Scenario 13: Long index name shows full name in get_enr_list and OBJECT_NAME
+EXEC temp_long_name_enr_long_index_name_proc
+GO

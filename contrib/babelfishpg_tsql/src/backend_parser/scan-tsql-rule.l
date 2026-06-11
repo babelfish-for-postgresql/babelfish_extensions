@@ -153,6 +153,8 @@
 <tsql>{tsql_ttname}	{
 					SET_YYLLOC();
 					yylval->str = pstrdup(yytext);
+					if (yyleng >= NAMEDATALEN)
+						truncate_identifier(yylval->str, yyleng, true);
 					return IDENT;
 				}
 

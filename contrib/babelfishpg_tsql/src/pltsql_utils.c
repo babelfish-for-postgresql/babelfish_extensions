@@ -1891,6 +1891,23 @@ exec_utility_cmd_helper(char *query_str)
 }
 
 extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
+/*
+ * make_original_rel_name_cmd - Create an AlterTableCmd that stores the
+ * original untruncated name in bbf_original_rel_name reloption.
+ */
+AlterTableCmd *
+make_original_rel_name_cmd(const char *original_name)
+{
+	AlterTableCmd *cmd = makeNode(AlterTableCmd);
+
+	cmd->subtype = AT_SetRelOptions;
+	cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME),
+		(Node *) makeString(pstrdup(original_name)), -1));
+	cmd->behavior = DROP_RESTRICT;
+	cmd->missing_ok = false;
+	return cmd;
+}
+
 void
 exec_add_original_index_name(char *idxname, char *schemaname, char *original_name)
 {

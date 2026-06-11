@@ -24,3 +24,6 @@ GO
 
 DROP PROCEDURE temp_long_name_enr_reuse_proc
 GO
+
+DROP PROCEDURE temp_long_name_enr_long_index_name_proc
+GO

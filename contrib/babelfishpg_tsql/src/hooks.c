@@ -2497,20 +2497,18 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, c
 	stmt->objtype = OBJECT_TABLE;
 
 	/*
-	 * Only store original_name if there's a difference, and if the difference
-	 * is only in capitalization
+	 * Store original_name in reloptions when:
+	 * 1. There is a case-only difference between relname and original_name, OR
+	 * 2. The identifier is a temp table name that was truncated (>= NAMEDATALEN)
 	 */
-	if (strncmp(relname, original_name, strlen(relname)) != 0 && strncasecmp(relname, original_name, strlen(relname)) == 0)
+	if ((strncmp(relname, original_name, strlen(relname)) != 0 && strncasecmp(relname, original_name, strlen(relname)) == 0) ||
+		(relation->relpersistence == RELPERSISTENCE_TEMP && original_name[0] == '#' && strlen(original_name) >= NAMEDATALEN))
 	{
 		/*
 		 * add "ALTER TABLE SET (bbf_original_table_name=<original_name>)" to
 		 * alist so that original_name will be stored in pg_class.reloptions
 		 */
-		cmd_orig_name = makeNode(AlterTableCmd);
-		cmd_orig_name->subtype = AT_SetRelOptions;
-		cmd_orig_name->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(original_name)), -1));
-		cmd_orig_name->behavior = DROP_RESTRICT;
-		cmd_orig_name->missing_ok = false;
+		cmd_orig_name = make_original_rel_name_cmd(original_name);
 		stmt->cmds = lappend(stmt->cmds, cmd_orig_name);
 	}
 

@@ -233,3 +233,17 @@ int
 2
 ~~END~~
 
+
+-- Scenario 13: Long index name shows full name in get_enr_list and OBJECT_NAME
+EXEC temp_long_name_enr_long_index_name_proc
+GO
+~~START~~
+text
+long_index_name_on_temp_table_exceeding_namedatalen_limit_in_proc
+~~END~~
+
+~~START~~
+varchar
+long_index_name_on_temp_table_exceeding_namedatalen_limit_in_proc
+~~END~~
+

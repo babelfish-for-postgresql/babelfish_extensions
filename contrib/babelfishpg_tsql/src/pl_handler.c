@@ -175,7 +175,7 @@ extern PLtsql_function *find_cached_batch(int handle);
 extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArgs *args);
 Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
-static List *transformSelectIntoStmt(CreateTableAsStmt *stmt);
+static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString);
 static char *get_oid_type_string(int type_oid);
 static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
@@ -239,6 +239,7 @@ static TargetEntry* buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry*
 static char *string_to_fixed_hash(const char *input);
 static void processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias, ForAutoContext *ctx, ForAutoMode mode);
 extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
+extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_concat_null_yields_null;
@@ -5386,6 +5387,34 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					List    	*partition_schemes = stmt->excludeOpNames;
 
 					stmt->excludeOpNames = NIL;
+
+					/*
+					 * For indexes on temp tables, extract the full original
+					 * name from the query string using name_location stored
+					 * by the parser. Remove name_location from options as
+					 * it is for internal use only.
+					 */
+					{
+						ListCell *lc;
+						foreach(lc, stmt->options)
+						{
+							DefElem *opt = (DefElem *) lfirst(lc);
+							if (strcmp(opt->defname, "name_location") == 0)
+							{
+								if (stmt->relation->relpersistence == RELPERSISTENCE_TEMP &&
+									stmt->relation->relname[0] == '#' && original_name)
+								{
+									int loc = intVal(opt->arg);
+									char *full_name = extract_identifier(queryString + loc, NULL);
+									if (full_name)
+										original_name = full_name;
+								}
+								stmt->options = foreach_delete_current(stmt->options, lc);
+								break;
+							}
+						}
+					}
+
 					if (stmt->idxname && !stmt->isconstraint)
 						stmt->idxname = construct_unique_index_name(stmt->idxname, stmt->relation->relname);
 					/*
@@ -7998,7 +8027,8 @@ get_identity_into_args(Node *node)
 }
 
 static List *
-transformSelectIntoStmt(CreateTableAsStmt *stmt)
+transformSelectIntoStmt
+(CreateTableAsStmt *stmt, const char *queryString)
 {
 	List *result;
 	ListCell *elements;
@@ -8239,6 +8269,31 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	}
 
 	result = lappend(result, stmt);
+
+	/* Store original name in reloption for SELECT INTO #temp with long names */
+	if (into && into->rel &&
+		into->rel->relpersistence == RELPERSISTENCE_TEMP &&
+		into->rel->relname[0] == '#' &&
+		into->rel->location >= 0 && queryString != NULL)
+	{
+		char *original_name = extract_identifier(queryString + into->rel->location, NULL);
+
+		if (original_name && strlen(original_name) >= NAMEDATALEN)
+		{
+			if (!altstmt)
+			{
+				altstmt = makeNode(AlterTableStmt);
+				altstmt->relation = into->rel;
+				altstmt->objtype = OBJECT_TABLE;
+				altstmt->cmds = NIL;
+			}
+			altstmt->cmds = lappend(altstmt->cmds, make_original_rel_name_cmd(original_name));
+			pfree(original_name);
+		}
+		else if (original_name)
+			pfree(original_name);
+	}
+
 	if (altstmt && list_length(altstmt->cmds) > 0)
 		result = lappend(result, altstmt);
 
@@ -8251,7 +8306,7 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 
 	Node *parsetree = pstmt->utilityStmt;
 	List *stmts;
-	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
+	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree, queryString);
 	while (stmts != NIL)
 	{
 		Node *stmt = (Node *)linitial(stmts);

@@ -104,6 +104,17 @@ BEGIN
 END
 GO
 
+CREATE PROCEDURE temp_long_name_enr_long_index_name_proc
+AS
+BEGIN
+    CREATE TABLE #tmp_idx (a INT, b INT)
+    CREATE INDEX long_index_name_on_temp_table_exceeding_namedatalen_limit_in_proc ON #tmp_idx(a)
+    SELECT relname FROM sys.babelfish_get_enr_list() WHERE relname LIKE 'long_index_name_on_temp%'
+    SELECT OBJECT_NAME(reloid) FROM sys.babelfish_get_enr_list() WHERE relname LIKE '%long_index%'
+    DROP TABLE #tmp_idx
+END
+GO
+
 CREATE PROCEDURE temp_long_name_enr_reuse_proc
 AS
 BEGIN
