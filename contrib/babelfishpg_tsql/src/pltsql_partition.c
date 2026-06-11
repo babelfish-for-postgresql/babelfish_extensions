@@ -379,6 +379,9 @@ construct_unique_hash(char *relation_name)
 	bool		success;
 	const char	*errstr = NULL;
 
+	/* Identifier should already be validated at the entry point */
+	Assert(pg_mbstrlen_with_len(relation_name, strlen(relation_name)) <= 128);
+
 	md5 = (char *) palloc(MD5_HASH_LEN + 1);
 
 	success = pg_md5_hash(relation_name, strlen(relation_name), md5, &errstr);
