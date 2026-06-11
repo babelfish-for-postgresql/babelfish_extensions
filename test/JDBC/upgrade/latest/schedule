@@ -445,6 +445,7 @@ TestSpatialPoint
 Test-spatial-functions
 Test-spatial-functions-2
 Test-spatial-functions-3
+Test-Spatial_Index
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
@@ -683,6 +684,8 @@ babel_convert_with_style
 forxml-raw-elements
 forxml-raw-elements-1gb-limit
 forxml-path-elements
+forxml-auto
 babel_sqlvariant_coerce_type
 BABEL-5264
 BABEL-6037
+xml_query

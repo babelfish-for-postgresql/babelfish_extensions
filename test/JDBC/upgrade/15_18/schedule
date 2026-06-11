@@ -220,7 +220,6 @@ forjson-subquery
 forjson-nesting
 format
 format-dep
-forxml
 forxml-path
 forxml-subquery
 fulltextserviceproperty
@@ -608,4 +607,6 @@ babel_binary-before-17_7-or-16_11
 babel_convert_with_style
 forxml-raw-elements-before-17_9-or-18_3
 forxml-path-elements-before-17_10-or-18_4
+forxml-before-17_10-or-18_4
+forxml-auto-before-17_11-or-18_5
 babel_sqlvariant_coerce_type_before_16_14-or-17_10-or-18_4
