@@ -156,6 +156,7 @@ static void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementC
 static bool post_process_create_table(TSqlParser::Create_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
+static bool post_process_create_spatial_index(TSqlParser::Create_spatial_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_type(TSqlParser::Create_typeContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, List *column_name = NULL, bool is_freetext_predicate = false);
@@ -195,6 +196,10 @@ template <class T> static void rewrite_geospatial_func_ref_no_arg_query_helper(T
 template <class T> static void rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t start_index, size_t arg_list_start_index, size_t arg_list_stop_index);
 template <class T> static void rewrite_function_call_dot_func_ref_args(T ctx);
 template <class T> static void rewrite_function_call_geospatial_func_ref_no_arg(T ctx);
+template <class T> static bool is_in_spatial_predicate_context(T ctx);
+template <class T> static bool is_spatial_predicate_eq_one(T ctx);
+template <class T> static bool extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &comp_value, bool &dist_on_lhs_out);
+static bool operand_is_spatial_method(antlr4::ParserRuleContext *operand, antlr4::ParserRuleContext *ctx);
 static void handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx);
 static void handleXMLFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx);
 static void handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx);
@@ -2526,6 +2531,8 @@ public:
 			nop = post_process_alter_table(ctx->alter_table(), stmt, ctx);
 		else if (ctx->create_index())
 			nop = post_process_create_index(ctx->create_index(), stmt, ctx);
+		else if (ctx->create_spatial_index())
+			nop = post_process_create_spatial_index(ctx->create_spatial_index(), stmt, ctx);
 		else if (ctx->create_database())
 			nop = post_process_create_database(ctx->create_database(), stmt, ctx);
 		else if (ctx->create_type())
@@ -8403,6 +8410,20 @@ post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_exec
 	return false;
 }
 
+static bool
+post_process_create_spatial_index(TSqlParser::Create_spatial_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
+{
+	/* Remove USING clause (GEOMETRY_GRID, GEOGRAPHY_GRID, etc.) */
+	if (ctx->spatial_grid_clause())
+		removeCtxStringFromQuery(stmt->sqlstmt, ctx->spatial_grid_clause(), baseCtx);
+
+	/* Remove WITH clause (BOUNDING_BOX, CELLS_PER_OBJECT, GRIDS, etc.) */
+	if (ctx->spatial_grid_option_clause())
+		removeCtxStringFromQuery(stmt->sqlstmt, ctx->spatial_grid_option_clause(), baseCtx);
+
+	return false;
+}
+
 static antlr4::tree::TerminalNode *
 getCreateDatabaseOptionTobeRemoved(TSqlParser::Create_database_optionContext* o)
 {
@@ -9333,6 +9354,505 @@ extract_xml_value_typearg(TSqlParser::ExpressionContext *expression)
 }
 
 /*
+ * True if s is a plain numeric literal (e.g. 100, 100.5, .5, 1e3, 1.5E-2).
+ * Used to distinguish a decimal threshold like 100.5 from a property access
+ * like @var.STX, both of which contain a '.'.
+ */
+static bool
+is_numeric_literal(const std::string &s)
+{
+	if (s.empty())
+		return false;
+
+	size_t i = 0;
+	if (s[i] == '+' || s[i] == '-')
+		++i;
+
+	bool seen_digit = false;
+	bool seen_dot = false;
+	for (; i < s.size(); ++i)
+	{
+		char c = s[i];
+		if (c >= '0' && c <= '9')
+		{
+			seen_digit = true;
+		}
+		else if (c == '.' && !seen_dot)
+		{
+			seen_dot = true;
+		}
+		else if ((c == 'e' || c == 'E') && seen_digit)
+		{
+			++i;
+			if (i < s.size() && (s[i] == '+' || s[i] == '-'))
+				++i;
+			bool seen_exp_digit = false;
+			for (; i < s.size(); ++i)
+			{
+				if (s[i] >= '0' && s[i] <= '9')
+					seen_exp_digit = true;
+				else
+					return false;
+			}
+			return seen_exp_digit;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	return seen_digit;
+}
+
+/* Find the comparison operator and threshold value around an STDistance call (e.g. `< 100`). */
+template<class T>
+static bool
+extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &comp_value, bool &dist_on_lhs_out)
+{
+	auto *parent = dynamic_cast<antlr4::ParserRuleContext *>(ctx->parent);
+	while (parent)
+	{
+		auto *pred = dynamic_cast<TSqlParser::PredicateContext *>(parent);
+		if (pred)
+		{
+			if (pred->comparison_operator() && pred->expression().size() == 2)
+			{
+				std::string op = ::getFullText(pred->comparison_operator());
+				auto *lhs = pred->expression().front();
+				auto *rhs = pred->expression().back();
+
+				/*
+				 * Figure out which side of the comparison the STDistance call
+				 * is on, so the caller can decide whether pre-filter injection
+				 * is safe for this predicate shape.
+				 */
+				size_t ctx_start = ctx->start->getStartIndex();
+				bool dist_on_lhs = (ctx_start >= lhs->start->getStartIndex() && ctx_start <= lhs->stop->getStopIndex());
+
+				if (dist_on_lhs && (op == "<" || op == "<="))
+				{
+					comp_operator = op;
+					comp_value = ::getFullText(rhs);
+					/*
+					 * Reject property access like @var.STX, but allow decimal
+					 * literals like 100.5.
+					 *
+					 * The threshold is later textually duplicated into the
+					 * ST_Expand prefilter and the STDistance recheck; volatile
+					 * thresholds (random(), nextval(), VOLATILE UDFs, subqueries)
+					 * are rejected at injection time by is_deterministic_threshold()
+					 * so the two copies cannot diverge and drop rows. Deterministic
+					 * arithmetic such as `(2 * @f)` remains eligible.
+					 */
+					if (comp_value.find('.') != std::string::npos && !is_numeric_literal(comp_value))
+						return false;
+					/* The STDistance call must be the LHS operand directly (modulo
+					 * grouping parens), not wrapped in CAST(...) / ABS(...) / "+ 0" /
+					 * COALESCE(...) / a CASE — a wrapper makes the && prefilter useless
+					 * and often a type error. */
+					if (!operand_is_spatial_method(lhs, dynamic_cast<antlr4::ParserRuleContext *>(ctx)))
+						return false;
+					dist_on_lhs_out = true;
+					return true;
+				}
+
+				if (!dist_on_lhs && (op == ">" || op == ">="))
+				{
+					comp_operator = (op == ">") ? "<" : "<=";
+					comp_value = ::getFullText(lhs);
+					/* Same property-access guard as the dist-on-lhs branch; volatile
+					 * thresholds are rejected later by is_deterministic_threshold(). */
+					if (comp_value.find('.') != std::string::npos && !is_numeric_literal(comp_value))
+						return false;
+					/* Reversed form (threshold > col.STDistance(...)): the STDistance
+					 * call must be the RHS operand directly (modulo parens), same
+					 * wrapper guard as the dist-on-lhs branch. */
+					if (!operand_is_spatial_method(rhs, dynamic_cast<antlr4::ParserRuleContext *>(ctx)))
+						return false;
+					dist_on_lhs_out = false;
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/* Stop climbing if we leave the predicate area */
+		if (dynamic_cast<TSqlParser::Search_conditionContext *>(parent))
+			return false;
+
+		parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
+	}
+	return false;
+}
+
+
+/* Slice the first method argument out of the already-rewritten expression. */
+static std::string
+slice_first_arg_from_rewritten_expr(antlr4::ParserRuleContext *first_expr_node,
+									const std::string &expr,
+									int ctx_start,
+									int offset1,
+									const std::vector<std::pair<int, int>> &arg_offset_list)
+{
+	int first_arg_start_abs = first_expr_node->start->getStartIndex();
+	int first_arg_stop_abs = first_expr_node->stop->getStopIndex();
+
+	int start_off = 0;
+	int end_off = 0;
+	for (auto &p : arg_offset_list)
+	{
+		if (p.first < first_arg_start_abs) start_off += p.second;
+		if (p.first < first_arg_stop_abs)  end_off   += p.second;
+	}
+
+	int start_in_expr = first_arg_start_abs - ctx_start + offset1 + start_off;
+	int end_in_expr   = first_arg_stop_abs  - ctx_start + offset1 + end_off;
+
+	if (start_in_expr >= 0
+		&& end_in_expr >= start_in_expr
+		&& (size_t)end_in_expr < expr.size())
+		return expr.substr(start_in_expr, end_in_expr - start_in_expr + 1);
+
+	return "";
+}
+
+/*
+ * Add a cheap bounding-box check (&&) before the spatial predicate so the GiST index can be used.
+ *
+ * Only the && term is parenthesized — NOT the whole expression. The comparison
+ * operator and RHS (e.g. "= 1") are appended by the surrounding predicate context
+ * after this fragment, so wrapping the whole thing would attach "= 1" to the AND
+ * expression (boolean = 1 type error). Wrapping just the && term is precedence-safe.
+ */
+static std::string
+maybe_inject_spatial_bbox_filter(const std::string &spatial_func_name, const std::string &col_ref, const std::string &first_arg, const std::string &rewritten_call)
+{
+	/* Only these methods benefit from && pre-filtering */
+	if (pg_strcasecmp(spatial_func_name.c_str(), "STIntersects") != 0 &&
+		pg_strcasecmp(spatial_func_name.c_str(), "STContains") != 0 &&
+		pg_strcasecmp(spatial_func_name.c_str(), "STWithin") != 0 &&
+		pg_strcasecmp(spatial_func_name.c_str(), "STOverlaps") != 0 &&
+		pg_strcasecmp(spatial_func_name.c_str(), "STTouches") != 0 &&
+		pg_strcasecmp(spatial_func_name.c_str(), "STEquals") != 0 &&
+		pg_strcasecmp(spatial_func_name.c_str(), "STCrosses") != 0)
+	{
+		return rewritten_call;
+	}
+
+	if (first_arg.empty())
+		return rewritten_call;
+
+	return "(" + col_ref + " OPERATOR(sys.&&) " + first_arg + ") AND " + rewritten_call;
+}
+
+/*
+ * A single T-SQL LOCAL_ID token: '@' followed by one or more identifier chars.
+ * Used to gate the @-prefix quoting below — compound expressions like
+ * "@var + 1" or "@@SPID" would otherwise be wrapped into a malformed quoted
+ * identifier ("@var + 1") and fail at execution time. For anything that is
+ * not a plain LOCAL_ID, the safe fallback is to skip the prefilter entirely.
+ */
+static bool
+is_single_local_id_token(const std::string &s)
+{
+	if (s.size() < 2 || s.front() != '@')
+		return false;
+	for (size_t i = 1; i < s.size(); ++i)
+	{
+		unsigned char c = static_cast<unsigned char>(s[i]);
+		if (!std::isalnum(c) && c != '_')
+			return false;
+	}
+	return true;
+}
+
+/*
+ * The distance threshold text is duplicated into both the ST_Expand prefilter
+ * and the STDistance recheck. That is only safe when the expression evaluates
+ * identically each time it runs. A scalar SQL expression is non-deterministic
+ * only via a volatile function call (random(), nextval(), a VOLATILE UDF) or a
+ * subquery, or a T-SQL session global (@@ROWCOUNT, @@SPID, ...); literals,
+ * @vars, and arithmetic over them are deterministic and safe to duplicate. We
+ * therefore reject any threshold that contains a function call (an identifier
+ * immediately followed by '('), a SELECT subquery, or an @@-global, and fall
+ * back to the un-prefiltered predicate — which is exactly the (correct,
+ * un-accelerated) plan PostgreSQL would choose for a volatile threshold anyway.
+ *
+ * Conservative by design: a STABLE/IMMUTABLE UDF would be safe to duplicate,
+ * but volatility cannot be determined from the parse text, so all name(...)
+ * calls are rejected. This trades a missed optimization (never correctness) for
+ * the safe ones.
+ */
+static bool
+is_deterministic_threshold(const std::string &s)
+{
+	/*
+	 * Reject T-SQL session globals (@@ROWCOUNT, @@SPID, @@IDENTITY, @@ERROR).
+	 * These are non-deterministic, use the @@name syntax (no parens, so the
+	 * function-call check below misses them), and reflect prior-statement state
+	 * that can differ between the two duplicated copies.
+	 */
+	if (s.find("@@") != std::string::npos)
+		return false;
+
+	/* Reject a SELECT subquery (case-insensitive whole-word match). */
+	for (size_t i = 0; i + 6 <= s.size(); ++i)
+	{
+		if (pg_strncasecmp(s.c_str() + i, "select", 6) == 0)
+		{
+			unsigned char before = (i == 0) ? ' ' : static_cast<unsigned char>(s[i - 1]);
+			unsigned char after  = (i + 6 < s.size()) ? static_cast<unsigned char>(s[i + 6]) : ' ';
+			if (!std::isalnum(before) && before != '_' &&
+				!std::isalnum(after)  && after  != '_')
+				return false;
+		}
+	}
+
+	/* Reject a function call: an identifier character run ending at '(' . */
+	for (size_t i = 0; i < s.size(); ++i)
+	{
+		if (s[i] != '(')
+			continue;
+		/* Skip whitespace immediately before '(' . */
+		size_t j = i;
+		while (j > 0 && std::isspace(static_cast<unsigned char>(s[j - 1])))
+			--j;
+		/* If the char before that is an identifier char, this '(' is a call. */
+		if (j > 0)
+		{
+			unsigned char prev = static_cast<unsigned char>(s[j - 1]);
+			if (std::isalnum(prev) || prev == '_')
+				return false;
+		}
+	}
+
+	return true;
+}
+
+/*
+ * Add a bounding-box check using ST_Expand so the GiST index can filter by distance.
+ *
+ * Known limitation (TODO: BABEL-6465 — to be addressed in a follow-up PR): for sys.GEOGRAPHY columns,
+ * STDistance returns meters but sys.ST_Expand(geography, ...) is currently bound
+ * to the cartesian LWGEOM_expand which treats the distance as degrees. The bbox
+ * prefilter is always correct (no false negatives, since the original predicate
+ * is retained as a recheck) but is extremely unselective for geography — it
+ * expands by N degrees instead of N meters, producing a bbox far larger than
+ * needed. Geography distance prefilter should either skip injection or rebind
+ * to a geodetic expander for meaningful selectivity.
+ */
+static std::string
+maybe_inject_spatial_distance_filter(const std::string &col_ref, const std::string &first_arg, const std::string &distance_value, const std::string &rewritten_call)
+{
+	/*
+	 * The threshold is textually duplicated below; skip the prefilter when it is
+	 * non-deterministic (volatile function call or subquery), else the two copies
+	 * could differ per row and silently drop matching rows.
+	 */
+	if (!is_deterministic_threshold(distance_value))
+		return rewritten_call;
+
+	std::string quoted_distance = distance_value;
+	if (!distance_value.empty() && distance_value.front() == '@')
+	{
+		if (!is_single_local_id_token(distance_value))
+			return rewritten_call;
+		quoted_distance = "\"" + distance_value + "\"";
+	}
+
+	/* Parenthesize only the && term; the comparison op/RHS is appended by the
+	 * surrounding predicate, so a full wrap would mis-bind it (see bbox filter note).
+	 * Result: (col OPERATOR(sys.&&) sys.ST_Expand(arg, CAST(d AS float8))) AND rewritten_call
+	 * (the trailing ")))" closes CAST, ST_Expand, and the && wrap respectively). */
+	return "(" + col_ref + " OPERATOR(sys.&&) sys.ST_Expand(" + first_arg + ", " + "CAST(" + quoted_distance + " AS float8))) AND " + rewritten_call;
+}
+
+
+/*
+ * Shared distance-prefilter dispatcher used by both rewrite_dot_func_ref_args_query_helper
+ * and rewrite_function_call_dot_func_ref_args. Verifies the predicate is
+ * STDistance(...) op threshold and delegates to maybe_inject_spatial_distance_filter.
+ */
+template<class T>
+static std::string
+maybe_inject_spatial_distance_filter_for_ctx(T ctx, const std::string &spatial_func_name, const std::string &col_ref, const std::string &first_arg, const std::string &rewritten_call)
+{
+	if (pg_strcasecmp(spatial_func_name.c_str(), "STDistance") != 0)
+		return rewritten_call;
+
+	if (first_arg.empty())
+		return rewritten_call;
+
+	std::string comp_operator;
+	std::string comp_value;
+	bool dist_on_lhs = false;
+
+	if (!extract_distance_predicate_info(ctx, comp_operator, comp_value, dist_on_lhs)
+		|| !dist_on_lhs)
+		return rewritten_call;
+
+	return maybe_inject_spatial_distance_filter(col_ref, first_arg, comp_value, rewritten_call);
+}
+
+/*
+ * True iff the comparison operand `operand` IS EXACTLY the spatial method call
+ * `ctx` — same start and stop — so the method is the bare comparison operand and
+ * nothing wraps it.
+ *
+ * The prefilter injection is textual: it emits "(col && arg) AND <method> " in
+ * place of the method and relies on the comparison ("= 1" / "< thr") following
+ * immediately. Any wrapper around the method breaks that assumption:
+ *   - a transforming wrapper (CAST(...), col.STFn(...) + 0, COALESCE(...), CASE)
+ *     makes the method a scalar argument — injection is useless and a type error;
+ *   - even redundant grouping parens, e.g. (col.STFn(...)) = 1, move the "= 1"
+ *     outside the parens, so the injected "(col && arg) AND STFn(...)" is left as
+ *     a bare boolean-AND-bit inside the parens and fails to type-check.
+ * In all those cases we must NOT inject; requiring an exact span match rejects
+ * them and the bare predicate runs correctly (just without the index push-down).
+ */
+static bool
+operand_is_spatial_method(antlr4::ParserRuleContext *operand, antlr4::ParserRuleContext *ctx)
+{
+	return operand->start->getStartIndex() == ctx->start->getStartIndex() &&
+		   operand->stop->getStopIndex()  == ctx->stop->getStopIndex();
+}
+
+/*
+ * Check if the spatial call is in a `col.STFn(...) = 1` predicate (only this
+ * form gets index optimization).
+ *
+ * Known limitation: the reversed form `1 = col.STFn(...)` is NOT detected here
+ * and falls back to a sequential scan. Both forms return identical results, so
+ * this is a missed optimization, not a correctness issue. Users migrating
+ * legacy T-SQL that writes the literal on the LHS may notice the perf gap;
+ * rewriting the predicate as `col.STFn(...) = 1` restores the index push-down.
+ * Tracked in BABEL-6665.
+ */
+template<class T>
+static bool
+is_spatial_predicate_eq_one(T ctx)
+{
+	auto *parent = dynamic_cast<antlr4::ParserRuleContext *>(ctx->parent);
+	while (parent)
+	{
+		auto *pred = dynamic_cast<TSqlParser::PredicateContext *>(parent);
+		if (pred)
+		{
+			if (pred->comparison_operator() && pred->expression().size() == 2)
+			{
+				std::string op = ::getFullText(pred->comparison_operator());
+				if (op != "=")
+					return false;
+
+				auto *lhs = pred->expression().front();
+				auto *rhs = pred->expression().back();
+
+				/*
+				 * The spatial method must be the LHS operand DIRECTLY, not
+				 * transformed by a wrapper — CAST(...), col.STFn(...) + 0, ABS(...),
+				 * COALESCE(...), a CASE, or even redundant grouping parens (which push
+				 * the "= 1" outside them). A wrapper makes the method a scalar argument,
+				 * not the comparison operand: injecting && there is useless (not
+				 * sargable) and a type error ("argument of AND must be type boolean").
+				 */
+				if (!operand_is_spatial_method(lhs, dynamic_cast<antlr4::ParserRuleContext *>(ctx)))
+					return false;
+
+				std::string rhs_str = ::getFullText(rhs);
+				size_t first = rhs_str.find_first_not_of(" \t\n\r\f\v");
+				if (first == std::string::npos)
+					return false;
+				size_t last = rhs_str.find_last_not_of(" \t\n\r\f\v");
+				rhs_str = rhs_str.substr(first, last - first + 1);
+
+				return rhs_str == "1";
+			}
+			return false;
+		}
+
+		/* Stop climbing if we leave the predicate area */
+		if (dynamic_cast<TSqlParser::Search_conditionContext *>(parent))
+			return false;
+
+		parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
+	}
+	return false;
+}
+
+template<class T>
+static bool
+is_spatial_predicate_negated(T ctx)
+{
+	auto *parent = dynamic_cast<antlr4::ParserRuleContext *>(ctx->parent);
+	while (parent)
+	{
+		/* Stop at the innermost predicate_br and inspect only its NOT list. */
+		auto *pred_br = dynamic_cast<TSqlParser::Predicate_brContext *>(parent);
+		if (pred_br)
+			return !pred_br->NOT().empty();
+
+		/* Stop climbing if we leave the predicate area */
+		if (dynamic_cast<TSqlParser::Search_conditionContext *>(parent))
+			return false;
+
+		parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
+	}
+	return false;
+}
+
+/*
+ * Check if a parse tree node is inside a predicate context
+ * (WHERE, JOIN ON, HAVING) where injecting && is safe.
+ */
+template<class T>
+static bool
+is_in_spatial_predicate_context(T ctx)
+{
+	auto *parent = dynamic_cast<antlr4::ParserRuleContext *>(ctx->parent);
+	while (parent)
+	{
+		/*
+		 * Scalar / conditional wrapper between the method and its predicate: the
+		 * method is being consumed as an argument, not used as a boolean operand.
+		 * Covers IIF, simple CASE (CASE <expr> WHEN ...), and the whole CASE-like
+		 * function family (COALESCE, ISNULL, NULLIF, CHOOSE, ...). Reached before
+		 * the enclosing search_condition
+		 */
+		if (dynamic_cast<TSqlParser::Function_callContext *>(parent) ||
+			dynamic_cast<TSqlParser::Built_in_functionsContext *>(parent) ||
+			dynamic_cast<TSqlParser::Case_expressionContext *>(parent))
+			return false;
+
+		if (auto *sc = dynamic_cast<TSqlParser::Search_conditionContext *>(parent))
+		{
+			/*
+			 * A search_condition that is itself the argument of a conditional —
+			 * a searched CASE branch (CASE WHEN <sc> ...) or an IIF(<sc>, ...) —
+			 * is not index-sargable, so skip injection. A real WHERE / HAVING /
+			 * JOIN ON / IF search_condition (parent is neither) is eligible.
+			 */
+			if (dynamic_cast<TSqlParser::Switch_search_condition_sectionContext *>(sc->parent) ||
+				dynamic_cast<TSqlParser::IIFContext *>(sc->parent))
+				return false;
+			return true;
+		}
+		if (dynamic_cast<TSqlParser::Select_list_elemContext *>(parent) ||
+			dynamic_cast<TSqlParser::Expression_listContext *>(parent) ||
+			dynamic_cast<TSqlParser::Declare_localContext *>(parent) ||
+			dynamic_cast<TSqlParser::Set_statementContext *>(parent) ||
+			dynamic_cast<TSqlParser::Print_statementContext *>(parent) ||
+			dynamic_cast<TSqlParser::Update_elemContext *>(parent) ||
+			dynamic_cast<TSqlParser::Insert_statementContext *>(parent) ||
+			dynamic_cast<TSqlParser::Return_statementContext *>(parent) ||
+			dynamic_cast<TSqlParser::Create_or_alter_procedureContext *>(parent) ||
+			dynamic_cast<TSqlParser::Create_or_alter_functionContext *>(parent))
+			return false;
+		parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
+	}
+	return false;
+}
+
+/*
  * In this helper function we Rewrite the Query for XML and Geospatial Handling
  * For Func_Ref Functions with args (such as EXIST(arg), STDistance(arg)) : ColRef.Func_name(arg_list)  ->  Func_name(arg_list, ColRef)
  * 
@@ -9419,6 +9939,8 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 				expr = expr.substr(0, local_index) + "\"" + entry.second + "\"" + expr.substr(local_index + entry.second.size());
 				offset2 += 2;
 				local_id_end_offset += 2;
+				/* Record local_id quoting delta so first_arg slicing below sees it. */
+				arg_offset_list.push_back(std::make_pair((int)entry.first, 2));
 			}
 		}
 	}
@@ -9430,6 +9952,31 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	{
 		rewritten_exp = "cast(" + rewritten_exp + " as " + typename_arg + ")";
 	}
+
+	/* Inject spatial pre-filters (bbox / distance) for predicates like
+	 * col.STIntersects(...) = 1 or col.STDistance(...) < threshold.
+	 */
+	if (method->spatial_methods()
+		&& method->spatial_methods()->geospatial_func_arg()
+		&& method->spatial_methods()->expression_list()
+		&& !method->spatial_methods()->expression_list()->expression().empty()
+		&& is_in_spatial_predicate_context(ctx)
+		&& !is_spatial_predicate_negated(ctx))
+	{
+		std::string spatial_func_name = ::getFullText(method->spatial_methods()->geospatial_func_arg());
+		std::string col_ref = expr.substr(0, func_call_len + offset1 + 1);
+
+		std::string first_arg = slice_first_arg_from_rewritten_expr(
+			method->spatial_methods()->expression_list()->expression().front(),
+			expr, ctx->start->getStartIndex(), offset1, arg_offset_list);
+
+		if (is_spatial_predicate_eq_one(ctx))
+			rewritten_exp = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, first_arg, rewritten_exp);
+
+		rewritten_exp = maybe_inject_spatial_distance_filter_for_ctx(
+			ctx, spatial_func_name, col_ref, first_arg, rewritten_exp);
+	}
+
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
 }
 
@@ -9664,6 +10211,8 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 				expr = expr.substr(0, local_index) + "\"" + entry.second + "\"" + expr.substr(local_index + entry.second.size());
 				offset2 += 2;
 				local_id_end_offset += 2;
+				/* Record local_id quoting delta so first_arg slicing below sees it. */
+				arg_offset_list.push_back(std::make_pair((int)entry.first, 2));
 			}
 		}
 	}
@@ -9679,6 +10228,31 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	{
 		rewritten_func = "cast(" + rewritten_func + " as " + typename_arg + ")";
 	}
+
+	/* Inject spatial pre-filters (bbox / distance) for predicates like
+	 * col.STIntersects(...) = 1 or col.STDistance(...) < threshold.
+	 */
+	if (ctx->spatial_proc_name_server_database_schema()
+		&& ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()
+		&& ctx->function_arg_list()
+		&& !ctx->function_arg_list()->expression().empty()
+		&& is_in_spatial_predicate_context(ctx)
+		&& !is_spatial_predicate_negated(ctx))
+	{
+		std::string spatial_func_name = ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg());
+		std::string col_ref = expr.substr(0, col_len + offset1 + 1);
+
+		std::string first_arg = slice_first_arg_from_rewritten_expr(
+			ctx->function_arg_list()->expression().front(),
+			expr, ctx->start->getStartIndex(), offset1, arg_offset_list);
+
+		if (is_spatial_predicate_eq_one(ctx))
+			rewritten_func = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, first_arg, rewritten_func);
+
+		rewritten_func = maybe_inject_spatial_distance_filter_for_ctx(
+			ctx, spatial_func_name, col_ref, first_arg, rewritten_func);
+	}
+
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
 }
 
