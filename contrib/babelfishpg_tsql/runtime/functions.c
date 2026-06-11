@@ -4369,7 +4369,8 @@ get_object_from_pg_class(Oid object_id, Oid user_id, int *type,
 		{
 			if (object_name)
 				*object_name = pstrdup(NameStr(pg_class->relname));
-			*schema_id = get_rel_namespace(object_id);
+			if (schema_id)
+				*schema_id = pg_class->relnamespace;
 
 			if ((pg_class->relpersistence == 'p' || pg_class->relpersistence == 'u' || pg_class->relpersistence == 't') &&
 				pg_class->relkind == 'r')
@@ -4411,7 +4412,7 @@ get_object_from_pg_class(Oid object_id, Oid user_id, int *type,
 						{
 							Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
 
-							if (depform->deptype == 'i')
+							if (depform->deptype == 'i' && type)
 								*type = OBJECT_TYPE_TABLE_TYPE;
 						}
 
@@ -4424,12 +4425,12 @@ get_object_from_pg_class(Oid object_id, Oid user_id, int *type,
 				/*
 				 * If the object is not of Table type (TT), it should be user defined table (U)
 				 */
-				if (*type != OBJECT_TYPE_TABLE_TYPE)
+				if (type && *type != OBJECT_TYPE_TABLE_TYPE)
 					*type = OBJECT_TYPE_TABLE;
 			}
-			else if (pg_class->relkind == 'v')
+			else if (type && pg_class->relkind == 'v')
 				*type = OBJECT_TYPE_VIEW;
-			else if (pg_class->relkind == 'S')
+			else if (type && pg_class->relkind == 'S')
 				*type = OBJECT_TYPE_SEQUENCE_OBJECT;
 		}
 
@@ -4460,11 +4461,12 @@ get_object_from_pg_proc(Oid object_id, Oid user_id, int *type,
 
 		if (object_name)
 			*object_name = pstrdup(NameStr(procform->proname));
-		*schema_id = tsql_get_proc_nsp_oid(object_id);
+		if (schema_id)
+			*schema_id = tsql_get_proc_nsp_oid(object_id);
 
-		if (procform->prokind == 'p')
+		if (procform->prokind == 'p' && type)
 			*type = OBJECT_TYPE_TSQL_STORED_PROCEDURE;
-		else if (procform->prokind == 'a')
+		else if (procform->prokind == 'a' && type)
 			*type = OBJECT_TYPE_AGGREGATE_FUNCTION;
 		else
 		{
@@ -4478,7 +4480,10 @@ get_object_from_pg_proc(Oid object_id, Oid user_id, int *type,
 			 */
 
 			if (pg_strcasecmp(temp, "trigger") == 0)
-				*type = OBJECT_TYPE_TSQL_DML_TRIGGER;
+			{	
+				if (type)	
+					*type = OBJECT_TYPE_TSQL_DML_TRIGGER;
+			}
 			/*
 			 * For SQL table-valued-functions and SQL inline table-valued functions, re-implement the existing SQL.
 			 */
@@ -4491,16 +4496,22 @@ get_object_from_pg_proc(Oid object_id, Oid user_id, int *type,
 				{
 					Form_pg_type typeform = (Form_pg_type) GETSTRUCT(tp);
 
-					if (typeform->typtype == 'c')
-						*type = OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION;
-					else
-						*type = OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION;
-
+					if (type)
+					{
+						if (typeform->typtype == 'c')
+							*type = OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION;
+						else
+							*type = OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION;
+					}
 					ReleaseSysCache(tp);
 				}
 			}
 			else
-				*type = OBJECT_TYPE_TSQL_SCALAR_FUNCTION;
+			{
+				if (type)
+					*type = OBJECT_TYPE_TSQL_SCALAR_FUNCTION;
+			}
+				
 
 			pfree(temp);
 		}
@@ -4549,8 +4560,10 @@ get_object_from_pg_trigger(Oid object_id, Oid user_id, int *type,
 		{
 			if (object_name)
 				*object_name = pstrdup(NameStr(tgform->tgname));
-			*type = OBJECT_TYPE_TSQL_DML_TRIGGER;
-			*schema_id = get_rel_namespace(tgform->tgrelid);
+			if (type)
+				*type = OBJECT_TYPE_TSQL_DML_TRIGGER;
+			if (schema_id)
+				*schema_id = get_rel_namespace(tgform->tgrelid);
 		}
 	}
 
@@ -4631,8 +4644,10 @@ get_object_from_pg_attrdef(Oid object_id, Oid user_id, int *type,
 				{
 					if (object_name)
 						*object_name = pstrdup(NameStr(attrform->attname));
-					*type = OBJECT_TYPE_DEFAULT_CONSTRAINT;
-					*schema_id = get_rel_namespace(atdform->adrelid);
+					if (type)
+						*type = OBJECT_TYPE_DEFAULT_CONSTRAINT;
+					if (schema_id)
+						*schema_id = get_rel_namespace(atdform->adrelid);
 				}
 			}
 
@@ -4665,7 +4680,7 @@ get_object_from_pg_constraint(Oid object_id, Oid user_id, int *type,
 		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
 
 		*schema_id = tsql_get_constraint_nsp_oid(object_id, user_id);
-		if (OidIsValid(*schema_id))
+		if (OidIsValid(*schema_id) && type)
 		{
 			if (object_name)
 				*object_name = pstrdup(NameStr(con->conname));
@@ -4716,7 +4731,8 @@ objectproperty_helper(Oid object_id, const char *property, int *out_type,
 	char	*object_name = NULL;
 	char	*nspname = NULL;
 
-	*is_null = false;
+	if (is_null)
+		*is_null = false;
 
 	/* Resolve object from catalogs */
 	if (!get_object_from_pg_class(object_id, user_id, &type, &schema_id, &object_name))
@@ -4729,12 +4745,14 @@ objectproperty_helper(Oid object_id, const char *property, int *out_type,
 	 * If the object_id is not found or user does not have enough privileges on the object and schema,
 	 * Return NULL.
 	 */
-	if (!schema_id || object_aclcheck(NamespaceRelationId, schema_id, user_id, ACL_USAGE) != ACLCHECK_OK)
+	if (!OidIsValid(schema_id) || object_aclcheck(NamespaceRelationId, schema_id, user_id, ACL_USAGE) != ACLCHECK_OK)
 	{
 		if (object_name)
 			pfree(object_name);
-		*is_null = true;
-		*out_type = OBJECT_TYPE_UNKNOWN;
+		if (is_null)
+			*is_null = true;
+		if (out_type)
+			*out_type = OBJECT_TYPE_UNKNOWN;
 		return 0;
 	}
 
@@ -4752,128 +4770,21 @@ objectproperty_helper(Oid object_id, const char *property, int *out_type,
 			pfree(nspname);
 		if (object_name)
 			pfree(object_name);
-		*is_null = true;
-		*out_type = OBJECT_TYPE_UNKNOWN;
+		if (is_null)
+			*is_null = true;
+		if(out_type)
+			*out_type = OBJECT_TYPE_UNKNOWN;
 		return 0;
 	}
 
 	if (nspname)
 		pfree(nspname);
-
-	*out_type = type;
+	if (out_type)
+		*out_type = type;
 
 	/* Property evaluation */
-	/* OwnerId */
-	if (pg_strcasecmp(property, "ownerid") == 0)
-	{
-		/*
-		 * Search for schema_id in pg_namespace catalog. Return nspowner from 
-		 * the found pg_namespace object.
-		 */
-		if (OidIsValid(schema_id))
-		{
-			HeapTuple	tp;
-			int		result;
-
-			tp = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(schema_id));
-			if (HeapTupleIsValid(tp))
-			{
-				Form_pg_namespace nsptup = (Form_pg_namespace) GETSTRUCT(tp);
-				result = ((int) nsptup->nspowner);
-				ReleaseSysCache(tp);
-			}
-			else
-			{
-				if (object_name) 
-					pfree(object_name);
-				*is_null = true;
-				return 0;
-			}
-			if (object_name) 
-				pfree(object_name);
-			return result;
-		}
-	}
-	/* IsDefaultCnst */
-	else if (pg_strcasecmp(property, "isdefaultcnst") == 0)
-	{
-		/*
-		 * The type of the object should be OBJECT_TYPE_DEFAULT_CONSTRAINT.
-		 */
-		if (object_name)
-			pfree(object_name);
-		if (type == OBJECT_TYPE_DEFAULT_CONSTRAINT)
-			return 1;
-		return 0;
-	}
-	/* ExecIsQuotedIdentOn, IsSchemaBound, ExecIsAnsiNullsOn */
-	else if (pg_strcasecmp(property, "execisquotedidenton") == 0 ||
-			pg_strcasecmp(property, "isschemabound") == 0 ||
-			pg_strcasecmp(property, "execisansinullson") == 0)
-	{
-		/*
-		 * These properties are only applicable to OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_REPLICATION_FILTER_PROCEDURE,
-		 * OBJECT_TYPE_VIEW, OBJECT_TYPE_TSQL_DML_TRIGGER, OBJECT_TYPE_TSQL_SCALAR_FUNCTION, OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION, 
-		 * OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION and OBJECT_TYPE_RULE.
-		 * Hence, return NULL if the object is not from the above types.
-		 */
-		if (!(type == OBJECT_TYPE_TSQL_STORED_PROCEDURE || type == OBJECT_TYPE_REPLICATION_FILTER_PROCEDURE ||
-			type == OBJECT_TYPE_VIEW || type == OBJECT_TYPE_TSQL_DML_TRIGGER || type == OBJECT_TYPE_TSQL_SCALAR_FUNCTION ||
-			type == OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION || type == OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION ||
-			type == OBJECT_TYPE_RULE))
-		{
-			if (object_name) 
-				pfree(object_name);
-			*is_null = true;
-			return 0;
-		}
-
-		/*
-		 * Currently, for IsSchemaBound property, we have hardcoded the value to 0
-		 */
-		if (pg_strcasecmp(property, "isschemabound") == 0)
-		{
-			bool is_weak_view = false;
-			bool is_view = (type == OBJECT_TYPE_VIEW);
-
-			if (is_view)
-				check_is_tsql_view(object_id, &is_weak_view);
-
-			if (object_name) 
-				pfree(object_name);
-			return is_view ? ((int) !is_weak_view) : 0;
-		}
-		/*
-		 * For ExecIsQuotedIdentOn and ExecIsAnsiNullsOn, we hardcoded it to 1
-		 */
-		if (object_name) 
-			pfree(object_name);
-		return 1;
-	}
-	/* TableFullTextPopulateStatus, TableHasVarDecimalStorageFormat */
-	else if (pg_strcasecmp(property, "tablefulltextpopulatestatus") == 0 ||
-			pg_strcasecmp(property, "tablehasvardecimalstorageformat") == 0)
-	{
-		/*
-		 * Currently, we have hardcoded the return value to 0.
-		 */
-		if (type == OBJECT_TYPE_TABLE)
-		{
-			if (object_name) 
-				pfree(object_name);
-			return 0;
-		}
-		/*
-		 * These properties are only applicable if the type of the object is TABLE, 
-		 * Hence, return NULL if the object is not a TABLE.
-		 */
-		if (object_name)
-			pfree(object_name);
-		*is_null = true;
-		return 0;
-	}
 	/* IsMSShipped*/
-	else if (pg_strcasecmp(property, "ismsshipped") == 0)
+	if (pg_strcasecmp(property, "ismsshipped") == 0)
 	{
 		/*
 		 * Check whether the object is MS shipped. We are using is_ms_shipped helper function
@@ -4887,54 +4798,6 @@ objectproperty_helper(Oid object_id, const char *property, int *out_type,
 		}
 		if (object_name) 
 			pfree(object_name);
-		return 0;
-	}
-	/* IsDeterministic */
-	else if (pg_strcasecmp(property, "isdeterministic") == 0)
-	{
-		/*
-		 * Currently, we hardcoded the value to 0.
-		 */
-		if (object_name) 
-			pfree(object_name);
-		return 0;
-	}
-	/* IsProcedure */
-	else if (pg_strcasecmp(property, "isprocedure") == 0)
-	{
-		/*
-		 * Check whether the type of the object is OBJECT_TYPE_TSQL_STORED_PROCEDURE.
-		 */
-		if (object_name)
-			pfree(object_name);
-		if (type == OBJECT_TYPE_TSQL_STORED_PROCEDURE)
-			return 1;
-		return 0;
-	}
-	/* IsTable */
-	else if (pg_strcasecmp(property, "istable") == 0)
-	{
-		/*
-		 * The type of the object should be OBJECT_TYPE_INTERNAL_TABLE or OBJECT_TYPE_TABLE_TYPE or
-		 * TABLE or OBJECT_TYPE_SYSTEM_BASE_TABLE.
-		 */
-		if (object_name)
-			pfree(object_name);
-		if (type == OBJECT_TYPE_INTERNAL_TABLE || type == OBJECT_TYPE_TABLE_TYPE ||
-			type == OBJECT_TYPE_TABLE || type == OBJECT_TYPE_SYSTEM_BASE_TABLE)
-			return 1;
-		return 0;		
-	}
-	/* IsView */
-	else if (pg_strcasecmp(property, "isview") == 0)
-	{
-		/*
-		 * The type of the object should be OBJECT_TYPE_VIEW.
-		 */
-		if (object_name)
-			pfree(object_name);
-		if (type == OBJECT_TYPE_VIEW)
-			return 1;
 		return 0;
 	}
 	/* IsUserView */
@@ -4953,138 +4816,258 @@ objectproperty_helper(Oid object_id, const char *property, int *out_type,
 			pfree(object_name);
 		return 0;
 	}
-	/* IsTableFunction */
-	else if (pg_strcasecmp(property, "istablefunction") == 0)
+	else
 	{
-		/*
-		 * The object should be OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION or OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION
-		 * OBJECT_TYPE_ASSEMBLY_TABLE_VALUED_FUNCTION.
-		 */
-		if (object_name)
-			pfree(object_name);
-		if (type == OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION || type == OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION ||
-			type == OBJECT_TYPE_ASSEMBLY_TABLE_VALUED_FUNCTION)
-			return 1;
-		return 0;	
-	}
-	/* IsInlineFunction */
-	else if (pg_strcasecmp(property, "isinlinefunction") == 0)
-	{
-		/*
-		 * The object should be OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION.
-		 */
-		if (object_name)
-			pfree(object_name);
-		if (type == OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION)
-			return 1;
-		return 0;
 
-	}
-	/* IsScalarFunction */
-	else if (pg_strcasecmp(property, "isscalarfunction") == 0)
-	{
-		/*
-		 * The object should be either OBJECT_TYPE_TSQL_SCALAR_FUNCTION or OBJECT_TYPE_ASSEMBLY_SCALAR_FUNCTION.
-		 */
 		if (object_name)
 			pfree(object_name);
-		if (type == OBJECT_TYPE_TSQL_SCALAR_FUNCTION || type == OBJECT_TYPE_ASSEMBLY_SCALAR_FUNCTION)
-			return 1;
-		return 0;
-	}
-	/* IsPrimaryKey */
-	else if (pg_strcasecmp(property, "isprimarykey") == 0)
-	{
-		/*
-		 * The object should be a OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT.
-		 */
-		if (object_name)
-			pfree(object_name);
-		if (type == OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT)
-			return 1;
-		return 0;
-	}
-	/* IsIndexed */
-	else if (pg_strcasecmp(property, "isindexed") == 0)
-	{
-		/*
-		 * Search for object_id in pg_index catalog by indrelid column.
-		 * The object is indexed if the entry exists in pg_index.
-		 */
-		Relation	indRel;
-		ScanKeyData 	key;
-		SysScanDesc 	scan;
-		HeapTuple	tup;
-
-		if (type != OBJECT_TYPE_TABLE)
+		/* OwnerId */
+		if (pg_strcasecmp(property, "ownerid") == 0)
 		{
-			if (object_name) 
-				pfree(object_name);
+			/*
+			 * Search for schema_id in pg_namespace catalog. Return nspowner from 
+			 * the found pg_namespace object.
+			 */
+			if (OidIsValid(schema_id))
+			{
+				HeapTuple	tp;
+				int		result;
+
+				tp = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(schema_id));
+				if (HeapTupleIsValid(tp))
+				{
+					Form_pg_namespace nsptup = (Form_pg_namespace) GETSTRUCT(tp);
+					result = ((int) nsptup->nspowner);
+					ReleaseSysCache(tp);
+				}
+				else
+				{
+					if(is_null)
+						*is_null = true;
+					return 0;
+				}
+				return result;
+			}
+		}
+		/* IsDefaultCnst */
+		else if (pg_strcasecmp(property, "isdefaultcnst") == 0)
+		{
+			/*
+			 * The type of the object should be OBJECT_TYPE_DEFAULT_CONSTRAINT.
+			 */
+			if (type == OBJECT_TYPE_DEFAULT_CONSTRAINT)
+				return 1;
+			return 0;
+		}
+		/* ExecIsQuotedIdentOn, IsSchemaBound, ExecIsAnsiNullsOn */
+		else if (pg_strcasecmp(property, "execisquotedidenton") == 0 ||
+				pg_strcasecmp(property, "isschemabound") == 0 ||
+				pg_strcasecmp(property, "execisansinullson") == 0)
+		{
+			/*
+			 * These properties are only applicable to OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_REPLICATION_FILTER_PROCEDURE,
+			 * OBJECT_TYPE_VIEW, OBJECT_TYPE_TSQL_DML_TRIGGER, OBJECT_TYPE_TSQL_SCALAR_FUNCTION, OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION, 
+			 * OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION and OBJECT_TYPE_RULE.
+			 * Hence, return NULL if the object is not from the above types.
+			 */
+			if (!(type == OBJECT_TYPE_TSQL_STORED_PROCEDURE || type == OBJECT_TYPE_REPLICATION_FILTER_PROCEDURE ||
+				type == OBJECT_TYPE_VIEW || type == OBJECT_TYPE_TSQL_DML_TRIGGER || type == OBJECT_TYPE_TSQL_SCALAR_FUNCTION ||
+				type == OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION || type == OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION ||
+				type == OBJECT_TYPE_RULE))
+			{
+				if (is_null)
+					*is_null = true;
+				return 0;
+			}
+
+			/*
+			 * Currently, for IsSchemaBound property, we have hardcoded the value to 0
+			 */
+			if (pg_strcasecmp(property, "isschemabound") == 0)
+			{
+				bool is_weak_view = false;
+				bool is_view = (type == OBJECT_TYPE_VIEW);
+
+				if (is_view)
+					check_is_tsql_view(object_id, &is_weak_view);
+				return is_view ? ((int) !is_weak_view) : 0;
+			}
+			/*
+			 * For ExecIsQuotedIdentOn and ExecIsAnsiNullsOn, we hardcoded it to 1
+			 */
+			return 1;
+		}
+		/* TableFullTextPopulateStatus, TableHasVarDecimalStorageFormat */
+		else if (pg_strcasecmp(property, "tablefulltextpopulatestatus") == 0 ||
+				pg_strcasecmp(property, "tablehasvardecimalstorageformat") == 0)
+		{
+			/*
+			 * Currently, we have hardcoded the return value to 0.
+			 */
+			if (type == OBJECT_TYPE_TABLE)
+			{
+				return 0;
+			}
+			/*
+			 * These properties are only applicable if the type of the object is TABLE, 
+			 * Hence, return NULL if the object is not a TABLE.
+			 */
+			if (is_null)
+				*is_null = true;
+			return 0;
+		}
+		/* IsDeterministic */
+		else if (pg_strcasecmp(property, "isdeterministic") == 0)
+		{
+			/*
+			 * Currently, we hardcoded the value to 0.
+			 */
+			return 0;
+		}
+		/* IsProcedure */
+		else if (pg_strcasecmp(property, "isprocedure") == 0)
+		{
+			/*
+			 * Check whether the type of the object is OBJECT_TYPE_TSQL_STORED_PROCEDURE.
+			 */
+			if (type == OBJECT_TYPE_TSQL_STORED_PROCEDURE)
+				return 1;
+			return 0;
+		}
+		/* IsTable */
+		else if (pg_strcasecmp(property, "istable") == 0)
+		{
+			/*
+			 * The type of the object should be OBJECT_TYPE_INTERNAL_TABLE or OBJECT_TYPE_TABLE_TYPE or
+			 * TABLE or OBJECT_TYPE_SYSTEM_BASE_TABLE.
+			 */
+			if (type == OBJECT_TYPE_INTERNAL_TABLE || type == OBJECT_TYPE_TABLE_TYPE ||
+				type == OBJECT_TYPE_TABLE || type == OBJECT_TYPE_SYSTEM_BASE_TABLE)
+				return 1;
+			return 0;		
+		}
+		/* IsView */
+		else if (pg_strcasecmp(property, "isview") == 0)
+		{
+			/*
+			 * The type of the object should be OBJECT_TYPE_VIEW.
+			 */
+			if (type == OBJECT_TYPE_VIEW)
+				return 1;
+			return 0;
+		}
+		/* IsTableFunction */
+		else if (pg_strcasecmp(property, "istablefunction") == 0)
+		{
+			/*
+			 * The object should be OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION or OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION
+			 * OBJECT_TYPE_ASSEMBLY_TABLE_VALUED_FUNCTION.
+			 */
+			if (type == OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION || type == OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION ||
+				type == OBJECT_TYPE_ASSEMBLY_TABLE_VALUED_FUNCTION)
+				return 1;
+			return 0;	
+		}
+		/* IsInlineFunction */
+		else if (pg_strcasecmp(property, "isinlinefunction") == 0)
+		{
+			/*
+			 * The object should be OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION.
+			 */
+			if (type == OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION)
+				return 1;
+			return 0;
+
+		}
+		/* IsScalarFunction */
+		else if (pg_strcasecmp(property, "isscalarfunction") == 0)
+		{
+			/*
+			 * The object should be either OBJECT_TYPE_TSQL_SCALAR_FUNCTION or OBJECT_TYPE_ASSEMBLY_SCALAR_FUNCTION.
+			 */
+			if (type == OBJECT_TYPE_TSQL_SCALAR_FUNCTION || type == OBJECT_TYPE_ASSEMBLY_SCALAR_FUNCTION)
+				return 1;
+			return 0;
+		}
+		/* IsPrimaryKey */
+		else if (pg_strcasecmp(property, "isprimarykey") == 0)
+		{
+			/*
+			 * The object should be a OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT.
+			 */
+			if (type == OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT)
+				return 1;
+			return 0;
+		}
+		/* IsIndexed */
+		else if (pg_strcasecmp(property, "isindexed") == 0)
+		{
+			/*
+			 * Search for object_id in pg_index catalog by indrelid column.
+			 * The object is indexed if the entry exists in pg_index.
+			 */
+			Relation	indRel;
+			ScanKeyData 	key;
+			SysScanDesc 	scan;
+			HeapTuple	tup;
+
+			if (type != OBJECT_TYPE_TABLE)
+			{
+				return 0;
+			}
+
+			indRel = table_open(IndexRelationId, AccessShareLock);
+
+			ScanKeyInit(&key,
+					Anum_pg_index_indrelid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(object_id));
+
+			scan = systable_beginscan(indRel, IndexIndrelidIndexId, true,
+							NULL, 1, &key);
+
+			if (HeapTupleIsValid(tup = systable_getnext(scan)))
+			{
+				systable_endscan(scan);
+				table_close(indRel, AccessShareLock);
+				return 1;
+			}
+
+			systable_endscan(scan);
+			table_close(indRel, AccessShareLock);
+
+			return 0;
+		}
+		/* IsDefault */
+		else if (pg_strcasecmp(property, "isdefault") == 0)
+		{
+			/*
+			 * Currently hardcoded to 0.
+			 */
+			return 0;
+		}
+		/* IsOBJECT_TYPE_RULE */
+		else if (pg_strcasecmp(property, "isrule") == 0)
+		{
+			/*
+			 * Currently hardcoded to 0.
+			 */
+			return 0;
+		}
+		/* IsTrigger */
+		else if (pg_strcasecmp(property, "istrigger") == 0)
+		{
+			/*
+			 * The type of the object should be a DML trigger.
+			 */
+			if (type == OBJECT_TYPE_TSQL_DML_TRIGGER)
+				return 1;
 			return 0;
 		}
 
-		indRel = table_open(IndexRelationId, AccessShareLock);
-
-		ScanKeyInit(&key,
-				Anum_pg_index_indrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(object_id));
-
-		scan = systable_beginscan(indRel, IndexIndrelidIndexId, true,
-				  		NULL, 1, &key);
-
-		if (HeapTupleIsValid(tup = systable_getnext(scan)))
-		{
-			systable_endscan(scan);
-			table_close(indRel, AccessShareLock);
-			if (object_name) 
-				pfree(object_name);
-			return 1;
-		}
-
-		systable_endscan(scan);
-		table_close(indRel, AccessShareLock);
-		if (object_name) 
-			pfree(object_name);
-
-		return 0;
-	}
-	/* IsDefault */
-	else if (pg_strcasecmp(property, "isdefault") == 0)
-	{
-		/*
-		 * Currently hardcoded to 0.
-		 */
-		if (object_name) 
-			pfree(object_name);
-		return 0;
-	}
-	/* IsOBJECT_TYPE_RULE */
-	else if (pg_strcasecmp(property, "isrule") == 0)
-	{
-		/*
-		 * Currently hardcoded to 0.
-		 */
-		if (object_name) 
-			pfree(object_name);
-		return 0;
-	}
-	/* IsTrigger */
-	else if (pg_strcasecmp(property, "istrigger") == 0)
-	{
-		/*
-		 * The type of the object should be a DML trigger.
-		 */
-		if (object_name)
-			pfree(object_name);
-		if (type == OBJECT_TYPE_TSQL_DML_TRIGGER)
-			return 1;
-		return 0;
 	}
 
 	/* Unrecognized property (including basetype - handled by objectpropertyex_internal) */
-	if (object_name)
-		pfree(object_name);
 	*is_null = true;
 	return 0;
 }
@@ -5096,12 +5079,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	Oid		object_id;
 	char	*raw;
 	char	*property;
-	int		type;
 	bool	is_null;
 	int		result;
-
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
-		PG_RETURN_NULL();
 
 	object_id = (Oid) PG_GETARG_INT32(0);
 	raw = text_to_cstring(PG_GETARG_TEXT_P(1));
@@ -5109,7 +5088,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	pfree(raw);
 	remove_trailing_spaces(property);
 
-	result = objectproperty_helper(object_id, property, &type, &is_null);
+	result = objectproperty_helper(object_id, property, NULL, &is_null);
 	pfree(property);
 
 	if (is_null)
@@ -5134,9 +5113,6 @@ objectpropertyex_internal(PG_FUNCTION_ARGS)
 	int		type;
 	bool	is_null;
 	int		result;
-
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
-		PG_RETURN_NULL();
 
 	object_id = (Oid) PG_GETARG_INT32(0);
 	raw = text_to_cstring(PG_GETARG_TEXT_P(1));
