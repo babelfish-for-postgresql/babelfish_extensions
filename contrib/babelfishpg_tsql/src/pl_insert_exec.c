@@ -612,6 +612,10 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema
 									quote_identifier(target_db),
 									quote_identifier(target_schema ? target_schema : "dbo"),
 									quote_identifier(target_table));
+	else if (target_schema != NULL)
+		qualified_target = psprintf("%s.%s",
+									quote_identifier(target_schema),
+									quote_identifier(target_table));
 	else
 		qualified_target = pstrdup(quote_identifier(target_table));
 
@@ -912,7 +916,7 @@ void
 insert_exec_success_cleanup(PLtsql_execstate *estate, InsertExecInfo *info)
 {
 	char	   *column_list = build_quoted_column_list(info->columns);
-	const char *flush_schema = (info->db_name != NULL) ? info->schema : NULL;
+	const char *flush_schema = (info->db_name != NULL || info->schema != NULL) ? info->schema : NULL;
 
 	PG_TRY();
 	{
