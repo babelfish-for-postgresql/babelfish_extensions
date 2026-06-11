@@ -29,6 +29,7 @@ extern int pltsql_antlr_parse_cache_stat_evictions;
 extern int pltsql_antlr_parse_cache_stat_errors;
 
 extern bool pltsql_enable_linked_servers;
+extern bool pltsql_enable_remote_proc_exec;
 extern bool pltsql_enable_ownership_chaining;
 extern bool pltsql_allow_windows_login;
 extern bool pltsql_allow_fulltext_parser;
@@ -39,6 +40,7 @@ extern int  pltsql_isolation_level_repeatable_read;
 extern int  pltsql_isolation_level_serializable;
 extern int escape_hatch_identity_function;
 extern int escape_hatch_insert_bulk_options;
+extern int escape_hatch_remote_proc_transaction;
 
 extern void define_custom_variables(void);
 extern void pltsql_validate_set_config_function(char *name, char *value);

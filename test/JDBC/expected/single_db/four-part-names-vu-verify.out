@@ -111,9 +111,9 @@ GO
 -- four part object is a procedure (Should throw error)
 EXEC bbf_fpn_server.master.dbo.sp_linkedserver
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 7412)~~
 
-~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
+~~ERROR (Message: Server 'bbf_fpn_server' is not configured for RPC OUT.)~~
 
 
 -- INSERT should not work with four-part object name

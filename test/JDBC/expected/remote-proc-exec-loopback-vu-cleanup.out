@@ -1,0 +1,49 @@
+-- tsql
+DROP PROCEDURE IF EXISTS rpe_loopback_no_params;
+GO
+
+DROP PROCEDURE IF EXISTS rpe_loopback_int_param;
+GO
+
+DROP PROCEDURE IF EXISTS rpe_loopback_varchar_param;
+GO
+
+DROP PROCEDURE IF EXISTS rpe_loopback_multi_params;
+GO
+
+DROP PROCEDURE IF EXISTS rpe_loopback_output;
+GO
+
+DROP PROCEDURE IF EXISTS rpe_loopback_output_multi;
+GO
+
+DROP PROCEDURE IF EXISTS rpe_loopback_return_code;
+GO
+
+DROP PROCEDURE IF EXISTS rpe_loopback_raiserror;
+GO
+
+DROP PROCEDURE IF EXISTS rpe_loopback_throw50001;
+GO
+
+DROP PROCEDURE IF EXISTS rpe_loopback_bare_rollback;
+GO
+
+DROP PROCEDURE IF EXISTS rpe_loopback_begin_no_commit;
+GO
+
+DROP PROCEDURE IF EXISTS rpe_loopback_multi_resultset;
+GO
+
+DROP PROCEDURE IF EXISTS rpe_loopback_multi_resultset_with_output;
+GO
+
+EXEC sp_dropserver 'bbf_loopback', 'droplogins';
+GO
+
+-- psql
+-- Suppress cascade warnings to keep test output deterministic
+SET client_min_messages TO 'error';
+DROP EXTENSION IF EXISTS tds_fdw CASCADE;
+SET client_min_messages TO 'notice';
+GO

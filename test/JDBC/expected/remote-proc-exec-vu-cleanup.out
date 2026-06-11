@@ -1,0 +1,147 @@
+-- tsql
+DROP PROCEDURE IF EXISTS dbo.sp_NoParams;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_SingleInt;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_TestIntegers;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_TestFloat;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_TestDecimal;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_TestMoney;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_TestVarchar;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_TestNvarchar;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_TestChar;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_TestBit;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_TestBinary;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_TestUUID;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_TestDate;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_TestDateTime;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_TestTime;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_OutputSingle;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_OutputMultiple;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_OutputNoResult;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_InOut;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_MultiRow;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_MixedTypes;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_EmptyResult;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_NullValues;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_ConditionalLogic;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_FilterByParam;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_CombinedIO;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_NullableParam;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_LargeString;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_ReturnCode;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_WithError;
+GO
+
+-- Nested procedure validation test procs
+DROP PROCEDURE IF EXISTS dbo.sp_Inner_SelectOnly;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Inner_WithInsert;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Inner_WithUpdate;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Inner_WithDelete;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Outer_CallsSelectOnly;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Outer_CallsInsert;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Outer_CallsUpdate;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Outer_CallsDelete;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Level3_SelectOnly;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Level2_CallsLevel3;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Level1_DeepNesting;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Level3_WithDML;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Level2_CallsDML;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Level1_DeepWithDML;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_CircularA;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_CircularB;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Outer_MultipleInner;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_Outer_WithDynamicSQL;
+GO
+
+-- Error message compatibility test procs
+DROP PROCEDURE IF EXISTS dbo.sp_err_SingleInt;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_TwoParams;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_Raiserror16;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_Raiserror11;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_Raiserror10;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_RaiserrorCustomMsg;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_DivByZero;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_Overflow;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_ConversionError;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_StringTruncation;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_NullDeref;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_InnerRaiserror;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_NestedError;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_ReturnAfterError;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_MultipleErrors;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_PrintAndError;
+GO
+DROP PROCEDURE IF EXISTS dbo.sp_err_PrintOnly;
+GO
+
+-- Drop linked server (and login mappings) before dropping the FDW extension
+EXEC sp_dropserver 'bbf_rpe_server', 'droplogins';
+GO
+
+-- psql
+-- Drop the FDW extension; CASCADE in case anything else still depends on it.
+-- Suppress warnings to keep test output deterministic.
+SET client_min_messages TO 'error';
+DROP EXTENSION IF EXISTS tds_fdw CASCADE;
+SET client_min_messages TO 'notice';
+GO

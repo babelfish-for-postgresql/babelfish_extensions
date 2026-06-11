@@ -1,0 +1,23 @@
+-- psql
+-- Ensure database-level GUC is restored in case verify failed mid-way
+ALTER DATABASE babelfish_db RESET babelfishpg_tsql.enable_remote_proc_exec;
+GO
+
+-- tsql
+DROP PROCEDURE IF EXISTS rpe_rtcheck_simple;
+GO
+
+EXEC sp_dropserver 'bbf_rtcheck', 'droplogins';
+GO
+
+ALTER SERVER ROLE sysadmin DROP MEMBER bbf_rtcheck_login;
+GO
+
+DROP LOGIN bbf_rtcheck_login;
+GO
+
+-- psql
+SET client_min_messages TO 'error';
+DROP EXTENSION IF EXISTS tds_fdw CASCADE;
+SET client_min_messages TO 'notice';
+GO

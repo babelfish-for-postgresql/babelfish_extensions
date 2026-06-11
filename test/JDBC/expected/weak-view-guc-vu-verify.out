@@ -25,6 +25,7 @@ babelfishpg_tsql.escape_hatch_login_password_unlock#!#strict#!#escape hatch for 
 babelfishpg_tsql.escape_hatch_nocheck_add_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table add
 babelfishpg_tsql.escape_hatch_nocheck_existing_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table on exsiting constraint
 babelfishpg_tsql.escape_hatch_query_hints#!#ignore#!#escape hatch for query hints
+babelfishpg_tsql.escape_hatch_remote_proc_transaction#!#strict#!#escape hatch for remote procedure execution within active transactions
 babelfishpg_tsql.escape_hatch_rowguidcol_column#!#ignore#!#escape hatch for ROWGUIDCOL option
 babelfishpg_tsql.escape_hatch_rowversion#!#strict#!#escape hatch for TIMESTAMP/ROWVERSION columns
 babelfishpg_tsql.escape_hatch_schemabinding_function#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE FUNCTION

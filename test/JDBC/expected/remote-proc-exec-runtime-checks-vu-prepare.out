@@ -1,0 +1,35 @@
+-- psql
+-- Suppress warnings for idempotent CREATE EXTENSION
+SET client_min_messages TO 'error';
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+SET client_min_messages TO 'notice';
+GO
+
+-- tsql
+-- Create loopback linked server for runtime checks testing
+EXEC sp_addlinkedserver @server = N'bbf_rtcheck', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master';
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_rtcheck', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678';
+GO
+
+-- Enable RPC out (required for remote procedure execution)
+EXEC sp_serveroption 'bbf_rtcheck', 'rpc out', 'true';
+GO
+
+-- Create a simple test procedure
+CREATE PROCEDURE rpe_rtcheck_simple
+AS BEGIN
+    SELECT 'runtime_check_ok' AS status;
+END;
+GO
+
+-- Second login used to spawn a fresh TDS connection for TEST 1
+-- (verify uses ALTER DATABASE SET to flip the PGC_SUSET GUC, which only
+--  takes effect on new connections; the framework caches by user/pwd, so
+--  a separate login is the only way to force a new TDS session.)
+CREATE LOGIN bbf_rtcheck_login WITH PASSWORD = '12345678';
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER bbf_rtcheck_login;
+GO

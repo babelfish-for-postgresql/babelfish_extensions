@@ -134,8 +134,8 @@ void         delete_xml_handle_entry(int  handle);
 int          insert_xml_handle_entry(xmltype *xml_data,xmltype *ns_data, int xml_data_length, int ns_data_length);
 
 /* server options and their default values for babelfish_server_options catalog insert */
-char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
-char	   * srvOptions_optvalue[BBF_SERVERS_DEF_NUM_COLS - 1] = {"0", "0"};
+char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout", "rpc out"};
+char	   * srvOptions_optvalue[BBF_SERVERS_DEF_NUM_COLS - 1] = {"0", "0", "false"};
 
 Datum
 sp_unprepare(PG_FUNCTION_ARGS)
@@ -2709,6 +2709,10 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 
 	MemSet(new_record_repl, false, sizeof(new_record_repl));
 
+	/* Open the relation early so we can check natts throughout the function */
+	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),RowExclusiveLock);
+	bbf_servers_def_rel_dsc = RelationGetDescr(bbf_servers_def_rel);
+
 	/* need not check for optname and optvalue when isInsert = true */
 	if(isInsert)
 	{
@@ -2722,6 +2726,18 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 					new_record[Anum_bbf_servers_def_query_timeout - 1] = Int32GetDatum(timeout);
 				else
 					new_record[Anum_bbf_servers_def_connect_timeout - 1] = Int32GetDatum(timeout);
+			}
+			else if(strlen(srvOptions_optname[i]) == 7 && strncmp(srvOptions_optname[i], "rpc out", 7) == 0)
+			{
+				/* 
+				 * Handle rpc out as boolean: "true" or "false"
+				 * Only set this if the catalog table has been upgraded to include the rpc_out column
+				 */
+				if (bbf_servers_def_rel_dsc->natts >= Anum_bbf_servers_def_rpc_out)
+				{
+					bool rpc_out_enabled = (strcmp(srvOptions_optvalue[i], "true") == 0);
+					new_record[Anum_bbf_servers_def_rpc_out - 1] = BoolGetDatum(rpc_out_enabled);
+				}
 			}
 		}
 	}
@@ -2763,6 +2779,36 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 				new_record[Anum_bbf_servers_def_connect_timeout - 1] = Int32GetDatum(timeout);
 			}
 		}
+		else if (optname && strlen(optname) == 7 && strncmp(optname, "rpc out", 7) == 0)
+		{
+			bool rpc_out_enabled;
+
+			/* Check if the catalog table has been upgraded to include the rpc_out column */
+			if (bbf_servers_def_rel_dsc->natts < Anum_bbf_servers_def_rpc_out)
+			{
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					errmsg("The 'rpc out' option is not available. The catalog needs to be upgraded.")));
+			}
+
+			/* Validate rpc out value: "true"/"false" or "yes"/"no" (case-insensitive, matching SQL Server) */
+			if (strlen(optvalue) == 0)
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					errmsg("Invalid option value for rpc out")));
+
+			if (pg_strcasecmp(optvalue, "true") == 0 || pg_strcasecmp(optvalue, "yes") == 0)
+				rpc_out_enabled = true;
+			else if (pg_strcasecmp(optvalue, "false") == 0 || pg_strcasecmp(optvalue, "no") == 0)
+				rpc_out_enabled = false;
+			else
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					errmsg("Invalid option value for rpc out. Valid values are 'true' or 'false'")));
+
+			new_record_repl[Anum_bbf_servers_def_rpc_out - 1] = true;
+			new_record[Anum_bbf_servers_def_rpc_out - 1] = BoolGetDatum(rpc_out_enabled);
+		}
 		else
 		{
 			ereport(ERROR,
@@ -2770,9 +2816,6 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 				 errmsg("Invalid option provided for sp_serveroption")));
 		}
 	}
-
-	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),RowExclusiveLock);
-	bbf_servers_def_rel_dsc = RelationGetDescr(bbf_servers_def_rel);
 
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 	new_record[Anum_bbf_servers_def_servername - 1] = CStringGetTextDatum(servername);
@@ -2801,7 +2844,12 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 					errmsg("The server '%s' does not exist. Use sp_linkedservers to show available servers.", servername)));
 		}
 
-		for(int i = 1; i < BBF_SERVERS_DEF_NUM_COLS; i++)
+		/* 
+		 * Copy existing values for columns that are not being updated.
+		 * Limit the loop to the actual number of columns in the table to handle
+		 * pre-upgrade catalogs that may have fewer columns.
+		 */
+		for(int i = 1; i < BBF_SERVERS_DEF_NUM_COLS && i < bbf_servers_def_rel_dsc->natts; i++)
 		{
 			if(!new_record_repl[i])
 			{
@@ -3285,12 +3333,14 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 	while (*newoptionvalue != '\0' && isspace((unsigned char) *newoptionvalue))
 		newoptionvalue++;
 
-	if (optionname && ((strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0 ) || (strlen(optionname) == 15 && strncmp(optionname, "connect timeout", 15) == 0)))
+	if (optionname && ((strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0 ) || 
+		(strlen(optionname) == 15 && strncmp(optionname, "connect timeout", 15) == 0) ||
+		(strlen(optionname) == 7 && strncmp(optionname, "rpc out", 7) == 0)))
 		update_bbf_server_options(servername, optionname, newoptionvalue, false);
 	else
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Invalid option provided for sp_serveroption. Only 'query timeout' and 'connect timeout' are currently supported.")));
+				errmsg("Invalid option provided for sp_serveroption. Supported options are 'query timeout', 'connect timeout', and 'rpc out'.")));
 
 	if(servername)
 		pfree(servername);

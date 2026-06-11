@@ -1,3 +1,19 @@
+-- Defensive drops: if a previous verify run failed partway through, its
+-- trailing DROP block never executed and these objects linger. Idempotent
+-- IF EXISTS drops let the next prepare/verify cycle start clean.
+DROP TABLE IF EXISTS fpn_table_insert_into;
+GO
+DROP TABLE IF EXISTS fpn_table_select_into;
+GO
+DROP TABLE IF EXISTS fpn_table;
+GO
+DROP VIEW IF EXISTS four_part_names_vu_verify_view;
+GO
+DROP PROCEDURE IF EXISTS fpn_vu_prepare__fpn_proc;
+GO
+DROP FUNCTION IF EXISTS fpn_vu_prepare__fpn_func;
+GO
+
 EXEC sp_dropserver 'bbf_fpn_server', 'droplogins'
 GO
 

@@ -1892,6 +1892,15 @@ typedef struct PLtsql_protocol_plugin
 
 	bool		(*pltsql_get_errdata) (int *tsql_error_code, int *tsql_error_severity, int *tsql_error_state);
 
+	/*
+	 * Plant explicit ERROR_NUMBER/SEVERITY/STATE values into the TDS-side
+	 * per-statement error slot. Used by the linked-server RPC path so the
+	 * captured remote errno (e.g., 50001 from THROW, 3903 from a bare
+	 * ROLLBACK) surfaces through the caller's CATCH instead of the
+	 * user-defined-error default of 50000.
+	 */
+	void		(*set_tds_estate_err_data) (int number, int severity, int state);
+
 	int16		(*pltsql_get_database_oid) (const char *dbname);
 
 	bool		(*pltsql_is_login) (Oid role_oid);

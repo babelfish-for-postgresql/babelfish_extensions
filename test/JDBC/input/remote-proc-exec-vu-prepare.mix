@@ -1,0 +1,587 @@
+-- psql
+-- Create tds_fdw extension for linked server support
+-- Suppress warnings for idempotent CREATE EXTENSION
+SET client_min_messages TO 'error';
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+SET client_min_messages TO 'notice';
+GO
+
+-- tsql
+-- Clean up any existing test procedures from previous runs to ensure consistent test state
+DROP PROCEDURE IF EXISTS dbo.sp_NoParams;
+DROP PROCEDURE IF EXISTS dbo.sp_SingleInt;
+DROP PROCEDURE IF EXISTS dbo.sp_TestIntegers;
+DROP PROCEDURE IF EXISTS dbo.sp_TestFloat;
+DROP PROCEDURE IF EXISTS dbo.sp_TestDecimal;
+DROP PROCEDURE IF EXISTS dbo.sp_TestMoney;
+DROP PROCEDURE IF EXISTS dbo.sp_TestVarchar;
+DROP PROCEDURE IF EXISTS dbo.sp_TestNvarchar;
+DROP PROCEDURE IF EXISTS dbo.sp_TestChar;
+DROP PROCEDURE IF EXISTS dbo.sp_TestBit;
+DROP PROCEDURE IF EXISTS dbo.sp_TestBinary;
+DROP PROCEDURE IF EXISTS dbo.sp_TestUUID;
+DROP PROCEDURE IF EXISTS dbo.sp_TestDate;
+DROP PROCEDURE IF EXISTS dbo.sp_TestDateTime;
+DROP PROCEDURE IF EXISTS dbo.sp_TestTime;
+DROP PROCEDURE IF EXISTS dbo.sp_OutputSingle;
+DROP PROCEDURE IF EXISTS dbo.sp_OutputMultiple;
+DROP PROCEDURE IF EXISTS dbo.sp_OutputNoResult;
+DROP PROCEDURE IF EXISTS dbo.sp_InOut;
+DROP PROCEDURE IF EXISTS dbo.sp_MultiRow;
+DROP PROCEDURE IF EXISTS dbo.sp_MixedTypes;
+DROP PROCEDURE IF EXISTS dbo.sp_EmptyResult;
+DROP PROCEDURE IF EXISTS dbo.sp_NullValues;
+DROP PROCEDURE IF EXISTS dbo.sp_ConditionalLogic;
+DROP PROCEDURE IF EXISTS dbo.sp_FilterByParam;
+DROP PROCEDURE IF EXISTS dbo.sp_CombinedIO;
+DROP PROCEDURE IF EXISTS dbo.sp_NullableParam;
+DROP PROCEDURE IF EXISTS dbo.sp_LargeString;
+DROP PROCEDURE IF EXISTS dbo.sp_ReturnCode;
+DROP PROCEDURE IF EXISTS dbo.sp_WithError;
+GO
+
+-- Create linked server for remote procedure execution tests
+EXEC sp_addlinkedserver @server = N'bbf_rpe_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master';
+GO
+
+-- Add login mapping for linked server
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_rpe_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678';
+GO
+
+-- Enable RPC out option (required for remote procedure execution)
+EXEC sp_serveroption 'bbf_rpe_server', 'rpc out', 'true';
+GO
+
+-- Create test procedures for various scenarios
+
+-- Basic execution tests
+CREATE PROCEDURE sp_NoParams
+AS BEGIN
+    SELECT 'Hello from remote' AS message, 42 AS number;
+END;
+GO
+
+CREATE PROCEDURE sp_SingleInt @value INT
+AS BEGIN
+    SELECT @value AS input_value, @value * 2 AS doubled;
+END;
+GO
+
+-- Numeric type tests
+CREATE PROCEDURE sp_TestIntegers @p_int INT, @p_bigint BIGINT, @p_smallint SMALLINT, @p_tinyint TINYINT
+AS BEGIN
+    SELECT @p_int AS int_val, @p_bigint AS bigint_val, @p_smallint AS smallint_val, @p_tinyint AS tinyint_val;
+END;
+GO
+
+CREATE PROCEDURE sp_TestFloat @p_float FLOAT, @p_real REAL
+AS BEGIN
+    SELECT @p_float AS float_val, @p_real AS real_val;
+END;
+GO
+
+CREATE PROCEDURE sp_TestDecimal @p_decimal DECIMAL(18,4), @p_numeric NUMERIC(10,2)
+AS BEGIN
+    SELECT @p_decimal AS decimal_val, @p_numeric AS numeric_val;
+END;
+GO
+
+CREATE PROCEDURE sp_TestMoney @p_money MONEY, @p_smallmoney SMALLMONEY
+AS BEGIN
+    SELECT @p_money AS money_val, @p_smallmoney AS smallmoney_val;
+END;
+GO
+
+-- String type tests
+CREATE PROCEDURE sp_TestVarchar @p VARCHAR(100)
+AS BEGIN
+    SELECT @p AS varchar_val, LEN(@p) AS str_len;
+END;
+GO
+
+CREATE PROCEDURE sp_TestNvarchar @p NVARCHAR(100)
+AS BEGIN
+    SELECT @p AS nvarchar_val, LEN(@p) AS str_len;
+END;
+GO
+
+CREATE PROCEDURE sp_TestChar @p_char CHAR(10), @p_nchar NCHAR(10)
+AS BEGIN
+    SELECT @p_char AS char_val, @p_nchar AS nchar_val, LEN(@p_char) AS char_len, LEN(@p_nchar) AS nchar_len;
+END;
+GO
+
+-- Binary and special types
+CREATE PROCEDURE sp_TestBit @p BIT
+AS BEGIN
+    SELECT @p AS bit_val, CASE WHEN @p = 1 THEN 'TRUE' ELSE 'FALSE' END AS bit_string;
+END;
+GO
+
+CREATE PROCEDURE sp_TestBinary @p VARBINARY(100)
+AS BEGIN
+    SELECT @p AS binary_val, LEN(@p) AS binary_len;
+END;
+GO
+
+CREATE PROCEDURE sp_TestUUID @p UNIQUEIDENTIFIER
+AS BEGIN
+    SELECT @p AS uuid_val, CAST(@p AS VARCHAR(50)) AS uuid_string;
+END;
+GO
+
+-- Date/Time type tests
+CREATE PROCEDURE sp_TestDate @p DATE
+AS BEGIN
+    SELECT @p AS date_val, DATEPART(year, @p) AS year_val;
+END;
+GO
+
+CREATE PROCEDURE sp_TestDateTime @p_datetime DATETIME, @p_datetime2 DATETIME2
+AS BEGIN
+    SELECT @p_datetime AS datetime_val, @p_datetime2 AS datetime2_val;
+END;
+GO
+
+CREATE PROCEDURE sp_TestTime @p TIME
+AS BEGIN
+    SELECT @p AS time_val, DATEPART(hour, @p) AS hour_val;
+END;
+GO
+
+-- OUTPUT parameter tests
+CREATE PROCEDURE sp_OutputSingle @input INT, @output INT OUTPUT
+AS BEGIN
+    SET @output = @input * 2;
+    SELECT @output AS calculated_value;
+END;
+GO
+
+CREATE PROCEDURE sp_OutputMultiple @a INT, @b INT, @sum INT OUTPUT, @product INT OUTPUT
+AS BEGIN
+    SET @sum = @a + @b;
+    SET @product = @a * @b;
+    SELECT @sum AS sum_result, @product AS product_result;
+END;
+GO
+
+CREATE PROCEDURE sp_OutputNoResult @input INT, @output INT OUTPUT
+AS BEGIN
+    SET @output = @input + 100;
+    -- No SELECT, just sets OUTPUT
+END;
+GO
+
+-- INOUT parameter test
+CREATE PROCEDURE sp_InOut @counter INT OUTPUT
+AS BEGIN
+    SET @counter = @counter + 100;
+    SELECT @counter AS new_value;
+END;
+GO
+
+-- Result set tests
+CREATE PROCEDURE sp_MultiRow
+AS BEGIN
+    SELECT 1 AS id, 'Alice' AS name, 25 AS age
+    UNION ALL SELECT 2, 'Bob', 30
+    UNION ALL SELECT 3, 'Charlie', 35
+    UNION ALL SELECT 4, 'Diana', 28
+    UNION ALL SELECT 5, 'Eve', 32
+    ORDER BY id;
+END;
+GO
+
+CREATE PROCEDURE sp_MixedTypes
+AS BEGIN
+    SELECT 
+        42 AS int_col,
+        'Test String' AS varchar_col,
+        N'Unicode String' AS nvarchar_col,
+        123.456 AS decimal_col,
+        CAST(1 AS BIT) AS bit_col,
+        CAST('12345678-1234-1234-1234-123456789ABC' AS UNIQUEIDENTIFIER) AS uuid_col;
+END;
+GO
+
+CREATE PROCEDURE sp_EmptyResult
+AS BEGIN
+    SELECT 1 AS id, 'test' AS name WHERE 1 = 0;
+END;
+GO
+
+CREATE PROCEDURE sp_NullValues
+AS BEGIN
+    SELECT 1 AS id, 'value' AS name, 100 AS amount
+    UNION ALL SELECT 2, NULL, 200
+    UNION ALL SELECT 3, 'another', NULL
+    UNION ALL SELECT 4, NULL, NULL
+    ORDER BY id;
+END;
+GO
+
+-- Conditional logic test
+CREATE PROCEDURE sp_ConditionalLogic @mode INT
+AS BEGIN
+    IF @mode = 1
+        SELECT 'Mode 1' AS result, 100 AS value;
+    ELSE IF @mode = 2
+        SELECT 'Mode 2' AS result, 200 AS value;
+    ELSE
+        SELECT 'Default Mode' AS result, 0 AS value;
+END;
+GO
+
+-- Parameter filtering
+CREATE PROCEDURE sp_FilterByParam @min_val INT, @max_val INT
+AS BEGIN
+    WITH Numbers AS (
+        SELECT 1 AS n
+        UNION ALL SELECT n + 1 FROM Numbers WHERE n < 20
+    )
+    SELECT n AS value, n * n AS squared
+    FROM Numbers
+    WHERE n >= @min_val AND n <= @max_val
+    OPTION (MAXRECURSION 20);
+END;
+GO
+
+-- Combined I/O with result
+CREATE PROCEDURE sp_CombinedIO @multiplier INT, @row_count INT OUTPUT
+AS BEGIN
+    WITH Numbers AS (
+        SELECT 1 AS n
+        UNION ALL SELECT n + 1 FROM Numbers WHERE n < 5
+    )
+    SELECT n AS original, n * @multiplier AS multiplied
+    FROM Numbers;
+    
+    SET @row_count = 5;
+END;
+GO
+
+-- NULL parameter test
+CREATE PROCEDURE sp_NullableParam @p VARCHAR(50)
+AS BEGIN
+    SELECT ISNULL(@p, 'NULL value') AS result;
+END;
+GO
+
+-- Large string test
+CREATE PROCEDURE sp_LargeString @p VARCHAR(MAX)
+AS BEGIN
+    SELECT LEN(@p) AS string_length, LEFT(@p, 50) AS first_50_chars;
+END;
+GO
+
+-- Return code test
+CREATE PROCEDURE sp_ReturnCode @value INT
+AS BEGIN
+    IF @value > 0
+        RETURN 1;
+    ELSE IF @value < 0
+        RETURN -1;
+    ELSE
+        RETURN 0;
+END;
+GO
+
+-- Procedure with RAISERROR
+CREATE PROCEDURE sp_WithError @should_error BIT
+AS BEGIN
+    IF @should_error = 1
+        RAISERROR('Test error message', 16, 1);
+    ELSE
+        SELECT 'Success' AS result;
+END;
+GO
+
+-- ========================================
+-- NESTED PROCEDURE VALIDATION TESTS
+-- Tests for recursive SELECT-only validation
+-- ========================================
+
+-- Inner procedure: SELECT only (should pass validation)
+CREATE PROCEDURE sp_Inner_SelectOnly
+AS BEGIN
+    SELECT 'Inner procedure SELECT only' AS message, 1 AS level;
+END;
+GO
+
+-- Inner procedure: Contains INSERT (should fail validation when called)
+CREATE PROCEDURE sp_Inner_WithInsert
+AS BEGIN
+    CREATE TABLE #temp_inner (id INT);
+    INSERT INTO #temp_inner VALUES (1);
+    SELECT * FROM #temp_inner;
+END;
+GO
+
+-- Inner procedure: Contains UPDATE (should fail validation when called)
+CREATE PROCEDURE sp_Inner_WithUpdate
+AS BEGIN
+    CREATE TABLE #temp_upd (id INT);
+    INSERT INTO #temp_upd VALUES (1);
+    UPDATE #temp_upd SET id = 2;
+    SELECT * FROM #temp_upd;
+END;
+GO
+
+-- Inner procedure: Contains DELETE (should fail validation when called)
+CREATE PROCEDURE sp_Inner_WithDelete
+AS BEGIN
+    CREATE TABLE #temp_del (id INT);
+    INSERT INTO #temp_del VALUES (1);
+    DELETE FROM #temp_del;
+    SELECT COUNT(*) AS cnt FROM #temp_del;
+END;
+GO
+
+-- Outer procedure: Calls SELECT-only inner (should pass)
+CREATE PROCEDURE sp_Outer_CallsSelectOnly
+AS BEGIN
+    SELECT 'Outer before call' AS message, 0 AS level;
+    EXEC sp_Inner_SelectOnly;
+    SELECT 'Outer after call' AS message, 0 AS level;
+END;
+GO
+
+-- Outer procedure: Calls inner with INSERT (should fail recursive validation)
+CREATE PROCEDURE sp_Outer_CallsInsert
+AS BEGIN
+    SELECT 'Outer SELECT only' AS message;
+    EXEC sp_Inner_WithInsert;
+END;
+GO
+
+-- Outer procedure: Calls inner with UPDATE (should fail recursive validation)
+CREATE PROCEDURE sp_Outer_CallsUpdate
+AS BEGIN
+    SELECT 'Outer SELECT only' AS message;
+    EXEC sp_Inner_WithUpdate;
+END;
+GO
+
+-- Outer procedure: Calls inner with DELETE (should fail recursive validation)
+CREATE PROCEDURE sp_Outer_CallsDelete
+AS BEGIN
+    SELECT 'Outer SELECT only' AS message;
+    EXEC sp_Inner_WithDelete;
+END;
+GO
+
+-- Level 3 procedure: Deep nesting SELECT-only
+CREATE PROCEDURE sp_Level3_SelectOnly
+AS BEGIN
+    SELECT 'Level 3 SELECT only' AS message, 3 AS level;
+END;
+GO
+
+-- Level 2 procedure: Calls Level 3 SELECT-only
+CREATE PROCEDURE sp_Level2_CallsLevel3
+AS BEGIN
+    SELECT 'Level 2 calling Level 3' AS message, 2 AS level;
+    EXEC sp_Level3_SelectOnly;
+END;
+GO
+
+-- Level 1 procedure: Calls Level 2 which calls Level 3 (deep nesting, all SELECT)
+CREATE PROCEDURE sp_Level1_DeepNesting
+AS BEGIN
+    SELECT 'Level 1 calling Level 2' AS message, 1 AS level;
+    EXEC sp_Level2_CallsLevel3;
+END;
+GO
+
+-- Level 3 procedure: Contains DML (for deep nesting failure test)
+CREATE PROCEDURE sp_Level3_WithDML
+AS BEGIN
+    CREATE TABLE #temp3 (val INT);
+    INSERT INTO #temp3 VALUES (999);
+    SELECT * FROM #temp3;
+END;
+GO
+
+-- Level 2 procedure: Calls Level 3 with DML
+CREATE PROCEDURE sp_Level2_CallsDML
+AS BEGIN
+    SELECT 'Level 2 SELECT only' AS message, 2 AS level;
+    EXEC sp_Level3_WithDML;
+END;
+GO
+
+-- Level 1 procedure: Deep nesting with DML at bottom (should fail)
+CREATE PROCEDURE sp_Level1_DeepWithDML
+AS BEGIN
+    SELECT 'Level 1 SELECT only' AS message, 1 AS level;
+    EXEC sp_Level2_CallsDML;
+END;
+GO
+
+-- Circular reference test: Proc A calls Proc B
+CREATE PROCEDURE sp_CircularA
+AS BEGIN
+    SELECT 'Circular A' AS message;
+    EXEC sp_CircularB;
+END;
+GO
+
+-- Circular reference test: Proc B calls Proc A (creates cycle)
+CREATE PROCEDURE sp_CircularB
+AS BEGIN
+    SELECT 'Circular B' AS message;
+    EXEC sp_CircularA;
+END;
+GO
+
+-- Outer procedure that calls multiple inner procedures (mixed)
+CREATE PROCEDURE sp_Outer_MultipleInner
+AS BEGIN
+    SELECT 'Calling multiple inner procs' AS message;
+    EXEC sp_Inner_SelectOnly;
+    EXEC sp_Inner_SelectOnly;
+END;
+GO
+
+-- Outer procedure with dynamic SQL call (tests sp_executesql skip)
+CREATE PROCEDURE sp_Outer_WithDynamicSQL
+AS BEGIN
+    SELECT 'Before dynamic SQL' AS message;
+    DECLARE @sql NVARCHAR(100) = N'SELECT 1 AS dynamic_result';
+    EXEC sp_executesql @sql;
+    SELECT 'After dynamic SQL' AS message;
+END;
+GO
+
+-- ========================================
+-- ERROR MESSAGE COMPATIBILITY TEST PROCEDURES
+-- Tests for SQL Server error code/message compatibility
+-- These validate that Babelfish returns correct SQL Server error codes
+-- when errors occur during remote procedure execution.
+-- ========================================
+
+-- Basic procedures for parameter error tests
+CREATE PROCEDURE sp_err_SingleInt @value INT
+AS BEGIN
+    SELECT @value AS input_val, @value * 2 AS doubled;
+END;
+GO
+
+CREATE PROCEDURE sp_err_TwoParams @a INT, @b VARCHAR(50)
+AS BEGIN
+    SELECT @a AS int_val, @b AS str_val;
+END;
+GO
+
+-- RAISERROR at various severities
+CREATE PROCEDURE sp_err_Raiserror16
+AS BEGIN
+    RAISERROR('Error severity 16: user error', 16, 1);
+END;
+GO
+
+CREATE PROCEDURE sp_err_Raiserror11
+AS BEGIN
+    RAISERROR('Error severity 11: object not found', 11, 1);
+END;
+GO
+
+CREATE PROCEDURE sp_err_Raiserror10
+AS BEGIN
+    RAISERROR('Info severity 10: informational message', 10, 1);
+    SELECT 'Execution continued after severity 10' AS result;
+END;
+GO
+
+CREATE PROCEDURE sp_err_RaiserrorCustomMsg
+AS BEGIN
+    RAISERROR('Custom application error: invalid operation', 16, 1);
+END;
+GO
+
+-- Runtime execution error procedures
+CREATE PROCEDURE sp_err_DivByZero
+AS BEGIN
+    DECLARE @x INT = 1;
+    DECLARE @y INT = 0;
+    SELECT @x / @y AS result;
+END;
+GO
+
+CREATE PROCEDURE sp_err_Overflow
+AS BEGIN
+    DECLARE @x INT = 2147483647;
+    SET @x = @x + 1;
+    SELECT @x AS result;
+END;
+GO
+
+CREATE PROCEDURE sp_err_ConversionError
+AS BEGIN
+    DECLARE @x INT = CAST('not_a_number' AS INT);
+    SELECT @x AS result;
+END;
+GO
+
+CREATE PROCEDURE sp_err_StringTruncation
+AS BEGIN
+    DECLARE @short VARCHAR(5);
+    SET @short = 'This is a very long string that will be truncated';
+    SELECT @short AS result;
+END;
+GO
+
+CREATE PROCEDURE sp_err_NullDeref
+AS BEGIN
+    DECLARE @x INT = NULL;
+    DECLARE @y INT = 5;
+    SELECT @x + @y AS result, ISNULL(@x + @y, -1) AS with_isnull;
+END;
+GO
+
+-- Nested error scenarios
+CREATE PROCEDURE sp_err_InnerRaiserror
+AS BEGIN
+    RAISERROR('Error from inner procedure', 16, 1);
+END;
+GO
+
+CREATE PROCEDURE sp_err_NestedError
+AS BEGIN
+    SELECT 'Before inner call' AS status;
+    EXEC dbo.sp_err_InnerRaiserror;
+    SELECT 'After inner call (should not reach here)' AS status;
+END;
+GO
+
+CREATE PROCEDURE sp_err_ReturnAfterError
+AS BEGIN
+    SELECT 'This result comes before error' AS result;
+    RAISERROR('Error after returning data', 16, 1);
+END;
+GO
+
+CREATE PROCEDURE sp_err_MultipleErrors
+AS BEGIN
+    BEGIN TRY
+        DECLARE @x INT = 1/0;
+    END TRY
+    BEGIN CATCH
+        RAISERROR('Caught and re-raised: division by zero', 16, 1);
+    END CATCH
+END;
+GO
+
+-- PRINT message scenarios
+CREATE PROCEDURE sp_err_PrintAndError
+AS BEGIN
+    PRINT 'Informational: starting execution';
+    RAISERROR('Error after PRINT', 16, 1);
+END;
+GO
+
+CREATE PROCEDURE sp_err_PrintOnly
+AS BEGIN
+    PRINT 'This is a PRINT message only';
+END;
+GO
