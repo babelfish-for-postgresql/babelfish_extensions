@@ -76,6 +76,7 @@
 					if (yyextra->literallen == 0)
 						yyerror("zero-length delimited identifier");
 					ident = litbufdup(yyscanner);
+					CHECK_LOCAL_TEMP_TABLE_LENGTH(ident);
 					if (yyextra->literallen >= NAMEDATALEN)
 						truncate_identifier(ident, yyextra->literallen, true);
 					yylval->str = ident;
@@ -152,6 +153,7 @@
 
 <tsql>{tsql_ttname}	{
 					SET_YYLLOC();
+					CHECK_LOCAL_TEMP_TABLE_LENGTH(yytext);
 					yylval->str = pstrdup(yytext);
 					if (yyleng >= NAMEDATALEN)
 						truncate_identifier(yylval->str, yyleng, true);

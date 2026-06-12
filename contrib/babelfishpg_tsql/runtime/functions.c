@@ -6155,3 +6155,115 @@ done:
 #endif							/* USE_LIBXML */
 }
 
+
+PG_FUNCTION_INFO_V1(bbf_xmlquery);
+
+/*
+ * bbf_xmlquery - C implementation of XML .query() method
+ *
+ * Signature:
+ *   sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT)
+ *
+ * Returns XML result of evaluating the XPath expression against the input.
+ * Returns empty XML if no nodes match.
+ *
+ * Validates:
+ *   - Input must be XML type (or UDT based on XML)
+ *   - QUOTED_IDENTIFIER must be ON
+ */
+Datum
+bbf_xmlquery(PG_FUNCTION_ARGS)
+{
+	text	   *xpath_expr;
+	Datum		xml_datum;
+	Oid			arg_type;
+	Oid			immediate_base_type;
+	ArrayType  *namespaces;
+	Datum		xpath_result;
+	ArrayType  *result_arr;
+	Datum	   *elems;
+	bool	   *nulls;
+	int			nitems;
+	StringInfoData buf;
+	int			i;
+
+	xpath_expr = PG_GETARG_TEXT_PP(0);
+	xml_datum = PG_GETARG_DATUM(1);
+
+	/* Lookup the datatype of the supplied argument */
+	arg_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
+
+	/* UDT handling: resolve to immediate base type if it's a UDT */
+	immediate_base_type = get_immediate_base_type_of_UDT_internal(arg_type);
+	if (OidIsValid(immediate_base_type))
+		arg_type = immediate_base_type;
+
+	if (arg_type != XMLOID)
+	{
+		const char *typname = NULL;
+
+		/* Get T-SQL type name for error message */
+		if (common_utility_plugin_ptr)
+			typname = (*common_utility_plugin_ptr->resolve_pg_type_to_tsql)(arg_type);
+		if (typname == NULL)
+			typname = format_type_be(arg_type);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("Cannot call methods on %s.", typname)));
+	}
+
+	/* Check QUOTED_IDENTIFIER setting (required for XML methods in T-SQL) */
+	if (!pltsql_quoted_identifier)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("SELECT failed because the following SET options have "
+						"incorrect settings: 'QUOTED_IDENTIFIER'. Verify that "
+						"SET options are correct for XML data type methods.")));
+
+	/*
+	 * Call the built-in xpath(text, xml, text[][]) directly with an empty
+	 * namespace array. Returns xml[] (array of XML fragments).
+	 *
+	 * TODO: when WITH XMLNAMESPACES is supported, populate this array with
+	 * the declared (prefix, uri) pairs from the active namespace context.
+	 */
+	namespaces = construct_empty_array(TEXTOID);
+	xpath_result = DirectFunctionCall3(xpath,
+									   PointerGetDatum(xpath_expr),
+									   xml_datum,
+									   PointerGetDatum(namespaces));
+
+	result_arr = DatumGetArrayTypeP(xpath_result);
+
+	/* Deconstruct the result array */
+	deconstruct_array(result_arr, XMLOID, -1, false, TYPALIGN_INT,
+					  &elems, &nulls, &nitems);
+
+	/* Empty result → return empty string as XML (matches T-SQL behavior) */
+	if (nitems == 0)
+		PG_RETURN_XML_P((xmltype *) cstring_to_text(""));
+
+	/* Single result → return directly (common fast path) */
+	if (nitems == 1 && !nulls[0])
+		PG_RETURN_DATUM(elems[0]);
+
+	/*
+	 * Multiple results - concatenate all XML fragments.
+	 * Equivalent to: SELECT xmlagg(x) FROM unnest(result_set) AS x
+	 */
+	initStringInfo(&buf);
+	for (i = 0; i < nitems; i++)
+	{
+		if (!nulls[i])
+		{
+			text *fragment = DatumGetTextPP(elems[i]);
+
+			appendBinaryStringInfo(&buf,
+								   VARDATA_ANY(fragment),
+								   VARSIZE_ANY_EXHDR(fragment));
+		}
+	}
+
+	PG_RETURN_XML_P((xmltype *) cstring_to_text_with_len(buf.data, buf.len));
+}

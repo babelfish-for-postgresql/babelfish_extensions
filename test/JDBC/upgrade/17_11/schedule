@@ -679,6 +679,8 @@ babel_convert_with_style
 forxml-raw-elements
 forxml-raw-elements-1gb-limit
 forxml-path-elements
+xml_query
 babel_sqlvariant_coerce_type
 forxml-auto
 temp_table_long_name_enr
+BABEL-login-db-long-identifiers
