@@ -181,13 +181,14 @@ get_insertable_column_list(const char *table_name, const char *physical_schema)
 
 /*
  * Set the global INSERT EXEC context with target table info.
- * Called from ANTLR parser when INSERT EXEC is detected.
  * This is called BEFORE temp table creation - just stores the target info.
  */
 void
 pltsql_set_insert_exec_context_info(const char *target_table)
 {
-	insert_exec_ctx.target_table = target_table ? pstrdup(target_table) : NULL;
+	insert_exec_ctx.target_table = target_table
+		? MemoryContextStrdup(TopTransactionContext, target_table)
+		: NULL;
 	/*
 	 * Snapshot the call stack entry at INSERT EXEC start. Comparing this
 	 * pointer later tells us whether an error occurred at the INSERT EXEC
@@ -203,7 +204,8 @@ pltsql_set_insert_exec_context_info(const char *target_table)
  * both the normal exit and safety-net cleanup paths. The target table's
  * RowExclusiveLock is transaction-scoped and released automatically when the 
  * implicit transaction commits or aborts. The string must be pfree'd before 
- * the memset, or memset alone would leak it in TopMemoryContext.
+ * the memset; otherwise the allocation in TopTransactionContext lingers
+ * until end of transaction.
  */
 void
 pltsql_insert_exec_reset_all(void)
@@ -226,15 +228,16 @@ pltsql_insert_exec_reset_all(void)
  */
 void
 pltsql_insert_exec_open_target_table(const char *target_table,
-                                     const char *schema_name_in,
-                                     const char *db_name_in)
+									 const char *schema_name_in,
+									 const char *db_name_in)
 {
-	RangeVar   *rv;
-	Oid			relid;
-	char	   *schema_name = NULL;
-	char	   *table_name = NULL;
-	char	   *physical_schema = NULL;
-	bool		is_temp_table;
+	RangeVar		*rv;
+	Oid				relid;
+	char			*schema_name = NULL;
+	char			*table_name = NULL;
+	char			*physical_schema = NULL;
+	bool			is_temp_table;
+	MemoryContext	oldcontext;
 
 	if (target_table == NULL)
 		return;
@@ -296,13 +299,26 @@ pltsql_insert_exec_open_target_table(const char *target_table,
 		 * but we detect it via is_target_relation_modified flag set by
 		 * ObjectPostAlterHook.
 		 */
+		oldcontext = CurrentMemoryContext;
+
 		PG_TRY();
 		{
 			LockRelationOid(relid, RowExclusiveLock);
 		}
 		PG_CATCH();
 		{
+			/* Only suppress benign errors (table dropped etc.) - re-throw the rest */
+			ErrorData  *edata;
+			MemoryContextSwitchTo(oldcontext);
+			edata = CopyErrorData();
 			FlushErrorState();
+
+			if (edata->sqlerrcode != ERRCODE_UNDEFINED_TABLE &&
+				edata->sqlerrcode != ERRCODE_LOCK_NOT_AVAILABLE)
+			{
+				ReThrowError(edata);
+			}
+			FreeErrorData(edata);
 			return;
 		}
 		PG_END_TRY();
@@ -340,6 +356,7 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	Relation		temp_rel;
 	TupleDesc		temp_tupdesc;
 	int				temp_natts;
+	MemoryContext	oldcontext;
 
 	/* Caller must ensure INSERT EXEC is active before calling */
 	Assert(pltsql_insert_exec_active());
@@ -359,13 +376,28 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	 * runtime error like division by zero will not fire here. On any error,
 	 * defer to the normal execution path.
 	 */
+	oldcontext = CurrentMemoryContext;
+
 	PG_TRY();
 	{
 		plan = SPI_prepare(query_string, 0, NULL);
 	}
 	PG_CATCH();
 	{
+		/* Only suppress benign errors - re-throw cancellation/OOM/FATAL */
+		ErrorData  *edata;
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
 		FlushErrorState();
+
+		if (edata->sqlerrcode == ERRCODE_QUERY_CANCELED ||
+			edata->sqlerrcode == ERRCODE_ADMIN_SHUTDOWN ||
+			edata->sqlerrcode == ERRCODE_OUT_OF_MEMORY ||
+			edata->elevel >= FATAL)
+		{
+			ReThrowError(edata);
+		}
+		FreeErrorData(edata);
 		return;  /* Parse/analyze error - normal path will report it */
 	}
 	PG_END_TRY();
@@ -395,6 +427,8 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	SPI_freeplan(plan);
 
 	/* Get temp table column count */
+	oldcontext = CurrentMemoryContext;
+
 	PG_TRY();
 	{
 		temp_rel = table_open(temp_table_oid, AccessShareLock);
@@ -404,7 +438,20 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	}
 	PG_CATCH();
 	{
+		/* Only suppress benign errors - re-throw cancellation/OOM/FATAL */
+		ErrorData  *edata;
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
 		FlushErrorState();
+
+		if (edata->sqlerrcode == ERRCODE_QUERY_CANCELED ||
+			edata->sqlerrcode == ERRCODE_ADMIN_SHUTDOWN ||
+			edata->sqlerrcode == ERRCODE_OUT_OF_MEMORY ||
+			edata->elevel >= FATAL)
+		{
+			ReThrowError(edata);
+		}
+		FreeErrorData(edata);
 		return;
 	}
 	PG_END_TRY();
@@ -846,8 +893,8 @@ insertexec_destroy(DestReceiver *self)
  */
 bool
 insert_exec_setup(PLtsql_execstate *estate,
-                            InsertExecInfo *info,
-                            bool start_implicit_txn)
+							 InsertExecInfo *info,
+							 bool start_implicit_txn)
 {
 	char	   *column_list = NULL;
 
@@ -936,7 +983,12 @@ insert_exec_success_cleanup(PLtsql_execstate *estate, InsertExecInfo *info)
 	if (column_list != NULL)
 		pfree(column_list);
 
-	/* Reset the INSERT EXEC context. */
+	/*
+	 * Reset the context before committing. The context is only needed through
+	 * the flush above, so it is safe to clear here. If the commit below fails,
+	 * the transaction aborts and pltsql_xact_cb runs the same reset (now a
+	 * no-op) - so the early reset never leaves a dangling context.
+	 */
 	pltsql_insert_exec_reset_all();
 
 	/*
