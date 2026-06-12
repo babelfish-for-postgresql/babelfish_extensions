@@ -71,43 +71,71 @@ datetimeoffset
 ~~END~~
 
 
---datetime, date, time, money, 
-SELECT sys.babelfish_conv_date_to_string('VARCHAR(10)', CAST('2024-01-15' AS DATE), 101);
+CREATE TABLE babel_6813_datetrunc (
+    id INT,
+    dt DATETIME2,
+    CONSTRAINT chk_dtrunc CHECK (DATETRUNC(month, dt) IS NOT NULL)
+)
 GO
-~~START~~
-text
-01/15/2024
-~~END~~
-
-
-SELECT sys.babelfish_conv_datetime_to_string('VARCHAR(30)', 'DATETIME', CAST('2024-01-15 10:30:45' AS DATETIME2), 121);
+INSERT INTO babel_6813_datetrunc (id, dt) VALUES (1, '2024-03-15 10:30:45'), (2, '2024-07-22 08:15:00')
 GO
-~~START~~
-text
-2024-01-15 10:30:45.000
-~~END~~
+~~ROW COUNT: 2~~
 
 
-SELECT sys.babelfish_conv_time_to_string('VARCHAR(30)', 'TIME(3)', CAST('10:30:45.123' AS TIME), 121);
+--datetime, date, time, money
+CREATE TABLE babel_6813_date (
+    id INT,
+    d DATE,
+    CONSTRAINT chk_date CHECK (CONVERT(VARCHAR(10), d, 101) IS NOT NULL)
+)
 GO
-~~START~~
-text
-10:30:45.123
-~~END~~
-
-
-SELECT sys.babelfish_conv_money_to_string('VARCHAR(30)', 1234.56, 1);
+INSERT INTO babel_6813_date (id, d) VALUES (1, '2024-01-15'), (2, '2024-12-25')
 GO
-~~START~~
-text
-1,234.56
-~~END~~
+~~ROW COUNT: 2~~
 
 
-SELECT sys.babelfish_conv_float_to_string('VARCHAR(30)', CAST(1234.56 AS FLOAT), 2);
+CREATE TABLE babel_6813_datetime (
+    id INT,
+    dt DATETIME,
+    CONSTRAINT chk_dt CHECK (CONVERT(VARCHAR(30), dt, 121) IS NOT NULL)
+)
 GO
-~~START~~
-text
-1.234560000000000e+03
-~~END~~
+INSERT INTO babel_6813_datetime (id, dt) VALUES (1, '2024-01-15 10:30:45'), (2, '2024-06-20 08:15:00')
+GO
+~~ROW COUNT: 2~~
+
+
+
+CREATE TABLE babel_6813_time (
+    id INT,
+    t TIME,
+    CONSTRAINT chk_time CHECK (CONVERT(VARCHAR(30), t, 121) IS NOT NULL)
+)
+GO
+INSERT INTO babel_6813_time (id, t) VALUES (1, '10:30:45.123'), (2, '23:59:59.999')
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE babel_6813_money (
+    id INT,
+    m MONEY,
+    CONSTRAINT chk_money CHECK (CONVERT(VARCHAR(30), m, 1) IS NOT NULL)
+)
+GO
+INSERT INTO babel_6813_money (id, m) VALUES (1, 1234.56), (2, 99999.99)
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE babel_6813_float (
+    id INT,
+    f FLOAT,
+    CONSTRAINT chk_float CHECK (CONVERT(VARCHAR(30), f, 2) IS NOT NULL)
+)
+GO
+
+INSERT INTO babel_6813_float (id, f) VALUES (1, 1234.56), (2, 0.001)
+GO
+~~ROW COUNT: 2~~
 
