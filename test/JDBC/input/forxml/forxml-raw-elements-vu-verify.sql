@@ -139,6 +139,14 @@ GO
 SELECT 1 AS a, NULL AS b FOR XML RAW, ROOT('data'), ELEMENTS XSINIL;
 GO
 
+-- RAW + XSINIL + ROOT + TYPE: xmlns:xsi declared once on the root element.
+SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL, ROOT('data'), TYPE;
+GO
+
+-- All-NULL row + XSINIL + ROOT: row tag still emitted (with xsi:nil on each col).
+SELECT NULL AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL, ROOT('data');
+GO
+
 SELECT 1 AS a, 2 AS b FOR XML RAW, ELEMENTS, ROOT('MyRoot');
 GO
 
@@ -933,6 +941,10 @@ GO
 
 -- RAW('') with ELEMENTS XSINIL and ROOT
 SELECT 1 AS a, NULL AS b FOR XML RAW(''), ELEMENTS XSINIL, ROOT('data');
+GO
+
+-- RAW('') + XSINIL + ROOT + TYPE: per-column xmlns:xsi preserved (T-SQL keeps it for RAW('')).
+SELECT 1 AS a, NULL AS b FOR XML RAW(''), ELEMENTS XSINIL, ROOT('data'), TYPE;
 GO
 
 -- RAW('') with ELEMENTS XSINIL - all NULLs
