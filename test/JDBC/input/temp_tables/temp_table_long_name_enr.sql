@@ -553,3 +553,89 @@ GO
 
 DROP TABLE #select_into_long_temp_table_name_exceeding_namedatalen_limit_xx
 GO
+
+-- =============================================================================
+-- Test 32: Cached plan - long index name on temp table via stored procedure
+-- Verifies that the full original name is stored correctly across executions
+-- =============================================================================
+CREATE PROCEDURE sp_long_idx_cached_plan AS
+BEGIN
+  CREATE TABLE #cached_plan_tmp (a INT, b INT)
+  CREATE INDEX #very_long_index_name_cached_plan_test_exceeding_namedatalen_lim ON #cached_plan_tmp(a)
+  SELECT relname FROM babelfish_get_enr_list() WHERE relname LIKE '#very_long_index_name_cached%'
+  DROP TABLE #cached_plan_tmp
+END
+GO
+
+-- First execution
+EXEC sp_long_idx_cached_plan
+GO
+
+-- Second execution (cached plan)
+EXEC sp_long_idx_cached_plan
+GO
+
+-- Third execution (definitely cached plan)
+EXEC sp_long_idx_cached_plan
+GO
+
+DROP PROCEDURE sp_long_idx_cached_plan
+GO
+
+-- =============================================================================
+-- Test 33: sp_prepare/sp_execute - guarantees cached plan reuse for long index
+-- =============================================================================
+DECLARE @handle INT
+EXEC sp_prepare @handle OUTPUT, NULL, N'CREATE TABLE #sp_prep_tmp (a INT); CREATE INDEX #very_long_index_name_sp_prepare_test_exceeding_namedatalen_limit ON #sp_prep_tmp(a); SELECT relname FROM babelfish_get_enr_list() WHERE relname LIKE ''#very_long_index_name_sp_prepare%''; DROP TABLE #sp_prep_tmp'
+EXEC sp_execute @handle
+EXEC sp_execute @handle
+EXEC sp_unprepare @handle
+GO
+
+-- =============================================================================
+-- Test 34: Same long index name on different long-name temp tables
+-- =============================================================================
+CREATE TABLE #diff_tbl_one_with_very_long_name_exceeding_namedatalen_limit_xxxxx (a INT, b INT)
+GO
+
+CREATE TABLE #diff_tbl_two_with_very_long_name_exceeding_namedatalen_limit_xxxxx (x INT, y INT)
+GO
+
+CREATE INDEX #same_long_index_name_on_different_temp_tables_exceeding_limit_x ON #diff_tbl_one_with_very_long_name_exceeding_namedatalen_limit_xxxxx(a)
+GO
+
+CREATE INDEX #same_long_index_name_on_different_temp_tables_exceeding_limit_x ON #diff_tbl_two_with_very_long_name_exceeding_namedatalen_limit_xxxxx(x)
+GO
+
+SELECT relname FROM babelfish_get_enr_list() WHERE relname LIKE '#same_long_index%' ORDER BY relname
+GO
+
+DROP TABLE #diff_tbl_one_with_very_long_name_exceeding_namedatalen_limit_xxxxx
+GO
+
+DROP TABLE #diff_tbl_two_with_very_long_name_exceeding_namedatalen_limit_xxxxx
+GO
+
+-- =============================================================================
+-- Test 35: Same short index name on different long-name temp tables
+-- =============================================================================
+CREATE TABLE #short_idx_tbl_one_with_very_long_name_exceeding_namedatalen_limit (a INT)
+GO
+
+CREATE TABLE #short_idx_tbl_two_with_very_long_name_exceeding_namedatalen_limit (x INT)
+GO
+
+CREATE INDEX idx_short ON #short_idx_tbl_one_with_very_long_name_exceeding_namedatalen_limit(a)
+GO
+
+CREATE INDEX idx_short ON #short_idx_tbl_two_with_very_long_name_exceeding_namedatalen_limit(x)
+GO
+
+SELECT relname FROM babelfish_get_enr_list() WHERE relname LIKE '#short_idx_tbl%' ORDER BY relname
+GO
+
+DROP TABLE #short_idx_tbl_one_with_very_long_name_exceeding_namedatalen_limit
+GO
+
+DROP TABLE #short_idx_tbl_two_with_very_long_name_exceeding_namedatalen_limit
+GO
