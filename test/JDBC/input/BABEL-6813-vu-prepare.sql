@@ -44,3 +44,19 @@ GO
 
 SELECT DATETRUNC(hour, CAST('2023-06-15 10:30:00.1234567 +05:30' AS datetimeoffset))
 GO
+
+--datetime, date, time, money, 
+SELECT sys.babelfish_conv_date_to_string('VARCHAR(10)', CAST('2024-01-15' AS DATE), 101);
+GO
+
+SELECT sys.babelfish_conv_datetime_to_string('VARCHAR(30)', 'DATETIME', CAST('2024-01-15 10:30:45' AS DATETIME2), 121);
+GO
+
+SELECT sys.babelfish_conv_time_to_string('VARCHAR(30)', 'TIME(3)', CAST('10:30:45.123' AS TIME), 121);
+GO
+
+SELECT sys.babelfish_conv_money_to_string('VARCHAR(30)', 1234.56, 1);
+GO
+
+SELECT sys.babelfish_conv_float_to_string('VARCHAR(30)', CAST(1234.56 AS FLOAT), 2);
+GO

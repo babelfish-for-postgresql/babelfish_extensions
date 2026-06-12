@@ -70,3 +70,44 @@ datetimeoffset
 2023-06-15 10:00:00.0000000 +05:30
 ~~END~~
 
+
+--datetime, date, time, money, 
+SELECT sys.babelfish_conv_date_to_string('VARCHAR(10)', CAST('2024-01-15' AS DATE), 101);
+GO
+~~START~~
+text
+01/15/2024
+~~END~~
+
+
+SELECT sys.babelfish_conv_datetime_to_string('VARCHAR(30)', 'DATETIME', CAST('2024-01-15 10:30:45' AS DATETIME2), 121);
+GO
+~~START~~
+text
+2024-01-15 10:30:45.000
+~~END~~
+
+
+SELECT sys.babelfish_conv_time_to_string('VARCHAR(30)', 'TIME(3)', CAST('10:30:45.123' AS TIME), 121);
+GO
+~~START~~
+text
+10:30:45.123
+~~END~~
+
+
+SELECT sys.babelfish_conv_money_to_string('VARCHAR(30)', 1234.56, 1);
+GO
+~~START~~
+text
+1,234.56
+~~END~~
+
+
+SELECT sys.babelfish_conv_float_to_string('VARCHAR(30)', CAST(1234.56 AS FLOAT), 2);
+GO
+~~START~~
+text
+1.234560000000000e+03
+~~END~~
+
