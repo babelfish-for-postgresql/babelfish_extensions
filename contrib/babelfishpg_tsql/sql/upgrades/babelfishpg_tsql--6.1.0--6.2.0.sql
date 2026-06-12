@@ -288,7 +288,7 @@ END;
 $body$
 LANGUAGE plpgsql STABLE;
 
-REATE OR REPLACE FUNCTION sys.babelfish_conv_datetime_to_string(IN p_datatype TEXT,
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_datetime_to_string(IN p_datatype TEXT,
                                                                      IN p_src_datatype TEXT,
                                                                      IN p_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE,
                                                                      IN p_style NUMERIC DEFAULT 0)
