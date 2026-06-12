@@ -89,6 +89,21 @@
 #define DATEPART_SMALLMONEY_MAX_VALUE 214748.3647	/* maximum value for datepart smallmoney */
 #define DATEPART_SMALLMONEY_MIN_VALUE -53690		/* minimum value for datepart smallmoney */
 #define TSQL_OPENXML_EDGE_TABLE_COLS 9
+#define OBJECT_TYPE_CODE_TABLE "U "
+#define OBJECT_TYPE_CODE_VIEW "V "
+#define OBJECT_TYPE_CODE_SEQUENCE "SO"
+#define OBJECT_TYPE_CODE_TABLE_TYPE "TT"
+#define OBJECT_TYPE_CODE_FOREIGN_KEY "F "
+#define OBJECT_TYPE_CODE_PRIMARY_KEY "PK"
+#define OBJECT_TYPE_CODE_UNIQUE_KEY	 "UQ"
+#define OBJECT_TYPE_CODE_CHECK_CONSTRAINT "C "
+#define OBJECT_TYPE_CODE_DEFAULT_CONSTRAINT "D "
+#define OBJECT_TYPE_CODE_STORED_PROCEDURE "P "
+#define OBJECT_TYPE_CODE_AGGREGATE_FUNCTION "AF"
+#define OBJECT_TYPE_CODE_DML_TRIGGER "TR"
+#define OBJECT_TYPE_CODE_TABLE_VALUED_FUNC "TF"
+#define OBJECT_TYPE_CODE_INLINE_TABLE_FUNC "IF"
+#define OBJECT_TYPE_CODE_SCALAR_FUNCTION "FN"
 
 typedef enum
 {
@@ -4326,21 +4341,21 @@ object_type_to_code(int type)
 {
 	switch (type)
 	{
-		case OBJECT_TYPE_TABLE:								return "U ";
-		case OBJECT_TYPE_VIEW:								return "V ";
-		case OBJECT_TYPE_SEQUENCE_OBJECT:					return "SO";
-		case OBJECT_TYPE_TABLE_TYPE:						return "TT";
-		case OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT:			return "F ";
-		case OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT:			return "PK";
-		case OBJECT_TYPE_UNIQUE_CONSTRAINT:					return "UQ";
-		case OBJECT_TYPE_CHECK_CONSTRAINT:					return "C ";
-		case OBJECT_TYPE_DEFAULT_CONSTRAINT:				return "D ";
-		case OBJECT_TYPE_TSQL_STORED_PROCEDURE:				return "P ";
-		case OBJECT_TYPE_AGGREGATE_FUNCTION:				return "AF";
-		case OBJECT_TYPE_TSQL_DML_TRIGGER:					return "TR";
-		case OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION:		return "TF";
-		case OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION:	return "IF";
-		case OBJECT_TYPE_TSQL_SCALAR_FUNCTION:				return "FN";
+		case OBJECT_TYPE_TABLE:								return OBJECT_TYPE_CODE_TABLE;
+		case OBJECT_TYPE_VIEW:								return OBJECT_TYPE_CODE_VIEW;
+		case OBJECT_TYPE_SEQUENCE_OBJECT:					return OBJECT_TYPE_CODE_SEQUENCE;
+		case OBJECT_TYPE_TABLE_TYPE:						return OBJECT_TYPE_CODE_TABLE_TYPE;
+		case OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT:			return OBJECT_TYPE_CODE_FOREIGN_KEY;
+		case OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT:			return OBJECT_TYPE_CODE_PRIMARY_KEY;
+		case OBJECT_TYPE_UNIQUE_CONSTRAINT:					return OBJECT_TYPE_CODE_UNIQUE_KEY;
+		case OBJECT_TYPE_CHECK_CONSTRAINT:					return OBJECT_TYPE_CODE_CHECK_CONSTRAINT;
+		case OBJECT_TYPE_DEFAULT_CONSTRAINT:				return OBJECT_TYPE_CODE_DEFAULT_CONSTRAINT;
+		case OBJECT_TYPE_TSQL_STORED_PROCEDURE:				return OBJECT_TYPE_CODE_STORED_PROCEDURE;
+		case OBJECT_TYPE_AGGREGATE_FUNCTION:				return OBJECT_TYPE_CODE_AGGREGATE_FUNCTION;
+		case OBJECT_TYPE_TSQL_DML_TRIGGER:					return OBJECT_TYPE_CODE_DML_TRIGGER;
+		case OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION:		return OBJECT_TYPE_CODE_TABLE_VALUED_FUNC;
+		case OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION:	return OBJECT_TYPE_CODE_INLINE_TABLE_FUNC;
+		case OBJECT_TYPE_TSQL_SCALAR_FUNCTION:				return OBJECT_TYPE_CODE_SCALAR_FUNCTION;
 		default:											return NULL;
 	}
 }
@@ -4356,6 +4371,11 @@ get_object_from_pg_class(Oid object_id, Oid user_id, int *type,
 						 Oid *schema_id, char **object_name)
 {
 	HeapTuple	tuple;
+	int			temp_type = OBJECT_TYPE_UNKNOWN;
+	Oid			temp_schema = InvalidOid;
+
+	if (!type || !schema_id)
+		return false;
 
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(object_id));
 	if (!HeapTupleIsValid(tuple))
@@ -4369,8 +4389,7 @@ get_object_from_pg_class(Oid object_id, Oid user_id, int *type,
 		{
 			if (object_name)
 				*object_name = pstrdup(NameStr(pg_class->relname));
-			if (schema_id)
-				*schema_id = pg_class->relnamespace;
+			temp_schema = pg_class->relnamespace;
 
 			if ((pg_class->relpersistence == 'p' || pg_class->relpersistence == 'u' || pg_class->relpersistence == 't') &&
 				pg_class->relkind == 'r')
@@ -4412,8 +4431,8 @@ get_object_from_pg_class(Oid object_id, Oid user_id, int *type,
 						{
 							Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
 
-							if (depform->deptype == 'i' && type)
-								*type = OBJECT_TYPE_TABLE_TYPE;
+							if (depform->deptype == 'i')
+								temp_type = OBJECT_TYPE_TABLE_TYPE;
 						}
 
 						systable_endscan(scan);
@@ -4425,18 +4444,20 @@ get_object_from_pg_class(Oid object_id, Oid user_id, int *type,
 				/*
 				 * If the object is not of Table type (TT), it should be user defined table (U)
 				 */
-				if (type && *type != OBJECT_TYPE_TABLE_TYPE)
-					*type = OBJECT_TYPE_TABLE;
+				if (temp_type != OBJECT_TYPE_TABLE_TYPE)
+					temp_type = OBJECT_TYPE_TABLE;
 			}
-			else if (type && pg_class->relkind == 'v')
-				*type = OBJECT_TYPE_VIEW;
-			else if (type && pg_class->relkind == 'S')
-				*type = OBJECT_TYPE_SEQUENCE_OBJECT;
+			else if (pg_class->relkind == 'v')
+				temp_type = OBJECT_TYPE_VIEW;
+			else if (pg_class->relkind == 'S')
+				temp_type = OBJECT_TYPE_SEQUENCE_OBJECT;
 		}
 
 		ReleaseSysCache(tuple);
 	}
 
+	*type = temp_type;
+	*schema_id = temp_schema;
 	return true;
 }
 
@@ -4450,6 +4471,11 @@ get_object_from_pg_proc(Oid object_id, Oid user_id, int *type,
 						Oid *schema_id, char **object_name)
 {
 	HeapTuple	tuple;
+	int			temp_type = OBJECT_TYPE_UNKNOWN;
+	Oid			temp_schema = InvalidOid;
+
+	if (!type || !schema_id)
+		return false;
 
 	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
 	if (!HeapTupleIsValid(tuple))
@@ -4461,13 +4487,12 @@ get_object_from_pg_proc(Oid object_id, Oid user_id, int *type,
 
 		if (object_name)
 			*object_name = pstrdup(NameStr(procform->proname));
-		if (schema_id)
-			*schema_id = tsql_get_proc_nsp_oid(object_id);
+		temp_schema = tsql_get_proc_nsp_oid(object_id);
 
-		if (procform->prokind == 'p' && type)
-			*type = OBJECT_TYPE_TSQL_STORED_PROCEDURE;
-		else if (procform->prokind == 'a' && type)
-			*type = OBJECT_TYPE_AGGREGATE_FUNCTION;
+		if (procform->prokind == 'p')
+			temp_type = OBJECT_TYPE_TSQL_STORED_PROCEDURE;
+		else if (procform->prokind == 'a')
+			temp_type = OBJECT_TYPE_AGGREGATE_FUNCTION;
 		else
 		{
 			/*
@@ -4480,10 +4505,7 @@ get_object_from_pg_proc(Oid object_id, Oid user_id, int *type,
 			 */
 
 			if (pg_strcasecmp(temp, "trigger") == 0)
-			{	
-				if (type)	
-					*type = OBJECT_TYPE_TSQL_DML_TRIGGER;
-			}
+				temp_type = OBJECT_TYPE_TSQL_DML_TRIGGER;
 			/*
 			 * For SQL table-valued-functions and SQL inline table-valued functions, re-implement the existing SQL.
 			 */
@@ -4496,21 +4518,15 @@ get_object_from_pg_proc(Oid object_id, Oid user_id, int *type,
 				{
 					Form_pg_type typeform = (Form_pg_type) GETSTRUCT(tp);
 
-					if (type)
-					{
-						if (typeform->typtype == 'c')
-							*type = OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION;
-						else
-							*type = OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION;
-					}
+					if (typeform->typtype == 'c')
+						temp_type = OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION;
+					else
+						temp_type = OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION;
 					ReleaseSysCache(tp);
 				}
 			}
 			else
-			{
-				if (type)
-					*type = OBJECT_TYPE_TSQL_SCALAR_FUNCTION;
-			}
+				temp_type = OBJECT_TYPE_TSQL_SCALAR_FUNCTION;
 				
 
 			pfree(temp);
@@ -4518,6 +4534,9 @@ get_object_from_pg_proc(Oid object_id, Oid user_id, int *type,
 	}
 
 	ReleaseSysCache(tuple);
+
+	*type = temp_type;
+	*schema_id = temp_schema;
 	return true;
 }
 
@@ -4536,6 +4555,11 @@ get_object_from_pg_trigger(Oid object_id, Oid user_id, int *type,
 	SysScanDesc tgscan;
 	HeapTuple	tuple;
 	bool		found = false;
+	int			temp_type = OBJECT_TYPE_UNKNOWN;
+	Oid			temp_schema = InvalidOid;
+
+	if (!type || !schema_id)
+		return false;
 
 	tgrel = table_open(TriggerRelationId, AccessShareLock);
 	ScanKeyInit(&key,
@@ -4560,15 +4584,16 @@ get_object_from_pg_trigger(Oid object_id, Oid user_id, int *type,
 		{
 			if (object_name)
 				*object_name = pstrdup(NameStr(tgform->tgname));
-			if (type)
-				*type = OBJECT_TYPE_TSQL_DML_TRIGGER;
-			if (schema_id)
-				*schema_id = get_rel_namespace(tgform->tgrelid);
+			temp_type = OBJECT_TYPE_TSQL_DML_TRIGGER;
+			temp_schema = get_rel_namespace(tgform->tgrelid);
 		}
 	}
 
 	systable_endscan(tgscan);
 	table_close(tgrel, AccessShareLock);
+
+	*type = temp_type;
+	*schema_id = temp_schema;
 	return found;
 }
 
@@ -4587,6 +4612,11 @@ get_object_from_pg_attrdef(Oid object_id, Oid user_id, int *type,
 	SysScanDesc attrscan;
 	HeapTuple	tuple;
 	bool		found = false;
+	int			temp_type = OBJECT_TYPE_UNKNOWN;
+	Oid			temp_schema = InvalidOid;
+
+	if (!type || !schema_id)
+		return false;
 
 	attrdefrel = table_open(AttrDefaultRelationId, AccessShareLock);
 	ScanKeyInit(&key,
@@ -4644,10 +4674,8 @@ get_object_from_pg_attrdef(Oid object_id, Oid user_id, int *type,
 				{
 					if (object_name)
 						*object_name = pstrdup(NameStr(attrform->attname));
-					if (type)
-						*type = OBJECT_TYPE_DEFAULT_CONSTRAINT;
-					if (schema_id)
-						*schema_id = get_rel_namespace(atdform->adrelid);
+					temp_type = OBJECT_TYPE_DEFAULT_CONSTRAINT;
+					temp_schema = get_rel_namespace(atdform->adrelid);
 				}
 			}
 
@@ -4658,6 +4686,9 @@ get_object_from_pg_attrdef(Oid object_id, Oid user_id, int *type,
 
 	systable_endscan(attrscan);
 	table_close(attrdefrel, AccessShareLock);
+
+	*type = temp_type;
+	*schema_id = temp_schema;
 	return found;
 }
 
@@ -4671,6 +4702,11 @@ get_object_from_pg_constraint(Oid object_id, Oid user_id, int *type,
 							  Oid *schema_id, char **object_name)
 {
 	HeapTuple	tuple;
+	int			temp_type = OBJECT_TYPE_UNKNOWN;
+	Oid			temp_schema = InvalidOid;
+
+	if (!type || !schema_id)
+		return false;
 
 	tuple = SearchSysCache1(CONSTROID, ObjectIdGetDatum(object_id));
 	if (!HeapTupleIsValid(tuple))
@@ -4679,9 +4715,8 @@ get_object_from_pg_constraint(Oid object_id, Oid user_id, int *type,
 	{
 		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
 
-		if(schema_id)
-			*schema_id = tsql_get_constraint_nsp_oid(object_id, user_id);
-		if (OidIsValid(*schema_id) && type)
+		temp_schema = tsql_get_constraint_nsp_oid(object_id, user_id);
+		if (OidIsValid(temp_schema))
 		{
 			if (object_name)
 				*object_name = pstrdup(NameStr(con->conname));
@@ -4690,25 +4725,27 @@ get_object_from_pg_constraint(Oid object_id, Oid user_id, int *type,
 			 * If the contype is 'f' on the pg_constraint object, then it is a Foreign key constraint
 			 */
 			if (con->contype == 'f')
-				*type = OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT;
+				temp_type = OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT;
 			/*
 			 * If the contype is 'p' on the pg_constraint object, then it is a Primary key constraint
 			 */
 			else if (con->contype == 'p')
-				*type = OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT;
+				temp_type = OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT;
 			/*
 			 * Reimplemented the existing SQL .
 			 * If the contype is 'c' and conrelid is 0 on the pg_constraint object, then it is a Check constraint
 			 */
 			else if (con->contype == 'c' && con->conrelid != 0)
-				*type = OBJECT_TYPE_CHECK_CONSTRAINT;
+				temp_type = OBJECT_TYPE_CHECK_CONSTRAINT;
 			else if (con->contype == 'u')
-				*type = OBJECT_TYPE_UNIQUE_CONSTRAINT;
+				temp_type = OBJECT_TYPE_UNIQUE_CONSTRAINT;
 		}
 
 		ReleaseSysCache(tuple);
 	}
 
+	*type = temp_type;
+	*schema_id = temp_schema;
 	return true;
 }
 
