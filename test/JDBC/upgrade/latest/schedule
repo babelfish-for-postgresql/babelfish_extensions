@@ -688,3 +688,5 @@ babel_sqlvariant_coerce_type
 BABEL-5264
 BABEL-6037
 xml_query
+forxml-namespaces
+xml-methods-namespaces

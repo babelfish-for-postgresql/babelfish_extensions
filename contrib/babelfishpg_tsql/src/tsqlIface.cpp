@@ -769,6 +769,28 @@ add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator)
 }
 
 /*
+ * Escape a string for embedding inside a double-quoted element of a PG array
+ * literal. Inside double quotes, PG array-literal parsing treats '"' as the
+ * element terminator and '\' as an escape character, so both must be
+ * backslash-escaped. Without this, a URI containing '"' produces a malformed
+ * array literal error and a URI containing '\' is silently corrupted (the
+ * backslash is dropped).
+ */
+static std::string
+escape_for_pg_array_literal(const std::string &s)
+{
+	std::string out;
+	out.reserve(s.size());
+	for (char c : s)
+	{
+		if (c == '"' || c == '\\')
+			out += '\\';
+		out += c;
+	}
+	return out;
+}
+
+/*
  * Build a PG text[][] array literal from a list of xml_declaration parse nodes.
  * Each xml_declaration is either:
  *   - 'uri' AS prefix  -> {"prefix", "uri"}
@@ -821,7 +843,7 @@ build_xmlnamespace_array_literal(const std::vector<TSqlParser::Xml_declarationCo
 					"http://www.w3.org/XML/1998/namespace. "
 					"This URI cannot be used with other prefixes.", 0, 0);
 
-			result += "\"\"," "\"" + uri + "\"";
+			result += "\"\"," "\"" + escape_for_pg_array_literal(uri) + "\"";
 		}
 		else
 		{
@@ -899,7 +921,7 @@ build_xmlnamespace_array_literal(const std::vector<TSqlParser::Xml_declarationCo
 						prefix.c_str()), 0, 0);
 			seen_prefixes.insert(prefix);
 
-			result += "\"" + prefix + "\",\"" + uri + "\"";
+			result += "\"" + prefix + "\",\"" + escape_for_pg_array_literal(uri) + "\"";
 		}
 	}
 	result += "}}'::_text";
@@ -940,9 +962,10 @@ xml_escape_attr_value(const std::string &in)
  * Declarations are emitted in REVERSE declaration order to match SQL Server's
  * FOR XML output for WITH XMLNAMESPACES.
  *
- * The xsi prefix bound to http://www.w3.org/2001/XMLSchema-instance is
- * skipped because XSINIL handling emits xmlns:xsi separately on each row;
- * SQL Server avoids redeclaring it when both are specified.
+ * Note: a declared xsi prefix IS included in this output string. Deduplication
+ * with the xmlns:xsi declaration that ELEMENTS XSINIL emits is handled
+ * downstream in forxml.c by ns_decls_has_xsi(), which detects xsi already
+ * present in ns_decls and suppresses the redundant per-row XSINIL declaration.
  *
  * Caller is expected to have already validated declarations via
  * build_xmlnamespace_array_literal, so this function performs no validation.
