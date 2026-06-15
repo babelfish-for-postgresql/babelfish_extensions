@@ -11059,7 +11059,7 @@ BEGIN
 		RAISE invalid_parameter_value;
 	END IF;
 
-	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP)::SMALLINT;
+	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP::text)::SMALLINT;
 	IF v_res_length IS NULL THEN
 		RETURN ltrim(v_result);
 	ELSE
