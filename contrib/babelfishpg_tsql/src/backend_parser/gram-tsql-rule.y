@@ -3527,7 +3527,43 @@ tsql_IndexStmt:
 					tsql_index_nulls_order(n->indexParams, n->accessMethod);
 					$$ = (Node *)n;
 				}
-		;
+		| CREATE TSQL_SPATIAL INDEX opt_single_name
+		  ON relation_expr '(' index_params ')'
+		  opt_using_spatial_grid
+		  opt_spatial_with_options
+		  tsql_opt_partition_scheme_or_filegroup
+			{
+				IndexStmt *n = makeNode(IndexStmt);
+
+				if (list_length($8) != 1)
+					ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("spatial index must reference exactly one column")));
+
+				n->unique = false;
+				n->concurrent = false;
+				n->idxname = $4;
+				n->relation = $6;
+				n->accessMethod = "gist";
+				n->indexParams = $8;
+				n->indexIncludingParams = NIL;
+				n->nulls_not_distinct = false;
+				n->whereClause = NULL;
+				n->options = NIL;
+				n->excludeOpNames = NIL;
+				n->idxcomment = NULL;
+				n->indexOid = InvalidOid;
+				n->oldNumber = InvalidOid;
+				n->primary = false;
+				n->isconstraint = false;
+				n->deferrable = false;
+				n->initdeferred = false;
+				n->transformed = false;
+				n->if_not_exists = false;
+				$$ = (Node *)n;
+			}
+	;
+
 
 tsql_cluster:
 			TSQL_CLUSTERED
@@ -3555,6 +3591,45 @@ tsql_opt_columnstore:
 						 errmsg("The COLUMNSTORE option is currently ignored")));
 			}
 			| /*EMPTY*/
+		;
+/*
+ * CREATE SPATIAL INDEX helper rules these consume and ignore SQL Server spatial-specific options since PostGIS GiST handles everything automatically.
+ */
+
+opt_using_spatial_grid:
+			USING IDENT		{ /* GEOMETRY_GRID, GEOGRAPHY_GRID, etc. - ignored */ }
+			| /*EMPTY*/
+		;
+
+opt_spatial_with_options:
+			WITH_paren spatial_option_list ')'			{}
+			| /*EMPTY*/									{}
+		;
+
+spatial_option_list:
+			spatial_option								{}
+			| spatial_option_list ',' spatial_option	{}
+		;
+
+spatial_option:
+			IDENT '=' IDENT								{}
+			| IDENT '=' ON								{}
+			| IDENT '=' OFF								{}
+			| IDENT '=' NONE							{}
+			| IDENT '=' NumericOnly						{}
+			| IDENT '=' '(' spatial_value_list ')'		{}
+		;
+
+spatial_value_list:
+			spatial_value								{}
+			| spatial_value_list ',' spatial_value		{}
+		;
+
+spatial_value:
+			IDENT										{}
+			| IDENT '=' IDENT							{}
+			| IDENT '=' NumericOnly						{}
+			| NumericOnly								{}
 		;
 
 /*
@@ -5043,6 +5118,7 @@ unreserved_keyword:
 			| TSQL_SCHEMABINDING
 			| TSQL_SERVER
 			| TSQL_SID
+			| TSQL_SPATIAL
 			| TSQL_SS
 			| TSQL_SUBSTRING
 			| TSQL_TABLOCK

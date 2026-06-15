@@ -89,11 +89,12 @@ typedef struct forxml_state
 {
 	StringInfo			xml_output;		/* Accumulated XML output */
 	forxml_auto_state  *auto_state;		/* AUTO mode state, NULL for other modes */
+	bool				has_root;		/* True if ROOT clause was specified */
 } forxml_state;
 
 static StringInfo for_xml_ffunc(PG_FUNCTION_ARGS);
-static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls);
-static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls);
+static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls, bool has_root);
+static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls, bool has_root);
 static void tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state, const char *ns_decls);
 static void update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, bool binary_base64, int i);
 static char *tsql_escape_xml(const char *str);
@@ -350,7 +351,8 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		fstate->auto_state = NULL;
 		state = fstate->xml_output;
 		root_name = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(5));
-		if (root_name != NULL && strlen(root_name) > 0)
+		fstate->has_root = (root_name != NULL && strlen(root_name) > 0);
+		if (fstate->has_root)
 		{
 			/*
 			 * We need to add an extra token to the beginning so that the
@@ -437,7 +439,7 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	switch (mode)
 	{
 		case TSQL_FORXML_RAW:	/* FOR XML RAW */
-			tsql_row_to_xml_raw(state, record, element_name, binary_base64, elements, xsinil, row_ns_decls, ns_decls);
+			tsql_row_to_xml_raw(state, record, element_name, binary_base64, elements, xsinil, row_ns_decls, ns_decls, fstate->has_root);
 			break;
 		case TSQL_FORXML_AUTO:	/* FOR XML AUTO */
 			{
@@ -452,7 +454,7 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 			}
 			break;
 		case TSQL_FORXML_PATH:	/* FOR XML PATH */
-			tsql_row_to_xml_path(state, record, element_name, binary_base64, xsinil, row_ns_decls, ns_decls);
+			tsql_row_to_xml_path(state, record, element_name, binary_base64, xsinil, row_ns_decls, ns_decls, fstate->has_root);
 			break;
 		case TSQL_FORXML_EXPLICIT:
 
@@ -569,7 +571,8 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
  * Map an SQL row to an XML element in RAW mode.
  */
 static void
-tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls)
+static void
+tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls, bool has_root)
 {
 	HeapTupleHeader td;
 	Oid             tupType;
@@ -608,12 +611,17 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 	{
 		if (elements)
 		{
-			/* ELEMENTS mode: <row><col>value</col></row> */
+			/*
+			 * ELEMENTS mode: <row><col>value</col></row>.
+			 * When XSINIL is set, xmlns:xsi normally goes on the row tag,
+			 * but when ROOT is present we already emitted it there, so
+			 * suppress the per-row declaration to match T-SQL behavior.
+			 */
 			if (xsinil && ns_decls && !ns_decls_has_xsi(ns_decls))
 				appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s>", element_name, ns_decls);
 			else if (xsinil && ns_decls)
 				appendStringInfo(state, "<%s %s>", element_name, ns_decls);
-			else if (xsinil)
+			else if (xsinil && !has_root)
 				appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
 			else if (ns_decls)
 				appendStringInfo(state, "<%s %s>", element_name, ns_decls);
@@ -765,7 +773,8 @@ validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tup
  * Map an SQL row to an XML element in PATH mode.
  */
 static void
-tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls)
+static void
+tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls, bool has_root)
 {
 	HeapTupleHeader td;
 	Oid             tupType;
@@ -794,7 +803,11 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 
 	/*
 	 * each tuple is either contained in a "row" tag, or standalone if the
-	 * element_name is an empty string
+	 * element_name is an empty string.
+	 *
+	 * When XSINIL is set, xmlns:xsi normally goes on the row tag,
+	 * but when ROOT is present we already emitted it there, so suppress
+	 * the per-row declaration to match T-SQL behavior.
 	 */
 	if (element_name && strlen(element_name) > 0)
 	{
@@ -805,7 +818,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 				appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s", element_name, ns_decls);
 			else if (xsinil && ns_decls)
 				appendStringInfo(state, "<%s %s", element_name, ns_decls);
-			else if (xsinil)
+			else if (xsinil && !has_root)
 				appendStringInfo(state, "<%s " XML_XMLNS_XSI, element_name);
 			else if (ns_decls)
 				appendStringInfo(state, "<%s %s", element_name, ns_decls);
@@ -818,7 +831,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 				appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s>", element_name, ns_decls);
 			else if (xsinil && ns_decls)
 				appendStringInfo(state, "<%s %s>", element_name, ns_decls);
-			else if (xsinil)
+			else if (xsinil && !has_root)
 				appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
 			else if (ns_decls)
 				appendStringInfo(state, "<%s %s>", element_name, ns_decls);
@@ -870,8 +883,13 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 				}
 				else
 				{
-					/* When PATH('') is used with XSINIL, add xmlns to each element */
-					if ((element_name && strlen(element_name) == 0) && xsinil)
+					/*
+					 * PATH('') + XSINIL emits xmlns:xsi on each column
+					 * element since there is no row tag to carry it.
+					 * When ROOT already declared it, suppress the per-column
+					 * declaration to match T-SQL behavior.
+					 */
+					if ((element_name && strlen(element_name) == 0) && xsinil && !has_root)
 						appendStringInfo(state, "<%s " XML_XMLNS_XSI ">%s</%s>",
 										 colname,
 										 map_sql_value_to_xml_value(colval, datatype_oid, true),
@@ -903,8 +921,13 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 
 				if (strncmp(NameStr(att->attname), "?column?", 8) != 0)
 				{
-					/* When PATH('') is used with XSINIL, add xmlns to each element */
-					if (element_name && strlen(element_name) == 0)
+					/*
+					 * PATH('') + XSINIL emits xmlns:xsi on each column
+					 * element since there is no row tag to carry it.
+					 * When ROOT already declared it, suppress the per-column
+					 * declaration to match T-SQL behavior.
+					 */
+					if (element_name && strlen(element_name) == 0 && !has_root)
 						appendStringInfo(state, "<%s " XML_XMLNS_XSI " " XML_XSI_NIL "/>", colname);
 					else
 						appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);
