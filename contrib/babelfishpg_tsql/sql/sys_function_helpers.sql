@@ -134,11 +134,11 @@ BEGIN
         v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_maxlength := CASE
-                          WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                          WHEN (v_res_datatype IN ('CHAR'::text, 'VARCHAR'::text)) THEN VARCHAR_MAX
                           ELSE NVARCHAR_MAX
                        END;
 
-        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP::text);
 
         IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
             RAISE interval_field_overflow;
@@ -174,7 +174,7 @@ BEGIN
         RAISE invalid_character_value_for_cast;
     END;
 
-    v_monthname := (v_lang_metadata_json -> 'months_shortnames') ->> v_month - 1;
+    v_monthname := (v_lang_metadata_json -> 'months_shortnames'::text) ->> v_month - 1;
 
     v_resmask := CASE
                     WHEN (v_style IN (1, 22)) THEN 'MM/DD/YY'
@@ -212,7 +212,7 @@ BEGIN
                                 ELSE 60
                              END);
     RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              WHEN (v_res_datatype NOT IN ('CHAR'::text, 'NCHAR'::text)) THEN v_resstring
               ELSE rpad(v_resstring, v_res_length, ' ')
            END;
 EXCEPTION
@@ -334,7 +334,7 @@ BEGIN
         v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_maxlength := CASE
-                          WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                          WHEN (v_res_datatype IN ('CHAR'::text, 'VARCHAR'::text)) THEN VARCHAR_MAX
                           ELSE NVARCHAR_MAX
                        END;
 
@@ -375,7 +375,7 @@ BEGIN
         RAISE invalid_character_value_for_cast;
     END;
 
-    v_monthname := (v_lang_metadata_json -> 'months_shortnames') ->> v_month - 1;
+    v_monthname := (v_lang_metadata_json -> 'months_shortnames'::text) ->> v_month - 1;
 
     IF (v_src_datatype IN ('DATETIME', 'SMALLDATETIME')) THEN
         v_fseconds := sys.babelfish_round_fractseconds(to_char(v_datetimeval, 'MS'));
@@ -495,7 +495,7 @@ BEGIN
                                 ELSE 60
                              END);
     RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              WHEN (v_res_datatype NOT IN ('CHAR'::text, 'NCHAR'::text)) THEN v_resstring
               ELSE rpad(v_resstring, v_res_length, ' ')
            END;
 EXCEPTION
@@ -2254,7 +2254,7 @@ BEGIN
         v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_res_maxlength := CASE
-                              WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                              WHEN (v_res_datatype IN ('CHAR'::text, 'VARCHAR'::text)) THEN VARCHAR_MAX
                               ELSE NVARCHAR_MAX
                            END;
 
@@ -2342,7 +2342,7 @@ BEGIN
                                 ELSE 60
                              END);
     RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              WHEN (v_res_datatype NOT IN ('CHAR'::text, 'NCHAR'::text)) THEN v_resstring
               ELSE rpad(v_resstring, v_res_length, ' ')
            END;
 EXCEPTION
@@ -2550,14 +2550,14 @@ BEGIN
 
         IF (v_lang_data_jsonb IS NULL)
         THEN
-            v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'));
+            v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'::text));
             IF (v_lang_spec_culture IN ('AR', 'FI') OR
                 v_lang_spec_culture ~ '_')
             THEN
                 SELECT lang_data_jsonb
                   INTO STRICT v_lang_data_jsonb
                   FROM sys.babelfish_syslanguages
-                 WHERE spec_culture = v_lang_spec_culture;
+                 WHERE spec_culture = v_lang_spec_culture::text;
             ELSE
                 SELECT lang_data_jsonb
                   INTO STRICT v_lang_data_jsonb
@@ -2573,10 +2573,10 @@ BEGIN
 
         v_lang_spec_culture := CASE
                                   WHEN (v_lang_spec_culture !~ '\.') THEN v_lang_spec_culture
-                                  ELSE substring(v_lang_spec_culture, '(.*)(?:\.)')
+                                  ELSE substring(v_lang_spec_culture, '(.*)(?:\.)'::text)
                                END;
 
-        v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, ',\s*', '_', 'gi'));
+        v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, ',\s*', '_', 'gi'::text));
 
         BEGIN
             v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
@@ -2594,7 +2594,7 @@ BEGIN
                     SELECT lang_data_jsonb
                       INTO STRICT v_lang_data_jsonb
                       FROM sys.babelfish_syslanguages
-                     WHERE spec_culture = v_lang_spec_culture;
+                     WHERE spec_culture = v_lang_spec_culture::text;
                 ELSE
                     v_locale_parts := string_to_array(v_lang_spec_culture, '-');
 
@@ -2611,7 +2611,7 @@ BEGIN
                     SELECT lang_data_jsonb
                       INTO v_lang_data_jsonb
                       FROM sys.babelfish_syslanguages
-                     WHERE spec_culture = v_lang_spec_culture;
+                     WHERE spec_culture = v_lang_spec_culture::text;
             END;
         ELSE
             v_is_cached := TRUE;
