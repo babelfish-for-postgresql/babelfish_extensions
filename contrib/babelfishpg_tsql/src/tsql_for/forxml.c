@@ -156,6 +156,61 @@ static bool validate_attribute_centric_col_names_xml(const char *element_name, T
 PG_FUNCTION_INFO_V1(tsql_query_to_xml_sfunc);
 
 /*
+ * Returns true if ns_decls declares the given namespace prefix.
+ *
+ * ns_decls (built by build_xmlnamespace_decls_string) has the form
+ *   xmlns:p1="uri1" xmlns:p2="uri2"
+ * A URI value may itself contain spaces, '=', or even the literal substring
+ * "xmlns:xsi=", so a naive strstr() can false-match inside a URI. We instead
+ * walk declaration by declaration, comparing only the declared prefix name and
+ * skipping over the quoted URI value.
+ */
+static bool
+ns_decls_has_prefix(const char *ns_decls, const char *prefix)
+{
+	const char *p;
+	size_t		prefix_len;
+
+	if (ns_decls == NULL || ns_decls[0] == '\0' || prefix == NULL)
+		return false;
+	prefix_len = strlen(prefix);
+
+	for (p = ns_decls; *p != '\0';)
+	{
+		const char *open;
+		const char *close;
+
+		/* Skip spaces between declarations */
+		while (*p == ' ')
+			p++;
+		if (*p == '\0')
+			break;
+
+		/* A prefixed declaration starts with "xmlns:<name>=" */
+		if (strncmp(p, "xmlns:", 6) == 0)
+		{
+			const char *name = p + 6;
+			const char *eq = strchr(name, '=');
+
+			if (eq != NULL &&
+				(size_t) (eq - name) == prefix_len &&
+				strncmp(name, prefix, prefix_len) == 0)
+				return true;
+		}
+
+		/* Advance past this declaration's quoted URI value */
+		open = strchr(p, '"');
+		if (open == NULL)
+			break;				/* malformed; stop scanning */
+		close = strchr(open + 1, '"');
+		if (close == NULL)
+			break;				/* unterminated; stop scanning */
+		p = close + 1;
+	}
+	return false;
+}
+
+/*
  * Returns true when ns_decls (a string built by build_xmlnamespace_decls_string)
  * already includes a binding for the xsi prefix to the XMLSchema-instance URI.
  *
@@ -166,9 +221,7 @@ PG_FUNCTION_INFO_V1(tsql_query_to_xml_sfunc);
 static bool
 ns_decls_has_xsi(const char *ns_decls)
 {
-	if (ns_decls == NULL || ns_decls[0] == '\0')
-		return false;
-	return strstr(ns_decls, "xmlns:xsi=") != NULL;
+	return ns_decls_has_prefix(ns_decls, "xsi");
 }
 
 /*
@@ -252,10 +305,7 @@ restore_xml_prefix_colon(char *colname, const char *ns_decls)
 
 	if (ns_decls != NULL && ns_decls[0] != '\0')
 	{
-		char       *needle = psprintf("xmlns:%s=", decoded_prefix.data);
-
-		prefix_declared = (strstr(ns_decls, needle) != NULL);
-		pfree(needle);
+		prefix_declared = ns_decls_has_prefix(ns_decls, decoded_prefix.data);
 	}
 
 	/*
@@ -651,7 +701,14 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 			continue;
 
 		colname = map_sql_identifier_to_xml_name(NameStr(att->attname), true, false);
-		colname = restore_xml_prefix_colon(colname, all_ns_decls);
+		{
+			char *raw_colname = colname;
+
+			colname = restore_xml_prefix_colon(raw_colname, all_ns_decls);
+			/* restore_xml_prefix_colon may return a new buffer; free the original */
+			if (colname != raw_colname)
+				pfree(raw_colname);
+		}
 		colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 		datatype_oid = att->atttypid;
 
@@ -851,7 +908,14 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 			continue;
 
 		colname = map_sql_identifier_to_xml_name(NameStr(att->attname), true, false);
-		colname = restore_xml_prefix_colon(colname, all_ns_decls);
+		{
+			char *raw_colname = colname;
+
+			colname = restore_xml_prefix_colon(raw_colname, all_ns_decls);
+			/* restore_xml_prefix_colon may return a new buffer; free the original */
+			if (colname != raw_colname)
+				pfree(raw_colname);
+		}
 		colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 		datatype_oid = att->atttypid;
 

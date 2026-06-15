@@ -450,3 +450,45 @@ SELECT @x = (SELECT 1 AS [ns1:a], 'v' AS [ns1:b] FOR XML PATH('ns1:Row'), TYPE);
 WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
 SELECT @x.query('/ns1:Row/ns1:a');
 GO
+
+-- ============================================
+-- SECTION 19: Special characters in WITH XMLNAMESPACES URIs
+-- ============================================
+
+-- 19.1 Double-quote in URI (array-literal escaping) -> empty
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:item>val</ns1:item></root>';
+WITH XMLNAMESPACES('http://example.com/"q"' AS p)
+SELECT @x.query('/root/p:item');
+GO
+
+-- 19.2 Backslash in URI (array-literal escaping) -> empty
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:item>val</ns1:item></root>';
+WITH XMLNAMESPACES('http://example.com/a\b' AS p)
+SELECT @x.query('/root/p:item');
+GO
+
+-- 19.3 Single-quote in URI (escaped as '' in T-SQL), resolves end-to-end -> val
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/it''s"><ns1:item>val</ns1:item></root>';
+WITH XMLNAMESPACES('http://example.com/it''s' AS ns1)
+SELECT @x.value('(/root/ns1:item)[1]', 'varchar(50)');
+GO
+
+-- 19.4 Combined double-quote and backslash in URI (array-literal escaping) -> 0
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:item>val</ns1:item></root>';
+WITH XMLNAMESPACES('http://example.com/"a"\b' AS p)
+SELECT @x.exist('/root/p:item');
+GO
+
+-- 19.5 Limitation: a document whose own namespace URI contains a character that
+-- is illegal in an RFC 3986 URI ('\' or '"') is rejected by PostgreSQL's xpath()
+-- (libxml2 URI validation). SQL Server accepts it and returns the element.
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/a\b"><ns1:item>val</ns1:item></root>';
+WITH XMLNAMESPACES('http://example.com/a\b' AS ns1)
+SELECT @x.query('/root/ns1:item');
+GO
+
+-- 19.6 Same limitation with a double-quote in the document namespace URI
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/&quot;q&quot;"><ns1:item>val</ns1:item></root>';
+WITH XMLNAMESPACES('http://example.com/"q"' AS ns1)
+SELECT @x.query('/root/ns1:item');
+GO

@@ -709,3 +709,18 @@ GO
 WITH XMLNAMESPACES('http://test.com' AS [ns123]) SELECT 'val' AS x FOR XML RAW;
 GO
 
+-- ============================================
+-- SECTION 24: ns_decls_has_xsi must not false-match a URI substring
+-- ============================================
+
+-- 24.1 Declared URI contains "xmlns:xsi=" substring, with ELEMENTS XSINIL.
+WITH XMLNAMESPACES('http://x/?xmlns:xsi=fake' AS n)
+SELECT 1 AS a, CAST(NULL AS VARCHAR(10)) AS b
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+
+-- 24.2 Same false-match guard in PATH mode
+WITH XMLNAMESPACES('http://x/?xmlns:xsi=fake' AS n)
+SELECT 1 AS a, CAST(NULL AS VARCHAR(10)) AS b
+FOR XML PATH('Row'), ELEMENTS XSINIL;
+GO

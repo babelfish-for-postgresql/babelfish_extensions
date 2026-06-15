@@ -2858,11 +2858,20 @@ public:
 
 			if (inner_dml)
 			{
+				/*
+				 * clear_rewritten_query_fragment() wipes the namespace globals,
+				 * so save and restore them instead of rebuilding.
+				 */
+				std::string saved_array_literal = xmlnamespace_array_literal;
+				std::string saved_decls_for_forxml = xmlnamespace_decls_for_forxml;
+				std::set<std::string> saved_declared_prefixes = xmlnamespace_declared_prefixes;
+
 				graft(makeSQL(inner_dml), peekContainer());
 				clear_rewritten_query_fragment();
 				/* Restore namespace context after clear */
-				xmlnamespace_array_literal = build_xmlnamespace_array_literal(decls);
-				xmlnamespace_decls_for_forxml = build_xmlnamespace_decls_string(decls);
+				xmlnamespace_array_literal = saved_array_literal;
+				xmlnamespace_decls_for_forxml = saved_decls_for_forxml;
+				xmlnamespace_declared_prefixes = saved_declared_prefixes;
 				PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(inner_dml);
 				Assert(stmt);
 				statementMutator = std::make_unique<PLtsql_expr_query_mutator>(stmt->sqlstmt, inner_dml);

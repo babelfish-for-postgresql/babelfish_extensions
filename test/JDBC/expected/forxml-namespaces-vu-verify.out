@@ -1183,3 +1183,28 @@ ntext
 ~~END~~
 
 
+
+-- ============================================
+-- SECTION 24: ns_decls_has_xsi must not false-match a URI substring
+-- ============================================
+-- 24.1 Declared URI contains "xmlns:xsi=" substring, with ELEMENTS XSINIL.
+WITH XMLNAMESPACES('http://x/?xmlns:xsi=fake' AS n)
+SELECT 1 AS a, CAST(NULL AS VARCHAR(10)) AS b
+FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:n="http://x/?xmlns:xsi=fake"><a>1</a><b xsi:nil="true"/></row>
+~~END~~
+
+
+-- 24.2 Same false-match guard in PATH mode
+WITH XMLNAMESPACES('http://x/?xmlns:xsi=fake' AS n)
+SELECT 1 AS a, CAST(NULL AS VARCHAR(10)) AS b
+FOR XML PATH('Row'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:n="http://x/?xmlns:xsi=fake"><a>1</a><b xsi:nil="true"/></Row>
+~~END~~
+
