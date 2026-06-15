@@ -628,11 +628,11 @@ BEGIN
         v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_maxlength := CASE
-                          WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                          WHEN (v_res_datatype IN ('CHAR'::text, 'VARCHAR'::text)) THEN VARCHAR_MAX
                           ELSE NVARCHAR_MAX
                        END;
 
-        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP::text);
 
         IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
             RAISE interval_field_overflow;
@@ -668,7 +668,7 @@ BEGIN
         RAISE invalid_character_value_for_cast;
     END;
 
-    v_monthname := (v_lang_metadata_json -> 'months_shortnames') ->> v_month - 1;
+    v_monthname := (v_lang_metadata_json -> 'months_shortnames'::text) ->> v_month - 1;
 
     v_resmask := CASE
                     WHEN (v_style IN (1, 22)) THEN 'MM/DD/YY'
@@ -706,7 +706,7 @@ BEGIN
                                 ELSE 60
                              END);
     RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              WHEN (v_res_datatype NOT IN ('CHAR'::text, 'NCHAR'::text)) THEN v_resstring
               ELSE rpad(v_resstring, v_res_length, ' ')
            END;
 EXCEPTION
@@ -819,6 +819,190 @@ BEGIN
     END IF;
 
     RETURN v_result;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_time_to_string(IN p_datatype TEXT,
+                                                                 IN p_src_datatype TEXT,
+                                                                 IN p_timeval TIME(6) WITHOUT TIME ZONE,
+                                                                 IN p_style NUMERIC DEFAULT 25)
+RETURNS TEXT
+AS
+$BODY$
+DECLARE
+    v_hours VARCHAR COLLATE "C";
+    v_style SMALLINT;
+    v_scale SMALLINT;
+    v_resmask VARCHAR COLLATE "C";
+    v_fseconds VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_resstring VARCHAR COLLATE "C";
+    v_lengthexpr VARCHAR COLLATE "C";
+    v_res_length SMALLINT;
+    v_res_datatype VARCHAR COLLATE "C";
+    v_src_datatype VARCHAR COLLATE "C";
+    v_res_maxlength SMALLINT;
+    VARCHAR_MAX CONSTANT SMALLINT := 8000;
+    NVARCHAR_MAX CONSTANT SMALLINT := 4000;
+    -- We use the regex below to make sure input p_datatype is one of them
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
+    -- We use the regex below to get the length of the datatype, if specified
+    -- For example, to get the '10' out of 'varchar(10)'
+    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+    SRCDATATYPE_MASK_REGEXP VARCHAR COLLATE "C" := '^\s*(?:TIME)\s*(?:\s*\(\s*(\d+)\s*\)\s*)?\s*$';
+BEGIN
+    v_datatype := pg_catalog.upper(pg_catalog.btrim(p_datatype));
+    v_src_datatype := pg_catalog.upper(pg_catalog.btrim(p_src_datatype));
+    v_style := floor(p_style)::SMALLINT;
+
+    IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
+    THEN
+        v_scale := coalesce(substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP::text)::SMALLINT, 7);
+
+        IF (v_scale NOT BETWEEN 0 AND 7) THEN
+            RAISE invalid_regular_expression;
+        END IF;
+    ELSE
+        RAISE most_specific_type_mismatch;
+    END IF;
+
+    IF (v_datatype ~* DATATYPE_MASK_REGEXP)
+    THEN
+        v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
+
+        v_res_maxlength := CASE
+                              WHEN (v_res_datatype IN ('CHAR'::text, 'VARCHAR'::text)) THEN VARCHAR_MAX
+                              ELSE NVARCHAR_MAX
+                           END;
+
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP::text);
+
+        IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
+            RAISE interval_field_overflow;
+        END IF;
+
+        v_res_length := CASE v_lengthexpr
+                           WHEN 'MAX' THEN v_res_maxlength
+                           ELSE v_lengthexpr::SMALLINT
+                        END;
+    ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
+        v_res_datatype := v_datatype;
+    ELSE
+        RAISE datatype_mismatch;
+    END IF;
+
+    IF (scale(p_style) > 0) THEN
+        RAISE escape_character_conflict;
+    ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
+                (v_style BETWEEN 20 AND 25) OR
+                (v_style BETWEEN 100 AND 114) OR
+                v_style IN (120, 121, 126, 127, 130, 131)))
+    THEN
+        RAISE invalid_parameter_value;
+    ELSIF ((v_style BETWEEN 1 AND 7) OR
+           (v_style BETWEEN 10 AND 12) OR
+           (v_style BETWEEN 101 AND 107) OR
+           (v_style BETWEEN 110 AND 112) OR
+           v_style = 23)
+    THEN
+        RAISE invalid_datetime_format;
+    END IF;
+
+    v_hours := PG_CATALOG.ltrim(to_char(p_timeval, 'HH12'), '0');
+    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs_v2(to_char(p_timeval, 'US'), v_scale);
+
+    -- Following condition will handle overflow of fractsecs
+    IF (v_fseconds::INTEGER < 0) THEN
+        v_fseconds := PG_CATALOG.repeat('0', LEAST(v_scale, 6));
+        p_timeval := p_timeval + INTERVAL '1 second';
+    END IF;
+
+    IF (v_scale = 7) THEN
+        v_fseconds := pg_catalog.concat(v_fseconds, '0');
+    END IF;
+
+    IF (v_style IN (0, 100))
+    THEN
+        v_resmask := pg_catalog.concat(v_hours, ':MIAM');
+    ELSIF (v_style IN (8, 20, 24, 108, 120))
+    THEN
+        v_resmask := 'HH24:MI:SS';
+    ELSIF (v_style IN (9, 109))
+    THEN
+        v_resmask := CASE
+                        WHEN (char_length(v_fseconds) = 0) THEN pg_catalog.concat(v_hours, ':MI:SSAM')
+                        ELSE pg_catalog.format('%s:MI:SS.%sAM', v_hours, v_fseconds)
+                     END;
+    ELSIF (v_style IN (13, 14, 21, 25, 113, 114, 121, 126, 127))
+    THEN
+        v_resmask := CASE
+                        WHEN (char_length(v_fseconds) = 0) THEN 'HH24:MI:SS'
+                        ELSE pg_catalog.concat('HH24:MI:SS.', v_fseconds)
+                     END;
+    ELSIF (v_style = 22)
+    THEN
+        v_resmask := pg_catalog.format('%s:MI:SS AM', lpad(v_hours, 2, ' '));
+    ELSIF (v_style IN (130, 131))
+    THEN
+        v_resmask := CASE
+                        WHEN (char_length(v_fseconds) = 0) THEN pg_catalog.concat(lpad(v_hours, 2, ' '), ':MI:SSAM')
+                        ELSE pg_catalog.format('%s:MI:SS.%sAM', lpad(v_hours, 2, ' '), v_fseconds)
+                     END;
+    END IF;
+
+    v_resstring := to_char(p_timeval, v_resmask);
+
+    v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
+    v_res_length := coalesce(v_res_length,
+                             CASE v_res_datatype
+                                WHEN 'CHAR' THEN 30
+                                ELSE 60
+                             END);
+    RETURN CASE
+              WHEN (v_res_datatype NOT IN ('CHAR'::text, 'NCHAR'::text)) THEN v_resstring
+              ELSE rpad(v_resstring, v_res_length, ' ')
+           END;
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Source data type should be ''TIME'' or ''TIME(n)''.',
+                    DETAIL := 'Use of incorrect "src_datatype" parameter value during conversion process.',
+                    HINT := 'Change "src_datatype" parameter to the proper value and try again.';
+
+   WHEN invalid_regular_expression THEN
+       RAISE USING MESSAGE := pg_catalog.format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
+                                     v_scale),
+                   DETAIL := 'Use of incorrect scale value of source data type parameter during conversion process.',
+                   HINT := 'Change scale component of source data type parameter to the allowable value and try again.';
+
+   WHEN interval_field_overflow THEN
+       RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
+                                     v_lengthexpr, pg_catalog.lower(v_res_datatype), v_res_maxlength),
+                   DETAIL := 'Use of incorrect size value of target data type parameter during conversion process.',
+                   HINT := 'Change size component of data type parameter to the allowable value and try again.';
+
+    WHEN escape_character_conflict THEN
+        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 4 of convert function.',
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from TIME to a character string.', v_style),
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN datatype_mismatch THEN
+        RAISE USING MESSAGE := 'Data type should be one of these values: ''CHAR(n|MAX)'', ''NCHAR(n|MAX)'', ''VARCHAR(n|MAX)'', ''NVARCHAR(n|MAX)''.',
+                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
+                    HINT := 'Change "datatype" parameter to the proper value and try again.';
+
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := pg_catalog.format('Error converting data type TIME to %s.',
+                                      PG_CATALOG.rtrim(split_part(pg_catalog.btrim(p_datatype), '(', 1))),
+                    DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
+                    HINT := 'Check the input parameters values, correct them if needed, and try again.';
 END;
 $BODY$
 LANGUAGE plpgsql

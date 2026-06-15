@@ -305,7 +305,7 @@ BEGIN
 
     IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
     THEN
-        v_scale := substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT;
+        v_scale := substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP::text)::SMALLINT;
 
         v_src_datatype := PG_CATALOG.rtrim(split_part(v_src_datatype, '(', 1));
 
@@ -338,7 +338,7 @@ BEGIN
                           ELSE NVARCHAR_MAX
                        END;
 
-        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP::text);
 
         IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4)
         THEN
@@ -377,7 +377,7 @@ BEGIN
 
     v_monthname := (v_lang_metadata_json -> 'months_shortnames'::text) ->> v_month - 1;
 
-    IF (v_src_datatype IN ('DATETIME', 'SMALLDATETIME')) THEN
+    IF (v_src_datatype IN ('DATETIME'::text, 'SMALLDATETIME'::text)) THEN
         v_fseconds := sys.babelfish_round_fractseconds(to_char(v_datetimeval, 'MS'));
 
         IF (v_fseconds::INTEGER = 1000) THEN
@@ -2240,7 +2240,7 @@ BEGIN
 
     IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
     THEN
-        v_scale := coalesce(substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT, 7);
+        v_scale := coalesce(substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP::text)::SMALLINT, 7);
 
         IF (v_scale NOT BETWEEN 0 AND 7) THEN
             RAISE invalid_regular_expression;
@@ -2258,7 +2258,7 @@ BEGIN
                               ELSE NVARCHAR_MAX
                            END;
 
-        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP::text);
 
         IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
             RAISE interval_field_overflow;
