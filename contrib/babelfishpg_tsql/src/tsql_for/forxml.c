@@ -571,7 +571,6 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
  * Map an SQL row to an XML element in RAW mode.
  */
 static void
-static void
 tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls, bool has_root)
 {
 	HeapTupleHeader td;
@@ -772,7 +771,6 @@ validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tup
 /*
  * Map an SQL row to an XML element in PATH mode.
  */
-static void
 static void
 tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls, bool has_root)
 {
