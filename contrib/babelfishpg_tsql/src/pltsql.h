@@ -2530,20 +2530,13 @@ extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags
 typedef struct InsertExecContext
 {
 	Oid			temp_table_oid;			/* OID of temp table for buffering */
-	/*
-	 * Target table name (bare), captured at parse time. Kept as a string
-	 * because it is needed when target_rel_oid can't be looked up: during
-	 * cleanup with no live transaction, after the target is dropped (556
-	 * error), for not-yet-existing or table-variable targets, and to preserve
-	 * the cross-DB logical name.
-	 */
 	char	   *target_table;
 	PLExecStateCallStack *call_stack_entry;	/* Call stack entry when INSERT EXEC started */
 	Oid			target_rel_oid;			/* OID of target table - lock held to detect schema changes */
 	bool		is_target_relation_modified;	/* Set by bbf_object_access_hook when target table is altered */
 } InsertExecContext;
 
-extern InsertExecContext insert_exec_ctx;
+extern InsertExecContext *insert_exec_ctx;
 
 extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list, const char *schema_name_in, const char *db_name_in);
 extern void pltsql_set_insert_exec_context_info(const char *target_table);

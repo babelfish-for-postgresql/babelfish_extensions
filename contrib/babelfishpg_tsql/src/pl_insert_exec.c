@@ -70,9 +70,9 @@ static void insertexec_shutdown(DestReceiver *self);
 static void insertexec_destroy(DestReceiver *self);
 
 /*
- * Global INSERT EXEC context - defined in pltsql.h, declared here.
+ * Global INSERT EXEC context pointer - defined in pltsql.h, declared here.
  */
-InsertExecContext insert_exec_ctx;
+InsertExecContext *insert_exec_ctx = NULL;
 
 extern void exec_set_rowcount(uint64 rowno);
 extern void exec_set_found(PLtsql_execstate *estate, bool state);
@@ -102,6 +102,35 @@ build_quoted_column_list(List *columns)
 		appendStringInfoString(&cols, quote_identifier((char *) lfirst(lc)));
 	}
 	return cols.data;
+}
+
+/*
+ * Resolve the logical T-SQL schema name for an INSERT EXEC target when the
+ * statement did not qualify it.
+ */
+static char *
+resolve_insert_exec_schema_name(const char *schema_name_in, const char *db_name_in)
+{
+	const char *db;
+	char	   *user;
+	char	   *default_schema;
+	char	   *result;
+
+	if (schema_name_in != NULL)
+		return pstrdup(schema_name_in);
+
+	db = (db_name_in != NULL) ? db_name_in : get_cur_db_name();
+	user = get_user_for_database(db);
+	default_schema = user ? get_authid_user_ext_schema_name(db, user) : NULL;
+
+	result = pstrdup(default_schema ? default_schema : "dbo");
+
+	if (default_schema)
+		pfree(default_schema);
+	if (user)
+		pfree(user);
+
+	return result;
 }
 
 /*
@@ -186,7 +215,11 @@ get_insertable_column_list(const char *table_name, const char *physical_schema)
 void
 pltsql_set_insert_exec_context_info(const char *target_table)
 {
-	insert_exec_ctx.target_table = target_table
+	Assert(insert_exec_ctx == NULL);
+	insert_exec_ctx = MemoryContextAllocZero(TopTransactionContext,
+											 sizeof(InsertExecContext));
+
+	insert_exec_ctx->target_table = target_table
 		? MemoryContextStrdup(TopTransactionContext, target_table)
 		: NULL;
 	/*
@@ -194,37 +227,29 @@ pltsql_set_insert_exec_context_info(const char *target_table)
 	 * pointer later tells us whether an error occurred at the INSERT EXEC
 	 * level or inside the executed procedure.
 	 */
-	insert_exec_ctx.call_stack_entry = exec_state_call_stack;
+	insert_exec_ctx->call_stack_entry = exec_state_call_stack;
 }
 
 /*
- * Reset the global INSERT EXEC context to a clean state.
- *
- * Frees the heap-allocated target table name and zeroes every field. Used on
- * both the normal exit and safety-net cleanup paths. The target table's
- * RowExclusiveLock is transaction-scoped and released automatically when the 
- * implicit transaction commits or aborts. The string must be pfree'd before 
- * the memset; otherwise the allocation in TopTransactionContext lingers
- * until end of transaction.
+ * Reset the global INSERT EXEC context to a clean state
  */
 void
 pltsql_insert_exec_reset_all(void)
 {
-	/* Free heap-allocated target table name before zeroing its pointer */
-	if (insert_exec_ctx.target_table)
-		pfree(insert_exec_ctx.target_table);
+	InsertExecContext *ctx = insert_exec_ctx;
 
-	/* Reset all fields to zero/NULL */
-	memset(&insert_exec_ctx, 0, sizeof(InsertExecContext));
+	if (ctx == NULL)
+		return;
+
+	insert_exec_ctx = NULL;
+
+	if (ctx->target_table)
+		pfree(ctx->target_table);
+	pfree(ctx);
 }
 
 /*
- * Capture target table OID and lock for change detection.
- * Regular tables get RowExclusiveLock to block concurrent DDL;
- * temp tables only get OID captured (session-local).
- *
- * Schema changes are detected via is_target_relation_modified flag,
- * which is set by the ObjectPostAlterHook when the target table is altered.
+ * Capture target table OID for change detection
  */
 void
 pltsql_insert_exec_open_target_table(const char *target_table,
@@ -237,7 +262,6 @@ pltsql_insert_exec_open_target_table(const char *target_table,
 	char			*table_name = NULL;
 	char			*physical_schema = NULL;
 	bool			is_temp_table;
-	MemoryContext	oldcontext;
 
 	if (target_table == NULL)
 		return;
@@ -257,15 +281,12 @@ pltsql_insert_exec_open_target_table(const char *target_table,
 			return;
 
 		/* Store the OID for schema verification (no lock for temp tables) */
-		insert_exec_ctx.target_rel_oid = relid;
+		insert_exec_ctx->target_rel_oid = relid;
 	}
 	else
 	{
 		table_name = pstrdup(target_table);
-		if (schema_name_in != NULL)
-			schema_name = pstrdup(schema_name_in);
-		else
-			schema_name = pstrdup("dbo");  /* default schema */
+		schema_name = resolve_insert_exec_schema_name(schema_name_in, db_name_in);
 		/*
 		 * Resolve against the target's database when a 3-part name
 		 * (db..table) was used; otherwise the current database.
@@ -291,59 +312,15 @@ pltsql_insert_exec_open_target_table(const char *target_table,
 			return;
 		}
 
-		/*
-		 * Acquire RowExclusiveLock on the target table.
-		 * This lock will be held until the end of the transaction.
-		 * It blocks concurrent sessions from modifying the table.
-		 * Note: Same-session DROP/ALTER is still allowed by PostgreSQL,
-		 * but we detect it via is_target_relation_modified flag set by
-		 * ObjectPostAlterHook.
-		 */
-		oldcontext = CurrentMemoryContext;
-
-		PG_TRY();
-		{
-			LockRelationOid(relid, RowExclusiveLock);
-		}
-		PG_CATCH();
-		{
-			/* Only suppress benign errors (table dropped etc.) - re-throw the rest */
-			ErrorData  *edata;
-			MemoryContextSwitchTo(oldcontext);
-			edata = CopyErrorData();
-			FlushErrorState();
-
-			if (edata->sqlerrcode != ERRCODE_UNDEFINED_TABLE &&
-				edata->sqlerrcode != ERRCODE_LOCK_NOT_AVAILABLE)
-			{
-				ReThrowError(edata);
-			}
-			FreeErrorData(edata);
-			return;
-		}
-		PG_END_TRY();
-
-		insert_exec_ctx.target_rel_oid = relid;
+		insert_exec_ctx->target_rel_oid = relid;
 	}
 
 	/* Initialize the modification flag to false */
-	insert_exec_ctx.is_target_relation_modified = false;
+	insert_exec_ctx->is_target_relation_modified = false;
 }
 
 /*
- * Validate column count from query string BEFORE plan preparation.
- *
- * T-SQL requires column-mismatch errors to take priority over runtime errors
- * (e.g. division by zero) inside TRY-CATCH. PostgreSQL evaluates constant
- * expressions during plan *preparation*, so we use SPI_prepare here, which
- * parse-analyzes and rewrites the query (producing its result tuple
- * descriptor) without planning it - hence without triggering constant folding.
- * Comparing that descriptor's column count to the temp table lets the mismatch
- * win over a constant-folded runtime error.
- *
- * If the result shape can't be determined (parse/analyze error, non
- * row-returning statement such as EXEC, or multiple statements), we defer to
- * the normal path - the DestReceiver still catches mismatches at runtime.
+ * Validate column count from query string BEFORE plan preparation
  */
 void
 pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
@@ -363,10 +340,9 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 
 	/*
 	 * Temp table must exist. It is created during INSERT EXEC setup before any
-	 * procedure-body statement runs, so it is normally valid here; if it isn't
-	 * (context not fully set up yet), defer to the normal execution path.
+	 * procedure-body statement runs, so it is normally valid here
 	 */
-	temp_table_oid = insert_exec_ctx.temp_table_oid;
+	temp_table_oid = insert_exec_ctx->temp_table_oid;
 	if (!OidIsValid(temp_table_oid))
 		return;
 
@@ -384,7 +360,10 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	}
 	PG_CATCH();
 	{
-		/* Only suppress benign errors - re-throw cancellation/OOM/FATAL */
+		/*
+		 * Probe-only failure: defer to real execution, which re-raises it.
+		 * Re-throw cancellation/OOM immediately - those must be honored now
+		 */
 		ErrorData  *edata;
 		MemoryContextSwitchTo(oldcontext);
 		edata = CopyErrorData();
@@ -392,8 +371,7 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 
 		if (edata->sqlerrcode == ERRCODE_QUERY_CANCELED ||
 			edata->sqlerrcode == ERRCODE_ADMIN_SHUTDOWN ||
-			edata->sqlerrcode == ERRCODE_OUT_OF_MEMORY ||
-			edata->elevel >= FATAL)
+			edata->sqlerrcode == ERRCODE_OUT_OF_MEMORY)
 		{
 			ReThrowError(edata);
 		}
@@ -427,34 +405,10 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	SPI_freeplan(plan);
 
 	/* Get temp table column count */
-	oldcontext = CurrentMemoryContext;
-
-	PG_TRY();
-	{
-		temp_rel = table_open(temp_table_oid, AccessShareLock);
-		temp_tupdesc = RelationGetDescr(temp_rel);
-		temp_natts = temp_tupdesc->natts;
-		table_close(temp_rel, AccessShareLock);
-	}
-	PG_CATCH();
-	{
-		/* Only suppress benign errors - re-throw cancellation/OOM/FATAL */
-		ErrorData  *edata;
-		MemoryContextSwitchTo(oldcontext);
-		edata = CopyErrorData();
-		FlushErrorState();
-
-		if (edata->sqlerrcode == ERRCODE_QUERY_CANCELED ||
-			edata->sqlerrcode == ERRCODE_ADMIN_SHUTDOWN ||
-			edata->sqlerrcode == ERRCODE_OUT_OF_MEMORY ||
-			edata->elevel >= FATAL)
-		{
-			ReThrowError(edata);
-		}
-		FreeErrorData(edata);
-		return;
-	}
-	PG_END_TRY();
+	temp_rel = table_open(temp_table_oid, AccessShareLock);
+	temp_tupdesc = RelationGetDescr(temp_rel);
+	temp_natts = temp_tupdesc->natts;
+	table_close(temp_rel, AccessShareLock);
 
 	/* Check for column count mismatch */
 	if (query_natts != temp_natts)
@@ -477,27 +431,25 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 bool
 pltsql_insert_exec_active(void)
 {
-	return (insert_exec_ctx.target_table != NULL);
+	return (insert_exec_ctx != NULL);
 }
 
 /*
  * Called from the sigsetjmp handler when a TRY-CATCH catches an error during
  * INSERT EXEC. Returns true if the error surfaced at the INSERT EXEC level
- * (call-stack head matches where INSERT EXEC started), false if the catching
- * TRY-CATCH is deeper inside the executed procedure - the caller uses the
- * false case to re-throw a column-mismatch error past the inner handler.
+ * false if the catching TRY-CATCH is deeper inside the executed procedure
  */
 bool
 pltsql_insert_exec_error_at_trycatch_level(void)
 {
-	if (insert_exec_ctx.target_table == NULL)
+	if (insert_exec_ctx == NULL)
 		return false;
 
 	/*
 	 * Same call-stack head as when INSERT EXEC started → error is at the
 	 * INSERT EXEC level. A deeper node → error is inside the called procedure.
 	 */
-	return exec_state_call_stack == insert_exec_ctx.call_stack_entry;
+	return exec_state_call_stack == insert_exec_ctx->call_stack_entry;
 }
 
 /*
@@ -540,10 +492,11 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 	 */
 	if (!(target_table[0] == '#' || target_table[0] == '@'))
 	{
-		const char *sname = (schema_name_in != NULL) ? schema_name_in : "dbo";
+		char *sname = resolve_insert_exec_schema_name(schema_name_in, db_name_in);
 
 		physical_schema = get_physical_schema_name(
 			(db_name_in != NULL) ? (char *) db_name_in : get_cur_db_name(), sname);
+		pfree(sname);
 		if (physical_schema == NULL)
 			elog(ERROR, "INSERT EXEC failed due to unresolvable schema for target table \"%s\"",
 				target_table);
@@ -613,22 +566,22 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema
 {
 	StringInfoData	flush_query;
 	int				rc;
-	Oid				temp_oid = insert_exec_ctx.temp_table_oid;
-	const char	   *target_table = insert_exec_ctx.target_table;
+	Oid				temp_oid;
+	const char	   *target_table;
 	const char	   *temp_name;
 	Relation		temp_rel;
 	char		   *qualified_target;
 
+	if (insert_exec_ctx == NULL)
+		return;
+
+	temp_oid = insert_exec_ctx->temp_table_oid;
+	target_table = insert_exec_ctx->target_table;
+
 	if (!OidIsValid(temp_oid) || target_table == NULL)
 		return;
 
-	/*
-	 * Use the same %s-placeholder format string as the TDS error_mapping entry
-	 * (ERRCODE_OBJECT_IN_USE -> 556). The TDS layer maps errors by the
-	 * untranslated errmsg format string, so hardcoding the rendered text would
-	 * not match and would fall back to the default code.
-	 */
-	if (insert_exec_ctx.is_target_relation_modified)
+	if (insert_exec_ctx->is_target_relation_modified)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
 				 errmsg("cannot %s \"%s\" because it is being used by active queries in this session",
@@ -732,11 +685,11 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 */
 	result_natts = typeinfo->natts;
 
-	if (!OidIsValid(insert_exec_ctx.temp_table_oid))
+	if (!OidIsValid(insert_exec_ctx->temp_table_oid))
 		elog(ERROR, "INSERT EXEC failed due to missing temp table OID");
 
 	/* Open temp table to read schema only - closed before startup returns */
-	temp_rel = table_open(insert_exec_ctx.temp_table_oid, AccessShareLock);
+	temp_rel = table_open(insert_exec_ctx->temp_table_oid, AccessShareLock);
 	temp_tupdesc = RelationGetDescr(temp_rel);
 	temp_natts = temp_tupdesc->natts;
 
@@ -837,7 +790,7 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	Assert(myState->econtext != NULL);
 
 	/* Open temp table fresh for each tuple - avoids stale handles across subtransactions */
-	temp_rel = table_open(insert_exec_ctx.temp_table_oid, RowExclusiveLock);
+	temp_rel = table_open(insert_exec_ctx->temp_table_oid, RowExclusiveLock);
 
 	/* Reset per-tuple memory context for expression evaluation */
 	ResetExprContext(myState->econtext);
@@ -940,7 +893,7 @@ insert_exec_setup(PLtsql_execstate *estate,
 	pltsql_insert_exec_open_target_table(info->target, info->schema, info->db_name);
 
 	/* Create temp table based on target table structure */
-	insert_exec_ctx.temp_table_oid = create_insert_exec_temp_table(info->target, column_list,
+	insert_exec_ctx->temp_table_oid = create_insert_exec_temp_table(info->target, column_list,
 												   info->schema, info->db_name);
 
 	if (column_list != NULL)
@@ -972,7 +925,7 @@ insert_exec_success_cleanup(PLtsql_execstate *estate, InsertExecInfo *info)
 	}
 	PG_CATCH();
 	{
-		/* Release target table lock and reset context before re-throwing. */
+		/* Free the column list and reset context before re-throwing. */
 		if (column_list != NULL)
 			pfree(column_list);
 		pltsql_insert_exec_reset_all();

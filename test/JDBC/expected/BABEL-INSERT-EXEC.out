@@ -96,6 +96,28 @@ DROP TABLE IF EXISTS insert_exec_trancount1;
 DROP TABLE IF EXISTS insert_exec_trancount2;
 DROP TABLE IF EXISTS insert_exec_trancount3;
 DROP TABLE IF EXISTS insert_exec_trancount4;
+-- Category P (same-session DDL) cleanup
+DROP PROCEDURE IF EXISTS dbo.p_p1_drop;
+DROP PROCEDURE IF EXISTS dbo.p_p2_alter;
+DROP PROCEDURE IF EXISTS dbo.p_p3_dropcol;
+DROP PROCEDURE IF EXISTS dbo.p_p4_trycatch;
+DROP PROCEDURE IF EXISTS dbo.p_p5_otherdrop;
+DROP TABLE IF EXISTS dbo.t_p1;
+DROP TABLE IF EXISTS dbo.t_p2;
+DROP TABLE IF EXISTS dbo.t_p3;
+DROP TABLE IF EXISTS dbo.t_p4;
+DROP TABLE IF EXISTS dbo.t_p5_target;
+DROP TABLE IF EXISTS dbo.t_p5_other;
+-- Category Q (INSERT EXEC inside a function) cleanup
+DROP FUNCTION IF EXISTS dbo.fn_q1;
+DROP FUNCTION IF EXISTS dbo.fn_q2;
+DROP PROCEDURE IF EXISTS dbo.p_q1;
+DROP PROCEDURE IF EXISTS dbo.p_q2;
+GO
+-- Category R (INSERT EXEC in TRY-CATCH, variable source) cleanup
+DROP PROCEDURE IF EXISTS dbo.p_var_run;
+DROP PROCEDURE IF EXISTS dbo.p_var_src;
+DROP TABLE IF EXISTS dbo.var_tgt;
 GO
 -- ============================================================================
 -- Category A: Basic INSERT EXEC Scenarios
@@ -1304,6 +1326,217 @@ DROP TABLE #t_temp;
 DROP PROCEDURE dbo.p_udd;
 DROP TYPE custom_int;
 GO
+
+
+-- ============================================================================
+-- Category P: Same-session DDL on INSERT EXEC target
+-- ============================================================================
+-- Concurrent-session DDL is blocked by RowExclusiveLock. Same-session DDL
+-- (DROP / ALTER inside the procedure body) is detected by ObjectPostAlterHook
+-- which sets is_target_relation_modified; flush surfaces ERRCODE_OBJECT_IN_USE.
+-- P1: Procedure body drops the target table mid-execution
+CREATE TABLE dbo.t_p1 (x INT);
+GO
+CREATE PROCEDURE dbo.p_p1_drop AS
+BEGIN
+    SELECT 1 AS x;
+    DROP TABLE dbo.t_p1;
+END;
+GO
+INSERT INTO dbo.t_p1 EXEC dbo.p_p1_drop; -- Expected: error, target was dropped
+GO
+~~ERROR (Code: 556)~~
+
+~~ERROR (Message: cannot DROP TABLE "t_p1" because it is being used by active queries in this session)~~
+
+DROP PROCEDURE dbo.p_p1_drop;
+GO
+
+-- P2: Procedure body alters the target table (add column)
+CREATE TABLE dbo.t_p2 (x INT);
+GO
+CREATE PROCEDURE dbo.p_p2_alter AS
+BEGIN
+    SELECT 1 AS x;
+    ALTER TABLE dbo.t_p2 ADD y INT;
+END;
+GO
+INSERT INTO dbo.t_p2 EXEC dbo.p_p2_alter; -- Expected: error, target was altered
+GO
+~~ERROR (Code: 556)~~
+
+~~ERROR (Message: cannot DROP TABLE "t_p2" because it is being used by active queries in this session)~~
+
+SELECT * FROM dbo.t_p2; -- Expected: empty (insert blocked)
+GO
+~~START~~
+int
+~~END~~
+
+DROP TABLE dbo.t_p2;
+DROP PROCEDURE dbo.p_p2_alter;
+GO
+
+-- P3: Procedure body alters the target table (drop column)
+CREATE TABLE dbo.t_p3 (x INT, y INT);
+GO
+CREATE PROCEDURE dbo.p_p3_dropcol AS
+BEGIN
+    SELECT 1 AS x, 2 AS y;
+    ALTER TABLE dbo.t_p3 DROP COLUMN y;
+END;
+GO
+INSERT INTO dbo.t_p3 EXEC dbo.p_p3_dropcol; -- Expected: error
+GO
+~~ERROR (Code: 556)~~
+
+~~ERROR (Message: cannot DROP TABLE "t_p3" because it is being used by active queries in this session)~~
+
+DROP TABLE dbo.t_p3;
+DROP PROCEDURE dbo.p_p3_dropcol;
+GO
+
+-- P4: TRY-CATCH cannot suppress same-session DDL detection
+-- The hook only sets a flag; the error is raised at flush time, outside the
+-- procedure's TRY-CATCH scope, so it cannot be silently swallowed.
+CREATE TABLE dbo.t_p4 (x INT);
+GO
+CREATE PROCEDURE dbo.p_p4_trycatch AS
+BEGIN
+    BEGIN TRY
+        SELECT 1 AS x;
+        DROP TABLE dbo.t_p4;
+    END TRY
+    BEGIN CATCH
+        SELECT 99 AS x;
+    END CATCH
+END;
+GO
+INSERT INTO dbo.t_p4 EXEC dbo.p_p4_trycatch; -- Expected: error not suppressed
+GO
+~~ERROR (Code: 556)~~
+
+~~ERROR (Message: cannot DROP TABLE "t_p4" because it is being used by active queries in this session)~~
+
+DROP PROCEDURE dbo.p_p4_trycatch;
+GO
+
+-- P5: Same-session DDL on a DIFFERENT table is not flagged
+CREATE TABLE dbo.t_p5_target (x INT);
+CREATE TABLE dbo.t_p5_other (y INT);
+GO
+CREATE PROCEDURE dbo.p_p5_otherdrop AS
+BEGIN
+    SELECT 1 AS x;
+    DROP TABLE dbo.t_p5_other;
+END;
+GO
+INSERT INTO dbo.t_p5_target EXEC dbo.p_p5_otherdrop; -- Expected: success
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM dbo.t_p5_target; -- Expected: 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+DROP TABLE dbo.t_p5_target;
+DROP PROCEDURE dbo.p_p5_otherdrop;
+GO
+
+
+-- ============================================================================
+-- Category Q: INSERT EXEC inside a T-SQL function
+-- ============================================================================
+-- Q1: Positive - function captures procedure output into a table variable
+CREATE PROCEDURE dbo.p_q1 AS
+BEGIN
+    SELECT 1 AS a, 'x' AS b
+    UNION ALL SELECT 2, 'y';
+END;
+GO
+CREATE FUNCTION dbo.fn_q1()
+RETURNS @t TABLE (a INT, b VARCHAR(10))
+AS
+BEGIN
+    INSERT INTO @t EXEC dbo.p_q1;
+    RETURN;
+END;
+GO
+SELECT * FROM dbo.fn_q1() ORDER BY a; -- Expected: (1,x) (2,y)
+GO
+~~START~~
+int#!#varchar
+1#!#x
+2#!#y
+~~END~~
+
+
+-- Q2: Source procedure returns no rows - function returns empty
+CREATE PROCEDURE dbo.p_q2 AS
+BEGIN
+    SELECT 1 AS a WHERE 1 = 0;
+END;
+GO
+CREATE FUNCTION dbo.fn_q2()
+RETURNS @t TABLE (a INT)
+AS
+BEGIN
+    INSERT INTO @t EXEC dbo.p_q2;
+    RETURN;
+END;
+GO
+SELECT * FROM dbo.fn_q2(); -- Expected: empty
+GO
+~~START~~
+int
+~~END~~
+
+DROP FUNCTION IF EXISTS dbo.fn_q1;
+DROP FUNCTION IF EXISTS dbo.fn_q2;
+DROP PROCEDURE IF EXISTS dbo.p_q1;
+DROP PROCEDURE IF EXISTS dbo.p_q2;
+GO
+
+-- ============================================================================
+-- Category R: INSERT EXEC inside TRY-CATCH with a variable-referencing source
+-- ============================================================================
+CREATE TABLE dbo.var_tgt (a int);
+GO
+CREATE PROCEDURE dbo.p_var_src AS
+BEGIN
+    DECLARE @x int = 7;
+    SELECT @x AS a;
+END;
+GO
+CREATE PROCEDURE dbo.p_var_run AS
+BEGIN
+    BEGIN TRY
+        INSERT INTO dbo.var_tgt EXEC dbo.p_var_src;
+    END TRY
+    BEGIN CATCH
+        SELECT ERROR_MESSAGE() AS err;
+    END CATCH
+END;
+GO
+EXEC dbo.p_var_run; -- Expected: 1 row affected, CATCH does not fire
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM dbo.var_tgt; -- Expected: 7
+GO
+~~START~~
+int
+7
+~~END~~
+
+DROP PROCEDURE IF EXISTS dbo.p_var_run;
+DROP PROCEDURE IF EXISTS dbo.p_var_src;
+DROP TABLE IF EXISTS dbo.var_tgt;
+GO
+
 -- ============================================================================
 -- Cleanup verification
 -- ============================================================================

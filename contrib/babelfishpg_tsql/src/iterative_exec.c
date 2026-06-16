@@ -1621,7 +1621,12 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 
 					/* INSERT EXEC: re-throw errors that must abort the whole flush. */
 					if (ignore_catch_block_for_insert_exec(estate))
+					{
+						elog(DEBUG4,
+							 "INSERT EXEC failed due to error (sqlerrcode=%d) inside procedure TRY-CATCH; re-throwing to abort flush",
+							 estate->cur_error->error ? estate->cur_error->error->sqlerrcode : 0);
 						ReThrowError(estate->cur_error->error);
+					}
 
 					/* Goto error handling blocks */
 					*pc = err_handler_pc - 1;	/* same as how goto handles PC */

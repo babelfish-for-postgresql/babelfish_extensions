@@ -2708,13 +2708,8 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 				ListCell   *l;
 				PLtsql_expr *expr = ((PLtsql_stmt_execsql *) stmt)->sqlstmt;
 
-				/*
-				 * True if this statement runs inside an INSERT EXEC. Covers
-				 * both paths: the new path uses the global context
-				 * (pltsql_insert_exec_active), the legacy path uses the
-				 * per-estate flag (estate->insert_exec).
-				 */
-				bool insert_exec_active = estate->insert_exec ||
+				/* True if running inside a new-path INSERT EXEC. */
+				bool insert_exec_active =
 					(pltsql_plugin_handler_ptr->pltsql_insert_exec_active &&
 					 pltsql_plugin_handler_ptr->pltsql_insert_exec_active());
 
@@ -2742,6 +2737,7 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 								 * and it just returned error.
 								 */
 								row_count_valid =
+									!estate->insert_exec &&
 									!insert_exec_active &&
 									!(markErrorFlag &&
 									  ((PLtsql_stmt_execsql *) stmt)->insert_exec);
@@ -2749,12 +2745,12 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 							else if (plansource->commandTag == CMDTAG_UPDATE)
 							{
 								command_type = TDS_CMD_UPDATE;
-								row_count_valid = !insert_exec_active;
+								row_count_valid = !estate->insert_exec && !insert_exec_active;
 							}
 							else if (plansource->commandTag == CMDTAG_DELETE)
 							{
 								command_type = TDS_CMD_DELETE;
-								row_count_valid = !insert_exec_active;
+								row_count_valid = !estate->insert_exec && !insert_exec_active;
 							}
 
 							/*
@@ -2764,7 +2760,7 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 							else if (plansource->commandTag == CMDTAG_SELECT)
 							{
 								command_type = TDS_CMD_SELECT;
-								row_count_valid = !insert_exec_active;
+								row_count_valid = !estate->insert_exec && !insert_exec_active;
 							}
 						}
 					}

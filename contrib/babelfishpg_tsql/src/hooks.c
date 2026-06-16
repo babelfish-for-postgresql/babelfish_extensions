@@ -3668,8 +3668,10 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 	 */
 	if ((access == OAT_POST_ALTER || access == OAT_DROP) && classId == RelationRelationId)
 	{
-		if (OidIsValid(insert_exec_ctx.target_rel_oid) && objectId == insert_exec_ctx.target_rel_oid)
-			insert_exec_ctx.is_target_relation_modified = true;
+		if (insert_exec_ctx != NULL &&
+			OidIsValid(insert_exec_ctx->target_rel_oid) &&
+			objectId == insert_exec_ctx->target_rel_oid)
+			insert_exec_ctx->is_target_relation_modified = true;
 	}
 }
 
