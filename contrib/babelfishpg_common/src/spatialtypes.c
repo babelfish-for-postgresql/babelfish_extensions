@@ -3326,7 +3326,13 @@ write_clr_metadata(uint8 *dst, GeoDataInfo *geom_data, bool is_geography)
             return write_polygon_clr_metadata(dst, geom_data, is_geography);
 
         default:
-            return 0;  /* Points and 2-point lines have no metadata */
+            /*
+             * Points and 2-point lines have no metadata. Multi-types
+             * (e.g. MultiLineString) are not dispatched here -- they write
+             * their CLR metadata directly in their dedicated handlers
+             * (e.g. handle_multilinestring_type_data).
+             */
+            return 0;
     }
 }
 

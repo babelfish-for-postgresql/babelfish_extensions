@@ -749,9 +749,8 @@ rewrite_dim_multipoint_wkt(PointArray *pa)
  * Converts a PointArrayList to a PostGIS-compatible MULTILINESTRING WKT representation.
  * Each ring in the PointArrayList becomes a child LineString.
  */
-
-char* 
-rewrite_multilinestring_query(PointArrayList *pal) 
+char *
+rewrite_multilinestring_query(PointArrayList *pal)
 {
     StringInfoData output;
     DimensionType type;
