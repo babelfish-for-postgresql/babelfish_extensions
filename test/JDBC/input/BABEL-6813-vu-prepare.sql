@@ -32,6 +32,16 @@ GO
 INSERT INTO babel_6813_t3 VALUES (1, 10.5)
 GO
 
+CREATE TABLE babel_6813_t4 (
+    id int,
+    val DECIMAL(10,2),
+    CONSTRAINT neg_test CHECK (CAST(val AS SMALLINT) > 0)
+)
+GO
+
+INSERT INTO babel_6813_t4 VALUES (1, 32768.9)
+GO
+
 -- DATETRUNC tests with various datetime types
 SELECT DATETRUNC(year, CAST('2023-06-15 10:30:00' AS datetime))
 GO

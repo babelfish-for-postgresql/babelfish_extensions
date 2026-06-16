@@ -38,6 +38,20 @@ GO
 ~~ROW COUNT: 1~~
 
 
+CREATE TABLE babel_6813_t4 (
+    id int,
+    val DECIMAL(10,2),
+    CONSTRAINT neg_test CHECK (CAST(val AS SMALLINT) > 0)
+)
+GO
+
+INSERT INTO babel_6813_t4 VALUES (1, 32768.9)
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
 -- DATETRUNC tests with various datetime types
 SELECT DATETRUNC(year, CAST('2023-06-15 10:30:00' AS datetime))
 GO

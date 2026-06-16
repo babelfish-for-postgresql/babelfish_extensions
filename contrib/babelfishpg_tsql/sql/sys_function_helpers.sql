@@ -134,7 +134,7 @@ BEGIN
         v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_maxlength := CASE
-                          WHEN (v_res_datatype IN ('CHAR'::text, 'VARCHAR'::text)) THEN VARCHAR_MAX
+                          WHEN (v_res_datatype::TEXT IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
                           ELSE NVARCHAR_MAX
                        END;
 
@@ -212,7 +212,7 @@ BEGIN
                                 ELSE 60
                              END);
     RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR'::text, 'NCHAR'::text)) THEN v_resstring
+              WHEN (v_res_datatype::TEXT NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
               ELSE rpad(v_resstring, v_res_length, ' ')
            END;
 EXCEPTION
@@ -252,7 +252,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(pg_catalog.lower(v_err_message) FROM 'integer\:\s\"(.*)\"' :: TEXT);
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT (or INTEGER) data type.',
                                       v_err_message),
@@ -334,7 +334,7 @@ BEGIN
         v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_maxlength := CASE
-                          WHEN (v_res_datatype IN ('CHAR'::text, 'VARCHAR'::text)) THEN VARCHAR_MAX
+                          WHEN (v_res_datatype::TEXT IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
                           ELSE NVARCHAR_MAX
                        END;
 
@@ -377,7 +377,7 @@ BEGIN
 
     v_monthname := (v_lang_metadata_json -> 'months_shortnames'::text) ->> v_month - 1;
 
-    IF (v_src_datatype IN ('DATETIME'::text, 'SMALLDATETIME'::text)) THEN
+    IF (v_src_datatype::TEXT IN ('DATETIME', 'SMALLDATETIME')) THEN
         v_fseconds := sys.babelfish_round_fractseconds(to_char(v_datetimeval, 'MS'));
 
         IF (v_fseconds::INTEGER = 1000) THEN
@@ -495,7 +495,7 @@ BEGIN
                                 ELSE 60
                              END);
     RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR'::text, 'NCHAR'::text)) THEN v_resstring
+              WHEN (v_res_datatype::TEXT NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
               ELSE rpad(v_resstring, v_res_length, ' ')
            END;
 EXCEPTION
@@ -545,7 +545,7 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(pg_catalog.lower(v_err_message) FROM 'integer\:\s\"(.*)\"' :: TEXT);
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
@@ -2254,7 +2254,7 @@ BEGIN
         v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_res_maxlength := CASE
-                              WHEN (v_res_datatype IN ('CHAR'::text, 'VARCHAR'::text)) THEN VARCHAR_MAX
+                              WHEN (v_res_datatype::TEXT IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
                               ELSE NVARCHAR_MAX
                            END;
 
@@ -2342,7 +2342,7 @@ BEGIN
                                 ELSE 60
                              END);
     RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR'::text, 'NCHAR'::text)) THEN v_resstring
+              WHEN (v_res_datatype::TEXT NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
               ELSE rpad(v_resstring, v_res_length, ' ')
            END;
 EXCEPTION

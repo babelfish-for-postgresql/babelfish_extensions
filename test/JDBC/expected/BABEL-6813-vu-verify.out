@@ -25,6 +25,13 @@ int#!#numeric
 ~~END~~
 
 
+SELECT * FROM babel_6813_t4
+GO
+~~START~~
+int#!#numeric
+~~END~~
+
+
 -- DATETRUNC tests with various datetime types
 SELECT DATETRUNC(year, CAST('2023-06-15 10:30:00' AS datetime))
 GO

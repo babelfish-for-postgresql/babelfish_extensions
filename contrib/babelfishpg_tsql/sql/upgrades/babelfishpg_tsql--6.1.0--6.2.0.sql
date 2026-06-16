@@ -288,6 +288,183 @@ END;
 $body$
 LANGUAGE plpgsql STABLE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
+                                                                 IN p_dateval DATE,
+                                                                 IN p_style NUMERIC DEFAULT 20)
+RETURNS TEXT
+AS
+$BODY$
+DECLARE
+    v_day VARCHAR COLLATE "C";
+    v_dateval DATE;
+    v_style SMALLINT;
+    v_month SMALLINT;
+    v_resmask VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_language VARCHAR COLLATE "C";
+    v_monthname VARCHAR COLLATE "C";
+    v_resstring VARCHAR COLLATE "C";
+    v_lengthexpr VARCHAR COLLATE "C";
+    v_maxlength SMALLINT;
+    v_res_length SMALLINT;
+    v_err_message VARCHAR COLLATE "C";
+    v_res_datatype VARCHAR COLLATE "C";
+    v_lang_metadata_json JSONB;
+    VARCHAR_MAX CONSTANT SMALLINT := 8000;
+    NVARCHAR_MAX CONSTANT SMALLINT := 4000;
+    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
+    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+BEGIN
+    v_datatype := pg_catalog.upper(pg_catalog.btrim(p_datatype));
+    v_style := floor(p_style)::SMALLINT;
+
+    IF (scale(p_style) > 0) THEN
+        RAISE most_specific_type_mismatch;
+    ELSIF (NOT ((v_style BETWEEN 0 AND 13) OR
+                (v_style BETWEEN 20 AND 25) OR
+                (v_style BETWEEN 100 AND 113) OR
+                v_style IN (120, 121, 126, 127, 130, 131)))
+    THEN
+        RAISE invalid_parameter_value;
+    ELSIF (v_style IN (8, 24, 108)) THEN
+        RAISE invalid_datetime_format;
+    END IF;
+
+    IF (v_datatype ~* DATATYPE_MASK_REGEXP) THEN
+        v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
+
+        v_maxlength := CASE
+                          WHEN (v_res_datatype::TEXT IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                          ELSE NVARCHAR_MAX
+                       END;
+
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP::text);
+
+        IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
+            RAISE interval_field_overflow;
+        END IF;
+
+        v_res_length := CASE v_lengthexpr
+                           WHEN 'MAX' THEN v_maxlength
+                           ELSE v_lengthexpr::SMALLINT
+                        END;
+    ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
+        v_res_datatype := v_datatype;
+    ELSE
+        RAISE datatype_mismatch;
+    END IF;
+
+    v_dateval := CASE
+                    WHEN (v_style NOT IN (130, 131)) THEN p_dateval
+                    ELSE sys.babelfish_conv_greg_to_hijri(p_dateval) + 1
+                 END;
+
+    v_day := PG_CATALOG.ltrim(to_char(v_dateval, 'DD'), '0');
+    v_month := to_char(v_dateval, 'MM')::SMALLINT;
+
+    v_language := CASE
+                     WHEN (v_style IN (130, 131)) THEN 'HIJRI'
+                     ELSE CONVERSION_LANG
+                  END;
+ RAISE NOTICE 'v_language=[%]', v_language;		  
+    BEGIN
+        v_lang_metadata_json := sys.babelfish_get_lang_metadata_json(v_language);
+    EXCEPTION
+        WHEN OTHERS THEN
+        RAISE invalid_character_value_for_cast;
+    END;
+
+    v_monthname := (v_lang_metadata_json -> 'months_shortnames'::text) ->> v_month - 1;
+
+    v_resmask := CASE
+                    WHEN (v_style IN (1, 22)) THEN 'MM/DD/YY'
+                    WHEN (v_style = 101) THEN 'MM/DD/YYYY'
+                    WHEN (v_style = 2) THEN 'YY.MM.DD'
+                    WHEN (v_style = 102) THEN 'YYYY.MM.DD'
+                    WHEN (v_style = 3) THEN 'DD/MM/YY'
+                    WHEN (v_style = 103) THEN 'DD/MM/YYYY'
+                    WHEN (v_style = 4) THEN 'DD.MM.YY'
+                    WHEN (v_style = 104) THEN 'DD.MM.YYYY'
+                    WHEN (v_style = 5) THEN 'DD-MM-YY'
+                    WHEN (v_style = 105) THEN 'DD-MM-YYYY'
+                    WHEN (v_style = 6) THEN 'DD $mnme$ YY'
+                    WHEN (v_style IN (13, 106, 113)) THEN 'DD $mnme$ YYYY'
+                    WHEN (v_style = 7) THEN '$mnme$ DD, YY'
+                    WHEN (v_style = 107) THEN '$mnme$ DD, YYYY'
+                    WHEN (v_style = 10) THEN 'MM-DD-YY'
+                    WHEN (v_style = 110) THEN 'MM-DD-YYYY'
+                    WHEN (v_style = 11) THEN 'YY/MM/DD'
+                    WHEN (v_style = 111) THEN 'YYYY/MM/DD'
+                    WHEN (v_style = 12) THEN 'YYMMDD'
+                    WHEN (v_style = 112) THEN 'YYYYMMDD'
+                    WHEN (v_style IN (20, 21, 23, 25, 120, 121, 126, 127)) THEN 'YYYY-MM-DD'
+                    WHEN (v_style = 130) THEN 'DD $mnme$ YYYY'
+                    WHEN (v_style = 131) THEN pg_catalog.format('%s/MM/YYYY', lpad(v_day, 2, ' '))
+                    WHEN (v_style IN (0, 9, 100, 109)) THEN pg_catalog.format('$mnme$ %s YYYY', lpad(v_day, 2, ' '))
+                 END;
+
+    v_resstring := to_char(v_dateval, v_resmask);
+    v_resstring := pg_catalog.replace(v_resstring, '$mnme$', v_monthname);
+    v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
+    v_res_length := coalesce(v_res_length,
+                             CASE v_res_datatype
+                                WHEN 'CHAR' THEN 30
+                                ELSE 60
+                             END);
+    RETURN CASE
+              WHEN (v_res_datatype::TEXT NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              ELSE rpad(v_resstring, v_res_length, ' ')
+           END;
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 3 of convert function.',
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from DATE to a character string.', v_style),
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := pg_catalog.format('Error converting data type DATE to %s.', pg_catalog.btrim(p_datatype)),
+                    DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
+                    HINT := 'Check the input parameters values, correct them if needed, and try again.';
+
+   WHEN interval_field_overflow THEN
+       RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
+                                     v_lengthexpr,
+                                     pg_catalog.lower(v_res_datatype),
+                                     v_maxlength),
+                   DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
+                   HINT := 'Change size component of data type parameter to the allowable value and try again.';
+
+    WHEN datatype_mismatch THEN
+        RAISE USING MESSAGE := 'Data type should be one of these values: ''CHAR(n|MAX)'', ''NCHAR(n|MAX)'', ''VARCHAR(n|MAX)'', ''NVARCHAR(n|MAX)''.',
+                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
+                    HINT := 'Change "datatype" parameter to the proper value and try again.';
+
+    WHEN invalid_character_value_for_cast THEN
+        RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+                                      CONVERSION_LANG),
+                    DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
+                    HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
+
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT (or INTEGER) data type.',
+                                      v_err_message),
+                    DETAIL := 'Supplied value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_datetime_to_string(IN p_datatype TEXT,
                                                                      IN p_src_datatype TEXT,
                                                                      IN p_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE,
@@ -329,7 +506,7 @@ BEGIN
 
     IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
     THEN
-        v_scale := substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT;
+        v_scale := substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP::text)::SMALLINT;
 
         v_src_datatype := PG_CATALOG.rtrim(split_part(v_src_datatype, '(', 1));
 
@@ -358,11 +535,11 @@ BEGIN
         v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_maxlength := CASE
-                          WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                          WHEN (v_res_datatype::TEXT IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
                           ELSE NVARCHAR_MAX
                        END;
 
-        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP::text);
 
         IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4)
         THEN
@@ -399,9 +576,9 @@ BEGIN
         RAISE invalid_character_value_for_cast;
     END;
 
-    v_monthname := (v_lang_metadata_json -> 'months_shortnames') ->> v_month - 1;
+    v_monthname := (v_lang_metadata_json -> 'months_shortnames'::text) ->> v_month - 1;
 
-    IF (v_src_datatype IN ('DATETIME', 'SMALLDATETIME')) THEN
+    IF (v_src_datatype::TEXT IN ('DATETIME', 'SMALLDATETIME')) THEN
         v_fseconds := sys.babelfish_round_fractseconds(to_char(v_datetimeval, 'MS'));
 
         IF (v_fseconds::INTEGER = 1000) THEN
@@ -519,7 +696,7 @@ BEGIN
                                 ELSE 60
                              END);
     RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              WHEN (v_res_datatype::TEXT NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
               ELSE rpad(v_resstring, v_res_length, ' ')
            END;
 EXCEPTION
@@ -569,186 +746,9 @@ EXCEPTION
 
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(pg_catalog.lower(v_err_message) FROM 'integer\:\s\"(.*)\"' :: TEXT);
+        v_err_message := substring(pg_catalog.lower(v_err_message), 'integer\:\s\"(.*)\"');
 
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
-                                      v_err_message),
-                    DETAIL := 'Supplied value contains illegal characters.',
-                    HINT := 'Correct supplied value, remove all illegal characters.';
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE
-RETURNS NULL ON NULL INPUT;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
-                                                                 IN p_dateval DATE,
-                                                                 IN p_style NUMERIC DEFAULT 20)
-RETURNS TEXT
-AS
-$BODY$
-DECLARE
-    v_day VARCHAR COLLATE "C";
-    v_dateval DATE;
-    v_style SMALLINT;
-    v_month SMALLINT;
-    v_resmask VARCHAR COLLATE "C";
-    v_datatype VARCHAR COLLATE "C";
-    v_language VARCHAR COLLATE "C";
-    v_monthname VARCHAR COLLATE "C";
-    v_resstring VARCHAR COLLATE "C";
-    v_lengthexpr VARCHAR COLLATE "C";
-    v_maxlength SMALLINT;
-    v_res_length SMALLINT;
-    v_err_message VARCHAR COLLATE "C";
-    v_res_datatype VARCHAR COLLATE "C";
-    v_lang_metadata_json JSONB;
-    VARCHAR_MAX CONSTANT SMALLINT := 8000;
-    NVARCHAR_MAX CONSTANT SMALLINT := 4000;
-    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
-    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
-    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
-BEGIN
-    v_datatype := pg_catalog.upper(pg_catalog.btrim(p_datatype));
-    v_style := floor(p_style)::SMALLINT;
-
-    IF (scale(p_style) > 0) THEN
-        RAISE most_specific_type_mismatch;
-    ELSIF (NOT ((v_style BETWEEN 0 AND 13) OR
-                (v_style BETWEEN 20 AND 25) OR
-                (v_style BETWEEN 100 AND 113) OR
-                v_style IN (120, 121, 126, 127, 130, 131)))
-    THEN
-        RAISE invalid_parameter_value;
-    ELSIF (v_style IN (8, 24, 108)) THEN
-        RAISE invalid_datetime_format;
-    END IF;
-
-    IF (v_datatype ~* DATATYPE_MASK_REGEXP) THEN
-        v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
-
-        v_maxlength := CASE
-                          WHEN (v_res_datatype IN ('CHAR'::text, 'VARCHAR'::text)) THEN VARCHAR_MAX
-                          ELSE NVARCHAR_MAX
-                       END;
-
-        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP::text);
-
-        IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
-            RAISE interval_field_overflow;
-        END IF;
-
-        v_res_length := CASE v_lengthexpr
-                           WHEN 'MAX' THEN v_maxlength
-                           ELSE v_lengthexpr::SMALLINT
-                        END;
-    ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
-        v_res_datatype := v_datatype;
-    ELSE
-        RAISE datatype_mismatch;
-    END IF;
-
-    v_dateval := CASE
-                    WHEN (v_style NOT IN (130, 131)) THEN p_dateval
-                    ELSE sys.babelfish_conv_greg_to_hijri(p_dateval) + 1
-                 END;
-
-    v_day := PG_CATALOG.ltrim(to_char(v_dateval, 'DD'), '0');
-    v_month := to_char(v_dateval, 'MM')::SMALLINT;
-
-    v_language := CASE
-                     WHEN (v_style IN (130, 131)) THEN 'HIJRI'
-                     ELSE CONVERSION_LANG
-                  END;
- RAISE NOTICE 'v_language=[%]', v_language;		  
-    BEGIN
-        v_lang_metadata_json := sys.babelfish_get_lang_metadata_json(v_language);
-    EXCEPTION
-        WHEN OTHERS THEN
-        RAISE invalid_character_value_for_cast;
-    END;
-
-    v_monthname := (v_lang_metadata_json -> 'months_shortnames'::text) ->> v_month - 1;
-
-    v_resmask := CASE
-                    WHEN (v_style IN (1, 22)) THEN 'MM/DD/YY'
-                    WHEN (v_style = 101) THEN 'MM/DD/YYYY'
-                    WHEN (v_style = 2) THEN 'YY.MM.DD'
-                    WHEN (v_style = 102) THEN 'YYYY.MM.DD'
-                    WHEN (v_style = 3) THEN 'DD/MM/YY'
-                    WHEN (v_style = 103) THEN 'DD/MM/YYYY'
-                    WHEN (v_style = 4) THEN 'DD.MM.YY'
-                    WHEN (v_style = 104) THEN 'DD.MM.YYYY'
-                    WHEN (v_style = 5) THEN 'DD-MM-YY'
-                    WHEN (v_style = 105) THEN 'DD-MM-YYYY'
-                    WHEN (v_style = 6) THEN 'DD $mnme$ YY'
-                    WHEN (v_style IN (13, 106, 113)) THEN 'DD $mnme$ YYYY'
-                    WHEN (v_style = 7) THEN '$mnme$ DD, YY'
-                    WHEN (v_style = 107) THEN '$mnme$ DD, YYYY'
-                    WHEN (v_style = 10) THEN 'MM-DD-YY'
-                    WHEN (v_style = 110) THEN 'MM-DD-YYYY'
-                    WHEN (v_style = 11) THEN 'YY/MM/DD'
-                    WHEN (v_style = 111) THEN 'YYYY/MM/DD'
-                    WHEN (v_style = 12) THEN 'YYMMDD'
-                    WHEN (v_style = 112) THEN 'YYYYMMDD'
-                    WHEN (v_style IN (20, 21, 23, 25, 120, 121, 126, 127)) THEN 'YYYY-MM-DD'
-                    WHEN (v_style = 130) THEN 'DD $mnme$ YYYY'
-                    WHEN (v_style = 131) THEN pg_catalog.format('%s/MM/YYYY', lpad(v_day, 2, ' '))
-                    WHEN (v_style IN (0, 9, 100, 109)) THEN pg_catalog.format('$mnme$ %s YYYY', lpad(v_day, 2, ' '))
-                 END;
-
-    v_resstring := to_char(v_dateval, v_resmask);
-    v_resstring := pg_catalog.replace(v_resstring, '$mnme$', v_monthname);
-    v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
-    v_res_length := coalesce(v_res_length,
-                             CASE v_res_datatype
-                                WHEN 'CHAR' THEN 30
-                                ELSE 60
-                             END);
-    RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR'::text, 'NCHAR'::text)) THEN v_resstring
-              ELSE rpad(v_resstring, v_res_length, ' ')
-           END;
-EXCEPTION
-    WHEN most_specific_type_mismatch THEN
-        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 3 of convert function.',
-                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
-                    HINT := 'Change "style" parameter to the proper value and try again.';
-
-    WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from DATE to a character string.', v_style),
-                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
-                    HINT := 'Change "style" parameter to the proper value and try again.';
-
-    WHEN invalid_datetime_format THEN
-        RAISE USING MESSAGE := pg_catalog.format('Error converting data type DATE to %s.', pg_catalog.btrim(p_datatype)),
-                    DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
-                    HINT := 'Check the input parameters values, correct them if needed, and try again.';
-
-   WHEN interval_field_overflow THEN
-       RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
-                                     v_lengthexpr,
-                                     pg_catalog.lower(v_res_datatype),
-                                     v_maxlength),
-                   DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
-                   HINT := 'Change size component of data type parameter to the allowable value and try again.';
-
-    WHEN datatype_mismatch THEN
-        RAISE USING MESSAGE := 'Data type should be one of these values: ''CHAR(n|MAX)'', ''NCHAR(n|MAX)'', ''VARCHAR(n|MAX)'', ''NVARCHAR(n|MAX)''.',
-                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
-                    HINT := 'Change "datatype" parameter to the proper value and try again.';
-
-    WHEN invalid_character_value_for_cast THEN
-        RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
-                                      CONVERSION_LANG),
-                    DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
-                    HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
-
-    WHEN invalid_text_representation THEN
-        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(pg_catalog.lower(v_err_message) FROM 'integer\:\s\"(.*)\"' :: TEXT);
-
-        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT (or INTEGER) data type.',
                                       v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
@@ -874,7 +874,7 @@ BEGIN
         v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_res_maxlength := CASE
-                              WHEN (v_res_datatype IN ('CHAR'::text, 'VARCHAR'::text)) THEN VARCHAR_MAX
+                              WHEN (v_res_datatype::TEXT IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
                               ELSE NVARCHAR_MAX
                            END;
 
@@ -962,7 +962,7 @@ BEGIN
                                 ELSE 60
                              END);
     RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR'::text, 'NCHAR'::text)) THEN v_resstring
+              WHEN (v_res_datatype::TEXT NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
               ELSE rpad(v_resstring, v_res_length, ' ')
            END;
 EXCEPTION
@@ -1085,6 +1085,129 @@ $BODY$
 LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_lang_metadata_json(IN p_lang_spec_culture TEXT)
+RETURNS JSONB
+AS
+$BODY$
+DECLARE
+    v_locale_parts TEXT[] COLLATE "C";
+    v_lang_data_jsonb JSONB;
+    v_lang_spec_culture VARCHAR COLLATE "C";
+    v_is_cached BOOLEAN := FALSE;
+BEGIN
+    v_lang_spec_culture := pg_catalog.upper(pg_catalog.btrim(p_lang_spec_culture));
+
+    IF (char_length(v_lang_spec_culture) > 0)
+    THEN
+        BEGIN
+            v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
+                                                               v_lang_spec_culture)), '')::JSONB;
+        EXCEPTION
+            WHEN undefined_object THEN
+            v_lang_data_jsonb := NULL;
+        END;
+
+        IF (v_lang_data_jsonb IS NULL)
+        THEN
+            v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'::text));
+            IF (v_lang_spec_culture IN ('AR', 'FI') OR
+                v_lang_spec_culture ~ '_')
+            THEN
+                SELECT lang_data_jsonb
+                  INTO STRICT v_lang_data_jsonb
+                  FROM sys.babelfish_syslanguages
+                 WHERE spec_culture = v_lang_spec_culture::text;
+            ELSE
+                SELECT lang_data_jsonb
+                  INTO STRICT v_lang_data_jsonb
+                  FROM sys.babelfish_syslanguages
+                 WHERE lang_name_mssql = v_lang_spec_culture
+                    OR lang_alias_mssql = v_lang_spec_culture;
+            END IF;
+        ELSE
+            v_is_cached := TRUE;
+        END IF;
+    ELSE
+        v_lang_spec_culture := current_setting('LC_TIME');
+
+        v_lang_spec_culture := CASE
+                                  WHEN (v_lang_spec_culture !~ '\.') THEN v_lang_spec_culture
+                                  ELSE substring(v_lang_spec_culture, '(.*)(?:\.)'::text)
+                               END;
+
+        v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, ',\s*', '_', 'gi'::text));
+
+        BEGIN
+            v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
+                                                               v_lang_spec_culture)), '')::JSONB;
+        EXCEPTION
+            WHEN undefined_object THEN
+            v_lang_data_jsonb := NULL;
+        END;
+
+        IF (v_lang_data_jsonb IS NULL)
+        THEN
+            BEGIN
+                IF (char_length(v_lang_spec_culture) = 5)
+                THEN
+                    SELECT lang_data_jsonb
+                      INTO STRICT v_lang_data_jsonb
+                      FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture::text;
+                ELSE
+                    v_locale_parts := string_to_array(v_lang_spec_culture, '-');
+
+                    SELECT lang_data_jsonb
+                      INTO STRICT v_lang_data_jsonb
+                      FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2];
+                END IF;
+            EXCEPTION
+                WHEN OTHERS THEN
+                    v_lang_spec_culture := 'EN_US';
+
+                    SELECT lang_data_jsonb
+                      INTO v_lang_data_jsonb
+                      FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture::text;
+            END;
+        ELSE
+            v_is_cached := TRUE;
+        END IF;
+    END IF;
+
+    IF (NOT v_is_cached) THEN
+        BEGIN
+            PERFORM set_config(format('sys.lang_metadata_json.%s',
+                                                v_lang_spec_culture),
+                                        v_lang_data_jsonb::TEXT,
+                                        FALSE);
+        EXCEPTION
+            WHEN invalid_transaction_state THEN
+            -- This exception will only occur when we are trying to set config in parallel mode
+            -- we can ignore this error as we cannot store this config during a parallel operation
+        END;
+    END IF;
+
+    RETURN v_lang_data_jsonb;
+EXCEPTION
+    WHEN invalid_text_representation THEN
+        RAISE USING MESSAGE := pg_catalog.format('The language metadata JSON value extracted from chache is not a valid JSON object.',
+                                      p_lang_spec_culture),
+                    HINT := 'Drop the current session, fix the appropriate record in "sys.babelfish_syslanguages" table, and try again after reconnection.';
+
+    WHEN OTHERS THEN
+        RAISE USING MESSAGE := pg_catalog.format('"%s" is not a valid special culture or language name parameter.',
+                                      p_lang_spec_culture),
+                    DETAIL := 'Use of incorrect "lang_spec_culture" parameter value during conversion process.',
+                    HINT := 'Change "lang_spec_culture" parameter to the proper value and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
