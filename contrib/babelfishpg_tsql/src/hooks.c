@@ -247,6 +247,9 @@ extern bool called_for_tsql_itvf_func();
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
+static bool babelfish_pgstat_init_function_usage(FunctionCallInfo fcinfo,
+												 PgStat_FunctionCallUsage *fcu,
+												 char *procname);
 static AclResult pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr);
 static bool allow_storing_init_privs(Oid objoid, Oid classoid, int objsubid);
 static bool pltsql_validateCachedPlanSearchPath(SPIPlanPtr plan);
@@ -389,6 +392,7 @@ static ExecFuncProc_AclCheck_hook_type prev_ExecFuncProc_AclCheck_hook = NULL;
 static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_as_dbsecadmin_hook = NULL;
 static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
 static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
+static pgstat_function_wrapper_hook_type prev_pgstat_function_wrapper_hook = NULL;
 static pre_QueryRewrite_hook_type prev_pre_QueryRewrite_hook = NULL;
 ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
 ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
@@ -616,6 +620,9 @@ InstallExtendedHooks(void)
 	prev_pltsql_pgstat_end_function_usage_hook = pltsql_pgstat_end_function_usage_hook;
 	pltsql_pgstat_end_function_usage_hook = is_function_pg_stat_valid;
 
+	prev_pgstat_function_wrapper_hook = pgstat_function_wrapper_hook;
+	pgstat_function_wrapper_hook = babelfish_pgstat_init_function_usage;
+
 	prev_pltsql_unique_constraint_nulls_ordering_hook = pltsql_unique_constraint_nulls_ordering_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = unique_constraint_nulls_ordering;
 
@@ -739,6 +746,7 @@ UninstallExtendedHooks(void)
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 	called_for_tsql_itvf_func_hook = prev_called_for_tsql_itvf_func_hook;
 	pltsql_pgstat_end_function_usage_hook = prev_pltsql_pgstat_end_function_usage_hook;
+	pgstat_function_wrapper_hook = prev_pgstat_function_wrapper_hook;
 	pltsql_unique_constraint_nulls_ordering_hook = prev_pltsql_unique_constraint_nulls_ordering_hook;
 	pltsql_strpos_non_determinstic_hook = prev_pltsql_strpos_non_determinstic_hook;
 	pltsql_replace_non_determinstic_hook = prev_pltsql_replace_non_determinstic_hook;
@@ -9304,4 +9312,13 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 	}
 
 	return expr;
+}
+
+static bool
+babelfish_pgstat_init_function_usage(FunctionCallInfo fcinfo,
+									 PgStat_FunctionCallUsage *fcu,
+									 char *procname)
+{
+	pgstat_init_function_usage_no_drop(fcinfo, fcu);
+	return true;
 }
