@@ -399,6 +399,7 @@ ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
 static openxml_set_namespaces_hook_type prev_openxml_set_namespaces_hook = NULL;
 #endif
 static match_opclause_to_indexcol_hook_type prev_match_opclause_to_indexcol_hook = NULL;
+static IndexClause *match_oid_cast_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo, int indexcol, IndexOptInfo *index, Node *cast_arg, Node *val_arg, Oid opfamily);
 static IndexClause *bbf_match_opclause_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo, int indexcol, IndexOptInfo *index);
 
 /*****************************************
@@ -9315,6 +9316,61 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 	return expr;
 }
 
+static IndexClause *
+match_oid_cast_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo,
+						   int indexcol, IndexOptInfo *index,
+						   Node *cast_arg, Node *val_arg, Oid opfamily)
+{
+	if (IsA(cast_arg, RelabelType))
+	{
+		RelabelType *relabel = (RelabelType *) cast_arg;
+		Node	   *inner_arg = (Node *) relabel->arg;
+		Oid			orig_type = exprType(inner_arg);
+
+		if (orig_type == OIDOID && relabel->resulttype == INT4OID)
+		{
+			Oid			idx_op;
+
+			idx_op = get_opfamily_member(opfamily, orig_type, orig_type,
+										BTEqualStrategyNumber);
+			if (OidIsValid(idx_op))
+			{
+				RelabelType *new_val;
+				OpExpr	   *new_clause;
+				RestrictInfo *new_rinfo;
+				IndexClause *iclause;
+				OpExpr	   *clause = (OpExpr *) rinfo->clause;
+
+				new_val = makeRelabelType((Expr *) copyObject(val_arg),
+										  orig_type, -1, InvalidOid,
+										  COERCE_IMPLICIT_CAST);
+
+				new_clause = makeNode(OpExpr);
+				new_clause->opno = idx_op;
+				new_clause->opfuncid = get_opcode(idx_op);
+				new_clause->opresulttype = BOOLOID;
+				new_clause->opretset = false;
+				new_clause->opcollid = InvalidOid;
+				new_clause->inputcollid = clause->inputcollid;
+				new_clause->args = list_make2(inner_arg, new_val);
+				new_clause->location = clause->location;
+
+				new_rinfo = make_simple_restrictinfo(root,
+													(Expr *) new_clause);
+
+				iclause = makeNode(IndexClause);
+				iclause->rinfo = rinfo;
+				iclause->indexquals = list_make1(new_rinfo);
+				iclause->lossy = false;
+				iclause->indexcol = indexcol;
+				iclause->indexcols = NIL;
+				return iclause;
+			}
+		}
+	}
+	return NULL;
+}
+
 /*
  * bbf_match_opclause_to_indexcol
  *
@@ -9340,109 +9396,21 @@ bbf_match_opclause_to_indexcol(PlannerInfo *root,
 			Node	   *leftop = (Node *) linitial(clause->args);
 			Node	   *rightop = (Node *) lsecond(clause->args);
 			Oid			opfamily = index->opfamily[indexcol];
+			IndexClause *iclause;
 
-			if (!bms_is_member(index->rel->relid, rinfo->right_relids) &&
-				!contain_volatile_functions(rightop) &&
-				IsA(leftop, RelabelType))
-			{
-				RelabelType *relabel = (RelabelType *) leftop;
-				Node	   *inner_arg = (Node *) relabel->arg;
-				Oid			orig_type = exprType(inner_arg);
+			/* Try left operand as the cast: (oid)::int4 = value */
+			iclause = match_oid_cast_to_indexcol(root, rinfo, indexcol,
+												index, leftop, rightop,
+												opfamily);
+			if (iclause)
+				return iclause;
 
-				if (orig_type == OIDOID && relabel->resulttype == INT4OID &&
-					match_index_to_operand(inner_arg, indexcol, index))
-				{
-					Oid			idx_op;
-
-					idx_op = get_opfamily_member(opfamily, orig_type, orig_type,
-												BTEqualStrategyNumber);
-					if (OidIsValid(idx_op) &&
-						IsBinaryCoercible(relabel->resulttype, orig_type))
-					{
-						RelabelType *new_right;
-						OpExpr	   *new_clause;
-						RestrictInfo *new_rinfo;
-						IndexClause *iclause;
-
-						new_right = makeRelabelType((Expr *) copyObject(rightop),
-												   orig_type, -1, InvalidOid,
-												   COERCE_IMPLICIT_CAST);
-
-						new_clause = makeNode(OpExpr);
-						new_clause->opno = idx_op;
-						new_clause->opfuncid = get_opcode(idx_op);
-						new_clause->opresulttype = BOOLOID;
-						new_clause->opretset = false;
-						new_clause->opcollid = InvalidOid;
-						new_clause->inputcollid = clause->inputcollid;
-						new_clause->args = list_make2(inner_arg, new_right);
-						new_clause->location = clause->location;
-
-						new_rinfo = make_simple_restrictinfo(root,
-															(Expr *) new_clause);
-
-						iclause = makeNode(IndexClause);
-						iclause->rinfo = rinfo;
-						iclause->indexquals = list_make1(new_rinfo);
-						iclause->lossy = false;
-						iclause->indexcol = indexcol;
-						iclause->indexcols = NIL;
-						return iclause;
-					}
-				}
-			}
-
-			/* Try right operand as the cast */
-			if (!bms_is_member(index->rel->relid, rinfo->left_relids) &&
-				!contain_volatile_functions(leftop) &&
-				IsA(rightop, RelabelType))
-			{
-				RelabelType *relabel = (RelabelType *) rightop;
-				Node	   *inner_arg = (Node *) relabel->arg;
-				Oid			orig_type = exprType(inner_arg);
-
-				if (orig_type == OIDOID && relabel->resulttype == INT4OID &&
-					match_index_to_operand(inner_arg, indexcol, index))
-				{
-					Oid			idx_op;
-
-					idx_op = get_opfamily_member(opfamily, orig_type, orig_type,
-												BTEqualStrategyNumber);
-					if (OidIsValid(idx_op) &&
-						IsBinaryCoercible(relabel->resulttype, orig_type))
-					{
-						RelabelType *new_left;
-						OpExpr	   *new_clause;
-						RestrictInfo *new_rinfo;
-						IndexClause *iclause;
-
-						new_left = makeRelabelType((Expr *) copyObject(leftop),
-												   orig_type, -1, InvalidOid,
-												   COERCE_IMPLICIT_CAST);
-
-						new_clause = makeNode(OpExpr);
-						new_clause->opno = idx_op;
-						new_clause->opfuncid = get_opcode(idx_op);
-						new_clause->opresulttype = BOOLOID;
-						new_clause->opretset = false;
-						new_clause->opcollid = InvalidOid;
-						new_clause->inputcollid = clause->inputcollid;
-						new_clause->args = list_make2(inner_arg, new_left);
-						new_clause->location = clause->location;
-
-						new_rinfo = make_simple_restrictinfo(root,
-															(Expr *) new_clause);
-
-						iclause = makeNode(IndexClause);
-						iclause->rinfo = rinfo;
-						iclause->indexquals = list_make1(new_rinfo);
-						iclause->lossy = false;
-						iclause->indexcol = indexcol;
-						iclause->indexcols = NIL;
-						return iclause;
-					}
-				}
-			}
+			/* Try right operand as the cast: value = (oid)::int4 */
+			iclause = match_oid_cast_to_indexcol(root, rinfo, indexcol,
+												index, rightop, leftop,
+												opfamily);
+			if (iclause)
+				return iclause;
 		}
 	}
 

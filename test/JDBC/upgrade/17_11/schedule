@@ -671,6 +671,7 @@ comparison_op_index_scan
 Test-Linestring
 Test-Polygon
 BABEL-5788
+BABEL-6814
 BABEL-1664
 sys-fn_varbintohexstr
 babel_string_to_money_reg
