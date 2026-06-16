@@ -54,6 +54,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/planner.h"
+#include "utils/selfuncs.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
@@ -359,6 +360,8 @@ static post_transform_expr_recurse_hook_type prev_post_transform_expr_recurse_ho
 static pre_transform_openxml_columns_hook_type prev_pre_transform_openxml_columns_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
+static opexpr_selectivity_hook_type prev_opexpr_selectivity_hook = NULL;
+static nulltest_selectivity_hook_type prev_nulltest_selectivity_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
 static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_hook = NULL;
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
@@ -543,6 +546,13 @@ InstallExtendedHooks(void)
 
 	prev_planner_hook = planner_hook;
 	planner_hook = pltsql_planner_hook;
+
+	/* Install selectivity estimation hooks */
+	prev_opexpr_selectivity_hook = opexpr_selectivity_hook;
+	opexpr_selectivity_hook = babelfish_opexpr_selectivity_hook;
+	prev_nulltest_selectivity_hook = nulltest_selectivity_hook;
+	nulltest_selectivity_hook = babelfish_nulltest_selectivity_hook;
+
 	prev_transform_check_constraint_expr_hook = transform_check_constraint_expr_hook;
 	transform_check_constraint_expr_hook = transform_like_in_add_constraint;
 
@@ -716,6 +726,8 @@ UninstallExtendedHooks(void)
 	pre_transform_openxml_columns_hook = prev_pre_transform_openxml_columns_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
+	opexpr_selectivity_hook = prev_opexpr_selectivity_hook;
+	nulltest_selectivity_hook = prev_nulltest_selectivity_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
 	validate_var_datatype_scale_hook = prev_validate_var_datatype_scale_hook;
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;

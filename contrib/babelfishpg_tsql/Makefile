@@ -79,6 +79,7 @@ OBJS += src/fts.o
 OBJS += src/fts_parser.o
 OBJS += src/pltsql_partition.o
 OBJS += src/bbf_parallel_query.o
+OBJS += src/namespace_support.o
 OBJS += src/temp_table.o
 OBJS += src/pl_insert_exec.o
 

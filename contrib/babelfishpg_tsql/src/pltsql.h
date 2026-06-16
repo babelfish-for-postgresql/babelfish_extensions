@@ -2264,6 +2264,11 @@ extern void exec_database_roles_subcmds(const char *physical_schema);
  * Functions for namespace handling in pl_funcs.c
  */
 extern void pltsql_ns_init(void);
+extern bool babelfish_opexpr_selectivity_hook(PlannerInfo *root, Node *clause,
+	int varRelid, JoinType jointype, SpecialJoinInfo *sjinfo,
+	bool use_extended_stats, Selectivity *selec);
+extern bool babelfish_nulltest_selectivity_hook(PlannerInfo *root,
+	NullTestType nulltesttype, Node *arg, int varRelid, Selectivity *selec);
 extern void pltsql_ns_push(const char *label,
 						   PLtsql_label_type label_type);
 extern void pltsql_ns_pop(void);
