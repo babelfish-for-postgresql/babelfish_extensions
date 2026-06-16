@@ -2550,14 +2550,14 @@ BEGIN
 
         IF (v_lang_data_jsonb IS NULL)
         THEN
-            v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'::text));
+            v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'));
             IF (v_lang_spec_culture IN ('AR', 'FI') OR
                 v_lang_spec_culture ~ '_')
             THEN
                 SELECT lang_data_jsonb
                   INTO STRICT v_lang_data_jsonb
                   FROM sys.babelfish_syslanguages
-                 WHERE spec_culture = v_lang_spec_culture::text;
+                 WHERE spec_culture = v_lang_spec_culture;
             ELSE
                 SELECT lang_data_jsonb
                   INTO STRICT v_lang_data_jsonb
