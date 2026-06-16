@@ -8,7 +8,7 @@ GO
 
 SELECT xyz AS [WOW! This is a very very long identifier that will get truncated with a uniquifying suffix by Babelfish] from ts.t1;
 GO
-SELECT xyz AS [WOW! This is a very very long identifier that will get truncated with a uniquifying suffix by Babelfish - with extra stuff at the end] from ts.t1;
+SELECT xyz AS [WOW! This is a very very long identifier that will get truncated with a uniquifying suffix by Babelfish - with extra stuff] from ts.t1;
 GO
 
 DROP TABLE ts.t1;
