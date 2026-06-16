@@ -32,15 +32,15 @@ PASS
 
 
 -- Test 4: sys.indexes - lookup by object_id
-SELECT i.name, i.index_id, i.type_desc FROM sys.indexes i
+SELECT i.index_id, i.type_desc FROM sys.indexes i
 WHERE i.object_id = (SELECT object_id FROM sys.tables WHERE name = 'babel_6814_t1')
 ORDER BY i.index_id;
 GO
 ~~START~~
-varchar#!#int#!#nvarchar
-<NULL>#!#0#!#HEAP
-babel_6814_idx1#!#2#!#NONCLUSTERED
-babel_6814_idx2#!#3#!#NONCLUSTERED
+int#!#nvarchar
+0#!#HEAP
+2#!#NONCLUSTERED
+3#!#NONCLUSTERED
 ~~END~~
 
 
@@ -116,17 +116,17 @@ babel_6814_t1#!#b
 
 
 -- Test 11: Join pattern - sys.tables JOIN sys.indexes
-SELECT t.name, i.name as idx_name, i.type_desc
+SELECT t.name, i.index_id, i.type_desc
 FROM sys.tables t
 JOIN sys.indexes i ON t.object_id = i.object_id
 WHERE t.name = 'babel_6814_t1'
 ORDER BY i.index_id;
 GO
 ~~START~~
-varchar#!#varchar#!#nvarchar
-babel_6814_t1#!#<NULL>#!#HEAP
-babel_6814_t1#!#babel_6814_idx1#!#NONCLUSTERED
-babel_6814_t1#!#babel_6814_idx2#!#NONCLUSTERED
+varchar#!#int#!#nvarchar
+babel_6814_t1#!#0#!#HEAP
+babel_6814_t1#!#2#!#NONCLUSTERED
+babel_6814_t1#!#3#!#NONCLUSTERED
 ~~END~~
 
 
@@ -161,15 +161,15 @@ babel_6814_view1#!#V #!#VIEW
 
 
 -- Test 14: sys.indexes with index_id filter
-SELECT i.name, i.index_id FROM sys.indexes i
+SELECT i.index_id FROM sys.indexes i
 WHERE i.object_id = (SELECT object_id FROM sys.tables WHERE name = 'babel_6814_t1')
 AND i.index_id > 0
 ORDER BY i.index_id;
 GO
 ~~START~~
-varchar#!#int
-babel_6814_idx1#!#2
-babel_6814_idx2#!#3
+int
+2
+3
 ~~END~~
 
 

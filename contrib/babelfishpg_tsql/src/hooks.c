@@ -9327,7 +9327,8 @@ match_oid_cast_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo,
 		Node	   *inner_arg = (Node *) relabel->arg;
 		Oid			orig_type = exprType(inner_arg);
 
-		if (orig_type == OIDOID && relabel->resulttype == INT4OID)
+		if (orig_type == OIDOID && relabel->resulttype == INT4OID &&
+			match_index_to_operand(inner_arg, indexcol, index))
 		{
 			Oid			idx_op;
 

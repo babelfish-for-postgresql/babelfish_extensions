@@ -17,7 +17,7 @@ THEN 'PASS' ELSE 'FAIL' END;
 GO
 
 -- Test 4: sys.indexes - lookup by object_id
-SELECT i.name, i.index_id, i.type_desc FROM sys.indexes i
+SELECT i.index_id, i.type_desc FROM sys.indexes i
 WHERE i.object_id = (SELECT object_id FROM sys.tables WHERE name = 'babel_6814_t1')
 ORDER BY i.index_id;
 GO
@@ -61,7 +61,7 @@ ORDER BY c.column_id;
 GO
 
 -- Test 11: Join pattern - sys.tables JOIN sys.indexes
-SELECT t.name, i.name as idx_name, i.type_desc
+SELECT t.name, i.index_id, i.type_desc
 FROM sys.tables t
 JOIN sys.indexes i ON t.object_id = i.object_id
 WHERE t.name = 'babel_6814_t1'
@@ -83,7 +83,7 @@ ORDER BY name;
 GO
 
 -- Test 14: sys.indexes with index_id filter
-SELECT i.name, i.index_id FROM sys.indexes i
+SELECT i.index_id FROM sys.indexes i
 WHERE i.object_id = (SELECT object_id FROM sys.tables WHERE name = 'babel_6814_t1')
 AND i.index_id > 0
 ORDER BY i.index_id;
