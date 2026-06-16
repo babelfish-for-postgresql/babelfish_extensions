@@ -810,7 +810,7 @@ BEGIN
     END IF;
 
     IF (pg_catalog.lower(p_datatype) LIKE '%varchar%(%' OR pg_catalog.lower(p_datatype) LIKE '%char%(%') THEN
-        v_varchar_length := substring(p_datatype COLLATE "C" FROM '\(([0-9]+|MAX)\)' :: TEXT);
+        v_varchar_length := substring(p_datatype COLLATE "C", '\(([0-9]+|MAX)\)' :: TEXT);
         IF (v_varchar_length IS NOT NULL AND v_varchar_length <> 'MAX' AND char_length(v_result) > v_varchar_length::SMALLINT) THEN
             RAISE USING MESSAGE := pg_catalog.format('There is insufficient result space to convert a money value to varchar.'),
                         DETAIL := 'The converted money value exceeds the specified varchar length.',
@@ -1110,14 +1110,14 @@ BEGIN
 
         IF (v_lang_data_jsonb IS NULL)
         THEN
-            v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'));
+            v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'::text));
             IF (v_lang_spec_culture IN ('AR', 'FI') OR
                 v_lang_spec_culture ~ '_')
             THEN
                 SELECT lang_data_jsonb
                   INTO STRICT v_lang_data_jsonb
                   FROM sys.babelfish_syslanguages
-                 WHERE spec_culture = v_lang_spec_culture;
+                 WHERE spec_culture = v_lang_spec_culture::text;
             ELSE
                 SELECT lang_data_jsonb
                   INTO STRICT v_lang_data_jsonb
@@ -1207,6 +1207,7 @@ END;
 $BODY$
 LANGUAGE plpgsql
 STABLE;
+
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
