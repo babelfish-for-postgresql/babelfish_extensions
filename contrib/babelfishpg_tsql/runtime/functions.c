@@ -4460,6 +4460,12 @@ get_object_from_pg_class(Oid object_id, Oid user_id, int *type,
 		ReleaseSysCache(tuple);
 	}
 
+	/*
+     * Return true even if ACL check fails — OID exists in this catalog,
+     * so stop searching other catalogs. Caller must check OidIsValid(schema_id)
+     * to detect insufficient permissions.
+     */
+
 	*type = temp_type;
 	*schema_id = temp_schema;
 	return true;
@@ -4503,7 +4509,9 @@ get_object_from_pg_proc(Oid object_id, Oid user_id, int *type,
 			 * Check whether the object is SQL DML trigger(TR), SQL table-valued-function (TF),
 			 * SQL inline table-valued function (IF), SQL scalar function (FN).
 			 */
-			char	*temp = format_type_extended(procform->prorettype, -1, FORMAT_TYPE_ALLOW_INVALID);
+			bool    proretset = procform->proretset;
+			Oid     prorettype = procform->prorettype;
+			char	*temp = format_type_extended(prorettype, -1, FORMAT_TYPE_ALLOW_INVALID);
 			/*
 			 * If the prorettype of the pg_proc object is "trigger", then the type of the object is "TR"
 			 */
@@ -4513,11 +4521,11 @@ get_object_from_pg_proc(Oid object_id, Oid user_id, int *type,
 			/*
 			 * For SQL table-valued-functions and SQL inline table-valued functions, re-implement the existing SQL.
 			 */
-			else if (procform->proretset)
+			else if (proretset)
 			{
 				HeapTuple tp;
 
-				tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(procform->prorettype));
+				tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(prorettype));
 				if (HeapTupleIsValid(tp))
 				{
 					Form_pg_type typeform = (Form_pg_type) GETSTRUCT(tp);
@@ -4825,6 +4833,16 @@ objectproperty_helper(Oid object_id, const char *property, int *out_type,
 		*out_type = type;
 
 	/* Property evaluation */
+
+	if (pg_strcasecmp(property, "basetype") == 0)
+	{
+		if (object_name)
+			pfree(object_name);
+		if (is_null)
+			*is_null = true;
+		return 0;
+	}
+	
 	/* IsMSShipped*/
 	if (pg_strcasecmp(property, "ismsshipped") == 0)
 	{
@@ -5109,7 +5127,7 @@ objectproperty_helper(Oid object_id, const char *property, int *out_type,
 
 	}
 
-	/* Unrecognized property (including basetype - handled by objectpropertyex_internal) */
+	/* Unrecognized property */
 	if(is_null)
 		*is_null = true;
 	return 0;
