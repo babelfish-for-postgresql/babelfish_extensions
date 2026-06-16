@@ -4416,23 +4416,27 @@ get_object_from_pg_class(Oid object_id, Oid user_id, int *type,
 						depRel = table_open(DependRelationId, AccessShareLock);
 
 						ScanKeyInit(&key[0],
-									Anum_pg_depend_objid,
+									Anum_pg_depend_refclassid,
 									BTEqualStrategyNumber, F_OIDEQ,
-									ObjectIdGetDatum(typform->typrelid));
+									ObjectIdGetDatum(TypeRelationId));
 						ScanKeyInit(&key[1],
 									Anum_pg_depend_refobjid,
 									BTEqualStrategyNumber, F_OIDEQ,
 									ObjectIdGetDatum(typform->oid));
 
-						scan = systable_beginscan(depRel, InvalidOid, false,
+						scan = systable_beginscan(depRel, DependReferenceIndexId, true,
 								  				NULL, 2, key);
 
-						if (HeapTupleIsValid(tup = systable_getnext(scan)))
+						while (HeapTupleIsValid(tup = systable_getnext(scan)))
 						{
 							Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
 
-							if (depform->deptype == 'i')
+							if (depform->deptype == 'i' && depform->objid == typform->typrelid)
+							{
 								temp_type = OBJECT_TYPE_TABLE_TYPE;
+								break;
+							}
+
 						}
 
 						systable_endscan(scan);
@@ -4733,7 +4737,7 @@ get_object_from_pg_constraint(Oid object_id, Oid user_id, int *type,
 				temp_type = OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT;
 			/*
 			 * Reimplemented the existing SQL .
-			 * If the contype is 'c' and conrelid is 0 on the pg_constraint object, then it is a Check constraint
+			 * If the contype is 'c' and conrelid is not 0 on the pg_constraint object, then it is a Check constraint
 			 */
 			else if (con->contype == 'c' && con->conrelid != 0)
 				temp_type = OBJECT_TYPE_CHECK_CONSTRAINT;
@@ -4773,11 +4777,11 @@ objectproperty_helper(Oid object_id, const char *property, int *out_type,
 		*is_null = false;
 
 	/* Resolve object from catalogs */
-	if (!get_object_from_pg_class(object_id, user_id, &type, &schema_id, &object_name))
-		if (!get_object_from_pg_proc(object_id, user_id, &type, &schema_id, &object_name))
-			if (!get_object_from_pg_trigger(object_id, user_id, &type, &schema_id, &object_name))
-				if (!get_object_from_pg_attrdef(object_id, user_id, &type, &schema_id, &object_name))
-					get_object_from_pg_constraint(object_id, user_id, &type, &schema_id, &object_name);
+	(void)(get_object_from_pg_class(object_id, user_id, &type, &schema_id, &object_name) ||
+			get_object_from_pg_proc(object_id, user_id, &type, &schema_id, &object_name) ||
+			get_object_from_pg_trigger(object_id, user_id, &type, &schema_id, &object_name) ||
+			get_object_from_pg_attrdef(object_id, user_id, &type, &schema_id, &object_name) ||
+			get_object_from_pg_constraint(object_id, user_id, &type, &schema_id, &object_name));
 
 	/*
 	 * If the object_id is not found or user does not have enough privileges on the object and schema,
