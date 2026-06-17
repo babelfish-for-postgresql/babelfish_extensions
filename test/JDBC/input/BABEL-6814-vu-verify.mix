@@ -99,6 +99,8 @@ GO
 
 -- Verifying Index Scans being Used
 -- psql
+ANALYZE;
+GO
 
 SET babelfishpg_tsql.sql_dialect = "tsql";
 GO

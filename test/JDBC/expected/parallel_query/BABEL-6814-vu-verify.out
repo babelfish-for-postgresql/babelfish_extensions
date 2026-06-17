@@ -188,8 +188,10 @@ babel_6814_t2#!#1
 
 
 -- psql
-
 -- Verifying Index Scans being Used
+ANALYZE;
+GO
+
 SET babelfishpg_tsql.sql_dialect = "tsql";
 GO
 
@@ -226,12 +228,11 @@ GO
 text
 Gather
   Workers Planned: 1
-  Single Copy: true
-  ->  Nested Loop
-        Join Filter: ((c.relnamespace)::integer = (n.oid)::integer)
-        ->  Seq Scan on pg_namespace n
-        ->  Materialize
-              ->  Index Only Scan using pg_class_relname_nsp_index on pg_class c
+  ->  Parallel Hash Join
+        Hash Cond: ((n.oid)::integer = (c.relnamespace)::integer)
+        ->  Parallel Seq Scan on pg_namespace n
+        ->  Parallel Hash
+              ->  Parallel Index Only Scan using pg_class_relname_nsp_index on pg_class c
                     Index Cond: (relname = 'babel_6814_t1'::name)
 ~~END~~
 
