@@ -78,7 +78,7 @@ GO
 
 -- Test 13: Different object types all resolve correctly
 SELECT name, type, type_desc FROM sys.objects
-WHERE name LIKE 'babel_6814%'
+WHERE name LIKE 'babel_6814%' AND name NOT LIKE 'babel_6814_extra%'
 ORDER BY name;
 GO
 

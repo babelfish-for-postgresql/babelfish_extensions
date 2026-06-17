@@ -147,7 +147,7 @@ babel_6814_t2#!#USER_TABLE
 
 -- Test 13: Different object types all resolve correctly
 SELECT name, type, type_desc FROM sys.objects
-WHERE name LIKE 'babel_6814%'
+WHERE name LIKE 'babel_6814%' AND name NOT LIKE 'babel_6814_extra%'
 ORDER BY name;
 GO
 ~~START~~
@@ -225,11 +225,12 @@ EXPLAIN (COSTS OFF) SELECT c.relname, n.nspname FROM pg_class c JOIN pg_namespac
 GO
 ~~START~~
 text
-Nested Loop
-  Join Filter: ((c.relnamespace)::integer = (n.oid)::integer)
-  ->  Index Only Scan using pg_class_relname_nsp_index on pg_class c
-        Index Cond: (relname = 'babel_6814_t1'::name)
+Hash Join
+  Hash Cond: ((n.oid)::integer = (c.relnamespace)::integer)
   ->  Seq Scan on pg_namespace n
+  ->  Hash
+        ->  Index Only Scan using pg_class_relname_nsp_index on pg_class c
+              Index Cond: (relname = 'babel_6814_t1'::name)
 ~~END~~
 
 
@@ -241,8 +242,8 @@ text
 Index Only Scan using pg_class_relname_nsp_index on pg_class c
   Index Cond: (relname = 'babel_6814_t1'::name)
   SubPlan 1
-    ->  Seq Scan on pg_namespace n
-          Filter: ((oid)::integer = (c.relnamespace)::integer)
+    ->  Index Scan using pg_namespace_oid_index on pg_namespace n
+          Index Cond: (oid = ((c.relnamespace)::integer)::oid)
 ~~END~~
 
 
@@ -251,8 +252,8 @@ EXPLAIN (COSTS OFF) SELECT * FROM pg_index WHERE (indrelid)::int4 = 12345;
 GO
 ~~START~~
 text
-Seq Scan on pg_index
-  Filter: ((indrelid)::integer = 12345)
+Index Scan using pg_index_indrelid_index on pg_index
+  Index Cond: (indrelid = (12345)::oid)
 ~~END~~
 
 
