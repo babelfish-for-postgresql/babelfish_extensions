@@ -198,8 +198,11 @@ EXPLAIN (COSTS OFF) SELECT * FROM pg_class WHERE (oid)::int4 = 12345;
 GO
 ~~START~~
 text
-Index Scan using pg_class_oid_index on pg_class
-  Index Cond: (oid = (12345)::oid)
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using pg_class_oid_index on pg_class
+        Index Cond: (oid = (12345)::oid)
 ~~END~~
 
 
@@ -208,8 +211,11 @@ EXPLAIN (COSTS OFF) SELECT * FROM pg_class WHERE 12345 = (oid)::int4;
 GO
 ~~START~~
 text
-Index Scan using pg_class_oid_index on pg_class
-  Index Cond: (oid = (12345)::oid)
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using pg_class_oid_index on pg_class
+        Index Cond: (oid = (12345)::oid)
 ~~END~~
 
 
@@ -218,11 +224,15 @@ EXPLAIN (COSTS OFF) SELECT c.relname, n.nspname FROM pg_class c JOIN pg_namespac
 GO
 ~~START~~
 text
-Nested Loop
-  Join Filter: ((c.relnamespace)::integer = (n.oid)::integer)
-  ->  Index Only Scan using pg_class_relname_nsp_index on pg_class c
-        Index Cond: (relname = 'babel_6814_t1'::name)
-  ->  Seq Scan on pg_namespace n
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Nested Loop
+        Join Filter: ((c.relnamespace)::integer = (n.oid)::integer)
+        ->  Seq Scan on pg_namespace n
+        ->  Materialize
+              ->  Index Only Scan using pg_class_relname_nsp_index on pg_class c
+                    Index Cond: (relname = 'babel_6814_t1'::name)
 ~~END~~
 
 
@@ -244,8 +254,10 @@ EXPLAIN (COSTS OFF) SELECT * FROM pg_index WHERE (indrelid)::int4 = 12345;
 GO
 ~~START~~
 text
-Seq Scan on pg_index
-  Filter: ((indrelid)::integer = 12345)
+Gather
+  Workers Planned: 2
+  ->  Parallel Seq Scan on pg_index
+        Filter: ((indrelid)::integer = 12345)
 ~~END~~
 
 
@@ -254,8 +266,11 @@ EXPLAIN (COSTS OFF) SELECT * FROM pg_attribute WHERE (attrelid)::int4 = 12345 AN
 GO
 ~~START~~
 text
-Index Scan using pg_attribute_relid_attnum_index on pg_attribute
-  Index Cond: ((attrelid = (12345)::oid) AND (attnum > 0))
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using pg_attribute_relid_attnum_index on pg_attribute
+        Index Cond: ((attrelid = (12345)::oid) AND (attnum > 0))
 ~~END~~
 
 
@@ -264,8 +279,11 @@ EXPLAIN (COSTS OFF) SELECT * FROM pg_class WHERE (oid)::int4 = 99999999;
 GO
 ~~START~~
 text
-Index Scan using pg_class_oid_index on pg_class
-  Index Cond: (oid = (99999999)::oid)
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using pg_class_oid_index on pg_class
+        Index Cond: (oid = (99999999)::oid)
 ~~END~~
 
 

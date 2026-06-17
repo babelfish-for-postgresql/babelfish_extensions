@@ -98,22 +98,38 @@ ORDER BY t.name;
 GO
 
 -- Verifying Index Scans being Used
-SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
+-- psql
+
+SET babelfishpg_tsql.sql_dialect = "tsql";
 GO
 
-SET babelfish_showplan_all ON;
+-- Test 16: EXPLAIN on pg_class 
+EXPLAIN (COSTS OFF) SELECT * FROM pg_class WHERE (oid)::int4 = 12345;
 GO
 
--- Test 16: Point lookup pattern - hook rewrites (oid)::int4 = 56 to oid = (56)::oid
--- Look for: Index Scan using pg_type_oid_index, Index Cond: (oid = (56)::oid)
-SELECT name FROM sys.types WHERE user_type_id = 56;
+-- Test 17: EXPLAIN reversed operand
+EXPLAIN (COSTS OFF) SELECT * FROM pg_class WHERE 12345 = (oid)::int4;
 GO
 
--- Test 17: Reversed operand pattern - hook handles value = (oid)::int4
--- Look for: Index Scan using pg_type_oid_index, Index Cond: (oid = (56)::oid)
-SELECT name FROM sys.types WHERE 56 = user_type_id;
+-- Test 18: EXPLAIN join pattern (pg_namespace has few rows, planner prefers Seq Scan)
+EXPLAIN (COSTS OFF) SELECT c.relname, n.nspname FROM pg_class c JOIN pg_namespace n ON (n.oid)::int4 = (c.relnamespace)::int4 WHERE c.relname = 'babel_6814_t1';
 GO
 
-SET babelfish_showplan_all OFF;
+-- Test 19: EXPLAIN correlated subquery (pg_namespace has few rows, planner prefers Seq Scan)
+EXPLAIN (COSTS OFF) SELECT c.relname, (SELECT n.nspname FROM pg_namespace n WHERE (n.oid)::int4 = (c.relnamespace)::int4) FROM pg_class c WHERE c.relname = 'babel_6814_t1';
 GO
 
+-- Test 20: EXPLAIN pg_index with indrelid cast (few rows, planner prefers Seq Scan)
+EXPLAIN (COSTS OFF) SELECT * FROM pg_index WHERE (indrelid)::int4 = 12345;
+GO
+
+-- Test 21: EXPLAIN pg_attribute with attrelid cast
+EXPLAIN (COSTS OFF) SELECT * FROM pg_attribute WHERE (attrelid)::int4 = 12345 AND attnum > 0;
+GO
+
+-- Test 22: EXPLAIN non-existent value
+EXPLAIN (COSTS OFF) SELECT * FROM pg_class WHERE (oid)::int4 = 99999999;
+GO
+
+RESET babelfishpg_tsql.sql_dialect;
+GO
