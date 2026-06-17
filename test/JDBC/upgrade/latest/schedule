@@ -690,4 +690,4 @@ BABEL-5264
 BABEL-6037
 babel_sqlvariant_coerce_type
 BABEL-login-db-long-identifiers
-persisted_comp_cols
+Persisted_Computed_Columns
