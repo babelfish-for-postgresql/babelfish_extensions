@@ -1102,6 +1102,17 @@ execute_remote_procedure_rpc(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			colcount = LINKED_SERVER_NUM_COLS(lsproc);
 
 			/*
+			 * colcount comes from the remote server. Guard the fixed-size
+			 * val[] stack array below against a result set with more columns
+			 * than we can hold, rather than overflowing the stack.
+			 */
+			if (colcount > MAX_COLS_SELECT)
+				ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						 errmsg("remote result set has %d columns, exceeding the maximum of %d",
+								colcount, MAX_COLS_SELECT)));
+
+			/*
 			 * A set with zero columns (e.g., a DML statement without
 			 * OUTPUT) has nothing to ship to the client. We still need
 			 * to advance past it; LINKED_SERVER_RESULTS at the top of
