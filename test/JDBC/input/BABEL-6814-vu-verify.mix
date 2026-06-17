@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- Test 1: sys.objects point lookup - left side cast pattern
 SELECT name FROM sys.objects
 WHERE object_id = (SELECT object_id FROM sys.objects WHERE name = 'babel_6814_t1');
