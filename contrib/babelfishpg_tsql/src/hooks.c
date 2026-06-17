@@ -9332,6 +9332,9 @@ match_oid_cast_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo,
 		{
 			Oid			idx_op;
 
+			if (contain_volatile_functions(val_arg))
+				return NULL;
+
 			idx_op = get_opfamily_member(opfamily, orig_type, orig_type,
 										BTEqualStrategyNumber);
 			if (OidIsValid(idx_op))
@@ -9353,11 +9356,12 @@ match_oid_cast_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo,
 				new_clause->opretset = false;
 				new_clause->opcollid = InvalidOid;
 				new_clause->inputcollid = clause->inputcollid;
-				new_clause->args = list_make2(inner_arg, new_val);
+				new_clause->args = list_make2(copyObject(inner_arg), new_val);
 				new_clause->location = clause->location;
 
 				new_rinfo = make_simple_restrictinfo(root,
 													(Expr *) new_clause);
+				new_rinfo->security_level = rinfo->security_level;
 
 				iclause = makeNode(IndexClause);
 				iclause->rinfo = rinfo;
@@ -9400,18 +9404,24 @@ bbf_match_opclause_to_indexcol(PlannerInfo *root,
 			IndexClause *iclause;
 
 			/* Try left operand as the cast: (oid)::int4 = value */
-			iclause = match_oid_cast_to_indexcol(root, rinfo, indexcol,
-												index, leftop, rightop,
-												opfamily);
-			if (iclause)
-				return iclause;
+			if (!bms_is_member(index->rel->relid, rinfo->right_relids))
+			{
+				iclause = match_oid_cast_to_indexcol(root, rinfo, indexcol,
+													index, leftop, rightop,
+													opfamily);
+				if (iclause)
+					return iclause;
+			}
 
 			/* Try right operand as the cast: value = (oid)::int4 */
-			iclause = match_oid_cast_to_indexcol(root, rinfo, indexcol,
-												index, rightop, leftop,
-												opfamily);
-			if (iclause)
-				return iclause;
+			if (!bms_is_member(index->rel->relid, rinfo->left_relids))
+			{
+				iclause = match_oid_cast_to_indexcol(root, rinfo, indexcol,
+													index, rightop, leftop,
+													opfamily);
+				if (iclause)
+					return iclause;
+			}
 		}
 	}
 

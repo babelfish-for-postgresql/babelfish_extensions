@@ -96,3 +96,24 @@ FROM sys.tables t
 WHERE t.name IN ('babel_6814_t1', 'babel_6814_t2')
 ORDER BY t.name;
 GO
+
+-- Verifying Index Scans being Used
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+
+SET babelfish_showplan_all ON;
+GO
+
+-- Test 16: Point lookup pattern - hook rewrites (oid)::int4 = 56 to oid = (56)::oid
+-- Look for: Index Scan using pg_type_oid_index, Index Cond: (oid = (56)::oid)
+SELECT name FROM sys.types WHERE user_type_id = 56;
+GO
+
+-- Test 17: Reversed operand pattern - hook handles value = (oid)::int4
+-- Look for: Index Scan using pg_type_oid_index, Index Cond: (oid = (56)::oid)
+SELECT name FROM sys.types WHERE 56 = user_type_id;
+GO
+
+SET babelfish_showplan_all OFF;
+GO
+

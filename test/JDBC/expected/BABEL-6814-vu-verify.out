@@ -186,3 +186,177 @@ babel_6814_t1#!#2
 babel_6814_t2#!#1
 ~~END~~
 
+
+-- Verifying Index Scans being Used
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET babelfish_showplan_all ON;
+GO
+
+-- Test 16: Point lookup pattern - hook rewrites (oid)::int4 = 56 to oid = (56)::oid
+-- Look for: Index Scan using pg_type_oid_index, Index Cond: (oid = (56)::oid)
+SELECT name FROM sys.types WHERE user_type_id = 56;
+GO
+~~START~~
+text
+Query Text: SELECT name FROM sys.types WHERE user_type_id = 56
+Subquery Scan on types
+  ->  Append
+        CTE type_code_list
+          ->  HashAggregate
+                Group Key: babelfish_typecode_list.pg_typname, babelfish_typecode_list.tsql_typname
+                ->  Function Scan on babelfish_typecode_list
+        CTE tt_internal
+          ->  Nested Loop
+                ->  Nested Loop
+                      Join Filter: (pt.typnamespace = base_1.oid)
+                      ->  Hash Join
+                            Hash Cond: (ext_1.nspname = base_1.nspname)
+                            ->  Seq Scan on babelfish_namespace_ext ext_1
+                                  Filter: (dbid = db_id())
+                            ->  Hash
+                                  ->  Seq Scan on pg_namespace base_1
+                      ->  Hash Join
+                            Hash Cond: (pt.typrelid = pc.oid)
+                            ->  Seq Scan on pg_type pt
+                                  Filter: (typtype = 'c'::"char")
+                            ->  Hash
+                                  ->  Seq Scan on pg_class pc
+                                        Filter: (relkind = 'r'::"char")
+                ->  Index Scan using pg_depend_depender_index on pg_depend dep
+                      Index Cond: (objid = pt.typrelid)
+                      Filter: (deptype = 'i'::"char")
+        ->  Nested Loop
+              Join Filter: (t.typnamespace = s.oid)
+              InitPlan 3
+                ->  Seq Scan on babelfish_sysdatabases
+                      Filter: (name = (db_name())::text)
+              ->  Hash Join
+                    Hash Cond: ((ti.pg_type_name)::text = t.typname)
+                    ->  CTE Scan on type_code_list ti
+                          Filter: (tsql_type_name IS NOT NULL)
+                    ->  Hash
+                          ->  Index Scan using pg_type_oid_index on pg_type t
+                                Index Cond: (oid = (56)::oid)
+                                Filter: pg_type_is_visible(oid)
+              ->  Seq Scan on pg_namespace s
+                    Filter: ((nspname = 'pg_catalog'::name) OR (nspname = 'sys'::name))
+        ->  Nested Loop
+              InitPlan 4
+                ->  Seq Scan on babelfish_sysdatabases babelfish_sysdatabases_1
+                      Filter: (name = (db_name())::text)
+              ->  Nested Loop Left Join
+                    Join Filter: (t_1.typrelid = tt.typrelid)
+                    Filter: ((t_1.typtype = 'd'::"char") OR (tt.typrelid IS NOT NULL))
+                    ->  Nested Loop
+                          Join Filter: (base.nspname = ext.nspname)
+                          ->  Nested Loop
+                                Join Filter: (t_1.typnamespace = base.oid)
+                                ->  Hash Right Join
+                                      Hash Cond: (ti_1.pg_type_name = t_1.typname)
+                                      Filter: (ti_1.tsql_type_name IS NULL)
+                                      ->  CTE Scan on type_code_list ti_1
+                                      ->  Hash
+                                            ->  Index Scan using pg_type_oid_index on pg_type t_1
+                                                  Index Cond: (oid = (56)::oid)
+                                ->  Seq Scan on pg_namespace base
+                          ->  Seq Scan on babelfish_namespace_ext ext
+                                Filter: (dbid = db_id())
+                    ->  CTE Scan on tt_internal tt
+              ->  Function Scan on translate_pg_type_to_tsql tsql_base_type_name
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 0.202 ms
+~~END~~
+
+
+-- Test 17: Reversed operand pattern - hook handles value = (oid)::int4
+-- Look for: Index Scan using pg_type_oid_index, Index Cond: (oid = (56)::oid)
+SELECT name FROM sys.types WHERE 56 = user_type_id;
+GO
+~~START~~
+text
+Query Text: SELECT name FROM sys.types WHERE 56 = user_type_id
+Subquery Scan on types
+  ->  Append
+        CTE type_code_list
+          ->  HashAggregate
+                Group Key: babelfish_typecode_list.pg_typname, babelfish_typecode_list.tsql_typname
+                ->  Function Scan on babelfish_typecode_list
+        CTE tt_internal
+          ->  Nested Loop
+                ->  Nested Loop
+                      Join Filter: (pt.typnamespace = base_1.oid)
+                      ->  Hash Join
+                            Hash Cond: (ext_1.nspname = base_1.nspname)
+                            ->  Seq Scan on babelfish_namespace_ext ext_1
+                                  Filter: (dbid = db_id())
+                            ->  Hash
+                                  ->  Seq Scan on pg_namespace base_1
+                      ->  Hash Join
+                            Hash Cond: (pt.typrelid = pc.oid)
+                            ->  Seq Scan on pg_type pt
+                                  Filter: (typtype = 'c'::"char")
+                            ->  Hash
+                                  ->  Seq Scan on pg_class pc
+                                        Filter: (relkind = 'r'::"char")
+                ->  Index Scan using pg_depend_depender_index on pg_depend dep
+                      Index Cond: (objid = pt.typrelid)
+                      Filter: (deptype = 'i'::"char")
+        ->  Nested Loop
+              Join Filter: (t.typnamespace = s.oid)
+              InitPlan 3
+                ->  Seq Scan on babelfish_sysdatabases
+                      Filter: (name = (db_name())::text)
+              ->  Hash Join
+                    Hash Cond: ((ti.pg_type_name)::text = t.typname)
+                    ->  CTE Scan on type_code_list ti
+                          Filter: (tsql_type_name IS NOT NULL)
+                    ->  Hash
+                          ->  Index Scan using pg_type_oid_index on pg_type t
+                                Index Cond: (oid = (56)::oid)
+                                Filter: pg_type_is_visible(oid)
+              ->  Seq Scan on pg_namespace s
+                    Filter: ((nspname = 'pg_catalog'::name) OR (nspname = 'sys'::name))
+        ->  Nested Loop
+              InitPlan 4
+                ->  Seq Scan on babelfish_sysdatabases babelfish_sysdatabases_1
+                      Filter: (name = (db_name())::text)
+              ->  Nested Loop Left Join
+                    Join Filter: (t_1.typrelid = tt.typrelid)
+                    Filter: ((t_1.typtype = 'd'::"char") OR (tt.typrelid IS NOT NULL))
+                    ->  Nested Loop
+                          Join Filter: (base.nspname = ext.nspname)
+                          ->  Nested Loop
+                                Join Filter: (t_1.typnamespace = base.oid)
+                                ->  Hash Right Join
+                                      Hash Cond: (ti_1.pg_type_name = t_1.typname)
+                                      Filter: (ti_1.tsql_type_name IS NULL)
+                                      ->  CTE Scan on type_code_list ti_1
+                                      ->  Hash
+                                            ->  Index Scan using pg_type_oid_index on pg_type t_1
+                                                  Index Cond: (oid = (56)::oid)
+                                ->  Seq Scan on pg_namespace base
+                          ->  Seq Scan on babelfish_namespace_ext ext
+                                Filter: (dbid = db_id())
+                    ->  CTE Scan on tt_internal tt
+              ->  Function Scan on translate_pg_type_to_tsql tsql_base_type_name
+~~END~~
+
+~~START~~
+text
+Babelfish T-SQL Batch Parsing Time: 1.021 ms
+~~END~~
+
+
+SET babelfish_showplan_all OFF;
+GO
+
