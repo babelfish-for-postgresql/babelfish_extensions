@@ -673,6 +673,7 @@ comparison_op_index_scan
 Test-Linestring
 Test-Polygon
 Test-Multipoint
+Test-Multilinestring
 BABEL-5788
 BABEL-1664
 sys-fn_varbintohexstr
