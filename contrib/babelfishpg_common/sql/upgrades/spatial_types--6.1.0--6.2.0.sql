@@ -1,7 +1,13 @@
 -------------------------------------------------------
 ---- Include changes related to spatial types here ----
 -------------------------------------------------------
-CREATE TYPE sys.box2df;
+DO $$
+  BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'box2df' AND typnamespace = 'sys'::regnamespace) THEN
+          CREATE TYPE sys.box2df;
+      END IF;
+  END$$;
+
 --geometry
 
 --ST_EXPAND
@@ -22,13 +28,18 @@ CREATE OR REPLACE FUNCTION sys.box2df_out(sys.box2df)
     AS '$libdir/postgis-3', 'box2df_out'
     LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE TYPE sys.box2df (
-    internallength = 16,
-    input = sys.box2df_in,
-    output = sys.box2df_out,
-    storage = plain,
-    alignment = double
-);
+DO $$
+  BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'box2df' AND typnamespace = 'sys'::regnamespace AND typlen > 0) THEN
+          CREATE TYPE sys.box2df (
+              internallength = 16,
+              input = sys.box2df_in,
+              output = sys.box2df_out,
+              storage = plain,
+              alignment = double
+          );
+      END IF;
+  END$$;
 
 
 -- GiST support functions
