@@ -189,7 +189,12 @@ babel_6814_t2#!#1
 
 -- psql
 -- Verifying Index Scans being Used
-ANALYZE;
+ANALYZE pg_class;
+ANALYZE pg_namespace;
+ANALYZE pg_index;
+ANALYZE pg_attribute;
+ANALYZE pg_type;
+ANALYZE pg_proc;
 GO
 
 SET babelfishpg_tsql.sql_dialect = "tsql";
