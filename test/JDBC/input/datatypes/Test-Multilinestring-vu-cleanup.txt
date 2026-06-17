@@ -1,0 +1,76 @@
+# Geometry Views — Properties
+DROP VIEW IF EXISTS DimOfGeometrymultilinestring;
+DROP VIEW IF EXISTS NumPointsOfGeometrymultilinestring;
+DROP VIEW IF EXISTS TextFromGeometrymultilinestring;
+DROP VIEW IF EXISTS BinaryFromGeometrymultilinestring;
+DROP VIEW IF EXISTS SridFromGeometrymultilinestring;
+DROP VIEW IF EXISTS EmptyGeometrymultilinestring;
+DROP VIEW IF EXISTS ValidGeometrymultilinestring;
+DROP VIEW IF EXISTS GeomTypeOfGeometrymultilinestring;
+
+# Geometry Views — Spatial Operations (multilinestring vs multilinestring)
+DROP VIEW IF EXISTS DisjointTempGeommultilinestring;
+DROP VIEW IF EXISTS DistanceTempGeommultilinestring;
+DROP VIEW IF EXISTS IntersectsTempGeommultilinestring;
+DROP VIEW IF EXISTS EqualsTempGeommultilinestring;
+DROP VIEW IF EXISTS ContainTempGeommultilinestring;
+DROP VIEW IF EXISTS equals_opgeommultilinestring;
+DROP VIEW IF EXISTS notequal_opgeommultilinestring;
+
+# Geometry Views — Spatial Operations (multilinestring vs point/linestring)
+DROP VIEW IF EXISTS DisjointTempGeommlsr;
+DROP VIEW IF EXISTS DistanceTempGeommlsr;
+DROP VIEW IF EXISTS IntersectsTempGeommlsr;
+DROP VIEW IF EXISTS EqualsTempGeommlsr;
+DROP VIEW IF EXISTS ContainTempGeommlsr;
+DROP VIEW IF EXISTS equals_opgeommlsr;
+DROP VIEW IF EXISTS notequal_opgeommlsr;
+
+# Geography Views — Properties
+DROP VIEW IF EXISTS DimOfGeographymultilinestring;
+DROP VIEW IF EXISTS NumPointsOfGeographymultilinestring;
+DROP VIEW IF EXISTS TextFromGeographymultilinestring;
+DROP VIEW IF EXISTS BinaryFromGeographymultilinestring;
+DROP VIEW IF EXISTS SridFromGeographymultilinestring;
+DROP VIEW IF EXISTS EmptyGeographymultilinestring;
+DROP VIEW IF EXISTS ValidGeographymultilinestring;
+DROP VIEW IF EXISTS GeomTypeOfGeographymultilinestring;
+
+# Geography Views — Spatial Operations (multilinestring vs multilinestring)
+DROP VIEW IF EXISTS DisjointTempGeogmultilinestring;
+DROP VIEW IF EXISTS DistanceTempGeogmultilinestring;
+DROP VIEW IF EXISTS IntersectsTempGeogmultilinestring;
+DROP VIEW IF EXISTS EqualsTempGeogmultilinestring;
+DROP VIEW IF EXISTS equals_opgeogmultilinestring;
+DROP VIEW IF EXISTS notequal_opgeogmultilinestring;
+
+# Geography Views — Spatial Operations (multilinestring vs point)
+DROP VIEW IF EXISTS DisjointTempGeogmlsr;
+DROP VIEW IF EXISTS DistanceTempGeogmlsr;
+DROP VIEW IF EXISTS IntersectsTempGeogmlsr;
+DROP VIEW IF EXISTS EqualsTempGeogmlsr;
+DROP VIEW IF EXISTS equals_opgeogmlsr;
+DROP VIEW IF EXISTS notequal_opgeogmlsr;
+
+# Geometry Tables
+DROP TABLE IF EXISTS GEOSPATIALMULTILINESTRINGGEOM_dt;
+DROP TABLE IF EXISTS GEOSPATIALPOINTGEOM_mlsr;
+DROP TABLE IF EXISTS GEOSPATIALMULTILINESTRINGGEOM_INVALID_dt;
+DROP TABLE IF EXISTS geometryAsVarbinarymultilinestring;
+DROP TABLE IF EXISTS geometryAsVarcharmultilinestring;
+DROP TABLE IF EXISTS VarbinaryAsgeometrymultilinestring;
+DROP TABLE IF EXISTS VarCharAsgeometrymultilinestring;
+DROP TABLE IF EXISTS GeoVarCharAsgeometrymultilinestring;
+
+# Geography Tables
+DROP TABLE IF EXISTS GEOSPATIALMULTILINESTRINGGEOG_dt;
+DROP TABLE IF EXISTS geospatialpointxgeog_mlsr;
+DROP TABLE IF EXISTS geographyAsVarbinarymultilinestring;
+DROP TABLE IF EXISTS geographyAsVarcharmultilinestring;
+DROP TABLE IF EXISTS VarCharAsgeographymultilinestring;
+DROP TABLE IF EXISTS GeoVarCharAsgeographymultilinestring;
+DROP TABLE IF EXISTS geographyToByteamultilinestring;
+
+# Prepared Statement Tables
+DROP TABLE IF EXISTS GEOSPATIAL_MLSGEOMRCV_dt;
+DROP TABLE IF EXISTS GEOSPATIAL_MLSGEOGRCV_dt;

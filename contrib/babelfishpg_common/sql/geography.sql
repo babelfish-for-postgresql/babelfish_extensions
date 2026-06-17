@@ -277,6 +277,16 @@ CREATE OR REPLACE FUNCTION sys.Geography__STMPointFromWKB(sys.VARBINARY, srid in
     END;
     $$ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.Geography__STMLineFromText(sys.NVARCHAR, srid integer)
+    RETURNS sys.GEOGRAPHY
+    AS 'babelfishpg_common', 'geography_mlinestring_from_text'
+    LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Geography__STMLineFromWKB(sys.VARBINARY, srid integer)
+    RETURNS sys.GEOGRAPHY
+    AS 'babelfishpg_common', 'geography_mlinestring_from_wkb'
+    LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.geogfromwkb_helper(bytea, integer)
     RETURNS sys.GEOGRAPHY
     AS 'babelfishpg_common', 'get_geography_from_wkb'
