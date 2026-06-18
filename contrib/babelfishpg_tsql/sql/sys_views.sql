@@ -8,9 +8,8 @@ create or replace view sys.table_types_internal as
 SELECT pt.typrelid
     FROM pg_catalog.pg_type pt
     INNER JOIN sys.schemas sch on pt.typnamespace = sch.schema_id
-    INNER JOIN pg_catalog.pg_depend dep ON pt.typrelid = dep.objid
-    INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
-    WHERE pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r';
+    INNER JOIN pg_catalog.pg_class pc ON pc.oid = pt.typrelid
+    WHERE pt.typtype = 'c' AND pc.relkind = 'r' AND sys.is_table_type(pc.oid);
 
 create or replace view sys.tables as
 with tt_internal as MATERIALIZED

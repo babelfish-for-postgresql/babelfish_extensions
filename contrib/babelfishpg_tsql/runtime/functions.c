@@ -208,6 +208,7 @@ PG_FUNCTION_INFO_V1(datepart_internal_smallmoney);
 PG_FUNCTION_INFO_V1(replace_special_chars_fts);
 PG_FUNCTION_INFO_V1(isnumeric);
 PG_FUNCTION_INFO_V1(openxml_simple);
+PG_FUNCTION_INFO_V1(is_table_type_oid);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -6206,4 +6207,72 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_XML_P((xmltype *) cstring_to_text_with_len(buf.data, buf.len));
+}
+
+Datum
+is_table_type_oid(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	HeapTuple	classtup;
+	bool		result = false;
+
+	classtup = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (HeapTupleIsValid(classtup))
+	{
+		Form_pg_class classform = (Form_pg_class) GETSTRUCT(classtup);
+
+		if (classform->relkind == 'r')
+		{
+			HeapTuple typtup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(classform->reltype));
+			if (HeapTupleIsValid(typtup))
+			{
+				Form_pg_type typform = (Form_pg_type) GETSTRUCT(typtup);
+
+				if (typform->typtype == 'c')
+				{
+					Relation	depRel;
+					ScanKeyData key[3];
+					SysScanDesc scan;
+					HeapTuple	deptup;
+
+					depRel = table_open(DependRelationId, AccessShareLock);
+
+					ScanKeyInit(&key[0],
+								Anum_pg_depend_classid,
+								BTEqualStrategyNumber, F_OIDEQ,
+								ObjectIdGetDatum(RelationRelationId));
+					ScanKeyInit(&key[1],
+								Anum_pg_depend_objid,
+								BTEqualStrategyNumber, F_OIDEQ,
+								ObjectIdGetDatum(typform->typrelid));
+					ScanKeyInit(&key[2],
+								Anum_pg_depend_objsubid,
+								BTEqualStrategyNumber, F_INT4EQ,
+								Int32GetDatum(0));
+
+					scan = systable_beginscan(depRel, DependDependerIndexId, true,
+											  NULL, 3, key);
+
+					while (HeapTupleIsValid(deptup = systable_getnext(scan)))
+					{
+						Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(deptup);
+
+						if (depform->deptype == 'i' &&
+							depform->refobjid == typform->oid)
+						{
+							result = true;
+							break;
+						}
+					}
+
+					systable_endscan(scan);
+					table_close(depRel, AccessShareLock);
+				}
+				ReleaseSysCache(typtup);
+			}
+		}
+		ReleaseSysCache(classtup);
+	}
+
+	PG_RETURN_BOOL(result);
 }

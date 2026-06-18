@@ -208,6 +208,17 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     FINALFUNC = tsql_query_to_xml_text_ffunc
 );
 
+CREATE OR REPLACE FUNCTION sys.is_table_type(object_id oid) RETURNS bool
+AS 'babelfishpg_tsql', 'is_table_type_oid'
+LANGUAGE C STABLE STRICT;
+
+CREATE OR REPLACE VIEW sys.table_types_internal AS
+SELECT pt.typrelid
+    FROM pg_catalog.pg_type pt
+    INNER JOIN sys.schemas sch on pt.typnamespace = sch.schema_id
+    INNER JOIN pg_catalog.pg_class pc ON pc.oid = pt.typrelid
+    WHERE pt.typtype = 'c' AND pc.relkind = 'r' AND sys.is_table_type(pc.oid);
+    
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
