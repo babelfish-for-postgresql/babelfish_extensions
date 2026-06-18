@@ -1,12 +1,8 @@
 -------------------------------------------------------
 ---- Include changes related to spatial types here ----
 -------------------------------------------------------
-DO $$
-  BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'box2df' AND typnamespace = 'sys'::regnamespace) THEN
-          CREATE TYPE sys.box2df;
-      END IF;
-  END$$;
+DROP TYPE IF EXISTS sys.box2df CASCADE;
+CREATE TYPE sys.box2df;
 
 --geometry
 
@@ -28,18 +24,13 @@ CREATE OR REPLACE FUNCTION sys.box2df_out(sys.box2df)
     AS '$libdir/postgis-3', 'box2df_out'
     LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
 
-DO $$
-  BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'box2df' AND typnamespace = 'sys'::regnamespace AND typlen > 0) THEN
-          CREATE TYPE sys.box2df (
-              internallength = 16,
-              input = sys.box2df_in,
-              output = sys.box2df_out,
-              storage = plain,
-              alignment = double
-          );
-      END IF;
-  END$$;
+CREATE TYPE sys.box2df (
+    internallength = 16,
+    input = sys.box2df_in,
+    output = sys.box2df_out,
+    storage = plain,
+    alignment = double
+);
 
 
 -- GiST support functions
@@ -138,6 +129,7 @@ CREATE OR REPLACE FUNCTION sys.gserialized_gist_joinsel_2d(internal, oid, intern
     LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Spatial operators
+DROP OPERATOR IF EXISTS sys.&&(sys.GEOMETRY, sys.GEOMETRY);
 CREATE OPERATOR sys.&& (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
@@ -147,6 +139,7 @@ CREATE OPERATOR sys.&& (
     JOIN = sys.gserialized_gist_joinsel_2d
 );
 
+DROP OPERATOR IF EXISTS sys.~(sys.GEOMETRY, sys.GEOMETRY);
 CREATE OPERATOR sys.~ (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
@@ -156,6 +149,7 @@ CREATE OPERATOR sys.~ (
     JOIN = sys.gserialized_gist_joinsel_2d
 );
 
+DROP OPERATOR IF EXISTS sys.@(sys.GEOMETRY, sys.GEOMETRY);
 CREATE OPERATOR sys.@ (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
@@ -165,6 +159,7 @@ CREATE OPERATOR sys.@ (
     JOIN = sys.gserialized_gist_joinsel_2d
 );
 
+DROP OPERATOR IF EXISTS sys.<<(sys.GEOMETRY, sys.GEOMETRY);
 CREATE OPERATOR sys.<< (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
@@ -174,6 +169,7 @@ CREATE OPERATOR sys.<< (
     JOIN = sys.gserialized_gist_joinsel_2d
 );
 
+DROP OPERATOR IF EXISTS sys.&<(sys.GEOMETRY, sys.GEOMETRY);
 CREATE OPERATOR sys.&< (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
@@ -182,6 +178,7 @@ CREATE OPERATOR sys.&< (
     JOIN = sys.gserialized_gist_joinsel_2d
 );
 
+DROP OPERATOR IF EXISTS sys.>>(sys.GEOMETRY, sys.GEOMETRY);
 CREATE OPERATOR sys.>> (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
@@ -191,6 +188,7 @@ CREATE OPERATOR sys.>> (
     JOIN = sys.gserialized_gist_joinsel_2d
 );
 
+DROP OPERATOR IF EXISTS sys.&>(sys.GEOMETRY, sys.GEOMETRY);
 CREATE OPERATOR sys.&> (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
@@ -199,6 +197,7 @@ CREATE OPERATOR sys.&> (
     JOIN = sys.gserialized_gist_joinsel_2d
 );
 
+DROP OPERATOR IF EXISTS sys.|>>(sys.GEOMETRY, sys.GEOMETRY);
 CREATE OPERATOR sys.|>> (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
@@ -208,6 +207,7 @@ CREATE OPERATOR sys.|>> (
     JOIN = sys.gserialized_gist_joinsel_2d
 );
 
+DROP OPERATOR IF EXISTS sys.|&>(sys.GEOMETRY, sys.GEOMETRY);
 CREATE OPERATOR sys.|&> (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
@@ -215,6 +215,8 @@ CREATE OPERATOR sys.|&> (
     RESTRICT = sys.gserialized_gist_sel_2d,
     JOIN = sys.gserialized_gist_joinsel_2d
 );
+
+DROP OPERATOR IF EXISTS sys.<<|(sys.GEOMETRY, sys.GEOMETRY);
 CREATE OPERATOR sys.<<| (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
@@ -224,6 +226,7 @@ CREATE OPERATOR sys.<<| (
     JOIN = sys.gserialized_gist_joinsel_2d
 );
 
+DROP OPERATOR IF EXISTS sys.&<|(sys.GEOMETRY, sys.GEOMETRY);
 CREATE OPERATOR sys.&<| (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
@@ -232,6 +235,7 @@ CREATE OPERATOR sys.&<| (
     JOIN = sys.gserialized_gist_joinsel_2d
 );
 
+DROP OPERATOR IF EXISTS sys.~=(sys.GEOMETRY, sys.GEOMETRY);
 CREATE OPERATOR sys.~= (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
@@ -241,6 +245,7 @@ CREATE OPERATOR sys.~= (
     JOIN = sys.gserialized_gist_joinsel_2d
 );
 
+DROP OPERATOR IF EXISTS sys.<->(sys.GEOMETRY, sys.GEOMETRY);
 CREATE OPERATOR sys.<-> (
     LEFTARG = sys.GEOMETRY,
     RIGHTARG = sys.GEOMETRY,
@@ -249,6 +254,7 @@ CREATE OPERATOR sys.<-> (
 );
 
 -- GiST operator class
+DROP OPERATOR CLASS IF EXISTS sys.gist_geometry_ops_2d USING gist;
 CREATE OPERATOR CLASS sys.gist_geometry_ops_2d
     DEFAULT FOR TYPE sys.GEOMETRY USING gist AS
     STORAGE sys.box2df,
@@ -381,6 +387,7 @@ CREATE OR REPLACE FUNCTION sys.geography_gist_joinsel(internal, oid, internal, s
     LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Spatial operators
+DROP OPERATOR IF EXISTS sys.&&(sys.GEOGRAPHY, sys.GEOGRAPHY);
 CREATE OPERATOR sys.&& (
     LEFTARG = sys.GEOGRAPHY,
     RIGHTARG = sys.GEOGRAPHY,
@@ -390,6 +397,7 @@ CREATE OPERATOR sys.&& (
     JOIN = sys.geography_gist_joinsel
 );
 
+DROP OPERATOR IF EXISTS sys.~(sys.GEOGRAPHY, sys.GEOGRAPHY);
 CREATE OPERATOR sys.~ (
     LEFTARG = sys.GEOGRAPHY,
     RIGHTARG = sys.GEOGRAPHY,
@@ -399,6 +407,7 @@ CREATE OPERATOR sys.~ (
     JOIN = sys.geography_gist_joinsel
 );
 
+DROP OPERATOR IF EXISTS sys.@(sys.GEOGRAPHY, sys.GEOGRAPHY);
 CREATE OPERATOR sys.@ (
     LEFTARG = sys.GEOGRAPHY,
     RIGHTARG = sys.GEOGRAPHY,
@@ -408,6 +417,7 @@ CREATE OPERATOR sys.@ (
     JOIN = sys.geography_gist_joinsel
 );
 
+DROP OPERATOR IF EXISTS sys.<<(sys.GEOGRAPHY, sys.GEOGRAPHY);
 CREATE OPERATOR sys.<< (
     LEFTARG = sys.GEOGRAPHY,
     RIGHTARG = sys.GEOGRAPHY,
@@ -417,6 +427,7 @@ CREATE OPERATOR sys.<< (
     JOIN = sys.geography_gist_joinsel
 );
 
+DROP OPERATOR IF EXISTS sys.&<(sys.GEOGRAPHY, sys.GEOGRAPHY);
 CREATE OPERATOR sys.&< (
     LEFTARG = sys.GEOGRAPHY,
     RIGHTARG = sys.GEOGRAPHY,
@@ -425,6 +436,7 @@ CREATE OPERATOR sys.&< (
     JOIN = sys.geography_gist_joinsel
 );
 
+DROP OPERATOR IF EXISTS sys.>>(sys.GEOGRAPHY, sys.GEOGRAPHY);
 CREATE OPERATOR sys.>> (
     LEFTARG = sys.GEOGRAPHY,
     RIGHTARG = sys.GEOGRAPHY,
@@ -434,6 +446,7 @@ CREATE OPERATOR sys.>> (
     JOIN = sys.geography_gist_joinsel
 );
 
+DROP OPERATOR IF EXISTS sys.&>(sys.GEOGRAPHY, sys.GEOGRAPHY);
 CREATE OPERATOR sys.&> (
     LEFTARG = sys.GEOGRAPHY,
     RIGHTARG = sys.GEOGRAPHY,
@@ -442,6 +455,7 @@ CREATE OPERATOR sys.&> (
     JOIN = sys.geography_gist_joinsel
 );
 
+DROP OPERATOR IF EXISTS sys.|>>(sys.GEOGRAPHY, sys.GEOGRAPHY);
 CREATE OPERATOR sys.|>> (
     LEFTARG = sys.GEOGRAPHY,
     RIGHTARG = sys.GEOGRAPHY,
@@ -451,6 +465,7 @@ CREATE OPERATOR sys.|>> (
     JOIN = sys.geography_gist_joinsel
 );
 
+DROP OPERATOR IF EXISTS sys.|&>(sys.GEOGRAPHY, sys.GEOGRAPHY);
 CREATE OPERATOR sys.|&> (
     LEFTARG = sys.GEOGRAPHY,
     RIGHTARG = sys.GEOGRAPHY,
@@ -459,6 +474,7 @@ CREATE OPERATOR sys.|&> (
     JOIN = sys.geography_gist_joinsel
 );
 
+DROP OPERATOR IF EXISTS sys.<<|(sys.GEOGRAPHY, sys.GEOGRAPHY);
 CREATE OPERATOR sys.<<| (
     LEFTARG = sys.GEOGRAPHY,
     RIGHTARG = sys.GEOGRAPHY,
@@ -468,6 +484,7 @@ CREATE OPERATOR sys.<<| (
     JOIN = sys.geography_gist_joinsel
 );
 
+DROP OPERATOR IF EXISTS sys.&<|(sys.GEOGRAPHY, sys.GEOGRAPHY);
 CREATE OPERATOR sys.&<| (
     LEFTARG = sys.GEOGRAPHY,
     RIGHTARG = sys.GEOGRAPHY,
@@ -475,6 +492,8 @@ CREATE OPERATOR sys.&<| (
     RESTRICT = sys.geography_gist_sel,
     JOIN = sys.geography_gist_joinsel
 );
+
+DROP OPERATOR IF EXISTS sys.~=(sys.GEOGRAPHY, sys.GEOGRAPHY);
 CREATE OPERATOR sys.~= (
     LEFTARG = sys.GEOGRAPHY,
     RIGHTARG = sys.GEOGRAPHY,
@@ -484,6 +503,7 @@ CREATE OPERATOR sys.~= (
     JOIN = sys.geography_gist_joinsel
 );
 
+DROP OPERATOR IF EXISTS sys.<->(sys.GEOGRAPHY, sys.GEOGRAPHY);
 CREATE OPERATOR sys.<-> (
     LEFTARG = sys.GEOGRAPHY,
     RIGHTARG = sys.GEOGRAPHY,
@@ -492,6 +512,7 @@ CREATE OPERATOR sys.<-> (
 );
 
 -- GiST operator class
+DROP OPERATOR CLASS IF EXISTS sys.gist_geography_ops_2d USING gist;
 CREATE OPERATOR CLASS sys.gist_geography_ops_2d
     DEFAULT FOR TYPE sys.GEOGRAPHY USING gist AS
     STORAGE sys.box2df,
@@ -516,5 +537,3 @@ CREATE OPERATOR CLASS sys.gist_geography_ops_2d
     FUNCTION  6  sys.geography_gist_picksplit(internal, internal),
     FUNCTION  7  sys.geography_gist_same(sys.GEOGRAPHY, sys.GEOGRAPHY, internal),
     FUNCTION  8  sys.geography_gist_distance(internal, sys.GEOGRAPHY, smallint, oid, internal);
-
-
