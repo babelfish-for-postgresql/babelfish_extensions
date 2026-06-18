@@ -4455,35 +4455,15 @@ CREATE OR REPLACE FUNCTION objectproperty(
     )
 RETURNS INT AS
 'babelfishpg_tsql', 'objectproperty_internal'
-LANGUAGE C STABLE;
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
     id INT,
     property SYS.VARCHAR
 )
-RETURNS SYS.SQL_VARIANT
-AS $$
-BEGIN
-	property := PG_CATALOG.RTRIM(LOWER(COALESCE(property, '')));
-	
-	IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
-	THEN
-		RETURN NULL;
-	END IF;
-
-	IF property = 'basetype' COLLATE "C" -- BaseType
-	THEN
-		RETURN (SELECT CAST(ao.type AS SYS.SQL_VARIANT) 
-                FROM sys.all_objects ao
-                WHERE ao.object_id = id
-                LIMIT 1
-                );
-    END IF;
-
-    RETURN CAST(OBJECTPROPERTY(id, property) AS SYS.SQL_VARIANT);
-END
-$$
-LANGUAGE plpgsql STABLE;
+RETURNS SYS.SQL_VARIANT AS
+'babelfishpg_tsql', 'objectpropertyex_internal'
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.sid_binary(IN login sys.nvarchar)
 RETURNS SYS.VARBINARY

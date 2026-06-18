@@ -1129,7 +1129,7 @@ SELECT OBJECTPROPERTY(OBJECT_ID('objectproperty_vu_prepare_IsTrigger_trigger', '
 GO
 ~~START~~
 int
-<NULL>
+1
 ~~END~~
 
 
@@ -1148,6 +1148,25 @@ GO
 ~~START~~
 int
 <NULL>
+~~END~~
+
+
+-- =============== Trigger properties ===============
+-- ExecIsAnsiNullsOn on trigger
+SELECT OBJECTPROPERTY(OBJECT_ID('objectproperty_vu_prepare_IsTrigger_trigger', 'TR'), 'ExecIsAnsiNullsOn')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- ExecIsQuotedIdentOn on trigger
+SELECT OBJECTPROPERTY(OBJECT_ID('objectproperty_vu_prepare_IsTrigger_trigger', 'TR'), 'ExecIsQuotedIdentOn')
+GO
+~~START~~
+int
+1
 ~~END~~
 
 
