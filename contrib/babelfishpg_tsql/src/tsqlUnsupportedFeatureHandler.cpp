@@ -63,6 +63,7 @@ declare_escape_hatch(escape_hatch_ignore_dup_key);
 declare_escape_hatch(escape_hatch_rowversion);
 declare_escape_hatch(escape_hatch_checkpoint);
 declare_escape_hatch(escape_hatch_inline_function_option);
+declare_escape_hatch(escape_hatch_spatial_index);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
@@ -110,6 +111,17 @@ protected:
 		antlrcpp::Any visitCreate_table(TSqlParser::Create_tableContext *ctx) override;
 		antlrcpp::Any visitAlter_table(TSqlParser::Alter_tableContext *ctx) override;
 		antlrcpp::Any visitCreate_index(TSqlParser::Create_indexContext *ctx) override;
+		antlrcpp::Any visitCreate_spatial_index(TSqlParser::Create_spatial_indexContext *ctx) override {
+			if ((ctx->spatial_grid_clause() || ctx->spatial_grid_option_clause())
+				&& escape_hatch_spatial_index != EH_IGNORE)
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED,
+					"CREATE SPATIAL INDEX USING/WITH options are not supported in Babelfish. "
+					"Set \'babelfishpg_tsql.escape_hatch_spatial_index\' to \'ignore\' to discard these options.",
+					getLineAndPos(ctx));
+			}
+			return visitChildren(ctx);
+		}
 		antlrcpp::Any visitAlter_index(TSqlParser::Alter_indexContext *ctx) override;
 		antlrcpp::Any visitCreate_database(TSqlParser::Create_databaseContext *ctx) override;
 		antlrcpp::Any visitAlter_database(TSqlParser::Alter_databaseContext *ctx) override;
@@ -1111,6 +1123,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 || ctx->create_db_role()
 	 || ctx->create_fulltext_index()
 	 || ctx->create_index()
+	 || ctx->create_spatial_index()
 	 || ctx->create_login()
 	 || ctx->create_sequence()
 	 || (ctx->create_server_role() && pltsql_allow_antlr_to_unsupported_grammar_for_testing)
@@ -1400,9 +1413,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFor_clause(TSqlParser::For
 		handle(INSTR_UNSUPPORTED_TSQL_FOR_BROWSE_CLAUSE, "FOR BROWSE", getLineAndPos(ctx->BROWSE()));
 	if (ctx->XML())
 	{
-		// RAW and PATH is supported
-		if (ctx->AUTO())
-			handle(INSTR_UNSUPPORTED_TSQL_XML_OPTION_AUTO, "FOR XML AUTO mode", getLineAndPos(ctx->AUTO()));
+		// RAW, PATH, and AUTO are supported
 		if (ctx->EXPLICIT())
 			handle(INSTR_UNSUPPORTED_TSQL_XML_OPTION_EXPLICIT, "FOR XML EXPLICIT mode", getLineAndPos(ctx->EXPLICIT()));
 		if (!ctx->XMLDATA().empty())
@@ -1520,10 +1531,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitId(TSqlParser::IdContext *
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitXml_func_arg(TSqlParser::Xml_func_argContext *ctx)
 {
-	if (ctx->QUERY())
-		handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML QUERY", getLineAndPos(ctx));
-	else if (ctx->MODIFY())
-		handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML MODIFY", getLineAndPos(ctx));
+	if (ctx->MODIFY())
+		handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 

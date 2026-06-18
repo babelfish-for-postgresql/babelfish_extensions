@@ -398,7 +398,7 @@ GO
 
 -- Exist function called on XML Query
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
-SELECT @xml.query('/artists/artist').exist('/artist/@name')
+SELECT @xml.query('/artists').exist('/artists/artist/@name')
 GO
 
 -- Dependent objects

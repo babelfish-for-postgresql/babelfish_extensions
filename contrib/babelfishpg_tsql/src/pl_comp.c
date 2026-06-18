@@ -41,6 +41,10 @@
 
 #include "pltsql.h"
 #include "pltsql-2.h"
+#include "pltsql_node/pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
+											 * by gen_pltsql_node_support.pl */
+#include "pltsql_node/pltsql_serialize.h"
+#include "hooks.h"
 #include "analyzer.h"
 #include "catalog.h"
 #include "codegen.h"
@@ -64,6 +68,13 @@ bool		pltsql_DumpExecTree = false;
 bool		pltsql_check_syntax = false;
 
 PLtsql_function *pltsql_curr_compile;
+
+/* Session-level routine antlr parse cache statistics */
+int pltsql_antlr_parse_cache_stat_hits = 0;
+int pltsql_antlr_parse_cache_stat_misses = 0;
+int pltsql_antlr_parse_cache_stat_writes = 0;
+int pltsql_antlr_parse_cache_stat_evictions = 0;
+int pltsql_antlr_parse_cache_stat_errors = 0;
 
 /* A context appropriate for short-term allocs during compilation */
 MemoryContext pltsql_compile_tmp_cxt;
@@ -137,7 +148,7 @@ static void pltsql_resolve_polymorphic_argtypes(int numargs,
 												Oid *argtypes, char *argmodes,
 												Node *call_expr, bool forValidator,
 												const char *proname);
-static PLtsql_function *pltsql_HashTableLookup(PLtsql_func_hashkey *func_key);
+PLtsql_function *pltsql_HashTableLookup(PLtsql_func_hashkey *func_key);
 static void pltsql_HashTableInsert(PLtsql_function *function,
 								   PLtsql_func_hashkey *func_key);
 static void pltsql_HashTableDelete(PLtsql_function *function);
@@ -200,9 +211,39 @@ recheck:
 		if (function->fn_xmin == HeapTupleHeaderGetRawXmin(procTup->t_data) &&
 			ItemPointerEquals(&function->fn_tid, &procTup->t_self) &&
 			function->exec_codes_valid)
-			function_valid = true;
+		{
+			if (function->from_cache)
+			{
+				/*
+				 * For functions loaded from persistent cache, verify caching is
+				 * still enabled by consulting is_antlr_parse_cache_enabled_for_routine()
+				 * which reads the per-function antlr_parse_cache_enabled column and
+				 * falls back to the session GUC.
+				 *
+				 * A concurrent session toggling the per-function flag via
+				 * sys.enable_antlr_parse_cache() is picked up here via syscache.
+				 * ALTER/DROP of the function is already caught by the pg_proc
+				 * xmin/tid check above and forces a fresh compile.
+				 */
+				if (is_antlr_parse_cache_enabled_for_routine(procTup, NULL))
+				{
+					function_valid = true;
+					pltsql_antlr_parse_cache_stat_hits++;
+				}
+				else
+				{
+					/* caching disabled for this routine — invalidate */
+					goto invalidate_function;
+				}
+			}
+			else
+			{
+				function_valid = true;
+			}
+		}
 		else
 		{
+invalidate_function:
 			/*
 			 * Nope, so remove it from hashtable and try to drop associated
 			 * storage (if not done already).
@@ -211,6 +252,8 @@ recheck:
 			 * PLtsql_function struct itself could have been allocated in the same
 			 * context, so we avoid accessing struct fields after the delete call.
 			 */
+			if (function->from_cache)
+				pltsql_antlr_parse_cache_stat_evictions++;
 			function_in_use = function->use_count != 0;
 			delete_function(function);
 
@@ -251,7 +294,7 @@ recheck:
 									 forValidator);
 
 		/*
-		 * Do the hard part.
+		 * Compile the function (will attempt to use cached parse result if available).
 		 */
 		function = do_compile(fcinfo, procTup, function,
 							  &hashkey, forValidator);
@@ -320,7 +363,7 @@ do_compile(FunctionCallInfo fcinfo,
 	char	  **argnames;
 	char	   *argmodes;
 	int		   *in_arg_varnos = NULL;
-	PLtsql_variable **out_arg_variables;
+	PLtsql_variable **out_arg_variables = NULL;
 	MemoryContext func_cxt;
 
 	/* Special handling is needed for Multi-Statement Table-Valued Functions. */
@@ -328,6 +371,13 @@ do_compile(FunctionCallInfo fcinfo,
 	char	   *tbl_typ = NULL;	/* Name of the output table variable's type */
 	int		   *typmods = NULL; /* typmod of each argument if available */
 	CompileContext *cmpl_ctx = create_compile_context();
+	bool		antlr_parse_cache_enabled_for_func = false;
+
+	/* saved for validate_parse_cache ANTLR parse tree comparison */
+	PLtsql_stmt_block *validation_cached_tree = NULL;  
+	PLtsql_datum **validation_cached_datums = NULL;
+	int validation_cached_ndatums = 0;
+	MemoryContext validation_cxt = NULL;
 
 	/*
 	 * Setup the scanner input and error info.  We assume that this function
@@ -907,7 +957,148 @@ do_compile(FunctionCallInfo fcinfo,
 	 * Now parse the function's text
 	 */
 	{
-		ANTLR_result result = antlr_parser_cpp(proc_source);
+		ANTLR_result result;
+		PLtsql_cached_parse_result *cached_result = NULL;
+
+		/*
+		 * Try to restore cached parse result from previous compilation (pltsql_enable_antlr_parse_cache).
+		 * This allows us to skip expensive ANTLR parsing for new session execution of routines.
+		 * Skip during validation (forValidator=true) as we're just checking syntax.
+		 */
+		if (!forValidator)
+		{
+			MemoryContext save_cxt = CurrentMemoryContext;
+
+			/*
+			 * When validation GUC is on, restore the cached tree into a
+			 * separate memory context so ANTLR re-parsing (which reuses
+			 * func_cxt) does not overwrite the cached node pointers.
+			 */
+			if (pltsql_validate_antlr_parse_cache)
+			{
+				validation_cxt = AllocSetContextCreate(func_cxt,
+													   "PLtsql validation",
+													   ALLOCSET_DEFAULT_SIZES);
+				MemoryContextSwitchTo(validation_cxt);
+			}
+
+			cached_result = pltsql_restore_antlr_parse_cache_result(procTup,
+															 &antlr_parse_cache_enabled_for_func);
+
+			/* Restore original context */
+			MemoryContextSwitchTo(save_cxt);
+			
+			if (cached_result)
+			{
+				int		ci;
+
+				pltsql_antlr_parse_cache_stat_hits++;
+				pltsql_parse_result = cached_result->parse_tree;
+				
+				/* Populate global datums from cache - pltsql_finish_datums() will copy to function */
+				pltsql_nDatums = cached_result->ndatums;
+				pltsql_Datums = cached_result->datums;
+				
+				/* Mark that this function was loaded from persistent cache */
+				function->from_cache = true;
+
+				/*
+				 * Re-derive out_param_varno from cached datums.
+				 *
+				 * The validator already built the OUT row (PLtsql_row) and it was
+				 * serialized into the cache. The cached parse tree's RETURN nodes
+				 * reference it by dno. We just need to find it and set
+				 * function->out_param_varno so the runtime can use it.
+				 *
+				 * For multiple OUT args (or procedure with any OUT): find the
+				 * PLtsql_row datum in the cache, then rebuild its rowtupdesc
+				 * (which is not serialized — marked read_write_ignore).
+				 * For single OUT arg (non-procedure function): point directly
+				 * to the matching cached datum using the dno from the parameter
+				 * loop (which assigned the same sequential dnos as the validator).
+				 */
+				if (num_out_args > 1 ||
+					(num_out_args == 1 && function->fn_prokind == PROKIND_PROCEDURE))
+				{
+					for (ci = 0; ci < cached_result->ndatums; ci++)
+					{
+						if (cached_result->datums[ci]->dtype == PLTSQL_DTYPE_ROW)
+						{
+							PLtsql_row *row = (PLtsql_row *) cached_result->datums[ci];
+							int fi;
+
+							function->out_param_varno = row->dno;
+
+							/*
+							 * Rebuild rowtupdesc — it is NULL after deserialization
+							 * (TupleDesc is not serializable). Walk the ROW's varnos
+							 * to find each member VAR's type info, same as
+							 * build_row_from_vars does.
+							 */
+							row->rowtupdesc = CreateTemplateTupleDesc(row->nfields);
+							for (fi = 0; fi < row->nfields; fi++)
+							{
+								PLtsql_var *fvar;
+
+								/* Validate varno bounds before accessing datums array (incase stale/corrupted) */
+								if (row->varnos[fi] < 0 || row->varnos[fi] >= cached_result->ndatums)
+									elog(ERROR, "cached row varno %d out of range (ndatums=%d)",
+										 row->varnos[fi], cached_result->ndatums);
+
+								fvar = (PLtsql_var *) cached_result->datums[row->varnos[fi]];
+
+								TupleDescInitEntry(row->rowtupdesc, fi + 1,
+												   row->fieldnames[fi],
+												   fvar->datatype->typoid,
+												   fvar->datatype->atttypmod,
+												   0);
+								TupleDescInitEntryCollation(row->rowtupdesc, fi + 1,
+															fvar->datatype->collation);
+							}
+							break;
+						}
+					}
+				}
+				else if (num_out_args == 1)
+					function->out_param_varno = out_arg_variables[0]->dno;
+
+				/* Free the wrapper structure (but not the data we transferred) */
+				pfree(cached_result);
+				
+				parse_rc = 0;
+
+				/*
+				 * Debug mode: save the cached tree and fall through to
+				 * ANTLR so both paths get identical post-processing. Compare
+				 * after function hash table insert.
+				 */
+				if (pltsql_validate_antlr_parse_cache)
+				{
+					validation_cached_tree = pltsql_parse_result;
+					validation_cached_datums = pltsql_Datums;
+					validation_cached_ndatums = pltsql_nDatums;
+					function->from_cache = false;
+					/* fall through to normal ANTLR parsing below */
+				}
+				else
+				{
+					/* Debug GUC is OFF, use cached results and skip ANTLR parsing */
+					goto skip_antlr_parsing;
+				}
+			}
+			else
+			{
+				/* No cached parse result */
+				/* Only count as miss if caching was enabled but cache was empty/invalid */
+				if (antlr_parse_cache_enabled_for_func)
+					pltsql_antlr_parse_cache_stat_misses++;
+			}
+		}
+		
+		/* No cache hit - do ANTLR parsing */
+		/* Mark that this function was NOT loaded from persistent cache */
+		function->from_cache = false;
+		result = antlr_parser_cpp(proc_source);
 
 		if (result.success)
 		{
@@ -919,7 +1110,8 @@ do_compile(FunctionCallInfo fcinfo,
 			parse_rc = 1;		/* invalid input */
 		}
 	}
-
+skip_antlr_parsing:
+	/* Continue with normal flow */
 	if (parse_rc != 0)
 		elog(ERROR, "pltsql parser returned %d", parse_rc);
 	function->action = pltsql_parse_result;
@@ -930,8 +1122,9 @@ do_compile(FunctionCallInfo fcinfo,
 	/*
 	 * Multi-Statement Table-Valued Function: 1) Add a declare table statement
 	 * to the beginning 2) Add a return table statement to the end
+	 * Skip when restoring from cache — the cached parse tree already contains these.
 	 */
-	if (function->is_mstvf)
+	if (function->is_mstvf && !function->from_cache)
 	{
 		/*
 		 * ANTLR parser would return a stmt list like INIT->BLOCK, where BLOCK
@@ -948,9 +1141,11 @@ do_compile(FunctionCallInfo fcinfo,
 	 * control to fall off the end without an explicit RETURN statement. The
 	 * easiest way to implement this is to add a RETURN statement to the end
 	 * of the statement list during parsing.
+	 * Skip when restoring from cache — the cached parse tree already has the dummy return.
 	 */
-	if (num_out_args > 0 || function->fn_rettype == VOIDOID ||
-		function->fn_retset)
+	if (!function->from_cache &&
+		(num_out_args > 0 || function->fn_rettype == VOIDOID ||
+		function->fn_retset))
 		add_dummy_return(function);
 
 	/*
@@ -974,6 +1169,22 @@ do_compile(FunctionCallInfo fcinfo,
 
 	pltsql_finish_datums(function);
 
+	/*
+	 * If antlr parse result caching enabled through `enable_antlr_parse_cache` GUC,
+	 * re-populate the antlr parse cache columns in babelfish_function_ext when we
+	 * have a fresh ANTLR parse (not restored from bbf_function_ext cache) so that
+	 * first-time routine execution in future sessions can skip ANTLR parsing.
+	 * This covers:
+	 *   - MVU: version mismatch rejected old cache, fresh parse needs storing
+	 *   - Rename proc: cache was NULLed, fresh parse needs storing
+	 *   - First exec with empty cache (e.g., created with GUC off, now on)
+	 *
+	 * Skip during CREATE/ALTER (forValidator) to avoid conflicts with
+	 * pltsql_store_func_default_positions that handles cache writes for DDL.
+	 */
+	if (!forValidator && !function->from_cache)
+		pltsql_update_func_antlr_parse_cache(procTup, function);
+
 	/* Debug dump for completed functions */
 	if (pltsql_DumpExecTree || pltsql_trace_tree)
 		pltsql_dumptree(function);
@@ -982,6 +1193,25 @@ do_compile(FunctionCallInfo fcinfo,
 	 * add it to the hash table
 	 */
 	pltsql_HashTableInsert(function, hashkey);
+
+	/*
+	 * Parse cache validation: compare cached (deserialized) tree against
+	 * fresh ANTLR compilation. Both trees have been through identical
+	 * post-processing at this point. Gated behind validate_parse_cache GUC.
+	 */
+	if (pltsql_validate_antlr_parse_cache && validation_cached_tree != NULL)
+	{
+		bool trees_match = pltsql_compare_parse_trees(validation_cached_tree,
+													  function->action);
+
+		elog(DEBUG1, "pltsql_validate_antlr_parse_cache[%s]: %s ANTLR parse tree comparison at EXEC",
+			 trees_match ? "PASS" : "FAIL", function->fn_signature);
+
+		pltsql_compare_datum_arrays(function->fn_signature,
+									validation_cached_datums, validation_cached_ndatums,
+									function->datums, function->ndatums);
+	}
+
 
 	/*
 	 * Pop the error context stack
@@ -1000,13 +1230,11 @@ do_compile(FunctionCallInfo fcinfo,
 		analyze(function, cmpl_ctx);
 		gen_exec_code(function, cmpl_ctx);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		destroy_compile_context(cmpl_ctx);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	destroy_compile_context(cmpl_ctx);
 
 	return function;
 }
@@ -1347,13 +1575,11 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 		analyze(function, cmpl_ctx);
 		gen_exec_code(function, cmpl_ctx);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		destroy_compile_context(cmpl_ctx);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	destroy_compile_context(cmpl_ctx);
 
 	return function;
 }
@@ -1446,7 +1672,7 @@ add_dummy_return(PLtsql_function *function)
 	{
 		PLtsql_stmt_block *new;
 
-		new = palloc0(sizeof(PLtsql_stmt_block));
+		new = makeNode(PLtsql_stmt_block);
 		new->cmd_type = PLTSQL_STMT_BLOCK;
 		new->body = list_make1(function->action);
 
@@ -1457,7 +1683,7 @@ add_dummy_return(PLtsql_function *function)
 	{
 		PLtsql_stmt_return *new;
 
-		new = palloc0(sizeof(PLtsql_stmt_return));
+		new = makeNode(PLtsql_stmt_return);
 		new->cmd_type = PLTSQL_STMT_RETURN;
 		new->expr = NULL;
 		new->retvarno = function->out_param_varno;
@@ -1474,7 +1700,7 @@ add_decl_table(PLtsql_function *function, int tbl_dno, char *tbl_typ)
 {
 	PLtsql_stmt_decl_table *new;
 
-	new = palloc0(sizeof(PLtsql_stmt_decl_table));
+	new = makeNode(PLtsql_stmt_decl_table);
 	new->cmd_type = PLTSQL_STMT_DECL_TABLE;
 	new->dno = tbl_dno;
 	new->tbltypname = tbl_typ;
@@ -2363,7 +2589,7 @@ pltsql_build_variable(const char *refname, int lineno, PLtsql_type *dtype,
 				/* Ordinary scalar datatype */
 				PLtsql_var *var;
 
-				var = palloc0(sizeof(PLtsql_var));
+				var = makeNode(PLtsql_var);
 				var->dtype = PLTSQL_DTYPE_VAR;
 				var->refname = pstrdup(refname);
 				var->lineno = lineno;
@@ -2446,7 +2672,7 @@ pltsql_build_record(const char *refname, int lineno,
 {
 	PLtsql_rec *rec;
 
-	rec = palloc0(sizeof(PLtsql_rec));
+	rec = makeNode(PLtsql_rec);
 	rec->dtype = PLTSQL_DTYPE_REC;
 	rec->refname = pstrdup(refname);
 	rec->lineno = lineno;
@@ -2472,7 +2698,7 @@ pltsql_build_table(const char *refname, int lineno,
 {
 	PLtsql_tbl *tbl;
 
-	tbl = palloc0(sizeof(PLtsql_tbl));
+	tbl = makeNode(PLtsql_tbl);
 	tbl->dtype = PLTSQL_DTYPE_TBL;
 	tbl->refname = pstrdup(refname);
 	tbl->lineno = lineno;
@@ -2498,7 +2724,7 @@ build_row_from_vars(PLtsql_variable **vars, int numvars)
 	PLtsql_row *row;
 	int			i;
 
-	row = palloc0(sizeof(PLtsql_row));
+	row = makeNode(PLtsql_row);
 	row->dtype = PLTSQL_DTYPE_ROW;
 	row->refname = "(unnamed row)";
 	row->lineno = -1;
@@ -2579,7 +2805,7 @@ pltsql_build_recfield(PLtsql_rec *rec, const char *fldname)
 	}
 
 	/* nope, so make a new one */
-	recfield = palloc0(sizeof(PLtsql_recfield));
+	recfield = makeNode(PLtsql_recfield);
 	recfield->dtype = PLTSQL_DTYPE_RECFIELD;
 	recfield->fieldname = pstrdup(fldname);
 	recfield->recparentno = rec->dno;
@@ -2645,7 +2871,7 @@ build_datatype(HeapTuple typeTup, int32 typmod,
 				 errmsg("type \"%s\" is only a shell",
 						NameStr(typeStruct->typname))));
 
-	typ = (PLtsql_type *) palloc(sizeof(PLtsql_type));
+	typ = (PLtsql_type *) makeNode(PLtsql_type);
 
 	typ->typname = pstrdup(NameStr(typeStruct->typname));
 	typ->typoid = typeStruct->oid;
@@ -2749,7 +2975,7 @@ pltsql_build_table_datatype_coldef(const char *coldef)
 {
 	PLtsql_type *typ;
 
-	typ = (PLtsql_type *) palloc(sizeof(PLtsql_type));
+	typ = (PLtsql_type *) makeNode(PLtsql_type);
 	typ->typname = NULL;
 	typ->typoid = InvalidOid;
 	typ->ttype = PLTSQL_TTYPE_TBL;
@@ -2828,7 +3054,7 @@ pltsql_parse_err_condition(char *condname)
 	 */
 	if (strcmp(condname, "others") == 0)
 	{
-		new = palloc(sizeof(PLtsql_condition));
+		new = makeNode(PLtsql_condition);
 		new->sqlerrstate = 0;
 		new->condname = condname;
 		new->next = NULL;
@@ -2840,7 +3066,7 @@ pltsql_parse_err_condition(char *condname)
 	{
 		if (strcmp(condname, exception_label_map[i].label) == 0)
 		{
-			new = palloc(sizeof(PLtsql_condition));
+			new = makeNode(PLtsql_condition);
 			new->sqlerrstate = exception_label_map[i].sqlerrstate;
 			new->condname = condname;
 			new->next = prev;
@@ -3148,7 +3374,7 @@ pltsql_HashTableInit(void)
 								   HASH_ELEM | HASH_BLOBS);
 }
 
-static PLtsql_function *
+PLtsql_function *
 pltsql_HashTableLookup(PLtsql_func_hashkey *func_key)
 {
 	pltsql_HashEnt *hentry;
@@ -3158,7 +3384,25 @@ pltsql_HashTableLookup(PLtsql_func_hashkey *func_key)
 											HASH_FIND,
 											NULL);
 	if (hentry)
+	{
+		/*
+		 * If GUC enable_antlr_parse_cache is off and function was loaded from ext
+		 * persistent cache(from_cache), evict it so do_compile re-parses via ANTLR.
+		 *
+		 * Note: Per-function antlr_parse_cache_enabled column is not checked here
+		 * to avoid expensive syscache lookup on every call. Instead, pltsql_compile
+		 * calls is_antlr_parse_cache_enabled_for_routine() to detect per-function
+		 * overrides or concurrent toggles and invalidates stale entries.
+		 */
+		if (!pltsql_enable_antlr_parse_cache && hentry->function->from_cache)
+		{
+			pltsql_antlr_parse_cache_stat_evictions++;
+			delete_function(hentry->function);
+			return NULL;
+		}
+
 		return hentry->function;
+	}
 	else
 		return NULL;
 }

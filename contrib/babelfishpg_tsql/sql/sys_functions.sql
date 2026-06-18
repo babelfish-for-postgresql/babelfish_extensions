@@ -7,7 +7,8 @@ CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
     binary_base64 boolean,
     root_name text,
     elements boolean,
-    xsinil boolean
+    xsinil boolean,
+    auto_metadata text
 ) RETURNS INTERNAL
 AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
 LANGUAGE C STABLE;
@@ -33,7 +34,8 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
     binary_base64 boolean,
     root_name text,
     elements boolean,
-    xsinil boolean)
+    xsinil boolean,
+    auto_metadata text)
 (
     STYPE = INTERNAL,
     SFUNC = tsql_query_to_xml_sfunc,
@@ -47,7 +49,8 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     binary_base64 boolean,
     root_name text,
     elements boolean,
-    xsinil boolean)
+    xsinil boolean,
+    auto_metadata text)
 (
     STYPE = INTERNAL,
     SFUNC = tsql_query_to_xml_sfunc,
@@ -156,10 +159,16 @@ BEGIN
         result := pg_catalog.replace(result, '&quot;', '"');
         result := pg_catalog.replace(result, '&amp;', '&');
         return result;
-    END IF; 
+    END IF;
 END
 $BODY$
 LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
+
+-- helper function for XML QUERY(xpath)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT)
+RETURNS XML
+AS 'babelfishpg_tsql', 'bbf_xmlquery'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
 
 -- SELECT FOR JSON
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
@@ -5312,3 +5321,23 @@ RETURNS table (
 AS 'babelfishpg_tsql', 'openxml_simple'
 LANGUAGE C IMMUTABLE;
 
+
+-- Routine-specific ANTLR parse tree cache GUC control across sessions (sets column in sys.babelfish_function_ext)
+-- antlr_parse_cache_enabled column: true = force on, false = force off (kill switch), NULL = follow session GUC (default)
+CREATE OR REPLACE FUNCTION sys.enable_antlr_parse_cache(
+    IN routine_id OID,
+    IN use_antlr_parse_cache BOOLEAN
+) RETURNS BOOLEAN
+AS 'babelfishpg_tsql', 'enable_antlr_parse_cache'
+LANGUAGE C VOLATILE PARALLEL UNSAFE;
+
+-- Session-level routine antlr parse cache statistics
+CREATE OR REPLACE FUNCTION sys.antlr_parse_cache_stats(
+    OUT cache_hits INT,
+    OUT cache_misses INT,
+    OUT cache_writes INT,
+    OUT cache_evictions INT,
+    OUT cache_errors INT
+) RETURNS RECORD
+AS 'babelfishpg_tsql', 'antlr_parse_cache_stats'
+LANGUAGE C VOLATILE PARALLEL RESTRICTED;

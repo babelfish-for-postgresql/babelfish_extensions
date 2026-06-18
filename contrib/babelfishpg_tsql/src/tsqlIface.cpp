@@ -38,6 +38,8 @@ extern "C" {
 #else
 #include "pltsql.h"
 #include "pltsql-2.h"
+#include "pltsql_node/pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
+											 * by gen_pltsql_node_support.pl */
 #include "pl_explain.h"
 #include "session.h"
 #include "multidb.h"
@@ -153,6 +155,7 @@ static void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementC
 static bool post_process_create_table(TSqlParser::Create_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
+static bool post_process_create_spatial_index(TSqlParser::Create_spatial_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_type(TSqlParser::Create_typeContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, List *column_name = NULL, bool is_freetext_predicate = false);
@@ -192,6 +195,10 @@ template <class T> static void rewrite_geospatial_func_ref_no_arg_query_helper(T
 template <class T> static void rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t start_index, size_t arg_list_start_index, size_t arg_list_stop_index);
 template <class T> static void rewrite_function_call_dot_func_ref_args(T ctx);
 template <class T> static void rewrite_function_call_geospatial_func_ref_no_arg(T ctx);
+template <class T> static bool is_in_spatial_predicate_context(T ctx);
+template <class T> static bool is_spatial_predicate_eq_one(T ctx);
+template <class T> static bool extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &comp_value, bool &dist_on_lhs_out);
+static bool operand_is_spatial_method(antlr4::ParserRuleContext *operand, antlr4::ParserRuleContext *ctx);
 static void handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx);
 static void handleXMLFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx);
 static void handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx);
@@ -1048,7 +1055,7 @@ public:
 
 	void exitXml_func_arg(TSqlParser::Xml_func_argContext *ctx) override
 	{
-		if (ctx->EXIST() || ctx->VALUE())
+		if (ctx->EXIST() || ctx->VALUE() || ctx->QUERY())
 		{
 			size_t startPosition = ctx->start->getStartIndex();
 			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "bbf_xml")));
@@ -2249,6 +2256,8 @@ public:
 			nop = post_process_alter_table(ctx->alter_table(), stmt, ctx);
 		else if (ctx->create_index())
 			nop = post_process_create_index(ctx->create_index(), stmt, ctx);
+		else if (ctx->create_spatial_index())
+			nop = post_process_create_spatial_index(ctx->create_spatial_index(), stmt, ctx);
 		else if (ctx->create_database())
 			nop = post_process_create_database(ctx->create_database(), stmt, ctx);
 		else if (ctx->create_type())
@@ -2983,10 +2992,27 @@ public:
 	void exitExecute_body_batch(TSqlParser::Execute_body_batchContext *ctx) override
 	{
 		in_execute_body_batch = false;
-		PLtsql_stmt_exec *stmt = (PLtsql_stmt_exec *) getPLtsql_fragment(ctx);
-		PLtsql_expr_query_mutator mutator(stmt->expr, ctx);
-		add_rewritten_query_fragment_to_mutator(&mutator); 
-		mutator.run();
+		PLtsql_stmt *stmt = (PLtsql_stmt *) getPLtsql_fragment(ctx);
+
+		/*
+		 * The query mutator only applies to PLtsql_stmt_exec (regular EXEC
+		 * of a user procedure), which has an expr field containing the
+		 * rewritable query text.
+		 *
+		 * System procedures (sp_executesql, sp_cursor*, etc.) are handled by
+		 * makeSpStatement() and return PLtsql_stmt_exec_sp, which has a
+		 * different struct layout and no expr field. We must not cast to
+		 * PLtsql_stmt_exec in that case — the field offsets differ, especially
+		 * now that NodeTag was added as the first field of all PLtsql statement
+		 * structs for enable_antlr_parse_cache serialization support.
+		 */
+		if (stmt->cmd_type == PLTSQL_STMT_EXEC)
+		{
+			PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) stmt;
+			PLtsql_expr_query_mutator mutator(exec_stmt->expr, ctx);
+			add_rewritten_query_fragment_to_mutator(&mutator);
+			mutator.run();
+		}
 		clear_rewritten_query_fragment();
 	}
 
@@ -3862,7 +3888,7 @@ static void process_select_statement(
 		Assert(selectCtx->for_clause()->XML() || selectCtx->for_clause()->JSON());
 		if (selectCtx->for_clause()->XML()) // FOR XML
 		{
-			Assert(selectCtx->for_clause()->RAW() || selectCtx->for_clause()->PATH());
+			Assert(selectCtx->for_clause()->RAW() || selectCtx->for_clause()->PATH() || selectCtx->for_clause()->AUTO());
 		}
 		else // for JSON
 		{
@@ -4467,7 +4493,7 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	// batch-level statment can be inputted in SQL batch only (by inline_handler) or has empty body. getLineNo() will not be affected by uninitialized pltsql_curr_compile_body_lineno.
 	Assert(pltsql_curr_compile->fn_oid == InvalidOid || ctx->SEMI());
 
-	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
+	PLtsql_stmt_block *result = makeNode(PLtsql_stmt_block);
 	result->cmd_type = PLTSQL_STMT_BLOCK;
 	result->lineno = getLineNo(ctx);
 	result->label = NULL;
@@ -4476,7 +4502,7 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	result->initvarnos = nullptr;
 	result->exceptions = nullptr;
 
-	PLtsql_stmt_init *init = (PLtsql_stmt_init *) palloc0(sizeof(*init));
+	PLtsql_stmt_init *init = (PLtsql_stmt_init *) makeNode(PLtsql_stmt_init);
 	init->cmd_type = PLTSQL_STMT_INIT;
 	init->lineno = getLineNo(ctx);
 	init->label = NULL;
@@ -4525,7 +4551,7 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 bool
 handleITVFBody(TSqlParser::Func_body_return_select_bodyContext *ctx)
 {
-	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
+	PLtsql_stmt_block *result = makeNode(PLtsql_stmt_block);
 	result->cmd_type = PLTSQL_STMT_BLOCK;
 	result->lineno = getLineNo(ctx);
 	result->label = NULL;
@@ -4941,7 +4967,7 @@ toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const st
 PLtsql_stmt *
 makeExecSql(ParserRuleContext *ctx)
 {
-	PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) palloc0(sizeof(*stmt));
+	PLtsql_stmt_execsql *stmt = makeNode(PLtsql_stmt_execsql);
 
 	stmt->cmd_type = PLTSQL_STMT_EXECSQL;
 	stmt->lineno = getLineNo(ctx);
@@ -4959,7 +4985,7 @@ makeExecSql(ParserRuleContext *ctx)
 PLtsql_expr *
 makeTsqlExpr(const std::string &fragment, bool addSelect)
 {
-    PLtsql_expr *result = (PLtsql_expr *) palloc0(sizeof(*result));
+    PLtsql_expr *result = makeNode(PLtsql_expr);
 
 	if (addSelect)
 		result->query = pstrdup((fragment_SELECT_prefix + delimitIfAtAtUserVarName(fragment)).c_str());
@@ -5195,14 +5221,14 @@ makeBatch(TSqlParser::Block_statementContext *ctx, tsqlBuilder &tsql)
 {
 	breakHere();
 	
-	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
+	PLtsql_stmt_block *result = makeNode(PLtsql_stmt_block);
 
 	result->cmd_type = PLTSQL_STMT_BLOCK;
 	result->lineno = getLineNo(ctx);
 	result->label = NULL;
 	result->body = NIL;
 
-	PLtsql_stmt_init *init = (PLtsql_stmt_init *) palloc0(sizeof(*init));
+	PLtsql_stmt_init *init = (PLtsql_stmt_init *) makeNode(PLtsql_stmt_init);
 
 	init->cmd_type = PLTSQL_STMT_INIT;
 	init->lineno = getLineNo(ctx);
@@ -5233,14 +5259,14 @@ makeBatch(TSqlParser::Tsql_fileContext *ctx, tsqlBuilder &builder)
 {
 	breakHere();
 	
-	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
+	PLtsql_stmt_block *result = makeNode(PLtsql_stmt_block);
 
 	result->cmd_type = PLTSQL_STMT_BLOCK;
 	result->lineno = getLineNo(ctx);
 	result->label = NULL;
 	result->body = NIL;
 
-    PLtsql_stmt_init *init = (PLtsql_stmt_init *) palloc0(sizeof(*init));
+    PLtsql_stmt_init *init = (PLtsql_stmt_init *) makeNode(PLtsql_stmt_init);
 
 	init->cmd_type = PLTSQL_STMT_INIT;
 	init->lineno = getLineNo(ctx);
@@ -5286,7 +5312,7 @@ makeBatch(TSqlParser::Tsql_fileContext *ctx, tsqlBuilder &builder)
 void *
 makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder)
 {
-	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
+	PLtsql_stmt_block *result = makeNode(PLtsql_stmt_block);
 
 	result->cmd_type = PLTSQL_STMT_BLOCK;
 	result->lineno = getLineNo(ctx);
@@ -5302,7 +5328,7 @@ makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder)
 PLtsql_stmt_block *
 makeEmptyBlockStmt(int lineno)
 {
-	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
+	PLtsql_stmt_block *result = makeNode(PLtsql_stmt_block);
 
 	result->cmd_type = PLTSQL_STMT_BLOCK;
 	result->lineno = lineno;
@@ -5320,7 +5346,7 @@ makeBreakStmt(TSqlParser::Break_statementContext *ctx)
 {
 	PLtsql_stmt_exit	*result;
 
-	result = (PLtsql_stmt_exit *) palloc0(sizeof(*result));
+	result = makeNode(PLtsql_stmt_exit);
 	
 	result->cmd_type = PLTSQL_STMT_EXIT;
 	result->is_exit  = true;
@@ -5336,7 +5362,7 @@ makeContinueStmt(TSqlParser::Continue_statementContext *ctx)
 {
 	PLtsql_stmt_exit	*result;
 
-	result = (PLtsql_stmt_exit *) palloc0(sizeof(*result));
+	result = makeNode(PLtsql_stmt_exit);
 	
 	result->cmd_type = PLTSQL_STMT_EXIT;
 	result->is_exit  = false;
@@ -5362,7 +5388,7 @@ makeGotoStmt(TSqlParser::Goto_statementContext *ctx)
 	if (ctx->GOTO() == nullptr)
 	{
 		// This is a statement label
-		PLtsql_stmt_label *result = (PLtsql_stmt_label *) palloc0(sizeof(*result));
+		PLtsql_stmt_label *result = makeNode(PLtsql_stmt_label);
 
 		result->cmd_type = PLTSQL_STMT_LABEL;
 		result->lineno = getLineNo(ctx);
@@ -5374,7 +5400,7 @@ makeGotoStmt(TSqlParser::Goto_statementContext *ctx)
 	else
 	{
 		// This is a GOTO statement
-		PLtsql_stmt_goto *result = (PLtsql_stmt_goto *) palloc0(sizeof(*result));
+		PLtsql_stmt_goto *result = makeNode(PLtsql_stmt_goto);
 	
 		result->cmd_type = PLTSQL_STMT_GOTO;
 		result->lineno = getLineNo(ctx);
@@ -5392,7 +5418,7 @@ makeIfStmt(TSqlParser::If_statementContext *ctx)
 {
 	// IF search_condition sql_clauses (ELSE sql_clauses)? ';'?
 	
-	PLtsql_stmt_if	*result = (PLtsql_stmt_if *) palloc0(sizeof(*result));
+	PLtsql_stmt_if	*result = makeNode(PLtsql_stmt_if);
 
 	result->cmd_type = PLTSQL_STMT_IF;
 	result->lineno = getLineNo(ctx);
@@ -5410,7 +5436,7 @@ makeIfStmt(TSqlParser::If_statementContext *ctx)
 void *
 makeReturnStmt(TSqlParser::Return_statementContext *ctx)
 {
-	PLtsql_stmt_return *result = (PLtsql_stmt_return *) palloc0(sizeof(*result));
+	PLtsql_stmt_return *result = makeNode(PLtsql_stmt_return);
 
 	result->cmd_type = PLTSQL_STMT_RETURN;
 	result->lineno = getLineNo(ctx);
@@ -5448,7 +5474,7 @@ makeReturnStmt(TSqlParser::Return_statementContext *ctx)
 void *
 makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool itvf)
 {
-	PLtsql_stmt_return_query *result = (PLtsql_stmt_return_query *) palloc0(sizeof(*result));
+	PLtsql_stmt_return_query *result = (PLtsql_stmt_return_query *) makeNode(PLtsql_stmt_return_query);
 
 	result->cmd_type = PLTSQL_STMT_RETURN_QUERY;
 	result->lineno =getLineNo(ctx);
@@ -5519,7 +5545,7 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 void *
 makeThrowStmt(TSqlParser::Throw_statementContext *ctx)
 {
-	PLtsql_stmt_throw *result = (PLtsql_stmt_throw *) palloc0(sizeof(*result));
+	PLtsql_stmt_throw *result = (PLtsql_stmt_throw *) makeNode(PLtsql_stmt_throw);
 
 	result->cmd_type = PLTSQL_STMT_THROW;
 	result->lineno = getLineNo(ctx);
@@ -5538,7 +5564,7 @@ makeThrowStmt(TSqlParser::Throw_statementContext *ctx)
 void *
 makeTryCatchStmt(TSqlParser::Try_catch_statementContext *ctx)
 {
-	PLtsql_stmt_try_catch *result = (PLtsql_stmt_try_catch *) palloc0(sizeof(*result));
+	PLtsql_stmt_try_catch *result = makeNode(PLtsql_stmt_try_catch);
 
 	result->cmd_type = PLTSQL_STMT_TRY_CATCH;
 	result->lineno = getLineNo(ctx);
@@ -5558,7 +5584,7 @@ makeWaitForStmt(TSqlParser::Waitfor_statementContext *ctx)
 void *
 makeWhileStmt(TSqlParser::While_statementContext *ctx)
 {
-	PLtsql_stmt_while *result = (PLtsql_stmt_while *) palloc0(sizeof(*result));
+	PLtsql_stmt_while *result = makeNode(PLtsql_stmt_while);
 	result->cmd_type = PLTSQL_STMT_WHILE;
 
 	/* We will populate result->cond during exitSearch_condition() */
@@ -5569,7 +5595,7 @@ makeWhileStmt(TSqlParser::While_statementContext *ctx)
 void *
 makePrintStmt(TSqlParser::Print_statementContext *ctx)
 {
-	PLtsql_stmt_print *result = (PLtsql_stmt_print *) palloc0(sizeof(*result));
+	PLtsql_stmt_print *result = makeNode(PLtsql_stmt_print);
 
 	result->cmd_type = PLTSQL_STMT_PRINT;
 	result->exprs = list_make1(makeTsqlExpr(ctx->expression(), true));
@@ -5581,7 +5607,7 @@ makePrintStmt(TSqlParser::Print_statementContext *ctx)
 void *
 makeRaiseErrorStmt(TSqlParser::Raiseerror_statementContext *ctx)
 {
-	PLtsql_stmt_raiserror *result = (PLtsql_stmt_raiserror *) palloc0(sizeof(*result));
+	PLtsql_stmt_raiserror *result = (PLtsql_stmt_raiserror *) makeNode(PLtsql_stmt_raiserror);
 
 	result->cmd_type = PLTSQL_STMT_RAISERROR;
 	result->lineno   = getLineNo(ctx);
@@ -5640,7 +5666,7 @@ makeRaiseErrorStmt(TSqlParser::Raiseerror_statementContext *ctx)
 PLtsql_stmt *
 makeInitializer(int varno, int lineno, TSqlParser::ExpressionContext *val)
 {
-	PLtsql_stmt_assign *result = (PLtsql_stmt_assign *) palloc0(sizeof(*result));
+	PLtsql_stmt_assign *result = makeNode(PLtsql_stmt_assign);
 
 	result->cmd_type = PLTSQL_STMT_ASSIGN;
 	result->lineno   = lineno;
@@ -5743,7 +5769,7 @@ makeDeclTableStmt(PLtsql_variable *var, PLtsql_type *type, int lineno)
 {
 	Assert(var->dtype == PLTSQL_DTYPE_TBL);
 
-	PLtsql_stmt_decl_table *result = (PLtsql_stmt_decl_table *) palloc0(sizeof(*result));
+	PLtsql_stmt_decl_table *result = (PLtsql_stmt_decl_table *) makeNode(PLtsql_stmt_decl_table);
 	result->cmd_type = PLTSQL_STMT_DECL_TABLE;
 	result->lineno = lineno;
 	result->dno = var->dno;
@@ -5930,7 +5956,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 	}
 	else if (ctx->CURSOR())
 	{
-		PLtsql_stmt_assign *result = (PLtsql_stmt_assign *) palloc0(sizeof(*result));
+		PLtsql_stmt_assign *result = makeNode(PLtsql_stmt_assign);
 		result->cmd_type = PLTSQL_STMT_ASSIGN;
 		result->lineno = getLineNo(ctx);
 
@@ -5981,7 +6007,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 
 		if (set_special_ctx->set_on_off_option().size() > 1)
 		{
-			PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) palloc0(sizeof(PLtsql_stmt_execsql));
+			PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) makeNode(PLtsql_stmt_execsql);
 			std::string query;
 			for (auto option : set_special_ctx->set_on_off_option())
 			{
@@ -6055,7 +6081,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 				if (pg_strncasecmp(param.c_str(), "NULL", 4) == 0 || param.length() == 0 || (pg_strncasecmp(param.c_str(), "0x", 2) == 0 && param.length() - 2 > 256))
 					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "SET CONTEXT_INFO option requires varbinary (128) NOT NULL parameter.", getLineAndPos(set_special_ctx->constant_LOCAL_ID()));
 
-				PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) palloc0(sizeof(PLtsql_stmt_execsql));
+				PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) makeNode(PLtsql_stmt_execsql);
 				std::string query;
 				query += "CALL sys.bbf_set_context_info(convert(varbinary(128), ";
 				query += param;
@@ -6132,7 +6158,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			/* build target variable for this GUC, so that in backend we can identify that target is GUC */
 			PLtsql_var *target_var = build_babelfish_guc_variable(guc_ctx);
 			/* assign expression to target */
-			PLtsql_stmt_assign *result = (PLtsql_stmt_assign *) palloc0(sizeof(*result));
+			PLtsql_stmt_assign *result = makeNode(PLtsql_stmt_assign);
 			result->cmd_type = PLTSQL_STMT_ASSIGN;
 			result->lineno   = getLineNo(ctx);
 			result->varno    = target_var->dno;
@@ -6160,7 +6186,7 @@ makeSetExplainModeStatement(TSqlParser::Set_statementContext *ctx, bool is_expla
 	if (!set_special_ctx)
 		return nullptr;
 
-	stmt = (PLtsql_stmt_set_explain_mode *) palloc0(sizeof(PLtsql_stmt_set_explain_mode));
+	stmt = (PLtsql_stmt_set_explain_mode *) makeNode(PLtsql_stmt_set_explain_mode);
 	on_off = getFullText(set_special_ctx->on_off());
 	len = on_off.length();
 
@@ -6192,7 +6218,7 @@ makeSetExplainModeStatement(TSqlParser::Set_statementContext *ctx, bool is_expla
 PLtsql_stmt *
 makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 {
-	PLtsql_stmt_insert_bulk *stmt = (PLtsql_stmt_insert_bulk *) palloc0(sizeof(*stmt));
+	PLtsql_stmt_insert_bulk *stmt = (PLtsql_stmt_insert_bulk *) makeNode(PLtsql_stmt_insert_bulk);
 	TSqlParser::Bulk_insert_statementContext *bulk_ctx = ctx->bulk_insert_statement();
 	std::vector<TSqlParser::Insert_bulk_column_definitionContext *> column_list = bulk_ctx->insert_bulk_column_definition();
 	std::vector<TSqlParser::Bulk_insert_optionContext *> option_list = bulk_ctx->bulk_insert_option();
@@ -6309,7 +6335,7 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 
 	if (body->LR_BRACKET()) /* execute a character string */
 	{
-		PLtsql_stmt_exec_batch *result = (PLtsql_stmt_exec_batch *) palloc0(sizeof(*result));
+		PLtsql_stmt_exec_batch *result = (PLtsql_stmt_exec_batch *) makeNode(PLtsql_stmt_exec_batch);
 		result->cmd_type = PLTSQL_STMT_EXEC_BATCH;
 		result->lineno = getLineNo(ctx);
 
@@ -6397,7 +6423,7 @@ makeDeclareCursorStatement(TSqlParser::Declare_cursorContext *ctx)
 		curvar->isconst = true;
 	}
 
-	PLtsql_stmt_decl_cursor *result = (PLtsql_stmt_decl_cursor *) palloc0(sizeof(PLtsql_stmt_decl_cursor));
+	PLtsql_stmt_decl_cursor *result = (PLtsql_stmt_decl_cursor *) makeNode(PLtsql_stmt_decl_cursor);
 	result->cmd_type = PLTSQL_STMT_DECL_CURSOR;
 	result->lineno = getLineNo(ctx);
 	result->curvar = curvar->dno;
@@ -6415,7 +6441,7 @@ makeOpenCursorStatement(TSqlParser::Cursor_statementContext *ctx)
 	if (ctx->GLOBAL())
 		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", getLineAndPos(ctx->GLOBAL()));
 
-	PLtsql_stmt_open *result = (PLtsql_stmt_open *) palloc0(sizeof(PLtsql_stmt_open));
+	PLtsql_stmt_open *result = (PLtsql_stmt_open *) makeNode(PLtsql_stmt_open);
 	result->cmd_type = PLTSQL_STMT_OPEN;
 	result->lineno = getLineNo(ctx);
 	result->curvar = -1;
@@ -6430,7 +6456,7 @@ makeOpenCursorStatement(TSqlParser::Cursor_statementContext *ctx)
 PLtsql_stmt *
 makeFetchCursorStatement(TSqlParser::Fetch_cursorContext *ctx)
 {
-	PLtsql_stmt_fetch *result = (PLtsql_stmt_fetch *) palloc(sizeof(PLtsql_stmt_fetch));
+	PLtsql_stmt_fetch *result = (PLtsql_stmt_fetch *) makeNode(PLtsql_stmt_fetch);
 	result->cmd_type = PLTSQL_STMT_FETCH;
 	result->lineno = getLineNo(ctx);
 	result->target = NULL;
@@ -6481,7 +6507,7 @@ makeFetchCursorStatement(TSqlParser::Fetch_cursorContext *ctx)
 	if (localIDs.size() > 1024)
 		throw PGErrorWrapperException(ERROR, ERRCODE_PROGRAM_LIMIT_EXCEEDED, "too many INTO variables specified", getLineAndPos(ctx->LOCAL_ID()[0]));
 
-	PLtsql_row *row = (PLtsql_row *) palloc(sizeof(PLtsql_row));
+	PLtsql_row *row = (PLtsql_row *) makeNode(PLtsql_row);
 	row->dtype = PLTSQL_DTYPE_ROW;
 	row->refname = pstrdup("*internal*");
 	row->lineno = getLineNo(ctx);
@@ -6530,7 +6556,7 @@ makeCloseCursorStatement(TSqlParser::Cursor_statementContext *ctx)
 	if (ctx->GLOBAL())
 		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", getLineAndPos(ctx->GLOBAL()));
 
-	PLtsql_stmt_close *result = (PLtsql_stmt_close *) palloc0(sizeof(PLtsql_stmt_close));
+	PLtsql_stmt_close *result = (PLtsql_stmt_close *) makeNode(PLtsql_stmt_close);
 	result->cmd_type = PLTSQL_STMT_CLOSE;
 	result->lineno = getLineNo(ctx);
 	result->curvar = -1;
@@ -6547,7 +6573,7 @@ makeDeallocateCursorStatement(TSqlParser::Cursor_statementContext *ctx)
 	if (ctx->GLOBAL())
 		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", getLineAndPos(ctx->GLOBAL()));
 
-	PLtsql_stmt_deallocate *result = (PLtsql_stmt_deallocate *) palloc0(sizeof(PLtsql_stmt_deallocate));
+	PLtsql_stmt_deallocate *result = makeNode(PLtsql_stmt_deallocate);
 	result->cmd_type = PLTSQL_STMT_DEALLOCATE;
 	result->lineno = getLineNo(ctx);;
 	result->curvar = -1;
@@ -6579,7 +6605,7 @@ makeCursorStatement(TSqlParser::Cursor_statementContext *ctx)
 PLtsql_stmt *
 makeUseStatement(TSqlParser::Use_statementContext *ctx)
 {
-	PLtsql_stmt_usedb *result = (PLtsql_stmt_usedb *) palloc0(sizeof(PLtsql_stmt_usedb));
+	PLtsql_stmt_usedb *result = (PLtsql_stmt_usedb *) makeNode(PLtsql_stmt_usedb);
 	result->cmd_type = PLTSQL_STMT_USEDB;
 	result->lineno = getLineNo(ctx);
 
@@ -6599,7 +6625,7 @@ makeUseStatement(TSqlParser::Use_statementContext *ctx)
 PLtsql_stmt *
 makeKillStatement(TSqlParser::Kill_statementContext *ctx)
 {
-	PLtsql_stmt_kill *result = (PLtsql_stmt_kill *) palloc0(sizeof(*result));
+	PLtsql_stmt_kill *result = (PLtsql_stmt_kill *) makeNode(PLtsql_stmt_kill);
 
 	result->cmd_type = PLTSQL_STMT_KILL;
 	result->lineno = getLineNo(ctx);
@@ -6630,7 +6656,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 				auto single_perm = perm->single_permission();
 				if (single_perm->CONNECT())
 				{
-					PLtsql_stmt_grantdb *result = (PLtsql_stmt_grantdb *) palloc0(sizeof(PLtsql_stmt_grantdb));
+					PLtsql_stmt_grantdb *result = makeNode(PLtsql_stmt_grantdb);
 					result->cmd_type = PLTSQL_STMT_GRANTDB;
 					result->lineno = getLineNo(grant);
 					result->is_grant = true;
@@ -6658,7 +6684,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 		{
 			if (grant->principals() && grant->permissions())
 			{
-				PLtsql_stmt_grantschema *result = (PLtsql_stmt_grantschema *) palloc0(sizeof(PLtsql_stmt_grantschema));
+				PLtsql_stmt_grantschema *result = makeNode(PLtsql_stmt_grantschema);
 				result->cmd_type = PLTSQL_STMT_GRANTSCHEMA;
 				result->lineno = getLineNo(grant);
 				result->is_grant = true;
@@ -6723,7 +6749,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 				auto single_perm = perm->single_permission();
 				if (single_perm->CONNECT())
 				{
-					PLtsql_stmt_grantdb *result = (PLtsql_stmt_grantdb *) palloc0(sizeof(PLtsql_stmt_grantdb));
+					PLtsql_stmt_grantdb *result = makeNode(PLtsql_stmt_grantdb);
 					result->cmd_type = PLTSQL_STMT_GRANTDB;
 					result->lineno = getLineNo(revoke);
 					result->is_grant = false;
@@ -6753,7 +6779,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 		{
 			if (revoke->principals() && revoke->permissions())
 			{
-				PLtsql_stmt_grantschema *result = (PLtsql_stmt_grantschema *) palloc0(sizeof(PLtsql_stmt_grantschema));
+				PLtsql_stmt_grantschema *result = makeNode(PLtsql_stmt_grantschema);
 				result->cmd_type = PLTSQL_STMT_GRANTSCHEMA;
 				result->lineno = getLineNo(revoke);
 				result->is_grant = false;
@@ -6819,7 +6845,7 @@ makeTransactionStatement(TSqlParser::Transaction_statementContext *ctx)
 
 	PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) result;
 
-	stmt->txn_data = (PLtsql_txn_data *) palloc0(sizeof(PLtsql_txn_data));
+	stmt->txn_data = (PLtsql_txn_data *) makeNode(PLtsql_txn_data);
 	auto *localID = ctx->local_id();
 	if (localID)
 	{
@@ -7032,7 +7058,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	}
 	
 	// Build the statement
-	PLtsql_stmt_exec *result = (PLtsql_stmt_exec *) palloc0(sizeof(*result));
+	PLtsql_stmt_exec *result = (PLtsql_stmt_exec *) makeNode(PLtsql_stmt_exec);
 	result->cmd_type = PLTSQL_STMT_EXEC;
 	result->lineno = lineno;
 	result->is_call = true;
@@ -7137,7 +7163,7 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 PLtsql_stmt*
 makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 {
-	PLtsql_stmt_dbcc *stmt = (PLtsql_stmt_dbcc *) palloc0(sizeof(*stmt));
+	PLtsql_stmt_dbcc *stmt = makeNode(PLtsql_stmt_dbcc);
 
 	std::string	new_reseed_value;
 	std::string	input_str;
@@ -7259,7 +7285,7 @@ PLtsql_row *
 create_select_target_row(const char *refname, size_t nfields, int lineno)
 {
 	/* prepare target if it is not ready */
-	PLtsql_row *target = (PLtsql_row *) palloc0(sizeof(*target));
+	PLtsql_row *target = makeNode(PLtsql_row);
 	target->dtype = PLTSQL_DTYPE_ROW;
 	target->refname = (char *) refname;
 	target->lineno = lineno;
@@ -7971,7 +7997,7 @@ getDatabaseSchemaAndTableName(TSqlParser::Table_nameContext* tctx)
 PLtsql_stmt *
 makeCreatePartitionFunction(TSqlParser::Create_partition_functionContext *ctx)
 {
-	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) palloc(sizeof(PLtsql_stmt_partition_function));
+	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) makeNode(PLtsql_stmt_partition_function);
 	std::string typeStr = ::getFullText(ctx->data_type());
 	PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);
 	
@@ -8005,7 +8031,7 @@ return (PLtsql_stmt *) stmt;
 PLtsql_stmt *
 makeDropPartitionFunction(TSqlParser::Drop_partition_functionContext *ctx)
 {
-	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) palloc(sizeof(PLtsql_stmt_partition_function));
+	PLtsql_stmt_partition_function *stmt = (PLtsql_stmt_partition_function *) makeNode(PLtsql_stmt_partition_function);
 	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
 	stmt->lineno = getLineNo(ctx);
 	stmt->cmd_type = PLTSQL_STMT_PARTITION_FUNCTION;
@@ -8018,7 +8044,7 @@ makeDropPartitionFunction(TSqlParser::Drop_partition_functionContext *ctx)
 PLtsql_stmt *
 makeCreatePartitionScheme(TSqlParser::Create_partition_schemeContext *ctx)
 {
-	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) palloc(sizeof(PLtsql_stmt_partition_scheme));
+	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) makeNode(PLtsql_stmt_partition_scheme);
 	stmt->scheme_name = pstrdup(stripQuoteFromId(ctx->id()[0]).c_str());
 	stmt->function_name = pstrdup(stripQuoteFromId(ctx->id()[1]).c_str());
 	stmt->is_create = true;
@@ -8037,7 +8063,7 @@ makeCreatePartitionScheme(TSqlParser::Create_partition_schemeContext *ctx)
 PLtsql_stmt *
 makeDropPartitionScheme(TSqlParser::Drop_partition_schemeContext *ctx)
 {
-	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) palloc(sizeof(PLtsql_stmt_partition_scheme));
+	PLtsql_stmt_partition_scheme *stmt = (PLtsql_stmt_partition_scheme *) makeNode(PLtsql_stmt_partition_scheme);
 	stmt->is_create = false;
 	stmt->scheme_name = pstrdup(stripQuoteFromId(ctx->id()).c_str());
 	stmt->lineno = getLineNo(ctx);
@@ -8050,7 +8076,7 @@ makeDropPartitionScheme(TSqlParser::Drop_partition_schemeContext *ctx)
 PLtsql_stmt *
 makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx)
 {
-	PLtsql_stmt_fulltextindex *stmt = (PLtsql_stmt_fulltextindex *) palloc0(sizeof(PLtsql_stmt_fulltextindex));
+	PLtsql_stmt_fulltextindex *stmt = (PLtsql_stmt_fulltextindex *) makeNode(PLtsql_stmt_fulltextindex);
 	stmt->cmd_type = PLTSQL_STMT_FULLTEXTINDEX;
 	stmt->lineno = getLineNo(ctx);
 	stmt->is_create = true;
@@ -8098,7 +8124,7 @@ makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx)
 PLtsql_stmt *
 makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx)
 {
-	PLtsql_stmt_fulltextindex *stmt = (PLtsql_stmt_fulltextindex *) palloc0(sizeof(PLtsql_stmt_fulltextindex));
+	PLtsql_stmt_fulltextindex *stmt = (PLtsql_stmt_fulltextindex *) makeNode(PLtsql_stmt_fulltextindex);
 	stmt->cmd_type = PLTSQL_STMT_FULLTEXTINDEX;
 	stmt->lineno = getLineNo(ctx);
 	stmt->is_create = false;
@@ -8125,6 +8151,20 @@ post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_exec
 		removeTokenStringFromQuery(stmt->sqlstmt, ctx->COLUMNSTORE(), baseCtx);
 	if (ctx->with_index_options() && !ctx->vector_index_method()) /* Vector indexes can have With clause. */
 		removeCtxStringFromQuery(stmt->sqlstmt, ctx->with_index_options(), baseCtx);
+
+	return false;
+}
+
+static bool
+post_process_create_spatial_index(TSqlParser::Create_spatial_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
+{
+	/* Remove USING clause (GEOMETRY_GRID, GEOGRAPHY_GRID, etc.) */
+	if (ctx->spatial_grid_clause())
+		removeCtxStringFromQuery(stmt->sqlstmt, ctx->spatial_grid_clause(), baseCtx);
+
+	/* Remove WITH clause (BOUNDING_BOX, CELLS_PER_OBJECT, GRIDS, etc.) */
+	if (ctx->spatial_grid_option_clause())
+		removeCtxStringFromQuery(stmt->sqlstmt, ctx->spatial_grid_option_clause(), baseCtx);
 
 	return false;
 }
@@ -8318,7 +8358,7 @@ build_cursor_variable(const char *curname, int lineno)
 	StringInfoData ds;
 	initStringInfo(&ds);
 	char		*cp1;
-	PLtsql_expr *curname_def = (PLtsql_expr *) palloc0(sizeof(PLtsql_expr));
+	PLtsql_expr *curname_def = makeNode(PLtsql_expr);
 	appendStringInfo(&ds, "SELECT ");
 	cp1 = curvar->refname;
 	/*
@@ -8406,7 +8446,7 @@ makeSpStatement(const std::string& name_str, TSqlParser::Execute_statement_argCo
 
 	std::vector<tsql_exec_param *> params;
 
-	PLtsql_stmt_exec_sp *result = (PLtsql_stmt_exec_sp *) palloc0(sizeof(*result));
+	PLtsql_stmt_exec_sp *result = (PLtsql_stmt_exec_sp *) makeNode(PLtsql_stmt_exec_sp);
 	result->cmd_type = PLTSQL_STMT_EXEC_SP;
 	result->lineno = lineno;
 	result->return_code_dno = return_code_dno;
@@ -8621,7 +8661,7 @@ makeSpParam(TSqlParser::Execute_statement_arg_namedContext *ctx)
 	TSqlParser::Execute_parameterContext *exec_param = ctx->execute_parameter();
 	Assert(exec_param && ctx->local_id());
 
-	tsql_exec_param *p = (tsql_exec_param *) palloc0(sizeof(*p));
+	tsql_exec_param *p = (tsql_exec_param *) makeNode(tsql_exec_param);
 	std::string targetText = ::getFullText(ctx->local_id());
 	p->name = pstrdup(targetText.c_str());
 	p->varno = -1;
@@ -8648,7 +8688,7 @@ makeSpParam(TSqlParser::Execute_statement_arg_unnamedContext *ctx)
 	TSqlParser::Execute_parameterContext *exec_param = ctx->execute_parameter();
 	Assert(exec_param);
 
-	tsql_exec_param *p = (tsql_exec_param *) palloc0(sizeof(*p));
+	tsql_exec_param *p = (tsql_exec_param *) makeNode(tsql_exec_param);
 	p->name = NULL;
 	p->varno = -1;
 	p->mode = FUNC_PARAM_IN;
@@ -9059,6 +9099,505 @@ extract_xml_value_typearg(TSqlParser::ExpressionContext *expression)
 }
 
 /*
+ * True if s is a plain numeric literal (e.g. 100, 100.5, .5, 1e3, 1.5E-2).
+ * Used to distinguish a decimal threshold like 100.5 from a property access
+ * like @var.STX, both of which contain a '.'.
+ */
+static bool
+is_numeric_literal(const std::string &s)
+{
+	if (s.empty())
+		return false;
+
+	size_t i = 0;
+	if (s[i] == '+' || s[i] == '-')
+		++i;
+
+	bool seen_digit = false;
+	bool seen_dot = false;
+	for (; i < s.size(); ++i)
+	{
+		char c = s[i];
+		if (c >= '0' && c <= '9')
+		{
+			seen_digit = true;
+		}
+		else if (c == '.' && !seen_dot)
+		{
+			seen_dot = true;
+		}
+		else if ((c == 'e' || c == 'E') && seen_digit)
+		{
+			++i;
+			if (i < s.size() && (s[i] == '+' || s[i] == '-'))
+				++i;
+			bool seen_exp_digit = false;
+			for (; i < s.size(); ++i)
+			{
+				if (s[i] >= '0' && s[i] <= '9')
+					seen_exp_digit = true;
+				else
+					return false;
+			}
+			return seen_exp_digit;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	return seen_digit;
+}
+
+/* Find the comparison operator and threshold value around an STDistance call (e.g. `< 100`). */
+template<class T>
+static bool
+extract_distance_predicate_info(T ctx, std::string &comp_operator, std::string &comp_value, bool &dist_on_lhs_out)
+{
+	auto *parent = dynamic_cast<antlr4::ParserRuleContext *>(ctx->parent);
+	while (parent)
+	{
+		auto *pred = dynamic_cast<TSqlParser::PredicateContext *>(parent);
+		if (pred)
+		{
+			if (pred->comparison_operator() && pred->expression().size() == 2)
+			{
+				std::string op = ::getFullText(pred->comparison_operator());
+				auto *lhs = pred->expression().front();
+				auto *rhs = pred->expression().back();
+
+				/*
+				 * Figure out which side of the comparison the STDistance call
+				 * is on, so the caller can decide whether pre-filter injection
+				 * is safe for this predicate shape.
+				 */
+				size_t ctx_start = ctx->start->getStartIndex();
+				bool dist_on_lhs = (ctx_start >= lhs->start->getStartIndex() && ctx_start <= lhs->stop->getStopIndex());
+
+				if (dist_on_lhs && (op == "<" || op == "<="))
+				{
+					comp_operator = op;
+					comp_value = ::getFullText(rhs);
+					/*
+					 * Reject property access like @var.STX, but allow decimal
+					 * literals like 100.5.
+					 *
+					 * The threshold is later textually duplicated into the
+					 * ST_Expand prefilter and the STDistance recheck; volatile
+					 * thresholds (random(), nextval(), VOLATILE UDFs, subqueries)
+					 * are rejected at injection time by is_deterministic_threshold()
+					 * so the two copies cannot diverge and drop rows. Deterministic
+					 * arithmetic such as `(2 * @f)` remains eligible.
+					 */
+					if (comp_value.find('.') != std::string::npos && !is_numeric_literal(comp_value))
+						return false;
+					/* The STDistance call must be the LHS operand directly (modulo
+					 * grouping parens), not wrapped in CAST(...) / ABS(...) / "+ 0" /
+					 * COALESCE(...) / a CASE — a wrapper makes the && prefilter useless
+					 * and often a type error. */
+					if (!operand_is_spatial_method(lhs, dynamic_cast<antlr4::ParserRuleContext *>(ctx)))
+						return false;
+					dist_on_lhs_out = true;
+					return true;
+				}
+
+				if (!dist_on_lhs && (op == ">" || op == ">="))
+				{
+					comp_operator = (op == ">") ? "<" : "<=";
+					comp_value = ::getFullText(lhs);
+					/* Same property-access guard as the dist-on-lhs branch; volatile
+					 * thresholds are rejected later by is_deterministic_threshold(). */
+					if (comp_value.find('.') != std::string::npos && !is_numeric_literal(comp_value))
+						return false;
+					/* Reversed form (threshold > col.STDistance(...)): the STDistance
+					 * call must be the RHS operand directly (modulo parens), same
+					 * wrapper guard as the dist-on-lhs branch. */
+					if (!operand_is_spatial_method(rhs, dynamic_cast<antlr4::ParserRuleContext *>(ctx)))
+						return false;
+					dist_on_lhs_out = false;
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/* Stop climbing if we leave the predicate area */
+		if (dynamic_cast<TSqlParser::Search_conditionContext *>(parent))
+			return false;
+
+		parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
+	}
+	return false;
+}
+
+
+/* Slice the first method argument out of the already-rewritten expression. */
+static std::string
+slice_first_arg_from_rewritten_expr(antlr4::ParserRuleContext *first_expr_node,
+									const std::string &expr,
+									int ctx_start,
+									int offset1,
+									const std::vector<std::pair<int, int>> &arg_offset_list)
+{
+	int first_arg_start_abs = first_expr_node->start->getStartIndex();
+	int first_arg_stop_abs = first_expr_node->stop->getStopIndex();
+
+	int start_off = 0;
+	int end_off = 0;
+	for (auto &p : arg_offset_list)
+	{
+		if (p.first < first_arg_start_abs) start_off += p.second;
+		if (p.first < first_arg_stop_abs)  end_off   += p.second;
+	}
+
+	int start_in_expr = first_arg_start_abs - ctx_start + offset1 + start_off;
+	int end_in_expr   = first_arg_stop_abs  - ctx_start + offset1 + end_off;
+
+	if (start_in_expr >= 0
+		&& end_in_expr >= start_in_expr
+		&& (size_t)end_in_expr < expr.size())
+		return expr.substr(start_in_expr, end_in_expr - start_in_expr + 1);
+
+	return "";
+}
+
+/*
+ * Add a cheap bounding-box check (&&) before the spatial predicate so the GiST index can be used.
+ *
+ * Only the && term is parenthesized — NOT the whole expression. The comparison
+ * operator and RHS (e.g. "= 1") are appended by the surrounding predicate context
+ * after this fragment, so wrapping the whole thing would attach "= 1" to the AND
+ * expression (boolean = 1 type error). Wrapping just the && term is precedence-safe.
+ */
+static std::string
+maybe_inject_spatial_bbox_filter(const std::string &spatial_func_name, const std::string &col_ref, const std::string &first_arg, const std::string &rewritten_call)
+{
+	/* Only these methods benefit from && pre-filtering */
+	if (pg_strcasecmp(spatial_func_name.c_str(), "STIntersects") != 0 &&
+		pg_strcasecmp(spatial_func_name.c_str(), "STContains") != 0 &&
+		pg_strcasecmp(spatial_func_name.c_str(), "STWithin") != 0 &&
+		pg_strcasecmp(spatial_func_name.c_str(), "STOverlaps") != 0 &&
+		pg_strcasecmp(spatial_func_name.c_str(), "STTouches") != 0 &&
+		pg_strcasecmp(spatial_func_name.c_str(), "STEquals") != 0 &&
+		pg_strcasecmp(spatial_func_name.c_str(), "STCrosses") != 0)
+	{
+		return rewritten_call;
+	}
+
+	if (first_arg.empty())
+		return rewritten_call;
+
+	return "(" + col_ref + " OPERATOR(sys.&&) " + first_arg + ") AND " + rewritten_call;
+}
+
+/*
+ * A single T-SQL LOCAL_ID token: '@' followed by one or more identifier chars.
+ * Used to gate the @-prefix quoting below — compound expressions like
+ * "@var + 1" or "@@SPID" would otherwise be wrapped into a malformed quoted
+ * identifier ("@var + 1") and fail at execution time. For anything that is
+ * not a plain LOCAL_ID, the safe fallback is to skip the prefilter entirely.
+ */
+static bool
+is_single_local_id_token(const std::string &s)
+{
+	if (s.size() < 2 || s.front() != '@')
+		return false;
+	for (size_t i = 1; i < s.size(); ++i)
+	{
+		unsigned char c = static_cast<unsigned char>(s[i]);
+		if (!std::isalnum(c) && c != '_')
+			return false;
+	}
+	return true;
+}
+
+/*
+ * The distance threshold text is duplicated into both the ST_Expand prefilter
+ * and the STDistance recheck. That is only safe when the expression evaluates
+ * identically each time it runs. A scalar SQL expression is non-deterministic
+ * only via a volatile function call (random(), nextval(), a VOLATILE UDF) or a
+ * subquery, or a T-SQL session global (@@ROWCOUNT, @@SPID, ...); literals,
+ * @vars, and arithmetic over them are deterministic and safe to duplicate. We
+ * therefore reject any threshold that contains a function call (an identifier
+ * immediately followed by '('), a SELECT subquery, or an @@-global, and fall
+ * back to the un-prefiltered predicate — which is exactly the (correct,
+ * un-accelerated) plan PostgreSQL would choose for a volatile threshold anyway.
+ *
+ * Conservative by design: a STABLE/IMMUTABLE UDF would be safe to duplicate,
+ * but volatility cannot be determined from the parse text, so all name(...)
+ * calls are rejected. This trades a missed optimization (never correctness) for
+ * the safe ones.
+ */
+static bool
+is_deterministic_threshold(const std::string &s)
+{
+	/*
+	 * Reject T-SQL session globals (@@ROWCOUNT, @@SPID, @@IDENTITY, @@ERROR).
+	 * These are non-deterministic, use the @@name syntax (no parens, so the
+	 * function-call check below misses them), and reflect prior-statement state
+	 * that can differ between the two duplicated copies.
+	 */
+	if (s.find("@@") != std::string::npos)
+		return false;
+
+	/* Reject a SELECT subquery (case-insensitive whole-word match). */
+	for (size_t i = 0; i + 6 <= s.size(); ++i)
+	{
+		if (pg_strncasecmp(s.c_str() + i, "select", 6) == 0)
+		{
+			unsigned char before = (i == 0) ? ' ' : static_cast<unsigned char>(s[i - 1]);
+			unsigned char after  = (i + 6 < s.size()) ? static_cast<unsigned char>(s[i + 6]) : ' ';
+			if (!std::isalnum(before) && before != '_' &&
+				!std::isalnum(after)  && after  != '_')
+				return false;
+		}
+	}
+
+	/* Reject a function call: an identifier character run ending at '(' . */
+	for (size_t i = 0; i < s.size(); ++i)
+	{
+		if (s[i] != '(')
+			continue;
+		/* Skip whitespace immediately before '(' . */
+		size_t j = i;
+		while (j > 0 && std::isspace(static_cast<unsigned char>(s[j - 1])))
+			--j;
+		/* If the char before that is an identifier char, this '(' is a call. */
+		if (j > 0)
+		{
+			unsigned char prev = static_cast<unsigned char>(s[j - 1]);
+			if (std::isalnum(prev) || prev == '_')
+				return false;
+		}
+	}
+
+	return true;
+}
+
+/*
+ * Add a bounding-box check using ST_Expand so the GiST index can filter by distance.
+ *
+ * Known limitation (TODO: BABEL-6465 — to be addressed in a follow-up PR): for sys.GEOGRAPHY columns,
+ * STDistance returns meters but sys.ST_Expand(geography, ...) is currently bound
+ * to the cartesian LWGEOM_expand which treats the distance as degrees. The bbox
+ * prefilter is always correct (no false negatives, since the original predicate
+ * is retained as a recheck) but is extremely unselective for geography — it
+ * expands by N degrees instead of N meters, producing a bbox far larger than
+ * needed. Geography distance prefilter should either skip injection or rebind
+ * to a geodetic expander for meaningful selectivity.
+ */
+static std::string
+maybe_inject_spatial_distance_filter(const std::string &col_ref, const std::string &first_arg, const std::string &distance_value, const std::string &rewritten_call)
+{
+	/*
+	 * The threshold is textually duplicated below; skip the prefilter when it is
+	 * non-deterministic (volatile function call or subquery), else the two copies
+	 * could differ per row and silently drop matching rows.
+	 */
+	if (!is_deterministic_threshold(distance_value))
+		return rewritten_call;
+
+	std::string quoted_distance = distance_value;
+	if (!distance_value.empty() && distance_value.front() == '@')
+	{
+		if (!is_single_local_id_token(distance_value))
+			return rewritten_call;
+		quoted_distance = "\"" + distance_value + "\"";
+	}
+
+	/* Parenthesize only the && term; the comparison op/RHS is appended by the
+	 * surrounding predicate, so a full wrap would mis-bind it (see bbox filter note).
+	 * Result: (col OPERATOR(sys.&&) sys.ST_Expand(arg, CAST(d AS float8))) AND rewritten_call
+	 * (the trailing ")))" closes CAST, ST_Expand, and the && wrap respectively). */
+	return "(" + col_ref + " OPERATOR(sys.&&) sys.ST_Expand(" + first_arg + ", " + "CAST(" + quoted_distance + " AS float8))) AND " + rewritten_call;
+}
+
+
+/*
+ * Shared distance-prefilter dispatcher used by both rewrite_dot_func_ref_args_query_helper
+ * and rewrite_function_call_dot_func_ref_args. Verifies the predicate is
+ * STDistance(...) op threshold and delegates to maybe_inject_spatial_distance_filter.
+ */
+template<class T>
+static std::string
+maybe_inject_spatial_distance_filter_for_ctx(T ctx, const std::string &spatial_func_name, const std::string &col_ref, const std::string &first_arg, const std::string &rewritten_call)
+{
+	if (pg_strcasecmp(spatial_func_name.c_str(), "STDistance") != 0)
+		return rewritten_call;
+
+	if (first_arg.empty())
+		return rewritten_call;
+
+	std::string comp_operator;
+	std::string comp_value;
+	bool dist_on_lhs = false;
+
+	if (!extract_distance_predicate_info(ctx, comp_operator, comp_value, dist_on_lhs)
+		|| !dist_on_lhs)
+		return rewritten_call;
+
+	return maybe_inject_spatial_distance_filter(col_ref, first_arg, comp_value, rewritten_call);
+}
+
+/*
+ * True iff the comparison operand `operand` IS EXACTLY the spatial method call
+ * `ctx` — same start and stop — so the method is the bare comparison operand and
+ * nothing wraps it.
+ *
+ * The prefilter injection is textual: it emits "(col && arg) AND <method> " in
+ * place of the method and relies on the comparison ("= 1" / "< thr") following
+ * immediately. Any wrapper around the method breaks that assumption:
+ *   - a transforming wrapper (CAST(...), col.STFn(...) + 0, COALESCE(...), CASE)
+ *     makes the method a scalar argument — injection is useless and a type error;
+ *   - even redundant grouping parens, e.g. (col.STFn(...)) = 1, move the "= 1"
+ *     outside the parens, so the injected "(col && arg) AND STFn(...)" is left as
+ *     a bare boolean-AND-bit inside the parens and fails to type-check.
+ * In all those cases we must NOT inject; requiring an exact span match rejects
+ * them and the bare predicate runs correctly (just without the index push-down).
+ */
+static bool
+operand_is_spatial_method(antlr4::ParserRuleContext *operand, antlr4::ParserRuleContext *ctx)
+{
+	return operand->start->getStartIndex() == ctx->start->getStartIndex() &&
+		   operand->stop->getStopIndex()  == ctx->stop->getStopIndex();
+}
+
+/*
+ * Check if the spatial call is in a `col.STFn(...) = 1` predicate (only this
+ * form gets index optimization).
+ *
+ * Known limitation: the reversed form `1 = col.STFn(...)` is NOT detected here
+ * and falls back to a sequential scan. Both forms return identical results, so
+ * this is a missed optimization, not a correctness issue. Users migrating
+ * legacy T-SQL that writes the literal on the LHS may notice the perf gap;
+ * rewriting the predicate as `col.STFn(...) = 1` restores the index push-down.
+ * Tracked in BABEL-6665.
+ */
+template<class T>
+static bool
+is_spatial_predicate_eq_one(T ctx)
+{
+	auto *parent = dynamic_cast<antlr4::ParserRuleContext *>(ctx->parent);
+	while (parent)
+	{
+		auto *pred = dynamic_cast<TSqlParser::PredicateContext *>(parent);
+		if (pred)
+		{
+			if (pred->comparison_operator() && pred->expression().size() == 2)
+			{
+				std::string op = ::getFullText(pred->comparison_operator());
+				if (op != "=")
+					return false;
+
+				auto *lhs = pred->expression().front();
+				auto *rhs = pred->expression().back();
+
+				/*
+				 * The spatial method must be the LHS operand DIRECTLY, not
+				 * transformed by a wrapper — CAST(...), col.STFn(...) + 0, ABS(...),
+				 * COALESCE(...), a CASE, or even redundant grouping parens (which push
+				 * the "= 1" outside them). A wrapper makes the method a scalar argument,
+				 * not the comparison operand: injecting && there is useless (not
+				 * sargable) and a type error ("argument of AND must be type boolean").
+				 */
+				if (!operand_is_spatial_method(lhs, dynamic_cast<antlr4::ParserRuleContext *>(ctx)))
+					return false;
+
+				std::string rhs_str = ::getFullText(rhs);
+				size_t first = rhs_str.find_first_not_of(" \t\n\r\f\v");
+				if (first == std::string::npos)
+					return false;
+				size_t last = rhs_str.find_last_not_of(" \t\n\r\f\v");
+				rhs_str = rhs_str.substr(first, last - first + 1);
+
+				return rhs_str == "1";
+			}
+			return false;
+		}
+
+		/* Stop climbing if we leave the predicate area */
+		if (dynamic_cast<TSqlParser::Search_conditionContext *>(parent))
+			return false;
+
+		parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
+	}
+	return false;
+}
+
+template<class T>
+static bool
+is_spatial_predicate_negated(T ctx)
+{
+	auto *parent = dynamic_cast<antlr4::ParserRuleContext *>(ctx->parent);
+	while (parent)
+	{
+		/* Stop at the innermost predicate_br and inspect only its NOT list. */
+		auto *pred_br = dynamic_cast<TSqlParser::Predicate_brContext *>(parent);
+		if (pred_br)
+			return !pred_br->NOT().empty();
+
+		/* Stop climbing if we leave the predicate area */
+		if (dynamic_cast<TSqlParser::Search_conditionContext *>(parent))
+			return false;
+
+		parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
+	}
+	return false;
+}
+
+/*
+ * Check if a parse tree node is inside a predicate context
+ * (WHERE, JOIN ON, HAVING) where injecting && is safe.
+ */
+template<class T>
+static bool
+is_in_spatial_predicate_context(T ctx)
+{
+	auto *parent = dynamic_cast<antlr4::ParserRuleContext *>(ctx->parent);
+	while (parent)
+	{
+		/*
+		 * Scalar / conditional wrapper between the method and its predicate: the
+		 * method is being consumed as an argument, not used as a boolean operand.
+		 * Covers IIF, simple CASE (CASE <expr> WHEN ...), and the whole CASE-like
+		 * function family (COALESCE, ISNULL, NULLIF, CHOOSE, ...). Reached before
+		 * the enclosing search_condition
+		 */
+		if (dynamic_cast<TSqlParser::Function_callContext *>(parent) ||
+			dynamic_cast<TSqlParser::Built_in_functionsContext *>(parent) ||
+			dynamic_cast<TSqlParser::Case_expressionContext *>(parent))
+			return false;
+
+		if (auto *sc = dynamic_cast<TSqlParser::Search_conditionContext *>(parent))
+		{
+			/*
+			 * A search_condition that is itself the argument of a conditional —
+			 * a searched CASE branch (CASE WHEN <sc> ...) or an IIF(<sc>, ...) —
+			 * is not index-sargable, so skip injection. A real WHERE / HAVING /
+			 * JOIN ON / IF search_condition (parent is neither) is eligible.
+			 */
+			if (dynamic_cast<TSqlParser::Switch_search_condition_sectionContext *>(sc->parent) ||
+				dynamic_cast<TSqlParser::IIFContext *>(sc->parent))
+				return false;
+			return true;
+		}
+		if (dynamic_cast<TSqlParser::Select_list_elemContext *>(parent) ||
+			dynamic_cast<TSqlParser::Expression_listContext *>(parent) ||
+			dynamic_cast<TSqlParser::Declare_localContext *>(parent) ||
+			dynamic_cast<TSqlParser::Set_statementContext *>(parent) ||
+			dynamic_cast<TSqlParser::Print_statementContext *>(parent) ||
+			dynamic_cast<TSqlParser::Update_elemContext *>(parent) ||
+			dynamic_cast<TSqlParser::Insert_statementContext *>(parent) ||
+			dynamic_cast<TSqlParser::Return_statementContext *>(parent) ||
+			dynamic_cast<TSqlParser::Create_or_alter_procedureContext *>(parent) ||
+			dynamic_cast<TSqlParser::Create_or_alter_functionContext *>(parent))
+			return false;
+		parent = dynamic_cast<antlr4::ParserRuleContext *>(parent->parent);
+	}
+	return false;
+}
+
+/*
  * In this helper function we Rewrite the Query for XML and Geospatial Handling
  * For Func_Ref Functions with args (such as EXIST(arg), STDistance(arg)) : ColRef.Func_name(arg_list)  ->  Func_name(arg_list, ColRef)
  * 
@@ -9145,6 +9684,8 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 				expr = expr.substr(0, local_index) + "\"" + entry.second + "\"" + expr.substr(local_index + entry.second.size());
 				offset2 += 2;
 				local_id_end_offset += 2;
+				/* Record local_id quoting delta so first_arg slicing below sees it. */
+				arg_offset_list.push_back(std::make_pair((int)entry.first, 2));
 			}
 		}
 	}
@@ -9156,6 +9697,31 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	{
 		rewritten_exp = "cast(" + rewritten_exp + " as " + typename_arg + ")";
 	}
+
+	/* Inject spatial pre-filters (bbox / distance) for predicates like
+	 * col.STIntersects(...) = 1 or col.STDistance(...) < threshold.
+	 */
+	if (method->spatial_methods()
+		&& method->spatial_methods()->geospatial_func_arg()
+		&& method->spatial_methods()->expression_list()
+		&& !method->spatial_methods()->expression_list()->expression().empty()
+		&& is_in_spatial_predicate_context(ctx)
+		&& !is_spatial_predicate_negated(ctx))
+	{
+		std::string spatial_func_name = ::getFullText(method->spatial_methods()->geospatial_func_arg());
+		std::string col_ref = expr.substr(0, func_call_len + offset1 + 1);
+
+		std::string first_arg = slice_first_arg_from_rewritten_expr(
+			method->spatial_methods()->expression_list()->expression().front(),
+			expr, ctx->start->getStartIndex(), offset1, arg_offset_list);
+
+		if (is_spatial_predicate_eq_one(ctx))
+			rewritten_exp = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, first_arg, rewritten_exp);
+
+		rewritten_exp = maybe_inject_spatial_distance_filter_for_ctx(
+			ctx, spatial_func_name, col_ref, first_arg, rewritten_exp);
+	}
+
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
 }
 
@@ -9390,6 +9956,8 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 				expr = expr.substr(0, local_index) + "\"" + entry.second + "\"" + expr.substr(local_index + entry.second.size());
 				offset2 += 2;
 				local_id_end_offset += 2;
+				/* Record local_id quoting delta so first_arg slicing below sees it. */
+				arg_offset_list.push_back(std::make_pair((int)entry.first, 2));
 			}
 		}
 	}
@@ -9405,6 +9973,31 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	{
 		rewritten_func = "cast(" + rewritten_func + " as " + typename_arg + ")";
 	}
+
+	/* Inject spatial pre-filters (bbox / distance) for predicates like
+	 * col.STIntersects(...) = 1 or col.STDistance(...) < threshold.
+	 */
+	if (ctx->spatial_proc_name_server_database_schema()
+		&& ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()
+		&& ctx->function_arg_list()
+		&& !ctx->function_arg_list()->expression().empty()
+		&& is_in_spatial_predicate_context(ctx)
+		&& !is_spatial_predicate_negated(ctx))
+	{
+		std::string spatial_func_name = ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg());
+		std::string col_ref = expr.substr(0, col_len + offset1 + 1);
+
+		std::string first_arg = slice_first_arg_from_rewritten_expr(
+			ctx->function_arg_list()->expression().front(),
+			expr, ctx->start->getStartIndex(), offset1, arg_offset_list);
+
+		if (is_spatial_predicate_eq_one(ctx))
+			rewritten_func = maybe_inject_spatial_bbox_filter(spatial_func_name, col_ref, first_arg, rewritten_func);
+
+		rewritten_func = maybe_inject_spatial_distance_filter_for_ctx(
+			ctx, spatial_func_name, col_ref, first_arg, rewritten_func);
+	}
+
 	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
 }
 
@@ -9457,6 +10050,10 @@ validateXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSqlParser::E
 	/* XML VALUE function requires only 2 argument */
 	if (xml_func->VALUE() && (expr_list == NULL || expr_list->expression().size() != 2))
 		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The value function requires 2 argument(s).", getLineAndPos(xml_func));
+
+	/* XML QUERY function requires only 1 argument */
+	if (xml_func->QUERY() && (expr_list == NULL || expr_list->expression().size() != 1))
+		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The query function requires 1 argument(s).", getLineAndPos(xml_func));
 
 	/* Only String Literal is allowed as agument for XML Functions */
 	if (expr_list)
@@ -9716,7 +10313,7 @@ escapeDoubleQuotes(const std::string strWithDoubleQuote)
 PLtsql_stmt *
 makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx)
 {
-	PLtsql_stmt_change_dbowner *result = (PLtsql_stmt_change_dbowner *) palloc0(sizeof(*result));
+	PLtsql_stmt_change_dbowner *result = makeNode(PLtsql_stmt_change_dbowner);
 
 	result->cmd_type = PLTSQL_STMT_CHANGE_DBOWNER;
 	result->lineno = getLineNo(ctx);
@@ -9735,7 +10332,7 @@ makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx)
 static PLtsql_stmt *
 makeAlterDatabaseStatement(TSqlParser::Alter_databaseContext *ctx)
 {
-	PLtsql_stmt_alter_db *result = (PLtsql_stmt_alter_db *) palloc0(sizeof(*result));
+	PLtsql_stmt_alter_db *result = makeNode(PLtsql_stmt_alter_db);
 
 	result->cmd_type = PLTSQL_STMT_ALTER_DB;
 	result->lineno = getLineNo(ctx);

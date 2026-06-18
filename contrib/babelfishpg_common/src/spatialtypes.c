@@ -13,6 +13,7 @@
 #include "utils/builtins.h"
 #include "utils/array.h"
 #include "utils/datum.h"
+#include "utils/memutils.h"
 #include "catalog/pg_type.h"
 #include "spatialtypes.h"
 
@@ -27,6 +28,7 @@ static void load_functions();
 #define LINE_TYPE        2  /* Identifier for Linestring geometry type */
 #define POLYGON_TYPE     3  /* Identifier for Polygon geometry type */
 #define MULTIPOINT_TYPE  4  /* Identifier for MultiPoint geometry type */
+#define MULTILINESTRING_TYPE 5  /* Identifier for MultiLineString geometry type */
 
 #define SRID_UNKNOWN_VAL    0
 #define GSERIALIZED_HDR_SIZE  8  /* offsetof(GSERIALIZED, data) */
@@ -72,10 +74,11 @@ static void load_functions();
 #define POSTGIS_HEADER_SIZE      5      /* Size of the postgis header in bytes */
 #define SRID_SIZE                4      /* Size of the SRID field in bytes */
 #define HEADER_DIMENSION_POS     4      /* Position of dimension info in header */
-#define EMPTY_POINT_TYPE_LASTBYTE       0x01    /* Type identifier for empty point */
-#define EMPTY_LINE_TYPE_LASTBYTE        0x02    /* Type identifier for empty linestring */
-#define EMPTY_POLYGON_TYPE_LASTBYTE     0x03    /* Type identifier for empty polygon */
-#define EMPTY_MULTIPOINT_TYPE_LASTBYTE  0x04    /* Type identifier for empty Multipoint */
+#define EMPTY_POINT_TYPE_LASTBYTE            0x01    /* Type identifier for empty point */
+#define EMPTY_LINE_TYPE_LASTBYTE             0x02    /* Type identifier for empty linestring */
+#define EMPTY_POLYGON_TYPE_LASTBYTE          0x03    /* Type identifier for empty polygon */
+#define EMPTY_MULTIPOINT_TYPE_LASTBYTE       0x04    /* Type identifier for empty Multipoint */
+#define EMPTY_MULTILINESTRING_TYPE_LASTBYTE  0x05    /* Type identifier for empty MultiLineString */
 #define NPOINTS_SIZE                 4          /* Size of no. of points data (4 bytes ) */
 
 #define SRID_FLAG_POS     4     /* Position of SRID flag in binary data */
@@ -152,10 +155,11 @@ static void load_functions();
 #define GEOM_TYPE_POS_RESULT   4   /* Position of geometry type in result data */
 
 #define EMPTY_Binary_SIZE      9   /* Size of empty representation in binary */
-#define EMPTY_POINT_Bytes      "\x01\x04\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty point */
-#define EMPTY_LINE_Bytes       "\x01\x02\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty linestring */
-#define EMPTY_POLYGON_Bytes    "\x01\x03\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty polygon */
-#define EMPTY_MULTIPOINT_Bytes "\x01\x04\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty Multipoint */
+#define EMPTY_POINT_Bytes            "\x01\x04\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty point */
+#define EMPTY_LINE_Bytes             "\x01\x02\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty linestring */
+#define EMPTY_POLYGON_Bytes          "\x01\x03\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty polygon */
+#define EMPTY_MULTIPOINT_Bytes       "\x01\x04\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty Multipoint */
+#define EMPTY_MULTILINESTRING_Bytes  "\x01\x05\x00\x00\x00\x00\x00\x00\x00"  /* Binary for empty MultiLineString */
 #define FIGURE_INTERIOR_RING  0x00
 #define FIGURE_STROKE         0x01
 #define FIGURE_EXTERIOR_RING  0x02
@@ -375,7 +379,8 @@ check_geom_type(const char *geom_type)
     if (strcmp(geom_type, "ST_Point") != 0 &&
         strcmp(geom_type, "ST_LineString") != 0 &&
         strcmp(geom_type, "ST_Polygon") != 0 &&
-        strcmp(geom_type, "ST_MultiPoint") != 0) 
+        strcmp(geom_type, "ST_MultiPoint") != 0 &&
+        strcmp(geom_type, "ST_MultiLineString") != 0)
     {
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -478,6 +483,11 @@ static st_numinteriorrings_t st_numinteriorrings_p;
 
 typedef Datum (*st_geometryn_t)(PG_FUNCTION_ARGS);
 static st_geometryn_t st_geometryn_p;
+
+typedef Datum (*st_numgeometries_t)(PG_FUNCTION_ARGS);
+static st_numgeometries_t st_numgeometries_p;
+
+typedef Datum (*geom_converter_fn)(PG_FUNCTION_ARGS);
 
 static void validate_geography_latitude(Datum geom_datum, bool is_flipped);
 static inline uint32_t gserialized_typecode(Datum datum);
@@ -610,6 +620,11 @@ PG_FUNCTION_INFO_V1(bbf_geog_to_varbinary);
 PG_FUNCTION_INFO_V1(bbf_geog_from_binary);
 PG_FUNCTION_INFO_V1(bbf_geog_to_binary);
 
+/* --- Multilinestring constructors (from upstream) --- */
+PG_FUNCTION_INFO_V1(geometry_mlinestring_from_text);
+PG_FUNCTION_INFO_V1(geography_mlinestring_from_text);
+PG_FUNCTION_INFO_V1(geometry_mlinestring_from_wkb);
+PG_FUNCTION_INFO_V1(geography_mlinestring_from_wkb);
 
 /*
  * Module to load external PostGIS functions
@@ -656,6 +671,7 @@ load_functions()
         lwgeom_zmflag_p  = (postgis_unary_fn_t) load_external_function("$libdir/postgis-3", "LWGEOM_zmflag", true, NULL);
         lwgeom_z_point_p = (postgis_unary_fn_t) load_external_function("$libdir/postgis-3", "LWGEOM_z_point", true, NULL);
         lwgeom_m_point_p = (postgis_unary_fn_t) load_external_function("$libdir/postgis-3", "LWGEOM_m_point", true, NULL);
+        st_numgeometries_p = (st_numgeometries_t) load_external_function("$libdir/postgis-3", "LWGEOM_numgeometries_collection", true, NULL);
     }
 }
 
@@ -948,6 +964,52 @@ validate_geography_latitude(Datum geom_datum, bool is_flipped)
             lon = DatumGetFloat8(lwgeom_y_p(fcinfo_local));
 
             validate_geography_coord_pair(lat, lon);
+        }
+    } else if (strcmp(geom_type, "ST_MultiLineString") == 0)
+    {
+        int num_geoms, geom_idx;
+        float8 prev_lat = 0, prev_lon = 0;
+
+        /* Get number of child LineStrings */
+        UpdateFunctionCallInfo(fcinfo_local, 1, flipped_geom);
+        num_geoms = DatumGetInt32(st_numgeometries_p(fcinfo_local));
+
+        /* Validate each child LineString */
+        for (geom_idx = 1; geom_idx <= num_geoms; geom_idx++)
+        {
+            Datum child_line;
+
+            /* Extract the geom_idx-th LineString from the MultiLineString */
+            UpdateFunctionCallInfo(fcinfo_local, 2, flipped_geom, Int32GetDatum(geom_idx));
+            child_line = st_geometryn_p(fcinfo_local);
+
+            /* Get total number of points in this child LineString */
+            UpdateFunctionCallInfo(fcinfo_local, 1, child_line);
+            npoints = DatumGetInt32(st_npoints_p(fcinfo_local));
+
+            prev_lat = 0;
+            prev_lon = 0;
+
+            /* Check each point in the child LineString */
+            for (i = 1; i <= npoints; i++)
+            {
+                /* Extract the i-th point from the LineString */
+                UpdateFunctionCallInfo(fcinfo_local, 2, child_line, Int32GetDatum(i));
+                point = st_pointn_p(fcinfo_local);
+
+                /* Get latitude value (x coordinate after flipping) */
+                UpdateFunctionCallInfo(fcinfo_local, 1, point);
+                lat = DatumGetFloat8(lwgeom_x_p(fcinfo_local));
+
+                /* Get longitude (y after flip) */
+                UpdateFunctionCallInfo(fcinfo_local, 1, point);
+                lon = DatumGetFloat8(lwgeom_y_p(fcinfo_local));
+
+                validate_geography_coord_pair(lat, lon);
+
+                /* Check for antipodal points */
+                check_antipodal_points(fcinfo_local, point, i, &prev_lat, &prev_lon);
+            }
         }
     }
     
@@ -1335,6 +1397,64 @@ get_geography_from_wkb(PG_FUNCTION_ARGS)
         pfree(geom_type);
 
     PG_RETURN_DATUM(geom_datum);
+}
+
+/*
+ * Common wrapper for MultiLineString WKT/WKB constructors.
+ */
+static Datum
+multilinestring_wrapper(FunctionCallInfo fcinfo, geom_converter_fn converter, Oid collation, const char *fname)
+{
+    Datum    geom_datum;
+    char    *geom_type;
+    LOCAL_FCINFO(fcinfo_local, 2);
+
+    if (PG_ARGISNULL(1))
+        ereport(ERROR,
+                (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+                 errmsg("'%s' failed because parameter 2 is not allowed to be null.", fname)));
+
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+
+    InitFunctionCallInfoData(*fcinfo_local, NULL, 2, collation, NULL, NULL);
+    UpdateFunctionCallInfo(fcinfo_local, 2, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1));
+    geom_datum = converter(fcinfo_local);
+
+    geom_type = GetGeometryTypeName(fcinfo_local, geom_datum);
+    if (geom_type == NULL || strcmp(geom_type, "ST_MultiLineString") != 0)
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                 errmsg("Expected \"MULTILINESTRING\" at position 1. The input has %s", geom_type ? geom_type : "(null)")));
+
+    if (geom_type)
+        pfree(geom_type);
+
+    PG_RETURN_DATUM(geom_datum);
+}
+
+Datum
+geometry_mlinestring_from_text(PG_FUNCTION_ARGS)
+{
+    return multilinestring_wrapper(fcinfo, get_geometry_from_text, PG_GET_COLLATION(), "geometry::STMLineFromText");
+}
+
+Datum
+geography_mlinestring_from_text(PG_FUNCTION_ARGS)
+{
+    return multilinestring_wrapper(fcinfo, get_geography_from_text, InvalidOid, "geography::STMLineFromText");
+}
+
+Datum
+geometry_mlinestring_from_wkb(PG_FUNCTION_ARGS)
+{
+    return multilinestring_wrapper(fcinfo, get_geometry_from_wkb, InvalidOid, "geometry::STMLineFromWKB");
+}
+
+Datum
+geography_mlinestring_from_wkb(PG_FUNCTION_ARGS)
+{
+    return multilinestring_wrapper(fcinfo, get_geography_from_wkb, InvalidOid, "geography::STMLineFromWKB");
 }
 
 /* This function creates a geography point (only 2D) */
@@ -2140,6 +2260,10 @@ parse_figures_and_shapes(GeometryData *geom_data)
             geom_data->geom_name = MULTIPOINT_TYPE;
             validate_multi_figures(geom_data, npoints, SHAPE_POINT);
             break;
+        case SHAPE_MULTILINESTRING:
+            geom_data->geom_name = MULTILINESTRING_TYPE;
+            validate_multi_figures(geom_data, npoints, SHAPE_LINESTRING);
+            break;
 
         default:
             ereport(ERROR,
@@ -2320,16 +2444,35 @@ write_wkb_point_child(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32
     return pos;
 }
 
+static uint32_t
+write_wkb_linestring_child(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32_t pt_start, uint32_t child_npoints, bool has_z, bool has_m)
+{
+    uint32_t wkb_type = get_wkb_type(LINE_TYPE, has_z, has_m);
+    uint32_t pos = 0;
+    uint32_t i;
+
+    dst[pos++] = 0x01;  /* little endian */
+    memcpy(dst + pos, &wkb_type, sizeof(uint32_t));
+    pos += sizeof(uint32_t);
+    memcpy(dst + pos, &child_npoints, sizeof(uint32_t));
+    pos += sizeof(uint32_t);
+
+    for (i = 0; i < child_npoints; i++)
+        pos += write_interleaved_point(dst + pos, src_base, total_points, pt_start + i, has_z, has_m);
+
+    return pos;
+}
 
 /* Write child WKB entry based on parent multi-type */
 static uint32_t
-write_child_wkb(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32_t pt_start, uint8 parent_type, bool has_z, bool has_m)
+write_child_wkb(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32_t pt_start, uint32_t child_npoints, uint8 parent_type, bool has_z, bool has_m)
 {
     switch (parent_type)
     {
         case MULTIPOINT_TYPE:
             return write_wkb_point_child(dst, src_base, total_points, pt_start, has_z, has_m);
-
+        case MULTILINESTRING_TYPE:
+            return write_wkb_linestring_child(dst, src_base, total_points, pt_start, child_npoints, has_z, has_m);
         default:
             THROW_VARBINARY_CONVERSION_ERROR();
             return 0;
@@ -2341,7 +2484,7 @@ write_child_wkb(uint8 *dst, uint8 *src_base, uint32_t total_points, uint32_t pt_
  */
 
 static uint32_t
-calculate_child_wkb_size(uint8 parent_type, bool has_z, bool has_m)
+calculate_child_wkb_size(uint8 parent_type, uint32_t child_npoints, bool has_z, bool has_m)
 {
     uint32_t coord_per_point = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0)  + (has_m ? COORD_SIZE : 0);
 
@@ -2350,6 +2493,17 @@ calculate_child_wkb_size(uint8 parent_type, bool has_z, bool has_m)
         case MULTIPOINT_TYPE:
             /* byte_order(1) + type(4) + coords */
             return 5 + coord_per_point;
+
+        case MULTILINESTRING_TYPE:
+        {
+            /* byte_order(1) + type(4) + npoints(4) + coords.
+             * Use uint64 intermediate so a crafted varbinary with a huge
+             * child_npoints cannot overflow uint32 and yield a tiny palloc. */
+            uint64_t size = (uint64_t) 9 + (uint64_t) child_npoints * coord_per_point;
+            if (size > MaxAllocSize)
+                THROW_VARBINARY_CONVERSION_ERROR();
+            return (uint32_t) size;
+        }
 
         default:
             return 0;
@@ -2401,10 +2555,12 @@ handle_multi_to_postgis(GeometryData *geom_data)
     /* Determine PostGIS WKB type byte */
     switch (geom_data->geom_name)
     {
-        case MULTIPOINT_TYPE:     
-          postgis_type_byte = 0x04; 
-          break;
-
+        case MULTIPOINT_TYPE:
+            postgis_type_byte = 0x04;
+            break;
+        case MULTILINESTRING_TYPE:
+            postgis_type_byte = 0x05;
+            break;
         default:
             THROW_VARBINARY_CONVERSION_ERROR();
             return NULL;
@@ -2421,7 +2577,7 @@ handle_multi_to_postgis(GeometryData *geom_data)
         uint32_t pt_start, child_npoints, fig_start, fig_end;
         get_child_info(geom_data, i + 1, &pt_start, &child_npoints, &fig_start, &fig_end);
 
-        result_size += calculate_child_wkb_size(geom_data->geom_name, has_z, has_m);
+        result_size += calculate_child_wkb_size(geom_data->geom_name, child_npoints, has_z, has_m);
     }
 
     /* Build PostGIS header */
@@ -2448,7 +2604,7 @@ handle_multi_to_postgis(GeometryData *geom_data)
         uint32_t pt_start, child_npoints, fig_start, fig_end;
         get_child_info(geom_data, i + 1, &pt_start, &child_npoints, &fig_start, &fig_end);
 
-        offset += write_child_wkb(result_data + offset, src, geom_data->npoints, pt_start, geom_data->geom_name, has_z, has_m);
+        offset += write_child_wkb(result_data + offset, src, geom_data->npoints, pt_start, child_npoints, geom_data->geom_name, has_z, has_m);
     }
 
     return result;
@@ -2488,7 +2644,8 @@ handle_non_empty_geometry_bytea(GeometryData *geom_data)
             postgis_header[1] = POLYGON_TYPE;
             new_data_size = calculate_polygon_size(geom_data);
             break;
-         case MULTIPOINT_TYPE:
+        case MULTIPOINT_TYPE:
+        case MULTILINESTRING_TYPE:
             return handle_multi_to_postgis(geom_data);
         default:
             THROW_VARBINARY_CONVERSION_ERROR();
@@ -2552,6 +2709,8 @@ create_empty_geometry(GeometryData *geom_data)
         postgis_header[1] = 0x03;
     else if (geom_data->geom_name == MULTIPOINT_TYPE)
         postgis_header[1] = 0x04;
+    else if (geom_data->geom_name == MULTILINESTRING_TYPE)
+        postgis_header[1] = 0x05;
     
     SET_VARSIZE(result, VARHDRSZ + POSTGIS_HEADER_SIZE + SRID_SIZE + EMPTY_GEOM_DATA_SIZE);
     result_data = (uint8 *)VARDATA(result);
@@ -2624,6 +2783,9 @@ handle_empty_geometry_bytea(GeometryData *geom_data)
             return create_empty_geometry(geom_data);
         case EMPTY_MULTIPOINT_TYPE_LASTBYTE:  /* 0x04 */
             geom_data->geom_name = MULTIPOINT_TYPE;
+            return create_empty_geometry(geom_data);
+        case EMPTY_MULTILINESTRING_TYPE_LASTBYTE:  /* 0x05 */
+            geom_data->geom_name = MULTILINESTRING_TYPE;
             return create_empty_geometry(geom_data);
         default:
             ereport(ERROR,
@@ -2850,7 +3012,7 @@ validate_geom_type(const GeoDataInfo *geom_data)
         return false;
         
     geom_type = geom_data->byte_data[GEOM_TYPE_POS_POSTGIS];
-    return (geom_type == POINT_TYPE || geom_type == LINE_TYPE || geom_type == POLYGON_TYPE || geom_type == MULTIPOINT_TYPE) &&
+    return (geom_type == POINT_TYPE || geom_type == LINE_TYPE || geom_type == POLYGON_TYPE || geom_type == MULTIPOINT_TYPE || geom_type == MULTILINESTRING_TYPE) &&
            geom_data->byte_data[GEOM_TYPE_POS_POSTGIS+1] == 0x00 && 
            geom_data->byte_data[GEOM_TYPE_POS_POSTGIS+2] == 0x00;
 }
@@ -2896,6 +3058,10 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                         geom_data->geom_type = VALID_2DLINE_MP;  /* 0x04 — same props byte */
                         geom_data->coord_size = COORD_SIZE_XY * geom_data->npoints;
                         break;
+                    case MULTILINESTRING_TYPE:
+                        geom_data->geom_type = VALID_2DLINE_MP;  /* 0x04 */
+                        geom_data->coord_size = COORD_SIZE_XY * geom_data->npoints;
+                        break;
                 }
             }
             break;
@@ -2918,6 +3084,10 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                     geom_data->coord_size = COORD_SIZE_XYZ * geom_data->npoints;
                     break;
                 case MULTIPOINT_TYPE:
+                    geom_data->geom_type = VALID_3DLINE_MP;  /* 0x05 */
+                    geom_data->coord_size = COORD_SIZE_XYZ * geom_data->npoints;
+                    break;
+                case MULTILINESTRING_TYPE:
                     geom_data->geom_type = VALID_3DLINE_MP;  /* 0x05 */
                     geom_data->coord_size = COORD_SIZE_XYZ * geom_data->npoints;
                     break;
@@ -2946,6 +3116,11 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                     geom_data->geom_type = VALID_3DMLINE_MP;  /* 0x07 */
                     geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;
                     break;
+
+                case MULTILINESTRING_TYPE:
+                    geom_data->geom_type = VALID_3DMLINE_MP;  /* 0x07 */
+                    geom_data->coord_size = COORD_SIZE_XYZM * geom_data->npoints;
+                    break;
             }
             break;
         case POSTGIS_DIM_XYM:
@@ -2967,6 +3142,10 @@ determine_geom_dimensions(GeoDataInfo *geom_data)
                     geom_data->coord_size = COORD_SIZE_XYM * geom_data->npoints;
                     break;
                 case MULTIPOINT_TYPE:
+                    geom_data->geom_type = VALID_2DMLINE_MP;  /* 0x06 */
+                    geom_data->coord_size = COORD_SIZE_XYM * geom_data->npoints;
+                    break;
+                case MULTILINESTRING_TYPE:
                     geom_data->geom_type = VALID_2DMLINE_MP;  /* 0x06 */
                     geom_data->coord_size = COORD_SIZE_XYM * geom_data->npoints;
                     break;
@@ -3091,6 +3270,18 @@ get_polygon_ring_count(GeoDataInfo *geom_data, bool is_geography)
 {
     int offset = (is_geography || geom_data->has_srid)  ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
     return *(int32 *)(geom_data->byte_data + offset);
+}
+
+/*
+ * Extract child LineString count from PostGIS MultiLineString binary data.
+ */
+static inline int32
+get_multilinestring_count(GeoDataInfo *geom_data, bool is_geography)
+{
+    int     offset = (is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID;
+    int32   count;
+    memcpy(&count, geom_data->byte_data + offset, sizeof(int32));
+    return count;
 }
 
 /*
@@ -3221,6 +3412,75 @@ write_multipoint_clr_metadata(uint8 *dst, int npoints)
 }
 
 /*
+ * Write CLR metadata for MultiLineString.
+ *
+ * Output:
+ *   nfigures(4)=num_linestrings
+ *     figure[i]: STROKE, offset=cumulative_points[i]
+ *   nshapes(4)=num_linestrings+1
+ *     shape[0]: parent=-1, fig=0, type=MULTILINESTRING (root)
+ *     shape[i]: parent=0, fig=i-1, type=LINESTRING     (children)
+ *
+ * Total: 4 + (num_linestrings × 5) + 4 + ((num_linestrings+1) × 9)
+ */
+static uint32_t
+write_multilinestring_clr_metadata(uint8 *dst, GeoDataInfo *geom_data, bool is_geography)
+{
+    uint32_t src_offset;
+    uint8    dim_mask = geom_data->srid_flag & DIMENSION_MASK;
+    bool     has_z = (dim_mask == POSTGIS_DIM_XYZ || dim_mask == POSTGIS_DIM_XYZM);
+    bool     has_m = (dim_mask == POSTGIS_DIM_XYM || dim_mask == POSTGIS_DIM_XYZM);
+    int      wkb_point_stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
+    uint32_t pos = 0;
+    int32_t  num_linestrings;
+    int32_t  count;
+    uint32_t cumulative_points = 0;
+    int      i;
+    uint32_t temp_offset;
+
+    /* Source offset past PostGIS header + SRID + MultiLineString WKB header (numgeoms) */
+    src_offset = ((is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID) + NPOINTS_SIZE;
+
+    /* Read number of child LineStrings from WKB */
+    num_linestrings = get_multilinestring_count(geom_data, is_geography);
+
+    /* ── Figure Array: one STROKE figure per LineString ── */
+    count = num_linestrings;
+    memcpy(dst + pos, &count, COUNT_FIELD_SIZE);
+    pos += COUNT_FIELD_SIZE;
+
+    temp_offset = src_offset;
+    for (i = 0; i < num_linestrings; i++)
+    {
+        int32_t child_npoints;
+
+        pos += write_figure_entry(dst + pos, FIGURE_STROKE, cumulative_points);
+
+        /* Skip child WKB header: byte_order(1) + type(4) + npoints(4) = 9 */
+        memcpy(&child_npoints, geom_data->byte_data + temp_offset + 5, sizeof(int32_t));
+        cumulative_points += child_npoints;
+        temp_offset += 9 + child_npoints * wkb_point_stride;
+    }
+
+    /* Shape Array: root MultiLineString + one LineString child per linestring  */
+    count = num_linestrings + 1;
+    memcpy(dst + pos, &count, COUNT_FIELD_SIZE);
+    pos += COUNT_FIELD_SIZE;
+
+    /* Root shape: MultiLineString */
+    pos += write_shape_entry(dst + pos, -1, 0, SHAPE_MULTILINESTRING);
+
+    /* Child shapes: one LineString per child */
+    for (i = 0; i < num_linestrings; i++)
+    {
+        pos += write_shape_entry(dst + pos, 0, (uint32_t)i, SHAPE_LINESTRING);
+    }
+
+    return pos;
+}
+
+
+/*
  * CLR metadata writer — dispatches by geometry type.
  * Returns: total bytes written to dst.
  */
@@ -3238,7 +3498,13 @@ write_clr_metadata(uint8 *dst, GeoDataInfo *geom_data, bool is_geography)
             return write_polygon_clr_metadata(dst, geom_data, is_geography);
 
         default:
-            return 0;  /* Points and 2-point lines have no metadata */
+            /*
+             * Points and 2-point lines have no metadata. Multi-types
+             * (e.g. MultiLineString) are not dispatched here -- they write
+             * their CLR metadata directly in their dedicated handlers
+             * (e.g. handle_multilinestring_type_data).
+             */
+            return 0;
     }
 }
 
@@ -3276,6 +3542,11 @@ calculate_clr_metadata_size(GeoDataInfo *geom_data, bool is_geography)
         case MULTIPOINT_TYPE:
             nfigures = geom_data->npoints;    /* one figure per point */
             nshapes  = geom_data->npoints + 1; /* root + one per point */
+            break;
+
+        case MULTILINESTRING_TYPE:
+            nfigures = get_multilinestring_count(geom_data, is_geography);     /* one figure per linestring */
+            nshapes  = nfigures + 1;                                            /* root + one per linestring */
             break;
 
         default:
@@ -3498,12 +3769,121 @@ handle_multipoint_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *r
         }
     }
 
-    /* ── Write CLR metadata (figures + shapes) ── */
+    /*  Write CLR metadata (figures + shapes) */
     metadata_pos = dst + offset;
     write_multipoint_clr_metadata(metadata_pos, npoints);
 
     return result;
 }
+
+/*
+ * handle_multilinestring_type_data()
+ *
+ * Converts PostGIS MultiLineString WKB (interleaved per-linestring) to
+ * T-SQL CLR columnar format:
+ *   [npoints(4)] [X1 Y1 X2 Y2 ...] [Z1 Z2 ...] [M1 M2 ...] [metadata]
+ *
+ * PostGIS MultiLineString WKB layout:
+ *   byte_order(1) + type(4) + num_linestrings(4)
+ *   For each linestring: byte_order(1) + type(4) + npoints(4) + X(8)Y(8)[Z(8)][M(8)] * npoints
+ */
+static bytea*
+handle_multilinestring_type_data(GeoDataInfo *geom_data, uint8 *result_data, bytea *result, bool is_geography)
+{
+    uint32_t src_offset;
+    uint8    dim_mask = geom_data->srid_flag & DIMENSION_MASK;
+    bool     has_z = (dim_mask == POSTGIS_DIM_XYZ || dim_mask == POSTGIS_DIM_XYZM);
+    bool     has_m = (dim_mask == POSTGIS_DIM_XYM || dim_mask == POSTGIS_DIM_XYZM);
+    int      total_npoints = geom_data->npoints;
+    int      wkb_point_stride = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0) + (has_m ? COORD_SIZE : 0);
+    int32_t  num_linestrings;
+    int      i, j;
+    uint32_t temp_src;
+    uint8   *dst;
+    uint8   *metadata_pos;
+    uint32_t xy_offset, z_offset, m_offset;
+
+    /* Source offset past PostGIS header + SRID + MultiLineString WKB numgeoms */
+    src_offset = ((is_geography || geom_data->has_srid) ? OFFSET_WITH_SRID : OFFSET_WITHOUT_SRID) + NPOINTS_SIZE;
+
+    /* Read number of child LineStrings */
+    num_linestrings = get_multilinestring_count(geom_data, is_geography);
+
+    /* Destination starts after SRID(4) + props(2) + npoints(4) */
+    dst = result_data + HEADER_SIZE + NPOINTS_SIZE;
+
+    /* ── Pass 1: Write all XY pairs ── */
+    temp_src = src_offset;
+    xy_offset = 0;
+    for (i = 0; i < num_linestrings; i++)
+    {
+        int32_t child_npoints;
+
+        /* Skip child WKB header: byte_order(1) + type(4) = 5 bytes, then read npoints */
+        memcpy(&child_npoints, geom_data->byte_data + temp_src + 5, sizeof(int32_t));
+        temp_src += 9;  /* skip byte_order(1) + type(4) + npoints(4) */
+
+        for (j = 0; j < child_npoints; j++)
+        {
+            memcpy(dst + xy_offset, geom_data->byte_data + temp_src, COORD_SIZE * 2);
+            xy_offset += COORD_SIZE * 2;
+            temp_src += wkb_point_stride;
+        }
+    }
+
+    /* ── Pass 2: Write all Z values ── */
+    if (has_z)
+    {
+        temp_src = src_offset;
+        z_offset = total_npoints * COORD_SIZE * 2;
+        for (i = 0; i < num_linestrings; i++)
+        {
+            int32_t child_npoints;
+            memcpy(&child_npoints, geom_data->byte_data + temp_src + 5, sizeof(int32_t));
+            temp_src += 9;
+
+            for (j = 0; j < child_npoints; j++)
+            {
+                double *z_coord = (double *)(geom_data->byte_data + temp_src + COORD_SIZE * 2);
+                copy_coord_with_nan_check(dst + z_offset, z_coord);
+                z_offset += COORD_SIZE;
+                temp_src += wkb_point_stride;
+            }
+        }
+    }
+
+    /* ── Pass 3: Write all M values ── */
+    if (has_m)
+    {
+        temp_src = src_offset;
+        m_offset = total_npoints * COORD_SIZE * 2 + (has_z ? total_npoints * COORD_SIZE : 0);
+        for (i = 0; i < num_linestrings; i++)
+        {
+            int32_t child_npoints;
+            memcpy(&child_npoints, geom_data->byte_data + temp_src + 5, sizeof(int32_t));
+            temp_src += 9;
+
+            for (j = 0; j < child_npoints; j++)
+            {
+                uint32_t m_pos = COORD_SIZE * 2 + (has_z ? COORD_SIZE : 0);
+                double *m_coord = (double *)(geom_data->byte_data + temp_src + m_pos);
+                copy_coord_with_nan_check(dst + m_offset, m_coord);
+                m_offset += COORD_SIZE;
+                temp_src += wkb_point_stride;
+            }
+        }
+    }
+
+    /* ── Write CLR metadata (figures + shapes) ── */
+    metadata_pos = dst + (total_npoints * COORD_SIZE * 2)
+                 + (has_z ? total_npoints * COORD_SIZE : 0)
+                 + (has_m ? total_npoints * COORD_SIZE : 0);
+    write_multilinestring_clr_metadata(metadata_pos, geom_data, is_geography);
+
+    return result;
+}
+
+
 /* Step 4: Construct final T-SQL binary representation */
 static bytea* 
 construct_result_bytea(GeoDataInfo *geom_data, bool is_geography) 
@@ -3531,7 +3911,7 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
      */
     needs_npoints = 
     (geom_data->postgis_geom_type == LINE_TYPE && geom_data->npoints > 2) ||
-    ((geom_data->postgis_geom_type == POLYGON_TYPE || geom_data->postgis_geom_type == MULTIPOINT_TYPE) && !geom_data->is_empty);
+    ((geom_data->postgis_geom_type == POLYGON_TYPE || geom_data->postgis_geom_type == MULTIPOINT_TYPE || geom_data->postgis_geom_type == MULTILINESTRING_TYPE) && !geom_data->is_empty);
 
     if (needs_npoints)
     {
@@ -3583,6 +3963,9 @@ construct_result_bytea(GeoDataInfo *geom_data, bool is_geography)
             case MULTIPOINT_TYPE:
                 memcpy(result_data + HEADER_SIZE, &geom_data->npoints, NPOINTS_SIZE);
                 return handle_multipoint_type_data(geom_data, result_data, result, is_geography);
+            case MULTILINESTRING_TYPE:
+                memcpy(result_data + HEADER_SIZE, &geom_data->npoints, NPOINTS_SIZE);
+                return handle_multilinestring_type_data(geom_data, result_data, result, is_geography);
         }
     }
     
@@ -3738,6 +4121,10 @@ st_as_binary_common(Datum input, bool is_geography)
          else if (strcmp(geom_type, "ST_MultiPoint") == 0)
         {
             memcpy(VARDATA(empty_geom), EMPTY_MULTIPOINT_Bytes, EMPTY_Binary_SIZE);
+        }
+        else if (strcmp(geom_type, "ST_MultiLineString") == 0)
+        {
+            memcpy(VARDATA(empty_geom), EMPTY_MULTILINESTRING_Bytes, EMPTY_Binary_SIZE);
         }
         
         /* Free allocated memory and return the empty WKB */

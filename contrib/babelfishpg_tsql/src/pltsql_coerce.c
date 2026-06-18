@@ -3174,10 +3174,10 @@ select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr, con
 	bool		is_case_expr = (strlen(context) == 4 && strncmp(context, "CASE", 4) == 0);
 
 	/*
-	 * If any branch is sql_variant, return it directly since it has 
-	 * the highest precedence and can hold any type. We must check this 
-	 * before the main loop because the loop bails out on non-char types, 
-	 * and the other branch (e.g. bit) would cause an early return of 
+	 * If any branch is sql_variant, return it directly since it has
+	 * the highest precedence and can hold any type. We must check this
+	 * before the main loop because the loop bails out on non-char types,
+	 * and the other branch (e.g. bit) would cause an early return of
 	 * InvalidOid before sql_variant is ever seen.
 	 */
 	foreach(lc, exprs)
@@ -3859,17 +3859,13 @@ pltsql_text_name(PG_FUNCTION_ARGS)
 								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				n = (*cstr_to_name_hook) (VARDATA_ANY(s), len);
 			}
-			PG_CATCH();
+			PG_FINALLY();
 			{
 				set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 								  GUC_CONTEXT_CONFIG,
 								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-				PG_RE_THROW();
 			}
 			PG_END_TRY();
-			set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-							  GUC_CONTEXT_CONFIG,
-							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 			PG_RETURN_NAME(n);
 		}
@@ -3921,17 +3917,13 @@ pltsql_bpchar_name(PG_FUNCTION_ARGS)
 								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				n = (*cstr_to_name_hook) (VARDATA_ANY(s), len);
 			}
-			PG_CATCH();
+			PG_FINALLY();
 			{
 				set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 								  GUC_CONTEXT_CONFIG,
 								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-				PG_RE_THROW();
 			}
 			PG_END_TRY();
-			set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-							  GUC_CONTEXT_CONFIG,
-							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 			PG_RETURN_NAME(n);
 		}
