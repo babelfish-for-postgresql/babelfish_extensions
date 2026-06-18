@@ -1,6 +1,5 @@
 #!/bin/sh
 
-export PG_CPPFLAGS='-DENABLE_SPATIAL_TYPES'
 set -e
 
 if [ ! $1 ]; then
