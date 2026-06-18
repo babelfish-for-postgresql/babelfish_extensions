@@ -164,6 +164,22 @@ test		 = $(shell test $(1) $(2) $(3) && echo yes || echo no)
 GE91		 = $(call test, $(MAJORVER), -ge, 91)
 
 PGXS := $(shell $(PG_CONFIG) --pgxs)
+
+# Generated files to remove on 'make clean' so they are always
+# regenerated with the current tool versions (flex, bison, perl).
+EXTRA_CLEAN += src/backend_parser/scan-backend.c src/backend_parser/scan-backend.l \
+	src/backend_parser/gram-backend.c src/backend_parser/gram-backend.h \
+	src/backend_parser/gram-backend.y src/backend_parser/gram-backend.output \
+	src/backend_parser/kwlist_d.h \
+	src/fts_scan.c src/fts_parser.c \
+	src/pl_gram.c src/pl_gram.h src/pl_gram.output \
+	src/plerrcodes.h \
+	pl_reserved_kwlist_d.h pl_unreserved_kwlist_d.h \
+	src/pltsql_node/pltsql_nodetags.h \
+	src/pltsql_node/pltsql_outfuncs_gen.c src/pltsql_node/pltsql_outfuncs_switch.c \
+	src/pltsql_node/pltsql_readfuncs_gen.c src/pltsql_node/pltsql_readfuncs_switch.c \
+	src/pltsql_node/pltsql_equalfuncs_gen.c src/pltsql_node/pltsql_equalfuncs_switch.c
+
 include $(PGXS)
 
 ifeq ($(GE91),yes)
