@@ -1,8 +1,18 @@
+
+
 -------------------------------------------------------
 ---- Include changes related to spatial types here ----
 -------------------------------------------------------
-DROP TYPE IF EXISTS sys.box2df CASCADE;
-CREATE TYPE sys.box2df;
+
+-- box2df type for GiST internal storage.
+
+DO $$
+BEGIN
+    IF to_regtype('sys.box2df') IS NULL THEN
+        CREATE TYPE sys.box2df;
+    END IF;
+END
+$$;
 
 --geometry
 
@@ -11,8 +21,6 @@ CREATE OR REPLACE FUNCTION sys.ST_Expand(geom sys.GEOMETRY, distance float8)
     RETURNS sys.GEOMETRY
     AS '$libdir/postgis-3', 'LWGEOM_expand'
     LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
-
--- box2df type for GiST internal storage
 
 CREATE OR REPLACE FUNCTION sys.box2df_in(cstring)
     RETURNS sys.box2df
@@ -24,13 +32,23 @@ CREATE OR REPLACE FUNCTION sys.box2df_out(sys.box2df)
     AS '$libdir/postgis-3', 'box2df_out'
     LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE TYPE sys.box2df (
-    internallength = 16,
-    input = sys.box2df_in,
-    output = sys.box2df_out,
-    storage = plain,
-    alignment = double
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE t.typname = 'box2df' AND n.nspname = 'sys' AND t.typisdefined
+    ) THEN
+        CREATE TYPE sys.box2df (
+            internallength = 16,
+            input = sys.box2df_in,
+            output = sys.box2df_out,
+            storage = plain,
+            alignment = double
+        );
+    END IF;
+END
+$$;
 
 
 -- GiST support functions
@@ -128,157 +146,218 @@ CREATE OR REPLACE FUNCTION sys.gserialized_gist_joinsel_2d(internal, oid, intern
     RETURNS float8 AS '$libdir/postgis-3', 'gserialized_gist_joinsel_2d'
     LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
 
--- Spatial operators
-DROP OPERATOR IF EXISTS sys.&&(sys.GEOMETRY, sys.GEOMETRY);
-CREATE OPERATOR sys.&& (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overlaps,
-    COMMUTATOR = &&,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
-);
+-- Spatial operators.
+-- Each CREATE OPERATOR / CREATE OPERATOR CLASS is wrapped so a re-run against
+-- a source cluster that already has these objects is a no-op rather than a
+-- fatal "already exists" error. Duplicate CREATE OPERATOR raises
+-- duplicate_function (42723); duplicate CREATE OPERATOR CLASS raises
+-- duplicate_object (42710).
+DO $$
+BEGIN
+    CREATE OPERATOR sys.&& (
+        LEFTARG = sys.GEOMETRY,
+        RIGHTARG = sys.GEOMETRY,
+        FUNCTION = sys.geometry_overlaps,
+        COMMUTATOR = &&,
+        RESTRICT = sys.gserialized_gist_sel_2d,
+        JOIN = sys.gserialized_gist_joinsel_2d
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.~(sys.GEOMETRY, sys.GEOMETRY);
-CREATE OPERATOR sys.~ (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_contains,
-    COMMUTATOR = @,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.~ (
+        LEFTARG = sys.GEOMETRY,
+        RIGHTARG = sys.GEOMETRY,
+        FUNCTION = sys.geometry_contains,
+        COMMUTATOR = @,
+        RESTRICT = sys.gserialized_gist_sel_2d,
+        JOIN = sys.gserialized_gist_joinsel_2d
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.@(sys.GEOMETRY, sys.GEOMETRY);
-CREATE OPERATOR sys.@ (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_within,
-    COMMUTATOR = ~,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.@ (
+        LEFTARG = sys.GEOMETRY,
+        RIGHTARG = sys.GEOMETRY,
+        FUNCTION = sys.geometry_within,
+        COMMUTATOR = ~,
+        RESTRICT = sys.gserialized_gist_sel_2d,
+        JOIN = sys.gserialized_gist_joinsel_2d
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.<<(sys.GEOMETRY, sys.GEOMETRY);
-CREATE OPERATOR sys.<< (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_left,
-    COMMUTATOR = >>,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.<< (
+        LEFTARG = sys.GEOMETRY,
+        RIGHTARG = sys.GEOMETRY,
+        FUNCTION = sys.geometry_left,
+        COMMUTATOR = >>,
+        RESTRICT = sys.gserialized_gist_sel_2d,
+        JOIN = sys.gserialized_gist_joinsel_2d
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.&<(sys.GEOMETRY, sys.GEOMETRY);
-CREATE OPERATOR sys.&< (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overleft,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.&< (
+        LEFTARG = sys.GEOMETRY,
+        RIGHTARG = sys.GEOMETRY,
+        FUNCTION = sys.geometry_overleft,
+        RESTRICT = sys.gserialized_gist_sel_2d,
+        JOIN = sys.gserialized_gist_joinsel_2d
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.>>(sys.GEOMETRY, sys.GEOMETRY);
-CREATE OPERATOR sys.>> (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_right,
-    COMMUTATOR = <<,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.>> (
+        LEFTARG = sys.GEOMETRY,
+        RIGHTARG = sys.GEOMETRY,
+        FUNCTION = sys.geometry_right,
+        COMMUTATOR = <<,
+        RESTRICT = sys.gserialized_gist_sel_2d,
+        JOIN = sys.gserialized_gist_joinsel_2d
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.&>(sys.GEOMETRY, sys.GEOMETRY);
-CREATE OPERATOR sys.&> (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overright,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.&> (
+        LEFTARG = sys.GEOMETRY,
+        RIGHTARG = sys.GEOMETRY,
+        FUNCTION = sys.geometry_overright,
+        RESTRICT = sys.gserialized_gist_sel_2d,
+        JOIN = sys.gserialized_gist_joinsel_2d
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.|>>(sys.GEOMETRY, sys.GEOMETRY);
-CREATE OPERATOR sys.|>> (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_above,
-    COMMUTATOR = <<|,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.|>> (
+        LEFTARG = sys.GEOMETRY,
+        RIGHTARG = sys.GEOMETRY,
+        FUNCTION = sys.geometry_above,
+        COMMUTATOR = <<|,
+        RESTRICT = sys.gserialized_gist_sel_2d,
+        JOIN = sys.gserialized_gist_joinsel_2d
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.|&>(sys.GEOMETRY, sys.GEOMETRY);
-CREATE OPERATOR sys.|&> (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overabove,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.|&> (
+        LEFTARG = sys.GEOMETRY,
+        RIGHTARG = sys.GEOMETRY,
+        FUNCTION = sys.geometry_overabove,
+        RESTRICT = sys.gserialized_gist_sel_2d,
+        JOIN = sys.gserialized_gist_joinsel_2d
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.<<|(sys.GEOMETRY, sys.GEOMETRY);
-CREATE OPERATOR sys.<<| (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_below,
-    COMMUTATOR = |>>,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.<<| (
+        LEFTARG = sys.GEOMETRY,
+        RIGHTARG = sys.GEOMETRY,
+        FUNCTION = sys.geometry_below,
+        COMMUTATOR = |>>,
+        RESTRICT = sys.gserialized_gist_sel_2d,
+        JOIN = sys.gserialized_gist_joinsel_2d
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.&<|(sys.GEOMETRY, sys.GEOMETRY);
-CREATE OPERATOR sys.&<| (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_overbelow,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.&<| (
+        LEFTARG = sys.GEOMETRY,
+        RIGHTARG = sys.GEOMETRY,
+        FUNCTION = sys.geometry_overbelow,
+        RESTRICT = sys.gserialized_gist_sel_2d,
+        JOIN = sys.gserialized_gist_joinsel_2d
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.~=(sys.GEOMETRY, sys.GEOMETRY);
-CREATE OPERATOR sys.~= (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_same,
-    COMMUTATOR = ~=,
-    RESTRICT = sys.gserialized_gist_sel_2d,
-    JOIN = sys.gserialized_gist_joinsel_2d
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.~= (
+        LEFTARG = sys.GEOMETRY,
+        RIGHTARG = sys.GEOMETRY,
+        FUNCTION = sys.geometry_same,
+        COMMUTATOR = ~=,
+        RESTRICT = sys.gserialized_gist_sel_2d,
+        JOIN = sys.gserialized_gist_joinsel_2d
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.<->(sys.GEOMETRY, sys.GEOMETRY);
-CREATE OPERATOR sys.<-> (
-    LEFTARG = sys.GEOMETRY,
-    RIGHTARG = sys.GEOMETRY,
-    FUNCTION = sys.geometry_distance_centroid,
-    COMMUTATOR = <->
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.<-> (
+        LEFTARG = sys.GEOMETRY,
+        RIGHTARG = sys.GEOMETRY,
+        FUNCTION = sys.geometry_distance_centroid,
+        COMMUTATOR = <->
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
 -- GiST operator class
-DROP OPERATOR CLASS IF EXISTS sys.gist_geometry_ops_2d USING gist;
-CREATE OPERATOR CLASS sys.gist_geometry_ops_2d
-    DEFAULT FOR TYPE sys.GEOMETRY USING gist AS
-    STORAGE sys.box2df,
-    OPERATOR  1  sys.<<(sys.GEOMETRY, sys.GEOMETRY)  ,
-    OPERATOR  2  sys.&<(sys.GEOMETRY, sys.GEOMETRY)  ,
-    OPERATOR  3  sys.&&(sys.GEOMETRY, sys.GEOMETRY)  ,
-    OPERATOR  4  sys.&>(sys.GEOMETRY, sys.GEOMETRY)  ,
-    OPERATOR  5  sys.>>(sys.GEOMETRY, sys.GEOMETRY)  ,
-    OPERATOR  6  sys.~=(sys.GEOMETRY, sys.GEOMETRY)  ,
-    OPERATOR  7  sys.~(sys.GEOMETRY, sys.GEOMETRY)   ,
-    OPERATOR  8  sys.@(sys.GEOMETRY, sys.GEOMETRY)   ,
-    OPERATOR  9  sys.&<|(sys.GEOMETRY, sys.GEOMETRY) ,
-    OPERATOR 10  sys.<<|(sys.GEOMETRY, sys.GEOMETRY) ,
-    OPERATOR 11  sys.|>>(sys.GEOMETRY, sys.GEOMETRY) ,
-    OPERATOR 12  sys.|&>(sys.GEOMETRY, sys.GEOMETRY) ,
-    OPERATOR 13  sys.<->(sys.GEOMETRY, sys.GEOMETRY) FOR ORDER BY pg_catalog.float_ops,
-    FUNCTION  1  sys.geometry_gist_consistent_2d(internal, sys.GEOMETRY, smallint, oid, internal),
-    FUNCTION  2  sys.geometry_gist_union_2d(bytea, internal),
-    FUNCTION  3  sys.geometry_gist_compress_2d(internal),
-    FUNCTION  4  sys.geometry_gist_decompress_2d(internal),
-    FUNCTION  5  sys.geometry_gist_penalty_2d(internal, internal, internal),
-    FUNCTION  6  sys.geometry_gist_picksplit_2d(internal, internal),
-    FUNCTION  7  sys.geometry_gist_same_2d(sys.GEOMETRY, sys.GEOMETRY, internal),
-    FUNCTION  8  sys.geometry_gist_distance_2d(internal, sys.GEOMETRY, smallint, oid, internal);
+DO $$
+BEGIN
+    CREATE OPERATOR CLASS sys.gist_geometry_ops_2d
+        DEFAULT FOR TYPE sys.GEOMETRY USING gist AS
+        STORAGE sys.box2df,
+        OPERATOR  1  sys.<<(sys.GEOMETRY, sys.GEOMETRY)  ,
+        OPERATOR  2  sys.&<(sys.GEOMETRY, sys.GEOMETRY)  ,
+        OPERATOR  3  sys.&&(sys.GEOMETRY, sys.GEOMETRY)  ,
+        OPERATOR  4  sys.&>(sys.GEOMETRY, sys.GEOMETRY)  ,
+        OPERATOR  5  sys.>>(sys.GEOMETRY, sys.GEOMETRY)  ,
+        OPERATOR  6  sys.~=(sys.GEOMETRY, sys.GEOMETRY)  ,
+        OPERATOR  7  sys.~(sys.GEOMETRY, sys.GEOMETRY)   ,
+        OPERATOR  8  sys.@(sys.GEOMETRY, sys.GEOMETRY)   ,
+        OPERATOR  9  sys.&<|(sys.GEOMETRY, sys.GEOMETRY) ,
+        OPERATOR 10  sys.<<|(sys.GEOMETRY, sys.GEOMETRY) ,
+        OPERATOR 11  sys.|>>(sys.GEOMETRY, sys.GEOMETRY) ,
+        OPERATOR 12  sys.|&>(sys.GEOMETRY, sys.GEOMETRY) ,
+        OPERATOR 13  sys.<->(sys.GEOMETRY, sys.GEOMETRY) FOR ORDER BY pg_catalog.float_ops,
+        FUNCTION  1  sys.geometry_gist_consistent_2d(internal, sys.GEOMETRY, smallint, oid, internal),
+        FUNCTION  2  sys.geometry_gist_union_2d(bytea, internal),
+        FUNCTION  3  sys.geometry_gist_compress_2d(internal),
+        FUNCTION  4  sys.geometry_gist_decompress_2d(internal),
+        FUNCTION  5  sys.geometry_gist_penalty_2d(internal, internal, internal),
+        FUNCTION  6  sys.geometry_gist_picksplit_2d(internal, internal),
+        FUNCTION  7  sys.geometry_gist_same_2d(sys.GEOMETRY, sys.GEOMETRY, internal),
+        FUNCTION  8  sys.geometry_gist_distance_2d(internal, sys.GEOMETRY, smallint, oid, internal);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END
+$$;
 
 
 --geography
@@ -387,153 +466,210 @@ CREATE OR REPLACE FUNCTION sys.geography_gist_joinsel(internal, oid, internal, s
     LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Spatial operators
-DROP OPERATOR IF EXISTS sys.&&(sys.GEOGRAPHY, sys.GEOGRAPHY);
-CREATE OPERATOR sys.&& (
-    LEFTARG = sys.GEOGRAPHY,
-    RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_overlaps,
-    COMMUTATOR = &&,
-    RESTRICT = sys.geography_gist_sel,
-    JOIN = sys.geography_gist_joinsel
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.&& (
+        LEFTARG = sys.GEOGRAPHY,
+        RIGHTARG = sys.GEOGRAPHY,
+        FUNCTION = sys.geography_overlaps,
+        COMMUTATOR = &&,
+        RESTRICT = sys.geography_gist_sel,
+        JOIN = sys.geography_gist_joinsel
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.~(sys.GEOGRAPHY, sys.GEOGRAPHY);
-CREATE OPERATOR sys.~ (
-    LEFTARG = sys.GEOGRAPHY,
-    RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_contains,
-    COMMUTATOR = @,
-    RESTRICT = sys.geography_gist_sel,
-    JOIN = sys.geography_gist_joinsel
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.~ (
+        LEFTARG = sys.GEOGRAPHY,
+        RIGHTARG = sys.GEOGRAPHY,
+        FUNCTION = sys.geography_contains,
+        COMMUTATOR = @,
+        RESTRICT = sys.geography_gist_sel,
+        JOIN = sys.geography_gist_joinsel
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.@(sys.GEOGRAPHY, sys.GEOGRAPHY);
-CREATE OPERATOR sys.@ (
-    LEFTARG = sys.GEOGRAPHY,
-    RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_within,
-    COMMUTATOR = ~,
-    RESTRICT = sys.geography_gist_sel,
-    JOIN = sys.geography_gist_joinsel
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.@ (
+        LEFTARG = sys.GEOGRAPHY,
+        RIGHTARG = sys.GEOGRAPHY,
+        FUNCTION = sys.geography_within,
+        COMMUTATOR = ~,
+        RESTRICT = sys.geography_gist_sel,
+        JOIN = sys.geography_gist_joinsel
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.<<(sys.GEOGRAPHY, sys.GEOGRAPHY);
-CREATE OPERATOR sys.<< (
-    LEFTARG = sys.GEOGRAPHY,
-    RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_left,
-    COMMUTATOR = >>,
-    RESTRICT = sys.geography_gist_sel,
-    JOIN = sys.geography_gist_joinsel
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.<< (
+        LEFTARG = sys.GEOGRAPHY,
+        RIGHTARG = sys.GEOGRAPHY,
+        FUNCTION = sys.geography_left,
+        COMMUTATOR = >>,
+        RESTRICT = sys.geography_gist_sel,
+        JOIN = sys.geography_gist_joinsel
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.&<(sys.GEOGRAPHY, sys.GEOGRAPHY);
-CREATE OPERATOR sys.&< (
-    LEFTARG = sys.GEOGRAPHY,
-    RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_overleft,
-    RESTRICT = sys.geography_gist_sel,
-    JOIN = sys.geography_gist_joinsel
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.&< (
+        LEFTARG = sys.GEOGRAPHY,
+        RIGHTARG = sys.GEOGRAPHY,
+        FUNCTION = sys.geography_overleft,
+        RESTRICT = sys.geography_gist_sel,
+        JOIN = sys.geography_gist_joinsel
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.>>(sys.GEOGRAPHY, sys.GEOGRAPHY);
-CREATE OPERATOR sys.>> (
-    LEFTARG = sys.GEOGRAPHY,
-    RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_right,
-    COMMUTATOR = <<,
-    RESTRICT = sys.geography_gist_sel,
-    JOIN = sys.geography_gist_joinsel
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.>> (
+        LEFTARG = sys.GEOGRAPHY,
+        RIGHTARG = sys.GEOGRAPHY,
+        FUNCTION = sys.geography_right,
+        COMMUTATOR = <<,
+        RESTRICT = sys.geography_gist_sel,
+        JOIN = sys.geography_gist_joinsel
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.&>(sys.GEOGRAPHY, sys.GEOGRAPHY);
-CREATE OPERATOR sys.&> (
-    LEFTARG = sys.GEOGRAPHY,
-    RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_overright,
-    RESTRICT = sys.geography_gist_sel,
-    JOIN = sys.geography_gist_joinsel
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.&> (
+        LEFTARG = sys.GEOGRAPHY,
+        RIGHTARG = sys.GEOGRAPHY,
+        FUNCTION = sys.geography_overright,
+        RESTRICT = sys.geography_gist_sel,
+        JOIN = sys.geography_gist_joinsel
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.|>>(sys.GEOGRAPHY, sys.GEOGRAPHY);
-CREATE OPERATOR sys.|>> (
-    LEFTARG = sys.GEOGRAPHY,
-    RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_above,
-    COMMUTATOR = <<|,
-    RESTRICT = sys.geography_gist_sel,
-    JOIN = sys.geography_gist_joinsel
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.|>> (
+        LEFTARG = sys.GEOGRAPHY,
+        RIGHTARG = sys.GEOGRAPHY,
+        FUNCTION = sys.geography_above,
+        COMMUTATOR = <<|,
+        RESTRICT = sys.geography_gist_sel,
+        JOIN = sys.geography_gist_joinsel
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.|&>(sys.GEOGRAPHY, sys.GEOGRAPHY);
-CREATE OPERATOR sys.|&> (
-    LEFTARG = sys.GEOGRAPHY,
-    RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_overabove,
-    RESTRICT = sys.geography_gist_sel,
-    JOIN = sys.geography_gist_joinsel
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.|&> (
+        LEFTARG = sys.GEOGRAPHY,
+        RIGHTARG = sys.GEOGRAPHY,
+        FUNCTION = sys.geography_overabove,
+        RESTRICT = sys.geography_gist_sel,
+        JOIN = sys.geography_gist_joinsel
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.<<|(sys.GEOGRAPHY, sys.GEOGRAPHY);
-CREATE OPERATOR sys.<<| (
-    LEFTARG = sys.GEOGRAPHY,
-    RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_below,
-    COMMUTATOR = |>>,
-    RESTRICT = sys.geography_gist_sel,
-    JOIN = sys.geography_gist_joinsel
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.<<| (
+        LEFTARG = sys.GEOGRAPHY,
+        RIGHTARG = sys.GEOGRAPHY,
+        FUNCTION = sys.geography_below,
+        COMMUTATOR = |>>,
+        RESTRICT = sys.geography_gist_sel,
+        JOIN = sys.geography_gist_joinsel
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.&<|(sys.GEOGRAPHY, sys.GEOGRAPHY);
-CREATE OPERATOR sys.&<| (
-    LEFTARG = sys.GEOGRAPHY,
-    RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_overbelow,
-    RESTRICT = sys.geography_gist_sel,
-    JOIN = sys.geography_gist_joinsel
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.&<| (
+        LEFTARG = sys.GEOGRAPHY,
+        RIGHTARG = sys.GEOGRAPHY,
+        FUNCTION = sys.geography_overbelow,
+        RESTRICT = sys.geography_gist_sel,
+        JOIN = sys.geography_gist_joinsel
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.~=(sys.GEOGRAPHY, sys.GEOGRAPHY);
-CREATE OPERATOR sys.~= (
-    LEFTARG = sys.GEOGRAPHY,
-    RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_same,
-    COMMUTATOR = ~=,
-    RESTRICT = sys.geography_gist_sel,
-    JOIN = sys.geography_gist_joinsel
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.~= (
+        LEFTARG = sys.GEOGRAPHY,
+        RIGHTARG = sys.GEOGRAPHY,
+        FUNCTION = sys.geography_same,
+        COMMUTATOR = ~=,
+        RESTRICT = sys.geography_gist_sel,
+        JOIN = sys.geography_gist_joinsel
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
-DROP OPERATOR IF EXISTS sys.<->(sys.GEOGRAPHY, sys.GEOGRAPHY);
-CREATE OPERATOR sys.<-> (
-    LEFTARG = sys.GEOGRAPHY,
-    RIGHTARG = sys.GEOGRAPHY,
-    FUNCTION = sys.geography_distance_centroid,
-    COMMUTATOR = <->
-);
+DO $$
+BEGIN
+    CREATE OPERATOR sys.<-> (
+        LEFTARG = sys.GEOGRAPHY,
+        RIGHTARG = sys.GEOGRAPHY,
+        FUNCTION = sys.geography_distance_centroid,
+        COMMUTATOR = <->
+    );
+EXCEPTION WHEN duplicate_function THEN NULL;
+END
+$$;
 
 -- GiST operator class
-DROP OPERATOR CLASS IF EXISTS sys.gist_geography_ops_2d USING gist;
-CREATE OPERATOR CLASS sys.gist_geography_ops_2d
-    DEFAULT FOR TYPE sys.GEOGRAPHY USING gist AS
-    STORAGE sys.box2df,
-    OPERATOR  1  sys.<<(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
-    OPERATOR  2  sys.&<(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
-    OPERATOR  3  sys.&&(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
-    OPERATOR  4  sys.&>(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
-    OPERATOR  5  sys.>>(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
-    OPERATOR  6  sys.~=(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
-    OPERATOR  7  sys.~(sys.GEOGRAPHY, sys.GEOGRAPHY)   ,
-    OPERATOR  8  sys.@(sys.GEOGRAPHY, sys.GEOGRAPHY)   ,
-    OPERATOR  9  sys.&<|(sys.GEOGRAPHY, sys.GEOGRAPHY) ,
-    OPERATOR 10  sys.<<|(sys.GEOGRAPHY, sys.GEOGRAPHY) ,
-    OPERATOR 11  sys.|>>(sys.GEOGRAPHY, sys.GEOGRAPHY) ,
-    OPERATOR 12  sys.|&>(sys.GEOGRAPHY, sys.GEOGRAPHY) ,
-    OPERATOR 13  sys.<->(sys.GEOGRAPHY, sys.GEOGRAPHY) FOR ORDER BY pg_catalog.float_ops,
-    FUNCTION  1  sys.geography_gist_consistent(internal, sys.GEOGRAPHY, smallint, oid, internal),
-    FUNCTION  2  sys.geography_gist_union(bytea, internal),
-    FUNCTION  3  sys.geography_gist_compress(internal),
-    FUNCTION  4  sys.geography_gist_decompress(internal),
-    FUNCTION  5  sys.geography_gist_penalty(internal, internal, internal),
-    FUNCTION  6  sys.geography_gist_picksplit(internal, internal),
-    FUNCTION  7  sys.geography_gist_same(sys.GEOGRAPHY, sys.GEOGRAPHY, internal),
-    FUNCTION  8  sys.geography_gist_distance(internal, sys.GEOGRAPHY, smallint, oid, internal);
+DO $$
+BEGIN
+    CREATE OPERATOR CLASS sys.gist_geography_ops_2d
+        DEFAULT FOR TYPE sys.GEOGRAPHY USING gist AS
+        STORAGE sys.box2df,
+        OPERATOR  1  sys.<<(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
+        OPERATOR  2  sys.&<(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
+        OPERATOR  3  sys.&&(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
+        OPERATOR  4  sys.&>(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
+        OPERATOR  5  sys.>>(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
+        OPERATOR  6  sys.~=(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
+        OPERATOR  7  sys.~(sys.GEOGRAPHY, sys.GEOGRAPHY)   ,
+        OPERATOR  8  sys.@(sys.GEOGRAPHY, sys.GEOGRAPHY)   ,
+        OPERATOR  9  sys.&<|(sys.GEOGRAPHY, sys.GEOGRAPHY) ,
+        OPERATOR 10  sys.<<|(sys.GEOGRAPHY, sys.GEOGRAPHY) ,
+        OPERATOR 11  sys.|>>(sys.GEOGRAPHY, sys.GEOGRAPHY) ,
+        OPERATOR 12  sys.|&>(sys.GEOGRAPHY, sys.GEOGRAPHY) ,
+        OPERATOR 13  sys.<->(sys.GEOGRAPHY, sys.GEOGRAPHY) FOR ORDER BY pg_catalog.float_ops,
+        FUNCTION  1  sys.geography_gist_consistent(internal, sys.GEOGRAPHY, smallint, oid, internal),
+        FUNCTION  2  sys.geography_gist_union(bytea, internal),
+        FUNCTION  3  sys.geography_gist_compress(internal),
+        FUNCTION  4  sys.geography_gist_decompress(internal),
+        FUNCTION  5  sys.geography_gist_penalty(internal, internal, internal),
+        FUNCTION  6  sys.geography_gist_picksplit(internal, internal),
+        FUNCTION  7  sys.geography_gist_same(sys.GEOGRAPHY, sys.GEOGRAPHY, internal),
+        FUNCTION  8  sys.geography_gist_distance(internal, sys.GEOGRAPHY, smallint, oid, internal);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END
+$$;
+
