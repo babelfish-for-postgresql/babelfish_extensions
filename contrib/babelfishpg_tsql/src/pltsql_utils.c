@@ -1779,7 +1779,7 @@ tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id)
 				 */
 				if (OidIsValid(con->conrelid))
 				{
-					if (pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
+					if (pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_REFERENCES) == ACLCHECK_OK)
 						namespace_oid = con->connamespace;
 				}
 			}
