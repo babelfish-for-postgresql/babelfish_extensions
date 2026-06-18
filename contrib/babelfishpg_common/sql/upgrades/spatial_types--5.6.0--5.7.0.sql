@@ -2,6 +2,587 @@
 ---- Include changes related to spatial types here ----
 -------------------------------------------------------
 
+
+-- =============================================================
+-- GEOMETRY
+-- =============================================================
+CREATE OR REPLACE FUNCTION sys.geometryin(cstring)
+    RETURNS sys.GEOMETRY
+    AS 'babelfishpg_common', 'geometry_in'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.geometryout(sys.GEOMETRY)
+	RETURNS cstring
+	AS '$libdir/postgis-3','LWGEOM_out'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.geometrytypmodin(cstring[])
+	RETURNS integer
+	AS '$libdir/postgis-3','geometry_typmod_in'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.geometrytypmodout(integer)
+	RETURNS cstring
+	AS '$libdir/postgis-3','postgis_typmod_out'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.geometryanalyze(internal)
+	RETURNS bool
+	AS '$libdir/postgis-3', 'gserialized_analyze_nd'
+	LANGUAGE 'c' VOLATILE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.geometryrecv(internal)
+	RETURNS sys.GEOMETRY
+	AS '$libdir/postgis-3','LWGEOM_recv'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.geometrysend(sys.GEOMETRY)
+	RETURNS bytea
+	AS '$libdir/postgis-3','LWGEOM_send'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.GEOMETRY, integer, boolean)
+	RETURNS sys.GEOMETRY
+	AS '$libdir/postgis-3','geometry_enforce_typmod'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(point)
+	RETURNS sys.GEOMETRY
+	AS '$libdir/postgis-3','point_to_geometry'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.point(sys.GEOMETRY)
+	RETURNS point
+	AS '$libdir/postgis-3','geometry_to_point'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(sys.NVARCHAR, integer)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'bbf_geometry_stgeomfromtext'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOMETRY)
+	RETURNS sys.NVARCHAR
+	AS 'babelfishpg_common', 'st_as_text'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.text(sys.GEOMETRY)
+	RETURNS text
+	AS 'babelfishpg_common', 'bbf_geom_to_text_error'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOMETRY, integer, boolean)
+	RETURNS sys.bpchar
+	AS 'babelfishpg_common','geometry_asbpchar'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bpchar)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'bbf_geom_from_bpchar'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOMETRY, integer, boolean)
+	RETURNS sys.varchar
+	AS 'babelfishpg_common', 'bbf_geom_asvarchar'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.varchar)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'bbf_geom_from_varchar'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common','geometry_from_bytea'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOMETRY)
+	RETURNS bytea
+	AS 'babelfishpg_common','bytea_from_geometry'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bbf_varbinary)
+    RETURNS sys.GEOMETRY
+    AS 'babelfishpg_common', 'bbf_geom_from_varbinary'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.bbf_varbinary(sys.GEOMETRY, integer, boolean)
+    RETURNS sys.bbf_varbinary
+    AS 'babelfishpg_common', 'bbf_geom_to_varbinary'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bbf_binary)
+    RETURNS sys.GEOMETRY
+    AS 'babelfishpg_common', 'bbf_geom_from_binary'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(text, integer, boolean)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'bbf_text_to_geom_error'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+
+CREATE OR REPLACE FUNCTION sys.bbf_binary(sys.GEOMETRY, integer, boolean)
+	RETURNS sys.bbf_binary
+	AS 'babelfishpg_common', 'bbf_geom_to_binary'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geometry__Point(float8, float8, srid integer)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'bbf_geometry_point'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
+	RETURNS sys.varbinary
+	AS 'babelfishpg_common', 'st_as_binary_geometry'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR, srid integer)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'bbf_geometry_stpointfromtext'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geometry__STLineFromText(sys.NVARCHAR, srid integer)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'bbf_geometry_stlinefromtext'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geometry__STPolyFromText(sys.NVARCHAR, srid integer)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'bbf_geometry_stpolyfromtext'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromText(sys.NVARCHAR, srid integer)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'bbf_geometry_stmpointfromtext'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromWKB(sys.VARBINARY, srid integer)
+    RETURNS sys.GEOMETRY
+    AS 'babelfishpg_common', 'bbf_geometry_stmpointfromwkb'
+    LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.geomfromwkb_helper(bytea, integer)
+    RETURNS sys.GEOMETRY
+    AS 'babelfishpg_common', 'get_geometry_from_wkb'
+    LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.ST_GeometryType(sys.GEOMETRY)
+	RETURNS text
+	AS '$libdir/postgis-3', 'geometry_geometrytype'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.ST_zmflag(sys.GEOMETRY)
+	RETURNS smallint
+	AS '$libdir/postgis-3', 'LWGEOM_zmflag'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STArea(geom sys.GEOMETRY)
+	RETURNS float8
+	AS 'babelfishpg_common', 'bbf_st_area'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STSrid(sys.GEOMETRY)
+	RETURNS integer
+	AS '$libdir/postgis-3','LWGEOM_get_srid'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STEquals(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS 'babelfishpg_common', 'bbf_st_equals'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STContains(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS 'babelfishpg_common', 'bbf_st_contains'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.ST_Equals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
+	RETURNS boolean
+	AS 'babelfishpg_common', 'bbf_geom_op_equals'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.ST_NotEquals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
+	RETURNS boolean
+	AS 'babelfishpg_common', 'bbf_geom_op_not_equals'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
+	RETURNS integer
+	AS 'babelfishpg_common', 'bbf_st_dimension'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STGeometryType(geom sys.GEOMETRY)
+	RETURNS sys.NVARCHAR(4000)
+	AS 'babelfishpg_common', 'bbf_st_geometrytype'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.MakeValid(geom sys.GEOMETRY)
+	RETURNS sys.GEOMETRY
+	AS 'babelfishpg_common', 'bbf_st_makevalid'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geometry__Parse(geometry_tagged_text sys.NVARCHAR)
+    RETURNS sys.GEOMETRY
+    AS 'babelfishpg_common', 'bbf_geometry_parse'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STNumPoints(geom sys.GEOMETRY)
+    RETURNS integer
+    AS 'babelfishpg_common', 'bbf_st_numpoints'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS 'babelfishpg_common', 'bbf_st_disjoint'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS 'babelfishpg_common', 'bbf_st_intersects'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS 'babelfishpg_common', 'bbf_st_isclosed'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STDistance(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
+	RETURNS float8
+	AS 'babelfishpg_common', 'bbf_st_distance'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.stx(sys.GEOMETRY)
+	RETURNS float8
+	AS '$libdir/postgis-3','LWGEOM_x_point'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.sty(sys.GEOMETRY)
+	RETURNS float8
+	AS '$libdir/postgis-3','LWGEOM_y_point'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.STIsEmpty(sys.GEOMETRY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','LWGEOM_isempty'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STIsValid(sys.GEOMETRY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','isvalid'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.HasZ(geom sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS 'babelfishpg_common', 'bbf_hasz'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.HasM(geom sys.GEOMETRY)
+	RETURNS sys.BIT
+	AS 'babelfishpg_common', 'bbf_hasm'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Z(geom sys.GEOMETRY)
+	RETURNS float8
+	AS 'babelfishpg_common', 'bbf_z'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.M(geom sys.GEOMETRY)
+	RETURNS float8
+	AS 'babelfishpg_common', 'bbf_m'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
+
+-- =============================================================
+-- GEOGRAPHY
+-- =============================================================
+CREATE OR REPLACE FUNCTION sys.geographyin(cstring, oid, integer)
+    RETURNS sys.GEOGRAPHY
+    AS 'babelfishpg_common','geography_in'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.geographyout(sys.GEOGRAPHY)
+    RETURNS cstring
+    AS '$libdir/postgis-3','geography_out'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.geographytypmodin(cstring[])
+    RETURNS integer
+    AS '$libdir/postgis-3','geometry_typmod_in'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.geographytypmodout(integer)
+    RETURNS cstring
+    AS '$libdir/postgis-3','postgis_typmod_out'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.geographyrecv(internal, oid, integer)
+    RETURNS sys.GEOGRAPHY
+    AS '$libdir/postgis-3','geography_recv'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.geographysend(sys.GEOGRAPHY)
+    RETURNS bytea
+    AS '$libdir/postgis-3','geography_send'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.geographyanalyze(internal)
+    RETURNS bool
+    AS '$libdir/postgis-3','gserialized_analyze_nd'
+    LANGUAGE 'c' VOLATILE STRICT;  
+
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.GEOGRAPHY, integer, boolean)
+	RETURNS sys.GEOGRAPHY
+	AS '$libdir/postgis-3','geography_enforce_typmod'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(bytea)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common','geography_from_bytea'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOGRAPHY)
+	RETURNS bytea
+	AS 'babelfishpg_common','bytea_from_geography'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bbf_varbinary)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'bbf_geog_from_varbinary'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.bbf_varbinary(sys.GEOGRAPHY, integer, boolean)
+	RETURNS sys.bbf_varbinary
+	AS 'babelfishpg_common', 'bbf_geog_to_varbinary'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bbf_binary)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'bbf_geog_from_binary'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.text(sys.GEOGRAPHY)
+	RETURNS text
+	AS 'babelfishpg_common', 'bbf_geog_to_text_error'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(text, integer, boolean)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'bbf_text_to_geog_error'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOGRAPHY, integer, boolean)
+	RETURNS sys.bpchar
+	AS 'babelfishpg_common', 'bbf_geog_asbpchar'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bpchar)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'bbf_geog_from_bpchar'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOGRAPHY, integer, boolean)
+	RETURNS sys.varchar
+	AS 'babelfishpg_common', 'bbf_geog_asvarchar'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.varchar)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'bbf_geog_from_varchar'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.bbf_binary(sys.GEOGRAPHY, integer, boolean)
+	RETURNS sys.bbf_binary
+	AS 'babelfishpg_common', 'bbf_geog_to_binary'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geography__STFlipCoordinates(sys.GEOGRAPHY)
+	RETURNS sys.GEOGRAPHY
+	AS '$libdir/postgis-3', 'ST_FlipCoordinates'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(sys.NVARCHAR, integer)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'bbf_geography_stgeomfromtext'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geography__STMPointFromText(sys.NVARCHAR, srid integer)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'bbf_geography_stmpointfromtext'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geography__STMPointFromWKB(sys.VARBINARY, srid integer)
+    RETURNS sys.GEOGRAPHY
+    AS 'babelfishpg_common', 'bbf_geography_stmpointfromwkb'
+    LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.geogfromwkb_helper(bytea, integer)
+    RETURNS sys.GEOGRAPHY
+    AS 'babelfishpg_common', 'get_geography_from_wkb'
+    LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
+    RETURNS sys.NVARCHAR
+    AS 'babelfishpg_common', 'bbf_geog_astext'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
+	RETURNS sys.varbinary
+	AS 'babelfishpg_common', 'st_as_binary_geography'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'geography_point'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(sys.NVARCHAR, srid integer)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'bbf_geography_stpointfromtext'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geography__STLineFromText(sys.NVARCHAR, srid integer)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'bbf_geography_stlinefromtext'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geography__STPolyFromText(sys.NVARCHAR, srid integer)
+	RETURNS sys.GEOGRAPHY
+	AS 'babelfishpg_common', 'bbf_geography_stpolyfromtext'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.ST_GeometryType(sys.GEOGRAPHY)
+	RETURNS text
+	AS '$libdir/postgis-3', 'geometry_geometrytype'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.ST_zmflag(sys.GEOGRAPHY)
+	RETURNS smallint
+	AS '$libdir/postgis-3', 'LWGEOM_zmflag'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STArea(geom sys.GEOGRAPHY)
+	RETURNS float8
+	AS 'babelfishpg_common', 'bbf_geog_area'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STSrid(sys.GEOGRAPHY)
+	RETURNS integer
+	AS '$libdir/postgis-3','LWGEOM_get_srid'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STEquals(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS 'babelfishpg_common', 'bbf_geog_equals'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STContains(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS 'babelfishpg_common', 'bbf_geog_contains'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.ST_Equals(leftarg sys.GEOGRAPHY, rightarg sys.GEOGRAPHY)
+	RETURNS boolean
+	AS 'babelfishpg_common', 'bbf_geog_op_equals'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.ST_NotEquals(leftarg sys.GEOGRAPHY, rightarg sys.GEOGRAPHY)
+	RETURNS boolean
+	AS 'babelfishpg_common', 'bbf_geog_op_not_equals'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOGRAPHY)
+	RETURNS integer
+	AS 'babelfishpg_common', 'bbf_geog_dimension'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.MakeValid(geog sys.GEOGRAPHY)
+    RETURNS sys.GEOGRAPHY
+    AS 'babelfishpg_common', 'bbf_geog_makevalid'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STNumPoints(geog sys.GEOGRAPHY)
+	RETURNS integer
+	AS 'babelfishpg_common', 'bbf_geog_numpoints'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Geography__Parse(geography_tagged_text sys.NVARCHAR)
+    RETURNS sys.GEOGRAPHY
+    AS 'babelfishpg_common', 'bbf_geography_parse'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STGeometryType(geog sys.GEOGRAPHY)
+	RETURNS sys.NVARCHAR(4000)
+	AS 'babelfishpg_common', 'bbf_st_geometrytype'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS 'babelfishpg_common', 'bbf_geog_disjoint'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS 'babelfishpg_common', 'bbf_geog_intersects'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS 'babelfishpg_common', 'bbf_geog_isclosed'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAPHY)
+	RETURNS float8
+	AS 'babelfishpg_common', 'bbf_geog_distance'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.long(sys.GEOGRAPHY)
+	RETURNS float8
+	AS '$libdir/postgis-3','LWGEOM_y_point'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.lat(sys.GEOGRAPHY)
+	RETURNS float8
+	AS '$libdir/postgis-3','LWGEOM_x_point'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.ST_Transform(sys.GEOGRAPHY, integer)
+	RETURNS sys.GEOGRAPHY
+	AS '$libdir/postgis-3','transform'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.STIsEmpty(sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','LWGEOM_isempty'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.STIsValid(sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','isvalid'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.HasZ(geog sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS 'babelfishpg_common', 'bbf_hasz'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.HasM(geog sys.GEOGRAPHY)
+	RETURNS sys.BIT
+	AS 'babelfishpg_common', 'bbf_hasm'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
+
+CREATE OR REPLACE FUNCTION sys.Z(geom sys.GEOGRAPHY)
+	RETURNS float8
+	AS 'babelfishpg_common', 'bbf_z'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.M(geom sys.GEOGRAPHY)
+	RETURNS float8
+	AS 'babelfishpg_common', 'bbf_m'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
+
+
 --Geometry
 
 --STMLineFromText
@@ -58,7 +639,6 @@ CREATE TYPE sys.box2df (
     storage = plain,
     alignment = double
 );
-
 
 -- GiST support functions
 CREATE OR REPLACE FUNCTION sys.geometry_gist_consistent_2d(internal, sys.GEOMETRY, smallint, oid, internal)
@@ -534,5 +1114,4 @@ CREATE OPERATOR CLASS sys.gist_geography_ops_2d
     FUNCTION  6  sys.geography_gist_picksplit(internal, internal),
     FUNCTION  7  sys.geography_gist_same(sys.GEOGRAPHY, sys.GEOGRAPHY, internal),
     FUNCTION  8  sys.geography_gist_distance(internal, sys.GEOGRAPHY, smallint, oid, internal);
-
 

@@ -108,14 +108,14 @@ SELECT geometry::STLineFromText('POINT(1 2 3)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "LINESTRING" at Position 1. The input has POINT(1 2 3))~~
+~~ERROR (Message: Expected "LINESTRING" at position 1. The input has POINT(1 2 3))~~
 
 
 SELECT geography::STLineFromText('POINT(1 2 3)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "LINESTRING" at Position 1. The input has POINT(1 2 3))~~
+~~ERROR (Message: Expected "LINESTRING" at position 1. The input has POINT(1 2 3))~~
 
 
 --  Negative Tests for Nan coordinates

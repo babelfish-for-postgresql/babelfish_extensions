@@ -1,22 +1,22 @@
 CREATE OR REPLACE FUNCTION sys.geometryin(cstring)
     RETURNS sys.GEOMETRY
     AS 'babelfishpg_common', 'geometry_in'
-    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.geometryout(sys.GEOMETRY)
 	RETURNS cstring
 	AS '$libdir/postgis-3','LWGEOM_out'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.geometrytypmodin(cstring[])
 	RETURNS integer
 	AS '$libdir/postgis-3','geometry_typmod_in'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.geometrytypmodout(integer)
 	RETURNS cstring
 	AS '$libdir/postgis-3','postgis_typmod_out'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.geometryanalyze(internal)
 	RETURNS bool
@@ -26,12 +26,12 @@ CREATE OR REPLACE FUNCTION sys.geometryanalyze(internal)
 CREATE OR REPLACE FUNCTION sys.geometryrecv(internal)
 	RETURNS sys.GEOMETRY
 	AS '$libdir/postgis-3','LWGEOM_recv'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.geometrysend(sys.GEOMETRY)
 	RETURNS bytea
 	AS '$libdir/postgis-3','LWGEOM_send'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE TYPE sys.GEOMETRY (
 	INTERNALLENGTH = variable,
@@ -51,19 +51,19 @@ CREATE TYPE sys.GEOMETRY (
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.GEOMETRY, integer, boolean)
 	RETURNS sys.GEOMETRY
 	AS '$libdir/postgis-3','geometry_enforce_typmod'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE CAST (sys.GEOMETRY AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.GEOMETRY, integer, boolean) AS IMPLICIT;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(point)
 	RETURNS sys.GEOMETRY
 	AS '$libdir/postgis-3','point_to_geometry'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.point(sys.GEOMETRY)
 	RETURNS point
 	AS '$libdir/postgis-3','geometry_to_point'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE CAST (sys.GEOMETRY AS point) WITH FUNCTION sys.point(sys.GEOMETRY);
 -- CREATE CAST (point AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(point);
@@ -71,74 +71,74 @@ CREATE CAST (sys.GEOMETRY AS point) WITH FUNCTION sys.point(sys.GEOMETRY);
 CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(sys.NVARCHAR, integer)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'bbf_geometry_stgeomfromtext'
-	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOMETRY)
 	RETURNS sys.NVARCHAR
 	AS 'babelfishpg_common', 'st_as_text'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.text(sys.GEOMETRY)
 	RETURNS text
 	AS 'babelfishpg_common', 'bbf_geom_to_text_error'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOMETRY, integer, boolean)
 	RETURNS sys.bpchar
 	AS 'babelfishpg_common','geometry_asbpchar'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bpchar)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'bbf_geom_from_bpchar'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOMETRY, integer, boolean)
 	RETURNS sys.varchar
 	AS 'babelfishpg_common', 'bbf_geom_asvarchar'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.varchar)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'bbf_geom_from_varchar'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common','geometry_from_bytea'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;	
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOMETRY)
 	RETURNS bytea
 	AS 'babelfishpg_common','bytea_from_geometry'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bbf_varbinary)
     RETURNS sys.GEOMETRY
     AS 'babelfishpg_common', 'bbf_geom_from_varbinary'
-    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.bbf_varbinary(sys.GEOMETRY, integer, boolean)
     RETURNS sys.bbf_varbinary
     AS 'babelfishpg_common', 'bbf_geom_to_varbinary'
-    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bbf_binary)
     RETURNS sys.GEOMETRY
     AS 'babelfishpg_common', 'bbf_geom_from_binary'
-    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(text, integer, boolean)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'bbf_text_to_geom_error'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 
 CREATE OR REPLACE FUNCTION sys.bbf_binary(sys.GEOMETRY, integer, boolean)
 	RETURNS sys.bbf_binary
 	AS 'babelfishpg_common', 'bbf_geom_to_binary'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE CAST (text AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(text, integer, boolean) AS IMPLICIT;
 CREATE CAST (sys.GEOMETRY AS text) WITH FUNCTION sys.text(sys.GEOMETRY);
@@ -157,38 +157,38 @@ CREATE CAST (sys.GEOMETRY AS sys.bbf_binary) WITH FUNCTION sys.bbf_binary(sys.GE
 CREATE OR REPLACE FUNCTION sys.Geometry__Point(float8, float8, srid integer)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'bbf_geometry_point'
-	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
 	RETURNS sys.varbinary
 	AS 'babelfishpg_common', 'st_as_binary_geometry'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(sys.NVARCHAR, srid integer)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'bbf_geometry_stpointfromtext'
-	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STLineFromText(sys.NVARCHAR, srid integer)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'bbf_geometry_stlinefromtext'
-	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
 
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STPolyFromText(sys.NVARCHAR, srid integer)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'bbf_geometry_stpolyfromtext'
-	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromText(sys.NVARCHAR, srid integer)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'bbf_geometry_stmpointfromtext'
-	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STMPointFromWKB(sys.VARBINARY, srid integer)
     RETURNS sys.GEOMETRY
     AS 'babelfishpg_common', 'bbf_geometry_stmpointfromwkb'
-    LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+    LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.Geometry__STMLineFromText(sys.NVARCHAR, srid integer)
     RETURNS sys.GEOMETRY
@@ -204,42 +204,42 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STMLineFromWKB(sys.VARBINARY, srid inte
 CREATE OR REPLACE FUNCTION sys.geomfromwkb_helper(bytea, integer)
     RETURNS sys.GEOMETRY
     AS 'babelfishpg_common', 'get_geometry_from_wkb'
-    LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+    LANGUAGE 'c' IMMUTABLE PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.ST_GeometryType(sys.GEOMETRY)
 	RETURNS text
 	AS '$libdir/postgis-3', 'geometry_geometrytype'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.ST_zmflag(sys.GEOMETRY)
 	RETURNS smallint
 	AS '$libdir/postgis-3', 'LWGEOM_zmflag'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.STArea(geom sys.GEOMETRY)
 	RETURNS float8
 	AS 'babelfishpg_common', 'bbf_st_area'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.STSrid(sys.GEOMETRY)
 	RETURNS integer
 	AS '$libdir/postgis-3','LWGEOM_get_srid'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.STEquals(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS sys.BIT
 	AS 'babelfishpg_common', 'bbf_st_equals'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.STContains(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS sys.BIT
 	AS 'babelfishpg_common', 'bbf_st_contains'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.ST_Equals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
 	RETURNS boolean
 	AS 'babelfishpg_common', 'bbf_geom_op_equals'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OPERATOR sys.= (
     LEFTARG = sys.GEOMETRY,
@@ -252,7 +252,7 @@ CREATE OPERATOR sys.= (
 CREATE OR REPLACE FUNCTION sys.ST_NotEquals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
 	RETURNS boolean
 	AS 'babelfishpg_common', 'bbf_geom_op_not_equals'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OPERATOR sys.<> (
     LEFTARG = sys.GEOMETRY,
@@ -266,57 +266,57 @@ CREATE OPERATOR sys.<> (
 CREATE OR REPLACE FUNCTION sys.STDimension(geom sys.GEOMETRY)
 	RETURNS integer
 	AS 'babelfishpg_common', 'bbf_st_dimension'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 	
 --STGeomType
 CREATE OR REPLACE FUNCTION sys.STGeometryType(geom sys.GEOMETRY)
 	RETURNS sys.NVARCHAR(4000)
 	AS 'babelfishpg_common', 'bbf_st_geometrytype'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 --MAKE VALID
 CREATE OR REPLACE FUNCTION sys.MakeValid(geom sys.GEOMETRY)
 	RETURNS sys.GEOMETRY
 	AS 'babelfishpg_common', 'bbf_st_makevalid'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 --Parse
 CREATE OR REPLACE FUNCTION sys.Geometry__Parse(geometry_tagged_text sys.NVARCHAR)
     RETURNS sys.GEOMETRY
     AS 'babelfishpg_common', 'bbf_geometry_parse'
-    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 --STNumPoints
 CREATE OR REPLACE FUNCTION sys.STNumPoints(geom sys.GEOMETRY)
     RETURNS integer
     AS 'babelfishpg_common', 'bbf_st_numpoints'
-    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 	
 -- STDisjoint
 -- Checks if two geometries have no points in common
 CREATE OR REPLACE FUNCTION sys.STDisjoint(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS sys.BIT
 	AS 'babelfishpg_common', 'bbf_st_disjoint'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 -- STIntersects
 -- Checks if two geometries spatially intersect
 CREATE OR REPLACE FUNCTION sys.STIntersects(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS sys.BIT
 	AS 'babelfishpg_common', 'bbf_st_intersects'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 -- STIsClosed
 -- Checks if geometry is closed
 CREATE OR REPLACE FUNCTION sys.STIsClosed(geom sys.GEOMETRY)
 	RETURNS sys.BIT
 	AS 'babelfishpg_common', 'bbf_st_isclosed'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 -- Minimum distance. 2D only.
 CREATE OR REPLACE FUNCTION sys.STDistance(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS float8
 	AS 'babelfishpg_common', 'bbf_st_distance'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.ST_Expand(geom sys.GEOMETRY, distance float8)
     RETURNS sys.GEOMETRY
@@ -338,14 +338,14 @@ CREATE OR REPLACE FUNCTION sys.sty(sys.GEOMETRY)
 CREATE OR REPLACE FUNCTION sys.STIsEmpty(sys.GEOMETRY)
         RETURNS sys.BIT
         AS '$libdir/postgis-3','LWGEOM_isempty'
-        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 -- STIsValid
 -- Checks if geometry is valid 
 CREATE OR REPLACE FUNCTION sys.STIsValid(sys.GEOMETRY)
         RETURNS sys.BIT
         AS '$libdir/postgis-3','isvalid'
-        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 -- HasZ
 -- Checks if a geometry instance has Z coordinates
@@ -353,7 +353,7 @@ CREATE OR REPLACE FUNCTION sys.STIsValid(sys.GEOMETRY)
 CREATE OR REPLACE FUNCTION sys.HasZ(geom sys.GEOMETRY)
 	RETURNS sys.BIT
 	AS 'babelfishpg_common', 'bbf_hasz'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 
 -- HasM
 -- Checks if a geometry instance has M coordinates (measure values)
@@ -361,7 +361,7 @@ CREATE OR REPLACE FUNCTION sys.HasZ(geom sys.GEOMETRY)
 CREATE OR REPLACE FUNCTION sys.HasM(geom sys.GEOMETRY)
 	RETURNS sys.BIT
 	AS 'babelfishpg_common', 'bbf_hasm'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE COST 100;
 -- Z
 -- Returns the Z coordinate value for a point geometry instance
 CREATE OR REPLACE FUNCTION sys.Z(geom sys.GEOMETRY)
@@ -374,11 +374,6 @@ CREATE OR REPLACE FUNCTION sys.Z(geom sys.GEOMETRY)
 CREATE OR REPLACE FUNCTION sys.M(geom sys.GEOMETRY)
 	RETURNS float8
 	AS 'babelfishpg_common', 'bbf_m'
-	LANGUAGE 'c' IMMUTABLE STRICT;
-
-CREATE OR REPLACE FUNCTION sys.M_helper(sys.GEOMETRY)
-	RETURNS float8
-	AS '$libdir/postgis-3','LWGEOM_m_point'
 	LANGUAGE 'c' IMMUTABLE STRICT;
 
 
