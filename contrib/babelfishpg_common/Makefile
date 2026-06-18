@@ -96,6 +96,10 @@ GE91		 = $(call test, $(MAJORVER), -ge, 91)
 
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 
+# Generated files to remove on 'make clean' so they are always
+# regenerated with the current tool versions (flex, bison, perl).
+EXTRA_CLEAN += src/geo_scan.c src/geo_parser.c
+
 src/geo_parser.o: src/geo_scan.c src/geo_data.h
 src/geo.o: src/geo_scan.c src/geo_parser.c src/geo_data.h
 distprep: src/geo_scan.c src/geo_parser.c
