@@ -4850,22 +4850,13 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	}
 
 	/*
-	 * For INSERT EXEC (new path), validate column count BEFORE plan
-	 * preparation so column mismatch errors take priority over runtime errors
-	 * (e.g., 1/0). PostgreSQL's eval_const_expressions() would evaluate
-	 * expressions first.
-	 *
-	 * Only validate inside TRY blocks; system procedures like sp_columns
-	 * have internal SELECTs with varying column counts outside TRY blocks.
+	 * INSERT EXEC (new path): validate the source statement's result column
+	 * count against the temp buffer BEFORE it is planned/executed, so a
+	 * column-count mismatch is raised ahead of any runtime error (e.g. 1/0)
 	 */
 	if (pltsql_insert_exec_active() &&
 		is_part_of_pltsql_trycatch_block(estate))
-	{
-		if (stmt->sqlstmt && stmt->sqlstmt->query)
-		{
-			pltsql_insert_exec_validate_column_count_from_query(stmt->sqlstmt->query);
-		}
-	}
+		pltsql_insert_exec_validate_column_count(estate, stmt);
 
 	PG_TRY();
 	{

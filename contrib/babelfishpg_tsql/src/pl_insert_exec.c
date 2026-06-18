@@ -323,9 +323,11 @@ pltsql_insert_exec_open_target_table(const char *target_table,
  * Validate column count from query string BEFORE plan preparation
  */
 void
-pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
+pltsql_insert_exec_validate_column_count(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 {
-	SPIPlanPtr		plan = NULL;
+	PLtsql_expr	   *expr = stmt->sqlstmt;
+	SPIPlanPtr		plan;
+	List		   *plansources;
 	CachedPlanSource *plansource;
 	TupleDesc		result_desc;
 	int				query_natts;
@@ -333,76 +335,51 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	Relation		temp_rel;
 	TupleDesc		temp_tupdesc;
 	int				temp_natts;
-	MemoryContext	oldcontext;
 
 	/* Caller must ensure INSERT EXEC is active before calling */
 	Assert(pltsql_insert_exec_active());
 
 	/*
 	 * Temp table must exist. It is created during INSERT EXEC setup before any
-	 * procedure-body statement runs, so it is normally valid here
+	 * procedure-body statement runs, so it is normally valid here.
 	 */
 	temp_table_oid = insert_exec_ctx->temp_table_oid;
 	if (!OidIsValid(temp_table_oid))
 		return;
 
+	if (expr == NULL || expr->query == NULL)
+		return;
+
 	/*
-	 * Parse-analyze the query to obtain its result descriptor. SPI_prepare
-	 * stops before planning, so constant expressions are not evaluated and a
-	 * runtime error like division by zero will not fire here. On any error,
-	 * defer to the normal execution path.
+	 * Reuse the cached plan if the statement was already prepared (earlier
+	 * execution). Otherwise prepare it once, through the normal parser setup.
 	 */
-	oldcontext = CurrentMemoryContext;
-
-	PG_TRY();
+	if (expr->plan != NULL)
+		plan = expr->plan;
+	else
 	{
-		plan = SPI_prepare(query_string, 0, NULL);
+		expr->func = estate->func;
+		plan = SPI_prepare_params(expr->query,
+								  (ParserSetupHook) pltsql_parser_setup,
+								  (void *) expr,
+								  CURSOR_OPT_PARALLEL_OK);
+		if (plan == NULL)
+			return;
 	}
-	PG_CATCH();
-	{
-		/*
-		 * Probe-only failure: defer to real execution, which re-raises it.
-		 * Re-throw cancellation/OOM immediately - those must be honored now
-		 */
-		ErrorData  *edata;
-		MemoryContextSwitchTo(oldcontext);
-		edata = CopyErrorData();
-		FlushErrorState();
 
-		if (edata->sqlerrcode == ERRCODE_QUERY_CANCELED ||
-			edata->sqlerrcode == ERRCODE_ADMIN_SHUTDOWN ||
-			edata->sqlerrcode == ERRCODE_OUT_OF_MEMORY)
-		{
-			ReThrowError(edata);
-		}
-		FreeErrorData(edata);
-		return;  /* Parse/analyze error - normal path will report it */
-	}
-	PG_END_TRY();
+	plansources = SPI_plan_get_plan_sources(plan);
 
 	/* Expect exactly one analyzed statement with a known result shape */
-	if (plan == NULL || list_length(plan->plancache_list) != 1)
-	{
-		if (plan != NULL)
-			SPI_freeplan(plan);
-		return;  /* Multiple statements or unusable plan, defer to runtime */
-	}
+	if (list_length(plansources) != 1)
+		return;
 
-	plansource = (CachedPlanSource *) linitial(plan->plancache_list);
+	plansource = (CachedPlanSource *) linitial(plansources);
 	result_desc = plansource->resultDesc;
 
-	/*
-	 * resultDesc is NULL for statements that do not return tuples (e.g. EXEC).
-	 * In that case there is nothing to validate statically; defer to runtime.
-	 */
 	if (result_desc == NULL)
-	{
-		SPI_freeplan(plan);
 		return;
-	}
 
 	query_natts = result_desc->natts;
-	SPI_freeplan(plan);
 
 	/* Get temp table column count */
 	temp_rel = table_open(temp_table_oid, AccessShareLock);
@@ -410,17 +387,23 @@ pltsql_insert_exec_validate_column_count_from_query(const char *query_string)
 	temp_natts = temp_tupdesc->natts;
 	table_close(temp_rel, AccessShareLock);
 
-	/* Check for column count mismatch */
+	/* Column count mismatch: raise before execution so it wins over 1/0 etc. */
 	if (query_natts != temp_natts)
-	{
-		/*
-		 * A column mismatch must roll back all rows even when caught by
-		 * TRY-CATCH, unlike data-level errors (e.g. division by zero) which
-		 * only drop the current row.
-		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("structure of query does not match function result type")));
+
+	/*
+	 * If we prepared the plan here (expr->plan was NULL), keep it and
+	 * cache it so exec_stmt_execsql reuses it instead of preparing again. This
+	 * is a result-returning SELECT, so it is not a modification statement.
+	 */
+	if (expr->plan == NULL)
+	{
+		SPI_keepplan(plan);
+		expr->plan = plan;
+		stmt->mod_stmt = false;
+		stmt->mod_stmt_tablevar = false;
 	}
 }
 

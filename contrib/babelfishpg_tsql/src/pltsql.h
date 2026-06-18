@@ -2545,7 +2545,7 @@ extern bool pltsql_insert_exec_active(void);
 extern bool pltsql_insert_exec_error_at_trycatch_level(void);
 extern void pltsql_insert_exec_open_target_table(const char *target_table,const char *schema_name_in,
                                                   const char *db_name_in);
-extern void pltsql_insert_exec_validate_column_count_from_query(const char *query_string);
+extern void pltsql_insert_exec_validate_column_count(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
 
 /* INSERT EXEC helper functions */
 extern DestReceiver *CreateInsertExecDestReceiver(void);
