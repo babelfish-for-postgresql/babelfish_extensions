@@ -129,12 +129,25 @@ CREATE TABLE pcc_fk_child (
 )
 GO
 
+-- CTAS source table
+CREATE TABLE pcc_ctas_source (
+    a VARCHAR(20),
+    b VARCHAR(20),
+    c AS a + b PERSISTED
+)
+GO
+
 -- Insert test data
 
 INSERT INTO pcc_concat (a, b) VALUES ('Hello', 'World')
 INSERT INTO pcc_concat (a, b) VALUES ('X', NULL)
 INSERT INTO pcc_concat (a, b) VALUES ('A', 'B')
 INSERT INTO pcc_concat (a, b) VALUES (NULL, 'test')
+GO
+
+INSERT INTO pcc_ctas_source (a, b) VALUES ('Hello', 'World')
+INSERT INTO pcc_ctas_source (a, b) VALUES ('X', NULL)
+INSERT INTO pcc_ctas_source (a, b) VALUES ('A', 'B')
 GO
 
 -- INSERT INTO pcc_convert (d) VALUES ('2024-01-15'), ('2024-12-25')

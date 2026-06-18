@@ -5,6 +5,12 @@
 #include "postgres.h"
 #include "nodes/parsenodes.h"
 
+/* Entry for whitelisted function lookup */
+typedef struct {
+    const char *funcname;
+    const char *nspname;
+} FuncEntry;
+
 /* Hook for PERSISTED computed columns with whitelisted STABLE functions */
 extern Node *stable_persisted_hook(Node *expr);
 

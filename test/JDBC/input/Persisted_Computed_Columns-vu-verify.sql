@@ -425,6 +425,43 @@ GO
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
+--INSERT with GUC ON 
+SET CONCAT_NULL_YIELDS_NULL ON
+GO
+SELECT a, b, c INTO pcc_ctas_dest_on FROM pcc_ctas_source
+GO
+--SELECT from destination table
+SELECT a, b, c FROM pcc_ctas_dest_on ORDER BY a
+GO
+
+-- Test 2: CTAS with GUC=OFF (re-evaluates)
+SET CONCAT_NULL_YIELDS_NULL OFF
+GO
+
+SELECT a, b, c INTO pcc_ctas_dest_off FROM pcc_ctas_source
+GO
+SET CONCAT_NULL_YIELDS_NULL ON
+GO
+--SELECT from destination table
+SELECT a, b, c FROM pcc_ctas_dest_off ORDER BY a
+GO
+
+--Checking the destination table with opposite GUC from the time of Insertion
+SET CONCAT_NULL_YIELDS_NULL ON
+GO
+
+SELECT a, b, c FROM pcc_ctas_dest_off ORDER BY a
+GO
+
+SET CONCAT_NULL_YIELDS_NULL OFF
+GO
+
+SELECT a, b, c FROM pcc_ctas_dest_on ORDER BY a
+GO
+
+SET CONCAT_NULL_YIELDS_NULL ON
+GO
+
 -- Bulk load re-evaluation
 
 -- COUNT with GUC=ON 

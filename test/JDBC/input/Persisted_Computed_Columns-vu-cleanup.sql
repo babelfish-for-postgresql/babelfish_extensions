@@ -34,3 +34,9 @@ DROP TABLE IF EXISTS pcc_dst
 GO
 DROP TABLE IF EXISTS pcc_bulk
 GO
+DROP TABLE IF EXISTS pcc_ctas_dest_on
+GO
+DROP TABLE IF EXISTS pcc_ctas_dest_off
+GO
+DROP TABLE IF EXISTS pcc_ctas_source
+GO

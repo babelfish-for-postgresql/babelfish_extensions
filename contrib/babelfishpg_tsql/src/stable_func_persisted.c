@@ -41,12 +41,7 @@ extern bool pltsql_ansi_warnings;
 extern bool pltsql_arithabort;
 extern bool pltsql_numeric_roundabort;
 
-typedef struct {
-    const char *funcname;
-    const char *nspname;
-} FuncEntry;
-
-/* Whitelist: deterministic STABLE functions we allow in PERSISTED columns */
+/* Whitelist: deterministic STABLE functions allowed in PERSISTED columns */
 static FuncEntry whitelist[] = {
     /* String concatenation */
     {"babelfish_concat_wrapper", "sys"},
@@ -87,7 +82,8 @@ name_in_list(const char *funcname, const char *nspname, FuncEntry *list)
 }
 
 /* Check required GUCs are at default values */
-bool check_persisted_gucs(void)
+bool 
+check_persisted_gucs(void)
 {
     return pltsql_quoted_identifier &&
            pltsql_arithabort &&
@@ -99,7 +95,8 @@ bool check_persisted_gucs(void)
 }
 
 /* Get comma-separated list of mismatched GUCs */
-char * get_mismatched_persisted_gucs(void)
+char * 
+get_mismatched_persisted_gucs(void)
 {
     StringInfoData buf;
     initStringInfo(&buf);
@@ -200,7 +197,8 @@ has_unsafe_func_walker(Node *node, void *context)
 }
 
 /* Hook: returns NULL to skip immutability check, expr to let PG handle */
-Node * stable_persisted_hook(Node *expr)
+Node * 
+stable_persisted_hook(Node *expr)
 {
     bool found_unsafe = false;
     
@@ -231,7 +229,8 @@ Node * stable_persisted_hook(Node *expr)
 }
 
 /* Check if table has any persisted computed columns */
-bool table_has_persisted_computed_cols(Oid relid)
+bool 
+table_has_persisted_computed_cols(Oid relid)
 {
     Relation  rel = relation_open(relid, AccessShareLock);
     TupleDesc tupdesc = RelationGetDescr(rel);
@@ -252,7 +251,8 @@ bool table_has_persisted_computed_cols(Oid relid)
 }
 
 /* Check GUCs for DML into tables with PERSISTED computed columns */
-void guc_check_dml(Query *parse)
+void 
+guc_check_dml(Query *parse)
 {
     RangeTblEntry *rte;
     const char *cmd;
@@ -347,7 +347,8 @@ query_rewrite_helper(Node *node, void *context)
     return expression_tree_mutator(node, query_rewrite_helper, context);
 }
 
-void query_rewrite_persisted(Query *parse)
+void 
+query_rewrite_persisted(Query *parse)
 {
     ListCell *lc;
     int rindex = 0;
