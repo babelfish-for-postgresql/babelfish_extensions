@@ -2540,4 +2540,11 @@ extern DestReceiver *CreateInsertExecDestReceiver(void);
 
 extern const char *shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2];
 
+/* Selectivity hook implementations */
+extern bool babelfish_opexpr_selectivity_hook(PlannerInfo *root, Node *clause,
+	int varRelid, JoinType jointype, SpecialJoinInfo *sjinfo,
+	bool use_extended_stats, Selectivity *selec);
+extern bool babelfish_nulltest_selectivity_hook(PlannerInfo *root,
+	NullTestType nulltesttype, Node *arg, int varRelid, Selectivity *selec);
+
 #endif							/* PLTSQL_H */
