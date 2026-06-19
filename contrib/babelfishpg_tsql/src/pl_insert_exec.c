@@ -261,59 +261,38 @@ pltsql_insert_exec_open_target_table(const char *target_table,
 	char			*schema_name = NULL;
 	char			*table_name = NULL;
 	char			*physical_schema = NULL;
-	bool			is_temp_table;
 
 	if (target_table == NULL)
 		return;
 
-	is_temp_table = (target_table[0] == '#' || target_table[0] == '@');
+	table_name = pstrdup(target_table);
+	schema_name = resolve_insert_exec_schema_name(schema_name_in, db_name_in);
+	/*
+	 * Resolve against the target's database when a 3-part name
+	 * (db..table) was used; otherwise the current database.
+	 */
+	physical_schema = get_physical_schema_name(
+		(db_name_in != NULL) ? (char *) db_name_in : get_cur_db_name(),
+		schema_name);
 
-	if (is_temp_table)
+	/* Create RangeVar and get the relation OID */
+	rv = makeRangeVar(physical_schema, table_name, -1);
+	relid = RangeVarGetRelid(rv, NoLock, true);
+
+	if (schema_name)
+		pfree(schema_name);
+	if (table_name)
+		pfree(table_name);
+	if (physical_schema)
+		pfree(physical_schema);
+
+	if (!OidIsValid(relid))
 	{
-		/*
-		 * Temp table or table variable - resolve using RangeVarGetRelid.
-		 * We don't need to lock because they're session-local.
-		 */
-		rv = makeRangeVar(NULL, pstrdup(target_table), -1);
-		relid = RangeVarGetRelid(rv, NoLock, true);
-
-		if (!OidIsValid(relid))
-			return;
-
-		/* Store the OID for schema verification (no lock for temp tables) */
-		insert_exec_ctx->target_rel_oid = relid;
+		/* Table doesn't exist - will be caught later during flush */
+		return;
 	}
-	else
-	{
-		table_name = pstrdup(target_table);
-		schema_name = resolve_insert_exec_schema_name(schema_name_in, db_name_in);
-		/*
-		 * Resolve against the target's database when a 3-part name
-		 * (db..table) was used; otherwise the current database.
-		 */
-		physical_schema = get_physical_schema_name(
-			(db_name_in != NULL) ? (char *) db_name_in : get_cur_db_name(),
-			schema_name);
 
-		/* Create RangeVar and get the relation OID */
-		rv = makeRangeVar(physical_schema, table_name, -1);
-		relid = RangeVarGetRelid(rv, NoLock, true);
-
-		if (schema_name)
-			pfree(schema_name);
-		if (table_name)
-			pfree(table_name);
-		if (physical_schema)
-			pfree(physical_schema);
-
-		if (!OidIsValid(relid))
-		{
-			/* Table doesn't exist - will be caught later during flush */
-			return;
-		}
-
-		insert_exec_ctx->target_rel_oid = relid;
-	}
+	insert_exec_ctx->target_rel_oid = relid;
 
 	/* Initialize the modification flag to false */
 	insert_exec_ctx->is_target_relation_modified = false;
@@ -351,33 +330,33 @@ pltsql_insert_exec_validate_column_count(PLtsql_execstate *estate, PLtsql_stmt_e
 		return;
 
 	/*
-	 * Reuse the cached plan if the statement was already prepared (earlier
-	 * execution). Otherwise prepare it once, through the normal parser setup.
+	 * Parse-analyze the statement just to read its result shape.
 	 */
-	if (expr->plan != NULL)
-		plan = expr->plan;
-	else
-	{
-		expr->func = estate->func;
-		plan = SPI_prepare_params(expr->query,
-								  (ParserSetupHook) pltsql_parser_setup,
-								  (void *) expr,
-								  CURSOR_OPT_PARALLEL_OK);
-		if (plan == NULL)
-			return;
-	}
+	expr->func = estate->func;
+	plan = SPI_prepare_params(expr->query,
+							  (ParserSetupHook) pltsql_parser_setup,
+							  (void *) expr,
+							  CURSOR_OPT_PARALLEL_OK);
+	if (plan == NULL)
+		return;
 
 	plansources = SPI_plan_get_plan_sources(plan);
 
 	/* Expect exactly one analyzed statement with a known result shape */
 	if (list_length(plansources) != 1)
+	{
+		SPI_freeplan(plan);
 		return;
+	}
 
 	plansource = (CachedPlanSource *) linitial(plansources);
 	result_desc = plansource->resultDesc;
 
 	if (result_desc == NULL)
+	{
+		SPI_freeplan(plan);
 		return;
+	}
 
 	query_natts = result_desc->natts;
 
@@ -387,24 +366,14 @@ pltsql_insert_exec_validate_column_count(PLtsql_execstate *estate, PLtsql_stmt_e
 	temp_natts = temp_tupdesc->natts;
 	table_close(temp_rel, AccessShareLock);
 
+	/* Done reading the shape; drop the throwaway plan. */
+	SPI_freeplan(plan);
+
 	/* Column count mismatch: raise before execution so it wins over 1/0 etc. */
 	if (query_natts != temp_natts)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("structure of query does not match function result type")));
-
-	/*
-	 * If we prepared the plan here (expr->plan was NULL), keep it and
-	 * cache it so exec_stmt_execsql reuses it instead of preparing again. This
-	 * is a result-returning SELECT, so it is not a modification statement.
-	 */
-	if (expr->plan == NULL)
-	{
-		SPI_keepplan(plan);
-		expr->plan = plan;
-		stmt->mod_stmt = false;
-		stmt->mod_stmt_tablevar = false;
-	}
 }
 
 /*
@@ -587,8 +556,10 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema
 	 * resolve it - the same path a plain "INSERT INTO db..table" takes.
 	 * Resolving the physical schema ourselves does not work because the
 	 * physical schema of another logical database is not visible as an
-	 * INSERT target under the T-SQL dialect. For same-DB and temp targets we
-	 * keep referencing the bare name (search_path resolves it).
+	 * INSERT target under the T-SQL dialect. Same-DB targets are schema-
+	 * qualified (the caller always resolves the schema) so the flush does not
+	 * depend on search_path. Temp tables/table variables have no schema and
+	 * are referenced by bare name (resolved via the session temp namespace).
 	 */
 	if (target_db != NULL)
 		qualified_target = psprintf("%s.%s.%s",
@@ -896,7 +867,7 @@ insert_exec_setup(PLtsql_execstate *estate,
  * so schema/db are passed as NULL there.
  */
 void
-insert_exec_success_cleanup(PLtsql_execstate *estate, InsertExecInfo *info)
+insert_exec_flush_and_cleanup(PLtsql_execstate *estate, InsertExecInfo *info)
 {
 	char	   *column_list = build_quoted_column_list(info->columns);
 	const char *flush_schema = (info->db_name != NULL || info->schema != NULL) ? info->schema : NULL;

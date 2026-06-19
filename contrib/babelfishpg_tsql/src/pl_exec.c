@@ -4849,15 +4849,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			set_cur_user_db_and_path(stmt->db_name, true, false);
 	}
 
-	/*
-	 * INSERT EXEC (new path): validate the source statement's result column
-	 * count against the temp buffer BEFORE it is planned/executed, so a
-	 * column-count mismatch is raised ahead of any runtime error (e.g. 1/0)
-	 */
-	if (pltsql_insert_exec_active() &&
-		is_part_of_pltsql_trycatch_block(estate))
-		pltsql_insert_exec_validate_column_count(estate, stmt);
-
 	PG_TRY();
 	{
 		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
@@ -9920,17 +9911,6 @@ pltsql_estate_cleanup(void)
 									top_es_entry->estate->stmt_mcontext_parent);
 	pfree(exec_state_call_stack);
 	exec_state_call_stack = top_es_entry;
-
-	/*
-	 * Clear stale INSERT EXEC context when the call stack becomes empty.
-	 * This is a safety net to prevent context from leaking between batches.
-	 * Primary cleanup happens in exec_stmt_exec error handlers, but this
-	 * ensures cleanup even if those paths are not taken.
-	 */
-	if (exec_state_call_stack == NULL && pltsql_insert_exec_active())
-	{
-		pltsql_insert_exec_reset_all();
-	}
 }
 
 /*

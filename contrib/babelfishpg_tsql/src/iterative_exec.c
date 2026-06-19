@@ -1619,15 +1619,6 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 					estate->cur_error->severity = exec_state_call_stack->error_data.error_severity;
 					estate->cur_error->state = exec_state_call_stack->error_data.error_state;
 
-					/* INSERT EXEC: re-throw errors that must abort the whole flush. */
-					if (ignore_catch_block_for_insert_exec(estate))
-					{
-						elog(DEBUG4,
-							 "INSERT EXEC failed due to error (sqlerrcode=%d) inside procedure TRY-CATCH; re-throwing to abort flush",
-							 estate->cur_error->error ? estate->cur_error->error->sqlerrcode : 0);
-						ReThrowError(estate->cur_error->error);
-					}
-
 					/* Goto error handling blocks */
 					*pc = err_handler_pc - 1;	/* same as how goto handles PC */
 
@@ -1643,7 +1634,9 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 									 * error context */
 						}
 					}
-					if (ignore_catch_block_for_unmapped_error(estate) || terminate_batch)
+					/* INSERT EXEC: re-throw errors that must abort the whole flush */
+					if (ignore_catch_block_for_insert_exec(estate) ||
+						ignore_catch_block_for_unmapped_error(estate) || terminate_batch)
 					{
 						elog(DEBUG1, "TSQL TXN Ignore catch block error mapping failed : %d", last_error_mapping_failed);
 						ReThrowError(estate->cur_error->error);

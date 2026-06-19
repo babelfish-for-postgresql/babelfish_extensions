@@ -870,9 +870,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	/* INSERT EXEC handling - temp table lifecycle */
 	bool insert_exec_setup_done = false;
 
-	/* set true at the end of the PG_TRY body to distinguish success from error in PG_FINALLY */
-	volatile bool exec_succeeded = false;
-
 	/*
 	 * We need to disable the explain gucs incase of sp_reset_connection
 	 * execution otherwise we will get explain output for it which is
@@ -1317,18 +1314,42 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			dest->rDestroy(dest);
 		}
 
-		exec_succeeded = true;
+		if (rc < 0)
+			elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
+				 expr->query, SPI_result_code_string(rc));
+
+		/*
+		 * Check result rowcount; if there's one row, assign procedure's output
+		 * values back to the appropriate variables
+		 */
+		if (SPI_processed == 1)
+		{
+			SPITupleTable *tuptab = SPI_tuptable;
+
+			if (!stmt->target)
+				elog(ERROR, "DO statement returned a row");
+
+			if (tuptab != NULL)
+				exec_move_row(estate, stmt->target, tuptab->vals[0], tuptab->tupdesc);
+		}
+		else if (SPI_processed > 1)
+			elog(ERROR, "procedure call returned more than one row");
+
+		exec_eval_cleanup(estate);
+		SPI_freetuptable(SPI_tuptable);
+
+		if (insert_exec_setup_done)
+			insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
 	}
 	PG_FINALLY();
 	{
-		/*
-		 * On the error path (new INSERT EXEC path only), tear down the temp
-		 * table context before re-throwing.
-		 */
-		if (!exec_succeeded &&
-			(insert_exec_setup_done || pltsql_insert_exec_active()))
+		if (insert_exec_setup_done)
 			pltsql_insert_exec_reset_all();
 
+		/*
+		 * Restore the database/user context if a cross-db EXEC switched it.
+		 * Runs on both success and error paths.
+		 */
 		if (strcmp(get_current_pltsql_db_name(), save_db_name) != 0)
 			set_cur_user_db_and_path(save_db_name, false, false);
 
@@ -1347,34 +1368,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		}
 	}
 	PG_END_TRY();
-
-	if (rc < 0)
-		elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
-			 expr->query, SPI_result_code_string(rc));
-
-	/*
-	 * Check result rowcount; if there's one row, assign procedure's output
-	 * values back to the appropriate variables.
-	 */
-	if (SPI_processed == 1)
-	{
-		SPITupleTable *tuptab = SPI_tuptable;
-
-		if (!stmt->target)
-			elog(ERROR, "DO statement returned a row");
-
-		if (tuptab != NULL)
-			exec_move_row(estate, stmt->target, tuptab->vals[0], tuptab->tupdesc);
-	}
-	else if (SPI_processed > 1)
-		elog(ERROR, "procedure call returned more than one row");
-
-	exec_eval_cleanup(estate);
-	SPI_freetuptable(SPI_tuptable);
-
-	/* Flush temp table to target table and cleanup after procedure completes */
-	if (insert_exec_setup_done)
-		insert_exec_success_cleanup(estate, stmt->insert_exec);
 
 	return PLTSQL_RC_OK;
 }
@@ -1553,8 +1546,6 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	/* INSERT EXEC handling - temp table lifecycle */
 	bool insert_exec_setup_done = false;
 
-	/* set true at the end of the PG_TRY body to distinguish success from error in PG_FINALLY */
-	volatile bool exec_succeeded = false;
 	LOCAL_FCINFO(fcinfo, 1);
 
 	/*
@@ -1601,13 +1592,12 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		if (fcinfo->isnull)
 			elog(ERROR, "pltsql_inline_handler failed");
 
-		exec_succeeded = true;
+		if (insert_exec_setup_done)
+			insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
 	}
 	PG_FINALLY();
 	{
-		/* On the error path (new INSERT EXEC path only), tear down the temp table context. */
-		if (!exec_succeeded &&
-			(insert_exec_setup_done || pltsql_insert_exec_active()))
+		if (insert_exec_setup_done)
 			pltsql_insert_exec_reset_all();
 
 		/* Restore past settings */
@@ -1636,10 +1626,6 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		pltsql_create_econtext(estate);
 	}
 	exec_eval_cleanup(estate);
-
-	/* Flush temp table to target and cleanup */
-	if (insert_exec_setup_done)
-		insert_exec_success_cleanup(estate, stmt->insert_exec);
 
 	return PLTSQL_RC_OK;
 }
@@ -2242,9 +2228,6 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				/* INSERT EXEC handling - temp table lifecycle */
 				bool insert_exec_setup_done = false;
 
-				/* set true at the end of the PG_TRY body to distinguish success from error in PG_FINALLY */
-				volatile bool exec_succeeded = false;
-
 				batch = exec_eval_expr(estate, stmt->query, &isnull1, &restype1, &restypmod1);
 				if (isnull1)
 				{
@@ -2310,23 +2293,18 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						exec_assign_value(estate, estate->datums[stmt->return_code_dno], Int32GetDatum(ret), false, INT4OID, 0);
 					}
 
-					exec_succeeded = true;
+					if (insert_exec_setup_done)
+						insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
 				}
 				PG_FINALLY();
 				{
-					/* On the error path (new INSERT EXEC path only), tear down the temp table context. */
-					if (!exec_succeeded &&
-						(insert_exec_setup_done || pltsql_insert_exec_active()))
+					if (insert_exec_setup_done)
 						pltsql_insert_exec_reset_all();
 
 					pltsql_revert_guc(save_nestlevel);
 					pltsql_revert_last_scope_identity(scope_level);
 				}
 				PG_END_TRY();
-
-				/* Flush temp table to target and cleanup after sp_executesql completes */
-				if (insert_exec_setup_done)
-					insert_exec_success_cleanup(estate, stmt->insert_exec);
 
 				break;
 			}
