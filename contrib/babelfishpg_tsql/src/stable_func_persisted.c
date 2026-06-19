@@ -162,15 +162,16 @@ contain_non_deterministic_func_walker(Node *node, void *context)
     {
         FuncExpr *f = (FuncExpr *) node;
         HeapTuple tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(f->funcid));
+        Form_pg_proc proc;
         
         if (!HeapTupleIsValid(tup))
         {
-            /* Cache lookup failed — fail closed */
+            /* Cache lookup failed, treat as unsafe */
             *found_unsafe = true;
             return true;
         }
 
-        Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(tup);
+        proc = (Form_pg_proc) GETSTRUCT(tup);
 
         if (proc->provolatile == PROVOLATILE_IMMUTABLE)
         {
