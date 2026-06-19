@@ -1,13 +1,76 @@
-DROP TABLE objectpropertyex_ownerid_schema.objectpropertyex_ownerid_table
+-- =============== ACL tests ===============
+DROP USER objectpropertyex_test_user
 GO
 
-DROP SCHEMA objectpropertyex_ownerid_schema
+DROP LOGIN objectpropertyex_test_login
+GO
+
+-- =============== Cross-database scoping ===============
+DROP DATABASE objectpropertyex_otherdb
+GO
+
+-- =============== Properties test objects ===============
+
+DROP INDEX objectpropertyex_idx ON objectpropertyex_indexed_table
+GO
+
+DROP TABLE objectpropertyex_indexed_table
+GO
+
+DROP TABLE objectpropertyex_noindex_table
+GO
+
+DROP TABLE objectpropertyex_default_table
+GO
+
+DROP TABLE objectpropertyex_notshipped_table
+GO
+
+DROP FUNCTION objectpropertyex_schemabound_fn
+GO
+
+DROP FUNCTION objectpropertyex_noschemabound_fn
+GO
+
+-- =============== IsSchemaBound - schema-bound view ===============
+
+DROP VIEW objectpropertyex_schemabound_view
+GO
+
+-- =============== BaseType - additional object types ===============
+
+DROP FUNCTION objectpropertyex_tvf
+GO
+
+DROP FUNCTION objectpropertyex_itvf
+GO
+
+DROP SEQUENCE objectpropertyex_test_seq
+GO
+
+DROP TABLE objectpropertyex_fk_table
+GO
+
+DROP TABLE objectpropertyex_constraint_table
+GO
+
+DROP TRIGGER objectpropertyex_test_trigger
+GO
+
+DROP TABLE objectpropertyex_trigger_table
+GO
+
+-- =============== Special Input Cases ===============
+
+DROP TABLE objectpropertyex_specialinput_table
 GO
 
 -- =============== BaseType ===============
 
--- Cleanup
 DROP TABLE objectpropertyex_basetype_table
+GO
+
+DROP TYPE objectpropertyex_basetype_tt
 GO
 
 DROP VIEW objectpropertyex_basetype_view
@@ -19,8 +82,23 @@ GO
 DROP PROC objectpropertyex_basetype_proc
 GO
 
--- =============== Special Input Cases ===============
+-- =============== OwnerId ===============
 
--- Cleanup
-DROP TABLE objectpropertyex_specialinput_table
+DROP TABLE objectpropertyex_ownerid_schema.objectpropertyex_ownerid_table
+GO
+
+DROP SCHEMA objectpropertyex_ownerid_schema
+GO
+
+-- =============== Permission edge cases ===============
+DROP TABLE objectpropertyex_oid_helper
+GO
+
+DROP TABLE objectpropertyex_perm_table
+GO
+
+DROP USER objectpropertyex_perm_user
+GO
+
+DROP LOGIN objectpropertyex_perm_login
 GO
