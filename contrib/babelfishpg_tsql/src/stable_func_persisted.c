@@ -148,7 +148,8 @@ get_mismatched_persisted_gucs(void)
 }
 
 /*
- * Non deterministic function walker: returns true if any function is unsafe i.e., not whitelisted or not immutable
+ * Non deterministic function walker: returns true if any function is unsafe i.e not whitelisted on not immutable
+ */
 static bool
 contain_non_deterministic_func_walker(Node *node, void *context)
 {
