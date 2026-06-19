@@ -1567,7 +1567,7 @@ SELECT OBJECTPROPERTY(OBJECT_ID('IsTrigger_trigger', 'TR'), 'IsTrigger')
 GO
 ~~START~~
 int
-<NULL>
+1
 ~~END~~
 
 
@@ -3202,7 +3202,7 @@ SELECT OBJECTPROPERTY(OBJECT_ID('IsTrigger_trigger', 'TR'), 'IsTrigger')
 GO
 ~~START~~
 int
-<NULL>
+1
 ~~END~~
 
 
