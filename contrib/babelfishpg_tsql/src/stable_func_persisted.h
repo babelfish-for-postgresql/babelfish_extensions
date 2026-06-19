@@ -9,7 +9,15 @@
 typedef struct {
     const char *funcname;
     const char *nspname;
+    int        style_arg_pos; /* 0-based position of style_specified arg, -1 means always safe */
 } FuncEntry;
+
+typedef struct
+{
+    int   varno;
+    int   varattno;
+    Node  *expr;
+} RewriteCtx;
 
 /* Hook for PERSISTED computed columns with whitelisted STABLE functions */
 extern Node *stable_persisted_hook(Node *expr);

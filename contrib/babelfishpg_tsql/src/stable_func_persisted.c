@@ -44,41 +44,66 @@ extern bool pltsql_numeric_roundabort;
 /* Whitelist: deterministic STABLE functions allowed in PERSISTED columns */
 static FuncEntry whitelist[] = {
     /* String concatenation */
-    {"babelfish_concat_wrapper", "sys"},
-    {"babelfish_concat_wrapper_outer", "sys"},
-    {"concat", "sys"},
-    {"concat_ws", "sys"},
+    {"babelfish_concat_wrapper",       "sys", -1},
+    {"babelfish_concat_wrapper_outer", "sys", -1},
+    {"concat",                         "sys", -1},
+    {"concat_ws",                      "sys", -1},
 
-    /* Conversion functions */
-    {"babelfish_conv_helper_to_varchar", "sys"},
+    /* Conversion functions — safe only when style_specified arg is true */
+    {"babelfish_conv_helper_to_varchar", "sys", 4},
 
     /* Numeric casting/rounding */
-    {"babelfish_cast_floor_int", "sys"},
-    {"babelfish_cast_floor_bigint", "sys"},
-    {"babelfish_cast_floor_smallint", "sys"},
-    {"_round_fixeddecimal_to_int2", "sys"},
-    {"_round_fixeddecimal_to_int4", "sys"},
-    {"_round_fixeddecimal_to_int8", "sys"},
-    {"_trunc_numeric_to_int2", "sys"},
-    {"_trunc_numeric_to_int4", "sys"},
-    {"_trunc_numeric_to_int8", "sys"},
+    {"babelfish_cast_floor_int",       "sys", -1},
+    {"babelfish_cast_floor_bigint",    "sys", -1},
+    {"babelfish_cast_floor_smallint",  "sys", -1},
+    {"_round_fixeddecimal_to_int2",    "sys", -1},
+    {"_round_fixeddecimal_to_int4",    "sys", -1},
+    {"_round_fixeddecimal_to_int8",    "sys", -1},
+    {"_trunc_numeric_to_int2",         "sys", -1},
+    {"_trunc_numeric_to_int4",         "sys", -1},
+    {"_trunc_numeric_to_int8",         "sys", -1},
 
     /* Date functions */
-    {"eomonth", "sys"},
-    {"datetrunc", "sys"},
+    {"eomonth",                        "sys", -1},
+    {"datetrunc",                      "sys", -1},
 
-    {NULL, NULL}
+    {NULL, NULL, -1}
 };
 
-/* Check if (funcname, nspname) is in a FuncEntry array */
-static bool
-name_in_list(const char *funcname, const char *nspname, FuncEntry *list)
+/* Find matching entry in whitelist, or return NULL */
+static FuncEntry *
+find_in_whitelist(const char *funcname, const char *nspname)
 {
-    for (int i = 0; list[i].funcname != NULL; i++)
-        if (pg_strcasecmp(funcname, list[i].funcname) == 0 &&
-            pg_strcasecmp(nspname, list[i].nspname) == 0)
-            return true;
-    return false;
+    for (int i = 0; whitelist[i].funcname != NULL; i++)
+        if (pg_strcasecmp(funcname, whitelist[i].funcname) == 0 &&
+            pg_strcasecmp(nspname, whitelist[i].nspname) == 0)
+            return &whitelist[i];
+    return NULL;
+}
+
+/*
+ * Validate a whitelisted function's arguments.
+ * If style_arg_pos >= 0, the argument at that position must be a boolean
+ * with value true (meaning an explicit style was specified).
+ */
+static bool
+validate_whitelist_entry(FuncEntry *entry, FuncExpr *f)
+{
+    Node  *arg;
+    Const *c;
+
+    if (entry->style_arg_pos < 0)
+        return true;
+
+    if (list_length(f->args) <= entry->style_arg_pos)
+        return false;
+
+    arg = (Node *) list_nth(f->args, entry->style_arg_pos);
+    if (!IsA(arg, Const))
+        return false;
+
+    c = (Const *) arg;
+    return !c->constisnull && DatumGetBool(c->constvalue);
 }
 
 /* Check required GUCs are at default values */
@@ -123,10 +148,10 @@ get_mismatched_persisted_gucs(void)
 }
 
 /*
- * Unsafe function walker: returns true if any function is unsafe i.e not whitelisted on not immutable
+ * Non deterministic function walker: returns true if any function is unsafe i.e not whitelisted on not immutable
  */
 static bool
-has_unsafe_func_walker(Node *node, void *context)
+contain_non_deterministic_func_walker(Node *node, void *context)
 {
     bool *found_unsafe = (bool *) context;
     
@@ -146,44 +171,23 @@ has_unsafe_func_walker(Node *node, void *context)
             {
                 /* IMMUTABLE is always safe */
                 ReleaseSysCache(tup);
-                return expression_tree_walker(node, has_unsafe_func_walker, context);
+                return expression_tree_walker(node, contain_non_deterministic_func_walker, context);
             }
             
             if (proc->provolatile == PROVOLATILE_STABLE)
             {
                 const char *funcname = NameStr(proc->proname);
                 char *nspname = get_namespace_name(proc->pronamespace);
-                
-                if (nspname && name_in_list(funcname, nspname, whitelist))
-                {
-                    /*
-                     * Whitelisted STABLE — but check CONVERT for explicit style.
-                     * CONVERT without style is non-deterministic.
-                     */
-                    if (pg_strcasecmp(funcname, "babelfish_conv_helper_to_varchar") == 0)
-                    {
-                        /* Check p_style_specified (5th arg) */
-                        if (list_length(f->args) >= 5)
-                        {
-                            Node *style_specified = (Node *) list_nth(f->args, 4);
-                            if (!IsA(style_specified, Const) ||
-                                !DatumGetBool(((Const *) style_specified)->constvalue))
-                            {
-                                /* Style not specified — non-deterministic */
-                                pfree(nspname);
-                                *found_unsafe = true;
-                                ReleaseSysCache(tup);
-                                return true;
-                            }
-                        }
-                    }
+                FuncEntry *entry = nspname ? find_in_whitelist(funcname, nspname) : NULL;
 
+                if (nspname)
                     pfree(nspname);
+
+                if (entry && validate_whitelist_entry(entry, f))
+                {
                     ReleaseSysCache(tup);
-                    return expression_tree_walker(node, has_unsafe_func_walker, context);
+                    return expression_tree_walker(node, contain_non_deterministic_func_walker, context);
                 }
-                
-                if (nspname) pfree(nspname);
             }
             
             /* VOLATILE or non-whitelisted STABLE — unsafe */
@@ -193,7 +197,7 @@ has_unsafe_func_walker(Node *node, void *context)
         }
     }
     
-    return expression_tree_walker(node, has_unsafe_func_walker, context);
+    return expression_tree_walker(node, contain_non_deterministic_func_walker, context);
 }
 
 /* Hook: returns NULL to skip immutability check, expr to let PG handle */
@@ -204,7 +208,13 @@ stable_persisted_hook(Node *expr)
     
     if (expr == NULL)
         return NULL;
-    
+
+    /* 
+     * If not TSQL dialect and not dump restore we pass to the previous hook.
+     * During dump/restore the sql_dialect may not be set to TSQL yet, but we still need to
+     * bypass the immutability check for tables being restored that have
+     * whitelisted STABLE functions in their persisted columns.
+     */
     if (sql_dialect != SQL_DIALECT_TSQL && !babelfish_dump_restore)
     {
         if (prev_persisted_col_hook)
@@ -220,7 +230,7 @@ stable_persisted_hook(Node *expr)
                         get_mismatched_persisted_gucs())));
     
     /* Check if expression only has safe functions ie Immutable or stable(whitelisted) */
-    has_unsafe_func_walker(expr, &found_unsafe);
+    contain_non_deterministic_func_walker(expr, &found_unsafe);
     
     if (found_unsafe)
         return expr;
@@ -318,13 +328,9 @@ guc_check_dml(Query *parse)
     }
 }
 
-typedef struct
-{
-    int   varno;
-    int   varattno;
-    Node *expr;
-} RewriteCtx;
-
+/*
+ * Query rewriter helper function to replace the Var node with the actual expression
+ */
 static Node *
 query_rewrite_helper(Node *node, void *context)
 {

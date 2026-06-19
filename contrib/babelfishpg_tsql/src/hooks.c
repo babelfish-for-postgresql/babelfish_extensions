@@ -5879,6 +5879,7 @@ update_rte_perms_info_walker(Node *node, void *context)
 static Query *
 persisted_col_planner_rewrite(Query *query)
 {
+	/* Only rewrite for T-SQL dialect */
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return query;
 
@@ -5897,7 +5898,11 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 	if (IS_TDS_CLIENT() && !InSecurityRestrictedOperation())
 		update_rte_perms_info_walker((Node *) parse, NULL);
 
-	/* Check GUCs for DML into tables with PERSISTED computed columns */
+	/*
+     * Check GUCs for DML into tables with PERSISTED computed columns.
+     * Only applies to T-SQL dialect; skip during dump/restore since
+     * GUC state may not reflect the original session settings.
+     */
 	if (sql_dialect == SQL_DIALECT_TSQL && !babelfish_dump_restore &&
 		(parse->commandType == CMD_INSERT || parse->commandType == CMD_UPDATE || parse->commandType == CMD_DELETE))
 	{
