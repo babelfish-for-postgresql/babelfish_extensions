@@ -148,8 +148,7 @@ get_mismatched_persisted_gucs(void)
 }
 
 /*
- * Non deterministic function walker: returns true if any function is unsafe i.e not whitelisted on not immutable
- */
+ * Non deterministic function walker: returns true if any function is unsafe i.e., not whitelisted or not immutable
 static bool
 contain_non_deterministic_func_walker(Node *node, void *context)
 {
@@ -163,38 +162,42 @@ contain_non_deterministic_func_walker(Node *node, void *context)
         FuncExpr *f = (FuncExpr *) node;
         HeapTuple tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(f->funcid));
         
-        if (HeapTupleIsValid(tup))
+        if (!HeapTupleIsValid(tup))
         {
-            Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(tup);
-            
-            if (proc->provolatile == PROVOLATILE_IMMUTABLE)
+            /* Cache lookup failed — fail closed */
+            *found_unsafe = true;
+            return true;
+        }
+
+        Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(tup);
+
+        if (proc->provolatile == PROVOLATILE_IMMUTABLE)
+        {
+            /* IMMUTABLE is always safe */
+            ReleaseSysCache(tup);
+            return expression_tree_walker(node, contain_non_deterministic_func_walker, context);
+        }
+
+        if (proc->provolatile == PROVOLATILE_STABLE)
+        {
+            const char *funcname = NameStr(proc->proname);
+            char *nspname = get_namespace_name(proc->pronamespace);
+            FuncEntry *entry = nspname ? find_in_whitelist(funcname, nspname) : NULL;
+
+            if (nspname)
+                pfree(nspname);
+
+            if (entry && validate_whitelist_entry(entry, f))
             {
-                /* IMMUTABLE is always safe */
                 ReleaseSysCache(tup);
                 return expression_tree_walker(node, contain_non_deterministic_func_walker, context);
             }
-            
-            if (proc->provolatile == PROVOLATILE_STABLE)
-            {
-                const char *funcname = NameStr(proc->proname);
-                char *nspname = get_namespace_name(proc->pronamespace);
-                FuncEntry *entry = nspname ? find_in_whitelist(funcname, nspname) : NULL;
-
-                if (nspname)
-                    pfree(nspname);
-
-                if (entry && validate_whitelist_entry(entry, f))
-                {
-                    ReleaseSysCache(tup);
-                    return expression_tree_walker(node, contain_non_deterministic_func_walker, context);
-                }
-            }
-            
-            /* VOLATILE or non-whitelisted STABLE — unsafe */
-            *found_unsafe = true;
-            ReleaseSysCache(tup);
-            return true;
         }
+
+        /* VOLATILE or non-whitelisted STABLE — unsafe */
+        *found_unsafe = true;
+        ReleaseSysCache(tup);
+        return true;
     }
     
     return expression_tree_walker(node, contain_non_deterministic_func_walker, context);
