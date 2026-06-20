@@ -987,6 +987,8 @@ STISCLOSED:                                      'STIsClosed';
 STISEMPTY:                                       'STIsEmpty';
 STISVALID:                                       'STIsValid';
 STLINEFROMTEXT:                                  'STLineFromText';
+STMLINEFROMTEXT:                                 'STMLineFromText';
+STMLINEFROMWKB:                                  'STMLineFromWKB';
 STMPOINTFROMTEXT:                                'STMPointFromText';
 STMPOINTFROMWKB:                                 'STMPointFromWKB';
 STNUMPOINTS:                                     'STNumPoints';

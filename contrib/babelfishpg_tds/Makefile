@@ -29,6 +29,10 @@ $(tds_include)/error_mapping.h: error_mapping.txt generate_error_mapping.pl
 	$(PERL) generate_error_mapping.pl $< > $@
 $(tds_backend)/tds/err_handler.o: $(tds_include)/error_mapping.h
 
+# Generated files to remove on 'make clean' so they are always
+# regenerated with the current tool versions (flex, bison, perl).
+EXTRA_CLEAN += $(tds_include)/error_mapping.h
+
 # Disable for now
 #NO_PGXS = 1
 

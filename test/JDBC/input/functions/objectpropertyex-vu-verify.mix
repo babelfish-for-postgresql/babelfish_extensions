@@ -32,8 +32,6 @@ INSERT INTO objectpropertyex_oid_helper VALUES
 ('basetype_view', OBJECT_ID('objectpropertyex_basetype_view')),
 ('perm_table', OBJECT_ID('objectpropertyex_perm_table'))
 GO
-~~ROW COUNT: 6~~
-
 
 -- psql
 -- Store OIDs that require psql (trigger OID + cross-DB table OID)
@@ -41,11 +39,10 @@ INSERT INTO master_dbo.objectpropertyex_oid_helper VALUES
 ('perm_trigger', (SELECT oid FROM pg_trigger WHERE tgname = 'objectpropertyex_perm_trigger')),
 ('otherdb_table', (SELECT oid FROM pg_class WHERE relname = 'objectpropertyex_otherdb_table'));
 GO
-~~ROW COUNT: 2~~
-
 
 -- tsql
 
+-- sla 650000
 -- Check for correct case
 SELECT CASE
     WHEN OBJECTPROPERTY(OBJECT_ID('objectpropertyex_ownerid_schema.objectpropertyex_ownerid_table'), 'OwnerId')  = (SELECT principal_id 
@@ -56,520 +53,242 @@ SELECT CASE
         'FAILED'
 END
 GO
-~~START~~
-varchar
-SUCCESS
-~~END~~
-
 
 -- Invalid property ID (should return NULL)
 SELECT OBJECTPROPERTY(0, 'OwnerId')
 GO
-~~START~~
-int
-<NULL>
-~~END~~
-
-
-
 
 -- =============== BaseType ===============
+
 -- Tests valid cases
+
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'BaseType')
 GO
-~~START~~
-sql_variant
-U 
-~~END~~
-
 
 -- Table type
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_tt'), 'BaseType')
 GO
-~~START~~
-sql_variant
-TT
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'BaseType')
 GO
-~~START~~
-sql_variant
-V 
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_function'), 'BaseType')
 GO
-~~START~~
-sql_variant
-FN
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_proc'), 'BaseType')
 GO
-~~START~~
-sql_variant
-P 
-~~END~~
-
 
 -- Tests invalid object
 SELECT OBJECTPROPERTYEX(0, 'BaseType')
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
-
 
 -- =============== Special Input Cases ===============
+
 -- Tests special input cases
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_specialinput_table'), 'BASETYPE')
 GO
-~~START~~
-sql_variant
-U 
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_specialinput_table'), 'basetype')
 GO
-~~START~~
-sql_variant
-U 
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_specialinput_table'), 'BASETYPE       ')
 GO
-~~START~~
-sql_variant
-U 
-~~END~~
-
-
 
 -- =============== NULL input handling ===============
+
 SELECT OBJECTPROPERTYEX(NULL, 'BaseType')
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), NULL)
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(NULL, NULL)
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
-
 
 -- =============== BaseType - additional object types ===============
+
 -- Trigger
 SELECT OBJECTPROPERTYEX(
     (SELECT object_id FROM sys.triggers WHERE name = 'objectpropertyex_test_trigger'),
     'BaseType')
 GO
-~~START~~
-sql_variant
-TR
-~~END~~
-
 
 -- Primary key constraint
--- NULL expected: sys.key_constraints returns no rows on older databases, so subquery returns NULL
 SELECT OBJECTPROPERTYEX(
     (SELECT object_id FROM sys.key_constraints WHERE name = 'objectpropertyex_pk'),
     'BaseType')
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
 
 -- Foreign key constraint
--- NULL expected: sys.foreign_keys returns no rows on older databases, so subquery returns NULL
 SELECT OBJECTPROPERTYEX(
     (SELECT object_id FROM sys.foreign_keys WHERE name = 'objectpropertyex_fk'),
     'BaseType')
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
 
 -- Check constraint
 SELECT OBJECTPROPERTYEX(
     (SELECT object_id FROM sys.check_constraints WHERE name LIKE '%objectpropertyex_constraint_table%' AND parent_column_id = (SELECT column_id FROM sys.columns WHERE name = 'c' AND object_id = OBJECT_ID('objectpropertyex_constraint_table'))),
     'BaseType')
 GO
-~~START~~
-sql_variant
-C 
-~~END~~
-
 
 -- Default constraint
 SELECT OBJECTPROPERTYEX(
     (SELECT object_id FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('objectpropertyex_constraint_table') AND parent_column_id = (SELECT column_id FROM sys.columns WHERE name = 'b' AND object_id = OBJECT_ID('objectpropertyex_constraint_table'))),
     'BaseType')
 GO
-~~START~~
-sql_variant
-D 
-~~END~~
-
 
 -- Sequence
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_test_seq'), 'BaseType')
 GO
-~~START~~
-sql_variant
-SO
-~~END~~
-
 
 -- Inline table-valued function
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_itvf'), 'BaseType')
 GO
-~~START~~
-sql_variant
-IF
-~~END~~
-
 
 -- Multi-statement table-valued function
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_tvf'), 'BaseType')
 GO
-~~START~~
-sql_variant
-TF
-~~END~~
-
-
 
 -- =============== IsSchemaBound ===============
+
 -- Schema-bound function should return 0 (hardcoded for non-view objects)
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_schemabound_fn'), 'IsSchemaBound')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
 
 -- Non-schema-bound function should return 0
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_noschemabound_fn'), 'IsSchemaBound')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
 
 -- View created with default weak_view_binding=false (strong-bound): returns 1
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'IsSchemaBound')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
 
 -- View created with SCHEMABINDING: returns 1
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_schemabound_view'), 'IsSchemaBound')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
 
 -- Table - IsSchemaBound not applicable, should return NULL
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsSchemaBound')
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
 
 -- Stored procedure
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_proc'), 'IsSchemaBound')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
-
 
 -- =============== IsIndexed ===============
+
 -- Table with index
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_indexed_table'), 'IsIndexed')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
 
 -- Table without index
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_noindex_table'), 'IsIndexed')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
 
 -- Non-table object - should return 0
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'IsIndexed')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
-
 
 -- =============== IsDefaultCnst ===============
+
 -- Default constraint
 SELECT OBJECTPROPERTYEX(
     (SELECT object_id FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('objectpropertyex_default_table')),
     'IsDefaultCnst')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
 
 -- Non-default object
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsDefaultCnst')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
-
 
 -- =============== IsMSShipped ===============
+
 -- User-created table should not be MS shipped
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_notshipped_table'), 'IsMSShipped')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
 
 -- System object should be MS shipped
 SELECT OBJECTPROPERTYEX(OBJECT_ID('sys.objects'), 'IsMSShipped')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
-
 
 -- =============== Type-checking properties ===============
+
 -- IsTable
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsTable')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'IsTable')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
 
 -- IsView
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'IsView')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsView')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
 
 -- IsUserTable
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsUserTable')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_view'), 'IsUserTable')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
 
 -- IsProcedure
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_proc'), 'IsProcedure')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsProcedure')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
 
 -- IsScalarFunction
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_function'), 'IsScalarFunction')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_proc'), 'IsScalarFunction')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
 
 -- IsTableFunction
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_tvf'), 'IsTableFunction')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsTableFunction')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
 
 -- IsInlineFunction
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_itvf'), 'IsInlineFunction')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_tvf'), 'IsInlineFunction')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
 
 -- IsPrimaryKey
--- NULL expected: sys.key_constraints returns no rows on older databases, so subquery returns NULL
 SELECT OBJECTPROPERTYEX(
     (SELECT object_id FROM sys.key_constraints WHERE name = 'objectpropertyex_pk'),
     'IsPrimaryKey')
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsPrimaryKey')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
-
 
 -- =============== ExecIsQuotedIdentOn / ExecIsAnsiNullsOn ===============
+
 -- These return 1 for applicable objects (procs, functions, views, triggers)
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_proc'), 'ExecIsQuotedIdentOn')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_function'), 'ExecIsAnsiNullsOn')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
 
 -- Not applicable to tables - should return NULL
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'ExecIsQuotedIdentOn')
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'ExecIsAnsiNullsOn')
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
-
 
 -- =============== Cross-database scoping ===============
+
 -- Object from another database should return NULL in current database context
 USE objectpropertyex_otherdb
 GO
@@ -577,122 +296,62 @@ GO
 -- Object from default database should not be visible here
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'BaseType')
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
 
 USE master
 GO
 
-
 -- =============== Non-existent OID ===============
+
 SELECT OBJECTPROPERTYEX(999999999, 'BaseType')
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
-
 
 -- =============== Unknown property name ===============
+
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'NonExistentProperty')
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
-
 
 -- =============== IsTrigger ===============
+
 SELECT OBJECTPROPERTYEX(
     (SELECT object_id FROM sys.triggers WHERE name = 'objectpropertyex_test_trigger'),
     'IsTrigger')
 GO
-~~START~~
-sql_variant
-1
-~~END~~
-
 
 SELECT OBJECTPROPERTYEX(OBJECT_ID('objectpropertyex_basetype_table'), 'IsTrigger')
 GO
-~~START~~
-sql_variant
-0
-~~END~~
 
-
+-- =============== ACL tests ===============
 
 -- tsql user=objectpropertyex_test_login password=12345678
--- =============== ACL tests ===============
 -- User with INSERT only should see BaseType (matches SQL Server behavior)
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='basetype_table'), 'BaseType') AS basetype_insert_only;
 GO
-~~START~~
-sql_variant
-U 
-~~END~~
-
 
 -- User with UPDATE only should see BaseType
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='specialinput_table'), 'BaseType') AS basetype_update_only;
 GO
-~~START~~
-sql_variant
-U 
-~~END~~
-
 
 -- User with DELETE only should see BaseType
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='trigger_table'), 'BaseType') AS basetype_delete_only;
 GO
-~~START~~
-sql_variant
-U 
-~~END~~
-
 
 -- User with REFERENCES only should see BaseType
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='noindex_table'), 'BaseType') AS basetype_references_only;
 GO
-~~START~~
-sql_variant
-U 
-~~END~~
-
 
 -- User with no permission on this object should get NULL
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='basetype_view'), 'BaseType') AS basetype_no_perm;
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
 
-
--- tsql user=objectpropertyex_perm_login password=12345678
 -- =============== Permission edge cases ===============
+-- tsql user=objectpropertyex_perm_login password=12345678
 -- No permissions: should return NULL
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_table'), 'BaseType')
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
 
 -- No permissions on parent table: trigger should return NULL
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_trigger'), 'BaseType')
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
 
 -- tsql
 -- Grant only SELECT
@@ -702,11 +361,6 @@ GO
 -- tsql user=objectpropertyex_perm_login password=12345678
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_table'), 'BaseType')
 GO
-~~START~~
-sql_variant
-U 
-~~END~~
-
 
 -- tsql
 REVOKE SELECT ON objectpropertyex_perm_table FROM objectpropertyex_perm_user
@@ -717,11 +371,6 @@ GO
 -- tsql user=objectpropertyex_perm_login password=12345678
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_table'), 'BaseType')
 GO
-~~START~~
-sql_variant
-U 
-~~END~~
-
 
 -- tsql
 REVOKE INSERT ON objectpropertyex_perm_table FROM objectpropertyex_perm_user
@@ -732,11 +381,6 @@ GO
 -- tsql user=objectpropertyex_perm_login password=12345678
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_table'), 'BaseType')
 GO
-~~START~~
-sql_variant
-U 
-~~END~~
-
 
 -- tsql
 REVOKE UPDATE ON objectpropertyex_perm_table FROM objectpropertyex_perm_user
@@ -747,11 +391,6 @@ GO
 -- tsql user=objectpropertyex_perm_login password=12345678
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_table'), 'BaseType')
 GO
-~~START~~
-sql_variant
-U 
-~~END~~
-
 
 -- tsql
 REVOKE DELETE ON objectpropertyex_perm_table FROM objectpropertyex_perm_user
@@ -763,20 +402,10 @@ GO
 -- REFERENCES only: table visible
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_table'), 'BaseType')
 GO
-~~START~~
-sql_variant
-U 
-~~END~~
-
 
 -- REFERENCES on parent: trigger visible
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_trigger'), 'BaseType')
 GO
-~~START~~
-sql_variant
-TR
-~~END~~
-
 
 -- tsql
 REVOKE REFERENCES ON objectpropertyex_perm_table FROM objectpropertyex_perm_user
@@ -786,38 +415,18 @@ GO
 -- No permissions again: should return NULL
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='perm_table'), 'BaseType')
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
 
-
--- tsql
 -- =============== Schema scoping tests ===============
+-- tsql
 -- sys schema object should always be visible
 SELECT OBJECTPROPERTYEX(OBJECT_ID('sys.objects'), 'BaseType') AS sys_always_visible
 GO
-~~START~~
-sql_variant
-V 
-~~END~~
-
 
 
 -- information_schema object should be visible (shared schema)
 SELECT OBJECTPROPERTYEX(OBJECT_ID('information_schema.columns'), 'BaseType') AS info_schema_visible
 GO
-~~START~~
-sql_variant
-V 
-~~END~~
-
 
 -- Object in another database should NOT be visible from master
 SELECT OBJECTPROPERTYEX((SELECT oid_val FROM objectpropertyex_oid_helper WHERE name='otherdb_table'), 'BaseType') AS other_db_hidden
 GO
-~~START~~
-sql_variant
-<NULL>
-~~END~~
-
