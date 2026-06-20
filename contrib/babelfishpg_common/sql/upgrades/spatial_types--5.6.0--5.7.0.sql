@@ -1115,3 +1115,534 @@ CREATE OPERATOR CLASS sys.gist_geography_ops_2d
     FUNCTION  7  sys.geography_gist_same(sys.GEOGRAPHY, sys.GEOGRAPHY, internal),
     FUNCTION  8  sys.geography_gist_distance(internal, sys.GEOGRAPHY, smallint, oid, internal);
 
+-- =============================================================
+-- BABEL-6444: drop spatial *_helper functions that were converted
+-- to native C / inlined wrappers. On a fresh install these no longer
+-- exist; drop them on upgrade so an upgraded instance matches a fresh
+-- install (otherwise pg_dump and upgrade dependency checks diverge).
+-- =============================================================
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.bpcharToGeography_helper(sys.bpchar, integer) RENAME TO bpchartogeography_helper_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bpchartogeography_helper_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.charTogeoghelper(sys.bpchar) RENAME TO chartogeoghelper_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'chartogeoghelper_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.charTogeomhelper(sys.bpchar) RENAME TO chartogeomhelper_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'chartogeomhelper_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.geogfromtext_helper(text, integer) RENAME TO geogfromtext_helper_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'geogfromtext_helper_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.GeographyAsTextbp_helper(sys.GEOGRAPHY, integer, boolean) RENAME TO geographyastextbp_helper_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'geographyastextbp_helper_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.GeographyAsTextvar_helper(sys.GEOGRAPHY) RENAME TO geographyastextvar_helper_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'geographyastextvar_helper_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.geomfromtext_helper(text, integer) RENAME TO geomfromtext_helper_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'geomfromtext_helper_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.GeomPoint_helper(float8, float8, integer) RENAME TO geompoint_helper_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'geompoint_helper_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.M_helper(sys.GEOMETRY) RENAME TO m_helper_geom_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'm_helper_geom_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.M_helper(sys.GEOGRAPHY) RENAME TO m_helper_geog_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'm_helper_geog_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.makevalid_helper(sys.GEOGRAPHY) RENAME TO makevalid_helper_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'makevalid_helper_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STArea_helper(sys.GEOMETRY) RENAME TO starea_helper_geom_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'starea_helper_geom_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STArea_helper(sys.GEOGRAPHY) RENAME TO starea_helper_geog_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'starea_helper_geog_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STAsText_common(sys.GEOGRAPHY) RENAME TO stastext_common_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stastext_common_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STAsText_helper(sys.GEOGRAPHY) RENAME TO stastext_helper_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stastext_helper_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STContains_helper(sys.GEOMETRY, sys.GEOMETRY) RENAME TO stcontains_helper_geom_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stcontains_helper_geom_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STContains_helper(sys.GEOGRAPHY, sys.GEOGRAPHY) RENAME TO stcontains_helper_geog_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stcontains_helper_geog_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STDimension_helper(sys.GEOMETRY) RENAME TO stdimension_helper_geom_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stdimension_helper_geom_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STDimension_helper(sys.GEOGRAPHY) RENAME TO stdimension_helper_geog_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stdimension_helper_geog_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STDisjoint_helper(sys.GEOMETRY, sys.GEOMETRY) RENAME TO stdisjoint_helper_geom_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stdisjoint_helper_geom_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STDisjoint_helper(sys.GEOGRAPHY, sys.GEOGRAPHY) RENAME TO stdisjoint_helper_geog_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stdisjoint_helper_geog_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STDistance_helper(sys.GEOMETRY, sys.GEOMETRY) RENAME TO stdistance_helper_geom_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stdistance_helper_geom_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STDistance_helper(sys.GEOGRAPHY, sys.GEOGRAPHY) RENAME TO stdistance_helper_geog_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stdistance_helper_geog_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STEquals_helper(sys.GEOMETRY, sys.GEOMETRY) RENAME TO stequals_helper_geom_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stequals_helper_geom_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STEquals_helper(sys.GEOGRAPHY, sys.GEOGRAPHY) RENAME TO stequals_helper_geog_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stequals_helper_geog_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STIntersects_helper(sys.GEOMETRY, sys.GEOMETRY) RENAME TO stintersects_helper_geom_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stintersects_helper_geom_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STIntersects_helper(sys.GEOGRAPHY, sys.GEOGRAPHY) RENAME TO stintersects_helper_geog_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stintersects_helper_geog_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STIsClosed_helper(sys.GEOMETRY) RENAME TO stisclosed_helper_geom_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stisclosed_helper_geom_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STIsClosed_helper(sys.GEOGRAPHY) RENAME TO stisclosed_helper_geog_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stisclosed_helper_geog_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STMakeValid_helper(sys.GEOMETRY) RENAME TO stmakevalid_helper_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stmakevalid_helper_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STNumPoints_helper(sys.GEOMETRY) RENAME TO stnumpoints_helper_geom_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stnumpoints_helper_geom_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.STNumPoints_helper(sys.GEOGRAPHY) RENAME TO stnumpoints_helper_geog_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'stnumpoints_helper_geog_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.varchar_helper(sys.GEOMETRY) RENAME TO varchar_helper_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'varchar_helper_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.Z_helper(sys.GEOMETRY) RENAME TO z_helper_geom_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'z_helper_geom_deprecated_5_7_0');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.Z_helper(sys.GEOGRAPHY) RENAME TO z_helper_geog_deprecated_5_7_0;
+
+EXCEPTION WHEN undefined_function THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'z_helper_geog_deprecated_5_7_0');
