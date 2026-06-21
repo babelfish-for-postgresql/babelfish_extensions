@@ -600,3 +600,106 @@ CREATE OPERATOR CLASS sys.gist_geography_ops_2d
     FUNCTION  6  sys.geography_gist_picksplit(internal, internal),
     FUNCTION  7  sys.geography_gist_same(sys.GEOGRAPHY, sys.GEOGRAPHY, internal),
     FUNCTION  8  sys.geography_gist_distance(internal, sys.GEOGRAPHY, smallint, oid, internal);
+
+-- =============================================================
+-- Retained helper functions (BABEL-6444)
+-- These inner helpers are no longer called by the native-C wrappers above,
+-- but are kept as catalog objects so a fresh install matches an instance
+-- upgraded from a prior release (where these functions already exist).
+-- Do not remove without also dropping them in the upgrade path.
+-- =============================================================
+
+CREATE OR REPLACE FUNCTION sys.bpcharToGeography_helper(sys.bpchar, integer)
+ RETURNS sys.GEOGRAPHY
+ AS '$libdir/postgis-3','LWGEOM_from_text'
+ LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charTogeoghelper(sys.bpchar)
+ RETURNS sys.GEOGRAPHY
+ AS 'babelfishpg_common', 'charTogeog'
+ LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geogfromtext_helper(text, integer)
+ RETURNS sys.GEOGRAPHY
+ AS 'babelfishpg_common', 'get_geography_from_text'
+ LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.GeographyAsTextbp_helper(sys.GEOGRAPHY, integer, boolean)
+ RETURNS sys.bpchar
+ AS 'babelfishpg_common', 'geometry_asbpchar'
+ LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.GeographyAsTextvar_helper(sys.GEOGRAPHY)
+ RETURNS sys.varchar
+ AS 'babelfishpg_common', 'geometry_astext'
+ LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.makevalid_helper(geog sys.GEOGRAPHY)
+    RETURNS sys.GEOGRAPHY
+    AS '$libdir/postgis-3', 'ST_MakeValid'
+ LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.M_helper(sys.GEOGRAPHY)
+ RETURNS float8
+ AS '$libdir/postgis-3','LWGEOM_m_point'
+ LANGUAGE 'c' IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.STArea_helper(sys.GEOGRAPHY)
+ RETURNS float8
+ AS '$libdir/postgis-3','ST_Area'
+ LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STAsText_common(sys.GEOGRAPHY)
+ RETURNS sys.NVARCHAR
+ AS 'babelfishpg_common', 'st_as_text'
+ LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STAsText_helper(sys.GEOGRAPHY)
+ RETURNS TEXT
+ AS '$libdir/postgis-3','LWGEOM_asText'
+ LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STContains_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+ RETURNS sys.BIT
+ AS '$libdir/postgis-3','within'
+ LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDimension_helper(sys.GEOGRAPHY)
+        RETURNS integer
+        AS '$libdir/postgis-3','LWGEOM_dimension'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDisjoint_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','disjoint'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STDistance_helper(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAPHY)
+ RETURNS float8
+ AS '$libdir/postgis-3', 'LWGEOM_distance_ellipsoid'
+ LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STEquals_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+ RETURNS sys.BIT
+ AS '$libdir/postgis-3','ST_Equals'
+ LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STIntersects_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','ST_Intersects'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STIsClosed_helper(sys.GEOGRAPHY)
+        RETURNS sys.BIT
+        AS '$libdir/postgis-3','LWGEOM_isclosed'
+        LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STNumPoints_helper(sys.GEOGRAPHY)
+    RETURNS integer
+    AS '$libdir/postgis-3', 'LWGEOM_npoints'
+    LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Z_helper(sys.GEOGRAPHY)
+ RETURNS float8
+ AS '$libdir/postgis-3','LWGEOM_z_point'
+ LANGUAGE 'c' IMMUTABLE STRICT;
