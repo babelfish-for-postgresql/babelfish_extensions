@@ -867,9 +867,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	/* whether procedure was created WITH RECOMPILE */
 	bool created_with_recompile = false;		
 
-	/* INSERT EXEC handling - temp table lifecycle */
-	bool insert_exec_setup_done = false;
-
 	/*
 	 * We need to disable the explain gucs incase of sp_reset_connection
 	 * execution otherwise we will get explain output for it which is
@@ -901,8 +898,8 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * Setup INSERT EXEC (new path): create temp table to capture procedure
 		 * output. After procedure completes, temp table is flushed to target.
 		 */
-		if (pltsql_enable_new_insert_exec)
-			insert_exec_setup_done = insert_exec_setup(estate, stmt->insert_exec, true);
+		if (stmt->insert_exec != NULL)
+			insert_exec_setup(estate, stmt->insert_exec, true);
 
 		if (IS_TDS_CONN())
 		{
@@ -1338,12 +1335,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		exec_eval_cleanup(estate);
 		SPI_freetuptable(SPI_tuptable);
 
-		if (insert_exec_setup_done)
+		if (stmt->insert_exec != NULL)
 			insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
 	}
 	PG_FINALLY();
 	{
-		if (insert_exec_setup_done)
+		if (stmt->insert_exec != NULL)
 			pltsql_insert_exec_reset_all();
 
 		/*
@@ -1543,9 +1540,6 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	char	   *old_db_name = get_cur_db_name();
 	char	   *cur_db_name = NULL;
 
-	/* INSERT EXEC handling - temp table lifecycle */
-	bool insert_exec_setup_done = false;
-
 	LOCAL_FCINFO(fcinfo, 1);
 
 	/*
@@ -1568,8 +1562,8 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		 * output. No implicit transaction for dynamic SQL (different semantics
 		 * than stored procs).
 		 */
-		if (pltsql_enable_new_insert_exec)
-			insert_exec_setup_done = insert_exec_setup(estate, stmt->insert_exec, false);
+		if (stmt->insert_exec != NULL)
+			insert_exec_setup(estate, stmt->insert_exec, false);
 
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(estate, query, restype);
@@ -1592,12 +1586,12 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		if (fcinfo->isnull)
 			elog(ERROR, "pltsql_inline_handler failed");
 
-		if (insert_exec_setup_done)
+		if (stmt->insert_exec != NULL)
 			insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
 	}
 	PG_FINALLY();
 	{
-		if (insert_exec_setup_done)
+		if (stmt->insert_exec != NULL)
 			pltsql_insert_exec_reset_all();
 
 		/* Restore past settings */
@@ -2224,9 +2218,6 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				int			save_nestlevel;
 				int			scope_level;
 				InlineCodeBlockArgs *args = NULL;
-				
-				/* INSERT EXEC handling - temp table lifecycle */
-				bool insert_exec_setup_done = false;
 
 				batch = exec_eval_expr(estate, stmt->query, &isnull1, &restype1, &restypmod1);
 				if (isnull1)
@@ -2279,8 +2270,8 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					 * The procedure output will be redirected to this temp table.
 					 * After procedure completes, we flush temp table to target and cleanup.
 					 */
-					if (pltsql_enable_new_insert_exec)
-						insert_exec_setup_done = insert_exec_setup(estate, stmt->insert_exec, true);
+					if (stmt->insert_exec != NULL)
+						insert_exec_setup(estate, stmt->insert_exec, true);
 
 					if (strcmp(batchstr, "") != 0)	/* check edge cases for
 													 * sp_executesql */
@@ -2293,12 +2284,12 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 						exec_assign_value(estate, estate->datums[stmt->return_code_dno], Int32GetDatum(ret), false, INT4OID, 0);
 					}
 
-					if (insert_exec_setup_done)
+					if (stmt->insert_exec != NULL)
 						insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
 				}
 				PG_FINALLY();
 				{
-					if (insert_exec_setup_done)
+					if (stmt->insert_exec != NULL)
 						pltsql_insert_exec_reset_all();
 
 					pltsql_revert_guc(save_nestlevel);

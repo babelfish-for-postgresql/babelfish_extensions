@@ -73,9 +73,16 @@ static void insertexec_destroy(DestReceiver *self);
  * Global INSERT EXEC context pointer - defined in pltsql.h, declared here.
  */
 InsertExecContext *insert_exec_ctx = NULL;
+PLtsql_execstate *insert_exec_flush_estate = NULL;
 
 extern void exec_set_rowcount(uint64 rowno);
 extern void exec_set_found(PLtsql_execstate *estate, bool state);
+/*
+ * The flush INSERT is routed through execute_batch (the top-level batch entry
+ * point). It runs through the same econtext setup as a normal T-SQL batch.
+ */
+extern int	execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, List *params);
+extern InlineCodeBlockArgs *create_args(int numargs);
 
 /*
  * Build a comma-separated list of quoted column identifiers from the parser's
@@ -523,6 +530,8 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema
 	const char	   *temp_name;
 	Relation		temp_rel;
 	char		   *qualified_target;
+	InlineCodeBlockArgs	*flush_args;
+	PLtsql_execstate *flush_estate_saved;
 
 	if (insert_exec_ctx == NULL)
 		return;
@@ -581,23 +590,38 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema
 
 	pfree(qualified_target);
 
-	/* Route through SPI_execute to run the flush INSERT in the current
-	 * transaction/SPI context. execute_batch cannot be used here: it enters
-	 * pltsql_inline_handler as an independent batch that manages its own
-	 * transaction boundaries, which aborts when the flush runs mid-INSERT-EXEC
-	 * (notably for table-variable targets whose lifetime is tied to the
-	 * surrounding transaction). */
-	rc = SPI_execute(flush_query.data, false, 0);
+	/*
+	 * Run the flush through execute_batch, publishing the caller's estate via
+	 * insert_exec_flush_estate for the duration so the inline handler's own
+	 * empty estate does not shadow it.
+	 */
+	flush_args = create_args(0);
+
+	flush_estate_saved = insert_exec_flush_estate;
+	insert_exec_flush_estate = estate;
+	PG_TRY();
+	{
+		rc = execute_batch(estate, flush_query.data, flush_args, NULL);
+	}
+	PG_CATCH();
+	{
+		insert_exec_flush_estate = flush_estate_saved;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	insert_exec_flush_estate = flush_estate_saved;
 
 	pfree(flush_query.data);
 
-	if (rc != SPI_OK_INSERT && rc != SPI_OK_INSERT_RETURNING)
+	if (rc != PLTSQL_RC_OK)
 		elog(ERROR, "INSERT EXEC failed due to error while flushing temp table to target table");
 
-	/* Update rowcount and FOUND for T-SQL compatibility */
-	estate->eval_processed = SPI_processed;
-	exec_set_rowcount(SPI_processed);
-	exec_set_found(estate, SPI_processed != 0);
+	/*
+	 * Report rows-affected from the DestReceiver's captured-row count
+	 */
+	estate->eval_processed = insert_exec_ctx->rows_processed;
+	exec_set_rowcount(insert_exec_ctx->rows_processed);
+	exec_set_found(estate, insert_exec_ctx->rows_processed != 0);
 }
 
 /*
@@ -757,6 +781,9 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 
 	/* Insert the projected tuple */
 	table_tuple_insert(temp_rel, insert_slot, myState->cid, 0, NULL);
+
+	/* INSERT EXEC rows-affected count */
+	insert_exec_ctx->rows_processed++;
 
 	/* Close immediately - do not hold open across subtransaction boundaries */
 	table_close(temp_rel, RowExclusiveLock);

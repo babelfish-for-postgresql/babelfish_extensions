@@ -4990,9 +4990,17 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		{
 			/* Open nesting level in engine */
 			BeginCompositeTriggers(CurrentMemoryContext);
-			/* TSQL commands must run inside an explicit transaction */
+			/*
+			 * TSQL commands must run inside an explicit transaction.
+			 *
+			 * Skip this for the INSERT EXEC flush statement
+			 * The flush runs while the INSERT EXEC context is still active, 
+			 * so the matching per-statement commit further below is suppressed.
+			 * The flush is a single INSERT that runs correctly under autocommit.
+			 */
 			if (!pltsql_disable_batch_auto_commit && support_tsql_trans &&
-				stmt->txn_data == NULL && !IsTransactionBlockActive())
+				stmt->txn_data == NULL && !IsTransactionBlockActive() &&
+				insert_exec_flush_estate == NULL)
 			{
 				MemoryContext oldCxt = CurrentMemoryContext;
 

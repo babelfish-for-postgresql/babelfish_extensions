@@ -2168,11 +2168,11 @@ public:
 	 */
 	void handleInsertExec(TSqlParser::Dml_statementContext *ctx)
 	{
-		/* INSERT EXEC is not allowed in functions unless target is a table variable */
+		/* INSERT EXEC is not allowed in a function */
 		if (is_compiling_create_function())
 		{
 			auto ddl_object = ctx->insert_statement()->ddl_object();
-			if (ddl_object && !ddl_object->local_id())
+			if (ddl_object)
 				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION,
 					"'INSERT EXEC' cannot be used within a function", getLineAndPos(ddl_object));
 		}

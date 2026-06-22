@@ -2534,9 +2534,18 @@ typedef struct InsertExecContext
 	PLExecStateCallStack *call_stack_entry;	/* Call stack entry when INSERT EXEC started */
 	Oid			target_rel_oid;			/* OID of target table - lock held to detect schema changes */
 	bool		is_target_relation_modified;	/* Set by bbf_object_access_hook when target table is altered */
+	uint64		rows_processed;			/* Rows captured by the DestReceiver = INSERT EXEC rows-affected */
 } InsertExecContext;
 
 extern InsertExecContext *insert_exec_ctx;
+
+/*
+ * Set only during an INSERT EXEC flush. The flush runs through the inline
+ * handler, which pushes its own empty estate; this points back at the estate
+ * that declared the flush target so table-variable lookup, the implicit-
+ * transaction decision, and ownership chaining all resolve against the caller.
+ */
+extern PLtsql_execstate *insert_exec_flush_estate;
 
 extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list, const char *schema_name_in, const char *db_name_in);
 extern void pltsql_set_insert_exec_context_info(const char *target_table);

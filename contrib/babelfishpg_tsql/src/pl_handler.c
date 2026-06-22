@@ -3067,6 +3067,16 @@ bbf_table_var_lookup(const char *relname, Oid relnamespace)
 	PLtsql_tbl *tbl;
 	PLtsql_execstate *estate = get_current_tsql_estate();
 
+	/*
+	 * During an INSERT EXEC flush the query runs through execute_batch/the
+	 * inline handler, which pushes its own (empty) estate. insert_exec_flush_estate
+	 * points us back at the estate that actually declared the target table
+	 * variable, so an "@tv" flush target resolves to its backing table.
+	 * Outside the flush it is NULL and we use the current (topmost) estate.
+	 */
+	estate = insert_exec_flush_estate ? insert_exec_flush_estate
+									  : get_current_tsql_estate();
+
 	if (prev_relname_lookup_hook)
 		relid = (*prev_relname_lookup_hook) (relname, relnamespace);
 	else

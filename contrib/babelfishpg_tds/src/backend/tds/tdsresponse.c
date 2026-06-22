@@ -2781,8 +2781,27 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 		case PLTSQL_STMT_EXEC_BATCH:
 		case PLTSQL_STMT_EXEC_SP:
 			{
+				/* INSERT EXEC can target any of EXEC, EXEC_BATCH or EXEC_SP */
+				void *insert_exec = NULL;
+
 				is_proc = true;
 				command_type = TDS_CMD_EXECUTE;
+
+				switch (stmt->cmd_type)
+				{
+					case PLTSQL_STMT_EXEC:
+						insert_exec = ((PLtsql_stmt_exec *) stmt)->insert_exec;
+						break;
+					case PLTSQL_STMT_EXEC_BATCH:
+						insert_exec = ((PLtsql_stmt_exec_batch *) stmt)->insert_exec;
+						break;
+					case PLTSQL_STMT_EXEC_SP:
+						insert_exec = ((PLtsql_stmt_exec_sp *) stmt)->insert_exec;
+						break;
+					default:
+						break;
+				}
+
 				/*
 				 * For INSERT EXEC, report the row count set in
 				 * flush_insert_exec_temp_table(). Suppress it when an error is
@@ -2790,16 +2809,7 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 				 * client, and a counted DONE left pending here would otherwise
 				 * carry a stale count into the following error DONE token.
 				 */
-				if (!markErrorFlag &&
-					stmt->cmd_type == PLTSQL_STMT_EXEC &&
-					((PLtsql_stmt_exec *) stmt)->insert_exec != NULL)
-				{
-					command_type = TDS_CMD_INSERT;
-					row_count_valid = true;
-				}
-				else if (!markErrorFlag &&
-					stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH &&
-					((PLtsql_stmt_exec_batch *) stmt)->insert_exec != NULL)
+				if (!markErrorFlag && insert_exec != NULL)
 				{
 					command_type = TDS_CMD_INSERT;
 					row_count_valid = true;

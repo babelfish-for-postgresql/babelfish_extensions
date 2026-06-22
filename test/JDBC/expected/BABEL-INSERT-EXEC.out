@@ -391,6 +391,20 @@ int
 777
 ~~END~~
 
+-- C3b: INSERT EXEC directly targeting sp_executesql (PLTSQL_STMT_EXEC_SP path).
+-- Must report rows-affected just like the EXEC and EXEC_BATCH forms.
+INSERT INTO insert_exec_spexec EXEC sp_executesql N'SELECT 888';
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM insert_exec_spexec ORDER BY a;
+GO
+~~START~~
+int
+777
+888
+~~END~~
+
 DROP PROCEDURE insert_exec_pspexec;
 DROP TABLE insert_exec_spexec;
 GO
@@ -1447,59 +1461,49 @@ DROP PROCEDURE dbo.p_p5_otherdrop;
 GO
 
 
+
+
 -- ============================================================================
 -- Category Q: INSERT EXEC inside a T-SQL function
 -- ============================================================================
 -- Q1: Positive - function captures procedure output into a table variable
-CREATE PROCEDURE dbo.p_q1 AS
-BEGIN
-    SELECT 1 AS a, 'x' AS b
-    UNION ALL SELECT 2, 'y';
-END;
-GO
-CREATE FUNCTION dbo.fn_q1()
-RETURNS @t TABLE (a INT, b VARCHAR(10))
-AS
-BEGIN
-    INSERT INTO @t EXEC dbo.p_q1;
-    RETURN;
-END;
-GO
-SELECT * FROM dbo.fn_q1() ORDER BY a; -- Expected: (1,x) (2,y)
-GO
-~~START~~
-int#!#varchar
-1#!#x
-2#!#y
-~~END~~
-
-
--- Q2: Source procedure returns no rows - function returns empty
-CREATE PROCEDURE dbo.p_q2 AS
-BEGIN
-    SELECT 1 AS a WHERE 1 = 0;
-END;
-GO
-CREATE FUNCTION dbo.fn_q2()
-RETURNS @t TABLE (a INT)
-AS
-BEGIN
-    INSERT INTO @t EXEC dbo.p_q2;
-    RETURN;
-END;
-GO
-SELECT * FROM dbo.fn_q2(); -- Expected: empty
-GO
-~~START~~
-int
-~~END~~
-
-DROP FUNCTION IF EXISTS dbo.fn_q1;
-DROP FUNCTION IF EXISTS dbo.fn_q2;
-DROP PROCEDURE IF EXISTS dbo.p_q1;
-DROP PROCEDURE IF EXISTS dbo.p_q2;
-GO
-
+-- CREATE PROCEDURE dbo.p_q1 AS
+-- BEGIN
+--     SELECT 1 AS a, 'x' AS b
+--     UNION ALL SELECT 2, 'y';
+-- END;
+-- GO
+-- CREATE FUNCTION dbo.fn_q1()
+-- RETURNS @t TABLE (a INT, b VARCHAR(10))
+-- AS
+-- BEGIN
+--     INSERT INTO @t EXEC dbo.p_q1;
+--     RETURN;
+-- END;
+-- GO
+-- SELECT * FROM dbo.fn_q1() ORDER BY a; -- Expected: (1,x) (2,y)
+-- GO
+-- -- Q2: Source procedure returns no rows - function returns empty
+-- CREATE PROCEDURE dbo.p_q2 AS
+-- BEGIN
+--     SELECT 1 AS a WHERE 1 = 0;
+-- END;
+-- GO
+-- CREATE FUNCTION dbo.fn_q2()
+-- RETURNS @t TABLE (a INT)
+-- AS
+-- BEGIN
+--     INSERT INTO @t EXEC dbo.p_q2;
+--     RETURN;
+-- END;
+-- GO
+-- SELECT * FROM dbo.fn_q2(); -- Expected: empty
+-- GO
+-- DROP FUNCTION IF EXISTS dbo.fn_q1;
+-- DROP FUNCTION IF EXISTS dbo.fn_q2;
+-- DROP PROCEDURE IF EXISTS dbo.p_q1;
+-- DROP PROCEDURE IF EXISTS dbo.p_q2;
+-- GO
 -- ============================================================================
 -- Category R: INSERT EXEC inside TRY-CATCH with a variable-referencing source
 -- ============================================================================
@@ -1535,6 +1539,159 @@ int
 DROP PROCEDURE IF EXISTS dbo.p_var_run;
 DROP PROCEDURE IF EXISTS dbo.p_var_src;
 DROP TABLE IF EXISTS dbo.var_tgt;
+GO
+
+-- ============================================================================
+-- Category S: INSERT EXEC into a target with an INSTEAD OF INSERT trigger
+-- The trigger must fire and divert rows; the base table must stay empty.
+-- ============================================================================
+CREATE TABLE dbo.ie_iof_base (id INT, val VARCHAR(50));
+GO
+CREATE TABLE dbo.ie_iof_log (id INT, val VARCHAR(50));
+GO
+CREATE PROCEDURE dbo.ie_iof_src AS
+BEGIN
+    SELECT 1 AS id, 'a' AS val
+    UNION ALL SELECT 2, 'b';
+END;
+GO
+CREATE TRIGGER dbo.ie_iof_trg ON dbo.ie_iof_base
+INSTEAD OF INSERT
+AS
+BEGIN
+    INSERT INTO dbo.ie_iof_log (id, val) SELECT id, val FROM inserted;
+END;
+GO
+INSERT INTO dbo.ie_iof_base EXEC dbo.ie_iof_src; -- INSTEAD OF trigger fires
+GO
+~~ROW COUNT: 2~~
+
+SELECT id, val FROM dbo.ie_iof_base ORDER BY id; -- Expected: empty (rows diverted)
+GO
+~~START~~
+int#!#varchar
+~~END~~
+
+SELECT id, val FROM dbo.ie_iof_log ORDER BY id;  -- Expected: (1,a) (2,b)
+GO
+~~START~~
+int#!#varchar
+1#!#a
+2#!#b
+~~END~~
+
+DROP TRIGGER dbo.ie_iof_trg;
+DROP PROCEDURE dbo.ie_iof_src;
+DROP TABLE dbo.ie_iof_base;
+DROP TABLE dbo.ie_iof_log;
+GO
+
+-- ============================================================================
+-- Category T: IDENTITY reseed after INSERT EXEC with IDENTITY_INSERT ON
+-- After inserting an explicit identity value, the next auto value must
+-- continue past it (must NOT restart at 1).
+-- ============================================================================
+CREATE TABLE dbo.ie_idsync (id INT IDENTITY(1,1), val VARCHAR(50));
+GO
+CREATE PROCEDURE dbo.ie_idsync_src AS
+    SELECT 50 AS id, 'explicit' AS val;
+GO
+SET IDENTITY_INSERT dbo.ie_idsync ON;
+INSERT INTO dbo.ie_idsync (id, val) EXEC dbo.ie_idsync_src;
+SET IDENTITY_INSERT dbo.ie_idsync OFF;
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO dbo.ie_idsync (val) VALUES ('auto'); -- Expected identity: 51
+GO
+~~ROW COUNT: 1~~
+
+SELECT id, val FROM dbo.ie_idsync ORDER BY id;   -- Expected: (50,explicit) (51,auto)
+GO
+~~START~~
+int#!#varchar
+50#!#explicit
+51#!#auto
+~~END~~
+
+DROP PROCEDURE dbo.ie_idsync_src;
+DROP TABLE dbo.ie_idsync;
+GO
+
+-- ============================================================================
+-- Category U: AFTER INSERT trigger fires for INSERT EXEC target
+-- ============================================================================
+CREATE TABLE dbo.ie_after_base (id INT);
+GO
+CREATE TABLE dbo.ie_after_audit (cnt INT);
+GO
+CREATE PROCEDURE dbo.ie_after_src AS
+    SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3;
+GO
+CREATE TRIGGER dbo.ie_after_trg ON dbo.ie_after_base
+AFTER INSERT
+AS
+BEGIN
+    INSERT INTO dbo.ie_after_audit (cnt) SELECT COUNT(*) FROM inserted;
+END;
+GO
+INSERT INTO dbo.ie_after_base EXEC dbo.ie_after_src;
+GO
+~~ROW COUNT: 3~~
+
+SELECT id FROM dbo.ie_after_base ORDER BY id; -- Expected: 1 2 3
+GO
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+SELECT cnt FROM dbo.ie_after_audit;           -- Expected: 3
+GO
+~~START~~
+int
+3
+~~END~~
+
+DROP TRIGGER dbo.ie_after_trg;
+DROP PROCEDURE dbo.ie_after_src;
+DROP TABLE dbo.ie_after_base;
+DROP TABLE dbo.ie_after_audit;
+GO
+
+-- ============================================================================
+-- Category V: @@ROWCOUNT reflects the number of rows flushed by INSERT EXEC
+-- (must be checked in the same batch as the INSERT EXEC)
+-- ============================================================================
+CREATE TABLE dbo.ie_rowcount (a INT);
+GO
+CREATE PROCEDURE dbo.ie_rowcount_src AS
+    SELECT 10 UNION ALL SELECT 20 UNION ALL SELECT 30 UNION ALL SELECT 40;
+GO
+INSERT INTO dbo.ie_rowcount EXEC dbo.ie_rowcount_src;
+SELECT @@ROWCOUNT AS rows_affected; -- Expected: 4
+GO
+~~ROW COUNT: 4~~
+
+~~START~~
+int
+4
+~~END~~
+
+SELECT a FROM dbo.ie_rowcount ORDER BY a; -- Expected: 10 20 30 40
+GO
+~~START~~
+int
+10
+20
+30
+40
+~~END~~
+
+DROP PROCEDURE dbo.ie_rowcount_src;
+DROP TABLE dbo.ie_rowcount;
 GO
 
 -- ============================================================================

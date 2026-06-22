@@ -3066,6 +3066,15 @@ get_current_func_oid(void)
 		return InvalidOid;
 
 	/*
+	 * During an INSERT EXEC flush the inline handler pushes its own (anonymous
+	 * batch) estate, so fall back to insert_exec_flush_estate (the procedure
+	 * that issued the INSERT EXEC) to keep ownership chaining intact.
+	 */
+	if (insert_exec_flush_estate != NULL)
+		return (insert_exec_flush_estate->func) ?
+			insert_exec_flush_estate->func->fn_oid : InvalidOid;
+
+	/*
 	* Fetch the top procedure excution state from execution state call stack
 	* and get the owner of that procedure. Top entry in stack will have
 	* fn_oid and fn_owner value set.
