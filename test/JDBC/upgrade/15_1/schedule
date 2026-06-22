@@ -477,6 +477,7 @@ test_conv_text_to_string-before-15_2
 babel_timezoneinfo_before_17_7
 comparison_op_index_scan-before-15_2-or-14_7
 BABEL-5788
+BABEL-6814
 BABEL-1664-before-16_10-or-17_6
 babel_convert_with_style-before-14_8-or-15_3 
 forxml-raw-elements-before-17_9-or-18_3
