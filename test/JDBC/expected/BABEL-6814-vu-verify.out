@@ -290,6 +290,7 @@ GO
 ~~START~~
 text
 Seq Scan on pg_class
+  Disabled: true
   Filter: ((oid)::integer = (random())::integer)
 ~~END~~
 
