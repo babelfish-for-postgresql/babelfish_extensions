@@ -139,5 +139,13 @@ GO
 EXPLAIN (COSTS OFF) SELECT * FROM pg_class WHERE (oid)::int4 = 99999999;
 GO
 
+-- Test 23: EXPLAIN volatile function with seqscan disabled
+SELECT set_config('enable_seqscan', 'off', false);
+GO
+EXPLAIN (COSTS OFF) SELECT * FROM pg_class WHERE (oid)::int4 = random()::int;
+GO
+SELECT set_config('enable_seqscan', 'on', false);
+GO
+
 RESET babelfishpg_tsql.sql_dialect;
 GO
