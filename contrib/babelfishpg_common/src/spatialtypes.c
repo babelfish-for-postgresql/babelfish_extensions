@@ -1861,6 +1861,62 @@ set_dimension_flag(GeometryData *geom_data)
     {
         geom_data->dimension_flag = DIM_FLAG_EMPTY;
     }
+
+    /*
+     * Validate that the declared coordinate region actually fits within the
+     * input before anything downstream uses the point count to size reads or
+     * compute offsets.
+     *
+     * For complex types npoints is read raw from input bytes [6..10) above with
+     * no inherent bound; an out-of-range value is the root cause of every
+     * coordinate-region over-read (check_nan_coordinates,
+     * validate_geography_latitude_bytes) and of the 32-bit offset wrap in
+     * parse_figures_and_shapes. For fixed-layout Point / 2-point LineString
+     * types there is no npoints field, but validate_input_length only
+     * guarantees MIN_GEOMETRY_LENGTH (22) bytes -- enough for a 2D point yet
+     * short of a 3D point (30) or a 2-point line (up to 38), so those paths can
+     * also read past the buffer.
+     *
+     * Reject a negative count and require HEADER + (npoints field) +
+     * point_count * stride <= input_len. All arithmetic is 64-bit so
+     * point_count * stride cannot overflow.
+     */
+    {
+        uint64_t per_point;
+        uint64_t point_count;
+        uint64_t coord_offset;
+
+        switch (geom_data->dimension_flag)
+        {
+            case DIM_FLAG_3DM:                  /* XYZM */
+                per_point = (uint64_t) COORD_SIZE * 4;
+                break;
+            case DIM_FLAG_3D:                   /* XYZ */
+            case DIM_FLAG_2DM:                  /* XYM */
+                per_point = (uint64_t) COORD_SIZE * 3;
+                break;
+            default:                            /* XY (also harmless for EMPTY) */
+                per_point = (uint64_t) COORD_SIZE * 2;
+                break;
+        }
+
+        if (geom_data->has_npoints_data)
+        {
+            if (geom_data->npoints < 0)
+                THROW_VARBINARY_CONVERSION_ERROR();
+            point_count  = (uint64_t) geom_data->npoints;
+            coord_offset = (uint64_t) HEADER_SIZE + NPOINTS_SIZE;
+        }
+        else
+        {
+            /* Fixed layout: Point = 1 point, 2-point LineString = 2 points. */
+            point_count  = (geom_data->geom_name == LINE_TYPE) ? 2 : 1;
+            coord_offset = (uint64_t) HEADER_SIZE;
+        }
+
+        if (coord_offset + point_count * per_point > geom_data->input_len)
+            THROW_VARBINARY_CONVERSION_ERROR();
+    }
 }
 
 /* STEP 3: COORDINATE VALIDATION - Checks if coordinates in the geometry data contain NaN values.
@@ -2525,7 +2581,18 @@ get_child_info(GeometryData *geom_data, uint32_t child_idx,
     uint32_t pt_end;
 
     *fig_start = geom_data->shapes[child_idx].figure_offset;
-    *pt_start  = geom_data->figures[*fig_start].point_offset;
+
+    /*
+     * parse_figures_and_shapes() accepts the CLR empty-child sentinel
+     * (figure_offset == 0xFFFFFFFF) for any shape, but an empty member of a
+     * non-empty MULTIPOINT/MULTILINESTRING is not supported here. Reject it
+     * rather than indexing figures[0xFFFFFFFF], which would read far out of
+     * bounds. (>= nfigures also covers any other out-of-range offset.)
+     */
+    if (*fig_start >= geom_data->nfigures)
+        THROW_VARBINARY_CONVERSION_ERROR();
+
+    *pt_start = geom_data->figures[*fig_start].point_offset;
 
     if (child_idx < geom_data->nshapes - 1)
         *fig_end = geom_data->shapes[child_idx + 1].figure_offset;
