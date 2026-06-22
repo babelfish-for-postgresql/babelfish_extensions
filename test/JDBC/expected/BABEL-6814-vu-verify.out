@@ -277,5 +277,29 @@ Index Scan using pg_class_oid_index on pg_class
 ~~END~~
 
 
+-- Test 23: EXPLAIN volatile function with seqscan disabled
+SELECT set_config('enable_seqscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+EXPLAIN (COSTS OFF) SELECT * FROM pg_class WHERE (oid)::int4 = random()::int;
+GO
+~~START~~
+text
+Seq Scan on pg_class
+  Filter: ((oid)::integer = (random())::integer)
+~~END~~
+
+SELECT set_config('enable_seqscan', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
 RESET babelfishpg_tsql.sql_dialect;
 GO
