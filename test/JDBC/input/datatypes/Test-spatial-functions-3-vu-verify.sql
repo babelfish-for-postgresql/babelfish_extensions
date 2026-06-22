@@ -886,6 +886,7 @@ SELECT ID, geom_type,
 FROM STNumPoints_geom_test
 ORDER BY ID;
 go
+
 --Parse functions test 
 
 -- geometry::Parse with POINT

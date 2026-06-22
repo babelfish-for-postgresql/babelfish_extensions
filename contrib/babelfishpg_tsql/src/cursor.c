@@ -194,6 +194,18 @@ pltsql_declare_cursor(PLtsql_execstate *estate, PLtsql_var *var, PLtsql_expr *ex
 	Portal		portal;
 	char		mangled_name[NAMEDATALEN];
 
+	/* Enforce 128-character limit on cursor name */
+	Assert(var->refname != NULL);
+	if (pg_mbstrlen(var->refname) > 128)
+	{
+		int		cliplen = pg_mbcliplen(var->refname, strlen(var->refname), 128);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_NAME_TOO_LONG),
+				 errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.",
+						cliplen, var->refname)));
+	}
+
 	if (!var->isnull)
 	{
 		curname = TextDatumGetCString(var->value);
@@ -223,12 +235,6 @@ pltsql_declare_cursor(PLtsql_execstate *estate, PLtsql_var *var, PLtsql_expr *ex
 	 * cursor, its lifespan is longer so we have to use different memory
 	 * context.
 	 */
-	Assert(var->refname != NULL);
-	if (strlen(var->refname) + strlen(LOCAL_CURSOR_INFIX) + 19 > NAMEDATALEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("internal cursor name is too long: %s", var->refname)));
-
 	snprintf(mangled_name, NAMEDATALEN, "%s%s%p", var->refname, LOCAL_CURSOR_INFIX, var);
 
 	assign_text_var(estate, var, mangled_name);

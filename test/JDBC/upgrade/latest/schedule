@@ -672,7 +672,10 @@ BABEL-4271
 comparison_op_index_scan
 Test-Linestring
 Test-Polygon
+Test-Multipoint
+Test-Multilinestring
 BABEL-5788
+BABEL-6814
 BABEL-1664
 sys-fn_varbintohexstr
 babel_string_to_money_reg
@@ -682,3 +685,9 @@ babel_convert_with_style
 forxml-raw-elements
 forxml-raw-elements-1gb-limit
 forxml-path-elements
+xml_query
+forxml-auto
+BABEL-5264
+BABEL-6037
+babel_sqlvariant_coerce_type
+BABEL-login-db-long-identifiers

@@ -23,8 +23,8 @@ POINT                 { return POINT_TOK; }
 LINESTRING            { return LINESTRING_TOK; }
 POLYGON               { return POLYGON_TOK; }
 CIRCULARSTRING        { yyerror(NULL, "CIRCULARSTRING is not supported"); return CIRCULARSTRING_TOK; }
-MULTIPOINT            { yyerror(NULL, "MULTIPOINT is not supported");  return MPOINT_TOK; }
-MULTILINESTRING       { yyerror(NULL, "MULTILINESTRING is not supported"); return MLINESTRING_TOK; }
+MULTIPOINT            { return MPOINT_TOK; }
+MULTILINESTRING       { return MLINESTRING_TOK; }
 MULTIPOLYGON          { yyerror(NULL, "MULTIPOLYGON is not supported");  return MPOLYGON_TOK; }
 CURVEPOLYGON          { yyerror(NULL, "CURVEPOLYGON is not supported");  return CURVEPOLYGON_TOK; }
 COMPOUNDCURVE         { yyerror(NULL, "COMPOUNDCURVE is not supported");  return COMPOUNDCURVE_TOK; }

@@ -143,7 +143,7 @@ SELECT NULL AS a, NULL AS b FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row></row>
+<row/>
 ~~END~~
 
 
@@ -170,7 +170,7 @@ SELECT NULL AS a, NULL AS b, NULL AS c, NULL AS d FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row></row>
+<row/>
 ~~END~~
 
 
@@ -198,7 +198,7 @@ SELECT NULL AS a, NULL AS b FOR XML RAW, ELEMENTS ABSENT;
 GO
 ~~START~~
 ntext
-<row></row>
+<row/>
 ~~END~~
 
 
@@ -302,7 +302,7 @@ SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL, ROOT('data');
 GO
 ~~START~~
 ntext
-<data><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row></data>
+<data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><a>1</a><b xsi:nil="true"/></row></data>
 ~~END~~
 
 
@@ -310,7 +310,25 @@ SELECT 1 AS a, NULL AS b FOR XML RAW, ROOT('data'), ELEMENTS XSINIL;
 GO
 ~~START~~
 ntext
-<data><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row></data>
+<data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><a>1</a><b xsi:nil="true"/></row></data>
+~~END~~
+
+
+-- RAW + XSINIL + ROOT + TYPE: xmlns:xsi declared once on the root element.
+SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL, ROOT('data'), TYPE;
+GO
+~~START~~
+xml
+<data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><a>1</a><b xsi:nil="true"/></row></data>
+~~END~~
+
+
+-- All-NULL row + XSINIL + ROOT: row tag still emitted (with xsi:nil on each col).
+SELECT NULL AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL, ROOT('data');
+GO
+~~START~~
+ntext
+<data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><a xsi:nil="true"/><b xsi:nil="true"/></row></data>
 ~~END~~
 
 
@@ -494,7 +512,7 @@ SELECT * FROM forxml_raw_elements_t1 FOR XML RAW('Employee'), ELEMENTS XSINIL, R
 GO
 ~~START~~
 ntext
-<Employees><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>3</id><name>Bob</name><salary xsi:nil="true"/><department>Finance</department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>4</id><name>Alice</name><salary>70000</salary><department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>5</id><name xsi:nil="true"/><salary xsi:nil="true"/><department xsi:nil="true"/></Employee></Employees>
+<Employees xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Employee><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee><Employee><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee><Employee><id>3</id><name>Bob</name><salary xsi:nil="true"/><department>Finance</department></Employee><Employee><id>4</id><name>Alice</name><salary>70000</salary><department xsi:nil="true"/></Employee><Employee><id>5</id><name xsi:nil="true"/><salary xsi:nil="true"/><department xsi:nil="true"/></Employee></Employees>
 ~~END~~
 
 
@@ -510,7 +528,7 @@ SELECT name, salary FROM forxml_raw_elements_t1 FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row><name>John</name><salary>50000</salary></row><row><name>Jane</name><salary>60000</salary></row><row><name>Bob</name></row><row><name>Alice</name><salary>70000</salary></row><row></row>
+<row><name>John</name><salary>50000</salary></row><row><name>Jane</name><salary>60000</salary></row><row><name>Bob</name></row><row><name>Alice</name><salary>70000</salary></row><row/>
 ~~END~~
 
 
@@ -950,7 +968,7 @@ SELECT CAST(NULL AS VARCHAR(10)) AS null_val FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row></row>
+<row/>
 ~~END~~
 
 
@@ -971,7 +989,34 @@ SELECT 1 AS a, 2 AS b FOR XML RAW(''), ELEMENTS;
 GO
 ~~START~~
 ntext
-<><a>1</a><b>2</b></>
+<a>1</a><b>2</b>
+~~END~~
+
+
+-- Empty element name without ELEMENTS (attribute-centric) - should error
+SELECT 1 AS a, 2 AS b FOR XML RAW('');
+GO
+~~START~~
+ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Row tag omission (empty row tag name) cannot be used with attribute-centric FOR XML serialization.)~~
+
+
+-- All NULLs under attribute mode (no ELEMENTS)
+SELECT NULL AS a, NULL AS b FOR XML RAW;
+GO
+~~START~~
+ntext
+<row/>
+~~END~~
+
+
+-- All NULLs with empty element name and ELEMENTS
+SELECT NULL AS a, NULL AS b FOR XML RAW(''), ELEMENTS;
+GO
+~~START~~
+ntext
 ~~END~~
 
 

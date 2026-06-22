@@ -56,6 +56,8 @@
 #include "utils/formatting.h"
 
 #include "pltsql.h"
+#include "pltsql_node/pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
+											 * by gen_pltsql_node_support.pl */
 #include "access/xact.h"
 #include "err_handler.h"
 #include "iterative_exec.h"
@@ -2517,7 +2519,7 @@ exec_stmt_call(PLtsql_execstate *estate, PLtsql_stmt_call *stmt)
 			 */
 			oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
 
-			row = (PLtsql_row *) palloc0(sizeof(PLtsql_row));
+			row = makeNode(PLtsql_row);
 			row->dtype = PLTSQL_DTYPE_ROW;
 			row->refname = "(unnamed row)";
 			row->lineno = -1;
@@ -3474,7 +3476,7 @@ exec_stmt_return(PLtsql_execstate *estate, PLtsql_stmt_return *stmt)
 	{
 		PLtsql_stmt_return_query *return_table;
 
-		return_table = (PLtsql_stmt_return_query *) palloc0(sizeof(PLtsql_stmt_return_query));
+		return_table = (PLtsql_stmt_return_query *) makeNode(PLtsql_stmt_return_query);
 		return_table->cmd_type = PLTSQL_STMT_RETURN_TABLE;
 		return_table->query = NULL;
 		return_table->dynquery = NULL;
@@ -4606,6 +4608,7 @@ is_query_using_regular_relation_walker(Node *node, void *context)
         RangeTblEntry *rte = (RangeTblEntry *) node;
 		if (rte->rtekind == RTE_RELATION && rte->relkind == 'r')
 			return true;
+		return false;
     }
     
     if (IsA(node, Query))
@@ -4716,7 +4719,7 @@ setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_s
      */
     oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
 
-    row = (PLtsql_row *) palloc0(sizeof(PLtsql_row));
+    row = makeNode(PLtsql_row);
     row->dtype = PLTSQL_DTYPE_ROW;
     row->refname = "(unnamed row)";
     row->lineno = -1;
@@ -4815,12 +4818,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	Portal		portal = NULL;
 	ListCell   *lc;
 	bool		is_returning = false;
-
-	/*
-	 * Temporarily disable FMTONLY as it is causing issues with Import-Export.
-	 * Reenable if a use-case is found.
-	 */
-	bool		fmtonly_enabled = true;
 	CmdType		cmd = CMD_UNKNOWN;
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
 	bool		support_tsql_trans = pltsql_support_tsql_transactions();
@@ -4872,7 +4869,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			 * statements as exec statements that invoke
 			 * sp_describe_first_result_set.
 			 */
-			if (pltsql_fmtonly && !strcasestr(estate->func->fn_signature, "sp_describe_first_result_set") && fmtonly_enabled && strcasestr(stmt->sqlstmt->query, "SELECT *"))
+			if (pltsql_fmtonly && !strcasestr(estate->func->fn_signature, "sp_describe_first_result_set") && strcasestr(stmt->sqlstmt->query, "SELECT *"))
 			{
 				initStringInfo(&query);
 				appendStringInfo(&query, "SELECT TOP 0");
@@ -5375,7 +5372,7 @@ exec_fmtonly(PLtsql_execstate *estate,
 	PLtsql_var *return_code;
 	Query	   *query;
 
-	estmt = (PLtsql_stmt_exec *) palloc0(sizeof(*estmt));
+	estmt = (PLtsql_stmt_exec *) makeNode(PLtsql_stmt_exec);
 	estmt->cmd_type = PLTSQL_STMT_EXEC;
 	estmt->lineno = stmt->lineno;
 	estmt->is_call = true;
@@ -5386,7 +5383,7 @@ exec_fmtonly(PLtsql_execstate *estate,
 	appendStringInfo(&ss, "EXEC sp_describe_first_result_set N'");
 	appendStringInfoString(&ss, expr->query);
 	appendStringInfo(&ss, "', null, 0;");
-	estmt->expr = (PLtsql_expr *) palloc0(sizeof(estmt->expr));
+	estmt->expr = makeNode(PLtsql_expr);
 	estmt->expr->query = strdup(ss.data);
 	estmt->expr->plan = NULL;
 	estmt->expr->paramnos = NULL;
@@ -5435,7 +5432,7 @@ exec_fmtonly(PLtsql_execstate *estate,
 	 */
 	oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
 
-	row = (PLtsql_row *) palloc0(sizeof(PLtsql_row));
+	row = makeNode(PLtsql_row);
 	row->dtype = PLTSQL_DTYPE_ROW;
 	row->refname = "(unnamed row)";
 	row->lineno = -1;
@@ -9844,7 +9841,7 @@ pltsql_eval_txn_data(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt, Cached
 		if (txn_name != NULL)
 		{
 			pfree(txnStmt->savepoint_name);
-			txnStmt->savepoint_name = pstrdup(txn_name);
+			txnStmt->savepoint_name = MemoryContextStrdup(cachedPlanSource->query_context, txn_name);
 		}
 	}
 
@@ -9914,7 +9911,7 @@ txn_clean_estate(bool commit)
 }
 
 /*
- * pltsql_xact_cb --- post-transaction-commit-or-abort cleanup
+ * pltsql_xact_cb --- transaction event callback for cleanup
  *
  * If a simple-expression EState was created in the current transaction,
  * it has to be cleaned up.
@@ -9922,6 +9919,15 @@ txn_clean_estate(bool commit)
 void
 pltsql_xact_cb(XactEvent event, void *arg)
 {
+	/*
+	 * Reset top transaction name to avoid dangling pointer after
+	 * transaction memory context is destroyed.
+	 */
+	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_ABORT)
+	{
+		ResetTopTransactionName();
+	}
+
 	/*
 	 * If we are doing a clean transaction shutdown, free the EState (so that
 	 * any remaining resources will be released correctly). In an abort, we

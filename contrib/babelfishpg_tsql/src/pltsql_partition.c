@@ -379,6 +379,9 @@ construct_unique_hash(char *relation_name)
 	bool		success;
 	const char	*errstr = NULL;
 
+	/* Identifier should already be validated at the entry point */
+	Assert(pg_mbstrlen_with_len(relation_name, strlen(relation_name)) <= 128);
+
 	md5 = (char *) palloc(MD5_HASH_LEN + 1);
 
 	success = pg_md5_hash(relation_name, strlen(relation_name), md5, &errstr);
@@ -926,7 +929,7 @@ bbf_alter_handle_partitioned_table(AlterTableStmt *stmt)
 	else if (is_partition_table)
 	{
 		char	*parent_table_name = get_rel_name(get_partition_parent(relid, false));
-		if (is_bbf_partitioned_table(dbid, logical_schemaname, parent_table_name))
+		if (is_bbf_partitioned_table(dbid, logical_schemaname, parent_table_name) && cmd->subtype != AT_ChangeOwner)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), 
 					errmsg("Modifying partitions directly is not supported. You can modify the partitions by modifying the parent table.")));

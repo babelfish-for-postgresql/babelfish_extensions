@@ -222,7 +222,6 @@ forjson-nesting
 forjsonauto
 format
 format-dep
-forxml
 forxml-path
 forxml-subquery
 fulltextserviceproperty
@@ -604,6 +603,7 @@ sp_xml_removedocument
 openxml_with_clause-before-17_7
 fixeddecimal_modulo
 BABEL-NUMERIC_EXPR
+BABEL-6814
 test_conv_float_to_varchar_char
 test_constraint_like-17-4-or-16-8
 round_return_type_test-before-16_9-or-17_5
@@ -645,5 +645,8 @@ babel_string_to_money_reg
 babel_convert_with_style
 like_op_index_scan
 forxml-raw-elements-before-17_9-or-18_3
-sys-fn-varbintohexsubstring-before-16_10-or-17_6
 forxml-path-elements-before-17_10-or-18_4
+xml_query-before-17_11-or-18_5
+forxml-before-17_11-or-18_5
+forxml-auto-before-17_11-or-18_5
+BABEL-login-db-long-identifiers

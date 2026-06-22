@@ -148,7 +148,7 @@ SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'
 GO
 ~~START~~
 ntext
-<Data><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
 ~~END~~
 
 
@@ -173,7 +173,7 @@ SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'
 GO
 ~~START~~
 ntext
-<Data><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
 ~~END~~
 
 
@@ -209,7 +209,7 @@ SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'
 GO
 ~~START~~
 xml
-<Data><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
 ~~END~~
 
 
@@ -218,7 +218,7 @@ SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'
 GO
 ~~START~~
 xml
-<Data><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
 ~~END~~
 
 
@@ -239,6 +239,43 @@ GO
 ~~START~~
 ntext
 <ID>2</ID><Name>Jane</Name>
+~~END~~
+
+
+-- PATH('') with ROOT — xmlns:xsi declared on ROOT only,
+-- per-column declarations suppressed.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID IN (1,3) FOR XML PATH(''), ELEMENTS XSINIL, ROOT('Data');
+GO
+~~START~~
+ntext
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department><ID>3</ID><Name>Bob</Name><Department>IT</Department></Data>
+~~END~~
+
+
+-- PATH('') with ROOT, mixed NULL columns.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH(''), ELEMENTS XSINIL, ROOT('Data');
+GO
+~~START~~
+ntext
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/><ID>3</ID><Name>Bob</Name><Department>IT</Department><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Data>
+~~END~~
+
+
+-- PATH('') with ROOT, directive order swapped.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 2 FOR XML PATH(''), ROOT('Data'), ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Data>
+~~END~~
+
+
+-- PATH('') with ROOT and TYPE combined.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 2 FOR XML PATH(''), ELEMENTS XSINIL, ROOT('Data'), TYPE;
+GO
+~~START~~
+xml
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Data>
 ~~END~~
 
 
@@ -405,7 +442,7 @@ FOR XML PATH('CustomerOrder'), ELEMENTS XSINIL, ROOT('Data');
 GO
 ~~START~~
 ntext
-<Data><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="Acme Corp" City="New York"><OrderDate>2024-01-15</OrderDate><TotalAmount>100.00</TotalAmount></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="Acme Corp" City="New York"><OrderDate>2024-02-20</OrderDate><TotalAmount>250.00</TotalAmount></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="Tech Inc"><OrderDate>2024-03-10</OrderDate><TotalAmount xsi:nil="true"/></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" City="Boston"><OrderDate xsi:nil="true"/><TotalAmount>175.50</TotalAmount></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="Global Ltd" City="Chicago"><OrderDate xsi:nil="true"/><TotalAmount xsi:nil="true"/></CustomerOrder></Data>
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerOrder Name="Acme Corp" City="New York"><OrderDate>2024-01-15</OrderDate><TotalAmount>100.00</TotalAmount></CustomerOrder><CustomerOrder Name="Acme Corp" City="New York"><OrderDate>2024-02-20</OrderDate><TotalAmount>250.00</TotalAmount></CustomerOrder><CustomerOrder Name="Tech Inc"><OrderDate>2024-03-10</OrderDate><TotalAmount xsi:nil="true"/></CustomerOrder><CustomerOrder City="Boston"><OrderDate xsi:nil="true"/><TotalAmount>175.50</TotalAmount></CustomerOrder><CustomerOrder Name="Global Ltd" City="Chicago"><OrderDate xsi:nil="true"/><TotalAmount xsi:nil="true"/></CustomerOrder></Data>
 ~~END~~
 
 
@@ -704,6 +741,33 @@ ntext
 ~~END~~
 
 
+-- PATH (no parens) + XSINIL + ROOT: xmlns:xsi declared once on root.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 1 FOR XML PATH, ELEMENTS XSINIL, ROOT('Data');
+GO
+~~START~~
+ntext
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><ID>1</ID><Name>John</Name><Department>Sales</Department></row></Data>
+~~END~~
+
+
+-- PATH (no parens) + XSINIL + ROOT + TYPE.
+SELECT ID, Name, Department FROM forxml_path_elements_t1 WHERE ID = 1 FOR XML PATH, ELEMENTS XSINIL, ROOT('Data'), TYPE;
+GO
+~~START~~
+xml
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><ID>1</ID><Name>John</Name><Department>Sales</Department></row></Data>
+~~END~~
+
+
+-- PATH (no parens) + XSINIL + ROOT, all-NULL row.
+SELECT NULL AS Col1, NULL AS Col2 FOR XML PATH, ELEMENTS XSINIL, ROOT('Data');
+GO
+~~START~~
+ntext
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><Col1 xsi:nil="true"/><Col2 xsi:nil="true"/></row></Data>
+~~END~~
+
+
 -- NULL in element name position
 SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH(NULL), ELEMENTS XSINIL;
 GO
@@ -775,7 +839,7 @@ FOR XML PATH('CustomerOrder'), ELEMENTS XSINIL, ROOT('Data');
 GO
 ~~START~~
 ntext
-<Data><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerName>Acme Corp</CustomerName><City>New York</City><OrderDate>2024-01-15</OrderDate><TotalAmount>100.00</TotalAmount></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerName>Acme Corp</CustomerName><City>New York</City><OrderDate>2024-02-20</OrderDate><TotalAmount>250.00</TotalAmount></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerName>Tech Inc</CustomerName><City xsi:nil="true"/><OrderDate>2024-03-10</OrderDate><TotalAmount xsi:nil="true"/></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerName xsi:nil="true"/><City>Boston</City><OrderDate xsi:nil="true"/><TotalAmount>175.50</TotalAmount></CustomerOrder><CustomerOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerName>Global Ltd</CustomerName><City>Chicago</City><OrderDate xsi:nil="true"/><TotalAmount xsi:nil="true"/></CustomerOrder></Data>
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><CustomerOrder><CustomerName>Acme Corp</CustomerName><City>New York</City><OrderDate>2024-01-15</OrderDate><TotalAmount>100.00</TotalAmount></CustomerOrder><CustomerOrder><CustomerName>Acme Corp</CustomerName><City>New York</City><OrderDate>2024-02-20</OrderDate><TotalAmount>250.00</TotalAmount></CustomerOrder><CustomerOrder><CustomerName>Tech Inc</CustomerName><City xsi:nil="true"/><OrderDate>2024-03-10</OrderDate><TotalAmount xsi:nil="true"/></CustomerOrder><CustomerOrder><CustomerName xsi:nil="true"/><City>Boston</City><OrderDate xsi:nil="true"/><TotalAmount>175.50</TotalAmount></CustomerOrder><CustomerOrder><CustomerName>Global Ltd</CustomerName><City>Chicago</City><OrderDate xsi:nil="true"/><TotalAmount xsi:nil="true"/></CustomerOrder></Data>
 ~~END~~
 
 
@@ -918,7 +982,7 @@ EXEC forxml_path_elements_p4;
 GO
 ~~START~~
 ntext
-<Data><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
 ~~END~~
 
 
@@ -926,7 +990,7 @@ EXEC forxml_path_elements_p5;
 GO
 ~~START~~
 ntext
-<Data><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
 ~~END~~
 
 
@@ -1011,7 +1075,7 @@ SELECT @xml_var AS result;
 GO
 ~~START~~
 xml
-<Data><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/></Employee></Data>
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Employee><ID>1</ID><Name>John</Name></Employee><Employee><ID>2</ID><Name>Jane</Name></Employee><Employee><ID>3</ID><Name>Bob</Name></Employee><Employee><ID>4</ID><Name xsi:nil="true"/></Employee><Employee><ID>5</ID><Name xsi:nil="true"/></Employee></Data>
 ~~END~~
 
 
@@ -1054,7 +1118,7 @@ SELECT * FROM forxml_path_elements_into3;
 GO
 ~~START~~
 xml
-<Data><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
+<Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Data>
 ~~END~~
 
 
@@ -1121,7 +1185,7 @@ SELECT * FROM forxml_path_elements_dep_view4;
 GO
 ~~START~~
 ntext
-<Employees><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Employees>
+<Employees xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee><Employee><ID>2</ID><Name>Jane</Name><Department xsi:nil="true"/></Employee><Employee><ID>3</ID><Name>Bob</Name><Department>IT</Department></Employee><Employee><ID>4</ID><Name xsi:nil="true"/><Department xsi:nil="true"/></Employee><Employee><ID>5</ID><Name xsi:nil="true"/><Department>HR</Department></Employee></Employees>
 ~~END~~
 
 
@@ -1202,9 +1266,10 @@ varchar
 -- Using .query() method on XSINIL result
 SELECT (SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ROOT('Data'), ELEMENTS XSINIL, TYPE).query('/Data/Employee[1]') AS query_result;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
+~~START~~
+xml
+<Employee><ID>1</ID><Name>John</Name><Department>Sales</Department></Employee>
+~~END~~
 
 
 -- Using .exist() method on XSINIL result

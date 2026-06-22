@@ -1,0 +1,350 @@
+-- sla 80000
+# Multipoint Geometry Test Cases
+
+CREATE TABLE GEOSPATIALMULTIPOINTGEOM_dt (location geometry)
+ALTER TABLE GEOSPATIALMULTIPOINTGEOM_dt ADD id INT IDENTITY(1,1);
+
+# Positive Test for STGeomFromText with SRID 4326 — 2D
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2), (3 4))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2), (3 4), (5 6))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((0 0), (1 1), (2 2), (3 3))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((0 0), (10 0), (10 10), (0 10), (5 5))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((-1 -2), (-3 -4))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((-1 2), (3 -4), (0 0))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1.5 2.7), (3.14159 4.00001))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((999999999 999999999), (-999999999 -999999999))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((0.000001 0.000001), (0.000002 0.000002))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((0 0), (0 0))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2), (1 2))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((5 5), (5 5), (5 5))', 4326));
+
+# 2D — Alternate WKT (no inner parens)
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT(1 2, 3 4)', 4326));
+
+# 3D (XYZ)
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 3), (4 5 6))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 3), (4 5 6), (7 8 9))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((10 20 30))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 -3), (4 5 -6))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 0), (4 5 0))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1.1 2.2 3.3), (4.4 5.5 6.6))', 4326));
+
+# 3D — Partial Z (mixed dimensions)
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 3), (4 5))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2), (4 5 6))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 3), (4 5), (7 8 9))', 4326));
+
+# 2DM (XYM)
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 NULL 4), (5 6 NULL 8))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 NULL 10), (3 4 NULL 20), (5 6 NULL 30))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 NULL 4))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 NULL -4), (5 6 NULL -8))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 NULL 0), (5 6 NULL 0))', 4326));
+
+# 2DM — Partial M (mixed dimensions)
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 NULL 4), (5 6))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2), (5 6 NULL 8))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 NULL 4), (5 6), (7 8 NULL 10))', 4326));
+
+# 4D (XYZM)
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 3 4), (5 6 7 8))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 3 4), (5 6 7 8), (9 10 11 12))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 3 4))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 -3 -4), (5 6 -7 -8))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1.1 2.2 3.3 4.4), (5.5 6.6 7.7 8.8))', 4326));
+
+# 4D — Partial (mixed dimensions)
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 3 4), (5 6 7), (8 9))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 3), (5 6 7 8))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 NULL 4), (5 6 7 8))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 3), (5 6 NULL 8), (9 10))', 4326));
+
+# EMPTY
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT EMPTY', 4326));
+
+# Negative Test when SRID is not valid
+# SRID should be between 0 to 999999
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2), (3 4))', 1000000000));
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2), (3 4))', -1));
+
+# Negative Test for STGeomFromText when a coordinate is missing
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1), (3 4))', 4326));
+
+# Negative Test for STGeomFromText when Incorrect cast is provided
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_dt (location) VALUES (geography::STGeomFromText('MULTIPOINT((1 2), (3 4))', 4326));
+
+# Cross-type reference table for spatial operations
+CREATE TABLE GEOSPATIALPOINTGEOM_mpsr (location geometry)
+ALTER TABLE GEOSPATIALPOINTGEOM_mpsr ADD id INT IDENTITY(1,1);
+
+INSERT INTO GEOSPATIALPOINTGEOM_mpsr (location) VALUES (geometry::STGeomFromText('LINESTRING EMPTY', 4326));
+INSERT INTO GEOSPATIALPOINTGEOM_mpsr (location) VALUES (geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326));
+INSERT INTO GEOSPATIALPOINTGEOM_mpsr (location) VALUES (geometry::STGeomFromText('Point(47.65100 -22.34900 32.546000)', 4326));
+INSERT INTO GEOSPATIALPOINTGEOM_mpsr (location) VALUES (geometry::STGeomFromText('Point(47.65100 -22.34900 NULL 32.546000)', 4326));
+INSERT INTO GEOSPATIALPOINTGEOM_mpsr (location) VALUES (geometry::STGeomFromText('Point(47.65100 -22.34900 32.546000 54.56300)', 4326));
+INSERT INTO GEOSPATIALPOINTGEOM_mpsr (location) VALUES (geometry::STGeomFromText('POINT EMPTY', 4326));
+
+# Test with invalid instances
+CREATE TABLE GEOSPATIALMULTIPOINTGEOM_INVALID_dt (location geometry)
+ALTER TABLE GEOSPATIALMULTIPOINTGEOM_INVALID_dt ADD id INT IDENTITY(1,1);
+
+INSERT INTO GEOSPATIALMULTIPOINTGEOM_INVALID_dt (location) VALUES (geometry::STGeomFromText('MULTIPOINT((1 2 3 4 5), (6 7 8 9 10))', 4326));
+
+# Views for geometry multipoint properties
+CREATE VIEW DimOfGeometrymultipoint AS SELECT location.STAsText() AS geometry, location.STDimension() AS dimension FROM GEOSPATIALMULTIPOINTGEOM_dt ORDER BY id;
+
+CREATE VIEW NumPointsOfGeometrymultipoint AS SELECT location.STAsText() AS geometry, location.STNumPoints() AS numpoints FROM GEOSPATIALMULTIPOINTGEOM_dt ORDER BY id;
+
+CREATE VIEW TextFromGeometrymultipoint AS SELECT location.STAsText() AS text FROM GEOSPATIALMULTIPOINTGEOM_dt ORDER BY id;
+
+CREATE VIEW BinaryFromGeometrymultipoint AS SELECT location.STAsText() AS geometry, location.STAsBinary() AS binary FROM GEOSPATIALMULTIPOINTGEOM_dt ORDER BY id;
+
+CREATE VIEW SridFromGeometrymultipoint AS SELECT location.STAsText() AS geometry, location.STSrid AS srid FROM GEOSPATIALMULTIPOINTGEOM_dt ORDER BY id;
+
+CREATE VIEW EmptyGeometrymultipoint AS SELECT location.STAsText() AS geometry, location.STIsEmpty() AS isempty FROM GEOSPATIALMULTIPOINTGEOM_dt ORDER BY id;
+
+CREATE VIEW ValidGeometrymultipoint AS SELECT location.STAsText() AS geometry, location.STIsValid() AS isvalid FROM GEOSPATIALMULTIPOINTGEOM_dt ORDER BY id;
+
+CREATE VIEW GeomTypeOfGeometrymultipoint AS SELECT location.STAsText() AS geometry, location.STGeometryType() AS geomtype FROM GEOSPATIALMULTIPOINTGEOM_dt ORDER BY id;
+
+# Spatial operation views — multipoint vs multipoint
+CREATE VIEW DisjointTempGeommultipoint AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALMULTIPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALMULTIPOINTGEOM_dt p2 ORDER BY p1.id;
+
+CREATE VIEW DistanceTempGeommultipoint AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, CAST(STDistance(p1.location, p2.location) AS numeric(20, 6)) AS distance FROM GEOSPATIALMULTIPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALMULTIPOINTGEOM_dt p2 ORDER BY p1.id;
+
+CREATE VIEW IntersectsTempGeommultipoint AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STIntersects(p2.location) AS intersecting FROM GEOSPATIALMULTIPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALMULTIPOINTGEOM_dt p2 ORDER BY p1.id;
+
+CREATE VIEW EqualsTempGeommultipoint AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STEquals(p2.location) AS equals FROM GEOSPATIALMULTIPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALMULTIPOINTGEOM_dt p2 ORDER BY p1.id;
+
+CREATE VIEW ContainTempGeommultipoint AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STContains(p2.location) AS contain FROM GEOSPATIALMULTIPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALMULTIPOINTGEOM_dt p2 ORDER BY p1.id;
+
+CREATE VIEW equals_opgeommultipoint AS SELECT p1.location AS point FROM GEOSPATIALMULTIPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALMULTIPOINTGEOM_dt p2 WHERE p1.location = p2.location ORDER BY p1.id;
+
+CREATE VIEW notequal_opgeommultipoint AS SELECT p1.location AS point FROM GEOSPATIALMULTIPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALMULTIPOINTGEOM_dt p2 WHERE p1.location <> p2.location ORDER BY p1.id;
+
+# Spatial operation views — multipoint vs point/linestring
+CREATE VIEW DisjointTempGeommpsr AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALMULTIPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_mpsr p2 ORDER BY p1.id;
+
+CREATE VIEW DistanceTempGeommpsr AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, CAST(STDistance(p1.location, p2.location) AS numeric(20, 6)) AS distance FROM GEOSPATIALMULTIPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_mpsr p2 ORDER BY p1.id;
+
+CREATE VIEW IntersectsTempGeommpsr AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STIntersects(p2.location) AS intersecting FROM GEOSPATIALMULTIPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_mpsr p2 ORDER BY p1.id;
+
+CREATE VIEW EqualsTempGeommpsr AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STEquals(p2.location) AS equals FROM GEOSPATIALMULTIPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_mpsr p2 ORDER BY p1.id;
+
+CREATE VIEW ContainTempGeommpsr AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STContains(p2.location) AS contain FROM GEOSPATIALMULTIPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_mpsr p2 ORDER BY p1.id;
+
+CREATE VIEW equals_opgeommpsr AS SELECT p1.location AS point FROM GEOSPATIALMULTIPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_mpsr p2 WHERE p1.location = p2.location ORDER BY p1.id;
+
+CREATE VIEW notequal_opgeommpsr AS SELECT p1.location AS point FROM GEOSPATIALMULTIPOINTGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_mpsr p2 WHERE p1.location <> p2.location ORDER BY p1.id;
+
+# STMPointFromText view
+CREATE VIEW MultipointGeomFromText AS SELECT geometry::STMPointFromText('MULTIPOINT((1 2), (3 4))', 4326) AS geom1, geometry::STMPointFromText('MULTIPOINT((5 6 7), (8 9 10))', 4326) AS geom2;
+
+# CAST to VARBINARY table
+CREATE TABLE geometryAsVarbinarymultipoint (ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARBINARY(2000));
+
+INSERT INTO geometryAsVarbinarymultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2), (3 4))', 4326) AS VARBINARY(2000)));
+INSERT INTO geometryAsVarbinarymultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2), (3 4), (5 6))', 4326) AS VARBINARY(2000)));
+INSERT INTO geometryAsVarbinarymultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2 3), (4 5 6))', 4326) AS VARBINARY(2000)));
+INSERT INTO geometryAsVarbinarymultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2 NULL 4), (5 6 NULL 8))', 4326) AS VARBINARY(2000)));
+INSERT INTO geometryAsVarbinarymultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2 3 4), (5 6 7 8))', 4326) AS VARBINARY(2000)));
+INSERT INTO geometryAsVarbinarymultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2 3), (4 5))', 4326) AS VARBINARY(2000)));
+INSERT INTO geometryAsVarbinarymultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2), (4 5 6))', 4326) AS VARBINARY(2000)));
+INSERT INTO geometryAsVarbinarymultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2 NULL 4), (5 6 7 8))', 4326) AS VARBINARY(2000)));
+INSERT INTO geometryAsVarbinarymultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2 3), (5 6 NULL 8), (9 10))', 4326) AS VARBINARY(2000)));
+INSERT INTO geometryAsVarbinarymultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((-1 -2), (-3 -4))', 4326) AS VARBINARY(2000)));
+INSERT INTO geometryAsVarbinarymultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1.5 2.7), (3.14159 4.00001))', 4326) AS VARBINARY(2000)));
+INSERT INTO geometryAsVarbinarymultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2))', 4326) AS VARBINARY(2000)));
+INSERT INTO geometryAsVarbinarymultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT EMPTY', 4326) AS VARBINARY(2000)));
+
+# CAST to VARCHAR table
+CREATE TABLE geometryAsVarcharmultipoint (ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARCHAR(500));
+
+INSERT INTO geometryAsVarcharmultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2), (3 4))', 4326) AS VARCHAR(500)));
+INSERT INTO geometryAsVarcharmultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2), (3 4), (5 6))', 4326) AS VARCHAR(500)));
+INSERT INTO geometryAsVarcharmultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2 3), (4 5 6))', 4326) AS VARCHAR(500)));
+INSERT INTO geometryAsVarcharmultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2 NULL 4), (5 6 NULL 8))', 4326) AS VARCHAR(500)));
+INSERT INTO geometryAsVarcharmultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2 3 4), (5 6 7 8))', 4326) AS VARCHAR(500)));
+INSERT INTO geometryAsVarcharmultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT((1 2 3), (4 5))', 4326) AS VARCHAR(500)));
+INSERT INTO geometryAsVarcharmultipoint (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTIPOINT EMPTY', 4326) AS VARCHAR(500)));
+
+# VARBINARY back to geometry table
+CREATE TABLE VarbinaryAsgeometrymultipoint (ID INT IDENTITY(1,1) PRIMARY KEY, geometryData geometry);
+
+INSERT INTO VarbinaryAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2), (3 4))', 4326) AS VARBINARY(2000)) AS geometry));
+INSERT INTO VarbinaryAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2), (3 4), (5 6))', 4326) AS VARBINARY(2000)) AS geometry));
+INSERT INTO VarbinaryAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2 3), (4 5 6))', 4326) AS VARBINARY(2000)) AS geometry));
+INSERT INTO VarbinaryAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2 NULL 4), (5 6 NULL 8))', 4326) AS VARBINARY(2000)) AS geometry));
+INSERT INTO VarbinaryAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2 3 4), (5 6 7 8))', 4326) AS VARBINARY(2000)) AS geometry));
+INSERT INTO VarbinaryAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2 3), (4 5))', 4326) AS VARBINARY(2000)) AS geometry));
+INSERT INTO VarbinaryAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2), (4 5 6))', 4326) AS VARBINARY(2000)) AS geometry));
+INSERT INTO VarbinaryAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2 NULL 4), (5 6 7 8))', 4326) AS VARBINARY(2000)) AS geometry));
+INSERT INTO VarbinaryAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT EMPTY', 4326) AS VARBINARY(2000)) AS geometry));
+
+# VARCHAR to geometry table
+CREATE TABLE VarCharAsgeometrymultipoint (ID INT IDENTITY(1,1) PRIMARY KEY, geometryData geometry);
+
+INSERT INTO VarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST('MULTIPOINT((1 2), (3 4))' AS VARCHAR(500)) AS geometry));
+INSERT INTO VarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST('MULTIPOINT((1 2), (3 4), (5 6))' AS VARCHAR(500)) AS geometry));
+INSERT INTO VarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST('MULTIPOINT((1 2 3), (4 5 6))' AS VARCHAR(500)) AS geometry));
+INSERT INTO VarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST('MULTIPOINT((1 2 NULL 4), (5 6 NULL 8))' AS VARCHAR(500)) AS geometry));
+INSERT INTO VarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST('MULTIPOINT((1 2 3 4), (5 6 7 8))' AS VARCHAR(500)) AS geometry));
+INSERT INTO VarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST('MULTIPOINT((1 2 3), (4 5))' AS VARCHAR(500)) AS geometry));
+INSERT INTO VarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST('MULTIPOINT EMPTY' AS VARCHAR(500)) AS geometry));
+
+# GeoVarChar (geometry to VARCHAR back to geometry)
+CREATE TABLE GeoVarCharAsgeometrymultipoint (ID INT IDENTITY(1,1) PRIMARY KEY, geometryData geometry);
+
+INSERT INTO GeoVarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2), (3 4))', 4326) AS VARCHAR(500)) AS geometry));
+INSERT INTO GeoVarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2), (3 4), (5 6))', 4326) AS VARCHAR(500)) AS geometry));
+INSERT INTO GeoVarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2 3), (4 5 6))', 4326) AS VARCHAR(500)) AS geometry));
+INSERT INTO GeoVarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2 NULL 4), (5 6 NULL 8))', 4326) AS VARCHAR(500)) AS geometry));
+INSERT INTO GeoVarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2 3 4), (5 6 7 8))', 4326) AS VARCHAR(500)) AS geometry));
+INSERT INTO GeoVarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2 3), (4 5))', 4326) AS VARCHAR(500)) AS geometry));
+INSERT INTO GeoVarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2), (4 5 6))', 4326) AS VARCHAR(500)) AS geometry));
+INSERT INTO GeoVarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT((1 2 NULL 4), (5 6 7 8))', 4326) AS VARCHAR(500)) AS geometry));
+INSERT INTO GeoVarCharAsgeometrymultipoint (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTIPOINT EMPTY', 4326) AS VARCHAR(500)) AS geometry));
+
+
+# ============================================================================
+# Multipoint Geography Test Cases
+# ============================================================================
+
+CREATE TABLE GEOSPATIALMULTIPOINTGEOG_dt (location geography)
+ALTER TABLE GEOSPATIALMULTIPOINTGEOG_dt ADD id INT IDENTITY(1,1);
+
+# Positive Test for geography multipoint
+INSERT INTO GEOSPATIALMULTIPOINTGEOG_dt (location) VALUES (geography::STGeomFromText('MULTIPOINT((45 90), (50 100))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOG_dt (location) VALUES (geography::STGeomFromText('MULTIPOINT((0 0), (45 90), (30 60))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOG_dt (location) VALUES (geography::STGeomFromText('MULTIPOINT((45 90))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOG_dt (location) VALUES (geography::STGeomFromText('MULTIPOINT((0 0), (10 20), (30 40), (50 60), (70 80))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOG_dt (location) VALUES (geography::STGeomFromText('MULTIPOINT((45 90 100), (50 100 200))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOG_dt (location) VALUES (geography::STGeomFromText('MULTIPOINT((45 90 100 1), (50 100 200 2))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOG_dt (location) VALUES (geography::STGeomFromText('MULTIPOINT((45 90 NULL 1), (50 100 NULL 2))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOG_dt (location) VALUES (geography::STGeomFromText('MULTIPOINT((-45 -90), (-50 -100))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOG_dt (location) VALUES (geography::STGeomFromText('MULTIPOINT((0 0), (0 0))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOG_dt (location) VALUES (geography::STGeomFromText('MULTIPOINT((90 0), (-90 0))', 4326));
+INSERT INTO GEOSPATIALMULTIPOINTGEOG_dt (location) VALUES (geography::STGeomFromText('MULTIPOINT EMPTY', 4326));
+
+# Cross-type reference table for geography
+CREATE TABLE geospatialpointxgeog_mpsr (location geography)
+ALTER TABLE geospatialpointxgeog_mpsr ADD id INT IDENTITY(1,1);
+
+INSERT INTO geospatialpointxgeog_mpsr (location) VALUES (geography::STGeomFromText('LINESTRING EMPTY', 4326));
+INSERT INTO geospatialpointxgeog_mpsr (location) VALUES (geography::STGeomFromText('Point(47.65100 -22.34900)', 4326));
+INSERT INTO geospatialpointxgeog_mpsr (location) VALUES (geography::STGeomFromText('Point(47.65100 -22.34900 32.546000)', 4326));
+INSERT INTO geospatialpointxgeog_mpsr (location) VALUES (geography::STGeomFromText('Point(47.65100 -22.34900 NULL 32.546000)', 4326));
+INSERT INTO geospatialpointxgeog_mpsr (location) VALUES (geography::STGeomFromText('Point(47.65100 -22.34900 32.546000 54.56300)', 4326));
+INSERT INTO geospatialpointxgeog_mpsr (location) VALUES (geography::STGeomFromText('POINT EMPTY', 4326));
+
+# Views for geography multipoint properties
+CREATE VIEW DimOfGeographymultipoint AS SELECT location.STAsText() AS geography, location.STDimension() AS dimension FROM GEOSPATIALMULTIPOINTGEOG_dt ORDER BY id;
+
+CREATE VIEW NumPointsOfGeographymultipoint AS SELECT location.STAsText() AS geography, location.STNumPoints() AS numpoints FROM GEOSPATIALMULTIPOINTGEOG_dt ORDER BY id;
+
+CREATE VIEW TextFromGeographymultipoint AS SELECT location.STAsText() AS text FROM GEOSPATIALMULTIPOINTGEOG_dt ORDER BY id;
+
+CREATE VIEW BinaryFromGeographymultipoint AS SELECT location.STAsText() AS geography, location.STAsBinary() AS binary FROM GEOSPATIALMULTIPOINTGEOG_dt ORDER BY id;
+
+CREATE VIEW SridFromGeographymultipoint AS SELECT location.STAsText() AS geography, location.STSrid AS srid FROM GEOSPATIALMULTIPOINTGEOG_dt ORDER BY id;
+
+CREATE VIEW EmptyGeographymultipoint AS SELECT location.STAsText() AS geography, location.STIsEmpty() AS isempty FROM GEOSPATIALMULTIPOINTGEOG_dt ORDER BY id;
+
+CREATE VIEW ValidGeographymultipoint AS SELECT location.STAsText() AS geography, location.STIsValid() AS isvalid FROM GEOSPATIALMULTIPOINTGEOG_dt ORDER BY id;
+
+CREATE VIEW GeomTypeOfGeographymultipoint AS SELECT location.STAsText() AS geography, location.STGeometryType() AS geomtype FROM GEOSPATIALMULTIPOINTGEOG_dt ORDER BY id;
+
+# Spatial operation views — geography multipoint vs multipoint
+CREATE VIEW DisjointTempGeogmultipoint AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALMULTIPOINTGEOG_dt p1 CROSS JOIN GEOSPATIALMULTIPOINTGEOG_dt p2 ORDER BY p1.id;
+
+CREATE VIEW DistanceTempGeogmultipoint AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, CAST(STDistance(p1.location, p2.location) AS numeric(20, 6)) AS distance FROM GEOSPATIALMULTIPOINTGEOG_dt p1 CROSS JOIN GEOSPATIALMULTIPOINTGEOG_dt p2 ORDER BY p1.id;
+
+CREATE VIEW IntersectsTempGeogmultipoint AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, p1.location.STIntersects(p2.location) AS intersecting FROM GEOSPATIALMULTIPOINTGEOG_dt p1 CROSS JOIN GEOSPATIALMULTIPOINTGEOG_dt p2 ORDER BY p1.id;
+
+CREATE VIEW EqualsTempGeogmultipoint AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, p1.location.STEquals(p2.location) AS equals FROM GEOSPATIALMULTIPOINTGEOG_dt p1 CROSS JOIN GEOSPATIALMULTIPOINTGEOG_dt p2 ORDER BY p1.id;
+
+CREATE VIEW equals_opgeogmultipoint AS SELECT p1.location AS point FROM GEOSPATIALMULTIPOINTGEOG_dt p1 CROSS JOIN GEOSPATIALMULTIPOINTGEOG_dt p2 WHERE p1.location = p2.location ORDER BY p1.id;
+
+CREATE VIEW notequal_opgeogmultipoint AS SELECT p1.location AS point FROM GEOSPATIALMULTIPOINTGEOG_dt p1 CROSS JOIN GEOSPATIALMULTIPOINTGEOG_dt p2 WHERE p1.location <> p2.location ORDER BY p1.id;
+
+# Spatial operation views — geography multipoint vs point
+CREATE VIEW DisjointTempGeogmpsr AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALMULTIPOINTGEOG_dt p1 CROSS JOIN geospatialpointxgeog_mpsr p2 ORDER BY p1.id;
+
+CREATE VIEW DistanceTempGeogmpsr AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, CAST(STDistance(p1.location, p2.location) AS numeric(20, 6)) AS distance FROM GEOSPATIALMULTIPOINTGEOG_dt p1 CROSS JOIN geospatialpointxgeog_mpsr p2 ORDER BY p1.id;
+
+CREATE VIEW IntersectsTempGeogmpsr AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, p1.location.STIntersects(p2.location) AS intersecting FROM GEOSPATIALMULTIPOINTGEOG_dt p1 CROSS JOIN geospatialpointxgeog_mpsr p2 ORDER BY p1.id;
+
+CREATE VIEW EqualsTempGeogmpsr AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, p1.location.STEquals(p2.location) AS equals FROM GEOSPATIALMULTIPOINTGEOG_dt p1 CROSS JOIN geospatialpointxgeog_mpsr p2 ORDER BY p1.id;
+
+CREATE VIEW equals_opgeogmpsr AS SELECT p1.location AS point FROM GEOSPATIALMULTIPOINTGEOG_dt p1 CROSS JOIN geospatialpointxgeog_mpsr p2 WHERE p1.location = p2.location ORDER BY p1.id;
+
+CREATE VIEW notequal_opgeogmpsr AS SELECT p1.location AS point FROM GEOSPATIALMULTIPOINTGEOG_dt p1 CROSS JOIN geospatialpointxgeog_mpsr p2 WHERE p1.location <> p2.location ORDER BY p1.id;
+
+CREATE VIEW MultipointGeogFromText AS SELECT geography::STMPointFromText('MULTIPOINT((45 90), (50 100))', 4326) AS geog1, geography::STMPointFromText('MULTIPOINT((1 2 3), (4 5 6))', 4326) AS geog2;
+
+# Geography CAST tables
+CREATE TABLE geographyAsVarbinarymultipoint (ID INT IDENTITY(1,1) PRIMARY KEY, geographyData VARBINARY(2000));
+
+INSERT INTO geographyAsVarbinarymultipoint (geographyData) VALUES (CAST(geography::STGeomFromText('MULTIPOINT((45 90), (50 100))', 4326) AS VARBINARY(2000)));
+INSERT INTO geographyAsVarbinarymultipoint (geographyData) VALUES (CAST(geography::STGeomFromText('MULTIPOINT((0 0), (45 90), (30 60))', 4326) AS VARBINARY(2000)));
+INSERT INTO geographyAsVarbinarymultipoint (geographyData) VALUES (CAST(geography::STGeomFromText('MULTIPOINT((45 90 100), (50 100 200))', 4326) AS VARBINARY(2000)));
+INSERT INTO geographyAsVarbinarymultipoint (geographyData) VALUES (CAST(geography::STGeomFromText('MULTIPOINT((45 90 100 1), (50 100 200 2))', 4326) AS VARBINARY(2000)));
+INSERT INTO geographyAsVarbinarymultipoint (geographyData) VALUES (CAST(geography::STGeomFromText('MULTIPOINT((45 90 NULL 1), (50 100 NULL 2))', 4326) AS VARBINARY(2000)));
+INSERT INTO geographyAsVarbinarymultipoint (geographyData) VALUES (CAST(geography::STGeomFromText('MULTIPOINT EMPTY', 4326) AS VARBINARY(2000)));
+
+CREATE TABLE geographyAsVarcharmultipoint (ID INT IDENTITY(1,1) PRIMARY KEY, geographyData VARCHAR(500));
+
+INSERT INTO geographyAsVarcharmultipoint (geographyData) VALUES (CAST(geography::STGeomFromText('MULTIPOINT((45 90), (50 100))', 4326) AS VARCHAR(500)));
+INSERT INTO geographyAsVarcharmultipoint (geographyData) VALUES (CAST(geography::STGeomFromText('MULTIPOINT((0 0), (45 90), (30 60))', 4326) AS VARCHAR(500)));
+INSERT INTO geographyAsVarcharmultipoint (geographyData) VALUES (CAST(geography::STGeomFromText('MULTIPOINT((45 90 100), (50 100 200))', 4326) AS VARCHAR(500)));
+INSERT INTO geographyAsVarcharmultipoint (geographyData) VALUES (CAST(geography::STGeomFromText('MULTIPOINT((45 90 100 1), (50 100 200 2))', 4326) AS VARCHAR(500)));
+INSERT INTO geographyAsVarcharmultipoint (geographyData) VALUES (CAST(geography::STGeomFromText('MULTIPOINT EMPTY', 4326) AS VARCHAR(500)));
+
+CREATE TABLE VarCharAsgeographymultipoint (ID INT IDENTITY(1,1) PRIMARY KEY, geographyData geography);
+
+INSERT INTO VarCharAsgeographymultipoint (geographyData) VALUES (CAST(CAST('MULTIPOINT((45 90), (50 100))' AS VARCHAR(500)) AS geography));
+INSERT INTO VarCharAsgeographymultipoint (geographyData) VALUES (CAST(CAST('MULTIPOINT((0 0), (45 90), (30 60))' AS VARCHAR(500)) AS geography));
+INSERT INTO VarCharAsgeographymultipoint (geographyData) VALUES (CAST(CAST('MULTIPOINT((45 90 100), (50 100 200))' AS VARCHAR(500)) AS geography));
+INSERT INTO VarCharAsgeographymultipoint (geographyData) VALUES (CAST(CAST('MULTIPOINT((45 90 100 1), (50 100 200 2))' AS VARCHAR(500)) AS geography));
+INSERT INTO VarCharAsgeographymultipoint (geographyData) VALUES (CAST(CAST('MULTIPOINT EMPTY' AS VARCHAR(500)) AS geography));
+
+CREATE TABLE GeoVarCharAsgeographymultipoint (ID INT IDENTITY(1,1) PRIMARY KEY, geographyData geography);
+
+INSERT INTO GeoVarCharAsgeographymultipoint (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('MULTIPOINT((45 90), (50 100))', 4326) AS VARCHAR(500)) AS geography));
+INSERT INTO GeoVarCharAsgeographymultipoint (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('MULTIPOINT((0 0), (45 90), (30 60))', 4326) AS VARCHAR(500)) AS geography));
+INSERT INTO GeoVarCharAsgeographymultipoint (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('MULTIPOINT((45 90 100), (50 100 200))', 4326) AS VARCHAR(500)) AS geography));
+INSERT INTO GeoVarCharAsgeographymultipoint (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('MULTIPOINT((45 90 100 1), (50 100 200 2))', 4326) AS VARCHAR(500)) AS geography));
+INSERT INTO GeoVarCharAsgeographymultipoint (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('MULTIPOINT((45 90 NULL 1), (50 100 NULL 2))', 4326) AS VARCHAR(500)) AS geography));
+INSERT INTO GeoVarCharAsgeographymultipoint (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('MULTIPOINT EMPTY', 4326) AS VARCHAR(500)) AS geography));
+
+# Geography bytea round-trip table
+CREATE TABLE geographyToByteamultipoint (ID INT PRIMARY KEY, geo_multipoint geography);
+
+INSERT INTO geographyToByteamultipoint (ID, geo_multipoint) VALUES (1, geography::STGeomFromText('MULTIPOINT((45 90), (50 100))', 4326));
+INSERT INTO geographyToByteamultipoint (ID, geo_multipoint) VALUES (2, geography::STGeomFromText('MULTIPOINT((0 0), (45 90), (30 60))', 4326));
+INSERT INTO geographyToByteamultipoint (ID, geo_multipoint) VALUES (3, geography::STGeomFromText('MULTIPOINT((45 90 100), (50 100 200))', 4326));
+INSERT INTO geographyToByteamultipoint (ID, geo_multipoint) VALUES (4, geography::STGeomFromText('MULTIPOINT((45 90 100 1), (50 100 200 2))', 4326));
+INSERT INTO geographyToByteamultipoint (ID, geo_multipoint) VALUES (5, geography::STGeomFromText('MULTIPOINT((45 90 NULL 1), (50 100 NULL 2))', 4326));
+INSERT INTO geographyToByteamultipoint (ID, geo_multipoint) VALUES (6, geography::STGeomFromText('MULTIPOINT EMPTY', 4326));
+
+# Tests for Geometry type Prepared Statements
+CREATE TABLE GEOSPATIAL_MPGEOMRCV_dt (location geometry)
+
+prepst#!#INSERT INTO GEOSPATIAL_MPGEOMRCV_dt(location) values(@location) #!#GEOMETRY|-|location|-|MULTIPOINT ((1 2), (3 4)):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTIPOINT EMPTY:4326
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTIPOINT ((1 2 3), (4 5 6)):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTIPOINT ((1 2 NULL 4), (5 6 NULL 8)):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTIPOINT ((1 2 3 4), (5 6 7 8)):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTIPOINT ((0 0), (1 1), (2 2)):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTIPOINT ((-1 -2), (-3 -4)):4326
+
+# Tests for Geography type Prepared Statements
+CREATE TABLE GEOSPATIAL_MPGEOGRCV_dt (location geography)
+
+prepst#!#INSERT INTO GEOSPATIAL_MPGEOGRCV_dt(location) values(@location) #!#GEOGRAPHY|-|location|-|MULTIPOINT ((45 90), (50 100)):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTIPOINT EMPTY:4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTIPOINT ((0 0), (45 90), (30 60)):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTIPOINT ((45 90 100), (50 100 200)):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTIPOINT ((45 90 100 1), (50 100 200 2)):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTIPOINT ((45 90 NULL 1), (50 100 NULL 2)):4326

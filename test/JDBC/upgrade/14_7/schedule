@@ -198,7 +198,6 @@ forjson-datatypes
 forjson-subquery
 format
 format-dep
-forxml
 forxml-path
 forxml-subquery
 fulltextserviceproperty
@@ -495,6 +494,9 @@ test_conv_text_to_binary-before-15_5
 test_conv_text_to_string-before-14_21
 comparison_op_index_scan-before-15_6-or-14_11
 BABEL-5788
+BABEL-6814
 babel_convert_with_style-before-14_8-or-15_3
 forxml-raw-elements-before-17_9-or-18_3
 forxml-path-elements-before-17_10-or-18_4
+forxml-before-17_11-or-18_5
+forxml-auto-before-17_11-or-18_5

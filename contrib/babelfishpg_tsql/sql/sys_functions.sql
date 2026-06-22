@@ -7,7 +7,8 @@ CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
     binary_base64 boolean,
     root_name text,
     elements boolean,
-    xsinil boolean
+    xsinil boolean,
+    auto_metadata text
 ) RETURNS INTERNAL
 AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
 LANGUAGE C STABLE;
@@ -33,7 +34,8 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
     binary_base64 boolean,
     root_name text,
     elements boolean,
-    xsinil boolean)
+    xsinil boolean,
+    auto_metadata text)
 (
     STYPE = INTERNAL,
     SFUNC = tsql_query_to_xml_sfunc,
@@ -47,7 +49,8 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     binary_base64 boolean,
     root_name text,
     elements boolean,
-    xsinil boolean)
+    xsinil boolean,
+    auto_metadata text)
 (
     STYPE = INTERNAL,
     SFUNC = tsql_query_to_xml_sfunc,
@@ -156,10 +159,16 @@ BEGIN
         result := pg_catalog.replace(result, '&quot;', '"');
         result := pg_catalog.replace(result, '&amp;', '&');
         return result;
-    END IF; 
+    END IF;
 END
 $BODY$
 LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
+
+-- helper function for XML QUERY(xpath)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT)
+RETURNS XML
+AS 'babelfishpg_tsql', 'bbf_xmlquery'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
 
 -- SELECT FOR JSON
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
@@ -4446,35 +4455,15 @@ CREATE OR REPLACE FUNCTION objectproperty(
     )
 RETURNS INT AS
 'babelfishpg_tsql', 'objectproperty_internal'
-LANGUAGE C STABLE;
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
     id INT,
     property SYS.VARCHAR
 )
-RETURNS SYS.SQL_VARIANT
-AS $$
-BEGIN
-	property := PG_CATALOG.RTRIM(LOWER(COALESCE(property, '')));
-	
-	IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
-	THEN
-		RETURN NULL;
-	END IF;
-
-	IF property = 'basetype' COLLATE "C" -- BaseType
-	THEN
-		RETURN (SELECT CAST(ao.type AS SYS.SQL_VARIANT) 
-                FROM sys.all_objects ao
-                WHERE ao.object_id = id
-                LIMIT 1
-                );
-    END IF;
-
-    RETURN CAST(OBJECTPROPERTY(id, property) AS SYS.SQL_VARIANT);
-END
-$$
-LANGUAGE plpgsql STABLE;
+RETURNS SYS.SQL_VARIANT AS
+'babelfishpg_tsql', 'objectpropertyex_internal'
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.sid_binary(IN login sys.nvarchar)
 RETURNS SYS.VARBINARY
@@ -5322,3 +5311,23 @@ RETURNS table (
 AS 'babelfishpg_tsql', 'openxml_simple'
 LANGUAGE C IMMUTABLE;
 
+
+-- Routine-specific ANTLR parse tree cache GUC control across sessions (sets column in sys.babelfish_function_ext)
+-- antlr_parse_cache_enabled column: true = force on, false = force off (kill switch), NULL = follow session GUC (default)
+CREATE OR REPLACE FUNCTION sys.enable_antlr_parse_cache(
+    IN routine_id OID,
+    IN use_antlr_parse_cache BOOLEAN
+) RETURNS BOOLEAN
+AS 'babelfishpg_tsql', 'enable_antlr_parse_cache'
+LANGUAGE C VOLATILE PARALLEL UNSAFE;
+
+-- Session-level routine antlr parse cache statistics
+CREATE OR REPLACE FUNCTION sys.antlr_parse_cache_stats(
+    OUT cache_hits INT,
+    OUT cache_misses INT,
+    OUT cache_writes INT,
+    OUT cache_evictions INT,
+    OUT cache_errors INT
+) RETURNS RECORD
+AS 'babelfishpg_tsql', 'antlr_parse_cache_stats'
+LANGUAGE C VOLATILE PARALLEL RESTRICTED;

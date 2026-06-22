@@ -4,6 +4,8 @@
 #include "codegen.h"
 #include "dynavec.h"
 #include "dynastack.h"
+#include "pltsql_node/pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
+											 * by gen_pltsql_node_support.pl */
 #include "utils/elog.h"
 #include "utils/lsyscache.h"
 
@@ -147,7 +149,7 @@ create_goto(int lineno)
 {
 	PLtsql_stmt_goto *stmt_goto;
 
-	stmt_goto = palloc(sizeof(PLtsql_stmt_goto));
+	stmt_goto = makeNode(PLtsql_stmt_goto);
 	stmt_goto->cmd_type = PLTSQL_STMT_GOTO;
 	stmt_goto->lineno = lineno;
 	stmt_goto->cond = NULL;		/* unconditional goto */
@@ -159,7 +161,7 @@ create_goto(int lineno)
 static PLtsql_stmt_save_ctx *
 create_save_ctx(int lineno)
 {
-	PLtsql_stmt_save_ctx *save_ctx = palloc(sizeof(PLtsql_stmt_save_ctx));
+	PLtsql_stmt_save_ctx *save_ctx = makeNode(PLtsql_stmt_save_ctx);
 
 	save_ctx->cmd_type = PLTSQL_STMT_SAVE_CTX;
 	save_ctx->lineno = lineno;
@@ -171,7 +173,7 @@ create_save_ctx(int lineno)
 static PLtsql_stmt_restore_ctx_full *
 create_restore_ctx_full(int lineno)
 {
-	PLtsql_stmt_restore_ctx_full *restore_ctx = palloc(sizeof(PLtsql_stmt_restore_ctx_full));
+	PLtsql_stmt_restore_ctx_full *restore_ctx = makeNode(PLtsql_stmt_restore_ctx_full);
 
 	restore_ctx->cmd_type = PLTSQL_STMT_RESTORE_CTX_FULL;
 	restore_ctx->lineno = lineno;
@@ -181,7 +183,7 @@ create_restore_ctx_full(int lineno)
 static PLtsql_stmt_restore_ctx_partial *
 create_restore_ctx_partial(int lineno)
 {
-	PLtsql_stmt_restore_ctx_partial *restore_ctx = palloc(sizeof(PLtsql_stmt_restore_ctx_partial));
+	PLtsql_stmt_restore_ctx_partial *restore_ctx = makeNode(PLtsql_stmt_restore_ctx_partial);
 
 	restore_ctx->cmd_type = PLTSQL_STMT_RESTORE_CTX_PARTIAL;
 	restore_ctx->lineno = lineno;

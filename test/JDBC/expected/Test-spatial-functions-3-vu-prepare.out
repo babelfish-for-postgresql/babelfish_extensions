@@ -466,6 +466,7 @@ INSERT INTO STNumPoints_geog_test (ID, geog_type, geog) VALUES (12, 'Empty LineS
 CREATE VIEW STNumPoints_geom_view AS SELECT ID, geom_type, geom.STNumPoints() AS num_points FROM STNumPoints_geom_test;
 
 CREATE VIEW STNumPoints_geog_view AS SELECT ID, geog_type, geog.STNumPoints() AS num_points FROM STNumPoints_geog_test;
+
 CREATE DATABASE TestGeospatialParse_DB;
 
 USE TestGeospatialParse_DB;

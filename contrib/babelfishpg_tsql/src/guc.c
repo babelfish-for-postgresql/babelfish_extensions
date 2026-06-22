@@ -59,6 +59,7 @@ bool		pltsql_disable_batch_auto_commit = false;
 bool		pltsql_disable_internal_savepoint = false;
 bool		pltsql_disable_txn_in_triggers = false;
 bool		pltsql_recursive_triggers = false;
+bool		pltsql_enable_new_insert_exec = false;
 bool		pltsql_noexec = false;
 bool		pltsql_showplan_all = false;
 bool		pltsql_showplan_text = false;
@@ -73,6 +74,8 @@ char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
 bool		pltsql_enable_alter_owner_from_pg = false;
+bool		pltsql_enable_antlr_parse_cache = false;
+bool		pltsql_validate_antlr_parse_cache = false;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -368,10 +371,6 @@ check_no_browsetable(bool *newval, void **extra, GucSource source)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("OFF setting is not allowed for option NO_BROWSETABLE. please use babelfishpg_tsql.escape_hatch_session_settings to ignore")));
-	}
-	else if (escape_hatch_session_settings == EH_IGNORE)
-	{
-		*newval = true;			/* overwrite to a default value */
 	}
 	return true;
 }
@@ -954,6 +953,15 @@ define_custom_variables(void)
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_new_insert_exec",
+							 gettext_noop("Enables INSERT...EXEC redesign code path"),
+							 NULL,
+							 &pltsql_enable_new_insert_exec,
+							 false,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
 	DefineCustomBoolVariable("babelfishpg_tsql.noexec",
 							 gettext_noop("SQL-Server compatibility NOEXEC option."),
 							 NULL,
@@ -1138,6 +1146,32 @@ define_custom_variables(void)
 							 &pltsql_enable_alter_owner_from_pg,
 							 false,
 							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/*
+	 * Enable/disable persistent caching of ANTLR parse result for routines for cross-session performance optimization.
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_antlr_parse_cache",
+							 gettext_noop("Enables persistent caching of ANTLR parser results for faster execution of routines."),
+							 gettext_noop("When enabled, ANTLR parsed results are reused from cache for routines."),
+							 &pltsql_enable_antlr_parse_cache,
+							 false,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/*
+	 * Debugging GUC: when enabled, every routine/trigger execution invokes comparison of ANTLR-compiled and cached parse trees. Logs PASS/FAIL.
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.validate_antlr_parse_cache",
+							 gettext_noop("GUC for validation of cached ANTLR parser results on creation or execution of routines and triggers."),
+							 gettext_noop("When enabled, routine executions that use cached parse results also run a fresh "
+										  "ANTLR parse and compare the two. Results are logged to the server log. "
+										  "Use sys.antlr_parse_cache_stats() to check for cache hits, writes or errors."),
+							 &pltsql_validate_antlr_parse_cache,
+							 false,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 

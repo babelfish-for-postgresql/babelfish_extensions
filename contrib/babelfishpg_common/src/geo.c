@@ -12,6 +12,8 @@
 #define FLAGS_GET_Z(flags)           ((flags) & POINTFLAG_Z)
 #define FLAGS_GET_M(flags)           ((flags) & POINTFLAG_M)
 
+typedef void (*PointFormatter)(StringInfoData *, POINT);
+
 text*
 geo_wkt_rewrite(text* input_text)
 {
@@ -389,6 +391,36 @@ format_postgis_point_coordinates(StringInfoData *output, POINT p)
     }
 }
 
+
+static void
+free_point_array(PointArray *pa)
+{
+    if (!pa)
+        return;
+    if (pa->points)
+        pfree(pa->points);
+    pfree(pa);
+}
+
+/*  Replaces the repeated for-loop that formats points */
+static void
+append_formatted_points(StringInfoData *output, PointArray *pa, bool wrap_each, PointFormatter formatter)
+{
+    for (int i = 0; i < pa->count; i++)
+    {
+        if (wrap_each)
+            appendStringInfoChar(output, '(');
+
+        formatter(output, pa->points[i]);
+
+        if (wrap_each)
+            appendStringInfoChar(output, ')');
+
+        if (i < pa->count - 1)
+            appendStringInfoString(output, ", ");
+    }
+}
+
 /*
  * Converts a PointArray to a PostGIS-compatible LINESTRING WKT representation
  * Determines the appropriate dimension type (Z, M, ZM, etc.) based on the points,
@@ -426,15 +458,8 @@ rewrite_linestring_query(PointArray *pa)
     transform_points(pa, type);
 
     /* Add each point's coordinates to the WKT string */
-    for (int i = 0; i < pa->count; i++) 
-    {
-        POINT p = pa->points[i];
-        format_tsql_point_coordinates(&output, p);
+    append_formatted_points(&output, pa, false, format_tsql_point_coordinates);
 
-        /* Add comma between points, except after the last point */
-        if (i < pa->count - 1) 
-            appendStringInfoString(&output, ", ");
-    }
 
     /* Close parenthesis */
     appendStringInfoChar(&output, ')');
@@ -467,15 +492,8 @@ rewrite_dim_linestring_query(PointArray *pa)
     appendStringInfoChar(&output, '(');
 
     /* Add each point's coordinates to the WKT string */
-    for (int i = 0; i < pa->count; i++) 
-    {
-        POINT p = pa->points[i];
-        format_postgis_point_coordinates(&output, p);
+    append_formatted_points(&output, pa, false, format_postgis_point_coordinates);
 
-        /* Add comma between points, except after the last point */
-        if (i < pa->count - 1) 
-            appendStringInfoString(&output, ", ");
-    }
     
     /* Close parenthesis */
     appendStringInfoChar(&output, ')');
@@ -667,3 +685,150 @@ rewrite_dim_polygon_query(PointArrayList *pal)
     
     return output.data;
 }
+
+char* 
+rewrite_multipoint_wkt(PointArray *pa)
+{
+    DimensionType type;
+    StringInfoData output;
+
+    if (!pa || pa->count == 0)
+    {
+        free_point_array(pa);
+        return pstrdup("MULTIPOINT EMPTY");
+    }
+
+    initStringInfo(&output);
+    
+    type = determine_ptarray_type(pa);
+    
+    appendStringInfoString(&output, "MULTIPOINT");
+
+    if (type == M) 
+        appendStringInfoString(&output, " M");
+
+    appendStringInfoChar(&output, '(');
+    
+    transform_points(pa, type);
+
+    append_formatted_points(&output, pa, true, format_tsql_point_coordinates);
+
+    appendStringInfoChar(&output, ')');
+
+    free_point_array(pa);
+    
+    return output.data;
+}
+
+
+char* 
+rewrite_dim_multipoint_wkt(PointArray *pa) 
+{
+    StringInfoData output;
+
+    if (!pa || pa->count == 0)
+    {
+        free_point_array(pa);
+        return pstrdup("MULTIPOINT EMPTY");
+    }
+
+    initStringInfo(&output);
+    
+    appendStringInfoString(&output, "MULTIPOINT(");
+
+    append_formatted_points(&output, pa, true, format_postgis_point_coordinates);
+
+    appendStringInfoChar(&output, ')');
+
+    free_point_array(pa);
+    
+    return output.data;
+}
+
+/*
+ * Converts a PointArrayList to a PostGIS-compatible MULTILINESTRING WKT representation.
+ * Each ring in the PointArrayList becomes a child LineString.
+ */
+char *
+rewrite_multilinestring_query(PointArrayList *pal)
+{
+    StringInfoData output;
+    DimensionType type;
+
+    if (!pal || pal->count == 0) 
+        return pstrdup("MULTILINESTRING EMPTY");
+
+    initStringInfo(&output);
+    
+    /* Determine type from all linestrings */
+    type = determine_ring_type(pal);
+    
+    appendStringInfoString(&output, "MULTILINESTRING");
+    
+    if (type == M) 
+        appendStringInfoString(&output, " M");
+
+    appendStringInfoChar(&output, '(');
+    
+    /* Transform all points in all linestrings to conform to the determined type */
+    transform_polygon_points(pal, type);
+
+    for (int ring_idx = 0; ring_idx < pal->count; ring_idx++) 
+    {
+        PointArray *pa = pal->rings[ring_idx];
+        
+        appendStringInfoChar(&output, '(');
+        append_formatted_points(&output, pa, false, format_tsql_point_coordinates); 
+        appendStringInfoChar(&output, ')');
+        
+        if (ring_idx < pal->count - 1) 
+            appendStringInfoString(&output, ", ");
+
+        free_point_array(pa);
+    }
+
+    appendStringInfoChar(&output, ')');
+    
+    pfree(pal->rings);
+    pfree(pal);
+    
+    return output.data;
+}
+
+/*
+ * Converts a PointArrayList to a T-SQL compatible MULTILINESTRING WKT representation.
+ * Used for Z, M, ZM dimension variants coming from PostGIS format.
+ */
+char* 
+rewrite_dim_multilinestring_query(PointArrayList *pal) 
+{
+    StringInfoData output;
+
+    if (!pal || pal->count == 0) 
+        return pstrdup("MULTILINESTRING EMPTY");
+
+    initStringInfo(&output);
+    appendStringInfoString(&output, "MULTILINESTRING(");
+
+    for (int ring_idx = 0; ring_idx < pal->count; ring_idx++) 
+    {
+        PointArray *pa = pal->rings[ring_idx];
+        
+        appendStringInfoChar(&output, '(');
+        append_formatted_points(&output, pa, false, format_postgis_point_coordinates);
+        appendStringInfoChar(&output, ')');
+
+        if (ring_idx < pal->count - 1)
+            appendStringInfoString(&output, ", ");
+
+        free_point_array(pa);
+    }
+
+    appendStringInfoChar(&output, ')');
+    
+    pfree(pal->rings);
+    pfree(pal);
+    
+    return output.data;
+}
+

@@ -1,5 +1,7 @@
 
 #include "pltsql-2.h"
+#include "pltsql_node/pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
+											 * by gen_pltsql_node_support.pl */
 
 #include "funcapi.h"
 
@@ -1027,7 +1029,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			 */
 			oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
 
-			row = (PLtsql_row *) palloc0(sizeof(PLtsql_row));
+			row = makeNode(PLtsql_row);
 			row->dtype = PLTSQL_DTYPE_ROW;
 			row->refname = "(unnamed row)";
 			row->lineno = -1;
@@ -1447,7 +1449,7 @@ exec_stmt_return_table(PLtsql_execstate *estate, PLtsql_stmt_return_query *stmt)
 	 */
 	oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
 
-	expr = palloc0(sizeof(PLtsql_expr));
+	expr = makeNode(PLtsql_expr);
 	
 	/*
 	 * Add delimiters for valid T-SQL variable names like @@var or @var#
@@ -1611,7 +1613,7 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 			 * 3. Read parameter values, insert OUT parameter info in the row
 			 * Datum.
 			 */
-			row = (PLtsql_row *) palloc0(sizeof(PLtsql_row));
+			row = makeNode(PLtsql_row);
 			row->dtype = PLTSQL_DTYPE_ROW;
 			row->refname = "(unnamed row)";
 			row->lineno = -1;
@@ -1645,17 +1647,12 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 		if (fcinfo->isnull)
 			elog(ERROR, "pltsql_inline_handler failed");
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		/* Delete temporary tables as ENR */
 		pltsql_remove_current_query_env();
-
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	/* Delete temporary tables as ENR */
-	pltsql_remove_current_query_env();
 
 	after_lxid = MyProc->vxid.lxid;
 
@@ -1876,13 +1873,11 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 												paramno, args->numargs, args->argtypes,
 												values, nulls);
 				}
-				PG_CATCH();
+				PG_FINALLY();
 				{
 					disable_sp_cursor_find_param_hook();
-					PG_RE_THROW();
 				}
 				PG_END_TRY();
-				disable_sp_cursor_find_param_hook();
 
 				if (ret > 0)
 					ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
@@ -1930,13 +1925,11 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 												   (ccopt_null ? NULL : &ccopt),
 												   args->numargs, args->argtypes);
 				}
-				PG_CATCH();
+				PG_FINALLY();
 				{
 					disable_sp_cursor_find_param_hook();
-					PG_RE_THROW();
 				}
 				PG_END_TRY();
-				disable_sp_cursor_find_param_hook();
 
 				if (ret > 0)
 					ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
@@ -2038,13 +2031,11 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 													paramno, args->numargs,
 													args->argtypes, values, nulls);
 				}
-				PG_CATCH();
+				PG_FINALLY();
 				{
 					disable_sp_cursor_find_param_hook();
-					PG_RE_THROW();
 				}
 				PG_END_TRY();
-				disable_sp_cursor_find_param_hook();
 
 				if (ret > 0)
 					ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
@@ -2717,7 +2708,7 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 		FunctionParameter *p;
 
 		p = (FunctionParameter *) lfirst(lc);
-		args->argnames[i] = p->name;
+		args->argnames[i] = pstrdup(p->name);
 		args->argmodes[i] = p->mode;
 
 		/*
@@ -2767,7 +2758,11 @@ clone_inline_args(InlineCodeBlockArgs *args)
 	clone = create_args(args->numargs);
 	memcpy(clone->argtypes, args->argtypes, sizeof(Oid) * args->numargs);
 	memcpy(clone->argtypmods, args->argtypmods, sizeof(int32) * args->numargs);
-	memcpy(clone->argnames, args->argnames, sizeof(char *) * args->numargs);
+
+	/* Deep copy argument names */
+	for (int i = 0; i < args->numargs; i++)
+		clone->argnames[i] = args->argnames[i] ? pstrdup(args->argnames[i]) : NULL;
+
 	memcpy(clone->argmodes, args->argmodes, sizeof(char) * args->numargs);
 
 	return clone;
@@ -4393,11 +4388,14 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 	 */
 
 	/* check if given name is exceeding the allowed limit */
-	if (strlen(partition_function_name) > 128)
+	if (pg_mbstrlen(partition_function_name) > 128)
 	{
-		ereport(ERROR, 
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("The identifier that starts with '%.128s' is too long. Maximum length is 128.", partition_function_name)));
+		int		cliplen = pg_mbcliplen(partition_function_name, strlen(partition_function_name), 128);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_NAME_TOO_LONG),
+				 errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.",
+						cliplen, partition_function_name)));
 	}
 
 	/*
@@ -4650,12 +4648,14 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 	 */
 
 	/* check if given name is exceeding the allowed limit */
-	if (strlen(partition_scheme_name) > 128)
+	if (pg_mbstrlen(partition_scheme_name) > 128)
 	{
-		ereport(ERROR, 
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("The identifier that starts with '%.128s' is too long. Maximum length is 128.",
-						partition_scheme_name)));
+		int		cliplen = pg_mbcliplen(partition_scheme_name, strlen(partition_scheme_name), 128);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_NAME_TOO_LONG),
+				 errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.",
+						cliplen, partition_scheme_name)));
 	}
 
 	/* raise error if provided partition function doesn't exists in the current database */

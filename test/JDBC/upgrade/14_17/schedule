@@ -71,7 +71,7 @@ fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
 objectproperty
-objectpropertyex-before-16_5-or-15_9
+objectpropertyex
 sys-column-property
 sys-configurations
 sys-datefirst
@@ -146,7 +146,6 @@ BABEL-937
 forjson
 forjson-subquery
 forjson-datatypes
-forxml
 forxml-path
 forxml-subquery
 BABEL-PROCID
@@ -499,7 +498,10 @@ test_conv_text_to_string-before-14_21
 temp_table_dialect_check-before-15_12-or-16_8
 comparison_op_index_scan-before-17_8-or-16_12
 BABEL-5788
+BABEL-6814
 babel_convert_with_style
 like_op_index_scan-before-15_2
 forxml-raw-elements-before-17_9-or-18_3
 forxml-path-elements-before-17_10-or-18_4
+forxml-before-17_11-or-18_5
+forxml-auto-before-17_11-or-18_5

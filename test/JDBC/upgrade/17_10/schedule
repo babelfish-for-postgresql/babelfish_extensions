@@ -224,7 +224,7 @@ forjson-nesting
 forjsonauto
 format
 format-dep
-forxml
+forxml-before-17_11-or-18_5
 forxml-path
 forxml-subquery
 fulltextserviceproperty
@@ -669,8 +669,10 @@ update_with_var
 BABEL-4271
 comparison_op_index_scan
 Test-Linestring
-# Test-Polygon
+Test-Polygon
+Test-Multipoint
 BABEL-5788
+BABEL-6814
 BABEL-1664
 sys-fn_varbintohexstr
 babel_string_to_money_reg
@@ -680,3 +682,7 @@ babel_convert_with_style
 forxml-raw-elements
 forxml-raw-elements-1gb-limit
 forxml-path-elements
+xml_query-before-17_11-or-18_5
+forxml-auto-before-17_11-or-18_5
+babel_sqlvariant_coerce_type
+BABEL-login-db-long-identifiers
