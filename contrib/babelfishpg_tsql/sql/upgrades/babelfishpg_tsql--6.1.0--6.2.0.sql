@@ -224,6 +224,15 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     FINALFUNC = tsql_query_to_xml_text_ffunc
 );
 
+-- Runtime LIKE prefix bounds for index scan optimization (BABEL-5966)
+CREATE OR REPLACE FUNCTION sys.babelfish_like_prefix(pattern TEXT, is_ilike BOOL)
+RETURNS TEXT AS 'babelfishpg_tsql', 'babelfish_like_prefix'
+LANGUAGE C STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_like_prefix_upper(pattern TEXT, is_ilike BOOL)
+RETURNS TEXT AS 'babelfishpg_tsql', 'babelfish_like_prefix_upper'
+LANGUAGE C STABLE PARALLEL SAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);

@@ -11492,3 +11492,11 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.babelfish_construct_unique_index_name(index_name TEXT, table_name TEXT)
 RETURNS TEXT AS 'babelfishpg_tsql', 'bbf_construct_unique_index_name'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_like_prefix(pattern TEXT, is_ilike BOOL)
+RETURNS TEXT AS 'babelfishpg_tsql', 'babelfish_like_prefix'
+LANGUAGE C STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_like_prefix_upper(pattern TEXT, is_ilike BOOL)
+RETURNS TEXT AS 'babelfishpg_tsql', 'babelfish_like_prefix_upper'
+LANGUAGE C STABLE PARALLEL SAFE;

@@ -22,6 +22,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
 #include "nodes/pathnodes.h"
+#include "optimizer/optimizer.h"
 #ifdef USE_ICU
 #include <unicode/utrans.h>
 #include "utils/removeaccent.map"
@@ -65,6 +66,8 @@ Oid			database_or_server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
 static Oid remove_accents_internal_oid;
+static Oid babelfish_like_prefix_oid = InvalidOid;
+static Oid babelfish_like_prefix_upper_oid = InvalidOid;
 static UTransliterator *cached_transliterator = NULL;
 
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
@@ -79,87 +82,6 @@ extern int	pattern_fixed_prefix_wrapper(Const *patt,
 
 static Node *transform_likenode_for_AI(OpExpr *op);
 static Node *convert_node_to_funcexpr_for_like(Node *node, Oid inputcollid);
-
-/*
- * Check whether a like_escape call appears anywhere in the expression.
- * Uses expression_tree_walker for safe traversal of all node types.
- */
-static bool
-contains_like_escape(Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, FuncExpr) &&
-		strcmp(get_func_name(((FuncExpr *) node)->funcid),
-			   "like_escape") == 0)
-		return true;
-	return expression_tree_walker(node, contains_like_escape, context);
-}
-
-/*
- * Check whether the expression contains any non-immutable function
- * outside our allowlist of safe-to-fold stable functions.
- * Returns true if an unsafe function is found.
- *
- * Allowlisted functions are STABLE only because plpgsql/C cannot be
- * declared IMMUTABLE, but are deterministic for constant inputs:
- *   babelfish_conv_helper_*   - CONVERT / TRY_CONVERT
- *   babelfish_try_cast_to_*   - TRY_CAST
- *   babelfish_concat_wrapper* - string + operator
- *   concat                     - CONCAT()
- */
-static bool
-has_unsafe_stable_func(Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, FuncExpr))
-	{
-		FuncExpr   *func = (FuncExpr *) node;
-
-		if (func_volatile(func->funcid) != PROVOLATILE_IMMUTABLE)
-		{
-			char   *name = get_func_name(func->funcid);
-			bool	safe = (name != NULL &&
-							(strncmp(name, "babelfish_conv_helper_", 22) == 0 ||
-							 strncmp(name, "babelfish_try_cast_to_", 22) == 0 ||
-							 strncmp(name, "babelfish_concat_wrapper", 24) == 0 ||
-							 strcmp(name, "concat") == 0));
-
-			if (name)
-				pfree(name);
-			if (!safe)
-				return true;
-		}
-	}
-	return expression_tree_walker(node, has_unsafe_stable_func, context);
-}
-
-/*
- * Fold a LIKE pattern to Const, restricted to expressions whose
- * non-immutable functions are all known-safe stable functions.
- * The original LIKE is always kept as a recheck, so correctness
- * is guaranteed.
- */
-static Node *
-fold_like_pattern_to_const(Node *expr)
-{
-	PlannerGlobal glob;
-	PlannerInfo root;
-
-	if (has_unsafe_stable_func(expr, NULL))
-		return expr;
-
-	memset(&glob, 0, sizeof(PlannerGlobal));
-	glob.type = T_PlannerGlobal;
-	glob.boundParams = NULL;
-
-	memset(&root, 0, sizeof(PlannerInfo));
-	root.type = T_PlannerInfo;
-	root.glob = &glob;
-
-	return estimate_expression_value(&root, expr);
-}
 
 /* pattern prefix status for pattern_fixed_prefix_wrapper
  * Pattern_Prefix_None: no prefix found, this means the first character is a wildcard character
@@ -176,6 +98,8 @@ PG_FUNCTION_INFO_V1(init_like_ilike_table);
 PG_FUNCTION_INFO_V1(get_server_collation_oid);
 PG_FUNCTION_INFO_V1(is_collated_ci_as_internal);
 PG_FUNCTION_INFO_V1(is_collated_ai_internal);
+PG_FUNCTION_INFO_V1(babelfish_like_prefix);
+PG_FUNCTION_INFO_V1(babelfish_like_prefix_upper);
 
 /* this function is no longer needed and is only a placeholder for upgrade script */
 PG_FUNCTION_INFO_V1(init_server_collation);
@@ -230,6 +154,78 @@ Datum
 is_collated_ai_internal(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(tsql_is_collated_ai_internal(fcinfo));
+}
+
+/*
+ * babelfish_like_prefix - extract the literal prefix from a LIKE pattern.
+ * Returns everything before the first wildcard (%, _, [, ]).
+ * Returns empty string if pattern starts with a wildcard.
+ */
+Datum
+babelfish_like_prefix(PG_FUNCTION_ARGS)
+{
+	text	   *pattern;
+	char	   *patt_str;
+	int			patt_len;
+	int			i;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+	pattern = PG_GETARG_TEXT_PP(0);
+	patt_str = VARDATA_ANY(pattern);
+	patt_len = VARSIZE_ANY_EXHDR(pattern);
+
+	for (i = 0; i < patt_len; i++)
+	{
+		char c = patt_str[i];
+		if (c == '%' || c == '_' || c == '[' || c == ']')
+			break;
+		if (c == '\\' && i + 1 < patt_len)
+			i++;
+	}
+
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(patt_str, i));
+}
+
+/*
+ * babelfish_like_prefix_upper - extract the literal prefix and append \uFFFF.
+ * Returns just \uFFFF if pattern starts with a wildcard (effectively unbounded).
+ */
+Datum
+babelfish_like_prefix_upper(PG_FUNCTION_ARGS)
+{
+	text	   *pattern;
+	char	   *patt_str;
+	int			patt_len;
+	int			i;
+	StringInfoData buf;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+	pattern = PG_GETARG_TEXT_PP(0);
+	patt_str = VARDATA_ANY(pattern);
+	patt_len = VARSIZE_ANY_EXHDR(pattern);
+
+	for (i = 0; i < patt_len; i++)
+	{
+		char c = patt_str[i];
+		if (c == '%' || c == '_' || c == '[' || c == ']')
+			break;
+		if (c == '\\' && i + 1 < patt_len)
+			i++;
+	}
+
+	/* No prefix - return just the high-sort character as unbounded upper */
+	if (i == 0)
+		PG_RETURN_TEXT_P(cstring_to_text(SORT_KEY_STR));
+
+	initStringInfo(&buf);
+	appendBinaryStringInfo(&buf, patt_str, i);
+	appendStringInfoString(&buf, SORT_KEY_STR);
+
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(buf.data, buf.len));
 }
 
 /* init_like_ilike_table - this function is no longer needed and is only a placeholder for upgrade script */
@@ -404,6 +400,173 @@ create_collate_expr(Node *arg, Oid collid)
 	return expr;
 }
 
+static Oid
+get_like_prefix_func_oid(void)
+{
+	if (!OidIsValid(babelfish_like_prefix_oid))
+	{
+		Oid argtypes[2] = {TEXTOID, BOOLOID};
+		babelfish_like_prefix_oid = LookupFuncName(
+			list_make2(makeString("sys"), makeString("babelfish_like_prefix")),
+			2, argtypes, false);
+	}
+	return babelfish_like_prefix_oid;
+}
+
+static Oid
+get_like_prefix_upper_func_oid(void)
+{
+	if (!OidIsValid(babelfish_like_prefix_upper_oid))
+	{
+		Oid argtypes[2] = {TEXTOID, BOOLOID};
+		babelfish_like_prefix_upper_oid = LookupFuncName(
+			list_make2(makeString("sys"), makeString("babelfish_like_prefix_upper")),
+			2, argtypes, false);
+	}
+	return babelfish_like_prefix_upper_oid;
+}
+
+/*
+ * Check whether a like_escape call appears anywhere in the expression.
+ * Uses expression_tree_walker for safe traversal of all node types.
+ */
+static bool
+contains_like_escape(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, FuncExpr) &&
+		strcmp(get_func_name(((FuncExpr *) node)->funcid),
+			   "like_escape") == 0)
+		return true;
+	return expression_tree_walker(node, contains_like_escape, context);
+}
+
+/*
+ * emit_runtime_like_bounds - build runtime index bound expressions
+ * using babelfish_like_prefix / babelfish_like_prefix_upper functions.
+ */
+static Node *
+emit_runtime_like_bounds(Node *node, OpExpr *op, Node *leftop, Node *rightop,
+						 Oid ltypeId, Oid rtypeId,
+						 coll_info_t coll_info_of_inputcollid,
+						 like_ilike_info_t like_entry, bool is_ci)
+{
+	Node	   *rightop_text;
+	Node	   *prefix_expr;
+	Node	   *upper_expr;
+	Const	   *is_ci_const;
+	Expr	   *ge_expr;
+	Expr	   *lt_expr;
+	Node	   *bound_qual;
+	Operator	optup;
+
+	/*
+	 * Strip RelabelType to get the original column Var and its true type.
+	 * LIKE coerces operands to TEXT, but the index is on the original type
+	 * (varchar/nvarchar/char). We need operators matching that type for
+	 * match_index_to_operand to recognize the column.
+	 */
+	if (IsA(leftop, RelabelType))
+	{
+		leftop = (Node *) ((RelabelType *) leftop)->arg;
+		ltypeId = exprType(leftop);
+	}
+
+	/* Coerce RHS to TEXT if needed */
+	if (rtypeId != TEXTOID)
+	{
+		rightop_text = coerce_to_target_type(NULL, rightop, rtypeId,
+											 TEXTOID, -1,
+											 COERCION_IMPLICIT,
+											 COERCE_IMPLICIT_CAST, -1);
+		if (rightop_text == NULL)
+			rightop_text = rightop;
+	}
+	else
+		rightop_text = rightop;
+
+	is_ci_const = (Const *) makeBoolConst(is_ci, false);
+
+	/* Build FuncExpr for babelfish_like_prefix(rightop_text, is_ci) */
+	prefix_expr = (Node *) makeFuncExpr(get_like_prefix_func_oid(),
+										TEXTOID,
+										list_make2(rightop_text, is_ci_const),
+										InvalidOid, InvalidOid,
+										COERCE_EXPLICIT_CALL);
+
+	/* Build FuncExpr for babelfish_like_prefix_upper(rightop_text, is_ci) */
+	upper_expr = (Node *) makeFuncExpr(get_like_prefix_upper_func_oid(),
+									   TEXTOID,
+									   list_make2(copyObject(rightop_text),
+												  copyObject(is_ci_const)),
+									   InvalidOid, InvalidOid,
+									   COERCE_EXPLICIT_CALL);
+
+	/* Coerce results back to ltypeId if needed */
+	if (ltypeId != TEXTOID)
+	{
+		Node *coerced;
+		coerced = coerce_to_target_type(NULL, prefix_expr, TEXTOID,
+										ltypeId, -1,
+										COERCION_IMPLICIT,
+										COERCE_IMPLICIT_CAST, -1);
+		if (coerced != NULL)
+			prefix_expr = coerced;
+
+		coerced = coerce_to_target_type(NULL, upper_expr, TEXTOID,
+										ltypeId, -1,
+										COERCION_IMPLICIT,
+										COERCE_IMPLICIT_CAST, -1);
+		if (coerced != NULL)
+			upper_expr = coerced;
+	}
+
+	/* Wrap in CollateExpr */
+	prefix_expr = (Node *) create_collate_expr(prefix_expr, coll_info_of_inputcollid.oid);
+	upper_expr = (Node *) create_collate_expr(upper_expr, coll_info_of_inputcollid.oid);
+
+	/* Build col >= prefix_expr */
+	optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, ltypeId,
+							true, -1);
+	if (optup == (Operator) NULL)
+		return node;
+
+	ge_expr = make_op_with_func(oprid(optup), BOOLOID, false,
+								(Expr *) copyObject(leftop),
+								(Expr *) prefix_expr,
+								InvalidOid, coll_info_of_inputcollid.oid,
+								oprfuncid(optup));
+	ReleaseSysCache(optup);
+
+	/* Build col < upper_expr */
+	optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, ltypeId,
+							true, -1);
+	if (optup == (Operator) NULL)
+		return node;
+
+	lt_expr = make_op_with_func(oprid(optup), BOOLOID, false,
+								(Expr *) copyObject(leftop),
+								(Expr *) upper_expr,
+								InvalidOid, coll_info_of_inputcollid.oid,
+								oprfuncid(optup));
+	ReleaseSysCache(optup);
+
+	bound_qual = make_and_qual((Node *) ge_expr, (Node *) lt_expr);
+
+	/* Add collation to original op args */
+	linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
+	lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
+
+	if (like_entry.is_not_match)
+	{
+		bound_qual = (Node *) make_notclause((Expr *) bound_qual);
+		return make_or_qual(node, bound_qual);
+	}
+
+	return make_and_qual(node, bound_qual);
+}
+
 /*
  * If the node is OpExpr and the colaltion is ci_as/ci_ai , then
  * transform the LIKE OpExpr to ILIKE OpExpr. For ci_ai, use remove_accents_internal*
@@ -486,27 +649,6 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 		linitial(op->args) = leftop = (Node*)((CollateExpr*) leftop)->arg;
 	}
 
-	/*
-	 * Try to reduce rightop to a Const for prefix extraction.
-	 *
-	 * First use eval_const_expressions (folds immutable functions like
-	 * string concatenation and type casts). If still not a Const, use
-	 * fold_like_pattern_to_const which selectively folds only
-	 * allowlisted stable functions (CONVERT, TRY_CONVERT, TRY_CAST,
-	 * string +) via estimate_expression_value.
-	 *
-	 * Skip for like_escape: PG's like_escape converts escape sequences
-	 * to backslash format, which doesn't match T-SQL bracket patterns.
-	 * Folding it produces wrong prefix bounds.
-	 */
-	if (!contains_like_escape(rightop, NULL))
-	{
-		rightop = eval_const_expressions(NULL, rightop);
-		if (!IsA(rightop, Const))
-			rightop = fold_like_pattern_to_const(rightop);
-		lsecond(op->args) = rightop;
-	}
-
 	/* 
 	 * This is needed to process CI_AI for Const nodes
 	 * Because after we call coerce_to_target_type for type conversion in transform_likenode_for_AI,
@@ -529,14 +671,69 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	 * for it. Rather it will add extra overhead, moreover vanilla Postgres
 	 * also handles check constraints this way
 	 */
-	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
-		((Const *) rightop)->constisnull || is_constraint)
+	if (IsA(leftop, Const) || is_constraint)
 	{
-		/* update the collation of left and right node*/
+		/* leftop is const or CHECK constraint — can't optimize */
 		linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
-		lsecond(op->args) = (IsA(rightop, Const) && ((Const *) rightop)->constisnull) ? lsecond(op->args) : 
-								(Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
+		lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
 		return node;
+	}
+
+	if (!IsA(rightop, Const) || ((Const *) rightop)->constisnull)
+	{
+		/*
+		 * Skip for like_escape: PG's like_escape converts escape sequences
+		 * to backslash format, which doesn't match T-SQL bracket patterns.
+		 * Folding it produces wrong prefix bounds.
+		 */
+		if (!IsA(rightop, Const) && contains_like_escape(rightop, NULL))
+		{
+			linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
+			lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
+			return node;
+		}
+
+		/* Tier 1: try folding IMMUTABLE functions */
+		if (!IsA(rightop, Const))
+		{
+			rightop = eval_const_expressions(NULL, rightop);
+			lsecond(op->args) = rightop;
+		}
+
+		/* Unwrap RelabelType */
+		if (IsA(rightop, RelabelType))
+		{
+			RelabelType *relabel = (RelabelType *) rightop;
+			if (IsA(relabel->arg, Const))
+			{
+				lsecond(op->args) = (Node *) relabel->arg;
+				rightop = (Node *) lsecond(op->args);
+			}
+		}
+
+		/* If still not a usable Const, try Tier 2: runtime bounds */
+		if (!IsA(rightop, Const) || ((Const *) rightop)->constisnull)
+		{
+			bool is_ci = (coll_info_of_inputcollid.collateflags == 0x000f ||
+						  coll_info_of_inputcollid.collateflags == 0x000d);
+
+			if (!IsA(rightop, Const) &&
+				!contain_var_clause(rightop) &&
+				!contain_volatile_functions(rightop))
+			{
+				return emit_runtime_like_bounds(node, op, leftop, rightop,
+											   ltypeId, rtypeId,
+											   coll_info_of_inputcollid,
+											   like_entry, is_ci);
+			}
+
+			/* Give up */
+			linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
+			lsecond(op->args) = (IsA(rightop, Const) && ((Const *) rightop)->constisnull) ?
+									lsecond(op->args) :
+									(Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
+			return node;
+		}
 	}
 
 	patt = (Const *) rightop;
