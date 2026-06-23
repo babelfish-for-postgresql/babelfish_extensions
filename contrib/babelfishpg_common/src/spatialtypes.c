@@ -2190,6 +2190,17 @@ validate_multi_figures(GeometryData *geom_data, uint32_t npoints,  uint8_t expec
             THROW_VARBINARY_CONVERSION_ERROR();
         if (geom_data->shapes[i].type != expected_child_type)
             THROW_VARBINARY_CONVERSION_ERROR();
+
+        /*
+         * A non-empty multi-type child must reference a real figure. The
+         * 0xFFFFFFFF sentinel is only valid for empty geometries, which take
+         * a separate path via handle_empty_geometry_bytea() and never reach
+         * here. get_child_info() later uses this offset as an index into the
+         * figures array, so an unchecked 0xFFFFFFFF would cause an
+         * out-of-bounds read. Reject any out-of-range offset.
+         */
+        if (geom_data->shapes[i].figure_offset >= geom_data->nfigures)
+            THROW_VARBINARY_CONVERSION_ERROR();
     }
 
     /* Validate figure attributes based on child type */
@@ -2617,6 +2628,7 @@ handle_multi_to_postgis(GeometryData *geom_data)
     bool     has_m = (geom_data->dimension_flag == DIM_FLAG_2DM || geom_data->dimension_flag == DIM_FLAG_3DM);
     uint32_t nchildren = geom_data->nshapes - 1;  /* exclude root shape */
     uint32_t result_size;
+    uint64_t accum_size;
     uint8    postgis_header[POSTGIS_HEADER_SIZE];
     uint8    postgis_type_byte;
     bytea   *result;
@@ -2640,16 +2652,24 @@ handle_multi_to_postgis(GeometryData *geom_data)
     /* Source coordinate data base (after header + npoints) */
     src = geom_data->input_data + HEADER_SIZE + NPOINTS_SIZE;
 
-    /* Calculate total WKB size: header + SRID + nchildren(4) + all children */
-    result_size = POSTGIS_HEADER_SIZE + SRID_SIZE + sizeof(uint32_t);
+    /*
+     * Calculate total WKB size: header + SRID + nchildren(4) + all children.
+     * Accumulate in uint64 so that many children near the individual
+     * MaxAllocSize cap cannot wrap a uint32 and yield an undersized palloc.
+     */
+    accum_size = (uint64_t) POSTGIS_HEADER_SIZE + SRID_SIZE + sizeof(uint32_t);
 
     for (i = 0; i < nchildren; i++)
     {
         uint32_t pt_start, child_npoints, fig_start, fig_end;
         get_child_info(geom_data, i + 1, &pt_start, &child_npoints, &fig_start, &fig_end);
 
-        result_size += calculate_child_wkb_size(geom_data->geom_name, child_npoints, has_z, has_m);
+        accum_size += calculate_child_wkb_size(geom_data->geom_name, child_npoints, has_z, has_m);
+        if (accum_size > MaxAllocSize)
+            THROW_VARBINARY_CONVERSION_ERROR();
     }
+
+    result_size = (uint32_t) accum_size;
 
     /* Build PostGIS header */
     memcpy(postgis_header, POSTGIS_HEADER_MULTIPOINT, POSTGIS_HEADER_SIZE);
