@@ -204,7 +204,7 @@ BEGIN
     CREATE TABLE #proc_create(id int, name varchar(30))
     INSERT INTO #proc_create VALUES (1, 'first')
     INSERT INTO #proc_create VALUES (2, 'second')
-    SELECT * FROM #proc_create ORDER BY id
+    SELECT * FROM #proc_create
     DROP TABLE #proc_create
 END
 GO
@@ -4480,7 +4480,7 @@ GO
 ~~ROW COUNT: 2~~
 
 
-SELECT * FROM #insert_exec_target
+SELECT * FROM #insert_exec_target ORDER BY id
 GO
 ~~START~~
 int#!#varchar
