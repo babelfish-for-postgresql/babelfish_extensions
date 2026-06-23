@@ -421,6 +421,22 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     FINALFUNC = tsql_query_to_xml_text_ffunc
 );
 
+CREATE OR REPLACE FUNCTION objectproperty(
+    id INT,
+    property SYS.VARCHAR
+    )
+RETURNS INT AS
+'babelfishpg_tsql', 'objectproperty_internal'
+LANGUAGE C STABLE STRICT;
+
+CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
+    id INT,
+    property SYS.VARCHAR
+)
+RETURNS SYS.SQL_VARIANT AS
+'babelfishpg_tsql', 'objectpropertyex_internal'
+LANGUAGE C STABLE STRICT;
+
 -- WITH XMLNAMESPACES support: extend FOR XML aggregate to carry namespace declarations
 -- and add namespace-aware overloads for XML data type methods.
 --

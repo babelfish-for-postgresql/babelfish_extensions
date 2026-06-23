@@ -5,15 +5,15 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup.h"
-#include "access/table.h"
-#include "access/transam.h"
-#include "catalog/heap.h"
-#include "utils/pg_locale.h"
-#include "access/xact.h"
 #include "access/relation.h"
 #include "access/reloptions.h"
+#include "access/stratnum.h"
+#include "access/table.h"
+#include "access/transam.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
+#include "catalog/heap.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_aggregate.h"
@@ -25,16 +25,16 @@
 #include "catalog/pg_db_role_setting.h"
 #include "catalog/pg_depend.h"	/* Required in handle_bbf_view_binding_on_object_drop to access pg_rewrite dependencies */
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_rewrite.h"
+#include "catalog/pg_sequence.h"
+#include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_trigger_d.h"
 #include "catalog/pg_type.h"
-#include "catalog/pg_rewrite.h"
-#include "catalog/pg_operator.h"
-#include "catalog/pg_tablespace.h"
-#include "catalog/pg_sequence.h"
-#include "commands/copy.h"
 #include "commands/comment.h"
+#include "commands/copy.h"
 #include "commands/dbcommands.h"
 #include "commands/explain.h"
 #include "commands/extension.h"
@@ -44,6 +44,7 @@
 #include "commands/view.h"
 #include "common/logging.h"
 #include "executor/execExpr.h"
+#include "executor/nodeFunctionscan.h"
 #include "executor/spi.h"
 #include "executor/spi_priv.h"
 #include "funcapi.h"
@@ -53,18 +54,20 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
+#include "optimizer/paths.h"
 #include "optimizer/planner.h"
+#include "optimizer/restrictinfo.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
+#include "parser/parse_oper.h"
 #include "parser/parse_param.h"
 #include "parser/parse_relation.h"
-#include "parser/parse_utilcmd.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
-#include "parser/parse_oper.h"
+#include "parser/parse_utilcmd.h"
 #include "parser/parser.h"
 #include "parser/scanner.h"
 #include "parser/scansup.h"
@@ -78,16 +81,17 @@
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
+#include "utils/numeric.h"
+#include "utils/pg_locale.h"
+#include "utils/queryenvironment.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-#include "utils/numeric.h"
-#include "utils/queryenvironment.h"
+#include "utils/xml.h"
 #include <math.h>
 #include "pgstat.h"
-#include "executor/nodeFunctionscan.h"
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "pltsql.h"
@@ -104,7 +108,6 @@
 #include "table_variable_mvcc.h"
 #include "bbf_parallel_query.h"
 #include "extendedproperty.h"
-#include "utils/xml.h"
 
 #ifdef USE_LIBXML
 #include <libxml/tree.h>
@@ -395,6 +398,9 @@ ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
 #ifdef USE_LIBXML
 static openxml_set_namespaces_hook_type prev_openxml_set_namespaces_hook = NULL;
 #endif
+static match_opclause_to_indexcol_hook_type prev_match_opclause_to_indexcol_hook = NULL;
+static IndexClause *match_oid_cast_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo, int indexcol, IndexOptInfo *index, Node *cast_arg, Node *val_arg, Oid opfamily);
+static IndexClause *bbf_match_opclause_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo, int indexcol, IndexOptInfo *index);
 
 /*****************************************
  * 			Install / Uninstall
@@ -668,6 +674,9 @@ InstallExtendedHooks(void)
 	walk_view_rule_hook = mark_nodes_inside_view;
 
 	handle_target_view_hook = tsql_handle_target_view_hook;
+
+	prev_match_opclause_to_indexcol_hook = match_opclause_to_indexcol_hook;
+	match_opclause_to_indexcol_hook = bbf_match_opclause_to_indexcol;
 }
 
 void
@@ -765,6 +774,7 @@ UninstallExtendedHooks(void)
 	get_domain_typmodin_hook = NULL;
 	walk_view_rule_hook = NULL;
 	handle_target_view_hook = NULL;
+	match_opclause_to_indexcol_hook = prev_match_opclause_to_indexcol_hook;
 }
 
 /*****************************************
@@ -9288,4 +9298,118 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 	}
 
 	return expr;
+}
+
+static IndexClause *
+match_oid_cast_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo,
+						   int indexcol, IndexOptInfo *index,
+						   Node *cast_arg, Node *val_arg, Oid opfamily)
+{
+	if (IsA(cast_arg, RelabelType))
+	{
+		RelabelType *relabel = (RelabelType *) cast_arg;
+		Node	   *inner_arg = (Node *) relabel->arg;
+		Oid			orig_type = exprType(inner_arg);
+
+		if (orig_type == OIDOID && relabel->resulttype == INT4OID &&
+			match_index_to_operand(inner_arg, indexcol, index))
+		{
+			Oid			idx_op;
+
+			if (contain_volatile_functions(val_arg))
+				return NULL;
+
+			idx_op = get_opfamily_member(opfamily, orig_type, orig_type,
+										BTEqualStrategyNumber);
+			if (OidIsValid(idx_op))
+			{
+				RelabelType *new_val;
+				OpExpr	   *new_clause;
+				RestrictInfo *new_rinfo;
+				IndexClause *iclause;
+				OpExpr	   *clause = (OpExpr *) rinfo->clause;
+
+				new_val = makeRelabelType((Expr *) copyObject(val_arg),
+										  orig_type, -1, InvalidOid,
+										  COERCE_IMPLICIT_CAST);
+
+				new_clause = makeNode(OpExpr);
+				new_clause->opno = idx_op;
+				new_clause->opfuncid = get_opcode(idx_op);
+				new_clause->opresulttype = BOOLOID;
+				new_clause->opretset = false;
+				new_clause->opcollid = InvalidOid;
+				new_clause->inputcollid = clause->inputcollid;
+				new_clause->args = list_make2(copyObject(inner_arg), new_val);
+				new_clause->location = clause->location;
+
+				new_rinfo = make_simple_restrictinfo(root,
+													(Expr *) new_clause);
+				new_rinfo->security_level = rinfo->security_level;
+
+				iclause = makeNode(IndexClause);
+				iclause->rinfo = rinfo;
+				iclause->indexquals = list_make1(new_rinfo);
+				iclause->lossy = false;
+				iclause->indexcol = indexcol;
+				iclause->indexcols = NIL;
+				return iclause;
+			}
+		}
+	}
+	return NULL;
+}
+
+/*
+ * bbf_match_opclause_to_indexcol
+ *
+ * Enables index usage for Babelfish equality patterns where an OID column
+ * is cast to integer, preventing index matching. Handles both operand orders:
+ *   (oid)::integer = value  =>  oid = value::oid
+ *   value = (oid)::integer  =>  oid = value::oid
+ */
+static IndexClause *
+bbf_match_opclause_to_indexcol(PlannerInfo *root,
+							   RestrictInfo *rinfo,
+							   int indexcol,
+							   IndexOptInfo *index)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL && IsA(rinfo->clause, OpExpr))
+	{
+		OpExpr	   *clause = (OpExpr *) rinfo->clause;
+
+		if (list_length(clause->args) == 2 &&
+			clause->opno == Int4EqualOperator &&
+			index->opcintype[indexcol] == OIDOID)
+		{
+			Node	   *leftop = (Node *) linitial(clause->args);
+			Node	   *rightop = (Node *) lsecond(clause->args);
+			Oid			opfamily = index->opfamily[indexcol];
+			IndexClause *iclause;
+
+			/* Try left operand as the cast: (oid)::int4 = value */
+			if (!bms_is_member(index->rel->relid, rinfo->right_relids))
+			{
+				iclause = match_oid_cast_to_indexcol(root, rinfo, indexcol,
+													index, leftop, rightop,
+													opfamily);
+				if (iclause)
+					return iclause;
+			}
+
+			/* Try right operand as the cast: value = (oid)::int4 */
+			if (!bms_is_member(index->rel->relid, rinfo->left_relids))
+			{
+				iclause = match_oid_cast_to_indexcol(root, rinfo, indexcol,
+													index, rightop, leftop,
+													opfamily);
+				if (iclause)
+					return iclause;
+			}
+		}
+	}
+
+	if (prev_match_opclause_to_indexcol_hook)
+		return prev_match_opclause_to_indexcol_hook(root, rinfo, indexcol, index);
+	return NULL;
 }

@@ -108,14 +108,14 @@ SELECT geometry::STLineFromText('POINT(1 2 3)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "LINESTRING" at Position 1. The input has POINT(1 2 3))~~
+~~ERROR (Message: Expected "LINESTRING" at position 1. The input has POINT(1 2 3))~~
 
 
 SELECT geography::STLineFromText('POINT(1 2 3)', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected "LINESTRING" at Position 1. The input has POINT(1 2 3))~~
+~~ERROR (Message: Expected "LINESTRING" at position 1. The input has POINT(1 2 3))~~
 
 
 --  Negative Tests for Nan coordinates
@@ -12810,4 +12810,61 @@ E61000000104000000000000000001000000FFFFFFFFFFFFFFFF02
 E61000000104000000000000000001000000FFFFFFFFFFFFFFFF02
 E61000000104000000000000000001000000FFFFFFFFFFFFFFFF02
 ~~END~~
+
+
+
+-- ============================================================================
+-- BABEL-6444: Security regression — crafted varbinary must produce a clean
+-- conversion error, never an out-of-bounds read / backend crash.
+-- These exercise the bounds checks added in spatialtypes.c (set_dimension_flag
+-- npoints guard + get_child_info sentinel guard).
+-- ============================================================================
+-- Oversized npoints: 2D-complex header claims npoints=1000 but payload is only
+-- 22 bytes. Must NOT walk past the buffer in check_nan_coordinates.
+SELECT CAST(0x000000000100E8030000000000000000000000000000 as geometry);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+
+
+SELECT CAST(0x000000000100E8030000000000000000000000000000 as geography);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+
+
+-- Negative npoints (0xBFFFFFFF): signed*2 overflow used to make check_nan loop
+-- ~2.1B times reading OOB. Must be rejected as a clean conversion error.
+SELECT CAST(0x000000000100FFFFFFBF000000000000000000000000 as geometry);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+
+
+-- MultiPoint with empty-child sentinel (figure_offset = 0xFFFFFFFF on a child
+-- shape of a non-empty multi): used to dereference figures[0xFFFFFFFF].
+SELECT CAST(0xE6100000010401000000000000000000F03F000000000000004001000000010000000003000000FFFFFFFF000000000400000000000000000100000000FFFFFFFF01 as geometry);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+
+
+-- Truncated 3D point: type 0x0D needs 30 bytes but only 22 are supplied.
+SELECT CAST(0x00000000010D000000000000F03F0000000000000040 as geometry);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+
+
+-- Truncated 2-point LineString: type 0x14 needs 38 bytes but only 22 supplied.
+SELECT CAST(0x000000000114000000000000F03F0000000000000040 as geometry);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
 

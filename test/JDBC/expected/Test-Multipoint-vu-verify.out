@@ -1929,7 +1929,7 @@ SELECT geometry::STGeomFromText('MULTILINESTRING((1 2), (3 4))', 4326);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: MULTILINESTRING is not supported)~~
+~~ERROR (Message: geometry requires more points)~~
 
 
 -- TC-MP-145: Special characters in WKT
