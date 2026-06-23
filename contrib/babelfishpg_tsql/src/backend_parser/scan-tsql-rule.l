@@ -294,6 +294,7 @@
                             case TSQL_XSINIL:
                             case TSQL_ABSENT:
 							case TSQL_PROC:
+							case TSQL_SPATIAL:
 							case TSQL_INCLUDE_NULL_VALUES:
 							case TSQL_WITHOUT_ARRAY_WRAPPER:
 							case TSQL_IIF:

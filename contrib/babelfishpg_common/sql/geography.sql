@@ -741,6 +741,11 @@ CREATE OR REPLACE FUNCTION sys.M(geom sys.GEOGRAPHY)
     END;
     $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
+CREATE OR REPLACE FUNCTION sys.ST_Expand(geog sys.GEOGRAPHY, distance float8)
+    RETURNS sys.GEOGRAPHY
+    AS '$libdir/postgis-3', 'LWGEOM_expand'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Helper functions for main T-SQL functions
 CREATE OR REPLACE FUNCTION sys.STEquals_helper(geom1 sys.GEOGRAPHY, geom2 sys.GEOGRAPHY)
 	RETURNS sys.BIT
@@ -836,3 +841,235 @@ CREATE OR REPLACE FUNCTION sys.M_helper(sys.GEOGRAPHY)
 	RETURNS float8
 	AS '$libdir/postgis-3','LWGEOM_m_point'
 	LANGUAGE 'c' IMMUTABLE STRICT;
+
+
+
+-- GiST support for sys.GEOGRAPHY (spatial indexing)
+
+-- GiST support functions
+CREATE OR REPLACE FUNCTION sys.geography_gist_consistent(internal, sys.GEOGRAPHY, smallint, oid, internal)
+    RETURNS bool AS '$libdir/postgis-3', 'gserialized_gist_consistent_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_gist_compress(internal)
+    RETURNS internal AS '$libdir/postgis-3', 'gserialized_gist_compress_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_gist_decompress(internal)
+    RETURNS internal AS '$libdir/postgis-3', 'gserialized_gist_decompress_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_gist_penalty(internal, internal, internal)
+    RETURNS internal AS '$libdir/postgis-3', 'gserialized_gist_penalty_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_gist_picksplit(internal, internal)
+    RETURNS internal AS '$libdir/postgis-3', 'gserialized_gist_picksplit_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_gist_union(bytea, internal)
+    RETURNS internal AS '$libdir/postgis-3', 'gserialized_gist_union_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_gist_same(sys.GEOGRAPHY, sys.GEOGRAPHY, internal)
+    RETURNS internal AS '$libdir/postgis-3', 'gserialized_gist_same_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_gist_distance(internal, sys.GEOGRAPHY, smallint, oid, internal)
+    RETURNS float8 AS '$libdir/postgis-3', 'gserialized_gist_distance_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Spatial operator functions
+CREATE OR REPLACE FUNCTION sys.geography_overlaps(sys.GEOGRAPHY, sys.GEOGRAPHY)
+    RETURNS boolean AS '$libdir/postgis-3', 'gserialized_overlaps_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_contains(sys.GEOGRAPHY, sys.GEOGRAPHY)
+    RETURNS boolean AS '$libdir/postgis-3', 'gserialized_contains_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_within(sys.GEOGRAPHY, sys.GEOGRAPHY)
+    RETURNS boolean AS '$libdir/postgis-3', 'gserialized_within_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_left(sys.GEOGRAPHY, sys.GEOGRAPHY)
+    RETURNS boolean AS '$libdir/postgis-3', 'gserialized_left_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_overleft(sys.GEOGRAPHY, sys.GEOGRAPHY)
+    RETURNS boolean AS '$libdir/postgis-3', 'gserialized_overleft_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_right(sys.GEOGRAPHY, sys.GEOGRAPHY)
+    RETURNS boolean AS '$libdir/postgis-3', 'gserialized_right_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_overright(sys.GEOGRAPHY, sys.GEOGRAPHY)
+    RETURNS boolean AS '$libdir/postgis-3', 'gserialized_overright_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_above(sys.GEOGRAPHY, sys.GEOGRAPHY)
+    RETURNS boolean AS '$libdir/postgis-3', 'gserialized_above_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_overabove(sys.GEOGRAPHY, sys.GEOGRAPHY)
+    RETURNS boolean AS '$libdir/postgis-3', 'gserialized_overabove_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_below(sys.GEOGRAPHY, sys.GEOGRAPHY)
+    RETURNS boolean AS '$libdir/postgis-3', 'gserialized_below_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_overbelow(sys.GEOGRAPHY, sys.GEOGRAPHY)
+    RETURNS boolean AS '$libdir/postgis-3', 'gserialized_overbelow_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_same(sys.GEOGRAPHY, sys.GEOGRAPHY)
+    RETURNS boolean AS '$libdir/postgis-3', 'gserialized_same_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_distance_centroid(sys.GEOGRAPHY, sys.GEOGRAPHY)
+    RETURNS float8 AS '$libdir/postgis-3', 'gserialized_distance_centroid_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Selectivity estimation functions
+CREATE OR REPLACE FUNCTION sys.geography_gist_sel(internal, oid, internal, integer)
+    RETURNS float8 AS '$libdir/postgis-3', 'gserialized_gist_sel_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geography_gist_joinsel(internal, oid, internal, smallint, internal)
+    RETURNS float8 AS '$libdir/postgis-3', 'gserialized_gist_joinsel_2d'
+    LANGUAGE c IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Spatial operators
+CREATE OPERATOR sys.&& (
+    LEFTARG = sys.GEOGRAPHY, RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_overlaps,
+    COMMUTATOR = &&,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
+);
+
+CREATE OPERATOR sys.~ (
+    LEFTARG = sys.GEOGRAPHY, RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_contains,
+    COMMUTATOR = @,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
+);
+
+CREATE OPERATOR sys.@ (
+    LEFTARG = sys.GEOGRAPHY, RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_within,
+    COMMUTATOR = ~,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
+);
+
+CREATE OPERATOR sys.<< (
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_left,
+    COMMUTATOR = >>,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
+);
+
+CREATE OPERATOR sys.&< (
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_overleft,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
+);
+
+CREATE OPERATOR sys.>> (
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_right,
+    COMMUTATOR = <<,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
+);
+
+CREATE OPERATOR sys.&> (
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_overright,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
+);
+
+CREATE OPERATOR sys.|>> (
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_above,
+    COMMUTATOR = <<|,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
+);
+
+CREATE OPERATOR sys.|&> (
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_overabove,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
+);
+
+CREATE OPERATOR sys.<<| (
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_below,
+    COMMUTATOR = |>>,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
+);
+
+CREATE OPERATOR sys.&<| (
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_overbelow,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
+);
+
+CREATE OPERATOR sys.~= (
+    LEFTARG = sys.GEOGRAPHY, RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_same,
+    COMMUTATOR = ~=,
+    RESTRICT = sys.geography_gist_sel,
+    JOIN = sys.geography_gist_joinsel
+);
+
+CREATE OPERATOR sys.<-> (
+    LEFTARG = sys.GEOGRAPHY, RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.geography_distance_centroid,
+    COMMUTATOR = <->
+);
+
+-- GiST operator class
+CREATE OPERATOR CLASS sys.gist_geography_ops_2d
+    DEFAULT FOR TYPE sys.GEOGRAPHY USING gist AS
+    STORAGE sys.box2df,
+    OPERATOR  1  sys.<<(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
+    OPERATOR  2  sys.&<(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
+    OPERATOR  3  sys.&&(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
+    OPERATOR  4  sys.&>(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
+    OPERATOR  5  sys.>>(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
+    OPERATOR  6  sys.~=(sys.GEOGRAPHY, sys.GEOGRAPHY)  ,
+    OPERATOR  7  sys.~(sys.GEOGRAPHY, sys.GEOGRAPHY)   ,
+    OPERATOR  8  sys.@(sys.GEOGRAPHY, sys.GEOGRAPHY)   ,
+    OPERATOR  9  sys.&<|(sys.GEOGRAPHY, sys.GEOGRAPHY) ,
+    OPERATOR 10  sys.<<|(sys.GEOGRAPHY, sys.GEOGRAPHY) ,
+    OPERATOR 11  sys.|>>(sys.GEOGRAPHY, sys.GEOGRAPHY) ,
+    OPERATOR 12  sys.|&>(sys.GEOGRAPHY, sys.GEOGRAPHY) ,
+    OPERATOR 13  sys.<->(sys.GEOGRAPHY, sys.GEOGRAPHY) FOR ORDER BY pg_catalog.float_ops,
+    FUNCTION  1  sys.geography_gist_consistent(internal, sys.GEOGRAPHY, smallint, oid, internal),
+    FUNCTION  2  sys.geography_gist_union(bytea, internal),
+    FUNCTION  3  sys.geography_gist_compress(internal),
+    FUNCTION  4  sys.geography_gist_decompress(internal),
+    FUNCTION  5  sys.geography_gist_penalty(internal, internal, internal),
+    FUNCTION  6  sys.geography_gist_picksplit(internal, internal),
+    FUNCTION  7  sys.geography_gist_same(sys.GEOGRAPHY, sys.GEOGRAPHY, internal),
+    FUNCTION  8  sys.geography_gist_distance(internal, sys.GEOGRAPHY, smallint, oid, internal);
