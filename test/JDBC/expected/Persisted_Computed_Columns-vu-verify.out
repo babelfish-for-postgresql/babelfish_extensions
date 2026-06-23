@@ -42,7 +42,7 @@ CREATE TABLE pcc_bad4 (a VARCHAR(10), b VARCHAR(10), c AS (a+b) PERSISTED)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: CREATE TABLE failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER')~~
+~~ERROR (Message: CREATE/ALTER TABLE failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER')~~
 
 SET QUOTED_IDENTIFIER ON
 GO
@@ -54,7 +54,7 @@ CREATE TABLE pcc_bad5 (a VARCHAR(10), b VARCHAR(10), c AS (a+b) PERSISTED)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: CREATE TABLE failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
+~~ERROR (Message: CREATE/ALTER TABLE failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
 
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
@@ -1071,7 +1071,7 @@ ALTER TABLE pcc_concat ADD e AS (a + 'suffix') PERSISTED
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: CREATE TABLE failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
+~~ERROR (Message: CREATE/ALTER TABLE failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
 
 SET CONCAT_NULL_YIELDS_NULL ON
 GO

@@ -96,6 +96,7 @@
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "pltsql.h"
+#include "guc.h"
 #include "pltsql_node/pltsql_serialize.h"
 #include "pltsql_permissions.h"
 #include "pl_explain.h"
@@ -5881,6 +5882,10 @@ persisted_col_planner_rewrite(Query *query)
 {
 	/* Only rewrite for T-SQL dialect */
 	if (sql_dialect != SQL_DIALECT_TSQL)
+		return query;
+
+	/* Skip re-evaluation if escape hatch is 'ignore' */
+	if (escape_hatch_persisted_col_guc_check == EH_IGNORE)
 		return query;
 
 	if (!check_persisted_gucs())

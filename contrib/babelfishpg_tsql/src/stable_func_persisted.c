@@ -27,6 +27,7 @@
 #include "utils/syscache.h"
 
 #include "pltsql.h"
+#include "guc.h"
 #include "stable_func_persisted.h"
 
 extern bool babelfish_dump_restore;
@@ -227,11 +228,13 @@ stable_persisted_hook(Node *expr)
         return expr;
     }
     
-    /* Enforce GUC settings at CREATE time (skip during dump/restore) */
-    if (!babelfish_dump_restore && !check_persisted_gucs())
+    /* Enforce GUC settings at CREATE time (skip during dump/restore or when escape hatch is 'ignore') */
+    if (!babelfish_dump_restore &&
+        escape_hatch_persisted_col_guc_check != EH_IGNORE &&
+        !check_persisted_gucs())
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-                 errmsg("CREATE TABLE failed because the following SET options have incorrect settings: '%s'",
+                 errmsg("CREATE/ALTER TABLE failed because the following SET options have incorrect settings: '%s'",
                         get_mismatched_persisted_gucs())));
     
     /* Check if expression only has safe functions ie Immutable or stable(whitelisted) */
@@ -273,6 +276,10 @@ guc_check_dml(Query *parse)
     const char *cmd;
 
     if (parse->resultRelation == 0)
+        return;
+
+    /* Skip if escape hatch is 'ignore' */
+    if (escape_hatch_persisted_col_guc_check == EH_IGNORE)
         return;
 
     rte = rt_fetch(parse->resultRelation, parse->rtable);
