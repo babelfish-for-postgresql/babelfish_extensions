@@ -66,7 +66,6 @@
 #include "parser/parse_param.h"
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
-#include "parser/parse_utilcmd.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "parser/parse_utilcmd.h"
@@ -111,7 +110,6 @@
 #include "bbf_parallel_query.h"
 #include "extendedproperty.h"
 #include "stable_func_persisted.h"
-#include "utils/xml.h"
 
 #ifdef USE_LIBXML
 #include <libxml/tree.h>
