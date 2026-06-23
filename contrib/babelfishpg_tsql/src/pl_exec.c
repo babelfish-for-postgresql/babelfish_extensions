@@ -9964,9 +9964,11 @@ pltsql_xact_cb(XactEvent event, void *arg)
 		ResetTopTransactionName();
 
 		/*
-		 * Clean up INSERT EXEC context on transaction end. This is a safety
-		 * net for timeouts, interrupts, and other cases where normal cleanup
-		 * paths are bypassed. On commit, any remaining context is stale.
+		 * Clean up INSERT EXEC context on transaction end. This is a signal that an
+		 * aborted INSERT EXEC has nothing to flush: on abort the buffer temp
+		 * table is gone, so clearing the context here makes the subsequent
+		 * flush a no-op (it early-returns on a NULL context) instead of
+		 * opening a dropped relation.
 		 */
 		if (pltsql_insert_exec_active())
 			pltsql_insert_exec_reset_all();

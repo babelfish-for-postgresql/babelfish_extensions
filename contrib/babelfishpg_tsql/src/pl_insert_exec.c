@@ -223,11 +223,11 @@ void
 pltsql_set_insert_exec_context_info(const char *target_table)
 {
 	Assert(insert_exec_ctx == NULL);
-	insert_exec_ctx = MemoryContextAllocZero(TopTransactionContext,
+	insert_exec_ctx = MemoryContextAllocZero(TopMemoryContext,
 											 sizeof(InsertExecContext));
 
 	insert_exec_ctx->target_table = target_table
-		? MemoryContextStrdup(TopTransactionContext, target_table)
+		? MemoryContextStrdup(TopMemoryContext, target_table)
 		: NULL;
 	/*
 	 * Snapshot the call stack entry at INSERT EXEC start. Comparing this
@@ -531,7 +531,6 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema
 	Relation		temp_rel;
 	char		   *qualified_target;
 	InlineCodeBlockArgs	*flush_args;
-	PLtsql_execstate *flush_estate_saved;
 
 	if (insert_exec_ctx == NULL)
 		return;
@@ -597,7 +596,9 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema
 	 */
 	flush_args = create_args(0);
 
-	flush_estate_saved = insert_exec_flush_estate;
+	if (insert_exec_flush_estate != NULL)
+		elog(ERROR, "insert_exec_flush_estate is already set; INSERT EXEC flush must not nest");
+
 	insert_exec_flush_estate = estate;
 	PG_TRY();
 	{
@@ -605,11 +606,11 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema
 	}
 	PG_CATCH();
 	{
-		insert_exec_flush_estate = flush_estate_saved;
+		insert_exec_flush_estate = NULL;
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	insert_exec_flush_estate = flush_estate_saved;
+	insert_exec_flush_estate = NULL;
 
 	pfree(flush_query.data);
 
@@ -841,6 +842,19 @@ insert_exec_setup(PLtsql_execstate *estate,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("nested INSERT ... EXECUTE statements are not allowed")));
 
+	/*
+	 * T-SQL does not allow INSERT EXEC inside a function. The parser blocks
+	 * the common cases at CREATE FUNCTION time; this catches anything that
+	 * still reaches runtime (e.g. a table-variable target).
+	 */
+	if (estate->func &&
+		estate->func->fn_oid != InvalidOid &&
+		estate->func->fn_prokind == PROKIND_FUNCTION &&
+		estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("'INSERT EXEC' cannot be used within a function")));
+
 	/* Build the quoted column list (if any) for temp table creation */
 	column_list = build_quoted_column_list(info->columns);
 
@@ -851,15 +865,9 @@ insert_exec_setup(PLtsql_execstate *estate,
 	 */
 	if (start_implicit_txn)
 	{
-		bool in_function = (estate->func &&
-							estate->func->fn_oid != InvalidOid &&
-							estate->func->fn_prokind == PROKIND_FUNCTION &&
-							estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER);
-
 		if (!pltsql_disable_batch_auto_commit &&
 			pltsql_support_tsql_transactions() &&
-			!IsTransactionBlockActive() &&
-			!in_function)
+			!IsTransactionBlockActive())
 		{
 			elog(DEBUG4, "TSQL TXN Start internal transaction for INSERT EXEC");
 			pltsql_start_txn();
@@ -899,20 +907,7 @@ insert_exec_flush_and_cleanup(PLtsql_execstate *estate, InsertExecInfo *info)
 	char	   *column_list = build_quoted_column_list(info->columns);
 	const char *flush_schema = (info->db_name != NULL || info->schema != NULL) ? info->schema : NULL;
 
-	PG_TRY();
-	{
-		/* Flush temp table to target table */
-		flush_insert_exec_temp_table(estate, flush_schema, info->db_name, column_list);
-	}
-	PG_CATCH();
-	{
-		/* Free the column list and reset context before re-throwing. */
-		if (column_list != NULL)
-			pfree(column_list);
-		pltsql_insert_exec_reset_all();
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	flush_insert_exec_temp_table(estate, flush_schema, info->db_name, column_list);
 
 	if (column_list != NULL)
 		pfree(column_list);
