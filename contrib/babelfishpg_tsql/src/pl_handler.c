@@ -3065,7 +3065,7 @@ bbf_table_var_lookup(const char *relname, Oid relnamespace)
 	ListCell   *lc;
 	int			n;
 	PLtsql_tbl *tbl;
-	PLtsql_execstate *estate = get_current_tsql_estate();
+	PLtsql_execstate *estate;
 
 	/*
 	 * During an INSERT EXEC flush the query runs through execute_batch/the

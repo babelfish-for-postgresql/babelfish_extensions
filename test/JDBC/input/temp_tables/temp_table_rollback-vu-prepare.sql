@@ -202,7 +202,7 @@ BEGIN
     CREATE TABLE #proc_create(id int, name varchar(30))
     INSERT INTO #proc_create VALUES (1, 'first')
     INSERT INTO #proc_create VALUES (2, 'second')
-    SELECT * FROM #proc_create
+    SELECT * FROM #proc_create ORDER BY id
     DROP TABLE #proc_create
 END
 GO

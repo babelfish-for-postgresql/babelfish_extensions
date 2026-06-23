@@ -74,9 +74,6 @@ static void insertexec_destroy(DestReceiver *self);
  */
 InsertExecContext *insert_exec_ctx = NULL;
 PLtsql_execstate *insert_exec_flush_estate = NULL;
-
-extern void exec_set_rowcount(uint64 rowno);
-extern void exec_set_found(PLtsql_execstate *estate, bool state);
 /*
  * The flush INSERT is routed through execute_batch (the top-level batch entry
  * point). It runs through the same econtext setup as a normal T-SQL batch.
@@ -268,19 +265,20 @@ pltsql_insert_exec_open_target_table(const char *target_table,
 	char			*schema_name = NULL;
 	char			*table_name = NULL;
 	char			*physical_schema = NULL;
+	char			*db = NULL;
 
 	if (target_table == NULL)
 		return;
 
 	table_name = pstrdup(target_table);
-	schema_name = resolve_insert_exec_schema_name(schema_name_in, db_name_in);
-	/*
-	 * Resolve against the target's database when a 3-part name
-	 * (db..table) was used; otherwise the current database.
-	 */
-	physical_schema = get_physical_schema_name(
-		(db_name_in != NULL) ? (char *) db_name_in : get_cur_db_name(),
-		schema_name);
+	db = (db_name_in != NULL) ? pstrdup(db_name_in) : get_cur_db_name();
+	if (db != NULL && db[0] != '\0')
+	{
+		schema_name = resolve_insert_exec_schema_name(schema_name_in, db);
+		physical_schema = get_physical_schema_name(db, schema_name);
+	}
+	if (db != NULL)
+		pfree(db);
 
 	/* Create RangeVar and get the relation OID */
 	rv = makeRangeVar(physical_schema, table_name, -1);
@@ -451,14 +449,25 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 	 */
 	if (!(target_table[0] == '#' || target_table[0] == '@'))
 	{
-		char *sname = resolve_insert_exec_schema_name(schema_name_in, db_name_in);
-
-		physical_schema = get_physical_schema_name(
-			(db_name_in != NULL) ? (char *) db_name_in : get_cur_db_name(), sname);
-		pfree(sname);
-		if (physical_schema == NULL)
-			elog(ERROR, "INSERT EXEC failed due to unresolvable schema for target table \"%s\"",
-				target_table);
+		char *db = (db_name_in != NULL) ? pstrdup(db_name_in) : get_cur_db_name();
+		/*
+		 * On the PostgreSQL endpoint a T-SQL procedure runs without logical
+		 * database context (fn_dbid is InvalidDbid for non-TDS connections),
+		 * so the current database name can be empty. With no DB context, leave
+		 * physical_schema NULL and reference the target by its bare name, so
+		 * search_path resolves it - exactly as a plain INSERT does.
+		 */
+		if (db != NULL && db[0] != '\0')
+		{
+			char *sname = resolve_insert_exec_schema_name(schema_name_in, db);
+			physical_schema = get_physical_schema_name(db, sname);
+			pfree(sname);
+			if (physical_schema == NULL)
+				elog(ERROR, "INSERT EXEC failed due to unresolvable schema for target table \"%s\"",
+					target_table);
+		}
+		if (db != NULL)
+			pfree(db);
 	}
 
 	/*
@@ -621,8 +630,6 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema
 	 * Report rows-affected from the DestReceiver's captured-row count
 	 */
 	estate->eval_processed = insert_exec_ctx->rows_processed;
-	exec_set_rowcount(insert_exec_ctx->rows_processed);
-	exec_set_found(estate, insert_exec_ctx->rows_processed != 0);
 }
 
 /*
