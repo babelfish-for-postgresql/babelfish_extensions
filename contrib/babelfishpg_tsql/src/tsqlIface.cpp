@@ -282,15 +282,20 @@ static std::map<size_t, pair<std::string, std::string>> rewritten_query_fragment
 // TODO: incorporate local_id_positions with rewritten_query_fragment
 static std::map<size_t, std::string> local_id_positions;
 
-// XML namespace context: holds the PG array literal for the current statement's namespace bindings.
-// Set by enterDeclare_xmlnamespaces_statement / enterWith_expression when XMLNAMESPACES is present.
-// Cleared by clear_rewritten_query_fragment at statement boundaries.
+// WITH XMLNAMESPACES context for the current statement.
+// Populated by enterDeclare_xmlnamespaces_statement / enterWith_expression;
+// cleared at statement boundaries via clear_rewritten_query_fragment.
+
+// For XML data type methods (.query()/.value()/.exist()): namespace array
+// literal appended to the rewritten method call.
 static std::string xmlnamespace_array_literal;
-// Space-separated 'xmlns:p="u"' string for FOR XML output emission. Set together
-// with xmlnamespace_array_literal.
+
+// For FOR XML output (RAW/PATH/AUTO): 'xmlns:p="u"' string emitted on the
+// row/root element.
 static std::string xmlnamespace_decls_for_forxml;
-// Set of prefixes declared via WITH XMLNAMESPACES (excluding DEFAULT). Used to
-// validate prefixed FOR XML column aliases like 'ns:ID' against the declared list.
+
+// For FOR XML column-alias validation: declared prefix names (excludes
+// DEFAULT).
 static std::set<std::string> xmlnamespace_declared_prefixes;
 	
 // For user-defined variables like @@var or @var# in the RETURN clause of an ITVF

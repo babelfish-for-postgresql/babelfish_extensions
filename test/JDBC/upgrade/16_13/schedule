@@ -653,4 +653,6 @@ sys-fn-varbintohexsubstring
 forxml-path-elements-before-17_10-or-18_4
 forxml-before-17_10-or-18_4
 forxml-auto-before-17_11-or-18_5
+forxml-namespaces-before-17_11-or-18_5
+xml-methods-namespaces-before-17_11-or-18_5
 babel_sqlvariant_coerce_type_before_16_14-or-17_10-or-18_4
