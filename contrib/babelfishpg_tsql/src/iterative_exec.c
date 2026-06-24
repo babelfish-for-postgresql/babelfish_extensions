@@ -1039,7 +1039,7 @@ is_batch_command(PLtsql_stmt *stmt)
 		case PLTSQL_STMT_EXEC_SP:
 			return true;
 		case PLTSQL_STMT_EXECSQL:
-			return ((PLtsql_stmt_execsql *) stmt)->insert_exec;
+			return false;
 		default:
 			return false;
 	}
@@ -1618,10 +1618,6 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 					estate->cur_error->number = exec_state_call_stack->error_data.error_number;
 					estate->cur_error->severity = exec_state_call_stack->error_data.error_severity;
 					estate->cur_error->state = exec_state_call_stack->error_data.error_state;
-
-					/* INSERT EXEC: re-throw errors that must abort the whole flush. */
-					if (ignore_catch_block_for_insert_exec(estate))
-						ReThrowError(estate->cur_error->error);
 
 					/* Goto error handling blocks */
 					*pc = err_handler_pc - 1;	/* same as how goto handles PC */

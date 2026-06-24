@@ -2229,53 +2229,19 @@ public:
 			ctx->insert_statement()->insert_statement_value()->execute_statement();
 
 		/*
-		 * New INSERT EXEC code path - gated behind GUC pltsql_enable_new_insert_exec.
-		 * When enabled, we create a PLtsql_stmt_exec instead of PLtsql_stmt_execsql,
-		 * which allows the executor to handle INSERT EXEC with the new DestReceiver
-		 * and temp table approach. When disabled, fall through to legacy behavior.
+		 * For INSERT EXEC, build a PLtsql_stmt_exec node so the executor can capture
+		 * procedure output via a DestReceiver into a temp table.
 		 *
 		 * Note : process_execsql_remove_unsupported_tokens() populates rewritten_query_fragment
 		 * which apply_exec_expression_rewriting() inside handleInsertExec() depends on.
-		 * Moving the check above it would break expression rewriting. 
+		 * Moving the check above it would break expression rewriting.
 		 */
-		if (is_insert_exec && pltsql_enable_new_insert_exec)
+		if (is_insert_exec)
 		{
 			handleInsertExec(ctx);
 			clear_query_hints();
 			clear_tables_info();
 			return;
-		}
-		/*
-		 * LEGACY INSERT EXEC CODE PATH (GUC pltsql_enable_new_insert_exec = false)
-		 * This code is only needed when the new INSERT EXEC implementation is disabled.
-		 * When the GUC is true, we use PLtsql_stmt_exec instead of PLtsql_stmt_execsql,
-		 * and the cross-database handling is done differently.
-		 * TODO: Remove this block when the new INSERT EXEC implementation is stable
-		 * and the GUC default is flipped to true.
-		 */
-		stmt->insert_exec = is_insert_exec;
-
-		/* Extract db_name and schema_name for cross-database INSERT EXEC (legacy path only) */
-		if (is_insert_exec)
-		{
-			TSqlParser::Func_proc_name_server_database_schemaContext *ctx_name = nullptr;
-			TSqlParser::Execute_bodyContext *body = nullptr;
-
-			TSqlParser::Execute_statementContext *ctxES = ctx->insert_statement()->insert_statement_value()->execute_statement();
-			body = ctxES->execute_body();
-			Assert(body);
-
-			ctx_name       = body->func_proc_name_server_database_schema();
-			if (ctx_name) 
-			{
-				if (ctx_name->database)
-				{
-					db_name = stripQuoteFromId(ctx_name->database);
-					is_cross_db = true;
-				}
-				if (ctx_name->schema)
-					schema_name = stripQuoteFromId(ctx_name->schema);
-			}
 		}
 
 		// record whether stmt is cross-db
@@ -2301,17 +2267,13 @@ public:
 			if (ctx->insert_statement())
 			{
 				auto ddl_object = ctx->insert_statement()->ddl_object();
-				if (stmt->insert_exec && ddl_object && !ddl_object->local_id()) /* insert into non-local object */
+				if (ddl_object && !ddl_object->local_id()) /* insert into non-local object */
 				{
-					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'INSERT EXEC' cannot be used within a function", getLineAndPos(ddl_object));
-				}
-				else if (ddl_object && !ddl_object->local_id()) /* insert into non-local object */
-				{
-					if (ddl_object && ddl_object->full_object_name() && isDelimitedAtAtUserVarName(getFullText(ddl_object->full_object_name()) ))
+					if (ddl_object->full_object_name() && isDelimitedAtAtUserVarName(getFullText(ddl_object->full_object_name())))
 					{
 						/* This is a table variable name enclosed in delimiters, which is OK */
 					}
-					else 
+					else
 						throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'INSERT' cannot be used within a function", getLineAndPos(ddl_object));
 				}
 			}
@@ -5274,7 +5236,6 @@ makeExecSql(ParserRuleContext *ctx)
 	stmt->target = NULL;
 	stmt->need_to_push_result = false;
 	stmt->is_tsql_select_assign_stmt = false;
-	stmt->insert_exec = false;
 
 	return (PLtsql_stmt *) stmt;
 }
@@ -6338,7 +6299,6 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			stmt->target = NULL;
 			stmt->need_to_push_result = false;
 			stmt->is_tsql_select_assign_stmt = false;
-			stmt->insert_exec = false;
 
 			attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
 			return (PLtsql_stmt *) stmt;
@@ -6392,7 +6352,6 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 				stmt->target = NULL;
 				stmt->need_to_push_result = false;
 				stmt->is_tsql_select_assign_stmt = false;
-				stmt->insert_exec = false;
 
 				attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
 				return (PLtsql_stmt *) stmt;

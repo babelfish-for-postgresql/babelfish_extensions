@@ -83,14 +83,7 @@ const uint64 PLTSQL_LOCKTAG_OFFSET = 0xABCDEF;
 static void
 error_if_xact_stmt_blocked_by_insert_exec(bool is_commit)
 {
-	bool		in_insert_exec;
-
-	in_insert_exec = pltsql_insert_exec_active() ||
-		(exec_state_call_stack &&
-		 exec_state_call_stack->estate &&
-		 exec_state_call_stack->estate->insert_exec);
-
-	if (!in_insert_exec)
+	if (!pltsql_insert_exec_active())
 		return;
 
 	if (is_commit)
@@ -157,48 +150,14 @@ PLTsqlProcessTransaction(Node *parsetree,
 
 		case TRANS_STMT_COMMIT:
 			{
-				/*
-				 * Block COMMIT during INSERT EXEC if NestedTranCount <= 1.
-				 *
-				 * INSERT EXEC implicitly makes @@TRANCOUNT = 1. COMMIT is only
-				 * blocked if it would make @@TRANCOUNT go from 1 to 0. If the
-				 * procedure did BEGIN TRAN first (@@TRANCOUNT = 2), then COMMIT
-				 * is allowed (@@TRANCOUNT goes from 2 to 1).
-				 *
-				 * INSERT EXEC detection differs by path: the new path uses the
-				 * global context (pltsql_insert_exec_active), the legacy path
-				 * the per-estate flag (estate->insert_exec).
-				 */
-				if (((pltsql_insert_exec_active()) ||
-					 (exec_state_call_stack &&
-					  exec_state_call_stack->estate &&
-					  exec_state_call_stack->estate->insert_exec)) &&
-					NestedTranCount <= 1)
-					ereport(ERROR,
-							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
-
+				error_if_xact_stmt_blocked_by_insert_exec(true);
 				PLTsqlCommitTransaction(qc, stmt->chain);
 			}
 			break;
 
 		case TRANS_STMT_ROLLBACK:
 			{
-				/*
-				 * Block ROLLBACK during INSERT EXEC.
-				 * ROLLBACK is not allowed within an INSERT-EXEC statement.
-				 *
-				 * INSERT EXEC detection differs by path: the new path uses the
-				 * global context (pltsql_insert_exec_active), the legacy path
-				 * the per-estate flag (estate->insert_exec).
-				 */
-				if ((pltsql_insert_exec_active()) ||
-					(exec_state_call_stack &&
-					 exec_state_call_stack->estate &&
-					 exec_state_call_stack->estate->insert_exec))
-					ereport(ERROR,
-							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-							 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
+				error_if_xact_stmt_blocked_by_insert_exec(false);
 				PLTsqlRollbackTransaction(txnName, qc, stmt->chain);
 			}
 			break;

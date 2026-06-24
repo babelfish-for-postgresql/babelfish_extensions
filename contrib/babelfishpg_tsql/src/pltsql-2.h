@@ -382,6 +382,6 @@ extern RangeVar *pltsqlMakeRangeVarFromName(const char *identifier_val);
 extern bool insert_exec_setup(PLtsql_execstate *estate,
                                         InsertExecInfo *info,
                                         bool start_implicit_txn);
-extern void insert_exec_success_cleanup(PLtsql_execstate *estate, InsertExecInfo *info);
+extern void insert_exec_flush_and_cleanup(PLtsql_execstate *estate, InsertExecInfo *info);
 
 #endif

@@ -1290,7 +1290,6 @@ typedef struct PLtsql_stmt_execsql
 	bool		need_to_push_result;	/* push result to client */
 	bool		is_tsql_select_assign_stmt; /* T-SQL SELECT-assign (i.e.
 											 * SELECT @a=1) */
-	bool		insert_exec;	/* INSERT-EXEC stmt? */
 	bool		is_cross_db;	/* cross database reference */
 	bool		is_ddl;			/* DDL statement? */
 	char	   *schema_name;	/* Schema specified */
@@ -1664,13 +1663,6 @@ typedef struct PLtsql_execstate
 	size_t		cur_err_ctx_idx;
 
 	int			tsql_trigger_flags;
-
-	/*
-	 * A same procedure can be invoked by either normal EXECUTE or INSERT ...
-	 * EXECUTE, and can behave differently.
-	 * Note : It's Used insert-exec legacy codepath, need to remove during cleanup.
-	 */
-	bool		insert_exec;
 
 	List	   *explain_infos;
 	instr_time	planning_start;
@@ -2530,13 +2522,6 @@ extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags
 typedef struct InsertExecContext
 {
 	Oid			temp_table_oid;			/* OID of temp table for buffering */
-	/*
-	 * Target table name (bare), captured at parse time. Kept as a string
-	 * because it is needed when target_rel_oid can't be looked up: during
-	 * cleanup with no live transaction, after the target is dropped (556
-	 * error), for not-yet-existing or table-variable targets, and to preserve
-	 * the cross-DB logical name.
-	 */
 	char	   *target_table;
 	PLExecStateCallStack *call_stack_entry;	/* Call stack entry when INSERT EXEC started */
 	Oid			target_rel_oid;			/* OID of target table - lock held to detect schema changes */
@@ -2546,6 +2531,14 @@ typedef struct InsertExecContext
 
 extern InsertExecContext *insert_exec_ctx;
 
+/*
+ * Set only during an INSERT EXEC flush. The flush runs through the inline
+ * handler, which pushes its own empty estate; this points back at the estate
+ * that declared the flush target so table-variable lookup, the implicit-
+ * transaction decision, and ownership chaining all resolve against the caller.
+ */
+extern PLtsql_execstate *insert_exec_flush_estate;
+
 extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list, const char *schema_name_in, const char *db_name_in);
 extern void pltsql_set_insert_exec_context_info(const char *target_table);
 extern void pltsql_insert_exec_reset_all(void);
@@ -2553,7 +2546,7 @@ extern bool pltsql_insert_exec_active(void);
 extern bool pltsql_insert_exec_error_at_trycatch_level(void);
 extern void pltsql_insert_exec_open_target_table(const char *target_table,const char *schema_name_in,
                                                   const char *db_name_in);
-extern void pltsql_insert_exec_validate_column_count_from_query(const char *query_string);
+extern void pltsql_insert_exec_validate_column_count(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
 
 /* INSERT EXEC helper functions */
 extern DestReceiver *CreateInsertExecDestReceiver(void);
