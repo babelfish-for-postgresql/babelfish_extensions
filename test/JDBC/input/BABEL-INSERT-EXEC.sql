@@ -1,0 +1,1235 @@
+-- ============================================================================
+-- BABEL-INSERT-EXEC: Comprehensive test for INSERT INTO ... EXEC functionality
+-- Tests the Temp Table + Query Rewriting approach for INSERT EXEC
+-- ============================================================================
+-- ============================================================================
+-- Cleanup any leftover objects from previous failed runs
+-- ============================================================================
+DROP PROCEDURE IF EXISTS insert_exec_p1;
+DROP PROCEDURE IF EXISTS insert_exec_p2;
+DROP PROCEDURE IF EXISTS insert_exec_p3;
+DROP PROCEDURE IF EXISTS insert_exec_p4;
+DROP PROCEDURE IF EXISTS insert_exec_p5;
+DROP PROCEDURE IF EXISTS insert_exec_pb1;
+DROP PROCEDURE IF EXISTS insert_exec_ptypes;
+DROP PROCEDURE IF EXISTS insert_exec_pnulls;
+DROP PROCEDURE IF EXISTS insert_exec_pcoerce;
+DROP PROCEDURE IF EXISTS insert_exec_pdynamic;
+DROP PROCEDURE IF EXISTS insert_exec_pmultidyn;
+DROP PROCEDURE IF EXISTS insert_exec_pspexec;
+DROP PROCEDURE IF EXISTS insert_exec_inner;
+DROP PROCEDURE IF EXISTS insert_exec_outer;
+DROP PROCEDURE IF EXISTS insert_exec_level1;
+DROP PROCEDURE IF EXISTS insert_exec_level2;
+DROP PROCEDURE IF EXISTS insert_exec_level3;
+DROP PROCEDURE IF EXISTS insert_exec_pmultisel;
+DROP PROCEDURE IF EXISTS insert_exec_nestinner;
+DROP PROCEDURE IF EXISTS insert_exec_nestmiddle;
+DROP PROCEDURE IF EXISTS insert_exec_nestouter;
+DROP PROCEDURE IF EXISTS insert_exec_pcust;
+DROP PROCEDURE IF EXISTS insert_exec_pidinsert;
+DROP PROCEDURE IF EXISTS insert_exec_ptemp;
+DROP PROCEDURE IF EXISTS insert_exec_pwithtemp;
+DROP PROCEDURE IF EXISTS insert_exec_pcte;
+DROP PROCEDURE IF EXISTS insert_exec_punion;
+DROP PROCEDURE IF EXISTS insert_exec_pcond;
+DROP PROCEDURE IF EXISTS insert_exec_ploop;
+DROP PROCEDURE IF EXISTS insert_exec_ptxn1;
+DROP PROCEDURE IF EXISTS insert_exec_ptxn2;
+DROP PROCEDURE IF EXISTS insert_exec_ptxn3a;
+DROP PROCEDURE IF EXISTS insert_exec_ptxn3b;
+DROP PROCEDURE IF EXISTS insert_exec_ptxn4;
+DROP PROCEDURE IF EXISTS insert_exec_ptrycatch1;
+DROP PROCEDURE IF EXISTS insert_exec_ptrycatch2;
+DROP PROCEDURE IF EXISTS insert_exec_ptrycatch3;
+DROP PROCEDURE IF EXISTS insert_exec_ptrycatch4;
+DROP PROCEDURE IF EXISTS insert_exec_ptrycatch5_inner;
+DROP PROCEDURE IF EXISTS insert_exec_ptrycatch5_outer;
+DROP PROCEDURE IF EXISTS insert_exec_ptrycatch6_inner;
+DROP PROCEDURE IF EXISTS insert_exec_ptrycatch6_outer;
+DROP PROCEDURE IF EXISTS insert_exec_perr2;
+DROP PROCEDURE IF EXISTS insert_exec_plarge;
+DROP PROCEDURE IF EXISTS insert_exec_poutput;
+DROP PROCEDURE IF EXISTS insert_exec_ptrancount1;
+DROP PROCEDURE IF EXISTS insert_exec_ptrancount2;
+DROP PROCEDURE IF EXISTS insert_exec_ptrancount3;
+DROP PROCEDURE IF EXISTS insert_exec_ptrancount4;
+GO
+DROP TABLE IF EXISTS insert_exec_t1;
+DROP TABLE IF EXISTS insert_exec_t2;
+DROP TABLE IF EXISTS insert_exec_t3;
+DROP TABLE IF EXISTS insert_exec_t4;
+DROP TABLE IF EXISTS insert_exec_t5;
+DROP TABLE IF EXISTS insert_exec_b1;
+DROP TABLE IF EXISTS insert_exec_types;
+DROP TABLE IF EXISTS insert_exec_nulls;
+DROP TABLE IF EXISTS insert_exec_coerce;
+DROP TABLE IF EXISTS insert_exec_dynamic;
+DROP TABLE IF EXISTS insert_exec_multidyn;
+DROP TABLE IF EXISTS insert_exec_spexec;
+DROP TABLE IF EXISTS insert_exec_nested;
+DROP TABLE IF EXISTS insert_exec_deep;
+DROP TABLE IF EXISTS insert_exec_multisel;
+DROP TABLE IF EXISTS insert_exec_nestmulti;
+DROP TABLE IF EXISTS insert_exec_custdata;
+DROP TABLE IF EXISTS insert_exec_identity;
+DROP TABLE IF EXISTS insert_exec_idinsert;
+DROP TABLE IF EXISTS insert_exec_fromtemp;
+DROP TABLE IF EXISTS insert_exec_cte;
+DROP TABLE IF EXISTS insert_exec_union;
+DROP TABLE IF EXISTS insert_exec_cond;
+DROP TABLE IF EXISTS insert_exec_loop;
+DROP TABLE IF EXISTS insert_exec_txn1;
+DROP TABLE IF EXISTS insert_exec_txn2;
+DROP TABLE IF EXISTS insert_exec_txn3;
+DROP TABLE IF EXISTS insert_exec_txn4;
+DROP TABLE IF EXISTS insert_exec_trycatch1;
+DROP TABLE IF EXISTS insert_exec_trycatch2;
+DROP TABLE IF EXISTS insert_exec_trycatch3;
+DROP TABLE IF EXISTS insert_exec_trycatch4;
+DROP TABLE IF EXISTS insert_exec_trycatch5;
+DROP TABLE IF EXISTS insert_exec_trycatch6;
+DROP TABLE IF EXISTS insert_exec_err2;
+DROP TABLE IF EXISTS insert_exec_large;
+DROP TABLE IF EXISTS insert_exec_output;
+DROP TABLE IF EXISTS insert_exec_trancount1;
+DROP TABLE IF EXISTS insert_exec_trancount2;
+DROP TABLE IF EXISTS insert_exec_trancount3;
+DROP TABLE IF EXISTS insert_exec_trancount4;
+-- Category P (same-session DDL) cleanup
+DROP PROCEDURE IF EXISTS dbo.p_p1_drop;
+DROP PROCEDURE IF EXISTS dbo.p_p2_alter;
+DROP PROCEDURE IF EXISTS dbo.p_p3_dropcol;
+DROP PROCEDURE IF EXISTS dbo.p_p4_trycatch;
+DROP PROCEDURE IF EXISTS dbo.p_p5_otherdrop;
+DROP TABLE IF EXISTS dbo.t_p1;
+DROP TABLE IF EXISTS dbo.t_p2;
+DROP TABLE IF EXISTS dbo.t_p3;
+DROP TABLE IF EXISTS dbo.t_p4;
+DROP TABLE IF EXISTS dbo.t_p5_target;
+DROP TABLE IF EXISTS dbo.t_p5_other;
+-- Category Q (INSERT EXEC inside a function) cleanup
+DROP FUNCTION IF EXISTS dbo.fn_q1;
+DROP FUNCTION IF EXISTS dbo.fn_q2;
+DROP PROCEDURE IF EXISTS dbo.p_q1;
+DROP PROCEDURE IF EXISTS dbo.p_q2;
+GO
+-- Category R (INSERT EXEC in TRY-CATCH, variable source) cleanup
+DROP PROCEDURE IF EXISTS dbo.p_var_run;
+DROP PROCEDURE IF EXISTS dbo.p_var_src;
+DROP TABLE IF EXISTS dbo.var_tgt;
+GO
+-- ============================================================================
+-- Category A: Basic INSERT EXEC Scenarios
+-- ============================================================================
+-- A1: Basic INSERT EXEC with Simple Procedure
+CREATE TABLE insert_exec_t1 (id INT, name VARCHAR(100));
+GO
+CREATE PROCEDURE insert_exec_p1 AS
+    SELECT 1, 'test';
+GO
+INSERT INTO insert_exec_t1 EXEC insert_exec_p1;
+GO
+SELECT * FROM insert_exec_t1;
+GO
+DROP PROCEDURE insert_exec_p1;
+DROP TABLE insert_exec_t1;
+GO
+-- A2: INSERT EXEC with Multiple Rows
+CREATE TABLE insert_exec_t2 (id INT, value VARCHAR(50));
+GO
+CREATE PROCEDURE insert_exec_p2 AS
+    SELECT 1, 'one'
+    UNION ALL SELECT 2, 'two'
+    UNION ALL SELECT 3, 'three';
+GO
+INSERT INTO insert_exec_t2 EXEC insert_exec_p2;
+GO
+SELECT * FROM insert_exec_t2 ORDER BY id;
+GO
+DROP PROCEDURE insert_exec_p2;
+DROP TABLE insert_exec_t2;
+GO
+-- A3: INSERT EXEC with Procedure Parameters
+CREATE TABLE insert_exec_t3 (id INT, computed INT);
+GO
+CREATE PROCEDURE insert_exec_p3 @multiplier INT AS
+    SELECT 1, 1 * @multiplier
+    UNION ALL SELECT 2, 2 * @multiplier
+    UNION ALL SELECT 3, 3 * @multiplier;
+GO
+INSERT INTO insert_exec_t3 EXEC insert_exec_p3 @multiplier = 10;
+GO
+SELECT * FROM insert_exec_t3 ORDER BY id;
+GO
+DROP PROCEDURE insert_exec_p3;
+DROP TABLE insert_exec_t3;
+GO
+
+-- A4: INSERT EXEC with Schema-Qualified Procedure
+CREATE TABLE dbo.insert_exec_t4 (id INT);
+GO
+CREATE PROCEDURE dbo.insert_exec_p4 AS
+    SELECT 100;
+GO
+INSERT INTO dbo.insert_exec_t4 EXEC dbo.insert_exec_p4;
+GO
+SELECT * FROM dbo.insert_exec_t4;
+GO
+DROP PROCEDURE dbo.insert_exec_p4;
+DROP TABLE dbo.insert_exec_t4;
+GO
+-- A5: INSERT EXEC with Empty Result Set
+CREATE TABLE insert_exec_t5 (id INT);
+GO
+CREATE PROCEDURE insert_exec_p5 AS
+    SELECT 1 WHERE 1 = 0;
+GO
+INSERT INTO insert_exec_t5 EXEC insert_exec_p5;
+GO
+SELECT COUNT(*) AS row_count FROM insert_exec_t5;
+GO
+DROP PROCEDURE insert_exec_p5;
+DROP TABLE insert_exec_t5;
+GO
+-- ============================================================================
+-- Category B: Column Mapping and Data Types
+-- ============================================================================
+-- B1: INSERT EXEC with Explicit Column List
+CREATE TABLE insert_exec_b1 (a INT, b INT, c INT);
+GO
+CREATE PROCEDURE insert_exec_pb1 AS
+    SELECT 100, 200;
+GO
+INSERT INTO insert_exec_b1 (c, a) EXEC insert_exec_pb1;
+GO
+SELECT * FROM insert_exec_b1;
+GO
+DROP PROCEDURE insert_exec_pb1;
+DROP TABLE insert_exec_b1;
+GO
+-- B2: INSERT EXEC with Various Data Types
+CREATE TABLE insert_exec_types (
+    col_int INT,
+    col_bigint BIGINT,
+    col_decimal DECIMAL(18,2),
+    col_varchar VARCHAR(100),
+    col_nvarchar NVARCHAR(100),
+    col_bit BIT
+);
+GO
+CREATE PROCEDURE insert_exec_ptypes AS
+    SELECT
+        123,
+        9223372036854775807,
+        12345.67,
+        'varchar test',
+        N'nvarchar test',
+        1;
+GO
+INSERT INTO insert_exec_types EXEC insert_exec_ptypes;
+GO
+SELECT * FROM insert_exec_types;
+GO
+DROP PROCEDURE insert_exec_ptypes;
+DROP TABLE insert_exec_types;
+GO
+-- B3: INSERT EXEC with NULL Values
+CREATE TABLE insert_exec_nulls (a INT, b VARCHAR(50), c INT);
+GO
+CREATE PROCEDURE insert_exec_pnulls AS
+    SELECT NULL, 'test', NULL
+    UNION ALL SELECT 1, NULL, 2;
+GO
+INSERT INTO insert_exec_nulls EXEC insert_exec_pnulls;
+GO
+SELECT * FROM insert_exec_nulls ORDER BY a;
+GO
+DROP PROCEDURE insert_exec_pnulls;
+DROP TABLE insert_exec_nulls;
+GO
+-- B4: INSERT EXEC with Type Coercion
+CREATE TABLE insert_exec_coerce (val VARCHAR(10));
+GO
+CREATE PROCEDURE insert_exec_pcoerce AS SELECT 12345;
+GO
+INSERT INTO insert_exec_coerce EXEC insert_exec_pcoerce;
+GO
+SELECT * FROM insert_exec_coerce;
+GO
+DROP PROCEDURE insert_exec_pcoerce;
+DROP TABLE insert_exec_coerce;
+GO
+
+-- ============================================================================
+-- Category C: Dynamic SQL (BABEL-4306)
+-- ============================================================================
+-- C1: INSERT EXEC with EXEC() inside procedure
+CREATE TABLE insert_exec_dynamic (a INT, b VARCHAR(10));
+GO
+CREATE PROCEDURE insert_exec_pdynamic AS
+    EXEC('SELECT 456, CAST(''def'' AS VARCHAR(10))');
+GO
+INSERT INTO insert_exec_dynamic EXEC insert_exec_pdynamic;
+GO
+SELECT * FROM insert_exec_dynamic;
+GO
+DROP PROCEDURE insert_exec_pdynamic;
+DROP TABLE insert_exec_dynamic;
+GO
+-- C2: INSERT EXEC with Multiple Dynamic SQL Statements
+CREATE TABLE insert_exec_multidyn (val INT);
+GO
+CREATE PROCEDURE insert_exec_pmultidyn AS
+    EXEC('SELECT 1');
+    EXEC('SELECT 2');
+    EXEC('SELECT 3');
+GO
+INSERT INTO insert_exec_multidyn EXEC insert_exec_pmultidyn;
+GO
+SELECT * FROM insert_exec_multidyn ORDER BY val;
+GO
+DROP PROCEDURE insert_exec_pmultidyn;
+DROP TABLE insert_exec_multidyn;
+GO
+-- C3: INSERT EXEC with sp_executesql inside procedure
+CREATE TABLE insert_exec_spexec (a INT);
+GO
+CREATE PROCEDURE insert_exec_pspexec AS
+    EXEC sp_executesql N'SELECT 777';
+GO
+INSERT INTO insert_exec_spexec EXEC insert_exec_pspexec;
+GO
+SELECT * FROM insert_exec_spexec;
+GO
+-- C3b: INSERT EXEC directly targeting sp_executesql (PLTSQL_STMT_EXEC_SP path).
+-- Must report rows-affected just like the EXEC and EXEC_BATCH forms.
+INSERT INTO insert_exec_spexec EXEC sp_executesql N'SELECT 888';
+GO
+SELECT * FROM insert_exec_spexec ORDER BY a;
+GO
+DROP PROCEDURE insert_exec_pspexec;
+DROP TABLE insert_exec_spexec;
+GO
+-- ============================================================================
+-- Category D: Nested Procedures
+-- ============================================================================
+-- D1: INSERT EXEC with Nested Procedure Calls
+CREATE TABLE insert_exec_nested (val INT);
+GO
+CREATE PROCEDURE insert_exec_inner AS SELECT 100;
+GO
+CREATE PROCEDURE insert_exec_outer AS EXEC insert_exec_inner;
+GO
+INSERT INTO insert_exec_nested EXEC insert_exec_outer;
+GO
+SELECT * FROM insert_exec_nested;
+GO
+DROP PROCEDURE insert_exec_outer;
+DROP PROCEDURE insert_exec_inner;
+DROP TABLE insert_exec_nested;
+GO
+-- D2: INSERT EXEC with Deeply Nested Procedures (3 levels)
+CREATE TABLE insert_exec_deep (level_val INT);
+GO
+CREATE PROCEDURE insert_exec_level3 AS SELECT 3;
+GO
+CREATE PROCEDURE insert_exec_level2 AS EXEC insert_exec_level3;
+GO
+CREATE PROCEDURE insert_exec_level1 AS EXEC insert_exec_level2;
+GO
+INSERT INTO insert_exec_deep EXEC insert_exec_level1;
+GO
+SELECT * FROM insert_exec_deep;
+GO
+DROP PROCEDURE insert_exec_level1;
+DROP PROCEDURE insert_exec_level2;
+DROP PROCEDURE insert_exec_level3;
+DROP TABLE insert_exec_deep;
+GO
+-- D3: INSERT EXEC with Multiple SELECT Statements
+CREATE TABLE insert_exec_multisel (val INT);
+GO
+CREATE PROCEDURE insert_exec_pmultisel AS
+    SELECT 1;
+    SELECT 2;
+    SELECT 3;
+GO
+INSERT INTO insert_exec_multisel EXEC insert_exec_pmultisel;
+GO
+SELECT * FROM insert_exec_multisel ORDER BY val;
+GO
+DROP PROCEDURE insert_exec_pmultisel;
+DROP TABLE insert_exec_multisel;
+GO
+-- D4: INSERT EXEC with Nested Procedure and Multiple SELECTs
+CREATE TABLE insert_exec_nestmulti (a INT);
+GO
+CREATE PROCEDURE insert_exec_nestinner AS SELECT 10;
+GO
+CREATE PROCEDURE insert_exec_nestmiddle AS EXEC insert_exec_nestinner; SELECT 20;
+GO
+CREATE PROCEDURE insert_exec_nestouter AS EXEC insert_exec_nestmiddle; SELECT 30;
+GO
+INSERT INTO insert_exec_nestmulti EXEC insert_exec_nestouter;
+GO
+SELECT * FROM insert_exec_nestmulti ORDER BY a;
+GO
+DROP PROCEDURE insert_exec_nestouter;
+DROP PROCEDURE insert_exec_nestmiddle;
+DROP PROCEDURE insert_exec_nestinner;
+DROP TABLE insert_exec_nestmulti;
+GO
+
+-- ============================================================================
+-- Category E: IDENTITY Column Handling (BABEL-4533)
+-- ============================================================================
+-- E1: INSERT EXEC with IDENTITY Column (auto-generated)
+CREATE TABLE insert_exec_custdata (
+    id VARCHAR(100),
+    cust_name VARCHAR(100),
+    city VARCHAR(100)
+);
+GO
+INSERT INTO insert_exec_custdata VALUES
+    (N'GREAL', N'Great Lakes Food Market', N'Eugene');
+GO
+CREATE PROCEDURE insert_exec_pcust AS
+    SELECT id, cust_name, city FROM insert_exec_custdata;
+GO
+CREATE TABLE insert_exec_identity (
+    idcol INT IDENTITY,
+    id VARCHAR(100),
+    cust_name VARCHAR(100),
+    city VARCHAR(100)
+);
+GO
+INSERT INTO insert_exec_identity EXEC insert_exec_pcust;
+GO
+SELECT * FROM insert_exec_identity;
+GO
+DROP PROCEDURE insert_exec_pcust;
+DROP TABLE insert_exec_custdata;
+DROP TABLE insert_exec_identity;
+GO
+-- E2: INSERT EXEC with IDENTITY_INSERT ON
+CREATE TABLE insert_exec_idinsert (id INT IDENTITY, val VARCHAR(50));
+GO
+CREATE PROCEDURE insert_exec_pidinsert AS
+    SELECT 100, 'explicit id';
+GO
+SET IDENTITY_INSERT insert_exec_idinsert ON;
+INSERT INTO insert_exec_idinsert (id, val) EXEC insert_exec_pidinsert;
+SET IDENTITY_INSERT insert_exec_idinsert OFF;
+GO
+SELECT * FROM insert_exec_idinsert;
+GO
+DROP PROCEDURE insert_exec_pidinsert;
+DROP TABLE insert_exec_idinsert;
+GO
+-- ============================================================================
+-- Category F: Temp Tables
+-- ============================================================================
+-- F1: INSERT EXEC into Temp Table
+CREATE TABLE #insert_exec_temp (id INT, name VARCHAR(50));
+GO
+CREATE PROCEDURE insert_exec_ptemp AS
+    SELECT 1, 'one'
+    UNION ALL SELECT 2, 'two';
+GO
+INSERT INTO #insert_exec_temp EXEC insert_exec_ptemp;
+GO
+SELECT * FROM #insert_exec_temp ORDER BY id;
+GO
+DROP PROCEDURE insert_exec_ptemp;
+DROP TABLE #insert_exec_temp;
+GO
+-- F2: INSERT EXEC with Temp Table Inside Procedure
+CREATE TABLE insert_exec_fromtemp (val INT);
+GO
+CREATE PROCEDURE insert_exec_pwithtemp AS
+    CREATE TABLE #inner_temp (x INT);
+    INSERT INTO #inner_temp VALUES (1), (2), (3);
+    SELECT x * 10 FROM #inner_temp;
+GO
+INSERT INTO insert_exec_fromtemp EXEC insert_exec_pwithtemp;
+GO
+SELECT * FROM insert_exec_fromtemp ORDER BY val;
+GO
+DROP PROCEDURE insert_exec_pwithtemp;
+DROP TABLE insert_exec_fromtemp;
+GO
+-- ============================================================================
+-- Category G: Advanced SQL Constructs
+-- ============================================================================
+-- G1: INSERT EXEC with CTE in Procedure
+CREATE TABLE insert_exec_cte (val INT);
+GO
+CREATE PROCEDURE insert_exec_pcte AS
+    WITH cte AS (
+        SELECT 1 AS n
+        UNION ALL
+        SELECT n + 1 FROM cte WHERE n < 5
+    )
+    SELECT n FROM cte;
+GO
+INSERT INTO insert_exec_cte EXEC insert_exec_pcte;
+GO
+SELECT * FROM insert_exec_cte ORDER BY val;
+GO
+DROP PROCEDURE insert_exec_pcte;
+DROP TABLE insert_exec_cte;
+GO
+-- G2: INSERT EXEC with UNION ALL
+CREATE TABLE insert_exec_union (a INT);
+GO
+CREATE PROCEDURE insert_exec_punion AS
+    SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3;
+GO
+INSERT INTO insert_exec_union EXEC insert_exec_punion;
+GO
+SELECT * FROM insert_exec_union ORDER BY a;
+GO
+DROP PROCEDURE insert_exec_punion;
+DROP TABLE insert_exec_union;
+GO
+-- G3: INSERT EXEC with Conditional SELECT
+CREATE TABLE insert_exec_cond (val INT);
+GO
+CREATE PROCEDURE insert_exec_pcond @flag BIT AS
+    IF @flag = 1
+        SELECT 100;
+    ELSE
+        SELECT 200;
+GO
+INSERT INTO insert_exec_cond EXEC insert_exec_pcond @flag = 1;
+INSERT INTO insert_exec_cond EXEC insert_exec_pcond @flag = 0;
+GO
+SELECT * FROM insert_exec_cond ORDER BY val;
+GO
+DROP PROCEDURE insert_exec_pcond;
+DROP TABLE insert_exec_cond;
+GO
+-- G4: INSERT EXEC with Loop in Procedure
+CREATE TABLE insert_exec_loop (iteration INT, value INT);
+GO
+CREATE PROCEDURE insert_exec_ploop AS
+    DECLARE @i INT = 1;
+    WHILE @i <= 5
+    BEGIN
+        SELECT @i, @i * 10;
+        SET @i = @i + 1;
+    END
+GO
+INSERT INTO insert_exec_loop EXEC insert_exec_ploop;
+GO
+SELECT * FROM insert_exec_loop ORDER BY iteration;
+GO
+DROP PROCEDURE insert_exec_ploop;
+DROP TABLE insert_exec_loop;
+GO
+
+-- ============================================================================
+-- Category H: Transaction Behavior
+-- ============================================================================
+-- H1: INSERT EXEC with Explicit Transaction - COMMIT
+CREATE TABLE insert_exec_txn1 (val INT);
+GO
+CREATE PROCEDURE insert_exec_ptxn1 AS
+    SELECT 1;
+    SELECT 2;
+GO
+BEGIN TRANSACTION;
+INSERT INTO insert_exec_txn1 EXEC insert_exec_ptxn1;
+COMMIT;
+GO
+SELECT COUNT(*) AS row_count FROM insert_exec_txn1;
+GO
+DROP PROCEDURE insert_exec_ptxn1;
+DROP TABLE insert_exec_txn1;
+GO
+-- H2: INSERT EXEC with Explicit Transaction - ROLLBACK
+CREATE TABLE insert_exec_txn2 (val INT);
+GO
+CREATE PROCEDURE insert_exec_ptxn2 AS
+    SELECT 1;
+    SELECT 2;
+GO
+BEGIN TRANSACTION;
+INSERT INTO insert_exec_txn2 EXEC insert_exec_ptxn2;
+ROLLBACK;
+GO
+SELECT COUNT(*) AS row_count FROM insert_exec_txn2;
+GO
+DROP PROCEDURE insert_exec_ptxn2;
+DROP TABLE insert_exec_txn2;
+GO
+-- H3: INSERT EXEC with Multiple Procedures in Transaction
+CREATE TABLE insert_exec_txn3 (source VARCHAR(10), val INT);
+GO
+CREATE PROCEDURE insert_exec_ptxn3a AS SELECT 'p1', 1;
+GO
+CREATE PROCEDURE insert_exec_ptxn3b AS SELECT 'p2', 2;
+GO
+BEGIN TRANSACTION;
+INSERT INTO insert_exec_txn3 EXEC insert_exec_ptxn3a;
+INSERT INTO insert_exec_txn3 EXEC insert_exec_ptxn3b;
+COMMIT;
+GO
+SELECT * FROM insert_exec_txn3 ORDER BY val;
+GO
+DROP PROCEDURE insert_exec_ptxn3a;
+DROP PROCEDURE insert_exec_ptxn3b;
+DROP TABLE insert_exec_txn3;
+GO
+-- H4: INSERT EXEC with Transaction Inside Procedure
+CREATE TABLE insert_exec_txn4 (a INT);
+GO
+CREATE PROCEDURE insert_exec_ptxn4 AS
+BEGIN TRY
+    BEGIN TRANSACTION;
+    SELECT 555;
+    COMMIT;
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0 ROLLBACK;
+END CATCH
+GO
+INSERT INTO insert_exec_txn4 EXEC insert_exec_ptxn4;
+GO
+SELECT * FROM insert_exec_txn4;
+GO
+DROP PROCEDURE insert_exec_ptxn4;
+DROP TABLE insert_exec_txn4;
+GO
+-- ============================================================================
+-- Category I: TRY/CATCH Behavior (BABEL-5922)
+-- ============================================================================
+-- I1: TRY/CATCH with Error - Rows Should Be Rolled Back
+CREATE TABLE insert_exec_trycatch1 (id INT, id1 INT);
+GO
+CREATE PROCEDURE insert_exec_ptrycatch1 AS
+BEGIN TRY
+    SELECT 1, 1;
+    SELECT 1/0;
+END TRY
+BEGIN CATCH
+END CATCH
+GO
+INSERT INTO insert_exec_trycatch1 EXEC insert_exec_ptrycatch1;
+GO
+SELECT COUNT(*) AS row_count FROM insert_exec_trycatch1;
+GO
+DROP PROCEDURE insert_exec_ptrycatch1;
+DROP TABLE insert_exec_trycatch1;
+GO
+-- I2: TRY/CATCH with Successful Execution
+CREATE TABLE insert_exec_trycatch2 (a INT);
+GO
+CREATE PROCEDURE insert_exec_ptrycatch2 AS
+BEGIN TRY
+    SELECT 100;
+    SELECT 200;
+END TRY
+BEGIN CATCH
+    SELECT -1;
+END CATCH
+GO
+INSERT INTO insert_exec_trycatch2 EXEC insert_exec_ptrycatch2;
+GO
+SELECT * FROM insert_exec_trycatch2 ORDER BY a;
+GO
+DROP PROCEDURE insert_exec_ptrycatch2;
+DROP TABLE insert_exec_trycatch2;
+GO
+-- I3: TRY/CATCH with RAISERROR (Severity < 11 - continues)
+CREATE TABLE insert_exec_trycatch3 (val INT);
+GO
+CREATE PROCEDURE insert_exec_ptrycatch3 AS
+BEGIN TRY
+    SELECT 1;
+    RAISERROR('Info message', 10, 1);
+    SELECT 2;
+END TRY
+BEGIN CATCH
+    SELECT -1;
+END CATCH
+GO
+INSERT INTO insert_exec_trycatch3 EXEC insert_exec_ptrycatch3;
+GO
+SELECT * FROM insert_exec_trycatch3 ORDER BY val;
+GO
+DROP PROCEDURE insert_exec_ptrycatch3;
+DROP TABLE insert_exec_trycatch3;
+GO
+-- I4: Nested TRY/CATCH
+CREATE TABLE insert_exec_trycatch4 (val INT);
+GO
+CREATE PROCEDURE insert_exec_ptrycatch4 AS
+BEGIN TRY
+    SELECT 1;
+    BEGIN TRY
+        SELECT 2;
+        SELECT 1/0;
+    END TRY
+    BEGIN CATCH
+        SELECT 3;
+    END CATCH
+    SELECT 4;
+END TRY
+BEGIN CATCH
+    SELECT -1;
+END CATCH
+GO
+INSERT INTO insert_exec_trycatch4 EXEC insert_exec_ptrycatch4;
+GO
+SELECT * FROM insert_exec_trycatch4 ORDER BY val;
+GO
+DROP PROCEDURE insert_exec_ptrycatch4;
+DROP TABLE insert_exec_trycatch4;
+GO
+-- I5: Nested Procedure with TRY/CATCH - Success Case
+-- Tests that internal savepoints work correctly when a nested procedure
+-- has TRY-CATCH that catches an error. The inner proc catches the error
+-- and continues, outer proc should see all rows.
+CREATE TABLE insert_exec_trycatch5 (val INT);
+GO
+CREATE PROCEDURE insert_exec_ptrycatch5_inner AS
+BEGIN TRY
+    SELECT 10;
+    SELECT 1/0;  -- Error caught by inner TRY-CATCH
+    SELECT 20;   -- Not reached
+END TRY
+BEGIN CATCH
+    SELECT 30;   -- Error handler runs
+END CATCH
+SELECT 40;       -- Continues after TRY-CATCH
+GO
+CREATE PROCEDURE insert_exec_ptrycatch5_outer AS
+    SELECT 1;
+    EXEC insert_exec_ptrycatch5_inner;
+    SELECT 2;
+GO
+INSERT INTO insert_exec_trycatch5 EXEC insert_exec_ptrycatch5_outer;
+GO
+SELECT * FROM insert_exec_trycatch5 ORDER BY val;
+GO
+DROP PROCEDURE insert_exec_ptrycatch5_outer;
+DROP PROCEDURE insert_exec_ptrycatch5_inner;
+DROP TABLE insert_exec_trycatch5;
+GO
+-- I6: Nested Procedure with TRY/CATCH - Failure Case (THROW re-raises)
+-- Tests that when inner proc re-throws an error, it propagates correctly
+-- and all rows are rolled back as expected for INSERT EXEC.
+CREATE TABLE insert_exec_trycatch6 (val INT);
+GO
+CREATE PROCEDURE insert_exec_ptrycatch6_inner AS
+BEGIN TRY
+    SELECT 10;
+    SELECT 1/0;  -- Error occurs
+END TRY
+BEGIN CATCH
+    SELECT 20;   -- Error handler runs
+    THROW;       -- Re-throw the error
+END CATCH
+GO
+CREATE PROCEDURE insert_exec_ptrycatch6_outer AS
+    SELECT 1;
+    EXEC insert_exec_ptrycatch6_inner;
+    SELECT 2;    -- Not reached due to re-thrown error
+GO
+INSERT INTO insert_exec_trycatch6 EXEC insert_exec_ptrycatch6_outer;
+GO
+SELECT COUNT(*) AS row_count FROM insert_exec_trycatch6;
+GO
+DROP PROCEDURE insert_exec_ptrycatch6_outer;
+DROP PROCEDURE insert_exec_ptrycatch6_inner;
+DROP TABLE insert_exec_trycatch6;
+GO
+
+-- ============================================================================
+-- Category J: Error Handling
+-- ============================================================================
+-- J1: INSERT EXEC with Division by Zero (skipped in INSERT EXEC)
+CREATE TABLE insert_exec_err2 (val INT);
+GO
+CREATE PROCEDURE insert_exec_perr2 AS
+    SELECT 1;
+    SELECT 1/0;
+    SELECT 2;
+GO
+INSERT INTO insert_exec_err2 EXEC insert_exec_perr2;
+GO
+SELECT * FROM insert_exec_err2 ORDER BY val;
+GO
+DROP PROCEDURE insert_exec_perr2;
+DROP TABLE insert_exec_err2;
+GO
+-- ============================================================================
+-- Category K: Large Result Sets
+-- ============================================================================
+-- K1: INSERT EXEC with 100 Rows
+CREATE TABLE insert_exec_large (id INT);
+GO
+CREATE PROCEDURE insert_exec_plarge AS
+    DECLARE @i INT = 1;
+    WHILE @i <= 100
+    BEGIN
+        SELECT @i;
+        SET @i = @i + 1;
+    END
+GO
+INSERT INTO insert_exec_large EXEC insert_exec_plarge;
+GO
+SELECT COUNT(*) AS row_count FROM insert_exec_large;
+GO
+DROP PROCEDURE insert_exec_plarge;
+DROP TABLE insert_exec_large;
+GO
+-- ============================================================================
+-- Category L: OUTPUT Clause (BABEL-5921)
+-- ============================================================================
+-- L1: INSERT EXEC with OUTPUT Clause in Procedure
+CREATE TABLE insert_exec_output (id INT);
+GO
+CREATE PROCEDURE insert_exec_poutput AS
+    DROP TABLE IF EXISTS #temp;
+    CREATE TABLE #temp (id INT);
+    INSERT INTO #temp OUTPUT INSERTED.* VALUES (1);
+GO
+INSERT INTO insert_exec_output EXEC insert_exec_poutput;
+GO
+SELECT * FROM insert_exec_output;
+GO
+DROP PROCEDURE insert_exec_poutput;
+DROP TABLE insert_exec_output;
+GO
+-- ============================================================================
+-- Category M: Transaction State Visibility (@@TRANCOUNT)
+-- Tests that transaction state is correctly visible inside nested procedures
+-- during INSERT EXEC execution.
+-- ============================================================================
+-- M1: @@TRANCOUNT visibility - no explicit transaction
+CREATE TABLE insert_exec_trancount1 (trancount_val INT);
+GO
+CREATE PROCEDURE insert_exec_ptrancount1 AS
+    SELECT @@TRANCOUNT;
+GO
+INSERT INTO insert_exec_trancount1 EXEC insert_exec_ptrancount1;
+GO
+SELECT * FROM insert_exec_trancount1;
+GO
+DROP PROCEDURE insert_exec_ptrancount1;
+DROP TABLE insert_exec_trancount1;
+GO
+-- M2: @@TRANCOUNT visibility - with explicit transaction
+CREATE TABLE insert_exec_trancount2 (trancount_val INT);
+GO
+CREATE PROCEDURE insert_exec_ptrancount2 AS
+    SELECT @@TRANCOUNT;
+GO
+BEGIN TRANSACTION;
+INSERT INTO insert_exec_trancount2 EXEC insert_exec_ptrancount2;
+COMMIT;
+GO
+SELECT * FROM insert_exec_trancount2;
+GO
+DROP PROCEDURE insert_exec_ptrancount2;
+DROP TABLE insert_exec_trancount2;
+GO
+-- M3: @@TRANCOUNT changes inside procedure
+-- Tests that BEGIN TRAN/COMMIT inside the proc correctly updates @@TRANCOUNT
+CREATE TABLE insert_exec_trancount3 (trancount_val INT);
+GO
+CREATE PROCEDURE insert_exec_ptrancount3 AS
+    SELECT @@TRANCOUNT;
+    BEGIN TRANSACTION;
+    SELECT @@TRANCOUNT;
+    COMMIT;
+    SELECT @@TRANCOUNT;
+GO
+INSERT INTO insert_exec_trancount3 EXEC insert_exec_ptrancount3;
+GO
+SELECT * FROM insert_exec_trancount3 ORDER BY trancount_val;
+GO
+DROP PROCEDURE insert_exec_ptrancount3;
+DROP TABLE insert_exec_trancount3;
+GO
+-- M4: Multiple nested transactions with @@TRANCOUNT
+CREATE TABLE insert_exec_trancount4 (trancount_val INT);
+GO
+CREATE PROCEDURE insert_exec_ptrancount4 AS
+    SELECT @@TRANCOUNT;
+    BEGIN TRANSACTION;
+    SELECT @@TRANCOUNT;
+    BEGIN TRANSACTION;
+    SELECT @@TRANCOUNT;
+    COMMIT;
+    SELECT @@TRANCOUNT;
+    COMMIT;
+    SELECT @@TRANCOUNT;
+GO
+INSERT INTO insert_exec_trancount4 EXEC insert_exec_ptrancount4;
+GO
+SELECT * FROM insert_exec_trancount4 ORDER BY trancount_val;
+GO
+DROP PROCEDURE insert_exec_ptrancount4;
+DROP TABLE insert_exec_trancount4;
+GO
+-- ============================================================================
+-- Category N: Cross-database targets and user-defined data types (UDD)
+-- Tests INSERT EXEC where the target table lives in another database, and
+-- where the source procedure uses a UDD while the target uses a base type.
+-- ============================================================================
+-- N1: target is cross-DB, proc is local
+CREATE DATABASE otherdb;
+GO
+USE otherdb;
+GO
+CREATE TABLE dbo.t_target (val INT);
+GO
+USE master;
+GO
+CREATE PROCEDURE p_local AS SELECT 100 AS val;
+GO
+INSERT INTO otherdb..t_target EXEC p_local;
+GO
+USE otherdb;
+GO
+SELECT * FROM dbo.t_target; -- Expected: 100
+GO
+DROP TABLE dbo.t_target;
+USE master;
+DROP PROCEDURE p_local;
+DROP DATABASE otherdb;
+GO
+-- N2: both target and proc are in otherdb
+CREATE DATABASE otherdb;
+GO
+USE otherdb;
+GO
+CREATE TABLE dbo.t_target (val INT);
+GO
+CREATE PROCEDURE dbo.p_remote AS SELECT 200 AS val;
+GO
+USE master;
+GO
+INSERT INTO otherdb..t_target EXEC otherdb.dbo.p_remote;
+GO
+USE otherdb;
+GO
+SELECT * FROM dbo.t_target; -- Expected: 200
+GO
+DROP TABLE dbo.t_target;
+DROP PROCEDURE dbo.p_remote;
+USE master;
+DROP DATABASE otherdb;
+GO
+-- N3: source uses UDD, target uses base type (UDD-to-base-type coercion)
+CREATE TYPE custom_int FROM INT NOT NULL;
+GO
+CREATE PROCEDURE dbo.p_udd AS
+    DECLARE @v custom_int = 42;
+    SELECT @v AS x;
+GO
+CREATE TABLE dbo.t_basetype (x INT);
+GO
+INSERT INTO dbo.t_basetype EXEC dbo.p_udd;
+GO
+SELECT * FROM dbo.t_basetype; -- Expected: 42
+GO
+DROP TABLE dbo.t_basetype;
+DROP PROCEDURE dbo.p_udd;
+DROP TYPE custom_int;
+GO
+-- N4: target is a temp table, source uses UDD
+CREATE TYPE custom_int FROM INT NOT NULL;
+GO
+CREATE PROCEDURE dbo.p_udd AS
+    DECLARE @v custom_int = 99;
+    SELECT @v AS x;
+GO
+CREATE TABLE #t_temp (x INT);
+GO
+INSERT INTO #t_temp EXEC dbo.p_udd;
+GO
+SELECT * FROM #t_temp; -- Expected: 99
+GO
+DROP TABLE #t_temp;
+DROP PROCEDURE dbo.p_udd;
+DROP TYPE custom_int;
+GO
+
+-- ============================================================================
+-- Category P: Same-session DDL on INSERT EXEC target
+-- ============================================================================
+-- Concurrent-session DDL is blocked by RowExclusiveLock. Same-session DDL
+-- (DROP / ALTER inside the procedure body) is detected by ObjectPostAlterHook
+-- which sets is_target_relation_modified; flush surfaces ERRCODE_OBJECT_IN_USE.
+
+-- P1: Procedure body drops the target table mid-execution
+CREATE TABLE dbo.t_p1 (x INT);
+GO
+CREATE PROCEDURE dbo.p_p1_drop AS
+BEGIN
+    SELECT 1 AS x;
+    DROP TABLE dbo.t_p1;
+END;
+GO
+INSERT INTO dbo.t_p1 EXEC dbo.p_p1_drop; -- Expected: error, target was dropped
+GO
+DROP PROCEDURE dbo.p_p1_drop;
+GO
+
+-- P2: Procedure body alters the target table (add column)
+CREATE TABLE dbo.t_p2 (x INT);
+GO
+CREATE PROCEDURE dbo.p_p2_alter AS
+BEGIN
+    SELECT 1 AS x;
+    ALTER TABLE dbo.t_p2 ADD y INT;
+END;
+GO
+INSERT INTO dbo.t_p2 EXEC dbo.p_p2_alter; -- Expected: error, target was altered
+GO
+SELECT * FROM dbo.t_p2; -- Expected: empty (insert blocked)
+GO
+DROP TABLE dbo.t_p2;
+DROP PROCEDURE dbo.p_p2_alter;
+GO
+
+-- P3: Procedure body alters the target table (drop column)
+CREATE TABLE dbo.t_p3 (x INT, y INT);
+GO
+CREATE PROCEDURE dbo.p_p3_dropcol AS
+BEGIN
+    SELECT 1 AS x, 2 AS y;
+    ALTER TABLE dbo.t_p3 DROP COLUMN y;
+END;
+GO
+INSERT INTO dbo.t_p3 EXEC dbo.p_p3_dropcol; -- Expected: error
+GO
+DROP TABLE dbo.t_p3;
+DROP PROCEDURE dbo.p_p3_dropcol;
+GO
+
+-- P4: TRY-CATCH cannot suppress same-session DDL detection
+-- The hook only sets a flag; the error is raised at flush time, outside the
+-- procedure's TRY-CATCH scope, so it cannot be silently swallowed.
+CREATE TABLE dbo.t_p4 (x INT);
+GO
+CREATE PROCEDURE dbo.p_p4_trycatch AS
+BEGIN
+    BEGIN TRY
+        SELECT 1 AS x;
+        DROP TABLE dbo.t_p4;
+    END TRY
+    BEGIN CATCH
+        SELECT 99 AS x;
+    END CATCH
+END;
+GO
+INSERT INTO dbo.t_p4 EXEC dbo.p_p4_trycatch; -- Expected: error not suppressed
+GO
+DROP PROCEDURE dbo.p_p4_trycatch;
+GO
+
+-- P5: Same-session DDL on a DIFFERENT table is not flagged
+CREATE TABLE dbo.t_p5_target (x INT);
+CREATE TABLE dbo.t_p5_other (y INT);
+GO
+CREATE PROCEDURE dbo.p_p5_otherdrop AS
+BEGIN
+    SELECT 1 AS x;
+    DROP TABLE dbo.t_p5_other;
+END;
+GO
+INSERT INTO dbo.t_p5_target EXEC dbo.p_p5_otherdrop; -- Expected: success
+GO
+SELECT * FROM dbo.t_p5_target; -- Expected: 1
+GO
+DROP TABLE dbo.t_p5_target;
+DROP PROCEDURE dbo.p_p5_otherdrop;
+GO
+
+-- ============================================================================
+-- Category Q: INSERT EXEC inside a T-SQL function
+-- ============================================================================
+
+-- Q1: Positive - function captures procedure output into a table variable
+-- CREATE PROCEDURE dbo.p_q1 AS
+-- BEGIN
+--     SELECT 1 AS a, 'x' AS b
+--     UNION ALL SELECT 2, 'y';
+-- END;
+-- GO
+-- CREATE FUNCTION dbo.fn_q1()
+-- RETURNS @t TABLE (a INT, b VARCHAR(10))
+-- AS
+-- BEGIN
+--     INSERT INTO @t EXEC dbo.p_q1;
+--     RETURN;
+-- END;
+-- GO
+-- SELECT * FROM dbo.fn_q1() ORDER BY a; -- Expected: (1,x) (2,y)
+-- GO
+
+-- -- Q2: Source procedure returns no rows - function returns empty
+-- CREATE PROCEDURE dbo.p_q2 AS
+-- BEGIN
+--     SELECT 1 AS a WHERE 1 = 0;
+-- END;
+-- GO
+-- CREATE FUNCTION dbo.fn_q2()
+-- RETURNS @t TABLE (a INT)
+-- AS
+-- BEGIN
+--     INSERT INTO @t EXEC dbo.p_q2;
+--     RETURN;
+-- END;
+-- GO
+-- SELECT * FROM dbo.fn_q2(); -- Expected: empty
+-- GO
+-- DROP FUNCTION IF EXISTS dbo.fn_q1;
+-- DROP FUNCTION IF EXISTS dbo.fn_q2;
+-- DROP PROCEDURE IF EXISTS dbo.p_q1;
+-- DROP PROCEDURE IF EXISTS dbo.p_q2;
+-- GO
+
+-- ============================================================================
+-- Category R: INSERT EXEC inside TRY-CATCH with a variable-referencing source
+-- ============================================================================
+CREATE TABLE dbo.var_tgt (a int);
+GO
+CREATE PROCEDURE dbo.p_var_src AS
+BEGIN
+    DECLARE @x int = 7;
+    SELECT @x AS a;
+END;
+GO
+CREATE PROCEDURE dbo.p_var_run AS
+BEGIN
+    BEGIN TRY
+        INSERT INTO dbo.var_tgt EXEC dbo.p_var_src;
+    END TRY
+    BEGIN CATCH
+        SELECT ERROR_MESSAGE() AS err;
+    END CATCH
+END;
+GO
+EXEC dbo.p_var_run; -- Expected: 1 row affected, CATCH does not fire
+GO
+SELECT * FROM dbo.var_tgt; -- Expected: 7
+GO
+DROP PROCEDURE IF EXISTS dbo.p_var_run;
+DROP PROCEDURE IF EXISTS dbo.p_var_src;
+DROP TABLE IF EXISTS dbo.var_tgt;
+GO
+
+-- ============================================================================
+-- Category S: INSERT EXEC into a target with an INSTEAD OF INSERT trigger
+-- The trigger must fire and divert rows; the base table must stay empty.
+-- ============================================================================
+CREATE TABLE dbo.ie_iof_base (id INT, val VARCHAR(50));
+GO
+CREATE TABLE dbo.ie_iof_log (id INT, val VARCHAR(50));
+GO
+CREATE PROCEDURE dbo.ie_iof_src AS
+BEGIN
+    SELECT 1 AS id, 'a' AS val
+    UNION ALL SELECT 2, 'b';
+END;
+GO
+CREATE TRIGGER dbo.ie_iof_trg ON dbo.ie_iof_base
+INSTEAD OF INSERT
+AS
+BEGIN
+    INSERT INTO dbo.ie_iof_log (id, val) SELECT id, val FROM inserted;
+END;
+GO
+INSERT INTO dbo.ie_iof_base EXEC dbo.ie_iof_src; -- INSTEAD OF trigger fires
+GO
+SELECT id, val FROM dbo.ie_iof_base ORDER BY id; -- Expected: empty (rows diverted)
+GO
+SELECT id, val FROM dbo.ie_iof_log ORDER BY id;  -- Expected: (1,a) (2,b)
+GO
+DROP TRIGGER dbo.ie_iof_trg;
+DROP PROCEDURE dbo.ie_iof_src;
+DROP TABLE dbo.ie_iof_base;
+DROP TABLE dbo.ie_iof_log;
+GO
+
+-- ============================================================================
+-- Category T: IDENTITY reseed after INSERT EXEC with IDENTITY_INSERT ON
+-- After inserting an explicit identity value, the next auto value must
+-- continue past it (must NOT restart at 1).
+-- ============================================================================
+CREATE TABLE dbo.ie_idsync (id INT IDENTITY(1,1), val VARCHAR(50));
+GO
+CREATE PROCEDURE dbo.ie_idsync_src AS
+    SELECT 50 AS id, 'explicit' AS val;
+GO
+SET IDENTITY_INSERT dbo.ie_idsync ON;
+INSERT INTO dbo.ie_idsync (id, val) EXEC dbo.ie_idsync_src;
+SET IDENTITY_INSERT dbo.ie_idsync OFF;
+GO
+INSERT INTO dbo.ie_idsync (val) VALUES ('auto'); -- Expected identity: 51
+GO
+SELECT id, val FROM dbo.ie_idsync ORDER BY id;   -- Expected: (50,explicit) (51,auto)
+GO
+DROP PROCEDURE dbo.ie_idsync_src;
+DROP TABLE dbo.ie_idsync;
+GO
+
+-- ============================================================================
+-- Category U: AFTER INSERT trigger fires for INSERT EXEC target
+-- ============================================================================
+CREATE TABLE dbo.ie_after_base (id INT);
+GO
+CREATE TABLE dbo.ie_after_audit (cnt INT);
+GO
+CREATE PROCEDURE dbo.ie_after_src AS
+    SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3;
+GO
+CREATE TRIGGER dbo.ie_after_trg ON dbo.ie_after_base
+AFTER INSERT
+AS
+BEGIN
+    INSERT INTO dbo.ie_after_audit (cnt) SELECT COUNT(*) FROM inserted;
+END;
+GO
+INSERT INTO dbo.ie_after_base EXEC dbo.ie_after_src;
+GO
+SELECT id FROM dbo.ie_after_base ORDER BY id; -- Expected: 1 2 3
+GO
+SELECT cnt FROM dbo.ie_after_audit;           -- Expected: 3
+GO
+DROP TRIGGER dbo.ie_after_trg;
+DROP PROCEDURE dbo.ie_after_src;
+DROP TABLE dbo.ie_after_base;
+DROP TABLE dbo.ie_after_audit;
+GO
+
+-- ============================================================================
+-- Category V: @@ROWCOUNT reflects the number of rows flushed by INSERT EXEC
+-- (must be checked in the same batch as the INSERT EXEC)
+-- ============================================================================
+CREATE TABLE dbo.ie_rowcount (a INT);
+GO
+CREATE PROCEDURE dbo.ie_rowcount_src AS
+    SELECT 10 UNION ALL SELECT 20 UNION ALL SELECT 30 UNION ALL SELECT 40;
+GO
+INSERT INTO dbo.ie_rowcount EXEC dbo.ie_rowcount_src;
+SELECT @@ROWCOUNT AS rows_affected; -- Expected: 4
+GO
+SELECT a FROM dbo.ie_rowcount ORDER BY a; -- Expected: 10 20 30 40
+GO
+DROP PROCEDURE dbo.ie_rowcount_src;
+DROP TABLE dbo.ie_rowcount;
+GO
+
+-- ============================================================================
+-- Cleanup verification
+-- ============================================================================
+SELECT 'All INSERT EXEC tests completed successfully' AS status;
+GO

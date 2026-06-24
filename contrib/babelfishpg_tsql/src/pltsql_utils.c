@@ -18,7 +18,6 @@
 #include "storage/lock.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
-#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/fmgroids.h"
@@ -28,6 +27,7 @@
 #include "access/genam.h"
 #include "catalog.h"
 #include "hooks.h"
+#include "guc.h"
 #include "tcop/utility.h"
 
 #include "multidb.h"
@@ -75,6 +75,37 @@ const uint64 PLTSQL_LOCKTAG_OFFSET = 0xABCDEF;
 						 (uint32) ((((int64) key16) + PLTSQL_LOCKTAG_OFFSET) >> 32), \
 						 (uint32) (((int64) key16) + PLTSQL_LOCKTAG_OFFSET), \
 						 3)
+/*
+ * During an INSERT EXEC, T-SQL forbids the executed procedure from committing
+ * or rolling back the implicit transaction that wraps the statement. Raise the
+ * appropriate error when a COMMIT/ROLLBACK is attempted inside an INSERT EXEC.
+ */
+static void
+error_if_xact_stmt_blocked_by_insert_exec(bool is_commit)
+{
+	bool		in_insert_exec;
+
+	in_insert_exec = pltsql_insert_exec_active() ||
+		(exec_state_call_stack &&
+		 exec_state_call_stack->estate &&
+		 exec_state_call_stack->estate->insert_exec);
+
+	if (!in_insert_exec)
+		return;
+
+	if (is_commit)
+	{
+		if (NestedTranCount <= 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+					 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+				 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
+}
+
 /*
  * Transaction processing using tsql semantics
  */
@@ -126,26 +157,14 @@ PLTsqlProcessTransaction(Node *parsetree,
 
 		case TRANS_STMT_COMMIT:
 			{
-				if (exec_state_call_stack &&
-					exec_state_call_stack->estate &&
-					exec_state_call_stack->estate->insert_exec &&
-					NestedTranCount <= 1)
-					ereport(ERROR,
-							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
-
+				error_if_xact_stmt_blocked_by_insert_exec(true);
 				PLTsqlCommitTransaction(qc, stmt->chain);
 			}
 			break;
 
 		case TRANS_STMT_ROLLBACK:
 			{
-				if (exec_state_call_stack &&
-					exec_state_call_stack->estate &&
-					exec_state_call_stack->estate->insert_exec)
-					ereport(ERROR,
-							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-							 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
+				error_if_xact_stmt_blocked_by_insert_exec(false);
 				PLTsqlRollbackTransaction(txnName, qc, stmt->chain);
 			}
 			break;
@@ -3045,6 +3064,15 @@ get_current_func_oid(void)
 {
 	if (!pltsql_support_tsql_transactions())
 		return InvalidOid;
+
+	/*
+	 * During an INSERT EXEC flush the inline handler pushes its own (anonymous
+	 * batch) estate, so fall back to insert_exec_flush_estate (the procedure
+	 * that issued the INSERT EXEC) to keep ownership chaining intact.
+	 */
+	if (insert_exec_flush_estate != NULL)
+		return (insert_exec_flush_estate->func) ?
+			insert_exec_flush_estate->func->fn_oid : InvalidOid;
 
 	/*
 	* Fetch the top procedure excution state from execution state call stack
