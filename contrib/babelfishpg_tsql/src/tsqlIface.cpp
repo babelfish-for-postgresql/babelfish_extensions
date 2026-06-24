@@ -899,6 +899,22 @@ set_insert_exec_info(PLtsql_stmt *stmt, InsertExecInfo *info)
 static void
 apply_exec_expression_rewriting(PLtsql_stmt *stmt, ParserRuleContext *baseCtx)
 {
+	/*
+	 * For INSERT EXEC, any rewrite recorded for the INSERT
+	 * target (e.g. the db/schema qualifier in "otherdb..t_target") sits before
+	 * the EXEC start and would map to a negative offset. Those entries belong
+	 * to the INSERT destination, not the executed statement, so drop them
+	 * before running the mutator.
+	 */
+	size_t exec_start = baseCtx->getStart()->getStartIndex();
+	for (auto it = rewritten_query_fragment.begin(); it != rewritten_query_fragment.end(); )
+	{
+		if (it->first < exec_start)
+			it = rewritten_query_fragment.erase(it);
+		else
+			++it;
+	}
+
 	if (stmt->cmd_type == PLTSQL_STMT_EXEC)
 	{
 		PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) stmt;
@@ -2152,11 +2168,11 @@ public:
 	 */
 	void handleInsertExec(TSqlParser::Dml_statementContext *ctx)
 	{
-		/* INSERT EXEC is not allowed in functions unless target is a table variable */
+		/* INSERT EXEC is not allowed in a function */
 		if (is_compiling_create_function())
 		{
 			auto ddl_object = ctx->insert_statement()->ddl_object();
-			if (ddl_object && !ddl_object->local_id())
+			if (ddl_object)
 				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION,
 					"'INSERT EXEC' cannot be used within a function", getLineAndPos(ddl_object));
 		}

@@ -6,22 +6,6 @@ END
 GO
 
 
-CREATE FUNCTION dbo.test_sp_addrolemember_func(@rolename sys.SYSNAME, @membername sys.SYSNAME) RETURNS INT
-AS
-BEGIN
-DECLARE
-    @tmp_sp_addrolemember TABLE(rolename sys.SYSNAME, membername sys.SYSNAME);
-	INSERT INTO @tmp_sp_addrolemember (rolename, membername) EXEC sp_addrolemember @rolename, @membername;
-    RETURN (SELECT IS_ROLEMEMBER(@rolename, @membername));
-END
-GO
-
-
-CREATE VIEW test_sp_addrolemember_view AS
-SELECT dbo.test_sp_addrolemember_func('sp_addrolemember_role1','sp_addrolemember_dummy') AS Description
-GO
-
-
 CREATE ROLE sp_addrolemember_role1
 GO
 

@@ -1883,7 +1883,7 @@ GO
 INSERT INTO #insert_exec_target EXEC p_insert_exec_basic
 GO
 
-SELECT * FROM #insert_exec_target
+SELECT * FROM #insert_exec_target ORDER BY id
 GO
 
 DROP TABLE #insert_exec_target

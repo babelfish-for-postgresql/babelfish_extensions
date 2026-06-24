@@ -3065,7 +3065,17 @@ bbf_table_var_lookup(const char *relname, Oid relnamespace)
 	ListCell   *lc;
 	int			n;
 	PLtsql_tbl *tbl;
-	PLtsql_execstate *estate = get_current_tsql_estate();
+	PLtsql_execstate *estate;
+
+	/*
+	 * During an INSERT EXEC flush the query runs through execute_batch/the
+	 * inline handler, which pushes its own (empty) estate. insert_exec_flush_estate
+	 * points us back at the estate that actually declared the target table
+	 * variable, so an "@tv" flush target resolves to its backing table.
+	 * Outside the flush it is NULL and we use the current (topmost) estate.
+	 */
+	estate = insert_exec_flush_estate ? insert_exec_flush_estate
+									  : get_current_tsql_estate();
 
 	if (prev_relname_lookup_hook)
 		relid = (*prev_relname_lookup_hook) (relname, relnamespace);
@@ -6502,6 +6512,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->sql_bytea_from_geography = common_utility_plugin_ptr->bytea_from_geography;
 		(*pltsql_protocol_plugin_ptr)->sql_geometry_from_bytea = common_utility_plugin_ptr->geometry_from_bytea;
 		(*pltsql_protocol_plugin_ptr)->sql_geography_from_bytea = common_utility_plugin_ptr->geography_from_bytea;
+		(*pltsql_protocol_plugin_ptr)->pltsql_insert_exec_active = &pltsql_insert_exec_active;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
@@ -6677,6 +6688,13 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 
 		pltsql_non_tsql_proc_entry_count = 0;
 		Assert(pltsql_sys_func_entry_count == 0);
+
+		/*
+		 * Clear stale INSERT EXEC context at the end of each top-level batch.
+		 * This is a safety net to prevent context from leaking between batches.
+		 */
+		if (pltsql_insert_exec_active())
+			pltsql_insert_exec_reset_all();
 
 		if (pltsql_snapshot_portal != NULL)
 		{
