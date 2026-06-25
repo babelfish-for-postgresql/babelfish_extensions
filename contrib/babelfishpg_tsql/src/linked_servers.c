@@ -118,6 +118,18 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 			rpc_error_code = error_code;
 			rpc_error_state = state;
 			rpc_error_severity = severity;
+
+			/*
+			 * Copy into TopMemoryContext (backend lifetime). These strings are
+			 * stashed in the file-static rpc_error_* globals and consumed later
+			 * by linked_server_throw_rpc_error(), after the RPC result-draining
+			 * loop has run SPI/Portal/tuplestore work that can switch or reset
+			 * CurrentMemoryContext. A shorter-lived allocation could be freed
+			 * before it is read, and the matching pfree() in
+			 * linked_server_clear_rpc_error() would then fault. The unconditional
+			 * clear() in execute_remote_procedure_rpc()'s PG_FINALLY frees them,
+			 * so there is no leak on the normal ERROR path.
+			 */
 			rpc_error_msg = error_msg ? MemoryContextStrdup(TopMemoryContext, error_msg) : NULL;
 			rpc_error_svr_name = svr_name ? MemoryContextStrdup(TopMemoryContext, svr_name) : NULL;
 			rpc_error_proc_name = proc_name ? MemoryContextStrdup(TopMemoryContext, proc_name) : NULL;

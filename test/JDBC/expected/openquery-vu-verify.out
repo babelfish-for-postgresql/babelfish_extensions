@@ -3269,6 +3269,17 @@ varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
 ~~END~~
 
 
+-- Charset regression guard: a non-Unicode varchar literal and an nvarchar (N'...')
+-- literal with multi-byte characters must both round-trip correctly through the
+-- UTF-8 client charset set in linked_server_establish_connection().
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT ''café'' AS c, N''日本語'' AS d')
+GO
+~~START~~
+varchar#!#nvarchar
+café#!#日本語
+~~END~~
+
+
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM TEXT_dt');
 GO
 ~~START~~

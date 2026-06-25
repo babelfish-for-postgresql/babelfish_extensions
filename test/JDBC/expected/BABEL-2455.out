@@ -320,7 +320,7 @@ select yourserver.master.dbo.f1(1);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
+~~ERROR (Message: Remote function calls using a 4-part object name (server.database.schema.function) are not currently supported in Babelfish; use EXEC to invoke a remote procedure)~~
 
 
 -- cleanup

@@ -488,7 +488,7 @@ SELECT dbo.TestGeospatialMethods_YourTableTemp.PointColumn.STIntersects(@referen
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
+~~ERROR (Message: Invoking a method on a schema-qualified multi-part object name (schema.table.column.method) is not currently supported in Babelfish)~~
 
 
 
@@ -983,7 +983,7 @@ SELECT dbo.TestGeospatialMethods_YourTableTemp.PointColumn.STDisjoint(@reference
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
+~~ERROR (Message: Invoking a method on a schema-qualified multi-part object name (schema.table.column.method) is not currently supported in Babelfish)~~
 
 
 -- Tests with different set of SRIDs

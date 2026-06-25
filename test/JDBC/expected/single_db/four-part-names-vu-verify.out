@@ -116,6 +116,14 @@ GO
 ~~ERROR (Message: Server 'bbf_fpn_server' is not configured for RPC OUT.)~~
 
 
+-- Remote function call via four-part name in expression position (Should throw error; use EXEC for remote procedures)
+SELECT bbf_fpn_server.master.dbo.fpn_remote_func(1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote function calls using a 4-part object name (server.database.schema.function) are not currently supported in Babelfish; use EXEC to invoke a remote procedure)~~
+
+
 -- INSERT should not work with four-part object name
 INSERT INTO bbf_fpn_server.master.dbo.fpn_table VALUES (5, 'five')
 GO

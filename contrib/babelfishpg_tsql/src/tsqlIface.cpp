@@ -1015,7 +1015,7 @@ public:
 				if (is_xml_method)
 					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "XML method calls with schema-qualified column references (schema.table.column.method) are not currently supported in Babelfish", getLineAndPos(ctx));
 				else
-					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote function calls using a 4-part object name (server.database.schema.function) are not currently supported in Babelfish; use EXEC to invoke a remote procedure", getLineAndPos(ctx));
 			}
 
 			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */
@@ -10062,32 +10062,13 @@ handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 	if (ctx->spatial_proc_name_server_database_schema())
 	{
 		/*
-		 * 4-part names in function call context: distinguish between XML method calls
-		 * (schema.table.xmlcolumn.method) and remote procedure calls (server.db.schema.func).
-		 * Both are unsupported in function-call context but deserve different error messages.
+		 * Reject a method invoked on a schema-qualified multi-part object name
+		 * (schema.table.column.method) in function-call context. The grammar
+		 * forces the trailing token here to be a geospatial method, so this is a
+		 * spatial/CLR-type method call, not a remote procedure reference.
 		 */
 		if (ctx->spatial_proc_name_server_database_schema()->schema)
-		{
-			std::string method_name;
-			if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg())
-				method_name = ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg());
-			else if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_no_arg())
-				method_name = ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_no_arg());
-			else if (ctx->spatial_proc_name_server_database_schema()->column)
-				method_name = stripQuoteFromId(ctx->spatial_proc_name_server_database_schema()->column);
-
-			/* Check if this is an XML method - give a specific error message */
-			bool is_xml_method = (pg_strcasecmp(method_name.c_str(), "exist") == 0) ||
-			                     (pg_strcasecmp(method_name.c_str(), "value") == 0) ||
-			                     (pg_strcasecmp(method_name.c_str(), "query") == 0) ||
-			                     (pg_strcasecmp(method_name.c_str(), "nodes") == 0) ||
-			                     (pg_strcasecmp(method_name.c_str(), "modify") == 0);
-
-			if (is_xml_method)
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "XML method calls with schema-qualified column references (schema.table.column.method) are not currently supported in Babelfish", getLineAndPos(ctx));
-			else
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
-		}
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invoking a method on a schema-qualified multi-part object name (schema.table.column.method) is not currently supported in Babelfish", getLineAndPos(ctx));
 
 		/* This if-elseIf clause rewrites the query in case of geospatial function calls */
 		if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg() && ctx->function_arg_list())
