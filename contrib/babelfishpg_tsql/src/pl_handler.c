@@ -1142,7 +1142,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 }
 
 static void
-pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
+pltsql_post_parse_analyze(ParseState *pstate, Query *query, const JumbleState *jstate)
 {
 
 	if (prev_post_parse_analyze_hook)
