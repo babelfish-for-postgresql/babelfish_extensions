@@ -1115,6 +1115,22 @@ ignore_catch_block_for_unmapped_error(PLtsql_execstate *estate)
 	return false;
 }
 
+/*
+ * When a TRY-CATCH is inside the procedure executed by an INSERT EXEC, the
+ * INSERT EXEC is still in progress. Column/datatype mismatch errors must roll
+ * back every buffered row, so they bypass the CATCH block and are re-thrown.
+ */
+static
+bool
+ignore_catch_block_for_insert_exec(PLtsql_execstate *estate)
+{
+	if (pltsql_insert_exec_error_at_trycatch_level() || !pltsql_insert_exec_active())
+		return false;
+
+	return (estate->cur_error->error != NULL &&
+			estate->cur_error->error->sqlerrcode == ERRCODE_DATATYPE_MISMATCH);
+}
+
 /* Cases where transaction is no longer committable */
 static
 bool
@@ -1618,7 +1634,9 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 									 * error context */
 						}
 					}
-					if (ignore_catch_block_for_unmapped_error(estate) || terminate_batch)
+					/* INSERT EXEC: re-throw errors that must abort the whole flush */
+					if (ignore_catch_block_for_insert_exec(estate) ||
+						ignore_catch_block_for_unmapped_error(estate) || terminate_batch)
 					{
 						elog(DEBUG1, "TSQL TXN Ignore catch block error mapping failed : %d", last_error_mapping_failed);
 						ReThrowError(estate->cur_error->error);

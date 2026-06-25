@@ -59,7 +59,7 @@ bool		pltsql_disable_batch_auto_commit = false;
 bool		pltsql_disable_internal_savepoint = false;
 bool		pltsql_disable_txn_in_triggers = false;
 bool		pltsql_recursive_triggers = false;
-bool		pltsql_enable_new_insert_exec = false;
+bool		pltsql_enable_new_insert_exec = true;
 bool		pltsql_noexec = false;
 bool		pltsql_showplan_all = false;
 bool		pltsql_showplan_text = false;
@@ -957,7 +957,7 @@ define_custom_variables(void)
 							 gettext_noop("Enables INSERT...EXEC redesign code path"),
 							 NULL,
 							 &pltsql_enable_new_insert_exec,
-							 false,
+							 true,
 							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
@@ -1339,6 +1339,7 @@ int			pltsql_isolation_level_repeatable_read = ISOLATION_OFF;
 int 		pltsql_isolation_level_serializable = ISOLATION_OFF;
 int 		escape_hatch_identity_function = EH_STRICT;
 int 		escape_hatch_insert_bulk_options = EH_IGNORE;
+int 		escape_hatch_spatial_index = EH_STRICT;
 
 void
 define_escape_hatch_variables(void)
@@ -1441,6 +1442,18 @@ define_escape_hatch_variables(void)
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
+	/* spatial index */
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_spatial_index",
+							 gettext_noop("escape hatch for CREATE SPATIAL INDEX USING/WITH options; "
+										  "PostGIS GiST is self-tuning and cannot honor these parameters"),
+							 NULL,
+							 &escape_hatch_spatial_index,
+							 EH_STRICT,
+							 escape_hatch_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
 
 	/* compatibility_level */
 

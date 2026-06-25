@@ -2708,6 +2708,11 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 				ListCell   *l;
 				PLtsql_expr *expr = ((PLtsql_stmt_execsql *) stmt)->sqlstmt;
 
+				/* True if running inside a new-path INSERT EXEC. */
+				bool insert_exec_active =
+					(pltsql_plugin_handler_ptr->pltsql_insert_exec_active &&
+					 pltsql_plugin_handler_ptr->pltsql_insert_exec_active());
+
 				/*
 				 * XXX: Once an error occurs, the expr and expr->plan may be
 				 * freed.  In that case, we've to save the command type in
@@ -2731,19 +2736,21 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 								 * or if the INSERT itself is an INSERT-EXEC
 								 * and it just returned error.
 								 */
-								row_count_valid = !estate->insert_exec &&
+								row_count_valid =
+									!estate->insert_exec &&
+									!insert_exec_active &&
 									!(markErrorFlag &&
 									  ((PLtsql_stmt_execsql *) stmt)->insert_exec);
 							}
 							else if (plansource->commandTag == CMDTAG_UPDATE)
 							{
 								command_type = TDS_CMD_UPDATE;
-								row_count_valid = !estate->insert_exec;
+								row_count_valid = !estate->insert_exec && !insert_exec_active;
 							}
 							else if (plansource->commandTag == CMDTAG_DELETE)
 							{
 								command_type = TDS_CMD_DELETE;
-								row_count_valid = !estate->insert_exec;
+								row_count_valid = !estate->insert_exec && !insert_exec_active;
 							}
 
 							/*
@@ -2753,7 +2760,7 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 							else if (plansource->commandTag == CMDTAG_SELECT)
 							{
 								command_type = TDS_CMD_SELECT;
-								row_count_valid = !estate->insert_exec;
+								row_count_valid = !estate->insert_exec && !insert_exec_active;
 							}
 						}
 					}
@@ -2774,8 +2781,39 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 		case PLTSQL_STMT_EXEC_BATCH:
 		case PLTSQL_STMT_EXEC_SP:
 			{
+				/* INSERT EXEC can target any of EXEC, EXEC_BATCH or EXEC_SP */
+				void *insert_exec = NULL;
+
 				is_proc = true;
 				command_type = TDS_CMD_EXECUTE;
+
+				switch (stmt->cmd_type)
+				{
+					case PLTSQL_STMT_EXEC:
+						insert_exec = ((PLtsql_stmt_exec *) stmt)->insert_exec;
+						break;
+					case PLTSQL_STMT_EXEC_BATCH:
+						insert_exec = ((PLtsql_stmt_exec_batch *) stmt)->insert_exec;
+						break;
+					case PLTSQL_STMT_EXEC_SP:
+						insert_exec = ((PLtsql_stmt_exec_sp *) stmt)->insert_exec;
+						break;
+					default:
+						break;
+				}
+
+				/*
+				 * For INSERT EXEC, report the row count set in
+				 * flush_insert_exec_temp_table(). Suppress it when an error is
+				 * pending: the rows are rolled back, no count is sent to the
+				 * client, and a counted DONE left pending here would otherwise
+				 * carry a stale count into the following error DONE token.
+				 */
+				if (!markErrorFlag && insert_exec != NULL)
+				{
+					command_type = TDS_CMD_INSERT;
+					row_count_valid = true;
+				}
 			}
 			break;
 		default:
