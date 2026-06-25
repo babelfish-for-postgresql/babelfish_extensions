@@ -367,10 +367,10 @@ pltsql_insert_exec_validate_column_count(PLtsql_execstate *estate, PLtsql_stmt_e
 	query_natts = result_desc->natts;
 
 	/* Get temp table column count */
-	temp_rel = table_open(temp_table_oid, AccessShareLock);
+	temp_rel = table_open(temp_table_oid, NoLock);
 	temp_tupdesc = RelationGetDescr(temp_rel);
 	temp_natts = temp_tupdesc->natts;
-	table_close(temp_rel, AccessShareLock);
+	table_close(temp_rel, NoLock);
 
 	/* Done reading the shape; drop the throwaway plan. */
 	SPI_freeplan(plan);
@@ -493,6 +493,10 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 	 * Create the temp buffer table by selecting the desired columns
 	 * with no rows. PostgreSQL infers column types from the SELECT.
 	 * ON COMMIT DROP ensures automatic cleanup at transaction end.
+	 *
+	 * This CREATE TABLE goes through heap_create_with_catalog, which takes
+	 * AccessExclusiveLock on the new relation and holds it until end of transaction.
+	 * 
 	 */
 	initStringInfo(&create_stmt);
 	appendStringInfo(&create_stmt,
@@ -679,7 +683,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 * Open the temp buffer table once and hold it open until shutdown, so all
 	 * tuples of this result set are inserted through a single relation handle.
 	 */
-	temp_rel = table_open(insert_exec_ctx->temp_table_oid, RowExclusiveLock);
+	temp_rel = table_open(insert_exec_ctx->temp_table_oid, NoLock);
 
 	myState->temp_rel = temp_rel;
 	temp_tupdesc = RelationGetDescr(temp_rel);
@@ -815,8 +819,8 @@ insertexec_shutdown(DestReceiver *self)
 	FreeExprContext(myState->econtext, true);
 	myState->econtext = NULL;
 
-	Assert(myState->temp_rel!=NULL);
-	table_close(myState->temp_rel, RowExclusiveLock);
+	Assert(myState->temp_rel != NULL);
+	table_close(myState->temp_rel, NoLock);
 	myState->temp_rel = NULL;
 }
 
