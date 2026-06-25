@@ -67,7 +67,6 @@ collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
 static Oid remove_accents_internal_oid;
 static Oid babelfish_like_prefix_oid = InvalidOid;
-static Oid babelfish_like_prefix_upper_oid = InvalidOid;
 static UTransliterator *cached_transliterator = NULL;
 
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
@@ -99,7 +98,6 @@ PG_FUNCTION_INFO_V1(get_server_collation_oid);
 PG_FUNCTION_INFO_V1(is_collated_ci_as_internal);
 PG_FUNCTION_INFO_V1(is_collated_ai_internal);
 PG_FUNCTION_INFO_V1(babelfish_like_prefix);
-PG_FUNCTION_INFO_V1(babelfish_like_prefix_upper);
 
 /* this function is no longer needed and is only a placeholder for upgrade script */
 PG_FUNCTION_INFO_V1(init_server_collation);
@@ -169,9 +167,6 @@ babelfish_like_prefix(PG_FUNCTION_ARGS)
 	int			patt_len;
 	int			i;
 
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();
-
 	pattern = PG_GETARG_TEXT_PP(0);
 	patt_str = VARDATA_ANY(pattern);
 	patt_len = VARSIZE_ANY_EXHDR(pattern);
@@ -181,51 +176,9 @@ babelfish_like_prefix(PG_FUNCTION_ARGS)
 		char c = patt_str[i];
 		if (c == '%' || c == '_' || c == '[' || c == ']')
 			break;
-		if (c == '\\' && i + 1 < patt_len)
-			i++;
 	}
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(patt_str, i));
-}
-
-/*
- * babelfish_like_prefix_upper - extract the literal prefix and append \uFFFF.
- * Returns just \uFFFF if pattern starts with a wildcard (effectively unbounded).
- */
-Datum
-babelfish_like_prefix_upper(PG_FUNCTION_ARGS)
-{
-	text	   *pattern;
-	char	   *patt_str;
-	int			patt_len;
-	int			i;
-	StringInfoData buf;
-
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();
-
-	pattern = PG_GETARG_TEXT_PP(0);
-	patt_str = VARDATA_ANY(pattern);
-	patt_len = VARSIZE_ANY_EXHDR(pattern);
-
-	for (i = 0; i < patt_len; i++)
-	{
-		char c = patt_str[i];
-		if (c == '%' || c == '_' || c == '[' || c == ']')
-			break;
-		if (c == '\\' && i + 1 < patt_len)
-			i++;
-	}
-
-	/* No prefix - return just the high-sort character as unbounded upper */
-	if (i == 0)
-		PG_RETURN_TEXT_P(cstring_to_text(SORT_KEY_STR));
-
-	initStringInfo(&buf);
-	appendBinaryStringInfo(&buf, patt_str, i);
-	appendStringInfoString(&buf, SORT_KEY_STR);
-
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(buf.data, buf.len));
 }
 
 /* init_like_ilike_table - this function is no longer needed and is only a placeholder for upgrade script */
@@ -405,25 +358,12 @@ get_like_prefix_func_oid(void)
 {
 	if (!OidIsValid(babelfish_like_prefix_oid))
 	{
-		Oid argtypes[2] = {TEXTOID, BOOLOID};
+		Oid argtypes[1] = {TEXTOID};
 		babelfish_like_prefix_oid = LookupFuncName(
 			list_make2(makeString("sys"), makeString("babelfish_like_prefix")),
-			2, argtypes, false);
+			1, argtypes, false);
 	}
 	return babelfish_like_prefix_oid;
-}
-
-static Oid
-get_like_prefix_upper_func_oid(void)
-{
-	if (!OidIsValid(babelfish_like_prefix_upper_oid))
-	{
-		Oid argtypes[2] = {TEXTOID, BOOLOID};
-		babelfish_like_prefix_upper_oid = LookupFuncName(
-			list_make2(makeString("sys"), makeString("babelfish_like_prefix_upper")),
-			2, argtypes, false);
-	}
-	return babelfish_like_prefix_upper_oid;
 }
 
 /*
@@ -444,18 +384,18 @@ contains_like_escape(Node *node, void *context)
 
 /*
  * emit_runtime_like_bounds - build runtime index bound expressions
- * using babelfish_like_prefix / babelfish_like_prefix_upper functions.
+ * using babelfish_like_prefix function and concat with \uFFFF for upper bound.
  */
 static Node *
 emit_runtime_like_bounds(Node *node, OpExpr *op, Node *leftop, Node *rightop,
 						 Oid ltypeId, Oid rtypeId,
 						 coll_info_t coll_info_of_inputcollid,
-						 like_ilike_info_t like_entry, bool is_ci)
+						 like_ilike_info_t like_entry)
 {
 	Node	   *rightop_text;
 	Node	   *prefix_expr;
 	Node	   *upper_expr;
-	Const	   *is_ci_const;
+	Const	   *highest_sort_key;
 	Expr	   *ge_expr;
 	Expr	   *lt_expr;
 	Node	   *bound_qual;
@@ -486,22 +426,31 @@ emit_runtime_like_bounds(Node *node, OpExpr *op, Node *leftop, Node *rightop,
 	else
 		rightop_text = rightop;
 
-	is_ci_const = (Const *) makeBoolConst(is_ci, false);
-
-	/* Build FuncExpr for babelfish_like_prefix(rightop_text, is_ci) */
+	/* Build FuncExpr for babelfish_like_prefix(rightop_text) */
 	prefix_expr = (Node *) makeFuncExpr(get_like_prefix_func_oid(),
 										TEXTOID,
-										list_make2(rightop_text, is_ci_const),
+										list_make1(rightop_text),
 										InvalidOid, InvalidOid,
 										COERCE_EXPLICIT_CALL);
 
-	/* Build FuncExpr for babelfish_like_prefix_upper(rightop_text, is_ci) */
-	upper_expr = (Node *) makeFuncExpr(get_like_prefix_upper_func_oid(),
-									   TEXTOID,
-									   list_make2(copyObject(rightop_text),
-												  copyObject(is_ci_const)),
-									   InvalidOid, InvalidOid,
-									   COERCE_EXPLICIT_CALL);
+	/* Build upper bound: babelfish_like_prefix(pattern) || '\uFFFF' */
+	highest_sort_key = makeConst(TEXTOID, -1, InvalidOid, -1,
+								 PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
+
+	optup = compatible_oper(NULL, list_make1(makeString("||")), TEXTOID, TEXTOID,
+							true, -1);
+	if (optup == (Operator) NULL)
+		return node;
+
+	upper_expr = (Node *) make_op_with_func(oprid(optup), TEXTOID, false,
+											(Expr *) makeFuncExpr(get_like_prefix_func_oid(),
+																  TEXTOID,
+																  list_make1(copyObject(rightop_text)),
+																  InvalidOid, InvalidOid,
+																  COERCE_EXPLICIT_CALL),
+											(Expr *) highest_sort_key,
+											InvalidOid, InvalidOid, oprfuncid(optup));
+	ReleaseSysCache(optup);
 
 	/* Coerce results back to ltypeId if needed */
 	if (ltypeId != TEXTOID)
@@ -714,9 +663,6 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 		/* If still not a usable Const, try Tier 2: runtime bounds */
 		if (!IsA(rightop, Const) || ((Const *) rightop)->constisnull)
 		{
-			bool is_ci = (coll_info_of_inputcollid.collateflags == 0x000f ||
-						  coll_info_of_inputcollid.collateflags == 0x000d);
-
 			if (!IsA(rightop, Const) &&
 				!contain_var_clause(rightop) &&
 				!contain_volatile_functions(rightop))
@@ -724,7 +670,7 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 				return emit_runtime_like_bounds(node, op, leftop, rightop,
 											   ltypeId, rtypeId,
 											   coll_info_of_inputcollid,
-											   like_entry, is_ci);
+											   like_entry);
 			}
 
 			/* Give up */
