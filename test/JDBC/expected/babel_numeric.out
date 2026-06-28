@@ -1345,6 +1345,8 @@ select
     avg(value) / 1.0 as avgValueDiv
 into avg_t from BABEL_6081_t1 group by id
 go
+~~ROW COUNT: 2~~
+
 
 select COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE from information_schema.columns where table_name = 'avg_t' ORDER BY COLUMN_NAME;
 go
@@ -1388,6 +1390,8 @@ INTO avg_results
 FROM decimal_test
 GROUP BY id
 GO
+~~ROW COUNT: 3~~
+
 
 select
     COLUMN_NAME,
@@ -1415,6 +1419,8 @@ INTO sum_results
 FROM decimal_test
 GROUP BY category
 GO
+~~ROW COUNT: 2~~
+
 
 select
     COLUMN_NAME,
@@ -1442,6 +1448,8 @@ INTO calc_results
 FROM decimal_test
 GROUP BY id
 GO
+~~ROW COUNT: 3~~
+
 
 select
     COLUMN_NAME,
@@ -1487,6 +1495,8 @@ INTO numeric_results
 FROM numeric_test
 GROUP BY id
 GO
+~~ROW COUNT: 2~~
+
 
 select
     COLUMN_NAME,
@@ -1516,6 +1526,8 @@ INTO range_results
 FROM decimal_test
 GROUP BY id
 GO
+~~ROW COUNT: 3~~
+
 
 select
     COLUMN_NAME,
@@ -1544,6 +1556,8 @@ INTO precision_test
 FROM decimal_test
 GROUP BY id
 GO
+~~ROW COUNT: 3~~
+
 
 select
     COLUMN_NAME,
@@ -1575,6 +1589,8 @@ INTO multi_agg_results
 FROM decimal_test
 GROUP BY category
 GO
+~~ROW COUNT: 2~~
+
 
 select
     COLUMN_NAME,
@@ -1619,6 +1635,8 @@ INTO zero_value_results
 FROM decimal_zero_test
 GROUP BY id
 GO
+~~ROW COUNT: 2~~
+
 
 select
     COLUMN_NAME,
@@ -1944,6 +1962,8 @@ FROM cte1 c1
 JOIN cte2 c2 ON c1.int_id = c2.int_id 
 GROUP BY c1.id; 
 GO
+~~ROW COUNT: 1~~
+
 
 select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE 
 from information_schema.columns 
@@ -1972,6 +1992,8 @@ FROM cte1 c1
 JOIN cte2 c2 ON c1.int_id = c2.int_id 
 GROUP BY c1.id; 
 GO
+~~ROW COUNT: 1~~
+
 
 select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE 
 from information_schema.columns 
@@ -2000,6 +2022,8 @@ FROM cte1 c1
 JOIN cte2 c2 ON c1.int_id = c2.int_id 
 GROUP BY c1.id; 
 GO
+~~ROW COUNT: 1~~
+
 
 select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
 from information_schema.columns 
@@ -2029,6 +2053,8 @@ FROM cte1 c1
 JOIN cte2 c2 ON c1.int_id = c2.int_id 
 GROUP BY c1.id; 
 GO
+~~ROW COUNT: 1~~
+
 
 select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE 
 from information_schema.columns 

@@ -1554,6 +1554,8 @@ GO
 -- New table gets created in my_babel_cross_db_vu_prepare_db1.dbo schema
 SELECT 1 INTO new_table1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases;
 GO
+~~ROW COUNT: 97~~
+
 
 SELECT * FROM new_table1;
 GO

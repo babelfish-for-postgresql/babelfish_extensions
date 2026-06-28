@@ -2843,6 +2843,8 @@ SELECT 1.00 * CASE 1
 END AS RESULT
 INTO test_case_babel_5890_1;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 2: Different precisions, same scale
 SELECT 1.00 * CASE 2
@@ -2854,6 +2856,8 @@ SELECT 1.00 * CASE 2
 END AS RESULT
 INTO test_case_babel_5890_2;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 3: NUMERIC vs DECIMAL comparison
 SELECT 1.00 * CASE 1
@@ -2865,6 +2869,8 @@ SELECT 1.00 * CASE 1
 END AS RESULT
 INTO test_case_babel_5890_3;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 4: Zero and NULL handling
 SELECT 1.00 / CASE 3
@@ -2876,6 +2882,8 @@ SELECT 1.00 / CASE 3
 END AS RESULT
 INTO test_case_babel_5890_4;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 5: Zero and NULL handling
 SELECT 1.00 * CASE 3
@@ -2887,6 +2895,8 @@ SELECT 1.00 * CASE 3
 END AS RESULT
 INTO test_case_babel_5890_5;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 6: High precision numbers
 SELECT 1.00 * CASE 1
@@ -2897,6 +2907,8 @@ SELECT 1.00 * CASE 1
 END AS RESULT
 INTO test_case_babel_5890_6;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 7: Small scale variations
 SELECT 1.00 * CASE 2
@@ -2908,6 +2920,8 @@ SELECT 1.00 * CASE 2
 END AS RESULT
 INTO test_case_babel_5890_7;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 8: Edge case - Maximum SQL Server precision
 SELECT 1.00 / CASE 1
@@ -2932,6 +2946,8 @@ SELECT 1.00 / CASE 4
 END AS RESULT
 INTO test_case_babel_5890_9;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 10: Different scales within the same precision
 SELECT 1.00 / CASE 2
@@ -2943,6 +2959,8 @@ SELECT 1.00 / CASE 2
 END AS RESULT
 INTO test_case_babel_5890_10;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Query INFORMATION_SCHEMA for all test cases
 SELECT 
@@ -3034,6 +3052,8 @@ SELECT CAST(
         AS NUMERIC(24,6)) AS ceiling_col
 INTO test_case_babel_5980_function_1;
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT 
     TABLE_NAME,
@@ -3068,6 +3088,8 @@ SELECT
     1.00 / DATEDIFF(dd, '2000-01-01', '2023-12-31') AS datediff_col_3
 INTO test_case_babel_5980_function_2;
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT 
     TABLE_NAME,
@@ -3616,6 +3638,8 @@ SELECT
     ROUND(CAST(123 AS TINYINT), 2) * 1.00 as tinyint_round
 INTO RoundResults;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Query INFORMATION_SCHEMA.COLUMNS for the results
 SELECT 
@@ -3653,6 +3677,8 @@ SELECT
     ROUND(CAST(123.456 AS MONEY), 2) * CAST(1 AS DECIMAL(15,6)) as money_round
 INTO RoundResultsWithMultipliers;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Query INFORMATION_SCHEMA.COLUMNS for the results with multipliers
 SELECT 
@@ -3685,6 +3711,8 @@ SELECT
     ROUND(CAST(123.456 AS DECIMAL(10,4)), -1) * 1.00 as decimal_round_minus_1
 INTO RoundResultsPositions;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Query INFORMATION_SCHEMA.COLUMNS for different rounding positions
 SELECT 
@@ -3717,6 +3745,8 @@ SELECT
     ROUND(CAST(-9999999.999999 AS NUMERIC(15,6)), 2) * 1.00 as negative_large_decimal_round
 INTO RoundResultsEdgeCases;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Query INFORMATION_SCHEMA.COLUMNS for edge cases
 SELECT 

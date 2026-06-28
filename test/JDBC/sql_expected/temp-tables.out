@@ -91,6 +91,8 @@ GO
 
 SELECT * INTO #local_tempt2 FROM tt_test_t1;
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM #local_tempt2;
 GO
