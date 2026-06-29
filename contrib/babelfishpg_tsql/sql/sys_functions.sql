@@ -5120,9 +5120,9 @@ BEGIN
             RAISE EXCEPTION 'The datepart ''weekday'' is not supported by date function datetrunc for data type ''%''.', date_arg_datatype;
         ELSIF date_arg_datatype = 'date'::regtype AND datepart IN ('hour', 'minute', 'second', 'millisecond', 'microsecond') THEN
             RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''date''.', datepart;
-        ELSIF date_arg_datatype = 'datetime'::regtype AND datepart IN ('microsecond') THEN
+        ELSIF date_arg_datatype = 'sys.datetime'::regtype AND datepart IN ('microsecond') THEN
             RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''datetime''.', datepart;
-        ELSIF date_arg_datatype = 'smalldatetime'::regtype AND datepart IN ('millisecond', 'microsecond') THEN
+        ELSIF date_arg_datatype = 'sys.smalldatetime'::regtype AND datepart IN ('millisecond', 'microsecond') THEN
             RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''smalldatetime''.', datepart;
         ELSIF date_arg_datatype = 'time'::regtype THEN
             IF datepart IN ('year', 'quarter', 'month', 'doy', 'day', 'week', 'tsql_week') THEN
@@ -5130,7 +5130,7 @@ BEGIN
             END IF;
             -- Limitation in determining if the specified fractional scale (if provided any) for time datatype is 
             -- insufficient to support provided datepart (millisecond, microsecond) value
-        ELSIF date_arg_datatype IN ('datetime2'::regtype, 'datetimeoffset'::regtype) THEN
+        ELSIF date_arg_datatype IN ('sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype) THEN
             -- Limitation in determining if the specified fractional scale (if provided any) for the above datatype is
             -- insufficient to support for provided datepart (millisecond, microsecond) value
         END IF;
