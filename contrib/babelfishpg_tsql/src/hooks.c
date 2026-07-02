@@ -26,6 +26,7 @@
 #include "catalog/pg_depend.h"	/* Required in handle_bbf_view_binding_on_object_drop to access pg_rewrite dependencies */
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_operator_d.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_sequence.h"
@@ -400,6 +401,7 @@ static openxml_set_namespaces_hook_type prev_openxml_set_namespaces_hook = NULL;
 #endif
 static match_opclause_to_indexcol_hook_type prev_match_opclause_to_indexcol_hook = NULL;
 static IndexClause *match_oid_cast_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo, int indexcol, IndexOptInfo *index, Node *cast_arg, Node *val_arg, Oid opfamily);
+static IndexClause *match_like_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo, int indexcol, IndexOptInfo *index);
 static IndexClause *bbf_match_opclause_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo, int indexcol, IndexOptInfo *index);
 
 /*****************************************
@@ -9379,6 +9381,241 @@ match_oid_cast_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo,
 }
 
 /*
+   * match_like_to_indexcol - generate index bound expressions for LIKE patterns
+   * where the existing Const path did not generate bounds.
+   * The bounds use babelfish_like_prefix(pattern) which the executor evaluates
+   * at scan start to determine the index seek range.
+   * Returns an IndexClause if bounds can be generated, NULL otherwise.
+ */
+static IndexClause *
+match_like_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo,
+					   int indexcol, IndexOptInfo *index)
+{
+	OpExpr	   *clause = (OpExpr *) rinfo->clause;
+	Node	   *leftop = (Node *) linitial(clause->args);
+	Node	   *rightop = (Node *) lsecond(clause->args);
+	Node	   *unwrapped = leftop;
+	Oid			ltypeId;
+	Oid			opfamily = index->opfamily[indexcol];
+	Oid			indexcollation = index->indexcollations[indexcol];
+	Node	   *prefix_expr;
+	Node	   *upper_expr;
+	Const	   *highest_sort_key;
+	Operator	optup;
+	Oid			geopr;
+	Oid			ltopr;
+	Expr	   *ge_expr;
+	Expr	   *lt_expr;
+	List	   *indexquals;
+	IndexClause *iclause;
+	static Oid	like_prefix_oid = InvalidOid;
+
+	/* Skip volatile or table-referencing patterns */
+	if (contain_volatile_functions(rightop))
+		return NULL;
+	if (bms_is_member(index->rel->relid, rinfo->right_relids))
+		return NULL;
+	if (!match_index_to_operand(leftop, indexcol, index))
+		return NULL;
+
+	/* Unwrap RelabelType to get original column type */
+	while (IsA(unwrapped, RelabelType))
+		unwrapped = (Node *) ((RelabelType *) unwrapped)->arg;
+	ltypeId = exprType(unwrapped);
+
+	/* Check if bounds already exist for this index column from existing path.
+	 * If col >= X, col < X, or col = X already exists, skip. */
+	{
+		ListCell *lc;
+		Oid baseType = getBaseType(ltypeId);
+		Oid check_eqopr = get_opfamily_member(opfamily, ltypeId, ltypeId,
+											  BTEqualStrategyNumber);
+		Oid check_geopr = get_opfamily_member(opfamily, ltypeId, ltypeId,
+											  BTGreaterEqualStrategyNumber);
+		Oid check_ltopr = get_opfamily_member(opfamily, ltypeId, ltypeId,
+											  BTLessStrategyNumber);
+		if (baseType != ltypeId)
+		{
+			if (!OidIsValid(check_eqopr))
+				check_eqopr = get_opfamily_member(opfamily, baseType, baseType,
+												  BTEqualStrategyNumber);
+			if (!OidIsValid(check_geopr))
+				check_geopr = get_opfamily_member(opfamily, baseType, baseType,
+												  BTGreaterEqualStrategyNumber);
+			if (!OidIsValid(check_ltopr))
+				check_ltopr = get_opfamily_member(opfamily, baseType, baseType,
+												  BTLessStrategyNumber);
+		}
+
+		foreach(lc, index->rel->baserestrictinfo)
+		{
+			RestrictInfo *ri = (RestrictInfo *) lfirst(lc);
+			if (ri != rinfo && IsA(ri->clause, OpExpr))
+			{
+				OpExpr *riop = (OpExpr *) ri->clause;
+				if (list_length(riop->args) == 2 &&
+					match_index_to_operand((Node *) linitial(riop->args), indexcol, index))
+				{
+					if (riop->opno == check_eqopr ||
+						riop->opno == check_geopr ||
+						riop->opno == check_ltopr)
+						return NULL;  /* Bounds already exist */
+				}
+			}
+		}
+	}
+
+	/* Skip Const patterns with leading wildcard — prefix is empty, bounds useless. */
+	{
+		Node *check = rightop;
+		while (IsA(check, CollateExpr))
+			check = (Node *) ((CollateExpr *) check)->arg;
+		while (IsA(check, RelabelType))
+			check = (Node *) ((RelabelType *) check)->arg;
+		if (IsA(check, Const))
+		{
+			Const *c = (Const *) check;
+			if (!c->constisnull && c->consttype == TEXTOID)
+			{
+				char *patt = VARDATA_ANY(DatumGetTextPP(c->constvalue));
+				int   plen = VARSIZE_ANY_EXHDR(DatumGetTextPP(c->constvalue));
+				/* Skip if first char is wildcard (empty prefix) */
+				if (plen == 0 || patt[0] == '%' || patt[0] == '_' || patt[0] == '[')
+					return NULL;
+				/* Skip if starts with BBF escape replacement \uFFFF (empty prefix) */
+				if (plen >= 3 &&
+					(unsigned char) patt[0] == 0xEF &&
+					(unsigned char) patt[1] == 0xBF &&
+					(unsigned char) patt[2] == 0xBF)
+					return NULL;
+			}
+		}
+	}
+
+	/* Get babelfish_like_prefix OID */
+	if (!OidIsValid(like_prefix_oid))
+	{
+		List	   *funcname = list_make2(makeString("sys"),
+										 makeString("babelfish_like_prefix"));
+		Oid			argtypes[1] = {TEXTOID};
+		like_prefix_oid = LookupFuncName(funcname, 1, argtypes, true);
+		if (!OidIsValid(like_prefix_oid))
+			return NULL;
+	}
+
+	/* Build: babelfish_like_prefix(pattern) */
+	prefix_expr = (Node *) makeFuncExpr(like_prefix_oid, TEXTOID,
+										list_make1(copyObject(rightop)),
+										InvalidOid, InvalidOid,
+										COERCE_EXPLICIT_CALL);
+
+	/* Build upper: babelfish_like_prefix(pattern) || '\uFFFF' */
+	highest_sort_key = makeConst(TEXTOID, -1, InvalidOid, -1,
+								 PointerGetDatum(cstring_to_text("\xEF\xBF\xBF")),
+								 false, false);
+
+	optup = compatible_oper(NULL, list_make1(makeString("||")),
+						   TEXTOID, TEXTOID, true, -1);
+	if (optup == (Operator) NULL)
+		return NULL;
+
+	upper_expr = (Node *) make_opclause(oprid(optup), TEXTOID, false,
+										(Expr *) makeFuncExpr(like_prefix_oid,
+															  TEXTOID,
+															  list_make1(copyObject(rightop)),
+															  InvalidOid, InvalidOid,
+															  COERCE_EXPLICIT_CALL),
+										(Expr *) highest_sort_key,
+										InvalidOid, InvalidOid);
+	set_opfuncid((OpExpr *) upper_expr);
+	ReleaseSysCache(optup);
+
+	/* Coerce to match column type */
+	if (ltypeId != TEXTOID)
+	{
+		Node *coerced;
+		Oid targetType = ltypeId;
+		Oid baseType = getBaseType(ltypeId);
+
+		/* Try coercing to the actual type first, then base type */
+		coerced = coerce_to_target_type(NULL, prefix_expr, TEXTOID,
+										targetType, -1,
+										COERCION_IMPLICIT,
+										COERCE_IMPLICIT_CAST, -1);
+		if (coerced == NULL && baseType != targetType)
+			coerced = coerce_to_target_type(NULL, prefix_expr, TEXTOID,
+											baseType, -1,
+											COERCION_IMPLICIT,
+											COERCE_IMPLICIT_CAST, -1);
+		if (coerced != NULL)
+			prefix_expr = coerced;
+
+		coerced = coerce_to_target_type(NULL, upper_expr, TEXTOID,
+										targetType, -1,
+										COERCION_IMPLICIT,
+										COERCE_IMPLICIT_CAST, -1);
+		if (coerced == NULL && baseType != targetType)
+			coerced = coerce_to_target_type(NULL, upper_expr, TEXTOID,
+											baseType, -1,
+											COERCION_IMPLICIT,
+											COERCE_IMPLICIT_CAST, -1);
+		if (coerced != NULL)
+			upper_expr = coerced;
+	}
+
+	/* Find >= operator in opfamily */
+	geopr = get_opfamily_member(opfamily, ltypeId, ltypeId,
+							   BTGreaterEqualStrategyNumber);
+	/* If not found, try base type (for domains like nvarchar over varchar) */
+	if (!OidIsValid(geopr))
+	{
+		Oid baseTypeId = getBaseType(ltypeId);
+		if (baseTypeId != ltypeId)
+			geopr = get_opfamily_member(opfamily, baseTypeId, baseTypeId,
+									   BTGreaterEqualStrategyNumber);
+	}
+	if (!OidIsValid(geopr))
+		return NULL;
+
+	ge_expr = make_opclause(geopr, BOOLOID, false,
+							(Expr *) copyObject(unwrapped),
+							(Expr *) prefix_expr,
+							InvalidOid, indexcollation);
+
+	/* Find < operator in opfamily */
+	ltopr = get_opfamily_member(opfamily, ltypeId, ltypeId,
+							   BTLessStrategyNumber);
+	if (!OidIsValid(ltopr))
+	{
+		Oid baseTypeId = getBaseType(ltypeId);
+		if (baseTypeId != ltypeId)
+			ltopr = get_opfamily_member(opfamily, baseTypeId, baseTypeId,
+									   BTLessStrategyNumber);
+	}
+	if (!OidIsValid(ltopr))
+	{
+		indexquals = list_make1(make_simple_restrictinfo(root, ge_expr));
+	}
+	else
+	{
+		lt_expr = make_opclause(ltopr, BOOLOID, false,
+								(Expr *) copyObject(unwrapped),
+								(Expr *) upper_expr,
+								InvalidOid, indexcollation);
+		indexquals = list_make2(make_simple_restrictinfo(root, ge_expr),
+							   make_simple_restrictinfo(root, lt_expr));
+	}
+
+	iclause = makeNode(IndexClause);
+	iclause->rinfo = rinfo;
+	iclause->indexquals = indexquals;
+	iclause->lossy = true;
+	iclause->indexcol = indexcol;
+	iclause->indexcols = NIL;
+	return iclause;
+}
+
+/*
  * bbf_match_opclause_to_indexcol
  *
  * Enables index usage for Babelfish equality patterns where an OID column
@@ -9424,6 +9661,22 @@ bbf_match_opclause_to_indexcol(PlannerInfo *root,
 				if (iclause)
 					return iclause;
 			}
+		}
+	}
+
+	/*
+	 * Handle non-Const LIKE patterns for index optimization.
+	 */
+	if (sql_dialect == SQL_DIALECT_TSQL && IsA(rinfo->clause, OpExpr))
+	{
+		OpExpr	   *clause = (OpExpr *) rinfo->clause;
+
+		if (list_length(clause->args) == 2 &&
+			(clause->opno == OID_TEXT_LIKE_OP || clause->opno == OID_TEXT_ICLIKE_OP))
+		{
+			IndexClause *iclause = match_like_to_indexcol(root, rinfo, indexcol, index);
+			if (iclause)
+				return iclause;
 		}
 	}
 

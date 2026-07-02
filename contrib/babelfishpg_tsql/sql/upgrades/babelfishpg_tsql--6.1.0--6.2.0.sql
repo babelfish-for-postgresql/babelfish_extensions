@@ -444,10 +444,10 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     FINALFUNC = tsql_query_to_xml_text_ffunc
 );
 
--- Runtime LIKE prefix bounds for index scan optimization (BABEL-5966)
+-- LIKE prefix bounds for index scan optimization
 CREATE OR REPLACE FUNCTION sys.babelfish_like_prefix(pattern TEXT)
 RETURNS TEXT AS 'babelfishpg_tsql', 'babelfish_like_prefix'
-LANGUAGE C STABLE STRICT PARALLEL SAFE;
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
