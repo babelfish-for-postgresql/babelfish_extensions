@@ -1086,7 +1086,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 1~~
 
 
 SELECT * FROM babel4157_tbl ORDER BY 1
@@ -1119,7 +1119,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 1~~
 
 
 SELECT * FROM babel4157_tbl ORDER BY 1
@@ -1152,7 +1152,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 1~~
 
 
 SELECT * FROM babel4157_tbl ORDER BY 1
@@ -1185,7 +1185,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 1~~
 
 
 SELECT * FROM babel4157_tbl ORDER BY 1
@@ -1218,7 +1218,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 1~~
 
 
 SELECT * FROM babel4157_tbl ORDER BY 1
@@ -1251,7 +1251,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 1~~
 
 
 SELECT * FROM babel4157_tbl ORDER BY 1
