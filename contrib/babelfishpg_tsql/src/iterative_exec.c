@@ -1035,7 +1035,7 @@ is_batch_command(PLtsql_stmt *stmt)
 		case PLTSQL_STMT_EXEC_SP:
 			return true;
 		case PLTSQL_STMT_EXECSQL:
-			return ((PLtsql_stmt_execsql *) stmt)->insert_exec;
+			return false;
 		default:
 			return false;
 	}

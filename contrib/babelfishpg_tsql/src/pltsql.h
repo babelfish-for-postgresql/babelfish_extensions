@@ -1290,7 +1290,6 @@ typedef struct PLtsql_stmt_execsql
 	bool		need_to_push_result;	/* push result to client */
 	bool		is_tsql_select_assign_stmt; /* T-SQL SELECT-assign (i.e.
 											 * SELECT @a=1) */
-	bool		insert_exec;	/* INSERT-EXEC stmt? */
 	bool		is_cross_db;	/* cross database reference */
 	bool		is_ddl;			/* DDL statement? */
 	char	   *schema_name;	/* Schema specified */
@@ -1664,13 +1663,6 @@ typedef struct PLtsql_execstate
 	size_t		cur_err_ctx_idx;
 
 	int			tsql_trigger_flags;
-
-	/*
-	 * A same procedure can be invoked by either normal EXECUTE or INSERT ...
-	 * EXECUTE, and can behave differently.
-	 * Note : It's Used insert-exec legacy codepath, need to remove during cleanup.
-	 */
-	bool		insert_exec;
 
 	List	   *explain_infos;
 	instr_time	planning_start;
