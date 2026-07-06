@@ -6989,7 +6989,6 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	FunctionCallInfo fake_fcinfo = palloc0(SizeForFunctionCallInfo(nargs));
 	bool		nonatomic;
 	bool		support_tsql_trans = pltsql_support_tsql_transactions();
-	ReturnSetInfo rsinfo;		/* for INSERT ... EXECUTE */
 
 	/*
 	 * FIXME: We leak sp_describe_first_result_set_inprogress if CREATE VIEW
@@ -7098,46 +7097,6 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	else
 		simple_eval_estate = CreateExecutorState();
 
-	/*
-	 * If we are here for INSERT ... EXECUTE, prepare a resultinfo node for
-	 * communication before invoking the function, which can accumulate the
-	 * result sets.
-	 */
-	if (codeblock->relation && codeblock->attrnos)
-	{
-		Oid			reltypeid;
-		TupleDesc	reldesc;
-		TupleDesc	retdesc;
-		int			natts = 0;
-		ListCell   *lc;
-		ListCell   *next;
-
-		/* look up the INSERT target relation rowtype's tupdesc */
-		reltypeid = get_rel_type_id(codeblock->relation);
-		reldesc = lookup_rowtype_tupdesc(reltypeid, -1);
-
-		/* build a tupdesc that only contains relevant INSERT columns */
-		retdesc = CreateTemplateTupleDesc(list_length(codeblock->attrnos));
-		for (lc = list_head(codeblock->attrnos); lc != NULL; lc = next)
-		{
-			natts += 1;
-			TupleDescCopyEntry(retdesc, natts, reldesc, lfirst_int(lc));
-			next = lnext(codeblock->attrnos, lc);
-		}
-
-		fake_fcinfo->resultinfo = (Node *) &rsinfo;
-		rsinfo.type = T_ReturnSetInfo;
-		rsinfo.econtext = CreateExprContext(simple_eval_estate);
-		rsinfo.expectedDesc = retdesc;
-		rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
-		/* note we do not set SFRM_Materialize_Random or _Preferred */
-		rsinfo.returnMode = SFRM_ValuePerCall;
-		rsinfo.isDone = ExprSingleResult;
-		rsinfo.setResult = NULL;
-		rsinfo.setDesc = NULL;
-		ReleaseTupleDesc(reldesc);
-	}
-
 	/* And run the function */
 	PG_TRY();
 	{
@@ -7183,28 +7142,6 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		return retval;
 	}
 	PG_END_TRY();
-
-	if (codeblock->dest && rsinfo.setDesc && rsinfo.setResult)
-	{
-		/*
-		 * If we are here for INSERT ... EXECUTE, send all tuples accumulated
-		 * in resultinfo to the DestReceiver, which will later be consumed by
-		 * the INSERT execution.
-		 */
-		TupleTableSlot *slot = MakeSingleTupleTableSlot(rsinfo.expectedDesc,
-														&TTSOpsMinimalTuple);
-		DestReceiver *dest = (DestReceiver *) codeblock->dest;
-
-		for (;;)
-		{
-			if (!tuplestore_gettupleslot(rsinfo.setResult, true, false, slot))
-				break;
-			dest->receiveSlot(slot, dest);
-			ExecClearTuple(slot);
-		}
-		ReleaseTupleDesc(rsinfo.expectedDesc);
-		ExecDropSingleTupleTableSlot(slot);
-	}
 
 	/* Function should now have no remaining use-counts ... */
 	func->use_count--;

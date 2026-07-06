@@ -59,7 +59,6 @@ bool		pltsql_disable_batch_auto_commit = false;
 bool		pltsql_disable_internal_savepoint = false;
 bool		pltsql_disable_txn_in_triggers = false;
 bool		pltsql_recursive_triggers = false;
-bool		pltsql_enable_new_insert_exec = true;
 bool		pltsql_noexec = false;
 bool		pltsql_showplan_all = false;
 bool		pltsql_showplan_text = false;
@@ -950,15 +949,6 @@ define_custom_variables(void)
 							 &pltsql_recursive_triggers,
 							 false,
 							 PGC_USERSET,
-							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							 NULL, NULL, NULL);
-
-	DefineCustomBoolVariable("babelfishpg_tsql.enable_new_insert_exec",
-							 gettext_noop("Enables INSERT...EXEC redesign code path"),
-							 NULL,
-							 &pltsql_enable_new_insert_exec,
-							 true,
-							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
