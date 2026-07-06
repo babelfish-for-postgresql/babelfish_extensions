@@ -83,14 +83,7 @@ const uint64 PLTSQL_LOCKTAG_OFFSET = 0xABCDEF;
 static void
 error_if_xact_stmt_blocked_by_insert_exec(bool is_commit)
 {
-	bool		in_insert_exec;
-
-	in_insert_exec = pltsql_insert_exec_active() ||
-		(exec_state_call_stack &&
-		 exec_state_call_stack->estate &&
-		 exec_state_call_stack->estate->insert_exec);
-
-	if (!in_insert_exec)
+	if (!pltsql_insert_exec_active())
 		return;
 
 	if (is_commit)
