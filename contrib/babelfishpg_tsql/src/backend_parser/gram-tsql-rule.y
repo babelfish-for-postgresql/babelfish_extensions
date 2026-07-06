@@ -2870,12 +2870,12 @@ tsql_InsertStmt:
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
 			tsql_output_clause INTO insert_target tsql_output_into_target_columns tsql_output_insert_rest
 				{
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, ((ReturningClause *) $10)->exprs, $12, $13, $14, 5, yyscanner);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, $10, $12, $13, $14, 5, yyscanner);
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target tsql_output_into_target_columns tsql_output_insert_rest
 				{
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, ((ReturningClause *) $7)->exprs, $9, $10, $11, 5, yyscanner);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, $10, $11, 5, yyscanner);
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target tsql_output_into_target_columns DEFAULT VALUES
@@ -2887,18 +2887,18 @@ tsql_InsertStmt:
 					i->withClause = NULL;
 					i->cols = NIL;
 					i->selectStmt = NULL;
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, ((ReturningClause *) $7)->exprs, $9, $10, i, 5, yyscanner);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, $10, i, 5, yyscanner);
 				}
 			/* Without OUTPUT target column list */
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
 			tsql_output_clause INTO insert_target tsql_output_insert_rest_no_paren
 				{
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, ((ReturningClause *) $10)->exprs, $12, NIL, $13, 5, yyscanner);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, $10, $12, NIL, $13, 5, yyscanner);
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target tsql_output_insert_rest_no_paren
 				{
-					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, ((ReturningClause *) $7)->exprs, $9, NIL, $10, 5, yyscanner);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, NIL, $10, 5, yyscanner);
 				}
 			/*
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
