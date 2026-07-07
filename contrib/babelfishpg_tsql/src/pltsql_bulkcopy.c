@@ -1019,7 +1019,7 @@ BeginBulkCopy(Relation rel,
 	ExecInitResultRelation(cstate->estate, cstate->resultRelInfo, 1);
 
 	/* Verify the named relation is a valid target for INSERT. */
-	CheckValidResultRel(cstate->resultRelInfo, CMD_INSERT, ONCONFLICT_NONE, NIL);
+	CheckValidResultRel(cstate->resultRelInfo, CMD_INSERT, ONCONFLICT_NONE, NIL, NULL);
 
 	CopyMultiInsertInfoInit(&cstate->multiInsertInfo, cstate->resultRelInfo, cstate,
 							cstate->estate, cstate->mycid, ti_options);
