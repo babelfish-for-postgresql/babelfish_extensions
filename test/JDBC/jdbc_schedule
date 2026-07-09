@@ -202,3 +202,6 @@ ignore#!#ISC-Tables-before_16_4_or_15_8_or_14_13-vu-cleanup
 ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-prepare
 ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-verify
 ignore#!#babelfish_function_ext-before_16_4_or_15_8_or_14_13-vu-cleanup
+#TDS fault injection framework is meant for internal testing only. So, ignore tds_faultinjection tests in stable branch
+ignore#!#tds_faultinjection
+ignore#!#babel_tds_fault_injection
