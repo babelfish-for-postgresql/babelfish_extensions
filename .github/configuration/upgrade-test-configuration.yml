@@ -97,7 +97,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: '14.24',
+      version: '14.25',
       upgrade-type: null
     },
     { 
@@ -133,7 +133,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: '15.19',
+      version: '15.20',
       upgrade-type: null
     },
     { 
@@ -169,7 +169,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: '17.10',
+      version: '17.11',
       upgrade-type: null
     },
     { 
@@ -284,7 +284,7 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: '16.15',
+      version: '16.16',
       upgrade-type: null
     },
     { 
