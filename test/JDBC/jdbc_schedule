@@ -430,3 +430,6 @@ ignore#!#trim-before-15_12-or-16_8-vu-cleanup
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-prepare
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-verify
 ignore#!#round_return_type_test-before-16_9-or-17_5-vu-cleanup
+#TDS fault injection framework is meant for internal testing only. So, ignore tds_faultinjection tests in stable branch
+ignore#!#tds_faultinjection
+ignore#!#babel_tds_fault_injection
