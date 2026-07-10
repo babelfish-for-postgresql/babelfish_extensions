@@ -1124,7 +1124,7 @@ SELECT dbo.xml_query_t1.data.query('/root/name') FROM xml_query_t1 WHERE id = 1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
+~~ERROR (Message: XML method calls with schema-qualified column references (schema.table.column.method) are not currently supported in Babelfish)~~
 
 
 

@@ -1701,7 +1701,7 @@ SELECT dbo.YourTable.PointColumn.STDistance(@referencePoint) AS Distance FROM Yo
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
+~~ERROR (Message: Invoking a method on a schema-qualified multi-part object name (schema.table.column.method) is not currently supported in Babelfish)~~
 
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 

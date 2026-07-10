@@ -52,6 +52,10 @@ GO
 EXEC bbf_fpn_server.master.dbo.sp_linkedserver
 GO
 
+-- Remote function call via four-part name in expression position (Should throw error; use EXEC for remote procedures)
+SELECT bbf_fpn_server.master.dbo.fpn_remote_func(1)
+GO
+
 -- INSERT should not work with four-part object name
 INSERT INTO bbf_fpn_server.master.dbo.fpn_table VALUES (5, 'five')
 GO

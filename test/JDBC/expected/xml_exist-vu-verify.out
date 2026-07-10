@@ -649,7 +649,7 @@ SELECT dbo.babel_5222_xml_exist_t1.XmlColumn.exist('/artists/artist/@name') FROM
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
+~~ERROR (Message: XML method calls with schema-qualified column references (schema.table.column.method) are not currently supported in Babelfish)~~
 
 
 SELECT Id, CASE WHEN XmlColumn.exist('/Root/Child1') = 1 THEN 'The Child1 element exists' ELSE 'The Child1 element does not exist' END AS Result

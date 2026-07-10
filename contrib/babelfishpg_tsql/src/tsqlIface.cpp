@@ -51,6 +51,7 @@ extern "C" {
 
 #include "guc.h"
 
+
 #endif
 
 #ifdef LOG // maybe already defined in elog.h, which is conflicted with grammar token LOG
@@ -1176,6 +1177,23 @@ public:
 		if (ctx->func_proc_name_server_database_schema())
 		{
 			auto fpnsds = ctx->func_proc_name_server_database_schema();
+
+			/* Reject 4-part function calls (server.database.schema.function) - these are not supported */
+			if (fpnsds->server)
+			{
+				/* Check if this is an XML method call - give a specific error message */
+				std::string proc_name = stripQuoteFromId(fpnsds->procedure);
+				bool is_xml_method = (pg_strcasecmp(proc_name.c_str(), "exist") == 0) ||
+				                     (pg_strcasecmp(proc_name.c_str(), "value") == 0) ||
+				                     (pg_strcasecmp(proc_name.c_str(), "query") == 0) ||
+				                     (pg_strcasecmp(proc_name.c_str(), "nodes") == 0) ||
+				                     (pg_strcasecmp(proc_name.c_str(), "modify") == 0);
+
+				if (is_xml_method)
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "XML method calls with schema-qualified column references (schema.table.column.method) are not currently supported in Babelfish", getLineAndPos(ctx));
+				else
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote function calls using a 4-part object name (server.database.schema.function) are not currently supported in Babelfish; use EXEC to invoke a remote procedure", getLineAndPos(ctx));
+			}
 
 			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */
 			{
@@ -4408,6 +4426,8 @@ void report_antlr_error(ANTLR_result r)
 }
 
 #pragma GCC diagnostic pop
+
+
 } // extern "C"
 
 template <class T>
@@ -7211,6 +7231,8 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		}
 	}
 	
+	std::string server_name;
+	
 	if (ctx_name) 
 	{
 		// Get the name of procedure being executed, and split up in parts
@@ -7220,6 +7242,11 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 		
 		// Original position of the name
 		namePos = ctx_name->start->getStartIndex();		
+		
+		if (ctx_name->server)
+		{
+			server_name = stripQuoteFromId(ctx_name->server);
+		}
 		
 		if (ctx_name->database)
 		{
@@ -7298,6 +7325,10 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	result->exec_with_recompile = exec_with_recompile;	
 
 	// Handle name parts
+	if (!server_name.empty())
+	{
+		result->server_name = pstrdup(downcase_truncate_identifier(server_name.c_str(), server_name.length(), true));
+	}
 	if (!proc_name.empty())
 	{
 		result->proc_name = pstrdup(downcase_truncate_identifier(proc_name.c_str(), proc_name.length(), true));
@@ -10260,7 +10291,14 @@ handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 	/* Handles rewrite of geospatial function calls */
 	if (ctx->spatial_proc_name_server_database_schema())
 	{
-		if (ctx->spatial_proc_name_server_database_schema()->schema) throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
+		/*
+		 * Reject a method invoked on a schema-qualified multi-part object name
+		 * (schema.table.column.method) in function-call context. The grammar
+		 * forces the trailing token here to be a geospatial method, so this is a
+		 * spatial/CLR-type method call, not a remote procedure reference.
+		 */
+		if (ctx->spatial_proc_name_server_database_schema()->schema)
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invoking a method on a schema-qualified multi-part object name (schema.table.column.method) is not currently supported in Babelfish", getLineAndPos(ctx));
 
 		/* This if-elseIf clause rewrites the query in case of geospatial function calls */
 		if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg() && ctx->function_arg_list())

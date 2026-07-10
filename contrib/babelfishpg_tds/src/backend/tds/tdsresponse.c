@@ -2993,6 +2993,27 @@ ResetTdsEstateErrorData(void)
 }
 
 /*
+ * Plant explicit error data into tds_estate so the next ERROR_NUMBER() /
+ * ERROR_SEVERITY() / ERROR_STATE() lookup picks up the supplied values
+ * instead of falling through to the user-defined-error default of 50000.
+ *
+ * Used by the linked-server RPC path (linked_server_throw_rpc_error) to
+ * surface the captured remote errno (e.g., 50001 from THROW, 3903 from
+ * a bare ROLLBACK) through the caller's CATCH block — matching SQL
+ * Server's behavior under remote proc transaction promotion = false.
+ */
+void
+SetTdsEstateErrorDataExplicit(int number, int severity, int state)
+{
+	if (tds_estate == NULL)
+		return;
+
+	tds_estate->cur_error_number = number;
+	tds_estate->cur_error_severity = severity;
+	tds_estate->cur_error_state = state;
+}
+
+/*
  * Read error data in tds_estate
  */
 bool

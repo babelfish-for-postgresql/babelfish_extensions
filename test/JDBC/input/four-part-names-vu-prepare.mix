@@ -1,8 +1,38 @@
 -- psql
+-- Suppress warnings for idempotent CREATE EXTENSION
+SET client_min_messages TO 'error';
 CREATE EXTENSION IF NOT EXISTS tds_fdw;
+SET client_min_messages TO 'notice';
 GO
 
 -- tsql
+-- Self-healing prepare: if a previous verify run was killed before its
+-- trailing DROP block ran, these objects linger and break this cycle's
+-- CREATE TABLE / CREATE VIEW in verify. Idempotent IF EXISTS drops reset
+-- local state regardless of how the prior run ended.
+DROP TABLE IF EXISTS fpn_table_insert_into;
+GO
+DROP TABLE IF EXISTS fpn_table_select_into;
+GO
+DROP TABLE IF EXISTS fpn_table;
+GO
+DROP VIEW IF EXISTS four_part_names_vu_verify_view;
+GO
+DROP PROCEDURE IF EXISTS fpn_vu_prepare__fpn_proc;
+GO
+DROP FUNCTION IF EXISTS fpn_vu_prepare__fpn_func;
+GO
+
+-- Reset any leftover linked server. sp_dropserver ... 'droplogins' also
+-- removes the login mapping and clears the server's babelfish_server_options
+-- row (including a stale 'rpc out' = true), so the sp_addlinkedserver below
+-- always starts from the clean default where 'rpc out' is false. Without
+-- this, a leftover server makes sp_addlinkedserver error ("already exists")
+-- and verify sees a stale rpc_out, dispatching RPC instead of raising 7412.
+IF EXISTS(SELECT * FROM sys.servers WHERE name = 'bbf_fpn_server')
+    EXEC sp_dropserver 'bbf_fpn_server', 'droplogins'
+GO
+
 EXEC sp_addlinkedserver  @server = N'bbf_fpn_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master';
 GO
 

@@ -1,0 +1,131 @@
+-- psql
+-- Suppress warnings for idempotent CREATE EXTENSION
+SET client_min_messages TO 'error';
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+SET client_min_messages TO 'notice';
+GO
+
+-- tsql
+-- Create loopback linked server for CI testing
+EXEC sp_addlinkedserver @server = N'bbf_loopback', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master';
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_loopback', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678';
+GO
+
+-- Enable RPC out (required for remote procedure execution)
+EXEC sp_serveroption 'bbf_loopback', 'rpc out', 'true';
+GO
+
+-- Create test procedures
+
+CREATE PROCEDURE rpe_loopback_no_params
+AS BEGIN
+    SELECT 'hello' AS msg, 1 AS val;
+END;
+GO
+
+CREATE PROCEDURE rpe_loopback_int_param @x INT
+AS BEGIN
+    SELECT @x AS input_val, @x * 2 AS doubled;
+END;
+GO
+
+CREATE PROCEDURE rpe_loopback_varchar_param @s VARCHAR(100)
+AS BEGIN
+    SELECT @s AS str_val, LEN(@s) AS str_len;
+END;
+GO
+
+CREATE PROCEDURE rpe_loopback_multi_params @a INT, @b VARCHAR(50), @c BIGINT
+AS BEGIN
+    SELECT @a AS int_val, @b AS str_val, @c AS bigint_val;
+END;
+GO
+
+CREATE PROCEDURE rpe_loopback_output @input INT, @result INT OUTPUT
+AS BEGIN
+    SET @result = @input * 3;
+END;
+GO
+
+CREATE PROCEDURE rpe_loopback_output_multi @x INT, @y INT, @sum INT OUTPUT, @product INT OUTPUT
+AS BEGIN
+    SET @sum = @x + @y;
+    SET @product = @x * @y;
+END;
+GO
+
+CREATE PROCEDURE rpe_loopback_return_code @val INT
+AS BEGIN
+    IF @val > 0
+        RETURN 1;
+    ELSE IF @val < 0
+        RETURN -1;
+    ELSE
+        RETURN 0;
+END;
+GO
+
+CREATE PROCEDURE rpe_loopback_raiserror
+AS BEGIN
+    RAISERROR('Test error from remote proc', 16, 1);
+END;
+GO
+
+-- Errno preservation cells (Item 1). The captured remote errno must surface
+-- through the caller's ERROR_NUMBER() instead of the user-defined-error
+-- default of 50000. Matches SQL Server's promotion=false behavior.
+CREATE PROCEDURE rpe_loopback_throw50001
+AS BEGIN
+    THROW 50001, 'errno-preservation: remote throw', 1;
+END;
+GO
+
+CREATE PROCEDURE rpe_loopback_bare_rollback
+AS BEGIN
+    -- Bare ROLLBACK with no matching BEGIN. The remote engine raises
+    -- error 3903; under caller XACT_ABORT ON the error propagates as a
+    -- catchable error and ERROR_NUMBER() should report 3903.
+    ROLLBACK TRAN;
+END;
+GO
+
+CREATE PROCEDURE rpe_loopback_begin_no_commit
+AS BEGIN
+    -- Open BEGIN TRAN without a matching COMMIT. On proc exit the engine
+    -- raises error 266 ("Transaction count after EXECUTE indicates a
+    -- mismatching number of BEGIN and COMMIT statements"). Used by the
+    -- I1.B errno-preservation cell to assert ERROR_NUMBER() = 266 — the
+    -- same plumbing path that surfaces 50001 (THROW) and 3903 (bare
+    -- ROLLBACK) must also surface engine error 266.
+    BEGIN TRAN;
+END;
+GO
+
+-- Emits multiple result sets (two SELECTs) in one proc. Exercises the
+-- result-set drain loop in execute_remote_procedure_rpc(): every set must be
+-- fully read + shipped before the next arrives, otherwise the trailing
+-- DONEPROC / return-status / OUTPUT-param bytes are corrupted.
+CREATE PROCEDURE rpe_loopback_multi_resultset
+AS BEGIN
+    SELECT 1 AS first_set_col, 'a' AS first_set_text;
+    SELECT 2 AS second_set_col, 'b' AS second_set_text
+    UNION ALL
+    SELECT 3 AS second_set_col, 'c' AS second_set_text
+    ORDER BY second_set_col;
+END;
+GO
+
+-- Mix of multi-set + OUTPUT param + return status. The TDS tail bytes
+-- (DONEPROC + OUTPUT + return status) must survive draining every set.
+CREATE PROCEDURE rpe_loopback_multi_resultset_with_output
+    @seed INT,
+    @row_count INT OUTPUT
+AS BEGIN
+    SELECT @seed AS seed_echo;
+    SELECT @seed + 1 AS next_val;
+    SET @row_count = 2;
+    RETURN 42;
+END;
+GO

@@ -1425,6 +1425,42 @@ get_timeout_from_server_name(char *servername, int attnum)
 	return timeout;
 }
 
+bool
+get_rpc_out_option(char *servername)
+{
+	Relation	bbf_servers_def_rel;
+	HeapTuple	tuple;
+	ScanKeyData	key;
+	TableScanDesc	scan;
+	bool		rpc_out_enabled = false;  /* Default to disabled */
+
+	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
+										 AccessShareLock);
+
+	ScanKeyInit(&key,
+				Anum_bbf_servers_def_servername,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(servername));
+
+	scan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
+
+	tuple = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tuple))
+	{
+		bool	isNull;
+		rpc_out_enabled = DatumGetBool(heap_getattr(tuple, 
+													 Anum_bbf_servers_def_rpc_out,
+													 RelationGetDescr(bbf_servers_def_rel), 
+													 &isNull));
+		if (isNull)
+			rpc_out_enabled = false;  /* Default if NULL */
+	}
+
+	table_endscan(scan);
+	table_close(bbf_servers_def_rel, AccessShareLock);
+	return rpc_out_enabled;
+}
+
 void
 clean_up_bbf_server_def()
 {

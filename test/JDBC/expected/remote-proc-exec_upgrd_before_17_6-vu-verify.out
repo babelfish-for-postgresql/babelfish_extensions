@@ -1,0 +1,17 @@
+-- Verify linked server persists through upgrade
+SELECT name, is_rpc_out_enabled FROM sys.servers WHERE name = 'bbf_server'
+GO
+~~START~~
+varchar#!#bit
+bbf_server#!#1
+~~END~~
+
+
+-- Test OPENQUERY still works after upgrade
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT 123 AS test_value')
+GO
+~~START~~
+int
+123
+~~END~~
+

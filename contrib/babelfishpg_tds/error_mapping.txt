@@ -188,3 +188,7 @@ XX000 ERRCODE_INTERNAL_ERROR	"The table-valued parameter \"%s\" must be declared
 42P01 ERRCODE_UNDEFINED_TABLE	"FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name."		SQL_ERROR_13600	16
 42P01 ERRCODE_FEATURE_NOT_SUPPORTED	"sub-select and values for json auto are not currently supported."		SQL_ERROR_13600	16
 
+HV004 ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION	"Could not execute statement on remote server '%s'."	SQL_ERROR_7215	16	"Could not execute statement on remote server"
+HV000 ERRCODE_FDW_ERROR	"Server '%s' is not configured for RPC OUT."	SQL_ERROR_7412	16	"is not configured for RPC OUT"
+HV000 ERRCODE_FDW_ERROR	"Could not find server '%s' in sys.servers."	SQL_ERROR_7202	11	"Could not find server"
+

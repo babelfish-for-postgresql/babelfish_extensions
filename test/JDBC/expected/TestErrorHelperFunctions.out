@@ -210,6 +210,9 @@ XX000#!#The table-valued parameter "%s" must be declared with the READONLY optio
 22008#!#Adding a value to a '%s' column caused an overflow.#!##!#517
 42P01#!#FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.#!##!#13600
 42P01#!#sub-select and values for json auto are not currently supported.#!##!#13600
+HV004#!#Could not execute statement on remote server '%s'.#!#Could not execute statement on remote server#!#7215
+HV000#!#Server '%s' is not configured for RPC OUT.#!#is not configured for RPC OUT#!#7412
+HV000#!#Could not find server '%s' in sys.servers.#!#Could not find server#!#7202
 ~~END~~
 
 

@@ -6,7 +6,9 @@
 #include "libpq/pqformat.h"
 #include "tsearch/ts_locale.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "miscadmin.h"
+#include "catalog/pg_type.h"
 
 #include "pltsql.h"
 #include "linked_servers.h"
@@ -21,6 +23,14 @@
 
 #define LINKED_SERVER_DEBUG(...)	elog(DEBUG1, __VA_ARGS__)
 #define LINKED_SERVER_DEBUG_FINER(...)	elog(DEBUG2, __VA_ARGS__)
+
+/*
+ * Note: FreeTDS handles UTF-8 to UTF-16 LE conversion internally when we
+ * use XSYBNVARCHAR/XSYBNCHAR types with dbrpcparam(). We configure the
+ * client charset to UTF-8 via DBSETLCHARSET in linked_server_establish_connection()
+ * so that FreeTDS correctly converts multi-byte UTF-8 characters (e.g., CJK,
+ * Arabic, emoji) to UTF-16 LE for the TDS protocol wire format.
+ */
 
 PG_FUNCTION_INFO_V1(openquery_internal);
 PG_FUNCTION_INFO_V1(sp_testlinkedserver_internal);
@@ -47,6 +57,22 @@ Oid		tdsTypeToOid(int datatype);
 int		tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int scale);
 Datum		getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len);
 static bool 	isQueryTimeout;
+
+/*
+ * RPC Error Capture State — must be inside #ifdef ENABLE_TDS_LIB since
+ * they reference TDS-specific types and are used by functions that are
+ * only compiled when the TDS client library is available.
+ */
+static bool     rpc_error_capture_mode = false;
+static bool     rpc_error_captured = false;
+static int      rpc_error_code = 0;
+static int      rpc_error_state = 0;
+static int      rpc_error_severity = 0;
+static char    *rpc_error_msg = NULL;
+static char    *rpc_error_svr_name = NULL;
+static char    *rpc_error_proc_name = NULL;
+static int      rpc_error_line = 0;
+static char    *rpc_error_linked_server_name = NULL;  /* configured linked server name */
 
 static int
 linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state, int severity, char *error_msg, char *svr_name, char *proc_name, int line)
@@ -79,9 +105,43 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 	appendStringInfo(&buf, "Line: %i, Level: %i", line, severity);
 
 	if (severity > 10)
+	{
+		/*
+		 * In RPC error capture mode, save error details for later formatting
+		 * as SQL Server error 7215. Only capture the first error (subsequent
+		 * errors from the same execution are ignored).
+		 * OPENQUERY uses the default path (rpc_error_capture_mode = false).
+		 */
+		if (rpc_error_capture_mode && !rpc_error_captured)
+		{
+			rpc_error_captured = true;
+			rpc_error_code = error_code;
+			rpc_error_state = state;
+			rpc_error_severity = severity;
+
+			/*
+			 * Copy into TopMemoryContext (backend lifetime). These strings are
+			 * stashed in the file-static rpc_error_* globals and consumed later
+			 * by linked_server_throw_rpc_error(), after the RPC result-draining
+			 * loop has run SPI/Portal/tuplestore work that can switch or reset
+			 * CurrentMemoryContext. A shorter-lived allocation could be freed
+			 * before it is read, and the matching pfree() in
+			 * linked_server_clear_rpc_error() would then fault. The unconditional
+			 * clear() in execute_remote_procedure_rpc()'s PG_FINALLY frees them,
+			 * so there is no leak on the normal ERROR path.
+			 */
+			rpc_error_msg = error_msg ? MemoryContextStrdup(TopMemoryContext, error_msg) : NULL;
+			rpc_error_svr_name = svr_name ? MemoryContextStrdup(TopMemoryContext, svr_name) : NULL;
+			rpc_error_proc_name = proc_name ? MemoryContextStrdup(TopMemoryContext, proc_name) : NULL;
+			rpc_error_line = line;
+			pfree(buf.data);
+			return 0;  /* Don't throw — let RPC caller format the error */
+		}
+
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 				 errmsg("%s", buf.data)));
+	}
 	else
 	{
 		/*
@@ -186,6 +246,59 @@ linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error
 		isQueryTimeout = true;
 		return LS_INT_CANCEL;
 	} 
+
+	/*
+	 * In RPC error capture mode, if we already captured an error from
+	 * msg_handler, throw the captured error immediately instead of the
+	 * generic DB error 20018 ("General SQL server error"). This ensures
+	 * the error aborts execution (preventing partial results from leaking
+	 * through) while preserving the SQL Server-compatible error 7215 format.
+	 * OPENQUERY is unaffected (capture mode defaults to false).
+	 */
+	if (rpc_error_capture_mode && rpc_error_captured)
+	{
+		StringInfoData errbuf;
+
+		pfree(buf.data);
+		initStringInfo(&errbuf);
+		appendStringInfo(&errbuf,
+			"Could not execute statement on remote server '%s'.",
+			rpc_error_linked_server_name ? rpc_error_linked_server_name : "unknown");
+		if (rpc_error_msg)
+		{
+			appendStringInfo(&errbuf, " [Msg %d, Level %d, State %d, Line %d]",
+				rpc_error_code, rpc_error_severity,
+				rpc_error_state, rpc_error_line);
+			appendStringInfo(&errbuf, " %s", rpc_error_msg);
+		}
+
+		/*
+		 * Surface the captured remote errno through the caller's
+		 * ERROR_NUMBER() / ERROR_SEVERITY() / ERROR_STATE() instead of the
+		 * user-defined-error default of 50000. The TDS error path short-
+		 * circuits the keyword-table mapping for ERRCODE_PLTSQL_RAISERROR
+		 * (because RAISERROR/THROW are user-defined) and reads tds_estate's
+		 * cur_error_* fields instead — so we plant the captured values there
+		 * before raising. Matches SQL Server: THROW 50001 surfaces 50001,
+		 * a bare ROLLBACK boundary surfaces engine error 3903, etc.
+		 */
+		if (rpc_error_code > 0 &&
+			*pltsql_protocol_plugin_ptr &&
+			(*pltsql_protocol_plugin_ptr)->set_tds_estate_err_data)
+		{
+			((*pltsql_protocol_plugin_ptr)->set_tds_estate_err_data) (
+				rpc_error_code, rpc_error_severity, rpc_error_state);
+		}
+
+		linked_server_clear_rpc_error();
+		/*
+		 * Use ERRCODE_PLTSQL_RAISERROR so the error is catchable by
+		 * T-SQL TRY/CATCH, matching SQL Server behavior for error 7215.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_PLTSQL_RAISERROR),
+				 errmsg("%s", errbuf.data)));
+	}
 
 	ereport(ERROR,
 			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -732,7 +845,7 @@ ValidateLinkedServerDataSource(char *data_src)
 				 errmsg("Only fully qualified domain name or IP address are allowed as data source")));
 }
 
-static void
+void
 linked_server_establish_connection(char *servername, LinkedServerProcess * lsproc, bool isTesting)
 {
 	/* Get the foreign server and user mapping */
@@ -745,6 +858,11 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 	char	*database = NULL;
 	int	query_timeout = 0;
 	int	connect_timeout = 0;
+
+	/* LOG: Function entry with context - proves this function was called */
+	LINKED_SERVER_DEBUG("Establishing connection to server: %s (%s)", 
+	     servername ? servername : "NULL",
+	     isTesting ? "testing" : "execution");
 
 	if (!pltsql_enable_linked_servers)
 		ereport(ERROR,
@@ -762,6 +880,8 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 					 errmsg("Error fetching foreign server with servername '%s'", servername)
 					 ));
 
+		/* LOG: Foreign server retrieved successfully */
+
 		mapping = GetUserMapping(GetUserId(), server->serverid);
 
 		if (mapping == NULL)
@@ -770,11 +890,15 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 					 errmsg("Error fetching user mapping with servername '%s'", servername)
 					 ));
 
+		/* LOG: User mapping retrieved successfully */
+
 		if (LINKED_SERVER_INIT() == FAIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("Failed to initialize TDS client library environment")
 					 ));
+
+		/* LOG: TDS library initialization successful */
 
 		LINKED_SERVER_ERR_HANDLE(linked_server_err_handler);
 		LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
@@ -815,6 +939,7 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 
 		LINKED_SERVER_SET_APP(login);
 		LINKED_SERVER_SET_VERSION(login);
+		LINKED_SERVER_SET_CHARSET(login, "UTF-8");
 
 		/* options in foreign server should be the servername and database */
 		foreach(option, server->options)
@@ -846,13 +971,25 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 			LINKED_SERVER_SET_CONNECT_TIMEOUT(connect_timeout);
 		}
 
+		/* LOG: Connection parameters configured */
+		LINKED_SERVER_DEBUG("LINKED SERVER: Connection parameters - data_source: %s, database: %s, connect_timeout: %d, query_timeout: %d",
+		     data_src ? data_src : "NULL", 
+		     database ? database : "(none)", 
+		     connect_timeout, 
+		     query_timeout);
+
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connecting to remote server \"%s\"", data_src);
+		
+		/* LOG: Initiating TDS connection */
 
 		*lsproc = LINKED_SERVER_OPEN(login, data_src);
 		if (!(*lsproc))
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("Unable to connect to \"%s\"", data_src)));
+
+		/* LOG: Connection successful */
+		LINKED_SERVER_DEBUG("LINKED SERVER: TDS connection established successfully to: %s", data_src);
 
 		LINKED_SERVER_FREELOGIN(login);
 
@@ -862,11 +999,18 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 		}
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connected to remote server");
+		
+		/* LOG: Connection ready */
 	}
 	PG_CATCH();
 	{
 		HOLD_INTERRUPTS();
 		LINKED_SERVER_DEBUG("LINKED SERVER: Failed to establish connection to remote server due to error");
+		
+		/* LOG: Connection failed */
+		LINKED_SERVER_DEBUG("Failed to establish connection to server: %s", 
+		     servername ? servername : "NULL");
+		
 		RESUME_INTERRUPTS();
 
 		PG_RE_THROW();
@@ -925,12 +1069,17 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Executing query against remote server");
 
+		/* LOG: Metadata query execution starting */
+		LINKED_SERVER_DEBUG("Executing metadata query on remote server");
+
 		/* Execute the query on remote server */
 		if (LINKED_SERVER_EXEC_QUERY(lsproc) == FAIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("error executing query \"%s\" against remote server", buf.data)
 					 ));
+
+		/* LOG: Metadata query execution successful */
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Begin fetching results from remote server");
 
@@ -1092,6 +1241,9 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 					}
 
 					*tupdesc = BlessTupleDesc(*tupdesc);
+					
+					/* LOG: Metadata retrieval complete */
+					LINKED_SERVER_DEBUG("Metadata retrieval complete - %d columns", numrows);
 				}
 				else
 				{
@@ -1168,6 +1320,9 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Executing query against remote server");
 
+		/* LOG: Query execution starting */
+		LINKED_SERVER_DEBUG("Executing query on remote server");
+
 		/* Execute the query on remote server */
 		if (LINKED_SERVER_EXEC_QUERY(lsproc) == FAIL)
 		{
@@ -1184,7 +1339,9 @@ openquery_imp(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("error executing query \"%s\" against remote server", query)
 					 ));
-		}		
+		}
+
+		/* LOG: Query execution successful */
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Begin fetching results from remote server");
 
@@ -1297,9 +1454,14 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 				LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Finished fetching results. Fetched %d rows", rowcount);
 
+				/* LOG: Result set summary */
+				LINKED_SERVER_DEBUG("Result set retrieved - %d columns, %d rows", colcount, rowcount);
+
 				tuplestore_donestoring(tupstore);
 			}
 		}
+		
+		/* LOG: Query completed with results */
 	}
 	PG_FINALLY();
 	{
@@ -1315,6 +1477,554 @@ openquery_imp(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 
 	return (Datum) 0;
+}
+
+/*
+ * Map PostgreSQL/Babelfish type OID to TDS type for RPC parameter binding.
+ *
+ * Babelfish type OIDs are resolved at runtime, so they cannot be used in
+ * switch/case labels (C requires constant expressions). We use the cached
+ * is_tsql_*_datatype() functions from the common utility plugin (typecode.c)
+ * which perform lazy-cached OID lookups internally — avoiding the overhead
+ * of repeated syscache queries on every call.
+ *
+ * For the few types without dedicated is_tsql_*_datatype() functions
+ * (float, real, datetime, uniqueidentifier), we use get_tsql_datatype_oid()
+ * which scans the pre-initialized type_infos[] array (also no syscache).
+ */
+int
+get_tds_type_from_pg_oid(Oid pgtype)
+{
+	/*
+	 * Check for Babelfish-specific types using cached is_tsql_*_datatype()
+	 * functions from the common utility plugin. Each function uses a
+	 * lazy-initialized static OID variable internally (see typecode.c),
+	 * so the syscache is consulted at most once per type per session.
+	 */
+	if (common_utility_plugin_ptr)
+	{
+		/* String types */
+		if (common_utility_plugin_ptr->is_tsql_varchar_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_varchar_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_nvarchar_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(pgtype))
+			return LS_TYPE_NVARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_bpchar_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(pgtype))
+			return LS_TYPE_CHAR;
+		if (common_utility_plugin_ptr->is_tsql_nchar_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_nchar_datatype)(pgtype))
+			return LS_TYPE_NCHAR;
+
+		/* Integer types */
+		if (common_utility_plugin_ptr->is_tsql_int_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_int_datatype)(pgtype))
+			return LS_TYPE_INT4;
+		if (common_utility_plugin_ptr->is_tsql_bigint_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_bigint_datatype)(pgtype))
+			return LS_TYPE_INT8;
+		if (common_utility_plugin_ptr->is_tsql_tinyint_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(pgtype))
+			return LS_TYPE_INT1;
+
+		/* Floating point types (no dedicated is_tsql_* — use cached array lookup) */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid)
+		{
+			if (pgtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("float"))
+				return LS_TYPE_FLOAT;
+			if (pgtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("real"))
+				return LS_TYPE_REAL;
+		}
+
+		/* Boolean type */
+		if (common_utility_plugin_ptr->is_tsql_bit_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_bit_datatype)(pgtype))
+			return LS_TYPE_BIT;
+
+		/* Binary types */
+		if (common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(pgtype))
+			return LS_TYPE_VARBINARY;
+		if (common_utility_plugin_ptr->is_tsql_sys_binary_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(pgtype))
+			return LS_TYPE_BINARY;
+
+		/* DateTime types — send as ISO string, server will parse */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid &&
+			pgtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("datetime"))
+			return LS_TYPE_VARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_smalldatetime_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_datetime2_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_datetime2_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+
+		/* Numeric/Decimal — send as string, server will convert */
+		if (common_utility_plugin_ptr->is_tsql_decimal_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_decimal_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+
+		/* Money types — send as string, server will convert */
+		if (common_utility_plugin_ptr->is_tsql_money_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_money_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+		if (common_utility_plugin_ptr->is_tsql_smallmoney_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(pgtype))
+			return LS_TYPE_VARCHAR;
+
+		/* Uniqueidentifier — send as string (GUID format) */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid &&
+			pgtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("uniqueidentifier"))
+			return LS_TYPE_VARCHAR;
+	}
+
+	/* Standard PostgreSQL types (compile-time OIDs, switch is appropriate) */
+	switch (pgtype)
+	{
+		case INT2OID:
+			return LS_TYPE_INT2;
+		case INT4OID:
+			return LS_TYPE_INT4;
+		case INT8OID:
+			return LS_TYPE_INT8;
+		case FLOAT4OID:
+			return LS_TYPE_REAL;
+		case FLOAT8OID:
+			return LS_TYPE_FLOAT;
+		case NUMERICOID:
+			return LS_TYPE_VARCHAR;
+		case BOOLOID:
+			return LS_TYPE_BIT;
+		case TEXTOID:
+			return LS_TYPE_TEXT;
+		case VARCHAROID:
+			return LS_TYPE_VARCHAR;
+		case BPCHAROID:
+			return LS_TYPE_CHAR;
+		case DATEOID:
+			return LS_TYPE_VARCHAR;
+		case TIMEOID:
+			return LS_TYPE_VARCHAR;
+		case TIMESTAMPOID:
+			return LS_TYPE_DATETIME;
+		case BYTEAOID:
+			return LS_TYPE_VARBINARY;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("PostgreSQL type OID %u is not supported for remote procedure parameters", pgtype)));
+	}
+
+	return 0;  /* Should not reach here */
+}
+
+/*
+ * Helper: Convert a text/varchar Datum to raw TDS bytes (no null terminator).
+ * Used for all string-like types (varchar, nvarchar, char, nchar, text, etc.)
+ *
+ * FreeTDS handles UTF-8 to UTF-16 encoding conversion internally when
+ * XSYBNVARCHAR/XSYBNCHAR types are used with dbrpcparam(). We send
+ * UTF-8 data and FreeTDS converts it as needed for the TDS wire format.
+ *
+ * Note: Do NOT include null terminator in output — it causes conversion
+ * errors in FreeTDS when passed via dbrpcparam.
+ */
+static void
+datum_text_to_tds_bytes(Datum value, void **data_out, DBINT *len_out)
+{
+	char *str = TextDatumGetCString(value);
+
+	*len_out = strlen(str);
+	*data_out = palloc(*len_out);
+	memcpy(*data_out, str, *len_out);
+	pfree(str);
+}
+
+/*
+ * Helper: Convert any Datum to TDS bytes via its type output function.
+ * The value is serialized to its text representation and sent as a string;
+ * the remote server will parse and convert to the appropriate type.
+ *
+ * Used for types that are complex to send in native TDS binary format
+ * (numeric, decimal, money, smallmoney, datetime variants, etc.)
+ */
+static void
+datum_output_to_tds_bytes(Datum value, Oid valtype, void **data_out, DBINT *len_out)
+{
+	Oid		typoutput;
+	bool	typIsVarlena;
+	char   *str;
+
+	getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
+	str = OidOutputFunctionCall(typoutput, value);
+	*len_out = strlen(str);
+	*data_out = palloc(*len_out);
+	memcpy(*data_out, str, *len_out);
+	pfree(str);
+}
+
+/*
+ * Convert a Datum value to raw bytes suitable for TDS RPC parameter binding.
+ * Returns palloc'd buffer containing the data.
+ *
+ * Uses cached is_tsql_*_datatype() functions from the common utility plugin
+ * (typecode.c) to identify Babelfish types without repeated syscache lookups.
+ * Standard PostgreSQL types use a switch statement on compile-time OIDs.
+ *
+ * Note on tds_typeio.h: The TDS type I/O functions in babelfishpg_tds
+ * (TdsSendType*, TdsRecvType*) handle server-side TDS protocol I/O — they
+ * write/read TDS wire format bytes to/from the protocol stream buffer.
+ * This function handles client-side conversion — it produces raw C values
+ * (int32, float8, char*) for FreeTDS dbrpcparam() which has a different API
+ * contract. The two cannot be shared due to both the cross-extension boundary
+ * (babelfishpg_tds vs babelfishpg_tsql) and the fundamentally different
+ * output format requirements.
+ */
+void
+convert_datum_to_tds_bytes(Datum value, Oid valtype, int32 valtypmod, bool isnull,
+						   void **data_out, DBINT *len_out)
+{
+	if (isnull)
+	{
+		*data_out = NULL;
+		*len_out = 0;
+		return;
+	}
+
+	/*
+	 * Check for Babelfish-specific types using cached is_tsql_*_datatype()
+	 * functions from the common utility plugin. Each function uses a
+	 * lazy-initialized static OID variable internally (see typecode.c),
+	 * so the syscache is consulted at most once per type per session.
+	 */
+	if (common_utility_plugin_ptr)
+	{
+		/*
+		 * String types (varchar, nvarchar, char, nchar) — send as UTF-8.
+		 * FreeTDS handles encoding conversion internally for nvarchar/nchar.
+		 */
+		if ((common_utility_plugin_ptr->is_tsql_nvarchar_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_nchar_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_varchar_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_varchar_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_bpchar_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(valtype)))
+		{
+			datum_text_to_tds_bytes(value, data_out, len_out);
+			return;
+		}
+
+		/* Babelfish FLOAT (8 bytes) */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid &&
+			valtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("float"))
+		{
+			*len_out = sizeof(LS_DBFLT8);
+			*data_out = palloc(*len_out);
+			*((LS_DBFLT8 *)*data_out) = DatumGetFloat8(value);
+			return;
+		}
+
+		/* Babelfish REAL (4 bytes) */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid &&
+			valtype == (*common_utility_plugin_ptr->get_tsql_datatype_oid)("real"))
+		{
+			*len_out = sizeof(LS_DBREAL);
+			*data_out = palloc(*len_out);
+			*((LS_DBREAL *)*data_out) = DatumGetFloat4(value);
+			return;
+		}
+
+		/* Babelfish BIT */
+		if (common_utility_plugin_ptr->is_tsql_bit_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_bit_datatype)(valtype))
+		{
+			*len_out = sizeof(LS_DBBOOL);
+			*data_out = palloc(*len_out);
+			*((LS_DBBOOL *)*data_out) = DatumGetBool(value) ? 1 : 0;
+			return;
+		}
+
+		/* Babelfish TINYINT (unsigned 0-255, stored internally as int2) */
+		if (common_utility_plugin_ptr->is_tsql_tinyint_datatype &&
+			(*common_utility_plugin_ptr->is_tsql_tinyint_datatype)(valtype))
+		{
+			int16_t	tinyint_val = DatumGetInt16(value);
+
+			/*
+			 * T-SQL TINYINT is unsigned 0-255. Babelfish stores it in an
+			 * int2, which can hold out-of-range values through casts or
+			 * arithmetic before this point. Without the range check, a
+			 * negative or >255 Datum would be silently truncated on the
+			 * wire and the remote server would receive garbage — matching
+			 * neither SQL Server semantics nor any intent of the caller.
+			 * Raise the standard numeric-value-out-of-range error instead.
+			 */
+			if (tinyint_val < 0 || tinyint_val > 255)
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("Arithmetic overflow error for data type tinyint, value = %d.",
+								tinyint_val)));
+
+			*len_out = sizeof(unsigned char);
+			*data_out = palloc(*len_out);
+			*((unsigned char *)*data_out) = (unsigned char) tinyint_val;
+			return;
+		}
+
+		/* Babelfish VARBINARY/BINARY */
+		if ((common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_sys_binary_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype)(valtype)))
+		{
+			bytea *bytes = DatumGetByteaPP(value);
+
+			*len_out = VARSIZE_ANY_EXHDR(bytes);
+			*data_out = palloc(*len_out);
+			memcpy(*data_out, VARDATA_ANY(bytes), *len_out);
+			return;
+		}
+
+		/*
+		 * Types sent as string representation — the remote server parses
+		 * and converts to the appropriate native type:
+		 *   numeric, decimal, money, smallmoney,
+		 *   datetime, datetime2, smalldatetime, date, datetimeoffset, time
+		 */
+		if ((common_utility_plugin_ptr->is_tsql_decimal_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_decimal_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_money_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_money_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_smallmoney_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_smallmoney_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_datetime2_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_datetime2_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_smalldatetime_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(valtype)) ||
+			(common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype &&
+			 (*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype)(valtype)))
+		{
+			datum_output_to_tds_bytes(value, valtype, data_out, len_out);
+			return;
+		}
+
+		/* datetime, date, time — no dedicated is_tsql_* function, use cached array */
+		if (common_utility_plugin_ptr->get_tsql_datatype_oid)
+		{
+			Oid datetime_oid = (*common_utility_plugin_ptr->get_tsql_datatype_oid)("datetime");
+			Oid numeric_oid = (*common_utility_plugin_ptr->get_tsql_datatype_oid)("numeric");
+
+			if (valtype == datetime_oid || valtype == numeric_oid)
+			{
+				datum_output_to_tds_bytes(value, valtype, data_out, len_out);
+				return;
+			}
+		}
+	}
+
+	/* Standard PostgreSQL types (compile-time OIDs, switch is appropriate) */
+	switch (valtype)
+	{
+		case BOOLOID:
+			{
+				*len_out = sizeof(LS_DBBOOL);
+				*data_out = palloc(*len_out);
+				*((LS_DBBOOL *)*data_out) = DatumGetBool(value) ? 1 : 0;
+			}
+			break;
+
+		case INT2OID:
+			{
+				*len_out = sizeof(LS_DBSMALLINT);
+				*data_out = palloc(*len_out);
+				*((LS_DBSMALLINT *)*data_out) = DatumGetInt16(value);
+			}
+			break;
+
+		case INT4OID:
+			{
+				*len_out = sizeof(LS_DBINT);
+				*data_out = palloc(*len_out);
+				*((LS_DBINT *)*data_out) = DatumGetInt32(value);
+			}
+			break;
+
+		case INT8OID:
+			{
+				*len_out = sizeof(int64);
+				*data_out = palloc(*len_out);
+				*((int64 *)*data_out) = DatumGetInt64(value);
+			}
+			break;
+
+		case FLOAT4OID:
+			{
+				*len_out = sizeof(LS_DBREAL);
+				*data_out = palloc(*len_out);
+				*((LS_DBREAL *)*data_out) = DatumGetFloat4(value);
+			}
+			break;
+
+		case FLOAT8OID:
+			{
+				*len_out = sizeof(LS_DBFLT8);
+				*data_out = palloc(*len_out);
+				*((LS_DBFLT8 *)*data_out) = DatumGetFloat8(value);
+			}
+			break;
+
+		case TEXTOID:
+		case VARCHAROID:
+		case BPCHAROID:
+			datum_text_to_tds_bytes(value, data_out, len_out);
+			break;
+
+		case BYTEAOID:
+			{
+				bytea *bytes = DatumGetByteaPP(value);
+
+				*len_out = VARSIZE_ANY_EXHDR(bytes);
+				*data_out = palloc(*len_out);
+				memcpy(*data_out, VARDATA_ANY(bytes), *len_out);
+			}
+			break;
+
+		default:
+			datum_output_to_tds_bytes(value, valtype, data_out, len_out);
+			break;
+	}
+}
+
+
+/*
+ * RPC Error Capture API
+ *
+ * These functions allow the RPC execution path (pl_exec-2.c) to:
+ * 1. Enable capture mode before RPC execution
+ * 2. Check if a remote error was captured
+ * 3. Format and throw a SQL Server-compatible error 7215
+ * 4. Clean up captured state
+ *
+ * The OPENQUERY path never enables capture mode, so it is unaffected.
+ */
+void
+linked_server_set_rpc_error_mode(bool enable, const char *server_name)
+{
+	rpc_error_capture_mode = enable;
+	if (enable)
+	{
+		/* Clear any stale state when entering capture mode */
+		linked_server_clear_rpc_error();
+		/* Store the configured linked server name for error formatting */
+		if (server_name)
+			rpc_error_linked_server_name = MemoryContextStrdup(TopMemoryContext, server_name);
+	}
+}
+
+bool
+linked_server_has_rpc_error(void)
+{
+	return rpc_error_captured;
+}
+
+/*
+ * Format and throw SQL Server error 7215:
+ *   "Could not execute statement on remote server '<name>'."
+ *
+ * The captured remote error details (Msg #, Level, State, Line, message)
+ * are appended to provide full context, matching SQL Server's behavior
+ * of wrapping the original error inside error 7215.
+ *
+ * Uses ERRCODE_PLTSQL_RAISERROR so that:
+ * 1. The error is catchable by T-SQL TRY/CATCH (matching SQL Server behavior
+ *    where error 7215 is severity 16 and catchable)
+ * 2. The TDS protocol layer still maps it to SQL_ERROR_7215 via
+ *    error_mapping.txt keyword matching on the message text
+ *
+ * Previously used ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION which was unmapped
+ * at the PL/tsql runtime layer, causing errors to bypass TRY/CATCH.
+ */
+void
+linked_server_throw_rpc_error(const char *linked_server_name)
+{
+	StringInfoData buf;
+
+	initStringInfo(&buf);
+
+	appendStringInfo(&buf,
+		"Could not execute statement on remote server '%s'.",
+		linked_server_name);
+
+	/* Append captured remote error details */
+	if (rpc_error_msg)
+	{
+		appendStringInfo(&buf, " [Msg %d, Level %d, State %d, Line %d]",
+			rpc_error_code, rpc_error_severity,
+			rpc_error_state, rpc_error_line);
+		appendStringInfo(&buf, " %s", rpc_error_msg);
+	}
+
+	/*
+	 * Surface the captured remote errno through the caller's
+	 * ERROR_NUMBER() / ERROR_SEVERITY() / ERROR_STATE() instead of the
+	 * user-defined-error default of 50000. The TDS error path short-
+	 * circuits the keyword-table mapping for ERRCODE_PLTSQL_RAISERROR
+	 * (because RAISERROR/THROW are user-defined) and reads tds_estate's
+	 * cur_error_* fields instead — so we plant the captured values there
+	 * before raising. Matches SQL Server: THROW 50001 surfaces 50001,
+	 * a bare ROLLBACK boundary surfaces engine error 3903, etc.
+	 */
+	if (rpc_error_code > 0 &&
+		*pltsql_protocol_plugin_ptr &&
+		(*pltsql_protocol_plugin_ptr)->set_tds_estate_err_data)
+	{
+		((*pltsql_protocol_plugin_ptr)->set_tds_estate_err_data) (
+			rpc_error_code, rpc_error_severity, rpc_error_state);
+	}
+
+	linked_server_clear_rpc_error();
+
+	ereport(ERROR,
+			(errcode(ERRCODE_PLTSQL_RAISERROR),
+			 errmsg("%s", buf.data)));
+}
+
+void
+linked_server_clear_rpc_error(void)
+{
+	rpc_error_captured = false;
+	rpc_error_code = 0;
+	rpc_error_state = 0;
+	rpc_error_severity = 0;
+	rpc_error_line = 0;
+
+	if (rpc_error_msg)
+	{
+		pfree(rpc_error_msg);
+		rpc_error_msg = NULL;
+	}
+	if (rpc_error_svr_name)
+	{
+		pfree(rpc_error_svr_name);
+		rpc_error_svr_name = NULL;
+	}
+	if (rpc_error_proc_name)
+	{
+		pfree(rpc_error_proc_name);
+		rpc_error_proc_name = NULL;
+	}
+	if (rpc_error_linked_server_name)
+	{
+		pfree(rpc_error_linked_server_name);
+		rpc_error_linked_server_name = NULL;
+	}
 }
 
 #endif
@@ -1377,4 +2087,3 @@ sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 
 }
-

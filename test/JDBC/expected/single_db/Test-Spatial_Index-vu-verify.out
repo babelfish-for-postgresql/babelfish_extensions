@@ -2657,7 +2657,7 @@ WHERE master_dbo.si_geom_tbl.geom.STIntersects(
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
+~~ERROR (Message: Invoking a method on a schema-qualified multi-part object name (schema.table.column.method) is not currently supported in Babelfish)~~
 
 
 -- Expected: 13 (same as unqualified). Catches col_ref extraction assuming 2-part name.

@@ -47,6 +47,7 @@ char	   *pltsql_language = NULL;
 char	   *pltsql_psql_logical_babelfish_db_name = NULL;
 int			pltsql_lock_timeout = -1;
 bool		pltsql_enable_linked_servers = true;
+bool		pltsql_enable_remote_proc_exec = true;
 bool		pltsql_enable_ownership_chaining = true;
 bool		pltsql_allow_windows_login = true;
 bool		pltsql_allow_fulltext_parser = false;
@@ -1281,6 +1282,15 @@ define_custom_variables(void)
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_remote_proc_exec",
+							 gettext_noop("Enables remote procedure execution via four-part names (EXEC server.db.schema.proc)"),
+							 NULL,
+							 &pltsql_enable_remote_proc_exec,
+							 true,
+							 PGC_SUSET,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
 	/* GUC to enable/disable the ownership chaining feature, by default enabled */
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_ownership_chaining",
 							 gettext_noop("Enables ownership chaining"),
@@ -1329,6 +1339,7 @@ int 		pltsql_isolation_level_serializable = ISOLATION_OFF;
 int 		escape_hatch_identity_function = EH_STRICT;
 int 		escape_hatch_insert_bulk_options = EH_IGNORE;
 int 		escape_hatch_spatial_index = EH_STRICT;
+int			escape_hatch_remote_proc_transaction = EH_STRICT;
 
 void
 define_escape_hatch_variables(void)
@@ -1730,6 +1741,17 @@ define_escape_hatch_variables(void)
 							 gettext_noop("escape hatch for INLINE option in CREATE FUNCTION"),
 							 NULL,
 							 &escape_hatch_inline_function_option,
+							 EH_STRICT,
+							 escape_hatch_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/* remote procedure transaction check */
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_remote_proc_transaction",
+							 gettext_noop("escape hatch for remote procedure execution within active transactions"),
+							 NULL,
+							 &escape_hatch_remote_proc_transaction,
 							 EH_STRICT,
 							 escape_hatch_options,
 							 PGC_USERSET,

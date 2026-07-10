@@ -1,0 +1,350 @@
+-- tsql
+
+-- =============================================================================
+-- Test: Runtime checks for remote procedure execution
+-- Covers: enable_remote_proc_exec GUC, escape_hatch_remote_proc_transaction,
+--         sp_serveroption 'rpc out' validation, sys.servers view
+-- =============================================================================
+-- Sanity: verify basic execution works before testing restrictions
+EXEC bbf_rtcheck.master.dbo.rpe_rtcheck_simple;
+GO
+~~START~~
+varchar
+runtime_check_ok
+~~END~~
+
+
+
+-- psql
+-- =============================================================================
+-- TEST 1: GUC babelfishpg_tsql.enable_remote_proc_exec = false
+-- Should block remote procedure execution
+-- =============================================================================
+-- Persist the GUC at database level so a new TDS connection inherits it.
+-- ALTER DATABASE SET writes to pg_db_role_setting (not postgresql.auto.conf),
+-- so it is not blocked by GUC_DISALLOW_IN_AUTO_FILE.
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.enable_remote_proc_exec = false;
+GO
+
+-- tsql      user=bbf_rtcheck_login      password=12345678
+-- Use the secondary login so the framework opens a fresh TDS session that
+-- inherits the database-level GUC value above.
+EXEC bbf_rtcheck.master.dbo.rpe_rtcheck_simple;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure execution via four-part names is not enabled)~~
+
+
+-- psql
+-- Restore the GUC default at database level
+ALTER DATABASE babelfish_db RESET babelfishpg_tsql.enable_remote_proc_exec;
+GO
+
+-- tsql
+-- Verify execution works again on the original session (default GUC still true here)
+EXEC bbf_rtcheck.master.dbo.rpe_rtcheck_simple;
+GO
+~~START~~
+varchar
+runtime_check_ok
+~~END~~
+
+
+
+-- =============================================================================
+-- TEST 2: Transaction check - escape_hatch_remote_proc_transaction = strict
+-- Default is strict; should ERROR inside a transaction
+-- =============================================================================
+BEGIN TRANSACTION;
+EXEC bbf_rtcheck.master.dbo.rpe_rtcheck_simple;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure execution within a transaction is blocked by the strict-mode safety check (@@TRANCOUNT = 1).)~~
+
+
+IF @@TRANCOUNT > 0 ROLLBACK;
+GO
+
+
+-- =============================================================================
+-- TEST 3: Nested transaction (@@TRANCOUNT = 2) + strict mode
+-- Should error mentioning @@TRANCOUNT = 2
+-- =============================================================================
+BEGIN TRANSACTION;
+BEGIN TRANSACTION;
+EXEC bbf_rtcheck.master.dbo.rpe_rtcheck_simple;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure execution within a transaction is blocked by the strict-mode safety check (@@TRANCOUNT = 2).)~~
+
+
+IF @@TRANCOUNT > 0 ROLLBACK;
+GO
+
+
+-- =============================================================================
+-- TEST 4: escape_hatch_remote_proc_transaction = ignore
+-- Should allow execution inside a transaction (warning only, no error)
+-- =============================================================================
+SELECT set_config('babelfishpg_tsql.escape_hatch_remote_proc_transaction', 'ignore', 'false');
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+BEGIN TRANSACTION;
+EXEC bbf_rtcheck.master.dbo.rpe_rtcheck_simple;
+COMMIT;
+GO
+~~START~~
+varchar
+runtime_check_ok
+~~END~~
+
+
+-- Reset escape hatch to strict
+SELECT set_config('babelfishpg_tsql.escape_hatch_remote_proc_transaction', 'strict', 'false');
+GO
+~~START~~
+text
+strict
+~~END~~
+
+
+
+-- =============================================================================
+-- TEST 5: sp_serveroption 'rpc out' validation
+-- Test various valid and invalid values
+-- =============================================================================
+-- 'false' should disable
+EXEC sp_serveroption 'bbf_rtcheck', 'rpc out', 'false';
+GO
+
+SELECT name, is_rpc_out_enabled FROM sys.servers WHERE name = 'bbf_rtcheck';
+GO
+~~START~~
+varchar#!#bit
+bbf_rtcheck#!#0
+~~END~~
+
+
+-- Execution should fail with rpc out disabled
+EXEC bbf_rtcheck.master.dbo.rpe_rtcheck_simple;
+GO
+~~ERROR (Code: 7412)~~
+
+~~ERROR (Message: Server 'bbf_rtcheck' is not configured for RPC OUT.)~~
+
+
+-- 'true' should re-enable
+EXEC sp_serveroption 'bbf_rtcheck', 'rpc out', 'true';
+GO
+
+SELECT name, is_rpc_out_enabled FROM sys.servers WHERE name = 'bbf_rtcheck';
+GO
+~~START~~
+varchar#!#bit
+bbf_rtcheck#!#1
+~~END~~
+
+
+-- 'yes' should work (case-insensitive)
+EXEC sp_serveroption 'bbf_rtcheck', 'rpc out', 'no';
+GO
+
+SELECT name, is_rpc_out_enabled FROM sys.servers WHERE name = 'bbf_rtcheck';
+GO
+~~START~~
+varchar#!#bit
+bbf_rtcheck#!#0
+~~END~~
+
+
+EXEC sp_serveroption 'bbf_rtcheck', 'rpc out', 'YES';
+GO
+
+SELECT name, is_rpc_out_enabled FROM sys.servers WHERE name = 'bbf_rtcheck';
+GO
+~~START~~
+varchar#!#bit
+bbf_rtcheck#!#1
+~~END~~
+
+
+-- 'TRUE' and 'FALSE' (uppercase) should work
+EXEC sp_serveroption 'bbf_rtcheck', 'rpc out', 'FALSE';
+GO
+
+SELECT name, is_rpc_out_enabled FROM sys.servers WHERE name = 'bbf_rtcheck';
+GO
+~~START~~
+varchar#!#bit
+bbf_rtcheck#!#0
+~~END~~
+
+
+EXEC sp_serveroption 'bbf_rtcheck', 'rpc out', 'TRUE';
+GO
+
+SELECT name, is_rpc_out_enabled FROM sys.servers WHERE name = 'bbf_rtcheck';
+GO
+~~START~~
+varchar#!#bit
+bbf_rtcheck#!#1
+~~END~~
+
+
+-- Invalid values should error
+EXEC sp_serveroption 'bbf_rtcheck', 'rpc out', 'invalid';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option value for rpc out. Valid values are 'true' or 'false')~~
+
+
+EXEC sp_serveroption 'bbf_rtcheck', 'rpc out', '1';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option value for rpc out. Valid values are 'true' or 'false')~~
+
+
+EXEC sp_serveroption 'bbf_rtcheck', 'rpc out', '';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option value for rpc out)~~
+
+
+
+-- =============================================================================
+-- TEST 6: sys.servers view - verify is_rpc_out_enabled reflects catalog
+-- =============================================================================
+-- Currently 'true' from above
+SELECT name, is_rpc_out_enabled FROM sys.servers WHERE name = 'bbf_rtcheck';
+GO
+~~START~~
+varchar#!#bit
+bbf_rtcheck#!#1
+~~END~~
+
+
+EXEC sp_serveroption 'bbf_rtcheck', 'rpc out', 'false';
+GO
+
+SELECT name, is_rpc_out_enabled FROM sys.servers WHERE name = 'bbf_rtcheck';
+GO
+~~START~~
+varchar#!#bit
+bbf_rtcheck#!#0
+~~END~~
+
+
+-- Restore for cleanup
+EXEC sp_serveroption 'bbf_rtcheck', 'rpc out', 'true';
+GO
+
+
+-- =============================================================================
+-- TEST 7: Unknown server name -> error 7202 (A3)
+-- A mistyped or nonexistent server name must raise 7202
+-- ("Could not find server 'X' in sys.servers.") BEFORE any per-server
+-- option check, not the misleading 7412 ("not configured for RPC OUT").
+-- =============================================================================
+EXEC srv_that_does_not_exist.master.dbo.rpe_rtcheck_simple;
+GO
+~~ERROR (Code: 7202)~~
+
+~~ERROR (Message: Could not find server 'srv_that_does_not_exist' in sys.servers.)~~
+
+
+-- Mixed case should be normalized by the parser (identifiers are
+-- case-insensitive); the error must still be 7202.
+EXEC Srv_That_Does_Not_Exist.master.dbo.rpe_rtcheck_simple;
+GO
+~~ERROR (Code: 7202)~~
+
+~~ERROR (Message: Could not find server 'srv_that_does_not_exist' in sys.servers.)~~
+
+
+
+-- =============================================================================
+-- TEST 8: Transaction guard extension (C1)
+-- The runtime guard catches NestedTranCount > 0 (explicit BEGIN TRAN),
+-- which is what SQL Server compatibility expects. This test pins the
+-- current behavior so a future change to widen the guard (e.g. to
+-- IsTransactionBlock()) is a deliberate decision.
+-- =============================================================================
+-- Strict mode (default) blocks inside explicit transaction
+BEGIN TRANSACTION;
+EXEC bbf_rtcheck.master.dbo.rpe_rtcheck_simple;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure execution within a transaction is blocked by the strict-mode safety check (@@TRANCOUNT = 1).)~~
+
+
+IF @@TRANCOUNT > 0 ROLLBACK;
+GO
+
+-- Ignore mode warns and proceeds.
+-- Use set_config() (not T-SQL SET) because dotted GUC names are PostgreSQL
+-- syntax and not parsed by T-SQL's SET statement; same approach as TEST 4.
+SELECT set_config('babelfishpg_tsql.escape_hatch_remote_proc_transaction', 'ignore', 'false');
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+BEGIN TRANSACTION;
+EXEC bbf_rtcheck.master.dbo.rpe_rtcheck_simple;
+GO
+~~START~~
+varchar
+runtime_check_ok
+~~END~~
+
+
+IF @@TRANCOUNT > 0 ROLLBACK;
+GO
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_remote_proc_transaction', 'strict', 'false');
+GO
+~~START~~
+text
+strict
+~~END~~
+
+
+
+-- =============================================================================
+-- TEST 9: Procedure-name identifier safety (G3)
+-- Bracket-quoted identifiers with special characters must be rejected or
+-- safely escaped BEFORE reaching dbrpcinit. This is a regression pin:
+-- the current parser path quotes identifiers, so a proc name containing
+-- a semicolon or a right-bracket cannot be used to inject into the RPC
+-- stream. Failing here would indicate a parser-layer regression.
+-- =============================================================================
+-- Quoted identifier with a semicolon -- parser must reject or escape
+EXEC bbf_rtcheck.master.dbo.[weird;name];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rtcheck'. [Msg 33557097, Level 16, State 1, Line 1] syntax error at or near "name")~~
+
+
+-- Quoted identifier with an embedded single quote
+EXEC bbf_rtcheck.master.dbo.[weird'name];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not execute statement on remote server 'bbf_rtcheck'. [Msg 33557097, Level 16, State 1, Line 1] unterminated quoted string at or near "'name")~~
+
+

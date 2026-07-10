@@ -210,7 +210,41 @@ test_concurrent_db#!#txn_login
 
 -- terminate-tsql-conn user=txn_login1 password=123
 
--- tsql 
+-- psql
+
+
+-- The txn_login1/txn_login2 TDS sessions were just closed client-side, but the
+-- server backends tear down asynchronously. drop login uses is_active_login()
+-- (CountUserBackends), so poll until those backends have fully exited; otherwise
+-- the drop races teardown and fails with "Could not drop login '...' as the user
+-- is currently logged in." Use a DO block (no result rows) so the wait stays
+-- deterministic regardless of how many backends are still present.
+DO
+$$
+DECLARE
+    remaining int;
+    attempts  int := 0;
+BEGIN
+    LOOP
+        PERFORM pg_terminate_backend(pid)
+        FROM pg_stat_get_activity(NULL)
+        WHERE sys.suser_name(usesysid) IN ('txn_login1', 'txn_login2')
+          AND backend_type = 'client backend'
+          AND usesysid IS NOT NULL;
+        SELECT count(*) INTO remaining
+        FROM pg_stat_get_activity(NULL)
+        WHERE sys.suser_name(usesysid) IN ('txn_login1', 'txn_login2')
+          AND backend_type = 'client backend'
+          AND usesysid IS NOT NULL;
+        EXIT WHEN remaining = 0 OR attempts >= 50;
+        attempts := attempts + 1;
+        PERFORM pg_sleep(0.1);
+    END LOOP;
+END
+$$
+GO
+
+-- tsql
 drop login txn_login1;
 go
 drop login txn_login2;

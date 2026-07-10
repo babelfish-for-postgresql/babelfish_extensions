@@ -68,6 +68,14 @@ ignore#!#charindex_and_replace_CIAI_collations
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
 
+# Remote proc exec reference tests require a real remote server (not for CI)
+ignore#!#remote-proc-exec-vu-prepare
+ignore#!#remote-proc-exec-vu-verify
+ignore#!#remote-proc-exec-vu-cleanup
+ignore#!#remote-proc-exec_upgrd_before_17_6-vu-prepare
+ignore#!#remote-proc-exec_upgrd_before_17_6-vu-verify
+ignore#!#remote-proc-exec_upgrd_before_17_6-vu-cleanup
+
 # Ignore upgrade tests in normal JDBC run. These are tests that cannot be run in non-upgrade contexts due
 # to changing the behavior between pre- and post-commit.
 ignore#!#BABEL-2934-vu-prepare
