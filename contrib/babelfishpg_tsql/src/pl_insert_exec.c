@@ -61,6 +61,7 @@ typedef struct
 	ProjectionInfo *proj_info;	/* projection info for coercion */
 	TupleTableSlot *proj_slot;	/* result slot for projection */
 	CommandId	cid;			/* command ID obtained once in startup, shared across all tuples */
+	Relation	temp_rel;		/* temp buffer table, held open startup→shutdown */
 } DR_insertexec;
 
 /* Forward declarations for DestReceiver callbacks */
@@ -366,10 +367,10 @@ pltsql_insert_exec_validate_column_count(PLtsql_execstate *estate, PLtsql_stmt_e
 	query_natts = result_desc->natts;
 
 	/* Get temp table column count */
-	temp_rel = table_open(temp_table_oid, AccessShareLock);
+	temp_rel = table_open(temp_table_oid, NoLock);
 	temp_tupdesc = RelationGetDescr(temp_rel);
 	temp_natts = temp_tupdesc->natts;
-	table_close(temp_rel, AccessShareLock);
+	table_close(temp_rel, NoLock);
 
 	/* Done reading the shape; drop the throwaway plan. */
 	SPI_freeplan(plan);
@@ -492,6 +493,10 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 	 * Create the temp buffer table by selecting the desired columns
 	 * with no rows. PostgreSQL infers column types from the SELECT.
 	 * ON COMMIT DROP ensures automatic cleanup at transaction end.
+	 *
+	 * This CREATE TABLE goes through heap_create_with_catalog, which takes
+	 * AccessExclusiveLock on the new relation and holds it until end of transaction.
+	 * 
 	 */
 	initStringInfo(&create_stmt);
 	appendStringInfo(&create_stmt,
@@ -674,8 +679,13 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	if (!OidIsValid(insert_exec_ctx->temp_table_oid))
 		elog(ERROR, "INSERT EXEC failed due to missing temp table OID");
 
-	/* Open temp table to read schema only - closed before startup returns */
-	temp_rel = table_open(insert_exec_ctx->temp_table_oid, AccessShareLock);
+	/*
+	 * Open the temp buffer table once and hold it open until shutdown, so all
+	 * tuples of this result set are inserted through a single relation handle.
+	 */
+	temp_rel = table_open(insert_exec_ctx->temp_table_oid, NoLock);
+
+	myState->temp_rel = temp_rel;
 	temp_tupdesc = RelationGetDescr(temp_rel);
 	temp_natts = temp_tupdesc->natts;
 
@@ -732,12 +742,10 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	}
 
 	/*
-	 * Copy the temp table descriptor before closing temp_rel.
-	 * INSERT EXEC must not hold a relation handle open
-	 * across the procedure's internal subtransaction boundaries.
+	 * Copy the temp table descriptor for the projection result slot. The
+	 * relation itself stays open (in myState->temp_rel) for the inserts.
 	 */
 	proj_tupdesc = CreateTupleDescCopy(temp_tupdesc);
-	table_close(temp_rel, AccessShareLock);
 
 	/* Create expression context and projection info */
 	myState->econtext = CreateStandaloneExprContext();
@@ -770,13 +778,9 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	DR_insertexec *myState = (DR_insertexec *) self;
 	TupleTableSlot *insert_slot;
 
-	Relation	temp_rel;
-
 	Assert(myState->proj_info != NULL);
 	Assert(myState->econtext != NULL);
-
-	/* Open temp table fresh for each tuple - avoids stale handles across subtransactions */
-	temp_rel = table_open(insert_exec_ctx->temp_table_oid, RowExclusiveLock);
+	Assert(myState->temp_rel != NULL);
 
 	/* Reset per-tuple memory context for expression evaluation */
 	ResetExprContext(myState->econtext);
@@ -788,13 +792,10 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	insert_slot = ExecProject(myState->proj_info);
 
 	/* Insert the projected tuple */
-	table_tuple_insert(temp_rel, insert_slot, myState->cid, 0, NULL);
+	table_tuple_insert(myState->temp_rel, insert_slot, myState->cid, 0, NULL);
 
 	/* INSERT EXEC rows-affected count */
 	insert_exec_ctx->rows_processed++;
-
-	/* Close immediately - do not hold open across subtransaction boundaries */
-	table_close(temp_rel, RowExclusiveLock);
 
 	return true;
 }
@@ -802,7 +803,8 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 /*
  * insertexec_shutdown - executor end for INSERT EXEC receiver
  *
- * Clean up the expression context and projection slot used for type coercion.
+ * Clean up the expression context, projection slot, and close the temp buffer
+ * table opened in startup.
  */
 static void
 insertexec_shutdown(DestReceiver *self)
@@ -816,6 +818,10 @@ insertexec_shutdown(DestReceiver *self)
 	Assert(myState->econtext != NULL);
 	FreeExprContext(myState->econtext, true);
 	myState->econtext = NULL;
+
+	Assert(myState->temp_rel != NULL);
+	table_close(myState->temp_rel, NoLock);
+	myState->temp_rel = NULL;
 }
 
 /*
@@ -899,7 +905,7 @@ insert_exec_setup(PLtsql_execstate *estate,
 }
 
 /*
- * insert_exec_success_cleanup - Clean up INSERT EXEC after successful execution.
+ * insert_exec_flush_and_cleanup - Clean up INSERT EXEC after successful execution.
  *
  * Flushes temp table to target, resets context, and commits the implicit
  * transaction if one was started. The flush target name parts come from the
