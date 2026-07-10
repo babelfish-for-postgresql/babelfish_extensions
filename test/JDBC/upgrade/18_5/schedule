@@ -678,6 +678,7 @@ Test-Multilinestring
 BABEL-5788
 BABEL-6814
 BABEL-1664
+select_into_rowcount
 sys-fn_varbintohexstr
 babel_string_to_money_reg
 string_aggregate

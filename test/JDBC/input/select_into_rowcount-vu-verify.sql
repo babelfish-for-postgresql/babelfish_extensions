@@ -46,3 +46,10 @@ GO
 SELECT * INTO #select_into_rowcount_vu_verify_t12 FROM select_into_rowcount_vu_prepare_src;
 SELECT @@ROWCOUNT;
 GO
+
+-- SET NOCOUNT ON suppresses row count but @@ROWCOUNT still works
+SET NOCOUNT ON;
+SELECT * INTO #select_into_rowcount_vu_verify_t13 FROM select_into_rowcount_vu_prepare_src;
+SELECT @@ROWCOUNT;
+SET NOCOUNT OFF;
+GO
