@@ -1308,7 +1308,6 @@ GO
 SELECT * FROM JsonTable;
 GO
 
-
 -- FOR JSON AUTO with INSERTED in AFTER INSERT trigger — single row
 INSERT INTO forjsonauto_t_trigger_test VALUES (1, 'Alice', 100);
 GO

@@ -1843,8 +1843,6 @@ int#!#nvarchar
 ~~END~~
 
 
-
----------------------------------------- NAMEDTUPLESTORE (Triggers with INSERTED/DELETED) ----------------------------------------
 -- FOR JSON AUTO with INSERTED in AFTER INSERT trigger — single row
 INSERT INTO forjsonauto_t_trigger_test VALUES (1, 'Alice', 100);
 GO
