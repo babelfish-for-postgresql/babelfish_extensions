@@ -1307,3 +1307,87 @@ GO
 -- SELECT FROM a table which value is a result of FOR JSON AUTO
 SELECT * FROM JsonTable;
 GO
+
+
+-- FOR JSON AUTO with INSERTED in AFTER INSERT trigger — single row
+INSERT INTO forjsonauto_t_trigger_test VALUES (1, 'Alice', 100);
+GO
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+
+-- FOR JSON AUTO with INSERTED — multiple rows
+INSERT INTO forjsonauto_t_trigger_test VALUES (2, 'Bob', 200), (3, 'Charlie', 300);
+GO
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+
+-- FOR JSON AUTO with DELETED in AFTER DELETE trigger — single row
+DELETE FROM forjsonauto_t_trigger_test WHERE ID = 1;
+GO
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+
+-- FOR JSON AUTO with DELETED — multiple rows
+DELETE FROM forjsonauto_t_trigger_test WHERE ID IN (2, 3);
+GO
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+
+-- FOR JSON AUTO with INSERTED and column subset
+DROP TRIGGER forjsonauto_trg_insert;
+GO
+
+CREATE TRIGGER forjsonauto_trg_insert ON forjsonauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT Name, Value FROM inserted FOR JSON AUTO)
+END;
+GO
+
+INSERT INTO forjsonauto_t_trigger_test VALUES (4, 'Diana', 400);
+GO
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+
+-- FOR JSON AUTO with INSERTED joined with base table
+DROP TRIGGER forjsonauto_trg_insert;
+GO
+
+CREATE TRIGGER forjsonauto_trg_insert ON forjsonauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT i.ID, i.Name, t.Value
+            FROM inserted i
+            JOIN forjsonauto_t_trigger_test t ON i.ID = t.ID
+            FOR JSON AUTO)
+END;
+GO
+
+INSERT INTO forjsonauto_t_trigger_test VALUES (5, 'Eve', 500);
+GO
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO

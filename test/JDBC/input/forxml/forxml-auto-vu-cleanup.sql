@@ -1,3 +1,13 @@
+-- Drop triggers and trigger test tables
+DROP TRIGGER IF EXISTS forxmlauto_trg_insert;
+GO
+DROP TRIGGER IF EXISTS forxmlauto_trg_delete;
+GO
+DROP TABLE IF EXISTS forxmlauto_t_trigger_xml_result;
+GO
+DROP TABLE IF EXISTS forxmlauto_t_trigger_test;
+GO
+
 -- Drop functions
 DROP FUNCTION IF EXISTS dbo.GetXmlCustomerOrders;
 GO

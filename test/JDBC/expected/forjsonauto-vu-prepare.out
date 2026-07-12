@@ -438,3 +438,30 @@ VALUES
 GO
 ~~ROW COUNT: 1~~
 
+
+-- Trigger test tables (RTE_NAMEDTUPLESTORE)
+CREATE TABLE forjsonauto_t_trigger_test (
+    ID INT PRIMARY KEY,
+    Name NVARCHAR(50),
+    Value INT
+);
+GO
+
+CREATE TABLE forjsonauto_t_trigger_json_result (
+    ResultJson NVARCHAR(MAX)
+);
+GO
+
+CREATE TRIGGER forjsonauto_trg_insert ON forjsonauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT * FROM inserted FOR JSON AUTO)
+END;
+GO
+
+CREATE TRIGGER forjsonauto_trg_delete ON forjsonauto_t_trigger_test AFTER DELETE AS
+BEGIN
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT * FROM deleted FOR JSON AUTO)
+END;
+GO

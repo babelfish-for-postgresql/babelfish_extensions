@@ -1,3 +1,12 @@
+
+DROP TRIGGER IF EXISTS forjsonauto_trg_insert;
+GO
+DROP TRIGGER IF EXISTS forjsonauto_trg_delete;
+GO
+DROP TABLE IF EXISTS forjsonauto_t_trigger_json_result;
+GO
+DROP TABLE IF EXISTS forjsonauto_t_trigger_test;
+GO
 DROP VIEW forjson_vu_v_1
 GO
 

@@ -1842,3 +1842,154 @@ int#!#nvarchar
 1#!#[{"CustomerID": "ALFKI", "CompanyName": "Alfreds Inc", "ContactName": "Maria Anders", "Country": "USA", "Phone": "030-0074321"}]
 ~~END~~
 
+
+
+---------------------------------------- NAMEDTUPLESTORE (Triggers with INSERTED/DELETED) ----------------------------------------
+-- FOR JSON AUTO with INSERTED in AFTER INSERT trigger — single row
+INSERT INTO forjsonauto_t_trigger_test VALUES (1, 'Alice', 100);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+~~START~~
+nvarchar
+[{"id": 1, "name": "Alice", "value": 100}]
+~~END~~
+
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+~~ROW COUNT: 1~~
+
+
+-- FOR JSON AUTO with INSERTED — multiple rows
+INSERT INTO forjsonauto_t_trigger_test VALUES (2, 'Bob', 200), (3, 'Charlie', 300);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+~~START~~
+nvarchar
+[{"id": 2, "name": "Bob", "value": 200}, {"id": 3, "name": "Charlie", "value": 300}]
+~~END~~
+
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+~~ROW COUNT: 1~~
+
+
+-- FOR JSON AUTO with DELETED in AFTER DELETE trigger — single row
+DELETE FROM forjsonauto_t_trigger_test WHERE ID = 1;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+~~START~~
+nvarchar
+[{"id": 1, "name": "Alice", "value": 100}]
+~~END~~
+
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+~~ROW COUNT: 1~~
+
+
+-- FOR JSON AUTO with DELETED — multiple rows
+DELETE FROM forjsonauto_t_trigger_test WHERE ID IN (2, 3);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+~~START~~
+nvarchar
+[{"id": 2, "name": "Bob", "value": 200}, {"id": 3, "name": "Charlie", "value": 300}]
+~~END~~
+
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+~~ROW COUNT: 1~~
+
+
+-- FOR JSON AUTO with INSERTED and column subset
+DROP TRIGGER forjsonauto_trg_insert;
+GO
+
+CREATE TRIGGER forjsonauto_trg_insert ON forjsonauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT Name, Value FROM inserted FOR JSON AUTO)
+END;
+GO
+
+INSERT INTO forjsonauto_t_trigger_test VALUES (4, 'Diana', 400);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+~~START~~
+nvarchar
+[{"Name": "Diana", "Value": 400}]
+~~END~~
+
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+~~ROW COUNT: 1~~
+
+
+-- FOR JSON AUTO with INSERTED joined with base table
+DROP TRIGGER forjsonauto_trg_insert;
+GO
+
+CREATE TRIGGER forjsonauto_trg_insert ON forjsonauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT i.ID, i.Name, t.Value
+            FROM inserted i
+            JOIN forjsonauto_t_trigger_test t ON i.ID = t.ID
+            FOR JSON AUTO)
+END;
+GO
+
+INSERT INTO forjsonauto_t_trigger_test VALUES (5, 'Eve', 500);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+~~START~~
+nvarchar
+[{"ID": 5, "Name": "Eve", "t": [{"Value": 500}]}]
+~~END~~
+
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+~~ROW COUNT: 1~~
+

@@ -339,3 +339,33 @@ GO
 
 INSERT INTO forxmlauto_t_ci_child VALUES (10, 1), (20, 2);
 GO
+
+-- ============================================
+-- SECTION: Triggers (RTE_NAMEDTUPLESTORE)
+-- ============================================
+
+CREATE TABLE forxmlauto_t_trigger_test (
+    ID INT PRIMARY KEY,
+    Name NVARCHAR(50),
+    Value INT
+);
+GO
+
+CREATE TABLE forxmlauto_t_trigger_xml_result (
+    ResultXml NVARCHAR(MAX)
+);
+GO
+
+CREATE TRIGGER forxmlauto_trg_insert ON forxmlauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forxmlauto_t_trigger_xml_result(ResultXml)
+    SELECT (SELECT * FROM inserted FOR XML AUTO)
+END;
+GO
+
+CREATE TRIGGER forxmlauto_trg_delete ON forxmlauto_t_trigger_test AFTER DELETE AS
+BEGIN
+    INSERT INTO forxmlauto_t_trigger_xml_result(ResultXml)
+    SELECT (SELECT * FROM deleted FOR XML AUTO)
+END;
+GO

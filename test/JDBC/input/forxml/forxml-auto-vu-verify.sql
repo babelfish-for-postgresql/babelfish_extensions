@@ -1510,3 +1510,90 @@ FOR XML AUTO;
 COMMIT;
 GO
 
+
+
+-- ============================================
+-- SECTION 21: NAMEDTUPLESTORE (Triggers with INSERTED/DELETED)
+-- ============================================
+-- 21.1 FOR XML AUTO with INSERTED in AFTER INSERT trigger
+INSERT INTO forxmlauto_t_trigger_test VALUES (1, 'Alice', 100);
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+-- 21.2 FOR XML AUTO with INSERTED — multiple rows
+INSERT INTO forxmlauto_t_trigger_test VALUES (2, 'Bob', 200), (3, 'Charlie', 300);
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+-- 21.3 FOR XML AUTO with DELETED in AFTER DELETE trigger
+DELETE FROM forxmlauto_t_trigger_test WHERE ID = 1;
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+-- 21.4 FOR XML AUTO with DELETED — multiple rows
+DELETE FROM forxmlauto_t_trigger_test WHERE ID IN (2, 3);
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+-- 21.5 FOR XML AUTO with INSERTED and column subset
+DROP TRIGGER forxmlauto_trg_insert;
+GO
+
+CREATE TRIGGER forxmlauto_trg_insert ON forxmlauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forxmlauto_t_trigger_xml_result(ResultXml)
+    SELECT (SELECT Name, Value FROM inserted FOR XML AUTO)
+END;
+GO
+
+INSERT INTO forxmlauto_t_trigger_test VALUES (4, 'Diana', 400);
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+-- 21.6 FOR XML AUTO with INSERTED joined with base table
+DROP TRIGGER forxmlauto_trg_insert;
+GO
+
+CREATE TRIGGER forxmlauto_trg_insert ON forxmlauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forxmlauto_t_trigger_xml_result(ResultXml)
+    SELECT (SELECT i.ID, i.Name, t.Value
+            FROM inserted i
+            JOIN forxmlauto_t_trigger_test t ON i.ID = t.ID
+            FOR XML AUTO)
+END;
+GO
+
+INSERT INTO forxmlauto_t_trigger_test VALUES (5, 'Eve', 500);
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
