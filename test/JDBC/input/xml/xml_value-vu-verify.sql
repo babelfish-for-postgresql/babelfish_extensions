@@ -67,6 +67,21 @@ DECLARE @xml XML = '<root></root>';
 SELECT @xml.value('(//child)[1]', 'varchar(100)');
 GO
 
+-- Test with empty input
+DECLARE @x XML = ''
+SELECT @x.value('(/Root/row)[1]', 'NVARCHAR(100)') 
+GO
+
+-- Test with only spaces input
+DECLARE @x XML = '    '
+SELECT @x.value('(/Root/row)[1]', 'NVARCHAR(100)') 
+GO
+
+-- Test with NULL input
+DECLARE @x XML = NULL
+SELECT @x.value('(/Root/row)[1]', 'NVARCHAR(100)') 
+GO
+
 -- Test with an XML document containing special characters
 DECLARE @xml XML = '<root><child>Hello & World</child></root>';
 SELECT @xml.value('(//child)[1]', 'varchar(100)');

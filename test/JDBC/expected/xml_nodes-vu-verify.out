@@ -1,0 +1,2482 @@
+set quoted_identifier on
+go
+
+-- tests with empty/NULL input
+DECLARE @x XML = ''
+SELECT T.c.query('.') AS result
+FROM @x.nodes('/Root/row') AS T(c)
+go
+~~START~~
+xml
+~~END~~
+
+
+DECLARE @x XML = '   '
+SELECT T.c.query('.') AS result
+FROM @x.nodes('/Root/row') AS T(c)
+go
+~~START~~
+xml
+~~END~~
+
+
+DECLARE @x XML = NULL
+SELECT T.c.query('.') AS result
+FROM @x.nodes('/Root/row') AS T(c)
+go
+~~START~~
+xml
+~~END~~
+
+
+DECLARE @x XML= ''
+SELECT T.c.value('.', 'varchar(10)') AS result
+FROM @x.nodes('/Root/row') AS T(c)
+ORDER BY 1
+go
+~~START~~
+varchar
+~~END~~
+
+
+DECLARE @x XML= '   '
+SELECT T.c.value('.', 'varchar(10)') AS result
+FROM @x.nodes('/Root/row') AS T(c)
+ORDER BY 1
+go
+~~START~~
+varchar
+~~END~~
+
+
+DECLARE @x XML= NULL
+SELECT T.c.value('.', 'varchar(10)') AS result
+FROM @x.nodes('/Root/row') AS T(c)
+ORDER BY 1
+go
+~~START~~
+varchar
+~~END~~
+
+
+-- tests with basic XPath queries
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT T.C.value('(@id)[1]', 'int') AS id
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT T.C.value('(@id)[2]', 'int') AS id
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+<NULL>
+<NULL>
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT T.C.value('(//@id)[1]', 'int') AS id
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+1
+1
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT T.C.value('(/*/@id)[1]', 'int') AS id
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+<NULL>
+<NULL>
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT T.C.value('(@id)[1]', 'int') AS id
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+
+CREATE TABLE #NullXml (Id INT, Data XML)
+INSERT #NullXml VALUES (1, NULL), (2, '<r><i>OK</i></r>')
+SELECT n.Id, t.c.value('.','varchar(20)') AS val
+FROM #NullXml n CROSS APPLY n.Data.nodes('/r/i') t(c)
+ORDER BY n.Id
+DROP TABLE #NullXml
+go
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+2#!#OK
+~~END~~
+
+
+-- .nodes() on an XML variable
+DECLARE @xml XML = '<r><i v="1"/><i v="2"/><i v="3"/></r>'
+SELECT t.c.value('@v','int') AS val
+FROM @xml.nodes('/r/i') t(c)
+ORDER BY val
+go
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+
+-- .nodes() on a table column
+CREATE TABLE #XmlData (Id INT, Data XML)
+INSERT #XmlData VALUES
+  (1, '<items><item>A</item><item>B</item></items>'),
+  (2, '<items><item>C</item></items>')
+SELECT d.Id, t.c.value('.','char(1)') AS item
+FROM #XmlData d
+CROSS APPLY d.Data.nodes('/items/item') t(c)
+ORDER BY d.Id
+DROP TABLE #XmlData
+go
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#char
+1#!#A
+1#!#B
+2#!#C
+~~END~~
+
+
+-- .nodes() on a subquery result
+SELECT t.c.value('@id','int') AS id, t.c.value('.','varchar(20)') AS val
+FROM (SELECT CAST('<root><e id="1">X</e><e id="2">Y</e></root>' AS XML) AS x) sub
+CROSS APPLY sub.x.nodes('/root/e') t(c)
+ORDER BY 1
+go
+~~START~~
+int#!#varchar
+1#!#X
+2#!#Y
+~~END~~
+
+
+-- .nodes() with deeper nesting on a variable
+DECLARE @xml XML = '<orders><o id="1"><li>item-1</li><li>item-2</li></o><o id="2"><li>item-3</li></o></orders>'
+SELECT t.c.value('../@id','int') AS orderId, t.c.value('.','varchar(20)') AS lineItem
+FROM @xml.nodes('/orders/o/li') t(c)
+ORDER BY 1,2
+go
+~~START~~
+int#!#varchar
+1#!#item-1
+1#!#item-2
+2#!#item-3
+~~END~~
+
+
+DECLARE @xml XML = '<orders><o id="1"><li>item-1</li><li>item-2</li></o><o id="2"><li>item-3</li></o></orders>'
+SELECT t.c.value('../@id','int') AS orderId, t.c.value('(.)','varchar(20)') AS lineItem
+FROM @xml.nodes('/orders/o/li') t(c)
+ORDER BY 1,2
+go
+~~START~~
+int#!#varchar
+1#!#item-1
+1#!#item-2
+2#!#item-3
+~~END~~
+
+
+DECLARE @xml XML = '<orders><o id="1"><li>item-1</li><li>item-2</li></o><o id="2"><li>item-3</li></o></orders>'
+SELECT @xml.value('.','varchar(20)')  AS lineItem
+ORDER BY 1
+go
+~~START~~
+varchar
+item-1item-2item-3
+~~END~~
+
+
+-- .nodes() on a subquery joining to another table
+CREATE TABLE #Orders (OrderId INT, OrderXml XML)
+INSERT #Orders VALUES (1,'<lines><l qty="5"/><l qty="3"/></lines>')
+SELECT o.OrderId, t.c.value('@qty','int') AS qty
+FROM #Orders o
+CROSS APPLY (SELECT o.OrderXml) sub(x)
+CROSS APPLY sub.x.nodes('/lines/l') t(c)
+ORDER BY 1,2
+DROP TABLE #Orders
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+1#!#3
+1#!#5
+~~END~~
+
+
+-- .nodes() with multiple levels via nested CROSS APPLY on a variable
+DECLARE @xml XML = '<depts><d name="Eng"><emp>James</emp><emp>Andrew</emp></d><d name="HR"><emp>Megan</emp></d></depts>'
+SELECT d.c.value('@name','varchar(20)') AS dept, e.c.value('.','varchar(20)') AS emp
+FROM @xml.nodes('/depts/d') d(c)
+CROSS APPLY d.c.nodes('emp') e(c)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+Eng#!#Andrew
+Eng#!#James
+HR#!#Megan
+~~END~~
+
+
+-- .nodes() returning empty set (no matches)
+DECLARE @xml XML = '<r><a>1</a></r>'
+SELECT t.c.value('.','int') AS val
+FROM @xml.nodes('/r/b') t(c)
+ORDER BY 1
+go
+~~START~~
+int
+~~END~~
+
+
+-- .nodes() on table column with NULL XML (should produce no rows)
+CREATE TABLE #NullXml (Id INT, Data XML)
+INSERT #NullXml VALUES (1, NULL), (2, '<r><i>OK</i></r>')
+SELECT n.Id, t.c.value('.','varchar(20)') AS val
+FROM #NullXml n
+CROSS APPLY n.Data.nodes('/r/i') t(c)
+ORDER BY 1,2
+DROP TABLE #NullXml
+go
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+2#!#OK
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT T.C.value('(@id)[1]', 'int') AS id, T.C.value('(name)[1]', 'varchar(100)') AS name
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int#!#varchar
+1#!#James
+2#!#Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT T.C.value('(@id)[1]', 'int') AS id, T.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int#!#varchar
+1#!#<NULL>
+2#!#<NULL>
+~~END~~
+
+
+-- nodes() returns empty rowset when xpath matches nothing
+DECLARE @xml XML = '<Root><row id="1"/></Root>'
+SELECT T.C.value('(@id)[1]', 'int') AS id
+FROM @xml.nodes('/Root/noMatch') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+~~END~~
+
+
+-- nodes() on a subquery
+SELECT T.C.value('(@id)[1]', 'int') AS id
+FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
+CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+10
+20
+~~END~~
+
+
+DECLARE @xml XML = '<Root><item>A</item><item>B</item></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS val
+FROM @xml.nodes('/Root/item') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+A
+B
+~~END~~
+
+
+DECLARE @xml XML = '<Root><item>A</item><item>B</item></Root>'
+SELECT T.C.value('..', 'varchar(20)') AS val
+FROM @xml.nodes('/Root/item') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+AB
+AB
+~~END~~
+
+
+SELECT T.C.value('(@id)[1]', 'int') AS id
+FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
+CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+10
+20
+~~END~~
+
+
+SELECT T.C.value('(./@id)[1]', 'int') AS id
+FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
+CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+10
+20
+~~END~~
+
+
+SELECT T.C.value('(../@id)[1]', 'int') AS id
+FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
+CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+<NULL>
+<NULL>
+~~END~~
+
+
+SELECT T.C.value('./@id', 'int') AS id
+FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
+CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+10
+20
+~~END~~
+
+
+SELECT T.C.value('../@id', 'int') AS id
+FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
+CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+<NULL>
+<NULL>
+~~END~~
+
+
+SELECT T.C.value('./@id[1]', 'int') AS id
+FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
+CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+10
+20
+~~END~~
+
+
+SELECT T.C.value('../@id[1]', 'int') AS id
+FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
+CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+<NULL>
+<NULL>
+~~END~~
+
+SELECT T.C.value('@id[1]', 'int') AS id
+FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
+CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+10
+20
+~~END~~
+
+
+SELECT T.C.value(' . / @id [1]', 'int') AS id
+FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
+CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+10
+20
+~~END~~
+
+
+SELECT T.C.value(' .. / @id [1]', 'int') AS id
+FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
+CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+<NULL>
+<NULL>
+~~END~~
+
+
+-- string split into rows on separator
+DECLARE @str varchar(20) = 'ab,cd,ef'
+DECLARE @separator varchar(10)=','
+DECLARE @xml xml = N'<root><i>' + replace(@str, @separator,'</i><i>') + '</i></root>'
+SELECT [i].value('.', 'VARCHAR(MAX)') AS Value
+FROM @xml.nodes('//root/i') AS [Items]([i])
+ORDER BY 1
+go
+~~START~~
+varchar
+ab
+cd
+ef
+~~END~~
+
+
+DECLARE @str varchar(20) = 'ab,cd,ef'
+DECLARE @separator varchar(10)='!'
+DECLARE @xml xml = N'<root><i>' + replace(@str, @separator,'</i><i>') + '</i></root>'
+SELECT [i].value('.', 'VARCHAR(MAX)') AS Value
+FROM @xml.nodes('//root/i') AS [Items]([i])
+ORDER BY 1
+go
+~~START~~
+varchar
+ab,cd,ef
+~~END~~
+
+
+DECLARE @str varchar(20) = ',ab,cd,ef,'
+DECLARE @separator varchar(10)=','
+DECLARE @xml xml = N'<root><i>' + replace(@str, @separator,'</i><i>') + '</i></root>'
+SELECT [i].value('.', 'VARCHAR(MAX)') AS Value
+FROM @xml.nodes('//root/i') AS [Items]([i])
+ORDER BY 1
+go
+~~START~~
+varchar
+
+
+ab
+cd
+ef
+~~END~~
+
+
+DECLARE @str varchar(20) = ',,ab,,cd,,ef,,'
+DECLARE @separator varchar(10)=','
+DECLARE @xml xml = N'<root><i>' + replace(@str, @separator,'</i><i>') + '</i></root>'
+SELECT [i].value('.', 'VARCHAR(MAX)') AS Value
+FROM @xml.nodes('//root/i') AS [Items]([i])
+ORDER BY 1
+go
+~~START~~
+varchar
+
+
+
+
+
+
+ab
+cd
+ef
+~~END~~
+
+
+DECLARE @str varchar(20) = NULL
+DECLARE @separator varchar(10)='!'
+DECLARE @xml xml = N'<root><i>' + replace(@str, @separator,'</i><i>') + '</i></root>'
+SELECT [i].value('.', 'VARCHAR(MAX)') AS Value
+FROM @xml.nodes('//root/i') AS [Items]([i])
+ORDER BY 1
+go
+~~START~~
+varchar
+~~END~~
+
+
+DECLARE @str varchar(20) = ''
+DECLARE @separator varchar(10)='!'
+DECLARE @xml xml = N'<root><i>' + replace(@str, @separator,'</i><i>') + '</i></root>'
+SELECT [i].value('.', 'VARCHAR(MAX)') AS Value
+FROM @xml.nodes('//root/i') AS [Items]([i])
+ORDER BY 1
+go
+~~START~~
+varchar
+
+~~END~~
+
+
+DECLARE @str varchar(20) = 'ab,cd,ef'
+DECLARE @separator varchar(10)=''
+DECLARE @xml xml = N'<root><i>' + replace(@str, @separator,'</i><i>') + '</i></root>'
+SELECT [i].value('.', 'VARCHAR(MAX)') AS Value
+FROM @xml.nodes('//root/i') AS [Items]([i])
+ORDER BY 1
+go
+~~START~~
+varchar
+ab,cd,ef
+~~END~~
+
+
+DECLARE @str varchar(20) = 'ab,cd,ef'
+DECLARE @separator varchar(10)=null
+DECLARE @xml xml = N'<root><i>' + replace(@str, @separator,'</i><i>') + '</i></root>'
+SELECT [i].value('.', 'VARCHAR(MAX)') AS Value
+FROM @xml.nodes('//root/i') AS [Items]([i])
+ORDER BY 1
+go
+~~START~~
+varchar
+~~END~~
+
+
+DECLARE @UsersList XML =
+'<Root>
+  <Rows UserName="jsmith" Name="John Smith"/>
+  <Rows UserName="adoe" Name="Andrew Doe"/>
+  <Rows UserName="bjones" Name="Bob Jones"/>
+</Root>'
+SELECT
+  T.C.value('./@UserName', 'varchar(100)') AS UserName,
+  T.C.value('./@Name', 'varchar(100)') AS Name,
+  u.UserID
+FROM @UsersList.nodes('/Root/Rows') AS T(C)
+INNER JOIN babel_5225_xml_nodes_t3 u ON u.UserName = T.C.value('./@UserName', 'varchar(100)')
+ORDER BY u.UserID
+go
+~~START~~
+varchar#!#varchar#!#int
+jsmith#!#John Smith#!#1
+adoe#!#Andrew Doe#!#2
+bjones#!#Bob Jones#!#3
+~~END~~
+
+
+-- double CROSS APPLY
+DECLARE @xml XML = '<root><row><def><item>item-1</item></def><def><item>item-2</item></def><attributes><color>blue</color></attributes><attributes><color>red</color></attributes></row><row><def><item>item-3</item></def><attributes><color>green</color></attributes></row></root>'
+SELECT
+   itemDef.value('(item)[1]', 'varchar(20)') AS item,
+   attrib.value('(color)[1]', 'varchar(20)') AS color
+FROM @xml.nodes('/root/row') AS row(rowType)
+   CROSS APPLY rowType.nodes('./def') AS itemDefs(itemDef)
+   CROSS APPLY rowType.nodes('./attributes') AS attributeDefs(attrib)
+ORDER BY item, color
+go
+~~START~~
+varchar#!#varchar
+item-1#!#blue
+item-1#!#red
+item-2#!#blue
+item-2#!#red
+item-3#!#green
+~~END~~
+
+
+-- with .exist()
+DECLARE @xml XML = '<root><row><def><item>item-1</item></def><def><item>item-2</item></def><attributes><color>blue</color></attributes><attributes><color>red</color></attributes></row><row><def><item>item-3</item></def><attributes><color>green</color></attributes></row></root>'
+SELECT
+   itemDef.value('(item)[1]', 'varchar(20)') AS item,
+   attrib.value('(color)[1]', 'varchar(20)') AS color
+FROM @xml.nodes('/root/row') AS row(rowType)
+   CROSS APPLY rowType.nodes('./def') AS itemDefs(itemDef)
+   CROSS APPLY rowType.nodes('./attributes') AS attributeDefs(attrib)
+WHERE attrib.exist('./color') = 1
+ORDER BY item, color
+go
+~~START~~
+varchar#!#varchar
+item-1#!#blue
+item-1#!#red
+item-2#!#blue
+item-2#!#red
+item-3#!#green
+~~END~~
+
+
+DECLARE @xml XML = '<root><row><def><item>item-1</item></def><def><item>item-2</item></def><attributes><color>blue</color></attributes><attributes><color>red</color></attributes></row><row><def><item>item-3</item></def><attributes><color>green</color></attributes></row></root>'
+SELECT
+   itemDef.value('(item)[1]', 'varchar(20)') AS item,
+   attrib.value('(color)[1]', 'varchar(20)') AS color
+FROM @xml.nodes('/root/row') AS row(rowType)
+   CROSS APPLY rowType.nodes('./def') AS itemDefs(itemDef)
+   CROSS APPLY rowType.nodes('./attributes') AS attributeDefs(attrib)
+WHERE attrib.exist('./nosuchtag') = 1
+ORDER BY item, color
+go
+~~START~~
+varchar#!#varchar
+~~END~~
+
+
+DECLARE @xml XML = '<root><row><def><item>item-1</item></def><def><item>item-2</item></def><attributes><color>blue</color></attributes><attributes><color>red</color></attributes></row><row><def><item>item-3</item></def><attributes><color>green</color></attributes></row></root>'
+SELECT
+   itemDef.value('(item)[1]', 'varchar(20)') AS item,
+   attrib.value('(color)[1]', 'varchar(20)') AS color
+FROM @xml.nodes('/root/row') AS row(rowType)
+   CROSS APPLY rowType.nodes('./def') AS itemDefs(itemDef)
+   CROSS APPLY rowType.nodes('./attributes') AS attributeDefs(attrib)
+WHERE attrib.exist('./color[text()="red"]') = 1
+ORDER BY item, color
+go
+~~START~~
+varchar#!#varchar
+item-1#!#red
+item-2#!#red
+~~END~~
+
+
+DECLARE @xml XML = '<root><row><def><item>item-1</item></def><def><item>item-2</item></def><attributes><color>blue</color></attributes><attributes><color>red</color></attributes></row><row><def><item>item-3</item></def><attributes><color>green</color></attributes></row></root>'
+SELECT
+   itemDef.value('(item)[1]', 'varchar(20)') AS item,
+   attrib.value('(color)[1]', 'varchar(20)') AS color
+FROM @xml.nodes('/root/row') AS row(rowType)
+   CROSS APPLY rowType.nodes('./def') AS itemDefs(itemDef)
+   CROSS APPLY rowType.nodes('./attributes') AS attributeDefs(attrib)
+WHERE itemDef.exist('./item[text()="item-2"]') = 1
+ORDER BY item, color
+go
+~~START~~
+varchar#!#varchar
+item-2#!#blue
+item-2#!#red
+~~END~~
+
+
+DECLARE @xml XML = '<Root><item>A</item><item>B</item></Root>'
+SELECT T.C.value('(.)[1]', 'varchar(20)') AS val
+FROM @xml.nodes('/Root/item') AS T(C)
+ORDER BY val
+go
+~~START~~
+varchar
+A
+B
+~~END~~
+
+
+-- variations on the xpath query
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS id
+FROM @xml.nodes('.') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+JamesMegan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('(.)') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+JamesMegan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('(.)[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+JamesMegan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('.[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+JamesMegan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('.[2]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS id
+FROM @xml.nodes('/Root/row/name') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('(/Root/row/name)') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('(/Root/row/name)[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('/Root/row/name[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS id
+FROM @xml.nodes('/Root/row/name') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('/Root/row/name') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+Megan
+~~END~~
+
+
+-- index in .nodes() query
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS id
+FROM @xml.nodes('(/Root/row/name)[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('(/Root/row/name)[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS id
+FROM @xml.nodes('(/Root/row/name)[2]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('(/Root/row/name)[2]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('/Root/row/name[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('/Root/row/name[2]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('/Root/row/name/..') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('(/Root/row/name/../name/../name)') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS id
+FROM @xml.nodes('(/Root/row/name/../name/../name)[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS id
+FROM @xml.nodes('(/Root/row/name/../name/../name)[2]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS id
+FROM @xml.nodes('(/Root/row/name/..)[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS id
+FROM @xml.nodes('(/Root/row/name/..)[2]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('/Root/row/name') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+2#!#Robert
+3#!#Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('(.)', 'varchar(20)') AS name
+FROM @xml.nodes('/Root/row/name') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+2#!#Robert
+3#!#Megan
+~~END~~
+
+
+-- index in .nodes() query
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name)[1]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('(.)', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name)[1]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name)[2]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+2#!#Robert
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('(.)', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name)[2]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+2#!#Robert
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('(.)', 'varchar(20)') AS name
+FROM @xml.nodes('/Root/row/name[1]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+3#!#Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('(.)', 'varchar(20)') AS name
+FROM @xml.nodes('/Root/row/name[2]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+2#!#Robert
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('(@id)', 'varchar(20)') AS id, T.C.value('(.)', 'varchar(20)') AS name
+FROM @xml.nodes('/Root/row/name/..') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+<NULL>#!#JamesRobert
+<NULL>#!#Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('(.)', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name/../name/../name)') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+2#!#Robert
+3#!#Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('(@id)', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name/../name/../name)[1]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('(@id)[1]', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name/../name/../name)[1]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('(@id)[2]', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name/../name/../name)[1]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+<NULL>#!#James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name/../name/../name)[2]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+2#!#Robert
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name/..)[1]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+<NULL>#!#JamesRobert
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name/..)[2]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+<NULL>#!#Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('/Root/row/name') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+2#!#Suzy
+3#!#Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('(.)', 'varchar(20)') AS name
+FROM @xml.nodes('/Root/row/name') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+2#!#Suzy
+3#!#Megan
+~~END~~
+
+
+-- different XML doc
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name)[1]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('(.)', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name)[1]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name)[2]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+2#!#Suzy
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('(.)', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name)[2]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+2#!#Suzy
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('(.)', 'varchar(20)') AS name
+FROM @xml.nodes('/Root/row/name[1]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+2#!#Suzy
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('(.)', 'varchar(20)') AS name
+FROM @xml.nodes('/Root/row/name[2]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+3#!#Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('(@id)', 'varchar(20)') AS id, T.C.value('(.)', 'varchar(20)') AS name
+FROM @xml.nodes('/Root/row/name/..') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+<NULL>#!#James
+<NULL>#!#SuzyMegan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('(.)', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name/../name/../name)') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+2#!#Suzy
+3#!#Megan
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('(@id)', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name/../name/../name)[1]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('(@id)[1]', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name/../name/../name)[1]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+1#!#James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('(@id)[2]', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name/../name/../name)[1]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+<NULL>#!#James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name/../name/../name)[2]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+2#!#Suzy
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name/..)[1]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+<NULL>#!#James
+~~END~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('(/Root/row/name/..)[2]') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#varchar
+<NULL>#!#SuzyMegan
+~~END~~
+
+
+
+
+
+
+-- more complex XML doc
+DECLARE @x XML = '
+<company>
+  <department name="Sales">
+    <manager><person id="1" firstName="Alice" lastName="Morgan"/></manager>
+    <team name="west">
+      <manager><person id="2" firstName="Bob" lastName="Carter"/></manager>
+      <person id="3" firstName="Carol" lastName="Davis"/>
+      <person id="4" firstName="Dan" lastName="Evans"/>
+      <person id="5" firstName="Eve" lastName="Foster"/>
+    </team>
+    <team name="east">
+      <manager><person id="6" firstName="Frank" lastName="Green"/></manager>
+      <person id="7" firstName="Grace" lastName="Hill"/>
+      <person id="8" firstName="Henry" lastName="Irving"/>
+      <person id="3" firstName="Carol" lastName="Davis"/>
+    </team>
+    <team name="central">
+      <manager><person id="9" firstName="Irene" lastName="James"/></manager>
+      <person id="10" firstName="Jack" lastName="Kelly"/>
+      <person id="11" firstName="Karen" lastName="Lewis"/>
+    </team>
+  </department>
+  <department name="Finance">
+    <manager><person id="12" firstName="Leo" lastName="Martin"/></manager>
+    <team name="accounts">
+      <manager><person id="13" firstName="Mona" lastName="Nash"/></manager>
+      <person id="14" firstName="Neil" lastName="Owen"/>
+      <person id="15" firstName="Olivia" lastName="Parker"/>
+      <person id="16" firstName="Paul" lastName="Quinn"/>
+    </team>
+    <team name="legal">
+      <manager><person id="17" firstName="Rachel" lastName="Stone"/></manager>
+      <person id="18" firstName="Sam" lastName="Taylor"/>
+      <person id="19" firstName="Tina" lastName="Underwood"/>
+      <person id="14" firstName="Neil" lastName="Owen"/>
+    </team>
+  </department>
+  <department name="Support">
+    <manager><person id="20" firstName="Uma" lastName="Vance"/></manager>
+    <team name="retail">
+      <manager><person id="21" firstName="Victor" lastName="Walsh"/></manager>
+      <person id="22" firstName="Wendy" lastName="Young"/>
+      <person id="23" firstName="Xavier" lastName="Adams"/>
+    </team>
+    <team name="enterprise">
+      <manager><person id="24" firstName="Yvonne" lastName="Blake"/></manager>
+      <person id="25" firstName="Zach" lastName="Cole"/>
+      <person id="22" firstName="Wendy" lastName="Young"/>
+    </team>
+    <team name="online">
+      <manager><person id="26" firstName="Arthur" lastName="Dean"/></manager>
+      <person id="27" firstName="Betty" lastName="Ellis"/>
+      <person id="28" firstName="Chris" lastName="Ford"/>
+    </team>
+  </department>
+</company>'
+-- All persons with ID and department
+SELECT DISTINCT
+  p.value('@id', 'int') AS PersonID,
+  CAST(p.value('@firstName', 'VARCHAR(15)') + ' ' + p.value('@lastName', 'VARCHAR(15)') AS VARCHAR(35)) AS FullName,
+  dept.value('@name', 'varchar(20)') AS Department
+FROM @x.nodes('/company/department') AS D(dept)
+CROSS APPLY dept.nodes('.//person') AS P(p)
+ORDER BY PersonID
+-- All managers, two CROSS APPLY
+SELECT DISTINCT
+  mgr.value('@id', 'int') AS ManagerID,
+  CAST(mgr.value('@firstName', 'varchar(15)') + ' ' + mgr.value('@lastName', 'varchar(15)') AS VARCHAR(35)) AS ManagerName,
+  'Department' AS ManagerLevel, dept.value('@name', 'varchar(20)') AS Department, NULL AS Team
+FROM @x.nodes('/company/department') AS D(dept)
+CROSS APPLY dept.nodes('manager/person') AS M(mgr)
+UNION ALL
+SELECT
+  mgr.value('@id', 'int'),
+  CAST(mgr.value('@firstName', 'varchar(15)') + ' ' + mgr.value('@lastName', 'varchar(15)') AS VARCHAR(35)),
+  'Team', dept.value('@name', 'varchar(20)'), team.value('@name', 'varchar(20)')
+FROM @x.nodes('/company/department') AS D(dept)
+CROSS APPLY dept.nodes('team') AS T(team)
+CROSS APPLY team.nodes('manager/person') AS M(mgr)
+ORDER BY ManagerID
+-- Persons in multiple teams
+WITH Members AS (
+  SELECT
+    p.value('@id', 'int') AS PersonID,
+    CAST(p.value('@firstName', 'varchar(15)') + ' ' + p.value('@lastName', 'varchar(15)') AS VARCHAR(35)) AS FullName,
+    team.value('@name', 'varchar(20)') AS TeamName
+  FROM @x.nodes('/company/department/team') AS T(team)
+  CROSS APPLY team.nodes('person') AS P(p)
+)
+SELECT DISTINCT m.PersonID, m.FullName, m.TeamName
+FROM Members m
+INNER JOIN (
+  SELECT PersonID FROM Members GROUP BY PersonID HAVING COUNT(*) > 1
+) multi ON multi.PersonID = m.PersonID
+ORDER BY m.PersonID, m.FullName, m.TeamName
+-- Teams with members using exist() and query()
+SELECT
+  dept.value('@name', 'varchar(50)') AS Department,
+  team.value('@name', 'varchar(50)') AS Team,
+  team.query('person') AS TeamMembersXML
+FROM @x.nodes('/company/department') AS D(dept)
+CROSS APPLY dept.nodes('team') AS T(team)
+WHERE team.exist('person') = 1
+ORDER BY cast(team.query('person') as varchar(200))
+go
+~~START~~
+int#!#varchar#!#varchar
+1#!#Alice Morgan#!#Sales
+2#!#Bob Carter#!#Sales
+3#!#Carol Davis#!#Sales
+4#!#Dan Evans#!#Sales
+5#!#Eve Foster#!#Sales
+6#!#Frank Green#!#Sales
+7#!#Grace Hill#!#Sales
+8#!#Henry Irving#!#Sales
+9#!#Irene James#!#Sales
+10#!#Jack Kelly#!#Sales
+11#!#Karen Lewis#!#Sales
+12#!#Leo Martin#!#Finance
+13#!#Mona Nash#!#Finance
+14#!#Neil Owen#!#Finance
+15#!#Olivia Parker#!#Finance
+16#!#Paul Quinn#!#Finance
+17#!#Rachel Stone#!#Finance
+18#!#Sam Taylor#!#Finance
+19#!#Tina Underwood#!#Finance
+20#!#Uma Vance#!#Support
+21#!#Victor Walsh#!#Support
+22#!#Wendy Young#!#Support
+23#!#Xavier Adams#!#Support
+24#!#Yvonne Blake#!#Support
+25#!#Zach Cole#!#Support
+26#!#Arthur Dean#!#Support
+27#!#Betty Ellis#!#Support
+28#!#Chris Ford#!#Support
+~~END~~
+
+~~START~~
+int#!#varchar#!#varchar#!#varchar#!#varchar
+1#!#Alice Morgan#!#Department#!#Sales#!#<NULL>
+2#!#Bob Carter#!#Team#!#Sales#!#west
+6#!#Frank Green#!#Team#!#Sales#!#east
+9#!#Irene James#!#Team#!#Sales#!#central
+12#!#Leo Martin#!#Department#!#Finance#!#<NULL>
+13#!#Mona Nash#!#Team#!#Finance#!#accounts
+17#!#Rachel Stone#!#Team#!#Finance#!#legal
+20#!#Uma Vance#!#Department#!#Support#!#<NULL>
+21#!#Victor Walsh#!#Team#!#Support#!#retail
+24#!#Yvonne Blake#!#Team#!#Support#!#enterprise
+26#!#Arthur Dean#!#Team#!#Support#!#online
+~~END~~
+
+~~START~~
+int#!#varchar#!#varchar
+3#!#Carol Davis#!#east
+3#!#Carol Davis#!#west
+14#!#Neil Owen#!#accounts
+14#!#Neil Owen#!#legal
+22#!#Wendy Young#!#enterprise
+22#!#Wendy Young#!#retail
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#xml
+Sales#!#central#!#<person id="10" firstName="Jack" lastName="Kelly"/><person id="11" firstName="Karen" lastName="Lewis"/>
+Finance#!#accounts#!#<person id="14" firstName="Neil" lastName="Owen"/><person id="15" firstName="Olivia" lastName="Parker"/><person id="16" firstName="Paul" lastName="Quinn"/>
+Finance#!#legal#!#<person id="18" firstName="Sam" lastName="Taylor"/><person id="19" firstName="Tina" lastName="Underwood"/><person id="14" firstName="Neil" lastName="Owen"/>
+Support#!#retail#!#<person id="22" firstName="Wendy" lastName="Young"/><person id="23" firstName="Xavier" lastName="Adams"/>
+Support#!#enterprise#!#<person id="25" firstName="Zach" lastName="Cole"/><person id="22" firstName="Wendy" lastName="Young"/>
+Support#!#online#!#<person id="27" firstName="Betty" lastName="Ellis"/><person id="28" firstName="Chris" lastName="Ford"/>
+Sales#!#west#!#<person id="3" firstName="Carol" lastName="Davis"/><person id="4" firstName="Dan" lastName="Evans"/><person id="5" firstName="Eve" lastName="Foster"/>
+Sales#!#east#!#<person id="7" firstName="Grace" lastName="Hill"/><person id="8" firstName="Henry" lastName="Irving"/><person id="3" firstName="Carol" lastName="Davis"/>
+~~END~~
+
+
+
+
+
+
+-- XPath functions that can take an argument ----------------
+DECLARE @x XML = '
+<root>
+  <row>
+    <item name="alpha">hello</item>
+    <item name="beta">world</item>
+    <item name="gamma">testing123</item>
+  </row>
+  <row>
+    <item name="delta">short</item>
+    <item name="epsilon">this is a longer string</item>
+  </row>
+  <books>
+    <title>SQL</title>
+    <title>Advanced Database Design</title>
+    <title>XML Fundamentals</title>
+  </books>
+</root>'
+-- Finds the first <item> whose text content equals "hello"
+SELECT @x.value('(/root/row/item[string(.) = "hello"])[1]', 'varchar(50)') AS result1
+-- Finds the first <item> whose text contains "test"
+SELECT @x.value('(/root/row/item[contains(.,"test")])[1]', 'varchar(50)') AS result2
+-- Finds the first <title> whose text length exceeds 5 characters
+SELECT @x.value('(/root/books/title[string-length(.) > 5])[1]', 'varchar(50)') AS result3
+-- Gets the @name attribute of the first <item> that has content (count(.) > 0)
+SELECT @x.value('(/root/row/item[count(.) > 0])[1]/@name', 'varchar(50)') AS result4
+go
+~~START~~
+varchar
+hello
+~~END~~
+
+~~START~~
+varchar
+testing123
+~~END~~
+
+~~START~~
+varchar
+Advanced Database Design
+~~END~~
+
+~~START~~
+varchar
+alpha
+~~END~~
+
+
+-- Context node (.)
+DECLARE @x XML = '<Root><A>1</A><B>2</B><C>3</C></Root>'
+SELECT T.c.value('local-name(.)', 'NVARCHAR(50)') AS val
+FROM @x.nodes('/Root/*') AS T(c)
+ORDER BY 1
+go
+~~START~~
+nvarchar
+A
+B
+C
+~~END~~
+
+
+-- Parent node
+DECLARE @x XML = '<Root><A>1</A><B>2</B><C>3</C></Root>'
+SELECT T.c.value('local-name(..)', 'NVARCHAR(50)') AS val
+FROM @x.nodes('/Root/*') AS T(c)
+ORDER BY 1
+go
+~~START~~
+nvarchar
+Root
+Root
+Root
+~~END~~
+
+
+-- extra brackets
+DECLARE @x XML = '<Root><A>1</A><B>2</B><C>3</C></Root>'
+SELECT T.c.value('((((local-name((((.))))))))', 'NVARCHAR(50)') AS val
+FROM @x.nodes('/Root/*') AS T(c)
+ORDER BY 1
+go
+~~START~~
+nvarchar
+A
+B
+C
+~~END~~
+
+
+DECLARE @x XML = '<Root><A>1</A><B>2</B><C>3</C></Root>'
+SELECT T.c.value('   ( ((local-name(..)) ) ) ', 'NVARCHAR(50)') AS val
+FROM @x.nodes('/Root/*') AS T(c)
+ORDER BY 1
+go
+~~START~~
+nvarchar
+Root
+Root
+Root
+~~END~~
+
+
+-- Attribute argument (@attr)
+DECLARE @x XML = '<Root><Item name="Laptop"/><Item name="Mouse"/></Root>'
+SELECT T.c.value('string-length(@name)', 'INT') AS val
+FROM @x.nodes('/Root/Item') AS T(c)
+ORDER BY 1
+go
+~~START~~
+int
+5
+6
+~~END~~
+
+
+-- Child element path
+DECLARE @x XML = '<Root><Item><Sub/><Sub/><Sub/></Item><Item><Sub/></Item></Root>'
+SELECT T.c.value('count(Sub)', 'INT') AS val
+FROM @x.nodes('/Root/Item') AS T(c)
+ORDER BY 1
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+
+-- Nested function as argument
+DECLARE @x XML = '<Root><Item name="Laptop"/><Item name="Mouse"/></Root>'
+SELECT T.c.value('substring(@name, string-length(@name))', 'NVARCHAR(10)') AS val
+FROM @x.nodes('/Root/Item') AS T(c)
+ORDER BY 1
+go
+~~START~~
+nvarchar
+e
+p
+~~END~~
+
+
+-- Attribute wildcard (@*)
+DECLARE @x XML = '<Root><Item a="1" b="2" c="3"/><Item a="4"/></Root>'
+SELECT T.c.value('count(@*)', 'INT') AS val
+FROM @x.nodes('/Root/Item') AS T(c)
+ORDER BY 1
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+
+-- Filtered child with predicate
+DECLARE @x XML = '<Root><Item><Sub val="1"/><Sub val="5"/><Sub val="9"/></Item><Item><Sub val="2"/></Item></Root>'
+SELECT T.c.value('count(Sub[@val>4])', 'INT') AS val
+FROM @x.nodes('/Root/Item') AS T(c)
+ORDER BY 1
+go
+~~START~~
+int
+0
+2
+~~END~~
+
+
+
+
+
+DECLARE @xml XML = N'
+<catalog xmlns:bk="http://example.com/books">
+  <bk:book id="B001" lang="en">
+    <id>987654</id>
+    <price>29.99</price>
+    <quantity>150</quantity>
+    <rating>4.7</rating>
+  </bk:book>
+  <bk:book id="B002" lang="fr">
+    <id>543219</id>
+    <price>39.50</price>
+    <quantity>75</quantity>
+    <rating>3.2</rating>
+  </bk:book>
+</catalog>'
+SELECT
+    T.c.value('local-name(.)',        'NVARCHAR(100)')  AS [local-name],
+    T.c.value('number(.)',            'FLOAT')          AS [number],
+    T.c.value('floor(.)',             'INT')            AS [floor],
+    T.c.value('ceiling(.)',           'INT')            AS [ceiling],
+    T.c.value('round(.)',             'INT')            AS [round]
+FROM @xml.nodes('/catalog//*[not(*)]') AS T(c)
+ORDER BY 1,2,3,4,5
+-- contains()
+SELECT T.c.value('.', 'NVARCHAR(100)') AS element_value
+FROM @xml.nodes('/catalog//title') AS T(c)
+WHERE T.c.value('contains(., "XML")', 'BIT') = 1
+ORDER BY 1
+-- sum(.) - note: sum needs a node-set, so we use it on child nodes
+SELECT @xml.value('sum(/catalog//price)', 'DECIMAL(10,2)') AS total_price
+-- count(.) - returns 1 per node
+SELECT T.c.value('count(.)', 'INT') AS count_of_self
+FROM @xml.nodes('/catalog//*') AS T(c)
+ORDER BY 1
+go
+~~START~~
+nvarchar#!#float#!#int#!#int#!#int
+id#!#543219.0#!#543219#!#543219#!#543219
+id#!#987654.0#!#987654#!#987654#!#987654
+price#!#29.99#!#29#!#30#!#30
+price#!#39.5#!#39#!#40#!#40
+quantity#!#75.0#!#75#!#75#!#75
+quantity#!#150.0#!#150#!#150#!#150
+rating#!#3.2#!#3#!#4#!#3
+rating#!#4.7#!#4#!#5#!#5
+~~END~~
+
+~~START~~
+nvarchar
+~~END~~
+
+~~START~~
+numeric
+69.49
+~~END~~
+
+~~START~~
+int
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+~~END~~
+
+
+
+
+
+
+DECLARE @xml XML = N'
+<data>
+  <item><value>hello</value><separator>l</separator></item>
+  <item><value>world</value><separator>o</separator></item>
+  <item><value>12345</value><separator>3</separator></item>
+</data>'
+SELECT
+  T.c.value('.', 'NVARCHAR(50)') AS val,
+  T.c.value('substring(., 2, string-length(.))', 'NVARCHAR(100)') AS [substring_dot_derived]
+FROM @xml.nodes('/data/item/value[. = "12345"]') AS T(c)
+ORDER BY 1,2
+-- Concatenates the node value with itself
+SELECT
+    T.c.value('concat(., " | ", .)', 'NVARCHAR(200)') AS [concat_dot_dot]
+FROM @xml.nodes('/data/item/value') AS T(c)
+ORDER BY 1
+-- Concatenates the node value with itself
+SELECT
+    T.c.value('.', 'NVARCHAR(50)') AS val,
+    T.c.value('string(contains(., .))', 'NVARCHAR(10)') AS [contains_dot_dot]
+FROM @xml.nodes('/data/item/value') AS T(c)
+ORDER BY 1
+-- Concatenates three times
+SELECT
+    T.c.value('concat(., ., .)', 'NVARCHAR(200)') AS [concat_three_dots]
+FROM @xml.nodes('/data/item/value') AS T(c)
+ORDER BY 1
+go
+~~START~~
+nvarchar#!#nvarchar
+12345#!#2345
+~~END~~
+
+~~START~~
+nvarchar
+12345 | 12345
+hello | hello
+world | world
+~~END~~
+
+~~START~~
+nvarchar#!#nvarchar
+12345#!#true
+hello#!#true
+world#!#true
+~~END~~
+
+~~START~~
+nvarchar
+123451234512345
+hellohellohello
+worldworldworld
+~~END~~
+
+
+
+
+DECLARE @xml XML = N'
+<items>
+  <item code="ABC123">Premium Package</item>
+  <item code="XYZ789">Basic Package</item>
+</items>'
+-- ./@ uses dot for navigation, also for function argument string(.) in one value() call
+SELECT
+     T.c.value('concat(./@code, " = ", string(.))', 'NVARCHAR(200)') AS combined
+ FROM @xml.nodes('/items/item') AS T(c)
+ORDER BY 1
+go
+~~START~~
+nvarchar
+ABC123 = Premium Package
+XYZ789 = Basic Package
+~~END~~
+
+
+
+DECLARE @xml XML = N'
+<products>
+  <product><name>Widget</name><price>9.99</price></product>
+  <product><name>Gadget</name><price>24.50</price></product>
+</products>'
+-- '.' (navigation) and 'string(.)' (function) in one value() call
+SELECT
+    T.c.value('concat(string(.), " [len=", string(string-length(string(.))), "]")', 'NVARCHAR(200)') AS result
+ FROM @xml.nodes('/products/product/name') AS T(c)
+ORDER BY 1
+go
+~~START~~
+nvarchar
+Gadget [len=6]
+Widget [len=6]
+~~END~~
+
+
+
+DECLARE @xml XML = N'
+<items>
+<item>Hello</item>
+<item>Brave</item>
+<item>New</item>
+<item>World</item>
+<item>12345</item>
+</items>'
+-- '.' is the path expression navigating to the node
+-- 'string(.)' appears in the predicate filter
+SELECT
+  T.c.value('.', 'NVARCHAR(50)') AS plain_dot,
+  T.c.value('string(.)', 'NVARCHAR(50)') AS string_of_dot,
+  T.c.value('(./parent::*/item[string-length(string(.)) > 4])[1]', 'NVARCHAR(50)') AS filtered
+FROM @xml.nodes('/items/item') AS T(c)
+ORDER BY 1,2
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+12345#!#12345#!#Hello
+Brave#!#Brave#!#Hello
+Hello#!#Hello#!#Hello
+New#!#New#!#Hello
+World#!#World#!#Hello
+~~END~~
+
+
+
+DECLARE @xml XML = N'
+<orders>
+  <order id="1001"><amount>75.50</amount><status>shipped</status></order>
+  <order id="2002"><amount>120.00</amount><status>pending</status></order>
+  <order id="3003"><amount>45.99</amount><status>shipped</status></order>
+</orders>'
+-- Combining:
+--   string-length(.)  dot as function argument (string value of context node)
+--   contains(., ...)  dot as function argument
+--   ./@id            regular XPath dot (self axis, then attribute)
+SELECT
+    T.c.value('./@id', 'INT') AS order_id,
+    T.c.value('string-length(.)', 'INT') AS [node_string_length],
+    T.c.value('string(contains(., "shipped"))', 'NVARCHAR(10)') AS [contains_shipped]
+FROM @xml.nodes('/orders/order') AS T(c)
+ORDER BY 1,2,3
+go
+~~START~~
+int#!#int#!#nvarchar
+1001#!#12#!#true
+2002#!#13#!#false
+3003#!#12#!#true
+~~END~~
+
+
+
+
+
+DECLARE @xml XML = N'
+  <sales>
+    <region name="North">
+      <quarter>1500.00</quarter>
+      <quarter>2200.50</quarter>
+      <quarter>1800.75</quarter>
+      <quarter>2500.00</quarter>
+    </region>
+    <region name="South">
+      <quarter>1200.00</quarter>
+      <quarter>1900.25</quarter>
+      <quarter>2100.00</quarter>
+      <quarter>2800.50</quarter>
+    </region>
+    <region name="West">
+      <quarter>3000.00</quarter>
+      <quarter>2700.00</quarter>
+      <quarter>3100.50</quarter>
+      <quarter>3500.75</quarter>
+    </region>
+  </sales>'
+-- sum(.) doesn't work meaningfully on a single node (it's just the node's numeric value).
+-- sum() needs a node-set, so we use it on child nodes relative to the context node.
+-- Use nodes() to get each region, then sum(.) on its children
+SELECT
+  T.c.value('@name', 'NVARCHAR(50)') AS region_name,
+  T.c.value('sum(quarter)', 'DECIMAL(10,2)') AS total_sales_1,
+  T.c.value('sum(./quarter)', 'DECIMAL(10,2)') AS total_sales_2
+FROM @xml.nodes('/sales/region') AS T(c)
+ORDER BY 1,2
+SELECT
+  T.c.value('sum(.)', 'DECIMAL(10,2)') AS sum_of_dot,
+  T.c.value('.', 'DECIMAL(10,2)') AS plain_dot
+FROM @xml.nodes('/sales/region[@name   = "North"]/quarter') AS T(c)
+ORDER BY 1,2
+SELECT
+  T.c.value('@name', 'NVARCHAR(50)') AS region_name,
+  T.c.value('sum(./quarter)', 'DECIMAL(10,2)') AS sum_via_dot_path
+FROM @xml.nodes('/sales/region') AS T(c)
+ORDER BY 1,2
+go
+~~START~~
+nvarchar#!#numeric#!#numeric
+North#!#8001.25#!#8001.25
+South#!#8000.75#!#8000.75
+West#!#12301.25#!#12301.25
+~~END~~
+
+~~START~~
+numeric#!#numeric
+1500.00#!#1500.00
+1800.75#!#1800.75
+2200.50#!#2200.50
+2500.00#!#2500.00
+~~END~~
+
+~~START~~
+nvarchar#!#numeric
+North#!#8001.25
+South#!#8000.75
+West#!#12301.25
+~~END~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- XPath 1.0 functions that cannot take an argument
+DECLARE @xml XML = N'
+<library>
+  <book id="1"><title>XPath Essentials</title><price>19.99</price></book>
+  <book id="2"><title>SQL Server XML</title><price>29.99</price></book>
+  <book id="3"><title>T-SQL Cookbook</title><price>39.99</price></book>
+  <book id="4"><title>Query Optimization</title><price>49.99</price></book>
+  <book id="5"><title>Database Design</title><price>59.99</price></book>
+</library>'
+-- Select the last book
+SELECT @xml.value('(/library/book[last()]/title)[1]', 'NVARCHAR(100)') AS last_book
+-- Select the second-to-last book
+SELECT @xml.value('(/library/book[last() - 1]/title)[1]', 'NVARCHAR(100)') AS second_to_last
+-- Use last() to get the count of books
+SELECT @xml.value('count(/library/book[last()])', 'INT') AS last_exists
+-- Select the first 3 books using position()
+SELECT T.c.value('title[1]', 'NVARCHAR(100)') AS book_title
+FROM @xml.nodes('/library/book[position() <= 3]') AS T(c)
+ORDER BY 1
+-- Select the book at position 3
+SELECT @xml.value('(/library/book[position() = 3]/title)[1]', 'NVARCHAR(100)') AS third_book
+-- Combine position() and last()
+SELECT T.c.value('title[1]', 'NVARCHAR(100)') AS not_first_not_last
+FROM @xml.nodes('/library/book[position() > 1 and position() < last()]') AS T(c)
+ORDER BY 1
+-- Select all books (predicate always true)
+SELECT T.c.value('title[1]', 'NVARCHAR(100)') AS all_books
+FROM @xml.nodes('/library/book[true()]') AS T(c)
+ORDER BY 1
+-- Use true() in a conditional string
+SELECT @xml.value('string(true())', 'NVARCHAR(10)') AS true_string
+-- Select no books (predicate always false)
+SELECT T.c.value('title[1]', 'NVARCHAR(100)') AS no_books
+FROM @xml.nodes('/library/book[false()]') AS T(c)
+ORDER BY 1
+-- Use false() in a conditional string
+SELECT @xml.value('string(false())', 'NVARCHAR(10)') AS false_string
+-- Use false() to test negation: not(false()) = true
+SELECT T.c.value('title[1]', 'NVARCHAR(100)') AS all_books_via_not_false
+FROM @xml.nodes('/library/book[not(false())]') AS T(c)
+ORDER BY 1
+-- Combine true() and false() with boolean logic
+SELECT
+    @xml.value('string(true() and true())',   'NVARCHAR(10)') AS [true_and_true],
+    @xml.value('string(true() and false())',  'NVARCHAR(10)') AS [true_and_false],
+    @xml.value('string(true() or false())',   'NVARCHAR(10)') AS [true_or_false],
+    @xml.value('string(not(false()))',        'NVARCHAR(10)') AS [not_false]
+-- Result: "true", "false", "true", "true"
+go
+~~START~~
+nvarchar
+Database Design
+~~END~~
+
+~~START~~
+nvarchar
+Query Optimization
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+nvarchar
+SQL Server XML
+T-SQL Cookbook
+XPath Essentials
+~~END~~
+
+~~START~~
+nvarchar
+T-SQL Cookbook
+~~END~~
+
+~~START~~
+nvarchar
+Query Optimization
+SQL Server XML
+T-SQL Cookbook
+~~END~~
+
+~~START~~
+nvarchar
+Database Design
+Query Optimization
+SQL Server XML
+T-SQL Cookbook
+XPath Essentials
+~~END~~
+
+~~START~~
+nvarchar
+true
+~~END~~
+
+~~START~~
+nvarchar
+~~END~~
+
+~~START~~
+nvarchar
+false
+~~END~~
+
+~~START~~
+nvarchar
+Database Design
+Query Optimization
+SQL Server XML
+T-SQL Cookbook
+XPath Essentials
+~~END~~
+
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+true#!#false#!#true#!#true
+~~END~~
+
+
+
+-- expected error cases ----------------
+-- nodes() with QUOTED_IDENTIFIER OFF
+SET QUOTED_IDENTIFIER OFF
+go
+
+DECLARE @xml XML = '<Root><row id="1"/></Root>'
+SELECT T.C.value('(@id)[1]', 'int') AS id
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+
+
+SET QUOTED_IDENTIFIER ON
+go
+
+-- too many arguments
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT * FROM @xml.nodes('/Root/row', 'another argument') AS T(C)
+ORDER BY 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The nodes function requires 1 argument(s).)~~
+
+
+-- too few arguments
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT * FROM @xml.nodes() AS T(C)
+ORDER BY 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The nodes function requires 1 argument(s).)~~
+
+
+-- cannot call nodes() on non-XML type
+DECLARE @x INT = 1
+SELECT T.C.value('(.)[1]', 'varchar(20)') AS val
+FROM @x.nodes('/root') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot call methods on int.)~~
+
+
+-- string constant required for xpath expression
+DECLARE @v varchar(100) = '(//@id)[2]'
+select CAST('<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>' as xml).value(@v, 'int') AS id
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "value" must be a string literal.)~~
+
+
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT @xml.value('(@id)[1]', 'varchar(100)') as xx
+go
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [value()]: Top-level attribute nodes are not supported)~~
+
+
+DECLARE @xml XML = '<Root><item>A</item><item>B</item></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS val
+FROM @xml.nodes('..') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [nodes()]: The result of applying the 'parent' axis on the document node is statically 'empty'.)~~
+
+
+DECLARE @v varchar(100) = '/Root/row'
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT T.C.value('(@id)[1]', 'int') AS id
+FROM @xml.nodes(@v) AS T(C)
+ORDER BY 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "nodes" must be a string literal.)~~
+
+
+DECLARE @xml XML = '<orders><o id="1"><li>item-1</li><li>item-2</li></o><o id="2"><li>item-3</li></o></orders>'
+SELECT @xml.value('../@id','int')
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [value()]: The result of applying the 'parent' axis on the document node is statically 'empty'.)~~
+
+
+DECLARE @xml XML = '<orders><o id="1"><li>item-1</li><li>item-2</li></o><o id="2"><li>item-3</li></o></orders>'
+SELECT @xml.value('(../@id)[1]','int')
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [value()]: The result of applying the 'parent' axis on the document node is statically 'empty'.)~~
+
+
+-- nodes() on a table column with CROSS APPLY
+SELECT t.Id, T.C.value('(@id)[1]', 'int') AS row_id, T.C.value('(name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t1 t
+CROSS APPLY t.XmlColumn.nodes('/Root/row') AS T(C)
+ORDER BY 1,2,3
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: table name "t" specified more than once)~~
+
+
+-- nodes() on empty element (no children matched)
+SELECT t.Id
+FROM babel_5225_xml_nodes_t1 t
+CROSS APPLY t.XmlColumn.nodes('/Root/row') AS T(C)
+WHERE t.Id = 3
+ORDER BY 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: table name "t" specified more than once)~~
+
+
+-- nodes() with attribute xpath
+SELECT T.C.value('(@name)[1]', 'varchar(100)') AS name, T.C.value('(@id)[1]', 'int') AS id
+FROM babel_5225_xml_nodes_t2 t
+CROSS APPLY t.XmlColumn.nodes('/artists/artist') AS T(C)
+ORDER BY 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: table name "t" specified more than once)~~
+
+
+-- nodes() combined with value() on same column
+SELECT T.C.value('(@id)[1]', 'int') AS id, T.C.value('(name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t1 t
+CROSS APPLY t.XmlColumn.nodes('/Root/row') AS T(C)
+WHERE t.Id = 1
+ORDER BY 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: table name "t" specified more than once)~~
+
+
+-- parent beyond root
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('..[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [nodes()]: The result of applying the 'parent' axis on the document node is statically 'empty'.)~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('(..)[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [nodes()]: The result of applying the 'parent' axis on the document node is statically 'empty'.)~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('(.)', 'varchar(20)') AS id
+FROM @xml.nodes('..[2]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [nodes()]: The result of applying the 'parent' axis on the document node is statically 'empty'.)~~
+
+
+-- GROUP BY expression cannot contain XML method calls
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT T.C.value('(@id)[1]', 'int') AS id, count(*) AS cnt
+FROM @xml.nodes('/Root/row') AS T(C)
+GROUP BY T.C.value('(@id)[1]', 'int')
+ORDER BY 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML methods are not allowed in a GROUP BY clause.)~~
+
+
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT T.C.value('(@id)[1]', 'int') + 1 AS id, count(*) AS cnt
+FROM @xml.nodes('/Root/row') AS T(C)
+GROUP BY T.C.value('(@id)[1]', 'int') + 1
+ORDER BY 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML methods are not allowed in a GROUP BY clause.)~~
+
+
+-- nodes() case sensitivity: only lowercase is valid in T-SQL
+DECLARE @xml XML = '<Root><item>A</item><item>B</item></Root>'
+SELECT T.C.value('(.)[1]', 'varchar(20)') AS val
+FROM @xml.NODES('/Root/item') AS T(C)
+ORDER BY val
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The XML nodes() function name must be in lowercase.)~~
+
+
+DECLARE @xml XML = '<Root><item>A</item><item>B</item></Root>'
+SELECT T.C.value('(.)[1]', 'varchar(20)') AS val
+FROM @xml.Nodes('/Root/item') AS T(C)
+ORDER BY val
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The XML nodes() function name must be in lowercase.)~~
+
+
+-- Some XPath 2.0 cases, not supported in PostgreSQL/Babelfish
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS id
+FROM @xml.nodes('/Root/row/name/..[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: nodes(): XPath expression is not valid per XPath 1.0 standard supported by PostgreSQL [/Root/row/name/..[1]])~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS id
+FROM @xml.nodes('/Root/row/name/..[2]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: nodes(): XPath expression is not valid per XPath 1.0 standard supported by PostgreSQL [/Root/row/name/..[2]])~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name><name id="2">Robert</name></row><row><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('/Root/row/name/..[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: nodes(): XPath expression is not valid per XPath 1.0 standard supported by PostgreSQL [/Root/row/name/..[1]])~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('@id', 'varchar(20)') AS id, T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('/Root/row/name/..[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: nodes(): XPath expression is not valid per XPath 1.0 standard supported by PostgreSQL [/Root/row/name/..[1]])~~
+
+
+DECLARE @xml XML = '<Root><row><name id="1">James</name></row><row><name id="2">Suzy</name><name id="3">Megan</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS name
+FROM @xml.nodes('/Root/row/name/..[2]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: nodes(): XPath expression is not valid per XPath 1.0 standard supported by PostgreSQL [/Root/row/name/..[2]])~~
+
+
+
+-- T-SQL error cases which are not raising an error in Babelfish --------------
+-- SELECT * FROM .nodes() should not be valid but returns results in Babelfish
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT * FROM @xml.nodes('/Root/row') AS T(C)
+go
+~~START~~
+xml
+<magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>(/Root/row)[1]</magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag><Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>
+<magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>(/Root/row)[2]</magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag><Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>
+~~END~~
+
+
+-- should return "'value()' requires a singleton (or empty sequence)'" but returns results in Babelfish
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT T.C.value('(@id)[1]', 'int') AS id, T.C.value('(name)', 'varchar(100)') AS name
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int#!#varchar
+1#!#James
+2#!#Megan
+~~END~~
+
+
+-- should return "'value()' requires a singleton (or empty sequence)'" but returns results in Babelfish
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT T.C.value('(@id)[1]', 'int') AS id, T.C.value('name', 'varchar(100)') AS name
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int#!#varchar
+1#!#James
+2#!#Megan
+~~END~~
+
+
+-- should return "'value()' requires a singleton (or empty sequence)'" but returns results in Babelfish
+SELECT T.C.value(' . . / @id [1]', 'int') AS id
+FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
+CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+<NULL>
+<NULL>
+~~END~~
+
+
+
