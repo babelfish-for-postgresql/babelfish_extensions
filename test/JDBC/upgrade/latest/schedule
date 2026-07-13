@@ -692,5 +692,3 @@ BABEL-6037
 babel_sqlvariant_coerce_type
 BABEL-login-db-long-identifiers
 BABEL-6813
-BABEL-INSERT-EXEC-pg-endpoint
-BABEL-INSERT-EXECUTE
