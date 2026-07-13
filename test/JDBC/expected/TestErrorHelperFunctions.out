@@ -65,6 +65,7 @@ P0001#!#%s#!#Cannot construct data type datetime, some of the arguments have val
 P0001#!#%s#!#is not supported for conversions from#!#9809
 22003#!#"%s" is out of range for type real#!##!#232
 42809#!#"%s" is not a table#!##!#4708
+42809#!#The request for procedure '%s' failed because '%s' is a table valued function object.#!##!#2809
 42601#!#%s at or near "%s"#!#VARYING#!#1051
 42601#!#%s at or near "%s"#!#SAVE#!#3914
 42601#!#%s at or near "%s"#!#duplicate trigger events specified#!#1034
