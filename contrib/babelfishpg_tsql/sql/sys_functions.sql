@@ -5880,7 +5880,8 @@ DECLARE
     len_previous INT;
 BEGIN
     /* Remove all whitespace and multiple consecutive brackets, just for the checks below */
-    xpath_pattern := pg_catalog.regexp_replace(xpath_pattern, '\s+', '', 'gi');
+    -- xpath_pattern := pg_catalog.regexp_replace(xpath_pattern, '\s+', '', 'gi');
+    xpath_pattern := pg_catalog.replace(xpath_pattern, ' ', '');
     WHILE true LOOP
         len_previous := length(xpath_pattern);
         xpath_pattern := pg_catalog.replace(xpath_pattern, '((', '(');
