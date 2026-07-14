@@ -21,7 +21,7 @@ SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
+~~ERROR (Message: column "@x" does not exist)~~
 
 GO
 
@@ -41,7 +41,7 @@ SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
+~~ERROR (Message: column "@x" does not exist)~~
 
 
 
@@ -76,10 +76,6 @@ SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
-
 
 declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
 if @@trancount > 0 rollback transaction;
@@ -87,11 +83,6 @@ drop procedure error_mapping.ErrorHandling1;
 set xact_abort OFF;
 set implicit_transactions OFF;
 GO
-~~START~~
-text
-BATCH TERMINATING\ txn rolledback
-~~END~~
-
 ~~ERROR (Code: 3701)~~
 
 ~~ERROR (Message: could not find a procedure named "master_error_mapping.errorhandling1")~~
@@ -124,10 +115,6 @@ SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
-
 
 declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
 if @@trancount > 0 rollback transaction;
@@ -135,11 +122,6 @@ drop procedure error_mapping.ErrorHandling1;
 set xact_abort OFF;
 set implicit_transactions OFF;
 GO
-~~START~~
-text
-BATCH TERMINATING\ txn rolledback
-~~END~~
-
 ~~ERROR (Code: 3701)~~
 
 ~~ERROR (Message: could not find a procedure named "master_error_mapping.errorhandling1")~~
@@ -165,7 +147,7 @@ SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
+~~ERROR (Message: column "@x" does not exist)~~
 
 GO
 
@@ -185,7 +167,7 @@ SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
+~~ERROR (Message: column "@x" does not exist)~~
 
 
 
@@ -219,10 +201,6 @@ SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
-
 
 declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
 if @@trancount > 0 rollback transaction;
@@ -230,11 +208,6 @@ drop procedure error_mapping.ErrorHandling1;
 set xact_abort OFF;
 set implicit_transactions OFF;
 GO
-~~START~~
-text
-BATCH TERMINATING\ txn rolledback
-~~END~~
-
 ~~ERROR (Code: 3701)~~
 
 ~~ERROR (Message: could not find a procedure named "master_error_mapping.errorhandling1")~~
@@ -267,10 +240,6 @@ SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
-
 
 declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
 if @@trancount > 0 rollback transaction;
@@ -278,11 +247,6 @@ drop procedure error_mapping.ErrorHandling1;
 set xact_abort OFF;
 set implicit_transactions OFF;
 GO
-~~START~~
-text
-BATCH TERMINATING\ txn rolledback
-~~END~~
-
 ~~ERROR (Code: 3701)~~
 
 ~~ERROR (Message: could not find a procedure named "master_error_mapping.errorhandling1")~~
