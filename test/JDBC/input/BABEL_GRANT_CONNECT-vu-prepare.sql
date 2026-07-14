@@ -13,9 +13,15 @@ go
 insert into grant_connect_t2(val) values ('existing_row');
 go
 
+grant select on grant_connect_t2 to guest;
+go
+
 create procedure grant_connect_proc1
 as
 select 'proc executed' as result;
+go
+
+grant exec on grant_connect_proc1 to guest;
 go
 
 create login grant_connect_abc with password = 'Babel123'
