@@ -5469,7 +5469,6 @@ BEGIN
         --xpath_pattern := pg_catalog.regexp_replace(xpath_pattern, '([^\/\.])\.\[', '\1(.)[', 'gi');
         RETURN xpath_pattern;
     END IF;
-
     -- Check if xpath_pattern is absolute (starts with '/' after stripping leading '(')
     stripped := xpath_pattern;
     WHILE substring(stripped, 1, 1) = '('
@@ -5692,19 +5691,19 @@ DECLARE
     len INT := length(xpath_pattern);
 BEGIN
     WHILE i <= len LOOP
-        IF substring(xpath_pattern, i, 1) = '.' THEN
+        IF substring(xpath_pattern, i, 1)::TEXT = '.' THEN
             -- Check if this is '.['
-            IF i + 1 <= len AND substring(xpath_pattern, i + 1, 1) = '[' THEN
+            IF i + 1 <= len AND substring(xpath_pattern, i + 1, 1)::TEXT = '[' THEN
                 -- Check it is not '..[' (preceded by '.')
-                IF i > 1 AND substring(xpath_pattern, i - 1, 1) = '.' THEN
+                IF i > 1 AND substring(xpath_pattern, i - 1, 1)::TEXT = '.' THEN
                     -- This is '..['  - leave as-is
                     result := result || '.';
                 -- Check it is not preceded by '/'
-                ELSIF i > 1 AND substring(xpath_pattern, i - 1, 1) = '/' THEN
+                ELSIF i > 1 AND substring(xpath_pattern, i - 1, 1)::TEXT = '/' THEN
                     result := result || '.';
                 ELSE
                     -- Check it is not '..'
-                    IF i + 1 <= len AND substring(xpath_pattern, i + 1, 1) = '.' THEN
+                    IF i + 1 <= len AND substring(xpath_pattern, i + 1, 1)::TEXT = '.' THEN
                         result := result || '.';
                     ELSE
                         -- This is '.[' - change to '(.)['
@@ -5718,7 +5717,7 @@ BEGIN
             result := result || substring(xpath_pattern, i, 1);
         END IF;
         i := i + 1;
-    END LOOP;
+    END LOOP;    
     RETURN result;
 END
 $BODY$
