@@ -1349,14 +1349,9 @@ DELETE FROM forjsonauto_t_trigger_json_result;
 GO
 
 -- FOR JSON AUTO with INSERTED and column subset
-DROP TRIGGER forjsonauto_trg_insert;
+DISABLE TRIGGER forjsonauto_trg_insert ON forjsonauto_t_trigger_test;
 GO
-
-CREATE TRIGGER forjsonauto_trg_insert ON forjsonauto_t_trigger_test AFTER INSERT AS
-BEGIN
-    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
-    SELECT (SELECT Name, Value FROM inserted FOR JSON AUTO)
-END;
+ENABLE TRIGGER forjsonauto_trg_insert_subset ON forjsonauto_t_trigger_test;
 GO
 
 INSERT INTO forjsonauto_t_trigger_test VALUES (4, 'Diana', 400);
@@ -1369,20 +1364,74 @@ DELETE FROM forjsonauto_t_trigger_json_result;
 GO
 
 -- FOR JSON AUTO with INSERTED joined with base table
-DROP TRIGGER forjsonauto_trg_insert;
+DISABLE TRIGGER forjsonauto_trg_insert_subset ON forjsonauto_t_trigger_test;
 GO
-
-CREATE TRIGGER forjsonauto_trg_insert ON forjsonauto_t_trigger_test AFTER INSERT AS
-BEGIN
-    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
-    SELECT (SELECT i.ID, i.Name, t.Value
-            FROM inserted i
-            JOIN forjsonauto_t_trigger_test t ON i.ID = t.ID
-            FOR JSON AUTO)
-END;
+ENABLE TRIGGER forjsonauto_trg_insert_join ON forjsonauto_t_trigger_test;
 GO
 
 INSERT INTO forjsonauto_t_trigger_test VALUES (5, 'Eve', 500);
+GO
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+
+-- FOR JSON AUTO with UPDATE trigger (both inserted and deleted)
+DISABLE TRIGGER forjsonauto_trg_insert_join ON forjsonauto_t_trigger_test;
+GO
+DISABLE TRIGGER forjsonauto_trg_delete ON forjsonauto_t_trigger_test;
+GO
+ENABLE TRIGGER forjsonauto_trg_update_both ON forjsonauto_t_trigger_test;
+GO
+
+UPDATE forjsonauto_t_trigger_test SET Value = 999 WHERE ID = 4;
+GO
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+
+-- FOR JSON AUTO with inserted JOIN deleted in UPDATE trigger (nesting behavior)
+DISABLE TRIGGER forjsonauto_trg_update_both ON forjsonauto_t_trigger_test;
+GO
+ENABLE TRIGGER forjsonauto_trg_update_join ON forjsonauto_t_trigger_test;
+GO
+
+UPDATE forjsonauto_t_trigger_test SET Value = 888, Name = 'Updated' WHERE ID = 5;
+GO
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+
+-- FOR JSON AUTO with NULL values in transition table columns
+DISABLE TRIGGER forjsonauto_trg_update_join ON forjsonauto_t_trigger_test;
+GO
+ENABLE TRIGGER forjsonauto_trg_insert_null ON forjsonauto_t_trigger_test;
+GO
+
+INSERT INTO forjsonauto_t_trigger_test VALUES (6, NULL, NULL);
+GO
+
+SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
+GO
+
+DELETE FROM forjsonauto_t_trigger_json_result;
+GO
+
+-- FOR JSON AUTO with DELETED joined with base table
+DISABLE TRIGGER forjsonauto_trg_insert_null ON forjsonauto_t_trigger_test;
+GO
+ENABLE TRIGGER forjsonauto_trg_delete_join ON forjsonauto_t_trigger_test;
+GO
+
+DELETE FROM forjsonauto_t_trigger_test WHERE ID = 6;
 GO
 
 SELECT ResultJson FROM forjsonauto_t_trigger_json_result;
