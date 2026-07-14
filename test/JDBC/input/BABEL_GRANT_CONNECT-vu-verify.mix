@@ -52,8 +52,31 @@ go
 use grant_connect_db1;
 go
 
+-- BABEL-6876: All cross-db DML via three-part names should fail when guest is disabled
+-- and login has no user mapping in the target database.
+
 -- should fail because grant_connect_db1 doesn't have guest enabled
 select * from grant_connect_db1.dbo.grant_connect_t1
+go
+
+-- should fail - INSERT via three-part name
+insert into grant_connect_db1.dbo.grant_connect_t2(val) values ('injected')
+go
+
+-- should fail - UPDATE via three-part name
+update grant_connect_db1.dbo.grant_connect_t2 set val = 'hacked' where id = 1
+go
+
+-- should fail - DELETE via three-part name
+delete from grant_connect_db1.dbo.grant_connect_t2 where id = 1
+go
+
+-- should fail - EXEC via three-part name
+exec grant_connect_db1.dbo.grant_connect_proc1
+go
+
+-- should fail - two-part db..table name
+select * from grant_connect_db1..grant_connect_t2
 go
 
 -- tsql

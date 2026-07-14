@@ -8,6 +8,12 @@ go
 drop table grant_connect_t1;
 go
 
+drop table grant_connect_t2;
+go
+
+drop procedure grant_connect_proc1;
+go
+
 use master;
 go
 
