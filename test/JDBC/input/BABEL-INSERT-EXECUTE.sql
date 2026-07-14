@@ -653,7 +653,25 @@ GO
 SELECT * FROM t_tvf_dest;
 GO
 
+-- Test with multi-statement TVF (MSTVF)
+CREATE FUNCTION fn_mstvf_test()
+RETURNS @result TABLE (c1 int)
+AS
+BEGIN
+    INSERT INTO @result VALUES (1);
+    RETURN;
+END
+GO
+
+INSERT INTO t_tvf_dest EXEC fn_mstvf_test;
+GO
+
+-- Verify still no rows inserted
+SELECT * FROM t_tvf_dest;
+GO
+
 -- Cleanup
+DROP FUNCTION fn_mstvf_test;
 DROP FUNCTION fn_inline_tvf_param;
 DROP FUNCTION fn_inline_tvf_test;
 DROP TABLE t_tvf_dest;
