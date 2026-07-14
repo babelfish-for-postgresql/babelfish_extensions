@@ -1629,6 +1629,8 @@ BEGIN
     SELECT * FROM #temp;
 END;
 GO
+~~ROW COUNT: 1~~
+
 ~~START~~
 varchar#!#nvarchar#!#varchar
  |-- view in -- master.babel_5448_s2 --| #!#babel_5448_db.dbo#!# |-- view in -- babel_5448_db.babel_5448_s2 --| 
@@ -1652,6 +1654,12 @@ BEGIN
     SELECT * FROM #temp;
 END;
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
 ~~WARNING (Code: 0)~~
 
 ~~WARNING (Message: Changed database context to 'master'.  Server SQLState: S0001)~~~~WARNING (Message: Changed database context to 'babel_5448_db'.  Server SQLState: S0001)~~

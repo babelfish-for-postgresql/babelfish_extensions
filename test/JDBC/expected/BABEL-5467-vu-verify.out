@@ -3,6 +3,8 @@ select count_avg = avg(convert(decimal(38,6), 10) + (convert(decimal(38,6), 2)/c
  , count_val = avg(cast(18 as decimal)) 
 into babel_5467_avgdata_1
 go
+~~ROW COUNT: 1~~
+
 
 select cast(count_avg as decimal(38,6)), cast(count_val as decimal(38,6))
  ,PercentSpike = ((count_val-count_avg)/count_avg)*100
@@ -28,6 +30,8 @@ select count_avg = avg((convert(decimal(38,6), 32)/convert(decimal(38,6), 3)))
  ,count_val = avg(cast(18 as decimal))
 into babel_5467_avgdata_2
 go
+~~ROW COUNT: 1~~
+
 
 select cast(count_avg as decimal(38,6)), cast(count_val as decimal(38,6))
  ,PercentSpike = ((count_val-count_avg)/count_avg)*100
@@ -60,6 +64,8 @@ select avg(convert(decimal, CountData)) as count_avg
 into babel_5467_avgdata_3 
 from babel_5467_avgdata_3_setup
 go
+~~ROW COUNT: 1~~
+
 
 select cast(count_avg as decimal(38,6)), cast(count_val as decimal(38,6))
  ,PercentSpike = ((count_val-count_avg)/count_avg)*100
@@ -129,6 +135,8 @@ SELECT a = 10.12345678, b = 10.0/3.0, c = cast(10.2345 as decimal(38,6))
  , f = avg(cast(10.2345 as decimal(38,6))) 
  into babel_5467_t1
 go
+~~ROW COUNT: 1~~
+
 
 -- Precision and scale details should be stored correctly
 select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE
@@ -201,6 +209,8 @@ numeric#!#numeric#!#numeric#!#numeric
 -- non-constant expression
 select c = (a/b), d = (a*b) into babel_5467_t3 from babel_5467_t2
 go
+~~ROW COUNT: 2~~
+
 select * from babel_5467_t3
 go
 ~~START~~
@@ -294,6 +304,8 @@ select (cast(32 as decimal(38,1)) / cast(3 as decimal(4,3))) as a,
         cast(32.2222 as decimal(38,4)) - cast(3.11111 as decimal(38,5)) as d 
 into babel_5467_t8
 go
+~~ROW COUNT: 1~~
+
 
 select * from babel_5467_t8
 go
@@ -327,6 +339,8 @@ select count_avg = avg(convert(DECIMALUDT_38_6, 10) + (convert(DECIMALUDT_38_6, 
  , count_val = avg(cast(18 as DECIMALUDT)) 
 into babel_5467_avgdata_udt_1
 go
+~~ROW COUNT: 1~~
+
 
 select cast(count_avg as DECIMALUDT_38_6), cast(count_val as DECIMALUDT_38_6)
  ,PercentSpike = ((count_val-count_avg)/count_avg)*100
@@ -352,6 +366,8 @@ select count_avg = avg((convert(DECIMALUDT_38_6, 32)/convert(DECIMALUDT_38_6, 3)
  ,count_val = avg(cast(18 as DECIMALUDT))
 into babel_5467_avgdata_udt_2
 go
+~~ROW COUNT: 1~~
+
 
 select cast(count_avg as DECIMALUDT_38_6), cast(count_val as DECIMALUDT_38_6)
  ,PercentSpike = ((count_val-count_avg)/count_avg)*100
@@ -378,6 +394,8 @@ select avg(convert(DECIMALUDT, CountData)) as count_avg
 into babel_5467_avgdata_udt_3 
 from babel_5467_avgdata_3_setup
 go
+~~ROW COUNT: 1~~
+
 
 select cast(count_avg as DECIMALUDT), cast(count_val as DECIMALUDT)
  ,PercentSpike = ((count_val-count_avg)/count_avg)*100
@@ -421,18 +439,28 @@ go
 
 select avg(a) as p, avg(b) as q, avg(c) as r, avg(a+c) as s into babel_5467_avgdata_4 from babel_5467_t4
 go
+~~ROW COUNT: 1~~
+
 
 select min(a) as p, min(b) as q, min(c) as r, min(a+c) as s into babel_5467_avgdata_5 from babel_5467_t4
 go
+~~ROW COUNT: 1~~
+
 
 select max(a) as p, max(b) as q, max(c) as r, max(a+c) as s into babel_5467_avgdata_6 from babel_5467_t4
 go
+~~ROW COUNT: 1~~
+
 
 select sum(a) as p, sum(b) as q, sum(c) as r, sum(a+c) as s into babel_5467_avgdata_7 from babel_5467_t4
 go
+~~ROW COUNT: 1~~
+
 
 select count(a) as p, count(b) as q, count(c) as r, count(a+c) as s into babel_5467_avgdata_8 from babel_5467_t4
 go
+~~ROW COUNT: 1~~
+
 
 select * from babel_5467_avgdata_4
 go
@@ -613,22 +641,32 @@ numeric
 declare @a decimal(10,2) = 12345678.12, @b decimal(15, 6) = 123456789.666666, @c decimal(8, 5) = 123.66666;
 select avg(@a) as p, avg(@b) as q, avg(@c) as r, avg(@a+@c) as s into babel_5467_avgdata_9
 go
+~~ROW COUNT: 1~~
+
 
 declare @a decimal(10,2) = 12345678.12, @b decimal(15, 6) = 123456789.666666, @c decimal(8, 5) = 123.66666;
 select min(@a) as p, min(@b) as q, min(@c) as r, min(@a+@c) as s into babel_5467_avgdata_10
 go
+~~ROW COUNT: 1~~
+
 
 declare @a decimal(10,2) = 12345678.12, @b decimal(15, 6) = 123456789.666666, @c decimal(8, 5) = 123.66666;
 select max(@a) as p, max(@b) as q, max(@c) as r, max(@a+@c) as s into babel_5467_avgdata_11
 go
+~~ROW COUNT: 1~~
+
 
 declare @a decimal(10,2) = 12345678.12, @b decimal(15, 6) = 123456789.666666, @c decimal(8, 5) = 123.66666;
 select sum(@a) as p, sum(@b) as q, sum(@c) as r, sum(@a+@c) as s into babel_5467_avgdata_12
 go
+~~ROW COUNT: 1~~
+
 
 declare @a decimal(10,2) = 12345678.12, @b decimal(15, 6) = 123456789.666666, @c decimal(8, 5) = 123.66666;
 select count(@a) as p, count(@b) as q, count(@c) as r, count(@a+@c) as s into babel_5467_avgdata_13
 go
+~~ROW COUNT: 1~~
+
 
 select * from babel_5467_avgdata_9
 go

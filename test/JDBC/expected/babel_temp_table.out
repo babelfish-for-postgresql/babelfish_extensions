@@ -24,6 +24,8 @@ GO
 
 ~~ROW COUNT: 1~~
 
+~~ROW COUNT: 2~~
+
 SELECT * FROM #local_tempt2;
 GO
 ~~START~~

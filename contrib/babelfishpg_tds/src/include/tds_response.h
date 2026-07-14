@@ -48,6 +48,7 @@
 #define TDS_CMD_UNKNOWN			0x02
 #define TDS_CMD_SET				0xBE
 #define TDS_CMD_SELECT			0xC1
+#define TDS_CMD_SELECTINTO		0xC2
 #define TDS_CMD_INSERT			0xC3
 #define TDS_CMD_DELETE			0xC4
 #define TDS_CMD_UPDATE			0xC5
