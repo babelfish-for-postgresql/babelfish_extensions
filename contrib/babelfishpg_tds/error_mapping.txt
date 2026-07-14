@@ -42,6 +42,7 @@ P0001 ERRCODE_RAISE_EXCEPTION	"%s"	SQL_ERROR_289	16 "Cannot construct data type 
 P0001 ERRCODE_RAISE_EXCEPTION	"%s"	SQL_ERROR_9809 16 "is not supported for conversions from"
 22003 ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE	"\"%s\" is out of range for type real"	SQL_ERROR_232	16
 42809 ERRCODE_WRONG_OBJECT_TYPE	"\"%s\" is not a table" SQL_ERROR_4708	16
+42809 ERRCODE_WRONG_OBJECT_TYPE	"The request for procedure '%s' failed because '%s' is a table valued function object."	SQL_ERROR_2809	16
 42601 ERRCODE_SYNTAX_ERROR	"%s at or near \"%s\""	SQL_ERROR_1051	15 "VARYING"
 42601 ERRCODE_SYNTAX_ERROR	"%s at or near \"%s\""	SQL_ERROR_3914	16 "SAVE"
 42601 ERRCODE_SYNTAX_ERROR	"%s at or near \"%s\""	SQL_ERROR_1034	15 "duplicate trigger events specified"
