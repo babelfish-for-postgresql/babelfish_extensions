@@ -7,22 +7,5 @@ go
 create table grant_connect_t1(a int);
 go
 
-create table grant_connect_t2(id int identity, val varchar(20));
-go
-
-insert into grant_connect_t2(val) values ('existing_row');
-go
-
-grant select on grant_connect_t2 to guest;
-go
-
-create procedure grant_connect_proc1
-as
-select 'proc executed' as result;
-go
-
-grant exec on grant_connect_proc1 to guest;
-go
-
 create login grant_connect_abc with password = 'Babel123'
 go

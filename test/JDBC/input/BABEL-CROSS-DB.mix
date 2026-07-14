@@ -866,3 +866,83 @@ DROP DATABASE babel_5448_db1
 GO
 ----------- END OF BABEL-5448 ------------------
 ------------------------------------------------
+
+------------------------------------------------
+------------- BABEL-6876 -----------------------
+-- Cross-db access via three-part names should fail when guest is disabled
+-- and login has no user mapping, even when the object has grants to guest.
+------------------------------------------------
+
+-- tsql
+CREATE DATABASE babel_6876_db;
+GO
+
+USE babel_6876_db;
+GO
+
+CREATE TABLE dbo.babel_6876_t1(id int identity, val varchar(20));
+GO
+
+INSERT INTO dbo.babel_6876_t1(val) VALUES ('secret_data');
+GO
+
+GRANT SELECT ON dbo.babel_6876_t1 TO guest;
+GO
+
+CREATE PROCEDURE dbo.babel_6876_proc1
+AS
+SELECT 'proc executed' AS result;
+GO
+
+GRANT EXEC ON dbo.babel_6876_proc1 TO guest;
+GO
+
+CREATE LOGIN babel_6876_login WITH PASSWORD = 'Babel123';
+GO
+
+USE master;
+GO
+
+-- tsql  user=babel_6876_login password=Babel123
+-- should fail - USE blocked because guest is disabled and no user mapping
+USE babel_6876_db;
+GO
+
+-- should fail - SELECT via three-part name (table has SELECT granted to guest)
+SELECT * FROM babel_6876_db.dbo.babel_6876_t1;
+GO
+
+-- should fail - EXEC via three-part name (proc has EXEC granted to guest)
+EXEC babel_6876_db.dbo.babel_6876_proc1;
+GO
+
+-- tsql
+USE babel_6876_db;
+GO
+
+DROP TABLE dbo.babel_6876_t1;
+GO
+
+DROP PROCEDURE dbo.babel_6876_proc1;
+GO
+
+USE master;
+GO
+
+DROP DATABASE babel_6876_db;
+GO
+
+-- psql
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_6876_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+DROP LOGIN babel_6876_login;
+GO
+
+----------- END OF BABEL-6876 ------------------
+------------------------------------------------

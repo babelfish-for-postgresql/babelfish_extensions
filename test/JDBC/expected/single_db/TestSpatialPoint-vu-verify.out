@@ -3825,9 +3825,9 @@ SET @sql =
 -- Execute the dynamic SQL
 EXEC sp_executesql @sql;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "db2" does not exist. Make sure that the name is entered correctly.)~~
+~~ERROR (Message: database "db2" does not exist)~~
 
 
 USE master
@@ -3916,9 +3916,9 @@ SET @sql =
 -- Execute the dynamic SQL
 EXEC sp_executesql @sql;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "db2" does not exist. Make sure that the name is entered correctly.)~~
+~~ERROR (Message: database "db2" does not exist)~~
 
 
 USE master

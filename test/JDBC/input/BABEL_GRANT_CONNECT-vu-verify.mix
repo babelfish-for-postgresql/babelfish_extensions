@@ -52,19 +52,8 @@ go
 use grant_connect_db1;
 go
 
--- BABEL-6876: Cross-db access via three-part names should fail when guest is disabled
--- and login has no user mapping, even when the object has grants to guest.
-
 -- should fail because grant_connect_db1 doesn't have guest enabled
 select * from grant_connect_db1.dbo.grant_connect_t1
-go
-
--- should fail - SELECT via three-part name (grant_connect_t2 has SELECT granted to guest)
-select * from grant_connect_db1.dbo.grant_connect_t2
-go
-
--- should fail - EXEC via three-part name (grant_connect_proc1 has EXEC granted to guest)
-exec grant_connect_db1.dbo.grant_connect_proc1
 go
 
 -- tsql

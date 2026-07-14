@@ -4631,10 +4631,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	if (is_cross_db)
 	{
-		/*
-		 * Block cross-database access if the login has no valid user mapping
-		 * and guest is disabled.
-		 */
+		/* Raise an error if the login does not have access to the database */
 		check_session_db_access(stmt->db_name);
 
 		/*
