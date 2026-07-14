@@ -1,0 +1,6 @@
+CREATE TABLE select_into_rowcount_vu_prepare_src (c1 INT, c2 VARCHAR(20));
+GO
+INSERT INTO select_into_rowcount_vu_prepare_src VALUES (1, 'a'), (2, 'b'), (3, 'c');
+GO
+~~ROW COUNT: 3~~
+

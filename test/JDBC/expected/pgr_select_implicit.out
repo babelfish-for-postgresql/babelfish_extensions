@@ -270,6 +270,8 @@ FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b ORDER BY x.b;
 GO
+~~ROW COUNT: 4~~
+
 SELECT * FROM test_missing_target2;
 GO
 ~~START~~
@@ -415,6 +417,8 @@ FROM test_missing_target x, test_missing_target y
 	GROUP BY x.b/2 ORDER BY x.b/2
 SELECT * FROM test_missing_target3;
 GO
+~~ROW COUNT: 3~~
+
 ~~START~~
 int
 1

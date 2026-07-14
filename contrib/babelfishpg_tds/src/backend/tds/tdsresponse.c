@@ -2755,7 +2755,13 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 							 */
 							else if (plansource->commandTag == CMDTAG_SELECT)
 							{
-								command_type = TDS_CMD_SELECT;
+								if (toplevel &&
+									!((PLtsql_stmt_execsql *) stmt)->need_to_push_result &&
+									!((PLtsql_stmt_execsql *) stmt)->is_tsql_select_assign_stmt &&
+									!((PLtsql_stmt_execsql *) stmt)->into)
+									command_type = TDS_CMD_SELECTINTO;
+								else
+									command_type = TDS_CMD_SELECT;
 								row_count_valid = !insert_exec_active;
 							}
 						}

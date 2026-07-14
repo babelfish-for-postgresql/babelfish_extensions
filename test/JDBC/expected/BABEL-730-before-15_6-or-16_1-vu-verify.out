@@ -4,6 +4,8 @@ SELECT * INTO test_log FROM
             SELECT log(5) AS log, log(100, 10) AS log_2args, log10(100) AS log10
          )AS p
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT * FROM test_log
 GO

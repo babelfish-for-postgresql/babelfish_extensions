@@ -912,6 +912,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -940,6 +942,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -968,6 +972,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -996,6 +1002,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1024,6 +1032,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1052,6 +1062,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1083,6 +1095,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1114,6 +1128,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1145,6 +1161,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1176,6 +1194,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1207,6 +1227,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1238,6 +1260,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1266,6 +1290,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1294,6 +1320,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1322,6 +1350,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1350,6 +1380,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1378,6 +1410,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1406,6 +1440,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1435,6 +1471,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1463,6 +1501,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1491,6 +1531,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1519,6 +1561,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1548,6 +1592,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1576,6 +1622,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1604,6 +1652,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1632,6 +1682,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) AS tbl
 ORDER BY 1
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
@@ -1807,6 +1859,8 @@ select tbl.babel3392_c1 into babel3392_vals from (
     values (CAST('1' AS CHAR(10))), (CAST(N'ΘЖऌฒ' AS NCHAR(15))), (NULL)
 ) as tbl(babel3392_c1)
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT * FROM babel3392_vals;
 GO
@@ -2041,6 +2095,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT c2 as babel4157_c1 FROM babel3392_collation
 ) tbl
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl order by babel4157_c1 COLLATE japanese_cs_as
 GO
@@ -2068,6 +2124,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT 'foo' as babel4157_c1
 ) tbl
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl order by babel4157_c1 COLLATE SQL_Latin1_General_CP1_CI_AS
 GO
@@ -2103,6 +2161,8 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT c1 as babel4157_c1 FROM babel3392_collation 
 ) tbl
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT * FROM babel4157_tbl order by babel4157_c1 COLLATE SQL_Latin1_General_CP1_CI_AS
 GO

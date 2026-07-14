@@ -544,6 +544,7 @@ replace-before-18_1
 binary-datatype-operators
 BABEL-5059_before_16_5
 SELECT_INTO_TEST
+select_into_rowcount
 securityadmin_role
 cast-varchar-to-time
 xml_exist-before-16_5
