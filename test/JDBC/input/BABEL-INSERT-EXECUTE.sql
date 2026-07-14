@@ -617,7 +617,7 @@ DROP PROCEDURE p_err_inner;
 DROP TABLE t_err_nest;
 GO
 
--- BABEL-6881: INSERT...EXEC on inline table-valued function should raise error
+-- INSERT...EXEC on inline table-valued function should raise error
 CREATE TABLE t_tvf_dest(c1 int);
 GO
 
