@@ -4631,9 +4631,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	if (is_cross_db)
 	{
-		/* Raise an error if the login does not have access to the database */
-		check_session_db_access(stmt->db_name);
-
 		/*
 		 * When there is cross db reference to sys or information_schema
 		 * schemas, Change the session property.

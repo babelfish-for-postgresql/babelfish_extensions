@@ -581,14 +581,14 @@ SELECT tb_1.*, tb_2.* FROM BABEL5119_db.dbo.BABEL5119_t1 tb_1, master.guest.BABE
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for table babel5119_t1)~~
+~~ERROR (Message: The server principal "login_babel5119_2" is not able to access the database "babel5119_db" under the current security context)~~
 
 
 SELECT vw_1.*, vw_2.* FROM BABEL5119_db.dbo.BABEL5119_v1 vw_1, master.guest.BABEL5119_v4 vw_2
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for view babel5119_v1)~~
+~~ERROR (Message: The server principal "login_babel5119_2" is not able to access the database "babel5119_db" under the current security context)~~
 
 
 -- Using crossdb query data

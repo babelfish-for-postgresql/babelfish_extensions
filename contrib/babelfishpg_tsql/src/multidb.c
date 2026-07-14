@@ -1221,6 +1221,13 @@ get_physical_schema_name_by_mode(char *db_name, const char *schema_name, Migrati
 	}
 
 	/*
+	 * Block cross-database access if the login has no valid user mapping
+	 * and guest is disabled, matching the USE <db> behavior.
+	 */
+	if (pg_strcasecmp(db_name, get_cur_db_name()) != 0)
+		check_session_db_access(db_name);
+
+	/*
 	 * Parser guarantees identifier will always be truncated to 64B. Schema
 	 * name that comes from other source (e.g scheam_id function) needs one
 	 * more truncate function call

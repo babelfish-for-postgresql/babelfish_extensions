@@ -1345,6 +1345,15 @@ GO
 GRANT SELECT ON dbo.babel_6876_t1 TO guest;
 GO
 
+GRANT INSERT ON dbo.babel_6876_t1 TO guest;
+GO
+
+GRANT UPDATE ON dbo.babel_6876_t1 TO guest;
+GO
+
+GRANT DELETE ON dbo.babel_6876_t1 TO guest;
+GO
+
 CREATE PROCEDURE dbo.babel_6876_proc1
 AS
 SELECT 'proc executed' AS result;
@@ -1376,8 +1385,82 @@ GO
 ~~ERROR (Message: The server principal "babel_6876_login" is not able to access the database "babel_6876_db" under the current security context)~~
 
 
+-- should fail - INSERT via three-part name
+INSERT INTO babel_6876_db.dbo.babel_6876_t1(val) VALUES ('injected');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "babel_6876_login" is not able to access the database "babel_6876_db" under the current security context)~~
+
+
+-- should fail - UPDATE via three-part name
+UPDATE babel_6876_db.dbo.babel_6876_t1 SET val = 'hacked' WHERE id = 1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "babel_6876_login" is not able to access the database "babel_6876_db" under the current security context)~~
+
+
+-- should fail - DELETE via three-part name
+DELETE FROM babel_6876_db.dbo.babel_6876_t1 WHERE id = 1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "babel_6876_login" is not able to access the database "babel_6876_db" under the current security context)~~
+
+
 -- should fail - EXEC via three-part name (proc has EXEC granted to guest)
 EXEC babel_6876_db.dbo.babel_6876_proc1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "babel_6876_login" is not able to access the database "babel_6876_db" under the current security context)~~
+
+
+-- should fail - dynamic SQL with cross-db reference
+EXEC('SELECT * FROM babel_6876_db.dbo.babel_6876_t1');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "babel_6876_login" is not able to access the database "babel_6876_db" under the current security context)~~
+
+
+-- tsql
+-- Create a second database with guest enabled for multi-db attack scenario
+CREATE DATABASE babel_6876_db2;
+GO
+
+USE babel_6876_db2;
+GO
+
+GRANT CONNECT TO guest;
+GO
+
+CREATE TABLE dbo.babel_6876_t2(x int);
+GO
+
+INSERT INTO dbo.babel_6876_t2 VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+
+GRANT SELECT ON dbo.babel_6876_t2 TO guest;
+GO
+
+USE master;
+GO
+
+-- tsql  user=babel_6876_login password=Babel123
+-- should fail - multi-db query combining accessible db2 with inaccessible db1
+SELECT s.* FROM babel_6876_db.dbo.babel_6876_t1 s, babel_6876_db2.dbo.babel_6876_t2 t WHERE 1=1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "babel_6876_login" is not able to access the database "babel_6876_db" under the current security context)~~
+
+
+-- should fail - subquery variant
+SELECT (SELECT val FROM babel_6876_db.dbo.babel_6876_t1) FROM babel_6876_db2.dbo.babel_6876_t2;
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -1394,10 +1477,19 @@ GO
 DROP PROCEDURE dbo.babel_6876_proc1;
 GO
 
+USE babel_6876_db2;
+GO
+
+DROP TABLE dbo.babel_6876_t2;
+GO
+
 USE master;
 GO
 
 DROP DATABASE babel_6876_db;
+GO
+
+DROP DATABASE babel_6876_db2;
 GO
 
 -- psql
