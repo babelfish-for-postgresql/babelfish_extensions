@@ -5947,6 +5947,7 @@ DECLARE
     result TEXT := '';
     skipped_chars TEXT;
 BEGIN
+    raise warning 'ws entry[%]', xpath_pattern;
     i := 1;
     WHILE i <= len_xp LOOP
         -- Do not touch string literals or predicates. If encountered,
@@ -5961,9 +5962,12 @@ BEGIN
             -- Not skipping any characters
             ch := substring(xpath_pattern, i, 1);
         END IF;
+        
+        raise warning 'ch=[%]  ascii(ch)=[%]', ch, ascii(ch);
 
         -- Remove whitespace characters...
-        IF ch IN ( ' ', E'\t', E'\r', E'\n' ) THEN
+        --IF ch IN ( ' ', E'\t', E'\r', E'\n' ) THEN
+        IF (ch = ' ') OR (ascii(ch) = 9) OR (ascii(ch) = 10) OR (ascii(ch) = 13) THEN
             -- ...but only if the removal is not causing word concatenation
             -- Amazingly, in PG the following are valid XPath queries, note
             -- the removed spaces around 'and' and 'or':
@@ -5994,6 +5998,7 @@ BEGIN
         i := i + 1;
     END LOOP;
 
+    raise warning 'ws result[%]', result;
     RETURN result;
 END
 $BODY$
