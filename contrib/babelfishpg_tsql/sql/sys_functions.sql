@@ -5307,7 +5307,6 @@ RETURNS XML
 AS
 $BODY$
 BEGIN
-    raise warning 'sys.bbf_xmlquery: enter';
     IF (xml_element IS NULL)  THEN
         RETURN NULL;
     END IF;
@@ -5326,7 +5325,6 @@ BEGIN
 
     xml_element := sys.bbf_xml_remove_magic_nodes_tag(xml_element);
 
-    raise warning 'sys.bbf_xmlquery: before *_internal';
     RETURN sys.bbf_xmlquery_internal(xpath_pattern, xml_element);
 END
 $BODY$
