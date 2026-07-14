@@ -19,7 +19,7 @@ extract_and_classify_warnings() {
             *"leak"*)
                 echo "LEAK_WARNING: $line"
                 ;;
-            *"role"*"has not been granted membership"*|*"permission denied"*|*"transaction left non-empty SPI stack"*|*"cast will be ignored because the source data type is a domain"*|*"Query parsing failed using SLL parser mode but succeeded with LL mode"*|*"Using the TDS Foreign data wrapper (tds_fdw) as provider"*|*"Ignoring @provstr argument value"*|*"Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION"*|*"no privileges could be revoked for"*|*"could not convert locale name"*|*"you don't own a lock of type"*|*"precision reduced to maximum allowed"*|*"WITH TIME ZONE precision reduced to maximum allowed"*|*"no privileges were granted for"*|*"parameter cannot be null"*|*"babelfishpg_tds.product_version cannot be set"*|*"could not convert locale name"*|*"This function has been deprecated and will no longer drop all users."*|*"cannot add relations to publication:"*|*"NUMERIC or DECIMAL type is cast to BIGINT"*)
+            *"role"*"has not been granted membership"*|*"permission denied"*|*"transaction left non-empty SPI stack"*|*"cast will be ignored because the source data type is a domain"*|*"Query parsing failed using SLL parser mode but succeeded with LL mode"*|*"Using the TDS Foreign data wrapper (tds_fdw) as provider"*|*"Ignoring @provstr argument value"*|*"Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION"*|*"no privileges could be revoked for"*|*"could not convert locale name"*|*"you don't own a lock of type"*|*"precision reduced to maximum allowed"*|*"WITH TIME ZONE precision reduced to maximum allowed"*|*"no privileges were granted for"*|*"parameter cannot be null"*|*"babelfishpg_tds.product_version cannot be set"*|*"could not convert locale name"*|*"This function has been deprecated and will no longer drop all users."*|*"cannot add relations to publication:"*|*"NUMERIC or DECIMAL type is cast to BIGINT"*|*"pltsql_enable_antlr_parse_cache[FAIL]"*|*"pltsql_validate_antlr_parse_cache[FAIL]"*)
                 # These warnings are expected and will be ignored
                 ;;
             *)
@@ -49,8 +49,8 @@ if [[ "$SNAPSHOT_ACTIVE_COUNT" -ne 44 ]]; then
     ERROR_FOUND=true
 fi
 
-if [[ "$LEAK_COUNT" -ne 416 ]]; then
-    echo "Error: Expected 416 leak warnings, but found $LEAK_COUNT"
+if [[ "$LEAK_COUNT" -ne 29 ]]; then
+    echo "Error: Expected 29 leak warnings, but found $LEAK_COUNT"
     ERROR_FOUND=true
 fi
 

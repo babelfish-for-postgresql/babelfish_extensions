@@ -59,7 +59,6 @@ bool		pltsql_disable_batch_auto_commit = false;
 bool		pltsql_disable_internal_savepoint = false;
 bool		pltsql_disable_txn_in_triggers = false;
 bool		pltsql_recursive_triggers = false;
-bool		pltsql_enable_new_insert_exec = false;
 bool		pltsql_noexec = false;
 bool		pltsql_showplan_all = false;
 bool		pltsql_showplan_text = false;
@@ -74,6 +73,8 @@ char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
 bool		pltsql_enable_alter_owner_from_pg = false;
+bool		pltsql_enable_antlr_parse_cache = false;
+bool		pltsql_validate_antlr_parse_cache = false;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -951,15 +952,6 @@ define_custom_variables(void)
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
-	DefineCustomBoolVariable("babelfishpg_tsql.enable_new_insert_exec",
-							 gettext_noop("Enables INSERT...EXEC redesign code path"),
-							 NULL,
-							 &pltsql_enable_new_insert_exec,
-							 false,
-							 PGC_SUSET,
-							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							 NULL, NULL, NULL);
-
 	DefineCustomBoolVariable("babelfishpg_tsql.noexec",
 							 gettext_noop("SQL-Server compatibility NOEXEC option."),
 							 NULL,
@@ -1147,6 +1139,32 @@ define_custom_variables(void)
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
+	/*
+	 * Enable/disable persistent caching of ANTLR parse result for routines for cross-session performance optimization.
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_antlr_parse_cache",
+							 gettext_noop("Enables persistent caching of ANTLR parser results for faster execution of routines."),
+							 gettext_noop("When enabled, ANTLR parsed results are reused from cache for routines."),
+							 &pltsql_enable_antlr_parse_cache,
+							 false,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/*
+	 * Debugging GUC: when enabled, every routine/trigger execution invokes comparison of ANTLR-compiled and cached parse trees. Logs PASS/FAIL.
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.validate_antlr_parse_cache",
+							 gettext_noop("GUC for validation of cached ANTLR parser results on creation or execution of routines and triggers."),
+							 gettext_noop("When enabled, routine executions that use cached parse results also run a fresh "
+										  "ANTLR parse and compare the two. Results are logged to the server log. "
+										  "Use sys.antlr_parse_cache_stats() to check for cache hits, writes or errors."),
+							 &pltsql_validate_antlr_parse_cache,
+							 false,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
 	/* Dump and Restore */
 	DefineCustomBoolVariable("babelfishpg_tsql.dump_restore",
 							 gettext_noop("Enable special handlings during dump and restore"),
@@ -1311,6 +1329,7 @@ int			pltsql_isolation_level_repeatable_read = ISOLATION_OFF;
 int 		pltsql_isolation_level_serializable = ISOLATION_OFF;
 int 		escape_hatch_identity_function = EH_STRICT;
 int 		escape_hatch_insert_bulk_options = EH_IGNORE;
+int 		escape_hatch_spatial_index = EH_STRICT;
 
 void
 define_escape_hatch_variables(void)
@@ -1413,6 +1432,18 @@ define_escape_hatch_variables(void)
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
+	/* spatial index */
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_spatial_index",
+							 gettext_noop("escape hatch for CREATE SPATIAL INDEX USING/WITH options; "
+										  "PostGIS GiST is self-tuning and cannot honor these parameters"),
+							 NULL,
+							 &escape_hatch_spatial_index,
+							 EH_STRICT,
+							 escape_hatch_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
 
 	/* compatibility_level */
 

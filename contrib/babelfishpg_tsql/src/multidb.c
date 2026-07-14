@@ -1,5 +1,6 @@
 #include "postgres.h"
 
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/parsenodes.h"
 #include "nodes/primnodes.h"
@@ -89,16 +90,6 @@ rewrite_object_refs(Node *stmt)
 		case T_DeleteStmt:
 		case T_InsertStmt:
 			{
-				/*
-				 * For INSERT ... EXECUTE, rewrite the schema name
-				*/
-				if ((nodeTag(stmt) == T_InsertStmt && ((InsertStmt *)stmt)->execStmt)
-					&& nodeTag(((InsertStmt *)stmt)->execStmt) == T_CallStmt)
-				{
-					CallStmt   *call = (CallStmt *) ((InsertStmt *)stmt)->execStmt;
-					call->funccall->funcname = rewrite_plain_name(call->funccall->funcname);
-				}
-
 				/* walker supported stmts */
 				raw_expression_tree_walker(stmt,
 										   rewrite_relation_walker,
@@ -1194,6 +1185,17 @@ get_physical_schema_name_by_mode(char *db_name, const char *schema_name, Migrati
 	len = strlen(schema_name);
 	if (len == 0)
 		return NULL;
+
+	/* Validate original schema name against T-SQL 128-char limit */
+	if (pg_mbstrlen_with_len(schema_name, len) > 128)
+	{
+		int		cliplen = pg_mbcliplen(schema_name, len, 128);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_NAME_TOO_LONG),
+				 errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.",
+						cliplen, schema_name)));
+	}
 
 	/* always return a new copy */
 	len = len > MAX_BBF_NAMEDATALEND ? len : MAX_BBF_NAMEDATALEND;

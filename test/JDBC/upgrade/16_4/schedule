@@ -222,7 +222,6 @@ forjson-nesting
 forjsonauto-before-16_5
 format
 format-dep
-forxml
 forxml-path
 forxml-subquery
 fulltextserviceproperty
@@ -253,7 +252,7 @@ msdb-dbo-syspolicy_system_health_state
 nested_trigger_inside_proc
 nested_trigger_with_dml
 newid
-objectpropertyex-before-16_5-or-15_9
+objectpropertyex
 openjson
 openquery_upgrd_before_15_4
 orderby
@@ -630,8 +629,12 @@ babel_timezoneinfo_before_17_7
 comparison_op_index_scan-before-17_8-or-16_12
 babel_string_to_money
 BABEL-5788
+BABEL-6814
 BABEL-1664-before-16_10-or-17_6
 babel_string_to_money_reg
 babel_convert_with_style
 forxml-raw-elements-before-17_9-or-18_3
 forxml-path-elements-before-17_10-or-18_4
+forxml-before-17_11-or-18_5
+forxml-auto-before-17_11-or-18_5
+BABEL-login-db-long-identifiers

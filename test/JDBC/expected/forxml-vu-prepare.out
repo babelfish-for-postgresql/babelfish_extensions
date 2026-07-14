@@ -23,9 +23,10 @@ go
 -- Test Select For XML syntax
 select * from forxml_vu_t1 for xml auto;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'FOR XML AUTO mode' is not currently supported in Babelfish)~~
+~~START~~
+ntext
+<forxml_vu_t1 id="1" a="t1_a1"/><forxml_vu_t1 id="2" a="t1_a2"/><forxml_vu_t1 id="3"/>
+~~END~~
 
 
 select * from forxml_vu_t1 for xml raw;

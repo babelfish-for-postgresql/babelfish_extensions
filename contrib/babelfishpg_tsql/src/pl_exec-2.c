@@ -1,5 +1,7 @@
 
 #include "pltsql-2.h"
+#include "pltsql_node/pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
+											 * by gen_pltsql_node_support.pl */
 
 #include "funcapi.h"
 
@@ -68,7 +70,6 @@ static int	exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltex
 static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
 static int	exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_function *stmt);
 static int	exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_scheme *stmt);
-static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
 extern Datum pltsql_inline_handler(PG_FUNCTION_ARGS);
@@ -80,7 +81,6 @@ static bool is_char_identstart(char c);
 static bool is_char_identpart(char c);
 
 void		read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr);
-bool  		called_from_tsql_insert_exec(void);
 void		cache_inline_args(PLtsql_function *func, InlineCodeBlockArgs *args);
 InlineCodeBlockArgs *create_args(int numargs);
 InlineCodeBlockArgs *clone_inline_args(InlineCodeBlockArgs *args);
@@ -120,7 +120,6 @@ extern SPIPlanPtr prepare_stmt_exec(PLtsql_execstate *estate, PLtsql_function *f
 extern int	sp_prepare_count;
 
 BulkCopyStmt *cstmt = NULL;
-bool		called_from_tsql_insert_execute = false;
 
 int			insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
 int			insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
@@ -741,14 +740,21 @@ exec_stmt_push_result(PLtsql_execstate *estate,
 
 	Assert(stmt->query != NULL);
 
-	/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
-	if (estate->insert_exec)
-		return exec_stmt_insert_execute_select(estate, stmt->query);
-
 	exec_run_select(estate, stmt->query, &portal);
 
-	receiver = CreateDestReceiver(DestRemote);
-	SetRemoteDestReceiverParams(receiver, portal);
+	/*
+	 * When INSERT EXEC is active, redirect results to the temp table
+	 * instead of sending to client.
+	 */
+	if (pltsql_insert_exec_active())
+	{
+		receiver = CreateInsertExecDestReceiver();
+	}
+	else
+	{
+		receiver = CreateDestReceiver(DestRemote);
+		SetRemoteDestReceiverParams(receiver, portal);
+	}
 
 	if (PortalRun(portal,
 				  FETCH_ALL,
@@ -794,8 +800,19 @@ exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_result *stmt
 		elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
 			 expr->query, SPI_result_code_string(SPI_result));
 
-	receiver = CreateDestReceiver(DestRemote);
-	SetRemoteDestReceiverParams(receiver, portal);
+	/*
+	 * INSERT EXEC context check - redirect OUTPUT clause results to temp table
+	 * instead of sending to client.
+	 */
+	if (pltsql_insert_exec_active())
+	{
+		receiver = CreateInsertExecDestReceiver();
+	}
+	else
+	{
+		receiver = CreateDestReceiver(DestRemote);
+		SetRemoteDestReceiverParams(receiver, portal);
+	}
 
 	success = PortalRun(portal,
 						FETCH_ALL,
@@ -864,9 +881,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		int32		rettypmod;	/* used for scalar function */
 		bool		is_scalar_func;
 
-		/* for EXEC as part of inline code under INSERT ... EXECUTE */
-		Tuplestorestate *tss;
-		DestReceiver *dest;
+		/*
+		 * Setup INSERT EXEC: create temp table to capture procedure output.
+		 * After procedure completes, temp table is flushed to target.
+		 */
+		if (stmt->insert_exec != NULL)
+			insert_exec_setup(estate, stmt->insert_exec, true);
 
 		if (IS_TDS_CONN())
 		{
@@ -934,12 +954,18 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 		stmt->is_scalar_func = is_scalar_func;
 
-		/* T-SQL doesn't allow procedure calls in a function */
+		/*
+		 * T-SQL doesn't allow procedure calls in a function, EXCEPT when
+		 * the procedure is being called as part of INSERT EXEC. In that case,
+		 * the procedure's output is captured into a table variable, which is
+		 * allowed in T-SQL functions.
+		 */
 		if (estate->func && estate->func->fn_oid != InvalidOid && estate->func->fn_prokind == PROKIND_FUNCTION && estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER /* check EXEC is running
 																																									 * in the body of
 																																									 * function */
-			&& !is_scalar_func) /* in case of EXEC on scalar function, it is
+			&& !is_scalar_func /* in case of EXEC on scalar function, it is
 								 * allowed in T-SQL. do not throw an error */
+			&& stmt->insert_exec == NULL) /* INSERT EXEC into table variable is allowed in functions */
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -1027,7 +1053,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			 */
 			oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
 
-			row = (PLtsql_row *) palloc0(sizeof(PLtsql_row));
+			row = makeNode(PLtsql_row);
 			row->dtype = PLTSQL_DTYPE_ROW;
 			row->refname = "(unnamed row)";
 			row->lineno = -1;
@@ -1152,37 +1178,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			stmt->target = (PLtsql_variable *) row;
 		}
 
-		if (estate->insert_exec)
-		{
-			/*
-			 * For EXEC under INSERT ... EXECUTE, get the expected TupleDesc,
-			 * create a DestReceiver and pass both to the CallStmt so that it
-			 * will know to accumulate result rows and send them back here.
-			 */
-
-			Node	   *node;
-			CallStmt   *callstmt;
-
-			/*
-			 * Get the parsed CallStmt
-			 */
-			node = linitial_node(Query,
-								 ((CachedPlanSource *) linitial(plan->plancache_list))->query_list)->utilityStmt;
-			if (node == NULL || !IsA(node, CallStmt))
-				elog(ERROR, "query for CALL statement is not a CallStmt");
-
-			tss = tuplestore_begin_heap(false, false, work_mem);
-			dest = CreateTuplestoreDestReceiver();
-			SetTuplestoreDestReceiverParams(dest, tss, CurrentMemoryContext, false, NULL, NULL);
-			dest->rStartup(dest, -1, estate->rsi->expectedDesc);
-
-			callstmt = (CallStmt *) node;
-			callstmt->relation = InvalidOid;
-			callstmt->attrnos = NULL;
-			callstmt->retdesc = (void *) estate->rsi->expectedDesc;
-			callstmt->dest = (void *) dest;
-		}
-
 		paramLI = setup_param_list(estate, expr);
 
 		before_lxid = MyProc->vxid.lxid;
@@ -1243,35 +1238,42 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			}
 		}
 
-		if (estate->insert_exec)
+		if (rc < 0)
+			elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
+				 expr->query, SPI_result_code_string(rc));
+
+		/*
+		 * Check result rowcount; if there's one row, assign procedure's output
+		 * values back to the appropriate variables
+		 */
+		if (SPI_processed == 1)
 		{
-			/*
-			 * For EXEC under INSERT ... EXECUTE, get the rows sent back by
-			 * the CallStmt, and store them into estate->tuple_store so that
-			 * at the end of function execution they will be sent to the right
-			 * place.
-			 */
-			TupleTableSlot *slot = MakeSingleTupleTableSlot(estate->rsi->expectedDesc,
-															&TTSOpsMinimalTuple);
+			SPITupleTable *tuptab = SPI_tuptable;
 
-			if (estate->tuple_store == NULL)
-				exec_init_tuple_store(estate);
+			if (!stmt->target)
+				elog(ERROR, "DO statement returned a row");
 
-			for (;;)
-			{
-				if (!tuplestore_gettupleslot(tss, true, false, slot))
-					break;
-				tuplestore_puttupleslot(estate->tuple_store, slot);
-				ExecClearTuple(slot);
-			}
-			ExecDropSingleTupleTableSlot(slot);
-
-			dest->rShutdown(dest);
-			dest->rDestroy(dest);
+			if (tuptab != NULL)
+				exec_move_row(estate, stmt->target, tuptab->vals[0], tuptab->tupdesc);
 		}
+		else if (SPI_processed > 1)
+			elog(ERROR, "procedure call returned more than one row");
+
+		exec_eval_cleanup(estate);
+		SPI_freetuptable(SPI_tuptable);
+
+		if (stmt->insert_exec != NULL)
+			insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
 	}
 	PG_FINALLY();
 	{
+		if (stmt->insert_exec != NULL)
+			pltsql_insert_exec_reset_all();
+
+		/*
+		 * Restore the database/user context if a cross-db EXEC switched it.
+		 * Runs on both success and error paths.
+		 */
 		if (strcmp(get_current_pltsql_db_name(), save_db_name) != 0)
 			set_cur_user_db_and_path(save_db_name, false, false);
 
@@ -1290,30 +1292,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		}
 	}
 	PG_END_TRY();
-
-	if (rc < 0)
-		elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
-			 expr->query, SPI_result_code_string(rc));
-
-	/*
-	 * Check result rowcount; if there's one row, assign procedure's output
-	 * values back to the appropriate variables.
-	 */
-	if (SPI_processed == 1)
-	{
-		SPITupleTable *tuptab = SPI_tuptable;
-
-		if (!stmt->target)
-			elog(ERROR, "DO statement returned a row");
-
-		if (tuptab != NULL)
-			exec_move_row(estate, stmt->target, tuptab->vals[0], tuptab->tupdesc);
-	}
-	else if (SPI_processed > 1)
-		elog(ERROR, "procedure call returned more than one row");
-
-	exec_eval_cleanup(estate);
-	SPI_freetuptable(SPI_tuptable);
 
 	return PLTSQL_RC_OK;
 }
@@ -1447,7 +1425,7 @@ exec_stmt_return_table(PLtsql_execstate *estate, PLtsql_stmt_return_query *stmt)
 	 */
 	oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
 
-	expr = palloc0(sizeof(PLtsql_expr));
+	expr = makeNode(PLtsql_expr);
 	
 	/*
 	 * Add delimiters for valid T-SQL variable names like @@var or @var#
@@ -1506,6 +1484,14 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 	PG_TRY();
 	{
+		/*
+		 * Setup INSERT EXEC (new path): create temp table to capture procedure
+		 * output. No implicit transaction for dynamic SQL (different semantics
+		 * than stored procs).
+		 */
+		if (stmt->insert_exec != NULL)
+			insert_exec_setup(estate, stmt->insert_exec, false);
+
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(estate, query, restype);
 
@@ -1526,9 +1512,15 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 		if (fcinfo->isnull)
 			elog(ERROR, "pltsql_inline_handler failed");
+
+		if (stmt->insert_exec != NULL)
+			insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
 	}
 	PG_FINALLY();
 	{
+		if (stmt->insert_exec != NULL)
+			pltsql_insert_exec_reset_all();
+
 		/* Restore past settings */
 		pltsql_revert_guc(save_nestlevel);
 		pltsql_revert_last_scope_identity(scope_level);
@@ -1555,6 +1547,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		pltsql_create_econtext(estate);
 	}
 	exec_eval_cleanup(estate);
+
 	return PLTSQL_RC_OK;
 }
 
@@ -1611,7 +1604,7 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 			 * 3. Read parameter values, insert OUT parameter info in the row
 			 * Datum.
 			 */
-			row = (PLtsql_row *) palloc0(sizeof(PLtsql_row));
+			row = makeNode(PLtsql_row);
 			row->dtype = PLTSQL_DTYPE_ROW;
 			row->refname = "(unnamed row)";
 			row->lineno = -1;
@@ -1645,17 +1638,12 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 		if (fcinfo->isnull)
 			elog(ERROR, "pltsql_inline_handler failed");
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		/* Delete temporary tables as ENR */
 		pltsql_remove_current_query_env();
-
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	/* Delete temporary tables as ENR */
-	pltsql_remove_current_query_env();
 
 	after_lxid = MyProc->vxid.lxid;
 
@@ -1876,13 +1864,11 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 												paramno, args->numargs, args->argtypes,
 												values, nulls);
 				}
-				PG_CATCH();
+				PG_FINALLY();
 				{
 					disable_sp_cursor_find_param_hook();
-					PG_RE_THROW();
 				}
 				PG_END_TRY();
-				disable_sp_cursor_find_param_hook();
 
 				if (ret > 0)
 					ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
@@ -1930,13 +1916,11 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 												   (ccopt_null ? NULL : &ccopt),
 												   args->numargs, args->argtypes);
 				}
-				PG_CATCH();
+				PG_FINALLY();
 				{
 					disable_sp_cursor_find_param_hook();
-					PG_RE_THROW();
 				}
 				PG_END_TRY();
-				disable_sp_cursor_find_param_hook();
 
 				if (ret > 0)
 					ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
@@ -2038,13 +2022,11 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 													paramno, args->numargs,
 													args->argtypes, values, nulls);
 				}
-				PG_CATCH();
+				PG_FINALLY();
 				{
 					disable_sp_cursor_find_param_hook();
-					PG_RE_THROW();
 				}
 				PG_END_TRY();
-				disable_sp_cursor_find_param_hook();
 
 				if (ret > 0)
 					ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
@@ -2163,7 +2145,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				int			save_nestlevel;
 				int			scope_level;
 				InlineCodeBlockArgs *args = NULL;
-				
+
 				batch = exec_eval_expr(estate, stmt->query, &isnull1, &restype1, &restypmod1);
 				if (isnull1)
 				{
@@ -2209,6 +2191,16 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 
 				PG_TRY();
 				{
+					/*
+					 * INSERT EXEC handling: if this is an INSERT EXEC statement
+					 * (set by parser), create temp table here.  The procedure
+					 * output will be redirected to this temp table.  After the
+					 * procedure completes, we flush the temp table to the target
+					 * and cleanup.
+					 */
+					if (stmt->insert_exec != NULL)
+						insert_exec_setup(estate, stmt->insert_exec, true);
+
 					if (strcmp(batchstr, "") != 0)	/* check edge cases for
 													 * sp_executesql */
 					{
@@ -2219,13 +2211,20 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					{
 						exec_assign_value(estate, estate->datums[stmt->return_code_dno], Int32GetDatum(ret), false, INT4OID, 0);
 					}
+
+					if (stmt->insert_exec != NULL)
+						insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
 				}
 				PG_FINALLY();
 				{
+					if (stmt->insert_exec != NULL)
+						pltsql_insert_exec_reset_all();
+
 					pltsql_revert_guc(save_nestlevel);
 					pltsql_revert_last_scope_identity(scope_level);
 				}
 				PG_END_TRY();
+
 				break;
 			}
 		case PLTSQL_EXEC_SP_EXECUTE:
@@ -3214,81 +3213,6 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 	return PLTSQL_RC_OK;
 }
 
-bool called_from_tsql_insert_exec()
-{
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return false;
-	return called_from_tsql_insert_execute;
-}
-
-/*
- * For naked SELECT stmt in INSERT ... EXECUTE, instead of pushing the result to
- * the client, we accumulate the result in estate->tuple_store (similar to
- * exec_stmt_return_query). Finally the EXECUTE stmt will return the result to
- * the INSERT stmt as rows to insert.
- */
-static int
-exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
-{
-	Portal		portal;
-	uint64		processed = 0;
-	TupleConversionMap *tupmap;
-	MemoryContext oldcontext;
-
-	if (estate->tuple_store == NULL)
-		exec_init_tuple_store(estate);
-
-	Assert(query != NULL);
-	exec_run_select(estate, query, &portal);
-
-	/* Use eval_mcontext for tuple conversion work */
-	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
-
-	called_from_tsql_insert_execute = true;
-	tupmap = convert_tuples_by_position(portal->tupDesc,
-										estate->tuple_store_desc,
-										gettext_noop("structure of query does not match function result type"));
-	called_from_tsql_insert_execute = false;
-	while (true)
-	{
-		uint64		i;
-
-		SPI_cursor_fetch(portal, true, 50);
-
-		/* SPI will have changed CurrentMemoryContext */
-		MemoryContextSwitchTo(get_eval_mcontext(estate));
-
-		if (SPI_processed == 0)
-			break;
-
-		for (i = 0; i < SPI_processed; i++)
-		{
-			HeapTuple	tuple = SPI_tuptable->vals[i];
-
-			if (tupmap)
-			{
-				called_from_tsql_insert_execute = true;
-				tuple = execute_attr_map_tuple(tuple, tupmap);
-				called_from_tsql_insert_execute = false;
-			}
-			tuplestore_puttuple(estate->tuple_store, tuple);
-			if (tupmap)
-				heap_freetuple(tuple);
-			processed++;
-		}
-
-		SPI_freetuptable(SPI_tuptable);
-	}
-
-	SPI_freetuptable(SPI_tuptable);
-	SPI_cursor_close(portal);
-
-	MemoryContextSwitchTo(oldcontext);
-	exec_eval_cleanup(estate);
-
-	return PLTSQL_RC_OK;
-}
-
 int
 exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stmt)
 {
@@ -3830,6 +3754,14 @@ execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamL
 	if (pltsql_explain_only)
 	{
 		receiver = None_Receiver;
+	}
+	else if (pltsql_insert_exec_active())
+	{
+		/*
+		 * INSERT EXEC context is active redirect results to temp table
+		 * instead of sending to client.
+		 */
+		receiver = CreateInsertExecDestReceiver();
 	}
 	else
 	{
@@ -4397,11 +4329,14 @@ exec_stmt_partition_function(PLtsql_execstate *estate, PLtsql_stmt_partition_fun
 	 */
 
 	/* check if given name is exceeding the allowed limit */
-	if (strlen(partition_function_name) > 128)
+	if (pg_mbstrlen(partition_function_name) > 128)
 	{
-		ereport(ERROR, 
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("The identifier that starts with '%.128s' is too long. Maximum length is 128.", partition_function_name)));
+		int		cliplen = pg_mbcliplen(partition_function_name, strlen(partition_function_name), 128);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_NAME_TOO_LONG),
+				 errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.",
+						cliplen, partition_function_name)));
 	}
 
 	/*
@@ -4654,12 +4589,14 @@ exec_stmt_partition_scheme(PLtsql_execstate *estate, PLtsql_stmt_partition_schem
 	 */
 
 	/* check if given name is exceeding the allowed limit */
-	if (strlen(partition_scheme_name) > 128)
+	if (pg_mbstrlen(partition_scheme_name) > 128)
 	{
-		ereport(ERROR, 
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("The identifier that starts with '%.128s' is too long. Maximum length is 128.",
-						partition_scheme_name)));
+		int		cliplen = pg_mbcliplen(partition_scheme_name, strlen(partition_scheme_name), 128);
+
+		ereport(ERROR,
+				(errcode(ERRCODE_NAME_TOO_LONG),
+				 errmsg("The identifier that starts with '%.*s' is too long. Maximum length is 128.",
+						cliplen, partition_scheme_name)));
 	}
 
 	/* raise error if provided partition function doesn't exists in the current database */

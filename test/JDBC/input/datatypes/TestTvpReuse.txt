@@ -1,0 +1,16 @@
+create type bbf_tvp_reuse_type as table (id int, v varchar(50))
+create table bbf_tvp_reuse_target (id int, v varchar(50))
+create procedure bbf_tvp_reuse_insert @t bbf_tvp_reuse_type readonly as begin insert into bbf_tvp_reuse_target select id, v from @t end
+
+prepst#!#EXEC bbf_tvp_reuse_insert @p1#!#tvp|-|bbf_tvp_reuse_type|-|utils/tvp-reuse-batch1.csv|-|utils/tvp-reuse-batch1.csv
+prepst#!#exec#!#tvp|-|bbf_tvp_reuse_type|-|utils/tvp-reuse-batch2.csv|-|utils/tvp-reuse-batch2.csv
+prepst#!#exec#!#tvp|-|bbf_tvp_reuse_type|-|utils/tvp-reuse-batch3.csv|-|utils/tvp-reuse-batch3.csv
+prepst#!#exec#!#tvp|-|bbf_tvp_reuse_type|-|utils/tvp-reuse-batch4.csv|-|utils/tvp-reuse-batch4.csv
+prepst#!#exec#!#tvp|-|bbf_tvp_reuse_type|-|utils/tvp-reuse-batch5.csv|-|utils/tvp-reuse-batch5.csv
+
+select count(*) as total from bbf_tvp_reuse_target
+select id, v from bbf_tvp_reuse_target order by id
+
+drop procedure bbf_tvp_reuse_insert
+drop table bbf_tvp_reuse_target
+drop type bbf_tvp_reuse_type

@@ -1,0 +1,306 @@
+-- Test 1: sys.objects point lookup - left side cast pattern
+SELECT name FROM sys.objects
+WHERE object_id = (SELECT object_id FROM sys.objects WHERE name = 'babel_6814_t1');
+GO
+~~START~~
+varchar
+babel_6814_t1
+~~END~~
+
+
+-- Test 2: sys.objects point lookup - right side cast pattern
+SELECT name FROM sys.objects
+WHERE (SELECT object_id FROM sys.objects WHERE name = 'babel_6814_t1') = object_id;
+GO
+~~START~~
+varchar
+babel_6814_t1
+~~END~~
+
+
+-- Test 3: Both patterns return same result
+SELECT CASE WHEN
+    (SELECT name FROM sys.objects WHERE object_id = (SELECT object_id FROM sys.objects WHERE name = 'babel_6814_t1'))
+    =
+    (SELECT name FROM sys.objects WHERE (SELECT object_id FROM sys.objects WHERE name = 'babel_6814_t1') = object_id)
+THEN 'PASS' ELSE 'FAIL' END;
+GO
+~~START~~
+varchar
+PASS
+~~END~~
+
+
+-- Test 4: sys.indexes - lookup by object_id
+SELECT i.index_id, i.type_desc FROM sys.indexes i
+WHERE i.object_id = (SELECT object_id FROM sys.tables WHERE name = 'babel_6814_t1')
+ORDER BY i.index_id;
+GO
+~~START~~
+int#!#nvarchar
+0#!#HEAP
+2#!#NONCLUSTERED
+3#!#NONCLUSTERED
+~~END~~
+
+
+-- Test 5: sys.columns - lookup by object_id
+SELECT name, column_id FROM sys.columns
+WHERE object_id = (SELECT object_id FROM sys.tables WHERE name = 'babel_6814_t1')
+ORDER BY column_id;
+GO
+~~START~~
+varchar#!#int
+a#!#1
+b#!#2
+~~END~~
+
+
+-- Test 6: sys.schemas - lookup by schema_id
+SELECT name FROM sys.schemas WHERE schema_id = SCHEMA_ID('dbo');
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+-- Test 7: Non-existent object returns 0 rows
+SELECT name FROM sys.objects WHERE object_id = 99999999;
+GO
+~~START~~
+varchar
+~~END~~
+
+
+-- Test 8: Correlated subquery pattern
+SELECT t.name,
+    (SELECT o.type FROM sys.objects o WHERE o.object_id = t.object_id) as obj_type
+FROM sys.tables t
+WHERE t.name IN ('babel_6814_t1', 'babel_6814_t2')
+ORDER BY t.name;
+GO
+~~START~~
+varchar#!#char
+babel_6814_t1#!#U 
+babel_6814_t2#!#U 
+~~END~~
+
+
+-- Test 9: Correlated subquery - reversed operand
+SELECT t.name,
+    (SELECT o.type FROM sys.objects o WHERE t.object_id = o.object_id) as obj_type
+FROM sys.tables t
+WHERE t.name IN ('babel_6814_t1', 'babel_6814_t2')
+ORDER BY t.name;
+GO
+~~START~~
+varchar#!#char
+babel_6814_t1#!#U 
+babel_6814_t2#!#U 
+~~END~~
+
+
+-- Test 10: Join pattern - sys.objects JOIN sys.columns
+SELECT o.name, c.name as col_name
+FROM sys.objects o
+JOIN sys.columns c ON o.object_id = c.object_id
+WHERE o.name = 'babel_6814_t1'
+ORDER BY c.column_id;
+GO
+~~START~~
+varchar#!#varchar
+babel_6814_t1#!#a
+babel_6814_t1#!#b
+~~END~~
+
+
+-- Test 11: Join pattern - sys.tables JOIN sys.indexes
+SELECT t.name, i.index_id, i.type_desc
+FROM sys.tables t
+JOIN sys.indexes i ON t.object_id = i.object_id
+WHERE t.name = 'babel_6814_t1'
+ORDER BY i.index_id;
+GO
+~~START~~
+varchar#!#int#!#nvarchar
+babel_6814_t1#!#0#!#HEAP
+babel_6814_t1#!#2#!#NONCLUSTERED
+babel_6814_t1#!#3#!#NONCLUSTERED
+~~END~~
+
+
+-- Test 12: Multiple objects via subquery
+SELECT name, type_desc FROM sys.objects
+WHERE object_id IN (
+    SELECT object_id FROM sys.objects WHERE name IN ('babel_6814_t1', 'babel_6814_t2', 'babel_6814_proc1')
+)
+ORDER BY name;
+GO
+~~START~~
+varchar#!#nvarchar
+babel_6814_proc1#!#SQL_STORED_PROCEDURE
+babel_6814_t1#!#USER_TABLE
+babel_6814_t2#!#USER_TABLE
+~~END~~
+
+
+-- Test 13: Different object types all resolve correctly
+SELECT name, type, type_desc FROM sys.objects
+WHERE name LIKE 'babel_6814%' AND name NOT LIKE 'babel_6814_extra%'
+ORDER BY name;
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+babel_6814_func1#!#FN#!#SQL_SCALAR_FUNCTION
+babel_6814_proc1#!#P #!#SQL_STORED_PROCEDURE
+babel_6814_t1#!#U #!#USER_TABLE
+babel_6814_t2#!#U #!#USER_TABLE
+babel_6814_view1#!#V #!#VIEW
+~~END~~
+
+
+-- Test 14: sys.indexes with index_id filter
+SELECT i.index_id FROM sys.indexes i
+WHERE i.object_id = (SELECT object_id FROM sys.tables WHERE name = 'babel_6814_t1')
+AND i.index_id > 0
+ORDER BY i.index_id;
+GO
+~~START~~
+int
+2
+3
+~~END~~
+
+
+-- Test 15: Correlated count - ensures all indexes found per table
+SELECT t.name,
+    (SELECT COUNT(*) FROM sys.indexes i WHERE i.object_id = t.object_id AND i.index_id > 0) as idx_count
+FROM sys.tables t
+WHERE t.name IN ('babel_6814_t1', 'babel_6814_t2')
+ORDER BY t.name;
+GO
+~~START~~
+varchar#!#int
+babel_6814_t1#!#2
+babel_6814_t2#!#1
+~~END~~
+
+
+-- psql
+-- Verifying Index Scans being Used
+ANALYZE pg_class;
+ANALYZE pg_namespace;
+ANALYZE pg_index;
+ANALYZE pg_attribute;
+ANALYZE pg_type;
+ANALYZE pg_proc;
+GO
+
+SET babelfishpg_tsql.sql_dialect = "tsql";
+GO
+
+-- Test 16: EXPLAIN on pg_class 
+EXPLAIN (COSTS OFF) SELECT * FROM pg_class WHERE (oid)::int4 = 12345;
+GO
+~~START~~
+text
+Index Scan using pg_class_oid_index on pg_class
+  Index Cond: (oid = (12345)::oid)
+~~END~~
+
+
+-- Test 17: EXPLAIN reversed operand
+EXPLAIN (COSTS OFF) SELECT * FROM pg_class WHERE 12345 = (oid)::int4;
+GO
+~~START~~
+text
+Index Scan using pg_class_oid_index on pg_class
+  Index Cond: (oid = (12345)::oid)
+~~END~~
+
+
+-- Test 18: EXPLAIN join pattern (pg_namespace has few rows, planner prefers Seq Scan)
+EXPLAIN (COSTS OFF) SELECT c.relname, n.nspname FROM pg_class c JOIN pg_namespace n ON (n.oid)::int4 = (c.relnamespace)::int4 WHERE c.relname = 'babel_6814_t1';
+GO
+~~START~~
+text
+Hash Join
+  Hash Cond: ((n.oid)::integer = (c.relnamespace)::integer)
+  ->  Seq Scan on pg_namespace n
+  ->  Hash
+        ->  Index Only Scan using pg_class_relname_nsp_index on pg_class c
+              Index Cond: (relname = 'babel_6814_t1'::name)
+~~END~~
+
+
+-- Test 19: EXPLAIN correlated subquery (pg_namespace has few rows, planner prefers Seq Scan)
+EXPLAIN (COSTS OFF) SELECT c.relname, (SELECT n.nspname FROM pg_namespace n WHERE (n.oid)::int4 = (c.relnamespace)::int4) FROM pg_class c WHERE c.relname = 'babel_6814_t1';
+GO
+~~START~~
+text
+Index Only Scan using pg_class_relname_nsp_index on pg_class c
+  Index Cond: (relname = 'babel_6814_t1'::name)
+  SubPlan 1
+    ->  Index Scan using pg_namespace_oid_index on pg_namespace n
+          Index Cond: (oid = ((c.relnamespace)::integer)::oid)
+~~END~~
+
+
+-- Test 20: EXPLAIN pg_index with indrelid cast (few rows, planner prefers Seq Scan)
+EXPLAIN (COSTS OFF) SELECT * FROM pg_index WHERE (indrelid)::int4 = 12345;
+GO
+~~START~~
+text
+Index Scan using pg_index_indrelid_index on pg_index
+  Index Cond: (indrelid = (12345)::oid)
+~~END~~
+
+
+-- Test 21: EXPLAIN pg_attribute with attrelid cast
+EXPLAIN (COSTS OFF) SELECT * FROM pg_attribute WHERE (attrelid)::int4 = 12345 AND attnum > 0;
+GO
+~~START~~
+text
+Index Scan using pg_attribute_relid_attnum_index on pg_attribute
+  Index Cond: ((attrelid = (12345)::oid) AND (attnum > 0))
+~~END~~
+
+
+-- Test 22: EXPLAIN non-existent value
+EXPLAIN (COSTS OFF) SELECT * FROM pg_class WHERE (oid)::int4 = 99999999;
+GO
+~~START~~
+text
+Index Scan using pg_class_oid_index on pg_class
+  Index Cond: (oid = (99999999)::oid)
+~~END~~
+
+
+-- Test 23: EXPLAIN volatile function with seqscan disabled
+SELECT set_config('enable_seqscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+EXPLAIN (COSTS OFF) SELECT * FROM pg_class WHERE (oid)::int4 = random()::int;
+GO
+~~START~~
+text
+Seq Scan on pg_class
+  Disabled: true
+  Filter: ((oid)::integer = (random())::integer)
+~~END~~
+
+SELECT set_config('enable_seqscan', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+RESET babelfishpg_tsql.sql_dialect;
+GO

@@ -32,24 +32,16 @@ babelfish_fts_rewrite(PG_FUNCTION_ARGS)
                 errmsg("Full Text Search is not yet supported.")));
     }
     
-    PG_TRY();
-    {
-        // Switch to a suitable memory context if necessary
-        if (!CurrentMemoryContext) {
-            MemoryContextSwitchTo(TopMemoryContext);
-        }
-        fts_scanner_init(input_str);
-
-        if (fts_yyparse(&translated_query) != 0)
-            fts_yyerror(&translated_query, "fts parser failed");
-
-        fts_scanner_finish();
+    // Switch to a suitable memory context if necessary
+    if (!CurrentMemoryContext) {
+        MemoryContextSwitchTo(TopMemoryContext);
     }
-    PG_CATCH();
-    {
-        PG_RE_THROW();
-    }
-    PG_END_TRY();
+    fts_scanner_init(input_str);
+
+    if (fts_yyparse(&translated_query) != 0)
+        fts_yyerror(&translated_query, "fts parser failed");
+
+    fts_scanner_finish();
 
     if (translated_query) {
         result_text = cstring_to_text(translated_query);

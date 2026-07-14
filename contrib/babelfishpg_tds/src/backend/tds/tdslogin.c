@@ -1162,6 +1162,46 @@ TdsResetLoginFlags()
  * Returns STATUS_OK or STATUS_ERROR, or might call ereport(FATAL) and
  * not return at all.
  */
+
+/*
+ * tds_truncate_identifier_md5
+ *
+ * Truncate an identifier exceeding NAMEDATALEN using clip + MD5 hash,
+ * matching the behavior of pltsql_truncate_identifier for CI_AS collations.
+ * Used for pre-auth user name truncation (where the tsql hook is unavailable)
+ * and for database name truncation (for consistency with the stored form).
+ */
+#define MD5_HASH_LEN 32
+
+static void
+tds_truncate_identifier_md5(char *ident, int len)
+{
+	char		md5[MD5_HASH_LEN + 1];
+	char		buf[NAMEDATALEN];
+	const char *errstr = NULL;
+	char	   *downcased;
+
+	Assert(len >= NAMEDATALEN);
+
+	downcased = downcase_identifier(ident, len, false, false);
+
+	if (!pg_md5_hash(downcased, strlen(downcased), md5, &errstr))
+		ereport(FATAL,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not compute %s hash: %s", "MD5", errstr)));
+
+	len = pg_mbcliplen(ident, len, NAMEDATALEN - MD5_HASH_LEN - 1);
+	Assert(len + MD5_HASH_LEN < NAMEDATALEN);
+	memcpy(buf, ident, len);
+	memcpy(buf + len, md5, MD5_HASH_LEN);
+	buf[len + MD5_HASH_LEN] = '\0';
+
+	pfree(downcased);
+	memcpy(ident, buf, len + MD5_HASH_LEN + 1);
+}
+
+#undef MD5_HASH_LEN
+
 static int
 ProcessLoginInternal(Port *port)
 {
@@ -1251,13 +1291,19 @@ ProcessLoginInternal(Port *port)
 	loginInfo = request;
 
 	/*
-	 * Truncate given database and user names to length of a Postgres name.
-	 * This avoids lookup failures when overlength names are given.
+	 * Truncate user name to fit Postgres NAMEDATALEN using TSQL-aware
+	 * truncation (clip + MD5 hash) so the result matches the role name
+	 * stored in the pg catalog. We cannot use truncate_identifier_hook here
+	 * because babelfishpg_tsql is not yet loaded at this stage.
+	 * Database name truncation is handled similarly in TdsSetDbContext().
 	 */
-	if (strlen(port->database_name) >= NAMEDATALEN)
-		port->database_name[NAMEDATALEN - 1] = '\0';
 	if (strlen(port->user_name) >= NAMEDATALEN)
-		port->user_name[NAMEDATALEN - 1] = '\0';
+	{
+		tds_truncate_identifier_md5(port->user_name, strlen(port->user_name));
+
+		pfree(loginInfo->username);
+		loginInfo->username = pstrdup(port->user_name);
+	}
 
 	/*
 	 * Done putting stuff in TopMemoryContext.
@@ -1971,31 +2017,23 @@ TdsProcessLogin(Port *port, bool loadedSsl)
 	TdsErrorContext->phase = 0;
 	TdsErrorContext->reqType = TDS_LOGIN7;
 
-	PG_TRY();
-	{
-		TdsErrorContext->err_text = "Parsing PreLogin Request";
-		/* Pre-Login */
-		rc = ParsePreLoginRequest();
-		if (rc < 0)
-			return rc;
+	TdsErrorContext->err_text = "Parsing PreLogin Request";
+	/* Pre-Login */
+	rc = ParsePreLoginRequest();
+	if (rc < 0)
+		return rc;
 
-		TdsErrorContext->err_text = "Make PreLogin Response";
+	TdsErrorContext->err_text = "Make PreLogin Response";
 
-		loadEncryption = MakePreLoginResponse(port, loadedSsl);
-		TdsFlush();
+	loadEncryption = MakePreLoginResponse(port, loadedSsl);
+	TdsFlush();
 
-		TdsErrorContext->err_text = "Setup SSL Handshake";
-		/* Setup the SSL handshake */
-		if (loadEncryption == TDS_ENCRYPT_ON ||
-			loadEncryption == TDS_ENCRYPT_OFF ||
-			loadEncryption == TDS_ENCRYPT_REQ)
-			rc = SecureOpenServer(port);
-	}
-	PG_CATCH();
-	{
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	TdsErrorContext->err_text = "Setup SSL Handshake";
+	/* Setup the SSL handshake */
+	if (loadEncryption == TDS_ENCRYPT_ON ||
+		loadEncryption == TDS_ENCRYPT_OFF ||
+		loadEncryption == TDS_ENCRYPT_REQ)
+		rc = SecureOpenServer(port);
 
 	/*
 	 * If SSL handshake failure has occurred then no need to go ahead with
@@ -2007,16 +2045,8 @@ TdsProcessLogin(Port *port, bool loadedSsl)
 	if (loadEncryption == TDS_ENCRYPT_ON)
 		TDSInstrumentation(INSTR_TDS_LOGIN_END_TO_END_ENCRYPT);
 
-	PG_TRY();
-	{
-		/* Login */
-		rc = ProcessLoginInternal(port);
-	}
-	PG_CATCH();
-	{
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	/* Login */
+	rc = ProcessLoginInternal(port);
 
 	TdsErrorContext->err_text = "";
 
@@ -2059,6 +2089,9 @@ TdsSetDbContext()
 			 * SQL injection.
 			 */
 			StartTransactionCommand();
+			if (strlen(loginInfo->database) >= NAMEDATALEN)
+				tds_truncate_identifier_md5(loginInfo->database,
+											strlen(loginInfo->database));
 			db_id = pltsql_plugin_handler_ptr->pltsql_get_database_oid(loginInfo->database);
 			CommitTransactionCommand();
 			MemoryContextSwitchTo(oldContext);

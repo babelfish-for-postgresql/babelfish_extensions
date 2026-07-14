@@ -222,7 +222,6 @@ forjson-nesting
 forjsonauto
 format
 format-dep
-forxml
 forxml-path
 forxml-subquery
 fulltextserviceproperty
@@ -643,6 +642,7 @@ BABEL-4271
 comparison_op_index_scan-before-17_8-or-16_12
 babel_string_to_money
 BABEL-5788
+BABEL-6814
 BABEL-1664
 babel_binary
 sys-fn_varbintohexstr
@@ -651,3 +651,7 @@ babel_convert_with_style
 forxml-raw-elements-before-17_9-or-18_3
 sys-fn-varbintohexsubstring
 forxml-path-elements-before-17_10-or-18_4
+forxml-before-17_11-or-18_5
+forxml-auto-before-17_11-or-18_5
+babel_sqlvariant_coerce_type_before_16_14-or-17_10-or-18_4
+BABEL-login-db-long-identifiers

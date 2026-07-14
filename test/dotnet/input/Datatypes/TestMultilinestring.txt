@@ -1,0 +1,50 @@
+CREATE TABLE MLSGEOM_dt(location GEOMETRY);
+prepst#!#INSERT INTO MLSGEOM_dt(location) values(@location) #!#GEOMETRY|-|location|-|MULTILINESTRING ((1 2, 3 4)):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTILINESTRING EMPTY:4326
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTILINESTRING ((1 2, 3 4), (5 6, 7 8)):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTILINESTRING ((1 2 3, 4 5 6)):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTILINESTRING ((1 2 NULL 4, 5 6 NULL 8)):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTILINESTRING ((1 2 3 4, 5 6 7 8)):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTILINESTRING ((1 2 3, 4 5 6), (7 8 9, 10 11 12)):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTILINESTRING ((-1 -2, -3 -4)):4326
+
+CREATE TABLE MLSGEOG_dt(location GEOGRAPHY);
+prepst#!#INSERT INTO MLSGEOG_dt(location) values(@location) #!#GEOGRAPHY|-|location|-|MULTILINESTRING ((10 10, 20 20)):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTILINESTRING EMPTY:4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTILINESTRING ((10 10, 20 20), (30 30, 40 40)):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTILINESTRING ((10 10 100, 20 20 200)):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTILINESTRING ((10 10 NULL 1, 20 20 NULL 2)):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTILINESTRING ((10 10 100 1, 20 20 200 2)):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTILINESTRING ((-10 -10, -20 -20)):4326
+
+INSERT INTO MLSGEOM_dt(location) values(geometry::STGeomFromText('MULTILINESTRING((1 2, 3 4))', 4326))
+INSERT INTO MLSGEOM_dt(location) values(geometry::STGeomFromText('MULTILINESTRING((1 2, 3 4), (5 6, 7 8))', 4326))
+INSERT INTO MLSGEOM_dt(location) values(geometry::STGeomFromText('MULTILINESTRING((1 2 3, 4 5 6))', 4326))
+INSERT INTO MLSGEOM_dt(location) values(geometry::STGeomFromText('MULTILINESTRING((1 2 NULL 4, 5 6 NULL 8))', 4326))
+INSERT INTO MLSGEOM_dt(location) values(geometry::STGeomFromText('MULTILINESTRING((1 2 3 4, 5 6 7 8))', 4326))
+INSERT INTO MLSGEOM_dt(location) values(geometry::STGeomFromText('MULTILINESTRING EMPTY', 4326))
+
+INSERT INTO MLSGEOG_dt(location) values(geography::STGeomFromText('MULTILINESTRING((10 10, 20 20))', 4326))
+INSERT INTO MLSGEOG_dt(location) values(geography::STGeomFromText('MULTILINESTRING((10 10 100, 20 20 200))', 4326))
+INSERT INTO MLSGEOG_dt(location) values(geography::STGeomFromText('MULTILINESTRING((10 10 100 1, 20 20 200 2))', 4326))
+INSERT INTO MLSGEOG_dt(location) values(geography::STGeomFromText('MULTILINESTRING((10 10 NULL 1, 20 20 NULL 2))', 4326))
+INSERT INTO MLSGEOG_dt(location) values(geography::STGeomFromText('MULTILINESTRING EMPTY', 4326))
+
+SELECT * FROM MLSGEOM_dt;
+SELECT * FROM MLSGEOG_dt;
+
+CREATE TABLE MLS_EMP_dt(geom GEOMETRY, geog GEOGRAPHY);
+prepst#!#INSERT INTO MLS_EMP_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|MULTILINESTRING EMPTY:4326
+prepst#!#INSERT INTO MLS_EMP_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|MULTILINESTRING EMPTY:4326
+prepst#!#INSERT INTO MLS_EMP_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|MULTILINESTRING EMPTY:0
+prepst#!#INSERT INTO MLS_EMP_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|MULTILINESTRING EMPTY:4121
+SELECT geom.STAsText(), geog.STAsText() FROM MLS_EMP_dt;
+SELECT geom.STDimension(), geog.STDimension() FROM MLS_EMP_dt;
+SELECT geom.STIsClosed(), geog.STIsClosed() FROM MLS_EMP_dt;
+SELECT geom.STIsValid(), geog.STIsValid() FROM MLS_EMP_dt;
+SELECT geom.STAsBinary(), geog.STAsBinary() FROM MLS_EMP_dt;
+SELECT geom.STArea(), geog.STArea() FROM MLS_EMP_dt;
+
+DROP TABLE IF EXISTS MLSGEOM_dt;
+DROP TABLE IF EXISTS MLSGEOG_dt;
+DROP TABLE IF EXISTS MLS_EMP_dt;

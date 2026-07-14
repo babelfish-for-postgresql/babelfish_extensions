@@ -221,7 +221,6 @@ forjson-nesting
 forjsonauto-before-16_5
 format
 format-dep
-forxml
 forxml-path
 forxml-subquery
 fulltextserviceproperty
@@ -609,8 +608,12 @@ babel_timezoneinfo_before_17_7
 comparison_op_index_scan-before-17_8-or-16_12
 babel_string_to_money
 BABEL-5788
+BABEL-6814
 BABEL-1664-before-16_10-or-17_6
 babel_string_to_money_reg
 babel_convert_with_style-before-14_12-or-16_3
 forxml-raw-elements-before-17_9-or-18_3
 forxml-path-elements-before-17_10-or-18_4
+forxml-before-17_11-or-18_5
+forxml-auto-before-17_11-or-18_5
+BABEL-login-db-long-identifiers

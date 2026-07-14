@@ -2407,13 +2407,6 @@ tsql_output_insert_rest:
 					s->sortClause = $3;
 					$$->selectStmt = (Node*) s;
                 }
-			| tsql_ExecStmt
-                  {
-                      $$ = makeNode(InsertStmt);
-                      $$->cols = NIL;
-                      $$->selectStmt = NULL;
-                      $$->execStmt = $1;
-                  }
         ;
 
 tsql_output_insert_rest_no_paren:
@@ -2423,13 +2416,6 @@ tsql_output_insert_rest_no_paren:
                     $$->cols = NIL;
                     $$->selectStmt = $1;
                 }
-			| tsql_output_ExecStmt
-                  {
-                      $$ = makeNode(InsertStmt);
-                      $$->cols = NIL;
-                      $$->selectStmt = NULL;
-                      $$->execStmt = $1;
-                  }
 		;
 
 tsql_output_simple_select:
@@ -2614,34 +2600,6 @@ tsql_output_target_el: /* same as target_el but BareColLabel is not allowed. kee
 
 tsql_output_into_target_columns:
 					'(' insert_column_list ')'						{ $$ = $2; }
-		;
-
-tsql_output_ExecStmt:
-			TSQL_EXEC tsql_opt_return tsql_func_name tsql_actual_args
-				{
-					List *name = $3;
-					List *args = $4;
-					CallStmt *n;
-					ListCell *lc;
-
-					foreach(lc, args)
-					{
-						Node *node = lfirst(lc);
-						if (node->type == T_RowExpr)
-						{
-							RowExpr *row_expr = (RowExpr *) node;
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("Row Expression argument not supported"),
-									 parser_errposition(row_expr->location)));
-						}
-					}
-
-					n = makeNode(CallStmt);
-					n->funccall = makeFuncCall(name, args, COERCE_EXPLICIT_CALL, @1);
-
-					$$ = (Node *) n;
-				}
 		;
 
 /* END rules for OUTPUT clause support */
@@ -2892,7 +2850,6 @@ tsql_InsertStmt:
 					i->withClause = $1;
 					i->cols = NIL;
 					i->selectStmt = NULL;
-					i->execStmt = NULL;
 					$$ = (Node *) i;
 				}
 			/* OUTPUT syntax */
@@ -2900,11 +2857,6 @@ tsql_InsertStmt:
 			 tsql_output_clause tsql_output_insert_rest_no_paren 
 				{
 					SelectLimit *top_stmt = (SelectLimit *)$3;
-					if ($11->execStmt)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
-								 parser_errposition(@10)));
 					$11->limitCount = top_stmt->limitCount;
 					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
 					$11->relation = $5;
@@ -2917,11 +2869,6 @@ tsql_InsertStmt:
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause tsql_output_insert_rest_no_paren 
 				{
 					SelectLimit *top_stmt = (SelectLimit *)$3;
-					if ($8->execStmt)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
-								 parser_errposition(@7)));
 					
 					$8->limitCount = top_stmt->limitCount;
 					tsql_check_top_percent_support(top_stmt, "INSERT", @3, yyscanner);
@@ -2945,7 +2892,6 @@ tsql_InsertStmt:
 					i->withClause = $1;
 					i->cols = NIL;
 					i->selectStmt = NULL;
-					i->execStmt = NULL;
 					$$ = (Node *) i;
 				}
 			*/
@@ -2953,21 +2899,11 @@ tsql_InsertStmt:
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
 			tsql_output_clause INTO insert_target tsql_output_into_target_columns tsql_output_insert_rest
 				{
-					if ($14->execStmt)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
-								 parser_errposition(@14)));
 					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, ((ReturningClause *) $10)->exprs, $12, $13, $14, 5, yyscanner);
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target tsql_output_into_target_columns tsql_output_insert_rest
 				{
-					if ($11->execStmt)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
-								 parser_errposition(@10)));
 					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, ((ReturningClause *) $7)->exprs, $9, $10, $11, 5, yyscanner);
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
@@ -2980,28 +2916,17 @@ tsql_InsertStmt:
 					i->withClause = NULL;
 					i->cols = NIL;
 					i->selectStmt = NULL;
-					i->execStmt = NULL;
 					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, ((ReturningClause *) $7)->exprs, $9, $10, i, 5, yyscanner);
 				}
 			/* Without OUTPUT target column list */
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
 			tsql_output_clause INTO insert_target tsql_output_insert_rest_no_paren
 				{
-					if ($13->execStmt)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
-								 parser_errposition(@13)));
 					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, ((ReturningClause *) $10)->exprs, $12, NIL, $13, 5, yyscanner);
 				}
 			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target tsql_output_insert_rest_no_paren
 				{
-					if ($10->execStmt)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
-								 parser_errposition(@9)));
 					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, ((ReturningClause *) $7)->exprs, $9, NIL, $10, 5, yyscanner);
 				}
 			/*
@@ -3015,7 +2940,6 @@ tsql_InsertStmt:
 					i->withClause = NULL;
 					i->cols = NIL;
 					i->selectStmt = NULL;
-					i->execStmt = NULL;
 					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, NIL, i, 5, yyscanner);
 				}
 			*/
@@ -3307,7 +3231,6 @@ tsql_for_xml_clause:
 			| TSQL_FOR XML_P TSQL_AUTO tsql_xml_common_directives
 			{
 				TSQL_ForClause *n = (TSQL_ForClause *) palloc(sizeof(TSQL_ForClause));
-				TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_XML_OPTION_AUTO);
 				n->mode = TSQL_FORXML_AUTO;
 				n->elementName = NULL;
 				n->commonDirectives = $4;
@@ -3561,7 +3484,43 @@ tsql_IndexStmt:
 					tsql_index_nulls_order(n->indexParams, n->accessMethod);
 					$$ = (Node *)n;
 				}
-		;
+		| CREATE TSQL_SPATIAL INDEX opt_single_name
+		  ON relation_expr '(' index_params ')'
+		  opt_using_spatial_grid
+		  opt_spatial_with_options
+		  tsql_opt_partition_scheme_or_filegroup
+			{
+				IndexStmt *n = makeNode(IndexStmt);
+
+				if (list_length($8) != 1)
+					ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("spatial index must reference exactly one column")));
+
+				n->unique = false;
+				n->concurrent = false;
+				n->idxname = $4;
+				n->relation = $6;
+				n->accessMethod = "gist";
+				n->indexParams = $8;
+				n->indexIncludingParams = NIL;
+				n->nulls_not_distinct = false;
+				n->whereClause = NULL;
+				n->options = NIL;
+				n->excludeOpNames = NIL;
+				n->idxcomment = NULL;
+				n->indexOid = InvalidOid;
+				n->oldNumber = InvalidOid;
+				n->primary = false;
+				n->isconstraint = false;
+				n->deferrable = false;
+				n->initdeferred = false;
+				n->transformed = false;
+				n->if_not_exists = false;
+				$$ = (Node *)n;
+			}
+	;
+
 
 tsql_cluster:
 			TSQL_CLUSTERED
@@ -3589,6 +3548,45 @@ tsql_opt_columnstore:
 						 errmsg("The COLUMNSTORE option is currently ignored")));
 			}
 			| /*EMPTY*/
+		;
+/*
+ * CREATE SPATIAL INDEX helper rules these consume and ignore SQL Server spatial-specific options since PostGIS GiST handles everything automatically.
+ */
+
+opt_using_spatial_grid:
+			USING IDENT		{ /* GEOMETRY_GRID, GEOGRAPHY_GRID, etc. - ignored */ }
+			| /*EMPTY*/
+		;
+
+opt_spatial_with_options:
+			WITH_paren spatial_option_list ')'			{}
+			| /*EMPTY*/									{}
+		;
+
+spatial_option_list:
+			spatial_option								{}
+			| spatial_option_list ',' spatial_option	{}
+		;
+
+spatial_option:
+			IDENT '=' IDENT								{}
+			| IDENT '=' ON								{}
+			| IDENT '=' OFF								{}
+			| IDENT '=' NONE							{}
+			| IDENT '=' NumericOnly						{}
+			| IDENT '=' '(' spatial_value_list ')'		{}
+		;
+
+spatial_value_list:
+			spatial_value								{}
+			| spatial_value_list ',' spatial_value		{}
+		;
+
+spatial_value:
+			IDENT										{}
+			| IDENT '=' IDENT							{}
+			| IDENT '=' NumericOnly						{}
+			| NumericOnly								{}
 		;
 
 /*
@@ -5084,6 +5082,7 @@ unreserved_keyword:
 			| TSQL_SCHEMABINDING
 			| TSQL_SERVER
 			| TSQL_SID
+			| TSQL_SPATIAL
 			| TSQL_SS
 			| TSQL_SUBSTRING
 			| TSQL_TABLOCK

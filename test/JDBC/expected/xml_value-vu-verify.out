@@ -1357,9 +1357,11 @@ GO
 DECLARE @xml XML = '<artists> <artist name="John Doe"/> <artist name="Edward Poe"/> <artist name="Mark The Great"/> </artists>'
 SELECT @xml.query('/artists/artist').value('/artist/@name', 'varchar(100)')
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML QUERY' is not currently supported in Babelfish)~~
+~~ERROR (Message: could not parse XML document)~~
 
 
 -- Dependent objects

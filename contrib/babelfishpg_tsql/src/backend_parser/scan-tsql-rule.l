@@ -76,6 +76,7 @@
 					if (yyextra->literallen == 0)
 						yyerror("zero-length delimited identifier");
 					ident = litbufdup(yyscanner);
+					CHECK_LOCAL_TEMP_TABLE_LENGTH(ident);
 					if (yyextra->literallen >= NAMEDATALEN)
 						truncate_identifier(ident, yyextra->literallen, true);
 					yylval->str = ident;
@@ -152,6 +153,7 @@
 
 <tsql>{tsql_ttname}	{
 					SET_YYLLOC();
+					CHECK_LOCAL_TEMP_TABLE_LENGTH(yytext);
 					yylval->str = pstrdup(yytext);
 					return IDENT;
 				}
@@ -292,6 +294,7 @@
                             case TSQL_XSINIL:
                             case TSQL_ABSENT:
 							case TSQL_PROC:
+							case TSQL_SPATIAL:
 							case TSQL_INCLUDE_NULL_VALUES:
 							case TSQL_WITHOUT_ARRAY_WRAPPER:
 							case TSQL_IIF:

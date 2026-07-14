@@ -328,12 +328,9 @@ analyze(PLtsql_function *func, CompileContext *cmpl_ctx)
 		/* extra checks */
 		check_unsupported_goto(analyzer_ctx);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		destroy_template_context(walker);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	destroy_template_context(walker);
 }

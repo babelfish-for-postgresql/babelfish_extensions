@@ -18,6 +18,8 @@
 #include "utils/memutils.h"
 
 #include "pltsql.h"
+#include "pltsql_node/pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
+											 * by gen_pltsql_node_support.pl */
 
 #include "pl_funcs-2.h"
 #include "iterative_exec.h"
@@ -102,6 +104,7 @@ pltsql_ns_additem(PLtsql_nsitem_type itemtype, int itemno, const char *name)
 	Assert(ns_top != NULL || itemtype == PLTSQL_NSTYPE_LABEL);
 
 	nse = palloc0(offsetof(PLtsql_nsitem, name) + strlen(name) + 1);
+	NodeSetTag(nse, T_PLtsql_nsitem);
 	nse->itemtype = itemtype;
 	nse->itemno = itemno;
 	nse->prev = ns_top;
