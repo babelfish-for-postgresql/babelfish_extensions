@@ -5412,7 +5412,7 @@ BEGIN
         RAISE EXCEPTION 'Cannot call methods on %.', temp_datatype;
     END IF;
 
-    IF (xml_element IS NULL) OR (trim(xml_element::TEXT) = '') THEN
+    IF (xml_element IS NULL) OR (trim(xml_element::TEXT)::TEXT = '') THEN
         RETURN QUERY SELECT UNNEST(xmlrowset);
         RETURN;
     END IF;
@@ -5422,11 +5422,10 @@ BEGIN
     IF (pltsql_quoted_identifier = 'off') THEN
         RAISE EXCEPTION 'SELECT failed because the following SET options have incorrect settings: ''QUOTED_IDENTIFIER''. Verify that SET options are correct for XML data type methods.';
     END IF;
-
+    
     context_node_path := sys.bbf_xml_extract_magic_nodes_tag(xml_element);
     xml_element := sys.bbf_xml_remove_magic_nodes_tag(xml_element);
     xpath_pattern := sys.bbf_xml_xpath_with_context_node(xpath_pattern, context_node_path);
-
     if (sys.bbf_xml_check_xpath_pattern(xpath_pattern, 'nodes') = 0) THEN
         -- successful, do nothing; otherwise an exception will have been thrown
     END IF;
@@ -5471,11 +5470,11 @@ BEGIN
     END IF;
     -- Check if xpath_pattern is absolute (starts with '/' after stripping leading '(')
     stripped := xpath_pattern;
-    WHILE substring(stripped, 1, 1) = '('
+    WHILE substring(stripped, 1, 1)::TEXT = '('
     LOOP
         stripped := substring(stripped, 2);
     END LOOP;
-    IF substring(stripped, 1, 1) = '/' THEN
+    IF substring(stripped, 1, 1)::TEXT = '/' THEN
         -- Absolute path, return unchanged
         RETURN xpath_pattern;
     END IF;
@@ -5489,7 +5488,7 @@ BEGIN
     END IF;
 
     -- Check if xpath_pattern starts with '(' (bracketed path)
-    IF substring(xpath_pattern, 1, 1) = '(' THEN
+    IF substring(xpath_pattern, 1, 1)::TEXT = '(' THEN
         -- Insert context_node_path + '/' after the opening '('
         result := '(' || context_node_path || '/' || substring(xpath_pattern, 2);
         RETURN result;
@@ -5563,7 +5562,7 @@ BEGIN
 
                 IF next_ch = '.' THEN
                     -- '..' (parent), check what follows
-                    IF substring(xpath_pattern, i + 2, 1) IN ('/', ')', ',', '[', ']', ' ') THEN
+                    IF substring(xpath_pattern, i + 2, 1)::TEXT IN ('/', ')', ',', '[', ']', ' ') THEN
                         result := result || '(' || context_node_path || '/..)';
                         i := i + 2; -- move forward
                     ELSE
@@ -5647,7 +5646,7 @@ BEGIN
 
                 is_xpath_function := false;
                 -- Check if this identifier is a known XPath function followed by '('
-                IF ident_end <= len_xp AND substring(xpath_pattern, ident_end, 1) = '(' THEN
+                IF ident_end <= len_xp AND substring(xpath_pattern, ident_end, 1)::TEXT = '(' THEN
                     is_xpath_function := sys.bbf_xml_is_xpath_function(ident||'(');
                 END IF;
 
@@ -5675,7 +5674,7 @@ BEGIN
     END LOOP;
 
     -- return final XPath query
-    RETURN substring(result, 2, (length(result)-2));
+    RETURN substring(result, 2, (length(result)-2))::TEXT;
 END
 $BODY$
 LANGUAGE plpgsql STABLE PARALLEL SAFE;
@@ -5714,7 +5713,7 @@ BEGIN
                 result := result || '.';
             END IF;
         ELSE
-            result := result || substring(xpath_pattern, i, 1);
+            result := result || substring(xpath_pattern, i, 1)::TEXT;
         END IF;
         i := i + 1;
     END LOOP;    
