@@ -910,6 +910,8 @@ rewrite_column_refs(ColumnRef *cref)
 																	 * schema */
 				else
 				{
+					if (pg_strcasecmp(strVal(db), get_cur_db_name()) != 0)
+						check_session_db_access(strVal(db));
 					new_schema = makeString(get_physical_schema_name(strVal(db), strVal(schema)));
 					cref->fields = list_delete_first(cref->fields);
 					cref->fields = list_delete_first(cref->fields);
@@ -931,6 +933,8 @@ rewrite_rangevar(RangeVar *rv)
 			rv->catalogname = NULL; /* redirect to shared schema */
 		else
 		{
+			if (pg_strcasecmp(rv->catalogname, get_cur_db_name()) != 0)
+				check_session_db_access(rv->catalogname);
 			rv->schemaname = get_physical_schema_name(rv->catalogname, rv->schemaname);
 			rv->catalogname = NULL;
 		}
@@ -991,6 +995,8 @@ rewrite_plain_name(List *name)
 													 * schema */
 				else
 				{
+					if (pg_strcasecmp(strVal(db), get_cur_db_name()) != 0)
+						check_session_db_access(strVal(db));
 					new_schema = makeString(get_physical_schema_name(strVal(db), strVal(schema)));
 
 					/*
@@ -1220,12 +1226,6 @@ get_physical_schema_name_by_mode(char *db_name, const char *schema_name, Migrati
 			return name;
 	}
 
-	/*
-	 * Block cross-database access if the login has no valid user mapping
-	 * and guest is disabled, matching the USE <db> behavior.
-	 */
-	if (pg_strcasecmp(db_name, get_cur_db_name()) != 0)
-		check_session_db_access(db_name);
 
 	/*
 	 * Parser guarantees identifier will always be truncated to 64B. Schema
