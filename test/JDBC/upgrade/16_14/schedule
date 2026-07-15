@@ -572,6 +572,7 @@ sys_sequences
 replicate
 space
 SELECT_INTO_TEST
+select_into_rowcount
 binary-datatype-operators
 sys_dm_os_sys_info
 BABEL-5059

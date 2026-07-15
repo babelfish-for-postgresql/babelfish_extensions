@@ -1085,6 +1085,8 @@ xml
 -- ============================================
 SELECT (SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS XSINIL, TYPE) AS XMLData INTO forxml_path_elements_into1;
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT * FROM forxml_path_elements_into1;
 GO
@@ -1099,6 +1101,8 @@ GO
 
 SELECT (SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ELEMENTS ABSENT, TYPE) AS XMLData INTO forxml_path_elements_into2;
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT * FROM forxml_path_elements_into2;
 GO
@@ -1113,6 +1117,8 @@ GO
 
 SELECT (SELECT ID, Name, Department FROM forxml_path_elements_t1 FOR XML PATH('Employee'), ROOT('Data'), ELEMENTS XSINIL, TYPE) AS XMLData INTO forxml_path_elements_into3;
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT * FROM forxml_path_elements_into3;
 GO

@@ -1552,7 +1552,9 @@ USE master;
 GO
 
 -- New table gets created in my_babel_cross_db_vu_prepare_db1.dbo schema
+SET NOCOUNT ON;
 SELECT 1 INTO new_table1 FROM my_babel_cross_db_vu_prepare_db1.sys.sysdatabases;
+SET NOCOUNT OFF;
 GO
 
 SELECT * FROM new_table1;
