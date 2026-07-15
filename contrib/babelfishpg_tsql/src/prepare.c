@@ -184,7 +184,7 @@ is_exec_stmt_on_scalar_func(const char *stmt, int *first_arg_location, const cha
 	FuncDetailCode fdresult;
 	Oid			funcid;
 	Oid			rettype;		/* not used */
-	bool		retset;			/* not used */
+	bool		retset;			/* used to detect table-valued functions */
 	int			nvargs;			/* not used */
 	Oid			vatype;			/* not used */
 	Oid		   *typeids;		/* not used */
@@ -222,6 +222,17 @@ is_exec_stmt_on_scalar_func(const char *stmt, int *first_arg_location, const cha
 
 	if (fdresult != FUNCDETAIL_NORMAL)
 		return false;
+
+	/* INSERT ... EXEC does not allow a table-valued function as its source. */
+	if (retset && pltsql_insert_exec_active())
+	{
+		char	   *tvf_name = strVal(llast(funcname));
+
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("The request for procedure '%s' failed because '%s' is a table valued function object.",
+						tvf_name, tvf_name)));
+	}
 
 	if (get_func_result_type(funcid, NULL, NULL) != TYPEFUNC_SCALAR)
 		return false;
