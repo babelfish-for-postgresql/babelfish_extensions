@@ -616,3 +616,63 @@ DROP PROCEDURE p_err_outer;
 DROP PROCEDURE p_err_inner;
 DROP TABLE t_err_nest;
 GO
+
+-- INSERT...EXEC on inline table-valued function should raise error
+CREATE TABLE t_tvf_dest(c1 int);
+GO
+
+CREATE FUNCTION fn_inline_tvf_test()
+RETURNS TABLE
+AS
+RETURN (SELECT 1 AS c1)
+GO
+
+-- Should fail: INSERT EXEC on inline TVF
+INSERT INTO t_tvf_dest EXEC fn_inline_tvf_test;
+GO
+
+-- Verify no rows were inserted
+SELECT * FROM t_tvf_dest;
+GO
+
+-- Test with schema-qualified name
+INSERT INTO t_tvf_dest EXEC dbo.fn_inline_tvf_test;
+GO
+
+-- Test with inline TVF that has parameters
+CREATE FUNCTION fn_inline_tvf_param(@val int)
+RETURNS TABLE
+AS
+RETURN (SELECT @val AS c1)
+GO
+
+INSERT INTO t_tvf_dest EXEC fn_inline_tvf_param @val = 5;
+GO
+
+-- Verify still no rows inserted
+SELECT * FROM t_tvf_dest;
+GO
+
+-- Test with multi-statement TVF (MSTVF)
+CREATE FUNCTION fn_mstvf_test()
+RETURNS @result TABLE (c1 int)
+AS
+BEGIN
+    INSERT INTO @result VALUES (1);
+    RETURN;
+END
+GO
+
+INSERT INTO t_tvf_dest EXEC fn_mstvf_test;
+GO
+
+-- Verify still no rows inserted
+SELECT * FROM t_tvf_dest;
+GO
+
+-- Cleanup
+DROP FUNCTION fn_mstvf_test;
+DROP FUNCTION fn_inline_tvf_param;
+DROP FUNCTION fn_inline_tvf_test;
+DROP TABLE t_tvf_dest;
+GO
