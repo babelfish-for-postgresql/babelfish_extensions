@@ -2051,8 +2051,9 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 								   HASH_ELEM | HASH_STRINGS);
 
 	/*
-	 * XML AUTO: Pre-scan for first base table alias as fallback for
-	 * recursive CTE columns joined with base tables.
+	 * XML AUTO: Pre-scan for first base table or named tuplestore alias
+	 * as fallback for recursive CTE columns joined with base tables or
+	 * trigger transition tables.
 	 */
 	if (mode == FOR_AUTO_XML)
 	{
@@ -2188,7 +2189,7 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 				{
 					matchedSrcCTEIsRecursive = true;
 
-					/* XML AUTO: look for base table sibling as fallback alias */
+					/* XML AUTO: look for base table or named tuplestore sibling as fallback alias */
 					if (mode == FOR_AUTO_XML)
 					{
 						ListCell *sibLc;
