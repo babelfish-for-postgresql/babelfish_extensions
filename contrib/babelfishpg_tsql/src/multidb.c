@@ -910,8 +910,6 @@ rewrite_column_refs(ColumnRef *cref)
 																	 * schema */
 				else
 				{
-					if (pg_strcasecmp(strVal(db), get_cur_db_name()) != 0)
-						check_session_db_access(strVal(db));
 					new_schema = makeString(get_physical_schema_name(strVal(db), strVal(schema)));
 					cref->fields = list_delete_first(cref->fields);
 					cref->fields = list_delete_first(cref->fields);

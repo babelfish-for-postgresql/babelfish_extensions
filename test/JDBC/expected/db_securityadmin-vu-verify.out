@@ -1008,14 +1008,14 @@ REVOKE SELECT ON babel_5135_db1.dbo.babel_5135_show_role_mem TO babel_5135_u1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for table babel_5135_show_role_mem)~~
+~~ERROR (Message: The server principal "babel_5135_dbsecadmin_l1" is not able to access the database "babel_5135_db1" under the current security context)~~
 
 
 REVOKE SELECT ON babel_5135_db1.dbo.babel_5135_show_role_mem FROM babel_5135_u1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for table babel_5135_show_role_mem)~~
+~~ERROR (Message: The server principal "babel_5135_dbsecadmin_l1" is not able to access the database "babel_5135_db1" under the current security context)~~
 
 
 -- tsql
