@@ -565,37 +565,44 @@ varchar
 -- ============================================
 EXEC xml_query_proc1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure xml_query_proc1() does not exist)~~
+~~START~~
+xml
+<item>hello</item>
+~~END~~
 
 
 EXEC xml_query_proc2 @id = 1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure xml_query_proc2(@id => integer) does not exist)~~
+~~START~~
+xml
+<name>John</name>
+~~END~~
 
 
 EXEC xml_query_proc2 @id = 3;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure xml_query_proc2(@id => integer) does not exist)~~
+~~START~~
+xml
+<name>Bob</name>
+~~END~~
 
 
 EXEC xml_query_proc2 @id = 4;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure xml_query_proc2(@id => integer) does not exist)~~
+~~START~~
+xml
+<NULL>
+~~END~~
 
 
 EXEC xml_query_proc3;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure xml_query_proc3() does not exist)~~
+~~START~~
+int#!#xml
+1#!#<root><name>John</name><age>30</age></root>
+2#!#<root><name>Jane</name><age>25</age></root>
+3#!#<root><name>Bob</name></root>
+~~END~~
 
 
 
@@ -604,30 +611,34 @@ GO
 -- ============================================
 SELECT dbo.xml_query_func1() AS result;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function dbo.xml_query_func1() does not exist)~~
+~~START~~
+xml
+<a>1</a>
+~~END~~
 
 
 SELECT dbo.xml_query_func2(1) AS result;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function dbo.xml_query_func2(integer) does not exist)~~
+~~START~~
+xml
+<name>John</name>
+~~END~~
 
 
 SELECT dbo.xml_query_func2(3) AS result;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function dbo.xml_query_func2(integer) does not exist)~~
+~~START~~
+xml
+<name>Bob</name>
+~~END~~
 
 
 SELECT dbo.xml_query_func2(4) AS result;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function dbo.xml_query_func2(integer) does not exist)~~
+~~START~~
+xml
+<NULL>
+~~END~~
 
 
 
@@ -637,16 +648,22 @@ GO
 -- ============================================
 SELECT * FROM xml_query_dep_view1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "xml_query_dep_view1" does not exist)~~
+~~START~~
+int#!#xml
+1#!#<name>John</name>
+2#!#<name>Jane</name>
+~~END~~
 
 
 SELECT * FROM xml_query_dep_view2;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "xml_query_dep_view2" does not exist)~~
+~~START~~
+int#!#xml
+1#!#<root><name>John</name><age>30</age></root>
+2#!#<root><name>Jane</name><age>25</age></root>
+3#!#<root><name>Bob</name></root>
+4#!#<NULL>
+~~END~~
 
 
 
@@ -679,7 +696,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on image.)~~
+~~ERROR (Message: cannot cast type xml_query_imageudt to xml)~~
 
 
 -- XML UDT
@@ -714,7 +731,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on int.)~~
+~~ERROR (Message: cannot cast type integer to xml)~~
 
 
 -- .query() on NVARCHAR should error
@@ -736,7 +753,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on bigint.)~~
+~~ERROR (Message: cannot cast type bigint to xml)~~
 
 
 -- .query() on FLOAT should error
@@ -747,7 +764,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on float.)~~
+~~ERROR (Message: cannot cast type double precision to xml)~~
 
 
 -- .query() on BIT should error
@@ -758,7 +775,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on bit.)~~
+~~ERROR (Message: cannot cast type "bit" to xml)~~
 
 
 -- .query() on DECIMAL should error
@@ -769,7 +786,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on decimal.)~~
+~~ERROR (Message: cannot cast type "decimal" to xml)~~
 
 
 -- .query() on TEXT column should error
@@ -809,9 +826,10 @@ GO
 -- ============================================
 SELECT * FROM xml_query_qi_off_view;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "xml_query_qi_off_view" does not exist)~~
+~~START~~
+int#!#xml
+1#!#<name>John</name>
+~~END~~
 
 
 
@@ -820,23 +838,20 @@ GO
 -- ============================================
 INSERT INTO xml_query_computed_t1 (id, data) VALUES (1, '<root><child>test</child></root>');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "xml_query_computed_t1" does not exist)~~
+~~ROW COUNT: 1~~
 
 
 SELECT * FROM xml_query_computed_t1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "xml_query_computed_t1" does not exist)~~
+~~START~~
+int#!#xml#!#xml
+1#!#<root><child>test</child></root>#!#<root><child>test</child></root>
+~~END~~
 
 
 DELETE FROM xml_query_computed_t1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "xml_query_computed_t1" does not exist)~~
+~~ROW COUNT: 1~~
 
 
 
@@ -1103,9 +1118,10 @@ xml
 -- Called on function_call
 SELECT dbo.xml_query_func1().query('/a');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function dbo.xml_query_func1() does not exist)~~
+~~START~~
+xml
+<a>1</a>
+~~END~~
 
 
 
@@ -1153,9 +1169,11 @@ GO
 -- ============================================
 SELECT * FROM xml_query_itvf_func();
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function xml_query_itvf_func() does not exist)~~
+~~START~~
+int#!#xml
+1#!#<name>John</name>
+2#!#<name>Jane</name>
+~~END~~
 
 
 
@@ -1344,12 +1362,9 @@ WHERE data IS NOT NULL
 GROUP BY data.query('/root/name').value('(/name)[1]', 'VARCHAR(50)')
 ORDER BY name_val;
 GO
-~~START~~
-varchar#!#int
-Bob#!#1
-Jane#!#1
-John#!#1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML methods are not allowed in a GROUP BY clause.)~~
 
 
 
@@ -1417,9 +1432,26 @@ SELECT @x.query('/');
 GO
 ~~START~~
 xml
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: could not parse XML document)~~
+~~END~~
+
+
+DECLARE @x XML = '   '
+SELECT @x.query('/Root/row') AS c
+GO
+~~START~~
+xml
+
+~~END~~
+
+
+DECLARE @x XML = NULl
+SELECT @x.query('/Root/row') AS c
+GO
+~~START~~
+xml
+<NULL>
+~~END~~
 
 
 -- 5. Bare ampersand (not an entity)
@@ -1478,5 +1510,5 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on int.)~~
+~~ERROR (Message: cannot cast type integer to xml)~~
 
