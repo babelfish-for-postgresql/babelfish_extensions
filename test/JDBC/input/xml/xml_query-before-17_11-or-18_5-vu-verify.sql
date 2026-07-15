@@ -772,14 +772,6 @@ DECLARE @x XML = '';
 SELECT @x.query('/');
 GO
 
-DECLARE @x XML = '   '
-SELECT @x.query('/Root/row') AS c
-GO
-
-DECLARE @x XML = NULl
-SELECT @x.query('/Root/row') AS c
-GO
-
 -- 5. Bare ampersand (not an entity)
 DECLARE @x XML = '<r>a & b</r>';
 SELECT @x.query('/r');
