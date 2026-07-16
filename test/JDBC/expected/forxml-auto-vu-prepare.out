@@ -387,3 +387,200 @@ INSERT INTO forxmlauto_t_ci_child VALUES (10, 1), (20, 2);
 GO
 ~~ROW COUNT: 2~~
 
+
+
+-- ============================================
+-- SECTION: Triggers (RTE_NAMEDTUPLESTORE)
+-- ============================================
+CREATE TABLE forxmlauto_t_trigger_test (
+    ID INT PRIMARY KEY,
+    Name NVARCHAR(50),
+    Value INT
+);
+GO
+
+CREATE TABLE forxmlauto_t_trigger_xml_result (
+    ResultXml NVARCHAR(MAX)
+);
+GO
+
+-- Used by tests 21.1, 21.2
+CREATE TRIGGER forxmlauto_trg_insert ON forxmlauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forxmlauto_t_trigger_xml_result(ResultXml)
+    SELECT (SELECT * FROM inserted FOR XML AUTO)
+END;
+GO
+
+-- Used by tests 21.3, 21.4
+CREATE TRIGGER forxmlauto_trg_delete ON forxmlauto_t_trigger_test AFTER DELETE AS
+BEGIN
+    INSERT INTO forxmlauto_t_trigger_xml_result(ResultXml)
+    SELECT (SELECT * FROM deleted FOR XML AUTO)
+END;
+GO
+
+-- Used by test 21.5 (column subset)
+CREATE TRIGGER forxmlauto_trg_insert_subset ON forxmlauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forxmlauto_t_trigger_xml_result(ResultXml)
+    SELECT (SELECT Name, Value FROM inserted FOR XML AUTO)
+END;
+GO
+
+-- Used by test 21.6 (inserted joined with base table)
+CREATE TRIGGER forxmlauto_trg_insert_join ON forxmlauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forxmlauto_t_trigger_xml_result(ResultXml)
+    SELECT (SELECT i.ID, i.Name, t.Value
+            FROM inserted i
+            JOIN forxmlauto_t_trigger_test t ON i.ID = t.ID
+            FOR XML AUTO)
+END;
+GO
+
+-- Used by test 21.7 (update trigger - both inserted and deleted)
+CREATE TRIGGER forxmlauto_trg_update_both ON forxmlauto_t_trigger_test AFTER UPDATE AS
+BEGIN
+    INSERT INTO forxmlauto_t_trigger_xml_result(ResultXml)
+    SELECT (SELECT * FROM inserted FOR XML AUTO)
+    INSERT INTO forxmlauto_t_trigger_xml_result(ResultXml)
+    SELECT (SELECT * FROM deleted FOR XML AUTO)
+END;
+GO
+
+-- Used by test 21.8 (inserted JOIN deleted in update trigger)
+CREATE TRIGGER forxmlauto_trg_update_join ON forxmlauto_t_trigger_test AFTER UPDATE AS
+BEGIN
+    INSERT INTO forxmlauto_t_trigger_xml_result(ResultXml)
+    SELECT (SELECT i.ID, i.Name AS NewName, i.Value AS NewValue, d.Value AS OldValue
+            FROM inserted i
+            JOIN deleted d ON i.ID = d.ID
+            FOR XML AUTO)
+END;
+GO
+
+-- Used by test 21.9 (NULL values)
+CREATE TRIGGER forxmlauto_trg_insert_null ON forxmlauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forxmlauto_t_trigger_xml_result(ResultXml)
+    SELECT (SELECT * FROM inserted FOR XML AUTO)
+END;
+GO
+
+-- Used by test 21.10 (deleted joined with base table)
+CREATE TRIGGER forxmlauto_trg_delete_join ON forxmlauto_t_trigger_test AFTER DELETE AS
+BEGIN
+    INSERT INTO forxmlauto_t_trigger_xml_result(ResultXml)
+    SELECT (SELECT d.ID, d.Name, t.Value AS RemainingValue
+            FROM deleted d
+            JOIN forxmlauto_t_trigger_test t ON t.ID = 5
+            FOR XML AUTO)
+END;
+GO
+
+-- Disable triggers that are not needed initially (will be enabled per-test in verify)
+DISABLE TRIGGER forxmlauto_trg_insert_subset ON forxmlauto_t_trigger_test;
+GO
+DISABLE TRIGGER forxmlauto_trg_insert_join ON forxmlauto_t_trigger_test;
+GO
+DISABLE TRIGGER forxmlauto_trg_update_both ON forxmlauto_t_trigger_test;
+GO
+DISABLE TRIGGER forxmlauto_trg_update_join ON forxmlauto_t_trigger_test;
+GO
+DISABLE TRIGGER forxmlauto_trg_insert_null ON forxmlauto_t_trigger_test;
+GO
+DISABLE TRIGGER forxmlauto_trg_delete_join ON forxmlauto_t_trigger_test;
+GO
+
+
+
+-- ============================================
+-- SECTION: Recursive CTE + Trigger (fallback alias tests)
+-- ============================================
+CREATE TABLE forxmlauto_t_rcte (id int, parent_id int, val varchar(50));
+GO
+INSERT INTO forxmlauto_t_rcte VALUES (1, NULL, 'Root'), (2, 1, 'Child');
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE forxmlauto_t_rcte_base (id int, col varchar(50));
+GO
+INSERT INTO forxmlauto_t_rcte_base VALUES (1, 'X'), (2, 'Y');
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE forxmlauto_t_rcte_result (result_xml nvarchar(max));
+GO
+
+-- Test: recursive CTE only with base table (no trigger)
+CREATE TRIGGER forxmlauto_trg_rcte_base_only ON forxmlauto_t_rcte AFTER INSERT AS
+BEGIN
+    ;WITH rcte AS (
+        SELECT id, val FROM forxmlauto_t_rcte WHERE parent_id IS NULL
+        UNION ALL
+        SELECT t.id, t.val FROM forxmlauto_t_rcte t JOIN rcte r ON t.parent_id = r.id
+    )
+    INSERT INTO forxmlauto_t_rcte_result(result_xml)
+    SELECT (SELECT r.val, t.col FROM forxmlauto_t_rcte_base t JOIN rcte r ON t.id = r.id FOR XML AUTO)
+END;
+GO
+
+-- Test: recursive CTE with inserted only (RTE_NAMEDTUPLESTORE as fallback)
+CREATE TRIGGER forxmlauto_trg_rcte_ins_only ON forxmlauto_t_rcte AFTER INSERT AS
+BEGIN
+    ;WITH rcte AS (
+        SELECT id, val FROM forxmlauto_t_rcte WHERE parent_id IS NULL
+        UNION ALL
+        SELECT t.id, t.val FROM forxmlauto_t_rcte t JOIN rcte r ON t.parent_id = r.id
+    )
+    INSERT INTO forxmlauto_t_rcte_result(result_xml)
+    SELECT (SELECT r.val, i.val AS ins_val FROM inserted i JOIN rcte r ON i.id = r.id FOR XML AUTO)
+END;
+GO
+
+-- Test: recursive CTE with base table FIRST, then inserted
+CREATE TRIGGER forxmlauto_trg_rcte_base_first ON forxmlauto_t_rcte AFTER INSERT AS
+BEGIN
+    ;WITH rcte AS (
+        SELECT id, val FROM forxmlauto_t_rcte WHERE parent_id IS NULL
+        UNION ALL
+        SELECT t.id, t.val FROM forxmlauto_t_rcte t JOIN rcte r ON t.parent_id = r.id
+    )
+    INSERT INTO forxmlauto_t_rcte_result(result_xml)
+    SELECT (SELECT b.col, i.val AS ins_val, r.val
+            FROM forxmlauto_t_rcte_base b
+            JOIN inserted i ON b.id = i.id
+            JOIN rcte r ON i.id = r.id
+            FOR XML AUTO)
+END;
+GO
+
+-- Test: recursive CTE with inserted FIRST, then base table
+CREATE TRIGGER forxmlauto_trg_rcte_ins_first ON forxmlauto_t_rcte AFTER INSERT AS
+BEGIN
+    ;WITH rcte AS (
+        SELECT id, val FROM forxmlauto_t_rcte WHERE parent_id IS NULL
+        UNION ALL
+        SELECT t.id, t.val FROM forxmlauto_t_rcte t JOIN rcte r ON t.parent_id = r.id
+    )
+    INSERT INTO forxmlauto_t_rcte_result(result_xml)
+    SELECT (SELECT i.val AS ins_val, b.col, r.val
+            FROM inserted i
+            JOIN forxmlauto_t_rcte_base b ON i.id = b.id
+            JOIN rcte r ON i.id = r.id
+            FOR XML AUTO)
+END;
+GO
+
+-- Disable all, will enable one at a time in verify
+DISABLE TRIGGER forxmlauto_trg_rcte_base_only ON forxmlauto_t_rcte;
+GO
+DISABLE TRIGGER forxmlauto_trg_rcte_ins_only ON forxmlauto_t_rcte;
+GO
+DISABLE TRIGGER forxmlauto_trg_rcte_base_first ON forxmlauto_t_rcte;
+GO
+DISABLE TRIGGER forxmlauto_trg_rcte_ins_first ON forxmlauto_t_rcte;
+GO
