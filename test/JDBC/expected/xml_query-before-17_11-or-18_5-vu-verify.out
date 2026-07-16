@@ -1349,6 +1349,7 @@ GO
 ~~ERROR (Message: XML methods are not allowed in a GROUP BY clause.)~~
 
 
+
 -- ============================================
 -- SECTION 52: .query() argument count validation
 -- ============================================
@@ -1413,6 +1414,7 @@ SELECT @x.query('/');
 GO
 ~~START~~
 xml
+
 ~~END~~
 
 
