@@ -1736,7 +1736,8 @@ isForAuto(List *target, ForAutoMode mode)
  * the target columns for nesting. Follows T-SQL behavior by reporting
  * "at least one table" error when no valid sources are found.
  *
- * Valid source types: RTE_RELATION, RTE_SUBQUERY, RTE_CTE, user-defined RTE_FUNCTION
+ * Valid source types: RTE_RELATION, RTE_SUBQUERY, RTE_CTE, RTE_NAMEDTUPLESTORE,
+ *                    RTE_GROUP, user-defined RTE_FUNCTION
  */
 static bool
 handleForAuto(Query *wrapperQuery, ForAutoContext *ctx)
@@ -1786,7 +1787,8 @@ handleForAuto(Query *wrapperQuery, ForAutoContext *ctx)
 		foreach(lc, origqRtable)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
-			if (rte->rtekind == RTE_RELATION || rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE || rte->rtekind == RTE_GROUP)
+			if (rte->rtekind == RTE_RELATION || rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE ||
+				rte->rtekind == RTE_GROUP || rte->rtekind == RTE_NAMEDTUPLESTORE)
 			{
 				hasValidSrc = true;
 				break;
@@ -2049,8 +2051,9 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 								   HASH_ELEM | HASH_STRINGS);
 
 	/*
-	 * XML AUTO: Pre-scan for first base table alias as fallback for
-	 * recursive CTE columns joined with base tables.
+	 * XML AUTO: Pre-scan for first base table or named tuplestore alias
+	 * as fallback for recursive CTE columns joined with base tables or
+	 * trigger transition tables.
 	 */
 	if (mode == FOR_AUTO_XML)
 	{
@@ -2058,7 +2061,7 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 		foreach(preLc, origQuery->rtable)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(preLc);
-			if (rte->rtekind == RTE_RELATION)
+			if (rte->rtekind == RTE_RELATION || rte->rtekind == RTE_NAMEDTUPLESTORE)
 			{
 				recursiveCTEFallbackAlias = rte->eref->aliasname;
 				break;
@@ -2186,14 +2189,14 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 				{
 					matchedSrcCTEIsRecursive = true;
 
-					/* XML AUTO: look for base table sibling as fallback alias */
+					/* XML AUTO: look for base table or named tuplestore sibling as fallback alias */
 					if (mode == FOR_AUTO_XML)
 					{
 						ListCell *sibLc;
 						foreach(sibLc, curQuery->rtable)
 						{
 							RangeTblEntry *sibRte = (RangeTblEntry *) lfirst(sibLc);
-							if (sibRte->rtekind == RTE_RELATION)
+							if (sibRte->rtekind == RTE_RELATION || sibRte->rtekind == RTE_NAMEDTUPLESTORE)
 							{
 								recursiveCTEFallbackAlias = sibRte->eref->aliasname;
 								break;
