@@ -10405,9 +10405,7 @@ validateXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSqlParser::E
 static void
 validateXMLNodeFunctionArg(TSqlParser::Xml_nodes_methodContext *ctx)
 {
-	/* XML .nodes() must be in lowercase */
-	if (::getFullText(ctx->NODES()) != "nodes")
-		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The XML nodes() function name must be in lowercase.", getLineAndPos(ctx));	
+    /* NB: T-SQL requires the XML method names to be in lowercase, but this is not enforced in Babelfish */
 		
 	/* XML .nodes() function requires only 1 argument */
 	if ((ctx->expression_list() != NULL) || (ctx->expression() == NULL && ctx->char_string() == NULL))

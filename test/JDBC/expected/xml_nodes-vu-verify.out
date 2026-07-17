@@ -2345,15 +2345,17 @@ go
 ~~ERROR (Message: XML methods are not allowed in a GROUP BY clause.)~~
 
 
--- nodes() case sensitivity: only lowercase is valid in T-SQL
+-- nodes() case sensitivity: only lowercase is valid in T-SQL, but not enforced in Babelfish
 DECLARE @xml XML = '<Root><item>A</item><item>B</item></Root>'
 SELECT T.C.value('(.)[1]', 'varchar(20)') AS val
 FROM @xml.NODES('/Root/item') AS T(C)
 ORDER BY val
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The XML nodes() function name must be in lowercase.)~~
+~~START~~
+varchar
+A
+B
+~~END~~
 
 
 DECLARE @xml XML = '<Root><item>A</item><item>B</item></Root>'
@@ -2361,9 +2363,11 @@ SELECT T.C.value('(.)[1]', 'varchar(20)') AS val
 FROM @xml.Nodes('/Root/item') AS T(C)
 ORDER BY val
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The XML nodes() function name must be in lowercase.)~~
+~~START~~
+varchar
+A
+B
+~~END~~
 
 
 -- Some XPath 2.0 cases, not supported in PostgreSQL/Babelfish

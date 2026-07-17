@@ -1304,7 +1304,7 @@ GROUP BY T.C.value('(@id)[1]', 'int') + 1
 ORDER BY 1
 go
 
--- nodes() case sensitivity: only lowercase is valid in T-SQL
+-- nodes() case sensitivity: only lowercase is valid in T-SQL, but not enforced in Babelfish
 DECLARE @xml XML = '<Root><item>A</item><item>B</item></Root>'
 SELECT T.C.value('(.)[1]', 'varchar(20)') AS val
 FROM @xml.NODES('/Root/item') AS T(C)
