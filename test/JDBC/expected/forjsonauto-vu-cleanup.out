@@ -1,3 +1,24 @@
+
+DROP TRIGGER IF EXISTS forjsonauto_trg_insert;
+GO
+DROP TRIGGER IF EXISTS forjsonauto_trg_delete;
+GO
+DROP TRIGGER IF EXISTS forjsonauto_trg_insert_subset;
+GO
+DROP TRIGGER IF EXISTS forjsonauto_trg_insert_join;
+GO
+DROP TRIGGER IF EXISTS forjsonauto_trg_update_both;
+GO
+DROP TRIGGER IF EXISTS forjsonauto_trg_update_join;
+GO
+DROP TRIGGER IF EXISTS forjsonauto_trg_insert_null;
+GO
+DROP TRIGGER IF EXISTS forjsonauto_trg_delete_join;
+GO
+DROP TABLE IF EXISTS forjsonauto_t_trigger_json_result;
+GO
+DROP TABLE IF EXISTS forjsonauto_t_trigger_test;
+GO
 DROP VIEW forjson_vu_v_1
 GO
 
