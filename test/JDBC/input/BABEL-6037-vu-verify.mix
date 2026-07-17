@@ -866,34 +866,10 @@ SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 
 
--- === Test 22: Parse cache validation (cached tree vs ANTLR comparison) ===
-PRINT '=== Test 22: Parse cache validation ===';
-GO
+-- Test 22 (validate_cache_proc validation) moved to
+-- antlr_parse_cache_local_regression_only-vu-verify.mix — requires true
+-- Postgres superuser to set the SUSET validate_antlr_parse_cache GUC. See BABEL-6879.
 
--- psql
--- Enable validation GUC at database level (SUSET - superuser only)
--- This will cause the next cache-hit EXEC to compare cached vs ANTLR trees
-ALTER DATABASE babelfish_db SET babelfishpg_tsql.validate_antlr_parse_cache = on;
-GO
-
--- tsql
-SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
-GO
-
--- Execute the validation procedure (triggers cached vs ANTLR comparison)
-EXEC dbo.validate_cache_proc @input = 0, @name = 'test';
-GO
-
-SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
-GO
-
--- psql
--- Disable validation GUC at database level
-ALTER DATABASE babelfish_db SET babelfishpg_tsql.validate_antlr_parse_cache = off;
-GO
-
-
--- tsql
 -- === Test 23: Proc created with cache OFF, executed with cache ON ===
 PRINT '=== Test 23: Cache populated at EXEC time ===';
 GO
@@ -1050,104 +1026,10 @@ GO
 SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 
--- Test 27: Error handling for cache deserialization failures at EXEC time
--- Test 27a: EXEC-time datums deserialization error
--- Test 27b: EXEC-time parse tree deserialization error
-
-SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
-GO
-
--- psql
--- Test 27a: Corrupt datums and test
-SET allow_system_table_mods = ON;
-UPDATE sys.babelfish_function_ext SET antlr_parse_cache_datums = '<>CORRUPTED_DATUMS'
-WHERE funcname = 'corrupt_cache_test_func' AND nspname = 'master_dbo';
-SET allow_system_table_mods = OFF;
-GO
-
--- tsql
--- Stats before datums deserialization error
-SELECT cache_errors FROM sys.antlr_parse_cache_stats();
-GO
-
--- This should error
-SELECT dbo.corrupt_cache_test_func(5);
-GO
-
--- Stats after datums deserialization error (expects: errors=+1)
-SELECT cache_errors FROM sys.antlr_parse_cache_stats();
-GO
-
--- psql
--- Test 27b: Corrupt parse tree and test
-SET allow_system_table_mods = ON;
-UPDATE sys.babelfish_function_ext SET antlr_parse_cache_tree = '<>CORRUPTED_TREE'
-WHERE funcname = 'corrupt_cache_test_func' AND nspname = 'master_dbo';
-SET allow_system_table_mods = OFF;
-GO
-
--- tsql
--- Stats before parse tree deserialization error
-SELECT cache_errors FROM sys.antlr_parse_cache_stats();
-GO
-
--- This should error: "failed to restore cached ANTLR parse tree" (parse tree deserialization)
-SELECT dbo.corrupt_cache_test_func(5);
-GO
-
--- Stats after parse tree deserialization error (expects: errors=+1)
-SELECT cache_errors FROM sys.antlr_parse_cache_stats();
-GO
-
--- After disabling cache, function should work normally via ANTLR
-SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
-GO
-
-SELECT dbo.corrupt_cache_test_func(5);
-GO
-
--- === Test 28: Version mismatch — cached tree with higher bbf_version ===
-PRINT '=== Test 28: Version mismatch (higher bbf_version) ===';
-GO
-
--- Verify cache is populated
-SELECT
-    CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status
-FROM sys.babelfish_function_ext
-WHERE funcname = 'version_mismatch' AND nspname = 'master_dbo';
-GO
-
--- psql
--- Update bbf_version to a higher version to simulate a version change
-SET allow_system_table_mods = ON;
-UPDATE sys.babelfish_function_ext SET antlr_parse_cache_bbf_version = '99.99.0'
-WHERE funcname = 'version_mismatch' AND nspname = 'master_dbo';
-SET allow_system_table_mods = OFF;
-GO
-
--- tsql
--- terminate-tsql-conn
-
--- tsql
--- New session: hash table is empty, do_compile runs, reads cache entry,
--- detects version mismatch (99.99.0 != current), skips cache, ANTLR re-parses.
--- Procedure should still execute correctly.
-SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
-GO
-
-EXEC dbo.version_mismatch @val = 42;
-GO
-
--- Verify the cache was re-populated with the current bbf_version (not 99.99.0)
-SELECT
-    CASE WHEN antlr_parse_cache_tree IS NOT NULL THEN 'CACHED' ELSE 'NOT CACHED' END AS cache_status,
-    CASE WHEN antlr_parse_cache_bbf_version = '99.99.0' THEN 'STALE' ELSE 'CURRENT' END AS version_status
-FROM sys.babelfish_function_ext
-WHERE funcname = 'version_mismatch' AND nspname = 'master_dbo';
-GO
-
-SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
-GO
+-- Test 27 (corrupt_cache_test_func deserialization errors) and Test 28
+-- (version_mismatch bbf_version corruption) moved to
+-- antlr_parse_cache_local_regression_only-vu-verify.mix — both require
+-- allow_system_table_mods and true Postgres superuser. See BABEL-6879.
 
 -- === Test 29: DBCC CHECKIDENT procedure with cache on ===
 PRINT '=== Test 29: DBCC CHECKIDENT with cache on ===';

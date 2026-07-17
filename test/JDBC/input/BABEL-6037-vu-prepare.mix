@@ -328,65 +328,11 @@ BEGIN
 END;
 GO
 
--- psql
--- Test 22: Validation procedure with complex statement types
--- Used with pltsql_validate_antlr_parse_cache GUC to compare cached vs ANTLR trees
--- Note: validation GUC is SUSET (superuser only), so we set it at database level
-ALTER DATABASE babelfish_db SET babelfishpg_tsql.validate_antlr_parse_cache = on;
-GO
+-- Test 22 (validate_cache_proc), Test 27 (corrupt_cache_test_func), and Test 28
+-- (version_mismatch) moved to antlr_parse_cache_local_regression_only-vu-prepare.mix
+-- since they require true Postgres superuser privileges (PGC_SUSET GUC and
+-- allow_system_table_mods). See BABEL-6879.
 
--- tsql
-CREATE PROCEDURE dbo.validate_cache_proc
-    @input INT,
-    @name VARCHAR(50)
-AS
-BEGIN
-    DECLARE @counter INT;
-    DECLARE @result VARCHAR(100);
-    DECLARE @flag BIT;
-
-    SET @counter = 0;
-    SET @flag = 1;
-
-    -- IF/ELSE
-    IF @input > 10
-        SET @result = 'large';
-    ELSE
-        SET @result = 'small';
-
-    -- WHILE loop
-    WHILE @counter < @input
-    BEGIN
-        SET @counter = @counter + 1;
-        IF @counter = 5
-            BREAK;
-    END;
-
-    -- TRY/CATCH
-    BEGIN TRY
-        SELECT @counter / @input AS division_result;
-    END TRY
-    BEGIN CATCH
-        PRINT 'Error caught';
-    END CATCH;
-
-    -- GOTO
-    IF @flag = 0
-        GOTO skip_section;
-
-    SELECT @result AS final_result, @counter AS final_counter, @name AS input_name;
-
-    skip_section:
-    PRINT 'validate_cache_proc completed';
-END;
-GO
-
--- psql
--- Turn off validation GUC after procedure creation (will be turned on again in verify for testing)
-ALTER DATABASE babelfish_db SET babelfishpg_tsql.validate_antlr_parse_cache = off;
-GO
-
--- tsql
 -- Test 23: Procedure created with cache OFF, executed with cache ON in verify
 -- Tests that pltsql_update_func_cache_entry populates cache at EXEC time
 SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
@@ -450,39 +396,6 @@ CREATE PROCEDURE dbo.dep_rename_proc
 AS
 BEGIN
     SELECT id, val FROM dbo.dep_rename_table;
-END;
-GO
-
-SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
-GO
-
--- Test 27: Corrupt cache deserialization test
--- Create a simple function whose cache we'll corrupt in verify to test deserialization error handling
-SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
-GO
-
-CREATE FUNCTION dbo.corrupt_cache_test_func(@x INT)
-RETURNS INT
-AS
-BEGIN
-    RETURN @x + 100;
-END;
-GO
-
-SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
-GO
-
--- Test 28: Version mismatch — cached parse tree with a higher bbf_version
--- Create a simple procedure with cache ON so the parse tree and bbf_version get populated.
--- In verify, we'll update bbf_version to a higher value and exec — should skip cache and ANTLR re-parse.
-SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
-GO
-
-CREATE PROCEDURE dbo.version_mismatch
-    @val INT
-AS
-BEGIN
-    SELECT @val + 1 AS result;
 END;
 GO
 
