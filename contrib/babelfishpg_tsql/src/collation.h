@@ -127,6 +127,7 @@ extern Node *pltsql_predicate_transformer(Node *expr, bool is_constraint);
 void set_db_collation_internal(const char *db_name);
 bool supported_collation_for_db_and_like(int32_t code_page);
 char* get_collation_name_for_db(const char* dbname);
+char* get_display_collation_name(const char *collname);
 
 /* Expression kind codes for preprocess_expression */
 #define EXPRKIND_QUAL				0
