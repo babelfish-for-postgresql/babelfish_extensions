@@ -1,0 +1,20 @@
+-- tsql
+-- BABEL-6879: execute a procedure cached by the lower version.
+-- The first execution must reject the lower-version cache and reparse with ANTLR;
+-- the second execution verifies continued use in the same session.
+-- Expected upgrade stats: hits=0, misses=1, writes=1, evictions=0, errors=0.
+
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
+GO
+
+EXEC dbo.antlr_parse_cache_version_proc @input = 41;
+GO
+
+EXEC dbo.antlr_parse_cache_version_proc @input = 99;
+GO
+
+SELECT * FROM sys.antlr_parse_cache_stats();
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
+GO

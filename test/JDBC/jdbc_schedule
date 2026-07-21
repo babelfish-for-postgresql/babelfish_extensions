@@ -773,3 +773,6 @@ ignore#!#babel_sqlvariant_coerce_type_before_16_14-or-17_10-or-18_4-vu-cleanup
 ignore#!#xml_query-before-17_11-or-18_5-vu-prepare
 ignore#!#xml_query-before-17_11-or-18_5-vu-verify
 ignore#!#xml_query-before-17_11-or-18_5-vu-cleanup
+ignore#!#antlr_parse_cache_version-vu-prepare
+ignore#!#antlr_parse_cache_version-vu-verify
+ignore#!#antlr_parse_cache_version-vu-cleanup
