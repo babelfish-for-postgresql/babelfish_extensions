@@ -1,5 +1,5 @@
 -- tsql
--- BABEL-6879: prepare a cached procedure on the lower version.
+-- Prepare a cached procedure on the lower version.
 -- Verification intentionally checks only functional results so the expected
 -- output remains stable when the cached representation is invalidated by an upgrade.
 
