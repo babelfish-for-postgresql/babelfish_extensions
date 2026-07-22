@@ -1,4 +1,4 @@
 
--- BABEL-6879: clean up the ANTLR parse-cache version-upgrade test.
+-- Clean up the ANTLR parse-cache version-upgrade test.
 DROP PROCEDURE IF EXISTS dbo.antlr_parse_cache_version_proc;
 GO

@@ -85,7 +85,6 @@ DROP PROCEDURE IF EXISTS dbo.perfunc_default_test;
 GO
 DROP PROCEDURE IF EXISTS test_cache_schema.perfunc_custom_schema;
 GO
--- validate_cache_proc dropped in antlr_parse_cache_local_regression_only-vu-cleanup.sql
 DROP PROCEDURE IF EXISTS dbo.nocache_create_proc;
 GO
 DROP PROCEDURE IF EXISTS dbo.overload_cache_proc;
@@ -104,8 +103,6 @@ DROP TABLE IF EXISTS dbo.dep_rename_table;
 GO
 DROP TABLE IF EXISTS dbo.dep_renamed_table;
 GO
--- corrupt_cache_test_func and version_mismatch dropped in
--- antlr_parse_cache_local_regression_only-vu-cleanup.sql
 DROP USER IF EXISTS babel_6037_nonowner;
 GO
 DROP LOGIN babel_6037_nonowner;

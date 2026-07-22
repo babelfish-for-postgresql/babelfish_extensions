@@ -1,6 +1,6 @@
 -- tsql
 
--- BABEL-6879: execute a procedure cached by the lower version.
+-- Execute a procedure cached by the lower version.
 -- The first execution must reject the lower-version cache and reparse with ANTLR;
 -- the second execution verifies continued use in the same session.
 -- Expected upgrade stats: hits=0, misses=1, writes=1, evictions=0, errors=0.

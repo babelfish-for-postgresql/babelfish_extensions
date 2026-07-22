@@ -866,9 +866,6 @@ SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 
 
--- Test 22 (validate_cache_proc validation) moved to
--- antlr_parse_cache_local_regression_only-vu-verify.mix — requires true
--- Postgres superuser to set the SUSET validate_antlr_parse_cache GUC. See BABEL-6879.
 
 -- === Test 23: Proc created with cache OFF, executed with cache ON ===
 PRINT '=== Test 23: Cache populated at EXEC time ===';
@@ -1026,10 +1023,6 @@ GO
 SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
 GO
 
--- Test 27 (corrupt_cache_test_func deserialization errors) and Test 28
--- (version_mismatch bbf_version corruption) moved to
--- antlr_parse_cache_local_regression_only-vu-verify.mix — both require
--- allow_system_table_mods and true Postgres superuser. See BABEL-6879.
 
 -- === Test 29: DBCC CHECKIDENT procedure with cache on ===
 PRINT '=== Test 29: DBCC CHECKIDENT with cache on ===';
