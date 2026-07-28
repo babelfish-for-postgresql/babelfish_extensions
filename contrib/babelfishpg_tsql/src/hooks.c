@@ -179,7 +179,7 @@ static void check_insert_row(List *icolumns, List *exprList, Oid relid);
 static void pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, ColumnDef *column, List **alist);
 static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, char *relname, List **alist);
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
-static bool tle_name_comparison(const char *tlename, const char *identifier);
+static bool tle_name_comparison(const char *tlename, const char *identifier, const char *sourcetext, int location);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(unsigned char c);
 static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
@@ -814,6 +814,34 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 				return true;
 			}
 			break;
+		}
+		case T_AlterTableStmt:
+		{
+			if (sql_dialect != SQL_DIALECT_TSQL && !IsBinaryUpgrade && !babelfish_dump_restore)
+			{
+				AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
+				ListCell *lcmd;
+
+				foreach(lcmd, atstmt->cmds)
+				{
+					AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+					if (cmd->subtype == AT_SetRelOptions || cmd->subtype == AT_SetOptions)
+					{
+						List *options = (List *) cmd->def;
+						ListCell *lopt;
+						foreach(lopt, options)
+						{
+							DefElem *defel = (DefElem *) lfirst(lopt);
+							if (strcmp(defel->defname, "bbf_original_rel_name") == 0 ||
+								strcmp(defel->defname, "bbf_original_name") == 0)
+								ereport(ERROR,
+										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+										 errmsg("cannot modify \"%s\" for babelfish objects", defel->defname)));
+						}
+					}
+				}
+			}
+			return false;
 		}
 		default:
 			return false;
@@ -2386,7 +2414,7 @@ extract_identifier(const char *start, int *last_pos)
  *    is given as 'start'. This helper function basically returns the
  *    last part of the multipart identifier.
  */
-static char *
+char *
 extract_multipart_identifier_name(const char *start)
 {
 	int 	identifier_len = strlen(start);
@@ -3100,23 +3128,46 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 }
 
 static bool
-tle_name_comparison(const char *tlename, const char *identifier)
+tle_name_comparison(const char *tlename, const char *identifier, const char *sourcetext, int location)
 {
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
 		int			tlelen = strlen(tlename);
+		int			identlen = strlen(identifier);
 
-		if (tlelen != strlen(identifier))
-			return false;
+		if (tlelen == identlen)
+		{
+			if (pltsql_case_insensitive_identifiers)
+				return (0 == strcmp(downcase_identifier(tlename, tlelen, false, false),
+									downcase_identifier(identifier, identlen, false, false)));
+			else
+				return (0 == strcmp(tlename, identifier));
+		}
 
-		if (pltsql_case_insensitive_identifiers)
-			return (0 == strcmp(downcase_identifier(tlename, tlelen, false, false),
-								downcase_identifier(identifier, tlelen, false, false)));
-		else
-			return (0 == strcmp(tlename, identifier));
+		/*
+		 * Handle long aliases: extract full name from source text
+		 * and compare with tlename.
+		 */
+		if (tlelen > identlen && identlen >= NAMEDATALEN - 1 &&
+			sourcetext && location >= 0)
+		{
+			char *full_ident = extract_identifier(sourcetext + location, NULL);
+			if (full_ident)
+			{
+				bool match;
+				if (pltsql_case_insensitive_identifiers)
+					match = (0 == pg_strcasecmp(full_ident, tlename));
+				else
+					match = (0 == strcmp(full_ident, tlename));
+				pfree(full_ident);
+				return match;
+			}
+		}
+
+		return false;
 	}
 	else if (prev_tle_name_comparison_hook)
-		return (*prev_tle_name_comparison_hook) (tlename, identifier);
+		return (*prev_tle_name_comparison_hook) (tlename, identifier, sourcetext, location);
 	else
 		return (0 == strcmp(tlename, identifier));
 }
