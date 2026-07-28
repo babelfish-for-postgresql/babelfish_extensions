@@ -61,6 +61,17 @@ CREATE TABLE sys.babelfish_namespace_ext (
 );
 GRANT SELECT ON sys.babelfish_namespace_ext TO PUBLIC;
 
+-- BABELFISH_IDENTIFIER_MAPPING
+CREATE TABLE sys.babelfish_identifier_mapping (
+	nspname NAME NOT NULL,
+	pg_catalog_type OID NOT NULL,
+	truncated_identifier_name NAME NOT NULL,
+	original_identifier_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+	parent_name NAME NOT NULL DEFAULT '',
+	PRIMARY KEY (truncated_identifier_name, nspname, pg_catalog_type, parent_name)
+);
+GRANT SELECT ON sys.babelfish_identifier_mapping TO PUBLIC;
+
 -- SYSDATABASES
 CREATE OR REPLACE VIEW sys.sysdatabases AS
 SELECT

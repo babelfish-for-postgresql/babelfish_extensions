@@ -2502,9 +2502,11 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, c
 
 	/*
 	 * Only store original_name if there's a difference, and if the difference
-	 * is only in capitalization
+	 * is only in capitalization, OR if the name was truncated
 	 */
-	if (strncmp(relname, original_name, strlen(relname)) != 0 && strncasecmp(relname, original_name, strlen(relname)) == 0)
+	if (strlen(original_name) >= NAMEDATALEN ||
+		(strncmp(relname, original_name, strlen(relname)) != 0 &&
+		 strncasecmp(relname, original_name, strlen(relname)) == 0))
 	{
 		/*
 		 * add "ALTER TABLE SET (bbf_original_table_name=<original_name>)" to
@@ -4485,6 +4487,30 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		recordDependencyOn(&address, &index, DEPENDENCY_NORMAL);
 	}
 
+	/* Store long parameter names in babelfish_identifier_mapping */
+	if (queryString && physical_schemaname)
+	{
+		foreach(x, parameters)
+		{
+			FunctionParameter *fp = (FunctionParameter *) lfirst(x);
+
+			if (fp->name && fp->location >= 0)
+			{
+				const char *param_start = queryString + fp->location;
+				char *orig_param = extract_identifier(param_start, NULL);
+
+				if (orig_param)
+				{
+					insert_bbf_ident_mapping(fp->name, orig_param,
+											 physical_schemaname,
+											 ProcedureRelationId,
+											 NameStr(form_proctup->proname));
+					pfree(orig_param);
+				}
+			}
+		}
+	}
+
 	pfree(func_signature);
 	pfree(physical_schemaname);
 	pfree(schema_name_NameData);
@@ -5508,6 +5534,7 @@ replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *far
 			}
 			if (!has_default)
 			{
+
 				arg_names = fetch_func_input_arg_names(func_tuple);
 				
 				if (proc_form->prokind == PROKIND_PROCEDURE)
