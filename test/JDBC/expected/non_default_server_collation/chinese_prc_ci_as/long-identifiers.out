@@ -1,0 +1,1718 @@
+
+-- tsql
+
+-- Long Identifier Storage Tests
+-- Tests all DDL paths that store original names for identifiers > 63 chars
+-- ===========================================
+-- CREATION: All object types with long names
+-- ===========================================
+-- 1. CREATE TABLE with long name
+CREATE TABLE Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing (id INT NOT NULL, name NVARCHAR(100));
+GO
+
+-- 2. CREATE TABLE with long column names
+CREATE TABLE babel5975_col_test (
+    Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1 INT,
+    Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col2 NVARCHAR(50)
+);
+GO
+
+-- 3. CREATE TABLE with long constraint name (PK)
+CREATE TABLE babel5975_pk_test (
+    id INT NOT NULL,
+    CONSTRAINT Very_Long_Primary_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three PRIMARY KEY (id)
+);
+GO
+
+-- 4. CREATE TABLE with long constraint name (UNIQUE)
+CREATE TABLE babel5975_uq_test (
+    val INT,
+    CONSTRAINT Very_Long_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters UNIQUE (val)
+);
+GO
+
+-- 5. CREATE TABLE with long constraint name (CHECK)
+CREATE TABLE babel5975_ck_test (
+    val INT,
+    CONSTRAINT Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters CHECK (val > 0)
+);
+GO
+
+-- 6. CREATE VIEW with long name
+CREATE VIEW Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+AS SELECT id, name FROM Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+
+-- 7. CREATE INDEX with long name
+CREATE INDEX Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+ON Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing (id);
+GO
+
+-- 8. CREATE SEQUENCE with long name
+CREATE SEQUENCE Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+AS INT START WITH 1 INCREMENT BY 1;
+GO
+
+-- 9. CREATE FUNCTION with long name
+CREATE FUNCTION Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing(@a INT)
+RETURNS INT AS BEGIN RETURN @a + 1 END;
+GO
+
+-- 10. CREATE PROCEDURE with long name and long parameter
+CREATE PROCEDURE Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+    @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT
+AS BEGIN SELECT @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters END;
+GO
+
+-- 11. CREATE TRIGGER with long name
+CREATE TRIGGER Very_Long_Trigger_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+ON Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+FOR INSERT AS BEGIN SELECT 1 END;
+GO
+
+-- 12. CREATE TYPE with long name
+CREATE TYPE Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing FROM INT;
+GO
+
+-- 13. SELECT INTO with long table name
+SELECT 1 AS col1 INTO Very_Long_Select_Into_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+~~ROW COUNT: 1~~
+
+
+
+-- 14. ALTER TABLE ADD COLUMN with long name
+ALTER TABLE babel5975_col_test ADD Very_Long_Added_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT;
+GO
+
+-- 14b. SELECT INTO preserves long column names
+SELECT Very_Long_Added_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INTO babel5975_select_into_col_test FROM babel5975_col_test;
+GO
+
+-- 15. CREATE FUNCTION with multiple long parameters
+CREATE FUNCTION babel5975_multi_param_func(
+    @Very_Long_First_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT,
+    @Very_Long_Second_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT
+)
+RETURNS INT AS BEGIN RETURN @Very_Long_First_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters + @Very_Long_Second_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters END;
+GO
+
+-- 16. SELECT with long alias - verify full name in result metadata
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT 1 AS Very_Long_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_For_Testing', NULL, 0);
+GO
+~~START~~
+varchar
+Very_Long_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_For_Testing
+~~END~~
+
+
+-- 17. CREATE DATABASE with long name
+CREATE DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing;
+GO
+
+-- Verify database original name stored in babelfish_sysdatabases.orig_name
+SELECT orig_name FROM sys.babelfish_sysdatabases WHERE orig_name LIKE 'Very_Long_Database%';
+GO
+~~START~~
+nvarchar
+Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing
+~~END~~
+
+
+-- 18. sp_rename TABLE with long name
+EXEC sp_rename 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing',
+    'Very_Long_Renamed_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters', 'OBJECT';
+GO
+
+-- 19. sp_rename COLUMN with long name
+EXEC sp_rename 'babel5975_col_test.Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col2',
+    'Very_Long_Renamed_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters', 'COLUMN';
+GO
+
+-- Verify renamed table shows new full name in sys.tables
+SELECT name FROM sys.tables WHERE name LIKE 'Very_Long_Renamed_Table%';
+GO
+~~START~~
+varchar
+Very_Long_Renamed_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+-- Verify renamed column shows new full name in sys.columns
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_col_test') AND name LIKE 'Very_Long_Renamed_Column%';
+GO
+~~START~~
+varchar
+Very_Long_Renamed_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+-- 20. sp_rename FUNCTION with long name
+EXEC sp_rename 'Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing',
+    'Very_Long_Renamed_Func_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters', 'OBJECT';
+GO
+
+-- 21. sp_rename PROCEDURE with long name
+EXEC sp_rename 'Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing',
+    'Very_Long_Renamed_Proc_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters', 'OBJECT';
+GO
+
+-- Rename back for cleanup
+EXEC sp_rename 'Very_Long_Renamed_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters',
+    'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing', 'OBJECT';
+GO
+EXEC sp_rename 'Very_Long_Renamed_Func_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters',
+    'Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing', 'OBJECT';
+GO
+EXEC sp_rename 'Very_Long_Renamed_Proc_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters',
+    'Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing', 'OBJECT';
+GO
+
+
+
+
+
+-- 17. CREATE DATABASE with long name (uses babelfish_sysdatabases)
+-- Skipped: database names limited to 128 but stored separately
+-- 18. CREATE SCHEMA with long name (uses babelfish_namespace_ext)
+-- Skipped: schema names limited differently
+-- 19. CREATE LOGIN with long name (uses babelfish_authid_login_ext)
+-- Skipped: requires sysadmin
+-- ===========================================
+-- ADDITIONAL SCENARIOS
+-- ===========================================
+-- 22. Long name with bracket delimiters - table
+CREATE TABLE [Very Long Table Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters] (
+    [Very Long Column Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters] INT,
+    CONSTRAINT [Very Long Constraint Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Chars] CHECK ([Very Long Column Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters] > 0)
+);
+GO
+
+-- 22b. Bracket delimiters - view
+CREATE VIEW [Very Long View Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters]
+AS SELECT [Very Long Column Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters] FROM [Very Long Table Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters];
+GO
+
+-- 22c. Bracket delimiters - function
+CREATE FUNCTION [Very Long Function Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters](@a INT)
+RETURNS INT AS BEGIN RETURN @a END;
+GO
+
+-- 22d. Bracket delimiters - index
+CREATE INDEX [Very Long Index Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters]
+ON [Very Long Table Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters] ([Very Long Column Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters]);
+GO
+
+-- 22e. Bracket delimiters - sequence
+CREATE SEQUENCE [Very Long Sequence Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters] AS INT START WITH 1;
+GO
+
+-- 22f. Bracket delimiters - alias
+SELECT 1 AS [Very Long Alias Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters];
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Verify bracket identifiers stored in babelfish_function_ext
+SELECT orig_name FROM sys.babelfish_function_ext WHERE orig_name LIKE 'Very Long Function%';
+GO
+~~START~~
+nvarchar
+Very Long Function Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters
+~~END~~
+
+
+-- Verify bracket identifiers stored in babelfish_identifier_mapping
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very Long%' ORDER BY original_identifier_name;
+GO
+~~START~~
+nvarchar
+Very Long Constraint Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Chars
+Very Long Sequence Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters
+~~END~~
+
+
+-- Cleanup bracket objects
+DROP VIEW [Very Long View Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters];
+GO
+DROP FUNCTION [Very Long Function Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters];
+GO
+DROP INDEX [Very Long Index Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters] ON [Very Long Table Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters];
+GO
+DROP TABLE [Very Long Table Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters];
+GO
+DROP SEQUENCE [Very Long Sequence Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters];
+GO
+
+-- 24. Long name with double-quote delimiters
+SET QUOTED_IDENTIFIER ON;
+GO
+CREATE TABLE "Very_Long_Quoted_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Test" (id INT);
+GO
+DROP TABLE "Very_Long_Quoted_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Test";
+GO
+
+-- 25. CREATE TABLE with long FK constraint name
+CREATE TABLE babel5975_fk_parent (id INT PRIMARY KEY);
+GO
+CREATE TABLE babel5975_fk_child (
+    id INT,
+    parent_id INT,
+    CONSTRAINT Very_Long_Foreign_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three FOREIGN KEY (parent_id) REFERENCES babel5975_fk_parent(id)
+);
+GO
+
+-- 27. CREATE OR ALTER VIEW with long name
+CREATE OR ALTER VIEW Very_Long_CreateOrAlter_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+AS SELECT id, name FROM Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+
+-- 28. ALTER PROCEDURE with long name
+ALTER PROCEDURE Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+    @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT
+AS BEGIN SELECT @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters + 1 END;
+GO
+
+-- 28. Multiple long aliases in one SELECT
+SELECT 1 AS Very_Long_First_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing,
+       2 AS Very_Long_Second_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing;
+GO
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+
+-- 29. View column display tests
+-- 29a. SELECT * FROM view with long alias shows full name
+CREATE VIEW babel5975_view_alias AS SELECT 1 AS Very_Long_View_Column_Alias_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+SELECT * FROM babel5975_view_alias;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- 29b. sys.columns shows full view column name
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_view_alias');
+GO
+~~START~~
+varchar
+Very_Long_View_Column_Alias_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+-- 29c. CREATE OR ALTER VIEW preserves long alias
+CREATE OR ALTER VIEW babel5975_view_alias AS SELECT 2 AS Very_Long_View_Column_Alias_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+SELECT * FROM babel5975_view_alias;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- 29d. View selecting long column from table
+CREATE VIEW babel5975_view_from_tbl AS SELECT Very_Long_Added_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FROM babel5975_col_test;
+GO
+SELECT * FROM babel5975_view_from_tbl;
+GO
+~~START~~
+int
+~~END~~
+
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_view_from_tbl');
+GO
+~~START~~
+varchar
+Very_Long_Added_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+DROP VIEW babel5975_view_alias;
+GO
+DROP VIEW IF EXISTS babel5975_view_from_tbl;
+GO
+
+-- 30. Long name with multibyte characters (Japanese)
+CREATE TABLE ああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ (id INT);
+GO
+DROP TABLE ああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ;
+GO
+
+-- 30. CREATE TABLE with long DEFAULT constraint name
+CREATE TABLE babel5975_df_test (
+    val INT CONSTRAINT Very_Long_Default_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars DEFAULT 0
+);
+GO
+
+
+-- ===========================================
+-- DROP CLEANUP TESTS: Verify entries are removed
+-- ===========================================
+-- Create objects to test drop cleanup
+CREATE TABLE babel5975_drop_test (
+    id INT NOT NULL,
+    CONSTRAINT Very_Long_Drop_Test_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars PRIMARY KEY (id)
+);
+GO
+CREATE SEQUENCE Very_Long_Drop_Test_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars AS INT START WITH 1;
+GO
+CREATE TYPE Very_Long_Drop_Test_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FROM INT;
+GO
+CREATE FUNCTION Very_Long_Drop_Test_Func_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters(
+    @Very_Long_Drop_Test_Param_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT
+) RETURNS INT AS BEGIN RETURN @Very_Long_Drop_Test_Param_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters END;
+GO
+
+-- Verify entries exist before drop
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Drop_Test%';
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Drop and verify entries are removed
+DROP TABLE babel5975_drop_test;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Drop_Test_Constraint%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+DROP SEQUENCE Very_Long_Drop_Test_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Drop_Test_Sequence%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+DROP TYPE Very_Long_Drop_Test_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Drop_Test_Type%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+DROP FUNCTION Very_Long_Drop_Test_Func_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Drop_Test_Param%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+-- ===========================================
+-- VERIFICATION: System views show original names
+-- ===========================================
+-- sys.tables shows full original name
+SELECT name FROM sys.tables WHERE name LIKE 'Very_Long_Table_Name%';
+GO
+~~START~~
+varchar
+Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+-- sys.views shows full original name
+SELECT name FROM sys.views WHERE name LIKE 'Very_Long_View_Name%';
+GO
+~~START~~
+varchar
+Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+-- sys.columns shows full original column names
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_col_test') ORDER BY column_id;
+GO
+~~START~~
+varchar
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1
+Very_Long_Renamed_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+Very_Long_Added_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+
+-- sys.all_columns shows full original column names
+SELECT name FROM sys.all_columns WHERE object_id = OBJECT_ID('babel5975_col_test') AND name LIKE '%Very_Long%' ORDER BY column_id;
+GO
+~~START~~
+varchar
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1
+Very_Long_Renamed_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+Very_Long_Added_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+-- sys.procedures shows full original name
+SELECT name FROM sys.procedures WHERE name LIKE 'Very_Long_Procedure%';
+GO
+~~START~~
+varchar
+Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+-- sys.types shows full original type name
+SELECT name FROM sys.types WHERE name LIKE 'Very_Long_Type%';
+GO
+~~START~~
+varchar
+Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+-- sys.indexes shows full original index name
+SELECT name FROM sys.indexes WHERE name LIKE 'Very_Long_Index%';
+GO
+~~START~~
+varchar
+Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+-- sys.indexes LIKE search with partial name works
+SELECT name FROM sys.indexes WHERE name LIKE '%Exceeds_PostgreSQL_Limit%';
+GO
+~~START~~
+varchar
+Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+-- sys.objects shows full original names (inherits from above)
+SELECT name, type_desc FROM sys.objects WHERE name LIKE 'Very_Long_Table_Name%' OR name LIKE 'Very_Long_Function%';
+GO
+~~START~~
+varchar#!#nvarchar
+Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing#!#USER_TABLE
+Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing#!#SQL_SCALAR_FUNCTION
+~~END~~
+
+
+-- sys.key_constraints shows full original constraint name
+SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_Primary%';
+GO
+~~START~~
+varchar
+Very_Long_Primary_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+~~END~~
+
+
+-- sys.check_constraints shows full original constraint name
+SELECT name FROM sys.check_constraints WHERE name LIKE 'Very_Long_Check%';
+GO
+~~START~~
+varchar
+Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+-- sys.foreign_keys shows full original constraint name
+SELECT name FROM sys.foreign_keys WHERE name LIKE 'Very_Long_Foreign%';
+GO
+~~START~~
+varchar
+Very_Long_Foreign_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+~~END~~
+
+
+-- sys.all_objects shows full original names for constraints
+SELECT name, type_desc FROM sys.all_objects WHERE name LIKE 'Very_Long_Primary%' OR name LIKE 'Very_Long_Check%' OR name LIKE 'Very_Long_Foreign%';
+GO
+~~START~~
+varchar#!#nvarchar
+Very_Long_Foreign_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three#!#FOREIGN_KEY_CONSTRAINT
+Very_Long_Primary_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three#!#PRIMARY_KEY_CONSTRAINT
+Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters#!#CHECK_CONSTRAINT
+~~END~~
+
+
+-- sys.all_objects shows full original names for sequences
+SELECT name, type_desc FROM sys.all_objects WHERE name LIKE 'Very_Long_Sequence%';
+GO
+~~START~~
+varchar#!#nvarchar
+Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing#!#SEQUENCE_OBJECT
+~~END~~
+
+
+-- information_schema.table_constraints shows original constraint names
+SELECT CONSTRAINT_NAME, TABLE_NAME FROM information_schema.table_constraints
+WHERE CONSTRAINT_NAME LIKE 'Very_Long_Primary%' OR CONSTRAINT_NAME LIKE 'Very_Long_Unique%';
+GO
+~~START~~
+varchar#!#varchar
+Very_Long_Primary_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three#!#babel5975_pk_test
+Very_Long_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters#!#babel5975_uq_test
+~~END~~
+
+
+-- information_schema.key_column_usage shows original names
+SELECT CONSTRAINT_NAME, TABLE_NAME, COLUMN_NAME FROM information_schema.key_column_usage
+WHERE CONSTRAINT_NAME LIKE 'Very_Long_Primary%';
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+Very_Long_Primary_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three#!#babel5975_pk_test#!#id
+~~END~~
+
+
+-- sp_statistics shows original index/table names
+EXEC sp_statistics @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+master#!#dbo#!#Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
+master#!#dbo#!#Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing#!#1#!#very_long_table_name_that_excee93167071de365a0cba68700e242774dd#!#Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing#!#3#!#1#!#id#!#A#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
+
+
+-- ===========================================
+-- VERIFICATION: Check actual storage locations
+-- ===========================================
+-- Verify functions/procedures/triggers in babelfish_function_ext.orig_name
+SELECT orig_name FROM sys.babelfish_function_ext
+WHERE orig_name LIKE 'Very_Long_Function%'
+   OR orig_name LIKE 'Very_Long_Procedure%'
+   OR orig_name LIKE 'Very_Long_Trigger%'
+ORDER BY orig_name;
+GO
+~~START~~
+nvarchar
+Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+Very_Long_Trigger_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+-- Verify sequences in babelfish_identifier_mapping
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping
+WHERE pg_catalog_type = 1259
+ORDER BY original_identifier_name;
+GO
+~~START~~
+nvarchar
+Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+-- Verify types in babelfish_identifier_mapping
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping
+WHERE pg_catalog_type = 1247
+ORDER BY original_identifier_name;
+GO
+~~START~~
+nvarchar
+Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+-- Verify constraints in babelfish_identifier_mapping
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping
+WHERE pg_catalog_type = 2606
+ORDER BY original_identifier_name;
+GO
+~~START~~
+nvarchar
+Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+Very_Long_Foreign_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+Very_Long_Primary_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+Very_Long_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+-- Verify parameters in babelfish_identifier_mapping
+SELECT original_identifier_name, parent_name FROM sys.babelfish_identifier_mapping
+WHERE pg_catalog_type = 1255
+ORDER BY original_identifier_name;
+GO
+~~START~~
+nvarchar#!#varchar
+@Very_Long_First_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters#!#babel5975_multi_param_func
+@Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters#!#very_long_procedure_name_that_e61b6230e662738953e607931c33a9021
+@Very_Long_Second_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters#!#babel5975_multi_param_func
+~~END~~
+
+
+-- psql
+-- Verify table original name in pg_class.reloptions
+SELECT opt FROM (SELECT unnest(reloptions) AS opt FROM pg_class WHERE relname LIKE 'very_long_table_name%' AND reloptions::text LIKE '%bbf_original_rel_name%') t WHERE opt LIKE 'bbf_original_rel_name%';
+GO
+~~START~~
+text
+bbf_original_rel_name=Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+-- psql
+-- Verify view original name in pg_class.reloptions
+SELECT opt FROM (SELECT unnest(reloptions) AS opt FROM pg_class WHERE relname LIKE 'very_long_view_name%' AND reloptions::text LIKE '%bbf_original_rel_name%') t WHERE opt LIKE 'bbf_original_rel_name%';
+GO
+~~START~~
+text
+bbf_original_rel_name=Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+-- psql
+-- Verify index original name in pg_class.reloptions
+SELECT opt FROM (SELECT unnest(reloptions) AS opt FROM pg_class WHERE relname LIKE '%very_long_index%' AND reloptions::text LIKE '%bbf_original_rel_name%') t WHERE opt LIKE 'bbf_original_rel_name%';
+GO
+~~START~~
+text
+bbf_original_rel_name=Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+-- psql
+-- Verify SELECT INTO table in pg_class.reloptions
+SELECT opt FROM (SELECT unnest(reloptions) AS opt FROM pg_class WHERE relname LIKE 'very_long_select_into%' AND reloptions::text LIKE '%bbf_original_rel_name%') t WHERE opt LIKE 'bbf_original_rel_name%';
+GO
+~~START~~
+text
+bbf_original_rel_name=Very_Long_Select_Into_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+~~END~~
+
+
+
+-- tsql
+-- Verify SELECT INTO column original name preserved
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_select_into_col_test') AND name LIKE '%Very_Long%';
+GO
+~~START~~
+varchar
+Very_Long_Added_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+-- Verify sp_tables works with long table names
+EXEC sp_tables @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#dbo#!#Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing#!#TABLE#!#<NULL>
+~~END~~
+
+
+-- Verify sp_columns works with long table names
+EXEC sp_columns @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
+master#!#dbo#!#Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing#!#id#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#38
+master#!#dbo#!#Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing#!#name#!#-9#!#nvarchar#!#100#!#200#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#200#!#2#!#YES#!#39
+~~END~~
+
+
+-- Verify OBJECT_ID works with long names
+SELECT CASE WHEN OBJECT_ID('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing') IS NOT NULL THEN 'FOUND' ELSE 'NOT FOUND' END;
+GO
+~~START~~
+varchar
+FOUND
+~~END~~
+
+
+-- Verify OBJECT_NAME returns full original name
+SELECT OBJECT_NAME(OBJECT_ID('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing'));
+GO
+~~START~~
+varchar
+Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+-- Verify sp_stored_procedures works with long procedure name
+EXEC sp_stored_procedures @sp_name = 'Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing';
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+master#!#dbo#!#Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+-- Verify DB_NAME() returns case-preserved name
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+-- sys.databases shows case-preserved database name
+SELECT name FROM sys.databases WHERE name LIKE '%Long_Database%';
+GO
+~~START~~
+varchar
+Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing
+~~END~~
+
+
+USE master;
+GO
+
+DROP DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing;
+GO
+
+CREATE DATABASE Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+USE Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- sys.sysdatabases shows case-preserved name
+SELECT name FROM sys.sysdatabases WHERE name LIKE '%Long_DB_Name%';
+GO
+~~START~~
+nvarchar
+Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+-- DB_NAME() comparison with sys.sysdatabases works (CI collation)
+SELECT name FROM sys.sysdatabases WHERE name = DB_NAME() collate database_default;
+GO
+~~START~~
+nvarchar
+Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+-- sp_tables works in long-named database
+EXEC sp_tables;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters#!#dbo#!#sysdatabases#!#VIEW#!#<NULL>
+~~END~~
+
+
+-- information_schema.tables works in long-named database
+SELECT TABLE_CATALOG FROM information_schema.tables WHERE TABLE_CATALOG LIKE '%Long_DB%';
+GO
+~~START~~
+nvarchar
+~~END~~
+
+
+USE master;
+GO
+DROP DATABASE Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- Verify information_schema.tables returns full table name
+SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_NAME LIKE 'Very_Long_Table_Name%';
+GO
+~~START~~
+varchar
+Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+-- Verify information_schema.columns returns full column name
+SELECT COLUMN_NAME FROM information_schema.columns WHERE TABLE_NAME LIKE 'Very_Long_Table_Name%' AND COLUMN_NAME LIKE '%id%';
+GO
+~~START~~
+nvarchar
+id
+~~END~~
+
+
+-- sys.triggers shows full trigger name
+SELECT name FROM sys.triggers WHERE name LIKE 'Very_Long_Trigger%';
+GO
+~~START~~
+varchar
+Very_Long_Trigger_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+~~END~~
+
+
+
+
+-- sp_fkeys with long table name
+EXEC sp_fkeys @pktable_name = 'babel5975_fk_parent';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+master#!#dbo#!#babel5975_fk_parent#!#id#!#master#!#dbo#!#babel5975_fk_child#!#parent_id#!#1#!#1#!#1#!#very_long_foreign_key_constrain8ae1bf6a621fff2f280f3a0f9f70d1f8#!#babel5975_fk_parent_pkey#!#7
+~~END~~
+
+
+-- sp_special_columns with long table name
+EXEC sp_special_columns @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing';
+GO
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#id#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+
+-- psql
+-- Verify column original names in pg_attribute.attoptions
+SELECT attname, attoptions FROM pg_attribute
+WHERE attrelid = (SELECT oid FROM pg_class WHERE relname LIKE 'babel5975_col_test%' LIMIT 1)
+  AND attoptions IS NOT NULL AND attoptions::text LIKE '%Very_Long%'
+ORDER BY attnum;
+GO
+~~START~~
+name#!#_text
+very_long_column_name_that_excec56ed1dfbe550fc8e689a0b82eabb305#!#{bbf_original_name=Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1}
+very_long_renamed_column_name_t5127d87a119eb55c397d5d2818fa2606#!#{bbf_original_name=Very_Long_Renamed_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters}
+very_long_added_column_name_thaceca5ee9cb8761d8bce6e44cff6cc23e#!#{bbf_original_name=Very_Long_Added_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters}
+~~END~~
+
+
+-- psql
+-- Verify ALTER TABLE ADD column
+SELECT attname, attoptions FROM pg_attribute
+WHERE attrelid = (SELECT oid FROM pg_class WHERE relname LIKE 'babel5975_col_test%' LIMIT 1)
+  AND attname LIKE 'very_long_added%';
+GO
+~~START~~
+name#!#_text
+very_long_added_column_name_thaceca5ee9cb8761d8bce6e44cff6cc23e#!#{bbf_original_name=Very_Long_Added_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters}
+~~END~~
+
+
+-- tsql
+
+
+-- Section 7: DML Result Set Headers
+-- ===========================================
+-- Long alias in SELECT
+SELECT 1 AS Very_Long_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_In_Select;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Long alias in UNION (first SELECT preserved)
+SELECT 1 AS Very_Long_Union_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+UNION ALL
+SELECT 2
+ORDER BY 1;
+GO
+~~START~~
+int
+1
+2
+~~END~~
+
+
+
+-- ===========================================
+-- Section 8: Case Sensitivity
+-- ===========================================
+-- Mixed case preserved
+CREATE TABLE MiXeD_CaSe_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (Id_MiXeD INT);
+GO
+SELECT name FROM sys.tables WHERE name LIKE 'MiXeD_CaSe%';
+GO
+~~START~~
+varchar
+MiXeD_CaSe_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+DROP TABLE MiXeD_CaSe_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+
+-- ===========================================
+-- Section 12: Edge Cases
+-- ===========================================
+-- Exactly 63 bytes - no catalog entry needed
+CREATE TABLE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa (id INT);
+GO
+DROP TABLE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
+GO
+
+-- Exactly 64 bytes - catalog entry created
+CREATE TABLE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa (id INT);
+GO
+SELECT name FROM sys.tables WHERE name LIKE 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%';
+GO
+~~START~~
+varchar
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+~~END~~
+
+DROP TABLE aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
+GO
+
+-- Quoted identifiers with special characters
+CREATE TABLE [Very Long "Quoted" Table Name That Exceeds PostgreSQL Limit Of Sixty Three Characters!] (id INT);
+GO
+SELECT name FROM sys.tables WHERE name LIKE '%Quoted%';
+GO
+~~START~~
+varchar
+Very Long "Quoted" Table Name That Exceeds PostgreSQL Limit Of Sixty Three Characters!
+~~END~~
+
+DROP TABLE [Very Long "Quoted" Table Name That Exceeds PostgreSQL Limit Of Sixty Three Characters!];
+GO
+
+
+-- psql
+-- ===========================================
+-- Section 9: PG Endpoint Isolation
+-- ===========================================
+-- Verify truncated names visible in pg_class
+SELECT relname FROM pg_class WHERE relname LIKE 'very_long_table_name%' LIMIT 1;
+GO
+~~START~~
+name
+very_long_table_name_that_excee93167071de365a0cba68700e242774dd
+~~END~~
+
+
+-- Verify modification of bbf_original_rel_name is blocked
+ALTER TABLE master_dbo.very_long_table_name_that_exceed05596e9412ba2b6bc9c227f800f8ca5a SET (bbf_original_rel_name='hacked');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: cannot modify "bbf_original_rel_name" for babelfish objects
+    Server SQLState: 42501)~~
+
+
+-- Verify modification of bbf_original_name (column) is blocked
+ALTER TABLE master_dbo.babel5975_col_test ALTER COLUMN very_long_column_name_that_excee78cb009a0e5eb4aba1c0243be4884f78 SET (bbf_original_name='hacked');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: cannot modify "bbf_original_name" for babelfish objects
+    Server SQLState: 42501)~~
+
+
+-- tsql
+
+
+-- ===========================================
+-- Section 6.5: Constraint-backed indexes
+-- ===========================================
+CREATE TABLE babel5975_idx_constraint_test (id INT, val INT,
+    CONSTRAINT PK_Very_Long_Primary_Key_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters PRIMARY KEY (id),
+    CONSTRAINT UQ_Very_Long_Unique_Key_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters UNIQUE (val));
+GO
+SELECT name, type_desc FROM sys.indexes WHERE object_id = OBJECT_ID('babel5975_idx_constraint_test') ORDER BY type;
+GO
+~~START~~
+varchar#!#nvarchar
+<NULL>#!#HEAP
+uq_very_long_unique_key_name_th0cf69e6e308abe9a1f6051a789c850d5#!#NONCLUSTERED
+pk_very_long_primary_key_name_t1584497a86c81db8e7e6195152e9e43a#!#NONCLUSTERED
+~~END~~
+
+
+DROP TABLE babel5975_idx_constraint_test;
+-- Section 7: Additional DML headers
+-- ===========================================
+-- CTE with long alias
+;WITH Very_Long_CTE_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CTE AS (SELECT 1 AS val)
+SELECT val FROM Very_Long_CTE_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CTE;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Subquery alias preserved in result
+SELECT * FROM (SELECT 1 AS Very_Long_SubQuery_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters) sub;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- ===========================================
+-- Section 10: Catalog cleanup - rapid CREATE/DROP
+-- ===========================================
+-- Rapid create/drop should not leave orphan entries
+CREATE TABLE babel5975_rapid_very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_characters (id INT);
+GO
+DROP TABLE babel5975_rapid_very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_characters;
+GO
+CREATE TABLE babel5975_rapid_very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_characters (id INT);
+GO
+DROP TABLE babel5975_rapid_very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_characters;
+GO
+-- Verify no orphan entries
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE truncated_identifier_name LIKE '%rapid_very_long%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- ===========================================
+-- ORDER BY with long alias
+-- ===========================================
+SELECT 1 AS Very_Long_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_For_Testing ORDER BY Very_Long_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_For_Testing;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- ===========================================
+-- CREATE INDEX on SELECT INTO column with long name
+-- ===========================================
+CREATE INDEX babel5975_idx_select_into ON babel5975_select_into_col_test(Very_Long_Added_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters);
+GO
+DROP INDEX babel5975_idx_select_into ON babel5975_select_into_col_test;
+GO
+
+
+
+
+
+-- ===========================================
+-- DROP cleanup verification
+-- ===========================================
+-- Verify catalog entries are removed after DROP TABLE
+CREATE TABLE babel5975_drop_test_very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three (col_very_long_name_that_exceeds_postgresql_limit_of_sixty_three_characters INT, CONSTRAINT ck_very_long_constraint_name_that_exceeds_postgresql_limit_of_sixty_three CHECK (col_very_long_name_that_exceeds_postgresql_limit_of_sixty_three_characters > 0));
+GO
+-- Verify entries exist
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE nspname LIKE '%dbo%' AND parent_name LIKE '%drop_test%';
+GO
+~~START~~
+int
+1
+~~END~~
+
+DROP TABLE babel5975_drop_test_very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three;
+GO
+-- Verify entries removed
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE nspname LIKE '%dbo%' AND parent_name LIKE '%drop_test%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Verify catalog entries removed after DROP DATABASE
+USE master;
+GO
+CREATE DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+USE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+CREATE TABLE babel5975_db_drop_test_table_very_long_name_that_exceeds_postgresql_limit_chars (id INT);
+GO
+USE master;
+GO
+DROP DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+
+-- ===========================================
+-- RENAME TESTS: Verify mapping is updated on sp_rename
+-- ===========================================
+-- Test sequence rename
+CREATE SEQUENCE Very_Long_Rename_Test_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars AS INT START WITH 1;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Rename_Test_Sequence%';
+GO
+~~START~~
+int
+1
+~~END~~
+
+EXEC sp_rename 'Very_Long_Rename_Test_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars', 'Very_Long_Renamed_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters', 'OBJECT';
+GO
+-- Old entry should be gone, new entry should exist
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Rename_Test_Sequence%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Renamed_Sequence%';
+GO
+~~START~~
+int
+1
+~~END~~
+
+DROP SEQUENCE Very_Long_Renamed_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- Test type rename
+CREATE TYPE Very_Long_Rename_Test_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FROM INT;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Rename_Test_Type%';
+GO
+~~START~~
+int
+1
+~~END~~
+
+EXEC sp_rename 'Very_Long_Rename_Test_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters', 'Very_Long_Renamed_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_New', 'USERDATATYPE';
+GO
+-- Old entry should be gone, new entry should exist
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Rename_Test_Type%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Renamed_Type%';
+GO
+~~START~~
+int
+1
+~~END~~
+
+DROP TYPE Very_Long_Renamed_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_New;
+GO
+
+
+-- ===========================================
+-- CASE SENSITIVITY TESTS: Verify original casing is preserved
+-- ===========================================
+-- Mixed case table name
+CREATE TABLE MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_ABC (id INT);
+GO
+SELECT name FROM sys.tables WHERE name LIKE 'MixedCase_Very_Long%';
+GO
+~~START~~
+varchar
+MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_ABC
+~~END~~
+
+SELECT name FROM sys.all_objects WHERE name LIKE 'MixedCase_Very_Long%';
+GO
+~~START~~
+varchar
+MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_ABC
+~~END~~
+
+-- Case-insensitive lookup should work
+SELECT name FROM sys.tables WHERE name = 'mixedcase_very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_characters_abc';
+GO
+~~START~~
+varchar
+MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_ABC
+~~END~~
+
+DROP TABLE MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_ABC;
+GO
+
+-- Mixed case constraint
+CREATE TABLE babel5975_case_test (id INT NOT NULL,
+    CONSTRAINT MixedCase_PK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters PRIMARY KEY (id),
+    CONSTRAINT MixedCase_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars CHECK (id > 0));
+GO
+SELECT name FROM sys.key_constraints WHERE name LIKE 'MixedCase_PK%';
+GO
+~~START~~
+varchar
+MixedCase_PK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+SELECT name FROM sys.check_constraints WHERE name LIKE 'MixedCase_Check%';
+GO
+~~START~~
+varchar
+MixedCase_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+~~END~~
+
+
+-- Foreign key with mixed case
+CREATE TABLE babel5975_fk_case_parent (id INT PRIMARY KEY);
+GO
+CREATE TABLE babel5975_fk_case_child (id INT,
+    CONSTRAINT MixedCase_FK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FOREIGN KEY (id) REFERENCES babel5975_fk_case_parent(id));
+GO
+SELECT name FROM sys.foreign_keys WHERE name LIKE 'MixedCase_FK%';
+GO
+~~START~~
+varchar
+MixedCase_FK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+DROP TABLE babel5975_fk_case_child;
+GO
+DROP TABLE babel5975_fk_case_parent;
+GO
+DROP TABLE babel5975_case_test;
+GO
+
+-- Mixed case sequence
+CREATE SEQUENCE MixedCase_Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars AS INT START WITH 1;
+GO
+SELECT name FROM sys.objects WHERE name LIKE 'MixedCase_Very_Long_Seq%';
+GO
+~~START~~
+varchar
+MixedCase_Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+~~END~~
+
+DROP SEQUENCE MixedCase_Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+
+-- Mixed case type
+CREATE TYPE MixedCase_Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FROM INT;
+GO
+SELECT name FROM sys.types WHERE name LIKE 'MixedCase_Very_Long_Type%';
+GO
+~~START~~
+varchar
+MixedCase_Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+DROP TYPE MixedCase_Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+
+-- ===========================================
+-- MULTIBYTE CHARACTER TESTS: Unicode identifiers
+-- ===========================================
+-- Japanese characters in table name (each char = 3 bytes, so 22+ chars exceed 63 bytes)
+CREATE TABLE テスト用の非常に長いテーブル名前がPostgreSQLの制限を超える場合のテスト (id INT, val NVARCHAR(50));
+GO
+SELECT name FROM sys.tables WHERE name LIKE 'テスト用%';
+GO
+~~START~~
+varchar
+テスト用の非常に長いテーブル名前がPostgreSQLの制限を超える場合のテスト
+~~END~~
+
+DROP TABLE テスト用の非常に長いテーブル名前がPostgreSQLの制限を超える場合のテスト;
+GO
+
+-- Emoji and special characters in constraint name
+CREATE TABLE babel5975_emoji_test (id INT NOT NULL,
+    CONSTRAINT PK_Emoji_😀😁😂🤣😃😄😅😆😉😊😋😎🙂🤗🤩🤔🤨😐😑😶🙄😏😣😥😮 PRIMARY KEY (id),
+    CONSTRAINT CHK_Emoji_😀😁😂🤣😃😄😅😆😉😊😋😎🙂🤗🤩🤔🤨😐😑😶🙄😏😣😥 CHECK (id > 0));
+GO
+SELECT name FROM sys.key_constraints WHERE name LIKE 'PK_Emoji%';
+GO
+~~START~~
+varchar
+PK_Emoji_?????????????????????????
+~~END~~
+
+SELECT name FROM sys.check_constraints WHERE name LIKE 'CHK_Emoji%';
+GO
+~~START~~
+varchar
+CHK_Emoji_????????????????????????
+~~END~~
+
+
+-- Foreign key with multibyte
+CREATE TABLE babel5975_fk_mb_parent (id INT PRIMARY KEY);
+GO
+CREATE TABLE babel5975_fk_mb_child (id INT,
+    CONSTRAINT FK_外部キー_制約名_非常に長い名前_PostgreSQLの制限を超える場合のテスト FOREIGN KEY (id) REFERENCES babel5975_fk_mb_parent(id));
+GO
+SELECT name FROM sys.foreign_keys WHERE name LIKE 'FK_外部キー%';
+GO
+~~START~~
+varchar
+FK_外部キー_制約名_非常に長い名前_PostgreSQLの制限を超える場合のテスト
+~~END~~
+
+DROP TABLE babel5975_fk_mb_child;
+GO
+DROP TABLE babel5975_fk_mb_parent;
+GO
+DROP TABLE babel5975_emoji_test;
+GO
+
+-- Chinese characters in sequence name
+CREATE SEQUENCE 这是一个非常长的序列名称用来测试PostgreSQL对超过六十三个字符的标识符的处理方式 AS INT START WITH 1;
+GO
+SELECT name FROM sys.objects WHERE name LIKE '这是一个%';
+GO
+~~START~~
+varchar
+这是一个非常长的序列名称用来测试PostgreSQL对超过六十三个字符的标识符的处理方式
+~~END~~
+
+DROP SEQUENCE 这是一个非常长的序列名称用来测试PostgreSQL对超过六十三个字符的标识符的处理方式;
+GO
+
+-- Korean characters in column name
+CREATE TABLE babel5975_korean_test (
+    [아주_긴_열_이름_PostgreSQL_제한을_초과하는_경우_테스트_식별자_잘림_처리_확인용_컬럼] INT
+);
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_korean_test') AND name LIKE '아주%';
+GO
+~~START~~
+varchar
+??_?_?_??_PostgreSQL_???_????_??_???_???_??_??_???_??
+~~END~~
+
+SELECT name FROM sys.all_columns WHERE object_id = OBJECT_ID('babel5975_korean_test') AND name LIKE '아주%';
+GO
+~~START~~
+varchar
+??_?_?_??_PostgreSQL_???_????_??_???_???_??_??_???_??
+~~END~~
+
+
+-- Multibyte index name
+CREATE INDEX [インデックス_非常に長い名前_PostgreSQLの制限を超える場合のテスト_識別子切り捨て] ON babel5975_korean_test([아주_긴_열_이름_PostgreSQL_제한을_초과하는_경우_테스트_식별자_잘림_처리_확인용_컬럼]);
+GO
+SELECT name FROM sys.indexes WHERE name LIKE 'インデックス%';
+GO
+~~START~~
+varchar
+インデックス_非常に長い名前_PostgreSQLの制限を超える場合のテスト_識別子切り捨て
+~~END~~
+
+DROP TABLE babel5975_korean_test;
+GO
+
+-- Mixed multibyte + ASCII in type name
+CREATE TYPE タイプ_Mixed_Type_Name_That_Exceeds_PostgreSQL_Limit_With_日本語_Characters_Added FROM INT;
+GO
+SELECT name FROM sys.types WHERE name LIKE 'タイプ_Mixed%';
+GO
+~~START~~
+varchar
+タイプ_Mixed_Type_Name_That_Exceeds_PostgreSQL_Limit_With_日本語_Characters_Added
+~~END~~
+
+DROP TYPE タイプ_Mixed_Type_Name_That_Exceeds_PostgreSQL_Limit_With_日本語_Characters_Added;
+GO
+
+
+-- ===========================================
+-- DATABASE SYSTEM OBJECT TESTS
+-- ===========================================
+-- Mixed case long database name
+CREATE DATABASE MixedCase_Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+SELECT name FROM sys.databases WHERE name LIKE 'MixedCase_Very_Long_Database%';
+GO
+~~START~~
+varchar
+MixedCase_Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+~~END~~
+
+SELECT name FROM sys.sysdatabases WHERE name LIKE 'MixedCase_Very_Long_Database%';
+GO
+~~START~~
+nvarchar
+MixedCase_Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+~~END~~
+
+-- Case-insensitive lookup
+SELECT name FROM sys.databases WHERE name = 'mixedcase_very_long_database_name_that_exceeds_postgresql_limit_of_sixty_three_chars';
+GO
+~~START~~
+varchar
+MixedCase_Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+~~END~~
+
+-- Verify DB_NAME() returns original name
+USE MixedCase_Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+MixedCase_Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+~~END~~
+
+-- Verify sp_helpdb can find database with long name (dbid is non-deterministic, just check it works)
+SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM sys.babelfish_helpdb() WHERE name = 'MixedCase_Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars';
+GO
+~~START~~
+int
+1
+~~END~~
+
+USE master;
+GO
+DROP DATABASE MixedCase_Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+
+-- Multibyte database name
+CREATE DATABASE データベース_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+SELECT name FROM sys.databases WHERE name LIKE 'データベース%';
+GO
+~~START~~
+varchar
+データベース_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+SELECT name FROM sys.sysdatabases WHERE name LIKE 'データベース%';
+GO
+~~START~~
+nvarchar
+データベース_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+-- Verify user operations in multibyte-named database
+USE [データベース_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters];
+GO
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+データベース_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+USE master;
+GO
+DROP DATABASE [データベース_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters];
+GO
+
+
+-- ===========================================
+-- PROCEDURES AND TRIGGERS TESTS
+-- ===========================================
+-- Mixed case procedure name
+CREATE PROCEDURE MixedCase_Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars AS SELECT 1;
+GO
+SELECT name FROM sys.procedures WHERE name LIKE 'MixedCase_Very_Long_Proc%';
+GO
+~~START~~
+varchar
+MixedCase_Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+~~END~~
+
+DROP PROCEDURE MixedCase_Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+
+-- Multibyte procedure name
+CREATE PROCEDURE プロシージャ_非常に長い名前_PostgreSQLの制限を超える場合のテスト AS SELECT 1;
+GO
+SELECT name FROM sys.procedures WHERE name LIKE 'プロシージャ%';
+GO
+~~START~~
+varchar
+プロシージャ_非常に長い名前_PostgreSQLの制限を超える場合のテスト
+~~END~~
+
+DROP PROCEDURE プロシージャ_非常に長い名前_PostgreSQLの制限を超える場合のテスト;
+GO
+
+-- Mixed case trigger name
+CREATE TABLE babel5975_trig_case_test (id INT);
+GO
+CREATE TRIGGER MixedCase_Very_Long_Trigger_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+ON babel5975_trig_case_test FOR INSERT AS BEGIN SELECT 1 END;
+GO
+SELECT name FROM sys.triggers WHERE name LIKE 'MixedCase_Very_Long_Trig%';
+GO
+~~START~~
+varchar
+MixedCase_Very_Long_Trigger_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+DROP TRIGGER MixedCase_Very_Long_Trigger_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+DROP TABLE babel5975_trig_case_test;
+GO
+
+-- Multibyte trigger name
+CREATE TABLE babel5975_trig_mb_test (id INT);
+GO
+CREATE TRIGGER トリガー_非常に長い名前_PostgreSQLの制限を超える場合のテスト_識別子処理
+ON babel5975_trig_mb_test FOR INSERT AS BEGIN SELECT 1 END;
+GO
+SELECT name FROM sys.triggers WHERE name LIKE 'トリガー%';
+GO
+~~START~~
+varchar
+トリガー_非常に長い名前_PostgreSQLの制限を超える場合のテスト_識別子処理
+~~END~~
+
+DROP TRIGGER トリガー_非常に長い名前_PostgreSQLの制限を超える場合のテスト_識別子処理;
+GO
+DROP TABLE babel5975_trig_mb_test;
+GO
+
+-- ===========================================
+-- CLEANUP
+-- ===========================================
+DROP TRIGGER Very_Long_Trigger_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+DROP VIEW Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+DROP VIEW Very_Long_CreateOrAlter_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP FUNCTION Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+DROP FUNCTION babel5975_multi_param_func;
+GO
+DROP PROCEDURE Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+DROP INDEX Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing ON Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+DROP TABLE Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+DROP TABLE babel5975_col_test;
+GO
+-- ===========================================
+-- Cross-session FK constraint violation (tests hook, not session cache)
+-- The FK constraint is created in this connection but the violation will
+-- be triggered from a separate connection below.
+-- ===========================================
+CREATE TABLE babel5975_fk_cross_parent (id INT PRIMARY KEY);
+GO
+INSERT INTO babel5975_fk_cross_parent VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+CREATE TABLE babel5975_fk_cross_child (
+    id INT,
+    parent_id INT,
+    CONSTRAINT Very_Long_FK_Cross_Session_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three FOREIGN KEY (parent_id) REFERENCES babel5975_fk_cross_parent(id)
+);
+GO
+
+-- tsql
+-- This is a NEW connection - the FK constraint name is NOT in this session's cache.
+-- The hook must resolve it from babelfish_identifier_mapping catalog.
+INSERT INTO babel5975_fk_cross_child VALUES (1, 999);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "babel5975_fk_cross_child" violates foreign key constraint "very_long_fk_cross_session_constraint_name_that_exceeds_postgresql_limit_of_sixty_three")~~
+
+
+-- tsql
+-- Also test DELETE on parent that violates FK (ON DELETE NO ACTION)
+DELETE FROM babel5975_fk_cross_parent WHERE id = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql
+-- Cleanup
+DROP TABLE babel5975_fk_cross_child;
+GO
+DROP TABLE babel5975_fk_cross_parent;
+GO
+
+-- tsql
+
+-- ===========================================
+-- CONSTRAINT with comments between keyword and name
+-- ===========================================
+-- Block comment between CONSTRAINT and name
+CREATE TABLE babel5975_block_comment_constraint (
+    col1 INT,
+    CONSTRAINT /* block comment */ Very_Long_Block_Comment_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three PRIMARY KEY (col1)
+);
+GO
+
+-- Verify constraint name via system view
+SELECT CONSTRAINT_NAME FROM information_schema.table_constraints
+WHERE TABLE_NAME = 'babel5975_block_comment_constraint' AND CONSTRAINT_TYPE = 'PRIMARY KEY';
+GO
+~~START~~
+varchar
+Very_Long_Block_Comment_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+~~END~~
+
+
+-- Line comment between CONSTRAINT and name
+CREATE TABLE babel5975_line_comment_constraint (
+    col1 INT,
+    CONSTRAINT -- line comment
+    Very_Long_Line_Comment_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_XY PRIMARY KEY (col1)
+);
+GO
+
+-- Verify constraint name via system view
+SELECT CONSTRAINT_NAME FROM information_schema.table_constraints
+WHERE TABLE_NAME = 'babel5975_line_comment_constraint' AND CONSTRAINT_TYPE = 'PRIMARY KEY';
+GO
+~~START~~
+varchar
+Very_Long_Line_Comment_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_XY
+~~END~~
+
+
+-- Multiple block comments between CONSTRAINT and name
+CREATE TABLE babel5975_multi_comment_constraint (
+    col1 INT,
+    CONSTRAINT /* first */ /* second */ Very_Long_Multi_Comment_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three PRIMARY KEY (col1)
+);
+GO
+
+-- Verify constraint name via system view
+SELECT CONSTRAINT_NAME FROM information_schema.table_constraints
+WHERE TABLE_NAME = 'babel5975_multi_comment_constraint' AND CONSTRAINT_TYPE = 'PRIMARY KEY';
+GO
+~~START~~
+varchar
+Very_Long_Multi_Comment_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+~~END~~
+
+
+DROP TABLE babel5975_block_comment_constraint;
+GO
+DROP TABLE babel5975_line_comment_constraint;
+GO
+DROP TABLE babel5975_multi_comment_constraint;
+GO
+
+-- tsql
+-- ===========================================
+-- CLEANUP
+-- ===========================================
+DROP TABLE babel5975_pk_test;
+GO
+DROP TABLE babel5975_uq_test;
+GO
+DROP TABLE babel5975_ck_test;
+GO
+DROP TABLE Very_Long_Select_Into_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP TABLE IF EXISTS babel5975_select_into_col_test;
+GO
+DROP SEQUENCE Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+DROP TYPE Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+DROP TABLE babel5975_fk_child;
+GO
+DROP TABLE babel5975_fk_parent;
+GO
+DROP TABLE babel5975_df_test;
+GO

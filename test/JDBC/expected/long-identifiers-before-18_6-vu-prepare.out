@@ -1,0 +1,79 @@
+
+-- Long identifiers vu-prepare: Create all types of objects with long names
+-- Table with long name
+CREATE TABLE Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU (
+    Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1 INT NOT NULL,
+    Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col2 VARCHAR(50),
+    CONSTRAINT Very_Long_PK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_VU PRIMARY KEY (Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1),
+    CONSTRAINT Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_VU CHECK (Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1 > 0)
+);
+GO
+
+-- Index with long name
+CREATE INDEX Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU
+ON Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU(Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col2);
+GO
+
+-- Foreign key parent and child
+CREATE TABLE babel5975_vu_fk_parent (id INT PRIMARY KEY);
+GO
+CREATE TABLE babel5975_vu_fk_child (id INT,
+    CONSTRAINT Very_Long_FK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU FOREIGN KEY (id) REFERENCES babel5975_vu_fk_parent(id));
+GO
+
+-- View with long name
+CREATE VIEW Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU AS
+SELECT Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1 AS id FROM Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU;
+GO
+
+-- Procedure with long name and long parameter
+CREATE PROCEDURE Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU
+    @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU INT
+AS BEGIN SELECT @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU END;
+GO
+-- Procedure with mixed case (short name)
+CREATE PROCEDURE Mixed_Case_Proc_VU
+AS SELECT 1;
+GO
+
+
+-- Function with long name
+CREATE FUNCTION Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU(@a INT)
+RETURNS INT AS BEGIN RETURN @a END;
+GO
+
+-- Trigger with long name
+CREATE TRIGGER Very_Long_Trigger_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU
+ON Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU
+FOR INSERT AS BEGIN SELECT 1 END;
+GO
+
+-- Short mixed-case trigger
+CREATE TRIGGER MixedCase_Trig_VU
+ON Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU
+FOR INSERT AS BEGIN SELECT 1 END;
+GO
+
+-- Sequence with long name
+CREATE SEQUENCE Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU AS INT START WITH 1;
+GO
+
+-- Type with long name
+CREATE TYPE Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU FROM INT;
+GO
+
+-- Database with long name
+CREATE DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU;
+GO
+
+-- Multibyte table
+CREATE TABLE [テスト用の非常に長いテーブル名前がPostgreSQLの制限を超える場合のテスト_VU] (id INT, val NVARCHAR(50));
+GO
+
+-- Mixed case table
+CREATE TABLE MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU (id INT);
+GO
+
+-- Role with long name
+CREATE ROLE Very_Long_Role_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU;
+GO

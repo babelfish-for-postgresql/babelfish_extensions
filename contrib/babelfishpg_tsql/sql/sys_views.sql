@@ -998,7 +998,7 @@ GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
 create or replace view sys.procedures as
 select
-  cast(p.proname as sys.sysname) as name
+  cast(coalesce(f.orig_name, p.proname::sys.NVARCHAR(128)) as sys.sysname) as name
   , cast(p.oid as int) as object_id
   , cast(null as int) as principal_id
   , cast(sch.schema_id as int) as schema_id
@@ -1592,7 +1592,7 @@ and p.proname != 'pltsql_call_handler'
 union all
 -- details of user defined procedures
 select
-    p.proname::sys.sysname as name
+    COALESCE(case when octet_length(p.proname) >= 60 then (select f.orig_name from sys.babelfish_function_ext f where f.funcname = p.proname and f.nspname = s.nspname limit 1) end, p.proname::text)::sys.sysname as name 
   , case
       when t.typname = 'trigger' then tr.oid else p.oid
     end as object_id
@@ -1813,7 +1813,7 @@ GRANT SELECT ON sys.all_views TO PUBLIC;
 CREATE OR REPLACE VIEW sys.triggers
 AS
 SELECT
-  CAST(p.proname as sys.sysname) as name,
+  CAST(coalesce(f.orig_name, p.proname::sys.NVARCHAR(128)) as sys.sysname) as name,
   CAST(tr.oid as int) as object_id,
   CAST(1 as sys.tinyint) as parent_class,
   CAST('OBJECT_OR_COLUMN' as sys.nvarchar(60)) AS parent_class_desc,
@@ -2082,7 +2082,7 @@ LEFT OUTER JOIN sys.babelfish_view_def bvd
       sys.babelfish_truncate_identifier(ao.name::text) = bvd.object_name COLLATE sys.database_default 
    )
 LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
-LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.orig_name COLLATE sys.database_default AND ao.schema_id::regnamespace::name = f.nspname
 AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature COLLATE "C"
 WHERE ao.type in ('P', 'RF', 'V', 'FN', 'IF', 'TF', 'R')
 UNION ALL
@@ -2101,7 +2101,7 @@ SELECT
 FROM sys.all_objects ao
 LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
 LEFT JOIN pg_trigger tr ON ao.object_id = CAST(tr.oid AS INT)
-LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.orig_name COLLATE sys.database_default AND ao.schema_id::regnamespace::name = f.nspname
 AND sys.babelfish_get_pltsql_function_signature(tr.tgfoid) = f.funcsignature COLLATE "C"
 WHERE ao.type = 'TR';
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
