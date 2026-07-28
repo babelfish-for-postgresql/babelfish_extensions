@@ -2345,6 +2345,7 @@ go
 ~~ERROR (Message: XML methods are not allowed in a GROUP BY clause.)~~
 
 
+-- use non-standard characters
 -- use ö
 DECLARE @xml XML = N'<Rööt><röw id="1"><name>James</name></röw><röw id="2"><name>Megan</name></röw></Rööt>'
 SELECT T.c.value('.', 'varchar(10)') AS result,
@@ -2359,9 +2360,9 @@ Megan#!#röw
 
 
 -- use ä
-DECLARE @x XML = '<Root><Item><Sub väl="1"/><Sub väl="5"/><Sub väl="9"/></Item><Item><Sub väl="2"/></Item></Root>'
-SELECT T.c.value('count(Sub[@väl>4])', 'INT') AS val
-FROM @x.nodes('/Root/Item') AS T(c)
+DECLARE @x XML = N'<Root><Item><Sub väl="1"/><Sub väl="5"/><Sub väl="9"/></Item><Item><Sub väl="2"/></Item></Root>'
+SELECT T.c.value(N'count(Sub[@väl>4])', 'INT') AS val
+FROM @x.nodes(N'/Root/Item') AS T(c)
 ORDER BY 1
 go
 ~~ERROR (Code: 33557097)~~
@@ -2387,7 +2388,7 @@ Megan#!#r電w
 DECLARE @xml XML = N'<Root><r電w id="1"><name>James</name></r電w><r電w id="2"><name>Megan</name></r電w></Root>'
 SELECT T.c.value('.', 'varchar(10)') AS result,
 T.c.value('local-name(.)', 'nvarchar(30)') AS name
-FROM @xml.nodes('/Root') AS T(c)
+FROM @xml.nodes(N'/Root') AS T(c)
 go
 ~~START~~
 varchar#!#nvarchar

@@ -1304,6 +1304,35 @@ GROUP BY T.C.value('(@id)[1]', 'int') + 1
 ORDER BY 1
 go
 
+-- use non-standard characters
+-- use ö
+DECLARE @xml XML = N'<Rööt><röw id="1"><name>James</name></röw><röw id="2"><name>Megan</name></röw></Rööt>'
+SELECT T.c.value('.', 'varchar(10)') AS result,
+T.c.value('local-name(.)', 'nvarchar(30)') AS name
+FROM @xml.nodes(N'/Rööt/röw') AS T(c)
+go
+
+-- use ä
+DECLARE @x XML = N'<Root><Item><Sub väl="1"/><Sub väl="5"/><Sub väl="9"/></Item><Item><Sub väl="2"/></Item></Root>'
+SELECT T.c.value(N'count(Sub[@väl>4])', 'INT') AS val
+FROM @x.nodes(N'/Root/Item') AS T(c)
+ORDER BY 1
+go
+
+-- change 'o' in 'row' to 電
+DECLARE @xml XML = N'<Root><r電w id="1"><name>James</name></r電w><r電w id="2"><name>Megan</name></r電w></Root>'
+SELECT T.c.value('.', 'varchar(10)') AS result,
+T.c.value('local-name(.)', 'nvarchar(30)') AS name
+FROM @xml.nodes(N'/Root/r電w') AS T(c)
+go
+
+-- change 'o' in 'row' to 電
+DECLARE @xml XML = N'<Root><r電w id="1"><name>James</name></r電w><r電w id="2"><name>Megan</name></r電w></Root>'
+SELECT T.c.value('.', 'varchar(10)') AS result,
+T.c.value('local-name(.)', 'nvarchar(30)') AS name
+FROM @xml.nodes(N'/Root') AS T(c)
+go
+
 -- nodes() case sensitivity: only lowercase is valid in T-SQL, but not enforced in Babelfish
 DECLARE @xml XML = '<Root><item>A</item><item>B</item></Root>'
 SELECT T.C.value('(.)[1]', 'varchar(20)') AS val
