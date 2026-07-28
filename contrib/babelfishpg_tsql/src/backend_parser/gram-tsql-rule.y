@@ -228,6 +228,25 @@ tsql_windows_options:
  * 	database creation, etc. For example,
  * 		CREATE ROLE sysadmin CREATEDB CREATEROLE INHERIT ROLE sa_name
  */
+
+tsql_CreatedbStmt:
+			CREATE DATABASE name opt_with createdb_opt_list
+				{
+					CreatedbStmt *n = makeNode(CreatedbStmt);
+					base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+					char *orig_name = extract_identifier(yyextra->core_yy_extra.scanbuf + @3, NULL);
+
+					n->dbname = $3;
+					n->options = $5;
+					if (orig_name)
+						n->options = lappend(n->options,
+											 makeDefElem("bbf_original_name",
+														 (Node *) makeString(orig_name),
+														 @3));
+					$$ = (Node *) n;
+				}
+		;
+
 tsql_CreateRoleStmt:
 			CREATE ROLE RoleId opt_with OptRoleList
 				{
@@ -2712,7 +2731,7 @@ tsql_stmt :
 			| CreateEventTrigStmt
 			| tsql_CreateRoleStmt
 			| tsql_CreateUserStmt
-			| CreatedbStmt
+			| tsql_CreatedbStmt
 			| DeallocateStmt
 			| DeclareCursorStmt
 			| DefineStmt
