@@ -3839,6 +3839,17 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 
 		rename_extended_property(objtype_code, schema_name, curr_relname,
 								 obj_name, new_name);
+
+		/* Insert new entry in babelfish_identifier_mapping if new name is long */
+		if ((objtype_code == OBJECT_SEQUENCE || objtype_code == OBJECT_TYPE) &&
+			strlen(new_name) >= NAMEDATALEN)
+		{
+			char *new_truncated = downcase_truncate_identifier(new_name, strlen(new_name), false);
+			Oid catalog_type = (objtype_code == OBJECT_SEQUENCE) ? RelationRelationId : TypeRelationId;
+			char *physical_schema = get_physical_schema_name(get_cur_db_name(),
+								str_tolower(schema_name, strlen(schema_name), DEFAULT_COLLATION_OID));
+			insert_bbf_ident_mapping(new_truncated, new_name, physical_schema, catalog_type, NULL);
+		}
 	}
 	PG_FINALLY();
 	{
@@ -4057,9 +4068,9 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		}
 		else
 		{
-			renamestmt->subname = str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID);
-			renamestmt->newname = str_tolower(newobjname, strlen(newobjname), DEFAULT_COLLATION_OID);
-			renamestmt->relation->relname = str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID);
+			renamestmt->subname = downcase_truncate_identifier(objname, strlen(objname), false);
+			renamestmt->newname = downcase_truncate_identifier(newobjname, strlen(newobjname), false);
+			renamestmt->relation->relname = downcase_truncate_identifier(objname, strlen(objname), false);
 		}
 
 		if (objtype == OBJECT_TABLE || objtype == OBJECT_INDEX)
@@ -4076,7 +4087,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterTableStmt")));
 
 			altertablestmt->relation->schemaname = str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID);
-			altertablestmt->relation->relname = str_tolower(newobjname, strlen(newobjname), DEFAULT_COLLATION_OID);
+			altertablestmt->relation->relname = downcase_truncate_identifier(newobjname, strlen(newobjname), false);
 			/* get data of the first node */
 			lc = list_head(altertablestmt->cmds);
 			cmd = (AlterTableCmd *) lfirst(lc);
@@ -4089,10 +4100,10 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 
 		renamestmt->renameType = objtype;
 		objwargs->objname = list_make2(makeString(pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID))), 
-											makeString(pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID))));
+											makeString(downcase_truncate_identifier(objname, strlen(objname), false)));
 		orig_proc_funcname = pstrdup(newname);
-		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
-		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
+		renamestmt->subname = downcase_truncate_identifier(objname, strlen(objname), false);
+		renamestmt->newname = downcase_truncate_identifier(newname, strlen(newname), false);
 	}
 	else if ((objtype == OBJECT_TRIGGER))
 	{
@@ -4120,9 +4131,9 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	{
 		renamestmt->renameType = objtype;
 		renamestmt->object = (Node *)list_make2(makeString(pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID))), 
-													makeString(pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID))));
-		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
-		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
+													makeString(downcase_truncate_identifier(objname, strlen(objname), false)));
+		renamestmt->subname = downcase_truncate_identifier(objname, strlen(objname), false);
+		renamestmt->newname = downcase_truncate_identifier(newname, strlen(newname), false);
 	}
 	else
 	{
@@ -4133,10 +4144,10 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 
 		renamestmt->renameType = objtype;
 		renamestmt->relationType = OBJECT_TABLE;
-		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
-		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
+		renamestmt->subname = downcase_truncate_identifier(objname, strlen(objname), false);
+		renamestmt->newname = downcase_truncate_identifier(newname, strlen(newname), false);
 		renamestmt->relation->schemaname = pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID));
-		renamestmt->relation->relname = pstrdup(str_tolower(curr_relname, strlen(curr_relname), DEFAULT_COLLATION_OID));
+		renamestmt->relation->relname = downcase_truncate_identifier(curr_relname, strlen(curr_relname), false);
 		rewrite_object_refs(stmt);
 
 		/* extra query nodes for modifying attoption column */
@@ -4146,14 +4157,14 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterTableStmt")));
 
 		altertablestmt->relation->schemaname = pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID));
-		altertablestmt->relation->relname = pstrdup(str_tolower(curr_relname, strlen(curr_relname), DEFAULT_COLLATION_OID));
+		altertablestmt->relation->relname = downcase_truncate_identifier(curr_relname, strlen(curr_relname), false);
 		altertablestmt->objtype = OBJECT_TABLE;
 		/* get data of the first node */
 		lc = list_head(altertablestmt->cmds);
 		cmd = (AlterTableCmd *) lfirst(lc);
 		cmd->subtype = AT_SetOptions;
-		cmd->name = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
-		cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME), (Node *) makeString(pstrdup(newname)), -1)); //column->location));
+		cmd->name = downcase_truncate_identifier(newname, strlen(newname), false);
+		cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME), (Node *) makeString(pstrdup(newname)), -1));
 	}
 	/* name mapping */
 	rewrite_object_refs(stmt);
