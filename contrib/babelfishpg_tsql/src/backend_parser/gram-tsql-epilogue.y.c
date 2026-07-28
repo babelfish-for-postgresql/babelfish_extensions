@@ -102,6 +102,15 @@ construct_unique_index_name(char *index_name, char *relation_name)
 	name = palloc(new_len + 1);
 	memcpy(name, buf, new_len + 1);
 
+	/* Cache constructed truncated name → original index name for error messages */
+	{
+		const char *orig = bbf_lookup_ident_name(index_name);
+		if (orig)
+			bbf_cache_index_name(name, orig);
+		else
+			bbf_cache_index_name(name, index_name);
+	}
+
 	return name;
 }
 

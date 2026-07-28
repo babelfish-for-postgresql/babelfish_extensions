@@ -95,6 +95,8 @@ extern int16 get_db_id(const char *dbname);
 extern char *get_db_name(int16 dbid);
 extern char *dbid_get_original_db_name(int16 dbid);
 extern char *dbname_get_original_db_name(const char *db_name);
+extern const char *bbf_get_original_constraint_name(const char *conname);
+extern const char *bbf_get_original_index_name(const char *idxname);
 extern char *get_db_owner_role_name(const char *dbname);
 extern void initTsqlSyscache(void);
 extern const char *get_one_user_db_name(void);
@@ -137,6 +139,19 @@ extern Oid	bbf_ident_mapping_idx_oid;
 extern Oid	get_bbf_ident_mapping_oid(void);
 extern Oid	get_bbf_ident_mapping_idx_oid(void);
 
+typedef struct IdentNameCacheEntry
+{
+	char		truncated_name[NAMEDATALEN];
+	char		original_name[512 + 1]; /* 128 T-SQL chars * 4 bytes UTF-8 + NUL */
+} IdentNameCacheEntry;
+
+extern void bbf_cache_ident_name(const char *truncated_name, const char *original_name);
+extern void bbf_cache_index_name(const char *internal_name, const char *index_name);
+extern const char *bbf_lookup_ident_name(const char *truncated_name);
+extern void bbf_reset_ident_name_cache(void);
+extern int	bbf_snapshot_ident_cache(IdentNameCacheEntry **entries, MemoryContext cxt);
+extern void bbf_restore_ident_cache(IdentNameCacheEntry *entries, int n);
+extern char *bbf_rewrite_truncated_identifiers(const char *msg);
 extern void insert_bbf_ident_mapping(const char *truncated_name,
 											const char *original_name,
 											const char *nspname,
