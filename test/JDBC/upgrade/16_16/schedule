@@ -655,3 +655,4 @@ sys-fn-varbintohexsubstring
 forxml-path-elements-before-17_10-or-18_4
 babel_sqlvariant_coerce_type
 BABEL-login-db-long-identifiers
+long-identifiers-catalog-before-18_6

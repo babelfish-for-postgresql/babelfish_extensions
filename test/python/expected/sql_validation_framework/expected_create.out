@@ -210,6 +210,7 @@ Could not find upgrade tests for procedure sys.sp_unprepare
 Could not find upgrade tests for procedure sys.sp_updatestats
 Could not find upgrade tests for table sys.babelfish_configurations
 Could not find upgrade tests for table sys.babelfish_helpcollation
+Could not find upgrade tests for table sys.babelfish_identifier_mapping
 Could not find upgrade tests for table sys.babelfish_partition_function
 Could not find upgrade tests for table sys.babelfish_partition_scheme
 Could not find upgrade tests for table sys.babelfish_syslanguages

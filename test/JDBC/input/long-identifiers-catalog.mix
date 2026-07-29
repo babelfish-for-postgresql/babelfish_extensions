@@ -1,0 +1,389 @@
+-- Long Identifier Tests: Constraints, Types, Sequences, Parameters
+-- Tests storage of original names in babelfish_identifier_mapping catalog
+
+-- tsql
+-- ===========================================
+-- CREATION: Objects using babelfish_identifier_mapping
+-- ===========================================
+
+-- 1. CREATE TABLE with long constraint name (PK)
+CREATE TABLE babel5975_pk_test (
+    id INT NOT NULL,
+    CONSTRAINT Very_Long_Primary_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three PRIMARY KEY (id)
+);
+GO
+
+-- 2. CREATE TABLE with long constraint name (UNIQUE)
+CREATE TABLE babel5975_uq_test (
+    val INT,
+    CONSTRAINT Very_Long_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters UNIQUE (val)
+);
+GO
+
+-- 3. CREATE TABLE with long constraint name (CHECK)
+CREATE TABLE babel5975_ck_test (
+    val INT,
+    CONSTRAINT Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters CHECK (val > 0)
+);
+GO
+
+-- 4. CREATE SEQUENCE with long name
+CREATE SEQUENCE Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+AS INT START WITH 1 INCREMENT BY 1;
+GO
+
+-- 5. CREATE TYPE with long name
+CREATE TYPE Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing FROM INT;
+GO
+
+-- 6. CREATE PROCEDURE with long parameter name
+CREATE PROCEDURE babel5975_param_proc
+    @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT
+AS BEGIN SELECT @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters END;
+GO
+
+-- 7. CREATE FUNCTION with multiple long parameters
+CREATE FUNCTION babel5975_multi_param_func(
+    @Very_Long_First_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT,
+    @Very_Long_Second_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT
+)
+RETURNS INT AS BEGIN RETURN @Very_Long_First_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters + @Very_Long_Second_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters END;
+GO
+
+-- 8. CREATE TABLE with long FK constraint name
+CREATE TABLE babel5975_fk_parent (id INT PRIMARY KEY);
+GO
+CREATE TABLE babel5975_fk_child (
+    id INT,
+    parent_id INT,
+    CONSTRAINT Very_Long_Foreign_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three FOREIGN KEY (parent_id) REFERENCES babel5975_fk_parent(id)
+);
+GO
+
+-- 9. CREATE TABLE with long DEFAULT constraint name
+CREATE TABLE babel5975_df_test (
+    val INT CONSTRAINT Very_Long_Default_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars DEFAULT 0
+);
+GO
+
+
+-- ===========================================
+-- BRACKET DELIMITERS: Long names with spaces
+-- ===========================================
+
+-- Bracket constraint
+CREATE TABLE babel5975_bracket_test (
+    [Very Long Column Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters] INT,
+    CONSTRAINT [Very Long Constraint Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Chars] CHECK ([Very Long Column Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters] > 0)
+);
+GO
+
+-- Bracket sequence
+CREATE SEQUENCE [Very Long Sequence Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters] AS INT START WITH 1;
+GO
+
+-- Verify bracket identifiers stored in babelfish_identifier_mapping
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very Long%' ORDER BY original_identifier_name;
+GO
+
+-- Cleanup bracket objects
+DROP TABLE babel5975_bracket_test;
+GO
+DROP SEQUENCE [Very Long Sequence Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters];
+GO
+
+-- ===========================================
+-- VERIFICATION: System views show original names
+-- ===========================================
+
+-- Verify PK constraint name in sys.key_constraints
+SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_Primary%';
+GO
+
+-- Verify UNIQUE constraint name in sys.key_constraints
+SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_Unique%';
+GO
+
+-- Verify CHECK constraint name in sys.check_constraints
+SELECT name FROM sys.check_constraints WHERE name LIKE 'Very_Long_Check%';
+GO
+
+-- Verify FK constraint name in sys.foreign_keys
+SELECT name FROM sys.foreign_keys WHERE name LIKE 'Very_Long_Foreign%';
+GO
+
+-- Verify DEFAULT constraint in sys.default_constraints
+SELECT name FROM sys.default_constraints WHERE name LIKE 'Very_Long_Default%';
+GO
+
+
+-- Verify type in sys.types
+SELECT name FROM sys.types WHERE name LIKE 'Very_Long_Type%';
+GO
+
+-- Verify parameters in sys.all_parameters
+SELECT name FROM sys.all_parameters WHERE name LIKE '%Very_Long_First_Parameter%';
+GO
+SELECT name FROM sys.all_parameters WHERE name LIKE '%Very_Long_Second_Parameter%';
+GO
+SELECT name FROM sys.all_parameters WHERE name LIKE '%Very_Long_Parameter_Name%';
+GO
+
+
+-- sys.all_objects shows full original names for constraints
+SELECT name, type_desc FROM sys.all_objects WHERE name LIKE 'Very_Long_Primary%' OR name LIKE 'Very_Long_Check%' OR name LIKE 'Very_Long_Foreign%';
+GO
+
+-- sys.all_objects shows full original names for sequences
+SELECT name, type_desc FROM sys.all_objects WHERE name LIKE 'Very_Long_Sequence%';
+GO
+
+-- information_schema.table_constraints shows original constraint names
+SELECT CONSTRAINT_NAME, TABLE_NAME FROM information_schema.table_constraints
+WHERE CONSTRAINT_NAME LIKE 'Very_Long_Primary%' OR CONSTRAINT_NAME LIKE 'Very_Long_Unique%';
+GO
+
+-- information_schema.key_column_usage shows original names
+SELECT CONSTRAINT_NAME, TABLE_NAME, COLUMN_NAME FROM information_schema.key_column_usage
+WHERE CONSTRAINT_NAME LIKE 'Very_Long_Primary%';
+GO
+
+-- ===========================================
+-- VERIFICATION: Check babelfish_identifier_mapping storage
+-- ===========================================
+
+-- Verify constraints stored (pg_constraint OID = 2606)
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping
+WHERE pg_catalog_type = 2606
+ORDER BY original_identifier_name;
+GO
+
+-- Verify sequences stored (pg_class OID = 1259)
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping
+WHERE pg_catalog_type = 1259
+ORDER BY original_identifier_name;
+GO
+
+-- Verify types stored (pg_type OID = 1247)
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping
+WHERE pg_catalog_type = 1247
+ORDER BY original_identifier_name;
+GO
+
+-- Verify parameters stored (pg_proc OID = 1255)
+SELECT original_identifier_name, parent_name FROM sys.babelfish_identifier_mapping
+WHERE pg_catalog_type = 1255
+ORDER BY original_identifier_name;
+GO
+
+-- ===========================================
+-- DROP CLEANUP TESTS: Verify entries are removed
+-- ===========================================
+
+-- Create objects to test drop cleanup
+CREATE TABLE babel5975_drop_test (
+    id INT NOT NULL,
+    CONSTRAINT Very_Long_Drop_Test_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars PRIMARY KEY (id)
+);
+GO
+CREATE SEQUENCE Very_Long_Drop_Test_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars AS INT START WITH 1;
+GO
+CREATE TYPE Very_Long_Drop_Test_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FROM INT;
+GO
+CREATE FUNCTION Very_Long_Drop_Test_Func_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters(
+    @Very_Long_Drop_Test_Param_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT
+) RETURNS INT AS BEGIN RETURN @Very_Long_Drop_Test_Param_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters END;
+GO
+
+-- Verify entries exist before drop
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Drop_Test%';
+GO
+
+-- Drop and verify entries are removed one by one
+DROP TABLE babel5975_drop_test;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Drop_Test_Constraint%';
+GO
+
+DROP SEQUENCE Very_Long_Drop_Test_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Drop_Test_Sequence%';
+GO
+
+DROP TYPE Very_Long_Drop_Test_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Drop_Test_Type%';
+GO
+
+DROP FUNCTION Very_Long_Drop_Test_Func_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Drop_Test_Param%';
+GO
+
+
+-- ===========================================
+
+-- ===========================================
+-- ALTER TABLE: ADD/DROP CONSTRAINT with long names
+-- ===========================================
+
+-- ALTER TABLE ADD CONSTRAINT with long CHECK name
+CREATE TABLE babel5975_alter_test (id INT, val INT);
+GO
+ALTER TABLE babel5975_alter_test ADD CONSTRAINT Very_Long_Alter_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three CHECK (val > 0);
+GO
+SELECT name FROM sys.check_constraints WHERE name LIKE 'Very_Long_Alter_Check%';
+GO
+
+-- ALTER TABLE ADD CONSTRAINT with long UNIQUE name
+ALTER TABLE babel5975_alter_test ADD CONSTRAINT Very_Long_Alter_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three UNIQUE (id);
+GO
+SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_Alter_Unique%';
+GO
+
+-- ALTER TABLE DROP CONSTRAINT - verify entry removed
+ALTER TABLE babel5975_alter_test DROP CONSTRAINT Very_Long_Alter_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Alter_Check%';
+GO
+
+ALTER TABLE babel5975_alter_test DROP CONSTRAINT Very_Long_Alter_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Alter_Unique%';
+GO
+
+DROP TABLE babel5975_alter_test;
+GO
+
+-- RENAME TESTS: Verify mapping is updated on sp_rename
+-- ===========================================
+
+-- Test sequence rename
+CREATE SEQUENCE Very_Long_Rename_Test_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars AS INT START WITH 1;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Rename_Test_Sequence%';
+GO
+EXEC sp_rename 'Very_Long_Rename_Test_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars', 'Very_Long_Renamed_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters', 'OBJECT';
+GO
+-- Old entry should be gone, new entry should exist
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Rename_Test_Sequence%';
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Renamed_Sequence%';
+GO
+DROP SEQUENCE Very_Long_Renamed_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- Test type rename
+CREATE TYPE Very_Long_Rename_Test_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FROM INT;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Rename_Test_Type%';
+GO
+EXEC sp_rename 'Very_Long_Rename_Test_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters', 'Very_Long_Renamed_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_New', 'USERDATATYPE';
+GO
+-- Old entry should be gone, new entry should exist
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Rename_Test_Type%';
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Renamed_Type%';
+GO
+DROP TYPE Very_Long_Renamed_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_New;
+GO
+
+-- ===========================================
+-- CASE SENSITIVITY TESTS
+-- ===========================================
+
+-- Mixed case constraint
+CREATE TABLE babel5975_case_test (id INT NOT NULL,
+    CONSTRAINT MixedCase_PK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters PRIMARY KEY (id),
+    CONSTRAINT MixedCase_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars CHECK (id > 0));
+GO
+SELECT name FROM sys.key_constraints WHERE name LIKE 'MixedCase_PK%';
+GO
+SELECT name FROM sys.check_constraints WHERE name LIKE 'MixedCase_Check%';
+GO
+
+-- Foreign key with mixed case
+CREATE TABLE babel5975_fk_case_parent (id INT PRIMARY KEY);
+GO
+CREATE TABLE babel5975_fk_case_child (id INT,
+    CONSTRAINT MixedCase_FK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FOREIGN KEY (id) REFERENCES babel5975_fk_case_parent(id));
+GO
+SELECT name FROM sys.foreign_keys WHERE name LIKE 'MixedCase_FK%';
+GO
+DROP TABLE babel5975_fk_case_child;
+GO
+DROP TABLE babel5975_fk_case_parent;
+GO
+DROP TABLE babel5975_case_test;
+GO
+
+-- Mixed case sequence
+CREATE SEQUENCE MixedCase_Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars AS INT START WITH 1;
+GO
+SELECT name FROM sys.objects WHERE name LIKE 'MixedCase_Very_Long_Seq%';
+GO
+DROP SEQUENCE MixedCase_Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+
+-- Mixed case type
+CREATE TYPE MixedCase_Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FROM INT;
+GO
+SELECT name FROM sys.types WHERE name LIKE 'MixedCase_Very_Long_Type%';
+GO
+DROP TYPE MixedCase_Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- ===========================================
+-- MULTIBYTE CHARACTER TESTS
+-- ===========================================
+
+-- Emoji and special characters in constraint name
+CREATE TABLE babel5975_emoji_test (id INT NOT NULL,
+    CONSTRAINT PK_Emoji_😀😁😂🤣😃😄😅😆😉😊😋😎🙂🤗🤩🤔🤨😐😑😶🙄😏😣😥😮 PRIMARY KEY (id),
+    CONSTRAINT CHK_Emoji_😀😁😂🤣😃😄😅😆😉😊😋😎🙂🤗🤩🤔🤨😐😑😶🙄😏😣😥 CHECK (id > 0));
+GO
+SELECT name FROM sys.key_constraints WHERE name LIKE 'PK_Emoji%';
+GO
+SELECT name FROM sys.check_constraints WHERE name LIKE 'CHK_Emoji%';
+GO
+DROP TABLE babel5975_emoji_test;
+GO
+
+-- Chinese characters in sequence name
+CREATE SEQUENCE 这是一个非常长的序列名称用来测试PostgreSQL对超过六十三个字符的标识符的处理方式 AS INT START WITH 1;
+GO
+SELECT name FROM sys.objects WHERE name LIKE '这是一个%';
+GO
+DROP SEQUENCE 这是一个非常长的序列名称用来测试PostgreSQL对超过六十三个字符的标识符的处理方式;
+GO
+
+-- Mixed multibyte + ASCII in type name
+CREATE TYPE タイプ_Mixed_Type_Name_That_Exceeds_PostgreSQL_Limit_With_日本語_Characters_Added FROM INT;
+GO
+SELECT name FROM sys.types WHERE name LIKE 'タイプ_Mixed%';
+GO
+DROP TYPE タイプ_Mixed_Type_Name_That_Exceeds_PostgreSQL_Limit_With_日本語_Characters_Added;
+GO
+
+-- CLEANUP
+-- ===========================================
+DROP TABLE babel5975_pk_test;
+GO
+DROP TABLE babel5975_uq_test;
+GO
+DROP TABLE babel5975_ck_test;
+GO
+DROP SEQUENCE Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+DROP TYPE Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+DROP PROCEDURE babel5975_param_proc;
+GO
+DROP FUNCTION babel5975_multi_param_func;
+GO
+DROP TABLE babel5975_fk_child;
+GO
+DROP TABLE babel5975_fk_parent;
+GO
+DROP TABLE babel5975_df_test;
+GO

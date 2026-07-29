@@ -473,13 +473,13 @@ CREATE NONCLUSTERED INDEX [partition_vu_prepare_varchar_index] ON [dbo].[partiti
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [VarCharPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [partitionindexnamelessthan128ab93d59dee3c39fb6416680e0982b0ea32] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan6402ce6bebcadddb6e6a931674c4836f80]
+CREATE NONCLUSTERED INDEX [PartitionIndexNameLessThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopq] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan6402ce6bebcadddb6e6a931674c4836f80]
 (
 	[value] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder]([partitioncolumnnamelessthan128aa68c06f20de507e395cc43043306431a])
 GO
 
-CREATE NONCLUSTERED INDEX [partitionindexnamelessthan128ab93d59dee3c39fb6416680e0982b0ea32] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamelessthan128ab6e1b50aeff8d243f9ee4c7ee01907bdf]
+CREATE NONCLUSTERED INDEX [PartitionIndexNameLessThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopq] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamelessthan128ab6e1b50aeff8d243f9ee4c7ee01907bdf]
 (
 	[value] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz]([partitioncolumnnamelessthan128aa68c06f20de507e395cc43043306431a])

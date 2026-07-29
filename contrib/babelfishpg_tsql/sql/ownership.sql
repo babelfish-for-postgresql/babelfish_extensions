@@ -71,6 +71,7 @@ CREATE TABLE sys.babelfish_identifier_mapping (
 	PRIMARY KEY (truncated_identifier_name, nspname, pg_catalog_type, parent_name)
 );
 GRANT SELECT ON sys.babelfish_identifier_mapping TO PUBLIC;
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_identifier_mapping', '');
 
 -- SYSDATABASES
 CREATE OR REPLACE VIEW sys.sysdatabases AS
