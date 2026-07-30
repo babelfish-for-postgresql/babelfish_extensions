@@ -240,6 +240,7 @@ static void handleLocal_id(TSqlParser::Local_idContext *ctx, bool inSqlObject);
 static std::string delimitIfAtAtUserVarName(const std::string name);
 static void CheckDeclareAtAtGlobalVarName(const std::string name, int lineNr);
 static antlr4::tree::TerminalNode *getTokenFromFunctionOption(TSqlParser::Function_optionContext* o);
+static void validateXMLNodeFunctionArg(TSqlParser::Xml_nodes_methodContext *ctx);	
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -1245,6 +1246,89 @@ public:
 		}
 	}
 
+	void exitXml_nodes_method(TSqlParser::Xml_nodes_methodContext *ctx) override
+	{
+		validateXMLNodeFunctionArg(ctx);
+				
+		std::string ctx_str = ::getFullText(ctx);			
+					
+		size_t startPosition = ctx->NODES()->getSymbol()->getStartIndex();
+		rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair("", "bbf_xml")));
+
+		std::string original_expr = ctx_str.substr(0, ctx->DOT()->getSymbol()->getStartIndex() - ctx->start->getStartIndex() + 1);		
+		std::string expr = original_expr;
+				
+		/* quoting local_id here so as to remove possibility of multiple rewrites in a single context */
+		int offset1 = 0;
+		std::vector<size_t> keysToRemove;
+		for (auto &entry : local_id_positions)
+		{
+			if(entry.first >= ctx->start->getStartIndex() && entry.first < ctx->DOT()->getSymbol()->getStartIndex())
+			{
+				/* Here we are quoting local_id which is before the function name */
+				int local_index = (int)entry.first - ctx->start->getStartIndex() + offset1;
+				if(expr.substr(local_index, entry.second.size()) ==  entry.second)
+				{
+					keysToRemove.push_back(entry.first);
+					expr = expr.substr(0, local_index) + "\"" + entry.second + "\"" + expr.substr(local_index + entry.second.size());
+					offset1 += 2;
+				}
+			}
+		}
+		for (const auto &key : keysToRemove) local_id_positions.erase(key);
+		keysToRemove.clear();
+		
+		rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(original_expr, "")));		
+		
+		expr.pop_back(); /* remove the trailing dot character */
+		rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()->getSymbol()->getStartIndex(), std::make_pair("", ", " + expr)));		
+	}
+
+	void enterXml_proc_name_table_column(TSqlParser::Xml_proc_name_table_columnContext *ctx) override
+	{
+		/*
+		 * XML methods cannot be called in GROUP BY expressions
+		 * The grammar path is always as follows, though expression can recurse
+		 * including via clr_udt_func_call:
+		 *	 group_by_item
+		 *	     expression
+		 *	         clr_udt_func_call
+		 *	             function_call
+		 *	                 xml_proc_name_table_column
+		 */
+		Assert(ctx->parent);
+		auto parentCtx = ctx->parent;
+		if (dynamic_cast<TSqlParser::Function_callContext *>(parentCtx))
+		{
+			Assert(parentCtx->parent);
+			parentCtx = parentCtx->parent;
+			if (dynamic_cast<TSqlParser::Clr_udt_func_callContext *>(parentCtx))
+			{
+				Assert(parentCtx->parent);
+				parentCtx = parentCtx->parent;
+				if (dynamic_cast<TSqlParser::ExpressionContext *>(parentCtx))
+				{
+					Assert(parentCtx->parent);
+					parentCtx = parentCtx->parent;
+				}
+			}
+		}
+
+		/* Check for possible nested expression */
+		while ((dynamic_cast<TSqlParser::Clr_udt_func_callContext *>(parentCtx)) ||
+			   (dynamic_cast<TSqlParser::ExpressionContext *>(parentCtx)))	
+		{
+			Assert(parentCtx->parent);
+			parentCtx = parentCtx->parent;
+		}
+
+		/* Final check: is this a GROUP BY expressioon ? */
+		if (dynamic_cast<TSqlParser::Group_by_itemContext *>(parentCtx))
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "XML methods are not allowed in a GROUP BY clause.", 0, 0);
+		}
+	}
+	
 	void exitDatatype_coloncolon_methods(TSqlParser::Datatype_coloncolon_methodsContext *ctx) override
 	{
 		std::string typeStr = ::getFullText(ctx->data_type());
@@ -10287,6 +10371,8 @@ handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 static void
 validateXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSqlParser::Expression_listContext *expr_list)
 {
+    /* NB: T-SQL requires the XML method names to be in lowercase, but this is not enforced in Babelfish */
+    
 	/* XML .exist() function requires only 1 argument */
 	if (xml_func->EXIST() && (expr_list == NULL || expr_list->expression().size() != 1))
 		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The exist function requires 1 argument(s).", getLineAndPos(xml_func));
@@ -10313,6 +10399,29 @@ validateXMLFunctionArgs(TSqlParser::Xml_func_argContext *xml_func, TSqlParser::E
 										(i+1), ::getFullText(xml_func).c_str()),
 						getLineAndPos(expr));
 		}
+	}
+}
+
+static void
+validateXMLNodeFunctionArg(TSqlParser::Xml_nodes_methodContext *ctx)
+{
+    /* NB: T-SQL requires the XML method names to be in lowercase, but this is not enforced in Babelfish */
+		
+	/* XML .nodes() function requires only 1 argument */
+	if ((ctx->expression_list() != NULL) || (ctx->expression() == NULL && ctx->char_string() == NULL))
+		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The nodes function requires 1 argument(s).", getLineAndPos(ctx));
+
+	/* Only string literal is allowed as XPath argument for XML Functions. 
+	 * We can detect this directly from the grammar as the argument must be char_string
+	 */
+	if (ctx->expression())
+	{
+		/* The argument is not a char_string */
+		throw PGErrorWrapperException(ERROR, 
+				ERRCODE_INVALID_PARAMETER_VALUE, 
+				format_errmsg("The argument %d of the XML data type method \"%s\" must be a string literal.",
+								1, "nodes"), 
+				getLineAndPos(ctx->expression()));
 	}
 }
 

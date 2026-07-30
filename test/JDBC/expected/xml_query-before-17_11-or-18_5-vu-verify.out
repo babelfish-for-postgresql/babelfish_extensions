@@ -679,7 +679,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on image.)~~
+~~ERROR (Message: cannot cast type xml_query_imageudt to xml)~~
 
 
 -- XML UDT
@@ -714,7 +714,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on int.)~~
+~~ERROR (Message: cannot cast type integer to xml)~~
 
 
 -- .query() on NVARCHAR should error
@@ -736,7 +736,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on bigint.)~~
+~~ERROR (Message: cannot cast type bigint to xml)~~
 
 
 -- .query() on FLOAT should error
@@ -747,7 +747,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on float.)~~
+~~ERROR (Message: cannot cast type double precision to xml)~~
 
 
 -- .query() on BIT should error
@@ -758,7 +758,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on bit.)~~
+~~ERROR (Message: cannot cast type "bit" to xml)~~
 
 
 -- .query() on DECIMAL should error
@@ -769,7 +769,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on decimal.)~~
+~~ERROR (Message: cannot cast type "decimal" to xml)~~
 
 
 -- .query() on TEXT column should error
@@ -1344,12 +1344,9 @@ WHERE data IS NOT NULL
 GROUP BY data.query('/root/name').value('(/name)[1]', 'VARCHAR(50)')
 ORDER BY name_val;
 GO
-~~START~~
-varchar#!#int
-Bob#!#1
-Jane#!#1
-John#!#1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML methods are not allowed in a GROUP BY clause.)~~
 
 
 
@@ -1417,9 +1414,8 @@ SELECT @x.query('/');
 GO
 ~~START~~
 xml
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: could not parse XML document)~~
+~~END~~
 
 
 -- 5. Bare ampersand (not an entity)
@@ -1478,5 +1474,5 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot call methods on int.)~~
+~~ERROR (Message: cannot cast type integer to xml)~~
 
