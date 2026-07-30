@@ -679,7 +679,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type xml_query_imageudt to xml)~~
+~~ERROR (Message: Cannot call methods on image.)~~
 
 
 -- XML UDT
@@ -714,7 +714,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type integer to xml)~~
+~~ERROR (Message: Cannot call methods on int.)~~
 
 
 -- .query() on NVARCHAR should error
@@ -736,7 +736,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type bigint to xml)~~
+~~ERROR (Message: Cannot call methods on bigint.)~~
 
 
 -- .query() on FLOAT should error
@@ -747,7 +747,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type double precision to xml)~~
+~~ERROR (Message: Cannot call methods on float.)~~
 
 
 -- .query() on BIT should error
@@ -758,7 +758,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type "bit" to xml)~~
+~~ERROR (Message: Cannot call methods on bit.)~~
 
 
 -- .query() on DECIMAL should error
@@ -769,7 +769,7 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type "decimal" to xml)~~
+~~ERROR (Message: Cannot call methods on decimal.)~~
 
 
 -- .query() on TEXT column should error
@@ -1474,5 +1474,5 @@ GO
 xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type integer to xml)~~
+~~ERROR (Message: Cannot call methods on int.)~~
 
