@@ -96,6 +96,12 @@ Oid			bbf_function_ext_oid;
 Oid			bbf_function_ext_idx_oid;
 
 /*****************************************
+ *			TRUNCATED_IDENTIFIER
+ *****************************************/
+Oid			bbf_ident_mapping_oid;
+Oid			bbf_ident_mapping_idx_oid;
+
+/*****************************************
  *			SCHEMA
  *****************************************/
 Oid			bbf_schema_perms_oid;
@@ -209,6 +215,17 @@ static struct cachedesc my_cacheinfo[] = {
 			0
 		},
 		16
+	},
+	{-1,						/* IDENTMAPPINGNAME */
+		-1,
+		4,
+		{
+			Anum_bbf_ident_mapping_truncated_name,
+			Anum_bbf_ident_mapping_nspname,
+			Anum_bbf_ident_mapping_pg_catalog_type,
+			Anum_bbf_ident_mapping_parent_name
+		},
+		128
 	}
 };
 
@@ -235,6 +252,10 @@ init_catalog(PG_FUNCTION_ARGS)
 	bbf_function_ext_oid = get_relname_relid(BBF_FUNCTION_EXT_TABLE_NAME, sys_schema_oid);
 	bbf_function_ext_idx_oid = get_relname_relid(BBF_FUNCTION_EXT_IDX_NAME, sys_schema_oid);
 
+	/* bbf_ident_mapping */
+	bbf_ident_mapping_oid = get_relname_relid(BBF_IDENT_MAPPING_TABLE_NAME, sys_schema_oid);
+	bbf_ident_mapping_idx_oid = get_relname_relid(BBF_IDENT_MAPPING_IDX_NAME, sys_schema_oid);
+
 	/* user ext */
 	bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
 												sys_schema_oid);
@@ -252,6 +273,8 @@ init_catalog(PG_FUNCTION_ARGS)
 	my_cacheinfo[3].indoid = namespace_ext_idx_oid_oid;
 	my_cacheinfo[4].reloid = bbf_authid_user_ext_oid;
 	my_cacheinfo[4].indoid = bbf_authid_user_ext_idx_oid;
+	my_cacheinfo[5].reloid = bbf_ident_mapping_oid;
+	my_cacheinfo[5].indoid = bbf_ident_mapping_idx_oid;
 
 	/* login ext */
 	bbf_authid_login_ext_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_TABLE_NAME,
@@ -317,7 +340,7 @@ initTsqlSyscache()
 	/* Initialize info for catcache */
 	if (!tsql_syscache_inited)
 	{
-		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 5);
+		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 6);
 		tsql_syscache_inited = true;
 	}
 }
@@ -343,7 +366,7 @@ IsPLtsqlExtendedCatalog(Oid relationId)
 		relationId == bbf_syslanguages_oid || relationId == bbf_service_settings_oid ||
 		relationId == spt_datatype_info_table_oid || relationId == bbf_versions_oid ||
 		relationId == bbf_partition_function_oid || relationId == bbf_partition_scheme_oid ||
-		relationId == bbf_partition_depend_oid))
+		relationId == bbf_partition_depend_oid || relationId == bbf_ident_mapping_oid))
 		return true;
 	if (PrevIsExtendedCatalogHook)
 		return (*PrevIsExtendedCatalogHook) (relationId);
@@ -1602,6 +1625,261 @@ clean_up_bbf_function_ext(int16 dbid)
 	table_endscan(scan);
 	table_close(namespace_rel, AccessShareLock);
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
+}
+
+/*****************************************
+ *		TRUNCATED IDENTIFIER helpers
+ *****************************************/
+
+Oid
+get_bbf_ident_mapping_oid(void)
+{
+	if (!OidIsValid(bbf_ident_mapping_oid))
+		bbf_ident_mapping_oid = get_relname_relid(BBF_IDENT_MAPPING_TABLE_NAME,
+													get_namespace_oid("sys", false));
+	return bbf_ident_mapping_oid;
+}
+
+Oid
+get_bbf_ident_mapping_idx_oid(void)
+{
+	if (!OidIsValid(bbf_ident_mapping_idx_oid))
+		bbf_ident_mapping_idx_oid = get_relname_relid(BBF_IDENT_MAPPING_IDX_NAME,
+														get_namespace_oid("sys", false));
+	return bbf_ident_mapping_idx_oid;
+}
+
+/*
+ * insert_bbf_ident_mapping - Insert an entry mapping truncated name
+ * to its original name. Only inserts if original name exceeds NAMEDATALEN-1 bytes.
+ */
+void
+insert_bbf_ident_mapping(const char *truncated_name,
+								const char *original_name,
+								const char *nspname,
+								Oid pg_catalog_type,
+								const char *parent_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	Datum		values[BBF_IDENT_MAPPING_NUM_COLS];
+	bool		nulls[BBF_IDENT_MAPPING_NUM_COLS];
+	NameData	truncated_namedata;
+	NameData	nspname_data;
+	NameData	parent_namedata;
+
+	/* Only store if the original name was actually truncated */
+	if (strlen(original_name) < NAMEDATALEN)
+		return;
+
+	if (!OidIsValid(get_bbf_ident_mapping_oid()))
+		return;
+
+	/* Skip if entry already exists */
+	{
+		char *existing = lookup_bbf_ident_mapping(truncated_name, nspname,
+												  pg_catalog_type, parent_name);
+		if (existing)
+		{
+			pfree(existing);
+			return;
+		}
+	}
+
+	rel = table_open(get_bbf_ident_mapping_oid(), RowExclusiveLock);
+
+	MemSet(nulls, false, sizeof(nulls));
+
+	namestrcpy(&nspname_data, nspname);
+	namestrcpy(&truncated_namedata, truncated_name);
+	namestrcpy(&parent_namedata, parent_name ? parent_name : "");
+
+	values[Anum_bbf_ident_mapping_nspname - 1] = NameGetDatum(&nspname_data);
+	values[Anum_bbf_ident_mapping_pg_catalog_type - 1] = ObjectIdGetDatum(pg_catalog_type);
+	values[Anum_bbf_ident_mapping_truncated_name - 1] = NameGetDatum(&truncated_namedata);
+	values[Anum_bbf_ident_mapping_original_name - 1] = CStringGetTextDatum(original_name);
+	values[Anum_bbf_ident_mapping_parent_name - 1] = NameGetDatum(&parent_namedata);
+
+	tuple = heap_form_tuple(RelationGetDescr(rel), values, nulls);
+	CatalogTupleInsert(rel, tuple);
+
+	heap_freetuple(tuple);
+	table_close(rel, RowExclusiveLock);
+
+	CommandCounterIncrement();
+}
+
+/*
+ * lookup_bbf_ident_mapping - Look up the original name for a truncated identifier.
+ * Returns a palloc'd string, or NULL if not found.
+ */
+char *
+lookup_bbf_ident_mapping(const char *truncated_name,
+								const char *nspname,
+								Oid pg_catalog_type,
+								const char *parent_name)
+{
+	HeapTuple	tuple;
+	char	   *result = NULL;
+	NameData	truncated_namedata;
+	NameData	nspname_data;
+	NameData	parent_namedata;
+
+	if (!OidIsValid(get_bbf_ident_mapping_oid()))
+		return NULL;
+
+	namestrcpy(&truncated_namedata, truncated_name);
+	namestrcpy(&nspname_data, nspname);
+	namestrcpy(&parent_namedata, parent_name ? parent_name : "");
+
+	tuple = SearchSysCache4(IDENTMAPPINGNAME,
+							NameGetDatum(&truncated_namedata),
+							NameGetDatum(&nspname_data),
+							ObjectIdGetDatum(pg_catalog_type),
+							NameGetDatum(&parent_namedata));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		bool		isNull;
+		Datum		datum;
+		Relation	rel;
+
+		rel = table_open(get_bbf_ident_mapping_oid(), AccessShareLock);
+		datum = heap_getattr(tuple, Anum_bbf_ident_mapping_original_name,
+							 RelationGetDescr(rel), &isNull);
+		if (!isNull)
+			result = TextDatumGetCString(datum);
+		table_close(rel, AccessShareLock);
+		ReleaseSysCache(tuple);
+	}
+
+	return result;
+}
+
+/*
+ * delete_bbf_ident_mapping - Delete a single catalog entry.
+ */
+void
+delete_bbf_ident_mapping(const char *truncated_name,
+								const char *nspname,
+								Oid pg_catalog_type,
+								const char *parent_name)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	NameData	truncated_namedata;
+	NameData	nspname_data;
+	NameData	parent_namedata;
+
+	if (!OidIsValid(get_bbf_ident_mapping_oid()))
+		return;
+
+	namestrcpy(&truncated_namedata, truncated_name);
+	namestrcpy(&nspname_data, nspname);
+	namestrcpy(&parent_namedata, parent_name ? parent_name : "");
+
+	tuple = SearchSysCache4(IDENTMAPPINGNAME,
+							NameGetDatum(&truncated_namedata),
+							NameGetDatum(&nspname_data),
+							ObjectIdGetDatum(pg_catalog_type),
+							NameGetDatum(&parent_namedata));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		rel = table_open(get_bbf_ident_mapping_oid(), RowExclusiveLock);
+		CatalogTupleDelete(rel, &tuple->t_self);
+		table_close(rel, RowExclusiveLock);
+		ReleaseSysCache(tuple);
+	}
+}
+
+/*
+ * delete_bbf_ident_mapping_by_parent - Delete all entries matching
+ * nspname + pg_catalog_type + parent_name. Used when dropping a parent
+ * object (e.g., all constraints of a table).
+ */
+void
+delete_bbf_ident_mapping_by_parent(const char *nspname,
+								   Oid pg_catalog_type,
+								   const char *parent_name)
+{
+	Relation	rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	NameData	nspname_data;
+	NameData	parent_namedata;
+
+	if (!OidIsValid(get_bbf_ident_mapping_oid()))
+		return;
+
+	namestrcpy(&nspname_data, nspname);
+	namestrcpy(&parent_namedata, parent_name ? parent_name : "");
+
+	rel = table_open(get_bbf_ident_mapping_oid(), RowExclusiveLock);
+
+	scan = table_beginscan_catalog(rel, 0, NULL);
+
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		bool	isNull;
+		Datum	d_nsp, d_type, d_parent;
+
+		d_nsp = heap_getattr(tuple, Anum_bbf_ident_mapping_nspname,
+							 RelationGetDescr(rel), &isNull);
+		if (isNull || strcmp(NameStr(*DatumGetName(d_nsp)), nspname_data.data) != 0)
+			continue;
+
+		d_type = heap_getattr(tuple, Anum_bbf_ident_mapping_pg_catalog_type,
+							  RelationGetDescr(rel), &isNull);
+		if (isNull || DatumGetObjectId(d_type) != pg_catalog_type)
+			continue;
+
+		d_parent = heap_getattr(tuple, Anum_bbf_ident_mapping_parent_name,
+								RelationGetDescr(rel), &isNull);
+		if (isNull || strcmp(NameStr(*DatumGetName(d_parent)), parent_namedata.data) != 0)
+			continue;
+
+		CatalogTupleDelete(rel, &tuple->t_self);
+	}
+
+	table_endscan(scan);
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * clean_up_bbf_ident_mapping - Remove all entries for a given nspname.
+ * Used during DROP SCHEMA / DROP DATABASE.
+ */
+void
+clean_up_bbf_ident_mapping(const char *nspname)
+{
+	Relation	rel;
+	TableScanDesc scan;
+	ScanKeyData scanKey[1];
+	HeapTuple	tuple;
+	NameData	nspname_data;
+
+	if (!OidIsValid(get_bbf_ident_mapping_oid()))
+		return;
+
+	namestrcpy(&nspname_data, nspname);
+
+	rel = table_open(get_bbf_ident_mapping_oid(), RowExclusiveLock);
+
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_ident_mapping_nspname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&nspname_data));
+
+	scan = table_beginscan_catalog(rel, 1, scanKey);
+
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		CatalogTupleDelete(rel, &tuple->t_self);
+	}
+
+	table_endscan(scan);
+	table_close(rel, RowExclusiveLock);
 }
 
 /*
@@ -3372,10 +3650,24 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_SEQUENCE:
+			/* Remove old entry from babelfish_identifier_mapping */
+			if (stmt->relation && stmt->relation->schemaname)
+				delete_bbf_ident_mapping(stmt->relation->relname,
+										 stmt->relation->schemaname,
+										 RelationRelationId, NULL);
 			break;
 		case OBJECT_TRIGGER:
 			break;
 		case OBJECT_TYPE:
+			/* Remove old entry from babelfish_identifier_mapping */
+			if (stmt->object)
+			{
+				List *names = (List *) stmt->object;
+				if (list_length(names) >= 2)
+					delete_bbf_ident_mapping(strVal(lsecond(names)),
+											 strVal(linitial(names)),
+											 TypeRelationId, NULL);
+			}
 			break;
 		case OBJECT_COLUMN:
 			break;
@@ -4776,7 +5068,7 @@ update_sysdatabases_db_name(const char *old_db_name, const char *new_db_name)
 		
 	/* Set up the new database. */
 	values[Anum_sysdatabases_name - 1]   = CStringGetTextDatum(new_db_name);
-	replaces[Anum_sysdatabases_name - 1] = true;	
+	replaces[Anum_sysdatabases_name - 1] = true;
 								  
 	tuple = heap_modify_tuple(db_found,
 							  sysdatabases_rel_descr,

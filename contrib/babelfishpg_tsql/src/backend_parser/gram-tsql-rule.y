@@ -904,6 +904,7 @@ ConstraintElem:
 					n->options = $9;
 					n->indexname = NULL;
 					n->indexspace = $10;
+					n->is_enforced = true;
 					processCASbits($11, @11, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, NULL, yyscanner);
@@ -1094,9 +1095,23 @@ DefineStmt:
 			| CREATE TYPE_P any_name FROM Typename
 				{
 					CreateDomainStmt *n = makeNode(CreateDomainStmt);
+					Constraint *c = makeNode(Constraint);
+
 					n->domainname = $3;
 					n->typeName = $5;
-					n->constraints = NIL;
+					c->contype = CONSTR_NULL;
+					c->location = @3;
+					if (sql_dialect == SQL_DIALECT_TSQL)
+					{
+						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+						char *original_name = extract_identifier(yyextra->core_yy_extra.scanbuf + @3, NULL);
+						if (original_name)
+							c->options = lappend(c->options,
+								makeDefElem("bbf_original_name",
+									(Node *)makeString(original_name),
+									@3));
+					}
+					n->constraints = list_make1(c);
 
 					$$ = (Node *)n;
 				}
@@ -1107,13 +1122,22 @@ DefineStmt:
 
 					n->domainname = $3;
 					n->typeName = $5;
-					n->constraints = list_make1(c);
-
 					c->contype = CONSTR_NOTNULL;
 					c->location = @6;
 					c->is_enforced = true;
 					c->skip_validation = false;
 					c->initially_valid = true;
+					if (sql_dialect == SQL_DIALECT_TSQL)
+					{
+						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+						char *original_name = extract_identifier(yyextra->core_yy_extra.scanbuf + @3, NULL);
+						if (original_name)
+							c->options = lappend(c->options,
+								makeDefElem("bbf_original_name",
+									(Node *)makeString(original_name),
+									@3));
+					}
+					n->constraints = list_make1(c);
 
 					$$ = (Node *)n;
 
@@ -1125,13 +1149,22 @@ DefineStmt:
 
 					n->domainname = $3;
 					n->typeName = $5;
-					n->constraints = list_make1(c);
-
 					c->contype = CONSTR_NULL;
 					c->location = @6;
 					c->is_enforced = true;
 					c->skip_validation = false;
 					c->initially_valid = true;
+					if (sql_dialect == SQL_DIALECT_TSQL)
+					{
+						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+						char *original_name = extract_identifier(yyextra->core_yy_extra.scanbuf + @3, NULL);
+						if (original_name)
+							c->options = lappend(c->options,
+								makeDefElem("bbf_original_name",
+									(Node *)makeString(original_name),
+									@3));
+					}
+					n->constraints = list_make1(c);
 
 					$$ = (Node *)n;
 
@@ -1146,6 +1179,7 @@ func_arg:
 					n->argType = $2;
 					n->mode = $3;
 					n->defexpr = NULL;
+					n->location = @1;
 					$$ = n;
 				}
 		;
@@ -4535,6 +4569,7 @@ tsql_proc_arg:
 					n->argType = $3;
 					n->mode = $6 ? FUNC_PARAM_INOUT : FUNC_PARAM_IN;
 					n->defexpr = $5;
+					n->location = @1;
 					tsql_check_param_readonly($1, $3, $7);
 
 					 $$ = n;
@@ -4570,6 +4605,7 @@ tsql_func_arg:
 					n->argType = $3;
 					n->mode = FUNC_PARAM_IN;
 					n->defexpr = $4;
+					n->location = @1;
 					tsql_check_param_readonly($1, $3, $5);
 
 					$$ = n;
