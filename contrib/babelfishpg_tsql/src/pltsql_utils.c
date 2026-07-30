@@ -26,6 +26,7 @@
 #include "access/table.h"
 #include "access/genam.h"
 #include "catalog.h"
+#include "rewrite/rewriteHandler.h"
 #include "hooks.h"
 #include "guc.h"
 #include "tcop/utility.h"
@@ -361,6 +362,29 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 
 			/* Store function/procedure related metadata in babelfish catalog */
 			pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location, with_recompile);
+
+			/* Store original parameter names for long identifiers */
+			if (queryString && stmt->parameters)
+			{
+				ListCell *plc;
+				char *funcname = strVal(llast(stmt->funcname));
+				char *nspname = get_namespace_name(get_func_namespace(address.objectId));
+
+				foreach(plc, stmt->parameters)
+				{
+					FunctionParameter *fp = (FunctionParameter *) lfirst(plc);
+
+					if (fp->name && fp->location >= 0 && strlen(fp->name) >= NAMEDATALEN - 1)
+					{
+						char *orig = extract_identifier(queryString + fp->location, NULL);
+						if (orig && strlen(orig) >= NAMEDATALEN)
+							insert_bbf_ident_mapping(fp->name, orig, nspname,
+													 ProcedureRelationId, funcname);
+						if (orig)
+							pfree(orig);
+					}
+				}
+			}
 
 			if (tbltypStmt || restore_tsql_tabletype)
 			{

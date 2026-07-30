@@ -1,0 +1,10 @@
+DROP TABLE babel5975_cat_vu_t1;
+GO
+DROP TABLE babel5975_cat_vu_t2;
+GO
+DROP SEQUENCE Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU;
+GO
+DROP TYPE Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU;
+GO
+DROP PROCEDURE babel5975_cat_vu_proc;
+GO

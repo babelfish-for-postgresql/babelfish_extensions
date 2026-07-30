@@ -514,7 +514,7 @@ BEGIN
     RETURN QUERY
     SELECT CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-           CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
+           COALESCE(case when octet_length(c.conname) >= 60 then (select m.original_identifier_name from sys.babelfish_identifier_mapping m where m.truncated_identifier_name = c.conname and m.nspname = nsp.nspname and m.pg_catalog_type = 'pg_constraint'::regclass::oid) end, c.conname::text)::sys.sysname AS "CONSTRAINT_NAME",
            CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
            CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
@@ -606,7 +606,7 @@ GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
 CREATE VIEW information_schema_tsql.check_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 	    CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-           CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
+           COALESCE(case when octet_length(c.conname) >= 60 then (select m.original_identifier_name from sys.babelfish_identifier_mapping m where m.truncated_identifier_name = c.conname and m.nspname = nc.nspname and m.pg_catalog_type = 'pg_constraint'::regclass::oid) end, c.conname::text)::sys.sysname AS "CONSTRAINT_NAME",
 	    CAST(sys.tsql_get_constraintdef(c.oid) AS sys.nvarchar(4000)) AS "CHECK_CLAUSE"
 
     FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
@@ -856,7 +856,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	SELECT
 		CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-		CAST(c.conname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME",
+		COALESCE(case when octet_length(c.conname) >= 60 then (select m.original_identifier_name from sys.babelfish_identifier_mapping m where m.truncated_identifier_name = c.conname and m.nspname = nsp.nspname and m.pg_catalog_type = 'pg_constraint'::regclass::oid) end, c.conname::text)::sys.nvarchar(128) AS "CONSTRAINT_NAME",
 		CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",

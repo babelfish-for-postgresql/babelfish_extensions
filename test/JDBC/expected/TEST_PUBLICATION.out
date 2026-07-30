@@ -34,6 +34,7 @@ sys.babelfish_domain_mapping
 sys.babelfish_extended_properties
 sys.babelfish_function_ext
 sys.babelfish_helpcollation
+sys.babelfish_identifier_mapping
 sys.babelfish_namespace_ext
 sys.babelfish_partition_depend
 sys.babelfish_partition_function

@@ -1,0 +1,50 @@
+-- Verify constraint names after upgrade
+SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_PK%CatVU';
+GO
+~~START~~
+varchar
+Very_Long_PK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+~~END~~
+
+
+SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_Unique%CatVU';
+GO
+~~START~~
+varchar
+Very_Long_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+~~END~~
+
+
+SELECT name FROM sys.check_constraints WHERE name LIKE 'Very_Long_Check%CatVU';
+GO
+~~START~~
+varchar
+Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+~~END~~
+
+
+-- Verify sequence name after upgrade
+SELECT name FROM sys.sequences WHERE name LIKE 'Very_Long_Sequence%CatVU';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+-- Verify type name after upgrade
+SELECT name FROM sys.types WHERE name LIKE 'Very_Long_Type%CatVU';
+GO
+~~START~~
+varchar
+Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU
+~~END~~
+
+
+-- Verify parameter name after upgrade
+SELECT name FROM sys.all_parameters WHERE name LIKE '%Very_Long_Parameter%CatVU';
+GO
+~~START~~
+varchar
+@Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU
+~~END~~
+
