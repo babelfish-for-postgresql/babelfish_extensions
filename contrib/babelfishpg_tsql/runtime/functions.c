@@ -6404,8 +6404,8 @@ bbf_xml_decode_chars(const char *s)
 	StringInfoData buf;
 	const char *p;
 
-	if (s == NULL)
-		return NULL;
+	if (!*s)
+		return pstrdup("");
 
 	/* Quick check: if no '&' present, nothing to do so return a copy as-is */
 	if (strchr(s, '&') == NULL)
@@ -6468,8 +6468,8 @@ bbf_xml_encode_chars(const char *s)
 	StringInfoData buf;
 	const char *p;
 
-	if (s == NULL)
-		return NULL;
+	if (!*s)
+		return pstrdup("");
 
 	initStringInfo(&buf);
 	for (p = s; *p; p++)
@@ -6515,7 +6515,7 @@ bbf_xml_extract_magic_nodes_tag(const char *xml_text)
 	int content_len;
 	char *content;
 
-	if (xml_text == NULL)
+	if (!*xml_text)
 		return pstrdup("");
 
 	/* Check if xml_text starts with the magic tag */
@@ -6551,8 +6551,8 @@ bbf_xml_remove_magic_nodes_tag(const char *xml_text)
 	int tag_close_len = strlen(tag_close);
 	const char *close_pos;
 
-	if (xml_text == NULL)
-		return NULL;
+	if (!*xml_text)
+		return pstrdup("");
 
 	/* Check if xml_text starts with the magic tag */
 	if (strncmp(xml_text, tag_open, tag_open_len) != 0)
@@ -6626,41 +6626,34 @@ bbf_xml_validate_xml_type(Oid arg_type)
  * bbf_xml_skip_xpath_chars
  * While processing the XPath query, skip characters inside string literals
  * (double-quoted) and predicates (square-bracketed, can be nested).
- * Returns the number of characters skipped, or 0 is none are skipped
+ * Returns the number of characters skipped, or 0 if none are skipped
  */
 static int
-//bbf_xml_skip_xpath_chars(const char *xpath_pattern, int i, int len_xp)
 bbf_xml_skip_xpath_chars(const char *p)
 {
 	int nr_chars_skipped = 0;
 	char ch;
 	int bracket_depth = 0;
-	
-	//printf("*** bbf_xml_skip_xpath_chars: entry=[%s]\n", p);	
 
 	if (!*p)
 		return 0;
 
 	ch = *p;
 
-	//printf("*** bbf_xml_skip_xpath_chars: ch=[%c]\n", ch);	
-	
 	/* String literals in double quotes */
 	if (ch == '"')
-	{		
+	{
 		while (*p)
 		{
 			nr_chars_skipped++;
 			p++;
 			ch = *p;
-			//printf("*** bbf_xml_skip_xpath_chars: ch=[%c] p=[%s] nr_chars_skipped=%d\n", ch, p, nr_chars_skipped);
 			if (ch == '"')
 			{
 				nr_chars_skipped++;
 				break;
 			}
 		}
-		//printf("*** bbf_xml_skip_xpath_chars: return A=%d p=[%s]\n", nr_chars_skipped, p);
 		return nr_chars_skipped;
 	}
 
@@ -6684,12 +6677,10 @@ bbf_xml_skip_xpath_chars(const char *p)
 			}
 			p++;
 		}
-		//printf("*** bbf_xml_skip_xpath_chars: return B=%d\n", nr_chars_skipped);		
 		return nr_chars_skipped;
 	}
 
 	/* Nothing to skip */
-	//printf("*** bbf_xml_skip_xpath_chars: final return 0\n");		
 	return 0;
 }
 
@@ -6705,43 +6696,37 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
 	char ch;
 	char *p;
 	StringInfoData result;
-	int nr_chars_skipped;	
 
-	//printf("*** bbf_xml_remove_xpath_whitespace: xpath_pattern entry=[%s]\n", xpath_pattern);
-	
-	if (xpath_pattern == NULL)
+	if (!*xpath_pattern)
 		return NULL;
 
 	initStringInfo(&result);
-	
-	p = (char *) xpath_pattern; 
+
+	p = (char *) xpath_pattern;
 	while (*p)
 	{
-		ch = *p;     
-				
-		/* 
+		ch = *p;
+
+		/*
          * Do not touch string literals or predicates. If encountered,
          * return the number of skipped chars
-         */		    
+         */
         if ((ch == '"') || (ch == '['))
         {
-			nr_chars_skipped = bbf_xml_skip_xpath_chars(p);
+			int nr_chars_skipped = bbf_xml_skip_xpath_chars(p);
 			if (nr_chars_skipped > 0)
 			{
-				//printf("*** bbf_xml_remove_xpath_whitespace: nr_chars_skipped=[%d] p=[%s]\n", nr_chars_skipped, p);	
 				while (nr_chars_skipped > 0)
 				{
 					appendStringInfoChar(&result, *p);
-					////printf("*** bbf_xml_remove_xpath_whitespace: A appending ch=[%c] tmp=[%s]\n", *p, result.data);					
 					p++;
 					nr_chars_skipped--;
-				}			
-				continue;		
+				}
+				continue;
 			}
 		}
 
 		/* Remove whitespace characters ...*/
-		//printf("*** bbf_xml_remove_xpath_whitespace: ch=[%c]\n", ch);		
 		if (isspace(ch))
 		{
 			/* ... but only if removal would not concatenate two word characters.
@@ -6762,7 +6747,6 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
 				{
 					/* Keep the space to avoid word concatenation */
 					appendStringInfoChar(&result, ch);
-					//printf("*** bbf_xml_remove_xpath_whitespace: B appending ch=[%c] tmp=[%s]\n", ch, result.data);	
 				}
 			}
 			/* Otherwise: skip whitespace */
@@ -6771,19 +6755,17 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
 		{
 			/* Not whitespace, copy the character */
 			appendStringInfoChar(&result, ch);
-			//printf("*** bbf_xml_remove_xpath_whitespace: C appending ch=[%c] tmp=[%s]\n", ch, result.data);	
 		}
 		p++;
 	}
 
-	//printf("*** bbf_xml_remove_xpath_whitespace: xpath_pattern exit =[%s]\n", result.data);
 	return result.data;
 }
 
 /*
  * bbf_xml_is_xpath_function
  * Checks whether a string starts with a known XPath 1.0 function name
- * followed by '('. 
+ * followed by '('.
  * The functions listed are the XPath 1.0 functions supported in T-SQL.
  */
 static bool
@@ -6812,8 +6794,6 @@ bbf_xml_is_xpath_function(const char *s)
 		NULL
 	};
 
-	// check for terminating bracket first?
-	
 	int i;
 
 	if (s == NULL || *s == '\0')
@@ -6836,50 +6816,46 @@ bbf_xml_patch_xpath_dot_bracket(const char *xpath_pattern)
 {
 	StringInfoData result;
 	int i = 0;
-	int len;
-
-	if (xpath_pattern == NULL)
-		return NULL;
-
-	len = strlen(xpath_pattern);
+	int len = strlen(xpath_pattern);
+	
+	if (!*xpath_pattern)
+		return '\0';
+	
+	/* Continue only if there is '.[' in the string (possible interleaving whitespace has already been removed) */
+	if (strstr(xpath_pattern, ".[") == NULL) 
+		return pstrdup(xpath_pattern);
+	
 	initStringInfo(&result);
 
 	while (i < len)
 	{
 		if (xpath_pattern[i] == '.')
 		{
-			/* Check if this is .[  */
-			if (i + 1 < len && xpath_pattern[i + 1] == '[')
+			/* Check for '..' (followed by '.') */
+			if (i + 1 < len && xpath_pattern[i + 1] == '.')
 			{
-				/* Check it is not ..[ (preceded by '.') */
-				if (i > 0 && xpath_pattern[i - 1] == '.')
-				{
-					/* This is ..[ - leave as-is */
+				/* This is '..' : copy and move forward */
+				appendStringInfoString(&result, "..");
+				i += 2;
+				continue;
+			}	
+			/* Check if this is .[  */
+			else if (i + 1 < len && xpath_pattern[i + 1] == '[')
+			{						
+				/* Check for '/.[' (preceded by '/')  */
+				if (i > 0 && xpath_pattern[i - 1] == '/')
+					/* This is '/.[' : keep as-is */
 					appendStringInfoChar(&result, '.');
-				}
-				/* Check it is not preceded by '/' */
-				else if (i > 0 && xpath_pattern[i - 1] == '/')
-				{
-					appendStringInfoChar(&result, '.');
-				}
-				/* Check it is not followed by '.' (i.e. ..) */
-				else if (i + 1 < len && xpath_pattern[i + 1] == '.')
-				{
-					appendStringInfoChar(&result, '.');
-				}
 				else
-				{
-					/* This is .[ - change to (.)[ */
+					/* This is '.[' : change to (.)[ */
 					appendStringInfoString(&result, "(.)");
-				}
 			}
 			else
-			{
 				appendStringInfoChar(&result, '.');
-			}
 		}
 		else
 		{
+			/* Default: copy the character */			
 			appendStringInfoChar(&result, xpath_pattern[i]);
 		}
 		i++;
@@ -6901,14 +6877,18 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 	int len;
 	int prev_len;
 
-	if (xpath_pattern == NULL)
+	if (!*xpath_pattern)
 		return;
 
-	/* Remove all spaces and collapse multiple parentheses for the checks */
+	/* 
+	 * Remove all spaces and collapse multiple parentheses for the checks 
+	 * NB: When adding checks on specific substrings such as 'xs:' then the 
+	 * whitespace may need to be kept.
+	 */
 	initStringInfo(&buf);
 	for (const char *p = xpath_pattern; *p; p++)
 	{
-		if (*p != ' ')
+		if (!isspace(*p))
 			appendStringInfoChar(&buf, *p);
 	}
 	stripped = buf.data;
@@ -6926,13 +6906,9 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 		while (*src)
 		{
 			if (*src == '(' && *(src + 1) == '(')
-			{
 				src++;
-			}
 			else
-			{
 				*dst++ = *src++;
-			}
 		}
 		*dst = '\0';
 
@@ -6942,13 +6918,9 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 		while (*src)
 		{
 			if (*src == ')' && *(src + 1) == ')')
-			{
 				src++;
-			}
 			else
-			{
 				*dst++ = *src++;
-			}
 		}
 		*dst = '\0';
 
@@ -6956,6 +6928,8 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 		if (len == prev_len)
 			break;
 	}
+	
+	/* The string has been cleaned up, now check for the things we want to report */
 
 	/* Cannot move higher up when already at the root */
 	if (strncmp(stripped, "..", 2) == 0 ||
@@ -7004,44 +6978,28 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 static char *
 bbf_xml_process_xpath_function(const char *xpath_pattern, const char *context_node_path)
 {
-	//int len_xp;
-	//int i;
 	char ch, next_ch, prev_ch;
 	StringInfoData result;
 	StringInfoData ident_buf;
-	int nr_chars_skipped;
 	char *p;
-	//char *skipped;
-	//char *padded;
-
-    //printf("*** bbf_xml_process_xpath_function: entry: xpath_pattern=[%s]\n", xpath_pattern);
 
 	if (context_node_path == NULL || strlen(context_node_path) == 0)
 		return pstrdup(xpath_pattern);
 
-	/*
-	 * Add space at start and two at the end to simplify logic so there's always
-	 * a previous and next character.
-	 */
-	//padded = psprintf(" %s  ", xpath_pattern);
-	//len_xp = strlen(padded);
-
 	initStringInfo(&result);
 
-	//i = 0;
-	p = (char *)xpath_pattern;  // cast?
+	p = (char *)xpath_pattern; 
 	while (*p)
 	{
 		ch = *p;
-				
-		/* 
+
+		/*
          * Do not touch string literals or predicates. If encountered,
          * return the number of skipped chars
-         */		
+         */
         if ((ch == '"') || (ch == '['))
-        {         
-			nr_chars_skipped = bbf_xml_skip_xpath_chars(p);
-			//printf("*** bbf_xml_process_xpath_function: p=[%s] nr_chars_skipped=%d\n", p, nr_chars_skipped);			
+        {
+			int nr_chars_skipped = bbf_xml_skip_xpath_chars(p);
 			if (nr_chars_skipped > 0)
 			{
 				while (nr_chars_skipped > 0)
@@ -7049,67 +7007,61 @@ bbf_xml_process_xpath_function(const char *xpath_pattern, const char *context_no
 					appendStringInfoChar(&result, *p);
 					p++;
 					nr_chars_skipped--;
-				}			
-				continue;		
+				}
+				continue;
 			}
 		}
 
 		prev_ch = (p != xpath_pattern) ? (*(p-1)) : ' ';
-			
-		//printf("*** bbf_xml_process_xpath_function: ch=[%c] prev_ch=[%c] p=[%s]\n", ch, prev_ch, p);			
 
 		/* '.' reference */
 		if (ch == '.')
 		{
 			if (prev_ch == '(' || prev_ch == ',' || prev_ch == '/' || prev_ch == ' ')
 			{
-				//next_ch = (i + 1 < len_xp) ? padded[i + 1] : ' ';
 				next_ch = (*p) && *(p+1) ? *(p+1) : ' ';
-				//printf("*** bbf_xml_process_xpath_function: next_ch=[%c] \n", next_ch);					
-
 				if (next_ch == '.')
 				{
-					/* '..' (parent reference), find out what follows it */
-					//char after_dots = (i + 2 < len_xp) ? padded[i + 2] : ' ';
+					/* 
+					 * '..' (parent reference), find out what follows it
+					 * 
+					 * NB. we're looking two positions ahead here, but if we'd be at the end of the string, 
+					 * then next_ch would contain a space now, so we wouldn't get into this branch
+					 */
 					char after_dots = *(p+2) ? *(p+2) : ' ';
-					//printf("*** bbf_xml_process_xpath_function: after_dots=[%c] \n", after_dots);	
-						
+
 					if (after_dots == '/' || after_dots == ')' || after_dots == ',' ||
 						after_dots == '[' || after_dots == ']' || after_dots == ' ')
 					{
 						appendStringInfo(&result, "(%s/..)", context_node_path);
-						p += 2; /* move two chars forward */
+						p += 2; /* Move two chars forward */
 					}
 					else
 					{
 						/* '..' followed by something else - not a parent reference we need to handle; copy as-is */
 						appendStringInfoString(&result, "..");
 						p += 2; /* move two chars forward */
-					}		
-					//printf("*** bbf_xml_process_xpath_function: .. result=[%s] p+2=[%s]\n", result.data, p);									
+					}
 				}
 				else if (next_ch == '/' || next_ch == ')' || next_ch == ',' ||
 						 next_ch == '[' || next_ch == ']' || next_ch == ' ')
 				{
 					/* self reference: '.' or './' etc. */
 					appendStringInfo(&result, "(%s/.)", context_node_path);
-					p++;					
-					//printf("*** bbf_xml_process_xpath_function: . result=[%s] p=[%s]\n", result.data, p);	
+					p++;
 				}
 				else
 				{
 					/* '.' followed by something else (could be a number in '1.0') . Copy as-is */
 					appendStringInfoChar(&result, ch);
 					p++;
-					//printf("*** bbf_xml_process_xpath_function: other result=[%s] p=[%s]\n", result.data, p);											
-				}						
+				}
 			}
 			else
 			{
 				/* '.' not preceded by argument-start character, copy as-is */
 				appendStringInfoChar(&result, ch);
 				p++;
-				//printf("*** bbf_xml_process_xpath_function: dft result=[%s] p=[%s]\n", result.data, p);					
 			}
 			continue;
 		}
@@ -7121,7 +7073,7 @@ bbf_xml_process_xpath_function(const char *xpath_pattern, const char *context_no
 			{
 				/* Collect the @attr name (@name, @*, @id, etc. and append to the context node path */
 				appendStringInfo(&result, "%s/", context_node_path);
-				appendStringInfoChar(&result, '@');				
+				appendStringInfoChar(&result, '@');
 
 				while (*p)
 				{
@@ -7143,91 +7095,66 @@ bbf_xml_process_xpath_function(const char *xpath_pattern, const char *context_no
 			}
 		}
 
-		/* 
-		 * Handle identifiers without '@', preceded by '(' or ',' 
-         * Note that we must not touch XPath function names		
+		/*
+		 * Handle identifiers without '@', preceded by '(' or ','
+         * Note that we must not touch XPath function names
          */
 		if (isalpha(ch) || ch == '_')
 		{
 			if (prev_ch == '(' || prev_ch == ',' || prev_ch == ' ')
 			{
-				char c;
-				/* Collect characters for this identifier */	
+				char ch2 = ' ';
+				/* Collect characters for this identifier */
 				initStringInfo(&ident_buf);
 				while (*p)
-				{   
-					c = *p;
-					////printf("*** bbf_xml_process_xpath_function: c=[%c] p=[%s]\n", c, p);	
-												
-					if (isalnum(c) || c == '_' || c == '-')
+				{
+					ch2 = *p;
+					if (isalnum(ch2) || ch2 == '_' || ch2 == '-')
 					{
-						appendStringInfoChar(&ident_buf, c);
-						//printf("*** bbf_xml_process_xpath_function: A appending [%c] ident_buf.data=[%s]\n", c, ident_buf.data);
+						appendStringInfoChar(&ident_buf, ch2);
 						p++;
-						continue;							
+						continue;
 					}
-					else if (c == '(')
-					{						
-						appendStringInfoChar(&ident_buf, c);
-						//printf("*** bbf_xml_process_xpath_function: B appending [%c] ident_buf.data=[%s]\n", c, ident_buf.data);						
+					else if (ch2 == '(')
+					{
+						appendStringInfoChar(&ident_buf, ch2);
 						break;
-					}	
-					else		
-						/* character will be appended below */			
+					}
+					else
+						/* character will be appended below */
 						break;
 				}
-				
-				//printf("*** bbf_xml_process_xpath_function:ident_buf.data=[%s]\n", ident_buf.data);						
-				
+
 				/* Check if this identifier is a known XPath function */
-				if ((c == '(') && (bbf_xml_is_xpath_function(ident_buf.data)))
+				if ((ch2 == '(') && (bbf_xml_is_xpath_function(ident_buf.data)))
 				{
 					/* XPath function - copy as-is */
 					appendStringInfoString(&result, ident_buf.data);
-					//printf("*** bbf_xml_process_xpath_function: C appending [%s] result.data=[%s]\n", ident_buf.data, result.data);					
 				}
 				else
 				{
 					/* Identifier but not XPath function - prepend the context node path */
 					appendStringInfo(&result, "%s/%s", context_node_path, ident_buf.data);
-					appendStringInfoChar(&result, c);			
-					//printf("*** bbf_xml_process_xpath_function: D appending [%s] result.data=[%s] p=[%s]\n", ident_buf.data, result.data, p);									
+					appendStringInfoChar(&result, ch2);
 				}
 				pfree(ident_buf.data);
 				p++;
-				//printf("*** bbf_xml_process_xpath_function: D-E p=[%s]\n", p);	
 				continue;
 			}
 			else
 			{
 				/* Not the start of an identifier - copy as-is */
-				appendStringInfoChar(&result, ch);					
+				appendStringInfoChar(&result, ch);
 				p++;
-				//printf("*** bbf_xml_process_xpath_function: E appending [%c] result.data=[%s] p=[%s]\n", ch, result.data, p);					
 				continue;
 			}
 		}
 
-		/* Default: copy character as-is */			
-		appendStringInfoChar(&result, ch);		
+		/* Default: copy character as-is */
+		appendStringInfoChar(&result, ch);
 		p++;
-		//printf("*** bbf_xml_process_xpath_function: F appending [%c] result.data=[%s] p=[%s]\n", ch, result.data, p);			
 	}
 
-    //printf("*** bbf_xml_process_xpath_function: function: result.data=[%s]\n", result.data);
-
-	/* Remove the padding spaces we added (first and last character) */
-/*	
-	if (result.len >= 2)
-	{
-		char *trimmed = pstrdup(result.data + 1);
-		int tlen = strlen(trimmed);
-		if (tlen > 0 && trimmed[tlen - 1] == ' ')
-			trimmed[tlen - 1] = '\0';
-		pfree(result.data);
-		return trimmed;
-	}
-*/
 	return result.data;
 }
 
@@ -7244,7 +7171,7 @@ bbf_xml_xpath_with_context_node(const char *xpath_pattern, const char *context_n
 	const char *stripped;
 	char *result_str;
 
-	if (context_node_path == NULL || strlen(context_node_path) == 0)
+	if (!*context_node_path)
         cleaned_ctx = NULL;
     else
         /* Remove whitespace */
@@ -7252,8 +7179,6 @@ bbf_xml_xpath_with_context_node(const char *xpath_pattern, const char *context_n
 
 	/* Remove whitespace */
 	cleaned_xpath = bbf_xml_remove_xpath_whitespace(xpath_pattern);
-	
-	//printf("*** bbf_xml_xpath_with_context_node: cleaned_xpath=[%s] cleaned_ctx=[%s]\n", cleaned_xpath, cleaned_ctx);
 
 	/* If context node path is empty, just patch .[N] and return */
 	if (cleaned_ctx == NULL || strlen(cleaned_ctx) == 0)
@@ -7262,7 +7187,6 @@ bbf_xml_xpath_with_context_node(const char *xpath_pattern, const char *context_n
 		pfree(cleaned_xpath);
 		if (cleaned_ctx)
 			pfree(cleaned_ctx);
-		//printf("*** bbf_xml_xpath_with_context_node: result_str ctx empty=[%s]\n", result_str);			
 		return result_str;
 	}
 
@@ -7275,7 +7199,6 @@ bbf_xml_xpath_with_context_node(const char *xpath_pattern, const char *context_n
 	{
 		/* Absolute path - return unchanged */
 		pfree(cleaned_ctx);
-		//printf("*** bbf_xml_xpath_with_context_node: result_str abs=[%s]\n", cleaned_xpath);			
 		return cleaned_xpath;
 	}
 
@@ -7292,9 +7215,7 @@ bbf_xml_xpath_with_context_node(const char *xpath_pattern, const char *context_n
 
 	pfree(cleaned_xpath);
 	pfree(cleaned_ctx);
-	
-	//printf("*** bbf_xml_xpath_with_context_node: result_str=[%s]\n", result_str);
-	
+
 	return result_str;
 }
 
@@ -7323,7 +7244,7 @@ bbf_xml_handle_context_node(const char *xml_str,
 	bbf_xml_check_final_xpath_query((const char *)*pfinal_xpath, caller);
 }
 
-/* 
+/*
  * ============================================================
  * Main XML method C implementations
  * ============================================================
@@ -7580,6 +7501,13 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 	int			nr_rows;
 	int			i;
 
+	/* Check QUOTED_IDENTIFIER is ON */
+    bbf_xml_validate_quoted_identifier();
+
+	/* Handle NULL XML input */
+	if (PG_ARGISNULL(1))
+		PG_RETURN_NULL();
+
 	/* Setup for set-returning function */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
 		ereport(ERROR,
@@ -7589,13 +7517,6 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
-
-	/* Check QUOTED_IDENTIFIER is ON */
-    bbf_xml_validate_quoted_identifier();
-
-	/* Handle NULL XML input */
-	if (PG_ARGISNULL(1))
-		PG_RETURN_NULL();
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
