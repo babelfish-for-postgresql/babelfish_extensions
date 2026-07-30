@@ -5542,25 +5542,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				if (sql_dialect == SQL_DIALECT_TSQL &&
 					strcmp(queryString, CREATE_FULLTEXT_INDEX) != 0) /* Skip fulltext indexes since they don't even have an original name */
 				{
-					char    	*original_name = NULL;
+					char    	*original_name = stmt->idxname != NULL ? stmt->idxname : NULL;
 					List    	*partition_schemes = stmt->excludeOpNames;
-					ListCell	*opt_lc;
-
-					/* Extract original index name using location from grammar */
-					foreach(opt_lc, stmt->options)
-					{
-						DefElem *defel = (DefElem *) lfirst(opt_lc);
-						if (strcmp(defel->defname, "name_location") == 0)
-						{
-							int loc = intVal(defel->arg);
-							if (loc >= 0 && queryString)
-								original_name = extract_identifier(queryString + loc, NULL);
-							stmt->options = foreach_delete_current(stmt->options, opt_lc);
-							break;
-						}
-					}
-					if (!original_name)
-						original_name = stmt->idxname;
 
 					stmt->excludeOpNames = NIL;
 					if (stmt->idxname && !stmt->isconstraint)
