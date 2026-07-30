@@ -5529,6 +5529,32 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									}
 								}
 							}
+							else if (IsA(elt, ColumnDef))
+							{
+								ColumnDef *coldef = (ColumnDef *) elt;
+								ListCell *clc;
+
+								foreach(clc, coldef->constraints)
+								{
+									Constraint *con = (Constraint *) lfirst(clc);
+
+									if (IsA(con, Constraint) && con->conname && con->location >= 0)
+									{
+										const char *start = skip_whitespace_and_comments(queryString + con->location + CONSTRAINT_KEYWORD_LEN);
+										char *original_name;
+
+										original_name = extract_identifier(start, NULL);
+
+										if (original_name)
+										{
+											insert_bbf_ident_mapping(con->conname,
+																		 original_name, nspname,
+																		 ConstraintRelationId, rel->relname);
+											pfree(original_name);
+										}
+									}
+								}
+							}
 						}
 					}
 				}

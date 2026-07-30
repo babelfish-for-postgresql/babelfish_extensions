@@ -146,6 +146,15 @@ varchar
 ~~END~~
 
 
+-- Verify DEFAULT constraint stored in babelfish_identifier_mapping
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Default%';
+GO
+~~START~~
+nvarchar
+Very_Long_Default_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+~~END~~
+
+
 
 -- Verify type in sys.types
 SELECT name FROM sys.types WHERE name LIKE 'Very_Long_Type%';
@@ -233,6 +242,7 @@ GO
 ~~START~~
 nvarchar
 Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+Very_Long_Default_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
 Very_Long_Foreign_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
 Very_Long_Primary_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
 Very_Long_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
