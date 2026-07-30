@@ -116,6 +116,10 @@ GO
 SELECT name FROM sys.default_constraints WHERE name LIKE 'Very_Long_Default%';
 GO
 
+-- Verify DEFAULT constraint stored in babelfish_identifier_mapping
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_Default%';
+GO
+
 
 -- Verify type in sys.types
 SELECT name FROM sys.types WHERE name LIKE 'Very_Long_Type%';
