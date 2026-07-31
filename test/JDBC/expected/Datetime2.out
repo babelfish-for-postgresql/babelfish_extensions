@@ -8698,10 +8698,10 @@ WHERE TABLE_NAME = 'DateTime2View' ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-DateTime2View#!#ComputedDateTime2Column#!#datetime2
-DateTime2View#!#DateTime2Column#!#datetime2
-DateTime2View#!#DefaultDateTime2Column#!#datetime2
-DateTime2View#!#ID#!#int
+datetime2view#!#ComputedDateTime2Column#!#datetime2
+datetime2view#!#DateTime2Column#!#datetime2
+datetime2view#!#DefaultDateTime2Column#!#datetime2
+datetime2view#!#ID#!#int
 ~~END~~
 
 

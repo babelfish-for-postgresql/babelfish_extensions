@@ -1169,7 +1169,7 @@ ROLLBACK
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "#temp_table_rollback_t5_idx2" does not exist)~~
+~~ERROR (Message: index "#temp_table_rollback_t5_idx2#te2a202739f4e4dbd1ebea8195fe760b6f" does not exist)~~
 
 
 SELECT * FROM #temp_table_rollback_t5
@@ -1185,7 +1185,7 @@ DROP INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "#temp_table_rollback_t5_idx2" does not exist)~~
+~~ERROR (Message: index "#temp_table_rollback_t5_idx2#te2a202739f4e4dbd1ebea8195fe760b6f" does not exist)~~
 
 
 CREATE INDEX #temp_table_rollback_t5_idx2 ON #temp_table_rollback_t5(b)

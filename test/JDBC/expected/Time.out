@@ -8966,10 +8966,10 @@ WHERE TABLE_NAME = 'TimeView' ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-TimeView#!#ComputedTimeColumn#!#time
-TimeView#!#DefaultTimeColumn#!#time
-TimeView#!#ID#!#int
-TimeView#!#TimeColumn#!#time
+timeview#!#ComputedTimeColumn#!#time
+timeview#!#DefaultTimeColumn#!#time
+timeview#!#ID#!#int
+timeview#!#TimeColumn#!#time
 ~~END~~
 
 

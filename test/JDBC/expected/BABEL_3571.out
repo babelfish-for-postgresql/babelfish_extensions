@@ -144,14 +144,14 @@ INSERT INTO babel_3571_3 VALUES (NULL, '', 0x9999)
 GO
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idx")~~
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce")~~
 
 
 INSERT INTO babel_3571_3 VALUES (0, NULL, 0x9999)
 GO
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idx")~~
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce")~~
 
 
 INSERT INTO babel_3571_3 VALUES (NULL, NULL, NULL)
@@ -163,7 +163,7 @@ INSERT INTO babel_3571_3 VALUES (NULL, NULL, 0x9999)
 GO
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idx")~~
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce")~~
 
 
 SELECT indexdef FROM pg_indexes 
@@ -697,7 +697,7 @@ INSERT INTO babel_3571_3 (id1, id2) VALUES (1,10)
 GO
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idx")~~
+~~ERROR (Message: duplicate key value violates unique constraint "babel_3571_3_unique_idxbabel_35df79da2a42216884edca5a4a798829ce")~~
 
 INSERT INTO babel_3571_3 (id1, id2) VALUES (NULL,10)
 GO
@@ -845,7 +845,7 @@ CREATE UNIQUE INDEX babel_3571_idx ON babel_3571_1(id)
 GO
 ~~ERROR (Code: 1505)~~
 
-~~ERROR (Message: could not create unique index "babel_3571_idx")~~
+~~ERROR (Message: could not create unique index "babel_3571_idxbabel_3571_176ad772d1712c20d411961692b38d002")~~
 
 -- now table will contain only one NULL value and create unique index/constraint shoudl start working
 DELETE TOP (1) FROM babel_3571_1 WHERE id IS NULL;

@@ -9550,17 +9550,17 @@ ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-DateTimeView#!#ComputedDateTimeColumn#!#datetime
-DateTimeView#!#DateTimeColumn#!#datetime
-DateTimeView#!#Day#!#int
-DateTimeView#!#DefaultDateTimeColumn#!#datetime
-DateTimeView#!#Hour#!#int
-DateTimeView#!#ID#!#int
-DateTimeView#!#Millisecond#!#int
-DateTimeView#!#Minute#!#int
-DateTimeView#!#Month#!#int
-DateTimeView#!#Second#!#int
-DateTimeView#!#Year#!#int
+datetimeview#!#ComputedDateTimeColumn#!#datetime
+datetimeview#!#DateTimeColumn#!#datetime
+datetimeview#!#Day#!#int
+datetimeview#!#DefaultDateTimeColumn#!#datetime
+datetimeview#!#Hour#!#int
+datetimeview#!#ID#!#int
+datetimeview#!#Millisecond#!#int
+datetimeview#!#Minute#!#int
+datetimeview#!#Month#!#int
+datetimeview#!#Second#!#int
+datetimeview#!#Year#!#int
 ~~END~~
 
 

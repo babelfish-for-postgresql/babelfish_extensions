@@ -94,7 +94,7 @@ CREATE SPATIAL INDEX si_dup ON si_ddl_tbl(geom);
 GO
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: relation "si_dup" already exists)~~
+~~ERROR (Message: relation "si_dupsi_ddl_tblefc70e6ee50389004ff8215c689e5467" already exists)~~
 
 
 -- 1.3 DROP and recreate
@@ -110,7 +110,7 @@ DROP INDEX si_fake ON si_ddl_tbl;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "si_fake" does not exist)~~
+~~ERROR (Message: index "si_fakesi_ddl_tbl94fe14b60d353fa399b536a197c4650c" does not exist)~~
 
 
 -- 1.5 Strict escape hatch blocks options

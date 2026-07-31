@@ -41,7 +41,7 @@ drop index guest.t1_drop_index.ix1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix1" does not exist)~~
+~~ERROR (Message: index "ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019" does not exist)~~
 
 drop index if exists guest.t1_drop_index.ix1
 go
@@ -49,7 +49,7 @@ drop index guest.t1_drop_index.ix2
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix2" does not exist)~~
+~~ERROR (Message: index "ix2t1_drop_indexbe63f9a1e6e197a9b4c58fbc7b470d87" does not exist)~~
 
 drop index if exists guest.t1_drop_index.ix2
 go
@@ -66,7 +66,7 @@ drop index dbo.t1_drop_index.ix1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix1" does not exist)~~
+~~ERROR (Message: index "ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019" does not exist)~~
 
 drop index if exists dbo.t1_drop_index.ix1
 go
@@ -74,7 +74,7 @@ drop index dbo.t1_drop_index.ix2
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix2" does not exist)~~
+~~ERROR (Message: index "ix2t1_drop_indexbe63f9a1e6e197a9b4c58fbc7b470d87" does not exist)~~
 
 drop index if exists dbo.t1_drop_index.ix2
 go
@@ -105,7 +105,7 @@ drop index t1_drop_index.ix1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix1" does not exist)~~
+~~ERROR (Message: index "ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019" does not exist)~~
 
 drop index if exists t1_drop_index.ix1
 go
@@ -134,7 +134,7 @@ execute('drop index guest.t1_drop_index.ix1')
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix1" does not exist)~~
+~~ERROR (Message: index "ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019" does not exist)~~
 
 execute('drop index if exists guest.t1_drop_index.ix1')
 go
@@ -151,7 +151,7 @@ execute('drop index t1_drop_index.ix1')
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix1" does not exist)~~
+~~ERROR (Message: index "ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019" does not exist)~~
 
 execute('drop index if exists t1_drop_index.ix1')
 go
@@ -172,7 +172,7 @@ execute p1_drop_index
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix1" does not exist)~~
+~~ERROR (Message: index "ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019" does not exist)~~
 
 execute p1_drop_index 1
 go
@@ -187,7 +187,7 @@ drop index nosuchtable.ix1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix1" does not exist)~~
+~~ERROR (Message: index "ix1nosuchtablea5111d2a1767bc43a700e9f2162be019" does not exist)~~
 
 drop index if exists nosuchtable.ix1
 go
@@ -344,7 +344,7 @@ drop index ix1 on guest.t1_drop_index
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix1" does not exist)~~
+~~ERROR (Message: index "ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019" does not exist)~~
 
 drop index if exists ix1 on guest.t1_drop_index
 go
@@ -352,7 +352,7 @@ drop index ix2 on guest.t1_drop_index
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix2" does not exist)~~
+~~ERROR (Message: index "ix2t1_drop_indexbe63f9a1e6e197a9b4c58fbc7b470d87" does not exist)~~
 
 drop index if exists ix2 on guest.t1_drop_index
 go
@@ -369,7 +369,7 @@ drop index ix1 on dbo.t1_drop_index
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix1" does not exist)~~
+~~ERROR (Message: index "ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019" does not exist)~~
 
 drop index if exists ix1 on dbo.t1_drop_index
 go
@@ -377,7 +377,7 @@ drop index ix2 on dbo.t1_drop_index
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix2" does not exist)~~
+~~ERROR (Message: index "ix2t1_drop_indexbe63f9a1e6e197a9b4c58fbc7b470d87" does not exist)~~
 
 drop index if exists ix2 on dbo.t1_drop_index
 go
@@ -408,7 +408,7 @@ drop index ix1 on t1_drop_index
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix1" does not exist)~~
+~~ERROR (Message: index "ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019" does not exist)~~
 
 drop index if exists ix1 on t1_drop_index
 go
@@ -437,7 +437,7 @@ execute('drop index ix1 on guest.t1_drop_index')
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix1" does not exist)~~
+~~ERROR (Message: index "ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019" does not exist)~~
 
 execute('drop index if exists ix1 on guest.t1_drop_index')
 go
@@ -454,7 +454,7 @@ execute('drop index ix1 on t1_drop_index')
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix1" does not exist)~~
+~~ERROR (Message: index "ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019" does not exist)~~
 
 execute('drop index if exists ix1 on t1_drop_index')
 go
@@ -475,7 +475,7 @@ execute p2_drop_index
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix1" does not exist)~~
+~~ERROR (Message: index "ix1t1_drop_indexa5111d2a1767bc43a700e9f2162be019" does not exist)~~
 
 execute p2_drop_index 1
 go
@@ -490,7 +490,7 @@ drop index ix1 on nosuchtable
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix1" does not exist)~~
+~~ERROR (Message: index "ix1nosuchtablea5111d2a1767bc43a700e9f2162be019" does not exist)~~
 
 drop index if exists ix1 on nosuchtable
 go

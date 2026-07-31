@@ -161,7 +161,7 @@ WHERE name LIKE 'babelfish_migration_mode%'
 ORDER BY name
 GO
 ~~START~~
-nvarchar
+text
 babelfish_migration_mode_db1
 ~~END~~
 
@@ -311,7 +311,7 @@ WHERE name LIKE 'babelfish_migration_mode%'
 ORDER BY name
 GO
 ~~START~~
-nvarchar
+text
 babelfish_migration_mode_db1
 ~~END~~
 

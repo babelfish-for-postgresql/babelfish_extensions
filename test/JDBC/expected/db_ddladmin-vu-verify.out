@@ -307,7 +307,7 @@ DROP INDEX babel_5116_idx1 ON babel_5116_t1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: must be owner of index babel_5116_idx1)~~
+~~ERROR (Message: must be owner of index babel_5116_idx1babel_5116_t1e29153c477c95d679c4b63370567552b)~~
 
 DROP TABLE babel_5116_t1
 GO

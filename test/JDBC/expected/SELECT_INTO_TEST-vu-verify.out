@@ -584,7 +584,7 @@ select column_name from information_schema.columns where table_name = 'select_in
 go
 ~~START~~
 nvarchar
-中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into
+中文_col_select_into_select_icefa3744f642e9df762aa877d7ccd6e7
 ~~END~~
 
 -- dropping the table select_into
@@ -691,7 +691,7 @@ select column_name from information_schema.columns where table_name = 'select_in
 go
 ~~START~~
 nvarchar
-select_into_COL_select_into_COL_Col_length_greater_then_sixty_four
+select_into_col_select_into_colb0110865143217c65f7939886bc07595
 ~~END~~
 
 

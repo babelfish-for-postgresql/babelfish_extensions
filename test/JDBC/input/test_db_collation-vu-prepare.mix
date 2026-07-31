@@ -301,8 +301,7 @@ FROM
 JOIN
     INFORMATION_SCHEMA.VIEWS v ON c.TABLE_NAME = v.TABLE_NAME
 WHERE 
-    v.TABLE_NAME = 'func_output2'
-ORDER BY c.COLUMN_NAME;
+    v.TABLE_NAME = 'func_output2';
 GO
 
 

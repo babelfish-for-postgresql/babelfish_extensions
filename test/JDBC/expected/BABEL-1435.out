@@ -2,7 +2,7 @@
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
 ~~START~~
-nvarchar
+text
 master
 msdb
 tempdb
@@ -84,7 +84,7 @@ GO
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
 ~~START~~
-nvarchar
+text
 db1
 master
 msdb
@@ -179,7 +179,7 @@ GO
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
 ~~START~~
-nvarchar
+text
 db2
 master
 msdb
@@ -258,7 +258,7 @@ GO
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
 ~~START~~
-nvarchar
+text
 master
 msdb
 tempdb
@@ -340,7 +340,7 @@ GO
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
 ~~START~~
-nvarchar
+text
 db1
 master
 msdb
@@ -435,7 +435,7 @@ GO
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
 ~~START~~
-nvarchar
+text
 db2
 master
 msdb

@@ -9848,15 +9848,15 @@ ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-SmallDateTimeView#!#ComputedSmallDateTimeColumn#!#smalldatetime
-SmallDateTimeView#!#Day#!#int
-SmallDateTimeView#!#DefaultSmallDateTimeColumn#!#smalldatetime
-SmallDateTimeView#!#Hour#!#int
-SmallDateTimeView#!#ID#!#int
-SmallDateTimeView#!#Minute#!#int
-SmallDateTimeView#!#Month#!#int
-SmallDateTimeView#!#SmallDateTimeColumn#!#smalldatetime
-SmallDateTimeView#!#Year#!#int
+smalldatetimeview#!#ComputedSmallDateTimeColumn#!#smalldatetime
+smalldatetimeview#!#Day#!#int
+smalldatetimeview#!#DefaultSmallDateTimeColumn#!#smalldatetime
+smalldatetimeview#!#Hour#!#int
+smalldatetimeview#!#ID#!#int
+smalldatetimeview#!#Minute#!#int
+smalldatetimeview#!#Month#!#int
+smalldatetimeview#!#SmallDateTimeColumn#!#smalldatetime
+smalldatetimeview#!#Year#!#int
 ~~END~~
 
 
