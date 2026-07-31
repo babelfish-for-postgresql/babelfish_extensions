@@ -124,7 +124,7 @@ babel_417
 BABEL-493
 BABEL-4888
 BABEL_539
-BABEL-621
+BABEL-621-before-18_6
 BABEL-728
 BABEL-733
 BABEL-741
@@ -686,4 +686,3 @@ xml_query
 babel_sqlvariant_coerce_type
 forxml-auto
 BABEL-login-db-long-identifiers
-BABEL-621-before-18_6

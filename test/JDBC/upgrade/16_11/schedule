@@ -125,7 +125,7 @@ babel_417
 BABEL-493
 BABEL-4888
 BABEL_539
-BABEL-621
+BABEL-621-before-18_6
 BABEL-728
 BABEL-733
 BABEL-741
@@ -652,4 +652,3 @@ forxml-path-elements-before-17_10-or-18_4
 forxml-before-17_11-or-18_5
 forxml-auto-before-17_11-or-18_5
 BABEL-login-db-long-identifiers
-BABEL-621-before-18_6
