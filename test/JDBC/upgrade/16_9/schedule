@@ -505,7 +505,7 @@ BABEL-4217
 Test_ISNULL
 BABEL-4270
 BABEL-4410
-BABEL-4231
+BABEL-4231-before-18_6
 function_as_keywd
 typeproperty-dep
 sys_asymmetric_keys
@@ -580,7 +580,7 @@ BABEL-5059
 cast-varchar-to-time
 xml_exist
 test_db_collation
-BABEL-5119
+BABEL-5119-before-18_6
 BABEL-5129
 BABEL-CASE_EXPR
 charindex_replace_patindex

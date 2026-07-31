@@ -260,6 +260,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 						ELSE NULL
 						END, ',')
 					FROM unnest(a.attoptions) AS option),
+					sys.bbf_get_view_column_name(a.attrelid, a.attnum::smallint),
 					a.attname)
 				AS sys.nvarchar(128)) AS "COLUMN_NAME",
 
@@ -569,7 +570,7 @@ GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.views AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS  "TABLE_SCHEMA",
-			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+			CAST(COALESCE((select substring(opt, 23) from unnest(c.reloptions) opt where opt like 'bbf_original_rel_name=%' limit 1), c.relname::text) AS sys.nvarchar(128)) AS "TABLE_NAME",
 			CAST(vd.definition AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
 
 			CAST(

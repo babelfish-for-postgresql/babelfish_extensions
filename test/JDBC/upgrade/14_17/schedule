@@ -247,7 +247,7 @@ sys-system_sql_modules-dep
 sys-triggers-dep
 sys-proc_param_helper-dep
 sys-sp_pkeys
-sys-sp_statistics
+sys-sp_statistics-before-16_9-or-17_4
 BABEL-APPLOCK
 BABEL-1438
 BABEL-SP_DATATYPE_INFO
@@ -412,7 +412,7 @@ babel_varbinary_int4_div
 sys-sql_expression_dependencies
 smalldatetimefromparts-dep
 BABEL_4330-before-15_8-or-16_4
-BABEL-4231
+BABEL-4231-before-18_6
 BABEL-4384
 default_params
 BABEL-3326

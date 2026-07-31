@@ -361,7 +361,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
 SELECT 
 	CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
 	CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-	CAST(
+	
 		COALESCE(
 			(SELECT pg_catalog.string_agg(
 				CASE
@@ -369,8 +369,8 @@ SELECT
 					ELSE NULL
 				END, ',')
 			FROM unnest(t1.reloptions) AS option),
-			t4."TABLE_NAME")
-		AS sys.sysname) AS TABLE_NAME,
+			t4."TABLE_NAME"::text)
+		::sys.sysname AS TABLE_NAME,
 	CAST(
 		COALESCE(
 			(SELECT pg_catalog.string_agg(
@@ -499,7 +499,7 @@ BEGIN
 				END
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
-		where table_name like @truncated_ident COLLATE database_default
+		where table_name like @table_name COLLATE database_default
 			and (coalesce(@table_owner,'') = '' or table_owner like @table_owner collate database_default)
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier like @table_qualifier collate database_default)
 			and (coalesce(@column_name,'') = '' or column_name like @column_name collate database_default)
@@ -538,7 +538,7 @@ BEGIN
 				END
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
-			where table_name = @truncated_ident collate database_default
+			where table_name = @table_name collate database_default
 			and (coalesce(@table_owner, '') = '' or table_owner = @table_owner collate database_default)
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier = @table_qualifier collate database_default)
 			and (coalesce(@column_name,'') = '' or column_name = @column_name collate database_default)
@@ -606,7 +606,7 @@ BEGIN
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
 		-- TODO: Temporary fix to use \ as escape character for now, need to remove ESCAPE clause from LIKE once we have fixed the dependencies on this procedure
-		where table_name like @truncated_ident COLLATE database_default ESCAPE '\' -- '  adding quote in comment to suppress build warning
+		where table_name like @table_name COLLATE database_default ESCAPE '\' -- '  adding quote in comment to suppress build warning
 			and (coalesce(@table_owner,'') = '' or table_owner like @table_owner collate database_default ESCAPE '\') -- '  adding quote in comment to suppress build warning
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier like @table_qualifier collate database_default)
 			and (coalesce(@column_name,'') = '' or column_name like @column_name collate database_default)
@@ -655,7 +655,7 @@ BEGIN
 				END
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
-			where table_name = @truncated_ident collate database_default
+			where table_name = @table_name collate database_default
 			and (coalesce(@table_owner, '') = '' or table_owner = @table_owner collate database_default)
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier = @table_qualifier collate database_default)
 			and (coalesce(@column_name,'') = '' or column_name = @column_name collate database_default)
@@ -1092,7 +1092,7 @@ CREATE OR REPLACE VIEW sys.sp_tables_view AS
 SELECT
 t2.dbname AS TABLE_QUALIFIER,
 CAST(t3.name AS name) AS TABLE_OWNER,
-t1.relname AS TABLE_NAME,
+COALESCE(case when octet_length(t1.relname) >= 60 then (SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(t1.reloptions) AS option) end, t1.relname::text)::sys.sysname AS TABLE_NAME,
 
 CASE 
 WHEN t1.relkind = 'v' 
@@ -1299,7 +1299,7 @@ CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
 -- the ones not in pg_constraint) and restoring it back before display
 CASE 
 WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
-ELSE CAST(pg_catalog.SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
+ELSE COALESCE((SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(t6.reloptions) AS option), t6.relname::text)::sys.sysname 
 END AS INDEX_NAME,
 CASE
 WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
@@ -1690,7 +1690,7 @@ CASE
 AS IS_NULLABLE,
 CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(C.relname AS sys.sysname) AS TABLE_NAME,
+COALESCE(case when octet_length(C.relname) >= 60 then (SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(C.reloptions) AS option) end, C.relname::text)::sys.sysname AS TABLE_NAME,
 
 CASE 
 	WHEN X.indisprimary
@@ -1942,11 +1942,11 @@ CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
 SELECT
 CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
 CAST(bbf_nsp2.orig_name AS sys.sysname) AS PKTABLE_OWNER ,
-CAST(c2.relname AS sys.sysname) AS PKTABLE_NAME,
+COALESCE(case when octet_length(c2.relname) >= 60 then (SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(c2.reloptions) AS option) end, c2.relname::text)::sys.sysname AS PKTABLE_NAME,
 CAST(COALESCE(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) AS sys.sysname) AS PKCOLUMN_NAME,
 CAST(nsp_ext.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
 CAST(bbf_nsp.orig_name AS sys.sysname) AS FKTABLE_OWNER ,
-CAST(c.relname AS sys.sysname) AS FKTABLE_NAME,
+COALESCE(case when octet_length(c.relname) >= 60 then (SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(c.reloptions) AS option) end, c.relname::text)::sys.sysname AS FKTABLE_NAME,
 CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname) AS sys.sysname) AS FKCOLUMN_NAME,
 CAST(nr AS smallint) AS KEY_SEQ,
 CASE

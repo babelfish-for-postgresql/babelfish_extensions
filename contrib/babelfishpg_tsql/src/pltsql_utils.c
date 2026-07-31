@@ -34,6 +34,7 @@
 #include "session.h"
 #include "rolecmds.h"
 #include "parser/scansup.h"
+#include "rewrite/rewriteHandler.h"
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
@@ -3216,4 +3217,39 @@ restrict_alter_table_stmt(AlterTableStmt *stmt)
                      errmsg("ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
         }
     }
+}
+PG_FUNCTION_INFO_V1(bbf_get_view_column_name);
+Datum
+bbf_get_view_column_name(PG_FUNCTION_ARGS)
+{
+	Oid viewOid = PG_GETARG_OID(0);
+	int16 attnum = PG_GETARG_INT16(1);
+	Relation vrel;
+	Query *vquery;
+	ListCell *lc;
+	int colno = 0;
+
+	/* Only process views - check relkind via syscache without opening */
+	if (get_rel_relkind(viewOid) != RELKIND_VIEW)
+		PG_RETURN_NULL();
+
+	vrel = table_open(viewOid, AccessShareLock);
+	vquery = get_view_query(vrel);
+
+	foreach(lc, vquery->targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+		if (tle->resjunk)
+			continue;
+		colno++;
+		if (colno == attnum && tle->resname)
+		{
+			text *result = cstring_to_text(tle->resname);
+			table_close(vrel, AccessShareLock);
+			PG_RETURN_TEXT_P(result);
+		}
+	}
+
+	table_close(vrel, AccessShareLock);
+	PG_RETURN_NULL();
 }

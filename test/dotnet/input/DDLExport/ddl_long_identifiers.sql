@@ -1,0 +1,133 @@
+DROP TRIGGER IF EXISTS ThisIsAVeryLongTriggerNameThatExceedsSixtyThreeCharactersInLength
+GO
+
+DROP VIEW IF EXISTS ThisIsAVeryLongViewNameThatDefinitelyExceedsSixtyThreeCharacters
+GO
+
+DROP FUNCTION IF EXISTS ThisIsAVeryLongFunctionNameThatExceedsSixtyThreeCharsForTesting
+GO
+
+DROP PROCEDURE IF EXISTS ThisIsAVeryLongProcedureNameThatExceedsSixtyThreeCharactersTest
+GO
+
+DROP TABLE IF EXISTS ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting
+GO
+
+DROP USER IF EXISTS ThisIsAVeryLongUserNameThatExceedsSixtyThreeCharactersForTesting1
+GO
+
+DROP TRIGGER IF EXISTS trg_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+GO
+
+DROP VIEW IF EXISTS vw_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+GO
+
+DROP FUNCTION IF EXISTS func_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst
+GO
+
+DROP PROCEDURE IF EXISTS proc_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst
+GO
+
+DROP TABLE IF EXISTS tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+GO
+
+CREATE LOGIN ThisIsAVeryLongLoginNameThatExceedsSixtyThreeCharactersForTestin WITH PASSWORD = 'test12345678'
+GO
+
+CREATE USER ThisIsAVeryLongUserNameThatExceedsSixtyThreeCharactersForTesting1 FOR LOGIN ThisIsAVeryLongLoginNameThatExceedsSixtyThreeCharactersForTestin
+GO
+
+CREATE TABLE ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting (
+  ID INT IDENTITY(1,1) NOT NULL,
+  Col1 VARCHAR(50),
+  Col2 INT,
+  CONSTRAINT PK_ThisIsAVeryLongConstraintNameThatExceedsSixtyThreeCharacters PRIMARY KEY (ID)
+)
+GO
+
+CREATE INDEX IX_ThisIsAVeryLongIndexNameThatExceedsSixtyThreeCharactersInTotal ON ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting (Col1)
+GO
+
+CREATE VIEW ThisIsAVeryLongViewNameThatDefinitelyExceedsSixtyThreeCharacters AS
+  SELECT ID, Col1, Col2 FROM ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting
+GO
+
+CREATE FUNCTION ThisIsAVeryLongFunctionNameThatExceedsSixtyThreeCharsForTesting(@p INT)
+RETURNS INT AS
+BEGIN
+  RETURN @p + 1;
+END
+GO
+
+CREATE TRIGGER ThisIsAVeryLongTriggerNameThatExceedsSixtyThreeCharactersInLength ON ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting AFTER INSERT AS
+	SELECT 1;
+GO
+
+CREATE PROCEDURE ThisIsAVeryLongProcedureNameThatExceedsSixtyThreeCharactersTest AS
+	SELECT 1;
+GO
+
+CREATE TABLE tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng (
+  ID INT IDENTITY(1,1) NOT NULL,
+  Col1 VARCHAR(50)
+)
+GO
+
+CREATE INDEX ix_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng ON tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng (Col1)
+GO
+
+CREATE VIEW vw_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng AS
+  SELECT ID, Col1 FROM tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+GO
+
+CREATE TRIGGER trg_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng ON tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng AFTER INSERT AS
+	SELECT 1;
+GO
+
+CREATE PROCEDURE proc_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst AS
+	SELECT 1;
+GO
+
+CREATE FUNCTION func_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst(@p INT)
+RETURNS INT AS
+BEGIN
+  RETURN @p + 1;
+END
+GO
+ddlexport#!#0
+GO
+DROP TRIGGER IF EXISTS ThisIsAVeryLongTriggerNameThatExceedsSixtyThreeCharactersInLength
+GO
+
+DROP VIEW IF EXISTS ThisIsAVeryLongViewNameThatDefinitelyExceedsSixtyThreeCharacters
+GO
+
+DROP FUNCTION IF EXISTS ThisIsAVeryLongFunctionNameThatExceedsSixtyThreeCharsForTesting
+GO
+
+DROP PROCEDURE IF EXISTS ThisIsAVeryLongProcedureNameThatExceedsSixtyThreeCharactersTest
+GO
+
+DROP TABLE IF EXISTS ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting
+GO
+
+DROP USER IF EXISTS ThisIsAVeryLongUserNameThatExceedsSixtyThreeCharactersForTesting1
+GO
+
+DROP TRIGGER IF EXISTS trg_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+GO
+
+DROP VIEW IF EXISTS vw_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+GO
+
+DROP FUNCTION IF EXISTS func_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst
+GO
+
+DROP PROCEDURE IF EXISTS proc_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst
+GO
+
+DROP TABLE IF EXISTS tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+GO
+
+DROP LOGIN ThisIsAVeryLongLoginNameThatExceedsSixtyThreeCharactersForTestin
+GO

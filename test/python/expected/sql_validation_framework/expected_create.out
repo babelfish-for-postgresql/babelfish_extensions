@@ -46,7 +46,6 @@ Could not find tests for function sys.role_id
 Could not find tests for function sys.sp_column_privileges_internal
 Could not find tests for function sys.sp_columns_managed_internal
 Could not find tests for function sys.sp_datatype_info_helper
-Could not find tests for function sys.sp_describe_first_result_set_internal
 Could not find tests for function sys.sp_describe_undeclared_parameters_internal
 Could not find tests for function sys.sp_getapplock_function
 Could not find tests for function sys.sp_releaseapplock_function

@@ -205,9 +205,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#guest#!#BABEL5119_t4#!#BASE TABLE
 master#!#guest#!#BABEL5119_t5#!#BASE TABLE
 master#!#guest#!#BABEL5119_t6#!#BASE TABLE
-master#!#guest#!#babel5119_v4#!#VIEW
-master#!#guest#!#babel5119_v5#!#VIEW
-master#!#guest#!#babel5119_v6#!#VIEW
+master#!#guest#!#BABEL5119_v4#!#VIEW
+master#!#guest#!#BABEL5119_v5#!#VIEW
+master#!#guest#!#BABEL5119_v6#!#VIEW
 ~~END~~
 
 
@@ -219,9 +219,9 @@ nvarchar#!#nvarchar
 BABEL5119_t4#!#a
 BABEL5119_t5#!#a
 BABEL5119_t6#!#a
-babel5119_v4#!#?column?
-babel5119_v5#!#?column?
-babel5119_v6#!#?column?
+BABEL5119_v4#!#?column?
+BABEL5119_v5#!#?column?
+BABEL5119_v6#!#?column?
 ~~END~~
 
 
@@ -230,9 +230,9 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v4#!#CREATE VIEW guest.BABEL5119_v4 AS SELECT 1<newline>
-babel5119_v5#!#CREATE VIEW guest.BABEL5119_v5 AS SELECT 1<newline>
-babel5119_v6#!#CREATE VIEW guest.BABEL5119_v6 AS SELECT 1<newline>
+BABEL5119_v4#!#CREATE VIEW guest.BABEL5119_v4 AS SELECT 1<newline>
+BABEL5119_v5#!#CREATE VIEW guest.BABEL5119_v5 AS SELECT 1<newline>
+BABEL5119_v6#!#CREATE VIEW guest.BABEL5119_v6 AS SELECT 1<newline>
 ~~END~~
 
 
@@ -445,9 +445,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#guest#!#BABEL5119_t4#!#BASE TABLE
 master#!#guest#!#BABEL5119_t5#!#BASE TABLE
 master#!#guest#!#BABEL5119_t6#!#BASE TABLE
-master#!#guest#!#babel5119_v4#!#VIEW
-master#!#guest#!#babel5119_v5#!#VIEW
-master#!#guest#!#babel5119_v6#!#VIEW
+master#!#guest#!#BABEL5119_v4#!#VIEW
+master#!#guest#!#BABEL5119_v5#!#VIEW
+master#!#guest#!#BABEL5119_v6#!#VIEW
 ~~END~~
 
 
@@ -459,9 +459,9 @@ nvarchar#!#nvarchar
 BABEL5119_t4#!#a
 BABEL5119_t5#!#a
 BABEL5119_t6#!#a
-babel5119_v4#!#?column?
-babel5119_v5#!#?column?
-babel5119_v6#!#?column?
+BABEL5119_v4#!#?column?
+BABEL5119_v5#!#?column?
+BABEL5119_v6#!#?column?
 ~~END~~
 
 
@@ -470,9 +470,9 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v4#!#CREATE VIEW guest.BABEL5119_v4 AS SELECT 1<newline>
-babel5119_v5#!#CREATE VIEW guest.BABEL5119_v5 AS SELECT 1<newline>
-babel5119_v6#!#CREATE VIEW guest.BABEL5119_v6 AS SELECT 1<newline>
+BABEL5119_v4#!#CREATE VIEW guest.BABEL5119_v4 AS SELECT 1<newline>
+BABEL5119_v5#!#CREATE VIEW guest.BABEL5119_v5 AS SELECT 1<newline>
+BABEL5119_v6#!#CREATE VIEW guest.BABEL5119_v6 AS SELECT 1<newline>
 ~~END~~
 
 
@@ -663,9 +663,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#guest#!#BABEL5119_t4#!#BASE TABLE
 master#!#guest#!#BABEL5119_t5#!#BASE TABLE
 master#!#guest#!#BABEL5119_t6#!#BASE TABLE
-master#!#guest#!#babel5119_v4#!#VIEW
-master#!#guest#!#babel5119_v5#!#VIEW
-master#!#guest#!#babel5119_v6#!#VIEW
+master#!#guest#!#BABEL5119_v4#!#VIEW
+master#!#guest#!#BABEL5119_v5#!#VIEW
+master#!#guest#!#BABEL5119_v6#!#VIEW
 ~~END~~
 
 
@@ -677,9 +677,9 @@ nvarchar#!#nvarchar
 BABEL5119_t4#!#a
 BABEL5119_t5#!#a
 BABEL5119_t6#!#a
-babel5119_v4#!#?column?
-babel5119_v5#!#?column?
-babel5119_v6#!#?column?
+BABEL5119_v4#!#?column?
+BABEL5119_v5#!#?column?
+BABEL5119_v6#!#?column?
 ~~END~~
 
 
@@ -688,9 +688,9 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v4#!#CREATE VIEW guest.BABEL5119_v4 AS SELECT 1<newline>
-babel5119_v5#!#CREATE VIEW guest.BABEL5119_v5 AS SELECT 1<newline>
-babel5119_v6#!#CREATE VIEW guest.BABEL5119_v6 AS SELECT 1<newline>
+BABEL5119_v4#!#CREATE VIEW guest.BABEL5119_v4 AS SELECT 1<newline>
+BABEL5119_v5#!#CREATE VIEW guest.BABEL5119_v5 AS SELECT 1<newline>
+BABEL5119_v6#!#CREATE VIEW guest.BABEL5119_v6 AS SELECT 1<newline>
 ~~END~~
 
 

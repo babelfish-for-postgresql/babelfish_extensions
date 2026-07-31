@@ -511,7 +511,7 @@ BABEL-4217
 Test_ISNULL
 BABEL-4270
 BABEL-4410
-BABEL-4231
+BABEL-4231-before-18_6
 function_as_keywd
 typeproperty-dep
 sys_asymmetric_keys
@@ -592,7 +592,7 @@ BABEL-5059
 cast-varchar-to-time
 xml_exist
 test_db_collation
-BABEL-5119
+BABEL-5119-before-18_6
 dbcreator_role
 BABEL-5129
 db_accessadmin
@@ -688,3 +688,4 @@ babel_sqlvariant_coerce_type
 forxml-auto-before-17_11-or-18_5
 forxml-before-17_11-or-18_5
 BABEL-login-db-long-identifiers
+long-identifiers-objects-before-18_6

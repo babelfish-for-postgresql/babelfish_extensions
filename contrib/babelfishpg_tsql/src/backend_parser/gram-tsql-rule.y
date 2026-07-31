@@ -3482,6 +3482,9 @@ tsql_IndexStmt:
 					n->if_not_exists = false;
 
 					tsql_index_nulls_order(n->indexParams, n->accessMethod);
+					n->options = lappend(n->options,
+						makeDefElem("name_location",
+							(Node *) makeInteger(@7), -1));
 					$$ = (Node *)n;
 				}
 		| CREATE TSQL_SPATIAL INDEX opt_single_name
