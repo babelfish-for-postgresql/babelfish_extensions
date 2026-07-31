@@ -6583,6 +6583,7 @@ _PG_init(void)
 	make_fn_arguments_from_stored_proc_probin_hook = pltsql_function_probin_reader;
 	truncate_identifier_hook = pltsql_truncate_identifier;
 	cstr_to_name_hook = pltsql_cstr_to_name;
+
 	/* TODO: Enable when engine PR #773 is merged
 	 * bbf_get_original_constraint_name_hook = bbf_get_original_constraint_name;
 	 * bbf_get_original_index_name_hook = bbf_get_original_index_name;
