@@ -431,6 +431,388 @@ get_db_name(int16 dbid)
 	return name;
 }
 
+/* Session cache for error message rewriting - type defined in catalog.h */
+
+static HTAB *ident_name_cache = NULL;
+
+static void
+ensure_ident_name_cache(void)
+{
+	if (ident_name_cache == NULL)
+	{
+		HASHCTL		ctl;
+
+		MemSet(&ctl, 0, sizeof(ctl));
+		ctl.keysize = NAMEDATALEN;
+		ctl.entrysize = sizeof(IdentNameCacheEntry);
+		ctl.hcxt = TopMemoryContext;
+		ident_name_cache = hash_create("Babelfish truncated identifier cache", 64, &ctl,
+									   HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
+	}
+}
+
+void
+bbf_reset_ident_name_cache(void)
+{
+	if (ident_name_cache)
+	{
+		hash_destroy(ident_name_cache);
+		ident_name_cache = NULL;
+	}
+}
+
+/*
+ * Snapshot current cache entries into a caller-provided array.
+ * Returns number of entries copied. Used by pl_comp to save
+ * mappings onto PLtsql_function during compilation.
+ */
+int
+bbf_snapshot_ident_cache(IdentNameCacheEntry **entries, MemoryContext cxt)
+{
+	HASH_SEQ_STATUS status;
+	IdentNameCacheEntry *entry;
+	int			n;
+	int			i = 0;
+
+	if (!ident_name_cache)
+	{
+		*entries = NULL;
+		return 0;
+	}
+
+	n = hash_get_num_entries(ident_name_cache);
+	if (n == 0)
+	{
+		*entries = NULL;
+		return 0;
+	}
+
+	*entries = (IdentNameCacheEntry *) MemoryContextAlloc(cxt, n * sizeof(IdentNameCacheEntry));
+	hash_seq_init(&status, ident_name_cache);
+	while ((entry = (IdentNameCacheEntry *) hash_seq_search(&status)) != NULL)
+	{
+		memcpy(&(*entries)[i], entry, sizeof(IdentNameCacheEntry));
+		i++;
+	}
+	return i;
+}
+
+/*
+ * Restore cached entries from a snapshot. Used by pl_exec
+ * at EXEC entry to repopulate the batch cache.
+ */
+void
+bbf_restore_ident_cache(IdentNameCacheEntry *entries, int n)
+{
+	int i;
+
+	if (!entries || n == 0)
+		return;
+
+	ensure_ident_name_cache();
+	for (i = 0; i < n; i++)
+	{
+		IdentNameCacheEntry *e;
+		bool found;
+
+		e = (IdentNameCacheEntry *) hash_search(ident_name_cache,
+												entries[i].truncated_name,
+												HASH_ENTER, &found);
+		if (!found)
+			strlcpy(e->original_name, entries[i].original_name, sizeof(e->original_name));
+	}
+}
+
+void
+bbf_cache_ident_name(const char *truncated_name, const char *original_name)
+{
+	IdentNameCacheEntry *entry;
+	bool		found;
+
+	if (!truncated_name || truncated_name[0] == '\0')
+		return;
+
+	if (strlen(original_name) < NAMEDATALEN - 1)
+		return;
+
+	ensure_ident_name_cache();
+	entry = (IdentNameCacheEntry *) hash_search(ident_name_cache, truncated_name, HASH_ENTER, &found);
+	strlcpy(entry->original_name, original_name, sizeof(entry->original_name));
+}
+
+/*
+ * Cache index internal name → original index name unconditionally.
+ * Used by construct_unique_index_name so error messages always show
+ * the user-supplied index name even for short identifiers.
+ */
+void
+bbf_cache_index_name(const char *internal_name, const char *index_name)
+{
+	IdentNameCacheEntry *entry;
+	bool		found;
+
+	if (!internal_name || internal_name[0] == '\0' ||
+		!index_name || strcmp(internal_name, index_name) == 0)
+		return;
+
+	ensure_ident_name_cache();
+
+	entry = (IdentNameCacheEntry *) hash_search(ident_name_cache, internal_name, HASH_ENTER, &found);
+	strlcpy(entry->original_name, index_name, sizeof(entry->original_name));
+}
+
+PGDLLEXPORT const char *
+bbf_lookup_ident_name(const char *truncated_name)
+{
+	IdentNameCacheEntry *entry;
+
+	if (!ident_name_cache)
+		return NULL;
+
+	entry = (IdentNameCacheEntry *) hash_search(ident_name_cache, truncated_name, HASH_FIND, NULL);
+	return entry ? entry->original_name : NULL;
+}
+
+/*
+ * Scan error message for any cached truncated identifier and replace with original.
+ * Returns new message (allocated in TopMemoryContext) or NULL if no replacement.
+ */
+/*
+ * Look up a truncated identifier in the catalog by name alone.
+ * Used in error paths where we don't know the schema/parent context.
+ * Caches the result for future lookups in this session.
+ */
+
+PGDLLEXPORT char *
+bbf_rewrite_truncated_identifiers(const char *msg)
+{
+	HASH_SEQ_STATUS		status;
+	IdentNameCacheEntry *entry;
+	char			   *result = NULL;
+
+	if (!msg)
+		return NULL;
+
+	ensure_ident_name_cache();
+
+	/* Session cache pass: replace truncated identifiers with lowercased originals */
+	if (hash_get_num_entries(ident_name_cache) > 0)
+	{
+		hash_seq_init(&status, ident_name_cache);
+		while ((entry = (IdentNameCacheEntry *) hash_seq_search(&status)) != NULL)
+		{
+			const char *key = entry->truncated_name;
+			int			key_len = strlen(key);
+			const char *found;
+			const char *search_msg = result ? result : msg;
+
+			/* Skip empty keys - strstr("anything","") never returns NULL */
+			if (key_len == 0)
+				continue;
+
+			/* Replace all occurrences of this key in the message */
+			found = strstr(search_msg, key);
+			while (found)
+			{
+				char	before;
+				char	after;
+				int		prefix_len;
+				int		orig_len;
+				int		suffix_len;
+				char   *newmsg;
+				char   *oldmsg;
+
+				/*
+				 * Word-boundary check: ensure the match is not part of a
+				 * larger identifier. The character before and after the match
+				 * must not be alphanumeric or underscore.
+				 */
+				before = (found > search_msg) ? *(found - 1) : '\0';
+				after = *(found + key_len);
+
+				if ((before != '\0' && (isalnum((unsigned char) before) || before == '_')) ||
+					(after != '\0' && (isalnum((unsigned char) after) || after == '_')))
+				{
+					/* Not a word boundary - skip to next occurrence */
+					found = strstr(found + key_len, key);
+					continue;
+				}
+
+				prefix_len = found - search_msg;
+				orig_len = strlen(entry->original_name);
+				suffix_len = strlen(found + key_len);
+				newmsg = MemoryContextAlloc(TopMemoryContext,
+										    prefix_len + orig_len + suffix_len + 1);
+				oldmsg = result;
+
+				memcpy(newmsg, search_msg, prefix_len);
+				memcpy(newmsg + prefix_len, entry->original_name, orig_len);
+				memcpy(newmsg + prefix_len + orig_len, found + key_len, suffix_len + 1);
+
+				/* Free intermediate allocation */
+				if (oldmsg)
+					pfree(oldmsg);
+
+				search_msg = newmsg;
+				result = newmsg;
+				found = strstr(search_msg + prefix_len + orig_len, key);
+			}
+		}
+	}
+
+	return result;
+}
+
+/*
+ * Look up original name from babelfish_identifier_mapping catalog.
+ * Used as fallback when session cache doesn't have the mapping.
+ * TODO: Enable when PR1 (babelfish_identifier_mapping) is merged.
+ */
+static const char * __attribute__((unused))
+lookup_ident_from_catalog_by_name(const char *truncated_name)
+{
+	return NULL;
+#if 0 /* Enable when PR1 is merged */
+	Relation	rel;
+	TableScanDesc scan;
+	ScanKeyData skey[1];
+	HeapTuple	tuple;
+	NameData	namedata;
+	const char *result = NULL;
+
+	if (!IsTransactionState())
+		return NULL;
+
+	if (!OidIsValid(get_bbf_ident_mapping_oid()))
+		return NULL;
+
+	namestrcpy(&namedata, truncated_name);
+	ScanKeyInit(&skey[0],
+				Anum_bbf_ident_mapping_truncated_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&namedata));
+
+	rel = table_open(get_bbf_ident_mapping_oid(), AccessShareLock);
+	scan = table_beginscan_catalog(rel, 1, skey);
+
+	PG_TRY();
+	{
+		tuple = heap_getnext(scan, ForwardScanDirection);
+		if (HeapTupleIsValid(tuple))
+		{
+			bool	isNull;
+			Datum	datum;
+
+			datum = heap_getattr(tuple, Anum_bbf_ident_mapping_original_name,
+								RelationGetDescr(rel), &isNull);
+			if (!isNull)
+			{
+				char *orig = TextDatumGetCString(datum);
+				bbf_cache_ident_name(truncated_name, orig);
+				result = bbf_lookup_ident_name(truncated_name);
+				pfree(orig);
+			}
+		}
+	}
+	PG_FINALLY();
+	{
+		table_endscan(scan);
+		table_close(rel, AccessShareLock);
+	}
+	PG_END_TRY();
+
+	return result;
+#endif
+}
+
+/*
+ * Resolve original constraint name from babelfish_identifier_mapping.
+ * TODO: Enable when PR1 (babelfish_identifier_mapping) is merged.
+ */
+const char *
+bbf_get_original_constraint_name(const char *conname)
+{
+	(void) lookup_ident_from_catalog_by_name; /* suppress unused warning until PR1 enables this */
+	return conname;
+#if 0 /* Enable when PR1 is merged */
+	const char *orig;
+
+	if (!conname || strlen(conname) < NAMEDATALEN - 1)
+		return conname;
+
+	/* Check babelfish_identifier_mapping (constraints, parameters, sequences) */
+	orig = lookup_ident_from_catalog_by_name(conname);
+	if (orig)
+	{
+		char *lower = downcase_identifier(orig, strlen(orig), false, false);
+		return lower;
+	}
+
+	return conname;
+#endif
+}
+
+/*
+ * Look up original index name from pg_class.reloptions (bbf_original_rel_name).
+ * TODO: Enable when PR2 (bbf_original_rel_name reloptions) is merged.
+ */
+const char *
+bbf_get_original_index_name(const char *idxname)
+{
+	return idxname;
+#if 0 /* Enable when PR2 is merged */
+	HeapTuple tp;
+	Relation rel;
+
+	if (!idxname || strlen(idxname) < NAMEDATALEN - 1)
+		return idxname;
+
+	rel = table_open(RelationRelationId, AccessShareLock);
+	{
+		ScanKeyData skey[1];
+		TableScanDesc scan;
+
+		ScanKeyInit(&skey[0], Anum_pg_class_relname,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(idxname));
+		scan = table_beginscan_catalog(rel, 1, skey);
+		tp = heap_getnext(scan, ForwardScanDirection);
+		if (HeapTupleIsValid(tp))
+		{
+			bool isnull;
+			Datum opts = heap_getattr(tp, Anum_pg_class_reloptions,
+									  RelationGetDescr(rel), &isnull);
+			if (!isnull)
+			{
+				ArrayType *arr = DatumGetArrayTypeP(opts);
+				ArrayIterator it = array_create_iterator(arr, 0, NULL);
+				Datum val;
+				bool vnull;
+
+				while (array_iterate(it, &val, &vnull))
+				{
+					const char *s = VARDATA_ANY(val);
+					int len = VARSIZE_ANY_EXHDR(val);
+					if (len > 22 && memcmp(s, "bbf_original_rel_name=", 22) == 0)
+					{
+						char *lower = downcase_identifier(s + 22, len - 22, false, false);
+						array_free_iterator(it);
+						table_endscan(scan);
+						table_close(rel, AccessShareLock);
+						return lower;
+					}
+				}
+				array_free_iterator(it);
+			}
+		}
+		table_endscan(scan);
+	}
+	table_close(rel, AccessShareLock);
+
+	return idxname;
+#endif
+}
+
 const char *
 get_one_user_db_name(void)
 {

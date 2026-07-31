@@ -10,6 +10,8 @@
 #include "utils/elog.h"
 #include "utils/hsearch.h"
 #include "utils/palloc.h"		/* Needed for pstrdup() */
+#include "utils/memutils.h"
+#include <dlfcn.h>
 
 #include "src/include/tds_int.h"
 #include "src/include/tds_response.h"
@@ -344,8 +346,41 @@ emit_tds_log(ErrorData *edata)
 			tsql_error_state = 1;
 		}
 
-		TdsSendError(tsql_error_code, tsql_error_state, tsql_error_sev,
-					 edata->message, error_lineno);
+		{
+			/* Rewrite truncated identifiers in error message */
+			char *msg = edata->message;
+
+			{
+				/*
+				 * Rewrite truncated identifiers in error message.
+				 * Look up truncated names from the session cache and replace
+				 * them with their original (user-visible) names.
+				 */
+				typedef char *(*rewrite_fn_t)(const char *);
+				static rewrite_fn_t rewrite_fn = NULL;
+				static bool rewrite_resolved = false;
+
+				if (!rewrite_resolved)
+				{
+					rewrite_fn = (rewrite_fn_t) dlsym(RTLD_DEFAULT, "bbf_rewrite_truncated_identifiers");
+					rewrite_resolved = true;
+				}
+
+				if (rewrite_fn)
+				{
+					char *newmsg = rewrite_fn(msg);
+					if (newmsg)
+						msg = newmsg;
+				}
+			}
+
+			TdsSendError(tsql_error_code, tsql_error_state, tsql_error_sev,
+						 msg, error_lineno);
+
+			/* Free rewritten message allocated in TopMemoryContext */
+			if (msg != edata->message)
+				pfree(msg);
+		}
 
 		/*
 		 * If we've not reached the main query loop yet, flush the error

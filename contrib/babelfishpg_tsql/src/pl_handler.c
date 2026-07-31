@@ -6226,7 +6226,20 @@ pltsql_truncate_identifier(char *ident, int len, bool warn)
 				 errmsg("identifier \"%s\" will be truncated to \"%s\"",
 						ident, buf)));
 
-	memcpy(ident, buf, len + MD5_HASH_LEN + 1);
+	{
+		char	saved_ident[128 * 4 + 1];	/* 513 bytes: 128 chars × 4 bytes UTF-8 + NUL */
+		int		saved_len = strlen(ident);
+
+		if (saved_len < (int) sizeof(saved_ident))
+			memcpy(saved_ident, ident, saved_len + 1);
+		else
+			saved_ident[0] = '\0';
+
+		memcpy(ident, buf, len + MD5_HASH_LEN + 1);
+
+		if (saved_ident[0] != '\0' && warn)
+			bbf_cache_ident_name(ident, saved_ident);
+	}
 	return true;
 }
 
@@ -6570,6 +6583,11 @@ _PG_init(void)
 	make_fn_arguments_from_stored_proc_probin_hook = pltsql_function_probin_reader;
 	truncate_identifier_hook = pltsql_truncate_identifier;
 	cstr_to_name_hook = pltsql_cstr_to_name;
+
+	/* TODO: Enable when engine PR #773 is merged
+	 * bbf_get_original_constraint_name_hook = bbf_get_original_constraint_name;
+	 * bbf_get_original_index_name_hook = bbf_get_original_index_name;
+	 */
 	tsql_has_pgstat_permissions_hook = tsql_has_pgstat_permissions;
 
 	if (pltsql_enable_linked_servers)

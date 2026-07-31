@@ -790,3 +790,6 @@ ignore#!#money_aggregate-before-17_11-or-18_5-vu-cleanup
 ignore#!#numeric_money-before-17_11-or-18_5-vu-prepare
 ignore#!#numeric_money-before-17_11-or-18_5-vu-verify
 ignore#!#numeric_money-before-17_11-or-18_5-vu-cleanup
+ignore#!#BABEL-621-before-18_6-vu-prepare
+ignore#!#BABEL-621-before-18_6-vu-verify
+ignore#!#BABEL-621-before-18_6-vu-cleanup

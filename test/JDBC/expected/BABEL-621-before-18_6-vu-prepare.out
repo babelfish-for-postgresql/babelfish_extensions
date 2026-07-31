@@ -107,5 +107,5 @@ go
 
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "idx")~~
+~~ERROR (Message: duplicate key value violates unique constraint "idxbabel_621_vu_prepare_table_147dc0d6e295169e8ba6e11ebeb1c6472")~~
 

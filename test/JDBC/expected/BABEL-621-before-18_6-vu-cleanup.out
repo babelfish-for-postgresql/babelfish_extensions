@@ -4,10 +4,6 @@ GO
 
 DROP INDEX uniq on babel_621_vu_prepare_table_3;
 GO
-~~ERROR (Code: 3723)~~
-
-~~ERROR (Message: cannot drop index uniq because constraint uniq on table babel_621_vu_prepare_table_3 requires it)~~
-
 
 DROP INDEX very_long_index_name_on_a_table_1234567890_1234567890_1234567890_1234567890_1234567890 on babel_621_vu_prepare_table_with_long_index_name;
 GO

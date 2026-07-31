@@ -58,6 +58,7 @@
 #include "pltsql.h"
 #include "pltsql_node/pltsql_nodetags.h"	/* PLtsql NodeTag values — generated 
 											 * by gen_pltsql_node_support.pl */
+#include "catalog.h"
 #include "access/xact.h"
 #include "err_handler.h"
 #include "iterative_exec.h"
@@ -527,6 +528,10 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	int			i;
 	int			rc;
 
+	/* Restore identifier mappings from prior execution for error messages */
+	if (func->n_ident_mappings > 0)
+		bbf_restore_ident_cache(func->ident_mappings, func->n_ident_mappings);
+
 	/*
 	 * Setup the execution state
 	 */
@@ -894,6 +899,13 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	PG_END_TRY();
 
 	estate.err_text = gettext_noop("during function exit");
+
+	/*
+	 * Snapshot identifier cache into the function struct after first execution.
+	 * On re-execution, these will be restored so error messages show full names.
+	 */
+	if (func->n_ident_mappings == 0)
+		func->n_ident_mappings = bbf_snapshot_ident_cache(&func->ident_mappings, func->fn_cxt);
 
 	/*
 	 * Let the instrumentation plugin peek at this function

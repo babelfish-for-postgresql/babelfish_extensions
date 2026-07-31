@@ -1,0 +1,658 @@
+-- Long Identifier Error Message Tests
+-- Verifies error messages show full original names (not truncated+hashed PG names)
+
+-- tsql
+
+-- ===========================================
+-- SETUP
+-- ===========================================
+CREATE TABLE ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (id INT, col1 INT);
+GO
+CREATE VIEW ErrTest_Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters AS SELECT 1 AS a;
+GO
+CREATE SEQUENCE ErrTest_Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars AS INT START WITH 1;
+GO
+CREATE FUNCTION ErrTest_Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars(@a INT) RETURNS INT AS BEGIN RETURN @a END;
+GO
+CREATE PROCEDURE ErrTest_Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars AS SELECT 1;
+GO
+CREATE INDEX ErrTest_Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+ON ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (id);
+GO
+
+-- ===========================================
+-- CREATE "already exists" errors
+-- ===========================================
+
+-- TABLE already exists
+CREATE TABLE ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (id INT);
+GO
+
+-- VIEW already exists
+CREATE VIEW ErrTest_Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters AS SELECT 1 AS a;
+GO
+
+-- SEQUENCE already exists
+CREATE SEQUENCE ErrTest_Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars AS INT START WITH 1;
+GO
+
+-- FUNCTION already exists
+CREATE FUNCTION ErrTest_Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars(@a INT) RETURNS INT AS BEGIN RETURN @a END;
+GO
+
+-- PROCEDURE already exists
+CREATE PROCEDURE ErrTest_Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars AS SELECT 1;
+GO
+
+-- INDEX already exists
+CREATE INDEX ErrTest_Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+ON ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (id);
+GO
+
+-- ===========================================
+-- DROP "does not exist" errors
+-- ===========================================
+
+DROP TABLE NonExist_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+DROP VIEW NonExist_Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+DROP FUNCTION NonExist_Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+DROP PROCEDURE NonExist_Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+DROP SEQUENCE NonExist_Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+DROP INDEX NonExist_Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+ON ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- ===========================================
+-- ALTER errors - object not found
+-- ===========================================
+
+-- ALTER TABLE that doesn't exist
+ALTER TABLE NonExist_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters ADD col2 INT;
+GO
+
+-- ALTER TABLE ADD COLUMN that already exists
+ALTER TABLE ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters ADD col1 INT;
+GO
+
+-- ALTER TABLE DROP COLUMN that doesn't exist
+ALTER TABLE ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters DROP COLUMN nonexist_very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_chars;
+GO
+
+-- ===========================================
+-- INSERT/UPDATE referencing non-existent table
+-- ===========================================
+
+INSERT INTO NonExist_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters VALUES (1);
+GO
+
+UPDATE NonExist_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters SET id = 1;
+GO
+
+DELETE FROM NonExist_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+SELECT * FROM NonExist_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- ===========================================
+-- DATABASE errors
+-- ===========================================
+
+-- USE non-existent database
+USE Very_Long_Nonexistent_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- DROP DATABASE that doesn't exist
+DROP DATABASE Very_Long_Nonexistent_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- ===========================================
+-- LOGIN errors
+-- ===========================================
+
+-- CREATE LOGIN already exists
+CREATE LOGIN Very_Long_Login_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Test WITH PASSWORD = '12345678';
+GO
+CREATE LOGIN Very_Long_Login_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Test WITH PASSWORD = '12345678';
+GO
+
+-- ALTER LOGIN does not exist
+ALTER LOGIN NonExist_Very_Long_Login_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters WITH PASSWORD = 'test123';
+GO
+
+-- DROP LOGIN does not exist
+DROP LOGIN NonExist_Very_Long_Login_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- cleanup login
+DROP LOGIN Very_Long_Login_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Test;
+GO
+
+-- ===========================================
+-- USER/ROLE errors
+-- ===========================================
+
+-- CREATE USER already exists
+CREATE USER Very_Long_User_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_TestUser;
+GO
+CREATE USER Very_Long_User_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_TestUser;
+GO
+
+-- DROP USER does not exist
+DROP USER NonExist_Very_Long_User_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- CREATE ROLE already exists
+CREATE ROLE Very_Long_Role_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_TestRole;
+GO
+CREATE ROLE Very_Long_Role_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_TestRole;
+GO
+
+-- DROP ROLE does not exist
+DROP ROLE NonExist_Very_Long_Role_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- cleanup user/role
+DROP USER Very_Long_User_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_TestUser;
+GO
+DROP ROLE Very_Long_Role_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_TestRole;
+GO
+
+-- ===========================================
+-- CONSTRAINT errors
+-- ===========================================
+
+-- Duplicate key constraint name
+ALTER TABLE ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+ADD CONSTRAINT ErrTest_Very_Long_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars UNIQUE (id);
+GO
+ALTER TABLE ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+ADD CONSTRAINT ErrTest_Very_Long_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars UNIQUE (col1);
+GO
+-- ===========================================
+-- TYPE errors
+-- ===========================================
+
+CREATE TYPE ErrTest_Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FROM INT;
+GO
+CREATE TYPE ErrTest_Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FROM INT;
+GO
+DROP TYPE NonExist_Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- ===========================================
+-- SCHEMA errors
+-- ===========================================
+
+CREATE SCHEMA NonExist_Very_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+CREATE SCHEMA NonExist_Very_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+DROP SCHEMA NonExist_Very_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+DROP SCHEMA NonExist_Very_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- ===========================================
+-- TRIGGER errors
+-- ===========================================
+
+DROP TRIGGER NonExist_Very_Long_Trigger_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- ===========================================
+-- Column reference errors in DML
+-- ===========================================
+
+-- SELECT non-existent column
+SELECT nonexist_very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_chars
+FROM ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- ===========================================
+-- CONSTRAINT violation errors (runtime)
+-- ===========================================
+
+-- CHECK constraint violation
+CREATE TABLE ErrTest_Constraint_Table (c1 INT, c2 INT, CONSTRAINT ErrTest_Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three CHECK (c2 > c1));
+GO
+INSERT INTO ErrTest_Constraint_Table(c1, c2) VALUES(5, 2);
+GO
+
+-- UNIQUE constraint violation
+ALTER TABLE ErrTest_Constraint_Table ADD CONSTRAINT ErrTest_Very_Long_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three UNIQUE (c1);
+GO
+INSERT INTO ErrTest_Constraint_Table(c1, c2) VALUES(1, 5);
+GO
+INSERT INTO ErrTest_Constraint_Table(c1, c2) VALUES(1, 5);
+GO
+
+DROP TABLE ErrTest_Constraint_Table;
+GO
+
+-- ===========================================
+-- INDEX-specific errors
+-- ===========================================
+
+-- CREATE INDEX on non-existent table
+CREATE INDEX SomeIdx_Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+ON NonExist_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (id);
+GO
+
+-- CREATE INDEX on non-existent column
+CREATE INDEX SomeIdx_Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+ON ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (nonexist_very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_chars);
+GO
+
+-- ===========================================
+-- Errors inside stored procedures
+-- ===========================================
+
+-- Table already exists inside proc
+CREATE PROCEDURE ErrTest_Proc_Table AS
+BEGIN
+    CREATE TABLE ErrProc_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (id INT);
+    CREATE TABLE ErrProc_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (id INT);
+END;
+GO
+EXEC ErrTest_Proc_Table;
+GO
+DROP TABLE IF EXISTS ErrProc_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+DROP PROCEDURE ErrTest_Proc_Table;
+GO
+
+-- Drop non-existent table inside proc
+CREATE PROCEDURE ErrTest_Proc_Drop AS
+BEGIN
+    DROP TABLE NonExist_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+END;
+GO
+EXEC ErrTest_Proc_Drop;
+GO
+DROP PROCEDURE ErrTest_Proc_Drop;
+GO
+
+-- Column not found inside proc
+CREATE PROCEDURE ErrTest_Proc_Col AS
+BEGIN
+    SELECT nonexist_very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_chars FROM ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+END;
+GO
+EXEC ErrTest_Proc_Col;
+GO
+DROP PROCEDURE ErrTest_Proc_Col;
+GO
+
+-- Constraint violation inside proc
+CREATE PROCEDURE ErrTest_Proc_Constraint AS
+BEGIN
+    INSERT INTO ErrTest_Constraint_Table(c1, c2) VALUES(10, 1);
+END;
+GO
+CREATE TABLE ErrTest_Constraint_Table2 (c1 INT, c2 INT, CONSTRAINT ErrProc_Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three CHECK (c2 > c1));
+GO
+CREATE PROCEDURE ErrTest_Proc_Constraint2 AS
+BEGIN
+    INSERT INTO ErrTest_Constraint_Table2(c1, c2) VALUES(10, 1);
+END;
+GO
+EXEC ErrTest_Proc_Constraint2;
+GO
+DROP PROCEDURE ErrTest_Proc_Constraint2;
+GO
+DROP TABLE ErrTest_Constraint_Table2;
+GO
+
+-- Index already exists inside proc
+CREATE PROCEDURE ErrTest_Proc_Index AS
+BEGIN
+    CREATE INDEX ErrProc_Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters ON ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (id);
+END;
+GO
+EXEC ErrTest_Proc_Index;
+GO
+EXEC ErrTest_Proc_Index;
+GO
+DROP INDEX IF EXISTS ErrProc_Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters ON ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+DROP PROCEDURE ErrTest_Proc_Index;
+GO
+
+-- Error in nested proc
+CREATE PROCEDURE ErrTest_Inner_Proc AS
+BEGIN
+    CREATE TABLE ErrProc_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (id INT);
+END;
+GO
+CREATE PROCEDURE ErrTest_Outer_Proc AS
+BEGIN
+    EXEC ErrTest_Inner_Proc;
+    EXEC ErrTest_Inner_Proc;
+END;
+GO
+EXEC ErrTest_Outer_Proc;
+GO
+DROP TABLE IF EXISTS ErrProc_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+DROP PROCEDURE ErrTest_Outer_Proc;
+GO
+DROP PROCEDURE ErrTest_Inner_Proc;
+GO
+
+-- Function already exists inside proc (via EXEC)
+CREATE PROCEDURE ErrTest_Proc_Func AS
+BEGIN
+    EXEC('CREATE FUNCTION ErrProc_Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars(@a INT) RETURNS INT AS BEGIN RETURN @a END');
+END;
+GO
+EXEC ErrTest_Proc_Func;
+GO
+EXEC ErrTest_Proc_Func;
+GO
+DROP FUNCTION IF EXISTS ErrProc_Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP PROCEDURE ErrTest_Proc_Func;
+GO
+
+-- View already exists inside proc (via EXEC)
+CREATE PROCEDURE ErrTest_Proc_View AS
+BEGIN
+    EXEC('CREATE VIEW ErrProc_Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters AS SELECT 1 AS a');
+END;
+GO
+EXEC ErrTest_Proc_View;
+GO
+EXEC ErrTest_Proc_View;
+GO
+DROP VIEW IF EXISTS ErrProc_Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+DROP PROCEDURE ErrTest_Proc_View;
+GO
+
+-- Sequence already exists inside proc
+CREATE PROCEDURE ErrTest_Proc_Seq AS
+BEGIN
+    CREATE SEQUENCE ErrProc_Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars AS INT START WITH 1;
+END;
+GO
+EXEC ErrTest_Proc_Seq;
+GO
+EXEC ErrTest_Proc_Seq;
+GO
+DROP SEQUENCE IF EXISTS ErrProc_Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP PROCEDURE ErrTest_Proc_Seq;
+GO
+
+-- DML on non-existent table inside proc
+CREATE PROCEDURE ErrTest_Proc_DML AS
+BEGIN
+    INSERT INTO NonExist_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters VALUES (1);
+END;
+GO
+EXEC ErrTest_Proc_DML;
+GO
+DROP PROCEDURE ErrTest_Proc_DML;
+GO
+
+-- ===========================================
+
+-- ===========================================
+-- Temp table errors
+-- ===========================================
+
+-- Long temp table name
+CREATE TABLE #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (id INT);
+GO
+
+-- Duplicate temp table - should show original name in error
+CREATE TABLE #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (id INT);
+GO
+
+-- Insert into temp table to verify it works
+INSERT INTO #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters VALUES (1);
+GO
+
+-- Drop non-existent temp table - should show original name in error
+DROP TABLE #NonExist_Very_Long_Temp_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- Multibyte temp table
+CREATE TABLE #テンプ_非常に長い一時テーブル名前がPostgreSQLの制限を超える場合のテスト (id INT);
+GO
+CREATE TABLE #テンプ_非常に長い一時テーブル名前がPostgreSQLの制限を超える場合のテスト (id INT);
+GO
+
+-- Index on temp table with long name
+-- TODO: Enable once BABEL-6433 (temp table name truncation) is merged
+-- CREATE INDEX IX_Very_Long_Index_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+-- ON #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters(id);
+-- GO
+-- Duplicate index on temp table - should show original name in error
+-- CREATE INDEX IX_Very_Long_Index_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+-- ON #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters(id);
+-- GO
+-- Drop non-existent index on temp table
+-- DROP INDEX NonExist_Very_Long_Index_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+-- ON #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+-- GO
+
+-- Constraint on temp table with long name
+-- TODO: Enable once BABEL-6433 (temp table name truncation) is merged
+-- ALTER TABLE #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+-- ADD CONSTRAINT CK_Very_Long_Constraint_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Sixty_Three CHECK (id > 0);
+-- GO
+-- Duplicate constraint on temp table - should show original name in error
+-- ALTER TABLE #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+-- ADD CONSTRAINT CK_Very_Long_Constraint_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Sixty_Three CHECK (id > 0);
+-- GO
+-- Drop constraint with long name
+-- ALTER TABLE #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+-- DROP CONSTRAINT CK_Very_Long_Constraint_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Sixty_Three;
+-- GO
+
+-- ===========================================
+-- LOGIN with invalid default database
+-- ===========================================
+
+CREATE LOGIN babel5975_test_long_login_name_that_exceeds_postgresql_limit_of_sixty_three_chars WITH PASSWORD = '12345678', DEFAULT_DATABASE = nonexistent_very_long_database_name_that_exceeds_postgresql_limit_of_sixty_three_chars;
+GO
+
+-- ===========================================
+-- Table variable errors
+-- ===========================================
+
+-- First batch declares (populates cache), second batch references (triggers error with full name)
+DECLARE @Very_Long_Table_Variable_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters TABLE (id INT);
+GO
+SELECT * FROM @Very_Long_Table_Variable_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+-- ===========================================
+-- Cross-session constraint name display
+-- ===========================================
+
+-- Unique constraint violation shows full constraint name (cross-session)
+CREATE TABLE ErrTest_Constraint_Cross (id INT, CONSTRAINT uq_Very_Long_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars UNIQUE(id));
+GO
+INSERT INTO ErrTest_Constraint_Cross VALUES (1);
+GO
+INSERT INTO ErrTest_Constraint_Cross VALUES (1);
+GO
+DROP TABLE ErrTest_Constraint_Cross;
+GO
+
+-- PRIMARY KEY constraint violation
+CREATE TABLE ErrTest_PK_Table (id INT, CONSTRAINT Very_Long_Primary_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three PRIMARY KEY (id));
+GO
+INSERT INTO ErrTest_PK_Table VALUES (1);
+GO
+INSERT INTO ErrTest_PK_Table VALUES (1);
+GO
+DROP TABLE ErrTest_PK_Table;
+GO
+
+-- FOREIGN KEY constraint violation
+CREATE TABLE ErrTest_FK_Parent (id INT PRIMARY KEY);
+GO
+CREATE TABLE ErrTest_FK_Child (id INT, parent_id INT, CONSTRAINT Very_Long_Foreign_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three FOREIGN KEY (parent_id) REFERENCES ErrTest_FK_Parent(id));
+GO
+INSERT INTO ErrTest_FK_Child VALUES (1, 999);
+GO
+DROP TABLE ErrTest_FK_Child;
+GO
+DROP TABLE ErrTest_FK_Parent;
+GO
+
+
+-- ===========================================
+-- Parameter name display in error messages
+-- ===========================================
+
+-- Function with long parameter name - missing required param shows full name
+CREATE FUNCTION ErrTest_Func_Long_Param(@Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT) RETURNS INT AS BEGIN RETURN @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters END;
+GO
+SELECT dbo.ErrTest_Func_Long_Param();
+GO
+
+-- Procedure with long parameter name - missing required param shows full name
+CREATE PROCEDURE ErrTest_Proc_Long_Param @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT AS SELECT @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+EXEC ErrTest_Proc_Long_Param;
+GO
+
+-- Procedure with long TVP parameter name - missing required param shows full name
+CREATE TYPE ErrTest_TVP_Type AS TABLE (id INT);
+GO
+CREATE PROCEDURE ErrTest_Proc_Long_TVP_Param @Very_Long_TVP_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters ErrTest_TVP_Type READONLY AS SELECT * FROM @Very_Long_TVP_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+EXEC ErrTest_Proc_Long_TVP_Param;
+GO
+
+DROP FUNCTION ErrTest_Func_Long_Param;
+GO
+DROP PROCEDURE ErrTest_Proc_Long_Param;
+GO
+DROP PROCEDURE ErrTest_Proc_Long_TVP_Param;
+GO
+DROP TYPE ErrTest_TVP_Type;
+GO
+
+-- CLEANUP
+-- ===========================================
+-- ===========================================
+-- Cross-session FK constraint violation (hook resolves from catalog, not cache)
+-- The FK is created in one connection, but the violation is triggered from a
+-- DIFFERENT connection (-- tsql block). The new session has no cache entry for
+-- the FK name, so the hook must resolve it from babelfish_identifier_mapping.
+-- ===========================================
+
+-- FK INSERT violation (referencing non-existent parent)
+CREATE TABLE ErrTest_FK_Cross_Parent (id INT PRIMARY KEY);
+GO
+INSERT INTO ErrTest_FK_Cross_Parent VALUES (1);
+GO
+CREATE TABLE ErrTest_FK_Cross_Child (
+    id INT,
+    parent_id INT,
+    CONSTRAINT Very_Long_FK_Cross_Session_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three FOREIGN KEY (parent_id) REFERENCES ErrTest_FK_Cross_Parent(id)
+);
+GO
+
+-- tsql
+-- NEW CONNECTION: FK name is NOT in this session's cache
+-- Hook must resolve from babelfish_identifier_mapping catalog
+INSERT INTO ErrTest_FK_Cross_Child VALUES (1, 999);
+GO
+
+-- tsql
+-- NEW CONNECTION: Test DELETE on parent violates FK (ON DELETE NO ACTION)
+INSERT INTO ErrTest_FK_Cross_Child VALUES (2, 1);
+GO
+DELETE FROM ErrTest_FK_Cross_Parent WHERE id = 1;
+GO
+
+-- tsql
+DROP TABLE ErrTest_FK_Cross_Child;
+GO
+DROP TABLE ErrTest_FK_Cross_Parent;
+GO
+
+-- ===========================================
+-- CONSTRAINT name with comments between keyword and name
+-- ===========================================
+
+-- Block comment between CONSTRAINT and name
+CREATE TABLE ErrTest_Block_Comment_Constraint (
+    col1 INT,
+    CONSTRAINT /* block comment */ ErrTest_Very_Long_Block_Comment_Constraint_Name_Exceeds_Sixty_Three_Bytes_Limit PRIMARY KEY (col1)
+);
+GO
+INSERT INTO ErrTest_Block_Comment_Constraint VALUES (1);
+GO
+INSERT INTO ErrTest_Block_Comment_Constraint VALUES (1);
+GO
+
+-- tsql
+-- NEW CONNECTION: Verify cross-session resolution works for block comment case
+INSERT INTO ErrTest_Block_Comment_Constraint VALUES (1);
+GO
+
+-- tsql
+-- Line comment between CONSTRAINT and name
+CREATE TABLE ErrTest_Line_Comment_Constraint (
+    col1 INT,
+    CONSTRAINT -- line comment
+    ErrTest_Very_Long_Line_Comment_Constraint_Name_Exceeds_Sixty_Three_Bytes_Limit_XY PRIMARY KEY (col1)
+);
+GO
+INSERT INTO ErrTest_Line_Comment_Constraint VALUES (1);
+GO
+INSERT INTO ErrTest_Line_Comment_Constraint VALUES (1);
+GO
+
+-- tsql
+-- NEW CONNECTION: Verify cross-session resolution works for line comment case
+INSERT INTO ErrTest_Line_Comment_Constraint VALUES (1);
+GO
+
+-- tsql
+DROP TABLE ErrTest_Block_Comment_Constraint;
+GO
+DROP TABLE ErrTest_Line_Comment_Constraint;
+GO
+
+-- ===========================================
+-- CLEANUP
+-- ===========================================
+DROP INDEX ErrTest_Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+ON ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+ALTER TABLE ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+DROP CONSTRAINT ErrTest_Very_Long_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP VIEW ErrTest_Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+DROP TABLE ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+DROP SEQUENCE ErrTest_Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP FUNCTION ErrTest_Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP PROCEDURE ErrTest_Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP PROCEDURE ErrTest_Proc_Constraint;
+GO
+DROP TYPE ErrTest_Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO

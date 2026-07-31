@@ -83,10 +83,6 @@ go
 insert into babel_621_vu_prepare_table_8 values(1, 1);
 insert into babel_621_vu_prepare_table_8 values(2, 1);
 go
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
 
 create table babel_621_vu_prepare_table_10
 (
@@ -101,11 +97,3 @@ insert into babel_621_vu_prepare_table_10 values(1, 1, 1);
 insert into babel_621_vu_prepare_table_10 values(1, 2, 1);
 insert into babel_621_vu_prepare_table_10 values(1, 2, 2);
 go
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 2627)~~
-
-~~ERROR (Message: duplicate key value violates unique constraint "idx")~~
-

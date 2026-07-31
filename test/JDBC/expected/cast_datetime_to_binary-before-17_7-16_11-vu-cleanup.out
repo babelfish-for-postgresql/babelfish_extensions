@@ -16,7 +16,7 @@ DROP INDEX IX_computed_binary ON test_computed_binary;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: index "ix_computed_binarytest_computed31c5988ff854870479cd098146452e5b" does not exist)~~
+~~ERROR (Message: index "ix_computed_binary" does not exist)~~
 
 
 DROP TABLE test_computed_binary;
