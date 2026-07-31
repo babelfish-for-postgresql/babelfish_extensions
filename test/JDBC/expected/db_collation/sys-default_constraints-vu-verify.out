@@ -36,3 +36,97 @@ int
 15
 ~~END~~
 
+
+-- Verify generated columns do not appear as default constraints (attgenerated filter working)
+CREATE TABLE sys_default_constraints_vu_verify_generated (a INT DEFAULT 5, b AS (a + 1), c INT DEFAULT 10);
+GO
+
+-- Only columns with actual defaults (a, c) should appear, not generated column (b)
+SELECT COUNT(*) FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('sys_default_constraints_vu_verify_generated');
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- Verify same count in sys.all_objects for this table
+SELECT COUNT(*) FROM sys.all_objects WHERE type = 'D' AND parent_object_id = OBJECT_ID('sys_default_constraints_vu_verify_generated');
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- Verify default constraints appear correctly in sys.all_objects with correct type
+SELECT type, type_desc FROM sys.all_objects
+WHERE parent_object_id = OBJECT_ID('sys_default_constraints_vu_verify_generated') AND type = 'D'
+ORDER BY name;
+GO
+~~START~~
+char#!#nvarchar
+D #!#DEFAULT_CONSTRAINT
+D #!#DEFAULT_CONSTRAINT
+~~END~~
+
+
+
+-- Verify table with all columns having named defaults shows correct count
+CREATE TABLE sys_default_constraints_vu_verify_alldef (a INT CONSTRAINT DF_alldef_a DEFAULT 1, b INT CONSTRAINT DF_alldef_b DEFAULT 2, c VARCHAR(10) CONSTRAINT DF_alldef_c DEFAULT 'abc');
+GO
+
+SELECT COUNT(*) FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('sys_default_constraints_vu_verify_alldef');
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.all_objects WHERE type = 'D' AND parent_object_id = OBJECT_ID('sys_default_constraints_vu_verify_alldef');
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Verify table with NO defaults shows zero constraints
+CREATE TABLE sys_default_constraints_vu_verify_nodef (a INT, b INT, c VARCHAR(10));
+GO
+
+SELECT COUNT(*) FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('sys_default_constraints_vu_verify_nodef');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.all_objects WHERE type = 'D' AND parent_object_id = OBJECT_ID('sys_default_constraints_vu_verify_nodef');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Verify add default - constraint appears in both views
+ALTER TABLE sys_default_constraints_vu_verify_nodef ADD CONSTRAINT DF_nodef_a DEFAULT 99 FOR a;
+GO
+
+SELECT COUNT(*) FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('sys_default_constraints_vu_verify_nodef');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.all_objects WHERE type = 'D' AND parent_object_id = OBJECT_ID('sys_default_constraints_vu_verify_nodef');
+GO
+~~START~~
+int
+1
+~~END~~
