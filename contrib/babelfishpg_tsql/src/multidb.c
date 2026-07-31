@@ -1255,6 +1255,20 @@ get_physical_schema_name_by_mode(char *db_name, const char *schema_name, Migrati
 	}
 
 	truncate_tsql_identifier(result);
+
+	/* Cache for error messages - with and without db prefix */
+	{
+		const char *orig = bbf_lookup_ident_name(name);
+		const char *val = orig ? orig : schema_name;
+		bbf_cache_ident_name(result, val);
+		/* Also cache without db prefix for PG errors that strip it */
+		{
+			int db_len = strlen(db_name);
+			if (strncmp(result, db_name, db_len) == 0 && result[db_len] == '_')
+				bbf_cache_ident_name(result + db_len + 1, val);
+		}
+	}
+
 	pfree(name);
 
 	return result;
@@ -1325,6 +1339,13 @@ get_physical_user_name(char *db_name, char *user_name, bool suppress_db_error, b
 
 	/* Truncate final result to 64 bytes */
 	truncate_tsql_identifier(result);
+
+	/* Cache for error messages - with and without db prefix */
+	{
+		const char *orig = bbf_lookup_ident_name(new_user_name);
+		const char *val = orig ? orig : user_name;
+		bbf_cache_ident_name(result, val);
+	}
 
 	/* 
 	 * If the user or role is not found in the sys.babelfish_authid_user_ext 

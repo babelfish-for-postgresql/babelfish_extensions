@@ -686,3 +686,4 @@ xml_query
 babel_sqlvariant_coerce_type
 forxml-auto
 BABEL-login-db-long-identifiers
+BABEL-621-before-18_6

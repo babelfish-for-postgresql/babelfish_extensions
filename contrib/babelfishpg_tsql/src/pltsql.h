@@ -1475,6 +1475,10 @@ typedef struct PLtsql_function
 
 	/* arguments for inline code block */
 	InlineCodeBlockArgs *inline_args;
+
+	/* cached truncated→original identifier mappings from compilation */
+	int			n_ident_mappings;
+	struct IdentNameCacheEntry *ident_mappings;
 } PLtsql_function;
 
 /*

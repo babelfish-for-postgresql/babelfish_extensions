@@ -603,4 +603,23 @@ typedef struct Rule
 
 extern void get_tvp_typename_typeschemaname(char *proc_name, char *target_arg_name, char **tvp_type_name, char **tvp_type_schema_name);
 
+
+/*****************************************
+ *		LONG IDENTIFIER ERROR HANDLING
+ *****************************************/
+typedef struct IdentNameCacheEntry
+{
+	char		truncated_name[NAMEDATALEN];
+	char		original_name[512 + 1]; /* 128 T-SQL chars * 4 bytes UTF-8 + NUL */
+} IdentNameCacheEntry;
+
+extern void bbf_cache_ident_name(const char *truncated_name, const char *original_name);
+extern void bbf_cache_index_name(const char *internal_name, const char *index_name);
+extern PGDLLEXPORT const char *bbf_lookup_ident_name(const char *truncated_name);
+extern void bbf_reset_ident_name_cache(void);
+extern int	bbf_snapshot_ident_cache(IdentNameCacheEntry **entries, MemoryContext cxt);
+extern void bbf_restore_ident_cache(IdentNameCacheEntry *entries, int n);
+extern PGDLLEXPORT char *bbf_rewrite_truncated_identifiers(const char *msg);
+extern const char *bbf_get_original_constraint_name(const char *conname);
+extern const char *bbf_get_original_index_name(const char *idxname);
 #endif

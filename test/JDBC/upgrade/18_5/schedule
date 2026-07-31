@@ -694,3 +694,4 @@ BABEL-5264
 babel_sqlvariant_coerce_type
 BABEL-login-db-long-identifiers
 BABEL-6813
+BABEL-621-before-18_6

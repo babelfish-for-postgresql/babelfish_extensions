@@ -1236,6 +1236,10 @@ skip_antlr_parsing:
 	}
 	PG_END_TRY();
 
+
+	/* Capture truncated identifier mappings from compilation for use at execution */
+	function->n_ident_mappings = bbf_snapshot_ident_cache(&function->ident_mappings,
+														  function->fn_cxt);
 	return function;
 }
 

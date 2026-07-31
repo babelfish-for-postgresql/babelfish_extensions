@@ -51,7 +51,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'msdb'
 go
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 msdb#!#new_OWNER_login
 ~~END~~
 
@@ -69,7 +69,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 change_owner_db#!#dba_login
 ~~END~~
 
@@ -79,7 +79,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 change_owner_db#!#new_OWNER_login
 ~~END~~
 
@@ -90,7 +90,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 change_owner_db#!#dba_login
 ~~END~~
 
@@ -189,8 +189,8 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db#!#new_OWNER_login
+nvarchar#!#nvarchar
+CHANGE_OWNER_DB#!#new_OWNER_login
 ~~END~~
 
 
@@ -221,7 +221,7 @@ select suser_name(), db_name()
 go
 ~~START~~
 nvarchar#!#nvarchar
-dba_login#!#change_owner_db
+dba_login#!#CHANGE_OWNER_DB
 ~~END~~
 
 -- when new owner is already a DB user, granting ownership is not allowed
@@ -248,7 +248,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 change_owner_db#!#dba_login
 ~~END~~
 
@@ -263,7 +263,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 change_owner_db#!#dba_login
 ~~END~~
 
@@ -293,12 +293,12 @@ go
 exec p_change_db_owner_1
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#nvarchar#!#nvarchar
 p_change_db_owner_1: before owner change#!#change_owner_db#!#dba_login
 ~~END~~
 
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#nvarchar#!#nvarchar
 p_change_db_owner_1: after owner change#!#change_owner_db#!#new_OWNER_login
 ~~END~~
 
@@ -336,12 +336,12 @@ alter authorization on database::change_owner_db to new_owner_login
 ~~END~~
 
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#nvarchar#!#nvarchar
 p_change_db_owner_2: before owner change#!#change_owner_db#!#dba_login
 ~~END~~
 
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#nvarchar#!#nvarchar
 p_change_db_owner_2: after owner change#!#change_owner_db#!#new_OWNER_login
 ~~END~~
 
@@ -415,7 +415,7 @@ go
 select 'before owner change', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#nvarchar#!#nvarchar
 before owner change#!#change_owner_db#!#dba_login
 ~~END~~
 
@@ -424,7 +424,7 @@ go
 select 'after owner change', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#nvarchar#!#nvarchar
 after owner change#!#change_owner_db#!#new_OWNER_login
 ~~END~~
 
@@ -433,7 +433,7 @@ go
 select 'after rollback', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#nvarchar#!#nvarchar
 after rollback#!#change_owner_db#!#dba_login
 ~~END~~
 
@@ -462,8 +462,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
+nvarchar#!#nvarchar
+DB63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
 ~~END~~
 
 alter authorization on database::[DB63long_012345678901234567890123456789012345678901234567890123] to dba_login
@@ -471,8 +471,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db63long_012345678901234567890123456789012345678901234567890123#!#dba_login
+nvarchar#!#nvarchar
+DB63long_012345678901234567890123456789012345678901234567890123#!#dba_login
 ~~END~~
 
 alter authorization on database::[DB63long_012345678901234567890123456789012345678901234567890123] to [LOGIN63long_345678901234567890123456789012345678901234567890123]
@@ -480,8 +480,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
+nvarchar#!#nvarchar
+DB63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
 ~~END~~
 
 set quoted_identifier on
@@ -491,8 +491,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db63long_012345678901234567890123456789012345678901234567890123#!#dba_login
+nvarchar#!#nvarchar
+DB63long_012345678901234567890123456789012345678901234567890123#!#dba_login
 ~~END~~
 
 alter authorization on database::"DB63long_012345678901234567890123456789012345678901234567890123" to "LOGIN63long_345678901234567890123456789012345678901234567890123"
@@ -500,8 +500,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
+nvarchar#!#nvarchar
+DB63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
 ~~END~~
 
 set quoted_identifier off
@@ -514,7 +514,7 @@ select user_name(), db_name()
 go
 ~~START~~
 nvarchar#!#nvarchar
-dbo#!#db63long_012345678901234567890123456789012345678901234567890123
+dbo#!#DB63long_012345678901234567890123456789012345678901234567890123
 ~~END~~
 
 use master
@@ -532,8 +532,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
+nvarchar#!#nvarchar
+DB64long_0123456789012345678901234567890123456789012345678901234#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
 ~~END~~
 
 alter authorization on database::[DB64long_0123456789012345678901234567890123456789012345678901234] to dba_login
@@ -541,8 +541,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#dba_login
+nvarchar#!#nvarchar
+DB64long_0123456789012345678901234567890123456789012345678901234#!#dba_login
 ~~END~~
 
 alter authorization on database::[DB64long_0123456789012345678901234567890123456789012345678901234] to [LOGIN64long_3456789012345678901234567890123456789012345678901234]
@@ -550,8 +550,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
+nvarchar#!#nvarchar
+DB64long_0123456789012345678901234567890123456789012345678901234#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
 ~~END~~
 
 set quoted_identifier on
@@ -561,8 +561,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#dba_login
+nvarchar#!#nvarchar
+DB64long_0123456789012345678901234567890123456789012345678901234#!#dba_login
 ~~END~~
 
 alter authorization on DATABASE::"DB64long_0123456789012345678901234567890123456789012345678901234" to "LOGIN64long_3456789012345678901234567890123456789012345678901234"
@@ -570,8 +570,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
+nvarchar#!#nvarchar
+DB64long_0123456789012345678901234567890123456789012345678901234#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
 ~~END~~
 
 set quoted_identifier off
@@ -644,7 +644,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'msdb'
 go
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 msdb#!#new_OWNER_login
 ~~END~~
 
@@ -662,7 +662,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 change_owner_db#!#dba_login
 ~~END~~
 
@@ -672,7 +672,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 change_owner_db#!#new_OWNER_login
 ~~END~~
 
@@ -683,7 +683,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 change_owner_db#!#dba_login
 ~~END~~
 
@@ -782,8 +782,8 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db#!#new_OWNER_login
+nvarchar#!#nvarchar
+CHANGE_OWNER_DB#!#new_OWNER_login
 ~~END~~
 
 
@@ -814,7 +814,7 @@ select suser_name(), db_name()
 go
 ~~START~~
 nvarchar#!#nvarchar
-dba_login#!#change_owner_db
+dba_login#!#CHANGE_OWNER_DB
 ~~END~~
 
 -- when new owner is already a DB user, granting ownership is not allowed
@@ -841,7 +841,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 change_owner_db#!#dba_login
 ~~END~~
 
@@ -856,7 +856,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 change_owner_db#!#dba_login
 ~~END~~
 
@@ -886,12 +886,12 @@ go
 exec p_change_db_owner_1
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#nvarchar#!#nvarchar
 p_change_db_owner_1: before owner change#!#change_owner_db#!#dba_login
 ~~END~~
 
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#nvarchar#!#nvarchar
 p_change_db_owner_1: after owner change#!#change_owner_db#!#new_OWNER_login
 ~~END~~
 
@@ -929,12 +929,12 @@ alter authorization on database::change_owner_db to new_owner_login
 ~~END~~
 
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#nvarchar#!#nvarchar
 p_change_db_owner_2: before owner change#!#change_owner_db#!#dba_login
 ~~END~~
 
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#nvarchar#!#nvarchar
 p_change_db_owner_2: after owner change#!#change_owner_db#!#new_OWNER_login
 ~~END~~
 
@@ -1008,7 +1008,7 @@ go
 select 'before owner change', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#nvarchar#!#nvarchar
 before owner change#!#change_owner_db#!#dba_login
 ~~END~~
 
@@ -1017,7 +1017,7 @@ go
 select 'after owner change', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#nvarchar#!#nvarchar
 after owner change#!#change_owner_db#!#new_OWNER_login
 ~~END~~
 
@@ -1026,7 +1026,7 @@ go
 select 'after rollback', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#nvarchar#!#nvarchar
 after rollback#!#change_owner_db#!#dba_login
 ~~END~~
 
@@ -1053,8 +1053,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
+nvarchar#!#nvarchar
+DB63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
 ~~END~~
 
 alter authorization on database::[DB63long_012345678901234567890123456789012345678901234567890123] to dba_login
@@ -1062,8 +1062,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db63long_012345678901234567890123456789012345678901234567890123#!#dba_login
+nvarchar#!#nvarchar
+DB63long_012345678901234567890123456789012345678901234567890123#!#dba_login
 ~~END~~
 
 alter authorization on database::[DB63long_012345678901234567890123456789012345678901234567890123] to [LOGIN63long_345678901234567890123456789012345678901234567890123]
@@ -1071,8 +1071,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
+nvarchar#!#nvarchar
+DB63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
 ~~END~~
 
 set quoted_identifier on
@@ -1082,8 +1082,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db63long_012345678901234567890123456789012345678901234567890123#!#dba_login
+nvarchar#!#nvarchar
+DB63long_012345678901234567890123456789012345678901234567890123#!#dba_login
 ~~END~~
 
 alter authorization on database::"DB63long_012345678901234567890123456789012345678901234567890123" to "LOGIN63long_345678901234567890123456789012345678901234567890123"
@@ -1091,8 +1091,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
+nvarchar#!#nvarchar
+DB63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
 ~~END~~
 
 set quoted_identifier off
@@ -1105,7 +1105,7 @@ select user_name(), db_name()
 go
 ~~START~~
 nvarchar#!#nvarchar
-dbo#!#db63long_012345678901234567890123456789012345678901234567890123
+dbo#!#DB63long_012345678901234567890123456789012345678901234567890123
 ~~END~~
 
 use master
@@ -1123,8 +1123,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
+nvarchar#!#nvarchar
+DB64long_0123456789012345678901234567890123456789012345678901234#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
 ~~END~~
 
 alter authorization on database::[DB64long_0123456789012345678901234567890123456789012345678901234] to dba_login
@@ -1132,8 +1132,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#dba_login
+nvarchar#!#nvarchar
+DB64long_0123456789012345678901234567890123456789012345678901234#!#dba_login
 ~~END~~
 
 alter authorization on database::[DB64long_0123456789012345678901234567890123456789012345678901234] to [LOGIN64long_3456789012345678901234567890123456789012345678901234]
@@ -1141,8 +1141,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
+nvarchar#!#nvarchar
+DB64long_0123456789012345678901234567890123456789012345678901234#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
 ~~END~~
 
 set quoted_identifier on
@@ -1152,8 +1152,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#dba_login
+nvarchar#!#nvarchar
+DB64long_0123456789012345678901234567890123456789012345678901234#!#dba_login
 ~~END~~
 
 alter authorization on DATABASE::"DB64long_0123456789012345678901234567890123456789012345678901234" to "LOGIN64long_3456789012345678901234567890123456789012345678901234"
@@ -1161,8 +1161,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
+nvarchar#!#nvarchar
+DB64long_0123456789012345678901234567890123456789012345678901234#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
 ~~END~~
 
 set quoted_identifier off
