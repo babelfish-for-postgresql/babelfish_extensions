@@ -71,7 +71,6 @@ D #!#DEFAULT_CONSTRAINT
 ~~END~~
 
 
-
 -- Verify table with all columns having named defaults shows correct count
 CREATE TABLE sys_default_constraints_vu_verify_alldef (a INT CONSTRAINT DF_alldef_a DEFAULT 1, b INT CONSTRAINT DF_alldef_b DEFAULT 2, c VARCHAR(10) CONSTRAINT DF_alldef_c DEFAULT 'abc');
 GO
@@ -130,3 +129,4 @@ GO
 int
 1
 ~~END~~
+
