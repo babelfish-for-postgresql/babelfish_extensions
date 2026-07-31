@@ -398,8 +398,21 @@ get_db_id(const char *dbname)
 	int16		db_id = 0;
 	HeapTuple	tuple;
 	Form_sysdatabases sysdb;
+	char *dbname_lower = downcase_identifier(dbname, strlen(dbname), false, false);
 
-	tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
+	tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname_lower));
+
+	if (!HeapTupleIsValid(tuple))
+	{
+		/* For long names, the input might be the original name.
+		 * Truncate with MD5 hash to match the stored key. */
+		if (strlen(dbname_lower) >= NAMEDATALEN - 1)
+		{
+			char *truncated = pstrdup(dbname_lower);
+			truncate_tsql_identifier(truncated);
+			tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(truncated));
+		}
+	}
 
 	if (!HeapTupleIsValid(tuple))
 		return InvalidDbid;
@@ -415,7 +428,7 @@ char *
 get_db_name(int16 dbid)
 {
 	HeapTuple	tuple;
-	Datum		name_datum;
+	Datum		datum;
 	char	   *name = NULL;
 	bool		isNull;
 
@@ -424,11 +437,51 @@ get_db_name(int16 dbid)
 	if (!HeapTupleIsValid(tuple))
 		return NULL;
 
-	name_datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabases_name, &isNull);
-	name = TextDatumGetCString(name_datum);
+	datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabases_name, &isNull);
+	name = TextDatumGetCString(datum);
 	ReleaseSysCache(tuple);
 
 	return name;
+}
+
+char *
+dbid_get_original_db_name(int16 dbid)
+{
+	HeapTuple	tuple;
+	Datum		datum;
+	bool		isNull;
+	char	   *name;
+
+	tuple = SearchSysCache1(SYSDATABASEOID, Int16GetDatum(dbid));
+	if (!HeapTupleIsValid(tuple))
+		return NULL;
+
+	/* Guard against old tuples that don't have orig_name yet (after pg_upgrade) */
+	if (HeapTupleHeaderGetNatts(tuple->t_data) < Anum_sysdatabases_orig_name)
+	{
+		ReleaseSysCache(tuple);
+		return NULL;
+	}
+
+	datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabases_orig_name, &isNull);
+	if (isNull)
+	{
+		ReleaseSysCache(tuple);
+		return NULL;
+	}
+
+	name = TextDatumGetCString(datum);
+	ReleaseSysCache(tuple);
+	return name;
+}
+
+char *
+dbname_get_original_db_name(const char *db_name)
+{
+	int16 dbid = get_db_id(db_name);
+	if (!DbidIsValid(dbid))
+		return NULL;
+	return dbid_get_original_db_name(dbid);
 }
 
 const char *
@@ -553,6 +606,9 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("The database '%s' does not exist. Supply a valid database name. To see available databases, use sys.databases.", dbname)));
+		/* Truncate for scan key - the index is on the truncated name */
+		if (strlen(dbname_lower) >= NAMEDATALEN - 1)
+			truncate_tsql_identifier(dbname_lower);
 		ScanKeyInit(&scanKey,
 					Anum_sysdatabases_name,
 					BTEqualStrategyNumber, F_TEXTEQ,
@@ -584,7 +640,7 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 
 		MemSet(nulls, 0, sizeof(nulls));
 
-		db_name_entry = TextDatumGetCString(heap_getattr(tuple, Anum_sysdatabases_name,
+		db_name_entry = TextDatumGetCString(heap_getattr(tuple, Anum_sysdatabases_orig_name,
 														 RelationGetDescr(rel), &isNull));
 
 		values[0] = CStringGetTextDatum(db_name_entry);
@@ -2506,9 +2562,9 @@ get_name_db_owner(HeapTuple tuple, TupleDesc dsc)
 	char	   *name_str = text_to_cstring(name);
 	char	   *name_db_owner = palloc0(MAX_BBF_NAMEDATALEND);
 
-	truncate_identifier(name_str, strlen(name_str), false);
+	truncate_tsql_identifier(name_str);
 	snprintf(name_db_owner, MAX_BBF_NAMEDATALEND, "%s_db_owner", name_str);
-	truncate_identifier(name_db_owner, strlen(name_db_owner), false);
+	truncate_tsql_identifier(name_db_owner);
 	return CStringGetDatum(name_db_owner);
 }
 
@@ -2520,9 +2576,9 @@ get_name_dbo(HeapTuple tuple, TupleDesc dsc)
 	char	   *name_str = text_to_cstring(name);
 	char	   *name_dbo = palloc0(MAX_BBF_NAMEDATALEND);
 
-	truncate_identifier(name_str, strlen(name_str), false);
+	truncate_tsql_identifier(name_str);
 	snprintf(name_dbo, MAX_BBF_NAMEDATALEND, "%s_dbo", name_str);
-	truncate_identifier(name_dbo, strlen(name_dbo), false);
+	truncate_tsql_identifier(name_dbo);
 	return CStringGetDatum(name_dbo);
 }
 
@@ -2534,9 +2590,9 @@ get_name_guest(HeapTuple tuple, TupleDesc dsc)
 	char	   *name_str = text_to_cstring(name);
 	char	   *name_dbo = palloc0(MAX_BBF_NAMEDATALEND);
 
-	truncate_identifier(name_str, strlen(name_str), false);
+	truncate_tsql_identifier(name_str);
 	snprintf(name_dbo, MAX_BBF_NAMEDATALEND, "%s_guest", name_str);
-	truncate_identifier(name_dbo, strlen(name_dbo), false);
+	truncate_tsql_identifier(name_dbo);
 	return CStringGetDatum(name_dbo);
 }
 
@@ -4776,7 +4832,9 @@ update_sysdatabases_db_name(const char *old_db_name, const char *new_db_name)
 		
 	/* Set up the new database. */
 	values[Anum_sysdatabases_name - 1]   = CStringGetTextDatum(new_db_name);
-	replaces[Anum_sysdatabases_name - 1] = true;	
+	replaces[Anum_sysdatabases_name - 1] = true;
+	values[Anum_sysdatabases_orig_name - 1] = CStringGetTextDatum(new_db_name);
+	replaces[Anum_sysdatabases_orig_name - 1] = true;
 								  
 	tuple = heap_modify_tuple(db_found,
 							  sysdatabases_rel_descr,

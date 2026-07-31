@@ -110,13 +110,15 @@ select db_name();
 go
 ~~START~~
 nvarchar
-long_identifier_database_test_a894fb1797d5bd72eca891e48e292b226
+long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst
 ~~END~~
 
 
 -- terminate-tsql-conn user=jdbc_user password=12345678 database=long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst
 
 -- tsql
+USE master;
+GO
 DROP DATABASE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
 GO
 
@@ -136,7 +138,7 @@ select db_name();
 go
 ~~START~~
 nvarchar
-mixed_case_database_test_xyzabc30cf92ced03f7ac92f201f0af44b2711
+Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV
 ~~END~~
 
 
@@ -163,13 +165,15 @@ select db_name();
 go
 ~~START~~
 nvarchar
-dätàbäsé_tëst_àáâãäåd6a6618170bcdd4e75eba3f835f8297b
+Dätàbäsé_Tëst_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóô
 ~~END~~
 
 
 -- terminate-tsql-conn user=jdbc_user password=12345678 database=Dätàbäsé_Tëst_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóô
 
 -- tsql
+USE master;
+GO
 DROP DATABASE Dätàbäsé_Tëst_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóô;
 GO
 
@@ -189,11 +193,24 @@ select suser_name(), db_name();
 go
 ~~START~~
 nvarchar#!#nvarchar
-long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr#!#long_identifier_database_test_a894fb1797d5bd72eca891e48e292b226
+long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr#!#long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst
 ~~END~~
 
 
 -- terminate-tsql-conn user=long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr password=1234 database=long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst
+
+-- tsql
+USE master;
+GO
+-- psql
+-- Wait for terminated session to fully release the database
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
 DROP DATABASE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
@@ -214,7 +231,7 @@ select suser_name(), db_name();
 go
 ~~START~~
 nvarchar#!#nvarchar
-Mixed_Case_Login_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXy#!#mixed_case_database_test_xyzabc30cf92ced03f7ac92f201f0af44b2711
+Mixed_Case_Login_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXy#!#Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV
 ~~END~~
 
 
@@ -248,13 +265,16 @@ select suser_name(), db_name();
 go
 ~~START~~
 nvarchar#!#nvarchar
-long_bracket_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstu#!#long_bracket_database_test_abcd6e156c6615f983f78b93694caae2bfdb
+long_bracket_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstu#!#long_bracket_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvw
 ~~END~~
 
 
 -- terminate-tsql-conn user=long_bracket_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstu password=1234 database=long_bracket_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvw
 
 -- tsql
+USE master;
+GO
+
 DROP DATABASE [long_bracket_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvw];
 GO
 
@@ -273,12 +293,14 @@ select suser_name(), db_name();
 go
 ~~START~~
 nvarchar#!#nvarchar
-Bracketed_Mixed_Case_Login_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsT#!#bracketed_mixed_case_database_x3aaf30f9af14101a36e10038975fbe5c
+Bracketed_Mixed_Case_Login_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsT#!#Bracketed_Mixed_Case_Database_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoP
 ~~END~~
 
 
 -- terminate-tsql-conn user=Bracketed_Mixed_Case_Login_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsT password=1234 database=Bracketed_Mixed_Case_Database_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoP
 
 -- tsql
+USE master;
+GO
 DROP DATABASE [Bracketed_Mixed_Case_Database_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoP];
 GO

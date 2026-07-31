@@ -618,6 +618,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	const char  *old_createrole_self_grant;
 	ListCell    *option;
 	const char  *database_collation_name = NULL;
+	const char  *orig_dbname = NULL;
 
 	/* Check options */
 	foreach(option, options)
@@ -628,6 +629,10 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		{
 			database_collation_name = tsql_translate_tsql_collation_to_bbf_collation(defGetString(defel));
 			check_database_collation_name(database_collation_name);
+		}
+		else if (strcmp(defel->defname, "bbf_original_name") == 0)
+		{
+			orig_dbname = defGetString(defel);
 		}
 		else
 		{
@@ -701,6 +706,10 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	new_record[5] = CStringGetTextDatum(dbname);
 	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(0));
 	new_record[7] = CStringGetTextDatum("{}");
+	if (orig_dbname)
+		new_record[8] = CStringGetTextDatum(orig_dbname);
+	else
+		new_record[8] = CStringGetTextDatum(dbname);
 
 	tuple = heap_form_tuple(RelationGetDescr(sysdatabase_rel),
 							new_record, new_record_nulls);

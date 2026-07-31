@@ -150,4 +150,5 @@ Unexpected drop found for procedure sys.create_xp_qv_in_master_dbo in file babel
 Unexpected drop found for procedure sys.sp_babelfish_grant_usage_to_all in file babelfishpg_tsql--1.1.0--1.2.0.sql
 Unexpected drop found for table "#temp_schedules_to_delete" in file babelfishpg_tsql--4.2.0--4.3.0.sql
 Unexpected drop found for table "#temp_schedules_to_delete" in file babelfishpg_tsql--4.4.0--5.0.0.sql
+Unexpected drop found for table _saved_sysdatabases_deps in file babelfishpg_tsql--6.2.0--6.3.0.sql
 Unexpected drop found for view sql_logins_deprecated_in_5_2_0 in file babelfishpg_tsql--5.1.0--5.2.0.sql

@@ -47,11 +47,12 @@ extern Oid	sysdatabaese_idx_oid_oid;
 extern Oid	sysdatabaese_idx_name_oid;
 
 /* MUST comply with babelfish_sysdatabases table */
-#define SYSDATABASES_NUM_COLS 8
+#define SYSDATABASES_NUM_COLS 9
 #define Anum_sysdatabases_oid 1
 #define Anum_sysdatabases_owner 4
 #define Anum_sysdatabases_name 6
 #define Anum_sysdatabases_crdate 7
+#define Anum_sysdatabases_orig_name 9
 
 /* MUST comply with babelfish_sysdatabases table */
 typedef struct FormData_sysdatabases
@@ -92,6 +93,8 @@ typedef FormData_authid_login_ext *Form_authid_login_ext;
 
 extern int16 get_db_id(const char *dbname);
 extern char *get_db_name(int16 dbid);
+extern char *dbid_get_original_db_name(int16 dbid);
+extern char *dbname_get_original_db_name(const char *db_name);
 extern char *get_db_owner_role_name(const char *dbname);
 extern void initTsqlSyscache(void);
 extern const char *get_one_user_db_name(void);

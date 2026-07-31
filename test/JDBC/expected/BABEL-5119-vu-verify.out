@@ -52,7 +52,7 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_db
+BABEL5119_db
 ~~END~~
 
 
@@ -84,12 +84,12 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
-babel5119_db#!#dbo#!#BABEL5119_t1#!#BASE TABLE
-babel5119_db#!#dbo#!#BABEL5119_t2#!#BASE TABLE
-babel5119_db#!#dbo#!#BABEL5119_t3#!#BASE TABLE
-babel5119_db#!#dbo#!#babel5119_v1#!#VIEW
-babel5119_db#!#dbo#!#babel5119_v2#!#VIEW
-babel5119_db#!#dbo#!#babel5119_v3#!#VIEW
+BABEL5119_db#!#dbo#!#BABEL5119_t1#!#BASE TABLE
+BABEL5119_db#!#dbo#!#BABEL5119_t2#!#BASE TABLE
+BABEL5119_db#!#dbo#!#BABEL5119_t3#!#BASE TABLE
+BABEL5119_db#!#dbo#!#babel5119_v1#!#VIEW
+BABEL5119_db#!#dbo#!#babel5119_v2#!#VIEW
+BABEL5119_db#!#dbo#!#babel5119_v3#!#VIEW
 ~~END~~
 
 
@@ -170,7 +170,7 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_db
+BABEL5119_db
 ~~END~~
 
 
@@ -292,7 +292,7 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_db
+BABEL5119_db
 ~~END~~
 
 
@@ -324,12 +324,12 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
-babel5119_db#!#dbo#!#BABEL5119_t1#!#BASE TABLE
-babel5119_db#!#dbo#!#BABEL5119_t2#!#BASE TABLE
-babel5119_db#!#dbo#!#BABEL5119_t3#!#BASE TABLE
-babel5119_db#!#dbo#!#babel5119_v1#!#VIEW
-babel5119_db#!#dbo#!#babel5119_v2#!#VIEW
-babel5119_db#!#dbo#!#babel5119_v3#!#VIEW
+BABEL5119_db#!#dbo#!#BABEL5119_t1#!#BASE TABLE
+BABEL5119_db#!#dbo#!#BABEL5119_t2#!#BASE TABLE
+BABEL5119_db#!#dbo#!#BABEL5119_t3#!#BASE TABLE
+BABEL5119_db#!#dbo#!#babel5119_v1#!#VIEW
+BABEL5119_db#!#dbo#!#babel5119_v2#!#VIEW
+BABEL5119_db#!#dbo#!#babel5119_v3#!#VIEW
 ~~END~~
 
 
@@ -410,7 +410,7 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_db
+BABEL5119_db
 ~~END~~
 
 
@@ -628,7 +628,7 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_db
+BABEL5119_db
 ~~END~~
 
 

@@ -1,0 +1,96 @@
+-- Test long identifier handling for database names (PR3 scope)
+-- Tests: CREATE DATABASE with long name, orig_name storage, sys.databases/sysdatabases resolution,
+-- DB_NAME() case preservation, sp_tables/information_schema in long-named DB
+
+-- tsql
+
+-- ===========================================
+-- CREATE DATABASE with long name
+-- ===========================================
+CREATE DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing;
+GO
+
+-- Verify database original name stored in babelfish_sysdatabases.orig_name
+SELECT orig_name FROM sys.babelfish_sysdatabases WHERE orig_name LIKE 'Very_Long_Database%';
+GO
+
+USE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing;
+GO
+
+-- Verify DB_NAME() returns case-preserved name
+SELECT DB_NAME();
+GO
+
+-- sys.databases shows case-preserved database name
+SELECT name FROM sys.databases WHERE name LIKE '%Long_Database%';
+GO
+
+USE master;
+GO
+
+DROP DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing;
+GO
+
+-- ===========================================
+-- Second database test with sp_tables and information_schema
+-- ===========================================
+CREATE DATABASE Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+USE Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- sys.sysdatabases shows case-preserved name
+SELECT name FROM sys.sysdatabases WHERE name LIKE '%Long_DB_Name%';
+GO
+
+-- DB_NAME() comparison with sys.sysdatabases works (CI collation)
+SELECT name FROM sys.sysdatabases WHERE name = DB_NAME() collate database_default;
+GO
+
+-- sp_tables works in long-named database
+EXEC sp_tables;
+GO
+
+-- information_schema.tables works in long-named database
+SELECT TABLE_CATALOG FROM information_schema.tables WHERE TABLE_CATALOG LIKE '%Long_DB%';
+GO
+
+USE master;
+GO
+DROP DATABASE Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- ===========================================
+-- Mixed case database name preservation
+-- ===========================================
+CREATE DATABASE MixedCase_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- Verify case-insensitive lookup works
+SELECT name FROM sys.databases WHERE name = 'mixedcase_long_db_name_that_exceeds_postgresql_limit_of_sixty_three_characters';
+GO
+
+DROP DATABASE MixedCase_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- ===========================================
+-- Verify catalog entries removed after DROP DATABASE
+-- ===========================================
+CREATE DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+USE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+CREATE TABLE babel5975_db_drop_test (id INT);
+GO
+USE master;
+GO
+DROP DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- Verify database is gone from sys.databases
+SELECT name FROM sys.databases WHERE name LIKE '%Very_Long_Database%';
+GO
+
+-- Verify orig_name removed from babelfish_sysdatabases
+SELECT orig_name FROM sys.babelfish_sysdatabases WHERE orig_name LIKE 'Very_Long_Database%';
+GO

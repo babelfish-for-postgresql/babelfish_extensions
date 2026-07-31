@@ -609,6 +609,12 @@ ignore#!#babel-4475_before_16_5-vu-cleanup
 ignore#!#BABEL-5119_before_16_5-vu-prepare
 ignore#!#BABEL-5119_before_16_5-vu-verify
 ignore#!#BABEL-5119_before_16_5-vu-cleanup
+ignore#!#BABEL-5119-before-18_6-vu-prepare
+ignore#!#BABEL-5119-before-18_6-vu-verify
+ignore#!#BABEL-5119-before-18_6-vu-cleanup
+ignore#!#BABEL-ROLE-MEMBER-before-18_6-vu-prepare
+ignore#!#BABEL-ROLE-MEMBER-before-18_6-vu-verify
+ignore#!#BABEL-ROLE-MEMBER-before-18_6-vu-cleanup
 ignore#!#BABEL-5059_before_16_5-vu-prepare
 ignore#!#BABEL-5059_before_16_5-vu-verify
 ignore#!#BABEL-5059_before_16_5-vu-cleanup
@@ -790,3 +796,12 @@ ignore#!#money_aggregate-before-17_11-or-18_5-vu-cleanup
 ignore#!#numeric_money-before-17_11-or-18_5-vu-prepare
 ignore#!#numeric_money-before-17_11-or-18_5-vu-verify
 ignore#!#numeric_money-before-17_11-or-18_5-vu-cleanup
+ignore#!#long-identifiers-databases-before-18_6-vu-prepare
+ignore#!#long-identifiers-databases-before-18_6-vu-verify
+ignore#!#long-identifiers-databases-before-18_6-vu-cleanup
+ignore#!#sys-sysdatabases-before-18_6-vu-prepare
+ignore#!#sys-sysdatabases-before-18_6-vu-verify
+ignore#!#sys-sysdatabases-before-18_6-vu-cleanup
+ignore#!#case_insensitive_collation-before-18_6-vu-prepare
+ignore#!#case_insensitive_collation-before-18_6-vu-verify
+ignore#!#case_insensitive_collation-before-18_6-vu-cleanup

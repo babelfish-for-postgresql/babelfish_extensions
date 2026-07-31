@@ -111,7 +111,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE PROCEDURE sys.sp_helpdb(IN "@dbname" VARCHAR(32))
+CREATE OR REPLACE PROCEDURE sys.sp_helpdb(IN "@dbname" sys.sysname)
 LANGUAGE 'pltsql'
 AS $$
 BEGIN
@@ -2059,8 +2059,8 @@ CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
 
 CASE 
-	WHEN p.prokind = 'p' THEN CAST(PG_CATALOG.concat(p.proname, ';1') AS sys.nvarchar(134))
-	ELSE CAST(PG_CATALOG.concat(p.proname, ';0') AS sys.nvarchar(134))
+	WHEN p.prokind = 'p' THEN CAST(PG_CATALOG.concat(COALESCE(case when octet_length(p.proname) >= 60 then (select f.orig_name from sys.babelfish_function_ext f where f.funcname = p.proname and f.nspname = p.pronamespace::regnamespace::name limit 1) end, p.proname::sys.NVARCHAR(128)), ';1') AS sys.nvarchar(134))
+	ELSE CAST(PG_CATALOG.concat(COALESCE(case when octet_length(p.proname) >= 60 then (select f.orig_name from sys.babelfish_function_ext f where f.funcname = p.proname and f.nspname = p.pronamespace::regnamespace::name limit 1) end, p.proname::sys.NVARCHAR(128)), ';0') AS sys.nvarchar(134))
 END AS PROCEDURE_NAME,
 
 -1 AS NUM_INPUT_PARAMS,
@@ -2335,9 +2335,9 @@ BEGIN
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
-		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.dbid = sys.db_id()
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
-		WHERE Ext1.database_name = DB_NAME()
+		WHERE Ext1.database_name = sys.bbf_cur_db() collate database_default
 		AND Ext1.type != 'R'
 		AND ((Ext2.orig_username IS NULL AND Base2.oid IS NULL) OR Ext2.type = 'R') -- We should only show public if user has no members i.e. Base2.oid is NULL
 		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
@@ -2357,7 +2357,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @name_in_db
 					OR pg_catalog.lower(orig_username) = pg_catalog.lower(@name_in_db))
-					AND database_name = DB_NAME()
+					AND database_name = sys.bbf_cur_db() collate database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'Role_name',
@@ -2369,8 +2369,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base2.oid = Authmbr.member
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
-		WHERE Ext1.database_name = DB_NAME()
-		AND Ext2.database_name = DB_NAME()
+		WHERE Ext1.database_name = sys.bbf_cur_db() collate database_default
+		AND Ext2.database_name = sys.bbf_cur_db() collate database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
@@ -2381,7 +2381,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @name_in_db
 					OR pg_catalog.lower(orig_username) = pg_catalog.lower(@name_in_db))
-					AND database_name = DB_NAME()
+					AND database_name = sys.bbf_cur_db() collate database_default
 					AND type != 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
@@ -2406,9 +2406,9 @@ BEGIN
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
-		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.dbid = sys.db_id()
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
-		WHERE Ext1.database_name = DB_NAME()
+		WHERE Ext1.database_name = sys.bbf_cur_db() collate database_default
 		AND Ext1.type != 'R'
 		AND ((Ext2.orig_username IS NULL AND Base2.oid IS NULL) OR Ext2.type = 'R') -- We should only show public if user has no members i.e. Base2.oid is NULL
 		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
@@ -2435,7 +2435,7 @@ BEGIN
 		FROM pg_catalog.pg_roles AS Base 
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext
 		ON Base.rolname = Ext.rolname
-		WHERE Ext.database_name = DB_NAME()
+		WHERE Ext.database_name = sys.bbf_cur_db() collate database_default
 		AND Ext.type = 'R'
 		ORDER BY RoleName;
 	END
@@ -2444,7 +2444,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @rolename
 					OR pg_catalog.lower(orig_username) = pg_catalog.lower(@rolename))
-					AND database_name = DB_NAME()
+					AND database_name = sys.bbf_cur_db() collate database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext.orig_username AS sys.SYSNAME) AS 'RoleName',
@@ -2453,7 +2453,7 @@ BEGIN
 		FROM pg_catalog.pg_roles AS Base 
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext
 		ON Base.rolname = Ext.rolname
-		WHERE Ext.database_name = DB_NAME()
+		WHERE Ext.database_name = sys.bbf_cur_db() collate database_default
 		AND Ext.type = 'R'
 		AND (Ext.orig_username = @rolename OR pg_catalog.lower(Ext.orig_username) = pg_catalog.lower(@rolename))
 		ORDER BY RoleName;
@@ -2481,8 +2481,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
-		WHERE Ext1.database_name = DB_NAME()
-		AND Ext2.database_name = DB_NAME()
+		WHERE Ext1.database_name = sys.bbf_cur_db() collate database_default
+		AND Ext2.database_name = sys.bbf_cur_db() collate database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
 		ORDER BY RoleName, MemberName;
@@ -2492,7 +2492,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @rolename
 					OR pg_catalog.lower(orig_username) = pg_catalog.lower(@rolename))
-					AND database_name = DB_NAME()
+					AND database_name = sys.bbf_cur_db() collate database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS sys.SYSNAME) AS 'RoleName',
@@ -2503,8 +2503,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
-		WHERE Ext1.database_name = DB_NAME()
-		AND Ext2.database_name = DB_NAME()
+		WHERE Ext1.database_name = sys.bbf_cur_db() collate database_default
+		AND Ext2.database_name = sys.bbf_cur_db() collate database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @rolename OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@rolename))
@@ -3128,7 +3128,7 @@ BEGIN
 					IF @row_count > 3
 						BEGIN
 							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 4;
-							IF @dbname != sys.db_name()
+							IF @dbname != sys.db_name() collate database_default
 								BEGIN
 									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
 								END
@@ -3156,7 +3156,7 @@ BEGIN
 					IF @row_count > 2
 						BEGIN
 							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 3;
-							IF @dbname != sys.db_name()
+							IF @dbname != sys.db_name() collate database_default
 								BEGIN
 									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
 								END
@@ -3749,7 +3749,7 @@ LANGUAGE 'pltsql'
 AS $$
 BEGIN
 	DECLARE @cmd sys.NVARCHAR(300)
-	DECLARE @db  sys.sysname = DB_NAME()
+	DECLARE @db  sys.sysname = DB_NAME() collate database_default
 
 	-- For a NULL login name, do nothing
 	IF @loginame IS NULL
@@ -3784,7 +3784,7 @@ AS $$
 BEGIN
 	IF @procedure_schema IS NULL OR @procedure_schema = ''
 		BEGIN
-			SELECT @procedure_schema = default_schema_name from sys.babelfish_authid_user_ext WHERE orig_username = user_name() AND database_name = db_name();
+			SELECT @procedure_schema = default_schema_name from sys.babelfish_authid_user_ext WHERE orig_username = user_name() AND database_name = sys.bbf_cur_db() collate database_default;
 		END
 
         SELECT 	v.column_name AS [PARAMETER_NAME],
