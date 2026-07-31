@@ -4089,10 +4089,10 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 
 		renamestmt->renameType = objtype;
 		objwargs->objname = list_make2(makeString(pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID))), 
-											makeString(pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID))));
+											makeString(downcase_truncate_identifier(objname, strlen(objname), false)));
 		orig_proc_funcname = pstrdup(newname);
-		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
-		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
+		renamestmt->subname = downcase_truncate_identifier(objname, strlen(objname), false);
+		renamestmt->newname = downcase_truncate_identifier(newname, strlen(newname), false);
 	}
 	else if ((objtype == OBJECT_TRIGGER))
 	{
