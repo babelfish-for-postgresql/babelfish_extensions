@@ -2593,6 +2593,11 @@ CREATE OR REPLACE FUNCTION sys.db_name() RETURNS sys.nvarchar(128)
 AS 'babelfishpg_tsql', 'babelfish_db_name'
 LANGUAGE C PARALLEL SAFE STABLE;
 
+-- Returns truncated internal database name (for internal comparisons with database_name column)
+CREATE OR REPLACE FUNCTION sys.bbf_cur_db() RETURNS TEXT
+AS 'babelfishpg_tsql', 'babelfish_db_name_internal'
+LANGUAGE C PARALLEL SAFE STABLE;
+
 CREATE OR REPLACE FUNCTION sys.exp(IN arg DOUBLE PRECISION)
 RETURNS DOUBLE PRECISION
 AS 'babelfishpg_tsql', 'tsql_exp'

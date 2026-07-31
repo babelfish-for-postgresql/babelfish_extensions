@@ -1,6 +1,14 @@
 USE BABEL_ROLE_MEMBER_vu_prepare_db
 go
 
+SELECT DB_NAME()
+GO
+~~START~~
+nvarchar
+BABEL_ROLE_MEMBER_vu_prepare_db
+~~END~~
+
+
 -- Print the current membership status
 EXEC BABEL_ROLE_MEMBER_vu_prepare_proc
 GO
