@@ -441,5 +441,7 @@ pltsql_stringToNode(const char *str)
 
 	retval = pltsql_nodeRead(NULL, 0);
 
+	pg_strtok_init(NULL);
+
 	return retval;
 }
