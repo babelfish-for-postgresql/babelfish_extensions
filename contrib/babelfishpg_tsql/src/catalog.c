@@ -664,12 +664,75 @@ bbf_rewrite_truncated_identifiers(const char *msg)
 }
 
 /*
+ * Look up original name from babelfish_identifier_mapping catalog.
+ * Used as fallback when session cache doesn't have the mapping.
+ * TODO: Enable when PR1 (babelfish_identifier_mapping) is merged.
+ */
+static const char * __attribute__((unused))
+lookup_ident_from_catalog_by_name(const char *truncated_name)
+{
+	return NULL;
+#if 0 /* Enable when PR1 is merged */
+	Relation	rel;
+	TableScanDesc scan;
+	ScanKeyData skey[1];
+	HeapTuple	tuple;
+	NameData	namedata;
+	const char *result = NULL;
+
+	if (!IsTransactionState())
+		return NULL;
+
+	if (!OidIsValid(get_bbf_ident_mapping_oid()))
+		return NULL;
+
+	namestrcpy(&namedata, truncated_name);
+	ScanKeyInit(&skey[0],
+				Anum_bbf_ident_mapping_truncated_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&namedata));
+
+	rel = table_open(get_bbf_ident_mapping_oid(), AccessShareLock);
+	scan = table_beginscan_catalog(rel, 1, skey);
+
+	PG_TRY();
+	{
+		tuple = heap_getnext(scan, ForwardScanDirection);
+		if (HeapTupleIsValid(tuple))
+		{
+			bool	isNull;
+			Datum	datum;
+
+			datum = heap_getattr(tuple, Anum_bbf_ident_mapping_original_name,
+								RelationGetDescr(rel), &isNull);
+			if (!isNull)
+			{
+				char *orig = TextDatumGetCString(datum);
+				bbf_cache_ident_name(truncated_name, orig);
+				result = bbf_lookup_ident_name(truncated_name);
+				pfree(orig);
+			}
+		}
+	}
+	PG_FINALLY();
+	{
+		table_endscan(scan);
+		table_close(rel, AccessShareLock);
+	}
+	PG_END_TRY();
+
+	return result;
+#endif
+}
+
+/*
  * Resolve original constraint name from babelfish_identifier_mapping.
  * TODO: Enable when PR1 (babelfish_identifier_mapping) is merged.
  */
 const char *
 bbf_get_original_constraint_name(const char *conname)
 {
+	(void) lookup_ident_from_catalog_by_name; /* suppress unused warning until PR1 enables this */
 	return conname;
 #if 0 /* Enable when PR1 is merged */
 	const char *orig;
