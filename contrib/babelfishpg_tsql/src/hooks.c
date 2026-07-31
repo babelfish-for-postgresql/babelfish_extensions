@@ -2848,11 +2848,19 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			 */
 			if (actual_alias_len >= NAMEDATALEN)
 			{
-				/* Use the full original name for TDS client display */
-				pfree(alias);
-				alias = palloc0(actual_alias_len + 1);
-				memcpy(alias, original_name, actual_alias_len);
-				alias[actual_alias_len] = '\0';
+				/* Sanity checks */
+				Assert(actual_alias_len > alias_len && alias_len >= 32);
+
+				/* First 32 characters of original_name are assigned to alias. */
+				/* cppcheck-suppress invalidFunctionArg */
+				memcpy(alias, original_name, (alias_len - 32));
+
+				/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated. */
+				memcpy(alias + (alias_len - 32),
+					   identifier_name + (alias_len - 32), 
+	   				   32);
+
+				alias[alias_len] = '\0';
 			}
 			else
 			{
@@ -3479,12 +3487,10 @@ pltsql_report_proc_not_found_error(List *names, List *fargs, List *given_argname
 						}
 
 						if (!has_default)
-						{
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_FUNCTION),
 									 errmsg("%s %s expects parameter \"%s\", which was not supplied.", obj_type, NameListToString(names), bbf_get_original_constraint_name(p_argnames[pp]))),
 									parser_errposition(pstate, location));
-						}
 					}
 					else if (pp < first_arg_with_default)
 					{
