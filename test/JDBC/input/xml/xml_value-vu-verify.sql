@@ -855,3 +855,19 @@ DECLARE @xml XML = '<root><child>Hello</child></root>';
 SELECT @xml.value('(//*:child)[1]');
 GO
 
+-- check for the special tag not being used in data or query
+DECLARE @x XML = '<magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>test</magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>  ';
+SELECT @x.value('(/*)', 'NVARCHAR(100)') AS c;
+go
+
+DECLARE @x XML = '<MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>test</MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>  ';
+SELECT @x.value('(/*)', 'NVARCHAR(100)') AS c;
+go
+
+DECLARE @x XML = '<magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>test</magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>  ';
+SELECT @x.value('(/magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag)', 'NVARCHAR(100)') AS c;
+go
+
+DECLARE @x XML = '<MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>test</MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>  ';
+SELECT @x.value('(/MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG)', 'NVARCHAR(100)') AS c;
+go

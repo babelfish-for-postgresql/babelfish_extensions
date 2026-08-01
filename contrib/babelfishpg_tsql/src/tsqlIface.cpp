@@ -1283,52 +1283,31 @@ public:
 		expr.pop_back(); /* remove the trailing dot character */
 		rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()->getSymbol()->getStartIndex(), std::make_pair("", ", " + expr)));		
 	}
-
-	void enterXml_proc_name_table_column(TSqlParser::Xml_proc_name_table_columnContext *ctx) override
+	
+	void enterGroup_by_item(TSqlParser::Group_by_itemContext *ctx) override
 	{
-		/*
-		 * XML methods cannot be called in GROUP BY expressions
-		 * The grammar path is always as follows, though expression can recurse
-		 * including via clr_udt_func_call:
-		 *	 group_by_item
-		 *	     expression
-		 *	         clr_udt_func_call
-		 *	             function_call
-		 *	                 xml_proc_name_table_column
-		 */
-		Assert(ctx->parent);
-		auto parentCtx = ctx->parent;
-		if (dynamic_cast<TSqlParser::Function_callContext *>(parentCtx))
-		{
-			Assert(parentCtx->parent);
-			parentCtx = parentCtx->parent;
-			if (dynamic_cast<TSqlParser::Clr_udt_func_callContext *>(parentCtx))
-			{
-				Assert(parentCtx->parent);
-				parentCtx = parentCtx->parent;
-				if (dynamic_cast<TSqlParser::ExpressionContext *>(parentCtx))
-				{
-					Assert(parentCtx->parent);
-					parentCtx = parentCtx->parent;
-				}
-			}
-		}
-
-		/* Check for possible nested expression */
-		while ((dynamic_cast<TSqlParser::Clr_udt_func_callContext *>(parentCtx)) ||
-			   (dynamic_cast<TSqlParser::ExpressionContext *>(parentCtx)))	
-		{
-			Assert(parentCtx->parent);
-			parentCtx = parentCtx->parent;
-		}
-
-		/* Final check: is this a GROUP BY expressioon ? */
-		if (dynamic_cast<TSqlParser::Group_by_itemContext *>(parentCtx))
-		{
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "XML methods are not allowed in a GROUP BY clause.", 0, 0);
-		}
+	    // Recursively search for xml_proc_name_table_column in the subtree
+	    if (hasDescendantOfType<TSqlParser::Xml_proc_name_table_columnContext>(ctx))
+	    {
+	        throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED,
+	            "XML methods are not allowed in a GROUP BY clause.", 0, 0);
+	    }
 	}
 	
+	// Determine if this node has a particular type of child node somewhere in the tree below it
+	template <class T>
+	static bool hasDescendantOfType(antlr4::tree::ParseTree *node)
+	{
+	    for (auto *child : node->children)
+	    {
+	        if (dynamic_cast<T *>(child))
+	            return true;
+	        if (hasDescendantOfType<T>(child))
+	            return true;
+	    }
+	    return false;
+	}
+
 	void exitDatatype_coloncolon_methods(TSqlParser::Datatype_coloncolon_methodsContext *ctx) override
 	{
 		std::string typeStr = ::getFullText(ctx->data_type());

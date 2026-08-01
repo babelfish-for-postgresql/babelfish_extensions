@@ -1405,4 +1405,44 @@ CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
 ORDER BY 1
 go
 
+-- check for the special tag not being used in data or query
+DECLARE @x XML= '<magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>test</magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>'
+SELECT T.c.value('.', 'varchar(10)') AS result
+FROM @x.nodes('/Root/row') AS T(c);
+go 
+
+DECLARE @x XML= '<MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>test</MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>'
+SELECT T.c.value('.', 'varchar(10)') AS result
+FROM @x.nodes('/Root/row') AS T(c);
+go 
+
+DECLARE @xml XML = '<Root><row><magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>test</magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag></row></Root>'
+SELECT T.C.value('.', 'varchar(10)') AS id
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY id
+go
+
+DECLARE @xml XML = '<Root><magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>test</magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag></Root>'
+SELECT T.C.value('.', 'varchar(10)') AS id
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY id
+go
+
+DECLARE @xml XML = '<magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>test</magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>'
+SELECT T.C.value('.', 'varchar(10)') AS id
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY id
+go
+
+DECLARE @xml XML = '<Root><row><name>James</name></row></Root>'
+SELECT T.C.value('.', 'varchar(10)') AS id
+FROM @xml.nodes('/Root/magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag') AS T(C)
+ORDER BY id
+go
+
+DECLARE @xml XML = '<Root><row><MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>James</MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG></row></Root>'
+SELECT T.C.value('.', 'varchar(10)') AS id
+FROM @xml.nodes('/Root/row/MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG') AS T(C)
+ORDER BY id
+go
 
