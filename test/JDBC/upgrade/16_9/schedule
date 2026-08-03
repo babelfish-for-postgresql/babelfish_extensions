@@ -617,6 +617,7 @@ round_return_type_test-before-16_11-or-17_7
 alter-view
 test_conv_int_to_varbinary_binary
 test_like_index
+like_op_index_scan
 babel_varbinary
 babel_test_numeric_int2_oper
 babel_test_numeric_int4_oper

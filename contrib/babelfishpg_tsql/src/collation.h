@@ -132,4 +132,32 @@ char* get_collation_name_for_db(const char* dbname);
 #define EXPRKIND_QUAL				0
 #define EXPRKIND_TARGET				1
 
+/* 
+ * Pattern prefix status for pattern_fixed_prefix_wrapper.
+ * Pattern_Prefix_None: no prefix found (first character is a wildcard)
+ * Pattern_Prefix_Partial: the pattern has a constant prefix followed by wildcards
+ * Pattern_Prefix_Exact: the pattern has no wildcard characters at all
+ */
+typedef enum
+{
+	Pattern_Prefix_None, Pattern_Prefix_Partial, Pattern_Prefix_Exact
+} Pattern_Prefix_Status;
+
+/* Hash table entry for storing original collations of LIKE expressions */
+typedef struct
+{
+	int		location;				/* Hash key: location of OpExpr */
+	Oid		orig_collation;			/* Original collation before transformation */
+} like_orig_coll_entry;
+
+extern void store_like_original_collation(int location, Oid collation);
+extern Oid get_like_original_collation(int location);
+extern void reset_like_original_collation(void);
+
+extern int pattern_fixed_prefix_wrapper(Const *patt,
+										int ptype,
+										Oid collation,
+										Const **prefix,
+										Selectivity *rest_selec);
+
 #endif
