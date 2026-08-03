@@ -124,6 +124,7 @@ nested_trigger_with_dml
 objectpropertyex-before-16_5-or-15_9
 routines_definition_before-14_7-or-15_2
 rowcount
+select_into_rowcount
 schema_resolution_func
 schema_resolution_proc
 schema_resolution_trigger

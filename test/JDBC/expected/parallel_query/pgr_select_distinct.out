@@ -239,6 +239,8 @@ GO
 
 SELECT DISTINCT g%1000 INTO distinct_group_1 FROM generate_series(0,9999) g;
 GO
+~~ROW COUNT: 1000~~
+
 
 
 -- -- SET jit_above_cost TO DEFAULT;
@@ -246,6 +248,8 @@ GO
 -- GO
 SELECT DISTINCT cast((g%1000) as varchar(max)) INTO distinct_group_2 FROM generate_series(0,9999) g;
 GO
+~~ROW COUNT: 1000~~
+
 
 select set_config('enable_hashagg', 'TRUE', false);
 GO
@@ -302,6 +306,8 @@ GO
 
 SELECT DISTINCT g%1000 INTO distinct_hash_1 FROM generate_series(0,9999) g;
 GO
+~~ROW COUNT: 1000~~
+
 
 
 
@@ -309,6 +315,8 @@ GO
 -- GO
 SELECT DISTINCT cast((g%1000) as varchar(max)) INTO distinct_hash_2 FROM generate_series(0,9999) g;
 GO
+~~ROW COUNT: 1000~~
+
 
 select set_config('enable_sort', 'TRUE', false);
 GO
