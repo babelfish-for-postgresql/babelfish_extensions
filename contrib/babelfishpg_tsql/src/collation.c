@@ -319,7 +319,6 @@ get_like_original_collation(int location)
 
 	if (!ht_like_orig_collation)
 	{
-		elog(WARNING, "get_like_original_collation: hash table is NULL, returning InvalidOid");
 		return InvalidOid;
 	}
 	

@@ -5865,9 +5865,6 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 	PlannedStmt *plan;
 	PLtsql_execstate *estate = NULL;
 
-	/* Reset per-statement hash table for LIKE collation tracking */
-	reset_like_original_collation();
-
 	if (IS_TDS_CLIENT() && !InSecurityRestrictedOperation())
 		update_rte_perms_info_walker((Node *) parse, NULL);
 
@@ -5886,6 +5883,9 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 		INSTR_TIME_SET_CURRENT(estate->planning_end);
 		INSTR_TIME_SUBTRACT(estate->planning_end, estate->planning_start);
 	}
+
+	/* Reset per-statement hash table for LIKE collation tracking after planning is complete */
+	reset_like_original_collation();
 
 	return plan;
 }
@@ -9401,7 +9401,6 @@ bbf_match_opclause_to_indexcol(PlannerInfo *root,
 
 		/* Try LIKE/ILIKE index optimization */
 		iclause = bbf_match_like_to_indexcol(root, rinfo, indexcol, index);
-		elog(INFO, "bbf_match_opclause_to_indexcol: bbf_match_like_to_indexcol returned %s", iclause ? "non-NULL" : "NULL");
 		if (iclause)
 			return iclause;
 
@@ -9492,6 +9491,20 @@ bbf_match_like_to_indexcol(PlannerInfo *root,
 	coll_info = tsql_lookup_collation_table_internal(clause->inputcollid);
 	if (!OidIsValid(coll_info.oid))
 		return NULL;
+
+	/*
+	 * Skip optimization if the index column doesn't use a Babelfish collation.
+	 * Generating bounds with Babelfish collation semantics for an index that uses
+	 * a different collation (e.g., pg_catalog tables using C collation) produces
+	 * incorrect results.
+	 */
+	{
+		coll_info_t idx_coll_info;
+		Oid idx_collation = index->indexcollations[indexcol];
+		idx_coll_info = tsql_lookup_collation_table_internal(idx_collation);
+		if (!OidIsValid(idx_coll_info.oid))
+			return NULL;
+	}
 
 	/*
 	 * Retrieve original collation that was stored by optimise_likenode.
