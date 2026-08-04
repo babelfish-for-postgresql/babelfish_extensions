@@ -1,0 +1,236 @@
+-- tsql
+-- Tests for T-SQL MERGE support behind babelfishpg_tsql.enable_tsql_merge (BABEL-2920, see also BABEL-1316)
+CREATE TABLE babel_2920_t (id INT PRIMARY KEY, val VARCHAR(20), qty INT)
+go
+CREATE TABLE babel_2920_s (id INT PRIMARY KEY, val VARCHAR(20), qty INT)
+go
+INSERT INTO babel_2920_t VALUES (1,'one',10),(2,'two',20),(3,'three',30)
+go
+~~ROW COUNT: 3~~
+
+INSERT INTO babel_2920_s VALUES (2,'zwei',200),(3,'three',30),(4,'four',400)
+go
+~~ROW COUNT: 3~~
+
+
+-- MERGE is rejected while the GUC is off (default)
+MERGE INTO babel_2920_t AS t
+USING babel_2920_s AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = s.val;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'MERGE' is not currently supported in Babelfish)~~
+
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.enable_tsql_merge = 'on';
+SELECT pg_reload_conf();
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+-- full three-way MERGE
+MERGE INTO babel_2920_t AS t
+USING babel_2920_s AS s ON t.id = s.id
+WHEN MATCHED AND s.val <> t.val THEN UPDATE SET val = s.val, qty = s.qty
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, val, qty) VALUES (s.id, s.val, s.qty)
+WHEN NOT MATCHED BY SOURCE THEN DELETE;
+SELECT @@ROWCOUNT AS merge_rowcount
+go
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT * FROM babel_2920_t ORDER BY id
+go
+~~START~~
+int#!#varchar#!#int
+2#!#zwei#!#200
+3#!#three#!#30
+4#!#four#!#400
+~~END~~
+
+
+-- INSERT DEFAULT VALUES action
+CREATE TABLE babel_2920_d (id INT DEFAULT 7, val VARCHAR(20) DEFAULT 'dflt')
+go
+MERGE INTO babel_2920_d AS t USING (SELECT 1 AS x) AS s ON 1 = 0
+WHEN NOT MATCHED THEN INSERT DEFAULT VALUES;
+SELECT * FROM babel_2920_d
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+7#!#dflt
+~~END~~
+
+
+-- table variable as MERGE target
+DECLARE @tv TABLE (id INT, val VARCHAR(20))
+INSERT INTO @tv VALUES (1, 'a')
+MERGE INTO @tv AS t USING (SELECT 1 AS id UNION ALL SELECT 2) AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = 'matched'
+WHEN NOT MATCHED THEN INSERT (id, val) VALUES (s.id, 'new');
+SELECT * FROM @tv ORDER BY id
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#matched
+2#!#new
+~~END~~
+
+
+-- updatable view as MERGE target
+CREATE VIEW babel_2920_v AS SELECT id, val, qty FROM babel_2920_t
+go
+MERGE INTO babel_2920_v AS t USING (SELECT 2 AS id, 'via_view' AS val) AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = s.val;
+SELECT id, val FROM babel_2920_t WHERE id = 2
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+2#!#via_view
+~~END~~
+
+
+-- MERGE inside a stored procedure (upsert pattern)
+CREATE PROCEDURE babel_2920_upsert @id INT, @val VARCHAR(20) AS
+BEGIN
+    MERGE INTO babel_2920_t AS t
+    USING (SELECT @id AS id, @val AS val) AS s ON t.id = s.id
+    WHEN MATCHED THEN UPDATE SET val = s.val
+    WHEN NOT MATCHED THEN INSERT (id, val, qty) VALUES (s.id, s.val, 0);
+    SELECT @@ROWCOUNT AS proc_rowcount
+END
+go
+EXEC babel_2920_upsert 100, 'hundred'
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+EXEC babel_2920_upsert 100, 'HUNDRED!'
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+SELECT id, val FROM babel_2920_t WHERE id = 100
+go
+~~START~~
+int#!#varchar
+100#!#HUNDRED!
+~~END~~
+
+
+-- error: MERGE cannot update the same row twice
+MERGE INTO babel_2920_t AS t
+USING (SELECT 2 AS id UNION ALL SELECT 2) AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET qty = 0;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: MERGE command cannot affect row a second time)~~
+
+
+-- error: TOP is not supported yet
+MERGE TOP (1) INTO babel_2920_t AS t USING babel_2920_s AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET qty = qty + 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'MERGE with TOP' is not currently supported in Babelfish)~~
+
+
+-- error: OUTPUT is not supported yet
+MERGE INTO babel_2920_t AS t USING (SELECT 3 AS id) AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET qty = qty
+OUTPUT $action;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'MERGE with OUTPUT' is not currently supported in Babelfish)~~
+
+
+-- error: MERGE on a permanent table is not allowed inside a function
+CREATE FUNCTION babel_2920_f() RETURNS INT AS
+BEGIN
+    MERGE INTO babel_2920_t AS t USING (SELECT 1 AS id) AS s ON t.id = s.id
+    WHEN MATCHED THEN UPDATE SET qty = 0;
+    RETURN 1
+END
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'MERGE' cannot be used within a function)~~
+
+
+-- psql
+ALTER SYSTEM RESET babelfishpg_tsql.enable_tsql_merge;
+SELECT pg_reload_conf();
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+-- back to the unsupported error after turning the GUC off again
+MERGE INTO babel_2920_t AS t
+USING babel_2920_s AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = s.val;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'MERGE' is not currently supported in Babelfish)~~
+
+
+DROP PROCEDURE babel_2920_upsert
+go
+DROP VIEW babel_2920_v
+go
+DROP TABLE babel_2920_t
+go
+DROP TABLE babel_2920_s
+go
+DROP TABLE babel_2920_d
+go

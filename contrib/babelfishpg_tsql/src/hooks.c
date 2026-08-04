@@ -1698,6 +1698,13 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 			if (trigDesc && trigDesc->trig_delete_instead_statement)
 				return true;
 			break;
+		case CMD_MERGE:
+			/*
+			 * T-SQL INSTEAD OF triggers are not supported on MERGE; the
+			 * rewriter checks the individual merge actions with their
+			 * INSERT/UPDATE/DELETE command types instead.
+			 */
+			break;
 		default:
 			elog(ERROR, "unrecognized CmdType: %d", (int)event);
 			break;

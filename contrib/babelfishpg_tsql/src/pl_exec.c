@@ -4802,6 +4802,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			case SPI_OK_INSERT:
 			case SPI_OK_UPDATE:
 			case SPI_OK_DELETE:
+			case SPI_OK_MERGE:
 			case SPI_OK_INSERT_RETURNING:
 			case SPI_OK_UPDATE_RETURNING:
 			case SPI_OK_DELETE_RETURNING:
@@ -5667,6 +5668,7 @@ exec_stmt_dynexecute(PLtsql_execstate *estate,
 		case SPI_OK_INSERT:
 		case SPI_OK_UPDATE:
 		case SPI_OK_DELETE:
+		case SPI_OK_MERGE:
 		case SPI_OK_INSERT_RETURNING:
 		case SPI_OK_UPDATE_RETURNING:
 		case SPI_OK_DELETE_RETURNING:

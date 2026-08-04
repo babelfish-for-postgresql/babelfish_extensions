@@ -2748,6 +2748,11 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 								command_type = TDS_CMD_DELETE;
 								row_count_valid = !insert_exec_active;
 							}
+							else if (plansource->commandTag == CMDTAG_MERGE)
+							{
+								command_type = TDS_CMD_MERGE;
+								row_count_valid = !insert_exec_active;
+							}
 
 							/*
 							 * [BABEL-2090] SELECT statement should show 'rows
