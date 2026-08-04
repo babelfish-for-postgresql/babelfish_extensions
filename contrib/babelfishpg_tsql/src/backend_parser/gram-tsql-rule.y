@@ -2605,6 +2605,29 @@ tsql_output_into_target_columns:
 /* END rules for OUTPUT clause support */
 /* --------------------------------- */
 
+/*
+ * In TSQL dialect the scanner delivers TSQL_VALUES instead of VALUES,
+ * so provide TSQL variants of the MERGE INSERT value rules.
+ */
+merge_values_clause:
+			TSQL_VALUES '(' expr_list ')'
+				{
+					$$ = $3;
+				}
+		;
+
+merge_insert:
+			INSERT DEFAULT TSQL_VALUES
+				{
+					MergeWhenClause *n = makeNode(MergeWhenClause);
+					n->commandType = CMD_INSERT;
+					n->override = OVERRIDING_NOT_SET;
+					n->targetList = NIL;
+					n->values = NIL;
+					$$ = n;
+				}
+		;
+
 tsql_stmt :
 			AlterEventTrigStmt
 			| AlterCollationStmt
@@ -2721,6 +2744,7 @@ tsql_stmt :
 			| RenameStmt
 			| RevokeStmt
 			| RevokeRoleStmt
+			| MergeStmt
 			| RuleStmt
 			| SecLabelStmt
 			| SelectStmt
