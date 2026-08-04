@@ -20,7 +20,7 @@ done
 # create test user and database from psql terminal
 if [[ $parallel_query_mode = false ]]; then
 echo "============================== CREATING USER AND DATABASE =============================="
-psql -h 127.0.0.1 -U "$USER" -d postgres -a << EOF
+psql -U "$USER" -d postgres -a << EOF
 CREATE USER jdbc_user WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;
 DROP DATABASE IF EXISTS babelfish_db;
 CREATE DATABASE babelfish_db OWNER jdbc_user;

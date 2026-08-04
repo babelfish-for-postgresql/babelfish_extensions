@@ -80,6 +80,15 @@ DECLARE @xml XML = NULL
 select @xml.exist('/Root/row')
 GO
 
+-- Test with empty XPath query
+DECLARE @xml XML = ''
+SELECT @xml.exist('')
+GO
+
+DECLARE @xml XML = '<Root><row><name>James</name></row></Root>'
+SELECT @xml.exist('')
+GO
+
 -- Test with an XML document containing special characters
 DECLARE @xml XML = '<root><child>Hello & World</child></root>';
 SELECT @xml.exist('(//child)[1]');

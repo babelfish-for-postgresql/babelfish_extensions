@@ -12,6 +12,7 @@
  * Special tag used by bbf_xmlnodes() to track the context node path across nested calls 
  * This tag should not be used in any user XML data/query, so an arbitrary UUID value is  
  * included to make it extremely unlikely to ever occur
+ * Note that this tag is case-sensitive.
  */
 #define BBF_XMLNODES_MAGIC_TAG_NAME "magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag"
 #define BBF_XMLNODES_MAGIC_TAG_OPEN "<" BBF_XMLNODES_MAGIC_TAG_NAME ">"
@@ -840,7 +841,7 @@ done:
 #endif							/* USE_LIBXML */
 }
 
-/* 
+/*
  * ============================================================
  * XML methods helper functions
  * ============================================================
@@ -964,7 +965,7 @@ bbf_xml_extract_magic_nodes_tag(const char *xml_text)
 	const char *tag_close = BBF_XMLNODES_MAGIC_TAG_CLOSE;
 	int tag_open_len = strlen(tag_open);
 	const char *close_pos;
-	int content_len;
+	size_t content_len;
 	char *content;
 
 	if (!*xml_text)
@@ -1150,7 +1151,7 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
 	StringInfoData result;
 
 	if (!*xpath_pattern)
-		return NULL;
+		return pstrdup("");
 
 	initStringInfo(&result);
 
@@ -1268,17 +1269,18 @@ bbf_xml_patch_xpath_dot_bracket(const char *xpath_pattern)
 {
 	StringInfoData result;
 	int i = 0;
-	int len = strlen(xpath_pattern);
-	
-	if (!*xpath_pattern)
-		return '\0';
-	
+	int len;
+
+	if (strlen(xpath_pattern) == 0)
+		return pstrdup("");
+
 	/* Continue only if there is '.[' in the string (possible interleaving whitespace has already been removed) */
-	if (strstr(xpath_pattern, ".[") == NULL) 
+	if (strstr(xpath_pattern, ".[") == NULL)
 		return pstrdup(xpath_pattern);
-	
+
 	initStringInfo(&result);
 
+	len = strlen(xpath_pattern);
 	while (i < len)
 	{
 		if (xpath_pattern[i] == '.')
@@ -1290,10 +1292,10 @@ bbf_xml_patch_xpath_dot_bracket(const char *xpath_pattern)
 				appendStringInfoString(&result, "..");
 				i += 2;
 				continue;
-			}	
+			}
 			/* Check if this is .[  */
 			else if (i + 1 < len && xpath_pattern[i + 1] == '[')
-			{						
+			{
 				/* Check for '/.[' (preceded by '/')  */
 				if (i > 0 && xpath_pattern[i - 1] == '/')
 					/* This is '/.[' : keep as-is */
@@ -1307,7 +1309,7 @@ bbf_xml_patch_xpath_dot_bracket(const char *xpath_pattern)
 		}
 		else
 		{
-			/* Default: copy the character */			
+			/* Default: copy the character */
 			appendStringInfoChar(&result, xpath_pattern[i]);
 		}
 		i++;
@@ -1332,9 +1334,9 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 	if (!*xpath_pattern)
 		return;
 
-	/* 
-	 * Remove all spaces and collapse multiple parentheses for the checks 
-	 * NB: When adding checks on specific substrings such as 'xs:' then the 
+	/*
+	 * Remove all spaces and collapse multiple parentheses for the checks
+	 * NB: When adding checks on specific substrings such as 'xs:' then the
 	 * whitespace may need to be kept.
 	 */
 	initStringInfo(&buf);
@@ -1380,7 +1382,7 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 		if (len == prev_len)
 			break;
 	}
-	
+
 	/* The string has been cleaned up, now check for the things we want to report */
 
 	/* Cannot move higher up when already at the root */
@@ -1410,6 +1412,11 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 		strstr(stripped, "/(.)") != NULL ||
 		strstr(stripped, "(..)[") != NULL)
 	{
+		/*
+		 * Reporting the actual XPath query back to the client since this may be relevant
+		 * in case the user has XPath 2 queries in their T-SQL application. Without the XPath
+		 * query, it will be more difficult for the user to understand what the problem is
+		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("%s(): XPath expression is not valid per XPath 1.0 standard supported by PostgreSQL [%s]",
@@ -1440,7 +1447,7 @@ bbf_xml_process_xpath_function(const char *xpath_pattern, const char *context_no
 
 	initStringInfo(&result);
 
-	p = (char *)xpath_pattern; 
+	p = (char *)xpath_pattern;
 	while (*p)
 	{
 		ch = *p;
@@ -1474,10 +1481,10 @@ bbf_xml_process_xpath_function(const char *xpath_pattern, const char *context_no
 				next_ch = (*p) && *(p+1) ? *(p+1) : ' ';
 				if (next_ch == '.')
 				{
-					/* 
+					/*
 					 * '..' (parent reference), find out what follows it
-					 * 
-					 * NB. we're looking two positions ahead here, but if we'd be at the end of the string, 
+					 *
+					 * NB. we're looking two positions ahead here, but if we'd be at the end of the string,
 					 * then next_ch would contain a space now, so we wouldn't get into this branch
 					 */
 					char after_dots = *(p+2) ? *(p+2) : ' ';
@@ -1623,7 +1630,7 @@ bbf_xml_xpath_with_context_node(const char *xpath_pattern, const char *context_n
 	const char *stripped;
 	char *result_str;
 
-	if (!*context_node_path)
+	if (strlen(context_node_path) == 0)
         cleaned_ctx = NULL;
     else
         /* Remove whitespace */
@@ -1640,6 +1647,13 @@ bbf_xml_xpath_with_context_node(const char *xpath_pattern, const char *context_n
 		if (cleaned_ctx)
 			pfree(cleaned_ctx);
 		return result_str;
+	}
+
+	/* If XPath query is empty, return empty. */
+	if (strlen(cleaned_xpath) == 0)
+	{
+		pfree(cleaned_xpath);
+		return pstrdup("");
 	}
 
 	/* Check if xpath_pattern is absolute (starts with '/' after stripping leading '(') */
@@ -1685,10 +1699,12 @@ bbf_xml_handle_context_node(const char *xml_str,
 							char **pfinal_xpath,
 							const char *caller)
 {
+	char *xpath_cstr = text_to_cstring(xpath_expr);
+
 	/* Extract and remove magic nodes() tag */
 	*pcontext_node_path = bbf_xml_extract_magic_nodes_tag(xml_str);
 	*pbare_xml_str = bbf_xml_remove_magic_nodes_tag(xml_str);
-	
+
 	/* Sanity check: special tag should not occur in the user-specified XML doc */
 	if (strstr(*pbare_xml_str, BBF_XMLNODES_MAGIC_TAG_OPEN) != NULL)
 	{
@@ -1697,24 +1713,24 @@ bbf_xml_handle_context_node(const char *xml_str,
 				 errmsg("Babelfish-internal XML tag cannot be used in XML data: [%s]",
 						BBF_XMLNODES_MAGIC_TAG_OPEN)));
 	}
-	
-	/* If the remaining XML doc is empty at this point, then it most likely means that 
-	 * the special tag was part of the user-specified XML doc, since an empty XML document 
+
+	/* If the remaining XML doc is empty at this point, then it most likely means that
+	 * the special tag was part of the user-specified XML doc, since an empty XML document
 	 * would have been intercepted already before we got here
 	 */
 	if (bbf_xml_is_empty(*pbare_xml_str))
 	{
 		if (strstr(xml_str, BBF_XMLNODES_MAGIC_TAG_OPEN) != NULL)
-		{		
+		{
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_EXCEPTION),
 					 errmsg("Babelfish-internal XML tag cannot be used in XML data: [%s]",
-							BBF_XMLNODES_MAGIC_TAG_OPEN)));		
+							BBF_XMLNODES_MAGIC_TAG_OPEN)));
 		}
 	}
-	
+
 	/* Sanity check: special tag should not occur in the XPath query */
-	if (strstr(text_to_cstring(xpath_expr), BBF_XMLNODES_MAGIC_TAG_NAME) != NULL)
+	if (strstr(xpath_cstr, BBF_XMLNODES_MAGIC_TAG_NAME) != NULL)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
@@ -1723,7 +1739,7 @@ bbf_xml_handle_context_node(const char *xml_str,
 	}
 
 	/* Process method query and context node query into the final XPath query */
-	*pfinal_xpath = (char *)bbf_xml_xpath_with_context_node(text_to_cstring(xpath_expr), *pcontext_node_path);
+	*pfinal_xpath = (char *)bbf_xml_xpath_with_context_node(xpath_cstr, *pcontext_node_path);
 
 	/* Check final XPath query for specific error cases */
 	bbf_xml_check_final_xpath_query((const char *)*pfinal_xpath, caller);
@@ -1767,10 +1783,7 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 	/* Validate XML data type before referencing xml_datum */
 	bbf_xml_validate_xml_type(get_fn_expr_argtype(fcinfo->flinfo, 1));
 
-	/* Handle empty XML input */
 	xml_str = text_to_cstring(DatumGetTextPP(xml_datum));
-	if (bbf_xml_is_empty(xml_str))
-		PG_RETURN_XML_P((xmltype *) cstring_to_text(""));
 
 	/* Handle the context node path, if present */
 	bbf_xml_handle_context_node(xml_str,
@@ -1780,6 +1793,10 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 								&final_xpath,
 								"query");
 
+	/* Handle empty input */
+	if (bbf_xml_is_empty(xml_str) && strlen(final_xpath) > 0)
+		PG_RETURN_XML_P((xmltype *) cstring_to_text(""));		
+		
 	/* Call PG's xpath() function with the processed XPath and bare XML */
 	namespaces = construct_empty_array(TEXTOID);
 	xpath_result = DirectFunctionCall3(xpath,
@@ -1855,10 +1872,7 @@ bbf_xmlvalue(PG_FUNCTION_ARGS)
 	/* Validate XML data type before referencing xml_datum */
 	bbf_xml_validate_xml_type(get_fn_expr_argtype(fcinfo->flinfo, 2));
 
-	/* Handle empty XML input */
 	xml_str = text_to_cstring(DatumGetTextPP(xml_datum));
-	if (bbf_xml_is_empty(xml_str))
-		PG_RETURN_NULL();
 
 	/* Handle the context node path, if present */
 	bbf_xml_handle_context_node(xml_str,
@@ -1868,6 +1882,10 @@ bbf_xmlvalue(PG_FUNCTION_ARGS)
 								&final_xpath,
 								"value");
 
+	/* Handle empty input */
+	if (bbf_xml_is_empty(xml_str) && strlen(final_xpath) > 0)
+		PG_RETURN_NULL();
+		
 	/* Call PG's xpath() to check cardinality first */
 	namespaces = construct_empty_array(TEXTOID);
 	xpath_result = DirectFunctionCall3(xpath,
@@ -1936,10 +1954,7 @@ bbf_xmlexist(PG_FUNCTION_ARGS)
 	/* Validate XML data type before referencing xml_datum */
 	bbf_xml_validate_xml_type(get_fn_expr_argtype(fcinfo->flinfo, 1));
 
-	/* Handle empty XML input */
 	xml_str = text_to_cstring(DatumGetTextPP(xml_datum));
-	if (bbf_xml_is_empty(xml_str))
-		PG_RETURN_INT16(0);
 
 	/* Handle the context node path, if present */
 	bbf_xml_handle_context_node(xml_str,
@@ -1949,6 +1964,10 @@ bbf_xmlexist(PG_FUNCTION_ARGS)
 								&final_xpath,
 								"exist");
 
+	/* Handle empty input */
+	if (bbf_xml_is_empty(xml_str) && strlen(final_xpath) > 0)
+		PG_RETURN_INT16(0);
+		
 	/* Call PG's xmlexists() */
 	exists_result = DirectFunctionCall2(xmlexists,
 										PointerGetDatum(cstring_to_text(final_xpath)),
@@ -1972,7 +1991,7 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 	MemoryContext tmp_ctx;
-	
+
 	text	   *xpath_expr = PG_GETARG_TEXT_PP(0);
 	Datum		xml_datum  = PG_GETARG_DATUM(1);
 	char	   *xml_str;
@@ -1986,7 +2005,7 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 	bool	   *nulls;
 	int			nr_rows;
 	int			i;
-	char	   *encoded_xpath;	
+	char	   *encoded_xpath;
 
 	/* Check QUOTED_IDENTIFIER is ON */
     bbf_xml_validate_quoted_identifier();
@@ -1997,7 +2016,7 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 
 	/* Validate XML data type before referencing xml_datum */
 	bbf_xml_validate_xml_type(get_fn_expr_argtype(fcinfo->flinfo, 1));
-	
+
 	/* Setup for set-returning function */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
 		ereport(ERROR,
@@ -2007,7 +2026,7 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
-	
+
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
@@ -2022,10 +2041,7 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 	rsinfo->setResult = tupstore;
 	rsinfo->setDesc = tupdesc;
 
-	/* Handle empty XML input */
 	xml_str = text_to_cstring(DatumGetTextPP(xml_datum));
-	if (bbf_xml_is_empty(xml_str))
-		PG_RETURN_NULL();
 
 	/* Handle the context node path, if present */
 	bbf_xml_handle_context_node(xml_str,
@@ -2034,6 +2050,10 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 								&bare_xml_str,
 								&final_xpath,
 								"nodes");
+
+	/* Handle empty input */
+	if (bbf_xml_is_empty(xml_str) && strlen(final_xpath) > 0)
+		PG_RETURN_NULL();
 
 	/* Evaluate XPath query to determine #rows to return */
 	namespaces = construct_empty_array(TEXTOID);
@@ -2047,33 +2067,33 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 					  &elems, &nulls, &nr_rows);
 
 	/* Mask XML special chars */
-	encoded_xpath = bbf_xml_encode_chars(final_xpath)
-	
-	/* Build result set: each row is magic_tag + original XML */;    	
+	encoded_xpath = bbf_xml_encode_chars(final_xpath);
+
+	/* Build result set: each row is magic_tag + original XML */
 	tmp_ctx = AllocSetContextCreate(CurrentMemoryContext,
 									"XML nodes() intermediate result",
 									ALLOCSET_DEFAULT_SIZES);
-																				
+
 	for (i = 1; i <= nr_rows; i++)
 	{
 		Datum		values[1];
 		bool		isnull[1] = {false};
 		char	   *row_xml;
 
-	    /* All allocations happen in tmp_ctx */		
+	    /* All allocations happen in tmp_ctx */
 	    MemoryContext old = MemoryContextSwitchTo(tmp_ctx);
-	    
+
 		/*
 		 * Build context node path for this row:
 		 * <magic_tag>(encoded_xpath)[i+1]</magic_tag>bare_xml
-		 */			    
+		 */
 		row_xml = psprintf("%s(%s)[%d]%s%s",
 						   BBF_XMLNODES_MAGIC_TAG_OPEN,
 						   encoded_xpath,
 						   i,
 						   BBF_XMLNODES_MAGIC_TAG_CLOSE,
 						   bare_xml_str);
-						   
+
 	    values[0] = PointerGetDatum(cstring_to_text(row_xml));
 
 	    MemoryContextSwitchTo(old);
@@ -2081,7 +2101,7 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 
 	    /* Wipe ALL per-iteration allocations in one shot */
 	    MemoryContextReset(tmp_ctx);
-	}	
+	}
 
 	tuplestore_donestoring(tupstore);
 	PG_RETURN_NULL();

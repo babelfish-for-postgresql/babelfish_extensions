@@ -1454,6 +1454,27 @@ xml
 ~~END~~
 
 
+-- Empty Path query
+DECLARE @xml XML = ''
+SELECT @xml.query('')
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: empty XPath expression)~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row></Root>'
+SELECT @xml.query('')
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: empty XPath expression)~~
+
+
 -- 5. Bare ampersand (not an entity)
 DECLARE @x XML = '<r>a & b</r>';
 SELECT @x.query('/r');

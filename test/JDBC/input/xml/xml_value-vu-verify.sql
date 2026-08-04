@@ -82,6 +82,15 @@ DECLARE @x XML = NULL
 SELECT @x.value('(/Root/row)[1]', 'NVARCHAR(100)') 
 GO
 
+-- Test with empty Path query
+DECLARE @xml XML = ''
+SELECT @xml.value('', 'varchar(20)')
+GO
+
+DECLARE @xml XML = '<Root><row><name>James</name></row></Root>'
+SELECT @xml.value('', 'varchar(20)')
+GO
+
 -- Test with an XML document containing special characters
 DECLARE @xml XML = '<root><child>Hello & World</child></root>';
 SELECT @xml.value('(//child)[1]', 'varchar(100)');

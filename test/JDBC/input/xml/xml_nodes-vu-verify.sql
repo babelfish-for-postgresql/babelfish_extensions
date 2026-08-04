@@ -1289,6 +1289,62 @@ FROM @xml.nodes('..[2]') AS T(C)
 ORDER BY 1
 go
 
+-- Empty XPath query
+DECLARE @xml XML = ''
+SELECT T.C.value('', 'int') AS id
+FROM @xml.nodes('') AS T(C)
+ORDER BY 1
+go
+
+DECLARE @xml XML = '<Root><row><name>James</name></row></Root>'
+SELECT T.C.value('', 'varchar(10)') AS id
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+
+DECLARE @xml XML = '<Root><row><name>James</name></row></Root>'
+SELECT T.C.value('', 'int') AS id
+FROM @xml.nodes('') AS T(C)
+ORDER BY 1
+go
+
+DECLARE @xml XML = '<Root><row><name>James</name></row></Root>'
+SELECT T.C.value('', 'int') AS id
+FROM @xml.nodes('') AS T(C)
+ORDER BY 1
+go
+
+DECLARE @xml XML = '<root><row><def><item>item-1</item></def><def><item>item-2</item></def><attributes><color>blue</color></attributes><attributes><color>red</color></attributes></row><row><def><item>item-3</item></def><attributes><color>green</color></attributes></row></root>'
+SELECT
+   itemDef.value('(item)[1]', 'varchar(20)') AS item,
+   attrib.value('(color)[1]', 'varchar(20)') AS color
+FROM @xml.nodes('/root/row') AS row(rowType)
+   CROSS APPLY rowType.nodes('./def') AS itemDefs(itemDef)
+   CROSS APPLY rowType.nodes('') AS attributeDefs(attrib)
+ORDER BY item, color
+go
+
+
+DECLARE @xml XML = '<root><row><def><item>item-1</item></def><def><item>item-2</item></def><attributes><color>blue</color></attributes><attributes><color>red</color></attributes></row><row><def><item>item-3</item></def><attributes><color>green</color></attributes></row></root>'
+SELECT
+   itemDef.value('(item)[1]', 'varchar(20)') AS item,
+   attrib.value('(color)[1]', 'varchar(20)') AS color
+FROM @xml.nodes('/root/row') AS row(rowType)
+   CROSS APPLY rowType.nodes('') AS itemDefs(itemDef)
+   CROSS APPLY rowType.nodes('') AS attributeDefs(attrib)
+ORDER BY item, color
+go
+
+DECLARE @xml XML = '<root><row><def><item>item-1</item></def><def><item>item-2</item></def><attributes><color>blue</color></attributes><attributes><color>red</color></attributes></row><row><def><item>item-3</item></def><attributes><color>green</color></attributes></row></root>'
+SELECT
+   itemDef.value('(item)[1]', 'varchar(20)') AS item,
+   attrib.value('(color)[1]', 'varchar(20)') AS color
+FROM @xml.nodes('/root/row') AS row(rowType)
+   CROSS APPLY rowType.nodes('') AS itemDefs(itemDef)
+   CROSS APPLY rowType.nodes('./attributes') AS attributeDefs(attrib)
+ORDER BY item, color
+go
+
 -- GROUP BY expression cannot contain XML method calls
 DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
 SELECT T.C.value('(@id)[1]', 'int') AS id, count(*) AS cnt
