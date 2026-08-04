@@ -12,7 +12,7 @@ select serverproperty('collation');
 go
 ~~START~~
 sql_variant
-sql_latin1_general_cp1_ci_as
+SQL_Latin1_General_CP1_CI_AS
 ~~END~~
 
 select 'true' where serverproperty('collationId') >= 0;

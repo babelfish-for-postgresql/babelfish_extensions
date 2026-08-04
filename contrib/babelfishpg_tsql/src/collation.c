@@ -1782,6 +1782,60 @@ pltsql_replace_non_determinstic(text *src_text, text *from_text, text *to_text, 
 	return false;
 }
 
+/*
+ * Translate an internal lowercase collation name to the canonical
+ * SQL Server display casing.  Expects ASCII input from the validated
+ * server_collation_name GUC.  bbf_* collations are returned unchanged.
+ */
+char *
+get_display_collation_name(const char *collname)
+{
+	char	   *result;
+	char	   *token;
+
+	if (collname == NULL)
+		return NULL;
+
+	result = pstrdup(collname);
+
+	if (strncmp(result, "bbf_", 4) == 0)
+		return result;
+
+	token = result;
+	while (token != NULL && *token != '\0')
+	{
+		char	   *next = strchr(token, '_');
+		size_t		len = next ? (size_t) (next - token) : strlen(token);
+		bool		upper_all;
+		size_t		i;
+
+		upper_all = (len == 2 && (strncmp(token, "ci", len) == 0 ||
+								  strncmp(token, "cs", len) == 0 ||
+								  strncmp(token, "ai", len) == 0 ||
+								  strncmp(token, "as", len) == 0 ||
+								  strncmp(token, "ks", len) == 0 ||
+								  strncmp(token, "ws", len) == 0)) ||
+			(len == 3 && (strncmp(token, "sql", len) == 0 ||
+						  strncmp(token, "prc", len) == 0 ||
+						  strncmp(token, "bin", len) == 0)) ||
+			(len == 4 && strncmp(token, "bin2", len) == 0) ||
+			(len > 2 && strncmp(token, "cp", 2) == 0 &&
+			 isdigit((unsigned char) token[2]));
+
+		if (upper_all)
+		{
+			for (i = 0; i < len; i++)
+				token[i] = pg_toupper((unsigned char) token[i]);
+		}
+		else
+			token[0] = pg_toupper((unsigned char) token[0]);
+
+		token = next ? next + 1 : NULL;
+	}
+
+	return result;
+}
+
 /* Find the collation corresponding to a specific database */
 char*
 get_collation_name_for_db(const char* dbname)
