@@ -1,0 +1,24 @@
+use sys_sp_statistics_vu_prepare_db1
+go
+drop index sys_sp_statistics_vu_prepare_i1 on sys_sp_statistics_vu_prepare_t1
+go
+drop index sys_sp_statistics_vu_prepare_i2 on sys_sp_statistics_vu_prepare_t2
+go
+drop index sys_sp_statistics_vu_prepare_i3 on sys_sp_statistics_vu_prepare_t3
+go
+drop index sys_sp_statistics_vu_prepare_i4 on sys_sp_statistics_vu_prepare_t4
+go
+drop table sys_sp_statistics_vu_prepare_t1
+go
+drop table sys_sp_statistics_vu_prepare_t2
+go
+drop table sys_sp_statistics_vu_prepare_t3
+go
+drop table sys_sp_statistics_vu_prepare_t4
+go
+drop table sys_sp_statistics_vu_prepare_t5
+go
+use master
+go
+drop database sys_sp_statistics_vu_prepare_db1
+go

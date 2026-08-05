@@ -1,0 +1,366 @@
+
+-- Long identifiers vu-verify: Verify all system objects show original names
+-- sys.tables
+SELECT name FROM sys.tables WHERE name LIKE 'Very_Long_Table_Name%VU';
+GO
+~~START~~
+varchar
+Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU
+~~END~~
+
+
+SELECT name FROM sys.tables WHERE name LIKE 'MixedCase_Very_Long%VU';
+GO
+~~START~~
+varchar
+MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU
+~~END~~
+
+
+-- Case-insensitive lookup
+SELECT name FROM sys.tables WHERE name = 'mixedcase_very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_chars_vu';
+GO
+~~START~~
+varchar
+MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU
+~~END~~
+
+
+-- sys.columns
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU') ORDER BY column_id;
+GO
+~~START~~
+varchar
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col2
+~~END~~
+
+
+-- sys.all_columns
+SELECT name FROM sys.all_columns WHERE object_id = OBJECT_ID('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU') ORDER BY column_id;
+GO
+~~START~~
+varchar
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col2
+~~END~~
+
+
+-- sys.indexes
+SELECT name FROM sys.indexes WHERE name LIKE 'Very_Long_Index%VU';
+GO
+~~START~~
+varchar
+Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU
+~~END~~
+
+
+-- sys.key_constraints
+SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_PK%VU';
+GO
+~~START~~
+varchar
+Very_Long_PK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_VU
+~~END~~
+
+
+-- sys.check_constraints
+SELECT name FROM sys.check_constraints WHERE name LIKE 'Very_Long_Check%VU';
+GO
+~~START~~
+varchar
+Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_VU
+~~END~~
+
+
+-- sys.foreign_keys
+SELECT name FROM sys.foreign_keys WHERE name LIKE 'Very_Long_FK%VU';
+GO
+~~START~~
+varchar
+Very_Long_FK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU
+~~END~~
+
+
+-- sys.views
+SELECT name FROM sys.views WHERE name LIKE 'Very_Long_View%VU';
+GO
+~~START~~
+varchar
+Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU
+~~END~~
+
+
+-- sys.procedures
+SELECT name FROM sys.procedures WHERE name LIKE 'Very_Long_Procedure%VU';
+GO
+~~START~~
+varchar
+Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU
+~~END~~
+
+
+-- sys.triggers
+SELECT name FROM sys.triggers WHERE name LIKE 'Very_Long_Trigger%VU';
+GO
+~~START~~
+varchar
+Very_Long_Trigger_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU
+~~END~~
+
+
+-- sys.types
+SELECT name FROM sys.types WHERE name LIKE 'Very_Long_Type%VU';
+GO
+~~START~~
+varchar
+Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU
+~~END~~
+
+
+-- sys.objects (sequence)
+SELECT name, type_desc FROM sys.objects WHERE name LIKE 'Very_Long_Sequence%VU';
+GO
+~~START~~
+varchar#!#nvarchar
+Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU#!#SEQUENCE_OBJECT
+~~END~~
+
+
+-- sys.all_objects (constraints)
+SELECT name, type_desc FROM sys.all_objects WHERE name LIKE 'Very_Long_PK%VU' OR name LIKE 'Very_Long_Check%VU' OR name LIKE 'Very_Long_FK%VU';
+GO
+~~START~~
+varchar#!#nvarchar
+Very_Long_FK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU#!#FOREIGN_KEY_CONSTRAINT
+Very_Long_PK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_VU#!#PRIMARY_KEY_CONSTRAINT
+Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_VU#!#CHECK_CONSTRAINT
+~~END~~
+
+
+-- sys.databases
+SELECT name FROM sys.databases WHERE name LIKE 'Very_Long_Database%VU';
+GO
+~~START~~
+varchar
+Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU
+~~END~~
+
+
+-- sys.sysdatabases
+SELECT name FROM sys.sysdatabases WHERE name LIKE 'Very_Long_Database%VU';
+GO
+~~START~~
+nvarchar
+Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU
+~~END~~
+
+
+-- DB_NAME() in long-named database
+USE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU;
+GO
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU
+~~END~~
+
+
+-- sys.database_principals in long-named database
+SELECT name FROM sys.database_principals WHERE name = 'dbo';
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+USE master;
+GO
+
+-- sp_helpdb with long name
+SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END FROM sys.babelfish_helpdb() WHERE name = 'Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Multibyte table
+SELECT name FROM sys.tables WHERE name LIKE 'テスト用%VU';
+GO
+~~START~~
+varchar
+?????????????????PostgreSQL?????????????_VU
+~~END~~
+
+
+-- information_schema.table_constraints
+SELECT CONSTRAINT_NAME FROM information_schema.table_constraints WHERE CONSTRAINT_NAME LIKE 'Very_Long_PK%VU';
+GO
+~~START~~
+varchar
+Very_Long_PK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_VU
+~~END~~
+
+
+-- information_schema.key_column_usage
+SELECT CONSTRAINT_NAME, COLUMN_NAME FROM information_schema.key_column_usage WHERE CONSTRAINT_NAME LIKE 'Very_Long_PK%VU';
+GO
+~~START~~
+nvarchar#!#nvarchar
+Very_Long_PK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_VU#!#Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1
+~~END~~
+
+
+-- Error messages show original names
+-- Duplicate table
+CREATE TABLE Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU (id INT);
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_characters_vu" already exists)~~
+
+
+-- Duplicate procedure
+CREATE PROCEDURE Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU AS SELECT 1;
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'very_long_procedure_name_that_exceeds_postgresql_limit_of_sixty_three_chars_vu' already exists with the same name)~~
+
+
+-- Drop non-existent table
+DROP TABLE NonExist_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "nonexist_very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_characters_vu" does not exist)~~
+
+
+-- Drop non-existent function
+DROP FUNCTION NonExist_Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a function named "nonexist_very_long_function_name_that_exceeds_postgresql_limit_of_sixty_three_chars_vu")~~
+
+
+-- sys.all_views
+SELECT name FROM sys.all_views WHERE name LIKE 'Very_Long_View%VU';
+GO
+~~START~~
+varchar
+Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU
+~~END~~
+
+
+-- sys.database_role_members
+SELECT COUNT(*) FROM sys.database_role_members;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- sp_tables
+EXEC sp_tables @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#dbo#!#Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU#!#TABLE#!#<NULL>
+~~END~~
+
+
+-- sp_fkeys
+EXEC sp_fkeys @pktable_name = 'babel5975_vu_fk_parent';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+master#!#dbo#!#babel5975_vu_fk_parent#!#id#!#master#!#dbo#!#babel5975_vu_fk_child#!#id#!#1#!#1#!#1#!#very_long_fk_constraint_name_thb4fc9f26bf1dbc1d877db6cf99be5888#!#babel5975_vu_fk_parent_pkey#!#7
+~~END~~
+
+
+-- sp_stored_procedures
+EXEC sp_stored_procedures @sp_name = 'Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU';
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+master#!#dbo#!#Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+-- sp_special_columns
+EXEC sp_special_columns @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU';
+GO
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+~~END~~
+
+
+-- information_schema.columns
+SELECT COLUMN_NAME FROM information_schema.columns WHERE TABLE_NAME LIKE 'Very_Long_Table_Name%VU' ORDER BY ORDINAL_POSITION;
+GO
+~~START~~
+nvarchar
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col2
+~~END~~
+
+
+-- sys.database_principals shows role with full name
+SELECT name, type_desc FROM sys.database_principals WHERE name LIKE 'Very_Long_Role%VU';
+GO
+~~START~~
+varchar#!#nvarchar
+Very_Long_Role_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU#!#DATABASE_ROLE
+~~END~~
+
+
+-- sp_helpuser/helprole/helprolemember in long-named database
+USE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU;
+GO
+DECLARE @t1 TABLE(userName sys.SYSNAME, roleName sys.SYSNAME, loginName sys.SYSNAME NULL, defdb sys.SYSNAME NULL, defschema sys.SYSNAME, userid INT, sid sys.VARBINARY(85));
+INSERT INTO @t1 EXEC sp_helpuser;
+SELECT userName, roleName, loginName, defdb, defschema FROM @t1 ORDER BY userName;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
+guest#!#public#!#<NULL>#!#<NULL>#!#guest
+~~END~~
+
+DECLARE @t2 TABLE(RoleName sys.SYSNAME, RoleId INT, IsAppRole INT);
+INSERT INTO @t2 EXEC sp_helprole;
+SELECT RoleName, IsAppRole FROM @t2 ORDER BY RoleName;
+GO
+~~ROW COUNT: 6~~
+
+~~START~~
+varchar#!#int
+db_accessadmin#!#0
+db_datareader#!#0
+db_datawriter#!#0
+db_ddladmin#!#0
+db_owner#!#0
+db_securityadmin#!#0
+~~END~~
+
+DECLARE @t3 TABLE(DbRole sys.SYSNAME, MemberName sys.SYSNAME, MemberSID sys.VARBINARY(85));
+INSERT INTO @t3 EXEC sp_helprolemember;
+SELECT DbRole, MemberName FROM @t3 ORDER BY DbRole, MemberName;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#varchar
+db_owner#!#dbo
+~~END~~
+
+USE master;
+GO

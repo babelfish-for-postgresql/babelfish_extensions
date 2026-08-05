@@ -6,175 +6,175 @@ go
 select name from sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from ..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from ...sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from ..dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from master..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .master..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
@@ -2365,134 +2365,134 @@ user_myschematest_mydb
 exec p_myschematest
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from vw_myschematest order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
@@ -2606,175 +2606,175 @@ go
 select name from sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from ..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from ...sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from ..dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from master..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .master..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
@@ -4867,134 +4867,134 @@ user_myschematest_mydb
 exec p_myschematest
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from vw_myschematest order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
@@ -5107,175 +5107,175 @@ go
 select name from sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from ..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from ...sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from ..dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .master.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .master.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from master..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .master..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .tempdb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .tempdb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .tempdb..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .myschematest_mydb.dbo.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .myschematest_mydb.sys.sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from .myschematest_mydb..sysdatabases where name = 'myschematest_mydb' order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
@@ -7487,134 +7487,134 @@ user_myschematest_mydb
 exec p_myschematest
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 
 select name from vw_myschematest order by 1
 go
 ~~START~~
-text
+nvarchar
 myschematest_mydb
 ~~END~~
 

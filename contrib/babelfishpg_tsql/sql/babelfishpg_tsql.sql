@@ -111,7 +111,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE PROCEDURE sys.sp_helpdb(IN "@dbname" VARCHAR(32))
+CREATE OR REPLACE PROCEDURE sys.sp_helpdb(IN "@dbname" sys.sysname)
 LANGUAGE 'pltsql'
 AS $$
 BEGIN
@@ -361,7 +361,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
 SELECT 
 	CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
 	CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-	CAST(
+	
 		COALESCE(
 			(SELECT pg_catalog.string_agg(
 				CASE
@@ -369,8 +369,8 @@ SELECT
 					ELSE NULL
 				END, ',')
 			FROM unnest(t1.reloptions) AS option),
-			t4."TABLE_NAME")
-		AS sys.sysname) AS TABLE_NAME,
+			t4."TABLE_NAME"::text)
+		::sys.sysname AS TABLE_NAME,
 	CAST(
 		COALESCE(
 			(SELECT pg_catalog.string_agg(
@@ -465,9 +465,6 @@ CREATE OR REPLACE PROCEDURE sys.sp_columns (
     "@fusepattern" smallint = 1)
 AS $$
 BEGIN
-	-- TODO: we should be able to get rid of babelfish_truncate_identifier when we fix BABEL-5416
-	declare @truncated_ident sys.nvarchar(384);
-	select @truncated_ident = sys.babelfish_truncate_identifier(pg_catalog.lower(@table_name));
 	IF @fusepattern = 1 
 		select table_qualifier as TABLE_QUALIFIER, 
 			table_owner as TABLE_OWNER,
@@ -499,7 +496,7 @@ BEGIN
 				END
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
-		where table_name like @truncated_ident COLLATE database_default
+		where table_name like @table_name COLLATE database_default
 			and (coalesce(@table_owner,'') = '' or table_owner like @table_owner collate database_default)
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier like @table_qualifier collate database_default)
 			and (coalesce(@column_name,'') = '' or column_name like @column_name collate database_default)
@@ -538,7 +535,7 @@ BEGIN
 				END
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
-			where table_name = @truncated_ident collate database_default
+			where table_name = @table_name collate database_default
 			and (coalesce(@table_owner, '') = '' or table_owner = @table_owner collate database_default)
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier = @table_qualifier collate database_default)
 			and (coalesce(@column_name,'') = '' or column_name = @column_name collate database_default)
@@ -561,9 +558,6 @@ CREATE OR REPLACE PROCEDURE sys.sp_columns_100 (
     "@fusepattern" smallint = 1)
 AS $$
 BEGIN
-	-- TODO: we should be able to get rid of babelfish_truncate_identifier when we fix BABEL-5416
-	declare @truncated_ident sys.nvarchar(384);
-	select @truncated_ident = sys.babelfish_truncate_identifier(pg_catalog.lower(@table_name));
 	IF @fusepattern = 1 
 		select table_qualifier as TABLE_QUALIFIER, 
 			table_owner as TABLE_OWNER,
@@ -606,7 +600,7 @@ BEGIN
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
 		-- TODO: Temporary fix to use \ as escape character for now, need to remove ESCAPE clause from LIKE once we have fixed the dependencies on this procedure
-		where table_name like @truncated_ident COLLATE database_default ESCAPE '\' -- '  adding quote in comment to suppress build warning
+		where table_name like @table_name COLLATE database_default ESCAPE '\' -- '  adding quote in comment to suppress build warning
 			and (coalesce(@table_owner,'') = '' or table_owner like @table_owner collate database_default ESCAPE '\') -- '  adding quote in comment to suppress build warning
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier like @table_qualifier collate database_default)
 			and (coalesce(@column_name,'') = '' or column_name like @column_name collate database_default)
@@ -655,7 +649,7 @@ BEGIN
 				END
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
-			where table_name = @truncated_ident collate database_default
+			where table_name = @table_name collate database_default
 			and (coalesce(@table_owner, '') = '' or table_owner = @table_owner collate database_default)
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier = @table_qualifier collate database_default)
 			and (coalesce(@column_name,'') = '' or column_name = @column_name collate database_default)
@@ -1092,7 +1086,7 @@ CREATE OR REPLACE VIEW sys.sp_tables_view AS
 SELECT
 t2.dbname AS TABLE_QUALIFIER,
 CAST(t3.name AS name) AS TABLE_OWNER,
-t1.relname AS TABLE_NAME,
+COALESCE(case when octet_length(t1.relname) >= 60 then (SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(t1.reloptions) AS option) end, t1.relname::text)::sys.sysname AS TABLE_NAME,
 
 CASE 
 WHEN t1.relkind = 'v' 
@@ -1299,7 +1293,7 @@ CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
 -- the ones not in pg_constraint) and restoring it back before display
 CASE 
 WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
-ELSE CAST(pg_catalog.SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
+ELSE COALESCE((SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(t6.reloptions) AS option), t6.relname::text)::sys.sysname 
 END AS INDEX_NAME,
 CASE
 WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
@@ -1690,7 +1684,7 @@ CASE
 AS IS_NULLABLE,
 CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(C.relname AS sys.sysname) AS TABLE_NAME,
+COALESCE(case when octet_length(C.relname) >= 60 then (SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(C.reloptions) AS option) end, C.relname::text)::sys.sysname AS TABLE_NAME,
 
 CASE 
 	WHEN X.indisprimary
@@ -1942,11 +1936,11 @@ CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
 SELECT
 CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
 CAST(bbf_nsp2.orig_name AS sys.sysname) AS PKTABLE_OWNER ,
-CAST(c2.relname AS sys.sysname) AS PKTABLE_NAME,
+COALESCE(case when octet_length(c2.relname) >= 60 then (SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(c2.reloptions) AS option) end, c2.relname::text)::sys.sysname AS PKTABLE_NAME,
 CAST(COALESCE(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) AS sys.sysname) AS PKCOLUMN_NAME,
 CAST(nsp_ext.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
 CAST(bbf_nsp.orig_name AS sys.sysname) AS FKTABLE_OWNER ,
-CAST(c.relname AS sys.sysname) AS FKTABLE_NAME,
+COALESCE(case when octet_length(c.relname) >= 60 then (SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(c.reloptions) AS option) end, c.relname::text)::sys.sysname AS FKTABLE_NAME,
 CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname) AS sys.sysname) AS FKCOLUMN_NAME,
 CAST(nr AS smallint) AS KEY_SEQ,
 CASE
@@ -2059,8 +2053,8 @@ CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
 
 CASE 
-	WHEN p.prokind = 'p' THEN CAST(PG_CATALOG.concat(p.proname, ';1') AS sys.nvarchar(134))
-	ELSE CAST(PG_CATALOG.concat(p.proname, ';0') AS sys.nvarchar(134))
+	WHEN p.prokind = 'p' THEN CAST(PG_CATALOG.concat(COALESCE(case when octet_length(p.proname) >= 60 then (select f.orig_name from sys.babelfish_function_ext f where f.funcname = p.proname and f.nspname = p.pronamespace::regnamespace::name limit 1) end, p.proname::sys.NVARCHAR(128)), ';1') AS sys.nvarchar(134))
+	ELSE CAST(PG_CATALOG.concat(COALESCE(case when octet_length(p.proname) >= 60 then (select f.orig_name from sys.babelfish_function_ext f where f.funcname = p.proname and f.nspname = p.pronamespace::regnamespace::name limit 1) end, p.proname::sys.NVARCHAR(128)), ';0') AS sys.nvarchar(134))
 END AS PROCEDURE_NAME,
 
 -1 AS NUM_INPUT_PARAMS,
@@ -2335,9 +2329,9 @@ BEGIN
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
-		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.dbid = sys.db_id()
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
-		WHERE Ext1.database_name = DB_NAME()
+		WHERE Ext1.database_name = sys.bbf_cur_db() collate database_default
 		AND Ext1.type != 'R'
 		AND ((Ext2.orig_username IS NULL AND Base2.oid IS NULL) OR Ext2.type = 'R') -- We should only show public if user has no members i.e. Base2.oid is NULL
 		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
@@ -2357,7 +2351,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @name_in_db
 					OR pg_catalog.lower(orig_username) = pg_catalog.lower(@name_in_db))
-					AND database_name = DB_NAME()
+					AND database_name = sys.bbf_cur_db() collate database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'Role_name',
@@ -2369,8 +2363,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base2.oid = Authmbr.member
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
-		WHERE Ext1.database_name = DB_NAME()
-		AND Ext2.database_name = DB_NAME()
+		WHERE Ext1.database_name = sys.bbf_cur_db() collate database_default
+		AND Ext2.database_name = sys.bbf_cur_db() collate database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
 		AND (Ext1.orig_username = @name_in_db OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@name_in_db))
@@ -2381,7 +2375,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @name_in_db
 					OR pg_catalog.lower(orig_username) = pg_catalog.lower(@name_in_db))
-					AND database_name = DB_NAME()
+					AND database_name = sys.bbf_cur_db() collate database_default
 					AND type != 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
@@ -2406,9 +2400,9 @@ BEGIN
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
-		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.dbid = sys.db_id()
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
-		WHERE Ext1.database_name = DB_NAME()
+		WHERE Ext1.database_name = sys.bbf_cur_db() collate database_default
 		AND Ext1.type != 'R'
 		AND ((Ext2.orig_username IS NULL AND Base2.oid IS NULL) OR Ext2.type = 'R') -- We should only show public if user has no members i.e. Base2.oid is NULL
 		AND Ext1.orig_username NOT IN ('db_owner', 'db_securityadmin', 'db_accessadmin', 'db_datareader', 'db_datawriter', 'db_ddladmin')
@@ -2435,7 +2429,7 @@ BEGIN
 		FROM pg_catalog.pg_roles AS Base 
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext
 		ON Base.rolname = Ext.rolname
-		WHERE Ext.database_name = DB_NAME()
+		WHERE Ext.database_name = sys.bbf_cur_db() collate database_default
 		AND Ext.type = 'R'
 		ORDER BY RoleName;
 	END
@@ -2444,7 +2438,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @rolename
 					OR pg_catalog.lower(orig_username) = pg_catalog.lower(@rolename))
-					AND database_name = DB_NAME()
+					AND database_name = sys.bbf_cur_db() collate database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext.orig_username AS sys.SYSNAME) AS 'RoleName',
@@ -2453,7 +2447,7 @@ BEGIN
 		FROM pg_catalog.pg_roles AS Base 
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext
 		ON Base.rolname = Ext.rolname
-		WHERE Ext.database_name = DB_NAME()
+		WHERE Ext.database_name = sys.bbf_cur_db() collate database_default
 		AND Ext.type = 'R'
 		AND (Ext.orig_username = @rolename OR pg_catalog.lower(Ext.orig_username) = pg_catalog.lower(@rolename))
 		ORDER BY RoleName;
@@ -2481,8 +2475,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
-		WHERE Ext1.database_name = DB_NAME()
-		AND Ext2.database_name = DB_NAME()
+		WHERE Ext1.database_name = sys.bbf_cur_db() collate database_default
+		AND Ext2.database_name = sys.bbf_cur_db() collate database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
 		ORDER BY RoleName, MemberName;
@@ -2492,7 +2486,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @rolename
 					OR pg_catalog.lower(orig_username) = pg_catalog.lower(@rolename))
-					AND database_name = DB_NAME()
+					AND database_name = sys.bbf_cur_db() collate database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS sys.SYSNAME) AS 'RoleName',
@@ -2503,8 +2497,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
-		WHERE Ext1.database_name = DB_NAME()
-		AND Ext2.database_name = DB_NAME()
+		WHERE Ext1.database_name = sys.bbf_cur_db() collate database_default
+		AND Ext2.database_name = sys.bbf_cur_db() collate database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @rolename OR pg_catalog.lower(Ext1.orig_username) = pg_catalog.lower(@rolename))
@@ -3128,7 +3122,7 @@ BEGIN
 					IF @row_count > 3
 						BEGIN
 							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 4;
-							IF @dbname != sys.db_name()
+							IF @dbname != sys.db_name() collate database_default
 								BEGIN
 									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
 								END
@@ -3156,7 +3150,7 @@ BEGIN
 					IF @row_count > 2
 						BEGIN
 							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 3;
-							IF @dbname != sys.db_name()
+							IF @dbname != sys.db_name() collate database_default
 								BEGIN
 									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
 								END
@@ -3210,7 +3204,7 @@ BEGIN
 			IF @objtype = 'COLUMN'
 				BEGIN
 					DECLARE @col_count INT;
-					SELECT @col_count = COUNT(*)FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @curr_relname and COLUMN_NAME = @subname;
+					SELECT @col_count = COUNT(*)FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname)) and COLUMN_NAME = sys.babelfish_truncate_identifier(pg_catalog.lower(@subname));
 					IF @col_count < 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;
@@ -3222,13 +3216,13 @@ BEGIN
 					DECLARE @relid INT = 0;
 					DECLARE @index_count INT;
 					SELECT @relid = object_id FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-						WHERE s1.name = @schemaname AND o1.name = @curr_relname;
+						WHERE s1.name = @schemaname AND o1.name = sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname));
 					IF @relid = 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;
 						END
 					SELECT @index_count = COUNT(*) FROM pg_index i JOIN pg_class c ON i.indexrelid = c.oid
-						WHERE i.indrelid = @relid AND c.relname = sys.babelfish_construct_unique_index_name(@subname, @curr_relname);
+						WHERE i.indrelid = @relid AND c.relname = sys.babelfish_construct_unique_index_name(sys.babelfish_truncate_identifier(pg_catalog.lower(@subname)), sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname)));
 					IF @index_count < 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;
@@ -3254,7 +3248,7 @@ BEGIN
 				BEGIN
 					DECLARE @count INT;
 					SELECT type INTO #tempTable FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-					WHERE s1.name = @schemaname AND o1.name = @subname;
+					WHERE s1.name = @schemaname AND (o1.name = @subname OR o1.object_id = OBJECT_ID(sys.babelfish_truncate_identifier(pg_catalog.lower(@schemaname)) + '.' + sys.babelfish_truncate_identifier(pg_catalog.lower(@subname))));
 					SELECT @count = COUNT(*) FROM #tempTable;
 
 					IF @count < 1
@@ -3270,7 +3264,7 @@ BEGIN
 											ELSE 'FN'
 										END as sys.bpchar(2)) AS type INTO #tempTable
 							FROM pg_proc p INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id
-							WHERE s1.name = @schemaname AND CAST(p.proname AS sys.sysname) = @subname;
+							WHERE s1.name = @schemaname AND CAST(p.proname AS sys.sysname) = sys.babelfish_truncate_identifier(pg_catalog.lower(@subname));
 							SELECT @count = COUNT(*) FROM #tempTable;
 						END
 					IF @count > 1
@@ -3304,7 +3298,7 @@ BEGIN
 							DECLARE @physical_schema_name sys.nvarchar(776) = '';
 							SELECT @physical_schema_name = nspname FROM sys.babelfish_namespace_ext WHERE dbid = sys.db_id() AND orig_name = @schemaname;
 							SELECT @curr_relname = relname FROM pg_catalog.pg_trigger tr LEFT JOIN pg_catalog.pg_class c ON tr.tgrelid = c.oid LEFT JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid 
-							WHERE tr.tgname = @subname AND n.nspname = @physical_schema_name;
+							WHERE tr.tgname = sys.babelfish_truncate_identifier(pg_catalog.lower(@subname)) AND n.nspname = @physical_schema_name;
 						END
 				END
 			ELSE
@@ -3749,7 +3743,7 @@ LANGUAGE 'pltsql'
 AS $$
 BEGIN
 	DECLARE @cmd sys.NVARCHAR(300)
-	DECLARE @db  sys.sysname = DB_NAME()
+	DECLARE @db  sys.sysname = DB_NAME() collate database_default
 
 	-- For a NULL login name, do nothing
 	IF @loginame IS NULL
@@ -3784,7 +3778,7 @@ AS $$
 BEGIN
 	IF @procedure_schema IS NULL OR @procedure_schema = ''
 		BEGIN
-			SELECT @procedure_schema = default_schema_name from sys.babelfish_authid_user_ext WHERE orig_username = user_name() AND database_name = db_name();
+			SELECT @procedure_schema = default_schema_name from sys.babelfish_authid_user_ext WHERE orig_username = user_name() AND database_name = sys.bbf_cur_db() collate database_default;
 		END
 
         SELECT 	v.column_name AS [PARAMETER_NAME],

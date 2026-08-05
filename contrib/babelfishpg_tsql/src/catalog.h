@@ -47,11 +47,12 @@ extern Oid	sysdatabaese_idx_oid_oid;
 extern Oid	sysdatabaese_idx_name_oid;
 
 /* MUST comply with babelfish_sysdatabases table */
-#define SYSDATABASES_NUM_COLS 8
+#define SYSDATABASES_NUM_COLS 9
 #define Anum_sysdatabases_oid 1
 #define Anum_sysdatabases_owner 4
 #define Anum_sysdatabases_name 6
 #define Anum_sysdatabases_crdate 7
+#define Anum_sysdatabases_orig_name 9
 
 /* MUST comply with babelfish_sysdatabases table */
 typedef struct FormData_sysdatabases
@@ -92,6 +93,10 @@ typedef FormData_authid_login_ext *Form_authid_login_ext;
 
 extern int16 get_db_id(const char *dbname);
 extern char *get_db_name(int16 dbid);
+extern char *dbid_get_original_db_name(int16 dbid);
+extern char *dbname_get_original_db_name(const char *db_name);
+extern const char *bbf_get_original_constraint_name(const char *conname);
+extern const char *bbf_get_original_index_name(const char *idxname);
 extern char *get_db_owner_role_name(const char *dbname);
 extern void initTsqlSyscache(void);
 extern const char *get_one_user_db_name(void);
@@ -115,6 +120,55 @@ extern int	namespace_ext_num_cols;
 
 extern const char *get_logical_schema_name(const char *physical_schema_name, bool missingOk);
 extern int16 get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missingOk);
+
+/*****************************************
+ *			TRUNCATED_IDENTIFIER
+ *****************************************/
+#define BBF_IDENT_MAPPING_TABLE_NAME "babelfish_identifier_mapping"
+#define BBF_IDENT_MAPPING_IDX_NAME "babelfish_identifier_mapping_pkey"
+#define BBF_IDENT_MAPPING_NUM_COLS 5
+#define Anum_bbf_ident_mapping_nspname 1
+#define Anum_bbf_ident_mapping_pg_catalog_type 2
+#define Anum_bbf_ident_mapping_truncated_name 3
+#define Anum_bbf_ident_mapping_original_name 4
+#define Anum_bbf_ident_mapping_parent_name 5
+
+extern Oid	bbf_ident_mapping_oid;
+extern Oid	bbf_ident_mapping_idx_oid;
+
+extern Oid	get_bbf_ident_mapping_oid(void);
+extern Oid	get_bbf_ident_mapping_idx_oid(void);
+
+typedef struct IdentNameCacheEntry
+{
+	char		truncated_name[NAMEDATALEN];
+	char		original_name[512 + 1]; /* 128 T-SQL chars * 4 bytes UTF-8 + NUL */
+} IdentNameCacheEntry;
+
+extern void bbf_cache_ident_name(const char *truncated_name, const char *original_name);
+extern void bbf_cache_index_name(const char *internal_name, const char *index_name);
+extern const char *bbf_lookup_ident_name(const char *truncated_name);
+extern void bbf_reset_ident_name_cache(void);
+extern int	bbf_snapshot_ident_cache(IdentNameCacheEntry **entries, MemoryContext cxt);
+extern void bbf_restore_ident_cache(IdentNameCacheEntry *entries, int n);
+extern char *bbf_rewrite_truncated_identifiers(const char *msg);
+extern void insert_bbf_ident_mapping(const char *truncated_name,
+											const char *original_name,
+											const char *nspname,
+											Oid pg_catalog_type,
+											const char *parent_name);
+extern char *lookup_bbf_ident_mapping(const char *truncated_name,
+											 const char *nspname,
+											 Oid pg_catalog_type,
+											 const char *parent_name);
+extern void delete_bbf_ident_mapping(const char *truncated_name,
+											const char *nspname,
+											Oid pg_catalog_type,
+											const char *parent_name);
+extern void delete_bbf_ident_mapping_by_parent(const char *nspname,
+											   Oid pg_catalog_type,
+											   const char *parent_name);
+extern void clean_up_bbf_ident_mapping(const char *nspname);
 
 /*****************************************
  *			LOGIN EXT

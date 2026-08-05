@@ -25,6 +25,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
@@ -61,6 +62,7 @@
 #include "parser/parse_type.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/scansup.h"
+#include "executor/executor.h"
 #include "pgstat.h"				/* for pgstat related activities */
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
@@ -108,6 +110,43 @@
 #include "access/xact.h"
 
 #define FORJSON_INITIAL_HASH_SIZE 64
+#define CONSTRAINT_KEYWORD_LEN 10	/* strlen("CONSTRAINT") */
+
+/*
+ * skip_whitespace_and_comments
+ *
+ * Advance a pointer past whitespace and SQL comments (block and line).
+ * Used to find the constraint name after the CONSTRAINT keyword, since
+ * valid SQL allows comments between the keyword and the identifier.
+ */
+static inline const char *
+skip_whitespace_and_comments(const char *p)
+{
+	while (*p)
+	{
+		if (scanner_isspace(*p))
+			p++;
+		else if (p[0] == '/' && p[1] == '*')
+		{
+			/* block comment */
+			p += 2;
+			while (*p && !(p[0] == '*' && p[1] == '/'))
+				p++;
+			if (*p)
+				p += 2;	/* skip closing */ 
+		}
+		else if (p[0] == '-' && p[1] == '-')
+		{
+			/* line comment */
+			p += 2;
+			while (*p && *p != '\n')
+				p++;
+		}
+		else
+			break;
+	}
+	return p;
+}
 
 extern int  escape_hatch_set_transaction_isolation_level;
 extern bool pltsql_recursive_triggers;
@@ -239,6 +278,7 @@ static TargetEntry* buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry*
 static char *string_to_fixed_hash(const char *input);
 static void processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias, ForAutoContext *ctx, ForAutoMode mode);
 extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
+extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_concat_null_yields_null;
@@ -1019,6 +1059,9 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 								Constraint *c = makeNode(Constraint);
 								c->contype = CONSTR_NOTNULL;
 								c->location = -1;
+								c->is_enforced = true;
+								c->skip_validation = false;
+								c->initially_valid = true;
 								def->constraints = lappend(def->constraints, c);
 							}
 							
@@ -3177,6 +3220,44 @@ validateUserAndRole(char *name)
  * CreateFunctionStmt could have elements in the options list that are specific
  * to tsql, like trigStmt and tbltypStmt.
  */
+
+/*
+ * Store original view/relation name in reloptions if it differs from the
+ * internal (lowercased/truncated) name.
+ */
+static void
+store_view_original_name(ViewStmt *stmt, const char *queryString)
+{
+	char *original_name;
+
+	if (stmt->view->location < 0 || !queryString || babelfish_dump_restore)
+		return;
+
+	original_name = extract_multipart_identifier_name(queryString + stmt->view->location);
+	if (original_name &&
+		(strlen(original_name) >= NAMEDATALEN ||
+		 (strncmp(stmt->view->relname, original_name, strlen(stmt->view->relname)) != 0 &&
+		  strncasecmp(stmt->view->relname, original_name, strlen(stmt->view->relname)) == 0)))
+	{
+		Oid viewOid = RangeVarGetRelid(stmt->view, NoLock, true);
+
+		if (OidIsValid(viewOid))
+		{
+			AlterTableCmd *cmd = makeNode(AlterTableCmd);
+			cmd->subtype = AT_SetRelOptions;
+			cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME),
+													   (Node *) makeString(pstrdup(original_name)), -1));
+			cmd->behavior = DROP_RESTRICT;
+			cmd->missing_ok = false;
+			AlterTableInternal(viewOid, list_make1(cmd), false);
+			CommandCounterIncrement();
+		}
+	}
+
+	if (original_name)
+		pfree(original_name);
+}
+
 static void
 bbf_ProcessUtility(PlannedStmt *pstmt,
 				   const char *queryString,
@@ -3750,9 +3831,21 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						pltsql_current_query_is_view_definition = false;
 					}
 					PG_END_TRY();
+
+					/*
+					 * Store original view name using RangeVar->location if
+					 * the name differs in case from the lowercased version.
+					 */
+					store_view_original_name(stmt, queryString);
 					return;
 				}
-				break;
+
+				/* Plain CREATE VIEW: execute, then store original name */
+				call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+
+				if (sql_dialect == SQL_DIALECT_TSQL)
+					store_view_original_name(stmt, queryString);
+				return;
 			}
 
 		case T_AlterTableStmt:
@@ -3810,6 +3903,64 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_alter_owner_from_pg && !superuser())
 				{
 					restrict_alter_table_stmt(atstmt);
+				}
+
+				/* Store long constraint names from ALTER TABLE ADD CONSTRAINT */
+				if (sql_dialect == SQL_DIALECT_TSQL && queryString)
+				{
+					foreach(lc, atstmt->cmds)
+					{
+						AlterTableCmd *cmd = (AlterTableCmd *)lfirst(lc);
+						if (cmd->subtype == AT_AddConstraint && cmd->def)
+						{
+							Constraint *con = (Constraint *) cmd->def;
+							if (con->conname && strlen(con->conname) >= NAMEDATALEN - 1 &&
+								con->location >= 0)
+							{
+								/* con->location points to CONSTRAINT keyword; skip to name */
+								const char *p = skip_whitespace_and_comments(queryString + con->location + CONSTRAINT_KEYWORD_LEN);
+								char *orig;
+
+								orig = extract_identifier(p, NULL);
+								if (orig && strlen(orig) >= NAMEDATALEN)
+								{
+									insert_bbf_ident_mapping(con->conname, orig,
+										atstmt->relation->schemaname ? atstmt->relation->schemaname : get_physical_schema_name(get_cur_db_name(), "dbo"),
+										ConstraintRelationId,
+										atstmt->relation->relname);
+
+									/* UNIQUE/PRIMARY KEY create an index; store original name in reloptions */
+									if (con->contype == CONSTR_UNIQUE || con->contype == CONSTR_PRIMARY)
+									{
+										call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+										exec_add_original_index_name(con->conname, atstmt->relation->schemaname, orig);
+										pfree(orig);
+										return;
+									}
+									pfree(orig);
+								}
+							}
+						}
+					}
+				}
+
+				/* Remove entries from babelfish_identifier_mapping on DROP CONSTRAINT */
+				if (sql_dialect == SQL_DIALECT_TSQL)
+				{
+					foreach(lc, atstmt->cmds)
+					{
+						AlterTableCmd *cmd = (AlterTableCmd *)lfirst(lc);
+						if (cmd->subtype == AT_DropConstraint && cmd->name)
+						{
+							if (strlen(cmd->name) >= NAMEDATALEN - 1)
+							{
+								const char *nspname = atstmt->relation->schemaname ?
+									atstmt->relation->schemaname :
+									get_physical_schema_name(get_cur_db_name(), "dbo");
+								delete_bbf_ident_mapping(cmd->name, nspname, ConstraintRelationId, atstmt->relation->relname);
+							}
+						}
+					}
 				}
 				break;
 			}
@@ -5126,6 +5277,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					 */
 					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
 
+					/* Clean up truncated identifier entries for this schema */
+					clean_up_bbf_ident_mapping(schemaname);
+
 					return;
 				}
 				else
@@ -5386,6 +5540,50 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, name);
 				}
 
+				/* Store long constraint names in babelfish_identifier_mapping */
+				if (sql_dialect == SQL_DIALECT_TSQL && !babelfish_dump_restore && queryString)
+				{
+					ListCell   *lc;
+					const char *nspname = rel->schemaname;
+					Oid			relOid;
+
+					if (!nspname)
+					{
+						relOid = RangeVarGetRelid(rel, NoLock, true);
+						if (OidIsValid(relOid))
+							nspname = get_namespace_name(get_rel_namespace(relOid));
+					}
+
+					if (nspname)
+					{
+						foreach(lc, create_stmt->tableElts)
+						{
+							Node *elt = (Node *) lfirst(lc);
+
+							if (IsA(elt, Constraint))
+							{
+								Constraint *con = (Constraint *) elt;
+
+								if (con->conname && con->location >= 0)
+								{
+									const char *start = skip_whitespace_and_comments(queryString + con->location + CONSTRAINT_KEYWORD_LEN);
+									char *original_name;
+
+									original_name = extract_identifier(start, NULL);
+
+									if (original_name)
+									{
+										insert_bbf_ident_mapping(con->conname,
+																 original_name, nspname,
+																 ConstraintRelationId, rel->relname);
+										pfree(original_name);
+									}
+								}
+							}
+						}
+					}
+				}
+
 				return;
 			}
 		case T_IndexStmt:
@@ -5395,8 +5593,25 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				if (sql_dialect == SQL_DIALECT_TSQL &&
 					strcmp(queryString, CREATE_FULLTEXT_INDEX) != 0) /* Skip fulltext indexes since they don't even have an original name */
 				{
-					char    	*original_name = stmt->idxname != NULL ? stmt->idxname : NULL;
+					char    	*original_name = NULL;
 					List    	*partition_schemes = stmt->excludeOpNames;
+					ListCell	*opt_lc;
+
+					/* Extract original index name using location from grammar */
+					foreach(opt_lc, stmt->options)
+					{
+						DefElem *defel = (DefElem *) lfirst(opt_lc);
+						if (strcmp(defel->defname, "name_location") == 0)
+						{
+							int loc = intVal(defel->arg);
+							if (loc >= 0 && queryString)
+								original_name = extract_identifier(queryString + loc, NULL);
+							stmt->options = foreach_delete_current(stmt->options, opt_lc);
+							break;
+						}
+					}
+					if (!original_name)
+						original_name = stmt->idxname;
 
 					stmt->excludeOpNames = NIL;
 					if (stmt->idxname && !stmt->isconstraint)
@@ -5422,16 +5637,50 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									errmsg("Un-aligned Index is not supported in Babelfish.")));
 						}
 					}
-					if (original_name && !stmt->isconstraint)
+					if (original_name)
 					{
 						/* Store the original index name in reloptions */
 						exec_add_original_index_name(stmt->idxname, stmt->relation->schemaname, original_name);
+
 						/* Restore the original index name so that cached plan remains valid */
-						stmt->idxname = original_name;
+						if (!stmt->isconstraint)
+							stmt->idxname = original_name;
 					}
 					return;
 				}
 				break;
+			}
+		case T_CreateSeqStmt:
+			{
+				CreateSeqStmt *seq_stmt = (CreateSeqStmt *) parsetree;
+
+				call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+
+				/*
+				 * Store original sequence name in babelfish_identifier_mapping catalog.
+				 */
+				if (sql_dialect == SQL_DIALECT_TSQL &&
+					seq_stmt->sequence->location >= 0 && queryString &&
+					!babelfish_dump_restore)
+				{
+					char *original_name = extract_multipart_identifier_name(queryString + seq_stmt->sequence->location);
+
+					if (original_name)
+					{
+						Oid seqOid = RangeVarGetRelid(seq_stmt->sequence, NoLock, true);
+						const char *nspname = seq_stmt->sequence->schemaname;
+
+						if (!nspname && OidIsValid(seqOid))
+							nspname = get_namespace_name(get_rel_namespace(seqOid));
+
+						if (nspname)
+							insert_bbf_ident_mapping(seq_stmt->sequence->relname,
+													 original_name, nspname,
+													 RelationRelationId, NULL);
+						pfree(original_name);
+					}
+				}
+				return;
 			}
 		case T_CreateDomainStmt:
 			{
@@ -5439,6 +5688,42 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				Form_pg_type		baseType;
 				int32				basetypeMod;
 				CreateDomainStmt	*create_domain = (CreateDomainStmt *) parsetree;
+				char			   *original_name = NULL;
+				int					origname_location = -1;
+
+				/*
+				 * Extract original_type_name from the constraint's options.
+				 * The grammar stores it as a DefElem in the existing
+				 * Constraint->options. Remove it before passing to the engine.
+				 */
+				if (sql_dialect == SQL_DIALECT_TSQL)
+				{
+					ListCell *lc;
+
+					foreach(lc, create_domain->constraints)
+					{
+						Constraint *constr = (Constraint *) lfirst(lc);
+
+						if (constr->options != NIL)
+						{
+							ListCell *opt;
+
+							foreach(opt, constr->options)
+							{
+								DefElem *defel = (DefElem *) lfirst(opt);
+
+								if (strcmp(defel->defname, "bbf_original_name") == 0)
+								{
+									original_name = pstrdup(strVal(defel->arg));
+									origname_location = defel->location;
+									constr->options = foreach_delete_current(constr->options, opt);
+									break;
+								}
+							}
+							break;
+						}
+					}
+				}
 
 				if (sql_dialect == SQL_DIALECT_TSQL && !create_domain->collClause)
 				{
@@ -5477,6 +5762,34 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				else
 					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 											queryEnv, dest, qc);
+
+				/*
+				 * Store original type name if it was provided and differs
+				 * in case from the lowercased version.
+				 */
+				if (sql_dialect == SQL_DIALECT_TSQL && original_name)
+				{
+					char *type_name = NameListToString(create_domain->domainname);
+					Oid typeOid = typenameTypeId(NULL, makeTypeNameFromNameList(create_domain->domainname));
+					const char *nspname = NULL;
+
+					if (OidIsValid(typeOid))
+					{
+						HeapTuple tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeOid));
+						if (HeapTupleIsValid(tup))
+						{
+							Form_pg_type typform = (Form_pg_type) GETSTRUCT(tup);
+							nspname = get_namespace_name(typform->typnamespace);
+							ReleaseSysCache(tup);
+						}
+					}
+
+					if (nspname)
+						insert_bbf_ident_mapping(type_name, original_name,
+												 nspname, TypeRelationId, NULL);
+					pfree(original_name);
+				}
+				(void) origname_location;
 
 				revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, create_domain->domainname);
 				return;
@@ -6226,7 +6539,20 @@ pltsql_truncate_identifier(char *ident, int len, bool warn)
 				 errmsg("identifier \"%s\" will be truncated to \"%s\"",
 						ident, buf)));
 
-	memcpy(ident, buf, len + MD5_HASH_LEN + 1);
+	{
+		char	saved_ident[128 * 4 + 1];	/* 513 bytes: 128 chars × 4 bytes UTF-8 + NUL */
+		int		saved_len = strlen(ident);
+
+		if (saved_len < (int) sizeof(saved_ident))
+			memcpy(saved_ident, ident, saved_len + 1);
+		else
+			saved_ident[0] = '\0';
+
+		memcpy(ident, buf, len + MD5_HASH_LEN + 1);
+
+		if (saved_ident[0] != '\0' && warn)
+			bbf_cache_ident_name(ident, saved_ident);
+	}
 	return true;
 }
 
@@ -6570,6 +6896,8 @@ _PG_init(void)
 	make_fn_arguments_from_stored_proc_probin_hook = pltsql_function_probin_reader;
 	truncate_identifier_hook = pltsql_truncate_identifier;
 	cstr_to_name_hook = pltsql_cstr_to_name;
+	bbf_get_original_constraint_name_hook = bbf_get_original_constraint_name;
+	bbf_get_original_index_name_hook = bbf_get_original_index_name;
 	tsql_has_pgstat_permissions_hook = tsql_has_pgstat_permissions;
 
 	if (pltsql_enable_linked_servers)
@@ -8228,6 +8556,36 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 
 	Node *parsetree = pstmt->utilityStmt;
 	List *stmts;
+	List *orig_colnames = NIL;
+
+	/*
+	 * Save original column names before transformSelectIntoStmt lowercases them.
+	 * pre_transform_target_entry has already set tle->resname to the full
+	 * original (mixed-case) name from source text for long identifiers.
+	 */
+	if (sql_dialect == SQL_DIALECT_TSQL)
+	{
+		CreateTableAsStmt *ctas = (CreateTableAsStmt *) parsetree;
+		if (ctas->query && IsA(ctas->query, Query))
+		{
+			Query *q = (Query *) ctas->query;
+			ListCell *tlc;
+			foreach(tlc, q->targetList)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(tlc);
+				if (tle->resjunk)
+				{
+					orig_colnames = lappend(orig_colnames, NULL);
+					continue;
+				}
+				if (tle->resname && strlen(tle->resname) >= NAMEDATALEN)
+					orig_colnames = lappend(orig_colnames, pstrdup(tle->resname));
+				else
+					orig_colnames = lappend(orig_colnames, NULL);
+			}
+		}
+	}
+
 	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
 	while (stmts != NIL)
 	{
@@ -8235,6 +8593,26 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 		stmts = list_delete_first(stmts);
 		if (IsA(stmt, CreateTableAsStmt))
 		{
+			/*
+			 * pre_transform_target_entry extends tle->resname to the full
+			 * original for "SELECT a AS LongAlias" display. For SELECT INTO,
+			 * this causes namestrcpy to simple-cut it, producing an attname
+			 * that won't match the parser's MD5-truncated form. Truncate
+			 * tle->resname back to MD5 form before table creation.
+			 */
+			Query *query = castNode(Query, ((CreateTableAsStmt *)parsetree)->query);
+			ListCell *tlc;
+
+			foreach(tlc, query->targetList)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(tlc);
+				if (tle->resname && strlen(tle->resname) >= NAMEDATALEN)
+				{
+					tle->resname = pstrdup(tle->resname);
+					truncate_identifier(tle->resname, strlen(tle->resname), false);
+				}
+			}
+
 			*address = ExecCreateTableAs(pstate, (CreateTableAsStmt *)parsetree, params, queryEnv, qc);
 		}
 		else
@@ -8254,6 +8632,93 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 	}
 
 	reseed_identity_post_select_into(address->objectId);
+
+	/*
+	 * Store original table name for SELECT INTO.
+	 */
+	if (sql_dialect == SQL_DIALECT_TSQL && !babelfish_dump_restore &&
+		queryString && OidIsValid(address->objectId))
+	{
+		CreateTableAsStmt *ctas = (CreateTableAsStmt *) parsetree;
+
+		if (ctas->into && ctas->into->rel && ctas->into->rel->location >= 0)
+		{
+			char *original_name = extract_multipart_identifier_name(queryString + ctas->into->rel->location);
+
+			if (original_name &&
+				(strlen(original_name) >= NAMEDATALEN ||
+				 (strncmp(ctas->into->rel->relname, original_name, strlen(ctas->into->rel->relname)) != 0 &&
+				  strncasecmp(ctas->into->rel->relname, original_name, strlen(ctas->into->rel->relname)) == 0)))
+			{
+				AlterTableCmd *cmd = makeNode(AlterTableCmd);
+				cmd->subtype = AT_SetRelOptions;
+				cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME),
+														   (Node *) makeString(pstrdup(original_name)), -1));
+				cmd->behavior = DROP_RESTRICT;
+				cmd->missing_ok = false;
+				AlterTableInternal(address->objectId, list_make1(cmd), false);
+				CommandCounterIncrement();
+			}
+			if (original_name)
+				pfree(original_name);
+		}
+	}
+
+	/*
+	 * Store original column names in pg_attribute.attoptions for columns
+	 * that were truncated (saved in orig_colnames during pre-truncation).
+	 */
+	if (sql_dialect == SQL_DIALECT_TSQL && OidIsValid(address->objectId) && orig_colnames != NIL)
+	{
+		Query *query = castNode(Query, ((CreateTableAsStmt *)parsetree)->query);
+		ListCell *lc, *oc;
+		int colno = 0;
+		Relation rel2;
+		TupleDesc td;
+		List *cmds = NIL;
+
+		rel2 = relation_open(address->objectId, AccessShareLock);
+		td = RelationGetDescr(rel2);
+
+		forboth(lc, query->targetList, oc, orig_colnames)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(lc);
+			char *orig_name = (char *) lfirst(oc);
+			Form_pg_attribute attr;
+
+			if (tle->resjunk)
+				continue;
+
+			if (colno >= td->natts)
+				break;
+
+			attr = TupleDescAttr(td, colno);
+			colno++;
+
+			if (attr->attisdropped)
+				continue;
+
+			if (orig_name != NULL)
+			{
+				AlterTableCmd *cmd = makeNode(AlterTableCmd);
+				cmd->subtype = AT_SetOptions;
+				cmd->name = pstrdup(NameStr(attr->attname));
+				cmd->def = (Node *) list_make1(
+					makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME),
+								(Node *) makeString(pstrdup(orig_name)), -1));
+				cmd->behavior = DROP_RESTRICT;
+				cmd->missing_ok = false;
+				cmds = lappend(cmds, cmd);
+			}
+		}
+		relation_close(rel2, AccessShareLock);
+
+		if (cmds != NIL)
+		{
+			AlterTableInternal(address->objectId, cmds, false);
+			CommandCounterIncrement();
+		}
+	}
 }
 
 void
@@ -8384,6 +8849,12 @@ bbf_ExecDropStmt(DropStmt *stmt)
 						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
 						delete_extended_property(db_id, type, schema_name,
 												major_name, NULL);
+
+						/* Remove constraint entries from babelfish_identifier_mapping */
+						if (schema_name)
+							delete_bbf_ident_mapping_by_parent(schema_name,
+															   ConstraintRelationId,
+															   major_name);
 					}
 					else if (stmt->removeType == OBJECT_VIEW)
 					{
@@ -8396,6 +8867,11 @@ bbf_ExecDropStmt(DropStmt *stmt)
 						type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SEQUENCE];
 						delete_extended_property(db_id, type, schema_name,
 												major_name, NULL);
+
+						/* Remove sequence entry from babelfish_identifier_mapping */
+						if (schema_name)
+							delete_bbf_ident_mapping(major_name, schema_name,
+													 RelationRelationId, NULL);
 					}
 				}
 				clean_up_bbf_schema_permissions(logicalschema, major_name, false);
@@ -8464,6 +8940,16 @@ bbf_ExecDropStmt(DropStmt *stmt)
 
 					delete_extended_property(db_id, type, schema_name, major_name,
 											NULL);
+
+					/* Remove from babelfish_identifier_mapping */
+					if (stmt->removeType == OBJECT_TYPE)
+						delete_bbf_ident_mapping(major_name, schema_name,
+												 TypeRelationId, NULL);
+					else if (stmt->removeType == OBJECT_PROCEDURE ||
+							 stmt->removeType == OBJECT_FUNCTION)
+						delete_bbf_ident_mapping_by_parent(schema_name,
+														   ProcedureRelationId,
+														   major_name);
 				}
 				clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 			}

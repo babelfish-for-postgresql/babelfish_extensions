@@ -125,7 +125,7 @@ babel_417
 BABEL-493
 BABEL-4888
 BABEL_539
-BABEL-621
+BABEL-621-before-18_6
 BABEL-728
 BABEL-733
 BABEL-741
@@ -167,7 +167,7 @@ BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
-BABEL-ROLE-MEMBER
+BABEL-ROLE-MEMBER-before-18_6
 BABEL_SCHEMATA
 BABEL-SPCOLUMNS
 BABEL-SPCOLUMNS-dep
@@ -197,7 +197,7 @@ babel_varbinary_int4_div
 bbf_view_def_before_16_5
 binary-index
 bitwise_not-operator
-case_insensitive_collation
+case_insensitive_collation-before-18_6
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
 col_length
@@ -361,7 +361,7 @@ sys-sp_databases
 sys-sp_databases-dep
 sys-sp_pkeys
 sys-sp_pkeys-dep
-sys-sp_statistics
+sys-sp_statistics-before-16_9-or-17_4
 sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
@@ -373,7 +373,7 @@ sys-synonyms
 sys-syscharsets
 sys-syscolumns
 sys-syscolumns-dep
-sys-sysdatabases
+sys-sysdatabases-before-18_6
 sys-sysforeignkeys
 sys-sysforeignkeys-dep
 sys-sysindexes

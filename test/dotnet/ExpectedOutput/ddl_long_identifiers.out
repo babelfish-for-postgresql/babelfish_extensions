@@ -1,0 +1,260 @@
+#Q#DROP TRIGGER IF EXISTS ThisIsAVeryLongTriggerNameThatExceedsSixtyThreeCharactersInLength
+
+#Q#
+DROP VIEW IF EXISTS ThisIsAVeryLongViewNameThatDefinitelyExceedsSixtyThreeCharacters
+
+#Q#
+DROP FUNCTION IF EXISTS ThisIsAVeryLongFunctionNameThatExceedsSixtyThreeCharsForTesting
+
+#Q#
+DROP PROCEDURE IF EXISTS ThisIsAVeryLongProcedureNameThatExceedsSixtyThreeCharactersTest
+
+#Q#
+DROP TABLE IF EXISTS ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting
+
+#Q#
+DROP USER IF EXISTS ThisIsAVeryLongUserNameThatExceedsSixtyThreeCharactersForTesting1
+
+#Q#
+DROP TRIGGER IF EXISTS trg_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+
+#Q#
+DROP VIEW IF EXISTS vw_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+
+#Q#
+DROP FUNCTION IF EXISTS func_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst
+
+#Q#
+DROP PROCEDURE IF EXISTS proc_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst
+
+#Q#
+DROP TABLE IF EXISTS tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+
+#Q#
+CREATE LOGIN ThisIsAVeryLongLoginNameThatExceedsSixtyThreeCharactersForTestin WITH PASSWORD = 'test12345678'
+
+#Q#
+CREATE USER ThisIsAVeryLongUserNameThatExceedsSixtyThreeCharactersForTesting1 FOR LOGIN ThisIsAVeryLongLoginNameThatExceedsSixtyThreeCharactersForTestin
+
+#Q#
+CREATE TABLE ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting (
+  ID INT IDENTITY(1,1) NOT NULL,
+  Col1 VARCHAR(50),
+  Col2 INT,
+  CONSTRAINT PK_ThisIsAVeryLongConstraintNameThatExceedsSixtyThreeCharacters PRIMARY KEY (ID)
+)
+
+#Q#
+CREATE INDEX IX_ThisIsAVeryLongIndexNameThatExceedsSixtyThreeCharactersInTotal ON ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting (Col1)
+
+#Q#
+CREATE VIEW ThisIsAVeryLongViewNameThatDefinitelyExceedsSixtyThreeCharacters AS
+  SELECT ID, Col1, Col2 FROM ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting
+
+#Q#
+CREATE FUNCTION ThisIsAVeryLongFunctionNameThatExceedsSixtyThreeCharsForTesting(@p INT)
+RETURNS INT AS
+BEGIN
+  RETURN @p + 1;
+END
+
+#Q#
+CREATE TRIGGER ThisIsAVeryLongTriggerNameThatExceedsSixtyThreeCharactersInLength ON ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting AFTER INSERT AS
+	SELECT 1;
+
+#Q#
+CREATE PROCEDURE ThisIsAVeryLongProcedureNameThatExceedsSixtyThreeCharactersTest AS
+	SELECT 1;
+
+#Q#
+CREATE TABLE tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng (
+  ID INT IDENTITY(1,1) NOT NULL,
+  Col1 VARCHAR(50)
+)
+
+#Q#
+CREATE INDEX ix_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng ON tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng (Col1)
+
+#Q#
+CREATE VIEW vw_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng AS
+  SELECT ID, Col1 FROM tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+
+#Q#
+CREATE TRIGGER trg_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng ON tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng AFTER INSERT AS
+	SELECT 1;
+
+#Q#
+CREATE PROCEDURE proc_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst AS
+	SELECT 1;
+
+#Q#
+CREATE FUNCTION func_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst(@p INT)
+RETURNS INT AS
+BEGIN
+  RETURN @p + 1;
+END
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[col1] [varchar](50) NULL
+) ON [PRIMARY]
+
+GO
+CREATE NONCLUSTERED INDEX [ix_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng] ON [dbo].[tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng]
+(
+	[col1] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TRIGGER trg_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng ON tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng AFTER INSERT AS
+	SELECT 1;
+
+GO
+ALTER TABLE [dbo].[tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng] ENABLE TRIGGER [trg_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[col1] [varchar](50) NULL,
+	[col2] [int] NULL,
+ CONSTRAINT [pk_thisisaverylongconstraintnamethatexceedssixtythreecharacters] PRIMARY KEY NONCLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+CREATE NONCLUSTERED INDEX [IX_ThisIsAVeryLongIndexNameThatExceedsSixtyThreeCharactersInTotal] ON [dbo].[ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting]
+(
+	[col1] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting] ADD  CONSTRAINT [pk_thisisaverylongconstraintnamethatexceedssixtythreecharacters] PRIMARY KEY NONCLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TRIGGER ThisIsAVeryLongTriggerNameThatExceedsSixtyThreeCharactersInLength ON ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting AFTER INSERT AS
+	SELECT 1;
+
+GO
+ALTER TABLE [dbo].[ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting] ENABLE TRIGGER [ThisIsAVeryLongTriggerNameThatExceedsSixtyThreeCharactersInLength]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE VIEW ThisIsAVeryLongViewNameThatDefinitelyExceedsSixtyThreeCharacters AS
+  SELECT ID, Col1, Col2 FROM ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE VIEW vw_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng AS
+  SELECT ID, Col1 FROM tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE proc_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst AS
+	SELECT 1;
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE ThisIsAVeryLongProcedureNameThatExceedsSixtyThreeCharactersTest AS
+	SELECT 1;
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION func_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst(@p INT)
+RETURNS INT AS
+BEGIN
+  RETURN @p + 1;
+END
+
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION ThisIsAVeryLongFunctionNameThatExceedsSixtyThreeCharsForTesting(@p INT)
+RETURNS INT AS
+BEGIN
+  RETURN @p + 1;
+END
+
+GO
+CREATE USER [ThisIsAVeryLongUserNameThatExceedsSixtyThreeCharactersForTesting1] FOR LOGIN [ThisIsAVeryLongLoginNameThatExceedsSixtyThreeCharactersForTestin] WITH DEFAULT_SCHEMA=[dbo]
+GO
+
+CREATE LOGIN [ThisIsAVeryLongLoginNameThatExceedsSixtyThreeCharactersForTestin] WITH PASSWORD='********************************************', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[English], CHECK_EXPIRATION=OFF, CHECK_POLICY=ON
+GO
+ALTER LOGIN [ThisIsAVeryLongLoginNameThatExceedsSixtyThreeCharactersForTestin] DISABLE
+GO
+#Q#DROP TRIGGER IF EXISTS ThisIsAVeryLongTriggerNameThatExceedsSixtyThreeCharactersInLength
+
+#Q#
+DROP VIEW IF EXISTS ThisIsAVeryLongViewNameThatDefinitelyExceedsSixtyThreeCharacters
+
+#Q#
+DROP FUNCTION IF EXISTS ThisIsAVeryLongFunctionNameThatExceedsSixtyThreeCharsForTesting
+
+#Q#
+DROP PROCEDURE IF EXISTS ThisIsAVeryLongProcedureNameThatExceedsSixtyThreeCharactersTest
+
+#Q#
+DROP TABLE IF EXISTS ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting
+
+#Q#
+DROP USER IF EXISTS ThisIsAVeryLongUserNameThatExceedsSixtyThreeCharactersForTesting1
+
+#Q#
+DROP TRIGGER IF EXISTS trg_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+
+#Q#
+DROP VIEW IF EXISTS vw_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+
+#Q#
+DROP FUNCTION IF EXISTS func_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst
+
+#Q#
+DROP PROCEDURE IF EXISTS proc_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst
+
+#Q#
+DROP TABLE IF EXISTS tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng
+
+#Q#
+DROP LOGIN ThisIsAVeryLongLoginNameThatExceedsSixtyThreeCharactersForTestin
+

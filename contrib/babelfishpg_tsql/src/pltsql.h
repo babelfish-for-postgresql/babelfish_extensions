@@ -1475,6 +1475,10 @@ typedef struct PLtsql_function
 
 	/* arguments for inline code block */
 	InlineCodeBlockArgs *inline_args;
+
+	/* cached truncated→original identifier mappings from compilation */
+	int			n_ident_mappings;
+	struct IdentNameCacheEntry *ident_mappings;
 } PLtsql_function;
 
 /*
@@ -2314,6 +2318,7 @@ extern int	pltsql_yyparse(void);
 
 /* functions in hooks.c */
 extern char *extract_identifier(const char *start, int *last_pos);
+extern char *extract_multipart_identifier_name(const char *start);
 
 /* functions in pltsql_utils.c */
 extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);

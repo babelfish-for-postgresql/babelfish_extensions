@@ -130,7 +130,7 @@ go
 
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "idxtable_107f9bec28bc8902d45d905788d7aa59a1")~~
+~~ERROR (Message: duplicate key value violates unique constraint "idx")~~
 
 drop index idx on table_10;
 go
