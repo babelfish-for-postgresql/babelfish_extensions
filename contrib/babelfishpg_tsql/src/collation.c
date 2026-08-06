@@ -9,6 +9,7 @@
 #include "utils/memutils.h"
 #include "utils/builtins.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_namespace_d.h"
 #include "catalog/pg_collation.h"
 #include "catalog/namespace.h"
 #include "tsearch/ts_locale.h"
@@ -293,6 +294,9 @@ store_like_original_collation(int location, Oid collation)
 	like_orig_coll_entry *entry;
 	bool found;
 
+	if (location < 0)
+		return;
+
 	if (!ht_like_orig_collation)
 	{
 		/* Create hash table in TopMemoryContext to ensure it persists
@@ -348,14 +352,20 @@ contains_like_escape(Node *node, void *context)
 	if (node == NULL)
 		return false;
 
-	/* Check if this is a FuncExpr with name "like_escape" */
+	/* Check if this is a FuncExpr with name "like_escape" in pg_catalog */
 	if (IsA(node, FuncExpr))
 	{
 		FuncExpr   *func = (FuncExpr *) node;
 		char	   *funcname = get_func_name(func->funcid);
 
-		if (funcname != NULL && strcmp(funcname, "like_escape") == 0)
-			return true;
+		if (funcname != NULL)
+		{
+			bool is_like_escape = (strcmp(funcname, "like_escape") == 0 &&
+								   get_func_namespace(func->funcid) == PG_CATALOG_NAMESPACE);
+			pfree(funcname);
+			if (is_like_escape)
+				return true;
+		}
 	}
 
 	/* Recursively check child nodes */

@@ -5874,18 +5874,26 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 		Assert(estate != NULL);
 		INSTR_TIME_SET_CURRENT(estate->planning_start);
 	}
-	if (prev_planner_hook)
-		plan = prev_planner_hook(parse, query_string, cursorOptions, boundParams);
-	else
-		plan = standard_planner(parse, query_string, cursorOptions, boundParams);
+
+	PG_TRY();
+	{
+		if (prev_planner_hook)
+			plan = prev_planner_hook(parse, query_string, cursorOptions, boundParams);
+		else
+			plan = standard_planner(parse, query_string, cursorOptions, boundParams);
+	}
+	PG_FINALLY();
+	{
+		/* Reset per-statement hash table for LIKE collation tracking after planning is complete */
+		reset_like_original_collation();
+	}
+	PG_END_TRY();
+
 	if (pltsql_explain_analyze)
 	{
 		INSTR_TIME_SET_CURRENT(estate->planning_end);
 		INSTR_TIME_SUBTRACT(estate->planning_end, estate->planning_start);
 	}
-
-	/* Reset per-statement hash table for LIKE collation tracking after planning is complete */
-	reset_like_original_collation();
 
 	return plan;
 }
@@ -9548,13 +9556,16 @@ bbf_match_like_to_indexcol(PlannerInfo *root,
 		Pattern_Prefix_Status pstatus;
 		int			ptype;
 		Node	   *actual_leftop = leftop;
+		coll_info_t bounds_coll_info;
 
-		if (coll_info.collateflags == 0x000f || coll_info.collateflags == 0x000d)
+		/* Determine ptype from the original collation */
+		bounds_coll_info = tsql_lookup_collation_table_internal(bounds_collation);
+		if (bounds_coll_info.collateflags == 0x000f || bounds_coll_info.collateflags == 0x000d)
 			ptype = 1; /* CI */
 		else
 			ptype = 0; /* CS */
 
-		pstatus = pattern_fixed_prefix_wrapper(patt, ptype, coll_info.oid,
+		pstatus = pattern_fixed_prefix_wrapper(patt, ptype, bounds_coll_info.oid,
 											   &prefix, NULL);
 
 		/* No prefix so can't generate bounds (leading wildcard) */
@@ -9569,8 +9580,10 @@ bbf_match_like_to_indexcol(PlannerInfo *root,
 		if (IsA(leftop, RelabelType))
 		{
 			RelabelType *relabel = (RelabelType *) leftop;
-			actual_leftop = copyObject((Node*) relabel->arg);
+			actual_leftop = (Node*) relabel->arg;
 		}
+
+		actual_leftop = copyObject(actual_leftop);
 
 		if (pstatus == Pattern_Prefix_Exact)
 		{
