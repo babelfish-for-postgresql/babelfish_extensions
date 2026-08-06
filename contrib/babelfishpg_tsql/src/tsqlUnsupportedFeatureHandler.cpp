@@ -149,6 +149,8 @@ protected:
 				handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE", getLineAndPos(ctx));
 				return visitChildren(ctx);
 			}
+			if (!ctx->final_char)
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "A MERGE statement must be terminated by a semi-colon (;).", getLineAndPos(ctx));
 			if (ctx->TOP())
 				handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE with TOP", getLineAndPos(ctx));
 			if (ctx->output_clause())
