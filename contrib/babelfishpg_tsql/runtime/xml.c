@@ -1078,7 +1078,7 @@ bbf_xml_validate_xml_type(Oid arg_type)
 /*
  * bbf_xml_skip_xpath_chars
  * While processing the XPath query, skip characters inside string literals
- * (double-quoted) and predicates (square-bracketed, can be nested).
+ * (double- or single-quoted) and predicates (square-bracketed, can be nested).
  * Returns the number of characters skipped, or 0 if none are skipped
  */
 static int
@@ -1093,15 +1093,16 @@ bbf_xml_skip_xpath_chars(const char *p)
 
 	ch = *p;
 
-	/* String literals in double quotes */
-	if (ch == '"')
+	/* String literals in double or (less likely) single quotes */
+	if ((ch == '"') || (ch == '\'')) 
 	{
+		char delimiter = ch;
 		while (*p)
 		{
 			nr_chars_skipped++;
 			p++;
 			ch = *p;
-			if (ch == '"')
+			if (ch == delimiter)
 			{
 				nr_chars_skipped++;
 				break;
@@ -1164,7 +1165,7 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
          * Do not touch string literals or predicates. If encountered,
          * return the number of skipped chars
          */
-        if ((ch == '"') || (ch == '['))
+        if ((ch == '"') || (ch == '\'') || (ch == '['))
         {
 			int nr_chars_skipped = bbf_xml_skip_xpath_chars(p);
 			if (nr_chars_skipped > 0)
@@ -1378,6 +1379,33 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 		}
 		*dst = '\0';
 
+		/* 
+		 * Remove contents of string literals in double or single quotes to avoid 
+		 * inadvertently matching character patterns inside strings 
+		 */
+		src = stripped;
+		dst = stripped;		
+		while (*src)
+		{
+			if ((*src == '"') || (*src == '\''))
+			{
+				char delimiter = *src;
+				*dst++ = *src++;
+				while (*src)
+				{
+					src++;
+					if (*src == delimiter)
+					{
+						*dst++ = *src++;
+						break;
+					}
+				}
+			}
+			else
+				*dst++ = *src++;
+		}
+		*dst = '\0';
+		
 		len = strlen(stripped);
 		if (len == prev_len)
 			break;
@@ -1456,7 +1484,7 @@ bbf_xml_process_xpath_function(const char *xpath_pattern, const char *context_no
          * Do not touch string literals or predicates. If encountered,
          * return the number of skipped chars
          */
-        if ((ch == '"') || (ch == '['))
+        if ((ch == '"') || (ch == '\'') || (ch == '['))
         {
 			int nr_chars_skipped = bbf_xml_skip_xpath_chars(p);
 			if (nr_chars_skipped > 0)
@@ -1472,7 +1500,7 @@ bbf_xml_process_xpath_function(const char *xpath_pattern, const char *context_no
 		}
 
 		prev_ch = (p != xpath_pattern) ? (*(p-1)) : ' ';
-
+			
 		/* '.' reference */
 		if (ch == '.')
 		{
@@ -1596,7 +1624,7 @@ bbf_xml_process_xpath_function(const char *xpath_pattern, const char *context_no
 					appendStringInfo(&result, "%s/%s", context_node_path, ident_buf.data);
 					appendStringInfoChar(&result, ch2);
 				}
-				pfree(ident_buf.data);
+				resetStringInfo(&ident_buf); // not calling pfree since it's a local variable anyway
 				p++;
 				continue;
 			}
@@ -1638,7 +1666,7 @@ bbf_xml_xpath_with_context_node(const char *xpath_pattern, const char *context_n
 
 	/* Remove whitespace */
 	cleaned_xpath = bbf_xml_remove_xpath_whitespace(xpath_pattern);
-
+	
 	/* If context node path is empty, just patch .[N] and return */
 	if (cleaned_ctx == NULL || strlen(cleaned_ctx) == 0)
 	{
@@ -1737,7 +1765,7 @@ bbf_xml_handle_context_node(const char *xml_str,
 				 errmsg("Babelfish-internal XML tag cannot be used in XPath query: [%s]",
 						BBF_XMLNODES_MAGIC_TAG_NAME)));
 	}
-
+	
 	/* Process method query and context node query into the final XPath query */
 	*pfinal_xpath = (char *)bbf_xml_xpath_with_context_node(xpath_cstr, *pcontext_node_path);
 
@@ -2104,5 +2132,6 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 	}
 
 	tuplestore_donestoring(tupstore);
+	MemoryContextDelete(tmp_ctx);
 	PG_RETURN_NULL();
 }

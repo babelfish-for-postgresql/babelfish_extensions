@@ -1,3 +1,6 @@
+#ifndef BABELFISHPG_TSQL_RUNTIME_H
+#define BABELFISHPG_TSQL_RUNTIME_H
+
 #include "postgres.h"
 #include "port.h"
 #include "funcapi.h"
@@ -94,3 +97,5 @@
 #define xstreq(tgtvar_, srcvar_) \
 	(((tgtvar_ == NULL) && (srcvar_ == NULL)) || \
 	 ((tgtvar_ != NULL) && (srcvar_ != NULL) && (strcmp(tgtvar_, srcvar_) == 0)))
+
+#endif /* BABELFISHPG_TSQL_RUNTIME_H */

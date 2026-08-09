@@ -990,6 +990,18 @@ SELECT
 FROM @xml.nodes('/data/item/value') AS T(c)
 ORDER BY 1
 
+-- Single-quoted embedded string
+SELECT
+    T.c.value('concat(., '' | '', .)', 'NVARCHAR(200)') AS [concat_dot_dot]
+FROM @xml.nodes('/data/item/value') AS T(c)
+ORDER BY 1
+
+-- Embedded string contains character patterns not supported by XPath 1.0, should be treated as literal
+SELECT
+    T.c.value('concat(., " | ..[ (..)[ /(.) | ", .)', 'NVARCHAR(200)') AS [concat_dot_dot]
+FROM @xml.nodes('/data/item/value') AS T(c)
+ORDER BY 1
+
 -- Concatenates the node value with itself
 SELECT
     T.c.value('.', 'NVARCHAR(50)') AS val,
