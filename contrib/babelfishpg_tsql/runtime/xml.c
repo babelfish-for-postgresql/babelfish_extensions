@@ -1939,8 +1939,15 @@ bbf_xmlvalue(PG_FUNCTION_ARGS)
 	decoded = bbf_xml_decode_chars(result_str);
 
 	/* Return as NVARCHAR via tsql_varchar_input */
-	result_varchar = (*common_utility_plugin_ptr->tsql_varchar_input)(decoded, strlen(decoded), -1);
-	PG_RETURN_VARCHAR_P(result_varchar);                              
+
+	
+	if (common_utility_plugin_ptr)
+	{
+		result_varchar = (*common_utility_plugin_ptr->tsql_varchar_input)(decoded, strlen(decoded), -1);
+		PG_RETURN_VARCHAR_P(result_varchar);
+	} 
+	else 
+        PG_RETURN_NULL();                          
 }
 
 /*
