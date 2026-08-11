@@ -787,3 +787,6 @@ ignore#!#babel_sqlvariant_coerce_type_before_16_14-or-17_10-or-18_4-vu-cleanup
 #TDS fault injection framework is meant for internal testing only. So, ignore tds_faultinjection tests in stable branch
 ignore#!#tds_faultinjection
 ignore#!#babel_tds_fault_injection
+ignore#!#antlr_parse_cache_version-vu-prepare
+ignore#!#antlr_parse_cache_version-vu-verify
+ignore#!#antlr_parse_cache_version-vu-cleanup
