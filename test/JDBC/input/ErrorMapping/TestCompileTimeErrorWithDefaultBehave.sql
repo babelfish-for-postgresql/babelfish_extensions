@@ -41,14 +41,9 @@ GO
 -- Executing test error_mapping.ErrorHandling1
 create procedure error_mapping.ErrorHandling1 as
 begin
-DECLARE @xml XML
-SET @xml = CONVERT(XML, '<Root>  
-                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
-                                <row id="2"><name>Bhagat</name></row>  
-                                <row id="3" />  
-                            </Root>')
-SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
-
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 
@@ -76,14 +71,9 @@ GO
 -- Executing test error_mapping.ErrorHandling1
 create procedure error_mapping.ErrorHandling1 as
 begin
-DECLARE @xml XML
-SET @xml = CONVERT(XML, '<Root>  
-                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
-                                <row id="2"><name>Bhagat</name></row>  
-                                <row id="3" />  
-                            </Root>')
-SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
-
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 
