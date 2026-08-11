@@ -2327,6 +2327,7 @@ extern List *get_columns(char *index_stmt);
 extern char *replace_special_chars_fts_impl(char *input_str);
 extern bool is_unique_index(Oid relid, const char *index_name);
 extern void exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege);
+extern AlterTableCmd *make_original_rel_name_cmd(const char *original_name);
 extern void exec_add_original_index_name(char *idxname, char *schemaname, char *original_name);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);

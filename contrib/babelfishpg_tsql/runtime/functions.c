@@ -51,7 +51,13 @@
 #include "utils/float.h"
 #include "utils/xid8.h"
 #include "utils/xml.h"
+#include "catalog/pg_class_d.h"
 #include <math.h>
+
+extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
+extern char *get_value_by_name_from_array(ArrayType *array, const char *name);
+
+static char *get_orig_temp_table_name(Oid relid);
 
 #include "../src/babelfish_version.h"
 #include "../src/datatype_info.h"
@@ -1336,7 +1342,19 @@ get_enr_list(PG_FUNCTION_ARGS)
 		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = ((EphemeralNamedRelationMetadata) lfirst(lc))->reliddesc;
-		values[1] = CStringGetTextDatum(((EphemeralNamedRelationMetadata) lfirst(lc))->name);
+		{
+			EphemeralNamedRelationMetadata md = (EphemeralNamedRelationMetadata) lfirst(lc);
+			const char *name = md->name;
+
+			/* Use original untruncated name from reloptions if available */
+			if (md->enrtype == ENR_TSQL_TEMP)
+			{
+				char *orig = get_orig_temp_table_name(md->reliddesc);
+				if (orig)
+					name = orig;
+			}
+			values[1] = CStringGetTextDatum(name);
+		}
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
@@ -2815,6 +2833,33 @@ object_id(PG_FUNCTION_ARGS)
  * 		if there is no such object in specified database, if database id is not provided it will lookup in current database
  * 		if user don't have right permission
  */
+/*
+ * get_orig_temp_table_name - Get original untruncated name from reloptions.
+ * Returns palloc'd string or NULL if not found.
+ */
+static char *
+get_orig_temp_table_name(Oid relid)
+{
+	HeapTuple	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	char	   *orig = NULL;
+
+	if (HeapTupleIsValid(tuple))
+	{
+		Datum	datum;
+		bool	isnull;
+
+		datum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
+		if (!isnull)
+		{
+			ArrayType *reloptions = DatumGetArrayTypeP(datum);
+			orig = get_value_by_name_from_array(reloptions, ATTOPTION_BBF_ORIGINAL_TABLE_NAME);
+		}
+		ReleaseSysCache(tuple);
+	}
+	/* orig remains valid after ReleaseSysCache - get_value_by_name_from_array palloc's a copy */
+	return orig;
+}
+
 Datum
 object_name(PG_FUNCTION_ARGS)
 {
@@ -2861,7 +2906,12 @@ object_name(PG_FUNCTION_ARGS)
 	enr = GetENRTempTableWithOid(object_id, false);
 	if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 	{
-		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(enr->md.name));
+		const char *name = enr->md.name;
+		char *orig = get_orig_temp_table_name(object_id);
+
+		if (orig)
+			name = orig;
+		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(name));
 	}
 
 	/* search in pg_class by object_id */
@@ -2872,7 +2922,17 @@ object_name(PG_FUNCTION_ARGS)
 		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
 		{
 			Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
-			result_text = cstring_to_text(NameStr(pg_class->relname)); // make a copy before releasing syscache
+
+			if (pg_class->relpersistence == RELPERSISTENCE_TEMP &&
+				NameStr(pg_class->relname)[0] == '#')
+			{
+				char *orig = get_orig_temp_table_name(object_id);
+				if (orig)
+					result_text = cstring_to_text(orig);
+			}
+
+			if (!result_text)
+				result_text = cstring_to_text(NameStr(pg_class->relname));
 			schema_id = pg_class->relnamespace;
 		}
 		ReleaseSysCache(tuple);
