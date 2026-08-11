@@ -74,9 +74,9 @@ struct PgXmlErrorContext
 void
 extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris, int *ns_count)
 {
-    xmlDocPtr	doc;
-    xmlNode    *root;
-    int         index;
+	xmlDocPtr	doc;
+	xmlNode    *root;
+	int         index;
 
 	/* Unlikely, just a sanity check */
 	if (ns_names == NULL || ns_uris == NULL || ns_count == NULL)
@@ -91,14 +91,14 @@ extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris,
 
 	doc = xml_parse_wrapper(ns_data, XMLOPTION_DOCUMENT, false, GetDatabaseEncoding(), NULL, NULL, NULL);
 
-    if (doc == NULL)
+	if (doc == NULL)
 		return;
 
 	/*
 	 * Get namespace declaration count
 	 */
 	root = xmlDocGetRootElement(doc);
-    for (xmlNs *cur = root->nsDef; cur != NULL; cur = cur->next)
+	for (xmlNs *cur = root->nsDef; cur != NULL; cur = cur->next)
 	{
 		if (cur->prefix)	// Ignore default namespace declaration
 		{
@@ -106,34 +106,34 @@ extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris,
 		}
 	}
     
-    if (*ns_count == 0)
-    {
-        if (doc)
-            xmlFreeDoc(doc);
-        return;
-    }
+	if (*ns_count == 0)
+	{
+		if (doc)
+			xmlFreeDoc(doc);
+		return;
+	}
 
 	/*
 	 * Allocate memory for namespace names and URIs
 	 */
 	*ns_names = (char **) palloc0((*ns_count) * sizeof(char *));
-    *ns_uris = (char **) palloc0((*ns_count) * sizeof(char *));
+	*ns_uris = (char **) palloc0((*ns_count) * sizeof(char *));
 
 	/*
 	 * Store namespace names and URIs in ns_names and ns_uris
 	 */
-    index = 0;
-    for (xmlNs *cur = root->nsDef; cur != NULL && index < *ns_count; cur = cur->next)
-    {
-        if (cur->prefix)
-        {
-            (*ns_names)[index] = (char *) pstrdup((const char *) cur->prefix);
-            (*ns_uris)[index] = cur->href ? (char *) pstrdup((const char *) cur->href) : NULL;
+	index = 0;
+	for (xmlNs *cur = root->nsDef; cur != NULL && index < *ns_count; cur = cur->next)
+	{
+		if (cur->prefix)
+		{
+			(*ns_names)[index] = (char *) pstrdup((const char *) cur->prefix);
+			(*ns_uris)[index] = cur->href ? (char *) pstrdup((const char *) cur->href) : NULL;
 			index++;
-        }
-    }
+		}
+	}
 
-    if (doc)
+	if (doc)
 		xmlFreeDoc(doc);
 }
 
@@ -609,15 +609,15 @@ Datum
 openxml_simple(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
-    int              document_id = PG_GETARG_INT32(0);
-    text            *xpath_expr_text;
+	int              document_id = PG_GETARG_INT32(0);
+	text            *xpath_expr_text;
 #ifdef NOT_USED
 	int              flags = PG_GETARG_INT32(2);
 #endif
-    xmltype         *xmldata = NULL;
-    xmltype         *ns_data = NULL;
-    char           **ns_names;
-    char           **ns_uris;
+	xmltype         *xmldata = NULL;
+	xmltype         *ns_data = NULL;
+	char           **ns_names;
+	char           **ns_uris;
 	int              ns_count;
 	char            *datastr;
 	int              len;
@@ -655,17 +655,17 @@ openxml_simple(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				errmsg("empty XPath expression")));
 
-    /*
-     * Using document_id fetch the xml document and namespaces list from 
-     * xml_handle_temp_table which is used to store the xml handles created
-     * using sp_xml_preparedocument.
-     */
-    get_xml_data_and_namespace_data(document_id, &xmldata, &ns_data);
+	/*
+	* Using document_id fetch the xml document and namespaces list from 
+	* xml_handle_temp_table which is used to store the xml handles created
+	* using sp_xml_preparedocument.
+	*/
+	get_xml_data_and_namespace_data(document_id, &xmldata, &ns_data);
 
 	if (xmldata == NULL)
 		goto done;
 
-    extract_namespaces_from_xml(ns_data, &ns_names, &ns_uris, &ns_count);
+	extract_namespaces_from_xml(ns_data, &ns_names, &ns_uris, &ns_count);
 
 	datastr = VARDATA_ANY(xmldata);
 	len = VARSIZE_ANY_EXHDR(xmldata);
@@ -981,7 +981,7 @@ bbf_xml_split_magic_tag(const char *xml_text, char **context_node_path, char **b
 	if (strncmp(xml_text, tag_open, BBF_XMLNODES_MAGIC_TAG_OPEN_LEN) != 0)
 	{
 		*context_node_path = pstrdup("");
-		*bare_xml_str = pstrdup(xml_text);	
+		*bare_xml_str = pstrdup(xml_text);
 		return;
 	}
 
@@ -990,7 +990,7 @@ bbf_xml_split_magic_tag(const char *xml_text, char **context_node_path, char **b
 	if (close_pos == NULL)
 	{
 		*context_node_path = pstrdup("");
-		*bare_xml_str = pstrdup(xml_text);	
+		*bare_xml_str = pstrdup(xml_text);
 		return;
 	}
 
@@ -1002,7 +1002,7 @@ bbf_xml_split_magic_tag(const char *xml_text, char **context_node_path, char **b
 
 	/* Decode XML entities in the context node path */
 	*context_node_path = bbf_xml_decode_chars(content);
-	
+
 	/* Return everything after the closing tag, i.e. the actual XML doc */
 	*bare_xml_str = pstrdup(close_pos + BBF_XMLNODES_MAGIC_TAG_CLOSE_LEN);
 	return;
@@ -1082,7 +1082,7 @@ bbf_xml_skip_xpath_chars(const char *p)
 	ch = *p;
 
 	/* String literals in double or (less likely) single quotes */
-	if ((ch == '"') || (ch == '\'')) 
+	if ((ch == '"') || (ch == '\''))
 	{
 		char delimiter = ch;
 		while (*p)
@@ -1153,8 +1153,8 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
          * Do not touch string literals or predicates. If encountered,
          * return the number of skipped chars
          */
-        if ((ch == '"') || (ch == '\'') || (ch == '['))
-        {
+		if ((ch == '"') || (ch == '\'') || (ch == '['))
+		{
 			int nr_chars_skipped = bbf_xml_skip_xpath_chars(p);
 			if (nr_chars_skipped > 0)
 			{
@@ -1332,7 +1332,7 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 	for (const char *p = xpath_pattern; *p; p++)
 	{
 		if (!isspace(*p))
-			appendStringInfoChar(&buf, *p);		
+			appendStringInfoChar(&buf, *p);
 	}
 	stripped = buf.data;
 
@@ -1367,12 +1367,12 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 		}
 		*dst = '\0';
 
-		/* 
-		 * Remove contents of string literals in double or single quotes to avoid 
-		 * inadvertently matching character patterns inside strings 
+		/*
+		 * Remove contents of string literals in double or single quotes to avoid
+		 * inadvertently matching character patterns inside strings
 		 */
 		src = stripped;
-		dst = stripped;		
+		dst = stripped;
 		while (*src)
 		{
 			if ((*src == '"') || (*src == '\''))
@@ -1393,7 +1393,7 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 				*dst++ = *src++;
 		}
 		*dst = '\0';
-		
+
 		len = strlen(stripped);
 		if (len == prev_len)
 			break;
@@ -1401,7 +1401,7 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 
 	/* The string has been cleaned up, now check for the things we want to report */
 
-	/* Cannot move higher up when already at the root */ 
+	/* Cannot move higher up when already at the root */
 	if (strncmp(stripped, "..", 2) == 0 ||
 		strncmp(stripped, "(..", 3) == 0 ||
 		strncmp(stripped, "/..", 3) == 0 ||
@@ -1412,7 +1412,7 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 				 errmsg("XQuery [%s()]: The result of applying the 'parent' axis on the document node is statically 'empty'.", caller)));
 	}
 
-	/* Top-level attribute nodes are not supported */	
+	/* Top-level attribute nodes are not supported */
 	if (stripped[0] == '@' ||
 		strncmp(stripped, "(@", 2) == 0 ||
 		strncmp(stripped, "/@", 2) == 0 ||
@@ -1472,8 +1472,8 @@ bbf_xml_process_xpath_function(const char *xpath_pattern, const char *context_no
          * Do not touch string literals or predicates. If encountered,
          * return the number of skipped chars
          */
-        if ((ch == '"') || (ch == '\'') || (ch == '['))
-        {
+		if ((ch == '"') || (ch == '\'') || (ch == '['))
+		{
 			int nr_chars_skipped = bbf_xml_skip_xpath_chars(p);
 			if (nr_chars_skipped > 0)
 			{
@@ -1488,7 +1488,7 @@ bbf_xml_process_xpath_function(const char *xpath_pattern, const char *context_no
 		}
 
 		prev_ch = (p != xpath_pattern) ? (*(p-1)) : ' ';
-			
+
 		/* '.' reference */
 		if (ch == '.')
 		{
@@ -1647,14 +1647,14 @@ bbf_xml_xpath_with_context_node(const char *xpath_pattern, const char *context_n
 	char *result_str;
 
 	if (strlen(context_node_path) == 0)
-        cleaned_ctx = NULL;
-    else
-        /* Remove whitespace */
-	    cleaned_ctx = bbf_xml_remove_xpath_whitespace(context_node_path);
+		cleaned_ctx = NULL;
+	else
+		/* Remove whitespace */
+		cleaned_ctx = bbf_xml_remove_xpath_whitespace(context_node_path);
 
 	/* Remove whitespace */
 	cleaned_xpath = bbf_xml_remove_xpath_whitespace(xpath_pattern);
-	
+
 	/* If context node path is empty, just patch .[N] and return */
 	if (cleaned_ctx == NULL || strlen(cleaned_ctx) == 0)
 	{
@@ -1688,10 +1688,10 @@ bbf_xml_xpath_with_context_node(const char *xpath_pattern, const char *context_n
 	if (bbf_xml_is_xpath_function(stripped))
 		result_str = bbf_xml_process_xpath_function(cleaned_xpath, cleaned_ctx);
 	else
-        /* Check if xpath_pattern starts with '(' (bracketed path) */
+		/* Check if xpath_pattern starts with '(' (bracketed path) */
     	if (*cleaned_xpath == '(')
     		result_str = psprintf("(%s/%s", cleaned_ctx, cleaned_xpath + 1);
-        else
+		else
         	/* Simple relative path - prepend context_node_path */
         	result_str = psprintf("%s/%s", cleaned_ctx, cleaned_xpath);
 
@@ -1719,7 +1719,7 @@ bbf_xml_handle_context_node(const char *xml_str,
 
 	/* Extract and remove magic nodes() tag */
 	bbf_xml_split_magic_tag(xml_str, pcontext_node_path, pbare_xml_str);
-	
+
 	/* Sanity check: special tag should not occur in the user-specified XML doc */
 	if (strstr(*pbare_xml_str, BBF_XMLNODES_MAGIC_TAG_OPEN) != NULL)
 	{
@@ -1752,7 +1752,7 @@ bbf_xml_handle_context_node(const char *xml_str,
 				 errmsg("Babelfish-internal XML tag cannot be used in XPath query: [%s]",
 						BBF_XMLNODES_MAGIC_TAG_NAME)));
 	}
-	
+
 	/* Process method query and context node query into the final XPath query */
 	*pfinal_xpath = (char *)bbf_xml_xpath_with_context_node(xpath_cstr, *pcontext_node_path);
 
@@ -1785,13 +1785,13 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 	int			nitems;
 	int			i;
 	StringInfoData buf;
-    text       *xpath_text_arg;
-    xmltype    *xml_data_arg;  	
-    ArrayType  *namespaces = construct_empty_array(TEXTOID);
-    ArrayBuildState *astate;    
+	text       *xpath_text_arg;
+	xmltype    *xml_data_arg;
+	ArrayType  *namespaces = construct_empty_array(TEXTOID);
+	ArrayBuildState *astate;
 
-    /* Check QUOTED_IDENTIFIER is ON */
-    bbf_xml_validate_quoted_identifier();
+	/* Check QUOTED_IDENTIFIER is ON */
+	bbf_xml_validate_quoted_identifier();
 
 	/* Handle NULL XML input */
 	if (PG_ARGISNULL(1))
@@ -1812,17 +1812,17 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 
 	/* Handle empty input */
 	if (bbf_xml_is_empty(xml_str) && strlen(final_xpath) > 0)
-		PG_RETURN_XML_P((xmltype *) cstring_to_text(""));		
+		PG_RETURN_XML_P((xmltype *) cstring_to_text(""));
 
-	/* Call PG's xpath_internal() directly */    
-    xpath_text_arg = cstring_to_text(final_xpath);
-    xml_data_arg = (xmltype *) cstring_to_text(bare_xml_str);
-    astate = initArrayResult(XMLOID, CurrentMemoryContext, true);
-    xpath_internal(xpath_text_arg, xml_data_arg, namespaces, NULL, astate);
+	/* Call PG's xpath_internal() directly */
+	xpath_text_arg = cstring_to_text(final_xpath);
+	xml_data_arg = (xmltype *) cstring_to_text(bare_xml_str);
+	astate = initArrayResult(XMLOID, CurrentMemoryContext, true);
+	xpath_internal_wrapper(xpath_text_arg, xml_data_arg, namespaces, NULL, astate);
 
-    result_arr = DatumGetArrayTypeP(makeArrayResult(astate, CurrentMemoryContext));
-    deconstruct_array(result_arr, XMLOID, -1, false, TYPALIGN_INT,
-                      &elems, &nulls, &nitems);				  
+	result_arr = DatumGetArrayTypeP(makeArrayResult(astate, CurrentMemoryContext));
+	deconstruct_array(result_arr, XMLOID, -1, false, TYPALIGN_INT,
+					  &elems, &nulls, &nitems);
 
 	/* Empty result -> return empty string as XML */
 	if (nitems == 0)
@@ -1871,15 +1871,15 @@ bbf_xmlvalue(PG_FUNCTION_ARGS)
 	char	   *decoded;
 	VarChar	   *result_varchar;
 	text       *string_xpath_text;
-    ArrayBuildState *str_astate;
-	StringInfoData string_xpath_buf; 
-    text       *xpath_text_arg;
-    xmltype    *xml_data_arg;
-    ArrayType  *namespaces = construct_empty_array(TEXTOID);
-    ArrayBuildState *astate;	  
+	ArrayBuildState *str_astate;
+	StringInfoData string_xpath_buf;
+	text       *xpath_text_arg;
+	xmltype    *xml_data_arg;
+	ArrayType  *namespaces = construct_empty_array(TEXTOID);
+	ArrayBuildState *astate;
 
-    /* Check QUOTED_IDENTIFIER is ON */
-    bbf_xml_validate_quoted_identifier();
+	/* Check QUOTED_IDENTIFIER is ON */
+	bbf_xml_validate_quoted_identifier();
 
 	/* Handle NULL XML input */
 	if (PG_ARGISNULL(2))
@@ -1901,35 +1901,35 @@ bbf_xmlvalue(PG_FUNCTION_ARGS)
 	/* Handle empty input */
 	if (bbf_xml_is_empty(xml_str) && strlen(final_xpath) > 0)
 		PG_RETURN_NULL();
-	
-    /* First: call PG's xpath_internal() to check cardinality */
-    xpath_text_arg = cstring_to_text(final_xpath);
-    xml_data_arg = (xmltype *) cstring_to_text(bare_xml_str);    
-    astate = initArrayResult(XMLOID, CurrentMemoryContext, true);
-    xpath_internal(xpath_text_arg, xml_data_arg, namespaces, &nitems, astate);
 
-    if (nitems > 1)
-        ereport(ERROR,
+	/* First: call PG's xpath_internal() to check cardinality */
+	xpath_text_arg = cstring_to_text(final_xpath);
+	xml_data_arg = (xmltype *) cstring_to_text(bare_xml_str);
+	astate = initArrayResult(XMLOID, CurrentMemoryContext, true);
+	xpath_internal_wrapper(xpath_text_arg, xml_data_arg, namespaces, &nitems, astate);
+
+	if (nitems > 1)
+		ereport(ERROR,
                 (errcode(ERRCODE_CARDINALITY_VIOLATION),
                  errmsg("XML Value result is not a single value.")));
 
-    if (nitems == 0)
-        PG_RETURN_NULL();
+	if (nitems == 0)
+		PG_RETURN_NULL();
 
-    /* Second: call xpath_internal() with string() to get string value */         
-    initStringInfo(&string_xpath_buf);
-    appendStringInfoString(&string_xpath_buf, "string(");
-    appendStringInfoString(&string_xpath_buf, final_xpath);
-    appendStringInfoChar(&string_xpath_buf, ')');
-    string_xpath_text = cstring_to_text(string_xpath_buf.data);
+	/* Second: call xpath_internal() with string() to get string value */
+	initStringInfo(&string_xpath_buf);
+	appendStringInfoString(&string_xpath_buf, "string(");
+	appendStringInfoString(&string_xpath_buf, final_xpath);
+	appendStringInfoChar(&string_xpath_buf, ')');
+	string_xpath_text = cstring_to_text(string_xpath_buf.data);
 
-    str_astate = initArrayResult(XMLOID, CurrentMemoryContext, true);
-    xpath_internal(string_xpath_text, xml_data_arg, namespaces, NULL, str_astate);
+	str_astate = initArrayResult(XMLOID, CurrentMemoryContext, true);
+	xpath_internal_wrapper(string_xpath_text, xml_data_arg, namespaces, NULL, str_astate);
 
-    string_arr = DatumGetArrayTypeP(makeArrayResult(str_astate, CurrentMemoryContext));
-    deconstruct_array(string_arr, XMLOID, -1, false, TYPALIGN_INT,
+	string_arr = DatumGetArrayTypeP(makeArrayResult(str_astate, CurrentMemoryContext));
+	deconstruct_array(string_arr, XMLOID, -1, false, TYPALIGN_INT,
                       &str_elems, &str_nulls, &str_nitems);
-                      
+
 	if (str_nitems == 0 || str_nulls[0])
 		PG_RETURN_NULL();
 
@@ -1940,14 +1940,14 @@ bbf_xmlvalue(PG_FUNCTION_ARGS)
 
 	/* Return as NVARCHAR via tsql_varchar_input */
 
-	
+
 	if (common_utility_plugin_ptr)
 	{
 		result_varchar = (*common_utility_plugin_ptr->tsql_varchar_input)(decoded, strlen(decoded), -1);
 		PG_RETURN_VARCHAR_P(result_varchar);
-	} 
-	else 
-        PG_RETURN_NULL();                          
+	}
+	else
+		PG_RETURN_NULL();
 }
 
 /*
@@ -1963,13 +1963,13 @@ bbf_xmlexist(PG_FUNCTION_ARGS)
 	char	   *context_node_path;
 	char	   *bare_xml_str;
 	char	   *final_xpath;
-    text       *xpath_text_arg;
-    xmltype    *xml_data_arg;
-    ArrayType  *namespaces = construct_empty_array(TEXTOID);
-    int         res_nitems;	
+	text       *xpath_text_arg;
+	xmltype    *xml_data_arg;
+	ArrayType  *namespaces = construct_empty_array(TEXTOID);
+	int         res_nitems;
 
 	/* Check QUOTED_IDENTIFIER is ON */
-    bbf_xml_validate_quoted_identifier();
+	bbf_xml_validate_quoted_identifier();
 
 	/* Handle NULL XML input*/
 	if (PG_ARGISNULL(1))
@@ -1991,14 +1991,14 @@ bbf_xmlexist(PG_FUNCTION_ARGS)
 	/* Handle empty input */
 	if (bbf_xml_is_empty(xml_str) && strlen(final_xpath) > 0)
 		PG_RETURN_INT16(0);
-		
-    /* Call PG's xpath_internal() directly instead of going through xmlexists() */
-    xpath_text_arg = cstring_to_text(final_xpath);
-    xml_data_arg = (xmltype *) cstring_to_text(bare_xml_str);
-    xpath_internal(xpath_text_arg, xml_data_arg, namespaces, &res_nitems, NULL);
 
-    /* Convert to BIT (int16 0 or 1) */
-    PG_RETURN_INT16(res_nitems > 0 ? 1 : 0);	
+	/* Call PG's xpath_internal() directly instead of going through xmlexists() */
+	xpath_text_arg = cstring_to_text(final_xpath);
+	xml_data_arg = (xmltype *) cstring_to_text(bare_xml_str);
+	xpath_internal_wrapper(xpath_text_arg, xml_data_arg, namespaces, &res_nitems, NULL);
+
+	/* Convert to BIT (int16 0 or 1) */
+	PG_RETURN_INT16(res_nitems > 0 ? 1 : 0);
 }
 
 /*
@@ -2025,17 +2025,17 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 	int			nr_rows;
 	int			i;
 	char	   *encoded_xpath;
-    text       *xpath_text_arg;
-    xmltype    *xml_data_arg;
-    ArrayType  *namespaces = construct_empty_array(TEXTOID);	
+	text       *xpath_text_arg;
+	xmltype    *xml_data_arg;
+	ArrayType  *namespaces = construct_empty_array(TEXTOID);
 	char	   *prefix;		/* "<magic_tag>(<encoded_xpath>)[" */
 	char	   *suffix;		/* "]</magic_tag><bare_xml>" */
 	int			prefix_len;
 	int			suffix_len;
-	StringInfoData row_buf;    
+	StringInfoData row_buf;
 
 	/* Check QUOTED_IDENTIFIER is ON */
-    bbf_xml_validate_quoted_identifier();
+	bbf_xml_validate_quoted_identifier();
 
 	/* Handle NULL XML input */
 	if (PG_ARGISNULL(1))
@@ -2081,12 +2081,12 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 	/* Handle empty input */
 	if (bbf_xml_is_empty(xml_str) && strlen(final_xpath) > 0)
 		PG_RETURN_NULL();
-					  
-    /* Call PG's xpath_internal() directly to determine #rows to return */
-    /* We only need the count of matching nodes, not the node content */
-    xpath_text_arg = cstring_to_text(final_xpath);
-    xml_data_arg = (xmltype *) cstring_to_text(bare_xml_str);
-    xpath_internal(xpath_text_arg, xml_data_arg, namespaces, &nr_rows, NULL);
+
+	/* Call PG's xpath_internal() directly to determine #rows to return */
+	/* We only need the count of matching nodes, not the node content */
+	xpath_text_arg = cstring_to_text(final_xpath);
+	xml_data_arg = (xmltype *) cstring_to_text(bare_xml_str);
+	xpath_internal_wrapper(xpath_text_arg, xml_data_arg, namespaces, &nr_rows, NULL);
 
 	/* Mask XML special chars */
 	encoded_xpath = bbf_xml_encode_chars(final_xpath);
@@ -2095,12 +2095,12 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 	tmp_ctx = AllocSetContextCreate(CurrentMemoryContext,
 									"XML nodes() intermediate result",
 									ALLOCSET_DEFAULT_SIZES);
-	
-    /* All allocations happen in tmp_ctx */
-    oldcontext = MemoryContextSwitchTo(tmp_ctx);
-    										
-	/* 
-	 * Build result set: each row is magic_tag + original XML doc 
+
+	/* All allocations happen in tmp_ctx */
+	oldcontext = MemoryContextSwitchTo(tmp_ctx);
+
+	/*
+	 * Build result set: each row is magic_tag + original XML doc
 	 * Each row has the format:
 	 *   <magic_tag>(<context_node_path>)[<i>]</magic_tag><xml_doc>
 	 * Except for the index value, the magic tag is loop-invariant
@@ -2112,7 +2112,7 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 
 	/*
 	 * Initialize StringInfoData once; resetStringInfo() between iterations
-	 * reuses the same buffer without calling palloc again. To ensure enough 
+	 * reuses the same buffer without calling palloc again. To ensure enough
 	 * space, allocate 10 bytes for the integer index value.
 	 */
 	initStringInfo(&row_buf);
@@ -2135,9 +2135,9 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	tuplestore_donestoring(tupstore);
-	
-    /* Wipe ALL per-iteration allocations in one shot */	
+
+	/* Wipe ALL per-iteration allocations in one shot */
 	MemoryContextDelete(tmp_ctx);
-	
+
 	PG_RETURN_NULL();
 }
