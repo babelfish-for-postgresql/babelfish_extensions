@@ -1274,7 +1274,7 @@ select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
 from pg_catalog.pg_attrdef as d
 inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
 inner join sys.tables tab on d.adrelid = tab.object_id
-WHERE a.atthasdef = 't' and a.attgenerated = ''
+WHERE a.attgenerated = ''
 AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
 GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
@@ -1638,7 +1638,7 @@ inner join pg_class o on d.adrelid = o.oid
 inner join pg_namespace s on s.oid = o.relnamespace
 left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = ('DF_' || o.relname || '_' || d.oid) and nis.schemaid = s.oid and nis.type = 'D'
-where a.atthasdef = 't' and a.attgenerated = ''
+where a.attgenerated = ''
 and (s.nspname = 'sys' or ext.nspname is not null)
 and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
 union all
