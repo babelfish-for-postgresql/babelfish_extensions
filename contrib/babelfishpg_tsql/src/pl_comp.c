@@ -1851,16 +1851,15 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 
 		for (i = 0; i < noptions; i++)
 		{
-			optstr = VARDATA(optiondatums[i]);
+			optstr = TextDatumGetCString(optiondatums[i]);
 			if (strncmp(optstr, "bbf_original_name=", 18) == 0)
 			{
-				/* Short names: restore original case for TDS display */
-				char *orig = (char *) &optstr[18];
-				int orig_len = strlen(orig);
-				if (orig_len < NAMEDATALEN)
-					te->resname = pnstrdup(orig, orig_len);
+				te->resname = pstrdup(optstr + 18);
+				
+				pfree(optstr);
 				break;
 			}
+			pfree(optstr);
 		}
 	}
 }

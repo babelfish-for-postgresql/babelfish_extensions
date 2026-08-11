@@ -611,6 +611,7 @@ GRANT SELECT ON sys.views TO PUBLIC;
 
 -- Recreate sys.all_views
 create or replace view sys.all_views as
+SELECT
     CAST(sys.bbf_get_truncated_rel_original_name(c.reloptions, c.relname) AS sys.SYSNAME) as name
   , CAST(c.oid AS INT) as object_id
   , CAST(null AS INT) as principal_id
@@ -1479,7 +1480,7 @@ CREATE OR REPLACE VIEW sys.sp_tables_view AS
 SELECT
 t2.dbname AS TABLE_QUALIFIER,
 CAST(t3.name AS name) AS TABLE_OWNER,
-CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS TABLE_NAME,
+sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname)::sys.sysname AS TABLE_NAME,
 CASE
 WHEN t1.relkind = 'v'
     THEN 'VIEW'
@@ -1493,97 +1494,6 @@ AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.sp_tables_view TO PUBLIC;
 
 
--- Recreate sys.sp_columns_100_view
-CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
-SELECT 
-	CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
-	CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-	
-		sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname)
-		::sys.sysname AS TABLE_NAME,
-	CAST(
-		COALESCE(
-			(SELECT pg_catalog.string_agg(
-				CASE
-					WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19 /* prefix length */)
-					ELSE NULL
-				END, ',')
-			FROM unnest(a.attoptions) AS option),
-			t4."COLUMN_NAME")
-		AS sys.sysname) AS COLUMN_NAME,
-	CAST(t5.data_type AS smallint) AS DATA_TYPE,
-	CAST(coalesce(tsql_type_name, t.typname) AS sys.sysname) AS TYPE_NAME,
-	CASE 
-		WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
-		WHEN a.atttypmod != -1
-			THEN CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", a.atttypmod)) AS INT)
-		WHEN tsql_type_name = 'timestamp'
-			THEN 8
-		ELSE
-			CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", t.typtypmod)) AS INT)
-	END AS PRECISION,
-	CASE 
-		WHEN a.atttypmod != -1
-			THEN CAST(sys.tsql_type_length_for_sp_columns_helper(t4."DATA_TYPE", a.attlen, a.atttypmod) AS int)
-		ELSE
-			CAST(sys.tsql_type_length_for_sp_columns_helper(t4."DATA_TYPE", a.attlen, t.typtypmod) AS int)
-	END AS LENGTH,
-	CASE 
-		WHEN a.atttypmod != -1
-			THEN CAST(coalesce(t4."NUMERIC_SCALE", sys.tsql_type_scale_helper(t4."DATA_TYPE", a.atttypmod, true)) AS smallint)
-		ELSE
-			CAST(coalesce(t4."NUMERIC_SCALE", sys.tsql_type_scale_helper(t4."DATA_TYPE", t.typtypmod, true)) AS smallint)
-	END AS SCALE,
-	CAST(coalesce(t4."NUMERIC_PRECISION_RADIX", sys.tsql_type_radix_for_sp_columns_helper(t4."DATA_TYPE")) AS smallint) AS RADIX,
-	CASE 
-		WHEN t4."IS_NULLABLE" = 'YES'
-			THEN CAST(1 AS smallint)
-		ELSE
-			CAST(0 AS smallint)
-	END AS NULLABLE,
-	CAST(NULL AS varchar(254)) AS remarks,
-	CAST(t4."COLUMN_DEFAULT" AS sys.nvarchar(4000)) AS COLUMN_DEF,
-	CAST(t5.sql_data_type AS smallint) AS SQL_DATA_TYPE,
-	CAST(t5.SQL_DATETIME_SUB AS smallint) AS SQL_DATETIME_SUB,
-	CASE 
-		WHEN t4."DATA_TYPE" = 'xml' THEN 0::INT
-		WHEN t4."DATA_TYPE" = 'sql_variant' THEN 8000::INT
-		WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
-		ELSE CAST(t4."CHARACTER_OCTET_LENGTH" AS int)
-	END AS CHAR_OCTET_LENGTH,
-	CAST(t4."ORDINAL_POSITION" AS int) AS ORDINAL_POSITION,
-	CAST(t4."IS_NULLABLE" AS varchar(254)) AS IS_NULLABLE,
-	CAST(t5.ss_data_type AS sys.tinyint) AS SS_DATA_TYPE,
-	CAST(0 AS smallint) AS SS_IS_SPARSE,
-	CAST(0 AS smallint) AS SS_IS_COLUMN_SET,
-	CAST(t6.is_computed as smallint) AS SS_IS_COMPUTED,
-	CAST(t6.is_identity as smallint) AS SS_IS_IDENTITY,
-	CAST(NULL AS varchar(254)) SS_UDT_CATALOG_NAME,
-	CAST(NULL AS varchar(254)) SS_UDT_SCHEMA_NAME,
-	CAST(NULL AS varchar(254)) SS_UDT_ASSEMBLY_TYPE_NAME,
-	CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
-	CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
-	CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_NAME
-FROM 
-	pg_catalog.pg_class t1
-	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
-	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-	LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
-	JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
-	LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname::sys.nvarchar(128) = t4."COLUMN_NAME"
-	LEFT JOIN pg_type t ON t.oid = a.atttypid
-	LEFT JOIN sys.columns t6 ON
-	(
-		t1.oid = t6.object_id AND
-		t4."ORDINAL_POSITION" = t6.column_id
-	)
-	, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
-	, sys.spt_datatype_info_table AS t5
-WHERE 
-	(t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (t4."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'))
-	AND ext.dbid = sys.db_id();
-
-GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
 
 -- Recreate sys.sp_columns_100 procedure
 CREATE OR REPLACE PROCEDURE sys.sp_columns_100 (
@@ -1770,11 +1680,11 @@ CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
 SELECT
 CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
 CAST(bbf_nsp2.orig_name AS sys.sysname) AS PKTABLE_OWNER ,
-CAST(sys.bbf_get_truncated_rel_original_name(c2.reloptions, c2.relname) AS sys.sysname) AS PKTABLE_NAME,
+sys.bbf_get_truncated_rel_original_name(c2.reloptions, c2.relname)::sys.sysname AS PKTABLE_NAME,
 CAST(COALESCE(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) AS sys.sysname) AS PKCOLUMN_NAME,
 CAST(nsp_ext.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
 CAST(bbf_nsp.orig_name AS sys.sysname) AS FKTABLE_OWNER ,
-CAST(sys.bbf_get_truncated_rel_original_name(c.reloptions, c.relname) AS sys.sysname) AS FKTABLE_NAME,
+sys.bbf_get_truncated_rel_original_name(c.reloptions, c.relname)::sys.sysname AS FKTABLE_NAME,
 CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname::text) AS sys.sysname) AS FKCOLUMN_NAME,
 CAST(nr AS smallint) AS KEY_SEQ,
 CASE
@@ -1858,7 +1768,7 @@ CASE
 AS IS_NULLABLE,
 CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(sys.bbf_get_truncated_rel_original_name(C.reloptions, C.relname) AS sys.sysname) AS TABLE_NAME,
+sys.bbf_get_truncated_rel_original_name(C.reloptions, C.relname)::sys.sysname AS TABLE_NAME,
 
 CASE 
 	WHEN X.indisprimary

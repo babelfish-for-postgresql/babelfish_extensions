@@ -361,7 +361,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
 SELECT 
 	CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
 	CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-	
+	CAST(
 		COALESCE(
 			(SELECT pg_catalog.string_agg(
 				CASE
@@ -369,8 +369,8 @@ SELECT
 					ELSE NULL
 				END, ',')
 			FROM unnest(t1.reloptions) AS option),
-			t4."TABLE_NAME"::text)
-		::sys.sysname AS TABLE_NAME,
+			t4."TABLE_NAME")
+		AS sys.sysname) AS TABLE_NAME,
 	CAST(
 		COALESCE(
 			(SELECT pg_catalog.string_agg(

@@ -2853,24 +2853,32 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			if (actual_alias_len >= NAMEDATALEN)
 			{
 				/*
-				 * Use the full original name for TDS client display.
-				 * For view definitions, truncate instead — original name
-				 * stored in pg_attribute.attoptions.
+				 * For non-view statements: use the full original name for
+				 * TDS client display.
+				 * For view definitions: restore case-preserved prefix with
+				 * MD5 hash suffix — original name stored in attoptions.
 				 */
-				bool is_view = pltsql_current_query_is_view_definition;
-
-				if (is_view)
-				{
-					/* Truncate for view — don't store full name in tle */
-					pfree(alias);
-					alias = downcase_truncate_identifier(original_name, actual_alias_len, true);
-				}
-				else
+				if (!pltsql_current_query_is_view_definition)
 				{
 					pfree(alias);
 					alias = palloc0(actual_alias_len + 1);
 					memcpy(alias, original_name, actual_alias_len);
 					alias[actual_alias_len] = '\0';
+				}
+				else
+				{
+					/* Keep scanner's MD5-truncated form but restore original case
+					 * in the prefix portion (first alias_len - 32 chars). */
+					Assert(actual_alias_len > alias_len && alias_len >= 32);
+
+					/* cppcheck-suppress invalidFunctionArg */
+					memcpy(alias, original_name, (alias_len - 32));
+
+					memcpy(alias + (alias_len - 32),
+						   identifier_name + (alias_len - 32),
+						   32);
+
+					alias[alias_len] = '\0';
 				}
 			}
 			else

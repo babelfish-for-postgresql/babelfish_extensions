@@ -3232,7 +3232,7 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 	List	   *cmds = NIL;
 	int			attnum = 0;
 
-	if (babelfish_dump_restore || !queryString)
+	if (!queryString)
 		return;
 
 	viewOid = RangeVarGetRelid(stmt->view, NoLock, true);
