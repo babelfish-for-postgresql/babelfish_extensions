@@ -3963,9 +3963,6 @@ rename_extended_property(ObjectType objtype, const char *var_schema_name,
 	}
 }
 
-extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
-extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
-
 static List *
 gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname)
 {

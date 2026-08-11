@@ -30,6 +30,7 @@
 #include "nodes/makefuncs.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
+#include "parser/scansup.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -1853,10 +1854,11 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 			optstr = VARDATA(optiondatums[i]);
 			if (strncmp(optstr, "bbf_original_name=", 18) == 0)
 			{
-				/*
-				 * We found the original name; rewrite it as bbf_original_name
-				 */
-				te->resname = pnstrdup((char *) &optstr[18], strlen(te->resname));
+				/* Short names: restore original case for TDS display */
+				char *orig = (char *) &optstr[18];
+				int orig_len = strlen(orig);
+				if (orig_len < NAMEDATALEN)
+					te->resname = pnstrdup(orig, orig_len);
 				break;
 			}
 		}

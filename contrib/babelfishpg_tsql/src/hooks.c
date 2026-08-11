@@ -816,33 +816,7 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 			break;
 		}
 		case T_AlterTableStmt:
-		{
-			if (sql_dialect != SQL_DIALECT_TSQL && !IsBinaryUpgrade && !babelfish_dump_restore)
-			{
-				AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
-				ListCell *lcmd;
-
-				foreach(lcmd, atstmt->cmds)
-				{
-					AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
-					if (cmd->subtype == AT_SetRelOptions || cmd->subtype == AT_SetOptions)
-					{
-						List *options = (List *) cmd->def;
-						ListCell *lopt;
-						foreach(lopt, options)
-						{
-							DefElem *defel = (DefElem *) lfirst(lopt);
-							if (strcmp(defel->defname, "bbf_original_rel_name") == 0 ||
-								strcmp(defel->defname, "bbf_original_name") == 0)
-								ereport(ERROR,
-										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-										 errmsg("cannot modify \"%s\" for babelfish objects", defel->defname)));
-						}
-					}
-				}
-			}
 			return false;
-		}
 		default:
 			return false;
 			break;
@@ -2444,8 +2418,6 @@ extract_multipart_identifier_name(const char *start)
 	return name;
 }
 
-extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
-
 static void
 pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, ColumnDef *column, List **alist)
 {
@@ -2487,8 +2459,7 @@ pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, 
 	(*alist) = lappend(*alist, stmt);
 }
 
-extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
-extern const char *ATTOPTION_BBF_TABLE_CREATE_DATE;
+extern bool pltsql_current_query_is_view_definition;
 
 static void
 pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, char *relname, List **alist)
@@ -2881,11 +2852,26 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			 */
 			if (actual_alias_len >= NAMEDATALEN)
 			{
-				/* Use the full original name for TDS client display */
-				pfree(alias);
-				alias = palloc0(actual_alias_len + 1);
-				memcpy(alias, original_name, actual_alias_len);
-				alias[actual_alias_len] = '\0';
+				/*
+				 * Use the full original name for TDS client display.
+				 * For view definitions, truncate instead — original name
+				 * stored in pg_attribute.attoptions.
+				 */
+				bool is_view = pltsql_current_query_is_view_definition;
+
+				if (is_view)
+				{
+					/* Truncate for view — don't store full name in tle */
+					pfree(alias);
+					alias = downcase_truncate_identifier(original_name, actual_alias_len, true);
+				}
+				else
+				{
+					pfree(alias);
+					alias = palloc0(actual_alias_len + 1);
+					memcpy(alias, original_name, actual_alias_len);
+					alias[actual_alias_len] = '\0';
+				}
 			}
 			else
 			{

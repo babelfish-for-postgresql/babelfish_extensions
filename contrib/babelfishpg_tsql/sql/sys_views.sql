@@ -18,14 +18,7 @@ with tt_internal as MATERIALIZED
   select * from sys.table_types_internal
 )
 select
-  CAST(coalesce(
-    case when octet_length(t.relname) >= 60 then
-    (select PG_CATALOG.string_agg(
-      case when option like 'bbf_original_rel_name=%%' then substring(option, 23)
-      else NULL end, ',')
-    from unnest(t.reloptions) as option)
-    end,
-    t.relname::text) as sys._ci_sysname) as name
+  CAST(sys.bbf_get_truncated_rel_original_name(t.reloptions, t.relname) as sys._ci_sysname) as name
   , CAST(t.oid as int) as object_id
   , CAST(NULL as int) as principal_id
   , CAST(t.relnamespace  as int) as schema_id
@@ -118,14 +111,7 @@ GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
 create or replace view sys.views as 
 select 
-  CAST(coalesce(
-    case when octet_length(t.relname) >= 60 then
-    (select PG_CATALOG.string_agg(
-      case when option like 'bbf_original_rel_name=%%' then substring(option, 23)
-      else NULL end, ',')
-    from unnest(t.reloptions) as option)
-    end,
-    t.relname::text) as sys.sysname) as name
+  CAST(sys.bbf_get_truncated_rel_original_name(t.reloptions, t.relname) as sys.sysname) as name
   , t.oid::int as object_id
   , null::integer as principal_id
   , sch.schema_id::int as schema_id
@@ -428,7 +414,6 @@ select CAST(c.oid as int) as object_id
       CASE WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19) ELSE NULL END, ','
     ) FROM unnest(a.attoptions) AS option)
     end,
-    sys.bbf_get_view_column_name(a.attrelid, a.attnum::smallint),
     a.attname::text) as sys.sysname) as name
   , CAST(a.attnum as int) as column_id
   , CAST(t.oid as int) as system_type_id
@@ -532,10 +517,7 @@ BEGIN
 		SELECT CAST(c.oid AS int),
 			CAST(coalesce(
 				case when octet_length(a.attname) >= 60 then
-				(select substring(val, 19) from (select unnest(a.attoptions) as val) opts where val like 'bbf_original_name=%%' limit 1)
-				end,
-				case when c.relkind = 'v' and length(a.attname) >= 63
-					then sys.bbf_get_view_column_name(c.oid, a.attnum)
+				(select substring(opt, 19) from unnest(a.attoptions) opt where opt like 'bbf_original_name=%%' limit 1)
 				end,
 				a.attname)
 			AS sys.sysname),
@@ -1372,7 +1354,7 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined tables
 select
-    COALESCE(case when octet_length(t.relname) >= 60 then (select substring(opt, 23) from unnest(t.reloptions) opt where opt like 'bbf_original_rel_name=%' limit 1) end, t.relname)::sys.sysname as name
+    sys.bbf_get_truncated_rel_original_name(t.reloptions, t.relname)::sys.sysname as name
   , t.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1420,7 +1402,7 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- Details of user defined views
 select
-    COALESCE(case when octet_length(t.relname) >= 60 then (select substring(opt, 23) from unnest(t.reloptions) opt where opt like 'bbf_original_rel_name=%' limit 1) end, t.relname)::sys.sysname as name
+    sys.bbf_get_truncated_rel_original_name(t.reloptions, t.relname)::sys.sysname as name
   , t.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1734,13 +1716,7 @@ GRANT SELECT ON sys.system_objects TO PUBLIC;
 
 create or replace view sys.all_views as
 SELECT
-    CAST(COALESCE(
-    case when octet_length(c.relname) >= 60 then
-    (SELECT pg_catalog.string_agg(
-      CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',')
-    FROM unnest(c.reloptions) AS option)
-    end,
-    c.relname::text) AS sys.SYSNAME) as name
+    CAST(sys.bbf_get_truncated_rel_original_name(c.reloptions, c.relname) AS sys.SYSNAME) as name
   , CAST(c.oid AS INT) as object_id
   , CAST(null AS INT) as principal_id
   , CAST(c.relnamespace as INT) as schema_id

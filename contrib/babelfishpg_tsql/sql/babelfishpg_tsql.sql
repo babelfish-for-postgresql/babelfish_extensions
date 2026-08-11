@@ -1092,7 +1092,7 @@ CREATE OR REPLACE VIEW sys.sp_tables_view AS
 SELECT
 t2.dbname AS TABLE_QUALIFIER,
 CAST(t3.name AS name) AS TABLE_OWNER,
-COALESCE(case when octet_length(t1.relname) >= 60 then (SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(t1.reloptions) AS option) end, t1.relname::text)::sys.sysname AS TABLE_NAME,
+sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname)::sys.sysname AS TABLE_NAME,
 
 CASE 
 WHEN t1.relkind = 'v' 
@@ -1690,7 +1690,7 @@ CASE
 AS IS_NULLABLE,
 CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-COALESCE(case when octet_length(C.relname) >= 60 then (SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(C.reloptions) AS option) end, C.relname::text)::sys.sysname AS TABLE_NAME,
+sys.bbf_get_truncated_rel_original_name(C.reloptions, C.relname)::sys.sysname AS TABLE_NAME,
 
 CASE 
 	WHEN X.indisprimary
@@ -1942,11 +1942,11 @@ CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
 SELECT
 CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
 CAST(bbf_nsp2.orig_name AS sys.sysname) AS PKTABLE_OWNER ,
-COALESCE(case when octet_length(c2.relname) >= 60 then (SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(c2.reloptions) AS option) end, c2.relname::text)::sys.sysname AS PKTABLE_NAME,
+sys.bbf_get_truncated_rel_original_name(c2.reloptions, c2.relname)::sys.sysname AS PKTABLE_NAME,
 CAST(COALESCE(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) AS sys.sysname) AS PKCOLUMN_NAME,
 CAST(nsp_ext.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
 CAST(bbf_nsp.orig_name AS sys.sysname) AS FKTABLE_OWNER ,
-COALESCE(case when octet_length(c.relname) >= 60 then (SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(c.reloptions) AS option) end, c.relname::text)::sys.sysname AS FKTABLE_NAME,
+sys.bbf_get_truncated_rel_original_name(c.reloptions, c.relname)::sys.sysname AS FKTABLE_NAME,
 CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname) AS sys.sysname) AS FKCOLUMN_NAME,
 CAST(nr AS smallint) AS KEY_SEQ,
 CASE

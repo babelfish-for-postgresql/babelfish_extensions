@@ -266,6 +266,70 @@ GO
 DROP TABLE MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_ABC;
 GO
 
+-- tsql
+-- VIEW and SELECT INTO with long column names
+-- ===========================================
+
+-- Setup: table with multiple long columns
+CREATE TABLE babel5975_multi_col (
+    Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_AAA INT,
+    Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_BBB NVARCHAR(50)
+);
+GO
+
+-- View with SELECT * from table with long columns
+CREATE VIEW babel5975_view_star AS SELECT * FROM babel5975_multi_col;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_view_star') ORDER BY column_id;
+GO
+
+-- View with explicit long alias
+CREATE VIEW babel5975_view_explicit_alias AS SELECT 1 AS Very_Long_Explicit_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_view_explicit_alias');
+GO
+
+-- View with mixed: alias + * from table
+CREATE VIEW babel5975_view_mixed AS SELECT 1 AS Very_Long_Mixed_View_Alias_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters, * FROM babel5975_multi_col;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_view_mixed') ORDER BY column_id;
+GO
+
+-- SELECT INTO with * from table with long columns
+SELECT * INTO babel5975_select_into_star FROM babel5975_multi_col;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_select_into_star') ORDER BY column_id;
+GO
+
+-- SELECT INTO with mixed: alias + *
+SELECT 1 AS Very_Long_SelectInto_Alias_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters, * INTO babel5975_select_into_mixed FROM babel5975_multi_col;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_select_into_mixed') ORDER BY column_id;
+GO
+
+-- View with long table alias (bracket-delimited)
+CREATE VIEW babel5975_view_long_alias AS SELECT * FROM babel5975_multi_col AS [Very_Long_Table_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters];
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_view_long_alias') ORDER BY column_id;
+GO
+
+-- Cleanup view/select into tests
+DROP VIEW babel5975_view_star;
+GO
+DROP VIEW babel5975_view_explicit_alias;
+GO
+DROP VIEW babel5975_view_mixed;
+GO
+DROP VIEW babel5975_view_long_alias;
+GO
+DROP TABLE babel5975_select_into_star;
+GO
+DROP TABLE babel5975_select_into_mixed;
+GO
+DROP TABLE babel5975_multi_col;
+GO
+
+
 -- ===========================================
 -- VERIFY ATTOPTIONS STORAGE
 -- ===========================================

@@ -21,6 +21,11 @@
 
 #define MD5_HASH_LEN 32
 
+/* DefElem name for storing original index name location in grammar */
+#ifndef TSQL_ORIGINAL_NAME_LOCATION
+#define TSQL_ORIGINAL_NAME_LOCATION "tsql_original_name_location"
+#endif
+
 static void pgtsql_base_yyerror(YYLTYPE * yylloc, core_yyscan_t yyscanner, const char *msg);
 
 List	   *TsqlSystemFuncName(char *name);

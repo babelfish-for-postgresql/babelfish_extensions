@@ -1903,7 +1903,70 @@ exec_utility_cmd_helper(char *query_str)
 	CommandCounterIncrement();
 }
 
-extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
+/*
+ * get_original_relname
+ *
+ * Look up the original (pre-truncation) relation name stored in the
+ * bbf_original_rel_name reloption for the given relation OID.
+ * If check_permission is true, verifies the caller has SELECT permission
+ * on the relation before returning the name.
+ * Returns a palloc'd copy of the original name, or NULL if not found.
+ */
+char *
+get_original_relname(Oid relid, bool check_permission)
+{
+	HeapTuple	tuple;
+	char	   *result = NULL;
+
+	if (!OidIsValid(relid))
+		return NULL;
+
+	if (check_permission)
+	{
+		AclResult	aclresult;
+		aclresult = pg_class_aclcheck(relid, GetUserId(), ACL_SELECT);
+		if (aclresult != ACLCHECK_OK)
+			return NULL;
+	}
+
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (HeapTupleIsValid(tuple))
+	{
+		bool		isnull;
+		Datum		opts;
+
+		opts = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
+		if (!isnull)
+		{
+			ArrayType	   *arr = DatumGetArrayTypeP(opts);
+			ArrayIterator	it = array_create_iterator(arr, 0, NULL);
+			Datum			val;
+			bool			vnull;
+			const char	   *prefix = ATTOPTION_BBF_ORIGINAL_TABLE_NAME "=";
+			int				prefix_len = strlen(prefix);
+
+			while (array_iterate(it, &val, &vnull))
+			{
+				const char *s;
+				int			len;
+
+				if (vnull)
+					continue;
+				s = VARDATA_ANY(val);
+				len = VARSIZE_ANY_EXHDR(val);
+				if (len > prefix_len && memcmp(s, prefix, prefix_len) == 0)
+				{
+					result = pnstrdup(s + prefix_len, len - prefix_len);
+					break;
+				}
+			}
+			array_free_iterator(it);
+		}
+		ReleaseSysCache(tuple);
+	}
+	return result;
+}
+
 void
 exec_add_original_index_name(char *idxname, char *schemaname, char *original_name)
 {
@@ -3217,39 +3280,4 @@ restrict_alter_table_stmt(AlterTableStmt *stmt)
                      errmsg("ALTER .. OWNER .. is blocked in PG dialect on TSQL objects. Please set babelfishpg_tsql.enable_alter_owner_from_pg to true to enable.")));
         }
     }
-}
-PG_FUNCTION_INFO_V1(bbf_get_view_column_name);
-Datum
-bbf_get_view_column_name(PG_FUNCTION_ARGS)
-{
-	Oid viewOid = PG_GETARG_OID(0);
-	int16 attnum = PG_GETARG_INT16(1);
-	Relation vrel;
-	Query *vquery;
-	ListCell *lc;
-	int colno = 0;
-
-	/* Only process views - check relkind via syscache without opening */
-	if (get_rel_relkind(viewOid) != RELKIND_VIEW)
-		PG_RETURN_NULL();
-
-	vrel = table_open(viewOid, AccessShareLock);
-	vquery = get_view_query(vrel);
-
-	foreach(lc, vquery->targetList)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(lc);
-		if (tle->resjunk)
-			continue;
-		colno++;
-		if (colno == attnum && tle->resname)
-		{
-			text *result = cstring_to_text(tle->resname);
-			table_close(vrel, AccessShareLock);
-			PG_RETURN_TEXT_P(result);
-		}
-	}
-
-	table_close(vrel, AccessShareLock);
-	PG_RETURN_NULL();
 }

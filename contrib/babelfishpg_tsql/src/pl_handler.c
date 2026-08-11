@@ -42,6 +42,7 @@
 #include "commands/trigger.h"
 #include "commands/user.h"
 #include "commands/view.h"
+#include "rewrite/rewriteHandler.h"
 #include "common/md5.h"
 #include "common/string.h"
 #include "funcapi.h"
@@ -238,8 +239,6 @@ static bool forAutoWalker(Node *node, ForAutoContext *ctx);
 static TargetEntry* buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te);
 static char *string_to_fixed_hash(const char *input);
 static void processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias, ForAutoContext *ctx, ForAutoMode mode);
-extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
-extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_concat_null_yields_null;
@@ -305,7 +304,7 @@ static guc_push_old_value_hook_type prev_guc_push_old_value_hook = NULL;
 static validate_set_config_function_hook_type prev_validate_set_config_function_hook = NULL;
 static void pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action);
 bool		current_query_is_create_tbl_check_constraint = false;
-static bool pltsql_current_query_is_view_definition = false;
+bool pltsql_current_query_is_view_definition = false;
 
 /* Configurations */
 bool		pltsql_trace_tree = false;
@@ -3216,6 +3215,134 @@ store_view_original_name(ViewStmt *stmt, const char *queryString)
 		pfree(original_name);
 }
 
+/*
+ * Store original column names in pg_attribute.attoptions for view columns
+ * that were truncated. Extracts full names from the query string.
+ */
+
+static void
+store_view_column_original_names(ViewStmt *stmt, const char *queryString)
+{
+	Oid			viewOid;
+	Relation	rel;
+	TupleDesc	tupdesc;
+	SelectStmt *select;
+	Query	   *viewquery;
+	ListCell   *lc_tle, *lc_rt;
+	List	   *cmds = NIL;
+	int			attnum = 0;
+
+	if (babelfish_dump_restore || !queryString)
+		return;
+
+	viewOid = RangeVarGetRelid(stmt->view, NoLock, true);
+	if (!OidIsValid(viewOid))
+		return;
+
+	rel = relation_open(viewOid, AccessShareLock);
+	tupdesc = RelationGetDescr(rel);
+	viewquery = get_view_query(rel);
+
+	/* Get the SELECT target list from the raw parse tree */
+	select = (SelectStmt *) stmt->query;
+	if (!select || !IsA(select, SelectStmt))
+	{
+		relation_close(rel, AccessShareLock);
+		return;
+	}
+
+	/*
+	 * Iterate view's target entries. For each column, resolve the original
+	 * name from: (1) explicit alias via queryString name_location, or
+	 * (2) source column's attoptions.
+	 */
+	lc_rt = list_head(select->targetList);
+	foreach(lc_tle, viewquery->targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc_tle);
+		char	   *original_name = NULL;
+		Form_pg_attribute attr;
+
+		if (tle->resjunk)
+			continue;
+
+		attnum++;
+		if (attnum > tupdesc->natts)
+			break;
+
+		attr = TupleDescAttr(tupdesc, attnum - 1);
+
+		/* Case 1: Check for explicit alias from raw ResTarget */
+		if (lc_rt)
+		{
+			ResTarget *rt = (ResTarget *) lfirst(lc_rt);
+			if (IsA(rt, ResTarget) && rt->name && rt->name_location >= 0 &&
+				(size_t) rt->name_location < strlen(queryString))
+			{
+				original_name = extract_identifier(queryString + rt->name_location, NULL);
+				lc_rt = lnext(select->targetList, lc_rt);
+			}
+			else if (IsA(rt, ResTarget) && rt->val && IsA(rt->val, ColumnRef))
+			{
+				ColumnRef *cr = (ColumnRef *) rt->val;
+				Node *last = (Node *) llast(cr->fields);
+				/* Don't advance for star — one ResTarget maps to many TLEs */
+				if (!IsA(last, A_Star))
+					lc_rt = lnext(select->targetList, lc_rt);
+			}
+			else
+				lc_rt = lnext(select->targetList, lc_rt);
+		}
+
+		/* Case 2: No alias found — check source column's attoptions */
+		if (!original_name && OidIsValid(tle->resorigtbl) && tle->resorigcol > 0)
+		{
+			HeapTuple	src_tuple;
+			src_tuple = SearchSysCache2(ATTNUM,
+										ObjectIdGetDatum(tle->resorigtbl),
+										Int16GetDatum(tle->resorigcol));
+			if (HeapTupleIsValid(src_tuple))
+			{
+				Datum	datum;
+				bool	isnull;
+				datum = SysCacheGetAttr(ATTNUM, src_tuple, Anum_pg_attribute_attoptions, &isnull);
+				if (!isnull)
+				{
+					ArrayType *arr = DatumGetArrayTypeP(datum);
+					char *val = get_value_by_name_from_array(arr, ATTOPTION_BBF_ORIGINAL_NAME);
+					if (val)
+						original_name = pstrdup(val);
+				}
+				ReleaseSysCache(src_tuple);
+			}
+		}
+
+		/* Store if we found an original name that's long */
+		if (original_name && strlen(original_name) >= NAMEDATALEN)
+		{
+			AlterTableCmd *cmd = makeNode(AlterTableCmd);
+
+			cmd->subtype = AT_SetOptions;
+			cmd->name = pstrdup(NameStr(attr->attname));
+			cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME),
+													   (Node *) makeString(original_name), -1));
+			cmd->behavior = DROP_RESTRICT;
+			cmd->missing_ok = false;
+
+			cmds = lappend(cmds, cmd);
+		}
+		else if (original_name)
+			pfree(original_name);
+	}
+
+	relation_close(rel, AccessShareLock);
+
+	if (cmds != NIL)
+	{
+		AlterTableInternal(viewOid, cmds, false);
+		CommandCounterIncrement();
+	}
+}
 static void
 bbf_ProcessUtility(PlannedStmt *pstmt,
 				   const char *queryString,
@@ -3297,6 +3424,34 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 									 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+						}
+					}
+
+					/*
+					 * Block modification of bbf_original_rel_name and
+					 * bbf_original_name reloptions from PG dialect to prevent
+					 * tampering with stored original identifiers.
+					 */
+					{
+						ListCell *lcmd;
+						foreach(lcmd, atstmt->cmds)
+						{
+							AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+							if (cmd->subtype == AT_SetRelOptions || cmd->subtype == AT_ResetRelOptions ||
+								cmd->subtype == AT_SetOptions)
+							{
+								List *options = (List *) cmd->def;
+								ListCell *lopt;
+								foreach(lopt, options)
+								{
+									DefElem *defel = (DefElem *) lfirst(lopt);
+									if (strcmp(defel->defname, ATTOPTION_BBF_ORIGINAL_TABLE_NAME) == 0 ||
+										strcmp(defel->defname, ATTOPTION_BBF_ORIGINAL_NAME) == 0)
+										ereport(ERROR,
+												(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+												 errmsg("cannot modify \"%s\" for babelfish objects", defel->defname)));
+								}
+							}
 						}
 					}
 					break;
@@ -3774,6 +3929,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							EventTriggerEndCompleteQuery();
 					}
 					PG_END_TRY();
+					store_view_original_name(stmt, queryString);
+					store_view_column_original_names(stmt, queryString);
 					return; 
 				}
 				else if(sql_dialect == SQL_DIALECT_TSQL)
@@ -3795,6 +3952,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					 * the name differs in case from the lowercased version.
 					 */
 					store_view_original_name(stmt, queryString);
+					store_view_column_original_names(stmt, queryString);
 					return;
 				}
 
@@ -3802,7 +3960,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 
 				if (sql_dialect == SQL_DIALECT_TSQL)
-					store_view_original_name(stmt, queryString);
+				{
+					ViewStmt *vstmt = (ViewStmt *) parsetree;
+					store_view_original_name(vstmt, queryString);
+					store_view_column_original_names(vstmt, queryString);
+				}
 				return;
 			}
 
@@ -5450,14 +5612,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					List    	*partition_schemes = stmt->excludeOpNames;
 					ListCell	*opt_lc;
 
-					/* Extract original index name using location from grammar */
+					/* Extract and remove original name location before DefineIndex validates options */
 					foreach(opt_lc, stmt->options)
 					{
 						DefElem *defel = (DefElem *) lfirst(opt_lc);
-						if (strcmp(defel->defname, "name_location") == 0)
+						if (strcmp(defel->defname, TSQL_ORIGINAL_NAME_LOCATION) == 0)
 						{
 							int loc = intVal(defel->arg);
-							if (loc >= 0 && queryString)
+							if (loc >= 0 && queryString && (size_t) loc < strlen(queryString))
 								original_name = extract_identifier(queryString + loc, NULL);
 							stmt->options = foreach_delete_current(stmt->options, opt_lc);
 							break;
@@ -8096,7 +8258,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 			if(tle->resname != NULL && !tle->resjunk)
-				tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
+				tle->resname = downcase_truncate_identifier(tle->resname, strlen(tle->resname), false);
 
 			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
 			{
@@ -8299,9 +8461,9 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 	List *orig_colnames = NIL;
 
 	/*
-	 * Save original column names before transformSelectIntoStmt lowercases them.
-	 * pre_transform_target_entry has already set tle->resname to the full
-	 * original (mixed-case) name from source text for long identifiers.
+	 * Save explicit alias names before transformSelectIntoStmt truncates them.
+	 * pre_transform_target_entry sets tle->resname to the full original for
+	 * explicit aliases (e.g., SELECT 1 AS VeryLongAlias INTO ...).
 	 */
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
@@ -8313,12 +8475,7 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 			foreach(tlc, q->targetList)
 			{
 				TargetEntry *tle = (TargetEntry *) lfirst(tlc);
-				if (tle->resjunk)
-				{
-					orig_colnames = lappend(orig_colnames, NULL);
-					continue;
-				}
-				if (tle->resname && strlen(tle->resname) >= NAMEDATALEN)
+				if (!tle->resjunk && tle->resname && strlen(tle->resname) >= NAMEDATALEN)
 					orig_colnames = lappend(orig_colnames, pstrdup(tle->resname));
 				else
 					orig_colnames = lappend(orig_colnames, NULL);
@@ -8333,27 +8490,9 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 		stmts = list_delete_first(stmts);
 		if (IsA(stmt, CreateTableAsStmt))
 		{
-			/*
-			 * pre_transform_target_entry extends tle->resname to the full
-			 * original for "SELECT a AS LongAlias" display. For SELECT INTO,
-			 * this causes namestrcpy to simple-cut it, producing an attname
-			 * that won't match the parser's MD5-truncated form. Truncate
-			 * tle->resname back to MD5 form before table creation.
-			 */
-			Query *query = castNode(Query, ((CreateTableAsStmt *)parsetree)->query);
-			ListCell *tlc;
+			CreateTableAsStmt *ctas_stmt = (CreateTableAsStmt *) stmt;
 
-			foreach(tlc, query->targetList)
-			{
-				TargetEntry *tle = (TargetEntry *) lfirst(tlc);
-				if (tle->resname && strlen(tle->resname) >= NAMEDATALEN)
-				{
-					tle->resname = pstrdup(tle->resname);
-					truncate_identifier(tle->resname, strlen(tle->resname), false);
-				}
-			}
-
-			*address = ExecCreateTableAs(pstate, (CreateTableAsStmt *)parsetree, params, queryEnv, qc);
+			*address = ExecCreateTableAs(pstate, ctas_stmt, params, queryEnv, qc);
 		}
 		else
 		{
@@ -8405,10 +8544,11 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 	}
 
 	/*
-	 * Store original column names in pg_attribute.attoptions for columns
-	 * that were truncated (saved in orig_colnames during pre-truncation).
+	 * Store original column names in pg_attribute.attoptions.
+	 * Iterate TLEs and resolve original names from source column attoptions
+	 * (for SELECT * / column refs) or from saved orig_colnames (for explicit aliases).
 	 */
-	if (sql_dialect == SQL_DIALECT_TSQL && OidIsValid(address->objectId) && orig_colnames != NIL)
+	if (sql_dialect == SQL_DIALECT_TSQL && OidIsValid(address->objectId) && queryString)
 	{
 		Query *query = castNode(Query, ((CreateTableAsStmt *)parsetree)->query);
 		ListCell *lc, *oc;
@@ -8420,11 +8560,19 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 		rel2 = relation_open(address->objectId, AccessShareLock);
 		td = RelationGetDescr(rel2);
 
-		forboth(lc, query->targetList, oc, orig_colnames)
+		oc = list_head(orig_colnames);
+		foreach(lc, query->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(lc);
-			char *orig_name = (char *) lfirst(oc);
+			char *orig_name = NULL;
 			Form_pg_attribute attr;
+
+			/* Get saved alias name if available */
+			if (oc)
+			{
+				orig_name = (char *) lfirst(oc);
+				oc = lnext(orig_colnames, oc);
+			}
 
 			if (tle->resjunk)
 				continue;
@@ -8438,7 +8586,29 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 			if (attr->attisdropped)
 				continue;
 
-			if (orig_name != NULL)
+			/* If no saved alias, look up source column's attoptions */
+			if (!orig_name && OidIsValid(tle->resorigtbl) && tle->resorigcol > 0)
+			{
+				HeapTuple src_tuple = SearchSysCache2(ATTNUM,
+													 ObjectIdGetDatum(tle->resorigtbl),
+													 Int16GetDatum(tle->resorigcol));
+				if (HeapTupleIsValid(src_tuple))
+				{
+					Datum datum;
+					bool isnull;
+					datum = SysCacheGetAttr(ATTNUM, src_tuple, Anum_pg_attribute_attoptions, &isnull);
+					if (!isnull)
+					{
+						ArrayType *arr = DatumGetArrayTypeP(datum);
+						char *val = get_value_by_name_from_array(arr, ATTOPTION_BBF_ORIGINAL_NAME);
+						if (val)
+							orig_name = pstrdup(val);
+					}
+					ReleaseSysCache(src_tuple);
+				}
+			}
+
+			if (orig_name != NULL && strlen(orig_name) >= NAMEDATALEN)
 			{
 				AlterTableCmd *cmd = makeNode(AlterTableCmd);
 				cmd->subtype = AT_SetOptions;

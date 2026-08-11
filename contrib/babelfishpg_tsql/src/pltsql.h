@@ -77,6 +77,14 @@
 #define TSQL_SMALLMONEY_TYPMOD ((SMALLMONEY_PRECISION << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ
 #define TSQL_EXPLICIT_NULLABILITY_MARKER "tsql_explicit_nullability"
 
+/* Attribute/relation option names for storing original T-SQL names */
+#define ATTOPTION_BBF_ORIGINAL_NAME "bbf_original_name"
+#define ATTOPTION_BBF_ORIGINAL_TABLE_NAME "bbf_original_rel_name"
+#define ATTOPTION_BBF_TABLE_CREATE_DATE "bbf_rel_create_date"
+
+/* DefElem name for storing original index name location in grammar */
+#define TSQL_ORIGINAL_NAME_LOCATION "tsql_original_name_location"
+
 /*
  * Compiler's namespace item types
  */
@@ -2317,6 +2325,7 @@ extern char *extract_identifier(const char *start, int *last_pos);
 extern char *extract_multipart_identifier_name(const char *start);
 
 /* functions in pltsql_utils.c */
+extern char *get_original_relname(Oid relid, bool check_permission);
 extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);
 extern char *gen_dropfulltextindex_cmds(const char *index_name, const char *schema_name);
 extern char *get_fulltext_index_name(Oid relid, const char *table_name);

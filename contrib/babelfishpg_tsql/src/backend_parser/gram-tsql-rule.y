@@ -3483,7 +3483,7 @@ tsql_IndexStmt:
 
 					tsql_index_nulls_order(n->indexParams, n->accessMethod);
 					n->options = lappend(n->options,
-						makeDefElem("name_location",
+						makeDefElem(TSQL_ORIGINAL_NAME_LOCATION,
 							(Node *) makeInteger(@7), -1));
 					$$ = (Node *)n;
 				}

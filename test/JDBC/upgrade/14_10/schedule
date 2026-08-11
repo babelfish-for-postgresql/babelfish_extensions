@@ -413,7 +413,7 @@ babel_varbinary_int4_div
 sys-sql_expression_dependencies
 smalldatetimefromparts-dep
 BABEL_4330-before-15_8-or-16_4
-BABEL-4231-before-18_6
+BABEL-4231
 BABEL-4384
 default_params
 BABEL-3326

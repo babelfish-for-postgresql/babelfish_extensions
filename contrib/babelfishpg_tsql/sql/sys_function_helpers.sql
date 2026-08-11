@@ -11493,6 +11493,21 @@ CREATE OR REPLACE FUNCTION sys.babelfish_construct_unique_index_name(index_name 
 RETURNS TEXT AS 'babelfishpg_tsql', 'bbf_construct_unique_index_name'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.bbf_get_view_column_name(view_oid OID, attnum SMALLINT)
-RETURNS TEXT AS 'babelfishpg_tsql', 'bbf_get_view_column_name'
-LANGUAGE C STABLE PARALLEL SAFE;
+-- BABEL-5975: Long Identifiers Support
+-- Returns the original (untruncated) relation name from bbf_original_rel_name
+-- reloption if stored, otherwise returns the relname as-is.
+-- Only checks reloptions when relname is potentially truncated (>= 60 bytes).
+CREATE OR REPLACE FUNCTION sys.bbf_get_truncated_rel_original_name(rel_reloptions text[], rel_relname name)
+RETURNS text
+LANGUAGE SQL
+IMMUTABLE
+PARALLEL SAFE
+RETURN COALESCE(
+    CASE WHEN octet_length(rel_relname) >= 60 THEN
+        (SELECT substring(opt, 23)
+         FROM unnest(rel_reloptions) opt
+         WHERE opt LIKE 'bbf_original_rel_name=%'
+         LIMIT 1)
+    END,
+    rel_relname::text);
+

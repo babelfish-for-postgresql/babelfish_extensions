@@ -260,7 +260,6 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 						ELSE NULL
 						END, ',')
 					FROM unnest(a.attoptions) AS option),
-					sys.bbf_get_view_column_name(a.attrelid, a.attnum::smallint),
 					a.attname)
 				AS sys.nvarchar(128)) AS "COLUMN_NAME",
 

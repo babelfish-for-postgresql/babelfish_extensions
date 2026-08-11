@@ -2874,29 +2874,12 @@ object_name(PG_FUNCTION_ARGS)
 			Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
 			char *relname = NameStr(pg_class->relname);
 
-			/* Try to get original name from reloptions */
+			/* Try to get original name from reloptions if name was truncated */
 			if (strlen(relname) >= NAMEDATALEN - 1)
 			{
-				bool isnull;
-				Datum opts = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
-				if (!isnull)
-				{
-					ArrayType *arr = DatumGetArrayTypeP(opts);
-					ArrayIterator it = array_create_iterator(arr, 0, NULL);
-					Datum val;
-					bool vnull;
-					while (array_iterate(it, &val, &vnull))
-					{
-						const char *s = VARDATA_ANY(val);
-						int len = VARSIZE_ANY_EXHDR(val);
-						if (len > 22 && memcmp(s, "bbf_original_rel_name=", 22) == 0)
-						{
-							result_text = cstring_to_text_with_len(s + 22, len - 22);
-							break;
-						}
-					}
-					array_free_iterator(it);
-				}
+				char *orig = get_original_relname(object_id, false);
+				if (orig)
+					result_text = cstring_to_text(orig);
 			}
 			if (result_text == NULL)
 				result_text = cstring_to_text(relname);
