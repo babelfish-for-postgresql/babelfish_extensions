@@ -2149,6 +2149,43 @@ true#!#false#!#true#!#true
 ~~END~~
 
 
+-- valid prefixes
+SELECT T2.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t2 
+CROSS APPLY XmlColumn.nodes('/artists/artist') AS T2(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+Jane Smith
+John Smith
+~~END~~
+
+
+SELECT T2.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t2 t
+CROSS APPLY t.XmlColumn.nodes('/artists/artist') AS T2(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+Jane Smith
+John Smith
+~~END~~
+
+
+SELECT T2.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t2 
+CROSS APPLY babel_5225_xml_nodes_t2.XmlColumn.nodes('/artists/artist') AS T2(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+Jane Smith
+John Smith
+~~END~~
+
+
 
 -- expected error cases ----------------
 -- nodes() with QUOTED_IDENTIFIER OFF
@@ -2725,4 +2762,44 @@ varchar
 James
 ~~END~~
 
+
+-- invalid prefixes
+SELECT T2.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM dbo.babel_5225_xml_nodes_t2 
+CROSS APPLY dbo.babel_5225_xml_nodes_t2.XmlColumn.nodes('/artists/artist') AS T2(C)
+ORDER BY 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The nodes function can be qualified by 'table.column.' or 'column.')~~
+
+
+SELECT T2.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t2 
+CROSS APPLY .XmlColumn.nodes('/artists/artist') AS T2(C)
+ORDER BY 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "xmlcolumn" does not exist)~~
+
+
+SELECT T2.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t2 
+CROSS APPLY .babel_5225_xml_nodes_t2.XmlColumn.nodes('/artists/artist') AS T2(C)
+ORDER BY 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The nodes function can be qualified by 'table.column.' or 'column.')~~
+
+
+SELECT T2.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t2 
+CROSS APPLY ..babel_5225_xml_nodes_t2.XmlColumn.nodes('/artists/artist') AS T2(C)
+ORDER BY 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The nodes function can be qualified by 'table.column.' or 'column.')~~
 

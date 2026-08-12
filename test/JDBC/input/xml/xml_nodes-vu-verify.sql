@@ -1188,6 +1188,25 @@ SELECT
 -- Result: "true", "false", "true", "true"
 go
 
+-- valid prefixes
+SELECT T2.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t2 
+CROSS APPLY XmlColumn.nodes('/artists/artist') AS T2(C)
+ORDER BY 1
+go
+
+SELECT T2.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t2 t
+CROSS APPLY t.XmlColumn.nodes('/artists/artist') AS T2(C)
+ORDER BY 1
+go
+
+SELECT T2.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t2 
+CROSS APPLY babel_5225_xml_nodes_t2.XmlColumn.nodes('/artists/artist') AS T2(C)
+ORDER BY 1
+go
+
 -- expected error cases ----------------
 
 -- nodes() with QUOTED_IDENTIFIER OFF
@@ -1514,3 +1533,27 @@ FROM @xml.nodes('/Root/row/MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_T
 ORDER BY id
 go
 
+-- invalid prefixes
+SELECT T2.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM dbo.babel_5225_xml_nodes_t2 
+CROSS APPLY dbo.babel_5225_xml_nodes_t2.XmlColumn.nodes('/artists/artist') AS T2(C)
+ORDER BY 1
+go
+
+SELECT T2.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t2 
+CROSS APPLY .XmlColumn.nodes('/artists/artist') AS T2(C)
+ORDER BY 1
+go
+
+SELECT T2.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t2 
+CROSS APPLY .babel_5225_xml_nodes_t2.XmlColumn.nodes('/artists/artist') AS T2(C)
+ORDER BY 1
+go
+
+SELECT T2.C.value('(@name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t2 
+CROSS APPLY ..babel_5225_xml_nodes_t2.XmlColumn.nodes('/artists/artist') AS T2(C)
+ORDER BY 1
+go
