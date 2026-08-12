@@ -10394,7 +10394,7 @@ validateXMLNodeFunctionArg(TSqlParser::Xml_nodes_methodContext *ctx)
 	if (ctx->full_column_name() != NULL)
 		if ((ctx->full_column_name()->DOT().size() > 1) || getFullText(ctx->full_column_name()).front() == '.')
 		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The nodes function can be qualified by 'table.column.' or 'column.'", getLineAndPos(ctx));
-		
+
 	/* Only string literal is allowed as XPath argument for XML Functions. 
 	 * We can detect this directly from the grammar as the argument must be char_string
 	 */
