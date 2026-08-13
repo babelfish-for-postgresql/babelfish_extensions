@@ -1,0 +1,354 @@
+-- TEST 1: Basic CASCADE DELETE - trigger should fire once seeing all 5 deleted rows, not 5 times
+INSERT INTO babel7022_parent SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5
+GO
+~~ROW COUNT: 5~~
+
+
+INSERT INTO babel7022_child (id, parent_id) SELECT 1,1 UNION SELECT 2,2 UNION SELECT 3,3 UNION SELECT 4,4 UNION SELECT 5,5
+GO
+~~ROW COUNT: 5~~
+
+
+DELETE FROM babel7022_parent
+GO
+~~ROW COUNT: 5~~
+
+
+SELECT COUNT(*) AS history_count FROM babel7022_history
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT id, parent_id FROM babel7022_history ORDER BY id
+GO
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+5#!#5
+~~END~~
+
+
+-- TEST 2: Single parent cascading to 10 children - trigger should fire once with all 10 rows
+INSERT INTO babel7022_parent2 VALUES (1)
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel7022_child2 (parent_id, val)
+  SELECT 1, 'child_' + CAST(n AS varchar)
+  FROM (SELECT 1 AS n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5
+        UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) t
+GO
+~~ROW COUNT: 10~~
+
+
+DELETE FROM babel7022_parent2 WHERE id = 1
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT COUNT(*) AS history_count FROM babel7022_history2
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+-- TEST 3: ON UPDATE CASCADE - trigger should fire once with all 5 updated child rows
+INSERT INTO babel7022_parent3 VALUES (1, 'old'), (2, 'new')
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO babel7022_child3 VALUES (1, 1, 'a'), (2, 1, 'b'), (3, 1, 'c'), (4, 1, 'd'), (5, 1, 'e')
+GO
+~~ROW COUNT: 5~~
+
+
+UPDATE babel7022_parent3 SET id = 10 WHERE id = 1
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT COUNT(*) AS log_count FROM babel7022_update_log
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT child_id, old_parent_id, new_parent_id FROM babel7022_update_log ORDER BY child_id
+GO
+~~START~~
+int#!#int#!#int
+1#!#1#!#10
+2#!#1#!#10
+3#!#1#!#10
+4#!#1#!#10
+5#!#1#!#10
+~~END~~
+
+
+-- TEST 4: Two triggers on same table - each should fire exactly once during CASCADE
+INSERT INTO babel7022_parent4 SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5
+GO
+~~ROW COUNT: 5~~
+
+
+INSERT INTO babel7022_child4 SELECT 1,1 UNION SELECT 2,2 UNION SELECT 3,3 UNION SELECT 4,4 UNION SELECT 5,5
+GO
+~~ROW COUNT: 5~~
+
+
+DELETE FROM babel7022_parent4
+GO
+~~ROW COUNT: 5~~
+
+
+SELECT 'trigger_a' AS trigger_name, COUNT(*) AS fire_count, SUM(cnt) AS total_rows FROM babel7022_audit4a
+GO
+~~START~~
+varchar#!#int#!#int
+trigger_a#!#1#!#5
+~~END~~
+
+
+SELECT 'trigger_b' AS trigger_name, COUNT(*) AS fire_count, SUM(cnt) AS total_rows FROM babel7022_audit4b
+GO
+~~START~~
+varchar#!#int#!#int
+trigger_b#!#1#!#5
+~~END~~
+
+
+-- TEST 5: Nested CASCADE (grandparent -> parent -> child) - validates multi-level FK chains
+INSERT INTO babel7022_gp VALUES (1), (2)
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO babel7022_p VALUES (1, 1), (2, 1), (3, 2), (4, 2)
+GO
+~~ROW COUNT: 4~~
+
+
+INSERT INTO babel7022_c VALUES (1, 1), (2, 1), (3, 3), (4, 3)
+GO
+~~ROW COUNT: 4~~
+
+
+DELETE FROM babel7022_gp
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT tbl, del_count FROM babel7022_gp_log ORDER BY tbl
+GO
+~~START~~
+varchar#!#int
+child#!#4
+parent#!#4
+~~END~~
+
+
+-- TEST 6: Direct DELETE without CASCADE - ensures normal trigger path is not regressed
+INSERT INTO babel7022_standalone VALUES (1, 'a'), (2, 'b'), (3, 'c'), (4, 'd'), (5, 'e')
+GO
+~~ROW COUNT: 5~~
+
+
+DELETE FROM babel7022_standalone
+GO
+~~ROW COUNT: 5~~
+
+
+SELECT COUNT(*) AS log_count FROM babel7022_standalone_log
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+-- TEST 7: INSERT trigger should not be affected by CASCADE DELETE on same table
+INSERT INTO babel7022_parent7 VALUES (1), (2), (3)
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO babel7022_child7 VALUES (1, 1), (2, 2), (3, 3)
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT COUNT(*) AS ins_log_count FROM babel7022_ins_log
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+DELETE FROM babel7022_parent7
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT COUNT(*) AS ins_log_count FROM babel7022_ins_log
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- TEST 8: Regular UPDATE trigger (no CASCADE) - ensures composite trigger path still works
+INSERT INTO babel7022_t8 VALUES (1, 10), (2, 20), (3, 30)
+GO
+~~ROW COUNT: 3~~
+
+
+UPDATE babel7022_t8 SET val = val + 100
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT COUNT(*) AS log_count FROM babel7022_t8_log
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT id, old_val, new_val FROM babel7022_t8_log ORDER BY id
+GO
+~~START~~
+int#!#int#!#int
+1#!#10#!#110
+2#!#20#!#120
+3#!#30#!#130
+~~END~~
+
+
+-- TEST 9: CASCADE DELETE when parent has no children - trigger still fires with empty deleted
+-- TODO: SQL Server does not fire the trigger in this case (log_count would be 0).
+-- Babelfish fires it with an empty deleted table. This is a separate compatibility issue.
+INSERT INTO babel7022_parent9 VALUES (1), (2), (3)
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO babel7022_child9 VALUES (10, 2), (20, 3)
+GO
+~~ROW COUNT: 2~~
+
+
+DELETE FROM babel7022_parent9 WHERE id = 1
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel7022_log9 ORDER BY cnt
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+DELETE FROM babel7022_parent9 WHERE id = 2
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel7022_log9 ORDER BY cnt
+GO
+~~START~~
+int
+0
+1
+~~END~~
+
+
+-- TEST 10: CASCADE DELETE inside explicit transaction - trigger should fire correctly within txn
+INSERT INTO babel7022_parent10 VALUES (1), (2), (3)
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO babel7022_child10 VALUES (1, 1), (2, 2), (3, 3)
+GO
+~~ROW COUNT: 3~~
+
+
+BEGIN TRANSACTION
+GO
+
+DELETE FROM babel7022_parent10
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT COUNT(*) AS log_count FROM babel7022_log10
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+COMMIT
+GO
+
+SELECT COUNT(*) AS log_count FROM babel7022_log10
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- TEST 11: Separate DELETE statements should each fire trigger independently, no cross-bleed
+INSERT INTO babel7022_parent11 VALUES (1), (2), (3)
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO babel7022_child11 VALUES (1, 1), (2, 1), (3, 2), (4, 2), (5, 3), (6, 3)
+GO
+~~ROW COUNT: 6~~
+
+
+DELETE FROM babel7022_parent11 WHERE id = 1
+GO
+~~ROW COUNT: 1~~
+
+
+DELETE FROM babel7022_parent11 WHERE id = 2
+GO
+~~ROW COUNT: 1~~
+
+
+DELETE FROM babel7022_parent11 WHERE id = 3
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT firing_num, del_count FROM babel7022_log11 ORDER BY firing_num
+GO
+~~START~~
+int#!#int
+1#!#2
+2#!#2
+3#!#2
+~~END~~
+
