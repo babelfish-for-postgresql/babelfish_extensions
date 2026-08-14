@@ -11,12 +11,17 @@ GO
 CREATE TABLE babel7022_history (id int, parent_id int)
 GO
 
+-- One row is inserted here per trigger firing, so its row count == number of firings
+CREATE TABLE babel7022_fire_count (rows_seen int)
+GO
+
 CREATE TRIGGER babel7022_child_del_trg
   ON babel7022_child
   AFTER DELETE
 AS
 BEGIN
   SET NOCOUNT ON;
+  INSERT INTO babel7022_fire_count (rows_seen) SELECT COUNT(*) FROM deleted;
   INSERT INTO babel7022_history (id, parent_id)
     SELECT id, parent_id FROM deleted;
 END
@@ -275,5 +280,265 @@ AS
 BEGIN
   SET NOCOUNT ON;
   INSERT INTO babel7022_log11 (del_count) SELECT COUNT(*) FROM deleted;
+END
+GO
+
+-- TEST 12: CASCADE DELETE with rollback / savepoint scenarios
+CREATE TABLE babel7022_parent12 (id int PRIMARY KEY)
+GO
+
+CREATE TABLE babel7022_child12 (
+  id int PRIMARY KEY,
+  parent_id int NOT NULL REFERENCES babel7022_parent12(id) ON DELETE CASCADE
+)
+GO
+
+CREATE TABLE babel7022_log12 (id int, parent_id int)
+GO
+
+CREATE TRIGGER babel7022_child12_del_trg
+  ON babel7022_child12
+  AFTER DELETE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  INSERT INTO babel7022_log12 (id, parent_id)
+    SELECT id, parent_id FROM deleted;
+END
+GO
+
+-- TEST 13: Transaction commands inside the trigger body during CASCADE (BABEL-1416)
+
+-- 13a: trigger body with SAVE TRANSACTION
+CREATE TABLE babel7022_parent13a (id int PRIMARY KEY)
+GO
+
+CREATE TABLE babel7022_child13a (
+  id int PRIMARY KEY,
+  parent_id int NOT NULL REFERENCES babel7022_parent13a(id) ON DELETE CASCADE
+)
+GO
+
+CREATE TABLE babel7022_history13a (id int, parent_id int)
+GO
+
+CREATE TRIGGER babel7022_child13a_del_trg
+  ON babel7022_child13a
+  AFTER DELETE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  SAVE TRANSACTION trg_sp;
+  INSERT INTO babel7022_history13a (id, parent_id) SELECT id, parent_id FROM deleted;
+END
+GO
+
+-- 13b: trigger body inserts a marker, saves, inserts, then rolls back to savepoint
+CREATE TABLE babel7022_parent13b (id int PRIMARY KEY)
+GO
+
+CREATE TABLE babel7022_child13b (
+  id int PRIMARY KEY,
+  parent_id int NOT NULL REFERENCES babel7022_parent13b(id) ON DELETE CASCADE
+)
+GO
+
+CREATE TABLE babel7022_history13b (id int, parent_id int)
+GO
+
+CREATE TRIGGER babel7022_child13b_del_trg
+  ON babel7022_child13b
+  AFTER DELETE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  INSERT INTO babel7022_history13b (id, parent_id) SELECT id, -1 FROM deleted;
+  SAVE TRANSACTION trg_sp;
+  INSERT INTO babel7022_history13b (id, parent_id) SELECT id, parent_id FROM deleted;
+  ROLLBACK TRANSACTION trg_sp;
+END
+GO
+
+-- 13c: trigger body with BEGIN TRANSACTION / COMMIT
+CREATE TABLE babel7022_parent13c (id int PRIMARY KEY)
+GO
+
+CREATE TABLE babel7022_child13c (
+  id int PRIMARY KEY,
+  parent_id int NOT NULL REFERENCES babel7022_parent13c(id) ON DELETE CASCADE
+)
+GO
+
+CREATE TABLE babel7022_history13c (id int, parent_id int)
+GO
+
+CREATE TRIGGER babel7022_child13c_del_trg
+  ON babel7022_child13c
+  AFTER DELETE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  BEGIN TRANSACTION;
+  INSERT INTO babel7022_history13c (id, parent_id) SELECT id, parent_id FROM deleted;
+  COMMIT TRANSACTION;
+END
+GO
+
+-- 13d: trigger body with full ROLLBACK (aborts the batch)
+CREATE TABLE babel7022_parent13d (id int PRIMARY KEY)
+GO
+
+CREATE TABLE babel7022_child13d (
+  id int PRIMARY KEY,
+  parent_id int NOT NULL REFERENCES babel7022_parent13d(id) ON DELETE CASCADE
+)
+GO
+
+CREATE TABLE babel7022_history13d (id int, parent_id int)
+GO
+
+CREATE TRIGGER babel7022_child13d_del_trg
+  ON babel7022_child13d
+  AFTER DELETE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  INSERT INTO babel7022_history13d (id, parent_id) SELECT id, parent_id FROM deleted;
+  ROLLBACK TRANSACTION;
+END
+GO
+
+
+-- TEST 14: Multi-row INSERT without cascade - statement trigger fires once
+CREATE TABLE babel7022_t14 (id int PRIMARY KEY, val int)
+GO
+
+CREATE TABLE babel7022_fire14 (rows_seen int)
+GO
+
+CREATE TRIGGER babel7022_t14_ins_trg
+  ON babel7022_t14
+  AFTER INSERT
+AS
+BEGIN
+  SET NOCOUNT ON;
+  INSERT INTO babel7022_fire14 (rows_seen) SELECT COUNT(*) FROM inserted;
+END
+GO
+
+-- TEST 15: Multi-row UPDATE without cascade - statement trigger fires once
+CREATE TABLE babel7022_t15 (id int PRIMARY KEY, val int)
+GO
+
+CREATE TABLE babel7022_fire15 (rows_seen int)
+GO
+
+CREATE TRIGGER babel7022_t15_upd_trg
+  ON babel7022_t15
+  AFTER UPDATE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  INSERT INTO babel7022_fire15 (rows_seen) SELECT COUNT(*) FROM inserted;
+END
+GO
+
+-- TEST 16: Multi-row DELETE without cascade - statement trigger fires once
+CREATE TABLE babel7022_t16 (id int PRIMARY KEY, val int)
+GO
+
+CREATE TABLE babel7022_fire16 (rows_seen int)
+GO
+
+CREATE TRIGGER babel7022_t16_del_trg
+  ON babel7022_t16
+  AFTER DELETE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  INSERT INTO babel7022_fire16 (rows_seen) SELECT COUNT(*) FROM deleted;
+END
+GO
+
+-- TEST 17: Chained triggers - CASCADE delete trigger writes to an audit table
+-- that has its own AFTER INSERT trigger; each trigger fires once
+CREATE TABLE babel7022_parent17 (id int PRIMARY KEY)
+GO
+
+CREATE TABLE babel7022_child17 (
+  id int PRIMARY KEY,
+  parent_id int NOT NULL REFERENCES babel7022_parent17(id) ON DELETE CASCADE
+)
+GO
+
+CREATE TABLE babel7022_audit17 (id int, parent_id int)
+GO
+
+CREATE TABLE babel7022_audit17_fire (rows_seen int)
+GO
+
+CREATE TRIGGER babel7022_child17_del_trg
+  ON babel7022_child17
+  AFTER DELETE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  INSERT INTO babel7022_audit17 (id, parent_id) SELECT id, parent_id FROM deleted;
+END
+GO
+
+CREATE TRIGGER babel7022_audit17_ins_trg
+  ON babel7022_audit17
+  AFTER INSERT
+AS
+BEGIN
+  SET NOCOUNT ON;
+  INSERT INTO babel7022_audit17_fire (rows_seen) SELECT COUNT(*) FROM inserted;
+END
+GO
+
+-- TEST 18: ON DELETE SET NULL - parent delete cascades as UPDATE on children, trigger fires once
+CREATE TABLE babel7022_parent18 (id int PRIMARY KEY)
+GO
+
+CREATE TABLE babel7022_child18 (
+  id int PRIMARY KEY,
+  parent_id int NULL REFERENCES babel7022_parent18(id) ON DELETE SET NULL
+)
+GO
+
+CREATE TABLE babel7022_fire18 (rows_seen int)
+GO
+
+CREATE TRIGGER babel7022_child18_upd_trg
+  ON babel7022_child18
+  AFTER UPDATE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  INSERT INTO babel7022_fire18 (rows_seen) SELECT COUNT(*) FROM inserted;
+END
+GO
+
+-- TEST 19: ON DELETE SET DEFAULT - parent delete cascades as UPDATE setting FK to default, trigger fires once
+CREATE TABLE babel7022_parent19 (id int PRIMARY KEY)
+GO
+
+CREATE TABLE babel7022_child19 (
+  id int PRIMARY KEY,
+  parent_id int NOT NULL DEFAULT 99 REFERENCES babel7022_parent19(id) ON DELETE SET DEFAULT
+)
+GO
+
+CREATE TABLE babel7022_fire19 (rows_seen int)
+GO
+
+CREATE TRIGGER babel7022_child19_upd_trg
+  ON babel7022_child19
+  AFTER UPDATE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  INSERT INTO babel7022_fire19 (rows_seen) SELECT COUNT(*) FROM inserted;
 END
 GO
