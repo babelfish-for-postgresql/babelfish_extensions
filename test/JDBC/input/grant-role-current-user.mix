@@ -63,8 +63,38 @@ GO
 GRANT sysadmin TO babel_6839_pg_user;
 GO
 
--- psql
+-- terminate-psql-conn user=babel_6839_pg_user password=12345678
+
+-- tsql
+-- Test 11: GRANT pg_role TO CURRENT_USER where current_user is a babelfish role
+-- Create a babelfish login from the TSQL endpoint
+CREATE LOGIN babel_6839_bbf_user WITH PASSWORD = '12345678';
+GO
+
+-- psql user=babel_6839_bbf_user password=12345678
+-- Test 11: GRANT non-babelfish role TO CURRENT_USER (babelfish role) should be blocked
+GRANT babel_6839_test_role TO CURRENT_USER;
+GO
+
+-- psql user=babel_6839_bbf_user password=12345678
+-- Test 12: GRANT non-babelfish role TO CURRENT_ROLE (babelfish role) should be blocked
+GRANT babel_6839_test_role TO CURRENT_ROLE;
+GO
+
+-- psql user=babel_6839_bbf_user password=12345678
+-- Test 13: GRANT non-babelfish role TO SESSION_USER (babelfish role) should be blocked
+GRANT babel_6839_test_role TO SESSION_USER;
+GO
+
+-- terminate-psql-conn user=babel_6839_bbf_user password=12345678
+
+-- tsql
+-- Cleanup babelfish login
+DROP LOGIN babel_6839_bbf_user;
+GO
+
 -- Cleanup
+-- psql
 DROP USER babel_6839_pg_user;
 GO
 

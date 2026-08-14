@@ -99,6 +99,51 @@ GO
     Server SQLState: 42501)~~
 
 
+-- terminate-psql-conn user=babel_6839_pg_user password=12345678
+
+-- tsql
+-- Test 11: GRANT pg_role TO CURRENT_USER where current_user is a babelfish role
+-- Create a babelfish login from the TSQL endpoint
+CREATE LOGIN babel_6839_bbf_user WITH PASSWORD = '12345678';
+GO
+
+-- psql user=babel_6839_bbf_user password=12345678
+-- Test 11: GRANT non-babelfish role TO CURRENT_USER (babelfish role) should be blocked
+GRANT babel_6839_test_role TO CURRENT_USER;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- psql user=babel_6839_bbf_user password=12345678
+-- Test 12: GRANT non-babelfish role TO CURRENT_ROLE (babelfish role) should be blocked
+GRANT babel_6839_test_role TO CURRENT_ROLE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- psql user=babel_6839_bbf_user password=12345678
+-- Test 13: GRANT non-babelfish role TO SESSION_USER (babelfish role) should be blocked
+GRANT babel_6839_test_role TO SESSION_USER;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- terminate-psql-conn user=babel_6839_bbf_user password=12345678
+
+-- tsql
+-- Cleanup babelfish login
+DROP LOGIN babel_6839_bbf_user;
+GO
+
 -- psql
 -- Cleanup
 DROP USER babel_6839_pg_user;

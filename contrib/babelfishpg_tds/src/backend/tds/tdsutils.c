@@ -962,7 +962,7 @@ is_babelfish_role(const char *role)
 
 	if (role == NULL)
 		return false;
-	
+
 	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
 	role_oid = get_role_oid(role, true);	/* missing OK */
 	securityadmin = get_role_oid(BABELFISH_SECURITYADMIN, true);  /* missing OK */
@@ -1293,6 +1293,8 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 		rolename = GetUserNameFromId(roleid, true);
 		if (is_babelfish_role(rolename))
 			check_babelfish_alterrole_restictions(false);
+		if (rolename)
+			pfree((char *) rolename);
 	}
 
 	return true;
