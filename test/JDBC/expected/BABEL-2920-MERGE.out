@@ -117,6 +117,56 @@ int#!#varchar
 ~~END~~
 
 
+-- view with a T-SQL INSTEAD OF trigger is rejected as MERGE target (trigger cannot be bypassed)
+CREATE TABLE babel_2920_iot (id INT PRIMARY KEY, val VARCHAR(20))
+go
+INSERT INTO babel_2920_iot VALUES (1, 'orig')
+go
+~~ROW COUNT: 1~~
+
+CREATE VIEW babel_2920_iotv AS SELECT id, val FROM babel_2920_iot
+go
+CREATE TRIGGER babel_2920_iottr ON babel_2920_iotv INSTEAD OF UPDATE AS UPDATE babel_2920_iot SET val = 'fromtrigger'
+go
+MERGE INTO babel_2920_iotv AS t USING (SELECT 1 AS id) AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = 'direct';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot merge into view "babel_2920_iotv")~~
+
+SELECT val FROM babel_2920_iot
+go
+~~START~~
+varchar
+orig
+~~END~~
+
+
+-- source and target remain usable as identifiers
+CREATE TABLE babel_2920_kw (source INT, target INT)
+go
+INSERT INTO babel_2920_kw (source, target) VALUES (1, 2)
+go
+~~ROW COUNT: 1~~
+
+SELECT source, target FROM babel_2920_kw
+go
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+SELECT k.source AS source, k.target AS target FROM babel_2920_kw AS k
+go
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+DROP TABLE babel_2920_kw
+go
+
 -- MERGE inside a stored procedure (upsert pattern)
 CREATE PROCEDURE babel_2920_upsert @id INT, @val VARCHAR(20) AS
 BEGIN
@@ -152,6 +202,30 @@ int#!#varchar
 100#!#HUNDRED!
 ~~END~~
 
+
+-- MERGE in a procedure captured via INSERT ... EXEC
+CREATE TABLE babel_2920_cap (rc INT)
+go
+INSERT INTO babel_2920_cap EXEC babel_2920_upsert 200, 'twohundred'
+go
+~~ROW COUNT: 1~~
+
+SELECT * FROM babel_2920_cap
+go
+~~START~~
+int
+1
+~~END~~
+
+SELECT id, val FROM babel_2920_t WHERE id = 200
+go
+~~START~~
+int#!#varchar
+200#!#twohundred
+~~END~~
+
+DROP TABLE babel_2920_cap
+go
 
 -- error: MERGE cannot update the same row twice
 MERGE INTO babel_2920_t AS t
@@ -227,6 +301,10 @@ go
 DROP PROCEDURE babel_2920_upsert
 go
 DROP VIEW babel_2920_v
+go
+DROP VIEW babel_2920_iotv
+go
+DROP TABLE babel_2920_iot
 go
 DROP TABLE babel_2920_t
 go
