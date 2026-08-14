@@ -1930,6 +1930,25 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause)
 	func_args = lappend(func_args, makeBoolAConst(xsinil, -1));
 	/* 8th arg: auto_metadata placeholder (empty string, filled in by handleForXmlAuto) */
 	func_args = lappend(func_args, makeStringConst("", -1));
+	/*
+	 * 9th arg: namespace declarations from WITH XMLNAMESPACES, if any.
+	 * The C++ ANTLR layer captures the WITH XMLNAMESPACES clause and stores
+	 * a formatted decls string ('xmlns:p1="u1" xmlns:p2="u2"') on the
+	 * enclosing PLtsql_stmt_execsql. We read it back from the currently
+	 * executing stmt via get_current_tsql_estate().
+	 */
+	{
+		PLtsql_execstate *estate = get_current_tsql_estate();
+		char	   *ns_decls = NULL;
+
+		if (estate && estate->err_stmt && estate->err_stmt->cmd_type == PLTSQL_STMT_EXECSQL)
+			ns_decls = ((PLtsql_stmt_execsql *) estate->err_stmt)->xml_namespace_decls;
+
+		if (ns_decls && ns_decls[0] != '\0')
+			func_args = lappend(func_args, makeStringConst(ns_decls, -1));
+		else
+			func_args = lappend(func_args, makeStringConst("", -1));
+	}
 	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
 
 	/*
