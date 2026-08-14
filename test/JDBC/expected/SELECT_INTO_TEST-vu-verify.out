@@ -444,6 +444,8 @@ go
 -- Create a new table select_into_REPO with column select_into_COL using the table-returning function
 select select_into_COL into select_into_REPO from dbo.GetSelectIntoData();
 go
+~~ROW COUNT: 3~~
+
 
 -- Check the data in select_into_REPO
 select * from select_into_REPO;
@@ -506,6 +508,8 @@ int
 -- Create a new table select_into_REPO with column 中文_COL
 select 中文_COL into select_into_REPO from select_into;
 go
+~~ROW COUNT: 3~~
+
 
 -- Check the data in select_into_REPO
 select * from select_into_REPO;
@@ -557,6 +561,8 @@ int
 -- Create a new table select_into_REPO with column 中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into
 select 中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into into select_into_REPO from select_into;
 go
+~~ROW COUNT: 3~~
+
 
 -- Check the data in select_into_REPO
 select * from select_into_REPO;
@@ -608,6 +614,8 @@ int
 -- Create a new table select_into_REPO with column select_into_COL using multi-part name
 select dbo.select_into.select_into_COL into select_into_REPO from dbo.select_into;
 go
+~~ROW COUNT: 3~~
+
 
 -- Check the data in select_into_REPO
 select * from select_into_REPO;
@@ -660,6 +668,8 @@ int
 -- Create a new table select_into_REPO with column select_into_COL_select_into_COL_Col_length_greater_then_sixty_four using multi-part name
 select dbo.select_into.select_into_COL_select_into_COL_Col_length_greater_then_sixty_four into select_into_REPO from dbo.select_into;
 go
+~~ROW COUNT: 3~~
+
 
 -- Check the data in select_into_REPO
 select * from select_into_REPO;

@@ -1728,7 +1728,7 @@ isForAuto(List *target, ForAutoMode mode)
  * the target columns for nesting. Follows T-SQL behavior by reporting
  * "at least one table" error when no valid sources are found.
  *
- * Valid source types: RTE_RELATION, RTE_SUBQUERY, RTE_CTE, user-defined RTE_FUNCTION
+ * Valid source types: RTE_RELATION, RTE_SUBQUERY, RTE_CTE, RTE_NAMEDTUPLESTORE, user-defined RTE_FUNCTION
  */
 static bool
 handleForAuto(Query *wrapperQuery, ForAutoContext *ctx)
@@ -1778,7 +1778,8 @@ handleForAuto(Query *wrapperQuery, ForAutoContext *ctx)
 		foreach(lc, origqRtable)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
-			if (rte->rtekind == RTE_RELATION || rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE)
+			if (rte->rtekind == RTE_RELATION || rte->rtekind == RTE_SUBQUERY || rte->rtekind == RTE_CTE ||
+				rte->rtekind == RTE_NAMEDTUPLESTORE)
 			{
 				hasValidSrc = true;
 				break;
@@ -2041,8 +2042,9 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 								   HASH_ELEM | HASH_STRINGS);
 
 	/*
-	 * XML AUTO: Pre-scan for first base table alias as fallback for
-	 * recursive CTE columns joined with base tables.
+	 * XML AUTO: Pre-scan for first base table or named tuplestore alias
+	 * as fallback for recursive CTE columns joined with base tables or
+	 * trigger transition tables.
 	 */
 	if (mode == FOR_AUTO_XML)
 	{
@@ -2050,7 +2052,7 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 		foreach(preLc, origQuery->rtable)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(preLc);
-			if (rte->rtekind == RTE_RELATION)
+			if (rte->rtekind == RTE_RELATION || rte->rtekind == RTE_NAMEDTUPLESTORE)
 			{
 				recursiveCTEFallbackAlias = rte->eref->aliasname;
 				break;
@@ -2141,14 +2143,14 @@ processAutoColumns(Query *wrapperQuery, Query *origQuery, Alias *wrapperRteAlias
 				{
 					matchedSrcCTEIsRecursive = true;
 
-					/* XML AUTO: look for base table sibling as fallback alias */
+					/* XML AUTO: look for base table or named tuplestore sibling as fallback alias */
 					if (mode == FOR_AUTO_XML)
 					{
 						ListCell *sibLc;
 						foreach(sibLc, curQuery->rtable)
 						{
 							RangeTblEntry *sibRte = (RangeTblEntry *) lfirst(sibLc);
-							if (sibRte->rtekind == RTE_RELATION)
+							if (sibRte->rtekind == RTE_RELATION || sibRte->rtekind == RTE_NAMEDTUPLESTORE)
 							{
 								recursiveCTEFallbackAlias = sibRte->eref->aliasname;
 								break;
@@ -3020,7 +3022,17 @@ bbf_table_var_lookup(const char *relname, Oid relnamespace)
 	ListCell   *lc;
 	int			n;
 	PLtsql_tbl *tbl;
-	PLtsql_execstate *estate = get_current_tsql_estate();
+	PLtsql_execstate *estate;
+
+	/*
+	 * During an INSERT EXEC flush the query runs through execute_batch/the
+	 * inline handler, which pushes its own (empty) estate. insert_exec_flush_estate
+	 * points us back at the estate that actually declared the target table
+	 * variable, so an "@tv" flush target resolves to its backing table.
+	 * Outside the flush it is NULL and we use the current (topmost) estate.
+	 */
+	estate = insert_exec_flush_estate ? insert_exec_flush_estate
+									  : get_current_tsql_estate();
 
 	if (prev_relname_lookup_hook)
 		relid = (*prev_relname_lookup_hook) (relname, relnamespace);
@@ -6438,6 +6450,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->sql_bytea_from_geography = common_utility_plugin_ptr->bytea_from_geography;
 		(*pltsql_protocol_plugin_ptr)->sql_geometry_from_bytea = common_utility_plugin_ptr->geometry_from_bytea;
 		(*pltsql_protocol_plugin_ptr)->sql_geography_from_bytea = common_utility_plugin_ptr->geography_from_bytea;
+		(*pltsql_protocol_plugin_ptr)->pltsql_insert_exec_active = &pltsql_insert_exec_active;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
@@ -6613,6 +6626,13 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 
 		pltsql_non_tsql_proc_entry_count = 0;
 		Assert(pltsql_sys_func_entry_count == 0);
+
+		/*
+		 * Clear stale INSERT EXEC context at the end of each top-level batch.
+		 * This is a safety net to prevent context from leaking between batches.
+		 */
+		if (pltsql_insert_exec_active())
+			pltsql_insert_exec_reset_all();
 
 		if (pltsql_snapshot_portal != NULL)
 		{
@@ -6907,7 +6927,6 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	FunctionCallInfo fake_fcinfo = palloc0(SizeForFunctionCallInfo(nargs));
 	bool		nonatomic;
 	bool		support_tsql_trans = pltsql_support_tsql_transactions();
-	ReturnSetInfo rsinfo;		/* for INSERT ... EXECUTE */
 
 	/*
 	 * FIXME: We leak sp_describe_first_result_set_inprogress if CREATE VIEW
@@ -7016,46 +7035,6 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	else
 		simple_eval_estate = CreateExecutorState();
 
-	/*
-	 * If we are here for INSERT ... EXECUTE, prepare a resultinfo node for
-	 * communication before invoking the function, which can accumulate the
-	 * result sets.
-	 */
-	if (codeblock->relation && codeblock->attrnos)
-	{
-		Oid			reltypeid;
-		TupleDesc	reldesc;
-		TupleDesc	retdesc;
-		int			natts = 0;
-		ListCell   *lc;
-		ListCell   *next;
-
-		/* look up the INSERT target relation rowtype's tupdesc */
-		reltypeid = get_rel_type_id(codeblock->relation);
-		reldesc = lookup_rowtype_tupdesc(reltypeid, -1);
-
-		/* build a tupdesc that only contains relevant INSERT columns */
-		retdesc = CreateTemplateTupleDesc(list_length(codeblock->attrnos));
-		for (lc = list_head(codeblock->attrnos); lc != NULL; lc = next)
-		{
-			natts += 1;
-			TupleDescCopyEntry(retdesc, natts, reldesc, lfirst_int(lc));
-			next = lnext(codeblock->attrnos, lc);
-		}
-
-		fake_fcinfo->resultinfo = (Node *) &rsinfo;
-		rsinfo.type = T_ReturnSetInfo;
-		rsinfo.econtext = CreateExprContext(simple_eval_estate);
-		rsinfo.expectedDesc = retdesc;
-		rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
-		/* note we do not set SFRM_Materialize_Random or _Preferred */
-		rsinfo.returnMode = SFRM_ValuePerCall;
-		rsinfo.isDone = ExprSingleResult;
-		rsinfo.setResult = NULL;
-		rsinfo.setDesc = NULL;
-		ReleaseTupleDesc(reldesc);
-	}
-
 	/* And run the function */
 	PG_TRY();
 	{
@@ -7101,28 +7080,6 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		return retval;
 	}
 	PG_END_TRY();
-
-	if (codeblock->dest && rsinfo.setDesc && rsinfo.setResult)
-	{
-		/*
-		 * If we are here for INSERT ... EXECUTE, send all tuples accumulated
-		 * in resultinfo to the DestReceiver, which will later be consumed by
-		 * the INSERT execution.
-		 */
-		TupleTableSlot *slot = MakeSingleTupleTableSlot(rsinfo.expectedDesc,
-														&TTSOpsMinimalTuple);
-		DestReceiver *dest = (DestReceiver *) codeblock->dest;
-
-		for (;;)
-		{
-			if (!tuplestore_gettupleslot(rsinfo.setResult, true, false, slot))
-				break;
-			dest->receiveSlot(slot, dest);
-			ExecClearTuple(slot);
-		}
-		ReleaseTupleDesc(rsinfo.expectedDesc);
-		ExecDropSingleTupleTableSlot(slot);
-	}
 
 	/* Function should now have no remaining use-counts ... */
 	func->use_count--;

@@ -113,6 +113,7 @@ nested_trigger_inside_proc
 nested_trigger_with_dml
 routines_definition_before-14_7-or-15_2
 rowcount
+select_into_rowcount
 schema_resolution_func
 schema_resolution_proc
 schema_resolution_trigger

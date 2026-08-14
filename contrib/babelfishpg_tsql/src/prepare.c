@@ -49,6 +49,15 @@ prepare_stmt_execsql(PLtsql_execstate *estate, PLtsql_function *func, PLtsql_stm
 	PLtsql_expr *expr = stmt->sqlstmt;
 	ListCell   *l;
 
+	/*
+	 * INSERT EXEC (new path): validate the source statement's result column
+	 * count against the temp buffer BEFORE the plan is built/const-folded, so
+	 * a column-count mismatch is raised ahead of any runtime error (e.g. 1/0).
+	 */
+	if (pltsql_insert_exec_active() &&
+		!stmt->is_tsql_select_assign_stmt)
+		pltsql_insert_exec_validate_column_count(estate, stmt);
+
 	exec_prepare_plan(estate, expr, CURSOR_OPT_PARALLEL_OK, keepplan);
 	stmt->mod_stmt = false;
 	stmt->mod_stmt_tablevar = false;
@@ -175,7 +184,7 @@ is_exec_stmt_on_scalar_func(const char *stmt, int *first_arg_location, const cha
 	FuncDetailCode fdresult;
 	Oid			funcid;
 	Oid			rettype;		/* not used */
-	bool		retset;			/* not used */
+	bool		retset;			/* used to detect table-valued functions */
 	int			nvargs;			/* not used */
 	Oid			vatype;			/* not used */
 	Oid		   *typeids;		/* not used */
@@ -213,6 +222,17 @@ is_exec_stmt_on_scalar_func(const char *stmt, int *first_arg_location, const cha
 
 	if (fdresult != FUNCDETAIL_NORMAL)
 		return false;
+
+	/* INSERT ... EXEC does not allow a table-valued function as its source. */
+	if (retset && pltsql_insert_exec_active())
+	{
+		char	   *tvf_name = strVal(llast(funcname));
+
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("The request for procedure '%s' failed because '%s' is a table valued function object.",
+						tvf_name, tvf_name)));
+	}
 
 	if (get_func_result_type(funcid, NULL, NULL) != TYPEFUNC_SCALAR)
 		return false;

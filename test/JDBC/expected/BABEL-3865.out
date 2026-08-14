@@ -94,6 +94,8 @@ GO
 
 SELECT * INTO #temp_4 FROM tab_1
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT * FROM #temp_4
 GO

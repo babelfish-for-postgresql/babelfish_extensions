@@ -50,7 +50,7 @@
 %type <fun_param> tsql_proc_arg tsql_func_arg
 %type <list> tsql_proc_args_list tsql_func_args_list
 
-%type <node> tsql_ExecStmt tsql_output_ExecStmt
+%type <node> tsql_ExecStmt
 %type <list> tsql_actual_args
 %type <list> tsql_opt_partition_scheme_or_filegroup
 %type <node> tsql_actual_arg

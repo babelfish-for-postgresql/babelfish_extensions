@@ -1477,3 +1477,211 @@ FOR XML AUTO;
 COMMIT;
 GO
 
+
+
+-- ============================================
+-- SECTION 21: NAMEDTUPLESTORE (Triggers with INSERTED/DELETED)
+-- ============================================
+-- 21.1 FOR XML AUTO with INSERTED in AFTER INSERT trigger
+INSERT INTO forxmlauto_t_trigger_test VALUES (1, 'Alice', 100);
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+-- 21.2 FOR XML AUTO with INSERTED — multiple rows
+INSERT INTO forxmlauto_t_trigger_test VALUES (2, 'Bob', 200), (3, 'Charlie', 300);
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+-- 21.3 FOR XML AUTO with DELETED in AFTER DELETE trigger
+DELETE FROM forxmlauto_t_trigger_test WHERE ID = 1;
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+-- 21.4 FOR XML AUTO with DELETED — multiple rows
+DELETE FROM forxmlauto_t_trigger_test WHERE ID IN (2, 3);
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+-- 21.5 FOR XML AUTO with INSERTED and column subset
+DISABLE TRIGGER forxmlauto_trg_insert ON forxmlauto_t_trigger_test;
+GO
+ENABLE TRIGGER forxmlauto_trg_insert_subset ON forxmlauto_t_trigger_test;
+GO
+
+INSERT INTO forxmlauto_t_trigger_test VALUES (4, 'Diana', 400);
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+-- 21.6 FOR XML AUTO with INSERTED joined with base table
+DISABLE TRIGGER forxmlauto_trg_insert_subset ON forxmlauto_t_trigger_test;
+GO
+ENABLE TRIGGER forxmlauto_trg_insert_join ON forxmlauto_t_trigger_test;
+GO
+
+INSERT INTO forxmlauto_t_trigger_test VALUES (5, 'Eve', 500);
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+-- 21.7 FOR XML AUTO with UPDATE trigger (both inserted and deleted)
+DISABLE TRIGGER forxmlauto_trg_insert_join ON forxmlauto_t_trigger_test;
+GO
+DISABLE TRIGGER forxmlauto_trg_delete ON forxmlauto_t_trigger_test;
+GO
+ENABLE TRIGGER forxmlauto_trg_update_both ON forxmlauto_t_trigger_test;
+GO
+
+UPDATE forxmlauto_t_trigger_test SET Value = 999 WHERE ID = 4;
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+-- 21.8 FOR XML AUTO with inserted JOIN deleted in UPDATE trigger (nesting behavior)
+DISABLE TRIGGER forxmlauto_trg_update_both ON forxmlauto_t_trigger_test;
+GO
+ENABLE TRIGGER forxmlauto_trg_update_join ON forxmlauto_t_trigger_test;
+GO
+
+UPDATE forxmlauto_t_trigger_test SET Value = 888, Name = 'Updated' WHERE ID = 5;
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+-- 21.9 FOR XML AUTO with NULL values in transition table columns
+DISABLE TRIGGER forxmlauto_trg_update_join ON forxmlauto_t_trigger_test;
+GO
+ENABLE TRIGGER forxmlauto_trg_insert_null ON forxmlauto_t_trigger_test;
+GO
+
+INSERT INTO forxmlauto_t_trigger_test VALUES (6, NULL, NULL);
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+-- 21.10 FOR XML AUTO with DELETED joined with base table
+DISABLE TRIGGER forxmlauto_trg_insert_null ON forxmlauto_t_trigger_test;
+GO
+ENABLE TRIGGER forxmlauto_trg_delete_join ON forxmlauto_t_trigger_test;
+GO
+
+DELETE FROM forxmlauto_t_trigger_test WHERE ID = 6;
+GO
+
+SELECT ResultXml FROM forxmlauto_t_trigger_xml_result;
+GO
+
+DELETE FROM forxmlauto_t_trigger_xml_result;
+GO
+
+
+-- ============================================
+-- SECTION 22: Recursive CTE fallback alias with trigger transition tables
+-- ============================================
+-- 22.1 Recursive CTE joined with base table (RTE_RELATION as fallback alias)
+ENABLE TRIGGER forxmlauto_trg_rcte_base_only ON forxmlauto_t_rcte;
+GO
+
+INSERT INTO forxmlauto_t_rcte VALUES (1, NULL, 'New');
+GO
+
+SELECT result_xml FROM forxmlauto_t_rcte_result;
+GO
+
+DELETE FROM forxmlauto_t_rcte_result;
+DELETE FROM forxmlauto_t_rcte WHERE val = 'New';
+GO
+
+DISABLE TRIGGER forxmlauto_trg_rcte_base_only ON forxmlauto_t_rcte;
+GO
+
+-- 22.2 Recursive CTE joined with inserted only (RTE_NAMEDTUPLESTORE as fallback alias)
+ENABLE TRIGGER forxmlauto_trg_rcte_ins_only ON forxmlauto_t_rcte;
+GO
+
+INSERT INTO forxmlauto_t_rcte VALUES (1, NULL, 'New');
+GO
+
+SELECT result_xml FROM forxmlauto_t_rcte_result;
+GO
+
+DELETE FROM forxmlauto_t_rcte_result;
+DELETE FROM forxmlauto_t_rcte WHERE val = 'New';
+GO
+
+DISABLE TRIGGER forxmlauto_trg_rcte_ins_only ON forxmlauto_t_rcte;
+GO
+
+-- 22.3 Recursive CTE with base table FIRST, then inserted
+ENABLE TRIGGER forxmlauto_trg_rcte_base_first ON forxmlauto_t_rcte;
+GO
+
+INSERT INTO forxmlauto_t_rcte VALUES (1, NULL, 'New');
+GO
+
+SELECT result_xml FROM forxmlauto_t_rcte_result;
+GO
+
+DELETE FROM forxmlauto_t_rcte_result;
+DELETE FROM forxmlauto_t_rcte WHERE val = 'New';
+GO
+
+DISABLE TRIGGER forxmlauto_trg_rcte_base_first ON forxmlauto_t_rcte;
+GO
+
+-- 22.4 Recursive CTE with inserted FIRST, then base table
+ENABLE TRIGGER forxmlauto_trg_rcte_ins_first ON forxmlauto_t_rcte;
+GO
+
+INSERT INTO forxmlauto_t_rcte VALUES (1, NULL, 'New');
+GO
+
+SELECT result_xml FROM forxmlauto_t_rcte_result;
+GO
+
+DELETE FROM forxmlauto_t_rcte_result;
+DELETE FROM forxmlauto_t_rcte WHERE val = 'New';
+GO
+
+DISABLE TRIGGER forxmlauto_trg_rcte_ins_first ON forxmlauto_t_rcte;
+GO

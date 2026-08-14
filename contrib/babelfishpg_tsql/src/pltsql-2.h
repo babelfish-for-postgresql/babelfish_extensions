@@ -10,6 +10,18 @@
  */
 
 /*
+ * INSERT EXEC info - shared by PLtsql_stmt_exec, PLtsql_stmt_exec_sp,
+ * and PLtsql_stmt_exec_batch.
+ */
+typedef struct InsertExecInfo
+{
+	char		*target;			/* Target table name (bare name only, no schema/db prefix) */
+	char		*schema;			/* Schema name, or NULL if not specified */
+	char		*db_name;			/* Database name, or NULL if not specified */
+	List		*columns;			/* List of column name strings, or NIL */
+} InsertExecInfo;
+
+/*
  * PRINT statement
  */
 typedef struct PLtsql_stmt_print
@@ -111,6 +123,8 @@ typedef struct PLtsql_stmt_exec
 	char	   *db_name;
 	char	   *proc_name;
 	char	   *schema_name;
+
+	InsertExecInfo *insert_exec;	/* NULL for plain EXEC, non-NULL for INSERT EXEC */
 		
 	bool		exec_with_recompile; /* forced recompile through EXECUTE */	
 } PLtsql_stmt_exec;
@@ -170,6 +184,8 @@ typedef struct PLtsql_stmt_exec_sp
 	PLtsql_expr *opt2;
 	PLtsql_expr *opt3;
 	List	   *stropt;
+
+	InsertExecInfo *insert_exec;	/* NULL for plain EXEC, non-NULL for INSERT EXEC */
 } PLtsql_stmt_exec_sp;
 
 /*
@@ -194,6 +210,8 @@ typedef struct PLtsql_stmt_exec_batch
 	PLtsql_stmt_type cmd_type;
 	int			lineno pg_node_attr(equal_ignore);
 	PLtsql_expr *expr;
+
+	InsertExecInfo *insert_exec;	/* NULL for plain EXEC, non-NULL for INSERT EXEC */
 } PLtsql_stmt_exec_batch;
 
 typedef struct PLtsql_stmt_raiserror
@@ -359,5 +377,11 @@ extern char *yytext;
 extern void pltsql_convert_ident(const char *s, char **output, int numidents);
 extern PLtsql_expr *pltsql_read_expression(int until, const char *expected);
 extern RangeVar *pltsqlMakeRangeVarFromName(const char *identifier_val);
+
+/* INSERT EXEC setup/cleanup helpers (pl_insert_exec.c) - take InsertExecInfo */
+extern bool insert_exec_setup(PLtsql_execstate *estate,
+                                        InsertExecInfo *info,
+                                        bool start_implicit_txn);
+extern void insert_exec_flush_and_cleanup(PLtsql_execstate *estate, InsertExecInfo *info);
 
 #endif

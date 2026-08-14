@@ -138,3 +138,5 @@ GO
 
 SELECT SUM(Amount) * 1.1 AS TotalWithMarkup, sum(a_tiny) * 1.1 as mul1, sum(b_smallint) * 1.1 as mul2, sum(c_big) * 1.1 as mul3, sum(d_fl) * 1.1 as mul4, sum(e_real) * 1.1 as mul5, sum(f_mon) * 1.1 as mul6, sum(g_smallmoney) * 1.1 as mul7 , sum(h_smallmoneyUDT) * 1.1 as mul8udtsmallmoney, sum(i_moneyudt) * 1.1 as mul8moneyudt INTO babel_5512_t6 FROM babel_5512_t5;
 GO
+~~ROW COUNT: 1~~
+

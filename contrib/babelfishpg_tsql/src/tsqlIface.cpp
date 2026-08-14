@@ -122,6 +122,7 @@ PLtsql_stmt *makeCfl(TSqlParser::Cfl_statementContext *ctx, tsqlBuilder &builder
 PLtsql_stmt *makeSQL(ParserRuleContext *ctx);
 std::vector<PLtsql_stmt *> makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder);
 PLtsql_stmt *makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx);
+PLtsql_stmt *makeExecuteStatement(TSqlParser::Execute_statementContext *ctx);
 PLtsql_stmt *makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type);
 PLtsql_stmt *makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx);
 PLtsql_stmt *makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx);
@@ -409,6 +410,59 @@ stripQuoteFromId(std::string s)
 		return s.substr(1,s.length()-2);
 	}
 	return s;
+}
+
+/*
+ * extract_ddl_object_names - Extract table name, schema, and database
+ * from a ddl_object parse context. Names are downcased and truncated to match
+ * PostgreSQL identifier handling.
+ * Output pointers are set to NULL if the corresponding name is not present.
+ * Returns true if a table name was found, false otherwise.
+ */
+static bool
+extract_ddl_object_names(TSqlParser::Ddl_objectContext *ddl_object,
+						 char **table_name,
+						 char **schema_name,
+						 char **db_name)
+{
+	*table_name = NULL;
+	*schema_name = NULL;
+	*db_name = NULL;
+
+	if (!ddl_object)
+		return false;
+
+	if (ddl_object->local_id())
+	{
+		std::string tbl = ::getFullText(ddl_object->local_id());
+		if (!tbl.empty())
+			*table_name = downcase_truncate_identifier(tbl.c_str(), tbl.length(), true);
+		return (*table_name != NULL);
+	}
+	else if (ddl_object->full_object_name())
+	{
+		if (ddl_object->full_object_name()->object_name)
+		{
+			std::string tbl = stripQuoteFromId(ddl_object->full_object_name()->object_name);
+			if (!tbl.empty())
+				*table_name = downcase_truncate_identifier(tbl.c_str(), tbl.length(), true);
+		}
+		if (ddl_object->full_object_name()->schema)
+		{
+			std::string sch = stripQuoteFromId(ddl_object->full_object_name()->schema);
+			if (!sch.empty())
+				*schema_name = downcase_truncate_identifier(sch.c_str(), sch.length(), true);
+		}
+		if (ddl_object->full_object_name()->database)
+		{
+			std::string db = stripQuoteFromId(ddl_object->full_object_name()->database);
+			if (!db.empty())
+				*db_name = downcase_truncate_identifier(db.c_str(), db.length(), true);
+		}
+		return (*table_name != NULL);
+	}
+
+	return false;
 }
 
 static int
@@ -1102,6 +1156,125 @@ validate_forxml_column_alias_prefixes(TSqlParser::Select_listContext *selectList
 		/* alias on the left: 'ns:Name' = expr */
 		if (exp_elem->column_alias())
 			check_alias(exp_elem->column_alias());
+ * get_insert_exec_info - Extract all INSERT EXEC target info from the parse
+ * context and return a populated InsertExecInfo struct.
+ */
+static InsertExecInfo *
+get_insert_exec_info(TSqlParser::Dml_statementContext *ctx)
+{
+	InsertExecInfo *info = (InsertExecInfo *) palloc0(sizeof(InsertExecInfo));
+	char *tbl_name = NULL;
+	char *tbl_schema = NULL;
+	char *tbl_db = NULL;
+
+	extract_ddl_object_names(ctx->insert_statement()->ddl_object(),
+							 &tbl_name, &tbl_schema, &tbl_db);
+
+	/*
+	 * Temp tables live in pg_temp, not user schemas. Strip any schema/db
+	 * the user may have provided (e.g., dbo.#temp).
+	 */
+	if (tbl_name && tbl_name[0] == '#')
+	{
+		if (tbl_schema) { pfree(tbl_schema); tbl_schema = NULL; }
+		if (tbl_db)     { pfree(tbl_db);     tbl_db = NULL; }
+	}
+
+	if (!tbl_name)
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+			"INSERT EXEC requires a valid target table",
+			getLineAndPos(ctx->insert_statement()));
+
+	info->target  = tbl_name;
+	info->schema  = tbl_schema;
+	info->db_name = tbl_db;
+
+	/* Build column list */
+	List *column_list = NIL;
+	auto column_list_ctx = ctx->insert_statement()->insert_column_name_list();
+	if (column_list_ctx)
+	{
+		for (auto col : column_list_ctx->col)
+		{
+			auto ids = col->id();
+			Assert(!ids.empty());
+			if (!ids.empty() && ids.back() != nullptr)
+			{
+				std::string col_name = stripQuoteFromId(ids.back());
+				if (!col_name.empty())
+					column_list = lappend(column_list,
+						downcase_truncate_identifier(col_name.c_str(), col_name.length(), true));
+			}
+		}
+	}
+	info->columns = column_list;
+
+	return info;
+}
+
+/*
+ * set_insert_exec_info - Apply an InsertExecInfo pointer to the correct
+ * statement type based on cmd_type.
+ */
+static void
+set_insert_exec_info(PLtsql_stmt *stmt, InsertExecInfo *info)
+{
+	if (stmt->cmd_type == PLTSQL_STMT_EXEC)
+		((PLtsql_stmt_exec *) stmt)->insert_exec = info;
+	else if (stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
+		((PLtsql_stmt_exec_batch *) stmt)->insert_exec = info;
+	else if (stmt->cmd_type == PLTSQL_STMT_EXEC_SP)
+		((PLtsql_stmt_exec_sp *) stmt)->insert_exec = info;
+	else
+		Assert(false); /* INSERT EXEC can only target EXEC, EXEC_BATCH, or EXEC_SP */
+}
+
+/*
+ * apply_exec_expression_rewriting - Apply expression rewriting for EXEC
+ * and EXEC_BATCH statement types. This handles double-quoted identifier
+ * rewriting and other query mutations for the execute statement.
+ *
+ * Note: PLTSQL_STMT_EXEC_SP (sp_executesql, sp_execute, sp_prepexec) does
+ * not need expression rewriting — system SP arguments are explicit typed
+ * parameters, not general SQL expressions containing double-quoted identifiers.
+ */
+static void
+apply_exec_expression_rewriting(PLtsql_stmt *stmt, ParserRuleContext *baseCtx)
+{
+	/*
+	 * For INSERT EXEC, any rewrite recorded for the INSERT
+	 * target (e.g. the db/schema qualifier in "otherdb..t_target") sits before
+	 * the EXEC start and would map to a negative offset. Those entries belong
+	 * to the INSERT destination, not the executed statement, so drop them
+	 * before running the mutator.
+	 */
+	size_t exec_start = baseCtx->getStart()->getStartIndex();
+	for (auto it = rewritten_query_fragment.begin(); it != rewritten_query_fragment.end(); )
+	{
+		if (it->first < exec_start)
+			it = rewritten_query_fragment.erase(it);
+		else
+			++it;
+	}
+
+	if (stmt->cmd_type == PLTSQL_STMT_EXEC)
+	{
+		PLtsql_stmt_exec *exec_stmt = (PLtsql_stmt_exec *) stmt;
+		PLtsql_expr_query_mutator mutator(exec_stmt->expr, baseCtx);
+		add_rewritten_query_fragment_to_mutator(&mutator);
+		mutator.run();
+	}
+	else if (stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
+	{
+		PLtsql_stmt_exec_batch *exec_batch_stmt = (PLtsql_stmt_exec_batch *) stmt;
+		PLtsql_expr_query_mutator mutator(exec_batch_stmt->expr, baseCtx);
+		/*
+		 * We don't call markSelectFragment here — selectFragmentOffsets was
+		 * recorded with ctx->parent as key, not baseCtx. For dynamic SQL in
+		 * INSERT EXEC, we rewrite the entire expression string.
+		 */
+		add_rewritten_query_fragment_to_mutator(&mutator);
+		mutator.run();
 	}
 }
 
@@ -2032,6 +2205,54 @@ public:
 		setCode(container, list_delete_ptr(siblings, stmt));
 	}
 
+	/*
+	 * Replace a grafted statement with a new one.
+	 * Used for INSERT EXEC where we replace PLtsql_stmt_execsql with PLtsql_stmt_exec
+	 */
+	void replaceGraftedStatement(ParserRuleContext *ctx, PLtsql_stmt *new_stmt)
+	{
+		PLtsql_stmt *old_stmt = getPLtsql_fragment(ctx);
+		ParserRuleContext *container = peekContainer();
+
+		/*
+		 * old_stmt is always set for INSERT EXEC — exitDml_statement attaches
+		 * a PLtsql_stmt_execsql fragment before this function is called.
+		 * Reaching here means a broken parser state.
+		*/
+		Assert(old_stmt != NULL && container != NULL);
+		if (!old_stmt || !container)
+			elog(ERROR, "INSERT EXEC: internal parser state error in replaceGraftedStatement");
+
+		List *siblings = getCode(container);
+		ListCell *lc;
+		int pos = 0;
+
+		if (pltsql_enable_antlr_detailed_log)
+			std::cout << "    replacing stmt (" << (void *) old_stmt << ") with (" << (void *) new_stmt << ") in container(" << (void *) container << ")" << std::endl;
+
+		/* Find the position of the old statement */
+		bool found = false;
+		foreach(lc, siblings)
+		{
+			if (lfirst(lc) == old_stmt) 
+			{ 
+				found = true; 
+				break; 
+			}
+			pos++;
+		}
+		if (!found)
+			elog(ERROR, "INSERT EXEC: grafted statement not found in container");
+
+		/* Remove old statement and insert new one at the same position */
+		siblings = list_delete_ptr(siblings, old_stmt);
+		siblings = list_insert_nth(siblings, pos, new_stmt);
+		setCode(container, siblings);
+
+		/* Update the fragment mapping */
+		attachPLtsql_fragment(ctx, new_stmt);
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
 	// Container statement management
 	//////////////////////////////////////////////////////////////////////////////
@@ -2332,13 +2553,51 @@ public:
 		statementMutator = std::make_unique<PLtsql_expr_query_mutator>(stmt->sqlstmt, ctx);
 	}
 
+	/*
+	 * handleInsertExec - Handle the INSERT EXEC new code path.
+	 * Contains the entire INSERT EXEC logic for the new implementation.
+	 */
+	void handleInsertExec(TSqlParser::Dml_statementContext *ctx)
+	{
+		/* INSERT EXEC is not allowed in a function */
+		if (is_compiling_create_function())
+		{
+			auto ddl_object = ctx->insert_statement()->ddl_object();
+			if (ddl_object)
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION,
+					"'INSERT EXEC' cannot be used within a function", getLineAndPos(ddl_object));
+		}
+
+		/* OUTPUT clause is not allowed with INSERT EXEC */
+		if (ctx->insert_statement()->output_clause())
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+				"The OUTPUT clause cannot be used in an INSERT...EXEC statement.",
+				getLineAndPos(ctx->insert_statement()->output_clause()));
+
+		TSqlParser::Execute_statementContext *ctxES =
+			ctx->insert_statement()->insert_statement_value()->execute_statement();
+
+		PLtsql_stmt *base_stmt = makeExecuteStatement(ctxES);
+
+		/* Extract INSERT EXEC info and apply to statement */
+		InsertExecInfo *info = get_insert_exec_info(ctx);
+		set_insert_exec_info(base_stmt, info);
+
+		/* Apply expression rewriting for EXEC and EXEC_BATCH statement types */
+		apply_exec_expression_rewriting(base_stmt, ctxES);
+
+		replaceGraftedStatement(ctx, base_stmt);
+		statementMutator.reset();
+		clear_rewritten_query_fragment();
+	}
+
 	void exitDml_statement(TSqlParser::Dml_statementContext *ctx) override
 	{
-        if (ctx->bulk_insert_statement())
-        {
-            clear_rewritten_query_fragment();
-            return;
-        }
+		if (ctx->bulk_insert_statement())
+		{
+			clear_rewritten_query_fragment();
+			return;
+		}
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
 		Assert(stmt);
 		Assert(stmt->sqlstmt = statementMutator->expr);
@@ -2355,31 +2614,25 @@ public:
 		process_execsql_remove_unsupported_tokens(ctx, statementMutator.get());
 
 		// record whether the stmt is an INSERT-EXEC stmt
-		stmt->insert_exec =
+		bool is_insert_exec =
 			ctx->insert_statement() &&
 			ctx->insert_statement()->insert_statement_value() &&
 			ctx->insert_statement()->insert_statement_value()->execute_statement();
 
-		if (stmt->insert_exec)
+		/*
+		 * For INSERT EXEC, build a PLtsql_stmt_exec node so the executor can capture
+		 * procedure output via a DestReceiver into a temp table.
+		 *
+		 * Note : process_execsql_remove_unsupported_tokens() populates rewritten_query_fragment
+		 * which apply_exec_expression_rewriting() inside handleInsertExec() depends on.
+		 * Moving the check above it would break expression rewriting.
+		 */
+		if (is_insert_exec)
 		{
-			TSqlParser::Func_proc_name_server_database_schemaContext *ctx_name = nullptr;
-			TSqlParser::Execute_bodyContext *body = nullptr;
-
-			TSqlParser::Execute_statementContext *ctxES = ctx->insert_statement()->insert_statement_value()->execute_statement();
-			body = ctxES->execute_body();
-			Assert(body);
-			
-			ctx_name       = body->func_proc_name_server_database_schema();
-			if (ctx_name) 
-			{				
-				if (ctx_name->database)
-				{
-					db_name = stripQuoteFromId(ctx_name->database);
-					is_cross_db = true;
-				}
-				if (ctx_name->schema)
-					schema_name = stripQuoteFromId(ctx_name->schema);
-			}
+			handleInsertExec(ctx);
+			clear_query_hints();
+			clear_tables_info();
+			return;
 		}
 
 		// record whether stmt is cross-db
@@ -2405,18 +2658,14 @@ public:
 			if (ctx->insert_statement())
 			{
 				auto ddl_object = ctx->insert_statement()->ddl_object();
-				if (stmt->insert_exec && ddl_object && !ddl_object->local_id()) /* insert into non-local object */
+				if (ddl_object && !ddl_object->local_id()) /* insert into non-local object */
 				{
-					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'INSERT EXEC' cannot be used within a function", getLineAndPos(ddl_object));
-				}
-				else if (ddl_object && !ddl_object->local_id()) /* insert into non-local object */
-				{					
-					if (ddl_object && ddl_object->full_object_name() && isDelimitedAtAtUserVarName(getFullText(ddl_object->full_object_name()) ))
+					if (ddl_object->full_object_name() && isDelimitedAtAtUserVarName(getFullText(ddl_object->full_object_name())))
 					{
 						/* This is a table variable name enclosed in delimiters, which is OK */
 					}
-					else 
-						throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'INSERT' cannot be used within a function", getLineAndPos(ddl_object));					
+					else
+						throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'INSERT' cannot be used within a function", getLineAndPos(ddl_object));
 				}
 			}
 			else if (ctx->update_statement() || ctx->delete_statement())
@@ -6568,7 +6817,6 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			stmt->target = NULL;
 			stmt->need_to_push_result = false;
 			stmt->is_tsql_select_assign_stmt = false;
-			stmt->insert_exec = false;
 
 			attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
 			return (PLtsql_stmt *) stmt;
@@ -6622,7 +6870,6 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 				stmt->target = NULL;
 				stmt->need_to_push_result = false;
 				stmt->is_tsql_select_assign_stmt = false;
-				stmt->insert_exec = false;
 
 				attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
 				return (PLtsql_stmt *) stmt;
@@ -6750,9 +6997,9 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 	std::vector<TSqlParser::Insert_bulk_column_definitionContext *> column_list = bulk_ctx->insert_bulk_column_definition();
 	std::vector<TSqlParser::Bulk_insert_optionContext *> option_list = bulk_ctx->bulk_insert_option();
 
-	std::string table_name;
-	std::string schema_name;
-	std::string db_name;
+	char *table_name = NULL;
+	char *schema_name = NULL;
+	char *db_name = NULL;
 	stmt->column_refs = NIL;
 
 	if (!bulk_ctx)
@@ -6763,31 +7010,11 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 	stmt->cmd_type = PLTSQL_STMT_INSERT_BULK;
 	if (bulk_ctx->ddl_object())
 	{
-		if (bulk_ctx->ddl_object()->local_id())
-		{
-			table_name = ::getFullText(bulk_ctx->ddl_object()->local_id()).c_str();
-		}
-		else if (bulk_ctx->ddl_object()->full_object_name())
-		{
-			if (bulk_ctx->ddl_object()->full_object_name()->object_name)
-				table_name = stripQuoteFromId(bulk_ctx->ddl_object()->full_object_name()->object_name);
-			if (bulk_ctx->ddl_object()->full_object_name()->schema)
-				schema_name = stripQuoteFromId(bulk_ctx->ddl_object()->full_object_name()->schema);
-			if (bulk_ctx->ddl_object()->full_object_name()->database)
-				db_name = stripQuoteFromId(bulk_ctx->ddl_object()->full_object_name()->database);
-		}
-		if (!table_name.empty())
-		{
-			stmt->table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
-		}
-		if (!schema_name.empty())
-		{
-			stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
-		}
-		if (!db_name.empty())
-		{
-			stmt->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
-		}
+		extract_ddl_object_names(bulk_ctx->ddl_object(), &table_name, &schema_name, &db_name);
+
+		stmt->table_name = table_name;
+		stmt->schema_name = schema_name;
+		stmt->db_name = db_name;
 
 		/* create a list of columns to insert into */
 		if (!column_list.empty())
@@ -6797,7 +7024,7 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 				std::string column_refs;
 				column_refs = ::stripQuoteFromId(column_list[i]->simple_column_name()->id());
 				if (!column_refs.empty())
-					stmt->column_refs = lappend(stmt->column_refs , pstrdup(downcase_truncate_identifier(column_refs.c_str(), column_refs.length(), true)));
+					stmt->column_refs = lappend(stmt->column_refs , downcase_truncate_identifier(column_refs.c_str(), column_refs.length(), true));
 			}
 		}
 

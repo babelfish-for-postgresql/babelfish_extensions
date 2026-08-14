@@ -1,10 +1,16 @@
 EXEC test_sp_helpsrvrolemember_proc
 GO
 
-SELECT dbo.test_sp_helpsrvrolemember_func()
+-- INSERT EXEC is not allowed inside a function, so capture sp_helpsrvrolemember
+-- output into a table variable directly in the batch instead.
+DECLARE @tmp_sp_helpsrvrolemember TABLE(ServerRole sys.SYSNAME, MemberName sys.SYSNAME, MemberSID sys.VARBINARY(85));
+INSERT INTO @tmp_sp_helpsrvrolemember (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember;
+SELECT COUNT(*) FROM @tmp_sp_helpsrvrolemember;
 GO
 
-SELECT * FROM test_sp_helpsrvrolemember_view
+DECLARE @tmp_sp_helpsrvrolemember TABLE(ServerRole sys.SYSNAME, MemberName sys.SYSNAME, MemberSID sys.VARBINARY(85));
+INSERT INTO @tmp_sp_helpsrvrolemember (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember;
+SELECT COUNT(*) FROM @tmp_sp_helpsrvrolemember;
 GO
 
 ALTER SERVER ROLE sysadmin ADD MEMBER test_sp_helpsrvrolemember_login
@@ -13,10 +19,14 @@ GO
 EXEC test_sp_helpsrvrolemember_proc 'sysadmin'
 GO
 
-SELECT dbo.test_sp_helpsrvrolemember_func()
+DECLARE @tmp_sp_helpsrvrolemember TABLE(ServerRole sys.SYSNAME, MemberName sys.SYSNAME, MemberSID sys.VARBINARY(85));
+INSERT INTO @tmp_sp_helpsrvrolemember (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember;
+SELECT COUNT(*) FROM @tmp_sp_helpsrvrolemember;
 GO
 
-SELECT * FROM test_sp_helpsrvrolemember_view
+DECLARE @tmp_sp_helpsrvrolemember TABLE(ServerRole sys.SYSNAME, MemberName sys.SYSNAME, MemberSID sys.VARBINARY(85));
+INSERT INTO @tmp_sp_helpsrvrolemember (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember;
+SELECT COUNT(*) FROM @tmp_sp_helpsrvrolemember;
 GO
 
 ALTER SERVER ROLE sysadmin DROP MEMBER test_sp_helpsrvrolemember_login
@@ -25,10 +35,14 @@ GO
 EXEC test_sp_helpsrvrolemember_proc 'sysadmin'
 GO
 
-SELECT dbo.test_sp_helpsrvrolemember_func()
+DECLARE @tmp_sp_helpsrvrolemember TABLE(ServerRole sys.SYSNAME, MemberName sys.SYSNAME, MemberSID sys.VARBINARY(85));
+INSERT INTO @tmp_sp_helpsrvrolemember (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember;
+SELECT COUNT(*) FROM @tmp_sp_helpsrvrolemember;
 GO
 
-SELECT * FROM test_sp_helpsrvrolemember_view
+DECLARE @tmp_sp_helpsrvrolemember TABLE(ServerRole sys.SYSNAME, MemberName sys.SYSNAME, MemberSID sys.VARBINARY(85));
+INSERT INTO @tmp_sp_helpsrvrolemember (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember;
+SELECT COUNT(*) FROM @tmp_sp_helpsrvrolemember;
 GO
 
 EXEC sp_helpsrvrolemember 'error'

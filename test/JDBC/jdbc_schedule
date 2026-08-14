@@ -770,6 +770,12 @@ ignore#!#Test-Polygon-before-17_9-or-18_3-vu-cleanup
 ignore#!#babel_sqlvariant_coerce_type_before_16_14-or-17_10-or-18_4-vu-prepare
 ignore#!#babel_sqlvariant_coerce_type_before_16_14-or-17_10-or-18_4-vu-verify
 ignore#!#babel_sqlvariant_coerce_type_before_16_14-or-17_10-or-18_4-vu-cleanup
+ignore#!#money_aggregate-before-17_11-or-18_5-vu-prepare
+ignore#!#money_aggregate-before-17_11-or-18_5-vu-verify
+ignore#!#money_aggregate-before-17_11-or-18_5-vu-cleanup
+ignore#!#numeric_money-before-17_11-or-18_5-vu-prepare
+ignore#!#numeric_money-before-17_11-or-18_5-vu-verify
+ignore#!#numeric_money-before-17_11-or-18_5-vu-cleanup
 ignore#!#xml_query-before-17_11-or-18_5-vu-prepare
 ignore#!#xml_query-before-17_11-or-18_5-vu-verify
 ignore#!#xml_query-before-17_11-or-18_5-vu-cleanup
@@ -779,3 +785,6 @@ ignore#!#forxml-namespaces-before-17_11-or-18_5-vu-cleanup
 ignore#!#xml-methods-namespaces-before-17_11-or-18_5-vu-prepare
 ignore#!#xml-methods-namespaces-before-17_11-or-18_5-vu-verify
 ignore#!#xml-methods-namespaces-before-17_11-or-18_5-vu-cleanup
+ignore#!#antlr_parse_cache_version-vu-prepare
+ignore#!#antlr_parse_cache_version-vu-verify
+ignore#!#antlr_parse_cache_version-vu-cleanup
