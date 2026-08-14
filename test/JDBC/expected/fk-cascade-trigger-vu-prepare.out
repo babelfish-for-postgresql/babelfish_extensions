@@ -542,3 +542,135 @@ BEGIN
   INSERT INTO babel7022_fire19 (rows_seen) SELECT COUNT(*) FROM inserted;
 END
 GO
+
+-- TEST 20: THROW (batch-terminating) inside trigger during CASCADE - operation rolls back
+CREATE TABLE babel7022_parent20 (id int PRIMARY KEY)
+GO
+
+CREATE TABLE babel7022_child20 (
+  id int PRIMARY KEY,
+  parent_id int NOT NULL REFERENCES babel7022_parent20(id) ON DELETE CASCADE
+)
+GO
+
+CREATE TRIGGER babel7022_child20_del_trg
+  ON babel7022_child20
+  AFTER DELETE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  THROW 51000, 'batch terminating error from trigger', 1;
+END
+GO
+
+-- TEST 21: TRY/CATCH around a CASCADE whose trigger errors - error is caught, batch continues
+CREATE TABLE babel7022_parent21 (id int PRIMARY KEY)
+GO
+
+CREATE TABLE babel7022_child21 (
+  id int PRIMARY KEY,
+  parent_id int NOT NULL REFERENCES babel7022_parent21(id) ON DELETE CASCADE
+)
+GO
+
+CREATE TRIGGER babel7022_child21_del_trg
+  ON babel7022_child21
+  AFTER DELETE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  THROW 51001, 'error caught by outer try/catch', 1;
+END
+GO
+
+-- TEST 22: recovery after error - a poison CASCADE that aborts, then a good CASCADE that still fires once
+CREATE TABLE babel7022_parent22p (id int PRIMARY KEY)
+GO
+
+CREATE TABLE babel7022_child22p (
+  id int PRIMARY KEY,
+  parent_id int NOT NULL REFERENCES babel7022_parent22p(id) ON DELETE CASCADE
+)
+GO
+
+CREATE TRIGGER babel7022_child22p_del_trg
+  ON babel7022_child22p
+  AFTER DELETE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  THROW 51002, 'poison trigger', 1;
+END
+GO
+
+CREATE TABLE babel7022_parent22g (id int PRIMARY KEY)
+GO
+
+CREATE TABLE babel7022_child22g (
+  id int PRIMARY KEY,
+  parent_id int NOT NULL REFERENCES babel7022_parent22g(id) ON DELETE CASCADE
+)
+GO
+
+CREATE TABLE babel7022_fire22g (rows_seen int)
+GO
+
+CREATE TRIGGER babel7022_child22g_del_trg
+  ON babel7022_child22g
+  AFTER DELETE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  INSERT INTO babel7022_fire22g (rows_seen) SELECT COUNT(*) FROM deleted;
+END
+GO
+
+-- TEST 23: runtime DML error (PK violation) inside trigger during CASCADE - operation rolls back
+CREATE TABLE babel7022_parent23 (id int PRIMARY KEY)
+GO
+
+CREATE TABLE babel7022_child23 (
+  id int PRIMARY KEY,
+  parent_id int NOT NULL REFERENCES babel7022_parent23(id) ON DELETE CASCADE
+)
+GO
+
+CREATE TABLE babel7022_audit23 (k int CONSTRAINT babel7022_audit23_pk PRIMARY KEY)
+GO
+
+CREATE TRIGGER babel7022_child23_del_trg
+  ON babel7022_child23
+  AFTER DELETE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  INSERT INTO babel7022_audit23 (k) VALUES (99);
+END
+GO
+
+-- TEST 24: TRY/CATCH inside the trigger body - catching an error dooms the transaction,
+-- so on trigger completion the batch is aborted and the operation rolled back
+-- (Msg 3616, matches SQL Server)
+CREATE TABLE babel7022_parent24 (id int PRIMARY KEY)
+GO
+
+CREATE TABLE babel7022_child24 (
+  id int PRIMARY KEY,
+  parent_id int NOT NULL REFERENCES babel7022_parent24(id) ON DELETE CASCADE
+)
+GO
+
+CREATE TRIGGER babel7022_child24_del_trg
+  ON babel7022_child24
+  AFTER DELETE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  BEGIN TRY
+    DECLARE @x int = 1 / 0;
+  END TRY
+  BEGIN CATCH
+    DECLARE @e int = ERROR_NUMBER();
+  END CATCH
+END
+GO

@@ -394,3 +394,93 @@ GO
 
 SELECT COUNT(*) AS default_children FROM babel7022_child19 WHERE parent_id = 99
 GO
+
+-- TEST 20: THROW (batch-terminating) inside trigger during CASCADE - delete rolled back, error surfaces
+INSERT INTO babel7022_parent20 VALUES (1), (2), (3)
+GO
+
+INSERT INTO babel7022_child20 VALUES (10,1), (20,2), (30,3)
+GO
+
+DELETE FROM babel7022_parent20 WHERE id = 1
+GO
+
+SELECT COUNT(*) AS parent_remaining FROM babel7022_parent20
+GO
+
+-- TEST 21: TRY/CATCH around a CASCADE whose trigger errors - error caught, batch continues
+INSERT INTO babel7022_parent21 VALUES (1), (2), (3)
+GO
+
+INSERT INTO babel7022_child21 VALUES (10,1), (20,2), (30,3)
+GO
+
+BEGIN TRY
+  DELETE FROM babel7022_parent21 WHERE id = 1
+END TRY
+BEGIN CATCH
+  SELECT ERROR_NUMBER() AS err_number, ERROR_MESSAGE() AS err_message
+END CATCH
+GO
+
+SELECT COUNT(*) AS parent_remaining FROM babel7022_parent21
+GO
+
+-- TEST 22: recovery after error - poison CASCADE aborts, then good CASCADE still fires exactly once
+INSERT INTO babel7022_parent22p VALUES (1), (2)
+GO
+
+INSERT INTO babel7022_child22p VALUES (10,1), (20,2)
+GO
+
+INSERT INTO babel7022_parent22g VALUES (1), (2), (3), (4), (5)
+GO
+
+INSERT INTO babel7022_child22g VALUES (10,1), (20,2), (30,3), (40,4), (50,5)
+GO
+
+BEGIN TRY
+  DELETE FROM babel7022_parent22p
+END TRY
+BEGIN CATCH
+  SELECT ERROR_NUMBER() AS caught_err
+END CATCH
+GO
+
+DELETE FROM babel7022_parent22g
+GO
+
+SELECT COUNT(*) AS poison_remaining FROM babel7022_parent22p
+GO
+
+SELECT COUNT(*) AS good_fire_count, MAX(rows_seen) AS rows_seen_per_fire FROM babel7022_fire22g
+GO
+
+-- TEST 23: runtime DML error (PK violation) inside trigger during CASCADE - delete rolled back
+INSERT INTO babel7022_parent23 VALUES (1), (2), (3)
+GO
+
+INSERT INTO babel7022_child23 VALUES (10,1), (20,2), (30,3)
+GO
+
+INSERT INTO babel7022_audit23 VALUES (99)
+GO
+
+DELETE FROM babel7022_parent23 WHERE id = 1
+GO
+
+SELECT COUNT(*) AS parent_remaining FROM babel7022_parent23
+GO
+
+-- TEST 24: TRY/CATCH inside trigger body catches an error - transaction doomed, batch aborted, cascade rolled back (Msg 3616)
+INSERT INTO babel7022_parent24 VALUES (1), (2), (3)
+GO
+
+INSERT INTO babel7022_child24 VALUES (10,1), (20,2), (30,3)
+GO
+
+DELETE FROM babel7022_parent24 WHERE id = 1
+GO
+
+SELECT COUNT(*) AS parent_remaining FROM babel7022_parent24
+GO

@@ -743,3 +743,173 @@ int
 5
 ~~END~~
 
+
+-- TEST 20: THROW (batch-terminating) inside trigger during CASCADE - delete rolled back, error surfaces
+INSERT INTO babel7022_parent20 VALUES (1), (2), (3)
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO babel7022_child20 VALUES (10,1), (20,2), (30,3)
+GO
+~~ROW COUNT: 3~~
+
+
+DELETE FROM babel7022_parent20 WHERE id = 1
+GO
+~~ERROR (Code: 51000)~~
+
+~~ERROR (Message: batch terminating error from trigger)~~
+
+
+SELECT COUNT(*) AS parent_remaining FROM babel7022_parent20
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- TEST 21: TRY/CATCH around a CASCADE whose trigger errors - error caught, batch continues
+INSERT INTO babel7022_parent21 VALUES (1), (2), (3)
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO babel7022_child21 VALUES (10,1), (20,2), (30,3)
+GO
+~~ROW COUNT: 3~~
+
+
+BEGIN TRY
+  DELETE FROM babel7022_parent21 WHERE id = 1
+END TRY
+BEGIN CATCH
+  SELECT ERROR_NUMBER() AS err_number, ERROR_MESSAGE() AS err_message
+END CATCH
+GO
+~~START~~
+int#!#nvarchar
+51001#!#error caught by outer try/catch
+~~END~~
+
+
+SELECT COUNT(*) AS parent_remaining FROM babel7022_parent21
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- TEST 22: recovery after error - poison CASCADE aborts, then good CASCADE still fires exactly once
+INSERT INTO babel7022_parent22p VALUES (1), (2)
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO babel7022_child22p VALUES (10,1), (20,2)
+GO
+~~ROW COUNT: 2~~
+
+
+INSERT INTO babel7022_parent22g VALUES (1), (2), (3), (4), (5)
+GO
+~~ROW COUNT: 5~~
+
+
+INSERT INTO babel7022_child22g VALUES (10,1), (20,2), (30,3), (40,4), (50,5)
+GO
+~~ROW COUNT: 5~~
+
+
+BEGIN TRY
+  DELETE FROM babel7022_parent22p
+END TRY
+BEGIN CATCH
+  SELECT ERROR_NUMBER() AS caught_err
+END CATCH
+GO
+~~START~~
+int
+51002
+~~END~~
+
+
+DELETE FROM babel7022_parent22g
+GO
+~~ROW COUNT: 5~~
+
+
+SELECT COUNT(*) AS poison_remaining FROM babel7022_parent22p
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT COUNT(*) AS good_fire_count, MAX(rows_seen) AS rows_seen_per_fire FROM babel7022_fire22g
+GO
+~~START~~
+int#!#int
+1#!#5
+~~END~~
+
+
+-- TEST 23: runtime DML error (PK violation) inside trigger during CASCADE - delete rolled back
+INSERT INTO babel7022_parent23 VALUES (1), (2), (3)
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO babel7022_child23 VALUES (10,1), (20,2), (30,3)
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO babel7022_audit23 VALUES (99)
+GO
+~~ROW COUNT: 1~~
+
+
+DELETE FROM babel7022_parent23 WHERE id = 1
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "babel7022_audit23_pk")~~
+
+
+SELECT COUNT(*) AS parent_remaining FROM babel7022_parent23
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- TEST 24: TRY/CATCH inside trigger body catches an error - transaction doomed, batch aborted, cascade rolled back (Msg 3616)
+INSERT INTO babel7022_parent24 VALUES (1), (2), (3)
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO babel7022_child24 VALUES (10,1), (20,2), (30,3)
+GO
+~~ROW COUNT: 3~~
+
+
+DELETE FROM babel7022_parent24 WHERE id = 1
+GO
+~~ERROR (Code: 3616)~~
+
+~~ERROR (Message: An error was raised during trigger execution. The batch has been aborted and the user transaction, if any, has been rolled back.)~~
+
+
+SELECT COUNT(*) AS parent_remaining FROM babel7022_parent24
+GO
+~~START~~
+int
+3
+~~END~~
+
