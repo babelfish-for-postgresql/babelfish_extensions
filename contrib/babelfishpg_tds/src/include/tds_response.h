@@ -52,7 +52,7 @@
 #define TDS_CMD_INSERT			0xC3
 #define TDS_CMD_DELETE			0xC4
 #define TDS_CMD_UPDATE			0xC5
-#define TDS_CMD_MERGE			0x117
+#define TDS_CMD_MERGE			0x117	/* CurCmd value SQL Server sends in the DONE token for MERGE */
 #define TDS_CMD_ROLLBACK		0xD2
 #define TDS_CMD_BEGIN			0xD4
 #define TDS_CMD_COMMIT			0xD5

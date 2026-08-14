@@ -1700,9 +1700,13 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 			break;
 		case CMD_MERGE:
 			/*
-			 * T-SQL INSTEAD OF triggers are not supported on MERGE; the
-			 * rewriter checks the individual merge actions with their
-			 * INSERT/UPDATE/DELETE command types instead.
+			 * T-SQL INSTEAD OF triggers are not supported on MERGE; return
+			 * false so the rewriter takes the auto-updatable view path. Its
+			 * rewriteTargetView() then calls this hook again for each merge
+			 * action with the action's INSERT/UPDATE/DELETE command type and
+			 * rejects the statement with "cannot merge into view" when a
+			 * T-SQL INSTEAD OF trigger exists, so the trigger can never be
+			 * bypassed.
 			 */
 			break;
 		default:
