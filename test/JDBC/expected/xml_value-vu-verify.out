@@ -323,9 +323,10 @@ DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</n
 WITH XMLNAMESPACES('http://example.com' as ns)
 SELECT @xml.value('(//ns:data)[1]', 'varchar(100)'), @xml.value('(//child)[1]', 'varchar(100)'), @xml.value('(//child/@ns:attr)[1]', 'varchar(100)');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'WITH XMLNAMESPACES' is not currently supported in Babelfish)~~
+~~START~~
+varchar#!#varchar#!#varchar
+Hello#!#Hello<ns:text>World</ns:text>#!#<NULL>
+~~END~~
 
 
 DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
