@@ -190,8 +190,8 @@
 '18.4':
   engine_branch: BABEL_6_1_STABLE__PG_18_4
   extension_branch: BABEL_6_1_STABLE
-'18.5':
-  engine_branch: BABEL_6_2_STABLE__PG_18_5
+'18.6':
+  engine_branch: BABEL_6_2_STABLE__PG_18_6
   extension_branch: BABEL_6_2_STABLE
 'source.latest':
   engine_branch: latest
