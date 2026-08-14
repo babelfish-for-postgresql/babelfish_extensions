@@ -1156,6 +1156,10 @@ validate_forxml_column_alias_prefixes(TSqlParser::Select_listContext *selectList
 		/* alias on the left: 'ns:Name' = expr */
 		if (exp_elem->column_alias())
 			check_alias(exp_elem->column_alias());
+	}
+}
+
+/*
  * get_insert_exec_info - Extract all INSERT EXEC target info from the parse
  * context and return a populated InsertExecInfo struct.
  */
@@ -5752,7 +5756,6 @@ makeExecSql(ParserRuleContext *ctx)
 	stmt->target = NULL;
 	stmt->need_to_push_result = false;
 	stmt->is_tsql_select_assign_stmt = false;
-	stmt->insert_exec = false;
 	stmt->xml_namespace_decls = NULL;
 
 	return (PLtsql_stmt *) stmt;
