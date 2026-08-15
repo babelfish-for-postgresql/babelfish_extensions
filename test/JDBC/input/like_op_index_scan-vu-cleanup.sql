@@ -1,0 +1,85 @@
+DROP VIEW BABEL_5966_vw_like_nested;
+DROP VIEW BABEL_5966_vw_like_exact;
+DROP VIEW BABEL_5966_vw_like_prefix;
+DROP VIEW BABEL_5966_vw_like_suffix;
+DROP VIEW BABEL_5966_vw_like_contains;
+DROP VIEW BABEL_5966_vw_like_single_char;
+DROP VIEW BABEL_5966_vw_not_like;
+DROP VIEW BABEL_5966_vw_not_like_exact;
+DROP VIEW BABEL_5966_vw_like_nvar_exact;
+DROP VIEW BABEL_5966_vw_like_nvar_prefix;
+DROP VIEW BABEL_5966_vw_like_nvar_suffix;
+DROP VIEW BABEL_5966_vw_like_char_exact;
+DROP VIEW BABEL_5966_vw_like_char_prefix;
+DROP VIEW BABEL_5966_vw_like_char_suffix;
+DROP VIEW BABEL_5966_vw_like_or;
+DROP VIEW BABEL_5966_vw_like_and;
+DROP VIEW BABEL_5966_vw_like_escape_pct;
+DROP VIEW BABEL_5966_vw_like_escape_underscore;
+DROP VIEW BABEL_5966_vw_like_unicode;
+DROP VIEW BABEL_5966_vw_like_unicode_prefix;
+DROP VIEW BABEL_5966_vw_like_cast_varchar;
+DROP VIEW BABEL_5966_vw_like_cast_nvarchar;
+DROP VIEW BABEL_5966_vw_like_cast_char;
+DROP VIEW BABEL_5966_vw_like_ci_as;
+DROP VIEW BABEL_5966_vw_like_cs_as;
+DROP VIEW BABEL_5966_vw_like_ci_ai;
+DROP VIEW BABEL_5966_vw_like_cs_ai;
+DROP VIEW BABEL_5966_vw_like_ci_as_prefix;
+DROP VIEW BABEL_5966_vw_like_cs_as_prefix;
+DROP VIEW BABEL_5966_vw_like_ci_ai_prefix;
+DROP VIEW BABEL_5966_vw_like_cs_ai_prefix;
+DROP VIEW BABEL_5966_vw_like_with_id;
+GO
+
+DROP PROCEDURE BABEL_5966_sp_like_exact_const;
+DROP PROCEDURE BABEL_5966_sp_like_prefix_const;
+DROP PROCEDURE BABEL_5966_sp_like_suffix_const;
+DROP PROCEDURE BABEL_5966_sp_like_varchar_param;
+DROP PROCEDURE BABEL_5966_sp_like_nvarchar_param;
+DROP PROCEDURE BABEL_5966_sp_like_all_types;
+DROP PROCEDURE BABEL_5966_sp_not_like_param;
+DROP PROCEDURE BABEL_5966_sp_like_escape;
+DROP PROCEDURE BABEL_5966_sp_like_dynamic;
+DROP PROCEDURE BABEL_5966_sp_like_output;
+DROP PROCEDURE BABEL_5966_sp_like_all_collations;
+DROP PROCEDURE BABEL_5966_sp_like_nvar_collations;
+DROP PROCEDURE BABEL_5966_sp_like_char_collations;
+DROP PROCEDURE BABEL_5966_sp_like_with_cast;
+DROP PROCEDURE BABEL_5966_sp_like_multi_condition;
+DROP PROCEDURE BABEL_5966_sp_like_subquery;
+DROP PROCEDURE BABEL_5966_sp_like_exists;
+DROP PROCEDURE BABEL_5966_sp_like_top;
+GO
+
+DROP TABLE BABEL_5966_TestLikeCollation_CI_AS;
+GO
+DROP TABLE BABEL_5966_TestLikeCollation_CS_AS;
+GO
+DROP TABLE BABEL_5966_TestLikeCollation_CI_AI;
+GO
+DROP TABLE BABEL_5966_TestLikeCollation_CS_AI;
+GO
+DROP TABLE BABEL_5966_TestLikeNVarCollation_CI_AS;
+GO
+DROP TABLE BABEL_5966_TestLikeNVarCollation_CS_AS;
+GO
+DROP TABLE BABEL_5966_TestLikeNVarCollation_CI_AI;
+GO
+DROP TABLE BABEL_5966_TestLikeNVarCollation_CS_AI;
+GO
+DROP TABLE BABEL_5966_TestLikeCharCollation_CI_AS;
+GO
+DROP TABLE BABEL_5966_TestLikeCharCollation_CS_AS;
+GO
+DROP TABLE BABEL_5966_TestLikeCharCollation_CI_AI;
+GO
+DROP TABLE BABEL_5966_TestLikeCharCollation_CS_AI;
+GO
+
+DROP TABLE BABEL_5966_TestLikeCheck_prefix;
+DROP TABLE BABEL_5966_TestLikeCheck_nprefix;
+DROP TABLE BABEL_5966_TestLikeCheck_not_like;
+DROP TABLE BABEL_5966_TestLikeCheck_escape;
+DROP TABLE BABEL_5966_TestLikeCheck_suffix;
+GO

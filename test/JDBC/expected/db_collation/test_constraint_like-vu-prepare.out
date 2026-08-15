@@ -414,7 +414,7 @@ SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'master_dbo
 GO
 ~~START~~
 text
-CHECK ((((sys.remove_accents_internal(((('123'::sys."varchar" COLLATE sys.bbf_unicode_cp1_ci_ai)::sys.nvarchar(3))::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ((sys.remove_accents_internal(((123)::sys."varchar"(3))::text))::text COLLATE sys.bbf_unicode_cp1_cs_as)))
+CHECK ((((sys.remove_accents_internal(((('123'::sys."varchar" COLLATE sys.bbf_unicode_cp1_ci_ai)::sys.nvarchar(3))::text COLLATE sys.bbf_unicode_cp1_ci_ai)))::text COLLATE sys.bbf_unicode_cp1_cs_as) ~~* ('123'::text COLLATE sys.bbf_unicode_cp1_cs_as)))
 ~~END~~
 
 

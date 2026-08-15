@@ -345,10 +345,10 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 NOT LIKE 'jones'
-Gather  (cost=11.56..24.71 rows=647 width=32)
+Gather  (cost=11.56..24.71 rows=650 width=32)
   Workers Planned: 3
-  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.56..24.71 rows=209 width=32)
-        Filter: ((c1 <> 'jones'::"varchar") AND ((c1)::text !~~* 'jones'::text COLLATE bbf_unicode_cp1_cs_as))
+  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.56..24.71 rows=210 width=32)
+        Filter: ((c1 <> 'jones'::"varchar") OR ((c1)::text !~~* 'jones'::text COLLATE bbf_unicode_cp1_cs_as))
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 

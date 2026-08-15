@@ -8,16 +8,21 @@
 #include "utils/syscache.h"
 #include "utils/memutils.h"
 #include "utils/builtins.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_collation.h"
 #include "catalog/namespace.h"
 #include "tsearch/ts_locale.h"
+#include "optimizer/clauses.h"
+#include "optimizer/optimizer.h"
 #include "parser/parser.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_type.h"
 #include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
+#include "nodes/pathnodes.h"
+#include "optimizer/optimizer.h"
 #ifdef USE_ICU
 #include <unicode/utrans.h>
 #include "utils/removeaccent.map"
@@ -91,6 +96,7 @@ PG_FUNCTION_INFO_V1(init_like_ilike_table);
 PG_FUNCTION_INFO_V1(get_server_collation_oid);
 PG_FUNCTION_INFO_V1(is_collated_ci_as_internal);
 PG_FUNCTION_INFO_V1(is_collated_ai_internal);
+PG_FUNCTION_INFO_V1(babelfish_like_prefix);
 
 /* this function is no longer needed and is only a placeholder for upgrade script */
 PG_FUNCTION_INFO_V1(init_server_collation);
@@ -145,6 +151,39 @@ Datum
 is_collated_ai_internal(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(tsql_is_collated_ai_internal(fcinfo));
+}
+
+/*
+ * babelfish_like_prefix - extract the literal prefix from a LIKE pattern.
+ * Returns everything before the first wildcard (%, _, [, ]).
+ * Returns empty string if pattern starts with a wildcard.
+ */
+Datum
+babelfish_like_prefix(PG_FUNCTION_ARGS)
+{
+	text	   *pattern;
+	char	   *patt_str;
+	int			patt_len;
+	int			i;
+
+	pattern = PG_GETARG_TEXT_PP(0);
+	patt_str = VARDATA_ANY(pattern);
+	patt_len = VARSIZE_ANY_EXHDR(pattern);
+
+	for (i = 0; i < patt_len; i++)
+	{
+		char c = patt_str[i];
+		if (c == '%' || c == '_' || c == '[' || c == ']')
+			break;
+		/* Stop at BBF_ESC_CHAR_REPLC (\uFFFF = \xEF\xBF\xBF) which is
+		 * the Babelfish ESCAPE replacement character */
+		if ((unsigned char) c == 0xEF && i + 2 < patt_len &&
+			(unsigned char) patt_str[i + 1] == 0xBF &&
+			(unsigned char) patt_str[i + 2] == 0xBF)
+			break;
+	}
+
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(patt_str, i));
 }
 
 /* init_like_ilike_table - this function is no longer needed and is only a placeholder for upgrade script */
@@ -319,6 +358,23 @@ create_collate_expr(Node *arg, Oid collid)
 	return expr;
 }
 
+
+/*
+ * Check whether a like_escape call appears anywhere in the expression.
+ * Uses expression_tree_walker for safe traversal of all node types.
+ */
+static bool
+contains_like_escape(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, FuncExpr) &&
+		strcmp(get_func_name(((FuncExpr *) node)->funcid),
+			   "like_escape") == 0)
+		return true;
+	return expression_tree_walker(node, contains_like_escape, context);
+}
+
 /*
  * If the node is OpExpr and the colaltion is ci_as/ci_ai , then
  * transform the LIKE OpExpr to ILIKE OpExpr. For ci_ai, use remove_accents_internal*
@@ -327,8 +383,9 @@ create_collate_expr(Node *arg, Oid collid)
  * function to remove the accents and optimize.
  * If the node is OpExpr and the collation is cs_as, then simply use optimization:
  *
- * Case 1: if the pattern is a constant stirng
- *		 col LIKE PATTERN -> col = PATTERN
+ * Case 1: if the pattern is a constant string
+ *		 col LIKE PATTERN -> col = PATTERN AND col LIKE PATTERN
+ *       col NOT LIKE PATTERN -> col <> PATTERN OR col NOT LIKE PATTERN
  * Case 2: if the pattern have a constant prefix
  *		 col LIKE PATTERN ->
  *		 col LIKE PATTERN BETWEEN prefix AND prefix||E'\uFFFF'
@@ -386,9 +443,8 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 		op->opno = like_entry.ilike_oid;
 		op->opfuncid = like_entry.ilike_opfuncid;
 	}
-	
-	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
+	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
 
 	/* Remove CollateExpr as the op->inputcollid has already been set */
 	if (IsA(rightop, CollateExpr))
@@ -423,14 +479,57 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	 * for it. Rather it will add extra overhead, moreover vanilla Postgres
 	 * also handles check constraints this way
 	 */
-	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
-		((Const *) rightop)->constisnull || is_constraint)
+	if (IsA(leftop, Const) || is_constraint)
 	{
-		/* update the collation of left and right node*/
+		/* leftop is const or CHECK constraint — can't optimize */
 		linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
-		lsecond(op->args) = (IsA(rightop, Const) && ((Const *) rightop)->constisnull) ? lsecond(op->args) : 
-								(Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
+		lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
 		return node;
+	}
+
+	if (!IsA(rightop, Const) || ((Const *) rightop)->constisnull)
+	{
+		/*
+		 * Skip for like_escape: PG's like_escape converts escape sequences
+		 * to backslash format, which doesn't match T-SQL bracket patterns.
+		 * Folding it produces wrong prefix bounds.
+		 */
+		if (!IsA(rightop, Const) && contains_like_escape(rightop, NULL))
+		{
+			linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
+			lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
+			return node;
+		}
+
+		/* Tier 1: try folding IMMUTABLE functions */
+		if (!IsA(rightop, Const))
+		{
+			rightop = eval_const_expressions(NULL, rightop);
+			lsecond(op->args) = rightop;
+		}
+
+		/* Unwrap RelabelType */
+		if (IsA(rightop, RelabelType))
+		{
+			RelabelType *relabel = (RelabelType *) rightop;
+			if (IsA(relabel->arg, Const))
+			{
+				lsecond(op->args) = (Node *) relabel->arg;
+				rightop = (Node *) lsecond(op->args);
+			}
+		}
+
+		/* If still not a usable Const, give up — the match_opclause_to_indexcol_hook
+		 * will generate bounds during index matching if applicable. */
+		if (!IsA(rightop, Const) || ((Const *) rightop)->constisnull)
+		{
+			/* Give up for non-Const — hook handles index bounds */
+			linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
+			lsecond(op->args) = (IsA(rightop, Const) && ((Const *) rightop)->constisnull) ?
+									lsecond(op->args) :
+									(Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
+			return node;
+		}
 	}
 
 	patt = (Const *) rightop;
@@ -466,8 +565,10 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	{
 		RelabelType	*relabel = (RelabelType *) leftop;
 		leftop = copyObject((Node*) relabel->arg);
-		prefix->consttype = rtypeId = ltypeId = exprType(leftop);
+		ltypeId = exprType(leftop);
 	}
+	/* Reconcile types — LIKE coerces to TEXT but we need original column type */
+	prefix->consttype = rtypeId = ltypeId;
 
 	/* 
 	 * We need to do this because the dump considers rightop as Const with COLLATE being added
@@ -506,7 +607,7 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 									InvalidOid,
 									coll_info_of_inputcollid.oid,
 									oprfuncid(optup)));
-		ret = make_and_qual(ret, node);
+		ret = like_entry.is_not_match ? make_or_qual(ret, node) : make_and_qual(ret, node);
 		ReleaseSysCache(optup);
 	}
 	else
@@ -1052,6 +1153,42 @@ transform_likenode(Node *node, bool is_constraint)
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
 
 		get_remove_accents_internal_oid();
+
+		/*
+		 * View definitions (after dump/restore) lose original column collation 
+		 * due to ::text casts, causing wrong LIKE/ILIKE operator selection. 
+		 * Skip if an explicit COLLATE clause is present.
+		 */
+
+		if (OidIsValid(like_entry.like_oid) && list_length(op->args) >= 2)
+		{
+			Node *left_arg = linitial(op->args);
+			Node *right_arg = lsecond(op->args);
+			if (!IsA(left_arg, CollateExpr) && !IsA(right_arg, CollateExpr) && !contain_var_clause(right_arg))
+			{
+				Node *unwrapped = left_arg;
+				while (IsA(unwrapped, RelabelType))
+					unwrapped = (Node *) ((RelabelType *) unwrapped)->arg;
+
+				if (IsA(unwrapped, Var))
+				{
+					Oid var_collation = ((Var *) unwrapped)->varcollid;
+
+					if (OidIsValid(var_collation) &&
+						var_collation != op->inputcollid)
+					{
+						coll_info_t var_coll_info =
+							tsql_lookup_collation_table_internal(var_collation);
+
+						if (OidIsValid(var_coll_info.oid))
+						{
+							op->inputcollid = var_collation;
+							coll_info_of_inputcollid = var_coll_info;
+						}
+					}
+				}
+			}
+	    }
 
 		/*
 		 * We do not allow CREATE TABLE statements with CHECK constraint where

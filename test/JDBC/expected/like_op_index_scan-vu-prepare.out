@@ -1,0 +1,496 @@
+CREATE TABLE BABEL_5966_TestLikeCollation_CI_AS (
+    Id INT IDENTITY PRIMARY KEY,
+    Col VARCHAR(100) COLLATE SQL_Latin1_General_CP1_CI_AS
+);
+GO
+
+CREATE TABLE BABEL_5966_TestLikeCollation_CS_AS (
+    Id INT IDENTITY PRIMARY KEY,
+    Col VARCHAR(100) COLLATE SQL_Latin1_General_CP1_CS_AS
+);
+GO
+
+CREATE TABLE BABEL_5966_TestLikeCollation_CI_AI (
+    Id INT IDENTITY PRIMARY KEY,
+    Col VARCHAR(100) COLLATE SQL_Latin1_General_CP1_CI_AI
+);
+GO
+
+CREATE TABLE BABEL_5966_TestLikeCollation_CS_AI (
+    Id INT IDENTITY PRIMARY KEY,
+    Col VARCHAR(100) COLLATE SQL_Latin1_General_CP1_CS_AI
+);
+GO
+
+CREATE INDEX BABEL_5966_idx_ci_as ON BABEL_5966_TestLikeCollation_CI_AS(Col);
+CREATE INDEX BABEL_5966_idx_cs_as ON BABEL_5966_TestLikeCollation_CS_AS(Col);
+GO
+
+INSERT INTO BABEL_5966_TestLikeCollation_CI_AS (Col)
+VALUES ('exact match'), ('EXACT MATCH'), ('Exact Match'),
+       ('prefix_abc'), ('PREFIX_ABC'), ('Prefix_Abc'),
+       ('prefix_def'), ('prefix_ghi'),
+       ('something else'), ('another value'),
+       ('test data 1'), ('test data 2'), ('test data 3'),
+       ('UPPER CASE'), ('mixed Case'),
+       ('café'), ('CAFÉ'), ('Café'),
+       ('résumé'), ('RÉSUMÉ'), ('Résumé'),
+       ('naïve'), ('NAÏVE'), ('Naïve'),
+       ('resume'), ('RESUME'), ('Resume'),
+       ('naive'), ('NAIVE'), ('Naive'),
+       ('straße'), ('STRASSE'), ('Straße'),
+       ('a'), ('A'), ('ab'), ('abc'), ('ABC'),
+       ('100%done'), ('under_score'),
+       ('back\slash'), ('single''quote'),
+       ('   spaces   '), ('trailing   '), ('   leading'),
+       ('aaaaaaaaaa'), ('AAAAAAAAAA'), ('aAbBcCdDeE');
+GO
+~~ROW COUNT: 48~~
+
+
+INSERT INTO BABEL_5966_TestLikeCollation_CI_AS (Col)
+SELECT 'zzz_filler_' + CAST(n AS VARCHAR(10))
+FROM generate_series(1, 20000) AS n;
+GO
+~~ROW COUNT: 20000~~
+
+
+INSERT INTO BABEL_5966_TestLikeCollation_CS_AS (Col)
+SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AS;
+GO
+~~ROW COUNT: 20048~~
+
+
+INSERT INTO BABEL_5966_TestLikeCollation_CI_AI (Col)
+SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AS;
+GO
+~~ROW COUNT: 20048~~
+
+
+INSERT INTO BABEL_5966_TestLikeCollation_CS_AI (Col)
+SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AS;
+GO
+~~ROW COUNT: 20048~~
+
+
+CREATE TABLE BABEL_5966_TestLikeNVarCollation_CI_AS (
+    Id INT IDENTITY PRIMARY KEY,
+    Col NVARCHAR(100) COLLATE SQL_Latin1_General_CP1_CI_AS
+);
+GO
+
+CREATE TABLE BABEL_5966_TestLikeNVarCollation_CS_AS (
+    Id INT IDENTITY PRIMARY KEY,
+    Col NVARCHAR(100) COLLATE SQL_Latin1_General_CP1_CS_AS
+);
+GO
+
+CREATE TABLE BABEL_5966_TestLikeNVarCollation_CI_AI (
+    Id INT IDENTITY PRIMARY KEY,
+    Col NVARCHAR(100) COLLATE SQL_Latin1_General_CP1_CI_AI
+);
+GO
+
+CREATE TABLE BABEL_5966_TestLikeNVarCollation_CS_AI (
+    Id INT IDENTITY PRIMARY KEY,
+    Col NVARCHAR(100) COLLATE SQL_Latin1_General_CP1_CS_AI
+);
+GO
+
+CREATE INDEX BABEL_5966_idx_nvar_ci_as ON BABEL_5966_TestLikeNVarCollation_CI_AS(Col);
+CREATE INDEX BABEL_5966_idx_nvar_cs_as ON BABEL_5966_TestLikeNVarCollation_CS_AS(Col);
+GO
+
+INSERT INTO BABEL_5966_TestLikeNVarCollation_CI_AS (Col)
+VALUES (N'exact match'), (N'EXACT MATCH'), (N'Exact Match'),
+       (N'prefix_abc'), (N'PREFIX_ABC'),
+       (N'prefix_def'), (N'prefix_ghi'),
+       (N'something else'), (N'another value'),
+       (N'test data 1'), (N'test data 2'), (N'test data 3'),
+       (N'café'), (N'CAFÉ'),
+       (N'résumé'), (N'RÉSUMÉ'), (N'resume'), (N'RESUME'),
+       (N'naïve'), (N'NAÏVE'), (N'naive'), (N'NAIVE'),
+       (N'straße'), (N'STRASSE'),
+       (N'a'), (N'A'), (N'ab'), (N'abc'), (N'ABC'),
+       (N'100%done'), (N'under_score'),
+       (N'back\slash'), (N'single''quote'),
+       (N'   spaces   '), (N'trailing   '), (N'   leading'),
+       (N'aaaaaaaaaa'), (N'AAAAAAAAAA'), (N'aAbBcCdDeE');
+GO
+~~ROW COUNT: 39~~
+
+
+INSERT INTO BABEL_5966_TestLikeNVarCollation_CI_AS (Col)
+SELECT N'zzz_filler_' + CAST(n AS NVARCHAR(10))
+FROM generate_series(1, 20000) AS n;
+GO
+~~ROW COUNT: 20000~~
+
+
+INSERT INTO BABEL_5966_TestLikeNVarCollation_CS_AS (Col) SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CI_AS;
+INSERT INTO BABEL_5966_TestLikeNVarCollation_CI_AI (Col) SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CI_AS;
+INSERT INTO BABEL_5966_TestLikeNVarCollation_CS_AI (Col) SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CI_AS;
+GO
+~~ROW COUNT: 20039~~
+
+~~ROW COUNT: 20039~~
+
+~~ROW COUNT: 20039~~
+
+
+CREATE TABLE BABEL_5966_TestLikeCharCollation_CI_AS (
+    Id INT IDENTITY PRIMARY KEY,
+    Col CHAR(100) COLLATE SQL_Latin1_General_CP1_CI_AS
+);
+GO
+
+CREATE TABLE BABEL_5966_TestLikeCharCollation_CS_AS (
+    Id INT IDENTITY PRIMARY KEY,
+    Col CHAR(100) COLLATE SQL_Latin1_General_CP1_CS_AS
+);
+GO
+
+CREATE TABLE BABEL_5966_TestLikeCharCollation_CI_AI (
+    Id INT IDENTITY PRIMARY KEY,
+    Col CHAR(100) COLLATE SQL_Latin1_General_CP1_CI_AI
+);
+GO
+
+CREATE TABLE BABEL_5966_TestLikeCharCollation_CS_AI (
+    Id INT IDENTITY PRIMARY KEY,
+    Col CHAR(100) COLLATE SQL_Latin1_General_CP1_CS_AI
+);
+GO
+
+CREATE INDEX BABEL_5966_idx_char_ci_as ON BABEL_5966_TestLikeCharCollation_CI_AS(Col);
+CREATE INDEX BABEL_5966_idx_char_cs_as ON BABEL_5966_TestLikeCharCollation_CS_AS(Col);
+GO
+
+INSERT INTO BABEL_5966_TestLikeCharCollation_CI_AS (Col)
+VALUES ('exact match'), ('EXACT MATCH'), ('Exact Match'),
+       ('prefix_abc'), ('PREFIX_ABC'), ('Prefix_Abc'),
+       ('prefix_def'), ('prefix_ghi'),
+       ('something else'), ('another value'),
+       ('test data 1'), ('test data 2'), ('test data 3'),
+       ('café'), ('CAFÉ'), ('Café'),
+       ('résumé'), ('RÉSUMÉ'), ('Résumé'),
+       ('naïve'), ('NAÏVE'), ('Naïve'),
+       ('resume'), ('RESUME'), ('Resume'),
+       ('naive'), ('NAIVE'), ('Naive'),
+       ('straße'), ('STRASSE'), ('Straße'),
+       ('a'), ('A'), ('ab'), ('abc'), ('ABC'),
+       ('100%done'), ('under_score'),
+       ('back\slash'), ('single''quote'),
+       ('   spaces   '), ('trailing   '), ('   leading'),
+       ('aaaaaaaaaa'), ('AAAAAAAAAA'), ('aAbBcCdDeE');
+GO
+~~ROW COUNT: 46~~
+
+
+INSERT INTO BABEL_5966_TestLikeCharCollation_CI_AS (Col)
+SELECT 'zzz_filler_' + CAST(n AS VARCHAR(10))
+FROM generate_series(1, 20000) AS n;
+GO
+~~ROW COUNT: 20000~~
+
+
+INSERT INTO BABEL_5966_TestLikeCharCollation_CS_AS (Col) SELECT Col FROM BABEL_5966_TestLikeCharCollation_CI_AS;
+INSERT INTO BABEL_5966_TestLikeCharCollation_CI_AI (Col) SELECT Col FROM BABEL_5966_TestLikeCharCollation_CI_AS;
+INSERT INTO BABEL_5966_TestLikeCharCollation_CS_AI (Col) SELECT Col FROM BABEL_5966_TestLikeCharCollation_CI_AS;
+GO
+~~ROW COUNT: 20046~~
+
+~~ROW COUNT: 20046~~
+
+~~ROW COUNT: 20046~~
+
+
+
+-- Views (using CI_AS explicit collation tables)
+CREATE VIEW BABEL_5966_vw_like_exact AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_prefix AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_suffix AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%match';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_contains AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%data%';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_single_char AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'_';
+GO
+
+CREATE VIEW BABEL_5966_vw_not_like AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE N'zzz%';
+GO
+
+CREATE VIEW BABEL_5966_vw_not_like_exact AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE N'exact match';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_nvar_exact AS
+SELECT Id, Col FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_nvar_prefix AS
+SELECT Id, Col FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_nvar_suffix AS
+SELECT Id, Col FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'%match';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_char_exact AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_char_prefix AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_char_suffix AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'%match';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_or AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS
+WHERE Col LIKE N'prefix%' OR Col LIKE N'test%';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_and AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS
+WHERE Col LIKE N'prefix%' AND Col LIKE N'%abc';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_escape_pct AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'100!%done' ESCAPE '!';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_escape_underscore AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'under!_score' ESCAPE '!';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_unicode AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'café';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_unicode_prefix AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'caf%';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_cast_varchar AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+CREATE VIEW BABEL_5966_vw_like_cast_nvarchar AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(N'prefix%' AS NVARCHAR(50));
+GO
+
+CREATE VIEW BABEL_5966_vw_like_cast_char AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+CREATE VIEW BABEL_5966_vw_like_ci_as AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_cs_as AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'exact match';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_ci_ai AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'exact match';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_cs_ai AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'exact match';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_ci_as_prefix AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_cs_as_prefix AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'prefix%';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_ci_ai_prefix AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'prefix%';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_cs_ai_prefix AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'prefix%';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_nested AS
+SELECT * FROM BABEL_5966_vw_like_prefix WHERE Col LIKE N'prefix_a%';
+GO
+
+CREATE VIEW BABEL_5966_vw_like_with_id AS
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS
+WHERE Col LIKE N'prefix%' AND Id > 0;
+GO
+
+
+-- Stored Procedures
+CREATE PROCEDURE BABEL_5966_sp_like_exact_const AS
+BEGIN
+    SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact match';
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_prefix_const AS
+BEGIN
+    SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%';
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_suffix_const AS
+BEGIN
+    SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%match';
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_varchar_param @pattern VARCHAR(50) AS
+BEGIN
+    SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @pattern;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_nvarchar_param @pattern NVARCHAR(50) AS
+BEGIN
+    SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @pattern;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_all_types @pattern NVARCHAR(50) AS
+BEGIN
+    SELECT COUNT(*) AS varchar_cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @pattern;
+    SELECT COUNT(*) AS nvarchar_cnt FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE @pattern;
+    SELECT COUNT(*) AS char_cnt FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE @pattern;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_not_like_param @pattern NVARCHAR(50) AS
+BEGIN
+    SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE @pattern;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_escape @pattern NVARCHAR(50), @esc CHAR(1) AS
+BEGIN
+    SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @pattern ESCAPE @esc;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_dynamic @prefix VARCHAR(50) AS
+BEGIN
+    SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @prefix + '%';
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_output @pattern NVARCHAR(50), @cnt INT OUTPUT AS
+BEGIN
+    SELECT @cnt = COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @pattern;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_all_collations @pattern NVARCHAR(50) AS
+BEGIN
+    SELECT COUNT(*) AS ci_as FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @pattern;
+    SELECT COUNT(*) AS cs_as FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE @pattern;
+    SELECT COUNT(*) AS ci_ai FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE @pattern;
+    SELECT COUNT(*) AS cs_ai FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE @pattern;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_nvar_collations @pattern NVARCHAR(50) AS
+BEGIN
+    SELECT COUNT(*) AS ci_as FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE @pattern;
+    SELECT COUNT(*) AS cs_as FROM BABEL_5966_TestLikeNVarCollation_CS_AS WHERE Col LIKE @pattern;
+    SELECT COUNT(*) AS ci_ai FROM BABEL_5966_TestLikeNVarCollation_CI_AI WHERE Col LIKE @pattern;
+    SELECT COUNT(*) AS cs_ai FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE @pattern;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_char_collations @pattern NVARCHAR(50) AS
+BEGIN
+    SELECT COUNT(*) AS ci_as FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE @pattern;
+    SELECT COUNT(*) AS cs_as FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE @pattern;
+    SELECT COUNT(*) AS ci_ai FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE @pattern;
+    SELECT COUNT(*) AS cs_ai FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE @pattern;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_with_cast @val VARCHAR(50) AS
+BEGIN
+    SELECT COUNT(*) AS cast_varchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(@val AS VARCHAR(50));
+    SELECT COUNT(*) AS cast_nvarchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(@val AS NVARCHAR(50));
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_multi_condition @p1 NVARCHAR(50), @p2 NVARCHAR(50) AS
+BEGIN
+    SELECT COUNT(*) AS and_cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @p1 AND Col LIKE @p2;
+    SELECT COUNT(*) AS or_cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @p1 OR Col LIKE @p2;
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_subquery @pattern NVARCHAR(50) AS
+BEGIN
+    SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS
+    WHERE Id IN (SELECT Id FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @pattern);
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_exists @pattern NVARCHAR(50) AS
+BEGIN
+    SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS t1
+    WHERE EXISTS (SELECT 1 FROM BABEL_5966_TestLikeCollation_CI_AS t2 WHERE t2.Col LIKE @pattern AND t2.Id = t1.Id);
+END;
+GO
+
+CREATE PROCEDURE BABEL_5966_sp_like_top @pattern NVARCHAR(50), @top INT AS
+BEGIN
+    SELECT TOP(@top) Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @pattern ORDER BY Col;
+END;
+GO
+
+
+-- CHECK Constraints
+CREATE TABLE BABEL_5966_TestLikeCheck_prefix (
+    Id INT IDENTITY PRIMARY KEY,
+    Col VARCHAR(50) CHECK (Col LIKE 'valid%')
+);
+GO
+
+CREATE TABLE BABEL_5966_TestLikeCheck_nprefix (
+    Id INT IDENTITY PRIMARY KEY,
+    Col VARCHAR(50) CHECK (Col LIKE N'valid%')
+);
+GO
+
+CREATE TABLE BABEL_5966_TestLikeCheck_not_like (
+    Id INT IDENTITY PRIMARY KEY,
+    Col VARCHAR(50) CHECK (Col NOT LIKE 'bad%')
+);
+GO
+
+CREATE TABLE BABEL_5966_TestLikeCheck_escape (
+    Id INT IDENTITY PRIMARY KEY,
+    Col VARCHAR(50) CHECK (Col LIKE '100!%%' ESCAPE '!')
+);
+GO
+
+CREATE TABLE BABEL_5966_TestLikeCheck_suffix (
+    Id INT IDENTITY PRIMARY KEY,
+    Col VARCHAR(50) CHECK (Col LIKE '%_valid')
+);
+GO

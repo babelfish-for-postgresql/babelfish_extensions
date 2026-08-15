@@ -1445,6 +1445,11 @@ LANGUAGE plpgsql
 STABLE;
 
 
+-- LIKE prefix bounds for index scan optimization
+CREATE OR REPLACE FUNCTION sys.babelfish_like_prefix(pattern TEXT)
+RETURNS TEXT AS 'babelfishpg_tsql', 'babelfish_like_prefix'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
