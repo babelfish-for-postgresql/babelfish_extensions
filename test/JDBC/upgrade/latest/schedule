@@ -700,3 +700,4 @@ xml_nodes
 forxml-namespaces
 xml-methods-namespaces
 fk-cascade-trigger
+Persisted_Computed_Columns
