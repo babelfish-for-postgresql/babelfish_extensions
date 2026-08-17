@@ -1,0 +1,38 @@
+
+#ifndef STABLE_FUNC_PERSISTED_H
+#define STABLE_FUNC_PERSISTED_H
+
+#include "postgres.h"
+#include "nodes/parsenodes.h"
+
+/* Entry for whitelisted function lookup */
+typedef struct {
+    const char *funcname;
+    const char *nspname;
+    int        style_arg_pos; /* 0-based position of style_specified arg, -1 means always safe */
+} FuncEntry;
+
+typedef struct
+{
+    int   varno;
+    int   varattno;
+    Node  *expr;
+} RewriteCtx;
+
+/* Hook for PERSISTED computed columns with whitelisted STABLE functions */
+extern Node *stable_persisted_hook(Node *expr);
+
+/* GUC check functions for PERSISTED computed columns */
+extern bool check_persisted_gucs(void);
+extern char *get_mismatched_persisted_gucs(void);
+
+/* Check if table has PERSISTED computed columns */
+extern bool table_has_persisted_computed_cols(Oid relid);
+
+/* Check GUCs for DML into tables with PERSISTED computed columns */
+extern void guc_check_dml(Query *parse);
+
+/* Rewrite computed column references in SELECT when GUCs don't match */
+extern void query_rewrite_persisted(Query *parse);
+
+#endif /* STABLE_FUNC_PERSISTED_H */
