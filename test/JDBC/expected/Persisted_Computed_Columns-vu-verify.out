@@ -765,6 +765,8 @@ SET CONCAT_NULL_YIELDS_NULL ON
 GO
 SELECT a, b, c INTO pcc_ctas_dest_on FROM pcc_ctas_source
 GO
+~~ROW COUNT: 3~~
+
 --SELECT from destination table
 SELECT a, b, c FROM pcc_ctas_dest_on ORDER BY a
 GO
@@ -782,6 +784,8 @@ GO
 
 SELECT a, b, c INTO pcc_ctas_dest_off FROM pcc_ctas_source
 GO
+~~ROW COUNT: 3~~
+
 SET CONCAT_NULL_YIELDS_NULL ON
 GO
 --SELECT from destination table
