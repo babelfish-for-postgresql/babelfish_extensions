@@ -24,6 +24,7 @@ babelfishpg_tsql.escape_hatch_login_password_must_change#!#strict#!#escape hatch
 babelfishpg_tsql.escape_hatch_login_password_unlock#!#strict#!#escape hatch for login passwords unlock option
 babelfishpg_tsql.escape_hatch_nocheck_add_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table add
 babelfishpg_tsql.escape_hatch_nocheck_existing_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table on exsiting constraint
+babelfishpg_tsql.escape_hatch_persisted_col_guc_check#!#strict#!#escape hatch for GUC enforcement on persisted computed columns
 babelfishpg_tsql.escape_hatch_query_hints#!#ignore#!#escape hatch for query hints
 babelfishpg_tsql.escape_hatch_rowguidcol_column#!#ignore#!#escape hatch for ROWGUIDCOL option
 babelfishpg_tsql.escape_hatch_rowversion#!#strict#!#escape hatch for TIMESTAMP/ROWVERSION columns
