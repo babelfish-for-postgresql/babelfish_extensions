@@ -691,3 +691,5 @@ babel_sqlvariant_coerce_type
 BABEL-5264
 antlr_parse_cache_version
 xml_query
+forxml-namespaces-before-17_12-or-18_6
+xml-methods-namespaces-before-17_12-or-18_6
