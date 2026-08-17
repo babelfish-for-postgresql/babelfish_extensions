@@ -25,5 +25,8 @@ GO
 DROP PROCEDURE computed_column_vu_prepare_p2
 GO
 
+DROP TABLE computed_column_vu_prepare_t8
+GO
+
 DROP TABLE computed_column_vu_prepare_t9
 GO

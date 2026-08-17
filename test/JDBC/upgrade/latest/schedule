@@ -696,3 +696,4 @@ BABEL-6813
 long-identifiers-trigger-func-proc
 xml_nodes
 fk-cascade-trigger
+Persisted_Computed_Columns
