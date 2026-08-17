@@ -415,7 +415,7 @@ TestBigInt
 TestBinary
 TestBIT
 TestChar
-Test-Computed-Columns
+Test-Computed-Columns-before-17_12-or-18_5
 TestDate
 TestDatetime
 TestDatetime2
@@ -560,7 +560,7 @@ babel_726
 BABEL-3401
 BABEL-3820
 stuff
-PARTITION
+PARTITION-before-17_12-or-18_5
 BABEL-5071
 string_agg_within
 reverse
@@ -577,7 +577,7 @@ binary-datatype-operators
 sys_dm_os_sys_info
 BABEL-5059
 cast-varchar-to-time
-xml_exist
+xml_exist-before-17_12-or-18_5
 test_db_collation
 BABEL-5119
 BABEL-5129

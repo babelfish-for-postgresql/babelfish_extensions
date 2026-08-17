@@ -1,4 +1,6 @@
 -- parallel_query_expected
+SET QUOTED_IDENTIFIER ON
+GO
 ---------------------------------------------------
 --- Check for inconsistent metadata after upgrade
 ----------------------------------------------------
@@ -1803,6 +1805,8 @@ GO
 
 
 -- Create partitioned table with computed columns
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE partition_float_real_partitioned_computed_test (
     id INT IDENTITY(1,1),
     float_val FLOAT,

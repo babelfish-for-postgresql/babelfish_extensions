@@ -170,10 +170,6 @@ CREATE TABLE computed_column_vu_prepare_t8
   FullName AS CONCAT(FirstName,' ',LastName)
 )
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: generation expression is not immutable)~~
-
 
 CREATE TABLE computed_column_vu_prepare_t9
 (
