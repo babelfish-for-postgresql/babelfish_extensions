@@ -612,7 +612,6 @@ GRANT SELECT ON sys.views TO PUBLIC;
 -- Recreate sys.all_views
 create or replace view sys.all_views as
 SELECT
-SELECT
     CAST(sys.bbf_get_truncated_rel_original_name(c.reloptions, c.relname) AS sys.SYSNAME) as name
   , CAST(c.oid AS INT) as object_id
   , CAST(null AS INT) as principal_id
