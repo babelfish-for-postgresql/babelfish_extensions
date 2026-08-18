@@ -694,3 +694,4 @@ babel_sqlvariant_coerce_type
 BABEL-login-db-long-identifiers
 long-identifiers-objects
 BABEL-6813
+fk-cascade-trigger
