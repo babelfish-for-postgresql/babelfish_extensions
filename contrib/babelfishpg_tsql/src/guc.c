@@ -10,6 +10,7 @@
 #include "pltsql_instr.h"
 #include "pltsql.h"
 #include "pl_explain.h"
+#include "adhoc_cache.h"
 #include "miscadmin.h"
 #include "access/parallel.h"
 
@@ -1160,6 +1161,38 @@ define_custom_variables(void)
 										  "ANTLR parse and compare the two. Results are logged to the server log. "
 										  "Use sys.antlr_parse_cache_stats() to check for cache hits, writes or errors."),
 							 &pltsql_validate_antlr_parse_cache,
+							 false,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/*
+	 * Ad-hoc query ANTLR parse cache
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_adhoc_antlr_parse_cache",
+							 gettext_noop("Enables shared memory caching of ANTLR parser results for ad-hoc TDS batch queries."),
+							 gettext_noop("When enabled, repeated ad-hoc queries with the same text skip ANTLR re-parse."),
+							 &pltsql_enable_adhoc_antlr_parse_cache,
+							 false,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	DefineCustomIntVariable("babelfishpg_tsql.adhoc_parse_cache_max_entries",
+							gettext_noop("Maximum number of entries in the ad-hoc ANTLR parse cache."),
+							gettext_noop("When the cache is full, the least recently used entry is evicted."),
+							&pltsql_adhoc_parse_cache_max_entries,
+							1000,
+							100,
+							100000,
+							PGC_SUSET,
+							GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.validate_adhoc_antlr_parse_cache",
+							 gettext_noop("Enables validation of cached ad-hoc parse trees against fresh ANTLR parse."),
+							 gettext_noop("When enabled, cached parse trees are compared with fresh parse for correctness verification."),
+							 &pltsql_validate_adhoc_antlr_parse_cache,
 							 false,
 							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
