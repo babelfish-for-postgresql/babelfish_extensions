@@ -88,6 +88,76 @@ go
 DROP TABLE babel_2920_kw
 go
 
+-- schema-qualified target and source
+MERGE INTO dbo.babel_2920_t AS t
+USING dbo.babel_2920_s AS s ON t.id = s.id
+WHEN MATCHED AND t.id = 3 THEN UPDATE SET val = 'dbo_q';
+SELECT val FROM babel_2920_t WHERE id = 3
+go
+
+-- source joining the target table to itself
+CREATE TABLE babel_2920_emp (id INT PRIMARY KEY, mgr INT, nm VARCHAR(20))
+go
+INSERT INTO babel_2920_emp VALUES (1, NULL, 'ceo'), (2, 1, 'dev'), (3, 1, 'ops')
+go
+MERGE INTO babel_2920_emp AS t
+USING (SELECT a.id, b.nm AS mgrname FROM babel_2920_emp a JOIN babel_2920_emp b ON a.mgr = b.id) AS s
+ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET nm = s.mgrname;
+SELECT * FROM babel_2920_emp ORDER BY id
+go
+
+-- LEFT JOIN source with a window function
+MERGE INTO babel_2920_emp AS t
+USING (SELECT e.id, COUNT(*) OVER (PARTITION BY e.mgr) AS cnt
+       FROM babel_2920_emp e LEFT JOIN babel_2920_emp m ON e.mgr = m.id) AS s
+ON t.id = s.id
+WHEN MATCHED AND s.cnt > 1 THEN UPDATE SET nm = 'peer';
+SELECT * FROM babel_2920_emp ORDER BY id
+go
+
+-- CTE as source
+WITH src AS (SELECT 9 AS id, 'cte' AS nm)
+MERGE INTO babel_2920_emp AS t USING src AS s ON t.id = s.id
+WHEN NOT MATCHED THEN INSERT (id, mgr, nm) VALUES (s.id, NULL, s.nm);
+SELECT nm FROM babel_2920_emp WHERE id = 9
+go
+
+-- view as source
+CREATE VIEW babel_2920_srcv AS SELECT id, val FROM babel_2920_s
+go
+MERGE INTO babel_2920_t AS t USING babel_2920_srcv AS s ON t.id = s.id
+WHEN MATCHED AND t.id = 4 THEN UPDATE SET val = s.val;
+SELECT val FROM babel_2920_t WHERE id = 4
+go
+
+-- sp_executesql with parameters
+EXEC sp_executesql N'MERGE INTO babel_2920_t AS t USING (SELECT @p1 AS id, @p2 AS v) AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = s.v
+WHEN NOT MATCHED THEN INSERT (id, val, qty) VALUES (s.id, s.v, 0);',
+N'@p1 INT, @p2 VARCHAR(20)', @p1 = 300, @p2 = N'dynamic'
+go
+SELECT id, val FROM babel_2920_t WHERE id = 300
+go
+
+-- constraint violation rolls back the whole MERGE atomically (TRY/CATCH)
+CREATE TABLE babel_2920_chk (id INT PRIMARY KEY, val INT CHECK (val > 0))
+go
+INSERT INTO babel_2920_chk VALUES (1, 10), (2, 20)
+go
+BEGIN TRY
+    MERGE INTO babel_2920_chk AS t
+    USING (SELECT 1 AS id, 99 AS val UNION ALL SELECT 3, -1) AS s ON t.id = s.id
+    WHEN MATCHED THEN UPDATE SET val = s.val
+    WHEN NOT MATCHED THEN INSERT (id, val) VALUES (s.id, s.val);
+END TRY
+BEGIN CATCH
+    SELECT ERROR_NUMBER() AS caught
+END CATCH
+go
+SELECT * FROM babel_2920_chk ORDER BY id
+go
+
 -- MERGE inside a stored procedure (upsert pattern)
 CREATE PROCEDURE babel_2920_upsert @id INT, @val VARCHAR(20) AS
 BEGIN
@@ -165,6 +235,12 @@ go
 DROP VIEW babel_2920_iotv
 go
 DROP TABLE babel_2920_iot
+go
+DROP VIEW babel_2920_srcv
+go
+DROP TABLE babel_2920_emp
+go
+DROP TABLE babel_2920_chk
 go
 DROP TABLE babel_2920_t
 go
