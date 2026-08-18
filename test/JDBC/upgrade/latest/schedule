@@ -690,3 +690,4 @@ babel_sqlvariant_coerce_type
 BABEL-5264
 BABEL-6037
 xml_query
+fk-cascade-trigger
