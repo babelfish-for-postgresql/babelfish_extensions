@@ -3179,6 +3179,65 @@ validateUserAndRole(char *name)
  */
 
 /*
+ * Build an AlterTableCmd that sets a single reloption/attoption (name=value).
+ * Centralizes the repeated command-construction pattern used when stashing
+ * original (untruncated) identifiers.
+ */
+static AlterTableCmd *
+build_set_option_cmd(AlterTableType subtype, const char *optname, const char *optval)
+{
+	AlterTableCmd *cmd = makeNode(AlterTableCmd);
+
+	cmd->subtype = subtype;
+	cmd->def = (Node *) list_make1(makeDefElem(pstrdup(optname),
+											   (Node *) makeString(pstrdup(optval)), -1));
+	cmd->behavior = DROP_RESTRICT;
+	cmd->missing_ok = false;
+	return cmd;
+}
+
+/*
+ * Extract the original (untruncated) index name from the query source text.
+ *
+ * The grammar appends a TSQL_ORIGINAL_NAME_LOCATION option carrying the byte
+ * offset of the identifier within queryString. This option is removed here so
+ * that DefineIndex does not reject it as unrecognized. Returns a palloc'd
+ * string, or NULL if the option is absent or invalid.
+ */
+static char *
+extract_index_original_name(IndexStmt *stmt, const char *queryString)
+{
+	ListCell   *opt_lc;
+	char	   *original_name = NULL;
+
+	/*
+	 * Iterate all options and remove every tsql_original_name_location entry.
+	 * The grammar appends exactly one such entry with an Integer value (the
+	 * byte offset of the identifier in queryString). A user could also spell
+	 * WITH (tsql_original_name_location = '...') which arrives as a String or
+	 * NULL; those are ignored (not reinterpreted as a pointer by intVal) but
+	 * still stripped so DefineIndex does not reject the unrecognized option.
+	 */
+	foreach(opt_lc, stmt->options)
+	{
+		DefElem *defel = (DefElem *) lfirst(opt_lc);
+
+		if (strcmp(defel->defname, TSQL_ORIGINAL_NAME_LOCATION) == 0)
+		{
+			if (!original_name && defel->arg && IsA(defel->arg, Integer))
+			{
+				int loc = intVal(defel->arg);
+
+				if (loc >= 0 && queryString && (size_t) loc < strlen(queryString))
+					original_name = extract_identifier(queryString + loc, NULL);
+			}
+			stmt->options = foreach_delete_current(stmt->options, opt_lc);
+		}
+	}
+	return original_name;
+}
+
+/*
  * Store original view/relation name in reloptions if it differs from the
  * internal (lowercased/truncated) name.
  */
@@ -3190,22 +3249,21 @@ store_view_original_name(ViewStmt *stmt, const char *queryString)
 	if (stmt->view->location < 0 || !queryString || babelfish_dump_restore)
 		return;
 
+	/* Guard against a location beyond the query text before dereferencing. */
+	if ((size_t) stmt->view->location >= strlen(queryString))
+		return;
+
 	original_name = extract_multipart_identifier_name(queryString + stmt->view->location);
 	if (original_name &&
-		(strlen(original_name) >= NAMEDATALEN ||
-		 (strncmp(stmt->view->relname, original_name, strlen(stmt->view->relname)) != 0 &&
-		  strncasecmp(stmt->view->relname, original_name, strlen(stmt->view->relname)) == 0)))
+		(strcmp(stmt->view->relname, original_name) != 0))
 	{
 		Oid viewOid = RangeVarGetRelid(stmt->view, NoLock, true);
 
 		if (OidIsValid(viewOid))
 		{
-			AlterTableCmd *cmd = makeNode(AlterTableCmd);
-			cmd->subtype = AT_SetRelOptions;
-			cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME),
-													   (Node *) makeString(pstrdup(original_name)), -1));
-			cmd->behavior = DROP_RESTRICT;
-			cmd->missing_ok = false;
+			AlterTableCmd *cmd = build_set_option_cmd(AT_SetRelOptions,
+													  ATTOPTION_BBF_ORIGINAL_TABLE_NAME,
+													  original_name);
 			AlterTableInternal(viewOid, list_make1(cmd), false);
 			CommandCounterIncrement();
 		}
@@ -3231,6 +3289,7 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 	ListCell   *lc_tle, *lc_rt;
 	List	   *cmds = NIL;
 	int			attnum = 0;
+	size_t		qlen;
 
 	if (!queryString)
 		return;
@@ -3243,6 +3302,17 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 	tupdesc = RelationGetDescr(rel);
 	viewquery = get_view_query(rel);
 
+	/*
+	 * get_view_query() returns NULL if the relation is not a view. This is
+	 * practically unreachable (the view was just created in this transaction)
+	 * but guard defensively to avoid a NULL dereference below.
+	 */
+	if (viewquery == NULL)
+	{
+		relation_close(rel, AccessShareLock);
+		return;
+	}
+
 	/* Get the SELECT target list from the raw parse tree */
 	select = (SelectStmt *) stmt->query;
 	if (!select || !IsA(select, SelectStmt))
@@ -3254,8 +3324,13 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 	/*
 	 * Iterate view's target entries. For each column, resolve the original
 	 * name from: (1) explicit alias via queryString name_location, or
-	 * (2) source column's attoptions.
+	 * (2) source column's attoptions. We only store names that end up longer
+	 * than NAMEDATALEN (checked below), which is the reliable signal that the
+	 * physical column name was truncated. The physical attname length is not a
+	 * safe proxy for truncation because multibyte truncation can back off to
+	 * fewer than NAMEDATALEN-1 bytes.
 	 */
+	qlen = strlen(queryString);
 	lc_rt = list_head(select->targetList);
 	foreach(lc_tle, viewquery->targetList)
 	{
@@ -3277,7 +3352,7 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 		{
 			ResTarget *rt = (ResTarget *) lfirst(lc_rt);
 			if (IsA(rt, ResTarget) && rt->name && rt->name_location >= 0 &&
-				(size_t) rt->name_location < strlen(queryString))
+				(size_t) rt->name_location < qlen)
 			{
 				original_name = extract_identifier(queryString + rt->name_location, NULL);
 				lc_rt = lnext(select->targetList, lc_rt);
@@ -3317,19 +3392,20 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 			}
 		}
 
-		/* Store if we found an original name that's long */
-		if (original_name && strlen(original_name) >= NAMEDATALEN)
+		/*
+		 * Store the original name whenever it differs from the physical
+		 * (lowercased/truncated) attname. This covers both truncated long
+		 * names and mixed-case short names, matching the relation-name path.
+		 */
+		if (original_name && strcmp(NameStr(attr->attname), original_name) != 0)
 		{
-			AlterTableCmd *cmd = makeNode(AlterTableCmd);
+			AlterTableCmd *cmd = build_set_option_cmd(AT_SetOptions,
+													  ATTOPTION_BBF_ORIGINAL_NAME,
+													  original_name);
 
-			cmd->subtype = AT_SetOptions;
 			cmd->name = pstrdup(NameStr(attr->attname));
-			cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME),
-													   (Node *) makeString(original_name), -1));
-			cmd->behavior = DROP_RESTRICT;
-			cmd->missing_ok = false;
-
 			cmds = lappend(cmds, cmd);
+			pfree(original_name);
 		}
 		else if (original_name)
 			pfree(original_name);
@@ -3438,7 +3514,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						{
 							AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
 							if (cmd->subtype == AT_SetRelOptions || cmd->subtype == AT_ResetRelOptions ||
-								cmd->subtype == AT_SetOptions)
+								cmd->subtype == AT_ReplaceRelOptions ||
+								cmd->subtype == AT_SetOptions || cmd->subtype == AT_ResetOptions)
 							{
 								List *options = (List *) cmd->def;
 								ListCell *lopt;
@@ -3920,6 +3997,20 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							if(oldViewAcl != NULL)
 								pfree(oldViewAcl);
 						}
+
+						/*
+						 * Store original view/column names within the same
+						 * transaction so the reloption/attoption writes commit
+						 * atomically with the view creation.
+						 *
+						 * CommandCounterIncrement() makes the just-created view's
+						 * catalog tuples visible to the subsequent AlterTableInternal
+						 * calls; without it they fail with "tuple already updated by
+						 * self".
+						 */
+						CommandCounterIncrement();
+						store_view_original_name(stmt, queryString);
+						store_view_column_original_names(stmt, queryString);
 						CommitTransactionCommand();
 					}
 					PG_FINALLY();
@@ -3929,8 +4020,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							EventTriggerEndCompleteQuery();
 					}
 					PG_END_TRY();
-					store_view_original_name(stmt, queryString);
-					store_view_column_original_names(stmt, queryString);
 					return; 
 				}
 				else if(sql_dialect == SQL_DIALECT_TSQL)
@@ -3938,34 +4027,25 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					PG_TRY();
 					{
 						pltsql_current_query_is_view_definition = true;
-						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, 
-												context, params, queryEnv, dest, qc);
+						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree,
+												 context, params, queryEnv, dest, qc);
+
+						/*
+						 * Store original view/column names using RangeVar->location
+						 * within the same execution so failures propagate correctly.
+						 */
+						store_view_original_name(stmt, queryString);
+						store_view_column_original_names(stmt, queryString);
 					}
 					PG_FINALLY();
 					{
 						pltsql_current_query_is_view_definition = false;
 					}
 					PG_END_TRY();
-
-					/*
-					 * Store original view name using RangeVar->location if
-					 * the name differs in case from the lowercased version.
-					 */
-					store_view_original_name(stmt, queryString);
-					store_view_column_original_names(stmt, queryString);
 					return;
 				}
 
-				/* Plain CREATE VIEW: execute, then store original name */
-				call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
-
-				if (sql_dialect == SQL_DIALECT_TSQL)
-				{
-					ViewStmt *vstmt = (ViewStmt *) parsetree;
-					store_view_original_name(vstmt, queryString);
-					store_view_column_original_names(vstmt, queryString);
-				}
-				return;
+				break;
 			}
 
 		case T_AlterTableStmt:
@@ -5610,21 +5690,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					char    	*original_name = NULL;
 					List    	*partition_schemes = stmt->excludeOpNames;
-					ListCell	*opt_lc;
 
-					/* Extract and remove original name location before DefineIndex validates options */
-					foreach(opt_lc, stmt->options)
-					{
-						DefElem *defel = (DefElem *) lfirst(opt_lc);
-						if (strcmp(defel->defname, TSQL_ORIGINAL_NAME_LOCATION) == 0)
-						{
-							int loc = intVal(defel->arg);
-							if (loc >= 0 && queryString && (size_t) loc < strlen(queryString))
-								original_name = extract_identifier(queryString + loc, NULL);
-							stmt->options = foreach_delete_current(stmt->options, opt_lc);
-							break;
-						}
-					}
+					/*
+					 * Extract and remove the original (untruncated) index name
+					 * location from the options before DefineIndex validates them.
+					 */
+					original_name = extract_index_original_name(stmt, queryString);
 					if (!original_name)
 						original_name = stmt->idxname;
 
@@ -8520,21 +8591,17 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 	{
 		CreateTableAsStmt *ctas = (CreateTableAsStmt *) parsetree;
 
-		if (ctas->into && ctas->into->rel && ctas->into->rel->location >= 0)
+		if (ctas->into && ctas->into->rel && ctas->into->rel->location >= 0 &&
+			(size_t) ctas->into->rel->location < strlen(queryString))
 		{
 			char *original_name = extract_multipart_identifier_name(queryString + ctas->into->rel->location);
 
 			if (original_name &&
-				(strlen(original_name) >= NAMEDATALEN ||
-				 (strncmp(ctas->into->rel->relname, original_name, strlen(ctas->into->rel->relname)) != 0 &&
-				  strncasecmp(ctas->into->rel->relname, original_name, strlen(ctas->into->rel->relname)) == 0)))
+				strcmp(ctas->into->rel->relname, original_name) != 0)
 			{
-				AlterTableCmd *cmd = makeNode(AlterTableCmd);
-				cmd->subtype = AT_SetRelOptions;
-				cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME),
-														   (Node *) makeString(pstrdup(original_name)), -1));
-				cmd->behavior = DROP_RESTRICT;
-				cmd->missing_ok = false;
+				AlterTableCmd *cmd = build_set_option_cmd(AT_SetRelOptions,
+														  ATTOPTION_BBF_ORIGINAL_TABLE_NAME,
+														  original_name);
 				AlterTableInternal(address->objectId, list_make1(cmd), false);
 				CommandCounterIncrement();
 			}
@@ -8550,12 +8617,22 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 	 */
 	if (sql_dialect == SQL_DIALECT_TSQL && OidIsValid(address->objectId) && queryString)
 	{
-		Query *query = castNode(Query, ((CreateTableAsStmt *)parsetree)->query);
+		Node *ctas_query = ((CreateTableAsStmt *) parsetree)->query;
+		Query *query;
 		ListCell *lc, *oc;
 		int colno = 0;
 		Relation rel2;
 		TupleDesc td;
 		List *cmds = NIL;
+
+		/*
+		 * After transformSelectIntoStmt() the query field should be a Query
+		 * node, but guard the cast (castNode is a raw cast in release builds)
+		 * to avoid misreading the node for unusual SELECT ... INTO forms.
+		 */
+		if (!ctas_query || !IsA(ctas_query, Query))
+			return;
+		query = (Query *) ctas_query;
 
 		rel2 = relation_open(address->objectId, AccessShareLock);
 		td = RelationGetDescr(rel2);
@@ -8608,16 +8685,12 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 				}
 			}
 
-			if (orig_name != NULL && strlen(orig_name) >= NAMEDATALEN)
+			if (orig_name != NULL && strcmp(NameStr(attr->attname), orig_name) != 0)
 			{
-				AlterTableCmd *cmd = makeNode(AlterTableCmd);
-				cmd->subtype = AT_SetOptions;
+				AlterTableCmd *cmd = build_set_option_cmd(AT_SetOptions,
+														  ATTOPTION_BBF_ORIGINAL_NAME,
+														  orig_name);
 				cmd->name = pstrdup(NameStr(attr->attname));
-				cmd->def = (Node *) list_make1(
-					makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME),
-								(Node *) makeString(pstrdup(orig_name)), -1));
-				cmd->behavior = DROP_RESTRICT;
-				cmd->missing_ok = false;
 				cmds = lappend(cmds, cmd);
 			}
 		}

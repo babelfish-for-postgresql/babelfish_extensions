@@ -508,6 +508,142 @@ DROP TABLE babel5975_multi_col;
 GO
 
 
+-- tsql
+
+
+-- ===========================================
+-- SELECT STATEMENTS: TDS column name display
+-- ===========================================
+-- SELECT with long column reference - verify via sp_describe_first_result_set_internal
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1 FROM babel5975_col_test', NULL, 0);
+GO
+~~START~~
+varchar
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1
+~~END~~
+
+
+-- SELECT * from table with long columns - verify column names in metadata
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT * FROM babel5975_col_test', NULL, 0);
+GO
+~~START~~
+varchar
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col2
+Very_Long_Added_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+-- SELECT with subquery - nested resolution
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT * FROM (SELECT Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1 FROM babel5975_col_test) sub1', NULL, 0);
+GO
+~~START~~
+varchar
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1
+~~END~~
+
+
+-- SELECT with bracket-delimited long alias
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT 1 AS [Very Long Bracket Alias Name That Exceeds PostgreSQL Limit Of Sixty Three Characters]', NULL, 0);
+GO
+~~START~~
+varchar
+Very Long Bracket Alias Name That Exceeds PostgreSQL Limit Of Sixty Three Characters
+~~END~~
+
+
+
+-- ===========================================
+-- BRACKET AND QUOTED IDENTIFIERS
+-- ===========================================
+-- CREATE TABLE with bracket-delimited long name
+CREATE TABLE [Very Long Table Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters] (id INT, val NVARCHAR(50));
+GO
+SELECT name FROM sys.tables WHERE name LIKE 'Very Long Table Name%';
+GO
+~~START~~
+varchar
+Very Long Table Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters
+~~END~~
+
+
+-- CREATE VIEW with bracket-delimited long name
+CREATE VIEW [Very Long View Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters]
+AS SELECT * FROM [Very Long Table Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters];
+GO
+SELECT name FROM sys.views WHERE name LIKE 'Very Long View Name%';
+GO
+~~START~~
+varchar
+Very Long View Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters
+~~END~~
+
+
+-- CREATE INDEX with bracket-delimited long name
+CREATE INDEX [Very Long Index Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters]
+ON [Very Long Table Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters] (id);
+GO
+SELECT name FROM sys.indexes WHERE name LIKE 'Very Long Index Name%';
+GO
+~~START~~
+varchar
+Very Long Index Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters
+~~END~~
+
+
+-- Cleanup bracket identifiers
+DROP VIEW [Very Long View Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters];
+GO
+DROP TABLE [Very Long Table Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters];
+GO
+
+
+-- ===========================================
+-- SP_RENAME: Index rename
+-- ===========================================
+-- Create table and index for rename test
+CREATE TABLE babel5975_idx_rename_test (id INT, val INT);
+GO
+CREATE INDEX Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Before_Rename
+ON babel5975_idx_rename_test (id);
+GO
+
+-- Rename index
+EXEC sp_rename 'babel5975_idx_rename_test.Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Before_Rename',
+    'Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_After_Rename', 'INDEX';
+GO
+
+-- Verify renamed index
+SELECT name FROM sys.indexes WHERE object_id = OBJECT_ID('babel5975_idx_rename_test') AND name LIKE 'Very_Long_Index%';
+GO
+~~START~~
+varchar
+Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_After_Rename
+~~END~~
+
+
+-- Cleanup
+DROP TABLE babel5975_idx_rename_test;
+GO
+
+
+-- ===========================================
+-- MIXED CASE PRESERVATION
+-- ===========================================
+-- Table with mixed case long name
+CREATE TABLE MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_XYZ (id INT);
+GO
+SELECT name FROM sys.tables WHERE name LIKE 'MixedCase_Very_Long%';
+GO
+~~START~~
+varchar
+MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_XYZ
+~~END~~
+
+DROP TABLE MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_XYZ;
+GO
+
+
 
 -- psql
 -- ===========================================
@@ -541,6 +677,24 @@ GO
 
 -- Verify modification of bbf_original_name (column) is blocked
 ALTER TABLE master_dbo.babel5975_col_test ALTER COLUMN very_long_column_name_that_excee78cb009a0e5eb4aba1c0243be4884f78 SET (bbf_original_name='hacked');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: cannot modify "bbf_original_name" for babelfish objects
+    Server SQLState: 42501)~~
+
+
+-- Verify RESET of bbf_original_rel_name (relation-level) is blocked
+ALTER TABLE master_dbo.very_long_table_name_that_excee93167071de365a0cba68700e242774dd RESET (bbf_original_rel_name);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: cannot modify "bbf_original_rel_name" for babelfish objects
+    Server SQLState: 42501)~~
+
+
+-- Verify RESET of bbf_original_name (column-level) is blocked
+ALTER TABLE master_dbo.babel5975_col_test ALTER COLUMN very_long_column_name_that_excee78cb009a0e5eb4aba1c0243be4884f78 RESET (bbf_original_name);
 GO
 ~~ERROR (Code: 0)~~
 

@@ -1645,10 +1645,8 @@ END AS NON_UNIQUE,
 CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
 -- the index name created by CREATE INDEX is re-mapped, find it (by checking
 -- the ones not in pg_constraint) and restoring it back before display
-CASE 
-WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
-ELSE COALESCE((SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(t6.reloptions) AS option), t6.relname::text)::sys.sysname 
-END AS INDEX_NAME,
+COALESCE((SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(t6.reloptions) AS option), t6.relname::text)::sys.sysname 
+AS INDEX_NAME,
 CASE
 WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
 ELSE CAST(3 AS smallint)

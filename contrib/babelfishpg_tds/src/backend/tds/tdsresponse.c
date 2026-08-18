@@ -1234,7 +1234,6 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 		 */
 		SetParamMetadataCommonInfo(col, finfo);
 		initStringInfo(&(col->colName));
-		appendStringInfoString(&col->colName, NameStr(att->attname));
 
 		/* Do we have a non-resjunk tlist item? */
 		while (tlist_item &&
@@ -1244,6 +1243,12 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 		{
 			tle = (TargetEntry *) lfirst(tlist_item);
 
+			/* Use tle->resname for full original name (before namestrcpy truncation) */
+			if (tle->resname)
+				appendStringInfoString(&col->colName, tle->resname);
+			else
+				appendStringInfoString(&col->colName, NameStr(att->attname));
+
 			col->relOid = tle->resorigtbl;
 			col->attrNum = tle->resorigcol;
 
@@ -1251,7 +1256,8 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 		}
 		else
 		{
-			/* No info available, so send zeroes */
+			/* No tlist info available, fall back to attname */
+			appendStringInfoString(&col->colName, NameStr(att->attname));
 			col->relOid = 0;
 			col->attrNum = 0;
 		}

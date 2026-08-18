@@ -816,7 +816,6 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 			break;
 		}
 		case T_AlterTableStmt:
-			return false;
 		default:
 			return false;
 			break;
@@ -2500,12 +2499,10 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, c
 	stmt->objtype = OBJECT_TABLE;
 
 	/*
-	 * Only store original_name if there's a difference, and if the difference
-	 * is only in capitalization, OR if the name was truncated
+	 * Only store original_name when it differs from the internal relname
+	 * (either due to case difference or truncation).
 	 */
-	if (strlen(original_name) >= NAMEDATALEN ||
-		(strncmp(relname, original_name, strlen(relname)) != 0 &&
-		 strncasecmp(relname, original_name, strlen(relname)) == 0))
+	if (strcmp(relname, original_name) != 0)
 	{
 		/*
 		 * add "ALTER TABLE SET (bbf_original_table_name=<original_name>)" to
