@@ -18,7 +18,7 @@ CREATE TABLE metadata_from_pg_child (a int REFERENCES metadata_from_pg_parent(a)
 GO
 CREATE TABLE metadata_from_pg_trg_tab (a int);
 GO
-CREATE TABLE trigger_counter (tally char(1));
+CREATE TABLE trigger_counter (tally char(10));
 GO
 CREATE TRIGGER metadata_from_pg_trg ON metadata_from_pg_trg_tab AFTER INSERT AS BEGIN INSERT INTO trigger_counter VALUES ('卌') END;
 GO
