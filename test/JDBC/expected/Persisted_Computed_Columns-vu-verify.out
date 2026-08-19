@@ -276,10 +276,16 @@ int
 ~~END~~
 
 
-
 -- Verify all whitelisted function outputs
--- SELECT * FROM pcc_convert ORDER BY id
--- GO
+SELECT * FROM pcc_convert ORDER BY id
+GO
+~~START~~
+int#!#date#!#varchar
+1#!#2024-01-15#!#01/15/2024
+2#!#2024-12-25#!#12/25/2024
+~~END~~
+
+
 SELECT * FROM pcc_eomonth ORDER BY id
 GO
 ~~START~~
@@ -289,9 +295,15 @@ int#!#date#!#date
 ~~END~~
 
 
+SELECT * FROM pcc_cast ORDER BY id
+GO
+~~START~~
+int#!#numeric#!#int
+1#!#123.4567#!#123
+2#!#99.9000#!#99
+~~END~~
 
--- SELECT * FROM pcc_cast ORDER BY id
--- GO
+
 SELECT * FROM pcc_concatws ORDER BY id
 GO
 ~~START~~
@@ -301,18 +313,42 @@ int#!#varchar#!#varchar#!#varchar#!#varchar
 ~~END~~
 
 
+SELECT * FROM pcc_datetrunc ORDER BY id
+GO
+~~START~~
+int#!#datetime#!#datetime
+1#!#2024-03-15 10:30:45.0#!#2024-03-01 00:00:00.0
+2#!#2024-07-22 08:15:00.0#!#2024-07-01 00:00:00.0
+~~END~~
 
 
+SELECT * FROM pcc_castbig ORDER BY id
+GO
+~~START~~
+int#!#numeric#!#bigint
+1#!#123456.7890#!#123456
+2#!#999999.9000#!#999999
+~~END~~
 
 
--- SELECT * FROM pcc_datetrunc ORDER BY id
--- GO
--- SELECT * FROM pcc_castbig ORDER BY id
--- GO
--- SELECT * FROM pcc_castsmall ORDER BY id
--- GO
--- SELECT * FROM pcc_conv_money ORDER BY id
--- GO
+SELECT * FROM pcc_castsmall ORDER BY id
+GO
+~~START~~
+int#!#numeric#!#smallint
+1#!#123.45#!#123
+2#!#32.10#!#32
+~~END~~
+
+
+SELECT * FROM pcc_conv_money ORDER BY id
+GO
+~~START~~
+int#!#money#!#text
+1#!#1234.5600#!#1234.5600
+2#!#99999.9900#!#99999.9900
+~~END~~
+
+
 -- Query plan verification (BABELFISH_SHOWPLAN_ALL)
 SELECT set_config('max_parallel_workers_per_gather', '0', false)
 GO
@@ -337,7 +373,7 @@ Aggregate  (cost=17.87..17.88 rows=1 width=4)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.105 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 SET BABELFISH_SHOWPLAN_ALL OFF
@@ -360,7 +396,7 @@ Aggregate  (cost=19.45..19.46 rows=1 width=4)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.066 ms
+Babelfish T-SQL Batch Parsing Time: 0.068 ms
 ~~END~~
 
 SET BABELFISH_SHOWPLAN_ALL OFF
@@ -395,7 +431,7 @@ Bitmap Heap Scan on pcc_bulk  (cost=4.17..11.28 rows=3 width=4)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.074 ms
+Babelfish T-SQL Batch Parsing Time: 0.072 ms
 ~~END~~
 
 SET BABELFISH_SHOWPLAN_ALL OFF
@@ -418,7 +454,7 @@ Seq Scan on pcc_bulk  (cost=0.00..19.45 rows=3 width=4)
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.068 ms
+Babelfish T-SQL Batch Parsing Time: 0.065 ms
 ~~END~~
 
 SET BABELFISH_SHOWPLAN_ALL OFF
