@@ -112,7 +112,7 @@ temp-tables
 table-variable
 TestNotNull
 Test-Identity
-Test-Computed-Columns-before-17_12-or-18_5
+Test-Computed-Columns-before-17_12-or-18_6
 BABEL-1189
 BABEL-1062
 BABEL-1243
