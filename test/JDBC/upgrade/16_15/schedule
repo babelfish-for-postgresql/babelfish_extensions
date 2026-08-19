@@ -417,7 +417,7 @@ TestBigInt
 TestBinary
 TestBIT
 TestChar
-Test-Computed-Columns-before-17_12-or-18_5
+Test-Computed-Columns-before-17_12-or-18_6
 TestDate
 TestDatetime
 TestDatetime2
@@ -579,7 +579,7 @@ binary-datatype-operators
 sys_dm_os_sys_info
 BABEL-5059
 cast-varchar-to-time
-xml_exist-before-17_12-or-18_5
+xml_exist-before-17_12-or-18_6
 test_db_collation
 BABEL-5119
 BABEL-5129

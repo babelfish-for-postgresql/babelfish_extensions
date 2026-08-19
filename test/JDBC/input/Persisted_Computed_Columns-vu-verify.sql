@@ -160,29 +160,29 @@ SELECT COUNT(*) AS cnt FROM pcc_concat WHERE c IS NOT NULL
 GO
 
 -- Verify all whitelisted function outputs
--- SELECT * FROM pcc_convert ORDER BY id
--- GO
+SELECT * FROM pcc_convert ORDER BY id
+GO
 
 SELECT * FROM pcc_eomonth ORDER BY id
 GO
 
--- SELECT * FROM pcc_cast ORDER BY id
--- GO
+SELECT * FROM pcc_cast ORDER BY id
+GO
 
 SELECT * FROM pcc_concatws ORDER BY id
 GO
 
--- SELECT * FROM pcc_datetrunc ORDER BY id
--- GO
+SELECT * FROM pcc_datetrunc ORDER BY id
+GO
 
--- SELECT * FROM pcc_castbig ORDER BY id
--- GO
+SELECT * FROM pcc_castbig ORDER BY id
+GO
 
--- SELECT * FROM pcc_castsmall ORDER BY id
--- GO
+SELECT * FROM pcc_castsmall ORDER BY id
+GO
 
--- SELECT * FROM pcc_conv_money ORDER BY id
--- GO
+SELECT * FROM pcc_conv_money ORDER BY id
+GO
 
 -- Query plan verification (BABELFISH_SHOWPLAN_ALL)
 SELECT set_config('max_parallel_workers_per_gather', '0', false)
