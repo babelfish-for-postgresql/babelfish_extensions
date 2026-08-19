@@ -3257,6 +3257,16 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 		}
 	}
 
+	/*
+	 * Block RENAME of TSQL functions/procedures and of the sys and
+	 * information_schema_tsql schemas from the PG endpoint.
+	 */
+	if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !superuser() &&
+		nodeTag(parsetree) == T_RenameStmt)
+	{
+		restrict_rename_stmt((RenameStmt *) parsetree);
+	}
+
 	switch (nodeTag(parsetree))
 	{
 		case T_AlterFunctionStmt:

@@ -3217,3 +3217,64 @@ restrict_alter_table_stmt(AlterTableStmt *stmt)
         }
     }
 }
+
+/*
+ * Blocks RENAME of TSQL functions, procedures, and the sys and
+ * information_schema_tsql schemas from the PG endpoint.
+ */
+void
+restrict_rename_stmt(RenameStmt *stmt)
+{
+    switch (stmt->renameType)
+    {
+        case OBJECT_FUNCTION:
+        case OBJECT_PROCEDURE:
+            {
+                ObjectAddress	address;
+                Relation		relation = NULL;
+                Oid				schema_oid;
+                char		   *schema_name;
+
+                address = get_object_address(stmt->renameType, stmt->object,
+                                             &relation, AccessShareLock, false);
+                schema_oid = get_object_namespace(&address);
+                if (relation)
+                    RelationClose(relation);
+
+                if (!OidIsValid(schema_oid))
+                    return;
+
+                schema_name = get_namespace_name(schema_oid);
+                if (!schema_name)
+                    return;
+
+                /* Only objects in a Babelfish schema */
+                if (physical_schema_name_exists(schema_name))
+                {
+                    pfree(schema_name);
+                    ereport(ERROR,
+                            (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                             errmsg("ALTER .. RENAME .. is blocked in PG dialect on TSQL objects.")));
+                }
+                pfree(schema_name);
+                break;
+            }
+        case OBJECT_SCHEMA:
+            {
+                /*
+                 * User T-SQL schemas are already covered by
+                 * check_extra_schema_restrictions(), system schemas are not
+                 * tracked in babelfish_namespace_ext, so guard them by name.
+                 */
+                if (stmt->subname &&
+                    (strcmp(stmt->subname, "sys") == 0 ||
+                     strcmp(stmt->subname, "information_schema_tsql") == 0))
+                    ereport(ERROR,
+                            (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                             errmsg("ALTER SCHEMA .. RENAME .. is blocked in PG dialect on Babelfish system schema \"%s\".", stmt->subname)));
+                break;
+            }
+        default:
+            break;
+    }
+}
