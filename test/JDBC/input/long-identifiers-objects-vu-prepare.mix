@@ -21,3 +21,15 @@ GO
 CREATE VIEW babel5975_tvc_vu_alias AS
 SELECT 1 AS Very_Long_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC;
 GO
+
+-- Table with PK for sp_special_columns and sp_fkeys testing
+CREATE TABLE Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC (
+    id INT PRIMARY KEY,
+    val NVARCHAR(50)
+);
+GO
+CREATE TABLE Very_Long_FK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC (
+    id INT,
+    fk_id INT REFERENCES Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC(id)
+);
+GO

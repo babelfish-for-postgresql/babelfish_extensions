@@ -42,3 +42,113 @@ varchar
 Very_Long_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC
 ~~END~~
 
+
+-- Verify sys.all_views
+SELECT name FROM sys.all_views WHERE name LIKE 'Very_Long_View%VU_TVC';
+GO
+~~START~~
+varchar
+Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC
+~~END~~
+
+
+-- Verify sys.all_objects (table)
+SELECT name FROM sys.all_objects WHERE name LIKE 'Very_Long_Table%VU_TVC' AND type = 'U';
+GO
+~~START~~
+varchar
+Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC
+~~END~~
+
+
+-- Verify sys.all_objects (view)
+SELECT name FROM sys.all_objects WHERE name LIKE 'Very_Long_View%VU_TVC' AND type = 'V';
+GO
+~~START~~
+varchar
+Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC
+~~END~~
+
+
+-- Verify sys.all_columns
+SELECT name FROM sys.all_columns WHERE object_id = OBJECT_ID('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC') AND name LIKE 'Very_Long_Column%';
+GO
+~~START~~
+varchar
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC
+~~END~~
+
+
+-- Verify information_schema.views
+SELECT TABLE_NAME FROM information_schema.views WHERE TABLE_NAME LIKE 'Very_Long_View%VU_TVC';
+GO
+~~START~~
+nvarchar
+Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC
+~~END~~
+
+
+-- Verify information_schema.columns
+SELECT COLUMN_NAME FROM information_schema.columns WHERE TABLE_NAME LIKE 'Very_Long_Table%VU_TVC' AND COLUMN_NAME LIKE 'Very_Long%';
+GO
+~~START~~
+nvarchar
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC
+~~END~~
+
+
+-- Verify sp_tables
+EXEC sp_tables @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#dbo#!#Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC#!#TABLE#!#<NULL>
+~~END~~
+
+
+-- Verify sp_columns
+EXEC sp_columns @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
+master#!#dbo#!#Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC#!#Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC#!#4#!#<NULL>#!#10#!#<NULL>#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+master#!#dbo#!#Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC#!#short_col#!#12#!#varchar#!#50#!#50#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#50#!#2#!#YES#!#39
+~~END~~
+
+
+-- Verify sp_statistics
+EXEC sp_statistics @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+master#!#dbo#!#Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
+master#!#dbo#!#Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC#!#1#!#very_long_table_name_that_excee58560d4982c4ae652ef7f043961fedfb#!#Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC#!#3#!#1#!#Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC#!#A#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
+
+-- Verify sys.all_sql_modules (view definition lookup)
+SELECT CASE WHEN definition IS NOT NULL THEN 'HAS_DEFINITION' ELSE 'NO_DEFINITION' END FROM sys.all_sql_modules WHERE object_id = OBJECT_ID('Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC');
+GO
+~~START~~
+varchar
+HAS_DEFINITION
+~~END~~
+
+
+-- Verify sp_fkeys
+EXEC sp_fkeys @pktable_name = 'Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+master#!#dbo#!#Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC#!#id#!#master#!#dbo#!#Very_Long_FK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC#!#fk_id#!#1#!#1#!#1#!#very_long_fk_table_name_that_exa06177b0defbf62338ce3_fk_id_fkey#!#very_long_pk_table_name_that_ex681c7bdf8a9d079e903123f7bfc_pkey#!#7
+~~END~~
+
+
+-- Verify sp_special_columns
+EXEC sp_special_columns @table_name = 'Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC';
+GO
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#id#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+

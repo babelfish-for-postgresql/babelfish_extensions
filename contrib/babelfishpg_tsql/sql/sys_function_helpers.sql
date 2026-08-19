@@ -11511,3 +11511,17 @@ RETURN COALESCE(
     END,
     rel_relname::text);
 
+CREATE OR REPLACE FUNCTION sys.bbf_get_truncated_att_original_name(att_attoptions text[], att_attname name)
+RETURNS text
+LANGUAGE SQL
+IMMUTABLE
+PARALLEL SAFE
+RETURN COALESCE(
+    CASE WHEN octet_length(att_attname) >= 60 THEN
+        (SELECT substring(opt, 19)
+         FROM unnest(att_attoptions) opt
+         WHERE opt LIKE 'bbf_original_name=%'
+         LIMIT 1)
+    END,
+    att_attname::text);
+

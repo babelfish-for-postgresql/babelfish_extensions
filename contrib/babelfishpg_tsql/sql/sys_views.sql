@@ -408,13 +408,7 @@ $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 create or replace view sys.all_columns as
 select CAST(c.oid as int) as object_id
-  , CAST(COALESCE(
-    case when octet_length(a.attname) >= 60 then
-    (SELECT PG_CATALOG.string_agg(
-      CASE WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19) ELSE NULL END, ','
-    ) FROM unnest(a.attoptions) AS option)
-    end,
-    a.attname::text) as sys.sysname) as name
+  , CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) as sys.sysname) as name
   , CAST(a.attnum as int) as column_id
   , CAST(t.oid as int) as system_type_id
   , CAST(t.oid as int) as user_type_id
@@ -515,12 +509,7 @@ $$
 BEGIN
 	RETURN QUERY
 		SELECT CAST(c.oid AS int),
-			CAST(coalesce(
-				case when octet_length(a.attname) >= 60 then
-				(select substring(opt, 19) from unnest(a.attoptions) opt where opt like 'bbf_original_name=%%' limit 1)
-				end,
-				a.attname)
-			AS sys.sysname),
+			CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) AS sys.sysname),
 			CAST(a.attnum AS int),
 			CASE 
 			WHEN tsql_type_name IS NOT NULL OR t.typbasetype = 0 THEN
@@ -1544,7 +1533,7 @@ and p.proname != 'pltsql_call_handler'
 union all
 -- details of user defined procedures
 select
-    p.proname::sys.sysname as name
+    p.proname::sys.sysname as name 
   , case
       when t.typname = 'trigger' then tr.oid else p.oid
     end as object_id

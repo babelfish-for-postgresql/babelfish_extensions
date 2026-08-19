@@ -3378,15 +3378,27 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 										Int16GetDatum(tle->resorigcol));
 			if (HeapTupleIsValid(src_tuple))
 			{
-				Datum	datum;
-				bool	isnull;
-				datum = SysCacheGetAttr(ATTNUM, src_tuple, Anum_pg_attribute_attoptions, &isnull);
-				if (!isnull)
+				Form_pg_attribute src_attr = (Form_pg_attribute) GETSTRUCT(src_tuple);
+
+				/*
+				 * Only propagate the source column's original name if the
+				 * view column inherited it (attnames match). If the view
+				 * explicitly renamed the column (e.g., CREATE VIEW v (col1)
+				 * AS SELECT id FROM t), the view's attname differs from the
+				 * source's and we must not overwrite it.
+				 */
+				if (pg_strcasecmp(NameStr(attr->attname), NameStr(src_attr->attname)) == 0)
 				{
-					ArrayType *arr = DatumGetArrayTypeP(datum);
-					char *val = get_value_by_name_from_array(arr, ATTOPTION_BBF_ORIGINAL_NAME);
-					if (val)
-						original_name = pstrdup(val);
+					Datum	datum;
+					bool	isnull;
+					datum = SysCacheGetAttr(ATTNUM, src_tuple, Anum_pg_attribute_attoptions, &isnull);
+					if (!isnull)
+					{
+						ArrayType *arr = DatumGetArrayTypeP(datum);
+						char *val = get_value_by_name_from_array(arr, ATTOPTION_BBF_ORIGINAL_NAME);
+						if (val)
+							original_name = pstrdup(val);
+					}
 				}
 				ReleaseSysCache(src_tuple);
 			}
@@ -3502,35 +3514,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
 						}
 					}
-
-					/*
-					 * Block modification of bbf_original_rel_name and
-					 * bbf_original_name reloptions from PG dialect to prevent
-					 * tampering with stored original identifiers.
-					 */
-					{
-						ListCell *lcmd;
-						foreach(lcmd, atstmt->cmds)
-						{
-							AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
-							if (cmd->subtype == AT_SetRelOptions || cmd->subtype == AT_ResetRelOptions ||
-								cmd->subtype == AT_ReplaceRelOptions ||
-								cmd->subtype == AT_SetOptions || cmd->subtype == AT_ResetOptions)
-							{
-								List *options = (List *) cmd->def;
-								ListCell *lopt;
-								foreach(lopt, options)
-								{
-									DefElem *defel = (DefElem *) lfirst(lopt);
-									if (strcmp(defel->defname, ATTOPTION_BBF_ORIGINAL_TABLE_NAME) == 0 ||
-										strcmp(defel->defname, ATTOPTION_BBF_ORIGINAL_NAME) == 0)
-										ereport(ERROR,
-												(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-												 errmsg("cannot modify \"%s\" for babelfish objects", defel->defname)));
-								}
-							}
-						}
-					}
 					break;
 				}
 			case T_RenameStmt:
@@ -3571,6 +3554,44 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 			default:
 				break;
+		}
+	}
+
+	/*
+	 * Block modification of bbf_original_rel_name and bbf_original_name
+	 * reloptions from PG dialect to prevent tampering with stored original
+	 * identifiers.  This check is intentionally outside the GUC-gated block
+	 * above so that it cannot be bypassed by setting
+	 * enable_create_alter_view_from_pg = true.
+	 */
+	if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore &&
+		nodeTag(parsetree) == T_AlterTableStmt)
+	{
+		AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
+		ListCell   *lcmd;
+
+		foreach(lcmd, atstmt->cmds)
+		{
+			AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+
+			if (cmd->subtype == AT_SetRelOptions || cmd->subtype == AT_ResetRelOptions ||
+				cmd->subtype == AT_ReplaceRelOptions ||
+				cmd->subtype == AT_SetOptions || cmd->subtype == AT_ResetOptions)
+			{
+				List	   *options = (List *) cmd->def;
+				ListCell   *lopt;
+
+				foreach(lopt, options)
+				{
+					DefElem    *defel = (DefElem *) lfirst(lopt);
+
+					if (strcmp(defel->defname, ATTOPTION_BBF_ORIGINAL_TABLE_NAME) == 0 ||
+						strcmp(defel->defname, ATTOPTION_BBF_ORIGINAL_NAME) == 0)
+						ereport(ERROR,
+								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								 errmsg("cannot modify \"%s\" for babelfish objects", defel->defname)));
+				}
+			}
 		}
 	}
 

@@ -465,9 +465,6 @@ CREATE OR REPLACE PROCEDURE sys.sp_columns (
     "@fusepattern" smallint = 1)
 AS $$
 BEGIN
-	-- TODO: we should be able to get rid of babelfish_truncate_identifier when we fix BABEL-5416
-	declare @truncated_ident sys.nvarchar(384);
-	select @truncated_ident = sys.babelfish_truncate_identifier(pg_catalog.lower(@table_name));
 	IF @fusepattern = 1 
 		select table_qualifier as TABLE_QUALIFIER, 
 			table_owner as TABLE_OWNER,
@@ -561,9 +558,6 @@ CREATE OR REPLACE PROCEDURE sys.sp_columns_100 (
     "@fusepattern" smallint = 1)
 AS $$
 BEGIN
-	-- TODO: we should be able to get rid of babelfish_truncate_identifier when we fix BABEL-5416
-	declare @truncated_ident sys.nvarchar(384);
-	select @truncated_ident = sys.babelfish_truncate_identifier(pg_catalog.lower(@table_name));
 	IF @fusepattern = 1 
 		select table_qualifier as TABLE_QUALIFIER, 
 			table_owner as TABLE_OWNER,
@@ -3969,6 +3963,3 @@ BEGIN
 END;
 $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_helplogins TO PUBLIC;
-
-
-test/JDBC/expected/sys-sp_statistics-vu-verify.out

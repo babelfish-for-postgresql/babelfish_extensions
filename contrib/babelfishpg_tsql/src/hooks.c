@@ -815,7 +815,6 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 			}
 			break;
 		}
-		case T_AlterTableStmt:
 		default:
 			return false;
 			break;

@@ -517,6 +517,20 @@ RETURN COALESCE(
     END,
     rel_relname::text);
 
+CREATE OR REPLACE FUNCTION sys.bbf_get_truncated_att_original_name(att_attoptions text[], att_attname name)
+RETURNS text
+LANGUAGE SQL
+IMMUTABLE
+PARALLEL SAFE
+RETURN COALESCE(
+    CASE WHEN octet_length(att_attname) >= 60 THEN
+        (SELECT substring(opt, 19)
+         FROM unnest(att_attoptions) opt
+         WHERE opt LIKE 'bbf_original_name=%'
+         LIMIT 1)
+    END,
+    att_attname::text);
+
 
 -- Recreate sys.tables
 create or replace view sys.tables as
@@ -1101,12 +1115,7 @@ $$
 BEGIN
 	RETURN QUERY
 		SELECT CAST(c.oid AS int),
-			CAST(coalesce(
-				case when octet_length(a.attname) >= 60 then
-				(select substring(val, 19) from (select unnest(a.attoptions) as val) opts where val like 'bbf_original_name=%%' limit 1)
-				end,
-				a.attname)
-			AS sys.sysname),
+			CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) AS sys.sysname),
 			CAST(a.attnum AS int),
 			CASE 
 			WHEN tsql_type_name IS NOT NULL OR t.typbasetype = 0 THEN
@@ -1264,13 +1273,7 @@ language plpgsql STABLE;
 -- Recreate sys.all_columns
 create or replace view sys.all_columns as
 select CAST(c.oid as int) as object_id
-  , CAST(COALESCE(
-    case when octet_length(a.attname) >= 60 then
-    (SELECT PG_CATALOG.string_agg(
-      CASE WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19) ELSE NULL END, ','
-    ) FROM unnest(a.attoptions) AS option)
-    end,
-    a.attname::text) as sys.sysname) as name
+  , CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) as sys.sysname) as name
   , CAST(a.attnum as int) as column_id
   , CAST(t.oid as int) as system_type_id
   , CAST(t.oid as int) as user_type_id
@@ -1324,119 +1327,59 @@ and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a
 and a.attnum > 0;
 GRANT SELECT ON sys.all_columns TO PUBLIC;
 
-
--- Recreate information_schema_tsql.columns_internal
-CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
-	SELECT c.oid AS "TABLE_OID",
-			CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
-			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-			CAST(
-				COALESCE(
-					(SELECT PG_CATALOG.string_agg(
-						CASE
-						WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23 /* prefix length */)
-						ELSE NULL
-						END, ',')
-					FROM unnest(c.reloptions) AS option),
-					c.relname)
-				AS sys.nvarchar(128)) AS "TABLE_NAME",
-
-			CAST(
-				COALESCE(
-					(SELECT PG_CATALOG.string_agg(
-						CASE
-						WHEN option LIKE 'bbf_original_name=%' THEN substring(option, 19 /* prefix length */)
-						ELSE NULL
-						END, ',')
-					FROM unnest(a.attoptions) AS option),
-					a.attname)
-				AS sys.nvarchar(128)) AS "COLUMN_NAME",
-
-			CAST(a.attnum AS int) AS "ORDINAL_POSITION",
-			CAST(CASE WHEN a.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS sys.nvarchar(4000)) AS "COLUMN_DEFAULT",
-			CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
-				AS varchar(3))
-				AS "IS_NULLABLE",
-
-			CAST(
-				CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype)
-				WHEN tsql_type_name.tsql_type_name IS NULL THEN format_type(t.oid, NULL::integer)
-				ELSE tsql_type_name END
-				AS sys.nvarchar(128))
-				AS "DATA_TYPE",
-
-			CAST(
-				information_schema_tsql._pgtsql_char_max_length(tsql_type_name, true_typmod)
-				AS int)
-				AS "CHARACTER_MAXIMUM_LENGTH",
-
-			CAST(
-				information_schema_tsql._pgtsql_char_octet_length(tsql_type_name, true_typmod)
-				AS int)
-				AS "CHARACTER_OCTET_LENGTH",
-
-			CAST(
-				information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, true_typid, true_typmod)
-				AS sys.tinyint)
-				AS "NUMERIC_PRECISION",
-
-			CAST(
-				information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, true_typid, true_typmod)
-				AS smallint)
-				AS "NUMERIC_PRECISION_RADIX",
-
-			CAST(
-				information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, true_typid, true_typmod)
-				AS int)
-				AS "NUMERIC_SCALE",
-
-			CAST(
-				information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
-				AS smallint)
-				AS "DATETIME_PRECISION",
-
-			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_CATALOG",
-			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_SCHEMA",
-			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
-
-			CAST(NULL as sys.nvarchar(128)) AS "COLLATION_CATALOG",
-			CAST(NULL as sys.nvarchar(128)) AS "COLLATION_SCHEMA",
-
-			CAST(co.collname AS sys.nvarchar(128)) AS "COLLATION_NAME",
-
-			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
-				THEN nc.dbname ELSE null END
-				AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
-			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
-				THEN ext.orig_name ELSE null END
-				AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
-			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
-				THEN t.typname ELSE null END
-				AS sys.nvarchar(128)) AS "DOMAIN_NAME"
-
-	FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
-		JOIN (pg_class c JOIN sys.pg_namespace_ext nc ON (c.relnamespace = nc.oid)) ON a.attrelid = c.oid
-		JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON a.atttypid = t.oid
-		LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
-			ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
-		LEFT JOIN pg_collation co on co.oid = a.attcollation
-		LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname,
-		information_schema_tsql._pgtsql_truetypid(nt, a, t) AS true_typid,
-		information_schema_tsql._pgtsql_truetypmod(nt, a, t) AS true_typmod,
-		sys.translate_pg_type_to_tsql(true_typid) AS tsql_type_name
-
-	WHERE (NOT pg_is_other_temp_schema(nc.oid))
-		AND a.attnum > 0 AND NOT a.attisdropped
-		AND c.relkind IN ('r', 'v', 'p')
-		AND c.relispartition = false
-		AND (pg_has_role(c.relowner, 'USAGE')
-			OR has_column_privilege(c.oid, a.attnum,
-									'SELECT, INSERT, UPDATE, REFERENCES'))
-		AND ext.dbid = sys.db_id();
-
-GRANT SELECT ON information_schema_tsql.columns_internal TO PUBLIC;
-
-
+CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
+SELECT
+  ao.object_id AS object_id
+  , CAST(
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN COALESCE(f.definition, '')
+      WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
+      ELSE NULL
+      END
+    AS sys.nvarchar) AS definition
+  , CAST(1 as sys.bit)  AS uses_ansi_nulls
+  , CAST(1 as sys.bit)  AS uses_quoted_identifier
+  , CAST(0 as sys.bit)  AS is_schema_bound
+  , CAST(0 as sys.bit)  AS uses_database_collation
+  , CAST(0 as sys.bit)  AS is_recompiled
+  , CAST(ao.type IN ('P', 'FN', 'IN', 'TF', 'RF', 'IF') 
+        AND p.proisstrict 
+    AS sys.bit) as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , CAST(0 as sys.bit) as uses_native_compilation
+  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
+FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
+LEFT OUTER JOIN sys.babelfish_view_def bvd 
+ on (
+      ext.orig_name = bvd.schema_name AND 
+      ext.dbid = bvd.dbid AND
+      sys.babelfish_truncate_identifier(ao.name::text) = bvd.object_name COLLATE sys.database_default 
+   )
+LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature COLLATE "C"
+WHERE ao.type in ('P', 'RF', 'V', 'FN', 'IF', 'TF', 'R')
+UNION ALL
+SELECT
+  ao.object_id AS object_id
+  , CAST(COALESCE(f.definition, '') AS sys.nvarchar) AS definition
+  , CAST(1 as sys.bit)  AS uses_ansi_nulls
+  , CAST(1 as sys.bit)  AS uses_quoted_identifier
+  , CAST(0 as sys.bit)  AS is_schema_bound
+  , CAST(0 as sys.bit)  AS uses_database_collation
+  , CAST(0 as sys.bit)  AS is_recompiled
+  , CAST(0 AS sys.bit) as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , CAST(0 as sys.bit) as uses_native_compilation
+  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
+FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT JOIN pg_trigger tr ON ao.object_id = CAST(tr.oid AS INT)
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+AND sys.babelfish_get_pltsql_function_signature(tr.tgfoid) = f.funcsignature COLLATE "C"
+WHERE ao.type = 'TR';
+GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 
 
 -- Recreate information_schema_tsql.views
@@ -1492,6 +1435,8 @@ WHERE t1.relnamespace = t3.schema_id AND t1.relnamespace = t2.oid AND t1.relkind
 AND t1.relispartition = false
 AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.sp_tables_view TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_tables_view_deprecated_in_6_3_0');
 
 
 
@@ -1673,7 +1618,6 @@ GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
 
 
 -- Recreate sys.sp_fkeys_view
-ALTER VIEW sys.sp_fkeys_view RENAME TO sp_fkeys_view_deprecated_in_6_3_0;
 CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
 SELECT
 CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
@@ -1740,7 +1684,6 @@ GRANT SELECT ON sys.sp_fkeys_view TO PUBLIC;
 
 
 -- Recreate sys.sp_special_columns_view
-ALTER VIEW sys.sp_special_columns_view RENAME TO sp_special_columns_view_deprecated_in_6_3_0;
 CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
 SELECT
 CAST(1 AS SMALLINT) AS SCOPE,
@@ -1796,9 +1739,6 @@ WHERE X.indislive ;
 GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC; 
 
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_tables_view_deprecated_in_6_3_0');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_special_columns_view_deprecated_in_6_3_0');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_fkeys_view_deprecated_in_6_3_0');
 
 CREATE OR REPLACE PROCEDURE sys.sp_columns (
  "@table_name" sys.nvarchar(384),
