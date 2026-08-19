@@ -1610,7 +1610,22 @@ bbf_xml_process_xpath_function(const char *xpath_pattern, const char *context_no
 				{
 					/* Identifier but not XPath function - prepend the context node path */
 					appendStringInfo(&result, "%s/%s", context_node_path, ident_buf.data);
-					appendStringInfoChar(&result, ch2);
+
+					if (*p == '\0')
+					{
+						/* 
+						 * If we get here, this means we have an unterminated XPath function call
+						 * since we missed the closing bracket. If that bracket is present we'd be 
+						 * reaching end-of-string at the next loop iteration.
+						 */
+						resetStringInfo(&ident_buf);
+						break;
+					}
+					else
+					{
+						/* Append character */
+						appendStringInfoChar(&result, ch2);
+					}
 				}
 				resetStringInfo(&ident_buf); // not calling pfree since it's a local variable anyway
 				p++;

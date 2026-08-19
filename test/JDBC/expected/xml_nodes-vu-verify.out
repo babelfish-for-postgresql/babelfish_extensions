@@ -2803,3 +2803,13 @@ go
 
 ~~ERROR (Message: The nodes function can be qualified by 'table.column.' or 'column.')~~
 
+
+-- invalid XPath function syntax
+DECLARE @x XML = '<Root><Item><Sub/><Sub/><Sub/></Item><Item><Sub/></Item></Root>'
+SELECT T.c.value('count(Sub', 'INT') AS val
+FROM @x.nodes('/Root/Item') AS T(c)
+ORDER BY 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid XPath expression)~~

@@ -10392,8 +10392,11 @@ validateXMLNodeFunctionArg(TSqlParser::Xml_nodes_methodContext *ctx)
 
 	/* XML .nodes() can be prefixed by 'table.column.' or 'column.' but not with a more extended name */
 	if (ctx->full_column_name() != NULL)
-		if ((ctx->full_column_name()->DOT().size() > 1) || getFullText(ctx->full_column_name()).front() == '.')
-		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The nodes function can be qualified by 'table.column.' or 'column.'", getLineAndPos(ctx));
+	{
+		std::string full_column_name_str = ::getFullText(ctx->full_column_name());
+		if ((ctx->full_column_name()->DOT().size() > 1) || (!full_column_name_str.empty() && full_column_name_str.front() == '.'))
+			throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_FUNCTION, "The nodes function can be qualified by 'table.column.' or 'column.'", getLineAndPos(ctx));
+	}
 
 	/* Only string literal is allowed as XPath argument for XML Functions. 
 	 * We can detect this directly from the grammar as the argument must be char_string

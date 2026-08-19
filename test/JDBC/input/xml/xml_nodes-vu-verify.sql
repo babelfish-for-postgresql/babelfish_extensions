@@ -1557,3 +1557,10 @@ FROM babel_5225_xml_nodes_t2
 CROSS APPLY ..babel_5225_xml_nodes_t2.XmlColumn.nodes('/artists/artist') AS T2(C)
 ORDER BY 1
 go
+
+-- invalid XPath function syntax
+DECLARE @x XML = '<Root><Item><Sub/><Sub/><Sub/></Item><Item><Sub/></Item></Root>'
+SELECT T.c.value('count(Sub', 'INT') AS val
+FROM @x.nodes('/Root/Item') AS T(c)
+ORDER BY 1
+go
