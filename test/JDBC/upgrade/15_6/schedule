@@ -412,7 +412,7 @@ TestBigInt
 TestBinary
 TestBIT
 TestChar
-Test-Computed-Columns-before-17_12-or-18_5
+Test-Computed-Columns-before-17_12-or-18_6
 TestDate
 TestDatetime
 TestDatetime2
