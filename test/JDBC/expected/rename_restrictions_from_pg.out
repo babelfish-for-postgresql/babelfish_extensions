@@ -10,6 +10,9 @@ GO
 CREATE FUNCTION rename_from_pg_f1() RETURNS INT BEGIN RETURN 1; END
 GO
 
+-- psql
+GRANT CREATE ON SCHEMA public TO rename_from_pg_u;
+GO
 
 -- psql user=rename_from_pg_u password=12345678
 -- renaming should be blocked from within the PG endpoint
@@ -22,6 +25,22 @@ GO
 
 
 ALTER FUNCTION master_dbo.rename_from_pg_f1 RENAME TO rename_from_pg_f1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL objects.
+    Server SQLState: 0A000)~~
+
+
+ALTER ROUTINE master_dbo.rename_from_pg_p1 RENAME TO rename_from_pg_p1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL objects.
+    Server SQLState: 0A000)~~
+
+
+ALTER ROUTINE master_dbo.rename_from_pg_f1 RENAME TO rename_from_pg_f1_new;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -45,6 +64,60 @@ GO
     Server SQLState: 0A000)~~
 
 
+-- pg user should be able to still rename pg objects
+CREATE PROCEDURE pg_proc_1()
+LANGUAGE SQL
+AS $$
+SELECT 'o7';
+$$;
+GO
+
+ALTER PROCEDURE pg_proc_1() RENAME TO pg_proc_not_1;
+GO
+
+DROP PROCEDURE pg_proc_not_1;
+GO
+
+CREATE FUNCTION pg_func_1() RETURNS TEXT
+LANGUAGE SQL
+AS $$
+SELECT 'o/';
+$$;
+GO
+
+ALTER FUNCTION pg_func_1() RENAME TO pg_func_not_1;
+GO
+
+DROP FUNCTION pg_func_not_1;
+GO
+
+-- ALTER ROUTINE should also work on native pg routines
+CREATE PROCEDURE pg_proc_2()
+LANGUAGE SQL
+AS $$
+SELECT '\o';
+$$;
+GO
+
+ALTER ROUTINE pg_proc_2() RENAME TO pg_proc_not_2;
+GO
+
+DROP PROCEDURE pg_proc_not_2;
+GO
+
+CREATE FUNCTION pg_func_2() RETURNS TEXT
+LANGUAGE SQL
+AS $$
+SELECT '\o/';
+$$;
+GO
+
+ALTER ROUTINE pg_func_2() RENAME TO pg_func_not_2;
+GO
+
+DROP FUNCTION pg_func_not_2;
+GO
+
 
 -- psql
 -- superuser should still be able to rename objects
@@ -56,6 +129,16 @@ GO
 ALTER FUNCTION master_dbo.rename_from_pg_f1 RENAME TO rename_from_pg_f1_new;
 GO
 ALTER FUNCTION master_dbo.rename_from_pg_f1_new RENAME TO rename_from_pg_f1;
+GO
+
+ALTER ROUTINE master_dbo.rename_from_pg_p1 RENAME TO rename_from_pg_p1_new;
+GO
+ALTER ROUTINE master_dbo.rename_from_pg_p1_new RENAME TO rename_from_pg_p1;
+GO
+
+ALTER ROUTINE master_dbo.rename_from_pg_f1 RENAME TO rename_from_pg_f1_new;
+GO
+ALTER ROUTINE master_dbo.rename_from_pg_f1_new RENAME TO rename_from_pg_f1;
 GO
 
 
@@ -95,6 +178,10 @@ DROP LOGIN rename_from_pg_tsql_login;
 GO
 
 -- terminate-psql-conn user=rename_from_pg_u password=12345678
+-- psql
+REVOKE CREATE ON SCHEMA public FROM rename_from_pg_u;
+GO
+
 -- tsql
 DROP PROCEDURe rename_from_pg_p1;
 GO

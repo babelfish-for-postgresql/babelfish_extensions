@@ -3227,6 +3227,7 @@ restrict_rename_stmt(RenameStmt *stmt)
 {
     switch (stmt->renameType)
     {
+		case OBJECT_ROUTINE:
         case OBJECT_FUNCTION:
         case OBJECT_PROCEDURE:
             {
