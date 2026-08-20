@@ -920,6 +920,142 @@ GO
 
 -- tsql
 
+-- FOR XML/JSON tests with long identifiers
+-- ===========================================
+CREATE TABLE babel5975_xml_test (id int, val varchar(50));
+GO
+INSERT INTO babel5975_xml_test VALUES (1, 'hello'), (2, 'world');
+GO
+~~ROW COUNT: 2~~
+
+
+-- Table with long column names
+CREATE TABLE babel5975_xml_long ([This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose] int, [Another_Extremely_Long_Column_Name_Exceeding_The_PostgreSQL_NAMEDATALEN_Maximum_Allowed_Value_Here] varchar(50));
+GO
+INSERT INTO babel5975_xml_long VALUES (1, 'value1');
+GO
+~~ROW COUNT: 1~~
+
+
+
+-- ===========================================
+-- FOR XML AUTO (full names via metadata side channel)
+-- ===========================================
+-- Long explicit alias
+SELECT id AS This_Is_A_Very_Long_Column_Alias_That_Exceeds_Sixty_Three_Characters_In_Length,
+       val AS Another_Long_Alias_Name_Exceeding_The_PostgreSQL_NAMEDATALEN_Limit_For_Testing
+FROM babel5975_xml_test
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<babel5975_x005F_xml_test This_Is_A_Very_Long_Column_Alias_That_Exceeds_Sixty_Three_Characters_In_Length="1" Another_Long_Alias_Name_Exceeding_The_PostgreSQL_NAMEDATALEN_Limit_For_Testing="hello"/><babel5975_x005F_xml_test This_Is_A_Very_Long_Column_Alias_That_Exceeds_Sixty_Three_Characters_In_Length="2" Another_Long_Alias_Name_Exceeding_The_PostgreSQL_NAMEDATALEN_Limit_For_Testing="world"/>
+~~END~~
+
+
+-- Long column names: SELECT *
+SELECT * FROM babel5975_xml_long FOR XML AUTO;
+GO
+~~START~~
+ntext
+<babel5975_x005F_xml_long This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose="1" Another_Extremely_Long_Column_Name_Exceeding_The_PostgreSQL_NAMEDATALEN_Maximum_Allowed_Value_Here="value1"/>
+~~END~~
+
+
+
+-- ===========================================
+-- FOR JSON AUTO (long names show truncated - to be fixed separately)
+-- ===========================================
+-- Long explicit alias
+SELECT id AS This_Is_A_Very_Long_Column_Alias_That_Exceeds_Sixty_Three_Characters_In_Length,
+       val AS Another_Long_Alias_Name_Exceeding_The_PostgreSQL_NAMEDATALEN_Limit_For_Testing
+FROM babel5975_xml_test
+FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"This_Is_A_Very_Long_Column_A": 1, "Another_Long_Alias_Name_Exce": "hello"}, {"This_Is_A_Very_Long_Column_A": 2, "Another_Long_Alias_Name_Exce": "world"}]
+~~END~~
+
+
+-- Long column names: SELECT *
+SELECT * FROM babel5975_xml_long FOR JSON AUTO;
+GO
+~~START~~
+nvarchar
+[{"this_is_a_very_long_column_n": 1, "another_extremely_long_colum": "value1"}]
+~~END~~
+
+
+
+-- ===========================================
+-- FOR XML RAW (long names show truncated+MD5 - to be fixed separately)
+-- ===========================================
+-- Long explicit alias
+SELECT id AS This_Is_A_Very_Long_Column_Alias_That_Exceeds_Sixty_Three_Characters_In_Length,
+       val AS Another_Long_Alias_Name_Exceeding_The_PostgreSQL_NAMEDATALEN_Limit_For_Testing
+FROM babel5975_xml_test
+FOR XML RAW('Row');
+GO
+~~START~~
+ntext
+<Row This_Is_A_Very_Long_Column_Alia6abb93051ef5128775be9d5379c0a8c6="1" Another_Long_Alias_Name_Exceedic792ec6bebbc3bb1341e77a5a31afdc1="hello"/><Row This_Is_A_Very_Long_Column_Alia6abb93051ef5128775be9d5379c0a8c6="2" Another_Long_Alias_Name_Exceedic792ec6bebbc3bb1341e77a5a31afdc1="world"/>
+~~END~~
+
+
+-- Long column names: SELECT *
+SELECT * FROM babel5975_xml_long FOR XML RAW('Row');
+GO
+~~START~~
+ntext
+<Row this_is_a_very_long_column_namebedb5708adbda97bea91b75a988c7dee="1" another_extremely_long_column_n752d0325e65c941df88cc6579dadfb5f="value1"/>
+~~END~~
+
+
+
+-- ===========================================
+-- FOR XML PATH (long names show truncated+MD5 - to be fixed separately)
+-- ===========================================
+-- Long explicit alias
+SELECT id AS This_Is_A_Very_Long_Column_Alias_That_Exceeds_Sixty_Three_Characters_In_Length,
+       val AS Another_Long_Alias_Name_Exceeding_The_PostgreSQL_NAMEDATALEN_Limit_For_Testing
+FROM babel5975_xml_test
+FOR XML PATH('Row'), ELEMENTS;
+GO
+~~START~~
+ntext
+<Row><This_Is_A_Very_Long_Column_Alia6abb93051ef5128775be9d5379c0a8c6>1</This_Is_A_Very_Long_Column_Alia6abb93051ef5128775be9d5379c0a8c6><Another_Long_Alias_Name_Exceedic792ec6bebbc3bb1341e77a5a31afdc1>hello</Another_Long_Alias_Name_Exceedic792ec6bebbc3bb1341e77a5a31afdc1></Row><Row><This_Is_A_Very_Long_Column_Alia6abb93051ef5128775be9d5379c0a8c6>2</This_Is_A_Very_Long_Column_Alia6abb93051ef5128775be9d5379c0a8c6><Another_Long_Alias_Name_Exceedic792ec6bebbc3bb1341e77a5a31afdc1>world</Another_Long_Alias_Name_Exceedic792ec6bebbc3bb1341e77a5a31afdc1></Row>
+~~END~~
+
+
+-- Long column names: SELECT *
+SELECT * FROM babel5975_xml_long FOR XML PATH('Row'), ELEMENTS;
+GO
+~~START~~
+ntext
+<Row><this_is_a_very_long_column_namebedb5708adbda97bea91b75a988c7dee>1</this_is_a_very_long_column_namebedb5708adbda97bea91b75a988c7dee><another_extremely_long_column_n752d0325e65c941df88cc6579dadfb5f>value1</another_extremely_long_column_n752d0325e65c941df88cc6579dadfb5f></Row>
+~~END~~
+
+
+
+-- ===========================================
+-- FOR JSON PATH (long names show truncated - to be fixed separately)
+-- ===========================================
+-- Long column names: SELECT *
+SELECT * FROM babel5975_xml_long FOR JSON PATH;
+GO
+~~START~~
+nvarchar
+[{"this_is_a_very_long_column_namebedb5708adbda97bea91b75a988c7dee": 1, "another_extremely_long_column_n752d0325e65c941df88cc6579dadfb5f": "value1"}]
+~~END~~
+
+
+DROP TABLE babel5975_xml_long;
+GO
+DROP TABLE babel5975_xml_test;
+GO
+
+
 -- CLEANUP
 -- ===========================================
 DROP VIEW Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;

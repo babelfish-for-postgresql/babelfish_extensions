@@ -304,7 +304,7 @@ static guc_push_old_value_hook_type prev_guc_push_old_value_hook = NULL;
 static validate_set_config_function_hook_type prev_validate_set_config_function_hook = NULL;
 static void pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action);
 bool		current_query_is_create_tbl_check_constraint = false;
-bool pltsql_current_query_is_view_definition = false;
+static bool pltsql_current_query_is_view_definition = false;
 
 /* Configurations */
 bool		pltsql_trace_tree = false;
@@ -1946,7 +1946,7 @@ static void
 appendXmlAutoMetadataEntry(StringInfo metadataStr, TargetEntry *te, int level,
 						   char *alias, RangeTblEntry *matchedSrc, Var *curVar)
 {
-	char *colname = te->resname;
+	char *colname = te->resorigname ? te->resorigname : te->resname;
 	char *escapedAlias;
 	char *escapedColname;
 
@@ -4048,8 +4048,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					PG_TRY();
 					{
 						pltsql_current_query_is_view_definition = true;
-						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree,
-												 context, params, queryEnv, dest, qc);
+						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, 
+												context, params, queryEnv, dest, qc);
 
 						/*
 						 * Store original view/column names using RangeVar->location
@@ -8350,7 +8350,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 			if(tle->resname != NULL && !tle->resjunk)
-				tle->resname = downcase_truncate_identifier(tle->resname, strlen(tle->resname), false);
+				tle->resname = downcase_identifier(tle->resname, strlen(tle->resname), false, false);
 
 			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
 			{
@@ -8567,8 +8567,8 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 			foreach(tlc, q->targetList)
 			{
 				TargetEntry *tle = (TargetEntry *) lfirst(tlc);
-				if (!tle->resjunk && tle->resname && strlen(tle->resname) >= NAMEDATALEN)
-					orig_colnames = lappend(orig_colnames, pstrdup(tle->resname));
+				if (!tle->resjunk && tle->resorigname)
+					orig_colnames = lappend(orig_colnames, pstrdup(tle->resorigname));
 				else
 					orig_colnames = lappend(orig_colnames, NULL);
 			}
@@ -8582,9 +8582,7 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 		stmts = list_delete_first(stmts);
 		if (IsA(stmt, CreateTableAsStmt))
 		{
-			CreateTableAsStmt *ctas_stmt = (CreateTableAsStmt *) stmt;
-
-			*address = ExecCreateTableAs(pstate, ctas_stmt, params, queryEnv, qc);
+			*address = ExecCreateTableAs(pstate, (CreateTableAsStmt *)parsetree, params, queryEnv, qc);
 		}
 		else
 		{

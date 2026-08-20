@@ -179,7 +179,8 @@ static void check_insert_row(List *icolumns, List *exprList, Oid relid);
 static void pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, ColumnDef *column, List **alist);
 static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, char *relname, List **alist);
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
-static bool tle_name_comparison(const char *tlename, const char *identifier, const char *sourcetext, int location);
+static void pltsql_post_transform_target_entry(TargetEntry *te, ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
+static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(unsigned char c);
 static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
@@ -442,6 +443,8 @@ InstallExtendedHooks(void)
 
 	prev_pre_transform_target_entry_hook = pre_transform_target_entry_hook;
 	pre_transform_target_entry_hook = pre_transform_target_entry;
+
+	post_transform_target_entry_hook = pltsql_post_transform_target_entry;
 
 	prev_tle_name_comparison_hook = tle_name_comparison_hook;
 	tle_name_comparison_hook = tle_name_comparison;
@@ -2457,7 +2460,6 @@ pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, 
 	(*alist) = lappend(*alist, stmt);
 }
 
-extern bool pltsql_current_query_is_view_definition;
 
 static void
 pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, char *relname, List **alist)
@@ -2848,34 +2850,19 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			 */
 			if (actual_alias_len >= NAMEDATALEN)
 			{
-				/*
-				 * For non-view statements: use the full original name for
-				 * TDS client display.
-				 * For view definitions: restore case-preserved prefix with
-				 * MD5 hash suffix — original name stored in attoptions.
-				 */
-				if (!pltsql_current_query_is_view_definition)
-				{
-					pfree(alias);
-					alias = palloc0(actual_alias_len + 1);
-					memcpy(alias, original_name, actual_alias_len);
-					alias[actual_alias_len] = '\0';
-				}
-				else
-				{
-					/* Keep scanner's MD5-truncated form but restore original case
-					 * in the prefix portion (first alias_len - 32 chars). */
-					Assert(actual_alias_len > alias_len && alias_len >= 32);
+				/* Sanity checks */
+				Assert(actual_alias_len > alias_len && alias_len >= 32);
 
-					/* cppcheck-suppress invalidFunctionArg */
-					memcpy(alias, original_name, (alias_len - 32));
+				/* First 32 characters of original_name are assigned to alias. */
+				/* cppcheck-suppress invalidFunctionArg */
+				memcpy(alias, original_name, (alias_len - 32));
 
-					memcpy(alias + (alias_len - 32),
-						   identifier_name + (alias_len - 32),
-						   32);
+				/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated. */
+				memcpy(alias + (alias_len - 32),
+					   identifier_name + (alias_len - 32), 
+	   				   32);
 
-					alias[alias_len] = '\0';
-				}
+				alias[alias_len] = '\0';
 			}
 			else
 			{
@@ -3112,47 +3099,63 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 	}
 }
 
+/*
+ * pltsql_post_transform_target_entry
+ *
+ * Post-transform hook: after a TargetEntry is created, set resorigname to
+ * the full (untruncated) original identifier from the query source text
+ * when the alias was longer than NAMEDATALEN.
+ */
+static void
+pltsql_post_transform_target_entry(TargetEntry *te, ResTarget *res,
+								   ParseState *pstate, ParseExprKind exprKind)
+{
+	const char *sourcetext;
+	char	   *original_name;
+	size_t		qlen;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	sourcetext = pstate->p_sourcetext;
+	if (!sourcetext || !res || !te || !te->resname)
+		return;
+
+	/* Only process explicit aliases with a known location */
+	if (res->name_location < 0)
+		return;
+
+	qlen = strlen(sourcetext);
+	if ((size_t) res->name_location >= qlen)
+		return;
+
+	original_name = extract_identifier(sourcetext + res->name_location, NULL);
+	if (original_name && strlen(original_name) >= NAMEDATALEN)
+	{
+		te->resorigname = original_name;
+	}
+	else if (original_name)
+		pfree(original_name);
+}
+
 static bool
-tle_name_comparison(const char *tlename, const char *identifier, const char *sourcetext, int location)
+tle_name_comparison(const char *tlename, const char *identifier)
 {
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
 		int			tlelen = strlen(tlename);
-		int			identlen = strlen(identifier);
 
-		if (tlelen == identlen)
-		{
-			if (pltsql_case_insensitive_identifiers)
-				return (0 == strcmp(downcase_identifier(tlename, tlelen, false, false),
-									downcase_identifier(identifier, identlen, false, false)));
-			else
-				return (0 == strcmp(tlename, identifier));
-		}
+		if (tlelen != strlen(identifier))
+			return false;
 
-		/*
-		 * Handle long aliases: extract full name from source text
-		 * and compare with tlename.
-		 */
-		if (tlelen > identlen && identlen >= NAMEDATALEN - 1 &&
-			sourcetext && location >= 0)
-		{
-			char *full_ident = extract_identifier(sourcetext + location, NULL);
-			if (full_ident)
-			{
-				bool match;
-				if (pltsql_case_insensitive_identifiers)
-					match = (0 == pg_strcasecmp(full_ident, tlename));
-				else
-					match = (0 == strcmp(full_ident, tlename));
-				pfree(full_ident);
-				return match;
-			}
-		}
-
-		return false;
+		if (pltsql_case_insensitive_identifiers)
+			return (0 == strcmp(downcase_identifier(tlename, tlelen, false, false),
+								downcase_identifier(identifier, tlelen, false, false)));
+		else
+			return (0 == strcmp(tlename, identifier));
 	}
 	else if (prev_tle_name_comparison_hook)
-		return (*prev_tle_name_comparison_hook) (tlename, identifier, sourcetext, location);
+		return (*prev_tle_name_comparison_hook) (tlename, identifier);
 	else
 		return (0 == strcmp(tlename, identifier));
 }

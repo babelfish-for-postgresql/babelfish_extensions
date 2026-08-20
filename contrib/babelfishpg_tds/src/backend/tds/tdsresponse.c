@@ -1243,9 +1243,9 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 		{
 			tle = (TargetEntry *) lfirst(tlist_item);
 
-			/* Use tle->resname for full original name (before namestrcpy truncation) */
-			if (tle->resname)
-				appendStringInfoString(&col->colName, tle->resname);
+			/* Prefer resorigname (full untruncated name) for TDS column display */
+			if (tle->resorigname)
+				appendStringInfoString(&col->colName, tle->resorigname);
 			else
 				appendStringInfoString(&col->colName, NameStr(att->attname));
 

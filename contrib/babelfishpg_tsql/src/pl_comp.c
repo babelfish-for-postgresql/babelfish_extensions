@@ -1854,8 +1854,12 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 			optstr = TextDatumGetCString(optiondatums[i]);
 			if (strncmp(optstr, "bbf_original_name=", 18) == 0)
 			{
-				te->resname = pstrdup(optstr + 18);
-				
+				te->resorigname = pstrdup(optstr + 18);
+
+				/* Only override resname for short identifiers that fit in NAMEDATALEN */
+				if (strlen(optstr + 18) < NAMEDATALEN)
+					te->resname = pnstrdup(optstr + 18, strlen(te->resname));
+
 				pfree(optstr);
 				break;
 			}
