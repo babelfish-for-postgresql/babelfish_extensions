@@ -105,7 +105,7 @@ f
 
 -- tsql
 INSERT INTO metadata_from_pg_dml VALUES (42, 42);
-SELECT * from metadata_from_pg_dml;
+SELECT * from metadata_from_pg_dml ORDER BY a;
 UPDATE metadata_from_pg_dml SET b = 0 WHERE a = 42;
 DELETE FROM metadata_from_pg_dml WHERE a = 42;
 GO
@@ -204,7 +204,7 @@ f
 
 -- tsql
 INSERT INTO metadata_from_pg_dml VALUES (42, 42);
-SELECT * from metadata_from_pg_dml;
+SELECT * from metadata_from_pg_dml ORDER BY a;
 UPDATE metadata_from_pg_dml SET b = 0 WHERE a = 42;
 DELETE FROM metadata_from_pg_dml WHERE a = 42;
 GO
@@ -279,7 +279,7 @@ GO
 
 ~~ERROR (Message: new row for relation "metadata_from_pg_struct" violates check constraint "metadata_from_pg_struct_chk")~~
 
-SELECT * from metadata_from_pg_struct;
+SELECT * FROM metadata_from_pg_struct ORDER BY a;
 UPDATE metadata_from_pg_struct SET b = NULL WHERE a = 42;
 DELETE FROM metadata_from_pg_struct WHERE a = 42;
 GO
@@ -325,7 +325,7 @@ f
 INSERT INTO metadata_from_pg_struct VALUES (42, 42);
 INSERT INTO metadata_from_pg_struct VALUES (-1, 42);
 INSERT INTO metadata_from_pg_struct VALUES (NULL, 42);
-SELECT * from metadata_from_pg_struct;
+SELECT * FROM metadata_from_pg_struct ORDER BY a;
 UPDATE metadata_from_pg_struct SET b = 0 WHERE a = 42;
 DELETE FROM metadata_from_pg_struct WHERE a = 42;
 GO
@@ -337,9 +337,9 @@ GO
 
 ~~START~~
 int#!#bigint
-42#!#42
--1#!#42
 <NULL>#!#42
+-1#!#42
+42#!#42
 ~~END~~
 
 ~~ROW COUNT: 1~~
@@ -363,14 +363,14 @@ f
 
 -- tsql
 INSERT INTO metadata_from_pg_struct VALUES (42, 42);
-SELECT * from metadata_from_pg_struct;
+SELECT * FROM metadata_from_pg_struct ORDER BY a;
 GO
 ~~ROW COUNT: 1~~
 
 ~~START~~
 int#!#bigint
--1#!#42
 <NULL>#!#42
+-1#!#42
 42#!#42
 ~~END~~
 
@@ -400,18 +400,18 @@ f
 
 
 -- tsql
-SELECT * from metadata_from_pg_struct;
+SELECT * FROM metadata_from_pg_struct ORDER BY a;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "metadata_from_pg_struct" does not exist)~~
 
-SELECT * from metadata_from_pg_struct_new;
+SELECT * FROM metadata_from_pg_struct_new ORDER BY a;
 GO
 ~~START~~
 int#!#bigint
--1#!#42
 <NULL>#!#42
+-1#!#42
 ~~END~~
 
 -- psql
@@ -430,12 +430,12 @@ f
 
 
 -- tsql
-SELECT * FROM metadata_from_pg_struct_new;
+SELECT * FROM metadata_from_pg_struct_new ORDER BY a;
 GO
 ~~START~~
 int#!#bigint
--1#!#42
 <NULL>#!#42
+-1#!#42
 ~~END~~
 
 -- psql
@@ -450,12 +450,12 @@ f
 
 
 -- tsql
-SELECT * FROM metadata_from_pg_struct_new;
+SELECT * FROM metadata_from_pg_struct_new ORDER BY a;
 GO
 ~~START~~
 int#!#bigint
--1#!#42
 <NULL>#!#42
+-1#!#42
 ~~END~~
 
 -- psql

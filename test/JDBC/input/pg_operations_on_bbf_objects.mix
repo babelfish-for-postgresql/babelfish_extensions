@@ -63,7 +63,7 @@ GO
 
 -- tsql
 INSERT INTO metadata_from_pg_dml VALUES (42, 42);
-SELECT * from metadata_from_pg_dml;
+SELECT * from metadata_from_pg_dml ORDER BY a;
 UPDATE metadata_from_pg_dml SET b = 0 WHERE a = 42;
 DELETE FROM metadata_from_pg_dml WHERE a = 42;
 GO
@@ -107,7 +107,7 @@ GO
 
 -- tsql
 INSERT INTO metadata_from_pg_dml VALUES (42, 42);
-SELECT * from metadata_from_pg_dml;
+SELECT * from metadata_from_pg_dml ORDER BY a;
 UPDATE metadata_from_pg_dml SET b = 0 WHERE a = 42;
 DELETE FROM metadata_from_pg_dml WHERE a = 42;
 GO
@@ -139,7 +139,7 @@ INSERT INTO metadata_from_pg_struct VALUES (NULL, 42, NULL);
 GO
 INSERT INTO metadata_from_pg_struct VALUES (-1, 42, NULL);
 GO
-SELECT * from metadata_from_pg_struct;
+SELECT * FROM metadata_from_pg_struct ORDER BY a;
 UPDATE metadata_from_pg_struct SET b = NULL WHERE a = 42;
 DELETE FROM metadata_from_pg_struct WHERE a = 42;
 GO
@@ -161,7 +161,7 @@ GO
 INSERT INTO metadata_from_pg_struct VALUES (42, 42);
 INSERT INTO metadata_from_pg_struct VALUES (-1, 42);
 INSERT INTO metadata_from_pg_struct VALUES (NULL, 42);
-SELECT * from metadata_from_pg_struct;
+SELECT * FROM metadata_from_pg_struct ORDER BY a;
 UPDATE metadata_from_pg_struct SET b = 0 WHERE a = 42;
 DELETE FROM metadata_from_pg_struct WHERE a = 42;
 GO
@@ -177,7 +177,7 @@ GO
 
 -- tsql
 INSERT INTO metadata_from_pg_struct VALUES (42, 42);
-SELECT * from metadata_from_pg_struct;
+SELECT * FROM metadata_from_pg_struct ORDER BY a;
 GO
 UPDATE metadata_from_pg_struct SET b = 0 WHERE a = 42;
 GO
@@ -192,9 +192,9 @@ SELECT sys.check_for_inconsistent_metadata();
 GO
 
 -- tsql
-SELECT * from metadata_from_pg_struct;
+SELECT * FROM metadata_from_pg_struct ORDER BY a;
 GO
-SELECT * from metadata_from_pg_struct_new;
+SELECT * FROM metadata_from_pg_struct_new ORDER BY a;
 GO
 -- psql
 
@@ -207,7 +207,7 @@ SELECT sys.check_for_inconsistent_metadata();
 GO
 
 -- tsql
-SELECT * FROM metadata_from_pg_struct_new;
+SELECT * FROM metadata_from_pg_struct_new ORDER BY a;
 GO
 -- psql
 
@@ -216,7 +216,7 @@ SELECT sys.check_for_inconsistent_metadata();
 GO
 
 -- tsql
-SELECT * FROM metadata_from_pg_struct_new;
+SELECT * FROM metadata_from_pg_struct_new ORDER BY a;
 GO
 -- psql
 
