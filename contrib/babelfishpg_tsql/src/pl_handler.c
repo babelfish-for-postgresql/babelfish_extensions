@@ -3257,16 +3257,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 		}
 	}
 
-	/*
-	 * Block RENAME of TSQL functions/procedures and of the sys and
-	 * information_schema_tsql schemas from the PG endpoint.
-	 */
-	if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !superuser() &&
-		nodeTag(parsetree) == T_RenameStmt)
-	{
-		restrict_rename_stmt((RenameStmt *) parsetree);
-	}
-
 	switch (nodeTag(parsetree))
 	{
 		case T_AlterFunctionStmt:
@@ -5230,9 +5220,26 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				return;
 			}
 			break;
+		case T_AlterObjectSchemaStmt:
+			{
+				/*
+				 * Block SET SCHEMA of TSQL functions/procedures from the PG endpoint.
+				 */
+				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !superuser())
+					restrict_rename_stmt(parsetree);
+
+				break;
+			}
 		case T_RenameStmt:
 			{
 				RenameStmt *stmt = (RenameStmt *) parsetree;
+
+				/*
+				 * Block RENAME TSQL functions/procedures, and RENAME of the
+				 * sys and information_schema_tsql schemas from the PG endpoint.
+				 */
+				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !superuser())
+					restrict_rename_stmt(parsetree);
 
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,

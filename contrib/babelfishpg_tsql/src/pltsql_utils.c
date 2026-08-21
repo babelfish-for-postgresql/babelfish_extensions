@@ -3219,63 +3219,126 @@ restrict_alter_table_stmt(AlterTableStmt *stmt)
 }
 
 /*
- * Blocks RENAME of TSQL functions, procedures, and the sys and
- * information_schema_tsql schemas from the PG endpoint.
+ * Blocks RENAME and SET SCHEMA of TSQL functions/procedures, and RENAME
+ * of the sys and information_schema_tsql schemas from the PG endpoint.
  */
 void
-restrict_rename_stmt(RenameStmt *stmt)
+restrict_rename_stmt(Node *stmt)
 {
-    switch (stmt->renameType)
-    {
-		case OBJECT_ROUTINE:
-        case OBJECT_FUNCTION:
-        case OBJECT_PROCEDURE:
-            {
-                ObjectAddress	address;
-                Relation		relation = NULL;
-                Oid				schema_oid;
-                char		   *schema_name;
+	switch (nodeTag(stmt))
+	{
+		case T_RenameStmt:
+			{
+				RenameStmt		   *rename_stmt = (RenameStmt *) stmt;
+				switch (rename_stmt->renameType)
+				{
+					case OBJECT_ROUTINE:
+					case OBJECT_FUNCTION:
+					case OBJECT_PROCEDURE:
+						{
+							ObjectAddress	address;
+							Relation		relation = NULL;
+							Oid				schema_oid;
+							char		   *schema_name;
 
-                address = get_object_address(stmt->renameType, stmt->object,
-                                             &relation, AccessShareLock, false);
-                schema_oid = get_object_namespace(&address);
-                if (relation)
-                    RelationClose(relation);
+							address = get_object_address(rename_stmt->renameType, rename_stmt->object,
+														&relation, AccessShareLock, false);
+							schema_oid = get_object_namespace(&address);
+							if (relation)
+								RelationClose(relation);
 
-                if (!OidIsValid(schema_oid))
-                    return;
+							if (!OidIsValid(schema_oid))
+								return;
 
-                schema_name = get_namespace_name(schema_oid);
-                if (!schema_name)
-                    return;
+							schema_name = get_namespace_name(schema_oid);
+							if (!schema_name)
+								return;
 
-                /* Only objects in a Babelfish schema */
-                if (physical_schema_name_exists(schema_name))
-                {
-                    pfree(schema_name);
-                    ereport(ERROR,
-                            (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                             errmsg("ALTER .. RENAME .. is blocked in PG dialect on TSQL objects.")));
-                }
-                pfree(schema_name);
-                break;
-            }
-        case OBJECT_SCHEMA:
-            {
-                /*
-                 * User T-SQL schemas are already covered by
-                 * check_extra_schema_restrictions(), system schemas are not
-                 * tracked in babelfish_namespace_ext, so guard them by name.
-                 */
-                if (stmt->subname &&
-                    (strcmp(stmt->subname, "sys") == 0 ||
-                     strcmp(stmt->subname, "information_schema_tsql") == 0))
-                    ereport(ERROR,
-                            (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                             errmsg("ALTER SCHEMA .. RENAME .. is blocked in PG dialect on Babelfish system schema \"%s\".", stmt->subname)));
-                break;
-            }
-        default:
-            break;
-    }
+							/* Only objects in a Babelfish schema */
+							if (physical_schema_name_exists(schema_name))
+							{
+								pfree(schema_name);
+								ereport(ERROR,
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										errmsg("ALTER .. RENAME .. is blocked in PG dialect on TSQL object \"%s\".",
+											NameListToString(((ObjectWithArgs *) rename_stmt->object)->objname))));
+							}
+							pfree(schema_name);
+							break;
+						}
+					case OBJECT_SCHEMA:
+						{
+							/*
+							* User T-SQL schemas are already covered by
+							* check_extra_schema_restrictions(), system schemas are not
+							* tracked in babelfish_namespace_ext, so guard them by name.
+							*/
+							if (rename_stmt->subname &&
+								(strcmp(rename_stmt->subname, "sys") == 0 ||
+								strcmp(rename_stmt->subname, "information_schema_tsql") == 0))
+								ereport(ERROR,
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										errmsg("ALTER SCHEMA .. RENAME .. is blocked in PG dialect on Babelfish system schema \"%s\".", rename_stmt->subname)));
+							break;
+						}
+					default:
+						break;
+				}
+				break;
+			}
+		case T_AlterObjectSchemaStmt:
+			{
+				AlterObjectSchemaStmt *altschstmt = (AlterObjectSchemaStmt *) stmt;
+
+				if (altschstmt->objectType == OBJECT_PROCEDURE ||
+					altschstmt->objectType == OBJECT_FUNCTION ||
+					altschstmt->objectType == OBJECT_ROUTINE)
+				{
+					Oid				schema_oid;
+					char		   *schema_name;
+					Relation		relation = NULL;
+					ObjectAddress	address = get_object_address(altschstmt->objectType, altschstmt->object,
+																 &relation, AccessShareLock, false);
+
+					schema_oid = get_object_namespace(&address);
+					if (relation)
+						RelationClose(relation);
+
+					if (!OidIsValid(schema_oid))
+						return;
+
+					/* source schema */
+					schema_name = get_namespace_name(schema_oid);
+					if (!schema_name)
+						break;
+
+					/* Only objects in a Babelfish schema */
+					if (physical_schema_name_exists(schema_name))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								errmsg("ALTER .. SET SCHEMA .. is blocked in PG dialect on TSQL object \"%s\" from schema \"%s\".",
+									NameListToString(((ObjectWithArgs *) altschstmt->object)->objname), schema_name)));
+					}
+					pfree(schema_name);
+
+					/* destination schema */
+					schema_name = altschstmt->newschema;
+					if (!schema_name)
+						break;
+
+					/* Only objects in a Babelfish schema */
+					if (physical_schema_name_exists(schema_name))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								errmsg("ALTER .. SET SCHEMA .. is blocked in PG dialect on object \"%s\" to TSQL schema \"%s\".",
+									NameListToString(((ObjectWithArgs *) altschstmt->object)->objname), schema_name)));
+					}
+				}
+				break;
+			}
+		default:
+			break;
+	}
 }

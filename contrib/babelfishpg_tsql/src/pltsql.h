@@ -2226,7 +2226,7 @@ extern uint64 execute_bulk_load_insert(int ncol, int nrow,
 									   Datum *Values, bool *Nulls);
 extern void restrict_alter_owner_stmt(AlterOwnerStmt *stmt);
 extern void restrict_alter_table_stmt(AlterTableStmt *stmt);
-extern void restrict_rename_stmt(RenameStmt *stmt);
+extern void restrict_rename_stmt(Node *stmt);
 
 /*
  * Functions in pl_exec.c

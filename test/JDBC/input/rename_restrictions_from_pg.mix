@@ -14,6 +14,12 @@ GO
 GRANT CREATE ON SCHEMA public TO rename_from_pg_u;
 GO
 
+CREATE SCHEMA rename_from_pg_pgschema;
+GO
+
+GRANT USAGE, CREATE ON SCHEMA rename_from_pg_pgschema TO rename_from_pg_u;
+GO
+
 -- renaming should be blocked from within the PG endpoint
 -- psql user=rename_from_pg_u password=12345678
 ALTER PROCEDURE master_dbo.rename_from_pg_p1 RENAME TO rename_from_pg_p1_new;
@@ -32,6 +38,53 @@ ALTER SCHEMA sys RENAME TO sys_new;
 GO
 
 ALTER SCHEMA information_schema_tsql RENAME TO information_schema_tsql_new;
+GO
+
+-- SET SCHEMA should also be blocked from within the PG endpoint
+-- source in a Babelfish schema
+ALTER PROCEDURE master_dbo.rename_from_pg_p1 SET SCHEMA public;
+GO
+
+ALTER FUNCTION master_dbo.rename_from_pg_f1 SET SCHEMA public;
+GO
+
+ALTER ROUTINE master_dbo.rename_from_pg_p1 SET SCHEMA public;
+GO
+
+ALTER ROUTINE master_dbo.rename_from_pg_f1 SET SCHEMA public;
+GO
+
+-- destination is a Babelfish schema
+CREATE PROCEDURE pg_ss_p1()
+LANGUAGE SQL
+AS $$
+SELECT 1;
+$$;
+GO
+
+CREATE FUNCTION pg_ss_f1() RETURNS TEXT
+LANGUAGE SQL
+AS $$
+SELECT '1';
+$$;
+GO
+
+ALTER PROCEDURE pg_ss_p1() SET SCHEMA master_dbo;
+GO
+
+ALTER FUNCTION pg_ss_f1() SET SCHEMA master_dbo;
+GO
+
+ALTER ROUTINE pg_ss_p1() SET SCHEMA master_dbo;
+GO
+
+ALTER ROUTINE pg_ss_f1() SET SCHEMA master_dbo;
+GO
+
+DROP PROCEDURE pg_ss_p1();
+GO
+
+DROP FUNCTION pg_ss_f1();
 GO
 
 -- pg user should be able to still rename pg objects
@@ -86,6 +139,60 @@ ALTER ROUTINE pg_func_2() RENAME TO pg_func_not_2;
 GO
 
 DROP FUNCTION pg_func_not_2;
+GO
+
+-- ALTER ... SET SCHEMA should work on pg objects across pg schemas
+CREATE PROCEDURE pg_proc_ss1()
+LANGUAGE SQL
+AS $$
+SELECT 1;
+$$;
+GO
+
+ALTER PROCEDURE pg_proc_ss1() SET SCHEMA rename_from_pg_pgschema;
+GO
+
+DROP PROCEDURE rename_from_pg_pgschema.pg_proc_ss1();
+GO
+
+CREATE FUNCTION pg_func_ss1() RETURNS TEXT
+LANGUAGE SQL
+AS $$
+SELECT 'ok';
+$$;
+GO
+
+ALTER FUNCTION pg_func_ss1() SET SCHEMA rename_from_pg_pgschema;
+GO
+
+DROP FUNCTION rename_from_pg_pgschema.pg_func_ss1();
+GO
+
+-- ALTER ROUTINE ... SET SCHEMA should also work on native pg routines
+CREATE PROCEDURE pg_proc_ss2()
+LANGUAGE SQL
+AS $$
+SELECT 1;
+$$;
+GO
+
+ALTER ROUTINE pg_proc_ss2() SET SCHEMA rename_from_pg_pgschema;
+GO
+
+DROP PROCEDURE rename_from_pg_pgschema.pg_proc_ss2();
+GO
+
+CREATE FUNCTION pg_func_ss2() RETURNS TEXT
+LANGUAGE SQL
+AS $$
+SELECT 'ok';
+$$;
+GO
+
+ALTER ROUTINE pg_func_ss2() SET SCHEMA rename_from_pg_pgschema;
+GO
+
+DROP FUNCTION rename_from_pg_pgschema.pg_func_ss2();
 GO
 
 
@@ -150,6 +257,9 @@ GO
 -- terminate-psql-conn user=rename_from_pg_u password=12345678
 -- psql
 REVOKE CREATE ON SCHEMA public FROM rename_from_pg_u;
+GO
+
+DROP SCHEMA rename_from_pg_pgschema;
 GO
 
 -- tsql
