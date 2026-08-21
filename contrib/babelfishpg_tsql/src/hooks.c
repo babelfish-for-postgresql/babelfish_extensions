@@ -2691,11 +2691,8 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 	/*
 	 * In the TSQL dialect construct an AS clause for each target list item
 	 * that is a column using the capitalization from the sourcetext.
-	 * Also run during dump/restore to preserve full-length view column aliases
-	 * in the rewrite rule's target list (tle->resname), since the scanner
-	 * truncates even double-quoted identifiers at NAMEDATALEN.
 	 */
-	if (sql_dialect != SQL_DIALECT_TSQL && !babelfish_dump_restore)
+	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
 	if (exprKind == EXPR_KIND_SELECT_TARGET)
@@ -3104,7 +3101,12 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
  *
  * Post-transform hook: after a TargetEntry is created, set resorigname to
  * the full (untruncated) original identifier from the query source text
- * when the alias was longer than NAMEDATALEN.
+ * when the identifier was longer than NAMEDATALEN.
+ *
+ * Handles:
+ *   1. Explicit aliases (res->name_location >= 0)
+ *   2. Column references without alias - looks up bbf_original_name from
+ *      pg_attribute attoptions via the resolved Var.
  */
 static void
 pltsql_post_transform_target_entry(TargetEntry *te, ResTarget *res,
@@ -3121,21 +3123,77 @@ pltsql_post_transform_target_entry(TargetEntry *te, ResTarget *res,
 	if (!sourcetext || !res || !te || !te->resname)
 		return;
 
-	/* Only process explicit aliases with a known location */
-	if (res->name_location < 0)
-		return;
-
-	qlen = strlen(sourcetext);
-	if ((size_t) res->name_location >= qlen)
-		return;
-
-	original_name = extract_identifier(sourcetext + res->name_location, NULL);
-	if (original_name && strlen(original_name) >= NAMEDATALEN)
+	/* Case 1: Explicit alias with a known location */
+	if (res->name_location >= 0)
 	{
-		te->resorigname = original_name;
+		qlen = strlen(sourcetext);
+		if ((size_t) res->name_location >= qlen)
+			return;
+
+		original_name = extract_identifier(sourcetext + res->name_location, NULL);
+		if (original_name && strlen(original_name) >= NAMEDATALEN)
+		{
+			te->resorigname = original_name;
+		}
+		else if (original_name)
+			pfree(original_name);
+		return;
 	}
-	else if (original_name)
-		pfree(original_name);
+
+	/*
+	 * Case 2: Column reference - look up the original name
+	 * from pg_attribute.attoptions (bbf_original_name) via the resolved Var.
+	 */
+	if (te->expr && IsA(te->expr, Var))
+	{
+		Var		   *var = (Var *) te->expr;
+		RangeTblEntry *rte;
+		Datum		attopts;
+
+		if (var->varno <= 0 || var->varattno <= 0)
+			return;
+
+		rte = GetRTEByRangeTablePosn(pstate, var->varno, var->varlevelsup);
+		if (rte == NULL || rte->rtekind != RTE_RELATION || rte->relid == InvalidOid)
+			return;
+
+		PG_TRY();
+		{
+			attopts = get_attoptions(rte->relid, var->varattno);
+		}
+		PG_CATCH();
+		{
+			attopts = (Datum) 0;
+		}
+		PG_END_TRY();
+
+		if (attopts)
+		{
+			ArrayType  *arr = DatumGetArrayTypeP(attopts);
+			Datum	   *optiondatums;
+			int			noptions;
+			int			i;
+
+			deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
+							  &optiondatums, NULL, &noptions);
+
+			for (i = 0; i < noptions; i++)
+			{
+				char *optstr = TextDatumGetCString(optiondatums[i]);
+
+				if (strncmp(optstr, "bbf_original_name=", 18) == 0)
+				{
+					char *orig = optstr + 18;
+
+					if (strlen(orig) >= NAMEDATALEN)
+						te->resorigname = pstrdup(orig);
+					pfree(optstr);
+					break;
+				}
+				pfree(optstr);
+			}
+		}
+	}
 }
 
 static bool

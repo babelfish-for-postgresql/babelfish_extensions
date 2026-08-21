@@ -29,6 +29,7 @@
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_relation.h"
+#include "parser/parsetree.h"
 #include "parser/parse_type.h"
 #include "parser/scansup.h"
 #include "utils/builtins.h"
@@ -131,7 +132,7 @@ static void add_dummy_return(PLtsql_function *function);
 static void add_decl_table(PLtsql_function *function, int tbl_dno, char *tbl_typ);
 static Node *pltsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
-static void pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l);
+void pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l);
 static Node *pltsql_param_ref(ParseState *pstate, ParamRef *pref);
 static Node *resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
 								ColumnRef *cref, bool error_if_no_field);
@@ -1793,7 +1794,7 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
  * We can rewrite the column names to their Babelfish (ie original case) names
  * if we find them in pg_attribute.
  */
-static void
+void
 pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 {
 	ListCell   *li;
@@ -1816,9 +1817,21 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 		Oid			relid = rte->relid;
 		int16		attnum = varnode->varattno;
 
+		if (rte->rtekind == RTE_SUBQUERY && rte->subquery != NULL)
+		{
+			/*
+			 * For subquery sources, look into the subquery's targetlist
+			 * for the corresponding column's resorigname.
+			 */
+			TargetEntry *sub_tle = get_tle_by_resno(rte->subquery->targetList, attnum);
+			if (sub_tle && sub_tle->resorigname)
+				te->resorigname = pstrdup(sub_tle->resorigname);
+			continue;
+		}
+
 		if (rte->rtekind != RTE_RELATION || relid == InvalidOid)
 		{
-			return;
+			continue;
 		}
 
 		/*

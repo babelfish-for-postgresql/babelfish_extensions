@@ -2874,8 +2874,12 @@ object_name(PG_FUNCTION_ARGS)
 			Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
 			char *relname = NameStr(pg_class->relname);
 
-			/* Try to get original name from reloptions if name was truncated */
-			if (strlen(relname) >= NAMEDATALEN - 1)
+			/*
+			 * Try to get original name from reloptions if name was likely
+			 * truncated. Use >= 60 (not NAMEDATALEN-1) because multibyte
+			 * truncation can back off to fewer than NAMEDATALEN-1 bytes.
+			 */
+			if (strlen(relname) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
 			{
 				char *orig = get_original_relname(object_id, false);
 				if (orig)

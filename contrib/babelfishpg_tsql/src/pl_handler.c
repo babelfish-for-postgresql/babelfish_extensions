@@ -42,7 +42,6 @@
 #include "commands/trigger.h"
 #include "commands/user.h"
 #include "commands/view.h"
-#include "rewrite/rewriteHandler.h"
 #include "common/md5.h"
 #include "common/string.h"
 #include "funcapi.h"
@@ -63,6 +62,7 @@
 #include "parser/parse_utilcmd.h"
 #include "parser/scansup.h"
 #include "pgstat.h"				/* for pgstat related activities */
+#include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
@@ -250,6 +250,7 @@ extern bool pltsql_arithabort;
 extern int	pltsql_datefirst;
 extern char *pltsql_language;
 extern int	pltsql_lock_timeout;
+extern void pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l);
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
@@ -1861,10 +1862,11 @@ handleForAuto(Query *wrapperQuery, ForAutoContext *ctx)
 static TargetEntry*
 buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 {
+	char *colname = te->resorigname ? te->resorigname : te->resname;
 	char nest[NAMEDATALEN]; /* check size appropriate */
 	StringInfo new_resname = makeStringInfo();
 	snprintf(nest, sizeof(nest), "%d", nestLevel);
-	if(te->resname == NULL || !strcmp(te->resname, "\?column\?")) {
+	if(colname == NULL || !strcmp(colname, "\?column\?")) {
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table")));
@@ -1878,7 +1880,7 @@ buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 	appendStringInfoChar(new_resname, '.');
 	appendStringInfoString(new_resname, tableAlias);
 	appendStringInfoChar(new_resname, '.');
-	appendStringInfoString(new_resname, te->resname);
+	appendStringInfoString(new_resname, colname);
 	te->resname = new_resname->data;
 	return te;
 }
@@ -3278,18 +3280,28 @@ store_view_original_name(ViewStmt *stmt, const char *queryString)
  * that were truncated. Extracts full names from the query string.
  */
 
+/*
+ * Minimal parser setup callback for reparsing view queries.
+ * Only sets p_post_expand_star_hook so that SELECT * expansion
+ * populates resorigname from attoptions.
+ */
+static void
+view_reparse_parser_setup(ParseState *pstate, void *arg)
+{
+	pstate->p_post_expand_star_hook = pltsql_post_expand_star;
+}
+
 static void
 store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 {
 	Oid			viewOid;
 	Relation	rel;
 	TupleDesc	tupdesc;
-	SelectStmt *select;
-	Query	   *viewquery;
-	ListCell   *lc_tle, *lc_rt;
+	Query	   *reparsed;
+	RawStmt    *rawstmt;
+	ListCell   *lc;
 	List	   *cmds = NIL;
 	int			attnum = 0;
-	size_t		qlen;
 
 	if (!queryString)
 		return;
@@ -3300,42 +3312,29 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 
 	rel = relation_open(viewOid, AccessShareLock);
 	tupdesc = RelationGetDescr(rel);
-	viewquery = get_view_query(rel);
 
 	/*
-	 * get_view_query() returns NULL if the relation is not a view. This is
-	 * practically unreachable (the view was just created in this transaction)
-	 * but guard defensively to avoid a NULL dereference below.
+	 * Reparse the view's SELECT query with p_post_expand_star_hook set,
+	 * so that all TargetEntries (including those from SELECT *) get
+	 * resorigname populated from attoptions.
 	 */
-	if (viewquery == NULL)
+	rawstmt = makeNode(RawStmt);
+	rawstmt->stmt = (Node *) copyObject(stmt->query);
+	rawstmt->stmt_location = 0;
+	rawstmt->stmt_len = strlen(queryString);
+
+	reparsed = parse_analyze_withcb(rawstmt, queryString,
+									(ParserSetupHook) view_reparse_parser_setup,
+									NULL, NULL);
+	if (!reparsed || reparsed->commandType != CMD_SELECT)
 	{
 		relation_close(rel, AccessShareLock);
 		return;
 	}
 
-	/* Get the SELECT target list from the raw parse tree */
-	select = (SelectStmt *) stmt->query;
-	if (!select || !IsA(select, SelectStmt))
+	foreach(lc, reparsed->targetList)
 	{
-		relation_close(rel, AccessShareLock);
-		return;
-	}
-
-	/*
-	 * Iterate view's target entries. For each column, resolve the original
-	 * name from: (1) explicit alias via queryString name_location, or
-	 * (2) source column's attoptions. We only store names that end up longer
-	 * than NAMEDATALEN (checked below), which is the reliable signal that the
-	 * physical column name was truncated. The physical attname length is not a
-	 * safe proxy for truncation because multibyte truncation can back off to
-	 * fewer than NAMEDATALEN-1 bytes.
-	 */
-	qlen = strlen(queryString);
-	lc_rt = list_head(select->targetList);
-	foreach(lc_tle, viewquery->targetList)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(lc_tle);
-		char	   *original_name = NULL;
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
 		Form_pg_attribute attr;
 
 		if (tle->resjunk)
@@ -3347,80 +3346,14 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 
 		attr = TupleDescAttr(tupdesc, attnum - 1);
 
-		/* Case 1: Check for explicit alias from raw ResTarget */
-		if (lc_rt)
-		{
-			ResTarget *rt = (ResTarget *) lfirst(lc_rt);
-			if (IsA(rt, ResTarget) && rt->name && rt->name_location >= 0 &&
-				(size_t) rt->name_location < qlen)
-			{
-				original_name = extract_identifier(queryString + rt->name_location, NULL);
-				lc_rt = lnext(select->targetList, lc_rt);
-			}
-			else if (IsA(rt, ResTarget) && rt->val && IsA(rt->val, ColumnRef))
-			{
-				ColumnRef *cr = (ColumnRef *) rt->val;
-				Node *last = (Node *) llast(cr->fields);
-				/* Don't advance for star — one ResTarget maps to many TLEs */
-				if (!IsA(last, A_Star))
-					lc_rt = lnext(select->targetList, lc_rt);
-			}
-			else
-				lc_rt = lnext(select->targetList, lc_rt);
-		}
-
-		/* Case 2: No alias found — check source column's attoptions */
-		if (!original_name && OidIsValid(tle->resorigtbl) && tle->resorigcol > 0)
-		{
-			HeapTuple	src_tuple;
-			src_tuple = SearchSysCache2(ATTNUM,
-										ObjectIdGetDatum(tle->resorigtbl),
-										Int16GetDatum(tle->resorigcol));
-			if (HeapTupleIsValid(src_tuple))
-			{
-				Form_pg_attribute src_attr = (Form_pg_attribute) GETSTRUCT(src_tuple);
-
-				/*
-				 * Only propagate the source column's original name if the
-				 * view column inherited it (attnames match). If the view
-				 * explicitly renamed the column (e.g., CREATE VIEW v (col1)
-				 * AS SELECT id FROM t), the view's attname differs from the
-				 * source's and we must not overwrite it.
-				 */
-				if (pg_strcasecmp(NameStr(attr->attname), NameStr(src_attr->attname)) == 0)
-				{
-					Datum	datum;
-					bool	isnull;
-					datum = SysCacheGetAttr(ATTNUM, src_tuple, Anum_pg_attribute_attoptions, &isnull);
-					if (!isnull)
-					{
-						ArrayType *arr = DatumGetArrayTypeP(datum);
-						char *val = get_value_by_name_from_array(arr, ATTOPTION_BBF_ORIGINAL_NAME);
-						if (val)
-							original_name = pstrdup(val);
-					}
-				}
-				ReleaseSysCache(src_tuple);
-			}
-		}
-
-		/*
-		 * Store the original name whenever it differs from the physical
-		 * (lowercased/truncated) attname. This covers both truncated long
-		 * names and mixed-case short names, matching the relation-name path.
-		 */
-		if (original_name && strcmp(NameStr(attr->attname), original_name) != 0)
+		if (tle->resorigname && strcmp(NameStr(attr->attname), tle->resorigname) != 0)
 		{
 			AlterTableCmd *cmd = build_set_option_cmd(AT_SetOptions,
 													  ATTOPTION_BBF_ORIGINAL_NAME,
-													  original_name);
-
+													  tle->resorigname);
 			cmd->name = pstrdup(NameStr(attr->attname));
 			cmds = lappend(cmds, cmd);
-			pfree(original_name);
 		}
-		else if (original_name)
-			pfree(original_name);
 	}
 
 	relation_close(rel, AccessShareLock);
@@ -3585,8 +3518,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					DefElem    *defel = (DefElem *) lfirst(lopt);
 
-					if (strcmp(defel->defname, ATTOPTION_BBF_ORIGINAL_TABLE_NAME) == 0 ||
-						strcmp(defel->defname, ATTOPTION_BBF_ORIGINAL_NAME) == 0)
+					if (defel->defname &&
+						(strcmp(defel->defname, ATTOPTION_BBF_ORIGINAL_TABLE_NAME) == 0 ||
+						strcmp(defel->defname, ATTOPTION_BBF_ORIGINAL_NAME) == 0))
 						ereport(ERROR,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 								 errmsg("cannot modify \"%s\" for babelfish objects", defel->defname)));
@@ -8550,31 +8484,6 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 
 	Node *parsetree = pstmt->utilityStmt;
 	List *stmts;
-	List *orig_colnames = NIL;
-
-	/*
-	 * Save explicit alias names before transformSelectIntoStmt truncates them.
-	 * pre_transform_target_entry sets tle->resname to the full original for
-	 * explicit aliases (e.g., SELECT 1 AS VeryLongAlias INTO ...).
-	 */
-	if (sql_dialect == SQL_DIALECT_TSQL)
-	{
-		CreateTableAsStmt *ctas = (CreateTableAsStmt *) parsetree;
-		if (ctas->query && IsA(ctas->query, Query))
-		{
-			Query *q = (Query *) ctas->query;
-			ListCell *tlc;
-			foreach(tlc, q->targetList)
-			{
-				TargetEntry *tle = (TargetEntry *) lfirst(tlc);
-				if (!tle->resjunk && tle->resorigname)
-					orig_colnames = lappend(orig_colnames, pstrdup(tle->resorigname));
-				else
-					orig_colnames = lappend(orig_colnames, NULL);
-			}
-		}
-	}
-
 	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
 	while (stmts != NIL)
 	{
@@ -8631,89 +8540,38 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 
 	/*
 	 * Store original column names in pg_attribute.attoptions.
-	 * Iterate TLEs and resolve original names from source column attoptions
-	 * (for SELECT * / column refs) or from saved orig_colnames (for explicit aliases).
+	 * resorigname survives transformSelectIntoStmt (which only lowercases
+	 * resname), so we can read it directly from the targetlist.
+	 * Compare against resname (which is the lowercased attname).
 	 */
-	if (sql_dialect == SQL_DIALECT_TSQL && OidIsValid(address->objectId) && queryString)
+	if (sql_dialect == SQL_DIALECT_TSQL && OidIsValid(address->objectId))
 	{
 		Node *ctas_query = ((CreateTableAsStmt *) parsetree)->query;
 		Query *query;
-		ListCell *lc, *oc;
-		int colno = 0;
-		Relation rel2;
-		TupleDesc td;
+		ListCell *lc;
 		List *cmds = NIL;
 
-		/*
-		 * After transformSelectIntoStmt() the query field should be a Query
-		 * node, but guard the cast (castNode is a raw cast in release builds)
-		 * to avoid misreading the node for unusual SELECT ... INTO forms.
-		 */
 		if (!ctas_query || !IsA(ctas_query, Query))
 			return;
 		query = (Query *) ctas_query;
 
-		rel2 = relation_open(address->objectId, AccessShareLock);
-		td = RelationGetDescr(rel2);
-
-		oc = list_head(orig_colnames);
 		foreach(lc, query->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(lc);
-			char *orig_name = NULL;
-			Form_pg_attribute attr;
-
-			/* Get saved alias name if available */
-			if (oc)
-			{
-				orig_name = (char *) lfirst(oc);
-				oc = lnext(orig_colnames, oc);
-			}
 
 			if (tle->resjunk)
 				continue;
 
-			if (colno >= td->natts)
-				break;
-
-			attr = TupleDescAttr(td, colno);
-			colno++;
-
-			if (attr->attisdropped)
-				continue;
-
-			/* If no saved alias, look up source column's attoptions */
-			if (!orig_name && OidIsValid(tle->resorigtbl) && tle->resorigcol > 0)
-			{
-				HeapTuple src_tuple = SearchSysCache2(ATTNUM,
-													 ObjectIdGetDatum(tle->resorigtbl),
-													 Int16GetDatum(tle->resorigcol));
-				if (HeapTupleIsValid(src_tuple))
-				{
-					Datum datum;
-					bool isnull;
-					datum = SysCacheGetAttr(ATTNUM, src_tuple, Anum_pg_attribute_attoptions, &isnull);
-					if (!isnull)
-					{
-						ArrayType *arr = DatumGetArrayTypeP(datum);
-						char *val = get_value_by_name_from_array(arr, ATTOPTION_BBF_ORIGINAL_NAME);
-						if (val)
-							orig_name = pstrdup(val);
-					}
-					ReleaseSysCache(src_tuple);
-				}
-			}
-
-			if (orig_name != NULL && strcmp(NameStr(attr->attname), orig_name) != 0)
+			if (tle->resorigname && tle->resname &&
+				strcmp(tle->resname, tle->resorigname) != 0)
 			{
 				AlterTableCmd *cmd = build_set_option_cmd(AT_SetOptions,
 														  ATTOPTION_BBF_ORIGINAL_NAME,
-														  orig_name);
-				cmd->name = pstrdup(NameStr(attr->attname));
+														  tle->resorigname);
+				cmd->name = pstrdup(tle->resname);
 				cmds = lappend(cmds, cmd);
 			}
 		}
-		relation_close(rel2, AccessShareLock);
 
 		if (cmds != NIL)
 		{

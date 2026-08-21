@@ -920,6 +920,112 @@ GO
 
 -- tsql
 
+-- TDS display of long column names in different SELECT forms
+-- Verified via sp_describe_first_result_set_internal which returns column names
+-- ===========================================
+CREATE TABLE babel5975_select_display ([This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose] int);
+GO
+INSERT INTO babel5975_select_display VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+
+-- SELECT * : full name via resorigname from attoptions
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT * FROM babel5975_select_display', NULL, 0);
+GO
+~~START~~
+varchar
+This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose
+~~END~~
+
+
+-- SELECT col (single-part column ref): full name via attoption lookup
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM babel5975_select_display', NULL, 0);
+GO
+~~START~~
+varchar
+This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose
+~~END~~
+
+
+-- SELECT t.col (multi-part column ref): full name via attoption lookup
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT t.This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM babel5975_select_display t', NULL, 0);
+GO
+~~START~~
+varchar
+This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose
+~~END~~
+
+
+-- SELECT expr AS long_alias: full name via source text extraction
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT 1 AS This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose', NULL, 0);
+GO
+~~START~~
+varchar
+This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose
+~~END~~
+
+
+DROP TABLE babel5975_select_display;
+GO
+
+
+-- Nested subquery: long column names should propagate through nesting
+-- ===========================================
+CREATE TABLE babel5975_nested_src ([ID] int, [This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose] varchar(50));
+GO
+INSERT INTO babel5975_nested_src VALUES (1, 'nested_val');
+GO
+~~ROW COUNT: 1~~
+
+
+-- Single nesting
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT * FROM (SELECT * FROM babel5975_nested_src) sub', NULL, 0);
+GO
+~~START~~
+varchar
+ID
+This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose
+~~END~~
+
+
+-- Double nesting
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT * FROM (SELECT * FROM (SELECT * FROM babel5975_nested_src) s1) s2', NULL, 0);
+GO
+~~START~~
+varchar
+ID
+This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose
+~~END~~
+
+
+-- Nested with explicit column ref
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT * FROM (SELECT This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM babel5975_nested_src) sub', NULL, 0);
+GO
+~~START~~
+varchar
+This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose
+~~END~~
+
+
+-- Nested view
+CREATE VIEW babel5975_nested_view AS SELECT * FROM (SELECT * FROM babel5975_nested_src) sub;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_nested_view');
+GO
+~~START~~
+varchar
+id
+This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose
+~~END~~
+
+
+DROP VIEW babel5975_nested_view;
+GO
+DROP TABLE babel5975_nested_src;
+GO
+
+
 -- FOR XML/JSON tests with long identifiers
 -- ===========================================
 CREATE TABLE babel5975_xml_test (id int, val varchar(50));
@@ -983,7 +1089,7 @@ SELECT * FROM babel5975_xml_long FOR JSON AUTO;
 GO
 ~~START~~
 nvarchar
-[{"this_is_a_very_long_column_n": 1, "another_extremely_long_colum": "value1"}]
+[{"This_Is_A_Very_Long_Column_N": 1, "Another_Extremely_Long_Colum": "value1"}]
 ~~END~~
 
 

@@ -1934,6 +1934,7 @@ get_original_relname(Oid relid, bool check_permission)
 	{
 		bool		isnull;
 		Datum		opts;
+		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
 
 		opts = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
 		if (!isnull)
@@ -1962,6 +1963,11 @@ get_original_relname(Oid relid, bool check_permission)
 			}
 			array_free_iterator(it);
 		}
+
+		/* Fallback to relname if no bbf_original_rel_name found */
+		if (!result)
+			result = pstrdup(NameStr(classForm->relname));
+
 		ReleaseSysCache(tuple);
 	}
 	return result;

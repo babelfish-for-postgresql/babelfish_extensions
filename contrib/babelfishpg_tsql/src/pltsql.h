@@ -82,6 +82,14 @@
 #define ATTOPTION_BBF_ORIGINAL_TABLE_NAME "bbf_original_rel_name"
 #define ATTOPTION_BBF_TABLE_CREATE_DATE "bbf_rel_create_date"
 
+/*
+ * Minimum byte length at which an identifier may have been truncated and
+ * hence may have an original name stored in reloptions/attoptions. Used as a
+ * fast-path guard to skip reloption lookups for clearly-short names. Set below
+ * NAMEDATALEN-1 (63) because multibyte truncation can back off to fewer bytes.
+ */
+#define BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD 60
+
 /* DefElem name for storing original index name location in grammar */
 #define TSQL_ORIGINAL_NAME_LOCATION "tsql_original_name_location"
 
