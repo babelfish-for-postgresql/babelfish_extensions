@@ -4157,7 +4157,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		 * Add function's dependency on catalog table's index so that table
 		 * gets restored before function during MVU.
 		 */
-		index.classId = IndexRelationId;
+		index.classId = RelationRelationId;
 		index.objectId = get_bbf_function_ext_idx_oid();
 		index.objectSubId = 0;
 		recordDependencyOn(&address, &index, DEPENDENCY_NORMAL);
