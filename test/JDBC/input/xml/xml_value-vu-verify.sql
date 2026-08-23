@@ -880,3 +880,30 @@ go
 DECLARE @x XML = '<MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>test</MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>  ';
 SELECT @x.value('(/MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG)', 'NVARCHAR(100)') AS c;
 go
+
+-- '.[' in element or XPath query
+DECLARE @xml XML = '<root><item name="a.[b">MATCH</item></root>'
+SELECT @xml.value('(/root/item[@name="a.[b"])[1]', 'varchar(20)')
+go
+
+DECLARE @xml XML = '<root><item a.b="x.y">MATCH</item></root>'
+SELECT @xml.value('(/root/item[@a.b="x.y"])[1]', 'varchar(20)')
+go
+
+DECLARE @xml XML = '<root><item a.b_.="x.y">MATCH</item>><item a.b_.="y.z">MATCH2</item></root>'
+SELECT @xml.value('(/root/item[@a.b_.="x.y"])[1]', 'varchar(20)')
+go
+
+DECLARE @xml XML = '<root><item a.b_.="x.y">MATCH</item>><item a.b_.="y.z">MATCH2</item></root>'
+SELECT @xml.value('(/root/item[@a.b_.="y.z"])[1]', 'varchar(20)')
+go
+
+-- invalid 
+DECLARE @xml XML = '<root><item a.[b="x.y">MATCH</item></root>'
+SELECT @xml.value('(/root/item[@a.[b="x.y"])[1]', 'varchar(20)')
+go
+
+-- invalid, unterminated string
+DECLARE @xml XML = '<root><item name="a.[b">MATCH</item></root>'
+SELECT @xml.value('(/root/item[@name="a.[b])[1]', 'varchar(20)')
+go

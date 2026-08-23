@@ -1887,3 +1887,62 @@ nvarchar
 test
 ~~END~~
 
+
+-- '.[' in element or XPath query
+DECLARE @xml XML = '<root><item name="a.[b">MATCH</item></root>'
+SELECT @xml.value('(/root/item[@name="a.[b"])[1]', 'varchar(20)')
+go
+~~START~~
+varchar
+MATCH
+~~END~~
+
+
+DECLARE @xml XML = '<root><item a.b="x.y">MATCH</item></root>'
+SELECT @xml.value('(/root/item[@a.b="x.y"])[1]', 'varchar(20)')
+go
+~~START~~
+varchar
+MATCH
+~~END~~
+
+
+DECLARE @xml XML = '<root><item a.b_.="x.y">MATCH</item>><item a.b_.="y.z">MATCH2</item></root>'
+SELECT @xml.value('(/root/item[@a.b_.="x.y"])[1]', 'varchar(20)')
+go
+~~START~~
+varchar
+MATCH
+~~END~~
+
+
+DECLARE @xml XML = '<root><item a.b_.="x.y">MATCH</item>><item a.b_.="y.z">MATCH2</item></root>'
+SELECT @xml.value('(/root/item[@a.b_.="y.z"])[1]', 'varchar(20)')
+go
+~~START~~
+varchar
+MATCH2
+~~END~~
+
+
+-- invalid 
+DECLARE @xml XML = '<root><item a.[b="x.y">MATCH</item></root>'
+SELECT @xml.value('(/root/item[@a.[b="x.y"])[1]', 'varchar(20)')
+go
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+
+-- invalid, unterminated string
+DECLARE @xml XML = '<root><item name="a.[b">MATCH</item></root>'
+SELECT @xml.value('(/root/item[@name="a.[b])[1]', 'varchar(20)')
+go
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid XPath expression)~~
+

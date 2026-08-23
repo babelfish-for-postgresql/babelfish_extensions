@@ -61,6 +61,16 @@ ORDER BY 1
 go
 
 DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
+SELECT 
+T.C.value('(//@id)[1]', 'int') AS id_abs,
+T.C.value('(./@id)[1]', 'int') AS id,
+T.C.value('(//name)[2]', 'varchar(20)') AS name_abs,
+T.C.value('(./name)[1]', 'varchar(20)') AS name
+FROM @xml.nodes('/Root/row') AS T(C)
+ORDER BY 1,2,3,4
+go
+
+DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
 SELECT T.C.value('(@id)[1]', 'int') AS id
 FROM @xml.nodes('/Root/row') AS T(C)
 ORDER BY 1
@@ -1207,6 +1217,135 @@ CROSS APPLY babel_5225_xml_nodes_t2.XmlColumn.nodes('/artists/artist') AS T2(C)
 ORDER BY 1
 go
 
+
+-- '.[' in element or XPath query
+DECLARE @xml XML = '<root><item name="a.[b"><sub>ONE </sub></item><item name="c.[d"><sub>TWO </sub></item></root>'
+SELECT @xml.value('.[1]', 'varchar(20)')
+FROM @xml.nodes('/root/item[@name="a.[b"]') AS T(c)
+go
+
+DECLARE @xml XML = '<root><item name="a.[b"><sub>ONE </sub></item><item name="c.[d"><sub>TWO </sub></item></root>'
+SELECT @xml.value('.', 'varchar(20)')
+FROM @xml.nodes('/root/item[@name="a.[b"]/sub') AS T(c)
+go
+
+DECLARE @xml XML = '<root><item name="a.[b"><sub>ONE </sub></item><item name="c.[d"><sub>TWO </sub></item></root>'
+SELECT @xml.value('(/root/item[@name="a.[b"])[1]', 'varchar(20)'),
+       @xml.value('(/root/item[@name="c.[d"])[1]', 'varchar(20)')
+FROM @xml.nodes('/root/item[@name="a.[b"]') AS T(c)
+go
+
+DECLARE @xml XML = '<root><item name="a.[b"><sub>ONE </sub><sub>TWO </sub></item><item name="c.[d"><sub>THREE </sub><sub>FOUR </sub></item></root>'
+SELECT @xml.value('(/root/item[@name="a.[b"])[1]', 'varchar(20)'),
+       @xml.value('(/root/item[@name="c.[d"])[1]', 'varchar(20)')
+FROM @xml.nodes('/root/item[@name="a.[b"]') AS T(c)
+go
+
+DECLARE @xml XML = '<Root><abc.>FIRST</abc.><abc.>SECOND</abc.></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS val
+FROM @xml.nodes('/Root/abc.[1]') AS T(C)
+go
+
+DECLARE @xml XML = '<Root><abc1.>FIRST</abc1.><abc1.>SECOND</abc1.></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS val
+FROM @xml.nodes('/Root/abc1.[1]') AS T(C)
+go
+
+DECLARE @xml XML = '<Root><_.>FIRST</_.><_.>SECOND</_.></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS val
+FROM @xml.nodes('/Root/_.[1]') AS T(C)
+go
+
+DECLARE @xml XML = '<Root><a.b..c.1.>FIRST</a.b..c.1.><a.b..c.1.>SECOND</a.b..c.1.></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS val
+FROM @xml.nodes('/Root/a.b..c.1.[1]') AS T(C)
+go
+
+DECLARE @xml XML = '<Root><abc.>FIRST</abc.><abc.>SECOND</abc.></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS val
+FROM @xml.nodes('/Root/abc.') AS T(C)
+ORDER BY 1
+go
+
+DECLARE @xml XML = '<Root><abc.>FIRST</abc.><abc.>SECOND</abc.></Root>'
+SELECT T.C.value('.[1]', 'varchar(20)') AS val
+FROM @xml.nodes('/Root/abc.') AS T(C)
+ORDER BY 1
+go
+
+-- Compound expressions
+DECLARE @xml XML = '<root><r><price>10</price><discount>3</discount></r></root>'
+SELECT T.c.value('(price)[1] - (discount)[1]', 'int') AS diff FROM @xml.nodes('/root/r') AS T(c)
+go
+
+DECLARE @xml XML = '<root><r><price>10</price><discount>3</discount><extra>5</extra></r></root>'
+SELECT T.c.value('price[1] + (extra[1]*10)', 'int') AS calc 
+FROM @xml.nodes('/root/r') AS T(c)
+go
+
+DECLARE @xml XML = '<root><r><price>10</price><discount>3</discount><extra>5</extra></r></root>'
+SELECT T.c.value('price[1] + extra[1]', 'int') AS calc 
+FROM @xml.nodes('/root/r') AS T(c)
+go
+
+DECLARE @xml XML = '<root><r><price>10</price><discount>3</discount><extra>5</extra></r></root>'
+SELECT T.c.value('price[1] - discount[1] + (extra[1]*10) + 100', 'int') AS calc 
+FROM @xml.nodes('/root/r') AS T(c)
+go
+
+-- with XPath functions
+DECLARE @xml XML = N'
+<products>
+  <product><name>Widget</name><price>9.99</price><discount>123</discount><extra>5</extra><extra>7</extra></product>
+  <product><name>Gadget</name><price>24.50</price><discount>456</discount><extra>6</extra><extra>8</extra></product>
+</products>'
+SELECT
+    T.c.value('../discount[1]*10 + round(.)*10 - ((../extra[2]))', 'NVARCHAR(200)') AS result
+ FROM @xml.nodes('/products/product/price') AS T(c)
+ORDER BY 1
+go
+
+DECLARE @xml XML = N'
+<products>
+  <product><name>Widget</name><price>9.99</price><discount>123</discount><extra>5</extra><extra>7</extra></product>
+  <product><name>Gadget</name><price>24.50</price><discount>456</discount><extra>6</extra><extra>8</extra></product>
+</products>'
+SELECT
+    T.c.value('round(.) + ../discount[1]*10 - ../extra[2]', 'NVARCHAR(200)') AS result
+ FROM @xml.nodes('/products/product/price') AS T(c)
+ORDER BY 1
+go
+
+-- extra brackets
+DECLARE @xml XML = N'
+<products>
+  <product><name>Widget</name><price>9.99</price><discount>123</discount><extra>5</extra><extra>7</extra></product>
+  <product><name>Gadget</name><price>24.50</price><discount>456</discount><extra>6</extra><extra>8</extra></product>
+</products>'
+SELECT
+    T.c.value('(((1) + ((round(.))) + ((../discount[1]*(10))) - ((../extra[2]))))', 'NVARCHAR(200)') AS result
+ FROM @xml.nodes('/products/product/price') AS T(c)
+ORDER BY 1
+go
+
+-- with absolute path
+DECLARE @xml XML = '
+<root>
+	<r><price id="2">10</price><discount>3</discount></r>
+	<r><price id="3">15</price><discount>4</discount></r>
+</root>'
+SELECT 
+T.c.value('(../@id)[1]', 'int') AS c1,
+T.c.value('(//@id)[1]', 'int') AS c2,
+T.c.value('(./@id)[1]', 'int') AS c2a,
+T.c.value('(.//@id)[1]', 'int') AS c2b,
+T.c.value('(price)[1] - (discount)[1]', 'int') AS c3,
+T.c.value('(price)[1] - (discount)[1] + (//@id)[1] + (.//@id)[1]', 'int') AS c4,
+T.c.value('(price)[1] - (//@id)[1] + (.//@id)[1] + (discount)[1] ', 'int') AS c5
+FROM @xml.nodes('/root/r') AS T(c)
+go
+
+
 -- expected error cases ----------------
 
 -- nodes() with QUOTED_IDENTIFIER OFF
@@ -1354,7 +1493,6 @@ FROM @xml.nodes('/root/row') AS row(rowType)
    CROSS APPLY rowType.nodes('') AS attributeDefs(attrib)
 ORDER BY item, color
 go
-
 
 DECLARE @xml XML = '<root><row><def><item>item-1</item></def><def><item>item-2</item></def><attributes><color>blue</color></attributes><attributes><color>red</color></attributes></row><row><def><item>item-3</item></def><attributes><color>green</color></attributes></row></root>'
 SELECT
@@ -1563,4 +1701,22 @@ DECLARE @x XML = '<Root><Item><Sub/><Sub/><Sub/></Item><Item><Sub/></Item></Root
 SELECT T.c.value('count(Sub', 'INT') AS val
 FROM @x.nodes('/Root/Item') AS T(c)
 ORDER BY 1
+go
+
+-- invalid '.['
+DECLARE @xml XML = '<Root><123.>FIRST</123.><123.>SECOND</123.></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS val
+FROM @xml.nodes('/Root/123.[1]') AS T(C)
+go
+
+-- invalid '.'
+DECLARE @xml XML = '<Root><.abc>FIRST</.abc><.abc>SECOND</.abc></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS val
+FROM @xml.nodes('/Root/.abc[1]') AS T(C)
+go
+
+-- invalid '.'
+DECLARE @xml XML = '<Root><abc>FIRST</abc><abc>SECOND</abc></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS val
+FROM @xml.nodes('/Root/.abc[1]') AS T(C)
 go
