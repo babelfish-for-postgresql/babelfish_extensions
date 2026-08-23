@@ -3985,6 +3985,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 			break;
 		case OBJECT_VIEW:
 			appendStringInfo(&query, "ALTER VIEW dummy RENAME TO dummy; ");
+			appendStringInfo(&query, "ALTER VIEW dummy SET (dummy = 'dummy'); ");
 			break;
 		case OBJECT_PROCEDURE:
 			appendStringInfo(&query, "ALTER PROCEDURE dummy RENAME TO dummy; ");
@@ -4022,6 +4023,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 
 	if ((objtype != OBJECT_TABLE) &&
 		(objtype != OBJECT_INDEX) &&
+		(objtype != OBJECT_VIEW) &&
 		(objtype != OBJECT_COLUMN) &&
 		(objtype != OBJECT_TRIGGER) &&
 		(list_length(res) != 1))
@@ -4059,7 +4061,8 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 			renamestmt->relation->relname = downcase_truncate_identifier(objname, strlen(objname), false);
 		}
 
-		if (objtype == OBJECT_TABLE || objtype == OBJECT_INDEX)
+		if (objtype == OBJECT_TABLE || objtype == OBJECT_INDEX ||
+			objtype == OBJECT_VIEW)
 		{
 			AlterTableStmt *altertablestmt;
 			AlterTableCmd *cmd;

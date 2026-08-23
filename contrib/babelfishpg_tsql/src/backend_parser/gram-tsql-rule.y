@@ -4414,6 +4414,10 @@ tsql_AlterViewStmt:
                     n->query = $7;
                     n->replace = true;
                     n->options = $5;
+                    if ($4 != NIL)
+                        n->options = lappend(n->options,
+                            makeDefElem("bbf_view_collist_loc",
+                                        (Node *) makeInteger(@4), @4));
                     n->withCheckOption = $8;
                     n->createOrAlter = true;
                     $$ = (Node *) n;
@@ -4427,6 +4431,10 @@ tsql_AlterViewStmt:
                     n->query = $9;
                     n->replace = false;
                     n->options = $7;
+                    if ($6 != NIL)
+                        n->options = lappend(n->options,
+                            makeDefElem("bbf_view_collist_loc",
+                                        (Node *) makeInteger(@6), @6));
                     n->withCheckOption = $10;
                     n->createOrAlter = true;
                     $$ = (Node *) n;

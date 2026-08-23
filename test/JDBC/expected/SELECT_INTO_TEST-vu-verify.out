@@ -319,7 +319,7 @@ select column_name from information_schema.columns where table_name = 'select_in
 go
 ~~START~~
 nvarchar
-select_into_COL
+select_into_col
 ~~END~~
 
 -- dropping the table select_into
@@ -349,7 +349,7 @@ select column_name from information_schema.columns where table_name = 'select_in
 go
 ~~START~~
 nvarchar
-select_into_COL
+select_into_col
 ~~END~~
 
 -- dropping the table select_into
@@ -379,7 +379,7 @@ select column_name from information_schema.columns where table_name = 'select_in
 go
 ~~START~~
 nvarchar
-select_into_COL
+select_into_col
 ~~END~~
 
 -- dropping the table select_into
@@ -409,7 +409,7 @@ select column_name from information_schema.columns where table_name = 'select_in
 go
 ~~START~~
 nvarchar
-select_into_COL
+select_into_col
 ~~END~~
 
 -- dropping the table select_into
@@ -531,7 +531,7 @@ select column_name from information_schema.columns where table_name = 'select_in
 go
 ~~START~~
 nvarchar
-中文_COL
+中文_col
 ~~END~~
 
 -- dropping the table select_into
@@ -637,7 +637,7 @@ select column_name from information_schema.columns where table_name = 'select_in
 go
 ~~START~~
 nvarchar
-select_into_COL
+select_into_col
 ~~END~~
 
 

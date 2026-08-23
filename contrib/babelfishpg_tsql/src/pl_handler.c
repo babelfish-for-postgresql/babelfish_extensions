@@ -3291,6 +3291,130 @@ view_reparse_parser_setup(ParseState *pstate, void *arg)
 	pstate->p_post_expand_star_hook = pltsql_post_expand_star;
 }
 
+/*
+ * skip_collist_separators
+ *
+ * Advance past separators (commas, whitespace) and SQL comments (block and
+ * line) between column identifiers in a source column list. Returns the
+ * pointer at the next identifier, ')' or end of string.
+ */
+static const char *
+skip_collist_separators(const char *p)
+{
+	while (*p)
+	{
+		if (*p == ',' || scanner_isspace(*p))
+			p++;
+		else if (*p == '/' && *(p + 1) == '*')
+		{
+			p += 2;
+			while (*p && !(*p == '*' && *(p + 1) == '/'))
+				p++;
+			if (*p)
+				p += 2;
+		}
+		else if (*p == '-' && *(p + 1) == '-')
+		{
+			while (*p && *p != '\n')
+				p++;
+		}
+		else
+			break;
+	}
+	return p;
+}
+
+/*
+ * store_view_explicit_column_names
+ *
+ * Handle CREATE VIEW v (c1, c2, ...) explicit column alias lists. The grammar
+ * recorded the source location of the column list '(' in the internal
+ * bbf_view_collist_loc option. Walk the list with extract_identifier and store
+ * bbf_original_name attoptions for columns whose original differs from their
+ * (truncated/lowercased) physical attname. Also strips the internal option.
+ */
+static void
+store_view_explicit_column_names(ViewStmt *stmt, const char *queryString,
+								 Oid viewOid, TupleDesc tupdesc)
+{
+	int			collist_loc = -1;
+	const char *p;
+	int			col = 0;
+	List	   *cmds = NIL;
+	ListCell   *olc;
+	AlterTableCmd *reset;
+
+	foreach(olc, stmt->options)
+	{
+		DefElem *defel = (DefElem *) lfirst(olc);
+		if (defel->defname &&
+			strcmp(defel->defname, BBF_VIEW_COLLIST_LOC_OPTION) == 0 &&
+			defel->arg && IsA(defel->arg, Integer))
+		{
+			collist_loc = intVal(defel->arg);
+			break;
+		}
+	}
+
+	if (collist_loc >= 0 && (size_t) collist_loc < strlen(queryString))
+	{
+		p = queryString + collist_loc;		/* points at '(' */
+		if (*p == '(')
+			p++;
+
+		while (col < tupdesc->natts)
+		{
+			char	   *original_name;
+			int			last_pos = 0;
+			Form_pg_attribute attr;
+
+			p = skip_collist_separators(p);
+			if (*p == '\0' || *p == ')')
+				break;
+
+			original_name = extract_identifier(p, &last_pos);
+			if (!original_name || last_pos <= 0)
+				break;
+			p += last_pos;
+
+			attr = TupleDescAttr(tupdesc, col++);
+			/*
+			 * A freshly created/altered view has no dropped columns, so this
+			 * branch is not expected to be hit; guard against it defensively.
+			 */
+			if (attr->attisdropped)
+			{
+				pfree(original_name);
+				continue;
+			}
+
+			if (strcmp(NameStr(attr->attname), original_name) != 0)
+			{
+				AlterTableCmd *cmd = build_set_option_cmd(AT_SetOptions,
+														  ATTOPTION_BBF_ORIGINAL_NAME,
+														  original_name);
+				cmd->name = pstrdup(NameStr(attr->attname));
+				cmds = lappend(cmds, cmd);
+			}
+			pfree(original_name);
+		}
+	}
+
+	/* Strip the internal bbf_view_collist_loc reloption that leaked onto the view. */
+	reset = makeNode(AlterTableCmd);
+	reset->subtype = AT_ResetRelOptions;
+	reset->def = (Node *) list_make1(makeDefElem(BBF_VIEW_COLLIST_LOC_OPTION, NULL, -1));
+	reset->behavior = DROP_RESTRICT;
+	reset->missing_ok = true;
+	cmds = lappend(cmds, reset);
+
+	if (cmds != NIL)
+	{
+		AlterTableInternal(viewOid, cmds, false);
+		CommandCounterIncrement();
+	}
+}
+
 static void
 store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 {
@@ -3312,6 +3436,17 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 
 	rel = relation_open(viewOid, AccessShareLock);
 	tupdesc = RelationGetDescr(rel);
+
+	/*
+	 * Case A: View has an explicit column alias list (CREATE VIEW v (c1, c2)
+	 * AS ...). Handle it separately using the recorded column-list location.
+	 */
+	if (stmt->aliases != NIL)
+	{
+		store_view_explicit_column_names(stmt, queryString, viewOid, tupdesc);
+		relation_close(rel, AccessShareLock);
+		return;
+	}
 
 	/*
 	 * Reparse the view's SELECT query with p_post_expand_star_hook set,
@@ -8481,9 +8616,9 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, QueryEnvironment *queryEnv,
 								 ParamListInfo params, QueryCompletion *qc, ObjectAddress *address)
 {
-
 	Node *parsetree = pstmt->utilityStmt;
 	List *stmts;
+
 	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
 	while (stmts != NIL)
 	{

@@ -633,6 +633,204 @@ DROP TABLE babel5975_nested_src;
 GO
 
 
+-- ===========================================
+-- CREATE VIEW with explicit column alias list (long identifiers)
+-- ===========================================
+CREATE TABLE babel5975_cv_base (id int, a varchar(10), b int);
+GO
+INSERT INTO babel5975_cv_base VALUES (1, 'x', 9);
+GO
+
+-- Long aliases mixed with short (full names preserved)
+CREATE VIEW babel5975_cv_long (This_Is_A_Very_Long_Column_Alias_Number_One_Exceeds_Sixty_Three_Chars, c2, This_Is_A_Very_Long_Column_Alias_Number_Three_Exceeds_Sixty_Three_Ch) AS SELECT * FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_long') ORDER BY column_id;
+GO
+DROP VIEW babel5975_cv_long;
+GO
+
+-- CREATE OR ALTER VIEW with long explicit column list
+CREATE OR ALTER VIEW babel5975_cv_alter (This_Is_A_Long_Alter_View_Column_Alias_That_Exceeds_Sixty_Three_Chars, c2, c3) AS SELECT * FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_alter') ORDER BY column_id;
+GO
+DROP VIEW babel5975_cv_alter;
+GO
+
+-- ALTER VIEW replacing an existing view's column list with long aliases
+CREATE VIEW babel5975_cv_alter2 (Short1, Short2) AS SELECT id, a FROM babel5975_cv_base;
+GO
+ALTER VIEW babel5975_cv_alter2 (This_Is_A_Long_ALTER_VIEW_Column_Alias_That_Exceeds_Sixty_Three_Chars, c2) AS SELECT id, a FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_alter2') ORDER BY column_id;
+GO
+DROP VIEW babel5975_cv_alter2;
+GO
+
+-- CREATE OR ALTER VIEW altering an EXISTING view to long aliases
+CREATE VIEW babel5975_cv_alter3 (Short1, Short2) AS SELECT id, a FROM babel5975_cv_base;
+GO
+CREATE OR ALTER VIEW babel5975_cv_alter3 (This_Is_A_Long_CREATE_OR_ALTER_Column_Alias_Exceeding_Sixty_Three_Ch, c2) AS SELECT id, a FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_alter3') ORDER BY column_id;
+GO
+DROP VIEW babel5975_cv_alter3;
+GO
+
+-- ALTER VIEW with long bracketed alias containing parens
+CREATE VIEW babel5975_cv_alter4 (Short1, Short2) AS SELECT id, a FROM babel5975_cv_base;
+GO
+ALTER VIEW babel5975_cv_alter4 ([Long_ALTER_VIEW_Alias_With_Parens_(and_more)_Exceeding_Sixty_Three], c2) AS SELECT id, a FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_alter4') ORDER BY column_id;
+GO
+DROP VIEW babel5975_cv_alter4;
+GO
+
+-- Newlines / whitespace in the column list (long)
+CREATE VIEW babel5975_cv_ws (
+  This_Is_A_Long_Whitespace_Column_Alias_That_Exceeds_Sixty_Three_Chars ,
+  c2 ,
+  c3
+) AS SELECT * FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_ws') ORDER BY column_id;
+GO
+DROP VIEW babel5975_cv_ws;
+GO
+
+-- Comment inside the column list (block comment, long)
+CREATE VIEW babel5975_cv_cmt (This_Is_A_Long_Comment_Column_Alias_That_Exceeds_Sixty_Three_Chars /* comment */, c2, c3) AS SELECT * FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_cmt') ORDER BY column_id;
+GO
+DROP VIEW babel5975_cv_cmt;
+GO
+
+-- Long alias containing parens inside a bracketed identifier
+CREATE VIEW babel5975_cv_lp1 ([This_Is_A_Very_Long_Column_Alias_With_Parens_(and_more)_Exceeding_63], c2, c3) AS SELECT * FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_lp1') ORDER BY column_id;
+GO
+DROP VIEW babel5975_cv_lp1;
+GO
+
+-- Long alias ending with a close paren
+CREATE VIEW babel5975_cv_lp2 ([Long_Alias_That_Ends_With_A_Close_Paren_And_Exceeds_Sixty_Three_(x)], c2, c3) AS SELECT * FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_lp2') ORDER BY column_id;
+GO
+DROP VIEW babel5975_cv_lp2;
+GO
+
+-- All three long aliases with parens
+CREATE VIEW babel5975_cv_lp3 ([First_Long_Paren_Alias_(1)_That_Exceeds_The_Sixty_Three_Char_Limit], [Second_Long_Paren_Alias_(2)_That_Exceeds_The_Sixty_Three_Char_Limit], [Third_Long_Paren_Alias_(3)_That_Exceeds_The_Sixty_Three_Char_Limit]) AS SELECT * FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_lp3') ORDER BY column_id;
+GO
+DROP VIEW babel5975_cv_lp3;
+GO
+
+-- Long alias with both comma AND paren inside brackets
+CREATE VIEW babel5975_cv_lp4 ([Long_Alias_With_Comma,_And_Paren_(here)_Exceeding_Sixty_Three_Chars], c2, c3) AS SELECT * FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_lp4') ORDER BY column_id;
+GO
+DROP VIEW babel5975_cv_lp4;
+GO
+
+-- Long double-quoted aliases (QUOTED_IDENTIFIER ON)
+SET QUOTED_IDENTIFIER ON;
+GO
+
+-- Long double-quoted alias with parens
+CREATE VIEW babel5975_cv_dq1 ("This_Is_A_Very_Long_Quoted_Alias_With_Parens_(and_more)_Exceeding_63", c2, c3) AS SELECT * FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_dq1') ORDER BY column_id;
+GO
+DROP VIEW babel5975_cv_dq1;
+GO
+
+-- Long double-quoted alias with comma AND paren
+CREATE VIEW babel5975_cv_dq2 ("Long_Quoted_Alias_With_Comma,_And_Paren_(here)_Exceeding_Sixty_Three", c2, c3) AS SELECT * FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_dq2') ORDER BY column_id;
+GO
+DROP VIEW babel5975_cv_dq2;
+GO
+
+-- Long double-quoted alias with escaped quote ("" -> ")
+CREATE VIEW babel5975_cv_dq3 ("Long_Alias_With_Escaped_""Quote""_Char_That_Exceeds_Sixty_Three_Chars", c2, c3) AS SELECT * FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_dq3') ORDER BY column_id;
+GO
+DROP VIEW babel5975_cv_dq3;
+GO
+
+-- ===========================================
+-- sp_rename refresh: view name, table name, column (long identifiers)
+-- ===========================================
+
+-- sp_rename VIEW long -> different long (bbf_original_rel_name must refresh)
+CREATE VIEW babel5975_rn_view_long_A AS SELECT id, a FROM babel5975_cv_base;
+GO
+EXEC sp_rename 'babel5975_rn_view_long_A', 'Renamed_Long_View_Via_Sp_Rename_That_Exceeds_The_Sixty_Three_Char_V', 'OBJECT';
+GO
+SELECT name FROM sys.objects WHERE type = 'V' AND name = 'Renamed_Long_View_Via_Sp_Rename_That_Exceeds_The_Sixty_Three_Char_V';
+GO
+DROP VIEW [Renamed_Long_View_Via_Sp_Rename_That_Exceeds_The_Sixty_Three_Char_V];
+GO
+
+-- sp_rename TABLE long -> different long (bbf_original_rel_name must refresh)
+CREATE TABLE babel5975_rn_tab_long_A (id int);
+GO
+EXEC sp_rename 'babel5975_rn_tab_long_A', 'Renamed_Long_Table_Via_Sp_Rename_That_Exceeds_The_Sixty_Three_Char_T', 'OBJECT';
+GO
+SELECT name FROM sys.objects WHERE type = 'U' AND name = 'Renamed_Long_Table_Via_Sp_Rename_That_Exceeds_The_Sixty_Three_Char_T';
+GO
+DROP TABLE [Renamed_Long_Table_Via_Sp_Rename_That_Exceeds_The_Sixty_Three_Char_T];
+GO
+
+-- sp_rename COLUMN long -> different long (bbf_original_name must refresh)
+CREATE TABLE babel5975_rn_col (Long_Column_For_Sp_Rename_That_Exceeds_The_Sixty_Three_Char_Limit_A int, c2 int);
+GO
+EXEC sp_rename 'babel5975_rn_col.Long_Column_For_Sp_Rename_That_Exceeds_The_Sixty_Three_Char_Limit_A', 'Renamed_Long_Column_Via_Sp_Rename_Exceeding_The_Sixty_Three_Char_B', 'COLUMN';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_rn_col') ORDER BY column_id;
+GO
+
+-- sp_rename COLUMN long -> short (bbf_original_name must refresh to short)
+EXEC sp_rename 'babel5975_rn_col.Renamed_Long_Column_Via_Sp_Rename_Exceeding_The_Sixty_Three_Char_B', 'shortcol', 'COLUMN';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_rn_col') ORDER BY column_id;
+GO
+DROP TABLE babel5975_rn_col;
+GO
+
+-- sp_rename VIEW COLUMN long -> different long (bbf_original_name must refresh)
+CREATE TABLE babel5975_rn_vcol_base (id int, a varchar(10));
+GO
+CREATE VIEW babel5975_rn_vcol (Long_View_Column_For_Sp_Rename_Exceeding_The_Sixty_Three_Char_A, c2) AS SELECT id, a FROM babel5975_rn_vcol_base;
+GO
+EXEC sp_rename 'babel5975_rn_vcol.Long_View_Column_For_Sp_Rename_Exceeding_The_Sixty_Three_Char_A', 'Renamed_View_Column_Via_Sp_Rename_Exceeding_Sixty_Three_Chars_B', 'COLUMN';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_rn_vcol') ORDER BY column_id;
+GO
+
+-- sp_rename VIEW COLUMN long -> short (bbf_original_name must refresh to short)
+EXEC sp_rename 'babel5975_rn_vcol.Renamed_View_Column_Via_Sp_Rename_Exceeding_Sixty_Three_Chars_B', 'shortvcol', 'COLUMN';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_rn_vcol') ORDER BY column_id;
+GO
+DROP VIEW babel5975_rn_vcol;
+GO
+DROP TABLE babel5975_rn_vcol_base;
+GO
+
+DROP TABLE babel5975_cv_base;
+GO
+
+
 -- FOR XML/JSON tests with long identifiers
 -- ===========================================
 CREATE TABLE babel5975_xml_test (id int, val varchar(50));

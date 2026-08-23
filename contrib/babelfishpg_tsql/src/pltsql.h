@@ -83,6 +83,14 @@
 #define ATTOPTION_BBF_TABLE_CREATE_DATE "bbf_rel_create_date"
 
 /*
+ * Internal ViewStmt option name recording the source-text location of a view's
+ * explicit column alias list '('. Set as a string literal in gram.y and
+ * gram-tsql-rule.y (grammar files use literals); consumed here to recover
+ * original (long/mixed-case) column alias names.
+ */
+#define BBF_VIEW_COLLIST_LOC_OPTION "bbf_view_collist_loc"
+
+/*
  * Minimum byte length at which an identifier may have been truncated and
  * hence may have an original name stored in reloptions/attoptions. Used as a
  * fast-path guard to skip reloption lookups for clearly-short names. Set below
