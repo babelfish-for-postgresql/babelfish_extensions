@@ -350,6 +350,13 @@ ParsePreLoginRequest()
 			temp->length = 0;
 			temp->next = NULL;
 			initStringInfo(&temp->val);
+			if (prev == NULL)
+			{
+				ereport(FATAL, (errcode(ERRCODE_PROTOCOL_VIOLATION),
+								errmsg("Prelogin request contained no options")));
+				return STATUS_ERROR;	/* unreachable, satisfies static analysis */
+			}
+
 			prev->next = temp;
 			prev = prev->next;
 			break;
@@ -360,6 +367,14 @@ ParsePreLoginRequest()
 		if (TdsGetbytes((char *) &data16, sizeof(data16)))
 			return STATUS_ERROR;
 		temp->length = pg_ntoh16(data16);
+
+		/* Reject prelogin option lengths that exceed the prelogin packet size. */
+		if (temp->length > TDS_DEFAULT_INIT_PACKET_SIZE)
+			ereport(FATAL,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("invalid prelogin option length: %u",
+							temp->length)));
+
 		initStringInfo(&temp->val);
 
 		temp->next = NULL;
@@ -377,8 +392,17 @@ ParsePreLoginRequest()
 	prev = TdsPreLoginRequest;
 	while (prev->next != NULL)
 	{
-		if (TdsGetbytes(prev->val.data, prev->length))
-			return STATUS_ERROR;
+
+		/* Resize the buffer for this token's data and maintain StringInfo invariants. */
+		resetStringInfo(&prev->val);
+		if (prev->length > 0)
+		{
+			enlargeStringInfo(&prev->val, prev->length);
+			if (TdsGetbytes(prev->val.data, prev->length))
+				return STATUS_ERROR;
+			prev->val.len = prev->length;
+			prev->val.data[prev->val.len] = '\0';
+		}
 		prev = prev->next;
 	}
 	if (!TdsCheckMessageType(TDS_PRELOGIN))
@@ -480,6 +504,11 @@ SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
 			 * encryption if req = TDS_ENCRYPT_OFF or else TDS_ENCRYPT_OFF No
 			 * SSL support - when disabled or on Unix sockets
 			 */
+			if (reqVal->len < 1)
+				ereport(FATAL,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("invalid prelogin ENCRYPTION option length: %d",
+						reqVal->len)));
 			if (loadSsl && port->laddr.addr.ss_family != AF_UNIX)
 			{
 				if ((reqVal->data[0] == TDS_ENCRYPT_ON) ||

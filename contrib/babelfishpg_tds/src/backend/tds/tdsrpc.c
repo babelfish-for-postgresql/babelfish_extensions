@@ -1281,6 +1281,8 @@ ReadPlp(ParameterToken temp, StringInfo message, uint64_t *mainOffset)
 	unsigned long lenCheck = 0;
 	uint64_t	offset = *mainOffset;
 
+	if (offset + sizeof(plpTok) > message->len)
+		return STATUS_ERROR;
 	memcpy(&plpTok, &message->data[offset], sizeof(plpTok));
 	offset += sizeof(plpTok);
 	temp->plp = NULL;
@@ -1370,6 +1372,8 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 		 * following parameters for the next RPC packet in the Batch.
 		 * BatchFlag is '0xFF' For TDS versions more than or equal to 7.2 and
 		 * '0x80' for Versions lower than or equal to TDS 7.1
+		 *
+		 * Note: offset < message->len is guaranteed by the while loop condition.
 		 */
 		if ((uint8_t) message->data[offset] == GetRpcBatchSeparator(GetClientTDSVersion()))
 		{
@@ -1385,6 +1389,8 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 		}
 
 		temp = palloc0(sizeof(ParameterTokenData));
+
+		CheckMessageBounds(offset, 1, message->len);
 		len = message->data[offset++];
 
 		/*
@@ -1396,6 +1402,8 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 
 		if (len > 0)
 		{
+			CheckMessageBounds(offset, (uint64_t) 2 * len, message->len);
+
 			/*
 			 * FIXME: parameter name is in UTF-16 format.  Fix this
 			 * separately.
@@ -1405,6 +1413,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 			len = 0;
 		}
 
+		CheckMessageBounds(offset, sizeof(temp->flags), message->len);
 		memcpy(&temp->flags, &message->data[offset], sizeof(temp->flags));
 		offset += sizeof(temp->flags);
 
@@ -1426,6 +1435,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 			lockForFaultInjection = false;
 		}
 #endif
+		CheckMessageBounds(offset, 1, message->len);
 		tdsType = message->data[offset++];
 
 		temp->type = tdsType;
@@ -1443,11 +1453,13 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 								(errcode(ERRCODE_PROTOCOL_VIOLATION),
 								 errmsg("Invalid parameter %d (\"%s\"): Data type 0x%02X is a deprecated large object, or LOB, but is marked as output parameter. "
 										"Deprecated types are not supported as output parameters. Use current large object types instead.",
+					/* Bounds validated inside GetSetColMetadataForTextType */
 										paramOrdinal, temp->paramMeta.colName.data, tdsType)));
 					retStatus = GetSetColMetadataForTextType(temp, message, tdsType, &offset);
 					if (retStatus != STATUS_OK)
 						return retStatus;
 
+					CheckMessageBounds(offset, sizeof(temp->len), message->len);
 					memcpy(&temp->len, &message->data[offset], sizeof(temp->len));
 
 					/* for Null values, Len field is set to -1(0xFFFFFFFF) */
@@ -1461,6 +1473,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 
 					offset += sizeof(temp->len);
 					temp->dataOffset = offset;
+					CheckMessageBounds(offset, temp->len, message->len);
 					offset += temp->len;
 				}
 				break;
@@ -1476,6 +1489,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 										paramOrdinal, temp->paramMeta.colName.data, tdsType)));
 					SetColMetadataForImageType(&temp->paramMeta, tdsType);
 
+					CheckMessageBounds(offset, sizeof(temp->len), message->len);
 					memcpy(&temp->len, &message->data[offset], sizeof(temp->len));
 
 					/*
@@ -1500,9 +1514,11 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 					 * Skipping two sequence of 4 Bytes, each sequence
 					 * containing actual image file length
 					 */
+					CheckMessageBounds(offset, 2 * sizeof(temp->len), message->len);
 					offset += 2 * sizeof(temp->len);
 
 					temp->dataOffset = offset;
+					CheckMessageBounds(offset, temp->len, message->len);
 					offset += temp->len;
 				}
 				break;
@@ -1511,6 +1527,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 			case TDS_TYPE_VARCHAR:
 			case TDS_TYPE_NVARCHAR:
 				{
+					/* Bounds validated inside GetSetColMetadataForCharType */
 					retStatus = GetSetColMetadataForCharType(temp, message, tdsType, &offset);
 					if (retStatus != STATUS_OK)
 						return retStatus;
@@ -1521,6 +1538,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 					 */
 					if (temp->maxLen == 0xFFFF)
 					{
+						/* Bounds validated inside ReadPlp via CheckMessageBounds */
 						retStatus = ReadPlp(temp, message, &offset);
 						CheckPLPStatusNotOK(temp, retStatus);
 					}
@@ -1571,8 +1589,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 			case TDS_TYPE_DATETIMEN:
 			case TDS_TYPE_UNIQUEIDENTIFIER:
 				{
-					if ((offset + 2) > message->len)
-						return STATUS_ERROR;
+					CheckMessageBounds(offset, 2, message->len);
 					temp->maxLen = message->data[offset++];
 
 					/*
@@ -1586,8 +1603,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 					CheckForInvalidLength(temp);
 
 					temp->dataOffset = offset;
-					if (offset + temp->len > message->len)
-						return STATUS_ERROR;
+					CheckMessageBounds(offset, temp->len, message->len);
 					offset += temp->len;
 
 					SetColMetadataForFixedType(&temp->paramMeta, tdsType, temp->maxLen);
@@ -1599,7 +1615,8 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 
 					/*
 					 * Sets the col metadata and also the corresponding row
-					 * data.
+					 * data.  SetColMetadataForTvp validates bounds via
+					 * CheckMessageBounds before each read from message.
 					 */
 					SetColMetadataForTvp(temp, message, &offset, request->name.data);
 				}
@@ -1609,6 +1626,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 				{
 					uint16		len;
 
+					CheckMessageBounds(offset, sizeof(len), message->len);
 					memcpy(&len, &message->data[offset], sizeof(len));
 					offset += sizeof(len);
 					temp->maxLen = len;
@@ -1622,11 +1640,13 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 					 */
 					if (temp->maxLen == 0xffff)
 					{
+						/* Bounds validated inside ReadPlp via CheckMessageBounds */
 						retStatus = ReadPlp(temp, message, &offset);
 						CheckPLPStatusNotOK(temp, retStatus);
 					}
 					else
 					{
+						CheckMessageBounds(offset, sizeof(len), message->len);
 						memcpy(&len, &message->data[offset], sizeof(len));
 						offset += sizeof(len);
 						temp->len = len;
@@ -1645,16 +1665,14 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 						CheckForInvalidLength(temp);
 
 						temp->dataOffset = offset;
-						if (offset + temp->len > message->len)
-							return STATUS_ERROR;
+						CheckMessageBounds(offset, temp->len, message->len);
 						offset += temp->len;
 					}
 				}
 				break;
 			case TDS_TYPE_DATE:
 				{
-					if ((offset + 1) > message->len)
-						return STATUS_ERROR;
+					CheckMessageBounds(offset, 1, message->len);
 
 					temp->len = message->data[offset++];
 					temp->maxLen = 3;
@@ -1665,8 +1683,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 					CheckForInvalidLength(temp);
 
 					temp->dataOffset = offset;
-					if (offset + temp->len > message->len)
-						return STATUS_ERROR;
+					CheckMessageBounds(offset, temp->len, message->len);
 					offset += temp->len;
 
 					SetColMetadataForDateType(&temp->paramMeta, tdsType);
@@ -1676,7 +1693,10 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 			case TDS_TYPE_DATETIME2:
 			case TDS_TYPE_DATETIMEOFFSET:
 				{
-					uint8_t		scale = message->data[offset++];
+					uint8_t		scale;
+
+					CheckMessageBounds(offset, 2, message->len);
+					scale = message->data[offset++];
 
 					temp->len = message->data[offset++];
 
@@ -1693,8 +1713,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 					CheckForInvalidLength(temp);
 
 					temp->dataOffset = offset;
-					if ((offset + temp->len) > message->len)
-						return STATUS_ERROR;
+					CheckMessageBounds(offset, temp->len, message->len);
 					offset += temp->len;
 
 					SetColMetadataForTimeType(&temp->paramMeta, tdsType, scale);
@@ -1706,6 +1725,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 					uint8_t		scale;
 					uint8_t		precision;
 
+					CheckMessageBounds(offset, 4, message->len);
 					temp->maxLen = message->data[offset++];
 
 					precision = message->data[offset++];
@@ -1734,8 +1754,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 
 					temp->dataOffset = offset;
 
-					if ((offset + temp->len) > message->len)
-						return STATUS_ERROR;
+					CheckMessageBounds(offset, temp->len, message->len);
 
 					/*
 					 * XXX: We do not support DECIMAL so internally we store
@@ -1751,7 +1770,9 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 				break;
 			case TDS_TYPE_XML:
 				{
+					CheckMessageBounds(offset, 1, message->len);
 					temp->maxLen = message->data[offset++];
+					/* Bounds validated inside ReadPlp via CheckMessageBounds */
 					retStatus = ReadPlp(temp, message, &offset);
 					CheckPLPStatusNotOK(temp, retStatus);
 				}
@@ -1764,15 +1785,18 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 
 					initStringInfo(&typeName);
 
+					CheckMessageBounds(offset, sizeof(len), message->len);
 					memcpy(&len, &message->data[offset], sizeof(len));
 					offset += sizeof(len);
 
 					temp->maxLen = len;
 
 					/* Read the type name for the given CLR-UDT */
+					CheckMessageBounds(offset, sizeof(typenamelen), message->len);
 					memcpy(&typenamelen, &message->data[offset], sizeof(typenamelen));
 					offset += sizeof(typenamelen);
 
+					CheckMessageBounds(offset, (uint64_t) 2 * typenamelen, message->len);
 					TdsUTF16toUTF8StringInfo(&typeName, &(message->data[offset]), 2*typenamelen);
 					offset += 2*typenamelen;
 
@@ -1799,6 +1823,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 					}
 
 					resetStringInfo(&typeName);
+					/* Bounds validated inside ReadPlp via CheckMessageBounds */
 					retStatus = ReadPlp(temp, message, &offset);
 					CheckPLPStatusNotOK(temp, retStatus);
 				}
@@ -1841,6 +1866,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 	 * Flush phase in TdsSocketBackend.
 	 */
 	request->batchSeparatorOffset = message->len;
+	request->messageLen = message->len;
 	return STATUS_OK;
 }
 
@@ -1872,6 +1898,7 @@ GetSPCursorHandleParameter(TDSRequestSP request)
 				Assert(token->paramMeta.metaLen == sizeof(token->paramMeta.metaEntry.type1) &&
 					   token->paramMeta.metaEntry.type1.tdsTypeId == TDS_TYPE_INTEGER);
 
+				CheckMessageBounds(token->dataOffset, sizeof(uint32), request->messageLen);
 				memcpy(&request->cursorHandle, &request->messageData[token->dataOffset],
 					   sizeof(uint32));
 
@@ -1938,6 +1965,7 @@ GetSPCursorPreparedHandleParameter(TDSRequestSP request)
 				Assert(token->paramMeta.metaLen == sizeof(token->paramMeta.metaEntry.type1) &&
 					   token->paramMeta.metaEntry.type1.tdsTypeId == TDS_TYPE_INTEGER);
 
+				CheckMessageBounds(token->dataOffset, sizeof(uint32), request->messageLen);
 				memcpy(&request->cursorPreparedHandle, &request->messageData[token->dataOffset],
 					   sizeof(uint32));
 
@@ -1990,6 +2018,7 @@ GetSPHandleParameter(TDSRequestSP request)
 				Assert(token->paramMeta.metaLen == sizeof(token->paramMeta.metaEntry.type1) &&
 					   token->paramMeta.metaEntry.type1.tdsTypeId == TDS_TYPE_INTEGER);
 
+				CheckMessageBounds(token->dataOffset, sizeof(uint32), request->messageLen);
 				memcpy(&request->handle, &request->messageData[token->dataOffset],
 					   sizeof(uint32));
 
@@ -2186,6 +2215,7 @@ FetchCursorOptions(TDSRequestSP req)
 	Assert(token->paramMeta.metaLen == sizeof(token->paramMeta.metaEntry.type1) &&
 		   token->paramMeta.metaEntry.type1.tdsTypeId == TDS_TYPE_INTEGER);
 
+	CheckMessageBounds(token->dataOffset, sizeof(uint32), req->messageLen);
 	memcpy(&req->scrollopt, &req->messageData[token->dataOffset],
 		   sizeof(uint32));
 
@@ -2196,6 +2226,7 @@ FetchCursorOptions(TDSRequestSP req)
 	Assert(token->paramMeta.metaLen == sizeof(token->paramMeta.metaEntry.type1) &&
 		   token->paramMeta.metaEntry.type1.tdsTypeId == TDS_TYPE_INTEGER);
 
+	CheckMessageBounds(token->dataOffset, sizeof(uint32), req->messageLen);
 	memcpy(&req->ccopt, &req->messageData[token->dataOffset],
 		   sizeof(uint32));
 
@@ -2523,6 +2554,7 @@ FetchAndValidateCursorFetchOptions(TDSRequestSP req, int *fetchType,
 	Assert(token->paramMeta.metaLen == sizeof(token->paramMeta.metaEntry.type1) &&
 		   token->paramMeta.metaEntry.type1.tdsTypeId == TDS_TYPE_INTEGER);
 
+	CheckMessageBounds(token->dataOffset, sizeof(uint32), req->messageLen);
 	memcpy(fetchType, &req->messageData[token->dataOffset], sizeof(uint32));
 
 	switch (*fetchType)
@@ -2563,6 +2595,7 @@ FetchAndValidateCursorFetchOptions(TDSRequestSP req, int *fetchType,
 		Assert(token->paramMeta.metaLen == sizeof(token->paramMeta.metaEntry.type1) &&
 			   token->paramMeta.metaEntry.type1.tdsTypeId == TDS_TYPE_INTEGER);
 
+		CheckMessageBounds(token->dataOffset, sizeof(uint32), req->messageLen);
 		memcpy(rownum, &req->messageData[token->dataOffset], sizeof(uint32));
 
 		/*
@@ -2587,6 +2620,7 @@ FetchAndValidateCursorFetchOptions(TDSRequestSP req, int *fetchType,
 		Assert(token->paramMeta.metaLen == sizeof(token->paramMeta.metaEntry.type1) &&
 			   token->paramMeta.metaEntry.type1.tdsTypeId == TDS_TYPE_INTEGER);
 
+		CheckMessageBounds(token->dataOffset, sizeof(uint32), req->messageLen);
 		memcpy(howMany, &req->messageData[token->dataOffset], sizeof(uint32));
 
 		/*
@@ -2768,6 +2802,7 @@ HandleSPCursorOptionRequest(TDSRequestSP req)
 		Assert(token->paramMeta.metaLen == sizeof(token->paramMeta.metaEntry.type1) &&
 			   token->paramMeta.metaEntry.type1.tdsTypeId == TDS_TYPE_INTEGER);
 
+		CheckMessageBounds(token->dataOffset, sizeof(uint32), req->messageLen);
 		memcpy(&code, &req->messageData[token->dataOffset], sizeof(uint32));
 	}
 
@@ -2779,6 +2814,7 @@ HandleSPCursorOptionRequest(TDSRequestSP req)
 		Assert(token->paramMeta.metaLen == sizeof(token->paramMeta.metaEntry.type1) &&
 			   token->paramMeta.metaEntry.type1.tdsTypeId == TDS_TYPE_INTEGER);
 
+		CheckMessageBounds(token->dataOffset, sizeof(uint32), req->messageLen);
 		memcpy(&value, &req->messageData[token->dataOffset], sizeof(uint32));
 	}
 
@@ -2836,6 +2872,7 @@ HandleSPCursorRequest(TDSRequestSP req)
 		Assert(token->paramMeta.metaLen == sizeof(token->paramMeta.metaEntry.type1) &&
 			   token->paramMeta.metaEntry.type1.tdsTypeId == TDS_TYPE_INTEGER);
 
+		CheckMessageBounds(token->dataOffset, sizeof(uint32), req->messageLen);
 		memcpy(&optype, &req->messageData[token->dataOffset], sizeof(uint32));
 	}
 
@@ -2847,6 +2884,7 @@ HandleSPCursorRequest(TDSRequestSP req)
 		Assert(token->paramMeta.metaLen == sizeof(token->paramMeta.metaEntry.type1) &&
 			   token->paramMeta.metaEntry.type1.tdsTypeId == TDS_TYPE_INTEGER);
 
+		CheckMessageBounds(token->dataOffset, sizeof(uint32), req->messageLen);
 		memcpy(&rownum, &req->messageData[token->dataOffset], sizeof(uint32));
 	}
 
@@ -2925,6 +2963,7 @@ GetRPCRequest(StringInfo message)
 		request = palloc0(sizeof(TDSRequestSPData));
 
 	request->reqType = TDS_REQUEST_SP_NUMBER;
+	CheckMessageBounds(offset, sizeof(len), message->len);
 	memcpy(&len, &(message->data[offset]), sizeof(len));
 
 	/*
@@ -2940,12 +2979,14 @@ GetRPCRequest(StringInfo message)
 	 */
 	if (len != 0xffff)
 	{
+		CheckMessageBounds(offset, (uint64_t) 2 * len, message->len);
 		TdsUTF16toUTF8StringInfo(&request->name, &(message->data[offset]), 2 * len);
 		offset += 2 * len;
 		request->spType = SP_CUSTOMTYPE;
 	}
 	else
 	{
+		CheckMessageBounds(offset, sizeof(request->spType), message->len);
 		memcpy(&request->spType, &(message->data[offset]), sizeof(request->spType));
 		offset += sizeof(request->spType);
 	}
@@ -2953,6 +2994,7 @@ GetRPCRequest(StringInfo message)
 	request->isStoredProcedure = false;
 	request->metaDataParameterValue = makeStringInfo();
 
+	CheckMessageBounds(offset, sizeof(request->spFlags), message->len);
 	memcpy(&request->spFlags, &(message->data[offset]), sizeof(request->spFlags));
 	offset += sizeof(request->spFlags);
 
@@ -2963,8 +3005,9 @@ GetRPCRequest(StringInfo message)
 	request->messageData = message->data;
 
 	if (ReadParameters(request, offset, message, &parameterCount) != STATUS_OK)
-		elog(FATAL, "corrupted TDS_RPC message - "
-			 "offset beyond the message length");
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect.")));
 	/* Initialise */
 	InitialiseParameterToken(request);
 
