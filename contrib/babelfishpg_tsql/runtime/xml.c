@@ -1150,9 +1150,9 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
 		ch = *p;
 
 		/*
-         * Do not touch string literals or predicates. If encountered,
-         * return the number of skipped chars
-         */
+		 * Do not touch string literals or predicates. If encountered,
+		 * return the number of skipped chars
+		 */
 		if ((ch == '"') || (ch == '\'') || (ch == '['))
 		{
 			int nr_chars_skipped = bbf_xml_skip_xpath_chars(p);
@@ -1173,10 +1173,10 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
 		{
 			/* ... but only if removal would not concatenate two word characters.
 			 * Amazingly, in PG the following are valid XPath queries, note
-             * the removed spaces around 'and' and 'or':
-             *    xpath('string(true()orfalse())', ...)
-             *    xpath('string(true()andnot(false()))', ...)
-             * However, let's play it safe and not cause such word concatenations.
+			 * the removed spaces around 'and' and 'or':
+			 *    xpath('string(true()orfalse())', ...)
+			 *    xpath('string(true()andnot(false()))', ...)
+			 * However, let's play it safe and not cause such word concatenations.
 			 *
 			 * NB. This matters only when we are not at the first or last character
 			 */
@@ -1274,10 +1274,10 @@ bbf_xml_patch_xpath_dot_bracket(const char *xpath_pattern)
 	while (i < len)
 	{
 		/*
-         * Do not touch string literals. If encountered,
-         * return the number of skipped chars
-         */
-        char ch = xpath_pattern[i];
+		 * Do not touch string literals. If encountered,
+		 * return the number of skipped chars
+		 */
+		char ch = xpath_pattern[i];
 		if ((ch == '"') || (ch == '\''))
 		{
 			char *p = (char *) &xpath_pattern[i];		
@@ -1346,7 +1346,7 @@ bbf_xml_patch_xpath_dot_bracket(const char *xpath_pattern)
 	}
 	else 
 	{
-		/* addOpenBrackets> 0: Need to insert additional open brackets at the start */
+		/* addOpenBrackets > 0: Need to insert additional open brackets at the start */
 		StringInfoData result2;	
 		initStringInfo(&result2);	
 		while (addOpenBrackets > 0)
@@ -1522,9 +1522,9 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 	{
 		ch = *p;
 		/*
-         * Do not touch string literals or predicates. If encountered,
-         * return the number of skipped chars
-         */
+		* Do not touch string literals or predicates. If encountered,
+		* return the number of skipped chars
+		*/
 		if ((ch == '"') || (ch == '\'') || (ch == '['))
 		{
 			int nr_chars_skipped = bbf_xml_skip_xpath_chars(p);
@@ -1545,7 +1545,6 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 		/* '.' reference */
 		if (ch == '.')
 		{
-			//if (prev_ch == '(' || prev_ch == ',' || prev_ch == '/' || prev_ch == ' ')
 			if (!(isalpha(prev_ch) || prev_ch == '_'))				
 			{
 				next_ch = (*p) && *(p+1) ? *(p+1) : ' ';
@@ -1572,8 +1571,9 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 						p += 2; /* move two chars forward */
 					}
 				}
-				else if (next_ch == '/' || next_ch == ')' || next_ch == ',' ||
-						 next_ch == '[' || next_ch == ']' || next_ch == ' ')
+				else if ((next_ch == '/' || next_ch == ')' || next_ch == ',' ||
+						  next_ch == '[' || next_ch == ']' || next_ch == ' ') &&
+						 (!isdigit(prev_ch)))  // do not modify a trailing dot in a numeric value, e.g. '2.)'
 				{
 					/* self reference: '.' or './' etc. */
 					appendStringInfo(&result, "(%s/.)", context_node_path);
@@ -1601,8 +1601,8 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 			if (!(isalpha(prev_ch) || prev_ch == '_'))
 			{
 				/* Collect the @attr name (@name, @*, @id, etc. and append to the context node path */
- 				if (prev_ch != '/') 
- 				{
+				if (prev_ch != '/') 
+				{
 					appendStringInfo(&result, "%s/", context_node_path);
 				}					
 					
@@ -1630,8 +1630,8 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 
 		/*
 		 * Handle identifiers without '@', preceded by '(' or ','
-         * Note that we must not touch XPath function names
-         */
+		 * Note that we must not touch XPath function names
+		 */
 		if (isalpha(ch) || ch == '_') 
 		{
 			if (!(isalpha(prev_ch) || prev_ch == '_'))
@@ -1670,7 +1670,7 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 				}
 				else
 				{
- 					if (prev_ch != '/')
+					if (prev_ch != '/')
 					{	
 						/* Identifier but not XPath function - prepend the context node path */
 						appendStringInfo(&result, "%s/%s", context_node_path, ident_buf.data);
@@ -1956,8 +1956,8 @@ bbf_xmlvalue(PG_FUNCTION_ARGS)
 
 	if (nitems > 1)
 		ereport(ERROR,
-                (errcode(ERRCODE_CARDINALITY_VIOLATION),
-                 errmsg("XML Value result is not a single value.")));
+			(errcode(ERRCODE_CARDINALITY_VIOLATION),
+			 errmsg("XML Value result is not a single value.")));
 
 	if (nitems == 0)
 		PG_RETURN_NULL();
@@ -1974,7 +1974,7 @@ bbf_xmlvalue(PG_FUNCTION_ARGS)
 
 	string_arr = DatumGetArrayTypeP(makeArrayResult(str_astate, CurrentMemoryContext));
 	deconstruct_array(string_arr, XMLOID, -1, false, TYPALIGN_INT,
-                      &str_elems, &str_nulls, &str_nitems);
+					  &str_elems, &str_nulls, &str_nitems);
 
 	if (str_nitems == 0 || str_nulls[0])
 		PG_RETURN_NULL();

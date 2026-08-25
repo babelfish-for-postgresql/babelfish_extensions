@@ -186,6 +186,20 @@ int#!#char
 ~~END~~
 
 
+SELECT t2.Id, T.C.value('(@id)[1]', 'int') AS row_id, T.C.value('(name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t1 t2
+CROSS APPLY t2.XmlColumn.nodes('/Root/row') AS T(C)
+ORDER BY 1,2,3
+go
+~~START~~
+int#!#int#!#varchar
+1#!#1#!#James
+1#!#2#!#Megan
+1#!#3#!#Chris
+2#!#4#!#Andrew
+~~END~~
+
+
 -- .nodes() on a subquery result
 SELECT t.c.value('@id','int') AS id, t.c.value('.','varchar(20)') AS val
 FROM (SELECT CAST('<root><e id="1">X</e><e id="2">Y</e></root>' AS XML) AS x) sub
@@ -236,6 +250,18 @@ item-1item-2item-3
 ~~END~~
 
 
+SELECT T.C.value('(@name)[1]', 'varchar(100)') AS name, T.C.value('(@id)[1]', 'int') AS id
+FROM babel_5225_xml_nodes_t2 t2
+CROSS APPLY t2.XmlColumn.nodes('/artists/artist') AS T(C)
+ORDER BY 1,2
+go
+~~START~~
+varchar#!#int
+Jane Smith#!#2
+John Smith#!#1
+~~END~~
+
+
 -- .nodes() on a subquery joining to another table
 CREATE TABLE #Orders (OrderId INT, OrderXml XML)
 INSERT #Orders VALUES (1,'<lines><l qty="5"/><l qty="3"/></lines>')
@@ -267,6 +293,20 @@ varchar#!#varchar
 Eng#!#Andrew
 Eng#!#James
 HR#!#Megan
+~~END~~
+
+
+SELECT T.C.value('(@id)[1]', 'int') AS id, T.C.value('(name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t1 t2
+CROSS APPLY t2.XmlColumn.nodes('/Root/row') AS T(C)
+WHERE t2.Id = 1
+ORDER BY 1,2
+go
+~~START~~
+int#!#varchar
+1#!#James
+2#!#Megan
+3#!#Chris
 ~~END~~
 
 
@@ -2426,6 +2466,64 @@ int#!#int#!#int#!#int#!#int#!#int#!#int
 ~~END~~
 
 
+-- Decimal literal in arithmetic (basic)
+DECLARE @xml XML = '<root><r><price>10</price></r></root>'
+SELECT T.c.value('price[1] * 1.5', 'NVARCHAR(50)') AS calc
+FROM @xml.nodes('/root/r') AS T(c)
+go
+~~START~~
+nvarchar
+15
+~~END~~
+
+
+-- Leading-dot decimal (.5) — '.' preceded by space
+DECLARE @xml XML = '<root><r><price>10</price></r></root>'
+SELECT T.c.value('price[1] * .5', 'NVARCHAR(50)') AS calc
+FROM @xml.nodes('/root/r') AS T(c)
+go
+~~START~~
+nvarchar
+5
+~~END~~
+
+
+-- Trailing-dot decimal before ')' — the ambiguous case most likely to misfire
+DECLARE @xml XML = '<root><r><price>10</price></r></root>'
+SELECT T.c.value('(price[1] * 2.)', 'NVARCHAR(50)') AS calc
+FROM @xml.nodes('/root/r') AS T(c)
+go
+~~START~~
+nvarchar
+20
+~~END~~
+
+
+-- ']/.[' pattern — indexed step, then /, then .[predicate]
+-- The '.[ ' preceded by ']/' triggers the ')' insertion + prepended '('
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS val
+FROM @xml.nodes('(/Root/row)[1]/.[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+~~END~~
+
+
+-- Multiple ']/.[' occurrences — addOpenBrackets increments > 1
+DECLARE @xml XML = '<Root><row><name>James</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS val
+FROM @xml.nodes('(/Root/row)[1]/.[1]/.[1]') AS T(C)
+ORDER BY 1
+go
+~~START~~
+varchar
+James
+~~END~~
+
+
 
 
 -- expected error cases ----------------
@@ -2479,6 +2577,17 @@ varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot call methods on int.)~~
+
+
+SELECT t2.Id
+FROM babel_5225_xml_nodes_t1 t2
+CROSS APPLY t.XmlColumn.nodes('/Root/row') AS T(C)
+WHERE t2.Id = 3
+ORDER BY 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: missing FROM-clause entry for table "t")~~
 
 
 -- string constant required for xpath expression
@@ -2543,46 +2652,11 @@ int
 ~~ERROR (Message: XQuery [value()]: The result of applying the 'parent' axis on the document node is statically 'empty'.)~~
 
 
--- nodes() on a table column with CROSS APPLY
+-- uppercase/lowercase table name clash
 SELECT t.Id, T.C.value('(@id)[1]', 'int') AS row_id, T.C.value('(name)[1]', 'varchar(100)') AS name
 FROM babel_5225_xml_nodes_t1 t
 CROSS APPLY t.XmlColumn.nodes('/Root/row') AS T(C)
 ORDER BY 1,2,3
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: table name "t" specified more than once)~~
-
-
--- nodes() on empty element (no children matched)
-SELECT t.Id
-FROM babel_5225_xml_nodes_t1 t
-CROSS APPLY t.XmlColumn.nodes('/Root/row') AS T(C)
-WHERE t.Id = 3
-ORDER BY 1
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: table name "t" specified more than once)~~
-
-
--- nodes() with attribute xpath
-SELECT T.C.value('(@name)[1]', 'varchar(100)') AS name, T.C.value('(@id)[1]', 'int') AS id
-FROM babel_5225_xml_nodes_t2 t
-CROSS APPLY t.XmlColumn.nodes('/artists/artist') AS T(C)
-ORDER BY 1
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: table name "t" specified more than once)~~
-
-
--- nodes() combined with value() on same column
-SELECT T.C.value('(@id)[1]', 'int') AS id, T.C.value('(name)[1]', 'varchar(100)') AS name
-FROM babel_5225_xml_nodes_t1 t
-CROSS APPLY t.XmlColumn.nodes('/Root/row') AS T(C)
-WHERE t.Id = 1
-ORDER BY 1
 go
 ~~ERROR (Code: 33557097)~~
 

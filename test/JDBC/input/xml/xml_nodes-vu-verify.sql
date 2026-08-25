@@ -103,6 +103,12 @@ ORDER BY d.Id
 DROP TABLE #XmlData
 go
 
+SELECT t2.Id, T.C.value('(@id)[1]', 'int') AS row_id, T.C.value('(name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t1 t2
+CROSS APPLY t2.XmlColumn.nodes('/Root/row') AS T(C)
+ORDER BY 1,2,3
+go
+
 -- .nodes() on a subquery result
 SELECT t.c.value('@id','int') AS id, t.c.value('.','varchar(20)') AS val
 FROM (SELECT CAST('<root><e id="1">X</e><e id="2">Y</e></root>' AS XML) AS x) sub
@@ -128,6 +134,12 @@ SELECT @xml.value('.','varchar(20)')  AS lineItem
 ORDER BY 1
 go
 
+SELECT T.C.value('(@name)[1]', 'varchar(100)') AS name, T.C.value('(@id)[1]', 'int') AS id
+FROM babel_5225_xml_nodes_t2 t2
+CROSS APPLY t2.XmlColumn.nodes('/artists/artist') AS T(C)
+ORDER BY 1,2
+go
+
 -- .nodes() on a subquery joining to another table
 CREATE TABLE #Orders (OrderId INT, OrderXml XML)
 INSERT #Orders VALUES (1,'<lines><l qty="5"/><l qty="3"/></lines>')
@@ -144,6 +156,13 @@ DECLARE @xml XML = '<depts><d name="Eng"><emp>James</emp><emp>Andrew</emp></d><d
 SELECT d.c.value('@name','varchar(20)') AS dept, e.c.value('.','varchar(20)') AS emp
 FROM @xml.nodes('/depts/d') d(c)
 CROSS APPLY d.c.nodes('emp') e(c)
+ORDER BY 1,2
+go
+
+SELECT T.C.value('(@id)[1]', 'int') AS id, T.C.value('(name)[1]', 'varchar(100)') AS name
+FROM babel_5225_xml_nodes_t1 t2
+CROSS APPLY t2.XmlColumn.nodes('/Root/row') AS T(C)
+WHERE t2.Id = 1
 ORDER BY 1,2
 go
 
@@ -1345,6 +1364,39 @@ T.c.value('(price)[1] - (//@id)[1] + (.//@id)[1] + (discount)[1] ', 'int') AS c5
 FROM @xml.nodes('/root/r') AS T(c)
 go
 
+-- Decimal literal in arithmetic (basic)
+DECLARE @xml XML = '<root><r><price>10</price></r></root>'
+SELECT T.c.value('price[1] * 1.5', 'NVARCHAR(50)') AS calc
+FROM @xml.nodes('/root/r') AS T(c)
+go
+
+-- Leading-dot decimal (.5) — '.' preceded by space
+DECLARE @xml XML = '<root><r><price>10</price></r></root>'
+SELECT T.c.value('price[1] * .5', 'NVARCHAR(50)') AS calc
+FROM @xml.nodes('/root/r') AS T(c)
+go
+
+-- Trailing-dot decimal before ')' — the ambiguous case most likely to misfire
+DECLARE @xml XML = '<root><r><price>10</price></r></root>'
+SELECT T.c.value('(price[1] * 2.)', 'NVARCHAR(50)') AS calc
+FROM @xml.nodes('/root/r') AS T(c)
+go
+
+-- ']/.[' pattern — indexed step, then /, then .[predicate]
+-- The '.[ ' preceded by ']/' triggers the ')' insertion + prepended '('
+DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS val
+FROM @xml.nodes('(/Root/row)[1]/.[1]') AS T(C)
+ORDER BY 1
+go
+
+-- Multiple ']/.[' occurrences — addOpenBrackets increments > 1
+DECLARE @xml XML = '<Root><row><name>James</name></row></Root>'
+SELECT T.C.value('.', 'varchar(20)') AS val
+FROM @xml.nodes('(/Root/row)[1]/.[1]/.[1]') AS T(C)
+ORDER BY 1
+go
+
 
 -- expected error cases ----------------
 
@@ -1380,6 +1432,13 @@ FROM @x.nodes('/root') AS T(C)
 ORDER BY 1
 go
 
+SELECT t2.Id
+FROM babel_5225_xml_nodes_t1 t2
+CROSS APPLY t.XmlColumn.nodes('/Root/row') AS T(C)
+WHERE t2.Id = 3
+ORDER BY 1
+go
+
 -- string constant required for xpath expression
 DECLARE @v varchar(100) = '(//@id)[2]'
 select CAST('<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>' as xml).value(@v, 'int') AS id
@@ -1410,34 +1469,11 @@ DECLARE @xml XML = '<orders><o id="1"><li>item-1</li><li>item-2</li></o><o id="2
 SELECT @xml.value('(../@id)[1]','int')
 go
 
--- nodes() on a table column with CROSS APPLY
+-- uppercase/lowercase table name clash
 SELECT t.Id, T.C.value('(@id)[1]', 'int') AS row_id, T.C.value('(name)[1]', 'varchar(100)') AS name
 FROM babel_5225_xml_nodes_t1 t
 CROSS APPLY t.XmlColumn.nodes('/Root/row') AS T(C)
 ORDER BY 1,2,3
-go
-
--- nodes() on empty element (no children matched)
-SELECT t.Id
-FROM babel_5225_xml_nodes_t1 t
-CROSS APPLY t.XmlColumn.nodes('/Root/row') AS T(C)
-WHERE t.Id = 3
-ORDER BY 1
-go
-
--- nodes() with attribute xpath
-SELECT T.C.value('(@name)[1]', 'varchar(100)') AS name, T.C.value('(@id)[1]', 'int') AS id
-FROM babel_5225_xml_nodes_t2 t
-CROSS APPLY t.XmlColumn.nodes('/artists/artist') AS T(C)
-ORDER BY 1
-go
-
--- nodes() combined with value() on same column
-SELECT T.C.value('(@id)[1]', 'int') AS id, T.C.value('(name)[1]', 'varchar(100)') AS name
-FROM babel_5225_xml_nodes_t1 t
-CROSS APPLY t.XmlColumn.nodes('/Root/row') AS T(C)
-WHERE t.Id = 1
-ORDER BY 1
 go
 
 -- parent beyond root
