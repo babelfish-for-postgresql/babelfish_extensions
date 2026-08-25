@@ -912,6 +912,9 @@ is_babelfish_role(const char *role)
 	Oid			sysadmin_oid;
 	Oid			role_oid;
 
+	if (role == NULL)
+		return false;
+
 	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
 	role_oid = get_role_oid(role, true);	/* missing OK */
 
