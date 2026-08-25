@@ -213,6 +213,451 @@ BEGIN
 END
 go
 
+-- additional search conditions: setup
+CREATE TABLE babel_2920_ct (id INT PRIMARY KEY, name VARCHAR(20), qty INT, status VARCHAR(10))
+go
+CREATE TABLE babel_2920_cs (id INT PRIMARY KEY, name VARCHAR(20), qty INT, flag VARCHAR(10))
+go
+CREATE TABLE babel_2920_cl (id INT PRIMARY KEY, allowed INT)
+go
+INSERT INTO babel_2920_cs VALUES (1,'alpha2',15,'yes'),(2,'beta2',25,'no'),(5,'eps',50,'yes'),(6,'zeta',60,'no'),(7,'eta',70,'yes')
+go
+INSERT INTO babel_2920_cl VALUES (1,0),(2,0),(5,1),(6,0),(7,1)
+go
+
+-- additional condition on WHEN NOT MATCHED BY TARGET
+DELETE FROM babel_2920_ct
+INSERT INTO babel_2920_ct VALUES (1,'alpha',10,'active'),(2,'beta',20,'active'),(3,'gamma',30,'idle'),(4,'delta',40,'idle')
+go
+MERGE INTO babel_2920_ct AS t
+USING babel_2920_cs AS s ON t.id = s.id
+WHEN NOT MATCHED BY TARGET AND s.flag = 'yes' THEN
+    INSERT (id, name, qty, status) VALUES (s.id, s.name, s.qty, 'ins');
+SELECT @@ROWCOUNT AS merge_rowcount
+go
+SELECT id, name, qty, status FROM babel_2920_ct ORDER BY id
+go
+
+-- additional condition on WHEN NOT MATCHED BY SOURCE with DELETE
+DELETE FROM babel_2920_ct
+INSERT INTO babel_2920_ct VALUES (1,'alpha',10,'active'),(2,'beta',20,'active'),(3,'gamma',30,'idle'),(4,'delta',40,'idle')
+go
+MERGE INTO babel_2920_ct AS t
+USING babel_2920_cs AS s ON t.id = s.id
+WHEN NOT MATCHED BY SOURCE AND t.status = 'idle' THEN
+    DELETE;
+go
+SELECT id, name, qty, status FROM babel_2920_ct ORDER BY id
+go
+
+-- additional condition on WHEN NOT MATCHED BY SOURCE with UPDATE: only one of the two unmatched rows qualifies
+DELETE FROM babel_2920_ct
+INSERT INTO babel_2920_ct VALUES (1,'alpha',10,'active'),(2,'beta',20,'active'),(3,'gamma',30,'idle'),(4,'delta',40,'idle')
+go
+MERGE INTO babel_2920_ct AS t
+USING babel_2920_cs AS s ON t.id = s.id
+WHEN NOT MATCHED BY SOURCE AND t.qty >= 40 THEN
+    UPDATE SET status = 'stale';
+go
+SELECT id, name, qty, status FROM babel_2920_ct ORDER BY id
+go
+
+-- multiple predicates per WHEN clause combining AND, OR and NOT, on all three WHEN variants
+DELETE FROM babel_2920_ct
+INSERT INTO babel_2920_ct VALUES (1,'alpha',10,'active'),(2,'beta',20,'active'),(3,'gamma',30,'idle'),(4,'delta',40,'idle')
+go
+MERGE INTO babel_2920_ct AS t
+USING babel_2920_cs AS s ON t.id = s.id
+WHEN MATCHED AND (s.qty > 20 OR t.status = 'active') AND NOT s.flag = 'no' THEN
+    UPDATE SET qty = s.qty, status = 'upd'
+WHEN NOT MATCHED BY TARGET AND (s.qty >= 60 OR s.flag = 'yes') THEN
+    INSERT (id, name, qty, status) VALUES (s.id, s.name, s.qty, 'ins')
+WHEN NOT MATCHED BY SOURCE AND (t.status = 'idle' AND NOT t.qty = 30) THEN
+    DELETE;
+go
+SELECT id, name, qty, status FROM babel_2920_ct ORDER BY id
+go
+
+-- BETWEEN, LIKE, an IN value list and a CASE expression in the additional condition
+DELETE FROM babel_2920_ct
+INSERT INTO babel_2920_ct VALUES (1,'alpha',10,'active'),(2,'beta',20,'active'),(3,'gamma',30,'idle'),(4,'delta',40,'idle')
+go
+MERGE INTO babel_2920_ct AS t
+USING babel_2920_cs AS s ON t.id = s.id
+WHEN NOT MATCHED BY TARGET AND s.qty BETWEEN 50 AND 65 AND s.name LIKE '%z%' THEN
+    INSERT (id, name, qty, status) VALUES (s.id, s.name, s.qty, 'like')
+WHEN NOT MATCHED BY SOURCE AND t.status IN ('idle','gone') AND CASE WHEN t.qty > 35 THEN 1 ELSE 0 END = 1 THEN
+    UPDATE SET status = 'case';
+go
+SELECT id, name, qty, status FROM babel_2920_ct ORDER BY id
+go
+
+-- every additional condition is false: no row is affected and @@ROWCOUNT is 0
+DELETE FROM babel_2920_ct
+INSERT INTO babel_2920_ct VALUES (1,'alpha',10,'active'),(2,'beta',20,'active'),(3,'gamma',30,'idle'),(4,'delta',40,'idle')
+go
+MERGE INTO babel_2920_ct AS t
+USING babel_2920_cs AS s ON t.id = s.id
+WHEN MATCHED AND s.qty < 0 THEN
+    UPDATE SET status = 'never'
+WHEN NOT MATCHED BY TARGET AND s.flag = 'maybe' THEN
+    INSERT (id, name, qty, status) VALUES (s.id, s.name, s.qty, 'never')
+WHEN NOT MATCHED BY SOURCE AND t.qty > 1000 THEN
+    DELETE;
+SELECT @@ROWCOUNT AS merge_rowcount
+go
+SELECT id, name, qty, status FROM babel_2920_ct ORDER BY id
+go
+
+-- additional condition containing a correlated EXISTS / NOT EXISTS subquery
+DELETE FROM babel_2920_ct
+INSERT INTO babel_2920_ct VALUES (1,'alpha',10,'active'),(2,'beta',20,'active'),(3,'gamma',30,'idle'),(4,'delta',40,'idle')
+go
+MERGE INTO babel_2920_ct AS t
+USING babel_2920_cs AS s ON t.id = s.id
+WHEN NOT MATCHED BY TARGET AND EXISTS (SELECT 1 FROM babel_2920_cl l WHERE l.id = s.id AND l.allowed = 1) THEN
+    INSERT (id, name, qty, status) VALUES (s.id, s.name, s.qty, 'exists')
+WHEN NOT MATCHED BY SOURCE AND NOT EXISTS (SELECT 1 FROM babel_2920_cl l WHERE l.id = t.id) THEN
+    UPDATE SET status = 'orphan';
+go
+SELECT id, name, qty, status FROM babel_2920_ct ORDER BY id
+go
+
+-- additional condition containing IN, NOT IN and a scalar aggregate subquery
+DELETE FROM babel_2920_ct
+INSERT INTO babel_2920_ct VALUES (1,'alpha',10,'active'),(2,'beta',20,'active'),(3,'gamma',30,'idle'),(4,'delta',40,'idle')
+go
+MERGE INTO babel_2920_ct AS t
+USING babel_2920_cs AS s ON t.id = s.id
+WHEN MATCHED AND t.id IN (SELECT id FROM babel_2920_cl WHERE allowed = 0) THEN
+    UPDATE SET qty = s.qty, status = 'inlist'
+WHEN NOT MATCHED BY TARGET AND s.qty > (SELECT AVG(qty) FROM babel_2920_cs) THEN
+    INSERT (id, name, qty, status) VALUES (s.id, s.name, s.qty, 'scalar')
+WHEN NOT MATCHED BY SOURCE AND t.id NOT IN (SELECT id FROM babel_2920_cl) THEN
+    DELETE;
+go
+SELECT id, name, qty, status FROM babel_2920_ct ORDER BY id
+go
+
+-- subquery conditions that match nothing: no row is affected
+DELETE FROM babel_2920_ct
+INSERT INTO babel_2920_ct VALUES (1,'alpha',10,'active'),(2,'beta',20,'active'),(3,'gamma',30,'idle'),(4,'delta',40,'idle')
+go
+MERGE INTO babel_2920_ct AS t
+USING babel_2920_cs AS s ON t.id = s.id
+WHEN MATCHED AND t.id IN (SELECT id FROM babel_2920_cl WHERE allowed = 1) THEN
+    UPDATE SET status = 'never'
+WHEN NOT MATCHED BY TARGET AND EXISTS (SELECT 1 FROM babel_2920_cl l WHERE l.id = s.id AND l.allowed = 99) THEN
+    INSERT (id, name, qty, status) VALUES (s.id, s.name, s.qty, 'never');
+SELECT @@ROWCOUNT AS merge_rowcount
+go
+SELECT id, name, qty, status FROM babel_2920_ct ORDER BY id
+go
+
+-- NULL in the additional condition follows three-valued logic (the NULL row is not inserted)
+INSERT INTO babel_2920_cs VALUES (8,'theta',80,NULL)
+DELETE FROM babel_2920_ct
+INSERT INTO babel_2920_ct VALUES (1,'alpha',10,'active'),(2,'beta',20,'active'),(3,'gamma',30,'idle'),(4,'delta',40,'idle')
+go
+MERGE INTO babel_2920_ct AS t
+USING babel_2920_cs AS s ON t.id = s.id
+WHEN NOT MATCHED BY TARGET AND s.flag <> 'no' THEN
+    INSERT (id, name, qty, status) VALUES (s.id, s.name, s.qty, 'nn');
+go
+SELECT id, name, qty, status FROM babel_2920_ct ORDER BY id
+go
+DELETE FROM babel_2920_cs WHERE id = 8
+go
+
+-- two WHEN MATCHED clauses: the first matching clause wins
+DELETE FROM babel_2920_ct
+INSERT INTO babel_2920_ct VALUES (1,'alpha',10,'active'),(2,'beta',20,'active'),(3,'gamma',30,'idle'),(4,'delta',40,'idle')
+go
+MERGE INTO babel_2920_ct AS t
+USING babel_2920_cs AS s ON t.id = s.id
+WHEN MATCHED AND s.flag = 'no' THEN
+    DELETE
+WHEN MATCHED THEN
+    UPDATE SET qty = s.qty, status = 'upd2';
+go
+SELECT id, name, qty, status FROM babel_2920_ct ORDER BY id
+go
+
+-- error: a source column cannot be referenced in a WHEN NOT MATCHED BY SOURCE condition
+MERGE INTO babel_2920_ct AS t
+USING babel_2920_cs AS s ON t.id = s.id
+WHEN NOT MATCHED BY SOURCE AND s.flag = 'yes' THEN
+    DELETE;
+go
+
+-- #temp table as MERGE target and as MERGE source
+CREATE TABLE #babel_2920_tt (id INT PRIMARY KEY, val VARCHAR(20), qty INT)
+go
+INSERT INTO #babel_2920_tt VALUES (1,'one',10),(2,'two',20),(3,'three',30)
+go
+CREATE TABLE #babel_2920_ts (id INT PRIMARY KEY, val VARCHAR(20), qty INT)
+go
+INSERT INTO #babel_2920_ts VALUES (2,'TWO',200),(3,'THREE',300),(4,'four',40)
+go
+MERGE INTO #babel_2920_tt AS t
+USING #babel_2920_ts AS s ON t.id = s.id
+WHEN MATCHED AND s.qty > 250 THEN DELETE
+WHEN MATCHED THEN UPDATE SET val = s.val, qty = s.qty
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, val, qty) VALUES (s.id, s.val, s.qty)
+WHEN NOT MATCHED BY SOURCE THEN UPDATE SET val = 'stale';
+go
+SELECT id, val, qty FROM #babel_2920_tt ORDER BY id
+go
+
+-- permanent target with a #temp table as source
+CREATE TABLE babel_2920_pt (id INT PRIMARY KEY, val VARCHAR(20))
+go
+INSERT INTO babel_2920_pt VALUES (1,'one'),(2,'two')
+go
+MERGE INTO babel_2920_pt AS t
+USING #babel_2920_ts AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = s.val
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, val) VALUES (s.id, s.val);
+go
+SELECT id, val FROM babel_2920_pt ORDER BY id
+go
+DROP TABLE #babel_2920_tt
+go
+DROP TABLE #babel_2920_ts
+go
+
+-- MERGE inside an explicit transaction that is rolled back: the target stays unchanged
+CREATE TABLE babel_2920_tx (id INT PRIMARY KEY, val VARCHAR(20))
+go
+INSERT INTO babel_2920_tx VALUES (1,'one'),(2,'two'),(3,'three')
+go
+CREATE TABLE babel_2920_txs (id INT PRIMARY KEY, val VARCHAR(20))
+go
+INSERT INTO babel_2920_txs VALUES (2,'TWO'),(4,'four')
+go
+BEGIN TRANSACTION
+MERGE INTO babel_2920_tx AS t
+USING babel_2920_txs AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = s.val
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, val) VALUES (s.id, s.val)
+WHEN NOT MATCHED BY SOURCE THEN DELETE;
+SELECT @@ROWCOUNT AS rows_affected, @@TRANCOUNT AS trancount
+SELECT id, val FROM babel_2920_tx ORDER BY id
+ROLLBACK TRANSACTION
+go
+SELECT id, val FROM babel_2920_tx ORDER BY id
+go
+
+-- the same MERGE committed instead
+BEGIN TRANSACTION
+MERGE INTO babel_2920_tx AS t
+USING babel_2920_txs AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = s.val
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, val) VALUES (s.id, s.val)
+WHEN NOT MATCHED BY SOURCE THEN DELETE;
+COMMIT TRANSACTION
+go
+SELECT id, val FROM babel_2920_tx ORDER BY id
+go
+
+-- a runtime MERGE error inside a transaction is catchable and leaves the transaction committable
+CREATE TABLE babel_2920_es (id INT, val VARCHAR(20))
+go
+INSERT INTO babel_2920_es VALUES (1,'a'),(1,'b')
+go
+BEGIN TRANSACTION
+BEGIN TRY
+    MERGE INTO babel_2920_tx AS t
+    USING babel_2920_es AS s ON t.id = s.id
+    WHEN MATCHED THEN UPDATE SET val = s.val;
+END TRY
+BEGIN CATCH
+    SELECT ERROR_NUMBER() AS err_num, @@TRANCOUNT AS trancount, XACT_STATE() AS xact_state
+END CATCH
+IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION
+go
+SELECT id, val FROM babel_2920_tx ORDER BY id
+go
+
+-- error: a recursive CTE in the USING clause is not supported
+CREATE TABLE babel_2920_rc (id INT PRIMARY KEY, val VARCHAR(20))
+go
+INSERT INTO babel_2920_rc VALUES (1,'one')
+go
+WITH babel_2920_nums AS (
+    SELECT 1 AS id, CAST('gen1' AS VARCHAR(20)) AS val
+    UNION ALL
+    SELECT id + 1, CAST('gen' AS VARCHAR(20)) FROM babel_2920_nums WHERE id < 3
+)
+MERGE INTO babel_2920_rc AS t
+USING babel_2920_nums AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = s.val
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, val) VALUES (s.id, s.val);
+go
+SELECT id, val FROM babel_2920_rc ORDER BY id
+go
+
+-- a non-recursive CTE with UNION ALL is still accepted
+WITH babel_2920_ncte AS (
+    SELECT 1 AS id, CAST('N1' AS VARCHAR(20)) AS val
+    UNION ALL
+    SELECT 2, CAST('N2' AS VARCHAR(20))
+)
+MERGE INTO babel_2920_rc AS t
+USING babel_2920_ncte AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = s.val
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, val) VALUES (s.id, s.val);
+go
+SELECT id, val FROM babel_2920_rc ORDER BY id
+go
+
+-- AFTER INSERT, UPDATE and DELETE triggers all fire from a single MERGE statement
+CREATE TABLE babel_2920_trg_t (id INT PRIMARY KEY, val VARCHAR(20), qty INT)
+go
+CREATE TABLE babel_2920_trg_s (id INT PRIMARY KEY, val VARCHAR(20), qty INT)
+go
+CREATE TABLE babel_2920_audit (audit_action VARCHAR(10), id INT, old_val VARCHAR(20), new_val VARCHAR(20))
+go
+CREATE TABLE babel_2920_fired (trg VARCHAR(10), row_cnt INT)
+go
+INSERT INTO babel_2920_trg_t VALUES (1,'keep',10),(2,'upd',20),(3,'upd2',30),(4,'del',40),(5,'del2',50)
+go
+INSERT INTO babel_2920_trg_s VALUES (2,'upd_new',22),(3,'upd2_new',33),(6,'ins',60),(7,'ins2',70)
+go
+CREATE TRIGGER babel_2920_trg_ins ON babel_2920_trg_t AFTER INSERT AS
+BEGIN
+    INSERT INTO babel_2920_fired (trg, row_cnt) SELECT 'INSERT', COUNT(*) FROM inserted
+    INSERT INTO babel_2920_audit (audit_action, id, old_val, new_val)
+        SELECT 'INSERT', i.id, NULL, i.val FROM inserted i
+END
+go
+CREATE TRIGGER babel_2920_trg_upd ON babel_2920_trg_t AFTER UPDATE AS
+BEGIN
+    INSERT INTO babel_2920_fired (trg, row_cnt) SELECT 'UPDATE', COUNT(*) FROM inserted
+    INSERT INTO babel_2920_audit (audit_action, id, old_val, new_val)
+        SELECT 'UPDATE', i.id, d.val, i.val FROM inserted i JOIN deleted d ON i.id = d.id
+END
+go
+CREATE TRIGGER babel_2920_trg_del ON babel_2920_trg_t AFTER DELETE AS
+BEGIN
+    INSERT INTO babel_2920_fired (trg, row_cnt) SELECT 'DELETE', COUNT(*) FROM deleted
+    INSERT INTO babel_2920_audit (audit_action, id, old_val, new_val)
+        SELECT 'DELETE', d.id, d.val, NULL FROM deleted d
+END
+go
+MERGE INTO babel_2920_trg_t AS t
+USING babel_2920_trg_s AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = s.val, qty = s.qty
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, val, qty) VALUES (s.id, s.val, s.qty)
+WHEN NOT MATCHED BY SOURCE AND t.val LIKE 'del%' THEN DELETE;
+go
+SELECT audit_action, id, old_val, new_val FROM babel_2920_audit ORDER BY audit_action, id
+go
+SELECT trg, row_cnt FROM babel_2920_fired ORDER BY trg
+go
+SELECT id, val, qty FROM babel_2920_trg_t ORDER BY id
+go
+
+-- stored procedure with MERGE, maximally parametrized (source, ON, WHEN condition, SET and INSERT values)
+CREATE TABLE babel_2920_stage (batch INT, item_id INT, item_name VARCHAR(30), qty INT)
+go
+INSERT INTO babel_2920_stage VALUES (1,1,'widget',5),(1,2,'gadget',1),(1,7,'newbie',12),(2,1,'widget',40),(2,3,'doohick',2)
+go
+CREATE TABLE babel_2920_inv (item_id INT PRIMARY KEY, item_name VARCHAR(30), qty INT, status VARCHAR(10))
+go
+INSERT INTO babel_2920_inv VALUES (1,'widget',10,'active'),(2,'gadget',20,'active'),(3,'doohick',30,'idle')
+go
+CREATE PROCEDURE babel_2920_merge_proc
+    @p_batch INT, @p_min_qty INT, @p_factor INT, @p_status VARCHAR(10), @p_def_status VARCHAR(10)
+AS
+BEGIN
+    MERGE INTO babel_2920_inv AS t
+    USING (SELECT item_id, item_name, qty FROM babel_2920_stage WHERE batch = @p_batch) AS s
+       ON t.item_id = s.item_id
+    WHEN MATCHED AND s.qty >= @p_min_qty THEN
+        UPDATE SET qty = t.qty + s.qty * @p_factor, status = @p_status
+    WHEN MATCHED AND s.qty < @p_min_qty THEN
+        DELETE
+    WHEN NOT MATCHED BY TARGET THEN
+        INSERT (item_id, item_name, qty, status) VALUES (s.item_id, s.item_name, s.qty * @p_factor, @p_def_status);
+    SELECT @@ROWCOUNT AS rows_affected
+END
+go
+EXEC babel_2920_merge_proc @p_batch = 1, @p_min_qty = 3, @p_factor = 2, @p_status = 'bumped', @p_def_status = 'fresh'
+go
+SELECT item_id, item_name, qty, status FROM babel_2920_inv ORDER BY item_id
+go
+EXEC babel_2920_merge_proc 2, 1, 3, 'again', 'new2'
+go
+SELECT item_id, item_name, qty, status FROM babel_2920_inv ORDER BY item_id
+go
+
+-- insufficient permissions: prepare two restricted logins
+CREATE TABLE babel_2920_ptgt (id INT PRIMARY KEY, val VARCHAR(20))
+go
+CREATE TABLE babel_2920_psrc (id INT PRIMARY KEY, val VARCHAR(20))
+go
+INSERT INTO babel_2920_ptgt VALUES (1,'t1'),(2,'t2')
+go
+INSERT INTO babel_2920_psrc VALUES (2,'s2'),(3,'s3')
+go
+CREATE LOGIN babel_2920_login1 WITH PASSWORD = '12345678'
+go
+CREATE USER babel_2920_user1 FOR LOGIN babel_2920_login1
+go
+CREATE LOGIN babel_2920_login2 WITH PASSWORD = '12345678'
+go
+CREATE USER babel_2920_user2 FOR LOGIN babel_2920_login2
+go
+-- user1 may read the source but has no privilege on the MERGE target
+GRANT SELECT ON babel_2920_psrc TO babel_2920_user1
+go
+-- user2 has full DML on the target but may not read the MERGE source
+GRANT SELECT, INSERT, UPDATE, DELETE ON babel_2920_ptgt TO babel_2920_user2
+go
+
+-- tsql user=babel_2920_login1 password=12345678
+-- error: MERGE target not accessible
+MERGE INTO babel_2920_ptgt AS t
+USING babel_2920_psrc AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = s.val
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, val) VALUES (s.id, s.val);
+go
+
+-- tsql user=babel_2920_login2 password=12345678
+-- error: MERGE source not accessible
+MERGE INTO babel_2920_ptgt AS t
+USING babel_2920_psrc AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = s.val
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, val) VALUES (s.id, s.val);
+go
+
+-- tsql
+-- the target is unchanged after both permission failures
+SELECT id, val FROM babel_2920_ptgt ORDER BY id
+go
+DROP USER babel_2920_user1
+go
+DROP USER babel_2920_user2
+go
+
+-- psql
+-- Need to terminate the active sessions before cleaning up the logins
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) IN ('babel_2920_login1', 'babel_2920_login2')
+  AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with the other sessions
+SELECT pg_sleep(1);
+go
+
+-- tsql
+DROP LOGIN babel_2920_login1
+go
+DROP LOGIN babel_2920_login2
+go
+
 -- psql
 ALTER SYSTEM RESET babelfishpg_tsql.enable_tsql_merge;
 SELECT pg_reload_conf();
@@ -247,4 +692,38 @@ go
 DROP TABLE babel_2920_s
 go
 DROP TABLE babel_2920_d
+go
+DROP TABLE babel_2920_ct
+go
+DROP TABLE babel_2920_cs
+go
+DROP TABLE babel_2920_cl
+go
+DROP TABLE babel_2920_pt
+go
+DROP TABLE babel_2920_tx
+go
+DROP TABLE babel_2920_txs
+go
+DROP TABLE babel_2920_es
+go
+DROP TABLE babel_2920_rc
+go
+DROP TABLE babel_2920_trg_t
+go
+DROP TABLE babel_2920_trg_s
+go
+DROP TABLE babel_2920_audit
+go
+DROP TABLE babel_2920_fired
+go
+DROP PROCEDURE babel_2920_merge_proc
+go
+DROP TABLE babel_2920_stage
+go
+DROP TABLE babel_2920_inv
+go
+DROP TABLE babel_2920_ptgt
+go
+DROP TABLE babel_2920_psrc
 go
