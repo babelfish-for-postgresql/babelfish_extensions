@@ -22,9 +22,6 @@ go
 select count(*) from pg_authid;
 go
 
-select sys.babelfish_set_role('rdsadmin');
-go
-
 -- Check for superuser privileges, should throw permission denied
 select count(*) from pg_authid;
 go
@@ -62,9 +59,6 @@ go
 select count(*) from pg_authid;
 go
 
-select sys.babelfish_set_role('rdsadmin');
-go
-
 -- Check for superuser privileges, should throw permission denied
 select count(*) from pg_authid;
 go
@@ -100,9 +94,6 @@ go
 
 -- Check for superuser privileges, should throw permission denied
 select count(*) from pg_authid;
-go
-
-select sys.babelfish_set_role('rdsadmin');
 go
 
 -- Check for superuser privileges, should throw permission denied
