@@ -61,7 +61,7 @@ SELECT CASE WHEN 1 = 1 THEN CAST(0 AS bit) ELSE CAST(1 AS sql_variant) END AS re
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -303,7 +303,7 @@ SELECT CASE WHEN SERVERPROPERTY('EngineEdition') = 8 THEN SERVERPROPERTY('IsFull
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -337,7 +337,7 @@ SELECT CASE WHEN 1 = 1 THEN CAST(0 AS bit) ELSE CAST(NULL AS sql_variant) END AS
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -396,7 +396,7 @@ GO
 ~~START~~
 sql_variant
 1
-0
+false
 ~~END~~
 
 
@@ -404,7 +404,7 @@ SELECT CASE WHEN id = 1 THEN CAST(0 AS bit) ELSE sv_col END AS result FROM babel
 GO
 ~~START~~
 sql_variant
-0
+false
 <NULL>
 ~~END~~
 
@@ -415,7 +415,7 @@ GO
 ~~START~~
 int#!#sql_variant
 1#!#1
-2#!#0
+2#!#false
 ~~END~~
 
 
@@ -423,7 +423,7 @@ SELECT * FROM babel_case_sqlvariant_v2
 GO
 ~~START~~
 int#!#sql_variant
-1#!#0
+1#!#false
 2#!#1
 ~~END~~
 
@@ -478,7 +478,7 @@ SELECT ISNULL(CAST(NULL AS sql_variant), CAST(0 AS bit)) AS result
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -596,7 +596,7 @@ GO
 ~~START~~
 sql_variant
 1
-0
+false
 ~~END~~
 
 
@@ -649,7 +649,7 @@ SELECT COALESCE(CAST(0 AS bit), CAST(1 AS sql_variant)) AS result
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -674,7 +674,7 @@ SELECT COALESCE(CAST(0 AS bit), CAST(100 AS int), CAST(1 AS sql_variant)) AS res
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -683,7 +683,7 @@ SELECT COALESCE(CAST(0 AS bit), CAST(100 AS int), CAST('hello' AS varchar(50)), 
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -717,7 +717,7 @@ SELECT COALESCE(CAST(NULL AS sql_variant), CAST(0 AS bit)) AS result
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -758,7 +758,7 @@ SELECT COALESCE(CAST(0 AS bit), CAST(NULL AS sql_variant), CAST(100 AS int)) AS 
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -767,7 +767,7 @@ SELECT COALESCE(CAST(0 AS bit), CAST(100 AS int), CAST(NULL AS sql_variant)) AS 
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -785,7 +785,7 @@ SELECT COALESCE(CAST(NULL AS sql_variant), CAST(NULL AS int), CAST(1 AS bit)) AS
 GO
 ~~START~~
 sql_variant
-1
+true
 ~~END~~
 
 
@@ -802,7 +802,7 @@ SELECT CAST(0 AS bit) AS col
 GO
 ~~START~~
 sql_variant
-0
+false
 1
 ~~END~~
 
@@ -855,7 +855,7 @@ SELECT CAST(1 AS sql_variant) AS col
 GO
 ~~START~~
 sql_variant
-0
+false
 1
 ~~END~~
 
@@ -897,7 +897,7 @@ SELECT CAST(1 AS sql_variant) AS col
 GO
 ~~START~~
 sql_variant
-0
+false
 1
 100
 ~~END~~
@@ -914,7 +914,7 @@ SELECT CAST(100 AS int) AS col
 GO
 ~~START~~
 sql_variant
-0
+false
 1
 100
 ~~END~~
@@ -930,7 +930,7 @@ GO
 ~~START~~
 sql_variant
 <NULL>
-0
+false
 ~~END~~
 
 
@@ -943,7 +943,7 @@ GO
 ~~START~~
 sql_variant
 <NULL>
-0
+false
 ~~END~~
 
 
@@ -984,7 +984,7 @@ GO
 ~~START~~
 sql_variant
 <NULL>
-0
+false
 100
 ~~END~~
 
@@ -1002,7 +1002,7 @@ SELECT CAST(0 AS bit) AS col
 GO
 ~~START~~
 sql_variant
-0
+false
 1
 ~~END~~
 
@@ -1029,7 +1029,7 @@ SELECT CAST(1 AS sql_variant) AS col
 GO
 ~~START~~
 sql_variant
-0
+false
 1
 ~~END~~
 
@@ -1058,7 +1058,7 @@ SELECT CAST(1 AS sql_variant) AS col
 GO
 ~~START~~
 sql_variant
-0
+false
 1
 100
 ~~END~~
@@ -1074,7 +1074,7 @@ GO
 ~~START~~
 sql_variant
 <NULL>
-0
+false
 ~~END~~
 
 
@@ -1087,7 +1087,7 @@ GO
 ~~START~~
 sql_variant
 <NULL>
-0
+false
 ~~END~~
 
 
@@ -1252,7 +1252,7 @@ SELECT CAST(1 AS sql_variant) AS col
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -1303,7 +1303,7 @@ SELECT CAST(NULL AS sql_variant) AS col
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -1343,7 +1343,7 @@ SELECT * FROM (VALUES
 GO
 ~~START~~
 sql_variant
-0
+false
 1
 ~~END~~
 
@@ -1380,7 +1380,7 @@ SELECT * FROM (VALUES
 GO
 ~~START~~
 sql_variant
-0
+false
 1
 ~~END~~
 
@@ -1406,7 +1406,7 @@ SELECT * FROM (VALUES
 GO
 ~~START~~
 sql_variant
-0
+false
 1
 100
 ~~END~~
@@ -1423,7 +1423,7 @@ GO
 ~~START~~
 sql_variant
 hello
-0
+false
 1
 100
 ~~END~~
@@ -1440,7 +1440,7 @@ GO
 ~~START~~
 sql_variant
 hello
-0
+false
 1
 100
 ~~END~~
@@ -1455,7 +1455,7 @@ GO
 ~~START~~
 sql_variant
 <NULL>
-0
+false
 ~~END~~
 
 
@@ -1467,7 +1467,7 @@ GO
 ~~START~~
 sql_variant
 <NULL>
-0
+false
 ~~END~~
 
 
@@ -1504,7 +1504,7 @@ GO
 ~~START~~
 sql_variant
 <NULL>
-0
+false
 100
 ~~END~~
 
@@ -1792,7 +1792,7 @@ SELECT CASE WHEN 1 = 1 THEN CAST(0 AS bit) ELSE CAST(1 AS babel_sqlvariant_udt_s
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -1818,7 +1818,7 @@ SELECT COALESCE(CAST(NULL AS babel_sqlvariant_udt_sv), CAST(0 AS bit)) AS result
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -1826,7 +1826,7 @@ SELECT COALESCE(CAST(0 AS bit), CAST(1 AS babel_sqlvariant_udt_sv)) AS result
 GO
 ~~START~~
 sql_variant
-0
+false
 ~~END~~
 
 
@@ -1866,7 +1866,7 @@ SELECT CAST(0 AS bit) AS col
 GO
 ~~START~~
 sql_variant
-0
+false
 1
 ~~END~~
 
@@ -1879,7 +1879,7 @@ SELECT CAST(1 AS babel_sqlvariant_udt_sv) AS col
 GO
 ~~START~~
 sql_variant
-0
+false
 1
 ~~END~~
 
