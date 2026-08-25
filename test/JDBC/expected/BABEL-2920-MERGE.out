@@ -1121,6 +1121,192 @@ int#!#varchar#!#int#!#varchar
 ~~END~~
 
 
+-- UPDATE(column) and COLUMNS_UPDATED() inside AFTER triggers driven by MERGE
+CREATE TABLE babel_2920_cu (id INT PRIMARY KEY, col_a INT, col_b INT)
+go
+CREATE TABLE babel_2920_cus (id INT PRIMARY KEY, col_a INT, col_b INT)
+go
+CREATE TABLE babel_2920_culog (seq INT IDENTITY(1,1) PRIMARY KEY, note VARCHAR(30), act VARCHAR(10), upd_a INT, upd_b INT, cu INT)
+go
+INSERT INTO babel_2920_cu VALUES (1, 10, 100)
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_2920_cus VALUES (1, 11, 111), (2, 20, 200)
+go
+~~ROW COUNT: 2~~
+
+CREATE TRIGGER babel_2920_cutrg ON babel_2920_cu AFTER INSERT, UPDATE AS
+BEGIN
+    DECLARE @act VARCHAR(10)
+    DECLARE @ua INT
+    DECLARE @ub INT
+    SET @ua = 0
+    SET @ub = 0
+    IF EXISTS (SELECT 1 FROM deleted) SET @act = 'UPDATE' ELSE SET @act = 'INSERT'
+    IF UPDATE(col_a) SET @ua = 1
+    IF UPDATE(col_b) SET @ub = 1
+    INSERT INTO babel_2920_culog (note, act, upd_a, upd_b, cu)
+        SELECT TOP 1 note, @act, @ua, @ub, CONVERT(INT, COLUMNS_UPDATED())
+        FROM babel_2920_culog WHERE act IS NULL ORDER BY seq DESC
+END
+go
+
+-- baseline: the same changes through plain UPDATE and INSERT
+INSERT INTO babel_2920_culog (note) VALUES ('plain-UPDATE-col_a')
+go
+~~ROW COUNT: 1~~
+
+UPDATE babel_2920_cu SET col_a = 12 WHERE id = 1
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_2920_culog (note) VALUES ('plain-INSERT')
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_2920_cu (id, col_a, col_b) VALUES (9, 90, 900)
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- MERGE with a single UPDATE action: only col_a is reported
+INSERT INTO babel_2920_culog (note) VALUES ('merge-UPDATE-col_a')
+go
+~~ROW COUNT: 1~~
+
+MERGE INTO babel_2920_cu AS t
+USING babel_2920_cus AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET col_a = s.col_a;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- MERGE with a single INSERT action
+INSERT INTO babel_2920_culog (note) VALUES ('merge-INSERT')
+go
+~~ROW COUNT: 1~~
+
+MERGE INTO babel_2920_cu AS t
+USING babel_2920_cus AS s ON t.id = s.id
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, col_a, col_b) VALUES (s.id, s.col_a, s.col_b);
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT note, act, upd_a AS upd_col_a, upd_b AS upd_col_b, cu AS columns_updated
+FROM babel_2920_culog WHERE act IS NOT NULL ORDER BY seq
+go
+~~START~~
+varchar#!#varchar#!#int#!#int#!#int
+plain-UPDATE-col_a#!#UPDATE#!#1#!#0#!#2
+plain-INSERT#!#INSERT#!#1#!#1#!#7
+merge-UPDATE-col_a#!#UPDATE#!#1#!#0#!#2
+merge-INSERT#!#INSERT#!#1#!#1#!#7
+~~END~~
+
+DROP TRIGGER babel_2920_cutrg
+go
+
+-- a view with an INSTEAD OF INSERT trigger is rejected as MERGE target
+CREATE TABLE babel_2920_ioi (id INT PRIMARY KEY, val VARCHAR(20))
+go
+INSERT INTO babel_2920_ioi VALUES (1, 'one')
+go
+~~ROW COUNT: 1~~
+
+CREATE VIEW babel_2920_ioiv AS SELECT id, val FROM babel_2920_ioi
+go
+CREATE TRIGGER babel_2920_ioitr ON babel_2920_ioiv INSTEAD OF INSERT AS
+    INSERT INTO babel_2920_ioi (id, val) SELECT id, 'fromtrigger' FROM inserted
+go
+MERGE INTO babel_2920_ioiv AS t USING (SELECT 2 AS id, 'direct' AS val) AS s ON t.id = s.id
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, val) VALUES (s.id, s.val);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot merge into view "babel_2920_ioiv")~~
+
+SELECT id, val FROM babel_2920_ioi ORDER BY id
+go
+~~START~~
+int#!#varchar
+1#!#one
+~~END~~
+
+
+-- a view with an INSTEAD OF DELETE trigger is rejected as MERGE target
+CREATE TABLE babel_2920_iod (id INT PRIMARY KEY, val VARCHAR(20))
+go
+INSERT INTO babel_2920_iod VALUES (1, 'one'), (2, 'two')
+go
+~~ROW COUNT: 2~~
+
+CREATE VIEW babel_2920_iodv AS SELECT id, val FROM babel_2920_iod
+go
+CREATE TRIGGER babel_2920_iodtr ON babel_2920_iodv INSTEAD OF DELETE AS
+    UPDATE babel_2920_iod SET val = 'soft-deleted' WHERE id IN (SELECT id FROM deleted)
+go
+MERGE INTO babel_2920_iodv AS t USING (SELECT 1 AS id) AS s ON t.id = s.id
+WHEN MATCHED THEN DELETE;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot merge into view "babel_2920_iodv")~~
+
+SELECT id, val FROM babel_2920_iod ORDER BY id
+go
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+
+-- IDENTITY column: MERGE INSERT assigns generated values like a plain INSERT
+CREATE TABLE babel_2920_idt (id INT IDENTITY(1,1) PRIMARY KEY, val VARCHAR(20))
+go
+CREATE TABLE babel_2920_ids (val VARCHAR(20))
+go
+INSERT INTO babel_2920_idt (val) VALUES ('seed')
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_2920_ids VALUES ('gen1'), ('gen2')
+go
+~~ROW COUNT: 2~~
+
+MERGE INTO babel_2920_idt AS t
+USING babel_2920_ids AS s ON t.val = s.val
+WHEN NOT MATCHED BY TARGET THEN INSERT (val) VALUES (s.val);
+go
+~~ROW COUNT: 2~~
+
+SELECT id, val FROM babel_2920_idt ORDER BY id
+go
+~~START~~
+int#!#varchar
+1#!#seed
+2#!#gen1
+3#!#gen2
+~~END~~
+
+SELECT SCOPE_IDENTITY() AS scope_identity
+go
+~~START~~
+numeric
+3
+~~END~~
+
+
 -- insufficient permissions: prepare two restricted logins
 CREATE TABLE babel_2920_ptgt (id INT PRIMARY KEY, val VARCHAR(20))
 go
@@ -1298,4 +1484,22 @@ go
 DROP TABLE babel_2920_ptgt
 go
 DROP TABLE babel_2920_psrc
+go
+DROP TABLE babel_2920_cu
+go
+DROP TABLE babel_2920_cus
+go
+DROP TABLE babel_2920_culog
+go
+DROP VIEW babel_2920_ioiv
+go
+DROP TABLE babel_2920_ioi
+go
+DROP VIEW babel_2920_iodv
+go
+DROP TABLE babel_2920_iod
+go
+DROP TABLE babel_2920_idt
+go
+DROP TABLE babel_2920_ids
 go
