@@ -4468,21 +4468,10 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	}
 	else
 	{
-		ObjectAddress index;
-
 		tuple = heap_form_tuple(bbf_function_ext_rel_dsc,
 								new_record, new_record_nulls);
 
 		CatalogTupleInsert(bbf_function_ext_rel, tuple);
-
-		/*
-		 * Add function's dependency on catalog table's index so that table
-		 * gets restored before function during MVU.
-		 */
-		index.classId = IndexRelationId;
-		index.objectId = get_bbf_function_ext_idx_oid();
-		index.objectSubId = 0;
-		recordDependencyOn(&address, &index, DEPENDENCY_NORMAL);
 	}
 
 	pfree(func_signature);
