@@ -45,6 +45,9 @@ uint64_t	volatile bcpOffset = 0;
 #define BINARY_COLUMNMETADATA_LEN			sizeof(uint16)
 #define SQL_VARIANT_COLUMNMETADATA_LEN		sizeof(uint32_t)
 
+/* Upper bound on the number of columns accepted in a bulk load request. */
+#define MAX_BULK_LOAD_COLUMNS				30000
+
 
 /* Check if retStatus Not OK. */
 #define CheckPLPStatusNotOK(temp, retStatus, colNum) \
@@ -248,6 +251,9 @@ GetBulkLoadRequest(StringInfo message)
 	request->reqType = TDS_REQUEST_BULK_LOAD;
 
 	TdsResetBcpOffset();
+
+	/* Buffer the COLMETADATA token byte before reading it. */
+	CheckMessageHasEnoughBytesToReadColMetadata(&message, sizeof(uint8_t));
 	if (unlikely((uint8_t) message->data[bcpOffset] != TDS_TOKEN_COLMETADATA))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -256,7 +262,17 @@ GetBulkLoadRequest(StringInfo message)
 
 	bcpOffset++;
 
+	/* Buffer the column count bytes before reading them. */
+	CheckMessageHasEnoughBytesToReadColMetadata(&message, sizeof(uint16));
 	memcpy(&colCount, &message->data[bcpOffset], sizeof(uint16));
+
+	/* Validate colCount before using it as an allocation size. */
+	if (unlikely(colCount == 0 || colCount > MAX_BULK_LOAD_COLUMNS))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. "
+						"column count %u is invalid.", colCount)));
+
 	colmetadata = palloc0(colCount * sizeof(BulkLoadColMetaData));
 	request->colCount = colCount;
 	request->colMetaData = colmetadata;
