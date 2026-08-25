@@ -1,0 +1,90 @@
+-- Cross-database T-SQL MERGE (BABEL-2920). Separate file because it needs more than one
+-- user database, which is not available in single-db migration mode.
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.enable_tsql_merge = 'on';
+SELECT pg_reload_conf();
+go
+
+SELECT pg_sleep(1);
+go
+
+-- tsql
+CREATE DATABASE babel_2920_db1
+go
+CREATE DATABASE babel_2920_db2
+go
+USE babel_2920_db1
+go
+CREATE TABLE dbo.babel_2920_xtgt (id INT PRIMARY KEY, val VARCHAR(20), qty INT)
+go
+INSERT INTO dbo.babel_2920_xtgt VALUES (1,'one',10),(2,'two',20),(5,'five',50)
+go
+USE babel_2920_db2
+go
+CREATE TABLE dbo.babel_2920_xsrc (id INT PRIMARY KEY, val VARCHAR(20), qty INT)
+go
+INSERT INTO dbo.babel_2920_xsrc VALUES (2,'TWO',200),(3,'THREE',300),(4,'FOUR',400)
+go
+
+-- local target, remote source
+USE babel_2920_db1
+go
+MERGE INTO dbo.babel_2920_xtgt AS t
+USING babel_2920_db2.dbo.babel_2920_xsrc AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = s.val, qty = s.qty
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, val, qty) VALUES (s.id, s.val, s.qty)
+WHEN NOT MATCHED BY SOURCE THEN DELETE;
+go
+SELECT id, val, qty FROM dbo.babel_2920_xtgt ORDER BY id
+go
+
+-- remote target, local source
+MERGE INTO babel_2920_db2.dbo.babel_2920_xsrc AS t
+USING dbo.babel_2920_xtgt AS s ON t.id = s.id
+WHEN MATCHED AND s.qty > 250 THEN UPDATE SET qty = t.qty + s.qty;
+go
+SELECT id, val, qty FROM babel_2920_db2.dbo.babel_2920_xsrc ORDER BY id
+go
+
+-- both sides remote, executed from a third database
+USE master
+go
+MERGE INTO babel_2920_db1.dbo.babel_2920_xtgt AS t
+USING babel_2920_db2.dbo.babel_2920_xsrc AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET val = 'both_remote';
+go
+SELECT id, val FROM babel_2920_db1.dbo.babel_2920_xtgt ORDER BY id
+go
+
+-- cross-database MERGE inside a parametrized stored procedure
+USE babel_2920_db1
+go
+CREATE PROCEDURE dbo.babel_2920_xproc @p_min INT, @p_tag VARCHAR(20) AS
+BEGIN
+    MERGE INTO dbo.babel_2920_xtgt AS t
+    USING (SELECT id, val, qty FROM babel_2920_db2.dbo.babel_2920_xsrc WHERE qty >= @p_min) AS s
+       ON t.id = s.id
+    WHEN MATCHED THEN UPDATE SET val = @p_tag
+    WHEN NOT MATCHED BY TARGET THEN INSERT (id, val, qty) VALUES (s.id, @p_tag, s.qty);
+    SELECT @@ROWCOUNT AS rows_affected
+END
+go
+EXEC dbo.babel_2920_xproc @p_min = 300, @p_tag = 'tagged'
+go
+SELECT id, val, qty FROM dbo.babel_2920_xtgt ORDER BY id
+go
+
+USE master
+go
+DROP DATABASE babel_2920_db1
+go
+DROP DATABASE babel_2920_db2
+go
+
+-- psql
+ALTER SYSTEM RESET babelfishpg_tsql.enable_tsql_merge;
+SELECT pg_reload_conf();
+go
+
+SELECT pg_sleep(1);
+go
