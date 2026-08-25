@@ -3291,15 +3291,10 @@ restrict_alter_object_schema_stmt(AlterObjectSchemaStmt *altschstmt)
 	Relation		relation = NULL;
 	ObjectAddress	address;
 
-	switch (altschstmt->objectType)
-	{
-		case OBJECT_PROCEDURE:
-		case OBJECT_FUNCTION:
-		case OBJECT_ROUTINE:
-			break;
-		default:
-			return;
-	}
+	if (altschstmt->objectType != OBJECT_PROCEDURE &&
+		altschstmt->objectType != OBJECT_FUNCTION &&
+		altschstmt->objectType != OBJECT_ROUTINE)
+		return;
 
 	address = get_object_address(altschstmt->objectType, altschstmt->object,
 								 &relation, AccessShareLock, false);
