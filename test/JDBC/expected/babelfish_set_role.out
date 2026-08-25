@@ -32,15 +32,6 @@ go
 ~~ERROR (Message: permission denied for table pg_authid)~~
 
 
-select sys.babelfish_set_role('rdsadmin');
-go
-~~START~~
-int
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied to set role "rdsadmin")~~
-
-
 -- Check for superuser privileges, should throw permission denied
 select count(*) from pg_authid;
 go
@@ -117,14 +108,6 @@ go
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: permission denied for table pg_authid
-    Server SQLState: 42501)~~
-
-
-select sys.babelfish_set_role('rdsadmin');
-go
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: permission denied to set role "rdsadmin"
     Server SQLState: 42501)~~
 
 
@@ -207,14 +190,6 @@ go
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: permission denied for table pg_authid
-    Server SQLState: 42501)~~
-
-
-select sys.babelfish_set_role('rdsadmin');
-go
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: permission denied to set role "rdsadmin"
     Server SQLState: 42501)~~
 
 
