@@ -841,6 +841,13 @@ FetchLoginRequest(LoginRequest request)
 
 		if (length > 0)
 		{
+			if (offset < read)
+			{
+				pfree(temp_utf8.data);
+				pfree(buf.data);
+				return STATUS_ERROR;
+			}
+
 			/* Skip bytes till the offset */
 			if (TdsDiscardbytes(offset - read))
 			{
@@ -878,6 +885,13 @@ FetchLoginRequest(LoginRequest request)
 
 			/* Since, it has UTF-16 format */
 			length *= 2;
+
+			if ((read + length) > request->length)
+			{
+				pfree(temp_utf8.data);
+				pfree(buf.data);
+				return STATUS_ERROR;
+			}
 
 			resetStringInfo(&buf);
 			enlargeStringInfo(&buf, length);
@@ -983,6 +997,8 @@ FetchLoginRequest(LoginRequest request)
 						 errmsg("large SSPI is not supported yet")));
 			}
 
+			if (offset < read)
+				return STATUS_ERROR;
 
 			/* Skip bytes till the offset */
 			if (TdsDiscardbytes(offset - read))
@@ -993,6 +1009,9 @@ FetchLoginRequest(LoginRequest request)
 			}
 
 			read = offset;
+
+			if ((read + request->sspiLen) > request->length)
+				return STATUS_ERROR;
 
 			request->sspi = palloc(request->sspiLen);
 
