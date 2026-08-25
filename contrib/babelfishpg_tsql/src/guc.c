@@ -1121,7 +1121,7 @@ define_custom_variables(void)
 							 NULL,
 							 &pltsql_enable_create_alter_view_from_pg,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 	/*
@@ -1132,7 +1132,7 @@ define_custom_variables(void)
 							 NULL,
 							 &pltsql_enable_alter_owner_from_pg,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
@@ -1142,7 +1142,7 @@ define_custom_variables(void)
 							 NULL,
 							 &babelfish_dump_restore,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
@@ -1151,7 +1151,7 @@ define_custom_variables(void)
 							 NULL,
 							 &restore_tsql_tabletype,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
@@ -1160,7 +1160,7 @@ define_custom_variables(void)
 							   NULL,
 							   &babelfish_dump_restore_min_oid,
 							   NULL,
-							   PGC_USERSET,
+							   PGC_SUSET,
 							   GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							   check_babelfish_dump_restore_min_oid, NULL, NULL);
 
