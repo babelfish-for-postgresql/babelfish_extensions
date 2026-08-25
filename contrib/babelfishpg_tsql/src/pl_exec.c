@@ -5051,11 +5051,31 @@ updateColumnUpdatedList(Query *query)
 	int			length;
 	List	   *targetList;
 
-	if (!(query->commandType == CMD_UPDATE || query->commandType == CMD_INSERT))
+	if (query->commandType == CMD_MERGE)
+	{
+		ListCell   *lcm;
+
+		/*
+		 * MERGE carries one target list per action, so collect the columns of
+		 * every INSERT and UPDATE action. A MERGE combining several
+		 * data-modifying actions reports the union of their columns.
+		 */
+		targetList = NIL;
+		foreach(lcm, query->mergeActionList)
+		{
+			MergeAction *action = (MergeAction *) lfirst(lcm);
+
+			if (action->commandType == CMD_UPDATE ||
+				action->commandType == CMD_INSERT)
+				targetList = list_concat(targetList,
+										 list_copy(action->targetList));
+		}
+	}
+	else if (query->commandType == CMD_UPDATE || query->commandType == CMD_INSERT)
+		targetList = query->targetList;
+	else
 		return;
 
-	targetList =
-		query->targetList;
 	if (query->rtable == NULL || targetList == NULL)
 		return;
 	rel = RelationIdGetRelation(((RangeTblEntry *) list_nth(query->rtable, query->resultRelation - 1))->relid);
@@ -5072,6 +5092,8 @@ updateColumnUpdatedList(Query *query)
 		foreach(lcj, targetList)
 		{
 			target_entry = (TargetEntry *) lfirst(lcj);
+			if (target_entry->resjunk || target_entry->resname == NULL)
+				continue;
 			tupdesc = RelationGetDescr(rel);
 			oldContext = MemoryContextSwitchTo(TopMemoryContext);
 			length = list_length(columns_updated_list);
