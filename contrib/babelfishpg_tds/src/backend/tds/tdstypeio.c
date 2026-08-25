@@ -45,6 +45,7 @@
 #include "src/include/tds_typeio.h"
 #include "src/include/err_handler.h"
 #include "src/include/tds_instr.h"
+#include "common/int.h"
 
 #include "tds_data_map.c"		/* include tables that used to initialize
 								 * hashmaps */
@@ -2199,26 +2200,15 @@ FetchTvpTypeOid(const ParameterToken token, char *tvpName)
 	char	   *query;
 
 	if ((rc = SPI_connect()) < 0)
-	{
-		/* Reset dialect. */
-		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		elog(ERROR, "SPI_connect() failed in TDS Listener "
 			 "with return code %d", rc);
-	}
 
-	query = psprintf("SELECT '%s'::regtype::oid", tvpName);
+	/* Pass tvpName as a SQL string literal to the regtype cast. */
+	query = psprintf("SELECT %s::regtype::oid", quote_literal_cstr(tvpName));
 
 	rc = SPI_execute(query, false, 1);
 	if (rc != SPI_OK_SELECT)
-	{
-		/* Reset dialect. */
-		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		elog(ERROR, "Failed to insert in the underlying table for table-valued parameter: %d", rc);
-	}
+		elog(ERROR, "Failed to fetch TVP type OID: %d", rc);
 	tupdesc = SPI_tuptable->tupdesc;
 	row = SPI_tuptable->vals[0];
 
@@ -2267,7 +2257,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		char	   *logical_schema = downcase_truncate_identifier(token->tvpInfo->tvpTypeSchemaName,
 																  strlen(token->tvpInfo->tvpTypeSchemaName), true);
 		char	   *physical_schema = pltsql_plugin_handler_ptr->get_physical_schema_name(db_name, logical_schema);
-		char	   *tempStr = psprintf("%s.%s", physical_schema, tvpTypeName);
+		char	   *tempStr = quote_qualified_identifier(physical_schema, tvpTypeName);
 
 		pfree(tvpTypeName);
 		tvpTypeName = tempStr;
@@ -2275,6 +2265,13 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		pfree(logical_schema);
 		pfree(physical_schema);
 		pfree(db_name);
+	}
+	else
+	{
+		char	   *tempStr = pstrdup(quote_identifier(tvpTypeName));
+
+		pfree(tvpTypeName);
+		tvpTypeName = tempStr;
 	}
 
 	/* Setting a unique name for TVP temp table. */
@@ -2296,6 +2293,9 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
+	PG_TRY();
+	{
+
 	if (!xactStarted)
 		StartTransactionCommand();
 	PushActiveSnapshot(GetTransactionSnapshot());
@@ -2304,8 +2304,9 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 	if (token->paramMeta.pgTypeOid == InvalidOid)
 		FetchTvpTypeOid(token, tvpTypeName);
 
+	/* Quote finalTableName locally to preserve its unquoted persisted form. */
 	query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
-					 finalTableName, tvpTypeName);
+					 quote_identifier(finalTableName), tvpTypeName);
 	pfree(tvpTypeName);
 
 
@@ -2317,10 +2318,6 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 
 	if (rc != SPI_OK_UTILITY)
 	{
-		/* Reset dialect. */
-		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  GUC_CONTEXT_CONFIG,
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		elog(ERROR, "Failed to create the underlying table for table-valued parameter: %d", rc);
 	}
 
@@ -2331,10 +2328,25 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 
 	{
 		char	   *src;
-		int			nargs = token->tvpInfo->colCount * token->tvpInfo->rowCount;
-		Datum	   *values = palloc(nargs * sizeof(Datum));
-		char	   *nulls = palloc(nargs * sizeof(char));
-		Oid		   *argtypes = palloc(nargs * sizeof(Datum));
+		int			nargs;
+		Datum	   *values;
+		char	   *nulls;
+		Oid		   *argtypes;
+		int			paramIndex = 0;
+
+		/*
+		 * pg_mul_s32_overflow guards colCount * rowCount, ensuring nargs
+		 * fits in int32. Since nargs <= INT32_MAX, the subsequent
+		 * palloc_array allocations cannot overflow on 64-bit systems.
+		 */
+		if (pg_mul_s32_overflow(token->tvpInfo->colCount, token->tvpInfo->rowCount, &nargs))
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("TVP row/column count too large")));
+
+		values = palloc_array(Datum, nargs);
+		nulls = palloc_array(char, nargs);
+		argtypes = palloc_array(Oid, nargs);
 
 		query = " ";
 
@@ -2353,69 +2365,70 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 			{
 				temp = &(row->columnValues[currentColumn]);
 				tempFuncInfo = TdsLookupTypeFunctionsByTdsId(colMetaData[currentColumn].columnTdsType, colMetaData[currentColumn].maxLen);
-				GetPgOid(argtypes[currentColumn], tempFuncInfo);
+				GetPgOid(argtypes[paramIndex], tempFuncInfo);
 
 				if (row->isNull[currentColumn] != 'n')
 					switch (colMetaData[currentColumn].columnTdsType)
 					{
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_VARCHAR:
-							values[currentColumn] = TdsTypeVarcharToDatum(temp, colMetaData[currentColumn].encoding, colMetaData[currentColumn].columnTdsType);
+							values[paramIndex] = TdsTypeVarcharToDatum(temp, colMetaData[currentColumn].encoding, colMetaData[currentColumn].columnTdsType);
 							break;
 						case TDS_TYPE_NCHAR:
 						case TDS_TYPE_NVARCHAR:
-							values[currentColumn] = TdsTypeNCharToDatum(temp);
+							values[paramIndex] = TdsTypeNCharToDatum(temp);
 							break;
 						case TDS_TYPE_INTEGER:
 						case TDS_TYPE_BIT:
-							values[currentColumn] = TdsTypeIntegerToDatum(temp, colMetaData[currentColumn].maxLen);
+							values[paramIndex] = TdsTypeIntegerToDatum(temp, colMetaData[currentColumn].maxLen);
 							break;
 						case TDS_TYPE_FLOAT:
-							values[currentColumn] = TdsTypeFloatToDatum(temp, colMetaData[currentColumn].maxLen);
+							values[paramIndex] = TdsTypeFloatToDatum(temp, colMetaData[currentColumn].maxLen);
 							break;
 						case TDS_TYPE_NUMERICN:
 						case TDS_TYPE_DECIMALN:
-							values[currentColumn] = TdsTypeNumericToDatum(temp, colMetaData[currentColumn].scale);
+							values[paramIndex] = TdsTypeNumericToDatum(temp, colMetaData[currentColumn].scale);
 							break;
 						case TDS_TYPE_VARBINARY:
 						case TDS_TYPE_BINARY:
-							values[currentColumn] = TdsTypeVarbinaryToDatum(temp);
-							argtypes[currentColumn] = tempFuncInfo->ttmtypeid;
+							values[paramIndex] = TdsTypeVarbinaryToDatum(temp);
+							argtypes[paramIndex] = tempFuncInfo->ttmtypeid;
 							break;
 						case TDS_TYPE_DATE:
-							values[currentColumn] = TdsTypeDateToDatum(temp);
+							values[paramIndex] = TdsTypeDateToDatum(temp);
 							break;
 						case TDS_TYPE_TIME:
-							values[currentColumn] = TdsTypeTimeToDatum(temp, colMetaData[currentColumn].scale, temp->len);
+							values[paramIndex] = TdsTypeTimeToDatum(temp, colMetaData[currentColumn].scale, temp->len);
 							break;
 						case TDS_TYPE_DATETIMEOFFSET:
-							values[currentColumn] = TdsTypeDatetimeoffsetToDatum(temp, colMetaData[currentColumn].scale, temp->len);
+							values[paramIndex] = TdsTypeDatetimeoffsetToDatum(temp, colMetaData[currentColumn].scale, temp->len);
 							break;
 						case TDS_TYPE_DATETIME2:
-							values[currentColumn] = TdsTypeDatetime2ToDatum(temp, colMetaData[currentColumn].scale, temp->len);
+							values[paramIndex] = TdsTypeDatetime2ToDatum(temp, colMetaData[currentColumn].scale, temp->len);
 							break;
 						case TDS_TYPE_DATETIMEN:
-							values[currentColumn] = TdsTypeDatetimeToDatum(temp);
+							values[paramIndex] = TdsTypeDatetimeToDatum(temp);
 							break;
 						case TDS_TYPE_MONEYN:
-							values[currentColumn] = TdsTypeMoneyToDatum(temp);
+							values[paramIndex] = TdsTypeMoneyToDatum(temp);
 							break;
 						case TDS_TYPE_XML:
-							values[currentColumn] = TdsTypeXMLToDatum(temp);
+							values[paramIndex] = TdsTypeXMLToDatum(temp);
 							break;
 						case TDS_TYPE_UNIQUEIDENTIFIER:
-							values[currentColumn] = TdsTypeUIDToDatum(temp);
+							values[paramIndex] = TdsTypeUIDToDatum(temp);
 							break;
 						case TDS_TYPE_SQLVARIANT:
-							values[currentColumn] = TdsTypeSqlVariantToDatum(temp);
+							values[paramIndex] = TdsTypeSqlVariantToDatum(temp);
 							break;
 						case TDS_TYPE_CLRUDT:
-							values[currentColumn] = TdsTypeSpatialToDatum(temp, false);
+							values[paramIndex] = TdsTypeSpatialToDatum(temp, false);
 							break; 
 					}
 				/* Build a string for bind parameters. */
-				currentQuery = psprintf("%s,$%d", currentQuery, currentColumn + 1);
-				nulls[currentColumn] = row->isNull[currentColumn];
+				currentQuery = psprintf("%s,$%d", currentQuery, paramIndex + 1);
+				nulls[paramIndex] = row->isNull[currentColumn];
+				paramIndex++;
 				currentColumn++;
 			}
 			row = row->nextRow;
@@ -2433,16 +2446,11 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		{
 			query[1] = ' ';		/* Convert the first ',' into a blank space. */
 
-			src = psprintf("Insert into %s values %s", finalTableName, query);
+			src = psprintf("Insert into %s values %s",
+						   quote_identifier(finalTableName), query);
 			if ((rc = SPI_connect()) < 0)
-			{
-				/* Reset dialect. */
-				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-								  GUC_CONTEXT_CONFIG,
-								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "SPI_connect() failed in TDS Listener "
 					 "with return code %d", rc);
-			}
 
 			rc = SPI_execute_with_args(src,
 									   nargs, argtypes,
@@ -2451,10 +2459,6 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 
 			if (rc != SPI_OK_INSERT)
 			{
-				/* Reset dialect. */
-				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-								  GUC_CONTEXT_CONFIG,
-								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "Failed to insert in the underlying table for table-valued parameter: %d", rc);
 			}
 
@@ -2465,10 +2469,15 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		if (!xactStarted)
 			CommitTransactionCommand();
 
+	}
+	}
+	PG_FINALLY();
+	{
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
+	PG_END_TRY();
 
 	/* Free all the pointers. */
 	while (token->tvpInfo->rowData)
