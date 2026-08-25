@@ -961,6 +961,18 @@ FROM @x.nodes('/Root/Item') AS T(c)
 ORDER BY 1
 go
 
+DECLARE @x XML = '<Root><Item><Sub val="1"/><Sub val="5"/><Sub val="9"/></Item><Item><Sub val="2"/></Item></Root>'
+SELECT T.c.value('count(Sub[@val>4 or @val < 2])', 'INT') AS val
+FROM @x.nodes('/Root/Item') AS T(c)
+ORDER BY 1
+go
+
+DECLARE @x XML = '<Root><Item><Sub val="1"/><Sub val="5"/><Sub val="9"/></Item><Item><Sub val="2"/></Item></Root>'
+SELECT T.c.value('count(Sub[@val>4 and @val < 2])', 'INT') AS val
+FROM @x.nodes('/Root/Item') AS T(c)
+ORDER BY 1
+go
+
 DECLARE @xml XML = N'
 <catalog xmlns:bk="http://example.com/books">
   <bk:book id="B001" lang="en">
@@ -1382,6 +1394,10 @@ SELECT T.c.value('(price[1] * 2.)', 'NVARCHAR(50)') AS calc
 FROM @xml.nodes('/root/r') AS T(c)
 go
 
+DECLARE @xml XML = '<root><r><price>10</price><discount>3</discount></r></root>'
+SELECT T.c.value('(price)[1] * 2.', 'int') FROM @xml.nodes('/root/r') AS T(c)
+go
+
 -- ']/.[' pattern — indexed step, then /, then .[predicate]
 -- The '.[ ' preceded by ']/' triggers the ')' insertion + prepended '('
 DECLARE @xml XML = '<Root><row><name>James</name></row><row><name>Megan</name></row></Root>'
@@ -1394,6 +1410,45 @@ go
 DECLARE @xml XML = '<Root><row><name>James</name></row></Root>'
 SELECT T.C.value('.', 'varchar(20)') AS val
 FROM @xml.nodes('(/Root/row)[1]/.[1]/.[1]') AS T(C)
+ORDER BY 1
+go
+
+-- XPath 1.0 operators (mod/div/and/or)
+DECLARE @xml XML = '<root><r><price>10</price><discount>3</discount></r></root>'
+SELECT T.c.value('(price)[1] div 2.', 'int') FROM @xml.nodes('/root/r') AS T(c)
+go
+
+DECLARE @xml XML = '<root><r><price>10</price><discount>3</discount></r></root>'
+SELECT T.c.value('(price)[1] mod 3', 'int') FROM @xml.nodes('/root/r') AS T(c)
+go
+
+DECLARE @xml XML = '<root><r><mod>10</mod><discount>3</discount></r></root>'
+SELECT T.c.value('(mod)[1] mod 3', 'int') FROM @xml.nodes('/root/r') AS T(c)
+go
+
+DECLARE @xml XML = '<root><r><mod>10</mod><discount>3</discount></r></root>'
+SELECT T.c.value('(/root/r/mod)[1] mod 3', 'int') FROM @xml.nodes('/root/r') AS T(c)
+go
+
+DECLARE @xml XML = '<root><r><mod>10</mod><discount>3</discount></r></root>'
+SELECT T.c.value('(mod)[1]', 'int') FROM @xml.nodes('/root/r') AS T(c)
+go
+
+DECLARE @xml XML = '<root><r><mod>10</mod><discount>3</discount></r></root>'
+SELECT T.c.value('(/root/r/mod)[1]', 'int') FROM @xml.nodes('/root/r') AS T(c)
+go
+
+DECLARE @xml XML = '<root><r><mod>10</mod><discount>3</discount></r></root>'
+SELECT T.c.value('(/root/mod)[1]', 'int') FROM @xml.nodes('/root/r') AS T(c)
+go
+
+DECLARE @xml XML = '<root><r><price>2</price><discount>3</discount></r></root>'
+SELECT T.c.value('10. div (price)[1] ', 'int') FROM @xml.nodes('/root/r') AS T(c)
+go
+
+DECLARE @x XML = '<Root><Item><mod val="1"/><mod val="5"/><mod val="9"/></Item><Item><mod val="2"/></Item></Root>'
+SELECT T.c.value('count(mod[@val>4 or @val < 2])', 'INT') AS val
+FROM @x.nodes('/Root/Item') AS T(c)
 ORDER BY 1
 go
 
@@ -1670,12 +1725,12 @@ go
 DECLARE @x XML= '<magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>test</magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>'
 SELECT T.c.value('.', 'varchar(10)') AS result
 FROM @x.nodes('/Root/row') AS T(c);
-go 
+go
 
 DECLARE @x XML= '<MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>test</MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>'
 SELECT T.c.value('.', 'varchar(10)') AS result
 FROM @x.nodes('/Root/row') AS T(c);
-go 
+go
 
 DECLARE @xml XML = '<Root><row><magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>test</magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag></row></Root>'
 SELECT T.C.value('.', 'varchar(10)') AS id

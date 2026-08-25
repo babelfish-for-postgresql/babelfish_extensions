@@ -1184,7 +1184,7 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
 			{
 				char prev_ch = *(p-1);
 				char next_ch = *(p+1);
-				if ((isalnum(prev_ch) || prev_ch == '_') &&
+				if ((isalnum(prev_ch) || prev_ch == '_' || prev_ch == '.') &&  // '.' i for cases like '2.'
 				    (isalnum(next_ch) || next_ch == '_'))
 				{
 					/* Keep the space to avoid word concatenation */
@@ -1249,6 +1249,34 @@ bbf_xml_is_xpath_function(const char *s)
 	return false;
 }
 
+
+/*
+ * bbf_xml_is_xpath_operator
+ * Checks whether a string starts is a known XPath 1.0 operator
+ */
+static bool
+bbf_xml_is_xpath_operator(const char *s)
+{
+	static const char *known_operators[] = {
+		"div",
+		"mod",
+		"and",
+		"or",
+		NULL
+	};
+
+	int i;
+
+	if (s == NULL || *s == '\0')
+		return false;
+
+	for (i = 0; known_operators[i] != NULL; i++)
+	{
+		if (strncmp(s, known_operators[i], strlen(known_operators[i])) == 0)
+			return true;
+	}
+	return false;
+}
 /*
  * bbf_xml_patch_xpath_dot_bracket
  * Change .[expr] to (.)[expr], except for /.[expr] and ..[expr]
@@ -1666,6 +1694,11 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 				if ((ch2 == '(') && (bbf_xml_is_xpath_function(ident_buf.data)))
 				{
 					/* XPath function - copy as-is */
+					appendStringInfoString(&result, ident_buf.data);
+				}
+				else if ((!((prev_ch == '(') || (prev_ch == '/'))) && (bbf_xml_is_xpath_operator(ident_buf.data)))
+				{
+					/* XPath operator - copy as-is */
 					appendStringInfoString(&result, ident_buf.data);
 				}
 				else
