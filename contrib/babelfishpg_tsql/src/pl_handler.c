@@ -3426,6 +3426,7 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 	ListCell   *lc;
 	List	   *cmds = NIL;
 	int			attnum = 0;
+	MemoryContext oldcontext = CurrentMemoryContext;
 
 	if (!queryString)
 		return;
@@ -3452,15 +3453,44 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 	 * Reparse the view's SELECT query with p_post_expand_star_hook set,
 	 * so that all TargetEntries (including those from SELECT *) get
 	 * resorigname populated from attoptions.
+	 *
+	 * Storing the original (untruncated) column names is a best-effort
+	 * convenience; a failure while re-analyzing the view's query must not
+	 * abort the surrounding CREATE VIEW. Swallow such errors and skip name
+	 * storage, but re-throw query cancellation so interrupts are never
+	 * masked, and reset the error state so the exception stack and error
+	 * context are left consistent for the rest of the transaction.
 	 */
 	rawstmt = makeNode(RawStmt);
 	rawstmt->stmt = (Node *) copyObject(stmt->query);
 	rawstmt->stmt_location = 0;
 	rawstmt->stmt_len = strlen(queryString);
 
-	reparsed = parse_analyze_withcb(rawstmt, queryString,
-									(ParserSetupHook) view_reparse_parser_setup,
-									NULL, NULL);
+	PG_TRY();
+	{
+		reparsed = parse_analyze_withcb(rawstmt, queryString,
+										(ParserSetupHook) view_reparse_parser_setup,
+										NULL, NULL);
+	}
+	PG_CATCH();
+	{
+		ErrorData  *edata;
+
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
+
+		if (edata->sqlerrcode == ERRCODE_QUERY_CANCELED)
+		{
+			relation_close(rel, AccessShareLock);
+			ReThrowError(edata);
+		}
+
+		FreeErrorData(edata);
+		reparsed = NULL;
+	}
+	PG_END_TRY();
+
 	if (!reparsed || reparsed->commandType != CMD_SELECT)
 	{
 		relation_close(rel, AccessShareLock);

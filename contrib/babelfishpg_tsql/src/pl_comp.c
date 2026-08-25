@@ -1804,6 +1804,8 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 	int			noptions,
 				i;
 	char	   *optstr;
+	const char *prefix = ATTOPTION_BBF_ORIGINAL_NAME "=";
+	int			prefix_len = strlen(prefix);
 
 	foreach(li, l)
 	{
@@ -1846,7 +1848,13 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 		}
 		PG_CATCH();
 		{
+			/*
+			 * Reset the error state so the exception stack and error context
+			 * are left consistent for the rest of the transaction, then treat
+			 * the missing attoptions as "no original name".
+			 */
 			HOLD_INTERRUPTS();
+			FlushErrorState();
 			elog(LOG, "Cache lookup failed in pltsql_post_expand_star for attribute %d of relation %u",
 				 attnum, relid);
 			attopts = (Datum) 0;
@@ -1865,13 +1873,15 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 		for (i = 0; i < noptions; i++)
 		{
 			optstr = TextDatumGetCString(optiondatums[i]);
-			if (strncmp(optstr, "bbf_original_name=", 18) == 0)
+			if (strncmp(optstr, prefix, prefix_len) == 0)
 			{
-				te->resorigname = pstrdup(optstr + 18);
+				char	   *orig = optstr + prefix_len;
+
+				te->resorigname = pstrdup(orig);
 
 				/* Only override resname for short identifiers that fit in NAMEDATALEN */
-				if (strlen(optstr + 18) < NAMEDATALEN)
-					te->resname = pnstrdup(optstr + 18, strlen(te->resname));
+				if (strlen(orig) < NAMEDATALEN)
+					te->resname = pnstrdup(orig, strlen(te->resname));
 
 				pfree(optstr);
 				break;

@@ -3149,6 +3149,7 @@ pltsql_post_transform_target_entry(TargetEntry *te, ResTarget *res,
 		Var		   *var = (Var *) te->expr;
 		RangeTblEntry *rte;
 		Datum		attopts;
+		MemoryContext oldcontext = CurrentMemoryContext;
 
 		if (var->varno <= 0 || var->varattno <= 0)
 			return;
@@ -3157,12 +3158,32 @@ pltsql_post_transform_target_entry(TargetEntry *te, ResTarget *res,
 		if (rte == NULL || rte->rtekind != RTE_RELATION || rte->relid == InvalidOid)
 			return;
 
+		/*
+		 * Populating resorigname is a best-effort convenience; a failed
+		 * attoptions lookup (for example, the attribute was concurrently
+		 * dropped) must not abort the surrounding query. Swallow such
+		 * errors, but re-throw query cancellation so interrupts are never
+		 * masked, and reset the error state so the exception stack and error
+		 * context are left consistent for the rest of the transaction.
+		 */
 		PG_TRY();
 		{
 			attopts = get_attoptions(rte->relid, var->varattno);
 		}
 		PG_CATCH();
 		{
+			ErrorData  *edata;
+
+			MemoryContextSwitchTo(oldcontext);
+			edata = CopyErrorData();
+			FlushErrorState();
+
+			if (edata->sqlerrcode == ERRCODE_QUERY_CANCELED)
+			{
+				ReThrowError(edata);
+			}
+
+			FreeErrorData(edata);
 			attopts = (Datum) 0;
 		}
 		PG_END_TRY();
@@ -3173,6 +3194,8 @@ pltsql_post_transform_target_entry(TargetEntry *te, ResTarget *res,
 			Datum	   *optiondatums;
 			int			noptions;
 			int			i;
+			const char *prefix = ATTOPTION_BBF_ORIGINAL_NAME "=";
+			int			prefix_len = strlen(prefix);
 
 			deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
 							  &optiondatums, NULL, &noptions);
@@ -3181,9 +3204,9 @@ pltsql_post_transform_target_entry(TargetEntry *te, ResTarget *res,
 			{
 				char *optstr = TextDatumGetCString(optiondatums[i]);
 
-				if (strncmp(optstr, "bbf_original_name=", 18) == 0)
+				if (strncmp(optstr, prefix, prefix_len) == 0)
 				{
-					char *orig = optstr + 18;
+					char *orig = optstr + prefix_len;
 
 					if (strlen(orig) >= NAMEDATALEN)
 						te->resorigname = pstrdup(orig);

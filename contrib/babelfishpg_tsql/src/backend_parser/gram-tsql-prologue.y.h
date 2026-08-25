@@ -26,6 +26,11 @@
 #define TSQL_ORIGINAL_NAME_LOCATION "tsql_original_name_location"
 #endif
 
+/* DefElem name for storing a view's explicit column list location in grammar */
+#ifndef BBF_VIEW_COLLIST_LOC_OPTION
+#define BBF_VIEW_COLLIST_LOC_OPTION "bbf_view_collist_loc"
+#endif
+
 static void pgtsql_base_yyerror(YYLTYPE * yylloc, core_yyscan_t yyscanner, const char *msg);
 
 List	   *TsqlSystemFuncName(char *name);
