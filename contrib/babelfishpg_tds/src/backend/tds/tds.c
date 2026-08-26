@@ -1089,6 +1089,10 @@ set_tds_context_info(bytea *context_info)
 	PGSTAT_BEGIN_WRITE_ACTIVITY(vtdsentry);
 
 	len = VARSIZE(context_info) - VARHDRSZ;
+	if (len > CONTEXTINFOLEN)
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+				 errmsg("context_info exceeds maximum length of %d bytes", CONTEXTINFOLEN)));
 	data = VARDATA(context_info);
 	memset(vtdsentry->st_context_info, 0, CONTEXTINFOLEN);
 	memcpy(vtdsentry->st_context_info, data, len);

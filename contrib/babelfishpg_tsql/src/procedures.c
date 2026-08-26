@@ -468,8 +468,10 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 			if (!result.success)
 				report_antlr_error(result);
 
-			/* Skip if NULL query was passed. */
-			if (pltsql_parse_result->body)
+			/* Skip if NULL query was passed or the batch shape is unexpected. */
+			if (pltsql_parse_result->body &&
+				list_length(pltsql_parse_result->body) >= 2 &&
+				((PLtsql_stmt *) lsecond(pltsql_parse_result->body))->cmd_type == PLTSQL_STMT_EXECSQL)
 			{
 				PLtsql_expr *sqlstmt = ((PLtsql_stmt_execsql *) lsecond(pltsql_parse_result->body))->sqlstmt;
 				if (sqlstmt)
