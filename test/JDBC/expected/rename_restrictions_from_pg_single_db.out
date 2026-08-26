@@ -1,0 +1,109 @@
+-- tsql
+CREATE LOGIN rename_from_pg_u_sd WITH PASSWORD = '12345678';
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER rename_from_pg_u_sd;
+GO
+
+CREATE DATABASE rename_from_pg_udb_sd;
+GO
+USE rename_from_pg_udb_sd;
+GO
+
+CREATE PROCEDURE dbo.udb_dbo_p1 AS SELECT 1;
+GO
+CREATE FUNCTION dbo.udb_dbo_f1() RETURNS INT BEGIN RETURN 1; END
+GO
+
+CREATE SCHEMA rename_from_pg_udbs_sd;
+GO
+CREATE PROCEDURE rename_from_pg_udbs_sd.udb_p1 AS SELECT 1;
+GO
+CREATE FUNCTION rename_from_pg_udbs_sd.udb_f1() RETURNS INT BEGIN RETURN 1; END
+GO
+
+USE master;
+GO
+
+-- psql
+GRANT CREATE ON SCHEMA public TO rename_from_pg_u_sd;
+GO
+
+-- psql user=rename_from_pg_u_sd password=12345678
+-- single-db user-DB physical schema cases; produces schema-does-not-exist errors in multi-db mode
+ALTER PROCEDURE dbo.udb_dbo_p1 RENAME TO udb_dbo_p1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "dbo" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER FUNCTION dbo.udb_dbo_f1 RENAME TO udb_dbo_f1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "dbo" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER PROCEDURE rename_from_pg_udbs_sd.udb_p1 RENAME TO udb_p1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "rename_from_pg_udbs_sd" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER FUNCTION rename_from_pg_udbs_sd.udb_f1 RENAME TO udb_f1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "rename_from_pg_udbs_sd" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER FUNCTION rename_from_pg_udbs_sd.udb_f1 SET SCHEMA public;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "rename_from_pg_udbs_sd" does not exist
+    Server SQLState: 3F000)~~
+
+
+CREATE PROCEDURE pg_ss_udb_sd_p1()
+LANGUAGE SQL
+AS $$
+SELECT 1;
+$$;
+GO
+
+ALTER PROCEDURE pg_ss_udb_sd_p1() SET SCHEMA dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "dbo" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER PROCEDURE pg_ss_udb_sd_p1() SET SCHEMA rename_from_pg_udbs_sd;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "rename_from_pg_udbs_sd" does not exist
+    Server SQLState: 3F000)~~
+
+
+DROP PROCEDURE pg_ss_udb_sd_p1();
+GO
+
+-- terminate-psql-conn user=rename_from_pg_u_sd password=12345678
+-- psql
+REVOKE CREATE ON SCHEMA public FROM rename_from_pg_u_sd;
+GO
+
+-- tsql
+DROP DATABASE rename_from_pg_udb_sd;
+GO
+DROP LOGIN rename_from_pg_u_sd;
+GO
