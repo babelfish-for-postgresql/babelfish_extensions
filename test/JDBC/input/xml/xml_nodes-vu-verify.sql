@@ -1446,6 +1446,11 @@ DECLARE @xml XML = '<root><r><price>2</price><discount>3</discount></r></root>'
 SELECT T.c.value('10. div (price)[1] ', 'int') FROM @xml.nodes('/root/r') AS T(c)
 go
 
+DECLARE @xml XML = '<root><r><price>2</price><discount>3</discount></r></root>'
+SELECT T.c.value('(price)[1] div .1 ', 'int') FROM @xml.nodes('/root/r') AS T(c)
+ORDER BY 1
+go
+
 DECLARE @x XML = '<Root><Item><mod val="1"/><mod val="5"/><mod val="9"/></Item><Item><mod val="2"/></Item></Root>'
 SELECT T.c.value('count(mod[@val>4 or @val < 2])', 'INT') AS val
 FROM @x.nodes('/Root/Item') AS T(c)
@@ -1693,6 +1698,13 @@ FROM @xml.nodes('/Root/row/name/..[2]') AS T(C)
 ORDER BY 1
 go
 
+-- '. .' is invalid
+SELECT T.C.value(' . . / @id [1]', 'int') AS id
+FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
+CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+
 -- T-SQL error cases which are not raising an error in Babelfish --------------
 
 -- SELECT * FROM .nodes() should not be valid but returns results in Babelfish
@@ -1711,13 +1723,6 @@ go
 DECLARE @xml XML = '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row></Root>'
 SELECT T.C.value('(@id)[1]', 'int') AS id, T.C.value('name', 'varchar(100)') AS name
 FROM @xml.nodes('/Root/row') AS T(C)
-ORDER BY 1
-go
-
--- should return "'value()' requires a singleton (or empty sequence)'" but returns results in Babelfish
-SELECT T.C.value(' . . / @id [1]', 'int') AS id
-FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
-CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
 ORDER BY 1
 go
 
@@ -1810,4 +1815,9 @@ go
 DECLARE @xml XML = '<Root><abc>FIRST</abc><abc>SECOND</abc></Root>'
 SELECT T.C.value('.', 'varchar(20)') AS val
 FROM @xml.nodes('/Root/.abc[1]') AS T(C)
+go
+
+-- invalid XPath query, ending in operator 'div'
+DECLARE @xml XML = '<root><r><price>10</price><discount>3</discount></r></root>'
+SELECT T.c.value('(price)[1] div', 'int') FROM @xml.nodes('/root/r') AS T(c)
 go

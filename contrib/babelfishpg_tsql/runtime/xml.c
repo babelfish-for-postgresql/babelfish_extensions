@@ -1184,8 +1184,8 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
 			{
 				char prev_ch = *(p-1);
 				char next_ch = *(p+1);
-				if ((isalnum(prev_ch) || prev_ch == '_' || prev_ch == '.') &&  // '.' i for cases like '2.'
-				    (isalnum(next_ch) || next_ch == '_'))
+				if ((isalnum(prev_ch) || prev_ch == '_' || prev_ch == '.') &&  // '.' is for cases like '2.'
+				    (isalnum(next_ch) || next_ch == '_' || next_ch == '.'))    // '.' is for cases like '.5'
 				{
 					/* Keep the space to avoid word concatenation */
 					appendStringInfoChar(&result, ch);
@@ -1207,7 +1207,7 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
 /*
  * bbf_xml_is_xpath_function
  * Checks whether a string starts with a known XPath 1.0 function name
- * followed by '('.
+ * followed by '('. The function argument 's' always ends in '('.
  * The functions listed are the XPath 1.0 functions supported in T-SQL.
  */
 static bool
@@ -1269,11 +1269,25 @@ bbf_xml_is_xpath_operator(const char *s)
 
 	if (s == NULL || *s == '\0')
 		return false;
-
 	for (i = 0; known_operators[i] != NULL; i++)
 	{
 		if (strncmp(s, known_operators[i], strlen(known_operators[i])) == 0)
-			return true;
+		{
+			if (strlen(s) == strlen(known_operators[i]))
+				return true;
+				
+			/* 
+			 * Argument 's' appears to be longer then the matched string.
+			 * Check any remaining characters beyond the match, and if
+			 * this is a non-word character (e.g. '.', '(', '[', we still 
+			 * have a match for the operator
+			 */
+			if (!isalnum(*(s + strlen(known_operators[i]))))
+				return true;
+				
+			/* no match */
+			continue;
+		}
 	}
 	return false;
 }
@@ -1689,7 +1703,6 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 						break;
 					}
 				}
-
 				/* Check if this identifier is a known XPath function */
 				if ((ch2 == '(') && (bbf_xml_is_xpath_function(ident_buf.data)))
 				{
@@ -1711,13 +1724,12 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 					else // preceded by '/'
 					{
 						appendStringInfoString(&result, ident_buf.data);
-					}
-					
-					if (*p == '\0')
-					{
-						break;
-					}				
+					}							
 				}
+				if (*p == '\0')
+				{
+					break;
+				}						
 				resetStringInfo(&ident_buf); // not calling pfree since it's a local variable anyway
 				p++;
 				continue;

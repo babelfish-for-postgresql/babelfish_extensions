@@ -2630,6 +2630,16 @@ int
 ~~END~~
 
 
+DECLARE @xml XML = '<root><r><price>2</price><discount>3</discount></r></root>'
+SELECT T.c.value('(price)[1] div .1 ', 'int') FROM @xml.nodes('/root/r') AS T(c)
+ORDER BY 1
+go
+~~START~~
+int
+20
+~~END~~
+
+
 DECLARE @x XML = '<Root><Item><mod val="1"/><mod val="5"/><mod val="9"/></Item><Item><mod val="2"/></Item></Root>'
 SELECT T.c.value('count(mod[@val>4 or @val < 2])', 'INT') AS val
 FROM @x.nodes('/Root/Item') AS T(c)
@@ -3075,6 +3085,19 @@ varchar
 ~~ERROR (Message: nodes(): XPath expression is not valid per XPath 1.0 standard supported by PostgreSQL [/Root/row/name/..[2]])~~
 
 
+-- '. .' is invalid
+SELECT T.C.value(' . . / @id [1]', 'int') AS id
+FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
+CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
+ORDER BY 1
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid XPath expression)~~
+
+
 
 -- T-SQL error cases which are not raising an error in Babelfish --------------
 -- SELECT * FROM .nodes() should not be valid but returns results in Babelfish
@@ -3111,19 +3134,6 @@ go
 int#!#varchar
 1#!#James
 2#!#Megan
-~~END~~
-
-
--- should return "'value()' requires a singleton (or empty sequence)'" but returns results in Babelfish
-SELECT T.C.value(' . . / @id [1]', 'int') AS id
-FROM (SELECT CAST('<Root><row id="10"/><row id="20"/></Root>' AS XML)) AS X(Col)
-CROSS APPLY X.Col.nodes('/Root/row') AS T(C)
-ORDER BY 1
-go
-~~START~~
-int
-<NULL>
-<NULL>
 ~~END~~
 
 
@@ -3292,6 +3302,17 @@ FROM @xml.nodes('/Root/.abc[1]') AS T(C)
 go
 ~~START~~
 varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid XPath expression)~~
+
+
+-- invalid XPath query, ending in operator 'div'
+DECLARE @xml XML = '<root><r><price>10</price><discount>3</discount></r></root>'
+SELECT T.c.value('(price)[1] div', 'int') FROM @xml.nodes('/root/r') AS T(c)
+go
+~~START~~
+int
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid XPath expression)~~
