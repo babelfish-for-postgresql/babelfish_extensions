@@ -2203,7 +2203,8 @@ FetchTvpTypeOid(const ParameterToken token, char *tvpName)
 		elog(ERROR, "SPI_connect() failed in TDS Listener "
 			 "with return code %d", rc);
 
-	query = psprintf("SELECT '%s'::regtype::oid", tvpName);
+	/* Pass tvpName as a SQL string literal to the regtype cast. */
+	query = psprintf("SELECT %s::regtype::oid", quote_literal_cstr(tvpName));
 
 	rc = SPI_execute(query, false, 1);
 	if (rc != SPI_OK_SELECT)
@@ -2256,7 +2257,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		char	   *logical_schema = downcase_truncate_identifier(token->tvpInfo->tvpTypeSchemaName,
 																  strlen(token->tvpInfo->tvpTypeSchemaName), true);
 		char	   *physical_schema = pltsql_plugin_handler_ptr->get_physical_schema_name(db_name, logical_schema);
-		char	   *tempStr = psprintf("%s.%s", physical_schema, tvpTypeName);
+		char	   *tempStr = quote_qualified_identifier(physical_schema, tvpTypeName);
 
 		pfree(tvpTypeName);
 		tvpTypeName = tempStr;
@@ -2264,6 +2265,13 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		pfree(logical_schema);
 		pfree(physical_schema);
 		pfree(db_name);
+	}
+	else
+	{
+		char	   *tempStr = pstrdup(quote_identifier(tvpTypeName));
+
+		pfree(tvpTypeName);
+		tvpTypeName = tempStr;
 	}
 
 	/* Setting a unique name for TVP temp table. */
@@ -2296,8 +2304,9 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 	if (token->paramMeta.pgTypeOid == InvalidOid)
 		FetchTvpTypeOid(token, tvpTypeName);
 
+	/* Quote finalTableName locally to preserve its unquoted persisted form. */
 	query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
-					 finalTableName, tvpTypeName);
+					 quote_identifier(finalTableName), tvpTypeName);
 	pfree(tvpTypeName);
 
 
@@ -2437,7 +2446,8 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		{
 			query[1] = ' ';		/* Convert the first ',' into a blank space. */
 
-			src = psprintf("Insert into %s values %s", finalTableName, query);
+			src = psprintf("Insert into %s values %s",
+						   quote_identifier(finalTableName), query);
 			if ((rc = SPI_connect()) < 0)
 				elog(ERROR, "SPI_connect() failed in TDS Listener "
 					 "with return code %d", rc);
