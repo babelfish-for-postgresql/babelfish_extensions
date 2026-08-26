@@ -185,6 +185,154 @@ GO
 DROP PROCEDURE pg_ss_user_p1();
 GO
 
+-- sp_rename from the PG endpoint must also be blocked on TSQL objects
+CALL sys.sp_rename('master.dbo.rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+-- case-insensitive: uppercase invocation must also be blocked
+CALL SYS.SP_RENAME('master.dbo.rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('master.dbo.rename_from_pg_f1', 'rename_from_pg_f1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('master.rename_from_pg_uschema.uschema_p1', 'uschema_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('master.rename_from_pg_uschema.uschema_f1', 'uschema_f1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_udb.dbo.udb_dbo_p1', 'udb_dbo_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_udb.dbo.udb_dbo_f1', 'udb_dbo_f1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_udb.rename_from_pg_udbs.udb_p1', 'udb_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_udb.rename_from_pg_udbs.udb_f1', 'udb_f1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_f1', 'rename_from_pg_f1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('dbo.rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('dbo.rename_from_pg_f1', 'rename_from_pg_f1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+-- setting psql_logical_babelfish_db_name should not bypass the block either
+SET psql_logical_babelfish_db_name = 'master';
+GO
+
+CALL sys.sp_rename('dbo.rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_uschema.uschema_p1', 'uschema_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+SET psql_logical_babelfish_db_name = 'rename_from_pg_udb';
+GO
+
+CALL sys.sp_rename('dbo.udb_dbo_p1', 'udb_dbo_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_udbs.udb_p1', 'udb_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+RESET psql_logical_babelfish_db_name;
+GO
+
 -- destination is a Babelfish schema
 CREATE PROCEDURE pg_ss_p1()
 LANGUAGE SQL

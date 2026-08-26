@@ -2228,6 +2228,7 @@ extern void restrict_alter_owner_stmt(AlterOwnerStmt *stmt);
 extern void restrict_alter_table_stmt(AlterTableStmt *stmt);
 extern void restrict_rename_stmt(RenameStmt *rename_stmt);
 extern void restrict_alter_object_schema_stmt(AlterObjectSchemaStmt *altschstmt);
+extern void restrict_call_stmt(CallStmt *call_stmt);
 
 /*
  * Functions in pl_exec.c
