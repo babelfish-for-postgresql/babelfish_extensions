@@ -1273,18 +1273,21 @@ bbf_xml_is_xpath_operator(const char *s)
 	{
 		if (strncmp(s, known_operators[i], strlen(known_operators[i])) == 0)
 		{
+			char ch;
+			
 			if (strlen(s) == strlen(known_operators[i]))
 				return true;
-				
-			/* 
+
+			/*
 			 * Argument 's' appears to be longer then the matched string.
 			 * Check any remaining characters beyond the match, and if
-			 * this is a non-word character (e.g. '.', '(', '[', we still 
+			 * this is a non-word character (e.g. '.', '(', '[', we still
 			 * have a match for the operator
 			 */
-			if (!isalnum(*(s + strlen(known_operators[i]))))
+			ch = *(s + strlen(known_operators[i]));	 
+			if (!(isalnum(ch) || (ch == '_')))
 				return true;
-				
+
 			/* no match */
 			continue;
 		}
