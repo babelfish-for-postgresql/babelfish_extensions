@@ -7,10 +7,6 @@ JOIN pg_roles mr ON (m.member = mr.oid)
 WHERE mr.rolname = 'dbowner__main_db_dbowner__u1_bbfobj'
 ORDER BY r.rolname;
 go
-~~START~~
-name
-~~END~~
-
 
 SELECT r.rolname AS parent_role
 FROM pg_auth_members m
@@ -19,13 +15,6 @@ JOIN pg_roles mr ON (m.member = mr.oid)
 WHERE mr.rolname = 'dbowner__main_db_dbowner__u1'
 ORDER BY r.rolname;
 go
-~~START~~
-name
-dbowner__main_db_db_owner
-dbowner__main_db_dbo
-dbowner__main_db_dbowner__u1_bbfobj
-~~END~~
-
 
 SELECT r.rolname AS parent_role
 FROM pg_auth_members m
@@ -34,20 +23,6 @@ JOIN pg_roles mr ON (m.member = mr.oid)
 WHERE mr.rolname = 'dbowner__main_db_db_owner'
 ORDER BY r.rolname;
 go
-~~START~~
-name
-dbowner__main_db_db_accessadmin
-dbowner__main_db_db_datareader
-dbowner__main_db_db_datawriter
-dbowner__main_db_db_ddladmin
-dbowner__main_db_db_securityadmin
-dbowner__main_db_dbowner__r1
-dbowner__main_db_dbowner__r2
-dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__u2
-dbowner__main_db_guest
-~~END~~
-
 
 SELECT r.rolname AS parent_role
 FROM pg_auth_members m
@@ -56,11 +31,6 @@ JOIN pg_roles mr ON (m.member = mr.oid)
 WHERE mr.rolname = 'dbowner__main_db_dbo'
 ORDER BY r.rolname;
 go
-~~START~~
-name
-dbowner__main_db_db_owner
-~~END~~
-
 
 -- tsql
 alter login dbowner__l1 with password = '123'
@@ -73,20 +43,12 @@ go
 -- Testing for name clash
 create login dbowner__main_db_dbowner__u1_bbfobj with password = '123'
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot create database principal "dbowner__main_db_dbowner__u1_bbfobj" as there already exists a Babelfish internal role with the same name)~~
-
 use dbowner__main_db
 go
 create login dbowner__nameclash with password = '123'
 go
 create user dbowner__u1_bbfobj for login dbowner__nameclash
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot create database principal "dbowner__main_db_dbowner__u1_bbfobj" as there already exists a Babelfish internal role with the same name)~~
-
 drop login dbowner__nameclash
 go
 use master
@@ -95,205 +57,65 @@ go
 -- Adding/Dropping non-existent user to db_owner should throw error
 alter role db_owner add member a_very_invalid_username
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: role "master_a_very_invalid_username" does not exist)~~
-
 alter role db_owner drop member a_very_invalid_username
 go
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: role "master_a_very_invalid_username" does not exist)~~
-
-
--- tsql user=dbowner__l1 password=123
 -- CASE 0: Should not be able to manipulate server level objects
+-- tsql user=dbowner__l1 password=123
 use dbowner__main_db
 go
 select is_member('db_owner')
 go
-~~START~~
-int
-1
-~~END~~
-
 create database dbowner_try_db_create
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied to create database)~~
-
 create login dbowner_try_login_create with password = '123'
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Current login dbowner__l1 does not have permission to create new login)~~
-
 drop login dbowner__l1
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot drop the login 'dbowner__l1', because it does not exist or you do not have permission.)~~
-
 drop login dbowner__l2
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot drop the login 'dbowner__l2', because it does not exist or you do not have permission.)~~
-
 alter server role sysadmin add member dbowner__temp
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Current login dbowner__l1 does not have permission to alter server role)~~
-
 
 -- CASE 1: Able to access all objects in its own database
 select is_member('db_owner')
 go
-~~START~~
-int
-1
-~~END~~
-
 insert into dbo.dbowner__t0 values (10), (20), (30)
 go
-~~START~~
-varchar
-New row inserted
-~~END~~
-
-~~ROW COUNT: 3~~
-
 select * from dbo.dbowner__t0
 go
-~~START~~
-int
-10
-20
-30
-~~END~~
-
 select * from dbo.dbowner__v0
 go
-~~START~~
-int
-1
-~~END~~
-
 select next value for dbo.dbowner__seq0;
 go
-~~START~~
-bigint
-2
-~~END~~
-
 select dbo.dbowner__f0()
 go
-~~START~~
-int
-10
-~~END~~
-
 exec dbo.dbowner__p0
 go
-~~START~~
-int
-20
-~~END~~
-
 insert into dbowner__s1.dbowner__t1 values (11), (21), (31)
 go
-~~START~~
-varchar
-New row inserted
-~~END~~
-
-~~ROW COUNT: 3~~
-
 select * from dbowner__s1.dbowner__t1
 go
-~~START~~
-int
-11
-21
-31
-~~END~~
-
 select * from dbowner__s1.dbowner__v1
 go
-~~START~~
-int
-1
-~~END~~
-
 select next value for dbowner__s1.dbowner__seq1;
 go
-~~START~~
-bigint
-3
-~~END~~
-
 select dbowner__s1.dbowner__f1()
 go
-~~START~~
-int
-11
-~~END~~
-
 exec dbowner__s1.dbowner__p1
 go
-~~START~~
-int
-21
-~~END~~
-
 insert into dbowner__s2.dbowner__t2 values (12), (22), (32)
 go
-~~START~~
-varchar
-New row inserted
-~~END~~
-
-~~ROW COUNT: 3~~
-
 select * from dbowner__s2.dbowner__t2
 go
-~~START~~
-int
-12
-22
-32
-~~END~~
-
 select * from dbowner__s2.dbowner__v2
 go
-~~START~~
-int
-1
-~~END~~
-
 select next value for dbowner__s2.dbowner__seq2;
 go
-~~START~~
-bigint
-4
-~~END~~
-
 select dbowner__s2.dbowner__f2()
 go
-~~START~~
-int
-12
-~~END~~
-
 exec dbowner__s2.dbowner__p2
 go
-~~START~~
-int
-22
-~~END~~
-
 
 -- CASE 2: Able to perform DDL on objects in its own database
 create table dbowner__s1.dbowner__t11 (a dbowner__s1.dbowner__typ1)
@@ -356,13 +178,6 @@ WHERE pronamespace::regnamespace::text = 'dbowner__main_db_dbo'
 AND proname LIKE 'dbowner__%'
 ORDER BY proname;
 GO
-~~START~~
-name#!#regrole
-dbowner__f0_renamed#!#dbowner__main_db_dbo
-dbowner__p0_renamed#!#dbowner__main_db_dbo
-dbowner__trg0_renamed#!#dbowner__main_db_dbo
-~~END~~
-
 
 -- Object owners should be dbowner__main_db_dbo
 SELECT
@@ -385,14 +200,6 @@ AND c.relname LIKE 'dbowner__%'
 AND c.relkind IN ('r', 'v', 'm', 'i', 'S', 's', 'f')
 ORDER BY n.nspname, c.relkind, c.relname;
 GO
-~~START~~
-name#!#name#!#text#!#name
-dbowner__main_db_dbo#!#dbowner__seq0_renamed#!#sequence#!#dbowner__main_db_dbo
-dbowner__main_db_dbo#!#dbowner__idx0dbowner__t0_renamedb568acfc1f3cd461939df16bc358e5e#!#index#!#dbowner__main_db_dbo
-dbowner__main_db_dbo#!#dbowner__t0_renamed#!#table#!#dbowner__main_db_dbo
-dbowner__main_db_dbo#!#dbowner__v0_renamed#!#view#!#dbowner__main_db_dbo
-~~END~~
-
 
 -- tsql user=dbowner__l1 password=123
 exec sp_rename 'dbo.dbowner__t0_renamed', 'dbowner__t0', 'object'
@@ -453,15 +260,6 @@ WHERE pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s1'
 OR pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s3'
 ORDER BY proname;
 GO
-~~START~~
-name#!#regrole
-dbowner__f1_renamed#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__f3_renamed#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__p1_renamed#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__p3_renamed#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__trg1_renamed#!#dbowner__main_db_dbowner__u1_bbfobj
-~~END~~
-
 
 -- Table owners should be dbowner__main_db_dbowner__u1_bbfobj
 SELECT
@@ -483,18 +281,6 @@ WHERE (n.nspname = 'dbowner__main_db_dbowner__s1' OR n.nspname = 'dbowner__main_
 AND c.relkind IN ('r', 'v', 'm', 'i', 'S', 's', 'f')
 ORDER BY n.nspname, c.relkind, c.relname;
 GO
-~~START~~
-name#!#name#!#text#!#name
-dbowner__main_db_dbowner__s1#!#dbowner__seq1_renamed#!#sequence#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__s1#!#dbowner__idx1dbowner__t1_rename201f1e94f908c7f8ec372fb904752258#!#index#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__s1#!#dbowner__t11#!#table#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__s1#!#dbowner__t1_renamed#!#table#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__s1#!#dbowner__v1_renamed#!#view#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__s3#!#dbowner__seq3_renamed#!#sequence#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__s3#!#dbowner__t3_renamed#!#table#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__s3#!#dbowner__v3_renamed#!#view#!#dbowner__main_db_dbowner__u1_bbfobj
-~~END~~
-
 
 -- tsql user=dbowner__l1 password=123
 exec sp_rename 'dbowner__s1.dbowner__t1_renamed', 'dbowner__t1', 'object'
@@ -552,13 +338,6 @@ FROM pg_proc
 WHERE pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s2'
 ORDER BY proname;
 GO
-~~START~~
-name#!#regrole
-dbowner__f2_renamed#!#dbowner__main_db_dbowner__u2
-dbowner__p2_renamed#!#dbowner__main_db_dbowner__u2
-dbowner__trg2#!#dbowner__main_db_dbowner__u2
-~~END~~
-
 
 -- Table owners should be dbowner__main_db_dbowner__u2
 SELECT
@@ -580,14 +359,6 @@ WHERE n.nspname = 'dbowner__main_db_dbowner__s2'
 AND c.relkind IN ('r', 'v', 'm', 'i', 'S', 's', 'f')
 ORDER BY n.nspname, c.relkind, c.relname;
 GO
-~~START~~
-name#!#name#!#text#!#name
-dbowner__main_db_dbowner__s2#!#dbowner__seq2_renamed#!#sequence#!#dbowner__main_db_dbowner__u2
-dbowner__main_db_dbowner__s2#!#dbowner__idx2dbowner__t2_rename125921e4886005da5e6305bfa288d0e1#!#index#!#dbowner__main_db_dbowner__u2
-dbowner__main_db_dbowner__s2#!#dbowner__t2_renamed#!#table#!#dbowner__main_db_dbowner__u2
-dbowner__main_db_dbowner__s2#!#dbowner__v2_renamed#!#view#!#dbowner__main_db_dbowner__u2
-~~END~~
-
 
 -- tsql user=dbowner__l1 password=123
 exec sp_rename 'dbowner__s2.dbowner__t2_renamed', 'dbowner__t2', 'object'
@@ -631,20 +402,6 @@ go
 select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
 where grantee IN ('dbowner__main_db_guest', 'dbowner__main_db_dbowner__u1', 'dbowner__main_db_dbowner__u2') order by permission;
 GO
-~~START~~
-"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#"sys"."varchar"
-dbowner__s1#!#dbowner__t1#!#1#!#dbowner__main_db_dbowner__u2#!#<NULL>
-dbowner__s2#!#ALL#!#1#!#dbowner__main_db_guest#!#<NULL>
-dbowner__s1#!#ALL#!#2#!#dbowner__main_db_dbowner__u2#!#<NULL>
-dbo#!#dbowner__t0#!#2#!#dbowner__main_db_dbowner__u2#!#<NULL>
-dbowner__s3#!#ALL#!#4#!#dbowner__main_db_dbowner__u2#!#<NULL>
-dbowner__s2#!#dbowner__t2#!#4#!#dbowner__main_db_dbowner__u1#!#<NULL>
-dbowner__s3#!#dbowner__t3#!#8#!#dbowner__main_db_dbowner__u2#!#<NULL>
-dbo#!#ALL#!#8#!#dbowner__main_db_dbowner__u2#!#<NULL>
-dbowner__s3#!#dbowner__p3#!#128#!#dbowner__main_db_dbowner__u1#!#<NULL>
-dbowner__s1#!#dbowner__f1#!#128#!#dbowner__main_db_dbowner__u1#!#<NULL>
-~~END~~
-
 
 -- tsql user=dbowner__l1 password=123
 revoke select on schema::dbowner__s1 to dbowner__u2
@@ -668,8 +425,8 @@ go
 revoke execute on object::dbowner__s3.dbowner__p3 to dbowner__u1
 go
 
--- tsql
 -- Adding a member to db_owner role should not affect other user's privileges
+-- tsql
 use dbowner__main_db
 go
 alter role db_owner drop member dbowner__u1
@@ -690,42 +447,21 @@ CREATE TABLE #db_owner_roles(userName sys.SYSNAME, roleName sys.SYSNAME, loginNa
 go
 INSERT INTO #db_owner_roles EXEC sp_helpuser 'dbowner__u1';
 go
-~~ROW COUNT: 1~~
-
 SELECT userName, roleName FROM #db_owner_roles;
 go
-~~START~~
-varchar#!#varchar
-dbowner__u1#!#db_owner
-~~END~~
-
 DROP TABLE #db_owner_roles;
 go
 
--- tsql user=dbowner__l2 password=123
 -- GRANT on dbowner__u2 should allow it to still access objects in schema
+-- tsql user=dbowner__l2 password=123
 use dbowner__main_db
 go
 select * from dbowner__s0.dbowner__t00
 go
-~~START~~
-float
-~~END~~
-
 select * from dbowner__s0.dbowner__v00
 go
-~~START~~
-int
-1
-~~END~~
-
 select dbowner__s0.dbowner__f00()
 go
-~~START~~
-int
-987
-~~END~~
-
 
 -- tsql
 revoke select on schema::dbowner__s0 to dbowner__u2
@@ -737,20 +473,11 @@ go
 select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
 where grantee IN ('dbowner__main_db_guest', 'dbowner__main_db_dbowner__u1', 'dbowner__main_db_dbowner__u2') order by permission;
 GO
-~~START~~
-"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#"sys"."varchar"
-~~END~~
 
-
--- tsql user=dbowner__l1 password=123
 -- CASE 4: Able to ALTER ANY USER
+-- tsql user=dbowner__l1 password=123
 select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname in ('dbowner__main_db_dbowner__u1', 'dbowner__main_db_new_dbowner__u2') order by rolname
 go
-~~START~~
-varchar#!#varchar#!#nvarchar#!#nvarchar
-dbowner__main_db_dbowner__u1#!#dbowner__l1#!#dbo#!#English
-~~END~~
-
 alter user dbowner__u1 with default_schema = dbowner__s1
 go
 alter user dbowner__u2 with default_schema = dbo
@@ -761,19 +488,8 @@ alter user dbowner__u2 with name = new_dbowner__u2
 go
 select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname in ('dbowner__main_db_dbowner__u1', 'dbowner__main_db_new_dbowner__u2') order by rolname
 go
-~~START~~
-varchar#!#varchar#!#nvarchar#!#nvarchar
-dbowner__main_db_dbowner__u1#!#dbowner__l1#!#dbowner__s1#!#English
-dbowner__main_db_new_dbowner__u2#!#dbowner__temp#!#dbo#!#English
-~~END~~
-
 select sys.user_name(), sys.suser_name(), is_member('db_owner')
 go
-~~START~~
-nvarchar#!#nvarchar#!#int
-dbowner__u1#!#dbowner__l1#!#1
-~~END~~
-
 alter user new_dbowner__u2 with default_schema = dbo
 go
 alter user new_dbowner__u2 with login = dbowner__l2
@@ -784,48 +500,14 @@ alter user dbowner__u1 with login = dbowner__temp
 go
 select sys.user_name(), sys.suser_name(), is_member('db_owner')
 go
-~~START~~
-nvarchar#!#nvarchar#!#int
-guest#!#dbowner__l1#!#0
-~~END~~
-
 select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname in ('dbowner__main_db_dbowner__u1', 'dbowner__main_db_new_dbowner__u2') order by rolname
 go
-~~START~~
-varchar#!#varchar#!#nvarchar#!#nvarchar
-dbowner__main_db_dbowner__u1#!#dbowner__temp#!#dbowner__s1#!#English
-~~END~~
-
 alter user dbowner__u1 with login = dbowner__l1
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Current user does not have privileges to change login)~~
-
 select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname in ('dbowner__main_db_dbowner__u1', 'dbowner__main_db_new_dbowner__u2') order by rolname
 go
-~~START~~
-varchar#!#varchar#!#nvarchar#!#nvarchar
-dbowner__main_db_dbowner__u1#!#dbowner__temp#!#dbowner__s1#!#English
-~~END~~
-
 select name from sys.database_principals order by name
 go
-~~START~~
-varchar
-db_accessadmin
-db_datareader
-db_datawriter
-db_ddladmin
-db_owner
-db_securityadmin
-dbo
-guest
-INFORMATION_SCHEMA
-public
-sys
-~~END~~
-
 
 -- tsql
 use dbowner__main_db
@@ -840,10 +522,6 @@ create role dbowner__u1_bbfobj
 go
 exec sp_addrolemember 'db_owner', 'dbowner__u1'
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Internal role "dbowner__main_db_dbowner__u1_bbfobj" could not be created because a role already exists with the same name)~~
-
 drop role dbowner__u1_bbfobj
 go
 
@@ -861,208 +539,61 @@ use dbowner__main_db
 go
 select sys.user_name(), is_member('db_owner')
 go
-~~START~~
-nvarchar#!#int
-dbowner__u1#!#1
-~~END~~
-
 select rolname, login_name, default_schema_name, default_language_name from babelfish_authid_user_ext where rolname in ('dbowner__main_db_dbowner__u1', 'dbowner__main_db_new_dbowner__u2') order by rolname
 go
-~~START~~
-varchar#!#varchar#!#nvarchar#!#nvarchar
-dbowner__main_db_dbowner__u1#!#dbowner__l1#!#dbowner__s1#!#English
-~~END~~
-
 select name from sys.database_principals order by name
 go
-~~START~~
-varchar
-db_accessadmin
-db_datareader
-db_datawriter
-db_ddladmin
-db_owner
-db_securityadmin
-dbo
-dbowner__r1
-dbowner__r2
-dbowner__u1
-dbowner__u2
-guest
-INFORMATION_SCHEMA
-public
-sys
-~~END~~
-
 
 -- tsql user=dbowner__l2 password=123
 use dbowner__main_db
 go
 select is_member('db_owner')
 go
-~~START~~
-int
-0
-~~END~~
-
 select * from dbo.dbowner__t0
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table dbowner__t0)~~
-
 select * from dbo.dbowner__v0
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for view dbowner__v0)~~
-
 select next value for dbo.dbowner__seq0;
 go
-~~START~~
-bigint
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for sequence dbowner__seq0)~~
-
 select dbo.dbowner__f0()
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for function dbowner__f0)~~
-
 exec dbo.dbowner__p0
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for procedure dbowner__p0)~~
-
 select * from dbowner__s1.dbowner__t1
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table dbowner__t1)~~
-
 select * from dbowner__s1.dbowner__v1
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for view dbowner__v1)~~
-
 select next value for dbowner__s1.dbowner__seq1;
 go
-~~START~~
-bigint
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for sequence dbowner__seq1)~~
-
 select dbowner__s1.dbowner__f1()
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for function dbowner__f1)~~
-
 exec dbowner__s1.dbowner__p1
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for procedure dbowner__p1)~~
-
 select * from dbowner__s2.dbowner__t2
 go
-~~START~~
-int
-12
-22
-32
-~~END~~
-
 select * from dbowner__s2.dbowner__v2
 go
-~~START~~
-int
-1
-~~END~~
-
 select next value for dbowner__s2.dbowner__seq2;
 go
-~~START~~
-bigint
-8
-~~END~~
-
 select dbowner__s2.dbowner__f2()
 go
-~~START~~
-int
-12
-~~END~~
-
 exec dbowner__s2.dbowner__p2
 go
-~~START~~
-int
-22
-~~END~~
-
 select * from dbowner__s1.dbowner__t11
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table dbowner__t11)~~
-
 select * from dbowner__s3.dbowner__t3
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table dbowner__t3)~~
-
 select * from dbowner__s3.dbowner__v3
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for view dbowner__v3)~~
-
 select next value for dbowner__s3.dbowner__seq3;
 go
-~~START~~
-bigint
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for sequence dbowner__seq3)~~
-
 select dbowner__s3.dbowner__f3()
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for function dbowner__f3)~~
-
 exec dbowner__s3.dbowner__p3
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for procedure dbowner__p3)~~
-
 
 select name from sys.database_principals order by name
 go
-~~START~~
-varchar
-db_accessadmin
-db_datareader
-db_datawriter
-db_ddladmin
-db_owner
-db_securityadmin
-dbo
-dbowner__u2
-guest
-INFORMATION_SCHEMA
-public
-sys
-~~END~~
-
 
 -- psql
 -- Procedure/function owners should be dbowner__main_db_dbowner__u1_bbfobj
@@ -1073,15 +604,6 @@ WHERE pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s1'
 OR pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s3'
 ORDER BY proname;
 GO
-~~START~~
-name#!#regrole
-dbowner__f1#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__f3#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__p1#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__p3#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__trg1#!#dbowner__main_db_dbowner__u1_bbfobj
-~~END~~
-
 
 -- Table owners should be dbowner__main_db_dbowner__u1_bbfobj
 SELECT
@@ -1103,18 +625,6 @@ WHERE (n.nspname = 'dbowner__main_db_dbowner__s1' OR n.nspname = 'dbowner__main_
 AND c.relkind IN ('r', 'v', 'm', 'i', 'S', 's', 'f')
 ORDER BY n.nspname, c.relkind, c.relname;
 GO
-~~START~~
-name#!#name#!#text#!#name
-dbowner__main_db_dbowner__s1#!#dbowner__seq1#!#sequence#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__s1#!#dbowner__idx1dbowner__t1051d92a6c0688536803636483cfc1e78#!#index#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__s1#!#dbowner__t1#!#table#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__s1#!#dbowner__t11#!#table#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__s1#!#dbowner__v1#!#view#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__s3#!#dbowner__seq3#!#sequence#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__s3#!#dbowner__t3#!#table#!#dbowner__main_db_dbowner__u1_bbfobj
-dbowner__main_db_dbowner__s3#!#dbowner__v3#!#view#!#dbowner__main_db_dbowner__u1_bbfobj
-~~END~~
-
 
 -- Schemas owner should be dbowner__main_db_dbowner__u1_bbfobj except for dbowner__main_db_dbowner__sch_u2 and dbowner__main_db_dbowner__sch_db_owner
 SELECT
@@ -1130,167 +640,50 @@ WHERE
     ns.nspname IN ('dbowner__main_db_dbowner__s1', 'dbowner__main_db_dbowner__s3', 'dbowner__main_db_dbowner__sch_u2', 'dbowner__main_db_dbowner__sch_db_owner')
 ORDER BY ns.nspname;
 GO
-~~START~~
-name#!#name
-dbowner__main_db_dbowner__u1_bbfobj#!#dbowner__main_db_dbowner__s1
-dbowner__main_db_dbowner__u1_bbfobj#!#dbowner__main_db_dbowner__s3
-dbowner__main_db_db_owner#!#dbowner__main_db_dbowner__sch_db_owner
-dbowner__main_db_dbowner__u2#!#dbowner__main_db_dbowner__sch_u2
-~~END~~
-
 
 -- tsql
 select * from dbo.dbowner__t0
 go
-~~START~~
-int
-10
-20
-30
-~~END~~
-
 select * from dbo.dbowner__v0
 go
-~~START~~
-int
-1
-~~END~~
-
 select next value for dbo.dbowner__seq0;
 go
-~~START~~
-bigint
-4
-~~END~~
-
 select dbo.dbowner__f0()
 go
-~~START~~
-int
-10
-~~END~~
-
 exec dbo.dbowner__p0
 go
-~~START~~
-int
-20
-~~END~~
-
 select * from dbowner__s1.dbowner__t1
 go
-~~START~~
-int
-11
-21
-31
-~~END~~
-
 select * from dbowner__s1.dbowner__v1
 go
-~~START~~
-int
-1
-~~END~~
-
 select next value for dbowner__s1.dbowner__seq1;
 go
-~~START~~
-bigint
-6
-~~END~~
-
 select dbowner__s1.dbowner__f1()
 go
-~~START~~
-int
-11
-~~END~~
-
 exec dbowner__s1.dbowner__p1
 go
-~~START~~
-int
-21
-~~END~~
-
 select * from dbowner__s2.dbowner__t2
 go
-~~START~~
-int
-12
-22
-32
-~~END~~
-
 select * from dbowner__s2.dbowner__v2
 go
-~~START~~
-int
-1
-~~END~~
-
 select next value for dbowner__s2.dbowner__seq2;
 go
-~~START~~
-bigint
-12
-~~END~~
-
 select dbowner__s2.dbowner__f2()
 go
-~~START~~
-int
-12
-~~END~~
-
 exec dbowner__s2.dbowner__p2
 go
-~~START~~
-int
-22
-~~END~~
-
 select * from dbowner__s1.dbowner__t11
 go
-~~START~~
-int
-~~END~~
-
 select * from dbowner__s3.dbowner__t3
 go
-~~START~~
-int
-~~END~~
-
 select * from dbowner__s3.dbowner__v3
 go
-~~START~~
-int
-230
-~~END~~
-
 select next value for dbowner__s3.dbowner__seq3;
 go
-~~START~~
-bigint
-5
-~~END~~
-
 select dbowner__s3.dbowner__f3()
 go
-~~START~~
-int
-13
-~~END~~
-
 exec dbowner__s3.dbowner__p3
 go
-~~START~~
-int
-23
-~~END~~
-
 create schema dbowner__sch_u1 authorization dbowner__u1
 go
 
@@ -1308,33 +701,9 @@ WHERE
     ns.nspname = 'dbowner__main_db_dbowner__sch_u1'
 ORDER BY ns.nspname;
 GO
-~~START~~
-varchar#!#varchar
-dbowner__main_db_dbowner__u1_bbfobj#!#dbowner__main_db_dbowner__sch_u1
-~~END~~
-
 
 select name from sys.database_principals order by name
 go
-~~START~~
-varchar
-db_accessadmin
-db_datareader
-db_datawriter
-db_ddladmin
-db_owner
-db_securityadmin
-dbo
-dbowner__r1
-dbowner__r2
-dbowner__u1
-dbowner__u2
-guest
-INFORMATION_SCHEMA
-public
-sys
-~~END~~
-
 
 -- CASE 5: If removed from db_owner, user should lose access to objects in schemas except the ones it owns
 alter role db_owner drop member dbowner__u1
@@ -1344,11 +713,6 @@ go
 -- Before anything, let's check if internal role linking/delinking got reverted as expected
 SELECT rolname FROM pg_roles WHERE rolname = 'dbowner__main_db_dbowner__u1_bbfobj'; -- "_bbfobj" role should not exist
 go
-~~START~~
-name
-~~END~~
-
-
 
 SELECT r.rolname AS parent_role
 FROM pg_auth_members m
@@ -1356,11 +720,8 @@ JOIN pg_roles r ON (m.roleid = r.oid)
 JOIN pg_roles mr ON (m.member = mr.oid)
 WHERE mr.rolname = 'dbowner__main_db_dbowner__u1'
 ORDER BY r.rolname;
-go
-~~START~~
-name
-~~END~~
 
+go
 
 SELECT r.rolname AS parent_role
 FROM pg_auth_members m
@@ -1369,20 +730,6 @@ JOIN pg_roles mr ON (m.member = mr.oid)
 WHERE mr.rolname = 'dbowner__main_db_db_owner'
 ORDER BY r.rolname;
 go
-~~START~~
-name
-dbowner__main_db_db_accessadmin
-dbowner__main_db_db_datareader
-dbowner__main_db_db_datawriter
-dbowner__main_db_db_ddladmin
-dbowner__main_db_db_securityadmin
-dbowner__main_db_dbowner__r1
-dbowner__main_db_dbowner__r2
-dbowner__main_db_dbowner__u1
-dbowner__main_db_dbowner__u2
-dbowner__main_db_guest
-~~END~~
-
 
 SELECT r.rolname AS parent_role
 FROM pg_auth_members m
@@ -1391,223 +738,74 @@ JOIN pg_roles mr ON (m.member = mr.oid)
 WHERE mr.rolname = 'dbowner__main_db_dbo'
 ORDER BY r.rolname;
 go
-~~START~~
-name
-dbowner__main_db_db_owner
-~~END~~
-
 
 -- tsql user=dbowner__l1 password=123
 select is_member('db_owner')
 go
-~~START~~
-int
-0
-~~END~~
-
 select * from dbo.dbowner__t0
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table dbowner__t0)~~
-
 select * from dbo.dbowner__v0
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for view dbowner__v0)~~
-
 select next value for dbo.dbowner__seq0;
 go
-~~START~~
-bigint
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for sequence dbowner__seq0)~~
-
 select dbo.dbowner__f0()
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for function dbowner__f0)~~
-
 exec dbo.dbowner__p0
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for procedure dbowner__p0)~~
-
 select * from dbowner__s1.dbowner__t1
 go
-~~START~~
-int
-11
-21
-31
-~~END~~
-
 select * from dbowner__s1.dbowner__v1
 go
-~~START~~
-int
-1
-~~END~~
-
 select next value for dbowner__s1.dbowner__seq1;
 go
-~~START~~
-bigint
-9
-~~END~~
-
 select dbowner__s1.dbowner__f1()
 go
-~~START~~
-int
-11
-~~END~~
-
 exec dbowner__s1.dbowner__p1
 go
-~~START~~
-int
-21
-~~END~~
-
 select * from dbowner__s2.dbowner__t2
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for table dbowner__t2)~~
-
 select * from dbowner__s2.dbowner__v2
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for view dbowner__v2)~~
-
 select next value for dbowner__s2.dbowner__seq2;
 go
-~~START~~
-bigint
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for sequence dbowner__seq2)~~
-
 select dbowner__s2.dbowner__f2()
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for function dbowner__f2)~~
-
 exec dbowner__s2.dbowner__p2
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for procedure dbowner__p2)~~
-
 select * from dbowner__s1.dbowner__t11
 go
-~~START~~
-int
-~~END~~
-
 select * from dbowner__s3.dbowner__t3
 go
-~~START~~
-int
-~~END~~
-
 select * from dbowner__s3.dbowner__v3
 go
-~~START~~
-int
-230
-~~END~~
-
 select next value for dbowner__s3.dbowner__seq3;
 go
-~~START~~
-bigint
-10
-~~END~~
-
 select dbowner__s3.dbowner__f3()
 go
-~~START~~
-int
-13
-~~END~~
-
 exec dbowner__s3.dbowner__p3
 go
-~~START~~
-int
-23
-~~END~~
-
 
 -- CASE 6: If removed from db_owner, user should lose access to create objects in schemas except the ones it owns
 alter table dbo.dbowner__t0 add c int
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: must be owner of table dbowner__t0)~~
-
 alter function dbo.dbowner__f0() returns int as begin return 1345 end
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for schema dbowner__main_db_dbo)~~
-
 alter procedure dbo.dbowner__p0 as select 2345
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for schema dbowner__main_db_dbo)~~
-
 create role dbowner__r3
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: User does not have permission to perform this action.)~~
-
 create role dbowner__r4
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: User does not have permission to perform this action.)~~
-
 create user dbowner__temp for login dbowner__temp
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: User does not have permission to perform this action.)~~
-
 alter role dbowner__r1 add member dbowner__u2
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Current login dbowner__l1 does not have permission to alter role dbowner__main_db_dbowner__r1)~~
-
 drop user dbowner__u2
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot drop the user 'dbowner__u2', because it does not exist or you do not have permission.)~~
-
 drop role dbowner__r1
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot drop the role 'dbowner__r1', because it does not exist or you do not have permission.)~~
-
 drop role dbowner__r2
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot drop the role 'dbowner__r2', because it does not exist or you do not have permission.)~~
-
 
 -- psql
 -- Procedure/function owners should be dbowner__main_db_dbowner__u1
@@ -1618,15 +816,6 @@ WHERE pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s1'
 OR pronamespace::regnamespace::text = 'dbowner__main_db_dbowner__s3'
 ORDER BY proname;
 GO
-~~START~~
-name#!#regrole
-dbowner__f1#!#dbowner__main_db_dbowner__u1
-dbowner__f3#!#dbowner__main_db_dbowner__u1
-dbowner__p1#!#dbowner__main_db_dbowner__u1
-dbowner__p3#!#dbowner__main_db_dbowner__u1
-dbowner__trg1#!#dbowner__main_db_dbowner__u1
-~~END~~
-
 
 -- Table owners should be dbowner__main_db_dbowner__u1
 SELECT
@@ -1648,18 +837,6 @@ WHERE (n.nspname = 'dbowner__main_db_dbowner__s1' OR n.nspname = 'dbowner__main_
 AND c.relkind IN ('r', 'v', 'm', 'i', 'S', 's', 'f')
 ORDER BY n.nspname, c.relkind, c.relname;
 GO
-~~START~~
-name#!#name#!#text#!#name
-dbowner__main_db_dbowner__s1#!#dbowner__seq1#!#sequence#!#dbowner__main_db_dbowner__u1
-dbowner__main_db_dbowner__s1#!#dbowner__idx1dbowner__t1051d92a6c0688536803636483cfc1e78#!#index#!#dbowner__main_db_dbowner__u1
-dbowner__main_db_dbowner__s1#!#dbowner__t1#!#table#!#dbowner__main_db_dbowner__u1
-dbowner__main_db_dbowner__s1#!#dbowner__t11#!#table#!#dbowner__main_db_dbowner__u1
-dbowner__main_db_dbowner__s1#!#dbowner__v1#!#view#!#dbowner__main_db_dbowner__u1
-dbowner__main_db_dbowner__s3#!#dbowner__seq3#!#sequence#!#dbowner__main_db_dbowner__u1
-dbowner__main_db_dbowner__s3#!#dbowner__t3#!#table#!#dbowner__main_db_dbowner__u1
-dbowner__main_db_dbowner__s3#!#dbowner__v3#!#view#!#dbowner__main_db_dbowner__u1
-~~END~~
-
 
 -- Schema owners should be dbowner__main_db_dbowner__u1
 SELECT
@@ -1675,15 +852,6 @@ WHERE
     ns.nspname IN ('dbowner__main_db_dbowner__s1', 'dbowner__main_db_dbowner__s3', 'dbowner__main_db_dbowner__sch_u1', 'dbowner__main_db_dbowner__sch_u2', 'dbowner__main_db_dbowner__sch_db_owner')
 ORDER BY ns.nspname;
 GO
-~~START~~
-name#!#name
-dbowner__main_db_dbowner__u1#!#dbowner__main_db_dbowner__s1
-dbowner__main_db_dbowner__u1#!#dbowner__main_db_dbowner__s3
-dbowner__main_db_db_owner#!#dbowner__main_db_dbowner__sch_db_owner
-dbowner__main_db_dbowner__u1#!#dbowner__main_db_dbowner__sch_u1
-dbowner__main_db_dbowner__u2#!#dbowner__main_db_dbowner__sch_u2
-~~END~~
-
 
 -- tsql
 alter role db_owner add member dbowner__u1
@@ -1694,28 +862,13 @@ go
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
 WHERE sys.suser_name(usesysid) = 'dbowner__l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
-~~START~~
-bool
-t
-~~END~~
-
 -- Wait to sync with another session
 SELECT pg_sleep(1);
 GO
-~~START~~
-void
-
-~~END~~
-
 
 -- tsql user=dbowner__l1 password=123
 select is_member('db_owner')
 go
-~~START~~
-int
-1
-~~END~~
-
 
 -- CASE 6: User member of db_owner should be able to drop all objects in its database
 create role dbowner__r3
@@ -1835,14 +988,9 @@ go
 -- tsql user=dbowner__l1 password=123
 select is_member('db_owner')
 go
-~~START~~
-int
-0
-~~END~~
 
-
--- tsql
 -- CASE 7: Check if db_owner can drop the database
+-- tsql
 create database dbowner__test_db
 go
 use dbowner__test_db
@@ -1857,23 +1005,13 @@ go
 -- tsql user=dbowner__l1 password=123
 select sys.user_name()
 go
-~~START~~
-nvarchar
-dbowner__u1
-~~END~~
-
 select is_member('db_owner')
 go
-~~START~~
-int
-0
-~~END~~
-
 drop database dbowner__test_db
 go
 
--- tsql
 -- CASE 8: Check if there can be multiple db_owners
+-- tsql
 create database dbowner__test_db
 go
 use dbowner__test_db
@@ -1883,28 +1021,18 @@ go
 alter role db_owner add member dbowner__test_db_dbowner__u1
 go
 
--- tsql user=dbowner__l1 password=123
 -- CASE 9: Should be able to add other users to db_owner role as a member of db_owner
+-- tsql user=dbowner__l1 password=123
 use dbowner__test_db
 go
 select is_member('db_owner')
 go
-~~START~~
-int
-1
-~~END~~
-
 create user dbowner__test_db_dbowner__u2 for login dbowner__l2
 go
 alter role db_owner add member dbowner__test_db_dbowner__u2
 go
 select is_rolemember('db_owner', 'dbowner__test_db_dbowner__u1'), is_rolemember('db_owner', 'dbowner__test_db_dbowner__u2')
 go
-~~START~~
-int#!#int
-1#!#1
-~~END~~
-
 
 -- CASE 10: Should be able to drop other users from db_owner role as a member of db_owner, including itself
 alter role db_owner drop member dbowner__test_db_dbowner__u2
@@ -1923,41 +1051,15 @@ go
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
 WHERE sys.suser_name(usesysid) = 'dbowner__l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
-~~START~~
-bool
-t
-~~END~~
-
 -- Wait to sync with another session
 SELECT pg_sleep(1);
 GO
-~~START~~
-void
-
-~~END~~
 
 
-
--- psql
 -- Check if dropping user, also drops the linked "_bbfobj" role
+-- psql
 select rolname from pg_authid where rolname like 'dbowner__test_db_%' order by rolname;
 go
-~~START~~
-name
-dbowner__test_db_db_accessadmin
-dbowner__test_db_db_datareader
-dbowner__test_db_db_datawriter
-dbowner__test_db_db_ddladmin
-dbowner__test_db_db_owner
-dbowner__test_db_db_securityadmin
-dbowner__test_db_dbo
-dbowner__test_db_dbowner__test_db_dbowner__u1
-dbowner__test_db_dbowner__test_db_dbowner__u1_bbfobj
-dbowner__test_db_dbowner__test_db_dbowner__u2
-dbowner__test_db_dbowner__test_db_dbowner__u2_bbfobj
-dbowner__test_db_guest
-~~END~~
-
 
 -- tsql
 use dbowner__test_db
@@ -1972,18 +1074,6 @@ go
 -- psql
 select rolname from pg_authid where rolname like 'dbowner__test_db_%' order by rolname;
 go
-~~START~~
-name
-dbowner__test_db_db_accessadmin
-dbowner__test_db_db_datareader
-dbowner__test_db_db_datawriter
-dbowner__test_db_db_ddladmin
-dbowner__test_db_db_owner
-dbowner__test_db_db_securityadmin
-dbowner__test_db_dbo
-dbowner__test_db_guest
-~~END~~
-
 
 -- tsql
 -- CASE 11: Check if long database names and long user names work with db_owner role
@@ -2001,11 +1091,6 @@ use dbowner_averyveryveryveryveryveryveryveryveryveryverylongdatabasename
 go
 select is_member('db_owner')
 go
-~~START~~
-int
-1
-~~END~~
-
 create schema db_owner_temp_schema
 go
 create table dbo.temp_tab (a int)
@@ -2014,30 +1099,12 @@ create table db_owner_temp_schema.temp_tab (a int)
 go
 insert into dbo.temp_tab values (1), (2), (34567)
 go
-~~ROW COUNT: 3~~
-
 insert into db_owner_temp_schema.temp_tab values (1), (2), (34567)
 go
-~~ROW COUNT: 3~~
-
 select * from dbo.temp_tab
 go
-~~START~~
-int
-1
-2
-34567
-~~END~~
-
 select * from db_owner_temp_schema.temp_tab
 go
-~~START~~
-int
-1
-2
-34567
-~~END~~
-
 drop table db_owner_temp_schema.temp_tab
 go
 drop table dbo.temp_tab
@@ -2048,11 +1115,6 @@ alter role db_owner drop member dbowner_averyveryveryveryveryveryveryveryveryver
 go
 select is_member('db_owner')
 go
-~~START~~
-int
-0
-~~END~~
-
 use master
 go
 
@@ -2073,47 +1135,22 @@ create user [dbownerdomain\abc]
 go
 select is_rolemember('db_owner', 'dbownerdomain\abc')
 go
-~~START~~
-int
-0
-~~END~~
-
 alter role db_owner add member [dbownerdomain\abc]
 go
 select is_rolemember('db_owner', 'dbownerdomain\abc')
 go
-~~START~~
-int
-1
-~~END~~
-
 alter role db_owner drop member [dbownerdomain\abc]
 go
 select is_rolemember('db_owner', 'dbownerdomain\abc')
 go
-~~START~~
-int
-0
-~~END~~
-
 exec sp_addrolemember 'db_owner', 'dbownerdomain\abc'
 go
 select is_rolemember('db_owner', 'dbownerdomain\abc')
 go
-~~START~~
-int
-1
-~~END~~
-
 exec sp_droprolemember 'db_owner', 'dbownerdomain\abc'
 go
 select is_rolemember('db_owner', 'dbownerdomain\abc')
 go
-~~START~~
-int
-0
-~~END~~
-
 drop user [dbownerdomain\abc]
 go
 drop login [dbownerdomain\abc]

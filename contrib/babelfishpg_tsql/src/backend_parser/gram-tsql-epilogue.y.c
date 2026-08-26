@@ -44,7 +44,7 @@ char *
 construct_unique_index_name(char *index_name, char *relation_name)
 {
 	char		md5[MD5_HASH_LEN + 1];
-	char		buf[2 * NAMEDATALEN + MD5_HASH_LEN + 1];
+	char	   *buf;
 	char	   *name;
 	bool		success;
 	int			full_len;
@@ -87,11 +87,24 @@ construct_unique_index_name(char *index_name, char *relation_name)
 			);
 	}
 
+	/*
+	 * BABEL-4557: size the scratch buffer from the actual inputs. The index
+	 * name may be up to 128 bytes (validated above) and relation_name is not
+	 * bounded by NAMEDATALEN here (it may itself be a truncated-with-hash
+	 * physical name up to NAMEDATALEN-1, or longer in edge cases), so a fixed
+	 * 2 * NAMEDATALEN + MD5_HASH_LEN buffer can overflow (e.g. a 114-byte
+	 * index name plus a 39-byte relation name plus the 32-byte hash exceeds
+	 * the old 161-byte buffer and smashes the stack). Allocate exactly what
+	 * we need; truncate_identifier() below still reduces the result to
+	 * < NAMEDATALEN.
+	 */
+	full_len = index_len + relation_len + MD5_HASH_LEN;
+	buf = (char *) palloc(full_len + 1);
+
 	memcpy(buf, index_name, index_len);
 	memcpy(buf + index_len, relation_name, relation_len);
 	memcpy(buf + index_len + relation_len, md5, MD5_HASH_LEN + 1);
 
-	full_len = index_len + relation_len + MD5_HASH_LEN;
 	buf[full_len] = '\0';
 
 	truncate_identifier(buf, full_len, false);
@@ -101,6 +114,8 @@ construct_unique_index_name(char *index_name, char *relation_name)
 
 	name = palloc(new_len + 1);
 	memcpy(name, buf, new_len + 1);
+
+	pfree(buf);
 
 	return name;
 }

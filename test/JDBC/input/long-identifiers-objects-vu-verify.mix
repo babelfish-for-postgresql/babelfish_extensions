@@ -65,3 +65,41 @@ GO
 -- Verify sp_special_columns
 EXEC sp_special_columns @table_name = 'Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC';
 GO
+
+-- ===========================================
+-- BABEL-5321: system procedures must resolve long identifiers passed either
+-- as the original name or as the truncated (physical) name, and must display
+-- the original (full) name.
+-- ===========================================
+
+-- Type-1 procs: calling with the TRUNCATED (physical) name must still return
+-- rows (backward compatibility for tools that captured the physical name).
+DECLARE @trunc_tbl sys.sysname = sys.babelfish_truncate_identifier(LOWER('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC'));
+DECLARE @trunc_pk sys.sysname = sys.babelfish_truncate_identifier(LOWER('Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC'));
+
+-- sp_tables with truncated name
+EXEC sp_tables @table_name = @trunc_tbl;
+GO
+DECLARE @trunc_tbl sys.sysname = sys.babelfish_truncate_identifier(LOWER('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC'));
+-- sp_columns with truncated name
+EXEC sp_columns @table_name = @trunc_tbl;
+GO
+DECLARE @trunc_tbl sys.sysname = sys.babelfish_truncate_identifier(LOWER('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC'));
+-- sp_statistics with truncated name
+EXEC sp_statistics @table_name = @trunc_tbl;
+GO
+DECLARE @trunc_pk sys.sysname = sys.babelfish_truncate_identifier(LOWER('Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC'));
+-- sp_pkeys with truncated name
+EXEC sp_pkeys @table_name = @trunc_pk;
+GO
+DECLARE @trunc_pk sys.sysname = sys.babelfish_truncate_identifier(LOWER('Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC'));
+-- sp_fkeys with truncated pktable name
+EXEC sp_fkeys @pktable_name = @trunc_pk;
+GO
+
+-- Type-2 procs: calling with the ORIGINAL name must return rows and display
+-- the full original TABLE_NAME (these previously matched only the physical name).
+EXEC sp_table_privileges @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC';
+GO
+EXEC sp_column_privileges @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC';
+GO

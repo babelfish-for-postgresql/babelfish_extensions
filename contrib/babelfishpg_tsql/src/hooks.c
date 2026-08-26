@@ -67,6 +67,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
+#include "parser/parsetree.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/parser.h"
 #include "parser/scanner.h"
@@ -3123,6 +3124,14 @@ pltsql_post_transform_target_entry(TargetEntry *te, ResTarget *res,
 	if (!sourcetext || !res || !te || !te->resname)
 		return;
 
+	/*
+	 * Fast path: a result column name shorter than the truncation boundary
+	 * cannot be a truncated long identifier, so there is no original name to
+	 * recover.
+	 */
+	if (strlen(te->resname) < BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+		return;
+
 	/* Case 1: Explicit alias with a known location */
 	if (res->name_location >= 0)
 	{
@@ -3147,74 +3156,24 @@ pltsql_post_transform_target_entry(TargetEntry *te, ResTarget *res,
 	if (te->expr && IsA(te->expr, Var))
 	{
 		Var		   *var = (Var *) te->expr;
-		RangeTblEntry *rte;
-		Datum		attopts;
-		MemoryContext oldcontext = CurrentMemoryContext;
-
-		if (var->varno <= 0 || var->varattno <= 0)
-			return;
-
-		rte = GetRTEByRangeTablePosn(pstate, var->varno, var->varlevelsup);
-		if (rte == NULL || rte->rtekind != RTE_RELATION || rte->relid == InvalidOid)
-			return;
+		char	   *orig;
 
 		/*
-		 * Populating resorigname is a best-effort convenience; a failed
-		 * attoptions lookup (for example, the attribute was concurrently
-		 * dropped) must not abort the surrounding query. Swallow such
-		 * errors, but re-throw query cancellation so interrupts are never
-		 * masked, and reset the error state so the exception stack and error
-		 * context are left consistent for the rest of the transaction.
+		 * Resolve the original name following the same chain PostgreSQL uses
+		 * to propagate a column name outward (base relation, subquery, CTE,
+		 * or join). This handles queries like
+		 *   SELECT LongCol FROM (SELECT LongCol FROM t) sub
+		 *   WITH cte AS (SELECT LongCol FROM t) SELECT LongCol FROM cte
+		 * Only the truncated case needs resorigname; short identifiers already
+		 * fit in resname as-is.
 		 */
-		PG_TRY();
+		orig = pltsql_resolve_var_original_name(pstate, var);
+		if (orig)
 		{
-			attopts = get_attoptions(rte->relid, var->varattno);
-		}
-		PG_CATCH();
-		{
-			ErrorData  *edata;
-
-			MemoryContextSwitchTo(oldcontext);
-			edata = CopyErrorData();
-			FlushErrorState();
-
-			if (edata->sqlerrcode == ERRCODE_QUERY_CANCELED)
-			{
-				ReThrowError(edata);
-			}
-
-			FreeErrorData(edata);
-			attopts = (Datum) 0;
-		}
-		PG_END_TRY();
-
-		if (attopts)
-		{
-			ArrayType  *arr = DatumGetArrayTypeP(attopts);
-			Datum	   *optiondatums;
-			int			noptions;
-			int			i;
-			const char *prefix = ATTOPTION_BBF_ORIGINAL_NAME "=";
-			int			prefix_len = strlen(prefix);
-
-			deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
-							  &optiondatums, NULL, &noptions);
-
-			for (i = 0; i < noptions; i++)
-			{
-				char *optstr = TextDatumGetCString(optiondatums[i]);
-
-				if (strncmp(optstr, prefix, prefix_len) == 0)
-				{
-					char *orig = optstr + prefix_len;
-
-					if (strlen(orig) >= NAMEDATALEN)
-						te->resorigname = pstrdup(orig);
-					pfree(optstr);
-					break;
-				}
-				pfree(optstr);
-			}
+			if (strlen(orig) >= NAMEDATALEN)
+				te->resorigname = orig;
+			else
+				pfree(orig);
 		}
 	}
 }

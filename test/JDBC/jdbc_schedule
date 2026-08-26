@@ -19,6 +19,9 @@ ignore#!#BABEL-2736-before-17_7-vu-cleanup
 ignore#!#PARTITION-before-17_7-vu-prepare
 ignore#!#PARTITION-before-17_7-vu-verify
 ignore#!#PARTITION-before-17_7-vu-cleanup
+ignore#!#db_owner-before-16_9-or-17_5-vu-prepare
+ignore#!#db_owner-before-16_9-or-17_5-vu-verify
+ignore#!#db_owner-before-16_9-or-17_5-vu-cleanup
 ignore#!#cast_string_to_binary-before-15_16-vu-prepare
 ignore#!#cast_string_to_binary-before-15_16-vu-verify
 ignore#!#cast_string_to_binary-before-15_16-vu-cleanup

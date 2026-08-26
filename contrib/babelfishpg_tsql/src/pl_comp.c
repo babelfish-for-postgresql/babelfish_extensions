@@ -1790,6 +1790,94 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 
 
 /*
+ * pltsql_resolve_var_original_name
+ *
+ * Resolve the original (pre-truncation, original-case) name of the column that
+ * a Var refers to, following the same chain PostgreSQL follows when it
+ * propagates a column name from an inner query to an outer one. Returns a
+ * palloc'd string, or NULL if there is no distinct original name.
+ *
+ * This mirrors PG's resname -> eref->colnames -> resname propagation so that
+ * long identifiers survive across every column-source construct:
+ *   - RTE_RELATION : original name lives in pg_attribute attoptions (PR1).
+ *   - RTE_SUBQUERY : recover from the subquery targetlist's resorigname.
+ *   - RTE_CTE      : recover from the CTE query's targetlist resorigname.
+ *   - RTE_JOIN     : follow joinaliasvars to the underlying Var and recurse.
+ * Only long identifiers (>= NAMEDATALEN) need this; short/mixed-case names
+ * already fit in resname and are propagated natively by PostgreSQL.
+ */
+char *
+pltsql_resolve_var_original_name(ParseState *pstate, Var *var)
+{
+	RangeTblEntry *rte;
+	AttrNumber	attnum;
+
+	/*
+	 * This function follows parser-produced Var chains (join alias vars,
+	 * nested subqueries) recursively. Normal parse trees are acyclic and
+	 * shallow, but guard against stack exhaustion on a pathologically deep
+	 * input so it fails cleanly.
+	 */
+	check_stack_depth();
+
+	if (var == NULL || !IsA(var, Var) ||
+		var->varno <= 0 || var->varattno <= 0)
+		return NULL;
+
+	rte = GetRTEByRangeTablePosn(pstate, var->varno, var->varlevelsup);
+	if (rte == NULL)
+		return NULL;
+	attnum = var->varattno;
+
+	switch (rte->rtekind)
+	{
+		case RTE_RELATION:
+			if (OidIsValid(rte->relid))
+				return get_bbf_original_column_name(rte->relid, attnum);
+			return NULL;
+
+		case RTE_SUBQUERY:
+			if (rte->subquery != NULL)
+			{
+				TargetEntry *sub_tle = get_tle_by_resno(rte->subquery->targetList, attnum);
+
+				if (sub_tle && sub_tle->resorigname)
+					return pstrdup(sub_tle->resorigname);
+			}
+			return NULL;
+
+		case RTE_CTE:
+			{
+				CommonTableExpr *cte = GetCTEForRTE(pstate, rte, var->varlevelsup);
+
+				if (cte != NULL && IsA(cte->ctequery, Query))
+				{
+					Query	   *ctequery = (Query *) cte->ctequery;
+					TargetEntry *cte_tle = get_tle_by_resno(ctequery->targetList, attnum);
+
+					if (cte_tle && cte_tle->resorigname)
+						return pstrdup(cte_tle->resorigname);
+				}
+			}
+			return NULL;
+
+		case RTE_JOIN:
+			if (attnum <= list_length(rte->joinaliasvars))
+			{
+				Node	   *aliasvar = (Node *) list_nth(rte->joinaliasvars, attnum - 1);
+
+				if (aliasvar != NULL && IsA(aliasvar, Var))
+					return pltsql_resolve_var_original_name(pstate, (Var *) aliasvar);
+			}
+			return NULL;
+
+		default:
+			return NULL;
+	}
+}
+
+
+/*
  * Call this hook only when expanding a SELECT * or relation.* to its individual column names
  * We can rewrite the column names to their Babelfish (ie original case) names
  * if we find them in pg_attribute.
@@ -1798,14 +1886,6 @@ void
 pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 {
 	ListCell   *li;
-	Datum		attopts;
-	ArrayType  *arr;
-	Datum	   *optiondatums;
-	int			noptions,
-				i;
-	char	   *optstr;
-	const char *prefix = ATTOPTION_BBF_ORIGINAL_NAME "=";
-	int			prefix_len = strlen(prefix);
 
 	foreach(li, l)
 	{
@@ -1815,78 +1895,20 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 		 */
 		TargetEntry *te = (TargetEntry *) lfirst(li);
 		Var		   *varnode = (Var *) te->expr;
-		RangeTblEntry *rte = GetRTEByRangeTablePosn(pstate, varnode->varno, varnode->varlevelsup);
-		Oid			relid = rte->relid;
-		int16		attnum = varnode->varattno;
+		char	   *orig;
 
-		if (rte->rtekind == RTE_SUBQUERY && rte->subquery != NULL)
-		{
-			/*
-			 * For subquery sources, look into the subquery's targetlist
-			 * for the corresponding column's resorigname.
-			 */
-			TargetEntry *sub_tle = get_tle_by_resno(rte->subquery->targetList, attnum);
-			if (sub_tle && sub_tle->resorigname)
-				te->resorigname = pstrdup(sub_tle->resorigname);
+		if (te->resjunk || varnode == NULL || !IsA(varnode, Var))
 			continue;
-		}
 
-		if (rte->rtekind != RTE_RELATION || relid == InvalidOid)
+		orig = pltsql_resolve_var_original_name(pstate, varnode);
+		if (orig)
 		{
-			continue;
-		}
-
-		/*
-		 * Get the list of names in pg_attribute. get_attoptions returns a
-		 * Datum of the text[] field pgattribute.attoptions. We don't want to
-		 * throw a full error if cache lookup fails to preserve functionality,
-		 * so just log it.
-		 */
-		PG_TRY();
-		{
-			attopts = get_attoptions(relid, attnum);
-		}
-		PG_CATCH();
-		{
-			/*
-			 * Reset the error state so the exception stack and error context
-			 * are left consistent for the rest of the transaction, then treat
-			 * the missing attoptions as "no original name".
-			 */
-			HOLD_INTERRUPTS();
-			FlushErrorState();
-			elog(LOG, "Cache lookup failed in pltsql_post_expand_star for attribute %d of relation %u",
-				 attnum, relid);
-			attopts = (Datum) 0;
-			RESUME_INTERRUPTS();
-		}
-		PG_END_TRY();
-		if (!attopts)
-		{
-			return;
-		}
-
-		arr = DatumGetArrayTypeP(attopts);
-		deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
-						  &optiondatums, NULL, &noptions);
-
-		for (i = 0; i < noptions; i++)
-		{
-			optstr = TextDatumGetCString(optiondatums[i]);
-			if (strncmp(optstr, prefix, prefix_len) == 0)
-			{
-				char	   *orig = optstr + prefix_len;
-
-				te->resorigname = pstrdup(orig);
-
-				/* Only override resname for short identifiers that fit in NAMEDATALEN */
-				if (strlen(orig) < NAMEDATALEN)
-					te->resname = pnstrdup(orig, strlen(te->resname));
-
-				pfree(optstr);
-				break;
-			}
-			pfree(optstr);
+			/* Only set resorigname for long identifiers; for short ones,
+			 * override resname to restore original case. */
+			if (strlen(orig) >= NAMEDATALEN)
+				te->resorigname = orig;
+			else if (te->resname)
+				te->resname = pnstrdup(orig, strlen(te->resname));
 		}
 	}
 }

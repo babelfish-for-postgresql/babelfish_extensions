@@ -2872,21 +2872,14 @@ object_name(PG_FUNCTION_ARGS)
 		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
 		{
 			Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
-			char *relname = NameStr(pg_class->relname);
 
 			/*
-			 * Try to get original name from reloptions if name was likely
-			 * truncated. Use >= 60 (not NAMEDATALEN-1) because multibyte
-			 * truncation can back off to fewer than NAMEDATALEN-1 bytes.
+			 * get_original_relname returns the original (pre-truncation)
+			 * name from reloptions when present, and falls back to the
+			 * physical relname otherwise. The truncation-threshold
+			 * optimization lives inside the helper.
 			 */
-			if (strlen(relname) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
-			{
-				char *orig = get_original_relname(object_id, false);
-				if (orig)
-					result_text = cstring_to_text(orig);
-			}
-			if (result_text == NULL)
-				result_text = cstring_to_text(relname);
+			result_text = cstring_to_text(get_original_relname(object_id, false));
 			schema_id = pg_class->relnamespace;
 		}
 		ReleaseSysCache(tuple);

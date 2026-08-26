@@ -1493,10 +1493,12 @@ BEGIN
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
 		-- TODO: Temporary fix to use \ as escape character for now, need to remove ESCAPE clause from LIKE once we have fixed the dependencies on this procedure
-		where table_name like @table_name COLLATE database_default ESCAPE '\' -- '  adding quote in comment to suppress build warning
+		where (table_name like @table_name COLLATE database_default ESCAPE '\' -- '  adding quote in comment to suppress build warning
+			   or sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) like @table_name COLLATE database_default ESCAPE '\') -- '  adding quote in comment to suppress build warning
 			and (coalesce(@table_owner,'') = '' or table_owner like @table_owner collate database_default ESCAPE '\') -- '  adding quote in comment to suppress build warning
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier like @table_qualifier collate database_default)
-			and (coalesce(@column_name,'') = '' or column_name like @column_name collate database_default)
+			and (coalesce(@column_name,'') = '' or column_name like @column_name collate database_default
+				 or sys.babelfish_truncate_identifier(pg_catalog.lower(column_name)) like @column_name collate database_default)
 		order by table_qualifier,
 				 table_owner,
 				 table_name,
@@ -1542,10 +1544,12 @@ BEGIN
 				END
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
-			where table_name = @table_name collate database_default
+			where (table_name = @table_name collate database_default
+				   or sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = @table_name collate database_default)
 			and (coalesce(@table_owner, '') = '' or table_owner = @table_owner collate database_default)
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier = @table_qualifier collate database_default)
-			and (coalesce(@column_name,'') = '' or column_name = @column_name collate database_default)
+			and (coalesce(@column_name,'') = '' or column_name = @column_name collate database_default
+				 or sys.babelfish_truncate_identifier(pg_catalog.lower(column_name)) = @column_name collate database_default)
 		order by table_qualifier,
 				 table_owner,
 				 table_name,
@@ -1586,7 +1590,7 @@ CASE
 WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
 ELSE CAST(1 AS smallint)
 END AS NON_UNIQUE,
-CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
+CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS INDEX_QUALIFIER,
 -- the index name created by CREATE INDEX is re-mapped, find it (by checking
 -- the ones not in pg_constraint) and restoring it back before display
 COALESCE((SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(t6.reloptions) AS option), t6.relname::text)::sys.sysname 
@@ -1781,10 +1785,12 @@ BEGIN
     END
    ) as SS_DATA_TYPE
   from sys.sp_columns_100_view
-  where table_name like @table_name COLLATE database_default
+  where (table_name like @table_name COLLATE database_default
+         or sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) like @table_name COLLATE database_default)
    and (coalesce(@table_owner,'') = '' or table_owner like @table_owner collate database_default)
    and (coalesce(@table_qualifier,'') = '' or table_qualifier like @table_qualifier collate database_default)
-   and (coalesce(@column_name,'') = '' or column_name like @column_name collate database_default)
+	and (coalesce(@column_name,'') = '' or column_name like @column_name collate database_default
+			or sys.babelfish_truncate_identifier(pg_catalog.lower(column_name)) like @column_name collate database_default)
   order by table_qualifier,
      table_owner,
      table_name,
@@ -1820,10 +1826,12 @@ BEGIN
     END
    ) as SS_DATA_TYPE
   from sys.sp_columns_100_view
-   where table_name = @table_name collate database_default
+   where (table_name = @table_name collate database_default
+          or sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = @table_name collate database_default)
    and (coalesce(@table_owner, '') = '' or table_owner = @table_owner collate database_default)
    and (coalesce(@table_qualifier,'') = '' or table_qualifier = @table_qualifier collate database_default)
-   and (coalesce(@column_name,'') = '' or column_name = @column_name collate database_default)
+	 and (coalesce(@column_name,'') = '' or column_name = @column_name collate database_default
+			or sys.babelfish_truncate_identifier(pg_catalog.lower(column_name)) = @column_name collate database_default)
   order by table_qualifier,
      table_owner,
      table_name,
@@ -1859,6 +1867,593 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql STABLE;
+
+
+-- BABEL-5321: recreate sp_tables, sp_pkeys, sp_statistics, sp_statistics_100
+-- so they match both the original and the truncated (physical) identifier.
+CREATE OR REPLACE PROCEDURE sys.sp_tables (
+    "@table_name" sys.nvarchar(384) = NULL,
+    "@table_owner" sys.nvarchar(384) = NULL, 
+    "@table_qualifier" sys.sysname = NULL,
+    "@table_type" sys.nvarchar(100) = NULL,
+    "@fusepattern" sys.bit = '1')
+AS $$
+BEGIN
+
+	-- Temporary variable to hold the current database name
+	DECLARE @current_db_name sys.sysname;
+
+	-- Handle special case: Enumerate all databases when name and owner are blank but qualifier is '%'
+	IF (@table_qualifier = '%' AND @table_owner = '' AND @table_name = '')
+	BEGIN
+		SELECT
+			d.name AS TABLE_QUALIFIER,
+			CAST(NULL AS sys.sysname) AS TABLE_OWNER,
+			CAST(NULL AS sys.sysname) AS TABLE_NAME,
+			CAST(NULL AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(NULL AS sys.varchar(254)) AS REMARKS
+		FROM sys.databases d ORDER BY TABLE_QUALIFIER;
+		
+		RETURN;
+	END;
+
+	SELECT @current_db_name = sys.db_name();
+
+	IF (@table_qualifier != '' AND pg_catalog.lower(@table_qualifier) != pg_catalog.lower(@current_db_name))
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
+	
+	IF (@fusepattern = 1)
+		SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			remarks AS REMARKS
+		FROM sys.sp_tables_view 
+		WHERE (@table_name IS NULL OR table_name LIKE @table_name collate database_default
+			   or sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) LIKE @table_name collate database_default)
+		AND (@table_owner IS NULL OR table_owner LIKE @table_owner collate database_default)
+		AND (@table_qualifier IS NULL OR table_qualifier LIKE @table_qualifier collate database_default)
+		AND (
+			@table_type IS NULL OR 
+			(CAST(@table_type AS varchar(100)) LIKE '%''TABLE''%' collate database_default AND table_type = 'TABLE' collate database_default) OR 
+			(CAST(@table_type AS varchar(100)) LIKE '%''VIEW''%' collate database_default AND table_type = 'VIEW' collate database_default)
+		)
+		ORDER BY TABLE_QUALIFIER, TABLE_OWNER, TABLE_NAME;
+	ELSE
+		SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			remarks AS REMARKS
+		FROM sys.sp_tables_view
+		WHERE (@table_name IS NULL OR table_name = @table_name collate database_default
+			   or sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = @table_name collate database_default)
+		AND (@table_owner IS NULL OR table_owner = @table_owner collate database_default)
+		AND (@table_qualifier IS NULL OR table_qualifier = @table_qualifier collate database_default)
+		AND (
+			@table_type IS NULL OR 
+			(CAST(@table_type AS varchar(100)) LIKE '%''TABLE''%' collate database_default AND table_type = 'TABLE' collate database_default) OR 
+			(CAST(@table_type AS varchar(100)) LIKE '%''VIEW''%' collate database_default AND table_type = 'VIEW' collate database_default)
+		)
+		ORDER BY TABLE_QUALIFIER, TABLE_OWNER, TABLE_NAME;
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_tables TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_pkeys(
+	"@table_name" sys.nvarchar(384),
+	"@table_owner" sys.nvarchar(384) = 'dbo',
+	"@table_qualifier" sys.nvarchar(384) = ''
+)
+AS $$
+BEGIN
+	select * from sys.sp_pkeys_view
+	where (table_name = @table_name
+		or sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = @table_name)
+		and table_owner = coalesce(@table_owner, 'dbo') 
+		and ((SELECT
+		         coalesce(@table_qualifier, '')) = '' or
+		         table_qualifier = @table_qualifier )
+	order by table_qualifier,
+	         table_owner,
+		 table_name,
+		 key_seq;
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_pkeys TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_statistics(
+    "@table_name" sys.sysname,
+    "@table_owner" sys.sysname = '',
+    "@table_qualifier" sys.sysname = '',
+	"@index_name" sys.sysname = '',
+	"@is_unique" char = 'N',
+	"@accuracy" char = 'Q'
+)
+AS $$
+BEGIN
+	IF @index_name = '%'
+	BEGIN
+		SELECT @index_name = ''
+	END
+	select * from sys.sp_statistics_view
+	where (@table_name = table_name
+		or @table_name = sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)))
+		and ((SELECT coalesce(@table_owner,'')) = '' or table_owner = @table_owner )
+		and ((SELECT coalesce(@table_qualifier,'')) = '' or table_qualifier = @table_qualifier )
+		and ((SELECT coalesce(@index_name,'')) = '' or index_name like @index_name )
+		and ((pg_catalog.UPPER(@is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (pg_catalog.UPPER(@is_unique) = 'N'))
+	order by non_unique, type, index_name, seq_in_index;
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_statistics TO PUBLIC;
+
+-- same as sp_statistics
+CREATE OR REPLACE PROCEDURE sys.sp_statistics_100(
+    "@table_name" sys.sysname,
+    "@table_owner" sys.sysname = '',
+    "@table_qualifier" sys.sysname = '',
+	"@index_name" sys.sysname = '',
+	"@is_unique" char = 'N',
+	"@accuracy" char = 'Q'
+)
+AS $$
+BEGIN
+	IF @index_name = '%'
+	BEGIN
+		SELECT @index_name = ''
+	END
+	select * from sys.sp_statistics_view
+	where (@table_name = table_name
+		or @table_name = sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)))
+		and ((SELECT coalesce(@table_owner,'')) = '' or table_owner = @table_owner )
+		and ((SELECT coalesce(@table_qualifier,'')) = '' or table_qualifier = @table_qualifier )
+		and ((SELECT coalesce(@index_name,'')) = '' or index_name like @index_name )
+		and ((pg_catalog.UPPER(@is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (pg_catalog.UPPER(@is_unique) = 'N'))
+	order by non_unique, type, index_name, seq_in_index;
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_statistics_100 TO PUBLIC;
+
+-- BABEL-5321: recreate system objects so they resolve long identifiers by
+-- both the original and the truncated (physical) name, and display the
+-- original (full) name. Covers table/view/column/index-related procedures.
+
+CREATE OR REPLACE FUNCTION sys.sp_column_privileges_internal()
+RETURNS TABLE (
+    TABLE_QUALIFIER sys.sysname,
+    TABLE_OWNER sys.sysname,
+    TABLE_NAME sys.sysname,
+    COLUMN_NAME sys.sysname,
+    GRANTOR sys.sysname,
+    GRANTEE sys.sysname,
+    PRIVILEGE sys.varchar(32),
+    IS_GRANTABLE sys.varchar(3)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+        CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+        CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS TABLE_NAME,
+        CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
+        CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
+        CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
+        CAST(t5.privilege_type AS sys.varchar(32)) COLLATE sys.database_default AS PRIVILEGE,
+        CAST(t5.is_grantable AS sys.varchar(3)) COLLATE sys.database_default AS IS_GRANTABLE
+    FROM pg_catalog.pg_class t1 
+        JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+        JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+        JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
+        JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name;
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.sp_table_privileges_internal()
+RETURNS TABLE (
+    TABLE_QUALIFIER sys.sysname,
+    TABLE_OWNER sys.sysname,
+    TABLE_NAME sys.sysname,
+    GRANTOR sys.sysname,
+    GRANTEE sys.sysname,
+    PRIVILEGE sys.sysname,
+    IS_GRANTABLE sys.sysname
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+        CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+        CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS TABLE_NAME,
+        CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t4.grantor) AS sys.sysname) AS GRANTOR,
+        CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t4.grantee) AS sys.sysname) AS GRANTEE,
+        CAST(t4.privilege_type AS sys.sysname) AS PRIVILEGE,
+        CAST(t4.is_grantable AS sys.sysname) AS IS_GRANTABLE
+    FROM pg_catalog.pg_class t1 
+        JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+        JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+        JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
+    WHERE t4.privilege_type = 'DELETE';
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE PROCEDURE sys.sp_column_privileges(
+    "@table_name" sys.sysname,
+    "@table_owner" sys.sysname = '',
+    "@table_qualifier" sys.sysname = '',
+    "@column_name" sys.nvarchar(384) = ''
+)
+AS $$
+BEGIN
+    IF (@table_qualifier != '') AND (pg_catalog.lower(@table_qualifier) != pg_catalog.lower(sys.db_name()))
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
+ 	
+	IF (COALESCE(@table_owner, '') = '')
+	BEGIN
+		SELECT
+		TABLE_QUALIFIER,
+		TABLE_OWNER,
+		TABLE_NAME,
+		COLUMN_NAME,
+		GRANTOR,
+		GRANTEE,
+		PRIVILEGE,
+		IS_GRANTABLE
+		FROM sys.sp_column_privileges_view
+		WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
+			AND (pg_catalog.lower('dbo')= pg_catalog.lower(table_owner))
+			AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
+			AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
+		ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
+	END
+	ELSE
+	BEGIN
+		SELECT 
+		TABLE_QUALIFIER,
+		TABLE_OWNER,
+		TABLE_NAME,
+		COLUMN_NAME,
+		GRANTOR,
+		GRANTEE,
+		PRIVILEGE,
+		IS_GRANTABLE
+		FROM sys.sp_column_privileges_view
+		WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
+			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+			AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
+			AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
+		ORDER BY table_qualifier, table_owner, table_name, column_name, privilege, grantee;
+	END
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_column_privileges TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_table_privileges(
+	"@table_name" sys.nvarchar(384),
+	"@table_owner" sys.nvarchar(384) = '',
+	"@table_qualifier" sys.sysname = '',
+	"@fusepattern" sys.bit = 1
+)
+AS $$
+BEGIN
+	
+	IF (@table_qualifier != '') AND (pg_catalog.lower(@table_qualifier) != pg_catalog.lower(sys.db_name()))
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
+	
+	IF @fusepattern = 1
+	BEGIN
+		SELECT 
+		TABLE_QUALIFIER,
+		TABLE_OWNER,
+		TABLE_NAME,
+		GRANTOR,
+		GRANTEE,
+		PRIVILEGE,
+		IS_GRANTABLE FROM sys.sp_table_privileges_view
+		WHERE (pg_catalog.lower(TABLE_NAME) LIKE pg_catalog.lower(@table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(TABLE_NAME)) = pg_catalog.lower(@table_name))
+			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(TABLE_OWNER) LIKE pg_catalog.lower(@table_owner))
+		ORDER BY table_qualifier, table_owner, table_name, privilege, grantee;
+	END
+	ELSE 
+	BEGIN
+		SELECT
+		TABLE_QUALIFIER,
+		TABLE_OWNER,
+		TABLE_NAME,
+		GRANTOR,
+		GRANTEE,
+		PRIVILEGE,
+		IS_GRANTABLE FROM sys.sp_table_privileges_view
+		WHERE (pg_catalog.lower(TABLE_NAME) = pg_catalog.lower(@table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(TABLE_NAME)) = pg_catalog.lower(@table_name))
+			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(TABLE_OWNER) = pg_catalog.lower(@table_owner))
+		ORDER BY table_qualifier, table_owner, table_name, privilege, grantee;
+	END
+	
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_table_privileges TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_special_columns(
+	"@table_name" sys.sysname,
+	"@table_owner" sys.sysname = '',
+	"@qualifier" sys.sysname = '',
+	"@col_type" char(1) = 'R',
+	"@scope" char(1) = 'T',
+	"@nullable" char(1) = 'U',
+	"@odbcver" int = 2
+)
+AS $$
+DECLARE @special_col_type sys.sysname;
+DECLARE @constraint_name sys.sysname;
+BEGIN
+	IF (@qualifier != '') AND (pg_catalog.lower(@qualifier) != pg_catalog.lower(sys.db_name()))
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+		
+	END
+	
+	IF (pg_catalog.lower(@col_type) = pg_catalog.lower('V'))
+	BEGIN
+		THROW 33557097, N'TIMESTAMP datatype is not currently supported in Babelfish', 1;
+	END
+	
+	IF (pg_catalog.lower(@nullable) = pg_catalog.lower('O'))
+	BEGIN
+		SELECT TOP 1 @special_col_type = constraint_type, @constraint_name = constraint_name FROM sys.sp_special_columns_view
+		WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
+			AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+			AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0)
+		ORDER BY constraint_type, index_id;
+	
+		IF @special_col_type='u'
+		BEGIN
+			IF @scope='C'
+			BEGIN
+				SELECT  
+				CAST(0 AS smallint) AS SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN FROM sys.sp_special_columns_view
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
+				AND @constraint_name = constraint_name
+				ORDER BY scope, column_name;
+				
+			END
+			ELSE
+			BEGIN
+				SELECT  
+				SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN FROM sys.sp_special_columns_view
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
+				AND @constraint_name = constraint_name
+				ORDER BY scope, column_name;
+			END
+		
+		END
+		
+		ELSE 
+		BEGIN
+			IF @scope='C'
+			BEGIN
+				SELECT 
+				CAST(0 AS smallint) AS SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN FROM sys.sp_special_columns_view
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
+				AND CONSTRAINT_TYPE = 'p'
+				ORDER BY scope, column_name;
+			END
+			ELSE
+			BEGIN
+				SELECT SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN  FROM sys.sp_special_columns_view
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
+				AND CONSTRAINT_TYPE = 'p'
+				ORDER BY scope, column_name;
+			END
+		END
+	END
+	
+	ELSE 
+	BEGIN
+		SELECT TOP 1 @special_col_type = constraint_type, @constraint_name = constraint_name FROM sys.sp_special_columns_view
+		WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
+			AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+			AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier))
+		ORDER BY constraint_type, index_id;
+
+		IF @special_col_type='u'
+		BEGIN
+			IF @scope='C'
+			BEGIN
+				SELECT 
+				CAST(0 AS smallint) AS SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN FROM sys.sp_special_columns_view
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
+				AND @constraint_name = constraint_name
+				ORDER BY scope, column_name;
+			END
+			
+			ELSE
+			BEGIN
+				SELECT SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN FROM sys.sp_special_columns_view
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
+				AND @constraint_name = constraint_name
+				ORDER BY scope, column_name;
+			END
+		
+		END
+		ELSE
+		BEGIN
+			IF @scope='C'
+			BEGIN
+				SELECT 
+				CAST(0 AS smallint) AS SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN FROM sys.sp_special_columns_view
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
+				AND CONSTRAINT_TYPE = 'p'
+				ORDER BY scope, column_name; 
+			END
+			
+			ELSE
+			BEGIN
+				SELECT SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN FROM sys.sp_special_columns_view
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
+				AND CONSTRAINT_TYPE = 'p'
+				ORDER BY scope, column_name;
+			END
+    
+		END
+	END
+
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_special_columns TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_fkeys(
+	"@pktable_name" sys.sysname = '',
+	"@pktable_owner" sys.sysname = '',
+	"@pktable_qualifier" sys.sysname = '',
+	"@fktable_name" sys.sysname = '',
+	"@fktable_owner" sys.sysname = '',
+	"@fktable_qualifier" sys.sysname = ''
+)
+AS $$
+BEGIN
+	
+	IF coalesce(@pktable_name,'') = '' AND coalesce(@fktable_name,'') = '' 
+	BEGIN
+		THROW 33557097, N'Primary or foreign key table name must be given.', 1;
+	END
+	
+	IF (@pktable_qualifier != '' AND (SELECT sys.db_name()) != @pktable_qualifier) OR 
+		(@fktable_qualifier != '' AND (SELECT sys.db_name()) != @fktable_qualifier) 
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+  	END
+  	
+  	SELECT 
+	PKTABLE_QUALIFIER,
+	PKTABLE_OWNER,
+	PKTABLE_NAME,
+	PKCOLUMN_NAME,
+	FKTABLE_QUALIFIER,
+	FKTABLE_OWNER,
+	FKTABLE_NAME,
+	FKCOLUMN_NAME,
+	KEY_SEQ,
+	UPDATE_RULE,
+	DELETE_RULE,
+	FK_NAME,
+	PK_NAME,
+	DEFERRABILITY
+	FROM sys.sp_fkeys_view
+	WHERE ((SELECT coalesce(@pktable_name,'')) = '' OR pg_catalog.lower(pktable_name) = pg_catalog.lower(@pktable_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(pktable_name)) = pg_catalog.lower(@pktable_name))
+		AND ((SELECT coalesce(@fktable_name,'')) = '' OR pg_catalog.lower(fktable_name) = pg_catalog.lower(@fktable_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(fktable_name)) = pg_catalog.lower(@fktable_name))
+		AND ((SELECT coalesce(@pktable_owner,'')) = '' OR pg_catalog.lower(pktable_owner) = pg_catalog.lower(@pktable_owner))
+		AND ((SELECT coalesce(@pktable_qualifier,'')) = '' OR pg_catalog.lower(pktable_qualifier) = pg_catalog.lower(@pktable_qualifier))
+		AND ((SELECT coalesce(@fktable_owner,'')) = '' OR pg_catalog.lower(fktable_owner) = pg_catalog.lower(@fktable_owner))
+		AND ((SELECT coalesce(@fktable_qualifier,'')) = '' OR pg_catalog.lower(fktable_qualifier) = pg_catalog.lower(@fktable_qualifier))
+	ORDER BY fktable_qualifier, fktable_owner, fktable_name, key_seq;
+
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_fkeys TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

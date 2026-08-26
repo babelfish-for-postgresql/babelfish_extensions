@@ -1936,32 +1936,49 @@ get_original_relname(Oid relid, bool check_permission)
 		Datum		opts;
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
 
-		opts = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
-		if (!isnull)
+		/*
+		 * Scan reloptions for the original name when the physical relname was
+		 * likely truncated. Use >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD (not
+		 * NAMEDATALEN-1) because multibyte truncation can back off to fewer
+		 * than NAMEDATALEN-1 bytes.
+		 *
+		 * Indexes are an exception: their physical name is always mangled as
+		 * index_name || table_name || md5(index_name) (see
+		 * construct_unique_index_name), so the bbf_original_rel_name reloption
+		 * is present even when the physical name is short. Always read it for
+		 * index relations (BABEL-5052).
+		 */
+		if (strlen(NameStr(classForm->relname)) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD ||
+			classForm->relkind == RELKIND_INDEX ||
+			classForm->relkind == RELKIND_PARTITIONED_INDEX)
 		{
-			ArrayType	   *arr = DatumGetArrayTypeP(opts);
-			ArrayIterator	it = array_create_iterator(arr, 0, NULL);
-			Datum			val;
-			bool			vnull;
-			const char	   *prefix = ATTOPTION_BBF_ORIGINAL_TABLE_NAME "=";
-			int				prefix_len = strlen(prefix);
-
-			while (array_iterate(it, &val, &vnull))
+			opts = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
+			if (!isnull)
 			{
-				const char *s;
-				int			len;
+				ArrayType	   *arr = DatumGetArrayTypeP(opts);
+				ArrayIterator	it = array_create_iterator(arr, 0, NULL);
+				Datum			val;
+				bool			vnull;
+				const char	   *prefix = ATTOPTION_BBF_ORIGINAL_TABLE_NAME "=";
+				int				prefix_len = strlen(prefix);
 
-				if (vnull)
-					continue;
-				s = VARDATA_ANY(val);
-				len = VARSIZE_ANY_EXHDR(val);
-				if (len > prefix_len && memcmp(s, prefix, prefix_len) == 0)
+				while (array_iterate(it, &val, &vnull))
 				{
-					result = pnstrdup(s + prefix_len, len - prefix_len);
-					break;
+					const char *s;
+					int			len;
+
+					if (vnull)
+						continue;
+					s = VARDATA_ANY(val);
+					len = VARSIZE_ANY_EXHDR(val);
+					if (len > prefix_len && memcmp(s, prefix, prefix_len) == 0)
+					{
+						result = pnstrdup(s + prefix_len, len - prefix_len);
+						break;
+					}
 				}
+				array_free_iterator(it);
 			}
-			array_free_iterator(it);
 		}
 
 		/* Fallback to relname if no bbf_original_rel_name found */
@@ -1970,6 +1987,61 @@ get_original_relname(Oid relid, bool check_permission)
 
 		ReleaseSysCache(tuple);
 	}
+	return result;
+}
+
+/*
+ * get_bbf_original_column_name
+ *
+ * Look up the original (pre-truncation, original-case) column name stored in
+ * the bbf_original_name attoption for the given relation OID and attribute
+ * number. Returns a palloc'd copy of the original name, or NULL if no such
+ * option is present.
+ *
+ * The caller is expected to already hold a lock on the relation (which the
+ * post-parse-analysis callers do, since the Var was resolved during parse
+ * analysis and that pins the relation). A concurrent DROP/RENAME of the
+ * attribute requires AccessExclusiveLock and therefore cannot commit while we
+ * reference the column, so get_attoptions() cannot legitimately fail here; if
+ * it ever did, that would indicate catalog corruption and the error is allowed
+ * to propagate rather than being masked.
+ */
+char *
+get_bbf_original_column_name(Oid relid, AttrNumber attnum)
+{
+	Datum		attopts;
+	ArrayType  *arr;
+	Datum	   *optiondatums;
+	int			noptions;
+	int			i;
+	char	   *result = NULL;
+	const char *prefix = ATTOPTION_BBF_ORIGINAL_NAME "=";
+	int			prefix_len = strlen(prefix);
+
+	if (!OidIsValid(relid) || attnum <= 0)
+		return NULL;
+
+	attopts = get_attoptions(relid, attnum);
+	if (attopts == (Datum) 0)
+		return NULL;
+
+	arr = DatumGetArrayTypeP(attopts);
+	deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
+					  &optiondatums, NULL, &noptions);
+
+	for (i = 0; i < noptions; i++)
+	{
+		char	   *optstr = TextDatumGetCString(optiondatums[i]);
+
+		if (strncmp(optstr, prefix, prefix_len) == 0)
+		{
+			result = pstrdup(optstr + prefix_len);
+			pfree(optstr);
+			break;
+		}
+		pfree(optstr);
+	}
+
 	return result;
 }
 

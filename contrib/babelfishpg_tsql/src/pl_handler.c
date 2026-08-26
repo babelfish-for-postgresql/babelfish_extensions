@@ -177,6 +177,8 @@ extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArg
 Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformSelectIntoStmt(CreateTableAsStmt *stmt);
+static void reject_reserved_bbf_original_name_options(List *options);
+static void block_bbf_original_name_reloption_tampering(Node *parsetree);
 static char *get_oid_type_string(int type_oid);
 static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
@@ -3480,7 +3482,16 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 		edata = CopyErrorData();
 		FlushErrorState();
 
-		if (edata->sqlerrcode == ERRCODE_QUERY_CANCELED)
+		/*
+		 * Recovering original column names from the view is best-effort, so we
+		 * swallow parse/analyze-class errors (SQL class 42 -
+		 * syntax_error_or_access_rule_violation) and continue with the
+		 * truncated names. Anything else - query cancel, administrator/crash
+		 * shutdown, out-of-memory, internal errors - must not be silently lost,
+		 * so re-throw it.
+		 */
+		if (ERRCODE_TO_CATEGORY(edata->sqlerrcode) !=
+			ERRCODE_TO_CATEGORY(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION))
 		{
 			relation_close(rel, AccessShareLock);
 			ReThrowError(edata);
@@ -3529,6 +3540,89 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 		CommandCounterIncrement();
 	}
 }
+
+/*
+ * block_bbf_original_name_reloption_tampering
+ *
+ * The bbf_original_rel_name and bbf_original_name reloptions/attoptions are
+ * reserved for Babelfish's internal storage of original (long/mixed-case)
+ * identifiers. Block any attempt to set them from the PG dialect, on either
+ * the CREATE paths (CREATE TABLE / VIEW / INDEX / SELECT INTO) or ALTER TABLE.
+ * Called unconditionally (not gated by enable_create_alter_view_from_pg) so it
+ * cannot be bypassed by enabling that GUC.
+ */
+static void
+reject_reserved_bbf_original_name_options(List *options)
+{
+	ListCell   *lopt;
+
+	foreach(lopt, options)
+	{
+		DefElem    *defel = (DefElem *) lfirst(lopt);
+
+		/*
+		 * Compare case-insensitively: a quoted option name (e.g.
+		 * "BBF_ORIGINAL_REL_NAME") keeps its case in defname, but the
+		 * underlying reloption handler matches it case-insensitively and
+		 * would apply the value, so strcmp() would let it slip through.
+		 */
+		if (defel->defname &&
+			(pg_strcasecmp(defel->defname, ATTOPTION_BBF_ORIGINAL_TABLE_NAME) == 0 ||
+			 pg_strcasecmp(defel->defname, ATTOPTION_BBF_ORIGINAL_NAME) == 0))
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("relation option \"%s\" is reserved for internal Babelfish use and cannot be set",
+							defel->defname)));
+	}
+}
+
+static void
+block_bbf_original_name_reloption_tampering(Node *parsetree)
+{
+	ListCell   *lc;
+
+	if (sql_dialect != SQL_DIALECT_PG || babelfish_dump_restore)
+		return;
+
+	switch (nodeTag(parsetree))
+	{
+		case T_AlterTableStmt:
+			{
+				AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
+
+				foreach(lc, atstmt->cmds)
+				{
+					AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lc);
+
+					if (cmd->subtype == AT_SetRelOptions || cmd->subtype == AT_ResetRelOptions ||
+						cmd->subtype == AT_ReplaceRelOptions ||
+						cmd->subtype == AT_SetOptions || cmd->subtype == AT_ResetOptions)
+						reject_reserved_bbf_original_name_options((List *) cmd->def);
+				}
+				break;
+			}
+		case T_CreateStmt:
+			reject_reserved_bbf_original_name_options(((CreateStmt *) parsetree)->options);
+			break;
+		case T_ViewStmt:
+			reject_reserved_bbf_original_name_options(((ViewStmt *) parsetree)->options);
+			break;
+		case T_IndexStmt:
+			reject_reserved_bbf_original_name_options(((IndexStmt *) parsetree)->options);
+			break;
+		case T_CreateTableAsStmt:
+			{
+				CreateTableAsStmt *ctas = (CreateTableAsStmt *) parsetree;
+
+				if (ctas->into != NULL)
+					reject_reserved_bbf_original_name_options(ctas->into->options);
+				break;
+			}
+		default:
+			break;
+	}
+}
+
 static void
 bbf_ProcessUtility(PlannedStmt *pstmt,
 				   const char *queryString,
@@ -3662,37 +3756,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 	 * above so that it cannot be bypassed by setting
 	 * enable_create_alter_view_from_pg = true.
 	 */
-	if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore &&
-		nodeTag(parsetree) == T_AlterTableStmt)
-	{
-		AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
-		ListCell   *lcmd;
-
-		foreach(lcmd, atstmt->cmds)
-		{
-			AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
-
-			if (cmd->subtype == AT_SetRelOptions || cmd->subtype == AT_ResetRelOptions ||
-				cmd->subtype == AT_ReplaceRelOptions ||
-				cmd->subtype == AT_SetOptions || cmd->subtype == AT_ResetOptions)
-			{
-				List	   *options = (List *) cmd->def;
-				ListCell   *lopt;
-
-				foreach(lopt, options)
-				{
-					DefElem    *defel = (DefElem *) lfirst(lopt);
-
-					if (defel->defname &&
-						(strcmp(defel->defname, ATTOPTION_BBF_ORIGINAL_TABLE_NAME) == 0 ||
-						strcmp(defel->defname, ATTOPTION_BBF_ORIGINAL_NAME) == 0))
-						ereport(ERROR,
-								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								 errmsg("cannot modify \"%s\" for babelfish objects", defel->defname)));
-				}
-			}
-		}
-	}
+	block_bbf_original_name_reloption_tampering(parsetree);
 
 	switch (nodeTag(parsetree))
 	{
@@ -8643,12 +8707,96 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 	return result;
 }
 
+/*
+ * store_select_into_original_names
+ *
+ * Persist the original (pre-truncation, original-case) identifiers for a
+ * SELECT INTO target so long/mixed-case names survive T-SQL metadata lookups:
+ *   - the table's original name is stored in the bbf_original_rel_name
+ *     reloption (extracted from the query text at the target relation's
+ *     location), and
+ *   - each column's original name is stored in the bbf_original_name attoption
+ *     (recovered from the SELECT targetlist's resorigname, which survives
+ *     transformSelectIntoStmt since that only lowercases resname).
+ *
+ * This mirrors what CREATE VIEW does (store_view_original_name /
+ * store_view_column_original_names); it is best-effort and only runs in the
+ * T-SQL dialect outside dump/restore.
+ */
+static void
+store_select_into_original_names(CreateTableAsStmt *ctas, const char *queryString,
+								 Oid relid)
+{
+	Node	   *ctas_query;
+	Query	   *query;
+	ListCell   *lc;
+	List	   *cmds = NIL;
+
+	if (sql_dialect != SQL_DIALECT_TSQL || !OidIsValid(relid))
+		return;
+
+	/* Store the original table name (reloption), skipped during dump/restore. */
+	if (!babelfish_dump_restore && queryString &&
+		ctas->into && ctas->into->rel && ctas->into->rel->location >= 0 &&
+		(size_t) ctas->into->rel->location < strlen(queryString))
+	{
+		char	   *original_name = extract_multipart_identifier_name(queryString + ctas->into->rel->location);
+
+		if (original_name &&
+			strcmp(ctas->into->rel->relname, original_name) != 0)
+		{
+			AlterTableCmd *cmd = build_set_option_cmd(AT_SetRelOptions,
+													  ATTOPTION_BBF_ORIGINAL_TABLE_NAME,
+													  original_name);
+			AlterTableInternal(relid, list_make1(cmd), false);
+			CommandCounterIncrement();
+		}
+		if (original_name)
+			pfree(original_name);
+	}
+
+	/*
+	 * Store the original column names (attoptions). resorigname survives
+	 * transformSelectIntoStmt (which only lowercases resname), so we read it
+	 * directly from the targetlist and compare against resname (the lowercased
+	 * attname).
+	 */
+	ctas_query = ctas->query;
+	if (!ctas_query || !IsA(ctas_query, Query))
+		return;
+	query = (Query *) ctas_query;
+
+	foreach(lc, query->targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		if (tle->resjunk)
+			continue;
+
+		if (tle->resorigname && tle->resname &&
+			strcmp(tle->resname, tle->resorigname) != 0)
+		{
+			AlterTableCmd *cmd = build_set_option_cmd(AT_SetOptions,
+													  ATTOPTION_BBF_ORIGINAL_NAME,
+													  tle->resorigname);
+			cmd->name = pstrdup(tle->resname);
+			cmds = lappend(cmds, cmd);
+		}
+	}
+
+	if (cmds != NIL)
+	{
+		AlterTableInternal(relid, cmds, false);
+		CommandCounterIncrement();
+	}
+}
+
 void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, QueryEnvironment *queryEnv,
 								 ParamListInfo params, QueryCompletion *qc, ObjectAddress *address)
 {
+
 	Node *parsetree = pstmt->utilityStmt;
 	List *stmts;
-
 	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
 	while (stmts != NIL)
 	{
@@ -8676,74 +8824,9 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 
 	reseed_identity_post_select_into(address->objectId);
 
-	/*
-	 * Store original table name for SELECT INTO.
-	 */
-	if (sql_dialect == SQL_DIALECT_TSQL && !babelfish_dump_restore &&
-		queryString && OidIsValid(address->objectId))
-	{
-		CreateTableAsStmt *ctas = (CreateTableAsStmt *) parsetree;
-
-		if (ctas->into && ctas->into->rel && ctas->into->rel->location >= 0 &&
-			(size_t) ctas->into->rel->location < strlen(queryString))
-		{
-			char *original_name = extract_multipart_identifier_name(queryString + ctas->into->rel->location);
-
-			if (original_name &&
-				strcmp(ctas->into->rel->relname, original_name) != 0)
-			{
-				AlterTableCmd *cmd = build_set_option_cmd(AT_SetRelOptions,
-														  ATTOPTION_BBF_ORIGINAL_TABLE_NAME,
-														  original_name);
-				AlterTableInternal(address->objectId, list_make1(cmd), false);
-				CommandCounterIncrement();
-			}
-			if (original_name)
-				pfree(original_name);
-		}
-	}
-
-	/*
-	 * Store original column names in pg_attribute.attoptions.
-	 * resorigname survives transformSelectIntoStmt (which only lowercases
-	 * resname), so we can read it directly from the targetlist.
-	 * Compare against resname (which is the lowercased attname).
-	 */
-	if (sql_dialect == SQL_DIALECT_TSQL && OidIsValid(address->objectId))
-	{
-		Node *ctas_query = ((CreateTableAsStmt *) parsetree)->query;
-		Query *query;
-		ListCell *lc;
-		List *cmds = NIL;
-
-		if (!ctas_query || !IsA(ctas_query, Query))
-			return;
-		query = (Query *) ctas_query;
-
-		foreach(lc, query->targetList)
-		{
-			TargetEntry *tle = (TargetEntry *) lfirst(lc);
-
-			if (tle->resjunk)
-				continue;
-
-			if (tle->resorigname && tle->resname &&
-				strcmp(tle->resname, tle->resorigname) != 0)
-			{
-				AlterTableCmd *cmd = build_set_option_cmd(AT_SetOptions,
-														  ATTOPTION_BBF_ORIGINAL_NAME,
-														  tle->resorigname);
-				cmd->name = pstrdup(tle->resname);
-				cmds = lappend(cmds, cmd);
-			}
-		}
-
-		if (cmds != NIL)
-		{
-			AlterTableInternal(address->objectId, cmds, false);
-			CommandCounterIncrement();
-		}
-	}
+	/* Persist original (long/mixed-case) table and column identifiers. */
+	store_select_into_original_names((CreateTableAsStmt *) parsetree, queryString,
+									 address->objectId);
 }
 
 void

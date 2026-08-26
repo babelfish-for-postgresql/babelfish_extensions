@@ -67,6 +67,28 @@ GO
 EXEC sp_columns @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing';
 GO
 
+-- Backward compatibility (BABEL-5975 #8): sp_columns must still resolve when the
+-- caller passes the old truncated internal (physical) name, not just the original.
+-- The physical name embeds a non-deterministic md5 hash, so compute it at runtime
+-- via sys.babelfish_truncate_identifier and pass it in; TABLE_NAME in the result
+-- is the original (untruncated) name, so the output is deterministic.
+DECLARE @truncated_name sys.nvarchar(384);
+SELECT @truncated_name = sys.babelfish_truncate_identifier(LOWER('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing'));
+EXEC sys.sp_columns @table_name = @truncated_name;
+GO
+
+-- Same backward-compat check for sp_columns_100.
+DECLARE @truncated_name100 sys.nvarchar(384);
+SELECT @truncated_name100 = sys.babelfish_truncate_identifier(LOWER('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing'));
+EXEC sys.sp_columns_100 @table_name = @truncated_name100;
+GO
+
+-- Backward-compat via the exact-match (@fusepattern = 0) branch as well.
+DECLARE @truncated_name0 sys.nvarchar(384);
+SELECT @truncated_name0 = sys.babelfish_truncate_identifier(LOWER('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing'));
+EXEC sys.sp_columns @table_name = @truncated_name0, @fusepattern = 0;
+GO
+
 -- ===========================================
 -- VERIFICATION: Check reloptions storage
 -- ===========================================
@@ -572,6 +594,42 @@ GO
 SET babelfishpg_tsql.enable_create_alter_view_from_pg = false;
 GO
 
+-- ===========================================
+-- BABEL-5975: the bbf_original_rel_name / bbf_original_name options are
+-- reserved for Babelfish and may not be set from the PG endpoint on any
+-- object (CREATE or ALTER path), matched case-insensitively.
+-- ===========================================
+
+-- psql
+-- CREATE with the reserved option is blocked
+CREATE TABLE bbf5975_reserved_ct (i int) WITH (bbf_original_rel_name = 'x');
+GO
+
+-- CREATE INDEX with the reserved option is blocked
+CREATE TABLE bbf5975_reserved_ixbase (i int);
+GO
+CREATE INDEX bbf5975_reserved_ix ON bbf5975_reserved_ixbase(i) WITH (bbf_original_rel_name = 'x');
+GO
+
+-- CREATE TABLE AS with the reserved option is blocked
+CREATE TABLE bbf5975_reserved_cta WITH (bbf_original_rel_name = 'x') AS SELECT 1 AS c;
+GO
+
+-- ALTER with the reserved option is blocked
+ALTER TABLE bbf5975_reserved_ixbase SET (bbf_original_rel_name = 'x');
+GO
+
+-- A quoted, upper-cased option name must also be blocked (case-insensitive match)
+ALTER TABLE bbf5975_reserved_ixbase SET ("BBF_ORIGINAL_REL_NAME" = 'x');
+GO
+
+-- A legitimate reloption must still succeed (no false positive)
+ALTER TABLE bbf5975_reserved_ixbase SET (fillfactor = 90);
+GO
+
+DROP TABLE bbf5975_reserved_ixbase;
+GO
+
 -- tsql
 
 -- TDS display of long column names in different SELECT forms
@@ -629,6 +687,56 @@ GO
 
 DROP VIEW babel5975_nested_view;
 GO
+
+-- ===========================================
+-- JOIN / set-operation propagation of long identifiers
+-- (Note: sp_describe_first_result_set_internal only supports queries that
+--  start with SELECT, so CTE (WITH ...) cases are exercised via views and
+--  direct TDS display elsewhere, not here.)
+-- ===========================================
+
+-- JOIN with a long column selected explicitly (avoid duplicate-column error)
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT a.This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose, b.ID FROM babel5975_nested_src a JOIN babel5975_nested_src b ON a.ID = b.ID', NULL, 0) ORDER BY column_ordinal;
+GO
+
+-- UNION SELECT *
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT * FROM babel5975_nested_src UNION ALL SELECT * FROM babel5975_nested_src', NULL, 0);
+GO
+
+-- UNION explicit column
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM babel5975_nested_src UNION SELECT This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM babel5975_nested_src', NULL, 0);
+GO
+
+-- EXCEPT
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM babel5975_nested_src EXCEPT SELECT This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM babel5975_nested_src', NULL, 0);
+GO
+
+-- CTE long identifier via a view (CTE resolver through view reparse path)
+CREATE VIEW babel5975_cte_view AS WITH cte AS (SELECT This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM babel5975_nested_src) SELECT * FROM cte;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cte_view');
+GO
+DROP VIEW babel5975_cte_view;
+GO
+
+-- ===========================================
+-- CROSS APPLY / OUTER APPLY propagation of long identifiers (BABEL-5975 #3)
+-- CROSS APPLY lowers to a LATERAL join; the resolver must follow the join's
+-- alias var into the underlying subquery/relation to recover the full name.
+-- ===========================================
+
+-- CROSS APPLY selecting a long column of the applied (lateral) subquery
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT ca.This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM babel5975_nested_src d CROSS APPLY (SELECT s.This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM babel5975_nested_src s WHERE s.ID = d.ID) ca', NULL, 0);
+GO
+
+-- OUTER APPLY selecting a long column of the applied (lateral) subquery
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT ca.This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM babel5975_nested_src d OUTER APPLY (SELECT s.This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM babel5975_nested_src s WHERE s.ID = d.ID) ca', NULL, 0);
+GO
+
+-- CROSS APPLY wrapped in an outer subquery (compound RTE recursion)
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT outer_q.This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM (SELECT ca.This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM babel5975_nested_src d CROSS APPLY (SELECT s.This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose FROM babel5975_nested_src s WHERE s.ID = d.ID) ca) outer_q', NULL, 0);
+GO
+
 DROP TABLE babel5975_nested_src;
 GO
 
@@ -917,6 +1025,71 @@ GO
 DROP TABLE babel5975_xml_test;
 GO
 
+-- ===========================================
+-- BABEL-4557: long index name in a WITH (INDEX (...)) hint must not crash
+-- the backend (previously caused a stack buffer overflow in
+-- construct_unique_index_name). The hint index name here is 114 bytes and
+-- contains special characters.
+-- ===========================================
+
+-- Table exists: the query should run and return rows (no crash).
+CREATE TABLE babel4557_hint_tab (
+    HandheldDeviceName varchar(50),
+    ContainerTypeAssociationId int,
+    RowVersion int,
+    Updated bit
+);
+GO
+CREATE INDEX [IX_ContainerTypeAssociationTransmissionLog(HandheldDeviceName,ContainerTypeAssociationId,RowVersion)_WHERE_UPDATED] ON babel4557_hint_tab (HandheldDeviceName, ContainerTypeAssociationId, RowVersion);
+GO
+INSERT INTO babel4557_hint_tab VALUES ('dev1', 100, 1, 1);
+GO
+SELECT * FROM babel4557_hint_tab WITH (INDEX ([IX_ContainerTypeAssociationTransmissionLog(HandheldDeviceName,ContainerTypeAssociationId,RowVersion)_WHERE_UPDATED]));
+GO
+
+-- Table does not exist: should raise a clean "does not exist" error, not crash.
+SELECT * FROM babel4557_missing_tab WITH (INDEX ([IX_ContainerTypeAssociationTransmissionLog(HandheldDeviceName,ContainerTypeAssociationId,RowVersion)_WHERE_UPDATED]));
+GO
+
+DROP TABLE babel4557_hint_tab;
+GO
+
+
+-- ===========================================
+-- BABEL-5052: after renaming a table with sp_rename, its indexes must remain
+-- usable (DROP/ALTER) and sys.indexes must still show the original index name.
+-- The physical index name embeds the table name, so the rename re-mangles
+-- every dependent index to encode the new table name.
+-- ===========================================
+CREATE TABLE babel5052_tab (a int, b int, c int);
+GO
+CREATE INDEX babel5052_idx ON babel5052_tab (a);
+GO
+CREATE UNIQUE INDEX babel5052_uq_idx ON babel5052_tab (b);
+GO
+CREATE INDEX [IX_babel5052_A_Very_Long_Index_Name_Exceeding_Sixty_Three_Characters_For_Test] ON babel5052_tab (c);
+GO
+EXEC sp_rename 'babel5052_tab', 'babel5052_renamed', 'OBJECT';
+GO
+-- sys.indexes must show the ORIGINAL index names on the renamed table
+SELECT name FROM sys.indexes WHERE object_id = OBJECT_ID('babel5052_renamed') AND name IS NOT NULL ORDER BY name;
+GO
+-- uniqueness must still be enforced after the rename
+INSERT INTO babel5052_renamed (a, b, c) VALUES (1, 1, 1);
+GO
+INSERT INTO babel5052_renamed (a, b, c) VALUES (2, 1, 2);
+GO
+-- DROP INDEX by original name on the renamed table must succeed (the bug)
+DROP INDEX babel5052_idx ON babel5052_renamed;
+GO
+DROP INDEX babel5052_uq_idx ON babel5052_renamed;
+GO
+DROP INDEX [IX_babel5052_A_Very_Long_Index_Name_Exceeding_Sixty_Three_Characters_For_Test] ON babel5052_renamed;
+GO
+SELECT COUNT(*) AS remaining_indexes FROM sys.indexes WHERE object_id = OBJECT_ID('babel5052_renamed') AND name IS NOT NULL;
+GO
+DROP TABLE babel5052_renamed;
+GO
 
 -- CLEANUP
 -- ===========================================
