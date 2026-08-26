@@ -215,3 +215,13 @@ go
 
 select ROUTINE_NAME, ROUTINE_BODY, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'alter_proc_p4';
 go
+
+-- BABEL-6496: Verify ALTER PROCEDURE works with quote_literal_cstr fix
+CREATE PROCEDURE [babel_6496_test'proc] AS SELECT 1;
+GO
+ALTER PROCEDURE [babel_6496_test'proc] AS SELECT 2;
+GO
+EXEC [babel_6496_test'proc];
+GO
+DROP PROCEDURE [babel_6496_test'proc];
+GO
