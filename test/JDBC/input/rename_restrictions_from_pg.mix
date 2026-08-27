@@ -10,6 +10,14 @@ CREATE PROCEDURE rename_from_pg_p1 AS SELECT 1;
 GO
 CREATE FUNCTION rename_from_pg_f1() RETURNS INT BEGIN RETURN 1; END
 GO
+CREATE TABLE rename_from_pg_t1 (id INT, col1 NVARCHAR(50));
+GO
+CREATE VIEW rename_from_pg_v1 AS SELECT id FROM rename_from_pg_t1;
+GO
+CREATE INDEX rename_from_pg_idx1 ON rename_from_pg_t1(id);
+GO
+CREATE TYPE rename_from_pg_udt1 FROM INT;
+GO
 
 -- set up a user schema in master and a user database with its own user schema
 CREATE SCHEMA rename_from_pg_uschema;
@@ -17,6 +25,10 @@ GO
 CREATE PROCEDURE rename_from_pg_uschema.uschema_p1 AS SELECT 1;
 GO
 CREATE FUNCTION rename_from_pg_uschema.uschema_f1() RETURNS INT BEGIN RETURN 1; END
+GO
+CREATE TABLE rename_from_pg_uschema.uschema_t1 (id INT);
+GO
+CREATE VIEW rename_from_pg_uschema.uschema_v1 AS SELECT id FROM rename_from_pg_uschema.uschema_t1;
 GO
 
 CREATE DATABASE rename_from_pg_udb;
@@ -27,6 +39,8 @@ GO
 CREATE PROCEDURE dbo.udb_dbo_p1 AS SELECT 1;
 GO
 CREATE FUNCTION dbo.udb_dbo_f1() RETURNS INT BEGIN RETURN 1; END
+GO
+CREATE TABLE dbo.udb_dbo_t1 (id INT);
 GO
 
 CREATE SCHEMA rename_from_pg_udbs;
@@ -150,6 +164,49 @@ CALL sys.sp_rename('dbo.rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
 GO
 
 CALL sys.sp_rename('dbo.rename_from_pg_f1', 'rename_from_pg_f1_new', 'OBJECT');
+GO
+
+-- sp_rename must also be blocked on tables
+CALL sys.sp_rename('master.dbo.rename_from_pg_t1', 'rename_from_pg_t1_new', 'OBJECT');
+GO
+
+-- sp_rename must also be blocked on views
+CALL sys.sp_rename('master.dbo.rename_from_pg_v1', 'rename_from_pg_v1_new', 'OBJECT');
+GO
+
+-- sp_rename must also be blocked on columns
+CALL sys.sp_rename('master.dbo.rename_from_pg_t1.col1', 'col1_new', 'COLUMN');
+GO
+
+-- sp_rename must also be blocked on indexes
+CALL sys.sp_rename('master.dbo.rename_from_pg_t1.rename_from_pg_idx1', 'rename_from_pg_idx1_new', 'INDEX');
+GO
+
+-- sp_rename must also be blocked on user-defined types
+CALL sys.sp_rename('master.dbo.rename_from_pg_udt1', 'rename_from_pg_udt1_new', 'USERDATATYPE');
+GO
+
+-- tables/views inside a user-created TSQL schema must also be blocked
+CALL sys.sp_rename('master.rename_from_pg_uschema.uschema_t1', 'uschema_t1_new', 'OBJECT');
+GO
+
+CALL sys.sp_rename('master.rename_from_pg_uschema.uschema_v1', 'uschema_v1_new', 'OBJECT');
+GO
+
+-- tables inside a user database must also be blocked
+CALL sys.sp_rename('rename_from_pg_udb.dbo.udb_dbo_t1', 'udb_dbo_t1_new', 'OBJECT');
+GO
+
+-- objects located in the sys schema must also be blocked
+CALL sys.sp_rename('sys.sysobjects', 'sysobjects_new', 'OBJECT');
+GO
+
+-- objects located in the information_schema_tsql schema must also be blocked
+CALL sys.sp_rename('information_schema_tsql.tables', 'tables_new', 'OBJECT');
+GO
+
+-- @objtype = 'DATABASE' (delegates internally to sp_renamedb) must also be blocked
+CALL sys.sp_rename('rename_from_pg_udb', 'rename_from_pg_udb_new', 'DATABASE');
 GO
 
 -- setting psql_logical_babelfish_db_name should not bypass the block either
@@ -453,6 +510,16 @@ GO
 DROP PROCEDURe rename_from_pg_p1;
 GO
 DROP FUNCTION rename_from_pg_f1;
+GO
+DROP VIEW rename_from_pg_v1;
+GO
+DROP TABLE rename_from_pg_t1;
+GO
+DROP TYPE rename_from_pg_udt1;
+GO
+DROP VIEW rename_from_pg_uschema.uschema_v1;
+GO
+DROP TABLE rename_from_pg_uschema.uschema_t1;
 GO
 DROP PROCEDURE rename_from_pg_uschema.uschema_p1;
 GO
