@@ -1169,7 +1169,7 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
 		}
 
 		/* Remove whitespace characters ...*/
-		if (isspace(ch))
+		if (isspace((unsigned char) ch))
 		{
 			/* ... but only if removal would not concatenate two word characters.
 			 * Amazingly, in PG the following are valid XPath queries, note
@@ -1184,8 +1184,8 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
 			{
 				char prev_ch = *(p-1);
 				char next_ch = *(p+1);
-				if ((isalnum(prev_ch) || prev_ch == '_' || prev_ch == '.') &&  // '.' is for cases like '2.'
-				    (isalnum(next_ch) || next_ch == '_' || next_ch == '.'))    // '.' is for cases like '.5'
+				if ((isalnum((unsigned char) prev_ch) || prev_ch == '_' || prev_ch == '.') &&  // '.' is for cases like '2.'
+				    (isalnum((unsigned char) next_ch) || next_ch == '_' || next_ch == '.'))    // '.' is for cases like '.5'
 				{
 					/* Keep the space to avoid word concatenation */
 					appendStringInfoChar(&result, ch);
@@ -1285,7 +1285,7 @@ bbf_xml_is_xpath_operator(const char *s)
 			 * have a match for the operator
 			 */
 			ch = *(s + strlen(known_operators[i]));	 
-			if (!(isalnum(ch) || (ch == '_')))
+			if (!(isalnum((unsigned char) ch) || (ch == '_')))
 				return true;
 
 			/* no match */
@@ -1354,7 +1354,7 @@ bbf_xml_patch_xpath_dot_bracket(const char *xpath_pattern)
 			else if (i + 1 < len && xpath_pattern[i + 1] == '[')
 			{				
 				/* Check for 'name.[' (preceded by alphanumeric char)  */
-				if (i > 0 && (isalnum(xpath_pattern[i - 1]) || (xpath_pattern[i - 1] == '_')) )
+				if (i > 0 && (isalnum((unsigned char) xpath_pattern[i - 1]) || (xpath_pattern[i - 1] == '_')) )
 					/* This is 'name.[' : keep as-is */
 					appendStringInfoChar(&result, '.');
 				else if (i > 0 && xpath_pattern[i - 1] == '/')
@@ -1416,7 +1416,7 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 	char *stripped;
 	int len;
 	int prev_len;
-
+		
 	if (!*xpath_pattern)
 		return;
 
@@ -1428,7 +1428,7 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 	initStringInfo(&buf);
 	for (const char *p = xpath_pattern; *p; p++)
 	{
-		if (!isspace(*p))
+		if (!isspace((unsigned char) *p))
 			appendStringInfoChar(&buf, *p);
 	}
 	stripped = buf.data;
@@ -1467,7 +1467,7 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 		/*
 		 * Remove contents of string literals in double or single quotes to avoid
 		 * inadvertently matching character patterns inside strings
-		 */
+		 */		 
 		src = stripped;
 		dst = stripped;
 		while (*src)
@@ -1478,21 +1478,23 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
 				*dst++ = *src++;
 				while (*src)
 				{
-					src++;
 					if (*src == delimiter)
-					{
+					{						
 						*dst++ = *src++;
 						break;
 					}
+					src++; // skip this character inside the string
 				}
 			}
 			else
+			{
 				*dst++ = *src++;
+			}
 		}
 		*dst = '\0';
-
+		
 		len = strlen(stripped);
-		if (len == prev_len)
+		if (len == prev_len) 
 			break;
 	}
 
@@ -1561,6 +1563,7 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 		return pstrdup(xpath_pattern);
 
 	initStringInfo(&result);
+	initStringInfo(&ident_buf);	
 
 	p = (char *)xpath_pattern;
 	while (*p)
@@ -1590,7 +1593,7 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 		/* '.' reference */
 		if (ch == '.')
 		{
-			if (!(isalpha(prev_ch) || prev_ch == '_'))				
+			if (!(isalpha((unsigned char) prev_ch) || prev_ch == '_'))				
 			{
 				next_ch = (*p) && *(p+1) ? *(p+1) : ' ';
 				if (next_ch == '.')
@@ -1643,7 +1646,7 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 		/* Handle @attr expressions when preceded by '(' or ','  e.g. at start of argument */
 		if (ch == '@')
 		{
-			if (!(isalpha(prev_ch) || prev_ch == '_'))
+			if (!(isalpha((unsigned char) prev_ch) || prev_ch == '_'))
 			{
 				/* Collect the @attr name (@name, @*, @id, etc. and append to the context node path */
 				if (prev_ch != '/') 
@@ -1657,7 +1660,7 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 				{
 					char c = *(++p);
 					/* Valid @attr name chars: [A-Za-z0-9_-.*] */
-					if (isalnum(c) || c == '_' || c == '-' || c == '.' || c == '*')
+					if (isalnum((unsigned char) c) || c == '_' || c == '-' || c == '.' || c == '*')
 						appendStringInfoChar(&result, c);
 					else
 						break;
@@ -1677,17 +1680,16 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 		 * Handle identifiers without '@', preceded by '(' or ','
 		 * Note that we must not touch XPath function names
 		 */
-		if (isalpha(ch) || ch == '_') 
+		if (isalpha((unsigned char) ch) || ch == '_') 
 		{
-			if (!(isalpha(prev_ch) || prev_ch == '_'))
+			if (!(isalpha((unsigned char) prev_ch) || prev_ch == '_'))
 			{
 				char ch2 = ' ';
 				/* Collect characters for this identifier */
-				initStringInfo(&ident_buf);
 				while (*p)
 				{
 					ch2 = *p;
-					if (isalnum(ch2) || ch2 == '_' || ch2 == '-' || ch2 == '.')
+					if (isalnum((unsigned char) ch2) || ch2 == '_' || ch2 == '-' || ch2 == '.')
 					{
 						appendStringInfoChar(&ident_buf, ch2);
 						p++;

@@ -405,6 +405,30 @@ WHERE attrib.exist('./color[text()="red"]') = 1
 ORDER BY item, color
 go
 
+-- empty double-quoted string
+DECLARE @xml XML = '<root><row><def><item>item-1</item></def><def><item>item-2</item></def><attributes><color>blue</color></attributes><attributes><color>red</color></attributes></row><row><def><item>item-3</item></def><attributes><color>green</color></attributes></row></root>'
+SELECT
+   itemDef.value('(item)[1]', 'varchar(20)') AS item,
+   attrib.value('(color)[1]', 'varchar(20)') AS color
+FROM @xml.nodes('/root/row') AS row(rowType)
+   CROSS APPLY rowType.nodes('./def') AS itemDefs(itemDef)
+   CROSS APPLY rowType.nodes('./attributes') AS attributeDefs(attrib)
+WHERE attrib.exist('./color[text()=""]') = 1
+ORDER BY item, color
+go
+
+-- empty double-quoted string
+DECLARE @xml XML = '<root><row><def><item>item-1</item></def><def><item>item-2</item></def><attributes><color>blue</color></attributes><attributes><color>red</color></attributes></row><row><def><item>item-3</item></def><attributes><color>green</color></attributes></row></root>'
+SELECT
+   itemDef.value('(item)[1]', 'varchar(20)') AS item,
+   attrib.value('(color)[1]', 'varchar(20)') AS color
+FROM @xml.nodes('/root/row') AS row(rowType)
+   CROSS APPLY rowType.nodes('./def') AS itemDefs(itemDef)
+   CROSS APPLY rowType.nodes('./attributes') AS attributeDefs(attrib)
+WHERE attrib.exist('./color[text()="" or text()="green"]') = 1
+ORDER BY item, color
+go
+
 DECLARE @xml XML = '<root><row><def><item>item-1</item></def><def><item>item-2</item></def><attributes><color>blue</color></attributes><attributes><color>red</color></attributes></row><row><def><item>item-3</item></def><attributes><color>green</color></attributes></row></root>'
 SELECT
    itemDef.value('(item)[1]', 'varchar(20)') AS item,
@@ -1034,6 +1058,12 @@ ORDER BY 1
 -- Single-quoted embedded string
 SELECT
     T.c.value('concat(., '' | '', .)', 'NVARCHAR(200)') AS [concat_dot_dot]
+FROM @xml.nodes('/data/item/value') AS T(c)
+ORDER BY 1
+
+-- Single-quoted embedded empty string
+SELECT
+    T.c.value('concat(., '''', .)', 'NVARCHAR(200)') AS [concat_dot_dot]
 FROM @xml.nodes('/data/item/value') AS T(c)
 ORDER BY 1
 
