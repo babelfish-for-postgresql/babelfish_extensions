@@ -178,7 +178,7 @@ Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformSelectIntoStmt(CreateTableAsStmt *stmt);
 static void reject_reserved_bbf_original_name_options(List *options);
-static void block_bbf_original_name_reloption_tampering(Node *parsetree);
+static void block_bbf_original_name_reloption(Node *parsetree);
 static char *get_oid_type_string(int type_oid);
 static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
@@ -3216,11 +3216,14 @@ extract_index_original_name(IndexStmt *stmt, const char *queryString)
 
 	/*
 	 * Iterate all options and remove every tsql_original_name_location entry.
-	 * The grammar appends exactly one such entry with an Integer value (the
-	 * byte offset of the identifier in queryString). A user could also spell
-	 * WITH (tsql_original_name_location = '...') which arrives as a String or
-	 * NULL; those are ignored (not reinterpreted as a pointer by intVal) but
-	 * still stripped so DefineIndex does not reject the unrecognized option.
+	 * The grammar appends exactly one such entry, distinguished by a DefElem
+	 * location of -1 (see gram-tsql-rule.y); its Integer arg is the byte offset
+	 * of the identifier in queryString. A user-supplied
+	 * WITH (tsql_original_name_location = ...) arrives with location >= 0 - that
+	 * is a tamper attempt on an internal-only option and is rejected, mirroring
+	 * how the bbf_original_* reserved options are rejected. Any recognized
+	 * (grammar) entry is stripped so DefineIndex does not see the internal
+	 * option.
 	 */
 	foreach(opt_lc, stmt->options)
 	{
@@ -3228,6 +3231,17 @@ extract_index_original_name(IndexStmt *stmt, const char *queryString)
 
 		if (strcmp(defel->defname, TSQL_ORIGINAL_NAME_LOCATION) == 0)
 		{
+			/*
+			 * Only the grammar-appended entry (location == -1) is trusted.
+			 * A user-written option (location >= 0) must not be able to choose
+			 * what gets stored as the internal original name.
+			 */
+			if (defel->location >= 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("option \"%s\" is reserved for internal Babelfish use and cannot be set",
+								TSQL_ORIGINAL_NAME_LOCATION)));
+
 			if (!original_name && defel->arg && IsA(defel->arg, Integer))
 			{
 				int loc = intVal(defel->arg);
@@ -3239,6 +3253,47 @@ extract_index_original_name(IndexStmt *stmt, const char *queryString)
 		}
 	}
 	return original_name;
+}
+
+/*
+ * extract_and_strip_view_collist_loc
+ *
+ * The T-SQL CREATE [OR ALTER] VIEW grammar records the source-text location of
+ * an explicit column list "(c1, c2, ...)" by appending an internal
+ * bbf_view_collist_loc DefElem to ViewStmt->options. That option is only a
+ * parse-time carrier and must not be persisted as a real reloption on the view.
+ * Remove it from the options list here, BEFORE the view is created, so it never
+ * lands in pg_class.reloptions (avoiding a follow-up AT_ResetRelOptions), and
+ * return the recorded location for use in original-name storage.
+ *
+ * Returns the recorded location, or -1 if the option is absent/invalid.
+ */
+static int
+extract_and_strip_view_collist_loc(ViewStmt *stmt)
+{
+	int			collist_loc = -1;
+	ListCell   *olc;
+
+	if (stmt == NULL)
+		return -1;
+
+	foreach(olc, stmt->options)
+	{
+		DefElem    *defel = (DefElem *) lfirst(olc);
+
+		if (defel->defname &&
+			strcmp(defel->defname, BBF_VIEW_COLLIST_LOC_OPTION) == 0)
+		{
+			if (defel->arg && IsA(defel->arg, Integer))
+				collist_loc = intVal(defel->arg);
+
+			/* Delete the internal option so it is never stored on the view. */
+			stmt->options = foreach_delete_current(stmt->options, olc);
+			break;
+		}
+	}
+
+	return collist_loc;
 }
 
 /*
@@ -3309,11 +3364,28 @@ skip_collist_separators(const char *p)
 			p++;
 		else if (*p == '/' && *(p + 1) == '*')
 		{
+			/*
+			 * T-SQL allows nested block comments, so track depth and only
+			 * exit when the outermost comment is closed.
+			 */
+			int			depth = 1;
+
 			p += 2;
-			while (*p && !(*p == '*' && *(p + 1) == '/'))
-				p++;
-			if (*p)
-				p += 2;
+			while (*p && depth > 0)
+			{
+				if (*p == '/' && *(p + 1) == '*')
+				{
+					depth++;
+					p += 2;
+				}
+				else if (*p == '*' && *(p + 1) == '/')
+				{
+					depth--;
+					p += 2;
+				}
+				else
+					p++;
+			}
 		}
 		else if (*p == '-' && *(p + 1) == '-')
 		{
@@ -3330,33 +3402,18 @@ skip_collist_separators(const char *p)
  * store_view_explicit_column_names
  *
  * Handle CREATE VIEW v (c1, c2, ...) explicit column alias lists. The grammar
- * recorded the source location of the column list '(' in the internal
- * bbf_view_collist_loc option. Walk the list with extract_identifier and store
- * bbf_original_name attoptions for columns whose original differs from their
- * (truncated/lowercased) physical attname. Also strips the internal option.
+ * recorded the source location of the column list '(' (passed here as
+ * collist_loc, already stripped from the statement's options). Walk the list
+ * with extract_identifier and store bbf_original_name attoptions for columns
+ * whose original differs from their (truncated/lowercased) physical attname.
  */
 static void
-store_view_explicit_column_names(ViewStmt *stmt, const char *queryString,
-								 Oid viewOid, TupleDesc tupdesc)
+store_view_explicit_column_names(const char *queryString,
+								 Oid viewOid, TupleDesc tupdesc, int collist_loc)
 {
-	int			collist_loc = -1;
 	const char *p;
 	int			col = 0;
 	List	   *cmds = NIL;
-	ListCell   *olc;
-	AlterTableCmd *reset;
-
-	foreach(olc, stmt->options)
-	{
-		DefElem *defel = (DefElem *) lfirst(olc);
-		if (defel->defname &&
-			strcmp(defel->defname, BBF_VIEW_COLLIST_LOC_OPTION) == 0 &&
-			defel->arg && IsA(defel->arg, Integer))
-		{
-			collist_loc = intVal(defel->arg);
-			break;
-		}
-	}
 
 	if (collist_loc >= 0 && (size_t) collist_loc < strlen(queryString))
 	{
@@ -3402,14 +3459,6 @@ store_view_explicit_column_names(ViewStmt *stmt, const char *queryString,
 		}
 	}
 
-	/* Strip the internal bbf_view_collist_loc reloption that leaked onto the view. */
-	reset = makeNode(AlterTableCmd);
-	reset->subtype = AT_ResetRelOptions;
-	reset->def = (Node *) list_make1(makeDefElem(BBF_VIEW_COLLIST_LOC_OPTION, NULL, -1));
-	reset->behavior = DROP_RESTRICT;
-	reset->missing_ok = true;
-	cmds = lappend(cmds, reset);
-
 	if (cmds != NIL)
 	{
 		AlterTableInternal(viewOid, cmds, false);
@@ -3418,7 +3467,7 @@ store_view_explicit_column_names(ViewStmt *stmt, const char *queryString,
 }
 
 static void
-store_view_column_original_names(ViewStmt *stmt, const char *queryString)
+store_view_column_original_names(ViewStmt *stmt, const char *queryString, int collist_loc)
 {
 	Oid			viewOid;
 	Relation	rel;
@@ -3428,7 +3477,6 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 	ListCell   *lc;
 	List	   *cmds = NIL;
 	int			attnum = 0;
-	MemoryContext oldcontext = CurrentMemoryContext;
 
 	if (!queryString)
 		return;
@@ -3446,7 +3494,7 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 	 */
 	if (stmt->aliases != NIL)
 	{
-		store_view_explicit_column_names(stmt, queryString, viewOid, tupdesc);
+		store_view_explicit_column_names(queryString, viewOid, tupdesc, collist_loc);
 		relation_close(rel, AccessShareLock);
 		return;
 	}
@@ -3455,52 +3503,15 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 	 * Reparse the view's SELECT query with p_post_expand_star_hook set,
 	 * so that all TargetEntries (including those from SELECT *) get
 	 * resorigname populated from attoptions.
-	 *
-	 * Storing the original (untruncated) column names is a best-effort
-	 * convenience; a failure while re-analyzing the view's query must not
-	 * abort the surrounding CREATE VIEW. Swallow such errors and skip name
-	 * storage, but re-throw query cancellation so interrupts are never
-	 * masked, and reset the error state so the exception stack and error
-	 * context are left consistent for the rest of the transaction.
 	 */
 	rawstmt = makeNode(RawStmt);
 	rawstmt->stmt = (Node *) copyObject(stmt->query);
 	rawstmt->stmt_location = 0;
 	rawstmt->stmt_len = strlen(queryString);
 
-	PG_TRY();
-	{
-		reparsed = parse_analyze_withcb(rawstmt, queryString,
-										(ParserSetupHook) view_reparse_parser_setup,
-										NULL, NULL);
-	}
-	PG_CATCH();
-	{
-		ErrorData  *edata;
-
-		MemoryContextSwitchTo(oldcontext);
-		edata = CopyErrorData();
-		FlushErrorState();
-
-		/*
-		 * Recovering original column names from the view is best-effort, so we
-		 * swallow parse/analyze-class errors (SQL class 42 -
-		 * syntax_error_or_access_rule_violation) and continue with the
-		 * truncated names. Anything else - query cancel, administrator/crash
-		 * shutdown, out-of-memory, internal errors - must not be silently lost,
-		 * so re-throw it.
-		 */
-		if (ERRCODE_TO_CATEGORY(edata->sqlerrcode) !=
-			ERRCODE_TO_CATEGORY(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION))
-		{
-			relation_close(rel, AccessShareLock);
-			ReThrowError(edata);
-		}
-
-		FreeErrorData(edata);
-		reparsed = NULL;
-	}
-	PG_END_TRY();
+	reparsed = parse_analyze_withcb(rawstmt, queryString,
+									(ParserSetupHook) view_reparse_parser_setup,
+									NULL, NULL);
 
 	if (!reparsed || reparsed->commandType != CMD_SELECT)
 	{
@@ -3542,7 +3553,7 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString)
 }
 
 /*
- * block_bbf_original_name_reloption_tampering
+ * block_bbf_original_name_reloption
  *
  * The bbf_original_rel_name and bbf_original_name reloptions/attoptions are
  * reserved for Babelfish's internal storage of original (long/mixed-case)
@@ -3568,7 +3579,8 @@ reject_reserved_bbf_original_name_options(List *options)
 		 */
 		if (defel->defname &&
 			(pg_strcasecmp(defel->defname, ATTOPTION_BBF_ORIGINAL_TABLE_NAME) == 0 ||
-			 pg_strcasecmp(defel->defname, ATTOPTION_BBF_ORIGINAL_NAME) == 0))
+			 pg_strcasecmp(defel->defname, ATTOPTION_BBF_ORIGINAL_NAME) == 0 ||
+			 pg_strcasecmp(defel->defname, ATTOPTION_BBF_TABLE_CREATE_DATE) == 0))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("relation option \"%s\" is reserved for internal Babelfish use and cannot be set",
@@ -3577,7 +3589,7 @@ reject_reserved_bbf_original_name_options(List *options)
 }
 
 static void
-block_bbf_original_name_reloption_tampering(Node *parsetree)
+block_bbf_original_name_reloption(Node *parsetree)
 {
 	ListCell   *lc;
 
@@ -3756,7 +3768,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 	 * above so that it cannot be bypassed by setting
 	 * enable_create_alter_view_from_pg = true.
 	 */
-	block_bbf_original_name_reloption_tampering(parsetree);
+	block_bbf_original_name_reloption(parsetree);
 
 	switch (nodeTag(parsetree))
 	{
@@ -4086,6 +4098,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					List *oldColumnAcls = NIL;
 					bool isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
 					bool needCleanup;
+					int collist_loc;
+
+					/*
+					 * Remove the internal bbf_view_collist_loc carrier option
+					 * from the statement BEFORE the view is created, so it is
+					 * never persisted into pg_class.reloptions. The recorded
+					 * location is threaded into original-name storage below.
+					 */
+					collist_loc = extract_and_strip_view_collist_loc(stmt);
 			
 					if (!IS_TDS_CLIENT())
 					{
@@ -4194,7 +4215,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						 */
 						CommandCounterIncrement();
 						store_view_original_name(stmt, queryString);
-						store_view_column_original_names(stmt, queryString);
+						store_view_column_original_names(stmt, queryString, collist_loc);
 						CommitTransactionCommand();
 					}
 					PG_FINALLY();
@@ -4208,6 +4229,16 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 				else if(sql_dialect == SQL_DIALECT_TSQL)
 				{
+					int collist_loc;
+
+					/*
+					 * Remove the internal bbf_view_collist_loc carrier option
+					 * before the view is created so it is never persisted into
+					 * pg_class.reloptions; thread the recorded location into
+					 * original-name storage below.
+					 */
+					collist_loc = extract_and_strip_view_collist_loc(stmt);
+
 					PG_TRY();
 					{
 						pltsql_current_query_is_view_definition = true;
@@ -4219,7 +4250,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						 * within the same execution so failures propagate correctly.
 						 */
 						store_view_original_name(stmt, queryString);
-						store_view_column_original_names(stmt, queryString);
+						store_view_column_original_names(stmt, queryString, collist_loc);
 					}
 					PG_FINALLY();
 					{

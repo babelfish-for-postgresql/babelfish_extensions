@@ -985,6 +985,31 @@ GO
     Server SQLState: 42501)~~
 
 
+-- CREATE INDEX with the internal tsql_original_name_location option is rejected.
+-- This option is appended only by the grammar (with an internal marker,
+-- DefElem location = -1) to carry the source-text offset of a long index name.
+-- A user cannot inject it: on the T-SQL endpoint the grammar does not preserve
+-- a user-supplied duplicate, and on the PG endpoint (below) it is rejected as
+-- an unrecognized reloption. The C guard in extract_index_original_name also
+-- rejects any user-supplied entry (location >= 0) as defense-in-depth.
+CREATE INDEX bbf5975_reserved_ixloc ON bbf5975_reserved_ixbase(i) WITH (tsql_original_name_location = 5);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: unrecognized parameter "tsql_original_name_location"
+    Server SQLState: 22023)~~
+
+
+-- A non-Integer user-supplied value must also be rejected (not silently
+-- stripped or reinterpreted as a pointer offset).
+CREATE INDEX bbf5975_reserved_ixloc_str ON bbf5975_reserved_ixbase(i) WITH (tsql_original_name_location = 'foo');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: unrecognized parameter "tsql_original_name_location"
+    Server SQLState: 22023)~~
+
+
 -- CREATE TABLE AS with the reserved option is blocked
 CREATE TABLE bbf5975_reserved_cta WITH (bbf_original_rel_name = 'x') AS SELECT 1 AS c;
 GO
@@ -1017,6 +1042,73 @@ ALTER TABLE bbf5975_reserved_ixbase SET (fillfactor = 90);
 GO
 
 DROP TABLE bbf5975_reserved_ixbase;
+GO
+
+
+-- tsql
+-- ===========================================
+-- BABEL-5975: the bbf_original_rel_name / bbf_original_name options are
+-- reserved for Babelfish and may not be set by a user from the T-SQL endpoint
+-- either. Babelfish sets them internally via CREATE-time subcommands, so a
+-- normal long-name CREATE still succeeds, but a user-issued
+-- ALTER TABLE ... SET (...) naming either reserved option must be rejected.
+-- This also closes the path that would otherwise let an over-long value reach
+-- the single-byte TDS column-metadata name-length field.
+-- ===========================================
+-- ALTER TABLE SET of the reserved relation option is blocked from T-SQL
+CREATE TABLE bbf5975_tsql_reserved (i int);
+GO
+ALTER TABLE bbf5975_tsql_reserved SET (bbf_original_rel_name = 'hacked');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation option "bbf_original_rel_name" is reserved for internal Babelfish use and cannot be set)~~
+
+
+-- An over-long value (would overflow the TDS uint8 name length) is also blocked
+ALTER TABLE bbf5975_tsql_reserved SET (bbf_original_rel_name = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation option "bbf_original_rel_name" is reserved for internal Babelfish use and cannot be set)~~
+
+
+-- The reserved column attoption is likewise blocked from T-SQL
+ALTER TABLE bbf5975_tsql_reserved SET (bbf_original_name = 'hacked');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation option "bbf_original_name" is reserved for internal Babelfish use and cannot be set)~~
+
+
+-- The reserved bbf_rel_create_date reloption (feeds sys.objects.create_date)
+-- is also blocked from T-SQL so a user cannot spoof an object's create date.
+ALTER TABLE bbf5975_tsql_reserved SET (bbf_rel_create_date = '2000-01-01');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation option "bbf_rel_create_date" is reserved for internal Babelfish use and cannot be set)~~
+
+
+-- A legitimate reloption from T-SQL must still succeed (no false positive)
+ALTER TABLE bbf5975_tsql_reserved SET (fillfactor = 90);
+GO
+
+-- A normal long-name CREATE (Babelfish stores bbf_original_rel_name internally
+-- via a CREATE-time subcommand) must still succeed and store the original name.
+CREATE TABLE bbf5975_tsql_LongNameThatExceedsThePostgreSQLNameDataLenLimitOfSixtyThreeBytesHere (i int);
+GO
+SELECT name FROM sys.tables WHERE name = 'bbf5975_tsql_LongNameThatExceedsThePostgreSQLNameDataLenLimitOfSixtyThreeBytesHere';
+GO
+~~START~~
+varchar
+bbf5975_tsql_LongNameThatExceedsThePostgreSQLNameDataLenLimitOfSixtyThreeBytesHere
+~~END~~
+
+
+DROP TABLE bbf5975_tsql_LongNameThatExceedsThePostgreSQLNameDataLenLimitOfSixtyThreeBytesHere;
+GO
+DROP TABLE bbf5975_tsql_reserved;
 GO
 
 -- tsql
@@ -1542,6 +1634,136 @@ c2
 DROP VIEW babel5975_rn_vcol;
 GO
 DROP TABLE babel5975_rn_vcol_base;
+GO
+
+
+-- store_view_explicit_column_names coverage: mixed long/short positions,
+-- all-short, mixed-case-short, two adjacent long, nested block comment, and
+-- line comment inside the column list. These exercise the source-text column
+-- list walker (a hot path) for correct positional attribution.
+-- (a) short, LONG (middle), short - positional alignment across mixed lengths
+CREATE VIEW babel5975_cv_mix (s1, This_Is_A_Long_Middle_Column_Alias_That_Exceeds_The_Sixty_Three_Chars, s3) AS SELECT id, a, b FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_mix') ORDER BY column_id;
+GO
+~~START~~
+varchar
+s1
+This_Is_A_Long_Middle_Column_Alias_That_Exceeds_The_Sixty_Three_Chars
+s3
+~~END~~
+
+DROP VIEW babel5975_cv_mix;
+GO
+
+-- (b) all-short aliases - no bbf_original_name attoption should be stored
+CREATE VIEW babel5975_cv_allshort (s1, s2, s3) AS SELECT id, a, b FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_allshort') ORDER BY column_id;
+GO
+~~START~~
+varchar
+s1
+s2
+s3
+~~END~~
+
+DROP VIEW babel5975_cv_allshort;
+GO
+
+-- (c) mixed-case SHORT alias
+CREATE VIEW babel5975_cv_mc (MyMixedCaseColumn, c2, c3) AS SELECT id, a, b FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_mc') ORDER BY column_id;
+GO
+~~START~~
+varchar
+mymixedcasecolumn
+c2
+c3
+~~END~~
+
+DROP VIEW babel5975_cv_mc;
+GO
+
+-- (d) two adjacent LONG aliases
+CREATE VIEW babel5975_cv_twolong (This_Is_The_First_Long_Column_Alias_Exceeding_Sixty_Three_Chars_AA, This_Is_The_Second_Long_Column_Alias_Exceeding_Sixty_Three_Chars_BB, c3) AS SELECT id, a, b FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_twolong') ORDER BY column_id;
+GO
+~~START~~
+varchar
+This_Is_The_First_Long_Column_Alias_Exceeding_Sixty_Three_Chars_AA
+This_Is_The_Second_Long_Column_Alias_Exceeding_Sixty_Three_Chars_BB
+c3
+~~END~~
+
+DROP VIEW babel5975_cv_twolong;
+GO
+
+-- (e) nested block comment before a LONG alias in the column list
+CREATE VIEW babel5975_cv_nested (/* /* nested */ */ This_Is_A_Long_Nested_Comment_Column_Alias_Exceeds_Sixty_Three_C, c2, c3) AS SELECT id, a, b FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_nested') ORDER BY column_id;
+GO
+~~START~~
+varchar
+This_Is_A_Long_Nested_Comment_Column_Alias_Exceeds_Sixty_Three_C
+c2
+c3
+~~END~~
+
+DROP VIEW babel5975_cv_nested;
+GO
+
+-- (f) line comment inside the column list after a LONG alias
+CREATE VIEW babel5975_cv_linecmt (This_Is_A_Long_Line_Comment_Column_Alias_Exceeds_Sixty_Three_Chars, -- trailing line comment
+c2, c3) AS SELECT id, a, b FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_linecmt') ORDER BY column_id;
+GO
+~~START~~
+varchar
+This_Is_A_Long_Line_Comment_Column_Alias_Exceeds_Sixty_Three_Chars
+c2
+c3
+~~END~~
+
+DROP VIEW babel5975_cv_linecmt;
+GO
+
+-- (g) nested block comment containing commas / special chars before a LONG
+-- alias: the commas inside the (nested) comment must not be treated as column
+-- separators, and skip_collist_separators must not crash or misalign.
+CREATE VIEW babel5975_cv_nestcomma (/* a, /* b,c */ d,e */ This_Is_A_Long_Nested_Comma_Comment_Alias_Exceeds_Sixty_Three, c2, c3) AS SELECT id, a, b FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_nestcomma') ORDER BY column_id;
+GO
+~~START~~
+varchar
+This_Is_A_Long_Nested_Comma_Comment_Alias_Exceeds_Sixty_Three
+c2
+c3
+~~END~~
+
+DROP VIEW babel5975_cv_nestcomma;
+GO
+
+-- (h) special characters and comment markers INSIDE a bracketed long alias are
+-- literal identifier content (handled by extract_identifier, not the separator
+-- scanner) - must be stored verbatim.
+CREATE VIEW babel5975_cv_specialbr ([Long_Alias_With_Special_!@#$,;()_/*notcomment*/_Exceeds_Sixty_Three], c2, c3) AS SELECT id, a, b FROM babel5975_cv_base;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_specialbr') ORDER BY column_id;
+GO
+~~START~~
+varchar
+Long_Alias_With_Special_!@#$,;()_/*notcomment*/_Exceeds_Sixty_Three
+c2
+c3
+~~END~~
+
+DROP VIEW babel5975_cv_specialbr;
 GO
 
 DROP TABLE babel5975_cv_base;

@@ -1906,9 +1906,15 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 			/* Only set resorigname for long identifiers; for short ones,
 			 * override resname to restore original case. */
 			if (strlen(orig) >= NAMEDATALEN)
-				te->resorigname = orig;
-			else if (te->resname)
-				te->resname = pnstrdup(orig, strlen(te->resname));
+				te->resorigname = orig;		/* ownership transferred to tle */
+			else
+			{
+				/* Short name: resorigname is not needed; restore original
+				 * case onto resname (a copy) and free the resolved string. */
+				if (te->resname)
+					te->resname = pnstrdup(orig, strlen(te->resname));
+				pfree(orig);
+			}
 		}
 	}
 }
