@@ -581,7 +581,7 @@ BABEL-5059
 cast-varchar-to-time
 xml_exist
 test_db_collation
-BABEL-5119
+BABEL-5119-before-18_6
 BABEL-5129
 BABEL-CASE_EXPR
 charindex_replace_patindex
@@ -656,4 +656,5 @@ sys-fn-varbintohexsubstring
 forxml-path-elements-before-17_10-or-18_4
 babel_sqlvariant_coerce_type
 BABEL-login-db-long-identifiers
+long-identifiers-objects-before-18_6
 fk-cascade-trigger

@@ -11423,7 +11423,7 @@ RETURNS table (
 -- internal function to truncate long identifier
 CREATE OR REPLACE FUNCTION sys.babelfish_truncate_identifier(IN object_name TEXT)
 RETURNS text
-AS 'babelfishpg_tsql', 'pltsql_truncate_identifier_func' LANGUAGE C IMMUTABLE STRICT;
+AS 'babelfishpg_tsql', 'pltsql_truncate_identifier_func' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 -- internal functions for debuggig/testing purpose
 CREATE OR REPLACE FUNCTION sys.babelfish_pltsql_cursor_show_textptr_only_column_indexes(cursor_handle INT)
@@ -11492,3 +11492,36 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.babelfish_construct_unique_index_name(index_name TEXT, table_name TEXT)
 RETURNS TEXT AS 'babelfishpg_tsql', 'bbf_construct_unique_index_name'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+-- BABEL-5975: Long Identifiers Support
+-- Returns the original (untruncated) relation name from bbf_original_rel_name
+-- reloption if stored, otherwise returns the relname as-is.
+-- Only checks reloptions when relname is potentially truncated (>= 60 bytes).
+CREATE OR REPLACE FUNCTION sys.bbf_get_truncated_rel_original_name(rel_reloptions text[], rel_relname name)
+RETURNS text
+LANGUAGE SQL
+IMMUTABLE
+PARALLEL SAFE
+RETURN COALESCE(
+    CASE WHEN octet_length(rel_relname) >= 60 THEN
+        (SELECT substring(opt, 23)
+         FROM unnest(rel_reloptions) opt
+         WHERE opt LIKE 'bbf_original_rel_name=%'
+         LIMIT 1)
+    END,
+    rel_relname::text);
+
+CREATE OR REPLACE FUNCTION sys.bbf_get_truncated_att_original_name(att_attoptions text[], att_attname name)
+RETURNS text
+LANGUAGE SQL
+IMMUTABLE
+PARALLEL SAFE
+RETURN COALESCE(
+    CASE WHEN octet_length(att_attname) >= 60 THEN
+        (SELECT substring(opt, 19)
+         FROM unnest(att_attoptions) opt
+         WHERE opt LIKE 'bbf_original_name=%'
+         LIMIT 1)
+    END,
+    att_attname::text);
+

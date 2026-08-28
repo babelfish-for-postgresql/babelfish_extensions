@@ -9092,13 +9092,13 @@ WHERE TABLE_NAME = 'DTOView' ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-dtoview#!#CESTTime#!#datetimeoffset
-dtoview#!#ComputedDTOColumn#!#datetimeoffset
-dtoview#!#DefaultDTOColumn#!#datetimeoffset
-dtoview#!#DTOColumn#!#datetimeoffset
-dtoview#!#ID#!#int
-dtoview#!#PSTTime#!#datetimeoffset
-dtoview#!#UTCTime#!#datetimeoffset
+DTOView#!#CESTTime#!#datetimeoffset
+DTOView#!#ComputedDTOColumn#!#datetimeoffset
+DTOView#!#DefaultDTOColumn#!#datetimeoffset
+DTOView#!#DTOColumn#!#datetimeoffset
+DTOView#!#ID#!#int
+DTOView#!#PSTTime#!#datetimeoffset
+DTOView#!#UTCTime#!#datetimeoffset
 ~~END~~
 
 

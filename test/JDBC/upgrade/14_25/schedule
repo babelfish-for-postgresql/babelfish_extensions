@@ -249,7 +249,7 @@ sys-system_sql_modules-dep
 sys-triggers-dep
 sys-proc_param_helper-dep
 sys-sp_pkeys
-sys-sp_statistics
+sys-sp_statistics-before-16_9-or-17_4
 BABEL-APPLOCK
 BABEL-1438
 BABEL-SP_DATATYPE_INFO
@@ -505,3 +505,4 @@ babel_convert_with_style
 forxml-raw-elements-before-17_9-or-18_3
 forxml-path-elements-before-17_10-or-18_4
 babel_sqlvariant_coerce_type_before_16_14-or-17_10-or-18_4
+long-identifiers-objects-before-18_6

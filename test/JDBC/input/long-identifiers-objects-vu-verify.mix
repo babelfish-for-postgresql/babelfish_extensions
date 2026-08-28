@@ -1,0 +1,105 @@
+-- Verify table name after upgrade
+SELECT name FROM sys.tables WHERE name LIKE 'Very_Long_Table%VU_TVC';
+GO
+
+-- Verify column name after upgrade
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC') AND name LIKE 'Very_Long_Column%';
+GO
+
+-- Verify view name after upgrade
+SELECT name FROM sys.views WHERE name LIKE 'Very_Long_View%VU_TVC';
+GO
+
+-- Verify index name after upgrade
+SELECT name FROM sys.indexes WHERE name LIKE 'Very_Long_Index%VU_TVC';
+GO
+
+-- Verify view column alias after upgrade
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_tvc_vu_alias') AND name LIKE 'Very_Long_Alias%';
+GO
+
+-- Verify sys.all_views
+SELECT name FROM sys.all_views WHERE name LIKE 'Very_Long_View%VU_TVC';
+GO
+
+-- Verify sys.all_objects (table)
+SELECT name FROM sys.all_objects WHERE name LIKE 'Very_Long_Table%VU_TVC' AND type = 'U';
+GO
+
+-- Verify sys.all_objects (view)
+SELECT name FROM sys.all_objects WHERE name LIKE 'Very_Long_View%VU_TVC' AND type = 'V';
+GO
+
+-- Verify sys.all_columns
+SELECT name FROM sys.all_columns WHERE object_id = OBJECT_ID('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC') AND name LIKE 'Very_Long_Column%';
+GO
+
+-- Verify information_schema.views
+SELECT TABLE_NAME FROM information_schema.views WHERE TABLE_NAME LIKE 'Very_Long_View%VU_TVC';
+GO
+
+-- Verify information_schema.columns
+SELECT COLUMN_NAME FROM information_schema.columns WHERE TABLE_NAME LIKE 'Very_Long_Table%VU_TVC' AND COLUMN_NAME LIKE 'Very_Long%';
+GO
+
+-- Verify sp_tables
+EXEC sp_tables @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC';
+GO
+
+-- Verify sp_columns
+EXEC sp_columns @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC';
+GO
+
+-- Verify sp_statistics
+EXEC sp_statistics @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC';
+GO
+
+-- Verify sys.all_sql_modules (view definition lookup)
+SELECT CASE WHEN definition IS NOT NULL THEN 'HAS_DEFINITION' ELSE 'NO_DEFINITION' END FROM sys.all_sql_modules WHERE object_id = OBJECT_ID('Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC');
+GO
+
+-- Verify sp_fkeys
+EXEC sp_fkeys @pktable_name = 'Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC';
+GO
+
+-- Verify sp_special_columns
+EXEC sp_special_columns @table_name = 'Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC';
+GO
+
+-- ===========================================
+-- BABEL-5321: system procedures must resolve long identifiers passed either
+-- as the original name or as the truncated (physical) name, and must display
+-- the original (full) name.
+-- ===========================================
+
+-- Type-1 procs: calling with the TRUNCATED (physical) name must still return
+-- rows (backward compatibility for tools that captured the physical name).
+DECLARE @trunc_tbl sys.sysname = sys.babelfish_truncate_identifier(LOWER('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC'));
+DECLARE @trunc_pk sys.sysname = sys.babelfish_truncate_identifier(LOWER('Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC'));
+
+-- sp_tables with truncated name
+EXEC sp_tables @table_name = @trunc_tbl;
+GO
+DECLARE @trunc_tbl sys.sysname = sys.babelfish_truncate_identifier(LOWER('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC'));
+-- sp_columns with truncated name
+EXEC sp_columns @table_name = @trunc_tbl;
+GO
+DECLARE @trunc_tbl sys.sysname = sys.babelfish_truncate_identifier(LOWER('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC'));
+-- sp_statistics with truncated name
+EXEC sp_statistics @table_name = @trunc_tbl;
+GO
+DECLARE @trunc_pk sys.sysname = sys.babelfish_truncate_identifier(LOWER('Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC'));
+-- sp_pkeys with truncated name
+EXEC sp_pkeys @table_name = @trunc_pk;
+GO
+DECLARE @trunc_pk sys.sysname = sys.babelfish_truncate_identifier(LOWER('Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC'));
+-- sp_fkeys with truncated pktable name
+EXEC sp_fkeys @pktable_name = @trunc_pk;
+GO
+
+-- Type-2 procs: calling with the ORIGINAL name must return rows and display
+-- the full original TABLE_NAME (these previously matched only the physical name).
+EXEC sp_table_privileges @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC';
+GO
+EXEC sp_column_privileges @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC';
+GO

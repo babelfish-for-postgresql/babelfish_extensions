@@ -67,6 +67,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
+#include "parser/parsetree.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/parser.h"
 #include "parser/scanner.h"
@@ -179,6 +180,7 @@ static void check_insert_row(List *icolumns, List *exprList, Oid relid);
 static void pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, ColumnDef *column, List **alist);
 static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, char *relname, List **alist);
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
+static void pltsql_post_transform_target_entry(TargetEntry *te, ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(unsigned char c);
@@ -442,6 +444,8 @@ InstallExtendedHooks(void)
 
 	prev_pre_transform_target_entry_hook = pre_transform_target_entry_hook;
 	pre_transform_target_entry_hook = pre_transform_target_entry;
+
+	post_transform_target_entry_hook = pltsql_post_transform_target_entry;
 
 	prev_tle_name_comparison_hook = tle_name_comparison_hook;
 	tle_name_comparison_hook = tle_name_comparison;
@@ -2386,7 +2390,7 @@ extract_identifier(const char *start, int *last_pos)
  *    is given as 'start'. This helper function basically returns the
  *    last part of the multipart identifier.
  */
-static char *
+char *
 extract_multipart_identifier_name(const char *start)
 {
 	int 	identifier_len = strlen(start);
@@ -2415,8 +2419,6 @@ extract_multipart_identifier_name(const char *start)
 
 	return name;
 }
-
-extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
 
 static void
 pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, ColumnDef *column, List **alist)
@@ -2459,8 +2461,6 @@ pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, 
 	(*alist) = lappend(*alist, stmt);
 }
 
-extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
-extern const char *ATTOPTION_BBF_TABLE_CREATE_DATE;
 
 static void
 pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, char *relname, List **alist)
@@ -2501,10 +2501,10 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, c
 	stmt->objtype = OBJECT_TABLE;
 
 	/*
-	 * Only store original_name if there's a difference, and if the difference
-	 * is only in capitalization
+	 * Only store original_name when it differs from the internal relname
+	 * (either due to case difference or truncation).
 	 */
-	if (strncmp(relname, original_name, strlen(relname)) != 0 && strncasecmp(relname, original_name, strlen(relname)) == 0)
+	if (strcmp(relname, original_name) != 0)
 	{
 		/*
 		 * add "ALTER TABLE SET (bbf_original_table_name=<original_name>)" to
@@ -3094,6 +3094,87 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			}
 		}
 		/* Otherwise keep the ResTarget as is */
+	}
+}
+
+/*
+ * pltsql_post_transform_target_entry
+ *
+ * Post-transform hook: after a TargetEntry is created, set resorigname to
+ * the full (untruncated) original identifier from the query source text
+ * when the identifier was longer than NAMEDATALEN.
+ *
+ * Handles:
+ *   1. Explicit aliases (res->name_location >= 0)
+ *   2. Column references without alias - looks up bbf_original_name from
+ *      pg_attribute attoptions via the resolved Var.
+ */
+static void
+pltsql_post_transform_target_entry(TargetEntry *te, ResTarget *res,
+								   ParseState *pstate, ParseExprKind exprKind)
+{
+	const char *sourcetext;
+	char	   *original_name;
+	size_t		qlen;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	sourcetext = pstate->p_sourcetext;
+	if (!sourcetext || !res || !te || !te->resname)
+		return;
+
+	/*
+	 * Fast path: a result column name shorter than the truncation boundary
+	 * cannot be a truncated long identifier, so there is no original name to
+	 * recover.
+	 */
+	if (strlen(te->resname) < BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+		return;
+
+	/* Case 1: Explicit alias with a known location */
+	if (res->name_location >= 0)
+	{
+		qlen = strlen(sourcetext);
+		if ((size_t) res->name_location >= qlen)
+			return;
+
+		original_name = extract_identifier(sourcetext + res->name_location, NULL);
+		if (original_name && strlen(original_name) >= NAMEDATALEN)
+		{
+			te->resorigname = original_name;
+		}
+		else if (original_name)
+			pfree(original_name);
+		return;
+	}
+
+	/*
+	 * Case 2: Column reference - look up the original name
+	 * from pg_attribute.attoptions (bbf_original_name) via the resolved Var.
+	 */
+	if (te->expr && IsA(te->expr, Var))
+	{
+		Var		   *var = (Var *) te->expr;
+		char	   *orig;
+
+		/*
+		 * Resolve the original name following the same chain PostgreSQL uses
+		 * to propagate a column name outward (base relation, subquery, CTE,
+		 * or join). This handles queries like
+		 *   SELECT LongCol FROM (SELECT LongCol FROM t) sub
+		 *   WITH cte AS (SELECT LongCol FROM t) SELECT LongCol FROM cte
+		 * Only the truncated case needs resorigname; short identifiers already
+		 * fit in resname as-is.
+		 */
+		orig = pltsql_resolve_var_original_name(pstate, var);
+		if (orig)
+		{
+			if (strlen(orig) >= NAMEDATALEN)
+				te->resorigname = orig;
+			else
+				pfree(orig);
+		}
 	}
 }
 

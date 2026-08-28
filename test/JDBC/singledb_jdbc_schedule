@@ -16,6 +16,9 @@ ignore#!#Test-sp_reset_connection
 ignore#!#db_owner-vu-prepare
 ignore#!#db_owner-vu-verify
 ignore#!#db_owner-vu-cleanup
+ignore#!#db_owner-before-16_9-or-17_5-vu-prepare
+ignore#!#db_owner-before-16_9-or-17_5-vu-verify
+ignore#!#db_owner-before-16_9-or-17_5-vu-cleanup
 ignore#!#test_search_path
 ignore#!#alter-mvu-test-vu-prepare
 ignore#!#alter-mvu-test-vu-verify

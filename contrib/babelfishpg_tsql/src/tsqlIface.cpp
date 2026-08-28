@@ -8166,6 +8166,30 @@ post_process_create_table(TSqlParser::Create_tableContext *ctx, PLtsql_stmt_exec
 static bool
 post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
 {
+	/*
+	 * BABEL-5975: the bbf_original_rel_name / bbf_original_name options are
+	 * reserved for Babelfish's internal storage of original (long/mixed-case)
+	 * identifiers. A user must not be able to set them via
+	 * ALTER TABLE ... SET (<option> = <value>) (which reaches here as a
+	 * file_table_option). Reject it with the same "reserved for internal
+	 * Babelfish use" error the PG-endpoint guard raises, so both endpoints
+	 * report a consistent message.
+	 */
+	for (auto ftoctx : ctx->file_table_option())
+	{
+		if (ftoctx->id())
+		{
+			std::string optname = stripQuoteFromId(ftoctx->id());
+
+			if (pg_strcasecmp(optname.c_str(), ATTOPTION_BBF_ORIGINAL_TABLE_NAME) == 0 ||
+				pg_strcasecmp(optname.c_str(), ATTOPTION_BBF_ORIGINAL_NAME) == 0 ||
+				pg_strcasecmp(optname.c_str(), ATTOPTION_BBF_TABLE_CREATE_DATE) == 0)
+				throw PGErrorWrapperException(ERROR, ERRCODE_INSUFFICIENT_PRIVILEGE,
+											  format_errmsg("relation option \"%s\" is reserved for internal Babelfish use and cannot be set", optname.c_str()),
+											  getLineAndPos(ftoctx->id()));
+		}
+	}
+
 	if (ctx->column_def_table_constraints())
 	{
 		for (auto cdtctx : ctx->column_def_table_constraints()->column_def_table_constraint())

@@ -580,7 +580,7 @@ BABEL-5059
 cast-varchar-to-time
 xml_exist
 test_db_collation
-BABEL-5119
+BABEL-5119-before-18_6
 BABEL-5129
 BABEL-CASE_EXPR
 charindex_replace_patindex

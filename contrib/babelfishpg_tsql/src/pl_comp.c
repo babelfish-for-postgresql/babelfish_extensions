@@ -29,7 +29,9 @@
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_relation.h"
+#include "parser/parsetree.h"
 #include "parser/parse_type.h"
+#include "parser/scansup.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -130,7 +132,7 @@ static void add_dummy_return(PLtsql_function *function);
 static void add_decl_table(PLtsql_function *function, int tbl_dno, char *tbl_typ);
 static Node *pltsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
-static void pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l);
+void pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l);
 static Node *pltsql_param_ref(ParseState *pstate, ParamRef *pref);
 static Node *resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
 								ColumnRef *cref, bool error_if_no_field);
@@ -1788,20 +1790,102 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 
 
 /*
+ * pltsql_resolve_var_original_name
+ *
+ * Resolve the original (pre-truncation, original-case) name of the column that
+ * a Var refers to, following the same chain PostgreSQL follows when it
+ * propagates a column name from an inner query to an outer one. Returns a
+ * palloc'd string, or NULL if there is no distinct original name.
+ *
+ * This mirrors PG's resname -> eref->colnames -> resname propagation so that
+ * long identifiers survive across every column-source construct:
+ *   - RTE_RELATION : original name lives in pg_attribute attoptions (PR1).
+ *   - RTE_SUBQUERY : recover from the subquery targetlist's resorigname.
+ *   - RTE_CTE      : recover from the CTE query's targetlist resorigname.
+ *   - RTE_JOIN     : follow joinaliasvars to the underlying Var and recurse.
+ * Only long identifiers (>= NAMEDATALEN) need this; short/mixed-case names
+ * already fit in resname and are propagated natively by PostgreSQL.
+ */
+char *
+pltsql_resolve_var_original_name(ParseState *pstate, Var *var)
+{
+	RangeTblEntry *rte;
+	AttrNumber	attnum;
+
+	/*
+	 * This function follows parser-produced Var chains (join alias vars,
+	 * nested subqueries) recursively. Normal parse trees are acyclic and
+	 * shallow, but guard against stack exhaustion on a pathologically deep
+	 * input so it fails cleanly.
+	 */
+	check_stack_depth();
+
+	if (var == NULL || !IsA(var, Var) ||
+		var->varno <= 0 || var->varattno <= 0)
+		return NULL;
+
+	rte = GetRTEByRangeTablePosn(pstate, var->varno, var->varlevelsup);
+	if (rte == NULL)
+		return NULL;
+	attnum = var->varattno;
+
+	switch (rte->rtekind)
+	{
+		case RTE_RELATION:
+			if (OidIsValid(rte->relid))
+				return get_bbf_original_column_name(rte->relid, attnum);
+			return NULL;
+
+		case RTE_SUBQUERY:
+			if (rte->subquery != NULL)
+			{
+				TargetEntry *sub_tle = get_tle_by_resno(rte->subquery->targetList, attnum);
+
+				if (sub_tle && sub_tle->resorigname)
+					return pstrdup(sub_tle->resorigname);
+			}
+			return NULL;
+
+		case RTE_CTE:
+			{
+				CommonTableExpr *cte = GetCTEForRTE(pstate, rte, var->varlevelsup);
+
+				if (cte != NULL && IsA(cte->ctequery, Query))
+				{
+					Query	   *ctequery = (Query *) cte->ctequery;
+					TargetEntry *cte_tle = get_tle_by_resno(ctequery->targetList, attnum);
+
+					if (cte_tle && cte_tle->resorigname)
+						return pstrdup(cte_tle->resorigname);
+				}
+			}
+			return NULL;
+
+		case RTE_JOIN:
+			if (attnum <= list_length(rte->joinaliasvars))
+			{
+				Node	   *aliasvar = (Node *) list_nth(rte->joinaliasvars, attnum - 1);
+
+				if (aliasvar != NULL && IsA(aliasvar, Var))
+					return pltsql_resolve_var_original_name(pstate, (Var *) aliasvar);
+			}
+			return NULL;
+
+		default:
+			return NULL;
+	}
+}
+
+
+/*
  * Call this hook only when expanding a SELECT * or relation.* to its individual column names
  * We can rewrite the column names to their Babelfish (ie original case) names
  * if we find them in pg_attribute.
  */
-static void
+void
 pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 {
 	ListCell   *li;
-	Datum		attopts;
-	ArrayType  *arr;
-	Datum	   *optiondatums;
-	int			noptions,
-				i;
-	char	   *optstr;
 
 	foreach(li, l)
 	{
@@ -1811,53 +1895,25 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 		 */
 		TargetEntry *te = (TargetEntry *) lfirst(li);
 		Var		   *varnode = (Var *) te->expr;
-		RangeTblEntry *rte = GetRTEByRangeTablePosn(pstate, varnode->varno, varnode->varlevelsup);
-		Oid			relid = rte->relid;
-		int16		attnum = varnode->varattno;
+		char	   *orig;
 
-		if (rte->rtekind != RTE_RELATION || relid == InvalidOid)
-		{
-			return;
-		}
+		if (te->resjunk || varnode == NULL || !IsA(varnode, Var))
+			continue;
 
-		/*
-		 * Get the list of names in pg_attribute. get_attoptions returns a
-		 * Datum of the text[] field pgattribute.attoptions. We don't want to
-		 * throw a full error if cache lookup fails to preserve functionality,
-		 * so just log it.
-		 */
-		PG_TRY();
+		orig = pltsql_resolve_var_original_name(pstate, varnode);
+		if (orig)
 		{
-			attopts = get_attoptions(relid, attnum);
-		}
-		PG_CATCH();
-		{
-			HOLD_INTERRUPTS();
-			elog(LOG, "Cache lookup failed in pltsql_post_expand_star for attribute %d of relation %u",
-				 attnum, relid);
-			attopts = (Datum) 0;
-			RESUME_INTERRUPTS();
-		}
-		PG_END_TRY();
-		if (!attopts)
-		{
-			return;
-		}
-
-		arr = DatumGetArrayTypeP(attopts);
-		deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
-						  &optiondatums, NULL, &noptions);
-
-		for (i = 0; i < noptions; i++)
-		{
-			optstr = VARDATA(optiondatums[i]);
-			if (strncmp(optstr, "bbf_original_name=", 18) == 0)
+			/* Only set resorigname for long identifiers; for short ones,
+			 * override resname to restore original case. */
+			if (strlen(orig) >= NAMEDATALEN)
+				te->resorigname = orig;		/* ownership transferred to tle */
+			else
 			{
-				/*
-				 * We found the original name; rewrite it as bbf_original_name
-				 */
-				te->resname = pnstrdup((char *) &optstr[18], strlen(te->resname));
-				break;
+				/* Short name: resorigname is not needed; restore original
+				 * case onto resname (a copy) and free the resolved string. */
+				if (te->resname)
+					te->resname = pnstrdup(orig, strlen(te->resname));
+				pfree(orig);
 			}
 		}
 	}
