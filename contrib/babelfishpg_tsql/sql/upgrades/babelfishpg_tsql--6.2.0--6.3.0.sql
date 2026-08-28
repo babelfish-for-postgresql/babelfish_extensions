@@ -43,6 +43,15 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+-- BABEL-5975: mark babelfish_truncate_identifier PARALLEL SAFE. It is a pure,
+-- deterministic string function (already IMMUTABLE) used per-row in the
+-- sp_columns / sp_tables / sp_statistics filters and system views; without the
+-- PARALLEL SAFE marker it disables parallelism (and forces poor plans) for
+-- every query that references it, causing timeouts on large/upgraded catalogs.
+CREATE OR REPLACE FUNCTION sys.babelfish_truncate_identifier(IN object_name TEXT)
+RETURNS text
+AS 'babelfishpg_tsql', 'pltsql_truncate_identifier_func' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 create or replace view sys.all_objects as
 WITH tt_internal AS MATERIALIZED (
   SELECT typrelid FROM sys.table_types_internal

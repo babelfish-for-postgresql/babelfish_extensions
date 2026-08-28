@@ -67,6 +67,14 @@
 #define VARBINARY_MAX_SCALE 8000
 
 /*
+ * Maximum length, in UTF-16 code units, that the single-byte COLMETADATA
+ * ColName / BaseColName length field can carry. A T-SQL identifier is at most
+ * 128 characters, so 128 code units is the semantic bound and also stays well
+ * within the 255 the length byte can physically represent.
+ */
+#define TDS_MAXCHAR_IN_COLMETADATA_NAME 128
+
+/*
  * Local structures and functions copied from printtup.c
  */
 typedef struct
@@ -921,14 +929,34 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 		{
 
 			/* column length and name */
-			if (col->colName.len > 0)
-				temp8 = (uint8_t) pg_mbstrlen(col->colName.data);
-			else
-				temp8 = 0;
-
 			resetStringInfo(&tempBuf);
 			TdsUTF8toUTF16StringInfo(&tempBuf, col->colName.data,
 									 col->colName.len);
+
+			/*
+			 * The COLMETADATA name length is a single byte counting UTF-16
+			 * code units, not code points. TdsUTF8toUTF16StringInfo emits two
+			 * bytes per code unit, so the unit count is tempBuf.len / 2.
+			 * Supplementary characters (U+10000..U+10FFFF) are one code point
+			 * but two code units, so a code-point count (pg_mbstrlen) would
+			 * under-announce and desynchronize the stream. Clamp to what the
+			 * uint8 field can represent, truncating the payload to match, so an
+			 * over-long name can never wrap the length field.
+			 */
+			if (col->colName.len > 0)
+			{
+				uint32_t	units = tempBuf.len / 2;
+
+				if (units > TDS_MAXCHAR_IN_COLMETADATA_NAME)
+				{
+					units = TDS_MAXCHAR_IN_COLMETADATA_NAME;
+					tempBuf.len = units * 2;
+				}
+				temp8 = (uint8_t) units;
+			}
+			else
+				temp8 = 0;
+
 			TdsPutbytes(&temp8, sizeof(temp8));
 			TdsPutbytes(tempBuf.data, tempBuf.len);
 		}
@@ -1072,10 +1100,26 @@ SendColInfoToken(int natts, bool sendRowStat)
 
 		if (status & COLUMN_STATUS_DIFFERENT_NAME)
 		{
+			uint32_t	units;
+
 			Assert(col->baseColName != NULL);
-			temp8 = (uint8_t) pg_mbstrlen(col->baseColName);
+			resetStringInfo(&tempBuf);
+			TdsUTF8toUTF16StringInfo(&tempBuf, col->baseColName, strlen(col->baseColName));
+
+			/*
+			 * Announce the length in UTF-16 code units (tempBuf.len / 2), not
+			 * code points, and clamp so an over-long or supplementary-character
+			 * base column name can never wrap the single-byte length field.
+			 */
+			units = tempBuf.len / 2;
+			if (units > TDS_MAXCHAR_IN_COLMETADATA_NAME)
+			{
+				units = TDS_MAXCHAR_IN_COLMETADATA_NAME;
+				tempBuf.len = units * 2;
+			}
+			temp8 = (uint8_t) units;
 			appendBinaryStringInfo(&buf, (const char *) &temp8, sizeof(uint8));
-			TdsUTF8toUTF16StringInfo(&buf, col->baseColName, strlen(col->baseColName));
+			appendBinaryStringInfo(&buf, tempBuf.data, tempBuf.len);
 		}
 	}
 

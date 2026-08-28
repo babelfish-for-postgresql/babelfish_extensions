@@ -11423,7 +11423,7 @@ RETURNS table (
 -- internal function to truncate long identifier
 CREATE OR REPLACE FUNCTION sys.babelfish_truncate_identifier(IN object_name TEXT)
 RETURNS text
-AS 'babelfishpg_tsql', 'pltsql_truncate_identifier_func' LANGUAGE C IMMUTABLE STRICT;
+AS 'babelfishpg_tsql', 'pltsql_truncate_identifier_func' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 -- internal functions for debuggig/testing purpose
 CREATE OR REPLACE FUNCTION sys.babelfish_pltsql_cursor_show_textptr_only_column_indexes(cursor_handle INT)
