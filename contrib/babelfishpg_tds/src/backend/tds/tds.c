@@ -312,6 +312,20 @@ tds_shmem_request()
 	 * resources in tds_status_shmem_startup().
 	 */
 	RequestAddinShmemSpace(tds_memsize());
+
+	/*
+	 * Ad-hoc ANTLR parse cache: reserve shared memory for the cache hash table.
+	 * The hash is created in tds_status_shmem_startup() and used by babelfishpg_tsql.
+	 */
+	{
+		Size adhoc_cache_size;
+		/* shared state + hash table for 100 entries */
+		adhoc_cache_size = MAXALIGN(sizeof(int64) * 8);  /* shared state */
+		adhoc_cache_size = add_size(adhoc_cache_size,
+									hash_estimate_size(100, 82008));
+		RequestAddinShmemSpace(adhoc_cache_size);
+	}
+	RequestNamedLWLockTranche("adhoc_antlr_parse_cache", 1);
 }
 
 /*
@@ -416,6 +430,48 @@ tds_status_shmem_startup(void)
 			TdsStatusArray[i].st_context_info = buffer;
 			buffer += CONTEXTINFOLEN;
 		}
+	}
+
+	/*
+	 * Ad-hoc ANTLR parse cache: create shared hash table and state.
+	 * babelfishpg_tsql will attach to these by calling ShmemInitHash/ShmemInitStruct
+	 * with the same names.
+	 */
+	{
+		typedef struct {
+			LWLock	   *lock;
+			int64		total_entries;
+			int64		stat_hits;
+			int64		stat_misses;
+			int64		stat_writes;
+			int64		stat_evictions;
+			int64		stat_errors;
+		} AdhocCacheState;
+
+		AdhocCacheState *state;
+		HASHCTL info;
+		bool state_found;
+
+		state = ShmemInitStruct("adhoc_antlr_parse_cache_state",
+								sizeof(AdhocCacheState), &state_found);
+		if (!state_found)
+		{
+			state->lock = &(GetNamedLWLockTranche("adhoc_antlr_parse_cache"))->lock;
+			state->total_entries = 0;
+			state->stat_hits = 0;
+			state->stat_misses = 0;
+			state->stat_writes = 0;
+			state->stat_evictions = 0;
+			state->stat_errors = 0;
+		}
+
+		memset(&info, 0, sizeof(info));
+		info.keysize = 16;  /* sizeof(AdhocCacheKey): int64 + int16 + padding */
+		info.entrysize = 82008;  /* exact sizeof(AdhocCacheEntry) */
+		ShmemInitHash("adhoc_antlr_parse_cache_hash",
+					  100, 100,
+					  &info,
+					  HASH_ELEM | HASH_BLOBS);
 	}
 
 	LWLockRelease(AddinShmemInitLock);
