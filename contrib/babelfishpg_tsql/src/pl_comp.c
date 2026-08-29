@@ -49,6 +49,9 @@
 #include "hooks.h"
 #include "analyzer.h"
 #include "catalog.h"
+#include "adhoc_cache.h"
+#include "session.h"
+#include "utils/snapmgr.h"
 #include "codegen.h"
 #include "iterative_exec.h"
 #include "multidb.h"
@@ -158,6 +161,8 @@ static void delete_function(PLtsql_function *func);
 
 extern Portal ActivePortal;
 extern bool pltsql_function_parse_error_transpose(const char *prosrc);
+extern bool babelfish_dump_restore;
+extern instr_time antlr_parse_time;
 static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid, int16 dbid);
 
 /* ----------
@@ -1510,20 +1515,191 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 	function->fetch_status_varno = var->dno;
 
 	/*
-	 * Now parse the function's text
+	 * Now parse the function's text.
+	 *
+	 * If ad-hoc ANTLR parse cache is enabled, try to restore
+	 * a previously cached parse tree first. On miss, parse normally and
+	 * cache the result for future executions.
 	 */
 	{
-		ANTLR_result result = antlr_parser_cpp(proc_source);
+		bool		adhoc_cache_hit = false;
+		char	   *normalized_query = NULL;
+		int64		query_hash_id = 0;
+		int16		current_db_id = 0;
 
-		if (result.success)
+		if (pltsql_enable_adhoc_antlr_parse_cache && args == NULL &&
+			IS_TDS_CONN() && !babelfish_dump_restore)
 		{
-			parse_rc = 0;
+			/* Use raw query text as cache key (normalization deferred to future phase) */
+			normalized_query = pstrdup(proc_source);
+			query_hash_id = compute_adhoc_query_hash(normalized_query);
+			current_db_id = get_cur_db_id();
+
+			/* Attempt cache lookup — switch to TopMemoryContext for catalog access */
+			{
+				MemoryContext old_cxt = MemoryContextSwitchTo(TopMemoryContext);
+				AdhocCacheEntry *cached = lookup_adhoc_parse_cache(query_hash_id,
+																  current_db_id,
+																  normalized_query);
+				MemoryContextSwitchTo(old_cxt);
+				if (cached != NULL)
+				{
+					PLtsql_stmt_block *restored_tree = NULL;
+					instr_time	deser_start, deser_end;
+
+					INSTR_TIME_SET_CURRENT(deser_start);
+
+					PG_TRY();
+					{
+						restored_tree = (PLtsql_stmt_block *)
+							pltsql_stringToNode(cached->parse_tree);
+					}
+					PG_CATCH();
+					{
+						FlushErrorState();
+						restored_tree = NULL;
+						pltsql_adhoc_cache_stat_errors++;
+						elog(DEBUG1, "pltsql_adhoc_parse_cache: deserialization failed, falling through to ANTLR");
+					}
+					PG_END_TRY();
+
+					if (restored_tree != NULL)
+					{
+						/* Restore datums if cached */
+						if (cached->parse_datums != NULL)
+						{
+							List *datum_list = NIL;
+
+							PG_TRY();
+							{
+								datum_list = (List *) pltsql_stringToNode(cached->parse_datums);
+							}
+							PG_CATCH();
+							{
+								FlushErrorState();
+								datum_list = NIL;
+								pltsql_adhoc_cache_stat_errors++;
+							}
+							PG_END_TRY();
+
+							if (datum_list != NIL)
+							{
+								ListCell *lc;
+								int ci = 0;
+
+								foreach(lc, datum_list)
+								{
+									PLtsql_datum *d = (PLtsql_datum *) lfirst(lc);
+									if (d != NULL)
+										pltsql_adddatum(d);
+									ci++;
+								}
+								list_free(datum_list);
+							}
+						}
+
+						pltsql_parse_result = restored_tree;
+						parse_rc = 0;
+						adhoc_cache_hit = true;
+						pltsql_adhoc_cache_stat_hits++;
+
+						/* Record deserialization time as the "parse time" for EXPLAIN reporting */
+						INSTR_TIME_SET_CURRENT(deser_end);
+						INSTR_TIME_SUBTRACT(deser_end, deser_start);
+						antlr_parse_time = deser_end;
+
+						elog(DEBUG1, "pltsql_adhoc_parse_cache[HIT]: hash=%ld db=%d (deser_time=%.3f ms)",
+							 (long) query_hash_id, current_db_id,
+							 1000.0 * INSTR_TIME_GET_DOUBLE(deser_end));
+					}
+				}
+
+				if (!adhoc_cache_hit)
+					pltsql_adhoc_cache_stat_misses++;
+			}
 		}
-		else
+
+		if (!adhoc_cache_hit)
 		{
-			report_antlr_error(result);
-			parse_rc = 1;		/* invalid input */
+			ANTLR_result result = antlr_parser_cpp(proc_source);
+
+			if (result.success)
+			{
+				parse_rc = 0;
+			}
+			else
+			{
+				report_antlr_error(result);
+				parse_rc = 1;		/* invalid input */
+			}
 		}
+
+		/* Cache write: after successful fresh ANTLR parse */
+		if (!adhoc_cache_hit && parse_rc == 0 &&
+			pltsql_enable_adhoc_antlr_parse_cache && normalized_query != NULL)
+		{
+			MemoryContext compile_cxt = MemoryContextSwitchTo(TopMemoryContext);
+			bool snapshot_pushed = false;
+
+			PG_TRY();
+			{
+				char *tree_str = pltsql_nodeToString(pltsql_parse_result);
+				char *datums_str = NULL;
+
+				/* Serialize current datums */
+				if (pltsql_nDatums > 0)
+				{
+					List *datum_list = NIL;
+					int di;
+
+					for (di = 0; di < pltsql_nDatums; di++)
+					{
+						if (pltsql_Datums[di] != NULL)
+							datum_list = lappend(datum_list, pltsql_Datums[di]);
+					}
+					if (datum_list != NIL)
+					{
+						datums_str = pltsql_nodeToString(datum_list);
+						list_free(datum_list);
+					}
+				}
+
+				/* Ensure active snapshot for catalog write */
+				if (!ActiveSnapshotSet())
+				{
+					PushActiveSnapshot(GetTransactionSnapshot());
+					snapshot_pushed = true;
+				}
+
+				insert_adhoc_parse_cache(query_hash_id, current_db_id,
+										 normalized_query, tree_str, datums_str);
+
+				if (snapshot_pushed)
+					PopActiveSnapshot();
+
+				if (tree_str)
+					pfree(tree_str);
+				if (datums_str)
+					pfree(datums_str);
+
+				elog(DEBUG1, "pltsql_adhoc_parse_cache[WRITE]: hash=%ld db=%d",
+					 (long) query_hash_id, current_db_id);
+			}
+			PG_CATCH();
+			{
+				if (snapshot_pushed)
+					PopActiveSnapshot();
+				FlushErrorState();
+				pltsql_adhoc_cache_stat_errors++;
+				elog(DEBUG1, "pltsql_adhoc_parse_cache[FAIL]: write failed, continuing normally");
+			}
+			PG_END_TRY();
+
+			MemoryContextSwitchTo(compile_cxt);
+		}
+
+		if (normalized_query)
+			pfree(normalized_query);
 	}
 
 	if (parse_rc != 0)
