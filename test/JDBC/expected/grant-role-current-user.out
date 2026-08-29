@@ -16,6 +16,10 @@ GO
 -- Test 1: GRANT role TO CURRENT_USER should not crash (previously caused SIGSEGV)
 GRANT babel_6839_test_role TO CURRENT_USER;
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: role "babel_6839_pg_user" is already a member of role "babel_6839_test_role"  Server SQLState: 00000)~~
+
 
 -- psql user=babel_6839_pg_user password=12345678
 -- Test 2: GRANT role TO CURRENT_ROLE should not crash
@@ -23,7 +27,7 @@ GRANT babel_6839_test_role TO CURRENT_ROLE;
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: role "babel_6839_pg_user" has already been granted membership in role "babel_6839_test_role" by role "babel_6839_pg_user"  Server SQLState: 00000)~~
+~~WARNING (Message: role "babel_6839_pg_user" is already a member of role "babel_6839_test_role"  Server SQLState: 00000)~~
 
 
 -- psql user=babel_6839_pg_user password=12345678
@@ -32,7 +36,7 @@ GRANT babel_6839_test_role TO SESSION_USER;
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: role "babel_6839_pg_user" has already been granted membership in role "babel_6839_test_role" by role "babel_6839_pg_user"  Server SQLState: 00000)~~
+~~WARNING (Message: role "babel_6839_pg_user" is already a member of role "babel_6839_test_role"  Server SQLState: 00000)~~
 
 
 -- psql user=babel_6839_pg_user password=12345678
@@ -46,7 +50,7 @@ REVOKE babel_6839_test_role FROM CURRENT_ROLE;
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: role "babel_6839_pg_user" has not been granted membership in role "babel_6839_test_role" by role "babel_6839_pg_user"  Server SQLState: 01000)~~
+~~WARNING (Message: role "babel_6839_pg_user" is not a member of role "babel_6839_test_role"  Server SQLState: 01000)~~
 
 
 -- psql user=babel_6839_pg_user password=12345678
@@ -55,7 +59,7 @@ REVOKE babel_6839_test_role FROM SESSION_USER;
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: role "babel_6839_pg_user" has not been granted membership in role "babel_6839_test_role" by role "babel_6839_pg_user"  Server SQLState: 01000)~~
+~~WARNING (Message: role "babel_6839_pg_user" is not a member of role "babel_6839_test_role"  Server SQLState: 01000)~~
 
 
 -- psql user=babel_6839_pg_user password=12345678
