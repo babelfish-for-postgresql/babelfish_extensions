@@ -1,0 +1,19 @@
+-- tsql
+use dbowner__main_db
+go
+drop database dbowner__test_db
+go
+drop user dbowner__u1
+go
+drop login dbowner__l1
+go
+drop login dbowner__l2
+go
+drop login dbowner__temp
+go
+revoke connect from guest
+go
+use master
+go
+drop database dbowner__main_db
+go

@@ -590,7 +590,7 @@ BABEL-5059
 cast-varchar-to-time
 xml_exist
 test_db_collation
-BABEL-5119
+BABEL-5119-before-18_6
 dbcreator_role
 BABEL-5129
 db_accessadmin
@@ -685,3 +685,4 @@ babel_sqlvariant_coerce_type_before_16_14-or-17_10-or-18_4
 forxml-auto-before-17_11-or-18_5
 forxml-before-17_11-or-18_5
 BABEL-login-db-long-identifiers
+long-identifiers-objects-before-18_6

@@ -34,6 +34,7 @@
 #include "session.h"
 #include "rolecmds.h"
 #include "parser/scansup.h"
+#include "rewrite/rewriteHandler.h"
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
@@ -1902,7 +1903,148 @@ exec_utility_cmd_helper(char *query_str)
 	CommandCounterIncrement();
 }
 
-extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
+/*
+ * get_original_relname
+ *
+ * Look up the original (pre-truncation) relation name stored in the
+ * bbf_original_rel_name reloption for the given relation OID.
+ * If check_permission is true, verifies the caller has SELECT permission
+ * on the relation before returning the name.
+ * Returns a palloc'd copy of the original name, or NULL if not found.
+ */
+char *
+get_original_relname(Oid relid, bool check_permission)
+{
+	HeapTuple	tuple;
+	char	   *result = NULL;
+
+	if (!OidIsValid(relid))
+		return NULL;
+
+	if (check_permission)
+	{
+		AclResult	aclresult;
+		aclresult = pg_class_aclcheck(relid, GetUserId(), ACL_SELECT);
+		if (aclresult != ACLCHECK_OK)
+			return NULL;
+	}
+
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (HeapTupleIsValid(tuple))
+	{
+		bool		isnull;
+		Datum		opts;
+		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
+
+		/*
+		 * Scan reloptions for the original name when the physical relname was
+		 * likely truncated. Use >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD (not
+		 * NAMEDATALEN-1) because multibyte truncation can back off to fewer
+		 * than NAMEDATALEN-1 bytes.
+		 *
+		 * Indexes are an exception: their physical name is always mangled as
+		 * index_name || table_name || md5(index_name) (see
+		 * construct_unique_index_name), so the bbf_original_rel_name reloption
+		 * is present even when the physical name is short. Always read it for
+		 * index relations (BABEL-5052).
+		 */
+		if (strlen(NameStr(classForm->relname)) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD ||
+			classForm->relkind == RELKIND_INDEX ||
+			classForm->relkind == RELKIND_PARTITIONED_INDEX)
+		{
+			opts = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
+			if (!isnull)
+			{
+				ArrayType	   *arr = DatumGetArrayTypeP(opts);
+				ArrayIterator	it = array_create_iterator(arr, 0, NULL);
+				Datum			val;
+				bool			vnull;
+				const char	   *prefix = ATTOPTION_BBF_ORIGINAL_TABLE_NAME "=";
+				int				prefix_len = strlen(prefix);
+
+				while (array_iterate(it, &val, &vnull))
+				{
+					const char *s;
+					int			len;
+
+					if (vnull)
+						continue;
+					s = VARDATA_ANY(val);
+					len = VARSIZE_ANY_EXHDR(val);
+					if (len > prefix_len && memcmp(s, prefix, prefix_len) == 0)
+					{
+						result = pnstrdup(s + prefix_len, len - prefix_len);
+						break;
+					}
+				}
+				array_free_iterator(it);
+			}
+		}
+
+		/* Fallback to relname if no bbf_original_rel_name found */
+		if (!result)
+			result = pstrdup(NameStr(classForm->relname));
+
+		ReleaseSysCache(tuple);
+	}
+	return result;
+}
+
+/*
+ * get_bbf_original_column_name
+ *
+ * Look up the original (pre-truncation, original-case) column name stored in
+ * the bbf_original_name attoption for the given relation OID and attribute
+ * number. Returns a palloc'd copy of the original name, or NULL if no such
+ * option is present.
+ *
+ * The caller is expected to already hold a lock on the relation (which the
+ * post-parse-analysis callers do, since the Var was resolved during parse
+ * analysis and that pins the relation). A concurrent DROP/RENAME of the
+ * attribute requires AccessExclusiveLock and therefore cannot commit while we
+ * reference the column, so get_attoptions() cannot legitimately fail here; if
+ * it ever did, that would indicate catalog corruption and the error is allowed
+ * to propagate rather than being masked.
+ */
+char *
+get_bbf_original_column_name(Oid relid, AttrNumber attnum)
+{
+	Datum		attopts;
+	ArrayType  *arr;
+	Datum	   *optiondatums;
+	int			noptions;
+	int			i;
+	char	   *result = NULL;
+	const char *prefix = ATTOPTION_BBF_ORIGINAL_NAME "=";
+	int			prefix_len = strlen(prefix);
+
+	if (!OidIsValid(relid) || attnum <= 0)
+		return NULL;
+
+	attopts = get_attoptions(relid, attnum);
+	if (attopts == (Datum) 0)
+		return NULL;
+
+	arr = DatumGetArrayTypeP(attopts);
+	deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
+					  &optiondatums, NULL, &noptions);
+
+	for (i = 0; i < noptions; i++)
+	{
+		char	   *optstr = TextDatumGetCString(optiondatums[i]);
+
+		if (strncmp(optstr, prefix, prefix_len) == 0)
+		{
+			result = pstrdup(optstr + prefix_len);
+			pfree(optstr);
+			break;
+		}
+		pfree(optstr);
+	}
+
+	return result;
+}
+
 void
 exec_add_original_index_name(char *idxname, char *schemaname, char *original_name)
 {

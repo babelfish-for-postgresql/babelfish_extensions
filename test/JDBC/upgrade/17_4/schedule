@@ -581,7 +581,7 @@ BABEL-5059
 cast-varchar-to-time
 xml_exist
 test_db_collation
-BABEL-5119
+BABEL-5119-before-18_6
 dbcreator_role
 BABEL-5129
 db_accessadmin
@@ -593,7 +593,7 @@ BABEL-5186
 BABEL-2736-before-17_7-16_11
 cast_nvarchar_test
 datareader_datawriter
-db_owner
+db_owner-before-16_9-or-17_5
 smalldatetime_date_cmp
 BABEL-2961
 BABEL-5031
