@@ -19,6 +19,9 @@ ignore#!#BABEL-2736-before-17_7-vu-cleanup
 ignore#!#PARTITION-before-17_7-vu-prepare
 ignore#!#PARTITION-before-17_7-vu-verify
 ignore#!#PARTITION-before-17_7-vu-cleanup
+ignore#!#db_owner-before-16_9-or-17_5-vu-prepare
+ignore#!#db_owner-before-16_9-or-17_5-vu-verify
+ignore#!#db_owner-before-16_9-or-17_5-vu-cleanup
 ignore#!#cast_string_to_binary-before-15_16-vu-prepare
 ignore#!#cast_string_to_binary-before-15_16-vu-verify
 ignore#!#cast_string_to_binary-before-15_16-vu-cleanup
@@ -609,6 +612,9 @@ ignore#!#babel-4475_before_16_5-vu-cleanup
 ignore#!#BABEL-5119_before_16_5-vu-prepare
 ignore#!#BABEL-5119_before_16_5-vu-verify
 ignore#!#BABEL-5119_before_16_5-vu-cleanup
+ignore#!#BABEL-5119-before-18_6-vu-prepare
+ignore#!#BABEL-5119-before-18_6-vu-verify
+ignore#!#BABEL-5119-before-18_6-vu-cleanup
 ignore#!#BABEL-5059_before_16_5-vu-prepare
 ignore#!#BABEL-5059_before_16_5-vu-verify
 ignore#!#BABEL-5059_before_16_5-vu-cleanup
@@ -790,6 +796,12 @@ ignore#!#money_aggregate-before-17_11-or-18_5-vu-cleanup
 ignore#!#numeric_money-before-17_11-or-18_5-vu-prepare
 ignore#!#numeric_money-before-17_11-or-18_5-vu-verify
 ignore#!#numeric_money-before-17_11-or-18_5-vu-cleanup
+ignore#!#long-identifiers-objects-before-18_6-vu-prepare
+ignore#!#long-identifiers-objects-before-18_6-vu-verify
+ignore#!#long-identifiers-objects-before-18_6-vu-cleanup
+ignore#!#sys-sp_statistics-before-16_9-or-17_4-vu-prepare
+ignore#!#sys-sp_statistics-before-16_9-or-17_4-vu-verify
+ignore#!#sys-sp_statistics-before-16_9-or-17_4-vu-cleanup
 ignore#!#antlr_parse_cache_version-vu-prepare
 ignore#!#antlr_parse_cache_version-vu-verify
 ignore#!#antlr_parse_cache_version-vu-cleanup

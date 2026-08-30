@@ -21,7 +21,7 @@ go
 drop view t_sptables5
 go
 
-drop table MyTable1
+drop table mytable1
 go
 
 use master

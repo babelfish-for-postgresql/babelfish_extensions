@@ -3482,6 +3482,9 @@ tsql_IndexStmt:
 					n->if_not_exists = false;
 
 					tsql_index_nulls_order(n->indexParams, n->accessMethod);
+					n->options = lappend(n->options,
+						makeDefElem(TSQL_ORIGINAL_NAME_LOCATION,
+							(Node *) makeInteger(@7), -1));
 					$$ = (Node *)n;
 				}
 		| CREATE TSQL_SPATIAL INDEX opt_single_name
@@ -4411,6 +4414,10 @@ tsql_AlterViewStmt:
                     n->query = $7;
                     n->replace = true;
                     n->options = $5;
+                    if ($4 != NIL)
+                        n->options = lappend(n->options,
+                            makeDefElem(BBF_VIEW_COLLIST_LOC_OPTION,
+                                        (Node *) makeInteger(@4), @4));
                     n->withCheckOption = $8;
                     n->createOrAlter = true;
                     $$ = (Node *) n;
@@ -4424,6 +4431,10 @@ tsql_AlterViewStmt:
                     n->query = $9;
                     n->replace = false;
                     n->options = $7;
+                    if ($6 != NIL)
+                        n->options = lappend(n->options,
+                            makeDefElem(BBF_VIEW_COLLIST_LOC_OPTION,
+                                        (Node *) makeInteger(@6), @6));
                     n->withCheckOption = $10;
                     n->createOrAlter = true;
                     $$ = (Node *) n;

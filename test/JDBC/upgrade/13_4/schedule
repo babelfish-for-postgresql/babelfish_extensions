@@ -155,7 +155,7 @@ sys-schemas-dep
 sys_server_principals_dep_for_13_x
 sys-sp_databases
 sys-sp_pkeys
-sys-sp_statistics
+sys-sp_statistics-before-16_9-or-17_4
 sys-sp_tables_view
 sys-sp_tables_view-dep
 sys-suser_sid

@@ -1,0 +1,35 @@
+-- Long identifiers tables/views/columns vu-prepare
+
+-- Table with long name
+CREATE TABLE Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC (
+    Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC INT,
+    short_col VARCHAR(50)
+);
+GO
+
+-- View with long name
+CREATE VIEW Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC AS
+SELECT Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC FROM Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC;
+GO
+
+-- Index with long name
+CREATE INDEX Very_Long_Index_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC
+ON Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC(Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC);
+GO
+
+-- View with long column alias
+CREATE VIEW babel5975_tvc_vu_alias AS
+SELECT 1 AS Very_Long_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC;
+GO
+
+-- Table with PK for sp_special_columns and sp_fkeys testing
+CREATE TABLE Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC (
+    id INT PRIMARY KEY,
+    val NVARCHAR(50)
+);
+GO
+CREATE TABLE Very_Long_FK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC (
+    id INT,
+    fk_id INT REFERENCES Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC(id)
+);
+GO

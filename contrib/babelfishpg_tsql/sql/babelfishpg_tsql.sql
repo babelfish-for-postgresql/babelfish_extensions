@@ -465,9 +465,6 @@ CREATE OR REPLACE PROCEDURE sys.sp_columns (
     "@fusepattern" smallint = 1)
 AS $$
 BEGIN
-	-- TODO: we should be able to get rid of babelfish_truncate_identifier when we fix BABEL-5416
-	declare @truncated_ident sys.nvarchar(384);
-	select @truncated_ident = sys.babelfish_truncate_identifier(pg_catalog.lower(@table_name));
 	IF @fusepattern = 1 
 		select table_qualifier as TABLE_QUALIFIER, 
 			table_owner as TABLE_OWNER,
@@ -499,10 +496,12 @@ BEGIN
 				END
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
-		where table_name like @truncated_ident COLLATE database_default
+		where (table_name like @table_name COLLATE database_default
+			   or sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) like @table_name COLLATE database_default)
 			and (coalesce(@table_owner,'') = '' or table_owner like @table_owner collate database_default)
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier like @table_qualifier collate database_default)
-			and (coalesce(@column_name,'') = '' or column_name like @column_name collate database_default)
+			and (coalesce(@column_name,'') = '' or column_name like @column_name collate database_default
+				 or sys.babelfish_truncate_identifier(pg_catalog.lower(column_name)) like @column_name collate database_default)
 		order by table_qualifier,
 				 table_owner,
 				 table_name,
@@ -538,10 +537,12 @@ BEGIN
 				END
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
-			where table_name = @truncated_ident collate database_default
+			where (table_name = @table_name collate database_default
+				   or sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = @table_name collate database_default)
 			and (coalesce(@table_owner, '') = '' or table_owner = @table_owner collate database_default)
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier = @table_qualifier collate database_default)
-			and (coalesce(@column_name,'') = '' or column_name = @column_name collate database_default)
+			and (coalesce(@column_name,'') = '' or column_name = @column_name collate database_default
+				 or sys.babelfish_truncate_identifier(pg_catalog.lower(column_name)) = @column_name collate database_default)
 		order by table_qualifier,
 				 table_owner,
 				 table_name,
@@ -561,9 +562,6 @@ CREATE OR REPLACE PROCEDURE sys.sp_columns_100 (
     "@fusepattern" smallint = 1)
 AS $$
 BEGIN
-	-- TODO: we should be able to get rid of babelfish_truncate_identifier when we fix BABEL-5416
-	declare @truncated_ident sys.nvarchar(384);
-	select @truncated_ident = sys.babelfish_truncate_identifier(pg_catalog.lower(@table_name));
 	IF @fusepattern = 1 
 		select table_qualifier as TABLE_QUALIFIER, 
 			table_owner as TABLE_OWNER,
@@ -606,10 +604,12 @@ BEGIN
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
 		-- TODO: Temporary fix to use \ as escape character for now, need to remove ESCAPE clause from LIKE once we have fixed the dependencies on this procedure
-		where table_name like @truncated_ident COLLATE database_default ESCAPE '\' -- '  adding quote in comment to suppress build warning
+		where (table_name like @table_name COLLATE database_default ESCAPE '\' -- '  adding quote in comment to suppress build warning
+			   or sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) like @table_name COLLATE database_default ESCAPE '\') -- '  adding quote in comment to suppress build warning
 			and (coalesce(@table_owner,'') = '' or table_owner like @table_owner collate database_default ESCAPE '\') -- '  adding quote in comment to suppress build warning
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier like @table_qualifier collate database_default)
-			and (coalesce(@column_name,'') = '' or column_name like @column_name collate database_default)
+			and (coalesce(@column_name,'') = '' or column_name like @column_name collate database_default
+				 or sys.babelfish_truncate_identifier(pg_catalog.lower(column_name)) like @column_name collate database_default)
 		order by table_qualifier,
 				 table_owner,
 				 table_name,
@@ -655,10 +655,12 @@ BEGIN
 				END
 			) as SS_DATA_TYPE
 		from sys.sp_columns_100_view
-			where table_name = @truncated_ident collate database_default
+			where (table_name = @table_name collate database_default
+				   or sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = @table_name collate database_default)
 			and (coalesce(@table_owner, '') = '' or table_owner = @table_owner collate database_default)
 			and (coalesce(@table_qualifier,'') = '' or table_qualifier = @table_qualifier collate database_default)
-			and (coalesce(@column_name,'') = '' or column_name = @column_name collate database_default)
+			and (coalesce(@column_name,'') = '' or column_name = @column_name collate database_default
+				 or sys.babelfish_truncate_identifier(pg_catalog.lower(column_name)) = @column_name collate database_default)
 		order by table_qualifier,
 				 table_owner,
 				 table_name,
@@ -1092,7 +1094,7 @@ CREATE OR REPLACE VIEW sys.sp_tables_view AS
 SELECT
 t2.dbname AS TABLE_QUALIFIER,
 CAST(t3.name AS name) AS TABLE_OWNER,
-t1.relname AS TABLE_NAME,
+sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname)::sys.sysname AS TABLE_NAME,
 
 CASE 
 WHEN t1.relkind = 'v' 
@@ -1148,7 +1150,8 @@ BEGIN
 			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
 			remarks AS REMARKS
 		FROM sys.sp_tables_view 
-		WHERE (@table_name IS NULL OR table_name LIKE @table_name collate database_default)
+		WHERE (@table_name IS NULL OR table_name LIKE @table_name collate database_default
+			   or sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) LIKE @table_name collate database_default)
 		AND (@table_owner IS NULL OR table_owner LIKE @table_owner collate database_default)
 		AND (@table_qualifier IS NULL OR table_qualifier LIKE @table_qualifier collate database_default)
 		AND (
@@ -1165,7 +1168,8 @@ BEGIN
 			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
 			remarks AS REMARKS
 		FROM sys.sp_tables_view
-		WHERE (@table_name IS NULL OR table_name = @table_name collate database_default)
+		WHERE (@table_name IS NULL OR table_name = @table_name collate database_default
+			   or sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = @table_name collate database_default)
 		AND (@table_owner IS NULL OR table_owner = @table_owner collate database_default)
 		AND (@table_qualifier IS NULL OR table_qualifier = @table_qualifier collate database_default)
 		AND (
@@ -1252,7 +1256,8 @@ CREATE OR REPLACE PROCEDURE sys.sp_pkeys(
 AS $$
 BEGIN
 	select * from sys.sp_pkeys_view
-	where table_name = @table_name
+	where (table_name = @table_name
+		or sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = @table_name)
 		and table_owner = coalesce(@table_owner, 'dbo') 
 		and ((SELECT
 		         coalesce(@table_qualifier, '')) = '' or
@@ -1294,13 +1299,10 @@ CASE
 WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
 ELSE CAST(1 AS smallint)
 END AS NON_UNIQUE,
-CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
+CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS INDEX_QUALIFIER,
 -- the index name created by CREATE INDEX is re-mapped, find it (by checking
 -- the ones not in pg_constraint) and restoring it back before display
-CASE 
-WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
-ELSE CAST(pg_catalog.SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
-END AS INDEX_NAME,
+COALESCE((SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(t6.reloptions) AS option), t6.relname::text)::sys.sysname AS INDEX_NAME,
 CASE
 WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
 ELSE CAST(3 AS smallint)
@@ -1340,7 +1342,8 @@ BEGIN
 		SELECT @index_name = ''
 	END
 	select * from sys.sp_statistics_view
-	where @table_name = table_name
+	where (@table_name = table_name
+		or @table_name = sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)))
 		and ((SELECT coalesce(@table_owner,'')) = '' or table_owner = @table_owner )
 		and ((SELECT coalesce(@table_qualifier,'')) = '' or table_qualifier = @table_qualifier )
 		and ((SELECT coalesce(@index_name,'')) = '' or index_name like @index_name )
@@ -1367,7 +1370,8 @@ BEGIN
 		SELECT @index_name = ''
 	END
 	select * from sys.sp_statistics_view
-	where @table_name = table_name
+	where (@table_name = table_name
+		or @table_name = sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)))
 		and ((SELECT coalesce(@table_owner,'')) = '' or table_owner = @table_owner )
 		and ((SELECT coalesce(@table_qualifier,'')) = '' or table_qualifier = @table_qualifier )
 		and ((SELECT coalesce(@index_name,'')) = '' or index_name like @index_name )
@@ -1452,7 +1456,7 @@ BEGIN
     SELECT
         CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
         CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-        CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+        CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS TABLE_NAME,
         CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
         CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
         CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
@@ -1506,7 +1510,8 @@ BEGIN
 		PRIVILEGE,
 		IS_GRANTABLE
 		FROM sys.sp_column_privileges_view
-		WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+		WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
 			AND (pg_catalog.lower('dbo')= pg_catalog.lower(table_owner))
 			AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
 			AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
@@ -1524,7 +1529,8 @@ BEGIN
 		PRIVILEGE,
 		IS_GRANTABLE
 		FROM sys.sp_column_privileges_view
-		WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+		WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
 			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
 			AND ((SELECT COALESCE(@table_qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@table_qualifier))
 			AND ((SELECT COALESCE(@column_name,'')) = '' OR pg_catalog.lower(column_name) LIKE pg_catalog.lower(@column_name))
@@ -1550,7 +1556,7 @@ BEGIN
     SELECT
         CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
         CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-        CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+        CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS TABLE_NAME,
         CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t4.grantor) AS sys.sysname) AS GRANTOR,
         CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t4.grantee) AS sys.sysname) AS GRANTEE,
         CAST(t4.privilege_type AS sys.sysname) AS PRIVILEGE,
@@ -1606,7 +1612,8 @@ BEGIN
 		GRANTEE,
 		PRIVILEGE,
 		IS_GRANTABLE FROM sys.sp_table_privileges_view
-		WHERE pg_catalog.lower(TABLE_NAME) LIKE pg_catalog.lower(@table_name)
+		WHERE (pg_catalog.lower(TABLE_NAME) LIKE pg_catalog.lower(@table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(TABLE_NAME)) = pg_catalog.lower(@table_name))
 			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(TABLE_OWNER) LIKE pg_catalog.lower(@table_owner))
 		ORDER BY table_qualifier, table_owner, table_name, privilege, grantee;
 	END
@@ -1620,7 +1627,8 @@ BEGIN
 		GRANTEE,
 		PRIVILEGE,
 		IS_GRANTABLE FROM sys.sp_table_privileges_view
-		WHERE pg_catalog.lower(TABLE_NAME) = pg_catalog.lower(@table_name)
+		WHERE (pg_catalog.lower(TABLE_NAME) = pg_catalog.lower(@table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(TABLE_NAME)) = pg_catalog.lower(@table_name))
 			AND ((SELECT COALESCE(@table_owner,'')) = '' OR pg_catalog.lower(TABLE_OWNER) = pg_catalog.lower(@table_owner))
 		ORDER BY table_qualifier, table_owner, table_name, privilege, grantee;
 	END
@@ -1690,7 +1698,7 @@ CASE
 AS IS_NULLABLE,
 CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(C.relname AS sys.sysname) AS TABLE_NAME,
+sys.bbf_get_truncated_rel_original_name(C.reloptions, C.relname)::sys.sysname AS TABLE_NAME,
 
 CASE 
 	WHEN X.indisprimary
@@ -1747,7 +1755,8 @@ BEGIN
 	IF (pg_catalog.lower(@nullable) = pg_catalog.lower('O'))
 	BEGIN
 		SELECT TOP 1 @special_col_type = constraint_type, @constraint_name = constraint_name FROM sys.sp_special_columns_view
-		WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+		WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
 			AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
 			AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0)
 		ORDER BY constraint_type, index_id;
@@ -1765,7 +1774,8 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN FROM sys.sp_special_columns_view
-				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND @constraint_name = constraint_name
@@ -1783,7 +1793,8 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN FROM sys.sp_special_columns_view
-				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND @constraint_name = constraint_name
@@ -1805,7 +1816,8 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN FROM sys.sp_special_columns_view
-				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND CONSTRAINT_TYPE = 'p'
@@ -1821,7 +1833,8 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN  FROM sys.sp_special_columns_view
-				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND (is_nullable = 0) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND CONSTRAINT_TYPE = 'p'
@@ -1833,7 +1846,8 @@ BEGIN
 	ELSE 
 	BEGIN
 		SELECT TOP 1 @special_col_type = constraint_type, @constraint_name = constraint_name FROM sys.sp_special_columns_view
-		WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+		WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
 			AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
 			AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier))
 		ORDER BY constraint_type, index_id;
@@ -1851,7 +1865,8 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN FROM sys.sp_special_columns_view
-				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND @constraint_name = constraint_name
@@ -1868,7 +1883,8 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN FROM sys.sp_special_columns_view
-				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND @constraint_name = constraint_name
@@ -1889,7 +1905,8 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN FROM sys.sp_special_columns_view
-				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND CONSTRAINT_TYPE = 'p'
@@ -1906,7 +1923,8 @@ BEGIN
 				LENGTH,
 				SCALE,
 				PSEUDO_COLUMN FROM sys.sp_special_columns_view
-				WHERE pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+				WHERE (pg_catalog.lower(@table_name) = pg_catalog.lower(table_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(table_name)) = pg_catalog.lower(@table_name))
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR pg_catalog.lower(table_owner) = pg_catalog.lower(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR pg_catalog.lower(table_qualifier) = pg_catalog.lower(@qualifier)) AND pg_catalog.lower(constraint_type) = pg_catalog.lower(@special_col_type)
 				AND CONSTRAINT_TYPE = 'p'
@@ -1942,11 +1960,11 @@ CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
 SELECT
 CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
 CAST(bbf_nsp2.orig_name AS sys.sysname) AS PKTABLE_OWNER ,
-CAST(c2.relname AS sys.sysname) AS PKTABLE_NAME,
+sys.bbf_get_truncated_rel_original_name(c2.reloptions, c2.relname)::sys.sysname AS PKTABLE_NAME,
 CAST(COALESCE(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) AS sys.sysname) AS PKCOLUMN_NAME,
 CAST(nsp_ext.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
 CAST(bbf_nsp.orig_name AS sys.sysname) AS FKTABLE_OWNER ,
-CAST(c.relname AS sys.sysname) AS FKTABLE_NAME,
+sys.bbf_get_truncated_rel_original_name(c.reloptions, c.relname)::sys.sysname AS FKTABLE_NAME,
 CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname) AS sys.sysname) AS FKCOLUMN_NAME,
 CAST(nr AS smallint) AS KEY_SEQ,
 CASE
@@ -2040,8 +2058,10 @@ BEGIN
 	PK_NAME,
 	DEFERRABILITY
 	FROM sys.sp_fkeys_view
-	WHERE ((SELECT coalesce(@pktable_name,'')) = '' OR pg_catalog.lower(pktable_name) = pg_catalog.lower(@pktable_name))
-		AND ((SELECT coalesce(@fktable_name,'')) = '' OR pg_catalog.lower(fktable_name) = pg_catalog.lower(@fktable_name))
+	WHERE ((SELECT coalesce(@pktable_name,'')) = '' OR pg_catalog.lower(pktable_name) = pg_catalog.lower(@pktable_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(pktable_name)) = pg_catalog.lower(@pktable_name))
+		AND ((SELECT coalesce(@fktable_name,'')) = '' OR pg_catalog.lower(fktable_name) = pg_catalog.lower(@fktable_name)
+			OR sys.babelfish_truncate_identifier(pg_catalog.lower(fktable_name)) = pg_catalog.lower(@fktable_name))
 		AND ((SELECT coalesce(@pktable_owner,'')) = '' OR pg_catalog.lower(pktable_owner) = pg_catalog.lower(@pktable_owner))
 		AND ((SELECT coalesce(@pktable_qualifier,'')) = '' OR pg_catalog.lower(pktable_qualifier) = pg_catalog.lower(@pktable_qualifier))
 		AND ((SELECT coalesce(@fktable_owner,'')) = '' OR pg_catalog.lower(fktable_owner) = pg_catalog.lower(@fktable_owner))

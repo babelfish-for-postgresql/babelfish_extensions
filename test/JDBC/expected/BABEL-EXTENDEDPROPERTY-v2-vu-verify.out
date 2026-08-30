@@ -394,8 +394,8 @@ TABLE#!#babel_extended_properties_table1#!#table property1#!#table property1 bef
 TABLE#!#babel_extended_properties_table1#!#table property2#!#table property2 before
 TABLE#!#BABEL_extended_properties_table2#!#table property1#!#table property1 before
 TABLE#!#BABEL_extended_properties_table2#!#table property2#!#table property2 before
-TABLE#!#babel_extended_properties_table783e9cd01e68686d0d071a20f0d03eba#!#table property1#!#table property1 before
-TABLE#!#babel_extended_properties_table783e9cd01e68686d0d071a20f0d03eba#!#table property2#!#table property2 before
+TABLE#!#BABEL_extended_properties_table3_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_name#!#table property1#!#table property1 before
+TABLE#!#BABEL_extended_properties_table3_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_name#!#table property2#!#table property2 before
 ~~END~~
 
 
@@ -414,7 +414,7 @@ GO
 varchar#!#varchar#!#varchar#!#sql_variant
 TABLE#!#babel_extended_properties_table1#!#table property1#!#table property1 before
 TABLE#!#BABEL_extended_properties_table2#!#table property1#!#table property1 before
-TABLE#!#babel_extended_properties_table783e9cd01e68686d0d071a20f0d03eba#!#table property1#!#table property1 before
+TABLE#!#BABEL_extended_properties_table3_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_name#!#table property1#!#table property1 before
 ~~END~~
 
 
@@ -467,8 +467,8 @@ TABLE#!#babel_extended_properties_table1#!#table property1#!#table property1 aft
 TABLE#!#babel_extended_properties_table1#!#table property2#!#table property2 before
 TABLE#!#BABEL_extended_properties_table2#!#table property1#!#table property1 before
 TABLE#!#BABEL_extended_properties_table2#!#table property2#!#table property2 after
-TABLE#!#babel_extended_properties_table783e9cd01e68686d0d071a20f0d03eba#!#table property1#!#table property1 after
-TABLE#!#babel_extended_properties_table783e9cd01e68686d0d071a20f0d03eba#!#table property2#!#table property2 before
+TABLE#!#BABEL_extended_properties_table3_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_name#!#table property1#!#table property1 after
+TABLE#!#BABEL_extended_properties_table3_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_name#!#table property2#!#table property2 before
 ~~END~~
 
 
@@ -509,7 +509,7 @@ varchar#!#varchar#!#varchar#!#sql_variant
 TABLE#!#babel_extended_properties_table1#!#table property1#!#table property1 after
 TABLE#!#babel_extended_properties_table1#!#table property2#!#table property2 before
 TABLE#!#BABEL_extended_properties_table2#!#table property1#!#table property1 before
-TABLE#!#babel_extended_properties_table783e9cd01e68686d0d071a20f0d03eba#!#table property2#!#table property2 before
+TABLE#!#BABEL_extended_properties_table3_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_long_name#!#table property2#!#table property2 before
 ~~END~~
 
 

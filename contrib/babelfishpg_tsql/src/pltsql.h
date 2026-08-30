@@ -77,6 +77,30 @@
 #define TSQL_SMALLMONEY_TYPMOD ((SMALLMONEY_PRECISION << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ
 #define TSQL_EXPLICIT_NULLABILITY_MARKER "tsql_explicit_nullability"
 
+/* Attribute/relation option names for storing original T-SQL names */
+#define ATTOPTION_BBF_ORIGINAL_NAME "bbf_original_name"
+#define ATTOPTION_BBF_ORIGINAL_TABLE_NAME "bbf_original_rel_name"
+#define ATTOPTION_BBF_TABLE_CREATE_DATE "bbf_rel_create_date"
+
+/*
+ * Internal ViewStmt option name recording the source-text location of a view's
+ * explicit column alias list '('. Set as a string literal in gram.y and
+ * gram-tsql-rule.y (grammar files use literals); consumed here to recover
+ * original (long/mixed-case) column alias names.
+ */
+#define BBF_VIEW_COLLIST_LOC_OPTION "bbf_view_collist_loc"
+
+/*
+ * Minimum byte length at which an identifier may have been truncated and
+ * hence may have an original name stored in reloptions/attoptions. Used as a
+ * fast-path guard to skip reloption lookups for clearly-short names. Set below
+ * NAMEDATALEN-1 (63) because multibyte truncation can back off to fewer bytes.
+ */
+#define BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD 60
+
+/* DefElem name for storing original index name location in grammar */
+#define TSQL_ORIGINAL_NAME_LOCATION "tsql_original_name_location"
+
 /*
  * Compiler's namespace item types
  */
@@ -2179,6 +2203,7 @@ extern PLtsql_function *pltsql_compile(FunctionCallInfo fcinfo,
 									   bool forValidator);
 extern PLtsql_function *pltsql_compile_inline(char *proc_source,
 											  InlineCodeBlockArgs *args);
+extern char *pltsql_resolve_var_original_name(struct ParseState *pstate, Var *var);
 extern void pltsql_parser_setup(struct ParseState *pstate,
 								PLtsql_expr *expr);
 extern bool pltsql_parse_word(char *word1, const char *yytxt,
@@ -2314,8 +2339,11 @@ extern int	pltsql_yyparse(void);
 
 /* functions in hooks.c */
 extern char *extract_identifier(const char *start, int *last_pos);
+extern char *extract_multipart_identifier_name(const char *start);
 
 /* functions in pltsql_utils.c */
+extern char *get_original_relname(Oid relid, bool check_permission);
+extern char *get_bbf_original_column_name(Oid relid, AttrNumber attnum);
 extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);
 extern char *gen_dropfulltextindex_cmds(const char *index_name, const char *schema_name);
 extern char *get_fulltext_index_name(Oid relid, const char *table_name);

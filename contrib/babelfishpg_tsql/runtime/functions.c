@@ -2735,7 +2735,14 @@ object_name(PG_FUNCTION_ARGS)
 		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
 		{
 			Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
-			result_text = cstring_to_text(NameStr(pg_class->relname)); // make a copy before releasing syscache
+
+			/*
+			 * get_original_relname returns the original (pre-truncation)
+			 * name from reloptions when present, and falls back to the
+			 * physical relname otherwise. The truncation-threshold
+			 * optimization lives inside the helper.
+			 */
+			result_text = cstring_to_text(get_original_relname(object_id, false));
 			schema_id = pg_class->relnamespace;
 		}
 		ReleaseSysCache(tuple);

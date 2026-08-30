@@ -4602,7 +4602,7 @@ BEGIN
         definition = (SELECT dc.definition FROM sys.default_constraints dc WHERE dc.object_id = $1);
         IF (definition IS NULL)
         THEN
-            definition = (SELECT asm.definition FROM sys.all_sql_modules asm WHERE asm.object_id = $1);
+            definition = (SELECT asm.definition FROM sys.all_sql_modules_internal asm WHERE asm.object_id = $1);
             IF (definition IS NULL)
             THEN
                 RETURN NULL;

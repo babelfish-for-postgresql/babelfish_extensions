@@ -87,9 +87,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 babel5119_db#!#dbo#!#BABEL5119_t1#!#BASE TABLE
 babel5119_db#!#dbo#!#BABEL5119_t2#!#BASE TABLE
 babel5119_db#!#dbo#!#BABEL5119_t3#!#BASE TABLE
-babel5119_db#!#dbo#!#babel5119_v1#!#VIEW
-babel5119_db#!#dbo#!#babel5119_v2#!#VIEW
-babel5119_db#!#dbo#!#babel5119_v3#!#VIEW
+babel5119_db#!#dbo#!#BABEL5119_v1#!#VIEW
+babel5119_db#!#dbo#!#BABEL5119_v2#!#VIEW
+babel5119_db#!#dbo#!#BABEL5119_v3#!#VIEW
 ~~END~~
 
 
@@ -101,9 +101,9 @@ nvarchar#!#nvarchar
 BABEL5119_t1#!#a
 BABEL5119_t2#!#a
 BABEL5119_t3#!#a
-babel5119_v1#!#?column?
-babel5119_v2#!#?column?
-babel5119_v3#!#?column?
+BABEL5119_v1#!#?column?
+BABEL5119_v2#!#?column?
+BABEL5119_v3#!#?column?
 ~~END~~
 
 
@@ -112,9 +112,9 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v1#!#CREATE VIEW BABEL5119_v1 AS SELECT 1<newline>
-babel5119_v2#!#CREATE VIEW BABEL5119_v2 AS SELECT 1<newline>
-babel5119_v3#!#CREATE VIEW BABEL5119_v3 AS SELECT 1<newline>
+BABEL5119_v1#!#CREATE VIEW BABEL5119_v1 AS SELECT 1<newline>
+BABEL5119_v2#!#CREATE VIEW BABEL5119_v2 AS SELECT 1<newline>
+BABEL5119_v3#!#CREATE VIEW BABEL5119_v3 AS SELECT 1<newline>
 ~~END~~
 
 
@@ -205,9 +205,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#guest#!#BABEL5119_t4#!#BASE TABLE
 master#!#guest#!#BABEL5119_t5#!#BASE TABLE
 master#!#guest#!#BABEL5119_t6#!#BASE TABLE
-master#!#guest#!#babel5119_v4#!#VIEW
-master#!#guest#!#babel5119_v5#!#VIEW
-master#!#guest#!#babel5119_v6#!#VIEW
+master#!#guest#!#BABEL5119_v4#!#VIEW
+master#!#guest#!#BABEL5119_v5#!#VIEW
+master#!#guest#!#BABEL5119_v6#!#VIEW
 ~~END~~
 
 
@@ -219,9 +219,9 @@ nvarchar#!#nvarchar
 BABEL5119_t4#!#a
 BABEL5119_t5#!#a
 BABEL5119_t6#!#a
-babel5119_v4#!#?column?
-babel5119_v5#!#?column?
-babel5119_v6#!#?column?
+BABEL5119_v4#!#?column?
+BABEL5119_v5#!#?column?
+BABEL5119_v6#!#?column?
 ~~END~~
 
 
@@ -230,9 +230,9 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v4#!#CREATE VIEW guest.BABEL5119_v4 AS SELECT 1<newline>
-babel5119_v5#!#CREATE VIEW guest.BABEL5119_v5 AS SELECT 1<newline>
-babel5119_v6#!#CREATE VIEW guest.BABEL5119_v6 AS SELECT 1<newline>
+BABEL5119_v4#!#CREATE VIEW guest.BABEL5119_v4 AS SELECT 1<newline>
+BABEL5119_v5#!#CREATE VIEW guest.BABEL5119_v5 AS SELECT 1<newline>
+BABEL5119_v6#!#CREATE VIEW guest.BABEL5119_v6 AS SELECT 1<newline>
 ~~END~~
 
 
@@ -327,9 +327,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 babel5119_db#!#dbo#!#BABEL5119_t1#!#BASE TABLE
 babel5119_db#!#dbo#!#BABEL5119_t2#!#BASE TABLE
 babel5119_db#!#dbo#!#BABEL5119_t3#!#BASE TABLE
-babel5119_db#!#dbo#!#babel5119_v1#!#VIEW
-babel5119_db#!#dbo#!#babel5119_v2#!#VIEW
-babel5119_db#!#dbo#!#babel5119_v3#!#VIEW
+babel5119_db#!#dbo#!#BABEL5119_v1#!#VIEW
+babel5119_db#!#dbo#!#BABEL5119_v2#!#VIEW
+babel5119_db#!#dbo#!#BABEL5119_v3#!#VIEW
 ~~END~~
 
 
@@ -341,9 +341,9 @@ nvarchar#!#nvarchar
 BABEL5119_t1#!#a
 BABEL5119_t2#!#a
 BABEL5119_t3#!#a
-babel5119_v1#!#?column?
-babel5119_v2#!#?column?
-babel5119_v3#!#?column?
+BABEL5119_v1#!#?column?
+BABEL5119_v2#!#?column?
+BABEL5119_v3#!#?column?
 ~~END~~
 
 
@@ -352,9 +352,9 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v1#!#CREATE VIEW BABEL5119_v1 AS SELECT 1<newline>
-babel5119_v2#!#CREATE VIEW BABEL5119_v2 AS SELECT 1<newline>
-babel5119_v3#!#CREATE VIEW BABEL5119_v3 AS SELECT 1<newline>
+BABEL5119_v1#!#CREATE VIEW BABEL5119_v1 AS SELECT 1<newline>
+BABEL5119_v2#!#CREATE VIEW BABEL5119_v2 AS SELECT 1<newline>
+BABEL5119_v3#!#CREATE VIEW BABEL5119_v3 AS SELECT 1<newline>
 ~~END~~
 
 
@@ -445,9 +445,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#guest#!#BABEL5119_t4#!#BASE TABLE
 master#!#guest#!#BABEL5119_t5#!#BASE TABLE
 master#!#guest#!#BABEL5119_t6#!#BASE TABLE
-master#!#guest#!#babel5119_v4#!#VIEW
-master#!#guest#!#babel5119_v5#!#VIEW
-master#!#guest#!#babel5119_v6#!#VIEW
+master#!#guest#!#BABEL5119_v4#!#VIEW
+master#!#guest#!#BABEL5119_v5#!#VIEW
+master#!#guest#!#BABEL5119_v6#!#VIEW
 ~~END~~
 
 
@@ -459,9 +459,9 @@ nvarchar#!#nvarchar
 BABEL5119_t4#!#a
 BABEL5119_t5#!#a
 BABEL5119_t6#!#a
-babel5119_v4#!#?column?
-babel5119_v5#!#?column?
-babel5119_v6#!#?column?
+BABEL5119_v4#!#?column?
+BABEL5119_v5#!#?column?
+BABEL5119_v6#!#?column?
 ~~END~~
 
 
@@ -470,9 +470,9 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v4#!#CREATE VIEW guest.BABEL5119_v4 AS SELECT 1<newline>
-babel5119_v5#!#CREATE VIEW guest.BABEL5119_v5 AS SELECT 1<newline>
-babel5119_v6#!#CREATE VIEW guest.BABEL5119_v6 AS SELECT 1<newline>
+BABEL5119_v4#!#CREATE VIEW guest.BABEL5119_v4 AS SELECT 1<newline>
+BABEL5119_v5#!#CREATE VIEW guest.BABEL5119_v5 AS SELECT 1<newline>
+BABEL5119_v6#!#CREATE VIEW guest.BABEL5119_v6 AS SELECT 1<newline>
 ~~END~~
 
 
@@ -663,9 +663,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#guest#!#BABEL5119_t4#!#BASE TABLE
 master#!#guest#!#BABEL5119_t5#!#BASE TABLE
 master#!#guest#!#BABEL5119_t6#!#BASE TABLE
-master#!#guest#!#babel5119_v4#!#VIEW
-master#!#guest#!#babel5119_v5#!#VIEW
-master#!#guest#!#babel5119_v6#!#VIEW
+master#!#guest#!#BABEL5119_v4#!#VIEW
+master#!#guest#!#BABEL5119_v5#!#VIEW
+master#!#guest#!#BABEL5119_v6#!#VIEW
 ~~END~~
 
 
@@ -677,9 +677,9 @@ nvarchar#!#nvarchar
 BABEL5119_t4#!#a
 BABEL5119_t5#!#a
 BABEL5119_t6#!#a
-babel5119_v4#!#?column?
-babel5119_v5#!#?column?
-babel5119_v6#!#?column?
+BABEL5119_v4#!#?column?
+BABEL5119_v5#!#?column?
+BABEL5119_v6#!#?column?
 ~~END~~
 
 
@@ -688,9 +688,9 @@ ORDER BY TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar
-babel5119_v4#!#CREATE VIEW guest.BABEL5119_v4 AS SELECT 1<newline>
-babel5119_v5#!#CREATE VIEW guest.BABEL5119_v5 AS SELECT 1<newline>
-babel5119_v6#!#CREATE VIEW guest.BABEL5119_v6 AS SELECT 1<newline>
+BABEL5119_v4#!#CREATE VIEW guest.BABEL5119_v4 AS SELECT 1<newline>
+BABEL5119_v5#!#CREATE VIEW guest.BABEL5119_v5 AS SELECT 1<newline>
+BABEL5119_v6#!#CREATE VIEW guest.BABEL5119_v6 AS SELECT 1<newline>
 ~~END~~
 
 
