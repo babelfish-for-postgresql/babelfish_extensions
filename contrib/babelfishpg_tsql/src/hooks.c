@@ -9543,10 +9543,7 @@ bbf_match_like_to_indexcol(PlannerInfo *root,
 	{
 		RelabelType   *relabel = (RelabelType *) rightop;
 		if (IsA(relabel->arg, Const))
-		{
-			lsecond(clause->args) = relabel->arg;
-			rightop = (Node *) lsecond(clause->args);
-		}
+			rightop = (Node *) relabel->arg;
 	}
 
 	if (IsA(rightop, Const) && !((Const *) rightop)->constisnull)

@@ -286,6 +286,15 @@ create_collate_expr(Node *arg, Oid collid)
 }
 /* Hash table for storing original collations of LIKE expressions */
 static HTAB *ht_like_orig_collation = NULL;
+static MemoryContext like_orig_collation_ctx = NULL;
+static MemoryContextCallback like_orig_collation_cb;
+
+/* Nulls the pointer if the context is torn down outside our reset path. */
+static void
+like_orig_collation_reset_cb(void *arg)
+{
+	ht_like_orig_collation = NULL;
+}
 
 void
 store_like_original_collation(int location, Oid collation)
@@ -297,18 +306,29 @@ store_like_original_collation(int location, Oid collation)
 	if (location < 0)
 		return;
 
+	/*
+	 * Dedicated context for the hash table, created once. It is reset after each
+	 * planning pass by reset_like_original_collation(), which the planner hook
+	 * calls in a PG_FINALLY block.
+	 */
+	if (like_orig_collation_ctx == NULL)
+		like_orig_collation_ctx = AllocSetContextCreate(TopMemoryContext,
+														"LIKE original collation",
+														ALLOCSET_SMALL_SIZES);
+
 	if (!ht_like_orig_collation)
 	{
-		/* Create hash table in TopMemoryContext to ensure it persists
-		 * across all statement processing, including constraint contexts.
-		 * Setting ctl.hcxt = TopMemoryContext tells hash_create() to allocate
-		 * the table there. The hash table is reset between statements via
-		 * reset_like_original_collation() which calls hash_destroy(). */
+		/* Callback nulls the pointer when the context is reset. Re-registered
+		 * each time as MemoryContextReset() consumes callbacks on firing. */
+		like_orig_collation_cb.func = like_orig_collation_reset_cb;
+		like_orig_collation_cb.arg = NULL;
+		MemoryContextRegisterResetCallback(like_orig_collation_ctx, &like_orig_collation_cb);
+
 		memset(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(int);
 		ctl.entrysize = sizeof(like_orig_coll_entry);
-		ctl.hcxt = TopMemoryContext;
-		ht_like_orig_collation = hash_create("like_orig_coll", 256, &ctl, HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
+		ctl.hcxt = like_orig_collation_ctx;
+		ht_like_orig_collation = hash_create("like_orig_coll", 32, &ctl, HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
 	}
 	
 	entry = hash_search(ht_like_orig_collation, &location, HASH_ENTER, &found);
@@ -333,9 +353,10 @@ get_like_original_collation(int location)
 void
 reset_like_original_collation(void)
 {
-	if (ht_like_orig_collation)
+	/* Free the table by resetting our context and null the pointer. */
+	if (like_orig_collation_ctx != NULL)
 	{
-		hash_destroy(ht_like_orig_collation);
+		MemoryContextReset(like_orig_collation_ctx);
 		ht_like_orig_collation = NULL;
 	}
 }
@@ -426,15 +447,11 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 
 
 	/* Remove CollateExpr as the op->inputcollid has already been set */
-	if (IsA(lsecond(op->args), CollateExpr))
-	{
-		lsecond(op->args) = ((CollateExpr*) lsecond(op->args))->arg;
-	}
+	while (IsA(linitial(op->args), CollateExpr))
+		linitial(op->args) = (Node *) ((CollateExpr *) linitial(op->args))->arg;
 
-	if (IsA(linitial(op->args), CollateExpr))
-	{
-		linitial(op->args) = ((CollateExpr*) linitial(op->args))->arg;
-	}
+	while (IsA(lsecond(op->args), CollateExpr))
+		lsecond(op->args) = (Node *) ((CollateExpr *) lsecond(op->args))->arg;
 
 	/* Store original collation for this OpExpr for use in index hook */
 	/* Skip storing for CHECK constraints since they won't use the index hook optimization */
