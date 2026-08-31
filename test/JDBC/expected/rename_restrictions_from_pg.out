@@ -673,6 +673,73 @@ GO
 DROP PROCEDURE pg_ss_udb_p1();
 GO
 
+-- single-db user-DB physical schema cases; produces schema-does-not-exist errors in multi-db mode
+ALTER PROCEDURE dbo.udb_dbo_p1 RENAME TO udb_dbo_p1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "dbo" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER FUNCTION dbo.udb_dbo_f1 RENAME TO udb_dbo_f1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "dbo" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER PROCEDURE rename_from_pg_udbs.udb_p1 RENAME TO udb_p1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "rename_from_pg_udbs" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER FUNCTION rename_from_pg_udbs.udb_f1 RENAME TO udb_f1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "rename_from_pg_udbs" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER FUNCTION rename_from_pg_udbs.udb_f1 SET SCHEMA public;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "rename_from_pg_udbs" does not exist
+    Server SQLState: 3F000)~~
+
+
+CREATE PROCEDURE pg_ss_udb_sd_p1()
+LANGUAGE SQL
+AS $$
+SELECT 1;
+$$;
+GO
+
+ALTER PROCEDURE pg_ss_udb_sd_p1() SET SCHEMA dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "dbo" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER PROCEDURE pg_ss_udb_sd_p1() SET SCHEMA rename_from_pg_udbs;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "rename_from_pg_udbs" does not exist
+    Server SQLState: 3F000)~~
+
+
+DROP PROCEDURE pg_ss_udb_sd_p1();
+GO
+
 
 -- psql
 -- superuser should still be able to rename objects
