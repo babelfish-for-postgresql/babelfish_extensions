@@ -3272,8 +3272,8 @@ restrict_rename_stmt(RenameStmt *rename_stmt)
 				 * tracked in babelfish_namespace_ext, so guard them by name.
 				 */
 				if (rename_stmt->subname &&
-					(strcmp(rename_stmt->subname, SYS_SCHEMA_NAME) == 0 ||
-					 strcmp(rename_stmt->subname, INFORMATION_SCHEMA_TSQL_NAME) == 0))
+					(strncmp(rename_stmt->subname, SYS_SCHEMA_NAME, sizeof(SYS_SCHEMA_NAME)) == 0 ||
+					 strncmp(rename_stmt->subname, INFORMATION_SCHEMA_TSQL_NAME, sizeof(INFORMATION_SCHEMA_TSQL_NAME)) == 0))
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("ALTER SCHEMA .. RENAME .. is blocked in PG dialect on Babelfish system schema \"%s\".", rename_stmt->subname)));
@@ -3370,7 +3370,8 @@ restrict_call_stmt(CallStmt *call_stmt)
 		return;
 	}
 
-	if (strcmp(nsp_name, SYS_SCHEMA_NAME) == 0 && strcmp(proc_name, SP_RENAME_PROC_NAME) == 0)
+	if (strncmp(nsp_name, SYS_SCHEMA_NAME, sizeof(SYS_SCHEMA_NAME)) == 0 &&
+		strncmp(proc_name, SP_RENAME_PROC_NAME, sizeof(SP_RENAME_PROC_NAME)) == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("sp_rename is blocked in PG dialect.")));
