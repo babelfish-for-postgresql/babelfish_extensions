@@ -3366,7 +3366,7 @@ restrict_call_stmt(CallStmt *call_stmt)
 		return;
 	}
 
-	if (pg_strcasecmp(nsp_name, "sys") == 0 && pg_strcasecmp(proc_name, "sp_rename") == 0)
+	if (strcmp(nsp_name, "sys") == 0 && strcmp(proc_name, "sp_rename") == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("sp_rename is blocked in PG dialect.")));

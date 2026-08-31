@@ -1,4 +1,3 @@
--- single_db_mode_expected
 -- tsql
 CREATE LOGIN rename_from_pg_u WITH PASSWORD = '12345678';
 GO
