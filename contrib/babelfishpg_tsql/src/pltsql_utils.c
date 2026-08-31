@@ -37,6 +37,10 @@
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
+#define SYS_SCHEMA_NAME "sys"
+#define INFORMATION_SCHEMA_TSQL_NAME "information_schema_tsql"
+#define SP_RENAME_PROC_NAME "sp_rename"
+
 bool		suppress_string_truncation_error = false;
 
 bool		pltsql_suppress_string_truncation_error(void);
@@ -3268,8 +3272,8 @@ restrict_rename_stmt(RenameStmt *rename_stmt)
 				 * tracked in babelfish_namespace_ext, so guard them by name.
 				 */
 				if (rename_stmt->subname &&
-					(strcmp(rename_stmt->subname, "sys") == 0 ||
-					 strcmp(rename_stmt->subname, "information_schema_tsql") == 0))
+					(strcmp(rename_stmt->subname, SYS_SCHEMA_NAME) == 0 ||
+					 strcmp(rename_stmt->subname, INFORMATION_SCHEMA_TSQL_NAME) == 0))
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("ALTER SCHEMA .. RENAME .. is blocked in PG dialect on Babelfish system schema \"%s\".", rename_stmt->subname)));
@@ -3366,7 +3370,7 @@ restrict_call_stmt(CallStmt *call_stmt)
 		return;
 	}
 
-	if (strcmp(nsp_name, "sys") == 0 && strcmp(proc_name, "sp_rename") == 0)
+	if (strcmp(nsp_name, SYS_SCHEMA_NAME) == 0 && strcmp(proc_name, SP_RENAME_PROC_NAME) == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("sp_rename is blocked in PG dialect.")));
