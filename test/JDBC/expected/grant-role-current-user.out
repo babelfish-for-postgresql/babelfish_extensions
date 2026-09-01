@@ -1,0 +1,157 @@
+-- psql
+-- BABEL-6839: NULL pointer dereference in is_babelfish_role() when
+-- GRANT/REVOKE <role> TO/FROM CURRENT_USER, CURRENT_ROLE, SESSION_USER
+-- is executed from the PostgreSQL endpoint by a non-superuser.
+-- Setup: create a non-superuser PG role and a plain role for testing
+CREATE USER babel_6839_pg_user WITH LOGIN CREATEROLE PASSWORD '12345678' INHERIT;
+GO
+
+CREATE ROLE babel_6839_test_role;
+GO
+
+GRANT babel_6839_test_role TO babel_6839_pg_user WITH ADMIN OPTION;
+GO
+
+-- psql user=babel_6839_pg_user password=12345678
+-- Test 1: GRANT role TO CURRENT_USER should not crash (previously caused SIGSEGV)
+GRANT babel_6839_test_role TO CURRENT_USER;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: role "babel_6839_pg_user" is already a member of role "babel_6839_test_role"  Server SQLState: 00000)~~
+
+
+-- psql user=babel_6839_pg_user password=12345678
+-- Test 2: GRANT role TO CURRENT_ROLE should not crash
+GRANT babel_6839_test_role TO CURRENT_ROLE;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: role "babel_6839_pg_user" is already a member of role "babel_6839_test_role"  Server SQLState: 00000)~~
+
+
+-- psql user=babel_6839_pg_user password=12345678
+-- Test 3: GRANT role TO SESSION_USER should not crash
+GRANT babel_6839_test_role TO SESSION_USER;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: role "babel_6839_pg_user" is already a member of role "babel_6839_test_role"  Server SQLState: 00000)~~
+
+
+-- psql user=babel_6839_pg_user password=12345678
+-- Test 4: REVOKE role FROM CURRENT_USER should not crash
+REVOKE babel_6839_test_role FROM CURRENT_USER;
+GO
+
+-- psql user=babel_6839_pg_user password=12345678
+-- Test 5: REVOKE role FROM CURRENT_ROLE should not crash
+REVOKE babel_6839_test_role FROM CURRENT_ROLE;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: role "babel_6839_pg_user" is not a member of role "babel_6839_test_role"  Server SQLState: 01000)~~
+
+
+-- psql user=babel_6839_pg_user password=12345678
+-- Test 6: REVOKE role FROM SESSION_USER should not crash
+REVOKE babel_6839_test_role FROM SESSION_USER;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: role "babel_6839_pg_user" is not a member of role "babel_6839_test_role"  Server SQLState: 01000)~~
+
+
+-- psql user=babel_6839_pg_user password=12345678
+-- Test 7: GRANT babelfish role (sysadmin) TO CURRENT_USER should be blocked
+-- with proper error, not crash
+GRANT sysadmin TO CURRENT_USER;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- psql user=babel_6839_pg_user password=12345678
+-- Test 8: GRANT babelfish role (sysadmin) TO CURRENT_ROLE should be blocked
+GRANT sysadmin TO CURRENT_ROLE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- psql user=babel_6839_pg_user password=12345678
+-- Test 9: GRANT babelfish role (sysadmin) TO SESSION_USER should be blocked
+GRANT sysadmin TO SESSION_USER;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- psql user=babel_6839_pg_user password=12345678
+-- Test 10: GRANT with literal name still enforces Babelfish restriction
+GRANT sysadmin TO babel_6839_pg_user;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- terminate-psql-conn user=babel_6839_pg_user password=12345678
+
+-- tsql
+-- Test 11: GRANT pg_role TO CURRENT_USER where current_user is a babelfish role
+-- Create a babelfish login from the TSQL endpoint
+CREATE LOGIN babel_6839_bbf_user WITH PASSWORD = '12345678';
+GO
+
+-- psql user=babel_6839_bbf_user password=12345678
+-- Test 11: GRANT non-babelfish role TO CURRENT_USER (babelfish role) should be blocked
+GRANT babel_6839_test_role TO CURRENT_USER;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- psql user=babel_6839_bbf_user password=12345678
+-- Test 12: GRANT non-babelfish role TO CURRENT_ROLE (babelfish role) should be blocked
+GRANT babel_6839_test_role TO CURRENT_ROLE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- psql user=babel_6839_bbf_user password=12345678
+-- Test 13: GRANT non-babelfish role TO SESSION_USER (babelfish role) should be blocked
+GRANT babel_6839_test_role TO SESSION_USER;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- terminate-psql-conn user=babel_6839_bbf_user password=12345678
+
+-- tsql
+-- Cleanup babelfish login
+DROP LOGIN babel_6839_bbf_user;
+GO
+
+-- psql
+-- Cleanup
+DROP USER babel_6839_pg_user;
+GO
+
+DROP ROLE babel_6839_test_role;
+GO
