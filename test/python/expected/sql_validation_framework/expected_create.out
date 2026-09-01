@@ -15,6 +15,7 @@ Could not find tests for function sys.babelfish_try_cast_floor_smallint
 Could not find tests for function sys.babelfish_try_cast_to_any
 Could not find tests for function sys.babelfish_try_cast_to_varbinary
 Could not find tests for function sys.babelfish_try_cast_to_varchar
+Could not find tests for function sys.bbf_get_func_original_name
 Could not find tests for function sys.bbf_is_role_member
 Could not find tests for function sys.bbf_pivot
 Could not find tests for function sys.bbf_xmlexist
@@ -123,6 +124,7 @@ Could not find upgrade tests for function sys.babelfish_try_cast_floor_smallint
 Could not find upgrade tests for function sys.babelfish_try_cast_to_any
 Could not find upgrade tests for function sys.babelfish_try_cast_to_varbinary
 Could not find upgrade tests for function sys.babelfish_try_cast_to_varchar
+Could not find upgrade tests for function sys.bbf_get_func_original_name
 Could not find upgrade tests for function sys.bbf_is_role_member
 Could not find upgrade tests for function sys.bbf_pivot
 Could not find upgrade tests for function sys.bbf_xmlexist

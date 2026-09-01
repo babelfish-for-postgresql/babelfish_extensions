@@ -3387,7 +3387,8 @@ tsql_CreateTrigStmt:
 					n2->funcname = $3;
 					n2->parameters = NIL;
 					n2->returnType = makeTypeName("trigger");
-					n2->options = list_make3(lang, body, trigStmt);
+					n2->options = list_make4(lang, body, trigStmt,
+						makeDefElem("location", (Node *) makeInteger(@3), @3));
 
 					$$ = (Node *) n2;
 				}

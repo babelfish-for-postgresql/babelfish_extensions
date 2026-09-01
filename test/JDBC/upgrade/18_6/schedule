@@ -693,5 +693,6 @@ antlr_parse_cache_version
 babel_sqlvariant_coerce_type
 BABEL-login-db-long-identifiers
 BABEL-6813
+long-identifiers-trigger-func-proc-before-18_6
 long-identifiers-objects-before-18_6
 fk-cascade-trigger

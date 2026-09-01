@@ -8388,7 +8388,7 @@ WHERE ROUTINE_NAME = 'GetCurrentDate' AND ROUTINE_TYPE = 'FUNCTION';
 GO
 ~~START~~
 nvarchar#!#nvarchar
-getcurrentdate#!#date
+GetCurrentDate#!#date
 ~~END~~
 
 

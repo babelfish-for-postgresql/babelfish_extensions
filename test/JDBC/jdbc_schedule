@@ -796,6 +796,12 @@ ignore#!#money_aggregate-before-17_11-or-18_5-vu-cleanup
 ignore#!#numeric_money-before-17_11-or-18_5-vu-prepare
 ignore#!#numeric_money-before-17_11-or-18_5-vu-verify
 ignore#!#numeric_money-before-17_11-or-18_5-vu-cleanup
+ignore#!#BABEL-5119-before-18_6-vu-prepare
+ignore#!#BABEL-5119-before-18_6-vu-verify
+ignore#!#BABEL-5119-before-18_6-vu-cleanup
+ignore#!#long-identifiers-trigger-func-proc-before-18_6-vu-prepare
+ignore#!#long-identifiers-trigger-func-proc-before-18_6-vu-verify
+ignore#!#long-identifiers-trigger-func-proc-before-18_6-vu-cleanup
 ignore#!#long-identifiers-objects-before-18_6-vu-prepare
 ignore#!#long-identifiers-objects-before-18_6-vu-verify
 ignore#!#long-identifiers-objects-before-18_6-vu-cleanup

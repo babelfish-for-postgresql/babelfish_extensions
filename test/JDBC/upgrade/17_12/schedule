@@ -685,5 +685,6 @@ xml_query
 babel_sqlvariant_coerce_type
 forxml-auto
 BABEL-login-db-long-identifiers
+long-identifiers-trigger-func-proc-before-18_6
 long-identifiers-objects-before-18_6
 fk-cascade-trigger

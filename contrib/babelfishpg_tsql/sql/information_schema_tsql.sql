@@ -714,10 +714,10 @@ GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.routines AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SPECIFIC_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "SPECIFIC_SCHEMA",
-           CAST(p.proname AS sys.nvarchar(128)) AS "SPECIFIC_NAME",
+           CAST(coalesce(f.orig_name, p.proname::sys.nvarchar(128)) AS sys.nvarchar(128)) AS "SPECIFIC_NAME",
            CAST(nc.dbname AS sys.nvarchar(128)) AS "ROUTINE_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "ROUTINE_SCHEMA",
-           CAST(p.proname AS sys.nvarchar(128)) AS "ROUTINE_NAME",
+           CAST(coalesce(f.orig_name, p.proname::sys.nvarchar(128)) AS sys.nvarchar(128)) AS "ROUTINE_NAME",
            CAST(CASE p.prokind WHEN 'f' THEN 'FUNCTION' WHEN 'p' THEN 'PROCEDURE' END
            	 AS sys.nvarchar(20)) AS "ROUTINE_TYPE",
            CAST(NULL AS sys.nvarchar(128)) AS "MODULE_CATALOG",

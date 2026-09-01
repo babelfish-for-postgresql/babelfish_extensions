@@ -508,6 +508,149 @@ $$;
 
 
 
+-- Helper function for extracting original (untruncated) function/procedure/trigger
+-- name from babelfish_function_ext. Only looks up the catalog when the physical
+-- proname is potentially truncated (>= 60 bytes).
+CREATE OR REPLACE FUNCTION sys.bbf_get_func_original_name(func_proname name, func_nspname name)
+RETURNS text
+LANGUAGE SQL
+STABLE
+PARALLEL SAFE
+RETURN COALESCE(
+    CASE WHEN octet_length(func_proname) >= 60 THEN
+        (SELECT f.orig_name
+         FROM sys.babelfish_function_ext f
+         WHERE f.funcname = func_proname
+           AND f.nspname = func_nspname
+         LIMIT 1)
+    END,
+    func_proname::text);
+
+-- Backfill orig_name for triggers/functions/procs (previously not populated for triggers)
+UPDATE sys.babelfish_function_ext SET orig_name = funcname WHERE orig_name IS NULL;
+
+-- Recreate sp_stored_procedures_view to use babelfish_function_ext.orig_name for long names
+ALTER VIEW sys.sp_stored_procedures_view RENAME TO sp_stored_procedures_view_deprecated_in_6_3_0;
+
+CREATE OR REPLACE VIEW sys.sp_stored_procedures_view AS
+SELECT 
+CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
+
+CASE 
+	WHEN p.prokind = 'p' THEN CAST(PG_CATALOG.concat(sys.bbf_get_func_original_name(p.proname, p.pronamespace::regnamespace::name)::sys.NVARCHAR(128), ';1') AS sys.nvarchar(134))
+	ELSE CAST(PG_CATALOG.concat(sys.bbf_get_func_original_name(p.proname, p.pronamespace::regnamespace::name)::sys.NVARCHAR(128), ';0') AS sys.nvarchar(134))
+END AS PROCEDURE_NAME,
+
+-1 AS NUM_INPUT_PARAMS,
+-1 AS NUM_OUTPUT_PARAMS,
+-1 AS NUM_RESULT_SETS,
+CAST(NULL AS varchar(254)) COLLATE sys.database_default AS REMARKS,
+cast(2 AS smallint) AS PROCEDURE_TYPE
+
+FROM pg_catalog.pg_proc p 
+
+INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id 
+INNER JOIN sys.databases d ON d.database_id = sys.db_id()
+
+UNION 
+
+SELECT CAST((SELECT sys.db_name()) AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
+CAST(nspname AS sys.sysname) AS PROCEDURE_OWNER,
+
+CASE 
+	WHEN prokind = 'p' THEN cast(PG_CATALOG.concat(proname, ';1') AS sys.nvarchar(134))
+	ELSE cast(PG_CATALOG.concat(proname, ';0') AS sys.nvarchar(134))
+END AS PROCEDURE_NAME,
+
+-1 AS NUM_INPUT_PARAMS,
+-1 AS NUM_OUTPUT_PARAMS,
+-1 AS NUM_RESULT_SETS,
+CAST(NULL AS varchar(254)) COLLATE sys.database_default AS REMARKS,
+cast(2 AS smallint) AS PROCEDURE_TYPE
+
+FROM    pg_catalog.pg_namespace n 
+JOIN    pg_catalog.pg_proc p 
+ON      pronamespace = n.oid   
+WHERE nspname = 'sys' AND (proname LIKE 'sp\_%' OR proname LIKE 'xp\_%' OR proname LIKE 'dm\_%' OR proname LIKE 'fn\_%');
+
+GRANT SELECT ON sys.sp_stored_procedures_view TO PUBLIC;
+
+
+
+-- Recreate sys.procedures to use babelfish_function_ext.orig_name
+create or replace view sys.procedures as
+select
+  cast(coalesce(f.orig_name, p.proname::sys.NVARCHAR(128)) as sys.sysname) as name
+  , cast(p.oid as int) as object_id
+  , cast(null as int) as principal_id
+  , cast(sch.schema_id as int) as schema_id
+  , cast (0 as int) as parent_object_id
+  , cast(case p.prokind
+      when 'p' then 'P'
+      when 'a' then 'AF'
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'TR'
+          else 'FN'
+        end
+    end as sys.bpchar(2)) COLLATE sys.database_default as type
+  , cast(case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'
+      when 'a' then 'AGGREGATE_FUNCTION'
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'SQL_TRIGGER'
+          else 'SQL_SCALAR_FUNCTION'
+        end
+    end as sys.nvarchar(60)) as type_desc
+  , cast(f.create_date as sys.datetime) as create_date
+  , cast(f.create_date as sys.datetime) as modify_date
+  , cast(0 as sys.bit) as is_ms_shipped
+  , cast(0 as sys.bit) as is_published
+  , cast(0 as sys.bit) as is_schema_published
+  , cast(0 as sys.bit) as is_auto_executed
+  , cast(0 as sys.bit) as is_execution_replicated
+  , cast(0 as sys.bit) as is_repl_serializable_only
+  , cast(0 as sys.bit) as skips_repl_constraints
+from pg_proc p
+inner join sys.schemas sch on sch.schema_id = p.pronamespace
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
+where 
+format_type(p.prorettype, null) <> 'trigger'
+and has_function_privilege(p.oid, 'EXECUTE');
+GRANT SELECT ON sys.procedures TO PUBLIC;
+
+-- Recreate sys.triggers to use babelfish_function_ext.orig_name
+CREATE OR REPLACE VIEW sys.triggers
+AS
+SELECT
+  CAST(coalesce(f.orig_name, p.proname::sys.NVARCHAR(128)) as sys.sysname) as name,
+  CAST(tr.oid as int) as object_id,
+  CAST(1 as sys.tinyint) as parent_class,
+  CAST('OBJECT_OR_COLUMN' as sys.nvarchar(60)) AS parent_class_desc,
+  CAST(tr.tgrelid as int) AS parent_id,
+  CAST('TR' as sys.bpchar(2)) AS type,
+  CAST('SQL_TRIGGER' as sys.nvarchar(60)) AS type_desc,
+  CAST(f.create_date as sys.datetime) AS create_date,
+  CAST(f.create_date as sys.datetime) AS modify_date,
+  CAST(0 as sys.bit) AS is_ms_shipped,
+  CAST(tr.tgenabled = 'D' AS sys.bit)	AS is_disabled,
+  CAST(0 as sys.bit) AS is_not_for_replication,
+  CAST(get_bit(CAST(CAST(tr.tgtype as int) as bit(7)),0) as sys.bit) AS is_instead_of_trigger
+FROM pg_proc p
+inner join sys.schemas sch on sch.schema_id = p.pronamespace
+left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
+where 
+has_function_privilege(p.oid, 'EXECUTE')
+and p.prokind = 'f'
+and format_type(p.prorettype, null) = 'trigger';
+GRANT SELECT ON sys.triggers TO PUBLIC;
+
+-- Recreate sys.all_objects to use babelfish_function_ext.orig_name for procedures
 -- BABEL-5975:Store original names in options for tables, views, columns
 
 -- Helper function for extracting original (untruncated) relation name from reloptions.
@@ -914,7 +1057,7 @@ and p.proname != 'pltsql_call_handler'
 union all
 -- details of user defined procedures
 select
-    p.proname::sys.sysname as name
+    sys.bbf_get_func_original_name(p.proname, s.nspname)::sys.sysname as name 
   , case
       when t.typname = 'trigger' then tr.oid else p.oid
     end as object_id
@@ -1366,7 +1509,7 @@ LEFT OUTER JOIN sys.babelfish_view_def bvd
       sys.babelfish_truncate_identifier(ao.name::text) = bvd.object_name COLLATE sys.database_default 
    )
 LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
-LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.orig_name COLLATE sys.database_default AND ao.schema_id::regnamespace::name = f.nspname
 AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature COLLATE "C"
 WHERE ao.type in ('P', 'RF', 'V', 'FN', 'IF', 'TF', 'R')
 UNION ALL
@@ -1385,10 +1528,11 @@ SELECT
 FROM sys.all_objects ao
 LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
 LEFT JOIN pg_trigger tr ON ao.object_id = CAST(tr.oid AS INT)
-LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.orig_name COLLATE sys.database_default AND ao.schema_id::regnamespace::name = f.nspname
 AND sys.babelfish_get_pltsql_function_signature(tr.tgfoid) = f.funcsignature COLLATE "C"
 WHERE ao.type = 'TR';
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_stored_procedures_view_deprecated_in_6_3_0');
 
 
 -- Recreate information_schema_tsql.views
@@ -2464,7 +2608,715 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_fkeys TO PUBLIC;
 
+
+-- BABEL-5975: recreate information_schema_tsql.routines so SPECIFIC_NAME /
+-- ROUTINE_NAME expose the routine's original (case-preserved, untruncated)
+-- name via sys.babelfish_function_ext.orig_name instead of the physical proname.
+CREATE OR REPLACE VIEW information_schema_tsql.routines AS
+    SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SPECIFIC_CATALOG",
+           CAST(ext.orig_name AS sys.nvarchar(128)) AS "SPECIFIC_SCHEMA",
+           CAST(coalesce(f.orig_name, p.proname::sys.nvarchar(128)) AS sys.nvarchar(128)) AS "SPECIFIC_NAME",
+           CAST(nc.dbname AS sys.nvarchar(128)) AS "ROUTINE_CATALOG",
+           CAST(ext.orig_name AS sys.nvarchar(128)) AS "ROUTINE_SCHEMA",
+           CAST(coalesce(f.orig_name, p.proname::sys.nvarchar(128)) AS sys.nvarchar(128)) AS "ROUTINE_NAME",
+           CAST(CASE p.prokind WHEN 'f' THEN 'FUNCTION' WHEN 'p' THEN 'PROCEDURE' END
+           	 AS sys.nvarchar(20)) AS "ROUTINE_TYPE",
+           CAST(NULL AS sys.nvarchar(128)) AS "MODULE_CATALOG",
+           CAST(NULL AS sys.nvarchar(128)) AS "MODULE_SCHEMA",
+           CAST(NULL AS sys.nvarchar(128)) AS "MODULE_NAME",
+           CAST(NULL AS sys.nvarchar(128)) AS "UDT_CATALOG",
+           CAST(NULL AS sys.nvarchar(128)) AS "UDT_SCHEMA",
+           CAST(NULL AS sys.nvarchar(128)) AS "UDT_NAME",
+	   CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN NULL ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
+           CAST(information_schema_tsql._pgtsql_char_max_length_for_routines(tsql_type_name, true_typmod)
+                 AS int)
+           AS "CHARACTER_MAXIMUM_LENGTH",
+           CAST(information_schema_tsql._pgtsql_char_octet_length_for_routines(tsql_type_name, true_typmod)
+                 AS int)
+           AS "CHARACTER_OCTET_LENGTH",
+           CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_CATALOG",
+           CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_SCHEMA",
+           CAST(
+                 CASE co.collname
+                       WHEN 'default' THEN current_setting('babelfishpg_tsql.server_collation_name')
+                       ELSE co.collname
+                 END
+            AS sys.nvarchar(128)) AS "COLLATION_NAME",
+            CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_CATALOG",
+            CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_SCHEMA",
+	    /*
+                 * TODO: We need to first create mapping of collation name to char-set name;
+                 * Until then return null.
+            */
+	    CAST(case when tsql_type_name IN ('nchar','nvarchar') THEN 'UNICODE' when tsql_type_name IN ('char','varchar') THEN 'iso_1' ELSE NULL END AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
+	    CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, true_typmod)
+                        AS smallint)
+            AS "NUMERIC_PRECISION",
+	    CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, case when t.typtype = 'd' THEN t.typbasetype ELSE t.oid END, true_typmod)
+                        AS smallint)
+            AS "NUMERIC_PRECISION_RADIX",
+            CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.oid, true_typmod)
+                        AS smallint)
+            AS "NUMERIC_SCALE",
+            CAST(information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
+                        AS smallint)
+            AS "DATETIME_PRECISION",
+	    CAST(NULL AS sys.nvarchar(30)) AS "INTERVAL_TYPE",
+            CAST(NULL AS smallint) AS "INTERVAL_PRECISION",
+            CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_CATALOG",
+            CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_SCHEMA",
+            CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_NAME",
+            CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_CATALOG",
+            CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_SCHEMA",
+            CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_NAME",
+            CAST(NULL AS bigint) AS "MAXIMUM_CARDINALITY",
+            CAST(NULL AS sys.nvarchar(128)) AS "DTD_IDENTIFIER",
+            CAST(CASE WHEN l.lanname = 'sql' THEN 'SQL' WHEN l.lanname = 'pltsql' THEN 'SQL' ELSE 'EXTERNAL' END AS sys.nvarchar(30)) AS "ROUTINE_BODY",
+            CAST(f.definition AS sys.nvarchar(4000)) AS "ROUTINE_DEFINITION",
+            CAST(NULL AS sys.nvarchar(128)) AS "EXTERNAL_NAME",
+            CAST(NULL AS sys.nvarchar(30)) AS "EXTERNAL_LANGUAGE",
+            CAST(NULL AS sys.nvarchar(30)) AS "PARAMETER_STYLE",
+            CAST(CASE WHEN p.provolatile = 'i' THEN 'YES' ELSE 'NO' END AS sys.nvarchar(10)) AS "IS_DETERMINISTIC",
+	    CAST(CASE p.prokind WHEN 'p' THEN 'MODIFIES' ELSE 'READS' END AS sys.nvarchar(30)) AS "SQL_DATA_ACCESS",
+            CAST(CASE WHEN p.prokind <> 'p' THEN
+              CASE WHEN p.proisstrict THEN 'YES' ELSE 'NO' END END AS sys.nvarchar(10)) AS "IS_NULL_CALL",
+            CAST(NULL AS sys.nvarchar(128)) AS "SQL_PATH",
+            CAST('YES' AS sys.nvarchar(10)) AS "SCHEMA_LEVEL_ROUTINE",
+            CAST(CASE p.prokind WHEN 'f' THEN 0 WHEN 'p' THEN -1 END AS smallint) AS "MAX_DYNAMIC_RESULT_SETS",
+            CAST('NO' AS sys.nvarchar(10)) AS "IS_USER_DEFINED_CAST",
+            CAST('NO' AS sys.nvarchar(10)) AS "IS_IMPLICITLY_INVOCABLE",
+            CAST(NULL AS sys.datetime) AS "CREATED",
+            CAST(NULL AS sys.datetime) AS "LAST_ALTERED"
+
+       FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
+            pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
+	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT)
+		LEFT JOIN sys.babelfish_function_ext f ON p.proname = f.funcname AND sch.schema_id::regnamespace::name = f.nspname
+			AND sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature COLLATE "C",
+            pg_language l,
+            pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
+            sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,
+            sys.tsql_get_returnTypmodValue(p.oid) AS true_typmod,
+	    sys.is_table_type(t.typrelid) as is_tbl_type
+
+       WHERE
+            (case p.prokind 
+	       when 'p' then true 
+	       when 'a' then false
+               else 
+    	           (case format_type(p.prorettype, null) 
+	   	      when 'trigger' then false 
+	   	      else true 
+   		    end) 
+            end)  
+            AND (NOT pg_is_other_temp_schema(nc.oid))
+            AND has_function_privilege(p.oid, 'EXECUTE')
+            AND (pg_has_role(t.typowner, 'USAGE')
+            OR has_type_privilege(t.oid, 'USAGE'))
+            AND ext.dbid = sys.db_id()
+	    AND p.prolang = l.oid
+            AND p.prorettype = t.oid
+            AND p.pronamespace = nc.oid
+	    AND CAST(ao.is_ms_shipped as INT) = 0;
+
+GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
+-- BABEL-5321: sp_stored_procedures must also match when the caller supplies
+-- the MD5-truncated physical name of a long (> NAMEDATALEN) procedure, in
+-- addition to the full original name now shown in procedure_name.
+CREATE OR REPLACE PROCEDURE sys.sp_stored_procedures(
+    "@sp_name" sys.nvarchar(390) = '',
+    "@sp_owner" sys.nvarchar(384) = '',
+    "@sp_qualifier" sys.sysname = '',
+    "@fusepattern" sys.bit = '1'
+)
+AS $$
+BEGIN
+	IF (@sp_qualifier != '') AND pg_catalog.lower(sys.db_name()) != pg_catalog.lower(@sp_qualifier)
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
+	
+	-- If @sp_name or @sp_owner = '%', it gets converted to NULL or '' regardless of @fusepattern 
+	IF @sp_name = '%'
+	BEGIN
+		SELECT @sp_name = ''
+	END
+	
+	IF @sp_owner = '%'
+	BEGIN
+		SELECT @sp_owner = ''
+	END
+	
+	-- Changes fusepattern to 0 if no wildcards are used. NOTE: Need to add [] wildcard pattern when it is implemented. Wait for BABEL-2452
+	IF @fusepattern = 1
+	BEGIN
+		IF (CHARINDEX('%', @sp_name) != 0 AND CHARINDEX('_', @sp_name) != 0 AND CHARINDEX('%', @sp_owner) != 0 AND CHARINDEX('_', @sp_owner) != 0 )
+		BEGIN
+			SELECT @fusepattern = 0;
+		END
+	END
+	
+	-- Condition for when sp_name argument is not given or is null, or is just a wildcard (same order)
+	IF COALESCE(@sp_name, '') = ''
+	BEGIN
+		IF @fusepattern=1 
+		BEGIN
+			SELECT 
+			PROCEDURE_QUALIFIER,
+			PROCEDURE_OWNER,
+			PROCEDURE_NAME,
+			NUM_INPUT_PARAMS,
+			NUM_OUTPUT_PARAMS,
+			NUM_RESULT_SETS,
+			REMARKS,
+			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+			WHERE ((SELECT COALESCE(@sp_owner,'')) = '' OR pg_catalog.lower(procedure_owner) LIKE pg_catalog.lower(@sp_owner))
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+		END
+		ELSE
+		BEGIN
+			SELECT 
+			PROCEDURE_QUALIFIER,
+			PROCEDURE_OWNER,
+			PROCEDURE_NAME,
+			NUM_INPUT_PARAMS,
+			NUM_OUTPUT_PARAMS,
+			NUM_RESULT_SETS,
+			REMARKS,
+			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+			WHERE ((SELECT COALESCE(@sp_owner,'')) = '' OR pg_catalog.lower(procedure_owner) LIKE pg_catalog.lower(@sp_owner))
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+		END
+	END
+	-- When @sp_name is not null
+	ELSE
+	BEGIN
+		-- When sp_owner is null and fusepattern = 0
+		IF (@fusepattern = 0 AND  COALESCE(@sp_owner,'') = '') 
+		BEGIN
+			IF EXISTS ( -- Search in the sys schema 
+					SELECT * FROM sys.sp_stored_procedures_view
+					WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name) OR sys.babelfish_truncate_identifier(pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2))) = pg_catalog.lower(@sp_name))
+						AND (pg_catalog.lower(procedure_owner) = 'sys'))
+			BEGIN
+				SELECT PROCEDURE_QUALIFIER,
+				PROCEDURE_OWNER,
+				PROCEDURE_NAME,
+				NUM_INPUT_PARAMS,
+				NUM_OUTPUT_PARAMS,
+				NUM_RESULT_SETS,
+				REMARKS,
+				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name) OR sys.babelfish_truncate_identifier(pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2))) = pg_catalog.lower(@sp_name))
+					AND (pg_catalog.lower(procedure_owner) = 'sys')
+				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+			END
+			ELSE IF EXISTS ( 
+				SELECT * FROM sys.sp_stored_procedures_view
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name) OR sys.babelfish_truncate_identifier(pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2))) = pg_catalog.lower(@sp_name))
+					AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(SCHEMA_NAME()))
+					)
+			BEGIN
+				SELECT PROCEDURE_QUALIFIER,
+				PROCEDURE_OWNER,
+				PROCEDURE_NAME,
+				NUM_INPUT_PARAMS,
+				NUM_OUTPUT_PARAMS,
+				NUM_RESULT_SETS,
+				REMARKS,
+				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name) OR sys.babelfish_truncate_identifier(pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2))) = pg_catalog.lower(@sp_name))
+					AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(SCHEMA_NAME()))
+				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+			END
+			ELSE -- Search in the dbo schema (if nothing exists it should just return nothing). 
+			BEGIN
+				SELECT PROCEDURE_QUALIFIER,
+				PROCEDURE_OWNER,
+				PROCEDURE_NAME,
+				NUM_INPUT_PARAMS,
+				NUM_OUTPUT_PARAMS,
+				NUM_RESULT_SETS,
+				REMARKS,
+				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name) OR sys.babelfish_truncate_identifier(pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2))) = pg_catalog.lower(@sp_name))
+					AND (pg_catalog.lower(procedure_owner) = 'dbo')
+				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+			END
+			
+		END
+		ELSE IF (@fusepattern = 0 AND  COALESCE(@sp_owner,'') != '')
+		BEGIN
+			SELECT 
+			PROCEDURE_QUALIFIER,
+			PROCEDURE_OWNER,
+			PROCEDURE_NAME,
+			NUM_INPUT_PARAMS,
+			NUM_OUTPUT_PARAMS,
+			NUM_RESULT_SETS,
+			REMARKS,
+			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+			WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name) OR sys.babelfish_truncate_identifier(pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2))) = pg_catalog.lower(@sp_name))
+				AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(@sp_owner))
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+		END
+		ELSE -- fusepattern = 1
+		BEGIN
+			SELECT 
+			PROCEDURE_QUALIFIER,
+			PROCEDURE_OWNER,
+			PROCEDURE_NAME,
+			NUM_INPUT_PARAMS,
+			NUM_OUTPUT_PARAMS,
+			NUM_RESULT_SETS,
+			REMARKS,
+			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) LIKE pg_catalog.lower(@sp_name) OR sys.babelfish_truncate_identifier(pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2))) LIKE pg_catalog.lower(@sp_name))
+				AND ((SELECT COALESCE(@sp_owner,'')) = '' OR pg_catalog.lower(procedure_owner) LIKE pg_catalog.lower(@sp_owner))
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+		END
+	END	
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_stored_procedures TO PUBLIC;
+
+-- BABEL-5321 / BABEL-5975: sp_sproc_columns must display the full original
+-- name of long (> NAMEDATALEN) procedures/functions and match both the full
+-- and the MD5-truncated name supplied by the caller.
+CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
+AS
+SELECT
+CAST(sys.db_name() AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be objects in current database
+, CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
+, CAST(
+CASE
+  WHEN ss.prokind = 'p' THEN PG_CATALOG.CONCAT(sys.bbf_get_func_original_name(ss.proname, ss.nspname), ';1')
+  ELSE PG_CATALOG.CONCAT(sys.bbf_get_func_original_name(ss.proname, ss.nspname), ';0')
+END
+AS sys.nvarchar(134)) AS PROCEDURE_NAME
+, CAST(
+CASE 
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN '@TABLE_RETURN_VALUE'
+    ELSE '@RETURN_VALUE'
+  END 
+ELSE COALESCE(ss.proargnames[n], '')
+END
+AS sys.SYSNAME) AS COLUMN_NAME
+, CAST(
+CASE
+WHEN ss.n IS NULL THEN
+  CASE 
+    WHEN ss.proretset THEN 3
+    ELSE 5
+  END
+WHEN ss.proargmodes[n] in ('o', 'b') THEN 2
+ELSE 1
+END
+AS smallint) AS COLUMN_TYPE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.prokind = 'p' THEN (SELECT data_type FROM sys.spt_datatype_info_table  WHERE type_name = 'int')
+    WHEN ss.proretset THEN NULL
+    ELSE sdit.data_type 
+    END
+  WHEN st.is_table_type = 1 THEN -153
+  ELSE sdit.data_type 
+END
+AS smallint) AS DATA_TYPE
+, CAST(
+CASE 
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 'table' 
+      WHEN ss.prokind = 'p' THEN 'int'
+      ELSE st.name
+    END
+  ELSE st.name
+END
+AS sys.sysname) AS TYPE_NAME
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 0 
+    WHEN ss.prokind = 'p' THEN (SELECT precision FROM sys.types WHERE name = 'int')
+    ELSE st.precision
+  END
+  WHEN st.is_table_type = 1 THEN 0
+  ELSE st.precision 
+END 
+AS sys.int) AS PRECISION
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+    WHEN ss.prokind = 'p' THEN (SELECT max_length FROM sys.types WHERE name = 'int')
+    ELSE st.max_length
+  END
+  WHEN st.is_table_type = 1 THEN 2147483647
+  ELSE st.max_length 
+END
+AS sys.int) AS LENGTH
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN 
+    CASE
+      WHEN ss.proretset THEN 0 
+      WHEN ss.prokind = 'p' THEN (SELECT scale FROM sys.types WHERE name = 'int')
+      ELSE st.scale
+    END
+  WHEN st.is_table_type = 1 THEN NULL
+  ELSE st.scale
+END
+AS smallint) AS SCALE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+    WHEN ss.prokind = 'p' THEN (SELECT num_prec_radix FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+    ELSE sdit.num_prec_radix
+  END
+  WHEN st.is_table_type = 1 THEN NULL
+  ELSE sdit.num_prec_radix
+END
+AS smallint) AS RADIX
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset OR ss.prokind = 'p' THEN 0
+      ELSE sdit.nullable 
+    END
+  WHEN st.is_table_type = 1 THEN 1
+  ELSE sdit.nullable 
+END
+AS smallint) AS NULLABLE
+, CAST(
+CASE 
+  WHEN ss.n IS NULL AND ss.proretset THEN 'Result table returned by table valued function'
+  ELSE NULL
+END
+AS sys.varchar(254)) COLLATE sys.database_default AS REMARKS
+, CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN NULL
+      WHEN ss.prokind = 'p' THEN (SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+      ELSE sdit.sql_data_type
+    END
+  WHEN st.is_table_type = 1 THEN -153
+  ELSE sdit.sql_data_type 
+END
+AS smallint) AS SQL_DATA_TYPE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 0
+      WHEN ss.prokind = 'p' THEN (SELECT sql_datetime_sub FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+      ELSE sdit.sql_datetime_sub
+    END
+  ELSE sdit.sql_datetime_sub 
+END 
+AS smallint) AS SQL_DATETIME_SUB
+, CAST(
+CASE
+  WHEN ss.n IS NOT NULL AND st.is_table_type = 1 THEN 2147483647
+  ELSE NULL
+END
+AS sys.int) AS CHAR_OCTET_LENGTH
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN 0
+  ELSE n 
+END 
+AS sys.int) AS ORDINAL_POSITION
+, CAST(
+CASE
+  WHEN ss.n IS NULL AND ss.proretset THEN 'NO'
+  WHEN st.is_table_type = 1 THEN 'YES'
+  WHEN sdit.nullable = 1 THEN 'YES'
+  ELSE 'NO'
+END
+AS sys.varchar(254)) COLLATE sys.database_default AS IS_NULLABLE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+      WHEN ss.prokind = 'p' THEN 56
+      ELSE sdit.ss_data_type
+    END
+  WHEN st.is_table_type = 1 THEN 0
+  ELSE sdit.ss_data_type
+END
+AS sys.tinyint) AS SS_DATA_TYPE
+, CAST(sys.bbf_get_func_original_name(ss.proname, ss.nspname) AS sys.sysname) AS original_procedure_name
+FROM 
+( 
+  -- CTE to query procedures related to bbf
+  WITH bbf_proc AS (
+    SELECT
+      p.proname as proname,
+      p.pronamespace::regnamespace::name as nspname,
+      p.proargnames as proargnames,
+      p.proargmodes as proargmodes,
+      p.prokind as prokind,
+      p.proretset as proretset,
+      p.prorettype as prorettype,
+      p.proallargtypes as proallargtypes,
+      p.proargtypes as proargtypes,
+      s.name as schema_name
+    FROM 
+      pg_proc p
+    INNER JOIN (
+      SELECT name as name, schema_id as id  FROM sys.schemas 
+      UNION ALL 
+      SELECT CAST(nspname as sys.sysname) as name, CAST(oid as int) as id 
+        from pg_namespace WHERE nspname in ('sys', 'information_schema')
+    ) as s ON p.pronamespace = s.id
+    WHERE (
+      (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+      AND (s.name != 'sys' 
+        OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs in sys schema
+        OR p.proname like 'xp\_%'
+        OR p.proname like 'dm\_%'
+        OR p.proname like 'fn\_%'))
+  )
+
+  SELECT *
+  FROM ( 
+    SELECT -- Selects all parameters (input and output), but NOT return values
+    p.proname as proname,
+    p.nspname as nspname,
+    p.proargnames as proargnames,
+    p.proargmodes as proargmodes,
+    p.prokind as prokind,
+    p.proretset as proretset,
+    p.prorettype as prorettype,
+    p.schema_name as schema_name,
+    (information_schema._pg_expandarray(
+    COALESCE(p.proallargtypes,
+      CASE 
+        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
+        ELSE CAST(p.proargtypes AS oid[])
+      END
+    ))).x AS x,
+    (information_schema._pg_expandarray(
+    COALESCE(p.proallargtypes,
+      CASE 
+        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
+        ELSE CAST(p.proargtypes AS oid[])
+      END
+    ))).n AS n
+    FROM bbf_proc p) AS t
+  WHERE (t.proargmodes[t.n] in ('i', 'o', 'b') OR t.proargmodes is NULL)
+
+  UNION ALL
+
+  SELECT -- Selects all return values (this is because inline-table functions could cause duplicate outputs)
+  p.proname as proname,
+  p.nspname as nspname,
+  p.proargnames as proargnames,
+  p.proargmodes as proargmodes,
+  p.prokind as prokind,
+  p.proretset as proretset,
+  p.prorettype as prorettype,
+  p.schema_name as schema_name,
+  p.prorettype AS x, 
+  NULL AS n -- null value indicates that we are retrieving the return values of the proc/func
+  FROM bbf_proc p
+) ss
+LEFT JOIN sys.types st ON ss.x = st.user_type_id -- left joined because return type of table-valued functions may not have an entry in sys.types
+-- Because spt_datatype_info_table does contain user-defind types and their names,
+-- the join below allows us to retrieve the name of the base type of the user-defined type
+LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = sys.translate_pg_type_to_tsql(st.system_type_id);
+GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
+
+
+CREATE OR REPLACE PROCEDURE sys.sp_sproc_columns(
+	"@procedure_name" sys.nvarchar(390) = '%',
+	"@procedure_owner" sys.nvarchar(384) = NULL,
+	"@procedure_qualifier" sys.sysname = NULL,
+	"@column_name" sys.nvarchar(384) = NULL,
+	"@odbcver" int = 2,
+	"@fusepattern" sys.bit = '1'
+)	
+AS $$
+	SELECT @procedure_name = pg_catalog.lower(COALESCE(@procedure_name, ''))
+	SELECT @procedure_owner = pg_catalog.lower(COALESCE(@procedure_owner, ''))
+	SELECT @procedure_qualifier = pg_catalog.lower(COALESCE(@procedure_qualifier, ''))
+	SELECT @column_name = pg_catalog.lower(COALESCE(@column_name, ''))
+BEGIN 
+	IF (@procedure_qualifier != '' AND (SELECT pg_catalog.lower(sys.db_name())) != @procedure_qualifier)
+		BEGIN
+			THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+ 	   	END
+	IF @fusepattern = '1'
+		BEGIN
+			SELECT PROCEDURE_QUALIFIER,
+					PROCEDURE_OWNER,
+					PROCEDURE_NAME,
+					COLUMN_NAME,
+					COLUMN_TYPE,
+					DATA_TYPE,
+					TYPE_NAME,
+					PRECISION,
+					LENGTH,
+					SCALE,
+					RADIX,
+					NULLABLE,
+					REMARKS,
+					COLUMN_DEF,
+					SQL_DATA_TYPE,
+					SQL_DATETIME_SUB,
+					CHAR_OCTET_LENGTH,
+					ORDINAL_POSITION,
+					IS_NULLABLE,
+					SS_DATA_TYPE
+			FROM sys.sp_sproc_columns_view
+			WHERE (@procedure_name = '' OR original_procedure_name LIKE @procedure_name OR sys.babelfish_truncate_identifier(pg_catalog.lower(original_procedure_name)) LIKE @procedure_name)
+				AND (@procedure_owner = '' OR procedure_owner LIKE @procedure_owner)
+				AND (@column_name = '' OR column_name LIKE @column_name)
+				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier)
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name, ordinal_position;
+		END
+	ELSE
+		BEGIN
+			SELECT PROCEDURE_QUALIFIER,
+					PROCEDURE_OWNER,
+					PROCEDURE_NAME,
+					COLUMN_NAME,
+					COLUMN_TYPE,
+					DATA_TYPE,
+					TYPE_NAME,
+					PRECISION,
+					LENGTH,
+					SCALE,
+					RADIX,
+					NULLABLE,
+					REMARKS,
+					COLUMN_DEF,
+					SQL_DATA_TYPE,
+					SQL_DATETIME_SUB,
+					CHAR_OCTET_LENGTH,
+					ORDINAL_POSITION,
+					IS_NULLABLE,
+					SS_DATA_TYPE
+			FROM sys.sp_sproc_columns_view
+			WHERE (@procedure_name = '' OR original_procedure_name = @procedure_name OR sys.babelfish_truncate_identifier(pg_catalog.lower(original_procedure_name)) = @procedure_name)
+				AND (@procedure_owner = '' OR procedure_owner = @procedure_owner)
+				AND (@column_name = '' OR column_name = @column_name)
+				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier)
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name, ordinal_position;
+		END
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT ALL ON PROCEDURE sys.sp_sproc_columns TO PUBLIC;
+
+-- BABEL-5321: sp_procedure_params_100_managed must also match the caller's
+-- MD5-truncated name for long (> NAMEDATALEN) procedures/functions.
+CREATE OR REPLACE PROCEDURE sys.sp_procedure_params_100_managed(IN "@procedure_name" sys.sysname, 
+                                                                IN "@group_number" integer DEFAULT 1, 
+                                                                IN "@procedure_schema" sys.sysname DEFAULT NULL, 
+                                                                IN "@parameter_name" sys.sysname DEFAULT NULL)
+AS $$
+BEGIN
+	IF @procedure_schema IS NULL OR @procedure_schema = ''
+		BEGIN
+			SELECT @procedure_schema = default_schema_name from sys.babelfish_authid_user_ext WHERE orig_username = user_name() AND database_name = db_name();
+		END
+
+        SELECT 	v.column_name AS [PARAMETER_NAME],
+		CAST (CASE v.column_type
+			WHEN 5 THEN 4
+                        WHEN 3 THEN 4
+                        ELSE v.column_type END
+                     	AS smallint) AS [PARAMETER_TYPE],
+        	CAST (CASE v.type_name
+			WHEN 'int' THEN 8
+                        WHEN 'nchar' THEN 10
+                        WHEN 'char' THEN 3
+                        WHEN 'date' THEN 31
+                        WHEN 'nvarchar' THEN 12
+                        WHEN 'varchar' THEN 22
+                        WHEN 'table' THEN 23
+                        WHEN 'datetime' THEN 4
+                        WHEN 'datetime2' THEN 33
+                        WHEN 'datetimeoffset' THEN 34
+                        WHEN 'smalldatetime' THEN 15
+			WHEN 'time' THEN 32
+                        WHEN 'decimal' THEN 5
+			WHEN 'numeric' THEN 5
+                        WHEN 'float' THEN 6
+                        WHEN 'real' THEN 13
+                        WHEN 'nchar' THEN 10
+                        WHEN 'flag' THEN 2
+                        WHEN 'money' THEN 9
+                        WHEN 'smallmoney' THEN 17
+                        WHEN 'tinyint' THEN 20
+                        WHEN 'smallint' THEN 16
+                        WHEN 'bigint' THEN 0
+                        WHEN 'bit' THEN 2
+			WHEN 'text' THEN 18
+			WHEN 'ntext' THEN 11
+			WHEN 'binary' THEN 1
+			WHEN 'varbinary' THEN 21
+			WHEN 'image' THEN 7
+                        ELSE 0 END
+                	AS smallint) AS [MANAGED_DATA_TYPE],
+        	CAST (CASE 
+			WHEN v.type_name IN (N'nchar', N'nvarchar') AND p.max_length <> -1 THEN p.max_length / 2
+			WHEN v.type_name IN (N'char', N'varchar', N'binary', N'varbinary') AND p.max_length <> -1 THEN p.max_length
+			WHEN v.type_name IN (N'nvarchar', N'varchar', N'varbinary') AND p.max_length = -1 THEN 0
+                	WHEN v.type_name IN (N'text', N'image') THEN 2147483647
+                	WHEN v.type_name = 'ntext' THEN 1073741823
+                	ELSE NULL END 
+			AS INT) AS [CHARACTER_MAXIMUM_LENGTH],
+        	CAST(CASE 
+			WHEN v.type_name IN (N'int', N'smallint', N'bigint', N'tinyint', N'float', N'real', N'decimal', N'numeric', N'money', N'smallmoney') 
+				THEN v.PRECISION
+			ELSE NULL END 
+			AS smallint) AS [NUMERIC_PRECISION],
+        	CAST(CASE 
+			WHEN v.type_name IN (N'decimal', N'numeric') THEN v.SCALE 
+			ELSE NULL END 
+			AS smallint ) AS [NUMERIC_SCALE],
+        	CAST(NULL AS sys.nvarchar(128)) AS [TYPE_CATALOG_NAME],
+        	CAST(NULL AS sys.nvarchar(128)) AS [TYPE_SCHEMA_NAME],
+        	CAST(v.TYPE_NAME AS sys.nvarchar(128)) AS [TYPE_NAME],
+        	CAST(NULL AS sys.nvarchar(128)) AS XML_CATALOGNAME,
+        	CAST(NULL AS sys.nvarchar(128)) AS XML_SCHEMANAME,
+        	CAST(NULL AS sys.nvarchar(128)) AS XML_SCHEMACOLLECTIONNAME,
+        	CAST(CASE
+			WHEN v.type_name = 'datetime' THEN 3
+                    	WHEN v.type_name IN (N'datetime2', N'datetimeoffset', N'time') THEN 7
+			WHEN v.type_name IN (N'date', N'smalldatetime') THEN 0
+                    	ELSE NULL END AS int) AS [SS_DATETIME_PRECISION]
+   	FROM sys.sp_sproc_columns_view v
+   	LEFT OUTER JOIN sys.all_parameters AS p 
+	ON v.column_name = p.name AND p.object_id = object_id(PG_CATALOG.CONCAT(@procedure_schema, '.', @procedure_name))
+   	WHERE (v.original_procedure_name = @procedure_name OR sys.babelfish_truncate_identifier(pg_catalog.lower(v.original_procedure_name)) = pg_catalog.lower(@procedure_name))
+    	AND v.procedure_owner = @procedure_schema
+	AND (@parameter_name IS NULL OR column_name = @parameter_name)
+	AND @group_number = 1
+    	ORDER BY PROCEDURE_OWNER, PROCEDURE_NAME, ORDINAL_POSITION;
+END;
+$$ LANGUAGE pltsql;
+GRANT EXECUTE ON PROCEDURE sys.sp_procedure_params_100_managed TO PUBLIC;
+
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
 

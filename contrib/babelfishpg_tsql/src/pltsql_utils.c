@@ -2045,6 +2045,76 @@ get_bbf_original_column_name(Oid relid, AttrNumber attnum)
 	return result;
 }
 
+/*
+ * get_inline_tvf_original_column_name
+ *
+ * Recover the full original name of the attnum-th output column of an inline
+ * table-valued function (RETURNS TABLE AS RETURN (SELECT ...)). Such a function
+ * returns RECORD with its output columns held as TABLE-mode OUT parameters in
+ * pg_proc.proargnames. proargnames is a text[] (not NameData), so it preserves
+ * the full (> NAMEDATALEN) name that BABEL-5975 stored at CREATE time; the
+ * function's result TupleDesc attname would otherwise be truncated to 63 bytes.
+ * Returns a palloc'd copy of the name for the attnum-th TABLE column, or NULL.
+ */
+char *
+get_inline_tvf_original_column_name(Oid funcid, AttrNumber attnum)
+{
+	HeapTuple	proctup;
+	Datum		proargnames;
+	Datum		proargmodes;
+	bool		namesnull;
+	bool		modesnull;
+	Datum	   *nameDatums;
+	Datum	   *modeDatums;
+	int			nnames;
+	int			nmodes;
+	int			tablecol = 0;
+	int			i;
+	char	   *result = NULL;
+
+	if (!OidIsValid(funcid) || attnum <= 0)
+		return NULL;
+
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (!HeapTupleIsValid(proctup))
+		return NULL;
+
+	proargnames = SysCacheGetAttr(PROCOID, proctup,
+								  Anum_pg_proc_proargnames, &namesnull);
+	proargmodes = SysCacheGetAttr(PROCOID, proctup,
+								  Anum_pg_proc_proargmodes, &modesnull);
+
+	/* Need both names and modes to locate the TABLE-mode output columns. */
+	if (namesnull || modesnull)
+	{
+		ReleaseSysCache(proctup);
+		return NULL;
+	}
+
+	deconstruct_array(DatumGetArrayTypeP(proargnames), TEXTOID, -1, false,
+					  TYPALIGN_INT, &nameDatums, NULL, &nnames);
+	deconstruct_array(DatumGetArrayTypeP(proargmodes), CHAROID, 1, true,
+					  TYPALIGN_CHAR, &modeDatums, NULL, &nmodes);
+
+	if (nnames == nmodes)
+	{
+		for (i = 0; i < nmodes; i++)
+		{
+			if (DatumGetChar(modeDatums[i]) != PROARGMODE_TABLE)
+				continue;
+			tablecol++;
+			if (tablecol == attnum)
+			{
+				result = TextDatumGetCString(nameDatums[i]);
+				break;
+			}
+		}
+	}
+
+	ReleaseSysCache(proctup);
+	return result;
+}
+
 void
 exec_add_original_index_name(char *idxname, char *schemaname, char *original_name)
 {

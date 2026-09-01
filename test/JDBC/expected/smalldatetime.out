@@ -9730,7 +9730,7 @@ WHERE ROUTINE_NAME = 'GetCurrentSmallDateTime' AND ROUTINE_TYPE = 'FUNCTION';
 GO
 ~~START~~
 nvarchar#!#nvarchar
-getcurrentsmalldatetime#!#smalldatetime
+GetCurrentSmallDateTime#!#smalldatetime
 ~~END~~
 
 
