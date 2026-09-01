@@ -182,6 +182,42 @@ ORDER BY orig_name;
 GO
 
 -- ===========================================
+-- BABEL-5975: sp_rename hardening (NULL @curr_relname and stale-global guards)
+-- ===========================================
+
+-- Issue 1: babelfish_sp_rename_internal is granted to PUBLIC and @curr_relname
+-- defaults to NULL. For TRIGGER/INDEX/COLUMN a NULL @curr_relname previously
+-- reached strlen(NULL) and crashed the backend (instance-wide DoS). It must now
+-- be rejected with a clean error, and the session must survive.
+EXEC sys.babelfish_sp_rename_internal @objname = 'some_trigger', @newname = 'new_trigger', @schemaname = 'dbo', @objtype = 'TR';
+GO
+EXEC sys.babelfish_sp_rename_internal @objname = 'some_index', @newname = 'new_index', @schemaname = 'dbo', @objtype = 'IX';
+GO
+EXEC sys.babelfish_sp_rename_internal @objname = 'some_column', @newname = 'new_column', @schemaname = 'dbo', @objtype = 'CO';
+GO
+-- Session is still alive after the rejected calls (no crash)
+SELECT 'sp_rename_internal_null_relname_ok' AS status;
+GO
+
+-- Issue 2: a rename that fails part-way must not leave the file-scope
+-- orig_proc_funcname global dangling; a subsequent successful rename in the
+-- same session must store the correct original name (not stale/garbage).
+CREATE PROCEDURE dbo.babel5975_rename_after_fail_proc AS SELECT 1;
+GO
+-- This rename fails (nonexistent object) after the trigger/proc paths may have
+-- set the global; the error must be clean.
+EXEC sp_rename 'dbo.nonexistent_object_babel5975', 'whatever_new_name', 'OBJECT';
+GO
+-- A subsequent valid rename in the same session must succeed and record the
+-- correct original name.
+EXEC sp_rename 'dbo.babel5975_rename_after_fail_proc', 'babel5975_rename_after_fail_proc_renamed', 'OBJECT';
+GO
+SELECT name FROM sys.procedures WHERE name = 'babel5975_rename_after_fail_proc_renamed';
+GO
+DROP PROCEDURE dbo.babel5975_rename_after_fail_proc_renamed;
+GO
+
+-- ===========================================
 -- Table-valued functions (long identifiers)
 -- ===========================================
 

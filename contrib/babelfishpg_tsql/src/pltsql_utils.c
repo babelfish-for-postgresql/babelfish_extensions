@@ -2066,6 +2066,7 @@ get_inline_tvf_original_column_name(Oid funcid, AttrNumber attnum)
 	bool		modesnull;
 	Datum	   *nameDatums;
 	Datum	   *modeDatums;
+	bool	   *nameNulls;
 	int			nnames;
 	int			nmodes;
 	int			tablecol = 0;
@@ -2092,7 +2093,7 @@ get_inline_tvf_original_column_name(Oid funcid, AttrNumber attnum)
 	}
 
 	deconstruct_array(DatumGetArrayTypeP(proargnames), TEXTOID, -1, false,
-					  TYPALIGN_INT, &nameDatums, NULL, &nnames);
+					  TYPALIGN_INT, &nameDatums, &nameNulls, &nnames);
 	deconstruct_array(DatumGetArrayTypeP(proargmodes), CHAROID, 1, true,
 					  TYPALIGN_CHAR, &modeDatums, NULL, &nmodes);
 
@@ -2105,7 +2106,13 @@ get_inline_tvf_original_column_name(Oid funcid, AttrNumber attnum)
 			tablecol++;
 			if (tablecol == attnum)
 			{
-				result = TextDatumGetCString(nameDatums[i]);
+				/*
+				 * A SQL-NULL name entry leaves the Datum as 0;
+				 * TextDatumGetCString on it would dereference NULL. Treat a
+				 * NULL name as "not found" rather than crashing.
+				 */
+				if (!nameNulls[i])
+					result = TextDatumGetCString(nameDatums[i]);
 				break;
 			}
 		}
