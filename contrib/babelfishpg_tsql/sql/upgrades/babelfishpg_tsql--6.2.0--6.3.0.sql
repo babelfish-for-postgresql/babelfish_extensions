@@ -506,6 +506,29 @@ $$
     end;
 $$;
 
+-- helper functions for XML EXIST(xpath)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlexist(xpath_pattern TEXT, xml_element ANYELEMENT)
+RETURNS sys.BIT
+AS 'babelfishpg_tsql', 'bbf_xmlexist'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
+-- helper functions for XML QUERY(xpath)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT)
+RETURNS XML
+AS 'babelfishpg_tsql', 'bbf_xmlquery'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
+-- helper functions for XML VALUE(xpath)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, datatype TEXT, xml_element ANYELEMENT)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'bbf_xmlvalue'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
+-- helper function for XML NODES(xpath)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlnodes(xpath_pattern TEXT, xml_element ANYELEMENT)
+RETURNS SETOF XML
+AS 'babelfishpg_tsql', 'bbf_xmlnodes'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
 
 
 -- BABEL-5975:Store original names in options for tables, views, columns

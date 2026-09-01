@@ -688,4 +688,5 @@ babel_sqlvariant_coerce_type
 forxml-auto-before-17_11-or-18_5
 forxml-before-17_11-or-18_5
 BABEL-login-db-long-identifiers
+xml_nodes
 long-identifiers-objects-before-18_6

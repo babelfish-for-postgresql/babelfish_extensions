@@ -1362,12 +1362,9 @@ WHERE data IS NOT NULL
 GROUP BY data.query('/root/name').value('(/name)[1]', 'VARCHAR(50)')
 ORDER BY name_val;
 GO
-~~START~~
-varchar#!#int
-Bob#!#1
-Jane#!#1
-John#!#1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML methods are not allowed in a GROUP BY clause.)~~
 
 
 
@@ -1435,9 +1432,47 @@ SELECT @x.query('/');
 GO
 ~~START~~
 xml
+
+~~END~~
+
+
+DECLARE @x XML = '   '
+SELECT @x.query('/Root/row') AS c
+GO
+~~START~~
+xml
+
+~~END~~
+
+
+DECLARE @x XML = NULl
+SELECT @x.query('/Root/row') AS c
+GO
+~~START~~
+xml
+<NULL>
+~~END~~
+
+
+-- Empty Path query
+DECLARE @xml XML = ''
+SELECT @xml.query('')
+GO
+~~START~~
+xml
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: could not parse XML document)~~
+~~ERROR (Message: empty XPath expression)~~
+
+
+DECLARE @xml XML = '<Root><row><name>James</name></row></Root>'
+SELECT @xml.query('')
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: empty XPath expression)~~
 
 
 -- 5. Bare ampersand (not an entity)
