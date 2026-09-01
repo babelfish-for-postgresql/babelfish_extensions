@@ -34,6 +34,10 @@
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
+#define SYS_SCHEMA_NAME "sys"
+#define INFORMATION_SCHEMA_TSQL_NAME "information_schema_tsql"
+#define SP_RENAME_PROC_NAME "sp_rename"
+
 bool		suppress_string_truncation_error = false;
 
 bool		pltsql_suppress_string_truncation_error(void);
@@ -2449,4 +2453,162 @@ downcase_truncate_split_object_name(char *four_part_object_name, char **server_n
 		*schema_name = temp_schema_name;
 	if (object_name != NULL)
 		*object_name = temp_object_name;
+}
+
+/*
+ * Blocks RENAME of TSQL functions/procedures, and the sys and
+ * information_schema_tsql schemas from the PG endpoint.
+ */
+void
+restrict_rename_stmt(RenameStmt *rename_stmt)
+{
+	switch (rename_stmt->renameType)
+	{
+		case OBJECT_ROUTINE:
+		case OBJECT_FUNCTION:
+		case OBJECT_PROCEDURE:
+			{
+				ObjectAddress	address;
+				Relation		relation = NULL;
+				Oid				schema_oid;
+				char		   *schema_name;
+
+				address = get_object_address(rename_stmt->renameType, rename_stmt->object,
+											 &relation, AccessShareLock, false);
+				schema_oid = get_object_namespace(&address);
+				if (relation)
+					RelationClose(relation);
+
+				if (!OidIsValid(schema_oid))
+					return;
+
+				schema_name = get_namespace_name(schema_oid);
+				if (!schema_name)
+					return;
+
+				/* Only objects in a Babelfish schema */
+				if (physical_schema_name_exists(schema_name))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("ALTER .. RENAME .. is blocked in PG dialect on TSQL object \"%s\".",
+								NameListToString(((ObjectWithArgs *) rename_stmt->object)->objname))));
+				}
+				pfree(schema_name);
+				break;
+			}
+		case OBJECT_SCHEMA:
+			{
+				/*
+				 * User T-SQL schemas are already covered by
+				 * check_extra_schema_restrictions(), system schemas are not
+				 * tracked in babelfish_namespace_ext, so guard them by name.
+				 */
+				if (rename_stmt->subname &&
+					(strncmp(rename_stmt->subname, SYS_SCHEMA_NAME, sizeof(SYS_SCHEMA_NAME)) == 0 ||
+					 strncmp(rename_stmt->subname, INFORMATION_SCHEMA_TSQL_NAME, sizeof(INFORMATION_SCHEMA_TSQL_NAME)) == 0))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("ALTER SCHEMA .. RENAME .. is blocked in PG dialect on Babelfish system schema \"%s\".", rename_stmt->subname)));
+				break;
+			}
+		default:
+			break;
+	}
+}
+
+/*
+ * Blocks SET SCHEMA of TSQL functions/procedures from the PG endpoint.
+ */
+void
+restrict_alter_object_schema_stmt(AlterObjectSchemaStmt *altschstmt)
+{
+	Oid				schema_oid;
+	char		   *schema_name;
+	Relation		relation = NULL;
+	ObjectAddress	address;
+
+	if (altschstmt->objectType != OBJECT_PROCEDURE &&
+		altschstmt->objectType != OBJECT_FUNCTION &&
+		altschstmt->objectType != OBJECT_ROUTINE)
+		return;
+
+	address = get_object_address(altschstmt->objectType, altschstmt->object,
+								 &relation, AccessShareLock, false);
+
+	schema_oid = get_object_namespace(&address);
+	if (relation)
+		RelationClose(relation);
+
+	if (!OidIsValid(schema_oid))
+		return;
+
+	/* source schema */
+	schema_name = get_namespace_name(schema_oid);
+	if (!schema_name)
+		return;
+
+	/* Block moving objects FROM a Babelfish schema */
+	if (physical_schema_name_exists(schema_name))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("ALTER .. SET SCHEMA .. is blocked in PG dialect on TSQL object \"%s\" from schema \"%s\".",
+						NameListToString(((ObjectWithArgs *) altschstmt->object)->objname), schema_name)));
+	}
+	pfree(schema_name);
+
+	/* destination schema */
+	schema_name = altschstmt->newschema;
+	if (!schema_name)
+		return;
+
+	/* Block moving objects TO a Babelfish schema as well */
+	if (physical_schema_name_exists(schema_name))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("ALTER .. SET SCHEMA .. is blocked in PG dialect on object \"%s\" to TSQL schema \"%s\".",
+						NameListToString(((ObjectWithArgs *) altschstmt->object)->objname), schema_name)));
+	}
+}
+
+/*
+ * Blocks CALL sys.sp_rename from the PG endpoint
+ */
+void
+restrict_call_stmt(CallStmt *call_stmt)
+{
+	Oid		proc_oid;
+	char   *proc_name;
+	Oid		nsp_oid;
+	char   *nsp_name;
+
+	if (call_stmt->funcexpr == NULL)
+		return;
+
+	proc_oid = call_stmt->funcexpr->funcid;
+	if (!OidIsValid(proc_oid))
+		return;
+
+	proc_name = get_func_name(proc_oid);
+	if (proc_name == NULL)
+		return;
+
+	nsp_oid = get_func_namespace(proc_oid);
+	nsp_name = get_namespace_name(nsp_oid);
+	if (nsp_name == NULL)
+	{
+		pfree(proc_name);
+		return;
+	}
+
+	if (strncmp(nsp_name, SYS_SCHEMA_NAME, sizeof(SYS_SCHEMA_NAME)) == 0 &&
+		strncmp(proc_name, SP_RENAME_PROC_NAME, sizeof(SP_RENAME_PROC_NAME)) == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("sp_rename is blocked in PG dialect.")));
+
+	pfree(proc_name);
+	pfree(nsp_name);
 }
