@@ -1,0 +1,871 @@
+-- tsql
+CREATE LOGIN rename_from_pg_u WITH PASSWORD = '12345678';
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER rename_from_pg_u;
+GO
+
+CREATE PROCEDURE rename_from_pg_p1 AS SELECT 1;
+GO
+CREATE FUNCTION rename_from_pg_f1() RETURNS INT BEGIN RETURN 1; END
+GO
+CREATE TABLE rename_from_pg_t1 (id INT, col1 NVARCHAR(50));
+GO
+CREATE VIEW rename_from_pg_v1 AS SELECT id FROM rename_from_pg_t1;
+GO
+CREATE INDEX rename_from_pg_idx1 ON rename_from_pg_t1(id);
+GO
+CREATE TYPE rename_from_pg_udt1 FROM INT;
+GO
+
+-- set up a user schema in master and a user database with its own user schema
+CREATE SCHEMA rename_from_pg_uschema;
+GO
+CREATE PROCEDURE rename_from_pg_uschema.uschema_p1 AS SELECT 1;
+GO
+CREATE FUNCTION rename_from_pg_uschema.uschema_f1() RETURNS INT BEGIN RETURN 1; END
+GO
+CREATE TABLE rename_from_pg_uschema.uschema_t1 (id INT);
+GO
+CREATE VIEW rename_from_pg_uschema.uschema_v1 AS SELECT id FROM rename_from_pg_uschema.uschema_t1;
+GO
+
+CREATE DATABASE rename_from_pg_udb;
+GO
+USE rename_from_pg_udb;
+GO
+
+CREATE PROCEDURE dbo.udb_dbo_p1 AS SELECT 1;
+GO
+CREATE FUNCTION dbo.udb_dbo_f1() RETURNS INT BEGIN RETURN 1; END
+GO
+CREATE TABLE dbo.udb_dbo_t1 (id INT);
+GO
+
+CREATE SCHEMA rename_from_pg_udbs;
+GO
+CREATE PROCEDURE rename_from_pg_udbs.udb_p1 AS SELECT 1;
+GO
+CREATE FUNCTION rename_from_pg_udbs.udb_f1() RETURNS INT BEGIN RETURN 1; END
+GO
+
+USE master;
+GO
+
+-- psql
+GRANT CREATE ON SCHEMA public TO rename_from_pg_u;
+GO
+
+CREATE SCHEMA rename_from_pg_pgschema;
+GO
+
+GRANT USAGE, CREATE ON SCHEMA rename_from_pg_pgschema TO rename_from_pg_u;
+GO
+
+-- psql user=rename_from_pg_u password=12345678
+-- renaming should be blocked from within the PG endpoint
+ALTER PROCEDURE master_dbo.rename_from_pg_p1 RENAME TO rename_from_pg_p1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "master_dbo.rename_from_pg_p1".
+    Server SQLState: 0A000)~~
+
+
+ALTER FUNCTION master_dbo.rename_from_pg_f1 RENAME TO rename_from_pg_f1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "master_dbo.rename_from_pg_f1".
+    Server SQLState: 0A000)~~
+
+
+ALTER ROUTINE master_dbo.rename_from_pg_p1 RENAME TO rename_from_pg_p1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "master_dbo.rename_from_pg_p1".
+    Server SQLState: 0A000)~~
+
+
+ALTER ROUTINE master_dbo.rename_from_pg_f1 RENAME TO rename_from_pg_f1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "master_dbo.rename_from_pg_f1".
+    Server SQLState: 0A000)~~
+
+
+ALTER SCHEMA sys RENAME TO sys_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER SCHEMA .. RENAME .. is blocked in PG dialect on Babelfish system schema "sys".
+    Server SQLState: 0A000)~~
+
+
+ALTER SCHEMA information_schema_tsql RENAME TO information_schema_tsql_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER SCHEMA .. RENAME .. is blocked in PG dialect on Babelfish system schema "information_schema_tsql".
+    Server SQLState: 0A000)~~
+
+
+-- SET SCHEMA should also be blocked from within the PG endpoint
+-- source in a Babelfish schema
+ALTER PROCEDURE master_dbo.rename_from_pg_p1 SET SCHEMA public;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on TSQL object "master_dbo.rename_from_pg_p1" from schema "master_dbo".
+    Server SQLState: 0A000)~~
+
+
+ALTER FUNCTION master_dbo.rename_from_pg_f1 SET SCHEMA public;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on TSQL object "master_dbo.rename_from_pg_f1" from schema "master_dbo".
+    Server SQLState: 0A000)~~
+
+
+ALTER ROUTINE master_dbo.rename_from_pg_p1 SET SCHEMA public;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on TSQL object "master_dbo.rename_from_pg_p1" from schema "master_dbo".
+    Server SQLState: 0A000)~~
+
+
+ALTER ROUTINE master_dbo.rename_from_pg_f1 SET SCHEMA public;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on TSQL object "master_dbo.rename_from_pg_f1" from schema "master_dbo".
+    Server SQLState: 0A000)~~
+
+
+-- rename must also be blocked on objects in a user-created TSQL schema (in master)
+ALTER PROCEDURE master_rename_from_pg_uschema.uschema_p1 RENAME TO uschema_p1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "master_rename_from_pg_uschema.uschema_p1".
+    Server SQLState: 0A000)~~
+
+
+ALTER FUNCTION master_rename_from_pg_uschema.uschema_f1 RENAME TO uschema_f1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "master_rename_from_pg_uschema.uschema_f1".
+    Server SQLState: 0A000)~~
+
+
+ALTER ROUTINE master_rename_from_pg_uschema.uschema_p1 RENAME TO uschema_p1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "master_rename_from_pg_uschema.uschema_p1".
+    Server SQLState: 0A000)~~
+
+
+-- SET SCHEMA out of a user-created TSQL schema/database must also be blocked
+ALTER PROCEDURE master_rename_from_pg_uschema.uschema_p1 SET SCHEMA public;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on TSQL object "master_rename_from_pg_uschema.uschema_p1" from schema "master_rename_from_pg_uschema".
+    Server SQLState: 0A000)~~
+
+
+-- SET SCHEMA into a user-created TSQL schema/database must also be blocked
+CREATE PROCEDURE pg_ss_user_p1()
+LANGUAGE SQL
+AS $$
+SELECT 1;
+$$;
+GO
+
+ALTER PROCEDURE pg_ss_user_p1() SET SCHEMA master_rename_from_pg_uschema;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on object "pg_ss_user_p1" to TSQL schema "master_rename_from_pg_uschema".
+    Server SQLState: 0A000)~~
+
+
+DROP PROCEDURE pg_ss_user_p1();
+GO
+
+-- sp_rename from the PG endpoint must also be blocked on TSQL objects
+CALL sys.sp_rename('master.dbo.rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+-- case-insensitive: uppercase invocation must also be blocked
+CALL SYS.SP_RENAME('master.dbo.rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('master.dbo.rename_from_pg_f1', 'rename_from_pg_f1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('master.rename_from_pg_uschema.uschema_p1', 'uschema_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('master.rename_from_pg_uschema.uschema_f1', 'uschema_f1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_udb.dbo.udb_dbo_p1', 'udb_dbo_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_udb.dbo.udb_dbo_f1', 'udb_dbo_f1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_udb.rename_from_pg_udbs.udb_p1', 'udb_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_udb.rename_from_pg_udbs.udb_f1', 'udb_f1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_f1', 'rename_from_pg_f1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('dbo.rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('dbo.rename_from_pg_f1', 'rename_from_pg_f1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+-- sp_rename must also be blocked on tables
+CALL sys.sp_rename('master.dbo.rename_from_pg_t1', 'rename_from_pg_t1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+-- sp_rename must also be blocked on views
+CALL sys.sp_rename('master.dbo.rename_from_pg_v1', 'rename_from_pg_v1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+-- sp_rename must also be blocked on columns
+CALL sys.sp_rename('master.dbo.rename_from_pg_t1.col1', 'col1_new', 'COLUMN');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+-- sp_rename must also be blocked on indexes
+CALL sys.sp_rename('master.dbo.rename_from_pg_t1.rename_from_pg_idx1', 'rename_from_pg_idx1_new', 'INDEX');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+-- sp_rename must also be blocked on user-defined types
+CALL sys.sp_rename('master.dbo.rename_from_pg_udt1', 'rename_from_pg_udt1_new', 'USERDATATYPE');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+-- tables/views inside a user-created TSQL schema must also be blocked
+CALL sys.sp_rename('master.rename_from_pg_uschema.uschema_t1', 'uschema_t1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('master.rename_from_pg_uschema.uschema_v1', 'uschema_v1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+-- tables inside a user database must also be blocked
+CALL sys.sp_rename('rename_from_pg_udb.dbo.udb_dbo_t1', 'udb_dbo_t1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+-- objects located in the sys schema must also be blocked
+CALL sys.sp_rename('sys.sysobjects', 'sysobjects_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+-- objects located in the information_schema_tsql schema must also be blocked
+CALL sys.sp_rename('information_schema_tsql.tables', 'tables_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+-- @objtype = 'DATABASE' (delegates internally to sp_renamedb) must also be blocked
+CALL sys.sp_rename('rename_from_pg_udb', 'rename_from_pg_udb_new', 'DATABASE');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+-- setting psql_logical_babelfish_db_name should not bypass the block either
+SET psql_logical_babelfish_db_name = 'master';
+GO
+
+CALL sys.sp_rename('dbo.rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_uschema.uschema_p1', 'uschema_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+SET psql_logical_babelfish_db_name = 'rename_from_pg_udb';
+GO
+
+CALL sys.sp_rename('dbo.udb_dbo_p1', 'udb_dbo_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+CALL sys.sp_rename('rename_from_pg_udbs.udb_p1', 'udb_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+
+RESET psql_logical_babelfish_db_name;
+GO
+
+-- destination is a Babelfish schema
+CREATE PROCEDURE pg_ss_p1()
+LANGUAGE SQL
+AS $$
+SELECT 1;
+$$;
+GO
+
+CREATE FUNCTION pg_ss_f1() RETURNS TEXT
+LANGUAGE SQL
+AS $$
+SELECT '1';
+$$;
+GO
+
+ALTER PROCEDURE pg_ss_p1() SET SCHEMA master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on object "pg_ss_p1" to TSQL schema "master_dbo".
+    Server SQLState: 0A000)~~
+
+
+ALTER FUNCTION pg_ss_f1() SET SCHEMA master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on object "pg_ss_f1" to TSQL schema "master_dbo".
+    Server SQLState: 0A000)~~
+
+
+ALTER ROUTINE pg_ss_p1() SET SCHEMA master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on object "pg_ss_p1" to TSQL schema "master_dbo".
+    Server SQLState: 0A000)~~
+
+
+ALTER ROUTINE pg_ss_f1() SET SCHEMA master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on object "pg_ss_f1" to TSQL schema "master_dbo".
+    Server SQLState: 0A000)~~
+
+
+DROP PROCEDURE pg_ss_p1();
+GO
+
+DROP FUNCTION pg_ss_f1();
+GO
+
+-- pg user should be able to still rename pg objects
+CREATE PROCEDURE pg_proc_1()
+LANGUAGE SQL
+AS $$
+SELECT 'o7';
+$$;
+GO
+
+ALTER PROCEDURE pg_proc_1() RENAME TO pg_proc_not_1;
+GO
+
+DROP PROCEDURE pg_proc_not_1;
+GO
+
+CREATE FUNCTION pg_func_1() RETURNS TEXT
+LANGUAGE SQL
+AS $$
+SELECT 'o/';
+$$;
+GO
+
+ALTER FUNCTION pg_func_1() RENAME TO pg_func_not_1;
+GO
+
+DROP FUNCTION pg_func_not_1;
+GO
+
+-- ALTER ROUTINE should also work on native pg routines
+CREATE PROCEDURE pg_proc_2()
+LANGUAGE SQL
+AS $$
+SELECT '\o';
+$$;
+GO
+
+ALTER ROUTINE pg_proc_2() RENAME TO pg_proc_not_2;
+GO
+
+DROP PROCEDURE pg_proc_not_2;
+GO
+
+CREATE FUNCTION pg_func_2() RETURNS TEXT
+LANGUAGE SQL
+AS $$
+SELECT '\o/';
+$$;
+GO
+
+ALTER ROUTINE pg_func_2() RENAME TO pg_func_not_2;
+GO
+
+DROP FUNCTION pg_func_not_2;
+GO
+
+-- ALTER ... SET SCHEMA should work on pg objects across pg schemas
+CREATE PROCEDURE pg_proc_ss1()
+LANGUAGE SQL
+AS $$
+SELECT 1;
+$$;
+GO
+
+ALTER PROCEDURE pg_proc_ss1() SET SCHEMA rename_from_pg_pgschema;
+GO
+
+DROP PROCEDURE rename_from_pg_pgschema.pg_proc_ss1();
+GO
+
+CREATE FUNCTION pg_func_ss1() RETURNS TEXT
+LANGUAGE SQL
+AS $$
+SELECT 'ok';
+$$;
+GO
+
+ALTER FUNCTION pg_func_ss1() SET SCHEMA rename_from_pg_pgschema;
+GO
+
+DROP FUNCTION rename_from_pg_pgschema.pg_func_ss1();
+GO
+
+-- ALTER ROUTINE ... SET SCHEMA should also work on native pg routines
+CREATE PROCEDURE pg_proc_ss2()
+LANGUAGE SQL
+AS $$
+SELECT 1;
+$$;
+GO
+
+ALTER ROUTINE pg_proc_ss2() SET SCHEMA rename_from_pg_pgschema;
+GO
+
+DROP PROCEDURE rename_from_pg_pgschema.pg_proc_ss2();
+GO
+
+CREATE FUNCTION pg_func_ss2() RETURNS TEXT
+LANGUAGE SQL
+AS $$
+SELECT 'ok';
+$$;
+GO
+
+ALTER ROUTINE pg_func_ss2() SET SCHEMA rename_from_pg_pgschema;
+GO
+
+DROP FUNCTION rename_from_pg_pgschema.pg_func_ss2();
+GO
+
+-- multi-db user-DB physical schema cases; produces schema-does-not-exist errors in single-db mode
+ALTER PROCEDURE rename_from_pg_udb_dbo.udb_dbo_p1 RENAME TO udb_dbo_p1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "rename_from_pg_udb_dbo.udb_dbo_p1".
+    Server SQLState: 0A000)~~
+
+
+ALTER FUNCTION rename_from_pg_udb_dbo.udb_dbo_f1 RENAME TO udb_dbo_f1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "rename_from_pg_udb_dbo.udb_dbo_f1".
+    Server SQLState: 0A000)~~
+
+
+ALTER PROCEDURE rename_from_pg_udb_rename_from_pg_udbs.udb_p1 RENAME TO udb_p1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "rename_from_pg_udb_rename_from_pg_udbs.udb_p1".
+    Server SQLState: 0A000)~~
+
+
+ALTER FUNCTION rename_from_pg_udb_rename_from_pg_udbs.udb_f1 RENAME TO udb_f1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "rename_from_pg_udb_rename_from_pg_udbs.udb_f1".
+    Server SQLState: 0A000)~~
+
+
+ALTER FUNCTION rename_from_pg_udb_rename_from_pg_udbs.udb_f1 SET SCHEMA public;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on TSQL object "rename_from_pg_udb_rename_from_pg_udbs.udb_f1" from schema "rename_from_pg_udb_rename_from_pg_udbs".
+    Server SQLState: 0A000)~~
+
+
+CREATE PROCEDURE pg_ss_udb_p1()
+LANGUAGE SQL
+AS $$
+SELECT 1;
+$$;
+GO
+
+ALTER PROCEDURE pg_ss_udb_p1() SET SCHEMA rename_from_pg_udb_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on object "pg_ss_udb_p1" to TSQL schema "rename_from_pg_udb_dbo".
+    Server SQLState: 0A000)~~
+
+
+ALTER PROCEDURE pg_ss_udb_p1() SET SCHEMA rename_from_pg_udb_rename_from_pg_udbs;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on object "pg_ss_udb_p1" to TSQL schema "rename_from_pg_udb_rename_from_pg_udbs".
+    Server SQLState: 0A000)~~
+
+
+DROP PROCEDURE pg_ss_udb_p1();
+GO
+
+-- single-db user-DB physical schema cases; produces schema-does-not-exist errors in multi-db mode
+ALTER PROCEDURE dbo.udb_dbo_p1 RENAME TO udb_dbo_p1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "dbo" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER FUNCTION dbo.udb_dbo_f1 RENAME TO udb_dbo_f1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "dbo" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER PROCEDURE rename_from_pg_udbs.udb_p1 RENAME TO udb_p1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "rename_from_pg_udbs" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER FUNCTION rename_from_pg_udbs.udb_f1 RENAME TO udb_f1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "rename_from_pg_udbs" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER FUNCTION rename_from_pg_udbs.udb_f1 SET SCHEMA public;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "rename_from_pg_udbs" does not exist
+    Server SQLState: 3F000)~~
+
+
+CREATE PROCEDURE pg_ss_udb_sd_p1()
+LANGUAGE SQL
+AS $$
+SELECT 1;
+$$;
+GO
+
+ALTER PROCEDURE pg_ss_udb_sd_p1() SET SCHEMA dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "dbo" does not exist
+    Server SQLState: 3F000)~~
+
+
+ALTER PROCEDURE pg_ss_udb_sd_p1() SET SCHEMA rename_from_pg_udbs;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "rename_from_pg_udbs" does not exist
+    Server SQLState: 3F000)~~
+
+
+DROP PROCEDURE pg_ss_udb_sd_p1();
+GO
+
+
+-- psql
+-- superuser should still be able to rename objects
+-- (this test case is oss-only)
+ALTER PROCEDURE master_dbo.rename_from_pg_p1 RENAME TO rename_from_pg_p1_new;
+GO
+ALTER PROCEDURE master_dbo.rename_from_pg_p1_new RENAME TO rename_from_pg_p1;
+GO
+
+ALTER FUNCTION master_dbo.rename_from_pg_f1 RENAME TO rename_from_pg_f1_new;
+GO
+ALTER FUNCTION master_dbo.rename_from_pg_f1_new RENAME TO rename_from_pg_f1;
+GO
+
+ALTER ROUTINE master_dbo.rename_from_pg_p1 RENAME TO rename_from_pg_p1_new;
+GO
+ALTER ROUTINE master_dbo.rename_from_pg_p1_new RENAME TO rename_from_pg_p1;
+GO
+
+ALTER ROUTINE master_dbo.rename_from_pg_f1 RENAME TO rename_from_pg_f1_new;
+GO
+ALTER ROUTINE master_dbo.rename_from_pg_f1_new RENAME TO rename_from_pg_f1;
+GO
+
+
+-- tsql
+-- a non-sysadmin tsql user must still be able to rename objects they have permissions for
+CREATE LOGIN rename_from_pg_tsql_login WITH PASSWORD = '12345678';
+GO
+CREATE USER rename_from_pg_tsql_user FOR LOGIN rename_from_pg_tsql_login;
+GO
+
+CREATE SCHEMA rename_from_pg_tsqlschema AUTHORIZATION rename_from_pg_tsql_user;
+GO
+
+-- tsql user=rename_from_pg_tsql_login password=12345678
+CREATE FUNCTION rename_from_pg_tsqlschema.tsqlfunc() RETURNS INT BEGIN RETURN 1; END
+GO
+CREATE PROCEDURE rename_from_pg_tsqlschema.tsqlproc AS SELECT 1;
+GO
+
+EXEC sp_rename 'rename_from_pg_tsqlschema.tsqlfunc', 'tsqlfunc_new', 'OBJECT';
+GO
+EXEC sp_rename 'rename_from_pg_tsqlschema.tsqlproc', 'tsqlproc_new', 'OBJECT';
+GO
+
+-- terminate-tsql-conn user=rename_from_pg_tsql_login password=12345678
+-- tsql
+-- cleanup
+DROP PROCEDURE rename_from_pg_tsqlschema.tsqlproc_new;
+GO
+DROP FUNCTION rename_from_pg_tsqlschema.tsqlfunc_new;
+GO
+DROP SCHEMA rename_from_pg_tsqlschema;
+GO
+DROP USER rename_from_pg_tsql_user;
+GO
+DROP LOGIN rename_from_pg_tsql_login;
+GO
+
+-- renames should also work inside a user-created schema (in master) and a user database
+EXEC sp_rename 'rename_from_pg_uschema.uschema_p1', 'uschema_p1_renamed', 'OBJECT';
+GO
+EXEC sp_rename 'rename_from_pg_uschema.uschema_p1_renamed', 'uschema_p1', 'OBJECT';
+GO
+EXEC sp_rename 'rename_from_pg_uschema.uschema_f1', 'uschema_f1_renamed', 'OBJECT';
+GO
+EXEC sp_rename 'rename_from_pg_uschema.uschema_f1_renamed', 'uschema_f1', 'OBJECT';
+GO
+
+USE rename_from_pg_udb;
+GO
+
+EXEC sp_rename 'dbo.udb_dbo_p1', 'udb_dbo_p1_renamed', 'OBJECT';
+GO
+EXEC sp_rename 'dbo.udb_dbo_p1_renamed', 'udb_dbo_p1', 'OBJECT';
+GO
+EXEC sp_rename 'dbo.udb_dbo_f1', 'udb_dbo_f1_renamed', 'OBJECT';
+GO
+EXEC sp_rename 'dbo.udb_dbo_f1_renamed', 'udb_dbo_f1', 'OBJECT';
+GO
+
+EXEC sp_rename 'rename_from_pg_udbs.udb_p1', 'udb_p1_renamed', 'OBJECT';
+GO
+EXEC sp_rename 'rename_from_pg_udbs.udb_p1_renamed', 'udb_p1', 'OBJECT';
+GO
+EXEC sp_rename 'rename_from_pg_udbs.udb_f1', 'udb_f1_renamed', 'OBJECT';
+GO
+EXEC sp_rename 'rename_from_pg_udbs.udb_f1_renamed', 'udb_f1', 'OBJECT';
+GO
+
+USE master;
+GO
+
+-- terminate-psql-conn user=rename_from_pg_u password=12345678
+-- psql
+REVOKE CREATE ON SCHEMA public FROM rename_from_pg_u;
+GO
+
+DROP SCHEMA rename_from_pg_pgschema;
+GO
+
+-- tsql
+DROP PROCEDURe rename_from_pg_p1;
+GO
+DROP FUNCTION rename_from_pg_f1;
+GO
+DROP VIEW rename_from_pg_v1;
+GO
+DROP TABLE rename_from_pg_t1;
+GO
+DROP TYPE rename_from_pg_udt1;
+GO
+DROP VIEW rename_from_pg_uschema.uschema_v1;
+GO
+DROP TABLE rename_from_pg_uschema.uschema_t1;
+GO
+DROP PROCEDURE rename_from_pg_uschema.uschema_p1;
+GO
+DROP FUNCTION rename_from_pg_uschema.uschema_f1;
+GO
+DROP SCHEMA rename_from_pg_uschema;
+GO
+DROP DATABASE rename_from_pg_udb;
+GO
+DROP LOGIN rename_from_pg_u;
+GO
+
+
