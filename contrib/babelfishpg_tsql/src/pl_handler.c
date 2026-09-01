@@ -5220,9 +5220,36 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				return;
 			}
 			break;
+		case T_AlterObjectSchemaStmt:
+			{
+				/*
+				 * Block SET SCHEMA of TSQL functions/procedures from the PG endpoint.
+				 */
+				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !superuser())
+					restrict_alter_object_schema_stmt((AlterObjectSchemaStmt *) parsetree);
+
+				break;
+			}
+		case T_CallStmt:
+			{
+				/*
+				 * Block CALL sys.sp_rename from the PG endpoint.
+				 */
+				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !superuser())
+					restrict_call_stmt((CallStmt *) parsetree);
+
+				break;
+			}
 		case T_RenameStmt:
 			{
 				RenameStmt *stmt = (RenameStmt *) parsetree;
+
+				/*
+				 * Block RENAME TSQL functions/procedures, and RENAME of the
+				 * sys and information_schema_tsql schemas from the PG endpoint.
+				 */
+				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !superuser())
+					restrict_rename_stmt(stmt);
 
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
