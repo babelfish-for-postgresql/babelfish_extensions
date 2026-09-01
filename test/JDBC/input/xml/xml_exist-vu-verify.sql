@@ -65,6 +65,30 @@ DECLARE @xml XML = '<root></root>';
 SELECT @xml.exist('(//child)[1]');
 GO
 
+-- Test with an empty string input
+DECLARE @xml XML = ''
+select @xml.exist('/Root/row')
+GO
+
+-- Test with only spaces input
+DECLARE @xml XML = '   '
+select @xml.exist('/Root/row')
+GO
+
+-- Test with NULL input
+DECLARE @xml XML = NULL
+select @xml.exist('/Root/row')
+GO
+
+-- Test with empty XPath query
+DECLARE @xml XML = ''
+SELECT @xml.exist('')
+GO
+
+DECLARE @xml XML = '<Root><row><name>James</name></row></Root>'
+SELECT @xml.exist('')
+GO
+
 -- Test with an XML document containing special characters
 DECLARE @xml XML = '<root><child>Hello & World</child></root>';
 SELECT @xml.exist('(//child)[1]');

@@ -1,0 +1,9 @@
+DROP TABLE babel_5225_xml_nodes_t1
+go
+
+DROP TABLE babel_5225_xml_nodes_t2
+go
+
+DROP TABLE babel_5225_xml_nodes_t3
+go
+
