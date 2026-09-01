@@ -455,18 +455,56 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 				 * after metadata parsing so per-row emission stays cheap. The
 				 * helper handles NULL ns_decls (no WITH XMLNAMESPACES) by
 				 * restoring the colon for any prefixed alias, matching T-SQL.
+				 *
+				 * restore_xml_prefix_colon() returns the input pointer when no
+				 * rewrite is needed and a freshly palloc'd buffer otherwise;
+				 * use the safe idiom "free the original only when a new buffer
+				 * was returned" to avoid leaks (see RAW/PATH row paths).
+				 *
+				 * table_aliases[] and level_to_alias[] share pointers: at
+				 * parse-time level_to_alias[level] is set to the first
+				 * table_aliases[i] whose nest_levels[i] == level (see
+				 * xml_auto_parse_metadata). Free the table_aliases[] entries
+				 * once and rebuild level_to_alias[] afterwards from the same
+				 * source, so we don't free a shared pointer twice and don't
+				 * restore the same string twice.
 				 */
 				for (int i = 0; i < auto_st->num_columns; i++)
 				{
 					if (auto_st->column_names[i])
-						auto_st->column_names[i] = restore_xml_prefix_colon(auto_st->column_names[i], ns_decls);
+					{
+						char *raw = auto_st->column_names[i];
+
+						auto_st->column_names[i] = restore_xml_prefix_colon(raw, ns_decls);
+						if (auto_st->column_names[i] != raw)
+							pfree(raw);
+					}
 					if (auto_st->table_aliases[i])
-						auto_st->table_aliases[i] = restore_xml_prefix_colon(auto_st->table_aliases[i], ns_decls);
+					{
+						char *raw = auto_st->table_aliases[i];
+
+						auto_st->table_aliases[i] = restore_xml_prefix_colon(raw, ns_decls);
+						if (auto_st->table_aliases[i] != raw)
+							pfree(raw);
+					}
 				}
-				for (int level = 0; level <= auto_st->max_depth; level++)
+
+				/*
+				 * Rebuild level_to_alias[] to point at the (possibly new)
+				 * table_aliases[] entries. This mirrors how it was originally
+				 * populated in xml_auto_parse_metadata and preserves the
+				 * "first table_aliases[i] for each level" invariant while
+				 * avoiding both a second restoration pass and dangling
+				 * pointers from the earlier aliasing.
+				 */
+				memset(auto_st->level_to_alias, 0,
+					(auto_st->max_depth + 1) * sizeof(char *));
+				for (int i = 0; i < auto_st->num_columns; i++)
 				{
-					if (auto_st->level_to_alias[level])
-						auto_st->level_to_alias[level] = restore_xml_prefix_colon(auto_st->level_to_alias[level], ns_decls);
+					int lvl = auto_st->nest_levels[i];
+
+					if (lvl > 0 && auto_st->level_to_alias[lvl] == NULL)
+						auto_st->level_to_alias[lvl] = auto_st->table_aliases[i];
 				}
 			}
 		}

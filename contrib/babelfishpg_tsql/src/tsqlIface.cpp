@@ -298,6 +298,11 @@ static std::string xmlnamespace_decls_for_forxml;
 // For FOR XML column-alias validation: declared prefix names (excludes
 // DEFAULT).
 static std::set<std::string> xmlnamespace_declared_prefixes;
+
+// The URI bound to the 'xsi' prefix in the current WITH XMLNAMESPACES, if
+// declared; empty otherwise. Captured at declaration time so the xsi/XSINIL
+// conflict check does not have to re-parse the array literal.
+static std::string xmlnamespace_xsi_declared_uri;
 	
 // For user-defined variables like @@var or @var# in the RETURN clause of an ITVF
 static std::map<size_t, std::string> local_id_positions_atatuservar;
@@ -817,6 +822,7 @@ clear_rewritten_query_fragment()
 	xmlnamespace_array_literal.clear();
 	xmlnamespace_decls_for_forxml.clear();
 	xmlnamespace_declared_prefixes.clear();
+	xmlnamespace_xsi_declared_uri.clear();
 }
 
 static void
@@ -980,6 +986,14 @@ build_xmlnamespace_array_literal(const std::vector<TSqlParser::Xml_declarationCo
 						prefix.c_str()), 0, 0);
 			seen_prefixes.insert(prefix);
 
+			/*
+			 * Capture the xsi binding for the downstream xsi/ELEMENTS XSINIL
+			 * conflict check. Storing the URI here (source of truth) avoids
+			 * re-parsing the assembled PG array literal later.
+			 */
+			if (prefix == "xsi")
+				xmlnamespace_xsi_declared_uri = uri;
+
 			result += "\"" + prefix + "\",\"" + escape_for_pg_array_literal(uri) + "\"";
 		}
 	}
@@ -1052,9 +1066,11 @@ build_xmlnamespace_decls_string(const std::vector<TSqlParser::Xml_declarationCon
 			prefix = stripQuoteFromId(decl->id());
 		}
 
+		/* getFullText returns the quoted string literal; strip the surrounding quotes to get the bare URI */
 		if (uri.size() >= 2 && uri.front() == '\'' && uri.back() == '\'')
 			uri = uri.substr(1, uri.size() - 2);
 
+		/* space-separate declarations: exactly one space between, none leading or trailing */
 		if (!result.empty())
 			result += " ";
 
@@ -4612,34 +4628,21 @@ static void process_select_statement(
 
 			/*
 			 * Validate xsi prefix conflict with ELEMENTS XSINIL.
-			 * If XSINIL is specified and the user declared 'xsi' prefix via
-			 * WITH XMLNAMESPACES with a URI other than the schema-instance URI,
-			 * reject the statement.
+			 * If XSINIL is specified and the user declared the 'xsi' prefix
+			 * via WITH XMLNAMESPACES to a URI other than the schema-instance
+			 * URI, reject the statement. The xsi binding is captured directly
+			 * in build_xmlnamespace_array_literal (source of truth) so this
+			 * check is a simple string compare with no re-parsing.
 			 */
-			if (!xmlnamespace_array_literal.empty() && !selectCtx->for_clause()->XSINIL().empty())
+			if (!xmlnamespace_xsi_declared_uri.empty() &&
+				!selectCtx->for_clause()->XSINIL().empty() &&
+				xmlnamespace_xsi_declared_uri != "http://www.w3.org/2001/XMLSchema-instance")
 			{
-				/* Parse the namespace array literal to check for xsi prefix */
-				std::string ns_str = xmlnamespace_array_literal;
-				std::string xsi_uri = "http://www.w3.org/2001/XMLSchema-instance";
-				size_t pos = ns_str.find("\"xsi\"");
-				if (pos != std::string::npos)
-				{
-					/* Found xsi prefix — extract its URI and compare */
-					size_t uri_start = ns_str.find("\"", pos + 5) + 1;
-					size_t uri_end = ns_str.find("\"", uri_start);
-					if (uri_start != std::string::npos && uri_end != std::string::npos)
-					{
-						std::string declared_uri = ns_str.substr(uri_start, uri_end - uri_start);
-						if (declared_uri != xsi_uri)
-						{
-							throw PGErrorWrapperException(ERROR,
-								ERRCODE_SYNTAX_ERROR,
-								"Redefinition of 'xsi' XML namespace prefix is not supported "
-								"with ELEMENTS XSINIL option of FOR XML.",
-								0, 0);
-						}
-					}
-				}
+				throw PGErrorWrapperException(ERROR,
+					ERRCODE_SYNTAX_ERROR,
+					"Redefinition of 'xsi' XML namespace prefix is not supported "
+					"with ELEMENTS XSINIL option of FOR XML.",
+					0, 0);
 			}
 
 			/*
