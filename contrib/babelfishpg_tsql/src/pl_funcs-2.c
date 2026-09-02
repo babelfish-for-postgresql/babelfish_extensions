@@ -21,6 +21,63 @@ cmpfunc(const void *a, const void *b)
 	return (*(int *) a - *(int *) b);
 }
 
+extern PLtsql_execstate *get_current_tsql_estate(void);
+
+/*
+ * Determine the action the trigger being executed was fired for: CMD_INSERT,
+ * CMD_UPDATE or CMD_DELETE. Returns false outside a trigger.
+ */
+static bool
+current_trigger_action(CmdType *action)
+{
+	PLtsql_execstate *estate = get_current_tsql_estate();
+
+	if (estate == NULL || estate->trigdata == NULL)
+		return false;
+	if (TRIGGER_FIRED_BY_INSERT(estate->trigdata->tg_event))
+		*action = CMD_INSERT;
+	else if (TRIGGER_FIRED_BY_UPDATE(estate->trigdata->tg_event))
+		*action = CMD_UPDATE;
+	else
+		*action = CMD_DELETE;
+	return true;
+}
+
+/*
+ * The columns recorded for the statement that fired the current trigger,
+ * limited to the action the trigger was fired for. A plain INSERT or UPDATE
+ * records its columns under its own command type, a MERGE records the columns
+ * of each INSERT and UPDATE action separately and nothing for a DELETE
+ * action, so a trigger fired for one action of a MERGE sees the same columns
+ * as it would for the equivalent plain statement. Outside a trigger the
+ * recorded columns are returned unfiltered.
+ */
+static List *
+current_updated_columns(void)
+{
+	List	   *curr_columns_list;
+	List	   *result = NIL;
+	CmdType		action;
+	ListCell   *l;
+
+	if (pltsql_trigger_depth - 1 < list_length(columns_updated_list))
+		curr_columns_list = (List *) list_nth(columns_updated_list, pltsql_trigger_depth - 1);
+	else
+		curr_columns_list = NIL;
+
+	if (!current_trigger_action(&action))
+		return curr_columns_list;
+
+	foreach(l, curr_columns_list)
+	{
+		UpdatedColumn *column = (UpdatedColumn *) lfirst(l);
+
+		if (column->action == action)
+			result = lappend(result, column);
+	}
+	return result;
+}
+
 PG_FUNCTION_INFO_V1(updated);
 Datum
 updated(PG_FUNCTION_ARGS)
@@ -30,10 +87,7 @@ updated(PG_FUNCTION_ARGS)
 	List	   *curr_columns_list;
 	ListCell   *l;
 
-	if (pltsql_trigger_depth - 1 < list_length(columns_updated_list))
-		curr_columns_list = (List *) list_nth(columns_updated_list, pltsql_trigger_depth - 1);
-	else
-		curr_columns_list = NIL;
+	curr_columns_list = current_updated_columns();
 	foreach(l, curr_columns_list)
 	{
 		real_column = ((UpdatedColumn *) lfirst(l))->column_name;
@@ -61,15 +115,20 @@ columnsupdated(PG_FUNCTION_ARGS)
 				total_columns = 0;
 	int8		curBuf;
 	int			j;
+	CmdType		action;
 
 	if (columns_updated_list == NULL)
 	{
 		PG_RETURN_NULL();
 	}
-	if (pltsql_trigger_depth - 1 < list_length(columns_updated_list))
-		curr_columns_list = (List *) list_nth(columns_updated_list, pltsql_trigger_depth - 1);
-	else
-		curr_columns_list = NIL;
+
+	/*
+	 * A DELETE sets no column. Report NULL, as a plain DELETE does because
+	 * it records nothing, rather than an empty bitmask.
+	 */
+	if (current_trigger_action(&action) && action == CMD_DELETE)
+		PG_RETURN_NULL();
+	curr_columns_list = current_updated_columns();
 	length = list_length(curr_columns_list);
 	curBuf = 0;
 	pq_begintypsend(&buf);
