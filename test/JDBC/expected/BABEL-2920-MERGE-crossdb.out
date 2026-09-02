@@ -129,6 +129,42 @@ int#!#varchar#!#int
 ~~END~~
 
 
+-- three-part names inside the WHEN condition, the SET clause and the INSERT
+-- VALUES clause are rewritten as well
+USE babel_2920_db2
+go
+CREATE TABLE dbo.babel_2920_xlookup (id INT PRIMARY KEY, tag VARCHAR(20))
+go
+INSERT INTO dbo.babel_2920_xlookup VALUES (2, 'two-tag'), (3, 'three-tag'), (7, 'seven-tag')
+go
+~~ROW COUNT: 3~~
+
+USE babel_2920_db1
+go
+INSERT INTO babel_2920_db2.dbo.babel_2920_xsrc VALUES (7, 'SEVEN', 700)
+go
+~~ROW COUNT: 1~~
+
+MERGE INTO dbo.babel_2920_xtgt AS t
+USING babel_2920_db2.dbo.babel_2920_xsrc AS s ON t.id = s.id
+WHEN MATCHED AND EXISTS (SELECT 1 FROM babel_2920_db2.dbo.babel_2920_xlookup l WHERE l.id = s.id)
+    THEN UPDATE SET val = (SELECT tag FROM babel_2920_db2.dbo.babel_2920_xlookup l WHERE l.id = s.id)
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, val, qty)
+    VALUES (s.id, (SELECT tag FROM babel_2920_db2.dbo.babel_2920_xlookup l WHERE l.id = s.id), s.qty);
+go
+~~ROW COUNT: 3~~
+
+SELECT id, val, qty FROM dbo.babel_2920_xtgt ORDER BY id
+go
+~~START~~
+int#!#varchar#!#int
+2#!#two-tag#!#200
+3#!#three-tag#!#300
+4#!#tagged#!#400
+7#!#seven-tag#!#700
+~~END~~
+
+
 USE master
 go
 DROP DATABASE babel_2920_db1
