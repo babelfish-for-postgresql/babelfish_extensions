@@ -2079,8 +2079,8 @@ CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
 
 CASE 
-	WHEN p.prokind = 'p' THEN CAST(PG_CATALOG.concat(p.proname, ';1') AS sys.nvarchar(134))
-	ELSE CAST(PG_CATALOG.concat(p.proname, ';0') AS sys.nvarchar(134))
+	WHEN p.prokind = 'p' THEN CAST(PG_CATALOG.concat(sys.bbf_get_func_original_name(p.proname, p.pronamespace::regnamespace::name)::sys.NVARCHAR(128), ';1') AS sys.nvarchar(134))
+	ELSE CAST(PG_CATALOG.concat(sys.bbf_get_func_original_name(p.proname, p.pronamespace::regnamespace::name)::sys.NVARCHAR(128), ';0') AS sys.nvarchar(134))
 END AS PROCEDURE_NAME,
 
 -1 AS NUM_INPUT_PARAMS,
@@ -2190,7 +2190,7 @@ BEGIN
 		BEGIN
 			IF EXISTS ( -- Search in the sys schema 
 					SELECT * FROM sys.sp_stored_procedures_view
-					WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+					WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name) OR sys.babelfish_truncate_identifier(pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2))) = pg_catalog.lower(@sp_name))
 						AND (pg_catalog.lower(procedure_owner) = 'sys'))
 			BEGIN
 				SELECT PROCEDURE_QUALIFIER,
@@ -2201,13 +2201,13 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name) OR sys.babelfish_truncate_identifier(pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2))) = pg_catalog.lower(@sp_name))
 					AND (pg_catalog.lower(procedure_owner) = 'sys')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
 			ELSE IF EXISTS ( 
 				SELECT * FROM sys.sp_stored_procedures_view
-				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name) OR sys.babelfish_truncate_identifier(pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2))) = pg_catalog.lower(@sp_name))
 					AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(SCHEMA_NAME()))
 					)
 			BEGIN
@@ -2219,7 +2219,7 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name) OR sys.babelfish_truncate_identifier(pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2))) = pg_catalog.lower(@sp_name))
 					AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(SCHEMA_NAME()))
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
@@ -2233,7 +2233,7 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+				WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name) OR sys.babelfish_truncate_identifier(pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2))) = pg_catalog.lower(@sp_name))
 					AND (pg_catalog.lower(procedure_owner) = 'dbo')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
@@ -2250,7 +2250,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name))
+			WHERE (pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) = pg_catalog.lower(@sp_name) OR sys.babelfish_truncate_identifier(pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2))) = pg_catalog.lower(@sp_name))
 				AND (pg_catalog.lower(procedure_owner) = pg_catalog.lower(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
@@ -2265,7 +2265,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) LIKE pg_catalog.lower(@sp_name))
+			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2)) LIKE pg_catalog.lower(@sp_name) OR sys.babelfish_truncate_identifier(pg_catalog.lower(pg_catalog.LEFT(procedure_name, LEN(procedure_name)-2))) LIKE pg_catalog.lower(@sp_name))
 				AND ((SELECT COALESCE(@sp_owner,'')) = '' OR pg_catalog.lower(procedure_owner) LIKE pg_catalog.lower(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
@@ -2702,8 +2702,8 @@ CAST(sys.db_name() AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be
 , CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
 , CAST(
 CASE
-  WHEN ss.prokind = 'p' THEN PG_CATALOG.CONCAT(ss.proname, ';1')
-  ELSE PG_CATALOG.CONCAT(ss.proname, ';0')
+  WHEN ss.prokind = 'p' THEN PG_CATALOG.CONCAT(sys.bbf_get_func_original_name(ss.proname, ss.nspname), ';1')
+  ELSE PG_CATALOG.CONCAT(sys.bbf_get_func_original_name(ss.proname, ss.nspname), ';0')
 END
 AS sys.nvarchar(134)) AS PROCEDURE_NAME
 , CAST(
@@ -2871,13 +2871,14 @@ CASE
   ELSE sdit.ss_data_type
 END
 AS sys.tinyint) AS SS_DATA_TYPE
-, CAST(ss.proname AS sys.sysname) AS original_procedure_name
+, CAST(sys.bbf_get_func_original_name(ss.proname, ss.nspname) AS sys.sysname) AS original_procedure_name
 FROM 
 ( 
   -- CTE to query procedures related to bbf
   WITH bbf_proc AS (
     SELECT
       p.proname as proname,
+      p.pronamespace::regnamespace::name as nspname,
       p.proargnames as proargnames,
       p.proargmodes as proargmodes,
       p.prokind as prokind,
@@ -2907,6 +2908,7 @@ FROM
   FROM ( 
     SELECT -- Selects all parameters (input and output), but NOT return values
     p.proname as proname,
+    p.nspname as nspname,
     p.proargnames as proargnames,
     p.proargmodes as proargmodes,
     p.prokind as prokind,
@@ -2934,6 +2936,7 @@ FROM
 
   SELECT -- Selects all return values (this is because inline-table functions could cause duplicate outputs)
   p.proname as proname,
+  p.nspname as nspname,
   p.proargnames as proargnames,
   p.proargmodes as proargmodes,
   p.prokind as prokind,
@@ -2992,7 +2995,7 @@ BEGIN
 					IS_NULLABLE,
 					SS_DATA_TYPE
 			FROM sys.sp_sproc_columns_view
-			WHERE (@procedure_name = '' OR original_procedure_name LIKE @procedure_name)
+			WHERE (@procedure_name = '' OR original_procedure_name LIKE @procedure_name OR sys.babelfish_truncate_identifier(pg_catalog.lower(original_procedure_name)) LIKE @procedure_name)
 				AND (@procedure_owner = '' OR procedure_owner LIKE @procedure_owner)
 				AND (@column_name = '' OR column_name LIKE @column_name)
 				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier)
@@ -3021,7 +3024,7 @@ BEGIN
 					IS_NULLABLE,
 					SS_DATA_TYPE
 			FROM sys.sp_sproc_columns_view
-			WHERE (@procedure_name = '' OR original_procedure_name = @procedure_name)
+			WHERE (@procedure_name = '' OR original_procedure_name = @procedure_name OR sys.babelfish_truncate_identifier(pg_catalog.lower(original_procedure_name)) = @procedure_name)
 				AND (@procedure_owner = '' OR procedure_owner = @procedure_owner)
 				AND (@column_name = '' OR column_name = @column_name)
 				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier)
@@ -3274,7 +3277,7 @@ BEGIN
 				BEGIN
 					DECLARE @count INT;
 					SELECT type INTO #tempTable FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-					WHERE s1.name = @schemaname AND o1.name = @subname;
+					WHERE s1.name = @schemaname AND (o1.name = @subname OR o1.object_id = OBJECT_ID(sys.babelfish_truncate_identifier(pg_catalog.lower(@schemaname)) + '.' + sys.babelfish_truncate_identifier(pg_catalog.lower(@subname))));
 					SELECT @count = COUNT(*) FROM #tempTable;
 
 					IF @count < 1
@@ -3290,7 +3293,7 @@ BEGIN
 											ELSE 'FN'
 										END as sys.bpchar(2)) AS type INTO #tempTable
 							FROM pg_proc p INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id
-							WHERE s1.name = @schemaname AND CAST(p.proname AS sys.sysname) = @subname;
+							WHERE s1.name = @schemaname AND CAST(p.proname AS sys.sysname) = sys.babelfish_truncate_identifier(pg_catalog.lower(@subname));
 							SELECT @count = COUNT(*) FROM #tempTable;
 						END
 					IF @count > 1
@@ -3876,7 +3879,7 @@ BEGIN
    	FROM sys.sp_sproc_columns_view v
    	LEFT OUTER JOIN sys.all_parameters AS p 
 	ON v.column_name = p.name AND p.object_id = object_id(PG_CATALOG.CONCAT(@procedure_schema, '.', @procedure_name))
-   	WHERE v.original_procedure_name = @procedure_name
+   	WHERE (v.original_procedure_name = @procedure_name OR sys.babelfish_truncate_identifier(pg_catalog.lower(v.original_procedure_name)) = pg_catalog.lower(@procedure_name))
     	AND v.procedure_owner = @procedure_schema
 	AND (@parameter_name IS NULL OR column_name = @parameter_name)
 	AND @group_number = 1

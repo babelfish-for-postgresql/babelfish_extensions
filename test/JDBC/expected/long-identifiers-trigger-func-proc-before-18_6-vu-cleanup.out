@@ -1,0 +1,11 @@
+-- tsql
+DROP TRIGGER Very_Long_Trigger_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+DROP FUNCTION Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+DROP FUNCTION babel5975_multi_param_func;
+GO
+DROP PROCEDURE Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
+GO
+DROP TABLE babel5975_trigger_test_table;
+GO

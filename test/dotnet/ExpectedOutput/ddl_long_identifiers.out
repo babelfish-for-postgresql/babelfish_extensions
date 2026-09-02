@@ -114,11 +114,11 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE TRIGGER [dbo].[trg_Ñoño_Ëmplöyéé_löngn4f7e0cfc75251c5a26c35c66e7cffe9a] ON [dbo].[tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng] AFTER INSERT AS
+CREATE TRIGGER trg_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng ON tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng AFTER INSERT AS
 	SELECT 1;
 
 GO
-ALTER TABLE [dbo].[tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng] ENABLE TRIGGER [trg_Ñoño_Ëmplöyéé_löngn4f7e0cfc75251c5a26c35c66e7cffe9a]
+ALTER TABLE [dbo].[tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng] ENABLE TRIGGER [trg_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng]
 GO
 SET ANSI_NULLS ON
 GO
@@ -150,11 +150,11 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE TRIGGER [dbo].[thisisaverylongtriggernamethate2bb5a1163d746f50e4c8c63bbe319c70] ON [dbo].[ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting] AFTER INSERT AS
+CREATE TRIGGER ThisIsAVeryLongTriggerNameThatExceedsSixtyThreeCharactersInLength ON ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting AFTER INSERT AS
 	SELECT 1;
 
 GO
-ALTER TABLE [dbo].[ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting] ENABLE TRIGGER [thisisaverylongtriggernamethate2bb5a1163d746f50e4c8c63bbe319c70]
+ALTER TABLE [dbo].[ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting] ENABLE TRIGGER [ThisIsAVeryLongTriggerNameThatExceedsSixtyThreeCharactersInLength]
 GO
 SET ANSI_NULLS ON
 GO
@@ -179,7 +179,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[proc_Ñoño_Ëmplöyéé_löngn73a0e69983d6140d39abc3ce1fc6d67f] AS
+CREATE PROCEDURE proc_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst AS
 	SELECT 1;
 
 GO
@@ -188,7 +188,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[thisisaverylongprocedurenamethatexceedssixtythreecharacterstest] AS
+CREATE PROCEDURE ThisIsAVeryLongProcedureNameThatExceedsSixtyThreeCharactersTest AS
 	SELECT 1;
 
 GO
@@ -197,7 +197,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE FUNCTION [dbo].[func_Ñoño_Ëmplöyéé_löngn00427e1b338d91d709db1b4156f7de41](@p INT)
+CREATE FUNCTION func_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëst(@p INT)
 RETURNS INT AS
 BEGIN
   RETURN @p + 1;
@@ -209,7 +209,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE FUNCTION [dbo].[thisisaverylongfunctionnamethatexceedssixtythreecharsfortesting](@p INT)
+CREATE FUNCTION ThisIsAVeryLongFunctionNameThatExceedsSixtyThreeCharsForTesting(@p INT)
 RETURNS INT AS
 BEGIN
   RETURN @p + 1;

@@ -9428,7 +9428,7 @@ WHERE ROUTINE_NAME = 'GetCurrentDateTime' AND ROUTINE_TYPE = 'FUNCTION';
 GO
 ~~START~~
 nvarchar#!#nvarchar
-getcurrentdatetime#!#datetime
+GetCurrentDateTime#!#datetime
 ~~END~~
 
 

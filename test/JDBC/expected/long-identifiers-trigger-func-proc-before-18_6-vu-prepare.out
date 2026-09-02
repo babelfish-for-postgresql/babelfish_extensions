@@ -1,0 +1,25 @@
+-- tsql
+
+-- Setup: Create objects with long names for trigger/func/proc testing
+CREATE TABLE babel5975_trigger_test_table (id INT NOT NULL, name NVARCHAR(100));
+GO
+
+CREATE FUNCTION Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing(@a INT)
+RETURNS INT AS BEGIN RETURN @a + 1 END;
+GO
+
+CREATE PROCEDURE Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+    @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT
+AS BEGIN SELECT @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters END;
+GO
+
+CREATE TRIGGER Very_Long_Trigger_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+ON babel5975_trigger_test_table
+FOR INSERT AS BEGIN SELECT 1 END;
+GO
+
+CREATE FUNCTION babel5975_multi_param_func(
+    @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_P1 INT,
+    @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_P2 INT
+) RETURNS INT AS BEGIN RETURN @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_P1 + @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_P2 END;
+GO

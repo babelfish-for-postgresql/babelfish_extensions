@@ -8592,7 +8592,7 @@ WHERE ROUTINE_NAME = 'GetCurrentDateTime2' AND ROUTINE_TYPE = 'FUNCTION';
 GO
 ~~START~~
 nvarchar#!#nvarchar
-getcurrentdatetime2#!#datetime2
+GetCurrentDateTime2#!#datetime2
 ~~END~~
 
 
