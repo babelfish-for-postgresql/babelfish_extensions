@@ -2025,6 +2025,16 @@ handle_returning_qualifiers(Query *query, ReturningClause *returningClause, Pars
 	if (command == CMD_DELETE || command == CMD_UPDATE)
 		pltsql_update_query_result_relation(query, pstate->p_target_relation, pstate->p_rtable);
 
+	/*
+	 * MERGE never reaches this hook: T-SQL OUTPUT on MERGE is rejected up
+	 * front, and the engine calls pre_transform_returning_hook only from
+	 * transformInsertStmt() and transformDeleteStmt(); the UPDATE path
+	 * arrives through output_update_self_join_transformation() instead.
+	 * transformMergeStmt() has no such call, so OUTPUT for MERGE needs an
+	 * engine-side hook call first, and this function would then have to
+	 * map the inserted and deleted pseudo-tables onto the new and old rows
+	 * of each merge action for CMD_MERGE.
+	 */
 	if (returningClause == NULL)
 		return;
 
@@ -6161,6 +6171,16 @@ pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType comm
 				break;
 			}
 		default:
+			/*
+			 * Only DELETE and UPDATE reach this hook: the engine calls it from
+			 * transformDeleteStmt() and transformUpdateStmt(), whereas
+			 * transformMergeStmt() resolves its target through setTargetTable()
+			 * directly. A CMD_MERGE arm is therefore not needed today. Should
+			 * MERGE ever be routed through this hook, the FROM-clause target
+			 * disambiguation and the rowversion handling above need an arm of
+			 * their own, since a MergeStmt carries neither a usingClause nor a
+			 * fromClause of the shape handled here.
+			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("Unexpected command type")));
