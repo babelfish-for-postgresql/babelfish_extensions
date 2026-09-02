@@ -323,6 +323,7 @@ static int	exec_stmt_assert(PLtsql_execstate *estate,
 							 PLtsql_stmt_assert *stmt);
 static int	exec_stmt_execsql(PLtsql_execstate *estate,
 							  PLtsql_stmt_execsql *stmt);
+static void recordUpdatedColumns(Relation rel, List *targetList, CmdType action);
 static void updateColumnUpdatedList(Query *query);
 static int	exec_stmt_dynexecute(PLtsql_execstate *estate,
 								 PLtsql_stmt_dynexecute *stmt);
@@ -5038,45 +5039,68 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	return PLTSQL_RC_OK;
 }
 
+/*
+ * Record the columns set by one INSERT or UPDATE target list of the statement
+ * being executed, tagged with the command type of the action that sets them.
+ * UPDATE() and COLUMNS_UPDATED() inside a trigger report only the columns
+ * recorded for the action the trigger was fired for.
+ */
 static void
-updateColumnUpdatedList(Query *query)
+recordUpdatedColumns(Relation rel, List *targetList, CmdType action)
 {
 	ListCell   *lcj;
 	List	   *curr_columns_list;
 	TargetEntry *target_entry;
-	Relation	rel;
 	TupleDesc	tupdesc;
 	MemoryContext oldContext;
 	UpdatedColumn *updateColumn;
 	int			length;
-	List	   *targetList;
 
-	if (query->commandType == CMD_MERGE)
+	foreach(lcj, targetList)
 	{
-		ListCell   *lcm;
-
-		/*
-		 * MERGE carries one target list per action, so collect the columns of
-		 * every INSERT and UPDATE action. A MERGE combining several
-		 * data-modifying actions reports the union of their columns.
-		 */
-		targetList = NIL;
-		foreach(lcm, query->mergeActionList)
+		target_entry = (TargetEntry *) lfirst(lcj);
+		if (target_entry->resjunk || target_entry->resname == NULL)
+			continue;
+		tupdesc = RelationGetDescr(rel);
+		oldContext = MemoryContextSwitchTo(TopMemoryContext);
+		length = list_length(columns_updated_list);
+		updateColumn = (UpdatedColumn *) palloc(sizeof(UpdatedColumn));
+		updateColumn->x_attnum = target_entry->resno;
+		updateColumn->trigger_depth = pltsql_trigger_depth;
+		updateColumn->total_columns = tupdesc->natts;
+		updateColumn->column_name = target_entry->resname;
+		updateColumn->action = action;
+		if (length < pltsql_trigger_depth + 1)
 		{
-			MergeAction *action = (MergeAction *) lfirst(lcm);
-
-			if (action->commandType == CMD_UPDATE ||
-				action->commandType == CMD_INSERT)
-				targetList = list_concat(targetList,
-										 list_copy(action->targetList));
+			curr_columns_list = NIL;
+			while (length < pltsql_trigger_depth)
+			{
+				columns_updated_list = lappend(columns_updated_list, NIL);
+				length++;
+			}
+			curr_columns_list = list_make1(updateColumn);
+			columns_updated_list = lappend(columns_updated_list, curr_columns_list);
 		}
+		else
+		{
+			curr_columns_list = (List *) list_nth(columns_updated_list, pltsql_trigger_depth);
+			curr_columns_list = lappend(curr_columns_list, updateColumn);
+		}
+		MemoryContextSwitchTo(oldContext);
 	}
-	else if (query->commandType == CMD_UPDATE || query->commandType == CMD_INSERT)
-		targetList = query->targetList;
-	else
+}
+
+static void
+updateColumnUpdatedList(Query *query)
+{
+	Relation	rel;
+
+	if (query->commandType != CMD_UPDATE &&
+		query->commandType != CMD_INSERT &&
+		query->commandType != CMD_MERGE)
 		return;
 
-	if (query->rtable == NULL || targetList == NULL)
+	if (query->rtable == NULL)
 		return;
 	rel = RelationIdGetRelation(((RangeTblEntry *) list_nth(query->rtable, query->resultRelation - 1))->relid);
 	if (!rel)
@@ -5089,37 +5113,29 @@ updateColumnUpdatedList(Query *query)
 	if (rel->trigdesc && rel->trigdesc->numtriggers > 0)
 	{
 		/* we only need call this structure inside triggers */
-		foreach(lcj, targetList)
+		if (query->commandType == CMD_MERGE)
 		{
-			target_entry = (TargetEntry *) lfirst(lcj);
-			if (target_entry->resjunk || target_entry->resname == NULL)
-				continue;
-			tupdesc = RelationGetDescr(rel);
-			oldContext = MemoryContextSwitchTo(TopMemoryContext);
-			length = list_length(columns_updated_list);
-			updateColumn = (UpdatedColumn *) palloc(sizeof(UpdatedColumn));
-			updateColumn->x_attnum = target_entry->resno;
-			updateColumn->trigger_depth = pltsql_trigger_depth;
-			updateColumn->total_columns = tupdesc->natts;
-			updateColumn->column_name = target_entry->resname;
-			if (length < pltsql_trigger_depth + 1)
+			ListCell   *lcm;
+
+			/*
+			 * MERGE carries one target list per action rather than a single
+			 * statement target list. Record the columns of each INSERT and
+			 * UPDATE action under the action's own command type: a trigger
+			 * fired for one of the actions then reports the columns of that
+			 * action only, as it would for the equivalent plain statement,
+			 * and a trigger fired for the DELETE action reports none.
+			 */
+			foreach(lcm, query->mergeActionList)
 			{
-				curr_columns_list = NIL;
-				while (length < pltsql_trigger_depth)
-				{
-					columns_updated_list = lappend(columns_updated_list, NIL);
-					length++;
-				}
-				curr_columns_list = list_make1(updateColumn);
-				columns_updated_list = lappend(columns_updated_list, curr_columns_list);
+				MergeAction *action = (MergeAction *) lfirst(lcm);
+
+				if (action->commandType == CMD_UPDATE ||
+					action->commandType == CMD_INSERT)
+					recordUpdatedColumns(rel, action->targetList, action->commandType);
 			}
-			else
-			{
-				curr_columns_list = (List *) list_nth(columns_updated_list, pltsql_trigger_depth);
-				curr_columns_list = lappend(curr_columns_list, updateColumn);
-			}
-			MemoryContextSwitchTo(oldContext);
 		}
+		else
+			recordUpdatedColumns(rel, query->targetList, query->commandType);
 	}
 	RelationClose(rel);
 }

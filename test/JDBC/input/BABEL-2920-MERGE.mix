@@ -651,6 +651,127 @@ go
 DROP TRIGGER babel_2920_cutrg
 go
 
+-- UPDATE(column) and COLUMNS_UPDATED() report the columns of the action a
+-- trigger fired for, not the union over all actions of the MERGE
+CREATE TABLE babel_2920_ma (id INT PRIMARY KEY, col_a INT, col_b INT)
+go
+CREATE TABLE babel_2920_mas (id INT PRIMARY KEY, col_a INT, col_b INT)
+go
+CREATE TABLE babel_2920_manote (note VARCHAR(40))
+go
+CREATE TABLE babel_2920_malog (seq INT IDENTITY(1,1) PRIMARY KEY, note VARCHAR(40), act VARCHAR(10), upd_a INT, upd_b INT, cu INT)
+go
+INSERT INTO babel_2920_manote VALUES ('setup')
+go
+CREATE TRIGGER babel_2920_matrg ON babel_2920_ma AFTER INSERT, UPDATE, DELETE AS
+BEGIN
+    DECLARE @act VARCHAR(10)
+    DECLARE @ua INT
+    DECLARE @ub INT
+    SET @ua = 0
+    SET @ub = 0
+    IF EXISTS (SELECT 1 FROM inserted) AND EXISTS (SELECT 1 FROM deleted) SET @act = 'UPDATE'
+    ELSE IF EXISTS (SELECT 1 FROM inserted) SET @act = 'INSERT'
+    ELSE IF EXISTS (SELECT 1 FROM deleted) SET @act = 'DELETE'
+    ELSE SET @act = 'NONE'
+    IF UPDATE(col_a) SET @ua = 1
+    IF UPDATE(col_b) SET @ub = 1
+    INSERT INTO babel_2920_malog (note, act, upd_a, upd_b, cu)
+        SELECT note, @act, @ua, @ub, CONVERT(INT, COLUMNS_UPDATED()) FROM babel_2920_manote
+END
+go
+
+-- baselines: a plain DELETE reports no column, a plain INSERT the columns it lists
+INSERT INTO babel_2920_ma VALUES (1, 10, 100), (2, 20, 200)
+go
+UPDATE babel_2920_manote SET note = 'plain-DELETE'
+go
+DELETE FROM babel_2920_ma WHERE id = 1
+go
+UPDATE babel_2920_manote SET note = 'plain-INSERT-id-a'
+go
+INSERT INTO babel_2920_ma (id, col_a) VALUES (3, 30)
+go
+
+-- UPDATE of col_a and INSERT of all columns, both actions affect rows: the
+-- UPDATE firing reports col_a only, the INSERT firing all columns
+UPDATE babel_2920_manote SET note = 'setup'
+go
+TRUNCATE TABLE babel_2920_ma
+go
+INSERT INTO babel_2920_ma VALUES (1, 10, 100), (2, 20, 200)
+go
+INSERT INTO babel_2920_mas VALUES (2, 22, 222), (3, 33, 333)
+go
+UPDATE babel_2920_manote SET note = 'merge-UPDATE-a-INSERT-both'
+go
+MERGE INTO babel_2920_ma AS t
+USING babel_2920_mas AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET col_a = s.col_a
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, col_a, col_b) VALUES (s.id, s.col_a, s.col_b);
+go
+
+-- UPDATE of col_b and INSERT of id and col_a: each firing reports its own columns
+UPDATE babel_2920_manote SET note = 'setup'
+go
+TRUNCATE TABLE babel_2920_ma
+go
+INSERT INTO babel_2920_ma VALUES (1, 10, 100), (2, 20, 200)
+go
+UPDATE babel_2920_manote SET note = 'merge-UPDATE-b-INSERT-id-a'
+go
+MERGE INTO babel_2920_ma AS t
+USING babel_2920_mas AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET col_b = s.col_b
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, col_a) VALUES (s.id, s.col_a);
+go
+
+-- DELETE and INSERT declared, only the DELETE affects rows: the DELETE firing
+-- reports no column although the statement declares an INSERT action, and the
+-- INSERT firing, with no rows, reports the INSERT columns
+UPDATE babel_2920_manote SET note = 'setup'
+go
+TRUNCATE TABLE babel_2920_ma
+go
+TRUNCATE TABLE babel_2920_mas
+go
+INSERT INTO babel_2920_ma VALUES (1, 10, 100), (2, 20, 200)
+go
+INSERT INTO babel_2920_mas VALUES (1, 11, 111), (2, 22, 222)
+go
+UPDATE babel_2920_manote SET note = 'merge-DELETE-INSERT-only-delete'
+go
+MERGE INTO babel_2920_ma AS t
+USING babel_2920_mas AS s ON t.id = s.id
+WHEN MATCHED THEN DELETE
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, col_a, col_b) VALUES (s.id, s.col_a, s.col_b);
+go
+
+-- UPDATE of col_a and DELETE of rows missing from the source, both fire
+UPDATE babel_2920_manote SET note = 'setup'
+go
+TRUNCATE TABLE babel_2920_ma
+go
+TRUNCATE TABLE babel_2920_mas
+go
+INSERT INTO babel_2920_ma VALUES (1, 10, 100), (2, 20, 200)
+go
+INSERT INTO babel_2920_mas VALUES (1, 11, 111)
+go
+UPDATE babel_2920_manote SET note = 'merge-UPDATE-a-BY-SOURCE-DELETE'
+go
+MERGE INTO babel_2920_ma AS t
+USING babel_2920_mas AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET col_a = s.col_a
+WHEN NOT MATCHED BY SOURCE THEN DELETE;
+go
+
+SELECT note, act, upd_a AS upd_col_a, upd_b AS upd_col_b, cu AS columns_updated
+FROM babel_2920_malog WHERE note <> 'setup' ORDER BY note, act
+go
+DROP TRIGGER babel_2920_matrg
+go
+
 -- a view with an INSTEAD OF INSERT trigger is rejected as MERGE target
 CREATE TABLE babel_2920_ioi (id INT PRIMARY KEY, val VARCHAR(20))
 go
@@ -841,6 +962,14 @@ go
 DROP TABLE babel_2920_cus
 go
 DROP TABLE babel_2920_culog
+go
+DROP TABLE babel_2920_ma
+go
+DROP TABLE babel_2920_mas
+go
+DROP TABLE babel_2920_manote
+go
+DROP TABLE babel_2920_malog
 go
 DROP VIEW babel_2920_ioiv
 go
