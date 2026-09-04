@@ -1,4 +1,3 @@
--- single_db_mode_expected
 -- tsql
 CREATE LOGIN rename_from_pg_u WITH PASSWORD = '12345678';
 GO
@@ -123,6 +122,39 @@ ALTER PROCEDURE pg_ss_user_p1() SET SCHEMA master_rename_from_pg_uschema;
 GO
 
 DROP PROCEDURE pg_ss_user_p1();
+GO
+
+-- single-db user-DB physical schema cases: in single-db, physical names for
+-- objects inside the sole user DB are unprefixed (bare "dbo", "rename_from_pg_udbs").
+ALTER PROCEDURE dbo.udb_dbo_p1 RENAME TO udb_dbo_p1_new;
+GO
+
+ALTER FUNCTION dbo.udb_dbo_f1 RENAME TO udb_dbo_f1_new;
+GO
+
+ALTER PROCEDURE rename_from_pg_udbs.udb_p1 RENAME TO udb_p1_new;
+GO
+
+ALTER FUNCTION rename_from_pg_udbs.udb_f1 RENAME TO udb_f1_new;
+GO
+
+ALTER FUNCTION rename_from_pg_udbs.udb_f1 SET SCHEMA public;
+GO
+
+CREATE PROCEDURE pg_ss_udb_p1()
+LANGUAGE SQL
+AS $$
+SELECT 1;
+$$;
+GO
+
+ALTER PROCEDURE pg_ss_udb_p1() SET SCHEMA dbo;
+GO
+
+ALTER PROCEDURE pg_ss_udb_p1() SET SCHEMA rename_from_pg_udbs;
+GO
+
+DROP PROCEDURE pg_ss_udb_p1();
 GO
 
 -- sp_rename from the PG endpoint must also be blocked on TSQL objects
@@ -372,70 +404,6 @@ GO
 DROP FUNCTION rename_from_pg_pgschema.pg_func_ss2();
 GO
 
--- multi-db user-DB physical schema cases; produces schema-does-not-exist errors in single-db mode
-ALTER PROCEDURE rename_from_pg_udb_dbo.udb_dbo_p1 RENAME TO udb_dbo_p1_new;
-GO
-
-ALTER FUNCTION rename_from_pg_udb_dbo.udb_dbo_f1 RENAME TO udb_dbo_f1_new;
-GO
-
-ALTER PROCEDURE rename_from_pg_udb_rename_from_pg_udbs.udb_p1 RENAME TO udb_p1_new;
-GO
-
-ALTER FUNCTION rename_from_pg_udb_rename_from_pg_udbs.udb_f1 RENAME TO udb_f1_new;
-GO
-
-ALTER FUNCTION rename_from_pg_udb_rename_from_pg_udbs.udb_f1 SET SCHEMA public;
-GO
-
-CREATE PROCEDURE pg_ss_udb_p1()
-LANGUAGE SQL
-AS $$
-SELECT 1;
-$$;
-GO
-
-ALTER PROCEDURE pg_ss_udb_p1() SET SCHEMA rename_from_pg_udb_dbo;
-GO
-
-ALTER PROCEDURE pg_ss_udb_p1() SET SCHEMA rename_from_pg_udb_rename_from_pg_udbs;
-GO
-
-DROP PROCEDURE pg_ss_udb_p1();
-GO
-
--- single-db user-DB physical schema cases; produces schema-does-not-exist errors in multi-db mode
-ALTER PROCEDURE dbo.udb_dbo_p1 RENAME TO udb_dbo_p1_new;
-GO
-
-ALTER FUNCTION dbo.udb_dbo_f1 RENAME TO udb_dbo_f1_new;
-GO
-
-ALTER PROCEDURE rename_from_pg_udbs.udb_p1 RENAME TO udb_p1_new;
-GO
-
-ALTER FUNCTION rename_from_pg_udbs.udb_f1 RENAME TO udb_f1_new;
-GO
-
-ALTER FUNCTION rename_from_pg_udbs.udb_f1 SET SCHEMA public;
-GO
-
-CREATE PROCEDURE pg_ss_udb_sd_p1()
-LANGUAGE SQL
-AS $$
-SELECT 1;
-$$;
-GO
-
-ALTER PROCEDURE pg_ss_udb_sd_p1() SET SCHEMA dbo;
-GO
-
-ALTER PROCEDURE pg_ss_udb_sd_p1() SET SCHEMA rename_from_pg_udbs;
-GO
-
-DROP PROCEDURE pg_ss_udb_sd_p1();
-GO
-
 
 -- superuser should still be able to rename objects
 -- (this test case is oss-only)
@@ -482,9 +450,13 @@ GO
 EXEC sp_rename 'rename_from_pg_tsqlschema.tsqlproc', 'tsqlproc_new', 'OBJECT';
 GO
 
--- terminate-tsql-conn user=rename_from_pg_tsql_login password=12345678
--- cleanup
+-- psql
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'rename_from_pg_tsql_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
 -- tsql
+-- cleanup
 DROP PROCEDURE rename_from_pg_tsqlschema.tsqlproc_new;
 GO
 DROP FUNCTION rename_from_pg_tsqlschema.tsqlfunc_new;
@@ -530,8 +502,11 @@ GO
 USE master;
 GO
 
--- terminate-psql-conn user=rename_from_pg_u password=12345678
 -- psql
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'rename_from_pg_u' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
 REVOKE CREATE ON SCHEMA public FROM rename_from_pg_u;
 GO
 
