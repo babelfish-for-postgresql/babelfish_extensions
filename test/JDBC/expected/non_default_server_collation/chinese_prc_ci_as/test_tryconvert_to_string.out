@@ -5764,10 +5764,6 @@ CREATE TABLE try_convert_computed_binary (
     VarbinaryStyle2 AS TRY_CONVERT(VARCHAR(50), VarbinaryValue, 2) PERSISTED
 );
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: generation expression is not immutable)~~
-
 
 -- Table with Computed Columns for Special Types
 CREATE TABLE try_convert_computed_special (
@@ -5986,9 +5982,9 @@ GO
 
 SELECT * FROM try_convert_computed_binary
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "try_convert_computed_binary" does not exist)~~
+~~START~~
+int#!#binary#!#varbinary#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
 
 SELECT * FROM try_convert_computed_special
 GO
@@ -6153,10 +6149,6 @@ DROP TABLE try_convert_computed_decimals;
 DROP TABLE try_convert_computed_integers;
 DROP TABLE try_convert_computed_special;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "try_convert_computed_binary" does not exist)~~
-
 ~~ERROR (Code: 3701)~~
 
 ~~ERROR (Message: table "try_convert_computed_datetime" does not exist)~~

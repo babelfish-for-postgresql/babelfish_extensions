@@ -1330,6 +1330,7 @@ int 		pltsql_isolation_level_serializable = ISOLATION_OFF;
 int 		escape_hatch_identity_function = EH_STRICT;
 int 		escape_hatch_insert_bulk_options = EH_IGNORE;
 int 		escape_hatch_spatial_index = EH_STRICT;
+int			escape_hatch_persisted_col_guc_check = EH_STRICT;
 
 void
 define_escape_hatch_variables(void)
@@ -1731,6 +1732,17 @@ define_escape_hatch_variables(void)
 							 gettext_noop("escape hatch for INLINE option in CREATE FUNCTION"),
 							 NULL,
 							 &escape_hatch_inline_function_option,
+							 EH_STRICT,
+							 escape_hatch_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/* Persisted computed column GUC enforcement */
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_persisted_col_guc_check",
+							 gettext_noop("escape hatch for GUC enforcement on persisted computed columns"),
+							 NULL,
+							 &escape_hatch_persisted_col_guc_check,
 							 EH_STRICT,
 							 escape_hatch_options,
 							 PGC_USERSET,

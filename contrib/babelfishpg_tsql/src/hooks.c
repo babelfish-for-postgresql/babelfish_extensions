@@ -65,6 +65,7 @@
 #include "parser/parse_oper.h"
 #include "parser/parse_param.h"
 #include "parser/parse_relation.h"
+#include "parser/parsetree.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "parser/parsetree.h"
@@ -96,6 +97,7 @@
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "pltsql.h"
+#include "guc.h"
 #include "pltsql_node/pltsql_serialize.h"
 #include "pltsql_permissions.h"
 #include "pl_explain.h"
@@ -109,6 +111,7 @@
 #include "table_variable_mvcc.h"
 #include "bbf_parallel_query.h"
 #include "extendedproperty.h"
+#include "stable_func_persisted.h"
 
 #ifdef USE_LIBXML
 #include <libxml/tree.h>
@@ -274,6 +277,7 @@ static bool is_bbf_db_ddladmin_operation(Oid namespaceId);
  * 			Planner Hook
  *****************************************/
 static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams);
+static Query *persisted_col_planner_rewrite(Query *query);
 
 /*****************************************
  * 			parser Hook
@@ -364,6 +368,7 @@ static pre_transform_openxml_columns_hook_type prev_pre_transform_openxml_column
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
+persisted_col_hook_type prev_persisted_col_hook = NULL;
 static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_hook = NULL;
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
@@ -393,6 +398,7 @@ static bbf_execute_grantstmt_as_dbsecadmin_hook_type prev_bbf_execute_grantstmt_
 static bbf_check_member_has_direct_priv_to_grant_role_hook_type prev_bbf_check_member_has_direct_priv_to_grant_role_hook = NULL;
 static validateCachedPlanSearchPath_hook_type prev_validateCachedPlanSearchPath_hook = NULL;
 static pre_QueryRewrite_hook_type prev_pre_QueryRewrite_hook = NULL;
+static persisted_col_rewrite_hook_type prev_persisted_col_rewrite_hook = NULL;
 ExecInitParallelPlan_hook_type prev_ExecInitParallelPlan_hook = NULL;
 ParallelQueryMain_hook_type prev_ParallelQueryMain_hook = NULL;
 #ifdef USE_LIBXML
@@ -554,6 +560,10 @@ InstallExtendedHooks(void)
 	prev_transform_check_constraint_expr_hook = transform_check_constraint_expr_hook;
 	transform_check_constraint_expr_hook = transform_like_in_add_constraint;
 
+	/* Hook for computed column expressions */
+	prev_persisted_col_hook = persisted_col_hook;
+	persisted_col_hook = stable_persisted_hook;
+
 	prev_validate_var_datatype_scale_hook = validate_var_datatype_scale_hook;
 	validate_var_datatype_scale_hook = pltsql_validate_var_datatype_scale;
 
@@ -670,6 +680,9 @@ InstallExtendedHooks(void)
 	prev_pre_QueryRewrite_hook = pre_QueryRewrite_hook;
 	pre_QueryRewrite_hook = repair_broken_views;
 
+	prev_persisted_col_rewrite_hook = persisted_col_rewrite_hook;
+	persisted_col_rewrite_hook = persisted_col_planner_rewrite;
+
 	walk_view_rule_hook = mark_nodes_inside_view;
 
 	handle_target_view_hook = tsql_handle_target_view_hook;
@@ -725,6 +738,7 @@ UninstallExtendedHooks(void)
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
+	persisted_col_hook = prev_persisted_col_hook;
 	validate_var_datatype_scale_hook = prev_validate_var_datatype_scale_hook;
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
@@ -755,6 +769,7 @@ UninstallExtendedHooks(void)
 	bbf_check_member_has_direct_priv_to_grant_role_hook = prev_bbf_check_member_has_direct_priv_to_grant_role_hook;
 	validateCachedPlanSearchPath_hook = prev_validateCachedPlanSearchPath_hook;
 	pre_QueryRewrite_hook = prev_pre_QueryRewrite_hook;
+	persisted_col_rewrite_hook = prev_persisted_col_rewrite_hook;
 	#ifdef USE_LIBXML
 	openxml_set_namespaces_hook = prev_openxml_set_namespaces_hook;
 	#endif
@@ -5927,6 +5942,24 @@ update_rte_perms_info_walker(Node *node, void *context)
 	return expression_tree_walker(node, update_rte_perms_info_walker, NULL);
 }
 
+/* Planner hook for persisted computed column re-evaluation */
+static Query *
+persisted_col_planner_rewrite(Query *query)
+{
+	/* Only rewrite for T-SQL dialect */
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return query;
+
+	/* Skip re-evaluation if escape hatch is 'ignore' */
+	if (escape_hatch_persisted_col_guc_check == EH_IGNORE)
+		return query;
+
+	if (!check_persisted_gucs())
+		query_rewrite_persisted(query);
+
+	return query;
+}
+
 static PlannedStmt *
 pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams)
 {
@@ -5935,6 +5968,17 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 
 	if (IS_TDS_CLIENT() && !InSecurityRestrictedOperation())
 		update_rte_perms_info_walker((Node *) parse, NULL);
+
+	/*
+     * Check GUCs for DML into tables with PERSISTED computed columns.
+     * Only applies to T-SQL dialect; skip during dump/restore since
+     * GUC state may not reflect the original session settings.
+     */
+	if (sql_dialect == SQL_DIALECT_TSQL && !babelfish_dump_restore &&
+		(parse->commandType == CMD_INSERT || parse->commandType == CMD_UPDATE || parse->commandType == CMD_DELETE))
+	{
+		guc_check_dml(parse);
+	}
 
 	if (pltsql_explain_analyze)
 	{

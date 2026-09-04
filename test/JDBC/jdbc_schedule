@@ -811,3 +811,16 @@ ignore#!#sys-sp_statistics-before-16_9-or-17_4-vu-cleanup
 ignore#!#antlr_parse_cache_version-vu-prepare
 ignore#!#antlr_parse_cache_version-vu-verify
 ignore#!#antlr_parse_cache_version-vu-cleanup
+
+ignore#!#Test-Computed-Columns-before-17_12-or-18_6-vu-prepare
+ignore#!#Test-Computed-Columns-before-17_12-or-18_6-vu-verify
+ignore#!#Test-Computed-Columns-before-17_12-or-18_6-vu-cleanup
+ignore#!#xml_exist-before-17_12-or-18_6-vu-prepare
+ignore#!#xml_exist-before-17_12-or-18_6-vu-verify
+ignore#!#xml_exist-before-17_12-or-18_6-vu-cleanup
+ignore#!#xml_value-before-17_12-or-18_6-vu-prepare
+ignore#!#xml_value-before-17_12-or-18_6-vu-verify
+ignore#!#xml_value-before-17_12-or-18_6-vu-cleanup
+ignore#!#PARTITION-before-17_12-or-18_6-vu-prepare
+ignore#!#PARTITION-before-17_12-or-18_6-vu-verify
+ignore#!#PARTITION-before-17_12-or-18_6-vu-cleanup
