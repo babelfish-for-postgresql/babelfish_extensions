@@ -2487,7 +2487,7 @@ restrict_rename_stmt(RenameStmt *rename_stmt)
 					return;
 
 				/* Only objects in a Babelfish schema */
-				if (physical_schema_name_exists(schema_name))
+				if (get_logical_schema_name(schema_name, true) != NULL)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2549,7 +2549,7 @@ restrict_alter_object_schema_stmt(AlterObjectSchemaStmt *altschstmt)
 		return;
 
 	/* Block moving objects FROM a Babelfish schema */
-	if (physical_schema_name_exists(schema_name))
+	if (get_logical_schema_name(schema_name, true) != NULL)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2564,7 +2564,7 @@ restrict_alter_object_schema_stmt(AlterObjectSchemaStmt *altschstmt)
 		return;
 
 	/* Block moving objects TO a Babelfish schema as well */
-	if (physical_schema_name_exists(schema_name))
+	if (get_logical_schema_name(schema_name, true) != NULL)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
