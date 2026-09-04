@@ -2340,7 +2340,7 @@ public:
 						throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'INSERT' cannot be used within a function", getLineAndPos(ddl_object));
 				}
 			}
-			else if (ctx->update_statement() || ctx->delete_statement())
+			else if (ctx->update_statement() || ctx->delete_statement() || ctx->merge_statement())
 			{
 				std::string dmlType = "";
 				TSqlParser::Ddl_objectContext *ddl_object = nullptr;
@@ -2352,6 +2352,12 @@ public:
 					ddl_object = ctx->update_statement()->ddl_object();
 					table_sources = ctx->update_statement()->table_sources();
 					dmlType = "UPDATE";
+				}
+				else if (ctx->merge_statement())
+				{
+					ddl_object = ctx->merge_statement()->ddl_object();
+					table_sources = ctx->merge_statement()->table_sources();
+					dmlType = "MERGE";
 				}
 				else
 				{
