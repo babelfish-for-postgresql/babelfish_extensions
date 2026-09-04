@@ -183,11 +183,10 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'jones'
-Gather  (cost=4.17..11.29 rows=1 width=32)
+Gather  (cost=4.17..11.28 rows=1 width=32)
   Workers Planned: 1
   Single Copy: true
-  ->  Bitmap Heap Scan on testing4  (cost=4.17..11.29 rows=1 width=32)
-        Recheck Cond: (c1 = 'jones'::"varchar")
+  ->  Bitmap Heap Scan on testing4  (cost=4.17..11.28 rows=1 width=32)
         Filter: ((c1)::text ~~* 'jones'::text COLLATE bbf_unicode_cp1_cs_as)
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.17 rows=3 width=0)
               Index Cond: (c1 = 'jones'::"varchar")
@@ -204,11 +203,10 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'Jon%'
-Gather  (cost=4.18..11.30 rows=1 width=32)
+Gather  (cost=4.19..11.29 rows=26 width=32)
   Workers Planned: 1
   Single Copy: true
-  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
-        Recheck Cond: ((c1 >= 'Jon'::"varchar") AND (c1 < 'Jon?'::"varchar"))
+  ->  Bitmap Heap Scan on testing4  (cost=4.19..11.29 rows=26 width=32)
         Filter: ((c1)::text ~~* 'Jon%'::text COLLATE bbf_unicode_cp1_cs_as)
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
               Index Cond: ((c1 >= 'Jon'::"varchar") AND (c1 < 'Jon?'::"varchar"))
@@ -225,11 +223,10 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'jone_'
-Gather  (cost=4.18..11.30 rows=1 width=32)
+Gather  (cost=4.18..11.29 rows=1 width=32)
   Workers Planned: 1
   Single Copy: true
-  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
-        Recheck Cond: ((c1 >= 'jone'::"varchar") AND (c1 < 'jone?'::"varchar"))
+  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.29 rows=1 width=32)
         Filter: ((c1)::text ~~* 'jone_'::text COLLATE bbf_unicode_cp1_cs_as)
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
               Index Cond: ((c1 >= 'jone'::"varchar") AND (c1 < 'jone?'::"varchar"))
@@ -283,11 +280,10 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'ab%'
-Gather  (cost=4.18..11.30 rows=1 width=32)
+Gather  (cost=4.21..11.32 rows=130 width=32)
   Workers Planned: 1
   Single Copy: true
-  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
-        Recheck Cond: ((c1 >= 'ab'::"varchar") AND (c1 < 'ab?'::"varchar"))
+  ->  Bitmap Heap Scan on testing4  (cost=4.21..11.32 rows=130 width=32)
         Filter: ((c1)::text ~~* 'ab%'::text COLLATE bbf_unicode_cp1_cs_as)
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
               Index Cond: ((c1 >= 'ab'::"varchar") AND (c1 < 'ab?'::"varchar"))
@@ -303,11 +299,10 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'äb%'
-Gather  (cost=4.18..11.30 rows=1 width=32)
+Gather  (cost=4.19..11.29 rows=26 width=32)
   Workers Planned: 1
   Single Copy: true
-  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
-        Recheck Cond: ((c1 >= 'äb'::"varchar") AND (c1 < 'äb?'::"varchar"))
+  ->  Bitmap Heap Scan on testing4  (cost=4.19..11.29 rows=26 width=32)
         Filter: ((c1)::text ~~* 'äb%'::text COLLATE bbf_unicode_cp1_cs_as)
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
               Index Cond: ((c1 >= 'äb'::"varchar") AND (c1 < 'äb?'::"varchar"))
@@ -323,11 +318,10 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'ä??_'
-Gather  (cost=4.18..11.30 rows=1 width=32)
+Gather  (cost=4.18..11.29 rows=1 width=32)
   Workers Planned: 1
   Single Copy: true
-  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
-        Recheck Cond: ((c1 >= 'ä??'::"varchar") AND (c1 < 'ä???'::"varchar"))
+  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.29 rows=1 width=32)
         Filter: ((c1)::text ~~* 'ä??_'::text COLLATE bbf_unicode_cp1_cs_as)
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
               Index Cond: ((c1 >= 'ä??'::"varchar") AND (c1 < 'ä???'::"varchar"))
@@ -345,10 +339,10 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 NOT LIKE 'jones'
-Gather  (cost=11.56..24.71 rows=647 width=32)
+Gather  (cost=11.56..24.18 rows=650 width=32)
   Workers Planned: 3
-  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.56..24.71 rows=209 width=32)
-        Filter: ((c1 <> 'jones'::"varchar") AND ((c1)::text !~~* 'jones'::text COLLATE bbf_unicode_cp1_cs_as))
+  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.56..24.18 rows=210 width=32)
+        Filter: ((c1)::text !~~* 'jones'::text COLLATE bbf_unicode_cp1_cs_as)
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -363,10 +357,10 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 NOT LIKE 'jone%'
-Gather  (cost=11.56..25.23 rows=648 width=32)
+Gather  (cost=11.56..24.18 rows=645 width=32)
   Workers Planned: 3
-  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.56..25.23 rows=209 width=32)
-        Filter: (((c1)::text !~~* 'jone%'::text COLLATE bbf_unicode_cp1_cs_as) OR (c1 < 'jone'::"varchar") OR (c1 >= 'jone?'::"varchar"))
+  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.56..24.18 rows=208 width=32)
+        Filter: ((c1)::text !~~* 'jone%'::text COLLATE bbf_unicode_cp1_cs_as)
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -381,10 +375,10 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 NOT LIKE 'ä%'
-Gather  (cost=11.55..25.22 rows=592 width=32)
+Gather  (cost=11.53..24.15 rows=520 width=32)
   Workers Planned: 3
-  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.55..25.22 rows=191 width=32)
-        Filter: (((c1)::text !~~* 'ä%'::text COLLATE bbf_unicode_cp1_cs_as) OR (c1 < 'ä'::"varchar") OR (c1 >= 'ä?'::"varchar"))
+  ->  Parallel Bitmap Heap Scan on testing4  (cost=11.53..24.15 rows=168 width=32)
+        Filter: ((c1)::text !~~* 'ä%'::text COLLATE bbf_unicode_cp1_cs_as)
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -401,11 +395,10 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE '\%ones'
-Gather  (cost=4.18..11.30 rows=1 width=32)
+Gather  (cost=4.18..11.29 rows=1 width=32)
   Workers Planned: 1
   Single Copy: true
-  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
-        Recheck Cond: ((c1 >= '\'::"varchar") AND (c1 < '\?'::"varchar"))
+  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.29 rows=1 width=32)
         Filter: ((c1)::text ~~* '\%ones'::text COLLATE bbf_unicode_cp1_cs_as)
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
               Index Cond: ((c1 >= '\'::"varchar") AND (c1 < '\?'::"varchar"))
@@ -422,11 +415,10 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE '\_ones'
-Gather  (cost=4.18..11.30 rows=1 width=32)
+Gather  (cost=4.18..11.29 rows=1 width=32)
   Workers Planned: 1
   Single Copy: true
-  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.30 rows=1 width=32)
-        Recheck Cond: ((c1 >= '\'::"varchar") AND (c1 < '\?'::"varchar"))
+  ->  Bitmap Heap Scan on testing4  (cost=4.18..11.29 rows=1 width=32)
         Filter: ((c1)::text ~~* '\_ones'::text COLLATE bbf_unicode_cp1_cs_as)
         ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..4.18 rows=3 width=0)
               Index Cond: ((c1 >= '\'::"varchar") AND (c1 < '\?'::"varchar"))
@@ -560,11 +552,11 @@ GO
 ~~START~~
 text
 Query Text: select * from testing5 where c1 LIKE 'jo%'
-Gather  (cost=0.00..17.68 rows=1 width=32)
+Gather  (cost=0.00..15.48 rows=7 width=32)
   Workers Planned: 3
-  ->  Parallel Seq Scan on testing5  (cost=0.00..17.68 rows=1 width=32)
+  ->  Parallel Seq Scan on testing5  (cost=0.00..15.48 rows=2 width=32)
         Disabled: true
-        Filter: (((c1)::text ~~ 'jo%'::text COLLATE bbf_unicode_cp1_cs_as) AND (c1 >= 'jo'::"varchar" COLLATE bbf_unicode_cp1_cs_as) AND (c1 < 'jo?'::"varchar" COLLATE bbf_unicode_cp1_cs_as))
+        Filter: ((c1)::text ~~ 'jo%'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -604,11 +596,11 @@ GO
 ~~START~~
 text
 Query Text: SELECT * from testing5 where c1 like ''
-Gather  (cost=0.00..16.58 rows=1 width=32)
+Gather  (cost=0.00..15.48 rows=7 width=32)
   Workers Planned: 3
-  ->  Parallel Seq Scan on testing5  (cost=0.00..16.58 rows=1 width=32)
+  ->  Parallel Seq Scan on testing5  (cost=0.00..15.48 rows=2 width=32)
         Disabled: true
-        Filter: (((c1)::text ~~ ''::text COLLATE bbf_unicode_cp1_cs_as) AND (c1 = ''::"varchar" COLLATE bbf_unicode_cp1_cs_as))
+        Filter: ((c1)::text ~~ ''::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -661,11 +653,11 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM testing5 where c1 COLLATE French_CI_AS like 'jo%'
-Gather  (cost=0.00..17.68 rows=1 width=32)
+Gather  (cost=0.00..15.48 rows=272 width=32)
   Workers Planned: 3
-  ->  Parallel Seq Scan on testing5  (cost=0.00..17.68 rows=1 width=32)
+  ->  Parallel Seq Scan on testing5  (cost=0.00..15.48 rows=88 width=32)
         Disabled: true
-        Filter: (((c1)::text ~~* 'jo%'::text COLLATE french_cs_as) AND (c1 >= 'jo'::"varchar" COLLATE french_ci_as) AND (c1 < 'jo?'::"varchar" COLLATE french_ci_as))
+        Filter: ((c1)::text ~~* 'jo%'::text COLLATE french_cs_as)
 ~~END~~
 
 ~~START~~
@@ -690,11 +682,11 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%'
-Gather  (cost=0.00..17.68 rows=1 width=32)
+Gather  (cost=0.00..15.48 rows=272 width=32)
   Workers Planned: 3
-  ->  Parallel Seq Scan on testing5  (cost=0.00..17.68 rows=1 width=32)
+  ->  Parallel Seq Scan on testing5  (cost=0.00..15.48 rows=88 width=32)
         Disabled: true
-        Filter: (((c1)::text ~~* 'jo%'::text COLLATE chinese_prc_cs_as) AND (c1 >= 'jo'::"varchar" COLLATE chinese_prc_ci_as) AND (c1 < 'jo?'::"varchar" COLLATE chinese_prc_ci_as))
+        Filter: ((c1)::text ~~* 'jo%'::text COLLATE chinese_prc_cs_as)
 ~~END~~
 
 ~~START~~

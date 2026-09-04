@@ -9,6 +9,7 @@
 #include "utils/memutils.h"
 #include "utils/builtins.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_namespace_d.h"
 #include "catalog/pg_collation.h"
 #include "catalog/namespace.h"
 #include "tsearch/ts_locale.h"
@@ -18,6 +19,7 @@
 #include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
+#include "nodes/nodeFuncs.h"
 #ifdef USE_ICU
 #include <unicode/utrans.h>
 #include "utils/removeaccent.map"
@@ -76,15 +78,6 @@ extern int	pattern_fixed_prefix_wrapper(Const *patt,
 static Node *transform_likenode_for_AI(OpExpr *op);
 static Node *convert_node_to_funcexpr_for_like(Node *node, Oid inputcollid);
 
-/* pattern prefix status for pattern_fixed_prefix_wrapper
- * Pattern_Prefix_None: no prefix found, this means the first character is a wildcard character
- * Pattern_Prefix_Exact: the pattern doesn't include any wildcard character
- * Pattern_Prefix_Partial: the pattern has a constant prefix
- */
-typedef enum
-{
-	Pattern_Prefix_None, Pattern_Prefix_Partial, Pattern_Prefix_Exact
-} Pattern_Prefix_Status;
 
 PG_FUNCTION_INFO_V1(init_collid_trans_tab);
 PG_FUNCTION_INFO_V1(init_like_ilike_table);
@@ -154,33 +147,6 @@ init_like_ilike_table(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-static Expr *
-make_op_with_func(Oid opno, Oid opresulttype, bool opretset,
-				  Expr *leftop, Expr *rightop,
-				  Oid opcollid, Oid inputcollid, Oid oprfuncid)
-{
-	OpExpr	   *expr = (OpExpr *) make_opclause(opno,
-												opresulttype,
-												opretset,
-												leftop,
-												rightop,
-												opcollid,
-												inputcollid);
-
-	expr->opfuncid = oprfuncid;
-	return (Expr *) expr;
-}
-
-/* helper fo make or qual, simialr to make_and_qual  */
-static Node *
-make_or_qual(Node *qual1, Node *qual2)
-{
-	if (qual1 == NULL)
-		return qual2;
-	if (qual2 == NULL)
-		return qual1;
-	return (Node *) make_orclause(list_make2(qual1, qual2));
-}
 
 static Node *
 transform_funcexpr(Node *node)
@@ -318,39 +284,129 @@ create_collate_expr(Node *arg, Oid collid)
 	expr->location = -1;
 	return expr;
 }
+/* Hash table for storing original collations of LIKE expressions */
+static HTAB *ht_like_orig_collation = NULL;
+static MemoryContext like_orig_collation_ctx = NULL;
+static MemoryContextCallback like_orig_collation_cb;
+
+/* Nulls the pointer if the context is torn down outside our reset path. */
+static void
+like_orig_collation_reset_cb(void *arg)
+{
+	ht_like_orig_collation = NULL;
+}
+
+void
+store_like_original_collation(int location, Oid collation)
+{
+	HASHCTL ctl;
+	like_orig_coll_entry *entry;
+	bool found;
+
+	if (location < 0)
+		return;
+
+	/*
+	 * Dedicated context for the hash table, created once. It is reset after each
+	 * planning pass by reset_like_original_collation(), which the planner hook
+	 * calls in a PG_FINALLY block.
+	 */
+	if (like_orig_collation_ctx == NULL)
+		like_orig_collation_ctx = AllocSetContextCreate(TopMemoryContext,
+														"LIKE original collation",
+														ALLOCSET_SMALL_SIZES);
+
+	if (!ht_like_orig_collation)
+	{
+		/* Callback nulls the pointer when the context is reset. Re-registered
+		 * each time as MemoryContextReset() consumes callbacks on firing. */
+		like_orig_collation_cb.func = like_orig_collation_reset_cb;
+		like_orig_collation_cb.arg = NULL;
+		MemoryContextRegisterResetCallback(like_orig_collation_ctx, &like_orig_collation_cb);
+
+		memset(&ctl, 0, sizeof(ctl));
+		ctl.keysize = sizeof(int);
+		ctl.entrysize = sizeof(like_orig_coll_entry);
+		ctl.hcxt = like_orig_collation_ctx;
+		ht_like_orig_collation = hash_create("like_orig_coll", 32, &ctl, HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
+	}
+	
+	entry = hash_search(ht_like_orig_collation, &location, HASH_ENTER, &found);
+	entry->orig_collation = collation;
+}
+
+Oid
+get_like_original_collation(int location)
+{
+	like_orig_coll_entry *entry;
+	bool found;
+
+	if (!ht_like_orig_collation)
+	{
+		return InvalidOid;
+	}
+	
+	entry = hash_search(ht_like_orig_collation, &location, HASH_FIND, &found);
+	return found ? entry->orig_collation : InvalidOid;
+}
+
+void
+reset_like_original_collation(void)
+{
+	/* Free the table by resetting our context and null the pointer. */
+	if (like_orig_collation_ctx != NULL)
+	{
+		MemoryContextReset(like_orig_collation_ctx);
+		ht_like_orig_collation = NULL;
+	}
+}
 
 /*
- * If the node is OpExpr and the colaltion is ci_as/ci_ai , then
- * transform the LIKE OpExpr to ILIKE OpExpr. For ci_ai, use remove_accents_internal*
- * function to remove the accents and optimize.
- * If the node is OpExpr and the collation is cs_ai , then use remove_accents_internal*
- * function to remove the accents and optimize.
- * If the node is OpExpr and the collation is cs_as, then simply use optimization:
+ * contains_like_escape
  *
- * Case 1: if the pattern is a constant stirng
- *		 col LIKE PATTERN -> col = PATTERN
- * Case 2: if the pattern have a constant prefix
- *		 col LIKE PATTERN ->
- *		 col LIKE PATTERN BETWEEN prefix AND prefix||E'\uFFFF'
- * Case 3: if the pattern doesn't have a constant prefix
- *		 col LIKE PATTERN -> col ILIKE PATTERN
+ * Check whether a node contains a like_escape function call.
+ * Uses expression_tree_walker for safe traversal of all node types.
+ */
+static bool
+contains_like_escape(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+
+	/* Check if this is a FuncExpr with name "like_escape" in pg_catalog */
+	if (IsA(node, FuncExpr))
+	{
+		FuncExpr   *func = (FuncExpr *) node;
+		char	   *funcname = get_func_name(func->funcid);
+
+		if (funcname != NULL)
+		{
+			bool is_like_escape = (strcmp(funcname, "like_escape") == 0 &&
+								   get_func_namespace(func->funcid) == PG_CATALOG_NAMESPACE);
+			pfree(funcname);
+			if (is_like_escape)
+				return true;
+		}
+	}
+
+	/* Recursively check child nodes */
+	return expression_tree_walker(node, contains_like_escape, context);
+}
+
+/*
+ * This function handles collation transformation, CollateExpr wrapping,
+ * and storing original collation for the hook to use.
+ * If the node is OpExpr and the collation is ci_as/ci_ai, then
+ * transform the LIKE OpExpr to ILIKE OpExpr and set inputcollid to CS_AS.
+ * If the node is OpExpr and the collation is cs_ai, set inputcollid to CS_AS.
+ * If the node is OpExpr and the collation is cs_as, no transformation needed.
+ *
  */
 
 static Node *
 optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid, bool is_constraint)
 {
-	Node	   *leftop = copyObject(linitial(op->args));
-	Node	   *rightop = copyObject(lsecond(op->args));
-	Oid			ltypeId = exprType(leftop);
-	Oid			rtypeId = exprType(rightop);
-	char	   *op_str;
-	Node	   *ret;
-	Const	   *patt;
-	Const	   *prefix;
-	Operator	optup;
-	Pattern_Prefix_Status pstatus;
 	int			collidx_of_cs_as;
-	CollateExpr *prefix_collate;
 
 	tsql_get_database_or_server_collation_oid_internal(true);
 
@@ -391,183 +447,35 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 
 
 	/* Remove CollateExpr as the op->inputcollid has already been set */
-	if (IsA(rightop, CollateExpr))
+	while (IsA(linitial(op->args), CollateExpr))
+		linitial(op->args) = (Node *) ((CollateExpr *) linitial(op->args))->arg;
+
+	while (IsA(lsecond(op->args), CollateExpr))
+		lsecond(op->args) = (Node *) ((CollateExpr *) lsecond(op->args))->arg;
+
+	/* Store original collation for this OpExpr for use in index hook */
+	/* Skip storing for CHECK constraints since they won't use the index hook optimization */
+	if (!is_constraint)
 	{
-		lsecond(op->args) = rightop = (Node*)((CollateExpr*) rightop)->arg;
+		/* Skip storing collation for LIKE with ESCAPE clause.
+		 * 
+		 * ESCAPE patterns are wrapped in like_escape() function call.
+		 * pattern_fixed_prefix_wrapper() cannot safely parse ESCAPE patterns
+		 * because it doesn't have access to the escape character and cannot
+		 * distinguish between escaped wildcards (e.g. !% with ESCAPE '!') and
+		 * literal wildcards. This causes incorrect prefix bounds to be generated.
+		 */
+		Node *rightop = (Node *) lsecond(op->args);
+		
+		if (!contains_like_escape(rightop, NULL))
+			store_like_original_collation(op->location, coll_info_of_inputcollid.oid);
 	}
-
-	if (IsA(leftop, CollateExpr))
-	{
-		linitial(op->args) = leftop = (Node*)((CollateExpr*) leftop)->arg;
-	}
-
-	/* 
-	 * This is needed to process CI_AI for Const nodes
-	 * Because after we call coerce_to_target_type for type conversion in transform_likenode_for_AI,
-	 * we obtain a Relabel node which won't help us to perform optimization
-	 * for constant prefix. Hence, we process that here
-	 */
-	if (IsA(rightop, RelabelType))
-	{
-		RelabelType		*relabel = (RelabelType *) rightop;
-		if (IsA(relabel->arg, Const))
-		{
-			lsecond(op->args) = relabel->arg;
-			rightop = (Node *) lsecond(op->args);
-		}
-	}
-
-	/* 
-	 * no constant prefix found in pattern, or pattern is not constant 
-	 * OR if it is for CHECK CONSTRAINT, we do NOT need any optimisation
-	 * for it. Rather it will add extra overhead, moreover vanilla Postgres
-	 * also handles check constraints this way
-	 */
-	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
-		((Const *) rightop)->constisnull || is_constraint)
-	{
-		/* update the collation of left and right node*/
-		linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
-		lsecond(op->args) = (IsA(rightop, Const) && ((Const *) rightop)->constisnull) ? lsecond(op->args) : 
-								(Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
-		return node;
-	}
-
-	patt = (Const *) rightop;
-
-	/* extract pattern */
-	if (coll_info_of_inputcollid.collateflags == 0x000f || coll_info_of_inputcollid.collateflags == 0x000d) /* CI */
-		pstatus = pattern_fixed_prefix_wrapper(patt, 1, coll_info_of_inputcollid.oid,
-												&prefix, NULL);
-	else
-		pstatus = pattern_fixed_prefix_wrapper(patt, 0, coll_info_of_inputcollid.oid, /* CS */
-												&prefix, NULL);
-
-
-	/* If there is no constant prefix then there's nothing more to do */
-	if (pstatus == Pattern_Prefix_None)
-	{
-		/* update the collation of left and right node*/
-		linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
-		lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
-		return node;
-	}
-
-	/* 
-	 * Obtain the original typeId of leftop so that we can find the compatible =, >= and <
-	 * operator for the original typeId. Else we will always obtain the operators compatible
-	 * with TEXT datatype as the operands get type coerced into TEXT as LIKE is defined for it
-	 * Make the typeId of rightop same as leftop so that we obtain expected operator
-	 * Similarly, update the type of prefix to have appropriate datatypes of operands
-	 * 
-	 * Optimiser will remove Relabel Node during Index scan, see match_index_to_operand
-	 */
-	if (IsA(leftop, RelabelType))
-	{
-		RelabelType	*relabel = (RelabelType *) leftop;
-		leftop = copyObject((Node*) relabel->arg);
-		prefix->consttype = rtypeId = ltypeId = exprType(leftop);
-	}
-
-	/* 
-	 * We need to do this because the dump considers rightop as Const with COLLATE being added
-	 * whereas during restore, that is considered as CollateExpr while building new expression tree
-	 * which is adding extra parenthesis on rightop when we invoke pg_get_constraintdef() from PG
-	 * We update the righop to equivalent CollateExpr to pick correct collation
-	 * We are clearing collation or else we observe multiple redundant COLLATE
-	 * clause in pg_get_constraintdef(), which will result in error during upgrade/restore
-	 * We also set InvalidOid for highest_sort_key during creation for the same reason,
-	 * later we enclose it withing CollateExpr
-	 */
-	prefix->constcollid = ((Const *) rightop)->constcollid = InvalidOid;
 	
-	prefix_collate = create_collate_expr((Node* ) prefix, coll_info_of_inputcollid.oid);
-
-	Assert(ltypeId == rtypeId);
-
-	/* Always create a CollateExpr on top to match with op->inputcollid */
-	linitial(op->args) = (Node*) create_collate_expr(linitial(op->args), op->inputcollid);
-	lsecond(op->args) = (Node*) create_collate_expr(lsecond(op->args), op->inputcollid);
-
-	/*
-	 * If we found an exact-match pattern, generate an "=" indexqual.
-	 */
-	if (pstatus == Pattern_Prefix_Exact)
-	{
-		op_str = like_entry.is_not_match ? "<>" : "=";
-		optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, rtypeId,
-								true, -1);
-		if (optup == (Operator) NULL)
-			return node;
-
-		ret = (Node *) (make_op_with_func(oprid(optup), BOOLOID, false,
-									(Expr *) leftop,
-									(Expr *) prefix_collate,
-									InvalidOid,
-									coll_info_of_inputcollid.oid,
-									oprfuncid(optup)));
-		ret = make_and_qual(ret, node);
-		ReleaseSysCache(optup);
-	}
-	else
-	{
-		Expr	   *greater_equal,
-					*less_equal,
-					*concat_expr;
-		Node	   *constant_suffix;
-		Const	   *highest_sort_key;
-
-		/* construct leftop >= pattern */
-		optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, rtypeId,
-								true, -1);
-		if (optup == (Operator) NULL)
-			return node;
-
-		/* Use the original node to create the operator */
-		greater_equal = make_op_with_func(oprid(optup), BOOLOID, false,
-											(Expr *) leftop, 
-											(Expr *) prefix_collate,
-											InvalidOid,
-											coll_info_of_inputcollid.oid,
-											oprfuncid(optup));
-		ReleaseSysCache(optup);
-		/* construct pattern||E'\uFFFF' */
-		highest_sort_key = makeConst(rtypeId, -1, InvalidOid, -1,
-										PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
-
-		optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
-								true, -1);
-		if (optup == (Operator) NULL)
-			return node;
-
-		concat_expr = make_op_with_func(oprid(optup), rtypeId, false,
-										(Expr *) prefix_collate,
-										(Expr *) create_collate_expr((Node* ) highest_sort_key, coll_info_of_inputcollid.oid),
-										coll_info_of_inputcollid.oid, coll_info_of_inputcollid.oid, oprfuncid(optup));
-		ReleaseSysCache(optup);
-		/* construct leftop < pattern */
-		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, rtypeId,
-								true, -1);
-		if (optup == (Operator) NULL)
-			return node;
-
-		/* Use the original node to create the operator */
-		less_equal = make_op_with_func(oprid(optup), BOOLOID, false,
-										(Expr *) leftop, (Expr *) concat_expr,
-										InvalidOid, coll_info_of_inputcollid.oid, oprfuncid(optup));
-		constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
-		if (like_entry.is_not_match)
-		{
-			constant_suffix = (Node *) make_notclause((Expr *) constant_suffix);
-			ret = make_or_qual(node, constant_suffix);
-		}
-		else
-		{
-			ret = make_and_qual(node, constant_suffix);
-		}
-		ReleaseSysCache(optup);
-	}
-	return ret;
+	/* update the collation of left and right node*/
+	linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
+	lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
+	
+	return node;
 }
 
 /*
@@ -1251,7 +1159,7 @@ pgtsql_expression_tree_mutator(Node *node, void *context)
 		 * Possibly a singleton LIKE predicate:  SELECT 'abc' LIKE 'ABC'; This
 		 * is done even in the postgres dialect.
 		 */
-		node = transform_likenode(node, false);
+		node = transform_likenode(node, current_query_is_create_tbl_check_constraint);
 	}
 
 	return node;

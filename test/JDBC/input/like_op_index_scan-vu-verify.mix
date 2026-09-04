@@ -1,0 +1,2483 @@
+-- sla 80000
+-- parallel_query_expected
+-- psql
+ANALYZE master_dbo.babel_5966_testlikecollation_ci_as;
+ANALYZE master_dbo.babel_5966_testlikecollation_cs_as;
+ANALYZE master_dbo.babel_5966_testlikecollation_ci_ai;
+ANALYZE master_dbo.babel_5966_testlikecollation_cs_ai;
+ANALYZE master_dbo.babel_5966_testlikenvarcollation_ci_as;
+ANALYZE master_dbo.babel_5966_testlikenvarcollation_cs_as;
+ANALYZE master_dbo.babel_5966_testlikenvarcollation_ci_ai;
+ANALYZE master_dbo.babel_5966_testlikenvarcollation_cs_ai;
+ANALYZE master_dbo.babel_5966_testlikecharcollation_ci_as;
+ANALYZE master_dbo.babel_5966_testlikecharcollation_cs_as;
+ANALYZE master_dbo.babel_5966_testlikecharcollation_ci_ai;
+ANALYZE master_dbo.babel_5966_testlikecharcollation_cs_ai;
+GO
+
+-- tsql
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+
+exec sp_babelfish_configure 'explain_costs', 'off';
+GO
+
+SET babelfish_showplan_all ON;
+GO
+
+-- Plain literal (VARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE '%match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE '%';
+GO
+
+-- Plain literal (NVARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'prefix%';
+GO
+
+-- Plain literal (CHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE 'prefix%';
+GO
+
+-- N-prefix literal (VARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%abc';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'a';
+GO
+
+-- N-prefix literal (NVARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+-- N-prefix literal (CHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+-- N-prefix with no extractable prefix
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'%else';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'%else';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%data%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%a%b%c%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'_xact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'_refix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'___';
+GO
+
+-- CAST/CONVERT of constants (VARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('prefix%' AS NVARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('prefix%' AS CHAR(20));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(CAST('exact match' AS NVARCHAR(50)) AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(CAST(CAST(N'exact match' AS VARCHAR(50)) AS NVARCHAR(50)) AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('%match' AS NVARCHAR(50));
+GO
+
+-- CONVERT (VARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), N'exact match');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), 'exact match');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), 'prefix%');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), N'prefix%');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), N'%match');
+GO
+
+-- CAST/CONVERT (NVARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE CAST('exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE CAST('prefix%' AS NVARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE CAST(CAST('exact match' AS NVARCHAR(50)) AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), N'exact match');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), N'prefix%');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE CAST('%match' AS NVARCHAR(50));
+GO
+
+-- CAST/CONVERT (CHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CAST('exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CAST('prefix%' AS NVARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CAST('prefix%' AS CHAR(20));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CAST(CAST('exact match' AS NVARCHAR(50)) AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), N'exact match');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), N'prefix%');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CAST('%match' AS NVARCHAR(50));
+GO
+
+-- TRY_CAST (VARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CAST('exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CAST('prefix%' AS NVARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CAST(N'prefix%' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CAST('%match' AS NVARCHAR(50));
+GO
+
+-- TRY_CAST (NVARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE TRY_CAST('exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE TRY_CAST(N'exact match' AS NVARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE TRY_CAST('prefix%' AS NVARCHAR(50));
+GO
+
+-- TRY_CAST (CHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE TRY_CAST('exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE TRY_CAST(N'prefix%' AS NVARCHAR(50));
+GO
+
+-- TRY_CAST nested
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CAST(TRY_CAST(N'exact match' AS NVARCHAR(50)) AS VARCHAR(50));
+GO
+
+-- TRY_CONVERT (VARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CONVERT(VARCHAR(50), N'exact match');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CONVERT(VARCHAR(50), 'exact match');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CONVERT(VARCHAR(50), 'prefix%');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CONVERT(VARCHAR(50), N'prefix%');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CONVERT(VARCHAR(50), N'%match');
+GO
+
+-- TRY_CONVERT (NVARCHAR/CHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE TRY_CONVERT(VARCHAR(50), N'exact match');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE TRY_CONVERT(NVARCHAR(50), 'prefix%');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE TRY_CONVERT(VARCHAR(50), N'exact match');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE TRY_CONVERT(VARCHAR(50), N'prefix%');
+GO
+
+-- TRY_CAST/TRY_CONVERT non-const (col ref)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CAST(Col AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CONVERT(VARCHAR(50), Col);
+GO
+
+-- TRY_CAST/TRY_CONVERT with parameter
+
+DECLARE @p NVARCHAR(50) = N'exact match';
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CAST(@p AS VARCHAR(50));
+GO
+
+DECLARE @p NVARCHAR(50) = N'prefix%';
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CONVERT(VARCHAR(50), @p);
+GO
+
+-- TRY_CAST with invalid conversion (returns NULL)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CAST('not a number' AS INT);
+GO
+
+-- ISNULL / COALESCE / NULLIF
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE ISNULL(N'exact match', 'fallback');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE ISNULL(N'prefix%', 'fallback');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE ISNULL(NULL, N'exact match');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE ISNULL(NULL, N'prefix%');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE COALESCE(N'exact match', 'fallback');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE COALESCE(NULL, N'prefix%');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE COALESCE(NULL, NULL, N'exact match');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE ISNULL(Col, 'fallback');
+GO
+
+DECLARE @p NVARCHAR(50) = N'exact match';
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE ISNULL(@p, 'fallback');
+GO
+
+DECLARE @p NVARCHAR(50) = NULL;
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE COALESCE(@p, N'prefix%');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE NULLIF(N'exact match', 'something else');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE NULLIF(N'prefix%', 'something else');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE NULLIF(N'exact match', N'exact match');
+GO
+
+-- Cross-datatype combinations (const patterns)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE 'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE CAST('prefix%' AS CHAR(20));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CAST(N'prefix%' AS NVARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(N'prefix%' AS NVARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE CAST(N'exact match' AS NVARCHAR(50));
+GO
+
+-- NOT LIKE variants (VARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE 'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE N'%match';
+GO
+
+-- NOT LIKE (NVARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col NOT LIKE 'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col NOT LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col NOT LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col NOT LIKE N'%match';
+GO
+
+-- NOT LIKE (CHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col NOT LIKE 'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col NOT LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col NOT LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col NOT LIKE N'%match';
+GO
+
+-- Non-const patterns
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(Col AS CHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE Col;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE Col;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE Col;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONCAT(Col, '%');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE REPLACE(Col, '_', '%');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE SUBSTRING(Col, 1, 3) + '%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE LEFT(Col, 5) + '%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE (Col + '%');
+GO
+
+-- Non-const with CONVERT
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), Col);
+GO
+
+-- NULL handling
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE NULL;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE NULL;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(NULL AS NVARCHAR(50));
+GO
+
+-- Special characters and ESCAPE (VARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix___';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'100!%done' ESCAPE '!';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'under!_score' ESCAPE '!';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'!%something' ESCAPE '!';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'abc!%%' ESCAPE '!';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'back\slash';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'single''quote';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'[a-z]%';
+GO
+
+-- ESCAPE (NVARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'prefix___';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'100!%done' ESCAPE '!';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'under!_score' ESCAPE '!';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'back\slash';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'single''quote';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'[a-z]%';
+GO
+
+-- ESCAPE (CHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'prefix___';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'100!%done' ESCAPE '!';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'under!_score' ESCAPE '!';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'back\slash';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'single''quote';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'[a-z]%';
+GO
+
+-- Unicode and accented characters
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'caf%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'rés%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'résumé';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'straße';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'caf%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'rés%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'caf%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'résumé';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'straße';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'rés%';
+GO
+
+-- Boundary cases (VARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'a';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'_';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'   spaces   ';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'   lead%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'trailing   ';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'nonexistent_value_xyz';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'zzz%';
+GO
+
+-- Boundary cases (NVARCHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'a';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'_';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'nonexistent_value_xyz';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'zzz%';
+GO
+
+-- Boundary cases (CHAR CI_AS)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'a';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'_';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'   spaces   ';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'   lead%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'trailing   ';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'nonexistent_value_xyz';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'zzz%';
+GO
+
+-- Variables and parameters
+
+DECLARE @pattern VARCHAR(50) = 'exact match';
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @pattern;
+GO
+
+DECLARE @pattern NVARCHAR(50) = N'prefix%';
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @pattern;
+GO
+
+DECLARE @pattern VARCHAR(50) = 'exact match';
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(@pattern AS NVARCHAR(50));
+GO
+
+DECLARE @pattern NVARCHAR(50) = N'exact match';
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), @pattern);
+GO
+
+DECLARE @pattern VARCHAR(50) = 'test';
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @pattern + '%';
+GO
+
+-- Expression patterns — Constant foldable
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact' + N' match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONCAT(N'exact', N' ', N'match');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE UPPER(N'exact match');
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE LOWER(N'EXACT MATCH');
+GO
+
+-- Function on LHS — Blocks index
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE UPPER(Col) LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE LOWER(Col) LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE LEFT(Col, 10) LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE RTRIM(Col) LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE REPLACE(Col, ' ', '') LIKE N'exactmatch';
+GO
+
+-- Case sensitivity
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'PREFIX%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'aAbBcCdDeE';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'PREFIX%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'PREFIX%';
+GO
+
+-- Covering index and scan variations
+
+SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%data%';
+GO
+
+SELECT Id, Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%data%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%data%';
+GO
+
+SELECT CASE WHEN EXISTS (SELECT 1 FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%data%') THEN 1 ELSE 0 END;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'straße';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%';
+GO
+
+-- Multiple LIKE conditions
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%' OR Col LIKE N'test%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%' AND Col LIKE N'%abc';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%' AND Id > 5;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%' AND Id BETWEEN 1 AND 10;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%' AND Col IS NOT NULL;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%' AND Id IN (1, 2, 3, 4, 5);
+GO
+
+-- LIKE in different query contexts
+
+SELECT COUNT(*)
+FROM BABEL_5966_TestLikeCollation_CI_AS t1
+JOIN BABEL_5966_TestLikeCollation_CI_AS t2 ON t1.Id = t2.Id
+WHERE t1.Col LIKE N'prefix%';
+GO
+
+SELECT LEFT(Col, 3) AS prefix, COUNT(*) AS cnt
+FROM BABEL_5966_TestLikeCollation_CI_AS
+GROUP BY LEFT(Col, 3)
+HAVING LEFT(Col, 3) LIKE N'pre%';
+GO
+
+SELECT COUNT(CASE WHEN Col LIKE N'prefix%' THEN 1 END) FROM BABEL_5966_TestLikeCollation_CI_AS;
+GO
+
+SELECT TOP 1 Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%' ORDER BY Col;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Id IN (
+    SELECT Id FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%'
+);
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS t1
+WHERE EXISTS (
+    SELECT 1 FROM BABEL_5966_TestLikeCollation_CI_AS t2
+    WHERE t2.Col LIKE N'prefix%' AND t2.Id = t1.Id
+);
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE (SELECT TOP 1 Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Id = 1);
+GO
+
+-- CI_AS collation (VARCHAR)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'resume';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'caf%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE Col;
+GO
+
+-- CS_AS collation (VARCHAR)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE 'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE 'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'resume';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'caf%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE Col;
+GO
+
+-- CI_AI collation (VARCHAR)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE 'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE 'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'resume';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'résumé';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'res%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'cafe';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'naive';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE Col;
+GO
+
+-- CS_AI collation (VARCHAR)
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE 'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE 'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'resume';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'résumé';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'RESUME';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'res%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE Col;
+GO
+
+-- Cross-collation via COLLATE clause
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact match' COLLATE SQL_Latin1_General_CP1_CS_AS;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'exact match' COLLATE SQL_Latin1_General_CP1_CI_AS;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'resume' COLLATE SQL_Latin1_General_CP1_CI_AI;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'resume' COLLATE SQL_Latin1_General_CP1_CS_AI;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'exact match' COLLATE SQL_Latin1_General_CP1_CS_AS;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'exact match' COLLATE SQL_Latin1_General_CP1_CI_AS;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE (N'exact match' COLLATE SQL_Latin1_General_CP1_CS_AS);
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE (N'prefix%' COLLATE SQL_Latin1_General_CP1_CI_AS);
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%' COLLATE SQL_Latin1_General_CP1_CS_AS;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'prefix%' COLLATE SQL_Latin1_General_CP1_CI_AI;
+GO
+
+-- NVARCHAR columns with all collations
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AI WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AI WHERE Col LIKE N'resume';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AI WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE N'resume';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE N'prefix%';
+GO
+
+-- CHAR columns with all collations
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE 'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE 'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'resume';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE Col;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE 'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE 'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE N'resume';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE Col;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE 'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE 'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE N'resume';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE N'résumé';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE N'cafe';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE N'naive';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE Col;
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE 'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE 'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'resume';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'résumé';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'RESUME';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE CAST(N'exact match' AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE Col;
+GO
+
+-- Cross-datatype with collations
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AS WHERE Col LIKE 'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AI WHERE Col LIKE 'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE 'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE 'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE 'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE 'café';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE 'café';
+GO
+
+-- Safety tests for evaluate_expr
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), Col);
+GO
+
+DECLARE @p VARCHAR(50) = 'exact match';
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), @p);
+GO
+
+DECLARE @p NVARCHAR(50) = N'prefix%';
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), @p);
+GO
+
+DECLARE @p NVARCHAR(50) = N'exact match';
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(@p AS VARCHAR(50));
+GO
+
+DECLARE @p VARCHAR(50) = 'test';
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @p + '%';
+GO
+
+-- Volatile functions
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), NEWID());
+GO
+
+-- Subquery pattern
+SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE (SELECT TOP 1 Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Id = 1);
+GO
+
+SELECT LEFT(Col, 3) AS prefix, COUNT(*) AS cnt
+FROM BABEL_5966_TestLikeCollation_CI_AS
+GROUP BY LEFT(Col, 3)
+HAVING LEFT(Col, 3) LIKE 'pre%';
+GO
+
+-- CHAR(N) / NCHAR(N) Pattern Tests
+
+SELECT COUNT(*) AS char_20_exact FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS char_11_exact FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(11));
+GO
+
+SELECT COUNT(*) AS char_11 FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(11));
+SELECT COUNT(*) AS char_20 FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS char_prefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('prefix%' AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS char_50_a FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('a' AS CHAR(50));
+GO
+
+SELECT COUNT(*) AS char_1_a FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('a' AS CHAR(1));
+GO
+
+SELECT COUNT(*) AS char_10_a FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('a' AS CHAR(10));
+GO
+
+SELECT COUNT(*) AS char_1_pct FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('%' AS CHAR(1));
+GO
+
+SELECT COUNT(*) AS char_10_pct FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('%' AS CHAR(10));
+GO
+
+SELECT COUNT(*) AS not_like_char FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE CAST('exact match' AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS nvar_char_20 FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS char_char_50 FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(50));
+GO
+
+SELECT COUNT(*) AS char_char_20 FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS char_leading FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('%match' AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS char_middle FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('pre%abc' AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS nchar_20_exact FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS NCHAR(20));
+GO
+
+SELECT COUNT(*) AS nchar_20_nvar FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE CAST('exact match' AS NCHAR(20));
+GO
+
+SELECT COUNT(*) AS nchar_20_prefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('prefix%' AS NCHAR(20));
+GO
+
+SELECT COUNT(*) AS convert_char_exact FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(CHAR(20), 'exact match');
+GO
+
+SELECT COUNT(*) AS convert_char_prefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(CHAR(20), 'prefix%');
+GO
+
+SELECT COUNT(*) AS char_to_varchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(CAST('exact match' AS CHAR(20)) AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) AS varchar_to_char FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(CAST('exact match' AS VARCHAR(50)) AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS ci_as_char FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS cs_as_char FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS ci_ai_char FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS cs_ai_char FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+-- Procedures
+
+EXEC BABEL_5966_sp_like_exact_const;
+GO
+
+EXEC BABEL_5966_sp_like_prefix_const;
+GO
+
+EXEC BABEL_5966_sp_like_suffix_const;
+GO
+
+EXEC BABEL_5966_sp_like_varchar_param 'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_varchar_param 'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_varchar_param '%match';
+GO
+
+EXEC BABEL_5966_sp_like_varchar_param '%';
+GO
+
+EXEC BABEL_5966_sp_like_varchar_param NULL;
+GO
+
+EXEC BABEL_5966_sp_like_varchar_param '';
+GO
+
+EXEC BABEL_5966_sp_like_varchar_param 'nonexistent_xyz';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'%match';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'%data%';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'café';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'caf%';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'EXACT MATCH';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'PREFIX%';
+GO
+
+EXEC BABEL_5966_sp_like_all_types N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_all_types N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_all_types N'%match';
+GO
+
+EXEC BABEL_5966_sp_like_all_types N'café';
+GO
+
+EXEC BABEL_5966_sp_not_like_param N'zzz%';
+GO
+
+EXEC BABEL_5966_sp_not_like_param N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_not_like_param N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_escape N'100!%done', '!';
+GO
+
+EXEC BABEL_5966_sp_like_escape N'under!_score', '!';
+GO
+
+EXEC BABEL_5966_sp_like_dynamic 'prefix';
+GO
+
+EXEC BABEL_5966_sp_like_dynamic 'test';
+GO
+
+EXEC BABEL_5966_sp_like_dynamic 'exact';
+GO
+
+EXEC BABEL_5966_sp_like_dynamic 'zzz';
+GO
+
+DECLARE @result INT;
+EXEC BABEL_5966_sp_like_output N'prefix%', @result OUTPUT;
+SELECT @result AS output_prefix;
+GO
+
+DECLARE @result INT;
+EXEC BABEL_5966_sp_like_output N'exact match', @result OUTPUT;
+SELECT @result AS output_exact;
+GO
+
+DECLARE @result INT;
+EXEC BABEL_5966_sp_like_output N'%match', @result OUTPUT;
+SELECT @result AS output_suffix;
+GO
+
+EXEC BABEL_5966_sp_like_all_collations N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_all_collations N'EXACT MATCH';
+GO
+
+EXEC BABEL_5966_sp_like_all_collations N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_all_collations N'PREFIX%';
+GO
+
+EXEC BABEL_5966_sp_like_all_collations N'café';
+GO
+
+EXEC BABEL_5966_sp_like_all_collations N'resume';
+GO
+
+EXEC BABEL_5966_sp_like_nvar_collations N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_nvar_collations N'EXACT MATCH';
+GO
+
+EXEC BABEL_5966_sp_like_nvar_collations N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_nvar_collations N'resume';
+GO
+
+EXEC BABEL_5966_sp_like_char_collations N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_char_collations N'EXACT MATCH';
+GO
+
+EXEC BABEL_5966_sp_like_char_collations N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_char_collations N'café';
+GO
+
+EXEC BABEL_5966_sp_like_with_cast 'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_with_cast 'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_multi_condition N'prefix%', N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_multi_condition N'prefix%', N'test%';
+GO
+
+EXEC BABEL_5966_sp_like_multi_condition N'exact match', N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_subquery N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_subquery N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_exists N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_exists N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_top N'prefix%', 3;
+GO
+
+EXEC BABEL_5966_sp_like_top N'zzz%', 5;
+GO
+
+-- Repeated execution
+EXEC BABEL_5966_sp_like_varchar_param 'exact match';
+EXEC BABEL_5966_sp_like_varchar_param 'prefix%';
+EXEC BABEL_5966_sp_like_varchar_param '%match';
+EXEC BABEL_5966_sp_like_varchar_param 'test%';
+EXEC BABEL_5966_sp_like_varchar_param 'a%';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'exact match';
+EXEC BABEL_5966_sp_like_nvarchar_param N'prefix%';
+EXEC BABEL_5966_sp_like_nvarchar_param N'%match';
+EXEC BABEL_5966_sp_like_nvarchar_param N'test%';
+EXEC BABEL_5966_sp_like_nvarchar_param N'a%';
+GO
+
+SET babelfish_showplan_all OFF;
+GO
+
+-- Result correctness
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE '%match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE '%data%';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%data%';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE '%match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE N'%match';
+GO
+
+-- Cross-type
+
+SELECT COUNT(*) AS varchar_plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS char_nprefix FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'exact match';
+SELECT COUNT(*) AS nvarchar_plain FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS cast_varchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS VARCHAR(50));
+SELECT COUNT(*) AS cast_nvarchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(N'exact match' AS NVARCHAR(50));
+GO
+
+SELECT COUNT(*) AS varchar_varchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS varchar_nvarchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%';
+SELECT COUNT(*) AS nvarchar_varchar FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS nvarchar_nvarchar FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'prefix%';
+SELECT COUNT(*) AS char_varchar FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS char_nvarchar FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) AS varchar_varchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS varchar_nvarchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact match';
+SELECT COUNT(*) AS varchar_char FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+SELECT COUNT(*) AS nvarchar_varchar FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nvarchar_nvarchar FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'exact match';
+SELECT COUNT(*) AS nvarchar_char FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+SELECT COUNT(*) AS char_varchar FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS char_nvarchar FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'exact match';
+SELECT COUNT(*) AS char_char FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(50));
+GO
+
+-- CAST/CONVERT patterns
+
+SELECT COUNT(*) AS direct FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS cast_varchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS VARCHAR(50));
+SELECT COUNT(*) AS cast_nvarchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(N'exact match' AS NVARCHAR(50));
+SELECT COUNT(*) AS cast_char FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+SELECT COUNT(*) AS convert_varchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), 'exact match');
+SELECT COUNT(*) AS convert_nvarchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), N'exact match');
+SELECT COUNT(*) AS nested_cast FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(CAST('exact match' AS NVARCHAR(50)) AS VARCHAR(50));
+SELECT COUNT(*) AS triple_cast FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(CAST(CAST(N'exact match' AS VARCHAR(50)) AS NVARCHAR(50)) AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) AS direct FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS cast_nvarchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(N'prefix%' AS NVARCHAR(50));
+SELECT COUNT(*) AS convert_nvarchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(VARCHAR(50), N'prefix%');
+GO
+
+SELECT COUNT(*) AS direct FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS try_cast_varchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CAST('exact match' AS VARCHAR(50));
+SELECT COUNT(*) AS try_cast_nvarchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CAST(N'exact match' AS VARCHAR(50));
+SELECT COUNT(*) AS try_convert_varchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CONVERT(VARCHAR(50), 'exact match');
+SELECT COUNT(*) AS try_convert_nvarchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CONVERT(VARCHAR(50), N'exact match');
+GO
+
+SELECT COUNT(*) AS direct FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS try_cast_nvarchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CAST(N'prefix%' AS VARCHAR(50));
+SELECT COUNT(*) AS try_convert_nvarchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CONVERT(VARCHAR(50), N'prefix%');
+GO
+
+SELECT COUNT(*) AS direct FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'exact match';
+GO
+SELECT COUNT(*) AS try_cast FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE TRY_CAST(N'exact match' AS NVARCHAR(50));
+GO
+SELECT COUNT(*) AS tc_result FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE TRY_CONVERT(NVARCHAR(50), N'exact match');
+GO
+
+SELECT COUNT(*) AS direct FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE 'prefix%';
+GO
+SELECT COUNT(*) AS try_cast FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE TRY_CAST(N'prefix%' AS VARCHAR(50));
+GO
+SELECT COUNT(*) AS try_c FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE TRY_CONVERT(VARCHAR(50), N'prefix%');
+GO
+
+-- TRY_CAST returning NULL (invalid conversion)
+SELECT COUNT(*) AS try_cast_null FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE TRY_CAST('not a number' AS INT);
+GO
+
+SELECT COUNT(*) AS direct FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS isnull_first FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE ISNULL(N'exact match', 'fallback');
+SELECT COUNT(*) AS isnull_null FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE ISNULL(NULL, N'exact match');
+SELECT COUNT(*) AS coalesce_first FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE COALESCE(N'exact match', 'fallback');
+SELECT COUNT(*) AS coalesce_null FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE COALESCE(NULL, N'exact match');
+SELECT COUNT(*) AS nullif_diff FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE NULLIF(N'exact match', 'something else');
+GO
+
+SELECT COUNT(*) AS direct FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS isnull_null FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE ISNULL(NULL, N'prefix%');
+SELECT COUNT(*) AS coalesce_null FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE COALESCE(NULL, N'prefix%');
+GO
+
+-- NULLIF returns NULL when args match
+SELECT COUNT(*) AS nullif_same FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE NULLIF(N'exact match', N'exact match');
+GO
+
+-- ISNULL with all NULLs
+SELECT COUNT(*) AS isnull_both_null FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE ISNULL(NULL, NULL);
+GO
+
+-- Special characters
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE '100!%done' ESCAPE '!';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'100!%done' ESCAPE '!';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'under!_score' ESCAPE '!';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'under!_score' ESCAPE '!';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'back\slash';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'back\slash';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'single''quote';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'single''quote';
+GO
+
+-- Unicode/accented
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'café';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'résumé';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'résumé';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'straße';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'straße';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE 'naïve';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'naïve';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'caf%';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'caf%';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'rés%';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'rés%';
+GO
+
+-- Case sensitivity
+
+SELECT COUNT(*) AS lower FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS upper FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'EXACT MATCH';
+SELECT COUNT(*) AS nlower FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact match';
+SELECT COUNT(*) AS nupper FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) AS lower FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS upper FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'PREFIX%';
+SELECT COUNT(*) AS nlower FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%';
+SELECT COUNT(*) AS nupper FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'PREFIX%';
+GO
+
+-- NULL handling
+
+SELECT COUNT(*) AS like_null FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE NULL;
+GO
+
+SELECT COUNT(*) AS not_like_null FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE NULL;
+GO
+
+SELECT COUNT(*) AS cast_null FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(NULL AS NVARCHAR(50));
+GO
+
+-- Boundary cases
+
+SELECT COUNT(*) AS empty_plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE '';
+SELECT COUNT(*) AS empty_nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'';
+GO
+
+SELECT COUNT(*) AS single_a_plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'a';
+SELECT COUNT(*) AS single_a_nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'a';
+GO
+
+SELECT COUNT(*) AS underscore_plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE '_';
+SELECT COUNT(*) AS underscore_nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'_';
+GO
+
+SELECT COUNT(*) AS pct_plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE '%';
+SELECT COUNT(*) AS pct_nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%';
+GO
+
+SELECT COUNT(*) AS spaces_plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE '   spaces   ';
+SELECT COUNT(*) AS spaces_nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'   spaces   ';
+GO
+
+SELECT COUNT(*) AS trailing_plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'trailing   ';
+SELECT COUNT(*) AS trailing_nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'trailing   ';
+GO
+
+SELECT COUNT(*) AS leading_plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE '   lead%';
+SELECT COUNT(*) AS leading_nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'   lead%';
+GO
+
+SELECT COUNT(*) AS nonexist_plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'nonexistent_value_xyz';
+SELECT COUNT(*) AS nonexist_nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'nonexistent_value_xyz';
+GO
+
+-- Collation CI_AS
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain_upper FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'EXACT MATCH';
+SELECT COUNT(*) AS nprefix_upper FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'café';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'resume';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'resume';
+GO
+
+-- Collation CS_AS
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain_upper FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE 'EXACT MATCH';
+SELECT COUNT(*) AS nprefix_upper FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE 'café';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'café';
+GO
+
+-- Collation CI_AI
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain_upper FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE 'EXACT MATCH';
+SELECT COUNT(*) AS nprefix_upper FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE 'resume';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'resume';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE 'café';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'café';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE 'cafe';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'cafe';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE 'naive';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'naive';
+GO
+
+-- Collation CS_AI
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain_upper FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE 'EXACT MATCH';
+SELECT COUNT(*) AS nprefix_upper FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'EXACT MATCH';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE 'resume';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'resume';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE 'résumé';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'résumé';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE 'RESUME';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'RESUME';
+GO
+
+-- NOT LIKE with collations
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col NOT LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col NOT LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col NOT LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col NOT LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col NOT LIKE N'exact match';
+GO
+
+-- Variables
+
+DECLARE @v VARCHAR(50) = 'exact match';
+DECLARE @n NVARCHAR(50) = N'exact match';
+SELECT COUNT(*) AS var_pattern FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @v;
+SELECT COUNT(*) AS nvar_pattern FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @n;
+GO
+
+DECLARE @v VARCHAR(50) = 'prefix%';
+DECLARE @n NVARCHAR(50) = N'prefix%';
+SELECT COUNT(*) AS var_pattern FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @v;
+SELECT COUNT(*) AS nvar_pattern FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @n;
+GO
+
+DECLARE @v VARCHAR(50) = '%match';
+DECLARE @n NVARCHAR(50) = N'%match';
+SELECT COUNT(*) AS var_pattern FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @v;
+SELECT COUNT(*) AS nvar_pattern FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @n;
+GO
+
+-- Expression patterns
+
+SELECT COUNT(*) AS direct FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS concat_n FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact' + N' match';
+SELECT COUNT(*) AS fn_concat FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONCAT(N'exact', N' ', N'match');
+GO
+
+SELECT COUNT(*) AS direct FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'EXACT MATCH';
+SELECT COUNT(*) AS upper_fn FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE UPPER(N'exact match');
+GO
+
+SELECT COUNT(*) AS direct FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS lower_fn FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE LOWER(N'EXACT MATCH');
+GO
+
+-- Multiple conditions
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'prefix%' AND Col LIKE 'prefix%';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%' AND Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'prefix%' OR Col LIKE 'test%';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%' OR Col LIKE N'test%';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'prefix%' AND Col LIKE '%abc';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%' AND Col LIKE N'%abc';
+GO
+
+-- NVARCHAR column
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE '%match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col NOT LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col NOT LIKE N'exact match';
+GO
+
+-- CHAR column
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE '%match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col NOT LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col NOT LIKE N'exact match';
+GO
+
+-- NVARCHAR collation tables
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CS_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeNVarCollation_CS_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CI_AI WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeNVarCollation_CI_AI WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CI_AI WHERE Col LIKE 'resume';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeNVarCollation_CI_AI WHERE Col LIKE N'resume';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE 'resume';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE N'resume';
+GO
+
+-- CHAR collation tables
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'exact match';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCharCollation_CS_AS WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCharCollation_CI_AI WHERE Col LIKE N'prefix%';
+GO
+
+SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE 'prefix%';
+SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCharCollation_CS_AI WHERE Col LIKE N'prefix%';
+GO
+
+-- Cross-collation COLLATE clause
+
+SELECT COUNT(*) AS ci_as FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS ci_as_cs_collate FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact match' COLLATE SQL_Latin1_General_CP1_CS_AS;
+GO
+
+SELECT COUNT(*) AS cs_as FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE 'exact match';
+SELECT COUNT(*) AS cs_as_ci_collate FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'exact match' COLLATE SQL_Latin1_General_CP1_CI_AS;
+GO
+
+SELECT COUNT(*) AS ci_as FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'resume';
+SELECT COUNT(*) AS ci_as_ai_collate FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'resume' COLLATE SQL_Latin1_General_CP1_CI_AI;
+GO
+
+-- CHAR(N) / NCHAR(N) Pattern Tests
+
+-- CHAR pattern exact match — should NOT match (trailing spaces)
+SELECT COUNT(*) AS char_20_exact FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+-- CHAR pattern same length — should match (no padding)
+SELECT COUNT(*) AS char_11_exact FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(11));
+GO
+
+-- Compare: CHAR(11) should match, CHAR(20) should NOT
+SELECT COUNT(*) AS char_11 FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(11));
+SELECT COUNT(*) AS char_20 FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+-- CHAR pattern with wildcard at end — should still work
+SELECT COUNT(*) AS char_prefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('prefix%' AS CHAR(20));
+GO
+
+-- CHAR pattern with large padding
+SELECT COUNT(*) AS char_50_a FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('a' AS CHAR(50));
+GO
+
+-- CHAR(1) pattern
+SELECT COUNT(*) AS char_1_a FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('a' AS CHAR(1));
+GO
+
+-- CHAR(10) with single char — padded with 9 spaces
+SELECT COUNT(*) AS char_10_a FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('a' AS CHAR(10));
+GO
+
+-- CHAR(1) with wildcard
+SELECT COUNT(*) AS char_1_pct FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('%' AS CHAR(1));
+GO
+
+-- CHAR(10) with wildcard — becomes '%         '
+SELECT COUNT(*) AS char_10_pct FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('%' AS CHAR(10));
+GO
+
+-- NOT LIKE with CHAR pattern
+SELECT COUNT(*) AS not_like_char FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col NOT LIKE CAST('exact match' AS CHAR(20));
+GO
+
+-- NVARCHAR column with CHAR pattern
+SELECT COUNT(*) AS nvar_char_20 FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+-- CHAR column with CHAR pattern (same length as column)
+SELECT COUNT(*) AS char_char_50 FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(50));
+GO
+
+-- CHAR column with CHAR pattern (different length)
+SELECT COUNT(*) AS char_char_20 FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+-- CHAR pattern with leading wildcard
+SELECT COUNT(*) AS char_leading FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('%match' AS CHAR(20));
+GO
+
+-- CHAR pattern with middle wildcard
+SELECT COUNT(*) AS char_middle FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('pre%abc' AS CHAR(20));
+GO
+
+-- NCHAR patterns
+SELECT COUNT(*) AS nchar_20_exact FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS NCHAR(20));
+GO
+
+SELECT COUNT(*) AS nchar_20_nvar FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE CAST('exact match' AS NCHAR(20));
+GO
+
+SELECT COUNT(*) AS nchar_20_prefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('prefix%' AS NCHAR(20));
+GO
+
+-- CHAR pattern with CONVERT
+SELECT COUNT(*) AS convert_char_exact FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(CHAR(20), 'exact match');
+GO
+
+SELECT COUNT(*) AS convert_char_prefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CONVERT(CHAR(20), 'prefix%');
+GO
+
+-- Nested CHAR casts
+SELECT COUNT(*) AS char_to_varchar FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(CAST('exact match' AS CHAR(20)) AS VARCHAR(50));
+GO
+
+SELECT COUNT(*) AS varchar_to_char FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST(CAST('exact match' AS VARCHAR(50)) AS CHAR(20));
+GO
+
+-- CHAR pattern across collations
+SELECT COUNT(*) AS ci_as_char FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS cs_as_char FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS ci_ai_char FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+SELECT COUNT(*) AS cs_ai_char FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE CAST('exact match' AS CHAR(20));
+GO
+
+-- Procedures
+
+EXEC BABEL_5966_sp_like_exact_const;
+GO
+
+EXEC BABEL_5966_sp_like_prefix_const;
+GO
+
+EXEC BABEL_5966_sp_like_suffix_const;
+GO
+
+EXEC BABEL_5966_sp_like_varchar_param 'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_varchar_param 'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_varchar_param '%match';
+GO
+
+EXEC BABEL_5966_sp_like_varchar_param '%';
+GO
+
+EXEC BABEL_5966_sp_like_varchar_param NULL;
+GO
+
+EXEC BABEL_5966_sp_like_varchar_param '';
+GO
+
+EXEC BABEL_5966_sp_like_varchar_param 'nonexistent_xyz';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'%match';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'%data%';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'café';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'caf%';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'EXACT MATCH';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'PREFIX%';
+GO
+
+EXEC BABEL_5966_sp_like_all_types N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_all_types N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_all_types N'%match';
+GO
+
+EXEC BABEL_5966_sp_like_all_types N'café';
+GO
+
+EXEC BABEL_5966_sp_not_like_param N'zzz%';
+GO
+
+EXEC BABEL_5966_sp_not_like_param N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_not_like_param N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_escape N'100!%done', '!';
+GO
+
+EXEC BABEL_5966_sp_like_escape N'under!_score', '!';
+GO
+
+EXEC BABEL_5966_sp_like_dynamic 'prefix';
+GO
+
+EXEC BABEL_5966_sp_like_dynamic 'test';
+GO
+
+EXEC BABEL_5966_sp_like_dynamic 'exact';
+GO
+
+EXEC BABEL_5966_sp_like_dynamic 'zzz';
+GO
+
+DECLARE @result INT;
+EXEC BABEL_5966_sp_like_output N'prefix%', @result OUTPUT;
+SELECT @result AS output_prefix;
+GO
+
+DECLARE @result INT;
+EXEC BABEL_5966_sp_like_output N'exact match', @result OUTPUT;
+SELECT @result AS output_exact;
+GO
+
+DECLARE @result INT;
+EXEC BABEL_5966_sp_like_output N'%match', @result OUTPUT;
+SELECT @result AS output_suffix;
+GO
+
+EXEC BABEL_5966_sp_like_all_collations N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_all_collations N'EXACT MATCH';
+GO
+
+EXEC BABEL_5966_sp_like_all_collations N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_all_collations N'PREFIX%';
+GO
+
+EXEC BABEL_5966_sp_like_all_collations N'café';
+GO
+
+EXEC BABEL_5966_sp_like_all_collations N'resume';
+GO
+
+EXEC BABEL_5966_sp_like_nvar_collations N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_nvar_collations N'EXACT MATCH';
+GO
+
+EXEC BABEL_5966_sp_like_nvar_collations N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_nvar_collations N'resume';
+GO
+
+EXEC BABEL_5966_sp_like_char_collations N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_char_collations N'EXACT MATCH';
+GO
+
+EXEC BABEL_5966_sp_like_char_collations N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_char_collations N'café';
+GO
+
+EXEC BABEL_5966_sp_like_with_cast 'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_with_cast 'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_multi_condition N'prefix%', N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_multi_condition N'prefix%', N'test%';
+GO
+
+EXEC BABEL_5966_sp_like_multi_condition N'exact match', N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_subquery N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_subquery N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_exists N'prefix%';
+GO
+
+EXEC BABEL_5966_sp_like_exists N'exact match';
+GO
+
+EXEC BABEL_5966_sp_like_top N'prefix%', 3;
+GO
+
+EXEC BABEL_5966_sp_like_top N'zzz%', 5;
+GO
+
+-- Repeated execution
+EXEC BABEL_5966_sp_like_varchar_param 'exact match';
+EXEC BABEL_5966_sp_like_varchar_param 'prefix%';
+EXEC BABEL_5966_sp_like_varchar_param '%match';
+EXEC BABEL_5966_sp_like_varchar_param 'test%';
+EXEC BABEL_5966_sp_like_varchar_param 'a%';
+GO
+
+EXEC BABEL_5966_sp_like_nvarchar_param N'exact match';
+EXEC BABEL_5966_sp_like_nvarchar_param N'prefix%';
+EXEC BABEL_5966_sp_like_nvarchar_param N'%match';
+EXEC BABEL_5966_sp_like_nvarchar_param N'test%';
+EXEC BABEL_5966_sp_like_nvarchar_param N'a%';
+GO
+
+-- sp_executesql
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @p',
+    N'@p VARCHAR(50)', @p = 'exact match';
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @p',
+    N'@p VARCHAR(50)', @p = 'prefix%';
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @p',
+    N'@p NVARCHAR(50)', @p = N'exact match';
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @p',
+    N'@p NVARCHAR(50)', @p = N'prefix%';
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @p',
+    N'@p NVARCHAR(50)', @p = N'%match';
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE @p',
+    N'@p NVARCHAR(50)', @p = N'exact match';
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE @p',
+    N'@p NVARCHAR(50)', @p = N'prefix%';
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE @p',
+    N'@p VARCHAR(50)', @p = 'exact match';
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCharCollation_CI_AS WHERE Col LIKE @p',
+    N'@p VARCHAR(50)', @p = 'prefix%';
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @p',
+    N'@p NVARCHAR(50)', @p = NULL;
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @p',
+    N'@p NVARCHAR(50)', @p = N'exact match';
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE @p',
+    N'@p NVARCHAR(50)', @p = N'EXACT MATCH';
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE @p',
+    N'@p NVARCHAR(50)', @p = N'exact match';
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE @p',
+    N'@p NVARCHAR(50)', @p = N'EXACT MATCH';
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE @p',
+    N'@p NVARCHAR(50)', @p = N'resume';
+GO
+
+EXEC sp_executesql N'SELECT COUNT(*) AS cnt FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE @p',
+    N'@p NVARCHAR(50)', @p = N'resume';
+GO
+
+
+-- CHECK Constraints
+
+-- Should succeed
+INSERT INTO BABEL_5966_TestLikeCheck_prefix (Col) VALUES ('valid_data');
+GO
+
+INSERT INTO BABEL_5966_TestLikeCheck_prefix (Col) VALUES ('valid');
+GO
+
+-- Should fail
+INSERT INTO BABEL_5966_TestLikeCheck_prefix (Col) VALUES ('invalid_data');
+GO
+
+-- Should succeed
+INSERT INTO BABEL_5966_TestLikeCheck_nprefix (Col) VALUES ('valid_data');
+GO
+
+-- Should fail
+INSERT INTO BABEL_5966_TestLikeCheck_nprefix (Col) VALUES ('invalid_data');
+GO
+
+-- Should succeed
+INSERT INTO BABEL_5966_TestLikeCheck_not_like (Col) VALUES ('good_data');
+GO
+
+INSERT INTO BABEL_5966_TestLikeCheck_not_like (Col) VALUES ('ok_data');
+GO
+
+-- Should fail
+INSERT INTO BABEL_5966_TestLikeCheck_not_like (Col) VALUES ('bad_data');
+GO
+
+-- Should succeed
+INSERT INTO BABEL_5966_TestLikeCheck_escape (Col) VALUES ('100%done');
+GO
+
+INSERT INTO BABEL_5966_TestLikeCheck_escape (Col) VALUES ('100%almost');
+GO
+
+-- Should fail
+INSERT INTO BABEL_5966_TestLikeCheck_escape (Col) VALUES ('200%done');
+GO
+
+-- Should succeed
+INSERT INTO BABEL_5966_TestLikeCheck_suffix (Col) VALUES ('is_valid');
+GO
+
+INSERT INTO BABEL_5966_TestLikeCheck_suffix (Col) VALUES ('also_valid');
+GO
+
+-- Should fail
+INSERT INTO BABEL_5966_TestLikeCheck_suffix (Col) VALUES ('invalid');
+GO
+
+SELECT * FROM BABEL_5966_TestLikeCheck_prefix;
+GO
+
+SELECT * FROM BABEL_5966_TestLikeCheck_nprefix;
+GO
+
+SELECT * FROM BABEL_5966_TestLikeCheck_not_like;
+GO
+
+SELECT * FROM BABEL_5966_TestLikeCheck_escape;
+GO
+
+SELECT * FROM BABEL_5966_TestLikeCheck_suffix;
+GO
+
+-- UPDATE / DELETE
+
+UPDATE BABEL_5966_TestLikeCollation_CI_AS SET Col = Col WHERE Col LIKE N'prefix%';
+SELECT @@ROWCOUNT AS update_prefix;
+GO
+
+UPDATE BABEL_5966_TestLikeCollation_CI_AS SET Col = Col WHERE Col NOT LIKE N'zzz%';
+SELECT @@ROWCOUNT AS update_not_zzz;
+GO
+
+DELETE FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'nonexistent_xyz_abc%';
+SELECT @@ROWCOUNT AS delete_none;
+GO
+
+exec sp_babelfish_configure 'explain_costs', 'off';
+GO
+
+SELECT set_config('enable_bitmapscan', 'on', false);
+GO
