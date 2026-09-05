@@ -1871,6 +1871,47 @@ pltsql_resolve_var_original_name(ParseState *pstate, Var *var)
 			}
 			return NULL;
 
+		case RTE_FUNCTION:
+			/*
+			 * Table-valued function: the output columns come from the
+			 * function's return composite type. When that type is a real
+			 * composite (e.g. a multi-statement TVF's RETURNS @t TABLE type),
+			 * its pg_attribute rows carry the bbf_original_name attoption, so
+			 * resolve the Var to that composite type's relid and look it up.
+			 * A single RangeTblFunction is the common (T-SQL) case; only that
+			 * is handled since column numbering across multiple SRFs in one
+			 * RTE is ambiguous for original-name recovery.
+			 */
+			if (list_length(rte->functions) == 1)
+			{
+				RangeTblFunction *rtfunc = (RangeTblFunction *) linitial(rte->functions);
+				Oid			functypeid;
+				Oid			funcrelid;
+
+				if (rtfunc->funcexpr == NULL ||
+					attnum > rtfunc->funccolcount)
+					return NULL;
+
+				functypeid = exprType(rtfunc->funcexpr);
+				funcrelid = get_typ_typrelid(functypeid);
+				if (OidIsValid(funcrelid))
+					return get_bbf_original_column_name(funcrelid, attnum);
+
+				/*
+				 * Inline TVF (RETURNS TABLE AS RETURN (SELECT ...)): its output
+				 * columns are TABLE-mode OUT params in proargnames, which
+				 * preserve the full original name (BABEL-5975). This covers
+				 * both the multi-column case (returns RECORD) and the
+				 * single-column case (Babelfish rewrites the return type to
+				 * that column's scalar type), so recover from proargnames
+				 * whenever the RTE is backed by a plain function call.
+				 */
+				if (IsA(rtfunc->funcexpr, FuncExpr))
+					return get_inline_tvf_original_column_name(
+								((FuncExpr *) rtfunc->funcexpr)->funcid, attnum);
+			}
+			return NULL;
+
 		default:
 			return NULL;
 	}

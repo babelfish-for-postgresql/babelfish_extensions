@@ -2344,6 +2344,7 @@ extern char *extract_multipart_identifier_name(const char *start);
 /* functions in pltsql_utils.c */
 extern char *get_original_relname(Oid relid, bool check_permission);
 extern char *get_bbf_original_column_name(Oid relid, AttrNumber attnum);
+extern char *get_inline_tvf_original_column_name(Oid funcid, AttrNumber attnum);
 extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);
 extern char *gen_dropfulltextindex_cmds(const char *index_name, const char *schema_name);
 extern char *get_fulltext_index_name(Oid relid, const char *table_name);

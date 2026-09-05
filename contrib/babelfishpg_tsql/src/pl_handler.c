@@ -8047,15 +8047,29 @@ pltsql_validator(PG_FUNCTION_ARGS)
 				foreach(prev_lc, query->targetList)
 				{
 					TargetEntry *prev_te = (TargetEntry *) lfirst(prev_lc);
+					char	   *te_name;
+					char	   *prev_name;
 
 					if (prev_te == te)
 						break;
 
-					if (strcmp(prev_te->resname, te->resname) == 0)
+					if (prev_te->resjunk)
+						continue;
+
+					/*
+					 * BABEL-5975: compare on the full original names (and
+					 * report them) so duplicate long column names are detected
+					 * and messaged in the identifier the user actually wrote,
+					 * not the MD5-truncated form.
+					 */
+					te_name = te->resorigname ? te->resorigname : te->resname;
+					prev_name = prev_te->resorigname ? prev_te->resorigname : prev_te->resname;
+
+					if (strcmp(prev_name, te_name) == 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 								 errmsg("parameter name \"%s\" used more than once",
-										te->resname)));
+										te_name)));
 				}
 
 				new_i = i + numargs;
@@ -8069,7 +8083,16 @@ pltsql_validator(PG_FUNCTION_ARGS)
 
 				allTypesNew[new_i] = ObjectIdGetDatum(new_type);
 				paramModesNew[new_i] = CharGetDatum(PROARGMODE_TABLE);
-				paramNamesNew[new_i] = CStringGetTextDatum(te->resname);
+				/*
+				 * BABEL-5975: prefer the full original name for the return
+				 * column. For a long (> NAMEDATALEN) column name, te->resname
+				 * holds the MD5-truncated form while te->resorigname (set by
+				 * post_transform_target_entry_hook when the body SELECT was
+				 * parsed above) holds the full identifier. proargnames is a
+				 * text[] (not NameData), so it can carry the full name, which
+				 * is what the caller sees when selecting from the inline TVF.
+				 */
+				paramNamesNew[new_i] = CStringGetTextDatum(te->resorigname ? te->resorigname : te->resname);
 				++i;
 			}
 			MemoryContextSwitchTo(SPIMemoryContext);

@@ -4014,7 +4014,7 @@ xml_modify_call
     ;
 
 xml_nodes_method
-    : (loc_id=LOCAL_ID | value_id=id | subquery) DOT NODES LR_BRACKET xquery=char_string RR_BRACKET
+    : (loc_id=local_id | value_id=id | full_column_name | subquery) DOT NODES LR_BRACKET ((xquery=char_string | expression) (COMMA expression_list)?)? RR_BRACKET
     ;
 
 switch_section

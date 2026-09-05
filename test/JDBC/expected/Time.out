@@ -8862,7 +8862,7 @@ WHERE ROUTINE_NAME = 'GetCurrentTime' AND ROUTINE_TYPE = 'FUNCTION';
 GO
 ~~START~~
 nvarchar#!#nvarchar
-getcurrenttime#!#time
+GetCurrentTime#!#time
 ~~END~~
 
 

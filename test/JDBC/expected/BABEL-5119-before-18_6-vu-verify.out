@@ -72,9 +72,9 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_p1
-babel5119_p2
-babel5119_p3
+BABEL5119_p1
+BABEL5119_p2
+BABEL5119_p3
 ~~END~~
 
 
@@ -190,9 +190,9 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_p4
-babel5119_p5
-babel5119_p6
+BABEL5119_p4
+BABEL5119_p5
+BABEL5119_p6
 ~~END~~
 
 
@@ -312,9 +312,9 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_p1
-babel5119_p2
-babel5119_p3
+BABEL5119_p1
+BABEL5119_p2
+BABEL5119_p3
 ~~END~~
 
 
@@ -430,9 +430,9 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_p4
-babel5119_p5
-babel5119_p6
+BABEL5119_p4
+BABEL5119_p5
+BABEL5119_p6
 ~~END~~
 
 
@@ -648,9 +648,9 @@ ORDER BY name
 GO
 ~~START~~
 varchar
-babel5119_p4
-babel5119_p5
-babel5119_p6
+BABEL5119_p4
+BABEL5119_p5
+BABEL5119_p6
 ~~END~~
 
 

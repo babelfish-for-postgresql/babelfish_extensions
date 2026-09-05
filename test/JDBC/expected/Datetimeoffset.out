@@ -8979,7 +8979,7 @@ WHERE ROUTINE_NAME = 'GetCurrentDTO' AND ROUTINE_TYPE = 'FUNCTION';
 GO
 ~~START~~
 nvarchar#!#nvarchar
-getcurrentdto#!#datetimeoffset
+GetCurrentDTO#!#datetimeoffset
 ~~END~~
 
 

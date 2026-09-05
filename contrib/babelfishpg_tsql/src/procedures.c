@@ -3743,6 +3743,19 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		if (new_name == NULL || strlen(new_name) == 0)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 							errmsg("Procedure or function 'sp_rename' expects parameter '@newname', which was not supplied.")));
+		/*
+		 * For TRIGGER (TA/TR), INDEX (IX) and COLUMN (CO) renames the containing
+		 * relation name (@curr_relname) is required: it is dereferenced later
+		 * via downcase_truncate_identifier(curr_relname, strlen(curr_relname)).
+		 * @curr_relname defaults to NULL and this procedure is granted to
+		 * PUBLIC, so a missing value would otherwise crash the backend on
+		 * strlen(NULL). Reject it here alongside the other required parameters.
+		 */
+		if (curr_relname == NULL &&
+			(strcmp(objtype, "TR") == 0 || strcmp(objtype, "TA") == 0 ||
+			 strcmp(objtype, "IX") == 0 || strcmp(objtype, "CO") == 0))
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+							errmsg("Procedure or function 'sp_rename' expects parameter '@curr_relname', which was not supplied.")));
 
 		/* 4. for each obj type, generate the corresponding RenameStmt */
 		/* update variables based on the target objtype */
@@ -3863,6 +3876,16 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		/*
+		 * orig_proc_funcname is a file-scope global set (via pstrdup) on the
+		 * PROCEDURE/FUNCTION/TRIGGER rename paths and consumed later when the
+		 * original name is written to the catalog. If an error is thrown
+		 * between the assignment and that write, the transaction abort frees
+		 * the pstrdup'd memory but the global would keep pointing at it, so a
+		 * later successful rename in the same session could read a dangling
+		 * pointer. Clear it unconditionally here on every exit.
+		 */
+		orig_proc_funcname = NULL;
 	}
 	PG_END_TRY();
 	PG_RETURN_VOID();
@@ -4206,19 +4229,20 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 
 		renamestmt->renameType = objtype;
 		objwargs->objname = list_make2(makeString(pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID))), 
-											makeString(pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID))));
+											makeString(downcase_truncate_identifier(objname, strlen(objname), false)));
 		orig_proc_funcname = pstrdup(newname);
-		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
-		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
+		renamestmt->subname = downcase_truncate_identifier(objname, strlen(objname), false);
+		renamestmt->newname = downcase_truncate_identifier(newname, strlen(newname), false);
 	}
 	else if ((objtype == OBJECT_TRIGGER))
 	{
 		ObjectWithArgs *objwargs;
+		orig_proc_funcname = pstrdup(newname);
 		renamestmt->renameType = objtype;
 		renamestmt->relation->schemaname = pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID));
-		renamestmt->relation->relname = pstrdup(str_tolower(curr_relname, strlen(curr_relname), DEFAULT_COLLATION_OID));
-		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
-		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
+		renamestmt->relation->relname = downcase_truncate_identifier(curr_relname, strlen(curr_relname), false);
+		renamestmt->subname = downcase_truncate_identifier(objname, strlen(objname), false);
+		renamestmt->newname = downcase_truncate_identifier(newname, strlen(newname), false);
 		rewrite_object_refs(stmt);
 
 		// extra query nodes for ALTER FUNCTION
@@ -4229,9 +4253,9 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		objwargs = (ObjectWithArgs *) renamestmt->object;
 		renamestmt->renameType = OBJECT_FUNCTION;
 		objwargs->objname = list_make2(makeString(pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID))), 
-											makeString(pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID))));
-		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
-		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
+											makeString(downcase_truncate_identifier(objname, strlen(objname), false)));
+		renamestmt->subname = downcase_truncate_identifier(objname, strlen(objname), false);
+		renamestmt->newname = downcase_truncate_identifier(newname, strlen(newname), false);
 	}
 	else if (objtype == OBJECT_TYPE)
 	{
