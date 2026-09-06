@@ -60,6 +60,11 @@ GO
 SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%';
 GO
 
+-- Emoji prefix verification: with emoji rows present, verify prefix bounds
+-- return exactly the expected tuples (not just a count).
+SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
 SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%abc';
 GO
 
@@ -85,6 +90,10 @@ GO
 -- N-prefix with no extractable prefix
 
 SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%match';
+GO
+
+-- No extractable prefix (leading wildcard): verify the exact tuples returned.
+SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%match' ORDER BY Col COLLATE Latin1_General_CS_AS;
 GO
 
 SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'%else';
@@ -1019,6 +1028,20 @@ SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE N'res
 GO
 
 SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE N'prefix%';
+GO
+
+-- Emoji prefix verification across all NVARCHAR collations: with emoji rows
+-- present, verify prefix bounds return exactly the expected tuples.
+SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CS_AS WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CI_AI WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
 GO
 
 -- CHAR columns with all collations

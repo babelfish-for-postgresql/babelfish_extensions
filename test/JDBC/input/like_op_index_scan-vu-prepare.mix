@@ -53,6 +53,12 @@ VALUES ('exact match'), ('EXACT MATCH'), ('Exact Match'),
        ('aaaaaaaaaa'), ('AAAAAAAAAA'), ('aAbBcCdDeE');
 GO
 
+-- tsql
+-- Emoji values interspersed to verify prefix bounds are correct with multibyte characters
+INSERT INTO BABEL_5966_TestLikeCollation_CI_AS (Col)
+VALUES (N'prefixA😀'), (N'prefix😀B'), (N'😀prefixC'), (N'prefixDüsseldorf');
+GO
+
 INSERT INTO BABEL_5966_TestLikeCollation_CI_AS (Col)
 SELECT 'zzz_filler_' + CAST(n AS VARCHAR(10))
 FROM generate_series(1, 20000) AS n;
@@ -119,7 +125,8 @@ VALUES (N'exact match'), (N'EXACT MATCH'), (N'Exact Match'),
        (N'100%done'), (N'under_score'),
        (N'back\slash'), (N'single''quote'),
        (N'   spaces   '), (N'trailing   '), (N'   leading'),
-       (N'aaaaaaaaaa'), (N'AAAAAAAAAA'), (N'aAbBcCdDeE');
+       (N'aaaaaaaaaa'), (N'AAAAAAAAAA'), (N'aAbBcCdDeE'),
+       (N'prefixA😀'), (N'prefix😀B'), (N'😀prefixC'), (N'prefixDüsseldorf');
 GO
 
 INSERT INTO BABEL_5966_TestLikeNVarCollation_CI_AS (Col)

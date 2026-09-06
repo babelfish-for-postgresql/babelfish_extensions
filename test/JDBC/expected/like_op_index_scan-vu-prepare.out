@@ -55,6 +55,14 @@ GO
 ~~ROW COUNT: 48~~
 
 
+-- tsql
+-- Emoji values interspersed to verify prefix bounds are correct with multibyte characters
+INSERT INTO BABEL_5966_TestLikeCollation_CI_AS (Col)
+VALUES (N'prefixA😀'), (N'prefix😀B'), (N'😀prefixC'), (N'prefixDüsseldorf');
+GO
+~~ROW COUNT: 4~~
+
+
 INSERT INTO BABEL_5966_TestLikeCollation_CI_AS (Col)
 SELECT 'zzz_filler_' + CAST(n AS VARCHAR(10))
 FROM generate_series(1, 20000) AS n;
@@ -65,19 +73,19 @@ GO
 INSERT INTO BABEL_5966_TestLikeCollation_CS_AS (Col)
 SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AS;
 GO
-~~ROW COUNT: 20048~~
+~~ROW COUNT: 20052~~
 
 
 INSERT INTO BABEL_5966_TestLikeCollation_CI_AI (Col)
 SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AS;
 GO
-~~ROW COUNT: 20048~~
+~~ROW COUNT: 20052~~
 
 
 INSERT INTO BABEL_5966_TestLikeCollation_CS_AI (Col)
 SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AS;
 GO
-~~ROW COUNT: 20048~~
+~~ROW COUNT: 20052~~
 
 
 CREATE TABLE BABEL_5966_TestLikeNVarCollation_CI_AS (
@@ -129,9 +137,10 @@ VALUES (N'exact match'), (N'EXACT MATCH'), (N'Exact Match'),
        (N'100%done'), (N'under_score'),
        (N'back\slash'), (N'single''quote'),
        (N'   spaces   '), (N'trailing   '), (N'   leading'),
-       (N'aaaaaaaaaa'), (N'AAAAAAAAAA'), (N'aAbBcCdDeE');
+       (N'aaaaaaaaaa'), (N'AAAAAAAAAA'), (N'aAbBcCdDeE'),
+       (N'prefixA😀'), (N'prefix😀B'), (N'😀prefixC'), (N'prefixDüsseldorf');
 GO
-~~ROW COUNT: 39~~
+~~ROW COUNT: 43~~
 
 
 INSERT INTO BABEL_5966_TestLikeNVarCollation_CI_AS (Col)
@@ -145,11 +154,11 @@ INSERT INTO BABEL_5966_TestLikeNVarCollation_CS_AS (Col) SELECT Col FROM BABEL_5
 INSERT INTO BABEL_5966_TestLikeNVarCollation_CI_AI (Col) SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CI_AS;
 INSERT INTO BABEL_5966_TestLikeNVarCollation_CS_AI (Col) SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CI_AS;
 GO
-~~ROW COUNT: 20039~~
+~~ROW COUNT: 20043~~
 
-~~ROW COUNT: 20039~~
+~~ROW COUNT: 20043~~
 
-~~ROW COUNT: 20039~~
+~~ROW COUNT: 20043~~
 
 
 CREATE TABLE BABEL_5966_TestLikeCharCollation_CI_AS (

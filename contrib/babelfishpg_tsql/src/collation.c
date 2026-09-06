@@ -284,6 +284,24 @@ create_collate_expr(Node *arg, Oid collid)
 	expr->location = -1;
 	return expr;
 }
+
+static Expr *
+make_op_with_func(Oid opno, Oid opresulttype, bool opretset,
+				  Expr *leftop, Expr *rightop,
+				  Oid opcollid, Oid inputcollid, Oid oprfuncid)
+{
+	OpExpr	   *expr = (OpExpr *) make_opclause(opno,
+												opresulttype,
+												opretset,
+												leftop,
+												rightop,
+												opcollid,
+												inputcollid);
+
+	expr->opfuncid = oprfuncid;
+	return (Expr *) expr;
+}
+
 /* Hash table for storing original collations of LIKE expressions */
 static HTAB *ht_like_orig_collation = NULL;
 static MemoryContext like_orig_collation_ctx = NULL;
@@ -407,6 +425,7 @@ static Node *
 optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid, bool is_constraint)
 {
 	int			collidx_of_cs_as;
+	Node	   *not_like_ne_expr = NULL;
 
 	tsql_get_database_or_server_collation_oid_internal(true);
 
@@ -453,6 +472,69 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	while (IsA(lsecond(op->args), CollateExpr))
 		lsecond(op->args) = (Node *) ((CollateExpr *) lsecond(op->args))->arg;
 
+	/*
+	 * NOT LIKE optimization (exact-match pattern only):
+	 *     col NOT LIKE 'pattern'  ->  col <> 'pattern' AND col NOT LIKE 'pattern'
+	 * ESCAPE patterns are skipped as their prefix can't be parsed safely. The clause is 
+	 * AND with the LIKE node below, after the operands are re-wrapped.
+	 */
+	if (like_entry.is_not_match && OidIsValid(coll_info_of_inputcollid.oid))
+	{
+		Node	   *rightop = (Node *) lsecond(op->args);
+
+		if (!contains_like_escape(rightop, NULL))
+		{
+			Node	   *patt_node = rightop;
+			int			ptype;
+			Const	   *prefix = NULL;
+			Pattern_Prefix_Status pstatus;
+
+			if (IsA(patt_node, RelabelType))
+				patt_node = (Node *) ((RelabelType *) patt_node)->arg;
+
+			if (IsA(patt_node, Const) && !((Const *) patt_node)->constisnull)
+			{
+				ptype = (coll_info_of_inputcollid.collateflags == 0x000f ||
+						 coll_info_of_inputcollid.collateflags == 0x000d) ? 1 : 0;
+
+				pstatus = pattern_fixed_prefix_wrapper((Const *) patt_node, ptype,
+													   coll_info_of_inputcollid.oid,
+													   &prefix, NULL);
+
+				if (pstatus == Pattern_Prefix_Exact)
+				{
+					Node	   *leftop = linitial(op->args);
+					Oid			ltypeId;
+					Oid			rtypeId;
+					Operator	optup;
+
+					/*
+					 * Unwrap RelabelType so the <> operand is the column's real
+					 * type, and set the prefix to that same type.
+					 */
+					if (IsA(leftop, RelabelType))
+						leftop = copyObject((Node *) ((RelabelType *) leftop)->arg);
+					ltypeId = exprType(leftop);
+					prefix->consttype = rtypeId = ltypeId;
+					prefix->constcollid = InvalidOid;
+
+					optup = compatible_oper(NULL, list_make1(makeString("<>")),
+											ltypeId, rtypeId, true, -1);
+					if (optup != (Operator) NULL)
+					{
+						not_like_ne_expr = (Node *) make_op_with_func(oprid(optup), BOOLOID, false,
+															 (Expr *) leftop,
+															 (Expr *) create_collate_expr((Node *) prefix, coll_info_of_inputcollid.oid),
+															 InvalidOid,
+															 coll_info_of_inputcollid.oid,
+															 oprfuncid(optup));
+						ReleaseSysCache(optup);
+					}
+				}
+			}
+		}
+	}
+
 	/* Store original collation for this OpExpr for use in index hook */
 	/* Skip storing for CHECK constraints since they won't use the index hook optimization */
 	if (!is_constraint)
@@ -474,6 +556,10 @@ optimise_likenode(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_inf
 	/* update the collation of left and right node*/
 	linitial(op->args) = (Node *) create_collate_expr(linitial(op->args), op->inputcollid);
 	lsecond(op->args) = (Node *) create_collate_expr(lsecond(op->args), op->inputcollid);
+
+	/* AND the exact NOT LIKE inequality with the LIKE node */
+	if (not_like_ne_expr != NULL)
+		return make_and_qual(not_like_ne_expr, node);
 	
 	return node;
 }
@@ -1005,6 +1091,15 @@ transform_likenode(Node *node, bool is_constraint)
 			 */
 			if ((*collation_callbacks_ptr->has_like_node) (node))
 				return node;
+
+			/*
+			 * An ilike node here is already fully transformed (CI_AS was
+			 * rewritten to ILIKE, CI_AI additionally got remove_accents_internal).
+			 * inputcollid was just reset to CS_AS above, so refresh coll_info to
+			 * match. This keeps the node on the AS branch below and stops the AI
+			 * branch from wrapping remove_accents_internal a second time.
+			 */
+			coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
 		}
 
 		if (OidIsValid(like_entry.like_oid) && OidIsValid(coll_info_of_inputcollid.oid))
