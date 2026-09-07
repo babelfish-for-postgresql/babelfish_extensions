@@ -2028,6 +2028,7 @@ typedef struct
 	int			trigger_depth;
 	int			total_columns;
 	char	   *column_name;
+	CmdType		action;			/* INSERT or UPDATE action that sets the column */
 } UpdatedColumn;
 
 extern IdentifierLookup pltsql_IdentifierLookup;
