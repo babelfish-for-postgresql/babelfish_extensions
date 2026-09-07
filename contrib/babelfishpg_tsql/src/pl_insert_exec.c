@@ -942,10 +942,6 @@ insert_exec_flush_and_cleanup(PLtsql_execstate *estate, InsertExecInfo *info)
 		estate->tsql_trigger_flags &= ~TSQL_TRAN_STARTED;
 
 		if (!pltsql_implicit_transactions)
-		{
-			elog(DEBUG4, "TSQL TXN Commit implicit transaction for INSERT EXEC");
 			commit_stmt(estate, true);
-		}
-		elog(DEBUG4, "TSQL TXN Commit implicit transaction for INSERT EXEC");
 	}
 }
