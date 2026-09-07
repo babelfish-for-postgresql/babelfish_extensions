@@ -663,7 +663,7 @@ SELECT * FROM forxml_path_elements_long_cols FOR XML PATH('Row'), ELEMENTS;
 GO
 ~~START~~
 ntext
-<Row><ID>1</ID><this_is_a_very_long_column_name_that_exceeds_sixty_four_charact>value1</this_is_a_very_long_column_name_that_exceeds_sixty_four_charact><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value2</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></Row><Row><ID>2</ID><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value3</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></Row>
+<Row><ID>1</ID><this_is_a_very_long_column_namefcb07baebb5d4f0209d9843bc42d4eb7>value1</this_is_a_very_long_column_namefcb07baebb5d4f0209d9843bc42d4eb7><another_extremely_long_column_n8fa40faaf615e282c707ca048857d896>value2</another_extremely_long_column_n8fa40faaf615e282c707ca048857d896></Row><Row><ID>2</ID><another_extremely_long_column_n8fa40faaf615e282c707ca048857d896>value3</another_extremely_long_column_n8fa40faaf615e282c707ca048857d896></Row>
 ~~END~~
 
 
@@ -671,7 +671,7 @@ SELECT * FROM forxml_path_elements_long_cols FOR XML PATH('Row'), ELEMENTS XSINI
 GO
 ~~START~~
 ntext
-<Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><this_is_a_very_long_column_name_that_exceeds_sixty_four_charact>value1</this_is_a_very_long_column_name_that_exceeds_sixty_four_charact><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value2</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><this_is_a_very_long_column_name_that_exceeds_sixty_four_charact xsi:nil="true"/><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value3</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></Row>
+<Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>1</ID><this_is_a_very_long_column_namefcb07baebb5d4f0209d9843bc42d4eb7>value1</this_is_a_very_long_column_namefcb07baebb5d4f0209d9843bc42d4eb7><another_extremely_long_column_n8fa40faaf615e282c707ca048857d896>value2</another_extremely_long_column_n8fa40faaf615e282c707ca048857d896></Row><Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><ID>2</ID><this_is_a_very_long_column_namefcb07baebb5d4f0209d9843bc42d4eb7 xsi:nil="true"/><another_extremely_long_column_n8fa40faaf615e282c707ca048857d896>value3</another_extremely_long_column_n8fa40faaf615e282c707ca048857d896></Row>
 ~~END~~
 
 
@@ -679,7 +679,7 @@ SELECT * FROM forxml_path_elements_long_cols FOR XML PATH('LongColTest'), ELEMEN
 GO
 ~~START~~
 ntext
-<Data><LongColTest><ID>1</ID><this_is_a_very_long_column_name_that_exceeds_sixty_four_charact>value1</this_is_a_very_long_column_name_that_exceeds_sixty_four_charact><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value2</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></LongColTest><LongColTest><ID>2</ID><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value3</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></LongColTest></Data>
+<Data><LongColTest><ID>1</ID><this_is_a_very_long_column_namefcb07baebb5d4f0209d9843bc42d4eb7>value1</this_is_a_very_long_column_namefcb07baebb5d4f0209d9843bc42d4eb7><another_extremely_long_column_n8fa40faaf615e282c707ca048857d896>value2</another_extremely_long_column_n8fa40faaf615e282c707ca048857d896></LongColTest><LongColTest><ID>2</ID><another_extremely_long_column_n8fa40faaf615e282c707ca048857d896>value3</another_extremely_long_column_n8fa40faaf615e282c707ca048857d896></LongColTest></Data>
 ~~END~~
 
 

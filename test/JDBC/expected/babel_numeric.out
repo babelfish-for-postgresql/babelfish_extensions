@@ -1971,7 +1971,7 @@ where TABLE_NAME = 'BABEL_6081_t3' order by COLUMN_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#smallint#!#int
-master#!#dbo#!#babel_6081_t3#!#product#!#15#!#10#!#2
+master#!#dbo#!#BABEL_6081_t3#!#product#!#15#!#10#!#2
 ~~END~~
 
 
@@ -2001,7 +2001,7 @@ where TABLE_NAME = 'BABEL_6081_t4' order by COLUMN_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#smallint#!#int
-master#!#dbo#!#babel_6081_t4#!#product#!#15#!#10#!#2
+master#!#dbo#!#BABEL_6081_t4#!#product#!#15#!#10#!#2
 ~~END~~
 
 
@@ -2031,7 +2031,7 @@ where TABLE_NAME = 'BABEL_6081_t5' order by COLUMN_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#smallint#!#int
-master#!#dbo#!#babel_6081_t5#!#product#!#38#!#10#!#6
+master#!#dbo#!#BABEL_6081_t5#!#product#!#38#!#10#!#6
 ~~END~~
 
 
@@ -2062,8 +2062,8 @@ where TABLE_NAME = 'BABEL_6081_t6' order by COLUMN_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#smallint#!#int
-master#!#dbo#!#babel_6081_t6#!#id#!#4#!#10#!#2
-master#!#dbo#!#babel_6081_t6#!#product#!#15#!#10#!#2
+master#!#dbo#!#BABEL_6081_t6#!#id#!#4#!#10#!#2
+master#!#dbo#!#BABEL_6081_t6#!#product#!#15#!#10#!#2
 ~~END~~
 
 

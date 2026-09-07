@@ -30,6 +30,7 @@ OBJS += src/cursor.o
 OBJS += src/applock.o
 OBJS += src/pltsql_coerce.o
 OBJS += runtime/functions.o
+OBJS += runtime/xml.o
 OBJS += src/err_handler.o
 OBJS += src/pltsql_function_probin_handler.o
 OBJS += src/pltsql_utils.o

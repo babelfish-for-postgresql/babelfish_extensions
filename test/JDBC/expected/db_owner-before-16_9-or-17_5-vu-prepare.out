@@ -1,0 +1,140 @@
+-- tsql
+create database dbowner__main_db
+go
+use dbowner__main_db
+go
+grant connect to guest
+go
+create login dbowner__l1 with password = '123'
+go
+create user dbowner__u1 for login dbowner__l1
+go
+create login dbowner__l2 with password = '123'
+go
+create login dbowner__temp with password = '123'
+go
+create user dbowner__u2 for login dbowner__l2
+go
+create schema dbowner__s0
+go
+create table dbowner__s0.dbowner__t00 (w float)
+go
+create function dbowner__s0.dbowner__f00() returns int as begin return 987 end
+go
+create type dbowner__s0.dbowner__typ00 from int
+go
+create trigger dbowner__s0.dbowner__trg00
+on dbowner__s0.dbowner__t00
+after insert
+as
+begin
+    select 'New row inserted'
+end
+go
+create index dbowner__idx00 on dbowner__s0.dbowner__t00 (w)
+go
+create view dbowner__s0.dbowner__v00 as select 1
+go
+create sequence dbowner__s0.dbowner__seq00 as int start with 1 increment by 1;
+go
+create schema dbowner__s1 authorization dbowner__u1
+go
+create schema dbowner__s2 authorization dbowner__u2
+go
+create table dbo.dbowner__t0 (x int)
+go
+create function dbo.dbowner__f0() returns int as begin return 10 end
+go
+create procedure dbo.dbowner__p0 as select 20
+go
+create type dbo.dbowner__typ0 from int
+go
+create trigger dbo.dbowner__trg0
+on dbo.dbowner__t0
+after insert
+as
+begin
+    select 'New row inserted'
+end
+go
+create index dbowner__idx0 on dbo.dbowner__t0 (x)
+go
+create view dbo.dbowner__v0 as select 1
+go
+create sequence dbo.dbowner__seq0 as int start with 2 increment by 2;
+go
+
+create role dbowner__r1
+go
+create role dbowner__r2
+go
+
+-- tsql user=dbowner__l1 password=123
+use dbowner__main_db
+go
+select is_member('db_owner')
+go
+~~START~~
+int
+0
+~~END~~
+
+create table dbowner__s1.dbowner__t1 (a int)
+go
+create function dbowner__s1.dbowner__f1() returns int as begin return 11 end
+go
+create procedure dbowner__s1.dbowner__p1 as select 21
+go
+create type dbowner__s1.dbowner__typ1 from int
+go
+create trigger dbowner__s1.dbowner__trg1
+on dbowner__s1.dbowner__t1
+after insert
+as
+begin
+    select 'New row inserted'
+end
+go
+create index dbowner__idx1 on dbowner__s1.dbowner__t1 (a)
+go
+create view dbowner__s1.dbowner__v1 as select 1
+go
+create sequence dbowner__s1.dbowner__seq1 as int start with 3 increment by 3;
+go
+
+-- tsql user=dbowner__l2 password=123
+use dbowner__main_db
+go
+select is_member('db_owner')
+go
+~~START~~
+int
+0
+~~END~~
+
+create table dbowner__s2.dbowner__t2 (a int)
+go
+create function dbowner__s2.dbowner__f2() returns int as begin return 12 end
+go
+create procedure dbowner__s2.dbowner__p2 as select 22
+go
+create type dbowner__s2.dbowner__typ2 from int
+go
+create trigger dbowner__s2.dbowner__trg2
+on dbowner__s2.dbowner__t2
+after insert
+as
+begin
+    select 'New row inserted'
+end
+go
+create index dbowner__idx2 on dbowner__s2.dbowner__t2 (a)
+go
+create view dbowner__s2.dbowner__v2 as select 1
+go
+create sequence dbowner__s2.dbowner__seq2 as int start with 4 increment by 4;
+go
+
+-- tsql
+alter role db_owner add member dbowner__u1
+go

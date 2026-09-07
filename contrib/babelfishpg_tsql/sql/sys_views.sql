@@ -18,7 +18,7 @@ with tt_internal as MATERIALIZED
   select * from sys.table_types_internal
 )
 select
-  CAST(t.relname as sys._ci_sysname) as name
+  CAST(sys.bbf_get_truncated_rel_original_name(t.reloptions, t.relname) as sys._ci_sysname) as name
   , CAST(t.oid as int) as object_id
   , CAST(NULL as int) as principal_id
   , CAST(t.relnamespace  as int) as schema_id
@@ -111,7 +111,7 @@ GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
 create or replace view sys.views as 
 select 
-  CAST(t.relname as sys.sysname) as name
+  CAST(sys.bbf_get_truncated_rel_original_name(t.reloptions, t.relname) as sys.sysname) as name
   , t.oid::int as object_id
   , null::integer as principal_id
   , sch.schema_id::int as schema_id
@@ -408,7 +408,7 @@ $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 create or replace view sys.all_columns as
 select CAST(c.oid as int) as object_id
-  , CAST(a.attname as sys.sysname) as name
+  , CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) as sys.sysname) as name
   , CAST(a.attnum as int) as column_id
   , CAST(t.oid as int) as system_type_id
   , CAST(t.oid as int) as user_type_id
@@ -509,7 +509,7 @@ $$
 BEGIN
 	RETURN QUERY
 		SELECT CAST(c.oid AS int),
-			CAST(a.attname AS sys.sysname),
+			CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) AS sys.sysname),
 			CAST(a.attnum AS int),
 			CASE 
 			WHEN tsql_type_name IS NOT NULL OR t.typbasetype = 0 THEN
@@ -955,7 +955,7 @@ GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
 create or replace view sys.procedures as
 select
-  cast(p.proname as sys.sysname) as name
+  cast(coalesce(f.orig_name, p.proname::sys.NVARCHAR(128)) as sys.sysname) as name
   , cast(p.oid as int) as object_id
   , cast(null as int) as principal_id
   , cast(sch.schema_id as int) as schema_id
@@ -1263,7 +1263,7 @@ select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
 from pg_catalog.pg_attrdef as d
 inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
 inner join sys.tables tab on d.adrelid = tab.object_id
-WHERE a.atthasdef = 't' and a.attgenerated = ''
+WHERE a.attgenerated = ''
 AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
 GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
@@ -1343,7 +1343,7 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined tables
 select
-    t.relname::sys.sysname as name
+    sys.bbf_get_truncated_rel_original_name(t.reloptions, t.relname)::sys.sysname as name
   , t.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1391,7 +1391,7 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- Details of user defined views
 select
-    t.relname::sys.sysname as name
+    sys.bbf_get_truncated_rel_original_name(t.reloptions, t.relname)::sys.sysname as name
   , t.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1533,7 +1533,7 @@ and p.proname != 'pltsql_call_handler'
 union all
 -- details of user defined procedures
 select
-    p.proname::sys.sysname as name 
+    sys.bbf_get_func_original_name(p.proname, s.nspname)::sys.sysname as name 
   , case
       when t.typname = 'trigger' then tr.oid else p.oid
     end as object_id
@@ -1627,7 +1627,7 @@ inner join pg_class o on d.adrelid = o.oid
 inner join pg_namespace s on s.oid = o.relnamespace
 left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = ('DF_' || o.relname || '_' || d.oid) and nis.schemaid = s.oid and nis.type = 'D'
-where a.atthasdef = 't' and a.attgenerated = ''
+where a.attgenerated = ''
 and (s.nspname = 'sys' or ext.nspname is not null)
 and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
 union all
@@ -1705,7 +1705,7 @@ GRANT SELECT ON sys.system_objects TO PUBLIC;
 
 create or replace view sys.all_views as
 SELECT
-    CAST(c.relname AS sys.SYSNAME) as name
+    CAST(sys.bbf_get_truncated_rel_original_name(c.reloptions, c.relname) AS sys.SYSNAME) as name
   , CAST(c.oid AS INT) as object_id
   , CAST(null AS INT) as principal_id
   , CAST(c.relnamespace as INT) as schema_id
@@ -1747,7 +1747,7 @@ GRANT SELECT ON sys.all_views TO PUBLIC;
 CREATE OR REPLACE VIEW sys.triggers
 AS
 SELECT
-  CAST(p.proname as sys.sysname) as name,
+  CAST(coalesce(f.orig_name, p.proname::sys.NVARCHAR(128)) as sys.sysname) as name,
   CAST(tr.oid as int) as object_id,
   CAST(1 as sys.tinyint) as parent_class,
   CAST('OBJECT_OR_COLUMN' as sys.nvarchar(60)) AS parent_class_desc,
@@ -2005,10 +2005,10 @@ LEFT OUTER JOIN sys.babelfish_view_def bvd
  on (
       ext.orig_name = bvd.schema_name AND 
       ext.dbid = bvd.dbid AND
-      ao.name = bvd.object_name 
+      sys.babelfish_truncate_identifier(ao.name::text) = bvd.object_name COLLATE sys.database_default 
    )
 LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
-LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.orig_name COLLATE sys.database_default AND ao.schema_id::regnamespace::name = f.nspname
 AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature COLLATE "C"
 WHERE ao.type in ('P', 'RF', 'V', 'FN', 'IF', 'TF', 'R')
 UNION ALL
@@ -2027,7 +2027,7 @@ SELECT
 FROM sys.all_objects ao
 LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
 LEFT JOIN pg_trigger tr ON ao.object_id = CAST(tr.oid AS INT)
-LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.orig_name COLLATE sys.database_default AND ao.schema_id::regnamespace::name = f.nspname
 AND sys.babelfish_get_pltsql_function_signature(tr.tgfoid) = f.funcsignature COLLATE "C"
 WHERE ao.type = 'TR';
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;

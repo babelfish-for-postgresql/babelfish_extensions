@@ -67,6 +67,30 @@ DECLARE @xml XML = '<root></root>';
 SELECT @xml.value('(//child)[1]', 'varchar(100)');
 GO
 
+-- Test with empty input
+DECLARE @x XML = ''
+SELECT @x.value('(/Root/row)[1]', 'NVARCHAR(100)') 
+GO
+
+-- Test with only spaces input
+DECLARE @x XML = '    '
+SELECT @x.value('(/Root/row)[1]', 'NVARCHAR(100)') 
+GO
+
+-- Test with NULL input
+DECLARE @x XML = NULL
+SELECT @x.value('(/Root/row)[1]', 'NVARCHAR(100)') 
+GO
+
+-- Test with empty Path query
+DECLARE @xml XML = ''
+SELECT @xml.value('', 'varchar(20)')
+GO
+
+DECLARE @xml XML = '<Root><row><name>James</name></row></Root>'
+SELECT @xml.value('', 'varchar(20)')
+GO
+
 -- Test with an XML document containing special characters
 DECLARE @xml XML = '<root><child>Hello & World</child></root>';
 SELECT @xml.value('(//child)[1]', 'varchar(100)');
@@ -840,3 +864,46 @@ DECLARE @xml XML = '<root><child>Hello</child></root>';
 SELECT @xml.value('(//*:child)[1]');
 GO
 
+-- check for the special tag not being used in data or query
+DECLARE @x XML = '<magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>test</magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>  ';
+SELECT @x.value('(/*)', 'NVARCHAR(100)') AS c;
+go
+
+DECLARE @x XML = '<MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>test</MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>  ';
+SELECT @x.value('(/*)', 'NVARCHAR(100)') AS c;
+go
+
+DECLARE @x XML = '<magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>test</magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag>  ';
+SELECT @x.value('(/magic_bbf_xmlnodes_945193483c854af5a887b50698b99b05_tag)', 'NVARCHAR(100)') AS c;
+go
+
+DECLARE @x XML = '<MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>test</MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG>  ';
+SELECT @x.value('(/MAGIC_BBF_XMLNODES_945193483C854AF5A887B50698B99B05_TAG)', 'NVARCHAR(100)') AS c;
+go
+
+-- '.[' in element or XPath query
+DECLARE @xml XML = '<root><item name="a.[b">MATCH</item></root>'
+SELECT @xml.value('(/root/item[@name="a.[b"])[1]', 'varchar(20)')
+go
+
+DECLARE @xml XML = '<root><item a.b="x.y">MATCH</item></root>'
+SELECT @xml.value('(/root/item[@a.b="x.y"])[1]', 'varchar(20)')
+go
+
+DECLARE @xml XML = '<root><item a.b_.="x.y">MATCH</item>><item a.b_.="y.z">MATCH2</item></root>'
+SELECT @xml.value('(/root/item[@a.b_.="x.y"])[1]', 'varchar(20)')
+go
+
+DECLARE @xml XML = '<root><item a.b_.="x.y">MATCH</item>><item a.b_.="y.z">MATCH2</item></root>'
+SELECT @xml.value('(/root/item[@a.b_.="y.z"])[1]', 'varchar(20)')
+go
+
+-- invalid 
+DECLARE @xml XML = '<root><item a.[b="x.y">MATCH</item></root>'
+SELECT @xml.value('(/root/item[@a.[b="x.y"])[1]', 'varchar(20)')
+go
+
+-- invalid, unterminated string
+DECLARE @xml XML = '<root><item name="a.[b">MATCH</item></root>'
+SELECT @xml.value('(/root/item[@name="a.[b])[1]', 'varchar(20)')
+go
