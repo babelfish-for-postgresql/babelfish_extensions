@@ -60,9 +60,17 @@ GO
 SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%';
 GO
 
--- Emoji prefix verification: with emoji rows present, verify prefix bounds
--- return exactly the expected tuples (not just a count).
+-- Supplementary-character prefix: verify prefix bounds (Index Cond) are correct with multibyte characters
 SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
 GO
 
 SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%abc';
@@ -92,7 +100,7 @@ GO
 SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%match';
 GO
 
--- No extractable prefix (leading wildcard): verify the exact tuples returned.
+-- No extractable prefix (leading wildcard): verify Seq Scan, no index bounds
 SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%match' ORDER BY Col COLLATE Latin1_General_CS_AS;
 GO
 
@@ -1030,8 +1038,7 @@ GO
 SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE N'prefix%';
 GO
 
--- Emoji prefix verification across all NVARCHAR collations: with emoji rows
--- present, verify prefix bounds return exactly the expected tuples.
+-- Supplementary-character prefix across all NVARCHAR collations: verify prefix bounds are correct
 SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
 GO
 
@@ -1558,6 +1565,34 @@ GO
 
 -- Result correctness
 
+-- Supplementary-character LIKE matching and length differ from T-SQL, tracked at BABEL-7102.
+SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeCollation_CS_AS WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AI WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeCollation_CS_AI WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'%match' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CS_AS WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CI_AI WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
+SELECT Col FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE N'prefix%' ORDER BY Col COLLATE Latin1_General_CS_AS;
+GO
+
 SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE 'exact match';
 SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'exact match';
 GO
@@ -1951,6 +1986,15 @@ GO
 
 SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE '%match';
 SELECT COUNT(*) AS nprefix FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AS WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CI_AI WHERE Col LIKE N'%match';
+GO
+
+SELECT COUNT(*) FROM BABEL_5966_TestLikeNVarCollation_CS_AI WHERE Col LIKE N'%match';
 GO
 
 SELECT COUNT(*) AS plain FROM BABEL_5966_TestLikeNVarCollation_CI_AS WHERE Col NOT LIKE 'exact match';

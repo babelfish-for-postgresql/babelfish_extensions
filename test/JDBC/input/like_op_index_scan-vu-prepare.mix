@@ -54,7 +54,6 @@ VALUES ('exact match'), ('EXACT MATCH'), ('Exact Match'),
 GO
 
 -- tsql
--- Emoji values interspersed to verify prefix bounds are correct with multibyte characters
 INSERT INTO BABEL_5966_TestLikeCollation_CI_AS (Col)
 VALUES (N'prefixA😀'), (N'prefix😀B'), (N'😀prefixC'), (N'prefixDüsseldorf');
 GO
