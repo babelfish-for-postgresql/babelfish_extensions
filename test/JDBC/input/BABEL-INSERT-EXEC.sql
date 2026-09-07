@@ -1305,6 +1305,25 @@ SET IMPLICIT_TRANSACTIONS OFF
 GO
 DROP PROCEDURE dbo.ie_implicit_txn_src;
 DROP TABLE dbo.ie_implicit_txn;
+
+-- ============================================================================
+-- Category VIII: INSERT EXEC from procedure containing UPDATE ... OUTPUT
+-- ============================================================================
+CREATE TABLE dbo.ie_update_output_dest (old_val DECIMAL(10,2), new_val DECIMAL(10,2));
+GO
+CREATE PROCEDURE dbo.ie_update_output_src AS
+BEGIN
+    DROP TABLE IF EXISTS #temp_upd;
+    CREATE TABLE #temp_upd (id INT, val DECIMAL(10,2));
+    INSERT INTO #temp_upd VALUES (1, 10.50), (2, 20.75);
+    UPDATE #temp_upd SET val = val * 2 OUTPUT DELETED.val, INSERTED.val;
+END;
+GO
+INSERT INTO dbo.ie_update_output_dest EXEC dbo.ie_update_output_src;
+SELECT old_val, new_val FROM dbo.ie_update_output_dest ORDER BY old_val; -- Expected: (10.50, 21.00) (20.75, 41.50)
+GO
+DROP PROCEDURE dbo.ie_update_output_src;
+DROP TABLE dbo.ie_update_output_dest;
 GO
 
 -- ============================================================================
