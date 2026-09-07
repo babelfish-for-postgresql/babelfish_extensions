@@ -89,6 +89,7 @@ rewrite_object_refs(Node *stmt)
 		case T_UpdateStmt:
 		case T_DeleteStmt:
 		case T_InsertStmt:
+		case T_MergeStmt:
 			{
 				/* walker supported stmts */
 				raw_expression_tree_walker(stmt,
