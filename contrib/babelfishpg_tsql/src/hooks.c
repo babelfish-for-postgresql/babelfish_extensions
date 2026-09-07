@@ -1907,6 +1907,8 @@ output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Que
 		stmt->fromClause = list_make1(from_table);
 		transformFromClause(pstate, stmt->fromClause);
 
+		((ParseNamespaceItem *) llast(pstate->p_namespace))->p_cols_visible = false;
+
 		/* Create the self-join condition based on ctid */
 		l_expr = makeNode(ColumnRef);
 		l_expr->fields = list_make2(makeString(stmt->relation->relname), makeString("ctid"));
