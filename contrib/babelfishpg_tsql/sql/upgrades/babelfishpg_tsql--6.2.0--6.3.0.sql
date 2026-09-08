@@ -122,18 +122,43 @@ BEGIN
     END IF;
 END $$;
 
+-- BABEL-5975: Long Identifiers Support
+-- Resolves the original (untruncated) identifier for an object whose PostgreSQL
+-- name was truncated to fit the 63-byte NAME limit, using the
+-- sys.babelfish_identifier_mapping catalog. Returns truncated_name unchanged
+-- when it is short enough to not have been truncated (< 60 bytes).
+--
+-- id_parent_name disambiguates identifiers that are only unique within a parent
+-- object (e.g. a constraint or parameter). Pass the parent object name to match
+-- a specific row, or leave it NULL (the default) to match on
+-- (name, namespace, pg_catalog_type) alone.
+CREATE OR REPLACE FUNCTION sys.bbf_get_original_identifier_name(
+    truncated_name name,
+    id_nspname name,
+    id_pg_catalog_type oid,
+    id_parent_name name DEFAULT NULL)
+RETURNS text
+LANGUAGE SQL
+STABLE
+PARALLEL SAFE
+RETURN COALESCE(
+    CASE WHEN octet_length(truncated_name) >= 60 THEN
+        (SELECT m.original_identifier_name
+         FROM sys.babelfish_identifier_mapping m
+         WHERE m.truncated_identifier_name = truncated_name
+           AND m.nspname = id_nspname
+           AND m.pg_catalog_type = id_pg_catalog_type
+           AND (id_parent_name IS NULL OR m.parent_name = id_parent_name)
+         LIMIT 1)
+    END,
+    truncated_name::text);
+
+
 
 -- Recreate sys.foreign_keys (constraint name resolution from babelfish_identifier_mapping)
 CREATE OR replace view sys.foreign_keys AS
 SELECT
-  CAST(COALESCE(
-      case when octet_length(c.conname) >= 60
-        then (select m.original_identifier_name from sys.babelfish_identifier_mapping m
-          where m.truncated_identifier_name = c.conname
-          and m.nspname = c.connamespace::regnamespace::name
-          and m.pg_catalog_type = 'pg_constraint'::regclass::oid)
-      end,
-      c.conname::text) AS sys.sysname) AS name
+  CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid) AS sys.sysname) AS name
 , CAST(c.oid AS INT) AS object_id
 , CAST(NULL AS INT) AS principal_id
 , CAST(sch.schema_id AS INT) AS schema_id
@@ -195,14 +220,7 @@ GRANT SELECT ON sys.foreign_keys TO PUBLIC;
 -- Recreate sys.key_constraints (constraint name resolution from babelfish_identifier_mapping)
 CREATE OR replace view sys.key_constraints AS
 SELECT
-    CAST(COALESCE(
-      case when octet_length(c.conname) >= 60
-        then (select m.original_identifier_name from sys.babelfish_identifier_mapping m
-          where m.truncated_identifier_name = c.conname
-          and m.nspname = c.connamespace::regnamespace::name
-          and m.pg_catalog_type = 'pg_constraint'::regclass::oid)
-      end,
-      c.conname::text) AS sys.sysname) AS name
+    CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid) AS sys.sysname) AS name
   , CAST(c.oid AS INT) AS object_id
   , CAST(0 AS INT) AS principal_id
   , CAST(sch.schema_id AS INT) AS schema_id
@@ -234,14 +252,7 @@ GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
 -- Recreate sys.check_constraints (constraint name resolution from babelfish_identifier_mapping)
 CREATE or replace VIEW sys.check_constraints AS
-SELECT CAST(COALESCE(
-      case when octet_length(c.conname) >= 60
-        then (select m.original_identifier_name from sys.babelfish_identifier_mapping m
-          where m.truncated_identifier_name = c.conname
-          and m.nspname = c.connamespace::regnamespace::name
-          and m.pg_catalog_type = 'pg_constraint'::regclass::oid)
-      end,
-      c.conname::text) as sys.sysname) as name
+SELECT CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid) as sys.sysname) as name
   , CAST(oid as integer) as object_id
   , CAST(NULL as integer) as principal_id 
   , CAST(c.connamespace as integer) as schema_id
@@ -312,14 +323,7 @@ and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
 -- For User Defined Types
-select cast(coalesce(
-    case when octet_length(t.typname) >= 60
-      then (select ti.original_identifier_name from sys.babelfish_identifier_mapping ti
-       where ti.truncated_identifier_name = t.typname
-         and ti.nspname = t.typnamespace::regnamespace::name
-         and ti.pg_catalog_type = 1247)
-    end,
-    t.typname::text) as sys.sysname) as name
+select cast(sys.bbf_get_original_identifier_name(t.typname, t.typnamespace::regnamespace::name, 1247) as sys.sysname) as name
   , cast(t.typbasetype as int) as system_type_id
   , cast(t.oid as int) as user_type_id
   , cast(t.typnamespace as int) as schema_id
@@ -820,8 +824,7 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined and system foreign key constraints
 select
-    COALESCE(case when octet_length(c.conname) >= 60 then (select m.original_identifier_name from sys.babelfish_identifier_mapping m where m.truncated_identifier_name = c.conname and m.nspname = c.connamespace::regnamespace::name and m.pg_catalog_type = 'pg_constraint'::regclass::oid) end,
-      c.conname::text)::sys.sysname as name
+    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid)::sys.sysname as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -843,8 +846,7 @@ and (s.nspname = 'sys' or ext.nspname is not null)
 union all
 -- details of user defined and system primary key constraints
 select
-    COALESCE(case when octet_length(c.conname) >= 60 then (select m.original_identifier_name from sys.babelfish_identifier_mapping m where m.truncated_identifier_name = c.conname and m.nspname = c.connamespace::regnamespace::name and m.pg_catalog_type = 'pg_constraint'::regclass::oid) end,
-      c.conname::text)::sys.sysname as name
+    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid)::sys.sysname as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1042,8 +1044,7 @@ and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES
 union all
 -- details of all check constraints
 select
-    COALESCE(case when octet_length(c.conname) >= 60 then (select m.original_identifier_name from sys.babelfish_identifier_mapping m where m.truncated_identifier_name = c.conname and m.nspname = c.connamespace::regnamespace::name and m.pg_catalog_type = 'pg_constraint'::regclass::oid) end,
-      c.conname::text)::sys.sysname
+    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid)::sys.sysname
   , c.oid::integer as object_id
   , NULL::integer as principal_id 
   , s.oid as schema_id
@@ -1065,7 +1066,7 @@ and (s.nspname = 'sys' or ext.nspname is not null)
 union all
 -- details of user defined and system defined sequence objects
 select
-  COALESCE(case when octet_length(p.relname) >= 60 then (select m.original_identifier_name from sys.babelfish_identifier_mapping m where m.truncated_identifier_name = p.relname and m.nspname = p.relnamespace::regnamespace::name and m.pg_catalog_type = 'pg_class'::regclass::oid and m.parent_name = '') end, p.relname::text)::sys.sysname as name
+  sys.bbf_get_original_identifier_name(p.relname, p.relnamespace::regnamespace::name, 'pg_class'::regclass::oid, '')::sys.sysname as name
   , p.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1232,15 +1233,7 @@ select
   from sys.check_constraints chk
 union all
 select
-    CAST(COALESCE(
-      case when octet_length(p.relname) >= 60
-        then (select m.original_identifier_name from sys.babelfish_identifier_mapping m
-          where m.truncated_identifier_name = p.relname
-          and m.nspname = p.relnamespace::regnamespace::name
-          and m.pg_catalog_type = 'pg_class'::regclass::oid
-          and m.parent_name = '')
-      end,
-      p.relname::text) as sys.sysname) as name
+    CAST(sys.bbf_get_original_identifier_name(p.relname, p.relnamespace::regnamespace::name, 'pg_class'::regclass::oid, '') as sys.sysname) as name
   , CAST(p.oid as int) as object_id
   , CAST(null as int) as principal_id
   , CAST(s.schema_id as int) as schema_id
@@ -1403,7 +1396,7 @@ BEGIN
     RETURN QUERY
     SELECT CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-           COALESCE(case when octet_length(c.conname) >= 60 then (select m.original_identifier_name from sys.babelfish_identifier_mapping m where m.truncated_identifier_name = c.conname and m.nspname = nsp.nspname and m.pg_catalog_type = 'pg_constraint'::regclass::oid) end, c.conname::text)::sys.sysname AS "CONSTRAINT_NAME",
+           sys.bbf_get_original_identifier_name(c.conname, nsp.nspname, 'pg_constraint'::regclass::oid)::sys.sysname AS "CONSTRAINT_NAME",
            CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
            CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
@@ -1436,7 +1429,7 @@ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 CREATE OR REPLACE VIEW information_schema_tsql.check_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 	    CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-           COALESCE(case when octet_length(c.conname) >= 60 then (select m.original_identifier_name from sys.babelfish_identifier_mapping m where m.truncated_identifier_name = c.conname and m.nspname = nc.nspname and m.pg_catalog_type = 'pg_constraint'::regclass::oid) end, c.conname::text)::sys.sysname AS "CONSTRAINT_NAME",
+           sys.bbf_get_original_identifier_name(c.conname, nc.nspname, 'pg_constraint'::regclass::oid)::sys.sysname AS "CONSTRAINT_NAME",
 	    CAST(sys.tsql_get_constraintdef(c.oid) AS sys.nvarchar(4000)) AS "CHECK_CLAUSE"
 
     FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
@@ -1462,7 +1455,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	SELECT
 		CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-		COALESCE(case when octet_length(c.conname) >= 60 then (select m.original_identifier_name from sys.babelfish_identifier_mapping m where m.truncated_identifier_name = c.conname and m.nspname = nsp.nspname and m.pg_catalog_type = 'pg_constraint'::regclass::oid) end, c.conname::text)::sys.nvarchar(128) AS "CONSTRAINT_NAME",
+		sys.bbf_get_original_identifier_name(c.conname, nsp.nspname, 'pg_constraint'::regclass::oid)::sys.nvarchar(128) AS "CONSTRAINT_NAME",
 		CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
