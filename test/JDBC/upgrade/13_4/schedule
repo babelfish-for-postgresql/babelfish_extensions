@@ -162,7 +162,7 @@ sys-suser_sid
 sys-suser_sname
 sys-syscharsets
 sys-syscolumns
-sys-sysdatabases
+sys-sysdatabases-before-18_6
 sys-sysforeignkeys
 sys-sysforeignkeys-dep
 sys-sysobjects

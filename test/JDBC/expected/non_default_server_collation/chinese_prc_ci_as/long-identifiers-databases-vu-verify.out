@@ -1,0 +1,99 @@
+-- tsql
+-- Verify: Database name resolves correctly after upgrade
+SELECT name FROM sys.databases WHERE name LIKE '%Very_Long_Database%VU_TVC';
+GO
+~~START~~
+varchar
+Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC
+~~END~~
+
+
+SELECT orig_name FROM sys.babelfish_sysdatabases WHERE orig_name LIKE '%Very_Long_Database%VU_TVC';
+GO
+~~START~~
+nvarchar
+Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC
+~~END~~
+
+
+-- DATABASEPROPERTYEX must resolve the long original name after upgrade
+SELECT DATABASEPROPERTYEX('Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC', 'Collation');
+GO
+~~START~~
+sql_variant
+chinese_prc_ci_as
+~~END~~
+
+
+-- HAS_DBACCESS must resolve the long original name after upgrade
+SELECT HAS_DBACCESS('Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- A login's default_database_name must expose the original long database name
+-- after upgrade, in both sys.sql_logins and sys.server_principals.
+SELECT default_database_name FROM sys.sql_logins WHERE name = 'long_default_db_login_vu_tvc';
+GO
+~~START~~
+varchar
+Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC
+~~END~~
+
+
+SELECT default_database_name FROM sys.server_principals WHERE name = 'long_default_db_login_vu_tvc';
+GO
+~~START~~
+varchar
+Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC
+~~END~~
+
+
+USE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC
+~~END~~
+
+
+-- sys.database_principals must resolve inside the long-named database
+-- (filters on sys.bbf_cur_db())
+SELECT name, type_desc FROM sys.database_principals WHERE name IN ('dbo','guest','db_owner') ORDER BY name;
+GO
+~~START~~
+varchar#!#nvarchar
+db_owner#!#DATABASE_ROLE
+dbo#!#SQL_USER
+guest#!#SQL_USER
+~~END~~
+
+
+-- information_schema_tsql.sequences must be queryable after upgrade and surface
+-- the sequence created before upgrade with the original (case/length preserved)
+-- SEQUENCE_CATALOG. This view depends on sys.pg_namespace_ext, which the upgrade
+-- renames+recreates; before the fix it kept a dependency on the renamed
+-- pg_namespace_ext_deprecated_in_6_3_0 view, which both orphaned that deprecated
+-- view and left SEQUENCES returning the physical catalog name.
+SELECT CAST("SEQUENCE_CATALOG" AS sys.sysname) AS SEQUENCE_CATALOG,
+       CAST("SEQUENCE_SCHEMA" AS sys.sysname) AS SEQUENCE_SCHEMA,
+       CAST("SEQUENCE_NAME" AS sys.sysname) AS SEQUENCE_NAME,
+       CAST("START_VALUE" AS bigint) AS START_VALUE,
+       CAST("INCREMENT" AS bigint) AS INCREMENT
+FROM information_schema_tsql.sequences
+WHERE "SEQUENCE_NAME" = 'babel5975_upg_seq';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#bigint#!#bigint
+Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC#!#dbo#!#babel5975_upg_seq#!#5#!#2
+~~END~~
+
+
+USE master;
+GO
