@@ -97,9 +97,10 @@ varchar
 WITH XMLNAMESPACES ('uri' as ns1)
 SELECT 'value' = '1'
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'WITH XMLNAMESPACES' is not currently supported in Babelfish)~~
+~~START~~
+varchar
+1
+~~END~~
 
 
 declare @string1 nvarchar(5);
