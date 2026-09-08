@@ -3275,9 +3275,8 @@ text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE N'   lead%'
 Aggregate
   ->  Gather
-        Workers Planned: 1
-        ->  Parallel Index Only Scan using babel_5966_idx_ci_asbabel_5966_7cc87a6b98e338dc94efc01ca6fb42c5 on babel_5966_testlikecollation_ci_as
-              Index Cond: ((col >= '   lead'::"varchar") AND (col < '   lead?'::"varchar"))
+        Workers Planned: 4
+        ->  Parallel Seq Scan on babel_5966_testlikecollation_ci_as
               Filter: ((col)::text ~~* '   lead%'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
