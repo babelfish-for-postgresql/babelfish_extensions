@@ -3874,13 +3874,21 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 
 		/* Insert new entry in babelfish_identifier_mapping if new name is long */
 		if ((objtype_code == OBJECT_SEQUENCE || objtype_code == OBJECT_TYPE) &&
-			strlen(new_name) >= NAMEDATALEN)
+			schema_name != NULL && strlen(new_name) >= NAMEDATALEN)
 		{
-			char *new_truncated = downcase_truncate_identifier(new_name, strlen(new_name), false);
-			Oid catalog_type = (objtype_code == OBJECT_SEQUENCE) ? RelationRelationId : TypeRelationId;
-			char *physical_schema = get_physical_schema_name(get_cur_db_name(),
-								str_tolower(schema_name, strlen(schema_name), DEFAULT_COLLATION_OID));
-			insert_bbf_ident_mapping(new_truncated, new_name, physical_schema, catalog_type, NULL);
+			char	   *new_truncated = downcase_truncate_identifier(new_name, strlen(new_name), false);
+			Oid			catalog_type = (objtype_code == OBJECT_SEQUENCE) ? RelationRelationId : TypeRelationId;
+			char	   *schema_lower = str_tolower(schema_name, strlen(schema_name), DEFAULT_COLLATION_OID);
+			char	   *physical_schema = get_physical_schema_name(get_cur_db_name(), schema_lower);
+
+			if (physical_schema)
+			{
+				insert_bbf_ident_mapping(new_truncated, new_name, physical_schema, catalog_type, NULL);
+				pfree(physical_schema);
+			}
+
+			pfree(new_truncated);
+			pfree(schema_lower);
 		}
 		/*
 		 * BABEL-5052: a table's physical index names embed the table name

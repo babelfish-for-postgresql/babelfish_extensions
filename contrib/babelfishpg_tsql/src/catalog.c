@@ -1893,6 +1893,7 @@ delete_bbf_ident_mapping_by_parent(const char *nspname,
 {
 	Relation	rel;
 	TableScanDesc scan;
+	ScanKeyData scanKey[3];
 	HeapTuple	tuple;
 	NameData	nspname_data;
 	NameData	parent_namedata;
@@ -1905,28 +1906,30 @@ delete_bbf_ident_mapping_by_parent(const char *nspname,
 
 	rel = table_open(get_bbf_ident_mapping_oid(), RowExclusiveLock);
 
-	scan = table_beginscan_catalog(rel, 0, NULL);
+	/*
+	 * Key the scan on (nspname, pg_catalog_type, parent_name) so we don't
+	 * walk the entire catalog on every DROP. truncated_identifier_name (the
+	 * leading PK column) is not known here, so this uses a filtered heap scan
+	 * rather than the PK index, but pushing the predicate into scan keys
+	 * still avoids the per-tuple attribute fetch + strcmp done previously.
+	 */
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_ident_mapping_nspname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&nspname_data));
+	ScanKeyInit(&scanKey[1],
+				Anum_bbf_ident_mapping_pg_catalog_type,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(pg_catalog_type));
+	ScanKeyInit(&scanKey[2],
+				Anum_bbf_ident_mapping_parent_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&parent_namedata));
+
+	scan = table_beginscan_catalog(rel, 3, scanKey);
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		bool	isNull;
-		Datum	d_nsp, d_type, d_parent;
-
-		d_nsp = heap_getattr(tuple, Anum_bbf_ident_mapping_nspname,
-							 RelationGetDescr(rel), &isNull);
-		if (isNull || strcmp(NameStr(*DatumGetName(d_nsp)), nspname_data.data) != 0)
-			continue;
-
-		d_type = heap_getattr(tuple, Anum_bbf_ident_mapping_pg_catalog_type,
-							  RelationGetDescr(rel), &isNull);
-		if (isNull || DatumGetObjectId(d_type) != pg_catalog_type)
-			continue;
-
-		d_parent = heap_getattr(tuple, Anum_bbf_ident_mapping_parent_name,
-								RelationGetDescr(rel), &isNull);
-		if (isNull || strcmp(NameStr(*DatumGetName(d_parent)), parent_namedata.data) != 0)
-			continue;
-
 		CatalogTupleDelete(rel, &tuple->t_self);
 	}
 

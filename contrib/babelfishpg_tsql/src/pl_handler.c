@@ -3562,7 +3562,15 @@ store_alter_table_constraint_original_names(AlterTableStmt *atstmt,
 			const char *p;
 			char	   *orig;
 
-			if (!con->conname || strlen(con->conname) < NAMEDATALEN - 1 ||
+			/*
+			 * A multibyte name can truncate to fewer than NAMEDATALEN-1 bytes
+			 * on a character boundary, so use BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD
+			 * (matching the lookup threshold in
+			 * sys.bbf_get_original_identifier_name) rather than NAMEDATALEN-1.
+			 * insert_bbf_ident_mapping makes the final store/skip decision
+			 * based on the original name's length.
+			 */
+			if (!con->conname || strlen(con->conname) < BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD ||
 				con->location < 0)
 				continue;
 
@@ -3648,8 +3656,14 @@ store_alter_table_constraint_original_names(AlterTableStmt *atstmt,
 	{
 		AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lc);
 
+		/*
+		 * Use BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD rather than NAMEDATALEN-1: a
+		 * multibyte name can truncate to fewer than 63 bytes, and its mapping
+		 * row must still be cleaned up. delete_bbf_ident_mapping is a keyed
+		 * no-op when no row matches.
+		 */
 		if (cmd->subtype == AT_DropConstraint && cmd->name &&
-			strlen(cmd->name) >= NAMEDATALEN - 1)
+			strlen(cmd->name) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
 		{
 			delete_bbf_ident_mapping(cmd->name, nspname,
 									 ConstraintRelationId,
@@ -6318,7 +6332,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								DefElem *defel = (DefElem *) lfirst(opt);
 
-								if (strcmp(defel->defname, "bbf_original_name") == 0)
+								if (strcmp(defel->defname, ATTOPTION_BBF_ORIGINAL_NAME) == 0)
 								{
 									original_name = pstrdup(strVal(defel->arg));
 									origname_location = defel->location;

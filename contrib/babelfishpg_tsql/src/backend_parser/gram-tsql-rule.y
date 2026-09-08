@@ -1134,7 +1134,7 @@ DefineStmt:
 						char *original_name = extract_identifier(yyextra->core_yy_extra.scanbuf + @3, NULL);
 						if (original_name)
 							c->options = lappend(c->options,
-								makeDefElem("bbf_original_name",
+								makeDefElem(ATTOPTION_BBF_ORIGINAL_NAME,
 									(Node *)makeString(original_name),
 									@3));
 					}
@@ -1160,7 +1160,7 @@ DefineStmt:
 						char *original_name = extract_identifier(yyextra->core_yy_extra.scanbuf + @3, NULL);
 						if (original_name)
 							c->options = lappend(c->options,
-								makeDefElem("bbf_original_name",
+								makeDefElem(ATTOPTION_BBF_ORIGINAL_NAME,
 									(Node *)makeString(original_name),
 									@3));
 					}
@@ -1187,7 +1187,7 @@ DefineStmt:
 						char *original_name = extract_identifier(yyextra->core_yy_extra.scanbuf + @3, NULL);
 						if (original_name)
 							c->options = lappend(c->options,
-								makeDefElem("bbf_original_name",
+								makeDefElem(ATTOPTION_BBF_ORIGINAL_NAME,
 									(Node *)makeString(original_name),
 									@3));
 					}

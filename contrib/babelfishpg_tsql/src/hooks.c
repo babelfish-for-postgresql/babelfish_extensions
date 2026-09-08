@@ -4583,7 +4583,19 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		{
 			FunctionParameter *fp = (FunctionParameter *) lfirst(x);
 
-			if (fp->name && fp->location >= 0)
+			/*
+			 * Only parameters whose physical name may have been truncated
+			 * need a mapping entry. Gate on the truncated-name length before
+			 * doing the (more expensive) source-text extraction. A multibyte
+			 * name can truncate to fewer than NAMEDATALEN-1 bytes on a
+			 * character boundary, so use BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD to
+			 * match the lookup threshold in
+			 * sys.bbf_get_original_identifier_name (octet_length >= 60);
+			 * insert_bbf_ident_mapping makes the final store/skip decision
+			 * based on the original name's length.
+			 */
+			if (fp->name && fp->location >= 0 &&
+				strlen(fp->name) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
 			{
 				const char *param_start = queryString + fp->location;
 				char *orig_param = extract_identifier(param_start, NULL);
