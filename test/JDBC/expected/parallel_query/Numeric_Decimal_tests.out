@@ -10674,6 +10674,8 @@ GO
 
 SELECT * INTO NUMERIC_dt_derived FROM NUMERIC_dt;
 GO
+~~ROW COUNT: 14~~
+
 
 -- Check column attributes for derived table
 SELECT 

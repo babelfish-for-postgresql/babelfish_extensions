@@ -438,3 +438,97 @@ VALUES
 GO
 ~~ROW COUNT: 1~~
 
+
+-- Trigger test tables (RTE_NAMEDTUPLESTORE)
+CREATE TABLE forjsonauto_t_trigger_test (
+    ID INT PRIMARY KEY,
+    Name NVARCHAR(50),
+    Value INT
+);
+GO
+
+CREATE TABLE forjsonauto_t_trigger_json_result (
+    ResultJson NVARCHAR(MAX)
+);
+GO
+
+CREATE TRIGGER forjsonauto_trg_insert ON forjsonauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT * FROM inserted FOR JSON AUTO)
+END;
+GO
+
+CREATE TRIGGER forjsonauto_trg_delete ON forjsonauto_t_trigger_test AFTER DELETE AS
+BEGIN
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT * FROM deleted FOR JSON AUTO)
+END;
+GO
+
+CREATE TRIGGER forjsonauto_trg_insert_subset ON forjsonauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT Name, Value FROM inserted FOR JSON AUTO)
+END;
+GO
+
+CREATE TRIGGER forjsonauto_trg_insert_join ON forjsonauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT i.ID, i.Name, t.Value
+            FROM inserted i
+            JOIN forjsonauto_t_trigger_test t ON i.ID = t.ID
+            FOR JSON AUTO)
+END;
+GO
+
+CREATE TRIGGER forjsonauto_trg_update_both ON forjsonauto_t_trigger_test AFTER UPDATE AS
+BEGIN
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT * FROM inserted FOR JSON AUTO)
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT * FROM deleted FOR JSON AUTO)
+END;
+GO
+
+CREATE TRIGGER forjsonauto_trg_update_join ON forjsonauto_t_trigger_test AFTER UPDATE AS
+BEGIN
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT i.ID, i.Name AS NewName, i.Value AS NewValue, d.Value AS OldValue
+            FROM inserted i
+            JOIN deleted d ON i.ID = d.ID
+            FOR JSON AUTO)
+END;
+GO
+
+CREATE TRIGGER forjsonauto_trg_insert_null ON forjsonauto_t_trigger_test AFTER INSERT AS
+BEGIN
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT * FROM inserted FOR JSON AUTO)
+END;
+GO
+
+CREATE TRIGGER forjsonauto_trg_delete_join ON forjsonauto_t_trigger_test AFTER DELETE AS
+BEGIN
+    INSERT INTO forjsonauto_t_trigger_json_result(ResultJson)
+    SELECT (SELECT d.ID, d.Name, t.Value AS RemainingValue
+            FROM deleted d
+            JOIN forjsonauto_t_trigger_test t ON t.ID = 5
+            FOR JSON AUTO)
+END;
+GO
+
+-- Disable triggers not needed initially
+DISABLE TRIGGER forjsonauto_trg_insert_subset ON forjsonauto_t_trigger_test;
+GO
+DISABLE TRIGGER forjsonauto_trg_insert_join ON forjsonauto_t_trigger_test;
+GO
+DISABLE TRIGGER forjsonauto_trg_update_both ON forjsonauto_t_trigger_test;
+GO
+DISABLE TRIGGER forjsonauto_trg_update_join ON forjsonauto_t_trigger_test;
+GO
+DISABLE TRIGGER forjsonauto_trg_insert_null ON forjsonauto_t_trigger_test;
+GO
+DISABLE TRIGGER forjsonauto_trg_delete_join ON forjsonauto_t_trigger_test;
+GO

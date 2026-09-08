@@ -789,6 +789,8 @@ PIVOT (
 ORDER BY 1
 SELECT TOP 10 * FROM pivot_SELECT_into ORDER by 1, 2;
 GO
+~~ROW COUNT: 197~~
+
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int#!#int
 1200#!#200#!#0#!#0#!#0#!#0#!#0
@@ -905,6 +907,8 @@ PIVOT (
 ) AS pvt2
 ORDER BY 1
 GO
+~~ROW COUNT: 200~~
+
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int
 1200#!#1#!#1#!#1#!#2#!#0

@@ -4481,7 +4481,7 @@ GO
 ~~ROW COUNT: 2~~
 
 
-SELECT * FROM #insert_exec_target
+SELECT * FROM #insert_exec_target ORDER BY id
 GO
 ~~START~~
 int#!#varchar

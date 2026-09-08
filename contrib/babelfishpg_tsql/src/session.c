@@ -125,14 +125,8 @@ set_cur_db(int16 id, const char *name)
 void
 bbf_set_current_user(const char *user_name)
 {
-	Oid			userid;
-
-	userid = get_role_oid(user_name, false);
-	if (userid != GetUserId())
-	{
-		SetConfigOption("role", user_name, PGC_SUSET, PGC_S_DATABASE_USER);
-		SetCurrentRoleId(userid, false);
-	}
+	set_config_option("role", user_name, PGC_SUSET, PGC_S_DATABASE_USER,
+					  GUC_ACTION_SET, true, ERROR, false);
 }
 
 /*
@@ -373,11 +367,25 @@ babelfish_db_name(PG_FUNCTION_ARGS)
 		strncpy(dbname, "msdb", dbnamelen);
 	}
 	else
-		dbname = get_db_name(dbid);
+	{
+		dbname = dbid_get_original_db_name(dbid);
+		if (!dbname)
+			dbname = get_db_name(dbid);
+	}
 
 	if (dbname == NULL)
 		PG_RETURN_NULL();
 
+	PG_RETURN_TEXT_P(cstring_to_text(dbname));
+}
+
+PG_FUNCTION_INFO_V1(babelfish_db_name_internal);
+Datum
+babelfish_db_name_internal(PG_FUNCTION_ARGS)
+{
+	char *dbname = get_cur_db_name();
+	if (!dbname)
+		PG_RETURN_NULL();
 	PG_RETURN_TEXT_P(cstring_to_text(dbname));
 }
 

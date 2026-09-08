@@ -19,16 +19,26 @@ db_owner#!#DB Owners
 ~~END~~
 
 
-SELECT dbo.test_sp_helpdbfixedrole_func()
+-- INSERT EXEC is not allowed inside a function, so capture sp_helpdbfixedrole
+-- output into a table variable directly in the batch instead.
+DECLARE @tmp_sp_helpdbfixedrole TABLE(DbFixedRole sys.SYSNAME, Description sys.NVARCHAR(70));
+INSERT INTO @tmp_sp_helpdbfixedrole (DbFixedRole, Description) EXEC sp_helpdbfixedrole;
+SELECT COUNT(*) FROM @tmp_sp_helpdbfixedrole;
 GO
+~~ROW COUNT: 6~~
+
 ~~START~~
 int
 6
 ~~END~~
 
 
-SELECT * FROM test_sp_helpdbfixedrole_view
+DECLARE @tmp_sp_helpdbfixedrole2 TABLE(DbFixedRole sys.SYSNAME, Description sys.NVARCHAR(70));
+INSERT INTO @tmp_sp_helpdbfixedrole2 (DbFixedRole, Description) EXEC sp_helpdbfixedrole;
+SELECT COUNT(*) FROM @tmp_sp_helpdbfixedrole2;
 GO
+~~ROW COUNT: 6~~
+
 ~~START~~
 int
 6

@@ -1,0 +1,11 @@
+DROP DATABASE sys_sysdatabases_vu_prepare_db
+GO
+
+DROP VIEW sys_sysdatabases_vu_prepare_view
+GO
+
+DROP PROC sys_sysdatabases_vu_prepare_proc
+GO
+
+DROP FUNCTION sys_sysdatabases_vu_prepare_func
+GO

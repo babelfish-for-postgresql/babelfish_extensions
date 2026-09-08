@@ -197,7 +197,6 @@ babel_varbinary_int4_div
 bbf_view_def
 binary-index
 bitwise_not-operator
-case_insensitive_collation
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
 col_length
@@ -445,6 +444,7 @@ TestSpatialPoint
 Test-spatial-functions
 Test-spatial-functions-2
 Test-spatial-functions-3
+Test-Spatial_Index
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
@@ -585,6 +585,7 @@ sys_sequences
 replicate
 space
 SELECT_INTO_TEST
+select_into_rowcount
 binary-datatype-operators
 securityadmin_role
 sys_dm_os_sys_info
@@ -673,7 +674,9 @@ comparison_op_index_scan
 Test-Linestring
 Test-Polygon
 Test-Multipoint
+Test-Multilinestring
 BABEL-5788
+BABEL-6814
 BABEL-1664
 sys-fn_varbintohexstr
 babel_string_to_money_reg
@@ -689,3 +692,8 @@ BABEL-6037
 babel_sqlvariant_coerce_type
 temp_table_long_name_enr
 BABEL-login-db-long-identifiers
+long-identifiers-objects
+BABEL-6813
+long-identifiers-trigger-func-proc
+xml_nodes
+fk-cascade-trigger

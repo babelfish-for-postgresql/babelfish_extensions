@@ -149,7 +149,7 @@ BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
-BABEL-ROLE-MEMBER
+BABEL-ROLE-MEMBER-before-18_6
 BABEL_SCHEMATA
 BABEL-SPCOLUMNS
 BABEL-SPCOLUMNS-dep
@@ -221,6 +221,7 @@ objectpropertyex-before-16_5-or-15_9
 openjson
 routines_definition_before_16_5
 rowcount
+select_into_rowcount
 schema_resolution_func
 schema_resolution_proc
 schema_resolution_trigger
@@ -322,7 +323,7 @@ sys-sp_databases
 sys-sp_databases-dep
 sys-sp_pkeys
 sys-sp_pkeys-dep
-sys-sp_statistics
+sys-sp_statistics-before-16_9-or-17_4
 sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
@@ -334,7 +335,7 @@ sys-synonyms
 sys-syscharsets
 sys-syscolumns
 sys-syscolumns-dep
-sys-sysdatabases
+sys-sysdatabases-before-18_6
 sys-sysforeignkeys
 sys-sysforeignkeys-dep
 sys-sysindexes
@@ -494,6 +495,7 @@ test_conv_text_to_binary-before-15_5
 test_conv_text_to_string-before-14_21
 comparison_op_index_scan-before-15_6-or-14_11
 BABEL-5788
+BABEL-6814
 babel_convert_with_style-before-14_8-or-15_3
 forxml-raw-elements-before-17_9-or-18_3
 forxml-path-elements-before-17_10-or-18_4

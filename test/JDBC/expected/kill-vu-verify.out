@@ -5,6 +5,8 @@ create login victim_user_tds with password = '12345678';
 go
 select count(*) as count into #kill_temp_table from sys.dm_exec_sessions
 go
+~~ROW COUNT: 1~~
+
 
 -- tsql user=victim_user_tds password=12345678
 select 1

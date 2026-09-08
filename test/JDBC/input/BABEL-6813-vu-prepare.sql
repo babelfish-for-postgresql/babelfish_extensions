@@ -1,0 +1,113 @@
+-- BABEL-6813: Fix infinite CAST recursion and DATETRUNC regtype resolution
+
+-- Test CAST(numeric AS INT) in CHECK constraint ( uses _trunc_numeric_to_int*)
+CREATE TABLE babel_6813_t1 (
+    id int,
+    val DECIMAL(10,2),
+    CONSTRAINT chk_val CHECK (CAST(val AS INT) > 0)
+)
+GO
+
+INSERT INTO babel_6813_t1 VALUES (1, 5.7)
+GO
+
+-- Test CAST to different integer sizes
+CREATE TABLE babel_6813_t2 (
+    id int,
+    val DECIMAL(10,2),
+    CONSTRAINT chk_val_int2 CHECK (CAST(val AS SMALLINT) > 0)
+)
+GO
+
+INSERT INTO babel_6813_t2 VALUES (1, 3.9)
+GO
+
+CREATE TABLE babel_6813_t3 (
+    id int,
+    val DECIMAL(10,2),
+    CONSTRAINT chk_val_int8 CHECK (CAST(val AS BIGINT) > 0)
+)
+GO
+
+INSERT INTO babel_6813_t3 VALUES (1, 10.5)
+GO
+
+CREATE TABLE babel_6813_t4 (
+    id int,
+    val DECIMAL(10,2),
+    CONSTRAINT neg_test CHECK (CAST(val AS SMALLINT) > 0)
+)
+GO
+
+INSERT INTO babel_6813_t4 VALUES (1, 32768.9)
+GO
+
+-- DATETRUNC tests with various datetime types
+SELECT DATETRUNC(year, CAST('2023-06-15 10:30:00' AS datetime))
+GO
+
+SELECT DATETRUNC(month, CAST('2023-06-15 10:30:00' AS smalldatetime))
+GO
+
+SELECT DATETRUNC(day, CAST('2023-06-15 10:30:00.1234567' AS datetime2))
+GO
+
+SELECT DATETRUNC(hour, CAST('2023-06-15 10:30:00.1234567 +05:30' AS datetimeoffset))
+GO
+
+CREATE TABLE babel_6813_datetrunc (
+    id INT,
+    dt DATETIME2,
+    CONSTRAINT chk_dtrunc CHECK (DATETRUNC(month, dt) IS NOT NULL)
+)
+GO
+INSERT INTO babel_6813_datetrunc (id, dt) VALUES (1, '2024-03-15 10:30:45'), (2, '2024-07-22 08:15:00')
+GO
+
+--datetime, date, time, money
+CREATE TABLE babel_6813_date (
+    id INT,
+    d DATE,
+    CONSTRAINT chk_date CHECK (CONVERT(VARCHAR(10), d, 101) IS NOT NULL)
+)
+GO
+INSERT INTO babel_6813_date (id, d) VALUES (1, '2024-01-15'), (2, '2024-12-25')
+GO
+
+CREATE TABLE babel_6813_datetime (
+    id INT,
+    dt DATETIME,
+    CONSTRAINT chk_dt CHECK (CONVERT(VARCHAR(30), dt, 121) IS NOT NULL)
+)
+GO
+INSERT INTO babel_6813_datetime (id, dt) VALUES (1, '2024-01-15 10:30:45'), (2, '2024-06-20 08:15:00')
+GO
+
+
+CREATE TABLE babel_6813_time (
+    id INT,
+    t TIME,
+    CONSTRAINT chk_time CHECK (CONVERT(VARCHAR(30), t, 121) IS NOT NULL)
+)
+GO
+INSERT INTO babel_6813_time (id, t) VALUES (1, '10:30:45.123'), (2, '23:59:59.999')
+GO
+
+CREATE TABLE babel_6813_money (
+    id INT,
+    m MONEY,
+    CONSTRAINT chk_money CHECK (CONVERT(VARCHAR(30), m, 1) IS NOT NULL)
+)
+GO
+INSERT INTO babel_6813_money (id, m) VALUES (1, 1234.56), (2, 99999.99)
+GO
+
+CREATE TABLE babel_6813_float (
+    id INT,
+    f FLOAT,
+    CONSTRAINT chk_float CHECK (CONVERT(VARCHAR(30), f, 2) IS NOT NULL)
+)
+GO
+
+INSERT INTO babel_6813_float (id, f) VALUES (1, 1234.56), (2, 0.001)
+GO

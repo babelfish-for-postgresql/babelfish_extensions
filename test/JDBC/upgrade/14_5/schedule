@@ -121,7 +121,7 @@ BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
-BABEL-ROLE-MEMBER
+BABEL-ROLE-MEMBER-before-18_6
 BABEL_SCHEMATA
 BABEL-SP_COLUMNS_MANAGED-dep
 BABEL-SP_FKEYS
@@ -269,7 +269,7 @@ sys-sp_databases
 sys-sp_databases-dep
 sys-sp_pkeys
 sys-sp_pkeys-dep
-sys-sp_statistics
+sys-sp_statistics-before-16_9-or-17_4
 sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
@@ -282,7 +282,7 @@ sys-synonyms
 sys-syscharsets
 sys-syscolumns
 sys-syscolumns-dep
-sys-sysdatabases
+sys-sysdatabases-before-18_6
 sys-sysforeignkeys
 sys-sysforeignkeys-dep
 sys-sysindexes
@@ -429,6 +429,7 @@ view_sec_setting_before_17_6-or-16_10
 ascii_function_before-17_7-or-16_11
 comparison_op_index_scan-before-15_2-or-14_7
 BABEL-5788
+BABEL-6814
 BABEL-SP_DATATYPE_INFO
 forxml-raw-elements-before-17_9-or-18_3
 forxml-path-elements-before-17_10-or-18_4

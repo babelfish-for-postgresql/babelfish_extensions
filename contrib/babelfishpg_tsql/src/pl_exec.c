@@ -74,9 +74,6 @@ static bool is_schemabinding_view = true;
 int			fetch_status_var = 0;
 int			saved_expr_kind = -1;
 
-/* Global variable to record the retval for insert exec */
-Datum execute_call_insert_exec_retval = (Datum) 0;
-
 typedef struct
 {
 	int			nargs;			/* number of arguments */
@@ -326,6 +323,7 @@ static int	exec_stmt_assert(PLtsql_execstate *estate,
 							 PLtsql_stmt_assert *stmt);
 static int	exec_stmt_execsql(PLtsql_execstate *estate,
 							  PLtsql_stmt_execsql *stmt);
+static void recordUpdatedColumns(Relation rel, List *targetList, CmdType action);
 static void updateColumnUpdatedList(Query *query);
 static int	exec_stmt_dynexecute(PLtsql_execstate *estate,
 								 PLtsql_stmt_dynexecute *stmt);
@@ -495,10 +493,6 @@ extern int
 
 static void
 pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, ErrorContextCallback *plerrcontext);
-
-/* Function to set up row Datum */
-static void
-setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
 
 static bool	called_for_tsql_itvf_function = false;
 bool  		called_for_tsql_itvf_func(void);
@@ -714,11 +708,8 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 
 		fcinfo->isnull = estate.retisnull;
 
-		if (estate.retisset || estate.insert_exec)
+		if (estate.retisset)
 		{
-			int16 typLen;
-			bool typByVal;
-			MemoryContext oldcontext;
 			ReturnSetInfo *rsi = estate.rsi;
 
 			/* Check caller can handle a set result */
@@ -738,50 +729,6 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 				oldcxt = MemoryContextSwitchTo(estate.tuple_store_cxt);
 				rsi->setDesc = CreateTupleDescCopy(estate.tuple_store_desc);
 				MemoryContextSwitchTo(oldcxt);
-			}
-
-			/* Obtain output parameters for Insert Execute */
-			if (estate.insert_exec)
-			{
-				/* Switch to function's memory context */
-				oldcontext = MemoryContextSwitchTo(estate.func->fn_cxt);
-
-				if (OidIsValid(estate.rettype))
-				{
-					/* Get return type properties */
-					get_typlenbyval(estate.rettype, &typLen, &typByVal);
-
-					if (typByVal)
-					{
-						execute_call_insert_exec_retval = estate.retval;
-					}
-					else
-					{
-						/* Pass-by-reference, need to copy the data */
-						execute_call_insert_exec_retval = datumCopy(estate.retval,
-																	typByVal,
-																	typLen);
-					}
-				}
-				else
-				{
-					/* For cases where rettype is not properly set, handle gracefully */
-					typLen = -1;    /* Variable length */
-					typByVal = false; /* Pass by reference */
-					
-					/* Only proceed if we have a valid return value */
-					if (estate.retval != (Datum) 0)
-					{
-						execute_call_insert_exec_retval = estate.retval;
-					}
-					else
-					{
-						/* Skip the exec_move_row_from_datum call entirely */
-						execute_call_insert_exec_retval = (Datum) 0;
-					}
-				}
-				MemoryContextSwitchTo(oldcontext);
-
 			}
 
 			estate.retval = (Datum) 0;
@@ -4391,14 +4338,6 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 
 	estate->nestlevel = -1;
 
-	/*
-	 * When executing a procedure or inline code block, if a ReturnSetInfo is
-	 * passed in, then it's invoked by INSERT ... EXECUTE.
-	 */
-	estate->insert_exec = (func->fn_prokind == PROKIND_PROCEDURE ||
-						   strcmp(func->fn_signature, "inline_code_block") == 0)
-		&& rsi;
-	
 	estate->explain_infos = NIL;
 
 	/*
@@ -4476,7 +4415,7 @@ execute_txn_command(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
  * is recreated when needed for cases like commit/
  * rollbck/rollback to savepoint
  */
-static void
+void
 commit_stmt(PLtsql_execstate *estate, bool txnStarted)
 {
 	SimpleEcontextStackEntry *topEntry = simple_econtext_stack;
@@ -4660,146 +4599,6 @@ is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
 	return true;
 }
 
-/*
- * setup_procedure_output_target_for_insert_exec - Create output target for INSERT EXECUTE
- *
- * This is a helper to adapt logic from exec_stmt_call. It constructs a PLtsql_row to capture
- * output parameters from a procedure call within an INSERT EXECUTE context.
- */
-static void
-setup_procedure_output_target_for_insert_exec(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
-{
-    CachedPlanSource *cachedPlanSource;
-    Node *node;
-    FuncExpr *funcexpr;
-    HeapTuple func_tuple;
-    List *funcargs;
-    Oid *argtypes;
-    char **argnames;
-    char *argmodes;
-    MemoryContext oldcontext;
-    PLtsql_row *row;
-    int nfields;
-    int i;
-    ListCell *lc;
-
-	/* Early NULL checks */
-	if (!stmt || !stmt->sqlstmt || !stmt->sqlstmt->plan || !stmt->sqlstmt->plan->plancache_list)
-		return; /* Not a procedure call */
-
-    /* Extract the CallStmt from the cached plan */
-    cachedPlanSource = (CachedPlanSource *) linitial(stmt->sqlstmt->plan->plancache_list);
-    node = linitial_node(Query, cachedPlanSource->query_list)->utilityStmt;
-
-    if (node == NULL || !IsA(node, CallStmt))
-        return; /* Not a procedure call */
-
-    funcexpr = ((CallStmt *) node)->funcexpr;
-
-    /* Look up the procedure in pg_proc */
-    func_tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcexpr->funcid));
-    if (!HeapTupleIsValid(func_tuple))
-        elog(ERROR, "cache lookup failed for function %u", funcexpr->funcid);
-
-    /* Extract function arguments, expanding any named-arg notation */
-    funcargs = expand_function_arguments(funcexpr->args,
-                                       false,
-                                       funcexpr->funcresulttype,
-                                       func_tuple);
-
-    /* Mark the procedure outside the view since procedure can never be called inside a view */
-    funcexpr->insideView = PNODE_OUTSIDE_VIEW;
-    /* Get the argument names and modes */
-    get_func_arg_info(func_tuple, &argtypes, &argnames, &argmodes);
-
-    ReleaseSysCache(func_tuple);
-
-    /*
-     * Begin constructing row Datum
-     */
-    oldcontext = MemoryContextSwitchTo(estate->func->fn_cxt);
-
-    row = makeNode(PLtsql_row);
-    row->dtype = PLTSQL_DTYPE_ROW;
-    row->refname = "(unnamed row)";
-    row->lineno = -1;
-    row->varnos = (int *) palloc(sizeof(int) * list_length(funcargs));
-
-    MemoryContextSwitchTo(oldcontext);
-
-    /*
-     * Examine procedure's argument list. Each output arg position
-     * should be an unadorned pltsql variable (Datum), which we can
-     * insert into the row Datum.
-     */
-    nfields = 0;
-    i = 0;
-    foreach(lc, funcargs)
-    {
-        Node *n = lfirst(lc);
-
-        if (argmodes &&
-            (argmodes[i] == PROARGMODE_INOUT ||
-             argmodes[i] == PROARGMODE_OUT))
-        {
-            if (IsA(n, Param))
-            {
-                Param *param = (Param *) n;
-
-                /* paramid is offset by 1 (see make_datum_param()) */
-                row->varnos[nfields++] = param->paramid - 1;
-            }
-            else if (get_underlying_node_from_implicit_casting(n, T_Param) != NULL)
-            {
-                /*
-                 * T-SQL allows implicit casting in INOUT and OUT params.
-                 * Strip the casting and get the underlying Param.
-                 */
-                Param *param = (Param *) get_underlying_node_from_implicit_casting(n, T_Param);
-
-                /* paramid is offset by 1 (see make_datum_param()) */
-                row->varnos[nfields++] = param->paramid - 1;
-            }
-            else if (argmodes[i] == PROARGMODE_INOUT && IsA(n, Const))
-            {
-                /*
-                 * T-SQL allows to pass constant value as an output parameter.
-                 * Put -1 to param id. We can skip assigning actual value.
-                 */
-                row->varnos[nfields++] = -1;
-            }
-            else if (argmodes[i] == PROARGMODE_INOUT && get_underlying_node_from_implicit_casting(n, T_Const) != NULL)
-            {
-                /*
-                 * Mixture case of implicit casting + CONST. We can
-                 * skip assigning actual value.
-                 */
-                row->varnos[nfields++] = -1;
-            }
-            else
-            {
-                /* report error using parameter name, if available */
-                if (argnames && argnames[i] && argnames[i][0])
-                    ereport(ERROR,
-                            (errcode(ERRCODE_SYNTAX_ERROR),
-                             errmsg("procedure parameter \"%s\" is an output parameter but corresponding argument is not writable",
-                                    argnames[i])));
-                else
-                    ereport(ERROR,
-                            (errcode(ERRCODE_SYNTAX_ERROR),
-                             errmsg("procedure parameter %d is an output parameter but corresponding argument is not writable",
-                                    i + 1)));
-            }
-        }
-        i++;
-    }
-
-    row->nfields = nfields;
-
-    stmt->target = (PLtsql_variable *) row;
-}
-
-
 /* ----------
  * exec_stmt_execsql			Execute an SQL statement (possibly with INTO).
  *
@@ -4843,19 +4642,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	PG_TRY();
 	{
-		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
-		if (stmt->need_to_push_result && estate->insert_exec)
-		{
-			int			ret = exec_stmt_insert_execute_select(estate, expr);
-
-			if (is_cross_db)
-			{
-				if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
-					set_cur_user_db_and_path(cur_dbname, true, false);
-			}
-			return ret;
-		}
-
 		if (expr->plan && expr->plan->oneshot)
 		{
 			SPI_freeplan(expr->plan);
@@ -4883,30 +4669,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * Set up ParamListInfo to pass to executor
 		 */
 		paramLI = setup_param_list(estate, expr);
-
-		/* Check for nested INSERT EXECUTE statements */
-		if (stmt->insert_exec)
-		{
-			/* Walk existing stack for any parent insert exec */
-			PLExecStateCallStack *cur = exec_state_call_stack;
-			while (cur != NULL)
-			{
-				/* Found parent insert exec - this is a nested INSERT EXECUTE */
-				if (cur->estate->insert_exec)
-				{
-					ereport(ERROR,
-						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						errmsg("nested INSERT ... EXECUTE statements are not allowed")));
-				}
-				cur = cur->next;
-			}
-		}
-
-		/* Setup output target for procedure parameters */
-		if (stmt->insert_exec && stmt->target == NULL)
-		{
-			setup_procedure_output_target_for_insert_exec(estate, stmt);
-		}
 
 		/*
 		 * Check whether the statement is an INSERT/DELETE with RETURNING
@@ -4974,9 +4736,17 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		{
 			/* Open nesting level in engine */
 			BeginCompositeTriggers(CurrentMemoryContext);
-			/* TSQL commands must run inside an explicit transaction */
+			/*
+			 * TSQL commands must run inside an explicit transaction.
+			 *
+			 * Skip this for the INSERT EXEC flush statement
+			 * The flush runs while the INSERT EXEC context is still active, 
+			 * so the matching per-statement commit further below is suppressed.
+			 * The flush is a single INSERT that runs correctly under autocommit.
+			 */
 			if (!pltsql_disable_batch_auto_commit && support_tsql_trans &&
-				stmt->txn_data == NULL && !IsTransactionBlockActive())
+				stmt->txn_data == NULL && !IsTransactionBlockActive() &&
+				insert_exec_flush_estate == NULL)
 			{
 				MemoryContext oldCxt = CurrentMemoryContext;
 
@@ -5033,6 +4803,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			case SPI_OK_INSERT:
 			case SPI_OK_UPDATE:
 			case SPI_OK_DELETE:
+			case SPI_OK_MERGE:
 			case SPI_OK_INSERT_RETURNING:
 			case SPI_OK_UPDATE_RETURNING:
 			case SPI_OK_DELETE_RETURNING:
@@ -5080,12 +4851,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
 					 expr->query, SPI_result_code_string(rc));
 				break;
-		}
-
-		/* Update the output parameter */
-		if (stmt->insert_exec && stmt->target && execute_call_insert_exec_retval != (Datum) 0)
-		{
-			exec_move_row_from_datum(estate, stmt->target, execute_call_insert_exec_retval);
 		}
 
 		if (enable_txn_in_triggers)
@@ -5237,12 +5002,16 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * Always commit to match auto commit behavior for each statement
 		 * inside batch or procedure, but not user-defined function or
 		 * procedure invoked by INSERT ... EXECUTE.
+		 *
+		 * Also skip commit during INSERT EXEC or its flush phase to avoid
+		 * orphaning SPI portal snapshots.
 		 */
 		/* TODO To let procedure call from PSQL work with old semantics */
 		if ((!pltsql_disable_batch_auto_commit || (stmt->txn_data != NULL)) &&
 			support_tsql_trans &&
 			(enable_txn_in_triggers || estate->trigdata == NULL) &&
-			!ro_func && !estate->insert_exec)
+			!ro_func &&
+			!pltsql_insert_exec_active())
 		{
 			commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED));
 
@@ -5270,25 +5039,68 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	return PLTSQL_RC_OK;
 }
 
+/*
+ * Record the columns set by one INSERT or UPDATE target list of the statement
+ * being executed, tagged with the command type of the action that sets them.
+ * UPDATE() and COLUMNS_UPDATED() inside a trigger report only the columns
+ * recorded for the action the trigger was fired for.
+ */
 static void
-updateColumnUpdatedList(Query *query)
+recordUpdatedColumns(Relation rel, List *targetList, CmdType action)
 {
 	ListCell   *lcj;
 	List	   *curr_columns_list;
 	TargetEntry *target_entry;
-	Relation	rel;
 	TupleDesc	tupdesc;
 	MemoryContext oldContext;
 	UpdatedColumn *updateColumn;
 	int			length;
-	List	   *targetList;
 
-	if (!(query->commandType == CMD_UPDATE || query->commandType == CMD_INSERT))
+	foreach(lcj, targetList)
+	{
+		target_entry = (TargetEntry *) lfirst(lcj);
+		if (target_entry->resjunk || target_entry->resname == NULL)
+			continue;
+		tupdesc = RelationGetDescr(rel);
+		oldContext = MemoryContextSwitchTo(TopMemoryContext);
+		length = list_length(columns_updated_list);
+		updateColumn = (UpdatedColumn *) palloc(sizeof(UpdatedColumn));
+		updateColumn->x_attnum = target_entry->resno;
+		updateColumn->trigger_depth = pltsql_trigger_depth;
+		updateColumn->total_columns = tupdesc->natts;
+		updateColumn->column_name = target_entry->resname;
+		updateColumn->action = action;
+		if (length < pltsql_trigger_depth + 1)
+		{
+			curr_columns_list = NIL;
+			while (length < pltsql_trigger_depth)
+			{
+				columns_updated_list = lappend(columns_updated_list, NIL);
+				length++;
+			}
+			curr_columns_list = list_make1(updateColumn);
+			columns_updated_list = lappend(columns_updated_list, curr_columns_list);
+		}
+		else
+		{
+			curr_columns_list = (List *) list_nth(columns_updated_list, pltsql_trigger_depth);
+			curr_columns_list = lappend(curr_columns_list, updateColumn);
+		}
+		MemoryContextSwitchTo(oldContext);
+	}
+}
+
+static void
+updateColumnUpdatedList(Query *query)
+{
+	Relation	rel;
+
+	if (query->commandType != CMD_UPDATE &&
+		query->commandType != CMD_INSERT &&
+		query->commandType != CMD_MERGE)
 		return;
 
-	targetList =
-		query->targetList;
-	if (query->rtable == NULL || targetList == NULL)
+	if (query->rtable == NULL)
 		return;
 	rel = RelationIdGetRelation(((RangeTblEntry *) list_nth(query->rtable, query->resultRelation - 1))->relid);
 	if (!rel)
@@ -5301,35 +5113,29 @@ updateColumnUpdatedList(Query *query)
 	if (rel->trigdesc && rel->trigdesc->numtriggers > 0)
 	{
 		/* we only need call this structure inside triggers */
-		foreach(lcj, targetList)
+		if (query->commandType == CMD_MERGE)
 		{
-			target_entry = (TargetEntry *) lfirst(lcj);
-			tupdesc = RelationGetDescr(rel);
-			oldContext = MemoryContextSwitchTo(TopMemoryContext);
-			length = list_length(columns_updated_list);
-			updateColumn = (UpdatedColumn *) palloc(sizeof(UpdatedColumn));
-			updateColumn->x_attnum = target_entry->resno;
-			updateColumn->trigger_depth = pltsql_trigger_depth;
-			updateColumn->total_columns = tupdesc->natts;
-			updateColumn->column_name = target_entry->resname;
-			if (length < pltsql_trigger_depth + 1)
+			ListCell   *lcm;
+
+			/*
+			 * MERGE carries one target list per action rather than a single
+			 * statement target list. Record the columns of each INSERT and
+			 * UPDATE action under the action's own command type: a trigger
+			 * fired for one of the actions then reports the columns of that
+			 * action only, as it would for the equivalent plain statement,
+			 * and a trigger fired for the DELETE action reports none.
+			 */
+			foreach(lcm, query->mergeActionList)
 			{
-				curr_columns_list = NIL;
-				while (length < pltsql_trigger_depth)
-				{
-					columns_updated_list = lappend(columns_updated_list, NIL);
-					length++;
-				}
-				curr_columns_list = list_make1(updateColumn);
-				columns_updated_list = lappend(columns_updated_list, curr_columns_list);
+				MergeAction *action = (MergeAction *) lfirst(lcm);
+
+				if (action->commandType == CMD_UPDATE ||
+					action->commandType == CMD_INSERT)
+					recordUpdatedColumns(rel, action->targetList, action->commandType);
 			}
-			else
-			{
-				curr_columns_list = (List *) list_nth(columns_updated_list, pltsql_trigger_depth);
-				curr_columns_list = lappend(curr_columns_list, updateColumn);
-			}
-			MemoryContextSwitchTo(oldContext);
 		}
+		else
+			recordUpdatedColumns(rel, query->targetList, query->commandType);
 	}
 	RelationClose(rel);
 }
@@ -5900,6 +5706,7 @@ exec_stmt_dynexecute(PLtsql_execstate *estate,
 		case SPI_OK_INSERT:
 		case SPI_OK_UPDATE:
 		case SPI_OK_DELETE:
+		case SPI_OK_MERGE:
 		case SPI_OK_INSERT_RETURNING:
 		case SPI_OK_UPDATE_RETURNING:
 		case SPI_OK_DELETE_RETURNING:
@@ -9926,6 +9733,16 @@ pltsql_xact_cb(XactEvent event, void *arg)
 	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_ABORT)
 	{
 		ResetTopTransactionName();
+
+		/*
+		 * Clean up INSERT EXEC context on transaction end. This is a signal that an
+		 * aborted INSERT EXEC has nothing to flush: on abort the buffer temp
+		 * table is gone, so clearing the context here makes the subsequent
+		 * flush a no-op (it early-returns on a NULL context) instead of
+		 * opening a dropped relation.
+		 */
+		if (pltsql_insert_exec_active())
+			pltsql_insert_exec_reset_all();
 	}
 
 	/*

@@ -73,18 +73,28 @@ go
 
 select * into dest_table_1 from t1_select_into order by [Col1]
 go
+~~ROW COUNT: 2~~
+
 
 select * into dest_table_2 from sch_select_into.t1_select_into group by [Col3], [Col4]
 go
+~~ROW COUNT: 1~~
+
 
 select * into dest_table_3 from master.sch_select_into_master.t1_select_into_master
 go
+~~ROW COUNT: 1~~
+
 
 select * into dest_table_4 from master..t1_select_into_master
 go
+~~ROW COUNT: 1~~
+
 
 select * into dest_table_5 from master.dbo.t1_select_into_master_dec
 go
+~~ROW COUNT: 1~~
+
 
 exec sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_identity_function', 'ignore';
 go
@@ -224,6 +234,8 @@ from dest_table_1 t1
 inner join dest_table_2 t2
 on t1.[Col1] * 2 = t2.[Col3]
 go
+~~ROW COUNT: 3~~
+
 
 select * from dest_table_join order by [Col1], [Col2]
 go
@@ -275,6 +287,8 @@ from
     select * from dest_table_3
 ) as combined_tables
 go
+~~ROW COUNT: 5~~
+
 
 select * from dest_table_union order by [Col1]
 go
@@ -324,6 +338,8 @@ from
     on t1.[Col1] * 2 = t2.[Col3]
 ) as combined_tables
 go
+~~ROW COUNT: 3~~
+
 
 select * from dest_table_sub_join order by [Col1], [Col2]
 go
@@ -367,6 +383,8 @@ int#!#nvarchar#!#smallint#!#numeric
 
 select * into dest_table_view from v1_select_into
 go
+~~ROW COUNT: 2~~
+
 
 select * from dest_table_view order by [Col1], [Col2]
 go
@@ -439,6 +457,8 @@ GO
 
 SELECT * INTO #babel_5661_new1 FROM babel_5661_source
 GO
+~~ROW COUNT: 6~~
+
 SELECT * FROM #babel_5661_new1 ORDER BY id
 GO
 ~~START~~
@@ -473,6 +493,8 @@ int#!#int
 -- filter rows using where clause so that new table's identity != source tables's identity
 SELECT * INTO #babel_5661_new2 FROM babel_5661_source WHERE id1 < 4
 GO
+~~ROW COUNT: 3~~
+
 -- identity should start from 4
 INSERT INTO #babel_5661_new2 VALUES (4)
 GO
@@ -494,6 +516,8 @@ DBCC CHECKIDENT ('dbo.babel_5661_source', RESEED, 9);
 GO
 SELECT * INTO #babel_5661_new3 FROM babel_5661_source
 GO
+~~ROW COUNT: 6~~
+
 -- Identity should start from 7 even though source tables identity next value is 10
 INSERT INTO #babel_5661_new3 VALUES (7)
 GO
@@ -551,6 +575,8 @@ GO
 
 SELECT * INTO #babel_5661_new4 FROM babel_5661_source WHERE id < 99
 GO
+~~ROW COUNT: 9~~
+
 -- Identity should start from 12 even though source tables identity next value is 100
 INSERT INTO #babel_5661_new4 VALUES (12)
 GO
@@ -591,6 +617,8 @@ GO
 
 SELECT * INTO #babel_5661_new1 FROM babel_5661_source
 GO
+~~ROW COUNT: 6~~
+
 SELECT * FROM #babel_5661_new1 ORDER BY id
 GO
 ~~START~~
@@ -625,6 +653,8 @@ int#!#int
 -- filter rows using where clause so that new table's identity != source tables's identity
 SELECT * INTO #babel_5661_new2 FROM babel_5661_source WHERE id1 > -4
 GO
+~~ROW COUNT: 3~~
+
 -- identity should start from 4
 INSERT INTO #babel_5661_new2 VALUES (-4)
 GO
@@ -646,6 +676,8 @@ DBCC CHECKIDENT ('dbo.babel_5661_source', RESEED, -9);
 GO
 SELECT * INTO #babel_5661_new3 FROM babel_5661_source
 GO
+~~ROW COUNT: 6~~
+
 -- Identity should start from 7 even though source tables identity next value is 10
 INSERT INTO #babel_5661_new3 VALUES (-7)
 GO
@@ -703,6 +735,8 @@ GO
 
 SELECT * INTO #babel_5661_new4 FROM babel_5661_source WHERE id > -99
 GO
+~~ROW COUNT: 9~~
+
 -- Identity should start from 12 even though source tables identity next value is 100
 INSERT INTO #babel_5661_new4 VALUES (-12)
 GO
@@ -756,6 +790,8 @@ GO
 -- Identity and nullability should NOT be carried over when source is view
 SELECT * INTO #t2 FROM babel_5661_source_view ORDER BY id
 GO
+~~ROW COUNT: 10~~
+
 
 -- this should pass because neither identity nor nullability should be carried over for view as source table
 -- in future we may change this
@@ -767,6 +803,8 @@ GO
 -- if identity column has multiple occurence then we should not carry it to new table
 SELECT id AS a, id AS b INTO #t5 FROM babel_5661_source
 GO
+~~ROW COUNT: 10~~
+
 INSERT INTO #t5 VALUES (1, 1)
 GO
 ~~ROW COUNT: 1~~
@@ -778,10 +816,16 @@ go
 
 SELECT id AS a, id AS b, IDENTITY(int, 1, 1) AS c INTO #t15 FROM babel_5661_source
 GO
+~~ROW COUNT: 10~~
+
 SELECT id AS a, IDENTITY(int, 1, 1) AS c, id AS b INTO #t16 FROM babel_5661_source
 GO
+~~ROW COUNT: 10~~
+
 SELECT IDENTITY(int, 1, 1) AS c, id AS b, id AS a INTO #t17 FROM babel_5661_source
 GO
+~~ROW COUNT: 10~~
+
 
 INSERT INTO #t15 VALUES (1, 1)
 GO
@@ -827,6 +871,8 @@ GO
 -- tsql user=babel_5661_login password=12345678
 SELECT * INTO #t1 FROM babel_5661_source
 GO
+~~ROW COUNT: 10~~
+
 INSERT INTO #t1 VALUES (-100)
 GO
 ~~ROW COUNT: 1~~
@@ -889,6 +935,8 @@ INTO babel_5661_NewTable
 FROM babel_5661_SourceTable s
 LEFT JOIN babel_5661_ConfigTable c ON s.ID = c.ConfigID;
 GO
+~~ROW COUNT: 2~~
+
 
 
 DROP VIEW IF EXISTS babel_5661_source_view

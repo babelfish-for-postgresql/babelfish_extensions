@@ -1,0 +1,578 @@
+# Multilinestring Geometry Test Cases
+
+CREATE TABLE GEOSPATIALMULTILINESTRINGGEOM_dt (location geometry)
+ALTER TABLE GEOSPATIALMULTILINESTRINGGEOM_dt ADD id INT IDENTITY(1,1);
+
+# Positive Test for STGeomFromText with SRID 4326 — 2D
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((0 0, 1 1, 2 2))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((0 0, 1 1, 2 2), (3 3, 4 4, 5 5))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((0 0, 1 1), (2 2, 3 3), (4 4, 5 5))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((0 0, 5 5))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((0 0, 1 0), (0 1, 1 1), (0 2, 1 2), (0 3, 1 3), (0 4, 1 4))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((0 0, 1 1, 2 0, 3 1, 4 0, 5 1, 6 0, 7 1, 8 0, 9 1, 10 0))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((-1 -2, -3 -4))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((-1 2, 3 -4, 0 0))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1.5 2.7, 3.14159 4.00001))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((0.000001 0.000001, 0.000002 0.000002))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((0 0, 1 0, 1 1, 0 1, 0 0))', 4326));
+~~ROW COUNT: 1~~
+
+
+# 2D — Patterns
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((0 0, 10 0), (0 5, 10 5), (0 10, 10 10))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((0 5, 10 5), (5 0, 5 10))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((0 0, 5 10), (5 10, 10 0), (10 0, 0 0))', 4326));
+~~ROW COUNT: 1~~
+
+
+# 3D (XYZ)
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1 2 3, 4 5 6))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1 2 3, 4 5 6, 7 8 9))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1 2 3, 4 5 6), (7 8 9, 10 11 12))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1.1 2.2 3.3, 4.4 5.5 6.6))', 4326));
+~~ROW COUNT: 1~~
+
+
+# 2DM (XYM)
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1 2 NULL 4, 5 6 NULL 8))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1 2 NULL 10, 3 4 NULL 20, 5 6 NULL 30))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1 2 NULL 4, 5 6 NULL 8), (7 8 NULL 12, 9 10 NULL 16))', 4326));
+~~ROW COUNT: 1~~
+
+
+# 4D (XYZM)
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1 2 3 4, 5 6 7 8))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1 2 3 4, 5 6 7 8, 9 10 11 12))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1 2 3 4, 5 6 7 8), (9 10 11 12, 13 14 15 16))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1.1 2.2 3.3 4.4, 5.5 6.6 7.7 8.8))', 4326));
+~~ROW COUNT: 1~~
+
+
+# EMPTY
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+
+# Negative Test when SRID is not valid
+# SRID should be between 0 to 999999
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1 1, 3 5))', 1000000000));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SRID value should be between 0 and 999999)~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1 1, 3 5))', -1));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SRID value should be between 0 and 999999)~~
+
+
+# Negative Test for STGeomFromText when a coordinate is missing
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1 1, 3 5),(-5 3))', 4326));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: geometry requires more points)~~
+
+
+# Negative Test for STGeomFromText when Incorrect cast is provided
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_dt (location) VALUES (geography::STGeomFromText('MULTILINESTRING((1 1, 3 5))', 4326));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "location" is of type geometry but expression is of type geography)~~
+
+
+# Cross-type reference table for spatial operations
+CREATE TABLE GEOSPATIALPOINTGEOM_mlsr (location geometry)
+ALTER TABLE GEOSPATIALPOINTGEOM_mlsr ADD id INT IDENTITY(1,1);
+
+INSERT INTO GEOSPATIALPOINTGEOM_mlsr (location) VALUES (geometry::STGeomFromText('LINESTRING EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_mlsr (location) VALUES (geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_mlsr (location) VALUES (geometry::STGeomFromText('LINESTRING(0 0, 1 1, 2 2)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALPOINTGEOM_mlsr (location) VALUES (geometry::STGeomFromText('POINT EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+
+# Test with invalid instances
+CREATE TABLE GEOSPATIALMULTILINESTRINGGEOM_INVALID_dt (location geometry)
+ALTER TABLE GEOSPATIALMULTILINESTRINGGEOM_INVALID_dt ADD id INT IDENTITY(1,1);
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOM_INVALID_dt (location) VALUES (geometry::STGeomFromText('MULTILINESTRING((1 2 3 4 5, 6 7 8 9 10))', 4326));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid geometry)~~
+
+
+# Views for geometry multilinestring properties
+CREATE VIEW DimOfGeometrymultilinestring AS SELECT location.STAsText() AS geometry, location.STDimension() AS dimension FROM GEOSPATIALMULTILINESTRINGGEOM_dt ORDER BY id;
+
+CREATE VIEW NumPointsOfGeometrymultilinestring AS SELECT location.STAsText() AS geometry, location.STNumPoints() AS numpoints FROM GEOSPATIALMULTILINESTRINGGEOM_dt ORDER BY id;
+
+CREATE VIEW TextFromGeometrymultilinestring AS SELECT location.STAsText() AS text FROM GEOSPATIALMULTILINESTRINGGEOM_dt ORDER BY id;
+
+CREATE VIEW BinaryFromGeometrymultilinestring AS SELECT location.STAsText() AS geometry, location.STAsBinary() AS binary FROM GEOSPATIALMULTILINESTRINGGEOM_dt ORDER BY id;
+
+CREATE VIEW SridFromGeometrymultilinestring AS SELECT location.STAsText() AS geometry, location.STSrid AS srid FROM GEOSPATIALMULTILINESTRINGGEOM_dt ORDER BY id;
+
+CREATE VIEW EmptyGeometrymultilinestring AS SELECT location.STAsText() AS geometry, location.STIsEmpty() AS isempty FROM GEOSPATIALMULTILINESTRINGGEOM_dt ORDER BY id;
+
+CREATE VIEW ValidGeometrymultilinestring AS SELECT location.STAsText() AS geometry, location.STIsValid() AS isvalid FROM GEOSPATIALMULTILINESTRINGGEOM_dt ORDER BY id;
+
+CREATE VIEW GeomTypeOfGeometrymultilinestring AS SELECT location.STAsText() AS geometry, location.STGeometryType() AS geomtype FROM GEOSPATIALMULTILINESTRINGGEOM_dt ORDER BY id;
+
+# Spatial operation views — multilinestring vs multilinestring
+CREATE VIEW DisjointTempGeommultilinestring AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALMULTILINESTRINGGEOM_dt p1 CROSS JOIN GEOSPATIALMULTILINESTRINGGEOM_dt p2 ORDER BY p1.id;
+
+CREATE VIEW DistanceTempGeommultilinestring AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, CAST(STDistance(p1.location, p2.location) AS numeric(20, 6)) AS distance FROM GEOSPATIALMULTILINESTRINGGEOM_dt p1 CROSS JOIN GEOSPATIALMULTILINESTRINGGEOM_dt p2 ORDER BY p1.id;
+
+CREATE VIEW IntersectsTempGeommultilinestring AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STIntersects(p2.location) AS intersecting FROM GEOSPATIALMULTILINESTRINGGEOM_dt p1 CROSS JOIN GEOSPATIALMULTILINESTRINGGEOM_dt p2 ORDER BY p1.id;
+
+CREATE VIEW EqualsTempGeommultilinestring AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STEquals(p2.location) AS equals FROM GEOSPATIALMULTILINESTRINGGEOM_dt p1 CROSS JOIN GEOSPATIALMULTILINESTRINGGEOM_dt p2 ORDER BY p1.id;
+
+CREATE VIEW ContainTempGeommultilinestring AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STContains(p2.location) AS contain FROM GEOSPATIALMULTILINESTRINGGEOM_dt p1 CROSS JOIN GEOSPATIALMULTILINESTRINGGEOM_dt p2 ORDER BY p1.id;
+
+CREATE VIEW equals_opgeommultilinestring AS SELECT p1.location AS line FROM GEOSPATIALMULTILINESTRINGGEOM_dt p1 CROSS JOIN GEOSPATIALMULTILINESTRINGGEOM_dt p2 WHERE p1.location = p2.location ORDER BY p1.id;
+
+CREATE VIEW notequal_opgeommultilinestring AS SELECT p1.location AS line FROM GEOSPATIALMULTILINESTRINGGEOM_dt p1 CROSS JOIN GEOSPATIALMULTILINESTRINGGEOM_dt p2 WHERE p1.location <> p2.location ORDER BY p1.id;
+
+# Spatial operation views — multilinestring vs point/linestring
+CREATE VIEW DisjointTempGeommlsr AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALMULTILINESTRINGGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_mlsr p2 ORDER BY p1.id;
+
+CREATE VIEW DistanceTempGeommlsr AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, CAST(STDistance(p1.location, p2.location) AS numeric(20, 6)) AS distance FROM GEOSPATIALMULTILINESTRINGGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_mlsr p2 ORDER BY p1.id;
+
+CREATE VIEW IntersectsTempGeommlsr AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STIntersects(p2.location) AS intersecting FROM GEOSPATIALMULTILINESTRINGGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_mlsr p2 ORDER BY p1.id;
+
+CREATE VIEW EqualsTempGeommlsr AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STEquals(p2.location) AS equals FROM GEOSPATIALMULTILINESTRINGGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_mlsr p2 ORDER BY p1.id;
+
+CREATE VIEW ContainTempGeommlsr AS SELECT p1.location.STAsText() AS geometry1, p2.location.STAsText() AS geometry2, p1.location.STContains(p2.location) AS contain FROM GEOSPATIALMULTILINESTRINGGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_mlsr p2 ORDER BY p1.id;
+
+CREATE VIEW equals_opgeommlsr AS SELECT p1.location AS line FROM GEOSPATIALMULTILINESTRINGGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_mlsr p2 WHERE p1.location = p2.location ORDER BY p1.id;
+
+CREATE VIEW notequal_opgeommlsr AS SELECT p1.location AS line FROM GEOSPATIALMULTILINESTRINGGEOM_dt p1 CROSS JOIN GEOSPATIALPOINTGEOM_mlsr p2 WHERE p1.location <> p2.location ORDER BY p1.id;
+
+# CAST to VARBINARY table
+CREATE TABLE geometryAsVarbinarymultilinestring (ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARBINARY(2000));
+
+INSERT INTO geometryAsVarbinarymultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING((0 0, 1 1, 2 2))', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinarymultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING((0 0, 1 1, 2 2), (3 3, 4 4, 5 5))', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinarymultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING((1 2 3, 4 5 6))', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinarymultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING((1 2 NULL 4, 5 6 NULL 8))', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinarymultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING((1 2 3 4, 5 6 7 8))', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinarymultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING((-1 -2, -3 -4))', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinarymultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING((1.5 2.7, 3.14159 4.00001))', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinarymultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING((0 0, 5 5))', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarbinarymultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING EMPTY', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+
+# CAST to VARCHAR table
+CREATE TABLE geometryAsVarcharmultilinestring (ID INT IDENTITY(1,1) PRIMARY KEY, geometryData VARCHAR(500));
+
+INSERT INTO geometryAsVarcharmultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING((0 0, 1 1, 2 2))', 4326) AS VARCHAR(500)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarcharmultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING((0 0, 1 1, 2 2), (3 3, 4 4, 5 5))', 4326) AS VARCHAR(500)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarcharmultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING((1 2 3, 4 5 6))', 4326) AS VARCHAR(500)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarcharmultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING((1 2 NULL 4, 5 6 NULL 8))', 4326) AS VARCHAR(500)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarcharmultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING((1 2 3 4, 5 6 7 8))', 4326) AS VARCHAR(500)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geometryAsVarcharmultilinestring (geometryData) VALUES (CAST(geometry::STGeomFromText('MULTILINESTRING EMPTY', 4326) AS VARCHAR(500)));
+~~ROW COUNT: 1~~
+
+
+# VARBINARY back to geometry table
+CREATE TABLE VarbinaryAsgeometrymultilinestring (ID INT IDENTITY(1,1) PRIMARY KEY, geometryData geometry);
+
+INSERT INTO VarbinaryAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTILINESTRING((0 0, 1 1, 2 2))', 4326) AS VARBINARY(2000)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTILINESTRING((0 0, 1 1, 2 2), (3 3, 4 4, 5 5))', 4326) AS VARBINARY(2000)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTILINESTRING((1 2 3, 4 5 6))', 4326) AS VARBINARY(2000)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTILINESTRING((1 2 NULL 4, 5 6 NULL 8))', 4326) AS VARBINARY(2000)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTILINESTRING((1 2 3 4, 5 6 7 8))', 4326) AS VARBINARY(2000)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarbinaryAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTILINESTRING EMPTY', 4326) AS VARBINARY(2000)) AS geometry));
+~~ROW COUNT: 1~~
+
+
+# VARCHAR to geometry table
+CREATE TABLE VarCharAsgeometrymultilinestring (ID INT IDENTITY(1,1) PRIMARY KEY, geometryData geometry);
+
+INSERT INTO VarCharAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST('MULTILINESTRING((0 0, 1 1, 2 2))' AS VARCHAR(500)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarCharAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST('MULTILINESTRING((0 0, 1 1, 2 2), (3 3, 4 4, 5 5))' AS VARCHAR(500)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarCharAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST('MULTILINESTRING((1 2 3, 4 5 6))' AS VARCHAR(500)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarCharAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST('MULTILINESTRING((1 2 NULL 4, 5 6 NULL 8))' AS VARCHAR(500)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarCharAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST('MULTILINESTRING((1 2 3 4, 5 6 7 8))' AS VARCHAR(500)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarCharAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST('MULTILINESTRING EMPTY' AS VARCHAR(500)) AS geometry));
+~~ROW COUNT: 1~~
+
+
+# GeoVarChar (geometry to VARCHAR back to geometry)
+CREATE TABLE GeoVarCharAsgeometrymultilinestring (ID INT IDENTITY(1,1) PRIMARY KEY, geometryData geometry);
+
+INSERT INTO GeoVarCharAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTILINESTRING((0 0, 1 1, 2 2))', 4326) AS VARCHAR(500)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarCharAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTILINESTRING((0 0, 1 1, 2 2), (3 3, 4 4, 5 5))', 4326) AS VARCHAR(500)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarCharAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTILINESTRING((1 2 3, 4 5 6))', 4326) AS VARCHAR(500)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarCharAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTILINESTRING((1 2 NULL 4, 5 6 NULL 8))', 4326) AS VARCHAR(500)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarCharAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTILINESTRING((1 2 3 4, 5 6 7 8))', 4326) AS VARCHAR(500)) AS geometry));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarCharAsgeometrymultilinestring (geometryData) VALUES (CAST(CAST(geometry::STGeomFromText('MULTILINESTRING EMPTY', 4326) AS VARCHAR(500)) AS geometry));
+~~ROW COUNT: 1~~
+
+
+
+# ============================================================================
+# Multilinestring Geography Test Cases
+# ============================================================================
+
+CREATE TABLE GEOSPATIALMULTILINESTRINGGEOG_dt (location geography)
+ALTER TABLE GEOSPATIALMULTILINESTRINGGEOG_dt ADD id INT IDENTITY(1,1);
+
+# Positive Test for geography multilinestring
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOG_dt (location) VALUES (geography::STGeomFromText('MULTILINESTRING((10 10, 20 20))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOG_dt (location) VALUES (geography::STGeomFromText('MULTILINESTRING((10 10, 20 20), (30 30, 40 40))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOG_dt (location) VALUES (geography::STGeomFromText('MULTILINESTRING((45 90, 50 100))', 4326));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOG_dt (location) VALUES (geography::STGeomFromText('MULTILINESTRING((0 0, 10 10, 20 20), (30 30, 40 40, 50 50))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOG_dt (location) VALUES (geography::STGeomFromText('MULTILINESTRING((10 10 100, 20 20 200))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOG_dt (location) VALUES (geography::STGeomFromText('MULTILINESTRING((10 10 100 1, 20 20 200 2))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOG_dt (location) VALUES (geography::STGeomFromText('MULTILINESTRING((10 10 NULL 1, 20 20 NULL 2))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOG_dt (location) VALUES (geography::STGeomFromText('MULTILINESTRING((-10 -10, -20 -20))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO GEOSPATIALMULTILINESTRINGGEOG_dt (location) VALUES (geography::STGeomFromText('MULTILINESTRING EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+
+# Cross-type reference table for geography
+CREATE TABLE geospatialpointxgeog_mlsr (location geography)
+ALTER TABLE geospatialpointxgeog_mlsr ADD id INT IDENTITY(1,1);
+
+INSERT INTO geospatialpointxgeog_mlsr (location) VALUES (geography::STGeomFromText('LINESTRING EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geospatialpointxgeog_mlsr (location) VALUES (geography::STGeomFromText('Point(47.65100 -22.34900)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geospatialpointxgeog_mlsr (location) VALUES (geography::STGeomFromText('LINESTRING(0 0, 10 10)', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geospatialpointxgeog_mlsr (location) VALUES (geography::STGeomFromText('POINT EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+
+# Views for geography multilinestring properties
+CREATE VIEW DimOfGeographymultilinestring AS SELECT location.STAsText() AS geography, location.STDimension() AS dimension FROM GEOSPATIALMULTILINESTRINGGEOG_dt ORDER BY id;
+
+CREATE VIEW NumPointsOfGeographymultilinestring AS SELECT location.STAsText() AS geography, location.STNumPoints() AS numpoints FROM GEOSPATIALMULTILINESTRINGGEOG_dt ORDER BY id;
+
+CREATE VIEW TextFromGeographymultilinestring AS SELECT location.STAsText() AS text FROM GEOSPATIALMULTILINESTRINGGEOG_dt ORDER BY id;
+
+CREATE VIEW BinaryFromGeographymultilinestring AS SELECT location.STAsText() AS geography, location.STAsBinary() AS binary FROM GEOSPATIALMULTILINESTRINGGEOG_dt ORDER BY id;
+
+CREATE VIEW SridFromGeographymultilinestring AS SELECT location.STAsText() AS geography, location.STSrid AS srid FROM GEOSPATIALMULTILINESTRINGGEOG_dt ORDER BY id;
+
+CREATE VIEW EmptyGeographymultilinestring AS SELECT location.STAsText() AS geography, location.STIsEmpty() AS isempty FROM GEOSPATIALMULTILINESTRINGGEOG_dt ORDER BY id;
+
+CREATE VIEW ValidGeographymultilinestring AS SELECT location.STAsText() AS geography, location.STIsValid() AS isvalid FROM GEOSPATIALMULTILINESTRINGGEOG_dt ORDER BY id;
+
+CREATE VIEW GeomTypeOfGeographymultilinestring AS SELECT location.STAsText() AS geography, location.STGeometryType() AS geomtype FROM GEOSPATIALMULTILINESTRINGGEOG_dt ORDER BY id;
+
+# Spatial operation views — geography multilinestring vs multilinestring
+CREATE VIEW DisjointTempGeogmultilinestring AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALMULTILINESTRINGGEOG_dt p1 CROSS JOIN GEOSPATIALMULTILINESTRINGGEOG_dt p2 ORDER BY p1.id;
+
+CREATE VIEW DistanceTempGeogmultilinestring AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, CAST(STDistance(p1.location, p2.location) AS numeric(20, 6)) AS distance FROM GEOSPATIALMULTILINESTRINGGEOG_dt p1 CROSS JOIN GEOSPATIALMULTILINESTRINGGEOG_dt p2 ORDER BY p1.id;
+
+CREATE VIEW IntersectsTempGeogmultilinestring AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, p1.location.STIntersects(p2.location) AS intersecting FROM GEOSPATIALMULTILINESTRINGGEOG_dt p1 CROSS JOIN GEOSPATIALMULTILINESTRINGGEOG_dt p2 ORDER BY p1.id;
+
+CREATE VIEW EqualsTempGeogmultilinestring AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, p1.location.STEquals(p2.location) AS equals FROM GEOSPATIALMULTILINESTRINGGEOG_dt p1 CROSS JOIN GEOSPATIALMULTILINESTRINGGEOG_dt p2 ORDER BY p1.id;
+
+CREATE VIEW equals_opgeogmultilinestring AS SELECT p1.location AS line FROM GEOSPATIALMULTILINESTRINGGEOG_dt p1 CROSS JOIN GEOSPATIALMULTILINESTRINGGEOG_dt p2 WHERE p1.location = p2.location ORDER BY p1.id;
+
+CREATE VIEW notequal_opgeogmultilinestring AS SELECT p1.location AS line FROM GEOSPATIALMULTILINESTRINGGEOG_dt p1 CROSS JOIN GEOSPATIALMULTILINESTRINGGEOG_dt p2 WHERE p1.location <> p2.location ORDER BY p1.id;
+
+# Spatial operation views — geography multilinestring vs point
+CREATE VIEW DisjointTempGeogmlsr AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, p1.location.STDisjoint(p2.location) AS disjoints FROM GEOSPATIALMULTILINESTRINGGEOG_dt p1 CROSS JOIN geospatialpointxgeog_mlsr p2 ORDER BY p1.id;
+
+CREATE VIEW DistanceTempGeogmlsr AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, CAST(STDistance(p1.location, p2.location) AS numeric(20, 6)) AS distance FROM GEOSPATIALMULTILINESTRINGGEOG_dt p1 CROSS JOIN geospatialpointxgeog_mlsr p2 ORDER BY p1.id;
+
+CREATE VIEW IntersectsTempGeogmlsr AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, p1.location.STIntersects(p2.location) AS intersecting FROM GEOSPATIALMULTILINESTRINGGEOG_dt p1 CROSS JOIN geospatialpointxgeog_mlsr p2 ORDER BY p1.id;
+
+CREATE VIEW EqualsTempGeogmlsr AS SELECT p1.location.STAsText() AS geography1, p2.location.STAsText() AS geography2, p1.location.STEquals(p2.location) AS equals FROM GEOSPATIALMULTILINESTRINGGEOG_dt p1 CROSS JOIN geospatialpointxgeog_mlsr p2 ORDER BY p1.id;
+
+CREATE VIEW equals_opgeogmlsr AS SELECT p1.location AS line FROM GEOSPATIALMULTILINESTRINGGEOG_dt p1 CROSS JOIN geospatialpointxgeog_mlsr p2 WHERE p1.location = p2.location ORDER BY p1.id;
+
+CREATE VIEW notequal_opgeogmlsr AS SELECT p1.location AS line FROM GEOSPATIALMULTILINESTRINGGEOG_dt p1 CROSS JOIN geospatialpointxgeog_mlsr p2 WHERE p1.location <> p2.location ORDER BY p1.id;
+
+# Geography CAST tables
+CREATE TABLE geographyAsVarbinarymultilinestring (ID INT IDENTITY(1,1) PRIMARY KEY, geographyData VARBINARY(2000));
+
+INSERT INTO geographyAsVarbinarymultilinestring (geographyData) VALUES (CAST(geography::STGeomFromText('MULTILINESTRING((10 10, 20 20))', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geographyAsVarbinarymultilinestring (geographyData) VALUES (CAST(geography::STGeomFromText('MULTILINESTRING((10 10, 20 20), (30 30, 40 40))', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geographyAsVarbinarymultilinestring (geographyData) VALUES (CAST(geography::STGeomFromText('MULTILINESTRING((10 10 100, 20 20 200))', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geographyAsVarbinarymultilinestring (geographyData) VALUES (CAST(geography::STGeomFromText('MULTILINESTRING((10 10 100 1, 20 20 200 2))', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geographyAsVarbinarymultilinestring (geographyData) VALUES (CAST(geography::STGeomFromText('MULTILINESTRING((10 10 NULL 1, 20 20 NULL 2))', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geographyAsVarbinarymultilinestring (geographyData) VALUES (CAST(geography::STGeomFromText('MULTILINESTRING EMPTY', 4326) AS VARBINARY(2000)));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE geographyAsVarcharmultilinestring (ID INT IDENTITY(1,1) PRIMARY KEY, geographyData VARCHAR(500));
+
+INSERT INTO geographyAsVarcharmultilinestring (geographyData) VALUES (CAST(geography::STGeomFromText('MULTILINESTRING((10 10, 20 20))', 4326) AS VARCHAR(500)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geographyAsVarcharmultilinestring (geographyData) VALUES (CAST(geography::STGeomFromText('MULTILINESTRING((10 10, 20 20), (30 30, 40 40))', 4326) AS VARCHAR(500)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geographyAsVarcharmultilinestring (geographyData) VALUES (CAST(geography::STGeomFromText('MULTILINESTRING((10 10 100, 20 20 200))', 4326) AS VARCHAR(500)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geographyAsVarcharmultilinestring (geographyData) VALUES (CAST(geography::STGeomFromText('MULTILINESTRING((10 10 100 1, 20 20 200 2))', 4326) AS VARCHAR(500)));
+~~ROW COUNT: 1~~
+
+INSERT INTO geographyAsVarcharmultilinestring (geographyData) VALUES (CAST(geography::STGeomFromText('MULTILINESTRING EMPTY', 4326) AS VARCHAR(500)));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE VarCharAsgeographymultilinestring (ID INT IDENTITY(1,1) PRIMARY KEY, geographyData geography);
+
+INSERT INTO VarCharAsgeographymultilinestring (geographyData) VALUES (CAST(CAST('MULTILINESTRING((10 10, 20 20))' AS VARCHAR(500)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarCharAsgeographymultilinestring (geographyData) VALUES (CAST(CAST('MULTILINESTRING((10 10, 20 20), (30 30, 40 40))' AS VARCHAR(500)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarCharAsgeographymultilinestring (geographyData) VALUES (CAST(CAST('MULTILINESTRING((10 10 100, 20 20 200))' AS VARCHAR(500)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarCharAsgeographymultilinestring (geographyData) VALUES (CAST(CAST('MULTILINESTRING((10 10 100 1, 20 20 200 2))' AS VARCHAR(500)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO VarCharAsgeographymultilinestring (geographyData) VALUES (CAST(CAST('MULTILINESTRING EMPTY' AS VARCHAR(500)) AS geography));
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE GeoVarCharAsgeographymultilinestring (ID INT IDENTITY(1,1) PRIMARY KEY, geographyData geography);
+
+INSERT INTO GeoVarCharAsgeographymultilinestring (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('MULTILINESTRING((10 10, 20 20))', 4326) AS VARCHAR(500)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarCharAsgeographymultilinestring (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('MULTILINESTRING((10 10, 20 20), (30 30, 40 40))', 4326) AS VARCHAR(500)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarCharAsgeographymultilinestring (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('MULTILINESTRING((10 10 100, 20 20 200))', 4326) AS VARCHAR(500)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarCharAsgeographymultilinestring (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('MULTILINESTRING((10 10 100 1, 20 20 200 2))', 4326) AS VARCHAR(500)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarCharAsgeographymultilinestring (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('MULTILINESTRING((10 10 NULL 1, 20 20 NULL 2))', 4326) AS VARCHAR(500)) AS geography));
+~~ROW COUNT: 1~~
+
+INSERT INTO GeoVarCharAsgeographymultilinestring (geographyData) VALUES (CAST(CAST(geography::STGeomFromText('MULTILINESTRING EMPTY', 4326) AS VARCHAR(500)) AS geography));
+~~ROW COUNT: 1~~
+
+
+# Geography bytea round-trip table
+CREATE TABLE geographyToByteamultilinestring (ID INT PRIMARY KEY, geo_multilinestring geography);
+
+INSERT INTO geographyToByteamultilinestring (ID, geo_multilinestring) VALUES (1, geography::STGeomFromText('MULTILINESTRING((10 10, 20 20))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geographyToByteamultilinestring (ID, geo_multilinestring) VALUES (2, geography::STGeomFromText('MULTILINESTRING((10 10, 20 20), (30 30, 40 40))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geographyToByteamultilinestring (ID, geo_multilinestring) VALUES (3, geography::STGeomFromText('MULTILINESTRING((10 10 100, 20 20 200))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geographyToByteamultilinestring (ID, geo_multilinestring) VALUES (4, geography::STGeomFromText('MULTILINESTRING((10 10 100 1, 20 20 200 2))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geographyToByteamultilinestring (ID, geo_multilinestring) VALUES (5, geography::STGeomFromText('MULTILINESTRING((10 10 NULL 1, 20 20 NULL 2))', 4326));
+~~ROW COUNT: 1~~
+
+INSERT INTO geographyToByteamultilinestring (ID, geo_multilinestring) VALUES (6, geography::STGeomFromText('MULTILINESTRING EMPTY', 4326));
+~~ROW COUNT: 1~~
+
+
+# Tests for Geometry type Prepared Statements
+CREATE TABLE GEOSPATIAL_MLSGEOMRCV_dt (location geometry)
+
+prepst#!#INSERT INTO GEOSPATIAL_MLSGEOMRCV_dt(location) values(?) #!#GEOMETRY|-|location|-|MULTILINESTRING ((0 0, 1 1, 2 2)):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTILINESTRING EMPTY:4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTILINESTRING ((1 2 3, 4 5 6)):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTILINESTRING ((1 2 NULL 4, 5 6 NULL 8)):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTILINESTRING ((1 2 3 4, 5 6 7 8)):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTILINESTRING ((0 0, 1 1), (2 2, 3 3)):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|MULTILINESTRING ((-1 -2, -3 -4)):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+
+
+# Tests for Geography type Prepared Statements
+CREATE TABLE GEOSPATIAL_MLSGEOGRCV_dt (location geography)
+
+prepst#!#INSERT INTO GEOSPATIAL_MLSGEOGRCV_dt(location) values(?) #!#GEOGRAPHY|-|location|-|MULTILINESTRING ((10 10, 20 20)):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTILINESTRING EMPTY:4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTILINESTRING ((10 10, 20 20), (30 30, 40 40)):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTILINESTRING ((10 10 100, 20 20 200)):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|MULTILINESTRING ((10 10 100 1, 20 20 200 2)):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary.)~~
+

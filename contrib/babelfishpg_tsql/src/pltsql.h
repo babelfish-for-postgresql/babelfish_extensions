@@ -77,6 +77,30 @@
 #define TSQL_SMALLMONEY_TYPMOD ((SMALLMONEY_PRECISION << 16) | FIXEDDECIMAL_SCALE) + VARHDRSZ
 #define TSQL_EXPLICIT_NULLABILITY_MARKER "tsql_explicit_nullability"
 
+/* Attribute/relation option names for storing original T-SQL names */
+#define ATTOPTION_BBF_ORIGINAL_NAME "bbf_original_name"
+#define ATTOPTION_BBF_ORIGINAL_TABLE_NAME "bbf_original_rel_name"
+#define ATTOPTION_BBF_TABLE_CREATE_DATE "bbf_rel_create_date"
+
+/*
+ * Internal ViewStmt option name recording the source-text location of a view's
+ * explicit column alias list '('. Set as a string literal in gram.y and
+ * gram-tsql-rule.y (grammar files use literals); consumed here to recover
+ * original (long/mixed-case) column alias names.
+ */
+#define BBF_VIEW_COLLIST_LOC_OPTION "bbf_view_collist_loc"
+
+/*
+ * Minimum byte length at which an identifier may have been truncated and
+ * hence may have an original name stored in reloptions/attoptions. Used as a
+ * fast-path guard to skip reloption lookups for clearly-short names. Set below
+ * NAMEDATALEN-1 (63) because multibyte truncation can back off to fewer bytes.
+ */
+#define BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD 60
+
+/* DefElem name for storing original index name location in grammar */
+#define TSQL_ORIGINAL_NAME_LOCATION "tsql_original_name_location"
+
 /*
  * Compiler's namespace item types
  */
@@ -1177,6 +1201,7 @@ typedef struct PLtsql_stmt_alter_db
 	int			lineno;
 	char	   *old_db_name;
 	char	   *new_db_name;
+	char	   *orig_new_db_name;
 } PLtsql_stmt_alter_db;
 
 /*
@@ -1290,7 +1315,6 @@ typedef struct PLtsql_stmt_execsql
 	bool		need_to_push_result;	/* push result to client */
 	bool		is_tsql_select_assign_stmt; /* T-SQL SELECT-assign (i.e.
 											 * SELECT @a=1) */
-	bool		insert_exec;	/* INSERT-EXEC stmt? */
 	bool		is_cross_db;	/* cross database reference */
 	bool		is_ddl;			/* DDL statement? */
 	char	   *schema_name;	/* Schema specified */
@@ -1665,12 +1689,6 @@ typedef struct PLtsql_execstate
 
 	int			tsql_trigger_flags;
 
-	/*
-	 * A same procedure can be invoked by either normal EXECUTE or INSERT ...
-	 * EXECUTE, and can behave differently.
-	 */
-	bool		insert_exec;
-
 	List	   *explain_infos;
 	instr_time	planning_start;
 	instr_time	planning_end;
@@ -1953,6 +1971,9 @@ typedef struct PLtsql_protocol_plugin
 	
 	Datum       (*sql_geography_from_bytea) (PG_FUNCTION_ARGS);
 
+	/* INSERT EXEC support */
+	bool		(*pltsql_insert_exec_active) (void);
+
 	/* Session level GUCs */
 	bool		quoted_identifier;
 	bool		arithabort;
@@ -2008,6 +2029,7 @@ typedef struct
 	int			trigger_depth;
 	int			total_columns;
 	char	   *column_name;
+	CmdType		action;			/* INSERT or UPDATE action that sets the column */
 } UpdatedColumn;
 
 extern IdentifierLookup pltsql_IdentifierLookup;
@@ -2183,6 +2205,7 @@ extern PLtsql_function *pltsql_compile(FunctionCallInfo fcinfo,
 									   bool forValidator);
 extern PLtsql_function *pltsql_compile_inline(char *proc_source,
 											  InlineCodeBlockArgs *args);
+extern char *pltsql_resolve_var_original_name(struct ParseState *pstate, Var *var);
 extern void pltsql_parser_setup(struct ParseState *pstate,
 								PLtsql_expr *expr);
 extern bool pltsql_parse_word(char *word1, const char *yytxt,
@@ -2318,8 +2341,12 @@ extern int	pltsql_yyparse(void);
 
 /* functions in hooks.c */
 extern char *extract_identifier(const char *start, int *last_pos);
+extern char *extract_multipart_identifier_name(const char *start);
 
 /* functions in pltsql_utils.c */
+extern char *get_original_relname(Oid relid, bool check_permission);
+extern char *get_bbf_original_column_name(Oid relid, AttrNumber attnum);
+extern char *get_inline_tvf_original_column_name(Oid funcid, AttrNumber attnum);
 extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);
 extern char *gen_dropfulltextindex_cmds(const char *index_name, const char *schema_name);
 extern char *get_fulltext_index_name(Oid relid, const char *table_name);
@@ -2358,6 +2385,7 @@ extern void pltsql_start_txn(void);
 extern void pltsql_commit_txn(void);
 extern void pltsql_rollback_txn(void);
 extern void pltsql_abort_any_transaction(void);
+extern void commit_stmt(PLtsql_execstate *estate, bool txnStarted);
 extern bool pltsql_get_errdata(int *tsql_error_code, int *tsql_error_severity, int *tsql_error_state);
 extern void pltsql_eval_txn_data(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt, CachedPlanSource *cachedPlanSource);
 extern bool is_sysname_column(ColumnDef *coldef);
@@ -2526,15 +2554,33 @@ extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags
 typedef struct InsertExecContext
 {
 	Oid			temp_table_oid;			/* OID of temp table for buffering */
+	char	   *target_table;
+	PLExecStateCallStack *call_stack_entry;	/* Call stack entry when INSERT EXEC started */
 	Oid			target_rel_oid;			/* OID of target table - lock held to detect schema changes */
 	bool		is_target_relation_modified;	/* Set by bbf_object_access_hook when target table is altered */
+	uint64		rows_processed;			/* Rows captured by the DestReceiver = INSERT EXEC rows-affected */
 } InsertExecContext;
 
-extern InsertExecContext insert_exec_ctx;
+extern InsertExecContext *insert_exec_ctx;
 
-extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list, const char *schema_name_in);
-extern void flush_insert_exec_temp_table(PLtsql_execstate *estate,
-										 const char *column_list);
+/*
+ * Set only during an INSERT EXEC flush. The flush runs through the inline
+ * handler, which pushes its own empty estate; this points back at the estate
+ * that declared the flush target so table-variable lookup, the implicit-
+ * transaction decision, and ownership chaining all resolve against the caller.
+ */
+extern PLtsql_execstate *insert_exec_flush_estate;
+
+extern Oid create_insert_exec_temp_table(const char *target_table, const char *column_list, const char *schema_name_in, const char *db_name_in);
+extern void pltsql_set_insert_exec_context_info(const char *target_table);
+extern void pltsql_insert_exec_reset_all(void);
+extern bool pltsql_insert_exec_active(void);
+extern bool pltsql_insert_exec_error_at_trycatch_level(void);
+extern void pltsql_insert_exec_open_target_table(const char *target_table,const char *schema_name_in,
+                                                  const char *db_name_in);
+extern void pltsql_insert_exec_validate_column_count(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt);
+
+/* INSERT EXEC helper functions */
 extern DestReceiver *CreateInsertExecDestReceiver(void);
 
 #define NUM_DB_OBJECTS 11

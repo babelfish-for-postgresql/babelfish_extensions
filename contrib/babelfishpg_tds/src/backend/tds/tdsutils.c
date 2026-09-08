@@ -960,6 +960,9 @@ is_babelfish_role(const char *role)
 	int			i;
 	bool			is_babelfish_login = false;
 
+	if (role == NULL)
+		return false;
+
 	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
 	role_oid = get_role_oid(role, true);	/* missing OK */
 	securityadmin = get_role_oid(BABELFISH_SECURITYADMIN, true);  /* missing OK */
@@ -1281,10 +1284,17 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 	{
 		RoleSpec   *rolespec = lfirst_node(RoleSpec, item);
 		Oid			roleid;
+		const char *rolename;
 
 		roleid = get_rolespec_oid(rolespec, false);
-		if (OidIsValid(roleid) && is_babelfish_role(rolespec->rolename))
+		if (!OidIsValid(roleid))
+			continue;
+
+		rolename = GetUserNameFromId(roleid, true);
+		if (is_babelfish_role(rolename))
 			check_babelfish_alterrole_restictions(false);
+		if (rolename)
+			pfree((char *) rolename);
 	}
 
 	return true;

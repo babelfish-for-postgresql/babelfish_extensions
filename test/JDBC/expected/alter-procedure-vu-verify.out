@@ -366,3 +366,18 @@ nvarchar#!#nvarchar#!#nvarchar
 alter_proc_p4#!#SQL#!#-- Test Case: confirm information_schema.routines is updated properly with comments<newline>CREATE <newline>-- test comment 1<newline>procedure alter_proc_p4 as select 4<newline>
 ~~END~~
 
+
+-- BABEL-6496: Verify ALTER PROCEDURE works with quote_literal_cstr fix
+CREATE PROCEDURE [babel_6496_test'proc] AS SELECT 1;
+GO
+ALTER PROCEDURE [babel_6496_test'proc] AS SELECT 2;
+GO
+EXEC [babel_6496_test'proc];
+GO
+~~START~~
+int
+2
+~~END~~
+
+DROP PROCEDURE [babel_6496_test'proc];
+GO

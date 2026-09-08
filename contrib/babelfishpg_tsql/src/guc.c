@@ -51,6 +51,7 @@ bool		pltsql_enable_linked_servers = true;
 bool		pltsql_enable_ownership_chaining = true;
 bool		pltsql_allow_windows_login = true;
 bool		pltsql_allow_fulltext_parser = false;
+bool		pltsql_enable_tsql_merge = false;
 
 bool		pltsql_xact_abort = false;
 bool		pltsql_implicit_transactions = false;
@@ -59,7 +60,6 @@ bool		pltsql_disable_batch_auto_commit = false;
 bool		pltsql_disable_internal_savepoint = false;
 bool		pltsql_disable_txn_in_triggers = false;
 bool		pltsql_recursive_triggers = false;
-bool		pltsql_enable_new_insert_exec = false;
 bool		pltsql_noexec = false;
 bool		pltsql_showplan_all = false;
 bool		pltsql_showplan_text = false;
@@ -702,6 +702,16 @@ define_custom_variables(void)
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_SUPERUSER_ONLY,
 							 NULL, NULL, NULL);
 
+	/* GUC for enabling or disabling T-SQL MERGE statement support */
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_tsql_merge",
+							 gettext_noop("GUC for enabling or disabling T-SQL MERGE statement support"),
+							 NULL,
+							 &pltsql_enable_tsql_merge,
+							 false,
+							 PGC_SUSET,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_SUPERUSER_ONLY,
+							 NULL, NULL, NULL);
+
 	/* ISO standard settings */
 	DefineCustomBoolVariable("babelfishpg_tsql.ansi_defaults",
 							 gettext_noop("Controls a group of settings that collectively specify some "
@@ -953,15 +963,6 @@ define_custom_variables(void)
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
-	DefineCustomBoolVariable("babelfishpg_tsql.enable_new_insert_exec",
-							 gettext_noop("Enables INSERT...EXEC redesign code path"),
-							 NULL,
-							 &pltsql_enable_new_insert_exec,
-							 false,
-							 PGC_SUSET,
-							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							 NULL, NULL, NULL);
-
 	DefineCustomBoolVariable("babelfishpg_tsql.noexec",
 							 gettext_noop("SQL-Server compatibility NOEXEC option."),
 							 NULL,
@@ -1134,7 +1135,7 @@ define_custom_variables(void)
 							 NULL,
 							 &pltsql_enable_create_alter_view_from_pg,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 	/*
@@ -1145,7 +1146,7 @@ define_custom_variables(void)
 							 NULL,
 							 &pltsql_enable_alter_owner_from_pg,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
@@ -1181,7 +1182,7 @@ define_custom_variables(void)
 							 NULL,
 							 &babelfish_dump_restore,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
@@ -1190,7 +1191,7 @@ define_custom_variables(void)
 							 NULL,
 							 &restore_tsql_tabletype,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
@@ -1199,7 +1200,7 @@ define_custom_variables(void)
 							   NULL,
 							   &babelfish_dump_restore_min_oid,
 							   NULL,
-							   PGC_USERSET,
+							   PGC_SUSET,
 							   GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							   check_babelfish_dump_restore_min_oid, NULL, NULL);
 
@@ -1339,6 +1340,7 @@ int			pltsql_isolation_level_repeatable_read = ISOLATION_OFF;
 int 		pltsql_isolation_level_serializable = ISOLATION_OFF;
 int 		escape_hatch_identity_function = EH_STRICT;
 int 		escape_hatch_insert_bulk_options = EH_IGNORE;
+int 		escape_hatch_spatial_index = EH_STRICT;
 
 void
 define_escape_hatch_variables(void)
@@ -1441,6 +1443,18 @@ define_escape_hatch_variables(void)
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
+	/* spatial index */
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_spatial_index",
+							 gettext_noop("escape hatch for CREATE SPATIAL INDEX USING/WITH options; "
+										  "PostGIS GiST is self-tuning and cannot honor these parameters"),
+							 NULL,
+							 &escape_hatch_spatial_index,
+							 EH_STRICT,
+							 escape_hatch_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
 
 	/* compatibility_level */
 

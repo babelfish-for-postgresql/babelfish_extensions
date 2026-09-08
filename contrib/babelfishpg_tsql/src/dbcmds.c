@@ -511,35 +511,42 @@ getAvailDbid(void)
 int16
 getDbidForLogicalDbRestore(Oid relid)
 {
-	const char *prev_current_user;
-	int16		dbid;
+	int16		dbid = InvalidDbid;
+	Oid 		save_userid;
+	int 		save_sec_context;
 
 	/* Get new DB ID. Need sysadmin to do that. */
-	prev_current_user = GetUserNameFromId(GetUserId(), false);
-	bbf_set_current_user("sysadmin");
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(get_sysadmin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
-	/*
-	 * For sysdatabases table we need to generate new dbid for the database we
-	 * are currently restoring.
-	 */
-	if (relid == sysdatabases_oid)
+	PG_TRY();
 	{
-		if ((dbid = getAvailDbid()) == InvalidDbid)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_DATABASE_DEFINITION),
-					 errmsg("cannot find an available ID for new database.")));
+		/*
+		* For sysdatabases table we need to generate new dbid for the database we
+		* are currently restoring.
+		*/
+		if (relid == sysdatabases_oid)
+		{
+			if ((dbid = getAvailDbid()) == InvalidDbid)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_DATABASE_DEFINITION),
+						errmsg("cannot find an available ID for new database.")));
+		}
+
+		/*
+		* For all the other catalog tables which contain dbid column, get dbid
+		* using current value of the babelfish_db_seq sequence. It is ok to fetch
+		* current value of the sequence here since we already have generated new
+		* dbid while inserting into sysdatabases catalog.
+		*/
+		else
+			dbid = DirectFunctionCall1(currval_oid, get_sys_babelfish_db_seq_oid());
 	}
-
-	/*
-	 * For all the other catalog tables which contain dbid column, get dbid
-	 * using current value of the babelfish_db_seq sequence. It is ok to fetch
-	 * current value of the sequence here since we already have generated new
-	 * dbid while inserting into sysdatabases catalog.
-	 */
-	else
-		dbid = DirectFunctionCall1(currval_oid, get_sys_babelfish_db_seq_oid());
-
-	bbf_set_current_user(prev_current_user);
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
 
 	return dbid;
 }
@@ -547,8 +554,9 @@ getDbidForLogicalDbRestore(Oid relid)
 static Oid
 do_create_bbf_db(ParseState *pstate, const char *dbname, List *options, const char *owner)
 {
-	int16		dbid;
-	const char *prev_current_user;
+	int16		dbid = InvalidDbid;
+	Oid 		save_userid;
+	int 		save_sec_context;
 
 	if (DbidIsValid(get_db_id(dbname)))
 		ereport(ERROR,
@@ -557,13 +565,21 @@ do_create_bbf_db(ParseState *pstate, const char *dbname, List *options, const ch
 						dbname)));
 
 	/* Get new DB ID. Need sysadmin to do that. */
-	prev_current_user = GetUserNameFromId(GetUserId(), false);
-	bbf_set_current_user("sysadmin");
-	if ((dbid = getAvailDbid()) == InvalidDbid)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATABASE_DEFINITION),
-				 errmsg("cannot find an available ID for database \"%s\"", dbname)));
-	bbf_set_current_user(prev_current_user);
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(get_sysadmin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
+	PG_TRY();
+	{
+		if ((dbid = getAvailDbid()) == InvalidDbid)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATABASE_DEFINITION),
+					 errmsg("cannot find an available ID for database \"%s\"", dbname)));
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
 
 	create_bbf_db_internal(pstate, dbname, options, owner, dbid);
 
@@ -618,6 +634,7 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	const char  *old_createrole_self_grant;
 	ListCell    *option;
 	const char  *database_collation_name = NULL;
+	const char  *orig_dbname = NULL;
 
 	/* Check options */
 	foreach(option, options)
@@ -628,6 +645,35 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		{
 			database_collation_name = tsql_translate_tsql_collation_to_bbf_collation(defGetString(defel));
 			check_database_collation_name(database_collation_name);
+		}
+		else if (strcmp(defel->defname, TSQL_ORIGINAL_NAME_LOCATION) == 0)
+		{
+			/*
+			 * The T-SQL grammar records the byte offset of the database name
+			 * within the source text (see tsql_CreatedbStmt), mirroring how
+			 * other objects handle TSQL_ORIGINAL_NAME_LOCATION.
+			 *
+			 * Only the grammar-appended entry is trusted; it carries a DefElem
+			 * location of -1. A user-written CREATE DATABASE ... WITH
+			 * (tsql_original_name_location = ...) arrives with location >= 0 and
+			 * is rejected: this is an internal-only option, and honoring an
+			 * attacker-chosen offset would allow an out-of-bounds read of the
+			 * source text.
+			 */
+			if (defel->location >= 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("option \"%s\" is reserved for internal Babelfish use and cannot be set",
+								TSQL_ORIGINAL_NAME_LOCATION)));
+
+			if (pstate && pstate->p_sourcetext && defel->arg && IsA(defel->arg, Integer))
+			{
+				int		loc = intVal(defel->arg);
+
+				/* Bound the offset within the source text to avoid an OOB read. */
+				if (loc >= 0 && (size_t) loc < strlen(pstate->p_sourcetext))
+					orig_dbname = extract_identifier(pstate->p_sourcetext + loc, NULL);
+			}
 		}
 		else
 		{
@@ -701,6 +747,16 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	new_record[5] = CStringGetTextDatum(dbname);
 	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(0));
 	new_record[7] = CStringGetTextDatum("{}");
+	/*
+	 * Only persist the original name when it actually differs from the
+	 * physical (downcased/truncated) name; otherwise the physical name already
+	 * represents it faithfully and orig_name is left NULL. Readers fall back to
+	 * the physical name column when orig_name is NULL.
+	 */
+	if (orig_dbname && strcmp(orig_dbname, dbname) != 0)
+		new_record[8] = CStringGetTextDatum(orig_dbname);
+	else
+		new_record_nulls[8] = true;
 
 	tuple = heap_form_tuple(RelationGetDescr(sysdatabase_rel),
 							new_record, new_record_nulls);
@@ -795,11 +851,12 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	List               *db_users_list;
 	List               *parsetree_list;
 	ListCell           *parsetree_item;
-	const char         *prev_current_user;
 	int                save_sec_context;
 	bool               is_set_userid = false;
 	Oid                save_userid;
 	Oid                prev_session_user_id;
+	Oid				   parent_save_userid;
+	int 			   parent_save_sec_context;
 
 	if (IS_BBF_BUILT_IN_DB(dbname))
 	{
@@ -844,9 +901,9 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 
 	/* Set current user to session user for dropping permissions */
 	prev_session_user_id = GetSessionUserId();
-	prev_current_user = GetUserNameFromId(GetUserId(), false);
 
-	bbf_set_current_user("sysadmin");
+	GetUserIdAndSecContext(&parent_save_userid, &parent_save_sec_context);
+	SetUserIdAndSecContext(get_sysadmin_oid(), parent_save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	PG_TRY();
 	{
@@ -957,7 +1014,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 			SetUserIdAndSecContext(save_userid, save_sec_context);
 
 		/* Clean up. Restore previous state. */
-		bbf_set_current_user(prev_current_user);
+		SetUserIdAndSecContext(parent_save_userid, parent_save_sec_context);
 		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
 		PG_RE_THROW();
 	}
@@ -966,7 +1023,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	pfree(dbo_role);
 
 	/* Set current user back to previous user */
-	bbf_set_current_user(prev_current_user);
+	SetUserIdAndSecContext(parent_save_userid, parent_save_sec_context);
 }
 
 PG_FUNCTION_INFO_V1(create_builtin_dbs);

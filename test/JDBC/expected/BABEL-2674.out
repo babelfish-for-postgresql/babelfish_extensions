@@ -87,6 +87,8 @@ int
 
 SELECT A into babel_2674_t2 FROM babel_2674_t1;
 go
+~~ROW COUNT: 6~~
+
 select * from babel_2674_t2;
 go
 ~~START~~

@@ -18,6 +18,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "commands/defrem.h"
 #include "commands/prepare.h"
 #include "commands/tablecmds.h"
@@ -33,6 +34,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
+#include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/fmgroids.h"
@@ -104,6 +106,8 @@ static void rename_extended_property(ObjectType objtype,
 									 const char *var_schema_name,
 									 const char *var_major_name,
 									 const char *old_name, const char *new_name);
+static void remangle_table_indexes_after_rename(const char *schema_name,
+												const char *new_table_name);
 
 List	   *handle_bool_expr_rec(BoolExpr *expr, List *list, bool is_sp_describe_undeclared_parameters);
 List	   *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums, bool is_sp_describe_undeclared_parameters);
@@ -468,8 +472,10 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 			if (!result.success)
 				report_antlr_error(result);
 
-			/* Skip if NULL query was passed. */
-			if (pltsql_parse_result->body)
+			/* Skip if NULL query was passed or the batch shape is unexpected. */
+			if (pltsql_parse_result->body &&
+				list_length(pltsql_parse_result->body) >= 2 &&
+				((PLtsql_stmt *) lsecond(pltsql_parse_result->body))->cmd_type == PLTSQL_STMT_EXECSQL)
 			{
 				PLtsql_expr *sqlstmt = ((PLtsql_stmt_execsql *) lsecond(pltsql_parse_result->body))->sqlstmt;
 				if (sqlstmt)
@@ -3577,6 +3583,7 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 {
 	char		*old_db_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char		*new_db_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char		*orig_new_db_name = NULL;
 	char	  **splited_object_name;
 	const char *saved_dialect = GetConfigOption("babelfish_tsql.sql_dialect", true, true);
 	int len;
@@ -3629,6 +3636,11 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 					 errmsg("The value for the @newname parameter contains invalid characters or violates a basic restriction ((%s)).", new_db_name)));
 
 	pfree(new_db_name);
+	/*
+	 * Preserve the user-typed new name (case and length) for the orig_name
+	 * column before it is downcased/truncated into the physical key.
+	 */
+	orig_new_db_name = pstrdup(splited_object_name[3]);
 	new_db_name = !pltsql_case_insensitive_identifiers ?
 					pstrdup(splited_object_name[3]) :
 					downcase_identifier(splited_object_name[3], strlen(splited_object_name[3]), false, false);
@@ -3653,7 +3665,14 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 								GUC_CONTEXT_CONFIG,
 								PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-		rename_tsql_db(old_db_name, new_db_name);
+		/*
+		 * Only carry the original name if it actually differs from the
+		 * physical (downcased/truncated) key; otherwise the physical name is
+		 * already an accurate representation and orig_name defaults to it.
+		 */
+		rename_tsql_db(old_db_name, new_db_name,
+					   (orig_new_db_name && strcmp(orig_new_db_name, new_db_name) != 0) ?
+					   orig_new_db_name : NULL);
 	}
 	PG_FINALLY();
 	{
@@ -3737,6 +3756,19 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		if (new_name == NULL || strlen(new_name) == 0)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 							errmsg("Procedure or function 'sp_rename' expects parameter '@newname', which was not supplied.")));
+		/*
+		 * For TRIGGER (TA/TR), INDEX (IX) and COLUMN (CO) renames the containing
+		 * relation name (@curr_relname) is required: it is dereferenced later
+		 * via downcase_truncate_identifier(curr_relname, strlen(curr_relname)).
+		 * @curr_relname defaults to NULL and this procedure is granted to
+		 * PUBLIC, so a missing value would otherwise crash the backend on
+		 * strlen(NULL). Reject it here alongside the other required parameters.
+		 */
+		if (curr_relname == NULL &&
+			(strcmp(objtype, "TR") == 0 || strcmp(objtype, "TA") == 0 ||
+			 strcmp(objtype, "IX") == 0 || strcmp(objtype, "CO") == 0))
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+							errmsg("Procedure or function 'sp_rename' expects parameter '@curr_relname', which was not supplied.")));
 
 		/* 4. for each obj type, generate the corresponding RenameStmt */
 		/* update variables based on the target objtype */
@@ -3839,16 +3871,137 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 
 		rename_extended_property(objtype_code, schema_name, curr_relname,
 								 obj_name, new_name);
+
+		/*
+		 * BABEL-5052: a table's physical index names embed the table name
+		 * (index_name + table_name + md5(index_name), see
+		 * construct_unique_index_name). Renaming the table above does not
+		 * update those index names, so a later DROP/ALTER INDEX ... ON
+		 * <new_table> recomputes a physical name from the new table name and
+		 * fails to find the index. Re-mangle each dependent index to encode
+		 * the new table name.
+		 */
+		if (objtype_code == OBJECT_TABLE)
+			remangle_table_indexes_after_rename(schema_name, new_name);
 	}
 	PG_FINALLY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		/*
+		 * orig_proc_funcname is a file-scope global set (via pstrdup) on the
+		 * PROCEDURE/FUNCTION/TRIGGER rename paths and consumed later when the
+		 * original name is written to the catalog. If an error is thrown
+		 * between the assignment and that write, the transaction abort frees
+		 * the pstrdup'd memory but the global would keep pointing at it, so a
+		 * later successful rename in the same session could read a dangling
+		 * pointer. Clear it unconditionally here on every exit.
+		 */
+		orig_proc_funcname = NULL;
 	}
 	PG_END_TRY();
 	PG_RETURN_VOID();
 }
+
+/*
+ * remangle_table_indexes_after_rename
+ *
+ * BABEL-5052 helper. After a table has been renamed via sp_rename, walk each
+ * of its indexes and update the physical index name so that it encodes the new
+ * table name. Babelfish stores physical index names as
+ *   construct_unique_index_name(original_index_name, table_name)
+ *      = original_index_name || table_name || md5(original_index_name)
+ * The original (user-provided) index name is stored in the index relation's
+ * bbf_original_rel_name reloption (set by the long-identifier support), which
+ * we read directly here (the gated get_original_relname() helper only reads it
+ * for physically-long names, but short index names carry the reloption too).
+ */
+static void
+remangle_table_indexes_after_rename(const char *schema_name,
+									const char *new_table_name)
+{
+	char	   *physical_schema;
+	char	   *lower_newtable;
+	Oid			nspoid;
+	Oid			reloid;
+	Relation	rel;
+	List	   *indexoidlist;
+	ListCell   *lc;
+
+	if (schema_name == NULL || new_table_name == NULL)
+		return;
+
+	/*
+	 * sp_rename passes the logical (T-SQL) schema name (e.g. "dbo"); map it to
+	 * the physical PostgreSQL schema (e.g. "master_dbo") before catalog lookup.
+	 */
+	physical_schema = get_physical_schema_name(get_cur_db_name(), schema_name);
+	lower_newtable = downcase_truncate_identifier(new_table_name, strlen(new_table_name), false);
+
+	if (physical_schema == NULL)
+		return;
+
+	nspoid = get_namespace_oid(physical_schema, true);
+	if (!OidIsValid(nspoid))
+		return;
+
+	reloid = get_relname_relid(lower_newtable, nspoid);
+	if (!OidIsValid(reloid))
+		return;
+
+	rel = try_relation_open(reloid, AccessShareLock);
+	if (rel == NULL)
+		return;
+
+	/* Snapshot the index list; we close the relation before renaming. */
+	indexoidlist = list_copy(RelationGetIndexList(rel));
+	relation_close(rel, AccessShareLock);
+
+	foreach(lc, indexoidlist)
+	{
+		Oid			indexoid = lfirst_oid(lc);
+		char	   *orig_index_name;
+		char	   *cur_index_name;
+		char	   *new_index_name;
+
+		cur_index_name = get_rel_name(indexoid);
+		if (cur_index_name == NULL)
+			continue;
+
+		/*
+		 * Recover the original (user-provided) index name from the
+		 * bbf_original_rel_name reloption via the shared helper. For indexes
+		 * get_original_relname() always reads the reloption (its length gate
+		 * is bypassed for index relkinds), and falls back to the physical
+		 * relname when no original name is stored.
+		 */
+		orig_index_name = get_original_relname(indexoid, false);
+
+		/*
+		 * If the helper returned the physical name itself, the index has no
+		 * stored original name (e.g. an internal/constraint index not created
+		 * through the Babelfish mangling path), so leave it untouched.
+		 */
+		if (orig_index_name == NULL ||
+			strcmp(orig_index_name, cur_index_name) == 0)
+			continue;
+
+		new_index_name = construct_unique_index_name(
+			downcase_truncate_identifier(orig_index_name, strlen(orig_index_name), false),
+			lower_newtable);
+
+		/* Only rename when the physical name actually changes. */
+		if (strcmp(cur_index_name, new_index_name) != 0)
+		{
+			RenameRelationInternal(indexoid, new_index_name, true, true);
+			CommandCounterIncrement();
+		}
+	}
+
+	list_free(indexoidlist);
+}
+
 
 /*
  * Rename record in extended property as well when calling sp_rename.
@@ -3963,9 +4116,6 @@ rename_extended_property(ObjectType objtype, const char *var_schema_name,
 	}
 }
 
-extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
-extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
-
 static List *
 gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname)
 {
@@ -3988,6 +4138,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 			break;
 		case OBJECT_VIEW:
 			appendStringInfo(&query, "ALTER VIEW dummy RENAME TO dummy; ");
+			appendStringInfo(&query, "ALTER VIEW dummy SET (dummy = 'dummy'); ");
 			break;
 		case OBJECT_PROCEDURE:
 			appendStringInfo(&query, "ALTER PROCEDURE dummy RENAME TO dummy; ");
@@ -4025,6 +4176,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 
 	if ((objtype != OBJECT_TABLE) &&
 		(objtype != OBJECT_INDEX) &&
+		(objtype != OBJECT_VIEW) &&
 		(objtype != OBJECT_COLUMN) &&
 		(objtype != OBJECT_TRIGGER) &&
 		(list_length(res) != 1))
@@ -4057,12 +4209,13 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		}
 		else
 		{
-			renamestmt->subname = str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID);
-			renamestmt->newname = str_tolower(newobjname, strlen(newobjname), DEFAULT_COLLATION_OID);
-			renamestmt->relation->relname = str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID);
+			renamestmt->subname = downcase_truncate_identifier(objname, strlen(objname), false);
+			renamestmt->newname = downcase_truncate_identifier(newobjname, strlen(newobjname), false);
+			renamestmt->relation->relname = downcase_truncate_identifier(objname, strlen(objname), false);
 		}
 
-		if (objtype == OBJECT_TABLE || objtype == OBJECT_INDEX)
+		if (objtype == OBJECT_TABLE || objtype == OBJECT_INDEX ||
+			objtype == OBJECT_VIEW)
 		{
 			AlterTableStmt *altertablestmt;
 			AlterTableCmd *cmd;
@@ -4076,7 +4229,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterTableStmt")));
 
 			altertablestmt->relation->schemaname = str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID);
-			altertablestmt->relation->relname = str_tolower(newobjname, strlen(newobjname), DEFAULT_COLLATION_OID);
+			altertablestmt->relation->relname = downcase_truncate_identifier(newobjname, strlen(newobjname), false);
 			/* get data of the first node */
 			lc = list_head(altertablestmt->cmds);
 			cmd = (AlterTableCmd *) lfirst(lc);
@@ -4089,19 +4242,20 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 
 		renamestmt->renameType = objtype;
 		objwargs->objname = list_make2(makeString(pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID))), 
-											makeString(pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID))));
+											makeString(downcase_truncate_identifier(objname, strlen(objname), false)));
 		orig_proc_funcname = pstrdup(newname);
-		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
-		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
+		renamestmt->subname = downcase_truncate_identifier(objname, strlen(objname), false);
+		renamestmt->newname = downcase_truncate_identifier(newname, strlen(newname), false);
 	}
 	else if ((objtype == OBJECT_TRIGGER))
 	{
 		ObjectWithArgs *objwargs;
+		orig_proc_funcname = pstrdup(newname);
 		renamestmt->renameType = objtype;
 		renamestmt->relation->schemaname = pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID));
-		renamestmt->relation->relname = pstrdup(str_tolower(curr_relname, strlen(curr_relname), DEFAULT_COLLATION_OID));
-		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
-		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
+		renamestmt->relation->relname = downcase_truncate_identifier(curr_relname, strlen(curr_relname), false);
+		renamestmt->subname = downcase_truncate_identifier(objname, strlen(objname), false);
+		renamestmt->newname = downcase_truncate_identifier(newname, strlen(newname), false);
 		rewrite_object_refs(stmt);
 
 		// extra query nodes for ALTER FUNCTION
@@ -4112,9 +4266,9 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		objwargs = (ObjectWithArgs *) renamestmt->object;
 		renamestmt->renameType = OBJECT_FUNCTION;
 		objwargs->objname = list_make2(makeString(pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID))), 
-											makeString(pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID))));
-		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
-		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
+											makeString(downcase_truncate_identifier(objname, strlen(objname), false)));
+		renamestmt->subname = downcase_truncate_identifier(objname, strlen(objname), false);
+		renamestmt->newname = downcase_truncate_identifier(newname, strlen(newname), false);
 	}
 	else if (objtype == OBJECT_TYPE)
 	{
@@ -4133,10 +4287,10 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 
 		renamestmt->renameType = objtype;
 		renamestmt->relationType = OBJECT_TABLE;
-		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
-		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
+		renamestmt->subname = downcase_truncate_identifier(objname, strlen(objname), false);
+		renamestmt->newname = downcase_truncate_identifier(newname, strlen(newname), false);
 		renamestmt->relation->schemaname = pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID));
-		renamestmt->relation->relname = pstrdup(str_tolower(curr_relname, strlen(curr_relname), DEFAULT_COLLATION_OID));
+		renamestmt->relation->relname = downcase_truncate_identifier(curr_relname, strlen(curr_relname), false);
 		rewrite_object_refs(stmt);
 
 		/* extra query nodes for modifying attoption column */
@@ -4146,13 +4300,13 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterTableStmt")));
 
 		altertablestmt->relation->schemaname = pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID));
-		altertablestmt->relation->relname = pstrdup(str_tolower(curr_relname, strlen(curr_relname), DEFAULT_COLLATION_OID));
+		altertablestmt->relation->relname = downcase_truncate_identifier(curr_relname, strlen(curr_relname), false);
 		altertablestmt->objtype = OBJECT_TABLE;
 		/* get data of the first node */
 		lc = list_head(altertablestmt->cmds);
 		cmd = (AlterTableCmd *) lfirst(lc);
 		cmd->subtype = AT_SetOptions;
-		cmd->name = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
+		cmd->name = downcase_truncate_identifier(newname, strlen(newname), false);
 		cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME), (Node *) makeString(pstrdup(newname)), -1)); //column->location));
 	}
 	/* name mapping */

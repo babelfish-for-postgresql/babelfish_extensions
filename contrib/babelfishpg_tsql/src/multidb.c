@@ -89,17 +89,8 @@ rewrite_object_refs(Node *stmt)
 		case T_UpdateStmt:
 		case T_DeleteStmt:
 		case T_InsertStmt:
+		case T_MergeStmt:
 			{
-				/*
-				 * For INSERT ... EXECUTE, rewrite the schema name
-				*/
-				if ((nodeTag(stmt) == T_InsertStmt && ((InsertStmt *)stmt)->execStmt)
-					&& nodeTag(((InsertStmt *)stmt)->execStmt) == T_CallStmt)
-				{
-					CallStmt   *call = (CallStmt *) ((InsertStmt *)stmt)->execStmt;
-					call->funccall->funcname = rewrite_plain_name(call->funccall->funcname);
-				}
-
 				/* walker supported stmts */
 				raw_expression_tree_walker(stmt,
 										   rewrite_relation_walker,

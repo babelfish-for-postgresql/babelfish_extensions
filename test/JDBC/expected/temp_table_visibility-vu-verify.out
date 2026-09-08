@@ -52,6 +52,8 @@ int
 
 SELECT * INTO #temptable5605 FROM generate_series(1,100);
 GO
+~~ROW COUNT: 100~~
+
 EXEC p_nested
 GO
 ~~ROW COUNT: 100~~

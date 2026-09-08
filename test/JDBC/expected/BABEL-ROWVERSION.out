@@ -172,6 +172,8 @@ ok
 -- Test SELECT-INTO
 select * into t2 from t1;
 go
+~~ROW COUNT: 2~~
+
 select case when x.rv = y.rv then 'equal' else 'not-equal' end
                 from t1 x inner join t2 y on x.id = y.id;
 go

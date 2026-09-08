@@ -302,7 +302,7 @@ SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL, ROOT('data');
 GO
 ~~START~~
 ntext
-<data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row></data>
+<data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><a>1</a><b xsi:nil="true"/></row></data>
 ~~END~~
 
 
@@ -310,7 +310,25 @@ SELECT 1 AS a, NULL AS b FOR XML RAW, ROOT('data'), ELEMENTS XSINIL;
 GO
 ~~START~~
 ntext
-<data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row></data>
+<data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><a>1</a><b xsi:nil="true"/></row></data>
+~~END~~
+
+
+-- RAW + XSINIL + ROOT + TYPE: xmlns:xsi declared once on the root element.
+SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL, ROOT('data'), TYPE;
+GO
+~~START~~
+xml
+<data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><a>1</a><b xsi:nil="true"/></row></data>
+~~END~~
+
+
+-- All-NULL row + XSINIL + ROOT: row tag still emitted (with xsi:nil on each col).
+SELECT NULL AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL, ROOT('data');
+GO
+~~START~~
+ntext
+<data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><row><a xsi:nil="true"/><b xsi:nil="true"/></row></data>
 ~~END~~
 
 
@@ -494,7 +512,7 @@ SELECT * FROM forxml_raw_elements_t1 FOR XML RAW('Employee'), ELEMENTS XSINIL, R
 GO
 ~~START~~
 ntext
-<Employees xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>3</id><name>Bob</name><salary xsi:nil="true"/><department>Finance</department></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>4</id><name>Alice</name><salary>70000</salary><department xsi:nil="true"/></Employee><Employee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>5</id><name xsi:nil="true"/><salary xsi:nil="true"/><department xsi:nil="true"/></Employee></Employees>
+<Employees xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Employee><id>1</id><name>John</name><salary>50000</salary><department>IT</department></Employee><Employee><id>2</id><name>Jane</name><salary>60000</salary><department>HR</department></Employee><Employee><id>3</id><name>Bob</name><salary xsi:nil="true"/><department>Finance</department></Employee><Employee><id>4</id><name>Alice</name><salary>70000</salary><department xsi:nil="true"/></Employee><Employee><id>5</id><name xsi:nil="true"/><salary xsi:nil="true"/><department xsi:nil="true"/></Employee></Employees>
 ~~END~~
 
 
@@ -875,7 +893,7 @@ SELECT * FROM forxml_raw_elements_long_cols FOR XML RAW, ELEMENTS;
 GO
 ~~START~~
 ntext
-<row><id>1</id><this_is_a_very_long_column_name_that_exceeds_sixty_four_charact>value1</this_is_a_very_long_column_name_that_exceeds_sixty_four_charact><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value2</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></row><row><id>2</id><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value3</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></row>
+<row><id>1</id><this_is_a_very_long_column_namefcb07baebb5d4f0209d9843bc42d4eb7>value1</this_is_a_very_long_column_namefcb07baebb5d4f0209d9843bc42d4eb7><another_extremely_long_column_n8fa40faaf615e282c707ca048857d896>value2</another_extremely_long_column_n8fa40faaf615e282c707ca048857d896></row><row><id>2</id><another_extremely_long_column_n8fa40faaf615e282c707ca048857d896>value3</another_extremely_long_column_n8fa40faaf615e282c707ca048857d896></row>
 ~~END~~
 
 
@@ -883,7 +901,7 @@ SELECT * FROM forxml_raw_elements_long_cols FOR XML RAW, ELEMENTS XSINIL;
 GO
 ~~START~~
 ntext
-<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>1</id><this_is_a_very_long_column_name_that_exceeds_sixty_four_charact>value1</this_is_a_very_long_column_name_that_exceeds_sixty_four_charact><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value2</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>2</id><this_is_a_very_long_column_name_that_exceeds_sixty_four_charact xsi:nil="true"/><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value3</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></row>
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>1</id><this_is_a_very_long_column_namefcb07baebb5d4f0209d9843bc42d4eb7>value1</this_is_a_very_long_column_namefcb07baebb5d4f0209d9843bc42d4eb7><another_extremely_long_column_n8fa40faaf615e282c707ca048857d896>value2</another_extremely_long_column_n8fa40faaf615e282c707ca048857d896></row><row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>2</id><this_is_a_very_long_column_namefcb07baebb5d4f0209d9843bc42d4eb7 xsi:nil="true"/><another_extremely_long_column_n8fa40faaf615e282c707ca048857d896>value3</another_extremely_long_column_n8fa40faaf615e282c707ca048857d896></row>
 ~~END~~
 
 
@@ -891,7 +909,7 @@ SELECT * FROM forxml_raw_elements_long_cols FOR XML RAW('LongColTest'), ELEMENTS
 GO
 ~~START~~
 ntext
-<Data><LongColTest><id>1</id><this_is_a_very_long_column_name_that_exceeds_sixty_four_charact>value1</this_is_a_very_long_column_name_that_exceeds_sixty_four_charact><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value2</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></LongColTest><LongColTest><id>2</id><another_extremely_long_column_name_for_testing_x005F_xml_element_gene>value3</another_extremely_long_column_name_for_testing_x005F_xml_element_gene></LongColTest></Data>
+<Data><LongColTest><id>1</id><this_is_a_very_long_column_namefcb07baebb5d4f0209d9843bc42d4eb7>value1</this_is_a_very_long_column_namefcb07baebb5d4f0209d9843bc42d4eb7><another_extremely_long_column_n8fa40faaf615e282c707ca048857d896>value2</another_extremely_long_column_n8fa40faaf615e282c707ca048857d896></LongColTest><LongColTest><id>2</id><another_extremely_long_column_n8fa40faaf615e282c707ca048857d896>value3</another_extremely_long_column_n8fa40faaf615e282c707ca048857d896></LongColTest></Data>
 ~~END~~
 
 
@@ -1962,6 +1980,15 @@ SELECT 1 AS a, NULL AS b FOR XML RAW(''), ELEMENTS XSINIL, ROOT('data');
 GO
 ~~START~~
 ntext
+<data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">1</a><b xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/></data>
+~~END~~
+
+
+-- RAW('') + XSINIL + ROOT + TYPE: per-column xmlns:xsi preserved (T-SQL keeps it for RAW('')).
+SELECT 1 AS a, NULL AS b FOR XML RAW(''), ELEMENTS XSINIL, ROOT('data'), TYPE;
+GO
+~~START~~
+xml
 <data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">1</a><b xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/></data>
 ~~END~~
 

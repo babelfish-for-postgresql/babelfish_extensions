@@ -85,8 +85,6 @@ DROP PROCEDURE IF EXISTS dbo.perfunc_default_test;
 GO
 DROP PROCEDURE IF EXISTS test_cache_schema.perfunc_custom_schema;
 GO
-DROP PROCEDURE IF EXISTS dbo.validate_cache_proc;
-GO
 DROP PROCEDURE IF EXISTS dbo.nocache_create_proc;
 GO
 DROP PROCEDURE IF EXISTS dbo.overload_cache_proc;
@@ -104,10 +102,6 @@ GO
 DROP TABLE IF EXISTS dbo.dep_rename_table;
 GO
 DROP TABLE IF EXISTS dbo.dep_renamed_table;
-GO
-DROP FUNCTION IF EXISTS dbo.corrupt_cache_test_func;
-GO
-DROP PROCEDURE IF EXISTS dbo.version_mismatch;
 GO
 DROP USER IF EXISTS babel_6037_nonowner;
 GO

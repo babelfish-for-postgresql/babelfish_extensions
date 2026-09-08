@@ -13,7 +13,7 @@ atn2
 ATTIMEZONE-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
-money_aggregate
+money_aggregate-before-17_11-or-18_5
 BABEL-1062
 BABEL-1189
 BABEL-1206
@@ -167,7 +167,7 @@ BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
-BABEL-ROLE-MEMBER
+BABEL-ROLE-MEMBER-before-18_6
 BABEL-SPCOLUMNS
 BABEL-SPCOLUMNS-dep
 BABEL-SP_COLUMNS_MANAGED-dep
@@ -197,7 +197,7 @@ babel_varbinary_int4_div
 bbf_view_def
 binary-index
 bitwise_not-operator
-case_insensitive_collation
+case_insensitive_collation-before-18_6
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
 col_length
@@ -384,7 +384,7 @@ sys-synonyms
 sys-syscharsets
 sys-syscolumns
 sys-syscolumns-dep
-sys-sysdatabases
+sys-sysdatabases-before-18_6
 sys-sysforeignkeys
 sys-sysforeignkeys-dep
 sys-sysindexes
@@ -443,6 +443,7 @@ TestSmallMoney
 TestSpatialPoint
 Test-spatial-functions
 Test-spatial-functions-2
+Test-Spatial_Index
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
@@ -510,7 +511,7 @@ BABEL-4217
 Test_ISNULL
 BABEL-4270
 BABEL-4410
-BABEL-4231
+BABEL-4231-before-18_6
 function_as_keywd
 typeproperty-dep
 sys_asymmetric_keys
@@ -583,6 +584,7 @@ sys_sequences
 replicate
 space
 SELECT_INTO_TEST
+select_into_rowcount
 binary-datatype-operators
 securityadmin_role
 sys_dm_os_sys_info
@@ -590,7 +592,7 @@ BABEL-5059
 cast-varchar-to-time
 xml_exist
 test_db_collation
-BABEL-5119
+BABEL-5119-before-18_6
 dbcreator_role
 BABEL-5129
 db_accessadmin
@@ -635,7 +637,7 @@ babel_test_numeric_int4_oper
 babel_test_numeric_int8_oper
 xml_value
 Test_cast_binary_bytea
-numeric_money
+numeric_money-before-17_11-or-18_5
 MONEY_OBJECT
 money_smallmoney
 money_smallmoney_bit_dep_obj
@@ -671,6 +673,7 @@ comparison_op_index_scan
 Test-Linestring
 Test-Polygon
 BABEL-5788
+BABEL-6814
 BABEL-1664
 sys-fn_varbintohexstr
 babel_string_to_money_reg
@@ -684,3 +687,7 @@ babel_sqlvariant_coerce_type
 forxml-auto
 temp_table_long_name_enr
 BABEL-login-db-long-identifiers
+long-identifiers-databases-before-18_6
+long-identifiers-trigger-func-proc-before-18_6
+long-identifiers-objects-before-18_6
+fk-cascade-trigger

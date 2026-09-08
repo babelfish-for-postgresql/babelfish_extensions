@@ -18,7 +18,6 @@
 #include "storage/lock.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
-#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/fmgroids.h"
@@ -28,12 +27,14 @@
 #include "access/genam.h"
 #include "catalog.h"
 #include "hooks.h"
+#include "guc.h"
 #include "tcop/utility.h"
 
 #include "multidb.h"
 #include "session.h"
 #include "rolecmds.h"
 #include "parser/scansup.h"
+#include "rewrite/rewriteHandler.h"
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
@@ -75,6 +76,30 @@ const uint64 PLTSQL_LOCKTAG_OFFSET = 0xABCDEF;
 						 (uint32) ((((int64) key16) + PLTSQL_LOCKTAG_OFFSET) >> 32), \
 						 (uint32) (((int64) key16) + PLTSQL_LOCKTAG_OFFSET), \
 						 3)
+/*
+ * During an INSERT EXEC, T-SQL forbids the executed procedure from committing
+ * or rolling back the implicit transaction that wraps the statement. Raise the
+ * appropriate error when a COMMIT/ROLLBACK is attempted inside an INSERT EXEC.
+ */
+static void
+error_if_xact_stmt_blocked_by_insert_exec(bool is_commit)
+{
+	if (!pltsql_insert_exec_active())
+		return;
+
+	if (is_commit)
+	{
+		if (NestedTranCount <= 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+					 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+				 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
+}
+
 /*
  * Transaction processing using tsql semantics
  */
@@ -126,26 +151,14 @@ PLTsqlProcessTransaction(Node *parsetree,
 
 		case TRANS_STMT_COMMIT:
 			{
-				if (exec_state_call_stack &&
-					exec_state_call_stack->estate &&
-					exec_state_call_stack->estate->insert_exec &&
-					NestedTranCount <= 1)
-					ereport(ERROR,
-							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
-
+				error_if_xact_stmt_blocked_by_insert_exec(true);
 				PLTsqlCommitTransaction(qc, stmt->chain);
 			}
 			break;
 
 		case TRANS_STMT_ROLLBACK:
 			{
-				if (exec_state_call_stack &&
-					exec_state_call_stack->estate &&
-					exec_state_call_stack->estate->insert_exec)
-					ereport(ERROR,
-							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-							 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
+				error_if_xact_stmt_blocked_by_insert_exec(false);
 				PLTsqlRollbackTransaction(txnName, qc, stmt->chain);
 			}
 			break;
@@ -1797,7 +1810,7 @@ tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id)
 				 */
 				if (OidIsValid(con->conrelid))
 				{
-					if (pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
+					if (pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_REFERENCES) == ACLCHECK_OK)
 						namespace_oid = con->connamespace;
 				}
 			}
@@ -1890,22 +1903,223 @@ exec_utility_cmd_helper(char *query_str)
 	CommandCounterIncrement();
 }
 
-extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
 /*
- * make_original_rel_name_cmd - Create an AlterTableCmd that stores the
- * original untruncated name in bbf_original_rel_name reloption.
+ * get_original_relname
+ *
+ * Look up the original (pre-truncation) relation name stored in the
+ * bbf_original_rel_name reloption for the given relation OID.
+ * If check_permission is true, verifies the caller has SELECT permission
+ * on the relation before returning the name.
+ * Returns a palloc'd copy of the original name, or NULL if not found.
  */
-AlterTableCmd *
-make_original_rel_name_cmd(const char *original_name)
+char *
+get_original_relname(Oid relid, bool check_permission)
 {
-	AlterTableCmd *cmd = makeNode(AlterTableCmd);
+	HeapTuple	tuple;
+	char	   *result = NULL;
 
-	cmd->subtype = AT_SetRelOptions;
-	cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME),
-		(Node *) makeString(pstrdup(original_name)), -1));
-	cmd->behavior = DROP_RESTRICT;
-	cmd->missing_ok = false;
-	return cmd;
+	if (!OidIsValid(relid))
+		return NULL;
+
+	if (check_permission)
+	{
+		AclResult	aclresult;
+		aclresult = pg_class_aclcheck(relid, GetUserId(), ACL_SELECT);
+		if (aclresult != ACLCHECK_OK)
+			return NULL;
+	}
+
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (HeapTupleIsValid(tuple))
+	{
+		bool		isnull;
+		Datum		opts;
+		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
+
+		/*
+		 * Scan reloptions for the original name when the physical relname was
+		 * likely truncated. Use >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD (not
+		 * NAMEDATALEN-1) because multibyte truncation can back off to fewer
+		 * than NAMEDATALEN-1 bytes.
+		 *
+		 * Indexes are an exception: their physical name is always mangled as
+		 * index_name || table_name || md5(index_name) (see
+		 * construct_unique_index_name), so the bbf_original_rel_name reloption
+		 * is present even when the physical name is short. Always read it for
+		 * index relations (BABEL-5052).
+		 */
+		if (strlen(NameStr(classForm->relname)) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD ||
+			classForm->relkind == RELKIND_INDEX ||
+			classForm->relkind == RELKIND_PARTITIONED_INDEX)
+		{
+			opts = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
+			if (!isnull)
+			{
+				ArrayType	   *arr = DatumGetArrayTypeP(opts);
+				ArrayIterator	it = array_create_iterator(arr, 0, NULL);
+				Datum			val;
+				bool			vnull;
+				const char	   *prefix = ATTOPTION_BBF_ORIGINAL_TABLE_NAME "=";
+				int				prefix_len = strlen(prefix);
+
+				while (array_iterate(it, &val, &vnull))
+				{
+					const char *s;
+					int			len;
+
+					if (vnull)
+						continue;
+					s = VARDATA_ANY(val);
+					len = VARSIZE_ANY_EXHDR(val);
+					if (len > prefix_len && memcmp(s, prefix, prefix_len) == 0)
+					{
+						result = pnstrdup(s + prefix_len, len - prefix_len);
+						break;
+					}
+				}
+				array_free_iterator(it);
+			}
+		}
+
+		/* Fallback to relname if no bbf_original_rel_name found */
+		if (!result)
+			result = pstrdup(NameStr(classForm->relname));
+
+		ReleaseSysCache(tuple);
+	}
+	return result;
+}
+
+/*
+ * get_bbf_original_column_name
+ *
+ * Look up the original (pre-truncation, original-case) column name stored in
+ * the bbf_original_name attoption for the given relation OID and attribute
+ * number. Returns a palloc'd copy of the original name, or NULL if no such
+ * option is present.
+ *
+ * The caller is expected to already hold a lock on the relation (which the
+ * post-parse-analysis callers do, since the Var was resolved during parse
+ * analysis and that pins the relation). A concurrent DROP/RENAME of the
+ * attribute requires AccessExclusiveLock and therefore cannot commit while we
+ * reference the column, so get_attoptions() cannot legitimately fail here; if
+ * it ever did, that would indicate catalog corruption and the error is allowed
+ * to propagate rather than being masked.
+ */
+char *
+get_bbf_original_column_name(Oid relid, AttrNumber attnum)
+{
+	Datum		attopts;
+	ArrayType  *arr;
+	Datum	   *optiondatums;
+	int			noptions;
+	int			i;
+	char	   *result = NULL;
+	const char *prefix = ATTOPTION_BBF_ORIGINAL_NAME "=";
+	int			prefix_len = strlen(prefix);
+
+	if (!OidIsValid(relid) || attnum <= 0)
+		return NULL;
+
+	attopts = get_attoptions(relid, attnum);
+	if (attopts == (Datum) 0)
+		return NULL;
+
+	arr = DatumGetArrayTypeP(attopts);
+	deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
+					  &optiondatums, NULL, &noptions);
+
+	for (i = 0; i < noptions; i++)
+	{
+		char	   *optstr = TextDatumGetCString(optiondatums[i]);
+
+		if (strncmp(optstr, prefix, prefix_len) == 0)
+		{
+			result = pstrdup(optstr + prefix_len);
+			pfree(optstr);
+			break;
+		}
+		pfree(optstr);
+	}
+
+	return result;
+}
+
+/*
+ * get_inline_tvf_original_column_name
+ *
+ * Recover the full original name of the attnum-th output column of an inline
+ * table-valued function (RETURNS TABLE AS RETURN (SELECT ...)). Such a function
+ * returns RECORD with its output columns held as TABLE-mode OUT parameters in
+ * pg_proc.proargnames. proargnames is a text[] (not NameData), so it preserves
+ * the full (> NAMEDATALEN) name that BABEL-5975 stored at CREATE time; the
+ * function's result TupleDesc attname would otherwise be truncated to 63 bytes.
+ * Returns a palloc'd copy of the name for the attnum-th TABLE column, or NULL.
+ */
+char *
+get_inline_tvf_original_column_name(Oid funcid, AttrNumber attnum)
+{
+	HeapTuple	proctup;
+	Datum		proargnames;
+	Datum		proargmodes;
+	bool		namesnull;
+	bool		modesnull;
+	Datum	   *nameDatums;
+	Datum	   *modeDatums;
+	bool	   *nameNulls;
+	int			nnames;
+	int			nmodes;
+	int			tablecol = 0;
+	int			i;
+	char	   *result = NULL;
+
+	if (!OidIsValid(funcid) || attnum <= 0)
+		return NULL;
+
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (!HeapTupleIsValid(proctup))
+		return NULL;
+
+	proargnames = SysCacheGetAttr(PROCOID, proctup,
+								  Anum_pg_proc_proargnames, &namesnull);
+	proargmodes = SysCacheGetAttr(PROCOID, proctup,
+								  Anum_pg_proc_proargmodes, &modesnull);
+
+	/* Need both names and modes to locate the TABLE-mode output columns. */
+	if (namesnull || modesnull)
+	{
+		ReleaseSysCache(proctup);
+		return NULL;
+	}
+
+	deconstruct_array(DatumGetArrayTypeP(proargnames), TEXTOID, -1, false,
+					  TYPALIGN_INT, &nameDatums, &nameNulls, &nnames);
+	deconstruct_array(DatumGetArrayTypeP(proargmodes), CHAROID, 1, true,
+					  TYPALIGN_CHAR, &modeDatums, NULL, &nmodes);
+
+	if (nnames == nmodes)
+	{
+		for (i = 0; i < nmodes; i++)
+		{
+			if (DatumGetChar(modeDatums[i]) != PROARGMODE_TABLE)
+				continue;
+			tablecol++;
+			if (tablecol == attnum)
+			{
+				/*
+				 * A SQL-NULL name entry leaves the Datum as 0;
+				 * TextDatumGetCString on it would dereference NULL. Treat a
+				 * NULL name as "not found" rather than crashing.
+				 */
+				if (!nameNulls[i])
+					result = TextDatumGetCString(nameDatums[i]);
+				break;
+			}
+		}
+	}
+
+	ReleaseSysCache(proctup);
+	return result;
 }
 
 void
@@ -3062,6 +3276,15 @@ get_current_func_oid(void)
 {
 	if (!pltsql_support_tsql_transactions())
 		return InvalidOid;
+
+	/*
+	 * During an INSERT EXEC flush the inline handler pushes its own (anonymous
+	 * batch) estate, so fall back to insert_exec_flush_estate (the procedure
+	 * that issued the INSERT EXEC) to keep ownership chaining intact.
+	 */
+	if (insert_exec_flush_estate != NULL)
+		return (insert_exec_flush_estate->func) ?
+			insert_exec_flush_estate->func->fn_oid : InvalidOid;
 
 	/*
 	* Fetch the top procedure excution state from execution state call stack

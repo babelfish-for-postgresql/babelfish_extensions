@@ -811,6 +811,8 @@ GO
 
 select * into BINARY_dt_derived from BINARY_dt;
 GO
+~~ROW COUNT: 14~~
+
 
 select attname, atttypmod from pg_attribute where attrelid = (select oid from pg_class where relname = 'binary_dt_derived') and attnum > 0
 GO
@@ -2976,6 +2978,8 @@ SELECT 'UNION Test 1',
     DATALENGTH(CAST(0x5678 AS VARBINARY(8))) AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select * from temp_tbl
 GO
@@ -3011,6 +3015,8 @@ SELECT 'UNION Test 2',
     DATALENGTH(CAST(0x5678 AS VARBINARY(4))) AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
@@ -3037,6 +3043,8 @@ SELECT 'UNION Test 3',
     DATALENGTH(CAST(0x5678 AS VARBINARY(4))) AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
@@ -3063,6 +3071,8 @@ SELECT 'UNION Test 4',
     DATALENGTH(CAST(0x5678 AS VARBINARY(4))) AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
@@ -3089,6 +3099,8 @@ SELECT 'UNION Test 5',
     DATALENGTH(CAST(0x345678 AS BINARY(8))) AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
@@ -3115,6 +3127,8 @@ SELECT 'UNION Test 6',
     DATALENGTH(CAST(0x345678 AS BINARY(8))) AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
@@ -3141,6 +3155,8 @@ SELECT 'UNION Test 7',
     DATALENGTH(CAST(0x345678 AS VARBINARY(max))) AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
@@ -3167,6 +3183,8 @@ SELECT 'UNION Test 8',
     DATALENGTH(CAST(0x345678 AS VARBINARY(max))) AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
@@ -3193,6 +3211,8 @@ SELECT 'VARBINARY and VARCHAR',
     DATALENGTH(CAST('World' AS VARCHAR(10))) AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
@@ -3219,6 +3239,8 @@ SELECT 'VARBINARY and INT',
     DATALENGTH(CAST(200 AS VARCHAR(10))) AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
@@ -3245,6 +3267,8 @@ SELECT 'VARBINARY and DATETIME',
     DATALENGTH(CAST('2024-01-16' AS DATETIME)) AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
@@ -3302,6 +3326,8 @@ SELECT 'VARBINARY and UNIQUEIDENTIFIER',
     DATALENGTH(CAST('87654321-4321-4321-4321-210987654321' AS UNIQUEIDENTIFIER)) AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
@@ -3390,6 +3416,8 @@ SELECT 'VARBINARY and NVARCHAR',
     DATALENGTH(CAST(N'World' AS NVARCHAR(10))) AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
@@ -3416,6 +3444,8 @@ SELECT 'VARBINARY(MAX) and VARBINARY',
     DATALENGTH(CAST(0x9ABCDEF0 AS VARBINARY(8))) AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
@@ -3442,6 +3472,8 @@ SELECT 'BINARY and NULL',
     NULL AS Length2
 ) t order by value;
 GO
+~~ROW COUNT: 2~~
+
 
 select name, (select name from sys.types where system_type_id = c.system_type_id), max_length from sys.columns c where object_id = object_id('temp_tbl');
 GO
@@ -3546,6 +3578,8 @@ FROM #BinaryData
 GROUP BY GroupID
 ) t order by GroupID, MaxValue, Test;
 GO
+~~ROW COUNT: 6~~
+
 
 -- Test Case 4: MIN aggregate
 SELECT t.* INTO #MinResults FROM
@@ -3565,6 +3599,8 @@ FROM #BinaryData
 GROUP BY GroupID
 ) t order by GroupID, MinValue, Test;
 GO
+~~ROW COUNT: 6~~
+
 
 -- Test Case 5: Combining multiple aggregates
 SELECT t.* INTO #CombinedResults FROM

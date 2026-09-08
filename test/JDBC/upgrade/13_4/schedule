@@ -113,6 +113,7 @@ nested_trigger_inside_proc
 nested_trigger_with_dml
 routines_definition_before-14_7-or-15_2
 rowcount
+select_into_rowcount
 schema_resolution_func
 schema_resolution_proc
 schema_resolution_trigger
@@ -154,14 +155,14 @@ sys-schemas-dep
 sys_server_principals_dep_for_13_x
 sys-sp_databases
 sys-sp_pkeys
-sys-sp_statistics
+sys-sp_statistics-before-16_9-or-17_4
 sys-sp_tables_view
 sys-sp_tables_view-dep
 sys-suser_sid
 sys-suser_sname
 sys-syscharsets
 sys-syscolumns
-sys-sysdatabases
+sys-sysdatabases-before-18_6
 sys-sysforeignkeys
 sys-sysforeignkeys-dep
 sys-sysobjects
@@ -277,6 +278,7 @@ babel_assign_nchar
 ascii_function_before-17_7-or-16_11
 comparison_op_index_scan-before-15_2-or-14_7
 BABEL-5788
+BABEL-6814
 forxml-raw-elements-before-17_9-or-18_3
 forxml-path-elements-before-17_10-or-18_4
 forxml-before-17_11-or-18_5

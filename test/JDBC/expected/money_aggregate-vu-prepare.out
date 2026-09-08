@@ -39,30 +39,40 @@ SELECT MAX(Amount) AS MaxAmount
 INTO ResultTable1
 FROM TestMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 2: MIN aggregation
 SELECT MIN(Amount) AS MinAmount
 INTO ResultTable2
 FROM TestMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 3: AVG aggregation
 SELECT AVG(Amount) AS AvgAmount
 INTO ResultTable3
 FROM TestMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 4: SUM aggregation
 SELECT SUM(Amount) AS TotalAmount
 INTO ResultTable4
 FROM TestMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 5: COUNT aggregation (should remain as INT)
 SELECT COUNT(Amount) AS CountAmount
 INTO ResultTable5
 FROM TestMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 6: Multiple aggregations in one query
 SELECT 
@@ -74,6 +84,8 @@ SELECT
 INTO ResultTable6
 FROM TestMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 7: Aggregation with GROUP BY
 SELECT 
@@ -83,6 +95,8 @@ INTO ResultTable7
 FROM TestMoneyTable
 GROUP BY Description;
 GO
+~~ROW COUNT: 6~~
+
 
 -- Test Case 8: Aggregation with subquery
 SELECT MaxAmount
@@ -92,6 +106,8 @@ FROM (
     FROM TestMoneyTable
 ) AS Subquery;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test Case 9: Aggregation with HAVING clause
 SELECT 
@@ -102,6 +118,8 @@ FROM TestMoneyTable
 GROUP BY Description
 HAVING MAX(Amount) > 200;
 GO
+~~ROW COUNT: 3~~
+
 
 -- Test Case 10: Aggregation with calculated MONEY column
 SELECT 
@@ -109,6 +127,8 @@ SELECT
 INTO ResultTable10
 FROM TestMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Negative Test Case: Empty table
 CREATE TABLE EmptyMoneyTable (Amount MONEY);
@@ -118,6 +138,8 @@ SELECT MAX(Amount) AS MaxAmount
 INTO ResultTableEmpty
 FROM EmptyMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Edge Test Case: Extreme values
 CREATE TABLE ExtremeMoneyTable (Amount MONEY);
@@ -134,6 +156,8 @@ SELECT MAX(Amount) AS MaxAmount, MIN(Amount) AS MinAmount
 INTO ResultTableExtreme
 FROM ExtremeMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Arbitrary Test Case: Mixing NULL and non-NULL values
 CREATE TABLE MixedNullMoneyTable (Amount MONEY);
@@ -153,6 +177,8 @@ SELECT
 INTO ResultTableMixedNull
 FROM MixedNullMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Edge Test Case: Aggregating calculated values that exceed MONEY range
 CREATE TABLE OverflowMoneyTable (Amount MONEY);
@@ -186,6 +212,8 @@ SELECT SUM(CAST(Amount AS MONEY)) AS TotalAmount
 INTO ResultTableNonMoney
 FROM NonMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Check Constraint Test
 CREATE TABLE CheckConstraintMoneyTable (
@@ -203,6 +231,8 @@ SELECT MAX(Amount) AS MaxCheckAmount
 INTO ResultTableCheck
 FROM CheckConstraintMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Complex Dependent Objects Test
 CREATE VIEW MoneyView AS SELECT MAX(Amount) as Amount FROM TestMoneyTable;
@@ -235,10 +265,14 @@ SELECT MAX(Amount) AS MaxViewAmount
 INTO ResultTableView
 FROM MoneyView;
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT GetTotalMoney() AS TotalFunctionAmount
 INTO ResultTableFunction;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Indexed View Test
 CREATE TABLE IndexedViewBaseTable (
@@ -264,6 +298,8 @@ SELECT MAX(Amount) AS MaxIndexedViewAmount
 INTO ResultTableIndexedView
 FROM IndexedMoneyView;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Currency Symbol Test Cases
 CREATE TABLE CurrencyMoneyTable (
@@ -291,16 +327,22 @@ SELECT MAX(Amount) AS MaxAmount
 INTO ResultTableCurrency1
 FROM CurrencyMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT MIN(Amount) AS MinAmount
 INTO ResultTableCurrency2
 FROM CurrencyMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT SUM(Amount) AS TotalAmount
 INTO ResultTableCurrency3
 FROM CurrencyMoneyTable;
 GO
+~~ROW COUNT: 1~~
+
 
 -- Test with mixed currency symbols in calculations
 SELECT 
@@ -311,3 +353,5 @@ SELECT
 INTO ResultTableCurrency4
 FROM CurrencyMoneyTable;
 GO
+~~ROW COUNT: 1~~
+

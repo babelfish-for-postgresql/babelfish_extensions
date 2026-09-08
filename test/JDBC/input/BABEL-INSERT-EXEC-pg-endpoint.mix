@@ -1,0 +1,86 @@
+-- This test verifies INSERT EXEC works when the enclosing T-SQL procedure is
+-- created on the Babelfish (TDS) endpoint but invoked from the PostgreSQL
+-- endpoint. The flush goes through execute_batch regardless of the entry point,
+-- so the buffered result set must still land in the target table.
+
+-- tsql
+CREATE TABLE babel_ie_pg_src (id INT, val VARCHAR(20));
+GO
+INSERT INTO babel_ie_pg_src VALUES (1, 'alpha'), (2, 'beta'), (3, 'gamma');
+GO
+
+CREATE TABLE babel_ie_pg_dst (id INT, val VARCHAR(20));
+GO
+
+-- Source procedure produces a result set
+CREATE PROCEDURE babel_ie_pg_source AS
+BEGIN
+    SELECT id, val FROM babel_ie_pg_src ORDER BY id;
+END
+GO
+
+-- Wrapper procedure buffers the result set into the target via INSERT EXEC
+CREATE PROCEDURE babel_ie_pg_wrapper AS
+BEGIN
+    INSERT INTO babel_ie_pg_dst EXEC babel_ie_pg_source;
+END
+GO
+
+-- Call the wrapper once from the TDS endpoint as a baseline
+EXEC babel_ie_pg_wrapper;
+GO
+SELECT id, val FROM babel_ie_pg_dst ORDER BY id;
+GO
+
+-- Empty the target so the PG-endpoint call starts clean
+DELETE FROM babel_ie_pg_dst;
+GO
+
+-- psql     currentSchema=master_dbo,public
+-- Invoke the T-SQL procedure from the PostgreSQL endpoint
+CALL master_dbo.babel_ie_pg_wrapper();
+GO
+
+-- Rows buffered by INSERT EXEC must be present in the target table
+SELECT id, val FROM master_dbo.babel_ie_pg_dst ORDER BY id;
+GO
+
+-- Clear the target again before the transaction cases
+DELETE FROM master_dbo.babel_ie_pg_dst;
+GO
+
+-- INSERT EXEC inside an explicit committed transaction on the PG endpoint:
+-- the buffered rows must persist after COMMIT.
+BEGIN;
+GO
+CALL master_dbo.babel_ie_pg_wrapper();
+GO
+COMMIT;
+GO
+SELECT id, val FROM master_dbo.babel_ie_pg_dst ORDER BY id;
+GO
+
+-- Clear the target before the rollback case
+DELETE FROM master_dbo.babel_ie_pg_dst;
+GO
+
+-- INSERT EXEC inside an explicit transaction that is rolled back on the PG
+-- endpoint: the buffered rows must be discarded, leaving the target empty.
+BEGIN;
+GO
+CALL master_dbo.babel_ie_pg_wrapper();
+GO
+ROLLBACK;
+GO
+SELECT id, val FROM master_dbo.babel_ie_pg_dst ORDER BY id;
+GO
+
+-- tsql
+DROP PROCEDURE babel_ie_pg_wrapper;
+GO
+DROP PROCEDURE babel_ie_pg_source;
+GO
+DROP TABLE babel_ie_pg_dst;
+GO
+DROP TABLE babel_ie_pg_src;
+GO

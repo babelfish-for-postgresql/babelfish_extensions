@@ -134,11 +134,11 @@ BEGIN
         v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_maxlength := CASE
-                          WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                          WHEN (v_res_datatype::TEXT IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
                           ELSE NVARCHAR_MAX
                        END;
 
-        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP::text);
 
         IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
             RAISE interval_field_overflow;
@@ -174,7 +174,7 @@ BEGIN
         RAISE invalid_character_value_for_cast;
     END;
 
-    v_monthname := (v_lang_metadata_json -> 'months_shortnames') ->> v_month - 1;
+    v_monthname := (v_lang_metadata_json -> 'months_shortnames'::text) ->> v_month - 1;
 
     v_resmask := CASE
                     WHEN (v_style IN (1, 22)) THEN 'MM/DD/YY'
@@ -212,7 +212,7 @@ BEGIN
                                 ELSE 60
                              END);
     RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              WHEN (v_res_datatype::TEXT NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
               ELSE rpad(v_resstring, v_res_length, ' ')
            END;
 EXCEPTION
@@ -305,7 +305,7 @@ BEGIN
 
     IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
     THEN
-        v_scale := substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT;
+        v_scale := substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP::text)::SMALLINT;
 
         v_src_datatype := PG_CATALOG.rtrim(split_part(v_src_datatype, '(', 1));
 
@@ -334,11 +334,11 @@ BEGIN
         v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_maxlength := CASE
-                          WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                          WHEN (v_res_datatype::TEXT IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
                           ELSE NVARCHAR_MAX
                        END;
 
-        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP::text);
 
         IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4)
         THEN
@@ -375,9 +375,9 @@ BEGIN
         RAISE invalid_character_value_for_cast;
     END;
 
-    v_monthname := (v_lang_metadata_json -> 'months_shortnames') ->> v_month - 1;
+    v_monthname := (v_lang_metadata_json -> 'months_shortnames'::text) ->> v_month - 1;
 
-    IF (v_src_datatype IN ('DATETIME', 'SMALLDATETIME')) THEN
+    IF (v_src_datatype::TEXT IN ('DATETIME', 'SMALLDATETIME')) THEN
         v_fseconds := sys.babelfish_round_fractseconds(to_char(v_datetimeval, 'MS'));
 
         IF (v_fseconds::INTEGER = 1000) THEN
@@ -495,7 +495,7 @@ BEGIN
                                 ELSE 60
                              END);
     RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              WHEN (v_res_datatype::TEXT NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
               ELSE rpad(v_resstring, v_res_length, ' ')
            END;
 EXCEPTION
@@ -2240,7 +2240,7 @@ BEGIN
 
     IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
     THEN
-        v_scale := coalesce(substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT, 7);
+        v_scale := coalesce(substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP::text)::SMALLINT, 7);
 
         IF (v_scale NOT BETWEEN 0 AND 7) THEN
             RAISE invalid_regular_expression;
@@ -2254,11 +2254,11 @@ BEGIN
         v_res_datatype := PG_CATALOG.rtrim(split_part(v_datatype, '(', 1));
 
         v_res_maxlength := CASE
-                              WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                              WHEN (v_res_datatype::TEXT IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
                               ELSE NVARCHAR_MAX
                            END;
 
-        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP::text);
 
         IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
             RAISE interval_field_overflow;
@@ -2342,7 +2342,7 @@ BEGIN
                                 ELSE 60
                              END);
     RETURN CASE
-              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              WHEN (v_res_datatype::TEXT NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
               ELSE rpad(v_resstring, v_res_length, ' ')
            END;
 EXCEPTION
@@ -2573,10 +2573,10 @@ BEGIN
 
         v_lang_spec_culture := CASE
                                   WHEN (v_lang_spec_culture !~ '\.') THEN v_lang_spec_culture
-                                  ELSE substring(v_lang_spec_culture, '(.*)(?:\.)')
+                                  ELSE substring(v_lang_spec_culture, '(.*)(?:\.)'::text)
                                END;
 
-        v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, ',\s*', '_', 'gi'));
+        v_lang_spec_culture := pg_catalog.upper(regexp_replace(v_lang_spec_culture, ',\s*', '_', 'gi'::text));
 
         BEGIN
             v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
@@ -2594,7 +2594,7 @@ BEGIN
                     SELECT lang_data_jsonb
                       INTO STRICT v_lang_data_jsonb
                       FROM sys.babelfish_syslanguages
-                     WHERE spec_culture = v_lang_spec_culture;
+                     WHERE spec_culture = v_lang_spec_culture::text;
                 ELSE
                     v_locale_parts := string_to_array(v_lang_spec_culture, '-');
 
@@ -2611,7 +2611,7 @@ BEGIN
                     SELECT lang_data_jsonb
                       INTO v_lang_data_jsonb
                       FROM sys.babelfish_syslanguages
-                     WHERE spec_culture = v_lang_spec_culture;
+                     WHERE spec_culture = v_lang_spec_culture::text;
             END;
         ELSE
             v_is_cached := TRUE;
@@ -10984,7 +10984,7 @@ BEGIN
     END IF;
 
     IF (pg_catalog.lower(p_datatype) LIKE '%varchar%(%' OR pg_catalog.lower(p_datatype) LIKE '%char%(%') THEN
-        v_varchar_length := substring(p_datatype COLLATE "C" FROM '\(([0-9]+|MAX)\)');
+        v_varchar_length := substring(p_datatype COLLATE "C" FROM '\(([0-9]+|MAX)\)'::TEXT);
         IF (v_varchar_length IS NOT NULL AND v_varchar_length <> 'MAX' AND char_length(v_result) > v_varchar_length::SMALLINT) THEN
             RAISE USING MESSAGE := pg_catalog.format('There is insufficient result space to convert a money value to varchar.'),
                         DETAIL := 'The converted money value exceeds the specified varchar length.',
@@ -11059,7 +11059,7 @@ BEGIN
 		RAISE invalid_parameter_value;
 	END IF;
 
-	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP)::SMALLINT;
+	v_res_length := substring(p_datatype COLLATE "C", MASK_REGEXP::text)::SMALLINT;
 	IF v_res_length IS NULL THEN
 		RETURN ltrim(v_result);
 	ELSE
@@ -11423,7 +11423,7 @@ RETURNS table (
 -- internal function to truncate long identifier
 CREATE OR REPLACE FUNCTION sys.babelfish_truncate_identifier(IN object_name TEXT)
 RETURNS text
-AS 'babelfishpg_tsql', 'pltsql_truncate_identifier_func' LANGUAGE C IMMUTABLE STRICT;
+AS 'babelfishpg_tsql', 'pltsql_truncate_identifier_func' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 -- internal functions for debuggig/testing purpose
 CREATE OR REPLACE FUNCTION sys.babelfish_pltsql_cursor_show_textptr_only_column_indexes(cursor_handle INT)
@@ -11492,3 +11492,36 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.babelfish_construct_unique_index_name(index_name TEXT, table_name TEXT)
 RETURNS TEXT AS 'babelfishpg_tsql', 'bbf_construct_unique_index_name'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+-- BABEL-5975: Long Identifiers Support
+-- Returns the original (untruncated) relation name from bbf_original_rel_name
+-- reloption if stored, otherwise returns the relname as-is.
+-- Only checks reloptions when relname is potentially truncated (>= 60 bytes).
+CREATE OR REPLACE FUNCTION sys.bbf_get_truncated_rel_original_name(rel_reloptions text[], rel_relname name)
+RETURNS text
+LANGUAGE SQL
+IMMUTABLE
+PARALLEL SAFE
+RETURN COALESCE(
+    CASE WHEN octet_length(rel_relname) >= 60 THEN
+        (SELECT substring(opt, 23)
+         FROM unnest(rel_reloptions) opt
+         WHERE opt LIKE 'bbf_original_rel_name=%'
+         LIMIT 1)
+    END,
+    rel_relname::text);
+
+CREATE OR REPLACE FUNCTION sys.bbf_get_truncated_att_original_name(att_attoptions text[], att_attname name)
+RETURNS text
+LANGUAGE SQL
+IMMUTABLE
+PARALLEL SAFE
+RETURN COALESCE(
+    CASE WHEN octet_length(att_attname) >= 60 THEN
+        (SELECT substring(opt, 19)
+         FROM unnest(att_attoptions) opt
+         WHERE opt LIKE 'bbf_original_name=%'
+         LIMIT 1)
+    END,
+    att_attname::text);
+

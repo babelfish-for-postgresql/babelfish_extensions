@@ -177,6 +177,8 @@ int#!#varchar
 -- SELECT INTO
 SELECT * INTO fpn_table_select_into FROM bbf_fpn_server.master.dbo.fpn_table
 GO
+~~ROW COUNT: 4~~
+
 
 SELECT * FROM fpn_table_select_into
 GO

@@ -167,7 +167,7 @@ BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
-BABEL-ROLE-MEMBER
+BABEL-ROLE-MEMBER-before-18_6
 BABEL_SCHEMATA
 BABEL-SPCOLUMNS
 BABEL-SPCOLUMNS-dep
@@ -198,7 +198,7 @@ babel_varbinary_int4_div
 bbf_view_def
 binary-index
 bitwise_not-operator
-case_insensitive_collation
+case_insensitive_collation-before-18_6
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
 col_length
@@ -366,7 +366,7 @@ sys-sp_databases
 sys-sp_databases-dep
 sys-sp_pkeys
 sys-sp_pkeys-dep
-sys-sp_statistics
+sys-sp_statistics-before-16_9-or-17_4
 sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
@@ -379,7 +379,7 @@ sys-synonyms
 sys-syscharsets
 sys-syscolumns
 sys-syscolumns-dep
-sys-sysdatabases
+sys-sysdatabases-before-18_6
 sys-sysforeignkeys
 sys-sysforeignkeys-dep
 sys-sysindexes
@@ -503,7 +503,7 @@ BABEL-4217
 Test_ISNULL
 BABEL-4270
 BABEL-4410
-BABEL-4231
+BABEL-4231-before-18_6
 function_as_keywd
 typeproperty-dep
 sys_asymmetric_keys
@@ -571,13 +571,14 @@ sys_sequences
 replicate
 space
 SELECT_INTO_TEST
+select_into_rowcount
 binary-datatype-operators
 sys_dm_os_sys_info
 BABEL-5059
 cast-varchar-to-time
 xml_exist
 test_db_collation
-BABEL-5119
+BABEL-5119-before-18_6
 BABEL-5129
 BABEL-CASE_EXPR
 charindex_replace_patindex
@@ -597,7 +598,7 @@ test_conv_string_to_datetime2-before-17_4
 test_conv_string_to_datetimeoffset-before-17_4
 test_conv_string_to_smalldatetime
 test_conv_string_to_time-before-17_4
-db_owner
+db_owner-before-16_9-or-17_5
 BABEL-5031
 BABEL-USER-GRANT
 test_conv_money_to_varchar
@@ -642,6 +643,7 @@ test_convert_to_binary-before-17_7-16_11
 comparison_op_index_scan-before-17_8-or-16_12
 babel_string_to_money
 BABEL-5788
+BABEL-6814
 BABEL-1664-before-16_10-or-17_6
 babel_string_to_money_reg
 babel_convert_with_style

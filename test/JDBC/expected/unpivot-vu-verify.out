@@ -1300,6 +1300,8 @@ FROM customer_turnover
 UNPIVOT (sales FOR quarter IN (q1, q2)) AS unpvt;
 SELECT * from #new_quarterly_sales;
 GO
+~~ROW COUNT: 5~~
+
 ~~START~~
 int#!#varchar#!#char#!#nvarchar#!#int
 3#!#Cust C#!#R#!#q2#!#0

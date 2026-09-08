@@ -72,7 +72,8 @@ GENERATED_UPGRADES = \
     sql/$(EXTENSION)--5.4.0--5.5.0.sql \
     sql/$(EXTENSION)--5.5.0--6.0.0.sql \
     sql/$(EXTENSION)--6.0.0--6.1.0.sql \
-    sql/$(EXTENSION)--6.1.0--6.2.0.sql
+    sql/$(EXTENSION)--6.1.0--6.2.0.sql \
+    sql/$(EXTENSION)--6.2.0--6.3.0.sql
 
 ifdef PREV_EXTVERSION
 DATA = sql/$(EXTENSION)--$(PREV_EXTVERSION).sql
@@ -95,6 +96,10 @@ test		 = $(shell test $(1) $(2) $(3) && echo yes || echo no)
 GE91		 = $(call test, $(MAJORVER), -ge, 91)
 
 PGXS := $(shell $(PG_CONFIG) --pgxs)
+
+# Generated files to remove on 'make clean' so they are always
+# regenerated with the current tool versions (flex, bison, perl).
+EXTRA_CLEAN += src/geo_scan.c src/geo_parser.c
 
 src/geo_parser.o: src/geo_scan.c src/geo_data.h
 src/geo.o: src/geo_scan.c src/geo_parser.c src/geo_data.h
@@ -169,6 +174,9 @@ ifeq (,$(filter $(FLAG_TO_CHECK),$(PG_CPPFLAGS)))
 
     sql/$(EXTENSION)--6.1.0--6.2.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D PREV_VERSION=6.1.0 -D CUR_VERSION=6.2.0 $< | sed 's/^# /-- /g' > $@
+
+    sql/$(EXTENSION)--6.2.0--6.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
+		cpp -D PREV_VERSION=6.2.0 -D CUR_VERSION=6.3.0 $< | sed 's/^# /-- /g' > $@
 else
 # The flag is present build the .in file including the spatial type files
     sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
@@ -221,6 +229,9 @@ else
 
     sql/$(EXTENSION)--6.1.0--6.2.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=6.1.0 -D CUR_VERSION=6.2.0 $< | sed 's/^# /-- /g' > $@
+
+    sql/$(EXTENSION)--6.2.0--6.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
+		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=6.2.0 -D CUR_VERSION=6.3.0 $< | sed 's/^# /-- /g' > $@
 endif
 
 sql/babelfishpg_common--%.sql: sql/upgrades/babelfishpg_common--%.sql

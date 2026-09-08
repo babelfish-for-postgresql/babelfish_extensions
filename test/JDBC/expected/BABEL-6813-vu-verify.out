@@ -1,0 +1,120 @@
+
+-- BABEL-6813: Fix infinite CAST recursion and DATETRUNC regtype resolution
+-- Verify CAST(numeric AS INT) in CHECK constraints worked
+SELECT * FROM babel_6813_t1
+GO
+~~START~~
+int#!#numeric
+1#!#5.70
+~~END~~
+
+
+SELECT * FROM babel_6813_t2
+GO
+~~START~~
+int#!#numeric
+1#!#3.90
+~~END~~
+
+
+SELECT * FROM babel_6813_t3
+GO
+~~START~~
+int#!#numeric
+1#!#10.50
+~~END~~
+
+
+SELECT * FROM babel_6813_t4
+GO
+~~START~~
+int#!#numeric
+~~END~~
+
+
+-- DATETRUNC tests with various datetime types
+SELECT DATETRUNC(year, CAST('2023-06-15 10:30:00' AS datetime))
+GO
+~~START~~
+datetime
+2023-01-01 00:00:00.0
+~~END~~
+
+
+SELECT DATETRUNC(month, CAST('2023-06-15 10:30:00' AS smalldatetime))
+GO
+~~START~~
+smalldatetime
+2023-06-01 00:00:00.0
+~~END~~
+
+
+SELECT DATETRUNC(day, CAST('2023-06-15 10:30:00.1234567' AS datetime2))
+GO
+~~START~~
+datetime2
+2023-06-15 00:00:00.0000000
+~~END~~
+
+
+SELECT DATETRUNC(hour, CAST('2023-06-15 10:30:00.1234567 +05:30' AS datetimeoffset))
+GO
+~~START~~
+datetimeoffset
+2023-06-15 10:00:00.0000000 +05:30
+~~END~~
+
+
+SELECT * FROM babel_6813_datetrunc
+GO
+~~START~~
+int#!#datetime2
+1#!#2024-03-15 10:30:45.0000000
+2#!#2024-07-22 08:15:00.0000000
+~~END~~
+
+
+SELECT * FROM babel_6813_date
+GO
+~~START~~
+int#!#date
+1#!#2024-01-15
+2#!#2024-12-25
+~~END~~
+
+
+SELECT * FROM babel_6813_datetime
+GO
+~~START~~
+int#!#datetime
+1#!#2024-01-15 10:30:45.0
+2#!#2024-06-20 08:15:00.0
+~~END~~
+
+
+SELECT * FROM babel_6813_time
+GO
+~~START~~
+int#!#time
+1#!#10:30:45.1230000
+2#!#23:59:59.9990000
+~~END~~
+
+
+SELECT * FROM babel_6813_money
+GO
+~~START~~
+int#!#money
+1#!#1234.5600
+2#!#99999.9900
+~~END~~
+
+
+SELECT * from babel_6813_float
+GO
+~~START~~
+int#!#float
+1#!#1234.56
+2#!#0.001
+~~END~~
+

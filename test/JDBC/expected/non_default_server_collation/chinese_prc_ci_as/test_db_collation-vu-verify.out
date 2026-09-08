@@ -1510,6 +1510,8 @@ Año Nuevo#!#Año Nuevo
 -- Case 4.4: SELECT INTO
 SELECT * INTO test_db_collation_vu_prepare_db121_si1 FROM test_db_collation_vu_prepare_db121_t1 ORDER BY nv;
 GO
+~~ROW COUNT: 12~~
+
 
 SELECT * FROM test_db_collation_vu_prepare_db121_si1 ORDER BY nv;
 GO
@@ -1557,6 +1559,8 @@ test_db_collation_vu_prepare_db121_t1#!#v#!#bbf_unicode_cp1_ci_ai
 -- Create a new table with employees hired after 2015
 SELECT * INTO test_db_collation_vu_prepare_db121_si2 FROM test_db_collation_vu_prepare_db121_t1 t1 WHERE t1.nv > 'naive' ORDER BY nv;
 GO
+~~ROW COUNT: 5~~
+
 
 SELECT * FROM test_db_collation_vu_prepare_db121_si2 ORDER BY nv;
 GO

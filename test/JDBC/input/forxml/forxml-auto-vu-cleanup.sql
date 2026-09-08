@@ -1,3 +1,41 @@
+-- Drop recursive CTE + trigger test objects
+DROP TRIGGER IF EXISTS forxmlauto_trg_rcte_base_only;
+GO
+DROP TRIGGER IF EXISTS forxmlauto_trg_rcte_ins_only;
+GO
+DROP TRIGGER IF EXISTS forxmlauto_trg_rcte_base_first;
+GO
+DROP TRIGGER IF EXISTS forxmlauto_trg_rcte_ins_first;
+GO
+DROP TABLE IF EXISTS forxmlauto_t_rcte_result;
+GO
+DROP TABLE IF EXISTS forxmlauto_t_rcte_base;
+GO
+DROP TABLE IF EXISTS forxmlauto_t_rcte;
+GO
+
+-- Drop triggers and trigger test tables
+DROP TRIGGER IF EXISTS forxmlauto_trg_insert;
+GO
+DROP TRIGGER IF EXISTS forxmlauto_trg_delete;
+GO
+DROP TRIGGER IF EXISTS forxmlauto_trg_insert_subset;
+GO
+DROP TRIGGER IF EXISTS forxmlauto_trg_insert_join;
+GO
+DROP TRIGGER IF EXISTS forxmlauto_trg_update_both;
+GO
+DROP TRIGGER IF EXISTS forxmlauto_trg_update_join;
+GO
+DROP TRIGGER IF EXISTS forxmlauto_trg_insert_null;
+GO
+DROP TRIGGER IF EXISTS forxmlauto_trg_delete_join;
+GO
+DROP TABLE IF EXISTS forxmlauto_t_trigger_xml_result;
+GO
+DROP TABLE IF EXISTS forxmlauto_t_trigger_test;
+GO
+
 -- Drop functions
 DROP FUNCTION IF EXISTS dbo.GetXmlCustomerOrders;
 GO

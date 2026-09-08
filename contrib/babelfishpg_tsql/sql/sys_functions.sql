@@ -84,90 +84,27 @@ $$
 LANGUAGE plpgsql IMMUTABLE;
 
 -- helper functions for XML EXIST(xpath)
-CREATE OR REPLACE FUNCTION sys.bbf_xmlexist(TEXT, ANYELEMENT)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlexist(xpath_pattern TEXT, xml_element ANYELEMENT)
 RETURNS sys.BIT
-AS
-$BODY$
-DECLARE
-    arg_datatype text;
-    arg_datatype_oid oid;
-    basetype oid;
-    pltsql_quoted_identifier text;
-BEGIN
-    arg_datatype_oid := pg_typeof($2)::oid;
-    arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
-    IF arg_datatype IS NULL THEN
-        -- for User Defined Datatype, use immediate base type to check for argument datatype validation
-        basetype := sys.bbf_get_immediate_base_type_of_UDT(arg_datatype_oid);
-        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
-    END IF;
+AS 'babelfishpg_tsql', 'bbf_xmlexist'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
 
-    IF (arg_datatype != 'xml') THEN
-        RAISE EXCEPTION 'Cannot call methods on %.', arg_datatype;
-    END IF;
-
-    pltsql_quoted_identifier := current_setting('babelfishpg_tsql.quoted_identifier');
-
-    IF (pltsql_quoted_identifier = 'off') THEN
-        RAISE EXCEPTION 'SELECT failed because the following SET options have incorrect settings: ''QUOTED_IDENTIFIER''. Verify that SET options are correct for XML data type methods.';
-    END IF;
-
-    RETURN xmlexists($1 passing by value $2);
-END
-$BODY$
-LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
+-- helper functions for XML QUERY(xpath)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT)
+RETURNS XML
+AS 'babelfishpg_tsql', 'bbf_xmlquery'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
 
 -- helper functions for XML VALUE(xpath)
 CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, datatype TEXT, xml_element ANYELEMENT)
 RETURNS sys.NVARCHAR
-AS
-$BODY$
-DECLARE
-    temp_datatype text;
-    temp_basetype oid;
-    result_set xml[];
-    result sys.NVARCHAR;
-    pltsql_quoted_identifier text;
-BEGIN
-    temp_datatype := sys.translate_pg_type_to_tsql(pg_typeof(xml_element)::oid);
-    IF temp_datatype IS NULL THEN
-        -- for User Defined Datatype, use immediate base type to check for xml_element datatype validation
-        temp_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(xml_element)::oid);
-        temp_datatype := sys.translate_pg_type_to_tsql(temp_basetype);
-    END IF;
+AS 'babelfishpg_tsql', 'bbf_xmlvalue'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
 
-    IF (temp_datatype != 'xml') THEN
-        RAISE EXCEPTION 'Cannot call methods on %.', temp_datatype;
-    END IF;
-
-    pltsql_quoted_identifier := current_setting('babelfishpg_tsql.quoted_identifier');
-
-    IF (pltsql_quoted_identifier = 'off') THEN
-        RAISE EXCEPTION 'SELECT failed because the following SET options have incorrect settings: ''QUOTED_IDENTIFIER''. Verify that SET options are correct for XML data type methods.';
-    END IF;
-
-    result_set := xpath(xpath_pattern, xml_element);
-    IF (cardinality(result_set) > 1) THEN
-        RAISE EXCEPTION 'XML Value result is not a single value.';
-    ELSIF (cardinality(result_set) = 0) THEN
-        RETURN NULL;
-    ELSE
-        result := (xpath('string(' + xpath_pattern + ')', xml_element))[1];
-        result := pg_catalog.replace(result, '&lt;', '<');
-        result := pg_catalog.replace(result, '&gt;', '>');
-        result := pg_catalog.replace(result, '&apos;', '''');
-        result := pg_catalog.replace(result, '&quot;', '"');
-        result := pg_catalog.replace(result, '&amp;', '&');
-        return result;
-    END IF;
-END
-$BODY$
-LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
-
--- helper function for XML QUERY(xpath)
-CREATE OR REPLACE FUNCTION sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT)
-RETURNS XML
-AS 'babelfishpg_tsql', 'bbf_xmlquery'
+-- helper function for XML NODES(xpath)
+CREATE OR REPLACE FUNCTION sys.bbf_xmlnodes(xpath_pattern TEXT, xml_element ANYELEMENT)
+RETURNS SETOF XML
+AS 'babelfishpg_tsql', 'bbf_xmlnodes'
 LANGUAGE C STABLE STRICT PARALLEL SAFE;
 
 -- SELECT FOR JSON
@@ -2593,6 +2530,11 @@ CREATE OR REPLACE FUNCTION sys.db_name() RETURNS sys.nvarchar(128)
 AS 'babelfishpg_tsql', 'babelfish_db_name'
 LANGUAGE C PARALLEL SAFE STABLE;
 
+-- Returns truncated internal database name (for internal comparisons with database_name column)
+CREATE OR REPLACE FUNCTION sys.bbf_cur_db() RETURNS TEXT
+AS 'babelfishpg_tsql', 'babelfish_db_name_internal'
+LANGUAGE C PARALLEL SAFE STABLE;
+
 CREATE OR REPLACE FUNCTION sys.exp(IN arg DOUBLE PRECISION)
 RETURNS DOUBLE PRECISION
 AS 'babelfishpg_tsql', 'tsql_exp'
@@ -4455,35 +4397,15 @@ CREATE OR REPLACE FUNCTION objectproperty(
     )
 RETURNS INT AS
 'babelfishpg_tsql', 'objectproperty_internal'
-LANGUAGE C STABLE;
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
     id INT,
     property SYS.VARCHAR
 )
-RETURNS SYS.SQL_VARIANT
-AS $$
-BEGIN
-	property := PG_CATALOG.RTRIM(LOWER(COALESCE(property, '')));
-	
-	IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
-	THEN
-		RETURN NULL;
-	END IF;
-
-	IF property = 'basetype' COLLATE "C" -- BaseType
-	THEN
-		RETURN (SELECT CAST(ao.type AS SYS.SQL_VARIANT) 
-                FROM sys.all_objects ao
-                WHERE ao.object_id = id
-                LIMIT 1
-                );
-    END IF;
-
-    RETURN CAST(OBJECTPROPERTY(id, property) AS SYS.SQL_VARIANT);
-END
-$$
-LANGUAGE plpgsql STABLE;
+RETURNS SYS.SQL_VARIANT AS
+'babelfishpg_tsql', 'objectpropertyex_internal'
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.sid_binary(IN login sys.nvarchar)
 RETURNS SYS.VARBINARY
@@ -4685,7 +4607,7 @@ BEGIN
         definition = (SELECT dc.definition FROM sys.default_constraints dc WHERE dc.object_id = $1);
         IF (definition IS NULL)
         THEN
-            definition = (SELECT asm.definition FROM sys.all_sql_modules asm WHERE asm.object_id = $1);
+            definition = (SELECT asm.definition FROM sys.all_sql_modules_internal asm WHERE asm.object_id = $1);
             IF (definition IS NULL)
             THEN
                 RETURN NULL;
@@ -5140,9 +5062,9 @@ BEGIN
             RAISE EXCEPTION 'The datepart ''weekday'' is not supported by date function datetrunc for data type ''%''.', date_arg_datatype;
         ELSIF date_arg_datatype = 'date'::regtype AND datepart IN ('hour', 'minute', 'second', 'millisecond', 'microsecond') THEN
             RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''date''.', datepart;
-        ELSIF date_arg_datatype = 'datetime'::regtype AND datepart IN ('microsecond') THEN
+        ELSIF date_arg_datatype = 'sys.datetime'::regtype AND datepart IN ('microsecond') THEN
             RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''datetime''.', datepart;
-        ELSIF date_arg_datatype = 'smalldatetime'::regtype AND datepart IN ('millisecond', 'microsecond') THEN
+        ELSIF date_arg_datatype = 'sys.smalldatetime'::regtype AND datepart IN ('millisecond', 'microsecond') THEN
             RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''smalldatetime''.', datepart;
         ELSIF date_arg_datatype = 'time'::regtype THEN
             IF datepart IN ('year', 'quarter', 'month', 'doy', 'day', 'week', 'tsql_week') THEN
@@ -5150,7 +5072,7 @@ BEGIN
             END IF;
             -- Limitation in determining if the specified fractional scale (if provided any) for time datatype is 
             -- insufficient to support provided datepart (millisecond, microsecond) value
-        ELSIF date_arg_datatype IN ('datetime2'::regtype, 'datetimeoffset'::regtype) THEN
+        ELSIF date_arg_datatype IN ('sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype) THEN
             -- Limitation in determining if the specified fractional scale (if provided any) for the above datatype is
             -- insufficient to support for provided datepart (millisecond, microsecond) value
         END IF;

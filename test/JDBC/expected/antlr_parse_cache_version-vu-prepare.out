@@ -1,0 +1,28 @@
+-- tsql
+
+-- Prepare a cached procedure on the lower version.
+-- Verification intentionally checks only functional results so the expected
+-- output remains stable when the cached representation is invalidated by an upgrade.
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+CREATE PROCEDURE dbo.antlr_parse_cache_version_proc
+    @input INT
+AS
+BEGIN
+    SELECT @input + 1 AS result;
+END;
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_antlr_parse_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+

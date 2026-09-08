@@ -81,6 +81,8 @@ DimensionType determine_ring_type(PointArrayList *pal);
 
 char* rewrite_multipoint_wkt(PointArray *pa);
 char* rewrite_dim_multipoint_wkt(PointArray *pa);
+char* rewrite_multilinestring_query(PointArrayList *pal);
+char* rewrite_dim_multilinestring_query(PointArrayList *pal);
 
 
 #endif /* GEO_DATA_H */

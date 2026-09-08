@@ -167,7 +167,7 @@ BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
-BABEL-ROLE-MEMBER
+BABEL-ROLE-MEMBER-before-18_6
 BABEL_SCHEMATA
 BABEL-SPCOLUMNS
 BABEL-SPCOLUMNS-dep
@@ -251,7 +251,7 @@ msdb-dbo-syspolicy_system_health_state
 nested_trigger_inside_proc
 nested_trigger_with_dml
 newid_before_15_8_or_16_4
-objectpropertyex-before-16_5-or-15_9
+objectpropertyex
 openjson
 openquery_upgrd_before_15_4
 orderby
@@ -261,6 +261,7 @@ schema_resolution_func
 schema_resolution_proc
 schema_resolution_trigger
 select-strip-parens
+select_into_rowcount
 sp_describe_first_result_set
 sp_tablecollations
 smalldatetimefromparts-dep
@@ -365,7 +366,7 @@ sys-sp_databases
 sys-sp_databases-dep
 sys-sp_pkeys
 sys-sp_pkeys-dep
-sys-sp_statistics
+sys-sp_statistics-before-16_9-or-17_4
 sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
@@ -378,7 +379,7 @@ sys-synonyms
 sys-syscharsets
 sys-syscolumns
 sys-syscolumns-dep
-sys-sysdatabases
+sys-sysdatabases-before-18_6
 sys-sysforeignkeys
 sys-sysforeignkeys-dep
 sys-sysindexes
@@ -494,7 +495,7 @@ BABEL-4217
 Test_ISNULL
 BABEL-4270
 BABEL-4410
-BABEL-4231
+BABEL-4231-before-18_6
 function_as_keywd
 typeproperty-dep
 sys_asymmetric_keys
@@ -614,6 +615,7 @@ babel_timezoneinfo_before_17_7
 comparison_op_index_scan-before-17_8-or-16_12
 babel_string_to_money
 BABEL-5788
+BABEL-6814
 BABEL-1664-before-16_10-or-17_6
 babel_string_to_money_reg
 babel_convert_with_style

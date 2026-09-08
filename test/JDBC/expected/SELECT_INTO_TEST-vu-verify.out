@@ -444,6 +444,8 @@ go
 -- Create a new table select_into_REPO with column select_into_COL using the table-returning function
 select select_into_COL into select_into_REPO from dbo.GetSelectIntoData();
 go
+~~ROW COUNT: 3~~
+
 
 -- Check the data in select_into_REPO
 select * from select_into_REPO;
@@ -506,6 +508,8 @@ int
 -- Create a new table select_into_REPO with column 中文_COL
 select 中文_COL into select_into_REPO from select_into;
 go
+~~ROW COUNT: 3~~
+
 
 -- Check the data in select_into_REPO
 select * from select_into_REPO;
@@ -557,6 +561,8 @@ int
 -- Create a new table select_into_REPO with column 中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into
 select 中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into into select_into_REPO from select_into;
 go
+~~ROW COUNT: 3~~
+
 
 -- Check the data in select_into_REPO
 select * from select_into_REPO;
@@ -578,7 +584,7 @@ select column_name from information_schema.columns where table_name = 'select_in
 go
 ~~START~~
 nvarchar
-中文_col_select_into_select_icefa3744f642e9df762aa877d7ccd6e7
+中文_COL_select_into_select_into_select_into_select_into_select_into_select_into_select_into_select_into
 ~~END~~
 
 -- dropping the table select_into
@@ -608,6 +614,8 @@ int
 -- Create a new table select_into_REPO with column select_into_COL using multi-part name
 select dbo.select_into.select_into_COL into select_into_REPO from dbo.select_into;
 go
+~~ROW COUNT: 3~~
+
 
 -- Check the data in select_into_REPO
 select * from select_into_REPO;
@@ -660,6 +668,8 @@ int
 -- Create a new table select_into_REPO with column select_into_COL_select_into_COL_Col_length_greater_then_sixty_four using multi-part name
 select dbo.select_into.select_into_COL_select_into_COL_Col_length_greater_then_sixty_four into select_into_REPO from dbo.select_into;
 go
+~~ROW COUNT: 3~~
+
 
 -- Check the data in select_into_REPO
 select * from select_into_REPO;
@@ -681,7 +691,7 @@ select column_name from information_schema.columns where table_name = 'select_in
 go
 ~~START~~
 nvarchar
-select_into_col_select_into_colb0110865143217c65f7939886bc07595
+select_into_COL_select_into_COL_Col_length_greater_then_sixty_four
 ~~END~~
 
 

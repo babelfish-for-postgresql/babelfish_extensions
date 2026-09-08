@@ -10,14 +10,9 @@ GO
 -- Example 1
 GO
 
-DECLARE @xml XML
-SET @xml = CONVERT(XML, '<Root>  
-                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
-                                <row id="2"><name>Bhagat</name></row>  
-                                <row id="3" />  
-                            </Root>')
-SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
-
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
 GO
 GO
 
@@ -26,14 +21,9 @@ begin transaction
 GO
 GO
 
-DECLARE @xml XML
-SET @xml = CONVERT(XML, '<Root>  
-                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
-                                <row id="2"><name>Bhagat</name></row>  
-                                <row id="3" />  
-                            </Root>')
-SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
-
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
 GO
 
 -- Below output is only applicable if query is special case. for example, CREATE/ALTER TRIGGER, CREATE/ALTER FUNCTION, CREATE/ALTER PROC, CREATE/ALTER VIEW etc
@@ -51,14 +41,9 @@ GO
 -- Executing test error_mapping.ErrorHandling1
 create procedure error_mapping.ErrorHandling1 as
 begin
-DECLARE @xml XML
-SET @xml = CONVERT(XML, '<Root>  
-                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
-                                <row id="2"><name>Bhagat</name></row>  
-                                <row id="3" />  
-                            </Root>')
-SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
-
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 
@@ -86,14 +71,9 @@ GO
 -- Executing test error_mapping.ErrorHandling1
 create procedure error_mapping.ErrorHandling1 as
 begin
-DECLARE @xml XML
-SET @xml = CONVERT(XML, '<Root>  
-                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
-                                <row id="2"><name>Bhagat</name></row>  
-                                <row id="3" />  
-                            </Root>')
-SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
-
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 
@@ -115,14 +95,9 @@ GO
 -- Example 2
 GO
 
-DECLARE @xml XML
-SET @xml = CONVERT(XML, '<Root>  
-                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
-                                <row id="2"><name>Bhagat</name></row>  
-                                <row id="3" />  
-                            </Root>')
-SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
-
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
 GO
 GO
 
@@ -131,14 +106,9 @@ begin transaction
 GO
 GO
 
-DECLARE @xml XML
-SET @xml = CONVERT(XML, '<Root>  
-                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
-                                <row id="2"><name>Bhagat</name></row>  
-                                <row id="3" />  
-                            </Root>')
-SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
-
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
 GO
 
 

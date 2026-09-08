@@ -1,90 +1,10 @@
-#include "postgres.h"
-#include "port.h"
-#include "funcapi.h"
-#include "pgstat.h"
-#include "varatt.h"
-
-#include "postgres.h"
-#include "access/hash.h"
-#include "access/nbtree.h"
-#include "utils/builtins.h"
-#include "utils/date.h"
-#include "utils/datetime.h"
-#include "libpq/pqformat.h"
-#include "utils/timestamp.h"
-#include "utils/formatting.h"
-
-#include "fmgr.h"
-#include "miscadmin.h"
-
-#include "access/detoast.h"
-#include "access/htup_details.h"
-#include "access/table.h"
-#include "access/xact.h"
-#include "catalog/namespace.h"
-#include "catalog/pg_database.h"
-#include "catalog/pg_namespace.h"
-#include "catalog/pg_type.h"
-#include "catalog/pg_attrdef.h"
-#include "catalog/pg_depend.h"
-#include "commands/dbcommands.h"
-#include "commands/extension.h"
-#include "common/md5.h"
-#include "executor/spi.h"
-#include "executor/spi_priv.h"
-#include "miscadmin.h"
-#include "parser/scansup.h"
-#include "tsearch/ts_locale.h"
-#include "utils/acl.h"
-#include "utils/builtins.h"
-#include "utils/date.h"
-#include "utils/datetime.h"
-#include "utils/elog.h"
-#include "utils/guc.h"
-#include "utils/lsyscache.h"
-#include "utils/memutils.h"
-#include "utils/numeric.h"
-#include "utils/rel.h"
-#include "utils/syscache.h"
-#include "utils/varlena.h"
-#include "utils/queryenvironment.h"
-#include "utils/float.h"
-#include "utils/xid8.h"
-#include "utils/xml.h"
+#include "runtime.h"
 #include "catalog/pg_class_d.h"
-#include <math.h>
 
 extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
 extern char *get_value_by_name_from_array(ArrayType *array, const char *name);
 
 static char *get_orig_temp_table_name(Oid relid);
-
-#include "../src/babelfish_version.h"
-#include "../src/datatype_info.h"
-#include "../src/pltsql.h"
-#include "../src/pltsql_instr.h"
-#include "../src/multidb.h"
-#include "../src/session.h"
-#include "../src/catalog.h"
-#include "../src/timezone.h"
-#include "../src/collation.h"
-#include "../src/dbcmds.h"
-#include "../src/hooks.h"
-#include "../src/rolecmds.h"
-#include "utils/fmgroids.h"
-#include "utils/acl.h"
-#include "access/table.h"
-#include "access/genam.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_trigger.h"
-#include "catalog/pg_constraint.h"
-#include "parser/parse_oper.h"
-
-#ifdef USE_LIBXML
-#include <libxml/tree.h>
-#include <libxml/xpath.h>
-#include <libxml/xpathInternals.h>
-#endif							/* USE_LIBXML */
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
@@ -94,10 +14,25 @@ static char *get_orig_temp_table_name(Oid relid);
 #define DATEPART_MIN_VALUE -53690               	/* minimun value for datepart general_integer_datatype */
 #define DATEPART_SMALLMONEY_MAX_VALUE 214748.3647	/* maximum value for datepart smallmoney */
 #define DATEPART_SMALLMONEY_MIN_VALUE -53690		/* minimum value for datepart smallmoney */
-#define TSQL_OPENXML_EDGE_TABLE_COLS 9
+#define OBJECT_TYPE_CODE_TABLE "U "
+#define OBJECT_TYPE_CODE_VIEW "V "
+#define OBJECT_TYPE_CODE_SEQUENCE "SO"
+#define OBJECT_TYPE_CODE_TABLE_TYPE "TT"
+#define OBJECT_TYPE_CODE_FOREIGN_KEY "F "
+#define OBJECT_TYPE_CODE_PRIMARY_KEY "PK"
+#define OBJECT_TYPE_CODE_UNIQUE_KEY	 "UQ"
+#define OBJECT_TYPE_CODE_CHECK_CONSTRAINT "C "
+#define OBJECT_TYPE_CODE_DEFAULT_CONSTRAINT "D "
+#define OBJECT_TYPE_CODE_STORED_PROCEDURE "P "
+#define OBJECT_TYPE_CODE_AGGREGATE_FUNCTION "AF"
+#define OBJECT_TYPE_CODE_DML_TRIGGER "TR"
+#define OBJECT_TYPE_CODE_TABLE_VALUED_FUNC "TF"
+#define OBJECT_TYPE_CODE_INLINE_TABLE_FUNC "IF"
+#define OBJECT_TYPE_CODE_SCALAR_FUNCTION "FN"
 
 typedef enum
 {
+	OBJECT_TYPE_UNKNOWN = -1,
 	OBJECT_TYPE_AGGREGATE_FUNCTION,
 	OBJECT_TYPE_CHECK_CONSTRAINT,
 	OBJECT_TYPE_DEFAULT_CONSTRAINT,
@@ -194,6 +129,7 @@ PG_FUNCTION_INFO_V1(object_schema_name);
 PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
 PG_FUNCTION_INFO_V1(objectproperty_internal);
+PG_FUNCTION_INFO_V1(objectpropertyex_internal);
 PG_FUNCTION_INFO_V1(sysutcdatetime);
 PG_FUNCTION_INFO_V1(getutcdate);
 PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
@@ -213,7 +149,6 @@ PG_FUNCTION_INFO_V1(datepart_internal_money);
 PG_FUNCTION_INFO_V1(datepart_internal_smallmoney);
 PG_FUNCTION_INFO_V1(replace_special_chars_fts);
 PG_FUNCTION_INFO_V1(isnumeric);
-PG_FUNCTION_INFO_V1(openxml_simple);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -251,39 +186,6 @@ extern bool inited_ht_tsql_cast_info;
 extern bool inited_ht_tsql_datatype_precedence_info;
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern char *replace_special_chars_fts_impl(char *input_str);
-
-#ifdef USE_LIBXML
-HTAB	     *ht_xmlNode2Id = NULL;
-static bool   inited_ht_xmlNode2Id = false;
-
-typedef struct ht_xmlNode2Id_entry
-{
-	xmlNode           *key;
-	long long int      id;
-} ht_xmlNode2Id_entry_t;
-
-/* This came from backend/utils/adt/xml.c */
-struct PgXmlErrorContext
-{
-	int			magic;
-	/* strictness argument passed to pg_xml_init */
-	PgXmlStrictness strictness;
-	/* current error status and accumulated message, if any */
-	bool		err_occurred;
-	StringInfoData err_buf;
-	/* previous libxml error handling state (saved by pg_xml_init) */
-	xmlStructuredErrorFunc saved_errfunc;
-	void	   *saved_errcxt;
-	/* previous libxml entity handler (saved by pg_xml_init) */
-	xmlExternalEntityLoader saved_entityfunc;
-};
-#endif							/* USE_LIBXML */
-
-#define NO_XML_SUPPORT() \
-	ereport(ERROR, \
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
-			 errmsg("unsupported XML feature"), \
-			 errdetail("This functionality requires the server to be built with libxml support.")))
 
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
@@ -347,28 +249,6 @@ do { \
 				 errmsg("duplicate category name"))); \
 	hentry->catdesc = CATDESC; \
 } while(0)
-
-#define xpfree(var_) \
-	do { \
-		if (var_ != NULL) \
-		{ \
-			pfree(var_); \
-			var_ = NULL; \
-		} \
-	} while (0)
-
-#define xpstrdup(tgtvar_, srcvar_) \
-	do { \
-		if (srcvar_) \
-			tgtvar_ = pstrdup(srcvar_); \
-		else \
-			tgtvar_ = NULL; \
-	} while (0)
-
-#define xstreq(tgtvar_, srcvar_) \
-	(((tgtvar_ == NULL) && (srcvar_ == NULL)) || \
-	 ((tgtvar_ != NULL) && (srcvar_ != NULL) && (strcmp(tgtvar_, srcvar_) == 0)))
-
 
 Datum
 babelfish_concat_wrapper(PG_FUNCTION_ARGS)
@@ -2906,16 +2786,13 @@ object_name(PG_FUNCTION_ARGS)
 		{
 			Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
 
-			if (pg_class->relpersistence == RELPERSISTENCE_TEMP &&
-				NameStr(pg_class->relname)[0] == '#')
-			{
-				char *orig = get_orig_temp_table_name(object_id);
-				if (orig)
-					result_text = cstring_to_text(orig);
-			}
-
-			if (!result_text)
-				result_text = cstring_to_text(NameStr(pg_class->relname));
+			/*
+			 * get_original_relname returns the original (pre-truncation)
+			 * name from reloptions when present, and falls back to the
+			 * physical relname otherwise. The truncation-threshold
+			 * optimization lives inside the helper.
+			 */
+			result_text = cstring_to_text(get_original_relname(object_id, false));
 			schema_id = pg_class->relnamespace;
 		}
 		ReleaseSysCache(tuple);
@@ -3267,6 +3144,14 @@ has_dbaccess(PG_FUNCTION_ARGS)
 
 	if (!DbidIsValid(db_id))
 		PG_RETURN_NULL();
+
+	/*
+	 * All downstream lookups (physical user/role/schema names) key off the
+	 * physical database name, which for long names is downcased and
+	 * MD5-truncated. Normalize once so a long or mixed-case original name
+	 * resolves the same physical objects as the stored row.
+	 */
+	lowercase_db_name = get_physical_db_name(lowercase_db_name);
 
 	login = GetUserNameFromId(GetSessionUserId(), false);
 	user = get_authid_user_ext_physical_name(lowercase_db_name, login);
@@ -4379,403 +4264,515 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 	return is_ms_shipped;
 }
 
-Datum
-objectproperty_internal(PG_FUNCTION_ARGS)
+static const char *
+object_type_to_code(int type)
 {
-	Oid		object_id;
-	Oid		schema_id = InvalidOid;
-	char		*property;
-	Oid		user_id = GetUserId();
-	HeapTuple	tuple;
-	int		type = 0;
-	char		*object_name = NULL;
-	char		*nspname = NULL;
-
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
-		PG_RETURN_NULL();
-	else
+	switch (type)
 	{
-		object_id = (Oid) PG_GETARG_INT32(0);
-		property = text_to_cstring(PG_GETARG_TEXT_P(1));
-		property = downcase_identifier(property, strlen(property), false, true);
-		remove_trailing_spaces(property);
+		case OBJECT_TYPE_TABLE:								return OBJECT_TYPE_CODE_TABLE;
+		case OBJECT_TYPE_VIEW:								return OBJECT_TYPE_CODE_VIEW;
+		case OBJECT_TYPE_SEQUENCE_OBJECT:					return OBJECT_TYPE_CODE_SEQUENCE;
+		case OBJECT_TYPE_TABLE_TYPE:						return OBJECT_TYPE_CODE_TABLE_TYPE;
+		case OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT:			return OBJECT_TYPE_CODE_FOREIGN_KEY;
+		case OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT:			return OBJECT_TYPE_CODE_PRIMARY_KEY;
+		case OBJECT_TYPE_UNIQUE_CONSTRAINT:					return OBJECT_TYPE_CODE_UNIQUE_KEY;
+		case OBJECT_TYPE_CHECK_CONSTRAINT:					return OBJECT_TYPE_CODE_CHECK_CONSTRAINT;
+		case OBJECT_TYPE_DEFAULT_CONSTRAINT:				return OBJECT_TYPE_CODE_DEFAULT_CONSTRAINT;
+		case OBJECT_TYPE_TSQL_STORED_PROCEDURE:				return OBJECT_TYPE_CODE_STORED_PROCEDURE;
+		case OBJECT_TYPE_AGGREGATE_FUNCTION:				return OBJECT_TYPE_CODE_AGGREGATE_FUNCTION;
+		case OBJECT_TYPE_TSQL_DML_TRIGGER:					return OBJECT_TYPE_CODE_DML_TRIGGER;
+		case OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION:		return OBJECT_TYPE_CODE_TABLE_VALUED_FUNC;
+		case OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION:	return OBJECT_TYPE_CODE_INLINE_TABLE_FUNC;
+		case OBJECT_TYPE_TSQL_SCALAR_FUNCTION:				return OBJECT_TYPE_CODE_SCALAR_FUNCTION;
+		default:											return NULL;
 	}
+}
 
-	/*
-	 * Search for the object_id in pg_class, pg_proc, pg_attrdef, pg_constraint.
-	 * If the object_id is not found in any of the above catalogs, return NULL.
-	 * Else, get the object name, type of the object and the schema_id in which 
-	 * the object is present.
-	 */
+/*
+ * get_object_from_pg_class - Look up object in pg_class (tables, views, sequences).
+ *
+ * Returns true if OID exists in this catalog (regardless of ACL result).
+ * Output params are only populated when ACL check passes.
+ */
+static bool
+get_object_from_pg_class(Oid object_id, Oid user_id, int *type,
+						 Oid *schema_id, char **object_name)
+{
+	HeapTuple	tuple;
+	int			temp_type = OBJECT_TYPE_UNKNOWN;
+	Oid			temp_schema = InvalidOid;
 
-	/* pg_class */
+	if (!type || !schema_id)
+		return false;
+
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(object_id));
-	if (HeapTupleIsValid(tuple))
+	if (!HeapTupleIsValid(tuple))
+		return false;
+
 	{
 		Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
 
-		object_name = NameStr(pg_class->relname);
-
-		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
-			schema_id = get_rel_namespace(object_id);
-
-		/* 
-		 * Get the type of the object 
-		 */
-		if ((pg_class->relpersistence == 'p' || pg_class->relpersistence == 'u' || pg_class->relpersistence == 't') &&
-				(pg_class->relkind == 'r'))
+		/* Any T-SQL table-level permission allows metadata visibility */
+		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT | ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_REFERENCES) == ACLCHECK_OK)
 		{
-			/* 
-			 * Check whether it is a Table type (TT) object.
-			 * The reltype of the pg_class object should be there in pg_type. The pg_type object found
-			 * should be of composite type (c) and the type of dependency should be DEPENDENCY_INTERNAL (i).
-			 * We scan pg_depend catalog to find the type of the dependency.
-			 */
-			HeapTuple tp;
-			tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(pg_class->reltype));
-			if(HeapTupleIsValid(tp))
+			if (object_name)
+				*object_name = pstrdup(NameStr(pg_class->relname));
+			temp_schema = pg_class->relnamespace;
+
+			if ((pg_class->relpersistence == 'p' || pg_class->relpersistence == 'u' || pg_class->relpersistence == 't') &&
+				pg_class->relkind == 'r')
 			{
-				Form_pg_type typform = (Form_pg_type) GETSTRUCT(tp);
-
-				if (typform->typtype == 'c')
+				/* 
+				 * Check whether it is a Table type (TT) object.
+				 * The reltype of the pg_class object should be there in pg_type. The pg_type object found
+				 * should be of composite type (c) and the type of dependency should be DEPENDENCY_INTERNAL (i).
+				 * We scan pg_depend catalog to find the type of the dependency.
+				 */
+				HeapTuple tp;
+				tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(pg_class->reltype));
+				if(HeapTupleIsValid(tp))
 				{
-					Relation	depRel;
-					ScanKeyData key[2];
-					SysScanDesc scan;
-					HeapTuple	tup;
+					Form_pg_type typform = (Form_pg_type) GETSTRUCT(tp);
 
-					depRel = table_open(DependRelationId, AccessShareLock);
-
-					ScanKeyInit(&key[0],
-								Anum_pg_depend_objid,
-								BTEqualStrategyNumber, F_OIDEQ,
-								ObjectIdGetDatum(typform->typrelid));
-					ScanKeyInit(&key[1],
-								Anum_pg_depend_refobjid,
-								BTEqualStrategyNumber, F_OIDEQ,
-								ObjectIdGetDatum(typform->oid));
-
-					scan = systable_beginscan(depRel, InvalidOid, false,
-							  				NULL, 2, key);
-
-					if (HeapTupleIsValid(tup = systable_getnext(scan)))
+					if (typform->typtype == 'c')
 					{
-						Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+						Relation	depRel;
+						ScanKeyData key[2];
+						SysScanDesc scan;
+						HeapTuple	tup;
 
-						if (depform->deptype == 'i')
-							type = OBJECT_TYPE_TABLE_TYPE;
+						depRel = table_open(DependRelationId, AccessShareLock);
+
+						ScanKeyInit(&key[0],
+									Anum_pg_depend_refclassid,
+									BTEqualStrategyNumber, F_OIDEQ,
+									ObjectIdGetDatum(TypeRelationId));
+						ScanKeyInit(&key[1],
+									Anum_pg_depend_refobjid,
+									BTEqualStrategyNumber, F_OIDEQ,
+									ObjectIdGetDatum(typform->oid));
+
+						scan = systable_beginscan(depRel, DependReferenceIndexId, true,
+								  				NULL, 2, key);
+
+						while (HeapTupleIsValid(tup = systable_getnext(scan)))
+						{
+							Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+
+							if (depform->deptype == 'i' && depform->objid == typform->typrelid)
+							{
+								temp_type = OBJECT_TYPE_TABLE_TYPE;
+								break;
+							}
+
+						}
+
+						systable_endscan(scan);
+
+						table_close(depRel, AccessShareLock);
 					}
-
-					systable_endscan(scan);
-
-					table_close(depRel, AccessShareLock);
+					ReleaseSysCache(tp);
 				}
-				ReleaseSysCache(tp);
+				/*
+				 * If the object is not of Table type (TT), it should be user defined table (U)
+				 */
+				if (temp_type != OBJECT_TYPE_TABLE_TYPE)
+					temp_type = OBJECT_TYPE_TABLE;
 			}
-			/*
-			 * If the object is not of Table type (TT), it should be user defined table (U)
-			 */
-			if (type == 0 || type != OBJECT_TYPE_TABLE_TYPE)
-				type = OBJECT_TYPE_TABLE;
+			else if (pg_class->relkind == 'v')
+				temp_type = OBJECT_TYPE_VIEW;
+			else if (pg_class->relkind == 'S')
+				temp_type = OBJECT_TYPE_SEQUENCE_OBJECT;
 		}
-		else if (pg_class->relkind == 'v')
-			type = OBJECT_TYPE_VIEW;
-		else if (pg_class->relkind == 's')
-			type = OBJECT_TYPE_SEQUENCE_OBJECT;
 
 		ReleaseSysCache(tuple);
 	}
-	/* pg_proc */
-	if (!schema_id)
+
+	/*
+     * Return true even if ACL check fails — OID exists in this catalog,
+     * so stop searching other catalogs. Caller must check OidIsValid(schema_id)
+     * to detect insufficient permissions.
+     */
+
+	*type = temp_type;
+	*schema_id = temp_schema;
+	return true;
+}
+
+/*
+ * get_object_from_pg_proc - Look up object in pg_proc (procedures, functions, triggers).
+ *
+ * Returns true if found. Populates type/schema_id, and object_name if non-NULL.
+ */
+static bool
+get_object_from_pg_proc(Oid object_id, Oid user_id, int *type,
+						Oid *schema_id, char **object_name)
+{
+	HeapTuple	tuple;
+	int			temp_type = OBJECT_TYPE_UNKNOWN;
+	Oid			temp_schema = InvalidOid;
+
+	if (!type || !schema_id)
+		return false;
+
+	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
+	if (!HeapTupleIsValid(tuple))
+		return false;
+
+	if (object_aclcheck(ProcedureRelationId, object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
 	{
-		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
-		if (HeapTupleIsValid(tuple))
-		{
-			if (object_aclcheck(ProcedureRelationId, object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
-			{
-				Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
+		Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
 
-				object_name = NameStr(procform->proname);
+		if (object_name)
+			*object_name = pstrdup(NameStr(procform->proname));
+		temp_schema = tsql_get_proc_nsp_oid(object_id);
 
-				schema_id = tsql_get_proc_nsp_oid(object_id);
-
-				if (procform->prokind == 'p')
-				type = OBJECT_TYPE_TSQL_STORED_PROCEDURE;
-				else if (procform->prokind == 'a')
-					type = OBJECT_TYPE_AGGREGATE_FUNCTION;
-				else
-				{
-					/*
-					 * Check whether the object is SQL DML trigger(TR), SQL table-valued-function (TF),
-					 * SQL inline table-valued function (IF), SQL scalar function (FN).
-					 */
-					char	*temp = format_type_extended(procform->prorettype, -1, FORMAT_TYPE_ALLOW_INVALID);
-					/*
-					 * If the prorettype of the pg_proc object is "trigger", then the type of the object is "TR"
-					 */
-					if (pg_strcasecmp(temp, "trigger") == 0) 
-						type = OBJECT_TYPE_TSQL_DML_TRIGGER;
-					/*
-					 * For SQL table-valued-functions and SQL inline table-valued functions, re-implement the existing SQL.
-					 */
-					else if (procform->proretset)
-					{
-						HeapTuple tp;
-						tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(procform->prorettype));
-						if (HeapTupleIsValid(tp))
-						{
-							Form_pg_type typeform = (Form_pg_type) GETSTRUCT(tuple);
-
-							if (typeform->typtype == 'c')
-								type = OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION;
-							else
-								type = OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION;
-
-							ReleaseSysCache(tp);
-						}
-					}
-					else
-						type = OBJECT_TYPE_TSQL_SCALAR_FUNCTION;
-					
-					pfree(temp);
-				}
-			}
-			ReleaseSysCache(tuple);
-		}
-	}
-	/* pg_attrdef */
-	if (!schema_id)
-	{
-		Relation	attrdefrel;
-		ScanKeyData key;
-		SysScanDesc attrscan;
-
-		attrdefrel = table_open(AttrDefaultRelationId, AccessShareLock);
-		ScanKeyInit(&key,
-					Anum_pg_attrdef_oid,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(object_id));
-
-		attrscan = systable_beginscan(attrdefrel, AttrDefaultOidIndexId, true,
-									NULL, 1, &key);
-
-		tuple = systable_getnext(attrscan);
-		if (HeapTupleIsValid(tuple))
+		if (procform->prokind == 'p')
+			temp_type = OBJECT_TYPE_TSQL_STORED_PROCEDURE;
+		else if (procform->prokind == 'a')
+			temp_type = OBJECT_TYPE_AGGREGATE_FUNCTION;
+		else
 		{
 			/*
-			 * scan pg_attribute catalog to find the corresponding row.
-			 * This pg_attribute pbject will be helpful to check whether the object is DEFAULT (D)
-			 * and to find the schema_id.
+			 * Check whether the object is SQL DML trigger(TR), SQL table-valued-function (TF),
+			 * SQL inline table-valued function (IF), SQL scalar function (FN).
 			 */
-			Form_pg_attrdef atdform = (Form_pg_attrdef) GETSTRUCT(tuple);
+			bool    proretset = procform->proretset;
+			Oid     prorettype = procform->prorettype;
+			char	*temp = format_type_extended(prorettype, -1, FORMAT_TYPE_ALLOW_INVALID);
+			/*
+			 * If the prorettype of the pg_proc object is "trigger", then the type of the object is "TR"
+			 */
+
+			if (pg_strcasecmp(temp, "trigger") == 0)
+				temp_type = OBJECT_TYPE_TSQL_DML_TRIGGER;
+			/*
+			 * For SQL table-valued-functions and SQL inline table-valued functions, re-implement the existing SQL.
+			 */
+			else if (proretset)
+			{
+				HeapTuple tp;
+
+				tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(prorettype));
+				if (HeapTupleIsValid(tp))
+				{
+					Form_pg_type typeform = (Form_pg_type) GETSTRUCT(tp);
+
+					if (typeform->typtype == 'c')
+						temp_type = OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION;
+					else
+						temp_type = OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION;
+					ReleaseSysCache(tp);
+				}
+			}
+			else
+				temp_type = OBJECT_TYPE_TSQL_SCALAR_FUNCTION;
+				
+
+			pfree(temp);
+		}
+	}
+
+	ReleaseSysCache(tuple);
+
+	*type = temp_type;
+	*schema_id = temp_schema;
+	return true;
+}
+
+/*
+ * get_object_from_pg_trigger - Look up object in pg_trigger (DML triggers).
+ *
+ * Returns true if OID exists in this catalog (regardless of ACL result).
+ * Output params are only populated when ACL check passes.
+ */
+static bool
+get_object_from_pg_trigger(Oid object_id, Oid user_id, int *type,
+						   Oid *schema_id, char **object_name)
+{
+	Relation	tgrel;
+	ScanKeyData key;
+	SysScanDesc tgscan;
+	HeapTuple	tuple;
+	bool		found = false;
+	int			temp_type = OBJECT_TYPE_UNKNOWN;
+	Oid			temp_schema = InvalidOid;
+
+	if (!type || !schema_id)
+		return false;
+
+	tgrel = table_open(TriggerRelationId, AccessShareLock);
+	ScanKeyInit(&key,
+				Anum_pg_trigger_oid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object_id));
+
+	tgscan = systable_beginscan(tgrel, TriggerOidIndexId, true,
+								NULL, 1, &key);
+
+	tuple = systable_getnext(tgscan);
+	if (HeapTupleIsValid(tuple))
+	{
+		Form_pg_trigger tgform = (Form_pg_trigger) GETSTRUCT(tuple);
+
+		found = true;
+
+		/* Any T-SQL table-level permission on parent table allows visibility */
+		if (pg_class_aclcheck(tgform->tgrelid, user_id,
+							  ACL_SELECT | ACL_INSERT | ACL_UPDATE |
+							  ACL_DELETE | ACL_REFERENCES) == ACLCHECK_OK)
+		{
+			if (object_name)
+				*object_name = pstrdup(NameStr(tgform->tgname));
+			temp_type = OBJECT_TYPE_TSQL_DML_TRIGGER;
+			temp_schema = get_rel_namespace(tgform->tgrelid);
+		}
+	}
+
+	systable_endscan(tgscan);
+	table_close(tgrel, AccessShareLock);
+
+	*type = temp_type;
+	*schema_id = temp_schema;
+	return found;
+}
+
+/*
+ * get_object_from_pg_attrdef - Look up object in pg_attrdef (default constraints).
+ *
+ * Returns true if OID exists in this catalog (regardless of ACL result).
+ * Output params are only populated when ACL check passes.
+ */
+static bool
+get_object_from_pg_attrdef(Oid object_id, Oid user_id, int *type,
+						   Oid *schema_id, char **object_name)
+{
+	Relation	attrdefrel;
+	ScanKeyData key;
+	SysScanDesc attrscan;
+	HeapTuple	tuple;
+	bool		found = false;
+	int			temp_type = OBJECT_TYPE_UNKNOWN;
+	Oid			temp_schema = InvalidOid;
+
+	if (!type || !schema_id)
+		return false;
+
+	attrdefrel = table_open(AttrDefaultRelationId, AccessShareLock);
+	ScanKeyInit(&key,
+				Anum_pg_attrdef_oid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object_id));
+
+	attrscan = systable_beginscan(attrdefrel, AttrDefaultOidIndexId, true,
+								  NULL, 1, &key);
+
+	tuple = systable_getnext(attrscan);
+	if (HeapTupleIsValid(tuple))
+	{
+		/*
+		 * scan pg_attribute catalog to find the corresponding row.
+		 * This pg_attribute pbject will be helpful to check whether the object is DEFAULT (D)
+		 * and to find the schema_id.
+		 */
+		Form_pg_attrdef atdform = (Form_pg_attrdef) GETSTRUCT(tuple);
+
+		found = true;
+
+		/* Any T-SQL table or column-level permission allows visibility */
+		if (pg_class_aclcheck(atdform->adrelid, user_id,
+							  ACL_SELECT | ACL_INSERT | ACL_UPDATE |
+							  ACL_DELETE | ACL_REFERENCES) == ACLCHECK_OK ||
+			pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id,
+								  ACL_SELECT | ACL_INSERT | ACL_UPDATE |
+								  ACL_REFERENCES) == ACLCHECK_OK)
+		{
 			Relation	attrRel;
-			ScanKeyData key[2];
+			ScanKeyData akey[2];
 			SysScanDesc scan;
 			HeapTuple	tup;
 
-			if (pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_SELECT) &&
-				pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_INSERT) &&
-				pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_UPDATE) &&
-				pg_attribute_aclcheck(atdform->adrelid, atdform->adnum, user_id, ACL_REFERENCES))
+			attrRel = table_open(AttributeRelationId, AccessShareLock);
+
+			ScanKeyInit(&akey[0],
+						Anum_pg_attribute_attrelid,
+						BTEqualStrategyNumber, F_OIDEQ,
+						ObjectIdGetDatum(atdform->adrelid));
+			ScanKeyInit(&akey[1],
+						Anum_pg_attribute_attnum,
+						BTEqualStrategyNumber, F_INT2EQ,
+						Int16GetDatum(atdform->adnum));
+
+			scan = systable_beginscan(attrRel, AttributeRelidNumIndexId, true,
+									  NULL, 2, akey);
+
+			if (HeapTupleIsValid(tup = systable_getnext(scan)))
 			{
-				attrRel = table_open(AttributeRelationId, AccessShareLock);
+				Form_pg_attribute attrform = (Form_pg_attribute) GETSTRUCT(tup);
 
-				ScanKeyInit(&key[0],
-							Anum_pg_attribute_attrelid,
-							BTEqualStrategyNumber, F_OIDEQ,
-							ObjectIdGetDatum(atdform->adrelid));
-				ScanKeyInit(&key[1],
-							Anum_pg_attribute_attnum,
-							BTEqualStrategyNumber, F_INT2EQ,
-							Int16GetDatum(atdform->adnum));
-
-				scan = systable_beginscan(attrRel, AttributeRelidNumIndexId, true,
-						  				NULL, 2, key);
-
-				if (HeapTupleIsValid(tup = systable_getnext(scan)))
+				if (attrform->atthasdef && !attrform->attgenerated)
 				{
-					Form_pg_attribute attrform = (Form_pg_attribute) GETSTRUCT(tup);
-
-					if (attrform->atthasdef && !attrform->attgenerated)
-					{
-						object_name = NameStr(attrform->attname);
-						type = OBJECT_TYPE_DEFAULT_CONSTRAINT;
-						if (pg_class_aclcheck(atdform->adrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
-							schema_id = get_rel_namespace(atdform->adrelid);
-					}
+					if (object_name)
+						*object_name = pstrdup(NameStr(attrform->attname));
+					temp_type = OBJECT_TYPE_DEFAULT_CONSTRAINT;
+					temp_schema = get_rel_namespace(atdform->adrelid);
 				}
-
-				systable_endscan(scan);
-
-				table_close(attrRel, AccessShareLock);
 			}
 
+			systable_endscan(scan);
+			table_close(attrRel, AccessShareLock);
 		}
-		systable_endscan(attrscan);
-		table_close(attrdefrel, AccessShareLock);
 	}
-	/* pg_constraint */
-	if (!schema_id)
+
+	systable_endscan(attrscan);
+	table_close(attrdefrel, AccessShareLock);
+
+	*type = temp_type;
+	*schema_id = temp_schema;
+	return found;
+}
+
+/*
+ * get_object_from_pg_constraint - Look up object in pg_constraint (PK, FK, check).
+ *
+ * Returns true if found. Populates type/schema_id, and object_name if non-NULL.
+ */
+static bool
+get_object_from_pg_constraint(Oid object_id, Oid user_id, int *type,
+							  Oid *schema_id, char **object_name)
+{
+	HeapTuple	tuple;
+	int			temp_type = OBJECT_TYPE_UNKNOWN;
+	Oid			temp_schema = InvalidOid;
+
+	if (!type || !schema_id)
+		return false;
+
+	tuple = SearchSysCache1(CONSTROID, ObjectIdGetDatum(object_id));
+	if (!HeapTupleIsValid(tuple))
+		return false;
+
 	{
-		tuple = SearchSysCache1(CONSTROID, ObjectIdGetDatum(object_id));
-		if (HeapTupleIsValid(tuple))
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+
+		temp_schema = tsql_get_constraint_nsp_oid(object_id, user_id);
+		if (OidIsValid(temp_schema))
 		{
-			Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
-			object_name = NameStr(con->conname);
-			schema_id = tsql_get_constraint_nsp_oid(object_id, user_id);
+			if (object_name)
+				*object_name = pstrdup(NameStr(con->conname));
+
 			/*
 			 * If the contype is 'f' on the pg_constraint object, then it is a Foreign key constraint
 			 */
 			if (con->contype == 'f')
-				type = OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT;
+				temp_type = OBJECT_TYPE_FOREIGN_KEY_CONSTRAINT;
 			/*
 			 * If the contype is 'p' on the pg_constraint object, then it is a Primary key constraint
 			 */
 			else if (con->contype == 'p')
-				type = OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT;
+				temp_type = OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT;
 			/*
 			 * Reimplemented the existing SQL .
-			 * If the contype is 'c' and conrelid is 0 on the pg_constraint object, then it is a Check constraint
+			 * If the contype is 'c' and conrelid is not 0 on the pg_constraint object, then it is a Check constraint
 			 */
 			else if (con->contype == 'c' && con->conrelid != 0)
-				type = OBJECT_TYPE_CHECK_CONSTRAINT;
-			
-			ReleaseSysCache(tuple);
+				temp_type = OBJECT_TYPE_CHECK_CONSTRAINT;
+			else if (con->contype == 'u')
+				temp_type = OBJECT_TYPE_UNIQUE_CONSTRAINT;
 		}
+
+		ReleaseSysCache(tuple);
 	}
+
+	*type = temp_type;
+	*schema_id = temp_schema;
+	return true;
+}
+
+/*
+ * objectproperty_helper - Resolve object and evaluate property.
+ *
+ * Looks up object_id in catalogs, validates schema visibility and database
+ * scoping, then evaluates the property. Returns the int result.
+ * is_null = true means the caller should return SQL NULL (object not found,
+ * no permission, or unrecognized property).
+ * is_null = false means the caller should return the int result.
+ * Sets *out_type to the resolved object type (for basetype callers).
+ */
+static int
+objectproperty_helper(Oid object_id, const char *property, int *out_type,
+					  bool *is_null)
+{
+	Oid		schema_id = InvalidOid;
+	Oid		user_id = GetUserId();
+	int		type = OBJECT_TYPE_UNKNOWN;
+	char	*object_name = NULL;
+	char	*nspname = NULL;
+
+	if (is_null)
+		*is_null = false;
+
+	/* Resolve object from catalogs */
+	(void)(get_object_from_pg_class(object_id, user_id, &type, &schema_id, &object_name) ||
+			get_object_from_pg_proc(object_id, user_id, &type, &schema_id, &object_name) ||
+			get_object_from_pg_trigger(object_id, user_id, &type, &schema_id, &object_name) ||
+			get_object_from_pg_attrdef(object_id, user_id, &type, &schema_id, &object_name) ||
+			get_object_from_pg_constraint(object_id, user_id, &type, &schema_id, &object_name));
 
 	/*
 	 * If the object_id is not found or user does not have enough privileges on the object and schema,
 	 * Return NULL.
 	 */
-	if (!schema_id || object_aclcheck(NamespaceRelationId, schema_id, user_id, ACL_USAGE) != ACLCHECK_OK)
+	if (!OidIsValid(schema_id) || object_aclcheck(NamespaceRelationId, schema_id, user_id, ACL_USAGE) != ACLCHECK_OK)
 	{
-		pfree(property);
-		PG_RETURN_NULL();
+		if (object_name)
+			pfree(object_name);
+		if (is_null)
+			*is_null = true;
+		if (out_type)
+			*out_type = OBJECT_TYPE_UNKNOWN;
+		return 0;
 	}
 
-	/*
-	 * schema_id found should be in sys.schemas view except 'sys'.
-	 */
 	nspname = get_namespace_name(schema_id);
-
-	if (!(nspname && pg_strcasecmp(nspname, "sys") == 0) && 
-		(!nspname || pg_strcasecmp(nspname, "pg_catalog") == 0 ||
-		pg_strcasecmp(nspname, "pg_toast") == 0 ||
-		pg_strcasecmp(nspname, "public") == 0))
+	
+	/*
+	 * Database scoping: hide objects not belonging to the current database.
+	 * Shared schemas (sys, information_schema_tsql, etc.) are always visible.
+	 * During pg_dump/restore (no active database), all objects are visible.
+	 */
+	if (!(nspname && is_shared_schema(nspname)) &&
+		OidIsValid(get_cur_db_id()) && !is_schema_from_db(schema_id, get_cur_db_id()))
 	{
-		pfree(property);
 		if (nspname)
 			pfree(nspname);
-
-		PG_RETURN_NULL();
+		if (object_name)
+			pfree(object_name);
+		if (is_null)
+			*is_null = true;
+		if(out_type)
+			*out_type = OBJECT_TYPE_UNKNOWN;
+		return 0;
 	}
 
-	pfree(nspname);
+	if (nspname)
+		pfree(nspname);
+	if (out_type)
+		*out_type = type;
 
-	/* OwnerId */
-	if (pg_strcasecmp(property, "ownerid") == 0)
+	/* Property evaluation */
+
+	if (pg_strcasecmp(property, "basetype") == 0)
 	{
-		/*
-		 * Search for schema_id in pg_namespace catalog. Return nspowner from 
-		 * the found pg_namespace object.
-		 */
-		if (OidIsValid(schema_id))
-		{
-			HeapTuple	tp;
-			int		result;
-
-			tp = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(schema_id));
-			if (HeapTupleIsValid(tp))
-			{
-				Form_pg_namespace nsptup = (Form_pg_namespace) GETSTRUCT(tp);
-				result = ((int) nsptup->nspowner);
-				ReleaseSysCache(tp);
-			}
-			else
-			{
-				pfree(property);
-				PG_RETURN_NULL();
-			}
-			pfree(property);
-			PG_RETURN_INT32(result);
-		}
+		if (object_name)
+			pfree(object_name);
+		if (is_null)
+			*is_null = true;
+		return 0;
 	}
-	/* IsDefaultCnst */
-	else if (pg_strcasecmp(property, "isdefaultcnst") == 0)
-	{
-		/*
-		 * The type of the object should be OBJECT_TYPE_DEFAULT_CONSTRAINT.
-		 */
-		if (type == OBJECT_TYPE_DEFAULT_CONSTRAINT)
-		{
-			pfree(property);
-			PG_RETURN_INT32(1);
-		}
-		pfree(property);
-		PG_RETURN_INT32(0);
-	}
-	/* ExecIsQuotedIdentOn, IsSchemaBound, ExecIsAnsiNullsOn */
-	else if (pg_strcasecmp(property, "execisquotedidenton") == 0 ||
-			pg_strcasecmp(property, "isschemabound") == 0 ||
-			pg_strcasecmp(property, "execisansinullson") == 0)
-	{
-		/*
-		 * These properties are only applicable to OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_REPLICATION_FILTER_PROCEDURE,
-		 * OBJECT_TYPE_VIEW, OBJECT_TYPE_TSQL_DML_TRIGGER, OBJECT_TYPE_TSQL_SCALAR_FUNCTION, OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION, 
-		 * OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION and OBJECT_TYPE_RULE.
-		 * Hence, return NULL if the object is not from the above types.
-		 */
-		if (!(type == OBJECT_TYPE_TSQL_STORED_PROCEDURE || type == OBJECT_TYPE_REPLICATION_FILTER_PROCEDURE ||
-			type == OBJECT_TYPE_VIEW || type == OBJECT_TYPE_TSQL_DML_TRIGGER || type == OBJECT_TYPE_TSQL_SCALAR_FUNCTION ||
-			type == OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION || type == OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION ||
-			type == OBJECT_TYPE_RULE))
-		{
-			pfree(property);
-			PG_RETURN_NULL();
-		}
-
-		/*
-		 * Currently, for IsSchemaBound property, we have hardcoded the value to 0
-		 */
-		if (pg_strcasecmp(property, "isschemabound") == 0)
-		{
-			bool is_weak_view = false;
-			bool is_view = (type == OBJECT_TYPE_VIEW);
-
-			if (is_view)
-				check_is_tsql_view(object_id, &is_weak_view);
-
-			pfree(property);
-			PG_RETURN_INT32(is_view ? ((int) !is_weak_view) : 0);
-		}
-		/*
-		 * For ExecIsQuotedIdentOn and ExecIsAnsiNullsOn, we hardcoded it to 1
-		 */
-		pfree(property);
-		PG_RETURN_INT32(1);
-	}
-	/* TableFullTextPopulateStatus, TableHasVarDecimalStorageFormat */
-	else if (pg_strcasecmp(property, "tablefulltextpopulatestatus") == 0 ||
-			pg_strcasecmp(property, "tablehasvardecimalstorageformat") == 0)
-	{
-		/*
-		 * Currently, we have hardcoded the return value to 0.
-		 */
-		if (type == OBJECT_TYPE_TABLE)
-		{
-			pfree(property);
-			PG_RETURN_INT32(0);
-		}
-		/*
-		 * These properties are only applicable if the type of the object is TABLE, 
-		 * Hence, return NULL if the object is not a TABLE.
-		 */
-		pfree(property);
-		PG_RETURN_NULL();		
-	}
+	
 	/* IsMSShipped*/
-	else if (pg_strcasecmp(property, "ismsshipped") == 0)
+	if (pg_strcasecmp(property, "ismsshipped") == 0)
 	{
 		/*
 		 * Check whether the object is MS shipped. We are using is_ms_shipped helper function
@@ -4783,64 +4780,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		 */
 		if (is_ms_shipped(object_name, type, schema_id))
 		{
-			pfree(property);
-			PG_RETURN_INT32(1);
+			if (object_name) 
+				pfree(object_name);
+			return 1;
 		}
-		pfree(property);
-		PG_RETURN_INT32(0);
-	}
-	/* IsDeterministic */
-	else if (pg_strcasecmp(property, "isdeterministic") == 0)
-	{
-		/*
-		 * Currently, we hardcoded the value to 0.
-		 */
-		pfree(property);
-		PG_RETURN_INT32(0);
-	}
-	/* IsProcedure */
-	else if (pg_strcasecmp(property, "isprocedure") == 0)
-	{
-		/*
-		 * Check whether the type of the object is OBJECT_TYPE_TSQL_STORED_PROCEDURE.
-		 */
-		if (type == OBJECT_TYPE_TSQL_STORED_PROCEDURE)
-		{
-			pfree(property);
-			PG_RETURN_INT32(1);
-		}
-		pfree(property);
-		PG_RETURN_INT32(0);
-	}
-	/* IsTable */
-	else if (pg_strcasecmp(property, "istable") == 0)
-	{
-		/*
-		 * The type of the object should be OBJECT_TYPE_INTERNAL_TABLE or OBJECT_TYPE_TABLE_TYPE or
-		 * TABLE or OBJECT_TYPE_SYSTEM_BASE_TABLE.
-		 */
-		if (type == OBJECT_TYPE_INTERNAL_TABLE || type == OBJECT_TYPE_TABLE_TYPE ||
-			type == OBJECT_TYPE_TABLE || type == OBJECT_TYPE_SYSTEM_BASE_TABLE)
-		{
-			pfree(property);
-			PG_RETURN_INT32(1);
-		}
-		pfree(property);
-		PG_RETURN_INT32(0);		
-	}
-	/* IsView */
-	else if (pg_strcasecmp(property, "isview") == 0)
-	{
-		/*
-		 * The type of the object should be OBJECT_TYPE_VIEW.
-		 */
-		if (type == OBJECT_TYPE_VIEW)
-		{
-			pfree(property);
-			PG_RETURN_INT32(1);
-		}
-		pfree(property);
-		PG_RETURN_INT32(0);
+		if (object_name) 
+			pfree(object_name);
+		return 0;
 	}
 	/* IsUserView */
 	else if (pg_strcasecmp(property, "isusertable") == 0)
@@ -4850,147 +4796,349 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		 */
 		if (type == OBJECT_TYPE_TABLE && is_ms_shipped(object_name, type, schema_id) == 0)
 		{
-			pfree(property);
-			PG_RETURN_INT32(1);
+			if (object_name) 
+				pfree(object_name);
+			return 1;
 		}
-		pfree(property);
-		PG_RETURN_INT32(0);
+		if (object_name) 
+			pfree(object_name);
+		return 0;
 	}
-	/* IsTableFunction */
-	else if (pg_strcasecmp(property, "istablefunction") == 0)
+	else
 	{
-		/*
-		 * The object should be OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION or OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION
-		 * OBJECT_TYPE_ASSEMBLY_TABLE_VALUED_FUNCTION.
-		 */
-		if (type == OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION || type == OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION ||
-			type == OBJECT_TYPE_ASSEMBLY_TABLE_VALUED_FUNCTION)
+
+		if (object_name)
+			pfree(object_name);
+		/* OwnerId */
+		if (pg_strcasecmp(property, "ownerid") == 0)
 		{
-			pfree(property);
-			PG_RETURN_INT32(1);
+			/*
+			 * Search for schema_id in pg_namespace catalog. Return nspowner from 
+			 * the found pg_namespace object.
+			 */
+			if (OidIsValid(schema_id))
+			{
+				HeapTuple	tp;
+				int		result;
+
+				tp = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(schema_id));
+				if (HeapTupleIsValid(tp))
+				{
+					Form_pg_namespace nsptup = (Form_pg_namespace) GETSTRUCT(tp);
+					result = ((int) nsptup->nspowner);
+					ReleaseSysCache(tp);
+				}
+				else
+				{
+					if(is_null)
+						*is_null = true;
+					return 0;
+				}
+				return result;
+			}
 		}
-		pfree(property);
-		PG_RETURN_INT32(0);	
-	}
-	/* IsInlineFunction */
-	else if (pg_strcasecmp(property, "isinlinefunction") == 0)
-	{
-		/*
-		 * The object should be OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION.
-		 */
-		if (type == OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION)
+		/* IsDefaultCnst */
+		else if (pg_strcasecmp(property, "isdefaultcnst") == 0)
 		{
-			pfree(property);
-			PG_RETURN_INT32(1);
+			/*
+			 * The type of the object should be OBJECT_TYPE_DEFAULT_CONSTRAINT.
+			 */
+			if (type == OBJECT_TYPE_DEFAULT_CONSTRAINT)
+				return 1;
+			return 0;
 		}
-		pfree(property);
-		PG_RETURN_INT32(0);
-
-	}
-	/* IsScalarFunction */
-	else if (pg_strcasecmp(property, "isscalarfunction") == 0)
-	{
-		/*
-		 * The object should be either OBJECT_TYPE_TSQL_SCALAR_FUNCTION or OBJECT_TYPE_ASSEMBLY_SCALAR_FUNCTION.
-		 */
-		if (type == OBJECT_TYPE_TSQL_SCALAR_FUNCTION || type == OBJECT_TYPE_ASSEMBLY_SCALAR_FUNCTION)
+		/* ExecIsQuotedIdentOn, IsSchemaBound, ExecIsAnsiNullsOn */
+		else if (pg_strcasecmp(property, "execisquotedidenton") == 0 ||
+				pg_strcasecmp(property, "isschemabound") == 0 ||
+				pg_strcasecmp(property, "execisansinullson") == 0)
 		{
-			pfree(property);
-			PG_RETURN_INT32(1);
+			/*
+			 * These properties are only applicable to OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_REPLICATION_FILTER_PROCEDURE,
+			 * OBJECT_TYPE_VIEW, OBJECT_TYPE_TSQL_DML_TRIGGER, OBJECT_TYPE_TSQL_SCALAR_FUNCTION, OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION, 
+			 * OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION and OBJECT_TYPE_RULE.
+			 * Hence, return NULL if the object is not from the above types.
+			 */
+			if (!(type == OBJECT_TYPE_TSQL_STORED_PROCEDURE || type == OBJECT_TYPE_REPLICATION_FILTER_PROCEDURE ||
+				type == OBJECT_TYPE_VIEW || type == OBJECT_TYPE_TSQL_DML_TRIGGER || type == OBJECT_TYPE_TSQL_SCALAR_FUNCTION ||
+				type == OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION || type == OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION ||
+				type == OBJECT_TYPE_RULE))
+			{
+				if (is_null)
+					*is_null = true;
+				return 0;
+			}
+
+			/*
+			 * Currently, for IsSchemaBound property, we have hardcoded the value to 0
+			 */
+			if (pg_strcasecmp(property, "isschemabound") == 0)
+			{
+				bool is_weak_view = false;
+				bool is_view = (type == OBJECT_TYPE_VIEW);
+
+				if (is_view)
+					check_is_tsql_view(object_id, &is_weak_view);
+				return is_view ? ((int) !is_weak_view) : 0;
+			}
+			/*
+			 * For ExecIsQuotedIdentOn and ExecIsAnsiNullsOn, we hardcoded it to 1
+			 */
+			return 1;
 		}
-		pfree(property);
-		PG_RETURN_INT32(0);
-	}
-	/* IsPrimaryKey */
-	else if (pg_strcasecmp(property, "isprimarykey") == 0)
-	{
-		/*
-		 * The object should be a OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT.
-		 */
-		if (type == OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT)
+		/* TableFullTextPopulateStatus, TableHasVarDecimalStorageFormat */
+		else if (pg_strcasecmp(property, "tablefulltextpopulatestatus") == 0 ||
+				pg_strcasecmp(property, "tablehasvardecimalstorageformat") == 0)
 		{
-			pfree(property);
-			PG_RETURN_INT32(1);
+			/*
+			 * Currently, we have hardcoded the return value to 0.
+			 */
+			if (type == OBJECT_TYPE_TABLE)
+			{
+				return 0;
+			}
+			/*
+			 * These properties are only applicable if the type of the object is TABLE, 
+			 * Hence, return NULL if the object is not a TABLE.
+			 */
+			if (is_null)
+				*is_null = true;
+			return 0;
 		}
-		pfree(property);
-		PG_RETURN_INT32(0);
-	}
-	/* IsIndexed */
-	else if (pg_strcasecmp(property, "isindexed") == 0)
-	{
-		/*
-		 * Search for object_id in pg_index catalog by indrelid column.
-		 * The object is indexed if the entry exists in pg_index.
-		 */
-		Relation	indRel;
-		ScanKeyData 	key;
-		SysScanDesc 	scan;
-		HeapTuple	tup;
-
-		if (type != OBJECT_TYPE_TABLE)
-			PG_RETURN_INT32(0);
-
-		indRel = table_open(IndexRelationId, AccessShareLock);
-
-		ScanKeyInit(&key,
-				Anum_pg_index_indrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(object_id));
-
-		scan = systable_beginscan(indRel, IndexIndrelidIndexId, true,
-				  		NULL, 1, &key);
-
-		if (HeapTupleIsValid(tup = systable_getnext(scan)))
+		/* IsDeterministic */
+		else if (pg_strcasecmp(property, "isdeterministic") == 0)
 		{
+			/*
+			 * Currently, we hardcoded the value to 0.
+			 */
+			return 0;
+		}
+		/* IsProcedure */
+		else if (pg_strcasecmp(property, "isprocedure") == 0)
+		{
+			/*
+			 * Check whether the type of the object is OBJECT_TYPE_TSQL_STORED_PROCEDURE.
+			 */
+			if (type == OBJECT_TYPE_TSQL_STORED_PROCEDURE)
+				return 1;
+			return 0;
+		}
+		/* IsTable */
+		else if (pg_strcasecmp(property, "istable") == 0)
+		{
+			/*
+			 * The type of the object should be OBJECT_TYPE_INTERNAL_TABLE or OBJECT_TYPE_TABLE_TYPE or
+			 * TABLE or OBJECT_TYPE_SYSTEM_BASE_TABLE.
+			 */
+			if (type == OBJECT_TYPE_INTERNAL_TABLE || type == OBJECT_TYPE_TABLE_TYPE ||
+				type == OBJECT_TYPE_TABLE || type == OBJECT_TYPE_SYSTEM_BASE_TABLE)
+				return 1;
+			return 0;		
+		}
+		/* IsView */
+		else if (pg_strcasecmp(property, "isview") == 0)
+		{
+			/*
+			 * The type of the object should be OBJECT_TYPE_VIEW.
+			 */
+			if (type == OBJECT_TYPE_VIEW)
+				return 1;
+			return 0;
+		}
+		/* IsTableFunction */
+		else if (pg_strcasecmp(property, "istablefunction") == 0)
+		{
+			/*
+			 * The object should be OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION or OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION
+			 * OBJECT_TYPE_ASSEMBLY_TABLE_VALUED_FUNCTION.
+			 */
+			if (type == OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION || type == OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION ||
+				type == OBJECT_TYPE_ASSEMBLY_TABLE_VALUED_FUNCTION)
+				return 1;
+			return 0;	
+		}
+		/* IsInlineFunction */
+		else if (pg_strcasecmp(property, "isinlinefunction") == 0)
+		{
+			/*
+			 * The object should be OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION.
+			 */
+			if (type == OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION)
+				return 1;
+			return 0;
+
+		}
+		/* IsScalarFunction */
+		else if (pg_strcasecmp(property, "isscalarfunction") == 0)
+		{
+			/*
+			 * The object should be either OBJECT_TYPE_TSQL_SCALAR_FUNCTION or OBJECT_TYPE_ASSEMBLY_SCALAR_FUNCTION.
+			 */
+			if (type == OBJECT_TYPE_TSQL_SCALAR_FUNCTION || type == OBJECT_TYPE_ASSEMBLY_SCALAR_FUNCTION)
+				return 1;
+			return 0;
+		}
+		/* IsPrimaryKey */
+		else if (pg_strcasecmp(property, "isprimarykey") == 0)
+		{
+			/*
+			 * The object should be a OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT.
+			 */
+			if (type == OBJECT_TYPE_PRIMARY_KEY_CONSTRAINT)
+				return 1;
+			return 0;
+		}
+		/* IsIndexed */
+		else if (pg_strcasecmp(property, "isindexed") == 0)
+		{
+			/*
+			 * Search for object_id in pg_index catalog by indrelid column.
+			 * The object is indexed if the entry exists in pg_index.
+			 */
+			Relation	indRel;
+			ScanKeyData 	key;
+			SysScanDesc 	scan;
+			HeapTuple	tup;
+
+			if (type != OBJECT_TYPE_TABLE)
+			{
+				return 0;
+			}
+
+			indRel = table_open(IndexRelationId, AccessShareLock);
+
+			ScanKeyInit(&key,
+					Anum_pg_index_indrelid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(object_id));
+
+			scan = systable_beginscan(indRel, IndexIndrelidIndexId, true,
+							NULL, 1, &key);
+
+			if (HeapTupleIsValid(tup = systable_getnext(scan)))
+			{
+				systable_endscan(scan);
+				table_close(indRel, AccessShareLock);
+				return 1;
+			}
+
 			systable_endscan(scan);
 			table_close(indRel, AccessShareLock);
-			pfree(property);
-			PG_RETURN_INT32(1);
+
+			return 0;
 		}
-
-		systable_endscan(scan);
-		table_close(indRel, AccessShareLock);
-		pfree(property);
-
-		PG_RETURN_INT32(0);
-	}
-	/* IsDefault */
-	else if (pg_strcasecmp(property, "isdefault") == 0)
-	{
-		/*
-		 * Currently hardcoded to 0.
-		 */
-		pfree(property);
-		PG_RETURN_INT32(0);
-	}
-	/* IsOBJECT_TYPE_RULE */
-	else if (pg_strcasecmp(property, "isrule") == 0)
-	{
-		/*
-		 * Currently hardcoded to 0.
-		 */
-		pfree(property);
-		PG_RETURN_INT32(0);
-	}
-	/* IsTrigger */
-	else if (pg_strcasecmp(property, "istrigger") == 0)
-	{
-		/*
-		 * The type of the object should be OBJECT_TYPE_ASSEMBLY_DML_TRIGGER.
-		 */
-		if (type == OBJECT_TYPE_ASSEMBLY_DML_TRIGGER)
+		/* IsDefault */
+		else if (pg_strcasecmp(property, "isdefault") == 0)
 		{
-			pfree(property);
-			PG_RETURN_INT32(1);
+			/*
+			 * Currently hardcoded to 0.
+			 */
+			return 0;
 		}
-		pfree(property);
-		PG_RETURN_INT32(0);
+		/* IsOBJECT_TYPE_RULE */
+		else if (pg_strcasecmp(property, "isrule") == 0)
+		{
+			/*
+			 * Currently hardcoded to 0.
+			 */
+			return 0;
+		}
+		/* IsTrigger */
+		else if (pg_strcasecmp(property, "istrigger") == 0)
+		{
+			/*
+			 * The type of the object should be a DML trigger.
+			 */
+			if (type == OBJECT_TYPE_TSQL_DML_TRIGGER)
+				return 1;
+			return 0;
+		}
+
 	}
-	
-	if (property)
+
+	/* Unrecognized property */
+	if(is_null)
+		*is_null = true;
+	return 0;
+}
+
+
+Datum
+objectproperty_internal(PG_FUNCTION_ARGS)
+{
+	Oid		object_id;
+	char	*raw;
+	char	*property;
+	bool	is_null;
+	int		result;
+
+	object_id = (Oid) PG_GETARG_INT32(0);
+	raw = text_to_cstring(PG_GETARG_TEXT_P(1));
+	property = downcase_identifier(raw, strlen(raw), false, true);
+	pfree(raw);
+	remove_trailing_spaces(property);
+
+	result = objectproperty_helper(object_id, property, NULL, &is_null);
+	pfree(property);
+
+	if (is_null)
+		PG_RETURN_NULL();
+
+	PG_RETURN_INT32(result);
+}
+
+/*
+ * objectpropertyex_internal
+ *
+ * For 'basetype', returns the 2-char T-SQL type code as sql_variant.
+ * For all other properties, delegates to objectproperty_helper and
+ * wraps the int result as sql_variant.
+ */
+Datum
+objectpropertyex_internal(PG_FUNCTION_ARGS)
+{
+	Oid		object_id;
+	char	*raw;
+	char	*property;
+	int		type;
+	bool	is_null;
+	int		result;
+
+	object_id = (Oid) PG_GETARG_INT32(0);
+	raw = text_to_cstring(PG_GETARG_TEXT_P(1));
+	property = downcase_identifier(raw, strlen(raw), false, true);
+	pfree(raw);
+	remove_trailing_spaces(property);
+
+	result = objectproperty_helper(object_id, property, &type, &is_null);
+
+	if (pg_strcasecmp(property, "basetype") == 0)
+	{
+		const char *type_code;
+
 		pfree(property);
 
-	PG_RETURN_NULL();
+		/*
+		 * For basetype, helper sets is_null (unrecognized property) but out_type
+		 * is valid if the object was found. OBJECT_TYPE_UNKNOWN means not found.
+		 */
+		if (type == OBJECT_TYPE_UNKNOWN)
+			PG_RETURN_NULL();
+
+		type_code = object_type_to_code(type);
+		if (type_code)
+		{
+			VarChar *vch = (*common_utility_plugin_ptr->tsql_varchar_input)(type_code, strlen(type_code), -1);
+			PG_RETURN_BYTEA_P((*common_utility_plugin_ptr->convertVarcharToSQLVariantByteA)(vch, PG_GET_COLLATION()));
+		}
+		PG_RETURN_NULL();
+	}
+
+	pfree(property);
+
+	if (is_null)
+		PG_RETURN_NULL();
+
+	PG_RETURN_BYTEA_P((*common_utility_plugin_ptr->convertIntToSQLVariantByteA)(result));
 }
 
 PG_FUNCTION_INFO_V1(bbf_pivot);
@@ -5371,899 +5519,4 @@ get_bbf_pivot_tuplestore(const char 	*sourcetext,
 		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_finish() failed");
 
 	return tupstore;
-}
-
-#ifdef USE_LIBXML
-/*
- * extract_namespaces_from_xml
- * 		Extracts namespace names and URIs from root node of the given XML data.
- *
- * Note: The extracted names and URIs are stored in ns_names and ns_uris respectively.
- * The count of extracted namespaces is stored in ns_count. If no namespaces are found, 
- * ns_names and ns_uris are set to NULL and ns_count to 0.
- */
-void
-extract_namespaces_from_xml(xmltype *ns_data, char ***ns_names, char ***ns_uris, int *ns_count)
-{
-    xmlDocPtr	doc;
-    xmlNode    *root;
-    int         index;
-
-	/* Unlikely, just a sanity check */
-	if (ns_names == NULL || ns_uris == NULL || ns_count == NULL)
-		return;
-
-	*ns_names = NULL;
-	*ns_uris = NULL;
-	*ns_count = 0;
-
-	if (ns_data == NULL)
-		return;
-
-	doc = xml_parse_wrapper(ns_data, XMLOPTION_DOCUMENT, false, GetDatabaseEncoding(), NULL, NULL, NULL);
-
-    if (doc == NULL)
-		return;
-
-	/*
-	 * Get namespace declaration count
-	 */
-	root = xmlDocGetRootElement(doc);
-    for (xmlNs *cur = root->nsDef; cur != NULL; cur = cur->next)
-	{
-		if (cur->prefix)	// Ignore default namespace declaration
-		{
-			(*ns_count)++;
-		}
-	}
-    
-    if (*ns_count == 0)
-    {
-        if (doc)
-            xmlFreeDoc(doc);
-        return;
-    }
-
-	/*
-	 * Allocate memory for namespace names and URIs
-	 */
-	*ns_names = (char **) palloc0((*ns_count) * sizeof(char *));
-    *ns_uris = (char **) palloc0((*ns_count) * sizeof(char *));
-
-	/*
-	 * Store namespace names and URIs in ns_names and ns_uris
-	 */
-    index = 0;
-    for (xmlNs *cur = root->nsDef; cur != NULL && index < *ns_count; cur = cur->next)
-    {
-        if (cur->prefix)
-        {
-            (*ns_names)[index] = (char *) pstrdup((const char *) cur->prefix);
-            (*ns_uris)[index] = cur->href ? (char *) pstrdup((const char *) cur->href) : NULL;
-			index++;
-        }
-    }
-
-    if (doc)
-		xmlFreeDoc(doc);
-}
-
-
-/*
- * init_xml_handles_htab
- * 		Initializes the hash table to map xmlNodePtr to unique IDs.
- */
-static void
-init_xml_handles_htab(long long int nelem)
-{
-	HASHCTL		hashCtl;
-
-	if (ht_xmlNode2Id == NULL)	/* create hash table */
-	{
-		MemSet(&hashCtl, 0, sizeof(hashCtl));
-		hashCtl.keysize = sizeof(xmlNodePtr);
-		hashCtl.entrysize = sizeof(ht_xmlNode2Id_entry_t);
-		hashCtl.hcxt = CurrentMemoryContext;
-		ht_xmlNode2Id = hash_create("Xml Node pointer to id Mapping",
-									  nelem,
-									  &hashCtl,
-									  HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
-	}
-
-	/* mark the hash table initialised */
-	inited_ht_xmlNode2Id = true;
-}
-
-/*
- * destroy_xml_handles_htab
- * 		Destroys the hash table and frees associated memory.
- */
-static void
-destroy_xml_handles_htab()
-{
-	if (ht_xmlNode2Id != NULL)
-	{
-		hash_destroy(ht_xmlNode2Id);
-		ht_xmlNode2Id = NULL;
-	}
-	inited_ht_xmlNode2Id = false;
-}
-
-/*
- * populate_xml_nodes 
- * 		Recursively traverse the XML tree and populate xml_nodes_list
- */
-static void 
-populate_xml_nodes(xmlNode *node, DynaVec *xml_nodes_list)
-{
-	/* Sanity Check */
-	if (node == NULL)
-		return;
-
-	if (node->type == XML_TEXT_NODE && xmlIsBlankNode(node))
-		return;  // skip whitespace-only text node
-
-	/*
-	 * Add the current node to the list if it is not a Document node.
-	 * Document node is not added to the list as it is not required for OpenXML processing.
-	 */
-	if (node->type != XML_DOCUMENT_NODE)
-		vec_push_back(xml_nodes_list, &node);
-
-	if (node->type == XML_ELEMENT_NODE)
-	{
-		xmlNs *ns = NULL;
-		xmlAttr *attr = NULL;
-
-		/*
-		 * For each of the namespace declaration in the node, create a new attribute.
-		 */
-		for (xmlNs *cur = node->nsDef; cur != NULL; cur = cur->next)
-		{
-			ns = xmlNewNs(NULL, NULL, BAD_CAST "xmlns");
-			
-			/* Unlikely, Just a sanity check */
-			if (ns == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-						 errmsg("could not process XML document.")));
-
-			if (cur->prefix == NULL)	// Default namespace declaration
-				attr = xmlNewNsProp(node, ns, BAD_CAST "xmlns", BAD_CAST cur->href);
-			else
-				attr = xmlNewNsProp(node, ns, BAD_CAST cur->prefix, BAD_CAST cur->href);
-			
-			/* Unlikely, Just a sanity check */
-			if (attr == NULL)
-				ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-						errmsg("could not process XML document.")));
-		}
-
-		for (xmlAttr *cur = node->properties; cur != NULL; cur = cur->next)
-		{
-			populate_xml_nodes((xmlNode *) cur, xml_nodes_list);
-		}
-	}
-
-	for (xmlNodePtr cur = node->children; cur != NULL; cur = cur->next)
-	{
-		populate_xml_nodes(cur, xml_nodes_list);
-	}
-}
-
-/*
- * assign_ids
- *  	For the given XML Document node, prepares a hash table 
- *  	which stores the mapping of each xmlNodePtr to a unique ID.
- */
-static void
-assign_ids(xmlDoc *doc)
-{
-	size_t                 xml_nodes_list_size;
-	size_t                 i;
-	long long int          counter;
-	xmlNode               *root = xmlDocGetRootElement(doc);
-	DynaVec				  *xml_nodes_list = NULL;
-
-	/*
-	 * Create a temporary list of all XML nodes in the document.
-	 */
-	xml_nodes_list = create_vector(sizeof(xmlNodePtr));
-	populate_xml_nodes((xmlNodePtr) doc, xml_nodes_list);
-	xml_nodes_list_size = vec_size(xml_nodes_list);
-
-	init_xml_handles_htab(xml_nodes_list_size);
-
-	/*
-	 * For each node in the list, if it is not already in the hash table,
-	 * assign it a unique ID and add it to the hash table. The root node
-	 * is assigned ID 0. Counter is used to generate unique IDs.
-	 */
-	counter = 1;
-	for (i = 1; i <= xml_nodes_list_size; i++)
-	{
-		ht_xmlNode2Id_entry_t *entry;
-		bool                   found = false;
-		xmlNode              **cur = (xmlNode **) vec_at(xml_nodes_list, i-1);
-
-		entry = hash_search(ht_xmlNode2Id, cur, HASH_ENTER, &found);
-		if (!found)
-		{
-			entry->id = (*cur == root) ? 0 : counter;
-			counter++;
-		}
-	}
-
-	/*
-	 * Free the temporary list of XML nodes as it is no longer needed.
-	 */
-	destroy_vector(xml_nodes_list);
-	xml_nodes_list = NULL;
-}
-
-/*
- * lookup_xmlNode_id
- *  	Returns the unique ID for a given xmlNodePtr from the hash table. 
- * 		If the node is not found in the hash table, it returns -1.
- */
-static long long int
-lookup_xmlNode_id(xmlNode *key)
-{
-	ht_xmlNode2Id_entry_t *hinfo;
-	bool		found;
-
-	if (key == NULL)
-		return -1;
-
-	hinfo = (ht_xmlNode2Id_entry_t *) hash_search(ht_xmlNode2Id,
-												  &key,
-												  HASH_FIND,
-												  &found);
-	if (!found)
-		return -1;
-
-	return hinfo->id;
-}
-
-/*
- * add_node_details 
- *		 Add details of given xmlNodePtr to the tuplestore. It also recursively add 
- *  	 details of its attribute nodes (properties) and child nodes to the tuplestore.
- */
-static void
-add_node_details(Tuplestorestate *tupstore, TupleDesc tupdesc, xmlNodePtr node, Bitmapset **xml_visited_nodes_set)
-{
-	Datum	         values[TSQL_OPENXML_EDGE_TABLE_COLS];
-	bool             nulls[TSQL_OPENXML_EDGE_TABLE_COLS];
-	long long int    node_id;
-
-	if (node->type == XML_TEXT_NODE && xmlIsBlankNode(node))
-		return;  // skip whitespace-only text node
-
-	/*
-	 * OPENXML only returns details of Element, Text, CDATA Section, Comment, Processing Instruction and Attribute nodes.
-	 */
-	if (node->type == XML_ELEMENT_NODE 
-		|| node->type == XML_ATTRIBUTE_NODE 
-		|| node->type == XML_TEXT_NODE 
-		|| node->type == XML_CDATA_SECTION_NODE 
-		|| node->type == XML_COMMENT_NODE 
-		|| node->type == XML_PI_NODE)
-	{
-		/*
-		 * Initialize all values to NULL and nulls to true
-		 */
-		memset(values, 0, sizeof(values));
-		memset(nulls, true, sizeof(nulls));
-
-		node_id = lookup_xmlNode_id(node);
-		if (node_id != -1)
-		{
-			nulls[0] = false;
-			values[0] = Int64GetDatum(node_id);
-		}
-
-		node_id = lookup_xmlNode_id(node->parent);
-		if (node_id != -1)
-		{
-			nulls[1] = false;
-			values[1] = Int64GetDatum(node_id);
-		}
-
-		nulls[2] = false;
-		values[2] = Int32GetDatum(node->type);
-
-		if (node->type == XML_TEXT_NODE)
-		{
-			nulls[3] = false;
-			values[3] = PointerGetDatum((VarChar *) cstring_to_text("#text"));
-		}
-		else if (node->type == XML_CDATA_SECTION_NODE)
-		{
-			nulls[3] = false;
-			values[3] = PointerGetDatum((VarChar *) cstring_to_text("#cdata-section"));
-		}
-		else if (node->type == XML_COMMENT_NODE)
-		{
-			nulls[3] = false;
-			values[3] = PointerGetDatum((VarChar *) cstring_to_text("#comment"));
-		}
-		else
-		{
-			if (node->name != NULL)
-			{
-				nulls[3] = false;
-				values[3] = PointerGetDatum((VarChar *) cstring_to_text((const char *) node->name));
-			}
-		}
-
-		if (node->ns != NULL)
-		{
-			if (node->ns->prefix != NULL)
-			{
-				nulls[4] = false;
-				values[4] = PointerGetDatum((VarChar *) cstring_to_text((const char *) node->ns->prefix));
-			}
-
-			if (node->ns->href != NULL)
-			{
-				nulls[5] = false;
-				values[5] = PointerGetDatum((VarChar *) cstring_to_text((const char *) node->ns->href));
-			}
-		}
-
-		/*
-		 * datatype column of openxml edge table refers Attribute-type, hence it is only applicable for Attribute nodes.
-		 * Following block fetches the attribute type from DTD if available and sets the value accordingly.
-		 * If DTD is not available or attribute type is not defined in DTD, datatype column is kept NULL.
-		 */
-		if (node->type == XML_ATTRIBUTE_NODE)
-		{
-			xmlDtdPtr dtd = xmlGetIntSubset(node->doc);
-			xmlAttributePtr attr_def = NULL;
-
-			if (dtd != NULL)
-			{
-				/*
-				 * Its Unlikely that node->parent is NULL, Just a sanity check
-				 */
-				if (node->parent != NULL)
-					attr_def = xmlGetDtdAttrDesc(dtd, node->parent->name, node->name);
-
-				if (attr_def != NULL)
-				{
-					switch (attr_def->atype)
-					{
-						case XML_ATTRIBUTE_CDATA:
-							nulls[6] = false;
-							values[6] = PointerGetDatum((VarChar *) cstring_to_text("string"));
-							break;
-						case XML_ATTRIBUTE_ID:
-							nulls[6] = false;
-							values[6] = PointerGetDatum((VarChar *) cstring_to_text("id"));
-							break;
-						case XML_ATTRIBUTE_IDREF:
-							nulls[6] = false;
-							values[6] = PointerGetDatum((VarChar *) cstring_to_text("idref"));
-							break;
-						case XML_ATTRIBUTE_IDREFS:
-							nulls[6] = false;
-							values[6] = PointerGetDatum((VarChar *) cstring_to_text("idrefs"));
-							break;
-						case XML_ATTRIBUTE_ENTITY:
-							nulls[6] = false;
-							values[6] = PointerGetDatum((VarChar *) cstring_to_text("entity"));
-							break;
-						case XML_ATTRIBUTE_ENTITIES:
-							nulls[6] = false;
-							values[6] = PointerGetDatum((VarChar *) cstring_to_text("entities"));
-							break;
-						case XML_ATTRIBUTE_NMTOKEN:
-							nulls[6] = false;
-							values[6] = PointerGetDatum((VarChar *) cstring_to_text("nmtoken"));
-							break;
-						case XML_ATTRIBUTE_NMTOKENS:
-							nulls[6] = false;
-							values[6] = PointerGetDatum((VarChar *) cstring_to_text("nmtokens"));
-							break;
-						case XML_ATTRIBUTE_ENUMERATION:
-							nulls[6] = false;
-							values[6] = PointerGetDatum((VarChar *) cstring_to_text("enumeration"));
-							break;
-						case XML_ATTRIBUTE_NOTATION:
-							nulls[6] = false;
-							values[6] = PointerGetDatum((VarChar *) cstring_to_text("notation"));
-							break;
-						default:
-							break;
-					}
-				}				
-			}
-		}
-
-		/*
-		 * For attribute node prev and content are not applicable. So we should keep them NULL.
-		 */
-		if (node->type != XML_ATTRIBUTE_NODE)
-		{
-			if (node->prev != NULL)
-			{
-				xmlNodePtr cur = node->prev;
-
-				while (cur != NULL && cur->type == XML_TEXT_NODE && xmlIsBlankNode(cur))
-					cur = cur->prev;
-
-				node_id = lookup_xmlNode_id(cur);
-				if (node_id != -1)
-				{
-					nulls[7] = false;
-					values[7] = Int64GetDatum(node_id);
-				}
-			}
-
-			if (node->content != NULL)
-			{
-				char *ptr = (char *) node->content;
-
-				/* for content, trim leading and trailing spaces */
-				while (isspace((char) *ptr))
-					ptr++;
-
-				remove_trailing_spaces(ptr);
-
-				nulls[8] = false;
-				values[8] = PointerGetDatum(cstring_to_text((const char *) ptr));
-			}
-		}
-
-		if (!nulls[0] && !bms_is_member(DatumGetInt64(values[0]), *xml_visited_nodes_set))
-		{
-			tuplestore_putvalues(tupstore, tupdesc, values, nulls);
-			*xml_visited_nodes_set = bms_add_member(*xml_visited_nodes_set, DatumGetInt64(values[0]));
-		}
-		else
-		{
-			/* This node is already visited, no need of further processing. */
-			return;
-		}
-	}
-
-	if (node->type == XML_ELEMENT_NODE)
-	{
-		for (xmlAttr *cur = node->properties; cur != NULL; cur = cur->next)
-		{
-			add_node_details(tupstore, tupdesc, (xmlNodePtr) cur, xml_visited_nodes_set);
-		}
-	}
-
-	for (xmlNodePtr cur = node->children; cur != NULL; cur = cur->next)
-	{
-		add_node_details(tupstore, tupdesc, cur, xml_visited_nodes_set);		
-	}
-}
-#endif							/* USE_LIBXML */
-
-/*
- * prepare_tupledesc_tuplestore_for_openxml
- *		Prepare the tuple descriptor and tuplestore for OPENXML function without WITH clause.
- */
-static void
-prepare_tupledesc_tuplestore_for_openxml(ReturnSetInfo *rsinfo, TupleDesc *tupdesc, Tuplestorestate **tupstore)
-{
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
-	Oid           bigint_oid, int_oid, nvarchar_oid, ntext_oid;
-
-	/* Unlikely, just a sanity check */
-	if (tupdesc == NULL || tupstore == NULL)
-		return;
-
-	/* check to see if caller supports us returning a tuplestore */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("materialize mode required, but it is not " \
-						"allowed in this context")));
-
-	bigint_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("bigint");
-	int_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("int");
-	nvarchar_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");
-	ntext_oid = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("ntext");
-
-	/* build tupdesc for result tuples. */
-	*tupdesc = CreateTemplateTupleDesc(TSQL_OPENXML_EDGE_TABLE_COLS);
-	TupleDescInitEntry(*tupdesc, (AttrNumber) 1, "id", bigint_oid, -1, 0);
-	TupleDescInitEntry(*tupdesc, (AttrNumber) 2, "parentid", bigint_oid, -1, 0);
-	TupleDescInitEntry(*tupdesc, (AttrNumber) 3, "nodetype", int_oid, -1, 0);
-	TupleDescInitEntry(*tupdesc, (AttrNumber) 4, "localname", nvarchar_oid, -1, 0);
-	TupleDescInitEntry(*tupdesc, (AttrNumber) 5, "prefix", nvarchar_oid, -1, 0);
-	TupleDescInitEntry(*tupdesc, (AttrNumber) 6, "namespaceuri", nvarchar_oid, -1, 0);
-	TupleDescInitEntry(*tupdesc, (AttrNumber) 7, "datatype", nvarchar_oid, -1, 0);
-	TupleDescInitEntry(*tupdesc, (AttrNumber) 8, "prev", bigint_oid, -1, 0);
-	TupleDescInitEntry(*tupdesc, (AttrNumber) 9, "text", ntext_oid, -1, 0);
-	*tupdesc = BlessTupleDesc(*tupdesc);
-
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
-	*tupstore = tuplestore_begin_heap(true, false, work_mem);
-
-	MemoryContextSwitchTo(oldcontext);
-}
-
-/*
- * openxml_simple
- *		Implementation of T-SQL OPENXML function without WITH clause.
- *
- * This function takes an XML document identified by an integer handle,
- * an XPath expression, and returns a rowset representing the XML nodes
- * that match the XPath expression. The rowset is structured according to
- * the OPENXML edge table format, which includes columns for node ID,
- * parent ID, node type, local name, prefix, namespace URI, datatype,
- * previous sibling ID, and text content.
- *
- * The function retrieves the XML document and any associated namespace
- * declarations using the provided handle. It then parses the XML document,
- * applies the XPath expression to select nodes, and constructs a tuplestore
- * containing the details of each selected node and its attributes.
- *
- * The function returns a set of rows, each representing an XML node in the
- * specified format. If no nodes match the XPath expression, an empty set is
- * returned.
- */
-Datum
-openxml_simple(PG_FUNCTION_ARGS)
-{
-#ifdef USE_LIBXML
-    int              document_id = PG_GETARG_INT32(0);
-    text            *xpath_expr_text;
-#ifdef NOT_USED
-	int              flags = PG_GETARG_INT32(2);
-#endif
-    xmltype         *xmldata = NULL;
-    xmltype         *ns_data = NULL;
-    char           **ns_names;
-    char           **ns_uris;
-	int              ns_count;
-	char            *datastr;
-	int              len;
-	int              xpath_len;
-	xmlChar         *string;
-	xmlChar         *xpath_expr;
-	size_t           xmldecl_len = 0;
-	int 			 res_code;
-
-	TupleDesc        tupdesc;
-	Tuplestorestate *tupstore;
-	ReturnSetInfo   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-
-	PgXmlErrorContext *xmlerrcxt;
-	volatile xmlParserCtxtPtr ctxt = NULL;
-	volatile xmlDocPtr doc = NULL;
-	volatile xmlXPathContextPtr xpathctx = NULL;
-	volatile xmlXPathCompExprPtr xpathcomp = NULL;
-	volatile xmlXPathObjectPtr xpathobj = NULL;
-
-	/*
-	 * Prepare tuple descriptor and tuplestore for returning the result set.
-	 */
-	prepare_tupledesc_tuplestore_for_openxml(rsinfo, &tupdesc, &tupstore);
-
-	if (PG_ARGISNULL(1))
-		ereport(ERROR,
-				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("XPath expression cannot be null")));
-
-	xpath_expr_text = PG_GETARG_TEXT_PP(1);
-	xpath_len = VARSIZE_ANY_EXHDR(xpath_expr_text);
-	if (xpath_len == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				errmsg("empty XPath expression")));
-
-    /*
-     * Using document_id fetch the xml document and namespaces list from 
-     * xml_handle_temp_table which is used to store the xml handles created
-     * using sp_xml_preparedocument.
-     */
-    get_xml_data_and_namespace_data(document_id, &xmldata, &ns_data);
-
-	if (xmldata == NULL)
-		goto done;
-
-    extract_namespaces_from_xml(ns_data, &ns_names, &ns_uris, &ns_count);
-
-	datastr = VARDATA_ANY(xmldata);
-	len = VARSIZE_ANY_EXHDR(xmldata);
-
-	string = pg_xmlCharStrndup_wrapper(datastr, len);
-	xpath_expr = pg_xmlCharStrndup_wrapper(VARDATA_ANY(xpath_expr_text), xpath_len);
-
-	res_code = parse_xml_decl_wrapper((xmlChar *) string, &xmldecl_len, NULL, NULL, NULL);
-	if (res_code != 0)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_XML_CONTENT),
-					errmsg("Invalid XML declaration")));
-	}
-
-	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
-
-	PG_TRY();
-	{
-		xmlInitParser();
-
-		ctxt = xmlNewParserCtxt();
-		if (ctxt == NULL || xmlerrcxt->err_occurred)
-			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
-						"could not allocate parser context");
-		doc = xmlCtxtReadMemory(ctxt, (char *) string + xmldecl_len,
-								len - xmldecl_len, NULL, NULL, XML_PARSE_NOBLANKS | XML_PARSE_DTDATTR);
-		if (doc == NULL || xmlerrcxt->err_occurred)
-			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-						"could not parse XML document");
-		xpathctx = xmlXPathNewContext(doc);
-		if (xpathctx == NULL || xmlerrcxt->err_occurred)
-			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
-						"could not allocate XPath context");
-		xpathctx->node = (xmlNodePtr) doc;
-
-		/* Initialize the hash table to store xml node pointer to id mapping */
-		assign_ids(doc);
-
-		/* register namespaces, if any */
-		if (ns_count > 0)
-		{
-			for (int i = 0; i < ns_count; i++)
-			{
-				char	   *ns_name;
-				char	   *ns_uri;
-
-				if (ns_names[i] == NULL || ns_uris[i] == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-							errmsg("neither namespace name nor URI may be null")));
-				ns_name = ns_names[i];
-				ns_uri = ns_uris[i];
-				if (xmlXPathRegisterNs(xpathctx,
-									(xmlChar *) ns_name,
-									(xmlChar *) ns_uri) != 0)
-					ereport(ERROR,
-							(errmsg("could not register XML namespace with name \"%s\" and URI \"%s\"",
-									ns_name, ns_uri)));
-			}
-		}
-
-		xpathcomp = xmlXPathCtxtCompile(xpathctx, xpath_expr);
-		if (xpathcomp == NULL || xmlerrcxt->err_occurred)
-			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
-						"invalid XPath expression");
-
-		xpathobj = xmlXPathCompiledEval(xpathcomp, xpathctx);
-		if (xpathobj == NULL || xmlerrcxt->err_occurred)
-			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
-						"could not create XPath object");
-
-		if (xpathobj->type == XPATH_NODESET)
-		{
-			if (xpathobj->nodesetval != NULL)
-			{
-				xmlNodePtr	node;
-				int			num_rows;
-				Bitmapset  *xml_visited_nodes_set = NULL;
-				
-				num_rows = xpathobj->nodesetval->nodeNr;
-				for (int i = 0; i < num_rows; i++)
-				{
-					node = xpathobj->nodesetval->nodeTab[i];
-					add_node_details(tupstore, tupdesc, node, &xml_visited_nodes_set);
-				}
-				bms_free(xml_visited_nodes_set);
-				xml_visited_nodes_set = NULL;
-			}
-		}
-	}
-	PG_CATCH();
-	{
-		/* Destroy the hash table that used to store xml node pointer to id mapping */
-		destroy_xml_handles_htab();
-
-		if (xpathobj)
-			xmlXPathFreeObject(xpathobj);
-		if (xpathcomp)
-			xmlXPathFreeCompExpr(xpathcomp);
-		if (xpathctx)
-			xmlXPathFreeContext(xpathctx);
-		if (doc)
-			xmlFreeDoc(doc);
-		if (ctxt)
-			xmlFreeParserCtxt(ctxt);
-
-		/*
-		 * ns_count > 0, should be sufficient here, other checks are just sanity 
-		 * checks which are unlikely to be NULLs if ns_count > 0  
-		 */
-		if (ns_count > 0 && ns_names != NULL && ns_uris != NULL)
-		{
-			for (int i = 0; i < ns_count; i++)
-			{
-				xpfree(ns_names[i]);
-				xpfree(ns_uris[i]);
-			}
-			xpfree(ns_names);
-			xpfree(ns_uris);
-		}
-
-		xpfree(string);
-		xpfree(xpath_expr);
-
-		pg_xml_done(xmlerrcxt, true);
-
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
-	/* Destroy the hash table that used to store xml node pointer to id mapping */
-	destroy_xml_handles_htab();
-	if (xpathobj)
-		xmlXPathFreeObject(xpathobj);
-	if (xpathcomp)
-		xmlXPathFreeCompExpr(xpathcomp);
-	if (xpathctx)
-		xmlXPathFreeContext(xpathctx);
-	if (doc)
-		xmlFreeDoc(doc);
-	if (ctxt)
-		xmlFreeParserCtxt(ctxt);
-
-	/*
-	 * ns_count > 0, should be sufficient here, other checks are just sanity 
-	 * checks which are unlikely to be NULLs if ns_count > 0  
-	 */
-	if (ns_count > 0 && ns_names != NULL && ns_uris != NULL)
-	{
-		for (int i = 0; i < ns_count; i++)
-		{
-			xpfree(ns_names[i]);
-			xpfree(ns_uris[i]);
-		}
-		xpfree(ns_names);
-		xpfree(ns_uris);
-	}
-
-	xpfree(string);
-	xpfree(xpath_expr);
-
-	pg_xml_done(xmlerrcxt, false);
-
-done:
-	/* return the tuplestore */
-	tuplestore_donestoring(tupstore);
-
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setResult = tupstore;
-	rsinfo->setDesc = tupdesc;
-
-	PG_RETURN_NULL();
-#else
-	NO_XML_SUPPORT();
-#endif							/* USE_LIBXML */
-}
-
-
-PG_FUNCTION_INFO_V1(bbf_xmlquery);
-
-/*
- * bbf_xmlquery - C implementation of XML .query() method
- *
- * Signature:
- *   sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT)
- *
- * Returns XML result of evaluating the XPath expression against the input.
- * Returns empty XML if no nodes match.
- *
- * Validates:
- *   - Input must be XML type (or UDT based on XML)
- *   - QUOTED_IDENTIFIER must be ON
- */
-Datum
-bbf_xmlquery(PG_FUNCTION_ARGS)
-{
-	text	   *xpath_expr;
-	Datum		xml_datum;
-	Oid			arg_type;
-	Oid			immediate_base_type;
-	ArrayType  *namespaces;
-	Datum		xpath_result;
-	ArrayType  *result_arr;
-	Datum	   *elems;
-	bool	   *nulls;
-	int			nitems;
-	StringInfoData buf;
-	int			i;
-
-	xpath_expr = PG_GETARG_TEXT_PP(0);
-	xml_datum = PG_GETARG_DATUM(1);
-
-	/* Lookup the datatype of the supplied argument */
-	arg_type = get_fn_expr_argtype(fcinfo->flinfo, 1);
-
-	/* UDT handling: resolve to immediate base type if it's a UDT */
-	immediate_base_type = get_immediate_base_type_of_UDT_internal(arg_type);
-	if (OidIsValid(immediate_base_type))
-		arg_type = immediate_base_type;
-
-	if (arg_type != XMLOID)
-	{
-		const char *typname = NULL;
-
-		/* Get T-SQL type name for error message */
-		if (common_utility_plugin_ptr)
-			typname = (*common_utility_plugin_ptr->resolve_pg_type_to_tsql)(arg_type);
-		if (typname == NULL)
-			typname = format_type_be(arg_type);
-
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("Cannot call methods on %s.", typname)));
-	}
-
-	/* Check QUOTED_IDENTIFIER setting (required for XML methods in T-SQL) */
-	if (!pltsql_quoted_identifier)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("SELECT failed because the following SET options have "
-						"incorrect settings: 'QUOTED_IDENTIFIER'. Verify that "
-						"SET options are correct for XML data type methods.")));
-
-	/*
-	 * Call the built-in xpath(text, xml, text[][]) directly with an empty
-	 * namespace array. Returns xml[] (array of XML fragments).
-	 *
-	 * TODO: when WITH XMLNAMESPACES is supported, populate this array with
-	 * the declared (prefix, uri) pairs from the active namespace context.
-	 */
-	namespaces = construct_empty_array(TEXTOID);
-	xpath_result = DirectFunctionCall3(xpath,
-									   PointerGetDatum(xpath_expr),
-									   xml_datum,
-									   PointerGetDatum(namespaces));
-
-	result_arr = DatumGetArrayTypeP(xpath_result);
-
-	/* Deconstruct the result array */
-	deconstruct_array(result_arr, XMLOID, -1, false, TYPALIGN_INT,
-					  &elems, &nulls, &nitems);
-
-	/* Empty result → return empty string as XML (matches T-SQL behavior) */
-	if (nitems == 0)
-		PG_RETURN_XML_P((xmltype *) cstring_to_text(""));
-
-	/* Single result → return directly (common fast path) */
-	if (nitems == 1 && !nulls[0])
-		PG_RETURN_DATUM(elems[0]);
-
-	/*
-	 * Multiple results - concatenate all XML fragments.
-	 * Equivalent to: SELECT xmlagg(x) FROM unnest(result_set) AS x
-	 */
-	initStringInfo(&buf);
-	for (i = 0; i < nitems; i++)
-	{
-		if (!nulls[i])
-		{
-			text *fragment = DatumGetTextPP(elems[i]);
-
-			appendBinaryStringInfo(&buf,
-								   VARDATA_ANY(fragment),
-								   VARSIZE_ANY_EXHDR(fragment));
-		}
-	}
-
-	PG_RETURN_XML_P((xmltype *) cstring_to_text_with_len(buf.data, buf.len));
 }

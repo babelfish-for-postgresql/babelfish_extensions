@@ -679,6 +679,8 @@ datetime#!#datetime
 
 SELECT * INTO datetime_test_new FROM datetime_test;
 GO
+~~ROW COUNT: 4~~
+
 
 UPDATE datetime_test SET date_time1 = date_time1, date_time2 = date_time2;
 GO

@@ -1,3 +1,13 @@
+-- psql
+ANALYZE pg_catalog.pg_class;
+ANALYZE pg_catalog.pg_namespace;
+ANALYZE pg_catalog.pg_proc;
+ANALYZE pg_catalog.pg_type;
+ANALYZE pg_catalog.pg_attribute;
+ANALYZE sys.babelfish_namespace_ext;
+ANALYZE sys.babelfish_sysdatabases;
+GO
+
 -- tsql
 -- check for inconsistent metadata after upgrade
 select COUNT(*) FROM sys.babelfish_inconsistent_metadata();

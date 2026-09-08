@@ -113,6 +113,8 @@ drop table if exists babel_788_select_into;
 GO
 select top(2) a into babel_788_select_into from babel_788_int order by 1;
 GO
+~~ROW COUNT: 2~~
+
 select * from babel_788_select_into;
 GO
 ~~START~~
@@ -126,6 +128,8 @@ drop table if exists babel_788_subquery_select_into;
 GO
 select * into babel_788_subquery_select_into from (select top(2) a from babel_788_int order by 1) s;
 GO
+~~ROW COUNT: 2~~
+
 select * from babel_788_subquery_select_into;
 GO
 ~~START~~

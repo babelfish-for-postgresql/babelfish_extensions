@@ -37,6 +37,8 @@ GO
 
 SELECT col1, IDENTITY(int, 1,1) AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT id_num, col1 FROM babel_539NewTable1 ORDER BY col1;
 GO
@@ -53,6 +55,8 @@ GO
 
 SELECT col1, IDENTITY(int, 1) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT id_num, col1 FROM #babel_539NewTable1 ORDER BY col1;
 GO
@@ -69,6 +73,8 @@ GO
 
 SELECT col1, IDENTITY(int) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT col1, id_num FROM #babel_539NewTable1 ORDER BY col1;
 GO
@@ -85,6 +91,8 @@ GO
 
 SELECT col1, id_num=IDENTITY(int, 1,100) INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT id_num, col1 FROM #babel_539NewTable1 ORDER BY col1;
 GO
@@ -101,6 +109,8 @@ GO
 
 SELECT col1, [id_num]=IDENTITY(int, 1,1) INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT id_num, col1 FROM #babel_539NewTable1 ORDER BY col1; 
 GO
@@ -117,6 +127,8 @@ GO
 
 SELECT col1, identity(int, 1,-100) AS [id_num] INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT id_num, col1 FROM #babel_539NewTable1 ORDER BY col1; 
 GO
@@ -133,6 +145,8 @@ GO
 
 SELECT *, identity(int) AS [id_num] INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT id_num, col1, name FROM #babel_539NewTable1 ORDER BY col1; 
 GO
@@ -151,6 +165,8 @@ GO
 SELECT IDENTITY(int,1,1) AS id_num, ltable.col1 AS col1, ltable.name AS name INTO #babel_539NewTable1 
 FROM babel_539OldTable AS ltable JOIN babel_539OldTable AS rtable ON ltable.col1 <> rtable.col1 ORDER BY ltable.col1;
 GO
+~~ROW COUNT: 6~~
+
 
 SELECT id_num, col1, name FROM #babel_539NewTable1 ORDER BY col1; 
 GO
@@ -170,6 +186,8 @@ GO
 
 SELECT IDENTITY(bigint, 9223372036854775807, -1) id_num, col1, name INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT id_num, col1, name FROM #babel_539NewTable1 ORDER BY col1; 
 GO
@@ -186,6 +204,8 @@ GO
 
 SELECT IDENTITY(numeric, -9223372036854775806, +1) id_num, col1, name INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT id_num, col1, name FROM #babel_539NewTable1 ORDER BY col1; 
 GO
@@ -202,6 +222,8 @@ GO
 
 SELECT IDENTITY(numeric(19,0), 9223372036854775807, -1) id_num, col1, name INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT id_num, col1, name FROM #babel_539NewTable1 ORDER BY col1; 
 GO
@@ -218,6 +240,8 @@ GO
 
 SELECT IDENTITY(numeric(19,0), 1, 1) as id_num, * into #babel_539NewTable1 from babel_539OldTable where 1=1;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT col1, name, id_num FROM #babel_539NewTable1 ORDER BY col1; 
 GO
@@ -234,6 +258,8 @@ GO
 
 SELECT col1, IDENTITY(int, 1, 1) AS id_num, name INTO #babel_539NewTable1 FROM babel_539OldTable ORDER BY col1 DESC;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT col1, name, id_num FROM #babel_539NewTable1 ORDER BY col1; 
 GO
@@ -250,6 +276,8 @@ GO
 
 SELECT DISTINCT IDENTITY(int, 1, 1) AS id_num, col1, name INTO #babel_539NewTable1 FROM babel_539OldTable ORDER BY col1;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT col1, name, id_num FROM #babel_539NewTable1 ORDER BY col1; 
 GO
@@ -266,6 +294,8 @@ GO
 
 SELECT DISTINCT name, col1, IDENTITY(int, 1, 1) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable ORDER BY name;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT col1, name, id_num FROM #babel_539NewTable1 ORDER BY name; 
 GO
@@ -282,6 +312,8 @@ GO
 
 SELECT TOP 2 col1, name, IDENTITY(int, 1, 1) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable ORDER BY col1;
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT col1, name, id_num FROM #babel_539NewTable1 ORDER BY col1; 
 GO
@@ -297,6 +329,8 @@ GO
 
 SELECT TOP 2 IDENTITY(int, 1, 1) AS id_num, col1 INTO #babel_539NewTable1 FROM babel_539OldTable ORDER BY col1, name;
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT col1, name, id_num FROM #babel_539NewTable1 ORDER BY col1; 
 GO
@@ -370,6 +404,8 @@ GO
 
 SELECT id_num, col1, name INTO babel_539NewTable2 FROM babel_539OldTable2 ORDER BY col1;
 GO
+~~ROW COUNT: 3~~
+
 
 SELECT id_num, col1, name FROM babel_539NewTable2 ORDER BY col1; 
 GO

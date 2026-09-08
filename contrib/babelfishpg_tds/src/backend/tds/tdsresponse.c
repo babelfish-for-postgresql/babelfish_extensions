@@ -67,6 +67,14 @@
 #define VARBINARY_MAX_SCALE 8000
 
 /*
+ * Maximum length, in UTF-16 code units, that the single-byte COLMETADATA
+ * ColName / BaseColName length field can carry. A T-SQL identifier is at most
+ * 128 characters, so 128 code units is the semantic bound and also stays well
+ * within the 255 the length byte can physically represent.
+ */
+#define TDS_MAXCHAR_IN_COLMETADATA_NAME 128
+
+/*
  * Local structures and functions copied from printtup.c
  */
 typedef struct
@@ -921,14 +929,34 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 		{
 
 			/* column length and name */
-			if (col->colName.len > 0)
-				temp8 = (uint8_t) pg_mbstrlen(col->colName.data);
-			else
-				temp8 = 0;
-
 			resetStringInfo(&tempBuf);
 			TdsUTF8toUTF16StringInfo(&tempBuf, col->colName.data,
 									 col->colName.len);
+
+			/*
+			 * The COLMETADATA name length is a single byte counting UTF-16
+			 * code units, not code points. TdsUTF8toUTF16StringInfo emits two
+			 * bytes per code unit, so the unit count is tempBuf.len / 2.
+			 * Supplementary characters (U+10000..U+10FFFF) are one code point
+			 * but two code units, so a code-point count (pg_mbstrlen) would
+			 * under-announce and desynchronize the stream. Clamp to what the
+			 * uint8 field can represent, truncating the payload to match, so an
+			 * over-long name can never wrap the length field.
+			 */
+			if (col->colName.len > 0)
+			{
+				uint32_t	units = tempBuf.len / 2;
+
+				if (units > TDS_MAXCHAR_IN_COLMETADATA_NAME)
+				{
+					units = TDS_MAXCHAR_IN_COLMETADATA_NAME;
+					tempBuf.len = units * 2;
+				}
+				temp8 = (uint8_t) units;
+			}
+			else
+				temp8 = 0;
+
 			TdsPutbytes(&temp8, sizeof(temp8));
 			TdsPutbytes(tempBuf.data, tempBuf.len);
 		}
@@ -1072,10 +1100,26 @@ SendColInfoToken(int natts, bool sendRowStat)
 
 		if (status & COLUMN_STATUS_DIFFERENT_NAME)
 		{
+			uint32_t	units;
+
 			Assert(col->baseColName != NULL);
-			temp8 = (uint8_t) pg_mbstrlen(col->baseColName);
+			resetStringInfo(&tempBuf);
+			TdsUTF8toUTF16StringInfo(&tempBuf, col->baseColName, strlen(col->baseColName));
+
+			/*
+			 * Announce the length in UTF-16 code units (tempBuf.len / 2), not
+			 * code points, and clamp so an over-long or supplementary-character
+			 * base column name can never wrap the single-byte length field.
+			 */
+			units = tempBuf.len / 2;
+			if (units > TDS_MAXCHAR_IN_COLMETADATA_NAME)
+			{
+				units = TDS_MAXCHAR_IN_COLMETADATA_NAME;
+				tempBuf.len = units * 2;
+			}
+			temp8 = (uint8_t) units;
 			appendBinaryStringInfo(&buf, (const char *) &temp8, sizeof(uint8));
-			TdsUTF8toUTF16StringInfo(&buf, col->baseColName, strlen(col->baseColName));
+			appendBinaryStringInfo(&buf, tempBuf.data, tempBuf.len);
 		}
 	}
 
@@ -1234,7 +1278,6 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 		 */
 		SetParamMetadataCommonInfo(col, finfo);
 		initStringInfo(&(col->colName));
-		appendStringInfoString(&col->colName, NameStr(att->attname));
 
 		/* Do we have a non-resjunk tlist item? */
 		while (tlist_item &&
@@ -1244,6 +1287,12 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 		{
 			tle = (TargetEntry *) lfirst(tlist_item);
 
+			/* Prefer resorigname (full untruncated name) for TDS column display */
+			if (tle->resorigname)
+				appendStringInfoString(&col->colName, tle->resorigname);
+			else
+				appendStringInfoString(&col->colName, NameStr(att->attname));
+
 			col->relOid = tle->resorigtbl;
 			col->attrNum = tle->resorigcol;
 
@@ -1251,7 +1300,8 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 		}
 		else
 		{
-			/* No info available, so send zeroes */
+			/* No tlist info available, fall back to attname */
+			appendStringInfoString(&col->colName, NameStr(att->attname));
 			col->relOid = 0;
 			col->attrNum = 0;
 		}
@@ -2708,6 +2758,11 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 				ListCell   *l;
 				PLtsql_expr *expr = ((PLtsql_stmt_execsql *) stmt)->sqlstmt;
 
+				/* True if this statement runs inside an INSERT EXEC. */
+				bool insert_exec_active =
+					pltsql_plugin_handler_ptr->pltsql_insert_exec_active &&
+					pltsql_plugin_handler_ptr->pltsql_insert_exec_active();
+
 				/*
 				 * XXX: Once an error occurs, the expr and expr->plan may be
 				 * freed.  In that case, we've to save the command type in
@@ -2731,19 +2786,22 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 								 * or if the INSERT itself is an INSERT-EXEC
 								 * and it just returned error.
 								 */
-								row_count_valid = !estate->insert_exec &&
-									!(markErrorFlag &&
-									  ((PLtsql_stmt_execsql *) stmt)->insert_exec);
+								row_count_valid = !insert_exec_active;
 							}
 							else if (plansource->commandTag == CMDTAG_UPDATE)
 							{
 								command_type = TDS_CMD_UPDATE;
-								row_count_valid = !estate->insert_exec;
+								row_count_valid = !insert_exec_active;
 							}
 							else if (plansource->commandTag == CMDTAG_DELETE)
 							{
 								command_type = TDS_CMD_DELETE;
-								row_count_valid = !estate->insert_exec;
+								row_count_valid = !insert_exec_active;
+							}
+							else if (plansource->commandTag == CMDTAG_MERGE)
+							{
+								command_type = TDS_CMD_MERGE;
+								row_count_valid = !insert_exec_active;
 							}
 
 							/*
@@ -2752,8 +2810,14 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 							 */
 							else if (plansource->commandTag == CMDTAG_SELECT)
 							{
-								command_type = TDS_CMD_SELECT;
-								row_count_valid = !estate->insert_exec;
+								if (toplevel &&
+									!((PLtsql_stmt_execsql *) stmt)->need_to_push_result &&
+									!((PLtsql_stmt_execsql *) stmt)->is_tsql_select_assign_stmt &&
+									!((PLtsql_stmt_execsql *) stmt)->into)
+									command_type = TDS_CMD_SELECTINTO;
+								else
+									command_type = TDS_CMD_SELECT;
+								row_count_valid = !insert_exec_active;
 							}
 						}
 					}
@@ -2774,8 +2838,39 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 		case PLTSQL_STMT_EXEC_BATCH:
 		case PLTSQL_STMT_EXEC_SP:
 			{
+				/* INSERT EXEC can target any of EXEC, EXEC_BATCH or EXEC_SP */
+				void *insert_exec = NULL;
+
 				is_proc = true;
 				command_type = TDS_CMD_EXECUTE;
+
+				switch (stmt->cmd_type)
+				{
+					case PLTSQL_STMT_EXEC:
+						insert_exec = ((PLtsql_stmt_exec *) stmt)->insert_exec;
+						break;
+					case PLTSQL_STMT_EXEC_BATCH:
+						insert_exec = ((PLtsql_stmt_exec_batch *) stmt)->insert_exec;
+						break;
+					case PLTSQL_STMT_EXEC_SP:
+						insert_exec = ((PLtsql_stmt_exec_sp *) stmt)->insert_exec;
+						break;
+					default:
+						break;
+				}
+
+				/*
+				 * For INSERT EXEC, report the row count set in
+				 * flush_insert_exec_temp_table(). Suppress it when an error is
+				 * pending: the rows are rolled back, no count is sent to the
+				 * client, and a counted DONE left pending here would otherwise
+				 * carry a stale count into the following error DONE token.
+				 */
+				if (!markErrorFlag && insert_exec != NULL)
+				{
+					command_type = TDS_CMD_INSERT;
+					row_count_valid = true;
+				}
 			}
 			break;
 		default:

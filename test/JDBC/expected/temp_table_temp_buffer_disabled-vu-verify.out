@@ -33,6 +33,8 @@ bigint#!#int#!#text
 
 SELECT * INTO #temp_table2 FROM #temp_table1;
 GO
+~~ROW COUNT: 6~~
+
 
 SELECT col1, col3, col4 FROM #temp_table2;
 GO
