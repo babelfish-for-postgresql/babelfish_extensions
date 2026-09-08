@@ -1949,10 +1949,9 @@ get_original_relname(Oid relid, bool check_permission)
 		 * index relations (BABEL-5052).
 		 *
 		 * Temp tables (physical relname begins with '#') are another
-		 * exception: the scanner lower-cases and (for long names) truncates
-		 * the identifier, so the bbf_original_rel_name reloption preserves the
-		 * original case/length even for short names. Always read it for temp
-		 * tables (BABEL-6433).
+		 * exception: the scanner truncates long identifiers (preserving case),
+		 * so the bbf_original_rel_name reloption preserves the original length
+		 * even after truncation. Always read it for temp tables (BABEL-6433).
 		 */
 		if (strlen(NameStr(classForm->relname)) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD ||
 			classForm->relkind == RELKIND_INDEX ||

@@ -39,15 +39,15 @@ GO
 SET NOCOUNT ON
 GO
 
-DROP TABLE IF EXISTS #tmpGoodsInfo;
+DROP TABLE IF EXISTS #tmpgoodsinfo;
 GO
 
-SELECT Description INTO #tmpGoodsInfo FROM dbo.fakeGoodsInfo;
+SELECT Description INTO #tmpgoodsinfo FROM dbo.fakeGoodsInfo;
 GO
 
 SELECT * FROM enr_view;
 GO
 
-SELECT COUNT(REPLACE(Description, '55', '44')) FROM #tmpGoodsInfo;
+SELECT COUNT(REPLACE(Description, '55', '44')) FROM #tmpgoodsinfo;
 GO
 -- terminate-tsql-conn
