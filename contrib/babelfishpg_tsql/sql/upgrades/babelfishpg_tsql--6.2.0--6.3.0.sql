@@ -277,98 +277,6 @@ WHERE
 c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
--- Recreate sys.types (type name resolution from babelfish_identifier_mapping)
-create or replace view sys.types As
-with RECURSIVE type_code_list as
-(
-    select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
-    from sys.babelfish_typecode_list()
-),
-tt_internal as MATERIALIZED
-(
-  select * from sys.table_types_internal
-)
--- For System types
-select
-  CAST(ti.tsql_type_name as sys.sysname) as name
-  , cast(t.oid as int) as system_type_id
-  , cast(t.oid as int) as user_type_id
-  , cast(s.oid as int) as schema_id
-  , cast(NULL as INT) as principal_id
-  , sys.tsql_type_max_length_helper(ti.tsql_type_name, t.typlen, t.typtypmod, true) as max_length
-  , sys.tsql_type_precision_helper(ti.tsql_type_name, t.typtypmod) as precision
-  , sys.tsql_type_scale_helper(ti.tsql_type_name, t.typtypmod, false) as scale
-  , CASE
-    WHEN t.typcollation = 0 THEN CAST(NULL as sys.sysname)
-    ELSE CAST((SELECT default_collation FROM babelfish_sysdatabases WHERE name = db_name() COLLATE "C") as sys.sysname)
-    END as collation_name
-  , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
-  , CAST(0 as sys.bit) as is_user_defined
-  , CASE ti.tsql_type_name
-    -- CLR UDT have is_assembly_type = 1
-    WHEN 'geometry' THEN CAST(1 as sys.bit)
-    WHEN 'geography' THEN CAST(1 as sys.bit)
-    ELSE  CAST(0 as sys.bit)
-    END as is_assembly_type
-  , CAST(0 as int) as default_object_id
-  , CAST(0 as int) as rule_object_id
-  , CAST(0 as sys.bit) as is_table_type
-from pg_type t
-inner join pg_namespace s on s.oid = t.typnamespace
-inner join type_code_list ti on t.typname = ti.pg_type_name
-left join pg_collation c on c.oid = t.typcollation
-where
-ti.tsql_type_name IS NOT NULL
-and pg_type_is_visible(t.oid)
-and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
-union all 
--- For User Defined Types
-select cast(sys.bbf_get_original_identifier_name(t.typname, t.typnamespace::regnamespace::name, 1247) as sys.sysname) as name
-  , cast(t.typbasetype as int) as system_type_id
-  , cast(t.oid as int) as user_type_id
-  , cast(t.typnamespace as int) as schema_id
-  , null::integer as principal_id
-  , case when tt.typrelid is not null then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
-  , case when tt.typrelid is not null then 0::sys.tinyint else sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) end as precision
-  , case when tt.typrelid is not null then 0::sys.tinyint else sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) end as scale
-  , CASE
-    WHEN t.typcollation = 0 THEN CAST(NULL as sys.sysname)
-    ELSE CAST((SELECT default_collation FROM babelfish_sysdatabases WHERE name = db_name() COLLATE "C") as sys.sysname)
-    END as collation_name
-  , case when tt.typrelid is not null then cast(0 as sys.bit)
-         else case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end
-    end
-    as is_nullable
-  -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
-  , CAST(1 as sys.bit) as is_user_defined
-  , CASE tsql_base_type_name
-    -- CLR UDT have is_assembly_type = 1
-    WHEN 'geometry' THEN CAST(1 as sys.bit)
-    WHEN 'geography' THEN CAST(1 as sys.bit)
-    ELSE  CAST(0 as sys.bit)
-    END as is_assembly_type
-  , CAST(0 as int) as default_object_id
-  , CAST(0 as int) as rule_object_id
-  , CAST(tt.typrelid is not null AS sys.bit) as is_table_type
-from pg_type t
-join sys.schemas sch on t.typnamespace = sch.schema_id
-left join type_code_list ti on t.typname = ti.pg_type_name
-left join pg_collation c on c.oid = t.typcollation
-left join tt_internal tt on t.typrelid = tt.typrelid
-, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
--- we want to show details of user defined datatypes created under babelfish database
-where 
- ti.tsql_type_name IS NULL
-and
-  (
-    -- show all user defined datatypes created under babelfish database except table types
-    t.typtype = 'd'
-    or
-    -- only for table types
-    tt.typrelid is not null  
-  );
-GRANT SELECT ON sys.types TO PUBLIC;
-
 -- Recreate sys.all_objects (constraint/sequence name resolution from babelfish_identifier_mapping)
 -- helper functions for XML EXIST(xpath)
 CREATE OR REPLACE FUNCTION sys.bbf_xmlexist(xpath_pattern TEXT, xml_element ANYELEMENT)
@@ -1261,77 +1169,6 @@ WHERE ( -- If it is a Table function, we only want the inputs
       (return_type LIKE 'TABLE(%' AND ss.proargmodes[(ss.x).n] = 'i'));
 GRANT SELECT ON sys.all_parameters TO PUBLIC;
 
--- Recreate information_schema_tsql.table_constraints_internal (constraint name resolution)
-CREATE OR REPLACE FUNCTION information_schema_tsql.table_constraints_internal()
-RETURNS TABLE (
-    "CONSTRAINT_CATALOG" sys.nvarchar(128),
-    "CONSTRAINT_SCHEMA" sys.nvarchar(128),
-    "CONSTRAINT_NAME" sys.sysname,
-    "TABLE_CATALOG" sys.nvarchar(128),
-    "TABLE_SCHEMA" sys.nvarchar(128),
-    "TABLE_NAME" sys.sysname,
-    "CONSTRAINT_TYPE" sys.varchar(11),
-    "IS_DEFERRABLE" sys.varchar(2),
-    "INITIALLY_DEFERRED" sys.varchar(2)
-)
-AS
-$$
-BEGIN
-    RETURN QUERY
-    SELECT CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
-           CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-           sys.bbf_get_original_identifier_name(c.conname, nsp.nspname, 'pg_constraint'::regclass::oid)::sys.sysname AS "CONSTRAINT_NAME",
-           CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
-           CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-           CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
-           CAST(
-             CASE c.contype WHEN 'c' THEN 'CHECK'
-                            WHEN 'f' THEN 'FOREIGN KEY'
-                            WHEN 'p' THEN 'PRIMARY KEY'
-                            WHEN 'u' THEN 'UNIQUE' END
-             AS sys.varchar(11)) COLLATE sys.database_default AS "CONSTRAINT_TYPE",
-           CAST('NO' AS sys.varchar(2)) AS "IS_DEFERRABLE",
-           CAST('NO' AS sys.varchar(2)) AS "INITIALLY_DEFERRED"
-    FROM 
-        pg_constraint c
-        INNER JOIN pg_class r ON c.conrelid = r.oid
-        INNER JOIN pg_namespace nsp ON r.relnamespace = nsp.oid
-        INNER JOIN sys.babelfish_namespace_ext ext ON nsp.nspname = ext.nspname AND ext.dbid = sys.db_id()
-        , sys.db_name() AS db_name
-    WHERE 
-        c.contype IN ('c', 'f', 'p', 'u')
-          AND r.relkind IN ('r', 'p')
-          AND relispartition = false
-          AND (pg_has_role(r.relowner, 'USAGE')
-               OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
-               OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES') );
-END;
-$$
-LANGUAGE plpgsql STABLE PARALLEL SAFE;
-
--- Recreate information_schema_tsql.check_constraints (constraint name resolution)
-CREATE OR REPLACE VIEW information_schema_tsql.check_constraints AS
-    SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
-	    CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-           sys.bbf_get_original_identifier_name(c.conname, nc.nspname, 'pg_constraint'::regclass::oid)::sys.sysname AS "CONSTRAINT_NAME",
-	    CAST(sys.tsql_get_constraintdef(c.oid) AS sys.nvarchar(4000)) AS "CHECK_CLAUSE"
-
-    FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
-         pg_constraint c,
-         pg_class r
-
-    WHERE nc.oid = c.connamespace AND nc.oid = r.relnamespace
-          AND c.conrelid = r.oid
-          AND c.contype = 'c'
-          AND r.relkind IN ('r', 'p')
-          AND r.relispartition = false
-          AND (NOT pg_is_other_temp_schema(nc.oid))
-          AND (pg_has_role(r.relowner, 'USAGE')
-               OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
-               OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
-		  AND  extc.dbid = sys.db_id();
-
-GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
 
 -- Recreate sys.sp_rename (uses babelfish_truncate_identifier for long name lookups)
 CREATE OR REPLACE PROCEDURE sys.sp_rename(
@@ -3808,7 +3645,7 @@ BEGIN
     RETURN QUERY
     SELECT CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-           CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
+           CAST(sys.bbf_get_original_identifier_name(c.conname, nsp.nspname, 'pg_constraint'::regclass::oid) AS sys.sysname) AS "CONSTRAINT_NAME",
            CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
            CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
@@ -3897,10 +3734,11 @@ GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
  * CHECK_CONSTRAINTS view
  */
 
+-- Recreate information_schema_tsql.check_constraints (constraint name resolution)
 CREATE OR REPLACE VIEW information_schema_tsql.check_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 	    CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-           CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
+           sys.bbf_get_original_identifier_name(c.conname, nc.nspname, 'pg_constraint'::regclass::oid)::sys.sysname AS "CONSTRAINT_NAME",
 	    CAST(sys.tsql_get_constraintdef(c.oid) AS sys.nvarchar(4000)) AS "CHECK_CLAUSE"
 
     FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
@@ -4028,6 +3866,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
 
 -- Recreate sys.types (collation lookup uses orig_name)
+-- Recreate sys.types (type name resolution from babelfish_identifier_mapping)
 create or replace view sys.types As
 with RECURSIVE type_code_list as
 (
@@ -4073,7 +3912,7 @@ and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
 -- For User Defined Types
-select cast(t.typname as sys.sysname) as name
+select cast(sys.bbf_get_original_identifier_name(t.typname, t.typnamespace::regnamespace::name, 1247) as sys.sysname) as name
   , cast(t.typbasetype as int) as system_type_id
   , cast(t.oid as int) as user_type_id
   , cast(t.typnamespace as int) as schema_id
