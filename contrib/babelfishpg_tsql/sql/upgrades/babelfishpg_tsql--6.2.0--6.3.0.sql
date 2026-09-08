@@ -5040,9 +5040,10 @@ GRANT SELECT ON sys.sql_logins TO PUBLIC;
 -- BABEL-5975: Recreate sp_databases_view/sp_databases and sp_helplogins so that
 -- database names displayed to users are the original (case/length preserved)
 -- names instead of the physical downcased/truncated key for long database names.
-DROP VIEW IF EXISTS sys.sp_databases_view CASCADE;
-CREATE VIEW sys.sp_databases_view AS
-	SELECT CAST(database_name AS sys.SYSNAME),
+-- The output column types are unchanged, so CREATE OR REPLACE is used to avoid
+-- dropping (and CASCADE-destroying) user objects that depend on the view.
+CREATE OR REPLACE VIEW sys.sp_databases_view AS
+	SELECT CAST(sys.bbf_get_original_db_name(database_name) AS sys.SYSNAME) AS database_name,
 	-- DATABASE_SIZE returns a NULL value for databases larger than 2.15 TB
 	CASE WHEN (sum(table_size)::NUMERIC/1024.0) > 2.15 * 1024.0 * 1024.0 * 1024.0 THEN NULL
 		ELSE CAST((sum(table_size)::NUMERIC/1024.0) AS int) END as database_size,
@@ -5050,7 +5051,7 @@ CREATE VIEW sys.sp_databases_view AS
 	FROM (
 		SELECT pg_catalog.pg_namespace.oid as schema_oid,
 		pg_catalog.pg_namespace.nspname as schema_name,
-		CAST(sys.bbf_get_original_db_name(INT.name) AS sys.NVARCHAR(128)) AS database_name,
+		INT.name AS database_name,
 		coalesce(pg_relation_size(pg_catalog.pg_class.oid), 0) as table_size
 		FROM
 		sys.babelfish_namespace_ext EXT

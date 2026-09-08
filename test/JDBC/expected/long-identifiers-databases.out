@@ -242,12 +242,15 @@ GO
 USE master;
 GO
 
--- sp_databases must list the long-named database using its original name
-EXEC sp_databases;
+-- sp_databases must list the long-named database using its original name.
+-- Query sys.sp_databases_view (which sp_databases wraps) filtered to just the
+-- database under test, so the result is deterministic regardless of what other
+-- databases/tables exist in the instance.
+SELECT database_name FROM sys.sp_databases_view WHERE database_name = 'My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63';
 GO
 ~~START~~
-varchar#!#int#!#varchar
-My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63#!#0#!#<NULL>
+varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
 ~~END~~
 
 
@@ -338,4 +341,107 @@ babel5975_shortdb#!#120
 ~~END~~
 
 DROP DATABASE babel5975_shortdb;
+GO
+
+-- ===========================================
+-- Database-name lookups must accept BOTH the original (case/length preserved)
+-- name AND the physical downcased/MD5-truncated key, and must display the
+-- original name. The physical key is derived at runtime via
+-- sys.babelfish_truncate_identifier(LOWER(<original>)) rather than hardcoding
+-- the MD5 hash.
+-- ===========================================
+CREATE DATABASE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+
+-- sys.db_id resolves both forms to the same (valid, equal) dbid
+SELECT CASE WHEN sys.db_id('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63') IS NOT NULL
+             AND sys.db_id('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63')
+               = sys.db_id(sys.babelfish_truncate_identifier(LOWER('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63')))
+            THEN 1 ELSE 0 END AS db_id_both_forms_match;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- DATABASEPROPERTYEX resolves both forms
+SELECT DATABASEPROPERTYEX('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63', 'Collation') AS orig_form;
+GO
+~~START~~
+sql_variant
+bbf_unicode_cp1_ci_as
+~~END~~
+
+SELECT DATABASEPROPERTYEX(sys.babelfish_truncate_identifier(LOWER('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63')), 'Collation') AS physical_form;
+GO
+~~START~~
+sql_variant
+bbf_unicode_cp1_ci_as
+~~END~~
+
+
+-- HAS_DBACCESS resolves both forms
+SELECT HAS_DBACCESS('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63') AS orig_form;
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT HAS_DBACCESS(sys.babelfish_truncate_identifier(LOWER('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63'))) AS physical_form;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- sp_helpdb resolves both forms and displays the original name
+SELECT name FROM sys.babelfish_helpdb('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63');
+GO
+~~START~~
+varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+~~END~~
+
+SELECT name FROM sys.babelfish_helpdb(sys.babelfish_truncate_identifier(LOWER('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63')));
+GO
+~~START~~
+varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+~~END~~
+
+
+-- USE resolves the original form and displays the original name (the info
+-- message is not captured by the framework, so DB_NAME() is asserted instead)
+USE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+SELECT DB_NAME() AS after_use_original_form;
+GO
+~~START~~
+nvarchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+~~END~~
+
+USE master;
+GO
+
+-- sp_tables qualifier accepts the original name (SQL Server semantics: the
+-- qualifier must be the current database's user-facing name)
+USE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+CREATE TABLE babel5975_spt_both (id INT);
+GO
+EXEC sp_tables @table_name = 'babel5975_spt_both', @table_qualifier = 'My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63#!#dbo#!#babel5975_spt_both#!#TABLE#!#<NULL>
+~~END~~
+
+USE master;
+GO
+
+DROP DATABASE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
 GO
