@@ -3533,11 +3533,6 @@ tsql_IndexStmt:
 					n->transformed = false;
 					n->if_not_exists = false;
 
-					if (n->idxname)
-						n->options = lappend(n->options,
-							makeDefElem("name_location",
-								(Node *) makeInteger(@7), @7));
-
 					tsql_index_nulls_order(n->indexParams, n->accessMethod);
 					n->options = lappend(n->options,
 						makeDefElem(TSQL_ORIGINAL_NAME_LOCATION,

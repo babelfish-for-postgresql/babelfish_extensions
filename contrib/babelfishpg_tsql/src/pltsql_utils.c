@@ -1947,10 +1947,17 @@ get_original_relname(Oid relid, bool check_permission)
 		 * construct_unique_index_name), so the bbf_original_rel_name reloption
 		 * is present even when the physical name is short. Always read it for
 		 * index relations (BABEL-5052).
+		 *
+		 * Temp tables (physical relname begins with '#') are another
+		 * exception: the scanner lower-cases and (for long names) truncates
+		 * the identifier, so the bbf_original_rel_name reloption preserves the
+		 * original case/length even for short names. Always read it for temp
+		 * tables (BABEL-6433).
 		 */
 		if (strlen(NameStr(classForm->relname)) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD ||
 			classForm->relkind == RELKIND_INDEX ||
-			classForm->relkind == RELKIND_PARTITIONED_INDEX)
+			classForm->relkind == RELKIND_PARTITIONED_INDEX ||
+			NameStr(classForm->relname)[0] == '#')
 		{
 			opts = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
 			if (!isnull)

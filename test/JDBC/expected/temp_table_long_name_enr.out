@@ -790,6 +790,8 @@ GO
 -- =============================================================================
 SELECT 1 AS id, 'hello' AS val INTO #select_into_long_temp_table_name_exceeding_namedatalen_limit_xx
 GO
+~~ROW COUNT: 1~~
+
 
 SELECT * FROM #select_into_long_temp_table_name_exceeding_namedatalen_limit_xx
 GO

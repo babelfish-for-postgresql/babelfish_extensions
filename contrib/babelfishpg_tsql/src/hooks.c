@@ -2531,7 +2531,11 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, c
 		 * add "ALTER TABLE SET (bbf_original_table_name=<original_name>)" to
 		 * alist so that original_name will be stored in pg_class.reloptions
 		 */
-		cmd_orig_name = make_original_rel_name_cmd(original_name);
+		cmd_orig_name = makeNode(AlterTableCmd);
+		cmd_orig_name->subtype = AT_SetRelOptions;
+		cmd_orig_name->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(original_name)), -1));
+		cmd_orig_name->behavior = DROP_RESTRICT;
+		cmd_orig_name->missing_ok = false;
 		stmt->cmds = lappend(stmt->cmds, cmd_orig_name);
 	}
 

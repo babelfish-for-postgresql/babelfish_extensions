@@ -1,10 +1,4 @@
 #include "runtime.h"
-#include "catalog/pg_class_d.h"
-
-extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
-extern char *get_value_by_name_from_array(ArrayType *array, const char *name);
-
-static char *get_orig_temp_table_name(Oid relid);
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
@@ -1212,7 +1206,7 @@ get_enr_list(PG_FUNCTION_ARGS)
 			/* Use original untruncated name from reloptions if available */
 			if (md->enrtype == ENR_TSQL_TEMP)
 			{
-				char *orig = get_orig_temp_table_name(md->reliddesc);
+				char *orig = get_original_relname(md->reliddesc, false);
 				if (orig)
 					name = orig;
 			}
@@ -2696,33 +2690,6 @@ object_id(PG_FUNCTION_ARGS)
  * 		if there is no such object in specified database, if database id is not provided it will lookup in current database
  * 		if user don't have right permission
  */
-/*
- * get_orig_temp_table_name - Get original untruncated name from reloptions.
- * Returns palloc'd string or NULL if not found.
- */
-static char *
-get_orig_temp_table_name(Oid relid)
-{
-	HeapTuple	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
-	char	   *orig = NULL;
-
-	if (HeapTupleIsValid(tuple))
-	{
-		Datum	datum;
-		bool	isnull;
-
-		datum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
-		if (!isnull)
-		{
-			ArrayType *reloptions = DatumGetArrayTypeP(datum);
-			orig = get_value_by_name_from_array(reloptions, ATTOPTION_BBF_ORIGINAL_TABLE_NAME);
-		}
-		ReleaseSysCache(tuple);
-	}
-	/* orig remains valid after ReleaseSysCache - get_value_by_name_from_array palloc's a copy */
-	return orig;
-}
-
 Datum
 object_name(PG_FUNCTION_ARGS)
 {
@@ -2770,7 +2737,7 @@ object_name(PG_FUNCTION_ARGS)
 	if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 	{
 		const char *name = enr->md.name;
-		char *orig = get_orig_temp_table_name(object_id);
+		char *orig = get_original_relname(object_id, false);
 
 		if (orig)
 			name = orig;
