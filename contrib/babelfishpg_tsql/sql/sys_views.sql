@@ -3272,11 +3272,11 @@ AS
 SELECT
     CAST(ss.p_oid AS INT) AS object_id
   , CAST(COALESCE(
-      case when octet_length(ss.proargnames[(ss.x).n]) >= 60
-        then (SELECT ti.original_identifier_name FROM sys.babelfish_identifier_mapping ti
-         WHERE ti.truncated_identifier_name = ss.proargnames[(ss.x).n]
-           AND ti.pg_catalog_type = 'pg_proc'::regclass::oid)
-      end,
+      sys.bbf_get_original_identifier_name(
+        ss.proargnames[(ss.x).n],
+        ss.pronspname,
+        'pg_proc'::regclass::oid,
+        ss.proname),
       ss.proargnames[(ss.x).n], '') AS sys.SYSNAME) AS name
   , CAST(
       CASE 
@@ -3335,6 +3335,8 @@ FROM pg_type t
   (
     SELECT
       p.oid AS p_oid,
+      p.proname,
+      p.pronamespace::regnamespace::name AS pronspname,
       p.proargnames,
       p.proargmodes,
       p.prokind,

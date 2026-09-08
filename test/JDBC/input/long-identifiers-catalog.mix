@@ -144,7 +144,8 @@ GO
 
 -- information_schema.table_constraints shows original constraint names
 SELECT CONSTRAINT_NAME, TABLE_NAME FROM information_schema.table_constraints
-WHERE CONSTRAINT_NAME LIKE 'Very_Long_Primary%' OR CONSTRAINT_NAME LIKE 'Very_Long_Unique%';
+WHERE CONSTRAINT_NAME LIKE 'Very_Long_Primary%' OR CONSTRAINT_NAME LIKE 'Very_Long_Unique%'
+ORDER BY CONSTRAINT_NAME;
 GO
 
 -- information_schema.key_column_usage shows original names
@@ -367,6 +368,54 @@ GO
 SELECT name FROM sys.types WHERE name LIKE 'タイプ_Mixed%';
 GO
 DROP TYPE タイプ_Mixed_Type_Name_That_Exceeds_PostgreSQL_Limit_With_日本語_Characters_Added;
+GO
+
+-- ===========================================
+-- ISSUE 2: ALTER TABLE ADD/DROP CONSTRAINT in a NON-dbo schema
+-- Verifies the mapping is filed under (and looked up / cleaned up in) the
+-- table's real physical namespace instead of defaulting to dbo. With the old
+-- dbo fallback the lookup keyed on connamespace fails and the truncated name
+-- leaks to the user, and DROP CONSTRAINT cleanup targets the wrong schema.
+-- ===========================================
+CREATE SCHEMA babel5975_sch;
+GO
+CREATE TABLE babel5975_sch.babel5975_alter_nondbo (id INT, val INT);
+GO
+
+-- ADD long CHECK constraint (schema-qualified table)
+ALTER TABLE babel5975_sch.babel5975_alter_nondbo ADD CONSTRAINT Very_Long_NonDbo_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty CHECK (val > 0);
+GO
+-- Original (untruncated) name must resolve for a constraint in the non-dbo
+-- schema. sys.check_constraints keys the lookup on the constraint's real
+-- namespace (connamespace); with the old dbo fallback the mapping is stored
+-- under the wrong schema, the lookup misses, and the truncated name leaks.
+SELECT name FROM sys.check_constraints WHERE name LIKE 'Very_Long_NonDbo_Check%';
+GO
+-- Exactly one mapping row should exist for this constraint
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_NonDbo_Check%';
+GO
+
+-- ADD long UNIQUE constraint (creates a backing index in the non-dbo schema)
+ALTER TABLE babel5975_sch.babel5975_alter_nondbo ADD CONSTRAINT Very_Long_NonDbo_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixt UNIQUE (id);
+GO
+SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_NonDbo_Unique%';
+GO
+
+-- DROP the CHECK constraint - mapping row in the non-dbo schema must be removed
+ALTER TABLE babel5975_sch.babel5975_alter_nondbo DROP CONSTRAINT Very_Long_NonDbo_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_NonDbo_Check%';
+GO
+
+-- DROP the UNIQUE constraint - mapping row must be removed
+ALTER TABLE babel5975_sch.babel5975_alter_nondbo DROP CONSTRAINT Very_Long_NonDbo_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixt;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'Very_Long_NonDbo_Unique%';
+GO
+
+DROP TABLE babel5975_sch.babel5975_alter_nondbo;
+GO
+DROP SCHEMA babel5975_sch;
 GO
 
 -- CLEANUP
