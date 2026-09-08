@@ -241,15 +241,16 @@ tsql_CreatedbStmt:
 					 * text, mirroring how other CREATE statements (indexes,
 					 * views, etc.) carry TSQL_ORIGINAL_NAME_LOCATION. The
 					 * original (case/length preserved) name is later resolved
-					 * from the query string in create_bbf_db_internal(). Storing
-					 * a location rather than the extracted string keeps the
-					 * option consistent with other objects and prevents a
-					 * user-supplied option value from being honored.
+					 * from the query string in create_bbf_db_internal(). The
+					 * DefElem location is set to -1 to mark this as the trusted,
+					 * grammar-appended entry: a user-supplied option of the same
+					 * name arrives with location >= 0 and is rejected, so it can
+					 * neither be honored nor drive an out-of-bounds read.
 					 */
 					n->options = lappend(n->options,
 										 makeDefElem(TSQL_ORIGINAL_NAME_LOCATION,
 													 (Node *) makeInteger(@3),
-													 @3));
+													 -1));
 					$$ = (Node *) n;
 				}
 		;

@@ -281,3 +281,38 @@ GO
 
 DROP DATABASE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
 GO
+
+-- ===========================================
+-- Security: tsql_original_name_location is an internal-only option used to
+-- carry the byte offset of the database name in the source text. A user
+-- attempting to supply it in CREATE DATABASE ... WITH must be rejected, must
+-- not create a database, and must never drive an out-of-bounds read of the
+-- source text (create_bbf_db_internal() bounds the offset and rejects any
+-- user-supplied instance; the T-SQL grammar additionally rejects the syntax).
+-- ===========================================
+CREATE DATABASE babel5975_reserved_opt WITH tsql_original_name_location = 999999999;
+GO
+CREATE DATABASE babel5975_reserved_opt WITH tsql_original_name_location = 0;
+GO
+
+-- The PostgreSQL parser (reachable e.g. via a psql/PG-protocol connection with
+-- the T-SQL dialect set) accepts the WITH option syntax, so the ANTLR T-SQL
+-- syntax rejection above does not cover it. create_bbf_db_internal() must
+-- reject the user-supplied internal option there as well, preventing the
+-- out-of-bounds read of the source text.
+-- psql
+SET babelfishpg_tsql.sql_dialect = 'tsql';
+GO
+CREATE DATABASE babel5975_reserved_opt WITH tsql_original_name_location = 999999999;
+GO
+CREATE DATABASE babel5975_reserved_opt WITH tsql_original_name_location = 5;
+GO
+
+-- tsql
+-- No database must have been created by the rejected statements, and the
+-- backend must still be alive (i.e. no crash from an out-of-bounds read).
+SELECT COUNT(*) AS leaked_db_count FROM sys.databases WHERE name LIKE 'babel5975_reserved_opt%';
+GO
+SELECT 'server-alive' AS status;
+GO
+

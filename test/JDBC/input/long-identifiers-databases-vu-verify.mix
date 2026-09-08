@@ -33,5 +33,20 @@ GO
 SELECT name, type_desc FROM sys.database_principals WHERE name IN ('dbo','guest','db_owner') ORDER BY name;
 GO
 
+-- information_schema_tsql.sequences must be queryable after upgrade and surface
+-- the sequence created before upgrade with the original (case/length preserved)
+-- SEQUENCE_CATALOG. This view depends on sys.pg_namespace_ext, which the upgrade
+-- renames+recreates; before the fix it kept a dependency on the renamed
+-- pg_namespace_ext_deprecated_in_6_3_0 view, which both orphaned that deprecated
+-- view and left SEQUENCES returning the physical catalog name.
+SELECT CAST("SEQUENCE_CATALOG" AS sys.sysname) AS SEQUENCE_CATALOG,
+       CAST("SEQUENCE_SCHEMA" AS sys.sysname) AS SEQUENCE_SCHEMA,
+       CAST("SEQUENCE_NAME" AS sys.sysname) AS SEQUENCE_NAME,
+       CAST("START_VALUE" AS bigint) AS START_VALUE,
+       CAST("INCREMENT" AS bigint) AS INCREMENT
+FROM information_schema_tsql.sequences
+WHERE "SEQUENCE_NAME" = 'babel5975_upg_seq';
+GO
+
 USE master;
 GO

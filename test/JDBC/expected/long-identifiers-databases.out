@@ -445,3 +445,66 @@ GO
 
 DROP DATABASE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
 GO
+
+-- ===========================================
+-- Security: tsql_original_name_location is an internal-only option used to
+-- carry the byte offset of the database name in the source text. A user
+-- attempting to supply it in CREATE DATABASE ... WITH must be rejected, must
+-- not create a database, and must never drive an out-of-bounds read of the
+-- source text (create_bbf_db_internal() bounds the offset and rejects any
+-- user-supplied instance; the T-SQL grammar additionally rejects the syntax).
+-- ===========================================
+CREATE DATABASE babel5975_reserved_opt WITH tsql_original_name_location = 999999999;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '=' at line 9 and character position 72)~~
+
+CREATE DATABASE babel5975_reserved_opt WITH tsql_original_name_location = 0;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '=' at line 1 and character position 72)~~
+
+
+-- psql
+-- The PostgreSQL parser (reachable e.g. via a psql/PG-protocol connection with
+-- the T-SQL dialect set) accepts the WITH option syntax, so the ANTLR T-SQL
+-- syntax rejection above does not cover it. create_bbf_db_internal() must
+-- reject the user-supplied internal option there as well, preventing the
+-- out-of-bounds read of the source text.
+SET babelfishpg_tsql.sql_dialect = 'tsql';
+GO
+CREATE DATABASE babel5975_reserved_opt WITH tsql_original_name_location = 999999999;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: option "tsql_original_name_location" is reserved for internal Babelfish use and cannot be set
+    Server SQLState: 42501)~~
+
+CREATE DATABASE babel5975_reserved_opt WITH tsql_original_name_location = 5;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: option "tsql_original_name_location" is reserved for internal Babelfish use and cannot be set
+    Server SQLState: 42501)~~
+
+
+-- tsql
+-- No database must have been created by the rejected statements, and the
+-- backend must still be alive (i.e. no crash from an out-of-bounds read).
+SELECT COUNT(*) AS leaked_db_count FROM sys.databases WHERE name LIKE 'babel5975_reserved_opt%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT 'server-alive' AS status;
+GO
+~~START~~
+varchar
+server-alive
+~~END~~
+
+

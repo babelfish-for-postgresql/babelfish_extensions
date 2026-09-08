@@ -650,17 +650,28 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 		{
 			/*
 			 * The T-SQL grammar records the byte offset of the database name
-			 * within the source text (see tsql_CreatedbStmt). Resolve the
-			 * original, case/length-preserved name from the query string here,
-			 * mirroring how other objects handle TSQL_ORIGINAL_NAME_LOCATION.
-			 * Guard on IsA(Integer) so a spurious/user-supplied value with a
-			 * non-integer argument is ignored.
+			 * within the source text (see tsql_CreatedbStmt), mirroring how
+			 * other objects handle TSQL_ORIGINAL_NAME_LOCATION.
+			 *
+			 * Only the grammar-appended entry is trusted; it carries a DefElem
+			 * location of -1. A user-written CREATE DATABASE ... WITH
+			 * (tsql_original_name_location = ...) arrives with location >= 0 and
+			 * is rejected: this is an internal-only option, and honoring an
+			 * attacker-chosen offset would allow an out-of-bounds read of the
+			 * source text.
 			 */
+			if (defel->location >= 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("option \"%s\" is reserved for internal Babelfish use and cannot be set",
+								TSQL_ORIGINAL_NAME_LOCATION)));
+
 			if (pstate && pstate->p_sourcetext && defel->arg && IsA(defel->arg, Integer))
 			{
-				int loc = intVal(defel->arg);
+				int		loc = intVal(defel->arg);
 
-				if (loc >= 0)
+				/* Bound the offset within the source text to avoid an OOB read. */
+				if (loc >= 0 && (size_t) loc < strlen(pstate->p_sourcetext))
 					orig_dbname = extract_identifier(pstate->p_sourcetext + loc, NULL);
 			}
 		}
