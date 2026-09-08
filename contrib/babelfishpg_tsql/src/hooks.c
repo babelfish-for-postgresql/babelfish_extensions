@@ -5950,6 +5950,14 @@ update_rte_perms_info_walker(Node *node, void *context)
 	return expression_tree_walker(node, update_rte_perms_info_walker, NULL);
 }
 
+/*
+ * Planning-recursion depth for the LIKE original-collation cache. Only the
+ * outermost planner pass resets the cache (see pltsql_planner_hook), so that
+ * nested planning (planner-time SPI, constant-folding, EXECUTE planning) does
+ * not clear the outer statement's cache and silently disable the optimization.
+ */
+static int	like_orig_collation_planner_depth = 0;
+
 static PlannedStmt *
 pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams)
 {
@@ -5968,6 +5976,7 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 
 	PG_TRY();
 	{
+		like_orig_collation_planner_depth++;
 		if (prev_planner_hook)
 			plan = prev_planner_hook(parse, query_string, cursorOptions, boundParams);
 		else
@@ -5975,8 +5984,18 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 	}
 	PG_FINALLY();
 	{
-		/* Reset per-statement hash table for LIKE collation tracking after planning is complete */
-		reset_like_original_collation();
+		/*
+		 * Reset the per-statement LIKE-collation hash only when the outermost
+		 * planning pass finishes. Planning can recurse (planner-time SPI,
+		 * constant-folding, EXECUTE planning), and resetting on every exit
+		 * would clear the outer statement's cache mid-plan and silently
+		 * disable the LIKE index optimization for it.
+		 */
+		if (--like_orig_collation_planner_depth <= 0)
+		{
+			like_orig_collation_planner_depth = 0;
+			reset_like_original_collation();
+		}
 	}
 	PG_END_TRY();
 
@@ -9689,8 +9708,15 @@ bbf_match_like_to_indexcol(PlannerInfo *root,
 			Oid			eq_opr;
 			OpExpr	   *op_expr;
 
+			/*
+			 * Resolve "=" by name/type (this allows the binary-coercible
+			 * operand types the AI/nvarchar paths rely on), then verify the
+			 * operator actually belongs to the index's opfamily so the scan
+			 * key is strategy-consistent with the index ordering.
+			 */
 			eq_opr = compatible_oper_opid(list_make1(makeString("=")), ltypeId, rtypeId, true);
-			if (!OidIsValid(eq_opr))
+			if (!OidIsValid(eq_opr) ||
+				!op_in_opfamily(eq_opr, index->opfamily[indexcol]))
 				return NULL;
 
 			op_expr = (OpExpr *) make_opclause(eq_opr, BOOLOID, false,
@@ -9709,10 +9735,17 @@ bbf_match_like_to_indexcol(PlannerInfo *root,
 			OpExpr	   *lt_op;
 			Const	   *highest_sort_key;
 
-			/* Use compatible_oper_opid to find >= and < operators that work with the collation */
+			/*
+			 * Resolve ">=" and "<" by name/type (allowing binary-coercible
+			 * operand types), then verify both operators belong to the index's
+			 * opfamily so the scan keys are strategy-consistent with the index
+			 * ordering.
+			 */
 			ge_opr = compatible_oper_opid(list_make1(makeString(">=")), ltypeId, rtypeId, true);
 			lt_opr = compatible_oper_opid(list_make1(makeString("<")), ltypeId, rtypeId, true);
-			if (!OidIsValid(ge_opr) || !OidIsValid(lt_opr))
+			if (!OidIsValid(ge_opr) || !OidIsValid(lt_opr) ||
+				!op_in_opfamily(ge_opr, index->opfamily[indexcol]) ||
+				!op_in_opfamily(lt_opr, index->opfamily[indexcol]))
 				return NULL;
 
 			/* Pre-compute upper bound: prefix || '\uFFFF' */

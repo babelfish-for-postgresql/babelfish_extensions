@@ -350,7 +350,21 @@ store_like_original_collation(int location, Oid collation)
 	}
 	
 	entry = hash_search(ht_like_orig_collation, &location, HASH_ENTER, &found);
-	entry->orig_collation = collation;
+
+	/*
+	 * A parse-node location is unique per source expression, but not per node
+	 * instance once a view/CTE containing a LIKE is inlined at more than one
+	 * reference. If those references carry different effective collations
+	 * (e.g. different outer COLLATE overrides), we get two stores at the same
+	 * location with conflicting collations. We cannot disambiguate them by
+	 * location, so on such a collision we invalidate the entry: the index hook
+	 * then sees InvalidOid from get_like_original_collation and safely falls
+	 * back to a filter rather than generating bounds with the wrong collation.
+	 */
+	if (found && entry->orig_collation != collation)
+		entry->orig_collation = InvalidOid;
+	else if (!found)
+		entry->orig_collation = collation;
 }
 
 Oid

@@ -854,6 +854,7 @@ init_like_ilike_table_internal(void)
 {
 	HASHCTL		hashCtl;
 	ht_like2ilike_entry_t *entry;
+	bool		found;
 
 	if (TransMemoryContext == NULL) /* initialize memory context */
 	{
@@ -919,7 +920,10 @@ init_like_ilike_table_internal(void)
 														roid);
 		if (OidIsValid(like_ilike_table[i].like_oid))
 		{
-			entry = hash_search(ht_like2ilike, &like_ilike_table[i].like_oid, HASH_ENTER, NULL);
+			entry = hash_search(ht_like2ilike, &like_ilike_table[i].like_oid, HASH_ENTER, &found);
+			if (found)
+				elog(ERROR, "duplicate oid %u in like/ilike operator table",
+					 like_ilike_table[i].like_oid);
 			entry->persist_id = i;
 		}
 		like_ilike_table[i].ilike_oid = OpernameGetOprid(list_make1(makeString(ilike_opname)),
@@ -927,7 +931,10 @@ init_like_ilike_table_internal(void)
 														 roid);
 		if (OidIsValid(like_ilike_table[i].ilike_oid))
 		{
-			entry = hash_search(ht_like2ilike, &like_ilike_table[i].ilike_oid, HASH_ENTER, NULL);
+			entry = hash_search(ht_like2ilike, &like_ilike_table[i].ilike_oid, HASH_ENTER, &found);
+			if (found)
+				elog(ERROR, "duplicate oid %u in like/ilike operator table",
+					 like_ilike_table[i].ilike_oid);
 			entry->persist_id = i;
 		}
 		like_ilike_table[i].ilike_opfuncid = get_opcode(like_ilike_table[i].ilike_oid);
