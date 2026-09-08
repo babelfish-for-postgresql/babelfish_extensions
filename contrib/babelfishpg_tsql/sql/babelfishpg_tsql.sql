@@ -1093,7 +1093,7 @@ GRANT ALL on PROCEDURE sys.sp_describe_undeclared_parameters TO PUBLIC;
 CREATE OR REPLACE VIEW sys.sp_tables_view AS
 SELECT
 t2.dbname AS TABLE_QUALIFIER,
-CAST(t3.name AS name) AS TABLE_OWNER,
+CAST(t3.name AS sys.sysname) AS TABLE_OWNER,
 sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname)::sys.sysname AS TABLE_NAME,
 
 CASE 

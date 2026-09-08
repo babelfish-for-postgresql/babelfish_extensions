@@ -2597,7 +2597,7 @@ ALTER VIEW sys.sp_tables_view RENAME TO sp_tables_view_deprecated_in_6_3_0;
 CREATE OR REPLACE VIEW sys.sp_tables_view AS
 SELECT
 t2.dbname AS TABLE_QUALIFIER,
-CAST(t3.name AS name) AS TABLE_OWNER,
+CAST(t3.name AS sys.sysname) AS TABLE_OWNER,
 sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname)::sys.sysname AS TABLE_NAME,
 
 CASE 

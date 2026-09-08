@@ -243,6 +243,90 @@ GO
 DROP DATABASE Mixed_Case_Database_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuV;
 GO
 
+
+-- BABEL-5321: suser_id() must resolve a long login name (> NAMEDATALEN-1
+-- bytes) whose physical role name is truncated with a hash suffix. Before the
+-- fix suser_id() returned NULL for the full name. Assert resolution via a
+-- deterministic round-trip suser_name(suser_id(<name>)) = <name>, and verify
+-- case-insensitive lookup. suser_id itself returns an OID that varies per run,
+-- so we compare the round-tripped name instead of the raw id.
+-- Long lowercase login (128 chars)
+SELECT CAST(CASE WHEN suser_id('long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr') IS NOT NULL THEN 1 ELSE 0 END AS INT) AS long_login_resolves;
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT suser_name(suser_id('long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr'));
+GO
+~~START~~
+nvarchar
+long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr
+~~END~~
+
+
+-- Boundary 64-char login
+SELECT CAST(CASE WHEN suser_id('boundary_test_login_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa') IS NOT NULL THEN 1 ELSE 0 END AS INT) AS boundary_login_resolves;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Case-insensitive: look up a mixed-case long login using an all-uppercase name
+SELECT suser_name(suser_id('MIXED_CASE_LOGIN_TEST_XYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXY'));
+GO
+~~START~~
+nvarchar
+Mixed_Case_Login_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXy
+~~END~~
+
+
+-- tsql
+-- BABEL-5321: user_id() must resolve a long database-user name (> NAMEDATALEN-1
+-- bytes) whose physical role name is truncated with a hash suffix. Create a
+-- long-named user (for an existing long login) inside a database and assert
+-- user_id() resolves it, verified through a deterministic round-trip
+-- user_name(user_id(<name>)) = <name> and via case-insensitive lookup.
+CREATE DATABASE babel5321_userid_db;
+GO
+USE babel5321_userid_db;
+GO
+CREATE USER Long_User_Name_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPq FOR LOGIN boundary_test_login_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
+GO
+-- Resolves (non-NULL)
+SELECT CAST(CASE WHEN user_id('Long_User_Name_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPq') IS NOT NULL THEN 1 ELSE 0 END AS INT) AS long_user_resolves;
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Round-trip returns the full original name
+SELECT user_name(user_id('Long_User_Name_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPq'));
+GO
+~~START~~
+nvarchar
+Long_User_Name_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPq
+~~END~~
+
+-- Case-insensitive lookup (all-uppercase input) resolves to the same user
+SELECT user_name(user_id('LONG_USER_NAME_TEST_XYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQ'));
+GO
+~~START~~
+nvarchar
+Long_User_Name_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPq
+~~END~~
+
+DROP USER Long_User_Name_Test_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPq;
+GO
+USE master;
+GO
+DROP DATABASE babel5321_userid_db;
+GO
+
 -- Verify ALTER LOGIN works with bracketed long identifiers
 ALTER LOGIN [long_bracket_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstu] WITH PASSWORD = '1234';
 GO

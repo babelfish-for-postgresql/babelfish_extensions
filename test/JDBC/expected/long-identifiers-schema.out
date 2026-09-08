@@ -1,0 +1,243 @@
+
+-- tsql
+
+-- BABEL-5975: Long schema name (> 63 bytes) must display as the full original
+-- name in system catalogs, information_schema views, and system procedures.
+-- Only valid (SQL Server compatible) inputs are tested: the full schema name.
+-- ===========================================
+-- SETUP: schema whose name exceeds the 63-byte PostgreSQL NAME limit
+-- ===========================================
+CREATE SCHEMA Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch;
+GO
+
+CREATE TABLE Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.t1 (
+    id INT NOT NULL,
+    col2 INT,
+    CONSTRAINT ck_schema_test CHECK (col2 > 0),
+    CONSTRAINT pk_schema_test PRIMARY KEY (id)
+);
+GO
+
+CREATE TABLE Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.child (
+    id INT,
+    pid INT,
+    CONSTRAINT fk_schema_test FOREIGN KEY (pid) REFERENCES Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.t1(id)
+);
+GO
+
+CREATE VIEW Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.v1
+AS SELECT id FROM Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.t1;
+GO
+
+CREATE PROCEDURE Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.p1
+AS BEGIN SELECT 1 END;
+GO
+
+CREATE SEQUENCE Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.sq1 AS INT START WITH 1;
+GO
+
+CREATE TYPE Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.ty1 FROM INT;
+GO
+
+-- ===========================================
+-- sys.schemas exposes the full original schema name
+-- ===========================================
+SELECT name FROM sys.schemas WHERE name LIKE 'Babel5975_Long_Schema%';
+GO
+~~START~~
+varchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+
+-- ===========================================
+-- SCHEMA_NAME(schema_id) returns the full name for each object class
+-- ===========================================
+SELECT SCHEMA_NAME(schema_id) FROM sys.tables WHERE name = 't1';
+GO
+~~START~~
+varchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+SELECT SCHEMA_NAME(schema_id) FROM sys.views WHERE name = 'v1';
+GO
+~~START~~
+varchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+SELECT SCHEMA_NAME(schema_id) FROM sys.procedures WHERE name = 'p1';
+GO
+~~START~~
+varchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+SELECT SCHEMA_NAME(schema_id) FROM sys.objects WHERE name = 't1' AND type = 'U';
+GO
+~~START~~
+varchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+SELECT SCHEMA_NAME(schema_id) FROM sys.check_constraints WHERE name = 'ck_schema_test';
+GO
+~~START~~
+varchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+SELECT SCHEMA_NAME(schema_id) FROM sys.foreign_keys WHERE name = 'fk_schema_test';
+GO
+~~START~~
+varchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+SELECT SCHEMA_NAME(schema_id) FROM sys.key_constraints WHERE name = 'pk_schema_test';
+GO
+~~START~~
+varchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+SELECT SCHEMA_NAME(schema_id) FROM sys.types WHERE name = 'ty1';
+GO
+~~START~~
+varchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+
+-- ===========================================
+-- information_schema views expose the full schema name
+-- ===========================================
+SELECT TABLE_SCHEMA FROM information_schema.tables WHERE TABLE_NAME = 't1';
+GO
+~~START~~
+nvarchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+SELECT DISTINCT TABLE_SCHEMA FROM information_schema.columns WHERE TABLE_NAME = 't1';
+GO
+~~START~~
+nvarchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+SELECT TABLE_SCHEMA FROM information_schema.views WHERE TABLE_NAME = 'v1';
+GO
+~~START~~
+nvarchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+SELECT ROUTINE_SCHEMA FROM information_schema.routines WHERE ROUTINE_NAME = 'p1';
+GO
+~~START~~
+nvarchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+SELECT DISTINCT CONSTRAINT_SCHEMA FROM information_schema.table_constraints WHERE TABLE_NAME = 't1' ORDER BY CONSTRAINT_SCHEMA;
+GO
+~~START~~
+nvarchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+SELECT CONSTRAINT_SCHEMA FROM information_schema.check_constraints WHERE CONSTRAINT_NAME = 'ck_schema_test';
+GO
+~~START~~
+nvarchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+
+-- ===========================================
+-- System procedures return the full schema name in the owner column,
+-- and match correctly when the full schema name is supplied as owner.
+-- ===========================================
+EXEC sys.sp_tables @table_name = 't1', @table_owner = 'Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch#!#t1#!#TABLE#!#<NULL>
+~~END~~
+
+EXEC sys.sp_columns_100 @table_name = 't1', @table_owner = 'Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+master#!#Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch#!#t1#!#id#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+master#!#Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch#!#t1#!#col2#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+EXEC sys.sp_pkeys @table_name = 't1', @table_owner = 'Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar
+master#!#Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch#!#t1#!#id#!#1#!#pk_schema_test
+~~END~~
+
+EXEC sys.sp_fkeys @pktable_name = 't1', @pktable_owner = 'Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+master#!#Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch#!#t1#!#id#!#master#!#Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch#!#child#!#pid#!#1#!#1#!#1#!#fk_schema_test#!#pk_schema_test#!#7
+~~END~~
+
+
+-- ===========================================
+-- sp_rename works for objects living in a long-named schema
+-- ===========================================
+EXEC sp_rename 'Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.t1.col2', 'col2_renamed', 'COLUMN';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.t1') ORDER BY column_id;
+GO
+~~START~~
+varchar
+id
+col2_renamed
+~~END~~
+
+
+EXEC sp_rename 'Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.sq1', 'sq1_renamed', 'OBJECT';
+GO
+SELECT SCHEMA_NAME(schema_id) FROM sys.objects WHERE name = 'sq1_renamed' AND type = 'SO';
+GO
+~~START~~
+varchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+
+EXEC sp_rename 'Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.ty1', 'ty1_renamed', 'USERDATATYPE';
+GO
+SELECT SCHEMA_NAME(schema_id) FROM sys.types WHERE name = 'ty1_renamed';
+GO
+~~START~~
+varchar
+Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch
+~~END~~
+
+
+-- ===========================================
+-- CLEANUP
+-- ===========================================
+DROP SEQUENCE Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.sq1_renamed;
+GO
+DROP TYPE Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.ty1_renamed;
+GO
+DROP PROCEDURE Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.p1;
+GO
+DROP VIEW Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.v1;
+GO
+DROP TABLE Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.child;
+GO
+DROP TABLE Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.t1;
+GO
+DROP SCHEMA Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch;
+GO
