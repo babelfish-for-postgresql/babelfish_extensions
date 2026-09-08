@@ -2,5 +2,7 @@
 -- Cleanup
 USE master;
 GO
+DROP LOGIN long_default_db_login_vu_tvc;
+GO
 DROP DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC;
 GO

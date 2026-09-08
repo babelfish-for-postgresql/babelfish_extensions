@@ -15,6 +15,25 @@ CREATE TABLE sys.babelfish_sysdatabases (
 
 GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 
+-- BABEL-5975: helper to resolve the original (case/length preserved) database
+-- name from a physical (downcased and, for long names, MD5-truncated) name as
+-- stored in sys.babelfish_sysdatabases.name. The catalog lookup is only
+-- performed for names at or beyond the truncation threshold (60); shorter names
+-- already match their physical form and are returned as-is.
+CREATE OR REPLACE FUNCTION sys.bbf_get_original_db_name(physical_db_name sys.sysname)
+RETURNS sys.sysname
+LANGUAGE SQL
+STABLE
+PARALLEL SAFE
+RETURN COALESCE(
+    CASE WHEN octet_length(physical_db_name) >= 60 THEN
+        (SELECT orig_name
+         FROM sys.babelfish_sysdatabases
+         WHERE name COLLATE database_default = physical_db_name
+         LIMIT 1)
+    END,
+    physical_db_name);
+
 -- BABELFISH_SCHEMA_PERMISSIONS
 -- This catalog is implemented specially to support GRANT/REVOKE .. ON SCHEMA ..
 -- Please avoid using this catalog anywhere else.
@@ -85,7 +104,7 @@ GRANT SELECT ON sys.babelfish_namespace_ext TO PUBLIC;
 -- SYSDATABASES
 CREATE OR REPLACE VIEW sys.sysdatabases AS
 SELECT
-t.orig_name AS name,
+COALESCE(t.orig_name, CAST(t.name AS sys.NVARCHAR(128))) AS name,
 sys.db_id(t.name) AS dbid,
 CAST(CAST(r.oid AS int) AS SYS.VARBINARY(85)) AS sid,
 CAST(0 AS SMALLINT) AS mode,
@@ -104,7 +123,7 @@ GRANT SELECT ON sys.sysdatabases TO PUBLIC;
 
 -- PG_NAMESPACE_EXT
 CREATE VIEW sys.pg_namespace_ext AS
-SELECT BASE.* , DB.orig_name as dbname FROM
+SELECT BASE.* , COALESCE(DB.orig_name, CAST(DB.name AS sys.NVARCHAR(128))) as dbname FROM
 pg_catalog.pg_namespace AS base
 LEFT OUTER JOIN sys.babelfish_namespace_ext AS EXT on BASE.nspname = EXT.nspname
 INNER JOIN sys.babelfish_sysdatabases AS DB ON EXT.dbid = DB.dbid;
@@ -360,7 +379,7 @@ CAST(
 CAST(Ext.is_disabled AS INT) AS is_disabled,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
 CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
-CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE sys.bbf_get_original_db_name(Ext.default_database_name) END AS SYS.SYSNAME) AS default_database_name,
 CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
 CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
@@ -723,7 +742,7 @@ RETURNS table (
 
 create or replace view sys.databases as
 select
-  CAST(d.orig_name as SYS.SYSNAME) as name
+  CAST(COALESCE(d.orig_name, d.name COLLATE sys.database_default) as SYS.SYSNAME) as name
   , CAST(sys.db_id(d.name) as INT) as database_id
   , CAST(NULL as INT) as source_database_id
   , cast(s.sid as SYS.VARBINARY(85)) as owner_sid

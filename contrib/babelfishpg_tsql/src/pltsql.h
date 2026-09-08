@@ -1201,6 +1201,7 @@ typedef struct PLtsql_stmt_alter_db
 	int			lineno;
 	char	   *old_db_name;
 	char	   *new_db_name;
+	char	   *orig_new_db_name;
 } PLtsql_stmt_alter_db;
 
 /*

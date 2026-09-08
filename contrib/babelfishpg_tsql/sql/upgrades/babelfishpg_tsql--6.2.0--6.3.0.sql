@@ -1966,6 +1966,24 @@ RESET allow_system_table_mods;
 -- 3. Populate orig_name for existing databases (copy from name column for case preservation)
 UPDATE sys.babelfish_sysdatabases SET orig_name = name WHERE orig_name IS NULL;
 
+-- BABEL-5975: helper to resolve the original (case/length preserved) database
+-- name from a physical (downcased/truncated) name; catalog lookup only for
+-- long names (>= 60). Defined here (after orig_name exists) so subsequent
+-- view/proc recreations can use it.
+CREATE OR REPLACE FUNCTION sys.bbf_get_original_db_name(physical_db_name sys.sysname)
+RETURNS sys.sysname
+LANGUAGE SQL
+STABLE
+PARALLEL SAFE
+RETURN COALESCE(
+    CASE WHEN octet_length(physical_db_name) >= 60 THEN
+        (SELECT orig_name
+         FROM sys.babelfish_sysdatabases
+         WHERE name COLLATE database_default = physical_db_name
+         LIMIT 1)
+    END,
+    physical_db_name);
+
 -- 5i. sys.databases and sys.sysdatabases (use orig_name)
 -- Save user views depending on wrapper sysdatabases views before rename
 CREATE TEMPORARY TABLE IF NOT EXISTS _saved_sysdatabases_deps (stmt TEXT);
@@ -2001,7 +2019,7 @@ ALTER VIEW sys.sysdatabases RENAME TO sysdatabases_deprecated_in_6_3_0;
 
 CREATE OR REPLACE VIEW sys.sysdatabases AS
 SELECT
-CAST(t.orig_name AS sys.nvarchar(128)) AS name,
+CAST(COALESCE(t.orig_name, CAST(t.name AS sys.NVARCHAR(128))) AS sys.nvarchar(128)) AS name,
 sys.db_id(t.name) AS dbid,
 CAST(CAST(r.oid AS int) AS SYS.VARBINARY(85)) AS sid,
 CAST(0 AS SMALLINT) AS mode,
@@ -2022,7 +2040,7 @@ GRANT SELECT ON sys.sysdatabases TO PUBLIC;
 ALTER VIEW sys.pg_namespace_ext RENAME TO pg_namespace_ext_deprecated_in_6_3_0;
 
 CREATE OR REPLACE VIEW sys.pg_namespace_ext AS
-SELECT BASE.*, DB.orig_name as dbname FROM
+SELECT BASE.*, COALESCE(DB.orig_name, CAST(DB.name AS sys.NVARCHAR(128))) as dbname FROM
 pg_catalog.pg_namespace AS base
 LEFT OUTER JOIN sys.babelfish_namespace_ext AS EXT on BASE.nspname = EXT.nspname
 INNER JOIN sys.babelfish_sysdatabases AS DB ON EXT.dbid = DB.dbid;
@@ -2891,7 +2909,7 @@ language plpgsql STABLE;
 
 create or replace view sys.databases as
 select
-  CAST(d.orig_name as SYS.SYSNAME) as name
+  CAST(COALESCE(d.orig_name, d.name COLLATE sys.database_default) as SYS.SYSNAME) as name
   , CAST(sys.db_id(d.name) as INT) as database_id
   , CAST(NULL as INT) as source_database_id
   , cast(s.sid as SYS.VARBINARY(85)) as owner_sid
@@ -3677,7 +3695,7 @@ select
   , sys.tsql_type_scale_helper(ti.tsql_type_name, t.typtypmod, false) as scale
   , CASE
     WHEN t.typcollation = 0 THEN CAST(NULL as sys.sysname)
-    ELSE CAST((SELECT default_collation FROM babelfish_sysdatabases WHERE orig_name = db_name() collate database_default) as sys.sysname)
+    ELSE CAST((SELECT default_collation FROM babelfish_sysdatabases WHERE name = sys.bbf_cur_db() collate database_default) as sys.sysname)
     END as collation_name
   , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
   , CAST(0 as sys.bit) as is_user_defined
@@ -3710,7 +3728,7 @@ select cast(t.typname as sys.sysname) as name
   , case when tt.typrelid is not null then 0::sys.tinyint else sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) end as scale
   , CASE
     WHEN t.typcollation = 0 THEN CAST(NULL as sys.sysname)
-    ELSE CAST((SELECT default_collation FROM babelfish_sysdatabases WHERE orig_name = db_name() collate database_default) as sys.sysname)
+    ELSE CAST((SELECT default_collation FROM babelfish_sysdatabases WHERE name = sys.bbf_cur_db() collate database_default) as sys.sysname)
     END as collation_name
   , case when tt.typrelid is not null then cast(0 as sys.bit)
          else case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end
@@ -3768,7 +3786,7 @@ BEGIN
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
-			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(sys.bbf_get_original_db_name(LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
@@ -3839,7 +3857,7 @@ BEGIN
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
-			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(sys.bbf_get_original_db_name(LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
@@ -4939,6 +4957,230 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT ALL ON PROCEDURE sys.sp_sproc_columns TO PUBLIC;
+-- BABEL-5975: Recreate sys.server_principals and sys.sql_logins so that
+-- default_database_name displays the original (case/length preserved) database
+-- name instead of the physical downcased/truncated key for long database names.
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE sys.bbf_get_original_db_name(Ext.default_database_name) END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(Ext.is_fixed_role AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER') 
+  OR pg_has_role(suser_id(), 'securityadmin'::TEXT, 'MEMBER')
+  OR Ext.orig_loginname = suser_name()
+  OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
+  OR Ext.type = 'R')
+  AND Ext.type != 'Z'
+UNION ALL
+SELECT
+CAST('public' AS SYS.SYSNAME) AS name,
+CAST(2 AS INT) AS principal_id, 
+CAST(CAST(2 as INT) as sys.varbinary(85)) AS sid,
+CAST('R' AS CHAR(1)) as type,
+CAST('SERVER_ROLE' AS NVARCHAR(60)) AS type_desc,
+CAST(0 AS INT) AS is_disabled,
+CAST(NULL AS SYS.DATETIME) AS create_date,
+CAST(NULL AS SYS.DATETIME) AS modify_date,
+CAST(NULL AS SYS.SYSNAME) AS default_database_name,
+CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+CAST(NULL AS INT) AS credential_id,
+CAST(1 AS INT) AS owning_principal_id,
+CAST(0 AS sys.BIT) AS is_fixed_role;
+GRANT SELECT ON sys.server_principals TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sql_logins AS 
+WITH super_user AS (SELECT pg_get_userbyid(datdba) COLLATE sys.database_default AS super_user FROM pg_database WHERE datname = CURRENT_DATABASE())
+SELECT
+  CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+  CAST(Base.oid AS INT) AS principal_id,
+  CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS sid,
+  CAST('S' AS sys.BPCHAR(1)) AS type,
+  CAST('SQL_LOGIN' AS sys.NVARCHAR(60)) AS type_desc,
+  CAST(Ext.is_disabled AS INT) AS is_disabled,
+  CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+  CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+  CAST(sys.bbf_get_original_db_name(Ext.default_database_name) AS SYS.SYSNAME) AS default_database_name,
+  CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+  CAST(Ext.credential_id AS INT) AS credential_id,
+  CAST(
+    CASE
+      WHEN Ext.orig_loginname = (SELECT super_user FROM super_user) THEN 0
+      ELSE 1
+    END
+  AS sys.BIT) AS is_policy_checked,
+  CAST(0 AS sys.BIT) AS is_expiration_checked,
+  CAST(NULL AS sys.varbinary(256)) AS password_hash 
+FROM pg_catalog.pg_roles AS Base 
+INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname 
+WHERE(pg_has_role(sys.suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+  OR pg_has_role(sys.suser_id(), 'securityadmin'::TEXT, 'MEMBER')
+  OR Ext.orig_loginname = sys.suser_name()
+  OR Ext.orig_loginname = (SELECT super_user FROM super_user))
+  AND Ext.type = 'S';
+GRANT SELECT ON sys.sql_logins TO PUBLIC;
+
+-- BABEL-5975: Recreate sp_databases_view/sp_databases and sp_helplogins so that
+-- database names displayed to users are the original (case/length preserved)
+-- names instead of the physical downcased/truncated key for long database names.
+DROP VIEW IF EXISTS sys.sp_databases_view CASCADE;
+CREATE VIEW sys.sp_databases_view AS
+	SELECT CAST(database_name AS sys.SYSNAME),
+	-- DATABASE_SIZE returns a NULL value for databases larger than 2.15 TB
+	CASE WHEN (sum(table_size)::NUMERIC/1024.0) > 2.15 * 1024.0 * 1024.0 * 1024.0 THEN NULL
+		ELSE CAST((sum(table_size)::NUMERIC/1024.0) AS int) END as database_size,
+	CAST(NULL AS sys.VARCHAR(254)) as remarks
+	FROM (
+		SELECT pg_catalog.pg_namespace.oid as schema_oid,
+		pg_catalog.pg_namespace.nspname as schema_name,
+		CAST(sys.bbf_get_original_db_name(INT.name) AS sys.NVARCHAR(128)) AS database_name,
+		coalesce(pg_relation_size(pg_catalog.pg_class.oid), 0) as table_size
+		FROM
+		sys.babelfish_namespace_ext EXT
+		JOIN sys.babelfish_sysdatabases INT ON EXT.dbid = INT.dbid
+		JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.nspname = EXT.nspname
+		LEFT JOIN pg_catalog.pg_class ON relnamespace = pg_catalog.pg_namespace.oid where pg_catalog.pg_class.relkind = 'r'
+	) t
+	GROUP BY database_name
+	ORDER BY database_name;
+GRANT SELECT on sys.sp_databases_view TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_databases ()
+AS $$
+BEGIN
+	SELECT database_name as "DATABASE_NAME",
+		database_size as "DATABASE_SIZE", 
+		remarks as "REMARKS" from sys.sp_databases_view;
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_databases TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helplogins(IN "@loginname" sys.sysname DEFAULT NULL)
+LANGUAGE pltsql
+AS $$
+DECLARE @input_loginname sys.sysname;
+DECLARE @current_username sys.nvarchar(128)
+DECLARE @is_sysadmin BIT
+BEGIN
+
+	IF is_srvrolemember('securityadmin') = 0 
+	BEGIN
+		RAISERROR('User does not have permission to perform this action.', 16, 1);
+		RETURN 0;
+	END
+
+	SET @current_username = LOWER(sys.suser_name());
+	SET @is_sysadmin = is_srvrolemember('sysadmin');
+
+	SET @input_loginname = sys.RTRIM(@loginname);
+
+	SELECT DISTINCT
+		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
+		CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS SID,
+		CAST(sys.bbf_get_original_db_name(LExt.default_database_name) AS SYS.SYSNAME) AS DefDBName,
+		CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
+		CASE
+		    WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('yes' AS sys.char(5)) -- if there exists a mapping between user and logins, then we can say that there are users attached to this login
+		    WHEN Db.owner COLLATE database_default = LExt.orig_loginname THEN CAST('yes' AS sys.char(5)) -- this is the case for superuser
+		    ELSE CAST('no' AS sys.char(5))
+		END AS AUser,
+		CAST('no' AS sys.char(7)) AS ARemote -- Currently we do not support linking local logins to remote logins
+	FROM pg_catalog.pg_roles AS Base
+	INNER JOIN sys.babelfish_authid_login_ext AS LExt ON Base.rolname = LExt.rolname
+	LEFT JOIN sys.babelfish_authid_user_ext AS Ext ON Ext.login_name = Base.rolname AND Ext.type != 'R'
+	LEFT JOIN sys.babelfish_sysdatabases AS Db ON Db.owner COLLATE database_default = LExt.orig_loginname
+	WHERE LExt.type NOT IN ('R', 'Z') AND
+	      (@loginname IS NULL OR LExt.orig_loginname = @input_loginname)
+
+	-- first selector in the union is to get all the mapped users
+	-- second selector in the union is to get all the mapped database/user-defined roles
+	SELECT
+		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
+		CAST(sys.bbf_get_original_db_name(UExt.database_name) AS sys.SYSNAME) AS DBName,
+		CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
+		CAST('User' AS sys.char(8)) AS UserOrAlias
+	FROM sys.babelfish_authid_user_ext UExt
+	LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt.database_name
+	LEFT JOIN sys.babelfish_authid_login_ext LExt ON LExt.rolname COLLATE database_default = COALESCE(NULLIF(UExt.login_name, ''), Db.owner)
+	WHERE UExt.type != 'R' AND  
+		UExt.orig_username != 'guest' AND 
+		has_dbaccess(UExt.database_name) = 1 AND
+		(@loginname IS NULL OR LExt.orig_loginname = @input_loginname) AND
+		(
+			@is_sysadmin = 1 OR
+			LExt.orig_loginname = @current_username OR
+			ISNULL(UExt.login_name, '') = '' OR
+			-- a co-related query to find out if the current_user is a member of db_securityadmin or db_accessadmin role in database - UExt.database_name 
+			EXISTS (
+				SELECT 1 
+				FROM pg_catalog.pg_auth_members AS Authmbr
+				INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
+				INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
+				INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname
+				INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname
+				WHERE UExt1.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') 
+				AND UExt2.database_name = UExt.database_name -- filter to check if the processing db is equal to the outer query db, since we want to find if the user is a member of the roles in the outer db
+				AND UExt2.login_name = @current_username
+			)
+		)
+	UNION
+	SELECT
+		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
+		CAST(sys.bbf_get_original_db_name(UExt2.database_name) AS sys.SYSNAME) AS DBName,
+		CAST(UExt1.orig_username AS sys.SYSNAME) AS UserName,
+		CAST('MemberOf' AS sys.char(8)) AS UserOrAlias
+	FROM pg_catalog.pg_auth_members AS Authmbr
+	INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
+	INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
+	INNER JOIN sys.babelfish_authid_user_ext AS UExt1 ON PGR1.rolname = UExt1.rolname AND UExt1.type = 'R'
+	INNER JOIN sys.babelfish_authid_user_ext AS UExt2 ON PGR2.rolname = UExt2.rolname AND UExt2.orig_username != 'db_owner'
+	LEFT JOIN sys.babelfish_sysdatabases Db ON Db.name COLLATE database_default = UExt1.database_name
+	LEFT JOIN sys.babelfish_authid_login_ext LExt ON LExt.rolname COLLATE database_default = COALESCE(NULLIF(UExt2.login_name, ''), Db.owner)
+	WHERE 
+		has_dbaccess(UExt2.database_name) = 1 AND
+		(@loginname IS NULL OR LExt.orig_loginname = @input_loginname) AND
+		(
+			@is_sysadmin = 1 OR
+			LExt.orig_loginname = @current_username OR
+			ISNULL(UExt2.login_name, '') = '' OR
+			-- a co-related query to find out if the current_user is a member of db_securityadmin or db_accessadmin role in database - UExt.database_name 
+			EXISTS (
+				SELECT 1
+				FROM pg_catalog.pg_auth_members AS Authmbr
+				INNER JOIN pg_catalog.pg_roles AS PGR1 ON PGR1.oid = Authmbr.roleid
+				INNER JOIN pg_catalog.pg_roles AS PGR2 ON PGR2.oid = Authmbr.member
+				INNER JOIN sys.babelfish_authid_user_ext AS UExt3 ON PGR1.rolname = UExt3.rolname
+				INNER JOIN sys.babelfish_authid_user_ext AS UExt4 ON PGR2.rolname = UExt4.rolname
+				WHERE UExt3.orig_username IN ('db_owner', 'db_securityadmin', 'db_accessadmin') 
+				AND UExt4.database_name = UExt2.database_name -- filter to check if the processing db is equal to the outer query db, since we want to find if the user is a member of the roles in the outer db
+				AND UExt4.login_name = @current_username
+			)
+		)
+	ORDER BY LoginName, DBName, UserName
+    
+	RETURN 0;
+END;
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_helplogins TO PUBLIC;
+
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
 

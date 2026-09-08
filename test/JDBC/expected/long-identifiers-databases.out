@@ -141,3 +141,201 @@ GO
 nvarchar
 ~~END~~
 
+
+-- ===========================================
+-- DATABASEPROPERTYEX / HAS_DBACCESS / USE / sp_helpdb with a long name
+-- (regression coverage for lookups that must normalize the original name
+--  to the physical downcased/truncated key)
+-- ===========================================
+CREATE DATABASE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+
+-- DATABASEPROPERTYEX must resolve the long original name (previously failed
+-- with "Could not find database")
+SELECT DATABASEPROPERTYEX('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63', 'Collation');
+GO
+~~START~~
+sql_variant
+bbf_unicode_cp1_ci_as
+~~END~~
+
+
+-- HAS_DBACCESS must resolve the long original name (previously failed with
+-- "database ... does not exist")
+SELECT HAS_DBACCESS('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- USE must report the original (case/length preserved) name, not the internal
+-- truncated+hashed physical name
+USE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+
+-- sys.database_principals must resolve inside a long-named database. This view
+-- filters on sys.bbf_cur_db(), so it exercises the current-database name
+-- resolution for a long/truncated physical name.
+SELECT name, type_desc FROM sys.database_principals WHERE name IN ('dbo','guest','db_owner') ORDER BY name;
+GO
+~~START~~
+varchar#!#nvarchar
+db_owner#!#DATABASE_ROLE
+dbo#!#SQL_USER
+guest#!#SQL_USER
+~~END~~
+
+
+-- sp_helpdb (no arg) must list the long database using its original name and
+-- must not crash on a NULL orig_name; project deterministic columns only
+SELECT name, compatibility_level FROM sys.babelfish_helpdb() WHERE name LIKE 'My_Very_Long_Database%';
+GO
+~~START~~
+varchar#!#smallint
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63#!#120
+~~END~~
+
+
+USE master;
+GO
+
+-- sp_helpdb with the long original name argument exercises the scan-key
+-- normalization and the NULL-handling read path in babelfish_helpdb()
+SELECT name, compatibility_level FROM sys.babelfish_helpdb('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63');
+GO
+~~START~~
+varchar#!#smallint
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63#!#120
+~~END~~
+
+
+-- A login whose DEFAULT_DATABASE is the long-named database must expose the
+-- full original name in sys.sql_logins and sys.server_principals, not the
+-- physical truncated+hashed name.
+CREATE LOGIN babel5975_longdb_login WITH PASSWORD = '12345678', DEFAULT_DATABASE = My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+SELECT default_database_name FROM sys.sql_logins WHERE name = 'babel5975_longdb_login';
+GO
+~~START~~
+varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+~~END~~
+
+SELECT default_database_name FROM sys.server_principals WHERE name = 'babel5975_longdb_login';
+GO
+~~START~~
+varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+~~END~~
+
+
+-- Create a table and a database user so sp_databases exposes the long-named
+-- database.
+USE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+CREATE TABLE babel5975_dbtbl (id INT);
+GO
+CREATE USER babel5975_longdb_user FOR LOGIN babel5975_longdb_login;
+GO
+USE master;
+GO
+
+-- sp_databases must list the long-named database using its original name
+EXEC sp_databases;
+GO
+~~START~~
+varchar#!#int#!#varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63#!#0#!#<NULL>
+~~END~~
+
+
+-- The shared helper resolves the physical (truncated) key back to the original
+-- name; this is the same mapping used by sp_helplogins/sp_helpuser DefDBName and
+-- sp_helplogins DBName (those procs also return SID/UserID columns whose values
+-- are OID-derived and therefore not asserted deterministically here).
+SELECT sys.bbf_get_original_db_name(default_database_name) AS DefDBName
+FROM sys.babelfish_authid_login_ext WHERE rolname = 'babel5975_longdb_login';
+GO
+~~START~~
+varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+~~END~~
+
+
+DROP LOGIN babel5975_longdb_login;
+GO
+
+DROP DATABASE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+
+-- ===========================================
+-- sp_renamedb must preserve the original (case/length) name in orig_name,
+-- DB_NAME() and sys.databases.name (previously overwritten with the physical
+-- truncated+hashed name)
+-- ===========================================
+CREATE DATABASE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+
+EXEC sp_renamedb 'My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63',
+                 'Renamed_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_63';
+GO
+
+-- orig_name should be the case-preserved renamed name
+SELECT orig_name FROM sys.babelfish_sysdatabases WHERE orig_name LIKE 'Renamed%';
+GO
+~~START~~
+nvarchar
+Renamed_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_63
+~~END~~
+
+
+-- sys.databases.name should be the case-preserved renamed name
+SELECT name FROM sys.databases WHERE name LIKE 'Renamed%';
+GO
+~~START~~
+varchar
+Renamed_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_63
+~~END~~
+
+
+-- DB_NAME() inside the renamed database should be case-preserved
+USE Renamed_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_63;
+GO
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+Renamed_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_63
+~~END~~
+
+USE master;
+GO
+
+DROP DATABASE Renamed_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_63;
+GO
+
+-- ===========================================
+-- Short, all-lowercase database name: physical name == original, so
+-- orig_name is left NULL and views fall back to the physical name;
+-- sp_helpdb must still display it
+-- ===========================================
+CREATE DATABASE babel5975_shortdb;
+GO
+SELECT name FROM sys.databases WHERE name = 'babel5975_shortdb';
+GO
+~~START~~
+varchar
+babel5975_shortdb
+~~END~~
+
+SELECT name, compatibility_level FROM sys.babelfish_helpdb('babel5975_shortdb');
+GO
+~~START~~
+varchar#!#smallint
+babel5975_shortdb#!#120
+~~END~~
+
+DROP DATABASE babel5975_shortdb;
+GO

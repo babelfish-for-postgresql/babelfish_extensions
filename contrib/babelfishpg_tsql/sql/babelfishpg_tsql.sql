@@ -1203,7 +1203,7 @@ CREATE VIEW sys.sp_databases_view AS
 	FROM (
 		SELECT pg_catalog.pg_namespace.oid as schema_oid,
 		pg_catalog.pg_namespace.nspname as schema_name,
-		INT.name AS database_name,
+		CAST(sys.bbf_get_original_db_name(INT.name) AS sys.NVARCHAR(128)) AS database_name,
 		coalesce(pg_relation_size(pg_catalog.pg_class.oid), 0) as table_size
 		FROM
 		sys.babelfish_namespace_ext EXT
@@ -2341,7 +2341,7 @@ BEGIN
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
-			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(sys.bbf_get_original_db_name(LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
@@ -2412,7 +2412,7 @@ BEGIN
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
-			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(sys.bbf_get_original_db_name(LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
@@ -3910,7 +3910,7 @@ BEGIN
 	SELECT DISTINCT
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
 		CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS SID,
-		CAST(LExt.default_database_name AS SYS.SYSNAME) AS DefDBName,
+		CAST(sys.bbf_get_original_db_name(LExt.default_database_name) AS SYS.SYSNAME) AS DefDBName,
 		CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
 		CASE
 		    WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('yes' AS sys.char(5)) -- if there exists a mapping between user and logins, then we can say that there are users attached to this login
@@ -3929,7 +3929,7 @@ BEGIN
 	-- second selector in the union is to get all the mapped database/user-defined roles
 	SELECT
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
-		CAST(UExt.database_name AS sys.SYSNAME) AS DBName,
+		CAST(sys.bbf_get_original_db_name(UExt.database_name) AS sys.SYSNAME) AS DBName,
 		CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
 		CAST('User' AS sys.char(8)) AS UserOrAlias
 	FROM sys.babelfish_authid_user_ext UExt
@@ -3959,7 +3959,7 @@ BEGIN
 	UNION
 	SELECT
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
-		CAST(UExt2.database_name AS sys.SYSNAME) AS DBName,
+		CAST(sys.bbf_get_original_db_name(UExt2.database_name) AS sys.SYSNAME) AS DBName,
 		CAST(UExt1.orig_username AS sys.SYSNAME) AS UserName,
 		CAST('MemberOf' AS sys.char(8)) AS UserOrAlias
 	FROM pg_catalog.pg_auth_members AS Authmbr

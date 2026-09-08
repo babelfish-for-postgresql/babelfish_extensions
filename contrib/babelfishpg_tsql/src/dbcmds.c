@@ -646,9 +646,23 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 			database_collation_name = tsql_translate_tsql_collation_to_bbf_collation(defGetString(defel));
 			check_database_collation_name(database_collation_name);
 		}
-		else if (strcmp(defel->defname, "bbf_original_name") == 0)
+		else if (strcmp(defel->defname, TSQL_ORIGINAL_NAME_LOCATION) == 0)
 		{
-			orig_dbname = defGetString(defel);
+			/*
+			 * The T-SQL grammar records the byte offset of the database name
+			 * within the source text (see tsql_CreatedbStmt). Resolve the
+			 * original, case/length-preserved name from the query string here,
+			 * mirroring how other objects handle TSQL_ORIGINAL_NAME_LOCATION.
+			 * Guard on IsA(Integer) so a spurious/user-supplied value with a
+			 * non-integer argument is ignored.
+			 */
+			if (pstate && pstate->p_sourcetext && defel->arg && IsA(defel->arg, Integer))
+			{
+				int loc = intVal(defel->arg);
+
+				if (loc >= 0)
+					orig_dbname = extract_identifier(pstate->p_sourcetext + loc, NULL);
+			}
 		}
 		else
 		{
@@ -722,10 +736,16 @@ create_bbf_db_internal(ParseState *pstate, const char *dbname, List *options, co
 	new_record[5] = CStringGetTextDatum(dbname);
 	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(0));
 	new_record[7] = CStringGetTextDatum("{}");
-	if (orig_dbname)
+	/*
+	 * Only persist the original name when it actually differs from the
+	 * physical (downcased/truncated) name; otherwise the physical name already
+	 * represents it faithfully and orig_name is left NULL. Readers fall back to
+	 * the physical name column when orig_name is NULL.
+	 */
+	if (orig_dbname && strcmp(orig_dbname, dbname) != 0)
 		new_record[8] = CStringGetTextDatum(orig_dbname);
 	else
-		new_record[8] = CStringGetTextDatum(dbname);
+		new_record_nulls[8] = true;
 
 	tuple = heap_form_tuple(RelationGetDescr(sysdatabase_rel),
 							new_record, new_record_nulls);

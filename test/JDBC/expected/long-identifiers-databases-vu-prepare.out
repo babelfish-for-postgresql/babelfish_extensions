@@ -2,3 +2,8 @@
 -- Prepare: Create database with long name before upgrade
 CREATE DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC;
 GO
+
+-- A login whose DEFAULT_DATABASE is the long-named database; after upgrade its
+-- default_database_name must still resolve to the original name.
+CREATE LOGIN long_default_db_login_vu_tvc WITH PASSWORD = '12345678', DEFAULT_DATABASE = Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC;
+GO

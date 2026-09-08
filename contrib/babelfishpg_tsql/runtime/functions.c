@@ -3095,6 +3095,14 @@ has_dbaccess(PG_FUNCTION_ARGS)
 	if (!DbidIsValid(db_id))
 		PG_RETURN_NULL();
 
+	/*
+	 * All downstream lookups (physical user/role/schema names) key off the
+	 * physical database name, which for long names is downcased and
+	 * MD5-truncated. Normalize once so a long or mixed-case original name
+	 * resolves the same physical objects as the stored row.
+	 */
+	lowercase_db_name = get_physical_db_name(lowercase_db_name);
+
 	login = GetUserNameFromId(GetSessionUserId(), false);
 	user = get_authid_user_ext_physical_name(lowercase_db_name, login);
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(lowercase_db_name), NAMEDATALEN);

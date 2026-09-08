@@ -233,16 +233,23 @@ tsql_CreatedbStmt:
 			CREATE DATABASE name opt_with createdb_opt_list
 				{
 					CreatedbStmt *n = makeNode(CreatedbStmt);
-					base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
-					char *orig_name = extract_identifier(yyextra->core_yy_extra.scanbuf + @3, NULL);
 
 					n->dbname = $3;
 					n->options = $5;
-					if (orig_name)
-						n->options = lappend(n->options,
-											 makeDefElem("bbf_original_name",
-														 (Node *) makeString(orig_name),
-														 @3));
+					/*
+					 * Record the byte offset of the database name in the source
+					 * text, mirroring how other CREATE statements (indexes,
+					 * views, etc.) carry TSQL_ORIGINAL_NAME_LOCATION. The
+					 * original (case/length preserved) name is later resolved
+					 * from the query string in create_bbf_db_internal(). Storing
+					 * a location rather than the extracted string keeps the
+					 * option consistent with other objects and prevents a
+					 * user-supplied option value from being honored.
+					 */
+					n->options = lappend(n->options,
+										 makeDefElem(TSQL_ORIGINAL_NAME_LOCATION,
+													 (Node *) makeInteger(@3),
+													 @3));
 					$$ = (Node *) n;
 				}
 		;
