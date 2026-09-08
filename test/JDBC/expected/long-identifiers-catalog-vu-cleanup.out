@@ -8,3 +8,7 @@ DROP TYPE Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chara
 GO
 DROP PROCEDURE babel5975_cat_vu_proc;
 GO
+DROP PROCEDURE babel5975_cat_vu_collide_one;
+GO
+DROP PROCEDURE babel5975_cat_vu_collide_two;
+GO

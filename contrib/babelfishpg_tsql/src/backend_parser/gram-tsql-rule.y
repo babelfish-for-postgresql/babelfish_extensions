@@ -1131,7 +1131,7 @@ DefineStmt:
 					if (sql_dialect == SQL_DIALECT_TSQL)
 					{
 						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
-						char *original_name = extract_identifier(yyextra->core_yy_extra.scanbuf + @3, NULL);
+						char *original_name = extract_multipart_identifier_name(yyextra->core_yy_extra.scanbuf + @3);
 						if (original_name)
 							c->options = lappend(c->options,
 								makeDefElem(ATTOPTION_BBF_ORIGINAL_NAME,
@@ -1157,7 +1157,7 @@ DefineStmt:
 					if (sql_dialect == SQL_DIALECT_TSQL)
 					{
 						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
-						char *original_name = extract_identifier(yyextra->core_yy_extra.scanbuf + @3, NULL);
+						char *original_name = extract_multipart_identifier_name(yyextra->core_yy_extra.scanbuf + @3);
 						if (original_name)
 							c->options = lappend(c->options,
 								makeDefElem(ATTOPTION_BBF_ORIGINAL_NAME,
@@ -1184,7 +1184,7 @@ DefineStmt:
 					if (sql_dialect == SQL_DIALECT_TSQL)
 					{
 						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
-						char *original_name = extract_identifier(yyextra->core_yy_extra.scanbuf + @3, NULL);
+						char *original_name = extract_multipart_identifier_name(yyextra->core_yy_extra.scanbuf + @3);
 						if (original_name)
 							c->options = lappend(c->options,
 								makeDefElem(ATTOPTION_BBF_ORIGINAL_NAME,

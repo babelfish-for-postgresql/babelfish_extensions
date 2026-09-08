@@ -225,6 +225,100 @@ Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sc
 
 
 -- ===========================================
+-- Schema-qualified long SEQUENCE rename maintains babelfish_identifier_mapping.
+-- The rename must remove the OLD mapping row (keyed on the PHYSICAL schema) and
+-- insert the row for the new long name. A stale old row would later mismatch a
+-- different object sharing the truncated form. Both the qualified (dbo.) and
+-- unqualified forms are exercised.
+-- ===========================================
+CREATE SEQUENCE dbo.Long_Seq_Rename_Src_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A AS INT START WITH 1;
+GO
+SELECT COUNT(*) AS before_rename_src FROM sys.babelfish_identifier_mapping WHERE original_identifier_name = 'Long_Seq_Rename_Src_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A';
+GO
+~~START~~
+int
+1
+~~END~~
+
+EXEC sp_rename 'dbo.Long_Seq_Rename_Src_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A', 'Long_Seq_Rename_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A', 'OBJECT';
+GO
+-- Old mapping row must be gone (0), new one present (1)
+SELECT COUNT(*) AS old_after_rename FROM sys.babelfish_identifier_mapping WHERE original_identifier_name = 'Long_Seq_Rename_Src_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A';
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT COUNT(*) AS new_after_rename FROM sys.babelfish_identifier_mapping WHERE original_identifier_name = 'Long_Seq_Rename_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A';
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- The renamed sequence resolves to its full new name in sys.objects
+SELECT name FROM sys.objects WHERE name = 'Long_Seq_Rename_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A' AND type = 'SO';
+GO
+~~START~~
+varchar
+Long_Seq_Rename_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A
+~~END~~
+
+DROP SEQUENCE dbo.Long_Seq_Rename_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A;
+GO
+-- After DROP the new row is also cleaned up
+SELECT COUNT(*) AS after_drop FROM sys.babelfish_identifier_mapping WHERE original_identifier_name = 'Long_Seq_Rename_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- ===========================================
+-- Schema-qualified long TYPE (user-defined type) create + rename.
+-- A schema-qualified CREATE TYPE must store the mapping keyed on the physical
+-- type name (not the schema-qualified parse-tree name) so it resolves in
+-- sys.types; the rename must remove the old row and insert the new one.
+-- ===========================================
+CREATE TYPE dbo.Long_Type_Qual_Src_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A FROM INT;
+GO
+-- Qualified create resolves to the full name in sys.types
+SELECT name FROM sys.types WHERE name = 'Long_Type_Qual_Src_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A';
+GO
+~~START~~
+varchar
+Long_Type_Qual_Src_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A
+~~END~~
+
+EXEC sp_rename 'dbo.Long_Type_Qual_Src_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A', 'Long_Type_Qual_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A', 'USERDATATYPE';
+GO
+SELECT COUNT(*) AS type_old_after_rename FROM sys.babelfish_identifier_mapping WHERE original_identifier_name = 'Long_Type_Qual_Src_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A';
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT COUNT(*) AS type_new_after_rename FROM sys.babelfish_identifier_mapping WHERE original_identifier_name = 'Long_Type_Qual_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A';
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT name FROM sys.types WHERE name = 'Long_Type_Qual_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A';
+GO
+~~START~~
+varchar
+Long_Type_Qual_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A
+~~END~~
+
+DROP TYPE dbo.Long_Type_Qual_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A;
+GO
+
+-- ===========================================
 -- CLEANUP
 -- ===========================================
 DROP SEQUENCE Babel5975_Long_Schema_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Sch.sq1_renamed;

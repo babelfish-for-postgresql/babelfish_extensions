@@ -19,3 +19,11 @@ GO
 -- Verify parameter name after upgrade
 SELECT name FROM sys.all_parameters WHERE name LIKE '%Very_Long_Parameter%CatVU';
 GO
+
+-- BABEL-5975: collision coverage. Each procedure's parameter shares the same
+-- leading 75 bytes but must resolve to its own original name via the
+-- parent/namespace disambiguation in sys.all_parameters.
+SELECT name FROM sys.all_parameters WHERE name LIKE '%Sixty_Three_ProcOne';
+GO
+SELECT name FROM sys.all_parameters WHERE name LIKE '%Sixty_Three_ProcTwo';
+GO

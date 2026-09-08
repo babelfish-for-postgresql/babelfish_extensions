@@ -3872,22 +3872,40 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		rename_extended_property(objtype_code, schema_name, curr_relname,
 								 obj_name, new_name);
 
-		/* Insert new entry in babelfish_identifier_mapping if new name is long */
+		/*
+		 * Maintain babelfish_identifier_mapping on rename for SEQUENCE / TYPE.
+		 * Both the delete of the old entry and the insert of the new entry are
+		 * keyed on the PHYSICAL schema (matching store_sequence_original_name /
+		 * the CREATE DOMAIN path and how the sys views resolve names). Doing
+		 * both here with a single physical-schema resolution keeps the delete
+		 * and insert consistent; renaming to a shorter name still removes any
+		 * stale long-name row.
+		 */
 		if ((objtype_code == OBJECT_SEQUENCE || objtype_code == OBJECT_TYPE) &&
-			schema_name != NULL && strlen(new_name) >= NAMEDATALEN)
+			schema_name != NULL)
 		{
-			char	   *new_truncated = downcase_truncate_identifier(new_name, strlen(new_name), false);
 			Oid			catalog_type = (objtype_code == OBJECT_SEQUENCE) ? RelationRelationId : TypeRelationId;
 			char	   *schema_lower = str_tolower(schema_name, strlen(schema_name), DEFAULT_COLLATION_OID);
 			char	   *physical_schema = get_physical_schema_name(get_cur_db_name(), schema_lower);
 
 			if (physical_schema)
 			{
-				insert_bbf_ident_mapping(new_truncated, new_name, physical_schema, catalog_type, NULL);
+				/* Remove the old entry (if the old name was long). */
+				char	   *old_truncated = downcase_truncate_identifier(obj_name, strlen(obj_name), false);
+
+				delete_bbf_ident_mapping(old_truncated, physical_schema, catalog_type, NULL);
+				pfree(old_truncated);
+
+				/* Insert the new entry if the new name is long. */
+				if (strlen(new_name) >= NAMEDATALEN)
+				{
+					char	   *new_truncated = downcase_truncate_identifier(new_name, strlen(new_name), false);
+
+					insert_bbf_ident_mapping(new_truncated, new_name, physical_schema, catalog_type, NULL);
+					pfree(new_truncated);
+				}
 				pfree(physical_schema);
 			}
-
-			pfree(new_truncated);
 			pfree(schema_lower);
 		}
 		/*

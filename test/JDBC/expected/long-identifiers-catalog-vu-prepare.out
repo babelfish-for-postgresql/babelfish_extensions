@@ -29,3 +29,16 @@ CREATE PROCEDURE babel5975_cat_vu_proc
     @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU INT
 AS BEGIN SELECT @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU END;
 GO
+
+-- BABEL-5975: collision coverage. Two procedures whose long parameter names
+-- share the same leading ~60 bytes but differ in suffix. Exercises the
+-- parent/namespace disambiguation in sys.all_parameters so each parameter must
+-- resolve to its OWN original name (not the other procedure's).
+CREATE PROCEDURE babel5975_cat_vu_collide_one
+    @Shared_Long_Parameter_Prefix_That_Exceeds_PostgreSQL_Limit_Sixty_Three_ProcOne INT
+AS BEGIN SELECT @Shared_Long_Parameter_Prefix_That_Exceeds_PostgreSQL_Limit_Sixty_Three_ProcOne END;
+GO
+CREATE PROCEDURE babel5975_cat_vu_collide_two
+    @Shared_Long_Parameter_Prefix_That_Exceeds_PostgreSQL_Limit_Sixty_Three_ProcTwo INT
+AS BEGIN SELECT @Shared_Long_Parameter_Prefix_That_Exceeds_PostgreSQL_Limit_Sixty_Three_ProcTwo END;
+GO

@@ -48,3 +48,21 @@ varchar
 @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU
 ~~END~~
 
+
+-- BABEL-5975: collision coverage. Each procedure's parameter shares the same
+-- leading 75 bytes but must resolve to its own original name via the
+-- parent/namespace disambiguation in sys.all_parameters.
+SELECT name FROM sys.all_parameters WHERE name LIKE '%Sixty_Three_ProcOne';
+GO
+~~START~~
+varchar
+@Shared_Long_Parameter_Prefix_That_Exceeds_PostgreSQL_Limit_Sixty_Three_ProcOne
+~~END~~
+
+SELECT name FROM sys.all_parameters WHERE name LIKE '%Sixty_Three_ProcTwo';
+GO
+~~START~~
+varchar
+@Shared_Long_Parameter_Prefix_That_Exceeds_PostgreSQL_Limit_Sixty_Three_ProcTwo
+~~END~~
+

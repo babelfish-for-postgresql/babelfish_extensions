@@ -3741,24 +3741,17 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_SEQUENCE:
-			/* Remove old entry from babelfish_identifier_mapping */
-			if (stmt->relation && stmt->relation->schemaname)
-				delete_bbf_ident_mapping(stmt->relation->relname,
-										 stmt->relation->schemaname,
-										 RelationRelationId, NULL);
+			/*
+			 * babelfish_identifier_mapping maintenance for SEQUENCE/TYPE rename
+			 * (delete old + insert new, keyed on the physical schema) is done
+			 * in sp_rename_internal where the physical schema is resolved once,
+			 * so nothing to do here.
+			 */
 			break;
 		case OBJECT_TRIGGER:
 			break;
 		case OBJECT_TYPE:
-			/* Remove old entry from babelfish_identifier_mapping */
-			if (stmt->object)
-			{
-				List *names = (List *) stmt->object;
-				if (list_length(names) >= 2)
-					delete_bbf_ident_mapping(strVal(lsecond(names)),
-											 strVal(linitial(names)),
-											 TypeRelationId, NULL);
-			}
+			/* See OBJECT_SEQUENCE: handled in sp_rename_internal. */
 			break;
 		case OBJECT_COLUMN:
 			break;

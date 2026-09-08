@@ -1126,14 +1126,23 @@ suser_id(PG_FUNCTION_ARGS)
 			 * name never matches directly. Fall back to resolving the
 			 * physical role name from sys.babelfish_authid_login_ext, which
 			 * stores the original (untruncated) login name in orig_loginname.
+			 *
+			 * Only a name longer than the NAME limit can be hash-truncated and
+			 * thus legitimately miss the direct lookup. Gating the fallback on
+			 * length avoids an unbounded sequential scan of the login-ext
+			 * catalog for every miss on a short (non-existent) name, which an
+			 * authenticated user could otherwise use as a cheap CPU amplifier.
 			 */
-			char	   *physical_rolname = get_login_rolname_from_orig_loginname(login);
-
-			if (physical_rolname)
+			if (strlen(login) >= NAMEDATALEN)
 			{
-				auth_tuple = SearchSysCache1(AUTHNAME,
-											 CStringGetDatum(physical_rolname));
-				pfree(physical_rolname);
+				char	   *physical_rolname = get_login_rolname_from_orig_loginname(login);
+
+				if (physical_rolname)
+				{
+					auth_tuple = SearchSysCache1(AUTHNAME,
+												 CStringGetDatum(physical_rolname));
+					pfree(physical_rolname);
+				}
 			}
 
 			if (!HeapTupleIsValid(auth_tuple))

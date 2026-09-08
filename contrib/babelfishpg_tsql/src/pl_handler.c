@@ -3697,10 +3697,19 @@ store_sequence_original_name(CreateSeqStmt *seq_stmt, const char *queryString)
 
 	if (original_name)
 	{
-		Oid seqOid = RangeVarGetRelid(seq_stmt->sequence, NoLock, true);
-		const char *nspname = seq_stmt->sequence->schemaname;
+		Oid			seqOid = RangeVarGetRelid(seq_stmt->sequence, NoLock, true);
+		char	   *nspname = NULL;
 
-		if (!nspname && OidIsValid(seqOid))
+		/*
+		 * Always key the mapping on the PHYSICAL namespace of the created
+		 * sequence, resolved from its OID. The sys.objects / sys.all_objects
+		 * sequence rows resolve the original name via the physical namespace
+		 * (relnamespace::regnamespace::name), so keying on the logical
+		 * schemaname from the parse tree (e.g. "dbo") when the user
+		 * schema-qualifies the object would file the row under the wrong
+		 * schema and the view lookup would miss, leaking the truncated name.
+		 */
+		if (OidIsValid(seqOid))
 			nspname = get_namespace_name(get_rel_namespace(seqOid));
 
 		if (nspname)
@@ -6389,9 +6398,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				 */
 				if (sql_dialect == SQL_DIALECT_TSQL && original_name)
 				{
-					char *type_name = NameListToString(create_domain->domainname);
 					Oid typeOid = typenameTypeId(NULL, makeTypeNameFromNameList(create_domain->domainname));
 					const char *nspname = NULL;
+					char *physical_typname = NULL;
 
 					if (OidIsValid(typeOid))
 					{
@@ -6400,13 +6409,25 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						{
 							Form_pg_type typform = (Form_pg_type) GETSTRUCT(tup);
 							nspname = get_namespace_name(typform->typnamespace);
+							/*
+							 * Key the mapping on the PHYSICAL type name
+							 * (pg_type.typname), not the schema-qualified
+							 * NameListToString of the parse-tree name: for a
+							 * schema-qualified CREATE TYPE the latter is
+							 * "<schema>.<type>" (and gets truncated), which never
+							 * matches the physical typname the sys.types lookup
+							 * uses (typname without schema).
+							 */
+							physical_typname = pstrdup(NameStr(typform->typname));
 							ReleaseSysCache(tup);
 						}
 					}
 
-					if (nspname)
-						insert_bbf_ident_mapping(type_name, original_name,
+					if (nspname && physical_typname)
+						insert_bbf_ident_mapping(physical_typname, original_name,
 												 nspname, TypeRelationId, NULL);
+					if (physical_typname)
+						pfree(physical_typname);
 					pfree(original_name);
 				}
 				(void) origname_location;
