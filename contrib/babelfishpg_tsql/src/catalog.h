@@ -47,11 +47,12 @@ extern Oid	sysdatabaese_idx_oid_oid;
 extern Oid	sysdatabaese_idx_name_oid;
 
 /* MUST comply with babelfish_sysdatabases table */
-#define SYSDATABASES_NUM_COLS 8
+#define SYSDATABASES_NUM_COLS 9
 #define Anum_sysdatabases_oid 1
 #define Anum_sysdatabases_owner 4
 #define Anum_sysdatabases_name 6
 #define Anum_sysdatabases_crdate 7
+#define Anum_sysdatabases_orig_name 9
 
 /* MUST comply with babelfish_sysdatabases table */
 typedef struct FormData_sysdatabases
@@ -91,7 +92,10 @@ typedef FormData_authid_login_ext *Form_authid_login_ext;
 #define DbidIsValid(id)  ((bool) ((id) != InvalidDbid))
 
 extern int16 get_db_id(const char *dbname);
+extern char *get_physical_db_name(const char *dbname);
 extern char *get_db_name(int16 dbid);
+extern char *dbid_get_original_db_name(int16 dbid);
+extern char *dbname_get_original_db_name(const char *db_name);
 extern char *get_db_owner_role_name(const char *dbname);
 extern void initTsqlSyscache(void);
 extern const char *get_one_user_db_name(void);
@@ -163,10 +167,10 @@ extern char *get_user_for_database(const char *db_name);
 extern void alter_user_can_connect(bool is_grant, char *user_name, char *db_name);
 extern bool guest_role_exists_for_db(const char *dbname);
 extern void update_db_owner(const char *new_owner_name, const char *db_name);
-extern void update_sysdatabases_db_name(const char *old_db_name, const char *new_db_name);
+extern void update_sysdatabases_db_name(const char *old_db_name, const char *new_db_name, const char *orig_new_db_name);
 extern List *update_babelfish_namespace_ext_nsp_name(int16 db_id, char *new_db_name);
 extern List *update_babelfish_authid_user_ext_db_name(const char *old_db_name, const char *new_db_name);
-extern void rename_tsql_db(char *old_db_name, char *new_db_name);
+extern void rename_tsql_db(char *old_db_name, char *new_db_name, char *orig_new_db_name);
 extern Oid get_login_for_user(Oid user_id, const char *physical_schema_name);
 extern bool user_exists_for_db(const char *db_name, const char *user_name);
 

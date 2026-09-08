@@ -3026,8 +3026,16 @@ get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype)
 static int
 exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 {
-	char		message[128];
+	/*
+	 * The message embeds the original (case/length preserved) database name,
+	 * which can be up to 128 characters (SYSNAME) and therefore up to 512 bytes
+	 * in UTF-8. Size the buffer to hold the full multibyte name plus the fixed
+	 * message text so snprintf never truncates in the middle of a multibyte
+	 * character (which would produce an invalid UTF-8 sequence).
+	 */
+	char		message[600];
 	char	   *old_db_name;
+	char	   *display_db_name;
 	int16		old_db_id;
 	int16		new_db_id;
 	PLExecStateCallStack *top_es_entry;
@@ -3084,10 +3092,21 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 	 */
 	if (!((*pltsql_protocol_plugin_ptr) && (*pltsql_protocol_plugin_ptr)->get_reset_tds_connection_flag()))
 	{
-		snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
+		/*
+		 * Display the original (case/length preserved) database name rather
+		 * than the physical downcased/truncated key. Resolve it from the
+		 * now-current database id (the context switch above has completed), the
+		 * same source DB_NAME() uses. Fall back to the physical name when no
+		 * original name is recorded.
+		 */
+		display_db_name = dbid_get_original_db_name(get_cur_db_id());
+		if (display_db_name == NULL)
+			display_db_name = stmt->db_name;
+
+		snprintf(message, sizeof(message), "Changed database context to '%s'.", display_db_name);
 		/* send env change token to user */
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
-			((*pltsql_protocol_plugin_ptr)->send_env_change) (1, stmt->db_name, old_db_name);
+			((*pltsql_protocol_plugin_ptr)->send_env_change) (1, display_db_name, old_db_name);
 		/* send message to user */
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
 			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
@@ -4072,7 +4091,9 @@ exec_stmt_alter_db(PLtsql_execstate *estate, PLtsql_stmt_alter_db *stmt)
 	 * the support at that time we can add a boolean to the stmt
 	 * to identify for rename and conditionally call rename_tsql_db
 	 */
-	rename_tsql_db(stmt->old_db_name, stmt->new_db_name);
+	rename_tsql_db(stmt->old_db_name, stmt->new_db_name,
+				   (stmt->orig_new_db_name && strcmp(stmt->orig_new_db_name, stmt->new_db_name) != 0) ?
+				   stmt->orig_new_db_name : NULL);
 	PopActiveSnapshot();
 	return PLTSQL_RC_OK;
 }

@@ -81,7 +81,7 @@ sys-original_login
 sys-schema-name
 sys-objects
 sys-procedures
-sys-sysdatabases
+sys-sysdatabases-before-18_6
 sys-sysobjects
 sys-trigger_nestlevel
 schema_resolution_proc
@@ -202,7 +202,7 @@ BABEL-3369
 BABEL-3370
 BABEL-RAND
 BABEL-741
-BABEL-ROLE-MEMBER
+BABEL-ROLE-MEMBER-before-18_6
 tdscollation
 BABEL-EXTENDEDPROPERTY-before-15_4
 BABEL-EXECUTE_AS_CALLER
@@ -412,7 +412,7 @@ babel_varbinary_int4_div
 sys-sql_expression_dependencies
 smalldatetimefromparts-dep
 BABEL_4330-before-15_8-or-16_4
-BABEL-4231
+BABEL-4231-before-18_6
 BABEL-4384
 default_params
 BABEL-3326
