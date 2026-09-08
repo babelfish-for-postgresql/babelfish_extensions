@@ -228,6 +228,33 @@ tsql_windows_options:
  * 	database creation, etc. For example,
  * 		CREATE ROLE sysadmin CREATEDB CREATEROLE INHERIT ROLE sa_name
  */
+
+tsql_CreatedbStmt:
+			CREATE DATABASE name opt_with createdb_opt_list
+				{
+					CreatedbStmt *n = makeNode(CreatedbStmt);
+
+					n->dbname = $3;
+					n->options = $5;
+					/*
+					 * Record the byte offset of the database name in the source
+					 * text, mirroring how other CREATE statements (indexes,
+					 * views, etc.) carry TSQL_ORIGINAL_NAME_LOCATION. The
+					 * original (case/length preserved) name is later resolved
+					 * from the query string in create_bbf_db_internal(). The
+					 * DefElem location is set to -1 to mark this as the trusted,
+					 * grammar-appended entry: a user-supplied option of the same
+					 * name arrives with location >= 0 and is rejected, so it can
+					 * neither be honored nor drive an out-of-bounds read.
+					 */
+					n->options = lappend(n->options,
+										 makeDefElem(TSQL_ORIGINAL_NAME_LOCATION,
+													 (Node *) makeInteger(@3),
+													 -1));
+					$$ = (Node *) n;
+				}
+		;
+
 tsql_CreateRoleStmt:
 			CREATE ROLE RoleId opt_with OptRoleList
 				{
@@ -2639,6 +2666,29 @@ tsql_output_into_target_columns:
 /* END rules for OUTPUT clause support */
 /* --------------------------------- */
 
+/*
+ * In TSQL dialect the scanner delivers TSQL_VALUES instead of VALUES,
+ * so provide TSQL variants of the MERGE INSERT value rules.
+ */
+merge_values_clause:
+			TSQL_VALUES '(' expr_list ')'
+				{
+					$$ = $3;
+				}
+		;
+
+merge_insert:
+			INSERT DEFAULT TSQL_VALUES
+				{
+					MergeWhenClause *n = makeNode(MergeWhenClause);
+					n->commandType = CMD_INSERT;
+					n->override = OVERRIDING_NOT_SET;
+					n->targetList = NIL;
+					n->values = NIL;
+					$$ = n;
+				}
+		;
+
 tsql_stmt :
 			AlterEventTrigStmt
 			| AlterCollationStmt
@@ -2712,7 +2762,7 @@ tsql_stmt :
 			| CreateEventTrigStmt
 			| tsql_CreateRoleStmt
 			| tsql_CreateUserStmt
-			| CreatedbStmt
+			| tsql_CreatedbStmt
 			| DeallocateStmt
 			| DeclareCursorStmt
 			| DefineStmt
@@ -2755,6 +2805,7 @@ tsql_stmt :
 			| RenameStmt
 			| RevokeStmt
 			| RevokeRoleStmt
+			| MergeStmt
 			| RuleStmt
 			| SecLabelStmt
 			| SelectStmt

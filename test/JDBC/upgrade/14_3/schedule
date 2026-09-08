@@ -122,7 +122,7 @@ BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-PROCID
 BABEL-RAND
 BABEL-ROLE
-BABEL-ROLE-MEMBER
+BABEL-ROLE-MEMBER-before-18_6
 BABEL_SCHEMATA
 BABEL-SPCOLUMNS
 BABEL-SPCOLUMNS-dep
@@ -269,7 +269,7 @@ sys-synonyms
 sys-syscharsets
 sys-syscolumns
 sys-syscolumns-dep
-sys-sysdatabases
+sys-sysdatabases-before-18_6
 sys-sysforeignkeys
 sys-sysforeignkeys-dep
 sys-sysindexes

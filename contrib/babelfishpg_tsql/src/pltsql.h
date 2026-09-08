@@ -1201,6 +1201,7 @@ typedef struct PLtsql_stmt_alter_db
 	int			lineno;
 	char	   *old_db_name;
 	char	   *new_db_name;
+	char	   *orig_new_db_name;
 } PLtsql_stmt_alter_db;
 
 /*
@@ -2028,6 +2029,7 @@ typedef struct
 	int			trigger_depth;
 	int			total_columns;
 	char	   *column_name;
+	CmdType		action;			/* INSERT or UPDATE action that sets the column */
 } UpdatedColumn;
 
 extern IdentifierLookup pltsql_IdentifierLookup;

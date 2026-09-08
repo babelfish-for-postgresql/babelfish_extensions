@@ -615,6 +615,9 @@ ignore#!#BABEL-5119_before_16_5-vu-cleanup
 ignore#!#BABEL-5119-before-18_6-vu-prepare
 ignore#!#BABEL-5119-before-18_6-vu-verify
 ignore#!#BABEL-5119-before-18_6-vu-cleanup
+ignore#!#BABEL-ROLE-MEMBER-before-18_6-vu-prepare
+ignore#!#BABEL-ROLE-MEMBER-before-18_6-vu-verify
+ignore#!#BABEL-ROLE-MEMBER-before-18_6-vu-cleanup
 ignore#!#BABEL-5059_before_16_5-vu-prepare
 ignore#!#BABEL-5059_before_16_5-vu-verify
 ignore#!#BABEL-5059_before_16_5-vu-cleanup
@@ -802,6 +805,15 @@ ignore#!#long-identifiers-catalog-vu-cleanup
 ignore#!#long-identifiers-catalog-before-18_6-vu-prepare
 ignore#!#long-identifiers-catalog-before-18_6-vu-verify
 ignore#!#long-identifiers-catalog-before-18_6-vu-cleanup
+ignore#!#long-identifiers-databases-before-18_6-vu-prepare
+ignore#!#long-identifiers-databases-before-18_6-vu-verify
+ignore#!#long-identifiers-databases-before-18_6-vu-cleanup
+ignore#!#sys-sysdatabases-before-18_6-vu-prepare
+ignore#!#sys-sysdatabases-before-18_6-vu-verify
+ignore#!#sys-sysdatabases-before-18_6-vu-cleanup
+ignore#!#case_insensitive_collation-before-18_6-vu-prepare
+ignore#!#case_insensitive_collation-before-18_6-vu-verify
+ignore#!#case_insensitive_collation-before-18_6-vu-cleanup
 ignore#!#long-identifiers-trigger-func-proc-before-18_6-vu-prepare
 ignore#!#long-identifiers-trigger-func-proc-before-18_6-vu-verify
 ignore#!#long-identifiers-trigger-func-proc-before-18_6-vu-cleanup

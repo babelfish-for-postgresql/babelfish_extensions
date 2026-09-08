@@ -1,0 +1,20 @@
+-- tsql
+-- Prepare: Create database with long name before upgrade
+CREATE DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC;
+GO
+
+-- A login whose DEFAULT_DATABASE is the long-named database; after upgrade its
+-- default_database_name must still resolve to the original name.
+CREATE LOGIN long_default_db_login_vu_tvc WITH PASSWORD = '12345678', DEFAULT_DATABASE = Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC;
+GO
+
+-- Create a sequence in the long-named database. information_schema_tsql.sequences
+-- depends on sys.pg_namespace_ext, which the upgrade renames and recreates; this
+-- lets vu-verify confirm the view is rebound to the new pg_namespace_ext (and the
+-- deprecated view was actually dropped) after upgrade.
+USE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC;
+GO
+CREATE SEQUENCE dbo.babel5975_upg_seq START WITH 5 INCREMENT BY 2;
+GO
+USE master;
+GO

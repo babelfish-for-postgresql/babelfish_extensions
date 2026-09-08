@@ -35,3 +35,6 @@ ignore#!#proc_ownership_chaining-vu-cleanup
 ignore#!#Test-spatial-functions-3-vu-prepare
 ignore#!#Test-spatial-functions-3-vu-verify
 ignore#!#Test-spatial-functions-3-vu-cleanup
+
+# needs two user databases, not available in single-db mode
+ignore#!#BABEL-2920-MERGE-crossdb

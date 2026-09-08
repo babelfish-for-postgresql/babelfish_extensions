@@ -142,7 +142,19 @@ protected:
 		antlrcpp::Any visitUpdate_statement(TSqlParser::Update_statementContext *ctx) override;
 		antlrcpp::Any visitDelete_statement(TSqlParser::Delete_statementContext *ctx) override;
 		antlrcpp::Any visitDelete_statement_from(TSqlParser::Delete_statement_fromContext *ctx) override;
-		antlrcpp::Any visitMerge_statement(TSqlParser::Merge_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitMerge_statement(TSqlParser::Merge_statementContext *ctx) override
+		{
+			if (!pltsql_enable_tsql_merge)
+			{
+				handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE", getLineAndPos(ctx));
+				return visitChildren(ctx);
+			}
+			if (ctx->TOP())
+				handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE with TOP", getLineAndPos(ctx));
+			if (ctx->output_clause())
+				handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE with OUTPUT", getLineAndPos(ctx->output_clause()));
+			return visitChildren(ctx);
+		}
 		antlrcpp::Any visitBulk_insert_statement(TSqlParser::Bulk_insert_statementContext *ctx) override;
 
 		// CFL
