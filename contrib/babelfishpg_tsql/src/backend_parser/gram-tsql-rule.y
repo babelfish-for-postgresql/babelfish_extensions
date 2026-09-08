@@ -3421,7 +3421,8 @@ tsql_CreateTrigStmt:
 					n2->funcname = $3;
 					n2->parameters = NIL;
 					n2->returnType = makeTypeName("trigger");
-					n2->options = list_make3(lang, body, trigStmt);
+					n2->options = list_make4(lang, body, trigStmt,
+						makeDefElem("location", (Node *) makeInteger(@3), @3));
 
 					$$ = (Node *) n2;
 				}
@@ -3516,6 +3517,9 @@ tsql_IndexStmt:
 					n->if_not_exists = false;
 
 					tsql_index_nulls_order(n->indexParams, n->accessMethod);
+					n->options = lappend(n->options,
+						makeDefElem(TSQL_ORIGINAL_NAME_LOCATION,
+							(Node *) makeInteger(@7), -1));
 					$$ = (Node *)n;
 				}
 		| CREATE TSQL_SPATIAL INDEX opt_single_name
@@ -4445,6 +4449,10 @@ tsql_AlterViewStmt:
                     n->query = $7;
                     n->replace = true;
                     n->options = $5;
+                    if ($4 != NIL)
+                        n->options = lappend(n->options,
+                            makeDefElem(BBF_VIEW_COLLIST_LOC_OPTION,
+                                        (Node *) makeInteger(@4), @4));
                     n->withCheckOption = $8;
                     n->createOrAlter = true;
                     $$ = (Node *) n;
@@ -4458,6 +4466,10 @@ tsql_AlterViewStmt:
                     n->query = $9;
                     n->replace = false;
                     n->options = $7;
+                    if ($6 != NIL)
+                        n->options = lappend(n->options,
+                            makeDefElem(BBF_VIEW_COLLIST_LOC_OPTION,
+                                        (Node *) makeInteger(@6), @6));
                     n->withCheckOption = $10;
                     n->createOrAlter = true;
                     $$ = (Node *) n;

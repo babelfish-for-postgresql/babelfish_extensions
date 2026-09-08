@@ -3654,15 +3654,15 @@ ORDER BY ORDINAL_POSITION;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
-roundresults#!#decimal_round#!#numeric#!#14#!#6
-roundresults#!#numeric_round#!#numeric#!#14#!#6
-roundresults#!#money_round#!#numeric#!#23#!#6
-roundresults#!#float_round#!#float#!#53#!#<NULL>
-roundresults#!#real_round#!#float#!#53#!#<NULL>
-roundresults#!#int_round#!#numeric#!#14#!#2
-roundresults#!#bigint_round#!#numeric#!#23#!#2
-roundresults#!#smallint_round#!#numeric#!#14#!#2
-roundresults#!#tinyint_round#!#numeric#!#14#!#2
+RoundResults#!#decimal_round#!#numeric#!#14#!#6
+RoundResults#!#numeric_round#!#numeric#!#14#!#6
+RoundResults#!#money_round#!#numeric#!#23#!#6
+RoundResults#!#float_round#!#float#!#53#!#<NULL>
+RoundResults#!#real_round#!#float#!#53#!#<NULL>
+RoundResults#!#int_round#!#numeric#!#14#!#2
+RoundResults#!#bigint_round#!#numeric#!#23#!#2
+RoundResults#!#smallint_round#!#numeric#!#14#!#2
+RoundResults#!#tinyint_round#!#numeric#!#14#!#2
 ~~END~~
 
 
@@ -3693,9 +3693,9 @@ ORDER BY ORDINAL_POSITION;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
-roundresultswithmultipliers#!#decimal_round#!#numeric#!#16#!#6
-roundresultswithmultipliers#!#numeric_round#!#numeric#!#21#!#8
-roundresultswithmultipliers#!#money_round#!#numeric#!#27#!#10
+RoundResultsWithMultipliers#!#decimal_round#!#numeric#!#16#!#6
+RoundResultsWithMultipliers#!#numeric_round#!#numeric#!#21#!#8
+RoundResultsWithMultipliers#!#money_round#!#numeric#!#27#!#10
 ~~END~~
 
 
@@ -3727,10 +3727,10 @@ ORDER BY ORDINAL_POSITION;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
-roundresultspositions#!#decimal_round_3#!#numeric#!#14#!#6
-roundresultspositions#!#decimal_round_1#!#numeric#!#14#!#6
-roundresultspositions#!#decimal_round_0#!#numeric#!#14#!#6
-roundresultspositions#!#decimal_round_minus_1#!#numeric#!#14#!#6
+RoundResultsPositions#!#decimal_round_3#!#numeric#!#14#!#6
+RoundResultsPositions#!#decimal_round_1#!#numeric#!#14#!#6
+RoundResultsPositions#!#decimal_round_0#!#numeric#!#14#!#6
+RoundResultsPositions#!#decimal_round_minus_1#!#numeric#!#14#!#6
 ~~END~~
 
 
@@ -3761,9 +3761,9 @@ ORDER BY ORDINAL_POSITION;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#int
-roundresultsedgecases#!#null_round#!#numeric#!#14#!#6
-roundresultsedgecases#!#large_decimal_round#!#numeric#!#19#!#8
-roundresultsedgecases#!#negative_large_decimal_round#!#numeric#!#19#!#8
+RoundResultsEdgeCases#!#null_round#!#numeric#!#14#!#6
+RoundResultsEdgeCases#!#large_decimal_round#!#numeric#!#19#!#8
+RoundResultsEdgeCases#!#negative_large_decimal_round#!#numeric#!#19#!#8
 ~~END~~
 
 

@@ -1344,12 +1344,9 @@ WHERE data IS NOT NULL
 GROUP BY data.query('/root/name').value('(/name)[1]', 'VARCHAR(50)')
 ORDER BY name_val;
 GO
-~~START~~
-varchar#!#int
-Bob#!#1
-Jane#!#1
-John#!#1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML methods are not allowed in a GROUP BY clause.)~~
 
 
 
@@ -1417,9 +1414,8 @@ SELECT @x.query('/');
 GO
 ~~START~~
 xml
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: could not parse XML document)~~
+~~END~~
 
 
 -- 5. Bare ampersand (not an entity)

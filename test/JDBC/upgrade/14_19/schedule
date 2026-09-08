@@ -247,7 +247,7 @@ sys-system_sql_modules-dep
 sys-triggers-dep
 sys-proc_param_helper-dep
 sys-sp_pkeys
-sys-sp_statistics
+sys-sp_statistics-before-16_9-or-17_4
 BABEL-APPLOCK
 BABEL-1438
 BABEL-SP_DATATYPE_INFO

@@ -1,0 +1,19 @@
+-- Verify table name after upgrade
+SELECT name FROM sys.tables WHERE name LIKE 'Very_Long_Table%VU_TVC';
+GO
+
+-- Verify column name after upgrade
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC') AND name LIKE 'Very_Long_Column%';
+GO
+
+-- Verify view name after upgrade
+SELECT name FROM sys.views WHERE name LIKE 'Very_Long_View%VU_TVC';
+GO
+
+-- Verify index name after upgrade
+SELECT name FROM sys.indexes WHERE name LIKE 'Very_Long_Index%VU_TVC';
+GO
+
+-- Verify view column alias after upgrade
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_tvc_vu_alias') AND name LIKE 'Very_Long_Alias%';
+GO

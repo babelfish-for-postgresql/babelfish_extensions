@@ -366,7 +366,7 @@ sys-sp_databases
 sys-sp_databases-dep
 sys-sp_pkeys
 sys-sp_pkeys-dep
-sys-sp_statistics
+sys-sp_statistics-before-16_9-or-17_4
 sys-sp_statistics-dep
 sys-sp_tables_view
 sys-sp_tables_view-dep
@@ -578,7 +578,7 @@ BABEL-5059
 cast-varchar-to-time
 xml_exist
 test_db_collation
-BABEL-5119
+BABEL-5119-before-18_6
 BABEL-5129
 BABEL-CASE_EXPR
 charindex_replace_patindex
@@ -598,7 +598,7 @@ test_conv_string_to_datetime2-before-17_4
 test_conv_string_to_datetimeoffset-before-17_4
 test_conv_string_to_smalldatetime
 test_conv_string_to_time-before-17_4
-db_owner
+db_owner-before-16_9-or-17_5
 BABEL-5031
 BABEL-USER-GRANT
 test_conv_money_to_varchar

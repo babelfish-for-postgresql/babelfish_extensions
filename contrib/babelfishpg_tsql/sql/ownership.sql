@@ -51,6 +51,26 @@ GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
 
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
 
+-- Helper for extracting a procedure/function original (untruncated,
+-- case-preserved) name from sys.babelfish_function_ext. Only looks up the
+-- catalog when the physical proname is potentially truncated (>= 60 bytes),
+-- otherwise returns the physical name as-is. Defined here, immediately after
+-- sys.babelfish_function_ext, because its body references that table.
+CREATE OR REPLACE FUNCTION sys.bbf_get_func_original_name(func_proname name, func_nspname name)
+RETURNS text
+LANGUAGE SQL
+STABLE
+PARALLEL SAFE
+RETURN COALESCE(
+    CASE WHEN octet_length(func_proname) >= 60 THEN
+        (SELECT f.orig_name
+         FROM sys.babelfish_function_ext f
+         WHERE f.funcname = func_proname
+           AND f.nspname = func_nspname
+         LIMIT 1)
+    END,
+    func_proname::text);
+
 -- BABELFISH_NAMESPACE_EXT
 CREATE TABLE sys.babelfish_namespace_ext (
     nspname NAME NOT NULL,

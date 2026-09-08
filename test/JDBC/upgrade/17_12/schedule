@@ -13,7 +13,7 @@ atn2
 ATTIMEZONE-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
-money_aggregate-before-17_11-or-18_5
+money_aggregate
 BABEL-1062
 BABEL-1189
 BABEL-1206
@@ -591,7 +591,7 @@ BABEL-5059
 cast-varchar-to-time
 xml_exist
 test_db_collation
-BABEL-5119
+BABEL-5119-before-18_6
 dbcreator_role
 BABEL-5129
 db_accessadmin
@@ -636,7 +636,7 @@ babel_test_numeric_int4_oper
 babel_test_numeric_int8_oper
 xml_value
 Test_cast_binary_bytea
-numeric_money-before-17_11-or-18_5
+numeric_money
 MONEY_OBJECT
 money_smallmoney
 money_smallmoney_bit_dep_obj
@@ -686,3 +686,6 @@ babel_sqlvariant_coerce_type
 forxml-auto
 BABEL-login-db-long-identifiers
 long-identifiers-catalog-before-18_6
+long-identifiers-trigger-func-proc-before-18_6
+long-identifiers-objects-before-18_6
+fk-cascade-trigger

@@ -300,8 +300,8 @@ SELECT name FROM sys.procedures WHERE name in ('BABEL_4367_PROCEDURE_1', 'BABEL_
 GO
 ~~START~~
 varchar
-babel_4367_procedure_1
-babel_4367_procedure_2
+BABEL_4367_PROCEDURE_1
+BABEL_4367_PROCEDURE_2
 ~~END~~
 
 
