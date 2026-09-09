@@ -532,9 +532,51 @@ LANGUAGE C STABLE STRICT PARALLEL SAFE;
 
 -- WITH XMLNAMESPACES support: extend FOR XML aggregate to carry namespace declarations
 -- and add namespace-aware overloads for XML data type methods.
-CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_agg', 'ANYELEMENT, int, text, boolean, text, boolean, boolean, text');
-CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_text_agg', 'ANYELEMENT, int, text, boolean, text, boolean, boolean, text');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_sfunc', 'INTERNAL, ANYELEMENT, int, text, boolean, text, boolean, boolean, text');
+-- The aggregates depend on tsql_query_to_xml_sfunc, so rename the aggregates
+-- out of the way first, then the sfunc, then recreate all three with the extra
+-- ns_decls argument. Renaming (rather than dropping directly) avoids the
+-- "cannot drop ... because other objects depend on it" failure.
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER AGGREGATE sys.tsql_select_for_xml_agg(anyelement, integer, text, boolean, text, boolean, boolean, text)
+    RENAME TO tsql_select_for_xml_agg_deprecated_in_6_3_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_agg_deprecated_in_6_3_0', 'anyelement, integer, text, boolean, text, boolean, boolean, text');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER AGGREGATE sys.tsql_select_for_xml_text_agg(anyelement, integer, text, boolean, text, boolean, boolean, text)
+    RENAME TO tsql_select_for_xml_text_agg_deprecated_in_6_3_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_text_agg_deprecated_in_6_3_0', 'anyelement, integer, text, boolean, text, boolean, boolean, text');
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.tsql_query_to_xml_sfunc(internal, anyelement, integer, text, boolean, text, boolean, boolean, text)
+    RENAME TO tsql_query_to_xml_sfunc_deprecated_in_6_3_0;
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_sfunc_deprecated_in_6_3_0', 'internal, anyelement, integer, text, boolean, text, boolean, boolean, text');
 
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
     state INTERNAL,
