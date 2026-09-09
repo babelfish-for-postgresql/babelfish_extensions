@@ -1760,6 +1760,15 @@ insert_bbf_ident_mapping(const char *truncated_name,
 	if (strlen(original_name) < NAMEDATALEN)
 		return;
 
+	/*
+	 * parent_name must be the PHYSICAL name (<= NAMEDATALEN-1 bytes). It is
+	 * written and looked up via namestrcpy, which silently truncates without a
+	 * hash suffix, and the DROP cleanup path keys on the physical name. If a
+	 * caller ever passes a parse-tree name >= NAMEDATALEN, the insert and
+	 * delete keys would diverge and leave a stale row -- assert to catch that.
+	 */
+	Assert(!parent_name || strlen(parent_name) < NAMEDATALEN);
+
 	if (!OidIsValid(get_bbf_ident_mapping_oid()))
 		return;
 
@@ -1830,14 +1839,17 @@ lookup_bbf_ident_mapping(const char *truncated_name,
 	{
 		bool		isNull;
 		Datum		datum;
-		Relation	rel;
 
-		rel = table_open(get_bbf_ident_mapping_oid(), AccessShareLock);
-		datum = heap_getattr(tuple, Anum_bbf_ident_mapping_original_name,
-							 RelationGetDescr(rel), &isNull);
+		/*
+		 * Read the attribute straight from the catcache tuple using the
+		 * catcache's cached tuple descriptor. This avoids opening the relation
+		 * (and taking an extra AccessShareLock) on the resolver hot path, which
+		 * runs once per row in the sys views.
+		 */
+		datum = SysCacheGetAttr(IDENTMAPPINGNAME, tuple,
+								Anum_bbf_ident_mapping_original_name, &isNull);
 		if (!isNull)
 			result = TextDatumGetCString(datum);
-		table_close(rel, AccessShareLock);
 		ReleaseSysCache(tuple);
 	}
 
@@ -1935,6 +1947,84 @@ delete_bbf_ident_mapping_by_parent(const char *nspname,
 
 	table_endscan(scan);
 	table_close(rel, RowExclusiveLock);
+}
+
+/*
+ * update_bbf_ident_mapping_parent - Re-point all entries matching
+ * nspname + pg_catalog_type + old_parent_name to new_parent_name. Used when a
+ * parent object is renamed (e.g. sp_rename on a table), so that constraint
+ * mapping rows continue to match the parent's new physical name at DROP time.
+ * Without this, a rename orphans the rows (their parent_name still holds the
+ * old physical name) and DROP-time cleanup misses them, leaking a stale row
+ * that could later resolve to the wrong original name.
+ */
+void
+update_bbf_ident_mapping_parent(const char *nspname,
+								Oid pg_catalog_type,
+								const char *old_parent_name,
+								const char *new_parent_name)
+{
+	Relation	rel;
+	TableScanDesc scan;
+	ScanKeyData scanKey[3];
+	HeapTuple	tuple;
+	NameData	nspname_data;
+	NameData	old_parent_data;
+	NameData	new_parent_data;
+
+	if (!OidIsValid(get_bbf_ident_mapping_oid()))
+		return;
+
+	/* Nothing to do if the physical parent name did not change. */
+	if (old_parent_name && new_parent_name &&
+		strcmp(old_parent_name, new_parent_name) == 0)
+		return;
+
+	namestrcpy(&nspname_data, nspname);
+	namestrcpy(&old_parent_data, old_parent_name ? old_parent_name : "");
+	namestrcpy(&new_parent_data, new_parent_name ? new_parent_name : "");
+
+	rel = table_open(get_bbf_ident_mapping_oid(), RowExclusiveLock);
+
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_ident_mapping_nspname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&nspname_data));
+	ScanKeyInit(&scanKey[1],
+				Anum_bbf_ident_mapping_pg_catalog_type,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(pg_catalog_type));
+	ScanKeyInit(&scanKey[2],
+				Anum_bbf_ident_mapping_parent_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&old_parent_data));
+
+	scan = table_beginscan_catalog(rel, 3, scanKey);
+
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		Datum		values[BBF_IDENT_MAPPING_NUM_COLS];
+		bool		nulls[BBF_IDENT_MAPPING_NUM_COLS];
+		bool		replaces[BBF_IDENT_MAPPING_NUM_COLS];
+		HeapTuple	newtuple;
+
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, false, sizeof(nulls));
+		MemSet(replaces, false, sizeof(replaces));
+
+		values[Anum_bbf_ident_mapping_parent_name - 1] = NameGetDatum(&new_parent_data);
+		replaces[Anum_bbf_ident_mapping_parent_name - 1] = true;
+
+		newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
+									 values, nulls, replaces);
+		CatalogTupleUpdate(rel, &newtuple->t_self, newtuple);
+		heap_freetuple(newtuple);
+	}
+
+	table_endscan(scan);
+	table_close(rel, RowExclusiveLock);
+
+	CommandCounterIncrement();
 }
 
 /*

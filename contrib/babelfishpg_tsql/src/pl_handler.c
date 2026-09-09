@@ -3424,17 +3424,26 @@ store_table_constraint_original_names(CreateStmt *create_stmt, RangeVar *rel,
 {
 	ListCell   *lc;
 	const char *nspname = rel->schemaname;
+	const char *phys_relname = rel->relname;
+	Oid			relOid = RangeVarGetRelid(rel, NoLock, true);
 	size_t		qlen;
 
-	if (!nspname)
+	/*
+	 * Resolve the PHYSICAL namespace and relation name from the created table's
+	 * OID. DROP TABLE cleanup keys the mapping on the physical relation name
+	 * (RelationGetRelationName), so the constraint rows must be filed under the
+	 * same physical parent name -- otherwise, for a table name >= NAMEDATALEN
+	 * bytes (where the physical name is MD5-truncated and differs from the
+	 * parse-tree name), the drop-time delete matches nothing and the row leaks.
+	 */
+	if (OidIsValid(relOid))
 	{
-		Oid relOid = RangeVarGetRelid(rel, NoLock, true);
-
-		if (OidIsValid(relOid))
+		if (!nspname)
 			nspname = get_namespace_name(get_rel_namespace(relOid));
+		phys_relname = get_rel_name(relOid);
 	}
 
-	if (!nspname)
+	if (!nspname || !phys_relname)
 		return;
 
 	qlen = strlen(queryString);
@@ -3461,7 +3470,7 @@ store_table_constraint_original_names(CreateStmt *create_stmt, RangeVar *rel,
 				{
 					insert_bbf_ident_mapping(con->conname,
 											 original_name, nspname,
-											 ConstraintRelationId, rel->relname);
+											 ConstraintRelationId, phys_relname);
 					pfree(original_name);
 				}
 			}
@@ -3489,7 +3498,7 @@ store_table_constraint_original_names(CreateStmt *create_stmt, RangeVar *rel,
 					{
 						insert_bbf_ident_mapping(con->conname,
 												 original_name, nspname,
-												 ConstraintRelationId, rel->relname);
+												 ConstraintRelationId, phys_relname);
 						pfree(original_name);
 					}
 				}
@@ -3530,16 +3539,24 @@ store_alter_table_constraint_original_names(AlterTableStmt *atstmt,
 {
 	ListCell   *lc;
 	const char *nspname = atstmt->relation->schemaname;
+	const char *phys_relname = atstmt->relation->relname;
+	Oid			relOid = RangeVarGetRelid(atstmt->relation, NoLock, true);
 	List	   *pk_uq_orig_names = NIL;	/* list of (conname, orig) for index reloptions */
 	bool		dispatched = false;
 	size_t		qlen;
 
-	if (!nspname)
+	/*
+	 * Resolve the PHYSICAL namespace and relation name from the table's OID.
+	 * DROP TABLE cleanup keys the constraint mapping on the physical relation
+	 * name, so the insert must use the same physical parent name; otherwise a
+	 * table whose name is >= NAMEDATALEN bytes (MD5-truncated physical name)
+	 * leaves a stale, still-readable mapping row after drop.
+	 */
+	if (OidIsValid(relOid))
 	{
-		Oid relOid = RangeVarGetRelid(atstmt->relation, NoLock, true);
-
-		if (OidIsValid(relOid))
+		if (!nspname)
 			nspname = get_namespace_name(get_rel_namespace(relOid));
+		phys_relname = get_rel_name(relOid);
 	}
 
 	/*
@@ -3547,7 +3564,7 @@ store_alter_table_constraint_original_names(AlterTableStmt *atstmt,
 	 * would file/lookup the mapping in the wrong schema and leak the truncated
 	 * name to the user.
 	 */
-	if (!nspname)
+	if (!nspname || !phys_relname)
 		return false;
 
 	qlen = strlen(queryString);
@@ -3594,7 +3611,7 @@ store_alter_table_constraint_original_names(AlterTableStmt *atstmt,
 			{
 				insert_bbf_ident_mapping(con->conname, orig,
 					nspname, ConstraintRelationId,
-					atstmt->relation->relname);
+					phys_relname);
 
 				/*
 				 * UNIQUE/PRIMARY KEY create an index; the original name must be
@@ -3635,7 +3652,7 @@ store_alter_table_constraint_original_names(AlterTableStmt *atstmt,
 			String	   *orig_node = (String *) lsecond(pair);
 
 			exec_add_original_index_name(strVal(conname_node),
-										 atstmt->relation->schemaname,
+										 (char *) nspname,
 										 strVal(orig_node));
 
 			/* free the payloads, the String nodes and the pair */
@@ -3667,7 +3684,7 @@ store_alter_table_constraint_original_names(AlterTableStmt *atstmt,
 		{
 			delete_bbf_ident_mapping(cmd->name, nspname,
 									 ConstraintRelationId,
-									 atstmt->relation->relname);
+									 phys_relname);
 		}
 	}
 

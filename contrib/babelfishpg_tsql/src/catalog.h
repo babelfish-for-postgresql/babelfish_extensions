@@ -154,6 +154,10 @@ extern void delete_bbf_ident_mapping(const char *truncated_name,
 extern void delete_bbf_ident_mapping_by_parent(const char *nspname,
 											   Oid pg_catalog_type,
 											   const char *parent_name);
+extern void update_bbf_ident_mapping_parent(const char *nspname,
+											 Oid pg_catalog_type,
+											 const char *old_parent_name,
+											 const char *new_parent_name);
 extern void clean_up_bbf_ident_mapping(const char *nspname);
 
 /*****************************************

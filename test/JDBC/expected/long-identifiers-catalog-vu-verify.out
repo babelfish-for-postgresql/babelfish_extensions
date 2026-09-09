@@ -66,3 +66,196 @@ varchar
 @Shared_Long_Parameter_Prefix_That_Exceeds_PostgreSQL_Limit_Sixty_Three_ProcTwo
 ~~END~~
 
+
+-- BABEL-5975 (Issue 1): a constraint mapping row must be keyed on the PHYSICAL
+-- parent table name so DROP TABLE cleans it up. For a table whose name exceeds
+-- NAMEDATALEN (physical name is MD5-truncated and differs from the parse-tree
+-- name), a mismatched key would leave a stale, still-readable row. Create such
+-- a table with a long constraint, drop it, and assert no leftover row remains.
+CREATE TABLE babel5975_cat_vu_LongTableNameThatExceedsThePostgreSQLNameDataLenLimitOfSixtyThree (
+    id INT,
+    CONSTRAINT babel5975_cat_vu_LongCheckConstraintNameThatExceedsTheSixtyThreeByteLimit CHECK (id > 0)
+);
+GO
+DROP TABLE babel5975_cat_vu_LongTableNameThatExceedsThePostgreSQLNameDataLenLimitOfSixtyThree;
+GO
+-- Expect 0: no stale constraint mapping row after the drop.
+SELECT count(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'babel5975_cat_vu_LongCheckConstraint%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- BABEL-5975 (Issue 1, rename variant): renaming a table changes its PHYSICAL
+-- name, which is the key the constraint mapping is filed under. sp_rename must
+-- re-point the constraint rows to the new physical name, else a later DROP
+-- misses them (stale row leak). Create long table+constraint, rename the table,
+-- drop it, and assert no leftover row remains.
+CREATE TABLE babel5975_cat_vu_RenameSrcTableNameThatExceedsThePostgreSQLNameDataLenLimitAbc (
+    id INT,
+    CONSTRAINT babel5975_cat_vu_RenameCheckConstraintNameThatExceedsTheSixtyThreeByteLim CHECK (id > 0)
+);
+GO
+EXEC sp_rename 'babel5975_cat_vu_RenameSrcTableNameThatExceedsThePostgreSQLNameDataLenLimitAbc', 'babel5975_cat_vu_RenameDstTableNameThatExceedsThePostgreSQLNameDataLenLimitXyz', 'OBJECT';
+GO
+DROP TABLE babel5975_cat_vu_RenameDstTableNameThatExceedsThePostgreSQLNameDataLenLimitXyz;
+GO
+-- Expect 0: constraint mapping row cleaned up after rename + drop.
+SELECT count(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'babel5975_cat_vu_RenameCheckConstraint%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- BABEL-5975 (rename to a SHORT name): renaming a long-named table to a short
+-- name re-keys the constraint mapping to the short physical name; drop must
+-- still clean it up.
+CREATE TABLE babel5975_cat_vu_RenameToShortSrcTableNameThatExceedsTheNameDataLenLimitHere (
+    id INT,
+    CONSTRAINT babel5975_cat_vu_RenameToShortCheckConstraintNameThatExceedsTheLimit CHECK (id > 0)
+);
+GO
+EXEC sp_rename 'babel5975_cat_vu_RenameToShortSrcTableNameThatExceedsTheNameDataLenLimitHere', 'babel5975_shortname_tbl', 'OBJECT';
+GO
+DROP TABLE babel5975_shortname_tbl;
+GO
+-- Expect 0.
+SELECT count(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'babel5975_cat_vu_RenameToShortCheckConstraint%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- BABEL-5975 (double rename chain): each rename must re-key the constraint
+-- mapping so a final drop after two renames leaves no stale row.
+CREATE TABLE babel5975_cat_vu_ChainRenameTableOneNameThatExceedsTheNameDataLenLimitHereAbc (
+    id INT,
+    CONSTRAINT babel5975_cat_vu_ChainRenameCheckConstraintNameExceedingTheByteLimit CHECK (id > 0)
+);
+GO
+EXEC sp_rename 'babel5975_cat_vu_ChainRenameTableOneNameThatExceedsTheNameDataLenLimitHereAbc', 'babel5975_cat_vu_ChainRenameTableTwoNameThatExceedsTheNameDataLenLimitHereXyz', 'OBJECT';
+GO
+EXEC sp_rename 'babel5975_cat_vu_ChainRenameTableTwoNameThatExceedsTheNameDataLenLimitHereXyz', 'babel5975_cat_vu_ChainRenameTableThreeNameThatExceedsTheNameDataLenLimitDef', 'OBJECT';
+GO
+DROP TABLE babel5975_cat_vu_ChainRenameTableThreeNameThatExceedsTheNameDataLenLimitDef;
+GO
+-- Expect 0.
+SELECT count(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'babel5975_cat_vu_ChainRenameCheckConstraint%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- BABEL-5975 (sequence rename): rename a long-named sequence, drop it, assert
+-- the old mapping row is removed and no row leaks.
+CREATE SEQUENCE babel5975_cat_vu_RenameSequenceSourceNameThatExceedsTheNameDataLenLimitHere START WITH 1;
+GO
+EXEC sp_rename 'babel5975_cat_vu_RenameSequenceSourceNameThatExceedsTheNameDataLenLimitHere', 'babel5975_cat_vu_RenameSequenceTargetNameThatExceedsTheNameDataLenLimitHere', 'OBJECT';
+GO
+DROP SEQUENCE babel5975_cat_vu_RenameSequenceTargetNameThatExceedsTheNameDataLenLimitHere;
+GO
+-- Expect 0.
+SELECT count(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'babel5975_cat_vu_RenameSequence%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- BABEL-5975 (type rename): rename a long-named user-defined type, drop it,
+-- assert no stale mapping row remains.
+CREATE TYPE babel5975_cat_vu_RenameTypeSourceNameThatExceedsTheNameDataLenLimitOfSixty FROM INT;
+GO
+EXEC sp_rename 'babel5975_cat_vu_RenameTypeSourceNameThatExceedsTheNameDataLenLimitOfSixty', 'babel5975_cat_vu_RenameTypeTargetNameThatExceedsTheNameDataLenLimitOfSixty', 'USERDATATYPE';
+GO
+DROP TYPE babel5975_cat_vu_RenameTypeTargetNameThatExceedsTheNameDataLenLimitOfSixty;
+GO
+-- Expect 0.
+SELECT count(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'babel5975_cat_vu_RenameType%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- BABEL-5975 (DEFAULT constraint): a long-named DEFAULT constraint is stored
+-- and cleaned up on drop.
+CREATE TABLE babel5975_cat_vu_default_tbl (
+    id INT CONSTRAINT babel5975_cat_vu_LongDefaultConstraintNameThatExceedsTheSixtyThreeByteLim DEFAULT 5
+);
+GO
+DROP TABLE babel5975_cat_vu_default_tbl;
+GO
+-- Expect 0.
+SELECT count(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'babel5975_cat_vu_LongDefaultConstraint%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- BABEL-5975 (FK constraint): a long-named FOREIGN KEY resolves in
+-- sys.foreign_keys after a table rename and is cleaned up on drop.
+CREATE TABLE babel5975_cat_vu_fk_parent (id INT PRIMARY KEY);
+GO
+CREATE TABLE babel5975_cat_vu_fk_child (
+    id INT,
+    pid INT,
+    CONSTRAINT babel5975_cat_vu_LongForeignKeyConstraintNameThatExceedsTheByteLim FOREIGN KEY (pid) REFERENCES babel5975_cat_vu_fk_parent (id)
+);
+GO
+EXEC sp_rename 'babel5975_cat_vu_fk_child', 'babel5975_cat_vu_fk_child_renamed', 'OBJECT';
+GO
+-- Original FK name must still resolve after the table rename.
+SELECT name FROM sys.foreign_keys WHERE name LIKE 'babel5975_cat_vu_LongForeignKey%';
+GO
+~~START~~
+varchar
+babel5975_cat_vu_LongForeignKeyConstraintNameThatExceedsTheByteLim
+~~END~~
+
+DROP TABLE babel5975_cat_vu_fk_child_renamed;
+GO
+DROP TABLE babel5975_cat_vu_fk_parent;
+GO
+-- Expect 0.
+SELECT count(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'babel5975_cat_vu_LongForeignKey%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- BABEL-5975 (DROP SCHEMA path): a long-named constraint in a non-dbo schema is
+-- cleaned up when its table (and schema) are dropped.
+CREATE SCHEMA babel5975_cat_vu_sch;
+GO
+CREATE TABLE babel5975_cat_vu_sch.babel5975_cat_vu_SchemaScopedTableNameExceedingLimit (
+    id INT,
+    CONSTRAINT babel5975_cat_vu_SchemaScopedCheckConstraintNameExceedingTheByteLimit CHECK (id > 0)
+);
+GO
+DROP TABLE babel5975_cat_vu_sch.babel5975_cat_vu_SchemaScopedTableNameExceedingLimit;
+GO
+DROP SCHEMA babel5975_cat_vu_sch;
+GO
+-- Expect 0.
+SELECT count(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'babel5975_cat_vu_SchemaScopedCheckConstraint%';
+GO
+~~START~~
+int
+0
+~~END~~
+

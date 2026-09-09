@@ -4595,6 +4595,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 			 * based on the original name's length.
 			 */
 			if (fp->name && fp->location >= 0 &&
+				(size_t) fp->location < strlen(queryString) &&
 				strlen(fp->name) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
 			{
 				const char *param_start = queryString + fp->location;

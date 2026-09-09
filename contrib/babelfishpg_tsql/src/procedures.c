@@ -16,6 +16,7 @@
 #include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -3919,6 +3920,33 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		 */
 		if (objtype_code == OBJECT_TABLE)
 			remangle_table_indexes_after_rename(schema_name, new_name);
+
+		/*
+		 * BABEL-5975: constraint original-name mappings are keyed on the
+		 * PHYSICAL parent table name. Renaming the table changes that physical
+		 * name, so re-point the constraint mapping rows to the new physical
+		 * name; otherwise DROP TABLE cleanup (which keys on the new physical
+		 * name) would miss them and leak a stale row that could later resolve
+		 * to the wrong original constraint name.
+		 */
+		if (objtype_code == OBJECT_TABLE && schema_name != NULL)
+		{
+			char	   *schema_lower = str_tolower(schema_name, strlen(schema_name), DEFAULT_COLLATION_OID);
+			char	   *physical_schema = get_physical_schema_name(get_cur_db_name(), schema_lower);
+
+			if (physical_schema)
+			{
+				char	   *old_phys = downcase_truncate_identifier(obj_name, strlen(obj_name), false);
+				char	   *new_phys = downcase_truncate_identifier(new_name, strlen(new_name), false);
+
+				update_bbf_ident_mapping_parent(physical_schema, ConstraintRelationId,
+												old_phys, new_phys);
+				pfree(old_phys);
+				pfree(new_phys);
+				pfree(physical_schema);
+			}
+			pfree(schema_lower);
+		}
 	}
 	PG_FINALLY();
 	{
