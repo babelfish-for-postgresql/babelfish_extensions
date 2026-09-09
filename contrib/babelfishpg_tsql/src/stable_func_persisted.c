@@ -107,17 +107,22 @@ validate_whitelist_entry(FuncEntry *entry, FuncExpr *f)
     return !c->constisnull && DatumGetBool(c->constvalue);
 }
 
-/* Check required GUCs are at default values */
+/*
+ * Does the session differ from the SET options required for PERSISTED computed
+ * columns?  Returns true when at least one of them is not at its required
+ * value, i.e. when the stored values cannot be trusted to match what the
+ * session would compute now.
+ */
 bool 
-check_persisted_gucs(void)
+has_mismatched_set_options(void)
 {
-    return pltsql_quoted_identifier &&
-           pltsql_arithabort &&
-           pltsql_concat_null_yields_null &&
-           pltsql_ansi_nulls &&
-           pltsql_ansi_padding &&
-           pltsql_ansi_warnings &&
-           !pltsql_numeric_roundabort;
+    return !(pltsql_quoted_identifier &&
+             pltsql_arithabort &&
+             pltsql_concat_null_yields_null &&
+             pltsql_ansi_nulls &&
+             pltsql_ansi_padding &&
+             pltsql_ansi_warnings &&
+             !pltsql_numeric_roundabort);
 }
 
 /* Get comma-separated list of mismatched GUCs */
@@ -231,7 +236,7 @@ stable_persisted_hook(Node *expr)
     /* Enforce GUC settings at CREATE time (skip during dump/restore or when escape hatch is 'ignore') */
     if (!babelfish_dump_restore &&
         escape_hatch_persisted_col_guc_check != EH_IGNORE &&
-        !check_persisted_gucs())
+        has_mismatched_set_options())
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
                  errmsg("CREATE/ALTER TABLE failed because the following SET options have incorrect settings: '%s'",
@@ -268,29 +273,74 @@ table_has_persisted_computed_cols(Oid relid)
     return found;
 }
 
-/* Check GUCs for DML into tables with PERSISTED computed columns */
-void 
-guc_check_dml(Query *parse)
+/* Raise the SET-options error for a DML command */
+pg_noreturn static void
+guc_check_dml_error(const char *cmd)
 {
-    RangeTblEntry *rte;
-    const char *cmd;
+    ereport(ERROR,
+            (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+             errmsg("%s failed because the following SET options have incorrect settings: '%s'",
+                    cmd, get_mismatched_persisted_gucs()),
+             errhint("Verify that SET options are correct for use with indexed views and/or indexes on computed columns.")));
+}
 
-    if (parse->resultRelation == 0)
+/*
+ * Raise an error if the target relation, or any table it references by foreign
+ * key, has PERSISTED computed columns.  Callers have already established that
+ * the session GUCs do not match the required settings.
+ */
+static void
+check_dml_target(Oid relid, const char *cmd)
+{
+    Relation    rel;
+    List       *fk_list;
+    ListCell   *lc;
+
+    /* Check if the target table itself has persisted computed columns */
+    if (table_has_persisted_computed_cols(relid))
+        guc_check_dml_error(cmd);
+
+    /* Check if any FK-referenced parent table has persisted computed columns */
+    rel = relation_open(relid, AccessShareLock);
+    fk_list = RelationGetFKeyList(rel);
+
+    foreach(lc, fk_list)
+    {
+        ForeignKeyCacheInfo *fk = (ForeignKeyCacheInfo *) lfirst(lc);
+
+        if (table_has_persisted_computed_cols(fk->confrelid))
+        {
+            relation_close(rel, AccessShareLock);
+            guc_check_dml_error(cmd);
+        }
+    }
+
+    relation_close(rel, AccessShareLock);
+}
+
+/*
+ * Check GUCs for DML into tables with PERSISTED computed columns.
+ *
+ * This runs from ExecutorStart rather than from the planner so that it is
+ * reached on every execution.  A cached plan (stored procedure, prepared
+ * statement, PL/tsql function or trigger) skips planning entirely, so a
+ * planner-time check is silently bypassed once the plan has been built, and
+ * a wrong value gets persisted with no error.
+ */
+void 
+guc_check_dml(PlannedStmt *pstmt)
+{
+    const char *cmd;
+    ListCell   *lc;
+
+    if (pstmt == NULL || pstmt->resultRelations == NIL)
         return;
 
     /* Skip if escape hatch is 'ignore' */
     if (escape_hatch_persisted_col_guc_check == EH_IGNORE)
         return;
 
-    rte = rt_fetch(parse->resultRelation, parse->rtable);
-
-    if (rte->rtekind != RTE_RELATION)
-        return;
-
-    if (check_persisted_gucs())
-        return;
-
-    switch (parse->commandType)
+    switch (pstmt->commandType)
     {
         case CMD_INSERT: 
             cmd = "INSERT"; break;
@@ -299,49 +349,34 @@ guc_check_dml(Query *parse)
         case CMD_DELETE: 
             cmd = "DELETE"; break;
         default: 
-            cmd = "DML"; break;
+            return;     /* not DML, nothing to check */
     }
 
-    /* Check if the target table itself has persisted computed columns */
-    if (table_has_persisted_computed_cols(rte->relid))
+    if (!has_mismatched_set_options())
+        return;
+
+    /*
+     * More than one result relation is possible for an inherited or
+     * partitioned target; every one of them needs to be checked.
+     */
+    foreach(lc, pstmt->resultRelations)
     {
-        ereport(ERROR,
-                (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-                 errmsg("%s failed because the following SET options have incorrect settings: '%s'",
-                        cmd, get_mismatched_persisted_gucs()),
-                 errhint("Verify that SET options are correct for use with indexed views and/or indexes on computed columns.")));
-    }
+        Index          rti = lfirst_int(lc);
+        RangeTblEntry *rte = rt_fetch(rti, pstmt->rtable);
 
-    /* Check if any FK-referenced parent table has persisted computed columns */
-    {
-        Relation    rel;
-        List       *fk_list;
-        ListCell   *lc;
-
-        rel = relation_open(rte->relid, AccessShareLock);
-        fk_list = RelationGetFKeyList(rel);
-
-        foreach(lc, fk_list)
-        {
-            ForeignKeyCacheInfo *fk = (ForeignKeyCacheInfo *) lfirst(lc);
-
-            if (table_has_persisted_computed_cols(fk->confrelid))
-            {
-                relation_close(rel, AccessShareLock);
-                ereport(ERROR,
-                        (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-                         errmsg("%s failed because the following SET options have incorrect settings: '%s'",
-                                cmd, get_mismatched_persisted_gucs()),
-                         errhint("Verify that SET options are correct for use with indexed views and/or indexes on computed columns.")));
-            }
-        }
-
-        relation_close(rel, AccessShareLock);
+        if (rte->rtekind == RTE_RELATION)
+            check_dml_target(rte->relid, cmd);
     }
 }
 
 /*
- * Query rewriter helper function to replace the Var node with the actual expression
+ * Replace references to one stored generated column with its generation
+ * expression, so the value is recomputed instead of read from the heap.
+ *
+ * Only reached when the session's SET options differ from the ones the stored
+ * value was computed under; see persisted_col_planner_rewrite().  Matches only
+ * Vars at the current query level - nested Query nodes are left alone, since
+ * subquery_planner() invokes the hook again for each of them.
  */
 static Node *
 query_rewrite_helper(Node *node, void *context)
