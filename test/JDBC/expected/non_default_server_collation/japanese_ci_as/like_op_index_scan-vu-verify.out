@@ -3336,7 +3336,8 @@ GO
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE UPPER(N'exact match')
 Aggregate
-  ->  Seq Scan on babel_5966_testlikecollation_ci_as
+  ->  Index Only Scan using babel_5966_idx_ci_asbabel_5966_7cc87a6b98e338dc94efc01ca6fb42c5 on babel_5966_testlikecollation_ci_as
+        Index Cond: (col = 'EXACT MATCH'::"varchar" COLLATE bbf_unicode_cp1_ci_as)
         Filter: ((col)::text ~~* 'EXACT MATCH'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
@@ -3352,7 +3353,8 @@ GO
 text
 Query Text: SELECT COUNT(*) FROM BABEL_5966_TestLikeCollation_CI_AS WHERE Col LIKE LOWER(N'EXACT MATCH')
 Aggregate
-  ->  Seq Scan on babel_5966_testlikecollation_ci_as
+  ->  Index Only Scan using babel_5966_idx_ci_asbabel_5966_7cc87a6b98e338dc94efc01ca6fb42c5 on babel_5966_testlikecollation_ci_as
+        Index Cond: (col = 'exact match'::"varchar" COLLATE bbf_unicode_cp1_ci_as)
         Filter: ((col)::text ~~* 'exact match'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
