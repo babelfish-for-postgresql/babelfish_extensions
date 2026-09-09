@@ -1863,6 +1863,26 @@ bbf_xml_handle_context_node(const char *xml_str,
 }
 
 /*
+ * bbf_xml_get_namespaces - fetch the WITH XMLNAMESPACES array argument.
+ *
+ * The namespace-aware SQL overloads pass a text[][] namespace array (built by
+ * build_xmlnamespace_array_literal in the ANTLR rewrite) as the trailing
+ * argument at position ns_argnum. The base (non-namespace) overloads have
+ * fewer arguments, in which case an empty array is returned so PG's
+ * xpath_internal treats the query as having no declared namespaces.
+ *
+ * The array has the shape expected by PG's xpath(): {{prefix,uri},...}, with
+ * an empty prefix ("") denoting the DEFAULT namespace.
+ */
+static ArrayType *
+bbf_xml_get_namespaces(FunctionCallInfo fcinfo, int ns_argnum)
+{
+	if (PG_NARGS() > ns_argnum && !PG_ARGISNULL(ns_argnum))
+		return PG_GETARG_ARRAYTYPE_P(ns_argnum);
+	return construct_empty_array(TEXTOID);
+}
+
+/*
  * ============================================================
  * Main XML method C implementations
  * ============================================================
@@ -1890,7 +1910,7 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 	text       *xpath_text_arg;
 	xmltype    *xml_data_arg;
-	ArrayType  *namespaces = construct_empty_array(TEXTOID);
+	ArrayType  *namespaces = bbf_xml_get_namespaces(fcinfo, 2);
 	ArrayBuildState *astate;
 
 	/* Validate XML data type before referencing xml_datum */
@@ -1975,7 +1995,7 @@ bbf_xmlvalue(PG_FUNCTION_ARGS)
 	StringInfoData string_xpath_buf;
 	text       *xpath_text_arg;
 	xmltype    *xml_data_arg;
-	ArrayType  *namespaces = construct_empty_array(TEXTOID);
+	ArrayType  *namespaces = bbf_xml_get_namespaces(fcinfo, 3);
 	ArrayBuildState *astate;
 
 	/* Validate XML data type before referencing xml_datum */
@@ -2062,7 +2082,7 @@ bbf_xmlexist(PG_FUNCTION_ARGS)
 	char	   *final_xpath;
 	text       *xpath_text_arg;
 	xmltype    *xml_data_arg;
-	ArrayType  *namespaces = construct_empty_array(TEXTOID);
+	ArrayType  *namespaces = bbf_xml_get_namespaces(fcinfo, 2);
 	int         res_nitems;
 
 	/* Validate XML data type before referencing xml_datum */
@@ -2121,7 +2141,7 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 	char	   *encoded_xpath;
 	text       *xpath_text_arg;
 	xmltype    *xml_data_arg;
-	ArrayType  *namespaces = construct_empty_array(TEXTOID);
+	ArrayType  *namespaces = bbf_xml_get_namespaces(fcinfo, 2);
 	char	   *prefix;		/* "<magic_tag>(<encoded_xpath>)[" */
 	char	   *suffix;		/* "]</magic_tag><bare_xml>" */
 	int			prefix_len;

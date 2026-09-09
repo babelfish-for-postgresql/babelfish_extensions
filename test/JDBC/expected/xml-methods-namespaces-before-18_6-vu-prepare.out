@@ -1,0 +1,81 @@
+
+
+-- ============================================
+-- Tests for XML data type methods (.query, .value, .exist)
+-- combined with WITH XMLNAMESPACES.
+--
+-- WITH XMLNAMESPACES provides namespace bindings for XPath evaluation.
+-- The bindings are passed to PG's xpath() function as a text[][] array.
+-- This lets prefixed XPath like /ns1:item resolve correctly when the
+-- target XML uses xmlns:ns1.
+-- ============================================
+-- ============================================
+-- SECTION: Base Tables
+-- ============================================
+CREATE TABLE xmlns_methods_t1 (id INT, data XML);
+GO
+
+INSERT INTO xmlns_methods_t1 VALUES (1, '<root xmlns:ns1="http://example.com/ns1"><ns1:item>val1</ns1:item><ns1:item>val2</ns1:item></root>');
+INSERT INTO xmlns_methods_t1 VALUES (2, '<root xmlns:ns1="http://example.com/ns1" xmlns:ns2="http://example.com/ns2"><ns1:a>10</ns1:a><ns2:b>20</ns2:b></root>');
+INSERT INTO xmlns_methods_t1 VALUES (3, '<root xmlns:ns1="http://example.com/ns1"><item ns1:attr="value"/></root>');
+INSERT INTO xmlns_methods_t1 VALUES (4, NULL);
+INSERT INTO xmlns_methods_t1 VALUES (5, '<root xmlns:ns1="http://example.com/ns1"><ns1:item>42</ns1:item></root>');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE xmlns_methods_t2 (id INT, data XML);
+GO
+
+INSERT INTO xmlns_methods_t2 VALUES (1, '<catalog xmlns:p="http://example.com/products"><p:book p:id="1"><p:title>SQL</p:title><p:price>29.99</p:price></p:book><p:book p:id="2"><p:title>XML</p:title><p:price>39.99</p:price></p:book></catalog>');
+INSERT INTO xmlns_methods_t2 VALUES (2, '<catalog xmlns:p="http://example.com/products"></catalog>');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+
+-- ============================================
+-- SECTION: Dependent Views
+-- ============================================
+CREATE VIEW xmlns_methods_view1 AS
+SELECT id, data FROM xmlns_methods_t1;
+GO
+
+
+-- ============================================
+-- SECTION: Tables for advanced method tests
+-- ============================================
+CREATE TABLE xmlns_methods_orders (id INT, data XML);
+GO
+
+INSERT INTO xmlns_methods_orders VALUES (1, '<order xmlns:p="http://example.com/products"><p:item p:price="29.99">Widget</p:item><p:item p:price="49.99">Gadget</p:item></order>');
+INSERT INTO xmlns_methods_orders VALUES (2, '<order xmlns:p="http://example.com/products"><p:item p:price="19.99">Gizmo</p:item></order>');
+INSERT INTO xmlns_methods_orders VALUES (3, '<order/>');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE xmlns_methods_comments (id INT, data XML);
+GO
+
+INSERT INTO xmlns_methods_comments VALUES (1, '<root xmlns:ns1="http://example.com/ns1"><!-- a comment --><ns1:item>val</ns1:item></root>');
+INSERT INTO xmlns_methods_comments VALUES (2, '<root xmlns:ns1="http://example.com/ns1"><ns1:item><!-- inner comment -->val</ns1:item></root>');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+

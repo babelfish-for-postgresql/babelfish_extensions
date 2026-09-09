@@ -581,6 +581,8 @@ cast-varchar-to-time
 xml_exist
 test_db_collation
 BABEL-5119-before-18_6
+forxml-namespaces-before-18_6
+xml-methods-namespaces-before-18_6
 BABEL-5129
 BABEL-CASE_EXPR
 charindex_replace_patindex

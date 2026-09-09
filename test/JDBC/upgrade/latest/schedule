@@ -696,4 +696,6 @@ long-identifiers-objects
 BABEL-6813
 long-identifiers-trigger-func-proc
 xml_nodes
+forxml-namespaces
+xml-methods-namespaces
 fk-cascade-trigger

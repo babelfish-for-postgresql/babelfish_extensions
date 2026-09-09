@@ -1,0 +1,113 @@
+-- ============================================
+-- Tests for WITH XMLNAMESPACES + FOR XML (RAW, PATH, AUTO)
+--
+-- WITH XMLNAMESPACES declares prefix-to-URI mappings whose scope is one
+-- statement. T-SQL emits xmlns:prefix="uri" attributes on the appropriate
+-- elements:
+--   - FOR XML RAW: on each row element
+--   - FOR XML PATH: on the outermost row element
+--   - FOR XML AUTO: on the outermost (table-named) element
+-- DEFAULT 'uri' emits xmlns="uri" (applies to unprefixed elements only).
+-- ============================================
+
+-- ============================================
+-- SECTION: Base Tables
+-- ============================================
+
+CREATE TABLE forxml_ns_employees (
+    EmpID INT,
+    EmpName VARCHAR(50),
+    Dept VARCHAR(50)
+);
+GO
+
+INSERT INTO forxml_ns_employees VALUES (1, 'Alice', 'Sales');
+INSERT INTO forxml_ns_employees VALUES (2, 'Bob', 'IT');
+INSERT INTO forxml_ns_employees VALUES (3, NULL, 'HR');
+INSERT INTO forxml_ns_employees VALUES (4, 'Diana', NULL);
+GO
+
+CREATE TABLE forxml_ns_orders (
+    OrderID INT,
+    EmpID INT,
+    Amount DECIMAL(10, 2)
+);
+GO
+
+INSERT INTO forxml_ns_orders VALUES (101, 1, 100.50);
+INSERT INTO forxml_ns_orders VALUES (102, 2, 200.00);
+INSERT INTO forxml_ns_orders VALUES (103, 1, NULL);
+GO
+
+CREATE TABLE forxml_ns_simple (
+    a INT,
+    b VARCHAR(50)
+);
+GO
+
+INSERT INTO forxml_ns_simple VALUES (1, 'val1');
+INSERT INTO forxml_ns_simple VALUES (2, 'val2');
+GO
+
+CREATE TABLE forxml_ns_nullable (
+    a INT,
+    b VARCHAR(50)
+);
+GO
+
+INSERT INTO forxml_ns_nullable VALUES (NULL, NULL);
+INSERT INTO forxml_ns_nullable VALUES (1, NULL);
+INSERT INTO forxml_ns_nullable VALUES (NULL, 'x');
+GO
+
+-- Table with multiple data types
+CREATE TABLE forxml_ns_types (
+    IntCol INT,
+    VarcharCol VARCHAR(50),
+    BitCol BIT,
+    DecimalCol DECIMAL(10,2),
+    DateCol DATE
+);
+GO
+
+INSERT INTO forxml_ns_types VALUES (100, 'Text1', 1, 99.99, '2024-01-01');
+INSERT INTO forxml_ns_types VALUES (NULL, NULL, NULL, NULL, NULL);
+INSERT INTO forxml_ns_types VALUES (200, NULL, 0, NULL, '2024-06-15');
+GO
+
+-- Special characters table
+CREATE TABLE forxml_ns_special (
+    ID INT,
+    Value VARCHAR(100)
+);
+GO
+
+INSERT INTO forxml_ns_special VALUES (1, 'a & b');
+INSERT INTO forxml_ns_special VALUES (2, 'a < b');
+INSERT INTO forxml_ns_special VALUES (3, 'say "hello"');
+INSERT INTO forxml_ns_special VALUES (4, '<tag>x</tag>');
+GO
+
+-- Unicode/multibyte values table
+CREATE TABLE forxml_ns_unicode (
+    ID INT,
+    Name NVARCHAR(50)
+);
+GO
+
+INSERT INTO forxml_ns_unicode VALUES (1, N'日本語');
+INSERT INTO forxml_ns_unicode VALUES (2, N'中文');
+INSERT INTO forxml_ns_unicode VALUES (3, N'한국어');
+GO
+
+-- ============================================
+-- SECTION: Dependent Views
+-- ============================================
+
+CREATE VIEW forxml_ns_view1 AS
+SELECT EmpID, EmpName FROM forxml_ns_employees;
+GO
+
+CREATE VIEW forxml_ns_view2 AS
+SELECT a, b FROM forxml_ns_simple;
+GO

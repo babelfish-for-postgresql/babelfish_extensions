@@ -530,6 +530,83 @@ RETURNS SETOF XML
 AS 'babelfishpg_tsql', 'bbf_xmlnodes'
 LANGUAGE C STABLE STRICT PARALLEL SAFE;
 
+-- WITH XMLNAMESPACES support: extend FOR XML aggregate to carry namespace declarations
+-- and add namespace-aware overloads for XML data type methods.
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_agg', 'ANYELEMENT, int, text, boolean, text, boolean, boolean, text');
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_text_agg', 'ANYELEMENT, int, text, boolean, text, boolean, boolean, text');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_sfunc', 'INTERNAL, ANYELEMENT, int, text, boolean, text, boolean, boolean, text');
+
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
+    state INTERNAL,
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text,
+    elements boolean,
+    xsinil boolean,
+    auto_metadata text,
+    ns_decls text
+) RETURNS INTERNAL
+AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text,
+    elements boolean,
+    xsinil boolean,
+    auto_metadata text,
+    ns_decls text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_ffunc
+);
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text,
+    elements boolean,
+    xsinil boolean,
+    auto_metadata text,
+    ns_decls text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_text_ffunc
+);
+
+-- namespace-aware overload for XML EXIST(xpath) with WITH XMLNAMESPACES
+CREATE OR REPLACE FUNCTION sys.bbf_xmlexist(xpath_pattern TEXT, xml_element ANYELEMENT, namespaces TEXT[])
+RETURNS sys.BIT
+AS 'babelfishpg_tsql', 'bbf_xmlexist'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
+-- namespace-aware overload for XML QUERY(xpath) with WITH XMLNAMESPACES
+CREATE OR REPLACE FUNCTION sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT, namespaces TEXT[])
+RETURNS XML
+AS 'babelfishpg_tsql', 'bbf_xmlquery'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
+-- namespace-aware overload for XML VALUE(xpath) with WITH XMLNAMESPACES
+CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, datatype TEXT, xml_element ANYELEMENT, namespaces TEXT[])
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'bbf_xmlvalue'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
+-- namespace-aware overload for XML NODES(xpath) with WITH XMLNAMESPACES
+CREATE OR REPLACE FUNCTION sys.bbf_xmlnodes(xpath_pattern TEXT, xml_element ANYELEMENT, namespaces TEXT[])
+RETURNS SETOF XML
+AS 'babelfishpg_tsql', 'bbf_xmlnodes'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
 
 -- Helper function for extracting original (untruncated) function/procedure/trigger
 -- name from babelfish_function_ext. Only looks up the catalog when the physical
