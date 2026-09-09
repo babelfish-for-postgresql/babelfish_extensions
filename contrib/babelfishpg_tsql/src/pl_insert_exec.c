@@ -60,8 +60,11 @@ typedef struct
 	ExprContext *econtext;		/* expression context for projection */
 	ProjectionInfo *proj_info;	/* projection info for coercion */
 	TupleTableSlot *proj_slot;	/* result slot for projection */
-	CommandId	cid;			/* command ID obtained once in startup, shared across all tuples */
-	Relation	temp_rel;		/* temp buffer table, held open startup→shutdown */
+	/*
+	 * temp_rel and cid removed: rows now go directly into
+	 * insert_exec_ctx->row_buffer (a TopMemoryContext tuplestore) which
+	 * survives transaction aborts, making TRY/CATCH-inside-EXEC safe.
+	 */
 } DR_insertexec;
 
 /* Forward declarations for DestReceiver callbacks */
@@ -233,10 +236,19 @@ pltsql_set_insert_exec_context_info(const char *target_table)
 	 * level or inside the executed procedure.
 	 */
 	insert_exec_ctx->call_stack_entry = exec_state_call_stack;
+	/*
+	 * Snapshot the transaction nesting depth so the COMMIT/ROLLBACK guard in
+	 * error_if_xact_stmt_blocked_by_insert_exec can correctly detect whether a
+	 * BEGIN TRANSACTION was issued inside the INSERT EXEC body (rather than
+	 * hard-coding the threshold of 1, which breaks the dynamic-SQL path where
+	 * no implicit transaction is started before entry).
+	 */
+	insert_exec_ctx->nested_tran_count_at_start = NestedTranCount;
 }
 
 /*
- * Reset the global INSERT EXEC context to a clean state
+ * Reset the global INSERT EXEC context to a clean state.
+ * Frees the row buffer and cached TupleDesc before releasing the struct.
  */
 void
 pltsql_insert_exec_reset_all(void)
@@ -250,6 +262,14 @@ pltsql_insert_exec_reset_all(void)
 
 	if (ctx->target_table)
 		pfree(ctx->target_table);
+
+	/* Release the cross-transaction row buffer and its cached schema. */
+	if (ctx->row_buffer)
+		tuplestore_end(ctx->row_buffer);
+
+	if (ctx->buf_tupdesc)
+		FreeTupleDesc(ctx->buf_tupdesc);
+
 	pfree(ctx);
 }
 
@@ -316,21 +336,20 @@ pltsql_insert_exec_validate_column_count(PLtsql_execstate *estate, PLtsql_stmt_e
 	CachedPlanSource *plansource;
 	TupleDesc		result_desc;
 	int				query_natts;
-	Oid				temp_table_oid;
-	Relation		temp_rel;
-	TupleDesc		temp_tupdesc;
 	int				temp_natts;
 
 	/* Caller must ensure INSERT EXEC is active before calling */
 	Assert(pltsql_insert_exec_active());
 
 	/*
-	 * Temp table must exist. It is created during INSERT EXEC setup before any
-	 * procedure-body statement runs, so it is normally valid here.
+	 * Use the cached TupleDesc (TopMemoryContext) instead of opening the
+	 * staging temp table -- the table may have been destroyed by a
+	 * TRY/CATCH abort, but buf_tupdesc always reflects the column layout.
 	 */
-	temp_table_oid = insert_exec_ctx->temp_table_oid;
-	if (!OidIsValid(temp_table_oid))
+	if (insert_exec_ctx->buf_tupdesc == NULL)
 		return;
+
+	temp_natts = insert_exec_ctx->buf_tupdesc->natts;
 
 	if (expr == NULL || expr->query == NULL)
 		return;
@@ -365,12 +384,6 @@ pltsql_insert_exec_validate_column_count(PLtsql_execstate *estate, PLtsql_stmt_e
 	}
 
 	query_natts = result_desc->natts;
-
-	/* Get temp table column count */
-	temp_rel = table_open(temp_table_oid, NoLock);
-	temp_tupdesc = RelationGetDescr(temp_rel);
-	temp_natts = temp_tupdesc->natts;
-	table_close(temp_rel, NoLock);
 
 	/* Done reading the shape; drop the throwaway plan. */
 	SPI_freeplan(plan);
@@ -492,15 +505,21 @@ create_insert_exec_temp_table(const char *target_table, const char *column_list,
 	/*
 	 * Create the temp buffer table by selecting the desired columns
 	 * with no rows. PostgreSQL infers column types from the SELECT.
-	 * ON COMMIT DROP ensures automatic cleanup at transaction end.
+	 *
+	 * We use ON COMMIT PRESERVE ROWS (not ON COMMIT DROP) because the
+	 * implicit transaction started by insert_exec_setup may be committed
+	 * inside the inner batch (e.g. PLTsqlCommitTransaction between
+	 * statements). ON COMMIT DROP would fire at that point and silently
+	 * destroy the buffer table before flush_insert_exec_temp_table has a
+	 * chance to read it. The table is instead dropped explicitly in
+	 * insert_exec_flush_and_cleanup after the flush completes.
 	 *
 	 * This CREATE TABLE goes through heap_create_with_catalog, which takes
 	 * AccessExclusiveLock on the new relation and holds it until end of transaction.
-	 * 
 	 */
 	initStringInfo(&create_stmt);
 	appendStringInfo(&create_stmt,
-		"CREATE TEMP TABLE %s ON COMMIT DROP AS SELECT %s FROM %s WITH NO DATA",
+		"CREATE TEMP TABLE %s ON COMMIT PRESERVE ROWS AS SELECT %s FROM %s WITH NO DATA",
 		quote_identifier(temp_table_name), select_cols, qualified_target);
 
 	if (cols_to_free)
@@ -656,14 +675,15 @@ CreateInsertExecDestReceiver(void)
 /*
  * insertexec_startup - executor startup for INSERT EXEC receiver
  *
- * Validates column count and builds coercion expressions for type 
+ * Validates column count and builds coercion expressions for type
  * conversion using PostgreSQL's ExecBuildProjectionInfo/ExecProject.
+ * Uses insert_exec_ctx->buf_tupdesc (a TopMemoryContext copy) so startup
+ * works after a TRY/CATCH abort destroyed the original staging temp table.
  */
 static void
 insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
 	DR_insertexec *myState = (DR_insertexec *) self;
-	Relation	temp_rel;
 	TupleDesc	temp_tupdesc;
 	TupleDesc	proj_tupdesc;
 	int			result_natts;
@@ -672,21 +692,16 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	List	   *target_list = NIL;
 
 	/*
-	 * Validate column count
+	 * Validate column count against the cached TupleDesc. This descriptor
+	 * was copied to TopMemoryContext in insert_exec_setup so it survives any
+	 * transaction abort that may have dropped the original staging table.
 	 */
 	result_natts = typeinfo->natts;
 
-	if (!OidIsValid(insert_exec_ctx->temp_table_oid))
-		elog(ERROR, "INSERT EXEC failed due to missing temp table OID");
+	if (insert_exec_ctx->buf_tupdesc == NULL)
+		elog(ERROR, "INSERT EXEC failed due to missing buffer descriptor");
 
-	/*
-	 * Open the temp buffer table once and hold it open until shutdown, so all
-	 * tuples of this result set are inserted through a single relation handle.
-	 */
-	temp_rel = table_open(insert_exec_ctx->temp_table_oid, NoLock);
-
-	myState->temp_rel = temp_rel;
-	temp_tupdesc = RelationGetDescr(temp_rel);
+	temp_tupdesc = insert_exec_ctx->buf_tupdesc;
 	temp_natts = temp_tupdesc->natts;
 
 	if (result_natts != temp_natts)
@@ -742,8 +757,7 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	}
 
 	/*
-	 * Copy the temp table descriptor for the projection result slot. The
-	 * relation itself stays open (in myState->temp_rel) for the inserts.
+	 * Copy the cached descriptor for the projection result slot.
 	 */
 	proj_tupdesc = CreateTupleDescCopy(temp_tupdesc);
 
@@ -757,20 +771,16 @@ insertexec_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 												 myState->proj_slot,
 												 NULL,		/* no parent PlanState */
 												 typeinfo);	/* input descriptor */
-
-	/*
-	 * Pre-assign XID before parallel mode starts. table_tuple_insert() calls
-	 * GetCurrentTransactionId() which fails in parallel mode if no XID exists.
-	 * rStartup runs before EnterParallelMode, so assigning here avoids the error.
-	 */
-	(void) GetCurrentTransactionId();
-
-	/* Obtain command ID once - all tuples share the same cid for MVCC consistency */
-	myState->cid = GetCurrentCommandId(true);
 }
 
 /*
- * insertexec_receive - receive each tuple and insert into temp table
+ * insertexec_receive - receive each tuple and store in the tuplestore row buffer.
+ *
+ * Rows are written to insert_exec_ctx->row_buffer (a Tuplestorestate in
+ * TopMemoryContext with interXact=true).  This buffer survives both savepoint
+ * rollbacks and full transaction aborts, so TRY/CATCH inside EXEC(@sql) no
+ * longer loses rows written before the error, and the CATCH block can still
+ * route its output here even after the transaction was reset.
  */
 static bool
 insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
@@ -780,7 +790,6 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 
 	Assert(myState->proj_info != NULL);
 	Assert(myState->econtext != NULL);
-	Assert(myState->temp_rel != NULL);
 
 	/* Reset per-tuple memory context for expression evaluation */
 	ResetExprContext(myState->econtext);
@@ -791,8 +800,13 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 	/* Project tuple with type coercion */
 	insert_slot = ExecProject(myState->proj_info);
 
-	/* Insert the projected tuple */
-	table_tuple_insert(myState->temp_rel, insert_slot, myState->cid, 0, NULL);
+	/*
+	 * Store the projected tuple in the cross-transaction row buffer.
+	 * tuplestore_puttupleslot copies the tuple into TopMemoryContext (the
+	 * context the tuplestore was created in) so the data survives any
+	 * subsequent transaction abort inside the executed procedure.
+	 */
+	tuplestore_puttupleslot(insert_exec_ctx->row_buffer, insert_slot);
 
 	/* INSERT EXEC rows-affected count */
 	insert_exec_ctx->rows_processed++;
@@ -801,10 +815,10 @@ insertexec_receive(TupleTableSlot *slot, DestReceiver *self)
 }
 
 /*
- * insertexec_shutdown - executor end for INSERT EXEC receiver
+ * insertexec_shutdown - executor end for INSERT EXEC receiver.
  *
- * Clean up the expression context, projection slot, and close the temp buffer
- * table opened in startup.
+ * Frees the expression context and projection slot.  The row buffer
+ * (tuplestore) is owned by InsertExecContext and outlives the receiver.
  */
 static void
 insertexec_shutdown(DestReceiver *self)
@@ -818,10 +832,6 @@ insertexec_shutdown(DestReceiver *self)
 	Assert(myState->econtext != NULL);
 	FreeExprContext(myState->econtext, true);
 	myState->econtext = NULL;
-
-	Assert(myState->temp_rel != NULL);
-	table_close(myState->temp_rel, NoLock);
-	myState->temp_rel = NULL;
 }
 
 /*
@@ -894,9 +904,35 @@ insert_exec_setup(PLtsql_execstate *estate,
 	/* Hold target table open to detect schema alterations during execution */
 	pltsql_insert_exec_open_target_table(info->target, info->schema, info->db_name);
 
-	/* Create temp table based on target table structure */
+	/* Create staging temp table whose schema matches the target's column list */
 	insert_exec_ctx->temp_table_oid = create_insert_exec_temp_table(info->target, column_list,
 												   info->schema, info->db_name);
+
+	/*
+	 * Copy the staging table TupleDesc to TopMemoryContext and create a
+	 * cross-transaction row buffer (tuplestore) there.  Both survive
+	 * AbortCurrentTransaction() so TRY/CATCH inside the executed batch
+	 * cannot lose buffered rows or prevent the CATCH block from routing
+	 * its output back to DR_insertexec.
+	 */
+	{
+		Relation		temp_rel;
+		MemoryContext	old_ctx;
+
+		old_ctx = MemoryContextSwitchTo(TopMemoryContext);
+
+		/* interXact=true: survives transaction boundaries */
+		insert_exec_ctx->row_buffer =
+			tuplestore_begin_heap(false, true, work_mem);
+
+		/* Cache column layout so insertexec_startup needs no open relation */
+		temp_rel = table_open(insert_exec_ctx->temp_table_oid, NoLock);
+		insert_exec_ctx->buf_tupdesc =
+			CreateTupleDescCopy(RelationGetDescr(temp_rel));
+		table_close(temp_rel, NoLock);
+
+		MemoryContextSwitchTo(old_ctx);
+	}
 
 	if (column_list != NULL)
 		pfree(column_list);
@@ -905,14 +941,76 @@ insert_exec_setup(PLtsql_execstate *estate,
 }
 
 /*
- * insert_exec_flush_and_cleanup - Clean up INSERT EXEC after successful execution.
+ * populate_staging_table_from_tuplestore
  *
- * Flushes temp table to target, resets context, and commits the implicit
- * transaction if one was started. The flush target name parts come from the
- * parser-provided info: for a cross-DB target (db..table) the flush must use
- * the logical T-SQL name (db.schema.table) so Babelfish's cross-DB rewriting
- * resolves it; same-DB/temp targets are resolved by bare name via search_path,
- * so schema/db are passed as NULL there.
+ * Write all rows from the cross-transaction row buffer into the staging
+ * temp table so flush_insert_exec_temp_table can SELECT from it. If the
+ * original staging table was destroyed by a TRY/CATCH transaction abort
+ * it is transparently re-created from the same target schema first.
+ */
+static void
+populate_staging_table_from_tuplestore(const char *target_table,
+										  const char *column_list,
+										  const char *schema_name_in,
+										  const char *db_name_in)
+{
+	Tuplestorestate *tuplestore = insert_exec_ctx->row_buffer;
+	Relation		staging_rel;
+	TupleTableSlot *slot;
+	CommandId		cid;
+	char		   *tname;
+
+	if (tuplestore == NULL || insert_exec_ctx->buf_tupdesc == NULL)
+		return;						/* nothing buffered */
+
+	/*
+	 * If the staging table was rolled back by a TRY/CATCH abort, re-create
+	 * it now. get_rel_name returns NULL when the OID is no longer live.
+	 */
+	tname = OidIsValid(insert_exec_ctx->temp_table_oid)
+		? get_rel_name(insert_exec_ctx->temp_table_oid)
+		: NULL;
+
+	if (tname == NULL)
+		insert_exec_ctx->temp_table_oid =
+			create_insert_exec_temp_table(target_table, column_list,
+										   schema_name_in, db_name_in);
+
+	/*
+	 * Write buffered rows into the staging table via direct heap inserts.
+	 * The tuplestore holds MinimalTuples already coerced to the target
+	 * column layout by insertexec_receive, so no further coercion is needed.
+	 */
+	staging_rel = table_open(insert_exec_ctx->temp_table_oid, RowExclusiveLock);
+	slot = MakeSingleTupleTableSlot(RelationGetDescr(staging_rel),
+									 &TTSOpsMinimalTuple);
+	cid = GetCurrentCommandId(true);
+
+	tuplestore_rescan(tuplestore);
+	while (tuplestore_gettupleslot(tuplestore, true, false, slot))
+	{
+		table_tuple_insert(staging_rel, slot, cid, 0, NULL);
+		ExecClearTuple(slot);
+	}
+
+	ExecDropSingleTupleTableSlot(slot);
+	table_close(staging_rel, RowExclusiveLock);
+
+	/*
+	 * Make the freshly inserted rows visible to the subsequent
+	 * flush_insert_exec_temp_table query (runs as a new command).
+	 */
+	CommandCounterIncrement();
+}
+
+/*
+ * insert_exec_flush_and_cleanup - flush buffered rows to the target table.
+ *
+ * 1. populate_staging_table_from_tuplestore transfers the row buffer into
+ *    the staging temp table (re-creating it if a TRY/CATCH abort killed it).
+ * 2. flush_insert_exec_temp_table runs INSERT INTO target SELECT * FROM staging.
+ * 3. The staging table is dropped and the INSERT EXEC context freed.
+ * 4. The implicit transaction (if any) is committed.
  */
 void
 insert_exec_flush_and_cleanup(PLtsql_execstate *estate, InsertExecInfo *info)
@@ -920,16 +1018,43 @@ insert_exec_flush_and_cleanup(PLtsql_execstate *estate, InsertExecInfo *info)
 	char	   *column_list = build_quoted_column_list(info->columns);
 	const char *flush_schema = (info->db_name != NULL || info->schema != NULL) ? info->schema : NULL;
 
+	/*
+	 * Transfer all buffered rows into the staging temp table.
+	 * If the table was destroyed by a TRY/CATCH abort it is transparently
+	 * re-created here from the same target schema.
+	 */
+	populate_staging_table_from_tuplestore(info->target, column_list,
+											   info->schema, info->db_name);
+
+	/* INSERT INTO target SELECT * FROM staging */
 	flush_insert_exec_temp_table(estate, flush_schema, info->db_name, column_list);
+
+	/*
+	 * Drop the staging temp table.  Done before pltsql_insert_exec_reset_all()
+	 * so insert_exec_ctx is still valid for the OID lookup.
+	 */
+	if (insert_exec_ctx != NULL && OidIsValid(insert_exec_ctx->temp_table_oid))
+	{
+		char	   *tname = get_rel_name(insert_exec_ctx->temp_table_oid);
+
+		if (tname != NULL)
+		{
+			StringInfoData drop_q;
+
+			initStringInfo(&drop_q);
+			appendStringInfo(&drop_q, "DROP TABLE IF EXISTS %s",
+							 quote_identifier(tname));
+			SPI_execute(drop_q.data, false, 0);
+			pfree(drop_q.data);
+		}
+	}
 
 	if (column_list != NULL)
 		pfree(column_list);
 
 	/*
-	 * Reset the context before committing. The context is only needed through
-	 * the flush above, so it is safe to clear here. If the commit below fails,
-	 * the transaction aborts and pltsql_xact_cb runs the same reset (now a
-	 * no-op) - so the early reset never leaves a dangling context.
+	 * Reset the context (frees tuplestore and buf_tupdesc). Done before the
+	 * optional commit so a commit failure cannot leave a dangling context.
 	 */
 	pltsql_insert_exec_reset_all();
 

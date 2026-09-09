@@ -1489,7 +1489,10 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		/*
 		 * Setup INSERT EXEC (new path): create temp table to capture procedure
 		 * output. No implicit transaction for dynamic SQL (different semantics
-		 * than stored procs).
+		 * than stored procs: starting a transaction block here triggers a
+		 * use-after-free in pltsql_xact_cb when commit_stmt commits the
+		 * implicit transaction while the outer estate's expression contexts
+		 * are still alive on simple_econtext_stack).
 		 */
 		if (stmt->insert_exec != NULL)
 			insert_exec_setup(estate, stmt->insert_exec, false);

@@ -9695,14 +9695,23 @@ pltsql_xact_cb(XactEvent event, void *arg)
 		ResetTopTransactionName();
 
 		/*
-		 * Clean up INSERT EXEC context on transaction end. This is a signal that an
-		 * aborted INSERT EXEC has nothing to flush: on abort the buffer temp
-		 * table is gone, so clearing the context here makes the subsequent
-		 * flush a no-op (it early-returns on a NULL context) instead of
-		 * opening a dropped relation.
+		 * Clean up INSERT EXEC context on transaction commit or abort.
+		 *
+		 * On abort: if abort_in_trycatch is set the abort was triggered inside
+		 * a TRY/CATCH block that wraps the INSERT EXEC.  We must NOT reset the
+		 * context here because (a) the row buffer (tuplestore in TopMemoryContext
+		 * with interXact=true) already holds the rows and survives the abort, and
+		 * (b) the CATCH block needs insert_exec_ctx to remain non-NULL so that
+		 * exec_stmt_push_result continues routing output to DR_insertexec.
+		 * We simply clear the flag and let the context live on.
 		 */
 		if (pltsql_insert_exec_active())
-			pltsql_insert_exec_reset_all();
+		{
+			if (event == XACT_EVENT_ABORT && insert_exec_ctx->abort_in_trycatch)
+				insert_exec_ctx->abort_in_trycatch = false;  /* clear; ctx survives */
+			else
+				pltsql_insert_exec_reset_all();
+		}
 	}
 
 	/*

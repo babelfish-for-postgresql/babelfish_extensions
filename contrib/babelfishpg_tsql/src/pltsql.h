@@ -37,6 +37,7 @@
 #include "utils/plancache.h"
 #include "utils/portal.h"
 #include "utils/typcache.h"
+#include "utils/tuplestore.h"
 #include "tcop/utility.h"
 
 #include "dynavec.h"
@@ -2530,6 +2531,24 @@ typedef struct InsertExecContext
 	Oid			target_rel_oid;			/* OID of target table - lock held to detect schema changes */
 	bool		is_target_relation_modified;	/* Set by bbf_object_access_hook when target table is altered */
 	uint64		rows_processed;			/* Rows captured by the DestReceiver = INSERT EXEC rows-affected */
+	int			nested_tran_count_at_start;	/* NestedTranCount when INSERT EXEC started (after implicit txn) */
+	/*
+	 * Row buffer -- a Tuplestorestate allocated in TopMemoryContext with
+	 * interXact=true. Rows written here survive both subtransaction and full
+	 * transaction aborts, so TRY/CATCH inside dynamic SQL cannot lose rows.
+	 * buf_tupdesc is a TopMemoryContext copy of the staging table TupleDesc
+	 * used to set up type coercion in insertexec_startup even after an abort
+	 * destroys the original temp table.
+	 */
+	Tuplestorestate *row_buffer;		/* in TopMemoryContext, interXact */
+	TupleDesc	buf_tupdesc;		/* TupleDesc copy in TopMemoryContext */
+	/*
+	 * Set to true just before AbortCurrentTransaction() when the abort is
+	 * caught by a TRY/CATCH block surrounding INSERT EXEC. pltsql_xact_cb
+	 * checks this flag to skip the context reset so the CATCH block can
+	 * still route output to DR_insertexec. Cleared once seen.
+	 */
+	bool		abort_in_trycatch;
 } InsertExecContext;
 
 extern InsertExecContext *insert_exec_ctx;

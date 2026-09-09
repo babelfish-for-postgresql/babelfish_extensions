@@ -1452,6 +1452,13 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback current transaction");
 			/* Hold portals to make sure that cursors work */
 			HoldPinnedPortals();
+			/*
+			 * If INSERT EXEC is active, flag the context so pltsql_xact_cb
+			 * skips the reset. The TRY/CATCH block above us will catch the
+			 * error, and the CATCH block must still route output to DR_insertexec.
+			 */
+			if (pltsql_insert_exec_active())
+				insert_exec_ctx->abort_in_trycatch = true;
 			AbortCurrentTransaction();
 			StartTransactionCommand();
 			MemoryContextSwitchTo(cur_ctxt);

@@ -92,7 +92,7 @@ error_if_xact_stmt_blocked_by_insert_exec(bool is_commit)
 
 	if (is_commit)
 	{
-		if (NestedTranCount <= 1)
+		if (NestedTranCount <= insert_exec_ctx->nested_tran_count_at_start)
 			ereport(ERROR,
 					(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 					 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
@@ -801,15 +801,29 @@ PLTsqlStartTransaction(char *txnName)
 	elog(DEBUG2, "TSQL TXN Start transaction %d", NestedTranCount);
 	if (!IsTransactionBlockActive())
 	{
-		Assert(NestedTranCount == 0);
-		BeginTransactionBlock();
+		if (!pltsql_insert_exec_active())
+		{
+			/*
+			 * Normal path: start a real PG transaction block and track the name.
+			 */
+			Assert(NestedTranCount == 0);
+			BeginTransactionBlock();
 
+			/*
+			 * set transaction name in savepoint field. It is needed to
+			 * distinguish rollback vs rollback to savepoint requests.
+			 */
+			if (txnName != NULL)
+				SetTopTransactionName(txnName);
+		}
 		/*
-		 * set transaction name in savepoint field. It is needed to
-		 * distinguish rollback vs rollback to savepoint requests.
+		 * Inside INSERT-EXEC with no outer transaction: just increment @@TRANCOUNT.
+		 * Do NOT call BeginTransactionBlock() here.  The INSERT-EXEC executor does
+		 * not run the CommitTransactionCommand() lifecycle that normally advances PG
+		 * state from TBLOCK_BEGIN to TBLOCK_INPROGRESS, so calling
+		 * BeginTransactionBlock() would leave PG in an inconsistent state and cause
+		 * EndTransactionBlock() to FATAL when COMMIT is later processed.
 		 */
-		if (txnName != NULL)
-			SetTopTransactionName(txnName);
 	}
 	++NestedTranCount;
 
@@ -821,8 +835,12 @@ void
 PLTsqlCommitTransaction(QueryCompletion *qc, bool chain)
 {
 	elog(DEBUG2, "TSQL TXN Commit transaction %d", NestedTranCount);
-	if (NestedTranCount <= 1)
+	if (NestedTranCount <= 1 && !pltsql_insert_exec_active())
 	{
+		/*
+		 * Outside INSERT-EXEC at the outermost transaction level: do a real PG
+		 * commit.
+		 */
 		RequireTransactionBlock(true, "COMMIT");
 		if (!EndTransactionBlock(chain))
 		{
@@ -834,6 +852,12 @@ PLTsqlCommitTransaction(QueryCompletion *qc, bool chain)
 	}
 	else
 	{
+		/*
+		 * Either we are inside INSERT-EXEC (where BeginTransactionBlock was
+		 * intentionally skipped, so EndTransactionBlock must not be called), or we
+		 * are in a nested BEGIN/COMMIT pair -- just decrement the T-SQL nesting
+		 * counter without touching the PG transaction state.
+		 */
 		--NestedTranCount;
 	}
 
