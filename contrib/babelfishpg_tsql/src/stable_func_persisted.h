@@ -4,6 +4,7 @@
 
 #include "postgres.h"
 #include "nodes/parsenodes.h"
+#include "nodes/plannodes.h"
 
 /* Entry for whitelisted function lookup */
 typedef struct {
@@ -23,14 +24,17 @@ typedef struct
 extern Node *stable_persisted_hook(Node *expr);
 
 /* GUC check functions for PERSISTED computed columns */
-extern bool check_persisted_gucs(void);
+extern bool has_mismatched_set_options(void);
 extern char *get_mismatched_persisted_gucs(void);
 
 /* Check if table has PERSISTED computed columns */
 extern bool table_has_persisted_computed_cols(Oid relid);
 
-/* Check GUCs for DML into tables with PERSISTED computed columns */
-extern void guc_check_dml(Query *parse);
+/*
+ * Check GUCs for DML into tables with PERSISTED computed columns.
+ * Called from ExecutorStart so that cached plans are still checked.
+ */
+extern void guc_check_dml(PlannedStmt *pstmt);
 
 /* Rewrite computed column references in SELECT when GUCs don't match */
 extern void query_rewrite_persisted(Query *parse);
