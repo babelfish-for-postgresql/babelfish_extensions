@@ -1437,6 +1437,19 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
 	int			ef = pltsql_explain_only ? EXEC_FLAG_EXPLAIN_ONLY : eflags;
 
+	/*
+	 * Check GUCs for DML into tables with PERSISTED computed columns.
+	 * Only applies to T-SQL dialect; skip during dump/restore since
+	 * GUC state may not reflect the original session settings.
+	 *
+	 * This is done here rather than in the planner hook because a cached plan
+	 * skips planning altogether, which would let DML from a stored procedure
+	 * or prepared statement persist a value computed under the wrong SET
+	 * options without any error.
+	 */
+	if (sql_dialect == SQL_DIALECT_TSQL && !babelfish_dump_restore)
+		guc_check_dml(queryDesc->plannedstmt);
+
 	if (pltsql_explain_analyze)
 	{
 		PLtsql_execstate *estate = get_current_tsql_estate();
@@ -5975,7 +5988,7 @@ persisted_col_planner_rewrite(Query *query)
 	if (escape_hatch_persisted_col_guc_check == EH_IGNORE)
 		return query;
 
-	if (!check_persisted_gucs())
+	if (has_mismatched_set_options())
 		query_rewrite_persisted(query);
 
 	return query;
@@ -5989,17 +6002,6 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 
 	if (IS_TDS_CLIENT() && !InSecurityRestrictedOperation())
 		update_rte_perms_info_walker((Node *) parse, NULL);
-
-	/*
-     * Check GUCs for DML into tables with PERSISTED computed columns.
-     * Only applies to T-SQL dialect; skip during dump/restore since
-     * GUC state may not reflect the original session settings.
-     */
-	if (sql_dialect == SQL_DIALECT_TSQL && !babelfish_dump_restore &&
-		(parse->commandType == CMD_INSERT || parse->commandType == CMD_UPDATE || parse->commandType == CMD_DELETE))
-	{
-		guc_check_dml(parse);
-	}
 
 	if (pltsql_explain_analyze)
 	{
