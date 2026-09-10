@@ -1502,13 +1502,13 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						arg2type = InvalidOid;
 				int32		typmod1 = -1,
 						typmod2 = -1;
-				uint8_t		scale1,
+				int32		scale1,
 						scale2,
 						precision1,
 						precision2;
-				uint8_t		scale,
+				int32		scale,
 						precision;
-				uint8_t		integralDigitCount = 0;
+				int32		integralDigitCount = 0;
 				bool		found_typmod;
 				int32 		fixsize_default_typmod;
 
