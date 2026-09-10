@@ -154,7 +154,7 @@
 <tsql>{tsql_ttname}	{
 					SET_YYLLOC();
 					CHECK_LOCAL_TEMP_TABLE_LENGTH(yytext);
-					yylval->str = pstrdup(yytext);
+					yylval->str = downcase_truncate_identifier(yytext, yyleng, true);
 					return IDENT;
 				}
 

@@ -690,6 +690,7 @@ forxml-auto
 BABEL-5264
 BABEL-6037
 babel_sqlvariant_coerce_type
+temp_table_long_name_enr
 BABEL-login-db-long-identifiers
 long-identifiers-objects
 BABEL-6813

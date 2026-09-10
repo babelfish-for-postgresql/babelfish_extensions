@@ -1199,7 +1199,19 @@ get_enr_list(PG_FUNCTION_ARGS)
 		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = ((EphemeralNamedRelationMetadata) lfirst(lc))->reliddesc;
-		values[1] = CStringGetTextDatum(((EphemeralNamedRelationMetadata) lfirst(lc))->name);
+		{
+			EphemeralNamedRelationMetadata md = (EphemeralNamedRelationMetadata) lfirst(lc);
+			const char *name = md->name;
+
+			/* Use original untruncated name from reloptions if available */
+			if (md->enrtype == ENR_TSQL_TEMP)
+			{
+				char *orig = get_original_relname(md->reliddesc, false);
+				if (orig)
+					name = orig;
+			}
+			values[1] = CStringGetTextDatum(name);
+		}
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
@@ -2724,7 +2736,12 @@ object_name(PG_FUNCTION_ARGS)
 	enr = GetENRTempTableWithOid(object_id, false);
 	if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 	{
-		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(enr->md.name));
+		const char *name = enr->md.name;
+		char *orig = get_original_relname(object_id, false);
+
+		if (orig)
+			name = orig;
+		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(name));
 	}
 
 	/* search in pg_class by object_id */
