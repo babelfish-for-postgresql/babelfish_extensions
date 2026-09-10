@@ -35,6 +35,7 @@ babelfish_db_seq
 babelfish_domain_mapping
 babelfish_extended_properties
 babelfish_function_ext
+babelfish_identifier_mapping
 babelfish_namespace_ext
 babelfish_partition_depend
 babelfish_partition_function

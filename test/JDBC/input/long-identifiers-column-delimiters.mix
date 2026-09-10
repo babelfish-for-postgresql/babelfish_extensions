@@ -1,0 +1,45 @@
+-- BABEL-2422: A long column name (> 63 bytes) that gets truncated internally
+-- must be accessible consistently whether referenced without a delimiter, with
+-- square brackets, or with double quotes. Previously delimited references used a
+-- different truncation than the undelimited form, so [col]/"col" failed with
+-- "column does not exist". CREATE TABLE with such long identifiers also used to
+-- emit a "detected write past chunk end" memory-corruption warning; this test
+-- exercising the same statement guards against its return.
+
+-- tsql
+
+-- Long undelimited column name and a long delimited (with spaces) column name
+-- in a single CREATE TABLE (mirrors the original reproducer).
+CREATE TABLE babel2422 (
+    i INT,
+    [HEY, this actually works, but if the delimited colname gets too long it will get truncated] INT,
+    Hey_this_actually_works_but_if_the_name_gets_longer_than_63_chars_it_truncates INT
+);
+GO
+
+INSERT INTO babel2422 VALUES (1, 88, 99);
+GO
+
+-- Access the long undelimited column, referenced three ways: undelimited,
+-- square brackets, and double quotes. All must return the same value (99).
+SELECT Hey_this_actually_works_but_if_the_name_gets_longer_than_63_chars_it_truncates FROM babel2422;
+GO
+SELECT [Hey_this_actually_works_but_if_the_name_gets_longer_than_63_chars_it_truncates] FROM babel2422;
+GO
+SELECT "Hey_this_actually_works_but_if_the_name_gets_longer_than_63_chars_it_truncates" FROM babel2422;
+GO
+
+-- Access the long delimited (with spaces) column via brackets and via quotes.
+SELECT [HEY, this actually works, but if the delimited colname gets too long it will get truncated] FROM babel2422;
+GO
+SELECT "HEY, this actually works, but if the delimited colname gets too long it will get truncated" FROM babel2422;
+GO
+
+-- The full original column names must be visible in the catalogs.
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel2422') AND name LIKE '%truncated%' ORDER BY name;
+GO
+SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'babel2422' AND COLUMN_NAME LIKE '%truncated%' ORDER BY COLUMN_NAME;
+GO
+
+DROP TABLE babel2422;
+GO

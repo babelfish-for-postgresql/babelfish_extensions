@@ -1093,7 +1093,7 @@ GRANT ALL on PROCEDURE sys.sp_describe_undeclared_parameters TO PUBLIC;
 CREATE OR REPLACE VIEW sys.sp_tables_view AS
 SELECT
 t2.dbname AS TABLE_QUALIFIER,
-CAST(t3.name AS name) AS TABLE_OWNER,
+CAST(t3.name AS sys.sysname) AS TABLE_OWNER,
 sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname)::sys.sysname AS TABLE_NAME,
 
 CASE 
@@ -3233,7 +3233,7 @@ BEGIN
 			IF @objtype = 'COLUMN'
 				BEGIN
 					DECLARE @col_count INT;
-					SELECT @col_count = COUNT(*)FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @curr_relname and COLUMN_NAME = @subname;
+					SELECT @col_count = COUNT(*)FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname)) and COLUMN_NAME = sys.babelfish_truncate_identifier(pg_catalog.lower(@subname));
 					IF @col_count < 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;
@@ -3245,13 +3245,13 @@ BEGIN
 					DECLARE @relid INT = 0;
 					DECLARE @index_count INT;
 					SELECT @relid = object_id FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-						WHERE s1.name = @schemaname AND o1.name = @curr_relname;
+						WHERE s1.name = @schemaname AND o1.name = sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname));
 					IF @relid = 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;
 						END
 					SELECT @index_count = COUNT(*) FROM pg_index i JOIN pg_class c ON i.indexrelid = c.oid
-						WHERE i.indrelid = @relid AND c.relname = sys.babelfish_construct_unique_index_name(@subname, @curr_relname);
+						WHERE i.indrelid = @relid AND c.relname = sys.babelfish_construct_unique_index_name(sys.babelfish_truncate_identifier(pg_catalog.lower(@subname)), sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname)));
 					IF @index_count < 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;

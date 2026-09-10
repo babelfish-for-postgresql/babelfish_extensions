@@ -1,0 +1,21 @@
+-- Verify constraint names after upgrade
+SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_PK%CatVU';
+GO
+
+SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_Unique%CatVU';
+GO
+
+SELECT name FROM sys.check_constraints WHERE name LIKE 'Very_Long_Check%CatVU';
+GO
+
+-- Verify sequence name after upgrade
+SELECT name FROM sys.sequences WHERE name LIKE 'Very_Long_Sequence%CatVU';
+GO
+
+-- Verify type name after upgrade
+SELECT name FROM sys.types WHERE name LIKE 'Very_Long_Type%CatVU';
+GO
+
+-- Verify parameter name after upgrade
+SELECT name FROM sys.all_parameters WHERE name LIKE '%Very_Long_Parameter%CatVU';
+GO

@@ -685,15 +685,11 @@ go
 -- this returns 'principal not found' due to a bug in SUSER_ID() for names > 63 chars
 execute sp_changedbowner "LOGIN64long_3456789012345678901234567890123456789012345678901234"
 go
-~~ERROR (Code: 50000)~~
-
-~~ERROR (Message: Cannot find the principal 'LOGIN64long_3456789012345678901234567890123456789012345678901234', because it does not exist or you do not have permission.)~~
-
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
 nvarchar#!#nvarchar
-DB64long_0123456789012345678901234567890123456789012345678901234#!#dba_login_sp
+DB64long_0123456789012345678901234567890123456789012345678901234#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
 ~~END~~
 
 use master
@@ -709,15 +705,11 @@ go
 -- this returns 'principal not found' due to a bug in SUSER_ID() for names > 63 chars
 execute sp_changedbowner "LOGIN64long_3456789012345678901234567890123456789012345678901234"
 go
-~~ERROR (Code: 50000)~~
-
-~~ERROR (Message: Cannot find the principal 'LOGIN64long_3456789012345678901234567890123456789012345678901234', because it does not exist or you do not have permission.)~~
-
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
 nvarchar#!#nvarchar
-DB64long_0123456789012345678901234567890123456789012345678901234#!#dba_login_sp
+DB64long_0123456789012345678901234567890123456789012345678901234#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
 ~~END~~
 
 use master

@@ -4576,6 +4576,43 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		CatalogTupleInsert(bbf_function_ext_rel, tuple);
 	}
 
+	/* Store long parameter names in babelfish_identifier_mapping */
+	if (queryString && physical_schemaname)
+	{
+		foreach(x, parameters)
+		{
+			FunctionParameter *fp = (FunctionParameter *) lfirst(x);
+
+			/*
+			 * Only parameters whose physical name may have been truncated
+			 * need a mapping entry. Gate on the truncated-name length before
+			 * doing the (more expensive) source-text extraction. A multibyte
+			 * name can truncate to fewer than NAMEDATALEN-1 bytes on a
+			 * character boundary, so use BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD to
+			 * match the lookup threshold in
+			 * sys.bbf_get_original_identifier_name (octet_length >= 60);
+			 * insert_bbf_ident_mapping makes the final store/skip decision
+			 * based on the original name's length.
+			 */
+			if (fp->name && fp->location >= 0 &&
+				(size_t) fp->location < strlen(queryString) &&
+				strlen(fp->name) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+			{
+				const char *param_start = queryString + fp->location;
+				char *orig_param = extract_identifier(param_start, NULL);
+
+				if (orig_param)
+				{
+					insert_bbf_ident_mapping(fp->name, orig_param,
+											 physical_schemaname,
+											 ProcedureRelationId,
+											 NameStr(form_proctup->proname));
+					pfree(orig_param);
+				}
+			}
+		}
+	}
+
 	pfree(func_signature);
 	pfree(physical_schemaname);
 	pfree(schema_name_NameData);
@@ -5599,6 +5636,7 @@ replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *far
 			}
 			if (!has_default)
 			{
+
 				arg_names = fetch_func_input_arg_names(func_tuple);
 				
 				if (proc_form->prokind == PROKIND_PROCEDURE)

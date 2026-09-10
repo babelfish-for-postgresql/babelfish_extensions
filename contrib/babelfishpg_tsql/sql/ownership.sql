@@ -101,6 +101,49 @@ CREATE TABLE sys.babelfish_namespace_ext (
 );
 GRANT SELECT ON sys.babelfish_namespace_ext TO PUBLIC;
 
+-- BABELFISH_IDENTIFIER_MAPPING
+CREATE TABLE sys.babelfish_identifier_mapping (
+	nspname NAME NOT NULL,
+	pg_catalog_type OID NOT NULL,
+	truncated_identifier_name NAME NOT NULL,
+	original_identifier_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+	parent_name NAME NOT NULL DEFAULT '',
+	PRIMARY KEY (truncated_identifier_name, nspname, pg_catalog_type, parent_name)
+);
+GRANT SELECT ON sys.babelfish_identifier_mapping TO PUBLIC;
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_identifier_mapping', '');
+
+-- BABEL-5975: Long Identifiers Support
+-- Resolves the original (untruncated) identifier for an object whose PostgreSQL
+-- name was truncated to fit the 63-byte NAME limit, using the
+-- sys.babelfish_identifier_mapping catalog. Returns truncated_name unchanged
+-- when it is short enough to not have been truncated (< 60 bytes).
+--
+-- id_parent_name disambiguates identifiers that are only unique within a parent
+-- object (e.g. a constraint or parameter). Pass the parent object name to match
+-- a specific row, or leave it NULL (the default) to match on
+-- (name, namespace, pg_catalog_type) alone.
+CREATE OR REPLACE FUNCTION sys.bbf_get_original_identifier_name(
+    truncated_name name,
+    id_nspname name,
+    id_pg_catalog_type oid,
+    id_parent_name name DEFAULT NULL)
+RETURNS text
+LANGUAGE SQL
+STABLE
+PARALLEL SAFE
+RETURN COALESCE(
+    CASE WHEN octet_length(truncated_name) >= 60 THEN
+        (SELECT m.original_identifier_name
+         FROM sys.babelfish_identifier_mapping m
+         WHERE m.truncated_identifier_name = truncated_name
+           AND m.nspname = id_nspname
+           AND m.pg_catalog_type = id_pg_catalog_type
+           AND (id_parent_name IS NULL OR m.parent_name = id_parent_name)
+         LIMIT 1)
+    END,
+    truncated_name::text);
+
 -- SYSDATABASES
 CREATE OR REPLACE VIEW sys.sysdatabases AS
 SELECT

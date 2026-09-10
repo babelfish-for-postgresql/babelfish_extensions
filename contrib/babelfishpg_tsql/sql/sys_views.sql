@@ -716,7 +716,7 @@ GRANT SELECT ON sys.foreign_key_columns TO PUBLIC;
 
 CREATE OR replace view sys.foreign_keys AS
 SELECT
-  CAST(c.conname AS sys.SYSNAME) AS name
+  CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid) AS sys.sysname) AS name
 , CAST(c.oid AS INT) AS object_id
 , CAST(NULL AS INT) AS principal_id
 , CAST(sch.schema_id AS INT) AS schema_id
@@ -923,7 +923,7 @@ GRANT SELECT ON sys.indexes TO PUBLIC;
 
 CREATE OR replace view sys.key_constraints AS
 SELECT
-    CAST(c.conname AS SYSNAME) AS name
+    CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid) AS sysname) AS name
   , CAST(c.oid AS INT) AS object_id
   , CAST(0 AS INT) AS principal_id
   , CAST(sch.schema_id AS INT) AS schema_id
@@ -1143,7 +1143,7 @@ and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
 -- For User Defined Types
-select cast(t.typname as sys.sysname) as name
+select cast(sys.bbf_get_original_identifier_name(t.typname, t.typnamespace::regnamespace::name, 1247) as sys.sysname) as name
   , cast(t.typbasetype as int) as system_type_id
   , cast(t.oid as int) as user_type_id
   , cast(t.typnamespace as int) as schema_id
@@ -1268,7 +1268,7 @@ AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES
 GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
 CREATE or replace VIEW sys.check_constraints AS
-SELECT CAST(c.conname as sys.sysname) as name
+SELECT CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid) as sys.sysname) as name
   , CAST(oid as integer) as object_id
   , CAST(NULL as integer) as principal_id 
   , CAST(c.connamespace as integer) as schema_id
@@ -1413,7 +1413,7 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined and system foreign key constraints
 select
-    c.conname::sys.sysname as name
+    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid)::sys.sysname as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1435,7 +1435,7 @@ and (s.nspname = 'sys' or ext.nspname is not null)
 union all
 -- details of user defined and system primary key constraints
 select
-    c.conname::sys.sysname as name
+    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid)::sys.sysname as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1633,7 +1633,7 @@ and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES
 union all
 -- details of all check constraints
 select
-    c.conname::sys.sysname
+    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid)::sys.sysname
   , c.oid::integer as object_id
   , NULL::integer as principal_id 
   , s.oid as schema_id
@@ -1655,7 +1655,7 @@ and (s.nspname = 'sys' or ext.nspname is not null)
 union all
 -- details of user defined and system defined sequence objects
 select
-  p.relname::sys.sysname as name
+  sys.bbf_get_original_identifier_name(p.relname, p.relnamespace::regnamespace::name, 'pg_class'::regclass::oid, '')::sys.sysname as name
   , p.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1899,7 +1899,7 @@ select
   from sys.check_constraints chk
 union all
 select
-    CAST(p.relname as sys.sysname) as name
+    CAST(sys.bbf_get_original_identifier_name(p.relname, p.relnamespace::regnamespace::name, 'pg_class'::regclass::oid, '') as sys.sysname) as name
   , CAST(p.oid as int) as object_id
   , CAST(null as int) as principal_id
   , CAST(s.schema_id as int) as schema_id
@@ -3271,7 +3271,13 @@ CREATE OR REPLACE VIEW sys.all_parameters
 AS
 SELECT
     CAST(ss.p_oid AS INT) AS object_id
-  , CAST(COALESCE(ss.proargnames[(ss.x).n], '') AS sys.SYSNAME) AS name
+  , CAST(COALESCE(
+      sys.bbf_get_original_identifier_name(
+        ss.proargnames[(ss.x).n],
+        ss.pronspname,
+        'pg_proc'::regclass::oid,
+        ss.proname),
+      ss.proargnames[(ss.x).n], '') AS sys.SYSNAME) AS name
   , CAST(
       CASE 
         WHEN is_out_scalar = 1 THEN 0 -- param_id = 0 for output of scalar function
@@ -3329,6 +3335,8 @@ FROM pg_type t
   (
     SELECT
       p.oid AS p_oid,
+      p.proname,
+      p.pronamespace::regnamespace::name AS pronspname,
       p.proargnames,
       p.proargmodes,
       p.prokind,

@@ -989,6 +989,62 @@ get_original_login_name(char *login)
 	return result;
 }
 
+/*
+ * get_login_rolname_from_orig_loginname
+ *
+ * Inverse of get_original_login_name: given the original (untruncated) login
+ * name as typed by the user, return the physical pg_authid role name stored
+ * in babelfish_authid_login_ext. This is needed for long login names
+ * (> NAMEDATALEN-1 bytes) whose physical role name is truncated with a hash
+ * suffix and therefore cannot be found by a direct pg_authid lookup on the
+ * full name. Comparison on orig_loginname is case-insensitive to match SQL
+ * Server login-name semantics. Returns a palloc'd string, or NULL if no login
+ * matches. orig_loginname is not indexed, so this performs a sequential scan;
+ * it is only reached on the (rare) fallback path after the direct lookup misses.
+ */
+static char *
+get_login_rolname_from_orig_loginname(const char *orig_login)
+{
+	Relation	relation;
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	char	   *result = NULL;
+
+	relation = table_open(get_authid_login_ext_oid(), AccessShareLock);
+	scan = systable_beginscan(relation, InvalidOid, false, NULL, 0, NULL);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		bool		isnull;
+		Datum		datum;
+		char	   *cur_orig;
+
+		datum = heap_getattr(tuple, Anum_bbf_authid_login_ext_orig_loginname,
+							 RelationGetDescr(relation), &isnull);
+		if (isnull)
+			continue;
+
+		cur_orig = TextDatumGetCString(datum);
+		if (pg_strcasecmp(cur_orig, orig_login) == 0)
+		{
+			Datum	rol_datum;
+
+			rol_datum = heap_getattr(tuple, Anum_bbf_authid_login_ext_rolname,
+									 RelationGetDescr(relation), &isnull);
+			if (!isnull)
+				result = pstrdup(NameStr(*DatumGetName(rol_datum)));
+			pfree(cur_orig);
+			break;
+		}
+		pfree(cur_orig);
+	}
+
+	systable_endscan(scan);
+	table_close(relation, AccessShareLock);
+
+	return result;
+}
+
 PG_FUNCTION_INFO_V1(suser_name);
 Datum
 suser_name(PG_FUNCTION_ARGS)
@@ -1062,7 +1118,36 @@ suser_id(PG_FUNCTION_ARGS)
 		/* Check if it is a role and get the oid */
 		auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(login));
 		if (!HeapTupleIsValid(auth_tuple))
-			PG_RETURN_NULL();
+		{
+			/*
+			 * The lookup by the (downcased) login name can miss when the
+			 * login name exceeds the 63-byte NAME limit: its physical role
+			 * name in pg_authid is truncated with a hash suffix, so the full
+			 * name never matches directly. Fall back to resolving the
+			 * physical role name from sys.babelfish_authid_login_ext, which
+			 * stores the original (untruncated) login name in orig_loginname.
+			 *
+			 * Only a name longer than the NAME limit can be hash-truncated and
+			 * thus legitimately miss the direct lookup. Gating the fallback on
+			 * length avoids an unbounded sequential scan of the login-ext
+			 * catalog for every miss on a short (non-existent) name, which an
+			 * authenticated user could otherwise use as a cheap CPU amplifier.
+			 */
+			if (strlen(login) >= NAMEDATALEN)
+			{
+				char	   *physical_rolname = get_login_rolname_from_orig_loginname(login);
+
+				if (physical_rolname)
+				{
+					auth_tuple = SearchSysCache1(AUTHNAME,
+												 CStringGetDatum(physical_rolname));
+					pfree(physical_rolname);
+				}
+			}
+
+			if (!HeapTupleIsValid(auth_tuple))
+				PG_RETURN_NULL();
+		}
 
 		authform = (Form_pg_authid) GETSTRUCT(auth_tuple);
 		ret = authform->oid;

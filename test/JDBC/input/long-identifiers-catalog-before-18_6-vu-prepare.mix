@@ -1,0 +1,31 @@
+-- Long identifiers catalog vu-prepare: Create objects stored in babelfish_identifier_mapping
+
+-- Table with long constraint names
+CREATE TABLE babel5975_cat_vu_t1 (
+    id INT NOT NULL,
+    val INT,
+    CONSTRAINT Very_Long_PK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU PRIMARY KEY (id),
+    CONSTRAINT Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU CHECK (val > 0)
+);
+GO
+
+-- Unique constraint
+CREATE TABLE babel5975_cat_vu_t2 (
+    val INT,
+    CONSTRAINT Very_Long_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU UNIQUE (val)
+);
+GO
+
+-- Sequence with long name
+CREATE SEQUENCE Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU AS INT START WITH 1;
+GO
+
+-- Type with long name
+CREATE TYPE Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU FROM INT;
+GO
+
+-- Procedure with long parameter
+CREATE PROCEDURE babel5975_cat_vu_proc
+    @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU INT
+AS BEGIN SELECT @Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU END;
+GO

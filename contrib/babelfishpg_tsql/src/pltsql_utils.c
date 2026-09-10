@@ -26,6 +26,7 @@
 #include "access/table.h"
 #include "access/genam.h"
 #include "catalog.h"
+#include "rewrite/rewriteHandler.h"
 #include "hooks.h"
 #include "guc.h"
 #include "tcop/utility.h"
@@ -34,7 +35,6 @@
 #include "session.h"
 #include "rolecmds.h"
 #include "parser/scansup.h"
-#include "rewrite/rewriteHandler.h"
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
@@ -360,7 +360,12 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 
 			address = CreateFunction(pstate, stmt);
 
-			/* Store function/procedure related metadata in babelfish catalog */
+			/*
+			 * Store function/procedure related metadata in babelfish catalog.
+			 * This also records long (truncated) parameter names in
+			 * sys.babelfish_identifier_mapping, so no separate storage loop is
+			 * needed here (it covers both CREATE and ALTER via its callers).
+			 */
 			pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location, with_recompile);
 
 			if (tbltypStmt || restore_tsql_tabletype)
