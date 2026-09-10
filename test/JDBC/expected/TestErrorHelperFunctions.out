@@ -149,6 +149,8 @@ XX000#!#CREATE FUNCTION failed because a column name is not specified for column
 22023#!#MAXVALUE (%ld) is out of range for sequence data type %s#!##!#11708
 22023#!#MINVALUE (%ld) must be less than MAXVALUE (%ld)#!##!#11705
 21000#!#more than one row returned by a subquery used as an expression#!##!#512
+21000#!#%s command cannot affect row a second time#!#MERGE#!#8672
+42601#!#A MERGE statement must be terminated by a semi-colon (;).#!##!#10713
 23514#!#new row for relation "%s" violates check constraint "%s"#!##!#547
 XX000#!#no owned sequence found#!##!#550
 44000#!#new row violates check option for view "%s"#!##!#550

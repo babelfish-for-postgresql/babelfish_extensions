@@ -126,6 +126,8 @@ XX000 ERRCODE_INTERNAL_ERROR	"CREATE FUNCTION failed because a column name is no
 22023 ERRCODE_INVALID_PARAMETER_VALUE	"MAXVALUE (%" PRId64 ") is out of range for sequence data type %s" SQL_ERROR_11708 16
 22023 ERRCODE_INVALID_PARAMETER_VALUE 	"MINVALUE (%" PRId64 ") must be less than MAXVALUE (%" PRId64 ")" SQL_ERROR_11705	16
 21000 ERRCODE_CARDINALITY_VIOLATION	"more than one row returned by a subquery used as an expression"	SQL_ERROR_512	16
+21000 ERRCODE_CARDINALITY_VIOLATION	"%s command cannot affect row a second time"	SQL_ERROR_8672	16	"MERGE"
+42601 ERRCODE_SYNTAX_ERROR	"A MERGE statement must be terminated by a semi-colon (;)."	SQL_ERROR_10713	15
 23514 ERRCODE_CHECK_VIOLATION	"new row for relation \"%s\" violates check constraint \"%s\""	SQL_ERROR_547	16
 XX000 ERRCODE_INTERNAL_ERROR	"no owned sequence found" SQL_ERROR_550	16
 44000 ERRCODE_WITH_CHECK_OPTION_VIOLATION	"new row violates check option for view \"%s\"" SQL_ERROR_550	16

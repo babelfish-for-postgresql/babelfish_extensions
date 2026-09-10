@@ -153,6 +153,7 @@ static void *makeBatch(TSqlParser::Tsql_fileContext *ctx, tsqlBuilder &builder);
 
 static void process_execsql_destination(TSqlParser::Dml_statementContext *ctx, PLtsql_stmt_execsql *stmt);
 static void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext *ctx, PLtsql_expr_query_mutator *exprMutator);
+static void post_process_merge_statement(TSqlParser::Merge_statementContext *mctx, PLtsql_expr *sqlstmt, PLtsql_expr_query_mutator *exprMutator);
 static bool post_process_create_table(TSqlParser::Create_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
@@ -8046,6 +8047,76 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 		{
 			removeCtxStringFromQuery(sqlstmt, dctx->option_clause(), exprMutator->ctx);
 			extractQueryHintsFromOptionClause(dctx->option_clause());
+		}
+	}
+	else if (ctx->merge_statement())
+	{
+		auto mctx = ctx->merge_statement();
+		post_process_merge_statement(mctx, sqlstmt, exprMutator);
+		if (mctx->with_table_hints()) // target table hints
+		{
+			if (!mctx->with_table_hints()->sample_clause() && mctx->ddl_object())
+			{
+				std::string table_name = extractTableName(mctx->ddl_object(), nullptr);
+				extractTableHints(mctx->with_table_hints(), table_name);
+			}
+			removeCtxStringFromQuery(sqlstmt, mctx->with_table_hints(), exprMutator->ctx);
+		}
+		if (mctx->table_sources()) // USING clause (to remove hints)
+			for (auto tctx : mctx->table_sources()->table_source_item())
+				post_process_table_source(tctx, sqlstmt, exprMutator->ctx);
+		if (mctx->option_clause()) // query hints
+		{
+			removeCtxStringFromQuery(sqlstmt, mctx->option_clause(), exprMutator->ctx);
+			extractQueryHintsFromOptionClause(mctx->option_clause());
+		}
+	}
+}
+
+/*
+ * Rewrite T-SQL MERGE into PostgreSQL MERGE syntax:
+ *   - MERGE <target>           => MERGE INTO <target>
+ *   - SET <alias>.<col> = ...  => SET <col> = ...
+ *   - SET <col> += <expr>      => SET <col> = <col> + (<expr>)
+ * Everything else (WHEN [NOT] MATCHED [BY SOURCE|TARGET] variants,
+ * AND conditions, DEFAULT VALUES, ...) is already valid PG MERGE syntax.
+ */
+static void post_process_merge_statement(TSqlParser::Merge_statementContext *mctx, PLtsql_expr *sqlstmt, PLtsql_expr_query_mutator *exprMutator)
+{
+	/* PG requires INTO; T-SQL allows omitting it */
+	if (!mctx->INTO())
+		rewritten_query_fragment.emplace(std::make_pair(mctx->MERGE()->getSymbol()->getStartIndex(),
+			std::make_pair(::getFullText(mctx->MERGE()), ::getFullText(mctx->MERGE()) + " INTO")));
+
+	for (auto wctx : mctx->when_matches())
+	{
+		if (wctx->merge_matched() && wctx->merge_matched()->UPDATE())
+		{
+			for (auto elem : wctx->merge_matched()->update_elem_merge())
+			{
+				auto fcn = elem->full_column_name();
+				std::string colText;
+				if (fcn && fcn->column_name)
+				{
+					colText = ::getFullText(fcn->column_name);
+					/* PG does not accept alias-qualified columns on the SET side */
+					if (!fcn->DOT().empty())
+						rewritten_query_fragment.emplace(std::make_pair(fcn->start->getStartIndex(),
+							std::make_pair(::getFullText(fcn), colText)));
+				}
+
+				/* compound assignment: SET c += expr => SET c = c + (expr) */
+				if (elem->assignment_operator() && !colText.empty() && elem->expression())
+				{
+					auto op = elem->assignment_operator();
+					std::string opText = ::getFullText(op);
+					std::string opchar = opText.substr(0, opText.size() - 1);
+					rewritten_query_fragment.emplace(std::make_pair(op->start->getStartIndex(),
+						std::make_pair(opText, std::string("= ") + colText + " " + opchar + " (")));
+					rewritten_query_fragment.emplace(std::make_pair(elem->expression()->stop->getStopIndex() + 1,
+						std::make_pair("", ")")));
+				}
+			}
 		}
 	}
 }

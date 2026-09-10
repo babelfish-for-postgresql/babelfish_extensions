@@ -1678,7 +1678,7 @@ merge_statement
       when_matches+
       output_clause?
       option_clause? 
-      final_char=(SEMI | RR_BRACKET)  /// semicolon is required for stand-alone statement, but not inside INSERT-SELECT FROM (MERGE), where we expect a bracket instead
+      final_char=(SEMI | RR_BRACKET)?  /// semicolon is required for stand-alone statement (enforced with the T-SQL error message in tsqlUnsupportedFeatureHandler), but not inside INSERT-SELECT FROM (MERGE), where we expect a bracket instead
     ;
 
 when_matches
