@@ -53,6 +53,7 @@
 #include "utils/datum.h"
 
 #include "catalog.h"
+#include "guc.h"
 #include "catalog/toasting.h"
 #include "extendedproperty.h"
 #include "multidb.h"
@@ -88,6 +89,7 @@ PG_FUNCTION_INFO_V1(sp_xml_removedocument);
 PG_FUNCTION_INFO_V1(tsql_openxml_get_colpattern);
 PG_FUNCTION_INFO_V1(tsql_openxml_get_xmldoc);
 
+extern bool babelfish_dump_restore;
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
 extern void read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr);
@@ -3583,6 +3585,11 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 	const char *saved_dialect = GetConfigOption("babelfish_tsql.sql_dialect", true, true);
 	int len;
 
+	if (!IS_TDS_CLIENT() && !babelfish_dump_restore && !pltsql_enable_rename_from_pg && !superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("sp_renamedb is not supported from PostgreSQL endpoint.")));
+
 	/* sp_rename is not allowed inside a transaction. */
 	PreventInTransactionBlock(true, "SP_RENAME/SP_RENAMEDB");
 
@@ -3687,6 +3694,11 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
 	const char *saved_dialect = GetConfigOption("babelfish_tsql.sql_dialect", true, true);
+
+	if (!IS_TDS_CLIENT() && !babelfish_dump_restore && !pltsql_enable_rename_from_pg && !superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("sp_rename is not supported from PostgreSQL endpoint.")));
 
 	PG_TRY();
 	{
