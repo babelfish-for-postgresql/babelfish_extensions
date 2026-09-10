@@ -5470,8 +5470,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE 'jones'
-Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.26 rows=1 width=6)
-  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jones'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((c1)::text) = 'jones'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+  Filter: ((remove_accents_internal((c1)::text))::text ~~* 'jones'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -5485,8 +5485,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE 'Jon%'
-Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
-  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'Jon%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((c1)::text) >= 'Jon'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((c1)::text) < 'Jon?'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+  Filter: ((remove_accents_internal((c1)::text))::text ~~* 'Jon%'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -5500,8 +5500,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from test_like_for_AI_prepare_index where c1 LIKE 'jone_'
-Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
-  Filter: (((remove_accents_internal((c1)::text))::text ~~* 'jone_'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((c1)::text) >= 'jone'::nvarchar COLLATE bbf_unicode_cp1_ci_ai) AND (remove_accents_internal((c1)::text) < 'jone?'::nvarchar COLLATE bbf_unicode_cp1_ci_ai))
+Index Only Scan using c1_idxtest_like_for_ai_prepare_38f8448780355a5f23c35e9a9184c6b2 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+  Filter: ((remove_accents_internal((c1)::text))::text ~~* 'jone_'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -5546,8 +5546,8 @@ GO
 ~~START~~
 text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE 'jones'
-Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.26 rows=1 width=6)
-  Filter: (((remove_accents_internal((c2)::text))::text ~~ 'jones'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((c2)::text) = 'jones'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+  Filter: ((remove_accents_internal((c2)::text))::text ~~ 'jones'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -5561,8 +5561,8 @@ GO
 ~~START~~
 text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE 'Jon%'
-Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
-  Filter: (((remove_accents_internal((c2)::text))::text ~~ 'Jon%'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((c2)::text) >= 'Jon'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((c2)::text) < 'Jon?'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+  Filter: ((remove_accents_internal((c2)::text))::text ~~ 'Jon%'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~
@@ -5576,8 +5576,8 @@ GO
 ~~START~~
 text
 Query Text: select c2 from test_like_for_AI_prepare_index where c2 LIKE 'jone_'
-Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.28 rows=1 width=6)
-  Filter: (((remove_accents_internal((c2)::text))::text ~~ 'jone_'::text COLLATE bbf_unicode_cp1_cs_as) AND (remove_accents_internal((c2)::text) >= 'jone'::nvarchar COLLATE bbf_unicode_cp1_cs_ai) AND (remove_accents_internal((c2)::text) < 'jone?'::nvarchar COLLATE bbf_unicode_cp1_cs_ai))
+Index Only Scan using c2_idxtest_like_for_ai_prepare_bf9020e1683683184624689e8139ccc9 on test_like_for_ai_prepare_index  (cost=0.13..12.23 rows=1 width=6)
+  Filter: ((remove_accents_internal((c2)::text))::text ~~ 'jone_'::text COLLATE bbf_unicode_cp1_cs_as)
 ~~END~~
 
 ~~START~~

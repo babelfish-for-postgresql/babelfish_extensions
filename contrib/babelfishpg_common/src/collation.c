@@ -854,6 +854,7 @@ init_like_ilike_table_internal(void)
 {
 	HASHCTL		hashCtl;
 	ht_like2ilike_entry_t *entry;
+	bool		found;
 
 	if (TransMemoryContext == NULL) /* initialize memory context */
 	{
@@ -870,7 +871,7 @@ init_like_ilike_table_internal(void)
 		hashCtl.entrysize = sizeof(ht_like2ilike_entry_t);
 		hashCtl.hcxt = TransMemoryContext;
 		ht_like2ilike = hash_create("OID to Persist like to ilike Mapping",
-									TOTAL_LIKE_OP_COUNT,
+									TOTAL_LIKE_OP_COUNT * 2,
 									&hashCtl,
 									HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
 	}
@@ -919,12 +920,23 @@ init_like_ilike_table_internal(void)
 														roid);
 		if (OidIsValid(like_ilike_table[i].like_oid))
 		{
-			entry = hash_search(ht_like2ilike, &like_ilike_table[i].like_oid, HASH_ENTER, NULL);
+			entry = hash_search(ht_like2ilike, &like_ilike_table[i].like_oid, HASH_ENTER, &found);
+			if (found)
+				elog(ERROR, "duplicate oid %u in like/ilike operator table",
+					 like_ilike_table[i].like_oid);
 			entry->persist_id = i;
 		}
 		like_ilike_table[i].ilike_oid = OpernameGetOprid(list_make1(makeString(ilike_opname)),
 														 loid,
 														 roid);
+		if (OidIsValid(like_ilike_table[i].ilike_oid))
+		{
+			entry = hash_search(ht_like2ilike, &like_ilike_table[i].ilike_oid, HASH_ENTER, &found);
+			if (found)
+				elog(ERROR, "duplicate oid %u in like/ilike operator table",
+					 like_ilike_table[i].ilike_oid);
+			entry->persist_id = i;
+		}
 		like_ilike_table[i].ilike_opfuncid = get_opcode(like_ilike_table[i].ilike_oid);
 	}
 	return 0;

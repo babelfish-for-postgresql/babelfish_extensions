@@ -9,7 +9,7 @@ varchar
 ~~END~~
 
 
-select * from babel4046;
+select * from babel4046 order by a COLLATE Latin1_General_CS_AS, b COLLATE Latin1_General_CS_AS;
 GO
 ~~START~~
 varchar#!#varchar
@@ -20,7 +20,7 @@ AAA#!#A%
 ~~END~~
 
 
-select * from babel4046_2;
+select * from babel4046_2 order by a COLLATE Latin1_General_CS_AS, b COLLATE Latin1_General_CS_AS;
 GO
 ~~START~~
 varchar#!#varchar

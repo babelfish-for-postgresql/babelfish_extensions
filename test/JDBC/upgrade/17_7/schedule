@@ -624,6 +624,7 @@ BABEL_OBJECT_RESOLUTION_IN_ROUTINES
 alter-mvu-test
 test_constraint_like_before_17_8-or-16_12
 test_like_index
+like_op_index_scan
 unpivot
 forjson-escape
 round_return_type_test

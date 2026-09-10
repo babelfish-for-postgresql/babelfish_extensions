@@ -5,10 +5,10 @@ select options_t.name
     on options_t.name like 'UM\_%' + svc_defs.svc_name escape '\'
 go
 
-select * from babel4046;
+select * from babel4046 order by a COLLATE Latin1_General_CS_AS, b COLLATE Latin1_General_CS_AS;
 GO
 
-select * from babel4046_2;
+select * from babel4046_2 order by a COLLATE Latin1_General_CS_AS, b COLLATE Latin1_General_CS_AS;
 GO
 
 ;with EMP_T AS (

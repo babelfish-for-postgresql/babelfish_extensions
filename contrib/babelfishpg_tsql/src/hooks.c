@@ -94,6 +94,7 @@
 #include <math.h>
 #include "pgstat.h"
 #include "backend_parser/scanner.h"
+#include "collation.h"
 #include "hooks.h"
 #include "pltsql.h"
 #include "pltsql_node/pltsql_serialize.h"
@@ -400,6 +401,7 @@ static openxml_set_namespaces_hook_type prev_openxml_set_namespaces_hook = NULL;
 #endif
 static match_opclause_to_indexcol_hook_type prev_match_opclause_to_indexcol_hook = NULL;
 static IndexClause *match_oid_cast_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo, int indexcol, IndexOptInfo *index, Node *cast_arg, Node *val_arg, Oid opfamily);
+static IndexClause *bbf_match_like_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo, int indexcol, IndexOptInfo *index);
 static IndexClause *bbf_match_opclause_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo, int indexcol, IndexOptInfo *index);
 
 /*****************************************
@@ -5948,6 +5950,14 @@ update_rte_perms_info_walker(Node *node, void *context)
 	return expression_tree_walker(node, update_rte_perms_info_walker, NULL);
 }
 
+/*
+ * Planning-recursion depth for the LIKE original-collation cache. Only the
+ * outermost planner pass resets the cache (see pltsql_planner_hook), so that
+ * nested planning (planner-time SPI, constant-folding, EXECUTE planning) does
+ * not clear the outer statement's cache and silently disable the optimization.
+ */
+static int	like_orig_collation_planner_depth = 0;
+
 static PlannedStmt *
 pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams)
 {
@@ -5963,10 +5973,32 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 		Assert(estate != NULL);
 		INSTR_TIME_SET_CURRENT(estate->planning_start);
 	}
-	if (prev_planner_hook)
-		plan = prev_planner_hook(parse, query_string, cursorOptions, boundParams);
-	else
-		plan = standard_planner(parse, query_string, cursorOptions, boundParams);
+
+	PG_TRY();
+	{
+		like_orig_collation_planner_depth++;
+		if (prev_planner_hook)
+			plan = prev_planner_hook(parse, query_string, cursorOptions, boundParams);
+		else
+			plan = standard_planner(parse, query_string, cursorOptions, boundParams);
+	}
+	PG_FINALLY();
+	{
+		/*
+		 * Reset the per-statement LIKE-collation hash only when the outermost
+		 * planning pass finishes. Planning can recurse (planner-time SPI,
+		 * constant-folding, EXECUTE planning), and resetting on every exit
+		 * would clear the outer statement's cache mid-plan and silently
+		 * disable the LIKE index optimization for it.
+		 */
+		if (--like_orig_collation_planner_depth <= 0)
+		{
+			like_orig_collation_planner_depth = 0;
+			reset_like_original_collation();
+		}
+	}
+	PG_END_TRY();
+
 	if (pltsql_explain_analyze)
 	{
 		INSTR_TIME_SET_CURRENT(estate->planning_end);
@@ -9476,10 +9508,13 @@ match_oid_cast_to_indexcol(PlannerInfo *root, RestrictInfo *rinfo,
 /*
  * bbf_match_opclause_to_indexcol
  *
- * Enables index usage for Babelfish equality patterns where an OID column
- * is cast to integer, preventing index matching. Handles both operand orders:
- *   (oid)::integer = value  =>  oid = value::oid
- *   value = (oid)::integer  =>  oid = value::oid
+ * Enables index usage for some Babelfish patterns:
+ *
+ * 1. OID cast patterns (equality):
+ *     (oid)::integer = value  =>  oid = value::oid
+ *     value = (oid)::integer  =>  oid = value::oid
+ *
+ * 2. LIKE/NOT LIKE index optimization for Babelfish collations
  */
 static IndexClause *
 bbf_match_opclause_to_indexcol(PlannerInfo *root,
@@ -9490,7 +9525,14 @@ bbf_match_opclause_to_indexcol(PlannerInfo *root,
 	if (sql_dialect == SQL_DIALECT_TSQL && IsA(rinfo->clause, OpExpr))
 	{
 		OpExpr	   *clause = (OpExpr *) rinfo->clause;
+		IndexClause *iclause;
 
+		/* Try LIKE/ILIKE index optimization */
+		iclause = bbf_match_like_to_indexcol(root, rinfo, indexcol, index);
+		if (iclause)
+			return iclause;
+
+		/* Try OID cast pattern */
 		if (list_length(clause->args) == 2 &&
 			clause->opno == Int4EqualOperator &&
 			index->opcintype[indexcol] == OIDOID)
@@ -9498,7 +9540,6 @@ bbf_match_opclause_to_indexcol(PlannerInfo *root,
 			Node	   *leftop = (Node *) linitial(clause->args);
 			Node	   *rightop = (Node *) lsecond(clause->args);
 			Oid			opfamily = index->opfamily[indexcol];
-			IndexClause *iclause;
 
 			/* Try left operand as the cast: (oid)::int4 = value */
 			if (!bms_is_member(index->rel->relid, rinfo->right_relids))
@@ -9525,4 +9566,245 @@ bbf_match_opclause_to_indexcol(PlannerInfo *root,
 	if (prev_match_opclause_to_indexcol_hook)
 		return prev_match_opclause_to_indexcol_hook(root, rinfo, indexcol, index);
 	return NULL;
+}
+
+
+/*
+ * bbf_match_like_to_indexcol
+ *
+ * Generate index bounds for LIKE operators in Babelfish.
+ *
+ * Case 1: if the pattern is a constant string
+ *     col LIKE PATTERN -> col = PATTERN
+ * Case 2: if the pattern has a constant prefix
+ *     col LIKE PATTERN ->
+ *     col >= prefix AND col < prefix||E'\uFFFF'
+ * Case 3: if the pattern doesn't have a constant prefix
+ *     col LIKE PATTERN -> no index optimization (full table scan)
+ */
+static IndexClause *
+bbf_match_like_to_indexcol(PlannerInfo *root,
+						   RestrictInfo *rinfo,
+						   int indexcol,
+						   IndexOptInfo *index)
+{
+	OpExpr	   *clause = (OpExpr *) rinfo->clause;
+	Node	   *leftop;
+	Node	   *rightop;
+	like_ilike_info_t like_entry;
+	coll_info_t coll_info;
+	Oid			ltypeId;
+	Oid			rtypeId;
+	Oid			bounds_collation;
+	IndexClause *iclause;
+	List	   *indexquals = NIL;
+
+	if (list_length(clause->args) != 2)
+		return NULL;
+
+	leftop = (Node *) linitial(clause->args);
+	rightop = (Node *) lsecond(clause->args);
+
+	/*
+	 * Check if this is a LIKE/ILIKE operator using the lookup table.
+	 */
+	like_entry = tsql_lookup_like_ilike_table_internal(clause->opno);
+	if (!OidIsValid(like_entry.like_oid))
+		return NULL;
+
+	/* NOT LIKE cannot use btree index bounds as no negation strategy exists */
+	if (like_entry.is_not_match)
+		return NULL;
+
+	coll_info = tsql_lookup_collation_table_internal(clause->inputcollid);
+	if (!OidIsValid(coll_info.oid))
+		return NULL;
+
+	/*
+	 * Skip optimization if the index column doesn't use a Babelfish collation.
+	 * Generating bounds with Babelfish collation semantics for an index that uses
+	 * a different collation (e.g., pg_catalog tables using C collation) produces
+	 * incorrect results.
+	 */
+	{
+		coll_info_t idx_coll_info;
+		Oid idx_collation = index->indexcollations[indexcol];
+		idx_coll_info = tsql_lookup_collation_table_internal(idx_collation);
+		if (!OidIsValid(idx_coll_info.oid))
+			return NULL;
+	}
+
+	/*
+	 * Retrieve original collation that was stored by optimise_likenode.
+	 * optimise_likenode transforms LIKE to ILIKE and sets inputcollid to CS_AS
+	 * for deterministic matching. However, we use the original collation for
+	 * index bounds so rows match correctly according to the user's specification.
+	 */
+	bounds_collation = get_like_original_collation(clause->location);
+	if (!OidIsValid(bounds_collation))
+		return NULL;
+
+	/* Get types for operator lookup */
+	ltypeId = exprType(leftop);
+
+	/* Strip RelabelType to get the original type for operator lookup */
+	if (IsA(leftop, RelabelType))
+		ltypeId = exprType((Node *) ((RelabelType *) leftop)->arg);
+
+	rtypeId = ltypeId; /* bounds use same type as leftop */
+
+	/*
+	 * This is needed to process CI_AI for Const nodes
+	 * Because after we call coerce_to_target_type for type conversion in transform_likenode_for_AI,
+	 * we obtain a Relabel node which won't help us to perform optimization
+	 * for constant prefix. Hence, we process that here
+	 */
+	if (IsA(rightop, RelabelType))
+	{
+		RelabelType   *relabel = (RelabelType *) rightop;
+		if (IsA(relabel->arg, Const))
+			rightop = (Node *) relabel->arg;
+	}
+
+	if (IsA(rightop, Const) && !((Const *) rightop)->constisnull)
+	{
+		Const	   *patt = (Const *) rightop;
+		Const	   *prefix = NULL;
+		Pattern_Prefix_Status pstatus;
+		int			ptype;
+		Node	   *actual_leftop = leftop;
+		coll_info_t bounds_coll_info;
+
+		/* Determine ptype from the original collation */
+		bounds_coll_info = tsql_lookup_collation_table_internal(bounds_collation);
+		if (bounds_coll_info.collateflags == 0x000f || bounds_coll_info.collateflags == 0x000d)
+			ptype = 1; /* CI */
+		else
+			ptype = 0; /* CS */
+
+		pstatus = pattern_fixed_prefix_wrapper(patt, ptype, bounds_coll_info.oid,
+											   &prefix, NULL);
+
+		/* No prefix so can't generate bounds (leading wildcard) */
+		if (pstatus == Pattern_Prefix_None)
+			return NULL;
+
+		/* Set prefix type and collation for index operator lookup */
+		prefix->consttype = rtypeId;
+		prefix->constcollid = bounds_collation;
+
+		/* For leftop, unwrap RelabelType to get the actual expression for operators */
+		if (IsA(leftop, RelabelType))
+		{
+			RelabelType *relabel = (RelabelType *) leftop;
+			actual_leftop = (Node*) relabel->arg;
+		}
+
+		actual_leftop = copyObject(actual_leftop);
+
+		if (pstatus == Pattern_Prefix_Exact)
+		{
+			/* Exact match: generate col = prefix */
+			Oid			eq_opr;
+			OpExpr	   *op_expr;
+
+			/*
+			 * Resolve "=" by name/type (this allows the binary-coercible
+			 * operand types the AI/nvarchar paths rely on), then verify the
+			 * operator actually belongs to the index's opfamily so the scan
+			 * key is strategy-consistent with the index ordering.
+			 */
+			eq_opr = compatible_oper_opid(list_make1(makeString("=")), ltypeId, rtypeId, true);
+			if (!OidIsValid(eq_opr) ||
+				!op_in_opfamily(eq_opr, index->opfamily[indexcol]))
+				return NULL;
+
+			op_expr = (OpExpr *) make_opclause(eq_opr, BOOLOID, false,
+											   (Expr *) actual_leftop, (Expr *) prefix,
+											   InvalidOid, bounds_collation);
+			op_expr->opfuncid = get_opcode(eq_opr);
+
+			indexquals = list_make1(make_simple_restrictinfo(root, (Expr *) op_expr));
+		}
+		else
+		{
+			/* Prefix match: generate col >= prefix AND col < upper_bound */
+			Oid			ge_opr;
+			Oid			lt_opr;
+			OpExpr	   *ge_op;
+			OpExpr	   *lt_op;
+			Const	   *highest_sort_key;
+
+			/*
+			 * Resolve ">=" and "<" by name/type (allowing binary-coercible
+			 * operand types), then verify both operators belong to the index's
+			 * opfamily so the scan keys are strategy-consistent with the index
+			 * ordering.
+			 */
+			ge_opr = compatible_oper_opid(list_make1(makeString(">=")), ltypeId, rtypeId, true);
+			lt_opr = compatible_oper_opid(list_make1(makeString("<")), ltypeId, rtypeId, true);
+			if (!OidIsValid(ge_opr) || !OidIsValid(lt_opr) ||
+				!op_in_opfamily(ge_opr, index->opfamily[indexcol]) ||
+				!op_in_opfamily(lt_opr, index->opfamily[indexcol]))
+				return NULL;
+
+			/* Pre-compute upper bound: prefix || '\uFFFF' */
+			{
+				text	   *prefix_text;
+				text	   *upper_text;
+				int			prefix_len;
+				char	   *upper_str;
+
+				prefix_text = DatumGetTextPP(prefix->constvalue);
+				prefix_len = VARSIZE_ANY_EXHDR(prefix_text);
+
+				upper_str = (char *) palloc(prefix_len + 3);
+				memcpy(upper_str, VARDATA_ANY(prefix_text), prefix_len);
+				memcpy(upper_str + prefix_len, "\xEF\xBF\xBF", 3);
+
+				upper_text = (text *) palloc(VARHDRSZ + prefix_len + 3);
+				SET_VARSIZE(upper_text, VARHDRSZ + prefix_len + 3);
+				memcpy(VARDATA(upper_text), upper_str, prefix_len + 3);
+				pfree(upper_str);
+
+				highest_sort_key = makeConst(rtypeId, -1, InvalidOid, -1,
+											 PointerGetDatum(upper_text), false, false);
+			}
+			/* Set collation on highest_sort_key */
+			((Const *) highest_sort_key)->constcollid = bounds_collation;
+
+			/* col >= prefix */
+			ge_op = (OpExpr *) make_opclause(ge_opr, BOOLOID, false,
+											 (Expr *) actual_leftop, (Expr *) prefix,
+											 InvalidOid, bounds_collation);
+			ge_op->opfuncid = get_opcode(ge_opr);
+
+			/* col < upper_bound */
+			lt_op = (OpExpr *) make_opclause(lt_opr, BOOLOID, false,
+											 (Expr *) copyObject(actual_leftop),
+											 (Expr *) highest_sort_key,
+											 InvalidOid, bounds_collation);
+			lt_op->opfuncid = get_opcode(lt_opr);
+
+			indexquals = list_make2(make_simple_restrictinfo(root, (Expr *) ge_op),
+								   make_simple_restrictinfo(root, (Expr *) lt_op));
+		}
+	}
+	else
+	{
+		/* Non-Const patterns */
+		return NULL;
+	}
+
+	if (indexquals == NIL)
+		return NULL;
+
+	iclause = makeNode(IndexClause);
+	iclause->rinfo = rinfo;
+	iclause->indexquals = indexquals;
+	iclause->lossy = true;  /* original LIKE is needed as recheck filter */
+	iclause->indexcol = indexcol;
+	iclause->indexcols = NIL;
+
+	return iclause;
 }
