@@ -7097,6 +7097,13 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		/* ... so we can free subsidiary storage */
 		if (!OPTION_ENABLED(codeblock_args, NO_FREE))
 		{
+			/*
+			 * Before freeing the private EState, pop any simple_econtext_stack
+			 * entries whose ExprContexts live in it.  Otherwise txn_clean_estate()
+			 * will double-free them after FreeExecutorState() already freed them
+			 * via es_exprcontexts.  See pltsql_cleanup_econtext_stack_for_estate.
+			 */
+			pltsql_cleanup_econtext_stack_for_estate(simple_eval_estate);
 			/* Clean up the private EState */
 			FreeExecutorState(simple_eval_estate);
 			pltsql_free_function_memory(func);
@@ -7115,6 +7122,13 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	/* ... so we can free subsidiary storage */
 	if (!OPTION_ENABLED(codeblock_args, NO_FREE))
 	{
+		/*
+		 * Before freeing the private EState, pop any simple_econtext_stack
+		 * entries whose ExprContexts live in it.  Otherwise txn_clean_estate()
+		 * will double-free them after FreeExecutorState() already freed them
+		 * via es_exprcontexts.  See pltsql_cleanup_econtext_stack_for_estate.
+		 */
+		pltsql_cleanup_econtext_stack_for_estate(simple_eval_estate);
 		FreeExecutorState(simple_eval_estate);
 		pltsql_free_function_memory(func);
 	}

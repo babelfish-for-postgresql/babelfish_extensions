@@ -83,6 +83,17 @@ const uint64 PLTSQL_LOCKTAG_OFFSET = 0xABCDEF;
  * During an INSERT EXEC, T-SQL forbids the executed procedure from committing
  * or rolling back the implicit transaction that wraps the statement. Raise the
  * appropriate error when a COMMIT/ROLLBACK is attempted inside an INSERT EXEC.
+ *
+ * Threshold logic:
+ *   - dynamic SQL path (nested_tran_count_at_start = 0): threshold = 0, so a
+ *     BEGIN TRAN/COMMIT pair inside EXEC('...') is allowed (NestedTranCount=1
+ *     is above 0).
+ *   - stored-proc path, implicit txn started (nested_tran_count_at_start = 1):
+ *     threshold = 1, blocking commits that would close the implicit wrapper.
+ *   - stored-proc path, user already in N=1 txns (no implicit txn started,
+ *     nested_tran_count_at_start = 1): threshold = 1, same result.
+ *   - stored-proc path, user already in N>=2 txns (nested_tran_count_at_start
+ *     >= 2): Min(N, 1) = 1, so COMMIT at level N is allowed (N > 1).
  */
 static void
 error_if_xact_stmt_blocked_by_insert_exec(bool is_commit)
@@ -92,7 +103,16 @@ error_if_xact_stmt_blocked_by_insert_exec(bool is_commit)
 
 	if (is_commit)
 	{
-		if (NestedTranCount <= insert_exec_ctx->nested_tran_count_at_start)
+		/*
+		 * Use Min(..., 1) so that when the user already held >= 2 open
+		 * transactions at INSERT EXEC entry time, a COMMIT inside the body is
+		 * allowed (it only reduces nesting, not commits the outermost txn).
+		 * For the dynamic-SQL path nested_tran_count_at_start is 0, preserving
+		 * the original behaviour that allows BEGIN TRAN/COMMIT inside EXEC('...').
+		 */
+		int		threshold = Min(insert_exec_ctx->nested_tran_count_at_start, 1);
+
+		if (NestedTranCount <= threshold)
 			ereport(ERROR,
 					(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 					 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));

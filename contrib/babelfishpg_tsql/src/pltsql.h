@@ -2243,6 +2243,7 @@ extern HeapTuple pltsql_exec_trigger(PLtsql_function *func,
 extern void pltsql_exec_event_trigger(PLtsql_function *func,
 									  EventTriggerData *trigdata);
 extern void pltsql_xact_cb(XactEvent event, void *arg);
+extern void pltsql_cleanup_econtext_stack_for_estate(EState *eval_estate);
 extern void pltsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 							  SubTransactionId parentSubid, void *arg);
 extern Oid	pltsql_exec_get_datum_type(PLtsql_execstate *estate,
@@ -2532,16 +2533,7 @@ typedef struct InsertExecContext
 	bool		is_target_relation_modified;	/* Set by bbf_object_access_hook when target table is altered */
 	uint64		rows_processed;			/* Rows captured by the DestReceiver = INSERT EXEC rows-affected */
 	int			nested_tran_count_at_start;	/* NestedTranCount when INSERT EXEC started (after implicit txn) */
-	/*
-	 * Row buffer -- a Tuplestorestate allocated in TopMemoryContext with
-	 * interXact=true. Rows written here survive both subtransaction and full
-	 * transaction aborts, so TRY/CATCH inside dynamic SQL cannot lose rows.
-	 * buf_tupdesc is a TopMemoryContext copy of the staging table TupleDesc
-	 * used to set up type coercion in insertexec_startup even after an abort
-	 * destroys the original temp table.
-	 */
-	Tuplestorestate *row_buffer;		/* in TopMemoryContext, interXact */
-	TupleDesc	buf_tupdesc;		/* TupleDesc copy in TopMemoryContext */
+
 	/*
 	 * Set to true just before AbortCurrentTransaction() when the abort is
 	 * caught by a TRY/CATCH block surrounding INSERT EXEC. pltsql_xact_cb

@@ -1053,6 +1053,31 @@ is_set_tran_isolation(PLtsql_stmt *stmt)
 	return false;
 }
 
+
+/*
+ * Return true if stmt is a T-SQL transaction control statement (BEGIN
+ * TRANSACTION, COMMIT, ROLLBACK, SAVEPOINT) -- whether expressed as a
+ * dedicated PL/tsql statement type or embedded inside an EXECSQL node (as
+ * happens when the command appears inside a dynamic-SQL batch).  These must
+ * NOT receive an internal savepoint because their own code paths manage the
+ * transaction state; wrapping them in a subtransaction would leave PG in an
+ * inconsistent state.
+ */
+static
+bool
+is_txn_control_stmt(PLtsql_stmt *stmt)
+{
+	/* Dedicated COMMIT / ROLLBACK statement types */
+	if (stmt->cmd_type == PLTSQL_STMT_COMMIT ||
+		stmt->cmd_type == PLTSQL_STMT_ROLLBACK)
+		return true;
+	/* EXECSQL that wraps a transaction command (BEGIN/COMMIT/ROLLBACK/SAVEPOINT) */
+	if (stmt->cmd_type == PLTSQL_STMT_EXECSQL &&
+		((PLtsql_stmt_execsql *) stmt)->txn_data != NULL)
+		return true;
+	return false;
+}
+
 static
 void
 record_error_state(PLtsql_execstate *estate)
@@ -1307,7 +1332,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 * savepoints and let the caller be responsible for handling the
 		 * error.
 		 */
-		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && IsTransactionBlockActive() && !is_set_tran_isolation(stmt))
+		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && (IsTransactionBlockActive() || (pltsql_insert_exec_active() && !is_txn_control_stmt(stmt))) && !is_set_tran_isolation(stmt))
 		{
 			elog(DEBUG5, "TSQL TXN Start internal savepoint");
 			BeginInternalSubTransaction(NULL);

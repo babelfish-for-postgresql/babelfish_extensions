@@ -9638,6 +9638,51 @@ pltsql_destroy_econtext(PLtsql_execstate *estate)
 	estate->eval_econtext = NULL;
 }
 
+/*
+ * pltsql_cleanup_econtext_stack_for_estate
+ *
+ * Remove and free all simple_econtext_stack entries whose ExprContexts were
+ * created in the given EState.  Must be called before FreeExecutorState() on
+ * a private per-invocation EState; otherwise txn_clean_estate() will attempt
+ * a second FreeExprContext on those same ExprContexts after
+ * FreeExecutorState() has already freed them via es_exprcontexts, causing a
+ * SIGSEGV double-free.
+ *
+ * This happens after AbortCurrentTransaction() during INSERT...EXEC error
+ * handling: the lxid-check code in exec_stmt_execute_batch() calls
+ * pltsql_create_econtext(estate) to rebuild the eval context, creating a
+ * stack entry that is never popped because the normal
+ * pltsql_destroy_econtext() path was bypassed by the abort.  When the outer
+ * pltsql_inline_handler later calls FreeExecutorState(), the ExprContext
+ * is freed a first time; txn_clean_estate() at commit then crashes trying
+ * to free it again.
+ */
+void
+pltsql_cleanup_econtext_stack_for_estate(EState *eval_estate)
+{
+	SimpleEcontextStackEntry **pp = &simple_econtext_stack;
+
+	if (eval_estate == NULL)
+		return;
+
+	while (*pp != NULL)
+	{
+		SimpleEcontextStackEntry *cur = *pp;
+
+		if (cur->stack_econtext->ecxt_estate == eval_estate)
+		{
+			/* Remove from stack, free ExprContext (removes from es_exprcontexts),
+			 * and free the entry struct. */
+			*pp = cur->next;
+			FreeExprContext(cur->stack_econtext, true);
+			pfree(cur);
+			/* do NOT advance pp — it now points to the new *pp */
+		}
+		else
+			pp = &cur->next;
+	}
+}
+
 void
 pltsql_estate_cleanup(void)
 {
@@ -9660,10 +9705,11 @@ pltsql_estate_cleanup(void)
 static void
 txn_clean_estate(bool commit)
 {
+	EState	   *old_shared;
+
 	while (simple_econtext_stack != NULL)
 	{
 		SimpleEcontextStackEntry *next;
-
 		FreeExprContext(simple_econtext_stack->stack_econtext, commit);
 
 		next = simple_econtext_stack->next;
@@ -9671,10 +9717,32 @@ txn_clean_estate(bool commit)
 		simple_econtext_stack = next;
 	}
 
+	old_shared = shared_simple_eval_estate;
 	if (shared_simple_eval_estate)
 		FreeExecutorState(shared_simple_eval_estate);
 
 	shared_simple_eval_estate = NULL;
+
+	/*
+	 * Any estate in the call stack that was pointing to the now-freed shared
+	 * EState now has a dangling simple_eval_estate pointer.  Reset it to NULL
+	 * so the next pltsql_create_econtext() call allocates a fresh EState
+	 * rather than calling CreateExprContext() on freed memory.  This can
+	 * happen after AbortCurrentTransaction() during INSERT...EXEC error
+	 * handling: the outer batch estate sets simple_eval_estate to
+	 * shared_simple_eval_estate, but txn_clean_estate (called from the abort
+	 * callback) frees it without clearing those estate pointers.
+	 */
+	if (old_shared != NULL)
+	{
+		PLExecStateCallStack *cs;
+
+		for (cs = exec_state_call_stack; cs != NULL; cs = cs->next)
+		{
+			if (cs->estate->simple_eval_estate == old_shared)
+				cs->estate->simple_eval_estate = NULL;
+		}
+	}
 }
 
 /*
