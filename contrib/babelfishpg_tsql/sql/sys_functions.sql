@@ -8,7 +8,8 @@ CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
     root_name text,
     elements boolean,
     xsinil boolean,
-    auto_metadata text
+    auto_metadata text,
+    ns_decls text
 ) RETURNS INTERNAL
 AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
 LANGUAGE C STABLE;
@@ -35,7 +36,8 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
     root_name text,
     elements boolean,
     xsinil boolean,
-    auto_metadata text)
+    auto_metadata text,
+    ns_decls text)
 (
     STYPE = INTERNAL,
     SFUNC = tsql_query_to_xml_sfunc,
@@ -50,7 +52,8 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     root_name text,
     elements boolean,
     xsinil boolean,
-    auto_metadata text)
+    auto_metadata text,
+    ns_decls text)
 (
     STYPE = INTERNAL,
     SFUNC = tsql_query_to_xml_sfunc,
@@ -89,8 +92,20 @@ RETURNS sys.BIT
 AS 'babelfishpg_tsql', 'bbf_xmlexist'
 LANGUAGE C STABLE STRICT PARALLEL SAFE;
 
+-- namespace-aware overload for XML EXIST(xpath) with WITH XMLNAMESPACES
+CREATE OR REPLACE FUNCTION sys.bbf_xmlexist(xpath_pattern TEXT, xml_element ANYELEMENT, namespaces TEXT[])
+RETURNS sys.BIT
+AS 'babelfishpg_tsql', 'bbf_xmlexist'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
 -- helper functions for XML QUERY(xpath)
 CREATE OR REPLACE FUNCTION sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT)
+RETURNS XML
+AS 'babelfishpg_tsql', 'bbf_xmlquery'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
+-- namespace-aware overload for XML QUERY(xpath) with WITH XMLNAMESPACES
+CREATE OR REPLACE FUNCTION sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT, namespaces TEXT[])
 RETURNS XML
 AS 'babelfishpg_tsql', 'bbf_xmlquery'
 LANGUAGE C STABLE STRICT PARALLEL SAFE;
@@ -101,8 +116,20 @@ RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'bbf_xmlvalue'
 LANGUAGE C STABLE STRICT PARALLEL SAFE;
 
+-- namespace-aware overload for XML VALUE(xpath) with WITH XMLNAMESPACES
+CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, datatype TEXT, xml_element ANYELEMENT, namespaces TEXT[])
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'bbf_xmlvalue'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
 -- helper function for XML NODES(xpath)
 CREATE OR REPLACE FUNCTION sys.bbf_xmlnodes(xpath_pattern TEXT, xml_element ANYELEMENT)
+RETURNS SETOF XML
+AS 'babelfishpg_tsql', 'bbf_xmlnodes'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
+-- namespace-aware overload for XML NODES(xpath) with WITH XMLNAMESPACES
+CREATE OR REPLACE FUNCTION sys.bbf_xmlnodes(xpath_pattern TEXT, xml_element ANYELEMENT, namespaces TEXT[])
 RETURNS SETOF XML
 AS 'babelfishpg_tsql', 'bbf_xmlnodes'
 LANGUAGE C STABLE STRICT PARALLEL SAFE;

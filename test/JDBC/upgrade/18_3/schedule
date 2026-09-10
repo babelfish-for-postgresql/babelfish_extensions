@@ -688,3 +688,5 @@ BABEL-login-db-long-identifiers
 long-identifiers-databases-before-18_6
 long-identifiers-trigger-func-proc-before-18_6
 long-identifiers-objects-before-18_6
+forxml-namespaces-before-18_6
+xml-methods-namespaces-before-18_6

@@ -614,3 +614,5 @@ babel_sqlvariant_coerce_type_before_16_14-or-17_10-or-18_4
 BABEL-login-db-long-identifiers
 long-identifiers-databases-before-18_6
 long-identifiers-objects-before-18_6
+forxml-namespaces-before-18_6
+xml-methods-namespaces-before-18_6
