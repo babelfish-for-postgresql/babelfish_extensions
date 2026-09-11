@@ -560,18 +560,17 @@ CREATE TABLE datalength_t4 (
     Col2 AS DATALENGTH(Col1 + 'suffix')
 );
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: generation expression is not immutable)~~
-
 
 
 INSERT INTO datalength_t4 (Col1) VALUES ('test');
 SELECT Col2 FROM datalength_t4;
 GO
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: relation "datalength_t4" does not exist)~~
+~~START~~
+int
+10
+~~END~~
 
 
 -- 12. Special Characters
@@ -2673,10 +2672,6 @@ GO
 
 DROP TABLE datalength_t4;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "datalength_t4" does not exist)~~
-
 
 DROP TABLE datalength_t5;
 DROP TABLE datalength_t6;

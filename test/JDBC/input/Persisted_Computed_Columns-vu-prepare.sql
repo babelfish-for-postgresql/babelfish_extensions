@@ -1,0 +1,188 @@
+-- Prepare: Create tables, data, view, FK tables and index table for
+-- PERSISTED computed column tests with deterministic STABLE functions
+
+SET QUOTED_IDENTIFIER ON
+SET CONCAT_NULL_YIELDS_NULL ON
+SET ANSI_NULLS ON
+SET ANSI_PADDING ON
+SET ANSI_WARNINGS ON
+SET ARITHABORT ON
+SET NUMERIC_ROUNDABORT OFF
+GO
+
+-- String concatenation via + operator
+CREATE TABLE pcc_concat (
+    id INT IDENTITY(1,1),
+    a VARCHAR(20),
+    b VARCHAR(20),
+    c AS (a + b) PERSISTED
+)
+GO
+
+-- CONVERT with explicit style
+CREATE TABLE pcc_convert (
+    id INT IDENTITY(1,1),
+    d DATE,
+    formatted AS CONVERT(VARCHAR(10), d, 101) PERSISTED
+)
+GO
+
+-- Multiple computed columns
+CREATE TABLE pcc_multi (
+    id INT,
+    a VARCHAR(20),
+    b VARCHAR(20),
+    c AS (a + b) PERSISTED,
+    d AS (b + a) PERSISTED
+)
+GO
+
+-- CONCAT function
+CREATE TABLE pcc_concatfn (
+    id INT IDENTITY(1,1),
+    first_name VARCHAR(20),
+    last_name VARCHAR(20),
+    full_name AS CONCAT(first_name, ' ', last_name) PERSISTED
+)
+GO
+
+-- EOMONTH
+CREATE TABLE pcc_eomonth (
+    id INT IDENTITY(1,1),
+    d DATE,
+    eom AS EOMONTH(d) PERSISTED
+)
+GO
+
+-- CONCAT_WS
+CREATE TABLE pcc_concatws (
+    id INT IDENTITY(1,1),
+    a VARCHAR(20),
+    b VARCHAR(20),
+    c VARCHAR(20),
+    combined AS CONCAT_WS('-', a, b, c) PERSISTED
+)
+GO
+
+-- DATETRUNC
+CREATE TABLE pcc_datetrunc (
+    id INT IDENTITY(1,1),
+    dt DATETIME,
+    truncated AS DATETRUNC(month, dt) PERSISTED
+)
+GO
+
+-- CAST to INT
+CREATE TABLE pcc_cast (
+    id INT IDENTITY(1,1),
+    val DECIMAL(10,4),
+    int_val AS CAST(val AS INT) PERSISTED
+)
+GO
+
+
+-- CAST to BIGINT
+CREATE TABLE pcc_castbig (
+    id INT IDENTITY(1,1),
+    val DECIMAL(18,4),
+    big_val AS CAST(val AS BIGINT) PERSISTED
+)
+GO
+
+-- CAST to SMALLINT
+CREATE TABLE pcc_castsmall (
+    id INT IDENTITY(1,1),
+    val DECIMAL(5,2),
+    small_val AS CAST(val AS SMALLINT) PERSISTED
+)
+GO
+
+-- CONVERT money with explicit style
+CREATE TABLE pcc_conv_money (
+    id INT IDENTITY(1,1),
+    m MONEY,
+    formatted AS CONVERT(TEXT, m, 1) PERSISTED
+)
+GO
+
+-- Normal table (no computed cols)
+CREATE TABLE pcc_normal (id INT, val VARCHAR(50))
+GO
+
+-- View on pcc_concat
+CREATE VIEW pcc_view AS SELECT id, a, b, c FROM pcc_concat
+GO
+
+-- FK parent with persisted computed col
+CREATE TABLE pcc_fk_parent (
+    a INT NOT NULL,
+    b INT NOT NULL,
+    c AS (a + b) PERSISTED UNIQUE
+)
+GO
+
+-- FK child referencing parent
+CREATE TABLE pcc_fk_child (
+    id INT PRIMARY KEY,
+    parent_c INT,
+    CONSTRAINT fk_pcc_child FOREIGN KEY (parent_c) REFERENCES pcc_fk_parent(c)
+)
+GO
+
+-- CTAS source table
+CREATE TABLE pcc_ctas_source (
+    a VARCHAR(20),
+    b VARCHAR(20),
+    c AS a + b PERSISTED
+)
+GO
+
+-- Insert test data
+
+INSERT INTO pcc_concat (a, b) VALUES ('Hello', 'World')
+INSERT INTO pcc_concat (a, b) VALUES ('X', NULL)
+INSERT INTO pcc_concat (a, b) VALUES ('A', 'B')
+INSERT INTO pcc_concat (a, b) VALUES (NULL, 'test')
+GO
+
+INSERT INTO pcc_ctas_source (a, b) VALUES ('Hello', 'World')
+INSERT INTO pcc_ctas_source (a, b) VALUES ('X', NULL)
+INSERT INTO pcc_ctas_source (a, b) VALUES ('A', 'B')
+GO
+
+INSERT INTO pcc_convert (d) VALUES ('2024-01-15'), ('2024-12-25')
+GO
+
+INSERT INTO pcc_multi (id, a, b) VALUES (1, 'Foo', 'Bar'), (2, 'P', NULL)
+GO
+
+INSERT INTO pcc_concatfn (first_name, last_name) VALUES ('John', 'Doe'), ('Jane', NULL)
+GO
+
+INSERT INTO pcc_eomonth (d) VALUES ('2024-01-15'), ('2024-02-10')
+GO
+
+INSERT INTO pcc_concatws (a, b, c) VALUES ('one', 'two', 'three'), ('x', NULL, 'z')
+GO
+
+INSERT INTO pcc_datetrunc (dt) VALUES ('2024-03-15 10:30:45'), ('2024-07-22 08:15:00')
+GO
+
+INSERT INTO pcc_cast (val) VALUES (123.4567), (99.9)
+GO
+
+INSERT INTO pcc_castbig (val) VALUES (123456.7890), (999999.9)
+GO
+
+INSERT INTO pcc_castsmall (val) VALUES (123.45), (32.1)
+GO
+
+INSERT INTO pcc_conv_money (m) VALUES (1234.56), (99999.99)
+GO
+
+INSERT INTO pcc_normal VALUES (1, 'test')
+GO
+
+INSERT INTO pcc_fk_parent (a, b) VALUES (1, 2), (5, 5)
+INSERT INTO pcc_fk_child VALUES (1, 3)
+GO
