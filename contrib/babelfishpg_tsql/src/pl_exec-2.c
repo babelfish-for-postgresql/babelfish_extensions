@@ -1265,7 +1265,11 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		SPI_freetuptable(SPI_tuptable);
 
 		if (stmt->insert_exec != NULL)
+		{
 			insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
+			before_lxid = MyProc->vxid.lxid;
+			topEntry = simple_econtext_stack;
+		}
 	}
 	PG_FINALLY();
 	{
@@ -1488,11 +1492,13 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	{
 		/*
 		 * Setup INSERT EXEC (new path): create temp table to capture procedure
-		 * output. No implicit transaction for dynamic SQL (different semantics
-		 * than stored procs).
+		 * output. Start an implicit transaction for dynamic SQL just as the
+		 * stored-proc path does: without an active transaction block, statement
+		 * errors call AbortCurrentTransaction(), which destroys the INSERT EXEC
+		 * buffer temp table (ON COMMIT DROP) and breaks TRY/CATCH recovery.
 		 */
 		if (stmt->insert_exec != NULL)
-			insert_exec_setup(estate, stmt->insert_exec, false);
+			insert_exec_setup(estate, stmt->insert_exec, true);
 
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(estate, query, restype);
@@ -1516,7 +1522,11 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			elog(ERROR, "pltsql_inline_handler failed");
 
 		if (stmt->insert_exec != NULL)
+		{
 			insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
+			before_lxid = MyProc->vxid.lxid;
+			topEntry = simple_econtext_stack;
+		}
 	}
 	PG_FINALLY();
 	{
