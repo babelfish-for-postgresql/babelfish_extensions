@@ -1308,6 +1308,46 @@ DROP TABLE dbo.ie_implicit_txn;
 GO
 
 -- ============================================================================
+-- Category VIII: INSERT EXEC transaction behavior with dynamic sql
+-- ============================================================================
+-- Repro 1: BEGIN TRAN/COMMIT in dynamic SQL inside INSERT-EXEC
+CREATE TABLE dest_table (id INT, name VARCHAR(100));
+GO
+
+TRUNCATE TABLE dest_table;
+DECLARE @sql2 VARCHAR(500);
+SET @sql2 = 'BEGIN TRANSACTION; SELECT 1 AS id, ''test'' AS name; COMMIT';
+INSERT INTO dest_table EXEC(@sql2);
+SELECT COUNT(*) AS row_count FROM dest_table;
+SELECT * FROM dest_table;
+GO
+
+DROP TABLE dest_table;
+GO
+
+-- Repro 2: TRY/CATCH in dynamic SQL inside INSERT-EXEC
+CREATE TABLE dest_table2 (id INT, name VARCHAR(100));
+GO
+
+DECLARE @sql1 VARCHAR(1000);
+SET @sql1 = '
+BEGIN TRY
+    SELECT 1 AS id, ''try_row'' AS name
+    SELECT 1/0 AS id, ''fail'' AS name
+END TRY
+BEGIN CATCH
+    SELECT 99 AS id, ''catch_row'' AS name
+END CATCH
+';
+INSERT INTO dest_table2 EXEC(@sql1);
+SELECT COUNT(*) AS row_count FROM dest_table2;
+SELECT * FROM dest_table2;
+GO
+
+DROP TABLE dest_table2;
+GO
+
+-- ============================================================================
 -- Cleanup verification
 -- ============================================================================
 SELECT 'All INSERT EXEC tests completed successfully' AS status;
