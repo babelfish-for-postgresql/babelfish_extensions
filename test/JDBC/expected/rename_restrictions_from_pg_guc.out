@@ -1,0 +1,116 @@
+-- tsql
+CREATE LOGIN rename_from_pg_guc_u_neg WITH PASSWORD = '12345678';
+GO
+ALTER SERVER ROLE sysadmin ADD MEMBER rename_from_pg_guc_u_neg;
+GO
+CREATE LOGIN rename_from_pg_guc_u_pos WITH PASSWORD = '12345678';
+GO
+ALTER SERVER ROLE sysadmin ADD MEMBER rename_from_pg_guc_u_pos;
+GO
+
+CREATE PROCEDURE rename_from_pg_guc_p1 AS SELECT 1;
+GO
+CREATE PROCEDURE rename_from_pg_guc_p2 AS SELECT 1;
+GO
+CREATE PROCEDURE rename_from_pg_guc_p3 AS SELECT 1;
+GO
+
+-- psql
+GRANT CREATE ON SCHEMA public TO rename_from_pg_guc_u_neg;
+GO
+GRANT CREATE ON SCHEMA public TO rename_from_pg_guc_u_pos;
+GO
+
+-- psql user=rename_from_pg_guc_u_neg password=12345678
+-- negative cases: GUC off, all three operation types must be blocked
+ALTER PROCEDURE master_dbo.rename_from_pg_guc_p1 RENAME TO rename_from_pg_guc_p1_new;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "master_dbo.rename_from_pg_guc_p1".
+    Server SQLState: 0A000)~~
+
+
+ALTER PROCEDURE master_dbo.rename_from_pg_guc_p2 SET SCHEMA public;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on TSQL object "master_dbo.rename_from_pg_guc_p2" from schema "master_dbo".
+    Server SQLState: 0A000)~~
+
+
+SET psql_logical_babelfish_db_name = 'master';
+GO
+CALL sys.sp_rename('master.dbo.rename_from_pg_guc_p3', 'rename_from_pg_guc_p3_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+    Server SQLState: 0A000)~~
+
+RESET psql_logical_babelfish_db_name;
+GO
+
+-- psql
+ALTER DATABASE babelfish_db SET babelfishpg_tsql.enable_rename_from_pg = on;
+GO
+
+-- psql user=rename_from_pg_guc_u_pos password=12345678
+-- positive cases: GUC on, all three operation types must succeed
+ALTER PROCEDURE master_dbo.rename_from_pg_guc_p1 RENAME TO rename_from_pg_guc_p1_new;
+GO
+ALTER PROCEDURE master_dbo.rename_from_pg_guc_p1_new RENAME TO rename_from_pg_guc_p1;
+GO
+
+ALTER PROCEDURE master_dbo.rename_from_pg_guc_p2 SET SCHEMA public;
+GO
+ALTER PROCEDURE public.rename_from_pg_guc_p2 SET SCHEMA master_dbo;
+GO
+
+-- these will still fail, not because of our block, but because sp_rename
+-- currently can't resolve the schema from the PG endpoint 
+SET psql_logical_babelfish_db_name = 'master';
+GO
+CALL sys.sp_rename('master.dbo.rename_from_pg_guc_p3', 'rename_from_pg_guc_p3_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: schema "dbo" does not exist
+  Where: SQL statement "EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname"
+PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 131 at EXEC
+    Server SQLState: 3F000)~~
+
+CALL sys.sp_rename('master.dbo.rename_from_pg_guc_p3_new', 'rename_from_pg_guc_p3', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+    Server SQLState: YY001)~~
+
+RESET psql_logical_babelfish_db_name;
+GO
+
+-- terminate-psql-conn user=rename_from_pg_guc_u_neg password=12345678
+-- terminate-psql-conn user=rename_from_pg_guc_u_pos password=12345678
+-- psql
+-- cleanup
+REVOKE CREATE ON SCHEMA public FROM rename_from_pg_guc_u_neg;
+GO
+REVOKE CREATE ON SCHEMA public FROM rename_from_pg_guc_u_pos;
+GO
+
+ALTER DATABASE babelfish_db RESET babelfishpg_tsql.enable_rename_from_pg;
+GO
+
+-- tsql
+DROP PROCEDURE rename_from_pg_guc_p1;
+GO
+DROP PROCEDURE rename_from_pg_guc_p2;
+GO
+DROP PROCEDURE rename_from_pg_guc_p3;
+GO
+DROP LOGIN rename_from_pg_guc_u_neg;
+GO
+DROP LOGIN rename_from_pg_guc_u_pos;
+GO
