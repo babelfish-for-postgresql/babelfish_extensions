@@ -1430,6 +1430,166 @@ GO
 DROP TABLE dbo.ie_dyn_err_notrycatch;
 GO
 
+
+-- Test 6: Two sequential dynamic SQL INSERT EXECs (re-baseline fix verification)
+DROP TABLE IF EXISTS dbo.ie_dyn_seq1;
+CREATE TABLE dbo.ie_dyn_seq1 (val INT);
+DROP TABLE IF EXISTS dbo.ie_dyn_seq2;
+CREATE TABLE dbo.ie_dyn_seq2 (val INT);
+GO
+
+INSERT INTO dbo.ie_dyn_seq1 EXEC('SELECT 10')
+INSERT INTO dbo.ie_dyn_seq2 EXEC('SELECT 20')
+GO
+
+SELECT val FROM dbo.ie_dyn_seq1;
+GO
+
+SELECT val FROM dbo.ie_dyn_seq2;
+GO
+
+DROP TABLE dbo.ie_dyn_seq1;
+DROP TABLE dbo.ie_dyn_seq2;
+GO
+
+-- Test 7: Outer TRY/CATCH catches error propagated from dynamic SQL
+DROP TABLE IF EXISTS dbo.ie_dyn_outer_try;
+CREATE TABLE dbo.ie_dyn_outer_try (val INT);
+GO
+
+BEGIN TRY
+    INSERT INTO dbo.ie_dyn_outer_try EXEC('SELECT 1/0')
+END TRY
+BEGIN CATCH
+    SELECT 'caught' AS result
+END CATCH
+GO
+
+SELECT COUNT(*) AS row_count FROM dbo.ie_dyn_outer_try;
+GO
+
+DROP TABLE dbo.ie_dyn_outer_try;
+GO
+
+-- Test 8: Outer explicit transaction + dynamic SQL INSERT EXEC + ROLLBACK undoes rows
+DROP TABLE IF EXISTS dbo.ie_dyn_txn_rollback;
+CREATE TABLE dbo.ie_dyn_txn_rollback (val INT);
+GO
+
+BEGIN TRANSACTION
+INSERT INTO dbo.ie_dyn_txn_rollback EXEC('SELECT 99')
+SELECT @@TRANCOUNT
+ROLLBACK
+GO
+
+SELECT COUNT(*) AS row_count FROM dbo.ie_dyn_txn_rollback;
+GO
+
+DROP TABLE dbo.ie_dyn_txn_rollback;
+GO
+
+-- Test 9: IMPLICIT_TRANSACTIONS ON + dynamic SQL INSERT EXEC + COMMIT
+DROP TABLE IF EXISTS dbo.ie_dyn_impl_commit;
+CREATE TABLE dbo.ie_dyn_impl_commit (val INT);
+GO
+
+SET IMPLICIT_TRANSACTIONS ON
+INSERT INTO dbo.ie_dyn_impl_commit EXEC('SELECT 100')
+SELECT @@TRANCOUNT
+COMMIT
+SELECT @@TRANCOUNT
+GO
+
+SELECT val FROM dbo.ie_dyn_impl_commit;
+GO
+
+SET IMPLICIT_TRANSACTIONS OFF
+DROP TABLE dbo.ie_dyn_impl_commit;
+GO
+
+-- Test 10: IMPLICIT_TRANSACTIONS ON + dynamic SQL INSERT EXEC + ROLLBACK undoes rows
+DROP TABLE IF EXISTS dbo.ie_dyn_impl_rollback;
+CREATE TABLE dbo.ie_dyn_impl_rollback (val INT);
+GO
+
+SET IMPLICIT_TRANSACTIONS ON
+INSERT INTO dbo.ie_dyn_impl_rollback EXEC('SELECT 200')
+SELECT @@TRANCOUNT
+ROLLBACK
+SELECT @@TRANCOUNT
+GO
+
+SELECT COUNT(*) AS row_count FROM dbo.ie_dyn_impl_rollback;
+GO
+
+SET IMPLICIT_TRANSACTIONS OFF
+DROP TABLE dbo.ie_dyn_impl_rollback;
+GO
+
+-- Test 11: TRY/CATCH inside dynamic SQL with ROLLBACK in CATCH (not allowed inside INSERT-EXEC)
+DROP TABLE IF EXISTS dbo.ie_dyn_catch_rollback;
+CREATE TABLE dbo.ie_dyn_catch_rollback (val INT);
+GO
+
+INSERT INTO dbo.ie_dyn_catch_rollback EXEC('
+BEGIN TRY
+    SELECT 1
+    SELECT 1/0
+END TRY
+BEGIN CATCH
+    ROLLBACK
+END CATCH
+')
+GO
+
+SELECT COUNT(*) AS row_count FROM dbo.ie_dyn_catch_rollback;
+GO
+
+DROP TABLE dbo.ie_dyn_catch_rollback;
+GO
+
+-- Test 12: Outer TRY/CATCH with ROLLBACK in CATCH block
+DROP TABLE IF EXISTS dbo.ie_dyn_outer_catch_rb;
+CREATE TABLE dbo.ie_dyn_outer_catch_rb (val INT);
+GO
+
+BEGIN TRANSACTION
+BEGIN TRY
+    INSERT INTO dbo.ie_dyn_outer_catch_rb EXEC('SELECT 1/0')
+END TRY
+BEGIN CATCH
+    SELECT 'caught' AS result
+    ROLLBACK
+END CATCH
+GO
+
+SELECT COUNT(*) AS row_count FROM dbo.ie_dyn_outer_catch_rb;
+GO
+
+DROP TABLE dbo.ie_dyn_outer_catch_rb;
+GO
+
+-- Test 13: SET XACT_ABORT ON + error in dynamic SQL terminates batch and rolls back transaction
+DROP TABLE IF EXISTS dbo.ie_dyn_xactabort;
+CREATE TABLE dbo.ie_dyn_xactabort (val INT);
+GO
+
+SET XACT_ABORT ON
+BEGIN TRANSACTION
+SELECT @@TRANCOUNT
+INSERT INTO dbo.ie_dyn_xactabort EXEC('SELECT 1/0')
+GO
+
+SELECT @@TRANCOUNT
+GO
+
+SELECT COUNT(*) AS row_count FROM dbo.ie_dyn_xactabort;
+GO
+
+SET XACT_ABORT OFF
+DROP TABLE dbo.ie_dyn_xactabort;
+GO
+
 -- ============================================================================
 -- Cleanup verification
 -- ============================================================================
