@@ -871,11 +871,7 @@ insert_exec_setup(PLtsql_execstate *estate,
 	/* Build the quoted column list (if any) for temp table creation */
 	column_list = build_quoted_column_list(info->columns);
 
-	/*
-	 * Start implicit transaction for INSERT EXEC if requested and not already in one.
-	 * This is used for stored procedure calls (exec_stmt_exec) but not for
-	 * dynamic SQL (exec_stmt_exec_batch) which has different transaction semantics.
-	 */
+	/* Start an implicit transaction for INSERT EXEC if not already in one */
 	if (start_implicit_txn)
 	{
 		if (!pltsql_disable_batch_auto_commit &&

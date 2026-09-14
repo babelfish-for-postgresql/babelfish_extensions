@@ -1348,9 +1348,9 @@ DROP TABLE dbo.ie_multicol_unqual_dest;
 GO
 
 -- ============================================================================
--- Category VIII: INSERT EXEC transaction behavior with dynamic sql
+-- Category IX: INSERT EXEC transaction behavior with dynamic sql
 -- ============================================================================
--- Repro 1: BEGIN TRAN/COMMIT in dynamic SQL inside INSERT-EXEC
+-- Test 1: BEGIN TRAN/COMMIT in dynamic SQL inside INSERT-EXEC
 CREATE TABLE dest_table (id INT, name VARCHAR(100));
 GO
 
@@ -1365,7 +1365,7 @@ GO
 DROP TABLE dest_table;
 GO
 
--- Repro 2: TRY/CATCH in dynamic SQL inside INSERT-EXEC
+-- Test 2: TRY/CATCH in dynamic SQL inside INSERT-EXEC
 CREATE TABLE dest_table2 (id INT, name VARCHAR(100));
 GO
 
@@ -1385,6 +1385,49 @@ SELECT * FROM dest_table2;
 GO
 
 DROP TABLE dest_table2;
+GO
+
+-- Test 3: Dynamic SQL INSERT EXEC inside an existing explicit transaction
+CREATE TABLE dbo.ie_dyn_outer_txn (val INT);
+GO
+
+BEGIN TRANSACTION
+SELECT @@TRANCOUNT
+INSERT INTO dbo.ie_dyn_outer_txn EXEC('SELECT 42')
+SELECT @@TRANCOUNT
+COMMIT
+GO
+
+SELECT val FROM dbo.ie_dyn_outer_txn;
+GO
+
+DROP TABLE dbo.ie_dyn_outer_txn;
+GO
+
+-- Test 4: ROLLBACK inside dynamic SQL errors
+CREATE TABLE dbo.ie_dyn_rollback (val INT);
+GO
+
+INSERT INTO dbo.ie_dyn_rollback EXEC('BEGIN TRANSACTION; SELECT 10; ROLLBACK')
+GO
+
+SELECT COUNT(*) AS row_count FROM dbo.ie_dyn_rollback;
+GO
+
+DROP TABLE dbo.ie_dyn_rollback;
+GO
+
+-- Test 5: statement error inside dynamic SQL without TRY/CATCH propagates
+CREATE TABLE dbo.ie_dyn_err_notrycatch (val INT);
+GO
+
+INSERT INTO dbo.ie_dyn_err_notrycatch EXEC('SELECT 1/0')
+GO
+
+SELECT COUNT(*) AS row_count FROM dbo.ie_dyn_err_notrycatch;
+GO
+
+DROP TABLE dbo.ie_dyn_err_notrycatch;
 GO
 
 -- ============================================================================
