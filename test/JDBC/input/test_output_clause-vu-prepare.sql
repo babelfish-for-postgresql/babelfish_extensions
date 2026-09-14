@@ -570,3 +570,10 @@ GO
 
 INSERT INTO t_upd_output_babel6885 VALUES (1, 10, 'row1'), (2, 20, 'row2'), (3, 30, 'row3');
 GO
+
+-- table for multi-column OUTPUT unqualified reference tests
+CREATE TABLE t_multicol_output_babel6885 (id INT, a INT, b INT, c INT, d INT);
+GO
+
+INSERT INTO t_multicol_output_babel6885 VALUES (1, 10, 20, 30, 40), (2, 11, 21, 31, 41);
+GO
