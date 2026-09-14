@@ -495,3 +495,17 @@ GO
 DROP TABLE OutputCapture_insert;
 DROP TABLE OutputCapture;
 GO
+
+-- Test Case 35: UPDATE with OUTPUT - unqualified column references
+UPDATE t_upd_output_babel6885
+SET val = val * 2
+OUTPUT id, deleted.val AS old_val, val AS new_val;
+GO
+
+-- Test Case 36: UPDATE with OUTPUT and WHERE clause - unqualified column reference (BABEL-6885)
+UPDATE t_upd_output_babel6885
+SET name = name + '_updated'
+OUTPUT id, name, deleted.name AS old_name
+WHERE id > 1;
+GO
+

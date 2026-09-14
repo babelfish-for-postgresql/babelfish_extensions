@@ -563,3 +563,10 @@ BEGIN
     SELECT ID, Name, Value, Counter, 'Inserted_Via_Trigger' FROM inserted;
 END;
 GO
+
+-- table for UPDATE...OUTPUT unqualified column reference tests
+CREATE TABLE t_upd_output_babel6885 (id INT, val INT, name VARCHAR(50));
+GO
+
+INSERT INTO t_upd_output_babel6885 VALUES (1, 10, 'row1'), (2, 20, 'row2'), (3, 30, 'row3');
+GO
