@@ -1106,3 +1106,20 @@ varchar
 outer
 ~~END~~
 
+-- ============================================
+-- SECTION 21: One WITH XMLNAMESPACES shared across multiple method calls
+-- Multiple XML method calls in a single statement must all see the same
+-- declared namespace context (each rewrite reads the same array literal).
+-- ============================================
+-- 21.1 Two .value() calls and one .exist(), all using the same declared prefix
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:a>10</ns1:a><ns1:b>20</ns1:b></root>';
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT @x.value('(/root/ns1:a)[1]', 'int') AS a,
+       @x.value('(/root/ns1:b)[1]', 'int') AS b,
+       @x.exist('/root/ns1:a') AS has_a;
+GO
+~~START~~
+int#!#int#!#bit
+10#!#20#!#1
+~~END~~
+

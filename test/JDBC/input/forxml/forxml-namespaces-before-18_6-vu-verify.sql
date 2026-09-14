@@ -724,3 +724,22 @@ WITH XMLNAMESPACES('http://x/?xmlns:xsi=fake' AS n)
 SELECT 1 AS a, CAST(NULL AS VARCHAR(10)) AS b
 FOR XML PATH('Row'), ELEMENTS XSINIL;
 GO
+-- ============================================
+-- SECTION 25: Namespace context does not leak across statement boundaries
+-- The WITH XMLNAMESPACES context is per-statement. A following statement in
+-- the same batch (and a statement that runs after one errored during
+-- validation) must not inherit any stale namespace declaration.
+-- ============================================
+-- 25.1 Statement 1 declares ns1; statement 2 has no WITH XMLNAMESPACES.
+-- Statement 2 must emit no xmlns:ns1 and treat its aliases as plain names.
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('Row');
+SELECT EmpID AS ID FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('Row');
+GO
+-- 25.2 Statement 1 errors on a duplicate prefix; the clear must still run so
+-- the next statement starts with empty namespace context.
+WITH XMLNAMESPACES('http://a' AS ns1, 'http://b' AS ns1)
+SELECT 1 AS [ns1:a] FOR XML RAW('Row');
+GO
+SELECT 1 AS a FOR XML RAW('Row');
+GO

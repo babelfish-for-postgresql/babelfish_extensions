@@ -1208,3 +1208,41 @@ ntext
 <Row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:n="http://x/?xmlns:xsi=fake"><a>1</a><b xsi:nil="true"/></Row>
 ~~END~~
 
+-- ============================================
+-- SECTION 25: Namespace context does not leak across statement boundaries
+-- The WITH XMLNAMESPACES context is per-statement. A following statement in
+-- the same batch (and a statement that runs after one errored during
+-- validation) must not inherit any stale namespace declaration.
+-- ============================================
+-- 25.1 Statement 1 declares ns1; statement 2 has no WITH XMLNAMESPACES.
+-- Statement 2 must emit no xmlns:ns1 and treat its aliases as plain names.
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('Row');
+SELECT EmpID AS ID FROM forxml_ns_employees WHERE EmpID = 1 FOR XML RAW('Row');
+GO
+~~START~~
+ntext
+<Row xmlns:ns1="http://example.com/ns1" ns1:ID="1"/>
+~~END~~
+
+~~START~~
+ntext
+<Row ID="1"/>
+~~END~~
+
+-- 25.2 Statement 1 errors on a duplicate prefix; the clear must still run so
+-- the next statement starts with empty namespace context.
+WITH XMLNAMESPACES('http://a' AS ns1, 'http://b' AS ns1)
+SELECT 1 AS [ns1:a] FOR XML RAW('Row');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Attempt to redefine namespace prefix 'ns1')~~
+
+SELECT 1 AS a FOR XML RAW('Row');
+GO
+~~START~~
+ntext
+<Row a="1"/>
+~~END~~
+
