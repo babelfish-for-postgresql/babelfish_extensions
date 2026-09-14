@@ -1843,8 +1843,64 @@ int
 
 SET IMPLICIT_TRANSACTIONS OFF
 GO
+
 DROP PROCEDURE dbo.ie_implicit_txn_src;
 DROP TABLE dbo.ie_implicit_txn;
+-- ============================================================================
+-- Category VIII: INSERT EXEC from procedure containing UPDATE ... OUTPUT
+-- ============================================================================
+CREATE TABLE dbo.ie_update_output_dest (old_val DECIMAL(10,2), new_val DECIMAL(10,2));
+GO
+CREATE PROCEDURE dbo.ie_update_output_src AS
+BEGIN
+    DROP TABLE IF EXISTS #temp_upd;
+    CREATE TABLE #temp_upd (id INT, val DECIMAL(10,2));
+    INSERT INTO #temp_upd VALUES (1, 10.50), (2, 20.75);
+    UPDATE #temp_upd SET val = val * 2 OUTPUT DELETED.val, INSERTED.val;
+END;
+GO
+INSERT INTO dbo.ie_update_output_dest EXEC dbo.ie_update_output_src;
+SELECT old_val, new_val FROM dbo.ie_update_output_dest ORDER BY old_val; -- Expected: (10.50, 21.00) (20.75, 41.50)
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+numeric#!#numeric
+10.50#!#21.00
+20.75#!#41.50
+~~END~~
+
+DROP PROCEDURE dbo.ie_update_output_src;
+DROP TABLE dbo.ie_update_output_dest;
+GO
+
+-- INSERT EXEC from procedure with multi-column UPDATE ... OUTPUT using unqualified references
+CREATE TABLE dbo.ie_multicol_unqual_dest (old_a INT, new_a INT, old_b INT, new_b INT, old_c INT, new_c INT);
+GO
+CREATE PROCEDURE dbo.ie_multicol_unqual_src AS
+BEGIN
+    DROP TABLE IF EXISTS #temp_mc;
+    CREATE TABLE #temp_mc (id INT, a INT, b INT, c INT);
+    INSERT INTO #temp_mc VALUES (1, 1, 10, 100), (2, 2, 20, 200);
+    UPDATE #temp_mc SET a = a * 2, b = b * 2, c = c * 2
+    OUTPUT deleted.a AS old_a, a AS new_a,
+           deleted.b AS old_b, b AS new_b,
+           deleted.c AS old_c, c AS new_c;
+END;
+GO
+INSERT INTO dbo.ie_multicol_unqual_dest EXEC dbo.ie_multicol_unqual_src;
+SELECT old_a, new_a, old_b, new_b, old_c, new_c FROM dbo.ie_multicol_unqual_dest ORDER BY old_a;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+1#!#2#!#10#!#20#!#100#!#200
+2#!#4#!#20#!#40#!#200#!#400
+~~END~~
+
+DROP PROCEDURE dbo.ie_multicol_unqual_src;
+DROP TABLE dbo.ie_multicol_unqual_dest;
 GO
 
 -- ============================================================================

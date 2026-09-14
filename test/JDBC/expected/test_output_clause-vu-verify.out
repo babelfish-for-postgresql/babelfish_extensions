@@ -827,3 +827,93 @@ int#!#nvarchar#!#int#!#int#!#nvarchar
 DROP TABLE OutputCapture_insert;
 DROP TABLE OutputCapture;
 GO
+
+-- Test Case 35: UPDATE with OUTPUT - unqualified column references
+UPDATE t_upd_output_babel6885
+SET val = val * 2
+OUTPUT id, deleted.val AS old_val, val AS new_val;
+GO
+~~START~~
+int#!#int#!#int
+1#!#10#!#20
+2#!#20#!#40
+3#!#30#!#60
+~~END~~
+
+
+-- Test Case 36: UPDATE with OUTPUT and WHERE clause - unqualified column reference (BABEL-6885)
+UPDATE t_upd_output_babel6885
+SET name = name + '_updated'
+OUTPUT id, name, deleted.name AS old_name
+WHERE id > 1;
+GO
+~~START~~
+int#!#varchar#!#varchar
+2#!#row2_updated#!#row2
+3#!#row3_updated#!#row3
+~~END~~
+
+
+
+-- Test Case 37: Multi-column UPDATE with OUTPUT - unqualified references for multiple columns
+UPDATE t_upd_output_babel6885
+SET val = val + 1, name = name + '_v3'
+OUTPUT id, val AS new_val, deleted.val AS old_val, name AS new_name, deleted.name AS old_name
+WHERE id = 1;
+GO
+~~START~~
+int#!#int#!#int#!#varchar#!#varchar
+1#!#21#!#20#!#row1_v3#!#row1
+~~END~~
+
+
+-- Test Case 38: DELETE with OUTPUT - unqualified column references
+DELETE FROM t_upd_output_babel6885
+OUTPUT id, val, name, deleted.id AS del_id, deleted.val AS del_val, deleted.name AS del_name
+WHERE id = 2;
+GO
+~~START~~
+int#!#int#!#varchar#!#int#!#int#!#varchar
+2#!#40#!#row2_updated#!#2#!#40#!#row2_updated
+~~END~~
+
+
+-- Test Case 39: INSERT with OUTPUT - unqualified column references
+INSERT INTO t_upd_output_babel6885 (id, val, name)
+OUTPUT id, val, name, inserted.id AS ins_id, inserted.val AS ins_val, inserted.name AS ins_name
+VALUES (99, 999, 'inserted_row');
+GO
+~~START~~
+int#!#int#!#varchar#!#int#!#int#!#varchar
+99#!#999#!#inserted_row#!#99#!#999#!#inserted_row
+~~END~~
+
+
+-- Test Case 40: 3-column UPDATE SET with unqualified, inserted, and deleted OUTPUT references
+UPDATE t_multicol_output_babel6885
+SET a = a + 1, b = b + 1, c = c + 1
+OUTPUT id, a AS new_a, inserted.a AS ins_a, deleted.a AS old_a,
+          b AS new_b, inserted.b AS ins_b, deleted.b AS old_b,
+          c AS new_c, inserted.c AS ins_c, deleted.c AS old_c
+WHERE id = 1;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+1#!#11#!#11#!#10#!#21#!#21#!#20#!#31#!#31#!#30
+~~END~~
+
+
+-- Test Case 41: 4-column UPDATE SET with unqualified, inserted, and deleted OUTPUT references
+UPDATE t_multicol_output_babel6885
+SET a = a + 1, b = b + 1, c = c + 1, d = d + 1
+OUTPUT id, a AS new_a, inserted.a AS ins_a, deleted.a AS old_a,
+          b AS new_b, inserted.b AS ins_b, deleted.b AS old_b,
+          c AS new_c, inserted.c AS ins_c, deleted.c AS old_c,
+          d AS new_d, inserted.d AS ins_d, deleted.d AS old_d
+WHERE id = 1;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+1#!#12#!#12#!#11#!#22#!#22#!#21#!#32#!#32#!#31#!#41#!#41#!#40
+~~END~~
+
