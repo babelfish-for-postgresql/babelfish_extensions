@@ -4861,7 +4861,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				/*
 				 * Block SET SCHEMA of TSQL functions/procedures from the PG endpoint.
 				 */
-				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !superuser())
+				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_rename_from_pg && !superuser())
 					restrict_alter_object_schema_stmt((AlterObjectSchemaStmt *) parsetree);
 
 				break;
@@ -4871,7 +4871,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				/*
 				 * Block CALL sys.sp_rename from the PG endpoint.
 				 */
-				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !superuser())
+				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_rename_from_pg && !superuser())
 					restrict_call_stmt((CallStmt *) parsetree);
 
 				break;
@@ -4884,7 +4884,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				 * Block RENAME TSQL functions/procedures, and RENAME of the
 				 * sys and information_schema_tsql schemas from the PG endpoint.
 				 */
-				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !superuser())
+				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_rename_from_pg && !superuser())
 					restrict_rename_stmt(stmt);
 
 				if (prev_ProcessUtility)

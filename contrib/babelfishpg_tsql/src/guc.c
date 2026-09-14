@@ -71,6 +71,7 @@ char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
 bool		pltsql_enable_alter_owner_from_pg = false;
+bool		pltsql_enable_rename_from_pg = false;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -1134,6 +1135,20 @@ define_custom_variables(void)
 							 gettext_noop("Enables blocked ALTER .. OWNER .. statements on TSQL objects from PG endpoint"),
 							 NULL,
 							 &pltsql_enable_alter_owner_from_pg,
+							 false,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/*
+	 * Block ALTER .. RENAME TO .., ALTER .. SET SCHEMA .., and CALL sys.sp_rename from the PG endpoint executed on TSQL objects.
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_rename_from_pg",
+							 gettext_noop("Enables blocked ALTER statements on TSQL objects from PG endpoint"),
+							 gettext_noop("When enabled, ALTER .. RENAME TO .., ALTER .. SET SCHEMA .., "
+										  "and CALL sys.sp_rename statements are allowed on TSQL objects "
+										  "from the PG endpoint."),
+							 &pltsql_enable_rename_from_pg,
 							 false,
 							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
