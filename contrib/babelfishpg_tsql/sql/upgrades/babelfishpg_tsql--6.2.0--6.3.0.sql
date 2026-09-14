@@ -5225,6 +5225,21 @@ GRANT SELECT ON information_schema_tsql.sequences TO PUBLIC;
 -- dependent was missed and should be recreated before this point.
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'pg_namespace_ext_deprecated_in_6_3_0');
 
+-- Versioned Latin1_General collations (Latin1_General_90/100/140_CI_AI/CI_AS/CS_AI/CS_AS)
+-- are now translated to the same Babelfish collations as the unversioned names.
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_90_ci_ai', N'Virtual, default locale, code page 1252, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_90_ci_as', N'Virtual, default locale, code page 1252, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_90_cs_ai', N'Virtual, default locale, code page 1252, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_90_cs_as', N'Virtual, default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_100_ci_ai', N'Virtual, default locale, code page 1252, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_100_ci_as', N'Virtual, default locale, code page 1252, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_100_cs_ai', N'Virtual, default locale, code page 1252, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_100_cs_as', N'Virtual, default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_140_ci_ai', N'Virtual, default locale, code page 1252, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_140_ci_as', N'Virtual, default locale, code page 1252, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_140_cs_ai', N'Virtual, default locale, code page 1252, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_140_cs_as', N'Virtual, default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
 

@@ -135,6 +135,18 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_ci_ai', N'Virtu
 INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_ci_as', N'Virtual, default locale, code page 1252, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_cs_ai', N'Virtual, default locale, code page 1252, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_cs_as', N'Virtual, default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_90_ci_ai', N'Virtual, default locale, code page 1252, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_90_ci_as', N'Virtual, default locale, code page 1252, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_90_cs_ai', N'Virtual, default locale, code page 1252, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_90_cs_as', N'Virtual, default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_100_ci_ai', N'Virtual, default locale, code page 1252, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_100_ci_as', N'Virtual, default locale, code page 1252, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_100_cs_ai', N'Virtual, default locale, code page 1252, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_100_cs_as', N'Virtual, default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_140_ci_ai', N'Virtual, default locale, code page 1252, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_140_ci_as', N'Virtual, default locale, code page 1252, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_140_cs_ai', N'Virtual, default locale, code page 1252, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_140_cs_as', N'Virtual, default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 
 INSERT INTO sys.babelfish_helpcollation VALUES (N'modern_spanish_cs_as', N'Traditional-Spanish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'modern_spanish_ci_as', N'Traditional-Spanish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');

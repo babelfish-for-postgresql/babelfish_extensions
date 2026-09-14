@@ -1,0 +1,4 @@
+CREATE TABLE babel_coll_ver_vu_prepare_t (id INT, val VARCHAR(50) COLLATE Latin1_General_CI_AS);
+GO
+INSERT INTO babel_coll_ver_vu_prepare_t VALUES (1, 'Äpfel'), (2, 'apfel'), (3, 'APFEL');
+GO
