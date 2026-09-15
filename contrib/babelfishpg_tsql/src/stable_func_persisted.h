@@ -6,11 +6,21 @@
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
 
+/*
+ * Extra condition for functions that are only deterministic for certain
+ * arguments.  argname is the parameter to inspect, from the whitelist entry.
+ * f is the call site, and is NULL when there are no arguments to look at (an
+ * operator or a type I/O coercion), so such rules must fail closed.
+ */
+typedef bool (*whitelist_validator) (HeapTuple procTup, FuncExpr *f,
+                                     const char *argname);
+
 /* Entry for whitelisted function lookup */
 typedef struct {
-    const char *funcname;
-    const char *nspname;
-    int        style_arg_pos; /* 0-based position of style_specified arg, -1 means always safe */
+    const char          *funcname;
+    const char          *nspname;
+    whitelist_validator  validate;      /* NULL: nothing beyond volatility */
+    const char          *validate_arg;  /* parameter the validator inspects */
 } FuncEntry;
 
 typedef struct
