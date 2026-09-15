@@ -406,6 +406,25 @@ DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:item>v</ns1:item
 WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
 SELECT @x . value('(/root/ns1:item)[1]', 'varchar(50)');
 GO
+-- 15.3 Spaces around .nodes(). The rewrite trims the trailing dot off the
+-- operand text by position before appending the namespace array argument, so
+-- the spaced form has to produce the same shredded rows as the unspaced one.
+DECLARE @x XML = '<r xmlns:p="http://p.example"><p:i>a</p:i><p:i>b</p:i></r>';
+WITH XMLNAMESPACES('http://p.example' AS p)
+SELECT n.c.value('.', 'varchar(10)') AS v FROM @x . nodes('/r/p:i') AS n(c) ORDER BY 1;
+GO
+-- 15.4 Same with the method on the shredded column also spaced
+DECLARE @x XML = '<r xmlns:p="http://p.example"><p:i>a</p:i><p:i>b</p:i></r>';
+WITH XMLNAMESPACES('http://p.example' AS p)
+SELECT n.c . value('.', 'varchar(10)') AS v FROM @x . nodes('/r/p:i') AS n(c) ORDER BY 1;
+GO
+-- 15.5 A newline between the operand and the dot
+DECLARE @x XML = '<r xmlns:p="http://p.example"><p:i>a</p:i><p:i>b</p:i></r>';
+WITH XMLNAMESPACES('http://p.example' AS p)
+SELECT n.c.value('.', 'varchar(10)') AS v
+FROM @x
+   . nodes('/r/p:i') AS n(c) ORDER BY 1;
+GO
 
 -- ============================================
 -- SECTION 16: Predicates with prefixed attributes (richer)

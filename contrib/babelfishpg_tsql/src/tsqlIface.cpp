@@ -294,9 +294,9 @@ static std::map<size_t, std::string> local_id_positions;
 // WITH XMLNAMESPACES context for the current statement.
 //
 // All four fields form a single logical unit: they are populated together by
-// enterDeclare_xmlnamespaces_statement / enterWith_expression, cleared together
-// at statement boundaries (clear()), and saved/restored together across a
-// nested statement rewrite cycle (see enterAnother_statement). Keeping them in
+// enterAnother_statement / enterWith_expression, cleared together at statement
+// boundaries (clear()), and saved/restored together across a nested statement
+// rewrite cycle (see enterAnother_statement). Keeping them in
 // one struct means a new field cannot be accidentally left out of a clear or a
 // save/restore, which is what would otherwise let namespace state leak between
 // statements.
@@ -853,20 +853,20 @@ add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator)
 }
 
 /*
- * Strip the T-SQL string-literal decoration from a URI token, leaving the bare
- * URI text.
+ * Strip the T-SQL string-literal decoration from a char_string token, leaving
+ * the bare text. Used for namespace URIs and for the FOR XML row/ROOT names.
  *
  * getFullText() returns the literal exactly as written. The STRING lexer rule
  * is "'N'? ( '...' | \"...\" )", so besides the surrounding quotes the literal
  * may carry a national-character prefix (N'uri') and, when QUOTED_IDENTIFIER
  * is OFF, may be double-quoted. All of those forms have to be reduced to the
- * bare URI before it is embedded in an array literal or an xmlns declaration.
+ * bare text before it is embedded in an array literal or an xmlns declaration.
  *
  * Doubled quotes inside the literal are deliberately left alone: they are
  * un-doubled later by the scanner when the assembled SQL text is parsed.
  */
 static std::string
-strip_uri_literal(const std::string &literal)
+strip_string_literal(const std::string &literal)
 {
 	std::string s = literal;
 
@@ -982,10 +982,10 @@ build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext 
 		bool is_default = (decl->DEFAULT() != nullptr);
 
 		if (is_default)
-			uri = strip_uri_literal(::getFullText(decl->char_string()));
+			uri = strip_string_literal(::getFullText(decl->char_string()));
 		else
 		{
-			uri = strip_uri_literal(::getFullText(decl->xml_namespace_uri));
+			uri = strip_string_literal(::getFullText(decl->xml_namespace_uri));
 			prefix = stripQuoteFromId(decl->id());
 		}
 
@@ -1112,6 +1112,129 @@ build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext 
 }
 
 /*
+ * Is this context inside the body of a stored procedure, function or trigger?
+ *
+ * A routine body is walked as part of the CREATE statement's parse tree and
+ * again when the body itself is parsed, so anything that depends on state
+ * gathered from the body has to run on the second walk only.
+ */
+static bool
+is_inside_routine_body(antlr4::ParserRuleContext *ctx)
+{
+	for (auto *pctx = ctx->parent; pctx; pctx = pctx->parent)
+	{
+		if (dynamic_cast<TSqlParser::Create_or_alter_procedureContext *>(pctx) ||
+			dynamic_cast<TSqlParser::Create_or_alter_functionContext *>(pctx) ||
+			dynamic_cast<TSqlParser::Create_or_alter_triggerContext *>(pctx))
+			return true;
+	}
+	return false;
+}
+
+/*
+ * Raise T-SQL's error 6846 when a FOR XML identifier carries a namespace prefix
+ * that WITH XMLNAMESPACES did not declare.
+ *
+ * 'probe' is the name the prefix is read from and 'reported_name' the name that
+ * goes into the message: they differ for a PATH attribute alias, where the
+ * leading '@' is not part of the prefix but is still echoed back by T-SQL.
+ * 'name_kind' is the position the identifier was used in ("column name",
+ * "row name", "ROOT name"), which T-SQL spells out in the message.
+ */
+static void
+validate_forxml_name_prefix(const std::string &probe,
+							const std::string &reported_name,
+							const char *name_kind)
+{
+	size_t colon = probe.find(':');
+
+	if (colon == std::string::npos)
+		return;					/* unprefixed, nothing to check */
+
+	/*
+	 * A leading colon is a malformed XML name rather than a missing
+	 * declaration. T-SQL reports a different error (6850) for it, so leave it
+	 * to the downstream XML name validation.
+	 */
+	if (colon == 0)
+		return;
+
+	std::string prefix = probe.substr(0, colon);
+
+	if (xmlnamespace_ctx.declared_prefixes.count(prefix) == 0)
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+			format_errmsg("XML name space prefix '%s' declaration is missing "
+				"for FOR XML %s '%s'.",
+				prefix.c_str(), name_kind, reported_name.c_str()), 0, 0);
+}
+
+/*
+ * Validate the prefixes of the FOR XML row name and ROOT name.
+ *
+ * for_clause holds more than one char_string child - RAW('row'), PATH('row')
+ * and XMLSCHEMA('uri') all use it - so the row name cannot be picked out by
+ * position. Walk the children in source order instead and bind a char_string to
+ * the keyword that introduced it, which also keeps the XMLSCHEMA argument out
+ * of the check (it is a target namespace URI, not an XML name). ROOT('name')
+ * sits one level down, in the xml_common_directives subrule.
+ *
+ * Unlike a column alias, T-SQL validates these two names even when there is no
+ * WITH XMLNAMESPACES clause at all, so this runs unconditionally. It also runs
+ * before the column aliases are checked, because when both are undeclared
+ * T-SQL reports the row name first, then the ROOT name, then the column.
+ */
+static void
+validate_forxml_row_and_root_prefixes(TSqlParser::For_clauseContext *forCtx)
+{
+	bool row_name_next = false;
+
+	if (!forCtx)
+		return;
+
+	for (auto *child : forCtx->children)
+	{
+		if (auto *term = dynamic_cast<antlr4::tree::TerminalNode *>(child))
+		{
+			size_t type = term->getSymbol()->getType();
+
+			/*
+			 * RAW('name') and PATH('name') introduce the row name. Only these
+			 * two keywords touch the flag: the brackets and commas in between
+			 * have to leave it set, and XMLSCHEMA has to clear it for the
+			 * "FOR XML RAW, XMLSCHEMA('uri')" form where RAW takes no name.
+			 */
+			if (type == TSqlParser::RAW || type == TSqlParser::PATH)
+				row_name_next = true;
+			else if (type == TSqlParser::XMLSCHEMA)
+				row_name_next = false;
+			continue;
+		}
+
+		if (auto *str = dynamic_cast<TSqlParser::Char_stringContext *>(child))
+		{
+			if (row_name_next)
+			{
+				std::string row_name = strip_string_literal(::getFullText(str));
+
+				validate_forxml_name_prefix(row_name, row_name, "row name");
+			}
+			row_name_next = false;
+			continue;
+		}
+
+		if (auto *dir = dynamic_cast<TSqlParser::Xml_common_directivesContext *>(child))
+		{
+			if (dir->ROOT() && dir->char_string())
+			{
+				std::string root_name = strip_string_literal(::getFullText(dir->char_string()));
+
+				validate_forxml_name_prefix(root_name, root_name, "ROOT name");
+			}
+		}
+	}
+}
+
+/*
  * Validate prefixed FOR XML column aliases against declared namespace prefixes.
  *
  * For every SELECT list alias of the form 'prefix:local' (only the char_string
@@ -1196,14 +1319,7 @@ validate_forxml_column_alias_prefixes(TSqlParser::Select_listContext *selectList
 		 */
 		if (probe.find('/') != std::string::npos || probe.find('@') != std::string::npos)
 			return;
-		std::string prefix = probe.substr(0, colon);
-		if (prefix.empty())
-			return;	/* malformed (':local'); leave for downstream to error on */
-		if (xmlnamespace_ctx.declared_prefixes.count(prefix) == 0)
-			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
-				format_errmsg("XML name space prefix '%s' declaration is missing "
-					"for FOR XML column name '%s'.",
-					prefix.c_str(), name.c_str()), 0, 0);
+		validate_forxml_name_prefix(probe, name, "column name");
 	};
 	for (auto *elem : selectList->select_list_elem())
 	{
@@ -3160,14 +3276,6 @@ public:
 		clear_rewritten_query_fragment();
 	}
 
-	void enterDeclare_xmlnamespaces_statement(TSqlParser::Declare_xmlnamespaces_statementContext *ctx) override
-	{
-		std::vector<TSqlParser::Xml_declarationContext *> decls;
-		for (auto *d : ctx->xml_dec)
-			decls.push_back(d);
-		build_xmlnamespace_context(decls);
-	}
-
 	void enterWith_expression(TSqlParser::With_expressionContext *ctx) override
 	{
 		if (ctx->XMLNAMESPACES())
@@ -4749,16 +4857,51 @@ static void process_select_statement(
 					0, 0);
 			}
 			/*
-			 * Validate prefixed FOR XML column aliases against the declared
-			 * namespace prefixes. SQL Server raises error 6846 when an alias
-			 * references a prefix not in the WITH XMLNAMESPACES declaration.
-			 * PATH mode validates even without WITH XMLNAMESPACES; RAW/AUTO
-			 * only validate when declarations are present.
+			 * Skip the namespace prefix validation while walking the body of a
+			 * routine. A routine body is walked twice: once as part of the
+			 * CREATE statement's own tree, where the body's WITH XMLNAMESPACES
+			 * clause has not been processed and the declared set is still
+			 * empty, and again when the body is parsed on its own, where the
+			 * declarations are in place. Validating on the first walk reports
+			 * every prefix as undeclared; the second walk is the one that can
+			 * tell a real missing declaration from a declared one.
 			 */
-			TSqlParser::Query_specificationContext *qctx = get_query_specification(selectCtx);
-			if (qctx && qctx->select_list())
-				validate_forxml_column_alias_prefixes(qctx->select_list(),
-					selectCtx->for_clause()->PATH() != nullptr);
+			if (!is_inside_routine_body(selectCtx))
+			{
+				/*
+				 * Rewrite fragments collected so far are keyed by position in
+				 * this statement. Throwing out of the walk would leave them
+				 * behind for the next statement to trip over, so drop them on
+				 * the way out (same handling as exitDml_statement).
+				 */
+				try
+				{
+					/*
+					 * Validate the prefixes on the row name and the ROOT name.
+					 * This is checked ahead of the column aliases to match the
+					 * order T-SQL reports them in, and is not conditional on a
+					 * WITH XMLNAMESPACES clause being present.
+					 */
+					validate_forxml_row_and_root_prefixes(selectCtx->for_clause());
+					/*
+					 * Validate prefixed FOR XML column aliases against the
+					 * declared namespace prefixes. SQL Server raises error 6846
+					 * when an alias references a prefix not in the
+					 * WITH XMLNAMESPACES declaration. PATH mode validates even
+					 * without WITH XMLNAMESPACES; RAW/AUTO only validate when
+					 * declarations are present.
+					 */
+					TSqlParser::Query_specificationContext *qctx = get_query_specification(selectCtx);
+					if (qctx && qctx->select_list())
+						validate_forxml_column_alias_prefixes(qctx->select_list(),
+							selectCtx->for_clause()->PATH() != nullptr);
+				}
+				catch (PGErrorWrapperException &e)
+				{
+					clear_rewritten_query_fragment();
+					throw;
+				}
+			}
 			/*
 			 * Attach namespace declarations to the enclosing exec stmt so the
 			 * backend parser can include them as the last (10th) aggregate

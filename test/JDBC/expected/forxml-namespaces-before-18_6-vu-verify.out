@@ -1399,3 +1399,356 @@ ntext
 <Emp xmlns:ns1="http://example.com/ns1" ns1:id="1"/>
 ~~END~~
 
+-- ============================================
+-- SECTION 30: Prefix validation for the FOR XML row name and ROOT name
+-- A prefix used in RAW('ns:Row') / PATH('ns:Row') or in ROOT('ns:Doc') must be
+-- declared too, and T-SQL checks these two even when the statement carries no
+-- WITH XMLNAMESPACES clause at all. When more than one name is undeclared the
+-- row name is reported first, then the ROOT name, then the column.
+-- ============================================
+-- 30.1 RAW row name with an undeclared prefix
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT 1 AS [ns1:y] FOR XML RAW('ns2:Row');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML name space prefix 'ns2' declaration is missing for FOR XML row name 'ns2:Row'.)~~
+
+-- 30.2 PATH row name with an undeclared prefix
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT 1 AS [ns1:y] FOR XML PATH('ns2:Row');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML name space prefix 'ns2' declaration is missing for FOR XML row name 'ns2:Row'.)~~
+
+-- 30.3 Prefixed row name with no WITH XMLNAMESPACES clause at all: the check is
+-- not conditional on declarations being present.
+SELECT 1 AS y FOR XML RAW('ns2:Row');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML name space prefix 'ns2' declaration is missing for FOR XML row name 'ns2:Row'.)~~
+
+-- 30.4 ROOT name with an undeclared prefix, row name declared
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT 1 AS [ns1:y] FOR XML RAW('ns1:Row'), ROOT('ns2:Doc');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML name space prefix 'ns2' declaration is missing for FOR XML ROOT name 'ns2:Doc'.)~~
+
+-- 30.5 AUTO mode has no row name of its own, so ROOT is the only name to check
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID FROM forxml_ns_employees WHERE EmpID = 1 FOR XML AUTO, ROOT('ns2:Doc');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML name space prefix 'ns2' declaration is missing for FOR XML ROOT name 'ns2:Doc'.)~~
+
+-- 30.6 A DEFAULT declaration binds no prefix, so a prefixed row name is still
+-- undeclared.
+WITH XMLNAMESPACES(DEFAULT 'http://example.com/d')
+SELECT 1 AS y FOR XML RAW('ns2:Row');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML name space prefix 'ns2' declaration is missing for FOR XML row name 'ns2:Row'.)~~
+
+-- 30.7 Row name and ROOT name both undeclared: row name is reported
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT 1 AS [ns1:y] FOR XML RAW('ns2:Row'), ROOT('ns3:Doc');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML name space prefix 'ns2' declaration is missing for FOR XML row name 'ns2:Row'.)~~
+
+-- 30.8 Column alias and ROOT name both undeclared: ROOT name is reported
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT 1 AS [ns3:y] FOR XML RAW('ns1:Row'), ROOT('ns2:Doc');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML name space prefix 'ns2' declaration is missing for FOR XML ROOT name 'ns2:Doc'.)~~
+
+-- 30.9 Row name and column alias both undeclared: row name is reported
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT 1 AS [ns3:y] FOR XML RAW('ns2:Row');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML name space prefix 'ns2' declaration is missing for FOR XML row name 'ns2:Row'.)~~
+
+-- ============================================
+-- SECTION 31: FOR XML with namespaces inside a stored procedure body
+-- A routine body is walked twice: once as part of the CREATE statement's own
+-- tree, where the body's WITH XMLNAMESPACES clause has not been processed yet,
+-- and again when the body is parsed on its own with the declarations in place.
+-- Prefix validation has to be left to the second walk, otherwise every prefix
+-- in a routine body looks undeclared and the CREATE is rejected.
+-- ============================================
+-- 31.1 Prefixed row name, ROOT name and column alias in a procedure body
+CREATE PROCEDURE forxml_ns_proc1 AS
+  WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+  SELECT 1 AS [ns1:a] FOR XML RAW('ns1:Row'), ROOT('ns1:Doc');
+GO
+EXEC forxml_ns_proc1;
+GO
+~~START~~
+ntext
+<ns1:Doc xmlns:ns1="http://example.com/ns1"><ns1:Row ns1:a="1"/></ns1:Doc>
+~~END~~
+
+-- 31.2 Same in PATH mode, which validates aliases unconditionally
+CREATE PROCEDURE forxml_ns_proc2 AS
+  WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+  SELECT 1 AS [ns1:a] FOR XML PATH('ns1:Row');
+GO
+EXEC forxml_ns_proc2;
+GO
+~~START~~
+ntext
+<ns1:Row xmlns:ns1="http://example.com/ns1"><ns1:a>1</ns1:a></ns1:Row>
+~~END~~
+
+-- 31.3 A genuinely undeclared prefix in a procedure body is still rejected, so
+-- the validation is deferred rather than dropped. T-SQL defers this one further
+-- and only reports it when the procedure runs.
+CREATE PROCEDURE forxml_ns_proc3 AS
+  WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+  SELECT 1 AS [ns1:a] FOR XML RAW('ns2:Row');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML name space prefix 'ns2' declaration is missing for FOR XML row name 'ns2:Row'.)~~
+
+-- 31.4 Undeclared column alias in a procedure body is still rejected
+CREATE PROCEDURE forxml_ns_proc4 AS
+  WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+  SELECT 1 AS [ns2:a] FOR XML PATH('ns1:Row');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML name space prefix 'ns2' declaration is missing for FOR XML column name 'ns2:a'.)~~
+
+-- 31.5 A failed validation must not leave rewrite fragments behind. Those are
+-- keyed by position in the failed statement, and a CREATE PROCEDURE that
+-- followed would apply them against its own body text and fail to mutate.
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT 1 AS [ns1:a] FOR XML RAW('ns2:Row');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML name space prefix 'ns2' declaration is missing for FOR XML row name 'ns2:Row'.)~~
+
+CREATE PROCEDURE forxml_ns_proc5 AS
+  WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+  SELECT 1 AS [ns1:a] FOR XML RAW('ns1:Row'), ROOT('ns1:Doc');
+GO
+EXEC forxml_ns_proc5;
+GO
+~~START~~
+ntext
+<ns1:Doc xmlns:ns1="http://example.com/ns1"><ns1:Row ns1:a="1"/></ns1:Doc>
+~~END~~
+
+DROP PROCEDURE forxml_ns_proc1;
+GO
+DROP PROCEDURE forxml_ns_proc2;
+GO
+DROP PROCEDURE forxml_ns_proc5;
+GO
+-- ============================================
+-- SECTION 32: The CTE form of the clause (WITH XMLNAMESPACES(...), cte AS ...)
+-- This form is a different grammar rule from the statement form and is handled
+-- by a different listener, so it strips the clause from the emitted SQL through
+-- its own rewrite fragment. These cases cover the shapes where the strip and
+-- the namespace context have to hold independently of each other: extra CTEs
+-- between the clause and the query, the prefix used only inside a CTE body, and
+-- a statement with no FOR XML or XML method at all, where the strip still has
+-- to happen or the emitted SQL keeps a clause PostgreSQL cannot parse.
+-- SECTION 5.1 covers the plain single-CTE case.
+-- ============================================
+-- 32.1 Several CTEs between the clause and the query using the prefix
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1),
+     c1 AS (SELECT EmpID, EmpName FROM forxml_ns_employees WHERE EmpID = 1),
+     c2 AS (SELECT EmpID FROM c1)
+SELECT EmpID AS [ns1:ID] FROM c2 FOR XML RAW('ns1:Emp');
+GO
+~~START~~
+ntext
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1"/>
+~~END~~
+
+-- 32.2 Prefix used only inside the CTE body, on a FOR XML of its own, with no
+-- FOR XML on the outer query
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1),
+     c1 AS (SELECT (SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+                    FOR XML RAW('ns1:Emp'), TYPE) AS frag)
+SELECT frag FROM c1;
+GO
+~~START~~
+xml
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1"/>
+~~END~~
+
+-- 32.3 No FOR XML and no XML method anywhere: nothing consumes the declarations,
+-- but the clause still has to be removed from the emitted SQL
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1),
+     c1 AS (SELECT EmpID FROM forxml_ns_employees WHERE EmpID = 1)
+SELECT EmpID FROM c1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- 32.4 Recursive CTE after the clause
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1),
+     nums AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM nums WHERE n < 3)
+SELECT n AS [ns1:N] FROM nums FOR XML RAW('ns1:Row');
+GO
+~~START~~
+ntext
+<ns1:Row xmlns:ns1="http://example.com/ns1" ns1:N="1"/><ns1:Row xmlns:ns1="http://example.com/ns1" ns1:N="2"/><ns1:Row xmlns:ns1="http://example.com/ns1" ns1:N="3"/>
+~~END~~
+
+-- 32.5 Prefix validation still applies through the CTE form
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1),
+     c1 AS (SELECT EmpID FROM forxml_ns_employees WHERE EmpID = 1)
+SELECT EmpID AS [ns2:ID] FROM c1 FOR XML RAW('ns1:Emp');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML name space prefix 'ns2' declaration is missing for FOR XML column name 'ns2:ID'.)~~
+
+-- ============================================
+-- SECTION 33: The clause in front of a DML statement rather than a SELECT
+-- The statement form of the clause accepts INSERT, UPDATE, DELETE and MERGE as
+-- well as SELECT. Those go through the inner-DML path, which builds the
+-- statement from the DML and hands the rewrite mutator to it, so the
+-- declarations have to survive that hand-off and reach the FOR XML or XML
+-- method nested inside.
+-- ============================================
+CREATE TABLE xmlns_dml_t (x XML);
+GO
+-- 33.1 INSERT ... SELECT of a nested FOR XML fragment
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+INSERT INTO xmlns_dml_t
+SELECT (SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+        FOR XML RAW('ns1:Emp'), TYPE);
+GO
+~~ROW COUNT: 1~~
+
+SELECT x FROM xmlns_dml_t;
+GO
+~~START~~
+xml
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="1"/>
+~~END~~
+
+-- 33.2 INSERT ... SELECT where an XML method resolves the prefix. This is the
+-- array-literal path rather than the FOR XML declarations path.
+DELETE FROM xmlns_dml_t;
+GO
+~~ROW COUNT: 1~~
+
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+INSERT INTO xmlns_dml_t
+SELECT CAST('<r xmlns:ns1="http://example.com/ns1"><ns1:v>hit</ns1:v></r>' AS XML)
+         .query('/r/ns1:v');
+GO
+~~ROW COUNT: 1~~
+
+SELECT x FROM xmlns_dml_t;
+GO
+~~START~~
+xml
+<ns1:v xmlns:ns1="http://example.com/ns1">hit</ns1:v>
+~~END~~
+
+-- 33.3 UPDATE with the prefix used in the assigned value
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+UPDATE xmlns_dml_t
+SET x = (SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 2
+         FOR XML RAW('ns1:Emp'), TYPE);
+GO
+~~ROW COUNT: 1~~
+
+SELECT x FROM xmlns_dml_t;
+GO
+~~START~~
+xml
+<ns1:Emp xmlns:ns1="http://example.com/ns1" ns1:ID="2"/>
+~~END~~
+
+-- 33.4 DELETE with the prefix used in the predicate
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+DELETE FROM xmlns_dml_t
+WHERE CAST('<r xmlns:ns1="http://example.com/ns1"><ns1:v>1</ns1:v></r>' AS XML)
+        .value('(/r/ns1:v)[1]', 'int') = 1;
+GO
+~~ROW COUNT: 1~~
+
+SELECT COUNT(*) AS remaining FROM xmlns_dml_t;
+GO
+~~START~~
+int
+0
+~~END~~
+
+-- 33.5 Prefix validation still reaches the DML form
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+INSERT INTO xmlns_dml_t
+SELECT (SELECT EmpID AS [ns2:ID] FROM forxml_ns_employees WHERE EmpID = 1
+        FOR XML RAW('ns1:Emp'), TYPE);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML name space prefix 'ns2' declaration is missing for FOR XML column name 'ns2:ID'.)~~
+
+DROP TABLE xmlns_dml_t;
+GO
+-- ============================================
+-- SECTION 34: The captured xsi binding must not outlive its statement
+-- The URI bound to 'xsi' is held in the namespace context so the ELEMENTS XSINIL
+-- conflict check does not have to re-parse the declarations. A binding left
+-- behind would make a later plain XSINIL statement fail for a redefinition it
+-- never made, and the error path is the one most likely to leave it behind.
+-- SECTION 4.7 and 4.8 cover xsi bound to its own URI.
+-- ============================================
+-- 34.1 xsi bound to another URI but no XSINIL in the statement: there is nothing
+-- for it to conflict with, so this is allowed and the binding is emitted as
+-- declared
+WITH XMLNAMESPACES('http://wrong.uri' AS xsi) SELECT 1 AS [xsi:a] FOR XML RAW;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://wrong.uri" xsi:a="1"/>
+~~END~~
+
+-- 34.2 A plain XSINIL statement straight after must use the schema-instance URI
+-- and must not inherit a conflict from the statement above
+SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row>
+~~END~~
+
+-- 34.3 The same redefinition together with XSINIL is the actual conflict
+WITH XMLNAMESPACES('http://wrong.uri' AS xsi)
+SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Redefinition of 'xsi' XML namespace prefix is not supported with ELEMENTS XSINIL option of FOR XML.)~~
+
+-- 34.4 And a plain XSINIL statement after that error must still succeed
+SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL;
+GO
+~~START~~
+ntext
+<row xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><a>1</a><b xsi:nil="true"/></row>
+~~END~~
+
