@@ -852,6 +852,38 @@ add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator)
 }
 
 /*
+ * Strip the T-SQL string-literal decoration from a URI token, leaving the bare
+ * URI text.
+ *
+ * getFullText() returns the literal exactly as written. The STRING lexer rule
+ * is "'N'? ( '...' | \"...\" )", so besides the surrounding quotes the literal
+ * may carry a national-character prefix (N'uri') and, when QUOTED_IDENTIFIER
+ * is OFF, may be double-quoted. All of those forms have to be reduced to the
+ * bare URI before it is embedded in an array literal or an xmlns declaration.
+ *
+ * Doubled quotes inside the literal are deliberately left alone: they are
+ * un-doubled later by the scanner when the assembled SQL text is parsed.
+ */
+static std::string
+strip_uri_literal(const std::string &literal)
+{
+	std::string s = literal;
+
+	/* optional national-character prefix */
+	if (s.size() >= 3 && (s[0] == 'N' || s[0] == 'n') &&
+		(s[1] == '\'' || s[1] == '"'))
+		s = s.substr(1);
+
+	/* surrounding quotes */
+	if (s.size() >= 2 &&
+		((s.front() == '\'' && s.back() == '\'') ||
+		 (s.front() == '"' && s.back() == '"')))
+		s = s.substr(1, s.size() - 2);
+
+	return s;
+}
+
+/*
  * Escape a URI string for embedding inside a PG string-form array literal.
  * Inside a '{...}'::_text literal, double-quoted elements need " and \ to be
  * backslash-escaped. Without this, a URI containing '"' produces a malformed
@@ -873,65 +905,111 @@ escape_for_pg_array_literal(const std::string &s)
 }
 
 /*
- * Build a PG text[][] array literal from a list of xml_declaration parse nodes.
- * Each xml_declaration is either:
- *   - 'uri' AS prefix  -> {"prefix", "uri"}
- *   - DEFAULT 'uri'    -> {"", "uri"}
- * Returns a string like: '{{"ns","http://example.com"},{"","http://default.com"}}'::text[][]
- *
- * Uses the string-form array literal (not ARRAY[...]) because T-SQL dialect
- * treats square brackets as identifier delimiters.
+ * Escape characters that have XML attribute-value significance: &, <, >, ".
+ * The single quote is left alone because we always wrap the URI in double
+ * quotes. Returns a copy with replacements; the input is not modified.
  */
 static std::string
-build_xmlnamespace_array_literal(const std::vector<TSqlParser::Xml_declarationContext *> &decls)
+xml_escape_attr_value(const std::string &in)
 {
-	if (decls.empty())
-		return "";
+	std::string out;
+	out.reserve(in.size());
+	for (char c : in)
+	{
+		switch (c)
+		{
+			case '&':  out += "&amp;";  break;
+			case '<':  out += "&lt;";   break;
+			case '>':  out += "&gt;";   break;
+			case '"':  out += "&quot;"; break;
+			default:   out += c;        break;
+		}
+	}
+	return out;
+}
+
+/*
+ * Parse, validate and record the WITH XMLNAMESPACES context from a list of
+ * xml_declaration parse nodes. Each declaration is either
+ *   'uri' AS prefix   -> that prefix
+ *   DEFAULT 'uri'     -> the default namespace (empty prefix)
+ *
+ * One pass over the declarations produces both representations the rewrite
+ * needs, so the parse tree is walked and the literals are stripped only once:
+ *
+ *   array_literal      '{{"ns","http://a"},{"","http://d"}}'::_text
+ *                      appended to the rewritten XML data type method calls and
+ *                      passed on to xpath(). The string form is used rather
+ *                      than ARRAY[...] because the T-SQL dialect reads square
+ *                      brackets as identifier delimiters.
+ *
+ *   decls_for_forxml   xmlns:ns="http://a" xmlns="http://d"
+ *                      emitted on the FOR XML row/root element, in REVERSE
+ *                      declaration order to match SQL Server's output.
+ *
+ * It also records declared_prefixes (excluding DEFAULT) for FOR XML column
+ * alias validation, and xsi_declared_uri for the ELEMENTS XSINIL conflict
+ * check.
+ *
+ * Rejects an empty URI, a prefix that is not a valid XML NCName, a duplicate
+ * prefix or a second DEFAULT, the reserved 'xmlns' prefix, and 'xml' bound to
+ * any URI other than the xml namespace URI (or that URI bound to any other
+ * prefix).
+ *
+ * Note: a declared xsi prefix IS included in decls_for_forxml. Deduplication
+ * with the xmlns:xsi declaration that ELEMENTS XSINIL emits is handled
+ * downstream in forxml.c by ns_decls_has_xsi(), which detects xsi already
+ * present in ns_decls and suppresses the redundant per-row XSINIL declaration.
+ */
+static void
+build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext *> &decls)
+{
+	static const std::string xml_ns_uri = "http://www.w3.org/XML/1998/namespace";
 	std::set<std::string> seen_prefixes;
 	bool has_default = false;
-	static const std::string xml_ns_uri = "http://www.w3.org/XML/1998/namespace";
-	std::string result = "'{{";
-	bool first = true;
+	/* (prefix, uri) in declaration order; prefix is empty for DEFAULT */
+	std::vector<std::pair<std::string, std::string>> parsed;
+
+	xmlnamespace_ctx.clear();
+	if (decls.empty())
+		return;
+
 	for (auto *decl : decls)
 	{
-		if (!first)
-			result += "},{";
-		first = false;
-		if (decl->DEFAULT())
+		std::string prefix;
+		std::string uri;
+		bool is_default = (decl->DEFAULT() != nullptr);
+
+		if (is_default)
+			uri = strip_uri_literal(::getFullText(decl->char_string()));
+		else
 		{
-			/* DEFAULT 'uri' */
-			std::string uri = ::getFullText(decl->char_string());
-			if (uri.size() >= 2 && uri.front() == '\'' && uri.back() == '\'')
-				uri = uri.substr(1, uri.size() - 2);
-			/* Rule 7: Empty URI */
-			if (uri.empty())
-				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
-					"Empty URI is not allowed in WITH XMLNAMESPACES clause.", 0, 0);
-			/* Rule 2b: Duplicate DEFAULT */
+			uri = strip_uri_literal(::getFullText(decl->xml_namespace_uri));
+			prefix = stripQuoteFromId(decl->id());
+		}
+
+		/* Empty URI is not allowed */
+		if (uri.empty())
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+				"Empty URI is not allowed in WITH XMLNAMESPACES clause.", 0, 0);
+
+		if (is_default)
+		{
+			/* Only one DEFAULT declaration is allowed */
 			if (has_default)
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 					"Attempt to redefine namespace prefix 'default'", 0, 0);
 			has_default = true;
-			/* Rule 5b: xml namespace URI cannot be used with other prefixes */
+			/* The xml namespace URI is reserved for the 'xml' prefix */
 			if (uri == xml_ns_uri)
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 					"XML namespace prefix 'xml' can only be associated with the URI "
 					"http://www.w3.org/XML/1998/namespace. "
 					"This URI cannot be used with other prefixes.", 0, 0);
-			result += "\"\"," "\"" + escape_for_pg_array_literal(uri) + "\"";
 		}
 		else
 		{
-			/* 'uri' AS prefix */
-			std::string uri = ::getFullText(decl->xml_namespace_uri);
-			if (uri.size() >= 2 && uri.front() == '\'' && uri.back() == '\'')
-				uri = uri.substr(1, uri.size() - 2);
-			std::string prefix = stripQuoteFromId(decl->id());
-			/* Rule 7: Empty URI */
-			if (uri.empty())
-				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
-					"Empty URI is not allowed in WITH XMLNAMESPACES clause.", 0, 0);
-			/* Rule 1: NCName - prefix must be a valid XML NCName.
+			/* The prefix must be a valid XML NCName.
 			 *
 			 * NameStartChar: '_' | letter | non-ASCII byte (permissive proxy
 			 * for the W3C NameStartChar set).
@@ -963,24 +1041,24 @@ build_xmlnamespace_array_literal(const std::vector<TSqlParser::Xml_declarationCo
 							"contains an invalid XML identifier. '%c'(0x%04X) is the "
 							"first character at fault.", prefix.c_str(), c, c), 0, 0);
 			}
-			/* Rule 4: xmlns prefix forbidden */
+			/* 'xmlns' is reserved and cannot be a user-defined prefix */
 			if (prefix == "xmlns")
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 					"Prefix 'xmlns' used in WITH XMLNAMESPACES is reserved and "
 					"cannot be used as a user-defined prefix.", 0, 0);
-			/* Rule 5a: xml prefix can only use the xml namespace URI */
+			/* The 'xml' prefix may only be bound to the xml namespace URI */
 			if (prefix == "xml" && uri != xml_ns_uri)
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 					"XML namespace prefix 'xml' can only be associated with the URI "
 					"http://www.w3.org/XML/1998/namespace. "
 					"This URI cannot be used with other prefixes.", 0, 0);
-			/* Rule 5b: xml namespace URI can only be bound to xml prefix */
+			/* ...and conversely that URI may only be bound to the 'xml' prefix */
 			if (uri == xml_ns_uri && prefix != "xml")
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 					"XML namespace prefix 'xml' can only be associated with the URI "
 					"http://www.w3.org/XML/1998/namespace. "
 					"This URI cannot be used with other prefixes.", 0, 0);
-			/* Rule 2: Duplicate prefix */
+			/* A prefix cannot be declared twice */
 			if (seen_prefixes.count(prefix) > 0)
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 					format_errmsg("Attempt to redefine namespace prefix '%s'",
@@ -988,93 +1066,48 @@ build_xmlnamespace_array_literal(const std::vector<TSqlParser::Xml_declarationCo
 			seen_prefixes.insert(prefix);
 			/*
 			 * Capture the xsi binding for the downstream xsi/ELEMENTS XSINIL
-			 * conflict check. Storing the URI here (source of truth) avoids
-			 * re-parsing the assembled PG array literal later.
+			 * conflict check, so that check does not have to re-parse the
+			 * assembled array literal.
 			 */
 			if (prefix == "xsi")
 				xmlnamespace_ctx.xsi_declared_uri = uri;
-			result += "\"" + prefix + "\",\"" + escape_for_pg_array_literal(uri) + "\"";
 		}
+
+		parsed.emplace_back(prefix, uri);
 	}
-	result += "}}'::_text";
+
+	/* Namespace array for xpath(), in declaration order */
+	std::string array_literal = "'{{";
+	bool first = true;
+	for (const auto &entry : parsed)
+	{
+		if (!first)
+			array_literal += "},{";
+		first = false;
+		array_literal += "\"" + entry.first + "\",\"" +
+			escape_for_pg_array_literal(entry.second) + "\"";
+	}
+	array_literal += "}}'::_text";
+
+	/*
+	 * xmlns declarations for FOR XML, in reverse declaration order. Exactly one
+	 * space between declarations, none leading or trailing.
+	 */
+	std::string decls_string;
+	for (auto it = parsed.rbegin(); it != parsed.rend(); ++it)
+	{
+		if (!decls_string.empty())
+			decls_string += " ";
+		std::string escaped_uri = xml_escape_attr_value(it->second);
+		if (it->first.empty())
+			decls_string += "xmlns=\"" + escaped_uri + "\"";
+		else
+			decls_string += "xmlns:" + it->first + "=\"" + escaped_uri + "\"";
+	}
+
+	xmlnamespace_ctx.array_literal = array_literal;
+	xmlnamespace_ctx.decls_for_forxml = decls_string;
 	xmlnamespace_ctx.declared_prefixes = seen_prefixes;
-	return result;
-}
-
-/*
- * Escape characters that have XML attribute-value significance: &, <, >, ".
- * The single quote is left alone because we always wrap the URI in double
- * quotes. Returns a copy with replacements; the input is not modified.
- */
-static std::string
-xml_escape_attr_value(const std::string &in)
-{
-	std::string out;
-	out.reserve(in.size());
-	for (char c : in)
-	{
-		switch (c)
-		{
-			case '&':  out += "&amp;";  break;
-			case '<':  out += "&lt;";   break;
-			case '>':  out += "&gt;";   break;
-			case '"':  out += "&quot;"; break;
-			default:   out += c;        break;
-		}
-	}
-	return out;
-}
-
-/*
- * Build a space-separated namespace declaration string from a list of
- * xml_declaration parse tree nodes. Output format:
- *   xmlns:prefix="uri" xmlns:prefix2="uri2"
- * For DEFAULT, emits xmlns="uri".
- *
- * Declarations are emitted in REVERSE declaration order to match SQL Server's
- * FOR XML output for WITH XMLNAMESPACES.
- *
- * Note: a declared xsi prefix IS included in this output string. Deduplication
- * with the xmlns:xsi declaration that ELEMENTS XSINIL emits is handled
- * downstream in forxml.c by ns_decls_has_xsi(), which detects xsi already
- * present in ns_decls and suppresses the redundant per-row XSINIL declaration.
- *
- * Caller is expected to have already validated declarations via
- * build_xmlnamespace_array_literal, so this function performs no validation.
- */
-static std::string
-build_xmlnamespace_decls_string(const std::vector<TSqlParser::Xml_declarationContext *> &decls)
-{
-	if (decls.empty())
-		return "";
-	std::string result;
-	for (auto it = decls.rbegin(); it != decls.rend(); ++it)
-	{
-		auto *decl = *it;
-		std::string uri;
-		std::string prefix;
-		if (decl->DEFAULT())
-		{
-			uri = ::getFullText(decl->char_string());
-		}
-		else
-		{
-			uri = ::getFullText(decl->xml_namespace_uri);
-			prefix = stripQuoteFromId(decl->id());
-		}
-		/* getFullText returns the quoted string literal; strip the surrounding quotes to get the bare URI */
-		if (uri.size() >= 2 && uri.front() == '\'' && uri.back() == '\'')
-			uri = uri.substr(1, uri.size() - 2);
-		/* space-separate declarations: exactly one space between, none leading or trailing */
-		if (!result.empty())
-			result += " ";
-		std::string escaped_uri = xml_escape_attr_value(uri);
-		if (prefix.empty())
-			result += "xmlns=\"" + escaped_uri + "\"";
-		else
-			result += "xmlns:" + prefix + "=\"" + escaped_uri + "\"";
-	}
-	return result;
 }
 
 /*
@@ -1104,7 +1137,7 @@ validate_forxml_column_alias_prefixes(TSqlParser::Select_listContext *selectList
 		return;
 	if (!selectList)
 		return;
-	auto check_alias = [](TSqlParser::Column_aliasContext *alias_ctx) {
+	auto check_alias = [is_path](TSqlParser::Column_aliasContext *alias_ctx) {
 		if (!alias_ctx)
 			return;
 		std::string raw;
@@ -1113,7 +1146,24 @@ validate_forxml_column_alias_prefixes(TSqlParser::Select_listContext *selectList
 			raw = ::getFullText(alias_ctx->char_string());
 			/* strip surrounding quotes */
 			if (raw.size() >= 2 && (raw.front() == '\'' || raw.front() == '"'))
+			{
+				char quote = raw.front();
 				raw = raw.substr(1, raw.size() - 2);
+				/*
+				 * Collapse the doubled quotes the literal used to escape the
+				 * delimiter, so the prefix compared against the declared ones
+				 * (and reported if undeclared) is the alias's real value.
+				 */
+				std::string collapsed;
+				collapsed.reserve(raw.size());
+				for (size_t i = 0; i < raw.size(); i++)
+				{
+					collapsed += raw[i];
+					if (raw[i] == quote && i + 1 < raw.size() && raw[i + 1] == quote)
+						i++;
+				}
+				raw = collapsed;
+			}
 		}
 		else if (alias_ctx->id())
 		{
@@ -1124,25 +1174,35 @@ validate_forxml_column_alias_prefixes(TSqlParser::Select_listContext *selectList
 		{
 			return;
 		}
-		size_t colon = raw.find(':');
+		/*
+		 * Keep the alias as written for the error message, and probe a copy for
+		 * the prefix. In PATH mode a leading '@' marks the column as an
+		 * attribute and is not part of the prefix, so drop it before looking:
+		 * T-SQL still validates the prefix of an attribute alias.
+		 */
+		std::string name = raw;
+		std::string probe = raw;
+		if (is_path && !probe.empty() && probe.front() == '@')
+			probe.erase(0, 1);
+		size_t colon = probe.find(':');
 		if (colon == std::string::npos)
 			return;	/* unprefixed alias, nothing to check */
 		/*
-		 * PATH-mode path-expression aliases (e.g. 'English/@xml:lang') use
-		 * '/' to separate elements and '@' to mark attributes. Splitting on
-		 * the first colon would misidentify the prefix, so leave them to the
-		 * PATH alias parser.
+		 * Path-expression aliases (e.g. 'Name/@ns:lang') address nested
+		 * elements, and a '@' anywhere other than the front is part of such an
+		 * expression. Babelfish does not implement that form, so leave them
+		 * alone rather than validating a prefix that would not be honoured.
 		 */
-		if (raw.find('/') != std::string::npos || raw.find('@') != std::string::npos)
+		if (probe.find('/') != std::string::npos || probe.find('@') != std::string::npos)
 			return;
-		std::string prefix = raw.substr(0, colon);
+		std::string prefix = probe.substr(0, colon);
 		if (prefix.empty())
 			return;	/* malformed (':local'); leave for downstream to error on */
 		if (xmlnamespace_ctx.declared_prefixes.count(prefix) == 0)
 			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 				format_errmsg("XML name space prefix '%s' declaration is missing "
 					"for FOR XML column name '%s'.",
-					prefix.c_str(), raw.c_str()), 0, 0);
+					prefix.c_str(), name.c_str()), 0, 0);
 	};
 	for (auto *elem : selectList->select_list_elem())
 	{
@@ -3104,8 +3164,7 @@ public:
 		std::vector<TSqlParser::Xml_declarationContext *> decls;
 		for (auto *d : ctx->xml_dec)
 			decls.push_back(d);
-		xmlnamespace_ctx.array_literal = build_xmlnamespace_array_literal(decls);
-		xmlnamespace_ctx.decls_for_forxml = build_xmlnamespace_decls_string(decls);
+		build_xmlnamespace_context(decls);
 	}
 
 	void enterWith_expression(TSqlParser::With_expressionContext *ctx) override
@@ -3115,8 +3174,7 @@ public:
 			std::vector<TSqlParser::Xml_declarationContext *> decls;
 			for (auto *d : ctx->xml_dec)
 				decls.push_back(d);
-			xmlnamespace_ctx.array_literal = build_xmlnamespace_array_literal(decls);
-			xmlnamespace_ctx.decls_for_forxml = build_xmlnamespace_decls_string(decls);
+			build_xmlnamespace_context(decls);
 			/*
 			 * Strip the XMLNAMESPACES clause from the SQL text sent to PG.
 			 * Grammar: WITH (XMLNAMESPACES(...) COMMA?)? (CTEs)*
@@ -3169,8 +3227,7 @@ public:
 			std::vector<TSqlParser::Xml_declarationContext *> decls;
 			for (auto *d : xmlns_ctx->xml_dec)
 				decls.push_back(d);
-			xmlnamespace_ctx.array_literal = build_xmlnamespace_array_literal(decls);
-			xmlnamespace_ctx.decls_for_forxml = build_xmlnamespace_decls_string(decls);
+			build_xmlnamespace_context(decls);
 			/* Find the inner DML and create a PLtsql_stmt for it */
 			ParserRuleContext *inner_dml = nullptr;
 			if (xmlns_ctx->select_statement())
@@ -4677,8 +4734,8 @@ static void process_select_statement(
 			 * If XSINIL is specified and the user declared the 'xsi' prefix
 			 * via WITH XMLNAMESPACES to a URI other than the schema-instance
 			 * URI, reject the statement. The xsi binding is captured directly
-			 * in build_xmlnamespace_array_literal (source of truth) so this
-			 * check is a simple string compare with no re-parsing.
+			 * in build_xmlnamespace_context (source of truth) so this check is
+			 * a simple string compare with no re-parsing.
 			 */
 			if (!xmlnamespace_ctx.xsi_declared_uri.empty() &&
 				!selectCtx->for_clause()->XSINIL().empty() &&

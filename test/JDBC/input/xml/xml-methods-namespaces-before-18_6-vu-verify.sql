@@ -639,3 +639,30 @@ SELECT @x.value('(/root/ns1:a)[1]', 'int') AS a,
        @x.value('(/root/ns1:b)[1]', 'int') AS b,
        @x.exist('/root/ns1:a') AS has_a;
 GO
+-- ============================================
+-- SECTION 22: A prefix literally named 'default' in an XML method XPath
+-- 'uri' AS [default] declares an ordinary prefix named "default" (bracketed
+-- because it is a reserved word), distinct from the DEFAULT keyword form. It
+-- resolves in an XPath like any other prefix.
+-- ============================================
+-- 22.1 [default] prefix used in a .value() XPath
+DECLARE @x XML = '<r xmlns:d="http://example.com/dflt"><d:v>hit</d:v></r>';
+WITH XMLNAMESPACES('http://example.com/dflt' AS [default])
+SELECT @x.value('(/r/default:v)[1]', 'varchar(10)') AS resolved;
+GO
+-- ============================================
+-- SECTION 23: National-character (N'...') URI literals in XML methods
+-- The STRING lexer rule allows an optional N prefix on the URI literal. It is
+-- literal decoration only and must be stripped before the namespace array is
+-- built, otherwise the prefix fails to resolve.
+-- ============================================
+-- 23.1 N-prefixed URI resolves in a .value() XPath
+DECLARE @x XML = '<r xmlns:ns1="http://example.com/ns1"><ns1:v>hit</ns1:v></r>';
+WITH XMLNAMESPACES(N'http://example.com/ns1' AS ns1)
+SELECT @x.value('(/r/ns1:v)[1]', 'varchar(10)') AS resolved;
+GO
+-- 23.2 N-prefixed URI with .exist() and .query()
+DECLARE @x XML = '<r xmlns:ns1="http://example.com/ns1"><ns1:v>hit</ns1:v></r>';
+WITH XMLNAMESPACES(N'http://example.com/ns1' AS ns1)
+SELECT @x.exist('/r/ns1:v') AS has_v, @x.query('/r/ns1:v') AS frag;
+GO

@@ -743,3 +743,100 @@ SELECT 1 AS [ns1:a] FOR XML RAW('Row');
 GO
 SELECT 1 AS a FOR XML RAW('Row');
 GO
+-- 25.3 Both propagation paths in one statement: the FOR XML decls-string path
+-- (ns1 on the row/aliases) and the method array-literal path (a .value() in
+-- the SELECT list using the same declared prefix). Both must resolve ns1.
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT e.EmpID AS [ns1:ID],
+       CAST('<r xmlns:ns1="http://example.com/ns1"><ns1:v>hit</ns1:v></r>' AS XML)
+         .value('(/r/ns1:v)[1]', 'varchar(10)') AS [ns1:Probe]
+FROM forxml_ns_employees e WHERE e.EmpID = 1
+FOR XML RAW('ns1:Emp');
+GO
+-- ============================================
+-- SECTION 26: WITH XMLNAMESPACES inside a subquery is rejected
+-- T-SQL allows WITH XMLNAMESPACES only as a statement-level prefix, not inside
+-- a nested subquery expression. Both SQL Server and Babelfish reject this as a
+-- syntax error (the error text differs between the two).
+-- ============================================
+-- 26.1 Outer statement declares ns1; an inner correlated subquery tries to
+-- declare its own ns2. Rejected as a syntax error.
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT e.EmpID AS [ns1:ID],
+       (WITH XMLNAMESPACES('http://example.com/ns2' AS ns2)
+        SELECT o.OrderID AS [ns2:OID]
+        FROM forxml_ns_orders o WHERE o.EmpID = e.EmpID
+        FOR XML RAW('ns2:Ord'), TYPE) AS [ns1:Orders]
+FROM forxml_ns_employees e WHERE e.EmpID = 1
+FOR XML RAW('ns1:Emp'), TYPE;
+GO
+-- 26.2 Outer statement has no namespaces; an inner subquery tries to declare
+-- ns2. Rejected as a syntax error.
+SELECT e.EmpID AS ID,
+       (WITH XMLNAMESPACES('http://example.com/ns2' AS ns2)
+        SELECT o.OrderID AS [ns2:OID]
+        FROM forxml_ns_orders o WHERE o.EmpID = e.EmpID
+        FOR XML RAW('ns2:Ord'), TYPE) AS Orders
+FROM forxml_ns_employees e WHERE e.EmpID = 1
+FOR XML RAW('Emp'), TYPE;
+GO
+-- ============================================
+-- SECTION 27: DEFAULT keyword vs a prefix literally named 'default'
+-- DEFAULT 'uri' declares the default namespace (empty prefix), while
+-- 'uri' AS [default] declares an ordinary prefix whose name happens to be
+-- "default" (bracketed because it is a reserved word). They are independent,
+-- so both may appear in the same clause; only a repeat of either is an error.
+-- ============================================
+-- 27.1 DEFAULT and a prefix named [default] coexist: the row carries both a
+-- default xmlns and an xmlns:default declaration.
+WITH XMLNAMESPACES(DEFAULT 'http://example.com/default', 'http://example.com/dflt' AS [default])
+SELECT 1 AS [default:x], 2 AS y FOR XML RAW('Row');
+GO
+-- 27.2 Same two declarations in the opposite order
+WITH XMLNAMESPACES('http://example.com/dflt' AS [default], DEFAULT 'http://example.com/default')
+SELECT 1 AS [default:x], 2 AS y FOR XML RAW('Row');
+GO
+-- 27.3 Declaring the [default] prefix twice is a duplicate prefix error
+WITH XMLNAMESPACES('http://a' AS [default], 'http://b' AS [default])
+SELECT 1 AS y FOR XML RAW('Row');
+GO
+-- ============================================
+-- SECTION 28: National-character (N'...') URI literals
+-- The STRING lexer rule allows an optional N prefix, so a URI may be written
+-- as N'uri'. The prefix is literal decoration and must not end up in the
+-- emitted xmlns declaration.
+-- ============================================
+-- 28.1 DEFAULT with an N-prefixed URI
+WITH XMLNAMESPACES(DEFAULT N'http://example.com/d')
+SELECT 1 AS y FOR XML RAW('Row');
+GO
+-- 28.2 N-prefixed URI bound to a prefix
+WITH XMLNAMESPACES(N'http://example.com/ns1' AS ns1)
+SELECT 1 AS [ns1:y] FOR XML RAW('Row');
+GO
+-- 28.3 N-prefixed and plain URIs in the same clause
+WITH XMLNAMESPACES(N'http://example.com/a' AS a, 'http://example.com/b' AS b)
+SELECT 1 AS [a:x], 2 AS [b:y] FOR XML RAW('Row');
+GO
+-- 28.4 N-prefixed URI in the CTE form of the clause (WITH XMLNAMESPACES(...), cte AS ...),
+-- which is a separate parse path from the statement-level form above.
+WITH XMLNAMESPACES(N'http://example.com/ns1' AS ns1),
+     cte AS (SELECT 1 AS a)
+SELECT a AS [ns1:x] FROM cte FOR XML RAW('ns1:Row');
+GO
+-- ============================================
+-- SECTION 29: Prefix validation for PATH attribute aliases
+-- In PATH mode a leading '@' marks the column as an attribute and is not part
+-- of the prefix, so the prefix that follows it is still validated.
+-- ============================================
+-- 29.1 Attribute alias with an undeclared prefix: missing-prefix error naming
+-- the prefix without the '@', and the column name as written.
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [@ns2:id] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML PATH('Emp');
+GO
+-- 29.2 Same shape with a declared prefix: emitted as a prefixed attribute.
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [@ns1:id] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML PATH('Emp');
+GO
