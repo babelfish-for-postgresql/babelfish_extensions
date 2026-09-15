@@ -3583,6 +3583,7 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 {
 	char		*old_db_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char		*new_db_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char		*orig_new_db_name = NULL;
 	char	  **splited_object_name;
 	const char *saved_dialect = GetConfigOption("babelfish_tsql.sql_dialect", true, true);
 	int len;
@@ -3635,6 +3636,11 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 					 errmsg("The value for the @newname parameter contains invalid characters or violates a basic restriction ((%s)).", new_db_name)));
 
 	pfree(new_db_name);
+	/*
+	 * Preserve the user-typed new name (case and length) for the orig_name
+	 * column before it is downcased/truncated into the physical key.
+	 */
+	orig_new_db_name = pstrdup(splited_object_name[3]);
 	new_db_name = !pltsql_case_insensitive_identifiers ?
 					pstrdup(splited_object_name[3]) :
 					downcase_identifier(splited_object_name[3], strlen(splited_object_name[3]), false, false);
@@ -3659,7 +3665,14 @@ sp_renamedb_internal(PG_FUNCTION_ARGS)
 								GUC_CONTEXT_CONFIG,
 								PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-		rename_tsql_db(old_db_name, new_db_name);
+		/*
+		 * Only carry the original name if it actually differs from the
+		 * physical (downcased/truncated) key; otherwise the physical name is
+		 * already an accurate representation and orig_name defaults to it.
+		 */
+		rename_tsql_db(old_db_name, new_db_name,
+					   (orig_new_db_name && strcmp(orig_new_db_name, new_db_name) != 0) ?
+					   orig_new_db_name : NULL);
 	}
 	PG_FINALLY();
 	{

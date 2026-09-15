@@ -197,7 +197,6 @@ babel_varbinary_int4_div
 bbf_view_def
 binary-index
 bitwise_not-operator
-case_insensitive_collation
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
 col_length
@@ -691,6 +690,7 @@ forxml-auto
 BABEL-5264
 BABEL-6037
 babel_sqlvariant_coerce_type
+temp_table_long_name_enr
 BABEL-login-db-long-identifiers
 long-identifiers-objects
 BABEL-6813

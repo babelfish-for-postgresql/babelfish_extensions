@@ -158,6 +158,82 @@ go
 SELECT * FROM babel_2920_chk ORDER BY id
 go
 
+-- omitted INTO with compound assignment and alias-qualified SET
+MERGE babel_2920_t AS t
+USING (SELECT 3 AS id, 5 AS bump) AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET t.qty += s.bump;
+SELECT qty FROM babel_2920_t WHERE id = 3
+go
+
+-- OPTION query hints: join hints and general hints
+CREATE TABLE babel_2920_opt_t (id INT PRIMARY KEY, hits INT NOT NULL)
+go
+CREATE TABLE babel_2920_opt_s (id INT PRIMARY KEY, tag VARCHAR(10))
+go
+INSERT INTO babel_2920_opt_t VALUES (1,0),(2,0)
+go
+INSERT INTO babel_2920_opt_s VALUES (2,'b'),(3,'c')
+go
+MERGE INTO babel_2920_opt_t AS t
+USING babel_2920_opt_s AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET hits = t.hits + 1
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, hits) VALUES (s.id, 0)
+OPTION (LOOP JOIN);
+go
+MERGE INTO babel_2920_opt_t AS t
+USING babel_2920_opt_s AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET hits = t.hits + 1
+OPTION (HASH JOIN);
+go
+MERGE INTO babel_2920_opt_t AS t
+USING babel_2920_opt_s AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET hits = t.hits + 1
+OPTION (MERGE JOIN);
+go
+MERGE INTO babel_2920_opt_t AS t
+USING babel_2920_opt_s AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET hits = t.hits + 1
+OPTION (FORCE ORDER);
+go
+MERGE INTO babel_2920_opt_t AS t
+USING babel_2920_opt_s AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET hits = t.hits + 1
+OPTION (KEEPFIXED PLAN);
+go
+MERGE INTO babel_2920_opt_t AS t
+USING babel_2920_opt_s AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET hits = t.hits + 1
+OPTION (MAXDOP 1);
+go
+MERGE INTO babel_2920_opt_t AS t
+USING babel_2920_opt_s AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET hits = t.hits + 1
+OPTION (LOOP JOIN, FORCE ORDER);
+go
+SELECT id, hits FROM babel_2920_opt_t ORDER BY id
+go
+
+-- OPTION combined with a table hint on the target
+MERGE INTO babel_2920_opt_t WITH (HOLDLOCK) AS t
+USING babel_2920_opt_s AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET hits = t.hits + 1
+OPTION (FORCE ORDER);
+go
+SELECT id, hits FROM babel_2920_opt_t ORDER BY id
+go
+DROP TABLE babel_2920_opt_t
+go
+DROP TABLE babel_2920_opt_s
+go
+
+-- table hints on the target and a query hint
+MERGE babel_2920_t WITH (HOLDLOCK) AS t
+USING babel_2920_s AS s ON t.id = s.id
+WHEN MATCHED AND t.id = 4 THEN UPDATE SET t.val = 'hinted'
+OPTION (LOOP JOIN);
+SELECT val FROM babel_2920_t WHERE id = 4
+go
+
 -- MERGE inside a stored procedure (upsert pattern)
 CREATE PROCEDURE babel_2920_upsert @id INT, @val VARCHAR(20) AS
 BEGIN
@@ -191,6 +267,11 @@ go
 MERGE INTO babel_2920_t AS t
 USING (SELECT 2 AS id UNION ALL SELECT 2) AS s ON t.id = s.id
 WHEN MATCHED THEN UPDATE SET qty = 0;
+go
+
+-- error: missing terminating semicolon (SQL Server: Msg 10713)
+MERGE INTO babel_2920_t AS t USING babel_2920_s AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET qty = qty
 go
 
 -- error: TOP is not supported yet

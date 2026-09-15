@@ -1,0 +1,30 @@
+-- tsql
+-- Clean up
+USE BABEL_ROLE_MEMBER_vu_prepare_db
+GO
+DROP USER BABEL_ROLE_MEMBER_vu_prepare_user1
+GO
+DROP USER BABEL_ROLE_MEMBER_vu_prepare_user2
+GO
+DROP USER BABEL_ROLE_MEMBER_vu_prepare_user3
+GO
+DROP ROLE BABEL_ROLE_MEMBER_vu_prepare_role5
+GO
+DROP ROLE BABEL_ROLE_MEMBER_vu_prepare_role4
+GO
+DROP ROLE BABEL_ROLE_MEMBER_vu_prepare_role3
+GO
+DROP ROLE BABEL_ROLE_MEMBER_vu_prepare_role2
+GO
+DROP ROLE BABEL_ROLE_MEMBER_vu_prepare_role1
+GO
+DROP LOGIN BABEL_ROLE_MEMBER_vu_prepare_login1
+GO
+DROP LOGIN BABEL_ROLE_MEMBER_vu_prepare_login2
+GO
+DROP LOGIN BABEL_ROLE_MEMBER_vu_prepare_login3
+GO
+USE master
+GO
+DROP DATABASE BABEL_ROLE_MEMBER_vu_prepare_db
+GO

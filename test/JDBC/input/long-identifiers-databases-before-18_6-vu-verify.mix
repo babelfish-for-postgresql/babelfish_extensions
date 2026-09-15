@@ -1,0 +1,16 @@
+-- Verify: Database name resolves correctly after upgrade
+-- tsql
+SELECT name FROM sys.databases WHERE name LIKE '%Very_Long_Database%VU_TVC';
+GO
+
+SELECT orig_name FROM sys.babelfish_sysdatabases WHERE orig_name LIKE '%Very_Long_Database%VU_TVC';
+GO
+
+USE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC;
+GO
+
+SELECT DB_NAME();
+GO
+
+USE master;
+GO

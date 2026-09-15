@@ -60,7 +60,8 @@ current_updated_columns(void)
 	CmdType		action;
 	ListCell   *l;
 
-	if (pltsql_trigger_depth - 1 < list_length(columns_updated_list))
+	if (pltsql_trigger_depth >= 1 &&
+		pltsql_trigger_depth - 1 < list_length(columns_updated_list))
 		curr_columns_list = (List *) list_nth(columns_updated_list, pltsql_trigger_depth - 1);
 	else
 		curr_columns_list = NIL;

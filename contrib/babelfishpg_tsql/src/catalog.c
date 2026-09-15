@@ -392,14 +392,43 @@ void pltsql_drop_relation_refcnt_hook(Relation relation)
 /*****************************************
  *			SYSDATABASES
  *****************************************/
+/*
+ * get_physical_db_name
+ *
+ * Convert a (possibly original, mixed-case, long) database name into the
+ * physical key stored in sys.babelfish_sysdatabases.name, which is always
+ * downcased and, when it does not fit in NAMEDATALEN, truncated with an MD5
+ * suffix by truncate_tsql_identifier(). Callers that look up a database by a
+ * user-supplied name should normalize through this helper so that long and
+ * mixed-case original names resolve to the stored physical row.
+ *
+ * Returns a palloc'd string.
+ */
+char *
+get_physical_db_name(const char *dbname)
+{
+	char	   *dbname_lower = downcase_identifier(dbname, strlen(dbname), false, false);
+
+	/*
+	 * truncate_tsql_identifier() is a no-op for names shorter than
+	 * NAMEDATALEN, so only names at or above the threshold get the MD5
+	 * truncation applied.
+	 */
+	if (strlen(dbname_lower) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+		truncate_tsql_identifier(dbname_lower);
+
+	return dbname_lower;
+}
+
 int16
 get_db_id(const char *dbname)
 {
 	int16		db_id = 0;
 	HeapTuple	tuple;
 	Form_sysdatabases sysdb;
+	char	   *phys_name = get_physical_db_name(dbname);
 
-	tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
+	tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(phys_name));
 
 	if (!HeapTupleIsValid(tuple))
 		return InvalidDbid;
@@ -415,7 +444,7 @@ char *
 get_db_name(int16 dbid)
 {
 	HeapTuple	tuple;
-	Datum		name_datum;
+	Datum		datum;
 	char	   *name = NULL;
 	bool		isNull;
 
@@ -424,11 +453,49 @@ get_db_name(int16 dbid)
 	if (!HeapTupleIsValid(tuple))
 		return NULL;
 
-	name_datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabases_name, &isNull);
-	name = TextDatumGetCString(name_datum);
+	datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabases_name, &isNull);
+	name = TextDatumGetCString(datum);
 	ReleaseSysCache(tuple);
 
 	return name;
+}
+
+char *
+dbid_get_original_db_name(int16 dbid)
+{
+	HeapTuple	tuple;
+	Datum		datum;
+	bool		isNull;
+	char	   *name;
+
+	tuple = SearchSysCache1(SYSDATABASEOID, Int16GetDatum(dbid));
+	if (!HeapTupleIsValid(tuple))
+		return NULL;
+
+	/*
+	 * SysCacheGetAttr() returns isNull = true for a NULL orig_name, which also
+	 * covers rows that predate the orig_name column (e.g. after pg_upgrade),
+	 * so no explicit column-count guard is required here.
+	 */
+	datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabases_orig_name, &isNull);
+	if (isNull)
+	{
+		ReleaseSysCache(tuple);
+		return NULL;
+	}
+
+	name = TextDatumGetCString(datum);
+	ReleaseSysCache(tuple);
+	return name;
+}
+
+char *
+dbname_get_original_db_name(const char *db_name)
+{
+	int16 dbid = get_db_id(db_name);
+	if (!DbidIsValid(dbid))
+		return NULL;
+	return dbid_get_original_db_name(dbid);
 }
 
 const char *
@@ -537,6 +604,8 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 
 	if (PG_NARGS() > 0)
 	{
+		char	   *phys_name;
+
 		dbname = TextDatumGetCString(PG_GETARG_DATUM(0));
 		dbname_lower = str_tolower(dbname, strlen(dbname), DEFAULT_COLLATION_OID);
 		/* Remove trailing spaces at the end of user typed dbname */
@@ -553,10 +622,16 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("The database '%s' does not exist. Supply a valid database name. To see available databases, use sys.databases.", dbname)));
+		/*
+		 * The primary key / index is on the physical (downcased and, for long
+		 * names, MD5-truncated) name, so build the scan key from the physical
+		 * form of the user-supplied name.
+		 */
+		phys_name = get_physical_db_name(dbname_lower);
 		ScanKeyInit(&scanKey,
 					Anum_sysdatabases_name,
 					BTEqualStrategyNumber, F_TEXTEQ,
-					CStringGetTextDatum(dbname_lower));
+					CStringGetTextDatum(phys_name));
 		scan = systable_beginscan(rel, sysdatabaese_idx_name_oid, true,
 								  NULL, 1, &scanKey);
 	}
@@ -576,6 +651,7 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 		Datum		values[7];
 		bool		nulls[7];
 		char	   *db_name_entry;
+		Datum		datum;
 		Timestamp	tmstmp;
 		char	   *tmstmp_str;
 		bool		isNull;
@@ -584,8 +660,20 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 
 		MemSet(nulls, 0, sizeof(nulls));
 
-		db_name_entry = TextDatumGetCString(heap_getattr(tuple, Anum_sysdatabases_name,
-														 RelationGetDescr(rel), &isNull));
+		/*
+		 * Prefer the original (case/length preserved) name for display. It is
+		 * nullable (rows created before the orig_name column existed, or after
+		 * pg_upgrade), so fall back to the physical name column when NULL to
+		 * avoid dereferencing a NULL datum.
+		 */
+		datum = heap_getattr(tuple, Anum_sysdatabases_orig_name,
+							 RelationGetDescr(rel), &isNull);
+		if (isNull)
+			datum = heap_getattr(tuple, Anum_sysdatabases_name,
+								 RelationGetDescr(rel), &isNull);
+		if (isNull)
+			continue;			/* unusable row, skip */
+		db_name_entry = TextDatumGetCString(datum);
 
 		values[0] = CStringGetTextDatum(db_name_entry);
 
@@ -2506,9 +2594,9 @@ get_name_db_owner(HeapTuple tuple, TupleDesc dsc)
 	char	   *name_str = text_to_cstring(name);
 	char	   *name_db_owner = palloc0(MAX_BBF_NAMEDATALEND);
 
-	truncate_identifier(name_str, strlen(name_str), false);
+	truncate_tsql_identifier(name_str);
 	snprintf(name_db_owner, MAX_BBF_NAMEDATALEND, "%s_db_owner", name_str);
-	truncate_identifier(name_db_owner, strlen(name_db_owner), false);
+	truncate_tsql_identifier(name_db_owner);
 	return CStringGetDatum(name_db_owner);
 }
 
@@ -2520,9 +2608,9 @@ get_name_dbo(HeapTuple tuple, TupleDesc dsc)
 	char	   *name_str = text_to_cstring(name);
 	char	   *name_dbo = palloc0(MAX_BBF_NAMEDATALEND);
 
-	truncate_identifier(name_str, strlen(name_str), false);
+	truncate_tsql_identifier(name_str);
 	snprintf(name_dbo, MAX_BBF_NAMEDATALEND, "%s_dbo", name_str);
-	truncate_identifier(name_dbo, strlen(name_dbo), false);
+	truncate_tsql_identifier(name_dbo);
 	return CStringGetDatum(name_dbo);
 }
 
@@ -2534,9 +2622,9 @@ get_name_guest(HeapTuple tuple, TupleDesc dsc)
 	char	   *name_str = text_to_cstring(name);
 	char	   *name_dbo = palloc0(MAX_BBF_NAMEDATALEND);
 
-	truncate_identifier(name_str, strlen(name_str), false);
+	truncate_tsql_identifier(name_str);
 	snprintf(name_dbo, MAX_BBF_NAMEDATALEND, "%s_guest", name_str);
-	truncate_identifier(name_dbo, strlen(name_dbo), false);
+	truncate_tsql_identifier(name_dbo);
 	return CStringGetDatum(name_dbo);
 }
 
@@ -4734,9 +4822,15 @@ update_db_owner(const char *new_owner_name, const char *db_name)
 
 /*
  * Update the name of a database in the sysdatabases catalog.
+ *
+ * new_db_name is the physical (downcased/truncated) name used as the primary
+ * key. orig_new_db_name is the user-typed name whose case and length are
+ * preserved for display; when NULL (e.g. an internal caller without the raw
+ * text) it defaults to new_db_name.
  */
 void
-update_sysdatabases_db_name(const char *old_db_name, const char *new_db_name)
+update_sysdatabases_db_name(const char *old_db_name, const char *new_db_name,
+							const char *orig_new_db_name)
 {
 	volatile 		Relation sysdatabases_rel;
 	TupleDesc		sysdatabases_rel_descr;
@@ -4776,7 +4870,10 @@ update_sysdatabases_db_name(const char *old_db_name, const char *new_db_name)
 		
 	/* Set up the new database. */
 	values[Anum_sysdatabases_name - 1]   = CStringGetTextDatum(new_db_name);
-	replaces[Anum_sysdatabases_name - 1] = true;	
+	replaces[Anum_sysdatabases_name - 1] = true;
+	values[Anum_sysdatabases_orig_name - 1] =
+		CStringGetTextDatum(orig_new_db_name ? orig_new_db_name : new_db_name);
+	replaces[Anum_sysdatabases_orig_name - 1] = true;
 								  
 	tuple = heap_modify_tuple(db_found,
 							  sysdatabases_rel_descr,
@@ -5064,7 +5161,7 @@ exec_rename_db_util(char *old_db_name, char *new_db_name, bool is_schema)
 }
 
 void
-rename_tsql_db(char *old_db_name, char *new_db_name)
+rename_tsql_db(char *old_db_name, char *new_db_name, char *orig_new_db_name)
 {
 	int xactStarted = IsTransactionOrTransactionBlock();
 	Oid save_userid = InvalidOid;
@@ -5143,7 +5240,13 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		List *list_of_schemas_to_rename;
 		List *list_of_roles_to_rename;
 		ListCell *lc;
-		char message[128];
+		/*
+		 * The message embeds the original (case/length preserved) database
+		 * name up to twice; a SYSNAME is up to 128 characters (up to 512 bytes
+		 * in UTF-8), so size the buffer to hold two full multibyte names plus
+		 * the fixed message text and avoid truncating a multibyte character.
+		 */
+		char message[1100];
 
 		prev_current_user = GetUserId();
 
@@ -5159,7 +5262,7 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		 * Update the database name in sys.babelfish_sysdatabases.
 		 * This should happen irrespective of the migration mode.
 		 */
-		update_sysdatabases_db_name(old_db_name, new_db_name);
+		update_sysdatabases_db_name(old_db_name, new_db_name, orig_new_db_name);
 
 		/*
 		 * There is no need to rename schemas for single-db mode.
@@ -5209,18 +5312,26 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		/* Update the default_database field in babelfish_authid_login_ext. */
 		update_babelfish_authid_login_ext_rename_db(old_db_name, new_db_name);
 
-		if (dbid == get_cur_db_id())
-			snprintf(message, sizeof(message), "Changed database context to '%s'.\nThe database name '%s' has been set.", new_db_name, new_db_name);
-		else
-			snprintf(message, sizeof(message), "The database name '%s' has been set.", new_db_name);
-		/* send env change token to user */
+		/*
+		 * For user-facing output, display the original (case/length preserved)
+		 * new name rather than the physical downcased/truncated key.
+		 */
+		{
+			const char *display_new_db_name = orig_new_db_name ? orig_new_db_name : new_db_name;
 
-		/* Send env change token if User is renaming current database. */
-		if (dbid == get_cur_db_id() && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
-			((*pltsql_protocol_plugin_ptr)->send_env_change) (1, new_db_name, old_db_name);
+			if (dbid == get_cur_db_id())
+				snprintf(message, sizeof(message), "Changed database context to '%s'.\nThe database name '%s' has been set.", display_new_db_name, display_new_db_name);
+			else
+				snprintf(message, sizeof(message), "The database name '%s' has been set.", display_new_db_name);
+			/* send env change token to user */
+
+			/* Send env change token if User is renaming current database. */
+			if (dbid == get_cur_db_id() && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
+				((*pltsql_protocol_plugin_ptr)->send_env_change) (1, (char *) display_new_db_name, old_db_name);
 		/* Send message to User. */
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
 			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
+		}
 	
 	}
 	PG_FINALLY();

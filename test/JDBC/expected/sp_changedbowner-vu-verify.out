@@ -51,7 +51,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'msdb'
 go
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 msdb#!#new_OWNER_login_sp
 ~~END~~
 
@@ -60,7 +60,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'msdb'
 go
 ~~START~~
-text#!#nvarchar
+nvarchar#!#nvarchar
 msdb#!#dba_login_sp
 ~~END~~
 
@@ -86,8 +86,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#dba_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#dba_login_sp
 ~~END~~
 
 execute sp_changedbowner 'no_such_login_sp'
@@ -109,8 +109,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#dba_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#dba_login_sp
 ~~END~~
 
 drop user new_owner_login_sp
@@ -120,8 +120,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 
@@ -132,7 +132,7 @@ select user_name(), db_name()
 go
 ~~START~~
 nvarchar#!#nvarchar
-dbo#!#change_owner_db_sp
+dbo#!#change_OWNER_db_sp
 ~~END~~
 
 use master
@@ -147,8 +147,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp2
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp2
 ~~END~~
 
 execute sp_changedbowner [new_owner_LOGIN_SP3], 12345
@@ -156,8 +156,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp3
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp3
 ~~END~~
 
 execute sp_changedbowner [NEW_owner_login_sp3], 'abcde'
@@ -165,8 +165,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp3
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp3
 ~~END~~
 
 execute sp_changedbowner [new_owner_LOGIN_SP 4], 'abcdefgh'
@@ -174,8 +174,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp 4
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp 4
 ~~END~~
 
 execute sp_changedbowner "NEW_owner_login_sp5"
@@ -183,8 +183,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp5
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp5
 ~~END~~
 
 execute sp_changedbowner @loginame = "new_owner_LOGIN_SP 6", @map = 'some-string'
@@ -192,8 +192,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp 6
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp 6
 ~~END~~
 
 
@@ -212,14 +212,14 @@ select user_name(), db_name()
 go
 ~~START~~
 nvarchar#!#nvarchar
-dbo#!#change_owner_db_sp
+dbo#!#change_OWNER_db_sp
 ~~END~~
 
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 execute sp_changedbowner "new_owner_login_sp"
@@ -227,8 +227,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 execute sp_changedbowner "NEW_OWNER_LOGIN_SP"
@@ -236,8 +236,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 execute sp_changedbowner [NEW_owner_login_sp]
@@ -245,8 +245,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 use master
@@ -261,8 +261,8 @@ go
 select 'before owner change', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
-before owner change#!#change_owner_db_sp#!#new_OWNER_login_sp
+varchar#!#nvarchar#!#nvarchar
+before owner change#!#change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 execute sp_changedbowner NEW_owner_login_sp2
@@ -270,8 +270,8 @@ go
 select 'after owner change', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
-after owner change#!#change_owner_db_sp#!#new_OWNER_login_sp2
+varchar#!#nvarchar#!#nvarchar
+after owner change#!#change_OWNER_db_sp#!#new_OWNER_login_sp2
 ~~END~~
 
 rollback
@@ -279,8 +279,8 @@ go
 select 'after rollback', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
-after rollback#!#change_owner_db_sp#!#new_OWNER_login_sp
+varchar#!#nvarchar#!#nvarchar
+after rollback#!#change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 
@@ -291,8 +291,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 execute sp_changedbowner @loginame=NULL
@@ -300,8 +300,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 
@@ -352,8 +352,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#dba_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#dba_login_sp
 ~~END~~
 
 execute sp_changedbowner 'no_such_login_sp'
@@ -375,8 +375,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#dba_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#dba_login_sp
 ~~END~~
 
 drop user new_owner_login_sp
@@ -386,8 +386,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 
@@ -398,7 +398,7 @@ select user_name(), db_name()
 go
 ~~START~~
 nvarchar#!#nvarchar
-dbo#!#change_owner_db_sp
+dbo#!#change_OWNER_db_sp
 ~~END~~
 
 use master
@@ -413,8 +413,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp2
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp2
 ~~END~~
 
 execute sp_changedbowner [new_owner_LOGIN_SP3], 12345
@@ -422,8 +422,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp3
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp3
 ~~END~~
 
 execute sp_changedbowner [NEW_owner_login_sp3], 'abcde'
@@ -431,8 +431,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp3
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp3
 ~~END~~
 
 execute sp_changedbowner [new_owner_LOGIN_SP 4], 'abcdefgh'
@@ -440,8 +440,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp 4
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp 4
 ~~END~~
 
 execute sp_changedbowner "NEW_owner_login_sp5"
@@ -449,8 +449,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp5
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp5
 ~~END~~
 
 execute sp_changedbowner @loginame = "new_owner_LOGIN_SP 6", @map = 'some-string'
@@ -458,8 +458,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp 6
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp 6
 ~~END~~
 
 
@@ -478,14 +478,14 @@ select user_name(), db_name()
 go
 ~~START~~
 nvarchar#!#nvarchar
-dbo#!#change_owner_db_sp
+dbo#!#change_OWNER_db_sp
 ~~END~~
 
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 execute sp_changedbowner "new_owner_login_sp"
@@ -493,8 +493,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 execute sp_changedbowner "NEW_OWNER_LOGIN_SP"
@@ -502,8 +502,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 execute sp_changedbowner [NEW_owner_login_sp]
@@ -511,8 +511,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 use master
@@ -527,8 +527,8 @@ go
 select 'before owner change', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
-before owner change#!#change_owner_db_sp#!#new_OWNER_login_sp
+varchar#!#nvarchar#!#nvarchar
+before owner change#!#change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 execute sp_changedbowner NEW_owner_login_sp2
@@ -536,8 +536,8 @@ go
 select 'after owner change', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
-after owner change#!#change_owner_db_sp#!#new_OWNER_login_sp2
+varchar#!#nvarchar#!#nvarchar
+after owner change#!#change_OWNER_db_sp#!#new_OWNER_login_sp2
 ~~END~~
 
 rollback
@@ -545,8 +545,8 @@ go
 select 'after rollback', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
-after rollback#!#change_owner_db_sp#!#new_OWNER_login_sp
+varchar#!#nvarchar#!#nvarchar
+after rollback#!#change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 
@@ -557,8 +557,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 execute sp_changedbowner @loginame=NULL
@@ -566,8 +566,8 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
-change_owner_db_sp#!#new_OWNER_login_sp
+nvarchar#!#nvarchar
+change_OWNER_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
 
@@ -619,8 +619,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
+nvarchar#!#nvarchar
+DB63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
 ~~END~~
 
 use master
@@ -633,7 +633,7 @@ select user_name(), db_name()
 go
 ~~START~~
 nvarchar#!#nvarchar
-dbo#!#db63long_012345678901234567890123456789012345678901234567890123
+dbo#!#DB63long_012345678901234567890123456789012345678901234567890123
 ~~END~~
 
 use master
@@ -653,8 +653,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
+nvarchar#!#nvarchar
+DB63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
 ~~END~~
 
 use master
@@ -667,7 +667,7 @@ select user_name(), db_name()
 go
 ~~START~~
 nvarchar#!#nvarchar
-dbo#!#db63long_012345678901234567890123456789012345678901234567890123
+dbo#!#DB63long_012345678901234567890123456789012345678901234567890123
 ~~END~~
 
 use master
@@ -692,8 +692,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#dba_login_sp
+nvarchar#!#nvarchar
+DB64long_0123456789012345678901234567890123456789012345678901234#!#dba_login_sp
 ~~END~~
 
 use master
@@ -716,8 +716,8 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
-db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#dba_login_sp
+nvarchar#!#nvarchar
+DB64long_0123456789012345678901234567890123456789012345678901234#!#dba_login_sp
 ~~END~~
 
 use master

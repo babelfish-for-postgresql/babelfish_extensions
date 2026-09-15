@@ -14,7 +14,7 @@ GO
 text
 #pg_toast_#oid_masked#
 #pg_toast_#oid_masked#_index
-#tmpgoodsinfo
+#tmpGoodsInfo
 ~~END~~
 
 

@@ -269,6 +269,13 @@ Gather
 
 
 -- Test 21: EXPLAIN pg_attribute with attrelid cast
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
 EXPLAIN (COSTS OFF) SELECT * FROM pg_attribute WHERE (attrelid)::int4 = 12345 AND attnum > 0;
 GO
 ~~START~~
@@ -278,6 +285,13 @@ Gather
   Single Copy: true
   ->  Index Scan using pg_attribute_relid_attnum_index on pg_attribute
         Index Cond: ((attrelid = (12345)::oid) AND (attnum > 0))
+~~END~~
+
+SELECT set_config('enable_bitmapscan', 'on', false);
+GO
+~~START~~
+text
+on
 ~~END~~
 
 

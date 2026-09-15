@@ -82,6 +82,8 @@ go
 -- terminate-tsql-conn user=jdbc_user password=12345678 database=long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst
 
 -- tsql
+USE master;
+GO
 DROP DATABASE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
 GO
 
@@ -125,6 +127,8 @@ go
 -- terminate-tsql-conn user=jdbc_user password=12345678 database=Dätàbäsé_Tëst_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóô
 
 -- tsql
+USE master;
+GO
 DROP DATABASE Dätàbäsé_Tëst_àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿàáâãäåæçèéêëìíîïðñòóô;
 GO
 
@@ -144,6 +148,14 @@ select suser_name(), db_name();
 go
 
 -- terminate-tsql-conn user=long_identifier_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr password=1234 database=long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst
+
+-- tsql
+USE master;
+GO
+-- psql
+-- Wait for terminated session to fully release the database
+SELECT pg_sleep(1);
+GO
 
 -- tsql
 DROP DATABASE long_identifier_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst;
@@ -195,6 +207,9 @@ go
 -- terminate-tsql-conn user=long_bracket_login_test_user_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstu password=1234 database=long_bracket_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvw
 
 -- tsql
+USE master;
+GO
+
 DROP DATABASE [long_bracket_database_test_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvw];
 GO
 
@@ -215,5 +230,7 @@ go
 -- terminate-tsql-conn user=Bracketed_Mixed_Case_Login_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsT password=1234 database=Bracketed_Mixed_Case_Database_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoP
 
 -- tsql
+USE master;
+GO
 DROP DATABASE [Bracketed_Mixed_Case_Database_XyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoP];
 GO
