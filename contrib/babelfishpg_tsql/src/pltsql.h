@@ -1894,6 +1894,9 @@ extern bool pltsql_sys_function_pop(void);
 extern uint64 execute_bulk_load_insert(int ncol, int nrow,
 									   Datum *Values, bool *Nulls);
 extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
+extern void restrict_rename_stmt(RenameStmt *rename_stmt);
+extern void restrict_alter_object_schema_stmt(AlterObjectSchemaStmt *altschstmt);
+extern void restrict_call_stmt(CallStmt *call_stmt);
 
 /*
  * Functions in pl_exec.c
