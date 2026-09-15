@@ -16,6 +16,7 @@
 #include "access/table.h"
 #include "catalog/heap.h"
 #include "catalog/pg_proc.h"
+#include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
@@ -42,33 +43,36 @@ extern bool pltsql_ansi_warnings;
 extern bool pltsql_arithabort;
 extern bool pltsql_numeric_roundabort;
 
+/* Validators referenced by the whitelist below */
+static bool require_true_flag(HeapTuple procTup, FuncExpr *f, const char *argname);
+
 /* Whitelist: deterministic STABLE functions allowed in PERSISTED columns */
 static FuncEntry whitelist[] = {
     /* String concatenation */
-    {"babelfish_concat_wrapper",       "sys", -1},
-    {"babelfish_concat_wrapper_outer", "sys", -1},
-    {"concat",                         "sys", -1},
-    {"concat_ws",                      "sys", -1},
+    {"babelfish_concat_wrapper",       "sys", NULL, NULL},
+    {"babelfish_concat_wrapper_outer", "sys", NULL, NULL},
+    {"concat",                         "sys", NULL, NULL},
+    {"concat_ws",                      "sys", NULL, NULL},
 
-    /* Conversion functions — safe only when style_specified arg is true */
-    {"babelfish_conv_helper_to_varchar", "sys", 4},
+    /* Conversion functions — deterministic only with an explicit style */
+    {"babelfish_conv_helper_to_varchar", "sys", require_true_flag, "p_style_specified"},
 
     /* Numeric casting/rounding */
-    {"babelfish_cast_floor_int",       "sys", -1},
-    {"babelfish_cast_floor_bigint",    "sys", -1},
-    {"babelfish_cast_floor_smallint",  "sys", -1},
-    {"_round_fixeddecimal_to_int2",    "sys", -1},
-    {"_round_fixeddecimal_to_int4",    "sys", -1},
-    {"_round_fixeddecimal_to_int8",    "sys", -1},
-    {"_trunc_numeric_to_int2",         "sys", -1},
-    {"_trunc_numeric_to_int4",         "sys", -1},
-    {"_trunc_numeric_to_int8",         "sys", -1},
+    {"babelfish_cast_floor_int",       "sys", NULL, NULL},
+    {"babelfish_cast_floor_bigint",    "sys", NULL, NULL},
+    {"babelfish_cast_floor_smallint",  "sys", NULL, NULL},
+    {"_round_fixeddecimal_to_int2",    "sys", NULL, NULL},
+    {"_round_fixeddecimal_to_int4",    "sys", NULL, NULL},
+    {"_round_fixeddecimal_to_int8",    "sys", NULL, NULL},
+    {"_trunc_numeric_to_int2",         "sys", NULL, NULL},
+    {"_trunc_numeric_to_int4",         "sys", NULL, NULL},
+    {"_trunc_numeric_to_int8",         "sys", NULL, NULL},
 
     /* Date functions */
-    {"eomonth",                        "sys", -1},
-    {"datetrunc",                      "sys", -1},
+    {"eomonth",                        "sys", NULL, NULL},
+    {"datetrunc",                      "sys", NULL, NULL},
 
-    {NULL, NULL, -1}
+    {NULL, NULL, NULL, NULL}
 };
 
 /* Find matching entry in whitelist, or return NULL */
@@ -83,28 +87,61 @@ find_in_whitelist(const char *funcname, const char *nspname)
 }
 
 /*
- * Validate a whitelisted function's arguments.
- * If style_arg_pos >= 0, the argument at that position must be a boolean
- * with value true (meaning an explicit style was specified).
+ * Position of the named parameter, or -1 if not found.  Also -1 for variadic
+ * functions, where proargnames is not positional against FuncExpr->args.
+ */
+static int
+find_arg_position(HeapTuple procTup, const char *argname)
+{
+    Form_pg_proc  proc = (Form_pg_proc) GETSTRUCT(procTup);
+    Oid          *argtypes;
+    char        **argnames;
+    char         *argmodes;
+    int           nargs;
+
+    if (OidIsValid(proc->provariadic))
+        return -1;
+
+    nargs = get_func_arg_info(procTup, &argtypes, &argnames, &argmodes);
+    if (argnames == NULL)
+        return -1;
+
+    for (int i = 0; i < nargs; i++)
+        if (argnames[i] != NULL && strcmp(argnames[i], argname) == 0)
+            return i;
+
+    return -1;
+}
+
+/* Named argument if it was passed as a literal, else NULL so callers fail closed. */
+static Const *
+get_literal_arg(HeapTuple procTup, FuncExpr *f, const char *argname)
+{
+    int    pos;
+    Node  *arg;
+
+    if (f == NULL || argname == NULL)
+        return NULL;
+
+    pos = find_arg_position(procTup, argname);
+    if (pos < 0 || list_length(f->args) <= pos)
+        return NULL;
+
+    arg = (Node *) list_nth(f->args, pos);
+    return IsA(arg, Const) ? (Const *) arg : NULL;
+}
+
+/*
+ * Deterministic only when the named boolean parameter is a literal true.
+ * Used by CONVERT, where the grammar sets p_style_specified when an explicit
+ * style was given, but reusable by any function with such a flag.
  */
 static bool
-validate_whitelist_entry(FuncEntry *entry, FuncExpr *f)
+require_true_flag(HeapTuple procTup, FuncExpr *f, const char *argname)
 {
-    Node  *arg;
-    Const *c;
+    Const *c = get_literal_arg(procTup, f, argname);
 
-    if (entry->style_arg_pos < 0)
-        return true;
-
-    if (list_length(f->args) <= entry->style_arg_pos)
-        return false;
-
-    arg = (Node *) list_nth(f->args, entry->style_arg_pos);
-    if (!IsA(arg, Const))
-        return false;
-
-    c = (Const *) arg;
-    return !c->constisnull && DatumGetBool(c->constvalue);
+    return c != NULL && !c->constisnull && DatumGetBool(c->constvalue);
 }
 
 /*
@@ -125,89 +162,142 @@ has_mismatched_set_options(void)
              !pltsql_numeric_roundabort);
 }
 
+/*
+ * Append one option name to a comma-separated list.  The separator goes before
+ * every entry except the first, so there is never a trailing one to trim; an
+ * empty buffer means nothing has been appended yet.
+ */
+static void
+append_mismatched_option(StringInfo buf, const char *name)
+{
+    if (buf->len > 0)
+        appendStringInfoString(buf, ", ");
+    appendStringInfoString(buf, name);
+}
+
 /* Get comma-separated list of mismatched GUCs */
 char * 
 get_mismatched_persisted_gucs(void)
 {
     StringInfoData buf;
+
     initStringInfo(&buf);
-    
+
     if (!pltsql_quoted_identifier)
-        appendStringInfoString(&buf, "QUOTED_IDENTIFIER, ");
+        append_mismatched_option(&buf, "QUOTED_IDENTIFIER");
     if (!pltsql_arithabort)
-        appendStringInfoString(&buf, "ARITHABORT, ");
+        append_mismatched_option(&buf, "ARITHABORT");
     if (!pltsql_concat_null_yields_null)
-        appendStringInfoString(&buf, "CONCAT_NULL_YIELDS_NULL, ");
+        append_mismatched_option(&buf, "CONCAT_NULL_YIELDS_NULL");
     if (!pltsql_ansi_nulls)
-        appendStringInfoString(&buf, "ANSI_NULLS, ");
+        append_mismatched_option(&buf, "ANSI_NULLS");
     if (!pltsql_ansi_padding)
-        appendStringInfoString(&buf, "ANSI_PADDING, ");
+        append_mismatched_option(&buf, "ANSI_PADDING");
     if (!pltsql_ansi_warnings)
-        appendStringInfoString(&buf, "ANSI_WARNINGS, ");
+        append_mismatched_option(&buf, "ANSI_WARNINGS");
     if (pltsql_numeric_roundabort)
-        appendStringInfoString(&buf, "NUMERIC_ROUNDABORT, ");
-    
-    if (buf.len >= 2)
-        buf.data[buf.len - 2] = '\0';
-    
+        append_mismatched_option(&buf, "NUMERIC_ROUNDABORT");
+
     return buf.data;
 }
 
 /*
- * Non deterministic function walker: returns true if any function is unsafe i.e not whitelisted on not immutable
+ * Is this function safe to persist?  IMMUTABLE always is; STABLE only if
+ * whitelisted and its validator agrees.  f is the call site, NULL when the
+ * function came from a node with no argument list (validators then fail closed).
+ */
+static bool
+funcid_is_safe(Oid funcid, FuncExpr *f)
+{
+    HeapTuple    tup;
+    Form_pg_proc proc;
+    bool         safe = false;
+
+    tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+    if (!HeapTupleIsValid(tup))
+    {
+        /*
+         * Should not happen: the OID was resolved from the catalog during parse
+         * analysis in this transaction.  Defer to PG's own immutability check
+         * rather than vouch for a function we cannot inspect.
+         */
+        return false;
+    }
+
+    proc = (Form_pg_proc) GETSTRUCT(tup);
+
+    if (proc->provolatile == PROVOLATILE_IMMUTABLE)
+        safe = true;
+    else if (proc->provolatile == PROVOLATILE_STABLE)
+    {
+        const char *funcname = NameStr(proc->proname);
+        char       *nspname = get_namespace_name(proc->pronamespace);
+        FuncEntry  *entry = nspname ? find_in_whitelist(funcname, nspname) : NULL;
+
+        if (nspname)
+            pfree(nspname);
+
+        if (entry != NULL)
+            safe = (entry->validate == NULL) ||
+                   entry->validate(tup, f, entry->validate_arg);
+    }
+
+    ReleaseSysCache(tup);
+    return safe;
+}
+
+/*
+ * Callback for check_functions_in_node().  Returns true to stop the scan, so
+ * true means "unsafe".  Used for node types that carry a function OID but no
+ * argument list we could hand to a validator.
+ */
+static bool
+persisted_funcid_checker(Oid funcid, void *context)
+{
+    return !funcid_is_safe(funcid, NULL);
+}
+
+/*
+ * Returns true if the expression contains a function that is unsafe to persist,
+ * i.e. neither IMMUTABLE nor whitelisted.
+ *
+ * Operators and type I/O coercions carry a function OID too, not just FuncExpr,
+ * so use check_functions_in_node() for the same node coverage PG's
+ * contain_mutable_functions_walker() has.
  */
 static bool
 contain_non_deterministic_func_walker(Node *node, void *context)
 {
     bool *found_unsafe = (bool *) context;
-    
+
     if (node == NULL)
         return false;
-    
+
+    /*
+     * FuncExpr is handled separately so that argument-sensitive whitelist
+     * entries (e.g. CONVERT with an explicit style) can inspect the call site.
+     */
     if (IsA(node, FuncExpr))
     {
-        FuncExpr *f = (FuncExpr *) node;
-        HeapTuple tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(f->funcid));
-        Form_pg_proc proc;
-        
-        if (!HeapTupleIsValid(tup))
+        if (!funcid_is_safe(((FuncExpr *) node)->funcid, (FuncExpr *) node))
         {
-            /* Cache lookup failed, treat as unsafe */
             *found_unsafe = true;
             return true;
         }
-
-        proc = (Form_pg_proc) GETSTRUCT(tup);
-
-        if (proc->provolatile == PROVOLATILE_IMMUTABLE)
-        {
-            /* IMMUTABLE is always safe */
-            ReleaseSysCache(tup);
-            return expression_tree_walker(node, contain_non_deterministic_func_walker, context);
-        }
-
-        if (proc->provolatile == PROVOLATILE_STABLE)
-        {
-            const char *funcname = NameStr(proc->proname);
-            char *nspname = get_namespace_name(proc->pronamespace);
-            FuncEntry *entry = nspname ? find_in_whitelist(funcname, nspname) : NULL;
-
-            if (nspname)
-                pfree(nspname);
-
-            if (entry && validate_whitelist_entry(entry, f))
-            {
-                ReleaseSysCache(tup);
-                return expression_tree_walker(node, contain_non_deterministic_func_walker, context);
-            }
-        }
-
-        /* VOLATILE or non-whitelisted STABLE — unsafe */
+    }
+    else if (check_functions_in_node(node, persisted_funcid_checker, NULL))
+    {
         *found_unsafe = true;
-        ReleaseSysCache(tup);
         return true;
     }
-    
+
+    /* Stable or volatile by definition, with no function OID to inspect */
+    if (IsA(node, SQLValueFunction) || IsA(node, NextValueExpr))
+    {
+        *found_unsafe = true;
+        return true;
+    }
+
     return expression_tree_walker(node, contain_non_deterministic_func_walker, context);
 }
 
