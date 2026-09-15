@@ -215,17 +215,6 @@ static struct cachedesc my_cacheinfo[] = {
 			0
 		},
 		16
-	},
-	{-1,						/* IDENTMAPPINGNAME */
-		-1,
-		4,
-		{
-			Anum_bbf_ident_mapping_truncated_name,
-			Anum_bbf_ident_mapping_nspname,
-			Anum_bbf_ident_mapping_pg_catalog_type,
-			Anum_bbf_ident_mapping_parent_name
-		},
-		128
 	}
 };
 
@@ -273,8 +262,6 @@ init_catalog(PG_FUNCTION_ARGS)
 	my_cacheinfo[3].indoid = namespace_ext_idx_oid_oid;
 	my_cacheinfo[4].reloid = bbf_authid_user_ext_oid;
 	my_cacheinfo[4].indoid = bbf_authid_user_ext_idx_oid;
-	my_cacheinfo[5].reloid = bbf_ident_mapping_oid;
-	my_cacheinfo[5].indoid = bbf_ident_mapping_idx_oid;
 
 	/* login ext */
 	bbf_authid_login_ext_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_TABLE_NAME,
@@ -340,7 +327,7 @@ initTsqlSyscache()
 	/* Initialize info for catcache */
 	if (!tsql_syscache_inited)
 	{
-		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 6);
+		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 5);
 		tsql_syscache_inited = true;
 	}
 }
@@ -1816,6 +1803,9 @@ lookup_bbf_ident_mapping(const char *truncated_name,
 								Oid pg_catalog_type,
 								const char *parent_name)
 {
+	Relation	rel;
+	SysScanDesc scan;
+	ScanKeyData scanKey[4];
 	HeapTuple	tuple;
 	char	   *result = NULL;
 	NameData	truncated_namedata;
@@ -1829,29 +1819,49 @@ lookup_bbf_ident_mapping(const char *truncated_name,
 	namestrcpy(&nspname_data, nspname);
 	namestrcpy(&parent_namedata, parent_name ? parent_name : "");
 
-	tuple = SearchSysCache4(IDENTMAPPINGNAME,
-							NameGetDatum(&truncated_namedata),
-							NameGetDatum(&nspname_data),
-							ObjectIdGetDatum(pg_catalog_type),
-							NameGetDatum(&parent_namedata));
+	rel = table_open(get_bbf_ident_mapping_oid(), AccessShareLock);
 
+	/*
+	 * All four key columns are known here, so scan the primary-key index for
+	 * an exact match. This is only reached on DDL paths (CREATE/ALTER of
+	 * constraints, parameters, sequences and types), never on the DML or query
+	 * hot path, so a direct catalog lookup is preferable to a dedicated
+	 * syscache.
+	 */
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_ident_mapping_truncated_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&truncated_namedata));
+	ScanKeyInit(&scanKey[1],
+				Anum_bbf_ident_mapping_nspname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&nspname_data));
+	ScanKeyInit(&scanKey[2],
+				Anum_bbf_ident_mapping_pg_catalog_type,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(pg_catalog_type));
+	ScanKeyInit(&scanKey[3],
+				Anum_bbf_ident_mapping_parent_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&parent_namedata));
+
+	scan = systable_beginscan(rel, get_bbf_ident_mapping_idx_oid(), true,
+							  NULL, 4, scanKey);
+
+	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
 	{
 		bool		isNull;
 		Datum		datum;
 
-		/*
-		 * Read the attribute straight from the catcache tuple using the
-		 * catcache's cached tuple descriptor. This avoids opening the relation
-		 * (and taking an extra AccessShareLock) on the resolver hot path, which
-		 * runs once per row in the sys views.
-		 */
-		datum = SysCacheGetAttr(IDENTMAPPINGNAME, tuple,
-								Anum_bbf_ident_mapping_original_name, &isNull);
+		datum = heap_getattr(tuple, Anum_bbf_ident_mapping_original_name,
+							 RelationGetDescr(rel), &isNull);
 		if (!isNull)
 			result = TextDatumGetCString(datum);
-		ReleaseSysCache(tuple);
 	}
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
 
 	return result;
 }
@@ -1866,6 +1876,8 @@ delete_bbf_ident_mapping(const char *truncated_name,
 								const char *parent_name)
 {
 	Relation	rel;
+	SysScanDesc scan;
+	ScanKeyData scanKey[4];
 	HeapTuple	tuple;
 	NameData	truncated_namedata;
 	NameData	nspname_data;
@@ -1878,19 +1890,39 @@ delete_bbf_ident_mapping(const char *truncated_name,
 	namestrcpy(&nspname_data, nspname);
 	namestrcpy(&parent_namedata, parent_name ? parent_name : "");
 
-	tuple = SearchSysCache4(IDENTMAPPINGNAME,
-							NameGetDatum(&truncated_namedata),
-							NameGetDatum(&nspname_data),
-							ObjectIdGetDatum(pg_catalog_type),
-							NameGetDatum(&parent_namedata));
+	rel = table_open(get_bbf_ident_mapping_oid(), RowExclusiveLock);
 
+	/*
+	 * All four key columns are known, so use the primary-key index for an
+	 * exact match. Only reached on DDL paths (DROP/rename of the mapped
+	 * object), so a direct catalog lookup is preferable to a syscache.
+	 */
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_ident_mapping_truncated_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&truncated_namedata));
+	ScanKeyInit(&scanKey[1],
+				Anum_bbf_ident_mapping_nspname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&nspname_data));
+	ScanKeyInit(&scanKey[2],
+				Anum_bbf_ident_mapping_pg_catalog_type,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(pg_catalog_type));
+	ScanKeyInit(&scanKey[3],
+				Anum_bbf_ident_mapping_parent_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&parent_namedata));
+
+	scan = systable_beginscan(rel, get_bbf_ident_mapping_idx_oid(), true,
+							  NULL, 4, scanKey);
+
+	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
-	{
-		rel = table_open(get_bbf_ident_mapping_oid(), RowExclusiveLock);
 		CatalogTupleDelete(rel, &tuple->t_self);
-		table_close(rel, RowExclusiveLock);
-		ReleaseSysCache(tuple);
-	}
+
+	systable_endscan(scan);
+	table_close(rel, RowExclusiveLock);
 }
 
 /*
