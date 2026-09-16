@@ -862,13 +862,18 @@ add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator)
  * is OFF, may be double-quoted. All of those forms have to be reduced to the
  * bare text before it is embedded in an array literal or an xmlns declaration.
  *
- * Doubled quotes inside the literal are deliberately left alone: they are
- * un-doubled later by the scanner when the assembled SQL text is parsed.
+ * A delimiter doubled inside the literal is collapsed here, so what comes back
+ * is the value the user wrote rather than its source form. The two consumers
+ * need different escaping of it and neither wants the source form: the xmlns
+ * declaration string is emitted as written and wants the bare character, while
+ * the array literal is spliced into a single-quoted PostgreSQL literal and has
+ * to re-double it (see escape_for_pg_array_literal).
  */
 static std::string
 strip_string_literal(const std::string &literal)
 {
 	std::string s = literal;
+	char		quote = '\0';
 
 	/* optional national-character prefix */
 	if (s.size() >= 3 && (s[0] == 'N' || s[0] == 'n') &&
@@ -879,17 +884,41 @@ strip_string_literal(const std::string &literal)
 	if (s.size() >= 2 &&
 		((s.front() == '\'' && s.back() == '\'') ||
 		 (s.front() == '"' && s.back() == '"')))
+	{
+		quote = s.front();
 		s = s.substr(1, s.size() - 2);
+	}
 
-	return s;
+	if (quote == '\0')
+		return s;
+
+	/* collapse the doubling that escaped the delimiter */
+	std::string collapsed;
+
+	collapsed.reserve(s.size());
+	for (size_t i = 0; i < s.size(); i++)
+	{
+		collapsed += s[i];
+		if (s[i] == quote && i + 1 < s.size() && s[i + 1] == quote)
+			i++;
+	}
+
+	return collapsed;
 }
 
 /*
  * Escape a URI string for embedding inside a PG string-form array literal.
- * Inside a '{...}'::_text literal, double-quoted elements need " and \ to be
- * backslash-escaped. Without this, a URI containing '"' produces a malformed
- * array literal error and a URI containing '\' is silently corrupted (the
- * backslash is dropped).
+ *
+ * The literal is spliced into the rewritten SQL as '{...}'::_text, so there are
+ * two nested levels to satisfy:
+ *
+ * - The array parser reads double-quoted elements, where " and \ have to be
+ *   backslash-escaped. Without this a URI containing '"' produces a malformed
+ *   array literal error and one containing '\' is silently corrupted, since the
+ *   array parser drops the backslash.
+ * - The single-quoted string literal around the whole thing needs any ' in the
+ *   URI doubled. Leaving it bare would end the literal early and the rest of the
+ *   URI would be parsed as SQL.
  */
 static std::string
 escape_for_pg_array_literal(const std::string &s)
@@ -900,6 +929,8 @@ escape_for_pg_array_literal(const std::string &s)
 	{
 		if (c == '"' || c == '\\')
 			out += '\\';
+		else if (c == '\'')
+			out += '\'';
 		out += c;
 	}
 	return out;

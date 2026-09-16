@@ -358,7 +358,6 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	char	   *root_name;
 	char	   *ns_decls = NULL;
 	char	   *row_ns_decls;
-	bool		has_root;
 
 	MemoryContext agg_context;
 	MemoryContext old_context;
@@ -519,10 +518,7 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	 * If ROOT is present, namespace declarations were already emitted on
 	 * the root element. Don't pass them to row functions for re-emission.
 	 */
-	row_ns_decls = ns_decls;
-	has_root = (state->len > 0 && state->data[0] == '{');
-	if (has_root)
-		row_ns_decls = NULL;
+	row_ns_decls = fstate->has_root ? NULL : ns_decls;
 
 	switch (mode)
 	{
@@ -983,15 +979,33 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 				}
 				else
 				{
+					bool		path_empty = (element_name && strlen(element_name) == 0);
+
 					/*
-					 * PATH('') + XSINIL emits xmlns:xsi on each column
-					 * element since there is no row tag to carry it.
-					 * When ROOT already declared it, suppress the per-column
-					 * declaration to match T-SQL behavior.
+					 * PATH('') emits no row tag, so whatever would have gone
+					 * on it belongs on each column element instead: xmlns:xsi
+					 * for XSINIL, and the WITH XMLNAMESPACES declarations.
+					 * When ROOT is present it carries them already, which is
+					 * why ns_decls arrives NULL in that case.
 					 */
-					if ((element_name && strlen(element_name) == 0) && xsinil && !has_root)
+					if (path_empty && xsinil && ns_decls && !ns_decls_has_xsi(ns_decls))
+						appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s>%s</%s>",
+										 colname, ns_decls,
+										 map_sql_value_to_xml_value(colval, datatype_oid, true),
+										 colname);
+					else if (path_empty && xsinil && ns_decls)
+						appendStringInfo(state, "<%s %s>%s</%s>",
+										 colname, ns_decls,
+										 map_sql_value_to_xml_value(colval, datatype_oid, true),
+										 colname);
+					else if (path_empty && xsinil && !has_root)
 						appendStringInfo(state, "<%s " XML_XMLNS_XSI ">%s</%s>",
 										 colname,
+										 map_sql_value_to_xml_value(colval, datatype_oid, true),
+										 colname);
+					else if (path_empty && ns_decls)
+						appendStringInfo(state, "<%s %s>%s</%s>",
+										 colname, ns_decls,
 										 map_sql_value_to_xml_value(colval, datatype_oid, true),
 										 colname);
 					else
@@ -1021,13 +1035,20 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 
 				if (strncmp(NameStr(att->attname), "?column?", 8) != 0)
 				{
+					bool		path_empty = (element_name && strlen(element_name) == 0);
+
 					/*
-					 * PATH('') + XSINIL emits xmlns:xsi on each column
-					 * element since there is no row tag to carry it.
-					 * When ROOT already declared it, suppress the per-column
-					 * declaration to match T-SQL behavior.
+					 * Same reasoning as the non-NULL case above: with no row
+					 * tag, xmlns:xsi and the WITH XMLNAMESPACES declarations
+					 * both belong on the column element.
 					 */
-					if (element_name && strlen(element_name) == 0 && !has_root)
+					if (path_empty && ns_decls && !ns_decls_has_xsi(ns_decls))
+						appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s " XML_XSI_NIL "/>",
+										 colname, ns_decls);
+					else if (path_empty && ns_decls)
+						appendStringInfo(state, "<%s %s " XML_XSI_NIL "/>",
+										 colname, ns_decls);
+					else if (path_empty && !has_root)
 						appendStringInfo(state, "<%s " XML_XMLNS_XSI " " XML_XSI_NIL "/>", colname);
 					else
 						appendStringInfo(state, "<%s " XML_XSI_NIL "/>", colname);

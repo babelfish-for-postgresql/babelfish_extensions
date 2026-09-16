@@ -430,6 +430,61 @@ SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
 FOR XML RAW('ns1:Emp');
 GO
 
+-- 9.1d URI with a single quote, written doubled in the literal. The doubling is
+-- source syntax and must not reach the output: the array literal has to re-double
+-- it for the PostgreSQL string literal it sits in, while the xmlns declaration
+-- needs the bare character.
+WITH XMLNAMESPACES('http://example.com/it''s' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML RAW('ns1:Emp');
+GO
+-- 9.1e Same in PATH mode
+WITH XMLNAMESPACES('http://example.com/it''s' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML PATH('ns1:Emp');
+GO
+-- 9.1f Same as a DEFAULT declaration
+WITH XMLNAMESPACES(DEFAULT 'http://example.com/it''s')
+SELECT EmpID AS ID FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML RAW('Emp');
+GO
+-- 9.1g URI with a backslash. The array literal backslash-escapes it, otherwise
+-- the array parser drops it.
+WITH XMLNAMESPACES('http://example.com/a\b' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML RAW('ns1:Emp');
+GO
+-- 9.1h URI with a double quote: backslash-escaped for the array literal, emitted
+-- as &quot; in the attribute value
+WITH XMLNAMESPACES('http://example.com/a"b' AS ns1)
+SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML RAW('ns1:Emp');
+GO
+-- 9.1i A URI shaped like an attempt to break out of the generated SQL. The
+-- array literal is spliced into the rewritten statement inside a single-quoted
+-- PostgreSQL literal, so the quote has to be doubled on the way in. If it were
+-- not, the rest of the URI would be parsed as SQL instead of being data. It has
+-- to come back out as an ordinary xmlns value.
+WITH XMLNAMESPACES('a'')||pg_sleep(10)||(''b' AS ns1)
+SELECT 1 AS [ns1:a] FOR XML RAW('Row');
+GO
+-- 9.1j The same idea against both escaping layers at once: the double quote and
+-- brace close the array element, the quote closes the enclosing literal, and the
+-- trailing comment marker would swallow what follows.
+WITH XMLNAMESPACES('a"}}''::_text, pg_sleep(10)) --' AS ns1)
+SELECT 1 AS [ns1:a] FOR XML RAW('Row');
+GO
+-- 9.1k Same payload with QUOTED_IDENTIFIER OFF, where a double-quoted literal
+-- may hold an undoubled quote. The statement is rejected before it runs. The
+-- rejection is not the escaping doing the work here, so if this ever starts
+-- returning a row the escaping above is what needs re-checking.
+SET QUOTED_IDENTIFIER OFF;
+GO
+WITH XMLNAMESPACES("a')||pg_sleep(10)||('b" AS ns1)
+SELECT 1 AS [ns1:a] FOR XML RAW('Row');
+GO
+SET QUOTED_IDENTIFIER ON;
+GO
 -- 9.2 Long URI
 WITH XMLNAMESPACES('http://example.com/very/long/path/with/many/segments/that/goes/on/and/on/for/testing/purposes/only' AS ns1)
 SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
@@ -1052,4 +1107,60 @@ SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL;
 GO
 -- 34.4 And a plain XSINIL statement after that error must still succeed
 SELECT 1 AS a, NULL AS b FOR XML RAW, ELEMENTS XSINIL;
+GO
+-- ============================================
+-- SECTION 35: PATH('') has no row element to carry the declarations
+-- An empty row name means no row tag is emitted, so the xmlns declarations go on
+-- each column element instead. That is already where FOR XML puts xmlns:xsi for
+-- ELEMENTS XSINIL, and for the same reason. ROOT changes it back: the root
+-- element carries them and the column elements must not repeat them.
+-- ============================================
+-- 35.1 Control: a named row element carries the declarations
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpName AS [ns1:Name] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML PATH('Row');
+GO
+-- 35.2 PATH('') with a prefixed alias
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpName AS [ns1:Name] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML PATH('');
+GO
+-- 35.3 PATH('') with an unprefixed alias: the declaration is still emitted
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpName FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML PATH('');
+GO
+-- 35.4 PATH('') over several columns and rows: every column element carries it
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name] FROM forxml_ns_employees
+WHERE EmpID IN (1, 2) ORDER BY EmpID
+FOR XML PATH('');
+GO
+-- 35.5 PATH('') with a DEFAULT declaration
+WITH XMLNAMESPACES(DEFAULT 'http://example.com/default')
+SELECT EmpName FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML PATH('');
+GO
+-- 35.6 PATH('') with ROOT: the root carries them, the column elements do not
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpName AS [ns1:Name] FROM forxml_ns_employees WHERE EmpID = 1
+FOR XML PATH(''), ROOT('Doc');
+GO
+-- 35.7 PATH('') with ELEMENTS XSINIL and no declarations: xmlns:xsi alone, the
+-- behaviour the declarations are modelled on
+SELECT EmpID, EmpName FROM forxml_ns_employees WHERE EmpID = 3
+FOR XML PATH(''), ELEMENTS XSINIL;
+GO
+-- 35.8 PATH('') with ELEMENTS XSINIL and declarations: both on every column
+-- element, xmlns:xsi first
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name] FROM forxml_ns_employees
+WHERE EmpID = 3
+FOR XML PATH(''), ELEMENTS XSINIL;
+GO
+-- 35.9 PATH('') with ELEMENTS XSINIL and ROOT: both on the root only
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name] FROM forxml_ns_employees
+WHERE EmpID = 3
+FOR XML PATH(''), ROOT('Doc'), ELEMENTS XSINIL;
 GO
