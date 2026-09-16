@@ -53,9 +53,9 @@
 #include "utils/datum.h"
 
 #include "catalog.h"
-#include "guc.h"
 #include "catalog/toasting.h"
 #include "extendedproperty.h"
+#include "guc.h"
 #include "multidb.h"
 #include "session.h"
 #include "rolecmds.h"
