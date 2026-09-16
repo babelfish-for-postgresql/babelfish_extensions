@@ -440,3 +440,81 @@ DROP TABLE babel5975_fk_parent;
 GO
 DROP TABLE babel5975_df_test;
 GO
+
+-- ===========================================
+-- QUOTED / DELIMITED IDENTIFIERS REQUIRING QUOTES
+-- ===========================================
+-- Long identifiers that CANNOT be written unquoted in T-SQL because they
+-- contain spaces, punctuation, or reserved words. Each mapped object type
+-- (constraint, sequence, type, parameter) is exercised with a name that must
+-- be delimited with [] and/or "" so we confirm the original (untruncated)
+-- delimited name round-trips through babelfish_identifier_mapping and the sys
+-- views regardless of the delimiter used.
+
+-- Double-quote delimited identifiers require QUOTED_IDENTIFIER ON.
+SET QUOTED_IDENTIFIER ON;
+GO
+
+-- Bracket-delimited constraint whose long name contains reserved words and
+-- punctuation (SELECT, FROM, commas, parentheses) so it must stay delimited.
+CREATE TABLE babel5975_quote_test (
+    id INT NOT NULL,
+    CONSTRAINT [PK (SELECT * FROM sys.objects) constraint name well beyond the sixty three byte limit] PRIMARY KEY (id),
+    CONSTRAINT [CK-with-dashes.and.dots-that-together-run-past-the-sixty-three-byte-identifier-limit] CHECK (id > 0)
+);
+GO
+
+-- Double-quote delimited long constraint added via ALTER TABLE.
+ALTER TABLE babel5975_quote_test ADD CONSTRAINT "UQ ""embedded quote"" and spaces constraint name exceeding sixty three bytes" UNIQUE (id);
+GO
+
+-- Bracket-delimited sequence and type with spaces/reserved words.
+CREATE SEQUENCE [ORDER BY sequence name with spaces that is comfortably over the sixty three byte limit] AS INT START WITH 1;
+GO
+CREATE TYPE [my.dotted.and spaced type name that runs well past the sixty three byte identifier limit] FROM INT;
+GO
+
+-- Note: T-SQL parameter names cannot be delimited (@[...] / @"..." are not
+-- valid), so a "quote-requiring" parameter name is not expressible; long plain
+-- parameter names are already covered in the main section above.
+
+-- Verify each delimited name is stored in babelfish_identifier_mapping.
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping
+WHERE original_identifier_name LIKE 'PK (SELECT%'
+   OR original_identifier_name LIKE 'CK-with-dashes%'
+   OR original_identifier_name LIKE 'UQ %embedded quote%'
+   OR original_identifier_name LIKE 'ORDER BY sequence%'
+   OR original_identifier_name LIKE 'my.dotted.and spaced type%'
+ORDER BY original_identifier_name;
+GO
+
+-- Verify constraints resolve to their full delimited names in the sys views.
+SELECT name FROM sys.key_constraints WHERE name = 'PK (SELECT * FROM sys.objects) constraint name well beyond the sixty three byte limit';
+GO
+SELECT name FROM sys.check_constraints WHERE name = 'CK-with-dashes.and.dots-that-together-run-past-the-sixty-three-byte-identifier-limit';
+GO
+SELECT name FROM sys.key_constraints WHERE name LIKE 'UQ %embedded quote%';
+GO
+
+-- Verify sequence and type resolve to their full delimited names.
+SELECT name FROM sys.objects WHERE name = 'ORDER BY sequence name with spaces that is comfortably over the sixty three byte limit';
+GO
+SELECT name FROM sys.types WHERE name = 'my.dotted.and spaced type name that runs well past the sixty three byte identifier limit';
+GO
+
+-- Cleanup: drop each object using its delimited name (mix of [] and "").
+DROP SEQUENCE [ORDER BY sequence name with spaces that is comfortably over the sixty three byte limit];
+GO
+DROP TYPE "my.dotted.and spaced type name that runs well past the sixty three byte identifier limit";
+GO
+DROP TABLE babel5975_quote_test;
+GO
+
+-- Confirm all delimited-name mapping rows are cleaned up after the drops.
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping
+WHERE original_identifier_name LIKE 'PK (SELECT%'
+   OR original_identifier_name LIKE 'CK-with-dashes%'
+   OR original_identifier_name LIKE 'UQ %embedded quote%'
+   OR original_identifier_name LIKE 'ORDER BY sequence%'
+   OR original_identifier_name LIKE 'my.dotted.and spaced type%';
+GO

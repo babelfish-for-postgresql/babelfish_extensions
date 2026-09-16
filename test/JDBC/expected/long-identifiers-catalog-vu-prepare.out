@@ -42,3 +42,22 @@ CREATE PROCEDURE babel5975_cat_vu_collide_two
     @Shared_Long_Parameter_Prefix_That_Exceeds_PostgreSQL_Limit_Sixty_Three_ProcTwo INT
 AS BEGIN SELECT @Shared_Long_Parameter_Prefix_That_Exceeds_PostgreSQL_Limit_Sixty_Three_ProcTwo END;
 GO
+
+-- BABEL-5975: ALTER TABLE ADD CONSTRAINT coverage. These long constraint names
+-- are stored via store_alter_table_constraint_original_names (the ALTER path),
+-- as opposed to the CREATE TABLE path exercised above. After dump/restore they
+-- must resolve to their original names and leave exactly one mapping row each --
+-- restore replays FOREIGN KEY constraints as ALTER TABLE ADD CONSTRAINT, so the
+-- ALTER path's dump/restore guard must prevent it from re-inserting rows the
+-- data restore already brings back.
+CREATE TABLE babel5975_cat_vu_alter_parent (id INT PRIMARY KEY);
+GO
+CREATE TABLE babel5975_cat_vu_alter_tbl (id INT, pid INT, val INT);
+GO
+ALTER TABLE babel5975_cat_vu_alter_tbl ADD CONSTRAINT Very_Long_Alter_Check_Constraint_Name_That_Exceeds_Sixty_Three_Bytes_CatVU CHECK (val > 0);
+GO
+ALTER TABLE babel5975_cat_vu_alter_tbl ADD CONSTRAINT Very_Long_Alter_Unique_Constraint_Name_That_Exceeds_Sixty_Three_Bytes_CatVU UNIQUE (id);
+GO
+ALTER TABLE babel5975_cat_vu_alter_tbl ADD CONSTRAINT Very_Long_Alter_Foreign_Key_Constraint_Name_Exceeds_Sixty_Three_Bytes_CatVU FOREIGN KEY (pid) REFERENCES babel5975_cat_vu_alter_parent (id);
+GO
+

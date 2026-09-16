@@ -67,6 +67,84 @@ varchar
 ~~END~~
 
 
+-- BABEL-5975: ALTER TABLE ADD CONSTRAINT coverage (store_alter_table_constraint_original_names).
+-- After dump/restore the long constraint names added via ALTER TABLE (CHECK,
+-- UNIQUE, FOREIGN KEY) must resolve to their original names in the sys views.
+SELECT name FROM sys.check_constraints WHERE name LIKE 'Very_Long_Alter_Check%CatVU';
+GO
+~~START~~
+varchar
+Very_Long_Alter_Check_Constraint_Name_That_Exceeds_Sixty_Three_Bytes_CatVU
+~~END~~
+
+SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_Alter_Unique%CatVU';
+GO
+~~START~~
+varchar
+Very_Long_Alter_Unique_Constraint_Name_That_Exceeds_Sixty_Three_Bytes_CatVU
+~~END~~
+
+SELECT name FROM sys.foreign_keys WHERE name LIKE 'Very_Long_Alter_Foreign_Key%CatVU';
+GO
+~~START~~
+varchar
+Very_Long_Alter_Foreign_Key_Constraint_Name_Exceeds_Sixty_Three_Bytes_CatVU
+~~END~~
+
+
+-- BABEL-5975 (dump/restore guard): this verify step runs after the pg_dump +
+-- restore performed by the dump/restore test framework. The
+-- babelfish_identifier_mapping rows for the objects created in vu-prepare are
+-- restored directly (pg_extension_config_dump), while the same objects are also
+-- recreated by replaying their DDL during restore. The object-creation hooks
+-- must stand down while babelfish_dump_restore is set, otherwise the DDL replay
+-- would re-insert rows that the data restore already brought back, causing a
+-- duplicate-key error (restore failure) or duplicate/stale rows here. Assert the
+-- catalog holds EXACTLY ONE row per prepared object after dump/restore -- this
+-- fails if any store hook's dump_restore guard is missing or broken.
+SELECT original_identifier_name, count(*) AS row_count
+FROM sys.babelfish_identifier_mapping
+WHERE original_identifier_name IN (
+    'Very_Long_PK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU',
+    'Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU',
+    'Very_Long_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU',
+    'Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU',
+    'Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU',
+    '@Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU',
+    'Very_Long_Alter_Check_Constraint_Name_That_Exceeds_Sixty_Three_Bytes_CatVU',
+    'Very_Long_Alter_Unique_Constraint_Name_That_Exceeds_Sixty_Three_Bytes_CatVU',
+    'Very_Long_Alter_Foreign_Key_Constraint_Name_Exceeds_Sixty_Three_Bytes_CatVU')
+GROUP BY original_identifier_name
+ORDER BY original_identifier_name;
+GO
+~~START~~
+nvarchar#!#int
+@Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU#!#1
+Very_Long_Alter_Check_Constraint_Name_That_Exceeds_Sixty_Three_Bytes_CatVU#!#1
+Very_Long_Alter_Foreign_Key_Constraint_Name_Exceeds_Sixty_Three_Bytes_CatVU#!#1
+Very_Long_Alter_Unique_Constraint_Name_That_Exceeds_Sixty_Three_Bytes_CatVU#!#1
+Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU#!#1
+Very_Long_PK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU#!#1
+Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU#!#1
+Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU#!#1
+Very_Long_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU#!#1
+~~END~~
+
+
+-- No duplicate mapping rows for any prepared object after dump/restore (each
+-- (truncated_identifier_name, nspname, pg_catalog_type, parent_name) key appears
+-- at most once). Expect 0 rows.
+SELECT truncated_identifier_name, nspname, pg_catalog_type, parent_name, count(*) AS dup_count
+FROM sys.babelfish_identifier_mapping
+GROUP BY truncated_identifier_name, nspname, pg_catalog_type, parent_name
+HAVING count(*) > 1
+ORDER BY truncated_identifier_name;
+GO
+~~START~~
+varchar#!#varchar#!#int#!#varchar#!#int
+~~END~~
+
+
 -- BABEL-5975 (Issue 1): a constraint mapping row must be keyed on the PHYSICAL
 -- parent table name so DROP TABLE cleans it up. For a table whose name exceeds
 -- NAMEDATALEN (physical name is MD5-truncated and differs from the parse-tree

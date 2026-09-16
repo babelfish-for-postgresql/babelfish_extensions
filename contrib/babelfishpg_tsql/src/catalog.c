@@ -1759,7 +1759,23 @@ insert_bbf_ident_mapping(const char *truncated_name,
 	if (!OidIsValid(get_bbf_ident_mapping_oid()))
 		return;
 
-	/* Skip if entry already exists */
+	/*
+	 * Skip if an identical entry already exists.
+	 *
+	 * The primary key is (truncated_name, nspname, pg_catalog_type,
+	 * parent_name). Reaching this point with the key already present means the
+	 * exact same object is being (re)stored -- e.g. CREATE OR REPLACE of a
+	 * function/type, or a statement whose utility hook fires more than once for
+	 * the same object. In those cases the original name for a given physical
+	 * name is deterministic and cannot differ, so the existing row is already
+	 * correct and re-inserting would only raise a spurious duplicate-key error
+	 * that aborts otherwise-valid DDL. We therefore skip rather than ERROR.
+	 *
+	 * This is not a source of stale rows: rows are removed by the DROP/rename
+	 * cleanup paths (delete_bbf_ident_mapping*, update_bbf_ident_mapping_parent)
+	 * which key on the same physical (namespace, parent) identifiers, so any
+	 * row we skip over is one that a live object still owns.
+	 */
 	{
 		char *existing = lookup_bbf_ident_mapping(truncated_name, nspname,
 												  pg_catalog_type, parent_name);
@@ -1923,6 +1939,8 @@ delete_bbf_ident_mapping(const char *truncated_name,
 
 	systable_endscan(scan);
 	table_close(rel, RowExclusiveLock);
+
+	CommandCounterIncrement();
 }
 
 /*
@@ -1979,6 +1997,8 @@ delete_bbf_ident_mapping_by_parent(const char *nspname,
 
 	table_endscan(scan);
 	table_close(rel, RowExclusiveLock);
+
+	CommandCounterIncrement();
 }
 
 /*
@@ -2003,6 +2023,9 @@ update_bbf_ident_mapping_parent(const char *nspname,
 	NameData	nspname_data;
 	NameData	old_parent_data;
 	NameData	new_parent_data;
+	Datum		values[BBF_IDENT_MAPPING_NUM_COLS];
+	bool		nulls[BBF_IDENT_MAPPING_NUM_COLS];
+	bool		replaces[BBF_IDENT_MAPPING_NUM_COLS];
 
 	if (!OidIsValid(get_bbf_ident_mapping_oid()))
 		return;
@@ -2033,19 +2056,21 @@ update_bbf_ident_mapping_parent(const char *nspname,
 
 	scan = table_beginscan_catalog(rel, 3, scanKey);
 
+	/*
+	 * Every matching row gets the same single-column update (parent_name ->
+	 * new_parent_data), so the values/nulls/replaces arrays are identical
+	 * across iterations and can be set up once outside the loop.
+	 */
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, false, sizeof(nulls));
+	MemSet(replaces, false, sizeof(replaces));
+
+	values[Anum_bbf_ident_mapping_parent_name - 1] = NameGetDatum(&new_parent_data);
+	replaces[Anum_bbf_ident_mapping_parent_name - 1] = true;
+
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Datum		values[BBF_IDENT_MAPPING_NUM_COLS];
-		bool		nulls[BBF_IDENT_MAPPING_NUM_COLS];
-		bool		replaces[BBF_IDENT_MAPPING_NUM_COLS];
 		HeapTuple	newtuple;
-
-		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, false, sizeof(nulls));
-		MemSet(replaces, false, sizeof(replaces));
-
-		values[Anum_bbf_ident_mapping_parent_name - 1] = NameGetDatum(&new_parent_data);
-		replaces[Anum_bbf_ident_mapping_parent_name - 1] = true;
 
 		newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
 									 values, nulls, replaces);
@@ -2093,6 +2118,8 @@ clean_up_bbf_ident_mapping(const char *nspname)
 
 	table_endscan(scan);
 	table_close(rel, RowExclusiveLock);
+
+	CommandCounterIncrement();
 }
 
 /*

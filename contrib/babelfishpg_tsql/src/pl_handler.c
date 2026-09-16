@@ -3427,6 +3427,8 @@ store_table_constraint_original_names(CreateStmt *create_stmt, RangeVar *rel,
 	const char *phys_relname = rel->relname;
 	Oid			relOid = RangeVarGetRelid(rel, NoLock, true);
 	size_t		qlen;
+	bool		free_nspname = false;
+	bool		free_phys_relname = false;
 
 	/*
 	 * Resolve the PHYSICAL namespace and relation name from the created table's
@@ -3435,16 +3437,30 @@ store_table_constraint_original_names(CreateStmt *create_stmt, RangeVar *rel,
 	 * same physical parent name -- otherwise, for a table name >= NAMEDATALEN
 	 * bytes (where the physical name is MD5-truncated and differs from the
 	 * parse-tree name), the drop-time delete matches nothing and the row leaks.
+	 *
+	 * get_namespace_name / get_rel_name return palloc'd strings that we must
+	 * free before returning; the parse-tree pointers they may replace must not
+	 * be freed, so track which values we own.
 	 */
 	if (OidIsValid(relOid))
 	{
 		if (!nspname)
+		{
 			nspname = get_namespace_name(get_rel_namespace(relOid));
+			free_nspname = true;
+		}
 		phys_relname = get_rel_name(relOid);
+		free_phys_relname = true;
 	}
 
 	if (!nspname || !phys_relname)
+	{
+		if (free_nspname && nspname)
+			pfree((char *) nspname);
+		if (free_phys_relname && phys_relname)
+			pfree((char *) phys_relname);
 		return;
+	}
 
 	qlen = strlen(queryString);
 
@@ -3505,6 +3521,11 @@ store_table_constraint_original_names(CreateStmt *create_stmt, RangeVar *rel,
 			}
 		}
 	}
+
+	if (free_nspname)
+		pfree((char *) nspname);
+	if (free_phys_relname)
+		pfree((char *) phys_relname);
 }
 
 /*
@@ -3544,6 +3565,19 @@ store_alter_table_constraint_original_names(AlterTableStmt *atstmt,
 	List	   *pk_uq_orig_names = NIL;	/* list of (conname, orig) for index reloptions */
 	bool		dispatched = false;
 	size_t		qlen;
+	bool		free_nspname = false;
+	bool		free_phys_relname = false;
+
+	/*
+	 * No-op during dump/restore. Restore replays FOREIGN KEY constraints as
+	 * ALTER TABLE ADD CONSTRAINT while the mapping rows are restored directly
+	 * via pg_extension_config_dump, so storing here would risk a duplicate-key
+	 * conflict on a row the data restore already brings back. DROP CONSTRAINT
+	 * is not replayed during restore, so skipping the cleanup branch is safe
+	 * too. Return false so the caller lets normal statement processing proceed.
+	 */
+	if (babelfish_dump_restore)
+		return false;
 
 	/*
 	 * Resolve the PHYSICAL namespace and relation name from the table's OID.
@@ -3551,12 +3585,20 @@ store_alter_table_constraint_original_names(AlterTableStmt *atstmt,
 	 * name, so the insert must use the same physical parent name; otherwise a
 	 * table whose name is >= NAMEDATALEN bytes (MD5-truncated physical name)
 	 * leaves a stale, still-readable mapping row after drop.
+	 *
+	 * get_namespace_name / get_rel_name return palloc'd strings that we must
+	 * free before returning; the parse-tree pointers they may replace must not
+	 * be freed, so track which values we own.
 	 */
 	if (OidIsValid(relOid))
 	{
 		if (!nspname)
+		{
 			nspname = get_namespace_name(get_rel_namespace(relOid));
+			free_nspname = true;
+		}
 		phys_relname = get_rel_name(relOid);
+		free_phys_relname = true;
 	}
 
 	/*
@@ -3565,7 +3607,13 @@ store_alter_table_constraint_original_names(AlterTableStmt *atstmt,
 	 * name to the user.
 	 */
 	if (!nspname || !phys_relname)
+	{
+		if (free_nspname && nspname)
+			pfree((char *) nspname);
+		if (free_phys_relname && phys_relname)
+			pfree((char *) phys_relname);
 		return false;
+	}
 
 	qlen = strlen(queryString);
 
@@ -3688,6 +3736,11 @@ store_alter_table_constraint_original_names(AlterTableStmt *atstmt,
 		}
 	}
 
+	if (free_nspname)
+		pfree((char *) nspname);
+	if (free_phys_relname)
+		pfree((char *) phys_relname);
+
 	return dispatched;
 }
 
@@ -3730,9 +3783,12 @@ store_sequence_original_name(CreateSeqStmt *seq_stmt, const char *queryString)
 			nspname = get_namespace_name(get_rel_namespace(seqOid));
 
 		if (nspname)
+		{
 			insert_bbf_ident_mapping(seq_stmt->sequence->relname,
 									 original_name, nspname,
 									 RelationRelationId, NULL);
+			pfree(nspname);
+		}
 		pfree(original_name);
 	}
 }
@@ -6412,8 +6468,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				/*
 				 * Store original type name if it was provided and differs
 				 * in case from the lowercased version.
+				 *
+				 * Skip during dump/restore: the babelfish_identifier_mapping
+				 * catalog is dumped and restored directly (via
+				 * pg_extension_config_dump), so re-inserting here on restore
+				 * would only risk a duplicate-key conflict on a row that is
+				 * already being restored.
 				 */
-				if (sql_dialect == SQL_DIALECT_TSQL && original_name)
+				if (sql_dialect == SQL_DIALECT_TSQL && original_name &&
+					!babelfish_dump_restore)
 				{
 					Oid typeOid = typenameTypeId(NULL, makeTypeNameFromNameList(create_domain->domainname));
 					const char *nspname = NULL;
@@ -6443,6 +6506,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (nspname && physical_typname)
 						insert_bbf_ident_mapping(physical_typname, original_name,
 												 nspname, TypeRelationId, NULL);
+					if (nspname)
+						pfree((char *) nspname);
 					if (physical_typname)
 						pfree(physical_typname);
 					pfree(original_name);

@@ -102,6 +102,53 @@ CREATE TABLE sys.babelfish_namespace_ext (
 GRANT SELECT ON sys.babelfish_namespace_ext TO PUBLIC;
 
 -- BABELFISH_IDENTIFIER_MAPPING
+--
+-- Stores the original (untruncated) T-SQL identifier for database objects whose
+-- PostgreSQL name had to be truncated to fit the 63-byte NAMEDATALEN limit.
+-- SQL Server allows identifiers up to 128 bytes (sysname); when a T-SQL name
+-- exceeds the PG limit its physical name is rewritten (truncated with a hash
+-- suffix), which would otherwise surface to users through the sys.* catalog
+-- views and sp_rename. Rows here let those code paths resolve the physical
+-- (truncated) name back to the name the user originally typed.
+--
+-- Scope: this catalog stores mappings ONLY for the following object classes
+-- (identified by the pg_catalog_type column):
+--   * Constraints              (pg_constraint) - PRIMARY KEY, FOREIGN KEY,
+--                                                CHECK, UNIQUE and DEFAULT
+--   * Sequences                (pg_class)
+--   * User-defined types        (pg_type)      - CREATE TYPE ... FROM ...
+--   * Procedure/function params (pg_proc)
+--
+-- Other long-identifier object classes are intentionally NOT stored here; they
+-- keep their original names through separate, pre-existing mechanisms:
+--   * Tables/relations and columns -> bbf_original_rel_name reloption and
+--                                     bbf_original_name attoption
+--   * Databases, schemas, logins/roles, procedures/functions (the routine
+--     name itself) -> their own dedicated extension catalogs
+--                     (e.g. sys.babelfish_authid_login_ext).
+-- Any new object class that needs long-name support should either reuse one of
+-- those mechanisms or be added here with a new pg_catalog_type value.
+--
+-- Columns:
+--   nspname                   - physical namespace (<dbname>_<schema>) the
+--                               object lives in; disambiguates same-named
+--                               objects across schemas/databases.
+--   pg_catalog_type           - OID of the PG catalog the object belongs to:
+--                               pg_constraint (constraints), pg_class
+--                               (sequences), pg_type (types), pg_proc
+--                               (parameters). Lets one table serve every
+--                               supported object class.
+--   truncated_identifier_name - the physical PG name (the lookup key).
+--   original_identifier_name  - the original full-length T-SQL name to display.
+--   parent_name               - physical name of the owning object (table for
+--                               a constraint, procedure/function for a
+--                               parameter); '' for objects that are unique
+--                               within their namespace (sequences, types).
+--                               Disambiguates child names that are only unique
+--                               within a parent.
+--
+-- The catalog is dumped/restored via pg_extension_config_dump below, so the
+-- object-creation hooks must not re-insert rows during a dump-restore replay.
 CREATE TABLE sys.babelfish_identifier_mapping (
 	nspname NAME NOT NULL,
 	pg_catalog_type OID NOT NULL,
