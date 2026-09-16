@@ -287,7 +287,7 @@ static Node* pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr);
 static Oid get_domain_typmodin(Type typ);
 static void pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf);
 #ifdef USE_LIBXML
-static void openxml_set_namespaces(xmlXPathContext *xpathctx, PgXmlErrorContext *xmlerrcxt, char *doc_id_str);
+static bool openxml_set_namespaces(xmlXPathContext *xpathctx, PgXmlErrorContext *xmlerrcxt, char *doc_id_str);
 #endif
 
 /***************************************************
@@ -8057,7 +8057,7 @@ pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf)
 }
 
 #ifdef USE_LIBXML
-static void
+static bool
 openxml_set_namespaces(xmlXPathContext *xpathctx, PgXmlErrorContext *xmlerrcxt, char *doc_id_str)
 {
 	int	               doc_id;
@@ -8067,17 +8067,22 @@ openxml_set_namespaces(xmlXPathContext *xpathctx, PgXmlErrorContext *xmlerrcxt, 
 	int                    ns_count;
 
 	/*
-	 * We will reach here in only two cases, Either when using function XMLTable or OPENXML. 
+	 * We will reach here in only two cases, Either when using function XMLTable or OPENXML.
 	 * And since XMLTable syntax is not supported by ANTLR, single dialect check is enough
 	 * to identify that this is for OPENXML.
+	 *
+	 * For a plain XMLTABLE we must return false so that the caller registers
+	 * the XMLNAMESPACES declaration itself.  doc_id_str carries an OPENXML
+	 * document handle, not a namespace URI, so there is nothing to fall back
+	 * to once we do take over.
 	 */
 	if (sql_dialect != SQL_DIALECT_TSQL)
-		return;
+		return false;
 
 	doc_id = pg_strtoint32(doc_id_str);
 	get_xml_data_and_namespace_data(doc_id, NULL, &ns_data);
 	if (ns_data == NULL)
-		return;
+		return true;
 
 	extract_namespaces_from_xml(ns_data, &ns_names, &ns_uris, &ns_count);
 
@@ -8104,6 +8109,8 @@ openxml_set_namespaces(xmlXPathContext *xpathctx, PgXmlErrorContext *xmlerrcxt, 
 							"could not set XML namespace");
 		}
 	}
+
+	return true;
 }
 #endif
 
