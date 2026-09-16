@@ -1,0 +1,18 @@
+-- ============================================
+-- SECTION: Cleanup
+-- ============================================
+
+DROP VIEW xmlns_methods_view1;
+GO
+
+DROP TABLE xmlns_methods_t1;
+GO
+
+DROP TABLE xmlns_methods_t2;
+GO
+
+DROP TABLE xmlns_methods_orders;
+GO
+
+DROP TABLE xmlns_methods_comments;
+GO
