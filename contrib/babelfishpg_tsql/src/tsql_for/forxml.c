@@ -158,7 +158,7 @@ PG_FUNCTION_INFO_V1(tsql_query_to_xml_sfunc);
 /*
  * Returns true if ns_decls declares the given namespace prefix.
  *
- * ns_decls (built by build_xmlnamespace_decls_string) has the form
+ * ns_decls (built by build_xmlnamespace_context) has the form
  *   xmlns:p1="uri1" xmlns:p2="uri2"
  * A URI value may itself contain spaces, '=', or even the literal substring
  * "xmlns:xsi=", so a naive strstr() can false-match inside a URI. We instead
@@ -211,7 +211,7 @@ ns_decls_has_prefix(const char *ns_decls, const char *prefix)
 }
 
 /*
- * Returns true when ns_decls (a string built by build_xmlnamespace_decls_string)
+ * Returns true when ns_decls (a string built by build_xmlnamespace_context)
  * already includes a binding for the xsi prefix to the XMLSchema-instance URI.
  *
  * Used by row-tag emission paths to skip the per-row "xmlns:xsi=..." attribute
@@ -249,11 +249,10 @@ restore_xml_prefix_colon(char *colname, const char *ns_decls)
 	const size_t enc_len = 7;
 	char       *first;
 	StringInfoData decoded_prefix;
+	StringInfoData result;
 	const char *p;
 	size_t      raw_prefix_len;
 	bool        prefix_declared = false;
-	char       *result;
-	char       *write;
 	const char *read;
 
 	if (colname == NULL)
@@ -313,35 +312,27 @@ restore_xml_prefix_colon(char *colname, const char *ns_decls)
 	 * the raw encoded prefix (when not), then ':', then the rest of the name
 	 * with subsequent _x003A_ sequences turned back into ':'.
 	 */
-	result = palloc(strlen(colname) + 1);
-	write = result;
+	initStringInfo(&result);
 	if (prefix_declared)
-	{
-		memcpy(write, decoded_prefix.data, decoded_prefix.len);
-		write += decoded_prefix.len;
-	}
+		appendBinaryStringInfo(&result, decoded_prefix.data, decoded_prefix.len);
 	else
-	{
-		memcpy(write, colname, raw_prefix_len);
-		write += raw_prefix_len;
-	}
+		appendBinaryStringInfo(&result, colname, raw_prefix_len);
 	pfree(decoded_prefix.data);
 
-	*write++ = ':';
+	appendStringInfoChar(&result, ':');
 	read = first + enc_len;
 	while (*read)
 	{
 		if (strncmp(read, enc, enc_len) == 0)
 		{
-			*write++ = ':';
+			appendStringInfoChar(&result, ':');
 			read += enc_len;
 		}
 		else
-			*write++ = *read++;
+			appendStringInfoChar(&result, *read++);
 	}
-	*write = '\0';
 
-	return result;
+	return result.data;
 }
 
 Datum

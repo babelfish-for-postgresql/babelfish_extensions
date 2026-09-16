@@ -291,29 +291,38 @@ static std::map<size_t, pair<std::string, std::string>> rewritten_query_fragment
 // TODO: incorporate local_id_positions with rewritten_query_fragment
 static std::map<size_t, std::string> local_id_positions;
 
-// WITH XMLNAMESPACES context for the current statement.
-//
-// All four fields form a single logical unit: they are populated together by
-// enterAnother_statement / enterWith_expression, cleared together at statement
-// boundaries (clear()), and saved/restored together across a nested statement
-// rewrite cycle (see enterAnother_statement). Keeping them in
-// one struct means a new field cannot be accidentally left out of a clear or a
-// save/restore, which is what would otherwise let namespace state leak between
-// statements.
+/*
+ * WITH XMLNAMESPACES context for the current statement.
+ *
+ * All four fields form a single logical unit: they are populated together by
+ * enterAnother_statement / enterWith_expression, cleared together at statement
+ * boundaries (clear()), and saved/restored together across a nested statement
+ * rewrite cycle (see enterAnother_statement). Keeping them in one struct means
+ * a new field cannot be accidentally left out of a clear or a save/restore,
+ * which is what would otherwise let namespace state leak between statements.
+ */
 struct XmlNamespaceContext
 {
-	// For XML data type methods (.query()/.value()/.exist()/.nodes()):
-	// namespace array literal appended to the rewritten method call.
+	/*
+	 * For XML data type methods (.query()/.value()/.exist()/.nodes()):
+	 * namespace array literal appended to the rewritten method call.
+	 */
 	std::string array_literal;
-	// For FOR XML output (RAW/PATH/AUTO): 'xmlns:p="u"' string emitted on the
-	// row/root element.
+	/*
+	 * For FOR XML output (RAW/PATH/AUTO): 'xmlns:p="u"' string emitted on the
+	 * row/root element.
+	 */
 	std::string decls_for_forxml;
-	// For FOR XML column-alias validation: declared prefix names (excludes
-	// DEFAULT).
+	/*
+	 * For FOR XML column-alias validation: declared prefix names (excludes
+	 * DEFAULT).
+	 */
 	std::set<std::string> declared_prefixes;
-	// The URI bound to the 'xsi' prefix in the current WITH XMLNAMESPACES, if
-	// declared; empty otherwise. Captured at declaration time so the
-	// xsi/XSINIL conflict check does not have to re-parse the array literal.
+	/*
+	 * The URI bound to the 'xsi' prefix in the current WITH XMLNAMESPACES, if
+	 * declared; empty otherwise. Captured at declaration time so the
+	 * xsi/XSINIL conflict check does not have to re-parse the array literal.
+	 */
 	std::string xsi_declared_uri;
 
 	void clear()

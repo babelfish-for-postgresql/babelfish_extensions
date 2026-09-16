@@ -1866,7 +1866,7 @@ bbf_xml_handle_context_node(const char *xml_str,
  * bbf_xml_get_namespaces - fetch the WITH XMLNAMESPACES array argument.
  *
  * The namespace-aware SQL overloads pass a text[][] namespace array (built by
- * build_xmlnamespace_array_literal in the ANTLR rewrite) as the trailing
+ * build_xmlnamespace_context in the ANTLR rewrite) as the trailing
  * argument at position ns_argnum. The base (non-namespace) overloads have
  * fewer arguments, in which case an empty array is returned so PG's
  * xpath_internal treats the query as having no declared namespaces.
