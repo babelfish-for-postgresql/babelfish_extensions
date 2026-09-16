@@ -836,13 +836,12 @@ insertexec_destroy(DestReceiver *self)
 /*
  * insert_exec_setup - set up INSERT EXEC context and create the
  * buffering temp table from parser-provided info. Returns false (no-op) when
- * there is no INSERT EXEC info; otherwise sets up context, optionally starts
- * an implicit transaction (stored procedure calls only).
+ * there is no INSERT EXEC info; otherwise sets up context and starts
+ * an implicit transaction if not already in one.
  */
 bool
 insert_exec_setup(PLtsql_execstate *estate,
-							 InsertExecInfo *info,
-							 bool start_implicit_txn)
+							 InsertExecInfo *info)
 {
 	char	   *column_list = NULL;
 
@@ -872,16 +871,13 @@ insert_exec_setup(PLtsql_execstate *estate,
 	column_list = build_quoted_column_list(info->columns);
 
 	/* Start an implicit transaction for INSERT EXEC if not already in one */
-	if (start_implicit_txn)
+	if (!pltsql_disable_batch_auto_commit &&
+		pltsql_support_tsql_transactions() &&
+		!IsTransactionBlockActive())
 	{
-		if (!pltsql_disable_batch_auto_commit &&
-			pltsql_support_tsql_transactions() &&
-			!IsTransactionBlockActive())
-		{
-			elog(DEBUG4, "TSQL TXN Start internal transaction for INSERT EXEC");
-			pltsql_start_txn();
-			estate->tsql_trigger_flags |= TSQL_TRAN_STARTED;
-		}
+		elog(DEBUG4, "TSQL TXN Start internal transaction for INSERT EXEC");
+		pltsql_start_txn();
+		estate->tsql_trigger_flags |= TSQL_TRAN_STARTED;
 	}
 
 	/* Record that INSERT EXEC is active (stores target name + call stack) */

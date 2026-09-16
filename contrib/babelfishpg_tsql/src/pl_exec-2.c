@@ -888,7 +888,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * After procedure completes, temp table is flushed to target.
 		 */
 		if (stmt->insert_exec != NULL)
-			insert_exec_setup(estate, stmt->insert_exec, true);
+			insert_exec_setup(estate, stmt->insert_exec);
 
 		if (IS_TDS_CONN())
 		{
@@ -1488,7 +1488,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	{
 		/* Setup INSERT EXEC: create temp table to capture procedure output */
 		if (stmt->insert_exec != NULL)
-			insert_exec_setup(estate, stmt->insert_exec, true);
+			insert_exec_setup(estate, stmt->insert_exec);
 
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(estate, query, restype);
@@ -2201,7 +2201,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					 * and cleanup.
 					 */
 					if (stmt->insert_exec != NULL)
-						insert_exec_setup(estate, stmt->insert_exec, true);
+						insert_exec_setup(estate, stmt->insert_exec);
 
 					if (strcmp(batchstr, "") != 0)	/* check edge cases for
 													 * sp_executesql */
