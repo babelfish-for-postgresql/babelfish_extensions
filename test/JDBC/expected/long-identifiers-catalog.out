@@ -806,3 +806,55 @@ int
 0
 ~~END~~
 
+
+
+-- ===========================================
+-- DROP DATABASE: mapping entries for the whole database are cleaned up
+-- ===========================================
+-- Create a database, populate it with long-named objects of each mapped type,
+-- then drop the database and confirm no babelfish_identifier_mapping rows
+-- survive for that database's physical schemas (nspname LIKE '<db>_%').
+CREATE DATABASE babel5975_dropdb;
+GO
+USE babel5975_dropdb;
+GO
+
+CREATE TABLE babel5975_dropdb_tbl (
+    id INT NOT NULL,
+    val INT,
+    CONSTRAINT Very_Long_DropDB_PK_Constraint_Name_That_Exceeds_PostgreSQL_Sixty_Three_Bytes PRIMARY KEY (id),
+    CONSTRAINT Very_Long_DropDB_Check_Constraint_Name_That_Exceeds_PostgreSQL_Sixty_Three_By CHECK (val > 0)
+);
+GO
+CREATE SEQUENCE Very_Long_DropDB_Sequence_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte_Limit AS INT START WITH 1;
+GO
+CREATE TYPE Very_Long_DropDB_Type_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte_Limit_Test FROM INT;
+GO
+CREATE PROCEDURE babel5975_dropdb_proc
+    @Very_Long_DropDB_Parameter_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte_Limit INT
+AS BEGIN SELECT @Very_Long_DropDB_Parameter_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte_Limit END;
+GO
+
+USE master;
+GO
+
+-- Before drop: the database's mapping rows exist (one per long-named object).
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE '%Very_Long_DropDB%';
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+DROP DATABASE babel5975_dropdb;
+GO
+
+-- After drop: every mapping row for the dropped database is cleaned up (0).
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE '%Very_Long_DropDB%';
+GO
+~~START~~
+int
+0
+~~END~~
+

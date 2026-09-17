@@ -135,30 +135,12 @@ extern int16 get_dbid_from_physical_schema_name(const char *physical_schema_name
 extern Oid	bbf_ident_mapping_oid;
 extern Oid	bbf_ident_mapping_idx_oid;
 
-extern Oid	get_bbf_ident_mapping_oid(void);
-extern Oid	get_bbf_ident_mapping_idx_oid(void);
-
-extern void insert_bbf_ident_mapping(const char *truncated_name,
-											const char *original_name,
-											const char *nspname,
-											Oid pg_catalog_type,
-											const char *parent_name);
-extern char *lookup_bbf_ident_mapping(const char *truncated_name,
-											 const char *nspname,
-											 Oid pg_catalog_type,
-											 const char *parent_name);
-extern void delete_bbf_ident_mapping(const char *truncated_name,
-											const char *nspname,
-											Oid pg_catalog_type,
-											const char *parent_name);
-extern void delete_bbf_ident_mapping_by_parent(const char *nspname,
-											   Oid pg_catalog_type,
-											   const char *parent_name);
-extern void update_bbf_ident_mapping_parent(const char *nspname,
-											 Oid pg_catalog_type,
-											 const char *old_parent_name,
-											 const char *new_parent_name);
-extern void clean_up_bbf_ident_mapping(const char *nspname);
+/*
+ * The accessor and CRUD functions for this catalog are defined in
+ * pltsql_identifier_mapping.c and declared in pltsql.h. Only the schema
+ * constants above and the cached OID globals (populated by init_catalog())
+ * live here with the other catalog definitions.
+ */
 
 /*****************************************
  *			LOGIN EXT

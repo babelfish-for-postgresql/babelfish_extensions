@@ -109,6 +109,7 @@ static void rename_extended_property(ObjectType objtype,
 									 const char *old_name, const char *new_name);
 static void remangle_table_indexes_after_rename(const char *schema_name,
 												const char *new_table_name);
+static char *get_physical_schema_from_logical(const char *schema_name);
 
 List	   *handle_bool_expr_rec(BoolExpr *expr, List *list, bool is_sp_describe_undeclared_parameters);
 List	   *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums, bool is_sp_describe_undeclared_parameters);
@@ -3885,9 +3886,8 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		if ((objtype_code == OBJECT_SEQUENCE || objtype_code == OBJECT_TYPE) &&
 			schema_name != NULL)
 		{
-			Oid			catalog_type = (objtype_code == OBJECT_SEQUENCE) ? RelationRelationId : TypeRelationId;
-			char	   *schema_lower = str_tolower(schema_name, strlen(schema_name), DEFAULT_COLLATION_OID);
-			char	   *physical_schema = get_physical_schema_name(get_cur_db_name(), schema_lower);
+			BbfIdentMappingObjType	catalog_type = (objtype_code == OBJECT_SEQUENCE) ? BBF_IDENT_SEQUENCE : BBF_IDENT_TYPE;
+			char	   *physical_schema = get_physical_schema_from_logical(schema_name);
 
 			if (physical_schema)
 			{
@@ -3907,7 +3907,6 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 				}
 				pfree(physical_schema);
 			}
-			pfree(schema_lower);
 		}
 		/*
 		 * BABEL-5052: a table's physical index names embed the table name
@@ -3931,21 +3930,19 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		 */
 		if (objtype_code == OBJECT_TABLE && schema_name != NULL)
 		{
-			char	   *schema_lower = str_tolower(schema_name, strlen(schema_name), DEFAULT_COLLATION_OID);
-			char	   *physical_schema = get_physical_schema_name(get_cur_db_name(), schema_lower);
+			char	   *physical_schema = get_physical_schema_from_logical(schema_name);
 
 			if (physical_schema)
 			{
 				char	   *old_phys = downcase_truncate_identifier(obj_name, strlen(obj_name), false);
 				char	   *new_phys = downcase_truncate_identifier(new_name, strlen(new_name), false);
 
-				update_bbf_ident_mapping_parent(physical_schema, ConstraintRelationId,
+				update_bbf_ident_mapping_parent(physical_schema, BBF_IDENT_CONSTRAINT,
 												old_phys, new_phys);
 				pfree(old_phys);
 				pfree(new_phys);
 				pfree(physical_schema);
 			}
-			pfree(schema_lower);
 		}
 	}
 	PG_FINALLY();
@@ -3966,6 +3963,31 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 	}
 	PG_END_TRY();
 	PG_RETURN_VOID();
+}
+
+/*
+ * get_physical_schema_from_logical
+ *
+ * Resolve the physical schema name (<db>_<schema>) for a logical T-SQL schema
+ * name in the current database. The logical name is normalized with
+ * downcase_truncate_identifier (consistent with how object names are folded)
+ * before mapping to the physical name. Returns a palloc'd string the caller
+ * must pfree, or NULL if the schema cannot be resolved.
+ */
+static char *
+get_physical_schema_from_logical(const char *schema_name)
+{
+	char	   *schema_lower;
+	char	   *physical_schema;
+
+	if (schema_name == NULL)
+		return NULL;
+
+	schema_lower = downcase_truncate_identifier(schema_name, strlen(schema_name), false);
+	physical_schema = get_physical_schema_name(get_cur_db_name(), schema_lower);
+	pfree(schema_lower);
+
+	return physical_schema;
 }
 
 /*

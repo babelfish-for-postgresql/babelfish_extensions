@@ -4605,7 +4605,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 				{
 					insert_bbf_ident_mapping(fp->name, orig_param,
 											 physical_schemaname,
-											 ProcedureRelationId,
+											 BBF_IDENT_PARAMETER,
 											 NameStr(form_proctup->proname));
 					pfree(orig_param);
 				}
