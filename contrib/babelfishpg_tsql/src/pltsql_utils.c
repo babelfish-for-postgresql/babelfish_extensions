@@ -39,7 +39,6 @@ common_utility_plugin *common_utility_plugin_ptr = NULL;
 
 #define SYS_SCHEMA_NAME "sys"
 #define INFORMATION_SCHEMA_TSQL_NAME "information_schema_tsql"
-#define SP_RENAME_PROC_NAME "sp_rename"
 
 bool		suppress_string_truncation_error = false;
 
@@ -3340,42 +3339,3 @@ restrict_alter_object_schema_stmt(AlterObjectSchemaStmt *altschstmt)
 	}
 }
 
-/*
- * Blocks CALL sys.sp_rename from the PG endpoint
- */
-void
-restrict_call_stmt(CallStmt *call_stmt)
-{
-	Oid		proc_oid;
-	char   *proc_name;
-	Oid		nsp_oid;
-	char   *nsp_name;
-
-	if (call_stmt->funcexpr == NULL)
-		return;
-
-	proc_oid = call_stmt->funcexpr->funcid;
-	if (!OidIsValid(proc_oid))
-		return;
-
-	proc_name = get_func_name(proc_oid);
-	if (proc_name == NULL)
-		return;
-
-	nsp_oid = get_func_namespace(proc_oid);
-	nsp_name = get_namespace_name(nsp_oid);
-	if (nsp_name == NULL)
-	{
-		pfree(proc_name);
-		return;
-	}
-
-	if (strncmp(nsp_name, SYS_SCHEMA_NAME, sizeof(SYS_SCHEMA_NAME)) == 0 &&
-		strncmp(proc_name, SP_RENAME_PROC_NAME, sizeof(SP_RENAME_PROC_NAME)) == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("sp_rename is blocked in PG dialect.")));
-
-	pfree(proc_name);
-	pfree(nsp_name);
-}

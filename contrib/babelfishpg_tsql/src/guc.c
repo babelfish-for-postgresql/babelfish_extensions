@@ -1140,13 +1140,13 @@ define_custom_variables(void)
 							 NULL, NULL, NULL);
 
 	/*
-	 * Block ALTER .. RENAME TO .., ALTER .. SET SCHEMA .., and CALL sys.sp_rename from the PG endpoint executed on TSQL objects.
+	 * Block ALTER .. RENAME TO .., ALTER .. SET SCHEMA .., CALL sys.sp_rename, and CALL sys.sp_renamedb from the PG endpoint executed on TSQL objects.
 	 */
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_rename_from_pg",
 							 gettext_noop("Enables blocked ALTER statements on TSQL objects from PG endpoint"),
 							 gettext_noop("When enabled, ALTER .. RENAME TO .., ALTER .. SET SCHEMA .., "
-										  "and CALL sys.sp_rename statements are allowed on TSQL objects "
-										  "from the PG endpoint."),
+										  "CALL sys.sp_rename, and CALL sys.sp_renamedb statements are allowed "
+										  "on TSQL objects from the PG endpoint."),
 							 &pltsql_enable_rename_from_pg,
 							 false,
 							 PGC_SUSET,

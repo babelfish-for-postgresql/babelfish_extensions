@@ -5230,16 +5230,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 				break;
 			}
-		case T_CallStmt:
-			{
-				/*
-				 * Block CALL sys.sp_rename from the PG endpoint.
-				 */
-				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_rename_from_pg && !superuser())
-					restrict_call_stmt((CallStmt *) parsetree);
-
-				break;
-			}
 		case T_RenameStmt:
 			{
 				RenameStmt *stmt = (RenameStmt *) parsetree;
