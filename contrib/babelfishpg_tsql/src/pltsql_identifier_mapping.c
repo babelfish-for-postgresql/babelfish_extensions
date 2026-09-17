@@ -248,21 +248,21 @@ lookup_bbf_ident_mapping(const char *truncated_name,
 	 * syscache.
 	 */
 	ScanKeyInit(&scanKey[0],
-				Anum_bbf_ident_mapping_truncated_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(&truncated_namedata));
-	ScanKeyInit(&scanKey[1],
 				Anum_bbf_ident_mapping_nspname,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				NameGetDatum(&nspname_data));
-	ScanKeyInit(&scanKey[2],
+	ScanKeyInit(&scanKey[1],
 				Anum_bbf_ident_mapping_pg_catalog_type,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(pg_catalog_type));
-	ScanKeyInit(&scanKey[3],
+	ScanKeyInit(&scanKey[2],
 				Anum_bbf_ident_mapping_parent_name,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				NameGetDatum(&parent_namedata));
+	ScanKeyInit(&scanKey[3],
+				Anum_bbf_ident_mapping_truncated_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&truncated_namedata));
 
 	scan = systable_beginscan(rel, get_bbf_ident_mapping_idx_oid(), true,
 							  NULL, 4, scanKey);
@@ -330,21 +330,21 @@ delete_bbf_ident_mapping(const char *truncated_name,
 		 */
 		namestrcpy(&truncated_namedata, truncated_name);
 		ScanKeyInit(&scanKey[0],
-					Anum_bbf_ident_mapping_truncated_name,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					NameGetDatum(&truncated_namedata));
-		ScanKeyInit(&scanKey[1],
 					Anum_bbf_ident_mapping_nspname,
 					BTEqualStrategyNumber, F_NAMEEQ,
 					NameGetDatum(&nspname_data));
-		ScanKeyInit(&scanKey[2],
+		ScanKeyInit(&scanKey[1],
 					Anum_bbf_ident_mapping_pg_catalog_type,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(pg_catalog_type));
-		ScanKeyInit(&scanKey[3],
+		ScanKeyInit(&scanKey[2],
 					Anum_bbf_ident_mapping_parent_name,
 					BTEqualStrategyNumber, F_NAMEEQ,
 					NameGetDatum(&parent_namedata));
+		ScanKeyInit(&scanKey[3],
+					Anum_bbf_ident_mapping_truncated_name,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					NameGetDatum(&truncated_namedata));
 
 		scan = systable_beginscan(rel, get_bbf_ident_mapping_idx_oid(), true,
 								  NULL, 4, scanKey);
@@ -864,13 +864,15 @@ store_table_constraint_original_names(CreateStmt *create_stmt, RangeVar *rel,
 
 				original_name = extract_identifier(start, NULL);
 
-				if (original_name)
+				/* Only store when the name is long enough to be truncated. */
+				if (original_name && strlen(original_name) >= NAMEDATALEN)
 				{
 					insert_bbf_ident_mapping(con->conname,
 											 original_name, nspname,
 											 BBF_IDENT_CONSTRAINT, phys_relname);
-					pfree(original_name);
 				}
+				if (original_name)
+					pfree(original_name);
 			}
 		}
 		else if (IsA(elt, ColumnDef))
@@ -892,13 +894,15 @@ store_table_constraint_original_names(CreateStmt *create_stmt, RangeVar *rel,
 
 					original_name = extract_identifier(start, NULL);
 
-					if (original_name)
+					/* Only store when the name is long enough to be truncated. */
+					if (original_name && strlen(original_name) >= NAMEDATALEN)
 					{
 						insert_bbf_ident_mapping(con->conname,
 												 original_name, nspname,
 												 BBF_IDENT_CONSTRAINT, phys_relname);
-						pfree(original_name);
 					}
+					if (original_name)
+						pfree(original_name);
 				}
 			}
 		}
