@@ -1,0 +1,6 @@
+-- Cleanup
+-- tsql
+USE master;
+GO
+DROP DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC;
+GO

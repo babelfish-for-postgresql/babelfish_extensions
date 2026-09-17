@@ -989,6 +989,63 @@ get_original_login_name(char *login)
 	return result;
 }
 
+/*
+ * get_login_rolname_from_orig_loginname
+ *
+ * Inverse of get_original_login_name: given the original (untruncated) login
+ * name as typed by the user, return the physical pg_authid role name stored
+ * in babelfish_authid_login_ext. This is needed for long login names
+ * (> NAMEDATALEN-1 bytes) whose physical role name is truncated with a hash
+ * suffix and therefore cannot be found by a direct pg_authid lookup on the
+ * full name. Instead of scanning the login-ext catalog, it reproduces the same
+ * transformation CREATE LOGIN applies at storage time (UPN conversion for
+ * Windows logins + TSQL substr(31)+md5 truncation), so the caller can resolve
+ * the physical name with a keyed lookup. Returns a palloc'd string.
+ */
+static char *
+get_login_rolname_from_orig_loginname(const char *orig_login)
+{
+	char	   *upn;
+	char	   *physical;
+
+	if (orig_login == NULL)
+		return NULL;
+
+	/*
+	 * Reproduce the exact original-login-name -> physical-rolname
+	 * transformation that CREATE LOGIN applies at storage time, so we can
+	 * resolve the physical name directly instead of scanning the whole
+	 * login-ext catalog:
+	 *
+	 *   1. Windows logins (domain\user) are converted to UPN form
+	 *      (user@domain) via convertToUPN; it is a no-op for SQL logins (names
+	 *      without a backslash), so it is safe to call unconditionally.
+	 *   2. The result is truncated with truncate_tsql_identifier, which forces
+	 *      the TSQL dialect and applies the same substr(31) + md5 truncation
+	 *      the engine uses to derive the physical pg_authid role name for names
+	 *      exceeding NAMEDATALEN-1 bytes. (Calling truncate_identifier directly
+	 *      is not enough: its hook no-ops unless sql_dialect is TSQL, which is
+	 *      not guaranteed in this execution context.)
+	 *
+	 * The caller uses the returned name for a keyed AUTHNAME syscache lookup.
+	 */
+	upn = convertToUPN((char *) orig_login);
+
+	/*
+	 * truncate_tsql_identifier mutates in place. convertToUPN returns a freshly
+	 * palloc'd string for Windows logins but the original pointer for SQL
+	 * logins, so always pstrdup to get a mutable, owned buffer (and to avoid
+	 * mutating the caller's string).
+	 */
+	physical = pstrdup(upn);
+	if (upn != orig_login)
+		pfree(upn);
+
+	truncate_tsql_identifier(physical);
+
+	return physical;
+}
+
 PG_FUNCTION_INFO_V1(suser_name);
 Datum
 suser_name(PG_FUNCTION_ARGS)
@@ -1062,7 +1119,36 @@ suser_id(PG_FUNCTION_ARGS)
 		/* Check if it is a role and get the oid */
 		auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(login));
 		if (!HeapTupleIsValid(auth_tuple))
-			PG_RETURN_NULL();
+		{
+			/*
+			 * The lookup by the (downcased) login name can miss when the
+			 * login name exceeds the 63-byte NAME limit: its physical role
+			 * name in pg_authid is truncated with a hash suffix, so the full
+			 * name never matches directly. Fall back to resolving the
+			 * physical role name from sys.babelfish_authid_login_ext, which
+			 * stores the original (untruncated) login name in orig_loginname.
+			 *
+			 * Only a name longer than the NAME limit can be hash-truncated and
+			 * thus legitimately miss the direct lookup. Gating the fallback on
+			 * length avoids an unbounded sequential scan of the login-ext
+			 * catalog for every miss on a short (non-existent) name, which an
+			 * authenticated user could otherwise use as a cheap CPU amplifier.
+			 */
+			if (strlen(login) >= NAMEDATALEN)
+			{
+				char	   *physical_rolname = get_login_rolname_from_orig_loginname(login);
+
+				if (physical_rolname)
+				{
+					auth_tuple = SearchSysCache1(AUTHNAME,
+												 CStringGetDatum(physical_rolname));
+					pfree(physical_rolname);
+				}
+			}
+
+			if (!HeapTupleIsValid(auth_tuple))
+				PG_RETURN_NULL();
+		}
 
 		authform = (Form_pg_authid) GETSTRUCT(auth_tuple);
 		ret = authform->oid;

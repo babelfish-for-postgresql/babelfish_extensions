@@ -10,18 +10,13 @@ GO
 -- Example 1
 GO
 
-
-DECLARE @xml XML
-SET @xml = CONVERT(XML, '<Root>  
-                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
-                                <row id="2"><name>Bhagat</name></row>  
-                                <row id="3" />  
-                            </Root>')
-SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'XML MODIFY' is not currently supported in Babelfish)~~
 
 GO
 
@@ -30,18 +25,13 @@ begin transaction
 GO
 GO
 
-
-DECLARE @xml XML
-SET @xml = CONVERT(XML, '<Root>  
-                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
-                                <row id="2"><name>Bhagat</name></row>  
-                                <row id="3" />  
-                            </Root>')
-SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'XML MODIFY' is not currently supported in Babelfish)~~
 
 
 
@@ -62,23 +52,18 @@ GO
 begin transaction
 GO
 
-
 -- Executing test error_mapping.ErrorHandling1
 create procedure error_mapping.ErrorHandling1 as
 begin
-DECLARE @xml XML
-SET @xml = CONVERT(XML, '<Root>  
-                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
-                                <row id="2"><name>Bhagat</name></row>  
-                                <row id="3" />  
-                            </Root>')
-SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'XML MODIFY' is not currently supported in Babelfish)~~
 
 
 declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
@@ -110,23 +95,18 @@ GO
 begin transaction
 GO
 
-
 -- Executing test error_mapping.ErrorHandling1
 create procedure error_mapping.ErrorHandling1 as
 begin
-DECLARE @xml XML
-SET @xml = CONVERT(XML, '<Root>  
-                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
-                                <row id="2"><name>Bhagat</name></row>  
-                                <row id="3" />  
-                            </Root>')
-SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'XML MODIFY' is not currently supported in Babelfish)~~
 
 
 declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
@@ -154,18 +134,13 @@ GO
 -- Example 2
 GO
 
-
-DECLARE @xml XML
-SET @xml = CONVERT(XML, '<Root>  
-                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
-                                <row id="2"><name>Bhagat</name></row>  
-                                <row id="3" />  
-                            </Root>')
-SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'XML MODIFY' is not currently supported in Babelfish)~~
 
 GO
 
@@ -174,18 +149,13 @@ begin transaction
 GO
 GO
 
-
-DECLARE @xml XML
-SET @xml = CONVERT(XML, '<Root>  
-                                <row id="1"><name>Rohit</name><oflw>some text</oflw></row>  
-                                <row id="2"><name>Bhagat</name></row>  
-                                <row id="3" />  
-                            </Root>')
-SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T(c);
+DECLARE @xml XML = '<Root><Child1>Value1</Child1><Child2>Value2</Child2></Root>';
+SET @xml.modify('replace value of (/Root/Child2/text())[1] with "NewValue"');
+SELECT @xml;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'XML MODIFY' is not currently supported in Babelfish)~~
 
 
 
@@ -219,10 +189,6 @@ SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
-
 
 declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
 if @@trancount > 0 rollback transaction;
@@ -230,11 +196,6 @@ drop procedure error_mapping.ErrorHandling1;
 set xact_abort OFF;
 set implicit_transactions OFF;
 GO
-~~START~~
-text
-BATCH TERMINATING\ txn rolledback
-~~END~~
-
 ~~ERROR (Code: 3701)~~
 
 ~~ERROR (Message: could not find a procedure named "master_error_mapping.errorhandling1")~~
@@ -267,10 +228,6 @@ SELECT T.c.value('.', 'varchar(10)') AS result FROM @x.nodes('/Root/row/name') T
 if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
 end
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'XML NODES' is not currently supported in Babelfish)~~
-
 
 declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
 if @@trancount > 0 rollback transaction;
@@ -278,11 +235,6 @@ drop procedure error_mapping.ErrorHandling1;
 set xact_abort OFF;
 set implicit_transactions OFF;
 GO
-~~START~~
-text
-BATCH TERMINATING\ txn rolledback
-~~END~~
-
 ~~ERROR (Code: 3701)~~
 
 ~~ERROR (Message: could not find a procedure named "master_error_mapping.errorhandling1")~~

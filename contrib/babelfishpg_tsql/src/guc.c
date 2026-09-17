@@ -51,6 +51,7 @@ bool		pltsql_enable_linked_servers = true;
 bool		pltsql_enable_ownership_chaining = true;
 bool		pltsql_allow_windows_login = true;
 bool		pltsql_allow_fulltext_parser = false;
+bool		pltsql_enable_tsql_merge = false;
 
 bool		pltsql_xact_abort = false;
 bool		pltsql_implicit_transactions = false;
@@ -701,6 +702,16 @@ define_custom_variables(void)
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_SUPERUSER_ONLY,
 							 NULL, NULL, NULL);
 
+	/* GUC for enabling or disabling T-SQL MERGE statement support */
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_tsql_merge",
+							 gettext_noop("GUC for enabling or disabling T-SQL MERGE statement support"),
+							 NULL,
+							 &pltsql_enable_tsql_merge,
+							 false,
+							 PGC_SUSET,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_SUPERUSER_ONLY,
+							 NULL, NULL, NULL);
+
 	/* ISO standard settings */
 	DefineCustomBoolVariable("babelfishpg_tsql.ansi_defaults",
 							 gettext_noop("Controls a group of settings that collectively specify some "
@@ -1124,7 +1135,7 @@ define_custom_variables(void)
 							 NULL,
 							 &pltsql_enable_create_alter_view_from_pg,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 	/*
@@ -1135,7 +1146,7 @@ define_custom_variables(void)
 							 NULL,
 							 &pltsql_enable_alter_owner_from_pg,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
@@ -1171,7 +1182,7 @@ define_custom_variables(void)
 							 NULL,
 							 &babelfish_dump_restore,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
@@ -1180,7 +1191,7 @@ define_custom_variables(void)
 							 NULL,
 							 &restore_tsql_tabletype,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
@@ -1189,7 +1200,7 @@ define_custom_variables(void)
 							   NULL,
 							   &babelfish_dump_restore_min_oid,
 							   NULL,
-							   PGC_USERSET,
+							   PGC_SUSET,
 							   GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							   check_babelfish_dump_restore_min_oid, NULL, NULL);
 

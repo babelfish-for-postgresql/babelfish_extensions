@@ -80,7 +80,8 @@ prepare_stmt_execsql(PLtsql_execstate *estate, PLtsql_function *func, PLtsql_stm
 		if (plansource->commandTag &&
 			(plansource->commandTag == CMDTAG_INSERT ||
 			 plansource->commandTag == CMDTAG_UPDATE ||
-			 plansource->commandTag == CMDTAG_DELETE))
+			 plansource->commandTag == CMDTAG_DELETE ||
+			 plansource->commandTag == CMDTAG_MERGE))
 		{
 			ListCell   *lc;
 			int			n;
@@ -100,6 +101,9 @@ prepare_stmt_execsql(PLtsql_execstate *estate, PLtsql_function *func, PLtsql_stm
 					break;
 				case T_DeleteStmt:
 					relname = ((DeleteStmt *) plansource->raw_parse_tree->stmt)->relation->relname;
+					break;
+				case T_MergeStmt:
+					relname = ((MergeStmt *) plansource->raw_parse_tree->stmt)->relation->relname;
 					break;
 				default:
 					ereport(ERROR,

@@ -1,0 +1,19 @@
+CREATE TABLE babel_5225_xml_nodes_t1 (Id INT, XmlColumn XML)
+go
+INSERT INTO babel_5225_xml_nodes_t1 VALUES
+    (1, '<Root><row id="1"><name>James</name></row><row id="2"><name>Megan</name></row><row id="3"><name>Chris</name></row></Root>'),
+    (2, '<Root><row id="4"><name>Andrew</name></row></Root>'),
+    (3, '<Root/>')
+go
+
+CREATE TABLE babel_5225_xml_nodes_t2 (Id INT, XmlColumn XML)
+go
+INSERT INTO babel_5225_xml_nodes_t2 VALUES
+    (1, '<artists><artist name="John Smith" id="1"/><artist name="Jane Smith" id="2"/></artists>')
+go
+
+CREATE TABLE babel_5225_xml_nodes_t3 (UserName VARCHAR(20), UserID INT)
+go
+INSERT INTO babel_5225_xml_nodes_t3 VALUES ('jsmith', 1), ('adoe', 2), ('bjones', 3)
+go
+
