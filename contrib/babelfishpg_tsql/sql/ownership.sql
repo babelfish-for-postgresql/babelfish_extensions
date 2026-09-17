@@ -155,7 +155,7 @@ CREATE TABLE sys.babelfish_identifier_mapping (
 	truncated_identifier_name NAME NOT NULL,
 	original_identifier_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
 	parent_name NAME NOT NULL DEFAULT '',
-	PRIMARY KEY (truncated_identifier_name, nspname, pg_catalog_type, parent_name)
+	PRIMARY KEY (nspname, pg_catalog_type, parent_name, truncated_identifier_name)
 );
 GRANT SELECT ON sys.babelfish_identifier_mapping TO PUBLIC;
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_identifier_mapping', '');

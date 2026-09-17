@@ -357,15 +357,15 @@ delete_bbf_ident_mapping(const char *truncated_name,
 	}
 	else
 	{
-		TableScanDesc scan;
+		SysScanDesc scan;
 		ScanKeyData scanKey[3];
 
 		/*
 		 * Key the scan on (nspname, pg_catalog_type, parent_name) so we don't
-		 * walk the entire catalog on every DROP. truncated_identifier_name (the
-		 * leading PK column) is not known here, so this uses a filtered heap
-		 * scan rather than the PK index, but pushing the predicate into scan
-		 * keys still avoids a per-tuple attribute fetch + strcmp.
+		 * walk the entire catalog on every DROP. These are the leading three
+		 * columns of the primary key, so the PK index serves this prefix scan
+		 * directly; truncated_identifier_name (the trailing PK column) is not
+		 * known here and is simply left unconstrained.
 		 */
 		ScanKeyInit(&scanKey[0],
 					Anum_bbf_ident_mapping_nspname,
@@ -380,12 +380,13 @@ delete_bbf_ident_mapping(const char *truncated_name,
 					BTEqualStrategyNumber, F_NAMEEQ,
 					NameGetDatum(&parent_namedata));
 
-		scan = table_beginscan_catalog(rel, 3, scanKey);
+		scan = systable_beginscan(rel, get_bbf_ident_mapping_idx_oid(), true,
+								  NULL, 3, scanKey);
 
-		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 			CatalogTupleDelete(rel, &tuple->t_self);
 
-		table_endscan(scan);
+		systable_endscan(scan);
 	}
 
 	table_close(rel, RowExclusiveLock);
@@ -462,7 +463,7 @@ update_bbf_ident_mapping_parent(const char *nspname,
 								const char *new_parent_name)
 {
 	Relation	rel;
-	TableScanDesc scan;
+	SysScanDesc scan;
 	ScanKeyData scanKey[3];
 	HeapTuple	tuple;
 	NameData	nspname_data;
@@ -500,7 +501,8 @@ update_bbf_ident_mapping_parent(const char *nspname,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				NameGetDatum(&old_parent_data));
 
-	scan = table_beginscan_catalog(rel, 3, scanKey);
+	scan = systable_beginscan(rel, get_bbf_ident_mapping_idx_oid(), true,
+							  NULL, 3, scanKey);
 
 	/*
 	 * Every matching row gets the same single-column update (parent_name ->
@@ -514,7 +516,7 @@ update_bbf_ident_mapping_parent(const char *nspname,
 	values[Anum_bbf_ident_mapping_parent_name - 1] = NameGetDatum(&new_parent_data);
 	replaces[Anum_bbf_ident_mapping_parent_name - 1] = true;
 
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
 		HeapTuple	newtuple;
 
@@ -524,7 +526,7 @@ update_bbf_ident_mapping_parent(const char *nspname,
 		heap_freetuple(newtuple);
 	}
 
-	table_endscan(scan);
+	systable_endscan(scan);
 	table_close(rel, RowExclusiveLock);
 
 	CommandCounterIncrement();
@@ -538,7 +540,7 @@ void
 clean_up_bbf_ident_mapping(const char *nspname)
 {
 	Relation	rel;
-	TableScanDesc scan;
+	SysScanDesc scan;
 	ScanKeyData scanKey[1];
 	HeapTuple	tuple;
 	NameData	nspname_data;
@@ -555,14 +557,15 @@ clean_up_bbf_ident_mapping(const char *nspname)
 				BTEqualStrategyNumber, F_NAMEEQ,
 				NameGetDatum(&nspname_data));
 
-	scan = table_beginscan_catalog(rel, 1, scanKey);
+	scan = systable_beginscan(rel, get_bbf_ident_mapping_idx_oid(), true,
+							  NULL, 1, scanKey);
 
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
 		CatalogTupleDelete(rel, &tuple->t_self);
 	}
 
-	table_endscan(scan);
+	systable_endscan(scan);
 	table_close(rel, RowExclusiveLock);
 
 	CommandCounterIncrement();
