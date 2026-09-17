@@ -39,6 +39,7 @@
 #include "tsearch/ts_locale.h"
 
 #include "catalog.h"
+#include "guc.h"
 #include "multidb.h"
 #include "session.h"
 #include "pltsql.h"
@@ -60,6 +61,7 @@ PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
 PG_FUNCTION_INFO_V1(sp_rename_internal);
 PG_FUNCTION_INFO_V1(sp_reset_connection_internal);
 
+extern bool babelfish_dump_restore;
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
 extern void read_param_def(InlineCodeBlockArgs * args, const char *paramdefstr);
@@ -2625,6 +2627,11 @@ Datum sp_rename_internal(PG_FUNCTION_ARGS)
 	List *parsetree_list;
 	ListCell *parsetree_item;
 	const char *saved_dialect = GetConfigOption("babelfish_tsql.sql_dialect", true, true);
+
+	if (!IS_TDS_CLIENT() && !babelfish_dump_restore && !pltsql_enable_rename_from_pg && !superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("sp_rename is not supported from PostgreSQL endpoint.")));
 
 	PG_TRY();
 	{

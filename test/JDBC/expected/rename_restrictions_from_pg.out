@@ -1,4 +1,5 @@
 -- tsql
+-- single_db_mode_expected
 CREATE LOGIN rename_from_pg_u WITH PASSWORD = '12345678';
 GO
 
@@ -204,8 +205,9 @@ CALL sys.sp_rename('master.dbo.rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJ
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 -- case-insensitive: uppercase invocation must also be blocked
@@ -213,96 +215,163 @@ CALL SYS.SP_RENAME('master.dbo.rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJ
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 CALL sys.sp_rename('master.dbo.rename_from_pg_f1', 'rename_from_pg_f1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 CALL sys.sp_rename('master.rename_from_pg_uschema.uschema_p1', 'uschema_p1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 CALL sys.sp_rename('master.rename_from_pg_uschema.uschema_f1', 'uschema_f1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 CALL sys.sp_rename('rename_from_pg_udb.dbo.udb_dbo_p1', 'udb_dbo_p1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 CALL sys.sp_rename('rename_from_pg_udb.dbo.udb_dbo_f1', 'udb_dbo_f1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 CALL sys.sp_rename('rename_from_pg_udb.rename_from_pg_udbs.udb_p1', 'udb_p1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 CALL sys.sp_rename('rename_from_pg_udb.rename_from_pg_udbs.udb_f1', 'udb_f1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 CALL sys.sp_rename('rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 CALL sys.sp_rename('rename_from_pg_f1', 'rename_from_pg_f1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 CALL sys.sp_rename('dbo.rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 CALL sys.sp_rename('dbo.rename_from_pg_f1', 'rename_from_pg_f1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
+
+
+-- physical schema forms (2-part) must also be blocked
+CALL sys.sp_rename('master_dbo.rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
+
+
+CALL sys.sp_rename('master_dbo.rename_from_pg_f1', 'rename_from_pg_f1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
+
+
+CALL sys.sp_rename('rename_from_pg_uschema.uschema_p1', 'uschema_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
+
+
+CALL sys.sp_rename('master_rename_from_pg_uschema.uschema_p1', 'uschema_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
+
+
+CALL sys.sp_rename('rename_from_pg_udb_dbo.udb_dbo_p1', 'udb_dbo_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
+
+
+CALL sys.sp_rename('rename_from_pg_udb_rename_from_pg_udbs.udb_p1', 'udb_p1_new', 'OBJECT');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 -- sp_rename must also be blocked on tables
@@ -310,8 +379,9 @@ CALL sys.sp_rename('master.dbo.rename_from_pg_t1', 'rename_from_pg_t1_new', 'OBJ
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 -- sp_rename must also be blocked on views
@@ -319,8 +389,9 @@ CALL sys.sp_rename('master.dbo.rename_from_pg_v1', 'rename_from_pg_v1_new', 'OBJ
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 -- sp_rename must also be blocked on columns
@@ -328,8 +399,9 @@ CALL sys.sp_rename('master.dbo.rename_from_pg_t1.col1', 'col1_new', 'COLUMN');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: Feature not supported: renaming object type Column
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 9 at THROW
+    Server SQLState: YY001)~~
 
 
 -- sp_rename must also be blocked on indexes
@@ -337,8 +409,9 @@ CALL sys.sp_rename('master.dbo.rename_from_pg_t1.rename_from_pg_idx1', 'rename_f
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: Feature not supported: renaming object type Index
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 13 at THROW
+    Server SQLState: YY001)~~
 
 
 -- sp_rename must also be blocked on user-defined types
@@ -346,8 +419,9 @@ CALL sys.sp_rename('master.dbo.rename_from_pg_udt1', 'rename_from_pg_udt1_new', 
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: Feature not supported: renaming object type User-defined Data Type alias
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 21 at THROW
+    Server SQLState: YY001)~~
 
 
 -- tables/views inside a user-created TSQL schema must also be blocked
@@ -355,16 +429,18 @@ CALL sys.sp_rename('master.rename_from_pg_uschema.uschema_t1', 'uschema_t1_new',
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 CALL sys.sp_rename('master.rename_from_pg_uschema.uschema_v1', 'uschema_v1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 -- tables inside a user database must also be blocked
@@ -372,8 +448,9 @@ CALL sys.sp_rename('rename_from_pg_udb.dbo.udb_dbo_t1', 'udb_dbo_t1_new', 'OBJEC
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 -- objects located in the sys schema must also be blocked
@@ -381,8 +458,9 @@ CALL sys.sp_rename('sys.sysobjects', 'sysobjects_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 -- objects located in the information_schema_tsql schema must also be blocked
@@ -390,8 +468,71 @@ CALL sys.sp_rename('information_schema_tsql.tables', 'tables_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
+
+
+-- direct calls to sys.babelfish_sp_rename_internal from the PG endpoint must also be blocked
+CALL sys.babelfish_sp_rename_internal('rename_from_pg_p1', 'rename_from_pg_p1_new', 'master_dbo', 'P', NULL);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: procedure sys.babelfish_sp_rename_internal(unknown, unknown, unknown, unknown, unknown) does not exist
+  Hint: No procedure matches the given name and argument types. You might need to add explicit type casts.
+  Position: 100
+    Server SQLState: 42883)~~
+
+
+-- case-insensitive: uppercase invocation must also be blocked
+CALL SYS.BABELFISH_SP_RENAME_INTERNAL('rename_from_pg_p1', 'rename_from_pg_p1_new', 'master_dbo', 'P', NULL);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: procedure sys.babelfish_sp_rename_internal(unknown, unknown, unknown, unknown, unknown) does not exist
+  Hint: No procedure matches the given name and argument types. You might need to add explicit type casts.
+  Position: 69
+    Server SQLState: 42883)~~
+
+
+CALL sys.babelfish_sp_rename_internal('rename_from_pg_f1', 'rename_from_pg_f1_new', 'master_dbo', 'FN', NULL);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: procedure sys.babelfish_sp_rename_internal(unknown, unknown, unknown, unknown, unknown) does not exist
+  Hint: No procedure matches the given name and argument types. You might need to add explicit type casts.
+  Position: 6
+    Server SQLState: 42883)~~
+
+
+CALL sys.babelfish_sp_rename_internal('rename_from_pg_t1', 'rename_from_pg_t1_new', 'master_dbo', 'U', NULL);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: procedure sys.babelfish_sp_rename_internal(unknown, unknown, unknown, unknown, unknown) does not exist
+  Hint: No procedure matches the given name and argument types. You might need to add explicit type casts.
+  Position: 6
+    Server SQLState: 42883)~~
+
+
+CALL sys.babelfish_sp_rename_internal('col1', 'col1_new', 'master_dbo', 'CO', 'rename_from_pg_t1');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: procedure sys.babelfish_sp_rename_internal(unknown, unknown, unknown, unknown, unknown) does not exist
+  Hint: No procedure matches the given name and argument types. You might need to add explicit type casts.
+  Position: 6
+    Server SQLState: 42883)~~
+
+
+CALL sys.babelfish_sp_rename_internal('uschema_p1', 'uschema_p1_new', 'master_rename_from_pg_uschema', 'P', NULL);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: procedure sys.babelfish_sp_rename_internal(unknown, unknown, unknown, unknown, unknown) does not exist
+  Hint: No procedure matches the given name and argument types. You might need to add explicit type casts.
+  Position: 6
+    Server SQLState: 42883)~~
 
 
 -- @objtype = 'DATABASE' (delegates internally to sp_renamedb) must also be blocked
@@ -399,8 +540,9 @@ CALL sys.sp_rename('rename_from_pg_udb', 'rename_from_pg_udb_new', 'DATABASE');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: Provided @objtype is not currently supported in Babelfish
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 25 at THROW
+    Server SQLState: YY001)~~
 
 
 -- setting psql_logical_babelfish_db_name should not bypass the block either
@@ -411,16 +553,18 @@ CALL sys.sp_rename('dbo.rename_from_pg_p1', 'rename_from_pg_p1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 CALL sys.sp_rename('rename_from_pg_uschema.uschema_p1', 'uschema_p1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 SET psql_logical_babelfish_db_name = 'rename_from_pg_udb';
@@ -430,16 +574,18 @@ CALL sys.sp_rename('dbo.udb_dbo_p1', 'udb_dbo_p1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 CALL sys.sp_rename('rename_from_pg_udbs.udb_p1', 'udb_p1_new', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: There is no object with the given @objname.
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
+    Server SQLState: YY001)~~
 
 
 RESET psql_logical_babelfish_db_name;
@@ -611,40 +757,40 @@ ALTER PROCEDURE rename_from_pg_udb_dbo.udb_dbo_p1 RENAME TO udb_dbo_p1_new;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "rename_from_pg_udb_dbo.udb_dbo_p1".
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: schema "rename_from_pg_udb_dbo" does not exist
+    Server SQLState: 3F000)~~
 
 
 ALTER FUNCTION rename_from_pg_udb_dbo.udb_dbo_f1 RENAME TO udb_dbo_f1_new;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "rename_from_pg_udb_dbo.udb_dbo_f1".
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: schema "rename_from_pg_udb_dbo" does not exist
+    Server SQLState: 3F000)~~
 
 
 ALTER PROCEDURE rename_from_pg_udb_rename_from_pg_udbs.udb_p1 RENAME TO udb_p1_new;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "rename_from_pg_udb_rename_from_pg_udbs.udb_p1".
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: schema "rename_from_pg_udb_rename_from_pg_udbs" does not exist
+    Server SQLState: 3F000)~~
 
 
 ALTER FUNCTION rename_from_pg_udb_rename_from_pg_udbs.udb_f1 RENAME TO udb_f1_new;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "rename_from_pg_udb_rename_from_pg_udbs.udb_f1".
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: schema "rename_from_pg_udb_rename_from_pg_udbs" does not exist
+    Server SQLState: 3F000)~~
 
 
 ALTER FUNCTION rename_from_pg_udb_rename_from_pg_udbs.udb_f1 SET SCHEMA public;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on TSQL object "rename_from_pg_udb_rename_from_pg_udbs.udb_f1" from schema "rename_from_pg_udb_rename_from_pg_udbs".
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: schema "rename_from_pg_udb_rename_from_pg_udbs" does not exist
+    Server SQLState: 3F000)~~
 
 
 CREATE PROCEDURE pg_ss_udb_p1()
@@ -658,16 +804,16 @@ ALTER PROCEDURE pg_ss_udb_p1() SET SCHEMA rename_from_pg_udb_dbo;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on object "pg_ss_udb_p1" to TSQL schema "rename_from_pg_udb_dbo".
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: schema "rename_from_pg_udb_dbo" does not exist
+    Server SQLState: 3F000)~~
 
 
 ALTER PROCEDURE pg_ss_udb_p1() SET SCHEMA rename_from_pg_udb_rename_from_pg_udbs;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on object "pg_ss_udb_p1" to TSQL schema "rename_from_pg_udb_rename_from_pg_udbs".
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: schema "rename_from_pg_udb_rename_from_pg_udbs" does not exist
+    Server SQLState: 3F000)~~
 
 
 DROP PROCEDURE pg_ss_udb_p1();
@@ -678,40 +824,40 @@ ALTER PROCEDURE dbo.udb_dbo_p1 RENAME TO udb_dbo_p1_new;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: schema "dbo" does not exist
-    Server SQLState: 3F000)~~
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "dbo.udb_dbo_p1".
+    Server SQLState: 0A000)~~
 
 
 ALTER FUNCTION dbo.udb_dbo_f1 RENAME TO udb_dbo_f1_new;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: schema "dbo" does not exist
-    Server SQLState: 3F000)~~
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "dbo.udb_dbo_f1".
+    Server SQLState: 0A000)~~
 
 
 ALTER PROCEDURE rename_from_pg_udbs.udb_p1 RENAME TO udb_p1_new;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: schema "rename_from_pg_udbs" does not exist
-    Server SQLState: 3F000)~~
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "rename_from_pg_udbs.udb_p1".
+    Server SQLState: 0A000)~~
 
 
 ALTER FUNCTION rename_from_pg_udbs.udb_f1 RENAME TO udb_f1_new;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: schema "rename_from_pg_udbs" does not exist
-    Server SQLState: 3F000)~~
+~~ERROR (Message: ERROR: ALTER .. RENAME .. is blocked in PG dialect on TSQL object "rename_from_pg_udbs.udb_f1".
+    Server SQLState: 0A000)~~
 
 
 ALTER FUNCTION rename_from_pg_udbs.udb_f1 SET SCHEMA public;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: schema "rename_from_pg_udbs" does not exist
-    Server SQLState: 3F000)~~
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on TSQL object "rename_from_pg_udbs.udb_f1" from schema "rename_from_pg_udbs".
+    Server SQLState: 0A000)~~
 
 
 CREATE PROCEDURE pg_ss_udb_sd_p1()
@@ -725,16 +871,16 @@ ALTER PROCEDURE pg_ss_udb_sd_p1() SET SCHEMA dbo;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: schema "dbo" does not exist
-    Server SQLState: 3F000)~~
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on object "pg_ss_udb_sd_p1" to TSQL schema "dbo".
+    Server SQLState: 0A000)~~
 
 
 ALTER PROCEDURE pg_ss_udb_sd_p1() SET SCHEMA rename_from_pg_udbs;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: schema "rename_from_pg_udbs" does not exist
-    Server SQLState: 3F000)~~
+~~ERROR (Message: ERROR: ALTER .. SET SCHEMA .. is blocked in PG dialect on object "pg_ss_udb_sd_p1" to TSQL schema "rename_from_pg_udbs".
+    Server SQLState: 0A000)~~
 
 
 DROP PROCEDURE pg_ss_udb_sd_p1();
@@ -786,7 +932,16 @@ GO
 EXEC sp_rename 'rename_from_pg_tsqlschema.tsqlproc', 'tsqlproc_new', 'OBJECT';
 GO
 
--- terminate-tsql-conn user=rename_from_pg_tsql_login password=12345678
+-- psql
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'rename_from_pg_tsql_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
 -- tsql
 -- cleanup
 DROP PROCEDURE rename_from_pg_tsqlschema.tsqlproc_new;
@@ -810,6 +965,20 @@ GO
 EXEC sp_rename 'rename_from_pg_uschema.uschema_f1_renamed', 'uschema_f1', 'OBJECT';
 GO
 
+-- direct sys.babelfish_sp_rename_internal calls from the T-SQL endpoint must still succeed
+EXEC sys.babelfish_sp_rename_internal 'rename_from_pg_p1', 'rename_from_pg_p1_via_internal', 'dbo', 'P';
+GO
+EXEC sys.babelfish_sp_rename_internal 'rename_from_pg_p1_via_internal', 'rename_from_pg_p1', 'dbo', 'P';
+GO
+EXEC sys.babelfish_sp_rename_internal 'rename_from_pg_f1', 'rename_from_pg_f1_via_internal', 'dbo', 'FN';
+GO
+EXEC sys.babelfish_sp_rename_internal 'rename_from_pg_f1_via_internal', 'rename_from_pg_f1', 'dbo', 'FN';
+GO
+EXEC sys.babelfish_sp_rename_internal 'uschema_p1', 'uschema_p1_via_internal', 'rename_from_pg_uschema', 'P';
+GO
+EXEC sys.babelfish_sp_rename_internal 'uschema_p1_via_internal', 'uschema_p1', 'rename_from_pg_uschema', 'P';
+GO
+
 USE rename_from_pg_udb;
 GO
 
@@ -831,11 +1000,29 @@ GO
 EXEC sp_rename 'rename_from_pg_udbs.udb_f1_renamed', 'udb_f1', 'OBJECT';
 GO
 
+-- direct sys.babelfish_sp_rename_internal calls inside a user DB must also succeed
+EXEC sys.babelfish_sp_rename_internal 'udb_dbo_p1', 'udb_dbo_p1_via_internal', 'dbo', 'P';
+GO
+EXEC sys.babelfish_sp_rename_internal 'udb_dbo_p1_via_internal', 'udb_dbo_p1', 'dbo', 'P';
+GO
+EXEC sys.babelfish_sp_rename_internal 'udb_p1', 'udb_p1_via_internal', 'rename_from_pg_udbs', 'P';
+GO
+EXEC sys.babelfish_sp_rename_internal 'udb_p1_via_internal', 'udb_p1', 'rename_from_pg_udbs', 'P';
+GO
+
 USE master;
 GO
 
--- terminate-psql-conn user=rename_from_pg_u password=12345678
 -- psql
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'rename_from_pg_u' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
 REVOKE CREATE ON SCHEMA public FROM rename_from_pg_u;
 GO
 

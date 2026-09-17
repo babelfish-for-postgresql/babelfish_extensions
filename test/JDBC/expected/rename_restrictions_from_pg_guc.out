@@ -1,4 +1,5 @@
 -- tsql
+-- single_db_mode_expected
 CREATE LOGIN rename_from_pg_guc_u_neg WITH PASSWORD = '12345678';
 GO
 ALTER SERVER ROLE sysadmin ADD MEMBER rename_from_pg_guc_u_neg;
@@ -45,14 +46,16 @@ CALL sys.sp_rename('master.dbo.rename_from_pg_guc_p3', 'rename_from_pg_guc_p3_ne
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
+~~ERROR (Message: ERROR: sp_rename is not supported from PostgreSQL endpoint.
+  Where: SQL statement "EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype"
+PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 86 at EXEC
     Server SQLState: 0A000)~~
 
 RESET psql_logical_babelfish_db_name;
 GO
 
 -- psql
-ALTER DATABASE babelfish_db SET babelfishpg_tsql.enable_rename_from_pg = on;
+ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.enable_rename_from_pg = on;
 GO
 
 -- psql user=rename_from_pg_guc_u_pos password=12345678
@@ -75,32 +78,40 @@ CALL sys.sp_rename('master.dbo.rename_from_pg_guc_p3', 'rename_from_pg_guc_p3_ne
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: schema "dbo" does not exist
-  Where: SQL statement "EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname"
-PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 131 at EXEC
-    Server SQLState: 3F000)~~
+~~ERROR (Message: ERROR: database "" does not exist. Make sure that the name is entered correctly.
+  Where: SQL statement "EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype"
+PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 86 at EXEC
+    Server SQLState: 3D000)~~
 
 CALL sys.sp_rename('master.dbo.rename_from_pg_guc_p3_new', 'rename_from_pg_guc_p3', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 82 at THROW
     Server SQLState: YY001)~~
 
 RESET psql_logical_babelfish_db_name;
 GO
 
--- terminate-psql-conn user=rename_from_pg_guc_u_neg password=12345678
--- terminate-psql-conn user=rename_from_pg_guc_u_pos password=12345678
 -- psql
 -- cleanup
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) IN ('rename_from_pg_guc_u_neg', 'rename_from_pg_guc_u_pos') AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+t
+~~END~~
+
+
 REVOKE CREATE ON SCHEMA public FROM rename_from_pg_guc_u_neg;
 GO
 REVOKE CREATE ON SCHEMA public FROM rename_from_pg_guc_u_pos;
 GO
 
-ALTER DATABASE babelfish_db RESET babelfishpg_tsql.enable_rename_from_pg;
+ALTER DATABASE jdbc_testdb RESET babelfishpg_tsql.enable_rename_from_pg;
 GO
 
 -- tsql
