@@ -888,7 +888,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * After procedure completes, temp table is flushed to target.
 		 */
 		if (stmt->insert_exec != NULL)
-			insert_exec_setup(estate, stmt->insert_exec, true);
+			insert_exec_setup(estate, stmt->insert_exec);
 
 		if (IS_TDS_CONN())
 		{
@@ -1486,13 +1486,9 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 	PG_TRY();
 	{
-		/*
-		 * Setup INSERT EXEC (new path): create temp table to capture procedure
-		 * output. No implicit transaction for dynamic SQL (different semantics
-		 * than stored procs).
-		 */
+		/* Setup INSERT EXEC: create temp table to capture procedure output */
 		if (stmt->insert_exec != NULL)
-			insert_exec_setup(estate, stmt->insert_exec, false);
+			insert_exec_setup(estate, stmt->insert_exec);
 
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(estate, query, restype);
@@ -1516,7 +1512,11 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			elog(ERROR, "pltsql_inline_handler failed");
 
 		if (stmt->insert_exec != NULL)
+		{
 			insert_exec_flush_and_cleanup(estate, stmt->insert_exec);
+			before_lxid = MyProc->vxid.lxid;
+			topEntry = simple_econtext_stack;
+		}
 	}
 	PG_FINALLY();
 	{
@@ -2201,7 +2201,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 					 * and cleanup.
 					 */
 					if (stmt->insert_exec != NULL)
-						insert_exec_setup(estate, stmt->insert_exec, true);
+						insert_exec_setup(estate, stmt->insert_exec);
 
 					if (strcmp(batchstr, "") != 0)	/* check edge cases for
 													 * sp_executesql */
