@@ -97,6 +97,7 @@
  * NAMEDATALEN-1 (63) because multibyte truncation can back off to fewer bytes.
  */
 #define BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD 60
+#define CONSTRAINT_KEYWORD_LEN 10	/* strlen("CONSTRAINT") */
 
 /* DefElem name for storing original index name location in grammar */
 #define TSQL_ORIGINAL_NAME_LOCATION "tsql_original_name_location"
@@ -2342,6 +2343,69 @@ extern int	pltsql_yyparse(void);
 /* functions in hooks.c */
 extern char *extract_identifier(const char *start, int *last_pos);
 extern char *extract_multipart_identifier_name(const char *start);
+
+/* functions in pltsql_identifier_mapping.c */
+
+/*
+ * Object classes whose long/original names are tracked in
+ * babelfish_identifier_mapping. The CRUD helpers take this enum and map it to
+ * the underlying pg_catalog_type OID internally (via
+ * bbf_ident_mapping_catalog_oid), so callers don't repeat the mapping.
+ *
+ * Defined here rather than in catalog.h so that C++ translation units which
+ * include pltsql.h do not transitively pull in catalog.h's FormData_* structs
+ * (their varlena members are illegal flexible-array-not-at-end in C++).
+ */
+typedef enum BbfIdentMappingObjType
+{
+	BBF_IDENT_CONSTRAINT,		/* pg_constraint */
+	BBF_IDENT_SEQUENCE,			/* pg_class      */
+	BBF_IDENT_TYPE,				/* pg_type       */
+	BBF_IDENT_PARAMETER			/* pg_proc       */
+} BbfIdentMappingObjType;
+
+extern Oid	get_bbf_ident_mapping_oid(void);
+extern Oid	get_bbf_ident_mapping_idx_oid(void);
+extern void insert_bbf_ident_mapping(const char *truncated_name,
+									 const char *original_name,
+									 const char *nspname,
+									 BbfIdentMappingObjType objtype,
+									 const char *parent_name);
+extern char *lookup_bbf_ident_mapping(const char *truncated_name,
+									  const char *nspname,
+									  BbfIdentMappingObjType objtype,
+									  const char *parent_name);
+extern void delete_bbf_ident_mapping(const char *truncated_name,
+									 const char *nspname,
+									 BbfIdentMappingObjType objtype,
+									 const char *parent_name);
+extern void delete_bbf_ident_mapping_for_drop(ObjectType removeType,
+											  const char *schema_name,
+											  const char *major_name);
+extern void update_bbf_ident_mapping_parent(const char *nspname,
+											 BbfIdentMappingObjType objtype,
+											 const char *old_parent_name,
+											 const char *new_parent_name);
+extern void clean_up_bbf_ident_mapping(const char *nspname);
+extern const char *skip_collist_separators(const char *p);
+extern void store_table_constraint_original_names(CreateStmt *create_stmt,
+												  RangeVar *rel,
+												  const char *queryString);
+extern void store_sequence_original_name(CreateSeqStmt *seq_stmt,
+										 const char *queryString);
+extern void store_view_column_original_names(ViewStmt *stmt,
+											 const char *queryString,
+											 int collist_loc);
+extern void block_bbf_original_name_reloption(Node *parsetree);
+
+/* more helpers in pltsql_identifier_mapping.c used by pl_handler.c */
+extern AlterTableCmd *build_set_option_cmd(AlterTableType subtype,
+										   const char *optname,
+										   const char *optval);
+extern char *extract_index_original_name(IndexStmt *stmt,
+										 const char *queryString);
+extern int	extract_and_strip_view_collist_loc(ViewStmt *stmt);
+extern void store_view_original_name(ViewStmt *stmt, const char *queryString);
 
 /* functions in pltsql_utils.c */
 extern char *get_original_relname(Oid relid, bool check_permission);

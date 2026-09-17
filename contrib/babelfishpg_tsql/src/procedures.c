@@ -16,6 +16,7 @@
 #include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -108,6 +109,7 @@ static void rename_extended_property(ObjectType objtype,
 									 const char *old_name, const char *new_name);
 static void remangle_table_indexes_after_rename(const char *schema_name,
 												const char *new_table_name);
+static char *get_physical_schema_from_logical(const char *schema_name);
 
 List	   *handle_bool_expr_rec(BoolExpr *expr, List *list, bool is_sp_describe_undeclared_parameters);
 List	   *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums, bool is_sp_describe_undeclared_parameters);
@@ -3873,6 +3875,40 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 								 obj_name, new_name);
 
 		/*
+		 * Maintain babelfish_identifier_mapping on rename for SEQUENCE / TYPE.
+		 * Both the delete of the old entry and the insert of the new entry are
+		 * keyed on the PHYSICAL schema (matching store_sequence_original_name /
+		 * the CREATE DOMAIN path and how the sys views resolve names). Doing
+		 * both here with a single physical-schema resolution keeps the delete
+		 * and insert consistent; renaming to a shorter name still removes any
+		 * stale long-name row.
+		 */
+		if ((objtype_code == OBJECT_SEQUENCE || objtype_code == OBJECT_TYPE) &&
+			schema_name != NULL)
+		{
+			BbfIdentMappingObjType	catalog_type = (objtype_code == OBJECT_SEQUENCE) ? BBF_IDENT_SEQUENCE : BBF_IDENT_TYPE;
+			char	   *physical_schema = get_physical_schema_from_logical(schema_name);
+
+			if (physical_schema)
+			{
+				/* Remove the old entry (if the old name was long). */
+				char	   *old_truncated = downcase_truncate_identifier(obj_name, strlen(obj_name), false);
+
+				delete_bbf_ident_mapping(old_truncated, physical_schema, catalog_type, NULL);
+				pfree(old_truncated);
+
+				/* Insert the new entry if the new name is long. */
+				if (strlen(new_name) >= NAMEDATALEN)
+				{
+					char	   *new_truncated = downcase_truncate_identifier(new_name, strlen(new_name), false);
+
+					insert_bbf_ident_mapping(new_truncated, new_name, physical_schema, catalog_type, NULL);
+					pfree(new_truncated);
+				}
+				pfree(physical_schema);
+			}
+		}
+		/*
 		 * BABEL-5052: a table's physical index names embed the table name
 		 * (index_name + table_name + md5(index_name), see
 		 * construct_unique_index_name). Renaming the table above does not
@@ -3883,6 +3919,31 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		 */
 		if (objtype_code == OBJECT_TABLE)
 			remangle_table_indexes_after_rename(schema_name, new_name);
+
+		/*
+		 * BABEL-5975: constraint original-name mappings are keyed on the
+		 * PHYSICAL parent table name. Renaming the table changes that physical
+		 * name, so re-point the constraint mapping rows to the new physical
+		 * name; otherwise DROP TABLE cleanup (which keys on the new physical
+		 * name) would miss them and leak a stale row that could later resolve
+		 * to the wrong original constraint name.
+		 */
+		if (objtype_code == OBJECT_TABLE && schema_name != NULL)
+		{
+			char	   *physical_schema = get_physical_schema_from_logical(schema_name);
+
+			if (physical_schema)
+			{
+				char	   *old_phys = downcase_truncate_identifier(obj_name, strlen(obj_name), false);
+				char	   *new_phys = downcase_truncate_identifier(new_name, strlen(new_name), false);
+
+				update_bbf_ident_mapping_parent(physical_schema, BBF_IDENT_CONSTRAINT,
+												old_phys, new_phys);
+				pfree(old_phys);
+				pfree(new_phys);
+				pfree(physical_schema);
+			}
+		}
 	}
 	PG_FINALLY();
 	{
@@ -3902,6 +3963,31 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 	}
 	PG_END_TRY();
 	PG_RETURN_VOID();
+}
+
+/*
+ * get_physical_schema_from_logical
+ *
+ * Resolve the physical schema name (<db>_<schema>) for a logical T-SQL schema
+ * name in the current database. The logical name is normalized with
+ * downcase_truncate_identifier (consistent with how object names are folded)
+ * before mapping to the physical name. Returns a palloc'd string the caller
+ * must pfree, or NULL if the schema cannot be resolved.
+ */
+static char *
+get_physical_schema_from_logical(const char *schema_name)
+{
+	char	   *schema_lower;
+	char	   *physical_schema;
+
+	if (schema_name == NULL)
+		return NULL;
+
+	schema_lower = downcase_truncate_identifier(schema_name, strlen(schema_name), false);
+	physical_schema = get_physical_schema_name(get_cur_db_name(), schema_lower);
+	pfree(schema_lower);
+
+	return physical_schema;
 }
 
 /*
@@ -4274,9 +4360,9 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	{
 		renamestmt->renameType = objtype;
 		renamestmt->object = (Node *)list_make2(makeString(pstrdup(str_tolower(schemaname, strlen(schemaname), DEFAULT_COLLATION_OID))), 
-													makeString(pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID))));
-		renamestmt->subname = pstrdup(str_tolower(objname, strlen(objname), DEFAULT_COLLATION_OID));
-		renamestmt->newname = pstrdup(str_tolower(newname, strlen(newname), DEFAULT_COLLATION_OID));
+													makeString(downcase_truncate_identifier(objname, strlen(objname), false)));
+		renamestmt->subname = downcase_truncate_identifier(objname, strlen(objname), false);
+		renamestmt->newname = downcase_truncate_identifier(newname, strlen(newname), false);
 	}
 	else
 	{

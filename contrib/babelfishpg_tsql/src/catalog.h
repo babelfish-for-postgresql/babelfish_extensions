@@ -121,6 +121,28 @@ extern const char *get_logical_schema_name(const char *physical_schema_name, boo
 extern int16 get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missingOk);
 
 /*****************************************
+ *			TRUNCATED_IDENTIFIER
+ *****************************************/
+#define BBF_IDENT_MAPPING_TABLE_NAME "babelfish_identifier_mapping"
+#define BBF_IDENT_MAPPING_IDX_NAME "babelfish_identifier_mapping_pkey"
+#define BBF_IDENT_MAPPING_NUM_COLS 5
+#define Anum_bbf_ident_mapping_nspname 1
+#define Anum_bbf_ident_mapping_pg_catalog_type 2
+#define Anum_bbf_ident_mapping_truncated_name 3
+#define Anum_bbf_ident_mapping_original_name 4
+#define Anum_bbf_ident_mapping_parent_name 5
+
+extern Oid	bbf_ident_mapping_oid;
+extern Oid	bbf_ident_mapping_idx_oid;
+
+/*
+ * The accessor and CRUD functions for this catalog are defined in
+ * pltsql_identifier_mapping.c and declared in pltsql.h. Only the schema
+ * constants above and the cached OID globals (populated by init_catalog())
+ * live here with the other catalog definitions.
+ */
+
+/*****************************************
  *			LOGIN EXT
  *****************************************/
 #define BBF_AUTHID_LOGIN_EXT_TABLE_NAME "babelfish_authid_login_ext"
