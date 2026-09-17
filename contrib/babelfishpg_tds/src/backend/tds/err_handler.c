@@ -2,6 +2,8 @@
 
 #include "postgres.h"
 
+#include <dlfcn.h>
+
 #include "common/hashfn.h"
 #include "miscadmin.h"
 #include "nodes/bitmapset.h"
@@ -9,9 +11,8 @@
 #include "storage/proc.h"
 #include "utils/elog.h"
 #include "utils/hsearch.h"
-#include "utils/palloc.h"		/* Needed for pstrdup() */
 #include "utils/memutils.h"
-#include <dlfcn.h>
+#include "utils/palloc.h"		/* Needed for pstrdup() */
 
 #include "src/include/tds_int.h"
 #include "src/include/tds_response.h"

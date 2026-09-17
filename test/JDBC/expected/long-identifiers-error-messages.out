@@ -622,25 +622,19 @@ GO
 -- Long temp table name
 CREATE TABLE #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (id INT);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "#temp_very_long_name_that_exceeds_postgresql_limit_of_sixty_three_characters" does not exist)~~
-
 
 -- Duplicate temp table - should show original name in error
 CREATE TABLE #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters (id INT);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: relation "#temp_very_long_name_that_exceeds_postgresql_limit_of_sixty_three_characters" does not exist)~~
+~~ERROR (Message: relation "#temp_very_long_name_that_exceeds_postgresql_limit_of_sixty_three_characters" already exists)~~
 
 
 -- Insert into temp table to verify it works
 INSERT INTO #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters VALUES (1);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "#temp_very_long_name_that_exceeds_postgresql_limit_of_sixty_three_characters" does not exist)~~
+~~ROW COUNT: 1~~
 
 
 -- Drop non-existent temp table - should show original name in error
@@ -654,46 +648,52 @@ GO
 -- Multibyte temp table
 CREATE TABLE #テンプ_非常に長い一時テーブル名前がPostgreSQLの制限を超える場合のテスト (id INT);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "#テンプ_非常に長い一時テーブル名前がpostgresqlの制限を超える場合のテスト" does not exist)~~
-
 CREATE TABLE #テンプ_非常に長い一時テーブル名前がPostgreSQLの制限を超える場合のテスト (id INT);
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: relation "#テンプ_非常に長い一時テーブル名前がpostgresqlの制限を超える場合のテスト" does not exist)~~
-
-
-
+~~ERROR (Message: relation "#テンプ_非常に長い一時テーブル名前がpostgresqlの制限を超える場合のテスト" already exists)~~
 
 
 -- Index on temp table with long name
--- TODO: Enable once BABEL-6433 (temp table name truncation) is merged
--- CREATE INDEX IX_Very_Long_Index_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
--- ON #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters(id);
--- GO
+CREATE INDEX IX_Very_Long_Index_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+ON #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters(id);
+GO
 -- Duplicate index on temp table - should show original name in error
--- CREATE INDEX IX_Very_Long_Index_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
--- ON #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters(id);
--- GO
+CREATE INDEX IX_Very_Long_Index_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+ON #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters(id);
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "ix_very_long_index_name_on_temp_table_that_exceeds_postgresql_limit_of_sixty_three" already exists)~~
+
 -- Drop non-existent index on temp table
--- DROP INDEX NonExist_Very_Long_Index_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
--- ON #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
--- GO
+DROP INDEX NonExist_Very_Long_Index_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+ON #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: index "nonexist_very_long_index_name_on_temp_table_that_exceeds_postgresql_limit_of_sixty_three" does not exist)~~
+
+
 -- Constraint on temp table with long name
--- TODO: Enable once BABEL-6433 (temp table name truncation) is merged
--- ALTER TABLE #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
--- ADD CONSTRAINT CK_Very_Long_Constraint_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Sixty_Three CHECK (id > 0);
--- GO
+ALTER TABLE #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+ADD CONSTRAINT CK_Very_Long_Constraint_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Sixty_Three CHECK (id > 0);
+GO
 -- Duplicate constraint on temp table - should show original name in error
--- ALTER TABLE #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
--- ADD CONSTRAINT CK_Very_Long_Constraint_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Sixty_Three CHECK (id > 0);
--- GO
+ALTER TABLE #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+ADD CONSTRAINT CK_Very_Long_Constraint_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Sixty_Three CHECK (id > 0);
+GO
 -- Drop constraint with long name
--- ALTER TABLE #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
--- DROP CONSTRAINT CK_Very_Long_Constraint_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Sixty_Three;
--- GO
+ALTER TABLE #Temp_Very_Long_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+DROP CONSTRAINT CK_Very_Long_Constraint_Name_On_Temp_Table_That_Exceeds_PostgreSQL_Limit_Sixty_Three;
+GO
+~~ERROR (Code: 3728)~~
+
+~~ERROR (Message: constraint "ck_very_long_constraint_name_on_temp_table_that_exceeds_postgresql_limit_sixty_three" of relation "#temp_very_long_name_that_exceeds_postgresql_limit_of_sixty_three_characters" does not exist)~~
+
+
+
 -- ===========================================
 -- LOGIN with invalid default database
 -- ===========================================
@@ -869,6 +869,66 @@ GO
 
 
 -- ===========================================
+-- Cross-session UNIQUE / PRIMARY KEY constraint violation
+-- The constraint is created on the default connection; the violation is
+-- triggered from a SEPARATE login connection whose session cache is empty. The
+-- backing index's reloption holds the MD5-mangled physical name (not the
+-- original), so the hook must fall back to babelfish_identifier_mapping to
+-- display the original constraint name. This case fails (shows the mangled
+-- name) without that fallback.
+-- ===========================================
+CREATE LOGIN err5975_xsess_login WITH PASSWORD = '12345678';
+GO
+CREATE USER err5975_xsess_user FOR LOGIN err5975_xsess_login;
+GO
+ALTER ROLE db_owner ADD MEMBER err5975_xsess_user;
+GO
+
+CREATE TABLE ErrTest_UQ_Cross (id INT,
+    CONSTRAINT Very_Long_UQ_Cross_Session_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Sixty_Three UNIQUE (id));
+GO
+INSERT INTO ErrTest_UQ_Cross VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+CREATE TABLE ErrTest_PK_Cross (id INT,
+    CONSTRAINT Very_Long_PK_Cross_Session_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Sixty_Three PRIMARY KEY (id));
+GO
+INSERT INTO ErrTest_PK_Cross VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+
+-- tsql user=err5975_xsess_login password=12345678
+-- SEPARATE LOGIN CONNECTION (empty session cache): the hook must resolve the
+-- UNIQUE constraint's original name from babelfish_identifier_mapping.
+INSERT INTO ErrTest_UQ_Cross VALUES (1);
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "very_long_uq_cross_session_constraint_name_that_exceeds_postgresql_limit_sixty_three")~~
+
+-- and the PRIMARY KEY constraint's original name likewise.
+INSERT INTO ErrTest_PK_Cross VALUES (1);
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "very_long_pk_cross_session_constraint_name_that_exceeds_postgresql_limit_sixty_three")~~
+
+
+-- terminate-tsql-conn user=err5975_xsess_login password=12345678
+-- tsql
+DROP TABLE ErrTest_UQ_Cross;
+GO
+DROP TABLE ErrTest_PK_Cross;
+GO
+DROP USER err5975_xsess_user;
+GO
+DROP LOGIN err5975_xsess_login;
+GO
+
+
+-- ===========================================
 -- CONSTRAINT name with comments between keyword and name
 -- ===========================================
 -- Block comment between CONSTRAINT and name
@@ -930,6 +990,37 @@ DROP TABLE ErrTest_Block_Comment_Constraint;
 GO
 DROP TABLE ErrTest_Line_Comment_Constraint;
 GO
+
+
+-- ===========================================
+-- Additional not-found / runtime error paths
+-- ===========================================
+-- DROP CONSTRAINT that does not exist (constraint-name resolution on not-found path)
+ALTER TABLE ErrTest_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+DROP CONSTRAINT NonExist_Very_Long_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_C;
+GO
+~~ERROR (Code: 3728)~~
+
+~~ERROR (Message: constraint "nonexist_very_long_constraint_name_that_exceeds_postgresql_limit_of_sixty_three_c" of relation "errtest_very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_characters" does not exist)~~
+
+
+-- EXEC a non-existent long-named procedure
+EXEC NonExist_Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure nonexist_very_long_procedure_name_that_exceeds_postgresql_limit_of_sixty_three_characters() does not exist)~~
+
+
+-- FOREIGN KEY referencing a non-existent long-named table
+CREATE TABLE ErrTest_FK_BadRef_Child (id INT, parent_id INT,
+    CONSTRAINT Very_Long_FK_BadRef_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_C
+    FOREIGN KEY (parent_id) REFERENCES NonExist_Very_Long_Parent_Table_Name_That_Exceeds_PG_Limit_Sixty(id));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "nonexist_very_long_parent_table_name_that_exceeds_pg_limit_sixty" does not exist)~~
+
 
 -- ===========================================
 -- CLEANUP

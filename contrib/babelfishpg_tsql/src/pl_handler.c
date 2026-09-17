@@ -6973,10 +6973,7 @@ _PG_init(void)
 	truncate_identifier_hook = pltsql_truncate_identifier;
 	cstr_to_name_hook = pltsql_cstr_to_name;
 
-	/* TODO: Enable when engine PR #773 is merged
-	 * bbf_get_original_constraint_name_hook = bbf_get_original_constraint_name;
-	 * bbf_get_original_index_name_hook = bbf_get_original_index_name;
-	 */
+	bbf_get_original_ident_name_hook = bbf_get_original_ident_name;
 	tsql_has_pgstat_permissions_hook = tsql_has_pgstat_permissions;
 
 	if (pltsql_enable_linked_servers)

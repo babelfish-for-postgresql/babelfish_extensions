@@ -40,7 +40,9 @@
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/hsearch.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/rel.h"
 
 #include "catalog.h"
@@ -1204,4 +1206,389 @@ block_bbf_original_name_reloption(Node *parsetree)
 		default:
 			break;
 	}
+}
+
+/*-------------------------------------------------------------------------
+ *		SESSION IDENTIFIER CACHE + ERROR-MESSAGE NAME RESOLUTION
+ *
+ * A per-session cache maps a truncated/mangled physical identifier back to the
+ * original user-supplied name so that error messages can display the original.
+ * The TDS layer calls bbf_rewrite_truncated_identifiers() on outgoing error
+ * text; the engine error hooks call bbf_get_original_ident_name(). Both are
+ * co-located here with the babelfish_identifier_mapping catalog helpers they
+ * delegate to (lookup_bbf_ident_mapping).
+ *-------------------------------------------------------------------------
+ */
+/* Session cache for error message rewriting - type defined in catalog.h */
+
+static HTAB *ident_name_cache = NULL;
+
+static void
+ensure_ident_name_cache(void)
+{
+	if (ident_name_cache == NULL)
+	{
+		HASHCTL		ctl;
+
+		MemSet(&ctl, 0, sizeof(ctl));
+		ctl.keysize = NAMEDATALEN;
+		ctl.entrysize = sizeof(IdentNameCacheEntry);
+		ctl.hcxt = TopMemoryContext;
+		ident_name_cache = hash_create("Babelfish truncated identifier cache", 64, &ctl,
+									   HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
+	}
+}
+
+void
+bbf_reset_ident_name_cache(void)
+{
+	if (ident_name_cache)
+	{
+		hash_destroy(ident_name_cache);
+		ident_name_cache = NULL;
+	}
+}
+
+/*
+ * Snapshot current cache entries into a caller-provided array.
+ * Returns number of entries copied. Used by pl_comp to save
+ * mappings onto PLtsql_function during compilation.
+ */
+int
+bbf_snapshot_ident_cache(IdentNameCacheEntry **entries, MemoryContext cxt)
+{
+	HASH_SEQ_STATUS status;
+	IdentNameCacheEntry *entry;
+	int			n;
+	int			i = 0;
+
+	if (!ident_name_cache)
+	{
+		*entries = NULL;
+		return 0;
+	}
+
+	n = hash_get_num_entries(ident_name_cache);
+	if (n == 0)
+	{
+		*entries = NULL;
+		return 0;
+	}
+
+	*entries = (IdentNameCacheEntry *) MemoryContextAlloc(cxt, n * sizeof(IdentNameCacheEntry));
+	hash_seq_init(&status, ident_name_cache);
+	while ((entry = (IdentNameCacheEntry *) hash_seq_search(&status)) != NULL)
+	{
+		memcpy(&(*entries)[i], entry, sizeof(IdentNameCacheEntry));
+		i++;
+	}
+	return i;
+}
+
+/*
+ * Restore cached entries from a snapshot. Used by pl_exec
+ * at EXEC entry to repopulate the batch cache.
+ */
+void
+bbf_restore_ident_cache(IdentNameCacheEntry *entries, int n)
+{
+	int i;
+
+	if (!entries || n == 0)
+		return;
+
+	ensure_ident_name_cache();
+	for (i = 0; i < n; i++)
+	{
+		IdentNameCacheEntry *e;
+		bool found;
+
+		e = (IdentNameCacheEntry *) hash_search(ident_name_cache,
+												entries[i].truncated_name,
+												HASH_ENTER, &found);
+		if (!found)
+			strlcpy(e->original_name, entries[i].original_name, sizeof(e->original_name));
+	}
+}
+
+void
+bbf_cache_ident_name(const char *truncated_name, const char *original_name)
+{
+	IdentNameCacheEntry *entry;
+	bool		found;
+
+	if (!truncated_name || truncated_name[0] == '\0')
+		return;
+
+	if (strlen(original_name) < NAMEDATALEN - 1)
+		return;
+
+	ensure_ident_name_cache();
+	entry = (IdentNameCacheEntry *) hash_search(ident_name_cache, truncated_name, HASH_ENTER, &found);
+	strlcpy(entry->original_name, original_name, sizeof(entry->original_name));
+}
+
+/*
+ * Cache index internal name → original index name unconditionally.
+ * Used by construct_unique_index_name so error messages always show
+ * the user-supplied index name even for short identifiers.
+ */
+void
+bbf_cache_index_name(const char *internal_name, const char *index_name)
+{
+	IdentNameCacheEntry *entry;
+	bool		found;
+
+	if (!internal_name || internal_name[0] == '\0' ||
+		!index_name || strcmp(internal_name, index_name) == 0)
+		return;
+
+	ensure_ident_name_cache();
+
+	entry = (IdentNameCacheEntry *) hash_search(ident_name_cache, internal_name, HASH_ENTER, &found);
+	strlcpy(entry->original_name, index_name, sizeof(entry->original_name));
+}
+
+PGDLLEXPORT const char *
+bbf_lookup_ident_name(const char *truncated_name)
+{
+	IdentNameCacheEntry *entry;
+
+	if (!ident_name_cache)
+		return NULL;
+
+	entry = (IdentNameCacheEntry *) hash_search(ident_name_cache, truncated_name, HASH_FIND, NULL);
+	return entry ? entry->original_name : NULL;
+}
+
+/*
+ * Scan an error message for any cached truncated identifier and replace it with
+ * the original name. Returns a new message (allocated in TopMemoryContext) or
+ * NULL if no replacement was made. Called by the TDS layer on outgoing errors.
+ */
+PGDLLEXPORT char *
+bbf_rewrite_truncated_identifiers(const char *msg)
+{
+	HASH_SEQ_STATUS		status;
+	IdentNameCacheEntry *entry;
+	char			   *result = NULL;
+
+	if (!msg)
+		return NULL;
+
+	ensure_ident_name_cache();
+
+	/* Session cache pass: replace truncated identifiers with lowercased originals */
+	if (hash_get_num_entries(ident_name_cache) > 0)
+	{
+		hash_seq_init(&status, ident_name_cache);
+		while ((entry = (IdentNameCacheEntry *) hash_seq_search(&status)) != NULL)
+		{
+			const char *key = entry->truncated_name;
+			int			key_len = strlen(key);
+			const char *found;
+			const char *search_msg = result ? result : msg;
+
+			/* Skip empty keys - strstr("anything","") never returns NULL */
+			if (key_len == 0)
+				continue;
+
+			/* Replace all occurrences of this key in the message */
+			found = strstr(search_msg, key);
+			while (found)
+			{
+				char	before;
+				char	after;
+				int		prefix_len;
+				int		orig_len;
+				int		suffix_len;
+				char   *newmsg;
+				char   *oldmsg;
+
+				/*
+				 * Word-boundary check: ensure the match is not part of a
+				 * larger identifier. The character before and after the match
+				 * must not be alphanumeric or underscore.
+				 */
+				before = (found > search_msg) ? *(found - 1) : '\0';
+				after = *(found + key_len);
+
+				if ((before != '\0' && (isalnum((unsigned char) before) || before == '_')) ||
+					(after != '\0' && (isalnum((unsigned char) after) || after == '_')))
+				{
+					/* Not a word boundary - skip to next occurrence */
+					found = strstr(found + key_len, key);
+					continue;
+				}
+
+				prefix_len = found - search_msg;
+				orig_len = strlen(entry->original_name);
+				suffix_len = strlen(found + key_len);
+				newmsg = MemoryContextAlloc(TopMemoryContext,
+										    prefix_len + orig_len + suffix_len + 1);
+				oldmsg = result;
+
+				memcpy(newmsg, search_msg, prefix_len);
+				memcpy(newmsg + prefix_len, entry->original_name, orig_len);
+				memcpy(newmsg + prefix_len + orig_len, found + key_len, suffix_len + 1);
+
+				/* Free intermediate allocation */
+				if (oldmsg)
+					pfree(oldmsg);
+
+				search_msg = newmsg;
+				result = newmsg;
+				found = strstr(search_msg + prefix_len + orig_len, key);
+			}
+		}
+	}
+
+	return result;
+}
+
+/*
+ * bbf_get_original_index_name - resolve the original (pre-truncation) name of
+ * an index for error-message display.
+ *
+ * PRIMARY KEY / UNIQUE indexes store their original name in the backing index
+ * relation's bbf_original_name reloption (present even for short physical
+ * names). We resolve the bare name to its relation Oid and delegate to the
+ * canonical get_original_relname(), which reads the reloption for index
+ * relkinds. Returns the original name (downcased, palloc'd) if one is stored,
+ * else the input idxname unchanged.
+ */
+static const char *
+bbf_get_original_index_name(const char *idxname)
+{
+	Oid			relid;
+	char	   *orig;
+
+	relid = RelnameGetRelid(idxname);
+	if (!OidIsValid(relid))
+		return idxname;
+
+	orig = get_original_relname(relid, false);
+	if (orig)
+	{
+		const char *result = idxname;
+
+		/* get_original_relname falls back to the physical relname. */
+		if (strcmp(orig, idxname) != 0)
+			result = downcase_identifier(orig, strlen(orig), false, false);
+		pfree(orig);
+		return result;
+	}
+
+	return idxname;
+}
+
+/*
+ * bbf_get_original_constraint_name - resolve the original (pre-truncation) name
+ * of a CHECK / FOREIGN KEY constraint (or parameter) for error-message display.
+ *
+ * These names live in the babelfish_identifier_mapping catalog, keyed by the
+ * 4-column primary key (truncated_name, nspname, pg_catalog_type, parent_name).
+ * The caller only has the bare name, so we recover the owning table's PHYSICAL
+ * namespace and name from pg_constraint (scanned by name), then delegate to the
+ * canonical lookup_bbf_ident_mapping(). Returns the original name (downcased,
+ * palloc'd) if a mapping exists, else the input conname unchanged.
+ */
+const char *
+bbf_get_original_constraint_name(const char *conname)
+{
+	Oid			relid;
+	char	   *orig = NULL;
+	SysScanDesc scan;
+	ScanKeyData skey[1];
+	HeapTuple	tuple;
+	Relation	rel;
+
+	if (!conname || strlen(conname) < NAMEDATALEN - 1)
+		return conname;
+
+	if (!IsTransactionState() || !OidIsValid(get_bbf_ident_mapping_oid()))
+		return conname;
+
+	ScanKeyInit(&skey[0],
+				Anum_pg_constraint_conname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(conname));
+
+	rel = table_open(ConstraintRelationId, AccessShareLock);
+	scan = systable_beginscan(rel, InvalidOid, false, NULL, 1, skey);
+
+	while (orig == NULL && HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+		char	   *nspname;
+		char	   *parent_name;
+
+		relid = con->conrelid;
+		if (!OidIsValid(relid))	/* only table constraints are mapped */
+			continue;
+
+		nspname = get_namespace_name(get_rel_namespace(relid));
+		parent_name = get_rel_name(relid);
+		if (nspname && parent_name)
+			orig = lookup_bbf_ident_mapping(conname, nspname,
+											BBF_IDENT_CONSTRAINT, parent_name);
+		if (nspname)
+			pfree(nspname);
+		if (parent_name)
+			pfree(parent_name);
+	}
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+
+	if (orig)
+	{
+		const char *result = downcase_identifier(orig, strlen(orig), false, false);
+
+		pfree(orig);
+		return result;
+	}
+
+	return conname;
+}
+
+/*
+ * bbf_get_original_ident_name - registered as bbf_get_original_ident_name_hook.
+ *
+ * The caller tells us whether the reported name is an index name (is_index):
+ *   - is_index = true: unique-violation reporting a PK/UNIQUE index name.
+ *     A standalone CREATE [UNIQUE] INDEX stores the true original name in the
+ *     backing index's bbf_original_name reloption, so the index lookup resolves
+ *     it. A UNIQUE/PRIMARY KEY *constraint*, however, stores the MD5-mangled
+ *     physical name in that reloption, so when the index lookup does not rewrite
+ *     the name we fall back to the constraint mapping (keyed by the constraint
+ *     name in babelfish_identifier_mapping). This fallback is required for the
+ *     cross-session case, where the session cache is empty and the TDS message
+ *     rewrite cannot help.
+ *   - is_index = false: CHECK/FK violation. Constraint mapping only -
+ *     no index relation lookup is performed.
+ *
+ * Returns the original name (palloc'd) when resolved, else ident_name unchanged.
+ */
+const char *
+bbf_get_original_ident_name(const char *ident_name, bool is_index)
+{
+	if (!ident_name || !IsTransactionState() ||
+		!OidIsValid(get_bbf_ident_mapping_oid()))
+		return ident_name;
+
+	if (is_index)
+	{
+		const char *resolved = bbf_get_original_index_name(ident_name);
+
+		/*
+		 * Resolved from the index reloption (standalone unique index). If the
+		 * name was not rewritten, it is a PK/UNIQUE constraint whose reloption
+		 * holds the mangled name, so fall back to the constraint mapping.
+		 */
+		if (resolved != ident_name)
+			return resolved;
+	}
+
+	return bbf_get_original_constraint_name(ident_name);
 }
