@@ -1,2 +1,3 @@
 select_into_rowcount
 TestInt
+babel_collation_latin1_general_versioned

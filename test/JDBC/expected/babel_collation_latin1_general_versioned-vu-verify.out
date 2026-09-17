@@ -1,0 +1,55 @@
+-- the upgrade script must register the versioned Latin1_General collations
+SELECT name FROM fn_helpcollations() WHERE name LIKE 'latin1[_]general[_]90[_]%' OR name LIKE 'latin1[_]general[_]100[_]%' OR name LIKE 'latin1[_]general[_]140[_]%' ORDER BY name;
+GO
+~~START~~
+varchar
+latin1_general_100_bin2
+latin1_general_100_ci_ai
+latin1_general_100_ci_as
+latin1_general_100_cs_ai
+latin1_general_100_cs_as
+latin1_general_140_bin2
+latin1_general_140_ci_ai
+latin1_general_140_ci_as
+latin1_general_140_cs_ai
+latin1_general_140_cs_as
+latin1_general_90_bin2
+latin1_general_90_ci_ai
+latin1_general_90_ci_as
+latin1_general_90_cs_ai
+latin1_general_90_cs_as
+~~END~~
+
+
+-- and the versioned names are usable against pre-existing data
+SELECT id FROM babel_coll_ver_vu_prepare_t WHERE val COLLATE Latin1_General_100_CI_AS = 'apfel' ORDER BY id;
+GO
+~~START~~
+int
+2
+3
+~~END~~
+
+SELECT id FROM babel_coll_ver_vu_prepare_t WHERE val COLLATE Latin1_General_100_CS_AS = 'apfel' ORDER BY id;
+GO
+~~START~~
+int
+2
+~~END~~
+
+SELECT id FROM babel_coll_ver_vu_prepare_t WHERE val COLLATE Latin1_General_140_CI_AI = 'apfel' ORDER BY id;
+GO
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+SELECT CAST(COLLATIONPROPERTY('Latin1_General_100_CI_AS', 'CodePage') AS INT) AS codepage;
+GO
+~~START~~
+int
+1252
+~~END~~
+

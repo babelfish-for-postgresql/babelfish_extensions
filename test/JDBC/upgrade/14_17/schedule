@@ -184,6 +184,7 @@ collation_tests_arabic
 collation_tests_greek
 collation_tests_mongolian
 collation_tests_polish
+babel_collation_latin1_general_versioned
 collation_tests
 babel_char
 BABEL-SQUARE
