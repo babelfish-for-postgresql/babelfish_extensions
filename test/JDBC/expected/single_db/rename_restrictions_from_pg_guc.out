@@ -45,11 +45,23 @@ CALL sys.sp_rename('master.dbo.rename_from_pg_guc_p3', 'rename_from_pg_guc_p3_ne
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: sp_rename is blocked in PG dialect.
-    Server SQLState: 0A000)~~
+~~ERROR (Message: ERROR: database "" does not exist. Make sure that the name is entered correctly.
+  Where: SQL statement "SELECT type INTO #tempTable FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id
+     WHERE s1.name = "@schemaname" AND (o1.name = "@subname" OR o1.object_id = OBJECT_ID(sys.babelfish_truncate_identifier(pg_catalog.lower("@schemaname")) + '.' + sys.babelfish_truncate_identifier(pg_catalog.lower("@subname"))))"
+PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 73 at SQL statement
+    Server SQLState: 3D000)~~
 
 RESET psql_logical_babelfish_db_name;
 GO
+
+-- calling sys.sp_renamedb directly must also be blocked while the GUC is off
+CALL sys.sp_renamedb('rename_from_pg_guc_db', 'rename_from_pg_guc_db_new');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: sp_renamedb is not supported from PostgreSQL endpoint.
+    Server SQLState: 0A000)~~
+
 
 -- psql
 ALTER DATABASE babelfish_db SET babelfishpg_tsql.enable_rename_from_pg = on;
@@ -76,20 +88,33 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: database "" does not exist. Make sure that the name is entered correctly.
-  Where: SQL statement "EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname"
-PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 131 at EXEC
+  Where: SQL statement "SELECT type INTO #tempTable FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id
+     WHERE s1.name = "@schemaname" AND (o1.name = "@subname" OR o1.object_id = OBJECT_ID(sys.babelfish_truncate_identifier(pg_catalog.lower("@schemaname")) + '.' + sys.babelfish_truncate_identifier(pg_catalog.lower("@subname"))))"
+PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 73 at SQL statement
     Server SQLState: 3D000)~~
 
 CALL sys.sp_rename('master.dbo.rename_from_pg_guc_p3_new', 'rename_from_pg_guc_p3', 'OBJECT');
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
-    Server SQLState: YY001)~~
+~~ERROR (Message: ERROR: database "" does not exist. Make sure that the name is entered correctly.
+  Where: SQL statement "SELECT type INTO #tempTable FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id
+     WHERE s1.name = "@schemaname" AND (o1.name = "@subname" OR o1.object_id = OBJECT_ID(sys.babelfish_truncate_identifier(pg_catalog.lower("@schemaname")) + '.' + sys.babelfish_truncate_identifier(pg_catalog.lower("@subname"))))"
+PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 73 at SQL statement
+    Server SQLState: 3D000)~~
 
 RESET psql_logical_babelfish_db_name;
 GO
+
+-- with the GUC on, sys.sp_renamedb must not hit our block; it fails for an
+-- unrelated reason (the target database does not exist) instead
+CALL sys.sp_renamedb('rename_from_pg_guc_db', 'rename_from_pg_guc_db_new');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Database rename_from_pg_guc_db does not exist. Make sure that the name is entered correctly.
+    Server SQLState: 22023)~~
+
 
 -- terminate-psql-conn user=rename_from_pg_guc_u_neg password=12345678
 -- terminate-psql-conn user=rename_from_pg_guc_u_pos password=12345678

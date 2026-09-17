@@ -37,6 +37,10 @@ GO
 RESET psql_logical_babelfish_db_name;
 GO
 
+-- calling sys.sp_renamedb directly must also be blocked while the GUC is off
+CALL sys.sp_renamedb('rename_from_pg_guc_db', 'rename_from_pg_guc_db_new');
+GO
+
 -- psql
 ALTER DATABASE babelfish_db SET babelfishpg_tsql.enable_rename_from_pg = on;
 GO
@@ -62,6 +66,11 @@ GO
 CALL sys.sp_rename('master.dbo.rename_from_pg_guc_p3_new', 'rename_from_pg_guc_p3', 'OBJECT');
 GO
 RESET psql_logical_babelfish_db_name;
+GO
+
+-- with the GUC on, sys.sp_renamedb must not hit our block; it fails for an
+-- unrelated reason (the target database does not exist) instead
+CALL sys.sp_renamedb('rename_from_pg_guc_db', 'rename_from_pg_guc_db_new');
 GO
 
 -- cleanup
