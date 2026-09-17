@@ -560,3 +560,86 @@ GO
 -- After drop: every mapping row for the dropped database is cleaned up (0).
 SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE '%Very_Long_DropDB%';
 GO
+
+
+-- ===========================================
+-- Constraint-name collision across tables (BABEL-5975)
+-- ===========================================
+-- Two tables in the same schema may legitimately reuse the SAME long
+-- constraint name (constraint names are table-scoped in T-SQL). Both truncate
+-- to the same physical conname, producing two mapping rows that differ only by
+-- parent_name. The constraint views must pass the parent table so each
+-- constraint resolves to its OWN original name (deterministically), not
+-- whichever mapping row LIMIT 1 happens to return.
+CREATE TABLE babel5975_collide_a (
+    id INT,
+    CONSTRAINT Shared_Long_Constraint_Name_Reused_On_Two_Tables_Exceeding_Sixty_Three_Bytes CHECK (id > 0)
+);
+GO
+CREATE TABLE babel5975_collide_b (
+    id INT,
+    CONSTRAINT Shared_Long_Constraint_Name_Reused_On_Two_Tables_Exceeding_Sixty_Three_Bytes CHECK (id > 0)
+);
+GO
+
+-- Each check constraint must resolve to the shared original name for its own
+-- table; both rows carry the same original name, so the key assertion is that
+-- EACH table shows exactly one row with the full (non-truncated) name.
+SELECT t.name AS table_name, c.name AS constraint_name
+FROM sys.check_constraints c
+JOIN sys.tables t ON t.object_id = c.parent_object_id
+WHERE t.name IN ('babel5975_collide_a', 'babel5975_collide_b')
+ORDER BY t.name;
+GO
+
+-- The full original name resolves (not the truncated hash form) for both.
+SELECT COUNT(*) FROM sys.check_constraints
+WHERE name = 'Shared_Long_Constraint_Name_Reused_On_Two_Tables_Exceeding_Sixty_Three_Bytes';
+GO
+
+DROP TABLE babel5975_collide_a;
+GO
+DROP TABLE babel5975_collide_b;
+GO
+
+
+-- ===========================================
+-- Stale-row overwrite (BABEL-5975)
+-- ===========================================
+-- A mapping row can only be left behind by a drop that bypasses the T-SQL DROP
+-- cleanup -- an interoperability path such as a PG-dialect drop, a cascaded
+-- drop, DROP OWNED BY / REASSIGN OWNED, or DROP EXTENSION (a pure T-SQL workload
+-- always cleans the row on DROP, and the catalog is SELECT-only so no user can
+-- inject a row). If such a stale row later collides on the same physical name
+-- with a new object that has a DIFFERENT original name, the new object must NOT
+-- display the old name: insert_bbf_ident_mapping overwrites a stale row whose
+-- original name differs from the new one.
+--
+-- Simulate the stale row directly (as a bypassed drop would leave it, pointing
+-- at a different old original name), then create a real long-named sequence
+-- whose physical name matches. The CREATE must overwrite the stale row so the
+-- sequence resolves to its OWN name.
+-- psql
+INSERT INTO sys.babelfish_identifier_mapping (nspname, pg_catalog_type, truncated_identifier_name, original_identifier_name, parent_name)
+VALUES ('master_dbo', 'pg_class'::regclass::oid,
+        sys.babelfish_truncate_identifier(lower('babel5975_stale_seq_name_that_exceeds_postgresql_sixty_three_byte_limit_stale')),
+        'STALE_ROW_FROM_A_BYPASSED_DROP', '');
+GO
+
+-- tsql
+CREATE SEQUENCE babel5975_stale_seq_name_that_exceeds_postgresql_sixty_three_byte_limit_stale AS INT START WITH 1;
+GO
+
+-- The mapping row must now hold the NEW sequence's own original name (the stale
+-- value was overwritten by the CREATE), proving a stale row cannot mask a later
+-- object's real name.
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping WHERE truncated_identifier_name LIKE 'babel5975_stale_seq_name%';
+GO
+
+-- The stale value must be gone (overwritten).
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping
+WHERE original_identifier_name = 'STALE_ROW_FROM_A_BYPASSED_DROP';
+GO
+
+DROP SEQUENCE babel5975_stale_seq_name_that_exceeds_postgresql_sixty_three_byte_limit_stale;
+GO

@@ -716,7 +716,7 @@ GRANT SELECT ON sys.foreign_key_columns TO PUBLIC;
 
 CREATE OR replace view sys.foreign_keys AS
 SELECT
-  CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid) AS sys.sysname) AS name
+  CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END) AS sys.sysname) AS name
 , CAST(c.oid AS INT) AS object_id
 , CAST(NULL AS INT) AS principal_id
 , CAST(sch.schema_id AS INT) AS schema_id
@@ -923,7 +923,7 @@ GRANT SELECT ON sys.indexes TO PUBLIC;
 
 CREATE OR replace view sys.key_constraints AS
 SELECT
-    CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid) AS sysname) AS name
+    CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END) AS sysname) AS name
   , CAST(c.oid AS INT) AS object_id
   , CAST(0 AS INT) AS principal_id
   , CAST(sch.schema_id AS INT) AS schema_id
@@ -1268,7 +1268,7 @@ AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES
 GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
 CREATE or replace VIEW sys.check_constraints AS
-SELECT CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid) as sys.sysname) as name
+SELECT CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END) as sys.sysname) as name
   , CAST(oid as integer) as object_id
   , CAST(NULL as integer) as principal_id 
   , CAST(c.connamespace as integer) as schema_id
@@ -1413,7 +1413,7 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined and system foreign key constraints
 select
-    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid)::sys.sysname as name
+    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.sysname as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1435,7 +1435,7 @@ and (s.nspname = 'sys' or ext.nspname is not null)
 union all
 -- details of user defined and system primary key constraints
 select
-    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid)::sys.sysname as name
+    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.sysname as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1633,7 +1633,7 @@ and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES
 union all
 -- details of all check constraints
 select
-    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid)::sys.sysname
+    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.sysname
   , c.oid::integer as object_id
   , NULL::integer as principal_id 
   , s.oid as schema_id

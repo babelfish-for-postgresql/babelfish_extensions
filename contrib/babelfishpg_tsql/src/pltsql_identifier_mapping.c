@@ -143,29 +143,48 @@ insert_bbf_ident_mapping(const char *truncated_name,
 		return;
 
 	/*
-	 * Skip if an identical entry already exists.
+	 * If a row for this key already exists, decide between a no-op and an
+	 * overwrite based on its stored original name.
 	 *
 	 * The primary key is (truncated_name, nspname, pg_catalog_type,
-	 * parent_name). Reaching this point with the key already present means the
-	 * exact same object is being (re)stored -- e.g. CREATE OR REPLACE of a
-	 * function/type, or a statement whose utility hook fires more than once for
-	 * the same object. In those cases the original name for a given physical
-	 * name is deterministic and cannot differ, so the existing row is already
-	 * correct and re-inserting would only raise a spurious duplicate-key error
-	 * that aborts otherwise-valid DDL. We therefore skip rather than ERROR.
+	 * parent_name). Two situations reach this point:
 	 *
-	 * This is not a source of stale rows: rows are removed by the DROP/rename
-	 * cleanup paths (delete_bbf_ident_mapping, update_bbf_ident_mapping_parent)
-	 * which key on the same physical (namespace, parent) identifiers, so any
-	 * row we skip over is one that a live object still owns.
+	 *  1. The exact same object is being (re)stored -- e.g. CREATE OR REPLACE
+	 *     of a function/type, or a utility hook that fires more than once for
+	 *     the same statement. The existing original name matches the new one,
+	 *     so we simply skip (re-inserting would raise a spurious duplicate-key
+	 *     error that aborts otherwise-valid DDL).
+	 *
+	 *  2. A stale row was left behind by a drop that bypassed the T-SQL DROP
+	 *     cleanup. This can only happen through interoperability paths (a drop
+	 *     issued in the PG dialect, a cascaded drop, DROP OWNED BY / REASSIGN
+	 *     OWNED, or DROP EXTENSION) -- a pure T-SQL workload always cleans the
+	 *     row on DROP. The catalog is also SELECT-only to users, so no user can
+	 *     inject such a row. In that rare case a new object whose physical name
+	 *     collides with the orphan is being created with a DIFFERENT original
+	 *     name; we must not keep displaying the old object's name, so overwrite
+	 *     the row with the new original name instead of skipping.
+	 *
+	 * Distinguish the two by comparing the stored original name: identical =>
+	 * skip; different => overwrite (delete the stale row, then insert below).
 	 */
 	{
 		char *existing = lookup_bbf_ident_mapping(truncated_name, nspname,
 												  objtype, parent_name);
 		if (existing)
 		{
+			bool identical = (strcmp(existing, original_name) == 0);
+
 			pfree(existing);
-			return;
+			if (identical)
+				return;
+
+			/*
+			 * Stale row masking a new object's name: remove it so the insert
+			 * below records the correct current original name.
+			 */
+			delete_bbf_ident_mapping(truncated_name, nspname, objtype,
+									 parent_name);
 		}
 	}
 

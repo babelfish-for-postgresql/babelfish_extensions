@@ -16,3 +16,7 @@ DROP TABLE babel5975_cat_vu_alter_tbl;
 GO
 DROP TABLE babel5975_cat_vu_alter_parent;
 GO
+DROP TABLE babel5975_cat_vu_collide_ta;
+GO
+DROP TABLE babel5975_cat_vu_collide_tb;
+GO

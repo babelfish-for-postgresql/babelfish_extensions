@@ -216,3 +216,23 @@ GO
 -- Expect 0.
 SELECT count(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE 'babel5975_cat_vu_SchemaScopedCheckConstraint%';
 GO
+
+-- BABEL-5975: constraint-name collision. Both tables share the
+-- same long constraint name; each must resolve to its own row via the parent
+-- table passed to sys.bbf_get_original_identifier_name in the constraint views.
+-- Each table shows exactly one check constraint with the full original name,
+-- tied to its own parent_object_id.
+SELECT t.name AS table_name, c.name AS constraint_name
+FROM sys.check_constraints c
+JOIN sys.tables t ON t.object_id = c.parent_object_id
+WHERE t.name IN ('babel5975_cat_vu_collide_ta', 'babel5975_cat_vu_collide_tb')
+ORDER BY t.name;
+GO
+-- Both resolve to the full (non-truncated) shared name: expect 2.
+SELECT count(*) FROM sys.check_constraints
+WHERE name = 'Shared_Long_Check_Constraint_Reused_On_Two_Tables_Exceeding_Sixty_Three_CatVU';
+GO
+-- Exactly two mapping rows exist, one per parent table (not collapsed): expect 2.
+SELECT count(*) FROM sys.babelfish_identifier_mapping
+WHERE original_identifier_name = 'Shared_Long_Check_Constraint_Reused_On_Two_Tables_Exceeding_Sixty_Three_CatVU';
+GO

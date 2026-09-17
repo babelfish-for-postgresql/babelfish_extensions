@@ -61,3 +61,22 @@ GO
 ALTER TABLE babel5975_cat_vu_alter_tbl ADD CONSTRAINT Very_Long_Alter_Foreign_Key_Constraint_Name_Exceeds_Sixty_Three_Bytes_CatVU FOREIGN KEY (pid) REFERENCES babel5975_cat_vu_alter_parent (id);
 GO
 
+
+-- BABEL-5975: constraint-name collision coverage. Two tables
+-- in the same schema reuse the SAME long constraint name (legal in T-SQL --
+-- constraint names are table-scoped). Both truncate to the same physical
+-- conname, producing two mapping rows that differ only by parent_name (the
+-- table). The constraint views must pass the parent table so each constraint
+-- resolves to its own name deterministically -- and must still do so after
+-- dump/restore.
+CREATE TABLE babel5975_cat_vu_collide_ta (
+    id INT,
+    CONSTRAINT Shared_Long_Check_Constraint_Reused_On_Two_Tables_Exceeding_Sixty_Three_CatVU CHECK (id > 0)
+);
+GO
+CREATE TABLE babel5975_cat_vu_collide_tb (
+    id INT,
+    CONSTRAINT Shared_Long_Check_Constraint_Reused_On_Two_Tables_Exceeding_Sixty_Three_CatVU CHECK (id > 0)
+);
+GO
+
