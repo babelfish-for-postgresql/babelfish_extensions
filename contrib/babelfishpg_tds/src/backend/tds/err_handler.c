@@ -378,9 +378,12 @@ emit_tds_log(ErrorData *edata)
 			TdsSendError(tsql_error_code, tsql_error_state, tsql_error_sev,
 						 msg, error_lineno);
 
-			/* Free rewritten message allocated in TopMemoryContext */
-			if (msg != edata->message)
-				pfree(msg);
+			/*
+			 * The rewritten message (if any) is allocated in ErrorContext by
+			 * bbf_rewrite_truncated_identifiers, which the error subsystem
+			 * reclaims when it finishes processing this error - so it is not
+			 * leaked even if TdsSendError throws and skips an explicit free.
+			 */
 		}
 
 		/*

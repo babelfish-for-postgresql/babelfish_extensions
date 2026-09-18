@@ -6626,6 +6626,15 @@ pltsql_truncate_identifier(char *ident, int len, bool warn)
 
 		memcpy(ident, buf, len + MD5_HASH_LEN + 1);
 
+		/*
+		 * Cache the truncated->original mapping only for warn=true truncations.
+		 * warn=true is the signal that this identifier came from user-supplied
+		 * SQL text (the scanner/parser paths that also emit the "will be
+		 * truncated" NOTICE) - i.e. a name the user typed and could see echoed
+		 * in a later error message. warn=false paths are internal/programmatic
+		 * truncations (e.g. cursor names, GUC values) that are not user-visible
+		 * object names, so caching them would only add noise and grow the cache.
+		 */
 		if (saved_ident[0] != '\0' && warn)
 			bbf_cache_ident_name(ident, saved_ident);
 	}

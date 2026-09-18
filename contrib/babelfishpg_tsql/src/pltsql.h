@@ -2419,8 +2419,8 @@ extern void bbf_reset_ident_name_cache(void);
 extern int	bbf_snapshot_ident_cache(IdentNameCacheEntry **entries, MemoryContext cxt);
 extern void bbf_restore_ident_cache(IdentNameCacheEntry *entries, int n);
 extern PGDLLEXPORT char *bbf_rewrite_truncated_identifiers(const char *msg);
-extern const char *bbf_get_original_constraint_name(const char *conname);
-extern const char *bbf_get_original_ident_name(const char *ident_name, bool is_index);
+extern const char *bbf_get_original_parameter_name(const char *param_name, Oid proc_oid);
+extern const char *bbf_get_original_ident_name(const char *ident_name, Oid object_id, bool is_index);
 
 /* more helpers in pltsql_identifier_mapping.c used by pl_handler.c */
 extern AlterTableCmd *build_set_option_cmd(AlterTableType subtype,

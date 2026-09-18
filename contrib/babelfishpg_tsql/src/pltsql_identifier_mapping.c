@@ -26,6 +26,7 @@
 #include "access/htup_details.h"
 #include "access/stratnum.h"
 #include "access/table.h"
+#include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_class.h"
@@ -44,6 +45,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "utils/syscache.h"
 
 #include "catalog.h"
 #include "pltsql.h"
@@ -1320,7 +1322,7 @@ bbf_cache_ident_name(const char *truncated_name, const char *original_name)
 	if (!truncated_name || truncated_name[0] == '\0')
 		return;
 
-	if (strlen(original_name) < NAMEDATALEN - 1)
+	if (!original_name || strlen(original_name) < NAMEDATALEN - 1)
 		return;
 
 	ensure_ident_name_cache();
@@ -1407,14 +1409,40 @@ bbf_rewrite_truncated_identifiers(const char *msg)
 
 				/*
 				 * Word-boundary check: ensure the match is not part of a
-				 * larger identifier. The character before and after the match
-				 * must not be alphanumeric or underscore.
+				 * larger identifier, and does not start/end in the middle of a
+				 * multi-byte (UTF-8) character.
+				 *
+				 * A UTF-8 continuation byte matches (b & 0xC0) == 0x80. If the
+				 * byte immediately before the match is a continuation byte, the
+				 * match started inside a codepoint; if the first byte after the
+				 * match is a continuation byte, the match ended inside a
+				 * codepoint. Either way a replacement would corrupt UTF-8, so
+				 * skip. (A lead byte neighbour is fine - that is a complete,
+				 * separate character.) For single-byte (ASCII) neighbours we
+				 * additionally reject alphanumeric / underscore so we do not
+				 * rewrite a substring of a larger identifier.
 				 */
 				before = (found > search_msg) ? *(found - 1) : '\0';
 				after = *(found + key_len);
 
-				if ((before != '\0' && (isalnum((unsigned char) before) || before == '_')) ||
-					(after != '\0' && (isalnum((unsigned char) after) || after == '_')))
+				if (((unsigned char) before & 0xC0) == 0x80 ||
+					((unsigned char) after & 0xC0) == 0x80)
+				{
+					/* Match edge falls inside a multi-byte char - skip */
+					found = strstr(found + key_len, key);
+					continue;
+				}
+
+				/*
+				 * Reject a match that abuts a larger ASCII identifier. Only
+				 * apply the alnum/underscore test to genuine ASCII bytes
+				 * (< 0x80); a multibyte lead byte here is a complete, separate
+				 * character and thus a valid boundary.
+				 */
+				if ((!IS_HIGHBIT_SET(before) && before != '\0' &&
+					 (isalnum((unsigned char) before) || before == '_')) ||
+					(!IS_HIGHBIT_SET(after) && after != '\0' &&
+					 (isalnum((unsigned char) after) || after == '_')))
 				{
 					/* Not a word boundary - skip to next occurrence */
 					found = strstr(found + key_len, key);
@@ -1424,7 +1452,14 @@ bbf_rewrite_truncated_identifiers(const char *msg)
 				prefix_len = found - search_msg;
 				orig_len = strlen(entry->original_name);
 				suffix_len = strlen(found + key_len);
-				newmsg = MemoryContextAlloc(TopMemoryContext,
+				/*
+				 * Allocate in ErrorContext: this runs on the error-emission
+				 * path, and ErrorContext is reset once the error has been
+				 * processed, so the rewritten message is reclaimed automatically
+				 * and never leaks even if the send throws. (Intermediate
+				 * allocations are still freed explicitly below.)
+				 */
+				newmsg = MemoryContextAlloc(ErrorContext,
 										    prefix_len + orig_len + suffix_len + 1);
 				oldmsg = result;
 
@@ -1458,16 +1493,21 @@ bbf_rewrite_truncated_identifiers(const char *msg)
  * else the input idxname unchanged.
  */
 static const char *
-bbf_get_original_index_name(const char *idxname)
+bbf_get_original_index_name(const char *idxname, Oid idxoid)
 {
-	Oid			relid;
 	char	   *orig;
 
-	relid = RelnameGetRelid(idxname);
-	if (!OidIsValid(relid))
+	/*
+	 * Prefer the Oid the caller passed (the index relation Oid at the error
+	 * site); only fall back to resolving the name through the search path when
+	 * no Oid is available.
+	 */
+	if (!OidIsValid(idxoid))
+		idxoid = RelnameGetRelid(idxname);
+	if (!OidIsValid(idxoid))
 		return idxname;
 
-	orig = get_original_relname(relid, false);
+	orig = get_original_relname(idxoid, false);
 	if (orig)
 	{
 		const char *result = idxname;
@@ -1483,63 +1523,87 @@ bbf_get_original_index_name(const char *idxname)
 }
 
 /*
- * bbf_get_original_constraint_name - resolve the original (pre-truncation) name
- * of a CHECK / FOREIGN KEY constraint (or parameter) for error-message display.
+ * bbf_get_original_constraint_name_by_relid - resolve the original name of a
+ * CHECK / FOREIGN KEY constraint from its OWNING relation's Oid.
  *
- * These names live in the babelfish_identifier_mapping catalog, keyed by the
- * 4-column primary key (truncated_name, nspname, pg_catalog_type, parent_name).
- * The caller only has the bare name, so we recover the owning table's PHYSICAL
- * namespace and name from pg_constraint (scanned by name), then delegate to the
- * canonical lookup_bbf_ident_mapping(). Returns the original name (downcased,
- * palloc'd) if a mapping exists, else the input conname unchanged.
+ * Constraint original names are stored in babelfish_identifier_mapping keyed by
+ * (truncated_name, physical nspname, BBF_IDENT_CONSTRAINT, physical parent
+ * relation name), where the parent is the constraint's owning relation
+ * (pg_constraint.conrelid). Both error sites already have that relation's Oid
+ * in hand - the check-violation site the target table, the FK-violation site
+ * riinfo->fk_relid (a FK's conrelid is its referencing table) - so we derive
+ * nspname/parent directly from the relation and issue a single mapping lookup,
+ * with no pg_constraint scan or CONSTROID syscache access. Returns the original
+ * name (downcased, palloc'd) if a mapping exists, else NULL.
+ */
+static const char *
+bbf_get_original_constraint_name_by_relid(const char *conname, Oid relid)
+{
+	char	   *nspname;
+	char	   *parent_name;
+	char	   *orig = NULL;
+	const char *result = NULL;
+
+	if (!OidIsValid(relid))
+		return NULL;
+
+	nspname = get_namespace_name(get_rel_namespace(relid));
+	parent_name = get_rel_name(relid);
+	if (nspname && parent_name)
+		orig = lookup_bbf_ident_mapping(conname, nspname,
+										BBF_IDENT_CONSTRAINT, parent_name);
+	if (nspname)
+		pfree(nspname);
+	if (parent_name)
+		pfree(parent_name);
+
+	if (orig)
+	{
+		result = downcase_identifier(orig, strlen(orig), false, false);
+		pfree(orig);
+	}
+	return result;
+}
+
+/*
+ * bbf_get_original_parameter_name - resolve the original (pre-truncation) name
+ * of a procedure/function parameter for "parameter was not supplied" errors.
+ *
+ * Parameters are stored in babelfish_identifier_mapping under BBF_IDENT_PARAMETER
+ * keyed by (truncated_name, physical schema, parent = procedure name), which is
+ * a different key space than constraints. We recover the owning procedure's
+ * physical namespace and name from its Oid (via the PROCOID syscache), then
+ * delegate to lookup_bbf_ident_mapping(). Returns the original name (downcased,
+ * palloc'd) if a mapping exists, else the input param_name unchanged.
  */
 const char *
-bbf_get_original_constraint_name(const char *conname)
+bbf_get_original_parameter_name(const char *param_name, Oid proc_oid)
 {
-	Oid			relid;
-	char	   *orig = NULL;
-	SysScanDesc scan;
-	ScanKeyData skey[1];
 	HeapTuple	tuple;
-	Relation	rel;
+	Form_pg_proc proc;
+	char	   *nspname;
+	char	   *orig = NULL;
 
-	if (!conname || strlen(conname) < NAMEDATALEN - 1)
-		return conname;
+	if (!param_name || strlen(param_name) < BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+		return param_name;
 
-	if (!IsTransactionState() || !OidIsValid(get_bbf_ident_mapping_oid()))
-		return conname;
+	if (!IsTransactionState() || !OidIsValid(proc_oid) ||
+		!OidIsValid(get_bbf_ident_mapping_oid()))
+		return param_name;
 
-	ScanKeyInit(&skey[0],
-				Anum_pg_constraint_conname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(conname));
+	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(proc_oid));
+	if (!HeapTupleIsValid(tuple))
+		return param_name;
 
-	rel = table_open(ConstraintRelationId, AccessShareLock);
-	scan = systable_beginscan(rel, InvalidOid, false, NULL, 1, skey);
-
-	while (orig == NULL && HeapTupleIsValid(tuple = systable_getnext(scan)))
+	proc = (Form_pg_proc) GETSTRUCT(tuple);
+	nspname = get_namespace_name(proc->pronamespace);
+	if (nspname)
 	{
-		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
-		char	   *nspname;
-		char	   *parent_name;
-
-		relid = con->conrelid;
-		if (!OidIsValid(relid))	/* only table constraints are mapped */
-			continue;
-
-		nspname = get_namespace_name(get_rel_namespace(relid));
-		parent_name = get_rel_name(relid);
-		if (nspname && parent_name)
-			orig = lookup_bbf_ident_mapping(conname, nspname,
-											BBF_IDENT_CONSTRAINT, parent_name);
-		if (nspname)
-			pfree(nspname);
-		if (parent_name)
-			pfree(parent_name);
+		orig = lookup_bbf_ident_mapping(param_name, nspname,
+										BBF_IDENT_PARAMETER, NameStr(proc->proname));
+		pfree(nspname);
 	}
-
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
+	ReleaseSysCache(tuple);
 
 	if (orig)
 	{
@@ -1549,13 +1613,15 @@ bbf_get_original_constraint_name(const char *conname)
 		return result;
 	}
 
-	return conname;
+	return param_name;
 }
+
 
 /*
  * bbf_get_original_ident_name - registered as bbf_get_original_ident_name_hook.
  *
- * The caller tells us whether the reported name is an index name (is_index):
+ * object_id is the index/constraint Oid when the caller has it (InvalidOid
+ * otherwise); is_index selects the lookup:
  *   - is_index = true: unique-violation reporting a PK/UNIQUE index name.
  *     A standalone CREATE [UNIQUE] INDEX stores the true original name in the
  *     backing index's bbf_original_name reloption, so the index lookup resolves
@@ -1565,30 +1631,69 @@ bbf_get_original_constraint_name(const char *conname)
  *     name in babelfish_identifier_mapping). This fallback is required for the
  *     cross-session case, where the session cache is empty and the TDS message
  *     rewrite cannot help.
- *   - is_index = false: CHECK/FK violation. Constraint mapping only -
- *     no index relation lookup is performed.
+ *   - is_index = false: CHECK/FK violation. object_id is the constraint's
+ *     owning relation; the constraint mapping is resolved directly from it. No
+ *     index relation lookup is performed. With no usable Oid, the name is
+ *     returned unchanged.
  *
  * Returns the original name (palloc'd) when resolved, else ident_name unchanged.
  */
 const char *
-bbf_get_original_ident_name(const char *ident_name, bool is_index)
+bbf_get_original_ident_name(const char *ident_name, Oid object_id, bool is_index)
 {
+	Oid			table_oid;			/* owning relation of the constraint */
+
 	if (!ident_name || !IsTransactionState() ||
 		!OidIsValid(get_bbf_ident_mapping_oid()))
 		return ident_name;
 
 	if (is_index)
 	{
-		const char *resolved = bbf_get_original_index_name(ident_name);
+		/*
+		 * Index path always runs regardless of name length: a PK/UNIQUE index's
+		 * physical name is mangled (name+table+md5) and its bbf_original_name
+		 * reloption is present even when the user's index name is short, so
+		 * get_original_relname() can resolve short names too.
+		 */
+		const char *resolved = bbf_get_original_index_name(ident_name, object_id);
+
+		if (resolved != ident_name)
+			return resolved;
 
 		/*
-		 * Resolved from the index reloption (standalone unique index). If the
-		 * name was not rewritten, it is a PK/UNIQUE constraint whose reloption
-		 * holds the mangled name, so fall back to the constraint mapping.
+		 * Not resolved from the reloption: it is a PK/UNIQUE *constraint* whose
+		 * backing-index reloption holds the mangled name. The constraint is
+		 * owned by the index's TABLE (conrelid), so resolve the index Oid to
+		 * its table for the constraint-mapping fallback below.
 		 */
-		if (resolved != ident_name)
+		table_oid = OidIsValid(object_id) ?
+			IndexGetRelation(object_id, true /* missing_ok */) : InvalidOid;
+	}
+	else
+	{
+		/*
+		 * CHECK / FK violation: the caller already passes the constraint's
+		 * owning relation Oid (target table / fk_relid).
+		 */
+		table_oid = object_id;
+	}
+
+	/*
+	 * Constraint-mapping fallback (shared by both paths). Constraint mappings
+	 * exist only for long originals, so short names are skipped. Use
+	 * BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD (not NAMEDATALEN - 1) because multibyte
+	 * names can truncate to fewer than NAMEDATALEN - 1 bytes. Resolves directly
+	 * from the relation - no pg_constraint scan.
+	 */
+	if (OidIsValid(table_oid) &&
+		strlen(ident_name) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+	{
+		const char *resolved = bbf_get_original_constraint_name_by_relid(ident_name, table_oid);
+
+		if (resolved)
 			return resolved;
 	}
 
-	return bbf_get_original_constraint_name(ident_name);
+	/* Nothing more we can resolve. */
+	return ident_name;
 }

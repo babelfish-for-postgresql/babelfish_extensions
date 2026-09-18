@@ -241,6 +241,23 @@ GO
 DROP TABLE ErrTest_Constraint_Table;
 GO
 
+-- Multibyte (UTF-8) long constraint names: the rewrite must show the original
+-- name intact without splitting a multi-byte character. Each Japanese kana is
+-- 3 bytes in UTF-8, so these names exceed the 63-byte physical limit.
+CREATE TABLE ErrTest_MB_Constraint (c1 INT, c2 INT,
+    CONSTRAINT 検査制約_非常に長いチェック制約名前がポストグレスの六十三バイト制限を超える場合のテスト CHECK (c2 > c1));
+GO
+INSERT INTO ErrTest_MB_Constraint(c1, c2) VALUES(5, 2);
+GO
+ALTER TABLE ErrTest_MB_Constraint ADD CONSTRAINT 一意制約_非常に長い一意制約名前がポストグレスの六十三バイト制限を超える場合のテスト UNIQUE (c1);
+GO
+INSERT INTO ErrTest_MB_Constraint(c1, c2) VALUES(1, 5);
+GO
+INSERT INTO ErrTest_MB_Constraint(c1, c2) VALUES(1, 9);
+GO
+DROP TABLE ErrTest_MB_Constraint;
+GO
+
 -- ===========================================
 -- INDEX-specific errors
 -- ===========================================
@@ -536,6 +553,33 @@ GO
 CREATE PROCEDURE ErrTest_Proc_Long_TVP_Param @Very_Long_TVP_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters ErrTest_TVP_Type READONLY AS SELECT * FROM @Very_Long_TVP_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
 GO
 EXEC ErrTest_Proc_Long_TVP_Param;
+GO
+
+-- Cross-session parameter name resolution: the function is created on the
+-- default connection; the missing-parameter error is triggered from a separate
+-- login connection with an empty session cache, so the original parameter name
+-- must be resolved from babelfish_identifier_mapping (BBF_IDENT_PARAMETER),
+-- not the cache. Fails (shows mangled name) without that catalog lookup.
+CREATE LOGIN err5975_param_login WITH PASSWORD = '12345678';
+GO
+CREATE USER err5975_param_user FOR LOGIN err5975_param_login;
+GO
+ALTER ROLE db_owner ADD MEMBER err5975_param_user;
+GO
+CREATE FUNCTION ErrTest_Func_XSess_Param(@Very_Long_XSess_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three INT) RETURNS INT AS BEGIN RETURN @Very_Long_XSess_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three END;
+GO
+
+-- tsql user=err5975_param_login password=12345678
+SELECT dbo.ErrTest_Func_XSess_Param();
+GO
+
+-- terminate-tsql-conn user=err5975_param_login password=12345678
+-- tsql
+DROP FUNCTION ErrTest_Func_XSess_Param;
+GO
+DROP USER err5975_param_user;
+GO
+DROP LOGIN err5975_param_login;
 GO
 
 DROP FUNCTION ErrTest_Func_Long_Param;

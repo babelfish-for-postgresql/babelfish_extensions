@@ -903,9 +903,27 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	/*
 	 * Snapshot identifier cache into the function struct after first execution.
 	 * On re-execution, these will be restored so error messages show full names.
+	 *
+	 * These mappings are a display convenience, not correctness, and this runs
+	 * after the main execution try/catch has ended - so an allocation failure
+	 * here must not abort the normal cleanup path (SPI disconnect, eval context
+	 * teardown). Treat any failure as "no mappings" and swallow it.
 	 */
 	if (func->n_ident_mappings == 0)
-		func->n_ident_mappings = bbf_snapshot_ident_cache(&func->ident_mappings, func->fn_cxt);
+	{
+		PG_TRY();
+		{
+			func->n_ident_mappings =
+				bbf_snapshot_ident_cache(&func->ident_mappings, func->fn_cxt);
+		}
+		PG_CATCH();
+		{
+			FlushErrorState();
+			func->n_ident_mappings = 0;
+			func->ident_mappings = NULL;
+		}
+		PG_END_TRY();
+	}
 
 	/*
 	 * Let the instrumentation plugin peek at this function

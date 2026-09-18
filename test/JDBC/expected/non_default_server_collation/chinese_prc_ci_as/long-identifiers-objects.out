@@ -1981,7 +1981,7 @@ INSERT INTO babel5052_renamed (a, b, c) VALUES (2, 1, 2);
 GO
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "babel5052_uq_idxbabel5052_renamd9245cb3ecfe2ae257fd8de611c6ab7b")~~
+~~ERROR (Message: duplicate key value violates unique constraint "babel5052_uq_idx")~~
 
 -- DROP INDEX by original name on the renamed table must succeed (the bug)
 DROP INDEX babel5052_idx ON babel5052_renamed;
