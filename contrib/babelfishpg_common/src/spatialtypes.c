@@ -1756,7 +1756,7 @@ set_dimension_flag(GeometryData *geom_data)
                 break;
             }
             /* Non-empty: fall through to COMPLEX_GEOM_2D handling */
-            /* FALLTHROUGH */
+            pg_fallthrough;
 
         case COMPLEX_GEOM_2D:  /* 0x00 — no flags (invalid 2D complex) */
             geom_data->dimension_flag = DIM_FLAG_2D;
@@ -4405,9 +4405,9 @@ bbf_detoast_both_args(FunctionCallInfo fcinfo)
     Datum d0 = fcinfo->args[0].value;
     Datum d1 = fcinfo->args[1].value;
 
-    if (VARATT_IS_EXTENDED(d0))
+    if (VARATT_IS_EXTENDED(DatumGetPointer(d0)))
         fcinfo->args[0].value = PointerGetDatum(PG_DETOAST_DATUM(d0));
-    if (VARATT_IS_EXTENDED(d1))
+    if (VARATT_IS_EXTENDED(DatumGetPointer(d1)))
         fcinfo->args[1].value = PointerGetDatum(PG_DETOAST_DATUM(d1));
 }
 
@@ -4421,7 +4421,7 @@ bbf_detoast_one_arg(FunctionCallInfo fcinfo)
 {
     Datum d0 = fcinfo->args[0].value;
 
-    if (VARATT_IS_EXTENDED(d0))
+    if (VARATT_IS_EXTENDED(DatumGetPointer(d0)))
         fcinfo->args[0].value = PointerGetDatum(PG_DETOAST_DATUM(d0));
 }
 
@@ -4444,7 +4444,7 @@ get_srid_from_header(const GSERIALIZED *g)
 static inline GSERIALIZED *
 get_geometry_header(Datum datum)
 {
-    if (VARATT_IS_EXTENDED(datum))
+    if (VARATT_IS_EXTENDED(DatumGetPointer(datum)))
         return (GSERIALIZED *) PG_DETOAST_DATUM_SLICE(datum, 0, GSERIALIZED_HDR_SIZE);
     else
         return (GSERIALIZED *) DatumGetPointer(datum);
@@ -4497,13 +4497,13 @@ fetch_bboxes(Datum a, Datum b, GBOX2D **out_a, GBOX2D **out_b)
 {
     GSERIALIZED *ga, *gb;
 
-    if (VARATT_IS_EXTENDED(a))
+    if (VARATT_IS_EXTENDED(DatumGetPointer(a)))
         ga = (GSERIALIZED *) PG_DETOAST_DATUM_SLICE(a, 0,
                                                     GSERIALIZED_HDR_SIZE + 8 + sizeof(GBOX2D));
     else
         ga = (GSERIALIZED *) DatumGetPointer(a);
 
-    if (VARATT_IS_EXTENDED(b))
+    if (VARATT_IS_EXTENDED(DatumGetPointer(b)))
         gb = (GSERIALIZED *) PG_DETOAST_DATUM_SLICE(b, 0,
                                                     GSERIALIZED_HDR_SIZE + 8 + sizeof(GBOX2D));
     else
@@ -4643,7 +4643,7 @@ gserialized_typecode(Datum datum)
     const uint8_t *p;
     uint32_t     type;
 
-    if (VARATT_IS_EXTENDED(datum))
+    if (VARATT_IS_EXTENDED(DatumGetPointer(datum)))
         g = (GSERIALIZED *) PG_DETOAST_DATUM_SLICE(datum, 0,
                                                    GSERIALIZED_TYPE_SLICE_SIZE);
     else
