@@ -1037,18 +1037,16 @@ sql_variant
 
 -- Testing computed columns and constraints with quoted_identifier as OFF 
 -- Testing computed columns created on wrapper function of xml exist when quoted_identifier was ON
+SET QUOTED_IDENTIFIER ON
+GO
 INSERT INTO babel_5222_xml_exist_compcol1 VALUES (1, '<artist name="Rohit Bhagat" />')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+~~ROW COUNT: 1~~
 
 
 INSERT INTO babel_5222_xml_exist_compcol1 VALUES (2, '<artist />')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+~~ROW COUNT: 1~~
 
 
 SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol1 ORDER BY id
@@ -1056,6 +1054,8 @@ GO
 ~~START~~
 xml#!#bit
 <artist name="Rohit Bhagat" />#!#1
+<artist name="Rohit Bhagat" />#!#1
+<artist />#!#0
 <artist />#!#0
 ~~END~~
 
@@ -1063,16 +1063,14 @@ xml#!#bit
 -- Testing constraint created on wrapper function of xml exist when quoted_identifier was OFF
 INSERT INTO babel_5222_xml_exist_constraint1 VALUES ('<artist name="Rohit Bhagat" />')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+~~ROW COUNT: 1~~
 
 
 INSERT INTO babel_5222_xml_exist_constraint1 VALUES ('<artist />')
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 547)~~
 
-~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+~~ERROR (Message: new row for relation "babel_5222_xml_exist_constraint1" violates check constraint "chknameexist1")~~
 
 
 -- Testing view created on xml exist when quoted_identifier was OFF
@@ -1080,25 +1078,22 @@ SELECT * FROM babel_5222_xml_exist_dep_view2
 GO
 ~~START~~
 bit
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+1
+~~END~~
 
 
 -- Testing computed columns and constraints with quoted_identifier as OFF 
 -- Testing computed columns created on wrapper function of xml exist when quoted_identifier was OFF
+SET QUOTED_IDENTIFIER ON
+GO
 INSERT INTO babel_5222_xml_exist_compcol2 VALUES (1, '<artist name="Rohit Bhagat" />')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+~~ROW COUNT: 1~~
 
 
 INSERT INTO babel_5222_xml_exist_compcol2 VALUES (2, '<artist />')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+~~ROW COUNT: 1~~
 
 
 SELECT col_xml, comp_col FROM babel_5222_xml_exist_compcol2 ORDER BY id
@@ -1106,6 +1101,8 @@ GO
 ~~START~~
 xml#!#bit
 <artist name="Rohit Bhagat" />#!#1
+<artist name="Rohit Bhagat" />#!#1
+<artist />#!#0
 <artist />#!#0
 ~~END~~
 
@@ -1113,16 +1110,14 @@ xml#!#bit
 -- Testing constraint created on wrapper function of xml exist when quoted_identifier was OFF
 INSERT INTO babel_5222_xml_exist_constraint2 VALUES ('<artist name="Rohit Bhagat" />')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+~~ROW COUNT: 1~~
 
 
 INSERT INTO babel_5222_xml_exist_constraint2 VALUES ('<artist />')
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 547)~~
 
-~~ERROR (Message: SELECT failed because the following SET options have incorrect settings: 'QUOTED_IDENTIFIER'. Verify that SET options are correct for XML data type methods.)~~
+~~ERROR (Message: new row for relation "babel_5222_xml_exist_constraint2" violates check constraint "chknameexist2")~~
 
 
 SET QUOTED_IDENTIFIER ON
