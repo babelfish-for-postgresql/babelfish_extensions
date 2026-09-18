@@ -37,7 +37,7 @@ go
 
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "i1813t18132835522bc8db62c2e7873fbd5c7ec927")~~
+~~ERROR (Message: duplicate key value violates unique constraint "i1813")~~
 
 select abs(-collation)*2 c, binary from t1813;
 go

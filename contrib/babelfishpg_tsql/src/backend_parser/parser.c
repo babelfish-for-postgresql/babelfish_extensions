@@ -24,6 +24,7 @@
 #include "parser/parser.h"
 
 #include "src/backend_parser/gramparse.h"
+extern void bbf_reset_ident_name_cache(void);
 
 #include "src/backend_parser/kwlist_d.h"
 #include "src/pltsql.h"
@@ -47,6 +48,10 @@ babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode)
 	List	   *raw_parsetree_list;
 	instr_time	parseStart;
 	instr_time	parseEnd;
+
+	/* Only clear cache at top-level batch, not inside proc execution */
+	if (!exec_state_call_stack)
+		bbf_reset_ident_name_cache();
 
 	/*
 	 * parse identifiers case-insensitively if the database collation is CI_AS

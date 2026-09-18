@@ -218,7 +218,7 @@ use [ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb];
 go
 ~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "thisolddatabasenameiscasesensit70deaa61d81bc286d3760d346a37224c" does not exist)~~
+~~ERROR (Message: database "thisolddatabasenameiscasesensitiveandislongerthan64digitstotestrenamedb" does not exist)~~
 
 use [ThisNewDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb]
 go

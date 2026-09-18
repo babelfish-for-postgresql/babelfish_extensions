@@ -3591,14 +3591,14 @@ pltsql_report_proc_not_found_error(List *names, List *fargs, List *given_argname
 						if (!has_default)
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_FUNCTION),
-									 errmsg("%s %s expects parameter \"%s\", which was not supplied.", obj_type, NameListToString(names), p_argnames[pp])),
+									 errmsg("%s %s expects parameter \"%s\", which was not supplied.", obj_type, NameListToString(names), bbf_get_original_parameter_name(p_argnames[pp], candidates->oid))),
 									parser_errposition(pstate, location));
 					}
 					else if (pp < first_arg_with_default)
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_FUNCTION),
-								 errmsg("%s %s expects parameter \"%s\", which was not supplied.", obj_type, NameListToString(names), p_argnames[pp])),
+								 errmsg("%s %s expects parameter \"%s\", which was not supplied.", obj_type, NameListToString(names), bbf_get_original_parameter_name(p_argnames[pp], candidates->oid))),
 								parser_errposition(pstate, location));
 					}
 				}
@@ -5643,7 +5643,7 @@ replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *far
 					ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
 						errmsg("Procedure or function \'%s\' expects parameter \'%s\', which was not supplied.",
-							NameStr(proc_form->proname), arg_names[i])));
+							NameStr(proc_form->proname), bbf_get_original_parameter_name(arg_names[i], proc_form->oid))));
 			}
 			++i;
 		}

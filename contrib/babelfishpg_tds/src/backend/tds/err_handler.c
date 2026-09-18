@@ -2,6 +2,8 @@
 
 #include "postgres.h"
 
+#include <dlfcn.h>
+
 #include "common/hashfn.h"
 #include "miscadmin.h"
 #include "nodes/bitmapset.h"
@@ -9,6 +11,7 @@
 #include "storage/proc.h"
 #include "utils/elog.h"
 #include "utils/hsearch.h"
+#include "utils/memutils.h"
 #include "utils/palloc.h"		/* Needed for pstrdup() */
 
 #include "src/include/tds_int.h"
@@ -344,8 +347,47 @@ emit_tds_log(ErrorData *edata)
 			tsql_error_state = 1;
 		}
 
-		TdsSendError(tsql_error_code, tsql_error_state, tsql_error_sev,
-					 edata->message, error_lineno);
+		{
+			/* Rewrite truncated identifiers in error message */
+			char *msg = edata->message;
+
+			{
+				/*
+				 * Rewrite truncated identifiers in error message.
+				 * Look up truncated names from the session cache and replace
+				 * them with their original (user-visible) names.
+				 */
+				typedef char *(*rewrite_fn_t)(const char *);
+				static rewrite_fn_t rewrite_fn = NULL;
+
+				/*
+				 * Resolve the T-SQL rewriter lazily. Do NOT latch a NULL result:
+				 * if the babelfishpg_tsql module is not yet loaded when the first
+				 * error fires, a latched NULL would silently disable the rewrite
+				 * for the life of the backend. Re-attempt on each call until it
+				 * resolves, then the non-NULL pointer is cached.
+				 */
+				if (rewrite_fn == NULL)
+					rewrite_fn = (rewrite_fn_t) dlsym(RTLD_DEFAULT, "bbf_rewrite_truncated_identifiers");
+
+				if (rewrite_fn)
+				{
+					char *newmsg = rewrite_fn(msg);
+					if (newmsg)
+						msg = newmsg;
+				}
+			}
+
+			TdsSendError(tsql_error_code, tsql_error_state, tsql_error_sev,
+						 msg, error_lineno);
+
+			/*
+			 * The rewritten message (if any) is allocated in ErrorContext by
+			 * bbf_rewrite_truncated_identifiers, which the error subsystem
+			 * reclaims when it finishes processing this error - so it is not
+			 * leaked even if TdsSendError throws and skips an explicit free.
+			 */
+		}
 
 		/*
 		 * If we've not reached the main query loop yet, flush the error

@@ -1501,6 +1501,10 @@ typedef struct PLtsql_function
 
 	/* arguments for inline code block */
 	InlineCodeBlockArgs *inline_args;
+
+	/* cached truncated→original identifier mappings from compilation */
+	int			n_ident_mappings;
+	struct IdentNameCacheEntry *ident_mappings;
 } PLtsql_function;
 
 /*
@@ -2397,6 +2401,26 @@ extern void store_view_column_original_names(ViewStmt *stmt,
 											 const char *queryString,
 											 int collist_loc);
 extern void block_bbf_original_name_reloption(Node *parsetree);
+
+/*
+ * Session identifier cache + error-message name resolution
+ * (implemented in pltsql_identifier_mapping.c).
+ */
+typedef struct IdentNameCacheEntry
+{
+	char		truncated_name[NAMEDATALEN];
+	char		original_name[512 + 1]; /* 128 T-SQL chars * 4 bytes UTF-8 + NUL */
+} IdentNameCacheEntry;
+
+extern void bbf_cache_ident_name(const char *truncated_name, const char *original_name);
+extern void bbf_cache_index_name(const char *internal_name, const char *index_name);
+extern PGDLLEXPORT const char *bbf_lookup_ident_name(const char *truncated_name);
+extern void bbf_reset_ident_name_cache(void);
+extern int	bbf_snapshot_ident_cache(IdentNameCacheEntry **entries, MemoryContext cxt);
+extern void bbf_restore_ident_cache(IdentNameCacheEntry *entries, int n);
+extern PGDLLEXPORT char *bbf_rewrite_truncated_identifiers(const char *msg);
+extern const char *bbf_get_original_parameter_name(const char *param_name, Oid proc_oid);
+extern const char *bbf_get_original_ident_name(const char *ident_name, Oid object_id, bool is_index);
 
 /* more helpers in pltsql_identifier_mapping.c used by pl_handler.c */
 extern AlterTableCmd *build_set_option_cmd(AlterTableType subtype,

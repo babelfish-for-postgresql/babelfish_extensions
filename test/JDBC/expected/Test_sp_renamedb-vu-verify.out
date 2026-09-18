@@ -225,7 +225,7 @@ use [sp_renamedb_ThisOldDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTest
 go
 ~~ERROR (Code: 911)~~
 
-~~ERROR (Message: database "sp_renamedb_thisolddatabasenamefe795a102eba19ee201b1eff90c69b35" does not exist)~~
+~~ERROR (Message: database "sp_renamedb_thisolddatabasenameiscasesensitiveandislongerthan64digitstotestrenamedb" does not exist)~~
 
 use [sp_renamedb_ThisNewDatabaseNameIsCaseSensitiveAndIsLongerThan64DigitsToTestRenameDb]
 go

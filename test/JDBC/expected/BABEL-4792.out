@@ -7,7 +7,7 @@ create proc [%%#%@$^$姓氏すず🤬🤯🫣🤗🫡🤔🫢🤭き,😀 鈴木
 go
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: Function '%%#%@$^$姓氏すず🤬🤯86d3db6066be0016789ff9cd274595b8' already exists with the same name)~~
+~~ERROR (Message: Function '%%#%@$^$姓氏すず🤬🤯🫣🤗🫡🤔🫢🤭き,😀 鈴木##' already exists with the same name)~~
 
 
 -- Expect error for duplicate function
@@ -19,7 +19,7 @@ end
 go
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: Function '%%#%@$^$姓氏すず🤬🤯86d3db6066be0016789ff9cd274595b8' already exists with the same name)~~
+~~ERROR (Message: Function '%%#%@$^$姓氏すず🤬🤯🫣🤗🫡🤔🫢🤭き,😀 鈴木##' already exists with the same name)~~
 
 
 -- Cleanup
@@ -43,7 +43,7 @@ end
 go
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: Function '%%#%@$^$姓氏すず🤬🤯86d3db6066be0016789ff9cd274595b8' already exists with the same name)~~
+~~ERROR (Message: Function '%%#%@$^$姓氏すず🤬🤯🫣🤗🫡🤔🫢🤭き,😀 鈴木##' already exists with the same name)~~
 
 
 -- Cleanup
@@ -63,7 +63,7 @@ as
 go
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: relation "%%#%@$^$姓氏すず🤬🤯86d3db6066be0016789ff9cd274595b8" already exists)~~
+~~ERROR (Message: relation "%%#%@$^$姓氏すず🤬🤯🫣🤗🫡🤔🫢🤭き,😀 鈴木##" already exists)~~
 
 
 -- Expect error for duplicate relation
@@ -73,7 +73,7 @@ create table [%%#%@$^$姓氏すず🤬🤯🫣🤗🫡🤔🫢🤭き,😀 鈴�
 go
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: relation "%%#%@$^$姓氏すず🤬🤯86d3db6066be0016789ff9cd274595b8" already exists)~~
+~~ERROR (Message: relation "%%#%@$^$姓氏すず🤬🤯🫣🤗🫡🤔🫢🤭き,😀 鈴木##" already exists)~~
 
 
 -- Cleanup
@@ -93,7 +93,7 @@ create table [%%#%@$^$姓氏すず🤬🤯🫣🤗🫡🤔🫢🤭き,😀 鈴�
 go
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: relation "%%#%@$^$姓氏すず🤬🤯86d3db6066be0016789ff9cd274595b8" already exists)~~
+~~ERROR (Message: relation "%%#%@$^$姓氏すず🤬🤯🫣🤗🫡🤔🫢🤭き,😀 鈴木##" already exists)~~
 
 
 -- Cleanup
@@ -126,7 +126,7 @@ rollback;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: trigger "%%#%@$^$姓氏すず🤬🤯86d3db6066be0016789ff9cd274595b8" for relation "t1" already exists)~~
+~~ERROR (Message: trigger "%%#%@$^$姓氏すず🤬🤯🫣🤗🫡🤔🫢🤭き,😀 鈴木##" for relation "t1" already exists)~~
 
 
 -- Cleanup
