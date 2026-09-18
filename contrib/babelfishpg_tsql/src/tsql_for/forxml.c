@@ -90,12 +90,20 @@ typedef struct forxml_state
 	StringInfo			xml_output;		/* Accumulated XML output */
 	forxml_auto_state  *auto_state;		/* AUTO mode state, NULL for other modes */
 	bool				has_root;		/* True if ROOT clause was specified */
+
+	bool				ns_has_xsi;		/* True if the declarations bind xsi */
+
+	/* Column name cache for RAW and PATH - built on the first row */
+	char			  **colnames;		/* colnames[i] = XML name for column i */
+	int					ncolnames;		/* Number of entries in colnames */
+	Oid					colnames_rowtype;	/* Rowtype the names were built from */
+	int32				colnames_typmod;	/* Typmod of that rowtype */
 } forxml_state;
 
 static StringInfo for_xml_ffunc(PG_FUNCTION_ARGS);
-static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls, bool has_root);
-static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls, bool has_root);
-static void tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state, const char *ns_decls);
+static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls, forxml_state *fstate);
+static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls, forxml_state *fstate);
+static void tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state, const char *ns_decls, bool ns_has_xsi);
 static void update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, bool binary_base64, int i);
 static char *tsql_escape_xml(const char *str);
 
@@ -145,7 +153,7 @@ tsql_escape_xml(const char *str)
 
 static int find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc);
 static void close_all_elements(StringInfo state, forxml_auto_state *auto_state);
-static void output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil, const char *ns_decls);
+static void output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil, const char *ns_decls, bool ns_has_xsi);
 static char *cached_value_to_xml_string(Datum value, int col_idx, forxml_auto_state *auto_state, Oid orig_type);
 static void init_output_func_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
 static void init_tsql_type_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
@@ -222,6 +230,57 @@ static bool
 ns_decls_has_xsi(const char *ns_decls)
 {
 	return ns_decls_has_prefix(ns_decls, "xsi");
+}
+
+/*
+ * Append an element's opening tag along with the declarations that belong on it.
+ *
+ * Every mode builds this tag the same way - an optional lead, the name, the xsi
+ * declaration, the namespace declarations, then whatever closes the tag - and
+ * only the pieces differ, so the modes share this and decide the pieces
+ * themselves.
+ *
+ * 'lead' precedes the tag and carries the '{' sentinel that marks a ROOT element
+ * for the final function.  'tail' closes it, and is empty where attributes are
+ * still to be appended.  'ns_decls' is emitted when non-NULL, so a caller that
+ * declares namespaces on an outer element only passes NULL here for the inner
+ * ones.  'emit_xsi' is the caller's decision as well; see
+ * xsi_belongs_on_element().
+ */
+static void
+append_xml_element_open(StringInfo state, const char *lead, const char *name,
+						bool emit_xsi, const char *ns_decls, const char *tail)
+{
+	appendStringInfo(state, "%s<%s", lead, name);
+
+	if (emit_xsi)
+		appendStringInfoString(state, " " XML_XMLNS_XSI);
+
+	if (ns_decls)
+		appendStringInfo(state, " %s", ns_decls);
+
+	appendStringInfoString(state, tail);
+}
+
+/*
+ * Does the xsi declaration belong on the element about to be emitted?
+ *
+ * XSINIL needs xmlns:xsi on the element carrying the nil attributes, but not when
+ * the caller's WITH XMLNAMESPACES already declared xsi, and not when an element
+ * further out has emitted it - T-SQL declares it once.  'declared_outside' is how
+ * the caller reports that: a ROOT element in RAW and PATH, an enclosing level in
+ * AUTO.
+ *
+ * 'ns_has_xsi' is the cached ns_decls_has_xsi() result held in the aggregate state,
+ * since the declarations do not change over the rows.
+ */
+static bool
+xsi_belongs_on_element(bool xsinil, const char *ns_decls, bool ns_has_xsi, bool declared_outside)
+{
+	if (!xsinil || ns_has_xsi)
+		return false;
+
+	return (ns_decls != NULL || !declared_outside);
 }
 
 /*
@@ -335,6 +394,49 @@ restore_xml_prefix_colon(char *colname, const char *ns_decls)
 	return result.data;
 }
 
+/*
+ * XML names for the columns of the rows being emitted.
+ *
+ * The names come from the tuple descriptor, so they are the same for every row,
+ * while working them out costs an allocation per column that the aggregate
+ * context then holds until the aggregate ends.  Build them once and hand the same
+ * array back for the remaining rows, as AUTO mode already does with its own
+ * metadata.  The descriptor is checked anyway, so a state reused against a
+ * different rowtype rebuilds rather than returning the wrong names.
+ */
+static char **
+forxml_column_names(forxml_state *fstate, TupleDesc tupdesc, const char *all_ns_decls)
+{
+	if (fstate->colnames != NULL &&
+		fstate->ncolnames == tupdesc->natts &&
+		fstate->colnames_rowtype == tupdesc->tdtypeid &&
+		fstate->colnames_typmod == tupdesc->tdtypmod)
+		return fstate->colnames;
+
+	fstate->colnames = (char **) palloc0(tupdesc->natts * sizeof(char *));
+	fstate->ncolnames = tupdesc->natts;
+	fstate->colnames_rowtype = tupdesc->tdtypeid;
+	fstate->colnames_typmod = tupdesc->tdtypmod;
+
+	for (int i = 0; i < tupdesc->natts; i++)
+	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+		char	   *raw;
+
+		if (att->attisdropped)
+			continue;
+
+		raw = map_sql_identifier_to_xml_name(NameStr(att->attname), true, false);
+		fstate->colnames[i] = restore_xml_prefix_colon(raw, all_ns_decls);
+
+		/* restore_xml_prefix_colon may return a new buffer; free the original */
+		if (fstate->colnames[i] != raw)
+			pfree(raw);
+	}
+
+	return fstate->colnames;
+}
+
 Datum
 tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 {
@@ -392,6 +494,13 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		state = fstate->xml_output;
 		root_name = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(5));
 		fstate->has_root = (root_name != NULL && strlen(root_name) > 0);
+
+		/*
+		 * The declarations are the same for every row, so scan them for an xsi
+		 * binding once here rather than on each row that emits a tag.
+		 */
+		fstate->ns_has_xsi = ns_decls_has_xsi(ns_decls);
+
 		if (fstate->has_root)
 		{
 			/*
@@ -399,16 +508,11 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 			 * finalfunc knows there is a root element. When namespaces are
 			 * declared, emit them on the ROOT element.
 			 */
-			if (xsinil && ns_decls && !ns_decls_has_xsi(ns_decls))
-				appendStringInfo(state, "{<%s " XML_XMLNS_XSI " %s>", root_name, ns_decls);
-			else if (xsinil && ns_decls)
-				appendStringInfo(state, "{<%s %s>", root_name, ns_decls);
-			else if (xsinil)
-				appendStringInfo(state, "{<%s " XML_XMLNS_XSI ">", root_name);
-			else if (ns_decls)
-				appendStringInfo(state, "{<%s %s>", root_name, ns_decls);
-			else
-				appendStringInfo(state, "{<%s>", root_name);
+			/* This is the outermost element, so nothing above has emitted xsi */
+			append_xml_element_open(state, "{", root_name,
+									xsi_belongs_on_element(xsinil, ns_decls,
+														  fstate->ns_has_xsi, false),
+									ns_decls, ">");
 		}
 
 		/* For AUTO mode, initialize auto_state with metadata from parameter */
@@ -514,7 +618,7 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	switch (mode)
 	{
 		case TSQL_FORXML_RAW:	/* FOR XML RAW */
-			tsql_row_to_xml_raw(state, record, element_name, binary_base64, elements, xsinil, row_ns_decls, ns_decls, fstate->has_root);
+			tsql_row_to_xml_raw(state, record, element_name, binary_base64, elements, xsinil, row_ns_decls, ns_decls, fstate);
 			break;
 		case TSQL_FORXML_AUTO:	/* FOR XML AUTO */
 			{
@@ -525,11 +629,11 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 							(errcode(ERRCODE_INTERNAL_ERROR),
 							 errmsg("FOR XML AUTO state not initialized")));
 
-				tsql_row_to_xml_auto(state, record, elements, xsinil, auto_state, row_ns_decls);
+				tsql_row_to_xml_auto(state, record, elements, xsinil, auto_state, row_ns_decls, fstate->ns_has_xsi);
 			}
 			break;
 		case TSQL_FORXML_PATH:	/* FOR XML PATH */
-			tsql_row_to_xml_path(state, record, element_name, binary_base64, xsinil, row_ns_decls, ns_decls, fstate->has_root);
+			tsql_row_to_xml_path(state, record, element_name, binary_base64, xsinil, row_ns_decls, ns_decls, fstate);
 			break;
 		case TSQL_FORXML_EXPLICIT:
 
@@ -646,7 +750,7 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
  * Map an SQL row to an XML element in RAW mode.
  */
 static void
-tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls, bool has_root)
+tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls, forxml_state *fstate)
 {
 	HeapTupleHeader td;
 	Oid             tupType;
@@ -655,7 +759,10 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 	HeapTupleData   tmptup;
 	HeapTuple       tuple;
 	bool            allnull = true;
-	
+	bool            has_root = fstate->has_root;
+	bool            ns_has_xsi = fstate->ns_has_xsi;
+	char          **colnames;
+
 	td = DatumGetHeapTupleHeader(record);
 
 	/* Extract rowtype info and find a tupdesc */
@@ -680,6 +787,8 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 						"with attribute-centric FOR XML serialization.")));
 	}
 
+	colnames = forxml_column_names(fstate, tupdesc, all_ns_decls);
+
 	/* Output opening tag (only when element_name is non-empty) */
 	if (element_name[0] != '\0')
 	{
@@ -691,26 +800,20 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 			 * but when ROOT is present we already emitted it there, so
 			 * suppress the per-row declaration to match T-SQL behavior.
 			 */
-			if (xsinil && ns_decls && !ns_decls_has_xsi(ns_decls))
-				appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s>", element_name, ns_decls);
-			else if (xsinil && ns_decls)
-				appendStringInfo(state, "<%s %s>", element_name, ns_decls);
-			else if (xsinil && !has_root)
-				appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
-			else if (ns_decls)
-				appendStringInfo(state, "<%s %s>", element_name, ns_decls);
-			else
-				appendStringInfo(state, "<%s>", element_name);
+			append_xml_element_open(state, "", element_name,
+									xsi_belongs_on_element(xsinil, ns_decls, ns_has_xsi, has_root),
+									ns_decls, ">");
 		}
 		else
 		{
-			/* ATTRIBUTES mode: <row col="value"/> */
-			if (xsinil && ns_decls && !ns_decls_has_xsi(ns_decls))
-				appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s", element_name, ns_decls);
-			else if (ns_decls)
-				appendStringInfo(state, "<%s %s", element_name, ns_decls);
-			else
-				appendStringInfo(state, "<%s", element_name);
+			/*
+			 * ATTRIBUTES mode: <row col="value"/>. Nil columns are left out
+			 * rather than marked, so xsi is only needed here to keep company
+			 * with declarations that are already going on this tag.
+			 */
+			append_xml_element_open(state, "", element_name,
+									ns_decls && xsi_belongs_on_element(xsinil, ns_decls, ns_has_xsi, has_root),
+									ns_decls, "");
 		}
 	}
 
@@ -725,15 +828,7 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 		if (att->attisdropped)
 			continue;
 
-		colname = map_sql_identifier_to_xml_name(NameStr(att->attname), true, false);
-		{
-			char *raw_colname = colname;
-
-			colname = restore_xml_prefix_colon(raw_colname, all_ns_decls);
-			/* restore_xml_prefix_colon may return a new buffer; free the original */
-			if (colname != raw_colname)
-				pfree(raw_colname);
-		}
+		colname = colnames[i];
 		colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 		datatype_oid = att->atttypid;
 
@@ -854,7 +949,7 @@ validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tup
  * Map an SQL row to an XML element in PATH mode.
  */
 static void
-tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls, bool has_root)
+tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls, forxml_state *fstate)
 {
 	HeapTupleHeader td;
 	Oid             tupType;
@@ -866,6 +961,9 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 	bool            has_att_centric = false;
 	bool            first = true;
 	int             inital_state_len = state->len;
+	bool            has_root = fstate->has_root;
+	bool            ns_has_xsi = fstate->ns_has_xsi;
+	char          **colnames;
 
 	td = DatumGetHeapTupleHeader(record);
 
@@ -881,6 +979,8 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 
 	has_att_centric = validate_attribute_centric_col_names_xml(element_name, tupdesc);
 
+	colnames = forxml_column_names(fstate, tupdesc, all_ns_decls);
+
 	/*
 	 * each tuple is either contained in a "row" tag, or standalone if the
 	 * element_name is an empty string.
@@ -892,32 +992,9 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 	if (element_name && strlen(element_name) > 0)
 	{
 		/* if "''" is the input path, ignore it per TSQL behavior */
-		if (has_att_centric)
-		{
-			if (xsinil && ns_decls && !ns_decls_has_xsi(ns_decls))
-				appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s", element_name, ns_decls);
-			else if (xsinil && ns_decls)
-				appendStringInfo(state, "<%s %s", element_name, ns_decls);
-			else if (xsinil && !has_root)
-				appendStringInfo(state, "<%s " XML_XMLNS_XSI, element_name);
-			else if (ns_decls)
-				appendStringInfo(state, "<%s %s", element_name, ns_decls);
-			else
-				appendStringInfo(state, "<%s", element_name);
-		}
-		else
-		{
-			if (xsinil && ns_decls && !ns_decls_has_xsi(ns_decls))
-				appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s>", element_name, ns_decls);
-			else if (xsinil && ns_decls)
-				appendStringInfo(state, "<%s %s>", element_name, ns_decls);
-			else if (xsinil && !has_root)
-				appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", element_name);
-			else if (ns_decls)
-				appendStringInfo(state, "<%s %s>", element_name, ns_decls);
-			else
-				appendStringInfo(state, "<%s>", element_name);
-		}
+		append_xml_element_open(state, "", element_name,
+								xsi_belongs_on_element(xsinil, ns_decls, ns_has_xsi, has_root),
+								ns_decls, has_att_centric ? "" : ">");
 	}
 
 	/* process the tuple into tags */
@@ -932,15 +1009,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 		if (att->attisdropped)
 			continue;
 
-		colname = map_sql_identifier_to_xml_name(NameStr(att->attname), true, false);
-		{
-			char *raw_colname = colname;
-
-			colname = restore_xml_prefix_colon(raw_colname, all_ns_decls);
-			/* restore_xml_prefix_colon may return a new buffer; free the original */
-			if (colname != raw_colname)
-				pfree(raw_colname);
-		}
+		colname = colnames[i];
 		colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 		datatype_oid = att->atttypid;
 
@@ -979,7 +1048,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 					 * When ROOT is present it carries them already, which is
 					 * why ns_decls arrives NULL in that case.
 					 */
-					if (path_empty && xsinil && ns_decls && !ns_decls_has_xsi(ns_decls))
+					if (path_empty && xsinil && ns_decls && !ns_has_xsi)
 						appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s>%s</%s>",
 										 colname, ns_decls,
 										 map_sql_value_to_xml_value(colval, datatype_oid, true),
@@ -1033,7 +1102,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 					 * tag, xmlns:xsi and the WITH XMLNAMESPACES declarations
 					 * both belong on the column element.
 					 */
-					if (path_empty && ns_decls && !ns_decls_has_xsi(ns_decls))
+					if (path_empty && ns_decls && !ns_has_xsi)
 						appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s " XML_XSI_NIL "/>",
 										 colname, ns_decls);
 					else if (path_empty && ns_decls)
@@ -1766,7 +1835,7 @@ auto_preformat_value(HeapTuple tuple, TupleDesc tupdesc,
  * 4. Store current values for next row comparison
  */
 static void
-output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil, const char *ns_decls)
+output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil, const char *ns_decls, bool ns_has_xsi)
 {
 	int first_changed_level;
 	int deepest_level_in_row = auto_state->max_depth;
@@ -1829,27 +1898,29 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 	for (int level = first_changed_level; level <= deepest_level_in_row; level++)
 	{
 		char *table_alias = auto_state->level_to_alias[level];
+		bool outermost;
+		const char *tag_ns;
+		bool emit_xsi;
 
 		if (table_alias == NULL)
 			continue;
 
+		/*
+		 * AUTO nests an element per level, and the declarations belong on the
+		 * outermost one only: a ROOT element carries them when there is one,
+		 * and a nested level inherits them from the level above.
+		 */
+		outermost = (!auto_state->has_root && level == 1);
+		tag_ns = outermost ? ns_decls : NULL;
+		emit_xsi = xsi_belongs_on_element(xsinil, tag_ns, ns_has_xsi, !outermost);
+
+		/* As in RAW, attribute-centric output needs xsi only beside declarations */
+		if (!elements)
+			emit_xsi = emit_xsi && tag_ns != NULL;
+
 		/* Open element tag */
-		if (elements && xsinil && ns_decls && !ns_decls_has_xsi(ns_decls) && !auto_state->has_root && level == 1)
-			appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s>", table_alias, ns_decls);
-		else if (elements && xsinil && ns_decls && !auto_state->has_root && level == 1)
-			appendStringInfo(state, "<%s %s>", table_alias, ns_decls);
-		else if (elements && xsinil && !auto_state->has_root && level == 1)
-			appendStringInfo(state, "<%s " XML_XMLNS_XSI ">", table_alias);
-		else if (elements && ns_decls && !auto_state->has_root && level == 1)
-			appendStringInfo(state, "<%s %s>", table_alias, ns_decls);
-		else if (elements)
-			appendStringInfo(state, "<%s>", table_alias);
-		else if (xsinil && ns_decls && !ns_decls_has_xsi(ns_decls) && !auto_state->has_root && level == 1)
-			appendStringInfo(state, "<%s " XML_XMLNS_XSI " %s", table_alias, ns_decls);
-		else if (ns_decls && !auto_state->has_root && level == 1)
-			appendStringInfo(state, "<%s %s", table_alias, ns_decls);
-		else
-			appendStringInfo(state, "<%s", table_alias);
+		append_xml_element_open(state, "", table_alias, emit_xsi, tag_ns,
+								elements ? ">" : "");
 
 		/* Add all columns for this level */
 		for (int i = 0; i < auto_state->num_columns; i++)
@@ -1980,7 +2051,7 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
  * Map an SQL row to XML in AUTO mode.
  */
 static void
-tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state, const char *ns_decls)
+tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state, const char *ns_decls, bool ns_has_xsi)
 {
 	HeapTupleHeader td;
 	Oid tupType;
@@ -2009,7 +2080,7 @@ tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil,
 	}
 
 	/* Generate hierarchical XML output */
-	output_row_xml(state, auto_state, tuple, tupdesc, elements, xsinil, ns_decls);
+	output_row_xml(state, auto_state, tuple, tupdesc, elements, xsinil, ns_decls, ns_has_xsi);
 
 	ReleaseTupleDesc(tupdesc);
 }

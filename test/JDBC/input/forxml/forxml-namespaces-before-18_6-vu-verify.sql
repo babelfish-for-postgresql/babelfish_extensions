@@ -991,6 +991,40 @@ DROP PROCEDURE forxml_ns_proc2;
 GO
 DROP PROCEDURE forxml_ns_proc5;
 GO
+-- 31.6 A body that declares nothing never gets the second walk, so the prefix
+-- has to be reported on the first one. Deferring unconditionally would accept
+-- this CREATE and leave the function emitting a prefixed name with no matching
+-- xmlns declaration.
+CREATE FUNCTION forxml_ns_fn1() RETURNS XML AS
+BEGIN
+  RETURN (SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+          FOR XML RAW('ns1:Emp'), TYPE);
+END;
+GO
+-- 31.7 The same body with the declaration in place is still accepted, so the
+-- case above did not turn into a rejection of declared prefixes in a function
+-- body. T-SQL creates this function as well but reports the prefix as missing
+-- when it runs: its clause does not reach a FOR XML nested in an assignment
+-- inside a function body, while the same shape resolves in a procedure body, at
+-- batch level and in an inline table function.
+CREATE FUNCTION forxml_ns_fn2() RETURNS XML AS
+BEGIN
+  DECLARE @r XML;
+  WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+  SELECT @r = (SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+               FOR XML RAW('ns1:Emp'), TYPE);
+  RETURN @r;
+END;
+GO
+SELECT dbo.forxml_ns_fn2();
+GO
+DROP FUNCTION forxml_ns_fn2;
+GO
+-- 31.8 A procedure body with no declaration is reported the same way
+CREATE PROCEDURE forxml_ns_proc6 AS
+  SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+  FOR XML RAW('ns1:Emp');
+GO
 -- ============================================
 -- SECTION 32: The CTE form of the clause (WITH XMLNAMESPACES(...), cte AS ...)
 -- This form is a different grammar rule from the statement form and is handled
@@ -1082,7 +1116,63 @@ INSERT INTO xmlns_dml_t
 SELECT (SELECT EmpID AS [ns2:ID] FROM forxml_ns_employees WHERE EmpID = 1
         FOR XML RAW('ns1:Emp'), TYPE);
 GO
+-- 33.6 DELETE whose predicate uses .exist() rather than .value(), so the
+-- namespace has to reach the method rewrite inside a DELETE
+DELETE FROM xmlns_dml_t;
+GO
+INSERT INTO xmlns_dml_t
+VALUES ('<root xmlns:ns1="http://example.com/ns1"><ns1:item>v</ns1:item></root>');
+GO
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+DELETE FROM xmlns_dml_t WHERE x.exist('/root/ns1:item') = 1;
+GO
+SELECT COUNT(*) AS remaining FROM xmlns_dml_t;
+GO
+-- 33.7 MERGE is the remaining branch of the inner-DML dispatch. MERGE itself is
+-- off by default behind babelfishpg_tsql.enable_tsql_merge and is rejected before
+-- the namespace context is consumed, which is the behaviour pinned here. With that
+-- GUC enabled the branch resolves the prefix and inserts the same fragment T-SQL
+-- does, so nothing here is waiting on the namespace side.
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+MERGE INTO xmlns_dml_t AS tgt
+USING (SELECT (SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+               FOR XML RAW('ns1:Emp'), TYPE) AS v) AS src
+ON 1 = 0
+WHEN NOT MATCHED THEN INSERT (x) VALUES (src.v);
+GO
 DROP TABLE xmlns_dml_t;
+GO
+-- ============================================
+-- 33.8 INSERT ... EXEC, where the rows come from a procedure whose body declares
+-- its own namespaces. This does not go through the inner-DML dispatch above at
+-- all: the procedure is compiled separately and only its result set is inserted,
+-- so the declarations that matter are the ones inside the body.
+-- ============================================
+CREATE TABLE xmlns_dml_exec (x XML);
+GO
+CREATE PROCEDURE xmlns_dml_proc AS
+  WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+  SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+  FOR XML RAW('ns1:Emp'), TYPE;
+GO
+-- 33.8a With a declaration on the outer INSERT as well. The outer clause has
+-- nothing to resolve, and must not disturb the procedure's own declarations.
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+INSERT INTO xmlns_dml_exec EXEC xmlns_dml_proc;
+GO
+SELECT x FROM xmlns_dml_exec;
+GO
+-- 33.8b The same INSERT ... EXEC with no outer declaration, which is the form
+-- that has to keep working on its own
+DELETE FROM xmlns_dml_exec;
+GO
+INSERT INTO xmlns_dml_exec EXEC xmlns_dml_proc;
+GO
+SELECT x FROM xmlns_dml_exec;
+GO
+DROP PROCEDURE xmlns_dml_proc;
+GO
+DROP TABLE xmlns_dml_exec;
 GO
 -- ============================================
 -- SECTION 34: The captured xsi binding must not outlive its statement
@@ -1163,4 +1253,39 @@ WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
 SELECT EmpID AS [ns1:ID], EmpName AS [ns1:Name] FROM forxml_ns_employees
 WHERE EmpID = 3
 FOR XML PATH(''), ROOT('Doc'), ELEMENTS XSINIL;
+GO
+-- ============================================
+-- SECTION 36: FOR XML in a variable initializer (SET and DECLARE)
+-- An initializer's expression becomes an assignment statement of its own and
+-- does not pass through the FOR XML handling that validates prefixes, so these
+-- shapes used to emit a prefixed name with no matching xmlns declaration. T-SQL
+-- does not accept WITH XMLNAMESPACES ahead of SET or DECLARE, so nothing can be
+-- in scope here and a prefixed identifier is always an undeclared one.
+-- ============================================
+-- 36.1 SET with a prefixed row name
+DECLARE @x1 NVARCHAR(MAX);
+SET @x1 = (SELECT EmpID FROM forxml_ns_employees WHERE EmpID = 1
+           FOR XML RAW('ns1:Emp'));
+GO
+-- 36.2 SET with a prefixed column alias in PATH mode
+DECLARE @x2 NVARCHAR(MAX);
+SET @x2 = (SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+           FOR XML PATH(''));
+GO
+-- 36.3 DECLARE initializer with a prefixed row name
+DECLARE @x3 XML = (SELECT EmpID FROM forxml_ns_employees WHERE EmpID = 1
+                   FOR XML RAW('ns1:Emp'), TYPE);
+GO
+-- 36.4 A prefixed column alias in RAW mode with no declarations is left alone,
+-- matching T-SQL, which only validates aliases in RAW when declarations exist
+DECLARE @x4 NVARCHAR(MAX);
+SET @x4 = (SELECT EmpID AS [ns1:ID] FROM forxml_ns_employees WHERE EmpID = 1
+           FOR XML RAW);
+SELECT @x4;
+GO
+-- 36.5 An initializer with no prefixes anywhere is unaffected
+DECLARE @x5 NVARCHAR(MAX);
+SET @x5 = (SELECT EmpID FROM forxml_ns_employees WHERE EmpID = 1
+           FOR XML PATH(''));
+SELECT @x5;
 GO

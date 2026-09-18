@@ -1152,21 +1152,55 @@ build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext 
 }
 
 /*
- * Is this context inside the body of a stored procedure, function or trigger?
+ * Does this subtree declare XML namespaces anywhere below it?
  *
- * A routine body is walked as part of the CREATE statement's parse tree and
- * again when the body itself is parsed, so anything that depends on state
- * gathered from the body has to run on the second walk only.
+ * Both spellings count: the statement form, which is a
+ * declare_xmlnamespaces_statement, and the CTE form, which is a with_expression
+ * carrying XMLNAMESPACES.
  */
 static bool
-is_inside_routine_body(antlr4::ParserRuleContext *ctx)
+subtree_declares_xmlnamespaces(antlr4::tree::ParseTree *node)
+{
+	for (auto *child : node->children)
+	{
+		TSqlParser::With_expressionContext *wctx;
+
+		if (dynamic_cast<TSqlParser::Declare_xmlnamespaces_statementContext *>(child))
+			return true;
+
+		wctx = dynamic_cast<TSqlParser::With_expressionContext *>(child);
+		if (wctx && wctx->XMLNAMESPACES())
+			return true;
+
+		if (subtree_declares_xmlnamespaces(child))
+			return true;
+	}
+	return false;
+}
+
+/*
+ * Should the FOR XML prefix validation be left to a later walk?
+ *
+ * A routine body is walked as part of the CREATE statement's tree before the
+ * body's own WITH XMLNAMESPACES clause has been processed, so the declared set
+ * is still empty there and validating would report every prefix as undeclared.
+ * When the body carries such a clause it is walked again on its own with the
+ * declarations in place, and that walk is the one that can tell a real missing
+ * declaration from a declared one - so defer to it.
+ *
+ * A body with no clause at all never gets that second walk, so there is nothing
+ * to defer to. Validate here instead, where an empty declared set is the truth
+ * rather than an artefact of walk order.
+ */
+static bool
+defer_forxml_prefix_validation(antlr4::ParserRuleContext *ctx)
 {
 	for (auto *pctx = ctx->parent; pctx; pctx = pctx->parent)
 	{
 		if (dynamic_cast<TSqlParser::Create_or_alter_procedureContext *>(pctx) ||
 			dynamic_cast<TSqlParser::Create_or_alter_functionContext *>(pctx) ||
 			dynamic_cast<TSqlParser::Create_or_alter_triggerContext *>(pctx))
-			return true;
+			return subtree_declares_xmlnamespaces(pctx);
 	}
 	return false;
 }
@@ -4896,17 +4930,8 @@ static void process_select_statement(
 					"with ELEMENTS XSINIL option of FOR XML.",
 					0, 0);
 			}
-			/*
-			 * Skip the namespace prefix validation while walking the body of a
-			 * routine. A routine body is walked twice: once as part of the
-			 * CREATE statement's own tree, where the body's WITH XMLNAMESPACES
-			 * clause has not been processed and the declared set is still
-			 * empty, and again when the body is parsed on its own, where the
-			 * declarations are in place. Validating on the first walk reports
-			 * every prefix as undeclared; the second walk is the one that can
-			 * tell a real missing declaration from a declared one.
-			 */
-			if (!is_inside_routine_body(selectCtx))
+			/* Left to the walk of the body's own parse tree where applicable */
+			if (!defer_forxml_prefix_validation(selectCtx))
 			{
 				/*
 				 * Rewrite fragments collected so far are keyed by position in
@@ -6730,10 +6755,59 @@ makeRaiseErrorStmt(TSqlParser::Raiseerror_statementContext *ctx)
 	return result;
 }
 
+/*
+ * Validate the namespace prefixes on a FOR XML nested inside a variable
+ * initializer.
+ *
+ * An initializer's expression becomes an assignment statement of its own and
+ * never reaches process_select_statement, so the FOR XML in it is not covered by
+ * the validation there. T-SQL does not accept WITH XMLNAMESPACES ahead of SET or
+ * DECLARE, so nothing can be in scope on this path and a prefixed identifier is
+ * always an undeclared one.
+ */
+static void
+validate_forxml_prefixes_in_initializer(antlr4::tree::ParseTree *node)
+{
+	for (auto *child : node->children)
+	{
+		TSqlParser::Select_statementContext *sctx;
+
+		sctx = dynamic_cast<TSqlParser::Select_statementContext *>(child);
+		if (sctx && sctx->for_clause() && sctx->for_clause()->XML())
+		{
+			TSqlParser::Query_specificationContext *qctx;
+
+			validate_forxml_row_and_root_prefixes(sctx->for_clause());
+
+			qctx = get_query_specification(sctx);
+			if (qctx && qctx->select_list())
+				validate_forxml_column_alias_prefixes(qctx->select_list(),
+					sctx->for_clause()->PATH() != nullptr);
+		}
+
+		validate_forxml_prefixes_in_initializer(child);
+	}
+}
+
 PLtsql_stmt *
 makeInitializer(int varno, int lineno, TSqlParser::ExpressionContext *val)
 {
 	PLtsql_stmt_assign *result = makeNode(PLtsql_stmt_assign);
+
+	/*
+	 * Rewrite fragments are keyed by position in the current statement, so a
+	 * throw from here would leave them behind for the next statement to apply
+	 * against its own text (same handling as process_select_statement).
+	 */
+	try
+	{
+		validate_forxml_prefixes_in_initializer(val);
+	}
+	catch (PGErrorWrapperException &e)
+	{
+		clear_rewritten_query_fragment();
+		throw;
+	}
 
 	result->cmd_type = PLTSQL_STMT_ASSIGN;
 	result->lineno   = lineno;
