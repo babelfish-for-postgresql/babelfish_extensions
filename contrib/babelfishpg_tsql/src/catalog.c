@@ -96,6 +96,12 @@ Oid			bbf_function_ext_oid;
 Oid			bbf_function_ext_idx_oid;
 
 /*****************************************
+ *			TRUNCATED_IDENTIFIER
+ *****************************************/
+Oid			bbf_ident_mapping_oid;
+Oid			bbf_ident_mapping_idx_oid;
+
+/*****************************************
  *			SCHEMA
  *****************************************/
 Oid			bbf_schema_perms_oid;
@@ -235,6 +241,10 @@ init_catalog(PG_FUNCTION_ARGS)
 	bbf_function_ext_oid = get_relname_relid(BBF_FUNCTION_EXT_TABLE_NAME, sys_schema_oid);
 	bbf_function_ext_idx_oid = get_relname_relid(BBF_FUNCTION_EXT_IDX_NAME, sys_schema_oid);
 
+	/* bbf_ident_mapping */
+	bbf_ident_mapping_oid = get_relname_relid(BBF_IDENT_MAPPING_TABLE_NAME, sys_schema_oid);
+	bbf_ident_mapping_idx_oid = get_relname_relid(BBF_IDENT_MAPPING_IDX_NAME, sys_schema_oid);
+
 	/* user ext */
 	bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
 												sys_schema_oid);
@@ -343,7 +353,7 @@ IsPLtsqlExtendedCatalog(Oid relationId)
 		relationId == bbf_syslanguages_oid || relationId == bbf_service_settings_oid ||
 		relationId == spt_datatype_info_table_oid || relationId == bbf_versions_oid ||
 		relationId == bbf_partition_function_oid || relationId == bbf_partition_scheme_oid ||
-		relationId == bbf_partition_depend_oid))
+		relationId == bbf_partition_depend_oid || relationId == bbf_ident_mapping_oid))
 		return true;
 	if (PrevIsExtendedCatalogHook)
 		return (*PrevIsExtendedCatalogHook) (relationId);
@@ -3460,10 +3470,17 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_SEQUENCE:
+			/*
+			 * babelfish_identifier_mapping maintenance for SEQUENCE/TYPE rename
+			 * (delete old + insert new, keyed on the physical schema) is done
+			 * in sp_rename_internal where the physical schema is resolved once,
+			 * so nothing to do here.
+			 */
 			break;
 		case OBJECT_TRIGGER:
 			break;
 		case OBJECT_TYPE:
+			/* See OBJECT_SEQUENCE: handled in sp_rename_internal. */
 			break;
 		case OBJECT_COLUMN:
 			break;

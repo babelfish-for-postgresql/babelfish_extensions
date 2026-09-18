@@ -55,6 +55,7 @@ OBJS += src/dbcmds.o
 OBJS += src/session.o
 OBJS += src/guc.o
 OBJS += src/catalog.o
+OBJS += src/pltsql_identifier_mapping.o
 OBJS += src/schemacmds.o
 OBJS += src/hooks.o
 OBJS += src/pltsql_permissions.o

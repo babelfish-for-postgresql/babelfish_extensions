@@ -25,6 +25,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
@@ -61,6 +62,7 @@
 #include "parser/parse_type.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/scansup.h"
+#include "executor/executor.h"
 #include "pgstat.h"				/* for pgstat related activities */
 #include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
@@ -177,8 +179,6 @@ extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArg
 Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformSelectIntoStmt(CreateTableAsStmt *stmt);
-static void reject_reserved_bbf_original_name_options(List *options);
-static void block_bbf_original_name_reloption(Node *parsetree);
 static char *get_oid_type_string(int type_oid);
 static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
@@ -1022,6 +1022,9 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 								Constraint *c = makeNode(Constraint);
 								c->contype = CONSTR_NOTNULL;
 								c->location = -1;
+								c->is_enforced = true;
+								c->skip_validation = false;
+								c->initially_valid = true;
 								def->constraints = lappend(def->constraints, c);
 							}
 							
@@ -3183,464 +3186,203 @@ validateUserAndRole(char *name)
  */
 
 /*
- * Build an AlterTableCmd that sets a single reloption/attoption (name=value).
- * Centralizes the repeated command-construction pattern used when stashing
- * original (untruncated) identifiers.
- */
-static AlterTableCmd *
-build_set_option_cmd(AlterTableType subtype, const char *optname, const char *optval)
-{
-	AlterTableCmd *cmd = makeNode(AlterTableCmd);
-
-	cmd->subtype = subtype;
-	cmd->def = (Node *) list_make1(makeDefElem(pstrdup(optname),
-											   (Node *) makeString(pstrdup(optval)), -1));
-	cmd->behavior = DROP_RESTRICT;
-	cmd->missing_ok = false;
-	return cmd;
-}
-
-/*
- * Extract the original (untruncated) index name from the query source text.
+ * store_alter_table_constraint_original_names
  *
- * The grammar appends a TSQL_ORIGINAL_NAME_LOCATION option carrying the byte
- * offset of the identifier within queryString. This option is removed here so
- * that DefineIndex does not reject it as unrecognized. Returns a palloc'd
- * string, or NULL if the option is absent or invalid.
- */
-static char *
-extract_index_original_name(IndexStmt *stmt, const char *queryString)
-{
-	ListCell   *opt_lc;
-	char	   *original_name = NULL;
-
-	/*
-	 * Iterate all options and remove every tsql_original_name_location entry.
-	 * The grammar appends exactly one such entry, distinguished by a DefElem
-	 * location of -1 (see gram-tsql-rule.y); its Integer arg is the byte offset
-	 * of the identifier in queryString. A user-supplied
-	 * WITH (tsql_original_name_location = ...) arrives with location >= 0 - that
-	 * is a tamper attempt on an internal-only option and is rejected, mirroring
-	 * how the bbf_original_* reserved options are rejected. Any recognized
-	 * (grammar) entry is stripped so DefineIndex does not see the internal
-	 * option.
-	 */
-	foreach(opt_lc, stmt->options)
-	{
-		DefElem *defel = (DefElem *) lfirst(opt_lc);
-
-		if (strcmp(defel->defname, TSQL_ORIGINAL_NAME_LOCATION) == 0)
-		{
-			/*
-			 * Only the grammar-appended entry (location == -1) is trusted.
-			 * A user-written option (location >= 0) must not be able to choose
-			 * what gets stored as the internal original name.
-			 */
-			if (defel->location >= 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("option \"%s\" is reserved for internal Babelfish use and cannot be set",
-								TSQL_ORIGINAL_NAME_LOCATION)));
-
-			if (!original_name && defel->arg && IsA(defel->arg, Integer))
-			{
-				int loc = intVal(defel->arg);
-
-				if (loc >= 0 && queryString && (size_t) loc < strlen(queryString))
-					original_name = extract_identifier(queryString + loc, NULL);
-			}
-			stmt->options = foreach_delete_current(stmt->options, opt_lc);
-		}
-	}
-	return original_name;
-}
-
-/*
- * extract_and_strip_view_collist_loc
+ * Handle long constraint names for ALTER TABLE ADD/DROP CONSTRAINT:
+ *   - store the original (untruncated) name for each added constraint in
+ *     sys.babelfish_identifier_mapping, and
+ *   - remove stale mapping rows for dropped constraints.
  *
- * The T-SQL CREATE [OR ALTER] VIEW grammar records the source-text location of
- * an explicit column list "(c1, c2, ...)" by appending an internal
- * bbf_view_collist_loc DefElem to ViewStmt->options. That option is only a
- * parse-time carrier and must not be persisted as a real reloption on the view.
- * Remove it from the options list here, BEFORE the view is created, so it never
- * lands in pg_class.reloptions (avoiding a follow-up AT_ResetRelOptions), and
- * return the recorded location for use in original-name storage.
+ * The table's real physical namespace is resolved once and reused for both
+ * the ADD and DROP paths so the mapping is filed under (and later looked up /
+ * cleaned up in) the constraint's actual schema rather than defaulting to dbo.
  *
- * Returns the recorded location, or -1 if the option is absent/invalid.
+ * UNIQUE/PRIMARY KEY constraints create a backing index whose original name
+ * must be recorded after the index exists. For that case this function
+ * dispatches the statement itself (via call_prev_ProcessUtility) and returns
+ * true to tell the caller it must return (the ALTER is already executed and
+ * cleanup done). Otherwise it returns false and the caller falls through to
+ * the normal post-switch dispatch.
  */
-static int
-extract_and_strip_view_collist_loc(ViewStmt *stmt)
+static bool
+store_alter_table_constraint_original_names(AlterTableStmt *atstmt,
+											PlannedStmt *pstmt,
+											const char *queryString,
+											bool readOnlyTree,
+											ProcessUtilityContext context,
+											ParamListInfo params,
+											QueryEnvironment *queryEnv,
+											DestReceiver *dest,
+											QueryCompletion *qc)
 {
-	int			collist_loc = -1;
-	ListCell   *olc;
-
-	if (stmt == NULL)
-		return -1;
-
-	foreach(olc, stmt->options)
-	{
-		DefElem    *defel = (DefElem *) lfirst(olc);
-
-		if (defel->defname &&
-			strcmp(defel->defname, BBF_VIEW_COLLIST_LOC_OPTION) == 0)
-		{
-			if (defel->arg && IsA(defel->arg, Integer))
-				collist_loc = intVal(defel->arg);
-
-			/* Delete the internal option so it is never stored on the view. */
-			stmt->options = foreach_delete_current(stmt->options, olc);
-			break;
-		}
-	}
-
-	return collist_loc;
-}
-
-/*
- * Store original view/relation name in reloptions if it differs from the
- * internal (lowercased/truncated) name.
- */
-static void
-store_view_original_name(ViewStmt *stmt, const char *queryString)
-{
-	char *original_name;
-
-	if (stmt->view->location < 0 || !queryString || babelfish_dump_restore)
-		return;
-
-	/* Guard against a location beyond the query text before dereferencing. */
-	if ((size_t) stmt->view->location >= strlen(queryString))
-		return;
-
-	original_name = extract_multipart_identifier_name(queryString + stmt->view->location);
-	if (original_name &&
-		(strcmp(stmt->view->relname, original_name) != 0))
-	{
-		Oid viewOid = RangeVarGetRelid(stmt->view, NoLock, true);
-
-		if (OidIsValid(viewOid))
-		{
-			AlterTableCmd *cmd = build_set_option_cmd(AT_SetRelOptions,
-													  ATTOPTION_BBF_ORIGINAL_TABLE_NAME,
-													  original_name);
-			AlterTableInternal(viewOid, list_make1(cmd), false);
-			CommandCounterIncrement();
-		}
-	}
-
-	if (original_name)
-		pfree(original_name);
-}
-
-/*
- * Store original column names in pg_attribute.attoptions for view columns
- * that were truncated. Extracts full names from the query string.
- */
-
-/*
- * Minimal parser setup callback for reparsing view queries.
- * Only sets p_post_expand_star_hook so that SELECT * expansion
- * populates resorigname from attoptions.
- */
-static void
-view_reparse_parser_setup(ParseState *pstate, void *arg)
-{
-	pstate->p_post_expand_star_hook = pltsql_post_expand_star;
-}
-
-/*
- * skip_collist_separators
- *
- * Advance past separators (commas, whitespace) and SQL comments (block and
- * line) between column identifiers in a source column list. Returns the
- * pointer at the next identifier, ')' or end of string.
- */
-static const char *
-skip_collist_separators(const char *p)
-{
-	while (*p)
-	{
-		if (*p == ',' || scanner_isspace(*p))
-			p++;
-		else if (*p == '/' && *(p + 1) == '*')
-		{
-			/*
-			 * T-SQL allows nested block comments, so track depth and only
-			 * exit when the outermost comment is closed.
-			 */
-			int			depth = 1;
-
-			p += 2;
-			while (*p && depth > 0)
-			{
-				if (*p == '/' && *(p + 1) == '*')
-				{
-					depth++;
-					p += 2;
-				}
-				else if (*p == '*' && *(p + 1) == '/')
-				{
-					depth--;
-					p += 2;
-				}
-				else
-					p++;
-			}
-		}
-		else if (*p == '-' && *(p + 1) == '-')
-		{
-			while (*p && *p != '\n')
-				p++;
-		}
-		else
-			break;
-	}
-	return p;
-}
-
-/*
- * store_view_explicit_column_names
- *
- * Handle CREATE VIEW v (c1, c2, ...) explicit column alias lists. The grammar
- * recorded the source location of the column list '(' (passed here as
- * collist_loc, already stripped from the statement's options). Walk the list
- * with extract_identifier and store bbf_original_name attoptions for columns
- * whose original differs from their (truncated/lowercased) physical attname.
- */
-static void
-store_view_explicit_column_names(const char *queryString,
-								 Oid viewOid, TupleDesc tupdesc, int collist_loc)
-{
-	const char *p;
-	int			col = 0;
-	List	   *cmds = NIL;
-
-	if (collist_loc >= 0 && (size_t) collist_loc < strlen(queryString))
-	{
-		p = queryString + collist_loc;		/* points at '(' */
-		if (*p == '(')
-			p++;
-
-		while (col < tupdesc->natts)
-		{
-			char	   *original_name;
-			int			last_pos = 0;
-			Form_pg_attribute attr;
-
-			p = skip_collist_separators(p);
-			if (*p == '\0' || *p == ')')
-				break;
-
-			original_name = extract_identifier(p, &last_pos);
-			if (!original_name || last_pos <= 0)
-				break;
-			p += last_pos;
-
-			attr = TupleDescAttr(tupdesc, col++);
-			/*
-			 * A freshly created/altered view has no dropped columns, so this
-			 * branch is not expected to be hit; guard against it defensively.
-			 */
-			if (attr->attisdropped)
-			{
-				pfree(original_name);
-				continue;
-			}
-
-			if (strcmp(NameStr(attr->attname), original_name) != 0)
-			{
-				AlterTableCmd *cmd = build_set_option_cmd(AT_SetOptions,
-														  ATTOPTION_BBF_ORIGINAL_NAME,
-														  original_name);
-				cmd->name = pstrdup(NameStr(attr->attname));
-				cmds = lappend(cmds, cmd);
-			}
-			pfree(original_name);
-		}
-	}
-
-	if (cmds != NIL)
-	{
-		AlterTableInternal(viewOid, cmds, false);
-		CommandCounterIncrement();
-	}
-}
-
-static void
-store_view_column_original_names(ViewStmt *stmt, const char *queryString, int collist_loc)
-{
-	Oid			viewOid;
-	Relation	rel;
-	TupleDesc	tupdesc;
-	Query	   *reparsed;
-	RawStmt    *rawstmt;
 	ListCell   *lc;
-	List	   *cmds = NIL;
-	int			attnum = 0;
-
-	if (!queryString)
-		return;
-
-	viewOid = RangeVarGetRelid(stmt->view, NoLock, true);
-	if (!OidIsValid(viewOid))
-		return;
-
-	rel = relation_open(viewOid, AccessShareLock);
-	tupdesc = RelationGetDescr(rel);
+	const char *nspname;
+	const char *phys_relname;
+	Oid			relOid = RangeVarGetRelid(atstmt->relation, NoLock, true);
+	List	   *pk_uq_orig_names = NIL;	/* list of (conname, orig) for index reloptions */
+	bool		dispatched = false;
+	size_t		qlen;
 
 	/*
-	 * Case A: View has an explicit column alias list (CREATE VIEW v (c1, c2)
-	 * AS ...). Handle it separately using the recorded column-list location.
+	 * No-op during dump/restore. Restore replays FOREIGN KEY constraints as
+	 * ALTER TABLE ADD CONSTRAINT while the mapping rows are restored directly
+	 * via pg_extension_config_dump, so storing here would risk a duplicate-key
+	 * conflict on a row the data restore already brings back. DROP CONSTRAINT
+	 * is not replayed during restore, so skipping the cleanup branch is safe
+	 * too. Return false so the caller lets normal statement processing proceed.
 	 */
-	if (stmt->aliases != NIL)
-	{
-		store_view_explicit_column_names(queryString, viewOid, tupdesc, collist_loc);
-		relation_close(rel, AccessShareLock);
-		return;
-	}
+	if (babelfish_dump_restore)
+		return false;
 
 	/*
-	 * Reparse the view's SELECT query with p_post_expand_star_hook set,
-	 * so that all TargetEntries (including those from SELECT *) get
-	 * resorigname populated from attoptions.
+	 * Always resolve the PHYSICAL namespace and relation name from the table's
+	 * OID. DROP TABLE cleanup keys the constraint mapping on the physical
+	 * relation name, so the insert must use the same physical parent name;
+	 * otherwise a table whose name is >= NAMEDATALEN bytes (MD5-truncated
+	 * physical name) leaves a stale, still-readable mapping row after drop.
+	 * get_namespace_name / get_rel_name return palloc'd strings that we free
+	 * before returning.
 	 */
-	rawstmt = makeNode(RawStmt);
-	rawstmt->stmt = (Node *) copyObject(stmt->query);
-	rawstmt->stmt_location = 0;
-	rawstmt->stmt_len = strlen(queryString);
+	if (!OidIsValid(relOid))
+		return false;
 
-	reparsed = parse_analyze_withcb(rawstmt, queryString,
-									(ParserSetupHook) view_reparse_parser_setup,
-									NULL, NULL);
+	nspname = get_namespace_name(get_rel_namespace(relOid));
+	phys_relname = get_rel_name(relOid);
 
-	if (!reparsed || reparsed->commandType != CMD_SELECT)
+	if (!nspname || !phys_relname)
 	{
-		relation_close(rel, AccessShareLock);
-		return;
+		if (nspname)
+			pfree((char *) nspname);
+		if (phys_relname)
+			pfree((char *) phys_relname);
+		return false;
 	}
 
-	foreach(lc, reparsed->targetList)
+	qlen = strlen(queryString);
+
+	foreach(lc, atstmt->cmds)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(lc);
-		Form_pg_attribute attr;
+		AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lc);
 
-		if (tle->resjunk)
-			continue;
-
-		attnum++;
-		if (attnum > tupdesc->natts)
-			break;
-
-		attr = TupleDescAttr(tupdesc, attnum - 1);
-
-		if (tle->resorigname && strcmp(NameStr(attr->attname), tle->resorigname) != 0)
+		if (cmd->subtype == AT_AddConstraint && cmd->def)
 		{
-			AlterTableCmd *cmd = build_set_option_cmd(AT_SetOptions,
-													  ATTOPTION_BBF_ORIGINAL_NAME,
-													  tle->resorigname);
-			cmd->name = pstrdup(NameStr(attr->attname));
-			cmds = lappend(cmds, cmd);
+			Constraint *con = (Constraint *) cmd->def;
+			const char *p;
+			char	   *orig;
+
+			/*
+			 * A multibyte name can truncate to fewer than NAMEDATALEN-1 bytes
+			 * on a character boundary, so use BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD
+			 * (matching the lookup threshold in
+			 * sys.bbf_get_original_identifier_name) rather than NAMEDATALEN-1.
+			 * insert_bbf_ident_mapping makes the final store/skip decision
+			 * based on the original name's length.
+			 */
+			if (!con->conname || strlen(con->conname) < BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD ||
+				con->location < 0)
+				continue;
+
+			/*
+			 * con->location is a byte offset into queryString that must point
+			 * at the CONSTRAINT keyword. Validate the bounds and the keyword
+			 * before dereferencing to avoid reading past the buffer (custom
+			 * Constraint nodes may carry a location that does not point at
+			 * "CONSTRAINT").
+			 */
+			if ((size_t) con->location + CONSTRAINT_KEYWORD_LEN >= qlen)
+				continue;
+			if (pg_strncasecmp(queryString + con->location, "CONSTRAINT",
+							   CONSTRAINT_KEYWORD_LEN) != 0)
+				continue;
+
+			p = skip_collist_separators(queryString + con->location + CONSTRAINT_KEYWORD_LEN);
+			orig = extract_identifier(p, NULL);
+
+			if (orig && strlen(orig) >= NAMEDATALEN)
+			{
+				insert_bbf_ident_mapping(con->conname, orig,
+					nspname, BBF_IDENT_CONSTRAINT,
+					phys_relname);
+
+				/*
+				 * UNIQUE/PRIMARY KEY create an index; the original name must be
+				 * stored in the index reloptions after the index exists.
+				 * Collect the names and apply them after a single
+				 * ProcessUtility dispatch below rather than returning from
+				 * inside the loop (which would skip the DROP CONSTRAINT
+				 * cleanup).
+				 */
+				if (con->contype == CONSTR_UNIQUE || con->contype == CONSTR_PRIMARY)
+					pk_uq_orig_names = lappend(pk_uq_orig_names,
+											   list_make2(makeString(pstrdup(con->conname)),
+														  makeString(orig)));
+				else
+					pfree(orig);
+			}
+			else if (orig)
+				pfree(orig);
 		}
 	}
 
-	relation_close(rel, AccessShareLock);
-
-	if (cmds != NIL)
+	/*
+	 * If the statement added any UNIQUE/PRIMARY KEY constraints, execute the
+	 * ALTER now (so the backing indexes exist), then record each original
+	 * index name.
+	 */
+	if (pk_uq_orig_names != NIL)
 	{
-		AlterTableInternal(viewOid, cmds, false);
-		CommandCounterIncrement();
+		ListCell   *lc2;
+
+		call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+		dispatched = true;
+
+		foreach(lc2, pk_uq_orig_names)
+		{
+			List	   *pair = (List *) lfirst(lc2);
+			String	   *conname_node = (String *) linitial(pair);
+			String	   *orig_node = (String *) lsecond(pair);
+
+			exec_add_original_index_name(strVal(conname_node),
+										 (char *) nspname,
+										 strVal(orig_node));
+
+			/* free the payloads, the String nodes and the pair */
+			pfree(strVal(conname_node));
+			pfree(strVal(orig_node));
+			pfree(conname_node);
+			pfree(orig_node);
+			list_free(pair);
+		}
+		list_free(pk_uq_orig_names);
 	}
-}
 
-/*
- * block_bbf_original_name_reloption
- *
- * The bbf_original_rel_name and bbf_original_name reloptions/attoptions are
- * reserved for Babelfish's internal storage of original (long/mixed-case)
- * identifiers. Block any attempt to set them from the PG dialect, on either
- * the CREATE paths (CREATE TABLE / VIEW / INDEX / SELECT INTO) or ALTER TABLE.
- * Called unconditionally (not gated by enable_create_alter_view_from_pg) so it
- * cannot be bypassed by enabling that GUC.
- */
-static void
-reject_reserved_bbf_original_name_options(List *options)
-{
-	ListCell   *lopt;
-
-	foreach(lopt, options)
+	/*
+	 * Remove entries from babelfish_identifier_mapping on DROP CONSTRAINT,
+	 * using the same resolved namespace.
+	 */
+	foreach(lc, atstmt->cmds)
 	{
-		DefElem    *defel = (DefElem *) lfirst(lopt);
+		AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lc);
 
 		/*
-		 * Compare case-insensitively: a quoted option name (e.g.
-		 * "BBF_ORIGINAL_REL_NAME") keeps its case in defname, but the
-		 * underlying reloption handler matches it case-insensitively and
-		 * would apply the value, so strcmp() would let it slip through.
+		 * Use BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD rather than NAMEDATALEN-1: a
+		 * multibyte name can truncate to fewer than 63 bytes, and its mapping
+		 * row must still be cleaned up. delete_bbf_ident_mapping is a keyed
+		 * no-op when no row matches.
 		 */
-		if (defel->defname &&
-			(pg_strcasecmp(defel->defname, ATTOPTION_BBF_ORIGINAL_TABLE_NAME) == 0 ||
-			 pg_strcasecmp(defel->defname, ATTOPTION_BBF_ORIGINAL_NAME) == 0 ||
-			 pg_strcasecmp(defel->defname, ATTOPTION_BBF_TABLE_CREATE_DATE) == 0))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("relation option \"%s\" is reserved for internal Babelfish use and cannot be set",
-							defel->defname)));
+		if (cmd->subtype == AT_DropConstraint && cmd->name &&
+			strlen(cmd->name) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+		{
+			delete_bbf_ident_mapping(cmd->name, nspname,
+									 BBF_IDENT_CONSTRAINT,
+									 phys_relname);
+		}
 	}
-}
 
-static void
-block_bbf_original_name_reloption(Node *parsetree)
-{
-	ListCell   *lc;
+	pfree((char *) nspname);
+	pfree((char *) phys_relname);
 
-	/*
-	 * The bypass for restore must NOT be gated on babelfish_dump_restore
-	 * alone: that GUC is PGC_USERSET, so any authenticated user could set it
-	 * and then forge the stored original identifiers. Legitimate dump/restore
-	 * always runs as superuser, so require superuser() in addition. This
-	 * matches the established babelfish_dump_restore && superuser() pattern
-	 * used elsewhere in this file for restore-only privileged paths.
-	 */
-	if (sql_dialect != SQL_DIALECT_PG || (babelfish_dump_restore && superuser()))
-		return;
-
-	switch (nodeTag(parsetree))
-	{
-		case T_AlterTableStmt:
-			{
-				AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
-
-				foreach(lc, atstmt->cmds)
-				{
-					AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lc);
-
-					if (cmd->subtype == AT_SetRelOptions || cmd->subtype == AT_ResetRelOptions ||
-						cmd->subtype == AT_ReplaceRelOptions ||
-						cmd->subtype == AT_SetOptions || cmd->subtype == AT_ResetOptions)
-						reject_reserved_bbf_original_name_options((List *) cmd->def);
-				}
-				break;
-			}
-		case T_CreateStmt:
-			reject_reserved_bbf_original_name_options(((CreateStmt *) parsetree)->options);
-			break;
-		case T_ViewStmt:
-			reject_reserved_bbf_original_name_options(((ViewStmt *) parsetree)->options);
-			break;
-		case T_IndexStmt:
-			reject_reserved_bbf_original_name_options(((IndexStmt *) parsetree)->options);
-			break;
-		case T_CreateTableAsStmt:
-			{
-				CreateTableAsStmt *ctas = (CreateTableAsStmt *) parsetree;
-
-				if (ctas->into != NULL)
-					reject_reserved_bbf_original_name_options(ctas->into->options);
-				break;
-			}
-		default:
-			break;
-	}
+	return dispatched;
 }
 
 static void
@@ -4327,6 +4069,18 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					restrict_alter_table_stmt(atstmt);
 				}
+
+				/*
+				 * Store long constraint names from ALTER TABLE ADD CONSTRAINT
+				 * and remove stale entries on DROP CONSTRAINT. For the
+				 * UNIQUE/PRIMARY KEY case the helper dispatches the statement
+				 * itself and returns true, so we must return here.
+				 */
+				if (sql_dialect == SQL_DIALECT_TSQL && queryString &&
+					store_alter_table_constraint_original_names(atstmt, pstmt, queryString,
+																readOnlyTree, context, params,
+																queryEnv, dest, qc))
+					return;
 				break;
 			}
 			case T_AlterOwnerStmt:
@@ -5642,6 +5396,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					 */
 					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
 
+					/*
+					 * Clean up truncated identifier entries for this schema.
+					 * This is keyed directly on the physical schema name, so it
+					 * also cleans up correctly when the DROP SCHEMA is a
+					 * subcommand of DROP DATABASE (unlike catalogs that need a
+					 * dbid-scoped pass).
+					 */
+					clean_up_bbf_ident_mapping(schemaname);
+
 					return;
 				}
 				else
@@ -5902,6 +5665,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, name);
 				}
 
+				/* Store long constraint names in babelfish_identifier_mapping */
+				if (sql_dialect == SQL_DIALECT_TSQL && !babelfish_dump_restore && queryString)
+					store_table_constraint_original_names(create_stmt, rel, queryString);
+
 				return;
 			}
 		case T_IndexStmt:
@@ -5946,16 +5713,29 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									errmsg("Un-aligned Index is not supported in Babelfish.")));
 						}
 					}
-					if (original_name && !stmt->isconstraint)
+					if (original_name)
 					{
 						/* Store the original index name in reloptions */
 						exec_add_original_index_name(stmt->idxname, stmt->relation->schemaname, original_name);
+
 						/* Restore the original index name so that cached plan remains valid */
-						stmt->idxname = original_name;
+						if (!stmt->isconstraint)
+							stmt->idxname = original_name;
 					}
 					return;
 				}
 				break;
+			}
+		case T_CreateSeqStmt:
+			{
+				CreateSeqStmt *seq_stmt = (CreateSeqStmt *) parsetree;
+
+				call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+
+				/* Store original sequence name in babelfish_identifier_mapping catalog. */
+				if (sql_dialect == SQL_DIALECT_TSQL)
+					store_sequence_original_name(seq_stmt, queryString);
+				return;
 			}
 		case T_CreateDomainStmt:
 			{
@@ -5963,6 +5743,42 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				Form_pg_type		baseType;
 				int32				basetypeMod;
 				CreateDomainStmt	*create_domain = (CreateDomainStmt *) parsetree;
+				char			   *original_name = NULL;
+				int					origname_location = -1;
+
+				/*
+				 * Extract original_type_name from the constraint's options.
+				 * The grammar stores it as a DefElem in the existing
+				 * Constraint->options. Remove it before passing to the engine.
+				 */
+				if (sql_dialect == SQL_DIALECT_TSQL)
+				{
+					ListCell *lc;
+
+					foreach(lc, create_domain->constraints)
+					{
+						Constraint *constr = (Constraint *) lfirst(lc);
+
+						if (constr->options != NIL)
+						{
+							ListCell *opt;
+
+							foreach(opt, constr->options)
+							{
+								DefElem *defel = (DefElem *) lfirst(opt);
+
+								if (strcmp(defel->defname, ATTOPTION_BBF_ORIGINAL_NAME) == 0)
+								{
+									original_name = pstrdup(strVal(defel->arg));
+									origname_location = defel->location;
+									constr->options = foreach_delete_current(constr->options, opt);
+									break;
+								}
+							}
+							break;
+						}
+					}
+				}
 
 				if (sql_dialect == SQL_DIALECT_TSQL && !create_domain->collClause)
 				{
@@ -6001,6 +5817,55 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				else
 					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 											queryEnv, dest, qc);
+
+				/*
+				 * Store original type name if it was provided and differs
+				 * in case from the lowercased version.
+				 *
+				 * Skip during dump/restore: the babelfish_identifier_mapping
+				 * catalog is dumped and restored directly (via
+				 * pg_extension_config_dump), so re-inserting here on restore
+				 * would only risk a duplicate-key conflict on a row that is
+				 * already being restored.
+				 */
+				if (sql_dialect == SQL_DIALECT_TSQL && original_name &&
+					!babelfish_dump_restore)
+				{
+					Oid typeOid = typenameTypeId(NULL, makeTypeNameFromNameList(create_domain->domainname));
+					const char *nspname = NULL;
+					char *physical_typname = NULL;
+
+					if (OidIsValid(typeOid))
+					{
+						HeapTuple tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeOid));
+						if (HeapTupleIsValid(tup))
+						{
+							Form_pg_type typform = (Form_pg_type) GETSTRUCT(tup);
+							nspname = get_namespace_name(typform->typnamespace);
+							/*
+							 * Key the mapping on the PHYSICAL type name
+							 * (pg_type.typname), not the schema-qualified
+							 * NameListToString of the parse-tree name: for a
+							 * schema-qualified CREATE TYPE the latter is
+							 * "<schema>.<type>" (and gets truncated), which never
+							 * matches the physical typname the sys.types lookup
+							 * uses (typname without schema).
+							 */
+							physical_typname = pstrdup(NameStr(typform->typname));
+							ReleaseSysCache(tup);
+						}
+					}
+
+					if (nspname && physical_typname)
+						insert_bbf_ident_mapping(physical_typname, original_name,
+												 nspname, BBF_IDENT_TYPE, NULL);
+					if (nspname)
+						pfree((char *) nspname);
+					if (physical_typname)
+						pfree(physical_typname);
+					pfree(original_name);
+				}
+				(void) origname_location;
 
 				revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, create_domain->domainname);
 				return;
@@ -9032,6 +8897,14 @@ bbf_ExecDropStmt(DropStmt *stmt)
 						delete_extended_property(db_id, type, schema_name,
 												major_name, NULL);
 					}
+
+					/*
+					 * Remove any babelfish_identifier_mapping rows for the
+					 * dropped object; the helper picks the mapped object class
+					 * and delete form from removeType (no-op for VIEW).
+					 */
+					delete_bbf_ident_mapping_for_drop(stmt->removeType,
+													  schema_name, major_name);
 				}
 				clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 			}
@@ -9099,6 +8972,14 @@ bbf_ExecDropStmt(DropStmt *stmt)
 
 					delete_extended_property(db_id, type, schema_name, major_name,
 											NULL);
+
+					/*
+					 * Remove any babelfish_identifier_mapping rows for the
+					 * dropped object; the helper picks the mapped object class
+					 * and delete form from removeType.
+					 */
+					delete_bbf_ident_mapping_for_drop(stmt->removeType,
+													  schema_name, major_name);
 				}
 				clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 			}
