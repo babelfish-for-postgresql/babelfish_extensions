@@ -1261,7 +1261,7 @@ bbf_snapshot_ident_cache(IdentNameCacheEntry **entries, MemoryContext cxt)
 {
 	HASH_SEQ_STATUS status;
 	IdentNameCacheEntry *entry;
-	int			n;
+	long		n;				/* hash_get_num_entries() returns long */
 	int			i = 0;
 
 	if (!ident_name_cache)
@@ -1271,13 +1271,24 @@ bbf_snapshot_ident_cache(IdentNameCacheEntry **entries, MemoryContext cxt)
 	}
 
 	n = hash_get_num_entries(ident_name_cache);
-	if (n == 0)
+	if (n <= 0)
 	{
 		*entries = NULL;
 		return 0;
 	}
 
-	*entries = (IdentNameCacheEntry *) MemoryContextAlloc(cxt, n * sizeof(IdentNameCacheEntry));
+	/*
+	 * Guard the allocation size. n comes from a session-local hash so this is
+	 * not reachable in practice, but validate before multiplying by the (large)
+	 * per-entry size so a corrupted/huge count can never overflow the request.
+	 */
+	if (n > (long) (MaxAllocSize / sizeof(IdentNameCacheEntry)))
+	{
+		*entries = NULL;
+		return 0;
+	}
+
+	*entries = (IdentNameCacheEntry *) MemoryContextAlloc(cxt, (Size) n * sizeof(IdentNameCacheEntry));
 	hash_seq_init(&status, ident_name_cache);
 	while ((entry = (IdentNameCacheEntry *) hash_seq_search(&status)) != NULL)
 	{
@@ -1356,7 +1367,7 @@ bbf_lookup_ident_name(const char *truncated_name)
 {
 	IdentNameCacheEntry *entry;
 
-	if (!ident_name_cache)
+	if (!truncated_name || !ident_name_cache)
 		return NULL;
 
 	entry = (IdentNameCacheEntry *) hash_search(ident_name_cache, truncated_name, HASH_FIND, NULL);

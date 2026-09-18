@@ -359,13 +359,16 @@ emit_tds_log(ErrorData *edata)
 				 */
 				typedef char *(*rewrite_fn_t)(const char *);
 				static rewrite_fn_t rewrite_fn = NULL;
-				static bool rewrite_resolved = false;
 
-				if (!rewrite_resolved)
-				{
+				/*
+				 * Resolve the T-SQL rewriter lazily. Do NOT latch a NULL result:
+				 * if the babelfishpg_tsql module is not yet loaded when the first
+				 * error fires, a latched NULL would silently disable the rewrite
+				 * for the life of the backend. Re-attempt on each call until it
+				 * resolves, then the non-NULL pointer is cached.
+				 */
+				if (rewrite_fn == NULL)
 					rewrite_fn = (rewrite_fn_t) dlsym(RTLD_DEFAULT, "bbf_rewrite_truncated_identifiers");
-					rewrite_resolved = true;
-				}
 
 				if (rewrite_fn)
 				{
