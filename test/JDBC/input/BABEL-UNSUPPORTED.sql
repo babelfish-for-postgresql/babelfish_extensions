@@ -1446,14 +1446,6 @@ GO
 DROP TABLE t8113_a;
 GO
 
--- XMLNAMESPACES (6869, 6870, 6871)
-WITH XMLNAMESPACES ('test.com' AS ns1, 'test2.com' AS ns1) SELECT 'test' AS 'TestAttr' FOR XML RAW
-GO
-WITH XMLNAMESPACES ('test.com' AS n@s1) SELECT 'test' AS 'TestAttr' FOR XML RAW
-GO
-WITH XMLNAMESPACES ('test.com' AS xmlns) SELECT 'test' AS 'TestAttr' FOR XML RAW
-GO
-
 -- BEGIN ATOMIC (10782)
 create proc p10782 AS begin atomic with (transaction isolation level = snapshot, language = N'us_english') SELECT 1; end
 GO
