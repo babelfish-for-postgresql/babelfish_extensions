@@ -148,6 +148,11 @@ SslHandShakeRead(BIO * h, char *buf, int size)
 	if (pkt_bytes_read + size > pkt_data.header.length)
 	{
 		TDS_DEBUG(TDS_DEBUG1, "SSL packet expand more than one TDS packet");
+
+		/* Validate header length to prevent integer underflow */
+		if (pkt_data.header.length < TDS_PACKET_HEADER_SIZE)
+			return -1;
+
 		size = pkt_data.header.length - pkt_bytes_read;
 	}
 

@@ -270,6 +270,18 @@ typedef TDSRequestData *TDSRequest;
 #define TVP_COLUMN_ORDERING_TOKEN		0x11
 #define TVP_END_TOKEN				0x00
 
+/* Check if offset + size exceeds the given length limit */
+#define CheckMessageBounds(offset, size, msgLen) \
+do \
+{ \
+	if ((uint64_t)(offset) + (uint64_t)(size) > (uint64_t)(msgLen)) \
+	{ \
+		ereport(ERROR, \
+				(errcode(ERRCODE_PROTOCOL_VIOLATION), \
+				 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect."))); \
+	} \
+} while(0)
+
 static inline void
 SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 {
@@ -279,6 +291,7 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 	int			retStatus = 0;
 
 	temp->tvpInfo->rowCount = 0;
+	CheckMessageBounds(*offset, 1, message->len);
 	while (messageData[*offset] == TVP_ROW_TOKEN)	/* Loop over each row. */
 	{
 		int			i = 0;		/* Current Column Number. */
@@ -317,6 +330,7 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 				case TDS_TYPE_MONEYN:
 				case TDS_TYPE_UNIQUEIDENTIFIER:
 					{
+						CheckMessageBounds(*offset, 1, message->len);
 						rowData->columnValues[i].len = messageData[(*offset)++];
 						if (rowData->columnValues[i].len == 0)	/* null */
 						{
@@ -330,6 +344,7 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 									 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
 											"Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X has an invalid data length or metadata length.",
 											temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1, colmetadata[i].columnTdsType)));
+						CheckMessageBounds(*offset, rowData->columnValues[i].len, message->len);
 						memcpy(rowData->columnValues[i].data, &messageData[*offset], rowData->columnValues[i].len);
 						*offset += rowData->columnValues[i].len;
 					}
@@ -359,6 +374,7 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 											"Table-valued parameter %d (\"%s\"): row %d, column %d: The supplied value is not a valid instance of data type Numeric/Decimal. "
 											"Check the source data for invalid values. An example of an invalid value is data of numeric type with scale greater than precision.",
 											temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1)));
+						CheckMessageBounds(*offset, 1, message->len);
 						rowData->columnValues[i].len = messageData[(*offset)++];
 						if (rowData->columnValues[i].len == 0)	/* null */
 						{
@@ -373,6 +389,7 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 											"Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X has an invalid data length or metadata length.",
 											temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1, colmetadata[i].columnTdsType)));
 
+						CheckMessageBounds(*offset, rowData->columnValues[i].len, message->len);
 						memcpy(rowData->columnValues[i].data, &messageData[*offset], rowData->columnValues[i].len);
 						*offset += rowData->columnValues[i].len;
 					}
@@ -387,6 +404,7 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 					{
 						if (colmetadata[i].maxLen != 0xffff)
 						{
+							CheckMessageBounds(*offset, sizeof(short), message->len);
 							memcpy(&rowData->columnValues[i].len, &messageData[*offset], sizeof(short));
 							*offset += sizeof(short);
 							rowData->columnValues[i].maxlen = colmetadata[i].maxLen;
@@ -401,6 +419,7 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 													"Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X has an invalid data length or metadata length.",
 													temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1, colmetadata[i].columnTdsType)));
 								value = palloc(rowData->columnValues[i].len);
+								CheckMessageBounds(*offset, rowData->columnValues[i].len, message->len);
 								memcpy(value, &messageData[*offset], rowData->columnValues[i].len);
 								rowData->columnValues[i].data = value;
 								*offset += rowData->columnValues[i].len;
@@ -441,6 +460,7 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 					break;
 				case TDS_TYPE_SQLVARIANT:
 					{
+						CheckMessageBounds(*offset, sizeof(uint32_t), message->len);
 						memcpy(&rowData->columnValues[i].len, &messageData[*offset], sizeof(uint32_t));
 						*offset += sizeof(uint32_t);
 
@@ -464,6 +484,7 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 						if (rowData->columnValues[i].len > rowData->columnValues[i].maxlen)
 							enlargeStringInfo(&rowData->columnValues[i], rowData->columnValues[i].len);
 
+						CheckMessageBounds(*offset, rowData->columnValues[i].len, message->len);
 						memcpy(rowData->columnValues[i].data, &messageData[*offset], rowData->columnValues[i].len);
 						*offset += rowData->columnValues[i].len;
 					}
@@ -471,7 +492,9 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 			}
 			i++;
 		}
+		CheckMessageBounds(*offset, 1, message->len);
 	}
+	CheckMessageBounds(*offset, 1, message->len);
 	if (messageData[*offset] != TVP_END_TOKEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -497,6 +520,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 	/* Database-Name.Schema-Name.TableType-Name */
 	for (; i < 3; i++)
 	{
+		CheckMessageBounds(*offset, 1, message->len);
 		len = messageData[(*offset)++];
 		if (len != 0)
 		{
@@ -511,6 +535,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 								temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, 1, temp->type)));
 			initStringInfo(tempStringInfo);
 
+			CheckMessageBounds(*offset, (uint64_t) len * 2, message->len);
 			tempString = palloc0(len * 2);
 			memcpy(tempString, &messageData[*offset], len * 2);
 			TdsUTF16toUTF8StringInfo(tempStringInfo, tempString, len * 2);
@@ -551,6 +576,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 
 	i = 0;
 
+	CheckMessageBounds(*offset, sizeof(uint16), message->len);
 	memcpy(&isTvpNull, &messageData[*offset], sizeof(uint16));
 	if (isTvpNull != TVP_NULL_TOKEN)
 	{
@@ -559,6 +585,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 		 */
 		TvpColMetaData *colmetadata;
 
+		CheckMessageBounds(*offset, sizeof(uint16), message->len);
 		memcpy(&colCount, &messageData[*offset], sizeof(uint16));
 		colmetadata = palloc0(colCount * sizeof(TvpColMetaData));
 		temp->tvpInfo->colCount = colCount;
@@ -580,10 +607,12 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 			memcpy(&colmetadata[i].userType, &messageData[*offset], sizeof(uint32_t));
 			*offset += sizeof(uint32_t);
 			/* Flags */
+			CheckMessageBounds(*offset, sizeof(uint32), message->len);
 			memcpy(&colmetadata[i].flags, &messageData[*offset], sizeof(uint32));
 			*offset += sizeof(uint16);
 
 			/* TYPE_INFO */
+			CheckMessageBounds(*offset, 1, message->len);
 			colmetadata[i].columnTdsType = messageData[(*offset)++];
 			switch (colmetadata[i].columnTdsType)
 			{
@@ -593,12 +622,16 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 				case TDS_TYPE_MONEYN:
 				case TDS_TYPE_DATETIMEN:
 				case TDS_TYPE_UNIQUEIDENTIFIER:
+					CheckMessageBounds(*offset, 1, message->len);
 					colmetadata[i].maxLen = messageData[(*offset)++];
 					break;
 				case TDS_TYPE_DECIMALN:
 				case TDS_TYPE_NUMERICN:
+					CheckMessageBounds(*offset, 1, message->len);
 					colmetadata[i].maxLen = messageData[(*offset)++];
+					CheckMessageBounds(*offset, 1, message->len);
 					colmetadata[i].precision = messageData[(*offset)++];
+					CheckMessageBounds(*offset, 1, message->len);
 					colmetadata[i].scale = messageData[(*offset)++];
 					break;
 				case TDS_TYPE_CHAR:
@@ -606,28 +639,34 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 				case TDS_TYPE_NCHAR:
 				case TDS_TYPE_NVARCHAR:
 					{
+						CheckMessageBounds(*offset, sizeof(uint16), message->len);
 						memcpy(&colmetadata[i].maxLen, &messageData[*offset], sizeof(uint16));
 						*offset += sizeof(uint16);
 
+						CheckMessageBounds(*offset, sizeof(uint32_t), message->len);
 						memcpy(&collation, &messageData[*offset], sizeof(uint32_t));
 						*offset += sizeof(uint32_t);
+						CheckMessageBounds(*offset, 1, message->len);
 						colmetadata[i].sortId = messageData[(*offset)++];
 						colmetadata[i].encoding = TdsGetEncoding(collation);
 					}
 					break;
 				case TDS_TYPE_XML:
 					{
+						CheckMessageBounds(*offset, 1, message->len);
 						colmetadata[i].maxLen = messageData[(*offset)++];
 					}
 					break;
 				case TDS_TYPE_DATETIME2:
 					{
+						CheckMessageBounds(*offset, 1, message->len);
 						colmetadata[i].scale = messageData[(*offset)++];
 						colmetadata[i].maxLen = 8;
 					}
 					break;
 				case TDS_TYPE_TIME:
 					{
+						CheckMessageBounds(*offset, 1, message->len);
 						colmetadata[i].scale = messageData[(*offset)++];
 						colmetadata[i].maxLen = 5;
 					}
@@ -637,6 +676,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 					{
 						uint16		plp;
 
+						CheckMessageBounds(*offset, sizeof(uint16), message->len);
 						memcpy(&plp, &messageData[*offset], sizeof(uint16));
 						*offset += sizeof(uint16);
 						colmetadata[i].maxLen = plp;
@@ -646,10 +686,12 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 					colmetadata[i].maxLen = 3;
 					break;
 				case TDS_TYPE_SQLVARIANT:
+					CheckMessageBounds(*offset, sizeof(uint32_t), message->len);
 					memcpy(&colmetadata[i].maxLen, &messageData[*offset], sizeof(uint32_t));
 					*offset += sizeof(uint32_t);
 					break;
 				case TDS_TYPE_CLRUDT:
+					CheckMessageBounds(*offset, 1, message->len);
 					colmetadata[i].maxLen = messageData[(*offset)++];
 					break;
 				default:
@@ -660,6 +702,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 									temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, i + 1, colmetadata[i].columnTdsType)));
 			}
 
+			CheckMessageBounds(*offset, 1, message->len);
 			if ((colmetadata[i].flags & TDS_COLMETA_COMPUTED) && ((messageData[*offset] == TVP_ORDER_UNIQUE_TOKEN) ||
 																  (messageData[*offset] == TVP_COLUMN_ORDERING_TOKEN)))
 				ereport(ERROR,
@@ -668,6 +711,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 								"The specified column is computed or default and has ordering or uniqueness set. Ordering and uniqueness "
 								"can only be set on columns that have client supplied data.",
 								temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, i + 1, colmetadata[i].columnTdsType)));
+			CheckMessageBounds(*offset, 1, message->len);
 			if (messageData[*offset] != TVP_END_TOKEN)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -682,12 +726,14 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 													 * metadata in paramtoken. */
 
 		/* TODO Optional Metadata token:- [TVP_ORDER_UNIQUE] */
+		CheckMessageBounds(*offset, 1, message->len);
 		if (messageData[*offset] == TVP_ORDER_UNIQUE_TOKEN)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("Order unique token for TVP is not currently supported in Babelfish")));
 
 		/* TODO Optional Metadata token:- [TVP_COLUMN_ORDERING_TOKEN] */
+		CheckMessageBounds(*offset, 1, message->len);
 		if (messageData[*offset] == TVP_COLUMN_ORDERING_TOKEN)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -698,6 +744,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 		temp->isNull = true;	/* If TVP is NULL. */
 		(*offset) += 2;
 	}
+	CheckMessageBounds(*offset, 1, message->len);
 	if (messageData[*offset] != TVP_END_TOKEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),

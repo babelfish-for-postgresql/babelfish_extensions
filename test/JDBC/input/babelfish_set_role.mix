@@ -1,0 +1,141 @@
+-- Setup
+-- Create a login from tsql endpoint
+-- tsql
+create login lgn_6312 with password='12345678';
+go
+
+create user usr_6312 for login lgn_6312;
+go
+
+-- create a role without any privilege from psql endpoint
+-- psql
+create role rl_6312 with login password '12345678';
+go
+
+-- CASE 1 - Test tsql login
+-- CASE 1.1 - Test from tsql endpoint
+-- tsql user=lgn_6312 password=12345678
+select sys.babelfish_set_role('jdbc_user');
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- should work since session role has permissions to set this role
+select sys.babelfish_set_role('lgn_6312');
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- should work since session role has permissions to set this role
+select sys.babelfish_set_role('master_usr_6312');
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- should not work since session role does not have permissions to set this role
+select sys.babelfish_set_role('rl_6312');
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- CASE 1.2 - Test from psql endpoint
+-- psql user=lgn_6312 password=12345678
+select sys.babelfish_set_role('jdbc_user');
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- should work since session role has permissions to set this role
+select sys.babelfish_set_role('lgn_6312');
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- should work since session role has permissions to set this role
+select sys.babelfish_set_role('master_usr_6312');
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- should not work since session role does not have permissions to set this role
+select sys.babelfish_set_role('rl_6312');
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- CASE 2 - Test for psql role, from psql endpoint
+-- psql user=rl_6312 password=12345678
+select sys.babelfish_set_role('jdbc_user');
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- should not work since session role does not have permissions to set this role
+select sys.babelfish_set_role('lgn_6312');
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- should not work since session role does not have permissions to set this role
+select sys.babelfish_set_role('master_usr_6312');
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- should work since session role has permissions to set this role
+select sys.babelfish_set_role('rl_6312');
+go
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+
+-- terminate-tsql-conn user=lgn_6312 password=12345678
+-- terminate-psql-conn user=lgn_6312 password=12345678
+-- terminate-psql-conn user=rl_6312 password=12345678
+
+-- Cleanup
+-- psql
+drop role rl_6312;
+go
+
+-- tsql
+drop user usr_6312;
+go
+
+drop login lgn_6312;
+go

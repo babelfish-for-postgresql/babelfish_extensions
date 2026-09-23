@@ -72,6 +72,7 @@ char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
 bool		pltsql_enable_alter_owner_from_pg = false;
+bool		pltsql_enable_rename_from_pg = false;
 bool		pltsql_enable_antlr_parse_cache = false;
 bool		pltsql_validate_antlr_parse_cache = false;
 
@@ -1123,7 +1124,7 @@ define_custom_variables(void)
 							 NULL,
 							 &pltsql_enable_create_alter_view_from_pg,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 	/*
@@ -1134,7 +1135,21 @@ define_custom_variables(void)
 							 NULL,
 							 &pltsql_enable_alter_owner_from_pg,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/*
+	 * Block ALTER .. RENAME TO .., ALTER .. SET SCHEMA .., CALL sys.sp_rename, and CALL sys.sp_renamedb from the PG endpoint executed on TSQL objects.
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_rename_from_pg",
+							 gettext_noop("Enables blocked ALTER statements on TSQL objects from PG endpoint"),
+							 gettext_noop("When enabled, ALTER .. RENAME TO .., ALTER .. SET SCHEMA .., "
+										  "CALL sys.sp_rename, and CALL sys.sp_renamedb statements are allowed "
+										  "on TSQL objects from the PG endpoint."),
+							 &pltsql_enable_rename_from_pg,
+							 false,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
@@ -1170,7 +1185,7 @@ define_custom_variables(void)
 							 NULL,
 							 &babelfish_dump_restore,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
@@ -1179,7 +1194,7 @@ define_custom_variables(void)
 							 NULL,
 							 &restore_tsql_tabletype,
 							 false,
-							 PGC_USERSET,
+							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
@@ -1188,7 +1203,7 @@ define_custom_variables(void)
 							   NULL,
 							   &babelfish_dump_restore_min_oid,
 							   NULL,
-							   PGC_USERSET,
+							   PGC_SUSET,
 							   GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							   check_babelfish_dump_restore_min_oid, NULL, NULL);
 

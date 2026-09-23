@@ -5220,9 +5220,26 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				return;
 			}
 			break;
+		case T_AlterObjectSchemaStmt:
+			{
+				/*
+				 * Block SET SCHEMA of TSQL functions/procedures from the PG endpoint.
+				 */
+				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_rename_from_pg && !superuser())
+					restrict_alter_object_schema_stmt((AlterObjectSchemaStmt *) parsetree);
+
+				break;
+			}
 		case T_RenameStmt:
 			{
 				RenameStmt *stmt = (RenameStmt *) parsetree;
+
+				/*
+				 * Block RENAME TSQL functions/procedures, and RENAME of the
+				 * sys and information_schema_tsql schemas from the PG endpoint.
+				 */
+				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_rename_from_pg && !superuser())
+					restrict_rename_stmt(stmt);
 
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
@@ -5871,7 +5888,7 @@ pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, 
 	if ((spi_rc = SPI_connect()) != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect() failed in pltsql_proc_get_oid_proname_proacl with return code %d", spi_rc);
 
-	query = psprintf("SELECT oid, proacl FROM pg_catalog.pg_proc WHERE proname = '%s' AND pronamespace = %d", funcname, schemaOid);
+	query = psprintf("SELECT oid, proacl FROM pg_catalog.pg_proc WHERE proname = %s AND pronamespace = %d", quote_literal_cstr(funcname), schemaOid);
 	SPI_execute(query, true, 0);
 
 	if (SPI_processed > 1)

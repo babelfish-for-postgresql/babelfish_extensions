@@ -1907,6 +1907,15 @@ output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Que
 		stmt->fromClause = list_make1(from_table);
 		transformFromClause(pstate, stmt->fromClause);
 
+		/*
+		 * Hide unqualified columns on the "deleted" alias so that bare column
+		 * names in the OUTPUT clause resolve to the UPDATE target rather than
+		 * the alias.  transformFromClause appended "deleted" as the only FROM
+		 * entry so llast() is guaranteed to refer to it.  Qualified references
+		 * like DELETED.col and INSERTED.col still resolve correctly.
+		 */
+		((ParseNamespaceItem *) llast(pstate->p_namespace))->p_cols_visible = false;
+
 		/* Create the self-join condition based on ctid */
 		l_expr = makeNode(ColumnRef);
 		l_expr->fields = list_make2(makeString(stmt->relation->relname), makeString("ctid"));
@@ -4468,21 +4477,10 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	}
 	else
 	{
-		ObjectAddress index;
-
 		tuple = heap_form_tuple(bbf_function_ext_rel_dsc,
 								new_record, new_record_nulls);
 
 		CatalogTupleInsert(bbf_function_ext_rel, tuple);
-
-		/*
-		 * Add function's dependency on catalog table's index so that table
-		 * gets restored before function during MVU.
-		 */
-		index.classId = RelationRelationId;
-		index.objectId = get_bbf_function_ext_idx_oid();
-		index.objectSubId = 0;
-		recordDependencyOn(&address, &index, DEPENDENCY_NORMAL);
 	}
 
 	pfree(func_signature);
