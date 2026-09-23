@@ -919,9 +919,6 @@ end:
 	PG_RETURN_NULL();
 }
 
-extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
-extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
-
 char*
 get_value_by_name_from_array(ArrayType *array, const char *name)
 {

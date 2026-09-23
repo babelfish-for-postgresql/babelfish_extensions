@@ -345,7 +345,7 @@ GO
 CREATE FUNCTION babel6434_ううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううううう() RETURNS INT AS BEGIN RETURN 1 END;
 GO
 
--- Temp table with multibyte name (116 chars - should pass, to be fixed with BABEL-6433 )
+-- Temp table with multibyte name (116 chars - should pass)
 CREATE TABLE #babel6434_さささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささ (a int);
 GO
 DROP TABLE IF EXISTS #babel6434_さささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささ;

@@ -38,6 +38,7 @@ extern int  pltsql_batch_query_cache_max_entries;
 extern int  pltsql_batch_query_cache_min_entry_size;
 extern int  pltsql_batch_query_cache_max_entry_size;
 extern bool pltsql_validate_batch_antlr_parse_cache;
+extern bool pltsql_enable_tsql_merge;
 extern bool pltsql_weak_view_binding;
 extern bool pltsql_no_browsetable;
 extern char *pltsql_psql_logical_babelfish_db_name;

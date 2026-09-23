@@ -565,13 +565,9 @@ GO
 ~~ERROR (Message: The identifier that starts with 'babel6434_ううううううううううううううううううううううううううううううううううううううう' is too long. Maximum length is 128.)~~
 
 
--- Temp table with multibyte name (116 chars - should pass, to be fixed with BABEL-6433 )
+-- Temp table with multibyte name (116 chars - should pass)
 CREATE TABLE #babel6434_さささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささ (a int);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "#babel6434_さささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささ" does not exist)~~
-
 DROP TABLE IF EXISTS #babel6434_さささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささささ;
 GO
 

@@ -1,0 +1,273 @@
+-- tsql
+-- Setup
+-- Create a login from tsql endpoint
+create login lgn_6312 with password='12345678';
+go
+
+create user usr_6312 for login lgn_6312;
+go
+
+-- psql
+-- create a role without any privilege from psql endpoint
+create role rl_6312 with login password '12345678';
+go
+
+-- tsql user=lgn_6312 password=12345678
+-- CASE 1 - Test tsql login
+-- CASE 1.1 - Test from tsql endpoint
+select sys.babelfish_set_role('jdbc_user');
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied to set role "jdbc_user")~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table pg_authid)~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table pg_authid)~~
+
+
+-- should work since session role has permissions to set this role
+select sys.babelfish_set_role('lgn_6312');
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table pg_authid)~~
+
+
+-- should work since session role has permissions to set this role
+select sys.babelfish_set_role('master_usr_6312');
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table pg_authid)~~
+
+
+-- should not work since session role does not have permissions to set this role
+select sys.babelfish_set_role('rl_6312');
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied to set role "rl_6312")~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table pg_authid)~~
+
+
+-- psql user=lgn_6312 password=12345678
+-- CASE 1.2 - Test from psql endpoint
+select sys.babelfish_set_role('jdbc_user');
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set role "jdbc_user"
+    Server SQLState: 42501)~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table pg_authid
+    Server SQLState: 42501)~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table pg_authid
+    Server SQLState: 42501)~~
+
+
+-- should work since session role has permissions to set this role
+select sys.babelfish_set_role('lgn_6312');
+go
+~~START~~
+int4
+1
+~~END~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table pg_authid
+    Server SQLState: 42501)~~
+
+
+-- should work since session role has permissions to set this role
+select sys.babelfish_set_role('master_usr_6312');
+go
+~~START~~
+int4
+1
+~~END~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table pg_authid
+    Server SQLState: 42501)~~
+
+
+-- should not work since session role does not have permissions to set this role
+select sys.babelfish_set_role('rl_6312');
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set role "rl_6312"
+    Server SQLState: 42501)~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table pg_authid
+    Server SQLState: 42501)~~
+
+
+-- psql user=rl_6312 password=12345678
+-- CASE 2 - Test for psql role, from psql endpoint
+select sys.babelfish_set_role('jdbc_user');
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set role "jdbc_user"
+    Server SQLState: 42501)~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table pg_authid
+    Server SQLState: 42501)~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table pg_authid
+    Server SQLState: 42501)~~
+
+
+-- should not work since session role does not have permissions to set this role
+select sys.babelfish_set_role('lgn_6312');
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set role "lgn_6312"
+    Server SQLState: 42501)~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table pg_authid
+    Server SQLState: 42501)~~
+
+
+-- should not work since session role does not have permissions to set this role
+select sys.babelfish_set_role('master_usr_6312');
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set role "master_usr_6312"
+    Server SQLState: 42501)~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table pg_authid
+    Server SQLState: 42501)~~
+
+
+-- should work since session role has permissions to set this role
+select sys.babelfish_set_role('rl_6312');
+go
+~~START~~
+int4
+1
+~~END~~
+
+
+-- Check for superuser privileges, should throw permission denied
+select count(*) from pg_authid;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for table pg_authid
+    Server SQLState: 42501)~~
+
+
+-- terminate-tsql-conn user=lgn_6312 password=12345678
+-- terminate-psql-conn user=lgn_6312 password=12345678
+-- terminate-psql-conn user=rl_6312 password=12345678
+
+-- psql
+-- Cleanup
+drop role rl_6312;
+go
+
+-- tsql
+drop user usr_6312;
+go
+
+drop login lgn_6312;
+go

@@ -1,0 +1,31 @@
+-- tsql
+-- Verify: Database name resolves correctly after upgrade
+SELECT name FROM sys.databases WHERE name LIKE '%Very_Long_Database%VU_TVC';
+GO
+~~START~~
+varchar
+very_long_database_name_that_exceeds_postgresql_limit_vu_tvc
+~~END~~
+
+
+SELECT orig_name FROM sys.babelfish_sysdatabases WHERE orig_name LIKE '%Very_Long_Database%VU_TVC';
+GO
+~~START~~
+nvarchar
+very_long_database_name_that_exceeds_postgresql_limit_vu_tvc
+~~END~~
+
+
+USE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+very_long_database_name_that_exceeds_postgresql_limit_vu_tvc
+~~END~~
+
+
+USE master;
+GO

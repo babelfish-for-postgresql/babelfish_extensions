@@ -8388,7 +8388,7 @@ WHERE ROUTINE_NAME = 'GetCurrentDate' AND ROUTINE_TYPE = 'FUNCTION';
 GO
 ~~START~~
 nvarchar#!#nvarchar
-getcurrentdate#!#date
+GetCurrentDate#!#date
 ~~END~~
 
 
@@ -8522,10 +8522,10 @@ WHERE TABLE_NAME = 'DateView' ORDER BY COLUMN_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-dateview#!#ComputedDateColumn#!#date
-dateview#!#DateColumn#!#date
-dateview#!#DefaultDateColumn#!#date
-dateview#!#ID#!#int
+DateView#!#ComputedDateColumn#!#date
+DateView#!#DateColumn#!#date
+DateView#!#DefaultDateColumn#!#date
+DateView#!#ID#!#int
 ~~END~~
 
 

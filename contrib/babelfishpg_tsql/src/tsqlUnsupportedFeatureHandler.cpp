@@ -142,7 +142,21 @@ protected:
 		antlrcpp::Any visitUpdate_statement(TSqlParser::Update_statementContext *ctx) override;
 		antlrcpp::Any visitDelete_statement(TSqlParser::Delete_statementContext *ctx) override;
 		antlrcpp::Any visitDelete_statement_from(TSqlParser::Delete_statement_fromContext *ctx) override;
-		antlrcpp::Any visitMerge_statement(TSqlParser::Merge_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitMerge_statement(TSqlParser::Merge_statementContext *ctx) override
+		{
+			if (!pltsql_enable_tsql_merge)
+			{
+				handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE", getLineAndPos(ctx));
+				return visitChildren(ctx);
+			}
+			if (!ctx->final_char)
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "A MERGE statement must be terminated by a semi-colon (;).", getLineAndPos(ctx));
+			if (ctx->TOP())
+				handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE with TOP", getLineAndPos(ctx));
+			if (ctx->output_clause())
+				handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE with OUTPUT", getLineAndPos(ctx->output_clause()));
+			return visitChildren(ctx);
+		}
 		antlrcpp::Any visitBulk_insert_statement(TSqlParser::Bulk_insert_statementContext *ctx) override;
 
 		// CFL
@@ -152,7 +166,7 @@ protected:
 		antlrcpp::Any visitSet_statement(TSqlParser::Set_statementContext *ctx) override;
 		antlrcpp::Any visitCursor_statement(TSqlParser::Cursor_statementContext *ctx) override;
 		antlrcpp::Any visitTransaction_statement(TSqlParser::Transaction_statementContext *ctx) override;
-		antlrcpp::Any visitDeclare_xmlnamespaces_statement(TSqlParser::Declare_xmlnamespaces_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_WITH_XMLNAMESPACES, "WITH XMLNAMESPACES", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitDeclare_xmlnamespaces_statement(TSqlParser::Declare_xmlnamespaces_statementContext *ctx) override { return visitChildren(ctx); }
 		antlrcpp::Any visitConversation_statement(TSqlParser::Conversation_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_CONVERSATION_STMT, "conversation statements", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitCreate_contract(TSqlParser::Create_contractContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_CONTRACT, "CREATE CONTRACT", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitCreate_queue(TSqlParser::Create_queueContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_QUEUE, "CREATE QUEUE", getLineAndPos(ctx)); return visitChildren(ctx); }
@@ -217,7 +231,6 @@ protected:
 
 		// methods call (XML, hierachy, spatial)
 		antlrcpp::Any visitXml_func_arg(TSqlParser::Xml_func_argContext *ctx) override;
-		antlrcpp::Any visitXml_nodes_method(TSqlParser::Xml_nodes_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_NODES, "XML NODES", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitXml_modify_method(TSqlParser::Xml_modify_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitXml_modify_call(TSqlParser::Xml_modify_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitHierarchyid_methods(TSqlParser::Hierarchyid_methodsContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_HIERARCHYID_METHOD, "HIERARCHYID methods", getLineAndPos(ctx)); return visitChildren(ctx); }
@@ -1449,9 +1462,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitGroup_by_item(TSqlParser::
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitWith_expression(TSqlParser::With_expressionContext *ctx)
 {
-	if (ctx->XMLNAMESPACES())
-		handle(INSTR_UNSUPPORTED_TSQL_WITH_XMLNAMESPACES, "WITH XMLNAMESPACES", getLineAndPos(ctx));
-
 	return visitChildren(ctx);
 }
 

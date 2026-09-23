@@ -1999,7 +1999,7 @@ FOR XML AUTO;
 GO
 ~~START~~
 ntext
-<c CustomerID="ALFKI"><o ThisIsAVeryLongColumnAliasThatMe112b864c5987f288f7a6d00d553a231="10248"/></c>
+<c CustomerID="ALFKI"><o ThisIsAVeryLongColumnAliasThatMightExceedSixtyThreeCharacterLimit="10248"/></c>
 ~~END~~
 
 

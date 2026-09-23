@@ -1,0 +1,29 @@
+DROP PROCEDURE temp_long_name_enr_basic_proc
+GO
+
+DROP PROCEDURE temp_long_name_enr_alter_proc
+GO
+
+DROP PROCEDURE temp_long_name_enr_join_proc
+GO
+
+DROP PROCEDURE temp_long_name_enr_subquery_proc
+GO
+
+DROP PROCEDURE temp_long_name_enr_insert_select_proc
+GO
+
+DROP PROCEDURE temp_long_name_enr_boundary_proc
+GO
+
+DROP PROCEDURE temp_long_name_enr_coexist_proc
+GO
+
+DROP PROCEDURE temp_long_name_enr_index_proc
+GO
+
+DROP PROCEDURE temp_long_name_enr_reuse_proc
+GO
+
+DROP PROCEDURE temp_long_name_enr_long_index_name_proc
+GO

@@ -44,7 +44,7 @@ char *
 construct_unique_index_name(char *index_name, char *relation_name)
 {
 	char		md5[MD5_HASH_LEN + 1];
-	char		buf[2 * NAMEDATALEN + MD5_HASH_LEN + 1];
+	char	   *buf;
 	char	   *name;
 	bool		success;
 	int			full_len;
@@ -87,11 +87,24 @@ construct_unique_index_name(char *index_name, char *relation_name)
 			);
 	}
 
+	/*
+	 * BABEL-4557: size the scratch buffer from the actual inputs. The index
+	 * name may be up to 128 bytes (validated above) and relation_name is not
+	 * bounded by NAMEDATALEN here (it may itself be a truncated-with-hash
+	 * physical name up to NAMEDATALEN-1, or longer in edge cases), so a fixed
+	 * 2 * NAMEDATALEN + MD5_HASH_LEN buffer can overflow (e.g. a 114-byte
+	 * index name plus a 39-byte relation name plus the 32-byte hash exceeds
+	 * the old 161-byte buffer and smashes the stack). Allocate exactly what
+	 * we need; truncate_identifier() below still reduces the result to
+	 * < NAMEDATALEN.
+	 */
+	full_len = index_len + relation_len + MD5_HASH_LEN;
+	buf = (char *) palloc(full_len + 1);
+
 	memcpy(buf, index_name, index_len);
 	memcpy(buf + index_len, relation_name, relation_len);
 	memcpy(buf + index_len + relation_len, md5, MD5_HASH_LEN + 1);
 
-	full_len = index_len + relation_len + MD5_HASH_LEN;
 	buf[full_len] = '\0';
 
 	truncate_identifier(buf, full_len, false);
@@ -101,6 +114,8 @@ construct_unique_index_name(char *index_name, char *relation_name)
 
 	name = palloc(new_len + 1);
 	memcpy(name, buf, new_len + 1);
+
+	pfree(buf);
 
 	return name;
 }
@@ -1947,6 +1962,25 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause)
 	func_args = lappend(func_args, makeBoolAConst(xsinil, -1));
 	/* 8th arg: auto_metadata placeholder (empty string, filled in by handleForXmlAuto) */
 	func_args = lappend(func_args, makeStringConst("", -1));
+	/*
+	 * 9th arg: namespace declarations from WITH XMLNAMESPACES, if any.
+	 * The C++ ANTLR layer captures the WITH XMLNAMESPACES clause and stores
+	 * a formatted decls string ('xmlns:p1="u1" xmlns:p2="u2"') on the
+	 * enclosing PLtsql_stmt_execsql. We read it back from the currently
+	 * executing stmt via get_current_tsql_estate().
+	 */
+	{
+		PLtsql_execstate *estate = get_current_tsql_estate();
+		char	   *ns_decls = NULL;
+
+		if (estate && estate->err_stmt && estate->err_stmt->cmd_type == PLTSQL_STMT_EXECSQL)
+			ns_decls = ((PLtsql_stmt_execsql *) estate->err_stmt)->xml_namespace_decls;
+
+		if (ns_decls && ns_decls[0] != '\0')
+			func_args = lappend(func_args, makeStringConst(ns_decls, -1));
+		else
+			func_args = lappend(func_args, makeStringConst("", -1));
+	}
 	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
 
 	/*

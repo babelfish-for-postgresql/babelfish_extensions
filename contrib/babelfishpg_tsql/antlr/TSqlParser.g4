@@ -1678,7 +1678,7 @@ merge_statement
       when_matches+
       output_clause?
       option_clause? 
-      final_char=(SEMI | RR_BRACKET)  /// semicolon is required for stand-alone statement, but not inside INSERT-SELECT FROM (MERGE), where we expect a bracket instead
+      final_char=(SEMI | RR_BRACKET)?  /// semicolon is required for stand-alone statement (enforced with the T-SQL error message in tsqlUnsupportedFeatureHandler), but not inside INSERT-SELECT FROM (MERGE), where we expect a bracket instead
     ;
 
 when_matches
@@ -4014,7 +4014,7 @@ xml_modify_call
     ;
 
 xml_nodes_method
-    : (loc_id=LOCAL_ID | value_id=id | subquery) DOT NODES LR_BRACKET xquery=char_string RR_BRACKET
+    : (loc_id=local_id | value_id=id | full_column_name | subquery) DOT NODES LR_BRACKET ((xquery=char_string | expression) (COMMA expression_list)?)? RR_BRACKET
     ;
 
 switch_section

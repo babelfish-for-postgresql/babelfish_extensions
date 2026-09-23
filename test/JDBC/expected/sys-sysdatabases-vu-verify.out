@@ -1,7 +1,7 @@
 SELECT * FROM sys_sysdatabases_vu_prepare_view
 GO
 ~~START~~
-text#!#tinyint
+nvarchar#!#tinyint
 sys_sysdatabases_vu_prepare_db#!#120
 ~~END~~
 
@@ -9,7 +9,7 @@ sys_sysdatabases_vu_prepare_db#!#120
 EXEC sys_sysdatabases_vu_prepare_proc
 GO
 ~~START~~
-text#!#tinyint
+nvarchar#!#tinyint
 sys_sysdatabases_vu_prepare_db#!#120
 ~~END~~
 

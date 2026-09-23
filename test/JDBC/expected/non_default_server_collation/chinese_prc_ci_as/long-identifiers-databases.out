@@ -1,0 +1,510 @@
+
+-- tsql
+
+-- Test long identifier handling for database names (PR3 scope)
+-- Tests: CREATE DATABASE with long name, orig_name storage, sys.databases/sysdatabases resolution,
+-- DB_NAME() case preservation, sp_tables/information_schema in long-named DB
+-- ===========================================
+-- CREATE DATABASE with long name
+-- ===========================================
+CREATE DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing;
+GO
+
+-- Verify database original name stored in babelfish_sysdatabases.orig_name
+SELECT orig_name FROM sys.babelfish_sysdatabases WHERE orig_name LIKE 'Very_Long_Database%';
+GO
+~~START~~
+nvarchar
+Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing
+~~END~~
+
+
+USE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing;
+GO
+
+-- Verify DB_NAME() returns case-preserved name
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing
+~~END~~
+
+
+-- sys.databases shows case-preserved database name
+SELECT name FROM sys.databases WHERE name LIKE '%Long_Database%';
+GO
+~~START~~
+varchar
+Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing
+~~END~~
+
+
+USE master;
+GO
+
+DROP DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Testing;
+GO
+
+-- ===========================================
+-- Second database test with sp_tables and information_schema
+-- ===========================================
+CREATE DATABASE Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+USE Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- sys.sysdatabases shows case-preserved name
+SELECT name FROM sys.sysdatabases WHERE name LIKE '%Long_DB_Name%';
+GO
+~~START~~
+nvarchar
+Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+-- DB_NAME() comparison with sys.sysdatabases works (CI collation)
+SELECT name FROM sys.sysdatabases WHERE name = DB_NAME() collate database_default;
+GO
+~~START~~
+nvarchar
+Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+-- sp_tables works in long-named database
+EXEC sp_tables;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters#!#dbo#!#sysdatabases#!#VIEW#!#<NULL>
+~~END~~
+
+
+-- information_schema.tables works in long-named database
+SELECT TABLE_CATALOG FROM information_schema.tables WHERE TABLE_CATALOG LIKE '%Long_DB%';
+GO
+~~START~~
+nvarchar
+~~END~~
+
+
+USE master;
+GO
+DROP DATABASE Test_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- ===========================================
+-- Mixed case database name preservation
+-- ===========================================
+CREATE DATABASE MixedCase_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- Verify case-insensitive lookup works
+SELECT name FROM sys.databases WHERE name = 'mixedcase_long_db_name_that_exceeds_postgresql_limit_of_sixty_three_characters';
+GO
+~~START~~
+varchar
+MixedCase_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+~~END~~
+
+
+DROP DATABASE MixedCase_Long_DB_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- ===========================================
+-- Verify catalog entries removed after DROP DATABASE
+-- ===========================================
+CREATE DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+USE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+CREATE TABLE babel5975_db_drop_test (id INT);
+GO
+USE master;
+GO
+DROP DATABASE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
+GO
+
+-- Verify database is gone from sys.databases
+SELECT name FROM sys.databases WHERE name LIKE '%Very_Long_Database%';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+-- Verify orig_name removed from babelfish_sysdatabases
+SELECT orig_name FROM sys.babelfish_sysdatabases WHERE orig_name LIKE 'Very_Long_Database%';
+GO
+~~START~~
+nvarchar
+~~END~~
+
+
+-- ===========================================
+-- DATABASEPROPERTYEX / HAS_DBACCESS / USE / sp_helpdb with a long name
+-- (regression coverage for lookups that must normalize the original name
+--  to the physical downcased/truncated key)
+-- ===========================================
+CREATE DATABASE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+
+-- DATABASEPROPERTYEX must resolve the long original name (previously failed
+-- with "Could not find database")
+SELECT DATABASEPROPERTYEX('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63', 'Collation');
+GO
+~~START~~
+sql_variant
+chinese_prc_ci_as
+~~END~~
+
+
+-- HAS_DBACCESS must resolve the long original name (previously failed with
+-- "database ... does not exist")
+SELECT HAS_DBACCESS('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- USE must report the original (case/length preserved) name, not the internal
+-- truncated+hashed physical name
+USE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+
+-- sys.database_principals must resolve inside a long-named database. This view
+-- filters on sys.bbf_cur_db(), so it exercises the current-database name
+-- resolution for a long/truncated physical name.
+SELECT name, type_desc FROM sys.database_principals WHERE name IN ('dbo','guest','db_owner') ORDER BY name;
+GO
+~~START~~
+varchar#!#nvarchar
+db_owner#!#DATABASE_ROLE
+dbo#!#SQL_USER
+guest#!#SQL_USER
+~~END~~
+
+
+-- sp_helpdb (no arg) must list the long database using its original name and
+-- must not crash on a NULL orig_name; project deterministic columns only
+SELECT name, compatibility_level FROM sys.babelfish_helpdb() WHERE name LIKE 'My_Very_Long_Database%';
+GO
+~~START~~
+varchar#!#smallint
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63#!#120
+~~END~~
+
+
+USE master;
+GO
+
+-- sp_helpdb with the long original name argument exercises the scan-key
+-- normalization and the NULL-handling read path in babelfish_helpdb()
+SELECT name, compatibility_level FROM sys.babelfish_helpdb('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63');
+GO
+~~START~~
+varchar#!#smallint
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63#!#120
+~~END~~
+
+
+-- A login whose DEFAULT_DATABASE is the long-named database must expose the
+-- full original name in sys.sql_logins and sys.server_principals, not the
+-- physical truncated+hashed name.
+CREATE LOGIN babel5975_longdb_login WITH PASSWORD = '12345678', DEFAULT_DATABASE = My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+SELECT default_database_name FROM sys.sql_logins WHERE name = 'babel5975_longdb_login';
+GO
+~~START~~
+varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+~~END~~
+
+SELECT default_database_name FROM sys.server_principals WHERE name = 'babel5975_longdb_login';
+GO
+~~START~~
+varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+~~END~~
+
+
+-- Create a table and a database user so sp_databases exposes the long-named
+-- database.
+USE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+CREATE TABLE babel5975_dbtbl (id INT);
+GO
+CREATE USER babel5975_longdb_user FOR LOGIN babel5975_longdb_login;
+GO
+USE master;
+GO
+
+-- sp_databases must list the long-named database using its original name.
+-- Query sys.sp_databases_view (which sp_databases wraps) filtered to just the
+-- database under test, so the result is deterministic regardless of what other
+-- databases/tables exist in the instance.
+SELECT database_name FROM sys.sp_databases_view WHERE database_name = 'My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63';
+GO
+~~START~~
+varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+~~END~~
+
+
+-- The shared helper resolves the physical (truncated) key back to the original
+-- name; this is the same mapping used by sp_helplogins/sp_helpuser DefDBName and
+-- sp_helplogins DBName (those procs also return SID/UserID columns whose values
+-- are OID-derived and therefore not asserted deterministically here).
+SELECT sys.bbf_get_original_db_name(default_database_name) AS DefDBName
+FROM sys.babelfish_authid_login_ext WHERE rolname = 'babel5975_longdb_login';
+GO
+~~START~~
+varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+~~END~~
+
+
+DROP LOGIN babel5975_longdb_login;
+GO
+
+DROP DATABASE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+
+-- ===========================================
+-- sp_renamedb must preserve the original (case/length) name in orig_name,
+-- DB_NAME() and sys.databases.name (previously overwritten with the physical
+-- truncated+hashed name)
+-- ===========================================
+CREATE DATABASE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+
+EXEC sp_renamedb 'My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63',
+                 'Renamed_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_63';
+GO
+
+-- orig_name should be the case-preserved renamed name
+SELECT orig_name FROM sys.babelfish_sysdatabases WHERE orig_name LIKE 'Renamed%';
+GO
+~~START~~
+nvarchar
+Renamed_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_63
+~~END~~
+
+
+-- sys.databases.name should be the case-preserved renamed name
+SELECT name FROM sys.databases WHERE name LIKE 'Renamed%';
+GO
+~~START~~
+varchar
+Renamed_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_63
+~~END~~
+
+
+-- DB_NAME() inside the renamed database should be case-preserved
+USE Renamed_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_63;
+GO
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+Renamed_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_63
+~~END~~
+
+USE master;
+GO
+
+DROP DATABASE Renamed_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_63;
+GO
+
+-- ===========================================
+-- Short, all-lowercase database name: physical name == original, so
+-- orig_name is left NULL and views fall back to the physical name;
+-- sp_helpdb must still display it
+-- ===========================================
+CREATE DATABASE babel5975_shortdb;
+GO
+SELECT name FROM sys.databases WHERE name = 'babel5975_shortdb';
+GO
+~~START~~
+varchar
+babel5975_shortdb
+~~END~~
+
+SELECT name, compatibility_level FROM sys.babelfish_helpdb('babel5975_shortdb');
+GO
+~~START~~
+varchar#!#smallint
+babel5975_shortdb#!#120
+~~END~~
+
+DROP DATABASE babel5975_shortdb;
+GO
+
+-- ===========================================
+-- Database-name lookups must accept BOTH the original (case/length preserved)
+-- name AND the physical downcased/MD5-truncated key, and must display the
+-- original name. The physical key is derived at runtime via
+-- sys.babelfish_truncate_identifier(LOWER(<original>)) rather than hardcoding
+-- the MD5 hash.
+-- ===========================================
+CREATE DATABASE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+
+-- sys.db_id resolves both forms to the same (valid, equal) dbid
+SELECT CASE WHEN sys.db_id('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63') IS NOT NULL
+             AND sys.db_id('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63')
+               = sys.db_id(sys.babelfish_truncate_identifier(LOWER('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63')))
+            THEN 1 ELSE 0 END AS db_id_both_forms_match;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- DATABASEPROPERTYEX resolves both forms
+SELECT DATABASEPROPERTYEX('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63', 'Collation') AS orig_form;
+GO
+~~START~~
+sql_variant
+chinese_prc_ci_as
+~~END~~
+
+SELECT DATABASEPROPERTYEX(sys.babelfish_truncate_identifier(LOWER('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63')), 'Collation') AS physical_form;
+GO
+~~START~~
+sql_variant
+chinese_prc_ci_as
+~~END~~
+
+
+-- HAS_DBACCESS resolves both forms
+SELECT HAS_DBACCESS('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63') AS orig_form;
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT HAS_DBACCESS(sys.babelfish_truncate_identifier(LOWER('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63'))) AS physical_form;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- sp_helpdb resolves both forms and displays the original name
+SELECT name FROM sys.babelfish_helpdb('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63');
+GO
+~~START~~
+varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+~~END~~
+
+SELECT name FROM sys.babelfish_helpdb(sys.babelfish_truncate_identifier(LOWER('My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63')));
+GO
+~~START~~
+varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+~~END~~
+
+
+-- USE resolves the original form and displays the original name (the info
+-- message is not captured by the framework, so DB_NAME() is asserted instead)
+USE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+SELECT DB_NAME() AS after_use_original_form;
+GO
+~~START~~
+nvarchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+~~END~~
+
+USE master;
+GO
+
+-- sp_tables qualifier accepts the original name (SQL Server semantics: the
+-- qualifier must be the current database's user-facing name)
+USE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+CREATE TABLE babel5975_spt_both (id INT);
+GO
+EXEC sp_tables @table_name = 'babel5975_spt_both', @table_qualifier = 'My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63#!#dbo#!#babel5975_spt_both#!#TABLE#!#<NULL>
+~~END~~
+
+USE master;
+GO
+
+DROP DATABASE My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63;
+GO
+
+-- ===========================================
+-- Security: tsql_original_name_location is an internal-only option used to
+-- carry the byte offset of the database name in the source text. A user
+-- attempting to supply it in CREATE DATABASE ... WITH must be rejected, must
+-- not create a database, and must never drive an out-of-bounds read of the
+-- source text (create_bbf_db_internal() bounds the offset and rejects any
+-- user-supplied instance; the T-SQL grammar additionally rejects the syntax).
+-- ===========================================
+CREATE DATABASE babel5975_reserved_opt WITH tsql_original_name_location = 999999999;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '=' at line 9 and character position 72)~~
+
+CREATE DATABASE babel5975_reserved_opt WITH tsql_original_name_location = 0;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '=' at line 1 and character position 72)~~
+
+
+-- psql
+-- The PostgreSQL parser (reachable e.g. via a psql/PG-protocol connection with
+-- the T-SQL dialect set) accepts the WITH option syntax, so the ANTLR T-SQL
+-- syntax rejection above does not cover it. create_bbf_db_internal() must
+-- reject the user-supplied internal option there as well, preventing the
+-- out-of-bounds read of the source text.
+SET babelfishpg_tsql.sql_dialect = 'tsql';
+GO
+CREATE DATABASE babel5975_reserved_opt WITH tsql_original_name_location = 999999999;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: option "tsql_original_name_location" is reserved for internal Babelfish use and cannot be set
+    Server SQLState: 42501)~~
+
+CREATE DATABASE babel5975_reserved_opt WITH tsql_original_name_location = 5;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: option "tsql_original_name_location" is reserved for internal Babelfish use and cannot be set
+    Server SQLState: 42501)~~
+
+
+-- tsql
+-- No database must have been created by the rejected statements, and the
+-- backend must still be alive (i.e. no crash from an out-of-bounds read).
+SELECT COUNT(*) AS leaked_db_count FROM sys.databases WHERE name LIKE 'babel5975_reserved_opt%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT 'server-alive' AS status;
+GO
+~~START~~
+varchar
+server-alive
+~~END~~
+
+

@@ -6,7 +6,7 @@ DROP PROCEDURE babel_sp_stored_procedures_vu_prepare_select_all
 GO
 DROP PROCEDURE babel_sp_stored_procedures_vu_prepare_seluct_all
 GO
-DROP PROCEDURE babel_sp_stored_procedures_vu_prepare_select_all_Mixed
+DROP PROCEDURE babel_sp_stored_procedures_vu_prepare_select_all_mixed
 GO
 DROP TABLE babel_sp_stored_procedures_vu_prepare_t1
 GO

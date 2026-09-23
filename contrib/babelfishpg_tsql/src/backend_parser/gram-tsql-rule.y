@@ -228,6 +228,33 @@ tsql_windows_options:
  * 	database creation, etc. For example,
  * 		CREATE ROLE sysadmin CREATEDB CREATEROLE INHERIT ROLE sa_name
  */
+
+tsql_CreatedbStmt:
+			CREATE DATABASE name opt_with createdb_opt_list
+				{
+					CreatedbStmt *n = makeNode(CreatedbStmt);
+
+					n->dbname = $3;
+					n->options = $5;
+					/*
+					 * Record the byte offset of the database name in the source
+					 * text, mirroring how other CREATE statements (indexes,
+					 * views, etc.) carry TSQL_ORIGINAL_NAME_LOCATION. The
+					 * original (case/length preserved) name is later resolved
+					 * from the query string in create_bbf_db_internal(). The
+					 * DefElem location is set to -1 to mark this as the trusted,
+					 * grammar-appended entry: a user-supplied option of the same
+					 * name arrives with location >= 0 and is rejected, so it can
+					 * neither be honored nor drive an out-of-bounds read.
+					 */
+					n->options = lappend(n->options,
+										 makeDefElem(TSQL_ORIGINAL_NAME_LOCATION,
+													 (Node *) makeInteger(@3),
+													 -1));
+					$$ = (Node *) n;
+				}
+		;
+
 tsql_CreateRoleStmt:
 			CREATE ROLE RoleId opt_with OptRoleList
 				{
@@ -904,6 +931,7 @@ ConstraintElem:
 					n->options = $9;
 					n->indexname = NULL;
 					n->indexspace = $10;
+					n->is_enforced = true;
 					processCASbits($11, @11, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, NULL, yyscanner);
@@ -1094,9 +1122,23 @@ DefineStmt:
 			| CREATE TYPE_P any_name FROM Typename
 				{
 					CreateDomainStmt *n = makeNode(CreateDomainStmt);
+					Constraint *c = makeNode(Constraint);
+
 					n->domainname = $3;
 					n->typeName = $5;
-					n->constraints = NIL;
+					c->contype = CONSTR_NULL;
+					c->location = @3;
+					if (sql_dialect == SQL_DIALECT_TSQL)
+					{
+						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+						char *original_name = extract_multipart_identifier_name(yyextra->core_yy_extra.scanbuf + @3);
+						if (original_name)
+							c->options = lappend(c->options,
+								makeDefElem(ATTOPTION_BBF_ORIGINAL_NAME,
+									(Node *)makeString(original_name),
+									@3));
+					}
+					n->constraints = list_make1(c);
 
 					$$ = (Node *)n;
 				}
@@ -1107,13 +1149,22 @@ DefineStmt:
 
 					n->domainname = $3;
 					n->typeName = $5;
-					n->constraints = list_make1(c);
-
 					c->contype = CONSTR_NOTNULL;
 					c->location = @6;
 					c->is_enforced = true;
 					c->skip_validation = false;
 					c->initially_valid = true;
+					if (sql_dialect == SQL_DIALECT_TSQL)
+					{
+						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+						char *original_name = extract_multipart_identifier_name(yyextra->core_yy_extra.scanbuf + @3);
+						if (original_name)
+							c->options = lappend(c->options,
+								makeDefElem(ATTOPTION_BBF_ORIGINAL_NAME,
+									(Node *)makeString(original_name),
+									@3));
+					}
+					n->constraints = list_make1(c);
 
 					$$ = (Node *)n;
 
@@ -1125,13 +1176,22 @@ DefineStmt:
 
 					n->domainname = $3;
 					n->typeName = $5;
-					n->constraints = list_make1(c);
-
 					c->contype = CONSTR_NULL;
 					c->location = @6;
 					c->is_enforced = true;
 					c->skip_validation = false;
 					c->initially_valid = true;
+					if (sql_dialect == SQL_DIALECT_TSQL)
+					{
+						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+						char *original_name = extract_multipart_identifier_name(yyextra->core_yy_extra.scanbuf + @3);
+						if (original_name)
+							c->options = lappend(c->options,
+								makeDefElem(ATTOPTION_BBF_ORIGINAL_NAME,
+									(Node *)makeString(original_name),
+									@3));
+					}
+					n->constraints = list_make1(c);
 
 					$$ = (Node *)n;
 
@@ -1146,6 +1206,7 @@ func_arg:
 					n->argType = $2;
 					n->mode = $3;
 					n->defexpr = NULL;
+					n->location = @1;
 					$$ = n;
 				}
 		;
@@ -2605,6 +2666,29 @@ tsql_output_into_target_columns:
 /* END rules for OUTPUT clause support */
 /* --------------------------------- */
 
+/*
+ * In TSQL dialect the scanner delivers TSQL_VALUES instead of VALUES,
+ * so provide TSQL variants of the MERGE INSERT value rules.
+ */
+merge_values_clause:
+			TSQL_VALUES '(' expr_list ')'
+				{
+					$$ = $3;
+				}
+		;
+
+merge_insert:
+			INSERT DEFAULT TSQL_VALUES
+				{
+					MergeWhenClause *n = makeNode(MergeWhenClause);
+					n->commandType = CMD_INSERT;
+					n->override = OVERRIDING_NOT_SET;
+					n->targetList = NIL;
+					n->values = NIL;
+					$$ = n;
+				}
+		;
+
 tsql_stmt :
 			AlterEventTrigStmt
 			| AlterCollationStmt
@@ -2678,7 +2762,7 @@ tsql_stmt :
 			| CreateEventTrigStmt
 			| tsql_CreateRoleStmt
 			| tsql_CreateUserStmt
-			| CreatedbStmt
+			| tsql_CreatedbStmt
 			| DeallocateStmt
 			| DeclareCursorStmt
 			| DefineStmt
@@ -2721,6 +2805,7 @@ tsql_stmt :
 			| RenameStmt
 			| RevokeStmt
 			| RevokeRoleStmt
+			| MergeStmt
 			| RuleStmt
 			| SecLabelStmt
 			| SelectStmt
@@ -3387,7 +3472,8 @@ tsql_CreateTrigStmt:
 					n2->funcname = $3;
 					n2->parameters = NIL;
 					n2->returnType = makeTypeName("trigger");
-					n2->options = list_make3(lang, body, trigStmt);
+					n2->options = list_make4(lang, body, trigStmt,
+						makeDefElem("location", (Node *) makeInteger(@3), @3));
 
 					$$ = (Node *) n2;
 				}
@@ -3482,6 +3568,9 @@ tsql_IndexStmt:
 					n->if_not_exists = false;
 
 					tsql_index_nulls_order(n->indexParams, n->accessMethod);
+					n->options = lappend(n->options,
+						makeDefElem(TSQL_ORIGINAL_NAME_LOCATION,
+							(Node *) makeInteger(@7), -1));
 					$$ = (Node *)n;
 				}
 		| CREATE TSQL_SPATIAL INDEX opt_single_name
@@ -4411,6 +4500,10 @@ tsql_AlterViewStmt:
                     n->query = $7;
                     n->replace = true;
                     n->options = $5;
+                    if ($4 != NIL)
+                        n->options = lappend(n->options,
+                            makeDefElem(BBF_VIEW_COLLIST_LOC_OPTION,
+                                        (Node *) makeInteger(@4), @4));
                     n->withCheckOption = $8;
                     n->createOrAlter = true;
                     $$ = (Node *) n;
@@ -4424,6 +4517,10 @@ tsql_AlterViewStmt:
                     n->query = $9;
                     n->replace = false;
                     n->options = $7;
+                    if ($6 != NIL)
+                        n->options = lappend(n->options,
+                            makeDefElem(BBF_VIEW_COLLIST_LOC_OPTION,
+                                        (Node *) makeInteger(@6), @6));
                     n->withCheckOption = $10;
                     n->createOrAlter = true;
                     $$ = (Node *) n;
@@ -4535,6 +4632,7 @@ tsql_proc_arg:
 					n->argType = $3;
 					n->mode = $6 ? FUNC_PARAM_INOUT : FUNC_PARAM_IN;
 					n->defexpr = $5;
+					n->location = @1;
 					tsql_check_param_readonly($1, $3, $7);
 
 					 $$ = n;
@@ -4570,6 +4668,7 @@ tsql_func_arg:
 					n->argType = $3;
 					n->mode = FUNC_PARAM_IN;
 					n->defexpr = $4;
+					n->location = @1;
 					tsql_check_param_readonly($1, $3, $5);
 
 					$$ = n;

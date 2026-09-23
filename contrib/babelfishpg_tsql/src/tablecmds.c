@@ -43,10 +43,6 @@
 #include "extendedproperty.h"
 #include "hooks.h"
 
-const char *ATTOPTION_BBF_ORIGINAL_NAME = "bbf_original_name";
-const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME = "bbf_original_rel_name";
-const char *ATTOPTION_BBF_TABLE_CREATE_DATE = "bbf_rel_create_date";
-
 typedef struct ComputedColumnContextData
 {
 	Relation	rel;

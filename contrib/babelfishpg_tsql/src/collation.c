@@ -1961,8 +1961,14 @@ get_collation_name_for_db(const char* dbname)
 	HeapTuple	tuple;
 	Form_sysdatabases sysdb;
 	char *collation_name;
+	/*
+	 * The catalog is keyed on the physical (downcased and, for long names,
+	 * MD5-truncated) database name, so normalize the possibly original,
+	 * mixed-case or long input before looking it up.
+	 */
+	char *phys_name = get_physical_db_name(dbname);
 
-	tuple = SearchSysCache1(SYSDATABASENAME, PointerGetDatum(cstring_to_text(dbname)));
+	tuple = SearchSysCache1(SYSDATABASENAME, PointerGetDatum(cstring_to_text(phys_name)));
 
 	if (!HeapTupleIsValid(tuple))
 			ereport(ERROR,

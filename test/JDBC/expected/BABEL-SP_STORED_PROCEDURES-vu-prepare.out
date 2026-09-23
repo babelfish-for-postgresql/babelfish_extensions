@@ -24,9 +24,9 @@ AS
 SELECT * FROM babel_sp_stored_procedures_vu_prepare_t1
 GO
 
-DROP PROCEDURE IF EXISTS babel_sp_stored_procedures_vu_prepare_select_all_Mixed
+DROP PROCEDURE IF EXISTS babel_sp_stored_procedures_vu_prepare_select_all_mixed
 GO
-CREATE PROCEDURE babel_sp_stored_procedures_vu_prepare_select_all_Mixed
+CREATE PROCEDURE babel_sp_stored_procedures_vu_prepare_select_all_mixed
 AS
 SELECT * FROM babel_sp_stored_procedures_vu_prepare_t1
 GO
