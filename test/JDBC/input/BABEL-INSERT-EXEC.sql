@@ -1229,6 +1229,85 @@ DROP TABLE dbo.ie_rowcount;
 GO
 
 -- ============================================================================
+-- Category VI: INSERT EXEC with SET IMPLICIT_TRANSACTIONS ON
+-- ============================================================================
+CREATE TABLE dbo.ie_implicit_txn (val INT);
+GO
+CREATE PROCEDURE dbo.ie_implicit_txn_src AS
+    SELECT 10 UNION ALL SELECT 20;
+GO
+-- Test 1: COMMIT should succeed after INSERT EXEC
+SET IMPLICIT_TRANSACTIONS ON;
+INSERT INTO dbo.ie_implicit_txn EXEC dbo.ie_implicit_txn_src;
+COMMIT;
+SET IMPLICIT_TRANSACTIONS OFF;
+GO
+SELECT val FROM dbo.ie_implicit_txn ORDER BY val; -- Expected: 10, 20
+GO
+-- Test 2: ROLLBACK should undo the INSERT EXEC
+SET IMPLICIT_TRANSACTIONS ON;
+INSERT INTO dbo.ie_implicit_txn EXEC dbo.ie_implicit_txn_src;
+ROLLBACK;
+SET IMPLICIT_TRANSACTIONS OFF;
+GO
+SELECT val FROM dbo.ie_implicit_txn ORDER BY val; -- Expected: 10, 20 (rollback undid second insert)
+GO
+DROP PROCEDURE dbo.ie_implicit_txn_src;
+DROP TABLE dbo.ie_implicit_txn;
+GO
+
+-- ============================================================================
+-- Category VII: INSERT EXEC with SET IMPLICIT_TRANSACTIONS ON
+-- ============================================================================
+CREATE TABLE dbo.ie_implicit_txn (val INT);
+GO
+CREATE PROCEDURE dbo.ie_implicit_txn_src AS
+    SELECT 10 UNION ALL SELECT 20;
+GO
+
+SET IMPLICIT_TRANSACTIONS ON
+GO
+
+-- INSERT EXEC should start implicit transaction and keep it open (core bug)
+SELECT @@TRANCOUNT
+INSERT INTO dbo.ie_implicit_txn EXEC dbo.ie_implicit_txn_src
+SELECT @@TRANCOUNT
+IF @@TRANCOUNT > 0 COMMIT
+GO
+
+-- Data should persist after COMMIT
+SELECT val FROM dbo.ie_implicit_txn ORDER BY val
+GO
+
+-- INSERT EXEC followed by ROLLBACK should undo the rows
+SELECT @@TRANCOUNT
+INSERT INTO dbo.ie_implicit_txn EXEC dbo.ie_implicit_txn_src
+SELECT @@TRANCOUNT
+ROLLBACK
+SELECT @@TRANCOUNT
+GO
+
+-- Verify rows were rolled back (only committed rows from first test remain)
+SELECT val FROM dbo.ie_implicit_txn ORDER BY val
+GO
+
+-- INSERT EXEC inside an explicit transaction should not prematurely commit
+SELECT @@TRANCOUNT
+BEGIN TRANSACTION
+SELECT @@TRANCOUNT
+INSERT INTO dbo.ie_implicit_txn EXEC dbo.ie_implicit_txn_src
+SELECT @@TRANCOUNT
+IF @@TRANCOUNT > 0 COMMIT
+IF @@TRANCOUNT > 0 COMMIT
+GO
+
+SET IMPLICIT_TRANSACTIONS OFF
+GO
+DROP PROCEDURE dbo.ie_implicit_txn_src;
+DROP TABLE dbo.ie_implicit_txn;
+GO
+
+-- ============================================================================
 -- Cleanup verification
 -- ============================================================================
 SELECT 'All INSERT EXEC tests completed successfully' AS status;
