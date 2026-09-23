@@ -314,18 +314,20 @@ tds_shmem_request()
 	RequestAddinShmemSpace(tds_memsize());
 
 	/*
-	 * Ad-hoc ANTLR parse cache: reserve shared memory for the cache hash table.
+	 * Batch query ANTLR parse cache: reserve shared memory for the cache hash table.
 	 * The hash is created in tds_status_shmem_startup() and used by babelfishpg_tsql.
+	 *
+	 * Each entry is ~256 KB (single data buffer for query_text + parse_tree + datums).
+	 * Shared state is ~56 bytes (LWLock pointer + spinlock + 5 stat counters).
 	 */
 	{
-		Size adhoc_cache_size;
-		/* shared state + hash table for 100 entries */
-		adhoc_cache_size = MAXALIGN(sizeof(int64) * 8);  /* shared state */
-		adhoc_cache_size = add_size(adhoc_cache_size,
-									hash_estimate_size(100, 82008));
-		RequestAddinShmemSpace(adhoc_cache_size);
+		Size batch_cache_size;
+		batch_cache_size = MAXALIGN(56);  /* sizeof(BatchCacheSharedState) */
+		batch_cache_size = add_size(batch_cache_size,
+									hash_estimate_size(100, 262232));  /* sizeof(BatchCacheEntry) */
+		RequestAddinShmemSpace(batch_cache_size);
 	}
-	RequestNamedLWLockTranche("adhoc_antlr_parse_cache", 1);
+	RequestNamedLWLockTranche("batch_antlr_parse_cache", 1);
 }
 
 /*
@@ -440,24 +442,24 @@ tds_status_shmem_startup(void)
 	{
 		typedef struct {
 			LWLock	   *lock;
-			int64		total_entries;
+			slock_t		mutex;
 			int64		stat_hits;
 			int64		stat_misses;
 			int64		stat_writes;
 			int64		stat_evictions;
 			int64		stat_errors;
-		} AdhocCacheState;
+		} BatchCacheState;
 
-		AdhocCacheState *state;
+		BatchCacheState *state;
 		HASHCTL info;
 		bool state_found;
 
-		state = ShmemInitStruct("adhoc_antlr_parse_cache_state",
-								sizeof(AdhocCacheState), &state_found);
+		state = ShmemInitStruct("batch_antlr_parse_cache_state",
+								sizeof(BatchCacheState), &state_found);
 		if (!state_found)
 		{
-			state->lock = &(GetNamedLWLockTranche("adhoc_antlr_parse_cache"))->lock;
-			state->total_entries = 0;
+			state->lock = &(GetNamedLWLockTranche("batch_antlr_parse_cache"))->lock;
+			SpinLockInit(&state->mutex);
 			state->stat_hits = 0;
 			state->stat_misses = 0;
 			state->stat_writes = 0;
@@ -466,9 +468,9 @@ tds_status_shmem_startup(void)
 		}
 
 		memset(&info, 0, sizeof(info));
-		info.keysize = 16;  /* sizeof(AdhocCacheKey): int64 + int16 + padding */
-		info.entrysize = 82008;  /* exact sizeof(AdhocCacheEntry) */
-		ShmemInitHash("adhoc_antlr_parse_cache_hash",
+		info.keysize = 8;       /* sizeof(BatchCacheKey) = sizeof(uint64) */
+		info.entrysize = 262232; /* sizeof(BatchCacheEntry) — 256KB data buffer + metadata */
+		ShmemInitHash("batch_antlr_parse_cache_hash",
 					  100, 100,
 					  &info,
 					  HASH_ELEM | HASH_BLOBS);

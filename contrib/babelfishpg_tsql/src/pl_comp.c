@@ -51,7 +51,7 @@
 #include "iterative_exec.h"
 #include "multidb.h"
 #include "collation.h"
-#include "adhoc_cache.h"
+#include "batch_cache.h"
 #include "session.h"
 
 /* ----------
@@ -1514,27 +1514,26 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 	/*
 	 * Now parse the function's text.
 	 *
-	 * If ad-hoc ANTLR parse cache is enabled, try to restore a previously
+	 * If batch query ANTLR parse cache is enabled, try to restore a previously
 	 * cached parse tree from shared memory. On miss, parse normally and
 	 * cache the result for future executions.
 	 */
 	{
-		bool		adhoc_cache_hit = false;
+		bool		batch_cache_hit = false;
 		char	   *query_text = NULL;
-		int64		query_hash_id = 0;
-		int16		current_db_id = 0;
+		BatchCacheKey cache_key = 0;
 
-		if (pltsql_enable_adhoc_antlr_parse_cache && args == NULL &&
-			IS_TDS_CONN() && !babelfish_dump_restore)
+		if (pltsql_allow_batch_query_cache &&
+			pltsql_enable_batch_query_cache &&
+			IS_TDS_CONN() && !babelfish_dump_restore &&
+			args != NULL && OPTION_ENABLED(args, CACHE_PLAN))
 		{
 			query_text = proc_source;
-			query_hash_id = compute_adhoc_query_hash(query_text);
-			current_db_id = get_cur_db_id();
+			cache_key = compute_batch_cache_key(query_text, get_cur_db_id());
 
 			/* Attempt cache lookup from shared memory */
 			{
-				AdhocCacheEntry *cached = adhoc_cache_lookup(query_hash_id,
-															current_db_id,
+				BatchCacheEntry *cached = batch_cache_lookup(cache_key,
 															query_text);
 				if (cached != NULL && cached->parse_tree_len > 0)
 				{
@@ -1543,6 +1542,7 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 
 					INSTR_TIME_SET_CURRENT(deser_start);
 
+					/* Deserialize parse tree from embedded buffer */
 					PG_TRY();
 					{
 						restored_tree = (PLtsql_stmt_block *)
@@ -1552,7 +1552,7 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 					{
 						FlushErrorState();
 						restored_tree = NULL;
-						elog(DEBUG1, "pltsql_adhoc_parse_cache: deserialization failed, falling through to ANTLR");
+						elog(DEBUG1, "pltsql_batch_parse_cache: deserialization failed, falling through to ANTLR");
 					}
 					PG_END_TRY();
 
@@ -1561,7 +1561,7 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 						/* Restore datums if cached */
 						if (cached->parse_datums_len > 0)
 						{
-							List *datum_list = NIL;
+							List   *datum_list = NIL;
 
 							PG_TRY();
 							{
@@ -1590,22 +1590,66 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 
 						pltsql_parse_result = restored_tree;
 						parse_rc = 0;
-						adhoc_cache_hit = true;
+						batch_cache_hit = true;
 
 						/* Record deserialization time for EXPLAIN reporting */
 						INSTR_TIME_SET_CURRENT(deser_end);
 						INSTR_TIME_SUBTRACT(deser_end, deser_start);
 						antlr_parse_time = deser_end;
 
-						elog(DEBUG1, "pltsql_adhoc_parse_cache[HIT]: hash=%ld db=%d (deser_time=%.3f ms)",
-							 (long) query_hash_id, current_db_id,
+						elog(DEBUG1, "pltsql_batch_parse_cache[HIT]: key=%lu (deser_time=%.3f ms)",
+							 (unsigned long) cache_key,
 							 1000.0 * INSTR_TIME_GET_DOUBLE(deser_end));
+
+						/*
+						 * Validation mode: run a fresh ANTLR parse and compare
+						 * the serialized trees. Logs PASS or FAIL. This is a
+						 * debug-only path — doubles the parse cost on every hit.
+						 */
+						if (pltsql_validate_batch_antlr_parse_cache)
+						{
+							PG_TRY();
+							{
+								ANTLR_result fresh_result = antlr_parser_cpp(proc_source);
+
+								if (fresh_result.success)
+								{
+									char *cached_str = pltsql_nodeToString(restored_tree);
+									char *fresh_str = pltsql_nodeToString(pltsql_parse_result);
+
+									if (strcmp(cached_str, fresh_str) == 0)
+										elog(LOG, "pltsql_batch_parse_cache[VALIDATE]: PASS key=%lu",
+											 (unsigned long) cache_key);
+									else
+										elog(WARNING, "pltsql_batch_parse_cache[VALIDATE]: FAIL key=%lu — cached tree differs from fresh ANTLR parse",
+											 (unsigned long) cache_key);
+
+									if (cached_str)
+										pfree(cached_str);
+									if (fresh_str)
+										pfree(fresh_str);
+
+									/* Restore the cached tree as the result
+									 * (fresh parse may have changed pltsql_parse_result) */
+									pltsql_parse_result = restored_tree;
+								}
+								else
+									elog(WARNING, "pltsql_batch_parse_cache[VALIDATE]: fresh ANTLR parse failed, cannot validate");
+							}
+							PG_CATCH();
+							{
+								FlushErrorState();
+								elog(WARNING, "pltsql_batch_parse_cache[VALIDATE]: error during validation, continuing with cached tree");
+								pltsql_parse_result = restored_tree;
+							}
+							PG_END_TRY();
+						}
 					}
 				}
 			}
 		}
 
-		if (!adhoc_cache_hit)
+		if (!batch_cache_hit)
 		{
 			ANTLR_result result = antlr_parser_cpp(proc_source);
 
@@ -1621,8 +1665,8 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 		}
 
 		/* Cache write: after successful fresh ANTLR parse */
-		if (!adhoc_cache_hit && parse_rc == 0 &&
-			pltsql_enable_adhoc_antlr_parse_cache && query_text != NULL)
+		if (!batch_cache_hit && parse_rc == 0 &&
+			pltsql_enable_batch_query_cache && query_text != NULL)
 		{
 			PG_TRY();
 			{
@@ -1647,7 +1691,7 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 					}
 				}
 
-				adhoc_cache_insert(query_hash_id, current_db_id,
+				batch_cache_insert(cache_key,
 								   query_text, tree_str, datums_str);
 
 				if (tree_str)
@@ -1655,13 +1699,13 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 				if (datums_str)
 					pfree(datums_str);
 
-				elog(DEBUG1, "pltsql_adhoc_parse_cache[WRITE]: hash=%ld db=%d",
-					 (long) query_hash_id, current_db_id);
+				elog(DEBUG1, "pltsql_batch_parse_cache[WRITE]: key=%lu",
+					 (unsigned long) cache_key);
 			}
 			PG_CATCH();
 			{
 				FlushErrorState();
-				elog(DEBUG1, "pltsql_adhoc_parse_cache[FAIL]: write failed, continuing normally");
+				elog(DEBUG1, "pltsql_batch_parse_cache[FAIL]: write failed, continuing normally");
 			}
 			PG_END_TRY();
 		}

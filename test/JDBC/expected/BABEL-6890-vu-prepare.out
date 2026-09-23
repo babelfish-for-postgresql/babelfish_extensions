@@ -1,0 +1,126 @@
+-- tsql
+-- Customer can't enable the feature
+-- Disabled by the superuser by default
+SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'on', false);
+GO
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Batch query parse cache feature is not enabled.)~~
+
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = on;
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+-- Customer can now enable the feature
+-- Enabled by the superuser
+SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+-- Flush any stale entries from previous runs
+SELECT sys.flush_batch_antlr_parse_cache();
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+-- Baseline stats (should be all zeros after flush)
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+0#!#0#!#0#!#0#!#0#!#0
+~~END~~
+
+
+
+-- ============================================================================
+-- Test tables
+-- ============================================================================
+CREATE TABLE dbo.cache_orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT,
+    product_name VARCHAR(200),
+    quantity INT,
+    unit_price DECIMAL(10,2),
+    order_date DATETIME,
+    status VARCHAR(50),
+    region VARCHAR(50)
+);
+GO
+
+INSERT INTO dbo.cache_orders VALUES
+    (1, 100, 'Widget A', 10, 29.99, '2026-01-15', 'active', 'US'),
+    (2, 101, 'Widget B', 5, 49.99, '2026-02-20', 'completed', 'EU'),
+    (3, 100, 'Widget C', 20, 9.99, '2026-03-10', 'active', 'US'),
+    (4, 102, 'Widget D', 1, 199.99, '2026-04-05', 'cancelled', 'US'),
+    (5, 103, 'Widget E', 50, 4.99, '2026-05-01', 'active', 'EU');
+GO
+~~ROW COUNT: 5~~
+
+
+CREATE TABLE dbo.cache_customers (
+    customer_id INT PRIMARY KEY,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    email VARCHAR(200),
+    tier VARCHAR(20)
+);
+GO
+
+INSERT INTO dbo.cache_customers VALUES
+    (100, 'Alice', 'Smith', 'alice@test.com', 'gold'),
+    (101, 'Bob', 'Jones', 'bob@test.com', 'silver'),
+    (102, 'Charlie', 'Brown', 'charlie@test.com', 'bronze'),
+    (103, 'Diana', 'Lee', 'diana@test.com', 'gold');
+GO
+~~ROW COUNT: 4~~
+
+
+-- Stored procedure for negative test (should NOT be cached)
+CREATE PROCEDURE dbo.cache_test_proc
+    @val INT
+AS
+BEGIN
+    SELECT @val * 10 AS result;
+END;
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+-- psql
+-- superuser enables the feature
+ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = off;
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+PRINT 'BABEL-6890 prepare completed';
+GO
