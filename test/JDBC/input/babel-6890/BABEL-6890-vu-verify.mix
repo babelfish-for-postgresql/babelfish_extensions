@@ -3,6 +3,8 @@
 ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = on;
 SELECT pg_reload_conf();
 GO
+SELECT pg_sleep(1);
+GO
 
 -- tsql
 -- Customer can now enable the feature
@@ -527,10 +529,9 @@ GO
 SELECT
     cache_key,
     query_text,
-    parse_tree,
     bbf_version
 FROM sys.batch_antlr_parse_cache_entries()
-ORDER BY query_text_len ASC;
+ORDER BY query_text_len ASC, cache_key ASC;
 GO
 
 -- ============================================================================

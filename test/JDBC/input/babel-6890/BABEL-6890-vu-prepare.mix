@@ -8,6 +8,8 @@ GO
 ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = on;
 SELECT pg_reload_conf();
 GO
+SELECT pg_sleep(1);
+GO
 
 -- tsql
 -- Customer can now enable the feature

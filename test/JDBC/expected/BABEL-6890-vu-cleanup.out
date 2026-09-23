@@ -8,6 +8,13 @@ bool
 t
 ~~END~~
 
+SELECT pg_sleep(1)
+GO
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
 -- Flush the batch query parse cache

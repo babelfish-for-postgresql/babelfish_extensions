@@ -19,6 +19,13 @@ bool
 t
 ~~END~~
 
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
 -- Customer can now enable the feature

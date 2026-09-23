@@ -8,6 +8,13 @@ bool
 t
 ~~END~~
 
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
 -- Customer can now enable the feature
@@ -936,18 +943,17 @@ GO
 SELECT
     cache_key,
     query_text,
-    parse_tree,
     bbf_version
 FROM sys.batch_antlr_parse_cache_entries()
-ORDER BY query_text_len ASC;
+ORDER BY query_text_len ASC, cache_key ASC;
 GO
 ~~START~~
-bigint#!#text#!#text#!#text
--7483105255655773912#!#select @p1#!#{PLTSQL_STMT_BLOCK :cmd_type 0 :lineno 1 :label <> :body ({PLTSQL_STMT_INIT :cmd_type 30 :lineno 1 :label <> :inits <>} {PLTSQL_STMT_EXECSQL :cmd_type 16 :lineno 1 :sqlstmt {PLTSQL_EXPR :query select\ "@p1" :paramnos (b) :rwparam -1 :ns {PLTSQL_NSITEM :itemtype 1 :itemno 2 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 1 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 0 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 0 :prev {PLTSQL_NSITEM :itemtype 0 :itemno 0 :prev <> :name inline_code_block} :name $1} :name @p1} :name found} :name @@fetch_status} :itvf_query <>} :mod_stmt false :into false :strict false :txn_data <> :target <> :mod_stmt_tablevar false :need_to_push_result true :is_tsql_select_assign_stmt false :is_cross_db false :is_ddl false :schema_name <> :db_name <> :is_create_view false :is_set_tran_isolation false :original_query <> :is_schemabinding false}) :n_initvars 0 :initvarnos <> :exceptions <>}#!#6.3.0
--3399684047881326832#!#SELECT @p1#!#{PLTSQL_STMT_BLOCK :cmd_type 0 :lineno 1 :label <> :body ({PLTSQL_STMT_INIT :cmd_type 30 :lineno 1 :label <> :inits <>} {PLTSQL_STMT_EXECSQL :cmd_type 16 :lineno 1 :sqlstmt {PLTSQL_EXPR :query SELECT\ "@p1" :paramnos (b) :rwparam -1 :ns {PLTSQL_NSITEM :itemtype 1 :itemno 2 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 1 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 0 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 0 :prev {PLTSQL_NSITEM :itemtype 0 :itemno 0 :prev <> :name inline_code_block} :name $1} :name @p1} :name found} :name @@fetch_status} :itvf_query <>} :mod_stmt false :into false :strict false :txn_data <> :target <> :mod_stmt_tablevar false :need_to_push_result true :is_tsql_select_assign_stmt false :is_cross_db false :is_ddl false :schema_name <> :db_name <> :is_create_view false :is_set_tran_isolation false :original_query <> :is_schemabinding false}) :n_initvars 0 :initvarnos <> :exceptions <>}#!#6.3.0
--1137576203213864454#!#SELECT @P1#!#{PLTSQL_STMT_BLOCK :cmd_type 0 :lineno 1 :label <> :body ({PLTSQL_STMT_INIT :cmd_type 30 :lineno 1 :label <> :inits <>} {PLTSQL_STMT_EXECSQL :cmd_type 16 :lineno 1 :sqlstmt {PLTSQL_EXPR :query SELECT\ "@P1" :paramnos (b) :rwparam -1 :ns {PLTSQL_NSITEM :itemtype 1 :itemno 2 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 1 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 0 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 0 :prev {PLTSQL_NSITEM :itemtype 0 :itemno 0 :prev <> :name inline_code_block} :name $1} :name @p1} :name found} :name @@fetch_status} :itvf_query <>} :mod_stmt false :into false :strict false :txn_data <> :target <> :mod_stmt_tablevar false :need_to_push_result true :is_tsql_select_assign_stmt false :is_cross_db false :is_ddl false :schema_name <> :db_name <> :is_create_view false :is_set_tran_isolation false :original_query <> :is_schemabinding false}) :n_initvars 0 :initvarnos <> :exceptions <>}#!#6.3.0
--4204046958248475738#!#SELECT  @p1#!#{PLTSQL_STMT_BLOCK :cmd_type 0 :lineno 1 :label <> :body ({PLTSQL_STMT_INIT :cmd_type 30 :lineno 1 :label <> :inits <>} {PLTSQL_STMT_EXECSQL :cmd_type 16 :lineno 1 :sqlstmt {PLTSQL_EXPR :query SELECT\ \ "@p1" :paramnos (b) :rwparam -1 :ns {PLTSQL_NSITEM :itemtype 1 :itemno 2 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 1 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 0 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 0 :prev {PLTSQL_NSITEM :itemtype 0 :itemno 0 :prev <> :name inline_code_block} :name $1} :name @p1} :name found} :name @@fetch_status} :itvf_query <>} :mod_stmt false :into false :strict false :txn_data <> :target <> :mod_stmt_tablevar false :need_to_push_result true :is_tsql_select_assign_stmt false :is_cross_db false :is_ddl false :schema_name <> :db_name <> :is_create_view false :is_set_tran_isolation false :original_query <> :is_schemabinding false}) :n_initvars 0 :initvarnos <> :exceptions <>}#!#6.3.0
-8846719939564481532#!#DECLARE @result VARCHAR(100) SET @result = 'Order ' + CAST(@p1 AS VARCHAR) + ' for ' + @p2 SELECT @result AS summary SELECT COUNT(*) AS total_orders FROM dbo.cache_orders WHERE customer_id = @p1#!#{PLTSQL_STMT_BLOCK :cmd_type 0 :lineno 1 :label <> :body ({PLTSQL_STMT_INIT :cmd_type 30 :lineno 1 :label <> :inits <>} {PLTSQL_STMT_ASSIGN :cmd_type 1 :lineno 1 :varno 4 :expr {PLTSQL_EXPR :query SELECT\ 'Order\ '\ +\ CAST\(@p1\ AS\ VARCHAR\)\ +\ '\ for\ '\ +\ @p2 :paramnos (b) :rwparam -1 :ns {PLTSQL_NSITEM :itemtype 1 :itemno 4 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 3 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 2 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 1 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 1 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 0 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 0 :prev {PLTSQL_NSITEM :itemtype 0 :itemno 0 :prev <> :name inline_code_block} :name $1} :name @p1} :name $2} :name @p2} :name found} :name @@fetch_status} :name @result} :itvf_query <>}} {PLTSQL_STMT_EXECSQL :cmd_type 16 :lineno 1 :sqlstmt {PLTSQL_EXPR :query SELECT\ "@result"\ AS\ summary :paramnos (b) :rwparam -1 :ns {PLTSQL_NSITEM :itemtype 1 :itemno 4 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 3 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 2 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 1 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 1 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 0 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 0 :prev {PLTSQL_NSITEM :itemtype 0 :itemno 0 :prev <> :name inline_code_block} :name $1} :name @p1} :name $2} :name @p2} :name found} :name @@fetch_status} :name @result} :itvf_query <>} :mod_stmt false :into false :strict false :txn_data <> :target <> :mod_stmt_tablevar false :need_to_push_result true :is_tsql_select_assign_stmt false :is_cross_db false :is_ddl false :schema_name <> :db_name <> :is_create_view false :is_set_tran_isolation false :original_query <> :is_schemabinding false} {PLTSQL_STMT_EXECSQL :cmd_type 16 :lineno 1 :sqlstmt {PLTSQL_EXPR :query SELECT\ COUNT\(*\)\ AS\ total_orders\ FROM\ dbo.cache_orders\ WHERE\ customer_id\ =\ "@p1" :paramnos (b) :rwparam -1 :ns {PLTSQL_NSITEM :itemtype 1 :itemno 4 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 3 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 2 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 1 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 1 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 0 :prev {PLTSQL_NSITEM :itemtype 1 :itemno 0 :prev {PLTSQL_NSITEM :itemtype 0 :itemno 0 :prev <> :name inline_code_block} :name $1} :name @p1} :name $2} :name @p2} :name found} :name @@fetch_status} :name @result} :itvf_query <>} :mod_stmt false :into false :strict false :txn_data <> :target <> :mod_stmt_tablevar false :need_to_push_result true :is_tsql_select_assign_stmt false :is_cross_db false :is_ddl false :schema_name dbo :db_name <> :is_create_view false :is_set_tran_isolation false :original_query <> :is_schemabinding false}) :n_initvars 0 :initvarnos <> :exceptions <>}#!#6.3.0
+bigint#!#text#!#text
+-7483105255655773912#!#select @p1#!#6.3.0
+-3399684047881326832#!#SELECT @p1#!#6.3.0
+-1137576203213864454#!#SELECT @P1#!#6.3.0
+-4204046958248475738#!#SELECT  @p1#!#6.3.0
+8846719939564481532#!#DECLARE @result VARCHAR(100) SET @result = 'Order ' + CAST(@p1 AS VARCHAR) + ' for ' + @p2 SELECT @result AS summary SELECT COUNT(*) AS total_orders FROM dbo.cache_orders WHERE customer_id = @p1#!#6.3.0
 ~~END~~
 
 
