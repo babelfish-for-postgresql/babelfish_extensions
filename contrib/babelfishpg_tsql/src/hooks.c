@@ -67,7 +67,6 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
-#include "parser/parsetree.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/parser.h"
 #include "parser/scanner.h"
@@ -180,7 +179,6 @@ static void check_insert_row(List *icolumns, List *exprList, Oid relid);
 static void pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, ColumnDef *column, List **alist);
 static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, char *relname, List **alist);
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
-static void pltsql_post_transform_target_entry(TargetEntry *te, ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(unsigned char c);
@@ -444,8 +442,6 @@ InstallExtendedHooks(void)
 
 	prev_pre_transform_target_entry_hook = pre_transform_target_entry_hook;
 	pre_transform_target_entry_hook = pre_transform_target_entry;
-
-	post_transform_target_entry_hook = pltsql_post_transform_target_entry;
 
 	prev_tle_name_comparison_hook = tle_name_comparison_hook;
 	tle_name_comparison_hook = tle_name_comparison;
@@ -1702,17 +1698,6 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 			if (trigDesc && trigDesc->trig_delete_instead_statement)
 				return true;
 			break;
-		case CMD_MERGE:
-			/*
-			 * T-SQL INSTEAD OF triggers are not supported on MERGE; return
-			 * false so the rewriter takes the auto-updatable view path. Its
-			 * rewriteTargetView() then calls this hook again for each merge
-			 * action with the action's INSERT/UPDATE/DELETE command type and
-			 * rejects the statement with "cannot merge into view" when a
-			 * T-SQL INSTEAD OF trigger exists, so the trigger can never be
-			 * bypassed.
-			 */
-			break;
 		default:
 			elog(ERROR, "unrecognized CmdType: %d", (int)event);
 			break;
@@ -1922,15 +1907,6 @@ output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Que
 		stmt->fromClause = list_make1(from_table);
 		transformFromClause(pstate, stmt->fromClause);
 
-		/*
-		 * Hide unqualified columns on the "deleted" alias so that bare column
-		 * names in the OUTPUT clause resolve to the UPDATE target rather than
-		 * the alias.  transformFromClause appended "deleted" as the only FROM
-		 * entry so llast() is guaranteed to refer to it.  Qualified references
-		 * like DELETED.col and INSERTED.col still resolve correctly.
-		 */
-		((ParseNamespaceItem *) llast(pstate->p_namespace))->p_cols_visible = false;
-
 		/* Create the self-join condition based on ctid */
 		l_expr = makeNode(ColumnRef);
 		l_expr->fields = list_make2(makeString(stmt->relation->relname), makeString("ctid"));
@@ -2038,16 +2014,6 @@ handle_returning_qualifiers(Query *query, ReturningClause *returningClause, Pars
 	if (command == CMD_DELETE || command == CMD_UPDATE)
 		pltsql_update_query_result_relation(query, pstate->p_target_relation, pstate->p_rtable);
 
-	/*
-	 * MERGE never reaches this hook: T-SQL OUTPUT on MERGE is rejected up
-	 * front, and the engine calls pre_transform_returning_hook only from
-	 * transformInsertStmt() and transformDeleteStmt(); the UPDATE path
-	 * arrives through output_update_self_join_transformation() instead.
-	 * transformMergeStmt() has no such call, so OUTPUT for MERGE needs an
-	 * engine-side hook call first, and this function would then have to
-	 * map the inserted and deleted pseudo-tables onto the new and old rows
-	 * of each merge action for CMD_MERGE.
-	 */
 	if (returningClause == NULL)
 		return;
 
@@ -2420,7 +2386,7 @@ extract_identifier(const char *start, int *last_pos)
  *    is given as 'start'. This helper function basically returns the
  *    last part of the multipart identifier.
  */
-char *
+static char *
 extract_multipart_identifier_name(const char *start)
 {
 	int 	identifier_len = strlen(start);
@@ -2449,6 +2415,8 @@ extract_multipart_identifier_name(const char *start)
 
 	return name;
 }
+
+extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
 
 static void
 pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, ColumnDef *column, List **alist)
@@ -2491,6 +2459,8 @@ pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, 
 	(*alist) = lappend(*alist, stmt);
 }
 
+extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
+extern const char *ATTOPTION_BBF_TABLE_CREATE_DATE;
 
 static void
 pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, char *relname, List **alist)
@@ -2531,10 +2501,10 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, c
 	stmt->objtype = OBJECT_TABLE;
 
 	/*
-	 * Only store original_name when it differs from the internal relname
-	 * (either due to case difference or truncation).
+	 * Only store original_name if there's a difference, and if the difference
+	 * is only in capitalization
 	 */
-	if (strcmp(relname, original_name) != 0)
+	if (strncmp(relname, original_name, strlen(relname)) != 0 && strncasecmp(relname, original_name, strlen(relname)) == 0)
 	{
 		/*
 		 * add "ALTER TABLE SET (bbf_original_table_name=<original_name>)" to
@@ -3124,87 +3094,6 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			}
 		}
 		/* Otherwise keep the ResTarget as is */
-	}
-}
-
-/*
- * pltsql_post_transform_target_entry
- *
- * Post-transform hook: after a TargetEntry is created, set resorigname to
- * the full (untruncated) original identifier from the query source text
- * when the identifier was longer than NAMEDATALEN.
- *
- * Handles:
- *   1. Explicit aliases (res->name_location >= 0)
- *   2. Column references without alias - looks up bbf_original_name from
- *      pg_attribute attoptions via the resolved Var.
- */
-static void
-pltsql_post_transform_target_entry(TargetEntry *te, ResTarget *res,
-								   ParseState *pstate, ParseExprKind exprKind)
-{
-	const char *sourcetext;
-	char	   *original_name;
-	size_t		qlen;
-
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return;
-
-	sourcetext = pstate->p_sourcetext;
-	if (!sourcetext || !res || !te || !te->resname)
-		return;
-
-	/*
-	 * Fast path: a result column name shorter than the truncation boundary
-	 * cannot be a truncated long identifier, so there is no original name to
-	 * recover.
-	 */
-	if (strlen(te->resname) < BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
-		return;
-
-	/* Case 1: Explicit alias with a known location */
-	if (res->name_location >= 0)
-	{
-		qlen = strlen(sourcetext);
-		if ((size_t) res->name_location >= qlen)
-			return;
-
-		original_name = extract_identifier(sourcetext + res->name_location, NULL);
-		if (original_name && strlen(original_name) >= NAMEDATALEN)
-		{
-			te->resorigname = original_name;
-		}
-		else if (original_name)
-			pfree(original_name);
-		return;
-	}
-
-	/*
-	 * Case 2: Column reference - look up the original name
-	 * from pg_attribute.attoptions (bbf_original_name) via the resolved Var.
-	 */
-	if (te->expr && IsA(te->expr, Var))
-	{
-		Var		   *var = (Var *) te->expr;
-		char	   *orig;
-
-		/*
-		 * Resolve the original name following the same chain PostgreSQL uses
-		 * to propagate a column name outward (base relation, subquery, CTE,
-		 * or join). This handles queries like
-		 *   SELECT LongCol FROM (SELECT LongCol FROM t) sub
-		 *   WITH cte AS (SELECT LongCol FROM t) SELECT LongCol FROM cte
-		 * Only the truncated case needs resorigname; short identifiers already
-		 * fit in resname as-is.
-		 */
-		orig = pltsql_resolve_var_original_name(pstate, var);
-		if (orig)
-		{
-			if (strlen(orig) >= NAMEDATALEN)
-				te->resorigname = orig;
-			else
-				pfree(orig);
-		}
 	}
 }
 
@@ -4579,17 +4468,18 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	}
 	else
 	{
+		ObjectAddress index;
+
 		tuple = heap_form_tuple(bbf_function_ext_rel_dsc,
 								new_record, new_record_nulls);
 
 		CatalogTupleInsert(bbf_function_ext_rel, tuple);
-	}
 
 		/*
 		 * Add function's dependency on catalog table's index so that table
 		 * gets restored before function during MVU.
 		 */
-		index.classId = RelationRelationId;
+		index.classId = IndexRelationId;
 		index.objectId = get_bbf_function_ext_idx_oid();
 		index.objectSubId = 0;
 		recordDependencyOn(&address, &index, DEPENDENCY_NORMAL);
@@ -5618,7 +5508,6 @@ replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *far
 			}
 			if (!has_default)
 			{
-
 				arg_names = fetch_func_input_arg_names(func_tuple);
 				
 				if (proc_form->prokind == PROKIND_PROCEDURE)
@@ -6272,16 +6161,6 @@ pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType comm
 				break;
 			}
 		default:
-			/*
-			 * Only DELETE and UPDATE reach this hook: the engine calls it from
-			 * transformDeleteStmt() and transformUpdateStmt(), whereas
-			 * transformMergeStmt() resolves its target through setTargetTable()
-			 * directly. A CMD_MERGE arm is therefore not needed today. Should
-			 * MERGE ever be routed through this hook, the FROM-clause target
-			 * disambiguation and the rowversion handling above need an arm of
-			 * their own, since a MergeStmt carries neither a usingClause nor a
-			 * fromClause of the shape handled here.
-			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("Unexpected command type")));
