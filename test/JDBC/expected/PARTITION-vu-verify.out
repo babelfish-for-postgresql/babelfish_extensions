@@ -1795,7 +1795,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.752 ms
+Babelfish T-SQL Batch Parsing Time: 0.274 ms
 ~~END~~
 
 
@@ -1814,7 +1814,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.129 ms
+Babelfish T-SQL Batch Parsing Time: 0.053 ms
 ~~END~~
 
 
@@ -1832,7 +1832,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.124 ms
+Babelfish T-SQL Batch Parsing Time: 0.050 ms
 ~~END~~
 
 
@@ -1850,7 +1850,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.099 ms
+Babelfish T-SQL Batch Parsing Time: 0.053 ms
 ~~END~~
 
 
@@ -1869,7 +1869,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.049 ms
 ~~END~~
 
 
@@ -1888,7 +1888,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.048 ms
 ~~END~~
 
 
@@ -1906,7 +1906,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.130 ms
+Babelfish T-SQL Batch Parsing Time: 0.049 ms
 ~~END~~
 
 
@@ -1924,7 +1924,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.131 ms
+Babelfish T-SQL Batch Parsing Time: 0.050 ms
 ~~END~~
 
 
@@ -1942,7 +1942,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.093 ms
+Babelfish T-SQL Batch Parsing Time: 0.049 ms
 ~~END~~
 
 
@@ -1960,7 +1960,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.091 ms
+Babelfish T-SQL Batch Parsing Time: 0.049 ms
 ~~END~~
 
 
@@ -1978,7 +1978,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.098 ms
+Babelfish T-SQL Batch Parsing Time: 0.050 ms
 ~~END~~
 
 
@@ -1996,7 +1996,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.049 ms
 ~~END~~
 
 
@@ -2018,7 +2018,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.049 ms
 ~~END~~
 
 
@@ -2038,7 +2038,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.049 ms
 ~~END~~
 
 
@@ -2058,7 +2058,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.097 ms
+Babelfish T-SQL Batch Parsing Time: 0.050 ms
 ~~END~~
 
 
@@ -2080,7 +2080,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.095 ms
+Babelfish T-SQL Batch Parsing Time: 0.049 ms
 ~~END~~
 
 
@@ -2099,7 +2099,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.094 ms
+Babelfish T-SQL Batch Parsing Time: 0.052 ms
 ~~END~~
 
 
@@ -2118,7 +2118,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.098 ms
+Babelfish T-SQL Batch Parsing Time: 0.049 ms
 ~~END~~
 
 
@@ -2136,7 +2136,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.096 ms
+Babelfish T-SQL Batch Parsing Time: 0.056 ms
 ~~END~~
 
 
@@ -2175,7 +2175,7 @@ Index Scan using "363863941f079adaa9aa733200e57c9f_partition_1_id_key" on "36386
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 11.417 ms
+Babelfish T-SQL Batch Parsing Time: 3.692 ms
 ~~END~~
 
 
@@ -2190,7 +2190,7 @@ Index Scan using "548bb344374ce8d65342b36428375873_partition_1_id_idx" on "548bb
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.174 ms
+Babelfish T-SQL Batch Parsing Time: 0.088 ms
 ~~END~~
 
 
@@ -2205,7 +2205,7 @@ Index Scan using "12025e103721b70925744c196ce004cd_partition_1_id_idx" on "12025
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.570 ms
+Babelfish T-SQL Batch Parsing Time: 2.529 ms
 ~~END~~
 
 
@@ -2220,7 +2220,7 @@ Index Scan using "61446d711d19b5970809387caa7fd3d3_partition_1_id_idx" on "61446
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.175 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -2235,7 +2235,7 @@ Index Scan using cda2902d769fd61eb60b1a461650212f_partition_1_id_idx on cda2902d
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 6.722 ms
+Babelfish T-SQL Batch Parsing Time: 2.168 ms
 ~~END~~
 
 
@@ -2250,7 +2250,7 @@ Index Scan using "57405760297bb338f333c148aac5f845_partition_1_id_idx" on "57405
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.194 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -2268,7 +2268,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.230 ms
+Babelfish T-SQL Batch Parsing Time: 0.113 ms
 ~~END~~
 
 
@@ -2286,7 +2286,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.163 ms
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
 ~~END~~
 
 
@@ -2301,7 +2301,7 @@ Index Scan using "4867824426e52acac5c93d9cbe8aa366_partition_1_id_idx" on "48678
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.273 ms
+Babelfish T-SQL Batch Parsing Time: 0.099 ms
 ~~END~~
 
 
@@ -2316,7 +2316,7 @@ Index Scan using "751ce655481adf15600727bf291667f7_partition_1_id_idx" on "751ce
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.170 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -2331,7 +2331,7 @@ Index Scan using "5ed003cf80dacbb8cce0b21e175f7f94_partition_1_id_idx" on "5ed00
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.169 ms
+Babelfish T-SQL Batch Parsing Time: 0.084 ms
 ~~END~~
 
 
@@ -2346,7 +2346,7 @@ Index Scan using b5c2e665ec4a1219ba8510e33e45379b_partition_1_id_idx on b5c2e665
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.246 ms
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
 ~~END~~
 
 
@@ -2361,7 +2361,7 @@ Index Scan using "5d20bd977eb6e6f1304dec45598c09f5_partition_1_id_idx" on "5d20b
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.180 ms
+Babelfish T-SQL Batch Parsing Time: 0.087 ms
 ~~END~~
 
 
@@ -2376,7 +2376,7 @@ Index Scan using "933a5c7f0de13890324e53ee0711424b_partition_1_id_idx" on "933a5
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.168 ms
+Babelfish T-SQL Batch Parsing Time: 0.080 ms
 ~~END~~
 
 
@@ -2391,7 +2391,7 @@ Index Scan using "320465af1d1bd21f5b29c57f9f4e5c51_partition_1_id_idx" on "32046
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.172 ms
+Babelfish T-SQL Batch Parsing Time: 0.089 ms
 ~~END~~
 
 
@@ -2429,7 +2429,7 @@ Append
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.184 ms
+Babelfish T-SQL Batch Parsing Time: 0.083 ms
 ~~END~~
 
 
@@ -2444,7 +2444,7 @@ Index Scan using "3a3cd2fe373a5dc4b9281d49f7960143_partition_1_id_idx" on "3a3cd
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 7.260 ms
+Babelfish T-SQL Batch Parsing Time: 2.233 ms
 ~~END~~
 
 
@@ -2459,7 +2459,7 @@ Index Scan using "77718961234110c3a22a3c977bc252d8_partition_1_id_idx" on "77718
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.180 ms
+Babelfish T-SQL Batch Parsing Time: 0.092 ms
 ~~END~~
 
 
@@ -2474,7 +2474,7 @@ Index Scan using f3baf999c06d6ea82082a4c549baeb77_partition_1_id_idx on f3baf999
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.198 ms
+Babelfish T-SQL Batch Parsing Time: 0.097 ms
 ~~END~~
 
 
@@ -3931,6 +3931,8 @@ int#!#bigint#!#varchar#!#float#!#float#!#int
 
 
 -- Create partitioned table with computed columns
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE partition_float_real_partitioned_computed_test (
     id INT IDENTITY(1,1),
     float_val FLOAT,
