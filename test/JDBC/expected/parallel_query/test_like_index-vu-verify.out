@@ -8974,11 +8974,14 @@ Query Text: SELECT test_like_index_vu_prepare_t_cias_col
 FROM test_like_index_vu_prepare_t_cias 
 WHERE test_like_index_vu_prepare_t_cias_col COLLATE latin1_general_cs_as LIKE 'ci1'
 Gather (actual rows=1.00 loops=1)
-  Workers Planned: 2
-  Workers Launched: 2
-  ->  Parallel Seq Scan on test_like_index_vu_prepare_t_cias (actual rows=0.33 loops=3)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Index Only Scan using test_like_index_vu_prepare_t_ci4396880db55c57e891a5445ee6b9f8f9 on test_like_index_vu_prepare_t_cias (actual rows=1.00 loops=1)
+        Index Cond: (test_like_index_vu_prepare_t_cias_col = 'ci1'::text COLLATE "default")
         Filter: (((test_like_index_vu_prepare_t_cias_col)::text ~~ 'ci1'::text COLLATE bbf_unicode_cp1_cs_as) AND (test_like_index_vu_prepare_t_cias_col = 'ci1'::text COLLATE bbf_unicode_cp1_cs_as))
-        Rows Removed by Filter: 333
+        Heap Fetches: 1
+        Index Searches: 1
 ~~END~~
 
 
