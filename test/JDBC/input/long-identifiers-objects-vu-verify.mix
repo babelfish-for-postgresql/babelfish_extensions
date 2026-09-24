@@ -1,4 +1,4 @@
--- sla 100000
+-- sla 500000
 -- Verify table name after upgrade
 SELECT name FROM sys.tables WHERE name LIKE 'Very_Long_Table%VU_TVC';
 GO
