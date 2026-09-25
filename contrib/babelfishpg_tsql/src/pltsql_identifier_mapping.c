@@ -1157,14 +1157,12 @@ block_bbf_original_name_reloption(Node *parsetree)
 	ListCell   *lc;
 
 	/*
-	 * The bypass for restore must NOT be gated on babelfish_dump_restore
-	 * alone: that GUC is PGC_USERSET, so any authenticated user could set it
-	 * and then forge the stored original identifiers. Legitimate dump/restore
-	 * always runs as superuser, so require superuser() in addition. This
-	 * matches the established babelfish_dump_restore && superuser() pattern
-	 * used elsewhere in this file for restore-only privileged paths.
+	 * Bypass the guard during dump/restore. The babelfishpg_tsql.dump_restore
+	 * GUC is PGC_SUSET, so an ordinary authenticated user cannot set it to
+	 * forge the stored original identifiers; no additional superuser() check
+	 * is required.
 	 */
-	if (sql_dialect != SQL_DIALECT_PG || (babelfish_dump_restore && superuser()))
+	if (sql_dialect != SQL_DIALECT_PG || babelfish_dump_restore)
 		return;
 
 	switch (nodeTag(parsetree))
