@@ -1,5 +1,14 @@
 name: JDBC Tests With Single-DB Migration Mode
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - BABEL_*_DEV
+      - BABEL_*_STABLE
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   run-babelfish-jdbc-tests:
@@ -146,4 +155,3 @@ jobs:
       - name: Check and upload coredumps
         if: always() && (steps.jdbc.outcome == 'failure' || steps.replication.outcome == 'failure')
         uses: ./.github/composite-actions/upload-coredump
-
