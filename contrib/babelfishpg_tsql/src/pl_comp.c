@@ -53,6 +53,8 @@
 #include "iterative_exec.h"
 #include "multidb.h"
 #include "collation.h"
+#include "batch_cache.h"
+#include "session.h"
 
 /* ----------
  * Our own local and global variables
@@ -158,6 +160,8 @@ static void delete_function(PLtsql_function *func);
 
 extern Portal ActivePortal;
 extern bool pltsql_function_parse_error_transpose(const char *prosrc);
+extern bool babelfish_dump_restore;
+extern instr_time antlr_parse_time;
 static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid, int16 dbid);
 
 /* ----------
@@ -1510,19 +1514,202 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 	function->fetch_status_varno = var->dno;
 
 	/*
-	 * Now parse the function's text
+	 * Now parse the function's text.
+	 *
+	 * If batch query ANTLR parse cache is enabled, try to restore a previously
+	 * cached parse tree from shared memory. On miss, parse normally and
+	 * cache the result for future executions.
 	 */
 	{
-		ANTLR_result result = antlr_parser_cpp(proc_source);
+		bool		batch_cache_hit = false;
+		char	   *query_text = NULL;
+		BatchCacheKey cache_key = 0;
 
-		if (result.success)
+		if (pltsql_allow_batch_query_cache &&
+			pltsql_enable_batch_query_cache &&
+			IS_TDS_CONN() && !babelfish_dump_restore &&
+			args != NULL && OPTION_ENABLED(args, CACHE_PLAN))
 		{
-			parse_rc = 0;
+			query_text = proc_source;
+			cache_key = compute_batch_cache_key(query_text, get_cur_db_id());
+
+			/* Attempt cache lookup from shared memory */
+			{
+				BatchCacheEntry *cached = batch_cache_lookup(cache_key,
+															query_text);
+				if (cached != NULL && cached->parse_tree_len > 0)
+				{
+					PLtsql_stmt_block *restored_tree = NULL;
+					instr_time	deser_start, deser_end;
+
+					INSTR_TIME_SET_CURRENT(deser_start);
+
+					/* Deserialize parse tree from embedded buffer */
+					PG_TRY();
+					{
+						restored_tree = (PLtsql_stmt_block *)
+							pltsql_stringToNode(cached->parse_tree);
+					}
+					PG_CATCH();
+					{
+						FlushErrorState();
+						restored_tree = NULL;
+						elog(DEBUG1, "pltsql_batch_parse_cache: deserialization failed, falling through to ANTLR");
+					}
+					PG_END_TRY();
+
+					if (restored_tree != NULL)
+					{
+						/* Restore datums if cached */
+						if (cached->parse_datums_len > 0)
+						{
+							List   *datum_list = NIL;
+
+							PG_TRY();
+							{
+								datum_list = (List *) pltsql_stringToNode(cached->parse_datums);
+							}
+							PG_CATCH();
+							{
+								FlushErrorState();
+								datum_list = NIL;
+							}
+							PG_END_TRY();
+
+							if (datum_list != NIL)
+							{
+								ListCell *lc;
+
+								foreach(lc, datum_list)
+								{
+									PLtsql_datum *d = (PLtsql_datum *) lfirst(lc);
+									if (d != NULL)
+										pltsql_adddatum(d);
+								}
+								list_free(datum_list);
+							}
+						}
+
+						pltsql_parse_result = restored_tree;
+						parse_rc = 0;
+						batch_cache_hit = true;
+
+						/* Record deserialization time for EXPLAIN reporting */
+						INSTR_TIME_SET_CURRENT(deser_end);
+						INSTR_TIME_SUBTRACT(deser_end, deser_start);
+						antlr_parse_time = deser_end;
+
+						elog(DEBUG1, "pltsql_batch_parse_cache[HIT]: key=%lu (deser_time=%.3f ms)",
+							 (unsigned long) cache_key,
+							 1000.0 * INSTR_TIME_GET_DOUBLE(deser_end));
+
+						/*
+						 * Validation mode: run a fresh ANTLR parse and compare
+						 * the serialized trees. Logs PASS or FAIL. This is a
+						 * debug-only path — doubles the parse cost on every hit.
+						 */
+						if (pltsql_validate_batch_antlr_parse_cache)
+						{
+							PG_TRY();
+							{
+								ANTLR_result fresh_result = antlr_parser_cpp(proc_source);
+
+								if (fresh_result.success)
+								{
+									char *cached_str = pltsql_nodeToString(restored_tree);
+									char *fresh_str = pltsql_nodeToString(pltsql_parse_result);
+
+									if (strcmp(cached_str, fresh_str) == 0)
+										elog(LOG, "pltsql_batch_parse_cache[VALIDATE]: PASS key=%lu",
+											 (unsigned long) cache_key);
+									else
+										elog(WARNING, "pltsql_batch_parse_cache[VALIDATE]: FAIL key=%lu — cached tree differs from fresh ANTLR parse",
+											 (unsigned long) cache_key);
+
+									if (cached_str)
+										pfree(cached_str);
+									if (fresh_str)
+										pfree(fresh_str);
+
+									/* Restore the cached tree as the result
+									 * (fresh parse may have changed pltsql_parse_result) */
+									pltsql_parse_result = restored_tree;
+								}
+								else
+									elog(WARNING, "pltsql_batch_parse_cache[VALIDATE]: fresh ANTLR parse failed, cannot validate");
+							}
+							PG_CATCH();
+							{
+								FlushErrorState();
+								elog(WARNING, "pltsql_batch_parse_cache[VALIDATE]: error during validation, continuing with cached tree");
+								pltsql_parse_result = restored_tree;
+							}
+							PG_END_TRY();
+						}
+					}
+				}
+			}
 		}
-		else
+
+		if (!batch_cache_hit)
 		{
-			report_antlr_error(result);
-			parse_rc = 1;		/* invalid input */
+			ANTLR_result result = antlr_parser_cpp(proc_source);
+
+			if (result.success)
+			{
+				parse_rc = 0;
+			}
+			else
+			{
+				report_antlr_error(result);
+				parse_rc = 1;		/* invalid input */
+			}
+		}
+
+		/* Cache write: after successful fresh ANTLR parse */
+		if (!batch_cache_hit && parse_rc == 0 &&
+			pltsql_enable_batch_query_cache && query_text != NULL)
+		{
+			PG_TRY();
+			{
+				char *tree_str = pltsql_nodeToString(pltsql_parse_result);
+				char *datums_str = NULL;
+
+				/* Serialize current datums */
+				if (pltsql_nDatums > 0)
+				{
+					List *datum_list = NIL;
+					int di;
+
+					for (di = 0; di < pltsql_nDatums; di++)
+					{
+						if (pltsql_Datums[di] != NULL)
+							datum_list = lappend(datum_list, pltsql_Datums[di]);
+					}
+					if (datum_list != NIL)
+					{
+						datums_str = pltsql_nodeToString(datum_list);
+						list_free(datum_list);
+					}
+				}
+
+				batch_cache_insert(cache_key,
+								   query_text, tree_str, datums_str);
+
+				if (tree_str)
+					pfree(tree_str);
+				if (datums_str)
+					pfree(datums_str);
+
+				elog(DEBUG1, "pltsql_batch_parse_cache[WRITE]: key=%lu",
+					 (unsigned long) cache_key);
+			}
+			PG_CATCH();
+			{
+				FlushErrorState();
+				elog(DEBUG1, "pltsql_batch_parse_cache[FAIL]: write failed, continuing normally");
+			}
+			PG_END_TRY();
 		}
 	}
 

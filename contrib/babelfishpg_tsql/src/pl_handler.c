@@ -103,6 +103,9 @@
 #include "schemacmds.h"
 #include "session.h"
 #include "pltsql.h"
+#include "batch_cache.h"
+#include "storage/ipc.h"
+#include "storage/shmem.h"
 #include "pltsql_partition.h"
 #include "pltsql_permissions.h"
 #include "pl_explain.h"
@@ -6718,6 +6721,13 @@ pltsql_truncate_identifier_func(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(cstring_to_text(name));
 }
 
+/* Batch query ANTLR parse cache: lazy initialization (called on first use) */
+static void
+pltsql_batch_cache_lazy_init(void)
+{
+	batch_cache_shmem_startup();
+}
+
 /*
  * _PG_init()			- library load-time initialization
  *
@@ -7000,6 +7010,9 @@ _PG_init(void)
 	coalesce_typmod_hook = coalesce_typmod_hook_impl;
 
 	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
+
+	/* Ad-hoc ANTLR parse cache: initialize backend-local hash table */
+	pltsql_batch_cache_lazy_init();
 
 	inited = true;
 }

@@ -51,6 +51,12 @@ bool		pltsql_enable_linked_servers = true;
 bool		pltsql_enable_ownership_chaining = true;
 bool		pltsql_allow_windows_login = true;
 bool		pltsql_allow_fulltext_parser = false;
+bool		pltsql_allow_batch_query_cache = false;
+bool		pltsql_enable_batch_query_cache = false;
+int			pltsql_batch_query_cache_max_entries = 1000;
+int			pltsql_batch_query_cache_min_entry_size = 16;
+int			pltsql_batch_query_cache_max_entry_size = 256;
+bool		pltsql_validate_batch_antlr_parse_cache = false;
 bool		pltsql_enable_tsql_merge = false;
 
 bool		pltsql_xact_abort = false;
@@ -112,6 +118,7 @@ static bool check_showplan_all(bool *newval, void **extra, GucSource source);
 static bool check_showplan_text(bool *newval, void **extra, GucSource source);
 static bool check_showplan_xml(bool *newval, void **extra, GucSource source);
 static bool check_enable_pg_hint(bool *newval, void **extra, GucSource source);
+static bool check_enable_batch_query_cache(bool *newval, void **extra, GucSource source);
 static void assign_transform_null_equals(bool newval, void *extra);
 static void assign_ansi_defaults(bool newval, void *extra);
 static void assign_quoted_identifier(bool newval, void *extra);
@@ -422,6 +429,23 @@ check_enable_pg_hint(bool *newval, void **extra, GucSource source)
                  errmsg("cannot change enable_hint_plan during a parallel operation")));
     }
 
+	return true;
+}
+
+static bool
+check_enable_batch_query_cache(bool *newval, void **extra, GucSource source)
+{
+	/*
+	 * Block enabling the feature if the kill switch is off. The check on
+	 * *newval ensures this only fires when setting to true (not when the
+	 * GUC default of false is applied during _PG_init).
+	 */
+	if (*newval && !pltsql_allow_batch_query_cache)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Batch query parse cache feature is not enabled.")));
+	}
 	return true;
 }
 
@@ -1190,6 +1214,66 @@ define_custom_variables(void)
 							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.allow_batch_query_cache",
+							 gettext_noop("GUC for enabling or disabling batch query parse cache feature"),
+							 NULL,
+							 &pltsql_allow_batch_query_cache,
+							 false,
+							 PGC_SUSET,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_SUPERUSER_ONLY,
+							 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_batch_query_cache",
+							 gettext_noop("Enables shared memory caching of ANTLR parser results for batch T-SQL queries."),
+							 gettext_noop("When enabled, repeated batch queries with the same text skip ANTLR re-parse."),
+							 &pltsql_enable_batch_query_cache,
+							 false,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 check_enable_batch_query_cache, NULL, NULL);
+
+	DefineCustomIntVariable("babelfishpg_tsql.batch_query_cache_max_entries",
+							gettext_noop("Maximum number of entries in the batch query ANTLR parse cache."),
+							gettext_noop("When the cache is full, the least executed entry is evicted."),
+							&pltsql_batch_query_cache_max_entries,
+							1000,
+							100,
+							100000,
+							PGC_USERSET,
+							GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.validate_batch_antlr_parse_cache",
+							 gettext_noop("Enables validation of cached batch query parse trees against fresh ANTLR parse."),
+							 gettext_noop("When enabled, cached parse trees are compared with fresh parse for correctness verification."),
+							 &pltsql_validate_batch_antlr_parse_cache,
+							 false,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	DefineCustomIntVariable("babelfishpg_tsql.batch_query_cache_min_entry_size",
+							gettext_noop("Minimum size (kB) of each entry stored in the batch query parse cache."),
+							gettext_noop("Entries smaller than this threshold are not cached."),
+							&pltsql_batch_query_cache_min_entry_size,
+							16,
+							0,
+							32768,
+							PGC_USERSET,
+							GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE | GUC_UNIT_KB,
+							NULL, NULL, NULL);
+
+	DefineCustomIntVariable("babelfishpg_tsql.batch_query_cache_max_entry_size",
+							gettext_noop("Maximum size (kB) of each entry stored in the batch query parse cache."),
+							gettext_noop("Entries larger than this threshold are not cached."),
+							&pltsql_batch_query_cache_max_entry_size,
+							256,
+							0,
+							32768,
+							PGC_USERSET,
+							GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE | GUC_UNIT_KB,
+							NULL, NULL, NULL);
 
 	/* Dump and Restore */
 	DefineCustomBoolVariable("babelfishpg_tsql.dump_restore",

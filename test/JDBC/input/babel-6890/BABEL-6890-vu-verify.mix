@@ -1,0 +1,556 @@
+-- psql
+-- superuser enables the feature
+ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = on;
+SELECT pg_reload_conf();
+GO
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+-- Customer can now enable the feature
+-- Enabled by the superuser
+SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'on', false);
+GO
+
+-- Default min_entry_size is 16 KB which rejects most small entries.
+-- Customer lowers it to 0 for this session to cache all sp_prepexec queries.
+SELECT set_config('babelfishpg_tsql.batch_query_cache_min_entry_size', '0', false);
+GO
+
+-- Flush any stale entries and reset stats
+SELECT sys.flush_batch_antlr_parse_cache();
+GO
+
+-- Baseline: empty cache, all zeros
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 1: Trivial sp_prepexec — simplest possible query
+-- ============================================================================
+PRINT '=== Test 1: Trivial sp_prepexec ===';
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1', @p1=42
+GO
+
+-- Expect: misses=1, writes=1, entries=1
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 2: sp_prepexec with WHERE clause
+-- ============================================================================
+PRINT '=== Test 2: sp_prepexec with WHERE ===';
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT * FROM dbo.cache_orders WHERE order_id = @p1', @p1=1
+GO
+
+-- Expect: misses=2, writes=2, entries=2
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 3: sp_prepexec with aggregation
+-- ============================================================================
+PRINT '=== Test 3: sp_prepexec aggregation ===';
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT,
+    N'@p1 VARCHAR(50)',
+    N'SELECT region, COUNT(*) AS cnt, SUM(quantity) AS total_qty, AVG(unit_price) AS avg_price FROM dbo.cache_orders WHERE region = @p1 GROUP BY region',
+    @p1=N'US'
+GO
+
+-- Expect: misses=3, writes=3, entries=3
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 4: sp_prepexec with JOIN
+-- ============================================================================
+PRINT '=== Test 4: sp_prepexec with JOIN ===';
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT,
+    N'@p1 VARCHAR(50)',
+    N'SELECT o.order_id, o.product_name, c.first_name, c.last_name, c.tier FROM dbo.cache_orders o INNER JOIN dbo.cache_customers c ON o.customer_id = c.customer_id WHERE o.status = @p1 ORDER BY o.order_id',
+    @p1=N'active'
+GO
+
+-- Expect: misses=4, writes=4, entries=4
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 5: sp_prepexec with CASE expression
+-- ============================================================================
+PRINT '=== Test 5: sp_prepexec with CASE ===';
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT,
+    N'@p1 DECIMAL(10,2)',
+    N'SELECT order_id, product_name, quantity, unit_price, CASE WHEN unit_price > @p1 THEN ''Premium'' ELSE ''Standard'' END AS tier, quantity * unit_price AS line_total FROM dbo.cache_orders',
+    @p1=25.00
+GO
+
+-- Expect: misses=5, writes=5, entries=5
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 6: sp_prepexec with subquery and EXISTS
+-- ============================================================================
+PRINT '=== Test 6: sp_prepexec with subquery ===';
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT,
+    N'@p1 VARCHAR(20)',
+    N'SELECT c.customer_id, c.first_name, c.last_name, (SELECT COUNT(*) FROM dbo.cache_orders o WHERE o.customer_id = c.customer_id) AS order_count FROM dbo.cache_customers c WHERE c.tier = @p1 AND EXISTS (SELECT 1 FROM dbo.cache_orders o WHERE o.customer_id = c.customer_id)',
+    @p1=N'gold'
+GO
+
+-- Expect: misses=6, writes=6, entries=6
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 7: NEGATIVE — Raw SQL_BATCH (should NOT cache)
+-- ============================================================================
+PRINT '=== Test 7: SQL_BATCH — should NOT cache ===';
+GO
+SELECT * FROM dbo.cache_orders WHERE order_id = 1;
+GO
+
+-- Expect: no change (SQL_BATCH has args=NULL)
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 8: NEGATIVE — sp_executesql (should NOT cache)
+-- ============================================================================
+PRINT '=== Test 8: sp_executesql — should NOT cache ===';
+GO
+EXEC sp_executesql N'SELECT * FROM dbo.cache_orders WHERE order_id = @p1', N'@p1 INT', @p1=1;
+GO
+
+-- Expect: no change (sp_executesql has options=0, not CACHE_PLAN)
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 9: NEGATIVE — Stored procedure (should NOT cache in batch cache)
+-- ============================================================================
+PRINT '=== Test 9: Stored procedure — should NOT cache ===';
+GO
+EXEC dbo.cache_test_proc @val = 5;
+GO
+
+-- Expect: no change (stored procs use routine cache, not batch cache)
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 10: sp_prepexec with INSERT (DML — should still cache)
+-- ============================================================================
+PRINT '=== Test 10: sp_prepexec INSERT ===';
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT,
+    N'@p1 INT, @p2 INT, @p3 VARCHAR(200), @p4 INT, @p5 DECIMAL(10,2)',
+    N'INSERT INTO dbo.cache_orders (order_id, customer_id, product_name, quantity, unit_price) VALUES (@p1, @p2, @p3, @p4, @p5)',
+    @p1=999, @p2=100, @p3=N'Test Product', @p4=1, @p5=9.99
+GO
+
+-- Expect: misses=7, writes=7, entries=7
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 11: Cache HIT — repeat Test 1 query, different param value
+-- ============================================================================
+PRINT '=== Test 11: Cache HIT — repeat Test 1 ===';
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1', @p1=99
+GO
+
+-- Expect: hits=1
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 12: Cache HIT — repeat Test 4 query (JOIN), different param value
+-- ============================================================================
+PRINT '=== Test 12: Cache HIT — repeat Test 4 ===';
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT,
+    N'@p1 VARCHAR(50)',
+    N'SELECT o.order_id, o.product_name, c.first_name, c.last_name, c.tier FROM dbo.cache_orders o INNER JOIN dbo.cache_customers c ON o.customer_id = c.customer_id WHERE o.status = @p1 ORDER BY o.order_id',
+    @p1=N'completed'
+GO
+
+-- Expect: hits=2
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 13: Multiple cache HITs — same query, 3 different param values
+-- ============================================================================
+PRINT '=== Test 13: Same query, 3 different param values ===';
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1', @p1=1
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1', @p1=999999
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1', @p1=-1
+GO
+
+-- Expect: hits=5 (3 more hits on Test 1 query)
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 14: Bind parameter type change — single param, same query body
+-- The query body (3rd arg to sp_prepexec) is what gets hashed.
+-- Parameter type declaration (2nd arg) is NOT part of the hash.
+-- Same body 'SELECT @p1' with different param types = cache HIT.
+-- ============================================================================
+PRINT '=== Test 14: Single param type change — INT, BIGINT, VARCHAR ===';
+GO
+
+-- Already cached from Test 1 as @p1 INT
+-- Now call with @p1 BIGINT — same body 'SELECT @p1' = cache HIT
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 BIGINT', N'SELECT @p1', @p1=42
+GO
+
+-- Expect: hits=6
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- Now with @p1 VARCHAR — same body = cache HIT
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 VARCHAR(10)', N'SELECT @p1', @p1=N'hello'
+GO
+
+-- Expect: hits=7
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- Now with @p1 DECIMAL — same body = cache HIT
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 DECIMAL(10,2)', N'SELECT @p1', @p1=3.14
+GO
+
+-- Expect: hits=8
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 15: Bind parameter type change — two params, types swapped
+-- Query body: 'SELECT @p1, @p2' — same text regardless of type declarations
+-- ============================================================================
+PRINT '=== Test 15: Two params, types swapped ===';
+GO
+
+-- First call: @p1 INT, @p2 VARCHAR — cache MISS (new query body)
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT,
+    N'@p1 INT, @p2 VARCHAR(50)',
+    N'SELECT @p1 AS val1, @p2 AS val2',
+    @p1=10, @p2=N'hello'
+GO
+
+-- Expect: misses=8, writes=8, entries=8
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- Second call: @p1 VARCHAR, @p2 INT — SWAPPED types, same body = cache HIT
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT,
+    N'@p1 VARCHAR(50), @p2 INT',
+    N'SELECT @p1 AS val1, @p2 AS val2',
+    @p1=N'world', @p2=99
+GO
+
+-- Expect: hits=9
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- Third call: @p1 BIGINT, @p2 DECIMAL — different types again, same body = cache HIT
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT,
+    N'@p1 BIGINT, @p2 DECIMAL(10,2)',
+    N'SELECT @p1 AS val1, @p2 AS val2',
+    @p1=9999999, @p2=1.23
+GO
+
+-- Expect: hits=10
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 16: Bind parameter count change — same start, extra params
+-- 'SELECT @p1' vs 'SELECT @p1, @p2' = different query bodies = different entries
+-- ============================================================================
+PRINT '=== Test 16: Different param count = different query ===';
+GO
+
+-- 'SELECT @p1' already cached (Test 1). This is a HIT.
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1', @p1=1
+GO
+
+-- Expect: hits=11
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- 'SELECT @p1, @p2' — different body, cache MISS
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT,
+    N'@p1 INT, @p2 INT',
+    N'SELECT @p1, @p2',
+    @p1=1, @p2=2
+GO
+
+-- Expect: misses=9, writes=9, entries=9
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- 'SELECT @p1, @p2, @p3' — different body again, cache MISS
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT,
+    N'@p1 INT, @p2 INT, @p3 INT',
+    N'SELECT @p1, @p2, @p3',
+    @p1=1, @p2=2, @p3=3
+GO
+
+-- Expect: misses=10, writes=10, entries=10
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 17: DDL correctness — ALTER TABLE after cache
+-- ============================================================================
+PRINT '=== Test 17: ALTER TABLE after cache ===';
+GO
+
+-- Re-execute Test 2 query — should HIT
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT * FROM dbo.cache_orders WHERE order_id = @p1', @p1=1
+GO
+
+-- Expect: hits=12
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ALTER TABLE — add a column
+ALTER TABLE dbo.cache_orders ADD notes VARCHAR(500);
+GO
+
+-- Re-execute — should HIT cache AND show new column in SELECT *
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT * FROM dbo.cache_orders WHERE order_id = @p1', @p1=1
+GO
+
+-- Expect: hits=13 (cache hit, PG planner sees the new column)
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 18: DDL correctness — DROP TABLE after cache
+-- ============================================================================
+PRINT '=== Test 18: DROP TABLE after cache ===';
+GO
+
+CREATE TABLE dbo.cache_drop_test (id INT, val VARCHAR(50));
+GO
+INSERT INTO dbo.cache_drop_test VALUES (1, 'test');
+GO
+
+-- Cache a query on the table
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT * FROM dbo.cache_drop_test WHERE id = @p1', @p1=1
+GO
+
+-- Drop the table
+DROP TABLE dbo.cache_drop_test;
+GO
+
+-- Re-execute — cache HIT but execution fails (table gone)
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT * FROM dbo.cache_drop_test WHERE id = @p1', @p1=1
+GO
+
+-- Expect: hits increased (cache hit occurred, then execution failed)
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 19: GUC toggle — disable cache, execute, re-enable
+-- ============================================================================
+PRINT '=== Test 19: GUC toggle ===';
+GO
+
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- Disable cache
+SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'off', false);
+GO
+
+-- Execute sp_prepexec — should NOT use cache
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1', @p1=42
+GO
+
+-- Expect: no change (bypassed)
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- Re-enable cache
+SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'on', false);
+GO
+
+-- Execute same query — should HIT cache
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1', @p1=42
+GO
+
+-- Expect: hits increased
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 20: Flush — clear all entries and reset stats
+-- ============================================================================
+PRINT '=== Test 20: Flush ===';
+GO
+
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+SELECT sys.flush_batch_antlr_parse_cache();
+GO
+
+-- Expect: all zeros after flush
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- Execute after flush — cache miss + write
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1', @p1=42
+GO
+
+-- Expect: misses=1, writes=1, entries=1
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 21: Case sensitivity — no normalization
+-- ============================================================================
+PRINT '=== Test 21: Case sensitivity ===';
+GO
+
+-- 'select @p1' — different from 'SELECT @p1' = MISS
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'select @p1', @p1=42
+GO
+
+-- Expect: misses=2, entries=2
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- 'SELECT @P1' — different again = MISS
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @P1', @p1=42
+GO
+
+-- Expect: misses=3, entries=3
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 22: Whitespace sensitivity
+-- ============================================================================
+PRINT '=== Test 22: Whitespace sensitivity ===';
+GO
+
+-- 'SELECT  @p1' (extra space) = different hash = MISS
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT  @p1', @p1=42
+GO
+
+-- Expect: misses=4, entries=4
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 23: Multi-statement batch
+-- ============================================================================
+PRINT '=== Test 23: Multi-statement batch ===';
+GO
+
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT,
+    N'@p1 INT, @p2 VARCHAR(50)',
+    N'DECLARE @result VARCHAR(100) SET @result = ''Order '' + CAST(@p1 AS VARCHAR) + '' for '' + @p2 SELECT @result AS summary SELECT COUNT(*) AS total_orders FROM dbo.cache_orders WHERE customer_id = @p1',
+    @p1=100, @p2=N'Alice'
+GO
+
+-- Expect: misses=5, writes=5, entries=5
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- Re-execute with different params — should HIT
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT,
+    N'@p1 INT, @p2 VARCHAR(50)',
+    N'DECLARE @result VARCHAR(100) SET @result = ''Order '' + CAST(@p1 AS VARCHAR) + '' for '' + @p2 SELECT @result AS summary SELECT COUNT(*) AS total_orders FROM dbo.cache_orders WHERE customer_id = @p1',
+    @p1=101, @p2=N'Bob'
+GO
+
+-- Expect: hits increased
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 24: Cache entries view — verify metadata
+-- ============================================================================
+PRINT '=== Test 24: Cache entries view ===';
+GO
+
+SELECT
+    cache_key,
+    query_text,
+    bbf_version
+FROM sys.batch_antlr_parse_cache_entries()
+ORDER BY query_text_len ASC, cache_key ASC;
+GO
+
+-- ============================================================================
+-- Final stats
+-- ============================================================================
+PRINT '=== Final cache stats ===';
+GO
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'off', false);
+GO
+
+-- psql
+-- superuser enables the feature
+ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = off;
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+PRINT 'BABEL-6890 verify completed';
+GO

@@ -312,6 +312,22 @@ tds_shmem_request()
 	 * resources in tds_status_shmem_startup().
 	 */
 	RequestAddinShmemSpace(tds_memsize());
+
+	/*
+	 * Batch query ANTLR parse cache: reserve shared memory for the cache hash table.
+	 * The hash is created in tds_status_shmem_startup() and used by babelfishpg_tsql.
+	 *
+	 * Each entry is ~256 KB (single data buffer for query_text + parse_tree + datums).
+	 * Shared state is ~56 bytes (LWLock pointer + spinlock + 5 stat counters).
+	 */
+	{
+		Size batch_cache_size;
+		batch_cache_size = MAXALIGN(56);  /* sizeof(BatchCacheSharedState) */
+		batch_cache_size = add_size(batch_cache_size,
+									hash_estimate_size(100, 262232));  /* sizeof(BatchCacheEntry) */
+		RequestAddinShmemSpace(batch_cache_size);
+	}
+	RequestNamedLWLockTranche("batch_antlr_parse_cache", 1);
 }
 
 /*
@@ -416,6 +432,48 @@ tds_status_shmem_startup(void)
 			TdsStatusArray[i].st_context_info = buffer;
 			buffer += CONTEXTINFOLEN;
 		}
+	}
+
+	/*
+	 * Ad-hoc ANTLR parse cache: create shared hash table and state.
+	 * babelfishpg_tsql will attach to these by calling ShmemInitHash/ShmemInitStruct
+	 * with the same names.
+	 */
+	{
+		typedef struct {
+			LWLock	   *lock;
+			slock_t		mutex;
+			int64		stat_hits;
+			int64		stat_misses;
+			int64		stat_writes;
+			int64		stat_evictions;
+			int64		stat_errors;
+		} BatchCacheState;
+
+		BatchCacheState *state;
+		HASHCTL info;
+		bool state_found;
+
+		state = ShmemInitStruct("batch_antlr_parse_cache_state",
+								sizeof(BatchCacheState), &state_found);
+		if (!state_found)
+		{
+			state->lock = &(GetNamedLWLockTranche("batch_antlr_parse_cache"))->lock;
+			SpinLockInit(&state->mutex);
+			state->stat_hits = 0;
+			state->stat_misses = 0;
+			state->stat_writes = 0;
+			state->stat_evictions = 0;
+			state->stat_errors = 0;
+		}
+
+		memset(&info, 0, sizeof(info));
+		info.keysize = 8;       /* sizeof(BatchCacheKey) = sizeof(uint64) */
+		info.entrysize = 262232; /* sizeof(BatchCacheEntry) — 256KB data buffer + metadata */
+		ShmemInitHash("batch_antlr_parse_cache_hash",
+					  100, 100,
+					  &info,
+					  HASH_ELEM | HASH_BLOBS);
 	}
 
 	LWLockRelease(AddinShmemInitLock);
