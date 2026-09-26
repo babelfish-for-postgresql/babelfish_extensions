@@ -1,5 +1,14 @@
 name: JDBC Tests With Parallel Query
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - BABEL_*_DEV
+      - BABEL_*_STABLE
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   run-babelfish-jdbc-tests-with-parallel-query-mode:
