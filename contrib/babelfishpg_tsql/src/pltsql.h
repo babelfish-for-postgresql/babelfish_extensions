@@ -2409,6 +2409,7 @@ extern void block_bbf_original_name_reloption(Node *parsetree);
 extern AlterTableCmd *build_set_option_cmd(AlterTableType subtype,
 										   const char *optname,
 										   const char *optval);
+extern void bbf_store_original_name_options(Oid relid, List *cmds);
 extern char *extract_index_original_name(IndexStmt *stmt,
 										 const char *queryString);
 extern int	extract_and_strip_view_collist_loc(ViewStmt *stmt);

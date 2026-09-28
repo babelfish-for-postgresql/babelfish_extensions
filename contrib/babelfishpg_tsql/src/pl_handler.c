@@ -8692,7 +8692,7 @@ store_select_into_original_names(CreateTableAsStmt *ctas, const char *queryStrin
 			AlterTableCmd *cmd = build_set_option_cmd(AT_SetRelOptions,
 													  ATTOPTION_BBF_ORIGINAL_TABLE_NAME,
 													  original_name);
-			AlterTableInternal(relid, list_make1(cmd), false);
+			bbf_store_original_name_options(relid, list_make1(cmd));
 			CommandCounterIncrement();
 		}
 		if (original_name)
@@ -8730,7 +8730,7 @@ store_select_into_original_names(CreateTableAsStmt *ctas, const char *queryStrin
 
 	if (cmds != NIL)
 	{
-		AlterTableInternal(relid, cmds, false);
+		bbf_store_original_name_options(relid, cmds);
 		CommandCounterIncrement();
 	}
 }
