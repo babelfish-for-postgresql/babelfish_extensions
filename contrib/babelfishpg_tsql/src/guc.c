@@ -10,6 +10,7 @@
 #include "pltsql_instr.h"
 #include "pltsql.h"
 #include "pl_explain.h"
+#include "batch_cache.h"
 #include "miscadmin.h"
 #include "access/parallel.h"
 
@@ -1220,12 +1221,12 @@ define_custom_variables(void)
 
 	DefineCustomIntVariable("babelfishpg_tsql.batch_query_cache_max_entries",
 							gettext_noop("Maximum number of entries in the batch query ANTLR parse cache."),
-							gettext_noop("When the cache is full, the least executed entry is evicted."),
+							gettext_noop("When the cache is full, the least recently used entries are evicted."),
 							&pltsql_batch_query_cache_max_entries,
 							1000,
 							100,
-							100000,
-							PGC_USERSET,
+							1000,
+							PGC_SUSET,
 							GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							NULL, NULL, NULL);
 

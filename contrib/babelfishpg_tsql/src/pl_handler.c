@@ -6704,7 +6704,9 @@ pltsql_truncate_identifier_func(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(cstring_to_text(name));
 }
 
-/* Batch query ANTLR parse cache: lazy initialization (called on first use) */
+/* Batch query ANTLR parse cache: attach to shared memory at library load time.
+ * The shmem is already allocated by babelfishpg_tds; this just attaches.
+ * Idempotent — safe to call from any backend type including background workers. */
 static void
 pltsql_batch_cache_lazy_init(void)
 {

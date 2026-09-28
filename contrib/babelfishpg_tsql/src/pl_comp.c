@@ -1668,6 +1668,7 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 
 		/* Cache write: after successful fresh ANTLR parse */
 		if (!batch_cache_hit && parse_rc == 0 &&
+			pltsql_allow_batch_query_cache &&
 			pltsql_enable_batch_query_cache && query_text != NULL)
 		{
 			PG_TRY();

@@ -8,7 +8,8 @@
  * No external file or disk I/O is involved.
  *
  * Query text is stored for hash collision detection (strcmp on every
- * lookup) and is not exposed to customers via SQL functions.
+ * lookup) and is exposed via sys.batch_antlr_parse_cache_entries()
+ * which is restricted to sysadmin only.
  *
  * The cache works on Aurora read-only instances since all operations
  * are local shared memory (RAM).
@@ -19,6 +20,7 @@
 #define BATCH_CACHE_H
 
 #include "postgres.h"
+#include "port/atomics.h"
 #include "storage/lwlock.h"
 #include "storage/s_lock.h"
 
@@ -28,6 +30,15 @@
 #define BATCH_CACHE_MAX_QUERY_TEXT_LEN	(64 * 1024)		/* 64 KB */
 #define BATCH_CACHE_MAX_PARSE_TREE_LEN	(160 * 1024)	/* 160 KB */
 #define BATCH_CACHE_MAX_PARSE_DATUMS_LEN (32 * 1024)	/* 32 KB */
+
+/*****************************************
+ *    HASH TABLE CAPACITY
+ *
+ *    Shared memory hash tables have a fixed directory that cannot
+ *    grow. This constant sets the max entries for shmem allocation
+ *    and must match the GUC default for batch_query_cache_max_entries.
+ *****************************************/
+#define BATCH_CACHE_DEFAULT_MAX_ENTRIES	1000
 
 /*****************************************
  *    HASH KEY
@@ -69,12 +80,11 @@ typedef struct BatchCacheEntry
 typedef struct BatchCacheSharedState
 {
 	LWLock	   *lock;				/* protects hash table structure (insert/remove/evict) */
-	slock_t		mutex;				/* protects global stat counters */
-	int64		stat_hits;			/* global hit counter */
-	int64		stat_misses;		/* global miss counter */
-	int64		stat_writes;		/* global write counter */
-	int64		stat_evictions;		/* global eviction counter */
-	int64		stat_errors;		/* global error counter */
+	pg_atomic_uint64 stat_hits;		/* global hit counter */
+	pg_atomic_uint64 stat_misses;	/* global miss counter */
+	pg_atomic_uint64 stat_writes;	/* global write counter */
+	pg_atomic_uint64 stat_evictions;/* global eviction counter */
+	pg_atomic_uint64 stat_errors;	/* global error counter */
 } BatchCacheSharedState;
 
 /*****************************************

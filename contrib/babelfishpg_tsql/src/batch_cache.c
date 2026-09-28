@@ -8,7 +8,8 @@
  * No external file, no disk I/O.
  *
  * Query text is stored for hash collision detection (strcmp on every
- * lookup). It is not exposed to customers via SQL functions.
+ * lookup) and is exposed via sys.batch_antlr_parse_cache_entries()
+ * which is restricted to sysadmin only.
  *
  * Eviction uses LRU: sort by last_used_at, drop bottom 10% (min 5).
  *
@@ -23,6 +24,7 @@
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
 #include "utils/builtins.h"
+#include "utils/acl.h"
 #include "utils/timestamp.h"
 
 #include "pltsql.h"
@@ -58,7 +60,11 @@ batch_cache_shmem_request(void)
 }
 
 /* ----------------------------------------------------------------
- * Shared Memory Startup (called from shmem_startup_hook)
+ * Shared Memory Startup
+ *
+ * Attaches to the shared state and hash table created by
+ * babelfishpg_tds at postmaster startup. Called from _PG_init()
+ * in pl_handler.c. Idempotent — skips if already attached.
  * ----------------------------------------------------------------
  */
 void
@@ -82,7 +88,8 @@ batch_cache_shmem_startup(void)
 	info.keysize = sizeof(BatchCacheKey);
 	info.entrysize = sizeof(BatchCacheEntry);
 	batch_cache_hash = ShmemInitHash("batch_antlr_parse_cache_hash",
-									 100, 100,
+									 BATCH_CACHE_DEFAULT_MAX_ENTRIES,
+									 BATCH_CACHE_DEFAULT_MAX_ENTRIES,
 									 &info,
 									 HASH_ELEM | HASH_BLOBS);
 
@@ -130,9 +137,7 @@ batch_cache_lookup(BatchCacheKey cache_key, const char *query_text)
 
 	if (entry == NULL)
 	{
-		SpinLockAcquire(&batch_cache_state->mutex);
-		batch_cache_state->stat_misses++;
-		SpinLockRelease(&batch_cache_state->mutex);
+		pg_atomic_add_fetch_u64(&batch_cache_state->stat_misses, 1);
 		LWLockRelease(batch_cache_state->lock);
 		return NULL;
 	}
@@ -141,9 +146,7 @@ batch_cache_lookup(BatchCacheKey cache_key, const char *query_text)
 	if (entry->query_text_len != (int) strlen(query_text) ||
 		strncmp(entry->query_text, query_text, entry->query_text_len) != 0)
 	{
-		SpinLockAcquire(&batch_cache_state->mutex);
-		batch_cache_state->stat_misses++;
-		SpinLockRelease(&batch_cache_state->mutex);
+		pg_atomic_add_fetch_u64(&batch_cache_state->stat_misses, 1);
 		LWLockRelease(batch_cache_state->lock);
 		return NULL;
 	}
@@ -151,9 +154,7 @@ batch_cache_lookup(BatchCacheKey cache_key, const char *query_text)
 	/* Version check */
 	if (strcmp(entry->bbf_version, BABELFISH_VERSION_STR) != 0)
 	{
-		SpinLockAcquire(&batch_cache_state->mutex);
-		batch_cache_state->stat_misses++;
-		SpinLockRelease(&batch_cache_state->mutex);
+		pg_atomic_add_fetch_u64(&batch_cache_state->stat_misses, 1);
 		LWLockRelease(batch_cache_state->lock);
 		return NULL;
 	}
@@ -167,10 +168,8 @@ batch_cache_lookup(BatchCacheKey cache_key, const char *query_text)
 	entry->last_used_at = GetCurrentTimestamp();
 	SpinLockRelease(&entry->mutex);
 
-	/* Update global hit counter via shared state spinlock */
-	SpinLockAcquire(&batch_cache_state->mutex);
-	batch_cache_state->stat_hits++;
-	SpinLockRelease(&batch_cache_state->mutex);
+	/* Update global hit counter — lock-free atomic */
+	pg_atomic_add_fetch_u64(&batch_cache_state->stat_hits, 1);
 
 	LWLockRelease(batch_cache_state->lock);
 
@@ -292,7 +291,7 @@ batch_cache_insert(BatchCacheKey cache_key,
 		{
 			hash_search(batch_cache_hash, &entries_arr[i]->key,
 						HASH_REMOVE, NULL);
-			batch_cache_state->stat_evictions++;
+			pg_atomic_add_fetch_u64(&batch_cache_state->stat_evictions, 1);
 		}
 
 		pfree(entries_arr);
@@ -304,7 +303,7 @@ batch_cache_insert(BatchCacheKey cache_key,
 
 	if (entry == NULL)
 	{
-		batch_cache_state->stat_errors++;
+		pg_atomic_add_fetch_u64(&batch_cache_state->stat_errors, 1);
 		LWLockRelease(batch_cache_state->lock);
 		return false;
 	}
@@ -318,7 +317,7 @@ batch_cache_insert(BatchCacheKey cache_key,
 				(errmsg("Hash collision in batch query parse cache"),
 				 errdetail("Cache Key: %lu",
 						   (unsigned long) cache_key)));
-		batch_cache_state->stat_errors++;
+		pg_atomic_add_fetch_u64(&batch_cache_state->stat_errors, 1);
 		LWLockRelease(batch_cache_state->lock);
 		return false;
 	}
@@ -350,7 +349,7 @@ batch_cache_insert(BatchCacheKey cache_key,
 		SpinLockInit(&entry->mutex);
 	}
 
-	batch_cache_state->stat_writes++;
+	pg_atomic_add_fetch_u64(&batch_cache_state->stat_writes, 1);
 
 	LWLockRelease(batch_cache_state->lock);
 	return true;
@@ -380,13 +379,11 @@ batch_cache_flush(void)
 	}
 
 	/* Reset all stat counters */
-	SpinLockAcquire(&batch_cache_state->mutex);
-	batch_cache_state->stat_hits = 0;
-	batch_cache_state->stat_misses = 0;
-	batch_cache_state->stat_writes = 0;
-	batch_cache_state->stat_evictions = 0;
-	batch_cache_state->stat_errors = 0;
-	SpinLockRelease(&batch_cache_state->mutex);
+	pg_atomic_write_u64(&batch_cache_state->stat_hits, 0);
+	pg_atomic_write_u64(&batch_cache_state->stat_misses, 0);
+	pg_atomic_write_u64(&batch_cache_state->stat_writes, 0);
+	pg_atomic_write_u64(&batch_cache_state->stat_evictions, 0);
+	pg_atomic_write_u64(&batch_cache_state->stat_errors, 0);
 
 	LWLockRelease(batch_cache_state->lock);
 
@@ -406,6 +403,12 @@ batch_antlr_parse_cache_stats(PG_FUNCTION_ARGS)
 	bool		nulls[6] = {false};
 	HeapTuple	tuple;
 
+	/* Only sysadmin or users granted execute can access cache functions */
+	if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Only sysadmin can access batch query parse cache functions.")));
+
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -416,14 +419,12 @@ batch_antlr_parse_cache_stats(PG_FUNCTION_ARGS)
 
 	if (batch_cache_state != NULL && batch_cache_hash != NULL)
 	{
-		LWLockAcquire(batch_cache_state->lock, LW_SHARED);
-		values[0] = Int64GetDatum(batch_cache_state->stat_hits);
-		values[1] = Int64GetDatum(batch_cache_state->stat_misses);
-		values[2] = Int64GetDatum(batch_cache_state->stat_writes);
-		values[3] = Int64GetDatum(batch_cache_state->stat_evictions);
-		values[4] = Int64GetDatum(batch_cache_state->stat_errors);
+		values[0] = Int64GetDatum((int64) pg_atomic_read_u64(&batch_cache_state->stat_hits));
+		values[1] = Int64GetDatum((int64) pg_atomic_read_u64(&batch_cache_state->stat_misses));
+		values[2] = Int64GetDatum((int64) pg_atomic_read_u64(&batch_cache_state->stat_writes));
+		values[3] = Int64GetDatum((int64) pg_atomic_read_u64(&batch_cache_state->stat_evictions));
+		values[4] = Int64GetDatum((int64) pg_atomic_read_u64(&batch_cache_state->stat_errors));
 		values[5] = Int64GetDatum(hash_get_num_entries(batch_cache_hash));
-		LWLockRelease(batch_cache_state->lock);
 	}
 	else
 	{
@@ -438,7 +439,15 @@ batch_antlr_parse_cache_stats(PG_FUNCTION_ARGS)
 Datum
 flush_batch_antlr_parse_cache(PG_FUNCTION_ARGS)
 {
-	int64	flushed = batch_cache_flush();
+	int64	flushed;
+
+	/* Only sysadmin or users granted execute can access cache functions */
+	if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Only sysadmin can access batch query parse cache functions.")));
+
+	flushed = batch_cache_flush();
 	PG_RETURN_BOOL(flushed > 0);
 }
 
@@ -457,6 +466,12 @@ batch_antlr_parse_cache_entries(PG_FUNCTION_ARGS)
 	MemoryContext	oldcontext;
 	HASH_SEQ_STATUS scan;
 	BatchCacheEntry *entry;
+
+	/* Only sysadmin or users granted execute can access cache functions */
+	if (!has_privs_of_role(GetSessionUserId(), get_sysadmin_oid()))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Only sysadmin can access batch query parse cache functions.")));
 
 #define BATCH_CACHE_ENTRIES_COLS 9
 

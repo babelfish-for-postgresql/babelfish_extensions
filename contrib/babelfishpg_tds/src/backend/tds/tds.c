@@ -24,6 +24,7 @@
 #include "src/include/tds_int.h"
 #include "src/include/tds_secure.h"
 #include "src/include/tds_instr.h"
+#include "src/batch_cache.h"
 #include "commands/defrem.h"
 #include "fmgr.h"
 #include "pgstat.h"
@@ -322,9 +323,10 @@ tds_shmem_request()
 	 */
 	{
 		Size batch_cache_size;
-		batch_cache_size = MAXALIGN(56);  /* sizeof(BatchCacheSharedState) */
+		batch_cache_size = MAXALIGN(sizeof(BatchCacheSharedState));
 		batch_cache_size = add_size(batch_cache_size,
-									hash_estimate_size(100, 262232));  /* sizeof(BatchCacheEntry) */
+									hash_estimate_size(BATCH_CACHE_DEFAULT_MAX_ENTRIES,
+													   sizeof(BatchCacheEntry)));
 		RequestAddinShmemSpace(batch_cache_size);
 	}
 	RequestNamedLWLockTranche("batch_antlr_parse_cache", 1);
@@ -435,43 +437,34 @@ tds_status_shmem_startup(void)
 	}
 
 	/*
-	 * Ad-hoc ANTLR parse cache: create shared hash table and state.
+	 * Batch query ANTLR parse cache: create shared hash table and state.
+	 * Uses BatchCacheSharedState/BatchCacheEntry/BatchCacheKey from batch_cache.h.
 	 * babelfishpg_tsql will attach to these by calling ShmemInitHash/ShmemInitStruct
 	 * with the same names.
 	 */
 	{
-		typedef struct {
-			LWLock	   *lock;
-			slock_t		mutex;
-			int64		stat_hits;
-			int64		stat_misses;
-			int64		stat_writes;
-			int64		stat_evictions;
-			int64		stat_errors;
-		} BatchCacheState;
-
-		BatchCacheState *state;
+		BatchCacheSharedState *state;
 		HASHCTL info;
 		bool state_found;
 
 		state = ShmemInitStruct("batch_antlr_parse_cache_state",
-								sizeof(BatchCacheState), &state_found);
+								sizeof(BatchCacheSharedState), &state_found);
 		if (!state_found)
 		{
 			state->lock = &(GetNamedLWLockTranche("batch_antlr_parse_cache"))->lock;
-			SpinLockInit(&state->mutex);
-			state->stat_hits = 0;
-			state->stat_misses = 0;
-			state->stat_writes = 0;
-			state->stat_evictions = 0;
-			state->stat_errors = 0;
+			pg_atomic_init_u64(&state->stat_hits, 0);
+			pg_atomic_init_u64(&state->stat_misses, 0);
+			pg_atomic_init_u64(&state->stat_writes, 0);
+			pg_atomic_init_u64(&state->stat_evictions, 0);
+			pg_atomic_init_u64(&state->stat_errors, 0);
 		}
 
 		memset(&info, 0, sizeof(info));
-		info.keysize = 8;       /* sizeof(BatchCacheKey) = sizeof(uint64) */
-		info.entrysize = 262232; /* sizeof(BatchCacheEntry) — 256KB data buffer + metadata */
+		info.keysize = sizeof(BatchCacheKey);
+		info.entrysize = sizeof(BatchCacheEntry);
 		ShmemInitHash("batch_antlr_parse_cache_hash",
-					  100, 100,
+					  BATCH_CACHE_DEFAULT_MAX_ENTRIES,
+					  BATCH_CACHE_DEFAULT_MAX_ENTRIES,
 					  &info,
 					  HASH_ELEM | HASH_BLOBS);
 	}

@@ -28,6 +28,15 @@ GO
 DROP TABLE IF EXISTS dbo.cache_drop_test;
 GO
 
+-- Drop test user from permission tests
+DROP USER IF EXISTS babel_6890_testuser;
+GO
+IF EXISTS (SELECT * FROM sys.server_principals WHERE name = 'babel_6890_testuser')
+BEGIN
+    DROP LOGIN babel_6890_testuser;
+END
+GO
+
 -- psql
 -- superuser enables the feature
 ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = off;

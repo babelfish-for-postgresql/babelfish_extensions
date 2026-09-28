@@ -545,8 +545,117 @@ GO
 SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'off', false);
 GO
 
+-- ============================================================================
+-- Test 25: Permission — non-sysadmin cannot access cache functions
+-- ============================================================================
+PRINT '=== Test 25: Permission — non-sysadmin denied ===';
+GO
+
+-- Clean up from any previous run
+DROP USER IF EXISTS babel_6890_testuser;
+GO
+IF EXISTS (SELECT * FROM sys.server_principals WHERE name = 'babel_6890_testuser')
+BEGIN
+    DROP LOGIN babel_6890_testuser;
+END
+GO
+
+-- Create a non-sysadmin login/user
+CREATE LOGIN babel_6890_testuser WITH PASSWORD = '12345678';
+GO
+CREATE USER babel_6890_testuser FOR LOGIN babel_6890_testuser;
+GO
+
+-- tsql      user=babel_6890_testuser password=12345678
+-- Non-sysadmin tries to access cache functions — should fail
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+SELECT * FROM sys.batch_antlr_parse_cache_entries();
+GO
+
+SELECT sys.flush_batch_antlr_parse_cache();
+GO
+
+-- terminate-tsql-conn
+
+-- tsql
+-- ============================================================================
+-- Test 26: Permission — sysadmin can access cache functions
+-- ============================================================================
+PRINT '=== Test 26: Permission — sysadmin allowed ===';
+GO
+
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- Test user cleanup is in BABEL-6890-vu-cleanup.sql
+
+-- ============================================================================
+-- Test 28: Kill switch off while session has enable=on
+-- Session already has enable=on, then RDSADMIN flips allow=off.
+-- Subsequent queries should silently bypass cache (no writes, no hits).
+-- ============================================================================
+PRINT '=== Test 28: Kill switch off while enabled ===';
+GO
+
 -- psql
--- superuser enables the feature
+-- First ensure allow is on
+ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = on;
+SELECT pg_reload_conf();
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+-- Enable cache and run a query to populate
+SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'on', false);
+GO
+SELECT set_config('babelfishpg_tsql.batch_query_cache_min_entry_size', '0', false);
+GO
+SELECT sys.flush_batch_antlr_parse_cache();
+GO
+
+-- First exec — cache miss + write
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1 + 100', @p1=1
+GO
+
+-- Verify entry was written
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- psql
+-- Now RDSADMIN flips the kill switch off
+ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = off;
+SELECT pg_reload_conf();
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+-- Session still has enable=on but allow is now off
+-- This exec should silently bypass cache — no hit, no write
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1 + 200', @p1=2
+GO
+
+-- Stats should NOT change (no new miss or write — cache bypassed entirely)
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- Re-execute the cached query — should NOT hit (allow is off)
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1 + 100', @p1=3
+GO
+
+-- Stats should still NOT change
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'off', false);
+GO
+
+-- psql
+-- Reset kill switch for cleanup
 ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = off;
 SELECT pg_reload_conf();
 GO
