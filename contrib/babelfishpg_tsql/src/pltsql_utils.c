@@ -689,6 +689,7 @@ pltsql_read_procedure_info(StringInfo inout_str,
 	CallStmt   *cstmt;
 	FuncCall   *funccall;
 	FuncCandidateList clist;
+	int			fgc_flags;		/* not used */
 	const char *str1 = "EXECUTE ";
 	StringInfoData proc_stmt;
 
@@ -711,7 +712,7 @@ pltsql_read_procedure_info(StringInfo inout_str,
 	 * Parse the name into components and see if it matches any pg_proc
 	 * entries in the current search path.
 	 */
-	clist = FuncnameGetCandidates(funccall->funcname, -1, NIL, false, false, false, false, NULL);
+	clist = FuncnameGetCandidates(funccall->funcname, -1, NIL, false, false, false, false, &fgc_flags);
 
 	if (clist == NULL)
 	{

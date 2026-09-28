@@ -3362,8 +3362,9 @@ pltsql_report_proc_not_found_error(List *names, List *fargs, List *given_argname
 	char	   *schemaname;
 	char	   *funcname;
 	const char *obj_type = proc_call ? "procedure" : "function";
+	int			fgc_flags;		/* not used */
 
-	candidates = FuncnameGetCandidates(names, -1, NIL, false, false, false, true, NULL);	/* search all possible
+	candidates = FuncnameGetCandidates(names, -1, NIL, false, false, false, true, &fgc_flags);	/* search all possible
 																					 * candidate regardless
 																					 * of the # of arguments */
 	if (candidates == NULL)
