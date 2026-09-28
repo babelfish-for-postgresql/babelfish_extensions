@@ -495,3 +495,55 @@ GO
 DROP TABLE OutputCapture_insert;
 DROP TABLE OutputCapture;
 GO
+
+-- Test Case 35: UPDATE with OUTPUT - unqualified column references
+UPDATE t_upd_output_babel6885
+SET val = val * 2
+OUTPUT id, deleted.val AS old_val, val AS new_val;
+GO
+
+-- Test Case 36: UPDATE with OUTPUT and WHERE clause - unqualified column reference (BABEL-6885)
+UPDATE t_upd_output_babel6885
+SET name = name + '_updated'
+OUTPUT id, name, deleted.name AS old_name
+WHERE id > 1;
+GO
+
+
+-- Test Case 37: Multi-column UPDATE with OUTPUT - unqualified references for multiple columns
+UPDATE t_upd_output_babel6885
+SET val = val + 1, name = name + '_v3'
+OUTPUT id, val AS new_val, deleted.val AS old_val, name AS new_name, deleted.name AS old_name
+WHERE id = 1;
+GO
+
+-- Test Case 38: DELETE with OUTPUT - unqualified column references
+DELETE FROM t_upd_output_babel6885
+OUTPUT id, val, name, deleted.id AS del_id, deleted.val AS del_val, deleted.name AS del_name
+WHERE id = 2;
+GO
+
+-- Test Case 39: INSERT with OUTPUT - unqualified column references
+INSERT INTO t_upd_output_babel6885 (id, val, name)
+OUTPUT id, val, name, inserted.id AS ins_id, inserted.val AS ins_val, inserted.name AS ins_name
+VALUES (99, 999, 'inserted_row');
+GO
+
+-- Test Case 40: 3-column UPDATE SET with unqualified, inserted, and deleted OUTPUT references
+UPDATE t_multicol_output_babel6885
+SET a = a + 1, b = b + 1, c = c + 1
+OUTPUT id, a AS new_a, inserted.a AS ins_a, deleted.a AS old_a,
+          b AS new_b, inserted.b AS ins_b, deleted.b AS old_b,
+          c AS new_c, inserted.c AS ins_c, deleted.c AS old_c
+WHERE id = 1;
+GO
+
+-- Test Case 41: 4-column UPDATE SET with unqualified, inserted, and deleted OUTPUT references
+UPDATE t_multicol_output_babel6885
+SET a = a + 1, b = b + 1, c = c + 1, d = d + 1
+OUTPUT id, a AS new_a, inserted.a AS ins_a, deleted.a AS old_a,
+          b AS new_b, inserted.b AS ins_b, deleted.b AS old_b,
+          c AS new_c, inserted.c AS ins_c, deleted.c AS old_c,
+          d AS new_d, inserted.d AS ins_d, deleted.d AS old_d
+WHERE id = 1;
+GO

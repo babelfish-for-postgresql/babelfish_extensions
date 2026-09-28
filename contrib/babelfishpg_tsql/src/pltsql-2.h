@@ -380,8 +380,7 @@ extern RangeVar *pltsqlMakeRangeVarFromName(const char *identifier_val);
 
 /* INSERT EXEC setup/cleanup helpers (pl_insert_exec.c) - take InsertExecInfo */
 extern bool insert_exec_setup(PLtsql_execstate *estate,
-                                        InsertExecInfo *info,
-                                        bool start_implicit_txn);
+                                        InsertExecInfo *info);
 extern void insert_exec_flush_and_cleanup(PLtsql_execstate *estate, InsertExecInfo *info);
 
 #endif

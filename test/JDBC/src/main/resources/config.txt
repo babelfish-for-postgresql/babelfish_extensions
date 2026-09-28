@@ -55,4 +55,4 @@ testFileRoot = ./
 defaultSLA = 40000
 
 # WHETHER THE CONNECTION SHOULD BE ALLOWED TO RESET AFTER EACH TEST OR CLOSED AFTER EACH TEST
-allowConnectionReset = true
+allowConnectionReset = false

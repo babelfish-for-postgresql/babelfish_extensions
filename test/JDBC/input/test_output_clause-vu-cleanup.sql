@@ -178,3 +178,9 @@ GO
 
 DROP TABLE IF EXISTS outputresults;
 GO
+
+DROP TABLE IF EXISTS t_upd_output_babel6885;
+GO
+
+DROP TABLE IF EXISTS t_multicol_output_babel6885;
+GO
