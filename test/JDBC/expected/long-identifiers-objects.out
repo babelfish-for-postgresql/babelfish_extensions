@@ -2000,6 +2000,7 @@ int
 DROP TABLE babel5052_renamed;
 GO
 
+
 -- psql
 -- ===========================================
 -- BABEL-7192: storing original (mixed-case / long) identifiers must not crash
