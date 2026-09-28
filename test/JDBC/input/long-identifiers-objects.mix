@@ -1226,6 +1226,249 @@ GO
 DROP TABLE babel5052_renamed;
 GO
 
+-- ===========================================
+-- BABEL-7192: storing original (mixed-case / long) identifiers must not crash
+-- the backend when a DDL event trigger is active. Exercises every path that
+-- stores original names via AlterTable() -- sp_rename, SELECT INTO, and the
+-- CREATE / CREATE OR ALTER / ALTER VIEW forms -- under a ddl_command_end
+-- trigger, then re-checks a representative path under sql_drop and
+-- table_rewrite (the other two trigger types that enable the crash state).
+-- Reaching the verifications below means no crash occurred.
+-- ===========================================
+
+-- psql
+-- Create a ddl_command_end event trigger so the crash path is exercised.
+-- (An event trigger of type sql_drop / table_rewrite / ddl_command_end is what
+-- establishes currentEventTriggerState; ddl_command_start alone does not.)
+CREATE OR REPLACE FUNCTION babel_7192_event_trigger_func()
+RETURNS event_trigger LANGUAGE plpgsql AS
+$$
+BEGIN
+    RAISE NOTICE 'babel_7192 event trigger fired: % %', tg_event, tg_tag;
+END;
+$$;
+GO
+CREATE EVENT TRIGGER babel_7192_ddl_trigger
+    ON ddl_command_end
+    EXECUTE FUNCTION babel_7192_event_trigger_func();
+GO
+
+-- tsql
+-- Path 1: sp_rename (the exact BABEL-7192 reproducer). sp_rename drives a
+-- SELECT INTO internally which stores the original relation name.
+CREATE TABLE Babel_7192_Rename_Src (id INT, name VARCHAR(50));
+GO
+EXEC sp_rename 'Babel_7192_Rename_Src', 'Babel_7192_Rename_Dst', 'OBJECT';
+GO
+SELECT name FROM sys.tables WHERE name = 'Babel_7192_Rename_Dst';
+GO
+
+-- Path 2: SELECT INTO with mixed-case table and column names (stores both
+-- bbf_original_table_name reloption and bbf_original_name attoptions).
+CREATE TABLE Babel_7192_SelInto_Source (MyIdCol INT, MyNameCol VARCHAR(50));
+GO
+INSERT INTO Babel_7192_SelInto_Source VALUES (1, 'a'), (2, 'b');
+GO
+SELECT MyIdCol, MyNameCol INTO Babel_7192_SelInto_Dest FROM Babel_7192_SelInto_Source;
+GO
+SELECT name FROM sys.tables WHERE name = 'Babel_7192_SelInto_Dest';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_SelInto_Dest') ORDER BY column_id;
+GO
+SELECT MyIdCol, MyNameCol FROM Babel_7192_SelInto_Dest ORDER BY MyIdCol;
+GO
+
+-- Path 3: CREATE VIEW with mixed-case view name and mixed-case column alias.
+CREATE VIEW Babel_7192_MixedCase_View AS
+    SELECT MyIdCol AS MyAliasCol FROM Babel_7192_SelInto_Source;
+GO
+SELECT name FROM sys.views WHERE name = 'Babel_7192_MixedCase_View';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_MixedCase_View');
+GO
+
+-- Path 3b: CREATE VIEW with an explicit column alias list
+-- (store_view_explicit_column_names -> bbf_store_original_name_options).
+CREATE VIEW Babel_7192_Explicit_View (MyExplicitAliasCol) AS
+    SELECT MyIdCol FROM Babel_7192_SelInto_Source;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Explicit_View');
+GO
+
+-- Path 3c: CREATE VIEW ... SELECT * over a mixed-case column
+-- (store_view_column_original_names reparse path).
+CREATE VIEW Babel_7192_Star_View AS SELECT * FROM Babel_7192_SelInto_Source;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Star_View') ORDER BY column_id;
+GO
+
+-- Path 3d: CREATE OR ALTER VIEW and ALTER VIEW (second view code path in
+-- pl_handler.c, also calls store_view_* -> bbf_store_original_name_options).
+CREATE OR ALTER VIEW Babel_7192_OrAlter_View AS SELECT 1 AS MyOrAlterCol;
+GO
+CREATE OR ALTER VIEW Babel_7192_OrAlter_View AS SELECT 2 AS MyOrAlterColV2;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_OrAlter_View');
+GO
+ALTER VIEW Babel_7192_OrAlter_View AS SELECT 3 AS MyAlteredCol;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_OrAlter_View');
+GO
+
+-- Path 3e: sp_rename of a COLUMN (refreshes bbf_original_name via AlterTable).
+CREATE TABLE Babel_7192_RenameCol_Tab (OrigColName INT);
+GO
+EXEC sp_rename 'Babel_7192_RenameCol_Tab.OrigColName', 'RenamedColName', 'COLUMN';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_RenameCol_Tab');
+GO
+
+-- Path 4: LONG (>63 byte) identifiers across every store path, with an active
+-- event trigger. Mirrors Paths 1-3e but with names that exceed the PostgreSQL
+-- 63-byte limit, since the option-building path differs slightly for long names.
+
+-- 4a: long table + SELECT INTO (table name + column names)
+CREATE TABLE Babel_7192_Very_Long_Src_Table_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63 (Babel_7192_Very_Long_Column_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63 INT);
+GO
+SELECT Babel_7192_Very_Long_Column_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63 INTO Babel_7192_Very_Long_SelInto_Dest_Name_That_Exceeds_The_PostgreSQL_Limit_63 FROM Babel_7192_Very_Long_Src_Table_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63;
+GO
+SELECT name FROM sys.tables WHERE name LIKE 'Babel_7192_Very_Long_SelInto%';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Very_Long_SelInto_Dest_Name_That_Exceeds_The_PostgreSQL_Limit_63');
+GO
+
+-- 4b: long CREATE VIEW name + long column alias
+CREATE VIEW Babel_7192_Very_Long_View_Name_That_Exceeds_The_PostgreSQL_Limit_Of_Sixty3 AS
+    SELECT Babel_7192_Very_Long_Column_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63 AS Babel_7192_Very_Long_View_Alias_That_Exceeds_The_PostgreSQL_Limit_Of_63 FROM Babel_7192_Very_Long_Src_Table_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63;
+GO
+SELECT name FROM sys.views WHERE name LIKE 'Babel_7192_Very_Long_View_Name%';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Very_Long_View_Name_That_Exceeds_The_PostgreSQL_Limit_Of_Sixty3');
+GO
+
+-- 4c: long CREATE VIEW with explicit long column alias list
+CREATE VIEW Babel_7192_Very_Long_Expl_View_Name_That_Exceeds_The_PostgreSQL_Limit_63 (Babel_7192_Very_Long_Explicit_Alias_That_Exceeds_The_PostgreSQL_Limit_Of_63) AS
+    SELECT Babel_7192_Very_Long_Column_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63 FROM Babel_7192_Very_Long_Src_Table_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Very_Long_Expl_View_Name_That_Exceeds_The_PostgreSQL_Limit_63');
+GO
+
+-- 4d: long CREATE VIEW ... SELECT * (reparse path)
+CREATE VIEW Babel_7192_Very_Long_Star_View_Name_That_Exceeds_The_PostgreSQL_Limit_63 AS SELECT * FROM Babel_7192_Very_Long_Src_Table_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Very_Long_Star_View_Name_That_Exceeds_The_PostgreSQL_Limit_63') ORDER BY column_id;
+GO
+
+-- 4e: sp_rename of a long OBJECT and a long COLUMN
+CREATE TABLE Babel_7192_Very_Long_Rename_Src_Name_That_Exceeds_The_PostgreSQL_Limit_63 (id INT);
+GO
+EXEC sp_rename 'Babel_7192_Very_Long_Rename_Src_Name_That_Exceeds_The_PostgreSQL_Limit_63', 'Babel_7192_Very_Long_Rename_Dst_Name_That_Exceeds_The_PostgreSQL_Limit_63', 'OBJECT';
+GO
+SELECT name FROM sys.tables WHERE name LIKE 'Babel_7192_Very_Long_Rename_Dst%';
+GO
+CREATE TABLE Babel_7192_Very_Long_RenameCol_Tab (Babel_7192_Very_Long_Orig_Column_Name_That_Exceeds_PostgreSQL_Limit_63 INT);
+GO
+EXEC sp_rename 'Babel_7192_Very_Long_RenameCol_Tab.Babel_7192_Very_Long_Orig_Column_Name_That_Exceeds_PostgreSQL_Limit_63', 'Babel_7192_Very_Long_Renamed_Column_Name_That_Exceeds_PostgreSQL_Limit_63', 'COLUMN';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Very_Long_RenameCol_Tab');
+GO
+
+-- Cleanup BABEL-7192 objects
+DROP VIEW Babel_7192_MixedCase_View;
+GO
+DROP VIEW Babel_7192_Explicit_View;
+GO
+DROP VIEW Babel_7192_Star_View;
+GO
+DROP VIEW Babel_7192_OrAlter_View;
+GO
+DROP VIEW Babel_7192_Very_Long_View_Name_That_Exceeds_The_PostgreSQL_Limit_Of_Sixty3;
+GO
+DROP VIEW Babel_7192_Very_Long_Expl_View_Name_That_Exceeds_The_PostgreSQL_Limit_63;
+GO
+DROP VIEW Babel_7192_Very_Long_Star_View_Name_That_Exceeds_The_PostgreSQL_Limit_63;
+GO
+DROP TABLE Babel_7192_RenameCol_Tab;
+GO
+DROP TABLE Babel_7192_Very_Long_RenameCol_Tab;
+GO
+DROP TABLE Babel_7192_Very_Long_Rename_Dst_Name_That_Exceeds_The_PostgreSQL_Limit_63;
+GO
+DROP TABLE Babel_7192_SelInto_Dest;
+GO
+DROP TABLE Babel_7192_SelInto_Source;
+GO
+DROP TABLE Babel_7192_Rename_Dst;
+GO
+DROP TABLE Babel_7192_Very_Long_SelInto_Dest_Name_That_Exceeds_The_PostgreSQL_Limit_63;
+GO
+DROP TABLE Babel_7192_Very_Long_Src_Table_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63;
+GO
+
+-- psql
+-- The crash-enabling event-trigger state is set for ANY of sql_drop /
+-- table_rewrite / ddl_command_end (not ddl_command_start). Re-point the trigger
+-- at the other two types and re-run a representative path (SELECT INTO + CREATE
+-- VIEW) to confirm none of them crash.
+DROP EVENT TRIGGER babel_7192_ddl_trigger;
+GO
+CREATE EVENT TRIGGER babel_7192_ddl_trigger
+    ON sql_drop
+    EXECUTE FUNCTION babel_7192_event_trigger_func();
+GO
+
+-- tsql
+CREATE TABLE Babel_7192_SqlDrop_Src (MyIdCol INT, MyNameCol VARCHAR(50));
+GO
+SELECT MyIdCol, MyNameCol INTO Babel_7192_SqlDrop_Dest FROM Babel_7192_SqlDrop_Src;
+GO
+CREATE VIEW Babel_7192_SqlDrop_View (MyDropAliasCol) AS SELECT MyIdCol FROM Babel_7192_SqlDrop_Src;
+GO
+SELECT name FROM sys.tables WHERE name = 'Babel_7192_SqlDrop_Dest';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_SqlDrop_View');
+GO
+DROP VIEW Babel_7192_SqlDrop_View;
+GO
+DROP TABLE Babel_7192_SqlDrop_Dest;
+GO
+DROP TABLE Babel_7192_SqlDrop_Src;
+GO
+
+-- psql
+DROP EVENT TRIGGER babel_7192_ddl_trigger;
+GO
+CREATE EVENT TRIGGER babel_7192_ddl_trigger
+    ON table_rewrite
+    EXECUTE FUNCTION babel_7192_event_trigger_func();
+GO
+
+-- tsql
+CREATE TABLE Babel_7192_TabRewrite_Src (MyIdCol INT, MyNameCol VARCHAR(50));
+GO
+SELECT MyIdCol, MyNameCol INTO Babel_7192_TabRewrite_Dest FROM Babel_7192_TabRewrite_Src;
+GO
+CREATE VIEW Babel_7192_TabRewrite_View (MyRewriteAliasCol) AS SELECT MyIdCol FROM Babel_7192_TabRewrite_Src;
+GO
+SELECT name FROM sys.tables WHERE name = 'Babel_7192_TabRewrite_Dest';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_TabRewrite_View');
+GO
+DROP VIEW Babel_7192_TabRewrite_View;
+GO
+DROP TABLE Babel_7192_TabRewrite_Dest;
+GO
+DROP TABLE Babel_7192_TabRewrite_Src;
+GO
+
+-- psql
+-- Drop the event trigger so it does not affect subsequent tests.
+DROP EVENT TRIGGER babel_7192_ddl_trigger;
+GO
+DROP FUNCTION babel_7192_event_trigger_func();
+GO
+
+-- tsql
 -- CLEANUP
 -- ===========================================
 DROP VIEW Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;

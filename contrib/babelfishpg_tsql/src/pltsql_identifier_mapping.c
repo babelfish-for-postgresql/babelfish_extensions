@@ -37,6 +37,7 @@
 #include "nodes/parsenodes.h"
 #include "parser/analyze.h"
 #include "parser/scansup.h"
+#include "tcop/dest.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -598,6 +599,55 @@ build_set_option_cmd(AlterTableType subtype, const char *optname, const char *op
 }
 
 /*
+ * bbf_store_original_name_options
+ *
+ * Run internal ALTER TABLE ... SET (option) commands that store original
+ * (untruncated / mixed-case) identifiers as reloptions/attoptions.
+ *
+ * Dispatched as a ProcessUtility subcommand (like the CREATE TABLE alist) so it
+ * goes through the high-level AlterTable(), which sets up the event-trigger
+ * command context. The low-level AlterTableInternal() skips that setup and
+ * crashes when a DDL event trigger is active (BABEL-7192).
+ *
+ * Callers must release any reference on relid first; AlterTable() runs
+ * CheckTableNotInUse().
+ */
+void
+bbf_store_original_name_options(Oid relid, List *cmds)
+{
+	AlterTableStmt *atstmt;
+	PlannedStmt	   *wrapper;
+	Relation		rel;
+	char		   *relname;
+	char		   *nspname;
+
+	if (cmds == NIL)
+		return;
+
+	/* Resolve schema-qualified name for the RangeVar (relation not kept open). */
+	rel = relation_open(relid, AccessShareLock);
+	relname = pstrdup(RelationGetRelationName(rel));
+	nspname = get_namespace_name(RelationGetNamespace(rel));
+	relation_close(rel, AccessShareLock);
+
+	atstmt = makeNode(AlterTableStmt);
+	atstmt->relation = makeRangeVar(nspname, relname, -1);
+	atstmt->cmds = cmds;
+	atstmt->objtype = OBJECT_TABLE;
+	atstmt->missing_ok = false;
+
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = (Node *) atstmt;
+	wrapper->stmt_location = -1;
+	wrapper->stmt_len = 0;
+
+	ProcessUtility(wrapper, "(internal bbf original-name option)", false,
+				   PROCESS_UTILITY_SUBCOMMAND, NULL, NULL, None_Receiver, NULL);
+}
+
+/*
  * Extract the original (untruncated) index name from the query source text.
  *
  * The grammar appends a TSQL_ORIGINAL_NAME_LOCATION option carrying the byte
@@ -720,7 +770,7 @@ store_view_original_name(ViewStmt *stmt, const char *queryString)
 			AlterTableCmd *cmd = build_set_option_cmd(AT_SetRelOptions,
 													  ATTOPTION_BBF_ORIGINAL_TABLE_NAME,
 													  original_name);
-			AlterTableInternal(viewOid, list_make1(cmd), false);
+			bbf_store_original_name_options(viewOid, list_make1(cmd));
 			CommandCounterIncrement();
 		}
 	}
@@ -970,9 +1020,9 @@ store_sequence_original_name(CreateSeqStmt *seq_stmt, const char *queryString)
  * with extract_identifier and store bbf_original_name attoptions for columns
  * whose original differs from their (truncated/lowercased) physical attname.
  */
-static void
+static List *
 store_view_explicit_column_names(const char *queryString,
-								 Oid viewOid, TupleDesc tupdesc, int collist_loc)
+								 TupleDesc tupdesc, int collist_loc)
 {
 	const char *p;
 	int			col = 0;
@@ -1022,11 +1072,8 @@ store_view_explicit_column_names(const char *queryString,
 		}
 	}
 
-	if (cmds != NIL)
-	{
-		AlterTableInternal(viewOid, cmds, false);
-		CommandCounterIncrement();
-	}
+	/* Return the commands; caller dispatches after closing its relation ref. */
+	return cmds;
 }
 
 void
@@ -1057,8 +1104,16 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString, int co
 	 */
 	if (stmt->aliases != NIL)
 	{
-		store_view_explicit_column_names(queryString, viewOid, tupdesc, collist_loc);
+		List	   *explicit_cmds;
+
+		/* Build commands while tupdesc is open, then close before dispatch. */
+		explicit_cmds = store_view_explicit_column_names(queryString, tupdesc, collist_loc);
 		relation_close(rel, AccessShareLock);
+		if (explicit_cmds != NIL)
+		{
+			bbf_store_original_name_options(viewOid, explicit_cmds);
+			CommandCounterIncrement();
+		}
 		return;
 	}
 
@@ -1110,7 +1165,7 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString, int co
 
 	if (cmds != NIL)
 	{
-		AlterTableInternal(viewOid, cmds, false);
+		bbf_store_original_name_options(viewOid, cmds);
 		CommandCounterIncrement();
 	}
 }
