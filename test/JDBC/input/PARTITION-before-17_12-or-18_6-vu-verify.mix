@@ -1,0 +1,1865 @@
+-- parallel_query_expected
+---------------------------------------------------
+--- Check for inconsistent metadata after upgrade
+----------------------------------------------------
+SELECT COUNT(*) FROM sys.babelfish_inconsistent_metadata();
+GO
+
+--------------------------------------------------
+--- CREATE PARTITION FUNCTION/SCHEME/TABLE using procedure
+--------------------------------------------------
+EXEC PartitionProcedureCreatePartitionFunction
+GO
+
+EXEC PartitionProcedureCreatePartitionScheme
+GO
+
+EXEC PartitionProcedureCreatePartitionTable
+GO
+
+EXEC PartitionProcedureCreatePartitionFunctionSchemeAndTable
+GO
+
+--------------------------------------------------
+--- CREATE PARTITION FUNCTION/SCHEME/TABLE inside Function
+--------------------------------------------------
+CREATE FUNCTION TestFunctionCreatePartitionFunction()
+RETURNS INT
+AS
+BEGIN
+    CREATE PARTITION FUNCTION TestPartitionFunction (int)
+    AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
+    RETURN 1;
+END;
+GO
+
+CREATE FUNCTION TestFunctionDropPartitionFunction()
+RETURNS INT
+AS
+BEGIN
+    DROP PARTITION FUNCTION IntPartitionFunction;
+    RETURN 1;
+END;
+GO
+
+CREATE FUNCTION TestFunctionCreatePartitionScheme()
+RETURNS INT
+AS
+BEGIN
+    CREATE PARTITION SCHEME TestPartitionScheme AS
+    PARTITION IntPartitionFunction
+    ALL TO ([PRIMARY]);
+    RETURN 1;
+END;
+GO
+
+CREATE FUNCTION TestFunctionDropPartitionScheme()
+RETURNS INT
+AS
+BEGIN
+    DROP PARTITION SCHEME IntPartitionScheme;
+    RETURN 1;
+END;
+GO
+
+CREATE FUNCTION TestFunctionCreatePartitionTable()
+RETURNS INT
+AS
+BEGIN
+    CREATE TABLE TestPartitionTable (
+    Id INT,
+    Value sys.varchar(20)
+    ) ON IntPartitionScheme(Id);
+END;
+GO
+
+CREATE FUNCTION TestFunctionDropPartitionTable()
+RETURNS INT
+AS
+BEGIN
+    DROP TABLE partition_vu_prepare_int_table;
+    RETURN 1;
+END;
+GO
+
+---------------------------------------------------------
+--- CREATE PARTITION FUNCTION/SCHEME using 2-part name
+---------------------------------------------------------
+
+CREATE PARTITION FUNCTION [TestDb].[TwoPartParitionFunction](DATE)
+AS RANGE RIGHT FOR VALUES ('20230101', '20230201', '20230301', '20230401');
+GO
+
+CREATE PARTITION SCHEME [TestDb].[TwoPartParitionScheme]
+AS PARTITION [TestDb].[TwoPartPF]
+TO ([PRIMARY], [PRIMARY], [PRIMARY], [PRIMARY]);
+GO
+
+--------------------------------------------------
+--- Unsupported Datatypes for Partition Function 
+--------------------------------------------------
+CREATE PARTITION FUNCTION VarcharMaxPartitionFunction (VARCHAR(MAX)) 
+AS RANGE RIGHT FOR VALUES ('A', 'B', 'C', 'D');
+GO
+
+CREATE PARTITION FUNCTION NVarcharMaxPartitionFunction (NVARCHAR(MAX)) 
+AS RANGE RIGHT FOR VALUES (N'A', N'B', N'C', N'D');
+GO
+
+CREATE PARTITION FUNCTION VarbinaryMaxPartitionFunction (VARBINARY(MAX)) 
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 0xC000);
+GO
+
+CREATE PARTITION FUNCTION BinaryMaxPartitionFunction (BINARY(MAX))
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 0xC000);
+GO
+
+CREATE PARTITION FUNCTION TextPartitionFunction (text)
+AS RANGE RIGHT FOR VALUES ('a', 'b', 'c');
+GO
+
+CREATE PARTITION FUNCTION NTextPartitionFunction (ntext)
+AS RANGE RIGHT FOR VALUES (N'a', N'b', N'c');
+GO
+
+CREATE PARTITION FUNCTION ImagePartitionFunction (image)
+AS RANGE RIGHT FOR VALUES (0x123456, 0x789ABC, 0xDEF012);
+GO
+
+CREATE PARTITION FUNCTION XmlPartitionFunction (xml)
+AS RANGE RIGHT FOR VALUES ('<a>1</a>', '<b>2</b>', '<c>3</c>');
+GO
+
+CREATE PARTITION FUNCTION GeometryPartitionFunction (GEOMETRY)
+AS RANGE RIGHT FOR VALUES (GEOMETRY::STGeomFromText('POINT(1 1)', 0));
+go
+
+CREATE PARTITION FUNCTION GeometryPartitionFunction (GEOGRAPHY)
+AS RANGE RIGHT FOR VALUES (GEOMETRY::STGeomFromText('POINT(1 1)', 0));
+GO
+
+-- to test rowversion and timestamp
+SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_rowversion', 'ignore', 'false')
+go
+
+CREATE PARTITION FUNCTION RowVersionPartitionFunction (ROWVERSION)
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x0000000000000001, 0x0000000000000002);
+go
+
+CREATE PARTITION FUNCTION TimestampPartitionFunction (TIMESTAMP)
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x0000000000000001, 0x0000000000000002);
+go
+
+-- reset back the escape hatch
+SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_rowversion', 'strict', 'true')
+go
+
+-- user defined type
+CREATE TYPE PartitionUserDefinedType FROM VARCHAR(10);
+GO
+
+CREATE PARTITION FUNCTION UdtPartitionFunction (PartitionUserDefinedType)
+AS RANGE RIGHT FOR VALUES ('a', 'b', 'c');
+GO
+
+DROP type PartitionUserDefinedType
+GO
+
+------------------------------------------------------------------------------
+--- Duplicate range values for all supported datatypes in Partition Function 
+------------------------------------------------------------------------------
+CREATE PARTITION FUNCTION IntPartitionFunctionContainsDuplicateValue (int) 
+AS RANGE RIGHT FOR VALUES (0, 100, 1000, 100);
+GO
+
+CREATE PARTITION FUNCTION BigIntPartitionFunctionContainsDuplicateValue (bigint)
+AS RANGE RIGHT FOR VALUES (0, 500, 100, 500, 1000);
+GO
+
+CREATE PARTITION FUNCTION SmallIntPartitionFunctionContainsDuplicateValue (smallint) 
+AS RANGE RIGHT FOR VALUES (32767, 10, -32768, 0, 10);
+GO
+
+CREATE PARTITION FUNCTION TinyIntPartitionFunctionContainsDuplicateValue (tinyint)
+AS RANGE RIGHT FOR VALUES (0, 255, 128, 255);
+GO
+
+CREATE PARTITION FUNCTION DecimalPartitionFunctionContainsDuplicateValue (decimal(10, 5))
+AS RANGE RIGHT FOR VALUES (0.0, 300.0, 200.0, 100.0, 300.0);
+GO
+
+CREATE PARTITION FUNCTION NumericPartitionFunctionContainsDuplicateValue (numeric(5, 2))
+AS RANGE RIGHT FOR VALUES (0.0, 30.0, 10.0, 20.0, 30.0);
+GO
+
+CREATE PARTITION FUNCTION DatePartitionFunctionContainsDuplicateValue (date) 
+AS RANGE RIGHT FOR VALUES ('2022-07-01', '2022-01-01','2023-01-01','2022-01-01');
+GO
+
+CREATE PARTITION FUNCTION DateTimePartitionFunctionContainsDuplicateValue (datetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01 00:00:00', '2019-01-01 00:00:00', '2022-01-01');
+GO
+
+CREATE PARTITION FUNCTION DateTime2PartitionFunctionContainsDuplicateValue (datetime2(3))
+AS RANGE RIGHT FOR VALUES ('2022-01-01 00:00:00.000', '2022-07-01 00:00:00.000', '2019-01-01 00:00:00.000', '2022-07-01 00:00:00.000');
+GO
+
+CREATE PARTITION FUNCTION SmallDateTimePartitionFunctionContainsDuplicateValue (smalldatetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01', '2019-01-01', '2022-07-01');
+GO
+
+CREATE PARTITION FUNCTION CharPartitionFunctionContainsDuplicateValue (char(5))
+AS RANGE RIGHT FOR VALUES ('A', 'F', 'K', 'P', 'U', 'Z', 'D', 'K');
+GO
+
+CREATE PARTITION FUNCTION VarCharPartitionFunctionContainsDuplicateValue (varchar(10))
+AS RANGE RIGHT FOR VALUES ('Apple', 'Banana', 'Mango', 'Cherry', 'Date', 'Banana');
+GO
+
+CREATE PARTITION FUNCTION NVarCharPartitionFunctionContainsDuplicateValue (nvarchar(10))
+AS RANGE RIGHT FOR VALUES (N'Apple', N'Banana', N'Mango', N'Cherry', N'Date', N'Banana');
+GO
+
+CREATE PARTITION FUNCTION NCharPartitionFunctionContainsDuplicateValue (nchar(5))
+AS RANGE RIGHT FOR VALUES (N'A', N'F', N'K', N'P', N'U', N'Z', N'B',  N'K');
+GO
+
+CREATE PARTITION FUNCTION BinaryPartitionFunctionContainsDuplicateValue (binary(4))
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 0xC000, 0x800);
+GO
+
+CREATE PARTITION FUNCTION VarBinaryPartitionFunctionContainsDuplicateValue (varbinary(8))
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x8000000000000000, 0x4000000000000000, 0xC000000000000000, 0x8000000000000000);
+GO
+
+CREATE PARTITION FUNCTION UniqueIdentifierPartitionFunctionContainsDuplicateValue (uniqueidentifier)
+AS RANGE RIGHT FOR VALUES ('00000000-0000-0000-0000-000000000000', '6F9619FF-8B86-D011-B42D-00C04FC964FF', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', '6F9619FF-8B86-D011-B42D-00C04FC964FF');
+GO
+
+--------------------------------------------------
+--- Unsupported Options with Partition Function 
+--------------------------------------------------
+-- LEFT option is not supported in Babelfish
+CREATE PARTITION FUNCTION PartitionFunctionWithLeft (int)
+AS RANGE LEFT FOR VALUES (10, 1000, 10000);
+GO
+
+-- sql_variant is not yet supported in Babelfish
+CREATE PARTITION FUNCTION SqlVariantPartitionFunction (sql_variant)
+AS RANGE RIGHT
+FOR VALUES (
+    CAST('abc' AS char(5)),
+    CAST(N'xyz' AS nchar(5)),
+    CAST('Apple' AS VARCHAR(10)),
+    CAST(N'Banana' AS NVARCHAR(10)),
+    CAST('Some text' AS SQL_VARIANT)
+);
+go
+
+-- by default it is LEFT and it should throw error
+CREATE PARTITION FUNCTION PartitionFunctionWithLeft (int)
+AS RANGE FOR VALUES (10, 1000, 10000);
+GO
+
+-- NULL value is not supported in range values
+CREATE PARTITION FUNCTION PartitionFunctionWithNULL (int)
+AS RANGE RIGHT FOR VALUES (10, 1000, NULL);
+GO
+
+CREATE PARTITION FUNCTION PartitionFunctionWithNULL (int)
+AS RANGE RIGHT FOR VALUES (10, 1000, NULL, NULL);
+GO
+
+--------------------------------------------------
+--- Duplicate Create of Partition Function/Scheme
+--------------------------------------------------
+CREATE PARTITION FUNCTION IntPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
+GO
+
+-- duplicate partition function with invalid args
+CREATE PARTITION FUNCTION IntPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES ('xyz', CONVERT(DATETIME, '2023-05-01'), 0x789ABC);
+GO
+
+CREATE PARTITION SCHEME IntPartitionScheme AS
+PARTITION IntPartitionFunction 
+ALL TO ([PRIMARY]);
+GO
+
+-- duplicate partition scheme with invalid Partition function
+CREATE PARTITION SCHEME IntPartitionScheme AS
+PARTITION PartitionFunctionDoesNotExists 
+ALL TO ([PRIMARY]);
+GO
+
+-----------------------------------------------------------------------------------
+--- Drop of of Partition Function/Scheme when it does not exists
+-----------------------------------------------------------------------------------
+DROP PARTITION FUNCTION PartitionFunctionDoesNotExists
+GO
+
+DROP PARTITION SCHEME PartitionSchemeDoesNotExists
+GO
+
+-----------------------------------------------------------------------------------
+--- Create of Partition Scheme when provided partition function doesn't exists
+-----------------------------------------------------------------------------------
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION PartitionFunctionDoesNotExists
+ALL TO ([PRIMARY]);
+GO
+
+-----------------------------------------------------------------------------------
+--- Drop of of Partition Function when there is dependent Partition Scheme
+-----------------------------------------------------------------------------------
+DROP PARTITION FUNCTION IntPartitionFunction
+GO
+
+-----------------------------------------------------------------------------------
+--- Drop of of Partition Scheme when there is dependent Table on it
+-----------------------------------------------------------------------------------
+DROP PARTITION SCHEME IntPartitionScheme
+GO
+
+
+-----------------------------------------------
+--- Filegroup behaviour with Partition Scheme 
+-----------------------------------------------
+
+-- by default user filegroup will be treated as PRIMARY filegroup
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION IntPartitionFunction
+ALL TO (user_filegroup);
+GO
+
+DROP PARTITION SCHEME TestPartitionScheme
+GO
+
+-- User can configure the "escape_hatch_storage_options" to STRICT to disallow user filegroups
+SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_storage_options', 'strict', 'false')
+GO
+
+-- should throw error
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION IntPartitionFunction
+ALL TO (user_filegroup);
+GO
+
+-- reset it back
+SELECT SET_CONFIG('babelfishpg_tsql.escape_hatch_storage_options', 'ignore', 'false')
+GO
+
+-- when more than one filegroup are specified with ALL option
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION IntPartitionFunction
+ALL TO ([PRIMARY], [PRIMARY], [PRIMARY]);
+GO
+
+-- when partition function generates more partition than specified filegroups
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION IntPartitionFunction
+TO ([PRIMARY], [PRIMARY], [PRIMARY]);
+GO
+
+---------------------------------
+--- Metadata Related Tests
+---------------------------------
+
+SELECT * FROM GetPartitionFunctionMetadataView
+GO
+
+SELECT * FROM GetRangeMetadataView
+GO
+
+SELECT * FROM GetRangeMetadataVarBinaryFunctionView
+GO
+
+SELECT * FROM GetParameterMetadataView
+GO
+
+SELECT * FROM GetPartitionSchemesMetadataView
+GO
+
+SELECT * FROM PartitionFunctionContainsDuplicateName()
+GO
+
+SELECT * FROM PartitionFunctionContainsDuplicateIDs()
+GO
+
+SELECT * FROM PartitionSchemeContainsDuplicateName()
+GO
+
+SELECT * FROM PartitionSchemeContainsDuplicateIDs()
+GO
+
+sp_rename 'dbo.partition_vu_prepare_normal_table.partition_vu_prepare_normal_index', 'partition_vu_prepare_normal_index_new', 'INDEX';
+GO
+
+sp_rename 'dbo.partition_vu_prepare_int_table.partition_vu_prepare_int_index', 'partition_vu_prepare_int_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_bigint_table.partition_vu_prepare_bigint_index', 'partition_vu_prepare_bigint_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_smallint_table.partition_vu_prepare_smallint_index', 'partition_vu_prepare_smallint_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_tinyint_table.partition_vu_prepare_tinyint_index', 'partition_vu_prepare_tinyint_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_decimal_table.partition_vu_prepare_decimal_index', 'partition_vu_prepare_decimal_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_numeric_table.partition_vu_prepare_numeric_index', 'partition_vu_prepare_numeric_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_money_table.partition_vu_prepare_money_index', 'partition_vu_prepare_money_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_smallmoney_table.partition_vu_prepare_smallmoney_index', 'partition_vu_prepare_smallmoney_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_date_table.partition_vu_prepare_date_index', 'partition_vu_prepare_date_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_datetime_table.partition_vu_prepare_datetime_index', 'partition_vu_prepare_datetime_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_datetime2_table.partition_vu_prepare_datetime2_index', 'partition_vu_prepare_datetime2_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_smalldatetime_table.partition_vu_prepare_smalldatetime_index', 'partition_vu_prepare_smalldatetime_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_char_table.partition_vu_prepare_char_index', 'partition_vu_prepare_char_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_varchar_table.partition_vu_prepare_varchar_index', 'partition_vu_prepare_varchar_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_nvarchar_table.partition_vu_prepare_nvarchar_index', 'partition_vu_prepare_nvarchar_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_nchar_table.partition_vu_prepare_nchar_index', 'partition_vu_prepare_nchar_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_binary_table.partition_vu_prepare_binary_index', 'partition_vu_prepare_binary_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_varbinary_table.partition_vu_prepare_varbinary_index', 'partition_vu_prepare_varbinary_index_new', 'INDEX';
+GO
+
+sp_rename 'partition_vu_prepare_uniqueidentifier_table.partition_vu_prepare_uniqueidentifier_index', 'partition_vu_prepare_uniqueidentifier_index_new', 'INDEX';
+GO
+
+SELECT * FROM GetPartitionSchemeOrFilegroupForTableOrIndex
+GO
+
+SELECT * FROM GetFileGroupMappingOfPartitionScheme
+GO
+
+SELECT * FROM GetPartitionedTablePartitioningColumn
+GO
+
+SELECT * FROM GetPartitionedIndexPartitioningColumn
+GO
+
+SELECT * FROM GetSysPartitionsMetadata
+GO
+
+--------------------------------------------------
+--- Test Partition Function Argument Limit
+--------------------------------------------------
+-- create with max allowed limit
+DECLARE @partition_count INT = 14998;
+DECLARE @partition_interval INT = 1000;
+DECLARE @partition_function_definition VARCHAR(MAX) = 'CREATE PARTITION FUNCTION PartitionFunctionWith14999Arg (int) AS RANGE RIGHT FOR VALUES (';
+
+-- Build the partition function definition
+
+DECLARE @i INT = 1;
+
+WHILE @i <= @partition_count
+
+BEGIN
+    SET @partition_function_definition = @partition_function_definition + CAST((@i * @partition_interval) AS VARCHAR(10)) + ', '
+    SET @i = @i + 1;
+
+END
+SET @partition_function_definition = @partition_function_definition + CAST((@i * @partition_interval) AS VARCHAR(10)) + ')'
+
+-- Execute the partition function creation
+EXEC (@partition_function_definition)
+GO
+
+SELECT fanout FROM sys.partition_functions WHERE name = 'PartitionFunctionWith14999Arg'
+GO
+
+DROP PARTITION FUNCTION PartitionFunctionWith14999Arg
+GO
+
+-- create when arg > max allowed limit should throw error
+DECLARE @partition_count INT = 14999;
+DECLARE @partition_interval INT = 1000;
+DECLARE @partition_function_definition VARCHAR(MAX) = 'CREATE PARTITION FUNCTION PartitionFunctionWith15000Arg (int) AS RANGE RIGHT FOR VALUES (';
+
+-- Build the partition function definition
+
+DECLARE @i INT = 1;
+
+WHILE @i <= @partition_count
+
+BEGIN
+    SET @partition_function_definition = @partition_function_definition + CAST((@i * @partition_interval) AS VARCHAR(10)) + ', '
+    SET @i = @i + 1;
+
+END
+SET @partition_function_definition = @partition_function_definition + CAST((@i * @partition_interval) AS VARCHAR(10)) + ')'
+
+-- Execute the partition function creation
+EXEC (@partition_function_definition)
+GO
+
+
+--------------------------------------------------
+--- Test Partition Function/Scheme Name Limit 
+--------------------------------------------------
+CREATE PARTITION FUNCTION PartitionFunctionNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz (bigint)
+AS RANGE RIGHT FOR VALUES (0, 10000, 100, 1000);
+GO
+
+CREATE PARTITION SCHEME PartitionSchemeNameGreaterThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz AS
+PARTITION PartitionFunctionDoesNotExists 
+ALL TO ([PRIMARY]);
+GO
+
+
+--------------------------------------------------
+--- TO test Permission
+--------------------------------------------------
+USE PartitionDb;
+GO
+
+CREATE LOGIN partition_l1 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER partition_u1 FOR LOGIN partition_l1;
+GO
+
+-- tsql     user=partition_l1 password=12345678
+USE PartitionDb;
+GO
+
+SELECT CURRENT_USER
+GO
+
+-- CREATE/DROP should throw permission error
+
+------------------------------------------------------------
+--- only db owner and logins which are member of sysadmin
+--- are allowed to create/drop partition function and scheme
+------------------------------------------------------------
+CREATE PARTITION FUNCTION TestPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
+Go
+
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION PartitionFunctionDoesNotExists
+ALL TO ([PRIMARY]);
+GO
+
+DROP PARTITION FUNCTION IntPartitionFunction
+go
+
+DROP PARTITION SCHEME IntPartitionScheme
+go
+
+------------------------------------------
+--- all user can access the metadata
+------------------------------------------
+SELECT 
+        name, type, type_desc, fanout, boundary_value_on_right, is_system
+    FROM 
+        sys.partition_functions
+    ORDER BY
+        name
+go
+
+SELECT 
+       ps.name as scheme_name, pf.name as function_name, ps.type, ps.type_desc, ps.is_default, ps.is_system
+    FROM 
+        sys.partition_schemes ps
+    INNER JOIN 
+        sys.partition_functions pf on (ps.function_id = pf.function_id)
+    ORDER BY
+        ps.name
+go
+
+------------------------------------------------------------
+--- all user can use the metadata of the partition scheme 
+--- to create table if they permission to create table
+------------------------------------------------------------
+-- tsql database=partitiondb
+-- add user as a member of db_ddladmin, so that it gets create permission
+ALTER ROLE db_ddladmin ADD MEMBER partition_u1
+GO
+
+-- tsql     user=partition_l1 password=12345678 database=partitiondb
+SELECT CURRENT_USER
+GO
+
+CREATE TABLE PartitionDb_TestPartitionTable (
+    Id INT,
+    Value sys.varchar(20)
+) ON PartitionDb_PartitionScheme(Id);
+GO
+
+-- tsql database=partitiondb
+-- remove user from member of db_ddladmin
+ALTER ROLE db_ddladmin DROP MEMBER partition_u1
+GO
+
+-----------------------------------------------------------------------------------
+--- DB owner should be able to create/drop partition function and scheme
+----------------------------------------------------------------------------------
+-- make the user a DB owner
+-- tsql
+USE PartitionDb;
+GO
+
+DROP USER partition_u1;
+GO
+
+execute sp_changedbowner 'partition_l1'
+GO
+
+-- tsql     user=partition_l1 password=12345678
+USE PartitionDb;
+GO
+
+SELECT CURRENT_USER
+GO
+--  CREATE/DROP should work now
+CREATE PARTITION FUNCTION TestPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, 10000);
+Go
+
+CREATE PARTITION SCHEME TestPartitionScheme AS
+PARTITION TestPartitionFunction
+ALL TO ([PRIMARY]);
+GO
+
+DROP PARTITION SCHEME TestPartitionScheme
+go
+
+DROP PARTITION FUNCTION TestPartitionFunction
+go
+
+-- tsql
+USE master
+GO
+
+------------------------------------------------------------------------------------------------------------
+--- Test error during Implicit Conversion of range values in Partition Function for each datatypes
+------------------------------------------------------------------------------------------------------------
+CREATE PARTITION FUNCTION NewIntPartitionFunction (int)
+AS RANGE RIGHT FOR VALUES (500, 1000, cast('xyz' as varchar));
+
+-- having duplicates also, but first it should try to convert and fail
+CREATE PARTITION FUNCTION NewBigIntPartitionFunction (bigint)
+AS RANGE RIGHT FOR VALUES (1000,  1000, 1000, cast('xyz' as varchar), 1000, 1000);
+GO
+
+CREATE PARTITION FUNCTION NewSmallIntPartitionFunction (smallint) 
+AS RANGE RIGHT FOR VALUES ('xyz', 32767, -32768);
+GO
+
+CREATE PARTITION FUNCTION NewTinyIntPartitionFunction (tinyint)
+AS RANGE RIGHT FOR VALUES (0, 255, cast('xyz' as varchar));
+GO
+
+CREATE PARTITION FUNCTION NewDecimalPartitionFunction (decimal(10, 5))
+AS RANGE RIGHT FOR VALUES (0.0, 300.0, 200.0, 'xyz');
+GO
+
+CREATE PARTITION FUNCTION NewNumericPartitionFunction (numeric(5, 2))
+AS RANGE RIGHT FOR VALUES (0.0, 30.0, 10.0, 'xyz');
+GO
+
+CREATE PARTITION FUNCTION NewDatePartitionFunction (date) 
+AS RANGE RIGHT FOR VALUES ('2022-07-01', '2022-01-01','xyz');
+GO
+
+CREATE PARTITION FUNCTION NewDateTimePartitionFunction (datetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01 00:00:00', 'xyz');
+GO
+
+CREATE PARTITION FUNCTION NewDateTime2PartitionFunction (datetime2(3))
+AS RANGE RIGHT FOR VALUES ('2022-01-01 00:00:00.000', '2022-07-01 00:00:00.000', 'xyz');
+GO
+
+CREATE PARTITION FUNCTION NewSmallDateTimePartitionFunction (smalldatetime)
+AS RANGE RIGHT FOR VALUES ('2022-01-01', '2022-07-01', cast(0x123 as binary(4)));
+GO
+
+CREATE PARTITION FUNCTION NewBinaryPartitionFunction (binary(4))
+AS RANGE RIGHT FOR VALUES (0x000, 0x800, 0x400, 'xyz');
+GO
+
+CREATE PARTITION FUNCTION NewVarBinaryPartitionFunction (varbinary(8))
+AS RANGE RIGHT FOR VALUES (0x0000000000000000, 0x8000000000000000, 0x4000000000000000, 'xyz');
+GO
+
+CREATE PARTITION FUNCTION NewUniqueIdentifierPartitionFunction (uniqueidentifier)
+AS RANGE RIGHT FOR VALUES ('00000000-0000-0000-0000-000000000000', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', 123);
+GO
+
+
+--------------------------------------------------
+--- DROP PARTITION FUNCTION/SCHEME/TABLE using procedure
+--------------------------------------------------
+EXEC PartitionProcedureDropPartitionTable
+GO
+
+EXEC PartitionProcedureDropPartitionScheme
+GO
+
+EXEC PartitionProcedureDropPartitionFunction
+GO
+
+EXEC PartitionProcedureDropPartitionFunctionSchemeAndTable
+GO
+
+---------------------------------------------------------------------------
+--- PARTITIONED TABLES test
+---------------------------------------------------------------------------
+
+SELECT * FROM GetPartitionedTableListFromSysTablesView
+GO
+
+---------------------------------------------------------------------------
+--- PARTITIONED INDEX test
+---------------------------------------------------------------------------
+SELECT * FROM GetPartitionedIndexListFromSysIndexesView
+GO
+
+
+----------------------------------------------------------------------------------------------
+--- System views should list only metadata of Partitioned table(not of the partitions)
+----------------------------------------------------------------------------------------------
+SELECT count(*) from sys.tables where name = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from sys.all_columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+
+SELECT count(*) from sys.columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+
+SELECT count(*) from sys.indexes where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+
+SELECT count(*) from sys.index_columns where object_id = OBJECT_ID('partition_vu_prepare_int_table')
+GO
+
+SELECT count(*) from sys.all_objects where name = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from sys.sp_tables_view where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.columns where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.tables where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.table_constraints where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.CONSTRAINT_COLUMN_USAGE where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+SELECT count(*) from information_schema.key_column_usage where TABLE_NAME = 'partition_vu_prepare_int_table'
+GO
+
+---------------------------------------------------------
+--- System views should not list metadata of Partitions
+---------------------------------------------------------
+SELECT count(*) from sys.tables where name = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from sys.all_columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+
+SELECT count(*) from sys.columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+
+SELECT count(*) from sys.indexes where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+
+SELECT count(*) from sys.index_columns where object_id = OBJECT_ID('363863941f079adaa9aa733200e57c9f_partition_0')
+GO
+
+SELECT count(*) from sys.all_objects where name = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from sys.sp_tables_view where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.columns where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.tables where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.table_constraints where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.CONSTRAINT_COLUMN_USAGE where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+SELECT count(*) from information_schema.key_column_usage where TABLE_NAME = '363863941f079adaa9aa733200e57c9f_partition_0'
+GO
+
+
+---------------------------------------------------------------------------
+--- Run analyze on each table and enable query plan
+---------------------------------------------------------------------------
+
+-- psql
+ANALYZE master_dbo.partition_vu_prepare_int_table;
+ANALYZE master_dbo.partition_vu_prepare_bigint_table;
+ANALYZE master_dbo.partition_vu_prepare_smallint_table;
+ANALYZE master_dbo.partition_vu_prepare_tinyint_table;
+ANALYZE master_dbo.partition_vu_prepare_decimal_table;
+ANALYZE master_dbo.partition_vu_prepare_numeric_table;
+ANALYZE master_dbo.partition_vu_prepare_money_table;
+ANALYZE master_dbo.partition_vu_prepare_smallmoney_table;
+ANALYZE master_dbo.partition_vu_prepare_date_table;
+ANALYZE master_dbo.partition_vu_prepare_datetime_table;
+ANALYZE master_dbo.partition_vu_prepare_datetime2_table;
+ANALYZE master_dbo.partition_vu_prepare_smalldatetime_table;
+ANALYZE master_dbo.partition_vu_prepare_char_table;
+ANALYZE master_dbo.partition_vu_prepare_varchar_table;
+ANALYZE master_dbo.partition_vu_prepare_nvarchar_table;
+ANALYZE master_dbo.partition_vu_prepare_nchar_table;
+ANALYZE master_dbo.partition_vu_prepare_binary_table;
+ANALYZE master_dbo.partition_vu_prepare_varbinary_table;
+ANALYZE master_dbo.partition_vu_prepare_uniqueidentifier_table;
+GO
+
+-- tsql
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+---------------------------------------------------------------------------
+--- Query plan of select on partitioned tables
+---------------------------------------------------------------------------
+
+SELECT * FROM partition_vu_prepare_int_table;
+GO
+
+SELECT * FROM partition_vu_prepare_bigint_table;
+GO
+
+SELECT * FROM partition_vu_prepare_smallint_table;
+GO
+
+SELECT * FROM partition_vu_prepare_tinyint_table;
+GO
+
+SELECT * FROM partition_vu_prepare_decimal_table;
+GO
+
+SELECT * FROM partition_vu_prepare_numeric_table;
+GO
+
+SELECT * FROM partition_vu_prepare_money_table;
+GO
+
+SELECT * FROM partition_vu_prepare_smallmoney_table;
+GO
+
+SELECT * FROM partition_vu_prepare_date_table;
+GO
+
+SELECT * FROM partition_vu_prepare_datetime_table;
+GO
+
+SELECT * FROM partition_vu_prepare_datetime2_table;
+GO
+
+SELECT * FROM partition_vu_prepare_smalldatetime_table;
+GO
+
+SELECT * FROM partition_vu_prepare_char_table;
+GO
+
+SELECT * FROM partition_vu_prepare_varchar_table;
+GO
+
+SELECT * FROM partition_vu_prepare_nvarchar_table;
+GO
+
+SELECT * FROM partition_vu_prepare_nchar_table;
+GO
+
+SELECT * FROM partition_vu_prepare_binary_table;
+GO
+
+SELECT * FROM partition_vu_prepare_varbinary_table;
+GO
+
+SELECT * FROM partition_vu_prepare_uniqueidentifier_table;
+GO
+
+-----------------------------------------------------------------------------------------
+--- Query plan of select on partitioned tables with predicate and enforced index scan
+-----------------------------------------------------------------------------------------
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON
+GO
+
+
+SELECT * FROM partition_vu_prepare_int_table WHERE Id >= 0 AND Id < 500;
+GO
+
+SELECT * FROM partition_vu_prepare_bigint_table WHERE Id >= 0 AND Id < 100;
+GO
+
+SELECT * FROM partition_vu_prepare_smallint_table WHERE Id >= -32768 AND Id < 0;
+GO
+
+SELECT * FROM partition_vu_prepare_tinyint_table WHERE Id >= 0 AND Id < 128;
+GO
+
+SELECT * FROM partition_vu_prepare_decimal_table WHERE Id >= 0.0 AND Id < 100.0;
+GO
+
+SELECT * FROM partition_vu_prepare_numeric_table WHERE Id >= 0.0 AND Id < 10.0;
+GO
+
+SELECT * FROM partition_vu_prepare_money_table WHERE Id >= 2.56789 AND Id < 3.56789;
+GO
+
+SELECT * FROM partition_vu_prepare_smallmoney_table WHERE Id >= 2.56789 AND Id < 3.56789;
+GO
+
+SELECT * FROM partition_vu_prepare_date_table WHERE Id >= '2022-01-01' AND Id < '2022-07-01';
+GO
+
+SELECT * FROM partition_vu_prepare_datetime_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01';
+GO
+
+SELECT * FROM partition_vu_prepare_datetime2_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01';
+GO
+
+SELECT * FROM partition_vu_prepare_smalldatetime_table WHERE Id >= '2019-01-01' AND Id < '2022-01-01';
+GO
+
+SELECT * FROM partition_vu_prepare_char_table WHERE Id >= 'A' AND Id < 'B';
+GO
+
+SELECT * FROM partition_vu_prepare_varchar_table WHERE Id >= 'Apple' AND Id < 'Banana';
+GO
+
+SELECT * FROM partition_vu_prepare_nvarchar_table WHERE Id >= N'Apple' AND Id < N'Banana';
+GO
+
+SELECT * FROM partition_vu_prepare_nchar_table WHERE Id >= N'A' AND Id < N'B';
+GO
+
+SELECT * FROM partition_vu_prepare_binary_table WHERE Id >= 0x0000 AND Id < 0x0400;
+GO
+
+SELECT * FROM partition_vu_prepare_varbinary_table WHERE Id >= 0x0000000000000000 AND Id < 0x4000000000000000;
+GO
+
+SELECT * FROM partition_vu_prepare_uniqueidentifier_table WHERE Id >= '00000000-0000-0000-0000-000000000000' AND Id < '6F9619FF-8B86-D011-B42D-00C04FC964FF';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_bitmapscan', 'on', false);
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
+GO
+
+
+------------------------------------------
+--- Blocked Operation For Partitioned Tables
+-------------------------------------------
+-- user should not be allowed to CREATE/ATTACH/DETACH partition
+-- to babelfish partitioned table from psql endpoint
+
+-- psql
+SET ROLE master_dbo;
+GO
+
+-- Attempt to create new partition with random values
+CREATE TABLE NonExistentTable PARTITION OF master_dbo.partition_vu_prepare_int_table
+FOR VALUES FROM (0) TO (500);
+GO
+
+-- Attempt to create new partition with DEFAULT
+CREATE TABLE NonExistentTable PARTITION OF master_dbo.partition_vu_prepare_int_table
+DEFAULT
+GO
+
+-- Attempt to drop partition of babelfish partitioned table from psql endpoint
+DROP TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+GO
+
+
+-- Attempt to detach
+-- explicit schema name specified
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+GO
+
+-- using search_path
+SET search_path = public, master_dbo;
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0";
+RESET search_path;
+GO
+
+-- Attempt to detach using CONCURRENTLY option
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0"
+CONCURRENTLY;
+GO
+
+-- Attempt to detach using FINALIZE option
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+DETACH PARTITION master_dbo."363863941f079adaa9aa733200e57c9f_partition_0"
+FINALIZE;
+GO
+
+-- Attempt to attach with Default value
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+ATTACH PARTITION NonExistentTable DEFAULT;
+GO
+
+-- Attempt to attach with random value
+ALTER TABLE master_dbo.partition_vu_prepare_int_table 
+ATTACH PARTITION NonExistentTable FOR VALUES FROM (10) TO (20);
+GO
+
+-- user should not be allowed to modify partition 
+-- of babelfish partitioned table neither from psql nor tsql endpoint
+
+-- explicit schema name specified
+ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
+ADD CONSTRAINT xyz CHECK ( id > 10 and id < 20);
+GO
+
+-- using search_path
+SET search_path = public, master_dbo;
+ALTER TABLE "363863941f079adaa9aa733200e57c9f_partition_0"
+ADD CONSTRAINT xyz CHECK ( id > 10 and id < 20);
+RESET search_path;
+GO
+
+RESET ROLE;
+GO
+
+-- Attempt to ADD storage parameter to babelfish partitioned table (not on the partitions)
+SET babelfishpg_tsql.sql_dialect = "tsql";
+GO
+
+ALTER TABLE master_dbo.partition_vu_prepare_int_table SET (autovacuum_enabled = false);
+GO
+
+RESET babelfishpg_tsql.sql_dialect;
+GO
+
+
+-- tsql
+ALTER TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
+ADD new_col int
+GO
+
+
+ALTER TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
+ADD CONSTRAINT xyz DEFAULT 10 FOR id;
+GO
+
+-- with explicity schema name
+ALTER TABLE dbo.[363863941f079adaa9aa733200e57c9f_partition_0]
+ADD new_col int
+GO
+
+ALTER TABLE dbo.[363863941f079adaa9aa733200e57c9f_partition_0]
+ADD CONSTRAINT xyz DEFAULT 10 FOR id;
+GO
+
+-- Attempt to drop partition of babelfish partitioned table from tsql endpoint
+DROP TABLE [363863941f079adaa9aa733200e57c9f_partition_0]
+GO
+
+--------------------------------------------------------------------
+-- user should not be allowed to rename partition of
+-- babelfish partitioned table neither from psql nor tsql endpoint
+--------------------------------------------------------------------
+-- Attempt to rename partition of babelfish partitioned table from psql endpoint
+-- psql
+-- explicit schema name specified
+ALTER TABLE master_dbo."363863941f079adaa9aa733200e57c9f_partition_0" 
+RENAME TO xyz
+GO
+
+-- using search_path
+SET search_path = public, master_dbo;
+ALTER TABLE "363863941f079adaa9aa733200e57c9f_partition_1"
+RENAME TO xyz1
+GO
+
+-- Attempt to rename partition of babelfish partitioned table from tsql endpoint
+-- NOTE: object not found error because sp_rename lookup in sys.objects which 
+-- will not list child objects
+-- tsql
+EXEC sp_rename '363863941f079adaa9aa733200e57c9f_partition_2', 'xyz2', 'OBJECT'
+GO
+--------------------------------------------------------------------
+
+--- Unsupported Option with CREATE TABLE with PARTITION SCHEME
+--------------------------------------------------------------------
+-- Computed column as partitioning column is not yet supported in babelfish
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT,
+    computed_col AS id + value
+)
+ON IntPartitionScheme(computed_col);
+GO
+
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT,
+    computed_col AS id + value PERSISTED
+)
+ON IntPartitionScheme(computed_col);
+GO
+
+-- temporary table
+CREATE TABLE #TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON IntPartitionScheme(id);
+GO
+
+---------------------------------------------------------------
+--- Negative Scenarios for CREATE TABLE with PARTITION SCHEME
+---------------------------------------------------------------
+
+-- Attempt to create with multiple columns as partitioning scheme
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON IntPartitionScheme(id, value);
+GO
+
+-- Attempt to create with a partition scheme that doesn't exist and column that doesn't exist in the table
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON NonExistentPartitionScheme(NonExistentColumn);
+GO
+
+-- Attempt to create with a partition scheme that doesn't exist
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON NonExistentPartitionScheme(id);
+GO
+
+-- Attempt to use two part name with partition scheme
+CREATE TABLE TestPartitionedTable
+(
+    id INT,
+    value INT
+)
+ON master.IntPartitionScheme(id);
+GO
+
+-- Attempt to create with a unique constraint on a non-partition column
+CREATE TABLE TestPartitionedTable
+(
+    Id INT,
+    PartitionColumn INT,
+    Col1 INT UNIQUE
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+
+-- Attempt to create with a primary key constraint on a non-partition column
+CREATE TABLE TestPartitionedTable
+(
+    Id INT,
+    PartitionColumn INT,
+    Col1 INT PRIMARY KEY
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+
+---------------------------------------------------------------
+--- Negative Scenarios for CREATE TABLE with PARTITION SCHEME
+--- Attempt to create with an incompatible partition column data type
+---------------------------------------------------------------
+CREATE TABLE TestPartitionedTable1
+(
+    Id INT,
+    PartitionColumn DECIMAL(10, 2)
+)
+ON IntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable2
+(
+    Id INT,
+    PartitionColumn DATETIME
+)
+ON DatePartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable3
+(
+    Id INT,
+    PartitionColumn VARCHAR(10)
+)
+ON CharPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable4
+(
+    Id INT,
+    PartitionColumn VARBINARY(10)
+)
+ON BinaryPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable5
+(
+    Id INT,
+    PartitionColumn SMALLINT
+)
+ON BigIntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable6
+(
+    Id INT,
+    PartitionColumn DECIMAL(10, 2)
+)
+ON SmallIntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable7
+(
+    Id INT,
+    PartitionColumn DECIMAL(10, 5)
+)
+ON TinyIntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable8
+(
+    Id INT,
+    PartitionColumn BIGINT
+)
+ON DecimalPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable9
+(
+    Id INT,
+    PartitionColumn MONEY
+)
+ON NumericPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable10
+(
+    Id INT,
+    PartitionColumn INT
+)
+ON MoneyPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable11
+(
+    Id INT,
+    PartitionColumn DATETIME
+)
+ON SmallMoneyPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable12
+(
+    Id INT,
+    PartitionColumn DATETIME2(3)
+)
+ON DateTimePartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable13
+(
+    Id INT,
+    PartitionColumn SMALLDATETIME
+)
+ON DateTime2PartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable14
+(
+    Id INT,
+    PartitionColumn NVARCHAR(10)
+)
+ON SmallDateTimePartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable15
+(
+    Id INT,
+    PartitionColumn INT
+)
+ON NVarCharPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable16
+(
+    Id INT,
+    PartitionColumn NCHAR(5)
+)
+ON VarCharPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestPartitionedTable17
+(
+    Id INT,
+    PartitionColumn INT
+)
+ON NCharPartitionScheme(PartitionColumn);
+GO
+
+-- using user defined type
+CREATE TYPE PartitionUserDefinedType FROM SMALLINT;
+GO
+
+CREATE TABLE TestPartitionedTable18
+(
+    Id INT,
+    PartitionColumn PartitionUserDefinedType
+)
+ON BigIntPartitionScheme(PartitionColumn);
+GO
+
+DROP TYPE PartitionUserDefinedType
+GO
+
+---------------------------------------------------------------
+--- Negative Scenarios for CREATE Index with PARTITION SCHEME
+---------------------------------------------------------------
+CREATE TABLE TestPartitionedTable (
+    PartitionColumn INT,
+    NonPartitionColumn INT
+) ON IntPartitionScheme(PartitionColumn);
+GO
+
+CREATE TABLE TestNonPartitionedTable (
+    a INT,
+    b INT
+)
+GO
+
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonExistentColumn1)
+ON NonExistentPartitionScheme (NonExistentColumn2);
+GO
+
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON NonExistentPartitionScheme (NonExistentColumn2);
+GO
+
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON NonExistentPartitionScheme (NonPartitionColumn);
+GO
+
+-- scheme is different from the partition scheme used in the table
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON BigIntPartitionScheme (NonPartitionColumn);
+GO
+
+-- column specified with partition scheme is different
+-- from the partition column used in the table
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON IntPartitionScheme (NonPartitionColumn);
+GO
+
+-- should work
+CREATE INDEX TestPartitionIndex
+ON TestPartitionedTable(NonPartitionColumn)
+ON IntPartitionScheme (PartitionColumn);
+GO
+
+DROP INDEX TestPartitionIndex ON TestPartitionedTable
+GO
+
+-- usage of partition scheme on non-partitioned table (should fail)
+CREATE INDEX TestPartitionIndex
+ON TestNonPartitionedTable(a)
+ON IntPartitionScheme (a);
+GO
+
+
+DROP TABLE TestPartitionedTable
+GO
+
+DROP TABLE TestNonPartitionedTable
+GO
+-------------------------------------------------------------------------------------------
+--- Rename Operation on Partitioned Tables should update name in babelfish_partition_depend
+--- and it should also update the name of all the partitions
+-------------------------------------------------------------------------------------------
+-- psql
+SELECT sys.db_name(dbid) as db_name, partition_scheme_name, schema_name, table_name FROM sys.babelfish_partition_depend where table_name = 'partition_vu_prepare_int_table';
+GO
+
+SELECT inhrelid::regclass as partition_name from pg_inherits where inhparent = (select oid from pg_class where relname = 'partition_vu_prepare_int_table')::regclass;
+GO
+
+-- tsql
+-- trigger rename from TSQL endpoint
+EXEC sp_rename 'partition_vu_prepare_int_table', 'partition_vu_prepare_int_table_renamed', 'OBJECT'
+GO
+
+-- psql
+SELECT sys.db_name(dbid) as db_name, partition_scheme_name, schema_name, table_name FROM sys.babelfish_partition_depend where table_name = 'partition_vu_prepare_int_table_renamed';
+GO
+
+SELECT inhrelid::regclass as partition_name from pg_inherits where inhparent = (select oid from pg_class where relname = 'partition_vu_prepare_int_table_renamed')::regclass;
+GO
+
+-- trigger rename from PSQL endpoint
+ALTER TABLE master_dbo.partition_vu_prepare_int_table_renamed RENAME TO partition_vu_prepare_int_table;
+GO
+
+-- we should get orginal here 
+SELECT sys.db_name(dbid) as db_name, partition_scheme_name, schema_name, table_name FROM sys.babelfish_partition_depend where table_name = 'partition_vu_prepare_int_table';
+GO
+
+SELECT inhrelid::regclass as partition_name from pg_inherits where inhparent = (select oid from pg_class where relname = 'partition_vu_prepare_int_table')::regclass;
+GO
+
+-- tsql
+----------------------------------------------------------
+--- DOLLAR PARTITION FUNCTION name identifiers tests
+----------------------------------------------------------
+SET QUOTED_IDENTIFIER ON;
+GO
+
+SELECT $PARTITION."IntPartitionFunction" (100)
+GO
+
+SELECT $PARTITION."PARTITION_FUNCTION 😎$@ #123 🌍rder  "(100)
+GO
+
+SELECT "master".$PARTITION."PARTITION_FUNCTION 😎$@ #123 🌍rder  "(100)
+GO
+
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+
+SELECT $PARTITION.[PARTITION_FUNCTION  유니코드스키마👻  ] (100)
+GO
+
+SELECT [master].$PARTITION.[PARTITION_FUNCTION  유니코드스키마👻  ] (100)
+GO
+
+SELECT $PARTITION.[IntPartitionFunction] (100)
+GO
+
+SELECT [master].$PARTITION.[IntPartitionFunction] (100)
+GO
+
+SELECT $PARTITION.PARTITION_FUNCTIONログインαιώνια (100)
+GO
+
+SELECT master.$PARTITION.PARTITION_FUNCTIONログインαιώνια (100)
+GO
+
+------------------------------------------
+--- DOLLAR PARTITION FUNCTION Negative test
+------------------------------------------
+-- explicit NULL value test
+SELECT $PARTITION.IntPartitionFunction(NULL)
+GO
+
+SELECT master.$PARTITION.IntPartitionFunction(NULL)
+GO
+
+-- variable as NULL value
+declare @var int = NULL
+SELECT $PARTITION.IntPartitionFunction(@var)
+GO
+
+-- non-existent database
+SELECT NonExistentDatabase.$PARTITION.IntPartitionFunction(10)
+GO
+
+-- error during implicit Conversion of values to partition function parameter type
+SELECT $PARTITION.IntPartitionFunction('xyz')
+GO
+
+-- using query 
+SELECT $PARTITION.IntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varchar_table
+ORDER BY PartitionNumber, Id;
+GO
+---------------------------------------------------------------------
+--- Test for all the Supported Datatypes for Dollar Partition Function
+---------------------------------------------------------------------
+SELECT $PARTITION.IntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_int_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.BigIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_bigint_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.SmallIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smallint_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.TinyIntPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_tinyint_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.DecimalPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_decimal_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.NumericPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_numeric_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.MoneyPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_money_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.SmallMoneyPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smallmoney_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.DatePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_date_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.DateTimePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_datetime_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.DateTime2PartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_datetime2_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.SmallDateTimePartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_smalldatetime_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.CharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_char_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.VarCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varchar_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.NVarCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_nvarchar_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.NCharPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_nchar_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.BinaryPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_binary_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.VarBinaryPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_varbinary_table
+ORDER BY PartitionNumber, Id;
+GO
+
+SELECT $PARTITION.UniqueIdentifierPartitionFunction(Id) AS PartitionNumber, Id
+FROM partition_vu_prepare_uniqueidentifier_table
+ORDER BY PartitionNumber, Id;
+GO
+
+----------------------------------------------
+--- DOLLAR PARTITION FUNCTION Dependency test
+----------------------------------------------
+-- non-null test
+SELECT * FROM DollarPartitionFunctionView
+GO
+
+EXEC DollarPartitionFunctionProc
+GO
+
+SELECT * FROM DollarPartitionFunctionFunc()
+GO
+
+-- null test
+SELECT * FROM DollarPartitionFunctionNullView
+GO
+
+EXEC DollarPartitionFunctionNullProc
+GO
+
+SELECT * FROM DollarPartitionFunctionNullFunc()
+GO
+
+SELECT * FROM SysSearchPartitionDepView
+GO
+
+SELECT * FROM SysSearchPartitionNULLDepView
+GO
+------------------------------------------------------
+--- DOLLAR PARTITION FUNCTION Cross Database test
+------------------------------------------------------
+-- in current database with explicity lookup
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+
+-- use different database
+USE PartitionDb;
+GO
+
+SELECT CURRENT_USER
+GO
+
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+
+-- test using guest login
+CREATE LOGIN partition_l2 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER partition_u2 FOR LOGIN partition_l2;
+GO
+
+-- tsql  user=partition_l2 password=12345678 database=partitiondb
+SELECT CURRENT_USER
+GO
+
+SELECT master.$PARTITION.[IntPartitionFunction] (100)
+GO
+
+-- tsql
+USE PartitionDb;
+GO
+
+DROP USER partition_u2
+GO
+
+---------------------------------------------------------------
+--- Test Collation of Partition Functions after upgrade
+---------------------------------------------------------------
+USE PartitionDb
+Go
+
+-- Test 1: Create tables with the compatible collation i.e. database default (should work)
+CREATE TABLE PT_SameCollation_Char (
+    ID INT IDENTITY(1,1),
+    PartitionKey CHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_Char(PartitionKey);
+GO
+
+CREATE TABLE PT_SameCollation_VarChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey VARCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_VarChar(PartitionKey);
+GO
+
+CREATE TABLE PT_SameCollation_NChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey NCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_NChar(PartitionKey);
+GO
+
+CREATE TABLE PT_SameCollation_NVarChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey NVARCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AS,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_NVarChar(PartitionKey);
+Go
+
+-- Test 2: Create tables with incompatible collation i.e. other than database default (should fail)
+CREATE TABLE PT_DifferentCollation_Char (
+    ID INT IDENTITY(1,1),
+    PartitionKey CHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AI,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_Char(PartitionKey);
+Go
+
+CREATE TABLE PT_DifferentCollation_VarChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey VARCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AI,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_VarChar(PartitionKey);
+GO
+
+CREATE TABLE PT_DifferentCollation_NChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey NCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AI,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_NChar(PartitionKey);
+GO
+
+CREATE TABLE PT_DifferentCollation_NVarChar (
+    ID INT IDENTITY(1,1),
+    PartitionKey NVARCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AI,
+    Value NVARCHAR(100)
+) ON PS_CollationTest_NVarChar(PartitionKey);
+Go
+
+USE master
+GO
+
+---------------------------------------------------------------
+--- Test Partition Tables with Computed columns
+---------------------------------------------------------------
+-- Query to show data in each partition for table created without computed column
+SELECT 
+    p.partition_number,
+    p.rows,
+    CASE 
+        WHEN p.partition_number = 1 THEN 'x <= -1000.0'
+        WHEN p.partition_number = 2 THEN '-1000.0 < x <= -1.0'
+        WHEN p.partition_number = 3 THEN '-1.0 < x <= 0.0'
+        WHEN p.partition_number = 4 THEN '0.0 < x <= 1.0'
+        WHEN p.partition_number = 5 THEN '1.0 < x <= 1000.0'
+        WHEN p.partition_number = 6 THEN 'x > 1000.0'
+    END as partition_range,
+    MIN(t.float_val) as min_float_val,
+    MAX(t.float_val) as max_float_val,
+    COUNT(*) as row_count
+FROM partition_float_real_partitioned_test t
+JOIN sys.partitions p ON p.object_id = OBJECT_ID('partition_float_real_partitioned_test')
+    AND p.index_id <= 1
+WHERE p.partition_number = $PARTITION.partition_float_real_range_partition_func(t.float_val)
+GROUP BY p.partition_number, p.rows
+ORDER BY p.partition_number;
+GO
+
+
+-- Create partitioned table with computed columns
+CREATE TABLE partition_float_real_partitioned_computed_test (
+    id INT IDENTITY(1,1),
+    float_val FLOAT,
+    real_val REAL,
+    computed_val AS (float_val * real_val),
+    description VARCHAR(100)
+) ON partition_float_real_range_partition_scheme(float_val);
+GO
+
+-- Insert test data
+INSERT INTO partition_float_real_partitioned_computed_test (float_val, real_val, description)
+SELECT float_val, real_val, description
+FROM partition_float_real_partitioned_test;
+GO
+
+-- Query to show data in each partition for table created with computed column
+SELECT 
+    p.partition_number,
+    p.rows,
+    CASE 
+        WHEN p.partition_number = 1 THEN 'x <= -1000.0'
+        WHEN p.partition_number = 2 THEN '-1000.0 < x <= -1.0'
+        WHEN p.partition_number = 3 THEN '-1.0 < x <= 0.0'
+        WHEN p.partition_number = 4 THEN '0.0 < x <= 1.0'
+        WHEN p.partition_number = 5 THEN '1.0 < x <= 1000.0'
+        WHEN p.partition_number = 6 THEN 'x > 1000.0'
+    END as partition_range,
+    MIN(t.float_val) as min_float_val,
+    MAX(t.float_val) as max_float_val,
+    COUNT(*) as row_count
+FROM partition_float_real_partitioned_computed_test t
+JOIN sys.partitions p ON p.object_id = OBJECT_ID('partition_float_real_partitioned_computed_test')
+    AND p.index_id <= 1
+WHERE p.partition_number = $PARTITION.partition_float_real_range_partition_func(t.float_val)
+GROUP BY p.partition_number, p.rows
+ORDER BY p.partition_number;
+GO
+
+-- Query to compare partition distribution in partition table with and without computed column
+SELECT 
+    'Base table' as table_name,
+    p.partition_number,
+    COUNT(*) as row_count
+FROM partition_float_real_partitioned_test t
+JOIN sys.partitions p ON p.object_id = OBJECT_ID('partition_float_real_partitioned_test')
+    AND p.index_id <= 1
+WHERE p.partition_number = $PARTITION.partition_float_real_range_partition_func(t.float_val)
+GROUP BY p.partition_number
+UNION ALL
+SELECT 
+    'Computed table' as table_name,
+    p.partition_number,
+    COUNT(*) as row_count
+FROM partition_float_real_partitioned_computed_test t
+JOIN sys.partitions p ON p.object_id = OBJECT_ID('partition_float_real_partitioned_computed_test')
+    AND p.index_id <= 1
+WHERE p.partition_number = $PARTITION.partition_float_real_range_partition_func(t.float_val)
+GROUP BY p.partition_number
+ORDER BY table_name, partition_number;
+GO
