@@ -5322,6 +5322,26 @@ rename_tsql_db(char *old_db_name, char *new_db_name, char *orig_new_db_name)
 			new_role_name = get_physical_user_name(new_db_name, role, true, true);
 			exec_rename_db_util(old_role_name, new_role_name, false);
 
+			/*
+			 * BABEL-7154: BABEL-4899 introduced a per-user internal object-owner
+			 * role named get_obj_role(<physical_user>) = <db>_<user>_bbfobj for
+			 * members of db_owner. This role is a plain PG role and is not tracked
+			 * in babelfish_authid_user_ext, so it is not covered by the catalog
+			 * scan above. Rename it here too (only if it exists) so that a
+			 * subsequent DROP DATABASE, which rebuilds the name from the renamed
+			 * catalog rolname via get_obj_role(), can find it.
+			 */
+			{
+				char *old_obj_role = get_obj_role(old_role_name);
+				char *new_obj_role = get_obj_role(new_role_name);
+
+				if (OidIsValid(get_role_oid(old_obj_role, true)))
+					exec_rename_db_util(old_obj_role, new_obj_role, false);
+
+				pfree(old_obj_role);
+				pfree(new_obj_role);
+			}
+
 			pfree(old_role_name);
 			pfree(new_role_name);
 		}
