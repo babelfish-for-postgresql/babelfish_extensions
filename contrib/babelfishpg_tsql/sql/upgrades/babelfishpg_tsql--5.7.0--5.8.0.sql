@@ -498,6 +498,145 @@ $$
 $$;
 
 
+-- WITH XMLNAMESPACES support: extend FOR XML aggregate to carry namespace declarations
+-- and add namespace-aware overloads for XML data type methods.
+
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_agg', 'ANYELEMENT, int, text, boolean, text, boolean, boolean, text');
+CALL sys.babelfish_drop_deprecated_object('aggregate', 'sys', 'tsql_select_for_xml_text_agg', 'ANYELEMENT, int, text, boolean, text, boolean, boolean, text');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_sfunc', 'INTERNAL, ANYELEMENT, int, text, boolean, text, boolean, boolean, text');
+
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
+    state INTERNAL,
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text,
+    elements boolean,
+    xsinil boolean,
+    auto_metadata text,
+    ns_decls text
+) RETURNS INTERNAL
+AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text,
+    elements boolean,
+    xsinil boolean,
+    auto_metadata text,
+    ns_decls text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_ffunc
+);
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text,
+    elements boolean,
+    xsinil boolean,
+    auto_metadata text,
+    ns_decls text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_text_ffunc
+);
+
+-- helper function for XML QUERY(xpath) with namespace support
+CREATE OR REPLACE FUNCTION sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT, nsarray TEXT[][])
+RETURNS XML
+AS 'babelfishpg_tsql', 'bbf_xmlquery_ns'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
+-- helper function for XML EXIST(xpath) with namespace support
+CREATE OR REPLACE FUNCTION sys.bbf_xmlexist(xpath_pattern TEXT, xml_element ANYELEMENT, nsarray TEXT[][])
+RETURNS sys.BIT
+AS
+$BODY$
+DECLARE
+    arg_datatype text;
+    arg_datatype_oid oid;
+    basetype oid;
+    pltsql_quoted_identifier text;
+BEGIN
+    arg_datatype_oid := pg_typeof(xml_element)::oid;
+    arg_datatype := sys.translate_pg_type_to_tsql(arg_datatype_oid);
+    IF arg_datatype IS NULL THEN
+        basetype := sys.bbf_get_immediate_base_type_of_UDT(arg_datatype_oid);
+        arg_datatype := sys.translate_pg_type_to_tsql(basetype);
+    END IF;
+
+    IF (arg_datatype != 'xml') THEN
+        RAISE EXCEPTION 'Cannot call methods on %.', arg_datatype;
+    END IF;
+
+    pltsql_quoted_identifier := current_setting('babelfishpg_tsql.quoted_identifier');
+
+    IF (pltsql_quoted_identifier = 'off') THEN
+        RAISE EXCEPTION 'SELECT failed because the following SET options have incorrect settings: ''QUOTED_IDENTIFIER''. Verify that SET options are correct for XML data type methods.';
+    END IF;
+
+    RETURN (cardinality(xpath(xpath_pattern, xml_element, nsarray)) > 0)::int::sys.BIT;
+END
+$BODY$
+LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
+
+-- helper function for XML VALUE(xpath) with namespace support
+CREATE OR REPLACE FUNCTION sys.bbf_xmlvalue(xpath_pattern TEXT, datatype TEXT, xml_element ANYELEMENT, nsarray TEXT[][])
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+DECLARE
+    temp_datatype text;
+    temp_basetype oid;
+    result_set xml[];
+    result sys.NVARCHAR;
+    pltsql_quoted_identifier text;
+BEGIN
+    temp_datatype := sys.translate_pg_type_to_tsql(pg_typeof(xml_element)::oid);
+    IF temp_datatype IS NULL THEN
+        temp_basetype := sys.bbf_get_immediate_base_type_of_UDT(pg_typeof(xml_element)::oid);
+        temp_datatype := sys.translate_pg_type_to_tsql(temp_basetype);
+    END IF;
+
+    IF (temp_datatype != 'xml') THEN
+        RAISE EXCEPTION 'Cannot call methods on %.', temp_datatype;
+    END IF;
+
+    pltsql_quoted_identifier := current_setting('babelfishpg_tsql.quoted_identifier');
+
+    IF (pltsql_quoted_identifier = 'off') THEN
+        RAISE EXCEPTION 'SELECT failed because the following SET options have incorrect settings: ''QUOTED_IDENTIFIER''. Verify that SET options are correct for XML data type methods.';
+    END IF;
+
+    result_set := xpath(xpath_pattern, xml_element, nsarray);
+    IF (cardinality(result_set) > 1) THEN
+        RAISE EXCEPTION 'XML Value result is not a single value.';
+    ELSIF (cardinality(result_set) = 0) THEN
+        RETURN NULL;
+    ELSE
+        result := (xpath('string(' || xpath_pattern || ')', xml_element, nsarray))[1];
+        result := pg_catalog.replace(result, '&lt;', '<');
+        result := pg_catalog.replace(result, '&gt;', '>');
+        result := pg_catalog.replace(result, '&apos;', '''');
+        result := pg_catalog.replace(result, '&quot;', '"');
+        result := pg_catalog.replace(result, '&amp;', '&');
+        return result;
+    END IF;
+END
+$BODY$
+LANGUAGE plpgsql STABLE STRICT PARALLEL SAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
