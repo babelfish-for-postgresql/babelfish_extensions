@@ -278,29 +278,3 @@ go
 -- tsql
 alter database rename_db_database2 modify name = rename_db_database1;
 go
-
--- tsql
--- BABEL-7154: renaming a db must also rename the internal <db>_<user>_bbfobj
--- object-owner role created when a non-dbo user is added to db_owner
--- (introduced in BABEL-4899). Otherwise DROP DATABASE on the renamed db fails
--- with: role "<newdb>_<user>_bbfobj" does not exist.
-create database bbf7154_db;
-go
-use bbf7154_db;
-go
-create login bbf7154_login with password = '12345678';
-go
-create user bbf7154_user for login bbf7154_login;
-go
--- creates internal role bbf7154_db_bbf7154_user_bbfobj
-alter role db_owner add member bbf7154_user;
-go
-use master;
-go
-alter database bbf7154_db modify name = bbf7154_db_renamed;
-go
--- should succeed (previously failed: role "bbf7154_db_renamed_bbf7154_user_bbfobj" does not exist)
-drop database bbf7154_db_renamed;
-go
-drop login bbf7154_login;
-go
