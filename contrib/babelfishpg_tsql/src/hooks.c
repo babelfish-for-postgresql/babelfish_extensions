@@ -1447,7 +1447,8 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 * or prepared statement persist a value computed under the wrong SET
 	 * options without any error.
 	 */
-	if (sql_dialect == SQL_DIALECT_TSQL && !babelfish_dump_restore)
+	if (pltsql_enable_stable_func_persisted &&
+		sql_dialect == SQL_DIALECT_TSQL && !babelfish_dump_restore)
 		guc_check_dml(queryDesc->plannedstmt);
 
 	if (pltsql_explain_analyze)
@@ -6027,15 +6028,9 @@ update_rte_perms_info_walker(Node *node, void *context)
 static Query *
 persisted_col_planner_rewrite(Query *query)
 {
-	/* Only rewrite for T-SQL dialect */
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return query;
-
-	/* Skip re-evaluation if escape hatch is 'ignore' */
-	if (escape_hatch_persisted_col_guc_check == EH_IGNORE)
-		return query;
-
-	if (has_mismatched_set_options())
+	if (pltsql_enable_stable_func_persisted &&
+		sql_dialect == SQL_DIALECT_TSQL &&
+		has_mismatched_set_options())
 		query_rewrite_persisted(query);
 
 	return query;

@@ -1478,7 +1478,22 @@ GO
 SELECT inhrelid::regclass as partition_name from pg_inherits where inhparent = (select oid from pg_class where relname = 'partition_vu_prepare_int_table')::regclass;
 GO
 
+-- rename back from PSQL endpoint
+ALTER TABLE master_dbo.partition_vu_prepare_int_table RENAME TO partition_vu_prepare_int_table_renamed;
+GO
+
 -- tsql
+-- BABEL-5052: the preceding PG-endpoint rename (ALTER TABLE ... RENAME) left the
+-- table named "_renamed". A PG-dialect rename does not re-mangle the table's
+-- index physical names (the mangling hash is only applied under T-SQL dialect),
+-- so the index still encodes the "_renamed" table name. Rename back to the
+-- original name via a T-SQL sp_rename: this both restores the original table
+-- name and re-mangles the index under T-SQL dialect so it stays consistent with
+-- the table (letting the DROP INDEX in vu-cleanup resolve it later).
+-- trigger rename from TSQL endpoint
+EXEC sp_rename 'partition_vu_prepare_int_table_renamed', 'partition_vu_prepare_int_table', 'OBJECT'
+GO
+
 ----------------------------------------------------------
 --- DOLLAR PARTITION FUNCTION name identifiers tests
 ----------------------------------------------------------
