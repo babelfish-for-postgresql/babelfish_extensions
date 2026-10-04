@@ -622,3 +622,86 @@ GO
 -- Verify data unchanged after all failed DMLs
 SELECT id, a, b, c FROM pcc_concat ORDER BY id
 GO
+
+-- Cached procedure SELECT follows SET option changes (plan cache reset)
+CREATE TABLE pcc_cached (id INT PRIMARY KEY, a VARCHAR(20), b VARCHAR(20), c AS (a + b) PERSISTED)
+GO
+INSERT INTO pcc_cached (id, a, b) VALUES (1, 'X', NULL)
+GO
+CREATE PROCEDURE pcc_cached_proc AS SELECT c FROM pcc_cached WHERE id = 1
+GO
+-- warm the cached plan under the default settings: NULL
+EXEC pcc_cached_proc
+GO
+EXEC pcc_cached_proc
+GO
+EXEC pcc_cached_proc
+GO
+EXEC pcc_cached_proc
+GO
+EXEC pcc_cached_proc
+GO
+EXEC pcc_cached_proc
+GO
+-- cached plan re-evaluates under OFF: X
+SET CONCAT_NULL_YIELDS_NULL OFF
+GO
+EXEC pcc_cached_proc
+GO
+-- cached INSERT is rejected under OFF
+CREATE PROCEDURE pcc_cached_ins_proc AS INSERT INTO pcc_cached (id, a, b) VALUES (2, 'Y', NULL)
+GO
+EXEC pcc_cached_ins_proc
+GO
+-- back to defaults: stored value, NULL
+SET CONCAT_NULL_YIELDS_NULL ON
+GO
+EXEC pcc_cached_proc
+GO
+
+-- babelfishpg_tsql.enable_stable_functions_in_computed_columns = off
+-- behaves as before the feature: no SET option checks, no re-evaluation,
+-- and only IMMUTABLE expressions in PERSISTED computed columns
+SELECT set_config('babelfishpg_tsql.enable_stable_functions_in_computed_columns', 'off', false)
+GO
+SET CONCAT_NULL_YIELDS_NULL OFF
+GO
+-- cached SELECT returns the stored value: NULL
+EXEC pcc_cached_proc
+GO
+-- DML is allowed with no SET option check
+EXEC pcc_cached_ins_proc
+GO
+SELECT id, a, b, c FROM pcc_cached ORDER BY id
+GO
+-- STABLE function in a PERSISTED computed column is rejected (should FAIL)
+CREATE TABLE pcc_feature_off (id INT, a VARCHAR(20), b VARCHAR(20), c AS (a + b) PERSISTED)
+GO
+-- IMMUTABLE expression is allowed with no SET option check
+CREATE TABLE pcc_feature_off_imm (id INT, x INT, y AS (x * 2) PERSISTED)
+GO
+INSERT INTO pcc_feature_off_imm (id, x) VALUES (1, 21)
+GO
+SELECT id, x, y FROM pcc_feature_off_imm
+GO
+
+-- turning the feature back on re-enables re-evaluation for cached plans: X
+SELECT set_config('babelfishpg_tsql.enable_stable_functions_in_computed_columns', 'on', false)
+GO
+EXEC pcc_cached_proc
+GO
+SET CONCAT_NULL_YIELDS_NULL ON
+GO
+EXEC pcc_cached_proc
+GO
+
+DROP PROCEDURE pcc_cached_ins_proc
+GO
+DROP PROCEDURE pcc_cached_proc
+GO
+DROP TABLE pcc_cached
+GO
+DROP TABLE IF EXISTS pcc_feature_off
+GO
+DROP TABLE pcc_feature_off_imm
+GO

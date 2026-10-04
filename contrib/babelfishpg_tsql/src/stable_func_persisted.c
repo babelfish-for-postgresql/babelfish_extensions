@@ -310,22 +310,21 @@ stable_persisted_hook(Node *expr)
     if (expr == NULL)
         return NULL;
 
-    /* 
-     * If not TSQL dialect and not dump restore we pass to the previous hook.
-     * During dump/restore the sql_dialect may not be set to TSQL yet, but we still need to
-     * bypass the immutability check for tables being restored that have
-     * whitelisted STABLE functions in their persisted columns.
+    /*
+     * If feature is off or not TSQL dialect then let PostgreSQL allow only
+     * IMMUTABLE expressions.  Dump/restore always continues, so restored tables with
+     * whitelisted STABLE functions can be recreated.
      */
-    if (sql_dialect != SQL_DIALECT_TSQL && !babelfish_dump_restore)
+    if (!babelfish_dump_restore &&
+        (!pltsql_enable_stable_func_persisted || sql_dialect != SQL_DIALECT_TSQL))
     {
         if (prev_persisted_col_hook)
             return prev_persisted_col_hook(expr);
         return expr;
     }
     
-    /* Enforce GUC settings at CREATE time (skip during dump/restore or when escape hatch is 'ignore') */
+    /* Enforce GUC settings at CREATE time (skip during dump/restore) */
     if (!babelfish_dump_restore &&
-        escape_hatch_persisted_col_guc_check != EH_IGNORE &&
         has_mismatched_set_options())
         ereport(ERROR,
                 (errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -424,10 +423,6 @@ guc_check_dml(PlannedStmt *pstmt)
     ListCell   *lc;
 
     if (pstmt == NULL || pstmt->resultRelations == NIL)
-        return;
-
-    /* Skip if escape hatch is 'ignore' */
-    if (escape_hatch_persisted_col_guc_check == EH_IGNORE)
         return;
 
     switch (pstmt->commandType)
