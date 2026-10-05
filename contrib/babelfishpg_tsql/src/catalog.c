@@ -2046,6 +2046,7 @@ bool		return_consistency = false;
 
 /* Core function declaration */
 static void metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
+static void exec_rename_db_util(char *old_db_name, char *new_db_name, bool is_schema);
 
 /* Value function declaration */
 static Datum get_master(HeapTuple tuple, TupleDesc dsc);
@@ -4990,6 +4991,14 @@ update_babelfish_authid_user_ext_rename_db(
 	HeapTuple		new_tuple, old_tuple;
 	SysScanDesc		tblscan;
 	List *list_of_roles_to_rename = NIL;
+
+	/*
+	 * db_owner and dbo of the database being renamed (still under the old
+	 * name at this point). Used to gate renaming of the per-user internal
+	 * object-owner (_bbfobj) role for db_owner members (BABEL-7154).
+	 */
+	Oid		db_owner_oid = get_role_oid(get_db_owner_name(old_db_name), true);
+	Oid		dbo_oid = get_role_oid(get_dbo_role_name(old_db_name), true);
 		
 	Datum		values[BBF_AUTHID_USER_EXT_NUM_COLS];
 	bool		nulls[BBF_AUTHID_USER_EXT_NUM_COLS];
@@ -5045,6 +5054,41 @@ update_babelfish_authid_user_ext_rename_db(
 
 		CatalogTupleUpdate(bbf_authid_user_ext_rel, &new_tuple->t_self, new_tuple);
 		heap_freetuple(new_tuple);
+
+		/*
+		 * BABEL-7154: BABEL-4899 introduced a per-user internal object-owner
+		 * role named get_obj_role(<physical_user>) = <db>_<user>_bbfobj for
+		 * members of the db_owner fixed database role. This role is a plain PG
+		 * role and is not tracked in babelfish_authid_user_ext, so the catalog
+		 * scan above does not rename it. Rename it here, gated by the same
+		 * db_owner-membership check used elsewhere (e.g. get_authid_user_ext_db_users),
+		 * so that a subsequent DROP DATABASE, which rebuilds the name from the
+		 * renamed catalog rolname via get_obj_role(), can find it.
+		 */
+		{
+			char   *old_phys_name = get_physical_user_name((char *) old_db_name, role_name, true, true);
+			Oid		user_oid = get_role_oid(old_phys_name, true);
+
+			if (OidIsValid(user_oid) &&
+				OidIsValid(db_owner_oid) &&
+				is_member_of_role(user_oid, db_owner_oid) &&
+				user_oid != dbo_oid &&
+				user_oid != db_owner_oid)
+			{
+				char   *new_phys_name = get_physical_user_name((char *) new_db_name, role_name, true, true);
+				char   *old_obj_role = get_obj_role(old_phys_name);
+				char   *new_obj_role = get_obj_role(new_phys_name);
+
+				if (OidIsValid(get_role_oid(old_obj_role, true)))
+					exec_rename_db_util(old_obj_role, new_obj_role, false);
+
+				pfree(new_phys_name);
+				pfree(old_obj_role);
+				pfree(new_obj_role);
+			}
+			pfree(old_phys_name);
+		}
+
 		if (role_name)
 			pfree(role_name);
 	}
@@ -5321,26 +5365,6 @@ rename_tsql_db(char *old_db_name, char *new_db_name, char *orig_new_db_name)
 			old_role_name = get_physical_user_name(old_db_name, role, true, true);
 			new_role_name = get_physical_user_name(new_db_name, role, true, true);
 			exec_rename_db_util(old_role_name, new_role_name, false);
-
-			/*
-			 * BABEL-7154: BABEL-4899 introduced a per-user internal object-owner
-			 * role named get_obj_role(<physical_user>) = <db>_<user>_bbfobj for
-			 * members of db_owner. This role is a plain PG role and is not tracked
-			 * in babelfish_authid_user_ext, so it is not covered by the catalog
-			 * scan above. Rename it here too (only if it exists) so that a
-			 * subsequent DROP DATABASE, which rebuilds the name from the renamed
-			 * catalog rolname via get_obj_role(), can find it.
-			 */
-			{
-				char *old_obj_role = get_obj_role(old_role_name);
-				char *new_obj_role = get_obj_role(new_role_name);
-
-				if (OidIsValid(get_role_oid(old_obj_role, true)))
-					exec_rename_db_util(old_obj_role, new_obj_role, false);
-
-				pfree(old_obj_role);
-				pfree(new_obj_role);
-			}
 
 			pfree(old_role_name);
 			pfree(new_role_name);
