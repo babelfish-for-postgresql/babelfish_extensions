@@ -14,6 +14,9 @@ MODULE_big = $(EXTENSION)
 
 PG_CFLAGS += -g -Werror -Wfloat-conversion
 PG_CFLAGS += -fstack-protector-strong
+# GCC 14+ gets -Wmissing-variable-declarations from the server's CFLAGS;
+# opt out the same way upstream PostgreSQL does for code not yet clean of it
+PG_CFLAGS += $(PERMIT_MISSING_VARIABLE_DECLARATIONS)
 ifdef PREV_EXTVERSION
 DATA = sql/$(EXTENSION)--$(PREV_EXTVERSION).sql
 endif

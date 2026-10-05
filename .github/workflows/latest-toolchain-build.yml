@@ -1,0 +1,212 @@
+name: Build with Latest GCC and Ubuntu
+
+# Builds the Babelfish engine and extensions with the newest GCC releases and
+# Ubuntu toolchains (C23 by default, newer glibc, OpenSSL 3/4, CMake 4), then
+# runs a short smoke test. The regular CI pins ubuntu-22.04 / GCC 11, so this
+# catches breakage from newer compilers before users hit it.
+#
+# Runs weekly on the default branch. To run it manually, use the Actions tab or:
+#   gh workflow run latest-toolchain-build.yml --ref <branch> [-f engine_branch=<branch>]
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # every Sunday at midnight (UTC)
+  workflow_dispatch:
+    inputs:
+      engine_branch:
+        description: 'Engine branch (default: same-named branch in your fork or upstream, else the default in clone_engine_repo.conf)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.os.image }} / ${{ matrix.build_type }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    # ubuntu:devel is a pre-release; report its failures without failing the run
+    continue-on-error: ${{ matrix.os.image == 'ubuntu:devel' }}
+    container:
+      image: ${{ matrix.os.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - { image: 'ubuntu:rolling', label: ubuntu-rolling }  # newest released Ubuntu
+          - { image: 'ubuntu:devel', label: ubuntu-devel }      # next Ubuntu release
+          - { image: 'gcc:latest', label: gcc-latest }          # newest GCC release (Debian based)
+        build_type: [debug, release]
+    defaults:
+      run:
+        shell: bash
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      INSTALL_DIR: /opt/bbf/psql
+      ANTLR_VERSION: 4.13.2
+      POSTGIS_VERSION: 3.6.0
+      CC: gcc
+      CXX: g++
+    steps:
+      # git is needed for a real checkout and by clone_engine_repo
+      - name: Install git
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates
+          # github.workspace is the host path in container jobs; use the container's
+          echo "LOG_DIR=$GITHUB_WORKSPACE/build-logs" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v4
+
+      # Same script developers use for first-time setup (packages + ANTLR runtime),
+      # plus what CI builds on top: GSSAPI, linked servers (FreeTDS), PostGIS, TDS client
+      - name: Install dependencies
+        env:
+          EXTRA_PACKAGES: >-
+            libkrb5-dev freetds-dev freetds-bin libsybdb5
+            libgeos-dev libproj-dev libjson-c-dev
+        run: |
+          ./.github/scripts/install-deps.sh
+          if [ -d /usr/local/lib64 ]; then
+            echo /usr/local/lib64 > /etc/ld.so.conf.d/local-lib64.conf
+            ldconfig
+          fi
+
+      - name: Report toolchain
+        run: |
+          {
+            echo "### ${{ matrix.os.image }} / ${{ matrix.build_type }}"
+            echo '```'
+            . /etc/os-release && echo "$PRETTY_NAME"
+            # sed instead of head: head exits early and pipefail turns SIGPIPE into a failure
+            gcc --version | sed -n 1p
+            g++ --version | sed -n 1p
+            ldd --version | sed -n 1p
+            cmake --version | sed -n 1p
+            openssl version
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Clone engine
+        env:
+          ENGINE_BRANCH: ${{ inputs.engine_branch || github.ref_name }}
+        run: |
+          mkdir -p "$LOG_DIR"
+          cd ..
+          rm -rf postgresql_modified_for_babelfish
+          "$GITHUB_WORKSPACE/.github/scripts/clone_engine_repo" "$GITHUB_REPOSITORY_OWNER" "$ENGINE_BRANCH"
+          git -C postgresql_modified_for_babelfish log -1 --format='Engine: %H %s' | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Build engine
+        run: |
+          cd ../postgresql_modified_for_babelfish
+          if [ "${{ matrix.build_type }}" = release ]; then
+            cflags="-ggdb -O2"; extra=""
+          else
+            cflags="-ggdb"; extra="--enable-cassert"
+          fi
+          ./configure --prefix="$INSTALL_DIR" --with-python PYTHON=/usr/bin/python3 --without-readline \
+            $extra CFLAGS="$cflags" --with-libxml --with-uuid=ossp --with-icu --with-openssl --with-gssapi
+          make -j"$(nproc)" 2>&1 | tee "$LOG_DIR/engine.log"
+          make install
+          make -C contrib -j"$(nproc)" install
+          # babelfishpg_tsql loads the ANTLR runtime (built by install-deps.sh) from the engine's lib dir
+          cp /usr/local/lib/libantlr4-runtime.so.$ANTLR_VERSION "$INSTALL_DIR/lib/"
+
+      - name: Build extensions
+        env:
+          TSQL_CPPFLAGS: -I/usr/include -DENABLE_TDS_LIB -DENABLE_SPATIAL_TYPES
+          TSQL_SHLIB_LINK: -lsybdb -L/usr/lib64
+        run: |
+          export PG_CONFIG="$INSTALL_DIR/bin/pg_config"
+          export PG_SRC="$(cd ../postgresql_modified_for_babelfish && pwd)"
+          export cmake="$(command -v cmake)"
+          jobs=$(nproc)
+          {
+            make -C contrib/babelfishpg_money -j$jobs install
+            PG_CPPFLAGS='-DENABLE_SPATIAL_TYPES' make -C contrib/babelfishpg_common -j$jobs install
+            make -C contrib/babelfishpg_tds -j$jobs install
+            # Generate the ANTLR parser first: the C++ sources include its headers
+            PG_CPPFLAGS="$TSQL_CPPFLAGS" SHLIB_LINK="$TSQL_SHLIB_LINK" make -C contrib/babelfishpg_tsql antlr/libantlr_tsql.a
+            PG_CPPFLAGS="$TSQL_CPPFLAGS" SHLIB_LINK="$TSQL_SHLIB_LINK" make -C contrib/babelfishpg_tsql -j$jobs install
+            PATH="$INSTALL_DIR/bin:$PATH" make -C contrib/babelfishpg_unit -j$jobs install
+          } 2>&1 | tee "$LOG_DIR/extensions.log"
+
+      # babelfishpg_common built with ENABLE_SPATIAL_TYPES needs PostGIS at CREATE EXTENSION time
+      - name: Build PostGIS
+        run: |
+          cd /tmp
+          wget -q https://download.osgeo.org/postgis/source/postgis-$POSTGIS_VERSION.tar.gz
+          tar xzf postgis-$POSTGIS_VERSION.tar.gz
+          cd postgis-$POSTGIS_VERSION
+          ./configure --without-protobuf --without-raster --with-pgconfig="$INSTALL_DIR/bin/pg_config"
+          # PostGIS' utils/ Makefile is not parallel safe (races on rtpostgis.sql)
+          make
+          make install
+
+      - name: Smoke test
+        run: |
+          id bbf >/dev/null 2>&1 || useradd -m bbf
+          chown -R bbf "$INSTALL_DIR"
+          chmod -R a+rX "$GITHUB_WORKSPACE"
+          runuser -u bbf -- bash -eo pipefail <<'EOF'
+          export PATH="$INSTALL_DIR/bin:$PATH"
+          data=/home/bbf/data
+          initdb -E UTF8 --locale=C.UTF-8 -D "$data"
+          sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'/" "$data/postgresql.conf"
+          pg_ctl -D "$data" -l "$data/logfile" -w start
+          psql -v ON_ERROR_STOP=1 -d postgres -v user=jdbc_user -v db=babelfish_db -v migration_mode=multi-db \
+            -v tsql_port=1433 -v parallel_query_mode=false -f "$GITHUB_WORKSPACE/.github/scripts/create_extension.sql"
+          pg_ctl -D "$data" -l "$data/logfile" -w restart
+
+          # T-SQL over the TDS endpoint (ANTLR parser, partitioned tables, money)
+          printf '[bbf]\n\thost = localhost\n\tport = 1433\n\ttds version = 7.4\n' > /home/bbf/freetds.conf
+          cat > /home/bbf/smoke.sql <<'SQL'
+          SELECT @@version;
+          GO
+          CREATE PARTITION FUNCTION pf (int) AS RANGE RIGHT FOR VALUES (10, 20);
+          GO
+          CREATE PARTITION SCHEME ps AS PARTITION pf ALL TO ([PRIMARY]);
+          GO
+          CREATE TABLE ptab (a int, b varchar(10)) ON ps(a);
+          GO
+          INSERT INTO ptab VALUES (1, 'x'), (15, 'y'), (25, 'z');
+          GO
+          SELECT COUNT(*) AS cnt, CAST(12.5 AS money) AS m FROM ptab;
+          GO
+          DROP TABLE ptab; DROP PARTITION SCHEME ps; DROP PARTITION FUNCTION pf;
+          GO
+          SQL
+          FREETDSCONF=/home/bbf/freetds.conf bsqldb -S bbf -U jdbc_user -P 12345678 -D master -i /home/bbf/smoke.sql
+
+          # babelfishpg_unit tests
+          psql -v ON_ERROR_STOP=1 -d babelfish_db -c "CREATE EXTENSION IF NOT EXISTS babelfishpg_unit"
+          psql -v ON_ERROR_STOP=1 -d babelfish_db -c "SELECT status, count(*) FROM babelfishpg_unit.babelfishpg_unit_run_tests() GROUP BY 1"
+          failed=$(psql -At -d babelfish_db -c "SELECT count(*) FROM babelfishpg_unit.babelfishpg_unit_run_tests() WHERE status = 'fail'")
+          [ "$failed" = 0 ] || { echo "$failed babelfishpg_unit test(s) failed"; exit 1; }
+          pg_ctl -D "$data" -w stop
+          EOF
+
+      - name: Summarize compiler warnings
+        if: always()
+        run: |
+          for f in engine extensions; do
+            log="$LOG_DIR/$f.log"
+            [ -f "$log" ] || continue
+            grep -E '^[^ ]+:[0-9]+:[0-9]+: warning: ' "$log" | sort -u > "$LOG_DIR/$f-warnings.txt" || true
+            echo "- $f: $(wc -l < "$LOG_DIR/$f-warnings.txt") unique compiler warnings" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Collect logs
+        if: failure()
+        run: |
+          cp ../postgresql_modified_for_babelfish/config.log "$LOG_DIR/" 2>/dev/null || true
+          cp /home/bbf/data/logfile "$LOG_DIR/postgres.log" 2>/dev/null || true
+
+      - name: Upload logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.os.label }}-${{ matrix.build_type }}
+          path: build-logs
+          retention-days: 7

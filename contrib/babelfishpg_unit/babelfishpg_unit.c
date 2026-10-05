@@ -326,7 +326,7 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
 		values[STATUS_NAME_COLUMN] = PointerGetDatum(cstring_to_text(test->enabled ? 
 				(tr->result ? PASS : FAIL) : NOT_RUN));
 		values[MESSAGE_NAME_COLUMN] = PointerGetDatum(cstring_to_text(tr->message));
-		values[RUNTIME_NAME_COLUMN] = PointerGetDatum(tr->run_time);
+		values[RUNTIME_NAME_COLUMN] = Int64GetDatum((int64) tr->run_time);
 		values[ENABLED_NAME_COLUMN] = PointerGetDatum(cstring_to_text(test->enabled ? ENABLED : DISABLED));
 		tuple = heap_form_tuple(state->tupledesc, values, state->nulls);
 		result = HeapTupleGetDatum(tuple);
