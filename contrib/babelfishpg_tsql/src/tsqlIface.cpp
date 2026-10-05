@@ -3510,10 +3510,8 @@ public:
 			{
 				// For each assignment to a @variable, a fragment was created (via makeInitializer).
 				// There can be multiple declarations and assignments in a single DECLARE, and these are processed below.
-				int i = 0;
 				for (TSqlParser::Declare_localContext *d : ctx->declare_statement()->declare_local() ) 
 				{
-					i++;
 					if (d->expression())
 					{  
 						ParserRuleContext *ctx_fragment = (ParserRuleContext *) ctx;

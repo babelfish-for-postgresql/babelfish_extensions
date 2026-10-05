@@ -281,7 +281,6 @@ TdsBioSecureSocket(BIO_METHOD * my_bio_methods)
 	if (my_bio_methods == NULL)
 	{
 		BIO_METHOD *biom = (BIO_METHOD *) BIO_s_socket();
-#ifdef HAVE_BIO_METH_NEW
 		int			my_bio_index;
 
 		my_bio_index = BIO_get_new_index();
@@ -304,14 +303,6 @@ TdsBioSecureSocket(BIO_METHOD * my_bio_methods)
 			my_bio_methods = NULL;
 			return NULL;
 		}
-#else
-		my_bio_methods = malloc(sizeof(BIO_METHOD));
-		if (!my_bio_methods)
-			return NULL;
-		memcpy(my_bio_methods, biom, sizeof(BIO_METHOD));
-		my_bio_methods->bread = SslHandShakeRead;
-		my_bio_methods->bwrite = SslHandShakeWrite;
-#endif
 	}
 	return my_bio_methods;
 }

@@ -18,7 +18,7 @@ void
 tsql_for_datetime_format(StringInfo format_output, const char *outputstr)
 {
 	char	   *date;
-	char	   *spaceptr;
+	const char *spaceptr;
 	int			len;
 
 	/* if we receive a null value, set the output as an empty string */
@@ -47,10 +47,10 @@ void
 tsql_for_datetimeoffset_format(StringInfo format_output, const char *str)
 {
 	char	   *date,
-			   *endptr,
-			   *time,
+			   *time;
+	const char *endptr,
 			   *offset;
-	char	   *spaceptr;
+	const char *spaceptr;
 	int			len;
 
 	/* if we receive a null value, set the output as an empty string */

@@ -11,6 +11,9 @@ TSQL_SRC = ../babelfishpg_tsql
 
 PG_CFLAGS += -Werror -Wfloat-conversion
 PG_CFLAGS += -fstack-protector-strong
+# GCC 14+ gets -Wmissing-variable-declarations from the server's CFLAGS;
+# opt out the same way upstream PostgreSQL does for code not yet clean of it
+PG_CFLAGS += $(PERMIT_MISSING_VARIABLE_DECLARATIONS)
 PG_CPPFLAGS += -I$(TSQL_SRC) -I$(PG_SRC) -I$(tds_top_dir) -DFAULT_INJECTOR
 
 # Exclude the following files from the build (sometimes these
