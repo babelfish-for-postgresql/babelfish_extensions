@@ -1196,6 +1196,9 @@ GO
 CREATE USER partition_u1 FOR LOGIN partition_l1;
 GO
 
+USE master;
+GO
+
 -- tsql     user=partition_l1 password=12345678
 USE PartitionDb;
 GO
