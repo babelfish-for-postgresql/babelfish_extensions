@@ -343,13 +343,6 @@ runs:
         echo 'Database restore complete.'
         rm -rf ~/upgrade/dump
 
-        # pg_dump does not carry planner statistics by default, so the restored database
-        # (user tables as well as the system catalogs that grew during restore) has none.
-        # Analyze the whole database so that verify tests are not slowed down by bad plans.
-        echo 'Running ANALYZE on restored database...'
-        sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "ANALYZE;"
-        echo 'ANALYZE complete.'
-
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
 
