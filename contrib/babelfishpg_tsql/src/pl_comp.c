@@ -1516,14 +1516,15 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 	/*
 	 * Now parse the function's text.
 	 *
-	 * If batch query ANTLR parse cache is enabled, try to restore a previously
-	 * cached parse tree from shared memory. On miss, parse normally and
-	 * cache the result for future executions.
+	 * With the batch query cache on, try the shared memory cache first; on a
+	 * miss, parse and cache the result.
 	 */
 	{
 		bool		batch_cache_hit = false;
 		char	   *query_text = NULL;
 		BatchCacheKey cache_key = 0;
+		uint64		compile_sig = 0;
+		int			pre_cache_nDatums = pltsql_nDatums;  /* datums created before ANTLR */
 
 		if (pltsql_allow_batch_query_cache &&
 			pltsql_enable_batch_query_cache &&
@@ -1531,20 +1532,28 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 			args != NULL && OPTION_ENABLED(args, CACHE_PLAN))
 		{
 			query_text = proc_source;
-			cache_key = compute_batch_cache_key(query_text, get_cur_db_id());
+			/* Parameter declaration and parse-affecting settings */
+			compile_sig = compute_batch_cache_compile_sig(numargs, argtypes,
+														  argmodes, argnames);
+			cache_key = compute_batch_cache_key(query_text, get_cur_db_id(),
+												compile_sig);
 
 			/* Attempt cache lookup from shared memory */
 			{
-				BatchCacheEntry *cached = batch_cache_lookup(cache_key,
-															query_text);
-				if (cached != NULL && cached->parse_tree_len > 0)
+				BatchCacheLookupResult *cached = batch_cache_lookup(cache_key,
+																	query_text,
+																	compile_sig,
+																	pre_cache_nDatums);
+
+				if (cached != NULL)
 				{
 					PLtsql_stmt_block *restored_tree = NULL;
-					instr_time	deser_start, deser_end;
+					instr_time	deser_start,
+								deser_end;
 
 					INSTR_TIME_SET_CURRENT(deser_start);
 
-					/* Deserialize parse tree from embedded buffer */
+					/* Deserialize parse tree from local copy (safe — not in shmem) */
 					PG_TRY();
 					{
 						restored_tree = (PLtsql_stmt_block *)
@@ -1558,38 +1567,67 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 					}
 					PG_END_TRY();
 
+					/* Restore datums if cached */
+					if (restored_tree != NULL &&
+						cached->parse_datums_len > 0 && cached->parse_datums != NULL)
+					{
+						List	   *datum_list = NIL;
+
+						PG_TRY();
+						{
+							datum_list = (List *) pltsql_stringToNode(cached->parse_datums);
+						}
+						PG_CATCH();
+						{
+							FlushErrorState();
+							datum_list = NIL;
+						}
+						PG_END_TRY();
+
+						if (datum_list != NIL)
+						{
+							ListCell   *lc;
+							int			expected_dno = pltsql_nDatums;
+							bool		datums_ok = true;
+
+							/*
+							 * The tree refers to datums by dno: check every
+							 * dno before adding any.
+							 */
+							foreach(lc, datum_list)
+							{
+								PLtsql_datum *d = (PLtsql_datum *) lfirst(lc);
+
+								if (d == NULL || d->dno != expected_dno++)
+								{
+									datums_ok = false;
+									break;
+								}
+							}
+
+							if (datums_ok)
+							{
+								foreach(lc, datum_list)
+									pltsql_adddatum((PLtsql_datum *) lfirst(lc));
+							}
+							else
+							{
+								restored_tree = NULL;
+								elog(DEBUG1, "pltsql_batch_parse_cache: cached datum numbering mismatch, falling through to ANTLR");
+							}
+							list_free(datum_list);
+						}
+						else
+						{
+							/* Datums missing: parse fresh */
+							restored_tree = NULL;
+							elog(DEBUG1, "pltsql_batch_parse_cache: datum deserialization failed, falling through to ANTLR");
+						}
+					}
+
+					/* Use the cached tree only if tree and datums restored */
 					if (restored_tree != NULL)
 					{
-						/* Restore datums if cached */
-						if (cached->parse_datums_len > 0)
-						{
-							List   *datum_list = NIL;
-
-							PG_TRY();
-							{
-								datum_list = (List *) pltsql_stringToNode(cached->parse_datums);
-							}
-							PG_CATCH();
-							{
-								FlushErrorState();
-								datum_list = NIL;
-							}
-							PG_END_TRY();
-
-							if (datum_list != NIL)
-							{
-								ListCell *lc;
-
-								foreach(lc, datum_list)
-								{
-									PLtsql_datum *d = (PLtsql_datum *) lfirst(lc);
-									if (d != NULL)
-										pltsql_adddatum(d);
-								}
-								list_free(datum_list);
-							}
-						}
-
 						pltsql_parse_result = restored_tree;
 						parse_rc = 0;
 						batch_cache_hit = true;
@@ -1604,36 +1642,55 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 							 1000.0 * INSTR_TIME_GET_DOUBLE(deser_end));
 
 						/*
-						 * Validation mode: run a fresh ANTLR parse and compare
-						 * the serialized trees. Logs PASS or FAIL. This is a
-						 * debug-only path — doubles the parse cost on every hit.
+						 * Validation mode (debug): re-parse and compare trees
+						 * and datums. Rewind the datum count so the fresh
+						 * parse numbers datums the same way, then restore the
+						 * cached state.
 						 */
 						if (pltsql_validate_batch_antlr_parse_cache)
 						{
+							int			n_cached = pltsql_nDatums - pre_cache_nDatums;
+							PLtsql_datum **saved = NULL;
+							int			si;
+
+							if (n_cached > 0)
+							{
+								saved = (PLtsql_datum **) palloc(sizeof(PLtsql_datum *) * n_cached);
+								memcpy(saved, &pltsql_Datums[pre_cache_nDatums],
+									   sizeof(PLtsql_datum *) * n_cached);
+							}
+							pltsql_nDatums = pre_cache_nDatums;
+
 							PG_TRY();
 							{
 								ANTLR_result fresh_result = antlr_parser_cpp(proc_source);
 
 								if (fresh_result.success)
 								{
-									char *cached_str = pltsql_nodeToString(restored_tree);
-									char *fresh_str = pltsql_nodeToString(pltsql_parse_result);
+									char	   *cached_str = pltsql_nodeToString(restored_tree);
+									char	   *fresh_str = pltsql_nodeToString(pltsql_parse_result);
+									bool		match = (strcmp(cached_str, fresh_str) == 0) &&
+										(pltsql_nDatums - pre_cache_nDatums == n_cached);
 
-									if (strcmp(cached_str, fresh_str) == 0)
+									for (si = 0; match && si < n_cached; si++)
+									{
+										char	   *c = pltsql_nodeToString(saved[si]);
+										char	   *f = pltsql_nodeToString(pltsql_Datums[pre_cache_nDatums + si]);
+
+										match = (strcmp(c, f) == 0);
+										pfree(c);
+										pfree(f);
+									}
+
+									if (match)
 										elog(LOG, "pltsql_batch_parse_cache[VALIDATE]: PASS key=%lu",
 											 (unsigned long) cache_key);
 									else
 										elog(WARNING, "pltsql_batch_parse_cache[VALIDATE]: FAIL key=%lu — cached tree differs from fresh ANTLR parse",
 											 (unsigned long) cache_key);
 
-									if (cached_str)
-										pfree(cached_str);
-									if (fresh_str)
-										pfree(fresh_str);
-
-									/* Restore the cached tree as the result
-									 * (fresh parse may have changed pltsql_parse_result) */
-									pltsql_parse_result = restored_tree;
+									pfree(cached_str);
+									pfree(fresh_str);
 								}
 								else
 									elog(WARNING, "pltsql_batch_parse_cache[VALIDATE]: fresh ANTLR parse failed, cannot validate");
@@ -1642,11 +1699,25 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 							{
 								FlushErrorState();
 								elog(WARNING, "pltsql_batch_parse_cache[VALIDATE]: error during validation, continuing with cached tree");
-								pltsql_parse_result = restored_tree;
 							}
 							PG_END_TRY();
+
+							/* Put the cached tree and datums back */
+							pltsql_parse_result = restored_tree;
+							pltsql_nDatums = pre_cache_nDatums;
+							for (si = 0; si < n_cached; si++)
+								pltsql_adddatum(saved[si]);
+							if (saved)
+								pfree(saved);
 						}
 					}
+
+					/* Free local copies on every path */
+					if (cached->parse_tree)
+						pfree(cached->parse_tree);
+					if (cached->parse_datums)
+						pfree(cached->parse_datums);
+					pfree(cached);
 				}
 			}
 		}
@@ -1673,37 +1744,47 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 		{
 			PG_TRY();
 			{
-				char *tree_str = pltsql_nodeToString(pltsql_parse_result);
-				char *datums_str = NULL;
+				char	   *tree_str = NULL;
+				char	   *datums_str = NULL;
+				bool		datums_ok = true;
 
-				/* Serialize current datums */
-				if (pltsql_nDatums > 0)
+				/*
+				 * Serialize only ANTLR-created datums. A NULL slot would shift
+				 * dnos on restore, so don't cache then.
+				 */
+				if (pltsql_nDatums > pre_cache_nDatums)
 				{
-					List *datum_list = NIL;
-					int di;
+					List	   *datum_list = NIL;
+					int			di;
 
-					for (di = 0; di < pltsql_nDatums; di++)
+					for (di = pre_cache_nDatums; di < pltsql_nDatums; di++)
 					{
-						if (pltsql_Datums[di] != NULL)
-							datum_list = lappend(datum_list, pltsql_Datums[di]);
+						if (pltsql_Datums[di] == NULL)
+						{
+							datums_ok = false;
+							break;
+						}
+						datum_list = lappend(datum_list, pltsql_Datums[di]);
 					}
-					if (datum_list != NIL)
-					{
+					if (datums_ok && datum_list != NIL)
 						datums_str = pltsql_nodeToString(datum_list);
-						list_free(datum_list);
-					}
+					list_free(datum_list);
 				}
 
-				batch_cache_insert(cache_key,
-								   query_text, tree_str, datums_str);
+				if (datums_ok)
+				{
+					tree_str = pltsql_nodeToString(pltsql_parse_result);
+					batch_cache_insert(cache_key,
+									   query_text, tree_str, datums_str,
+									   compile_sig, pre_cache_nDatums);
+					elog(DEBUG1, "pltsql_batch_parse_cache[WRITE]: key=%lu",
+						 (unsigned long) cache_key);
+				}
 
 				if (tree_str)
 					pfree(tree_str);
 				if (datums_str)
 					pfree(datums_str);
-
-				elog(DEBUG1, "pltsql_batch_parse_cache[WRITE]: key=%lu",
-					 (unsigned long) cache_key);
 			}
 			PG_CATCH();
 			{

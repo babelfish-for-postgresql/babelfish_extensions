@@ -217,44 +217,44 @@ GO
 
 -- ============================================================================
 -- Test 14: Bind parameter type change — single param, same query body
--- The query body (3rd arg to sp_prepexec) is what gets hashed.
--- Parameter type declaration (2nd arg) is NOT part of the hash.
--- Same body 'SELECT @p1' with different param types = cache HIT.
+-- The parameter declaration (2nd arg to sp_prepexec) is part of the cache key,
+-- because the ANTLR output depends on it. Same body 'SELECT @p1' with a
+-- different param type = cache MISS and a separate entry.
 -- ============================================================================
 PRINT '=== Test 14: Single param type change — INT, BIGINT, VARCHAR ===';
 GO
 
 -- Already cached from Test 1 as @p1 INT
--- Now call with @p1 BIGINT — same body 'SELECT @p1' = cache HIT
+-- Now call with @p1 BIGINT — different signature = cache MISS
 DECLARE @h INT
 EXEC sp_prepexec @h OUTPUT, N'@p1 BIGINT', N'SELECT @p1', @p1=42
 GO
 
--- Expect: hits=6
+-- Expect: hits=5, misses=8, writes=8, entries=8
 SELECT * FROM sys.batch_antlr_parse_cache_stats();
 GO
 
--- Now with @p1 VARCHAR — same body = cache HIT
+-- Now with @p1 VARCHAR — different signature = cache MISS
 DECLARE @h INT
 EXEC sp_prepexec @h OUTPUT, N'@p1 VARCHAR(10)', N'SELECT @p1', @p1=N'hello'
 GO
 
--- Expect: hits=7
+-- Expect: hits=5, misses=9, writes=9, entries=9
 SELECT * FROM sys.batch_antlr_parse_cache_stats();
 GO
 
--- Now with @p1 DECIMAL — same body = cache HIT
+-- Now with @p1 DECIMAL — different signature = cache MISS
 DECLARE @h INT
 EXEC sp_prepexec @h OUTPUT, N'@p1 DECIMAL(10,2)', N'SELECT @p1', @p1=3.14
 GO
 
--- Expect: hits=8
+-- Expect: hits=5, misses=10, writes=10, entries=10
 SELECT * FROM sys.batch_antlr_parse_cache_stats();
 GO
 
 -- ============================================================================
 -- Test 15: Bind parameter type change — two params, types swapped
--- Query body: 'SELECT @p1, @p2' — same text regardless of type declarations
+-- Query body: 'SELECT @p1, @p2' — each type declaration gets its own entry
 -- ============================================================================
 PRINT '=== Test 15: Two params, types swapped ===';
 GO
@@ -267,11 +267,11 @@ EXEC sp_prepexec @h OUTPUT,
     @p1=10, @p2=N'hello'
 GO
 
--- Expect: misses=8, writes=8, entries=8
+-- Expect: misses=11, writes=11, entries=11
 SELECT * FROM sys.batch_antlr_parse_cache_stats();
 GO
 
--- Second call: @p1 VARCHAR, @p2 INT — SWAPPED types, same body = cache HIT
+-- Second call: @p1 VARCHAR, @p2 INT — SWAPPED types, different signature = cache MISS
 DECLARE @h INT
 EXEC sp_prepexec @h OUTPUT,
     N'@p1 VARCHAR(50), @p2 INT',
@@ -279,11 +279,11 @@ EXEC sp_prepexec @h OUTPUT,
     @p1=N'world', @p2=99
 GO
 
--- Expect: hits=9
+-- Expect: hits=5, misses=12, writes=12, entries=12
 SELECT * FROM sys.batch_antlr_parse_cache_stats();
 GO
 
--- Third call: @p1 BIGINT, @p2 DECIMAL — different types again, same body = cache HIT
+-- Third call: @p1 BIGINT, @p2 DECIMAL — different types again = cache MISS
 DECLARE @h INT
 EXEC sp_prepexec @h OUTPUT,
     N'@p1 BIGINT, @p2 DECIMAL(10,2)',
@@ -291,7 +291,7 @@ EXEC sp_prepexec @h OUTPUT,
     @p1=9999999, @p2=1.23
 GO
 
--- Expect: hits=10
+-- Expect: hits=5, misses=13, writes=13, entries=13
 SELECT * FROM sys.batch_antlr_parse_cache_stats();
 GO
 
@@ -307,7 +307,7 @@ DECLARE @h INT
 EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1', @p1=1
 GO
 
--- Expect: hits=11
+-- Expect: hits=6
 SELECT * FROM sys.batch_antlr_parse_cache_stats();
 GO
 
@@ -319,7 +319,7 @@ EXEC sp_prepexec @h OUTPUT,
     @p1=1, @p2=2
 GO
 
--- Expect: misses=9, writes=9, entries=9
+-- Expect: misses=14, writes=14, entries=14
 SELECT * FROM sys.batch_antlr_parse_cache_stats();
 GO
 
@@ -331,7 +331,7 @@ EXEC sp_prepexec @h OUTPUT,
     @p1=1, @p2=2, @p3=3
 GO
 
--- Expect: misses=10, writes=10, entries=10
+-- Expect: misses=15, writes=15, entries=15
 SELECT * FROM sys.batch_antlr_parse_cache_stats();
 GO
 
@@ -346,7 +346,7 @@ DECLARE @h INT
 EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT * FROM dbo.cache_orders WHERE order_id = @p1', @p1=1
 GO
 
--- Expect: hits=12
+-- Expect: hits=7
 SELECT * FROM sys.batch_antlr_parse_cache_stats();
 GO
 
@@ -359,7 +359,7 @@ DECLARE @h INT
 EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT * FROM dbo.cache_orders WHERE order_id = @p1', @p1=1
 GO
 
--- Expect: hits=13 (cache hit, PG planner sees the new column)
+-- Expect: hits=8 (cache hit, PG planner sees the new column)
 SELECT * FROM sys.batch_antlr_parse_cache_stats();
 GO
 
@@ -593,7 +593,7 @@ GO
 
 -- ============================================================================
 -- Test 28: Kill switch off while session has enable=on
--- Session already has enable=on, then RDSADMIN flips allow=off.
+-- Session already has enable=on, then a superuser flips allow=off.
 -- Subsequent queries should silently bypass cache (no writes, no hits).
 -- ============================================================================
 PRINT '=== Test 28: Kill switch off while enabled ===';
@@ -625,7 +625,7 @@ SELECT * FROM sys.batch_antlr_parse_cache_stats();
 GO
 
 -- psql
--- Now RDSADMIN flips the kill switch off
+-- Now a superuser flips the kill switch off
 ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = off;
 SELECT pg_reload_conf();
 SELECT pg_sleep(1);
@@ -648,6 +648,292 @@ EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1 + 100', @p1=3
 GO
 
 -- Stats should still NOT change
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'off', false);
+GO
+
+-- ============================================================================
+-- Test 29: Same query body, different parameter count
+-- The parameter signature is part of the cache key, so each declaration
+-- gets its own entry and neither overwrites the other.
+-- ============================================================================
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = on;
+SELECT pg_reload_conf();
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+PRINT '=== Test 29: Same body, different param count ===';
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'on', false);
+GO
+SELECT set_config('babelfishpg_tsql.batch_query_cache_min_entry_size', '0', false);
+GO
+SELECT sys.flush_batch_antlr_parse_cache();
+GO
+
+-- Cache with 1 param
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'DECLARE @x INT SET @x = @p1 + 10 SELECT @x', @p1=5
+GO
+
+-- Expect: hits=0, misses=1, writes=1, entries=1
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- Same query body but 2 params — different key → MISS and a second entry
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT, @p2 INT', N'DECLARE @x INT SET @x = @p1 + 10 SELECT @x', @p1=5, @p2=99
+GO
+
+-- Expect: hits=0, misses=2, writes=2, entries=2
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- Re-run with original 1 param — should HIT the first entry (result 30)
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'DECLARE @x INT SET @x = @p1 + 10 SELECT @x', @p1=20
+GO
+
+-- Expect: hits=1, misses=2, writes=2, entries=2
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 30: DECLARE variable correctness on cache hit
+-- Verifies that ANTLR-created datums are restored correctly and
+-- variable references in the tree resolve to the right values
+-- ============================================================================
+PRINT '=== Test 30: DECLARE variable correctness ===';
+GO
+
+SELECT sys.flush_batch_antlr_parse_cache();
+GO
+
+-- First exec — cache miss, creates entry with DECLARE @x, @y
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT',
+    N'DECLARE @x INT DECLARE @y VARCHAR(20) SET @x = @p1 * 2 SET @y = CAST(@x AS VARCHAR) + '' items'' SELECT @x AS doubled, @y AS label',
+    @p1=5
+GO
+
+-- Expect: misses=1, writes=1, entries=1
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- Second exec — cache HIT, must produce correct results with different param
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT',
+    N'DECLARE @x INT DECLARE @y VARCHAR(20) SET @x = @p1 * 2 SET @y = CAST(@x AS VARCHAR) + '' items'' SELECT @x AS doubled, @y AS label',
+    @p1=15
+GO
+
+-- Expect: hits=1 and correct output (30, '30 items')
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 31: Same query body and param count, different param type
+-- SELECT @v = expr embeds a cast to the variable's type in the parse tree,
+-- so INT and VARCHAR declarations must not share an entry.
+-- ============================================================================
+PRINT '=== Test 31: Same body, different param type ===';
+GO
+
+SELECT sys.flush_batch_antlr_parse_cache();
+GO
+
+-- INT: '007' is cast to int → 7
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1 = ''007'' SELECT @p1 AS v', @p1=1
+GO
+
+-- VARCHAR: must return '007' (a reused INT tree would return 7)
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 VARCHAR(10)', N'SELECT @p1 = ''007'' SELECT @p1 AS v', @p1='a'
+GO
+
+-- Expect: hits=0, misses=2, writes=2, entries=2
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- VARCHAR again — HIT its own entry, still '007'
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 VARCHAR(10)', N'SELECT @p1 = ''007'' SELECT @p1 AS v', @p1='b'
+GO
+
+-- Expect: hits=1, misses=2, writes=2, entries=2
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 32: Same type, different declared length — shares one entry
+-- Typmod is not part of the signature (it never reaches ANTLR), so
+-- VARCHAR(10) and VARCHAR(50) hit the same entry.
+-- ============================================================================
+PRINT '=== Test 32: Same type, different length ===';
+GO
+
+SELECT sys.flush_batch_antlr_parse_cache();
+GO
+
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 VARCHAR(10)', N'SELECT @p1 = ''007'' SELECT @p1 AS v', @p1='a'
+GO
+
+-- Expect: hits=0, misses=1, writes=1, entries=1
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- VARCHAR(50) — same type, different length = cache HIT, still '007'
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 VARCHAR(50)', N'SELECT @p1 = ''007'' SELECT @p1 AS v', @p1='b'
+GO
+
+-- Expect: hits=1, misses=1, writes=1, entries=1
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 33: QUOTED_IDENTIFIER is part of the cache key
+-- "status" is a column with QUOTED_IDENTIFIER ON and a string literal with
+-- QUOTED_IDENTIFIER OFF, so the parse trees differ. Each setting gets its
+-- own entry.
+-- ============================================================================
+PRINT '=== Test 33: QUOTED_IDENTIFIER in cache key ===';
+GO
+
+SELECT sys.flush_batch_antlr_parse_cache();
+GO
+
+-- QI ON: "status" is a column → 'active'; entry is written
+SET QUOTED_IDENTIFIER ON
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT "status" AS v FROM dbo.cache_orders WHERE order_id = @p1', @p1=1
+GO
+
+-- Expect: hits=0, misses=1, writes=1, entries=1
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- QI OFF: "status" is a string → 'status'; MISS and a second entry
+SET QUOTED_IDENTIFIER OFF
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT "status" AS v FROM dbo.cache_orders WHERE order_id = @p1', @p1=1
+GO
+
+-- QI OFF again: HIT its own entry, still 'status'
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT "status" AS v FROM dbo.cache_orders WHERE order_id = @p1', @p1=1
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- Expect: hits=1, misses=2, writes=2, entries=2
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- QI ON again: HIT, still 'active'
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT "status" AS v FROM dbo.cache_orders WHERE order_id = @p1', @p1=1
+GO
+
+-- Expect: hits=2, misses=2, writes=2, entries=2
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- ============================================================================
+-- Test 34: enable_tsql_information_schema is part of the cache key
+-- With the setting on, ANTLR rewrites information_schema to
+-- information_schema_tsql, so each value gets its own entry.
+-- ============================================================================
+PRINT '=== Test 34: enable_tsql_information_schema in cache key ===';
+GO
+
+SELECT sys.flush_batch_antlr_parse_cache();
+GO
+SELECT set_config('babelfishpg_tsql.enable_tsql_information_schema', 'off', false);
+GO
+
+-- off: PostgreSQL information_schema (physical schema name)
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT TABLE_SCHEMA AS s FROM information_schema.tables WHERE TABLE_NAME = ''cache_orders''', @p1=1
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_tsql_information_schema', 'on', false);
+GO
+
+-- on: T-SQL information_schema ('dbo'); must not reuse the 'off' tree
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT TABLE_SCHEMA AS s FROM information_schema.tables WHERE TABLE_NAME = ''cache_orders''', @p1=1
+GO
+
+-- Expect: hits=0, misses=2, writes=2, entries=2
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+-- on again: HIT its own entry, still 'dbo'
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT TABLE_SCHEMA AS s FROM information_schema.tables WHERE TABLE_NAME = ''cache_orders''', @p1=1
+GO
+
+-- Expect: hits=1, misses=2, writes=2, entries=2
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+SELECT set_config('babelfishpg_tsql.enable_tsql_information_schema', 'off', false);
+GO
+
+-- ============================================================================
+-- Test 35: escape hatch values are part of the cache key
+-- With escape_hatch_query_hints = strict, OPTION (MAXDOP 1) raises at parse
+-- time. A tree cached under ignore must not let a strict session skip it.
+-- ============================================================================
+PRINT '=== Test 35: escape hatch in cache key ===';
+GO
+
+SELECT sys.flush_batch_antlr_parse_cache();
+GO
+SELECT set_config('babelfishpg_tsql.escape_hatch_query_hints', 'ignore', false);
+GO
+
+-- ignore: hint is ignored, query runs → 'active'
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT status AS v FROM dbo.cache_orders WHERE order_id = @p1 OPTION (MAXDOP 1)', @p1=1
+GO
+
+-- Expect: hits=0, misses=1, writes=1, entries=1
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_query_hints', 'strict', false);
+GO
+
+-- strict: must raise 'query hint is not currently supported'
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT status AS v FROM dbo.cache_orders WHERE order_id = @p1 OPTION (MAXDOP 1)', @p1=1
+GO
+
+-- Expect: hits=0, misses=2, writes=1, entries=1 (parse failed, nothing written)
+SELECT * FROM sys.batch_antlr_parse_cache_stats();
+GO
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_query_hints', 'ignore', false);
+GO
+
+-- ignore again: HIT the original entry, 'active'
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT status AS v FROM dbo.cache_orders WHERE order_id = @p1 OPTION (MAXDOP 1)', @p1=1
+GO
+
+-- Expect: hits=1, misses=2, writes=1, entries=1
 SELECT * FROM sys.batch_antlr_parse_cache_stats();
 GO
 

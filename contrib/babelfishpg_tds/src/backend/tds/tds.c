@@ -315,11 +315,8 @@ tds_shmem_request()
 	RequestAddinShmemSpace(tds_memsize());
 
 	/*
-	 * Batch query ANTLR parse cache: reserve shared memory for the cache hash table.
-	 * The hash is created in tds_status_shmem_startup() and used by babelfishpg_tsql.
-	 *
-	 * Each entry is ~256 KB (single data buffer for query_text + parse_tree + datums).
-	 * Shared state is ~56 bytes (LWLock pointer + spinlock + 5 stat counters).
+	 * Batch query ANTLR parse cache: reserve shared memory (~256 KB per
+	 * entry). Created in tds_status_shmem_startup(), used by babelfishpg_tsql.
 	 */
 	{
 		Size batch_cache_size;
@@ -437,10 +434,8 @@ tds_status_shmem_startup(void)
 	}
 
 	/*
-	 * Batch query ANTLR parse cache: create shared hash table and state.
-	 * Uses BatchCacheSharedState/BatchCacheEntry/BatchCacheKey from batch_cache.h.
-	 * babelfishpg_tsql will attach to these by calling ShmemInitHash/ShmemInitStruct
-	 * with the same names.
+	 * Batch query ANTLR parse cache: create the shared state and hash.
+	 * babelfishpg_tsql attaches using the same names.
 	 */
 	{
 		BatchCacheSharedState *state;

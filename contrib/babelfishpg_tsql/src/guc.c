@@ -437,10 +437,14 @@ static bool
 check_enable_batch_query_cache(bool *newval, void **extra, GucSource source)
 {
 	/*
-	 * Block enabling the feature if the kill switch is off. The check on
-	 * *newval ensures this only fires when setting to true (not when the
-	 * GUC default of false is applied during _PG_init).
+	 * Parallel workers restore the leader's value, which may be on after the
+	 * kill switch was turned off. It was checked when set, and the cache
+	 * re-checks the kill switch on every use.
 	 */
+	if (InitializingParallelWorker)
+		return true;
+
+	/* Setting to on requires the kill switch */
 	if (*newval && !pltsql_allow_batch_query_cache)
 	{
 		ereport(ERROR,

@@ -6721,11 +6721,13 @@ pltsql_truncate_identifier_func(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(cstring_to_text(name));
 }
 
-/* Batch query ANTLR parse cache: attach to shared memory at library load time.
- * The shmem is already allocated by babelfishpg_tds; this just attaches.
- * Idempotent — safe to call from any backend type including background workers. */
+/*
+ * Attach to the batch query cache shared memory created by babelfishpg_tds.
+ * Called from _PG_init(); babelfishpg_tsql is not preloaded, so the shared
+ * memory already exists. Idempotent.
+ */
 static void
-pltsql_batch_cache_lazy_init(void)
+pltsql_batch_cache_attach(void)
 {
 	batch_cache_shmem_startup();
 }
@@ -7013,8 +7015,8 @@ _PG_init(void)
 
 	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
 
-	/* Ad-hoc ANTLR parse cache: initialize backend-local hash table */
-	pltsql_batch_cache_lazy_init();
+	/* Batch query cache: attach to shared memory */
+	pltsql_batch_cache_attach();
 
 	inited = true;
 }

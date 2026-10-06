@@ -3,16 +3,9 @@
  * batch_cache.h
  *    Shared memory ANTLR parse tree cache for batch T-SQL queries.
  *
- * Each entry contains a single fixed-size data buffer that holds
- * query text, serialized parse tree, and datums concatenated together.
- * No external file or disk I/O is involved.
- *
- * Query text is stored for hash collision detection (strcmp on every
- * lookup) and is exposed via sys.batch_antlr_parse_cache_entries()
- * which is restricted to sysadmin only.
- *
- * The cache works on Aurora read-only instances since all operations
- * are local shared memory (RAM).
+ * Key: query text + database id + compile signature (parameter declaration
+ * and parse-affecting session settings). Query text is kept for collision
+ * checks and is visible to sysadmin via sys.batch_antlr_parse_cache_entries().
  *
  *-------------------------------------------------------------------------
  */
@@ -27,51 +20,45 @@
 /*****************************************
  *    BUFFER SIZE LIMITS
  *****************************************/
-#define BATCH_CACHE_MAX_QUERY_TEXT_LEN	(64 * 1024)		/* 64 KB */
+#define BATCH_CACHE_MAX_QUERY_TEXT_LEN	(64 * 1024) /* 64 KB */
 #define BATCH_CACHE_MAX_PARSE_TREE_LEN	(160 * 1024)	/* 160 KB */
 #define BATCH_CACHE_MAX_PARSE_DATUMS_LEN (32 * 1024)	/* 32 KB */
 
 /*****************************************
  *    HASH TABLE CAPACITY
  *
- *    Shared memory hash tables have a fixed directory that cannot
- *    grow. This constant sets the max entries for shmem allocation
- *    and must match the GUC default for batch_query_cache_max_entries.
+ *    Fixed: shared memory hash tables cannot grow. Upper bound of
+ *    batch_query_cache_max_entries.
  *****************************************/
 #define BATCH_CACHE_DEFAULT_MAX_ENTRIES	1000
 
 /*****************************************
  *    HASH KEY
  *****************************************/
-typedef uint64 BatchCacheKey;	/* hash_combine64(query_text_hash, db_id) */
+typedef uint64 BatchCacheKey;	/* hash of query text, db_id, compile_sig */
 
 /*****************************************
  *    HASH ENTRY
- *
- *    Query text, parse tree, and datums are stored in separate
- *    fixed-size buffers within each entry.
  *****************************************/
 typedef struct BatchCacheEntry
 {
-	BatchCacheKey key;				/* hash lookup key — must be first */
+	BatchCacheKey key;			/* hash lookup key — must be first */
 
-	/* Query text (for collision detection — not exposed to customers) */
-	char		query_text[BATCH_CACHE_MAX_QUERY_TEXT_LEN];
+	char		query_text[BATCH_CACHE_MAX_QUERY_TEXT_LEN];	/* for collision checks */
 	int			query_text_len;
 
-	/* Serialized ANTLR parse tree */
-	char		parse_tree[BATCH_CACHE_MAX_PARSE_TREE_LEN];
+	char		parse_tree[BATCH_CACHE_MAX_PARSE_TREE_LEN];	/* serialized tree */
 	int			parse_tree_len;
 
-	/* Serialized datums */
-	char		parse_datums[BATCH_CACHE_MAX_PARSE_DATUMS_LEN];
+	char		parse_datums[BATCH_CACHE_MAX_PARSE_DATUMS_LEN];	/* serialized datums */
 	int			parse_datums_len;
 
-	/* Metadata */
 	char		bbf_version[32];
-	TimestampTz	created_at;
-	TimestampTz	last_used_at;		/* LRU key — updated on every cache hit */
-	slock_t		mutex;				/* per-entry spinlock for counter updates */
+	uint64		compile_sig;	/* parameter + parse-context signature */
+	int			pre_cache_nDatums;	/* datums before ANTLR; must match on hit */
+	TimestampTz created_at;
+	TimestampTz last_used_at;	/* LRU key */
+	slock_t		mutex;			/* protects last_used_at */
 } BatchCacheEntry;
 
 /*****************************************
@@ -79,32 +66,55 @@ typedef struct BatchCacheEntry
  *****************************************/
 typedef struct BatchCacheSharedState
 {
-	LWLock	   *lock;				/* protects hash table structure (insert/remove/evict) */
-	pg_atomic_uint64 stat_hits;		/* global hit counter */
-	pg_atomic_uint64 stat_misses;	/* global miss counter */
-	pg_atomic_uint64 stat_writes;	/* global write counter */
-	pg_atomic_uint64 stat_evictions;/* global eviction counter */
-	pg_atomic_uint64 stat_errors;	/* global error counter */
+	LWLock	   *lock;			/* protects the hash table */
+	pg_atomic_uint64 stat_hits;
+	pg_atomic_uint64 stat_misses;
+	pg_atomic_uint64 stat_writes;
+	pg_atomic_uint64 stat_evictions;
+	pg_atomic_uint64 stat_errors;
 } BatchCacheSharedState;
+
+/*****************************************
+ *    LOOKUP RESULT (local copies, safe after lock release)
+ *****************************************/
+typedef struct BatchCacheLookupResult
+{
+	char	   *parse_tree;
+	int			parse_tree_len;
+	char	   *parse_datums;	/* NULL if none */
+	int			parse_datums_len;
+	int			pre_cache_nDatums;
+} BatchCacheLookupResult;
 
 /*****************************************
  *    PUBLIC FUNCTIONS
  *****************************************/
 
-/* Shared memory initialization (called from hooks) */
-extern void batch_cache_shmem_request(void);
+/* Attach to the shared memory created by babelfishpg_tds; idempotent */
 extern void batch_cache_shmem_startup(void);
 
 /* Cache key computation */
-extern BatchCacheKey compute_batch_cache_key(const char *query_text, int16 db_id);
+extern uint64 compute_batch_cache_param_sig(int numargs, const Oid *argtypes,
+											const char *argmodes,
+											char **argnames);
+extern uint64 compute_batch_cache_parse_ctx_sig(void);
+extern uint64 compute_batch_cache_compile_sig(int numargs, const Oid *argtypes,
+											  const char *argmodes,
+											  char **argnames);
+extern BatchCacheKey compute_batch_cache_key(const char *query_text, int16 db_id,
+											 uint64 compile_sig);
 
-/* Cache operations */
-extern BatchCacheEntry *batch_cache_lookup(BatchCacheKey cache_key,
-										   const char *query_text);
+/* Lookup returns palloc'd copies, or NULL on miss */
+extern BatchCacheLookupResult *batch_cache_lookup(BatchCacheKey cache_key,
+												  const char *query_text,
+												  uint64 compile_sig,
+												  int pre_cache_nDatums);
 extern bool batch_cache_insert(BatchCacheKey cache_key,
 							   const char *query_text,
 							   const char *parse_tree_str,
-							   const char *parse_datums_str);
+							   const char *parse_datums_str,
+							   uint64 compile_sig,
+							   int pre_cache_nDatums);
 extern int64 batch_cache_flush(void);
 
 /* SQL-callable functions */
