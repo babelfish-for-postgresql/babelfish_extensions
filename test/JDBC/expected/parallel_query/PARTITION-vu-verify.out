@@ -1313,6 +1313,9 @@ GO
 ALTER ROLE db_ddladmin DROP MEMBER partition_u1
 GO
 
+-- terminate-tsql-conn user=partition_l1 password=12345678 database=partitiondb
+-- terminate-tsql-conn database=partitiondb
+
 -- tsql
 -----------------------------------------------------------------------------------
 --- DB owner should be able to create/drop partition function and scheme
@@ -1353,6 +1356,8 @@ go
 
 DROP PARTITION FUNCTION TestPartitionFunction
 go
+
+-- terminate-tsql-conn user=partition_l1 password=12345678
 
 -- tsql
 USE master
@@ -3913,6 +3918,8 @@ int
 2
 ~~END~~
 
+
+-- terminate-tsql-conn user=partition_l2 password=12345678 database=partitiondb
 
 -- tsql
 USE PartitionDb;
