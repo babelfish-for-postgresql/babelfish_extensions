@@ -347,19 +347,7 @@ runs:
         # (user tables as well as the system catalogs that grew during restore) has none.
         # Analyze the whole database so that verify tests are not slowed down by bad plans.
         echo 'Running ANALYZE on restored database...'
-        # Analyze table by table with VERBOSE so that a failure names the table, and one failing
-        # table does not stop the rest (and the system catalogs) from being analyzed.
-        # Full output is kept in ~/upgrade/analyze.log, which is uploaded with the logs artifact.
-        sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -X -h localhost -d babelfish_db -U jdbc_user > ~/upgrade/analyze.log 2>&1 <<'EOF'
-        SELECT format('ANALYZE VERBOSE %I.%I', n.nspname, c.relname)
-          FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-         WHERE c.relkind IN ('r', 'm', 'p') AND c.relpersistence <> 't'
-         ORDER BY n.nspname, c.relname
-        \gexec
-        EOF
-        echo "Analyzed $(grep -c 'INFO:  analyzing' ~/upgrade/analyze.log) tables."
-        # Print each failing table with its error and flag it in the job summary
-        awk '/INFO:  analyzing/ { tbl = $NF } /ERROR:/ { sub(/.*ERROR: +/, ""); print "::warning title=ANALYZE failed::" tbl ": " $0 }' ~/upgrade/analyze.log
+        sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d babelfish_db -U jdbc_user -c "ANALYZE;"
         echo 'ANALYZE complete.'
 
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
