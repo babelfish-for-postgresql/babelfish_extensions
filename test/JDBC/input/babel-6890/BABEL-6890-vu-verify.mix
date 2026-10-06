@@ -527,9 +527,7 @@ PRINT '=== Test 24: Cache entries view ===';
 GO
 
 SELECT
-    cache_key,
-    query_text,
-    bbf_version
+    query_text
 FROM sys.batch_antlr_parse_cache_entries()
 ORDER BY query_text_len ASC, cache_key ASC;
 GO
