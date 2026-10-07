@@ -24,6 +24,8 @@
 
 #include "access/htup_details.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_collation.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
@@ -1245,6 +1247,57 @@ skip_antlr_parsing:
 	return function;
 }
 
+/*
+ * batch_cache_oid_in_builtin_schema - true if the namespace is pg_catalog or
+ * the Babelfish sys schema, i.e. a name there resolves the same in every
+ * session.
+ */
+static bool
+batch_cache_oid_in_builtin_schema(Oid nsp)
+{
+	if (nsp == PG_CATALOG_NAMESPACE)
+		return true;
+	return OidIsValid(nsp) && nsp == get_namespace_oid("sys", true);
+}
+
+/*
+ * batch_cache_type_is_cacheable - true if the variable's type and collation
+ * are built-in. A user-defined type or collation referenced by an unqualified
+ * name could resolve to a different OID in another session, so a batch that
+ * declares one must not be cached (the resolved OID is baked into the datum).
+ */
+static bool
+batch_cache_type_is_cacheable(PLtsql_type *dtype)
+{
+	HeapTuple	tp;
+	Oid			nsp;
+
+	if (dtype == NULL)
+		return false;
+
+	tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(dtype->typoid));
+	if (!HeapTupleIsValid(tp))
+		return false;
+	nsp = ((Form_pg_type) GETSTRUCT(tp))->typnamespace;
+	ReleaseSysCache(tp);
+	if (!batch_cache_oid_in_builtin_schema(nsp))
+		return false;
+
+	/* InvalidOid collation = none/default, which is safe */
+	if (OidIsValid(dtype->collation))
+	{
+		tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(dtype->collation));
+		if (!HeapTupleIsValid(tp))
+			return false;
+		nsp = ((Form_pg_collation) GETSTRUCT(tp))->collnamespace;
+		ReleaseSysCache(tp);
+		if (!batch_cache_oid_in_builtin_schema(nsp))
+			return false;
+	}
+
+	return true;
+}
+
 /* ----------
  * pltsql_compile_inline	Make an execution tree for an anonymous code block.
  *
@@ -1759,12 +1812,51 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 
 					for (di = pre_cache_nDatums; di < pltsql_nDatums; di++)
 					{
-						if (pltsql_Datums[di] == NULL)
+						PLtsql_datum *d = pltsql_Datums[di];
+
+						if (d == NULL)
 						{
 							datums_ok = false;
 							break;
 						}
-						datum_list = lappend(datum_list, pltsql_Datums[di]);
+
+						/*
+						 * A variable's type/collation OID is resolved against
+						 * the parsing session's schema search order and baked
+						 * into the datum. If the type or collation is not a
+						 * built-in (sys/pg_catalog), an unqualified name could
+						 * resolve differently in another session, so do not
+						 * cache this batch.
+						 */
+						if (d->dtype == PLTSQL_DTYPE_VAR)
+						{
+							if (!batch_cache_type_is_cacheable(((PLtsql_var *) d)->datatype))
+							{
+								datums_ok = false;
+								break;
+							}
+						}
+						else if (d->dtype == PLTSQL_DTYPE_ROW)
+						{
+							/*
+							 * A row (e.g. a SELECT-assignment target) carries no
+							 * type OID of its own; it references its member
+							 * datums by number, and those members are checked
+							 * independently in this same loop.
+							 */
+						}
+						else
+						{
+							/*
+							 * Record or table variable may carry a user-defined
+							 * composite or table-type OID; be conservative and
+							 * do not cache.
+							 */
+							datums_ok = false;
+							break;
+						}
+
+						datum_list = lappend(datum_list, d);
 					}
 					if (datums_ok && datum_list != NIL)
 						datums_str = pltsql_nodeToString(datum_list);
