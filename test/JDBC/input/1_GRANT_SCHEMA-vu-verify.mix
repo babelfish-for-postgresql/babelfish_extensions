@@ -1,3 +1,4 @@
+-- sla 80000
 -- tsql
 -- check for inconsistent metadata after upgrade
 select COUNT(*) FROM sys.babelfish_inconsistent_metadata();

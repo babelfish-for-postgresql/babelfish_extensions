@@ -1,3 +1,4 @@
+-- sla 80000
 CREATE DATABASE sysusersdb
 GO
 
