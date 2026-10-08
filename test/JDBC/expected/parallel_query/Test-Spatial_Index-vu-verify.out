@@ -68,7 +68,11 @@ off
 -- Refresh planner statistics so plan shape (Workers Planned, Index Scan vs
 -- Parallel Bitmap Heap Scan, per-worker row counts) is deterministic across
 -- runners with different CPU counts. Required for parallel-query mode.
-ANALYZE master_dbo.si_geom_tbl;
+-- VACUUM FULL repacks the heap into a deterministic physical layout so the
+-- Bitmap Heap Scan "Heap Blocks" count and the Bitmap Index Scan "actual rows"
+-- do not vary with the table's history (e.g. after dump/restore), which
+-- otherwise makes the STATISTICS PROFILE plan output flaky.
+VACUUM (FULL, ANALYZE) master_dbo.si_geom_tbl;
 ANALYZE master_dbo.si_geog_tbl;
 ANALYZE master_dbo.si_multi_tbl;
 ANALYZE master_dbo.si_view_tbl;
