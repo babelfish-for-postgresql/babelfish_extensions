@@ -3,6 +3,7 @@
 #include "commands/explain_state.h"
 #include "parser/scansup.h"		/* downcase_identifier */
 #include "utils/guc.h"
+#include "utils/plancache.h"
 #include "miscadmin.h"
 
 #include "guc.h"
@@ -77,6 +78,7 @@ bool		pltsql_enable_alter_owner_from_pg = false;
 bool		pltsql_enable_rename_from_pg = false;
 bool		pltsql_enable_antlr_parse_cache = false;
 bool		pltsql_validate_antlr_parse_cache = false;
+bool		pltsql_enable_stable_func_persisted = true;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -120,6 +122,8 @@ static void assign_ansi_null_dflt_on(bool newval, void *extra);
 static void assign_ansi_warnings(bool newval, void *extra);
 static void assign_ansi_padding(bool newval, void *extra);
 static void assign_concat_null_yields_null(bool newval, void *extra);
+static void assign_numeric_roundabort(bool newval, void *extra);
+static void assign_enable_stable_func_persisted(bool newval, void *extra);
 static void assign_language(const char *newval, void *extra);
 static void assign_lock_timeout(int newval, void *extra);
 static void assign_datefirst(int newval, void *extra);
@@ -442,9 +446,23 @@ assign_enable_pg_hint(bool newval, void *extra)
 		SetConfigOption("pg_hint_plan.enable_hint", newval ? "on" : "off", PGC_USERSET, PGC_S_SESSION);
 }
 
+/*
+ * Cached plans keep the PERSISTED column rewrite decision made at plan time,
+ * so drop them when an option it depends on changes.  Skipped while the
+ * feature is off; enabling it resets all plans.
+ */
+static inline void
+reset_plans_on_option_change(bool oldval, bool newval)
+{
+	if (pltsql_enable_stable_func_persisted && oldval != newval)
+		ResetPlanCache();
+}
+
 static void
 assign_transform_null_equals(bool newval, void *extra)
 {
+	reset_plans_on_option_change(pltsql_ansi_nulls, newval);
+
 	Transform_null_equals = !newval;
 
 	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
@@ -474,6 +492,12 @@ assign_ansi_defaults(bool newval, void *extra)
 	}
 	else if (newval)
 	{
+		/* These are set directly below, bypassing their own assign hooks */
+		if (pltsql_enable_stable_func_persisted &&
+			(!pltsql_ansi_nulls || !pltsql_ansi_warnings ||
+			 !pltsql_ansi_padding || !pltsql_quoted_identifier))
+			ResetPlanCache();
+
 		pltsql_ansi_nulls = true;
 		/* Call the assign hook function for ANSI_NULLS as well */
 		assign_transform_null_equals(true, NULL);
@@ -500,6 +524,11 @@ assign_ansi_defaults(bool newval, void *extra)
 	 */
 	else
 	{
+		/* These are set directly below, bypassing their own assign hooks */
+		if (pltsql_enable_stable_func_persisted &&
+			(pltsql_ansi_nulls || pltsql_quoted_identifier))
+			ResetPlanCache();
+
 		pltsql_ansi_nulls = false;
 		/* Call the assign hook function for ANSI_NULLS as well */
 		assign_transform_null_equals(false, NULL);
@@ -520,6 +549,8 @@ assign_ansi_defaults(bool newval, void *extra)
 static void
 assign_quoted_identifier(bool newval, void *extra)
 {
+	reset_plans_on_option_change(pltsql_quoted_identifier, newval);
+
 	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
 		(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.quoted_identifier", newval, NULL, 0);
 }
@@ -527,6 +558,8 @@ assign_quoted_identifier(bool newval, void *extra)
 static void
 assign_arithabort(bool newval, void *extra)
 {
+	reset_plans_on_option_change(pltsql_arithabort, newval);
+
 	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
 		(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.arithabort", newval, NULL, 0);
 }
@@ -541,6 +574,8 @@ assign_ansi_null_dflt_on(bool newval, void *extra)
 static void
 assign_ansi_warnings(bool newval, void *extra)
 {
+	reset_plans_on_option_change(pltsql_ansi_warnings, newval);
+
 	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
 		(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.ansi_warnings", newval, NULL, 0);
 }
@@ -548,6 +583,8 @@ assign_ansi_warnings(bool newval, void *extra)
 static void
 assign_ansi_padding(bool newval, void *extra)
 {
+	reset_plans_on_option_change(pltsql_ansi_padding, newval);
+
 	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
 		(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.ansi_padding", newval, NULL, 0);
 }
@@ -555,8 +592,24 @@ assign_ansi_padding(bool newval, void *extra)
 static void
 assign_concat_null_yields_null(bool newval, void *extra)
 {
+	reset_plans_on_option_change(pltsql_concat_null_yields_null, newval);
+
 	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
 		(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.concat_null_yields_null", newval, NULL, 0);
+}
+
+static void
+assign_numeric_roundabort(bool newval, void *extra)
+{
+	reset_plans_on_option_change(pltsql_numeric_roundabort, newval);
+}
+
+static void
+assign_enable_stable_func_persisted(bool newval, void *extra)
+{
+	/* The planner rewrite depends on this, so drop cached plans when it flips */
+	if (pltsql_enable_stable_func_persisted != newval)
+		ResetPlanCache();
 }
 
 static void
@@ -822,7 +875,7 @@ define_custom_variables(void)
 							 false,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							 check_numeric_roundabort, NULL, NULL);
+							 check_numeric_roundabort, assign_numeric_roundabort, NULL);
 
 	DefineCustomBoolVariable("babelfishpg_tsql.nocount",
 							 gettext_noop("Tsql compatibility NOCOUNT option."),
@@ -1317,6 +1370,22 @@ define_custom_variables(void)
 							 PGC_SUSET,
 							 GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL | GUC_SUPERUSER_ONLY,
 							 NULL, NULL, NULL);
+
+	/*
+	 * GUC to enable/disable whitelisted STABLE functions in PERSISTED
+	 * computed columns, along with the SET option checks for DDL and DML and
+	 * the SELECT re-evaluation.  By default enabled; when disabled, only
+	 * IMMUTABLE expressions are allowed, as before the feature.
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_stable_functions_in_computed_columns",
+							 gettext_noop("Allows whitelisted STABLE functions in PERSISTED computed columns "
+										  "and enforces the required SET options for them"),
+							 NULL,
+							 &pltsql_enable_stable_func_persisted,
+							 true,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, assign_enable_stable_func_persisted, NULL);
 }
 
 int			escape_hatch_storage_options = EH_IGNORE;
