@@ -801,7 +801,7 @@ float_str(PG_FUNCTION_ARGS)
 		}
 	}
 
-	return return_varchar_pointer(buf, size);
+	return return_varchar_pointer(buf, strlen(buf));
 }
 
 /*
