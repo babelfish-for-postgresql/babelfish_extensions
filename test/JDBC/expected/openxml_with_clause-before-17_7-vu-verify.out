@@ -1642,3 +1642,82 @@ GO
 
 ~~ERROR (Message: relation "openxml_documents" does not exist)~~
 
+
+-- psql
+-- BABEL-6999: plain PostgreSQL XMLTABLE with an XMLNAMESPACES clause must resolve
+-- namespace prefixes on the PG endpoint. babelfishpg_tsql installs
+-- openxml_set_namespaces_hook for the OPENXML cases above, and that hook must
+-- return false for a plain XMLTABLE so the standard namespace registration runs.
+-- Case 1: single prefix used in the row expression
+SELECT val FROM XMLTABLE(
+    XMLNAMESPACES('http://example.com/ns' AS ns1),
+    '/ns1:root/ns1:item'
+    PASSING XMLPARSE(DOCUMENT '<ns1:root xmlns:ns1="http://example.com/ns"><ns1:item>hello</ns1:item><ns1:item>world</ns1:item></ns1:root>')
+    COLUMNS val TEXT PATH '.')
+GO
+~~START~~
+text
+hello
+world
+~~END~~
+
+-- Case 2: prefix used in column PATH expressions, element and attribute axis
+SELECT id, title FROM XMLTABLE(
+    XMLNAMESPACES('http://example.com/ns' AS n),
+    '/n:catalog/n:book'
+    PASSING XMLPARSE(DOCUMENT '<n:catalog xmlns:n="http://example.com/ns"><n:book n:id="1"><n:title>SQL</n:title></n:book><n:book n:id="2"><n:title>XML</n:title></n:book></n:catalog>')
+    COLUMNS id INT PATH '@n:id', title TEXT PATH 'n:title')
+GO
+~~START~~
+int4#!#text
+1#!#SQL
+2#!#XML
+~~END~~
+
+-- Case 3: two prefixes declared, each resolving a different column
+SELECT a, b FROM XMLTABLE(
+    XMLNAMESPACES('http://example.com/one' AS n1, 'http://example.com/two' AS n2),
+    '/n1:root/n1:row'
+    PASSING XMLPARSE(DOCUMENT '<n1:root xmlns:n1="http://example.com/one" xmlns:n2="http://example.com/two"><n1:row><n1:a>x</n1:a><n2:b>y</n2:b></n1:row></n1:root>')
+    COLUMNS a TEXT PATH 'n1:a', b TEXT PATH 'n2:b')
+GO
+~~START~~
+text#!#text
+x#!#y
+~~END~~
+
+-- Case 4: an undeclared prefix must still be rejected
+SELECT val FROM XMLTABLE(
+    '/nsX:root/nsX:item'
+    PASSING XMLPARSE(DOCUMENT '<ns1:root xmlns:ns1="http://example.com/ns"><ns1:item>hello</ns1:item></ns1:root>')
+    COLUMNS val TEXT PATH '.')
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: could not create XPath object
+  Detail: Undefined namespace prefix
+    Server SQLState: 10608)~~
+
+-- Case 5: DEFAULT namespace remains unsupported by XMLTABLE
+SELECT val FROM XMLTABLE(
+    XMLNAMESPACES(DEFAULT 'http://example.com/ns'),
+    '/root/item'
+    PASSING XMLPARSE(DOCUMENT '<root xmlns="http://example.com/ns"><item>hello</item></root>')
+    COLUMNS val TEXT PATH '.')
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: DEFAULT namespace is not supported
+    Server SQLState: 0A000)~~
+
+-- Case 6: XMLTABLE without an XMLNAMESPACES clause is unaffected
+SELECT val FROM XMLTABLE(
+    '/root/item'
+    PASSING XMLPARSE(DOCUMENT '<root><item>plain</item></root>')
+    COLUMNS val TEXT PATH '.')
+GO
+~~START~~
+text
+plain
+~~END~~
+
