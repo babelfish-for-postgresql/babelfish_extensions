@@ -1723,3 +1723,99 @@ text
 plain
 ~~END~~
 
+-- Case 7: namespace URI given as a runtime expression rather than a literal
+SELECT val FROM XMLTABLE(
+    XMLNAMESPACES((SELECT 'http://example.com/' || 'ns') AS ns1),
+    '/ns1:root/ns1:item'
+    PASSING XMLPARSE(DOCUMENT '<ns1:root xmlns:ns1="http://example.com/ns"><ns1:item>runtime</ns1:item></ns1:root>')
+    COLUMNS val TEXT PATH '.')
+GO
+~~START~~
+text
+runtime
+~~END~~
+
+-- Case 8: rescan - namespaces must re-register on every scan initialisation
+SELECT t.k, x.val FROM (VALUES (1),(2)) AS t(k),
+  LATERAL XMLTABLE(
+    XMLNAMESPACES('http://example.com/ns' AS ns1),
+    '/ns1:root/ns1:item'
+    PASSING XMLPARSE(DOCUMENT '<ns1:root xmlns:ns1="http://example.com/ns"><ns1:item>resc</ns1:item></ns1:root>')
+    COLUMNS val TEXT PATH '.') AS x
+ORDER BY t.k
+GO
+~~START~~
+int4#!#text
+1#!#resc
+2#!#resc
+~~END~~
+
+-- Case 9: a declared prefix that the XPath never references
+SELECT val FROM XMLTABLE(
+    XMLNAMESPACES('http://example.com/ns' AS ns1, 'http://unused.example.com' AS unused),
+    '/ns1:root/ns1:item'
+    PASSING XMLPARSE(DOCUMENT '<ns1:root xmlns:ns1="http://example.com/ns"><ns1:item>partial</ns1:item></ns1:root>')
+    COLUMNS val TEXT PATH '.')
+GO
+~~START~~
+text
+partial
+~~END~~
+
+-- Cases 10 and 11 cover cross-endpoint routine execution. The dialect in effect
+-- is the routine's own, not the calling session's, so a PG routine must keep
+-- falling through to the standard registration and a TSQL routine must keep
+-- reaching the hook, whichever endpoint invokes it.
+CREATE FUNCTION master_dbo.openxml_ns_pgfn() RETURNS text LANGUAGE plpgsql AS $$
+DECLARE r text;
+BEGIN
+    SELECT val INTO r FROM XMLTABLE(
+        XMLNAMESPACES('http://example.com/ns' AS ns1),
+        '/ns1:root/ns1:item'
+        PASSING XMLPARSE(DOCUMENT '<ns1:root xmlns:ns1="http://example.com/ns"><ns1:item>pgfn</ns1:item></ns1:root>')
+        COLUMNS val TEXT PATH '.');
+    RETURN r;
+END $$
+GO
+SELECT master_dbo.openxml_ns_pgfn() AS pgfn_from_pg
+GO
+~~START~~
+text
+pgfn
+~~END~~
+
+-- tsql
+-- Case 10: PG function using plain XMLTABLE, invoked from the TDS endpoint
+SELECT dbo.openxml_ns_pgfn() AS pgfn_from_tsql
+GO
+~~START~~
+text
+pgfn
+~~END~~
+
+-- Case 11 setup: TSQL procedure containing OPENXML. The procedure cannot be
+-- created in the prepare script because pre-17.7 has no OPENXML WITH support.
+-- Its sink table (created in prepare) is schema qualified because the procedure
+-- is invoked from the PG endpoint below, where the TSQL search_path is not in
+-- effect.
+CREATE PROCEDURE openxml_ns_proc AS
+BEGIN
+    DECLARE @xml nvarchar(1000) = '<root xmlns:ns1="http://example.com/ns1"><ns1:child>value1</ns1:child></root>';
+    DECLARE @ns  nvarchar(200)  = '<root xmlns:ns1="http://example.com/ns1" />';
+    DECLARE @h INT;
+    EXEC sp_xml_preparedocument @h OUTPUT, @xml, @ns;
+    INSERT INTO master_dbo.openxml_ns_sink SELECT 'tsql_proc', child FROM OPENXML(@h, '/root/ns1:child', 3) WITH (child nvarchar(20) '.');
+    EXEC sp_xml_removedocument @h;
+END
+GO
+-- psql
+-- Case 11: TSQL procedure containing OPENXML, invoked from the PG endpoint
+CALL master_dbo.openxml_ns_proc()
+GO
+SELECT src, val FROM master_dbo.openxml_ns_sink
+GO
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"
+tsql_proc#!#value1
+~~END~~
+
