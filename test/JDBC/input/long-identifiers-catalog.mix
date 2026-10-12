@@ -171,7 +171,7 @@ GO
 
 -- Verify types stored (pg_type OID = 1247)
 SELECT original_identifier_name FROM sys.babelfish_identifier_mapping
-WHERE pg_catalog_type = 1247
+WHERE pg_catalog_type = 1247 AND original_identifier_name LIKE 'Very_Long_%'
 ORDER BY original_identifier_name;
 GO
 
@@ -547,6 +547,12 @@ CREATE PROCEDURE babel5975_dropdb_proc
 AS BEGIN SELECT @Very_Long_DropDB_Parameter_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte_Limit END;
 GO
 
+-- BABEL-7225: a long-named object in a USER-created schema must also be swept on DROP DATABASE
+CREATE SCHEMA babel5975_dropdb_usch;
+GO
+CREATE SEQUENCE babel5975_dropdb_usch.Very_Long_DropDB_UserSchema_Sequence_Name_Exceeding_Sixty_Three_Bytes AS INT START WITH 1;
+GO
+
 USE master;
 GO
 
@@ -642,4 +648,135 @@ WHERE original_identifier_name = 'STALE_ROW_FROM_A_BYPASSED_DROP';
 GO
 
 DROP SEQUENCE babel5975_stale_seq_name_that_exceeds_postgresql_sixty_three_byte_limit_stale;
+GO
+
+-- ===========================================
+-- BABEL-7225: OBJECT_NAME / TYPE_NAME, INFORMATION_SCHEMA.SEQUENCES / DOMAINS, table types return original name for long identifiers
+-- ===========================================
+
+-- tsql
+-- Setup: long-named procedure, trigger, PK constraint, sequence, scalar type
+-- and table type (all exceed the 63-byte NAMEDATALEN limit).
+CREATE PROCEDURE Babel7225_Long_Procedure_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte_Limit_Proc AS SELECT 1;
+GO
+CREATE TABLE babel7225_oname_tab (
+    a INT CONSTRAINT Babel7225_Long_Primary_Key_Constraint_Name_That_Exceeds_The_Sixty_Three_Limit PRIMARY KEY
+);
+GO
+CREATE TRIGGER Babel7225_Long_Trigger_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_Limit_Trg
+ON babel7225_oname_tab AFTER INSERT AS SELECT 1;
+GO
+CREATE SEQUENCE Babel7225_Long_Sequence_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_Limit_Seq AS INT START WITH 1;
+GO
+CREATE TYPE Babel7225_Long_Scalar_Type_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_UDT FROM INT;
+GO
+CREATE TYPE Babel7225_Long_Table_Type_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_TT AS TABLE (a INT);
+GO
+
+-- OBJECT_NAME on a long procedure returns the full original name
+SELECT CAST(OBJECT_NAME(OBJECT_ID('Babel7225_Long_Procedure_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte_Limit_Proc')) AS sys.sysname);
+GO
+
+-- OBJECT_NAME on a long trigger returns the full original name
+SELECT CAST(OBJECT_NAME(object_id) AS sys.sysname) FROM sys.triggers WHERE parent_id = OBJECT_ID('babel7225_oname_tab');
+GO
+
+-- OBJECT_NAME on a long PK constraint returns the full original name
+SELECT CAST(OBJECT_NAME(object_id) AS sys.sysname) FROM sys.key_constraints WHERE parent_object_id = OBJECT_ID('babel7225_oname_tab');
+GO
+
+-- OBJECT_NAME on a long sequence returns the full original name
+SELECT CAST(OBJECT_NAME(OBJECT_ID('Babel7225_Long_Sequence_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_Limit_Seq')) AS sys.sysname);
+GO
+
+-- TYPE_NAME on a long scalar user type returns the full original name
+SELECT CAST(TYPE_NAME(TYPE_ID('Babel7225_Long_Scalar_Type_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_UDT')) AS sys.sysname);
+GO
+
+-- INFORMATION_SCHEMA.SEQUENCES shows the full original sequence name
+SELECT CAST(SEQUENCE_NAME AS sys.sysname) FROM INFORMATION_SCHEMA.SEQUENCES WHERE SEQUENCE_NAME LIKE 'Babel7225_Long_Sequence%';
+GO
+
+-- INFORMATION_SCHEMA.DOMAINS shows the full original scalar type name
+SELECT CAST(DOMAIN_NAME AS sys.sysname) FROM INFORMATION_SCHEMA.DOMAINS WHERE DOMAIN_NAME LIKE 'Babel7225_Long_Scalar_Type%';
+GO
+
+-- sys.table_types / sys.types show the full original table-type name
+SELECT CAST(name AS sys.sysname) FROM sys.table_types WHERE name LIKE 'Babel7225_Long_Table_Type%';
+GO
+SELECT CAST(name AS sys.sysname) FROM sys.types WHERE name LIKE 'Babel7225_Long_Table_Type%';
+GO
+
+-- The table type's original name is stored in babelfish_identifier_mapping (pg_type)
+-- psql
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping
+WHERE pg_catalog_type = 'pg_type'::regclass::oid AND original_identifier_name LIKE 'Babel7225_Long_Table_Type%';
+GO
+
+-- Cleanup
+-- tsql
+DROP TRIGGER Babel7225_Long_Trigger_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_Limit_Trg;
+GO
+DROP TABLE babel7225_oname_tab;
+GO
+DROP PROCEDURE Babel7225_Long_Procedure_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte_Limit_Proc;
+GO
+DROP SEQUENCE Babel7225_Long_Sequence_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_Limit_Seq;
+GO
+DROP TYPE Babel7225_Long_Scalar_Type_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_UDT;
+GO
+DROP TYPE Babel7225_Long_Table_Type_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_TT;
+GO
+
+-- ===========================================
+-- BABEL-7225: internal partition child tables carry no bbf_original_rel_name reloption
+-- ===========================================
+
+-- tsql
+CREATE PARTITION FUNCTION babel7225_pf (INT) AS RANGE RIGHT FOR VALUES (10);
+GO
+CREATE PARTITION SCHEME babel7225_ps AS PARTITION babel7225_pf ALL TO ([PRIMARY]);
+GO
+CREATE TABLE babel7225_parttbl (a INT) ON babel7225_ps(a);
+GO
+
+-- No partition child of this table may carry a bbf_original_rel_name reloption (expect 0 rows)
+-- psql
+SELECT c.relname, c.reloptions
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_inherits i ON i.inhrelid = c.oid
+JOIN pg_catalog.pg_class p ON p.oid = i.inhparent
+WHERE p.relname LIKE '%babel7225_parttbl%'
+  AND c.reloptions::text LIKE '%bbf_original_rel_name%';
+GO
+
+-- tsql
+DROP TABLE babel7225_parttbl;
+GO
+DROP PARTITION SCHEME babel7225_ps;
+GO
+DROP PARTITION FUNCTION babel7225_pf;
+GO
+
+-- BABEL-7225: INFORMATION_SCHEMA.SCHEMATA shows the original schema name for long/mixed-case schemas
+-- tsql
+CREATE SCHEMA Babel7225_Mixed_Schema;
+GO
+CREATE SCHEMA Babel7225_Long_Schema_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_Limit_Sch;
+GO
+SELECT CAST(SCHEMA_NAME AS sys.sysname) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME LIKE 'Babel7225_%' ORDER BY SCHEMA_NAME;
+GO
+DROP SCHEMA Babel7225_Mixed_Schema;
+GO
+DROP SCHEMA Babel7225_Long_Schema_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_Limit_Sch;
+GO
+
+-- BABEL-7225: INFORMATION_SCHEMA.KEY_COLUMN_USAGE shows the original name for a long key column
+CREATE TABLE babel7225_kcu_tab (
+    Babel7225_Long_Key_Column_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_Lim INT CONSTRAINT babel7225_kcu_pk PRIMARY KEY
+);
+GO
+SELECT CAST(COLUMN_NAME AS sys.sysname) FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME = 'babel7225_kcu_tab';
+GO
+DROP TABLE babel7225_kcu_tab;
 GO

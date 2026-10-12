@@ -2684,6 +2684,79 @@ object_id(PG_FUNCTION_ARGS)
 }
 
 /*
+ * resolve_bbf_func_original_name
+ *
+ * Return the full (untruncated) but LOWERCASED T-SQL name for a procedure,
+ * function or trigger backed by pg_proc. The full name is recovered from
+ * babelfish_function_ext.orig_name and then downcased, so OBJECT_NAME restores
+ * the length of a long (truncated) identifier without restoring its original
+ * casing; short names are already lowercase and pass through unchanged. Falls
+ * back to the physical proname when no extended-catalog row exists (e.g. system
+ * objects, shared schemas, or during dump/restore). The returned string is
+ * palloc'd in the current context.
+ */
+static char *
+resolve_bbf_func_original_name(HeapTuple proctuple, const char *physical_name)
+{
+	HeapTuple	bbffunctuple;
+	char	   *orig = NULL;
+	char	   *result;
+
+	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctuple);
+	if (HeapTupleIsValid(bbffunctuple))
+	{
+		bool		isnull = true;
+		Datum		datum = SysCacheGetAttr(PROCNAMENSPSIGNATURE, bbffunctuple,
+											Anum_bbf_function_ext_orig_name, &isnull);
+
+		if (!isnull)
+			orig = TextDatumGetCString(datum);
+		heap_freetuple(bbffunctuple);
+	}
+
+	if (orig == NULL)
+		orig = pstrdup(physical_name);
+
+	/* Return the full name lowercased (restore length, not casing). */
+	result = downcase_identifier(orig, strlen(orig), false, false);
+	pfree(orig);
+	return result;
+}
+
+/*
+ * resolve_bbf_ident_original_name
+ *
+ * Return the full (untruncated) but LOWERCASED T-SQL name for an object whose
+ * physical name was truncated and recorded in sys.babelfish_identifier_mapping
+ * (constraints, sequences, user types). The full name is recovered from the
+ * mapping (only consulted when the physical name is long enough to have been
+ * truncated, matching the >= 60 gate of sys.bbf_get_original_identifier_name)
+ * and then downcased, so OBJECT_NAME / TYPE_NAME restore the length of a long
+ * identifier without restoring its original casing; short names are already
+ * lowercase and pass through unchanged. The returned string is palloc'd.
+ */
+static char *
+resolve_bbf_ident_original_name(const char *physical_name, const char *nspname,
+								BbfIdentMappingObjType objtype,
+								const char *parent_name)
+{
+	char	   *orig = NULL;
+	char	   *result;
+
+	if (nspname && strlen(physical_name) >= 60)
+		orig = lookup_bbf_ident_mapping(physical_name, nspname, objtype,
+										parent_name);
+
+	if (orig == NULL)
+		orig = pstrdup(physical_name);
+
+	/* Return the full name lowercased (restore length, not casing). */
+	result = downcase_identifier(orig, strlen(orig), false, false);
+	pfree(orig);
+	return result;
+}
+
+/*
  * object_name
  * 		returns the object name with object id and database id as input where database id is optional
  * Returns NULL
@@ -2753,13 +2826,32 @@ object_name(PG_FUNCTION_ARGS)
 		{
 			Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
 
-			/*
-			 * get_original_relname returns the original (pre-truncation)
-			 * name from reloptions when present, and falls back to the
-			 * physical relname otherwise. The truncation-threshold
-			 * optimization lives inside the helper.
-			 */
-			result_text = cstring_to_text(get_original_relname(object_id, false));
+			if (pg_class->relkind == RELKIND_SEQUENCE)
+			{
+				/*
+				 * Sequences record their original (untruncated) name in
+				 * sys.babelfish_identifier_mapping (keyed on pg_class), not in
+				 * reloptions, so resolve them through the mapping catalog.
+				 */
+				char	   *nspname = get_namespace_name(pg_class->relnamespace);
+				char	   *orig = resolve_bbf_ident_original_name(NameStr(pg_class->relname),
+																   nspname, BBF_IDENT_SEQUENCE, "");
+
+				result_text = cstring_to_text(orig);
+				pfree(orig);
+				if (nspname)
+					pfree(nspname);
+			}
+			else
+			{
+				/*
+				 * get_original_relname returns the original (pre-truncation)
+				 * name from reloptions when present, and falls back to the
+				 * physical relname otherwise. The truncation-threshold
+				 * optimization lives inside the helper.
+				 */
+				result_text = cstring_to_text(get_original_relname(object_id, false));
+			}
 			schema_id = pg_class->relnamespace;
 		}
 		ReleaseSysCache(tuple);
@@ -2776,8 +2868,11 @@ object_name(PG_FUNCTION_ARGS)
 			if (object_aclcheck(ProcedureRelationId, object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
 			{
 				Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
-				result_text = cstring_to_text(NameStr(procform->proname));
+				char	   *orig = resolve_bbf_func_original_name(tuple, NameStr(procform->proname));
+
+				result_text = cstring_to_text(orig);
 				schema_id = procform->pronamespace;
+				pfree(orig);
 			}
 			ReleaseSysCache(tuple);
 			found = true;
@@ -2794,7 +2889,14 @@ object_name(PG_FUNCTION_ARGS)
 			if (object_aclcheck(TypeRelationId, object_id, user_id, ACL_USAGE) == ACLCHECK_OK)
 			{
 				Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
-				result_text = cstring_to_text(NameStr(pg_type->typname));
+				char	   *nspname = get_namespace_name(pg_type->typnamespace);
+				char	   *orig = resolve_bbf_ident_original_name(NameStr(pg_type->typname),
+																   nspname, BBF_IDENT_TYPE, NULL);
+
+				result_text = cstring_to_text(orig);
+				pfree(orig);
+				if (nspname)
+					pfree(nspname);
 			}
 			ReleaseSysCache(tuple);
 			found = true;
@@ -2822,8 +2924,26 @@ object_name(PG_FUNCTION_ARGS)
 			if (OidIsValid(pg_trigger->tgrelid) &&
 				pg_class_aclcheck(pg_trigger->tgrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
 			{
-				result_text = cstring_to_text(NameStr(pg_trigger->tgname));
+				/*
+				 * A T-SQL trigger's original name is stored on its backing
+				 * pg_proc row (babelfish_function_ext.orig_name), mirroring
+				 * sys.triggers. Resolve via the trigger function OID; fall back
+				 * to the physical tgname when the proc tuple is unavailable.
+				 */
+				HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(pg_trigger->tgfoid));
+				char	   *orig;
+
+				if (HeapTupleIsValid(proctup))
+				{
+					orig = resolve_bbf_func_original_name(proctup, NameStr(pg_trigger->tgname));
+					ReleaseSysCache(proctup);
+				}
+				else
+					orig = pstrdup(NameStr(pg_trigger->tgname));
+
+				result_text = cstring_to_text(orig);
 				schema_id = get_rel_namespace(pg_trigger->tgrelid);
+				pfree(orig);
 			}
 			found = true;
 		}
@@ -2842,8 +2962,19 @@ object_name(PG_FUNCTION_ARGS)
 			/* check if user have right permission on object */
 			if (OidIsValid(con->conrelid) && (pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK))
 			{
-				result_text = cstring_to_text(NameStr(con->conname));
+				char	   *nspname = get_namespace_name(con->connamespace);
+				char	   *parent_name = get_rel_name(con->conrelid);
+				char	   *orig = resolve_bbf_ident_original_name(NameStr(con->conname),
+																   nspname, BBF_IDENT_CONSTRAINT,
+																   parent_name);
+
+				result_text = cstring_to_text(orig);
 				schema_id = con->connamespace;
+				pfree(orig);
+				if (nspname)
+					pfree(nspname);
+				if (parent_name)
+					pfree(parent_name);
 			}
 			ReleaseSysCache(tuple);
 			found = true;
@@ -3050,7 +3181,17 @@ type_name(PG_FUNCTION_ARGS)
             if (object_aclcheck(TypeRelationId, type_id, user_id, ACL_USAGE) == ACLCHECK_OK)
             {
                 Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
-                result = NameStr(pg_type->typname);
+                char       *nspname = get_namespace_name(pg_type->typnamespace);
+
+                /*
+                 * Resolve the original (untruncated) user type name from
+                 * sys.babelfish_identifier_mapping; falls back to the physical
+                 * typname for short names or system types.
+                 */
+                result = resolve_bbf_ident_original_name(NameStr(pg_type->typname),
+                                                         nspname, BBF_IDENT_TYPE, NULL);
+                if (nspname)
+                    pfree(nspname);
             }
             ReleaseSysCache(tuple);
         }

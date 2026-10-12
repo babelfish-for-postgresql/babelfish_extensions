@@ -996,6 +996,14 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		clean_up_bbf_partition_metadata(dbid);
 		/* clean up bbf function catalog */
 		clean_up_bbf_function_ext(dbid);
+		/*
+		 * Clean up truncated-identifier mapping rows for every schema of this
+		 * database. Must run BEFORE drop_related_bbf_namespace_entries(dbid),
+		 * which deletes the namespace rows this sweep enumerates. User schemas
+		 * dropped via DROP OWNED BY ... CASCADE never hit the per-schema
+		 * OBJECT_SCHEMA cleanup, so without this their mapping rows leak.
+		 */
+		clean_up_bbf_ident_mapping_for_db(dbid);
 		/* clean up bbf namespace catalog accordingly */
 		drop_related_bbf_namespace_entries(dbid);
 		/* clean up corresponding db users */

@@ -43,6 +43,7 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/syscache.h"
 
 #include "catalog.h"
 #include "pltsql.h"
@@ -573,6 +574,75 @@ clean_up_bbf_ident_mapping(const char *nspname)
 }
 
 /*
+ * clean_up_bbf_ident_mapping_for_db - Remove all identifier-mapping entries
+ * belonging to a logical database being dropped.
+ *
+ * babelfish_identifier_mapping is keyed on the physical schema name (nspname),
+ * not on dbid, so there is no single dbid-scoped delete. DROP DATABASE removes
+ * most user schemas via "DROP OWNED BY <role> CASCADE" rather than an explicit
+ * per-schema DROP SCHEMA, so the per-schema cleanup in the OBJECT_SCHEMA drop
+ * handler never fires for them and their mapping rows (sequences, user types,
+ * constraints, parameters) would leak.
+ *
+ * Enumerate every physical namespace of the database from
+ * babelfish_namespace_ext (which still exists at this point in drop_bbf_db)
+ * and clean the mapping for each. MUST be called BEFORE
+ * drop_related_bbf_namespace_entries(dbid) deletes those namespace rows.
+ */
+void
+clean_up_bbf_ident_mapping_for_db(int16 dbid)
+{
+	Relation	namespace_rel;
+	TupleDesc	namespace_rel_descr;
+	TableScanDesc tblscan;
+	ScanKeyData key[1];
+	HeapTuple	tuple;
+	List	   *nspnames = NIL;
+	ListCell   *lc;
+
+	if (!OidIsValid(get_bbf_ident_mapping_oid()))
+		return;
+
+	namespace_rel = table_open(namespace_ext_oid, AccessShareLock);
+	namespace_rel_descr = RelationGetDescr(namespace_rel);
+
+	ScanKeyInit(&key[0],
+				Anum_namespace_ext_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	tblscan = table_beginscan_catalog(namespace_rel, 1, key);
+
+	/*
+	 * Collect the physical schema names first; clean_up_bbf_ident_mapping
+	 * opens the mapping catalog for write, so avoid cleaning while this
+	 * namespace scan is still open.
+	 */
+	while ((tuple = heap_getnext(tblscan, ForwardScanDirection)) != NULL)
+	{
+		bool		isNull;
+		Datum		datum = heap_getattr(tuple, Anum_namespace_ext_namespace,
+										 namespace_rel_descr, &isNull);
+
+		if (!isNull)
+			nspnames = lappend(nspnames,
+							   pstrdup(NameStr(*DatumGetName(datum))));
+	}
+
+	table_endscan(tblscan);
+	table_close(namespace_rel, AccessShareLock);
+
+	foreach(lc, nspnames)
+	{
+		char	   *nspname = (char *) lfirst(lc);
+
+		clean_up_bbf_ident_mapping(nspname);
+		pfree(nspname);
+	}
+	list_free(nspnames);
+}
+
+/*
  * ------------------------------------------------------------------------
  * DDL-time helpers: extract the original identifier from the statement text
  * and store it in the mapping catalog. Invoked from the ProcessUtility hooks
@@ -1006,6 +1076,81 @@ store_sequence_original_name(CreateSeqStmt *seq_stmt, const char *queryString)
 									 original_name, nspname,
 									 BBF_IDENT_SEQUENCE, NULL);
 			pfree(nspname);
+		}
+		pfree(original_name);
+	}
+}
+
+/*
+ * store_tabletype_original_name
+ *
+ * Store the original (untruncated) name of a CREATE TYPE ... AS TABLE in
+ * sys.babelfish_identifier_mapping, keyed as a BBF_IDENT_TYPE row. A T-SQL
+ * table type is created as a CreateStmt (create_stmt->tsql_tabletype = true)
+ * whose backing composite type carries the same physical name as the relation.
+ * The relation itself records its original name in reloptions, but
+ * sys.types / sys.table_types resolve the display name through the pg_type
+ * identifier-mapping (bbf_get_original_identifier_name(..., 'pg_type')), so
+ * without a BBF_IDENT_TYPE row a long table-type name surfaces as the
+ * truncated/hashed physical typname.
+ *
+ * The original name is recovered from the source query text at the relation's
+ * location. Runs after the type has been created so its physical namespace and
+ * type name can be resolved from the catalog. No-op during dump/restore (the
+ * mapping catalog is dumped/restored directly) or when the namespace/type
+ * cannot be resolved.
+ */
+void
+store_tabletype_original_name(CreateStmt *create_stmt, const char *queryString)
+{
+	RangeVar   *rel = create_stmt->relation;
+	char	   *original_name;
+
+	if (!create_stmt->tsql_tabletype || rel == NULL ||
+		rel->location < 0 || !queryString ||
+		(size_t) rel->location >= strlen(queryString) ||
+		babelfish_dump_restore)
+		return;
+
+	original_name = extract_multipart_identifier_name(queryString + rel->location);
+
+	if (original_name)
+	{
+		Oid			relOid = RangeVarGetRelid(rel, NoLock, true);
+
+		/*
+		 * Resolve the PHYSICAL type name and namespace from the created
+		 * relation's composite type. sys.types keys the lookup on the physical
+		 * typname (pg_type.typname) and physical namespace, so the mapping row
+		 * must be filed under the same physical identifiers; the parse-tree
+		 * relname/schemaname would diverge for a long (truncated) name.
+		 */
+		if (OidIsValid(relOid))
+		{
+			Oid			typeOid = get_rel_type_id(relOid);
+
+			if (OidIsValid(typeOid))
+			{
+				HeapTuple	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeOid));
+
+				if (HeapTupleIsValid(tup))
+				{
+					Form_pg_type typform = (Form_pg_type) GETSTRUCT(tup);
+					char	   *physical_typname = pstrdup(NameStr(typform->typname));
+					char	   *nspname = get_namespace_name(typform->typnamespace);
+
+					ReleaseSysCache(tup);
+
+					/* Only store when the name is long enough to be truncated. */
+					if (nspname &&
+						strlen(original_name) >= NAMEDATALEN)
+						insert_bbf_ident_mapping(physical_typname, original_name,
+												 nspname, BBF_IDENT_TYPE, NULL);
+					if (nspname)
+						pfree(nspname);
+					pfree(physical_typname);
+				}
+			}
 		}
 		pfree(original_name);
 	}
