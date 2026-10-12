@@ -779,6 +779,12 @@ ignore#!#numeric_money-before-17_11-or-18_5-vu-cleanup
 ignore#!#xml_query-before-17_11-or-18_5-vu-prepare
 ignore#!#xml_query-before-17_11-or-18_5-vu-verify
 ignore#!#xml_query-before-17_11-or-18_5-vu-cleanup
+ignore#!#forxml-namespaces-before-17_12-or-18_6-vu-prepare
+ignore#!#forxml-namespaces-before-17_12-or-18_6-vu-verify
+ignore#!#forxml-namespaces-before-17_12-or-18_6-vu-cleanup
+ignore#!#xml-methods-namespaces-before-17_12-or-18_6-vu-prepare
+ignore#!#xml-methods-namespaces-before-17_12-or-18_6-vu-verify
+ignore#!#xml-methods-namespaces-before-17_12-or-18_6-vu-cleanup
 ignore#!#antlr_parse_cache_version-vu-prepare
 ignore#!#antlr_parse_cache_version-vu-verify
 ignore#!#antlr_parse_cache_version-vu-cleanup

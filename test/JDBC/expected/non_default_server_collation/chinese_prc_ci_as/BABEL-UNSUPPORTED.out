@@ -2572,19 +2572,19 @@ WITH XMLNAMESPACES ('test.com' AS ns1, 'test2.com' AS ns1) SELECT 'test' AS 'Tes
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'WITH XMLNAMESPACES' is not currently supported in Babelfish)~~
+~~ERROR (Message: Attempt to redefine namespace prefix 'ns1')~~
 
 WITH XMLNAMESPACES ('test.com' AS n@s1) SELECT 'test' AS 'TestAttr' FOR XML RAW
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'WITH XMLNAMESPACES' is not currently supported in Babelfish)~~
+~~ERROR (Message: Prefix 'n@s1' used in WITH XMLNAMESPACES clause contains an invalid XML identifier. '@'(0x0040) is the first character at fault.)~~
 
 WITH XMLNAMESPACES ('test.com' AS xmlns) SELECT 'test' AS 'TestAttr' FOR XML RAW
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'WITH XMLNAMESPACES' is not currently supported in Babelfish)~~
+~~ERROR (Message: Prefix 'xmlns' used in WITH XMLNAMESPACES is reserved and cannot be used as a user-defined prefix.)~~
 
 
 -- BEGIN ATOMIC (10782)

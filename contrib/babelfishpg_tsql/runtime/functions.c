@@ -6376,28 +6376,23 @@ done:
 
 
 PG_FUNCTION_INFO_V1(bbf_xmlquery);
+PG_FUNCTION_INFO_V1(bbf_xmlquery_ns);
 
 /*
- * bbf_xmlquery - C implementation of XML .query() method
+ * bbf_xmlquery_internal - shared implementation for the .query() XML method.
  *
- * Signature:
- *   sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT)
- *
- * Returns XML result of evaluating the XPath expression against the input.
- * Returns empty XML if no nodes match.
- *
- * Validates:
- *   - Input must be XML type (or UDT based on XML)
- *   - QUOTED_IDENTIFIER must be ON
+ * Validates the input type and QUOTED_IDENTIFIER setting, then evaluates the
+ * XPath expression against the XML datum using the supplied namespace array
+ * (which may be empty).  Returns the concatenated XML fragments, or the
+ * empty XML string if no nodes match.
  */
-Datum
-bbf_xmlquery(PG_FUNCTION_ARGS)
+static Datum
+bbf_xmlquery_internal(FunctionCallInfo fcinfo, ArrayType *namespaces)
 {
 	text	   *xpath_expr;
 	Datum		xml_datum;
 	Oid			arg_type;
 	Oid			immediate_base_type;
-	ArrayType  *namespaces;
 	Datum		xpath_result;
 	ArrayType  *result_arr;
 	Datum	   *elems;
@@ -6441,13 +6436,11 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 						"SET options are correct for XML data type methods.")));
 
 	/*
-	 * Call the built-in xpath(text, xml, text[][]) directly with an empty
-	 * namespace array. Returns xml[] (array of XML fragments).
-	 *
-	 * TODO: when WITH XMLNAMESPACES is supported, populate this array with
-	 * the declared (prefix, uri) pairs from the active namespace context.
+	 * Call the built-in xpath(text, xml, text[][]).  Returns xml[] (array of
+	 * XML fragments).  When invoked without WITH XMLNAMESPACES the caller
+	 * passes an empty array so libxml2 only resolves prefixes already
+	 * declared in the document.
 	 */
-	namespaces = construct_empty_array(TEXTOID);
 	xpath_result = DirectFunctionCall3(xpath,
 									   PointerGetDatum(xpath_expr),
 									   xml_datum,
@@ -6485,4 +6478,36 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_XML_P((xmltype *) cstring_to_text_with_len(buf.data, buf.len));
+}
+
+/*
+ * bbf_xmlquery - C implementation of XML .query() method (no namespaces).
+ *
+ * Signature:
+ *   sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT)
+ */
+Datum
+bbf_xmlquery(PG_FUNCTION_ARGS)
+{
+	ArrayType  *namespaces = construct_empty_array(TEXTOID);
+
+	return bbf_xmlquery_internal(fcinfo, namespaces);
+}
+
+/*
+ * bbf_xmlquery_ns - C implementation of XML .query() with namespace support.
+ *
+ * Signature:
+ *   sys.bbf_xmlquery(xpath_pattern TEXT, xml_element ANYELEMENT, nsarray TEXT[][])
+ *
+ * Used by the WITH XMLNAMESPACES rewrite path.  The ANTLR rewrite layer
+ * appends the namespace array as a 3rd argument when a WITH XMLNAMESPACES
+ * clause is in scope.
+ */
+Datum
+bbf_xmlquery_ns(PG_FUNCTION_ARGS)
+{
+	ArrayType  *namespaces = PG_GETARG_ARRAYTYPE_P(2);
+
+	return bbf_xmlquery_internal(fcinfo, namespaces);
 }
