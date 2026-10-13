@@ -107,7 +107,7 @@ SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_Primary%';
 GO
 ~~START~~
 varchar
-Very_Long_Primary_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+very_long_primary_key_constraint_name_that_exceeds_postgresql_limit_of_sixty_three
 ~~END~~
 
 
@@ -116,7 +116,7 @@ SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_Unique%';
 GO
 ~~START~~
 varchar
-Very_Long_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+very_long_unique_constraint_name_that_exceeds_postgresql_limit_of_sixty_three_characters
 ~~END~~
 
 
@@ -125,7 +125,7 @@ SELECT name FROM sys.check_constraints WHERE name LIKE 'Very_Long_Check%';
 GO
 ~~START~~
 varchar
-Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+very_long_check_constraint_name_that_exceeds_postgresql_limit_of_sixty_three_characters
 ~~END~~
 
 
@@ -134,7 +134,7 @@ SELECT name FROM sys.foreign_keys WHERE name LIKE 'Very_Long_Foreign%';
 GO
 ~~START~~
 varchar
-Very_Long_Foreign_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+very_long_foreign_key_constraint_name_that_exceeds_postgresql_limit_of_sixty_three
 ~~END~~
 
 
@@ -161,7 +161,7 @@ SELECT name FROM sys.types WHERE name LIKE 'Very_Long_Type%';
 GO
 ~~START~~
 varchar
-Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+very_long_type_name_that_exceeds_postgresql_limit_of_sixty_three_chars_for_testing
 ~~END~~
 
 
@@ -170,21 +170,21 @@ SELECT name FROM sys.all_parameters WHERE name LIKE '%Very_Long_First_Parameter%
 GO
 ~~START~~
 varchar
-@Very_Long_First_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+@very_long_first_parameter_name_that_exceeds_postgresql_limit_of_sixty_three_characters
 ~~END~~
 
 SELECT name FROM sys.all_parameters WHERE name LIKE '%Very_Long_Second_Parameter%';
 GO
 ~~START~~
 varchar
-@Very_Long_Second_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+@very_long_second_parameter_name_that_exceeds_postgresql_limit_of_sixty_three_characters
 ~~END~~
 
 SELECT name FROM sys.all_parameters WHERE name LIKE '%Very_Long_Parameter_Name%';
 GO
 ~~START~~
 varchar
-@Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+@very_long_parameter_name_that_exceeds_postgresql_limit_of_sixty_three_characters
 ~~END~~
 
 
@@ -194,9 +194,9 @@ SELECT name, type_desc FROM sys.all_objects WHERE name LIKE 'Very_Long_Primary%'
 GO
 ~~START~~
 varchar#!#nvarchar
-Very_Long_Foreign_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three#!#FOREIGN_KEY_CONSTRAINT
-Very_Long_Primary_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three#!#PRIMARY_KEY_CONSTRAINT
-Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters#!#CHECK_CONSTRAINT
+very_long_foreign_key_constraint_name_that_exceeds_postgresql_limit_of_sixty_three#!#FOREIGN_KEY_CONSTRAINT
+very_long_primary_key_constraint_name_that_exceeds_postgresql_limit_of_sixty_three#!#PRIMARY_KEY_CONSTRAINT
+very_long_check_constraint_name_that_exceeds_postgresql_limit_of_sixty_three_characters#!#CHECK_CONSTRAINT
 ~~END~~
 
 
@@ -205,7 +205,7 @@ SELECT name, type_desc FROM sys.all_objects WHERE name LIKE 'Very_Long_Sequence%
 GO
 ~~START~~
 varchar#!#nvarchar
-Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing#!#SEQUENCE_OBJECT
+very_long_sequence_name_that_exceeds_postgresql_limit_of_sixty_three_chars_for_testing#!#SEQUENCE_OBJECT
 ~~END~~
 
 
@@ -216,8 +216,8 @@ ORDER BY CONSTRAINT_NAME;
 GO
 ~~START~~
 varchar#!#varchar
-Very_Long_Primary_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three#!#babel5975_pk_test
-Very_Long_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters#!#babel5975_uq_test
+very_long_primary_key_constraint_name_that_exceeds_postgresql_limit_of_sixty_three#!#babel5975_pk_test
+very_long_unique_constraint_name_that_exceeds_postgresql_limit_of_sixty_three_characters#!#babel5975_uq_test
 ~~END~~
 
 
@@ -227,7 +227,7 @@ WHERE CONSTRAINT_NAME LIKE 'Very_Long_Primary%';
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-Very_Long_Primary_Key_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three#!#babel5975_pk_test#!#id
+very_long_primary_key_constraint_name_that_exceeds_postgresql_limit_of_sixty_three#!#babel5975_pk_test#!#id
 ~~END~~
 
 
@@ -370,7 +370,7 @@ SELECT name FROM sys.check_constraints WHERE name LIKE 'Very_Long_Alter_Check%';
 GO
 ~~START~~
 varchar
-Very_Long_Alter_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+very_long_alter_check_constraint_name_that_exceeds_postgresql_limit_of_sixty_three
 ~~END~~
 
 
@@ -381,7 +381,7 @@ SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_Alter_Unique%';
 GO
 ~~START~~
 varchar
-Very_Long_Alter_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three
+very_long_alter_unique_constraint_name_that_exceeds_postgresql_limit_of_sixty_three
 ~~END~~
 
 
@@ -485,14 +485,14 @@ SELECT name FROM sys.key_constraints WHERE name LIKE 'MixedCase_PK%';
 GO
 ~~START~~
 varchar
-MixedCase_PK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+mixedcase_pk_constraint_name_that_exceeds_postgresql_limit_of_sixty_three_characters
 ~~END~~
 
 SELECT name FROM sys.check_constraints WHERE name LIKE 'MixedCase_Check%';
 GO
 ~~START~~
 varchar
-MixedCase_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+mixedcase_check_constraint_name_that_exceeds_postgresql_limit_of_sixty_three_chars
 ~~END~~
 
 
@@ -506,7 +506,7 @@ SELECT name FROM sys.foreign_keys WHERE name LIKE 'MixedCase_FK%';
 GO
 ~~START~~
 varchar
-MixedCase_FK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+mixedcase_fk_constraint_name_that_exceeds_postgresql_limit_of_sixty_three_characters
 ~~END~~
 
 DROP TABLE babel5975_fk_case_child;
@@ -523,7 +523,7 @@ SELECT name FROM sys.objects WHERE name LIKE 'MixedCase_Very_Long_Seq%';
 GO
 ~~START~~
 varchar
-MixedCase_Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+mixedcase_very_long_sequence_name_that_exceeds_postgresql_limit_of_sixty_three_chars
 ~~END~~
 
 DROP SEQUENCE MixedCase_Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
@@ -536,7 +536,7 @@ SELECT name FROM sys.types WHERE name LIKE 'MixedCase_Very_Long_Type%';
 GO
 ~~START~~
 varchar
-MixedCase_Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+mixedcase_very_long_type_name_that_exceeds_postgresql_limit_of_sixty_three_characters
 ~~END~~
 
 DROP TYPE MixedCase_Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters;
@@ -555,14 +555,14 @@ SELECT name FROM sys.key_constraints WHERE name LIKE 'PK_Emoji%';
 GO
 ~~START~~
 varchar
-PK_Emoji_?????????????????????????
+pk_emoji_?????????????????????????
 ~~END~~
 
 SELECT name FROM sys.check_constraints WHERE name LIKE 'CHK_Emoji%';
 GO
 ~~START~~
 varchar
-CHK_Emoji_????????????????????????
+chk_emoji_????????????????????????
 ~~END~~
 
 DROP TABLE babel5975_emoji_test;
@@ -575,7 +575,7 @@ SELECT name FROM sys.objects WHERE name LIKE '这是一个%';
 GO
 ~~START~~
 varchar
-这是一个非常长的序列名称用来测试PostgreSQL对超过六十三个字符的标识符的处理方式
+这是一个非常长的序列名称用来测试postgresql对超过六十三个字符的标识符的处理方式
 ~~END~~
 
 DROP SEQUENCE 这是一个非常长的序列名称用来测试PostgreSQL对超过六十三个字符的标识符的处理方式;
@@ -588,7 +588,7 @@ SELECT name FROM sys.types WHERE name LIKE 'タイプ_Mixed%';
 GO
 ~~START~~
 varchar
-タイプ_Mixed_Type_Name_That_Exceeds_PostgreSQL_Limit_With_日本語_Characters_Added
+タイプ_mixed_type_name_that_exceeds_postgresql_limit_with_日本語_characters_added
 ~~END~~
 
 DROP TYPE タイプ_Mixed_Type_Name_That_Exceeds_PostgreSQL_Limit_With_日本語_Characters_Added;
@@ -617,7 +617,7 @@ SELECT name FROM sys.check_constraints WHERE name LIKE 'Very_Long_NonDbo_Check%'
 GO
 ~~START~~
 varchar
-Very_Long_NonDbo_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty
+very_long_nondbo_check_constraint_name_that_exceeds_postgresql_limit_of_sixty
 ~~END~~
 
 -- Exactly one mapping row should exist for this constraint
@@ -636,7 +636,7 @@ SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_NonDbo_Unique%';
 GO
 ~~START~~
 varchar
-Very_Long_NonDbo_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixt
+very_long_nondbo_unique_constraint_name_that_exceeds_postgresql_limit_of_sixt
 ~~END~~
 
 
@@ -751,21 +751,21 @@ SELECT name FROM sys.key_constraints WHERE name = 'PK (SELECT * FROM sys.objects
 GO
 ~~START~~
 varchar
-PK (SELECT * FROM sys.objects) constraint name well beyond the sixty three byte limit
+pk (select * from sys.objects) constraint name well beyond the sixty three byte limit
 ~~END~~
 
 SELECT name FROM sys.check_constraints WHERE name = 'CK-with-dashes.and.dots-that-together-run-past-the-sixty-three-byte-identifier-limit';
 GO
 ~~START~~
 varchar
-CK-with-dashes.and.dots-that-together-run-past-the-sixty-three-byte-identifier-limit
+ck-with-dashes.and.dots-that-together-run-past-the-sixty-three-byte-identifier-limit
 ~~END~~
 
 SELECT name FROM sys.key_constraints WHERE name LIKE 'UQ %embedded quote%';
 GO
 ~~START~~
 varchar
-UQ "embedded quote" and spaces constraint name exceeding sixty three bytes
+uq "embedded quote" and spaces constraint name exceeding sixty three bytes
 ~~END~~
 
 
@@ -774,7 +774,7 @@ SELECT name FROM sys.objects WHERE name = 'ORDER BY sequence name with spaces th
 GO
 ~~START~~
 varchar
-ORDER BY sequence name with spaces that is comfortably over the sixty three byte limit
+order by sequence name with spaces that is comfortably over the sixty three byte limit
 ~~END~~
 
 SELECT name FROM sys.types WHERE name = 'my.dotted.and spaced type name that runs well past the sixty three byte identifier limit';
@@ -891,8 +891,8 @@ ORDER BY t.name;
 GO
 ~~START~~
 varchar#!#varchar
-babel5975_collide_a#!#Shared_Long_Constraint_Name_Reused_On_Two_Tables_Exceeding_Sixty_Three_Bytes
-babel5975_collide_b#!#Shared_Long_Constraint_Name_Reused_On_Two_Tables_Exceeding_Sixty_Three_Bytes
+babel5975_collide_a#!#shared_long_constraint_name_reused_on_two_tables_exceeding_sixty_three_bytes
+babel5975_collide_b#!#shared_long_constraint_name_reused_on_two_tables_exceeding_sixty_three_bytes
 ~~END~~
 
 

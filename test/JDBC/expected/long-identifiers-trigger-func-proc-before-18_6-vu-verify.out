@@ -4,7 +4,7 @@ SELECT name FROM sys.all_objects WHERE name LIKE 'Very_Long_Function_Name%' AND 
 GO
 ~~START~~
 varchar
-Very_Long_Function_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+very_long_function_name_that_exceeds_postgresql_limit_of_sixty_three_chars_for_testing
 ~~END~~
 
 
@@ -54,7 +54,7 @@ SELECT name FROM sys.all_objects WHERE name LIKE 'Very_Long_Renamed_Func%' AND t
 GO
 ~~START~~
 varchar
-Very_Long_Renamed_Func_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+very_long_renamed_func_name_that_exceeds_postgresql_limit_of_sixty_three_characters
 ~~END~~
 
 
@@ -144,7 +144,7 @@ EXEC sp_stored_procedures @sp_name = 'Very_Long_Procedure_Name_That_Exceeds_Post
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
-master#!#dbo#!#Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+master#!#dbo#!#very_long_procedure_name_that_exceeds_postgresql_limit_of_sixty_three_chars_for_testing;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
 ~~END~~
 
 

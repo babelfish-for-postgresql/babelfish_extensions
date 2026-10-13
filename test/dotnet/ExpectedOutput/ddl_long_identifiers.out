@@ -98,13 +98,13 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE TABLE [dbo].[tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng](
+CREATE TABLE [dbo].[tbl_ñoño_ëmplöyéé_löngnàmé_éxcëëds_sïxtythrëë_bytës_tëstïng](
 	[id] [int] IDENTITY(1,1) NOT NULL,
 	[col1] [varchar](50) NULL
 ) ON [PRIMARY]
 
 GO
-CREATE NONCLUSTERED INDEX [ix_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng] ON [dbo].[tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng]
+CREATE NONCLUSTERED INDEX [ix_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng] ON [dbo].[tbl_ñoño_ëmplöyéé_löngnàmé_éxcëëds_sïxtythrëë_bytës_tëstïng]
 (
 	[col1] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -118,13 +118,13 @@ CREATE TRIGGER trg_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Byt�
 	SELECT 1;
 
 GO
-ALTER TABLE [dbo].[tbl_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng] ENABLE TRIGGER [trg_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng]
+ALTER TABLE [dbo].[tbl_ñoño_ëmplöyéé_löngnàmé_éxcëëds_sïxtythrëë_bytës_tëstïng] ENABLE TRIGGER [trg_Ñoño_Ëmplöyéé_LöngNàmé_Éxcëëds_SïxtyThrëë_Bytës_Tëstïng]
 GO
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE TABLE [dbo].[ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting](
+CREATE TABLE [dbo].[thisisaverylongtablenamethatexceedssixtythreecharactersfortesting](
 	[id] [int] IDENTITY(1,1) NOT NULL,
 	[col1] [varchar](50) NULL,
 	[col2] [int] NULL,
@@ -135,12 +135,12 @@ CREATE TABLE [dbo].[ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTe
 ) ON [PRIMARY]
 
 GO
-CREATE NONCLUSTERED INDEX [IX_ThisIsAVeryLongIndexNameThatExceedsSixtyThreeCharactersInTotal] ON [dbo].[ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting]
+CREATE NONCLUSTERED INDEX [IX_ThisIsAVeryLongIndexNameThatExceedsSixtyThreeCharactersInTotal] ON [dbo].[thisisaverylongtablenamethatexceedssixtythreecharactersfortesting]
 (
 	[col1] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
-ALTER TABLE [dbo].[ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting] ADD  CONSTRAINT [pk_thisisaverylongconstraintnamethatexceedssixtythreecharacters] PRIMARY KEY NONCLUSTERED 
+ALTER TABLE [dbo].[thisisaverylongtablenamethatexceedssixtythreecharactersfortesting] ADD  CONSTRAINT [pk_thisisaverylongconstraintnamethatexceedssixtythreecharacters] PRIMARY KEY NONCLUSTERED 
 (
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
@@ -154,7 +154,7 @@ CREATE TRIGGER ThisIsAVeryLongTriggerNameThatExceedsSixtyThreeCharactersInLength
 	SELECT 1;
 
 GO
-ALTER TABLE [dbo].[ThisIsAVeryLongTableNameThatExceedsSixtyThreeCharactersForTesting] ENABLE TRIGGER [ThisIsAVeryLongTriggerNameThatExceedsSixtyThreeCharactersInLength]
+ALTER TABLE [dbo].[thisisaverylongtablenamethatexceedssixtythreecharactersfortesting] ENABLE TRIGGER [ThisIsAVeryLongTriggerNameThatExceedsSixtyThreeCharactersInLength]
 GO
 SET ANSI_NULLS ON
 GO
