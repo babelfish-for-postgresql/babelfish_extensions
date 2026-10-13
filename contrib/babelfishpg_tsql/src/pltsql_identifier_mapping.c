@@ -534,6 +534,65 @@ update_bbf_ident_mapping_parent(const char *nspname,
 	CommandCounterIncrement();
 }
 
+/* Re-point every mapping row keyed on old_nspname to new_nspname. */
+void
+update_bbf_ident_mapping_nspname(const char *old_nspname,
+								 const char *new_nspname)
+{
+	Relation	rel;
+	SysScanDesc scan;
+	ScanKeyData scanKey[1];
+	HeapTuple	tuple;
+	NameData	old_nspname_data;
+	NameData	new_nspname_data;
+	Datum		values[BBF_IDENT_MAPPING_NUM_COLS];
+	bool		nulls[BBF_IDENT_MAPPING_NUM_COLS];
+	bool		replaces[BBF_IDENT_MAPPING_NUM_COLS];
+
+	if (!OidIsValid(get_bbf_ident_mapping_oid()))
+		return;
+
+	if (old_nspname == NULL || new_nspname == NULL ||
+		strcmp(old_nspname, new_nspname) == 0)
+		return;
+
+	namestrcpy(&old_nspname_data, old_nspname);
+	namestrcpy(&new_nspname_data, new_nspname);
+
+	rel = table_open(get_bbf_ident_mapping_oid(), RowExclusiveLock);
+
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_ident_mapping_nspname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&old_nspname_data));
+
+	scan = systable_beginscan(rel, get_bbf_ident_mapping_idx_oid(), true,
+							  NULL, 1, scanKey);
+
+	/* Same single-column update for every row; build the arrays once. */
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, false, sizeof(nulls));
+	MemSet(replaces, false, sizeof(replaces));
+
+	values[Anum_bbf_ident_mapping_nspname - 1] = NameGetDatum(&new_nspname_data);
+	replaces[Anum_bbf_ident_mapping_nspname - 1] = true;
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		HeapTuple	newtuple;
+
+		newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
+									 values, nulls, replaces);
+		CatalogTupleUpdate(rel, &newtuple->t_self, newtuple);
+		heap_freetuple(newtuple);
+	}
+
+	systable_endscan(scan);
+	table_close(rel, RowExclusiveLock);
+
+	CommandCounterIncrement();
+}
+
 /*
  * clean_up_bbf_ident_mapping - Remove all entries for a given nspname.
  * Used during DROP SCHEMA / DROP DATABASE.
@@ -1076,81 +1135,6 @@ store_sequence_original_name(CreateSeqStmt *seq_stmt, const char *queryString)
 									 original_name, nspname,
 									 BBF_IDENT_SEQUENCE, NULL);
 			pfree(nspname);
-		}
-		pfree(original_name);
-	}
-}
-
-/*
- * store_tabletype_original_name
- *
- * Store the original (untruncated) name of a CREATE TYPE ... AS TABLE in
- * sys.babelfish_identifier_mapping, keyed as a BBF_IDENT_TYPE row. A T-SQL
- * table type is created as a CreateStmt (create_stmt->tsql_tabletype = true)
- * whose backing composite type carries the same physical name as the relation.
- * The relation itself records its original name in reloptions, but
- * sys.types / sys.table_types resolve the display name through the pg_type
- * identifier-mapping (bbf_get_original_identifier_name(..., 'pg_type')), so
- * without a BBF_IDENT_TYPE row a long table-type name surfaces as the
- * truncated/hashed physical typname.
- *
- * The original name is recovered from the source query text at the relation's
- * location. Runs after the type has been created so its physical namespace and
- * type name can be resolved from the catalog. No-op during dump/restore (the
- * mapping catalog is dumped/restored directly) or when the namespace/type
- * cannot be resolved.
- */
-void
-store_tabletype_original_name(CreateStmt *create_stmt, const char *queryString)
-{
-	RangeVar   *rel = create_stmt->relation;
-	char	   *original_name;
-
-	if (!create_stmt->tsql_tabletype || rel == NULL ||
-		rel->location < 0 || !queryString ||
-		(size_t) rel->location >= strlen(queryString) ||
-		babelfish_dump_restore)
-		return;
-
-	original_name = extract_multipart_identifier_name(queryString + rel->location);
-
-	if (original_name)
-	{
-		Oid			relOid = RangeVarGetRelid(rel, NoLock, true);
-
-		/*
-		 * Resolve the PHYSICAL type name and namespace from the created
-		 * relation's composite type. sys.types keys the lookup on the physical
-		 * typname (pg_type.typname) and physical namespace, so the mapping row
-		 * must be filed under the same physical identifiers; the parse-tree
-		 * relname/schemaname would diverge for a long (truncated) name.
-		 */
-		if (OidIsValid(relOid))
-		{
-			Oid			typeOid = get_rel_type_id(relOid);
-
-			if (OidIsValid(typeOid))
-			{
-				HeapTuple	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typeOid));
-
-				if (HeapTupleIsValid(tup))
-				{
-					Form_pg_type typform = (Form_pg_type) GETSTRUCT(tup);
-					char	   *physical_typname = pstrdup(NameStr(typform->typname));
-					char	   *nspname = get_namespace_name(typform->typnamespace);
-
-					ReleaseSysCache(tup);
-
-					/* Only store when the name is long enough to be truncated. */
-					if (nspname &&
-						strlen(original_name) >= NAMEDATALEN)
-						insert_bbf_ident_mapping(physical_typname, original_name,
-												 nspname, BBF_IDENT_TYPE, NULL);
-					if (nspname)
-						pfree(nspname);
-					pfree(physical_typname);
-				}
-			}
 		}
 		pfree(original_name);
 	}

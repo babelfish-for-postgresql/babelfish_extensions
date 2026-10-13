@@ -1143,7 +1143,13 @@ and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
 -- For User Defined Types
-select cast(sys.bbf_get_original_identifier_name(t.typname, t.typnamespace::regnamespace::name, 1247) as sys.sysname) as name
+select cast(
+    case
+      when tt.typrelid is not null
+        then sys.bbf_get_truncated_rel_original_name(ttc.reloptions, ttc.relname)
+      else sys.bbf_get_original_identifier_name(t.typname, t.typnamespace::regnamespace::name, 1247)
+    end
+    as sys.sysname) as name
   , cast(t.typbasetype as int) as system_type_id
   , cast(t.oid as int) as user_type_id
   , cast(t.typnamespace as int) as schema_id
@@ -1175,6 +1181,7 @@ join sys.schemas sch on t.typnamespace = sch.schema_id
 left join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
 left join tt_internal tt on t.typrelid = tt.typrelid
+left join pg_catalog.pg_class ttc on ttc.oid = t.typrelid
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
 -- we want to show details of user defined datatypes created under babelfish database
 where 

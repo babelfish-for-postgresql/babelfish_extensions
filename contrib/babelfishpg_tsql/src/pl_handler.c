@@ -5680,16 +5680,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					if (create_stmt->tsql_tabletype)
 						revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, name);
-
-					/*
-					 * Store long table-type names in
-					 * babelfish_identifier_mapping so sys.types /
-					 * sys.table_types can resolve the original name.
-					 */
-					if (create_stmt->tsql_tabletype &&
-						sql_dialect == SQL_DIALECT_TSQL &&
-						!babelfish_dump_restore && queryString)
-						store_tabletype_original_name(create_stmt, queryString);
 				}
 
 				/* Store long constraint names in babelfish_identifier_mapping */

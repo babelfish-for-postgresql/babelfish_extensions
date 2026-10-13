@@ -2686,21 +2686,17 @@ object_id(PG_FUNCTION_ARGS)
 /*
  * resolve_bbf_func_original_name
  *
- * Return the full (untruncated) but LOWERCASED T-SQL name for a procedure,
- * function or trigger backed by pg_proc. The full name is recovered from
- * babelfish_function_ext.orig_name and then downcased, so OBJECT_NAME restores
- * the length of a long (truncated) identifier without restoring its original
- * casing; short names are already lowercase and pass through unchanged. Falls
- * back to the physical proname when no extended-catalog row exists (e.g. system
- * objects, shared schemas, or during dump/restore). The returned string is
- * palloc'd in the current context.
+ * Return the full (untruncated) RAW T-SQL name for a procedure, function or
+ * trigger backed by pg_proc, recovered from babelfish_function_ext.orig_name.
+ * Falls back to the physical proname when no extended-catalog row exists (e.g.
+ * system objects, shared schemas, or during dump/restore). The caller is
+ * responsible for any downcasing. The returned string is palloc'd.
  */
 static char *
 resolve_bbf_func_original_name(HeapTuple proctuple, const char *physical_name)
 {
 	HeapTuple	bbffunctuple;
 	char	   *orig = NULL;
-	char	   *result;
 
 	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctuple);
 	if (HeapTupleIsValid(bbffunctuple))
@@ -2717,42 +2713,131 @@ resolve_bbf_func_original_name(HeapTuple proctuple, const char *physical_name)
 	if (orig == NULL)
 		orig = pstrdup(physical_name);
 
-	/* Return the full name lowercased (restore length, not casing). */
-	result = downcase_identifier(orig, strlen(orig), false, false);
-	pfree(orig);
-	return result;
+	return orig;
 }
 
 /*
- * resolve_bbf_ident_original_name
+ * get_bbf_ident_original_name
  *
- * Return the full (untruncated) but LOWERCASED T-SQL name for an object whose
- * physical name was truncated and recorded in sys.babelfish_identifier_mapping
- * (constraints, sequences, user types). The full name is recovered from the
- * mapping (only consulted when the physical name is long enough to have been
- * truncated, matching the >= 60 gate of sys.bbf_get_original_identifier_name)
- * and then downcased, so OBJECT_NAME / TYPE_NAME restore the length of a long
- * identifier without restoring its original casing; short names are already
- * lowercase and pass through unchanged. The returned string is palloc'd.
+ * Original (untruncated) RAW name for an identifier-mapping object (sequence,
+ * scalar type, constraint). Consults sys.babelfish_identifier_mapping only when
+ * the physical name is long enough to have been truncated; short names fall
+ * back to the physical name. Caller downcases. Returns a palloc'd string.
  */
 static char *
-resolve_bbf_ident_original_name(const char *physical_name, const char *nspname,
-								BbfIdentMappingObjType objtype,
-								const char *parent_name)
+get_bbf_ident_original_name(const char *physical_name, const char *nspname,
+							BbfIdentMappingObjType objtype, const char *parent_name)
 {
 	char	   *orig = NULL;
-	char	   *result;
 
-	if (nspname && strlen(physical_name) >= 60)
-		orig = lookup_bbf_ident_mapping(physical_name, nspname, objtype,
-										parent_name);
-
+	if (nspname && strlen(physical_name) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+		orig = lookup_bbf_ident_mapping(physical_name, nspname, objtype, parent_name);
 	if (orig == NULL)
 		orig = pstrdup(physical_name);
+	return orig;
+}
 
-	/* Return the full name lowercased (restore length, not casing). */
-	result = downcase_identifier(orig, strlen(orig), false, false);
-	pfree(orig);
+/*
+ * get_bbf_original_object_name
+ *
+ * Single resolver for the original (untruncated, lowercased) name of a
+ * schema-bound object. The caller passes the catalog (classid) and the already
+ * fetched catalog tuple, so no second lookup is done here; for TriggerRelationId
+ * the tuple is the pg_trigger tuple (the backing pg_proc is looked up
+ * internally). Handles both short and long names per class and downcases once
+ * (restore length, not casing). No permission check: callers that need one
+ * perform it before calling. Returns a palloc'd name, or NULL.
+ */
+static char *
+get_bbf_original_object_name(Oid classid, HeapTuple tuple)
+{
+	char	   *orig = NULL;
+	char	   *result = NULL;
+
+	switch (classid)
+	{
+		case RelationRelationId:
+			{
+				Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
+
+				if (pg_class->relkind == RELKIND_SEQUENCE)
+				{
+					char	   *nspname = get_namespace_name(pg_class->relnamespace);
+
+					orig = get_bbf_ident_original_name(NameStr(pg_class->relname), nspname,
+													   BBF_IDENT_SEQUENCE, NULL);
+					if (nspname)
+						pfree(nspname);
+				}
+				else
+					orig = get_original_relname(pg_class->oid, false);
+				break;
+			}
+		case ProcedureRelationId:
+			{
+				Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
+
+				orig = resolve_bbf_func_original_name(tuple, NameStr(procform->proname));
+				break;
+			}
+		case TypeRelationId:
+			{
+				Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
+
+				/* Table type: reloptions; scalar UDT: identifier mapping. */
+				if (pg_type->typtype == TYPTYPE_COMPOSITE &&
+					OidIsValid(pg_type->typrelid))
+					orig = get_original_relname(pg_type->typrelid, false);
+				else
+				{
+					char	   *nspname = get_namespace_name(pg_type->typnamespace);
+
+					orig = get_bbf_ident_original_name(NameStr(pg_type->typname), nspname,
+													   BBF_IDENT_TYPE, NULL);
+					if (nspname)
+						pfree(nspname);
+				}
+				break;
+			}
+		case TriggerRelationId:
+			{
+				Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+				HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(pg_trigger->tgfoid));
+
+				if (HeapTupleIsValid(proctup))
+				{
+					orig = resolve_bbf_func_original_name(proctup, NameStr(pg_trigger->tgname));
+					ReleaseSysCache(proctup);
+				}
+				else
+					orig = pstrdup(NameStr(pg_trigger->tgname));
+				break;
+			}
+		case ConstraintRelationId:
+			{
+				Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+				char	   *nspname = get_namespace_name(con->connamespace);
+				char	   *parent_name = get_rel_name(con->conrelid);
+
+				orig = get_bbf_ident_original_name(NameStr(con->conname), nspname,
+												   BBF_IDENT_CONSTRAINT, parent_name);
+				if (nspname)
+					pfree(nspname);
+				if (parent_name)
+					pfree(parent_name);
+				break;
+			}
+		default:
+			break;
+	}
+
+	/* Downcase once for every class (restore length, not casing). */
+	if (orig)
+	{
+		result = downcase_identifier(orig, strlen(orig), false, false);
+		pfree(orig);
+	}
+
 	return result;
 }
 
@@ -2826,32 +2911,11 @@ object_name(PG_FUNCTION_ARGS)
 		{
 			Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
 
-			if (pg_class->relkind == RELKIND_SEQUENCE)
-			{
-				/*
-				 * Sequences record their original (untruncated) name in
-				 * sys.babelfish_identifier_mapping (keyed on pg_class), not in
-				 * reloptions, so resolve them through the mapping catalog.
-				 */
-				char	   *nspname = get_namespace_name(pg_class->relnamespace);
-				char	   *orig = resolve_bbf_ident_original_name(NameStr(pg_class->relname),
-																   nspname, BBF_IDENT_SEQUENCE, "");
-
-				result_text = cstring_to_text(orig);
-				pfree(orig);
-				if (nspname)
-					pfree(nspname);
-			}
+			if (pg_class->relkind == RELKIND_SEQUENCE &&
+				strlen(NameStr(pg_class->relname)) < BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+				result_text = cstring_to_text(NameStr(pg_class->relname));
 			else
-			{
-				/*
-				 * get_original_relname returns the original (pre-truncation)
-				 * name from reloptions when present, and falls back to the
-				 * physical relname otherwise. The truncation-threshold
-				 * optimization lives inside the helper.
-				 */
-				result_text = cstring_to_text(get_original_relname(object_id, false));
-			}
+				result_text = cstring_to_text(get_bbf_original_object_name(RelationRelationId, tuple));
 			schema_id = pg_class->relnamespace;
 		}
 		ReleaseSysCache(tuple);
@@ -2868,11 +2932,12 @@ object_name(PG_FUNCTION_ARGS)
 			if (object_aclcheck(ProcedureRelationId, object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
 			{
 				Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
-				char	   *orig = resolve_bbf_func_original_name(tuple, NameStr(procform->proname));
 
-				result_text = cstring_to_text(orig);
+				if (strlen(NameStr(procform->proname)) < BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+					result_text = cstring_to_text(NameStr(procform->proname));
+				else
+					result_text = cstring_to_text(get_bbf_original_object_name(ProcedureRelationId, tuple));
 				schema_id = procform->pronamespace;
-				pfree(orig);
 			}
 			ReleaseSysCache(tuple);
 			found = true;
@@ -2889,14 +2954,11 @@ object_name(PG_FUNCTION_ARGS)
 			if (object_aclcheck(TypeRelationId, object_id, user_id, ACL_USAGE) == ACLCHECK_OK)
 			{
 				Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
-				char	   *nspname = get_namespace_name(pg_type->typnamespace);
-				char	   *orig = resolve_bbf_ident_original_name(NameStr(pg_type->typname),
-																   nspname, BBF_IDENT_TYPE, NULL);
 
-				result_text = cstring_to_text(orig);
-				pfree(orig);
-				if (nspname)
-					pfree(nspname);
+				if (strlen(NameStr(pg_type->typname)) < BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+					result_text = cstring_to_text(NameStr(pg_type->typname));
+				else
+					result_text = cstring_to_text(get_bbf_original_object_name(TypeRelationId, tuple));
 			}
 			ReleaseSysCache(tuple);
 			found = true;
@@ -2924,26 +2986,11 @@ object_name(PG_FUNCTION_ARGS)
 			if (OidIsValid(pg_trigger->tgrelid) &&
 				pg_class_aclcheck(pg_trigger->tgrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
 			{
-				/*
-				 * A T-SQL trigger's original name is stored on its backing
-				 * pg_proc row (babelfish_function_ext.orig_name), mirroring
-				 * sys.triggers. Resolve via the trigger function OID; fall back
-				 * to the physical tgname when the proc tuple is unavailable.
-				 */
-				HeapTuple	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(pg_trigger->tgfoid));
-				char	   *orig;
-
-				if (HeapTupleIsValid(proctup))
-				{
-					orig = resolve_bbf_func_original_name(proctup, NameStr(pg_trigger->tgname));
-					ReleaseSysCache(proctup);
-				}
+				if (strlen(NameStr(pg_trigger->tgname)) < BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+					result_text = cstring_to_text(NameStr(pg_trigger->tgname));
 				else
-					orig = pstrdup(NameStr(pg_trigger->tgname));
-
-				result_text = cstring_to_text(orig);
+					result_text = cstring_to_text(get_bbf_original_object_name(TriggerRelationId, tuple));
 				schema_id = get_rel_namespace(pg_trigger->tgrelid);
-				pfree(orig);
 			}
 			found = true;
 		}
@@ -2962,19 +3009,11 @@ object_name(PG_FUNCTION_ARGS)
 			/* check if user have right permission on object */
 			if (OidIsValid(con->conrelid) && (pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK))
 			{
-				char	   *nspname = get_namespace_name(con->connamespace);
-				char	   *parent_name = get_rel_name(con->conrelid);
-				char	   *orig = resolve_bbf_ident_original_name(NameStr(con->conname),
-																   nspname, BBF_IDENT_CONSTRAINT,
-																   parent_name);
-
-				result_text = cstring_to_text(orig);
+				if (strlen(NameStr(con->conname)) < BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+					result_text = cstring_to_text(NameStr(con->conname));
+				else
+					result_text = cstring_to_text(get_bbf_original_object_name(ConstraintRelationId, tuple));
 				schema_id = con->connamespace;
-				pfree(orig);
-				if (nspname)
-					pfree(nspname);
-				if (parent_name)
-					pfree(parent_name);
 			}
 			ReleaseSysCache(tuple);
 			found = true;
@@ -3154,7 +3193,6 @@ type_name(PG_FUNCTION_ARGS)
 {
     Datum       type_id = PG_GETARG_DATUM(0);
     Datum       tsql_typename;
-    HeapTuple   tuple;
     Oid         user_id = GetUserId();
     char        *result = NULL;
 
@@ -3173,25 +3211,20 @@ type_name(PG_FUNCTION_ARGS)
         PG_RETURN_DATUM(tsql_typename);
     }
     else
-    {   
-        // Search in pg_type catalog
-        tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_id));
+    {
+        /* Search in pg_type catalog */
+        HeapTuple   tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_id));
+
         if (HeapTupleIsValid(tuple))
         {
-            if (object_aclcheck(TypeRelationId, type_id, user_id, ACL_USAGE) == ACLCHECK_OK)
+            if (object_aclcheck(TypeRelationId, (Oid) type_id, user_id, ACL_USAGE) == ACLCHECK_OK)
             {
                 Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
-                char       *nspname = get_namespace_name(pg_type->typnamespace);
 
-                /*
-                 * Resolve the original (untruncated) user type name from
-                 * sys.babelfish_identifier_mapping; falls back to the physical
-                 * typname for short names or system types.
-                 */
-                result = resolve_bbf_ident_original_name(NameStr(pg_type->typname),
-                                                         nspname, BBF_IDENT_TYPE, NULL);
-                if (nspname)
-                    pfree(nspname);
+                if (strlen(NameStr(pg_type->typname)) < BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+                    result = pstrdup(NameStr(pg_type->typname));
+                else
+                    result = get_bbf_original_object_name(TypeRelationId, tuple);
             }
             ReleaseSysCache(tuple);
         }

@@ -867,6 +867,115 @@ int
 
 
 -- ===========================================
+-- BABEL-7225: RENAME DATABASE propagates to babelfish_identifier_mapping, and
+-- a subsequent DROP DATABASE cleans the renamed rows.
+-- ===========================================
+-- babelfish_identifier_mapping is keyed on the PHYSICAL schema name
+-- (<db>_<schema>). A database rename renames every physical schema, so the
+-- mapping rows must be re-keyed to the new physical schema name. Otherwise the
+-- long-named objects in the renamed database resolve to their truncated/hashed
+-- name (orphaned mapping row) and the rows leak at DROP DATABASE time (the
+-- DROP-time sweep enumerates the NEW physical schema names).
+--
+-- Exercise one mapped object of each kind that lives in a mapping row
+-- (constraint, sequence, type, parameter), in both the dbo schema and a
+-- user-created schema, then rename the database, confirm resolution still
+-- returns the original names, and finally drop and confirm nothing leaks.
+CREATE DATABASE babel7225_rndb;
+GO
+USE babel7225_rndb;
+GO
+CREATE TABLE babel7225_rndb_tbl (
+    id INT NOT NULL,
+    val INT,
+    CONSTRAINT Very_Long_RenameDB_PK_Constraint_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte PRIMARY KEY (id),
+    CONSTRAINT Very_Long_RenameDB_Check_Constraint_Name_That_Exceeds_PostgreSQL_Sixty_Three CHECK (val > 0)
+);
+GO
+CREATE SEQUENCE Very_Long_RenameDB_Sequence_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte_Lim AS INT START WITH 1;
+GO
+CREATE TYPE Very_Long_RenameDB_Type_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte_Limit_T FROM INT;
+GO
+CREATE SCHEMA babel7225_rndb_usch;
+GO
+CREATE SEQUENCE babel7225_rndb_usch.Very_Long_RenameDB_UserSchema_Sequence_Name_Exceeding_Sixty_Three_Bytes AS INT START WITH 1;
+GO
+
+USE master;
+GO
+
+-- Before rename: mapping rows exist for the original database.
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE '%Very_Long_RenameDB%';
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+-- Rename the database.
+EXEC sp_renamedb 'babel7225_rndb', 'babel7225_rndb_renamed';
+GO
+
+-- After rename: the SAME number of mapping rows still exist (none lost or
+-- orphaned); mode-independent so this holds for both multi-db and single-db.
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE '%Very_Long_RenameDB%';
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+-- Resolution still returns the full original names inside the renamed database
+-- (would surface the truncated/hashed name if the mapping row were orphaned).
+USE babel7225_rndb_renamed;
+GO
+SELECT CAST(OBJECT_NAME(OBJECT_ID('Very_Long_RenameDB_Sequence_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte_Lim')) AS sys.sysname);
+GO
+~~START~~
+varchar
+very_long_renamedb_sequence_name_that_exceeds_postgresql_sixty_three_byte_lim
+~~END~~
+
+SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_RenameDB_PK%';
+GO
+~~START~~
+varchar
+Very_Long_RenameDB_PK_Constraint_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte
+~~END~~
+
+SELECT name FROM sys.types WHERE name LIKE 'Very_Long_RenameDB_Type%';
+GO
+~~START~~
+varchar
+Very_Long_RenameDB_Type_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte_Limit_T
+~~END~~
+
+SELECT name FROM sys.objects WHERE name LIKE 'Very_Long_RenameDB_UserSchema%' AND type = 'SO';
+GO
+~~START~~
+varchar
+Very_Long_RenameDB_UserSchema_Sequence_Name_Exceeding_Sixty_Three_Bytes
+~~END~~
+
+USE master;
+GO
+
+-- Drop the renamed database: every mapping row (now under the new prefix) must
+-- be cleaned up (0).
+DROP DATABASE babel7225_rndb_renamed;
+GO
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name LIKE '%Very_Long_RenameDB%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+-- ===========================================
 -- Constraint-name collision across tables (BABEL-5975)
 -- ===========================================
 -- Two tables in the same schema may legitimately reuse the SAME long
@@ -1073,13 +1182,47 @@ Babel7225_Long_Table_Type_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_TT
 
 
 -- psql
--- The table type's original name is stored in babelfish_identifier_mapping (pg_type)
-SELECT original_identifier_name FROM sys.babelfish_identifier_mapping
+-- The table type's original name is NOT stored in babelfish_identifier_mapping;
+-- it is resolved from the backing relation's bbf_original_rel_name reloption.
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping
 WHERE pg_catalog_type = 'pg_type'::regclass::oid AND original_identifier_name LIKE 'Babel7225_Long_Table_Type%';
 GO
 ~~START~~
-"sys"."varchar"
+int8
+0
+~~END~~
+
+
+-- The backing relation (relkind 'r') stores the full original name in its
+-- bbf_original_rel_name reloption; the physical typname/relname is truncated.
+SELECT pg_catalog.substring(opt, 23) AS reloption_original_name
+FROM pg_catalog.pg_type t
+JOIN pg_catalog.pg_class c ON c.oid = t.typrelid,
+     pg_catalog.unnest(c.reloptions) AS opt
+WHERE t.typname = sys.babelfish_truncate_identifier(pg_catalog.lower('Babel7225_Long_Table_Type_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_TT'))
+  AND opt LIKE 'bbf_original_rel_name=%';
+GO
+~~START~~
+text
 Babel7225_Long_Table_Type_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_TT
+~~END~~
+
+
+-- tsql
+-- TYPE_NAME / OBJECT_NAME on a long table type return the full original name
+-- (resolved from reloptions, lowercased like other builtins).
+SELECT CAST(TYPE_NAME(TYPE_ID('Babel7225_Long_Table_Type_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_TT')) AS sys.sysname);
+GO
+~~START~~
+varchar
+babel7225_long_table_type_name_that_exceeds_postgresql_the_sixty_three_byte_tt
+~~END~~
+
+SELECT CAST(OBJECT_NAME(TYPE_ID('Babel7225_Long_Table_Type_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_TT')) AS sys.sysname);
+GO
+~~START~~
+varchar
+babel7225_long_table_type_name_that_exceeds_postgresql_the_sixty_three_byte_tt
 ~~END~~
 
 
