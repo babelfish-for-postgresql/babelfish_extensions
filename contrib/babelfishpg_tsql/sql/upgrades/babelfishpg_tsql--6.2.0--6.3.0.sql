@@ -143,7 +143,7 @@ STABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(truncated_name) >= 60 THEN
-        (SELECT lower(m.original_identifier_name)
+        (SELECT pg_catalog.lower(m.original_identifier_name COLLATE "C")
          FROM sys.babelfish_identifier_mapping m
          WHERE m.truncated_identifier_name = truncated_name
            AND m.nspname = id_nspname
@@ -432,7 +432,7 @@ STABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(func_proname) >= 60 THEN
-        (SELECT lower(f.orig_name)
+        (SELECT pg_catalog.lower(f.orig_name COLLATE "C")
          FROM sys.babelfish_function_ext f
          WHERE f.funcname = func_proname
            AND f.nspname = func_nspname
@@ -500,7 +500,7 @@ IMMUTABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(rel_relname) >= 60 THEN
-        (SELECT lower(substring(opt, 23))
+        (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
          FROM unnest(rel_reloptions) opt
          WHERE opt LIKE 'bbf_original_rel_name=%'
          LIMIT 1)
@@ -514,7 +514,7 @@ IMMUTABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(att_attname) >= 60 THEN
-        (SELECT lower(substring(opt, 19))
+        (SELECT pg_catalog.lower(substring(opt, 19) COLLATE "C")
          FROM unnest(att_attoptions) opt
          WHERE opt LIKE 'bbf_original_name=%'
          LIMIT 1)
@@ -1529,7 +1529,7 @@ END AS NON_UNIQUE,
 CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS INDEX_QUALIFIER,
 -- the index name created by CREATE INDEX is re-mapped, find it (by checking
 -- the ones not in pg_constraint) and restoring it back before display
-lower(COALESCE((SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(t6.reloptions) AS option), t6.relname::text))::sys.sysname 
+pg_catalog.lower(COALESCE((SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) COLLATE "C" ELSE NULL END, ',') FROM unnest(t6.reloptions) AS option), t6.relname::text))::sys.sysname 
 AS INDEX_NAME,
 CASE
 WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
@@ -2289,7 +2289,7 @@ STABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(physical_db_name) >= 60 THEN
-        (SELECT lower(orig_name)
+        (SELECT pg_catalog.lower(orig_name COLLATE "C")
          FROM sys.babelfish_sysdatabases
          WHERE name COLLATE database_default = physical_db_name
          LIMIT 1)

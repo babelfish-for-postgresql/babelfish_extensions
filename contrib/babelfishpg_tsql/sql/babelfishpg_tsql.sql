@@ -1301,7 +1301,7 @@ END AS NON_UNIQUE,
 CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS INDEX_QUALIFIER,
 -- the index name created by CREATE INDEX is re-mapped, find it (by checking
 -- the ones not in pg_constraint) and restoring it back before display
-lower(COALESCE((SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(t6.reloptions) AS option), t6.relname::text))::sys.sysname AS INDEX_NAME,
+pg_catalog.lower(COALESCE((SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) COLLATE "C" ELSE NULL END, ',') FROM unnest(t6.reloptions) AS option), t6.relname::text))::sys.sysname AS INDEX_NAME,
 CASE
 WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
 ELSE CAST(3 AS smallint)
