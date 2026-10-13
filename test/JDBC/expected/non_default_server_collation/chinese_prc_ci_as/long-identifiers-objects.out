@@ -215,7 +215,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_view_alias')
 GO
 ~~START~~
 varchar
-very_long_view_alias_that_exceeds_postgresql_limit_of_sixty_three_characters_for_testing
+Very_Long_View_Alias_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_For_Testing
 ~~END~~
 
 DROP VIEW babel5975_view_alias;
@@ -487,7 +487,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_view_long_co
 GO
 ~~START~~
 varchar
-very_long_view_column_alias_that_exceeds_postgresql_limit_of_sixty_three_characters
+Very_Long_View_Column_Alias_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
 ~~END~~
 
 
@@ -499,7 +499,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_view_long_co
 GO
 ~~START~~
 varchar
-very_long_view_column_alias_that_exceeds_postgresql_limit_of_sixty_three_characters
+Very_Long_View_Column_Alias_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
 ~~END~~
 
 DROP VIEW babel5975_view_long_col;
@@ -513,7 +513,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_view_from_tb
 GO
 ~~START~~
 varchar
-very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_col1
+Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1
 ~~END~~
 
 DROP VIEW babel5975_view_from_tbl;
@@ -588,7 +588,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_view_explici
 GO
 ~~START~~
 varchar
-very_long_explicit_alias_name_that_exceeds_postgresql_limit_of_sixty_three_chars
+Very_Long_Explicit_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
 ~~END~~
 
 
@@ -599,7 +599,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_view_mixed')
 GO
 ~~START~~
 varchar
-very_long_mixed_view_alias_that_exceeds_postgresql_limit_of_sixty_three_characters
+Very_Long_Mixed_View_Alias_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
 very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_aaa
 very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_bbb
 ~~END~~
@@ -1268,7 +1268,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cte_view');
 GO
 ~~START~~
 varchar
-this_is_a_very_long_column_name_that_exceeds_the_sixty_three_characters_postgresql_limit_for_testing_purpose
+This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose
 ~~END~~
 
 DROP VIEW babel5975_cte_view;
@@ -2198,7 +2198,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Very_Long_V
 GO
 ~~START~~
 varchar
-babel_7192_very_long_view_alias_that_exceeds_the_postgresql_limit_of_63
+Babel_7192_Very_Long_View_Alias_That_Exceeds_The_PostgreSQL_Limit_Of_63
 ~~END~~
 
 

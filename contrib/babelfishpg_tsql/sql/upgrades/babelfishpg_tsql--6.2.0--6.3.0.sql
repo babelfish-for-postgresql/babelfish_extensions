@@ -514,7 +514,13 @@ IMMUTABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(att_attname) >= 60 THEN
-        (SELECT pg_catalog.lower(substring(opt, 19) COLLATE "C")
+        (SELECT CASE
+                    /* Match physical attname casing: table columns are downcased, but view columns
+                     * keep the SELECT alias case (set via res->name), so attname is mixed. */
+                    WHEN att_attname = pg_catalog.lower(att_attname COLLATE "C")
+                        THEN pg_catalog.lower(substring(opt, 19) COLLATE "C")
+                    ELSE substring(opt, 19)
+                END
          FROM unnest(att_attoptions) opt
          WHERE opt LIKE 'bbf_original_name=%'
          LIMIT 1)

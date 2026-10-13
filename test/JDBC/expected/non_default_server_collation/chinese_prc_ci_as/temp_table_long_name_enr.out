@@ -473,7 +473,7 @@ SELECT OBJECT_NAME(OBJECT_ID('#テスト用の非常に長いテンポラリテ�
 GO
 ~~START~~
 varchar
-#テスト用の非常に長いテンポラリテーブル名前がnamedatalen制限を超える場合のテスト
+#テスト用の非常に長いテンポラリテーブル名前がNAMEDATALEN制限を超える場合のテスト
 ~~END~~
 
 
@@ -591,7 +591,7 @@ SELECT OBJECT_NAME(OBJECT_ID('#ShortMixedCase')) AS test22_case_preserved
 GO
 ~~START~~
 varchar
-#shortmixedcase
+#ShortMixedCase
 ~~END~~
 
 
@@ -608,7 +608,7 @@ SELECT OBJECT_NAME(OBJECT_ID('#BracketShort_MixedCase')) AS test23_bracket_case
 GO
 ~~START~~
 varchar
-#bracketshort_mixedcase
+#BracketShort_MixedCase
 ~~END~~
 
 

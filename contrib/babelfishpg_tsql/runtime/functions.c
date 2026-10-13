@@ -2741,11 +2741,6 @@ object_name(PG_FUNCTION_ARGS)
 
 		if (orig)
 			name = orig;
-		/*
-		 * Downcase the resolved temp-table name so object_name() reports it in
-		 * lowercased form regardless of length.
-		 */
-		name = downcase_identifier(name, strlen(name), false, false);
 		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(name));
 	}
 
@@ -2768,7 +2763,8 @@ object_name(PG_FUNCTION_ARGS)
 			 * casing (ASCII-only on UTF-8), the same folding used when the
 			 * name was created.
 			 */
-			result_text = cstring_to_text(downcase_identifier(rel_name, strlen(rel_name), false, false));
+			if (rel_name != NULL)
+				result_text = cstring_to_text(downcase_identifier(rel_name, strlen(rel_name), false, false));
 			schema_id = pg_class->relnamespace;
 		}
 		ReleaseSysCache(tuple);

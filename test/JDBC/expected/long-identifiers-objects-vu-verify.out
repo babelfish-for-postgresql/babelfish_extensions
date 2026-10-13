@@ -39,7 +39,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_tvc_vu_alias
 GO
 ~~START~~
 varchar
-very_long_alias_name_that_exceeds_postgresql_limit_of_sixty_three_characters_vu_tvc
+Very_Long_Alias_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC
 ~~END~~
 
 
