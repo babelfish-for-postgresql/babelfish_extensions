@@ -2741,6 +2741,11 @@ object_name(PG_FUNCTION_ARGS)
 
 		if (orig)
 			name = orig;
+		/*
+		 * Downcase the resolved temp-table name so object_name() reports it in
+		 * lowercased form regardless of length.
+		 */
+		name = str_tolower(name, strlen(name), DEFAULT_COLLATION_OID);
 		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(name));
 	}
 
@@ -2752,14 +2757,16 @@ object_name(PG_FUNCTION_ARGS)
 		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
 		{
 			Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
+			char	   *rel_name = get_original_relname(object_id, false);
 
 			/*
 			 * get_original_relname returns the original (pre-truncation)
 			 * name from reloptions when present, and falls back to the
 			 * physical relname otherwise. The truncation-threshold
-			 * optimization lives inside the helper.
+			 * optimization lives inside the helper. Downcase the result so
+			 * object_name() reports the relation name in lowercased form.
 			 */
-			result_text = cstring_to_text(get_original_relname(object_id, false));
+			result_text = cstring_to_text(str_tolower(rel_name, strlen(rel_name), DEFAULT_COLLATION_OID));
 			schema_id = pg_class->relnamespace;
 		}
 		ReleaseSysCache(tuple);

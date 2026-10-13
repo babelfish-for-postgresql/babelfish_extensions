@@ -11504,7 +11504,7 @@ IMMUTABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(rel_relname) >= 60 THEN
-        (SELECT substring(opt, 23)
+        (SELECT lower(substring(opt, 23))
          FROM unnest(rel_reloptions) opt
          WHERE opt LIKE 'bbf_original_rel_name=%'
          LIMIT 1)
@@ -11518,7 +11518,7 @@ IMMUTABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(att_attname) >= 60 THEN
-        (SELECT substring(opt, 19)
+        (SELECT lower(substring(opt, 19))
          FROM unnest(att_attoptions) opt
          WHERE opt LIKE 'bbf_original_name=%'
          LIMIT 1)
