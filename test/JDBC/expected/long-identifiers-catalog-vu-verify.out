@@ -373,3 +373,56 @@ int
 2
 ~~END~~
 
+
+
+-- BABEL-7225: table type name resolves to the original after upgrade
+SELECT name FROM sys.table_types WHERE name LIKE 'Very_Long_Table_Type%CatVU';
+GO
+~~START~~
+varchar
+Very_Long_Table_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+~~END~~
+
+SELECT name FROM sys.types WHERE name LIKE 'Very_Long_Table_Type%CatVU';
+GO
+~~START~~
+varchar
+Very_Long_Table_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+~~END~~
+
+
+-- BABEL-7225: trigger name resolves to the original via OBJECT_NAME after upgrade
+SELECT CAST(OBJECT_NAME(object_id) AS sys.sysname) FROM sys.triggers WHERE parent_id = OBJECT_ID('babel7225_cat_vu_trg_tbl');
+GO
+~~START~~
+varchar
+very_long_trigger_name_that_exceeds_postgresql_limit_of_sixty_three_chars_catvu
+~~END~~
+
+
+-- BABEL-7225: procedure name resolves to the original via OBJECT_NAME after upgrade
+SELECT CAST(OBJECT_NAME(OBJECT_ID('Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_CatVU')) AS sys.sysname);
+GO
+~~START~~
+varchar
+very_long_procedure_name_that_exceeds_postgresql_limit_of_sixty_three_chars_catvu
+~~END~~
+
+
+-- BABEL-7225: long sequence name resolves via INFORMATION_SCHEMA.SEQUENCES after upgrade
+SELECT CAST(SEQUENCE_NAME AS sys.sysname) FROM INFORMATION_SCHEMA.SEQUENCES WHERE SEQUENCE_NAME LIKE 'Very_Long_Sequence%CatVU';
+GO
+~~START~~
+varchar
+Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+~~END~~
+
+
+-- BABEL-7225: long scalar type name resolves via INFORMATION_SCHEMA.DOMAINS after upgrade
+SELECT CAST(DOMAIN_NAME AS sys.sysname) FROM INFORMATION_SCHEMA.DOMAINS WHERE DOMAIN_NAME LIKE 'Very_Long_Type%CatVU';
+GO
+~~START~~
+varchar
+Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU
+~~END~~
+

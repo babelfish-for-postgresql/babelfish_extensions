@@ -80,3 +80,18 @@ CREATE TABLE babel5975_cat_vu_collide_tb (
 );
 GO
 
+
+-- BABEL-7225: table type with a long name (stored in babelfish_identifier_mapping as pg_type)
+CREATE TYPE Very_Long_Table_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU AS TABLE (a INT);
+GO
+
+-- BABEL-7225: trigger with a long name (resolved via babelfish_function_ext.orig_name)
+CREATE TABLE babel7225_cat_vu_trg_tbl (id INT);
+GO
+CREATE TRIGGER Very_Long_Trigger_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_CatVU
+ON babel7225_cat_vu_trg_tbl AFTER INSERT AS SELECT 1;
+GO
+
+-- BABEL-7225: procedure with a long name (OBJECT_NAME / OBJECT_ID resolution)
+CREATE PROCEDURE Very_Long_Procedure_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_CatVU AS SELECT 1;
+GO

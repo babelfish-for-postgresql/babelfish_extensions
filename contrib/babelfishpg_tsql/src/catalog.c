@@ -5344,6 +5344,7 @@ rename_tsql_db(char *old_db_name, char *new_db_name, char *orig_new_db_name)
 				char *new_schema_name = get_physical_schema_name(new_db_name, sch);
 
 				exec_rename_db_util(old_schema_name, new_schema_name, true);
+				update_bbf_ident_mapping_nspname(old_schema_name, new_schema_name);
 			}
 		}
 
