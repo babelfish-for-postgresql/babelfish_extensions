@@ -11,7 +11,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Very_Long_Table_Name_T
 GO
 ~~START~~
 varchar
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_vu_tvc
 ~~END~~
 
 

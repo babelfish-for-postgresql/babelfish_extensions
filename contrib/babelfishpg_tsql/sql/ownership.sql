@@ -27,7 +27,7 @@ STABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(physical_db_name) >= 60 THEN
-        (SELECT orig_name
+        (SELECT pg_catalog.lower(orig_name COLLATE "C")
          FROM sys.babelfish_sysdatabases
          WHERE name COLLATE database_default = physical_db_name
          LIMIT 1)
@@ -83,7 +83,7 @@ STABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(func_proname) >= 60 THEN
-        (SELECT f.orig_name
+        (SELECT pg_catalog.lower(f.orig_name COLLATE "C")
          FROM sys.babelfish_function_ext f
          WHERE f.funcname = func_proname
            AND f.nspname = func_nspname
@@ -181,7 +181,7 @@ STABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(truncated_name) >= 60 THEN
-        (SELECT m.original_identifier_name
+        (SELECT pg_catalog.lower(m.original_identifier_name COLLATE "C")
          FROM sys.babelfish_identifier_mapping m
          WHERE m.truncated_identifier_name = truncated_name
            AND m.nspname = id_nspname

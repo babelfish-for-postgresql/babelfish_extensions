@@ -67,7 +67,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel2422') AND name L
 GO
 ~~START~~
 varchar
-HEY, this actually works, but if the delimited colname gets too long it will get truncated
+hey, this actually works, but if the delimited colname gets too long it will get truncated
 ~~END~~
 
 SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'babel2422' AND COLUMN_NAME LIKE '%truncated%' ORDER BY COLUMN_NAME;

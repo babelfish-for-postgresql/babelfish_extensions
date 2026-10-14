@@ -220,14 +220,14 @@ SELECT default_database_name FROM sys.sql_logins WHERE name = 'babel5975_longdb_
 GO
 ~~START~~
 varchar
-My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+my_very_long_database_name_that_exceeds_the_postgresql_namedatalen_limit_of_63
 ~~END~~
 
 SELECT default_database_name FROM sys.server_principals WHERE name = 'babel5975_longdb_login';
 GO
 ~~START~~
 varchar
-My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+my_very_long_database_name_that_exceeds_the_postgresql_namedatalen_limit_of_63
 ~~END~~
 
 
@@ -250,7 +250,7 @@ SELECT database_name FROM sys.sp_databases_view WHERE database_name = 'My_Very_L
 GO
 ~~START~~
 varchar
-My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+my_very_long_database_name_that_exceeds_the_postgresql_namedatalen_limit_of_63
 ~~END~~
 
 
@@ -263,7 +263,7 @@ FROM sys.babelfish_authid_login_ext WHERE rolname = 'babel5975_longdb_login';
 GO
 ~~START~~
 varchar
-My_Very_Long_Database_Name_That_Exceeds_The_PostgreSQL_NAMEDATALEN_Limit_Of_63
+my_very_long_database_name_that_exceeds_the_postgresql_namedatalen_limit_of_63
 ~~END~~
 
 
