@@ -996,6 +996,8 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		clean_up_bbf_partition_metadata(dbid);
 		/* clean up bbf function catalog */
 		clean_up_bbf_function_ext(dbid);
+		/* Clean up truncated-identifier mapping rows. */
+		clean_up_bbf_ident_mapping_for_db(dbid);
 		/* clean up bbf namespace catalog accordingly */
 		drop_related_bbf_namespace_entries(dbid);
 		/* clean up corresponding db users */

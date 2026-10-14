@@ -43,6 +43,7 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/syscache.h"
 
 #include "catalog.h"
 #include "pltsql.h"
@@ -533,6 +534,65 @@ update_bbf_ident_mapping_parent(const char *nspname,
 	CommandCounterIncrement();
 }
 
+/* Re-point every mapping row keyed on old_nspname to new_nspname. */
+void
+update_bbf_ident_mapping_nspname(const char *old_nspname,
+								 const char *new_nspname)
+{
+	Relation	rel;
+	SysScanDesc scan;
+	ScanKeyData scanKey[1];
+	HeapTuple	tuple;
+	NameData	old_nspname_data;
+	NameData	new_nspname_data;
+	Datum		values[BBF_IDENT_MAPPING_NUM_COLS];
+	bool		nulls[BBF_IDENT_MAPPING_NUM_COLS];
+	bool		replaces[BBF_IDENT_MAPPING_NUM_COLS];
+
+	if (!OidIsValid(get_bbf_ident_mapping_oid()))
+		return;
+
+	if (old_nspname == NULL || new_nspname == NULL ||
+		strcmp(old_nspname, new_nspname) == 0)
+		return;
+
+	namestrcpy(&old_nspname_data, old_nspname);
+	namestrcpy(&new_nspname_data, new_nspname);
+
+	rel = table_open(get_bbf_ident_mapping_oid(), RowExclusiveLock);
+
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_ident_mapping_nspname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&old_nspname_data));
+
+	scan = systable_beginscan(rel, get_bbf_ident_mapping_idx_oid(), true,
+							  NULL, 1, scanKey);
+
+	/* Same single-column update for every row; build the arrays once. */
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, false, sizeof(nulls));
+	MemSet(replaces, false, sizeof(replaces));
+
+	values[Anum_bbf_ident_mapping_nspname - 1] = NameGetDatum(&new_nspname_data);
+	replaces[Anum_bbf_ident_mapping_nspname - 1] = true;
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		HeapTuple	newtuple;
+
+		newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
+									 values, nulls, replaces);
+		CatalogTupleUpdate(rel, &newtuple->t_self, newtuple);
+		heap_freetuple(newtuple);
+	}
+
+	systable_endscan(scan);
+	table_close(rel, RowExclusiveLock);
+
+	CommandCounterIncrement();
+}
+
 /*
  * clean_up_bbf_ident_mapping - Remove all entries for a given nspname.
  * Used during DROP SCHEMA / DROP DATABASE.
@@ -570,6 +630,75 @@ clean_up_bbf_ident_mapping(const char *nspname)
 	table_close(rel, RowExclusiveLock);
 
 	CommandCounterIncrement();
+}
+
+/*
+ * clean_up_bbf_ident_mapping_for_db - Remove all identifier-mapping entries
+ * belonging to a logical database being dropped.
+ *
+ * babelfish_identifier_mapping is keyed on the physical schema name (nspname),
+ * not on dbid, so there is no single dbid-scoped delete. DROP DATABASE removes
+ * most user schemas via "DROP OWNED BY <role> CASCADE" rather than an explicit
+ * per-schema DROP SCHEMA, so the per-schema cleanup in the OBJECT_SCHEMA drop
+ * handler never fires for them and their mapping rows (sequences, user types,
+ * constraints, parameters) would leak.
+ *
+ * Enumerate every physical namespace of the database from
+ * babelfish_namespace_ext (which still exists at this point in drop_bbf_db)
+ * and clean the mapping for each. MUST be called BEFORE
+ * drop_related_bbf_namespace_entries(dbid) deletes those namespace rows.
+ */
+void
+clean_up_bbf_ident_mapping_for_db(int16 dbid)
+{
+	Relation	namespace_rel;
+	TupleDesc	namespace_rel_descr;
+	TableScanDesc tblscan;
+	ScanKeyData key[1];
+	HeapTuple	tuple;
+	List	   *nspnames = NIL;
+	ListCell   *lc;
+
+	if (!OidIsValid(get_bbf_ident_mapping_oid()))
+		return;
+
+	namespace_rel = table_open(namespace_ext_oid, AccessShareLock);
+	namespace_rel_descr = RelationGetDescr(namespace_rel);
+
+	ScanKeyInit(&key[0],
+				Anum_namespace_ext_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	tblscan = table_beginscan_catalog(namespace_rel, 1, key);
+
+	/*
+	 * Collect the physical schema names first; clean_up_bbf_ident_mapping
+	 * opens the mapping catalog for write, so avoid cleaning while this
+	 * namespace scan is still open.
+	 */
+	while ((tuple = heap_getnext(tblscan, ForwardScanDirection)) != NULL)
+	{
+		bool		isNull;
+		Datum		datum = heap_getattr(tuple, Anum_namespace_ext_namespace,
+										 namespace_rel_descr, &isNull);
+
+		if (!isNull)
+			nspnames = lappend(nspnames,
+							   pstrdup(NameStr(*DatumGetName(datum))));
+	}
+
+	table_endscan(tblscan);
+	table_close(namespace_rel, AccessShareLock);
+
+	foreach(lc, nspnames)
+	{
+		char	   *nspname = (char *) lfirst(lc);
+
+		clean_up_bbf_ident_mapping(nspname);
+		pfree(nspname);
+	}
+	list_free(nspnames);
 }
 
 /*
