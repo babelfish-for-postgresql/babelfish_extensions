@@ -380,14 +380,14 @@ SELECT name FROM sys.table_types WHERE name LIKE 'Very_Long_Table_Type%CatVU';
 GO
 ~~START~~
 varchar
-Very_Long_Table_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+very_long_table_type_name_that_exceeds_postgresql_limit_of_sixty_three_catvu
 ~~END~~
 
 SELECT name FROM sys.types WHERE name LIKE 'Very_Long_Table_Type%CatVU';
 GO
 ~~START~~
 varchar
-Very_Long_Table_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+very_long_table_type_name_that_exceeds_postgresql_limit_of_sixty_three_catvu
 ~~END~~
 
 
@@ -414,7 +414,7 @@ SELECT CAST(SEQUENCE_NAME AS sys.sysname) FROM INFORMATION_SCHEMA.SEQUENCES WHER
 GO
 ~~START~~
 varchar
-Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+very_long_sequence_name_that_exceeds_postgresql_limit_of_sixty_three_catvu
 ~~END~~
 
 
@@ -423,6 +423,6 @@ SELECT CAST(DOMAIN_NAME AS sys.sysname) FROM INFORMATION_SCHEMA.DOMAINS WHERE DO
 GO
 ~~START~~
 varchar
-Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU
+very_long_type_name_that_exceeds_postgresql_limit_of_sixty_three_characters_catvu
 ~~END~~
 

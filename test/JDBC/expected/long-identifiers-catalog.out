@@ -942,21 +942,21 @@ SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_RenameDB_PK%';
 GO
 ~~START~~
 varchar
-Very_Long_RenameDB_PK_Constraint_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte
+very_long_renamedb_pk_constraint_name_that_exceeds_postgresql_sixty_three_byte
 ~~END~~
 
 SELECT name FROM sys.types WHERE name LIKE 'Very_Long_RenameDB_Type%';
 GO
 ~~START~~
 varchar
-Very_Long_RenameDB_Type_Name_That_Exceeds_PostgreSQL_Sixty_Three_Byte_Limit_T
+very_long_renamedb_type_name_that_exceeds_postgresql_sixty_three_byte_limit_t
 ~~END~~
 
 SELECT name FROM sys.objects WHERE name LIKE 'Very_Long_RenameDB_UserSchema%' AND type = 'SO';
 GO
 ~~START~~
 varchar
-Very_Long_RenameDB_UserSchema_Sequence_Name_Exceeding_Sixty_Three_Bytes
+very_long_renamedb_userschema_sequence_name_exceeding_sixty_three_bytes
 ~~END~~
 
 USE master;
@@ -1152,7 +1152,7 @@ SELECT CAST(SEQUENCE_NAME AS sys.sysname) FROM INFORMATION_SCHEMA.SEQUENCES WHER
 GO
 ~~START~~
 varchar
-Babel7225_Long_Sequence_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_Limit_Seq
+babel7225_long_sequence_name_that_exceeds_postgresql_the_sixty_three_byte_limit_seq
 ~~END~~
 
 
@@ -1161,7 +1161,7 @@ SELECT CAST(DOMAIN_NAME AS sys.sysname) FROM INFORMATION_SCHEMA.DOMAINS WHERE DO
 GO
 ~~START~~
 varchar
-Babel7225_Long_Scalar_Type_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_UDT
+babel7225_long_scalar_type_name_that_exceeds_postgresql_the_sixty_three_byte_udt
 ~~END~~
 
 
@@ -1170,14 +1170,14 @@ SELECT CAST(name AS sys.sysname) FROM sys.table_types WHERE name LIKE 'Babel7225
 GO
 ~~START~~
 varchar
-Babel7225_Long_Table_Type_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_TT
+babel7225_long_table_type_name_that_exceeds_postgresql_the_sixty_three_byte_tt
 ~~END~~
 
 SELECT CAST(name AS sys.sysname) FROM sys.types WHERE name LIKE 'Babel7225_Long_Table_Type%';
 GO
 ~~START~~
 varchar
-Babel7225_Long_Table_Type_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_TT
+babel7225_long_table_type_name_that_exceeds_postgresql_the_sixty_three_byte_tt
 ~~END~~
 
 
@@ -1303,7 +1303,7 @@ SELECT CAST(COLUMN_NAME AS sys.sysname) FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
 GO
 ~~START~~
 varchar
-Babel7225_Long_Key_Column_Name_That_Exceeds_PostgreSQL_The_Sixty_Three_Byte_Lim
+babel7225_long_key_column_name_that_exceeds_postgresql_the_sixty_three_byte_lim
 ~~END~~
 
 DROP TABLE babel7225_kcu_tab;
