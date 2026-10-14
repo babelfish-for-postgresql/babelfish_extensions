@@ -2605,9 +2605,10 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 
 CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
- SELECT CAST(sys.db_name() AS sys.sysname) AS "CATALOG_NAME",
- CAST(CASE WHEN np.nspname LIKE PG_CATALOG.CONCAT(sys.db_name(),'%') THEN PG_CATALOG.RIGHT(np.nspname, LENGTH(np.nspname) - LENGTH(sys.db_name()) - 1)
-      ELSE np.nspname END AS sys.nvarchar(128)) AS "SCHEMA_NAME",
+	SELECT CAST(sys.db_name() AS sys.sysname) AS "CATALOG_NAME",
+	CAST(CASE WHEN ext.orig_name IS NOT NULL THEN ext.orig_name::text
+	     WHEN np.nspname LIKE PG_CATALOG.CONCAT(sys.db_name(),'%') THEN PG_CATALOG.RIGHT(np.nspname, LENGTH(np.nspname) - LENGTH(sys.db_name()) - 1)
+	     ELSE np.nspname::text END AS sys.nvarchar(128)) AS "SCHEMA_NAME",
  -- For system-defined schemas, schema-owner name will be same as schema_name
  -- For user-defined schemas having default owner, schema-owner will be dbo
  -- For user-defined schemas with explicit owners, rolname contains dbname followed
@@ -3650,7 +3651,7 @@ GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.domains AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
-		CAST(t.typname AS sys.sysname) AS "DOMAIN_NAME",
+		CAST(sys.bbf_get_original_identifier_name(t.typname, nc.nspname, 'pg_type'::regclass::oid) AS sys.sysname) AS "DOMAIN_NAME",
 		CAST(case when is_tbl_type THEN 'table type' ELSE tsql_type_name END AS sys.sysname) AS "DATA_TYPE",
 
 		CAST(information_schema_tsql._pgtsql_char_max_length(tsql_type_name, t.typtypmod)
@@ -3976,7 +3977,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 		CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
-		CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
+		CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) AS sys.nvarchar(128)) AS "COLUMN_NAME",
 		CAST(ord AS int) AS "ORDINAL_POSITION"	
 	FROM
 		pg_constraint c 
@@ -4039,7 +4040,13 @@ and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
 -- For User Defined Types
-select cast(sys.bbf_get_original_identifier_name(t.typname, t.typnamespace::regnamespace::name, 1247) as sys.sysname) as name
+select cast(
+    case
+      when tt.typrelid is not null
+        then sys.bbf_get_truncated_rel_original_name(ttc.reloptions, ttc.relname)
+      else sys.bbf_get_original_identifier_name(t.typname, t.typnamespace::regnamespace::name, 1247)
+    end
+    as sys.sysname) as name
   , cast(t.typbasetype as int) as system_type_id
   , cast(t.oid as int) as user_type_id
   , cast(t.typnamespace as int) as schema_id
@@ -4071,6 +4078,7 @@ join sys.schemas sch on t.typnamespace = sch.schema_id
 left join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
 left join tt_internal tt on t.typrelid = tt.typrelid
+left join pg_catalog.pg_class ttc on ttc.oid = t.typrelid
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
 -- we want to show details of user defined datatypes created under babelfish database
 where 
@@ -5511,7 +5519,7 @@ GRANT EXECUTE ON PROCEDURE sys.sp_helplogins TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SEQUENCE_CATALOG",
             CAST(extc.orig_name AS sys.nvarchar(128)) AS "SEQUENCE_SCHEMA",
-            CAST(r.relname AS sys.nvarchar(128)) AS "SEQUENCE_NAME",
+            CAST(sys.bbf_get_original_identifier_name(r.relname, nc.nspname, 'pg_class'::regclass::oid, '') AS sys.nvarchar(128)) AS "SEQUENCE_NAME",
             CAST(CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype) ELSE tsql_type_name END
                     AS sys.nvarchar(128))AS "DATA_TYPE",  -- numeric and decimal data types are converted into bigint which is due to Postgres inherent implementation
             CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, -1)
