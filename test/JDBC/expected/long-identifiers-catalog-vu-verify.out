@@ -3,7 +3,7 @@ SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_PK%CatVU';
 GO
 ~~START~~
 varchar
-Very_Long_PK_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+very_long_pk_constraint_name_that_exceeds_postgresql_limit_of_sixty_three_catvu
 ~~END~~
 
 
@@ -11,7 +11,7 @@ SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_Unique%CatVU';
 GO
 ~~START~~
 varchar
-Very_Long_Unique_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+very_long_unique_constraint_name_that_exceeds_postgresql_limit_of_sixty_three_catvu
 ~~END~~
 
 
@@ -19,7 +19,7 @@ SELECT name FROM sys.check_constraints WHERE name LIKE 'Very_Long_Check%CatVU';
 GO
 ~~START~~
 varchar
-Very_Long_Check_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+very_long_check_constraint_name_that_exceeds_postgresql_limit_of_sixty_three_catvu
 ~~END~~
 
 
@@ -36,7 +36,7 @@ SELECT name FROM sys.types WHERE name LIKE 'Very_Long_Type%CatVU';
 GO
 ~~START~~
 varchar
-Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU
+very_long_type_name_that_exceeds_postgresql_limit_of_sixty_three_characters_catvu
 ~~END~~
 
 
@@ -45,7 +45,7 @@ SELECT name FROM sys.all_parameters WHERE name LIKE '%Very_Long_Parameter%CatVU'
 GO
 ~~START~~
 varchar
-@Very_Long_Parameter_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU
+@very_long_parameter_name_that_exceeds_postgresql_limit_of_sixty_three_characters_catvu
 ~~END~~
 
 
@@ -56,14 +56,14 @@ SELECT name FROM sys.all_parameters WHERE name LIKE '%Sixty_Three_ProcOne';
 GO
 ~~START~~
 varchar
-@Shared_Long_Parameter_Prefix_That_Exceeds_PostgreSQL_Limit_Sixty_Three_ProcOne
+@shared_long_parameter_prefix_that_exceeds_postgresql_limit_sixty_three_procone
 ~~END~~
 
 SELECT name FROM sys.all_parameters WHERE name LIKE '%Sixty_Three_ProcTwo';
 GO
 ~~START~~
 varchar
-@Shared_Long_Parameter_Prefix_That_Exceeds_PostgreSQL_Limit_Sixty_Three_ProcTwo
+@shared_long_parameter_prefix_that_exceeds_postgresql_limit_sixty_three_proctwo
 ~~END~~
 
 
@@ -74,21 +74,21 @@ SELECT name FROM sys.check_constraints WHERE name LIKE 'Very_Long_Alter_Check%Ca
 GO
 ~~START~~
 varchar
-Very_Long_Alter_Check_Constraint_Name_That_Exceeds_Sixty_Three_Bytes_CatVU
+very_long_alter_check_constraint_name_that_exceeds_sixty_three_bytes_catvu
 ~~END~~
 
 SELECT name FROM sys.key_constraints WHERE name LIKE 'Very_Long_Alter_Unique%CatVU';
 GO
 ~~START~~
 varchar
-Very_Long_Alter_Unique_Constraint_Name_That_Exceeds_Sixty_Three_Bytes_CatVU
+very_long_alter_unique_constraint_name_that_exceeds_sixty_three_bytes_catvu
 ~~END~~
 
 SELECT name FROM sys.foreign_keys WHERE name LIKE 'Very_Long_Alter_Foreign_Key%CatVU';
 GO
 ~~START~~
 varchar
-Very_Long_Alter_Foreign_Key_Constraint_Name_Exceeds_Sixty_Three_Bytes_CatVU
+very_long_alter_foreign_key_constraint_name_exceeds_sixty_three_bytes_catvu
 ~~END~~
 
 
@@ -300,7 +300,7 @@ SELECT name FROM sys.foreign_keys WHERE name LIKE 'babel5975_cat_vu_LongForeignK
 GO
 ~~START~~
 varchar
-babel5975_cat_vu_LongForeignKeyConstraintNameThatExceedsTheByteLim
+babel5975_cat_vu_longforeignkeyconstraintnamethatexceedsthebytelim
 ~~END~~
 
 DROP TABLE babel5975_cat_vu_fk_child_renamed;
@@ -351,8 +351,8 @@ ORDER BY t.name;
 GO
 ~~START~~
 varchar#!#varchar
-babel5975_cat_vu_collide_ta#!#Shared_Long_Check_Constraint_Reused_On_Two_Tables_Exceeding_Sixty_Three_CatVU
-babel5975_cat_vu_collide_tb#!#Shared_Long_Check_Constraint_Reused_On_Two_Tables_Exceeding_Sixty_Three_CatVU
+babel5975_cat_vu_collide_ta#!#shared_long_check_constraint_reused_on_two_tables_exceeding_sixty_three_catvu
+babel5975_cat_vu_collide_tb#!#shared_long_check_constraint_reused_on_two_tables_exceeding_sixty_three_catvu
 ~~END~~
 
 -- Both resolve to the full (non-truncated) shared name: expect 2.
@@ -380,14 +380,14 @@ SELECT name FROM sys.table_types WHERE name LIKE 'Very_Long_Table_Type%CatVU';
 GO
 ~~START~~
 varchar
-Very_Long_Table_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+very_long_table_type_name_that_exceeds_postgresql_limit_of_sixty_three_catvu
 ~~END~~
 
 SELECT name FROM sys.types WHERE name LIKE 'Very_Long_Table_Type%CatVU';
 GO
 ~~START~~
 varchar
-Very_Long_Table_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+very_long_table_type_name_that_exceeds_postgresql_limit_of_sixty_three_catvu
 ~~END~~
 
 
@@ -414,7 +414,7 @@ SELECT CAST(SEQUENCE_NAME AS sys.sysname) FROM INFORMATION_SCHEMA.SEQUENCES WHER
 GO
 ~~START~~
 varchar
-Very_Long_Sequence_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_CatVU
+very_long_sequence_name_that_exceeds_postgresql_limit_of_sixty_three_catvu
 ~~END~~
 
 
@@ -423,6 +423,6 @@ SELECT CAST(DOMAIN_NAME AS sys.sysname) FROM INFORMATION_SCHEMA.DOMAINS WHERE DO
 GO
 ~~START~~
 varchar
-Very_Long_Type_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_CatVU
+very_long_type_name_that_exceeds_postgresql_limit_of_sixty_three_characters_catvu
 ~~END~~
 

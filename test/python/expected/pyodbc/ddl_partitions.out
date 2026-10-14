@@ -328,7 +328,7 @@ GO
 
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
-CREATE TABLE [dbo].[PartitionTableNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz](
+CREATE TABLE [dbo].[partitiontablenamegreaterthan64andlessthan128abcdefghijklmnopqrstuvwxyz](
 	[id] [int] NULL,
 	[value] [varchar](50) NULL
 ) ON [IntPartitionScheme]([id])
@@ -337,19 +337,19 @@ GO
 
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
-CREATE TABLE [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[PartitionTableNameGreaterThan64AndLessThan128withoutEmoji$123rder](
-	[PartitionColumnNameLessThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqr] [bigint] NULL,
+CREATE TABLE [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan64andlessthan128withoutemoji$123rder](
+	[partitioncolumnnamelessthan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqr] [bigint] NULL,
 	[value] [varchar](50) NULL
-) ON [PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder]([PartitionColumnNameLessThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqr])
+) ON [PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder]([partitioncolumnnamelessthan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqr])
 
 GO
 
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
-CREATE TABLE [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[PartitionTableNameLessThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopq](
-	[PartitionColumnNameLessThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqr] [bigint] NULL,
+CREATE TABLE [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamelessthan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopq](
+	[partitioncolumnnamelessthan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqr] [bigint] NULL,
 	[value] [varchar](50) NULL
-) ON [PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz]([PartitionColumnNameLessThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqr])
+) ON [PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz]([partitioncolumnnamelessthan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqr])
 
 GO
 
@@ -473,16 +473,16 @@ CREATE NONCLUSTERED INDEX [partition_vu_prepare_varchar_index] ON [dbo].[partiti
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [VarCharPartitionScheme]([id])
 GO
 
-CREATE NONCLUSTERED INDEX [PartitionIndexNameLessThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopq] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[PartitionTableNameGreaterThan64AndLessThan128withoutEmoji$123rder]
+CREATE NONCLUSTERED INDEX [PartitionIndexNameLessThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopq] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamegreaterthan64andlessthan128withoutemoji$123rder]
 (
 	[value] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder]([PartitionColumnNameLessThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqr])
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PartitionSchemeNameGreaterThan64AndLessThan128HavingEmoji😎$123🌍rder]([partitioncolumnnamelessthan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqr])
 GO
 
-CREATE NONCLUSTERED INDEX [PartitionIndexNameLessThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopq] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[PartitionTableNameLessThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopq]
+CREATE NONCLUSTERED INDEX [PartitionIndexNameLessThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopq] ON [PartitionSchemaNameGreaterThan64abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz].[partitiontablenamelessthan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopq]
 (
 	[value] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz]([PartitionColumnNameLessThan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqr])
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PartitionSchemeNameGreaterThan64AndLessThan128abcdefghijklmnopqrstuvwxyz]([partitioncolumnnamelessthan128abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyabcdefghijklmnopqr])
 GO
 
 GO

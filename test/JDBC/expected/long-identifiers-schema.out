@@ -262,7 +262,7 @@ SELECT name FROM sys.objects WHERE name = 'Long_Seq_Rename_Dst_Name_That_Exceeds
 GO
 ~~START~~
 varchar
-Long_Seq_Rename_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A
+long_seq_rename_dst_name_that_exceeds_postgresql_limit_of_sixty_three_chars_a
 ~~END~~
 
 DROP SEQUENCE dbo.Long_Seq_Rename_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A;
@@ -289,7 +289,7 @@ SELECT name FROM sys.types WHERE name = 'Long_Type_Qual_Src_Name_That_Exceeds_Po
 GO
 ~~START~~
 varchar
-Long_Type_Qual_Src_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A
+long_type_qual_src_name_that_exceeds_postgresql_limit_of_sixty_three_chars_a
 ~~END~~
 
 EXEC sp_rename 'dbo.Long_Type_Qual_Src_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A', 'Long_Type_Qual_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A', 'USERDATATYPE';
@@ -312,7 +312,7 @@ SELECT name FROM sys.types WHERE name = 'Long_Type_Qual_Dst_Name_That_Exceeds_Po
 GO
 ~~START~~
 varchar
-Long_Type_Qual_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A
+long_type_qual_dst_name_that_exceeds_postgresql_limit_of_sixty_three_chars_a
 ~~END~~
 
 DROP TYPE dbo.Long_Type_Qual_Dst_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_A;
