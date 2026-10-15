@@ -103,9 +103,7 @@
 #include "schemacmds.h"
 #include "session.h"
 #include "pltsql.h"
-#include "batch_cache.h"
-#include "storage/ipc.h"
-#include "storage/shmem.h"
+#include "antlr_batch_parse_cache.h"
 #include "pltsql_partition.h"
 #include "pltsql_permissions.h"
 #include "pl_explain.h"
@@ -6722,17 +6720,6 @@ pltsql_truncate_identifier_func(PG_FUNCTION_ARGS)
 }
 
 /*
- * Attach to the batch query cache shared memory created by babelfishpg_tds.
- * Called from _PG_init(); babelfishpg_tsql is not preloaded, so the shared
- * memory already exists. Idempotent.
- */
-static void
-pltsql_batch_cache_attach(void)
-{
-	batch_cache_shmem_startup();
-}
-
-/*
  * _PG_init()			- library load-time initialization
  *
  * DO NOT make this static nor change its name!
@@ -7015,8 +7002,12 @@ _PG_init(void)
 
 	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
 
-	/* Batch query cache: attach to shared memory */
-	pltsql_batch_cache_attach();
+	/*
+	 * Batch query cache: attach to the shared memory created by
+	 * babelfishpg_tds. babelfishpg_tsql is not preloaded, so it already
+	 * exists here.
+	 */
+	antlr_batch_parse_cache_shmem_startup();
 
 	inited = true;
 }

@@ -1,35 +1,9 @@
--- psql
--- superuser enables the feature
-ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = on;
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-SELECT pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
-
-
 -- tsql
--- Customer can now enable the feature
--- Enabled by the superuser
-SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'on', false);
-GO
-~~START~~
-text
-on
-~~END~~
 
-
+-- The cache is enabled server-wide (babelfishpg_tds.enable_antlr_batch_parse_cache = on).
 -- Default min_entry_size is 16 KB which rejects most small entries.
 -- Customer lowers it to 0 for this session to cache all sp_prepexec queries.
-SELECT set_config('babelfishpg_tsql.batch_query_cache_min_entry_size', '0', false);
+SELECT set_config('babelfishpg_tsql.antlr_batch_parse_cache_min_entry_size', '0', false);
 GO
 ~~START~~
 text
@@ -38,7 +12,7 @@ text
 
 
 -- Flush any stale entries and reset stats
-SELECT sys.flush_batch_antlr_parse_cache();
+SELECT sys.flush_antlr_batch_parse_cache();
 GO
 ~~START~~
 bit
@@ -47,7 +21,7 @@ bit
 
 
 -- Baseline: empty cache, all zeros
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -70,7 +44,7 @@ int
 
 
 -- Expect: misses=1, writes=1, entries=1
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -93,7 +67,7 @@ int#!#int#!#varchar#!#int#!#numeric#!#datetime#!#varchar#!#varchar
 
 
 -- Expect: misses=2, writes=2, entries=2
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -119,7 +93,7 @@ US#!#3#!#31#!#79.990000
 
 
 -- Expect: misses=3, writes=3, entries=3
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -147,7 +121,7 @@ int#!#varchar#!#varchar#!#varchar#!#varchar
 
 
 -- Expect: misses=4, writes=4, entries=4
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -177,7 +151,7 @@ int#!#varchar#!#int#!#numeric#!#varchar#!#numeric
 
 
 -- Expect: misses=5, writes=5, entries=5
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -204,7 +178,7 @@ int#!#varchar#!#varchar#!#int
 
 
 -- Expect: misses=6, writes=6, entries=6
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -226,7 +200,7 @@ int#!#int#!#varchar#!#int#!#numeric#!#datetime#!#varchar#!#varchar
 
 
 -- Expect: no change (SQL_BATCH has args=NULL)
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -248,7 +222,7 @@ int#!#int#!#varchar#!#int#!#numeric#!#datetime#!#varchar#!#varchar
 
 
 -- Expect: no change (sp_executesql has options=0, not CACHE_PLAN)
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -270,7 +244,7 @@ int
 
 
 -- Expect: no change (stored procs use routine cache, not batch cache)
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -293,7 +267,7 @@ GO
 
 
 -- Expect: misses=7, writes=7, entries=7
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -316,7 +290,7 @@ int
 
 
 -- Expect: hits=1
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -342,7 +316,7 @@ int#!#varchar#!#varchar#!#varchar#!#varchar
 
 
 -- Expect: hits=2
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -381,7 +355,7 @@ int
 
 
 -- Expect: hits=5 (3 more hits on Test 1 query)
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -410,7 +384,7 @@ bigint
 
 
 -- Expect: hits=5, misses=8, writes=8, entries=8
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -429,7 +403,7 @@ hello
 
 
 -- Expect: hits=5, misses=9, writes=9, entries=9
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -448,7 +422,7 @@ numeric
 
 
 -- Expect: hits=5, misses=10, writes=10, entries=10
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -477,7 +451,7 @@ int#!#varchar
 
 
 -- Expect: misses=11, writes=11, entries=11
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -499,7 +473,7 @@ world#!#99
 
 
 -- Expect: hits=5, misses=12, writes=12, entries=12
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -521,7 +495,7 @@ bigint#!#numeric
 
 
 -- Expect: hits=5, misses=13, writes=13, entries=13
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -547,7 +521,7 @@ int
 
 
 -- Expect: hits=6
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -569,7 +543,7 @@ int#!#int
 
 
 -- Expect: misses=14, writes=14, entries=14
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -591,7 +565,7 @@ int#!#int#!#int
 
 
 -- Expect: misses=15, writes=15, entries=15
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -616,7 +590,7 @@ int#!#int#!#varchar#!#int#!#numeric#!#datetime#!#varchar#!#varchar
 
 
 -- Expect: hits=7
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -639,7 +613,7 @@ int#!#int#!#varchar#!#int#!#numeric#!#datetime#!#varchar#!#varchar#!#varchar
 
 
 -- Expect: hits=8 (cache hit, PG planner sees the new column)
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -684,7 +658,7 @@ GO
 
 
 -- Expect: hits increased (cache hit occurred, then execution failed)
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -693,40 +667,12 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 
 
 -- ============================================================================
--- Test 19: GUC toggle — disable cache, execute, re-enable
+-- Test 19: min_entry_size — entries smaller than the minimum are not written
 -- ============================================================================
-PRINT '=== Test 19: GUC toggle ===';
+PRINT '=== Test 19: min_entry_size skips small entries ===';
 GO
 
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
-GO
-~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-9#!#16#!#16#!#0#!#0#!#16
-~~END~~
-
-
--- Disable cache
-SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'off', false);
-GO
-~~START~~
-text
-off
-~~END~~
-
-
--- Execute sp_prepexec — should NOT use cache
-DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1', @p1=42
-GO
-~~START~~
-int
-42
-~~END~~
-
-
--- Expect: no change (bypassed)
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -734,31 +680,58 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 ~~END~~
 
 
--- Re-enable cache
-SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'on', false);
+-- Raise the minimum to 16 KB for this session
+SELECT set_config('babelfishpg_tsql.antlr_batch_parse_cache_min_entry_size', '16', false);
 GO
 ~~START~~
 text
-on
+16kB
 ~~END~~
 
 
--- Execute same query — should HIT cache
+-- New small query — miss, but too small to be written
 DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1', @p1=42
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1 + 19', @p1=42
 GO
 ~~START~~
 int
-42
+61
 ~~END~~
 
 
--- Expect: hits increased
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+-- Expect: misses +1, writes unchanged
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-10#!#16#!#16#!#0#!#0#!#16
+9#!#17#!#16#!#0#!#0#!#16
+~~END~~
+
+
+-- Back to 0: the same query is now written
+SELECT set_config('babelfishpg_tsql.antlr_batch_parse_cache_min_entry_size', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1 + 19', @p1=42
+GO
+~~START~~
+int
+61
+~~END~~
+
+
+-- Expect: misses +1, writes +1
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+9#!#18#!#17#!#0#!#0#!#17
 ~~END~~
 
 
@@ -768,15 +741,15 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 PRINT '=== Test 20: Flush ===';
 GO
 
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-10#!#16#!#16#!#0#!#0#!#16
+9#!#18#!#17#!#0#!#0#!#17
 ~~END~~
 
 
-SELECT sys.flush_batch_antlr_parse_cache();
+SELECT sys.flush_antlr_batch_parse_cache();
 GO
 ~~START~~
 bit
@@ -785,7 +758,7 @@ bit
 
 
 -- Expect: all zeros after flush
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -804,7 +777,7 @@ int
 
 
 -- Expect: misses=1, writes=1, entries=1
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -829,7 +802,7 @@ int
 
 
 -- Expect: misses=2, entries=2
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -848,7 +821,7 @@ int
 
 
 -- Expect: misses=3, entries=3
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -873,7 +846,7 @@ int
 
 
 -- Expect: misses=4, entries=4
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -905,7 +878,7 @@ int
 
 
 -- Expect: misses=5, writes=5, entries=5
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -932,7 +905,7 @@ int
 
 
 -- Expect: hits increased
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -946,18 +919,21 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 PRINT '=== Test 24: Cache entries view ===';
 GO
 
+-- Only metadata is exposed: no query text or parse tree
 SELECT
-    query_text
-FROM sys.batch_antlr_parse_cache_entries()
+    query_text_len,
+    CASE WHEN parse_tree_len > 0 THEN 1 ELSE 0 END AS has_tree,
+    CASE WHEN bbf_version IS NOT NULL THEN 1 ELSE 0 END AS has_version
+FROM sys.antlr_batch_parse_cache_entries()
 ORDER BY query_text_len ASC, cache_key ASC;
 GO
 ~~START~~
-text
-SELECT @p1
-select @p1
-SELECT @P1
-SELECT  @p1
-DECLARE @result VARCHAR(100) SET @result = 'Order ' + CAST(@p1 AS VARCHAR) + ' for ' + @p2 SELECT @result AS summary SELECT COUNT(*) AS total_orders FROM dbo.cache_orders WHERE customer_id = @p1
+int#!#int#!#int
+10#!#1#!#1
+10#!#1#!#1
+10#!#1#!#1
+11#!#1#!#1
+194#!#1#!#1
 ~~END~~
 
 
@@ -966,19 +942,11 @@ DECLARE @result VARCHAR(100) SET @result = 'Order ' + CAST(@p1 AS VARCHAR) + ' f
 -- ============================================================================
 PRINT '=== Final cache stats ===';
 GO
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 1#!#5#!#5#!#0#!#0#!#5
-~~END~~
-
-
-SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'off', false);
-GO
-~~START~~
-text
-off
 ~~END~~
 
 
@@ -1005,7 +973,7 @@ GO
 
 -- tsql      user=babel_6890_testuser password=12345678
 -- Non-sysadmin tries to access cache functions — should fail
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1014,16 +982,16 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 ~~ERROR (Message: Only sysadmin can access batch query parse cache functions.)~~
 
 
-SELECT * FROM sys.batch_antlr_parse_cache_entries();
+SELECT * FROM sys.antlr_batch_parse_cache_entries();
 GO
 ~~START~~
-bigint#!#datetime#!#datetime#!#int#!#int#!#int#!#text#!#text#!#text
+bigint#!#datetime#!#datetime#!#int#!#int#!#int#!#text
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Only sysadmin can access batch query parse cache functions.)~~
 
 
-SELECT sys.flush_batch_antlr_parse_cache();
+SELECT sys.flush_antlr_batch_parse_cache();
 GO
 ~~START~~
 bit
@@ -1041,7 +1009,7 @@ bit
 PRINT '=== Test 26: Permission — sysadmin allowed ===';
 GO
 
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1052,179 +1020,21 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 
 -- Test user cleanup is in BABEL-6890-vu-cleanup.sql
 -- ============================================================================
--- Test 28: Kill switch off while session has enable=on
--- Session already has enable=on, then a superuser flips allow=off.
--- Subsequent queries should silently bypass cache (no writes, no hits).
--- ============================================================================
-PRINT '=== Test 28: Kill switch off while enabled ===';
-GO
-
--- psql
--- First ensure allow is on
-ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = on;
-SELECT pg_reload_conf();
-SELECT pg_sleep(1);
-GO
-~~START~~
-bool
-t
-~~END~~
-
-~~START~~
-void
-
-~~END~~
-
-
--- tsql
--- Enable cache and run a query to populate
-SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'on', false);
-GO
-~~START~~
-text
-on
-~~END~~
-
-SELECT set_config('babelfishpg_tsql.batch_query_cache_min_entry_size', '0', false);
-GO
-~~START~~
-text
-0
-~~END~~
-
-SELECT sys.flush_batch_antlr_parse_cache();
-GO
-~~START~~
-bit
-1
-~~END~~
-
-
--- First exec — cache miss + write
-DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1 + 100', @p1=1
-GO
-~~START~~
-int
-101
-~~END~~
-
-
--- Verify entry was written
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
-GO
-~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-0#!#1#!#1#!#0#!#0#!#1
-~~END~~
-
-
--- psql
--- Now a superuser flips the kill switch off
-ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = off;
-SELECT pg_reload_conf();
-SELECT pg_sleep(1);
-GO
-~~START~~
-bool
-t
-~~END~~
-
-~~START~~
-void
-
-~~END~~
-
-
--- tsql
--- Session still has enable=on but allow is now off
--- This exec should silently bypass cache — no hit, no write
-DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1 + 200', @p1=2
-GO
-~~START~~
-int
-202
-~~END~~
-
-
--- Stats should NOT change (no new miss or write — cache bypassed entirely)
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
-GO
-~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-0#!#1#!#1#!#0#!#0#!#1
-~~END~~
-
-
--- Re-execute the cached query — should NOT hit (allow is off)
-DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1 + 100', @p1=3
-GO
-~~START~~
-int
-103
-~~END~~
-
-
--- Stats should still NOT change
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
-GO
-~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-0#!#1#!#1#!#0#!#0#!#1
-~~END~~
-
-
-SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'off', false);
-GO
-~~START~~
-text
-off
-~~END~~
-
-
-
--- psql
--- ============================================================================
 -- Test 29: Same query body, different parameter count
 -- The parameter signature is part of the cache key, so each declaration
 -- gets its own entry and neither overwrites the other.
 -- ============================================================================
-ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = on;
-SELECT pg_reload_conf();
-SELECT pg_sleep(1);
-GO
-~~START~~
-bool
-t
-~~END~~
-
-~~START~~
-void
-
-~~END~~
-
-
--- tsql
 PRINT '=== Test 29: Same body, different param count ===';
 GO
 
-SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'on', false);
-GO
-~~START~~
-text
-on
-~~END~~
-
-SELECT set_config('babelfishpg_tsql.batch_query_cache_min_entry_size', '0', false);
+SELECT set_config('babelfishpg_tsql.antlr_batch_parse_cache_min_entry_size', '0', false);
 GO
 ~~START~~
 text
 0
 ~~END~~
 
-SELECT sys.flush_batch_antlr_parse_cache();
+SELECT sys.flush_antlr_batch_parse_cache();
 GO
 ~~START~~
 bit
@@ -1243,7 +1053,7 @@ int
 
 
 -- Expect: hits=0, misses=1, writes=1, entries=1
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1262,7 +1072,7 @@ int
 
 
 -- Expect: hits=0, misses=2, writes=2, entries=2
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1281,7 +1091,7 @@ int
 
 
 -- Expect: hits=1, misses=2, writes=2, entries=2
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1297,7 +1107,7 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 PRINT '=== Test 30: DECLARE variable correctness ===';
 GO
 
-SELECT sys.flush_batch_antlr_parse_cache();
+SELECT sys.flush_antlr_batch_parse_cache();
 GO
 ~~START~~
 bit
@@ -1318,7 +1128,7 @@ int#!#varchar
 
 
 -- Expect: misses=1, writes=1, entries=1
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1339,7 +1149,7 @@ int#!#varchar
 
 
 -- Expect: hits=1 and correct output (30, '30 items')
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1355,7 +1165,7 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 PRINT '=== Test 31: Same body, different param type ===';
 GO
 
-SELECT sys.flush_batch_antlr_parse_cache();
+SELECT sys.flush_antlr_batch_parse_cache();
 GO
 ~~START~~
 bit
@@ -1384,7 +1194,7 @@ varchar
 
 
 -- Expect: hits=0, misses=2, writes=2, entries=2
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1403,7 +1213,7 @@ varchar
 
 
 -- Expect: hits=1, misses=2, writes=2, entries=2
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1419,7 +1229,7 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 PRINT '=== Test 32: Same type, different length ===';
 GO
 
-SELECT sys.flush_batch_antlr_parse_cache();
+SELECT sys.flush_antlr_batch_parse_cache();
 GO
 ~~START~~
 bit
@@ -1437,7 +1247,7 @@ varchar
 
 
 -- Expect: hits=0, misses=1, writes=1, entries=1
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1456,7 +1266,7 @@ varchar
 
 
 -- Expect: hits=1, misses=1, writes=1, entries=1
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1473,7 +1283,7 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 PRINT '=== Test 33: QUOTED_IDENTIFIER in cache key ===';
 GO
 
-SELECT sys.flush_batch_antlr_parse_cache();
+SELECT sys.flush_antlr_batch_parse_cache();
 GO
 ~~START~~
 bit
@@ -1494,7 +1304,7 @@ active
 
 
 -- Expect: hits=0, misses=1, writes=1, entries=1
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1527,7 +1337,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 -- Expect: hits=1, misses=2, writes=2, entries=2
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1546,7 +1356,7 @@ active
 
 
 -- Expect: hits=2, misses=2, writes=2, entries=2
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1562,7 +1372,7 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 PRINT '=== Test 34: enable_tsql_information_schema in cache key ===';
 GO
 
-SELECT sys.flush_batch_antlr_parse_cache();
+SELECT sys.flush_antlr_batch_parse_cache();
 GO
 ~~START~~
 bit
@@ -1606,7 +1416,7 @@ dbo
 
 
 -- Expect: hits=0, misses=2, writes=2, entries=2
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1625,7 +1435,7 @@ dbo
 
 
 -- Expect: hits=1, misses=2, writes=2, entries=2
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -1641,120 +1451,5 @@ off
 ~~END~~
 
 
--- ============================================================================
--- Test 35: escape hatch values are part of the cache key
--- With escape_hatch_query_hints = strict, OPTION (MAXDOP 1) raises at parse
--- time. A tree cached under ignore must not let a strict session skip it.
--- ============================================================================
-PRINT '=== Test 35: escape hatch in cache key ===';
-GO
-
-SELECT sys.flush_batch_antlr_parse_cache();
-GO
-~~START~~
-bit
-1
-~~END~~
-
-SELECT set_config('babelfishpg_tsql.escape_hatch_query_hints', 'ignore', false);
-GO
-~~START~~
-text
-ignore
-~~END~~
-
-
--- ignore: hint is ignored, query runs → 'active'
-DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT status AS v FROM dbo.cache_orders WHERE order_id = @p1 OPTION (MAXDOP 1)', @p1=1
-GO
-~~START~~
-varchar
-active
-~~END~~
-
-
--- Expect: hits=0, misses=1, writes=1, entries=1
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
-GO
-~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-0#!#1#!#1#!#0#!#0#!#1
-~~END~~
-
-
-SELECT set_config('babelfishpg_tsql.escape_hatch_query_hints', 'strict', false);
-GO
-~~START~~
-text
-strict
-~~END~~
-
-
--- strict: must raise 'query hint is not currently supported'
-DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT status AS v FROM dbo.cache_orders WHERE order_id = @p1 OPTION (MAXDOP 1)', @p1=1
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'query hint' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_query_hints to ignore)~~
-
-
--- Expect: hits=0, misses=2, writes=1, entries=1 (parse failed, nothing written)
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
-GO
-~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-0#!#2#!#1#!#0#!#0#!#1
-~~END~~
-
-
-SELECT set_config('babelfishpg_tsql.escape_hatch_query_hints', 'ignore', false);
-GO
-~~START~~
-text
-ignore
-~~END~~
-
-
--- ignore again: HIT the original entry, 'active'
-DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT status AS v FROM dbo.cache_orders WHERE order_id = @p1 OPTION (MAXDOP 1)', @p1=1
-GO
-~~START~~
-varchar
-active
-~~END~~
-
-
--- Expect: hits=1, misses=2, writes=1, entries=1
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
-GO
-~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-1#!#2#!#1#!#0#!#0#!#1
-~~END~~
-
-
-SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'off', false);
-GO
-~~START~~
-text
-off
-~~END~~
-
-
--- psql
--- Reset kill switch for cleanup
-ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = off;
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-
--- tsql
 PRINT 'BABEL-6890 verify completed';
 GO

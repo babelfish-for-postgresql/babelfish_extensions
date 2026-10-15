@@ -1,43 +1,10 @@
--- psql
--- superuser enables the feature
-ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = on;
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-SELECT pg_sleep(1)
-GO
-~~START~~
-void
-
-~~END~~
-
-
 -- tsql
 -- Flush the batch query parse cache
-SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'on', false);
-GO
-~~START~~
-text
-on
-~~END~~
-
-
-SELECT sys.flush_batch_antlr_parse_cache();
+SELECT sys.flush_antlr_batch_parse_cache();
 GO
 ~~START~~
 bit
 1
-~~END~~
-
-SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'off', false);
-GO
-~~START~~
-text
-off
 ~~END~~
 
 
@@ -62,17 +29,5 @@ BEGIN
 END
 GO
 
--- psql
--- superuser enables the feature
-ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = off;
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-
--- tsql
 PRINT 'BABEL-6890 cleanup completed';
 GO

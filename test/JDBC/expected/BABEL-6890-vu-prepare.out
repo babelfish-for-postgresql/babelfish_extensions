@@ -1,36 +1,7 @@
--- tsql
--- Customer can't enable the feature
--- Disabled by the superuser by default
-SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'on', false);
-GO
-~~START~~
-text
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Batch query parse cache feature is not enabled.)~~
-
-
 -- psql
-ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = on;
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-SELECT pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
-
-
--- tsql
--- Customer can now enable the feature
--- Enabled by the superuser
-SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'on', false);
+-- The cache is enabled server-wide in postgresql.conf before startup:
+--   babelfishpg_tds.enable_antlr_batch_parse_cache = on
+SHOW babelfishpg_tds.enable_antlr_batch_parse_cache;
 GO
 ~~START~~
 text
@@ -38,8 +9,19 @@ on
 ~~END~~
 
 
+-- tsql
+-- PGC_POSTMASTER: cannot be changed in a session
+SELECT set_config('babelfishpg_tds.enable_antlr_batch_parse_cache', 'off', false);
+GO
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parameter "babelfishpg_tds.enable_antlr_batch_parse_cache" cannot be changed without restarting the server)~~
+
+
 -- Flush any stale entries from previous runs
-SELECT sys.flush_batch_antlr_parse_cache();
+SELECT sys.flush_antlr_batch_parse_cache();
 GO
 ~~START~~
 bit
@@ -48,7 +30,7 @@ bit
 
 
 -- Baseline stats (should be all zeros after flush)
-SELECT * FROM sys.batch_antlr_parse_cache_stats();
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
@@ -109,25 +91,5 @@ BEGIN
 END;
 GO
 
-SELECT set_config('babelfishpg_tsql.enable_batch_query_cache', 'off', false);
-GO
-~~START~~
-text
-off
-~~END~~
-
-
--- psql
--- superuser enables the feature
-ALTER SYSTEM SET babelfishpg_tsql.allow_batch_query_cache = off;
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-
--- tsql
 PRINT 'BABEL-6890 prepare completed';
 GO
