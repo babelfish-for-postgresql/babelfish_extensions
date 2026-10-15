@@ -19,7 +19,6 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_collation.h"
-#include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
 #include "common/hashfn.h"
 #include "funcapi.h"
@@ -615,22 +614,6 @@ antlr_batch_parse_cache_flush(void)
  */
 
 /*
- * antlr_batch_parse_cache_oid_in_builtin_schema - true if the namespace is pg_catalog or
- * the Babelfish sys schema, i.e. a name there resolves the same in every
- * session.
- *
- * Same check as is_namespace_sys_or_pg_catalog() in pltsql_coerce.c, which
- * is static there.
- */
-static bool
-antlr_batch_parse_cache_oid_in_builtin_schema(Oid nsp)
-{
-	if (nsp == PG_CATALOG_NAMESPACE)
-		return true;
-	return OidIsValid(nsp) && nsp == get_namespace_oid("sys", true);
-}
-
-/*
  * antlr_batch_parse_cache_type_is_cacheable - true if the variable's type and collation
  * are built-in. A user-defined type or collation referenced by an unqualified
  * name could resolve to a different OID in another session, so a batch that
@@ -650,7 +633,7 @@ antlr_batch_parse_cache_type_is_cacheable(PLtsql_type *dtype)
 		return false;
 	nsp = ((Form_pg_type) GETSTRUCT(tp))->typnamespace;
 	ReleaseSysCache(tp);
-	if (!antlr_batch_parse_cache_oid_in_builtin_schema(nsp))
+	if (!is_namespace_sys_or_pg_catalog(nsp))
 		return false;
 
 	/* InvalidOid collation = none/default, which is safe */
@@ -661,7 +644,7 @@ antlr_batch_parse_cache_type_is_cacheable(PLtsql_type *dtype)
 			return false;
 		nsp = ((Form_pg_collation) GETSTRUCT(tp))->collnamespace;
 		ReleaseSysCache(tp);
-		if (!antlr_batch_parse_cache_oid_in_builtin_schema(nsp))
+		if (!is_namespace_sys_or_pg_catalog(nsp))
 			return false;
 	}
 

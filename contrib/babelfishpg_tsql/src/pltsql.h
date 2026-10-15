@@ -2616,6 +2616,7 @@ extern bool     validate_special_function(char *proc_nsname, char *proc_name, in
 extern int32    resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found);
 extern Oid      get_immediate_base_type_of_UDT_internal(Oid oid);
 extern bool 	is_numeric_datatype(Oid typid);
+extern bool 	is_namespace_sys_or_pg_catalog(Oid nspoid);
 
 /*
  * Function in pltsql_ruleutils.c
