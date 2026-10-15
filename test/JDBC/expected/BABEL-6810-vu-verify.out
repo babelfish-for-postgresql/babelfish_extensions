@@ -1,0 +1,76 @@
+-- EXEC a table-valued function with a named argument, via a procedure and
+-- directly at batch level
+EXEC babel_6810_vu_prepare_call_variant 'test'
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The procedure babel_6810_vu_prepare_tvf_variant is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+EXEC babel_6810_vu_prepare_call_nvarchar 'test'
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The procedure babel_6810_vu_prepare_tvf_nvarchar is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+EXEC babel_6810_vu_prepare_tvf_nvarchar @customerRef = 'batch_level'
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The procedure babel_6810_vu_prepare_tvf_nvarchar is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+-- EXEC a table-valued function with a positional argument
+EXEC babel_6810_vu_prepare_call_positional 'test'
+GO
+~~ERROR (Code: 206)~~
+
+~~ERROR (Message: The procedure babel_6810_vu_prepare_tvf_nvarchar is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
+
+
+-- Invoke the table-valued function the supported way, via SELECT
+SELECT CAST(Address AS NVARCHAR(50)) AS addr FROM babel_6810_vu_prepare_tvf_nvarchar('direct_ok')
+GO
+~~START~~
+nvarchar
+direct_ok
+~~END~~
+
+
+-- Named-argument procedure call
+EXEC babel_6810_vu_prepare_add @a = 3, @b = 4
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+-- Named-argument procedure call with an OUTPUT parameter
+DECLARE @res INT
+EXEC babel_6810_vu_prepare_out @x = 5, @y = @res OUTPUT
+SELECT @res AS out_value
+GO
+~~START~~
+int
+50
+~~END~~
+
+
+-- Named-argument procedure call relying on a default, and supplying all args
+EXEC babel_6810_vu_prepare_def @a = 1
+GO
+~~START~~
+int
+101
+~~END~~
+
+
+EXEC babel_6810_vu_prepare_def @a = 1, @b = 2
+GO
+~~START~~
+int
+3
+~~END~~
+

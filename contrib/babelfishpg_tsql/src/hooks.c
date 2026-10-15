@@ -5137,6 +5137,29 @@ match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
 	int			pronargs = procform->pronargs;
 
+	/* Account for OUT args, matching core FuncnameGetCandidates() */
+	if (include_out_arguments)
+	{
+		Datum		proallargtypes;
+		bool		isNull;
+
+		proallargtypes = SysCacheGetAttr(PROCOID, proctup,
+										 Anum_pg_proc_proallargtypes,
+										 &isNull);
+		if (!isNull)
+		{
+			ArrayType  *arr = DatumGetArrayTypeP(proallargtypes);
+
+			pronargs = ARR_DIMS(arr)[0];
+			if (ARR_NDIM(arr) != 1 ||
+				pronargs < 0 ||
+				ARR_HASNULL(arr) ||
+				ARR_ELEMTYPE(arr) != OIDOID)
+				elog(ERROR, "proallargtypes is not a 1-D Oid array or it contains nulls");
+			Assert(pronargs >= procform->pronargs);
+		}
+	}
+
 	if (argnames != NIL)
 	{
 		/*
