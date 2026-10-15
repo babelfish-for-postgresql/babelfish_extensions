@@ -2418,7 +2418,7 @@ List
 *get_columns(char *index_stmt)
 {
 	
-	const char 	*indexdf = index_stmt;
+	char	   *indexdf = index_stmt;
 	List		*column_name_list = NULL;
 	size_t 		regconfig_len = strlen("regconfig, ");
 	size_t 		replace_special_chars_fts_len = strlen("replace_special_chars_fts(");
@@ -2507,7 +2507,7 @@ char
 
 			if (next_char_index < input_len) {
 				for (int k = 0; k < 5; k++) {
-					char *is_special_char = strchr(special_chars[k], input_str[next_char_index]);
+					const char *is_special_char = strchr(special_chars[k], input_str[next_char_index]);
 					while ((next_char_index < input_len && isspace((unsigned char)input_str[next_char_index])) || (next_char_index < input_len && is_special_char != NULL)) {
 						if (is_special_char != NULL) {
 							is_single = false;

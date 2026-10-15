@@ -4728,7 +4728,6 @@ make_target_row(List *fields, int location)
 static char *
 read_top_clause(execsql_ctx *ctx)
 {
-	int length = 4; /* length of "TOP " */
 	int start = yylloc;
 
 	/*
@@ -4741,12 +4740,9 @@ read_top_clause(execsql_ctx *ctx)
 		YYDPRINTF((stderr, "read_top_clause - tok (%d) loc(%d) len(%d)\n", 
 				  ctx->tok, pltsql_yylloc, pltsql_get_yyleng()));
 
-		if (ctx->tok == ICONST)
-			length += pltsql_get_yyleng();
-		else if (ctx->tok == FCONST)
-			length += pltsql_get_yyleng();
-		else if (word_matches(ctx->tok, "PERCENT"))
-			length += pltsql_get_yyleng();
+		if (ctx->tok == ICONST || ctx->tok == FCONST ||
+			word_matches(ctx->tok, "PERCENT"))
+			continue;			/* still inside the TOP clause */
 		else if (ctx->tok == '(')
 		{
 			int paren_level = 1;

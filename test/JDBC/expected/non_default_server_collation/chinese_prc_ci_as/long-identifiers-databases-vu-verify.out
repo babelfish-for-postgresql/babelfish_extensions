@@ -40,7 +40,7 @@ SELECT default_database_name FROM sys.sql_logins WHERE name = 'long_default_db_l
 GO
 ~~START~~
 varchar
-Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC
+very_long_database_name_that_exceeds_postgresql_limit_vu_tvc
 ~~END~~
 
 
@@ -48,7 +48,7 @@ SELECT default_database_name FROM sys.server_principals WHERE name = 'long_defau
 GO
 ~~START~~
 varchar
-Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC
+very_long_database_name_that_exceeds_postgresql_limit_vu_tvc
 ~~END~~
 
 

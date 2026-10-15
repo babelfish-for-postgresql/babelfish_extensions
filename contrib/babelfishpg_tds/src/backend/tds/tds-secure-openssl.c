@@ -93,13 +93,7 @@ Tds_be_tls_init(bool isServerStart)
 	/* This stuff need be done only once. */
 	if (!SSL_initialized)
 	{
-#ifdef HAVE_OPENSSL_INIT_SSL
 		OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
-#else
-		OPENSSL_config(NULL);
-		SSL_library_init();
-		SSL_load_error_strings();
-#endif
 		SSL_initialized = true;
 	}
 
@@ -584,13 +578,8 @@ aloop:
 	}
 
 	/* TDS specific post SSL function register */
-#ifdef HAVE_BIO_METH_NEW
 	BIO_meth_set_read(my_bio_methods, my_sock_read);
 	BIO_meth_set_write(my_bio_methods, my_sock_write);
-#else
-	my_bio_methods->bread = my_sock_read;
-	my_bio_methods->bwrite = my_sock_write;
-#endif
 
 
 	/* and extract the Common Name and Distinguished Name from it. */
@@ -600,18 +589,18 @@ aloop:
 	if (port->peer != NULL)
 	{
 		int			len;
-		X509_NAME  *x509name = X509_get_subject_name(port->peer);
+		const X509_NAME *x509name = X509_get_subject_name(port->peer);
 		char	   *peer_dn;
 		BIO		   *bio = NULL;
 		BUF_MEM    *bio_buf = NULL;
 
-		len = X509_NAME_get_text_by_NID(x509name, NID_commonName, NULL, 0);
+		len = X509_NAME_get_text_by_NID(unconstify(X509_NAME *, x509name), NID_commonName, NULL, 0);
 		if (len != -1)
 		{
 			char	   *peer_cn;
 
 			peer_cn = MemoryContextAlloc(TopMemoryContext, len + 1);
-			r = X509_NAME_get_text_by_NID(x509name, NID_commonName, peer_cn,
+			r = X509_NAME_get_text_by_NID(unconstify(X509_NAME *, x509name), NID_commonName, peer_cn,
 										  len + 1);
 			peer_cn[len] = '\0';
 			if (r != len)

@@ -659,7 +659,7 @@ Datum remove_accents_internal_using_cache(PG_FUNCTION_ARGS)
 		unsigned char b4 = 0;
 		uint32 utf8_char;
 		uint32 utf8_normalized_str;
-		remove_accent_map_pair *pr;
+		const remove_accent_map_pair *pr;
 
 		/* "break" cases all represent errors */
 		if (*input_str == '\0')

@@ -389,13 +389,13 @@ get_err_lineno(const char *context)
 	int			lineno = -1;
 	const char *pattern1 = "line ";
 	const char *pattern2 = " at";
-	char	   *start,
-			   *end;
+	const char *start;
+	char	   *end;
 
 	if ((start = strstr(context, pattern1)))
 	{
 		start += strlen(pattern1);
-		if ((end = strstr(start, pattern2)))
+		if (strstr(start, pattern2))
 		{
 			lineno = strtoint(start, &end, 10);
 		}

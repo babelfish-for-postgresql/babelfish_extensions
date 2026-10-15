@@ -454,8 +454,7 @@ SetVariables(TDSRequestSP req, FunctionCallInfo *fcinfo)
 {
 	InlineCodeBlockArgs *codeblock_args;
 	ParameterToken token = NULL;
-	int			i = 0,
-				index = 0;
+	int			index = 0;
 
 	/* should be only called for sp_execute */
 	Assert(req->spType == SP_EXECUTE);
@@ -498,8 +497,6 @@ SetVariables(TDSRequestSP req, FunctionCallInfo *fcinfo)
 																   index,
 																   NULL,
 																   fcinfo);
-
-			i++;
 		}
 	}
 
@@ -2225,7 +2222,6 @@ InitializeDataParamTokenIndex(TDSRequestSP request)
 {
 	ParameterToken token;
 	uint16		idOutParam = 0;
-	int32		paramCount = 0;
 
 	request->nOutParams = 0;
 	request->idxOutParams = NULL;
@@ -2251,7 +2247,6 @@ InitializeDataParamTokenIndex(TDSRequestSP request)
 
 		if ((token->flags & 0x01) == 1)
 			request->idxOutParams[idOutParam++] = token;
-		paramCount++;
 	}
 
 	Assert(request->nOutParams == idOutParam);
@@ -3918,7 +3913,7 @@ TdsGetAndSetParamIndex(const char *name)
 		int			i = 0,
 					temp = 0;
 		const char *source = req->metaDataParameterValue->data;
-		char	   *pos;
+		const char *pos;
 		int			ptr;
 		int			qlen = strlen(source);
 		int			nlen = strlen(name);

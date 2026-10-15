@@ -691,6 +691,23 @@ ANALYZE master_dbo.babel_varbinary_test_table2;
 GO
 
 -- tsql
+-- Force a deterministic, non-parallel plan so SHOWPLAN_ALL output does not vary
+-- with the runner's CPU count or the parallel-query CI job (this test checks the
+-- bbf_varbinary index/scan choice, not parallelism).
+SELECT set_config('max_parallel_workers_per_gather', '0', false)
+GO
+~~START~~
+text
+0
+~~END~~
+
+SELECT set_config('debug_parallel_query', '0', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 GO
 ~~START~~
@@ -713,7 +730,7 @@ Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b6080
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 4.031 ms
+Babelfish T-SQL Batch Parsing Time: 5.353 ms
 ~~END~~
 
 
@@ -728,7 +745,7 @@ Index Only Scan using babel_varbinary_test_indbabel_v93c04b51675320c0200287b6080
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.182 ms
+Babelfish T-SQL Batch Parsing Time: 0.207 ms
 ~~END~~
 
 
@@ -743,7 +760,7 @@ Seq Scan on babel_varbinary_test_table2
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 3.663 ms
+Babelfish T-SQL Batch Parsing Time: 4.948 ms
 ~~END~~
 
 
@@ -752,17 +769,14 @@ GO
 ~~START~~
 text
 Query Text: select count(*) from babel_varbinary_test_table2 where varbinary_col > cast(0x123 as varbinary(max)) + cast(0x123 as varbinary(max))
-Finalize Aggregate
-  ->  Gather
-        Workers Planned: 2
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_varbinary_test_table2
-                    Filter: ((varbinary_col)::bbf_varbinary > '0x01230123'::bbf_varbinary)
+Aggregate
+  ->  Seq Scan on babel_varbinary_test_table2
+        Filter: ((varbinary_col)::bbf_varbinary > '0x01230123'::bbf_varbinary)
 ~~END~~
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 16.572 ms
+Babelfish T-SQL Batch Parsing Time: 21.999 ms
 ~~END~~
 
 
@@ -778,7 +792,7 @@ Aggregate
 
 ~~START~~
 text
-Babelfish T-SQL Batch Parsing Time: 0.144 ms
+Babelfish T-SQL Batch Parsing Time: 0.189 ms
 ~~END~~
 
 

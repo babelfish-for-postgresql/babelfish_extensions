@@ -143,7 +143,7 @@ STABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(truncated_name) >= 60 THEN
-        (SELECT m.original_identifier_name
+        (SELECT pg_catalog.lower(m.original_identifier_name COLLATE "C")
          FROM sys.babelfish_identifier_mapping m
          WHERE m.truncated_identifier_name = truncated_name
            AND m.nspname = id_nspname
@@ -432,7 +432,7 @@ STABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(func_proname) >= 60 THEN
-        (SELECT f.orig_name
+        (SELECT pg_catalog.lower(f.orig_name COLLATE "C")
          FROM sys.babelfish_function_ext f
          WHERE f.funcname = func_proname
            AND f.nspname = func_nspname
@@ -500,7 +500,7 @@ IMMUTABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(rel_relname) >= 60 THEN
-        (SELECT substring(opt, 23)
+        (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
          FROM unnest(rel_reloptions) opt
          WHERE opt LIKE 'bbf_original_rel_name=%'
          LIMIT 1)
@@ -514,7 +514,13 @@ IMMUTABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(att_attname) >= 60 THEN
-        (SELECT substring(opt, 19)
+        (SELECT CASE
+                    /* Match physical attname casing: table columns are downcased, but view columns
+                     * keep the SELECT alias case (set via res->name), so attname is mixed. */
+                    WHEN att_attname = pg_catalog.lower(att_attname COLLATE "C")
+                        THEN pg_catalog.lower(substring(opt, 19) COLLATE "C")
+                    ELSE substring(opt, 19)
+                END
          FROM unnest(att_attoptions) opt
          WHERE opt LIKE 'bbf_original_name=%'
          LIMIT 1)
@@ -1529,7 +1535,7 @@ END AS NON_UNIQUE,
 CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS INDEX_QUALIFIER,
 -- the index name created by CREATE INDEX is re-mapped, find it (by checking
 -- the ones not in pg_constraint) and restoring it back before display
-COALESCE((SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) ELSE NULL END, ',') FROM unnest(t6.reloptions) AS option), t6.relname::text)::sys.sysname 
+pg_catalog.lower(COALESCE((SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) COLLATE "C" ELSE NULL END, ',') FROM unnest(t6.reloptions) AS option), t6.relname::text))::sys.sysname 
 AS INDEX_NAME,
 CASE
 WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
@@ -2289,7 +2295,7 @@ STABLE
 PARALLEL SAFE
 RETURN COALESCE(
     CASE WHEN octet_length(physical_db_name) >= 60 THEN
-        (SELECT orig_name
+        (SELECT pg_catalog.lower(orig_name COLLATE "C")
          FROM sys.babelfish_sysdatabases
          WHERE name COLLATE database_default = physical_db_name
          LIMIT 1)
@@ -2599,9 +2605,10 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 
 CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
- SELECT CAST(sys.db_name() AS sys.sysname) AS "CATALOG_NAME",
- CAST(CASE WHEN np.nspname LIKE PG_CATALOG.CONCAT(sys.db_name(),'%') THEN PG_CATALOG.RIGHT(np.nspname, LENGTH(np.nspname) - LENGTH(sys.db_name()) - 1)
-      ELSE np.nspname END AS sys.nvarchar(128)) AS "SCHEMA_NAME",
+	SELECT CAST(sys.db_name() AS sys.sysname) AS "CATALOG_NAME",
+	CAST(CASE WHEN ext.orig_name IS NOT NULL THEN ext.orig_name::text
+	     WHEN np.nspname LIKE PG_CATALOG.CONCAT(sys.db_name(),'%') THEN PG_CATALOG.RIGHT(np.nspname, LENGTH(np.nspname) - LENGTH(sys.db_name()) - 1)
+	     ELSE np.nspname::text END AS sys.nvarchar(128)) AS "SCHEMA_NAME",
  -- For system-defined schemas, schema-owner name will be same as schema_name
  -- For user-defined schemas having default owner, schema-owner will be dbo
  -- For user-defined schemas with explicit owners, rolname contains dbname followed
@@ -3676,7 +3683,7 @@ GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.domains AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
-		CAST(t.typname AS sys.sysname) AS "DOMAIN_NAME",
+		CAST(sys.bbf_get_original_identifier_name(t.typname, nc.nspname, 'pg_type'::regclass::oid) AS sys.sysname) AS "DOMAIN_NAME",
 		CAST(case when is_tbl_type THEN 'table type' ELSE tsql_type_name END AS sys.sysname) AS "DATA_TYPE",
 
 		CAST(information_schema_tsql._pgtsql_char_max_length(tsql_type_name, t.typtypmod)
@@ -4002,7 +4009,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 		CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
-		CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
+		CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) AS sys.nvarchar(128)) AS "COLUMN_NAME",
 		CAST(ord AS int) AS "ORDINAL_POSITION"	
 	FROM
 		pg_constraint c 
@@ -4065,7 +4072,13 @@ and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
 -- For User Defined Types
-select cast(sys.bbf_get_original_identifier_name(t.typname, t.typnamespace::regnamespace::name, 1247) as sys.sysname) as name
+select cast(
+    case
+      when tt.typrelid is not null
+        then sys.bbf_get_truncated_rel_original_name(ttc.reloptions, ttc.relname)
+      else sys.bbf_get_original_identifier_name(t.typname, t.typnamespace::regnamespace::name, 1247)
+    end
+    as sys.sysname) as name
   , cast(t.typbasetype as int) as system_type_id
   , cast(t.oid as int) as user_type_id
   , cast(t.typnamespace as int) as schema_id
@@ -4097,6 +4110,7 @@ join sys.schemas sch on t.typnamespace = sch.schema_id
 left join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
 left join tt_internal tt on t.typrelid = tt.typrelid
+left join pg_catalog.pg_class ttc on ttc.oid = t.typrelid
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
 -- we want to show details of user defined datatypes created under babelfish database
 where 
@@ -5537,7 +5551,7 @@ GRANT EXECUTE ON PROCEDURE sys.sp_helplogins TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SEQUENCE_CATALOG",
             CAST(extc.orig_name AS sys.nvarchar(128)) AS "SEQUENCE_SCHEMA",
-            CAST(r.relname AS sys.nvarchar(128)) AS "SEQUENCE_NAME",
+            CAST(sys.bbf_get_original_identifier_name(r.relname, nc.nspname, 'pg_class'::regclass::oid, '') AS sys.nvarchar(128)) AS "SEQUENCE_NAME",
             CAST(CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype) ELSE tsql_type_name END
                     AS sys.nvarchar(128))AS "DATA_TYPE",  -- numeric and decimal data types are converted into bigint which is due to Postgres inherent implementation
             CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, -1)
@@ -5571,6 +5585,117 @@ GRANT SELECT ON information_schema_tsql.sequences TO PUBLIC;
 -- sys.pg_namespace_ext, so the non-CASCADE drop must succeed; if it fails, a
 -- dependent was missed and should be recreated before this point.
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'pg_namespace_ext_deprecated_in_6_3_0');
+
+CREATE OR REPLACE PROCEDURE sys.analyze_babelfish_catalogs()
+LANGUAGE plpgsql
+AS $$ 
+DECLARE 
+	babelfish_catalog RECORD;
+	schema_name varchar = 'sys';
+	error_msg text;
+BEGIN
+	FOR babelfish_catalog IN (
+		SELECT relname as name FROM pg_catalog.pg_class t 
+		INNER JOIN pg_catalog.pg_namespace n ON n.oid = t.relnamespace
+		WHERE t.relkind = 'r' AND n.nspname = schema_name
+		)
+	LOOP
+		BEGIN
+			EXECUTE pg_catalog.format('ANALYZE %I.%I', schema_name, babelfish_catalog.name);
+		EXCEPTION WHEN OTHERS THEN
+			GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+			RAISE WARNING 'ANALYZE for babelfish catalog %.% failed with error: %s', schema_name, babelfish_catalog.name, error_msg;
+		END;
+	END LOOP;
+END;
+$$;
+
+CREATE OR REPLACE PROCEDURE initialize_babelfish ( sa_name VARCHAR(128) )
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	reserved_roles varchar[] := ARRAY['sysadmin', 'securityadmin', 'dbcreator',
+									  'master_dbo', 'master_guest', 'master_db_owner',
+									  'master_db_accessadmin', 'master_db_securityadmin',
+									  'master_db_datareader', 'master_db_datawriter', 'master_db_ddladmin',
+									  'tempdb_dbo', 'tempdb_guest', 'tempdb_db_owner', 
+									  'tempdb_db_accessadmin', 'tempdb_db_securityadmin',
+									  'tempdb_db_datareader', 'tempdb_db_datawriter', 'tempdb_db_ddladmin',
+									  'msdb_dbo', 'msdb_guest', 'msdb_db_owner',
+									  'msdb_db_accessadmin', 'msdb_db_securityadmin',
+									  'msdb_db_datareader', 'msdb_db_datawriter', 'msdb_db_ddladmin'];
+	user_id  oid := -1;
+	db_name  name := NULL;
+	role_name varchar;
+	dba_name varchar;
+BEGIN
+	-- check reserved roles
+	FOREACH role_name IN ARRAY reserved_roles LOOP
+	BEGIN
+		SELECT oid INTO user_id FROM pg_catalog.pg_roles WHERE rolname = role_name;
+		IF user_id > 0 THEN
+			SELECT datname INTO db_name FROM pg_catalog.pg_shdepend AS s INNER JOIN pg_catalog.pg_database AS d ON s.dbid = d.oid WHERE s.refobjid = user_id;
+			IF db_name IS NOT NULL THEN
+				RAISE E'Could not initialize babelfish in current database: Reserved role % used in database %.\nIf babelfish was initialized in %, please remove babelfish and try again.', role_name, db_name, db_name;
+			ELSE
+				RAISE E'Could not initialize babelfish in current database: Reserved role % exists. \nPlease rename or drop existing role and try again ', role_name;
+			END IF;
+		END IF;
+	END;
+	END LOOP;
+
+	SELECT pg_catalog.pg_get_userbyid(datdba) INTO dba_name FROM pg_catalog.pg_database WHERE datname = pg_catalog.current_database();
+	IF sa_name <> dba_name THEN
+		RAISE E'Could not initialize babelfish with given role name: % is not the DB owner of current database.', sa_name;
+	END IF;
+
+	EXECUTE pg_catalog.format('CREATE ROLE securityadmin CREATEROLE INHERIT PASSWORD NULL');
+	EXECUTE pg_catalog.format('CREATE ROLE dbcreator CREATEDB INHERIT PASSWORD NULL');
+	EXECUTE pg_catalog.format('CREATE ROLE bbf_role_admin CREATEDB CREATEROLE INHERIT PASSWORD NULL');
+	EXECUTE pg_catalog.format('GRANT CREATE ON DATABASE %s TO bbf_role_admin', pg_catalog.current_database());
+	EXECUTE pg_catalog.format('GRANT %I to bbf_role_admin WITH ADMIN TRUE;', sa_name);
+	EXECUTE pg_catalog.format('CREATE ROLE sysadmin CREATEDB CREATEROLE INHERIT ROLE %I', sa_name);
+	EXECUTE pg_catalog.format('GRANT sysadmin TO bbf_role_admin WITH ADMIN TRUE');
+	EXECUTE pg_catalog.format('GRANT securityadmin TO bbf_role_admin WITH ADMIN TRUE');
+	EXECUTE pg_catalog.format('GRANT dbcreator TO bbf_role_admin WITH ADMIN TRUE');
+	EXECUTE pg_catalog.format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_partition_function_seq TO sysadmin WITH GRANT OPTION');
+	EXECUTE pg_catalog.format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_partition_scheme_seq TO sysadmin WITH GRANT OPTION');
+	EXECUTE pg_catalog.format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_db_seq TO sysadmin WITH GRANT OPTION');
+	EXECUTE pg_catalog.format('GRANT CREATE, CONNECT, TEMPORARY ON DATABASE %s TO sysadmin WITH GRANT OPTION', pg_catalog.current_database());
+	EXECUTE pg_catalog.format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = true', pg_catalog.current_database());
+	EXECUTE 'SET babelfishpg_tsql.enable_ownership_structure = true';
+	CALL sys.babel_initialize_logins(sa_name);
+	CALL sys.babel_initialize_logins('sysadmin');
+	CALL sys.babel_initialize_logins('bbf_role_admin');
+	CALL sys.babel_initialize_logins('securityadmin');
+	CALL sys.babel_initialize_logins('dbcreator');
+	CALL sys.babel_create_builtin_dbs(sa_name);
+	CALL sys.initialize_babel_extras();
+	-- run analyze for all babelfish catalog
+	CALL sys.analyze_babelfish_catalogs();
+END
+$$;
+
+CREATE OR REPLACE PROCEDURE remove_babelfish ()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+	CALL sys.babel_drop_all_dbs();
+	CALL sys.babel_drop_all_logins();
+	EXECUTE pg_catalog.format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = false', pg_catalog.current_database());
+	EXECUTE 'ALTER SEQUENCE sys.babelfish_db_seq RESTART';
+	EXECUTE 'ALTER SEQUENCE sys.babelfish_partition_function_seq RESTART';
+	EXECUTE 'ALTER SEQUENCE sys.babelfish_partition_scheme_seq RESTART';
+	DROP OWNED BY sysadmin;
+	DROP ROLE sysadmin;
+	DROP OWNED BY bbf_role_admin;
+	DROP ROLE bbf_role_admin;
+	DROP OWNED BY securityadmin;
+	DROP ROLE securityadmin;
+	DROP OWNED BY dbcreator;
+	DROP ROLE dbcreator;
+END
+$$;
 
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);

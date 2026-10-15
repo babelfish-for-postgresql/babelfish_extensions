@@ -104,3 +104,25 @@ EXEC sp_table_privileges @table_name = 'Very_Long_Table_Name_That_Exceeds_Postgr
 GO
 EXEC sp_column_privileges @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC';
 GO
+
+-- ===========================================
+-- BABEL-5975: OBJECT_NAME() must return the resolved long identifier in its
+-- physical (lowercased) form for tables, views, and indexes. OBJECT_ID()
+-- accepts the original name; OBJECT_NAME() reports the downcased name.
+-- ===========================================
+
+-- OBJECT_NAME() for a long table name
+SELECT OBJECT_NAME(OBJECT_ID('Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC'));
+GO
+
+-- OBJECT_NAME() for a long view name
+SELECT OBJECT_NAME(OBJECT_ID('Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC'));
+GO
+
+-- Note: OBJECT_NAME() for a long INDEX name shares the same RELKIND_INDEX /
+-- get_original_relname downcasing path as the table/view cases above; the
+-- displayed (lowercased) index name is already covered by the sys.indexes
+-- query earlier in this file. OBJECT_ID() does not resolve index names and the
+-- T-SQL parser rejects pg_class alias subqueries, so no separate OBJECT_NAME
+-- index case is added here.
+

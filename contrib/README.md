@@ -88,7 +88,7 @@ The following build instructions comply with Ubuntu 22.04 and Amazon Linux 2 env
     unzip -d antlr4 antlr4-cpp-runtime-4.13.2-source.zip 
     cd antlr4
     mkdir build && cd build 
-    cmake .. -DANTLR_JAR_LOCATION=/usr/local/lib/antlr-4.13.2-complete.jar -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
+    cmake .. -DANTLR_JAR_LOCATION=/usr/local/lib/antlr-4.13.2-complete.jar -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True -DANTLR_BUILD_CPP_TESTS=OFF
     make
     sudo make install
     ```

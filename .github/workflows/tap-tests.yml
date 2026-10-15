@@ -1,5 +1,14 @@
 name: TAP Tests
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - BABEL_*_DEV
+      - BABEL_*_STABLE
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   run-babelfish-tap-tests:

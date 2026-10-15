@@ -1213,9 +1213,11 @@ pltsql_ExecFuncProc_AclCheck(Oid funcid, Expr *expr)
 	return object_aclcheck(ProcedureRelationId, funcid, userid, ACL_EXECUTE);
 }
 
+typedef bool (*plan_tree_walker_callback) (Plan *plan, void *context);
+
 typedef struct WalkSubplanContext
 {
-	bool (*plan_walker) ();
+	plan_tree_walker_callback plan_walker;
 	void *plan_context;
 	List *allplans;
 } WalkSubplanContext;
@@ -1233,7 +1235,7 @@ static bool expr_walk_subplan(Node *node, void *context)
 }
 
 static bool
-plan_walk_members(List *plans, bool (*walker) (), void *context)
+plan_walk_members(List *plans, plan_tree_walker_callback walker, void *context)
 {
 	ListCell   *l;
 	foreach(l, plans)
@@ -1247,8 +1249,8 @@ plan_walk_members(List *plans, bool (*walker) (), void *context)
 
 static bool
 plan_walk_subplans(List *plans, List *allplans,
-						bool (*walker) (),
-						void *context)
+				   plan_tree_walker_callback walker,
+				   void *context)
 {
 	ListCell   *lc;
 
@@ -1266,7 +1268,7 @@ plan_walk_subplans(List *plans, List *allplans,
 }
 
 static bool
-plan_tree_walker(Plan *plan, List *allplans, bool (*walker) (), void *context)
+plan_tree_walker(Plan *plan, List *allplans, plan_tree_walker_callback walker, void *context)
 {
 	struct WalkSubplanContext sc = { walker, context, allplans };
 
@@ -1399,8 +1401,10 @@ replace_params_mutator(Node *node, ParamReplaceContext *context)
  * Recursively walk the plan tree and replace params in quals.
  */
 static bool
-replace_params_in_plan_tree(Plan *plan, ParamReplaceContext *context)
+replace_params_in_plan_tree(Plan *plan, void *arg)
 {
+	ParamReplaceContext *context = (ParamReplaceContext *) arg;
+
 	if (plan == NULL)
 		return false;
 

@@ -2,12 +2,13 @@ name: JDBC Tests With PG AUDIT Enable
 on:
   schedule:
     - cron: '0 0 * * *'  # runs every midnight
+  workflow_dispatch:
 
 jobs:
   run-babelfish-jdbc-tests-with-pg-audit:
     strategy:
       matrix:
-        extension_branch: [BABEL_4_X_DEV,BABEL_5_X_DEV, BABEL_6_X_DEV]
+        extension_branch: [BABEL_4_X_DEV, BABEL_5_X_DEV, BABEL_6_X_DEV]
 
     env:
       INSTALL_DIR: psql
@@ -24,11 +25,14 @@ jobs:
       - name: Determine Engine Branch
         id: determine-engine-branch
         run: |
-          if [[ "${{ matrix.extension_branch }}" == "BABEL_4_X_DEV" ]]; then
-            echo "ENGINE_BRANCH=BABEL_4_X_DEV__PG_16_X" >> $GITHUB_OUTPUT
-          elif [[ "${{ matrix.extension_branch }}" == "BABEL_5_X_DEV" ]]; then
-            echo "ENGINE_BRANCH=BABEL_5_X_DEV__PG_17_X" >> $GITHUB_OUTPUT
-          elif [[ "${{ matrix.extension_branch }}" == "latest" ]]; then
+          EXT_BRANCH="${{ matrix.extension_branch }}"
+          # Extract Babelfish major version number from branch name (e.g. BABEL_6_X_DEV -> 6)
+          BABEL_MAJOR=$(echo "$EXT_BRANCH" | grep -oP 'BABEL_\K[0-9]+')
+          if [[ -n "$BABEL_MAJOR" ]]; then
+            # PG major version = Babelfish major version + 12 (4->16, 5->17, 6->18, ...)
+            PG_MAJOR=$(( BABEL_MAJOR + 12 ))
+            echo "ENGINE_BRANCH=${EXT_BRANCH}__PG_${PG_MAJOR}_X" >> $GITHUB_OUTPUT
+          elif [[ "$EXT_BRANCH" == "latest" ]]; then
             echo "ENGINE_BRANCH=BABEL_5_X_DEV__PG_17_X" >> $GITHUB_OUTPUT
           else
             echo "ENGINE_BRANCH=main" >> $GITHUB_OUTPUT
@@ -98,23 +102,22 @@ jobs:
         run: |
           cd ~
           rm -rf pgaudit
-          # Determine PgAudit version based on Babelfish branch
-          if [[ "${{ matrix.extension_branch }}" == 'BABEL_5_X_DEV' ]]; then
-            git clone --depth 1 --branch REL_17_STABLE https://github.com/pgaudit/pgaudit.git
-            cd pgaudit
-            # Apply patch to fix BABEL-4600
-            patch -p1 < ~/pgaudit_executor_hook_null_check.patch
-            make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
-          elif [[ "${{ matrix.extension_branch }}" == 'BABEL_4_X_DEV' ]]; then
-            git clone --depth 1 --branch REL_16_STABLE https://github.com/pgaudit/pgaudit.git
-            cd pgaudit
-            # Apply patch to fix BABEL-4600
-            patch -p1 < ~/pgaudit_executor_hook_null_check.patch
-            make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config 
-          else
-            echo "Unsupported branch: ${{ matrix.extension_branch }}"
-            exit 1 
+          # Map Babelfish major version to PostgreSQL major version
+          EXT_BRANCH="${{ matrix.extension_branch }}"
+          # Extract Babelfish major version number from branch name (e.g. BABEL_6_X_DEV -> 6)
+          BABEL_MAJOR=$(echo "$EXT_BRANCH" | grep -oP 'BABEL_\K[0-9]+')
+          if [[ -z "$BABEL_MAJOR" ]]; then
+            echo "Unsupported branch: $EXT_BRANCH"
+            exit 1
           fi
+          # PG major version = Babelfish major version + 12 (4->16, 5->17, 6->18, ...)
+          PG_MAJOR=$(( BABEL_MAJOR + 12 ))
+          # Determine PgAudit version based on Babelfish branch
+          git clone --depth 1 --branch REL_${PG_MAJOR}_STABLE https://github.com/pgaudit/pgaudit.git
+          cd pgaudit
+          # Apply patch to fix BABEL-4600
+          patch -p1 < ~/pgaudit_executor_hook_null_check.patch
+          make install USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config
           
           cd ~/${{ env.INSTALL_DIR }}
           sudo sed -i 's/^shared_preload_libraries .*$/shared_preload_libraries = '\''babelfishpg_tds, pg_stat_statements,pgaudit'\''/g' data/postgresql.conf

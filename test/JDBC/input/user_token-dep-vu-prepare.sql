@@ -1,3 +1,4 @@
+-- sla 80000
 create view dbo.user_token_vu as select name, suser_sname(sid), type, usage from sys.user_token;
 GO
 grant select on dbo.user_token_vu to public;

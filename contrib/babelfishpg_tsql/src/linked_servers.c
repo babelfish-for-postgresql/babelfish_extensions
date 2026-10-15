@@ -1024,7 +1024,7 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 					 * We return here, when we will again execute the query we
 					 * will error out from there
 					 */
-					if (bind_typename == NULL)
+					if (bind_typename[0] == '\0')
 						ereport(ERROR,
 								(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 								 errmsg("Failed to bind results for column \"system_type_name\" to a variable.")
@@ -1043,7 +1043,7 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 					 * TODO: Solve for cases where column with only whitespace
 					 * characters is a valid column name.
 					 */
-					if ((bind_colname == NULL))
+					if (bind_colname[0] == '\0')
 						strncpy(bind_colname, "?column?", 256);
 					else
 					{

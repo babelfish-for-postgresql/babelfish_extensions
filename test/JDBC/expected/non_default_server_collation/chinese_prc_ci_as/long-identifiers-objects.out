@@ -46,7 +46,7 @@ SELECT name FROM sys.tables WHERE name LIKE 'Very_Long_Table_Name%';
 GO
 ~~START~~
 varchar
-Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_chars_for_testing
 ~~END~~
 
 
@@ -55,7 +55,7 @@ SELECT name FROM sys.views WHERE name LIKE 'Very_Long_View_Name%';
 GO
 ~~START~~
 varchar
-Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+very_long_view_name_that_exceeds_postgresql_limit_of_sixty_three_chars_for_testing
 ~~END~~
 
 
@@ -73,9 +73,9 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_col_test') A
 GO
 ~~START~~
 varchar
-Very_Long_Added_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col2
+very_long_added_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_col1
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_col2
 ~~END~~
 
 
@@ -84,7 +84,7 @@ SELECT name FROM sys.tables WHERE name LIKE 'Very_Long_Select_Into%';
 GO
 ~~START~~
 varchar
-Very_Long_Select_Into_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+very_long_select_into_table_name_that_exceeds_postgresql_limit_of_sixty_three_chars
 ~~END~~
 
 
@@ -93,7 +93,7 @@ EXEC sp_tables @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
-master#!#dbo#!#Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing#!#TABLE#!#<NULL>
+master#!#dbo#!#very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_chars_for_testing#!#TABLE#!#<NULL>
 ~~END~~
 
 
@@ -251,7 +251,7 @@ SELECT name FROM sys.all_views WHERE name LIKE 'Very_Long_View_Name%';
 GO
 ~~START~~
 varchar
-Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+very_long_view_name_that_exceeds_postgresql_limit_of_sixty_three_chars_for_testing
 ~~END~~
 
 
@@ -260,7 +260,7 @@ SELECT name FROM sys.all_objects WHERE name LIKE 'Very_Long_Table_Name%' AND typ
 GO
 ~~START~~
 varchar
-Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_chars_for_testing
 ~~END~~
 
 
@@ -269,7 +269,7 @@ SELECT name FROM sys.all_objects WHERE name LIKE 'Very_Long_View_Name%' AND type
 GO
 ~~START~~
 varchar
-Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing
+very_long_view_name_that_exceeds_postgresql_limit_of_sixty_three_chars_for_testing
 ~~END~~
 
 
@@ -278,9 +278,9 @@ SELECT name FROM sys.all_columns WHERE object_id = OBJECT_ID('babel5975_col_test
 GO
 ~~START~~
 varchar
-Very_Long_Added_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col2
+very_long_added_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_col1
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_col2
 ~~END~~
 
 
@@ -298,7 +298,7 @@ EXEC sp_fkeys @pktable_name = 'Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_L
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
-master#!#dbo#!#Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Testing#!#id#!#master#!#dbo#!#Very_Long_FK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_Testing#!#fk_id#!#1#!#1#!#1#!#very_long_fk_table_name_that_ex010202c2fb3fa0c59cfac_fk_id_fkey#!#very_long_pk_table_name_that_ex0f1740f7e4e8b57bc7c243a63b6_pkey#!#7
+master#!#dbo#!#very_long_pk_table_name_that_exceeds_postgresql_limit_of_sixty_three_chars_testing#!#id#!#master#!#dbo#!#very_long_fk_table_name_that_exceeds_postgresql_limit_of_sixty_three_chars_testing#!#fk_id#!#1#!#1#!#1#!#very_long_fk_table_name_that_ex010202c2fb3fa0c59cfac_fk_id_fkey#!#very_long_pk_table_name_that_ex0f1740f7e4e8b57bc7c243a63b6_pkey#!#7
 ~~END~~
 
 
@@ -350,7 +350,7 @@ SELECT name FROM sys.tables WHERE name LIKE 'Very_Long_Renamed_Table%';
 GO
 ~~START~~
 varchar
-Very_Long_Renamed_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+very_long_renamed_table_name_that_exceeds_postgresql_limit_of_sixty_three_characters
 ~~END~~
 
 
@@ -364,7 +364,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Very_Long_Renamed_Tabl
 GO
 ~~START~~
 varchar
-Very_Long_Renamed_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
+very_long_renamed_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters
 ~~END~~
 
 
@@ -381,7 +381,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_select_into_
 GO
 ~~START~~
 varchar
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Col1
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_col1
 ~~END~~
 
 DROP TABLE IF EXISTS babel5975_select_into_col_test;
@@ -421,14 +421,14 @@ SELECT name FROM sys.tables WHERE name LIKE 'Very Long Table%';
 GO
 ~~START~~
 varchar
-Very Long Table Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters
+very long table name with spaces that exceeds postgresql limit of sixty three characters
 ~~END~~
 
 SELECT name FROM sys.views WHERE name LIKE 'Very Long View%';
 GO
 ~~START~~
 varchar
-Very Long View Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters
+very long view name with spaces that exceeds postgresql limit of sixty three characters
 ~~END~~
 
 
@@ -452,7 +452,7 @@ SELECT name FROM sys.tables WHERE name LIKE 'Very_Long_Quoted_Table%';
 GO
 ~~START~~
 varchar
-Very_Long_Quoted_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Test
+very_long_quoted_table_name_that_exceeds_postgresql_limit_of_sixty_three_characters_test
 ~~END~~
 
 DROP TABLE "Very_Long_Quoted_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_Test";
@@ -469,7 +469,7 @@ SELECT name FROM sys.views WHERE name LIKE 'Very_Long_CreateOrAlter%';
 GO
 ~~START~~
 varchar
-Very_Long_CreateOrAlter_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+very_long_createoralter_view_name_that_exceeds_postgresql_limit_of_sixty_three_chars
 ~~END~~
 
 DROP VIEW Very_Long_CreateOrAlter_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
@@ -544,7 +544,7 @@ SELECT name FROM sys.tables WHERE name LIKE 'MixedCase_Very_Long%';
 GO
 ~~START~~
 varchar
-MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_ABC
+mixedcase_very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_characters_abc
 ~~END~~
 
 -- Case-insensitive lookup should work
@@ -552,7 +552,7 @@ SELECT name FROM sys.tables WHERE name = 'mixedcase_very_long_table_name_that_ex
 GO
 ~~START~~
 varchar
-MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_ABC
+mixedcase_very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_characters_abc
 ~~END~~
 
 DROP TABLE MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_ABC;
@@ -576,8 +576,8 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_view_star') 
 GO
 ~~START~~
 varchar
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_AAA
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_BBB
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_aaa
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_bbb
 ~~END~~
 
 
@@ -600,8 +600,8 @@ GO
 ~~START~~
 varchar
 Very_Long_Mixed_View_Alias_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_AAA
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_BBB
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_aaa
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_bbb
 ~~END~~
 
 
@@ -612,8 +612,8 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_select_into_
 GO
 ~~START~~
 varchar
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_AAA
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_BBB
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_aaa
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_bbb
 ~~END~~
 
 
@@ -624,9 +624,9 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_select_into_
 GO
 ~~START~~
 varchar
-Very_Long_SelectInto_Alias_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_AAA
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_BBB
+very_long_selectinto_alias_that_exceeds_postgresql_limit_of_sixty_three_characters
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_aaa
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_bbb
 ~~END~~
 
 
@@ -637,8 +637,8 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_view_long_al
 GO
 ~~START~~
 varchar
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_AAA
-Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_BBB
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_aaa
+very_long_column_name_that_exceeds_postgresql_limit_of_sixty_three_characters_bbb
 ~~END~~
 
 
@@ -714,7 +714,7 @@ SELECT name FROM sys.tables WHERE name LIKE 'Very Long Table Name%';
 GO
 ~~START~~
 varchar
-Very Long Table Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters
+very long table name with spaces that exceeds postgresql limit of sixty three characters
 ~~END~~
 
 
@@ -726,7 +726,7 @@ SELECT name FROM sys.views WHERE name LIKE 'Very Long View Name%';
 GO
 ~~START~~
 varchar
-Very Long View Name With Spaces That Exceeds PostgreSQL Limit Of Sixty Three Characters
+very long view name with spaces that exceeds postgresql limit of sixty three characters
 ~~END~~
 
 
@@ -788,7 +788,7 @@ SELECT name FROM sys.tables WHERE name LIKE 'MixedCase_Very_Long%';
 GO
 ~~START~~
 varchar
-MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_XYZ
+mixedcase_very_long_table_name_that_exceeds_postgresql_limit_of_sixty_three_characters_xyz
 ~~END~~
 
 DROP TABLE MixedCase_Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_XYZ;
@@ -806,7 +806,7 @@ SELECT name FROM sys.tables WHERE name LIKE 'テスト用%';
 GO
 ~~START~~
 varchar
-テスト用の非常に長いテーブル名前がPostgreSQLの制限を超える場合のテスト
+テスト用の非常に長いテーブル名前がpostgresqlの制限を超える場合のテスト
 ~~END~~
 
 DROP TABLE テスト用の非常に長いテーブル名前がPostgreSQLの制限を超える場合のテスト;
@@ -821,7 +821,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_korean_test'
 GO
 ~~START~~
 varchar
-??_?_?_??_PostgreSQL_???_????_??_???_???_??_??_???_??
+??_?_?_??_postgresql_???_????_??_???_???_??_??_???_??
 ~~END~~
 
 
@@ -847,7 +847,7 @@ SELECT name FROM sys.views WHERE name LIKE '这是一个%';
 GO
 ~~START~~
 varchar
-这是一个非常长的视图名称用来测试PostgreSQL对超过六十三个字符的标识符的处理方式
+这是一个非常长的视图名称用来测试postgresql对超过六十三个字符的标识符的处理方式
 ~~END~~
 
 DROP VIEW [这是一个非常长的视图名称用来测试PostgreSQL对超过六十三个字符的标识符的处理方式];
@@ -1102,7 +1102,7 @@ SELECT name FROM sys.tables WHERE name = 'bbf5975_tsql_LongNameThatExceedsThePos
 GO
 ~~START~~
 varchar
-bbf5975_tsql_LongNameThatExceedsThePostgreSQLNameDataLenLimitOfSixtyThreeBytesHere
+bbf5975_tsql_longnamethatexceedsthepostgresqlnamedatalenlimitofsixtythreebyteshere
 ~~END~~
 
 
@@ -1209,7 +1209,7 @@ GO
 ~~START~~
 varchar
 id
-This_Is_A_Very_Long_Column_Name_That_Exceeds_The_Sixty_Three_Characters_PostgreSQL_Limit_For_Testing_Purpose
+this_is_a_very_long_column_name_that_exceeds_the_sixty_three_characters_postgresql_limit_for_testing_purpose
 ~~END~~
 
 
@@ -1328,9 +1328,9 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_long') OR
 GO
 ~~START~~
 varchar
-This_Is_A_Very_Long_Column_Alias_Number_One_Exceeds_Sixty_Three_Chars
+this_is_a_very_long_column_alias_number_one_exceeds_sixty_three_chars
 c2
-This_Is_A_Very_Long_Column_Alias_Number_Three_Exceeds_Sixty_Three_Ch
+this_is_a_very_long_column_alias_number_three_exceeds_sixty_three_ch
 ~~END~~
 
 DROP VIEW babel5975_cv_long;
@@ -1343,7 +1343,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_alter') O
 GO
 ~~START~~
 varchar
-This_Is_A_Long_Alter_View_Column_Alias_That_Exceeds_Sixty_Three_Chars
+this_is_a_long_alter_view_column_alias_that_exceeds_sixty_three_chars
 c2
 c3
 ~~END~~
@@ -1360,7 +1360,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_alter2') 
 GO
 ~~START~~
 varchar
-This_Is_A_Long_ALTER_VIEW_Column_Alias_That_Exceeds_Sixty_Three_Chars
+this_is_a_long_alter_view_column_alias_that_exceeds_sixty_three_chars
 c2
 ~~END~~
 
@@ -1376,7 +1376,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_alter3') 
 GO
 ~~START~~
 varchar
-This_Is_A_Long_CREATE_OR_ALTER_Column_Alias_Exceeding_Sixty_Three_Ch
+this_is_a_long_create_or_alter_column_alias_exceeding_sixty_three_ch
 c2
 ~~END~~
 
@@ -1392,7 +1392,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_alter4') 
 GO
 ~~START~~
 varchar
-Long_ALTER_VIEW_Alias_With_Parens_(and_more)_Exceeding_Sixty_Three
+long_alter_view_alias_with_parens_(and_more)_exceeding_sixty_three
 c2
 ~~END~~
 
@@ -1410,7 +1410,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_ws') ORDE
 GO
 ~~START~~
 varchar
-This_Is_A_Long_Whitespace_Column_Alias_That_Exceeds_Sixty_Three_Chars
+this_is_a_long_whitespace_column_alias_that_exceeds_sixty_three_chars
 c2
 c3
 ~~END~~
@@ -1425,7 +1425,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_cmt') ORD
 GO
 ~~START~~
 varchar
-This_Is_A_Long_Comment_Column_Alias_That_Exceeds_Sixty_Three_Chars
+this_is_a_long_comment_column_alias_that_exceeds_sixty_three_chars
 c2
 c3
 ~~END~~
@@ -1440,7 +1440,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_lp1') ORD
 GO
 ~~START~~
 varchar
-This_Is_A_Very_Long_Column_Alias_With_Parens_(and_more)_Exceeding_63
+this_is_a_very_long_column_alias_with_parens_(and_more)_exceeding_63
 c2
 c3
 ~~END~~
@@ -1455,7 +1455,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_lp2') ORD
 GO
 ~~START~~
 varchar
-Long_Alias_That_Ends_With_A_Close_Paren_And_Exceeds_Sixty_Three_(x)
+long_alias_that_ends_with_a_close_paren_and_exceeds_sixty_three_(x)
 c2
 c3
 ~~END~~
@@ -1470,9 +1470,9 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_lp3') ORD
 GO
 ~~START~~
 varchar
-First_Long_Paren_Alias_(1)_That_Exceeds_The_Sixty_Three_Char_Limit
-Second_Long_Paren_Alias_(2)_That_Exceeds_The_Sixty_Three_Char_Limit
-Third_Long_Paren_Alias_(3)_That_Exceeds_The_Sixty_Three_Char_Limit
+first_long_paren_alias_(1)_that_exceeds_the_sixty_three_char_limit
+second_long_paren_alias_(2)_that_exceeds_the_sixty_three_char_limit
+third_long_paren_alias_(3)_that_exceeds_the_sixty_three_char_limit
 ~~END~~
 
 DROP VIEW babel5975_cv_lp3;
@@ -1485,7 +1485,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_lp4') ORD
 GO
 ~~START~~
 varchar
-Long_Alias_With_Comma,_And_Paren_(here)_Exceeding_Sixty_Three_Chars
+long_alias_with_comma,_and_paren_(here)_exceeding_sixty_three_chars
 c2
 c3
 ~~END~~
@@ -1504,7 +1504,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_dq1') ORD
 GO
 ~~START~~
 varchar
-This_Is_A_Very_Long_Quoted_Alias_With_Parens_(and_more)_Exceeding_63
+this_is_a_very_long_quoted_alias_with_parens_(and_more)_exceeding_63
 c2
 c3
 ~~END~~
@@ -1519,7 +1519,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_dq2') ORD
 GO
 ~~START~~
 varchar
-Long_Quoted_Alias_With_Comma,_And_Paren_(here)_Exceeding_Sixty_Three
+long_quoted_alias_with_comma,_and_paren_(here)_exceeding_sixty_three
 c2
 c3
 ~~END~~
@@ -1534,7 +1534,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_dq3') ORD
 GO
 ~~START~~
 varchar
-Long_Alias_With_Escaped_"Quote"_Char_That_Exceeds_Sixty_Three_Chars
+long_alias_with_escaped_"quote"_char_that_exceeds_sixty_three_chars
 c2
 c3
 ~~END~~
@@ -1555,7 +1555,7 @@ SELECT name FROM sys.objects WHERE type = 'V' AND name = 'Renamed_Long_View_Via_
 GO
 ~~START~~
 varchar
-Renamed_Long_View_Via_Sp_Rename_That_Exceeds_The_Sixty_Three_Char_V
+renamed_long_view_via_sp_rename_that_exceeds_the_sixty_three_char_v
 ~~END~~
 
 DROP VIEW [Renamed_Long_View_Via_Sp_Rename_That_Exceeds_The_Sixty_Three_Char_V];
@@ -1570,7 +1570,7 @@ SELECT name FROM sys.objects WHERE type = 'U' AND name = 'Renamed_Long_Table_Via
 GO
 ~~START~~
 varchar
-Renamed_Long_Table_Via_Sp_Rename_That_Exceeds_The_Sixty_Three_Char_T
+renamed_long_table_via_sp_rename_that_exceeds_the_sixty_three_char_t
 ~~END~~
 
 DROP TABLE [Renamed_Long_Table_Via_Sp_Rename_That_Exceeds_The_Sixty_Three_Char_T];
@@ -1585,7 +1585,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_rn_col') ORD
 GO
 ~~START~~
 varchar
-Renamed_Long_Column_Via_Sp_Rename_Exceeding_The_Sixty_Three_Char_B
+renamed_long_column_via_sp_rename_exceeding_the_sixty_three_char_b
 c2
 ~~END~~
 
@@ -1615,7 +1615,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_rn_vcol') OR
 GO
 ~~START~~
 varchar
-Renamed_View_Column_Via_Sp_Rename_Exceeding_Sixty_Three_Chars_B
+renamed_view_column_via_sp_rename_exceeding_sixty_three_chars_b
 c2
 ~~END~~
 
@@ -1649,7 +1649,7 @@ GO
 ~~START~~
 varchar
 s1
-This_Is_A_Long_Middle_Column_Alias_That_Exceeds_The_Sixty_Three_Chars
+this_is_a_long_middle_column_alias_that_exceeds_the_sixty_three_chars
 s3
 ~~END~~
 
@@ -1693,8 +1693,8 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_twolong')
 GO
 ~~START~~
 varchar
-This_Is_The_First_Long_Column_Alias_Exceeding_Sixty_Three_Chars_AA
-This_Is_The_Second_Long_Column_Alias_Exceeding_Sixty_Three_Chars_BB
+this_is_the_first_long_column_alias_exceeding_sixty_three_chars_aa
+this_is_the_second_long_column_alias_exceeding_sixty_three_chars_bb
 c3
 ~~END~~
 
@@ -1708,7 +1708,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_nested') 
 GO
 ~~START~~
 varchar
-This_Is_A_Long_Nested_Comment_Column_Alias_Exceeds_Sixty_Three_C
+this_is_a_long_nested_comment_column_alias_exceeds_sixty_three_c
 c2
 c3
 ~~END~~
@@ -1724,7 +1724,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_linecmt')
 GO
 ~~START~~
 varchar
-This_Is_A_Long_Line_Comment_Column_Alias_Exceeds_Sixty_Three_Chars
+this_is_a_long_line_comment_column_alias_exceeds_sixty_three_chars
 c2
 c3
 ~~END~~
@@ -1741,7 +1741,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_nestcomma
 GO
 ~~START~~
 varchar
-This_Is_A_Long_Nested_Comma_Comment_Alias_Exceeds_Sixty_Three
+this_is_a_long_nested_comma_comment_alias_exceeds_sixty_three
 c2
 c3
 ~~END~~
@@ -1758,7 +1758,7 @@ SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('babel5975_cv_specialbr
 GO
 ~~START~~
 varchar
-Long_Alias_With_Special_!@#$,;()_/*notcomment*/_Exceeds_Sixty_Three
+long_alias_with_special_!@#$,;()_/*notcomment*/_exceeds_sixty_three
 c2
 c3
 ~~END~~
@@ -2000,6 +2000,371 @@ int
 DROP TABLE babel5052_renamed;
 GO
 
+
+-- psql
+-- ===========================================
+-- BABEL-7192: storing original (mixed-case / long) identifiers must not crash
+-- the backend when a DDL event trigger is active. Exercises every path that
+-- stores original names via AlterTable() -- sp_rename, SELECT INTO, and the
+-- CREATE / CREATE OR ALTER / ALTER VIEW forms -- under a ddl_command_end
+-- trigger, then re-checks a representative path under sql_drop and
+-- table_rewrite (the other two trigger types that enable the crash state).
+-- Reaching the verifications below means no crash occurred.
+-- ===========================================
+-- Create a ddl_command_end event trigger so the crash path is exercised.
+-- (An event trigger of type sql_drop / table_rewrite / ddl_command_end is what
+-- establishes currentEventTriggerState; ddl_command_start alone does not.)
+CREATE OR REPLACE FUNCTION babel_7192_event_trigger_func()
+RETURNS event_trigger LANGUAGE plpgsql AS
+$$
+BEGIN
+    RAISE NOTICE 'babel_7192 event trigger fired: % %', tg_event, tg_tag;
+END;
+$$;
+GO
+CREATE EVENT TRIGGER babel_7192_ddl_trigger
+    ON ddl_command_end
+    EXECUTE FUNCTION babel_7192_event_trigger_func();
+GO
+
+-- tsql
+-- Path 1: sp_rename (the exact BABEL-7192 reproducer). sp_rename drives a
+-- SELECT INTO internally which stores the original relation name.
+CREATE TABLE Babel_7192_Rename_Src (id INT, name VARCHAR(50));
+GO
+EXEC sp_rename 'Babel_7192_Rename_Src', 'Babel_7192_Rename_Dst', 'OBJECT';
+GO
+SELECT name FROM sys.tables WHERE name = 'Babel_7192_Rename_Dst';
+GO
+~~START~~
+varchar
+babel_7192_rename_dst
+~~END~~
+
+
+-- Path 2: SELECT INTO with mixed-case table and column names (stores both
+-- bbf_original_table_name reloption and bbf_original_name attoptions).
+CREATE TABLE Babel_7192_SelInto_Source (MyIdCol INT, MyNameCol VARCHAR(50));
+GO
+INSERT INTO Babel_7192_SelInto_Source VALUES (1, 'a'), (2, 'b');
+GO
+~~ROW COUNT: 2~~
+
+SELECT MyIdCol, MyNameCol INTO Babel_7192_SelInto_Dest FROM Babel_7192_SelInto_Source;
+GO
+~~ROW COUNT: 2~~
+
+SELECT name FROM sys.tables WHERE name = 'Babel_7192_SelInto_Dest';
+GO
+~~START~~
+varchar
+babel_7192_selinto_dest
+~~END~~
+
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_SelInto_Dest') ORDER BY column_id;
+GO
+~~START~~
+varchar
+myidcol
+mynamecol
+~~END~~
+
+SELECT MyIdCol, MyNameCol FROM Babel_7192_SelInto_Dest ORDER BY MyIdCol;
+GO
+~~START~~
+int#!#varchar
+1#!#a
+2#!#b
+~~END~~
+
+
+-- Path 3: CREATE VIEW with mixed-case view name and mixed-case column alias.
+CREATE VIEW Babel_7192_MixedCase_View AS
+    SELECT MyIdCol AS MyAliasCol FROM Babel_7192_SelInto_Source;
+GO
+SELECT name FROM sys.views WHERE name = 'Babel_7192_MixedCase_View';
+GO
+~~START~~
+varchar
+babel_7192_mixedcase_view
+~~END~~
+
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_MixedCase_View');
+GO
+~~START~~
+varchar
+MyAliasCol
+~~END~~
+
+
+-- Path 3b: CREATE VIEW with an explicit column alias list
+-- (store_view_explicit_column_names -> bbf_store_original_name_options).
+CREATE VIEW Babel_7192_Explicit_View (MyExplicitAliasCol) AS
+    SELECT MyIdCol FROM Babel_7192_SelInto_Source;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Explicit_View');
+GO
+~~START~~
+varchar
+myexplicitaliascol
+~~END~~
+
+
+-- Path 3c: CREATE VIEW ... SELECT * over a mixed-case column
+-- (store_view_column_original_names reparse path).
+CREATE VIEW Babel_7192_Star_View AS SELECT * FROM Babel_7192_SelInto_Source;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Star_View') ORDER BY column_id;
+GO
+~~START~~
+varchar
+myidcol
+mynamecol
+~~END~~
+
+
+-- Path 3d: CREATE OR ALTER VIEW and ALTER VIEW (second view code path in
+-- pl_handler.c, also calls store_view_* -> bbf_store_original_name_options).
+CREATE OR ALTER VIEW Babel_7192_OrAlter_View AS SELECT 1 AS MyOrAlterCol;
+GO
+CREATE OR ALTER VIEW Babel_7192_OrAlter_View AS SELECT 2 AS MyOrAlterColV2;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_OrAlter_View');
+GO
+~~START~~
+varchar
+MyOrAlterColV2
+~~END~~
+
+ALTER VIEW Babel_7192_OrAlter_View AS SELECT 3 AS MyAlteredCol;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_OrAlter_View');
+GO
+~~START~~
+varchar
+MyAlteredCol
+~~END~~
+
+
+-- Path 3e: sp_rename of a COLUMN (refreshes bbf_original_name via AlterTable).
+CREATE TABLE Babel_7192_RenameCol_Tab (OrigColName INT);
+GO
+EXEC sp_rename 'Babel_7192_RenameCol_Tab.OrigColName', 'RenamedColName', 'COLUMN';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_RenameCol_Tab');
+GO
+~~START~~
+varchar
+renamedcolname
+~~END~~
+
+
+
+-- Path 4: LONG (>63 byte) identifiers across every store path, with an active
+-- event trigger. Mirrors Paths 1-3e but with names that exceed the PostgreSQL
+-- 63-byte limit, since the option-building path differs slightly for long names.
+-- 4a: long table + SELECT INTO (table name + column names)
+CREATE TABLE Babel_7192_Very_Long_Src_Table_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63 (Babel_7192_Very_Long_Column_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63 INT);
+GO
+SELECT Babel_7192_Very_Long_Column_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63 INTO Babel_7192_Very_Long_SelInto_Dest_Name_That_Exceeds_The_PostgreSQL_Limit_63 FROM Babel_7192_Very_Long_Src_Table_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63;
+GO
+SELECT name FROM sys.tables WHERE name LIKE 'Babel_7192_Very_Long_SelInto%';
+GO
+~~START~~
+varchar
+babel_7192_very_long_selinto_dest_name_that_exceeds_the_postgresql_limit_63
+~~END~~
+
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Very_Long_SelInto_Dest_Name_That_Exceeds_The_PostgreSQL_Limit_63');
+GO
+~~START~~
+varchar
+babel_7192_very_long_column_name_that_exceeds_the_postgresql_limit_of_63
+~~END~~
+
+
+-- 4b: long CREATE VIEW name + long column alias
+CREATE VIEW Babel_7192_Very_Long_View_Name_That_Exceeds_The_PostgreSQL_Limit_Of_Sixty3 AS
+    SELECT Babel_7192_Very_Long_Column_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63 AS Babel_7192_Very_Long_View_Alias_That_Exceeds_The_PostgreSQL_Limit_Of_63 FROM Babel_7192_Very_Long_Src_Table_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63;
+GO
+SELECT name FROM sys.views WHERE name LIKE 'Babel_7192_Very_Long_View_Name%';
+GO
+~~START~~
+varchar
+babel_7192_very_long_view_name_that_exceeds_the_postgresql_limit_of_sixty3
+~~END~~
+
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Very_Long_View_Name_That_Exceeds_The_PostgreSQL_Limit_Of_Sixty3');
+GO
+~~START~~
+varchar
+Babel_7192_Very_Long_View_Alias_That_Exceeds_The_PostgreSQL_Limit_Of_63
+~~END~~
+
+
+-- 4c: long CREATE VIEW with explicit long column alias list
+CREATE VIEW Babel_7192_Very_Long_Expl_View_Name_That_Exceeds_The_PostgreSQL_Limit_63 (Babel_7192_Very_Long_Explicit_Alias_That_Exceeds_The_PostgreSQL_Limit_Of_63) AS
+    SELECT Babel_7192_Very_Long_Column_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63 FROM Babel_7192_Very_Long_Src_Table_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Very_Long_Expl_View_Name_That_Exceeds_The_PostgreSQL_Limit_63');
+GO
+~~START~~
+varchar
+babel_7192_very_long_explicit_alias_that_exceeds_the_postgresql_limit_of_63
+~~END~~
+
+
+-- 4d: long CREATE VIEW ... SELECT * (reparse path)
+CREATE VIEW Babel_7192_Very_Long_Star_View_Name_That_Exceeds_The_PostgreSQL_Limit_63 AS SELECT * FROM Babel_7192_Very_Long_Src_Table_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63;
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Very_Long_Star_View_Name_That_Exceeds_The_PostgreSQL_Limit_63') ORDER BY column_id;
+GO
+~~START~~
+varchar
+babel_7192_very_long_column_name_that_exceeds_the_postgresql_limit_of_63
+~~END~~
+
+
+-- 4e: sp_rename of a long OBJECT and a long COLUMN
+CREATE TABLE Babel_7192_Very_Long_Rename_Src_Name_That_Exceeds_The_PostgreSQL_Limit_63 (id INT);
+GO
+EXEC sp_rename 'Babel_7192_Very_Long_Rename_Src_Name_That_Exceeds_The_PostgreSQL_Limit_63', 'Babel_7192_Very_Long_Rename_Dst_Name_That_Exceeds_The_PostgreSQL_Limit_63', 'OBJECT';
+GO
+SELECT name FROM sys.tables WHERE name LIKE 'Babel_7192_Very_Long_Rename_Dst%';
+GO
+~~START~~
+varchar
+babel_7192_very_long_rename_dst_name_that_exceeds_the_postgresql_limit_63
+~~END~~
+
+CREATE TABLE Babel_7192_Very_Long_RenameCol_Tab (Babel_7192_Very_Long_Orig_Column_Name_That_Exceeds_PostgreSQL_Limit_63 INT);
+GO
+EXEC sp_rename 'Babel_7192_Very_Long_RenameCol_Tab.Babel_7192_Very_Long_Orig_Column_Name_That_Exceeds_PostgreSQL_Limit_63', 'Babel_7192_Very_Long_Renamed_Column_Name_That_Exceeds_PostgreSQL_Limit_63', 'COLUMN';
+GO
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_Very_Long_RenameCol_Tab');
+GO
+~~START~~
+varchar
+babel_7192_very_long_renamed_column_name_that_exceeds_postgresql_limit_63
+~~END~~
+
+
+-- Cleanup BABEL-7192 objects
+DROP VIEW Babel_7192_MixedCase_View;
+GO
+DROP VIEW Babel_7192_Explicit_View;
+GO
+DROP VIEW Babel_7192_Star_View;
+GO
+DROP VIEW Babel_7192_OrAlter_View;
+GO
+DROP VIEW Babel_7192_Very_Long_View_Name_That_Exceeds_The_PostgreSQL_Limit_Of_Sixty3;
+GO
+DROP VIEW Babel_7192_Very_Long_Expl_View_Name_That_Exceeds_The_PostgreSQL_Limit_63;
+GO
+DROP VIEW Babel_7192_Very_Long_Star_View_Name_That_Exceeds_The_PostgreSQL_Limit_63;
+GO
+DROP TABLE Babel_7192_RenameCol_Tab;
+GO
+DROP TABLE Babel_7192_Very_Long_RenameCol_Tab;
+GO
+DROP TABLE Babel_7192_Very_Long_Rename_Dst_Name_That_Exceeds_The_PostgreSQL_Limit_63;
+GO
+DROP TABLE Babel_7192_SelInto_Dest;
+GO
+DROP TABLE Babel_7192_SelInto_Source;
+GO
+DROP TABLE Babel_7192_Rename_Dst;
+GO
+DROP TABLE Babel_7192_Very_Long_SelInto_Dest_Name_That_Exceeds_The_PostgreSQL_Limit_63;
+GO
+DROP TABLE Babel_7192_Very_Long_Src_Table_Name_That_Exceeds_The_PostgreSQL_Limit_Of_63;
+GO
+
+-- psql
+-- The crash-enabling event-trigger state is set for ANY of sql_drop /
+-- table_rewrite / ddl_command_end (not ddl_command_start). Re-point the trigger
+-- at the other two types and re-run a representative path (SELECT INTO + CREATE
+-- VIEW) to confirm none of them crash.
+DROP EVENT TRIGGER babel_7192_ddl_trigger;
+GO
+CREATE EVENT TRIGGER babel_7192_ddl_trigger
+    ON sql_drop
+    EXECUTE FUNCTION babel_7192_event_trigger_func();
+GO
+
+-- tsql
+CREATE TABLE Babel_7192_SqlDrop_Src (MyIdCol INT, MyNameCol VARCHAR(50));
+GO
+SELECT MyIdCol, MyNameCol INTO Babel_7192_SqlDrop_Dest FROM Babel_7192_SqlDrop_Src;
+GO
+CREATE VIEW Babel_7192_SqlDrop_View (MyDropAliasCol) AS SELECT MyIdCol FROM Babel_7192_SqlDrop_Src;
+GO
+SELECT name FROM sys.tables WHERE name = 'Babel_7192_SqlDrop_Dest';
+GO
+~~START~~
+varchar
+babel_7192_sqldrop_dest
+~~END~~
+
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_SqlDrop_View');
+GO
+~~START~~
+varchar
+mydropaliascol
+~~END~~
+
+DROP VIEW Babel_7192_SqlDrop_View;
+GO
+DROP TABLE Babel_7192_SqlDrop_Dest;
+GO
+DROP TABLE Babel_7192_SqlDrop_Src;
+GO
+
+-- psql
+DROP EVENT TRIGGER babel_7192_ddl_trigger;
+GO
+CREATE EVENT TRIGGER babel_7192_ddl_trigger
+    ON table_rewrite
+    EXECUTE FUNCTION babel_7192_event_trigger_func();
+GO
+
+-- tsql
+CREATE TABLE Babel_7192_TabRewrite_Src (MyIdCol INT, MyNameCol VARCHAR(50));
+GO
+SELECT MyIdCol, MyNameCol INTO Babel_7192_TabRewrite_Dest FROM Babel_7192_TabRewrite_Src;
+GO
+CREATE VIEW Babel_7192_TabRewrite_View (MyRewriteAliasCol) AS SELECT MyIdCol FROM Babel_7192_TabRewrite_Src;
+GO
+SELECT name FROM sys.tables WHERE name = 'Babel_7192_TabRewrite_Dest';
+GO
+~~START~~
+varchar
+babel_7192_tabrewrite_dest
+~~END~~
+
+SELECT name FROM sys.columns WHERE object_id = OBJECT_ID('Babel_7192_TabRewrite_View');
+GO
+~~START~~
+varchar
+myrewritealiascol
+~~END~~
+
+DROP VIEW Babel_7192_TabRewrite_View;
+GO
+DROP TABLE Babel_7192_TabRewrite_Dest;
+GO
+DROP TABLE Babel_7192_TabRewrite_Src;
+GO
+
+-- psql
+-- Drop the event trigger so it does not affect subsequent tests.
+DROP EVENT TRIGGER babel_7192_ddl_trigger;
+GO
+DROP FUNCTION babel_7192_event_trigger_func();
+GO
+
+-- tsql
 -- CLEANUP
 -- ===========================================
 DROP VIEW Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;

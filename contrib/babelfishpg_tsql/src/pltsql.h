@@ -2393,7 +2393,10 @@ extern void update_bbf_ident_mapping_parent(const char *nspname,
 											 BbfIdentMappingObjType objtype,
 											 const char *old_parent_name,
 											 const char *new_parent_name);
+extern void update_bbf_ident_mapping_nspname(const char *old_nspname,
+											 const char *new_nspname);
 extern void clean_up_bbf_ident_mapping(const char *nspname);
+extern void clean_up_bbf_ident_mapping_for_db(int16 dbid);
 extern const char *skip_collist_separators(const char *p);
 extern void store_table_constraint_original_names(CreateStmt *create_stmt,
 												  RangeVar *rel,
@@ -2409,6 +2412,7 @@ extern void block_bbf_original_name_reloption(Node *parsetree);
 extern AlterTableCmd *build_set_option_cmd(AlterTableType subtype,
 										   const char *optname,
 										   const char *optval);
+extern void bbf_store_original_name_options(Oid relid, List *cmds);
 extern char *extract_index_original_name(IndexStmt *stmt,
 										 const char *queryString);
 extern int	extract_and_strip_view_collist_loc(ViewStmt *stmt);
