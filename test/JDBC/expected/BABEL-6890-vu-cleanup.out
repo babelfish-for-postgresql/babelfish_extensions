@@ -29,5 +29,28 @@ BEGIN
 END
 GO
 
+-- Drop objects from UDT tests (33-36)
+DROP USER IF EXISTS babel_6890_schema_user;
+GO
+IF EXISTS (SELECT * FROM sys.server_principals WHERE name = 'babel_6890_schema_user')
+BEGIN
+    DROP LOGIN babel_6890_schema_user;
+END
+GO
+DROP TYPE IF EXISTS dbo.babel_6890_udt;
+GO
+DROP TYPE IF EXISTS dbo.babel_6890_t;
+GO
+DROP TYPE IF EXISTS babel_6890_s1.babel_6890_t;
+GO
+DROP TYPE IF EXISTS babel_6890_s2.babel_6890_t;
+GO
+IF EXISTS (SELECT * FROM sys.schemas WHERE name = 'babel_6890_s1')
+    DROP SCHEMA babel_6890_s1;
+GO
+IF EXISTS (SELECT * FROM sys.schemas WHERE name = 'babel_6890_s2')
+    DROP SCHEMA babel_6890_s2;
+GO
+
 PRINT 'BABEL-6890 cleanup completed';
 GO

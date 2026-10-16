@@ -1275,12 +1275,12 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 
 
 -- ============================================================================
--- Test 33: QUOTED_IDENTIFIER is part of the cache key
--- "status" is a column with QUOTED_IDENTIFIER ON and a string literal with
--- QUOTED_IDENTIFIER OFF, so the parse trees differ. Each setting gets its
--- own entry.
+-- Test 33: UDT as parameter type — cached; drop + recreate with the same name
+-- The key hashes the schema-qualified type name, so the recreated type hits
+-- the same entry. Parameter datums are rebuilt from the current catalog on
+-- every call, so the hit uses the new type (INT: '007' -> 7).
 -- ============================================================================
-PRINT '=== Test 33: QUOTED_IDENTIFIER in cache key ===';
+PRINT '=== Test 33: UDT parameter type, drop + recreate ===';
 GO
 
 SELECT sys.flush_antlr_batch_parse_cache();
@@ -1290,68 +1290,208 @@ bit
 1
 ~~END~~
 
-
--- QI ON: "status" is a column → 'active'; entry is written
-SET QUOTED_IDENTIFIER ON
+CREATE TYPE dbo.babel_6890_udt FROM VARCHAR(20);
 GO
+
+-- Miss + write: '007'
 DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT "status" AS v FROM dbo.cache_orders WHERE order_id = @p1', @p1=1
+EXEC sp_prepexec @h OUTPUT, N'@p1 dbo.babel_6890_udt', N'SELECT @p1 = ''007'' SELECT @p1 AS v', @p1='b'
 GO
 ~~START~~
 varchar
-active
+007
 ~~END~~
 
 
--- Expect: hits=0, misses=1, writes=1, entries=1
+-- HIT: '007'
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 dbo.babel_6890_udt', N'SELECT @p1 = ''007'' SELECT @p1 AS v', @p1='b'
+GO
+~~START~~
+varchar
+007
+~~END~~
+
+
+-- Expect: hits=1, misses=1, writes=1, entries=1
 SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-0#!#1#!#1#!#0#!#0#!#1
+1#!#1#!#1#!#0#!#0#!#1
 ~~END~~
 
 
--- QI OFF: "status" is a string → 'status'; MISS and a second entry
-SET QUOTED_IDENTIFIER OFF
+DROP TYPE dbo.babel_6890_udt;
 GO
+CREATE TYPE dbo.babel_6890_udt FROM INT;
+GO
+
+-- Same name -> same key -> HIT, but the parameter is now INT: 7
 DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT "status" AS v FROM dbo.cache_orders WHERE order_id = @p1', @p1=1
+EXEC sp_prepexec @h OUTPUT, N'@p1 dbo.babel_6890_udt', N'SELECT @p1 = ''007'' SELECT @p1 AS v', @p1=1
 GO
 ~~START~~
-varchar
-status
+int
+7
 ~~END~~
 
 
--- QI OFF again: HIT its own entry, still 'status'
-DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT "status" AS v FROM dbo.cache_orders WHERE order_id = @p1', @p1=1
-GO
-~~START~~
-varchar
-status
-~~END~~
-
-SET QUOTED_IDENTIFIER ON
-GO
-
--- Expect: hits=1, misses=2, writes=2, entries=2
+-- Expect: hits=2, misses=1, writes=1, entries=1
 SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-1#!#2#!#2#!#0#!#0#!#2
+2#!#1#!#1#!#0#!#0#!#1
 ~~END~~
 
 
--- QI ON again: HIT, still 'active'
+DROP TYPE dbo.babel_6890_udt;
+GO
+
+-- ============================================================================
+-- Test 34: UDT in DECLARE — never cached
+-- The variable's type OID would be stored in the cached datum, so a batch
+-- that declares a user-defined type is not written. Every call parses, so
+-- a recreated type is always picked up.
+-- ============================================================================
+PRINT '=== Test 34: UDT in DECLARE is not cached ===';
+GO
+
+SELECT sys.flush_antlr_batch_parse_cache();
+GO
+~~START~~
+bit
+1
+~~END~~
+
+CREATE TYPE dbo.babel_6890_udt FROM VARCHAR(20);
+GO
+
+-- varchar: '5'
 DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT "status" AS v FROM dbo.cache_orders WHERE order_id = @p1', @p1=1
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'DECLARE @v dbo.babel_6890_udt = @p1 SELECT @v AS v', @p1=5
 GO
 ~~START~~
 varchar
-active
+5
+~~END~~
+
+
+-- Still a miss (nothing written): '5'
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'DECLARE @v dbo.babel_6890_udt = @p1 SELECT @v AS v', @p1=5
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+
+-- Expect: hits=0, misses=2, writes=0, entries=0
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+0#!#2#!#0#!#0#!#0#!#0
+~~END~~
+
+
+DROP TYPE dbo.babel_6890_udt;
+GO
+CREATE TYPE dbo.babel_6890_udt FROM INT;
+GO
+
+-- Re-parsed with the recreated type: int 5
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'DECLARE @v dbo.babel_6890_udt = @p1 SELECT @v AS v', @p1=5
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+-- Expect: hits=0, misses=3, writes=0, entries=0
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+0#!#3#!#0#!#0#!#0#!#0
+~~END~~
+
+
+DROP TYPE dbo.babel_6890_udt;
+GO
+
+-- ============================================================================
+-- Test 35: Same type name in two schemas — separate entries
+-- babel_6890_s1.babel_6890_t (VARCHAR) and babel_6890_s2.babel_6890_t (INT)
+-- have different qualified names, so the same batch text gets two keys.
+-- ============================================================================
+PRINT '=== Test 35: Same type name, different schemas ===';
+GO
+
+CREATE SCHEMA babel_6890_s1;
+GO
+CREATE SCHEMA babel_6890_s2;
+GO
+CREATE TYPE babel_6890_s1.babel_6890_t FROM VARCHAR(20);
+GO
+CREATE TYPE babel_6890_s2.babel_6890_t FROM INT;
+GO
+SELECT sys.flush_antlr_batch_parse_cache();
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+-- s1 (varchar): '7'
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 babel_6890_s1.babel_6890_t', N'SELECT @p1 AS v', @p1='7'
+GO
+~~START~~
+varchar
+7
+~~END~~
+
+
+-- s2 (int): 7 — must not reuse the s1 entry
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 babel_6890_s2.babel_6890_t', N'SELECT @p1 AS v', @p1=7
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+-- Expect: hits=0, misses=2, writes=2, entries=2
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+0#!#2#!#2#!#0#!#0#!#2
+~~END~~
+
+
+-- Both again: each HITs its own entry
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 babel_6890_s1.babel_6890_t', N'SELECT @p1 AS v', @p1='7'
+GO
+~~START~~
+varchar
+7
+~~END~~
+
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 babel_6890_s2.babel_6890_t', N'SELECT @p1 AS v', @p1=7
+GO
+~~START~~
+int
+7
 ~~END~~
 
 
@@ -1365,13 +1505,31 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 
 
 -- ============================================================================
--- Test 34: enable_tsql_information_schema is part of the cache key
--- With the setting on, ANTLR rewrites information_schema to
--- information_schema_tsql, so each value gets its own entry.
+-- Test 36: Unqualified type name resolved by the user's default schema
+-- Same text N'@p1 babel_6890_t'. jdbc_user (default dbo) resolves it to
+-- dbo.babel_6890_t (VARCHAR); babel_6890_schema_user (default babel_6890_s2)
+-- resolves it to babel_6890_s2.babel_6890_t (INT). Different resolved names
+-- give different keys, so each user gets its own entry and neither
+-- overwrites the other.
 -- ============================================================================
-PRINT '=== Test 34: enable_tsql_information_schema in cache key ===';
+PRINT '=== Test 36: Unqualified type, per-user default schema ===';
 GO
 
+CREATE TYPE dbo.babel_6890_t FROM VARCHAR(20);
+GO
+DROP USER IF EXISTS babel_6890_schema_user;
+GO
+IF EXISTS (SELECT * FROM sys.server_principals WHERE name = 'babel_6890_schema_user')
+BEGIN
+    DROP LOGIN babel_6890_schema_user;
+END
+GO
+CREATE LOGIN babel_6890_schema_user WITH PASSWORD = '12345678';
+GO
+CREATE USER babel_6890_schema_user FOR LOGIN babel_6890_schema_user WITH DEFAULT_SCHEMA = babel_6890_s2;
+GO
+GRANT EXECUTE ON SCHEMA::babel_6890_s2 TO babel_6890_schema_user;
+GO
 SELECT sys.flush_antlr_batch_parse_cache();
 GO
 ~~START~~
@@ -1379,77 +1537,79 @@ bit
 1
 ~~END~~
 
-SELECT set_config('babelfishpg_tsql.enable_tsql_information_schema', 'off', false);
-GO
-~~START~~
-text
-off
-~~END~~
 
-
--- off: PostgreSQL information_schema (physical schema name)
+-- jdbc_user -> dbo.babel_6890_t (varchar): miss + write, '7'
 DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT TABLE_SCHEMA AS s FROM information_schema.tables WHERE TABLE_NAME = ''cache_orders''', @p1=1
+EXEC sp_prepexec @h OUTPUT, N'@p1 babel_6890_t', N'SELECT @p1 AS v', @p1='7'
 GO
 ~~START~~
 varchar
-master_dbo
+7
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_tsql_information_schema', 'on', false);
+-- tsql      user=babel_6890_schema_user password=12345678
+SELECT set_config('babelfishpg_tsql.antlr_batch_parse_cache_min_entry_size', '0', false);
 GO
 ~~START~~
 text
-on
+0
 ~~END~~
 
-
--- on: T-SQL information_schema ('dbo'); must not reuse the 'off' tree
+-- babel_6890_s2.babel_6890_t (int): different key -> miss + write, 7
 DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT TABLE_SCHEMA AS s FROM information_schema.tables WHERE TABLE_NAME = ''cache_orders''', @p1=1
+EXEC sp_prepexec @h OUTPUT, N'@p1 babel_6890_t', N'SELECT @p1 AS v', @p1=7
 GO
 ~~START~~
-nvarchar
-dbo
+int
+7
+~~END~~
+
+-- HIT its own entry: 7
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 babel_6890_t', N'SELECT @p1 AS v', @p1=7
+GO
+~~START~~
+int
+7
+~~END~~
+
+-- terminate-tsql-conn
+
+-- tsql
+-- jdbc_user again: HIT the dbo entry (not overwritten), '7'
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 babel_6890_t', N'SELECT @p1 AS v', @p1='7'
+GO
+~~START~~
+varchar
+7
 ~~END~~
 
 
--- Expect: hits=0, misses=2, writes=2, entries=2
+-- Expect: hits=2, misses=2, writes=2, entries=2
 SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-0#!#2#!#2#!#0#!#0#!#2
+2#!#2#!#2#!#0#!#0#!#2
 ~~END~~
 
 
--- on again: HIT its own entry, still 'dbo'
-DECLARE @h INT
-EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT TABLE_SCHEMA AS s FROM information_schema.tables WHERE TABLE_NAME = ''cache_orders''', @p1=1
+-- Cleanup for Tests 35-36. The login is dropped in BABEL-6890-vu-cleanup,
+-- since its session may still be open here.
+DROP USER IF EXISTS babel_6890_schema_user;
 GO
-~~START~~
-nvarchar
-dbo
-~~END~~
-
-
--- Expect: hits=1, misses=2, writes=2, entries=2
-SELECT * FROM sys.antlr_batch_parse_cache_stats();
+DROP TYPE dbo.babel_6890_t;
 GO
-~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-1#!#2#!#2#!#0#!#0#!#2
-~~END~~
-
-
-SELECT set_config('babelfishpg_tsql.enable_tsql_information_schema', 'off', false);
+DROP TYPE babel_6890_s1.babel_6890_t;
 GO
-~~START~~
-text
-off
-~~END~~
-
+DROP TYPE babel_6890_s2.babel_6890_t;
+GO
+DROP SCHEMA babel_6890_s1;
+GO
+DROP SCHEMA babel_6890_s2;
+GO
 
 PRINT 'BABEL-6890 verify completed';
 GO

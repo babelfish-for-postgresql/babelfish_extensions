@@ -3,8 +3,8 @@
  * antlr_batch_parse_cache.h
  *    Shared memory ANTLR parse tree cache for batch T-SQL queries.
  *
- * Key: query text + database id + compile signature (parameter declaration
- * and parse-affecting session settings). Query text is kept only for
+ * Key: query text + database id + parameter signature (parameter
+ * count, type names, modes and names). Query text is kept only for
  * collision checks; sys.antlr_batch_parse_cache_entries() exposes metadata
  * (sizes, timestamps, version), not the query text or parse tree.
  *
@@ -45,26 +45,27 @@
 /*****************************************
  *    HASH KEY
  *****************************************/
-typedef uint64 AntlrBatchParseCacheKey;	/* hash of query text, db_id, compile_sig */
+typedef uint64 AntlrBatchParseCacheKey; /* hash of query text, db_id,
+										 * param_sig */
 
 /*****************************************
  *    HASH ENTRY
  *****************************************/
 typedef struct AntlrBatchParseCacheEntry
 {
-	AntlrBatchParseCacheKey key;			/* hash lookup key — must be first */
+	AntlrBatchParseCacheKey key;	/* hash lookup key — must be first */
 
-	char		query_text[ANTLR_BATCH_PARSE_CACHE_MAX_QUERY_TEXT_LEN];	/* for collision checks */
+	char		query_text[ANTLR_BATCH_PARSE_CACHE_MAX_QUERY_TEXT_LEN]; /* for collision checks */
 	int			query_text_len;
 
-	char		parse_tree[ANTLR_BATCH_PARSE_CACHE_MAX_PARSE_TREE_LEN];	/* serialized tree */
+	char		parse_tree[ANTLR_BATCH_PARSE_CACHE_MAX_PARSE_TREE_LEN]; /* serialized tree */
 	int			parse_tree_len;
 
-	char		parse_datums[ANTLR_BATCH_PARSE_CACHE_MAX_PARSE_DATUMS_LEN];	/* serialized datums */
+	char		parse_datums[ANTLR_BATCH_PARSE_CACHE_MAX_PARSE_DATUMS_LEN]; /* serialized datums */
 	int			parse_datums_len;
 
 	char		bbf_version[32];
-	uint64		compile_sig;	/* parameter + parse-context signature */
+	uint64		param_sig;		/* parameter signature */
 	int			pre_cache_nDatums;	/* datums before ANTLR; must match on hit */
 	TimestampTz created_at;
 	TimestampTz last_used_at;	/* LRU key */
@@ -105,7 +106,7 @@ extern void antlr_batch_parse_cache_shmem_startup(void);
 struct InlineCodeBlockArgs;
 extern bool antlr_batch_parse_cache_enabled(struct InlineCodeBlockArgs *args);
 extern int	antlr_batch_parse_cache_get_or_parse(const char *proc_source,
-									 struct InlineCodeBlockArgs *args);
+												 struct InlineCodeBlockArgs *args);
 
 /* SQL-callable functions */
 extern Datum antlr_batch_parse_cache_stats(PG_FUNCTION_ARGS);

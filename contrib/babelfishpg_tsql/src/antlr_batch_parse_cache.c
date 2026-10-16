@@ -42,8 +42,6 @@
 #include "pltsql_node/pltsql_serialize.h"
 
 /* Defined in guc.c; not in guc.h for C/C++ linkage reasons (see guc.h) */
-extern bool pltsql_quoted_identifier;
-extern bool pltsql_allow_antlr_to_unsupported_grammar_for_testing;
 extern bool babelfish_dump_restore;
 
 /* Defined in iterative_exec.c; reported by EXPLAIN */
@@ -56,8 +54,10 @@ PG_FUNCTION_INFO_V1(antlr_batch_parse_cache_entries);
 /*****************************************
  *    EVICTION CONSTANTS
  *****************************************/
-#define ANTLR_BATCH_PARSE_CACHE_DEALLOC_PERCENT		10	/* free this % of entries at once */
-#define ANTLR_BATCH_PARSE_CACHE_MIN_VICTIMS			5	/* minimum entries to evict */
+#define ANTLR_BATCH_PARSE_CACHE_DEALLOC_PERCENT		10	/* free this % of
+														 * entries at once */
+#define ANTLR_BATCH_PARSE_CACHE_MIN_VICTIMS			5	/* minimum entries to
+														 * evict */
 
 /*****************************************
  *    SHARED STATE (pointers into shmem)
@@ -83,7 +83,7 @@ typedef struct AntlrBatchParseCacheCtx
 {
 	const char *query_text;
 	AntlrBatchParseCacheKey key;
-	uint64		compile_sig;
+	uint64		param_sig;
 	int			pre_cache_nDatums;	/* datums created before ANTLR */
 } AntlrBatchParseCacheCtx;
 
@@ -135,40 +135,60 @@ antlr_batch_parse_cache_shmem_startup(void)
 	info.keysize = sizeof(AntlrBatchParseCacheKey);
 	info.entrysize = sizeof(AntlrBatchParseCacheEntry);
 	antlr_batch_parse_cache_hash = ShmemInitHash("antlr_batch_parse_cache_hash",
-									 ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
-									 ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
-									 &info,
-									 HASH_ELEM | HASH_BLOBS);
+												 ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
+												 ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
+												 &info,
+												 HASH_ELEM | HASH_BLOBS);
 	antlr_batch_parse_cache_state = state;
 
 	LWLockRelease(AddinShmemInitLock);
+}
+
+/* 64-bit hash of a NUL-terminated string */
+static uint64
+antlr_batch_parse_cache_hash_cstring(const char *str)
+{
+	return DatumGetUInt64(hash_any_extended((const unsigned char *) str,
+											strlen(str), 0));
 }
 
 /* ----------------------------------------------------------------
  * Parameter Signature
  *
  * Parameter count, names, types, and modes change the ANTLR output (dno
- * layout, assignment casts). Typmod is excluded: parameters are built
- * with typmod -1, so it never reaches ANTLR.
+ * layout, assignment casts). Types are hashed by schema-qualified name,
+ * not OID. Typmod is excluded: parameters are built with typmod -1, so it
+ * never reaches ANTLR.
  * ----------------------------------------------------------------
  */
 static uint64
 compute_antlr_batch_parse_cache_param_sig(int numargs, const Oid *argtypes,
-							  const char *argmodes,
-							  char **argnames)
+										  const char *argmodes,
+										  char **argnames)
 {
 	uint64		sig = (uint64) numargs;
 	int			i;
 
 	for (i = 0; i < numargs; i++)
 	{
-		sig = hash_combine64(sig, (uint64) (argtypes ? argtypes[i] : InvalidOid));
+		Oid			typoid = argtypes ? argtypes[i] : InvalidOid;
+
+		if (OidIsValid(typoid))
+		{
+			char	   *typname = format_type_extended(typoid, -1,
+													   FORMAT_TYPE_FORCE_QUALIFY |
+													   FORMAT_TYPE_ALLOW_INVALID);
+
+			sig = hash_combine64(sig, antlr_batch_parse_cache_hash_cstring(typname));
+			pfree(typname);
+		}
+		else
+			sig = hash_combine64(sig, 0);
+
 		sig = hash_combine64(sig, (uint64) (unsigned char) (argmodes ? argmodes[i] : 'i'));
+
 		if (argnames && argnames[i])
-			sig = hash_combine64(sig,
-								 DatumGetUInt64(hash_any_extended((const unsigned char *) argnames[i],
-																  strlen(argnames[i]),
-																  0)));
+			sig = hash_combine64(sig, antlr_batch_parse_cache_hash_cstring(argnames[i]));
 		else
 			sig = hash_combine64(sig, 0);
 	}
@@ -176,43 +196,9 @@ compute_antlr_batch_parse_cache_param_sig(int numargs, const Oid *argtypes,
 	return sig;
 }
 
-/* ----------------------------------------------------------------
- * Parse-Context Signature
- *
- * Session settings read during the ANTLR parse that change the tree:
- * QUOTED_IDENTIFIER, enable_tsql_information_schema, enable_hint_mapping,
- * and the test-grammar setting. Add any new parse-time setting here.
- *
- * Escape hatches are not included: the routine ANTLR parse cache has the
- * same gap, and it is tracked separately.
- * ----------------------------------------------------------------
- */
-static uint64
-compute_antlr_batch_parse_cache_parse_ctx_sig(void)
-{
-	uint64		sig = 0;
-
-	sig = hash_combine64(sig, (uint64) pltsql_quoted_identifier);
-	sig = hash_combine64(sig, (uint64) pltsql_enable_tsql_information_schema);
-	sig = hash_combine64(sig, (uint64) enable_hint_mapping);
-	sig = hash_combine64(sig, (uint64) pltsql_allow_antlr_to_unsupported_grammar_for_testing);
-
-	return sig;
-}
-
-/* Parameter signature combined with parse-context signature */
-static uint64
-compute_antlr_batch_parse_cache_compile_sig(int numargs, const Oid *argtypes,
-								const char *argmodes, char **argnames)
-{
-	return hash_combine64(compute_antlr_batch_parse_cache_param_sig(numargs, argtypes,
-														argmodes, argnames),
-						  compute_antlr_batch_parse_cache_parse_ctx_sig());
-}
-
-/* Cache key: hash of query text, db_id, and compile signature */
+/* Cache key: hash of query text, db_id, and parameter signature */
 static AntlrBatchParseCacheKey
-compute_antlr_batch_parse_cache_key(const char *query_text, int16 db_id, uint64 compile_sig)
+compute_antlr_batch_parse_cache_key(const char *query_text, int16 db_id, uint64 param_sig)
 {
 	uint64		hash;
 
@@ -220,7 +206,7 @@ compute_antlr_batch_parse_cache_key(const char *query_text, int16 db_id, uint64 
 											strlen(query_text),
 											0));
 	hash = hash_combine64(hash, (uint64) db_id);
-	hash = hash_combine64(hash, compile_sig);
+	hash = hash_combine64(hash, param_sig);
 	return (AntlrBatchParseCacheKey) hash;
 }
 
@@ -246,7 +232,7 @@ static AntlrBatchParseCacheEntry *
 antlr_batch_parse_cache_hash_find(AntlrBatchParseCacheKey key)
 {
 	return (AntlrBatchParseCacheEntry *) hash_search(antlr_batch_parse_cache_hash, &key,
-										   HASH_FIND, NULL);
+													 HASH_FIND, NULL);
 }
 
 /* Insert: a new or existing entry for a key; NULL if the table is full */
@@ -255,7 +241,7 @@ antlr_batch_parse_cache_hash_enter(AntlrBatchParseCacheKey key, bool *found)
 {
 	/* HASH_ENTER_NULL: returns NULL instead of raising ERROR */
 	return (AntlrBatchParseCacheEntry *) hash_search(antlr_batch_parse_cache_hash, &key,
-										   HASH_ENTER_NULL, found);
+													 HASH_ENTER_NULL, found);
 }
 
 /* Delete: one entry */
@@ -330,14 +316,14 @@ antlr_batch_parse_cache_hash_evict_lru(AntlrBatchParseCacheEntry **entries_arr)
 	}
 }
 
-/* True if the entry holds this query text and compile signature */
+/* True if the entry holds this query text and parameter signature */
 static bool
 antlr_batch_parse_cache_entry_matches(AntlrBatchParseCacheEntry *entry, const char *query_text,
-						  int query_len, uint64 compile_sig)
+									  int query_len, uint64 param_sig)
 {
 	return entry->query_text_len == query_len &&
 		strncmp(entry->query_text, query_text, query_len) == 0 &&
-		entry->compile_sig == compile_sig;
+		entry->param_sig == param_sig;
 }
 
 /* Update: mark the entry as just used. Safe under a shared lock. */
@@ -352,10 +338,10 @@ antlr_batch_parse_cache_entry_touch(AntlrBatchParseCacheEntry *entry, TimestampT
 /* Update: copy the data into the entry. Needs the exclusive lock. */
 static void
 antlr_batch_parse_cache_entry_fill(AntlrBatchParseCacheEntry *entry, bool found,
-					   const char *query_text, int query_len,
-					   const char *tree_str, int tree_len,
-					   const char *datums_str, int datums_len,
-					   uint64 compile_sig, int pre_cache_nDatums)
+								   const char *query_text, int query_len,
+								   const char *tree_str, int tree_len,
+								   const char *datums_str, int datums_len,
+								   uint64 param_sig, int pre_cache_nDatums)
 {
 	memcpy(entry->query_text, query_text, query_len);
 	entry->query_text[query_len] = '\0';
@@ -371,7 +357,7 @@ antlr_batch_parse_cache_entry_fill(AntlrBatchParseCacheEntry *entry, bool found,
 	entry->parse_datums_len = datums_len;
 
 	strlcpy(entry->bbf_version, BABELFISH_VERSION_STR, sizeof(entry->bbf_version));
-	entry->compile_sig = compile_sig;
+	entry->param_sig = param_sig;
 	entry->pre_cache_nDatums = pre_cache_nDatums;
 	entry->last_used_at = GetCurrentTimestamp();
 
@@ -459,7 +445,7 @@ antlr_batch_parse_cache_entry_size_ok(int query_len, int tree_len, int datums_le
 
 /*
  * Get: palloc'd copies of the entry, made under the shared lock, or NULL
- * on miss. Any mismatch in text, compile signature, datum count, or
+ * on miss. Any mismatch in text, parameter signature, datum count, or
  * version is a miss. Caller frees the result.
  */
 static AntlrBatchParseCacheLookupResult *
@@ -478,8 +464,8 @@ antlr_batch_parse_cache_get(const AntlrBatchParseCacheCtx *ctx)
 
 	if (entry == NULL ||
 		!antlr_batch_parse_cache_entry_matches(entry, ctx->query_text,
-								   (int) strlen(ctx->query_text),
-								   ctx->compile_sig) ||
+											   (int) strlen(ctx->query_text),
+											   ctx->param_sig) ||
 		entry->pre_cache_nDatums != ctx->pre_cache_nDatums ||
 		strcmp(entry->bbf_version, BABELFISH_VERSION_STR) != 0 ||
 		entry->parse_tree_len <= 0)
@@ -509,7 +495,7 @@ antlr_batch_parse_cache_get(const AntlrBatchParseCacheCtx *ctx)
  */
 static bool
 antlr_batch_parse_cache_put(const AntlrBatchParseCacheCtx *ctx, const char *tree_str,
-				const char *datums_str)
+							const char *datums_str)
 {
 	AntlrBatchParseCacheEntry *entry;
 	AntlrBatchParseCacheEntry **entries_arr;
@@ -543,7 +529,7 @@ antlr_batch_parse_cache_put(const AntlrBatchParseCacheCtx *ctx, const char *tree
 	/* Key already used by different text or signature */
 	if (found &&
 		!antlr_batch_parse_cache_entry_matches(entry, ctx->query_text, query_len,
-								   ctx->compile_sig))
+											   ctx->param_sig))
 	{
 		pg_atomic_add_fetch_u64(&antlr_batch_parse_cache_state->stat_errors, 1);
 		LWLockRelease(antlr_batch_parse_cache_state->lock);
@@ -571,10 +557,10 @@ antlr_batch_parse_cache_put(const AntlrBatchParseCacheCtx *ctx, const char *tree
 	}
 
 	antlr_batch_parse_cache_entry_fill(entry, found,
-						   ctx->query_text, query_len,
-						   tree_str, tree_len,
-						   datums_str, datums_len,
-						   ctx->compile_sig, ctx->pre_cache_nDatums);
+									   ctx->query_text, query_len,
+									   tree_str, tree_len,
+									   datums_str, datums_len,
+									   ctx->param_sig, ctx->pre_cache_nDatums);
 
 	pg_atomic_add_fetch_u64(&antlr_batch_parse_cache_state->stat_writes, 1);
 
@@ -759,7 +745,7 @@ antlr_batch_parse_cache_restore_datums(const char *datums_str)
  */
 static void
 antlr_batch_parse_cache_validate_hit(const AntlrBatchParseCacheCtx *ctx, const char *proc_source,
-						 PLtsql_stmt_block *cached_tree)
+									 PLtsql_stmt_block *cached_tree)
 {
 	int			pre = ctx->pre_cache_nDatums;
 	int			n_cached = pltsql_nDatums - pre;
@@ -798,7 +784,7 @@ antlr_batch_parse_cache_validate_hit(const AntlrBatchParseCacheCtx *ctx, const c
 				elog(LOG, "antlr_batch_parse_cache[VALIDATE]: PASS key=%lu",
 					 (unsigned long) ctx->key);
 			else
-				elog(WARNING, "antlr_batch_parse_cache[VALIDATE]: FAIL key=%lu — cached tree differs from fresh ANTLR parse",
+				elog(WARNING, "antlr_batch_parse_cache[VALIDATE]: FAIL key=%lu - cached tree differs from fresh ANTLR parse",
 					 (unsigned long) ctx->key);
 
 			pfree(cached_str);
@@ -913,7 +899,7 @@ antlr_batch_parse_cache_write(const AntlrBatchParseCacheCtx *ctx)
 		bool		cacheable;
 
 		datums_str = antlr_batch_parse_cache_serialize_datums(ctx->pre_cache_nDatums,
-												  &cacheable);
+															  &cacheable);
 		if (cacheable)
 		{
 			tree_str = pltsql_nodeToString(pltsql_parse_result);
@@ -978,13 +964,13 @@ antlr_batch_parse_cache_get_or_parse(const char *proc_source, InlineCodeBlockArg
 
 	ctx.query_text = proc_source;
 	ctx.pre_cache_nDatums = pltsql_nDatums;
-	/* Parameter declaration and parse-affecting settings */
-	ctx.compile_sig = compute_antlr_batch_parse_cache_compile_sig(args->numargs,
-													  args->argtypes,
-													  args->argmodes,
-													  args->argnames);
+	/* Parameter count, type names, modes and names */
+	ctx.param_sig = compute_antlr_batch_parse_cache_param_sig(args->numargs,
+															  args->argtypes,
+															  args->argmodes,
+															  args->argnames);
 	ctx.key = compute_antlr_batch_parse_cache_key(proc_source, get_cur_db_id(),
-									  ctx.compile_sig);
+												  ctx.param_sig);
 
 	if (antlr_batch_parse_cache_read(&ctx, proc_source))
 		return 0;
