@@ -53,6 +53,7 @@
 #include "iterative_exec.h"
 #include "multidb.h"
 #include "collation.h"
+#include "antlr_batch_parse_cache.h"
 
 /* ----------
  * Our own local and global variables
@@ -1512,6 +1513,9 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 	/*
 	 * Now parse the function's text
 	 */
+	if (antlr_batch_parse_cache_enabled(args))
+		parse_rc = antlr_batch_parse_cache_get_or_parse(proc_source, args);
+	else
 	{
 		ANTLR_result result = antlr_parser_cpp(proc_source);
 

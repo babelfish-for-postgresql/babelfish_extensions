@@ -103,6 +103,7 @@
 #include "schemacmds.h"
 #include "session.h"
 #include "pltsql.h"
+#include "antlr_batch_parse_cache.h"
 #include "pltsql_partition.h"
 #include "pltsql_permissions.h"
 #include "pl_explain.h"
@@ -7000,6 +7001,13 @@ _PG_init(void)
 	coalesce_typmod_hook = coalesce_typmod_hook_impl;
 
 	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
+
+	/*
+	 * Batch query cache: attach to the shared memory created by
+	 * babelfishpg_tds. babelfishpg_tsql is not preloaded, so it already
+	 * exists here.
+	 */
+	antlr_batch_parse_cache_shmem_startup();
 
 	inited = true;
 }

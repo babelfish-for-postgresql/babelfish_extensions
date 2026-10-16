@@ -24,6 +24,7 @@
 #include "src/include/tds_int.h"
 #include "src/include/tds_secure.h"
 #include "src/include/tds_instr.h"
+#include "src/antlr_batch_parse_cache.h"
 #include "commands/defrem.h"
 #include "fmgr.h"
 #include "pgstat.h"
@@ -297,6 +298,20 @@ tds_memsize()
 	size = add_size(size, TdsHostNameBufferSize());
 	size = add_size(size, TdsLanguageBufferSize());
 	size = add_size(size, TdsContextInfoBufferSize());
+
+	/*
+	 * Batch query ANTLR parse cache: ~256 KB per entry, reserved only when
+	 * the feature is enabled. Created in tds_status_shmem_startup(), used by
+	 * babelfishpg_tsql.
+	 */
+	if (tds_enable_antlr_batch_parse_cache)
+	{
+		size = add_size(size, MAXALIGN(sizeof(AntlrBatchParseCacheSharedState)));
+		size = add_size(size,
+						hash_estimate_size(ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
+										   sizeof(AntlrBatchParseCacheEntry)));
+	}
+
 	return size;
 }
 
@@ -312,6 +327,8 @@ tds_shmem_request()
 	 * resources in tds_status_shmem_startup().
 	 */
 	RequestAddinShmemSpace(tds_memsize());
+	if (tds_enable_antlr_batch_parse_cache)
+		RequestNamedLWLockTranche("antlr_batch_parse_cache", 1);
 }
 
 /*
@@ -416,6 +433,38 @@ tds_status_shmem_startup(void)
 			TdsStatusArray[i].st_context_info = buffer;
 			buffer += CONTEXTINFOLEN;
 		}
+	}
+
+	/*
+	 * Batch query ANTLR parse cache: create the shared state and hash.
+	 * babelfishpg_tsql attaches using the same names.
+	 */
+	if (tds_enable_antlr_batch_parse_cache)
+	{
+		AntlrBatchParseCacheSharedState *state;
+		HASHCTL info;
+		bool state_found;
+
+		state = ShmemInitStruct("antlr_batch_parse_cache_state",
+								sizeof(AntlrBatchParseCacheSharedState), &state_found);
+		if (!state_found)
+		{
+			state->lock = &(GetNamedLWLockTranche("antlr_batch_parse_cache"))->lock;
+			pg_atomic_init_u64(&state->stat_hits, 0);
+			pg_atomic_init_u64(&state->stat_misses, 0);
+			pg_atomic_init_u64(&state->stat_writes, 0);
+			pg_atomic_init_u64(&state->stat_evictions, 0);
+			pg_atomic_init_u64(&state->stat_errors, 0);
+		}
+
+		memset(&info, 0, sizeof(info));
+		info.keysize = sizeof(AntlrBatchParseCacheKey);
+		info.entrysize = sizeof(AntlrBatchParseCacheEntry);
+		ShmemInitHash("antlr_batch_parse_cache_hash",
+					  ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
+					  ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
+					  &info,
+					  HASH_ELEM | HASH_BLOBS);
 	}
 
 	LWLockRelease(AddinShmemInitLock);

@@ -145,6 +145,7 @@ jobs:
         run: |
           ulimit -c unlimited
           cd ~
+          echo "babelfishpg_tds.enable_antlr_batch_parse_cache = on" >> ~/psql/data/postgresql.conf
           ~/psql/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
           sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "\dx"
           sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
