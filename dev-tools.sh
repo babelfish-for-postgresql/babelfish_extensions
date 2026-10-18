@@ -183,13 +183,19 @@ init_pghint() {
     make install
 }
 
+copy_antlr_lib() {
+    local lib="/usr/local/lib/libantlr4-runtime.so.4.13.2"
+    [ -f "$lib" ] || lib="/usr/local/lib64/libantlr4-runtime.so.4.13.2"
+    cp "$lib" $1/postgres/lib/
+}
+
 init_pg() {
     cd $1/postgresql_modified_for_babelfish
     ./configure --prefix=$2/postgres/ --without-readline --without-zlib --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
     make -j 4
     make install
     cd contrib && make && make install
-    cp "/usr/local/lib64/libantlr4-runtime.so.4.13.2" $2/postgres/lib/
+    copy_antlr_lib $2
     init_pghint $1 $2
 }
 
@@ -291,7 +297,7 @@ init_pg_coverage(){
     make -j 4
     make install
     cd contrib && make && make install
-    cp "/usr/local/lib64/libantlr4-runtime.so.4.13.2" $2/postgres/lib/
+    copy_antlr_lib $2
     init_pghint $1 $2
 }
 
