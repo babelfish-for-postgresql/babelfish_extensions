@@ -35,3 +35,10 @@ GO
 
 ~~ERROR (Message: view "openxml_documents" does not exist)~~
 
+
+DROP FUNCTION openxml_ns_pgfn
+GO
+DROP PROCEDURE openxml_ns_proc
+GO
+DROP TABLE openxml_ns_sink
+GO
