@@ -328,7 +328,7 @@ tds_shmem_request()
 	 */
 	RequestAddinShmemSpace(tds_memsize());
 	if (tds_enable_antlr_batch_parse_cache)
-		RequestNamedLWLockTranche("antlr_batch_parse_cache", 1);
+		RequestNamedLWLockTranche(ANTLR_BATCH_PARSE_CACHE_LWLOCK_TRANCHE, 1);
 }
 
 /*
@@ -445,11 +445,11 @@ tds_status_shmem_startup(void)
 		HASHCTL info;
 		bool state_found;
 
-		state = ShmemInitStruct("antlr_batch_parse_cache_state",
+		state = ShmemInitStruct(ANTLR_BATCH_PARSE_CACHE_SHMEM_STATE_NAME,
 								sizeof(AntlrBatchParseCacheSharedState), &state_found);
 		if (!state_found)
 		{
-			state->lock = &(GetNamedLWLockTranche("antlr_batch_parse_cache"))->lock;
+			state->lock = &(GetNamedLWLockTranche(ANTLR_BATCH_PARSE_CACHE_LWLOCK_TRANCHE))->lock;
 			pg_atomic_init_u64(&state->stat_hits, 0);
 			pg_atomic_init_u64(&state->stat_misses, 0);
 			pg_atomic_init_u64(&state->stat_writes, 0);
@@ -460,7 +460,7 @@ tds_status_shmem_startup(void)
 		memset(&info, 0, sizeof(info));
 		info.keysize = sizeof(AntlrBatchParseCacheKey);
 		info.entrysize = sizeof(AntlrBatchParseCacheEntry);
-		ShmemInitHash("antlr_batch_parse_cache_hash",
+		ShmemInitHash(ANTLR_BATCH_PARSE_CACHE_SHMEM_HASH_NAME,
 					  ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
 					  ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
 					  &info,
@@ -834,7 +834,7 @@ get_tds_database_backend_count(int16 db_id, bool ignore_current_connection)
 {
 	TdsStatus  *tdsentry;
 	LocalTdsStatus *local_tdsentry;
-	int number_of_connections = 0;
+	int			number_of_connections = 0;
 
 	/* Read the latest activity from the shared mem. */
 	tdsstat_read_current_status();
@@ -849,13 +849,13 @@ get_tds_database_backend_count(int16 db_id, bool ignore_current_connection)
 		tdsentry = &local_tdsentry->tdsStatus;
 
 		/*
-		 * Return true if we find the first backend connected to
-		 * this database. Also sanity check that the pid is valid.
-		 * 
-		 * If ignore_current_connection is set to true then we need to skip
-		 * at least one connection using that database,
-		 * i.e. increment count to 1 and return true
-		 * only when we find another connection using same database.
+		 * Return true if we find the first backend connected to this
+		 * database. Also sanity check that the pid is valid.
+		 *
+		 * If ignore_current_connection is set to true then we need to skip at
+		 * least one connection using that database, i.e. increment count to 1
+		 * and return true only when we find another connection using same
+		 * database.
 		 */
 		if (tdsentry->st_procpid > 0 &&
 			tdsentry->client_pid != 0 && tdsentry->database_id == db_id)

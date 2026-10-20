@@ -43,6 +43,16 @@
 #define ANTLR_BATCH_PARSE_CACHE_ENABLE_GUC	"babelfishpg_tds.enable_antlr_batch_parse_cache"
 
 /*****************************************
+ *    SHARED MEMORY NAMES
+ *
+ *    Created by babelfishpg_tds, attached by babelfishpg_tsql; both must
+ *    use the same names.
+ *****************************************/
+#define ANTLR_BATCH_PARSE_CACHE_SHMEM_STATE_NAME	"antlr_batch_parse_cache_state"
+#define ANTLR_BATCH_PARSE_CACHE_SHMEM_HASH_NAME		"antlr_batch_parse_cache_hash"
+#define ANTLR_BATCH_PARSE_CACHE_LWLOCK_TRANCHE		"antlr_batch_parse_cache"
+
+/*****************************************
  *    HASH KEY
  *****************************************/
 typedef uint64 AntlrBatchParseCacheKey; /* hash of query text, db_id,

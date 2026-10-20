@@ -7003,9 +7003,8 @@ _PG_init(void)
 	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
 
 	/*
-	 * Batch query cache: attach to the shared memory created by
-	 * babelfishpg_tds. babelfishpg_tsql is not preloaded, so it already
-	 * exists here.
+	 * Batch query cache: attach to the shared memory created during server
+	 * start (only when babelfishpg_tds.enable_antlr_batch_parse_cache is on).
 	 */
 	antlr_batch_parse_cache_shmem_startup();
 

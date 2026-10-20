@@ -118,7 +118,7 @@ antlr_batch_parse_cache_shmem_startup(void)
 
 	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
 
-	state = ShmemInitStruct("antlr_batch_parse_cache_state",
+	state = ShmemInitStruct(ANTLR_BATCH_PARSE_CACHE_SHMEM_STATE_NAME,
 							sizeof(AntlrBatchParseCacheSharedState),
 							&found_state);
 
@@ -134,7 +134,7 @@ antlr_batch_parse_cache_shmem_startup(void)
 	memset(&info, 0, sizeof(info));
 	info.keysize = sizeof(AntlrBatchParseCacheKey);
 	info.entrysize = sizeof(AntlrBatchParseCacheEntry);
-	antlr_batch_parse_cache_hash = ShmemInitHash("antlr_batch_parse_cache_hash",
+	antlr_batch_parse_cache_hash = ShmemInitHash(ANTLR_BATCH_PARSE_CACHE_SHMEM_HASH_NAME,
 												 ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
 												 ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
 												 &info,

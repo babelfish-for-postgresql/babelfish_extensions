@@ -681,6 +681,38 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_stored_procedures TO PUBLIC;
 
+-- Global batch query antlr parse cache statistics
+CREATE OR REPLACE FUNCTION sys.antlr_batch_parse_cache_stats(
+    OUT cache_hits BIGINT,
+    OUT cache_misses BIGINT,
+    OUT cache_writes BIGINT,
+    OUT cache_evictions BIGINT,
+    OUT cache_errors BIGINT,
+    OUT cache_entries BIGINT
+) RETURNS RECORD
+AS 'babelfishpg_tsql', 'antlr_batch_parse_cache_stats'
+LANGUAGE C VOLATILE PARALLEL RESTRICTED;
+
+-- Flush all entries from the batch query antlr parse cache
+-- Returns true if any entries were flushed, false if cache was already empty
+CREATE OR REPLACE FUNCTION sys.flush_antlr_batch_parse_cache()
+RETURNS BOOLEAN
+AS 'babelfishpg_tsql', 'flush_antlr_batch_parse_cache'
+LANGUAGE C VOLATILE PARALLEL UNSAFE;
+
+-- List all entries in the batch query antlr parse cache
+CREATE OR REPLACE FUNCTION sys.antlr_batch_parse_cache_entries(
+    OUT cache_key BIGINT,
+    OUT created_at sys.DATETIME,
+    OUT last_used_at sys.DATETIME,
+    OUT query_text_len INT,
+    OUT parse_tree_len INT,
+    OUT parse_datums_len INT,
+    OUT bbf_version TEXT
+) RETURNS SETOF RECORD
+AS 'babelfishpg_tsql', 'antlr_batch_parse_cache_entries'
+LANGUAGE C VOLATILE PARALLEL RESTRICTED;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
