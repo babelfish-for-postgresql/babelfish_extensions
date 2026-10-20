@@ -1,0 +1,80 @@
+DROP TABLE babel_5223_xml_value_udt
+GO
+
+DROP TYPE dbo.babel_5223_xml_value_xmlUDT
+GO
+
+DROP TYPE dbo.babel_5223_xml_value_varcharUDT
+GO
+
+DROP TYPE dbo.babel_5223_xml_value_imageUDT
+GO
+
+DROP TYPE babel_5223_sch1.babel_5223_xml_value_sch_varcharUDT
+GO
+
+DROP TYPE babel_5223_sch2.babel_5223_xml_value_sch_varcharUDT
+GO
+
+DROP SCHEMA babel_5223_sch1
+GO
+
+DROP SCHEMA babel_5223_sch2
+GO
+
+DROP VIEW babel_5223_xml_value_dep_view
+GO
+
+DROP VIEW babel_5223_xml_value_dep_view2
+GO
+
+DROP PROCEDURE babel_5223_xml_value_dep_proc
+GO
+
+DROP FUNCTION dbo.babel_5223_xml_value_func1
+GO
+
+DROP FUNCTION babel_5223_xml_value_dep_func
+GO
+
+DROP FUNCTION babel_5223_xml_value_itvf_func
+GO
+
+DROP TABLE babel_5223_xml_value_compcol
+GO
+
+DROP TABLE babel_5223_xml_value_constraint
+GO
+
+DROP TABLE babel_5223_xml_value_compcol1
+GO
+
+DROP TABLE babel_5223_xml_value_constraint1
+GO
+
+DROP FUNCTION dbo.wrapper_xmlvalue1
+GO
+
+DROP TABLE babel_5223_xml_value_compcol2
+GO
+
+DROP TABLE babel_5223_xml_value_constraint2
+GO
+
+DROP FUNCTION dbo.wrapper_xmlvalue2
+GO
+
+DROP TRIGGER  babel_5223_xml_value_tr_parital_student_entry
+GO
+
+DROP TABLE babel_5223_xml_value_school_details
+GO
+
+DROP TABLE babel_5223_xml_value_t1
+GO
+
+DROP TABLE babel_5223_xml_value_t2
+GO
+
+DROP TABLE babel_5223_xml_value_text
+GO
