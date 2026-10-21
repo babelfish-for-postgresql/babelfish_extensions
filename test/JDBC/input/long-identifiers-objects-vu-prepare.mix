@@ -33,3 +33,47 @@ CREATE TABLE Very_Long_FK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Thre
     fk_id INT REFERENCES Very_Long_PK_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC(id)
 );
 GO
+
+-- Catalog sweep: tables/constraints/columns with long (>=64 byte) names must
+-- show the original name, not the truncated+md5 hashed physical name, across
+-- sys.indexes, COL_NAME, sys.computed_columns, INFORMATION_SCHEMA.TABLE_CONSTRAINTS/
+-- KEY_COLUMN_USAGE/CONSTRAINT_COLUMN_USAGE, sp_pkeys_view, sp_fkeys_view,
+-- sp_sproc_columns_view, and INFORMATION_SCHEMA.COLUMNS/COLUMN_DOMAIN_USAGE.DOMAIN_NAME.
+
+-- Inline long-named PK/FK constraints
+CREATE TABLE Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars_VU_TVC (
+    id INT,
+    CONSTRAINT Very_Long_Catalog_Parent_Pk_Constraint_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars_VU_TVC PRIMARY KEY (id)
+);
+GO
+CREATE TABLE Very_Long_Catalog_Child_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars_VU_TVC (
+    id INT,
+    CONSTRAINT Very_Long_Catalog_Child_Fk_Constraint_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars_VU_TVC FOREIGN KEY (id) REFERENCES Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars_VU_TVC(id)
+);
+GO
+
+-- Long column name
+CREATE TABLE Very_Long_Catalog_Column_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars_VU_TVC (
+    Very_Long_Catalog_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC INT
+);
+GO
+
+-- Computed column referencing a long base column name
+CREATE TABLE Very_Long_Catalog_Computed_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars_VU_TVC (
+    Very_Long_Catalog_Base_Column_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC INT,
+    computed_col AS (Very_Long_Catalog_Base_Column_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_VU_TVC * 2)
+);
+GO
+
+-- Procedure with a long parameter name
+CREATE PROCEDURE Very_Long_Catalog_Procedure_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars_VU_TVC (@Very_Long_Catalog_Parameter_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars_VU_TVC INT)
+AS BEGIN SELECT @Very_Long_Catalog_Parameter_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars_VU_TVC; END;
+GO
+
+-- Long domain (UDT) name used by a table column
+CREATE TYPE Very_Long_Catalog_Domain_Type_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars_VU_TVC FROM INT;
+GO
+CREATE TABLE Very_Long_Catalog_Domain_Usage_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars_VU_TVC (
+    domain_col Very_Long_Catalog_Domain_Type_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars_VU_TVC
+);
+GO

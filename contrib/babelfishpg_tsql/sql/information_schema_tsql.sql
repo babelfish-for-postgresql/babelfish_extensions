@@ -328,7 +328,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 				THEN ext.orig_name ELSE null END
 				AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
 			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
-				THEN t.typname ELSE null END
+				THEN sys.bbf_get_original_identifier_name(t.typname, nt.nspname, 'pg_type'::regclass::oid) ELSE null END
 				AS sys.nvarchar(128)) AS "DOMAIN_NAME"
 
 	FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
@@ -517,7 +517,7 @@ BEGIN
            sys.bbf_get_original_identifier_name(c.conname, nsp.nspname, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.sysname AS "CONSTRAINT_NAME",
            CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-           CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
+           CAST(sys.bbf_get_truncated_rel_original_name(r.reloptions, r.relname) AS sys.sysname) AS "TABLE_NAME",
            CAST(
              CASE c.contype WHEN 'c' THEN 'CHECK'
                             WHEN 'f' THEN 'FOREIGN KEY'
@@ -633,15 +633,15 @@ GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.CONSTRAINT_COLUMN_USAGE AS
 SELECT    CAST(tblcat AS sys.nvarchar(128)) AS "TABLE_CATALOG",
           CAST(tblschema AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-          CAST(tblname AS sys.nvarchar(128)) AS "TABLE_NAME" ,
-          CAST(colname AS sys.nvarchar(128)) AS "COLUMN_NAME",
+          CAST(sys.bbf_get_truncated_rel_original_name(tblreloptions, tblname) AS sys.nvarchar(128)) AS "TABLE_NAME" ,
+          CAST(sys.bbf_get_truncated_att_original_name(attoptions, colname) AS sys.nvarchar(128)) AS "COLUMN_NAME",
           CAST(cstrcat AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
           CAST(cstrschema AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-          CAST(cstrname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME"
+          CAST(sys.bbf_get_original_identifier_name(cstrname, cstrnspname, 'pg_constraint'::regclass::oid, tblname) AS sys.nvarchar(128)) AS "CONSTRAINT_NAME"
 
 FROM (
         /* check constraints */
-   SELECT DISTINCT extr.orig_name, r.relname, r.relowner, a.attname, extc.orig_name, c.conname, nr.dbname, nc.dbname
+   SELECT DISTINCT extr.orig_name, r.relname, r.relowner, a.attname, a.attoptions, r.reloptions, extc.orig_name, c.conname, nr.dbname, nc.dbname, nc.nspname
      FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
           sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
           pg_attribute a,
@@ -667,7 +667,7 @@ FROM (
        UNION ALL
 
         /* unique/primary key/foreign key constraints */
-   SELECT extr.orig_name, r.relname, r.relowner, a.attname, extc.orig_name, c.conname, nr.dbname, nc.dbname
+   SELECT extr.orig_name, r.relname, r.relowner, a.attname, a.attoptions, r.reloptions, extc.orig_name, c.conname, nr.dbname, nc.dbname, nc.nspname
      FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
           sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
           pg_attribute a,
@@ -686,7 +686,7 @@ FROM (
 		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
 		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
-      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat);
+      ) AS x (tblschema, tblname, tblowner, colname, attoptions, tblreloptions, cstrschema, cstrname, tblcat, cstrcat, cstrnspname);
 
 GRANT SELECT ON information_schema_tsql.CONSTRAINT_COLUMN_USAGE TO PUBLIC;
 
@@ -859,7 +859,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 		sys.bbf_get_original_identifier_name(c.conname, nsp.nspname, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.nvarchar(128) AS "CONSTRAINT_NAME",
 		CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+		CAST(sys.bbf_get_truncated_rel_original_name(r.reloptions, r.relname) AS sys.nvarchar(128)) AS "TABLE_NAME",
 		CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) AS sys.nvarchar(128)) AS "COLUMN_NAME",
 		CAST(ord AS int) AS "ORDINAL_POSITION"	
 	FROM

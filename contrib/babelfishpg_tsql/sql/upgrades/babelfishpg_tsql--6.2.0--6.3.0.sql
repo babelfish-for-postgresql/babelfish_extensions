@@ -1345,13 +1345,14 @@ BEGIN
 					DECLARE @relid INT = 0;
 					DECLARE @index_count INT;
 					SELECT @relid = object_id FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-						WHERE s1.name = @schemaname AND o1.name = sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname));
+						WHERE s1.name = @schemaname AND (o1.name = @curr_relname
+							OR sys.babelfish_truncate_identifier(pg_catalog.lower(o1.name)) = sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname)));
 					IF @relid = 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;
 						END
 					SELECT @index_count = COUNT(*) FROM pg_index i JOIN pg_class c ON i.indexrelid = c.oid
-						WHERE i.indrelid = @relid AND c.relname = sys.babelfish_construct_unique_index_name(sys.babelfish_truncate_identifier(pg_catalog.lower(@subname)), sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname)));
+						WHERE i.indrelid = @relid AND c.relname = sys.babelfish_construct_unique_index_name(pg_catalog.lower(@subname), pg_catalog.lower(@curr_relname));
 					IF @index_count < 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;
@@ -2476,7 +2477,7 @@ CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
 CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
 CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
 CAST(seq AS smallint) AS KEY_SEQ,
-CAST(t5.conname AS sys.sysname) AS PK_NAME
+CAST(sys.bbf_get_original_identifier_name(t5.conname, t2.nspname, 'pg_constraint'::regclass::oid, t1.relname) AS sys.sysname) AS PK_NAME
 FROM pg_catalog.pg_class t1
  JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
  JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
@@ -2918,8 +2919,8 @@ CASE
    WHEN const1.confdeltype = 'd' THEN CAST(3 AS smallint) -- set default
    ELSE CAST(0 AS smallint)
 END AS DELETE_RULE,
-CAST(const1.conname AS sys.sysname) AS FK_NAME,
-CAST(const2.conname AS sys.sysname) AS PK_NAME,
+CAST(sys.bbf_get_original_identifier_name(const1.conname, nsp_ext.nspname, 'pg_constraint'::regclass::oid, c.relname) AS sys.sysname) AS FK_NAME,
+CAST(sys.bbf_get_original_identifier_name(const2.conname, nsp_ext2.nspname, 'pg_constraint'::regclass::oid, c2.relname) AS sys.sysname) AS PK_NAME,
 CASE
    WHEN const1.condeferrable = false THEN CAST(7 as smallint) -- not deferrable
    ELSE (CASE WHEN const1.condeferred = false THEN CAST(6 as smallint) --  not deferred by default
@@ -3587,7 +3588,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 				THEN ext.orig_name ELSE null END
 				AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
 			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
-				THEN t.typname ELSE null END
+				THEN sys.bbf_get_original_identifier_name(t.typname, nt.nspname, 'pg_type'::regclass::oid) ELSE null END
 				AS sys.nvarchar(128)) AS "DOMAIN_NAME"
 
 	FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
@@ -3776,7 +3777,7 @@ BEGIN
            CAST(sys.bbf_get_original_identifier_name(c.conname, nsp.nspname, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END) AS sys.sysname) AS "CONSTRAINT_NAME",
            CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-           CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
+           CAST(sys.bbf_get_truncated_rel_original_name(r.reloptions, r.relname) AS sys.sysname) AS "TABLE_NAME",
            CAST(
              CASE c.contype WHEN 'c' THEN 'CHECK'
                             WHEN 'f' THEN 'FOREIGN KEY'
@@ -3893,15 +3894,15 @@ GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.CONSTRAINT_COLUMN_USAGE AS
 SELECT    CAST(tblcat AS sys.nvarchar(128)) AS "TABLE_CATALOG",
           CAST(tblschema AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-          CAST(tblname AS sys.nvarchar(128)) AS "TABLE_NAME" ,
-          CAST(colname AS sys.nvarchar(128)) AS "COLUMN_NAME",
+          CAST(sys.bbf_get_truncated_rel_original_name(tblreloptions, tblname) AS sys.nvarchar(128)) AS "TABLE_NAME" ,
+          CAST(sys.bbf_get_truncated_att_original_name(attoptions, colname) AS sys.nvarchar(128)) AS "COLUMN_NAME",
           CAST(cstrcat AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
           CAST(cstrschema AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-          CAST(cstrname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME"
+          CAST(sys.bbf_get_original_identifier_name(cstrname, cstrnspname, 'pg_constraint'::regclass::oid, tblname) AS sys.nvarchar(128)) AS "CONSTRAINT_NAME"
 
 FROM (
         /* check constraints */
-   SELECT DISTINCT extr.orig_name, r.relname, r.relowner, a.attname, extc.orig_name, c.conname, nr.dbname, nc.dbname
+   SELECT DISTINCT extr.orig_name, r.relname, r.relowner, a.attname, a.attoptions, r.reloptions, extc.orig_name, c.conname, nr.dbname, nc.dbname, nc.nspname
      FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
           sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
           pg_attribute a,
@@ -3927,7 +3928,7 @@ FROM (
        UNION ALL
 
         /* unique/primary key/foreign key constraints */
-   SELECT extr.orig_name, r.relname, r.relowner, a.attname, extc.orig_name, c.conname, nr.dbname, nc.dbname
+   SELECT extr.orig_name, r.relname, r.relowner, a.attname, a.attoptions, r.reloptions, extc.orig_name, c.conname, nr.dbname, nc.dbname, nc.nspname
      FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
           sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
           pg_attribute a,
@@ -3946,7 +3947,7 @@ FROM (
 		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
 		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
-      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat);
+      ) AS x (tblschema, tblname, tblowner, colname, attoptions, tblreloptions, cstrschema, cstrname, tblcat, cstrcat, cstrnspname);
 
 GRANT SELECT ON information_schema_tsql.CONSTRAINT_COLUMN_USAGE TO PUBLIC;
 
@@ -3976,7 +3977,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 		sys.bbf_get_original_identifier_name(c.conname, nsp.nspname, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.nvarchar(128) AS "CONSTRAINT_NAME",
 		CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+		CAST(sys.bbf_get_truncated_rel_original_name(r.reloptions, r.relname) AS sys.nvarchar(128)) AS "TABLE_NAME",
 		CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) AS sys.nvarchar(128)) AS "COLUMN_NAME",
 		CAST(ord AS int) AS "ORDINAL_POSITION"	
 	FROM
@@ -4965,7 +4966,7 @@ CASE
       WHEN ss.proretset THEN '@TABLE_RETURN_VALUE'
     ELSE '@RETURN_VALUE'
   END 
-ELSE COALESCE(ss.proargnames[n], '')
+ELSE COALESCE(sys.bbf_get_original_identifier_name(ss.proargnames[n], ss.nspname, 'pg_proc'::regclass::oid, ss.proname), '')
 END
 AS sys.SYSNAME) AS COLUMN_NAME
 , CAST(
@@ -5664,6 +5665,27 @@ BEGIN
 	DROP ROLE dbcreator;
 END
 $$;
+
+-- Fix sys.COL_NAME to return the original (untruncated) column name instead
+-- of the physical truncated/MD5-hashed pg_attribute.attname.
+CREATE OR REPLACE FUNCTION sys.COL_NAME(IN table_id INT, IN column_id INT)
+RETURNS sys.SYSNAME AS $$
+    DECLARE
+        column_name TEXT;
+        column_attoptions TEXT[];
+    BEGIN
+        SELECT attname, attoptions INTO STRICT column_name, column_attoptions
+        FROM pg_attribute 
+        WHERE attrelid = table_id AND attnum = column_id AND attnum > 0;
+        
+        RETURN sys.bbf_get_truncated_att_original_name(column_attoptions, column_name::name)::sys.SYSNAME;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END; 
+$$
+LANGUAGE plpgsql IMMUTABLE
+STRICT;
 
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);

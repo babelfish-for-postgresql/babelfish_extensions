@@ -4034,7 +4034,8 @@ remangle_table_indexes_after_rename(const char *schema_name,
 	 * sp_rename passes the logical (T-SQL) schema name (e.g. "dbo"); map it to
 	 * the physical PostgreSQL schema (e.g. "master_dbo") before catalog lookup.
 	 */
-	physical_schema = get_physical_schema_name(get_cur_db_name(), schema_name);
+	physical_schema = get_physical_schema_name(get_cur_db_name(),
+											   downcase_truncate_identifier(schema_name, strlen(schema_name), false));
 	lower_newtable = downcase_truncate_identifier(new_table_name, strlen(new_table_name), false);
 
 	if (physical_schema == NULL)

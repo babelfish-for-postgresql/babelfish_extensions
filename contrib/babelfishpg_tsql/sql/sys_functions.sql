@@ -4745,12 +4745,13 @@ CREATE OR REPLACE FUNCTION sys.COL_NAME(IN table_id INT, IN column_id INT)
 RETURNS sys.SYSNAME AS $$
     DECLARE
         column_name TEXT;
+        column_attoptions TEXT[];
     BEGIN
-        SELECT attname INTO STRICT column_name 
+        SELECT attname, attoptions INTO STRICT column_name, column_attoptions
         FROM pg_attribute 
         WHERE attrelid = table_id AND attnum = column_id AND attnum > 0;
         
-        RETURN column_name::sys.SYSNAME;
+        RETURN sys.bbf_get_truncated_att_original_name(column_attoptions, column_name::name)::sys.SYSNAME;
     EXCEPTION
         WHEN OTHERS THEN
             RETURN NULL;
