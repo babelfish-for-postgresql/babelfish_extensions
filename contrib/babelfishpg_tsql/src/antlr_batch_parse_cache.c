@@ -18,6 +18,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "access/xact.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "common/hashfn.h"
@@ -31,6 +32,7 @@
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/resowner.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
 
@@ -514,10 +516,7 @@ antlr_batch_parse_cache_put(const AntlrBatchParseCacheCtx *ctx, const char *tree
 	if (!antlr_batch_parse_cache_entry_size_ok(query_len, tree_len, datums_len))
 		return false;
 
-	/*
-	 * Allocate before locking: nothing may raise an ERROR under the lock,
-	 * since the caller's FlushErrorState() does not release LWLocks.
-	 */
+	/* Allocate before locking to keep the exclusive section short */
 	entries_arr = (AntlrBatchParseCacheEntry **)
 		palloc(sizeof(AntlrBatchParseCacheEntry *) * ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES);
 
@@ -751,6 +750,8 @@ antlr_batch_parse_cache_validate_hit(const AntlrBatchParseCacheCtx *ctx, const c
 	int			n_cached = pltsql_nDatums - pre;
 	PLtsql_datum **saved = NULL;
 	int			si;
+	MemoryContext oldcxt = CurrentMemoryContext;
+	ResourceOwner oldowner = CurrentResourceOwner;
 
 	if (n_cached > 0)
 	{
@@ -758,6 +759,14 @@ antlr_batch_parse_cache_validate_hit(const AntlrBatchParseCacheCtx *ctx, const c
 		memcpy(saved, &pltsql_Datums[pre], sizeof(PLtsql_datum *) * n_cached);
 	}
 	pltsql_nDatums = pre;
+
+	/*
+	 * The fresh parse does catalog lookups, so run it in a subtransaction: on
+	 * error, the rollback releases its locks and catalog references and the
+	 * query continues with the cached tree.
+	 */
+	BeginInternalSubTransaction(NULL);
+	MemoryContextSwitchTo(oldcxt);
 
 	PG_TRY();
 	{
@@ -792,13 +801,19 @@ antlr_batch_parse_cache_validate_hit(const AntlrBatchParseCacheCtx *ctx, const c
 		}
 		else
 			elog(WARNING, "antlr_batch_parse_cache[VALIDATE]: fresh ANTLR parse failed, cannot validate");
+
+		ReleaseCurrentSubTransaction();
 	}
 	PG_CATCH();
 	{
+		MemoryContextSwitchTo(oldcxt);
 		FlushErrorState();
+		RollbackAndReleaseCurrentSubTransaction();
 		elog(WARNING, "antlr_batch_parse_cache[VALIDATE]: error during validation, continuing with cached tree");
 	}
 	PG_END_TRY();
+	MemoryContextSwitchTo(oldcxt);
+	CurrentResourceOwner = oldowner;
 
 	/* Put the cached tree and datums back */
 	pltsql_parse_result = cached_tree;
@@ -888,10 +903,21 @@ antlr_batch_parse_cache_serialize_datums(int pre_cache_nDatums, bool *cacheable)
 	return datums_str;
 }
 
-/* Cache write: store the result of a successful fresh ANTLR parse */
+/*
+ * Cache write: store the result of a successful fresh ANTLR parse. Runs in
+ * a subtransaction so that any error (catalog lookup, shared hash insert
+ * under the LWLock) is rolled back, which releases the lock and catalog
+ * references, and the query continues without caching.
+ */
 static void
 antlr_batch_parse_cache_write(const AntlrBatchParseCacheCtx *ctx)
 {
+	MemoryContext oldcxt = CurrentMemoryContext;
+	ResourceOwner oldowner = CurrentResourceOwner;
+
+	BeginInternalSubTransaction(NULL);
+	MemoryContextSwitchTo(oldcxt);
+
 	PG_TRY();
 	{
 		char	   *tree_str = NULL;
@@ -912,13 +938,19 @@ antlr_batch_parse_cache_write(const AntlrBatchParseCacheCtx *ctx)
 			pfree(tree_str);
 		if (datums_str)
 			pfree(datums_str);
+
+		ReleaseCurrentSubTransaction();
 	}
 	PG_CATCH();
 	{
+		MemoryContextSwitchTo(oldcxt);
 		FlushErrorState();
+		RollbackAndReleaseCurrentSubTransaction();
 		elog(DEBUG1, "antlr_batch_parse_cache[FAIL]: write failed, continuing normally");
 	}
 	PG_END_TRY();
+	MemoryContextSwitchTo(oldcxt);
+	CurrentResourceOwner = oldowner;
 }
 
 /* Normal ANTLR parse; returns 0 on success, 1 on invalid input */

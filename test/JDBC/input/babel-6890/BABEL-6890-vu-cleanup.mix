@@ -32,6 +32,13 @@ BEGIN
     DROP LOGIN babel_6890_schema_user;
 END
 GO
+DROP USER IF EXISTS babel_6890_validate_user;
+GO
+IF EXISTS (SELECT * FROM sys.server_principals WHERE name = 'babel_6890_validate_user')
+BEGIN
+    DROP LOGIN babel_6890_validate_user;
+END
+GO
 DROP TYPE IF EXISTS dbo.babel_6890_udt;
 GO
 DROP TYPE IF EXISTS dbo.babel_6890_t;

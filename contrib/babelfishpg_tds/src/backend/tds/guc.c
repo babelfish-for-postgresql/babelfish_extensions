@@ -205,7 +205,7 @@ TdsDefineGucs(void)
 	DefineCustomBoolVariable(
 							 "babelfishpg_tds.enable_antlr_batch_parse_cache",
 							 gettext_noop("Enables the shared memory ANTLR parse cache for sp_prepexec batch queries."),
-							 gettext_noop("Shared memory for the cache is reserved only when this is on. Requires a server restart."),
+							 gettext_noop("When on, about 250 MB of shared memory (1000 fixed slots of about 256 KB each) is reserved at server start, whether or not entries are cached. Requires a server restart."),
 							 &tds_enable_antlr_batch_parse_cache,
 							 false,
 							 PGC_POSTMASTER,

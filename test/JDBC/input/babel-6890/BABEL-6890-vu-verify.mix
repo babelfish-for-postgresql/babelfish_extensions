@@ -919,5 +919,88 @@ GO
 DROP SCHEMA babel_6890_s2;
 GO
 
+-- ============================================================================
+-- Test 37: Validation GUC is SUSET
+-- babelfishpg_tsql.validate_antlr_batch_parse_cache re-parses every hit and
+-- compares the trees. A T-SQL session cannot turn it on.
+-- ============================================================================
+PRINT '=== Test 37: validate GUC cannot be set from a T-SQL session ===';
+GO
+SELECT set_config('babelfishpg_tsql.validate_antlr_batch_parse_cache', 'on', false);
+GO
+
+-- ============================================================================
+-- Test 38: Validation on cache hits
+-- The GUC is set on a dedicated login's role, so it applies when that login
+-- connects. Each batch is run twice: miss + write, then hit + validate.
+-- A PASS is logged to the server log only; a mismatch or a validation error
+-- would show up here as a WARNING. Results must match the uncached run.
+-- ============================================================================
+PRINT '=== Test 38: Validation on cache hits ===';
+GO
+DROP USER IF EXISTS babel_6890_validate_user;
+GO
+IF EXISTS (SELECT * FROM sys.server_principals WHERE name = 'babel_6890_validate_user')
+BEGIN
+    DROP LOGIN babel_6890_validate_user;
+END
+GO
+CREATE LOGIN babel_6890_validate_user WITH PASSWORD = '12345678';
+GO
+CREATE USER babel_6890_validate_user FOR LOGIN babel_6890_validate_user;
+GO
+SELECT sys.flush_antlr_batch_parse_cache();
+GO
+
+-- psql
+ALTER ROLE babel_6890_validate_user SET babelfishpg_tsql.validate_antlr_batch_parse_cache = on;
+GO
+
+-- tsql      user=babel_6890_validate_user password=12345678
+SELECT set_config('babelfishpg_tsql.antlr_batch_parse_cache_min_entry_size', '0', false);
+GO
+-- 38a: simple SELECT: miss, then hit validated
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1 * 10 AS v', @p1 = 3
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1 * 10 AS v', @p1 = 4
+GO
+-- 38b: DECLARE + control flow (datums restored from the cache)
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'DECLARE @v INT = @p1; DECLARE @s VARCHAR(20) = ''n''; WHILE @v > 0 BEGIN SET @s = @s + CAST(@v AS VARCHAR(5)); SET @v = @v - 1; END; IF LEN(@s) > 2 SELECT @s AS s ELSE SELECT ''short'' AS s', @p1 = 3
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'DECLARE @v INT = @p1; DECLARE @s VARCHAR(20) = ''n''; WHILE @v > 0 BEGIN SET @s = @s + CAST(@v AS VARCHAR(5)); SET @v = @v - 1; END; IF LEN(@s) > 2 SELECT @s AS s ELSE SELECT ''short'' AS s', @p1 = 1
+GO
+-- 38c: two parameters, CASE and string functions
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT, @p2 NVARCHAR(10)', N'SELECT CASE WHEN @p1 > 1 THEN @p2 + N''!'' ELSE @p2 END AS name, @p1 + LEN(@p2) AS n', @p1 = 1, @p2 = N'a'
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT, @p2 NVARCHAR(10)', N'SELECT CASE WHEN @p1 > 1 THEN @p2 + N''!'' ELSE @p2 END AS name, @p1 + LEN(@p2) AS n', @p1 = 2, @p2 = N'b'
+GO
+-- 38d: table variable: never cached (datum not cacheable), so no hit to
+-- validate; both runs are misses and must still return correct results
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT, @p2 NVARCHAR(10)', N'DECLARE @t TABLE (id INT, name NVARCHAR(10)); INSERT INTO @t VALUES (@p1, @p2); SELECT id, name FROM @t', @p1 = 1, @p2 = N'a'
+GO
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT, @p2 NVARCHAR(10)', N'DECLARE @t TABLE (id INT, name NVARCHAR(10)); INSERT INTO @t VALUES (@p1, @p2); SELECT id, name FROM @t', @p1 = 2, @p2 = N'b'
+GO
+-- terminate-tsql-conn
+
+-- psql
+ALTER ROLE babel_6890_validate_user RESET babelfishpg_tsql.validate_antlr_batch_parse_cache;
+GO
+
+-- tsql
+-- Expect: hits=3, misses=5, writes=3, errors=0, entries=3
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
+GO
+-- The login is dropped in BABEL-6890-vu-cleanup
+DROP USER IF EXISTS babel_6890_validate_user;
+GO
+
 PRINT 'BABEL-6890 verify completed';
 GO
