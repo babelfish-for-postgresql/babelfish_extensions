@@ -66,7 +66,7 @@ exec_stmt_goto(PLtsql_execstate *estate, PLtsql_stmt_goto *stmt)
 	{
 		/* conditional jump */
 		bool		isnull = false;
-		bool		value = exec_eval_boolean(estate, stmt->cond, &isnull);
+		bool		value = bbf_eval_boolean_crossdb(estate, stmt->cond, &isnull);
 
 		exec_eval_cleanup(estate);
 

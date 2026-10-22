@@ -11,6 +11,9 @@ ignore#!#test_db_collation-vu-prepare
 ignore#!#test_db_collation-vu-verify
 ignore#!#test_db_collation-vu-cleanup
 ignore#!#BABEL-CROSS-DB
+ignore#!#crossdb-sysview-cond-vu-prepare
+ignore#!#crossdb-sysview-cond-vu-verify
+ignore#!#crossdb-sysview-cond-vu-cleanup
 ignore#!#BABEL-SYS-DATABASES
 ignore#!#Test-sp_reset_connection
 ignore#!#db_owner-vu-prepare
