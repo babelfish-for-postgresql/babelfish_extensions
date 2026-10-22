@@ -17,6 +17,7 @@
 #include "utils/datum.h"
 #include "utils/xml.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 #include "catalog/pg_type.h"
@@ -66,6 +67,14 @@ typedef struct forxml_auto_state
 	bool		   *type_typbyval;		/* typbyval of column's base type (for datumCopy) */
 	bool			eq_cache_init;		/* Whether equality cache has been populated */
 
+	/*
+	 * Per-aggregate memory context.  The sfunc runs the row work in a context
+	 * that is reset once the row has been appended, so the prev-row caches
+	 * below — which exist precisely to be read when the *next* row is
+	 * compared — must be allocated here rather than in the current context.
+	 */
+	MemoryContext agg_context;	/* Context cross-row state must live in */
+
 	/* Previous row values, stored as Datums for type-aware comparison. */
 	Datum		   *prev_datums;		/* datumCopy'd previous values */
 	bool		   *prev_isnull;		/* Per-column null flag for prev row */
@@ -92,6 +101,16 @@ typedef struct forxml_state
 	bool				has_root;		/* True if ROOT clause was specified */
 
 	bool				ns_has_xsi;		/* True if the declarations bind xsi */
+
+	/*
+	 * Memory contexts.  agg_context is the per-aggregate context this state
+	 * lives in; row_context is a child of it holding one row's worth of
+	 * serialization scratch, reset after every row.  Anything allocated while
+	 * row_context is current and read by a later row has to be put in
+	 * agg_context explicitly.
+	 */
+	MemoryContext agg_context;	/* Lives as long as the aggregate */
+	MemoryContext row_context;	/* Reset after every row */
 
 	/* Column name cache for RAW and PATH - built on the first row */
 	char			  **colnames;		/* colnames[i] = XML name for column i */
@@ -407,16 +426,29 @@ restore_xml_prefix_colon(char *colname, const char *ns_decls)
 static char **
 forxml_column_names(forxml_state *fstate, TupleDesc tupdesc, const char *all_ns_decls)
 {
+	MemoryContext oldcontext;
+	char	  **names;
+
 	if (fstate->colnames != NULL &&
 		fstate->ncolnames == tupdesc->natts &&
 		fstate->colnames_rowtype == tupdesc->tdtypeid &&
 		fstate->colnames_typmod == tupdesc->tdtypmod)
 		return fstate->colnames;
 
-	fstate->colnames = (char **) palloc0(tupdesc->natts * sizeof(char *));
-	fstate->ncolnames = tupdesc->natts;
-	fstate->colnames_rowtype = tupdesc->tdtypeid;
-	fstate->colnames_typmod = tupdesc->tdtypmod;
+	/*
+	 * This runs on the first row, from inside the per-row context the sfunc
+	 * installs around the row work, but the array and its strings are handed
+	 * back to every later row.  Build them in the aggregate context so the
+	 * reset at the end of this row does not take them with it.
+	 */
+	oldcontext = MemoryContextSwitchTo(fstate->agg_context);
+
+	/*
+	 * Build into a local and publish it only once the loop has completed, so
+	 * a failure partway through cannot leave a half-filled array that the
+	 * check above would accept on a later row.
+	 */
+	names = (char **) palloc0(tupdesc->natts * sizeof(char *));
 
 	for (int i = 0; i < tupdesc->natts; i++)
 	{
@@ -427,12 +459,19 @@ forxml_column_names(forxml_state *fstate, TupleDesc tupdesc, const char *all_ns_
 			continue;
 
 		raw = map_sql_identifier_to_xml_name(NameStr(att->attname), true, false);
-		fstate->colnames[i] = restore_xml_prefix_colon(raw, all_ns_decls);
+		names[i] = restore_xml_prefix_colon(raw, all_ns_decls);
 
 		/* restore_xml_prefix_colon may return a new buffer; free the original */
-		if (fstate->colnames[i] != raw)
+		if (names[i] != raw)
 			pfree(raw);
 	}
+
+	fstate->colnames = names;
+	fstate->ncolnames = tupdesc->natts;
+	fstate->colnames_rowtype = tupdesc->tdtypeid;
+	fstate->colnames_typmod = tupdesc->tdtypmod;
+
+	MemoryContextSwitchTo(oldcontext);
 
 	return fstate->colnames;
 }
@@ -492,6 +531,20 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		fstate->xml_output = makeStringInfo();
 		fstate->auto_state = NULL;
 		state = fstate->xml_output;
+		fstate->agg_context = agg_context;
+
+		/*
+		 * Scratch context for one row's serialization.  Serializing a row
+		 * allocates a handful of short-lived strings per column (the output
+		 * function's result, the XML-escaped copy of it, T-SQL datetime
+		 * reformatting) which the row functions largely do not free; left in
+		 * agg_context they would be retained until the aggregate finished,
+		 * growing with rows x columns.  Created once here and reset after
+		 * each row.
+		 */
+		fstate->row_context = AllocSetContextCreate(agg_context,
+													"FOR XML per-row",
+													ALLOCSET_SMALL_SIZES);
 		root_name = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(5));
 		fstate->has_root = (root_name != NULL && strlen(root_name) > 0);
 
@@ -532,6 +585,7 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 				auto_st->first_row = true;
 				auto_st->has_root = (root_name != NULL && strlen(root_name) > 0);
 				auto_st->binary_base64 = binary_base64;
+				auto_st->agg_context = agg_context;
 				fstate->auto_state = auto_st;
 
 				/* Parse metadata now so it's ready for the first row */
@@ -541,6 +595,25 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 					int32 tupTypmod = HeapTupleHeaderGetTypMod(td);
 					TupleDesc tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 					xml_auto_parse_metadata(auto_st, auto_metadata, tupdesc->natts);
+
+					/*
+					 * Build the per-column caches here rather than lazily on
+					 * the first row.  Every row reads them, so they have to
+					 * live in agg_context, while the row work below runs in a
+					 * context that is reset after each row.  It matters most
+					 * for the FmgrInfos: fmgr_info() records the current
+					 * context as fn_mcxt, which is where a function later
+					 * allocates anything it caches in fn_extra, so an
+					 * FmgrInfo set up inside the per-row context would hand
+					 * out freed memory on a later row.
+					 *
+					 * Order matters: init_eq_op_cache() reads base_types[],
+					 * which init_output_func_cache() fills in.
+					 */
+					init_output_func_cache(auto_st, tupdesc);
+					init_tsql_type_cache(auto_st, tupdesc);
+					init_eq_op_cache(auto_st, tupdesc);
+
 					ReleaseTupleDesc(tupdesc);
 				}
 
@@ -615,6 +688,19 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	 */
 	row_ns_decls = fstate->has_root ? NULL : ns_decls;
 
+	/*
+	 * Serialize the row in the per-row context, then flush it.  Everything
+	 * the row functions allocate to build the row's text is dead once the
+	 * text has been appended, so one reset reclaims it and keeps the
+	 * aggregate's footprint flat in the number of rows.
+	 *
+	 * fstate->xml_output is unaffected by the switch: appendStringInfo()
+	 * enlarges the buffer with repalloc(), which works off the chunk's own
+	 * context rather than the current one, and both the StringInfo and its
+	 * initial buffer were allocated in agg_context above.
+	 */
+	MemoryContextSwitchTo(fstate->row_context);
+
 	switch (mode)
 	{
 		case TSQL_FORXML_RAW:	/* FOR XML RAW */
@@ -651,6 +737,10 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("invalid FOR XML mode")));
 	}
+
+	/* Row is in the output buffer; drop the scratch it was built from */
+	MemoryContextSwitchTo(agg_context);
+	MemoryContextReset(fstate->row_context);
 
 	MemoryContextSwitchTo(old_context);
 
@@ -1474,10 +1564,27 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 				(curr_str != NULL && strcmp(curr_str, prev_str) != 0))
 				changed = true;
 
-			/* Update cached prev string */
-			if (auto_state->prev_str_values[i] != NULL)
-				pfree(auto_state->prev_str_values[i]);
-			auto_state->prev_str_values[i] = curr_str;
+			/*
+			 * Update cached prev string.  curr_str was serialized in the
+			 * per-row context, which is reset before the next row gets here,
+			 * so keep the comparison copy in the aggregate context.
+			 *
+			 * Copy first, free the old value after, so prev_str_values[i] is
+			 * never left dangling if the copy throws.
+			 */
+			if (curr_str != NULL)
+			{
+				MemoryContext oldcontext = MemoryContextSwitchTo(auto_state->agg_context);
+				char	   *new_str = pstrdup(curr_str);
+
+				MemoryContextSwitchTo(oldcontext);
+				auto_state->prev_str_values[i] = new_str;
+			}
+			else
+				auto_state->prev_str_values[i] = NULL;
+
+			if (prev_str != NULL)
+				pfree(prev_str);
 		}
 
 		if (changed && level < first_change)
@@ -1486,8 +1593,9 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 		/*
 		 * Update prev Datum for eq-op columns.  For pass-by-reference types
 		 * we must datumCopy into the aggregate context, since the source
-		 * tuple will be reclaimed before the next row.  For pass-by-value
-		 * types the Datum itself is the value.
+		 * tuple will be reclaimed before the next row, and so will the
+		 * per-row context this runs in.  Hence the explicit switch below. For
+		 * pass-by-value types the Datum itself is the value.
 		 *
 		 * datumCopy first, free old after — keeps prev_datums[i] valid if
 		 * the copy throws.
@@ -1497,9 +1605,14 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 			Datum new_datum = (Datum) 0;
 
 			if (!curr_isnull)
+			{
+				MemoryContext oldcontext = MemoryContextSwitchTo(auto_state->agg_context);
+
 				new_datum = datumCopy(curr_datum,
 									  auto_state->type_typbyval[i],
 									  auto_state->type_typlen[i]);
+				MemoryContextSwitchTo(oldcontext);
+			}
 
 			if (!auto_state->prev_isnull[i] &&
 				!auto_state->type_typbyval[i])
@@ -1840,20 +1953,16 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 	int first_changed_level;
 	int deepest_level_in_row = auto_state->max_depth;
 
-	/* Initialize output function cache on first row (covers all columns) */
-	if (!auto_state->out_funcs_cached)
-		init_output_func_cache(auto_state, tupdesc);
-
-	/* Initialize T-SQL type conversion cache on first row */
-	if (!auto_state->tsql_types_cached)
-		init_tsql_type_cache(auto_state, tupdesc);
-
 	/*
-	 * Initialize equality-operator cache on first row.  Depends on
-	 * base_types[] from init_output_func_cache, so must run after it.
+	 * The output-function, T-SQL type and equality caches are built once in
+	 * the sfunc's AUTO setup block, before it installs the per-row context
+	 * (see tsql_query_to_xml_sfunc).  They used to be built lazily here, on
+	 * the first row, which would now put them in a context that is reset
+	 * before the second row reads them.
 	 */
-	if (!auto_state->eq_cache_init)
-		init_eq_op_cache(auto_state, tupdesc);
+	Assert(auto_state->out_funcs_cached);
+	Assert(auto_state->tsql_types_cached);
+	Assert(auto_state->eq_cache_init);
 
 	/* Find where this row differs from previous */
 	first_changed_level = find_first_changed_level(auto_state, tuple, tupdesc);
@@ -2021,19 +2130,40 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 
 			curr_datum = heap_getattr(tuple, i + 1, tupdesc, &curr_isnull);
 
+			/*
+			 * Both branches cache a value for the next row to compare
+			 * against, so both have to allocate in the aggregate context
+			 * rather than the per-row context this runs in.  Same reasoning
+			 * as the equivalent updates in find_first_changed_level().
+			 */
 			if (auto_state->has_eq_op[i])
 			{
 				if (curr_isnull)
 					auto_state->prev_datums[i] = (Datum) 0;
 				else
+				{
+					MemoryContext oldcontext = MemoryContextSwitchTo(auto_state->agg_context);
+
 					auto_state->prev_datums[i] = datumCopy(curr_datum,
-															auto_state->type_typbyval[i],
-															auto_state->type_typlen[i]);
+														   auto_state->type_typbyval[i],
+														   auto_state->type_typlen[i]);
+					MemoryContextSwitchTo(oldcontext);
+				}
 			}
 			else
 			{
 				/* Fallback path: cache serialized form for strcmp */
-				auto_state->prev_str_values[i] = auto_column_to_xml_string(curr_datum, curr_isnull, tuple, tupdesc, i, auto_state);
+				char	   *curr_str = auto_column_to_xml_string(curr_datum, curr_isnull, tuple, tupdesc, i, auto_state);
+
+				if (curr_str != NULL)
+				{
+					MemoryContext oldcontext = MemoryContextSwitchTo(auto_state->agg_context);
+
+					auto_state->prev_str_values[i] = pstrdup(curr_str);
+					MemoryContextSwitchTo(oldcontext);
+				}
+				else
+					auto_state->prev_str_values[i] = NULL;
 			}
 
 			auto_state->prev_isnull[i] = curr_isnull;
