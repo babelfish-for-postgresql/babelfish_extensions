@@ -662,3 +662,4 @@ string_aggregate
 babel_convert_with_style
 babel_sqlvariant_coerce_type
 fk-cascade-trigger
+exec_tvf_named_args
