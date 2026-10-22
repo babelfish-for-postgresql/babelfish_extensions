@@ -1698,7 +1698,7 @@ GO
 
 ~~ERROR (Message: ERROR: could not create XPath object
   Detail: Undefined namespace prefix
-    Server SQLState: 10608)~~
+    Server SQLState: XX000)~~
 
 -- Case 5: DEFAULT namespace remains unsupported by XMLTABLE
 SELECT val FROM XMLTABLE(
