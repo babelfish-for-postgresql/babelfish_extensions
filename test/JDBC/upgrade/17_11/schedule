@@ -692,3 +692,4 @@ BABEL-5264
 antlr_parse_cache_version
 xml_query
 fk-cascade-trigger
+exec_tvf_named_args
