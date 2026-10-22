@@ -701,3 +701,4 @@ xml_nodes
 forxml-namespaces
 xml-methods-namespaces
 fk-cascade-trigger
+exec_tvf_named_args
