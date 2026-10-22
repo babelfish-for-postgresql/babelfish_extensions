@@ -1759,5 +1759,263 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 DROP USER IF EXISTS babel_6890_validate_user;
 GO
 
+-- ============================================================================
+-- Test 39: Cross-session hit
+-- A batch cached by one session is a hit for a new session on the same
+-- database.
+-- ============================================================================
+PRINT '=== Test 39: Cross-session hit ===';
+GO
+SELECT sys.flush_antlr_batch_parse_cache();
+GO
+~~START~~
+bit
+1
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.antlr_batch_parse_cache_min_entry_size', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+-- Session 1: miss + write, 11
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1 + 10 AS v', @p1 = 1
+GO
+~~START~~
+int
+11
+~~END~~
+
+-- terminate-tsql-conn
+
+-- tsql
+-- Session 2 (new connection): hit, 12
+SELECT set_config('babelfishpg_tsql.antlr_batch_parse_cache_min_entry_size', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'SELECT @p1 + 10 AS v', @p1 = 2
+GO
+~~START~~
+int
+12
+~~END~~
+
+-- Expect: hits=1, misses=1, writes=1, entries=1
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+1#!#1#!#1#!#0#!#0#!#1
+~~END~~
+
+
+-- ============================================================================
+-- Test 40: max_entry_size - entries larger than the maximum are not written
+-- ============================================================================
+PRINT '=== Test 40: max_entry_size skips large entries ===';
+GO
+SELECT sys.flush_antlr_batch_parse_cache();
+GO
+~~START~~
+bit
+1
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.antlr_batch_parse_cache_max_entry_size', '1', false);
+GO
+~~START~~
+text
+1kB
+~~END~~
+
+-- Larger than 1 KB serialized: miss, not written, both runs return 6
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'DECLARE @a INT = @p1; SET @a = @a + 5; SELECT @a AS v', @p1 = 1
+GO
+~~START~~
+int
+6
+~~END~~
+
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'DECLARE @a INT = @p1; SET @a = @a + 5; SELECT @a AS v', @p1 = 1
+GO
+~~START~~
+int
+6
+~~END~~
+
+-- Expect: hits=0, misses=2, writes=0, entries=0
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+0#!#2#!#0#!#0#!#0#!#0
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.antlr_batch_parse_cache_max_entry_size', '256', false);
+GO
+~~START~~
+text
+256kB
+~~END~~
+
+-- Default maximum: same batch is written
+DECLARE @h INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT', N'DECLARE @a INT = @p1; SET @a = @a + 5; SELECT @a AS v', @p1 = 1
+GO
+~~START~~
+int
+6
+~~END~~
+
+-- Expect: hits=0, misses=3, writes=1, entries=1
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+0#!#3#!#1#!#0#!#0#!#1
+~~END~~
+
+
+-- ============================================================================
+-- Test 41: Eviction when max_entries is reached
+-- max_entries is SIGHUP; lower it to the minimum (100), reload, and wait for
+-- the backends to pick it up. 105 distinct batches: the 101st insert finds
+-- 100 entries and evicts 10% (10), so 95 remain.
+-- ============================================================================
+PRINT '=== Test 41: Eviction at max_entries ===';
+GO
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.antlr_batch_parse_cache_max_entries = 100;
+GO
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+SELECT pg_sleep(3);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+SELECT sys.flush_antlr_batch_parse_cache();
+GO
+~~START~~
+bit
+1
+~~END~~
+
+DECLARE @i INT = 1, @h INT, @sql NVARCHAR(200);
+WHILE @i <= 105
+BEGIN
+    SET @sql = N'DECLARE @x INT = @p1 + ' + CAST(@i AS NVARCHAR(10));
+    EXEC sp_prepexec @h OUTPUT, N'@p1 INT', @sql, @p1 = 1;
+    EXEC sp_unprepare @h;
+    SET @i = @i + 1;
+END
+GO
+-- Expect: misses=105, writes=105, evictions=10, entries=95
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+0#!#105#!#105#!#10#!#0#!#95
+~~END~~
+
+-- psql
+ALTER SYSTEM RESET babelfishpg_tsql.antlr_batch_parse_cache_max_entries;
+GO
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+SELECT pg_sleep(3);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+-- ============================================================================
+-- Test 42: OUTPUT parameter
+-- The OUT value is correct on a miss and on a hit. The same text with the
+-- parameter declared without OUTPUT has a different signature, so it gets its
+-- own entry.
+-- ============================================================================
+PRINT '=== Test 42: OUTPUT parameter ===';
+GO
+SELECT sys.flush_antlr_batch_parse_cache();
+GO
+~~START~~
+bit
+1
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.antlr_batch_parse_cache_min_entry_size', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+-- miss + write: 6
+DECLARE @h INT, @o INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT, @p2 INT OUTPUT', N'SET @p2 = @p1 * 2', @p1 = 3, @p2 = @o OUTPUT
+SELECT @o AS out_value
+GO
+~~START~~
+int
+6
+~~END~~
+
+-- hit: 10
+DECLARE @h INT, @o INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT, @p2 INT OUTPUT', N'SET @p2 = @p1 * 2', @p1 = 5, @p2 = @o OUTPUT
+SELECT @o AS out_value
+GO
+~~START~~
+int
+10
+~~END~~
+
+-- No OUTPUT in the signature: miss + write, caller's variable unchanged (NULL)
+DECLARE @h INT, @o INT
+EXEC sp_prepexec @h OUTPUT, N'@p1 INT, @p2 INT', N'SET @p2 = @p1 * 2', @p1 = 5, @p2 = @o
+SELECT @o AS out_value
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+-- Expect: hits=1, misses=2, writes=2, entries=2
+SELECT * FROM sys.antlr_batch_parse_cache_stats();
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+1#!#2#!#2#!#0#!#0#!#2
+~~END~~
+
+
 PRINT 'BABEL-6890 verify completed';
 GO

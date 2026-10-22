@@ -448,7 +448,8 @@ antlr_batch_parse_cache_entry_size_ok(int query_len, int tree_len, int datums_le
 /*
  * Get: palloc'd copies of the entry, made under the shared lock, or NULL
  * on miss. Any mismatch in text, parameter signature, datum count, or
- * version is a miss. Caller frees the result.
+ * version is a miss and is counted here. A found entry is not counted as a
+ * hit yet; read() counts it after the restore. Caller frees the result.
  */
 static AntlrBatchParseCacheLookupResult *
 antlr_batch_parse_cache_get(const AntlrBatchParseCacheCtx *ctx)
@@ -484,8 +485,7 @@ antlr_batch_parse_cache_get(const AntlrBatchParseCacheCtx *ctx)
 	now = GetCurrentTimestamp();
 	antlr_batch_parse_cache_entry_touch(entry, now);
 
-	pg_atomic_add_fetch_u64(&antlr_batch_parse_cache_state->stat_hits, 1);
-
+	/* The hit is counted by the caller once the restore succeeds */
 	LWLockRelease(antlr_batch_parse_cache_state->lock);
 
 	return result;
@@ -681,6 +681,7 @@ antlr_batch_parse_cache_restore_tree(const char *tree_str)
 	PG_CATCH();
 	{
 		FlushErrorState();
+		pg_atomic_add_fetch_u64(&antlr_batch_parse_cache_state->stat_errors, 1);
 		tree = NULL;
 		elog(DEBUG1, "pltsql_antlr_batch_parse_cache: deserialization failed, falling through to ANTLR");
 	}
@@ -708,6 +709,7 @@ antlr_batch_parse_cache_restore_datums(const char *datums_str)
 	PG_CATCH();
 	{
 		FlushErrorState();
+		pg_atomic_add_fetch_u64(&antlr_batch_parse_cache_state->stat_errors, 1);
 		datum_list = NIL;
 	}
 	PG_END_TRY();
@@ -827,6 +829,8 @@ antlr_batch_parse_cache_validate_hit(const AntlrBatchParseCacheCtx *ctx, const c
 /*
  * Cache read: on a hit, install the cached tree and datums and return true.
  * On a miss or any restore failure, return false with no state changed.
+ * A hit is counted only when the restore succeeds; a found entry that cannot
+ * be restored is counted as a miss, since the caller does a full ANTLR parse.
  */
 static bool
 antlr_batch_parse_cache_read(const AntlrBatchParseCacheCtx *ctx, const char *proc_source)
@@ -850,9 +854,17 @@ antlr_batch_parse_cache_read(const AntlrBatchParseCacheCtx *ctx, const char *pro
 
 	antlr_batch_parse_cache_free_result(cached);
 
+	/*
+	 * Entry found but not usable: the caller falls back to a full ANTLR
+	 * parse, so count a miss (restore errors are also counted as errors).
+	 */
 	if (tree == NULL)
+	{
+		pg_atomic_add_fetch_u64(&antlr_batch_parse_cache_state->stat_misses, 1);
 		return false;
+	}
 
+	pg_atomic_add_fetch_u64(&antlr_batch_parse_cache_state->stat_hits, 1);
 	pltsql_parse_result = tree;
 
 	/* Record deserialization time for EXPLAIN reporting */
@@ -946,6 +958,7 @@ antlr_batch_parse_cache_write(const AntlrBatchParseCacheCtx *ctx)
 		MemoryContextSwitchTo(oldcxt);
 		FlushErrorState();
 		RollbackAndReleaseCurrentSubTransaction();
+		pg_atomic_add_fetch_u64(&antlr_batch_parse_cache_state->stat_errors, 1);
 		elog(DEBUG1, "antlr_batch_parse_cache[FAIL]: write failed, continuing normally");
 	}
 	PG_END_TRY();
