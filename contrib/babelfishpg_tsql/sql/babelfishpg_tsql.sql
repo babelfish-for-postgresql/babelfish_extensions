@@ -2400,10 +2400,9 @@ BEGIN
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(COALESCE(
 			       CASE WHEN octet_length(LogExt.default_database_name) >= 60 THEN
-			           (SELECT pg_catalog.lower(orig_name COLLATE "C")
-			            FROM sys.babelfish_sysdatabases
-			            WHERE name COLLATE database_default = LogExt.default_database_name
-			            LIMIT 1)
+			           (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+			            FROM sys.babelfish_sysdatabases sdb
+			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
 			       END,
 			       LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
@@ -2478,10 +2477,9 @@ BEGIN
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(COALESCE(
 			       CASE WHEN octet_length(LogExt.default_database_name) >= 60 THEN
-			           (SELECT pg_catalog.lower(orig_name COLLATE "C")
-			            FROM sys.babelfish_sysdatabases
-			            WHERE name COLLATE database_default = LogExt.default_database_name
-			            LIMIT 1)
+			           (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+			            FROM sys.babelfish_sysdatabases sdb
+			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
 			       END,
 			       LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
@@ -3983,10 +3981,9 @@ BEGIN
 		CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS SID,
 		CAST(COALESCE(
 		    CASE WHEN octet_length(LExt.default_database_name) >= 60 THEN
-		        (SELECT pg_catalog.lower(orig_name COLLATE "C")
-		         FROM sys.babelfish_sysdatabases
-		         WHERE name COLLATE database_default = LExt.default_database_name
-		         LIMIT 1)
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+		         FROM sys.babelfish_sysdatabases sdb
+		         WHERE sdb.name COLLATE database_default = LExt.default_database_name)
 		    END,
 		    LExt.default_database_name) AS SYS.SYSNAME) AS DefDBName,
 		CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
@@ -4009,10 +4006,9 @@ BEGIN
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
 		CAST(COALESCE(
 		    CASE WHEN octet_length(UExt.database_name) >= 60 THEN
-		        (SELECT pg_catalog.lower(orig_name COLLATE "C")
-		         FROM sys.babelfish_sysdatabases
-		         WHERE name COLLATE database_default = UExt.database_name
-		         LIMIT 1)
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+		         FROM sys.babelfish_sysdatabases sdb
+		         WHERE sdb.name COLLATE database_default = UExt.database_name)
 		    END,
 		    UExt.database_name) AS sys.SYSNAME) AS DBName,
 		CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
@@ -4046,10 +4042,9 @@ BEGIN
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
 		CAST(COALESCE(
 		    CASE WHEN octet_length(UExt2.database_name) >= 60 THEN
-		        (SELECT pg_catalog.lower(orig_name COLLATE "C")
-		         FROM sys.babelfish_sysdatabases
-		         WHERE name COLLATE database_default = UExt2.database_name
-		         LIMIT 1)
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+		         FROM sys.babelfish_sysdatabases sdb
+		         WHERE sdb.name COLLATE database_default = UExt2.database_name)
 		    END,
 		    UExt2.database_name) AS sys.SYSNAME) AS DBName,
 		CAST(UExt1.orig_username AS sys.SYSNAME) AS UserName,

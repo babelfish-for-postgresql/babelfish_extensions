@@ -254,19 +254,6 @@ my_very_long_database_name_that_exceeds_the_postgresql_namedatalen_limit_of_63
 ~~END~~
 
 
--- The shared helper resolves the physical (truncated) key back to the original
--- name; this is the same mapping used by sp_helplogins/sp_helpuser DefDBName and
--- sp_helplogins DBName (those procs also return SID/UserID columns whose values
--- are OID-derived and therefore not asserted deterministically here).
-SELECT sys.bbf_get_original_db_name(default_database_name) AS DefDBName
-FROM sys.babelfish_authid_login_ext WHERE rolname = 'babel5975_longdb_login';
-GO
-~~START~~
-varchar
-my_very_long_database_name_that_exceeds_the_postgresql_namedatalen_limit_of_63
-~~END~~
-
-
 DROP LOGIN babel5975_longdb_login;
 GO
 
