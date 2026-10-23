@@ -15,25 +15,6 @@ CREATE TABLE sys.babelfish_sysdatabases (
 
 GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 
--- BABEL-5975: helper to resolve the original (case/length preserved) database
--- name from a physical (downcased and, for long names, MD5-truncated) name as
--- stored in sys.babelfish_sysdatabases.name. The catalog lookup is only
--- performed for names at or beyond the truncation threshold (60); shorter names
--- already match their physical form and are returned as-is.
-CREATE OR REPLACE FUNCTION sys.bbf_get_original_db_name(physical_db_name sys.sysname)
-RETURNS sys.sysname
-LANGUAGE SQL
-STABLE
-PARALLEL SAFE
-RETURN COALESCE(
-    CASE WHEN octet_length(physical_db_name) >= 60 THEN
-        (SELECT pg_catalog.lower(orig_name COLLATE "C")
-         FROM sys.babelfish_sysdatabases
-         WHERE name COLLATE database_default = physical_db_name
-         LIMIT 1)
-    END,
-    physical_db_name);
-
 -- BABELFISH_SCHEMA_PERMISSIONS
 -- This catalog is implemented specially to support GRANT/REVOKE .. ON SCHEMA ..
 -- Please avoid using this catalog anywhere else.
@@ -70,26 +51,6 @@ CREATE TABLE sys.babelfish_function_ext (
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
 
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
-
--- Helper for extracting a procedure/function original (untruncated,
--- case-preserved) name from sys.babelfish_function_ext. Only looks up the
--- catalog when the physical proname is potentially truncated (>= 60 bytes),
--- otherwise returns the physical name as-is. Defined here, immediately after
--- sys.babelfish_function_ext, because its body references that table.
-CREATE OR REPLACE FUNCTION sys.bbf_get_func_original_name(func_proname name, func_nspname name)
-RETURNS text
-LANGUAGE SQL
-STABLE
-PARALLEL SAFE
-RETURN COALESCE(
-    CASE WHEN octet_length(func_proname) >= 60 THEN
-        (SELECT pg_catalog.lower(f.orig_name COLLATE "C")
-         FROM sys.babelfish_function_ext f
-         WHERE f.funcname = func_proname
-           AND f.nspname = func_nspname
-         LIMIT 1)
-    END,
-    func_proname::text);
 
 -- BABELFISH_NAMESPACE_EXT
 CREATE TABLE sys.babelfish_namespace_ext (
@@ -160,36 +121,6 @@ CREATE TABLE sys.babelfish_identifier_mapping (
 GRANT SELECT ON sys.babelfish_identifier_mapping TO PUBLIC;
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_identifier_mapping', '');
 
--- BABEL-5975: Long Identifiers Support
--- Resolves the original (untruncated) identifier for an object whose PostgreSQL
--- name was truncated to fit the 63-byte NAME limit, using the
--- sys.babelfish_identifier_mapping catalog. Returns truncated_name unchanged
--- when it is short enough to not have been truncated (< 60 bytes).
---
--- id_parent_name disambiguates identifiers that are only unique within a parent
--- object (e.g. a constraint or parameter). Pass the parent object name to match
--- a specific row, or leave it NULL (the default) to match on
--- (name, namespace, pg_catalog_type) alone.
-CREATE OR REPLACE FUNCTION sys.bbf_get_original_identifier_name(
-    truncated_name name,
-    id_nspname name,
-    id_pg_catalog_type oid,
-    id_parent_name name DEFAULT NULL)
-RETURNS text
-LANGUAGE SQL
-STABLE
-PARALLEL SAFE
-RETURN COALESCE(
-    CASE WHEN octet_length(truncated_name) >= 60 THEN
-        (SELECT pg_catalog.lower(m.original_identifier_name COLLATE "C")
-         FROM sys.babelfish_identifier_mapping m
-         WHERE m.truncated_identifier_name = truncated_name
-           AND m.nspname = id_nspname
-           AND m.pg_catalog_type = id_pg_catalog_type
-           AND (id_parent_name IS NULL OR m.parent_name = id_parent_name)
-         LIMIT 1)
-    END,
-    truncated_name::text);
 
 -- SYSDATABASES
 CREATE OR REPLACE VIEW sys.sysdatabases AS
@@ -469,7 +400,14 @@ CAST(
 CAST(Ext.is_disabled AS INT) AS is_disabled,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
 CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
-CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE sys.bbf_get_original_db_name(Ext.default_database_name) END AS SYS.SYSNAME) AS default_database_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE COALESCE(
+    CASE WHEN octet_length(Ext.default_database_name) >= 60 THEN
+        (SELECT pg_catalog.lower(orig_name COLLATE "C")
+         FROM sys.babelfish_sysdatabases
+         WHERE name COLLATE database_default = Ext.default_database_name
+         LIMIT 1)
+    END,
+    Ext.default_database_name) END AS SYS.SYSNAME) AS default_database_name,
 CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
 CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
