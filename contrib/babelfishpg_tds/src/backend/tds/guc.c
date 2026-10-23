@@ -45,6 +45,7 @@ char	   *product_version = "default";
 static bool TdsFaultInjectionEnabled = false;
 #endif
 bool		enable_drop_babelfish_role = false;
+bool		tds_enable_antlr_batch_parse_cache = false;
 
 const struct config_enum_entry ssl_protocol_versions_info[] = {
 	{"", PG_TLS_ANY, false},
@@ -201,6 +202,16 @@ void
 TdsDefineGucs(void)
 {
 	/* Define TDS specific GUCs */
+	DefineCustomBoolVariable(
+							 "babelfishpg_tds.enable_antlr_batch_parse_cache",
+							 gettext_noop("Enables the shared memory ANTLR parse cache for sp_prepexec batch queries."),
+							 gettext_noop("When on, about 250 MB of shared memory (1000 fixed slots of about 256 KB each) is reserved at server start, whether or not entries are cached. Requires a server restart."),
+							 &tds_enable_antlr_batch_parse_cache,
+							 false,
+							 PGC_POSTMASTER,
+							 GUC_NOT_IN_SAMPLE,
+							 NULL, NULL, NULL);
+
 	DefineCustomIntVariable(
 							"babelfishpg_tds.port",
 							gettext_noop("Sets the TDS TCP port the server listens on."),

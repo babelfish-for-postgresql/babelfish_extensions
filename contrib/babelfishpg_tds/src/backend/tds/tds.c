@@ -24,6 +24,7 @@
 #include "src/include/tds_int.h"
 #include "src/include/tds_secure.h"
 #include "src/include/tds_instr.h"
+#include "src/antlr_batch_parse_cache.h"
 #include "commands/defrem.h"
 #include "fmgr.h"
 #include "pgstat.h"
@@ -297,6 +298,20 @@ tds_memsize()
 	size = add_size(size, TdsHostNameBufferSize());
 	size = add_size(size, TdsLanguageBufferSize());
 	size = add_size(size, TdsContextInfoBufferSize());
+
+	/*
+	 * Batch query ANTLR parse cache: ~256 KB per entry, reserved only when
+	 * the feature is enabled. Created in tds_status_shmem_startup(), used by
+	 * babelfishpg_tsql.
+	 */
+	if (tds_enable_antlr_batch_parse_cache)
+	{
+		size = add_size(size, MAXALIGN(sizeof(AntlrBatchParseCacheSharedState)));
+		size = add_size(size,
+						hash_estimate_size(ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
+										   sizeof(AntlrBatchParseCacheEntry)));
+	}
+
 	return size;
 }
 
@@ -312,6 +327,8 @@ tds_shmem_request()
 	 * resources in tds_status_shmem_startup().
 	 */
 	RequestAddinShmemSpace(tds_memsize());
+	if (tds_enable_antlr_batch_parse_cache)
+		RequestNamedLWLockTranche(ANTLR_BATCH_PARSE_CACHE_LWLOCK_TRANCHE, 1);
 }
 
 /*
@@ -416,6 +433,38 @@ tds_status_shmem_startup(void)
 			TdsStatusArray[i].st_context_info = buffer;
 			buffer += CONTEXTINFOLEN;
 		}
+	}
+
+	/*
+	 * Batch query ANTLR parse cache: create the shared state and hash.
+	 * babelfishpg_tsql attaches using the same names.
+	 */
+	if (tds_enable_antlr_batch_parse_cache)
+	{
+		AntlrBatchParseCacheSharedState *state;
+		HASHCTL info;
+		bool state_found;
+
+		state = ShmemInitStruct(ANTLR_BATCH_PARSE_CACHE_SHMEM_STATE_NAME,
+								sizeof(AntlrBatchParseCacheSharedState), &state_found);
+		if (!state_found)
+		{
+			state->lock = &(GetNamedLWLockTranche(ANTLR_BATCH_PARSE_CACHE_LWLOCK_TRANCHE))->lock;
+			pg_atomic_init_u64(&state->stat_hits, 0);
+			pg_atomic_init_u64(&state->stat_misses, 0);
+			pg_atomic_init_u64(&state->stat_writes, 0);
+			pg_atomic_init_u64(&state->stat_evictions, 0);
+			pg_atomic_init_u64(&state->stat_errors, 0);
+		}
+
+		memset(&info, 0, sizeof(info));
+		info.keysize = sizeof(AntlrBatchParseCacheKey);
+		info.entrysize = sizeof(AntlrBatchParseCacheEntry);
+		ShmemInitHash(ANTLR_BATCH_PARSE_CACHE_SHMEM_HASH_NAME,
+					  ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
+					  ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
+					  &info,
+					  HASH_ELEM | HASH_BLOBS);
 	}
 
 	LWLockRelease(AddinShmemInitLock);
@@ -785,7 +834,7 @@ get_tds_database_backend_count(int16 db_id, bool ignore_current_connection)
 {
 	TdsStatus  *tdsentry;
 	LocalTdsStatus *local_tdsentry;
-	int number_of_connections = 0;
+	int			number_of_connections = 0;
 
 	/* Read the latest activity from the shared mem. */
 	tdsstat_read_current_status();
@@ -800,13 +849,13 @@ get_tds_database_backend_count(int16 db_id, bool ignore_current_connection)
 		tdsentry = &local_tdsentry->tdsStatus;
 
 		/*
-		 * Return true if we find the first backend connected to
-		 * this database. Also sanity check that the pid is valid.
-		 * 
-		 * If ignore_current_connection is set to true then we need to skip
-		 * at least one connection using that database,
-		 * i.e. increment count to 1 and return true
-		 * only when we find another connection using same database.
+		 * Return true if we find the first backend connected to this
+		 * database. Also sanity check that the pid is valid.
+		 *
+		 * If ignore_current_connection is set to true then we need to skip at
+		 * least one connection using that database, i.e. increment count to 1
+		 * and return true only when we find another connection using same
+		 * database.
 		 */
 		if (tdsentry->st_procpid > 0 &&
 			tdsentry->client_pid != 0 && tdsentry->database_id == db_id)

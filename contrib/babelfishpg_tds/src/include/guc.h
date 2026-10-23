@@ -14,6 +14,7 @@
  */
 
 extern int	pe_port;
+extern bool tds_enable_antlr_batch_parse_cache;
 extern char *pe_listen_addrs;
 extern char *pe_unix_socket_directories;
 extern char *product_version;

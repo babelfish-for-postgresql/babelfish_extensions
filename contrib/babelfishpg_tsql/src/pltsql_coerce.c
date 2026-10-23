@@ -1252,7 +1252,7 @@ get_default_typmod_for_fixedsize_dataypes(Oid resulttype)
  * is_namespace_sys_or_pg_catalog
  * Returns true if the given namespace Oid is either sys or pg_catalog.
  */
-static bool
+bool
 is_namespace_sys_or_pg_catalog(Oid nspoid)
 {
 	if (nspoid == PG_CATALOG_NAMESPACE || nspoid == get_namespace_oid("sys", false))
