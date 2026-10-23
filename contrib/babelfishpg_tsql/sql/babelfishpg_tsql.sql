@@ -1233,7 +1233,7 @@ CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
 CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
 CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
 CAST(seq AS smallint) AS KEY_SEQ,
-CAST(t5.conname AS sys.sysname) AS PK_NAME
+CAST(sys.bbf_get_original_identifier_name(t5.conname, t2.nspname, 'pg_constraint'::regclass::oid, t1.relname) AS sys.sysname) AS PK_NAME
 FROM pg_catalog.pg_class t1 
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
@@ -1980,8 +1980,8 @@ CASE
    WHEN const1.confdeltype = 'd' THEN CAST(3 AS smallint) -- set default
    ELSE CAST(0 AS smallint)
 END AS DELETE_RULE,
-CAST(const1.conname AS sys.sysname) AS FK_NAME,
-CAST(const2.conname AS sys.sysname) AS PK_NAME,
+CAST(sys.bbf_get_original_identifier_name(const1.conname, nsp_ext.nspname, 'pg_constraint'::regclass::oid, c.relname) AS sys.sysname) AS FK_NAME,
+CAST(sys.bbf_get_original_identifier_name(const2.conname, nsp_ext2.nspname, 'pg_constraint'::regclass::oid, c2.relname) AS sys.sysname) AS PK_NAME,
 CASE
    WHEN const1.condeferrable = false THEN CAST(7 as smallint) -- not deferrable
    ELSE (CASE WHEN const1.condeferred = false THEN CAST(6 as smallint) --  not deferred by default
@@ -2712,7 +2712,7 @@ CASE
       WHEN ss.proretset THEN '@TABLE_RETURN_VALUE'
     ELSE '@RETURN_VALUE'
   END 
-ELSE COALESCE(ss.proargnames[n], '')
+ELSE COALESCE(sys.bbf_get_original_identifier_name(ss.proargnames[n], ss.nspname, 'pg_proc'::regclass::oid, ss.proname), '')
 END
 AS sys.SYSNAME) AS COLUMN_NAME
 , CAST(
@@ -3244,13 +3244,14 @@ BEGIN
 					DECLARE @relid INT = 0;
 					DECLARE @index_count INT;
 					SELECT @relid = object_id FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-						WHERE s1.name = @schemaname AND o1.name = sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname));
+						WHERE s1.name = @schemaname AND (o1.name = @curr_relname
+							OR sys.babelfish_truncate_identifier(pg_catalog.lower(o1.name)) = sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname)));
 					IF @relid = 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;
 						END
 					SELECT @index_count = COUNT(*) FROM pg_index i JOIN pg_class c ON i.indexrelid = c.oid
-						WHERE i.indrelid = @relid AND c.relname = sys.babelfish_construct_unique_index_name(sys.babelfish_truncate_identifier(pg_catalog.lower(@subname)), sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname)));
+						WHERE i.indrelid = @relid AND c.relname = sys.babelfish_construct_unique_index_name(pg_catalog.lower(@subname), pg_catalog.lower(@curr_relname));
 					IF @index_count < 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;

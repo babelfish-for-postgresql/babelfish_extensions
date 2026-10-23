@@ -7485,7 +7485,8 @@ PLtsql_stmt *
 makeDeclareCursorStatement(TSqlParser::Declare_cursorContext *ctx)
 {
 	Assert(ctx->cursor_name());
-	std::string cursor_name = ::getFullText(ctx->cursor_name());
+	std::string cursor_name_raw = ::getFullText(ctx->cursor_name());
+	std::string cursor_name = downcase_truncate_identifier(cursor_name_raw.c_str(), cursor_name_raw.length(), true);
 
 	PLtsql_var *curvar = nullptr;
 	PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, cursor_name.c_str(), nullptr, nullptr, nullptr);
