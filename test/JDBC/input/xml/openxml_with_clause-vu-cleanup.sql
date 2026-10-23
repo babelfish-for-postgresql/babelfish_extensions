@@ -27,3 +27,10 @@ GO
 
 DROP VIEW openxml_documents
 GO
+
+DROP FUNCTION openxml_ns_pgfn
+GO
+DROP PROCEDURE openxml_ns_proc
+GO
+DROP TABLE openxml_ns_sink
+GO
