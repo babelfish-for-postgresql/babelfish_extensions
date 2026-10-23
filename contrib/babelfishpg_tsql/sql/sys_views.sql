@@ -19,9 +19,9 @@ with tt_internal as MATERIALIZED
 )
 select
   CAST(COALESCE(
-      CASE WHEN octet_length(t.relname) >= 60 THEN
-          (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
-           FROM unnest(t.reloptions) opt
+      CASE WHEN pg_catalog.octet_length(t.relname) >= 60 THEN
+          (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+           FROM pg_catalog.unnest(t.reloptions) opt
            WHERE opt LIKE 'bbf_original_rel_name=%'
            LIMIT 1)
       END,
@@ -119,9 +119,9 @@ GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 create or replace view sys.views as 
 select 
   CAST(COALESCE(
-      CASE WHEN octet_length(t.relname) >= 60 THEN
-          (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
-           FROM unnest(t.reloptions) opt
+      CASE WHEN pg_catalog.octet_length(t.relname) >= 60 THEN
+          (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+           FROM pg_catalog.unnest(t.reloptions) opt
            WHERE opt LIKE 'bbf_original_rel_name=%'
            LIMIT 1)
       END,
@@ -423,13 +423,13 @@ $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 create or replace view sys.all_columns as
 select CAST(c.oid as int) as object_id
   , CAST(COALESCE(
-      CASE WHEN octet_length(a.attname) >= 60 THEN
+      CASE WHEN pg_catalog.octet_length(a.attname) >= 60 THEN
           (SELECT CASE
                       WHEN a.attname = pg_catalog.lower(a.attname COLLATE "C")
-                          THEN pg_catalog.lower(substring(opt, 19) COLLATE "C")
-                      ELSE substring(opt, 19)
+                          THEN pg_catalog.lower(pg_catalog.substring(opt, 19) COLLATE "C")
+                      ELSE pg_catalog.substring(opt, 19)
                   END
-           FROM unnest(a.attoptions) opt
+           FROM pg_catalog.unnest(a.attoptions) opt
            WHERE opt LIKE 'bbf_original_name=%'
            LIMIT 1)
       END,
@@ -535,13 +535,13 @@ BEGIN
 	RETURN QUERY
 		SELECT CAST(c.oid AS int),
 			CAST(COALESCE(
-				CASE WHEN octet_length(a.attname) >= 60 THEN
+				CASE WHEN pg_catalog.octet_length(a.attname) >= 60 THEN
 					(SELECT CASE
 								WHEN a.attname = pg_catalog.lower(a.attname COLLATE "C")
-									THEN pg_catalog.lower(substring(opt, 19) COLLATE "C")
-								ELSE substring(opt, 19)
+									THEN pg_catalog.lower(pg_catalog.substring(opt, 19) COLLATE "C")
+								ELSE pg_catalog.substring(opt, 19)
 							END
-					 FROM unnest(a.attoptions) opt
+					 FROM pg_catalog.unnest(a.attoptions) opt
 					 WHERE opt LIKE 'bbf_original_name=%'
 					 LIMIT 1)
 				END,
@@ -1183,9 +1183,9 @@ select cast(
     case
       when tt.typrelid is not null
         then COALESCE(
-            CASE WHEN octet_length(ttc.relname) >= 60 THEN
-                (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
-                 FROM unnest(ttc.reloptions) opt
+            CASE WHEN pg_catalog.octet_length(ttc.relname) >= 60 THEN
+                (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+                 FROM pg_catalog.unnest(ttc.reloptions) opt
                  WHERE opt LIKE 'bbf_original_rel_name=%'
                  LIMIT 1)
             END,
@@ -1394,9 +1394,9 @@ union all
 -- details of user defined tables
 select
     COALESCE(
-        CASE WHEN octet_length(t.relname) >= 60 THEN
-            (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
-             FROM unnest(t.reloptions) opt
+        CASE WHEN pg_catalog.octet_length(t.relname) >= 60 THEN
+            (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+             FROM pg_catalog.unnest(t.reloptions) opt
              WHERE opt LIKE 'bbf_original_rel_name=%'
              LIMIT 1)
         END,
@@ -1449,9 +1449,9 @@ union all
 -- Details of user defined views
 select
     COALESCE(
-        CASE WHEN octet_length(t.relname) >= 60 THEN
-            (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
-             FROM unnest(t.reloptions) opt
+        CASE WHEN pg_catalog.octet_length(t.relname) >= 60 THEN
+            (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+             FROM pg_catalog.unnest(t.reloptions) opt
              WHERE opt LIKE 'bbf_original_rel_name=%'
              LIMIT 1)
         END,
@@ -1770,9 +1770,9 @@ GRANT SELECT ON sys.system_objects TO PUBLIC;
 create or replace view sys.all_views as
 SELECT
     CAST(COALESCE(
-        CASE WHEN octet_length(c.relname) >= 60 THEN
-            (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
-             FROM unnest(c.reloptions) opt
+        CASE WHEN pg_catalog.octet_length(c.relname) >= 60 THEN
+            (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+             FROM pg_catalog.unnest(c.reloptions) opt
              WHERE opt LIKE 'bbf_original_rel_name=%'
              LIMIT 1)
         END,
@@ -3526,7 +3526,7 @@ SELECT
   CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
   CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
   CAST(COALESCE(
-      CASE WHEN octet_length(Ext.default_database_name) >= 60 THEN
+      CASE WHEN pg_catalog.octet_length(Ext.default_database_name) >= 60 THEN
           (SELECT pg_catalog.lower(orig_name COLLATE "C")
            FROM sys.babelfish_sysdatabases
            WHERE name COLLATE database_default = Ext.default_database_name

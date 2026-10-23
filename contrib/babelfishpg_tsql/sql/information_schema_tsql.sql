@@ -861,13 +861,13 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
 		CAST(COALESCE(
-			CASE WHEN octet_length(a.attname) >= 60 THEN
+			CASE WHEN pg_catalog.octet_length(a.attname) >= 60 THEN
 				(SELECT CASE
 				            WHEN a.attname = pg_catalog.lower(a.attname COLLATE "C")
-				                THEN pg_catalog.lower(substring(opt, 19) COLLATE "C")
-				            ELSE substring(opt, 19)
+				                THEN pg_catalog.lower(pg_catalog.substring(opt, 19) COLLATE "C")
+				            ELSE pg_catalog.substring(opt, 19)
 				        END
-				 FROM unnest(a.attoptions) opt
+				 FROM pg_catalog.unnest(a.attoptions) opt
 				 WHERE opt LIKE 'bbf_original_name=%'
 				 LIMIT 1)
 			END,

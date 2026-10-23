@@ -401,7 +401,7 @@ CAST(Ext.is_disabled AS INT) AS is_disabled,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
 CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
 CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE COALESCE(
-    CASE WHEN octet_length(Ext.default_database_name) >= 60 THEN
+    CASE WHEN pg_catalog.octet_length(Ext.default_database_name) >= 60 THEN
         (SELECT pg_catalog.lower(orig_name COLLATE "C")
          FROM sys.babelfish_sysdatabases
          WHERE name COLLATE database_default = Ext.default_database_name

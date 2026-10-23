@@ -1095,9 +1095,9 @@ SELECT
 t2.dbname AS TABLE_QUALIFIER,
 CAST(t3.name AS sys.sysname) AS TABLE_OWNER,
 COALESCE(
-    CASE WHEN octet_length(t1.relname) >= 60 THEN
-        (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
-         FROM unnest(t1.reloptions) opt
+    CASE WHEN pg_catalog.octet_length(t1.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(t1.reloptions) opt
          WHERE opt LIKE 'bbf_original_rel_name=%'
          LIMIT 1)
     END,
@@ -1204,7 +1204,7 @@ DROP VIEW IF EXISTS sys.sp_databases_view CASCADE;
 CREATE VIEW sys.sp_databases_view AS
 	SELECT CAST(
 		COALESCE(
-			CASE WHEN octet_length(database_name) >= 60 THEN
+			CASE WHEN pg_catalog.octet_length(database_name) >= 60 THEN
 				(SELECT pg_catalog.lower(orig_name COLLATE "C")
 				 FROM sys.babelfish_sysdatabases
 				 WHERE name COLLATE sys.database_default = database_name
@@ -1315,9 +1315,9 @@ WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
 ELSE CAST(1 AS smallint)
 END AS NON_UNIQUE,
 CAST(COALESCE(
-    CASE WHEN octet_length(t1.relname) >= 60 THEN
-        (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
-         FROM unnest(t1.reloptions) opt
+    CASE WHEN pg_catalog.octet_length(t1.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(t1.reloptions) opt
          WHERE opt LIKE 'bbf_original_rel_name=%'
          LIMIT 1)
     END,
@@ -1479,9 +1479,9 @@ BEGIN
         CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
         CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
         CAST(COALESCE(
-            CASE WHEN octet_length(t1.relname) >= 60 THEN
-                (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
-                 FROM unnest(t1.reloptions) opt
+            CASE WHEN pg_catalog.octet_length(t1.relname) >= 60 THEN
+                (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+                 FROM pg_catalog.unnest(t1.reloptions) opt
                  WHERE opt LIKE 'bbf_original_rel_name=%'
                  LIMIT 1)
             END,
@@ -1586,9 +1586,9 @@ BEGIN
         CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
         CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
         CAST(COALESCE(
-            CASE WHEN octet_length(t1.relname) >= 60 THEN
-                (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
-                 FROM unnest(t1.reloptions) opt
+            CASE WHEN pg_catalog.octet_length(t1.relname) >= 60 THEN
+                (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+                 FROM pg_catalog.unnest(t1.reloptions) opt
                  WHERE opt LIKE 'bbf_original_rel_name=%'
                  LIMIT 1)
             END,
@@ -1735,9 +1735,9 @@ AS IS_NULLABLE,
 CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
 COALESCE(
-    CASE WHEN octet_length(C.relname) >= 60 THEN
-        (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
-         FROM unnest(C.reloptions) opt
+    CASE WHEN pg_catalog.octet_length(C.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(C.reloptions) opt
          WHERE opt LIKE 'bbf_original_rel_name=%'
          LIMIT 1)
     END,
@@ -2004,9 +2004,9 @@ SELECT
 CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
 CAST(bbf_nsp2.orig_name AS sys.sysname) AS PKTABLE_OWNER ,
 COALESCE(
-    CASE WHEN octet_length(c2.relname) >= 60 THEN
-        (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
-         FROM unnest(c2.reloptions) opt
+    CASE WHEN pg_catalog.octet_length(c2.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(c2.reloptions) opt
          WHERE opt LIKE 'bbf_original_rel_name=%'
          LIMIT 1)
     END,
@@ -2015,9 +2015,9 @@ CAST(COALESCE(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) AS sy
 CAST(nsp_ext.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
 CAST(bbf_nsp.orig_name AS sys.sysname) AS FKTABLE_OWNER ,
 COALESCE(
-    CASE WHEN octet_length(c.relname) >= 60 THEN
-        (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
-         FROM unnest(c.reloptions) opt
+    CASE WHEN pg_catalog.octet_length(c.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(c.reloptions) opt
          WHERE opt LIKE 'bbf_original_rel_name=%'
          LIMIT 1)
     END,
@@ -2399,11 +2399,10 @@ BEGIN
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(COALESCE(
-			       CASE WHEN octet_length(LogExt.default_database_name) >= 60 THEN
-			           (SELECT pg_catalog.lower(orig_name COLLATE "C")
-			            FROM sys.babelfish_sysdatabases
-			            WHERE name COLLATE database_default = LogExt.default_database_name
-			            LIMIT 1)
+			       CASE WHEN pg_catalog.octet_length(LogExt.default_database_name) >= 60 THEN
+			           (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+			            FROM sys.babelfish_sysdatabases sdb
+			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
 			       END,
 			       LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
@@ -2477,11 +2476,10 @@ BEGIN
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(COALESCE(
-			       CASE WHEN octet_length(LogExt.default_database_name) >= 60 THEN
-			           (SELECT pg_catalog.lower(orig_name COLLATE "C")
-			            FROM sys.babelfish_sysdatabases
-			            WHERE name COLLATE database_default = LogExt.default_database_name
-			            LIMIT 1)
+			       CASE WHEN pg_catalog.octet_length(LogExt.default_database_name) >= 60 THEN
+			           (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+			            FROM sys.babelfish_sysdatabases sdb
+			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
 			       END,
 			       LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
@@ -3982,11 +3980,10 @@ BEGIN
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
 		CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS SID,
 		CAST(COALESCE(
-		    CASE WHEN octet_length(LExt.default_database_name) >= 60 THEN
-		        (SELECT pg_catalog.lower(orig_name COLLATE "C")
-		         FROM sys.babelfish_sysdatabases
-		         WHERE name COLLATE database_default = LExt.default_database_name
-		         LIMIT 1)
+		    CASE WHEN pg_catalog.octet_length(LExt.default_database_name) >= 60 THEN
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+		         FROM sys.babelfish_sysdatabases sdb
+		         WHERE sdb.name COLLATE database_default = LExt.default_database_name)
 		    END,
 		    LExt.default_database_name) AS SYS.SYSNAME) AS DefDBName,
 		CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
@@ -4008,11 +4005,10 @@ BEGIN
 	SELECT
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
 		CAST(COALESCE(
-		    CASE WHEN octet_length(UExt.database_name) >= 60 THEN
-		        (SELECT pg_catalog.lower(orig_name COLLATE "C")
-		         FROM sys.babelfish_sysdatabases
-		         WHERE name COLLATE database_default = UExt.database_name
-		         LIMIT 1)
+		    CASE WHEN pg_catalog.octet_length(UExt.database_name) >= 60 THEN
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+		         FROM sys.babelfish_sysdatabases sdb
+		         WHERE sdb.name COLLATE database_default = UExt.database_name)
 		    END,
 		    UExt.database_name) AS sys.SYSNAME) AS DBName,
 		CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
@@ -4045,11 +4041,10 @@ BEGIN
 	SELECT
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
 		CAST(COALESCE(
-		    CASE WHEN octet_length(UExt2.database_name) >= 60 THEN
-		        (SELECT pg_catalog.lower(orig_name COLLATE "C")
-		         FROM sys.babelfish_sysdatabases
-		         WHERE name COLLATE database_default = UExt2.database_name
-		         LIMIT 1)
+		    CASE WHEN pg_catalog.octet_length(UExt2.database_name) >= 60 THEN
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+		         FROM sys.babelfish_sysdatabases sdb
+		         WHERE sdb.name COLLATE database_default = UExt2.database_name)
 		    END,
 		    UExt2.database_name) AS sys.SYSNAME) AS DBName,
 		CAST(UExt1.orig_username AS sys.SYSNAME) AS UserName,
