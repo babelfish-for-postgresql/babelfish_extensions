@@ -686,7 +686,7 @@ go
 set datefirst 7
 go
 
--- SET DATEFORMAT currently ignores the argument and will always use 'mdy'
+-- SET DATEFORMAT takes the date order from the variable
 declare @@v varchar(10) = 'dmy'
 set dateformat @@v
 select cast('01/02/03' as datetime)
@@ -694,7 +694,7 @@ go
 set dateformat mdy
 go
 
--- SET DATEFORMAT currently silently ignores the argument and will always use 'mdy'
+-- SET DATEFORMAT takes the date order from the variable
 declare @#v varchar(10) = 'dmy'
 set dateformat @#v
 select cast('01/02/03' as datetime)
@@ -702,7 +702,7 @@ go
 set dateformat mdy
 go
 
--- SET DATEFORMAT currently silently ignores the argument and will always use 'mdy'
+-- SET DATEFORMAT takes the date order from the variable
 declare @@v128_890123456789$123456789$1234567890123456789$123456789$1234567890123456789$123456789$12345678901234567890123456789012345678 varchar(10) = 'dmy'
 set dateformat @@v128_890123456789$123456789$1234567890123456789$123456789$1234567890123456789$123456789$12345678901234567890123456789012345678
 select cast('01/02/03' as datetime)

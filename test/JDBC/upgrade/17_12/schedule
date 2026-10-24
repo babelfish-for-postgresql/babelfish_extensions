@@ -213,7 +213,7 @@ dateadd_internal_df
 datediff_big
 datediff
 dateadd
-datename_tzoffset
+datename_tzoffset-before-18_8
 datepart
 datetime2fromparts-after-15-2
 fk_trigger_temp
@@ -693,3 +693,4 @@ forxml-namespaces-before-18_6
 xml-methods-namespaces-before-18_6
 fk-cascade-trigger
 exec_tvf_named_args
+set_dateformat

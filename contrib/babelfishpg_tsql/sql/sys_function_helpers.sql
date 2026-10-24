@@ -971,7 +971,7 @@ BEGIN
         RAISE invalid_escape_sequence;
     END;
 
-    v_date_format := coalesce(nullif(DATE_FORMAT, ''), v_lang_metadata_json ->> 'date_format');
+    v_date_format := coalesce(nullif(DATE_FORMAT, ''), pg_catalog.upper(pg_catalog.current_setting('babelfishpg_tsql.dateformat', true)), v_lang_metadata_json ->> 'date_format');
 
     v_compmonth_regexp := array_to_string(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
                                                     ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_names'))), '|');
@@ -1631,7 +1631,7 @@ BEGIN
         RAISE invalid_escape_sequence;
     END;
 
-    v_date_format := coalesce(nullif(DATE_FORMAT, ''), v_lang_metadata_json ->> 'date_format');
+    v_date_format := coalesce(nullif(DATE_FORMAT, ''), pg_catalog.upper(pg_catalog.current_setting('babelfishpg_tsql.dateformat', true)), v_lang_metadata_json ->> 'date_format');
 
     v_compmonth_regexp := array_to_string(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
                                                     ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_names'))), '|');

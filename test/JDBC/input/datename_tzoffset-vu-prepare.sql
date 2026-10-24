@@ -77,7 +77,7 @@ INSERT INTO datename_stability_test (config_type, config_value, test_date, datep
 VALUES ('DATEFORMAT', 'mdy', '03-06-2025', 'month', DATENAME(month, '03-06-2025'));
 GO
 
-    -- SET DATEFORMAT dmy (not supported, treated as mdy)
+    -- SET DATEFORMAT dmy
 SET DATEFORMAT dmy;
 GO
 INSERT INTO datename_stability_test (config_type, config_value, test_date, datepart, result)

@@ -1297,8 +1297,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::
 		{
 			/* don't strip id here. let them throw an "unrecognized SET option" error in tsqlIface */
 			std::string val = getFullText(sctx->id().front());
-			if (pg_strcasecmp("DATEFORMAT", val.c_str()) == 0)
-				handle(INSTR_UNSUPPORTED_TSQL_OPTION_DATEFORMAT, "DATEFORMAT", &st_escape_hatch_session_settings, getLineAndPos(sctx));
+			/* DATEFORMAT is checked when babelfishpg_tsql.dateformat is set */
 			if (pg_strcasecmp("DEADLOCK_PRIORITY", val.c_str()) == 0)
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_DEADLOCK_PRIORITY, "DEADLOCK_PRIORITY", &st_escape_hatch_session_settings, getLineAndPos(sctx));
 			if (pg_strcasecmp("QUERY_GOVERNOR_COST_LIMIT", val.c_str()) == 0)

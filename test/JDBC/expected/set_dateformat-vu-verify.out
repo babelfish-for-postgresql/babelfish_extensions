@@ -1,0 +1,359 @@
+-- The session's date order decides how CAST and CONVERT without a style read
+-- date strings
+SET DATEFORMAT dmy
+GO
+
+SELECT * FROM set_dateformat_v ORDER BY id
+GO
+~~START~~
+int#!#varchar#!#date#!#datetime#!#date#!#datetime
+1#!#01/02/2026#!#2026-02-01#!#2026-02-01 00:00:00.0#!#2026-02-01#!#2026-02-01 00:00:00.0
+2#!#13/02/2026#!#2026-02-13#!#2026-02-13 00:00:00.0#!#2026-02-13#!#2026-02-13 00:00:00.0
+3#!#02/13/2026#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+SET DATEFORMAT mdy
+GO
+
+SELECT * FROM set_dateformat_v ORDER BY id
+GO
+~~START~~
+int#!#varchar#!#date#!#datetime#!#date#!#datetime
+1#!#01/02/2026#!#2026-01-02#!#2026-01-02 00:00:00.0#!#2026-01-02#!#2026-01-02 00:00:00.0
+2#!#13/02/2026#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#02/13/2026#!#2026-02-13#!#2026-02-13 00:00:00.0#!#2026-02-13#!#2026-02-13 00:00:00.0
+~~END~~
+
+
+SET DATEFORMAT ymd
+GO
+
+SELECT CAST('2026/01/02' AS DATE), CONVERT(DATETIME, '2026-01-02'), CAST('26/01/02' AS DATE)
+GO
+~~START~~
+date#!#datetime#!#date
+2026-01-02#!#2026-01-02 00:00:00.0#!#2026-01-02
+~~END~~
+
+
+-- Every date and time type follows it
+SET DATEFORMAT dmy
+GO
+
+SELECT CAST('01/02/2026' AS DATE), CAST('01/02/2026' AS DATETIME), CAST('01/02/2026' AS DATETIME2),
+	CAST('01/02/2026' AS SMALLDATETIME), CAST('01/02/2026 10:00 +01:00' AS DATETIMEOFFSET)
+GO
+~~START~~
+date#!#datetime#!#datetime2#!#smalldatetime#!#datetimeoffset
+2026-02-01#!#2026-02-01 00:00:00.0#!#2026-02-01 00:00:00.0000000#!#2026-02-01 00:00:00.0#!#2026-02-01 10:00:00.0000000 +01:00
+~~END~~
+
+
+-- So do implicit conversions and functions taking a date string
+SELECT DATEPART(month, '01/02/2026'), ISDATE('13/02/2026'), ISDATE('02/13/2026')
+GO
+~~START~~
+int#!#int#!#int
+2#!#1#!#0
+~~END~~
+
+
+DECLARE @d DATE = '13/02/2026'
+SELECT @d
+GO
+~~START~~
+date
+2026-02-13
+~~END~~
+
+
+-- Unseparated dates are always ymd
+SELECT CAST('20260102' AS DATE)
+GO
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+-- Objects created before the SET follow it too
+SELECT dbo.set_dateformat_f('01/02/2026')
+GO
+~~START~~
+date
+2026-02-01
+~~END~~
+
+
+EXEC set_dateformat_p '01/02/2026'
+GO
+~~START~~
+date#!#datetime
+2026-02-01#!#2026-02-01 00:00:00.0
+~~END~~
+
+
+SET DATEFORMAT mdy
+GO
+
+-- The value can be upper case, quoted or a variable
+SET DATEFORMAT DMY
+GO
+
+SELECT CAST('01/02/2026' AS DATE)
+GO
+~~START~~
+date
+2026-02-01
+~~END~~
+
+
+SET DATEFORMAT 'ymd'
+GO
+
+SELECT CAST('2026/01/02' AS DATE)
+GO
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+DECLARE @f VARCHAR(10) = 'dmy'
+SET DATEFORMAT @f
+SELECT CAST('01/02/2026' AS DATE)
+GO
+~~START~~
+date
+2026-02-01
+~~END~~
+
+
+SET DATEFORMAT mdy
+GO
+
+-- A SET inside a procedure or EXEC() is reverted when it returns
+EXEC set_dateformat_p_dmy '01/02/2026'
+SELECT CAST('01/02/2026' AS DATE) AS after_proc
+GO
+~~START~~
+date
+2026-02-01
+~~END~~
+
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+EXEC('SET DATEFORMAT dmy; SELECT CAST(''01/02/2026'' AS DATE) AS inside_exec')
+SELECT CAST('01/02/2026' AS DATE) AS after_exec
+GO
+~~START~~
+date
+2026-02-01
+~~END~~
+
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+EXEC sp_executesql N'SELECT CAST(@s AS DATE) AS sp_executesql_dmy', N'@s VARCHAR(30)', '01/02/2026'
+GO
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+-- It is not undone by ROLLBACK
+BEGIN TRAN
+SET DATEFORMAT dmy
+ROLLBACK
+SELECT CAST('01/02/2026' AS DATE) AS after_rollback
+GO
+~~START~~
+date
+2026-02-01
+~~END~~
+
+
+SET DATEFORMAT mdy
+GO
+
+-- A cached plan is parsed again when the date order changes
+EXEC set_dateformat_p_literal
+GO
+~~START~~
+date#!#datetime
+2026-01-02#!#2026-01-02 00:00:00.0
+~~END~~
+
+
+SET DATEFORMAT dmy
+GO
+
+EXEC set_dateformat_p_literal
+GO
+~~START~~
+date#!#datetime
+2026-02-01#!#2026-02-01 00:00:00.0
+~~END~~
+
+
+-- So is a statement in a loop
+DECLARE @i INT = 0, @f VARCHAR(3);
+WHILE @i < 3
+BEGIN
+	SET @f = CASE @i WHEN 0 THEN 'mdy' WHEN 1 THEN 'dmy' ELSE 'ymd' END;
+	SET DATEFORMAT @f;
+	SELECT @f AS dateformat, CAST('01/02/03' AS DATE) AS cast_date, CONVERT(DATE, '01/02/03') AS convert_date;
+	SET @i += 1;
+END
+GO
+~~START~~
+varchar#!#date#!#date
+mdy#!#2003-01-02#!#2003-01-02
+~~END~~
+
+~~START~~
+varchar#!#date#!#date
+dmy#!#2003-02-01#!#2003-02-01
+~~END~~
+
+~~START~~
+varchar#!#date#!#date
+ymd#!#2001-02-03#!#2001-02-03
+~~END~~
+
+
+SET DATEFORMAT mdy
+GO
+
+-- Invalid values raise error 2741, which ends only the statement
+SET DATEFORMAT abc
+GO
+~~ERROR (Code: 2741)~~
+
+~~ERROR (Message: SET DATEFORMAT date order 'abc' is invalid.)~~
+
+
+SET DATEFORMAT 'xyz'
+GO
+~~ERROR (Code: 2741)~~
+
+~~ERROR (Message: SET DATEFORMAT date order 'xyz' is invalid.)~~
+
+
+DECLARE @f VARCHAR(10) = 'Nope'
+SET DATEFORMAT @f
+SELECT CAST('01/02/2026' AS DATE) AS after_error
+GO
+~~ERROR (Code: 2741)~~
+
+~~ERROR (Message: SET DATEFORMAT date order 'Nope' is invalid.)~~
+
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+BEGIN TRY
+	SET DATEFORMAT dmyx
+END TRY
+BEGIN CATCH
+	SELECT ERROR_NUMBER(), ERROR_MESSAGE()
+END CATCH
+GO
+~~START~~
+int#!#nvarchar
+2741#!#SET DATEFORMAT date order 'dmyx' is invalid.
+~~END~~
+
+
+-- ydm, myd and dym are accepted while escape_hatch_session_settings is
+-- ignore.  CONVERT without a style reads all six orders.
+SET DATEFORMAT ydm
+GO
+
+SELECT CONVERT(DATETIME, '2-3-4'), CONVERT(DATETIME, '2026/13/02')
+GO
+~~START~~
+datetime#!#datetime
+2002-04-03 00:00:00.0#!#2026-02-13 00:00:00.0
+~~END~~
+
+
+-- The date, time, datetime2 and datetimeoffset types do not allow ydm
+SELECT CONVERT(DATE, '2-3-4')
+GO
+~~ERROR (Code: 9808)~~
+
+~~ERROR (Message: This session's YDM date format is not supported when converting from this character string format to date, time, datetime2 or datetimeoffset. Change the session's date format or provide a style to the explicit conversion.)~~
+
+
+BEGIN TRY
+	SELECT CONVERT(DATETIME2, '2-3-4')
+END TRY
+BEGIN CATCH
+	SELECT ERROR_NUMBER()
+END CATCH
+GO
+~~START~~
+int
+9808
+~~END~~
+
+
+SET DATEFORMAT myd
+GO
+
+SELECT CONVERT(DATETIME, '2-3-4'), CONVERT(DATE, '2-3-4')
+GO
+~~START~~
+datetime#!#date
+2003-02-04 00:00:00.0#!#2003-02-04
+~~END~~
+
+
+SET DATEFORMAT dym
+GO
+
+SELECT CONVERT(DATETIME, '2-3-4'), CONVERT(DATE, '2-3-4')
+GO
+~~START~~
+datetime#!#date
+2003-04-02 00:00:00.0#!#2003-04-02
+~~END~~
+
+
+SET DATEFORMAT mdy
+GO
+
+-- With the escape hatch set to strict they raise an error instead, and the
+-- date order stays as it was
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'strict'
+GO
+
+SET DATEFORMAT ydm
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Settings other than "mdy", "dmy" and "ymd" are not allowed for option DATEFORMAT. Please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
+
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'ignore'
+GO
+
+SELECT CAST('01/02/2026' AS DATE)
+GO
+~~START~~
+date
+2026-01-02
+~~END~~
+

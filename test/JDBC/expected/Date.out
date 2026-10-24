@@ -148,27 +148,19 @@ SET DATEFORMAT dmy;
 GO
 EXEC InsertDateTest 'DMY - Slash format', '16/6/2023';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "16/6/2023")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTest 'DMY - Hyphen format', '16-6-2023';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "16-6-2023")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTest 'DMY - Period format', '16.6.2023';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "16.6.2023")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTest 'DMY - Space format', '16 6 2023';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "16 6 2023")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTest 'DMY - No separator', '16062023';
 GO
@@ -810,27 +802,19 @@ GO
 -- yy,mm,dd variations
 EXEC InsertDateTest 'YMD - yy,mm,dd - Comma', '23,06,05';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "23,06,05")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTest 'YMD - yy,mm,dd - Period', '23.06.05';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "23.06.05")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTest 'YMD - yy,mm,dd - Hyphen', '23-06-05';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "23-06-05")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTest 'YMD - yy,mm,dd - Space', '23 06 05';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "23 06 05")~~
+~~ROW COUNT: 1~~
 
 
 -- y,m,d variations
@@ -1177,6 +1161,10 @@ int#!#nvarchar#!#nvarchar#!#date
 4#!#MDY - Hyphen format#!#6-16-2023#!#2023-06-16
 5#!#MDY - Period format#!#6.16.2023#!#2023-06-16
 6#!#MDY - Space format#!#6 16 2023#!#2023-06-16
+8#!#DMY - Slash format#!#16/6/2023#!#2023-06-16
+9#!#DMY - Hyphen format#!#16-6-2023#!#2023-06-16
+10#!#DMY - Period format#!#16.6.2023#!#2023-06-16
+11#!#DMY - Space format#!#16 6 2023#!#2023-06-16
 13#!#YMD - Slash format#!#2023/6/16#!#2023-06-16
 14#!#YMD - Hyphen format#!#2023-6-16#!#2023-06-16
 15#!#YMD - Period format#!#2023.6.16#!#2023-06-16
@@ -1240,30 +1228,34 @@ int#!#nvarchar#!#nvarchar#!#date
 105#!#YMD - yyyy,mm,d - Period#!#2023.06.5#!#2023-06-05
 106#!#YMD - yyyy,mm,d - Hyphen#!#2023-06-5#!#2023-06-05
 107#!#YMD - yyyy,mm,d - Space#!#2023 06 5#!#2023-06-05
-112#!#DMY - d,mm,yyyy - Comma#!#5,06,2023#!#2023-05-06
-113#!#DMY - d,mm,yyyy - Period#!#5.06.2023#!#2023-05-06
-114#!#DMY - d,mm,yyyy - Hyphen#!#5-06-2023#!#2023-05-06
-115#!#DMY - d,mm,yyyy - Space#!#5 06 2023#!#2023-05-06
-116#!#DMY - dd,m,yy - Comma#!#05,6,23#!#2023-05-06
-117#!#DMY - dd,m,yy - Period#!#05.6.23#!#2023-05-06
-118#!#DMY - dd,m,yy - Hyphen#!#05-6-23#!#2023-05-06
-119#!#DMY - dd,m,yy - Space#!#05 6 23#!#2023-05-06
-120#!#DMY - d,m,yy - Comma#!#5,6,23#!#2023-05-06
-121#!#DMY - d,m,yy - Period#!#5.6.23#!#2023-05-06
-122#!#DMY - d,m,yy - Hyphen#!#5-6-23#!#2023-05-06
-123#!#DMY - d,m,yy - Space#!#5 6 23#!#2023-05-06
-124#!#DMY - d,m,y - Comma#!#5,6,3#!#2003-05-06
-125#!#DMY - d,m,y - Period#!#5.6.3#!#2003-05-06
-126#!#DMY - d,m,y - Hyphen#!#5-6-3#!#2003-05-06
-127#!#DMY - d,m,y - Space#!#5 6 3#!#2003-05-06
+112#!#DMY - d,mm,yyyy - Comma#!#5,06,2023#!#2023-06-05
+113#!#DMY - d,mm,yyyy - Period#!#5.06.2023#!#2023-06-05
+114#!#DMY - d,mm,yyyy - Hyphen#!#5-06-2023#!#2023-06-05
+115#!#DMY - d,mm,yyyy - Space#!#5 06 2023#!#2023-06-05
+116#!#DMY - dd,m,yy - Comma#!#05,6,23#!#2023-06-05
+117#!#DMY - dd,m,yy - Period#!#05.6.23#!#2023-06-05
+118#!#DMY - dd,m,yy - Hyphen#!#05-6-23#!#2023-06-05
+119#!#DMY - dd,m,yy - Space#!#05 6 23#!#2023-06-05
+120#!#DMY - d,m,yy - Comma#!#5,6,23#!#2023-06-05
+121#!#DMY - d,m,yy - Period#!#5.6.23#!#2023-06-05
+122#!#DMY - d,m,yy - Hyphen#!#5-6-23#!#2023-06-05
+123#!#DMY - d,m,yy - Space#!#5 6 23#!#2023-06-05
+124#!#DMY - d,m,y - Comma#!#5,6,3#!#2003-06-05
+125#!#DMY - d,m,y - Period#!#5.6.3#!#2003-06-05
+126#!#DMY - d,m,y - Hyphen#!#5-6-3#!#2003-06-05
+127#!#DMY - d,m,y - Space#!#5 6 3#!#2003-06-05
 128#!#YMD - yyyy,m,d - Comma#!#2023,6,5#!#2023-06-05
 129#!#YMD - yyyy,m,d - Period#!#2023.6.5#!#2023-06-05
 130#!#YMD - yyyy,m,d - Hyphen#!#2023-6-5#!#2023-06-05
 131#!#YMD - yyyy,m,d - Space#!#2023 6 5#!#2023-06-05
-136#!#YMD - y,m,d - Comma#!#3,6,5#!#2005-03-06
-137#!#YMD - y,m,d - Period#!#3.6.5#!#2005-03-06
-138#!#YMD - y,m,d - Hyphen#!#3-6-5#!#2005-03-06
-139#!#YMD - y,m,d - Space#!#3 6 5#!#2005-03-06
+132#!#YMD - yy,mm,dd - Comma#!#23,06,05#!#2023-06-05
+133#!#YMD - yy,mm,dd - Period#!#23.06.05#!#2023-06-05
+134#!#YMD - yy,mm,dd - Hyphen#!#23-06-05#!#2023-06-05
+135#!#YMD - yy,mm,dd - Space#!#23 06 05#!#2023-06-05
+136#!#YMD - y,m,d - Comma#!#3,6,5#!#2003-06-05
+137#!#YMD - y,m,d - Period#!#3.6.5#!#2003-06-05
+138#!#YMD - y,m,d - Hyphen#!#3-6-5#!#2003-06-05
+139#!#YMD - y,m,d - Space#!#3 6 5#!#2003-06-05
 ~~END~~
 
 
@@ -1882,9 +1874,7 @@ SET DATEFORMAT dmy;
 INSERT INTO UDDTDateTest (ID, RegularDate, BusinessDateCol, HistoricalDateCol)
 VALUES (8, '21/06/2023', '21/06/2023', '04/07/1776');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "21/06/2023")~~
+~~ROW COUNT: 1~~
 
 
 SET DATEFORMAT mdy;
@@ -1895,6 +1885,7 @@ GO
 ~~START~~
 int#!#date#!#date#!#date
 7#!#2023-06-21#!#2023-06-21#!#1776-07-04
+8#!#2023-06-21#!#2023-06-21#!#1776-07-04
 ~~END~~
 
 
@@ -9789,9 +9780,10 @@ date
 2023-06-15
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "15/06/2023")~~
+~~START~~
+date
+2023-06-15
+~~END~~
 
 
 -- Test with different centuries
@@ -9799,19 +9791,19 @@ SELECT
     CAST('06/15/23' AS DATE) AS [Interpreted as 2023],
     CAST('06/15/1923' AS DATE) AS [Explicitly 1923];
 GO
-~~START~~
-date#!#date
-2023-06-15#!#1923-06-15
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "06/15/23")~~
 
 
 -- Test with two-digit years and DATEFORMAT
 SET DATEFORMAT ymd;
 SELECT CAST('23/06/15' AS DATE);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "23/06/15")~~
+~~START~~
+date
+2023-06-15
+~~END~~
 
 
 SET DATEFORMAT mdy;

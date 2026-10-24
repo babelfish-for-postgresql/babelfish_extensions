@@ -1,0 +1,48 @@
+-- Objects created here are used after an upgrade too, so they must not
+-- depend on SET DATEFORMAT having been supported when they were created
+CREATE TABLE set_dateformat_t (id INT, s VARCHAR(30))
+GO
+
+INSERT INTO set_dateformat_t VALUES (1, '01/02/2026'), (2, '13/02/2026'), (3, '02/13/2026')
+GO
+
+CREATE VIEW set_dateformat_v AS
+SELECT id, s,
+	TRY_CAST(s AS DATE) AS cast_date,
+	TRY_CAST(s AS DATETIME) AS cast_datetime,
+	TRY_CONVERT(DATE, s) AS convert_date,
+	TRY_CONVERT(DATETIME, s) AS convert_datetime
+FROM set_dateformat_t
+GO
+
+CREATE FUNCTION set_dateformat_f (@s VARCHAR(30))
+RETURNS DATE
+AS
+BEGIN
+	RETURN CAST(@s AS DATE)
+END
+GO
+
+CREATE PROCEDURE set_dateformat_p (@s VARCHAR(30))
+AS
+BEGIN
+	SELECT CAST(@s AS DATE) AS cast_date, CONVERT(DATETIME, @s) AS convert_datetime
+END
+GO
+
+-- A SET DATEFORMAT inside a procedure only lasts until the procedure returns
+CREATE PROCEDURE set_dateformat_p_dmy (@s VARCHAR(30))
+AS
+BEGIN
+	SET DATEFORMAT dmy
+	SELECT CAST(@s AS DATE) AS inside_proc
+END
+GO
+
+-- Date literals are read when the procedure is compiled
+CREATE PROCEDURE set_dateformat_p_literal
+AS
+BEGIN
+	SELECT CAST('01/02/2026' AS DATE) AS cast_date, CONVERT(DATETIME, '01/02/2026') AS convert_datetime
+END
+GO

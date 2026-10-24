@@ -137,6 +137,8 @@ is_ignorable_error(int pg_error_code, uint8_t override_flag)
 		case SQL_ERROR_535:
 		case SQL_ERROR_13600:
 		case SQL_ERROR_15003:
+		case SQL_ERROR_2741:
+		case SQL_ERROR_9808:
 			{
 				elog(DEBUG1, "TSQL TXN is_ignorable_error %d", latest_error_code);
 				return true;

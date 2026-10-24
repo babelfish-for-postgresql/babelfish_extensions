@@ -833,15 +833,16 @@ SELECT CONVERT(DATETIME, '2-3-4')
 GO
 ~~START~~
 datetime
-2004-02-03 00:00:00.0
+2004-03-02 00:00:00.0
 ~~END~~
 
 
 SELECT CONVERT(DATETIME, '22-03-2024')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+~~START~~
+datetime
+2024-03-22 00:00:00.0
+~~END~~
 
 
 SET DATEFORMAT 'YMD'
@@ -851,7 +852,7 @@ SELECT CONVERT(DATETIME, '2-3-4')
 GO
 ~~START~~
 datetime
-2004-02-03 00:00:00.0
+2002-03-04 00:00:00.0
 ~~END~~
 
 
@@ -870,7 +871,7 @@ SELECT CONVERT(DATETIME, '2-3-4')
 GO
 ~~START~~
 datetime
-2004-02-03 00:00:00.0
+2003-02-04 00:00:00.0
 ~~END~~
 
 
@@ -889,15 +890,16 @@ SELECT CONVERT(DATETIME, '2-3-4')
 GO
 ~~START~~
 datetime
-2004-02-03 00:00:00.0
+2003-04-02 00:00:00.0
 ~~END~~
 
 
 SELECT CONVERT(DATETIME, '22-2024-03')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+~~START~~
+datetime
+2024-03-22 00:00:00.0
+~~END~~
 
 
 SET DATEFORMAT 'YDM'
@@ -909,16 +911,17 @@ SELECT CONVERT(DATETIME, '2-3-4')
 GO
 ~~START~~
 datetime
-2004-02-03 00:00:00.0
+2002-04-03 00:00:00.0
 ~~END~~
 
 
 -- For DATE as follows, it will always be treated as YMD DATEFORMAT as YDM is not supported.
 SELECT CONVERT(DATETIME, '2024-22-03')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The conversion of a varchar data type to a datetime data type resulted in an out-of-range value.)~~
+~~START~~
+datetime
+2024-03-22 00:00:00.0
+~~END~~
 
 
 -- SET DATEFORMAT back to default

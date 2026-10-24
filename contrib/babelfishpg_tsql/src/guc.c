@@ -3,6 +3,8 @@
 #include "commands/explain_state.h"
 #include "parser/scansup.h"		/* downcase_identifier */
 #include "utils/guc.h"
+#include "utils/guc_tables.h"
+#include "utils/plancache.h"
 #include "miscadmin.h"
 
 #include "guc.h"
@@ -43,6 +45,7 @@ bool		pltsql_nocount = false;
 char	   *pltsql_database_name = NULL;
 char	   *pltsql_version = NULL;
 int			pltsql_datefirst = 7;
+char	   *pltsql_dateformat = NULL;
 int			pltsql_rowcount = 0;
 char	   *pltsql_language = NULL;
 char	   *pltsql_psql_logical_babelfish_db_name = NULL;
@@ -123,6 +126,9 @@ static void assign_concat_null_yields_null(bool newval, void *extra);
 static void assign_language(const char *newval, void *extra);
 static void assign_lock_timeout(int newval, void *extra);
 static void assign_datefirst(int newval, void *extra);
+static bool check_dateformat(char **newval, void **extra, GucSource source);
+static void assign_dateformat(const char *newval, void *extra);
+static const char *show_dateformat(void);
 static bool check_no_browsetable(bool *newval, void **extra, GucSource source);
 static void assign_enable_pg_hint(bool newval, void *extra);
 int			escape_hatch_session_settings;	/* forward declaration */
@@ -616,6 +622,151 @@ assign_datefirst(int newval, void *extra)
 		(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.datefirst", false, NULL, newval);
 }
 
+/*
+ * SET DATEFORMAT.  CAST and implicit conversions read date strings such as
+ * '01/02/2026' through PG's DateOrder, and CONVERT without a style reads
+ * babelfishpg_tsql.dateformat itself (see sys_function_helpers.sql).
+ *
+ * DateOrder only has ymd, dmy and mdy, so ydm, myd and dym are unsupported.
+ * When the escape hatch lets them through, CONVERT still handles them
+ * exactly, and DateOrder gets the order that starts with the same date part.
+ *
+ * PG's DateStyle also sets DateOrder, and sets it again whenever DateStyle
+ * is set, reset or reloaded from the configuration file, so its assign hook
+ * is wrapped to keep the order from SET DATEFORMAT.  The default, an empty
+ * string, means no SET DATEFORMAT is in effect, and the order is the one
+ * from DateStyle.
+ *
+ * The hooks keep no "extra" state: the engine's extra_field_used() does not
+ * look at the Babelfish session_stack, so an extra could be freed while a
+ * procedure-level SET still refers to it.  They don't read pltsql_dateformat
+ * either, because a parallel worker frees it before calling
+ * assign_dateformat().
+ */
+
+/* The value last passed to assign_dateformat() */
+static char assigned_dateformat[4] = "";
+
+/* The order DateStyle sets */
+static int	datestyle_date_order;
+
+static GucStringAssignHook prev_assign_datestyle = NULL;
+
+static const char *
+date_order_to_dateformat(int order)
+{
+	switch (order)
+	{
+		case DATEORDER_YMD:
+			return "ymd";
+		case DATEORDER_DMY:
+			return "dmy";
+		default:
+			return "mdy";
+	}
+}
+
+static int
+dateformat_to_date_order(const char *dateformat)
+{
+	/* The first date part decides; see above for ydm, myd and dym */
+	switch (dateformat[0])
+	{
+		case 'y':
+			return DATEORDER_YMD;
+		case 'd':
+			return DATEORDER_DMY;
+		case 'm':
+			return DATEORDER_MDY;
+		default:
+			return datestyle_date_order;
+	}
+}
+
+static bool
+check_dateformat(char **newval, void **extra, GucSource source)
+{
+	/*
+	 * Nothing to check for the default, or in a parallel worker, which gets a
+	 * value the leader has accepted even if the escape hatch has changed
+	 * since.
+	 */
+	if (source == PGC_S_DEFAULT || InitializingParallelWorker)
+		return true;
+
+	if (pg_strcasecmp(*newval, "ydm") == 0 ||
+		pg_strcasecmp(*newval, "myd") == 0 ||
+		pg_strcasecmp(*newval, "dym") == 0)
+	{
+		TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_OPTION_DATEFORMAT);
+		if (escape_hatch_session_settings != EH_IGNORE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Settings other than \"mdy\", \"dmy\" and \"ymd\" are not allowed for option DATEFORMAT. Please use babelfishpg_tsql.escape_hatch_session_settings to ignore")));
+	}
+	else if (pg_strcasecmp(*newval, "mdy") != 0 &&
+			 pg_strcasecmp(*newval, "dmy") != 0 &&
+			 pg_strcasecmp(*newval, "ymd") != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("SET DATEFORMAT date order '%s' is invalid.", *newval)));
+
+	/* Store the value in lower case, the way SQL Server reports it */
+	for (char *p = *newval; *p; p++)
+		*p = pg_tolower((unsigned char) *p);
+	return true;
+}
+
+static void
+assign_dateformat(const char *newval, void *extra)
+{
+	/*
+	 * Date strings in a query are read when it is parsed, so a cached plan
+	 * keeps the order it was parsed with.  Make cached plans parse again when
+	 * the setting changes, the way SQL Server recompiles after a SET option
+	 * changes.
+	 */
+	if (strcmp(newval, assigned_dateformat) != 0)
+	{
+		ResetPlanCache();
+		strlcpy(assigned_dateformat, newval, sizeof(assigned_dateformat));
+	}
+
+	DateOrder = dateformat_to_date_order(newval);
+}
+
+static const char *
+show_dateformat(void)
+{
+	/* Without SET DATEFORMAT, show the order from DateStyle */
+	if (assigned_dateformat[0] == '\0')
+		return date_order_to_dateformat(DateOrder);
+	return assigned_dateformat;
+}
+
+static void
+pltsql_assign_datestyle(const char *newval, void *extra)
+{
+	prev_assign_datestyle(newval, extra);
+	datestyle_date_order = DateOrder;
+	DateOrder = dateformat_to_date_order(assigned_dateformat);
+}
+
+/*
+ * Called before babelfishpg_tsql.dateformat is defined, so that its first
+ * assign_dateformat() gets the order from DateStyle.
+ */
+static void
+wrap_assign_datestyle(void)
+{
+	struct config_string *datestyle;
+
+	datestyle = (struct config_string *) find_option("datestyle", false, false, ERROR);
+	datestyle_date_order = DateOrder;
+	prev_assign_datestyle = datestyle->assign_hook;
+	datestyle->assign_hook = pltsql_assign_datestyle;
+}
+
 void
 			define_escape_hatch_variables(void);
 
@@ -859,6 +1010,16 @@ define_custom_variables(void)
 							PGC_USERSET,
 							GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							NULL, assign_datefirst, NULL);
+
+	wrap_assign_datestyle();
+	DefineCustomStringVariable("babelfishpg_tsql.dateformat",
+							   gettext_noop("Sets the order of the month, day and year date parts for interpreting date character strings."),
+							   NULL,
+							   &pltsql_dateformat,
+							   "",
+							   PGC_USERSET,
+							   GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							   check_dateformat, assign_dateformat, show_dateformat);
 
 	DefineCustomIntVariable("babelfishpg_tsql.rowcount",
 							gettext_noop("Causes the DB engine to stop processing the query after the "
