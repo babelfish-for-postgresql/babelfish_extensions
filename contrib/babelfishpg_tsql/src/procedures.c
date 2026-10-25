@@ -5180,7 +5180,11 @@ get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **n
 			datum = heap_getattr(tuple, Anum_xml_handle_temp_table_xml_data, RelationGetDescr(relation), &isnull);
 			
 			if (!isnull)
-				*xml_data = DatumGetXmlP(datum);
+				/*
+				 * Copy: an inline datum points into the scan's buffer page,
+				 * which is released by table_endscan() below.
+				 */
+				*xml_data = (xmltype *) PG_DETOAST_DATUM_COPY(datum);
 			else
 				*xml_data = NULL;
 		}
@@ -5192,7 +5196,8 @@ get_xml_data_and_namespace_data(int document_id, xmltype **xml_data, xmltype **n
 			datum = heap_getattr(tuple, Anum_xml_handle_temp_table_ns_data, RelationGetDescr(relation), &isnull);
 			
 			if (!isnull)
-				*ns_data = DatumGetXmlP(datum);
+				/* Same buffer-page lifetime issue as xml_data above. */
+				*ns_data = (xmltype *) PG_DETOAST_DATUM_COPY(datum);
 			else
 				*ns_data = NULL;
 		}
