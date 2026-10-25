@@ -1,0 +1,92 @@
+-- psql
+CREATE FUNCTION pg_temp.try_cast_datetime_error(query text) RETURNS text
+LANGUAGE plpgsql AS $$
+BEGIN
+    -- Parse the PL/pgSQL query expression before switching the dynamic query to T-SQL.
+    EXECUTE query USING set_config('babelfishpg_tsql.sql_dialect', 'tsql', true);
+    RETURN NULL;
+EXCEPTION WHEN cannot_coerce THEN
+    RETURN SQLERRM;
+END;
+$$;
+GO
+CREATE TEMP TABLE try_cast_datetime_empty (i integer);
+GO
+SELECT set_config('babelfishpg_tsql.sql_dialect', 'tsql', false);
+GO
+-- Forbidden conversions give CAST's error, including NULL and an empty table.
+SELECT pg_temp.try_cast_datetime_error('SELECT TRY_CAST(CAST(1 AS int) AS date)') =
+       pg_temp.try_cast_datetime_error('SELECT CAST(CAST(1 AS int) AS date)') AS same_error;
+GO
+SELECT pg_temp.try_cast_datetime_error('SELECT TRY_CAST(CAST(NULL AS int) AS time)') =
+       pg_temp.try_cast_datetime_error('SELECT CAST(CAST(NULL AS int) AS time)') AS same_error;
+GO
+SELECT pg_temp.try_cast_datetime_error('SELECT TRY_CAST(CAST(1 AS int) AS datetime2)') =
+       pg_temp.try_cast_datetime_error('SELECT CAST(CAST(1 AS int) AS datetime2)') AS same_error;
+GO
+SELECT pg_temp.try_cast_datetime_error('SELECT TRY_CAST(CAST(1 AS int) AS datetimeoffset)') =
+       pg_temp.try_cast_datetime_error('SELECT CAST(CAST(1 AS int) AS datetimeoffset)') AS same_error;
+GO
+SELECT pg_temp.try_cast_datetime_error('SELECT TRY_CAST(i AS date) FROM try_cast_datetime_empty') =
+       pg_temp.try_cast_datetime_error('SELECT CAST(i AS date) FROM try_cast_datetime_empty') AS same_error;
+GO
+
+-- Preserve Babelfish CAST semantics for direct text sources.
+SELECT
+    TRY_CAST(CAST('01/02/2026 12:34:56.123' AS text) AS date) =
+    CAST(CAST('01/02/2026 12:34:56.123' AS text) AS date),
+    TRY_CAST(CAST('01/02/2026 12:34:56.123' AS text) AS time) =
+    CAST(CAST('01/02/2026 12:34:56.123' AS text) AS time),
+    TRY_CAST(CAST('01/02/2026 12:34:56.123' AS text) AS datetime) =
+    CAST(CAST('01/02/2026 12:34:56.123' AS text) AS datetime),
+    TRY_CAST(CAST('01/02/2026 12:34:56.123' AS text) AS datetime2) =
+    CAST(CAST('01/02/2026 12:34:56.123' AS text) AS datetime2),
+    TRY_CAST(CAST('01/02/2026 12:34:56.123' AS text) AS smalldatetime) =
+    CAST(CAST('01/02/2026 12:34:56.123' AS text) AS smalldatetime),
+    TRY_CAST(CAST('01/02/2026 12:34:56.123' AS text) AS datetimeoffset) =
+    CAST(CAST('01/02/2026 12:34:56.123' AS text) AS datetimeoffset);
+GO
+SELECT
+    TRY_CAST(CAST('not-a-date' AS text) AS date) IS NULL,
+    TRY_CAST(CAST('not-a-date' AS text) AS time) IS NULL,
+    TRY_CAST(CAST('not-a-date' AS text) AS datetime) IS NULL,
+    TRY_CAST(CAST('not-a-date' AS text) AS datetime2) IS NULL,
+    TRY_CAST(CAST('not-a-date' AS text) AS smalldatetime) IS NULL,
+    TRY_CAST(CAST('not-a-date' AS text) AS datetimeoffset) IS NULL;
+GO
+SELECT TRY_CAST(CAST('' AS text) AS date) IS NULL,
+       TRY_CAST(CAST('' AS text) AS time) IS NULL;
+GO
+SELECT pg_catalog.set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
+GO
+
+-- The input routines also report soft errors to callers other than TRY_CAST.
+SELECT pg_input_is_valid('!', 'sys.datetime'),
+       pg_input_is_valid('!', 'sys.datetime2'),
+       pg_input_is_valid('!', 'sys.smalldatetime'),
+       pg_input_is_valid('!', 'sys.datetimeoffset');
+GO
+SELECT pg_input_is_valid('not-a-date', 'sys.datetime'),
+       pg_input_is_valid('not-a-date', 'sys.datetime2'),
+       pg_input_is_valid('not-a-date', 'sys.smalldatetime'),
+       pg_input_is_valid('not-a-date', 'sys.datetimeoffset');
+GO
+SELECT pg_input_is_valid('infinity', 'sys.datetime'),
+       pg_input_is_valid('infinity', 'sys.datetime2'),
+       pg_input_is_valid('infinity', 'sys.smalldatetime'),
+       pg_input_is_valid('infinity', 'sys.datetimeoffset');
+GO
+SELECT pg_input_is_valid('10000-01-01', 'sys.datetime'),
+       pg_input_is_valid('10000-01-01', 'sys.datetime2'),
+       pg_input_is_valid('10000-01-01', 'sys.smalldatetime'),
+       pg_input_is_valid('10000-01-01', 'sys.datetimeoffset');
+GO
+SELECT pg_input_is_valid('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'sys.datetime'),
+       pg_input_is_valid('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'sys.datetime2'),
+       pg_input_is_valid('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'sys.smalldatetime'),
+       pg_input_is_valid('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'sys.datetimeoffset');
+GO
+DROP TABLE try_cast_datetime_empty;
+GO
+DROP FUNCTION pg_temp.try_cast_datetime_error(text);
+GO

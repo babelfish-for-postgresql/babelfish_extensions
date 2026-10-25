@@ -7,6 +7,7 @@
  */
 
 #include "postgres.h"
+#include "nodes/miscnodes.h"
 
 #include "fmgr.h"
 #include "utils/builtins.h"
@@ -103,12 +104,15 @@ smalldatetime_in_str(char *str, Node *escontext)
 		dterr = 0;
 	}
 	if (dterr != 0)
+	{
 		DateTimeParseError(dterr, &extra, str, "smalldatetime", escontext);
+		return (Datum) 0;
+	}
 	switch (dtype)
 	{
 		case DTK_DATE:
 			if (tm2timestamp(tm, fsec, NULL, &result) != 0)
-				ereport(ERROR,
+				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("smalldatetime out of range: \"%s\"", str)));
 			break;
@@ -132,6 +136,8 @@ smalldatetime_in_str(char *str, Node *escontext)
 	}
 
 	CheckSmalldatetimeRange(result, escontext);
+	if (SOFT_ERROR_OCCURRED(escontext))
+		return (Datum) 0;
 	AdjustTimestampForSmallDatetime(&result);
 
 	PG_RETURN_TIMESTAMP(result);

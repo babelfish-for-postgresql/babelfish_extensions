@@ -468,7 +468,28 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
 	 * the arg to TEXT then casts to the target type. Works for most cases but
 	 * not all such as casting float to int.
 	 */
-	if (type_oid == INT2OID)
+	if (type_oid == DATEOID || type_oid == TIMEOID ||
+		type_oid == typenameTypeId(NULL, makeTypeName("datetime")) ||
+		type_oid == typenameTypeId(NULL, makeTypeName("datetime2")) ||
+		type_oid == typenameTypeId(NULL, makeTypeName("smalldatetime")) ||
+		type_oid == typenameTypeId(NULL, makeTypeName("datetimeoffset")))
+	{
+		Node	   *targetType = makeTypeCast(makeNullAConst(location), typename, location);
+
+		/* Give string and NULL literals CAST's varchar semantics. */
+		if (IsA(arg, A_Const) &&
+			(((A_Const *) arg)->isnull || IsA(&((A_Const *) arg)->val, String)))
+			arg = makeTypeCast(arg, makeTypeNameFromNameList(list_make2(
+																		makeString("sys"), makeString("varchar"))), location);
+
+		/* Source-type dispatch is deferred until parse analysis. */
+		result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_datetime"),
+									   list_make3(arg, targetType, makeIntConst(typmod, location)),
+									   COERCE_EXPLICIT_CALL, location);
+		if (typmod >= 0)
+			result = makeTypeCast(result, typename, location);
+	}
+	else if (type_oid == INT2OID)
 		result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_floor_smallint"), list_make1(arg), COERCE_EXPLICIT_CALL, location);
 
 	else if (type_oid == INT4OID)
@@ -477,18 +498,7 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
 	else if (type_oid == INT8OID)
 		result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_floor_bigint"), list_make1(arg), COERCE_EXPLICIT_CALL, location);
 
-	else if (type_oid == typenameTypeId(NULL, makeTypeName("datetime2")))
-	{
-		/*
-		 * Handles null typmod case. typmod is set to 6 because that is the
-		 * current max precision for datetime2 Update to 7 when BABEL-2934 is
-		 * reolved
-		 */
-		if (typmod < 0)
-			typmod = 6;
 
-		result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_datetime2"), list_make2(arg, makeIntConst(typmod, location)), COERCE_EXPLICIT_CALL, location);
-	}
 	else if ((strcmp(typename_string, "varchar") == 0) || (strcmp(typename_string, "bpchar") == 0)
 			|| (strcmp(typename_string, "nvarchar") == 0) || (strcmp(typename_string, "nchar") == 0))
 	{

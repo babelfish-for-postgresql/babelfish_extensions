@@ -7,6 +7,7 @@
  */
 
 #include "postgres.h"
+#include "nodes/miscnodes.h"
 
 #include "fmgr.h"
 #include "common/int.h"
@@ -283,18 +284,20 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 		PG_RETURN_TIMESTAMP(result);
 	}
 
-	modified_str = clean_input_str(str, &contains_extra_spaces, DATE_TIME_2);
+	modified_str = clean_input_str(str, &contains_extra_spaces, DATE_TIME_2, escontext);
+	if (modified_str == NULL)
+		return (Datum) 0;
 
 	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
 
-	if (tsql_decode_datetime2_fields(str, modified_str, field, nf, ftype, 
-								contains_extra_spaces, tm, &is_year_set, DATE_TIME_2))
+	if (dterr == 0 && tsql_decode_datetime2_fields(str, modified_str, field, nf, ftype,
+												   contains_extra_spaces, tm, &is_year_set, DATE_TIME_2))
 	{
 		if (modified_str)
 			pfree(modified_str);
 
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				errmsg("invalid input syntax for type datetime2: \"%s\"", str)));
 	}
@@ -322,7 +325,10 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 	}
 
 	if (dterr != 0)
+	{
 		DateTimeParseError(dterr, &extra, str, "datetime2", escontext);
+		return (Datum) 0;
+	}
 
 	/*
 	 * Caps upper limit on fractional seconds(999999 microseconds) so that the
@@ -342,7 +348,7 @@ datetime2_in_str(char *str, int32 typmod, Node *escontext)
 	{
 		case DTK_DATE:
 			if (tm2timestamp(tm, fsec, NULL, &result) != 0)
-				ereport(ERROR,
+				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("datetime2 out of range: \"%s\"", str)));
 			break;

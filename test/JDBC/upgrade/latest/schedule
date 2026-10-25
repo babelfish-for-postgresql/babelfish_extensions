@@ -701,3 +701,5 @@ forxml-namespaces
 xml-methods-namespaces
 fk-cascade-trigger
 exec_tvf_named_args
+try_cast_string_to_datetime
+try_cast_string_to_datetime_bbf

@@ -1,5 +1,8 @@
 #include "runtime.h"
 
+#include "nodes/miscnodes.h"
+#include "parser/parse_coerce.h"
+
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
 #define SYSVARCHAR_MAX_LENGTH 4000
@@ -2370,6 +2373,151 @@ isnumeric(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(result ? 1 : 0);
 }
 
+
+
+/*
+ * The parser uses these functions only for character strings and the six
+ * date/time types. Cache CAST's function and typmod coercion rather than
+ * converting the source to text, which loses varchar's empty-string rules.
+ */
+typedef struct TryCastDatetimeData
+{
+	FmgrInfo	castfunc;
+	FmgrInfo	outputfunc;
+	FmgrInfo	inputfunc;
+	FmgrInfo	typmodfunc;
+	Oid			typioparam;
+	bool		via_io;
+} TryCastDatetimeData;
+
+static Datum
+try_cast_datetime_call(FmgrInfo *flinfo, Datum value, int32 typmod,
+					   ErrorSaveContext *escontext)
+{
+	LOCAL_FCINFO(cast_fcinfo, 3);
+
+	Assert(flinfo->fn_nargs >= 1 && flinfo->fn_nargs <= 3);
+	InitFunctionCallInfoData(*cast_fcinfo, flinfo, flinfo->fn_nargs,
+							 InvalidOid, (Node *) escontext, NULL);
+	cast_fcinfo->args[0].value = value;
+	cast_fcinfo->args[0].isnull = false;
+	cast_fcinfo->args[1].value = Int32GetDatum(typmod);
+	cast_fcinfo->args[1].isnull = false;
+	cast_fcinfo->args[2].value = BoolGetDatum(true);
+	cast_fcinfo->args[2].isnull = false;
+	return FunctionCallInvoke(cast_fcinfo);
+}
+
+PG_FUNCTION_INFO_V1(babelfish_try_cast_to_datetime);
+Datum
+babelfish_try_cast_to_datetime(PG_FUNCTION_ARGS)
+{
+	TryCastDatetimeData *data = fcinfo->flinfo->fn_extra;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
+	Datum		result;
+	int32		typmod;
+
+	if (data == NULL)
+	{
+		Oid			source = getBaseType(get_fn_expr_argtype(fcinfo->flinfo, 0));
+		Oid			target = get_fn_expr_rettype(fcinfo->flinfo);
+		Oid			castoid;
+		Oid			typmodoid;
+		CoercionPathType path;
+		bool		isvarlena;
+		char		volatility = PROVOLATILE_IMMUTABLE;
+		FmgrInfo   *functions[4];
+		int			i;
+
+		if (!(source == TEXTOID || source == VARCHAROID || source == BPCHAROID ||
+			  (*common_utility_plugin_ptr->is_tsql_varchar_datatype) (source) ||
+			  (*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (source)) ||
+			!(target == DATEOID || target == TIMEOID ||
+			  target == (*common_utility_plugin_ptr->get_tsql_datatype_oid) ("datetime") ||
+			  (*common_utility_plugin_ptr->is_tsql_datetime2_datatype) (target) ||
+			  (*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype) (target) ||
+			  (*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype) (target)))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("unsupported types for TRY_CAST date/time helper")));
+
+		data = MemoryContextAllocZero(fcinfo->flinfo->fn_mcxt, sizeof(*data));
+		path = find_coercion_pathway(target, source, COERCION_EXPLICIT, &castoid);
+		if (path == COERCION_PATH_FUNC)
+			fmgr_info_cxt(castoid, &data->castfunc, fcinfo->flinfo->fn_mcxt);
+		else if (path == COERCION_PATH_COERCEVIAIO)
+		{
+			Oid			outputoid;
+			Oid			inputoid;
+
+			data->via_io = true;
+			getTypeOutputInfo(source, &outputoid, &isvarlena);
+			getTypeInputInfo(target, &inputoid, &data->typioparam);
+			fmgr_info_cxt(outputoid, &data->outputfunc, fcinfo->flinfo->fn_mcxt);
+			fmgr_info_cxt(inputoid, &data->inputfunc, fcinfo->flinfo->fn_mcxt);
+		}
+		else
+			elog(ERROR, "unexpected cast path for TRY_CAST date/time helper");
+
+		if (find_typmod_coercion_function(target, &typmodoid) == COERCION_PATH_FUNC)
+			fmgr_info_cxt(typmodoid, &data->typmodfunc, fcinfo->flinfo->fn_mcxt);
+
+		/* Also enforce the SQL declarations for direct calls to the helpers. */
+		functions[0] = &data->castfunc;
+		functions[1] = &data->outputfunc;
+		functions[2] = &data->inputfunc;
+		functions[3] = &data->typmodfunc;
+		for (i = 0; i < lengthof(functions); i++)
+		{
+			Oid			funcid = functions[i]->fn_oid;
+
+			if (!OidIsValid(funcid))
+				continue;
+			if (func_volatile(funcid) > volatility)
+				volatility = func_volatile(funcid);
+			if (func_parallel(funcid) != PROPARALLEL_SAFE)
+				elog(ERROR, "unsafe cast function for TRY_CAST date/time helper");
+		}
+		if (func_volatile(fcinfo->flinfo->fn_oid) < volatility)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("incorrect volatility for TRY_CAST date/time helper")));
+		fcinfo->flinfo->fn_extra = data;
+	}
+
+	/*
+	 * The second argument is a NULL of the target type, so we cannot be
+	 * strict.
+	 */
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(2))
+		PG_RETURN_NULL();
+	typmod = PG_GETARG_INT32(2);
+	if (data->via_io)
+	{
+		char	   *str = OutputFunctionCall(&data->outputfunc, PG_GETARG_DATUM(0));
+		bool		ok;
+
+		ok = InputFunctionCallSafe(&data->inputfunc, str, data->typioparam,
+								   -1, (Node *) &escontext, &result);
+		pfree(str);
+		if (!ok)
+			PG_RETURN_NULL();
+	}
+	else
+	{
+		result = try_cast_datetime_call(&data->castfunc, PG_GETARG_DATUM(0),
+										typmod, &escontext);
+		if (escontext.error_occurred)
+			PG_RETURN_NULL();
+	}
+	if (typmod >= 0 && OidIsValid(data->typmodfunc.fn_oid))
+	{
+		result = try_cast_datetime_call(&data->typmodfunc, result, typmod, &escontext);
+		if (escontext.error_occurred)
+			PG_RETURN_NULL();
+	}
+	PG_RETURN_DATUM(result);
+}
 
 
 /*

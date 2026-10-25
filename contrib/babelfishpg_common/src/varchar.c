@@ -1060,7 +1060,7 @@ varchar2date(PG_FUNCTION_ARGS)
 {
 	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
 	char	   *str;
-	DateADT		date;
+	Datum		date;
 
 	str = varchar2cstring(source);
 
@@ -1068,11 +1068,18 @@ varchar2date(PG_FUNCTION_ARGS)
 	 * Set input to default '1900-01-01' if empty string encountered
 	 */
 	if (isEmptyOrWhitespace(str))
-		date = initializeToDefaultDate();
+		date = DateADTGetDatum(initializeToDefaultDate());
 	else
-		date = DatumGetDateADT(DirectFunctionCall1(date_in, CStringGetDatum(str)));
+	{
+		if (!DirectInputFunctionCallSafe(date_in, str, InvalidOid, -1,
+										 fcinfo->context, &date))
+		{
+			pfree(str);
+			PG_RETURN_NULL();
+		}
+	}
 	pfree(str);
-	PG_RETURN_DATEADT(date);
+	PG_RETURN_DATUM(date);
 }
 
 Datum
@@ -1081,7 +1088,7 @@ varchar2time(PG_FUNCTION_ARGS)
 	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
 	int32		typmod = -1;
 	char	   *str;
-	TimeADT		time;
+	Datum		time;
 	
 	if (PG_NARGS() > 1)
 		typmod = PG_GETARG_INT32(1);
@@ -1092,11 +1099,18 @@ varchar2time(PG_FUNCTION_ARGS)
 	 * Set input to default '00:00:00.0000000' if empty string encountered
 	 */
 	if (isEmptyOrWhitespace(str))
-		time = initializeToDefaultTime(typmod);
+		time = TimeADTGetDatum(initializeToDefaultTime(typmod));
 	else
-		time = DatumGetTimeADT(DirectFunctionCall3(time_in, CStringGetDatum(str), InvalidOid, typmod));
+	{
+		if (!DirectInputFunctionCallSafe(time_in, str, InvalidOid, typmod,
+										 fcinfo->context, &time))
+		{
+			pfree(str);
+			PG_RETURN_NULL();
+		}
+	}
 	pfree(str);
-	PG_RETURN_TIMEADT(time);
+	PG_RETURN_DATUM(time);
 }
 
 Datum

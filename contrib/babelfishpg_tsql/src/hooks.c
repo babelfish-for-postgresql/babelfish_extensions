@@ -9441,6 +9441,78 @@ tsql_set_typmod_op_expr(ParseState *pstate, Node *OpExp, Node *lexpr, Node* rexp
 		return OpExp;
 }
 
+/* Resolve TRY_CAST after its source type is known, before any rows are read. */
+static Node *
+transform_try_cast_datetime(ParseState *pstate, FuncExpr *expr)
+{
+	char	   *name;
+	Node	   *arg;
+	Oid			source;
+	Oid			target = expr->funcresulttype;
+	CaseTestExpr *input;
+	Node	   *cast;
+	Const	   *typmod;
+	Oid			argtypes[3] = {ANYCOMPATIBLEOID, ANYELEMENTOID, INT4OID};
+	char	   *helper;
+
+	/* This runs for every function call, so check the cheap things first */
+	if (list_length(expr->args) != 3 || !IsA(lthird(expr->args), Const))
+		return (Node *) expr;
+	name = get_func_name(expr->funcid);
+	if (name == NULL || strcmp(name, "babelfish_try_cast_to_datetime") != 0 ||
+		get_func_namespace(expr->funcid) != get_namespace_oid("sys", false))
+		return (Node *) expr;
+
+	arg = linitial(expr->args);
+	source = exprType(arg);
+	typmod = lthird_node(Const, expr->args);
+	input = makeNode(CaseTestExpr);
+	input->typeId = source;
+	input->typeMod = exprTypmod(arg);
+	input->collation = exprCollation(arg);
+
+	/* A placeholder validates the cast without converting a constant input. */
+	cast = coerce_to_target_type(pstate, (Node *) input, source, target,
+								 DatumGetInt32(typmod->constvalue), COERCION_EXPLICIT,
+								 COERCE_EXPLICIT_CAST, expr->location);
+	if (cast == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_CANNOT_COERCE),
+				 errmsg("cannot cast type %s to %s",
+						format_type_be(source), format_type_be(target)),
+				 parser_errposition(pstate, expr->location)));
+
+	source = getBaseType(source);
+	if (source == TEXTOID || source == VARCHAROID || source == BPCHAROID ||
+		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (source) ||
+		(*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (source))
+	{
+		/* Match CAST's volatility, including its input and typmod functions. */
+		if (contain_volatile_functions(cast))
+			return (Node *) expr;
+		helper = contain_mutable_functions(cast) ?
+			"babelfish_try_cast_to_datetime_stable" :
+			"babelfish_try_cast_to_datetime_immutable";
+	}
+	else if ((*common_utility_plugin_ptr->is_tsql_datetime2_datatype) (target))
+	{
+		/* Other source types retain the existing PL/pgSQL implementation. */
+		helper = "babelfish_try_cast_to_datetime2";
+		argtypes[0] = ANYELEMENTOID;
+		argtypes[1] = INT4OID;
+		expr->args = list_make2(arg, typmod);
+		if (DatumGetInt32(typmod->constvalue) < 0)
+			typmod->constvalue = Int32GetDatum(6);
+	}
+	else
+		helper = "babelfish_try_cast_to_any";
+
+	expr->funcid = LookupFuncName(list_make2(makeString("sys"), makeString(helper)),
+								  list_length(expr->args), argtypes, false);
+	return (Node *) expr;
+}
+
+
 static Node*
 pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 {
@@ -9452,6 +9524,10 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 
 	switch (nodeTag(expr))
 	{
+		case T_FuncExpr:
+			expr = transform_try_cast_datetime(pstate, (FuncExpr *) expr);
+			break;
+
 		case T_OpExpr:
 		{
 			OpExpr		*op = (OpExpr *) expr;

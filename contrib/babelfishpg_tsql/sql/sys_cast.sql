@@ -309,3 +309,21 @@ AS $BODY$ BEGIN
             -- Do nothing. Output carries NULL.
 END; $BODY$
 LANGUAGE plpgsql;
+
+
+-- The parser selects the helper with the same volatility as the CAST expression.
+-- The NULL target argument supplies its result type; the C function checks NULL input.
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime(IN arg ANYCOMPATIBLE, INOUT output ANYELEMENT, IN typmod INT)
+RETURNS ANYELEMENT
+AS 'babelfishpg_tsql', 'babelfish_try_cast_to_datetime'
+LANGUAGE C VOLATILE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime_stable(IN arg ANYCOMPATIBLE, INOUT output ANYELEMENT, IN typmod INT)
+RETURNS ANYELEMENT
+AS 'babelfishpg_tsql', 'babelfish_try_cast_to_datetime'
+LANGUAGE C STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime_immutable(IN arg ANYCOMPATIBLE, INOUT output ANYELEMENT, IN typmod INT)
+RETURNS ANYELEMENT
+AS 'babelfishpg_tsql', 'babelfish_try_cast_to_datetime'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;

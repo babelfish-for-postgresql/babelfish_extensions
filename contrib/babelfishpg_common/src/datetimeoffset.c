@@ -7,6 +7,7 @@
  */
 
 #include "postgres.h"
+#include "nodes/miscnodes.h"
 #include "varatt.h"
 #include "access/hash.h"
 #include "utils/builtins.h"
@@ -119,18 +120,20 @@ datetimeoffset_in_str(char *str, int32 typmod, Node *escontext)
 		PG_RETURN_DATETIMEOFFSET(datetimeoffset);
 	}
  
-	modified_str = clean_input_str(str, &contains_extra_spaces, DATE_TIME_OFFSET);
+	modified_str = clean_input_str(str, &contains_extra_spaces, DATE_TIME_OFFSET, escontext);
+	if (modified_str == NULL)
+		return (Datum) 0;
  
 	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
 
-	if (tsql_decode_datetime2_fields(str, modified_str, field, nf, ftype, 
-								contains_extra_spaces, tm, &is_year_set, DATE_TIME_OFFSET))
+	if (dterr == 0 && tsql_decode_datetime2_fields(str, modified_str, field, nf, ftype,
+												   contains_extra_spaces, tm, &is_year_set, DATE_TIME_OFFSET))
 	{
 		if (modified_str)
 			pfree(modified_str);
 
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				errmsg("invalid input syntax for type datetimeoffset: \"%s\"", str)));
 	}
@@ -154,7 +157,10 @@ datetimeoffset_in_str(char *str, int32 typmod, Node *escontext)
 		dterr = 0;
 	}
 	if (dterr != 0)
+	{
 		DateTimeParseError(dterr, &extra, str, "timestamp with time zone", escontext);
+		return (Datum) 0;
+	}
 
 	/*
 	 * When time zone offset it not specified in input string
@@ -170,7 +176,7 @@ datetimeoffset_in_str(char *str, int32 typmod, Node *escontext)
 	{
 		case DTK_DATE:
 			if (tm2timestamp(tm, fsec, NULL, &tsql_ts) != 0)
-				ereport(ERROR,
+				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range: \"%s\"", str)));
 			break;

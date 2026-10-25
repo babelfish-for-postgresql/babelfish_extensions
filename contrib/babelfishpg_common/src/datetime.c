@@ -10,6 +10,7 @@
 #include "postgres.h"
 
 #include "fmgr.h"
+#include "nodes/miscnodes.h"
 #include "varatt.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
@@ -64,7 +65,7 @@ PG_FUNCTION_INFO_V1(timestamp_diff);
 PG_FUNCTION_INFO_V1(timestamp_diff_big);
 
 void		CheckDatetimeRange(const Timestamp time, Node *escontext);
-void		CheckDatetimePrecision(fsec_t fsec);
+void		CheckDatetimePrecision(fsec_t fsec, Node *escontext);
 int			roundFractionalSeconds(int v_fractseconds);
 
 int			DaycountInMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -179,14 +180,15 @@ check_regex_for_text_month(char *str, DateTimeContext context)
  * unnecessary spaces between the fields.
  */
 char*
-clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
+clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context, Node *escontext)
 {
-	char *result = (char *) palloc(MAXDATELEN + 1);
-	int i = 0, j = 0;
-	int last_non_space = -1;
-	int num_colons = 0;
-	char *context_str = (context == DATE_TIME) ? "datetime" 
-			: ((context == DATE_TIME_2) ? "datetime2" : "datetimeoffset");
+	char	   *result = (char *) palloc(MAXDATELEN + 2);
+	int			i = 0,
+				j = 0;
+	int			last_non_space = -1;
+	int			num_colons = 0;
+	char	   *context_str = (context == DATE_TIME) ? "datetime"
+		: ((context == DATE_TIME_2) ? "datetime2" : "datetimeoffset");
 
 	while (str[i] != '\0')
 	{
@@ -208,7 +210,7 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 			if (result)
 				pfree(result);
 
-			ereport(ERROR,
+			ereturn(escontext, NULL,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 					errmsg("invalid input syntax for type %s: \"%s\"", context_str, str)));
 		}
@@ -308,13 +310,21 @@ clean_input_str(char *str, bool *contains_extra_spaces, DateTimeContext context)
 			if (result)
 				pfree(result);
 			
-			ereport(ERROR,
+			ereturn(escontext, NULL,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 					errmsg("invalid input syntax for type %s: \"%s\"", context_str, str)));
 		}
 
 		last_non_space = i;
 		i++;
+	}
+
+	if (j > MAXDATELEN)
+	{
+		pfree(result);
+		ereturn(escontext, NULL,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for type %s: \"%s\"", context_str, str)));
 	}
 
 	result[j] = '\0';
@@ -579,8 +589,8 @@ handle_datetime_carry_over(struct pg_tm *tm, int *rounded_msec)
 /*
  * Apply datetime rounding off logic 
  */
-Timestamp
-roundoff_datetime(Timestamp timestamp)
+static Timestamp
+roundoff_datetime_internal(Timestamp timestamp, Node *escontext)
 {
 	struct pg_tm tm;
 	fsec_t		fsec;
@@ -588,7 +598,7 @@ roundoff_datetime(Timestamp timestamp)
 	Timestamp	result;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp) || timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) != 0)
-		ereport(ERROR,
+		ereturn(escontext, (Timestamp) 0,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("datetime out of range")));
 
@@ -601,11 +611,17 @@ roundoff_datetime(Timestamp timestamp)
 	fsec = rounded_msec * 1000;
 
 	if (tm2timestamp(&tm, fsec, NULL, &result) != 0)
-		ereport(ERROR,
+		ereturn(escontext, (Timestamp) 0,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("datetime out of range")));
 
 	return result;
+}
+
+Timestamp
+roundoff_datetime(Timestamp timestamp)
+{
+	return roundoff_datetime_internal(timestamp, NULL);
 }
 
 Datum
@@ -644,7 +660,9 @@ datetime_in_str(char *str, Node *escontext)
 	tm->tm_mon = 0;
 	tm->tm_mday = 0;
 
-	modified_str = clean_input_str(str, &contains_extra_spaces, DATE_TIME);
+	modified_str = clean_input_str(str, &contains_extra_spaces, DATE_TIME, escontext);
+	if (modified_str == NULL)
+		return (Datum) 0;
 
 	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
@@ -652,13 +670,13 @@ datetime_in_str(char *str, Node *escontext)
 	/*
 	 * throw error if the return value is not zero.
 	 */
-	if(tsql_decode_datetime_fields(str, modified_str, field, nf, ftype, 
-					contains_extra_spaces, tm, &is_year_set))
+	if (dterr == 0 && tsql_decode_datetime_fields(str, modified_str, field, nf, ftype,
+												  contains_extra_spaces, tm, &is_year_set))
 	{
 		if (modified_str)
 			pfree(modified_str);
 
-		ereport(ERROR,
+		ereturn(escontext, (Datum) 0,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				errmsg("invalid input syntax for type datetime: \"%s\"", str)));
 	}
@@ -689,12 +707,15 @@ datetime_in_str(char *str, Node *escontext)
 	}
 
 	if (dterr != 0)
+	{
 		DateTimeParseError(dterr, &extra, str, "datetime", escontext);
+		return (Datum) 0;
+	}
 	switch (dtype)
 	{
 		case DTK_DATE:
 			if (tm2timestamp(tm, fsec, NULL, &result) != 0)
-				ereport(ERROR,
+				ereturn(escontext, (Datum) 0,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("datetime out of range: \"%s\"", str)));
 			break;
@@ -718,10 +739,14 @@ datetime_in_str(char *str, Node *escontext)
 	}
 
 	/* Apply datetime rounding */
-	result = roundoff_datetime(result);
+	result = roundoff_datetime_internal(result, escontext);
+	if (SOFT_ERROR_OCCURRED(escontext))
+		return (Datum) 0;
 
 	CheckDatetimeRange(result, escontext);
-	CheckDatetimePrecision(fsec);
+	if (SOFT_ERROR_OCCURRED(escontext))
+		return (Datum) 0;
+	CheckDatetimePrecision(fsec, escontext);
 
 	PG_RETURN_TIMESTAMP(result);
 
@@ -787,11 +812,11 @@ CheckDatetimeRange(const Timestamp time, Node *escontext)
  * CheckDatetimePrecision --- Check precision for datetime
  */
 void
-CheckDatetimePrecision(fsec_t fsec)
+CheckDatetimePrecision(fsec_t fsec, Node *escontext)
 {
 	if (!IS_VALID_DT_PRECISION(fsec))
 	{
-		ereport(ERROR,
+		errsave(escontext,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("data precision out of range for datetime")));
 	}

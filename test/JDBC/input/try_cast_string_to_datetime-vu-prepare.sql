@@ -1,0 +1,44 @@
+CREATE TABLE try_cast_string_to_datetime_t
+(
+    id int,
+    v varchar(256),
+    nv nvarchar(256),
+    c char(40),
+    nc nchar(40),
+    t text
+);
+GO
+INSERT INTO try_cast_string_to_datetime_t VALUES
+    (0, NULL, NULL, NULL, NULL, NULL),
+    (1, N'', N'', N'', N'', N''),
+    (2, N'   ', N'   ', N'   ', N'   ', N'   '),
+    (3, N'01/02/2026 12:34:56.123', N'01/02/2026 12:34:56.123', N'01/02/2026 12:34:56.123', N'01/02/2026 12:34:56.123', N'01/02/2026 12:34:56.123'),
+    (4, N'2024-02-29 00:00:00', N'2024-02-29 00:00:00', N'2024-02-29 00:00:00', N'2024-02-29 00:00:00', N'2024-02-29 00:00:00'),
+    (5, N'not-a-date', N'not-a-date', N'not-a-date', N'not-a-date', N'not-a-date'),
+    (6, N'2026-02-29 12:34:56', N'2026-02-29 12:34:56', N'2026-02-29 12:34:56', N'2026-02-29 12:34:56', N'2026-02-29 12:34:56'),
+    (7, N'1753-01-01 00:00:00', N'1753-01-01 00:00:00', N'1753-01-01 00:00:00', N'1753-01-01 00:00:00', N'1753-01-01 00:00:00'),
+    (8, N'0001-01-01 00:00:00', N'0001-01-01 00:00:00', N'0001-01-01 00:00:00', N'0001-01-01 00:00:00', N'0001-01-01 00:00:00'),
+    (9, N'2079-06-06 23:59:29', N'2079-06-06 23:59:29', N'2079-06-06 23:59:29', N'2079-06-06 23:59:29', N'2079-06-06 23:59:29'),
+    (10, N'2079-06-06 23:59:30', N'2079-06-06 23:59:30', N'2079-06-06 23:59:30', N'2079-06-06 23:59:30', N'2079-06-06 23:59:30'),
+    (11, N'9999-12-31 00:00:00', N'9999-12-31 00:00:00', N'9999-12-31 00:00:00', N'9999-12-31 00:00:00', N'9999-12-31 00:00:00'),
+    (12, N'!invalid!', N'!invalid!', N'!invalid!', N'!invalid!', N'!invalid!');
+GO
+
+CREATE PROCEDURE try_cast_string_to_datetime_p AS
+BEGIN
+    DECLARE @v varchar(50) = '', @nv nvarchar(50) = '01/02/2026 12:34:56.123';
+    SELECT TRY_CAST(@v AS date),
+           TRY_CAST(@v AS time),
+           TRY_CAST(@v AS datetime),
+           TRY_CAST(@v AS datetime2),
+           TRY_CAST(@v AS smalldatetime),
+           TRY_CAST(@v AS datetimeoffset);
+    SELECT TRY_CAST(@nv AS date),
+           TRY_CAST(@nv AS time),
+           TRY_CAST(@nv AS datetime),
+           TRY_CAST(@nv AS datetime2),
+           TRY_CAST(@nv AS smalldatetime),
+           TRY_CAST(@nv AS datetimeoffset);
+END;
+GO
+

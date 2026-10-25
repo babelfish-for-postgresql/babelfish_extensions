@@ -3,6 +3,24 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+
+-- The parser selects the helper with the same volatility as the CAST expression.
+-- The NULL target argument supplies its result type; the C function checks NULL input.
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime(IN arg ANYCOMPATIBLE, INOUT output ANYELEMENT, IN typmod INT)
+RETURNS ANYELEMENT
+AS 'babelfishpg_tsql', 'babelfish_try_cast_to_datetime'
+LANGUAGE C VOLATILE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime_stable(IN arg ANYCOMPATIBLE, INOUT output ANYELEMENT, IN typmod INT)
+RETURNS ANYELEMENT
+AS 'babelfishpg_tsql', 'babelfish_try_cast_to_datetime'
+LANGUAGE C STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime_immutable(IN arg ANYCOMPATIBLE, INOUT output ANYELEMENT, IN typmod INT)
+RETURNS ANYELEMENT
+AS 'babelfishpg_tsql', 'babelfish_try_cast_to_datetime'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar, arg_types varchar DEFAULT '') AS
 $$
 DECLARE
