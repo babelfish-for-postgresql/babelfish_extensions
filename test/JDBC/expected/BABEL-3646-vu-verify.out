@@ -1,21 +1,21 @@
 SELECT * FROM BABEL_3646_vu_prepare_v1
 GO
-~~START~~
-date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type xml to date.)~~
+~~ERROR (Message: relation "babel_3646_vu_prepare_v1" does not exist)~~
 
 DROP VIEW BABEL_3646_vu_prepare_v1
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel_3646_vu_prepare_v1" does not exist)~~
+
 
 EXEC BABEL_3646_vu_prepare_p1
 GO
-~~START~~
-date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type xml to date.)~~
+~~ERROR (Message: cannot cast type xml to date)~~
 
 DROP PROCEDURE BABEL_3646_vu_prepare_p1
 GO
@@ -26,7 +26,7 @@ GO
 date
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type xml to date.)~~
+~~ERROR (Message: cannot cast type xml to date)~~
 
 DROP FUNCTION BABEL_3646_vu_prepare_f1()
 GO
@@ -391,7 +391,7 @@ SELECT * FROM BABEL_3646_vu_prepare_v13
 GO
 ~~START~~
 datetime2
-1990-01-01 10:10:10.1000000
+1990-01-01 10:10:10.1
 ~~END~~
 
 DROP VIEW BABEL_3646_vu_prepare_v13
@@ -401,7 +401,7 @@ EXEC BABEL_3646_vu_prepare_p13
 GO
 ~~START~~
 datetime2
-1990-01-01 10:10:10.1000000
+1990-01-01 10:10:10.1
 ~~END~~
 
 DROP PROCEDURE BABEL_3646_vu_prepare_p13
@@ -638,22 +638,22 @@ GO
 
 SELECT * FROM BABEL_3646_vu_prepare_v22
 GO
-~~START~~
-time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type date to time without time zone.)~~
+~~ERROR (Message: relation "babel_3646_vu_prepare_v22" does not exist)~~
 
 DROP VIEW BABEL_3646_vu_prepare_v22
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel_3646_vu_prepare_v22" does not exist)~~
+
 
 EXEC BABEL_3646_vu_prepare_p22
 GO
-~~START~~
-time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type date to time without time zone.)~~
+~~ERROR (Message: cannot cast type date to time without time zone)~~
 
 DROP PROCEDURE BABEL_3646_vu_prepare_p22
 GO
@@ -664,7 +664,7 @@ GO
 time
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot cast type date to time without time zone.)~~
+~~ERROR (Message: cannot cast type date to time without time zone)~~
 
 DROP FUNCTION BABEL_3646_vu_prepare_f22()
 GO

@@ -161,6 +161,62 @@ bool#!#bool#!#bool#!#bool
 f#!#f#!#f#!#f
 ~~END~~
 
+
+-- Direct calls to the helpers. Each one refuses a cast more volatile than
+-- itself, and only accepts character strings and the six date/time types.
+SELECT sys.babelfish_try_cast_to_datetime_immutable(CAST('2026-01-02' AS sys.varchar), NULL::date, -1),
+       sys.babelfish_try_cast_to_datetime_immutable(CAST('not-a-date' AS sys.varchar), NULL::date, -1);
+GO
+~~START~~
+date#!#date
+2026-01-02#!#<NULL>
+~~END~~
+
+SELECT sys.babelfish_try_cast_to_datetime_stable(CAST('2026-01-02' AS sys.varchar), NULL::date, -1),
+       sys.babelfish_try_cast_to_datetime_stable(CAST('' AS sys.varchar), NULL::date, -1);
+GO
+~~START~~
+date#!#date
+2026-01-02#!#1900-01-01
+~~END~~
+
+SELECT sys.babelfish_try_cast_to_datetime(CAST('2026-01-02 12:34:56' AS sys.varchar), NULL::sys.datetime, -1),
+       sys.babelfish_try_cast_to_datetime(CAST('2026-01-02 12:34:56.1234567' AS sys.varchar), NULL::sys.datetime2, 3),
+       sys.babelfish_try_cast_to_datetime(CAST('not-a-date' AS sys.varchar), NULL::sys.datetime, -1);
+GO
+~~START~~
+"sys"."datetime"#!#"sys"."datetime2"#!#"sys"."datetime"
+2026-01-02 12:34:56#!#2026-01-02 12:34:56.123#!#<NULL>
+~~END~~
+
+SELECT sys.babelfish_try_cast_to_datetime_stable(CAST('2026-01-02 12:34:56' AS sys.varchar), NULL::sys.datetime, -1);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: incorrect volatility for TRY_CAST date/time helper
+    Server SQLState: 22023)~~
+
+SELECT sys.babelfish_try_cast_to_datetime_immutable(CAST('2026-01-02 12:34:56' AS sys.varchar), NULL::sys.datetime2, -1);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: incorrect volatility for TRY_CAST date/time helper
+    Server SQLState: 22023)~~
+
+SELECT sys.babelfish_try_cast_to_datetime(CAST(1 AS int), NULL::date, -1);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: unsupported types for TRY_CAST date/time helper
+    Server SQLState: 42804)~~
+
+SELECT sys.babelfish_try_cast_to_datetime(CAST('1' AS sys.varchar), NULL::int, -1);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: unsupported types for TRY_CAST date/time helper
+    Server SQLState: 42804)~~
+
 DROP TABLE try_cast_datetime_empty;
 GO
 DROP FUNCTION pg_temp.try_cast_datetime_error(text);

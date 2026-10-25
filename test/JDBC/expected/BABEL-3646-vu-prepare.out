@@ -1,5 +1,9 @@
 CREATE VIEW BABEL_3646_vu_prepare_v1 as (SELECT TRY_CAST(CAST('1990-01-01' as xml) as date));
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to date)~~
+
 CREATE PROCEDURE BABEL_3646_vu_prepare_p1 as (SELECT TRY_CAST(CAST('1990-01-01' as xml) as date));
 GO
 CREATE FUNCTION BABEL_3646_vu_prepare_f1()
@@ -236,6 +240,10 @@ GO
 
 CREATE VIEW BABEL_3646_vu_prepare_v22 as (SELECT TRY_CAST(CAST('1990-01-01' AS DATE) AS TIME));
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to time without time zone)~~
+
 CREATE PROCEDURE BABEL_3646_vu_prepare_p22 as (SELECT TRY_CAST(CAST('1990-01-01' AS DATE) AS TIME));
 GO
 CREATE FUNCTION BABEL_3646_vu_prepare_f22()
