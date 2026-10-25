@@ -8,6 +8,130 @@ mdy
 ~~END~~
 
 
+-- Until SET DATEFORMAT is used, a change of DateStyle changes how cached plans
+-- and new statements read date strings
+CREATE PROCEDURE set_dateformat_guc_p AS
+SELECT CAST('01/02/2026' AS DATE) AS cast_date, CONVERT(DATETIME, '01/02/2026') AS convert_datetime;
+GO
+
+EXEC set_dateformat_guc_p;
+GO
+~~START~~
+date#!#datetime
+2026-01-02#!#2026-01-02 00:00:00.0
+~~END~~
+
+
+DECLARE @x VARCHAR(30) = (SELECT set_config('datestyle', 'ISO, DMY', false));
+GO
+
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat;
+EXEC set_dateformat_guc_p;
+SELECT CAST('01/02/2026' AS DATE) AS cast_date;
+GO
+~~START~~
+text
+dmy
+~~END~~
+
+~~START~~
+date#!#datetime
+2026-02-01#!#2026-02-01 00:00:00.0
+~~END~~
+
+~~START~~
+date
+2026-02-01
+~~END~~
+
+
+DECLARE @x VARCHAR(30) = (SELECT set_config('datestyle', 'ISO, MDY', false));
+GO
+
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat;
+EXEC set_dateformat_guc_p;
+SELECT CAST('01/02/2026' AS DATE) AS cast_date;
+GO
+~~START~~
+text
+mdy
+~~END~~
+
+~~START~~
+date#!#datetime
+2026-01-02#!#2026-01-02 00:00:00.0
+~~END~~
+
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+DECLARE @i INT = 0, @x VARCHAR(30);
+WHILE @i < 4
+BEGIN
+	SET @x = (SELECT set_config('datestyle', CASE WHEN @i % 2 = 0 THEN 'ISO, DMY' ELSE 'ISO, MDY' END, false));
+	SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat, CAST('01/02/2026' AS DATE) AS cast_date;
+	SET @i += 1;
+END
+GO
+~~START~~
+text#!#date
+dmy#!#2026-02-01
+~~END~~
+
+~~START~~
+text#!#date
+mdy#!#2026-01-02
+~~END~~
+
+~~START~~
+text#!#date
+dmy#!#2026-02-01
+~~END~~
+
+~~START~~
+text#!#date
+mdy#!#2026-01-02
+~~END~~
+
+
+-- After SET DATEFORMAT, DateStyle no longer matters
+SET DATEFORMAT dmy;
+GO
+
+DECLARE @x VARCHAR(30) = (SELECT set_config('datestyle', 'ISO, YMD', false));
+GO
+
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat;
+EXEC set_dateformat_guc_p;
+GO
+~~START~~
+text
+dmy
+~~END~~
+
+~~START~~
+date#!#datetime
+2026-02-01#!#2026-02-01 00:00:00.0
+~~END~~
+
+
+DECLARE @x VARCHAR(30) = (SELECT set_config('datestyle', 'ISO, MDY', false));
+GO
+
+DROP PROCEDURE set_dateformat_guc_p;
+GO
+
+SELECT current_setting('datestyle') AS datestyle;
+GO
+~~START~~
+text
+ISO, MDY
+~~END~~
+
+
 CREATE TABLE set_dateformat_guc_t (id INT, s VARCHAR(30));
 GO
 

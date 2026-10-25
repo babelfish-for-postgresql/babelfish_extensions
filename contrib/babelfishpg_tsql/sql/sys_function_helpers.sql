@@ -1150,7 +1150,7 @@ BEGIN
                 v_month := v_middlepart;
 
             ELSIF ((v_style IN (101, 110)) OR
-                    ((v_style IS NULL OR v_style = 0) AND v_date_format = 'MDY'))
+                    ((v_style IS NULL OR v_style = 0) AND v_date_format IN ('MDY', 'YMD')))
             THEN
                 v_day := v_middlepart;
                 v_month := v_leftpart;

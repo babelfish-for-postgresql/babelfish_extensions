@@ -43,6 +43,7 @@ extern int escape_hatch_identity_function;
 extern int escape_hatch_insert_bulk_options;
 
 extern void define_custom_variables(void);
+extern const char *pltsql_get_dateformat(void);
 extern void pltsql_validate_set_config_function(char *name, char *value);
 
 /*************************************

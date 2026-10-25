@@ -4,7 +4,6 @@
 #include "parser/scansup.h"		/* downcase_identifier */
 #include "utils/guc.h"
 #include "utils/guc_tables.h"
-#include "utils/plancache.h"
 #include "miscadmin.h"
 
 #include "guc.h"
@@ -128,7 +127,6 @@ static void assign_lock_timeout(int newval, void *extra);
 static void assign_datefirst(int newval, void *extra);
 static bool check_dateformat(char **newval, void **extra, GucSource source);
 static void assign_dateformat(const char *newval, void *extra);
-static const char *show_dateformat(void);
 static bool check_no_browsetable(bool *newval, void **extra, GucSource source);
 static void assign_enable_pg_hint(bool newval, void *extra);
 int			escape_hatch_session_settings;	/* forward declaration */
@@ -720,23 +718,17 @@ check_dateformat(char **newval, void **extra, GucSource source)
 static void
 assign_dateformat(const char *newval, void *extra)
 {
-	/*
-	 * Date strings in a query are read when it is parsed, so a cached plan
-	 * keeps the order it was parsed with.  Make cached plans parse again when
-	 * the setting changes, the way SQL Server recompiles after a SET option
-	 * changes.
-	 */
-	if (strcmp(newval, assigned_dateformat) != 0)
-	{
-		ResetPlanCache();
-		strlcpy(assigned_dateformat, newval, sizeof(assigned_dateformat));
-	}
-
+	strlcpy(assigned_dateformat, newval, sizeof(assigned_dateformat));
 	DateOrder = dateformat_to_date_order(newval);
 }
 
-static const char *
-show_dateformat(void)
+/*
+ * The setting in effect, which is also what SHOW reports.  plan_inval.c
+ * records it with each cached plan, so that a plan is parsed again when it
+ * has changed.
+ */
+const char *
+pltsql_get_dateformat(void)
 {
 	/* Without SET DATEFORMAT, show the order from DateStyle */
 	if (assigned_dateformat[0] == '\0')
@@ -1019,7 +1011,7 @@ define_custom_variables(void)
 							   "",
 							   PGC_USERSET,
 							   GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							   check_dateformat, assign_dateformat, show_dateformat);
+							   check_dateformat, assign_dateformat, pltsql_get_dateformat);
 
 	DefineCustomIntVariable("babelfishpg_tsql.rowcount",
 							gettext_noop("Causes the DB engine to stop processing the query after the "

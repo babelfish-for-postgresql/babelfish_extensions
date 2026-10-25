@@ -46,3 +46,32 @@ BEGIN
 	SELECT CAST('01/02/2026' AS DATE) AS cast_date, CONVERT(DATETIME, '01/02/2026') AS convert_datetime
 END
 GO
+
+-- A literal that is valid in some date orders but not in others
+CREATE PROCEDURE set_dateformat_p_reparse
+AS
+BEGIN
+	SELECT CAST('13/01/26' AS DATE) AS cast_date, CAST('01/02/26' AS DATE) AS cast_date2
+END
+GO
+
+-- A procedure that is also parsed again when a table it reads is altered
+CREATE TABLE set_dateformat_t_ddl (a INT)
+GO
+
+CREATE PROCEDURE set_dateformat_p_ddl
+AS
+BEGIN
+	SELECT CAST('01/02/03' AS DATE) AS cast_date, CONVERT(DATETIME, '01/02/03') AS convert_datetime,
+		(SELECT COUNT(*) FROM set_dateformat_t_ddl) AS cnt
+END
+GO
+
+-- Date literals in the procedure and in the batch that calls it
+CREATE PROCEDURE set_dateformat_p_scope
+AS
+BEGIN
+	SET DATEFORMAT dmy
+	SELECT 'inner' AS who, CAST('01/02/2026' AS DATE) AS cast_date, CONVERT(DATETIME, '01/02/2026') AS convert_datetime
+END
+GO

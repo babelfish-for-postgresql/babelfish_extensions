@@ -6433,14 +6433,21 @@ exec_assign_value(PLtsql_execstate *estate,
 				if(var->is_babelfish_guc)
 				{	
 					StringInfo buf;
-					if (isNull)
+
+					/*
+					 * SQL Server reads a NULL date order as an empty string,
+					 * which check_dateformat() reports as invalid
+					 */
+					if (isNull && strcmp(var->refname, "dateformat") != 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 								 errmsg("Invalid argument for SET %s. Must be a non-null value.",
 									asc_toupper(var->refname, strlen(var->refname)))));
 
 					buf =  makeStringInfo();
-					if(var->datatype->typoid == INT4OID)
+					if (isNull)
+						;		/* an empty string, as above */
+					else if(var->datatype->typoid == INT4OID)
 						appendStringInfo(buf, "%d", DatumGetInt32(newvalue));
 					else
 						appendStringInfoString(buf, TextDatumGetCString(newvalue));
