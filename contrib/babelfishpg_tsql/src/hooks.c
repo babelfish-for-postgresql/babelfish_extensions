@@ -285,6 +285,7 @@ static char* pltsql_get_object_identity_event_trigger(ObjectAddress *addr);
 static const char *remove_db_name_in_schema(const char *schema_name, const char *object_type);
 static int32 pltsql_exprTypmod(Plan *plan, Node *expr);
 static Node* pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr);
+static Node *fold_index_predicate_constants(Node *node, void *context);
 static Oid get_domain_typmodin(Type typ);
 static void pre_transform_openxml_columns(ParseState *pstate, RangeTableFunc *rtf);
 #ifdef USE_LIBXML
@@ -9492,21 +9493,38 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 	/*
 	 * A filtered index's WHERE clause is stored as it is, and each session
 	 * folds its constant parts with its own settings when it reads it.  For a
-	 * CONVERT without a style, which depends on DATEFORMAT, sessions with
-	 * different settings would then add rows to the index, and trust it for
-	 * a query, by different predicates.  Fold the constant parts now, so the
-	 * predicate keeps the settings in effect when the index is created.  SQL
-	 * Server only allows comparisons of columns with constants there.
+	 * date string converted without a style, which depends on DATEFORMAT,
+	 * sessions with different settings would then add rows to the index, and
+	 * trust it for a query, by different predicates.  Fold the constant parts
+	 * now, so the predicate keeps the settings in effect when the index is
+	 * created.  SQL Server only allows comparisons of columns with constants
+	 * there.
 	 */
-	if (pstate->p_expr_kind == EXPR_KIND_INDEX_PREDICATE &&
-		!IsA(expr, Const) && !contain_var_clause(expr))
-	{
-		/* Collations are otherwise assigned after the whole clause */
-		assign_expr_collations(pstate, expr);
-		expr = eval_const_expressions(NULL, expr);
-	}
+	if (pstate->p_expr_kind == EXPR_KIND_INDEX_PREDICATE)
+		expr = fold_index_predicate_constants(expr, pstate);
 
 	return expr;
+}
+
+/*
+ * Fold each part of an index predicate that doesn't refer to a column.  This
+ * runs for every node, because the casts that a comparison adds to its
+ * constant side are only there once the comparison is transformed.
+ */
+static Node *
+fold_index_predicate_constants(Node *node, void *context)
+{
+	ParseState *pstate = (ParseState *) context;
+
+	if (node == NULL || IsA(node, Const))
+		return node;
+
+	if (contain_var_clause(node))
+		return expression_tree_mutator(node, fold_index_predicate_constants, context);
+
+	/* Collations are otherwise assigned after the whole clause */
+	assign_expr_collations(pstate, node);
+	return eval_const_expressions(NULL, node);
 }
 
 static IndexClause *

@@ -172,23 +172,36 @@ GO
 CREATE INDEX set_dateformat_guc_fi_bad ON set_dateformat_guc_fi (d) WHERE d >= CONVERT(DATE, '13/13/2026');
 GO
 
+-- The same for the cast that a comparison adds to a typed constant
+CREATE TABLE set_dateformat_guc_fi2 (id INT, d DATE, e DATE);
+GO
+
+CREATE INDEX set_dateformat_guc_fi2_n ON set_dateformat_guc_fi2 (d) WHERE d >= N'01/02/2026';
+GO
+
+CREATE INDEX set_dateformat_guc_fi2_in ON set_dateformat_guc_fi2 (e) WHERE e IN (N'01/02/2026', N'01/03/2026');
+GO
+
 INSERT INTO set_dateformat_guc_fi VALUES (1, '2026-01-15');
+INSERT INTO set_dateformat_guc_fi2 VALUES (1, '2026-01-15', '2026-01-02');
 GO
 
 SET DATEFORMAT dmy;
 GO
 
 INSERT INTO set_dateformat_guc_fi VALUES (2, '2026-01-15');
+INSERT INTO set_dateformat_guc_fi2 VALUES (2, '2026-01-15', '2026-01-02');
 GO
 
 SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat;
 GO
 
 -- psql
--- The constant is read in the order of the session that created the index
-SELECT c.relname LIKE 'set\_dateformat\_guc\_fi\_ix%' AS is_ix, pg_get_expr(i.indpred, i.indrelid) AS predicate
-FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid
-WHERE c.relname LIKE 'set\_dateformat\_guc\_fi\_%';
+-- The constants are read in the order of the session that created the indexes
+SELECT t.relname AS table_name, pg_get_expr(i.indpred, i.indrelid) AS predicate
+FROM pg_index i JOIN pg_class t ON t.oid = i.indrelid
+WHERE t.relname LIKE 'set\_dateformat\_guc\_fi%'
+ORDER BY 1, 2;
 GO
 
 -- tsql password=12345678;applicationName=set_dateformat_guc_s2
@@ -203,15 +216,20 @@ GO
 DECLARE @x VARCHAR(10) = (SELECT set_config('enable_seqscan', 'off', false));
 GO
 
--- Under dmy the constant is 1 February, so no row matches.  Under mdy it is
--- 2 January, and both rows do.  The index holds the same rows for both.
+-- Under dmy the constants are 1 February and 1 March, so no row matches.
+-- Under mdy they are 2 and 3 January, and both rows do.  The indexes hold the
+-- same rows for both.
 SELECT id, d FROM set_dateformat_guc_fi WHERE d >= CONVERT(DATE, '01/02/2026') ORDER BY id;
+SELECT id FROM set_dateformat_guc_fi2 WHERE d >= N'01/02/2026' ORDER BY id;
+SELECT id FROM set_dateformat_guc_fi2 WHERE e IN (N'01/02/2026', N'01/03/2026') ORDER BY id;
 GO
 
 SET DATEFORMAT mdy;
 GO
 
 SELECT id, d FROM set_dateformat_guc_fi WHERE d >= CONVERT(DATE, '01/02/2026') ORDER BY id;
+SELECT id FROM set_dateformat_guc_fi2 WHERE d >= N'01/02/2026' ORDER BY id;
+SELECT id FROM set_dateformat_guc_fi2 WHERE e IN (N'01/02/2026', N'01/03/2026') ORDER BY id;
 GO
 
 DECLARE @v VARCHAR(10) = (SELECT reset_val FROM pg_settings WHERE name = 'enable_seqscan');
@@ -223,4 +241,5 @@ SET DATEFORMAT mdy;
 GO
 
 DROP TABLE set_dateformat_guc_fi;
+DROP TABLE set_dateformat_guc_fi2;
 GO
