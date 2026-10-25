@@ -158,3 +158,69 @@ GO
 
 SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat, '01/02/2026'::date AS date_value;
 GO
+
+-- tsql
+-- A filtered index keeps the predicate as it was when the index was created, so
+-- that sessions with another date order fill and use the index by the same rule
+CREATE TABLE set_dateformat_guc_fi (id INT, d DATE);
+GO
+
+CREATE INDEX set_dateformat_guc_fi_ix ON set_dateformat_guc_fi (d) WHERE d >= CONVERT(DATE, '01/02/2026');
+GO
+
+-- An invalid constant now fails when the index is created
+CREATE INDEX set_dateformat_guc_fi_bad ON set_dateformat_guc_fi (d) WHERE d >= CONVERT(DATE, '13/13/2026');
+GO
+
+INSERT INTO set_dateformat_guc_fi VALUES (1, '2026-01-15');
+GO
+
+SET DATEFORMAT dmy;
+GO
+
+INSERT INTO set_dateformat_guc_fi VALUES (2, '2026-01-15');
+GO
+
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat;
+GO
+
+-- psql
+-- The constant is read in the order of the session that created the index
+SELECT c.relname LIKE 'set\_dateformat\_guc\_fi\_ix%' AS is_ix, pg_get_expr(i.indpred, i.indrelid) AS predicate
+FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid
+WHERE c.relname LIKE 'set\_dateformat\_guc\_fi\_%';
+GO
+
+-- tsql password=12345678;applicationName=set_dateformat_guc_s2
+-- A second session, which has not read the index yet, starts with its own date
+-- order, not the one the first session has set
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat;
+GO
+
+SET DATEFORMAT dmy;
+GO
+
+DECLARE @x VARCHAR(10) = (SELECT set_config('enable_seqscan', 'off', false));
+GO
+
+-- Under dmy the constant is 1 February, so no row matches.  Under mdy it is
+-- 2 January, and both rows do.  The index holds the same rows for both.
+SELECT id, d FROM set_dateformat_guc_fi WHERE d >= CONVERT(DATE, '01/02/2026') ORDER BY id;
+GO
+
+SET DATEFORMAT mdy;
+GO
+
+SELECT id, d FROM set_dateformat_guc_fi WHERE d >= CONVERT(DATE, '01/02/2026') ORDER BY id;
+GO
+
+DECLARE @v VARCHAR(10) = (SELECT reset_val FROM pg_settings WHERE name = 'enable_seqscan');
+DECLARE @x VARCHAR(10) = (SELECT set_config('enable_seqscan', @v, false));
+GO
+
+-- tsql
+SET DATEFORMAT mdy;
+GO
+
+DROP TABLE set_dateformat_guc_fi;
+GO

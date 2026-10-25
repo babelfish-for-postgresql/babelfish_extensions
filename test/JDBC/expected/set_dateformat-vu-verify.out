@@ -691,3 +691,134 @@ date
 2026-01-02
 ~~END~~
 
+
+-- Styles fix the order, so PERSISTED computed columns and filtered indexes that
+-- use them give the same result under every DATEFORMAT.  They are created here,
+-- not in the prepare file, because a filtered index that exists before an
+-- upgrade keeps the predicate it had then.
+CREATE TABLE set_dateformat_t_style (id INT, s103 VARCHAR(30), s121 VARCHAR(30), d DATE,
+	c103 AS CONVERT(DATE, s103, 103) PERSISTED, c121 AS CONVERT(DATETIME, s121, 121) PERSISTED)
+GO
+
+-- Only the rows from 1 February on are in the index and have to be unique
+CREATE UNIQUE INDEX set_dateformat_i_style ON set_dateformat_t_style (id) WHERE d >= CONVERT(DATE, '01/02/2026', 103)
+GO
+
+SET DATEFORMAT mdy
+INSERT INTO set_dateformat_t_style (id, s103, s121, d)
+VALUES (1, '01/02/2026', '2026-01-02 10:30:15.123', '2026-01-15'), (1, '31/12/2026', '2026-12-31 23:59:59.997', '2026-02-15')
+GO
+~~ROW COUNT: 2~~
+
+
+SET DATEFORMAT dmy
+INSERT INTO set_dateformat_t_style (id, s103, s121, d)
+VALUES (2, '01/02/2026', '2026-01-02 10:30:15.123', '2026-01-15'), (2, '31/12/2026', '2026-12-31 23:59:59.997', '2026-02-15')
+GO
+~~ROW COUNT: 2~~
+
+
+-- A second row from 1 February on is a duplicate, under either order
+BEGIN TRY
+	INSERT INTO set_dateformat_t_style (id, s103, s121, d) VALUES (2, '02/03/2026', '2026-03-02 00:00:00.000', '2026-03-01')
+END TRY
+BEGIN CATCH
+	SELECT CASE WHEN ERROR_NUMBER() IN (2601, 2627) THEN 'duplicate key' ELSE 'error ' + CAST(ERROR_NUMBER() AS VARCHAR(10)) END AS dmy
+END CATCH
+GO
+~~START~~
+varchar
+duplicate key
+~~END~~
+
+
+SET DATEFORMAT mdy
+BEGIN TRY
+	INSERT INTO set_dateformat_t_style (id, s103, s121, d) VALUES (1, '02/03/2026', '2026-03-02 00:00:00.000', '2026-03-01')
+END TRY
+BEGIN CATCH
+	SELECT CASE WHEN ERROR_NUMBER() IN (2601, 2627) THEN 'duplicate key' ELSE 'error ' + CAST(ERROR_NUMBER() AS VARCHAR(10)) END AS mdy
+END CATCH
+GO
+~~START~~
+varchar
+duplicate key
+~~END~~
+
+
+-- The values are the same under dmy and mdy
+SET DATEFORMAT dmy
+SELECT id, c103, c121 FROM set_dateformat_t_style ORDER BY id, d
+SELECT id, d FROM set_dateformat_t_style WHERE d >= CONVERT(DATE, '01/02/2026', 103) ORDER BY id
+GO
+~~START~~
+int#!#date#!#datetime
+1#!#2026-02-01#!#2026-01-02 10:30:15.123
+1#!#2026-12-31#!#2026-12-31 23:59:59.997
+2#!#2026-02-01#!#2026-01-02 10:30:15.123
+2#!#2026-12-31#!#2026-12-31 23:59:59.997
+~~END~~
+
+~~START~~
+int#!#date
+1#!#2026-02-15
+2#!#2026-02-15
+~~END~~
+
+
+SET DATEFORMAT mdy
+SELECT id, c103, c121 FROM set_dateformat_t_style ORDER BY id, d
+SELECT id, d FROM set_dateformat_t_style WHERE d >= CONVERT(DATE, '01/02/2026', 103) ORDER BY id
+GO
+~~START~~
+int#!#date#!#datetime
+1#!#2026-02-01#!#2026-01-02 10:30:15.123
+1#!#2026-12-31#!#2026-12-31 23:59:59.997
+2#!#2026-02-01#!#2026-01-02 10:30:15.123
+2#!#2026-12-31#!#2026-12-31 23:59:59.997
+~~END~~
+
+~~START~~
+int#!#date
+1#!#2026-02-15
+2#!#2026-02-15
+~~END~~
+
+
+DROP TABLE set_dateformat_t_style
+GO
+
+-- A prepared statement follows the date order of each execution, for a literal
+-- in the statement as well as for a parameter
+SET DATEFORMAT mdy
+GO
+
+prepst#!#SELECT CAST('01/02/2026' AS DATE) AS literal, CONVERT(DATE, ?) AS param#!#VARCHAR|-|s|-|01/02/2026
+~~START~~
+date#!#date
+2026-01-02#!#2026-01-02
+~~END~~
+
+GO
+
+SET DATEFORMAT dmy
+GO
+
+prepst#!#exec#!#VARCHAR|-|s|-|01/02/2026
+~~START~~
+date#!#date
+2026-02-01#!#2026-02-01
+~~END~~
+
+GO
+
+SET DATEFORMAT mdy
+GO
+
+prepst#!#exec#!#VARCHAR|-|s|-|01/02/2026
+~~START~~
+date#!#date
+2026-01-02#!#2026-01-02
+~~END~~
+
+GO

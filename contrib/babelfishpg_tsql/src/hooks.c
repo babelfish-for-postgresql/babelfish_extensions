@@ -60,6 +60,7 @@
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
@@ -9486,6 +9487,23 @@ pltsql_post_transform_expr_recurse(ParseState *pstate, Node *expr)
 
 		default:
 			break;
+	}
+
+	/*
+	 * A filtered index's WHERE clause is stored as it is, and each session
+	 * folds its constant parts with its own settings when it reads it.  For a
+	 * CONVERT without a style, which depends on DATEFORMAT, sessions with
+	 * different settings would then add rows to the index, and trust it for
+	 * a query, by different predicates.  Fold the constant parts now, so the
+	 * predicate keeps the settings in effect when the index is created.  SQL
+	 * Server only allows comparisons of columns with constants there.
+	 */
+	if (pstate->p_expr_kind == EXPR_KIND_INDEX_PREDICATE &&
+		!IsA(expr, Const) && !contain_var_clause(expr))
+	{
+		/* Collations are otherwise assigned after the whole clause */
+		assign_expr_collations(pstate, expr);
+		expr = eval_const_expressions(NULL, expr);
 	}
 
 	return expr;
