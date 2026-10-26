@@ -52,7 +52,6 @@ bool		pltsql_enable_linked_servers = true;
 bool		pltsql_enable_ownership_chaining = true;
 bool		pltsql_allow_windows_login = true;
 bool		pltsql_allow_fulltext_parser = false;
-int			pltsql_antlr_batch_parse_cache_max_entries = 1000;
 int			pltsql_antlr_batch_parse_cache_min_entry_size = 16;
 int			pltsql_antlr_batch_parse_cache_max_entry_size = 256;
 bool		pltsql_validate_antlr_batch_parse_cache = false;
@@ -629,18 +628,6 @@ assign_datefirst(int newval, void *extra)
 static void
 define_antlr_batch_parse_cache_variables(void)
 {
-	/* Server-wide soft limit; the shared hash is sized for the maximum */
-	DefineCustomIntVariable("babelfishpg_tsql.antlr_batch_parse_cache_max_entries",
-							gettext_noop("Maximum number of entries in the batch query ANTLR parse cache."),
-							gettext_noop("When the cache is full, the least recently used entries are evicted."),
-							&pltsql_antlr_batch_parse_cache_max_entries,
-							ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
-							100,
-							ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
-							PGC_SIGHUP,
-							GUC_NOT_IN_SAMPLE,
-							NULL, NULL, NULL);
-
 	/* Server default, can be changed per session */
 	DefineCustomIntVariable("babelfishpg_tsql.antlr_batch_parse_cache_min_entry_size",
 							gettext_noop("Minimum size (kB) of each entry stored in the batch query parse cache."),
@@ -656,7 +643,7 @@ define_antlr_batch_parse_cache_variables(void)
 	/* Server default, can be changed per session */
 	DefineCustomIntVariable("babelfishpg_tsql.antlr_batch_parse_cache_max_entry_size",
 							gettext_noop("Maximum size (kB) of each entry stored in the batch query parse cache."),
-							gettext_noop("Entries larger than this threshold are not cached."),
+							gettext_noop("Entries larger than this threshold, or larger than babelfishpg_tds.antlr_batch_parse_cache_slot_size, are not cached."),
 							&pltsql_antlr_batch_parse_cache_max_entry_size,
 							256,
 							0,

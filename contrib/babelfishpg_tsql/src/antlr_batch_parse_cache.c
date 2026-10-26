@@ -135,10 +135,11 @@ antlr_batch_parse_cache_shmem_startup(void)
 
 	memset(&info, 0, sizeof(info));
 	info.keysize = sizeof(AntlrBatchParseCacheKey);
-	info.entrysize = sizeof(AntlrBatchParseCacheEntry);
+	/* Same entry size and capacity babelfishpg_tds used to create the hash */
+	info.entrysize = state->entry_size;
 	antlr_batch_parse_cache_hash = ShmemInitHash(ANTLR_BATCH_PARSE_CACHE_SHMEM_HASH_NAME,
-												 ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
-												 ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
+												 state->num_slots,
+												 state->num_slots,
 												 &info,
 												 HASH_ELEM | HASH_BLOBS);
 	antlr_batch_parse_cache_state = state;
@@ -286,8 +287,7 @@ antlr_batch_parse_cache_entry_cmp(const void *a, const void *b)
 
 /*
  * Delete: the least recently used 10% (min 5). entries_arr must hold
- * ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES pointers; it is allocated by the caller
- * before taking the lock.
+ * num_slots pointers; it is allocated by the caller before taking the lock.
  */
 static void
 antlr_batch_parse_cache_hash_evict_lru(AntlrBatchParseCacheEntry **entries_arr)
@@ -301,7 +301,7 @@ antlr_batch_parse_cache_hash_evict_lru(AntlrBatchParseCacheEntry **entries_arr)
 	hash_seq_init(&scan, antlr_batch_parse_cache_hash);
 	while ((scan_entry = (AntlrBatchParseCacheEntry *) hash_seq_search(&scan)) != NULL)
 	{
-		if (num_entries < ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES)
+		if (num_entries < antlr_batch_parse_cache_state->num_slots)
 			entries_arr[num_entries++] = scan_entry;
 	}
 
@@ -318,13 +318,32 @@ antlr_batch_parse_cache_hash_evict_lru(AntlrBatchParseCacheEntry **entries_arr)
 	}
 }
 
+/* Parts of the entry's data area: text, then tree, then datums */
+static inline char *
+antlr_batch_parse_cache_entry_text(AntlrBatchParseCacheEntry *entry)
+{
+	return entry->data;
+}
+
+static inline char *
+antlr_batch_parse_cache_entry_tree(AntlrBatchParseCacheEntry *entry)
+{
+	return entry->data + entry->query_text_len + 1;
+}
+
+static inline char *
+antlr_batch_parse_cache_entry_datums(AntlrBatchParseCacheEntry *entry)
+{
+	return antlr_batch_parse_cache_entry_tree(entry) + entry->parse_tree_len + 1;
+}
+
 /* True if the entry holds this query text and parameter signature */
 static bool
 antlr_batch_parse_cache_entry_matches(AntlrBatchParseCacheEntry *entry, const char *query_text,
 									  int query_len, uint64 param_sig)
 {
 	return entry->query_text_len == query_len &&
-		strncmp(entry->query_text, query_text, query_len) == 0 &&
+		strncmp(antlr_batch_parse_cache_entry_text(entry), query_text, query_len) == 0 &&
 		entry->param_sig == param_sig;
 }
 
@@ -345,18 +364,25 @@ antlr_batch_parse_cache_entry_fill(AntlrBatchParseCacheEntry *entry, bool found,
 								   const char *datums_str, int datums_len,
 								   uint64 param_sig, int pre_cache_nDatums)
 {
-	memcpy(entry->query_text, query_text, query_len);
-	entry->query_text[query_len] = '\0';
+	char	   *dst;
+
+	/* Lengths first: the part accessors use them as offsets */
 	entry->query_text_len = query_len;
-
-	memcpy(entry->parse_tree, tree_str, tree_len);
-	entry->parse_tree[tree_len] = '\0';
 	entry->parse_tree_len = tree_len;
-
-	if (datums_len > 0)
-		memcpy(entry->parse_datums, datums_str, datums_len);
-	entry->parse_datums[datums_len] = '\0';
 	entry->parse_datums_len = datums_len;
+
+	dst = antlr_batch_parse_cache_entry_text(entry);
+	memcpy(dst, query_text, query_len);
+	dst[query_len] = '\0';
+
+	dst = antlr_batch_parse_cache_entry_tree(entry);
+	memcpy(dst, tree_str, tree_len);
+	dst[tree_len] = '\0';
+
+	dst = antlr_batch_parse_cache_entry_datums(entry);
+	if (datums_len > 0)
+		memcpy(dst, datums_str, datums_len);
+	dst[datums_len] = '\0';
 
 	strlcpy(entry->bbf_version, BABELFISH_VERSION_STR, sizeof(entry->bbf_version));
 	entry->param_sig = param_sig;
@@ -380,7 +406,7 @@ antlr_batch_parse_cache_entry_copy(AntlrBatchParseCacheEntry *entry)
 
 	result->parse_tree_len = entry->parse_tree_len;
 	result->parse_tree = palloc(entry->parse_tree_len + 1);
-	memcpy(result->parse_tree, entry->parse_tree, entry->parse_tree_len);
+	memcpy(result->parse_tree, antlr_batch_parse_cache_entry_tree(entry), entry->parse_tree_len);
 	result->parse_tree[entry->parse_tree_len] = '\0';
 
 	result->parse_datums_len = entry->parse_datums_len;
@@ -388,7 +414,8 @@ antlr_batch_parse_cache_entry_copy(AntlrBatchParseCacheEntry *entry)
 	if (entry->parse_datums_len > 0)
 	{
 		result->parse_datums = palloc(entry->parse_datums_len + 1);
-		memcpy(result->parse_datums, entry->parse_datums, entry->parse_datums_len);
+		memcpy(result->parse_datums, antlr_batch_parse_cache_entry_datums(entry),
+			   entry->parse_datums_len);
 		result->parse_datums[entry->parse_datums_len] = '\0';
 	}
 
@@ -405,33 +432,32 @@ antlr_batch_parse_cache_free_result(AntlrBatchParseCacheLookupResult *result)
 	pfree(result);
 }
 
-/* True if the serialized sizes fit the buffers and the min/max size GUCs */
+/* True if text, tree and datums together fit a slot and the min/max size GUCs */
 static bool
 antlr_batch_parse_cache_entry_size_ok(int query_len, int tree_len, int datums_len)
 {
-	int			total_data_len = query_len + tree_len + datums_len;
-	int			min_bytes = pltsql_antlr_batch_parse_cache_min_entry_size * 1024;
-	int			max_bytes = pltsql_antlr_batch_parse_cache_max_entry_size * 1024;
+	int64		total_data_len = (int64) query_len + tree_len + datums_len;
+	int64		min_bytes = (int64) pltsql_antlr_batch_parse_cache_min_entry_size * 1024;
+	int64		max_bytes = (int64) pltsql_antlr_batch_parse_cache_max_entry_size * 1024;
 
-	if (query_len >= ANTLR_BATCH_PARSE_CACHE_MAX_QUERY_TEXT_LEN ||
-		tree_len >= ANTLR_BATCH_PARSE_CACHE_MAX_PARSE_TREE_LEN ||
-		datums_len >= ANTLR_BATCH_PARSE_CACHE_MAX_PARSE_DATUMS_LEN)
+	/* One NUL terminator per part */
+	if (total_data_len + 3 > antlr_batch_parse_cache_state->data_capacity)
 	{
-		elog(DEBUG1, "antlr_batch_parse_cache: entry exceeds buffer limit (query=%d tree=%d datums=%d), skipping",
-			 query_len, tree_len, datums_len);
+		elog(DEBUG1, "antlr_batch_parse_cache: entry does not fit in a slot (query=%d tree=%d datums=%d, slot capacity %d bytes), skipping",
+			 query_len, tree_len, datums_len, antlr_batch_parse_cache_state->data_capacity);
 		return false;
 	}
 
 	if (total_data_len < min_bytes)
 	{
-		elog(DEBUG1, "antlr_batch_parse_cache: entry too small (%d bytes, min %d bytes), skipping",
+		elog(DEBUG1, "antlr_batch_parse_cache: entry too small (" INT64_FORMAT " bytes, min " INT64_FORMAT " bytes), skipping",
 			 total_data_len, min_bytes);
 		return false;
 	}
 
 	if (max_bytes > 0 && total_data_len > max_bytes)
 	{
-		elog(DEBUG1, "antlr_batch_parse_cache: entry too large (%d bytes, max %d bytes), skipping",
+		elog(DEBUG1, "antlr_batch_parse_cache: entry too large (" INT64_FORMAT " bytes, max " INT64_FORMAT " bytes), skipping",
 			 total_data_len, max_bytes);
 		return false;
 	}
@@ -518,7 +544,7 @@ antlr_batch_parse_cache_put(const AntlrBatchParseCacheCtx *ctx, const char *tree
 
 	/* Allocate before locking to keep the exclusive section short */
 	entries_arr = (AntlrBatchParseCacheEntry **)
-		palloc(sizeof(AntlrBatchParseCacheEntry *) * ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES);
+		palloc(sizeof(AntlrBatchParseCacheEntry *) * antlr_batch_parse_cache_state->num_slots);
 
 	LWLockAcquire(antlr_batch_parse_cache_state->lock, LW_EXCLUSIVE);
 
@@ -542,7 +568,9 @@ antlr_batch_parse_cache_put(const AntlrBatchParseCacheCtx *ctx, const char *tree
 
 	if (!found)
 	{
-		if (hash_get_num_entries(antlr_batch_parse_cache_hash) >= (long) pltsql_antlr_batch_parse_cache_max_entries)
+		/* Full: all slots reserved at server start are in use */
+		if (hash_get_num_entries(antlr_batch_parse_cache_hash) >=
+			antlr_batch_parse_cache_state->num_slots)
 			antlr_batch_parse_cache_hash_evict_lru(entries_arr);
 
 		entry = antlr_batch_parse_cache_hash_enter(ctx->key, &found);

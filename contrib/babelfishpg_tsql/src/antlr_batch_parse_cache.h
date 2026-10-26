@@ -19,19 +19,19 @@
 #include "storage/s_lock.h"
 
 /*****************************************
- *    BUFFER SIZE LIMITS
- *****************************************/
-#define ANTLR_BATCH_PARSE_CACHE_MAX_QUERY_TEXT_LEN	(64 * 1024) /* 64 KB */
-#define ANTLR_BATCH_PARSE_CACHE_MAX_PARSE_TREE_LEN	(160 * 1024)	/* 160 KB */
-#define ANTLR_BATCH_PARSE_CACHE_MAX_PARSE_DATUMS_LEN (32 * 1024)	/* 32 KB */
-
-/*****************************************
- *    HASH TABLE CAPACITY
+ *    CACHE AND SLOT SIZE
  *
- *    Fixed: shared memory hash tables cannot grow. Upper bound of
- *    antlr_batch_parse_cache_max_entries.
+ *    Both are fixed at server start (shared memory hash tables cannot grow):
+ *    babelfishpg_tds.antlr_batch_parse_cache_size (MB) is the total and
+ *    babelfishpg_tds.antlr_batch_parse_cache_slot_size (KB) is one whole
+ *    entry, header included. Number of entries = total / slot size.
  *****************************************/
-#define ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES	1000
+#define ANTLR_BATCH_PARSE_CACHE_DEFAULT_SIZE_MB		250
+#define ANTLR_BATCH_PARSE_CACHE_MIN_SIZE_MB			100
+#define ANTLR_BATCH_PARSE_CACHE_MAX_SIZE_MB			10000
+#define ANTLR_BATCH_PARSE_CACHE_DEFAULT_SLOT_SIZE_KB	256
+#define ANTLR_BATCH_PARSE_CACHE_MIN_SLOT_SIZE_KB		10
+#define ANTLR_BATCH_PARSE_CACHE_MAX_SLOT_SIZE_KB		10000
 
 /*****************************************
  *    ENABLE GUC
@@ -65,13 +65,8 @@ typedef struct AntlrBatchParseCacheEntry
 {
 	AntlrBatchParseCacheKey key;	/* hash lookup key — must be first */
 
-	char		query_text[ANTLR_BATCH_PARSE_CACHE_MAX_QUERY_TEXT_LEN]; /* for collision checks */
 	int			query_text_len;
-
-	char		parse_tree[ANTLR_BATCH_PARSE_CACHE_MAX_PARSE_TREE_LEN]; /* serialized tree */
 	int			parse_tree_len;
-
-	char		parse_datums[ANTLR_BATCH_PARSE_CACHE_MAX_PARSE_DATUMS_LEN]; /* serialized datums */
 	int			parse_datums_len;
 
 	char		bbf_version[32];
@@ -80,7 +75,28 @@ typedef struct AntlrBatchParseCacheEntry
 	TimestampTz created_at;
 	TimestampTz last_used_at;	/* LRU key */
 	slock_t		mutex;			/* protects last_used_at */
+
+	/*
+	 * Query text, serialized tree and serialized datums, each NUL-terminated,
+	 * stored back to back. Fills the rest of the slot.
+	 */
+	char		data[FLEXIBLE_ARRAY_MEMBER];
 } AntlrBatchParseCacheEntry;
+
+/* Bytes reserved per slot: the whole entry, header included */
+static inline Size
+antlr_batch_parse_cache_entry_size(int slot_size_kb)
+{
+	return MAXALIGN((Size) slot_size_kb * 1024);
+}
+
+/* Number of slots that fit in size_mb megabytes */
+static inline long
+antlr_batch_parse_cache_num_slots(int size_mb, int slot_size_kb)
+{
+	return (long) (((Size) size_mb * 1024 * 1024) /
+				   antlr_batch_parse_cache_entry_size(slot_size_kb));
+}
 
 /*****************************************
  *    SHARED STATE
@@ -93,6 +109,10 @@ typedef struct AntlrBatchParseCacheSharedState
 	pg_atomic_uint64 stat_writes;
 	pg_atomic_uint64 stat_evictions;
 	pg_atomic_uint64 stat_errors;
+	/* Set by babelfishpg_tds when the hash is created */
+	long		num_slots;		/* hash capacity */
+	Size		entry_size;		/* bytes per slot, header included */
+	int			data_capacity;	/* bytes per slot for text, tree and datums */
 } AntlrBatchParseCacheSharedState;
 
 /*****************************************

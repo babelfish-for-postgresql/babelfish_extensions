@@ -1887,32 +1887,13 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 
 
 -- ============================================================================
--- Test 41: Eviction when max_entries is reached
--- max_entries is SIGHUP; lower it to the minimum (100), reload, and wait for
--- the backends to pick it up. 105 distinct batches: the 101st insert finds
--- 100 entries and evicts 10% (10), so 95 remain.
+-- Test 41: Eviction when every slot is in use
+-- Default cache_size 250MB / slot_size 256kB = 1000 slots. 1005 distinct
+-- batches: the 1001st insert finds 1000 entries and evicts 10% (100), so
+-- 905 remain.
 -- ============================================================================
-PRINT '=== Test 41: Eviction at max_entries ===';
+PRINT '=== Test 41: Eviction when all slots are used ===';
 GO
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.antlr_batch_parse_cache_max_entries = 100;
-GO
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-SELECT pg_sleep(3);
-GO
-~~START~~
-void
-
-~~END~~
-
-
--- tsql
 SELECT sys.flush_antlr_batch_parse_cache();
 GO
 ~~START~~
@@ -1921,7 +1902,7 @@ bit
 ~~END~~
 
 DECLARE @i INT = 1, @h INT, @sql NVARCHAR(200);
-WHILE @i <= 105
+WHILE @i <= 1005
 BEGIN
     SET @sql = N'DECLARE @x INT = @p1 + ' + CAST(@i AS NVARCHAR(10));
     EXEC sp_prepexec @h OUTPUT, N'@p1 INT', @sql, @p1 = 1;
@@ -1929,33 +1910,14 @@ BEGIN
     SET @i = @i + 1;
 END
 GO
--- Expect: misses=105, writes=105, evictions=10, entries=95
+-- Expect: misses=1005, writes=1005, evictions=100, entries=905
 SELECT * FROM sys.antlr_batch_parse_cache_stats();
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-0#!#105#!#105#!#10#!#0#!#95
+0#!#1005#!#1005#!#100#!#0#!#905
 ~~END~~
 
--- psql
-ALTER SYSTEM RESET babelfishpg_tsql.antlr_batch_parse_cache_max_entries;
-GO
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-SELECT pg_sleep(3);
-GO
-~~START~~
-void
-
-~~END~~
-
-
--- tsql
 -- ============================================================================
 -- Test 42: OUTPUT parameter
 -- The OUT value is correct on a miss and on a hit. The same text with the
@@ -2015,6 +1977,41 @@ GO
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
 1#!#2#!#2#!#0#!#0#!#2
 ~~END~~
+
+
+-- ============================================================================
+-- Test 43: Cache size and slot size GUCs
+-- Both size the shared memory at server start, so a runtime change is
+-- rejected. Other sizes need a restart and are tested manually.
+-- ============================================================================
+PRINT '=== Test 43: Cache size and slot size GUCs ===';
+GO
+-- Expect: 250MB, 256kB
+SELECT current_setting('babelfishpg_tds.antlr_batch_parse_cache_size') AS cache_size,
+       current_setting('babelfishpg_tds.antlr_batch_parse_cache_slot_size') AS slot_size;
+GO
+~~START~~
+text#!#text
+250MB#!#256kB
+~~END~~
+
+-- Expect: error, cannot be changed without restarting the server
+SELECT set_config('babelfishpg_tds.antlr_batch_parse_cache_size', '100', false);
+GO
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parameter "babelfishpg_tds.antlr_batch_parse_cache_size" cannot be changed without restarting the server)~~
+
+-- Expect: error, cannot be changed without restarting the server
+SELECT set_config('babelfishpg_tds.antlr_batch_parse_cache_slot_size', '64', false);
+GO
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: parameter "babelfishpg_tds.antlr_batch_parse_cache_slot_size" cannot be changed without restarting the server)~~
 
 
 PRINT 'BABEL-6890 verify completed';

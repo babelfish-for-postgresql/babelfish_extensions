@@ -300,16 +300,18 @@ tds_memsize()
 	size = add_size(size, TdsContextInfoBufferSize());
 
 	/*
-	 * Batch query ANTLR parse cache: ~256 KB per entry, reserved only when
-	 * the feature is enabled. Created in tds_status_shmem_startup(), used by
+	 * Batch query ANTLR parse cache: antlr_batch_parse_cache_size MB in slots
+	 * of antlr_batch_parse_cache_slot_size KB, reserved only when the feature
+	 * is enabled. Created in tds_status_shmem_startup(), used by
 	 * babelfishpg_tsql.
 	 */
 	if (tds_enable_antlr_batch_parse_cache)
 	{
 		size = add_size(size, MAXALIGN(sizeof(AntlrBatchParseCacheSharedState)));
 		size = add_size(size,
-						hash_estimate_size(ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
-										   sizeof(AntlrBatchParseCacheEntry)));
+						hash_estimate_size(antlr_batch_parse_cache_num_slots(tds_antlr_batch_parse_cache_size,
+																			 tds_antlr_batch_parse_cache_slot_size),
+										   antlr_batch_parse_cache_entry_size(tds_antlr_batch_parse_cache_slot_size)));
 	}
 
 	return size;
@@ -442,8 +444,8 @@ tds_status_shmem_startup(void)
 	if (tds_enable_antlr_batch_parse_cache)
 	{
 		AntlrBatchParseCacheSharedState *state;
-		HASHCTL info;
-		bool state_found;
+		HASHCTL		info;
+		bool		state_found;
 
 		state = ShmemInitStruct(ANTLR_BATCH_PARSE_CACHE_SHMEM_STATE_NAME,
 								sizeof(AntlrBatchParseCacheSharedState), &state_found);
@@ -455,14 +457,19 @@ tds_status_shmem_startup(void)
 			pg_atomic_init_u64(&state->stat_writes, 0);
 			pg_atomic_init_u64(&state->stat_evictions, 0);
 			pg_atomic_init_u64(&state->stat_errors, 0);
+			state->num_slots = antlr_batch_parse_cache_num_slots(tds_antlr_batch_parse_cache_size,
+																 tds_antlr_batch_parse_cache_slot_size);
+			state->entry_size = antlr_batch_parse_cache_entry_size(tds_antlr_batch_parse_cache_slot_size);
+			state->data_capacity = (int) (state->entry_size -
+										  offsetof(AntlrBatchParseCacheEntry, data));
 		}
 
 		memset(&info, 0, sizeof(info));
 		info.keysize = sizeof(AntlrBatchParseCacheKey);
-		info.entrysize = sizeof(AntlrBatchParseCacheEntry);
+		info.entrysize = state->entry_size;
 		ShmemInitHash(ANTLR_BATCH_PARSE_CACHE_SHMEM_HASH_NAME,
-					  ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
-					  ANTLR_BATCH_PARSE_CACHE_DEFAULT_MAX_ENTRIES,
+					  state->num_slots,
+					  state->num_slots,
 					  &info,
 					  HASH_ELEM | HASH_BLOBS);
 	}

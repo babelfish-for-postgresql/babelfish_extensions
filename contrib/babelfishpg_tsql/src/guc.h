@@ -33,7 +33,6 @@ extern bool pltsql_enable_linked_servers;
 extern bool pltsql_enable_ownership_chaining;
 extern bool pltsql_allow_windows_login;
 extern bool pltsql_allow_fulltext_parser;
-extern int  pltsql_antlr_batch_parse_cache_max_entries;
 extern int  pltsql_antlr_batch_parse_cache_min_entry_size;
 extern int  pltsql_antlr_batch_parse_cache_max_entry_size;
 extern bool pltsql_validate_antlr_batch_parse_cache;
