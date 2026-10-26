@@ -249,3 +249,23 @@ BEGIN
     EXEC sp_xml_removedocument @hdoc
 END
 GO
+
+-- BABEL-7195: procedures reading a document while a temp table scan runs
+CREATE PROCEDURE sp_xml_preparedocument_babel_7195_read @h int
+AS
+BEGIN
+    SELECT sys.tsql_openxml_get_xmldoc(@h) AS doc, (SELECT COUNT(*) FROM #babel_7195_big) AS big_rows;
+END
+GO
+
+CREATE PROCEDURE sp_xml_preparedocument_babel_7195_prep_read
+AS
+BEGIN
+    DECLARE @h int;
+    DECLARE @doc nvarchar(max) = N'<p>' + REPLICATE(CAST(N'<item id="2">klmnopqrst</item>' AS nvarchar(max)), 30) + N'</p>';
+    EXEC sp_xml_preparedocument @h OUTPUT, @doc;
+    SELECT sys.tsql_openxml_get_xmldoc(@h) AS doc, (SELECT COUNT(*) FROM #babel_7195_big) AS big_rows;
+    SELECT COUNT(*) AS items, MIN(id) AS min_id FROM OPENXML(@h, '/p/item', 1) WITH (id int '@id');
+    EXEC sp_xml_removedocument @h;
+END
+GO

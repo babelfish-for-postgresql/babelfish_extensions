@@ -95,3 +95,9 @@ GO
 
 DROP TABLE IF EXISTS CastingTestData_babel_1168;
 GO
+
+DROP PROCEDURE IF EXISTS sp_xml_preparedocument_babel_7195_read;
+GO
+
+DROP PROCEDURE IF EXISTS sp_xml_preparedocument_babel_7195_prep_read;
+GO
