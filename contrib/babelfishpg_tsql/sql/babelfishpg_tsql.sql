@@ -3244,13 +3244,14 @@ BEGIN
 					DECLARE @relid INT = 0;
 					DECLARE @index_count INT;
 					SELECT @relid = object_id FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-						WHERE s1.name = @schemaname AND o1.name = sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname));
+						WHERE s1.name = @schemaname AND (o1.name = @curr_relname
+							OR sys.babelfish_truncate_identifier(pg_catalog.lower(o1.name)) = sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname)));
 					IF @relid = 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;
 						END
 					SELECT @index_count = COUNT(*) FROM pg_index i JOIN pg_class c ON i.indexrelid = c.oid
-						WHERE i.indrelid = @relid AND c.relname = sys.babelfish_construct_unique_index_name(sys.babelfish_truncate_identifier(pg_catalog.lower(@subname)), sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname)));
+						WHERE i.indrelid = @relid AND c.relname = sys.babelfish_construct_unique_index_name(pg_catalog.lower(@subname), pg_catalog.lower(@curr_relname));
 					IF @index_count < 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;

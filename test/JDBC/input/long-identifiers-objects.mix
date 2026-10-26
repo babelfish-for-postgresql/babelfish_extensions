@@ -1227,6 +1227,68 @@ DROP TABLE babel5052_renamed;
 GO
 
 -- ===========================================
+-- BABEL-7251: sp_rename of an INDEX on a table whose own name is long
+-- (>= NAMEDATALEN) must succeed. sys.objects.name holds the table's full
+-- original name (BABEL-5975); sp_rename's INDEX branch must compare that
+-- against the full @curr_relname it receives, not a truncated/hashed form,
+-- or the existence checks spuriously fail with "There is no object with the
+-- given @objname."
+-- ===========================================
+CREATE TABLE dbo.babel7251_LongTableName_ExceedingSixtyThreeCharactersForTestingXYZ (c int);
+GO
+CREATE INDEX babel7251_short_idx ON dbo.babel7251_LongTableName_ExceedingSixtyThreeCharactersForTestingXYZ (c);
+GO
+EXEC sp_rename N'dbo.babel7251_LongTableName_ExceedingSixtyThreeCharactersForTestingXYZ.babel7251_short_idx', N'babel7251_renamed_idx', 'INDEX';
+GO
+SELECT name FROM sys.indexes WHERE object_id = OBJECT_ID('dbo.babel7251_LongTableName_ExceedingSixtyThreeCharactersForTestingXYZ') AND name IS NOT NULL;
+GO
+
+-- sp_rename has always also accepted the truncated/MD5-hashed PHYSICAL table
+-- name (not just the full original name) as @objname's table-qualifying
+-- part; both forms must keep working. Build the physical name dynamically
+-- since the hash suffix is not something a test should hardcode.
+CREATE INDEX babel7251_phys_idx ON dbo.babel7251_LongTableName_ExceedingSixtyThreeCharactersForTestingXYZ (c);
+GO
+DECLARE @babel7251_trunc_relname sys.nvarchar(776) = sys.babelfish_truncate_identifier(LOWER('babel7251_LongTableName_ExceedingSixtyThreeCharactersForTestingXYZ'));
+DECLARE @babel7251_qualified_name sys.nvarchar(776) = 'dbo.' + @babel7251_trunc_relname + '.babel7251_phys_idx';
+EXEC sp_rename @babel7251_qualified_name, 'babel7251_phys_idx_renamed', 'INDEX';
+GO
+SELECT name FROM sys.indexes WHERE object_id = OBJECT_ID('dbo.babel7251_LongTableName_ExceedingSixtyThreeCharactersForTestingXYZ') AND name = 'babel7251_phys_idx_renamed';
+GO
+
+DROP TABLE dbo.babel7251_LongTableName_ExceedingSixtyThreeCharactersForTestingXYZ;
+GO
+
+-- ===========================================
+-- BABEL-7251: DROP INDEX must still succeed after the parent table has been
+-- renamed via sp_rename, including when the containing schema name is
+-- mixed-case and shorter than NAMEDATALEN. Renaming the table must re-mangle
+-- the physical names of its dependent indexes (BABEL-5052); if the schema
+-- name is not case-folded before being used for that catalog lookup, the
+-- lookup silently fails, the indexes are left pointing at their old (stale)
+-- physical names, and a subsequent DROP/ALTER INDEX ... ON <new_table> (which
+-- recomputes the expected physical name from the table's current name) can no
+-- longer find them.
+-- ===========================================
+CREATE SCHEMA Babel7251MixedCaseSchema;
+GO
+CREATE TABLE Babel7251MixedCaseSchema.babel7251_src_tab (c int);
+GO
+CREATE INDEX babel7251_idx_on_renamed_tab ON Babel7251MixedCaseSchema.babel7251_src_tab (c);
+GO
+EXEC sp_rename N'Babel7251MixedCaseSchema.babel7251_src_tab', N'babel7251_renamed_tab', 'OBJECT';
+GO
+DROP INDEX babel7251_idx_on_renamed_tab ON Babel7251MixedCaseSchema.babel7251_renamed_tab;
+GO
+SELECT COUNT(*) AS remaining_indexes FROM sys.indexes i JOIN sys.tables t ON t.object_id = i.object_id
+WHERE t.name = 'babel7251_renamed_tab' AND i.index_id > 0;
+GO
+DROP TABLE Babel7251MixedCaseSchema.babel7251_renamed_tab;
+GO
+DROP SCHEMA Babel7251MixedCaseSchema;
+GO
+
+-- ===========================================
 -- BABEL-7192: storing original (mixed-case / long) identifiers must not crash
 -- the backend when a DDL event trigger is active. Exercises every path that
 -- stores original names via AlterTable() -- sp_rename, SELECT INTO, and the
