@@ -2465,13 +2465,18 @@ pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, 
 
 	AlterTableStmt *stmt;
 	AlterTableCmd *cmd;
+	char	   *original_name;
+	const char *column_name_start;
+
+	if (column->location < 0)
+		return;
 
 	/*
 	 * To get original column name, utilize location of ColumnDef and query
 	 * string.
 	 */
-	const char *column_name_start = pstate->p_sourcetext + column->location;
-	char	   *original_name = extract_identifier(column_name_start, NULL);
+	column_name_start = pstate->p_sourcetext + column->location;
+	original_name = extract_identifier(column_name_start, NULL);
 
 	if (original_name == NULL)
 		ereport(ERROR,

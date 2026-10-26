@@ -25,6 +25,14 @@ GO
 SELECT id_num, col1 FROM babel_539NewTable1 ORDER BY col1;
 GO
 
+-- BABEL-7241: the IDENTITY column's ColumnDef is synthesized by
+-- transformSelectIntoStmt without a real source location, which must not be
+-- mistaken for a location of 0 (start of the query text) when recording the
+-- column's original name -- otherwise the first word of the query ("SELECT")
+-- gets stored and displayed as the column name instead of "id_num".
+SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'babel_539newtable1' ORDER BY ORDINAL_POSITION;
+GO
+
 DROP TABLE IF EXISTS babel_539NewTable1;
 GO
 
