@@ -362,6 +362,7 @@ static exprTypmod_hook_type prev_exprTypmod_hook = NULL;
 static post_transform_expr_recurse_hook_type prev_post_transform_expr_recurse_hook = NULL;
 static pre_transform_openxml_columns_hook_type prev_pre_transform_openxml_columns_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
+static pltsql_substitute_simple_column_names_hook_type prev_pltsql_substitute_simple_column_names_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
 static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_hook = NULL;
@@ -549,6 +550,9 @@ InstallExtendedHooks(void)
 	prev_print_pltsql_function_arguments_hook = print_pltsql_function_arguments_hook;
 	print_pltsql_function_arguments_hook = print_pltsql_function_arguments;
 
+	prev_pltsql_substitute_simple_column_names_hook = pltsql_substitute_simple_column_names_hook;
+	pltsql_substitute_simple_column_names_hook = pltsql_substitute_computed_column_names;
+
 	prev_planner_hook = planner_hook;
 	planner_hook = pltsql_planner_hook;
 	prev_transform_check_constraint_expr_hook = transform_check_constraint_expr_hook;
@@ -723,6 +727,7 @@ UninstallExtendedHooks(void)
 	post_transform_expr_recurse_hook = prev_post_transform_expr_recurse_hook;
 	pre_transform_openxml_columns_hook = prev_pre_transform_openxml_columns_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
+	pltsql_substitute_simple_column_names_hook = prev_pltsql_substitute_simple_column_names_hook;
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
 	validate_var_datatype_scale_hook = prev_validate_var_datatype_scale_hook;

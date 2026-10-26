@@ -1468,7 +1468,108 @@ GO
 DROP FUNCTION babel_7192_event_trigger_func();
 GO
 
+-- ===========================================
+-- Catalog sweep: tables/constraints/columns with long (>=64 byte) names must
+-- show the original name, not the truncated+md5 hashed physical name, across
+-- sys.indexes, COL_NAME, sys.computed_columns, INFORMATION_SCHEMA.TABLE_CONSTRAINTS/
+-- KEY_COLUMN_USAGE/CONSTRAINT_COLUMN_USAGE, sp_pkeys_view, sp_fkeys_view,
+-- sp_sproc_columns_view, and INFORMATION_SCHEMA.COLUMNS/COLUMN_DOMAIN_USAGE.DOMAIN_NAME.
+-- ===========================================
+
 -- tsql
+CREATE TABLE Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars (
+    id INT,
+    CONSTRAINT Very_Long_Catalog_Parent_Pk_Constraint_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars PRIMARY KEY (id)
+);
+GO
+CREATE TABLE Very_Long_Catalog_Child_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars (
+    id INT,
+    CONSTRAINT Very_Long_Catalog_Child_Fk_Constraint_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars FOREIGN KEY (id) REFERENCES Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars(id)
+);
+GO
+
+-- Verify the backing index of an inline long-named PK shows the original
+-- constraint name in sys.indexes, not the truncated+hashed physical name.
+SELECT name FROM sys.indexes WHERE object_id = OBJECT_ID('Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars') AND name IS NOT NULL;
+GO
+
+CREATE TABLE Very_Long_Catalog_Column_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars (
+    Very_Long_Catalog_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT
+);
+GO
+
+-- Verify COL_NAME returns the original column name, not the hashed one.
+SELECT COL_NAME(OBJECT_ID('Very_Long_Catalog_Column_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars'), 1);
+GO
+
+CREATE TABLE Very_Long_Catalog_Computed_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars (
+    Very_Long_Catalog_Base_Column_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT,
+    computed_col AS (Very_Long_Catalog_Base_Column_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters * 2)
+);
+GO
+
+-- Verify sys.computed_columns.definition deparses the original column name.
+SELECT definition FROM sys.computed_columns WHERE object_id = OBJECT_ID('Very_Long_Catalog_Computed_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars');
+GO
+
+-- Verify INFORMATION_SCHEMA.TABLE_CONSTRAINTS.TABLE_NAME shows the original name.
+SELECT CONSTRAINT_NAME, TABLE_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_NAME = 'Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars';
+GO
+
+-- Verify INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME shows the original name.
+SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME = 'Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars';
+GO
+
+-- Verify INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE shows original names for all three columns.
+SELECT CONSTRAINT_NAME, TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME = 'Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars';
+GO
+
+-- Verify sp_pkeys_view.pk_name shows the original constraint name.
+SELECT pk_name FROM sys.sp_pkeys_view WHERE table_name = 'Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars';
+GO
+
+-- Verify sp_fkeys_view.fk_name/pk_name show the original constraint names.
+SELECT fk_name, pk_name FROM sys.sp_fkeys_view WHERE fktable_name = 'very_long_catalog_child_table_that_exceeds_postgresql_limit_of_sixty_three_chars';
+GO
+
+CREATE PROCEDURE Very_Long_Catalog_Procedure_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars (@Very_Long_Catalog_Parameter_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars INT)
+AS BEGIN SELECT @Very_Long_Catalog_Parameter_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars; END;
+GO
+
+-- Verify sp_sproc_columns_view.column_name shows the original parameter name.
+SELECT column_name FROM sys.sp_sproc_columns_view WHERE procedure_name LIKE 'Very_Long_Catalog_Procedure_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars%' AND column_name LIKE '@Very_Long%';
+GO
+
+CREATE TYPE Very_Long_Catalog_Domain_Type_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars FROM INT;
+GO
+CREATE TABLE Very_Long_Catalog_Domain_Usage_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars (
+    domain_col Very_Long_Catalog_Domain_Type_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+);
+GO
+
+-- Verify INFORMATION_SCHEMA.COLUMNS.DOMAIN_NAME shows the original domain name.
+SELECT DOMAIN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Very_Long_Catalog_Domain_Usage_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars';
+GO
+
+-- Verify INFORMATION_SCHEMA.COLUMN_DOMAIN_USAGE.DOMAIN_NAME shows the original domain name.
+SELECT DOMAIN_NAME FROM INFORMATION_SCHEMA.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME = 'Very_Long_Catalog_Domain_Usage_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars';
+GO
+
+DROP PROCEDURE Very_Long_Catalog_Procedure_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP TABLE Very_Long_Catalog_Domain_Usage_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars;
+GO
+DROP TYPE Very_Long_Catalog_Domain_Type_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP TABLE Very_Long_Catalog_Computed_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP TABLE Very_Long_Catalog_Column_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP TABLE Very_Long_Catalog_Child_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP TABLE Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+
 -- CLEANUP
 -- ===========================================
 DROP VIEW Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;

@@ -104,7 +104,6 @@ Could not find tests for view sys.sp_datatype_info_100_view_odbc_version_2
 Could not find tests for view sys.sp_datatype_info_100_view_odbc_version_3
 Could not find tests for view sys.sp_datatype_info_view_odbc_version_2
 Could not find tests for view sys.sp_datatype_info_view_odbc_version_3
-Could not find tests for view sys.sp_fkeys_view
 Could not find tests for view sys.sp_special_columns_view
 Could not find tests for view sys.sp_statistics_view
 Could not find tests for view sys.sp_stored_procedures_view
@@ -234,7 +233,6 @@ Could not find upgrade tests for view sys.sp_datatype_info_100_view_odbc_version
 Could not find upgrade tests for view sys.sp_datatype_info_100_view_odbc_version_3
 Could not find upgrade tests for view sys.sp_datatype_info_view_odbc_version_2
 Could not find upgrade tests for view sys.sp_datatype_info_view_odbc_version_3
-Could not find upgrade tests for view sys.sp_fkeys_view
 Could not find upgrade tests for view sys.sp_special_columns_view
 Could not find upgrade tests for view sys.sp_statistics_view
 Could not find upgrade tests for view sys.sp_stored_procedures_view

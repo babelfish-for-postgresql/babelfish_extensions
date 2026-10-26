@@ -1233,7 +1233,7 @@ CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
 CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
 CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
 CAST(seq AS smallint) AS KEY_SEQ,
-CAST(t5.conname AS sys.sysname) AS PK_NAME
+CAST(sys.bbf_get_original_identifier_name(t5.conname, t2.nspname, 'pg_constraint'::regclass::oid, t1.relname) AS sys.sysname) AS PK_NAME
 FROM pg_catalog.pg_class t1 
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
@@ -1980,8 +1980,8 @@ CASE
    WHEN const1.confdeltype = 'd' THEN CAST(3 AS smallint) -- set default
    ELSE CAST(0 AS smallint)
 END AS DELETE_RULE,
-CAST(const1.conname AS sys.sysname) AS FK_NAME,
-CAST(const2.conname AS sys.sysname) AS PK_NAME,
+CAST(sys.bbf_get_original_identifier_name(const1.conname, nsp_ext.nspname, 'pg_constraint'::regclass::oid, c.relname) AS sys.sysname) AS FK_NAME,
+CAST(sys.bbf_get_original_identifier_name(const2.conname, nsp_ext2.nspname, 'pg_constraint'::regclass::oid, c2.relname) AS sys.sysname) AS PK_NAME,
 CASE
    WHEN const1.condeferrable = false THEN CAST(7 as smallint) -- not deferrable
    ELSE (CASE WHEN const1.condeferred = false THEN CAST(6 as smallint) --  not deferred by default
@@ -2712,7 +2712,7 @@ CASE
       WHEN ss.proretset THEN '@TABLE_RETURN_VALUE'
     ELSE '@RETURN_VALUE'
   END 
-ELSE COALESCE(ss.proargnames[n], '')
+ELSE COALESCE(sys.bbf_get_original_identifier_name(ss.proargnames[n], ss.nspname, 'pg_proc'::regclass::oid, ss.proname), '')
 END
 AS sys.SYSNAME) AS COLUMN_NAME
 , CAST(
