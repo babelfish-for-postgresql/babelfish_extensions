@@ -1094,7 +1094,14 @@ CREATE OR REPLACE VIEW sys.sp_tables_view AS
 SELECT
 t2.dbname AS TABLE_QUALIFIER,
 CAST(t3.name AS sys.sysname) AS TABLE_OWNER,
-sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname)::sys.sysname AS TABLE_NAME,
+COALESCE(
+    CASE WHEN pg_catalog.octet_length(t1.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(t1.reloptions) opt
+         WHERE opt LIKE 'bbf_original_rel_name=%'
+         LIMIT 1)
+    END,
+    t1.relname::text)::sys.sysname AS TABLE_NAME,
 
 CASE 
 WHEN t1.relkind = 'v' 
@@ -1195,7 +1202,16 @@ GRANT ALL on FUNCTION sys.fn_mapped_system_error_list TO PUBLIC;
 DROP VIEW IF EXISTS sys.sp_databases_view CASCADE;
 
 CREATE VIEW sys.sp_databases_view AS
-	SELECT CAST(sys.bbf_get_original_db_name(database_name) AS sys.SYSNAME) AS database_name,
+	SELECT CAST(
+		COALESCE(
+			CASE WHEN pg_catalog.octet_length(database_name) >= 60 THEN
+				(SELECT pg_catalog.lower(orig_name COLLATE "C")
+				 FROM sys.babelfish_sysdatabases
+				 WHERE name COLLATE sys.database_default = database_name
+				 LIMIT 1)
+			END,
+			database_name)
+		AS sys.SYSNAME) AS database_name,
 	-- DATABASE_SIZE returns a NULL value for databases larger than 2.15 TB
 	CASE WHEN (sum(table_size)::NUMERIC/1024.0) > 2.15 * 1024.0 * 1024.0 * 1024.0 THEN NULL
 		ELSE CAST((sum(table_size)::NUMERIC/1024.0) AS int) END as database_size,
@@ -1298,7 +1314,14 @@ CASE
 WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
 ELSE CAST(1 AS smallint)
 END AS NON_UNIQUE,
-CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS INDEX_QUALIFIER,
+CAST(COALESCE(
+    CASE WHEN pg_catalog.octet_length(t1.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(t1.reloptions) opt
+         WHERE opt LIKE 'bbf_original_rel_name=%'
+         LIMIT 1)
+    END,
+    t1.relname::text) AS sys.sysname) AS INDEX_QUALIFIER,
 -- the index name created by CREATE INDEX is re-mapped, find it (by checking
 -- the ones not in pg_constraint) and restoring it back before display
 pg_catalog.lower(COALESCE((SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) COLLATE "C" ELSE NULL END, ',') FROM unnest(t6.reloptions) AS option), t6.relname::text))::sys.sysname AS INDEX_NAME,
@@ -1455,7 +1478,14 @@ BEGIN
     SELECT
         CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
         CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-        CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS TABLE_NAME,
+        CAST(COALESCE(
+            CASE WHEN pg_catalog.octet_length(t1.relname) >= 60 THEN
+                (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+                 FROM pg_catalog.unnest(t1.reloptions) opt
+                 WHERE opt LIKE 'bbf_original_rel_name=%'
+                 LIMIT 1)
+            END,
+            t1.relname::text) AS sys.sysname) AS TABLE_NAME,
         CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
         CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
         CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
@@ -1555,7 +1585,14 @@ BEGIN
     SELECT
         CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
         CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-        CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS TABLE_NAME,
+        CAST(COALESCE(
+            CASE WHEN pg_catalog.octet_length(t1.relname) >= 60 THEN
+                (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+                 FROM pg_catalog.unnest(t1.reloptions) opt
+                 WHERE opt LIKE 'bbf_original_rel_name=%'
+                 LIMIT 1)
+            END,
+            t1.relname::text) AS sys.sysname) AS TABLE_NAME,
         CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t4.grantor) AS sys.sysname) AS GRANTOR,
         CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t4.grantee) AS sys.sysname) AS GRANTEE,
         CAST(t4.privilege_type AS sys.sysname) AS PRIVILEGE,
@@ -1697,7 +1734,14 @@ CASE
 AS IS_NULLABLE,
 CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-sys.bbf_get_truncated_rel_original_name(C.reloptions, C.relname)::sys.sysname AS TABLE_NAME,
+COALESCE(
+    CASE WHEN pg_catalog.octet_length(C.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(C.reloptions) opt
+         WHERE opt LIKE 'bbf_original_rel_name=%'
+         LIMIT 1)
+    END,
+    C.relname::text)::sys.sysname AS TABLE_NAME,
 
 CASE 
 	WHEN X.indisprimary
@@ -1959,11 +2003,25 @@ CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
 SELECT
 CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
 CAST(bbf_nsp2.orig_name AS sys.sysname) AS PKTABLE_OWNER ,
-sys.bbf_get_truncated_rel_original_name(c2.reloptions, c2.relname)::sys.sysname AS PKTABLE_NAME,
+COALESCE(
+    CASE WHEN pg_catalog.octet_length(c2.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(c2.reloptions) opt
+         WHERE opt LIKE 'bbf_original_rel_name=%'
+         LIMIT 1)
+    END,
+    c2.relname::text)::sys.sysname AS PKTABLE_NAME,
 CAST(COALESCE(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) AS sys.sysname) AS PKCOLUMN_NAME,
 CAST(nsp_ext.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
 CAST(bbf_nsp.orig_name AS sys.sysname) AS FKTABLE_OWNER ,
-sys.bbf_get_truncated_rel_original_name(c.reloptions, c.relname)::sys.sysname AS FKTABLE_NAME,
+COALESCE(
+    CASE WHEN pg_catalog.octet_length(c.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(c.reloptions) opt
+         WHERE opt LIKE 'bbf_original_rel_name=%'
+         LIMIT 1)
+    END,
+    c.relname::text)::sys.sysname AS FKTABLE_NAME,
 CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname) AS sys.sysname) AS FKCOLUMN_NAME,
 CAST(nr AS smallint) AS KEY_SEQ,
 CASE
@@ -2078,8 +2136,8 @@ CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
 
 CASE 
-	WHEN p.prokind = 'p' THEN CAST(PG_CATALOG.concat(sys.bbf_get_func_original_name(p.proname, p.pronamespace::regnamespace::name)::sys.NVARCHAR(128), ';1') AS sys.nvarchar(134))
-	ELSE CAST(PG_CATALOG.concat(sys.bbf_get_func_original_name(p.proname, p.pronamespace::regnamespace::name)::sys.NVARCHAR(128), ';0') AS sys.nvarchar(134))
+	WHEN p.prokind = 'p' THEN CAST(PG_CATALOG.concat(COALESCE(CASE WHEN pg_catalog.octet_length(p.proname) >= 60 THEN (SELECT pg_catalog.lower(bfe.orig_name COLLATE "C") FROM sys.babelfish_function_ext bfe WHERE bfe.funcname = p.proname AND bfe.nspname = p.pronamespace::regnamespace::name LIMIT 1) END, p.proname::text)::sys.NVARCHAR(128), ';1') AS sys.nvarchar(134))
+	ELSE CAST(PG_CATALOG.concat(COALESCE(CASE WHEN pg_catalog.octet_length(p.proname) >= 60 THEN (SELECT pg_catalog.lower(bfe.orig_name COLLATE "C") FROM sys.babelfish_function_ext bfe WHERE bfe.funcname = p.proname AND bfe.nspname = p.pronamespace::regnamespace::name LIMIT 1) END, p.proname::text)::sys.NVARCHAR(128), ';0') AS sys.nvarchar(134))
 END AS PROCEDURE_NAME,
 
 -1 AS NUM_INPUT_PARAMS,
@@ -2340,7 +2398,13 @@ BEGIN
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
-			   CAST(sys.bbf_get_original_db_name(LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(COALESCE(
+			       CASE WHEN pg_catalog.octet_length(LogExt.default_database_name) >= 60 THEN
+			           (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
+			            FROM sys.babelfish_sysdatabases sdb
+			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
+			       END,
+			       LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
@@ -2411,7 +2475,13 @@ BEGIN
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
-			   CAST(sys.bbf_get_original_db_name(LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(COALESCE(
+			       CASE WHEN pg_catalog.octet_length(LogExt.default_database_name) >= 60 THEN
+			           (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
+			            FROM sys.babelfish_sysdatabases sdb
+			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
+			       END,
+			       LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
@@ -2701,8 +2771,8 @@ CAST(sys.db_name() AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be
 , CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
 , CAST(
 CASE
-  WHEN ss.prokind = 'p' THEN PG_CATALOG.CONCAT(sys.bbf_get_func_original_name(ss.proname, ss.nspname), ';1')
-  ELSE PG_CATALOG.CONCAT(sys.bbf_get_func_original_name(ss.proname, ss.nspname), ';0')
+  WHEN ss.prokind = 'p' THEN PG_CATALOG.CONCAT(COALESCE(CASE WHEN pg_catalog.octet_length(ss.proname) >= 60 THEN (SELECT pg_catalog.lower(bfe.orig_name COLLATE "C") FROM sys.babelfish_function_ext bfe WHERE bfe.funcname = ss.proname AND bfe.nspname = ss.nspname LIMIT 1) END, ss.proname::text), ';1')
+  ELSE PG_CATALOG.CONCAT(COALESCE(CASE WHEN pg_catalog.octet_length(ss.proname) >= 60 THEN (SELECT pg_catalog.lower(bfe.orig_name COLLATE "C") FROM sys.babelfish_function_ext bfe WHERE bfe.funcname = ss.proname AND bfe.nspname = ss.nspname LIMIT 1) END, ss.proname::text), ';0')
 END
 AS sys.nvarchar(134)) AS PROCEDURE_NAME
 , CAST(
@@ -2870,7 +2940,7 @@ CASE
   ELSE sdit.ss_data_type
 END
 AS sys.tinyint) AS SS_DATA_TYPE
-, CAST(sys.bbf_get_func_original_name(ss.proname, ss.nspname) AS sys.sysname) AS original_procedure_name
+, CAST(COALESCE(CASE WHEN pg_catalog.octet_length(ss.proname) >= 60 THEN (SELECT pg_catalog.lower(bfe.orig_name COLLATE "C") FROM sys.babelfish_function_ext bfe WHERE bfe.funcname = ss.proname AND bfe.nspname = ss.nspname LIMIT 1) END, ss.proname::text) AS sys.sysname) AS original_procedure_name
 FROM 
 ( 
   -- CTE to query procedures related to bbf
@@ -3909,7 +3979,13 @@ BEGIN
 	SELECT DISTINCT
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
 		CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS SID,
-		CAST(sys.bbf_get_original_db_name(LExt.default_database_name) AS SYS.SYSNAME) AS DefDBName,
+		CAST(COALESCE(
+		    CASE WHEN pg_catalog.octet_length(LExt.default_database_name) >= 60 THEN
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
+		         FROM sys.babelfish_sysdatabases sdb
+		         WHERE sdb.name COLLATE database_default = LExt.default_database_name)
+		    END,
+		    LExt.default_database_name) AS SYS.SYSNAME) AS DefDBName,
 		CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
 		CASE
 		    WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('yes' AS sys.char(5)) -- if there exists a mapping between user and logins, then we can say that there are users attached to this login
@@ -3928,7 +4004,13 @@ BEGIN
 	-- second selector in the union is to get all the mapped database/user-defined roles
 	SELECT
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
-		CAST(sys.bbf_get_original_db_name(UExt.database_name) AS sys.SYSNAME) AS DBName,
+		CAST(COALESCE(
+		    CASE WHEN pg_catalog.octet_length(UExt.database_name) >= 60 THEN
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
+		         FROM sys.babelfish_sysdatabases sdb
+		         WHERE sdb.name COLLATE database_default = UExt.database_name)
+		    END,
+		    UExt.database_name) AS sys.SYSNAME) AS DBName,
 		CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
 		CAST('User' AS sys.char(8)) AS UserOrAlias
 	FROM sys.babelfish_authid_user_ext UExt
@@ -3958,7 +4040,13 @@ BEGIN
 	UNION
 	SELECT
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
-		CAST(sys.bbf_get_original_db_name(UExt2.database_name) AS sys.SYSNAME) AS DBName,
+		CAST(COALESCE(
+		    CASE WHEN pg_catalog.octet_length(UExt2.database_name) >= 60 THEN
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
+		         FROM sys.babelfish_sysdatabases sdb
+		         WHERE sdb.name COLLATE database_default = UExt2.database_name)
+		    END,
+		    UExt2.database_name) AS sys.SYSNAME) AS DBName,
 		CAST(UExt1.orig_username AS sys.SYSNAME) AS UserName,
 		CAST('MemberOf' AS sys.char(8)) AS UserOrAlias
 	FROM pg_catalog.pg_auth_members AS Authmbr
