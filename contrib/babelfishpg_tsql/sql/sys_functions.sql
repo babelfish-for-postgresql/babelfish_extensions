@@ -4751,7 +4751,7 @@ RETURNS sys.SYSNAME AS $$
         FROM pg_attribute 
         WHERE attrelid = table_id AND attnum = column_id AND attnum > 0;
         
-        RETURN sys.bbf_get_truncated_att_original_name(column_attoptions, column_name::name)::sys.SYSNAME;
+        RETURN (CASE WHEN octet_length(column_name) >= 60 THEN sys.bbf_get_truncated_att_original_name(column_attoptions, column_name::name) ELSE column_name END)::sys.SYSNAME;
     EXCEPTION
         WHEN OTHERS THEN
             RETURN NULL;

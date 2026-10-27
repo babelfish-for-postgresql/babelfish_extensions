@@ -328,7 +328,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 				THEN ext.orig_name ELSE null END
 				AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
 			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
-				THEN sys.bbf_get_original_identifier_name(t.typname, nt.nspname, 'pg_type'::regclass::oid) ELSE null END
+				THEN CASE WHEN octet_length(t.typname) >= 60 THEN sys.bbf_get_original_identifier_name(t.typname, nt.nspname, 'pg_type'::regclass::oid) ELSE t.typname::text END ELSE null END
 				AS sys.nvarchar(128)) AS "DOMAIN_NAME"
 
 	FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
@@ -517,7 +517,7 @@ BEGIN
            sys.bbf_get_original_identifier_name(c.conname, nsp.nspname, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.sysname AS "CONSTRAINT_NAME",
            CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-           CAST(sys.bbf_get_truncated_rel_original_name(r.reloptions, r.relname) AS sys.sysname) AS "TABLE_NAME",
+           CAST(CASE WHEN octet_length(r.relname) >= 60 THEN sys.bbf_get_truncated_rel_original_name(r.reloptions, r.relname) ELSE r.relname::text END AS sys.sysname) AS "TABLE_NAME",
            CAST(
              CASE c.contype WHEN 'c' THEN 'CHECK'
                             WHEN 'f' THEN 'FOREIGN KEY'
@@ -637,16 +637,15 @@ SELECT    CAST(tblcat AS sys.nvarchar(128)) AS "TABLE_CATALOG",
           CAST(colname AS sys.nvarchar(128)) AS "COLUMN_NAME",
           CAST(cstrcat AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
           CAST(cstrschema AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-          CAST(sys.bbf_get_original_identifier_name(cstrname, cstrnspname, 'pg_constraint'::regclass::oid, phystblname) AS sys.nvarchar(128)) AS "CONSTRAINT_NAME"
+          CAST(CASE WHEN octet_length(cstrname) >= 60 THEN sys.bbf_get_original_identifier_name(cstrname, cstrnspname, 'pg_constraint'::regclass::oid, phystblname) ELSE cstrname::text END AS sys.nvarchar(128)) AS "CONSTRAINT_NAME"
 
 FROM (
         /* check constraints */
-   SELECT DISTINCT ON (r.relname, a.attname, c.conname, nr.dbname, nc.dbname, nc.nspname, extr.orig_name, extc.orig_name, r.relowner)
-          extr.orig_name,
-          sys.bbf_get_truncated_rel_original_name(r.reloptions, r.relname) AS relname,
+   SELECT DISTINCT extr.orig_name,
+          CASE WHEN octet_length(r.relname) >= 60 THEN sys.bbf_get_truncated_rel_original_name(r.reloptions, r.relname) ELSE r.relname::text END AS relname,
           r.relname AS physrelname,
           r.relowner,
-          sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) AS attname,
+          CASE WHEN octet_length(a.attname) >= 60 THEN sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) ELSE a.attname::text END AS attname,
           extc.orig_name, c.conname, nr.dbname, nc.dbname, nc.nspname
      FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
           sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
@@ -674,10 +673,10 @@ FROM (
 
         /* unique/primary key/foreign key constraints */
    SELECT extr.orig_name,
-          sys.bbf_get_truncated_rel_original_name(r.reloptions, r.relname) AS relname,
+          CASE WHEN octet_length(r.relname) >= 60 THEN sys.bbf_get_truncated_rel_original_name(r.reloptions, r.relname) ELSE r.relname::text END AS relname,
           r.relname AS physrelname,
           r.relowner,
-          sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) AS attname,
+          CASE WHEN octet_length(a.attname) >= 60 THEN sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) ELSE a.attname::text END AS attname,
           extc.orig_name, c.conname, nr.dbname, nc.dbname, nc.nspname
      FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
           sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
@@ -870,7 +869,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 		sys.bbf_get_original_identifier_name(c.conname, nsp.nspname, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.nvarchar(128) AS "CONSTRAINT_NAME",
 		CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-		CAST(sys.bbf_get_truncated_rel_original_name(r.reloptions, r.relname) AS sys.nvarchar(128)) AS "TABLE_NAME",
+		CAST(CASE WHEN octet_length(r.relname) >= 60 THEN sys.bbf_get_truncated_rel_original_name(r.reloptions, r.relname) ELSE r.relname::text END AS sys.nvarchar(128)) AS "TABLE_NAME",
 		CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) AS sys.nvarchar(128)) AS "COLUMN_NAME",
 		CAST(ord AS int) AS "ORDINAL_POSITION"	
 	FROM
