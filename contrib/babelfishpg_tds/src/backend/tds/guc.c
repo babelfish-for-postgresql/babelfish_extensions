@@ -24,6 +24,7 @@
 #include "src/include/tds_secure.h"
 #include "src/include/faultinjection.h"
 #include "src/include/guc.h"
+#include "src/antlr_batch_parse_cache.h"
 
 /* Global variables */
 int			pe_port;
@@ -45,6 +46,9 @@ char	   *product_version = "default";
 static bool TdsFaultInjectionEnabled = false;
 #endif
 bool		enable_drop_babelfish_role = false;
+bool		tds_enable_antlr_batch_parse_cache = false;
+int			tds_antlr_batch_parse_cache_size = ANTLR_BATCH_PARSE_CACHE_DEFAULT_SIZE_MB;
+int			tds_antlr_batch_parse_cache_slot_size = ANTLR_BATCH_PARSE_CACHE_DEFAULT_SLOT_SIZE_KB;
 
 const struct config_enum_entry ssl_protocol_versions_info[] = {
 	{"", PG_TLS_ANY, false},
@@ -201,6 +205,40 @@ void
 TdsDefineGucs(void)
 {
 	/* Define TDS specific GUCs */
+	DefineCustomBoolVariable(
+							 "babelfishpg_tds.enable_antlr_batch_parse_cache",
+							 gettext_noop("Enables the shared memory ANTLR parse cache for sp_prepexec batch queries."),
+							 gettext_noop("When on, babelfishpg_tds.antlr_batch_parse_cache_size of shared memory is reserved at server start, whether or not entries are cached. Requires a server restart."),
+							 &tds_enable_antlr_batch_parse_cache,
+							 false,
+							 PGC_POSTMASTER,
+							 GUC_NOT_IN_SAMPLE,
+							 NULL, NULL, NULL);
+
+	DefineCustomIntVariable(
+							"babelfishpg_tds.antlr_batch_parse_cache_size",
+							gettext_noop("Sets the shared memory reserved for the batch query ANTLR parse cache."),
+							gettext_noop("The number of cached entries is this size divided by babelfishpg_tds.antlr_batch_parse_cache_slot_size. Used only when babelfishpg_tds.enable_antlr_batch_parse_cache is on. Requires a server restart."),
+							&tds_antlr_batch_parse_cache_size,
+							ANTLR_BATCH_PARSE_CACHE_DEFAULT_SIZE_MB,
+							ANTLR_BATCH_PARSE_CACHE_MIN_SIZE_MB,
+							ANTLR_BATCH_PARSE_CACHE_MAX_SIZE_MB,
+							PGC_POSTMASTER,
+							GUC_NOT_IN_SAMPLE | GUC_UNIT_MB,
+							NULL, NULL, NULL);
+
+	DefineCustomIntVariable(
+							"babelfishpg_tds.antlr_batch_parse_cache_slot_size",
+							gettext_noop("Sets the shared memory reserved for each entry of the batch query ANTLR parse cache."),
+							gettext_noop("Covers the whole entry: query text, serialized parse tree and datums together. Entries that do not fit are not cached; set babelfishpg_tsql.antlr_batch_parse_cache_min_entry_size and max_entry_size to match. Requires a server restart."),
+							&tds_antlr_batch_parse_cache_slot_size,
+							ANTLR_BATCH_PARSE_CACHE_DEFAULT_SLOT_SIZE_KB,
+							ANTLR_BATCH_PARSE_CACHE_MIN_SLOT_SIZE_KB,
+							ANTLR_BATCH_PARSE_CACHE_MAX_SLOT_SIZE_KB,
+							PGC_POSTMASTER,
+							GUC_NOT_IN_SAMPLE | GUC_UNIT_KB,
+							NULL, NULL, NULL);
+
 	DefineCustomIntVariable(
 							"babelfishpg_tds.port",
 							gettext_noop("Sets the TDS TCP port the server listens on."),
