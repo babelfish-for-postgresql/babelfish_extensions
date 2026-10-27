@@ -205,7 +205,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -215,7 +215,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -224,7 +224,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -233,7 +233,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -242,7 +242,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -251,7 +251,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -260,7 +260,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -269,7 +269,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -278,7 +278,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -287,7 +287,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -296,7 +296,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -305,7 +305,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -314,7 +314,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -324,7 +324,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -333,7 +333,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -342,7 +342,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -351,7 +351,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -360,7 +360,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -369,7 +369,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -379,7 +379,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -389,7 +389,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -400,7 +400,7 @@ GO
 
 ~~ERROR (Message: ERROR: sp_rename is not supported from PostgreSQL endpoint.
   Where: SQL statement "EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname"
-PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 131 at EXEC
+PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 132 at EXEC
     Server SQLState: 0A000)~~
 
 
@@ -410,7 +410,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 45 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 46 at THROW
     Server SQLState: YY001)~~
 
 
@@ -420,7 +420,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 66 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 67 at THROW
     Server SQLState: YY001)~~
 
 
@@ -430,7 +430,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -439,7 +439,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -449,7 +449,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -459,7 +459,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -469,7 +469,7 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: There is no object with the given @objname.
-  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 108 at THROW
+  Where: PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 109 at THROW
     Server SQLState: YY001)~~
 
 
@@ -553,7 +553,7 @@ GO
 
 ~~ERROR (Message: ERROR: sp_rename is not supported from PostgreSQL endpoint.
   Where: SQL statement "EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname"
-PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 131 at EXEC
+PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 132 at EXEC
     Server SQLState: 0A000)~~
 
 
@@ -563,7 +563,7 @@ GO
 
 ~~ERROR (Message: ERROR: sp_rename is not supported from PostgreSQL endpoint.
   Where: SQL statement "EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname"
-PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 131 at EXEC
+PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 132 at EXEC
     Server SQLState: 0A000)~~
 
 
@@ -576,7 +576,7 @@ GO
 
 ~~ERROR (Message: ERROR: sp_rename is not supported from PostgreSQL endpoint.
   Where: SQL statement "EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname"
-PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 131 at EXEC
+PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 132 at EXEC
     Server SQLState: 0A000)~~
 
 
@@ -586,7 +586,7 @@ GO
 
 ~~ERROR (Message: ERROR: sp_rename is not supported from PostgreSQL endpoint.
   Where: SQL statement "EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname"
-PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 131 at EXEC
+PL/tsql function sp_rename(nvarchar,sysname,"varchar") line 132 at EXEC
     Server SQLState: 0A000)~~
 
 
