@@ -392,7 +392,7 @@ GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.domains AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
-		CAST(sys.bbf_get_original_identifier_name(t.typname, nc.nspname, 'pg_type'::regclass::oid) AS sys.sysname) AS "DOMAIN_NAME",
+		CAST(COALESCE(CASE WHEN pg_catalog.octet_length(t.typname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = t.typname AND bim.nspname = nc.nspname AND bim.pg_catalog_type = 'pg_type'::regclass::oid LIMIT 1) END, t.typname::text) AS sys.sysname) AS "DOMAIN_NAME",
 		CAST(case when is_tbl_type THEN 'table type' ELSE tsql_type_name END AS sys.sysname) AS "DATA_TYPE",
 
 		CAST(information_schema_tsql._pgtsql_char_max_length(tsql_type_name, t.typtypmod)
@@ -514,7 +514,7 @@ BEGIN
     RETURN QUERY
     SELECT CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-           sys.bbf_get_original_identifier_name(c.conname, nsp.nspname, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.sysname AS "CONSTRAINT_NAME",
+           COALESCE(CASE WHEN pg_catalog.octet_length(c.conname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = c.conname AND bim.nspname = nsp.nspname AND bim.pg_catalog_type = 'pg_constraint'::regclass::oid AND ((SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) IS NULL OR bim.parent_name = (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid)) LIMIT 1) END, c.conname::text)::sys.sysname AS "CONSTRAINT_NAME",
            CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
            CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
@@ -606,7 +606,7 @@ GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
 CREATE VIEW information_schema_tsql.check_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 	    CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-           sys.bbf_get_original_identifier_name(c.conname, nc.nspname, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.sysname AS "CONSTRAINT_NAME",
+           COALESCE(CASE WHEN pg_catalog.octet_length(c.conname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = c.conname AND bim.nspname = nc.nspname AND bim.pg_catalog_type = 'pg_constraint'::regclass::oid AND ((SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) IS NULL OR bim.parent_name = (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid)) LIMIT 1) END, c.conname::text)::sys.sysname AS "CONSTRAINT_NAME",
 	    CAST(sys.tsql_get_constraintdef(c.oid) AS sys.nvarchar(4000)) AS "CHECK_CLAUSE"
 
     FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
@@ -823,7 +823,7 @@ GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SEQUENCE_CATALOG",
             CAST(extc.orig_name AS sys.nvarchar(128)) AS "SEQUENCE_SCHEMA",
-            CAST(sys.bbf_get_original_identifier_name(r.relname, nc.nspname, 'pg_class'::regclass::oid, '') AS sys.nvarchar(128)) AS "SEQUENCE_NAME",
+            CAST(COALESCE(CASE WHEN pg_catalog.octet_length(r.relname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = r.relname AND bim.nspname = nc.nspname AND bim.pg_catalog_type = 'pg_class'::regclass::oid AND bim.parent_name = '' LIMIT 1) END, r.relname::text) AS sys.nvarchar(128)) AS "SEQUENCE_NAME",
             CAST(CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype) ELSE tsql_type_name END
                     AS sys.nvarchar(128))AS "DATA_TYPE",  -- numeric and decimal data types are converted into bigint which is due to Postgres inherent implementation
             CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, -1)
@@ -856,11 +856,22 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	SELECT
 		CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-		sys.bbf_get_original_identifier_name(c.conname, nsp.nspname, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.nvarchar(128) AS "CONSTRAINT_NAME",
+		COALESCE(CASE WHEN pg_catalog.octet_length(c.conname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = c.conname AND bim.nspname = nsp.nspname AND bim.pg_catalog_type = 'pg_constraint'::regclass::oid AND ((SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) IS NULL OR bim.parent_name = (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid)) LIMIT 1) END, c.conname::text)::sys.nvarchar(128) AS "CONSTRAINT_NAME",
 		CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
-		CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) AS sys.nvarchar(128)) AS "COLUMN_NAME",
+		CAST(COALESCE(
+			CASE WHEN pg_catalog.octet_length(a.attname) >= 60 THEN
+				(SELECT CASE
+				            WHEN a.attname = pg_catalog.lower(a.attname COLLATE "C")
+				                THEN pg_catalog.lower(pg_catalog.substring(opt, 19) COLLATE "C")
+				            ELSE pg_catalog.substring(opt, 19)
+				        END
+				 FROM pg_catalog.unnest(a.attoptions) opt
+				 WHERE opt LIKE 'bbf_original_name=%'
+				 LIMIT 1)
+			END,
+			a.attname::text) AS sys.nvarchar(128)) AS "COLUMN_NAME",
 		CAST(ord AS int) AS "ORDINAL_POSITION"	
 	FROM
 		pg_constraint c 
