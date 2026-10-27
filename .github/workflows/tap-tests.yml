@@ -1,11 +1,10 @@
 name: TAP Tests
 on:
-  # push:
-  #   branches:
-  #     - BABEL_*_DEV
-  #     - BABEL_*_STABLE
-  # pull_request:
-  workflow_dispatch:
+  push:
+    branches:
+      - BABEL_*_DEV
+      - BABEL_*_STABLE
+  pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
