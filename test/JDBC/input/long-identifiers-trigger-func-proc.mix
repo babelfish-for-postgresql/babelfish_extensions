@@ -247,6 +247,63 @@ GO
 SELECT * FROM Very_Long_Inline_Table_Valued_Function_Name_Exceeding_Sixty_Three_Chars();
 GO
 
+-- BABEL-7246: selecting a long (> NAMEDATALEN) inline-TVF output column by
+-- name must succeed and return the correct value, not fail with "column ...
+-- does not exist" against the MD5-truncated physical name.
+CREATE TABLE babel7246_tvf_src (shortcol int, Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters int);
+GO
+INSERT INTO babel7246_tvf_src VALUES (1, 10);
+GO
+
+-- Single-column inline TVF (scalar return type): long output column by name
+CREATE FUNCTION dbo.babel7246_tvf_scalar() RETURNS TABLE AS RETURN (SELECT Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FROM babel7246_tvf_src);
+GO
+SELECT Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FROM dbo.babel7246_tvf_scalar();
+GO
+SELECT * FROM dbo.babel7246_tvf_scalar();
+GO
+
+-- Multi-column inline TVF (RECORD return type): long output column by name,
+-- alongside a short column
+CREATE FUNCTION dbo.babel7246_tvf_multi_col() RETURNS TABLE AS RETURN (SELECT shortcol, Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FROM babel7246_tvf_src);
+GO
+SELECT Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters FROM dbo.babel7246_tvf_multi_col();
+GO
+SELECT shortcol FROM dbo.babel7246_tvf_multi_col();
+GO
+SELECT * FROM dbo.babel7246_tvf_multi_col();
+GO
+
+-- Bracket-delimited long column name must resolve the same way
+SELECT [Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters] FROM dbo.babel7246_tvf_scalar();
+GO
+SELECT [Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters] FROM dbo.babel7246_tvf_multi_col();
+GO
+
+-- Negative: a long column name that the TVF does not return must still fail.
+-- The message is matched by pattern so the test does not pin the physical hash.
+BEGIN TRY
+    EXEC('SELECT Some_Other_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars FROM dbo.babel7246_tvf_scalar()');
+END TRY
+BEGIN CATCH
+    SELECT CASE WHEN ERROR_MESSAGE() LIKE 'column "%" does not exist' THEN 'column does not exist' ELSE ERROR_MESSAGE() END AS scalar_result;
+END CATCH
+GO
+BEGIN TRY
+    EXEC('SELECT Some_Other_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars FROM dbo.babel7246_tvf_multi_col()');
+END TRY
+BEGIN CATCH
+    SELECT CASE WHEN ERROR_MESSAGE() LIKE 'column "%" does not exist' THEN 'column does not exist' ELSE ERROR_MESSAGE() END AS multi_col_result;
+END CATCH
+GO
+
+DROP FUNCTION dbo.babel7246_tvf_scalar;
+GO
+DROP FUNCTION dbo.babel7246_tvf_multi_col;
+GO
+DROP TABLE babel7246_tvf_src;
+GO
+
 -- ===========================================
 -- BABEL-5975: TVF return columns with long (> NAMEDATALEN) names must display
 -- the full original name.
