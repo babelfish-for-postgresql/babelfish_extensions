@@ -1947,6 +1947,39 @@ GO
 
 
 -- ===========================================
+-- BABEL-7244: a cursor name is an identifier, so DECLARE must fold case (and
+-- truncate long names) exactly like OPEN / FETCH / CLOSE / DEALLOCATE do.
+-- Otherwise a cursor declared with a mixed-case or long (> NAMEDATALEN) name
+-- cannot be found by a later statement that refers to it.
+-- ===========================================
+-- Mixed-case cursor name, referenced with different casing.
+DECLARE Babel7244_Mixed_Case_Cursor CURSOR LOCAL FAST_FORWARD FOR SELECT 1;
+OPEN babel7244_mixed_case_cursor;
+FETCH NEXT FROM BABEL7244_MIXED_CASE_CURSOR;
+CLOSE Babel7244_Mixed_Case_Cursor;
+DEALLOCATE babel7244_MIXED_case_cursor;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Long (> NAMEDATALEN) cursor name, referenced with different casing.
+DECLARE Babel7244_Long_Cursor_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars CURSOR LOCAL FAST_FORWARD FOR SELECT 2;
+OPEN babel7244_long_cursor_name_that_exceeds_postgresql_limit_of_sixty_three_chars;
+FETCH NEXT FROM BABEL7244_LONG_CURSOR_NAME_THAT_EXCEEDS_POSTGRESQL_LIMIT_OF_SIXTY_THREE_CHARS;
+CLOSE Babel7244_Long_Cursor_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+DEALLOCATE babel7244_long_cursor_name_that_exceeds_postgresql_limit_of_sixty_three_chars;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+
+-- ===========================================
 -- BABEL-5052: after renaming a table with sp_rename, its indexes must remain
 -- usable (DROP/ALTER) and sys.indexes must still show the original index name.
 -- The physical index name embeds the table name, so the rename re-mangles
