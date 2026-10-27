@@ -274,6 +274,29 @@ GO
 SELECT * FROM dbo.babel7246_tvf_multi_col();
 GO
 
+-- Bracket-delimited long column name must resolve the same way
+SELECT [Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters] FROM dbo.babel7246_tvf_scalar();
+GO
+SELECT [Very_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters] FROM dbo.babel7246_tvf_multi_col();
+GO
+
+-- Negative: a long column name that the TVF does not return must still fail.
+-- The message is matched by pattern so the test does not pin the physical hash.
+BEGIN TRY
+    EXEC('SELECT Some_Other_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars FROM dbo.babel7246_tvf_scalar()');
+END TRY
+BEGIN CATCH
+    SELECT CASE WHEN ERROR_MESSAGE() LIKE 'column "%" does not exist' THEN 'column does not exist' ELSE ERROR_MESSAGE() END AS scalar_result;
+END CATCH
+GO
+BEGIN TRY
+    EXEC('SELECT Some_Other_Long_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars FROM dbo.babel7246_tvf_multi_col()');
+END TRY
+BEGIN CATCH
+    SELECT CASE WHEN ERROR_MESSAGE() LIKE 'column "%" does not exist' THEN 'column does not exist' ELSE ERROR_MESSAGE() END AS multi_col_result;
+END CATCH
+GO
+
 DROP FUNCTION dbo.babel7246_tvf_scalar;
 GO
 DROP FUNCTION dbo.babel7246_tvf_multi_col;
