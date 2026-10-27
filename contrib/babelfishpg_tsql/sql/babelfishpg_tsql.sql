@@ -2400,7 +2400,7 @@ BEGIN
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(COALESCE(
 			       CASE WHEN pg_catalog.octet_length(LogExt.default_database_name) >= 60 THEN
-			           (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+			           (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
 			            FROM sys.babelfish_sysdatabases sdb
 			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
 			       END,
@@ -2477,7 +2477,7 @@ BEGIN
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(COALESCE(
 			       CASE WHEN pg_catalog.octet_length(LogExt.default_database_name) >= 60 THEN
-			           (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+			           (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
 			            FROM sys.babelfish_sysdatabases sdb
 			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
 			       END,
@@ -3981,7 +3981,7 @@ BEGIN
 		CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS SID,
 		CAST(COALESCE(
 		    CASE WHEN pg_catalog.octet_length(LExt.default_database_name) >= 60 THEN
-		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
 		         FROM sys.babelfish_sysdatabases sdb
 		         WHERE sdb.name COLLATE database_default = LExt.default_database_name)
 		    END,
@@ -4006,7 +4006,7 @@ BEGIN
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
 		CAST(COALESCE(
 		    CASE WHEN pg_catalog.octet_length(UExt.database_name) >= 60 THEN
-		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
 		         FROM sys.babelfish_sysdatabases sdb
 		         WHERE sdb.name COLLATE database_default = UExt.database_name)
 		    END,
@@ -4042,7 +4042,7 @@ BEGIN
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
 		CAST(COALESCE(
 		    CASE WHEN pg_catalog.octet_length(UExt2.database_name) >= 60 THEN
-		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
 		         FROM sys.babelfish_sysdatabases sdb
 		         WHERE sdb.name COLLATE database_default = UExt2.database_name)
 		    END,

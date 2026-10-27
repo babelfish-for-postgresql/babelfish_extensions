@@ -261,7 +261,7 @@ my_very_long_database_name_that_exceeds_the_postgresql_namedatalen_limit_of_63
 -- asserted deterministically here).
 SELECT CAST(COALESCE(
     CASE WHEN pg_catalog.octet_length(Ext.default_database_name) >= 60 THEN
-        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C")
+        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
          FROM sys.babelfish_sysdatabases sdb
          WHERE sdb.name COLLATE database_default = Ext.default_database_name)
     END,
