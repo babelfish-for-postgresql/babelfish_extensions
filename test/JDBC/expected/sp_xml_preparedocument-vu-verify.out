@@ -2159,7 +2159,16 @@ int#!#int#!#varchar
 ~~END~~
 
 
--- Handle prepared outside a procedure and read inside it
+-- Handle prepared outside a procedure and read inside it.
+-- Procedures are created here rather than in vu-prepare because
+-- sys.tsql_openxml_get_xmldoc does not exist in older base versions.
+CREATE PROCEDURE sp_xml_preparedocument_babel_7195_read @h int
+AS
+BEGIN
+    SELECT sys.tsql_openxml_get_xmldoc(@h) AS doc, (SELECT COUNT(*) FROM #babel_7195_big) AS big_rows;
+END
+GO
+
 DECLARE @h int = (SELECT h FROM #babel_7195_handle);
 EXEC sp_xml_preparedocument_babel_7195_read @h;
 GO
@@ -2170,6 +2179,18 @@ xml#!#int
 
 
 -- Document prepared and read inside a procedure
+CREATE PROCEDURE sp_xml_preparedocument_babel_7195_prep_read
+AS
+BEGIN
+    DECLARE @h int;
+    DECLARE @doc nvarchar(max) = N'<p>' + REPLICATE(CAST(N'<item id="2">klmnopqrst</item>' AS nvarchar(max)), 30) + N'</p>';
+    EXEC sp_xml_preparedocument @h OUTPUT, @doc;
+    SELECT sys.tsql_openxml_get_xmldoc(@h) AS doc, (SELECT COUNT(*) FROM #babel_7195_big) AS big_rows;
+    SELECT COUNT(*) AS items, MIN(id) AS min_id FROM OPENXML(@h, '/p/item', 1) WITH (id int '@id');
+    EXEC sp_xml_removedocument @h;
+END
+GO
+
 EXEC sp_xml_preparedocument_babel_7195_prep_read;
 GO
 ~~START~~
@@ -2187,6 +2208,8 @@ DECLARE @h int = (SELECT h FROM #babel_7195_handle);
 EXEC sp_xml_removedocument @h;
 DROP TABLE #babel_7195_handle;
 DROP TABLE #babel_7195_big;
+DROP PROCEDURE sp_xml_preparedocument_babel_7195_read;
+DROP PROCEDURE sp_xml_preparedocument_babel_7195_prep_read;
 GO
 
 -- psql
