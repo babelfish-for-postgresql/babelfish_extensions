@@ -8528,6 +8528,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				def->identity = ATTRIBUTE_IDENTITY_ALWAYS;
 				def->is_not_null = true;
 				def->constraints = lappend(def->constraints, constraint);
+				def->location = -1;
 
 				lcmd = makeNode(AlterTableCmd);
 				lcmd->subtype = AT_AddColumn;
