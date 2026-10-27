@@ -1,10 +1,11 @@
 name: Major Version Upgrade Tests for empty database
 on:
-  push:
-    branches:
-      - BABEL_*_DEV
-      - BABEL_*_STABLE
-  pull_request:
+  # push:
+  #   branches:
+  #     - BABEL_*_DEV
+  #     - BABEL_*_STABLE
+  # pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
