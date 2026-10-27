@@ -1344,9 +1344,9 @@ BEGIN
 				BEGIN
 					DECLARE @relid INT = 0;
 					DECLARE @index_count INT;
-					SELECT @relid = object_id FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-						WHERE s1.name = @schemaname AND (o1.name = @curr_relname
-							OR sys.babelfish_truncate_identifier(pg_catalog.lower(o1.name)) = sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname)));
+					-- Look the table up in pg_class by its physical name: the truncated, lowercased form of
+					-- either its original or its physical name. Scanning sys.objects here is far slower.
+					SELECT @relid = CAST(c.oid AS INT) FROM pg_class c INNER JOIN sys.schemas s1 ON c.relnamespace = s1.schema_id WHERE s1.name = @schemaname AND c.relname = sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname));
 					IF @relid = 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;
