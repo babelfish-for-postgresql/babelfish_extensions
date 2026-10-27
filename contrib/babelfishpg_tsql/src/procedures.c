@@ -4034,24 +4034,30 @@ remangle_table_indexes_after_rename(const char *schema_name,
 	 * sp_rename passes the logical (T-SQL) schema name (e.g. "dbo"); map it to
 	 * the physical PostgreSQL schema (e.g. "master_dbo") before catalog lookup.
 	 */
-	physical_schema = get_physical_schema_name(get_cur_db_name(),
-											   downcase_truncate_identifier(schema_name, strlen(schema_name), false));
-	lower_newtable = downcase_truncate_identifier(new_table_name, strlen(new_table_name), false);
-
+	physical_schema = get_physical_schema_from_logical(schema_name);
 	if (physical_schema == NULL)
 		return;
 
 	nspoid = get_namespace_oid(physical_schema, true);
+	pfree(physical_schema);
 	if (!OidIsValid(nspoid))
 		return;
 
+	lower_newtable = downcase_truncate_identifier(new_table_name, strlen(new_table_name), false);
+
 	reloid = get_relname_relid(lower_newtable, nspoid);
 	if (!OidIsValid(reloid))
+	{
+		pfree(lower_newtable);
 		return;
+	}
 
 	rel = try_relation_open(reloid, AccessShareLock);
 	if (rel == NULL)
+	{
+		pfree(lower_newtable);
 		return;
+	}
 
 	/* Snapshot the index list; we close the relation before renaming. */
 	indexoidlist = list_copy(RelationGetIndexList(rel));
@@ -4099,6 +4105,7 @@ remangle_table_indexes_after_rename(const char *schema_name,
 	}
 
 	list_free(indexoidlist);
+	pfree(lower_newtable);
 }
 
 
