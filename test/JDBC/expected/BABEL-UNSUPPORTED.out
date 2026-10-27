@@ -81,11 +81,11 @@ GO
 ~~ERROR (Message: 'OFFSETS' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
 
 
-SET DATEFORMAT dmy;
+SET DATEFORMAT ydm;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'DATEFORMAT' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
+~~ERROR (Message: Settings other than "mdy", "dmy" and "ymd" are not allowed for option DATEFORMAT. Please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
 
 
 SET DEADLOCK_PRIORITY 0;
@@ -261,7 +261,7 @@ SET STATISTICS IO ON;
 GO
 SET OFFSETS SELECT ON;
 GO
-SET DATEFORMAT dmy;
+SET DATEFORMAT ydm;
 GO
 SET DEADLOCK_PRIORITY 0;
 GO

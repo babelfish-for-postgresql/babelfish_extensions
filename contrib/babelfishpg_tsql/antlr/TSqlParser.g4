@@ -3416,6 +3416,7 @@ set_special
 
 special_variable
     : DATEFIRST
+    | DATEFORMAT
     | ROWCOUNT
     | LANGUAGE
     ;

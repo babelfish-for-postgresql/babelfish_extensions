@@ -40,6 +40,7 @@ P0001 ERRCODE_RAISE_EXCEPTION	"%s"	SQL_ERROR_289	16 "Cannot construct data type 
 2200N ERRCODE_INVALID_XML_CONTENT	"%s"	SQL_ERROR_9451 16 "invalid XML content"
 2200N ERRCODE_INVALID_XML_CONTENT	"%s"	SQL_ERROR_9441 16 "invalid XML content#invalid XML declaration"
 P0001 ERRCODE_RAISE_EXCEPTION	"%s"	SQL_ERROR_9809 16 "is not supported for conversions from"
+P0001 ERRCODE_RAISE_EXCEPTION	"%s"	SQL_ERROR_9808 16 "date format is not supported when converting from this character string format"
 22003 ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE	"\"%s\" is out of range for type real"	SQL_ERROR_232	16
 42809 ERRCODE_WRONG_OBJECT_TYPE	"\"%s\" is not a table" SQL_ERROR_4708	16
 42809 ERRCODE_WRONG_OBJECT_TYPE	"The request for procedure '%s' failed because '%s' is a table valued function object."	SQL_ERROR_2809	16
@@ -190,4 +191,5 @@ XX000 ERRCODE_INTERNAL_ERROR	"The table-valued parameter \"%s\" must be declared
 22008 ERRCODE_DATETIME_VALUE_OUT_OF_RANGE	"Adding a value to a \'%s\' column caused an overflow." SQL_ERROR_517 16
 42P01 ERRCODE_UNDEFINED_TABLE	"FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name."		SQL_ERROR_13600	16
 42P01 ERRCODE_FEATURE_NOT_SUPPORTED	"sub-select and values for json auto are not currently supported."		SQL_ERROR_13600	16
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"SET DATEFORMAT date order '%s' is invalid."	SQL_ERROR_2741	16
 

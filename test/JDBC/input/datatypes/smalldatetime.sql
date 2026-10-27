@@ -162,6 +162,8 @@ EXEC InsertSmalldateTimeTest 'YDM Slash Short', '96/15/4 14:30';
 GO
 
 -- 2. Time Formats (All Valid Variations)
+SET DATEFORMAT mdy;
+GO
 EXEC InsertSmalldateTimeTest 'Time 24hr', '1996-04-15 14:30';
 GO
 EXEC InsertSmalldateTimeTest 'Time AM', '1996-04-15 09:30 AM';

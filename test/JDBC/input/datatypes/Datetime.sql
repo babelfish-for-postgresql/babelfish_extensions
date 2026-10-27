@@ -167,6 +167,8 @@ EXEC InsertDateTimeTest 'YDM Slash Short', '96/15/4 14:30:20.123';
 GO
 
 -- 2. Time Formats (All Variations)
+SET DATEFORMAT mdy;
+GO
 EXEC InsertDateTimeTest 'Time 24hr Full', '1996-04-15 14:30:20.123';
 GO
 EXEC InsertDateTimeTest 'Time 24hr No Seconds', '1996-04-15 14:30';

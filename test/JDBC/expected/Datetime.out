@@ -213,39 +213,27 @@ SET DATEFORMAT dmy;
 GO
 EXEC InsertDateTimeTest 'DMY Slash Full', '15/04/1996 14:30:20.123';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "15/04/1996 14:30:20.123")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTimeTest 'DMY Slash Short', '15/4/96 14:30:20.123';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "15/4/96 14:30:20.123")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTimeTest 'DMY Hyphen Full', '15-04-1996 14:30:20.123';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "15-04-1996 14:30:20.123")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTimeTest 'DMY Hyphen Short', '15-4-96 14:30:20.123';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "15-4-96 14:30:20.123")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTimeTest 'DMY Period Full', '15.04.1996 14:30:20.123';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "15.04.1996 14:30:20.123")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTimeTest 'DMY Period Short', '15.4.96 14:30:20.123';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "15.4.96 14:30:20.123")~~
+~~ROW COUNT: 1~~
 
 
 SET DATEFORMAT ymd;
@@ -256,9 +244,7 @@ GO
 
 EXEC InsertDateTimeTest 'YMD Slash Short', '96/4/15 14:30:20.123';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "96/4/15 14:30:20.123")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTimeTest 'YMD Hyphen Full', '1996-04-15 14:30:20.123';
 GO
@@ -266,9 +252,7 @@ GO
 
 EXEC InsertDateTimeTest 'YMD Hyphen Short', '96-4-15 14:30:20.123';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "96-4-15 14:30:20.123")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTimeTest 'YMD Period Full', '1996.04.15 14:30:20.123';
 GO
@@ -276,9 +260,7 @@ GO
 
 EXEC InsertDateTimeTest 'YMD Period Short', '96.4.15 14:30:20.123';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "96.4.15 14:30:20.123")~~
+~~ROW COUNT: 1~~
 
 
 SET DATEFORMAT myd;
@@ -298,9 +280,7 @@ SET DATEFORMAT dym;
 GO
 EXEC InsertDateTimeTest 'DYM Slash Full', '15/1996/04 14:30:20.123';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "15/1996/04 14:30:20.123")~~
+~~ROW COUNT: 1~~
 
 EXEC InsertDateTimeTest 'DYM Slash Short', '15/96/4 14:30:20.123';
 GO
@@ -325,6 +305,8 @@ GO
 
 
 -- 2. Time Formats (All Variations)
+SET DATEFORMAT mdy;
+GO
 EXEC InsertDateTimeTest 'Time 24hr Full', '1996-04-15 14:30:20.123';
 GO
 ~~ROW COUNT: 1~~
@@ -1210,10 +1192,20 @@ int#!#nvarchar#!#nvarchar#!#datetime
 4#!#MDY Hyphen Short#!#4-15-96 14:30:20.123#!#1996-04-15 14:30:20.123
 5#!#MDY Period Full#!#04.15.1996 14:30:20.123#!#1996-04-15 14:30:20.123
 6#!#MDY Period Short#!#4.15.96 14:30:20.123#!#1996-04-15 14:30:20.123
+7#!#DMY Slash Full#!#15/04/1996 14:30:20.123#!#1996-04-15 14:30:20.123
+8#!#DMY Slash Short#!#15/4/96 14:30:20.123#!#1996-04-15 14:30:20.123
+9#!#DMY Hyphen Full#!#15-04-1996 14:30:20.123#!#1996-04-15 14:30:20.123
+10#!#DMY Hyphen Short#!#15-4-96 14:30:20.123#!#1996-04-15 14:30:20.123
+11#!#DMY Period Full#!#15.04.1996 14:30:20.123#!#1996-04-15 14:30:20.123
+12#!#DMY Period Short#!#15.4.96 14:30:20.123#!#1996-04-15 14:30:20.123
 13#!#YMD Slash Full#!#1996/04/15 14:30:20.123#!#1996-04-15 14:30:20.123
+14#!#YMD Slash Short#!#96/4/15 14:30:20.123#!#1996-04-15 14:30:20.123
 15#!#YMD Hyphen Full#!#1996-04-15 14:30:20.123#!#1996-04-15 14:30:20.123
+16#!#YMD Hyphen Short#!#96-4-15 14:30:20.123#!#1996-04-15 14:30:20.123
 17#!#YMD Period Full#!#1996.04.15 14:30:20.123#!#1996-04-15 14:30:20.123
+18#!#YMD Period Short#!#96.4.15 14:30:20.123#!#1996-04-15 14:30:20.123
 19#!#MYD Slash Full#!#04/1996/15 14:30:20.123#!#1996-04-15 14:30:20.123
+21#!#DYM Slash Full#!#15/1996/04 14:30:20.123#!#1996-04-15 14:30:20.123
 25#!#Time 24hr Full#!#1996-04-15 14:30:20.123#!#1996-04-15 14:30:20.123
 26#!#Time 24hr No Seconds#!#1996-04-15 14:30#!#1996-04-15 14:30:00.0
 27#!#Time 24hr No MS#!#1996-04-15 14:30:20#!#1996-04-15 14:30:20.0
@@ -1406,9 +1398,7 @@ SET DATEFORMAT dmy;
 GO
 EXEC InsertDateTimeConversionTest 'DMY Format', '16/06/2023 14:30:20.123';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "16/06/2023 14:30:20.123")~~
+~~ROW COUNT: 1~~
 
 
 SET DATEFORMAT ymd;
@@ -1547,6 +1537,7 @@ int#!#nvarchar#!#nvarchar#!#datetime#!#nvarchar
 20#!#Full Month Name#!#June 16, 2023 14:30:20.123#!#2023-06-16 14:30:20.123#!#2023-06-16 14:30:20.123
 21#!#Abbreviated Month#!#Jun 16, 2023 14:30:20.123#!#2023-06-16 14:30:20.123#!#2023-06-16 14:30:20.123
 22#!#MDY Format#!#06/16/2023 14:30:20.123#!#2023-06-16 14:30:20.123#!#2023-06-16 14:30:20.123
+23#!#DMY Format#!#16/06/2023 14:30:20.123#!#2023-06-16 14:30:20.123#!#2023-06-16 14:30:20.123
 24#!#YMD Format#!#2023/06/16 14:30:20.123#!#2023-06-16 14:30:20.123#!#2023-06-16 14:30:20.123
 25#!#Round 997ms#!#2023-06-16 14:30:20.997#!#2023-06-16 14:30:20.997#!#2023-06-16 14:30:20.997
 26#!#Round 993ms#!#2023-06-16 14:30:20.993#!#2023-06-16 14:30:20.993#!#2023-06-16 14:30:20.993
@@ -2123,9 +2114,7 @@ SET DATEFORMAT dmy;
 INSERT INTO UDDTDateTimeTest (ID, RegularDateTime, BusinessDateTimeCol, HistoricalDateTimeCol)
 VALUES (8, '21/06/2023 15:30:20.123', '21/06/2023 15:30:20.123', '04/07/1776 12:00:00');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "21/06/2023 15:30:20.123")~~
+~~ROW COUNT: 1~~
 
 
 SET DATEFORMAT mdy;
@@ -2162,6 +2151,7 @@ GO
 ~~START~~
 int#!#datetime#!#datetime#!#datetime
 7#!#2023-06-21 15:30:20.123#!#2023-06-21 15:30:20.123#!#1776-07-04 12:00:00.0
+8#!#2023-06-21 15:30:20.123#!#2023-06-21 15:30:20.123#!#1776-07-04 12:00:00.0
 9#!#2023-06-16 14:30:20.123#!#2023-06-16 14:30:20.123#!#2000-01-01 00:00:00.0
 10#!#2023-06-16 14:30:20.997#!#2023-06-16 14:30:20.997#!#2000-01-01 00:00:00.997
 ~~END~~
@@ -11014,9 +11004,10 @@ datetime
 2023-06-15 14:30:20.123
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: date/time field value out of range: "15/06/2023 14:30:20.123")~~
+~~START~~
+datetime
+2023-06-15 14:30:20.123
+~~END~~
 
 SET DATEFORMAT mdy;
 GO

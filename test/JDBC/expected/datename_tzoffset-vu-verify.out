@@ -164,7 +164,7 @@ GO
 varchar#!#varchar#!#varchar#!#varchar#!#nvarchar
 DATEFIRST#!#1#!#2025-01-05#!#week#!#1
 DATEFIRST#!#7#!#2025-01-05#!#week#!#2
-DATEFORMAT#!#dmy#!#03-06-2025#!#month#!#March
+DATEFORMAT#!#dmy#!#03-06-2025#!#month#!#June
 DATEFORMAT#!#mdy#!#03-06-2025#!#month#!#March
 DATEFORMAT#!#ydm#!#2025-03-06#!#month#!#March
 DATEFORMAT#!#ymd#!#2025-03-06#!#month#!#March
@@ -188,6 +188,7 @@ GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#int
 DATEFIRST#!#2025-01-05#!#week#!#2
+DATEFORMAT#!#03-06-2025#!#month#!#2
 ~~END~~
 
 

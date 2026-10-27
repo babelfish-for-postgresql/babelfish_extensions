@@ -1,0 +1,824 @@
+-- The session's date order decides how CAST and CONVERT without a style read
+-- date strings
+SET DATEFORMAT dmy
+GO
+
+SELECT * FROM set_dateformat_v ORDER BY id
+GO
+~~START~~
+int#!#varchar#!#date#!#datetime#!#date#!#datetime
+1#!#01/02/2026#!#2026-02-01#!#2026-02-01 00:00:00.0#!#2026-02-01#!#2026-02-01 00:00:00.0
+2#!#13/02/2026#!#2026-02-13#!#2026-02-13 00:00:00.0#!#2026-02-13#!#2026-02-13 00:00:00.0
+3#!#02/13/2026#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+SET DATEFORMAT mdy
+GO
+
+SELECT * FROM set_dateformat_v ORDER BY id
+GO
+~~START~~
+int#!#varchar#!#date#!#datetime#!#date#!#datetime
+1#!#01/02/2026#!#2026-01-02#!#2026-01-02 00:00:00.0#!#2026-01-02#!#2026-01-02 00:00:00.0
+2#!#13/02/2026#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#02/13/2026#!#2026-02-13#!#2026-02-13 00:00:00.0#!#2026-02-13#!#2026-02-13 00:00:00.0
+~~END~~
+
+
+SET DATEFORMAT ymd
+GO
+
+SELECT CAST('2026/01/02' AS DATE), CONVERT(DATETIME, '2026-01-02'), CAST('26/01/02' AS DATE)
+GO
+~~START~~
+date#!#datetime#!#date
+2026-01-02#!#2026-01-02 00:00:00.0#!#2026-01-02
+~~END~~
+
+
+-- Under ymd, CONVERT without a style reads a year at the end of the string as
+-- month, day, year, for every type and separator
+SELECT CONVERT(DATE, '01/02/2026'), CONVERT(DATETIME2, '01/02/2026'), CONVERT(DATETIMEOFFSET, '01/02/2026'),
+	CONVERT(TIME, '01/02/2026'), CONVERT(DATETIME, '01/02/2026'), CONVERT(SMALLDATETIME, '01/02/2026')
+GO
+~~START~~
+date#!#datetime2#!#datetimeoffset#!#time#!#datetime#!#smalldatetime
+2026-01-02#!#2026-01-02 00:00:00.0000000#!#2026-01-02 00:00:00.0000000 +00:00#!#00:00:00.0000000#!#2026-01-02 00:00:00.0#!#2026-01-02 00:00:00.0
+~~END~~
+
+
+SELECT CONVERT(DATE, '01-02-2026'), CONVERT(DATETIME2, '01.02.2026'), CONVERT(DATETIMEOFFSET, '01-02-2026'),
+	CONVERT(TIME, '01.02.2026'), CONVERT(DATETIME, '01-02-2026'), CONVERT(SMALLDATETIME, '01.02.2026')
+GO
+~~START~~
+date#!#datetime2#!#datetimeoffset#!#time#!#datetime#!#smalldatetime
+2026-01-02#!#2026-01-02 00:00:00.0000000#!#2026-01-02 00:00:00.0000000 +00:00#!#00:00:00.0000000#!#2026-01-02 00:00:00.0#!#2026-01-02 00:00:00.0
+~~END~~
+
+
+SELECT CONVERT(DATE, '01/02/2026 10:30:15'), CONVERT(DATETIME2, '01/02/2026 10:30:15'),
+	CONVERT(DATETIMEOFFSET, '01/02/2026 10:30:15 +01:00'), CONVERT(TIME, '01/02/2026 10:30:15'),
+	CONVERT(DATETIME, '01/02/2026 10:30:15'), CONVERT(SMALLDATETIME, '01/02/2026 10:30:15')
+GO
+~~START~~
+date#!#datetime2#!#datetimeoffset#!#time#!#datetime#!#smalldatetime
+2026-01-02#!#2026-01-02 10:30:15.0000000#!#2026-01-02 10:30:15.0000000 +01:00#!#10:30:15.0000000#!#2026-01-02 10:30:15.0#!#2026-01-02 10:30:00.0
+~~END~~
+
+
+SELECT CONVERT(DATE, '12/31/2026'), CONVERT(DATETIME2, '12-31-2026'), CONVERT(DATETIMEOFFSET, '12.31.2026')
+GO
+~~START~~
+date#!#datetime2#!#datetimeoffset
+2026-12-31#!#2026-12-31 00:00:00.0000000#!#2026-12-31 00:00:00.0000000 +00:00
+~~END~~
+
+
+DECLARE @s VARCHAR(30) = '03/04/2026'
+SELECT CONVERT(DATE, @s), CONVERT(DATETIME2, @s), CONVERT(DATETIMEOFFSET, @s), CONVERT(TIME, @s)
+GO
+~~START~~
+date#!#datetime2#!#datetimeoffset#!#time
+2026-03-04#!#2026-03-04 00:00:00.0000000#!#2026-03-04 00:00:00.0000000 +00:00#!#00:00:00.0000000
+~~END~~
+
+
+-- A year at the start of the string, or a style, is not affected
+SELECT CONVERT(DATE, '2026/01/02'), CONVERT(DATETIME2, '26/01/02'), CONVERT(DATE, '01/02/2026', 103),
+	CONVERT(DATETIME2, '01.02.2026', 104)
+GO
+~~START~~
+date#!#datetime2#!#date#!#datetime2
+2026-01-02#!#2026-01-02 00:00:00.0000000#!#2026-02-01#!#2026-02-01 00:00:00.0000000
+~~END~~
+
+
+-- Known difference: SQL Server reads the string of a CAST as month, day, year
+-- too, but Babelfish raises error 33557097
+SELECT CAST('01/02/2026' AS DATE)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "01/02/2026")~~
+
+
+SELECT CAST('01/02/2026' AS DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "01/02/2026")~~
+
+
+-- Every date and time type follows it
+SET DATEFORMAT dmy
+GO
+
+SELECT CAST('01/02/2026' AS DATE), CAST('01/02/2026' AS DATETIME), CAST('01/02/2026' AS DATETIME2),
+	CAST('01/02/2026' AS SMALLDATETIME), CAST('01/02/2026 10:00 +01:00' AS DATETIMEOFFSET)
+GO
+~~START~~
+date#!#datetime#!#datetime2#!#smalldatetime#!#datetimeoffset
+2026-02-01#!#2026-02-01 00:00:00.0#!#2026-02-01 00:00:00.0000000#!#2026-02-01 00:00:00.0#!#2026-02-01 10:00:00.0000000 +01:00
+~~END~~
+
+
+-- So do implicit conversions and functions taking a date string
+SELECT DATEPART(month, '01/02/2026'), ISDATE('13/02/2026'), ISDATE('02/13/2026')
+GO
+~~START~~
+int#!#int#!#int
+2#!#1#!#0
+~~END~~
+
+
+DECLARE @d DATE = '13/02/2026'
+SELECT @d
+GO
+~~START~~
+date
+2026-02-13
+~~END~~
+
+
+-- Unseparated dates are always ymd
+SELECT CAST('20260102' AS DATE)
+GO
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+-- Objects created before the SET follow it too
+SELECT dbo.set_dateformat_f('01/02/2026')
+GO
+~~START~~
+date
+2026-02-01
+~~END~~
+
+
+EXEC set_dateformat_p '01/02/2026'
+GO
+~~START~~
+date#!#datetime
+2026-02-01#!#2026-02-01 00:00:00.0
+~~END~~
+
+
+SET DATEFORMAT mdy
+GO
+
+-- The value can be upper case, quoted or a variable
+SET DATEFORMAT DMY
+GO
+
+SELECT CAST('01/02/2026' AS DATE)
+GO
+~~START~~
+date
+2026-02-01
+~~END~~
+
+
+SET DATEFORMAT 'ymd'
+GO
+
+SELECT CAST('2026/01/02' AS DATE)
+GO
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+DECLARE @f VARCHAR(10) = 'dmy'
+SET DATEFORMAT @f
+SELECT CAST('01/02/2026' AS DATE)
+GO
+~~START~~
+date
+2026-02-01
+~~END~~
+
+
+SET DATEFORMAT mdy
+GO
+
+-- A SET inside a procedure or EXEC() is reverted when it returns
+EXEC set_dateformat_p_dmy '01/02/2026'
+SELECT CAST('01/02/2026' AS DATE) AS after_proc
+GO
+~~START~~
+date
+2026-02-01
+~~END~~
+
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+EXEC('SET DATEFORMAT dmy; SELECT CAST(''01/02/2026'' AS DATE) AS inside_exec')
+SELECT CAST('01/02/2026' AS DATE) AS after_exec
+GO
+~~START~~
+date
+2026-02-01
+~~END~~
+
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+EXEC sp_executesql N'SELECT CAST(@s AS DATE) AS sp_executesql_dmy', N'@s VARCHAR(30)', '01/02/2026'
+GO
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+-- It is not undone by ROLLBACK
+BEGIN TRAN
+SET DATEFORMAT dmy
+ROLLBACK
+SELECT CAST('01/02/2026' AS DATE) AS after_rollback
+GO
+~~START~~
+date
+2026-02-01
+~~END~~
+
+
+SET DATEFORMAT mdy
+GO
+
+-- A cached plan is parsed again when the date order changes
+EXEC set_dateformat_p_literal
+GO
+~~START~~
+date#!#datetime
+2026-01-02#!#2026-01-02 00:00:00.0
+~~END~~
+
+
+SET DATEFORMAT dmy
+GO
+
+EXEC set_dateformat_p_literal
+GO
+~~START~~
+date#!#datetime
+2026-02-01#!#2026-02-01 00:00:00.0
+~~END~~
+
+
+-- So is a statement in a loop, including when the order goes back to one it
+-- had before
+DECLARE @i INT = 0, @f VARCHAR(3);
+WHILE @i < 5
+BEGIN
+	SET @f = CASE @i WHEN 0 THEN 'mdy' WHEN 1 THEN 'dmy' WHEN 2 THEN 'ymd' WHEN 3 THEN 'dmy' ELSE 'mdy' END;
+	SET DATEFORMAT @f;
+	SELECT @f AS dateformat, CAST('01/02/03' AS DATE) AS cast_date, CONVERT(DATE, '01/02/03') AS convert_date;
+	SET @i += 1;
+END
+GO
+~~START~~
+varchar#!#date#!#date
+mdy#!#2003-01-02#!#2003-01-02
+~~END~~
+
+~~START~~
+varchar#!#date#!#date
+dmy#!#2003-02-01#!#2003-02-01
+~~END~~
+
+~~START~~
+varchar#!#date#!#date
+ymd#!#2001-02-03#!#2001-02-03
+~~END~~
+
+~~START~~
+varchar#!#date#!#date
+dmy#!#2003-02-01#!#2003-02-01
+~~END~~
+
+~~START~~
+varchar#!#date#!#date
+mdy#!#2003-01-02#!#2003-01-02
+~~END~~
+
+
+-- A literal that is not valid in the new order raises its error each time the
+-- procedure runs with that order, and the procedure works again with an order
+-- it is valid in
+SET DATEFORMAT dmy
+EXEC set_dateformat_p_reparse
+GO
+~~START~~
+date#!#date
+2026-01-13#!#2026-02-01
+~~END~~
+
+
+SET DATEFORMAT mdy
+EXEC set_dateformat_p_reparse
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "13/01/26")~~
+
+
+SET DATEFORMAT ymd
+EXEC set_dateformat_p_reparse
+GO
+~~START~~
+date#!#date
+2013-01-26#!#2001-02-26
+~~END~~
+
+
+SET DATEFORMAT mdy
+EXEC set_dateformat_p_reparse
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "13/01/26")~~
+
+
+EXEC set_dateformat_p_reparse
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "13/01/26")~~
+
+
+SET DATEFORMAT dmy
+EXEC set_dateformat_p_reparse
+GO
+~~START~~
+date#!#date
+2026-01-13#!#2026-02-01
+~~END~~
+
+
+SET DATEFORMAT mdy
+GO
+
+-- A procedure that is parsed again for another reason, such as ALTER TABLE,
+-- is parsed with the date order at that time
+EXEC set_dateformat_p_ddl
+GO
+~~START~~
+date#!#datetime#!#int
+2003-01-02#!#2003-01-02 00:00:00.0#!#0
+~~END~~
+
+
+SET DATEFORMAT dmy
+GO
+
+ALTER TABLE set_dateformat_t_ddl ADD b INT
+GO
+
+EXEC set_dateformat_p_ddl
+GO
+~~START~~
+date#!#datetime#!#int
+2003-02-01#!#2003-02-01 00:00:00.0#!#0
+~~END~~
+
+
+SET DATEFORMAT mdy
+EXEC set_dateformat_p_ddl
+GO
+~~START~~
+date#!#datetime#!#int
+2003-01-02#!#2003-01-02 00:00:00.0#!#0
+~~END~~
+
+
+SET DATEFORMAT ymd
+GO
+
+ALTER TABLE set_dateformat_t_ddl DROP COLUMN b
+GO
+
+EXEC set_dateformat_p_ddl
+GO
+~~START~~
+date#!#datetime#!#int
+2001-02-03#!#2001-02-03 00:00:00.0#!#0
+~~END~~
+
+
+SET DATEFORMAT dmy
+EXEC set_dateformat_p_ddl
+GO
+~~START~~
+date#!#datetime#!#int
+2003-02-01#!#2003-02-01 00:00:00.0#!#0
+~~END~~
+
+
+SET DATEFORMAT mdy
+EXEC set_dateformat_p_ddl
+GO
+~~START~~
+date#!#datetime#!#int
+2003-01-02#!#2003-01-02 00:00:00.0#!#0
+~~END~~
+
+
+-- The order set inside a procedure does not reach the statements around the
+-- call, whether they were parsed before or after it
+DECLARE @i INT = 0
+WHILE @i < 3
+BEGIN
+	SELECT 'before' AS who, CAST('01/02/2026' AS DATE) AS cast_date, CONVERT(DATETIME, '01/02/2026') AS convert_datetime
+	EXEC set_dateformat_p_scope
+	SELECT 'after' AS who, CAST('01/02/2026' AS DATE) AS cast_date, CONVERT(DATETIME, '01/02/2026') AS convert_datetime
+	SET @i += 1
+END
+GO
+~~START~~
+varchar#!#date#!#datetime
+before#!#2026-01-02#!#2026-01-02 00:00:00.0
+~~END~~
+
+~~START~~
+varchar#!#date#!#datetime
+inner#!#2026-02-01#!#2026-02-01 00:00:00.0
+~~END~~
+
+~~START~~
+varchar#!#date#!#datetime
+after#!#2026-01-02#!#2026-01-02 00:00:00.0
+~~END~~
+
+~~START~~
+varchar#!#date#!#datetime
+before#!#2026-01-02#!#2026-01-02 00:00:00.0
+~~END~~
+
+~~START~~
+varchar#!#date#!#datetime
+inner#!#2026-02-01#!#2026-02-01 00:00:00.0
+~~END~~
+
+~~START~~
+varchar#!#date#!#datetime
+after#!#2026-01-02#!#2026-01-02 00:00:00.0
+~~END~~
+
+~~START~~
+varchar#!#date#!#datetime
+before#!#2026-01-02#!#2026-01-02 00:00:00.0
+~~END~~
+
+~~START~~
+varchar#!#date#!#datetime
+inner#!#2026-02-01#!#2026-02-01 00:00:00.0
+~~END~~
+
+~~START~~
+varchar#!#date#!#datetime
+after#!#2026-01-02#!#2026-01-02 00:00:00.0
+~~END~~
+
+
+SET DATEFORMAT ymd
+GO
+
+SELECT 'before' AS who, CAST('2026/01/02' AS DATE) AS cast_date, CONVERT(DATE, '01/02/03') AS convert_date
+EXEC set_dateformat_p_scope
+SELECT 'after' AS who, CAST('2026/01/02' AS DATE) AS cast_date, CONVERT(DATE, '01/02/03') AS convert_date
+GO
+~~START~~
+varchar#!#date#!#date
+before#!#2026-01-02#!#2001-02-03
+~~END~~
+
+~~START~~
+varchar#!#date#!#datetime
+inner#!#2026-02-01#!#2026-02-01 00:00:00.0
+~~END~~
+
+~~START~~
+varchar#!#date#!#date
+after#!#2026-01-02#!#2001-02-03
+~~END~~
+
+
+SET DATEFORMAT mdy
+GO
+
+-- Invalid values raise error 2741, which ends only the statement
+SET DATEFORMAT abc
+GO
+~~ERROR (Code: 2741)~~
+
+~~ERROR (Message: SET DATEFORMAT date order 'abc' is invalid.)~~
+
+
+SET DATEFORMAT 'xyz'
+GO
+~~ERROR (Code: 2741)~~
+
+~~ERROR (Message: SET DATEFORMAT date order 'xyz' is invalid.)~~
+
+
+DECLARE @f VARCHAR(10) = 'Nope'
+SET DATEFORMAT @f
+SELECT CAST('01/02/2026' AS DATE) AS after_error
+GO
+~~ERROR (Code: 2741)~~
+
+~~ERROR (Message: SET DATEFORMAT date order 'Nope' is invalid.)~~
+
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+BEGIN TRY
+	SET DATEFORMAT dmyx
+END TRY
+BEGIN CATCH
+	SELECT ERROR_NUMBER(), ERROR_MESSAGE()
+END CATCH
+GO
+~~START~~
+int#!#nvarchar
+2741#!#SET DATEFORMAT date order 'dmyx' is invalid.
+~~END~~
+
+
+-- So does a NULL variable, caught or not, and the date order stays as it was
+SET DATEFORMAT dmy
+GO
+
+DECLARE @f VARCHAR(10) = NULL
+BEGIN TRY
+	SET DATEFORMAT @f
+END TRY
+BEGIN CATCH
+	SELECT ERROR_NUMBER(), ERROR_MESSAGE()
+END CATCH
+SELECT CAST('01/02/2026' AS DATE) AS after_caught
+GO
+~~START~~
+int#!#nvarchar
+2741#!#SET DATEFORMAT date order '' is invalid.
+~~END~~
+
+~~START~~
+date
+2026-02-01
+~~END~~
+
+
+DECLARE @f VARCHAR(10) = NULL
+SET DATEFORMAT @f
+SELECT 'same batch' AS batch, CAST('01/02/2026' AS DATE) AS after_uncaught
+GO
+~~ERROR (Code: 2741)~~
+
+~~ERROR (Message: SET DATEFORMAT date order '' is invalid.)~~
+
+~~START~~
+varchar#!#date
+same batch#!#2026-02-01
+~~END~~
+
+
+SELECT 'next batch' AS batch, CAST('01/02/2026' AS DATE) AS after_uncaught
+GO
+~~START~~
+varchar#!#date
+next batch#!#2026-02-01
+~~END~~
+
+
+SET DATEFORMAT mdy
+GO
+
+-- ydm, myd and dym are accepted while escape_hatch_session_settings is
+-- ignore.  CONVERT without a style reads all six orders.
+SET DATEFORMAT ydm
+GO
+
+SELECT CONVERT(DATETIME, '2-3-4'), CONVERT(DATETIME, '2026/13/02')
+GO
+~~START~~
+datetime#!#datetime
+2002-04-03 00:00:00.0#!#2026-02-13 00:00:00.0
+~~END~~
+
+
+-- The date, time, datetime2 and datetimeoffset types do not allow ydm
+SELECT CONVERT(DATE, '2-3-4')
+GO
+~~ERROR (Code: 9808)~~
+
+~~ERROR (Message: This session's YDM date format is not supported when converting from this character string format to date, time, datetime2 or datetimeoffset. Change the session's date format or provide a style to the explicit conversion.)~~
+
+
+BEGIN TRY
+	SELECT CONVERT(DATETIME2, '2-3-4')
+END TRY
+BEGIN CATCH
+	SELECT ERROR_NUMBER()
+END CATCH
+GO
+~~START~~
+int
+9808
+~~END~~
+
+
+SET DATEFORMAT myd
+GO
+
+SELECT CONVERT(DATETIME, '2-3-4'), CONVERT(DATE, '2-3-4')
+GO
+~~START~~
+datetime#!#date
+2003-02-04 00:00:00.0#!#2003-02-04
+~~END~~
+
+
+SET DATEFORMAT dym
+GO
+
+SELECT CONVERT(DATETIME, '2-3-4'), CONVERT(DATE, '2-3-4')
+GO
+~~START~~
+datetime#!#date
+2003-04-02 00:00:00.0#!#2003-04-02
+~~END~~
+
+
+SET DATEFORMAT mdy
+GO
+
+-- With the escape hatch set to strict they raise an error instead, and the
+-- date order stays as it was
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'strict'
+GO
+
+SET DATEFORMAT ydm
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Settings other than "mdy", "dmy" and "ymd" are not allowed for option DATEFORMAT. Please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
+
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'ignore'
+GO
+
+SELECT CAST('01/02/2026' AS DATE)
+GO
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+-- Styles fix the order, so PERSISTED computed columns and filtered indexes that
+-- use them give the same result under every DATEFORMAT.  They are created here,
+-- not in the prepare file, because a filtered index that exists before an
+-- upgrade keeps the predicate it had then.
+CREATE TABLE set_dateformat_t_style (id INT, s103 VARCHAR(30), s121 VARCHAR(30), d DATE,
+	c103 AS CONVERT(DATE, s103, 103) PERSISTED, c121 AS CONVERT(DATETIME, s121, 121) PERSISTED)
+GO
+
+-- Only the rows from 1 February on are in the index and have to be unique
+CREATE UNIQUE INDEX set_dateformat_i_style ON set_dateformat_t_style (id) WHERE d >= CONVERT(DATE, '01/02/2026', 103)
+GO
+
+SET DATEFORMAT mdy
+INSERT INTO set_dateformat_t_style (id, s103, s121, d)
+VALUES (1, '01/02/2026', '2026-01-02 10:30:15.123', '2026-01-15'), (1, '31/12/2026', '2026-12-31 23:59:59.997', '2026-02-15')
+GO
+~~ROW COUNT: 2~~
+
+
+SET DATEFORMAT dmy
+INSERT INTO set_dateformat_t_style (id, s103, s121, d)
+VALUES (2, '01/02/2026', '2026-01-02 10:30:15.123', '2026-01-15'), (2, '31/12/2026', '2026-12-31 23:59:59.997', '2026-02-15')
+GO
+~~ROW COUNT: 2~~
+
+
+-- A second row from 1 February on is a duplicate, under either order
+BEGIN TRY
+	INSERT INTO set_dateformat_t_style (id, s103, s121, d) VALUES (2, '02/03/2026', '2026-03-02 00:00:00.000', '2026-03-01')
+END TRY
+BEGIN CATCH
+	SELECT CASE WHEN ERROR_NUMBER() IN (2601, 2627) THEN 'duplicate key' ELSE 'error ' + CAST(ERROR_NUMBER() AS VARCHAR(10)) END AS dmy
+END CATCH
+GO
+~~START~~
+varchar
+duplicate key
+~~END~~
+
+
+SET DATEFORMAT mdy
+BEGIN TRY
+	INSERT INTO set_dateformat_t_style (id, s103, s121, d) VALUES (1, '02/03/2026', '2026-03-02 00:00:00.000', '2026-03-01')
+END TRY
+BEGIN CATCH
+	SELECT CASE WHEN ERROR_NUMBER() IN (2601, 2627) THEN 'duplicate key' ELSE 'error ' + CAST(ERROR_NUMBER() AS VARCHAR(10)) END AS mdy
+END CATCH
+GO
+~~START~~
+varchar
+duplicate key
+~~END~~
+
+
+-- The values are the same under dmy and mdy
+SET DATEFORMAT dmy
+SELECT id, c103, c121 FROM set_dateformat_t_style ORDER BY id, d
+SELECT id, d FROM set_dateformat_t_style WHERE d >= CONVERT(DATE, '01/02/2026', 103) ORDER BY id
+GO
+~~START~~
+int#!#date#!#datetime
+1#!#2026-02-01#!#2026-01-02 10:30:15.123
+1#!#2026-12-31#!#2026-12-31 23:59:59.997
+2#!#2026-02-01#!#2026-01-02 10:30:15.123
+2#!#2026-12-31#!#2026-12-31 23:59:59.997
+~~END~~
+
+~~START~~
+int#!#date
+1#!#2026-02-15
+2#!#2026-02-15
+~~END~~
+
+
+SET DATEFORMAT mdy
+SELECT id, c103, c121 FROM set_dateformat_t_style ORDER BY id, d
+SELECT id, d FROM set_dateformat_t_style WHERE d >= CONVERT(DATE, '01/02/2026', 103) ORDER BY id
+GO
+~~START~~
+int#!#date#!#datetime
+1#!#2026-02-01#!#2026-01-02 10:30:15.123
+1#!#2026-12-31#!#2026-12-31 23:59:59.997
+2#!#2026-02-01#!#2026-01-02 10:30:15.123
+2#!#2026-12-31#!#2026-12-31 23:59:59.997
+~~END~~
+
+~~START~~
+int#!#date
+1#!#2026-02-15
+2#!#2026-02-15
+~~END~~
+
+
+DROP TABLE set_dateformat_t_style
+GO
+
+-- A prepared statement follows the date order of each execution, for a literal
+-- in the statement as well as for a parameter
+SET DATEFORMAT mdy
+GO
+
+prepst#!#SELECT CAST('01/02/2026' AS DATE) AS literal, CONVERT(DATE, ?) AS param#!#VARCHAR|-|s|-|01/02/2026
+~~START~~
+date#!#date
+2026-01-02#!#2026-01-02
+~~END~~
+
+GO
+
+SET DATEFORMAT dmy
+GO
+
+prepst#!#exec#!#VARCHAR|-|s|-|01/02/2026
+~~START~~
+date#!#date
+2026-02-01#!#2026-02-01
+~~END~~
+
+GO
+
+SET DATEFORMAT mdy
+GO
+
+prepst#!#exec#!#VARCHAR|-|s|-|01/02/2026
+~~START~~
+date#!#date
+2026-01-02#!#2026-01-02
+~~END~~
+
+GO

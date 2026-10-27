@@ -1,0 +1,433 @@
+-- tsql
+-- Without SET DATEFORMAT, the setting shows the order from DateStyle
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat;
+GO
+~~START~~
+text
+mdy
+~~END~~
+
+
+-- Until SET DATEFORMAT is used, a change of DateStyle changes how cached plans
+-- and new statements read date strings
+CREATE PROCEDURE set_dateformat_guc_p AS
+SELECT CAST('01/02/2026' AS DATE) AS cast_date, CONVERT(DATETIME, '01/02/2026') AS convert_datetime;
+GO
+
+EXEC set_dateformat_guc_p;
+GO
+~~START~~
+date#!#datetime
+2026-01-02#!#2026-01-02 00:00:00.0
+~~END~~
+
+
+DECLARE @x VARCHAR(30) = (SELECT set_config('datestyle', 'ISO, DMY', false));
+GO
+
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat;
+EXEC set_dateformat_guc_p;
+SELECT CAST('01/02/2026' AS DATE) AS cast_date;
+GO
+~~START~~
+text
+dmy
+~~END~~
+
+~~START~~
+date#!#datetime
+2026-02-01#!#2026-02-01 00:00:00.0
+~~END~~
+
+~~START~~
+date
+2026-02-01
+~~END~~
+
+
+DECLARE @x VARCHAR(30) = (SELECT set_config('datestyle', 'ISO, MDY', false));
+GO
+
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat;
+EXEC set_dateformat_guc_p;
+SELECT CAST('01/02/2026' AS DATE) AS cast_date;
+GO
+~~START~~
+text
+mdy
+~~END~~
+
+~~START~~
+date#!#datetime
+2026-01-02#!#2026-01-02 00:00:00.0
+~~END~~
+
+~~START~~
+date
+2026-01-02
+~~END~~
+
+
+DECLARE @i INT = 0, @x VARCHAR(30);
+WHILE @i < 4
+BEGIN
+	SET @x = (SELECT set_config('datestyle', CASE WHEN @i % 2 = 0 THEN 'ISO, DMY' ELSE 'ISO, MDY' END, false));
+	SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat, CAST('01/02/2026' AS DATE) AS cast_date;
+	SET @i += 1;
+END
+GO
+~~START~~
+text#!#date
+dmy#!#2026-02-01
+~~END~~
+
+~~START~~
+text#!#date
+mdy#!#2026-01-02
+~~END~~
+
+~~START~~
+text#!#date
+dmy#!#2026-02-01
+~~END~~
+
+~~START~~
+text#!#date
+mdy#!#2026-01-02
+~~END~~
+
+
+-- After SET DATEFORMAT, DateStyle no longer matters
+SET DATEFORMAT dmy;
+GO
+
+DECLARE @x VARCHAR(30) = (SELECT set_config('datestyle', 'ISO, YMD', false));
+GO
+
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat;
+EXEC set_dateformat_guc_p;
+GO
+~~START~~
+text
+dmy
+~~END~~
+
+~~START~~
+date#!#datetime
+2026-02-01#!#2026-02-01 00:00:00.0
+~~END~~
+
+
+DECLARE @x VARCHAR(30) = (SELECT set_config('datestyle', 'ISO, MDY', false));
+GO
+
+DROP PROCEDURE set_dateformat_guc_p;
+GO
+
+SELECT current_setting('datestyle') AS datestyle;
+GO
+~~START~~
+text
+ISO, MDY
+~~END~~
+
+
+CREATE TABLE set_dateformat_guc_t (id INT, s VARCHAR(30));
+GO
+
+INSERT INTO set_dateformat_guc_t VALUES (1, '01/02/2026'), (2, '13/02/2026');
+GO
+~~ROW COUNT: 2~~
+
+
+-- A configuration reload must not change the date order
+SET DATEFORMAT dmy;
+GO
+
+-- psql
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+SELECT id, CAST(s AS DATE) AS cast_date, CONVERT(DATE, s) AS convert_date, current_setting('babelfishpg_tsql.dateformat') AS dateformat FROM set_dateformat_guc_t ORDER BY id;
+GO
+~~START~~
+int#!#date#!#date#!#text
+1#!#2026-02-01#!#2026-02-01#!#dmy
+2#!#2026-02-13#!#2026-02-13#!#dmy
+~~END~~
+
+
+-- A parallel worker takes the date order of the leader, even if the escape
+-- hatch has changed since an unsupported order was accepted
+DECLARE @x VARCHAR(10) = (SELECT set_config('debug_parallel_query', 'on', false));
+GO
+
+EXEC sp_babelfish_configure 'escape_hatch_session_settings', 'ignore';
+GO
+
+SET DATEFORMAT dym;
+GO
+
+EXEC sp_babelfish_configure 'escape_hatch_session_settings', 'strict';
+GO
+
+SELECT count(*) FROM set_dateformat_guc_t;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+EXEC sp_babelfish_configure 'escape_hatch_session_settings', 'ignore';
+GO
+
+SET DATEFORMAT dmy;
+GO
+
+SELECT id, CAST(s AS DATE) AS cast_date FROM set_dateformat_guc_t ORDER BY id;
+GO
+~~START~~
+int#!#date
+1#!#2026-02-01
+2#!#2026-02-13
+~~END~~
+
+
+-- Back to the server's setting of debug_parallel_query
+DECLARE @v VARCHAR(20) = (SELECT reset_val FROM pg_settings WHERE name = 'debug_parallel_query');
+DECLARE @x VARCHAR(20) = (SELECT set_config('debug_parallel_query', @v, false));
+GO
+
+SET DATEFORMAT mdy;
+GO
+
+DROP TABLE set_dateformat_guc_t;
+GO
+
+-- psql
+-- DateStyle sets the order until SET DATEFORMAT is used
+SET datestyle = 'ISO, DMY';
+GO
+
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat, '01/02/2026'::date AS date_value;
+GO
+~~START~~
+text#!#date
+dmy#!#2026-02-01
+~~END~~
+
+
+-- Setting DateStyle again keeps the order from SET DATEFORMAT
+SET babelfishpg_tsql.dateformat = 'mdy';
+GO
+
+SET datestyle = 'ISO, DMY';
+GO
+
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat, '01/02/2026'::date AS date_value;
+GO
+~~START~~
+text#!#date
+mdy#!#2026-01-02
+~~END~~
+
+
+-- So does rolling back a change of DateStyle
+BEGIN;
+GO
+
+SET datestyle = 'ISO, YMD';
+GO
+
+ROLLBACK;
+GO
+
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat, '01/02/2026'::date AS date_value;
+GO
+~~START~~
+text#!#date
+mdy#!#2026-01-02
+~~END~~
+
+
+-- After RESET, the order from DateStyle applies again
+RESET babelfishpg_tsql.dateformat;
+GO
+
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat, '01/02/2026'::date AS date_value;
+GO
+~~START~~
+text#!#date
+dmy#!#2026-02-01
+~~END~~
+
+
+RESET datestyle;
+GO
+
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat, '01/02/2026'::date AS date_value;
+GO
+~~START~~
+text#!#date
+mdy#!#2026-01-02
+~~END~~
+
+
+-- tsql
+-- A filtered index keeps the predicate as it was when the index was created, so
+-- that sessions with another date order fill and use the index by the same rule
+CREATE TABLE set_dateformat_guc_fi (id INT, d DATE);
+GO
+
+CREATE INDEX set_dateformat_guc_fi_ix ON set_dateformat_guc_fi (d) WHERE d >= CONVERT(DATE, '01/02/2026');
+GO
+
+-- An invalid constant now fails when the index is created
+CREATE INDEX set_dateformat_guc_fi_bad ON set_dateformat_guc_fi (d) WHERE d >= CONVERT(DATE, '13/13/2026');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a varchar data type to a date data type resulted in an out-of-range value.)~~
+
+
+-- The same for the cast that a comparison adds to a typed constant
+CREATE TABLE set_dateformat_guc_fi2 (id INT, d DATE, e DATE);
+GO
+
+CREATE INDEX set_dateformat_guc_fi2_n ON set_dateformat_guc_fi2 (d) WHERE d >= N'01/02/2026';
+GO
+
+CREATE INDEX set_dateformat_guc_fi2_in ON set_dateformat_guc_fi2 (e) WHERE e IN (N'01/02/2026', N'01/03/2026');
+GO
+
+INSERT INTO set_dateformat_guc_fi VALUES (1, '2026-01-15');
+INSERT INTO set_dateformat_guc_fi2 VALUES (1, '2026-01-15', '2026-01-02');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SET DATEFORMAT dmy;
+GO
+
+INSERT INTO set_dateformat_guc_fi VALUES (2, '2026-01-15');
+INSERT INTO set_dateformat_guc_fi2 VALUES (2, '2026-01-15', '2026-01-02');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat;
+GO
+~~START~~
+text
+dmy
+~~END~~
+
+
+-- psql
+-- The constants are read in the order of the session that created the indexes
+SELECT t.relname AS table_name, pg_get_expr(i.indpred, i.indrelid) AS predicate
+FROM pg_index i JOIN pg_class t ON t.oid = i.indrelid
+WHERE t.relname LIKE 'set\_dateformat\_guc\_fi%'
+ORDER BY 1, 2;
+GO
+~~START~~
+name#!#text
+set_dateformat_guc_fi#!#(d >= '2026-01-02'::date)
+set_dateformat_guc_fi2#!#(d >= '2026-01-02'::date)
+set_dateformat_guc_fi2#!#(e = ANY ('{2026-01-02,2026-01-03}'::date[]))
+~~END~~
+
+
+-- tsql password=12345678;applicationName=set_dateformat_guc_s2
+-- A second session, which has not read the index yet, starts with its own date
+-- order, not the one the first session has set
+SELECT current_setting('babelfishpg_tsql.dateformat') AS dateformat;
+GO
+~~START~~
+text
+mdy
+~~END~~
+
+
+SET DATEFORMAT dmy;
+GO
+
+DECLARE @x VARCHAR(10) = (SELECT set_config('enable_seqscan', 'off', false));
+GO
+
+-- Under dmy the constants are 1 February and 1 March, so no row matches.
+-- Under mdy they are 2 and 3 January, and both rows do.  The indexes hold the
+-- same rows for both.
+SELECT id, d FROM set_dateformat_guc_fi WHERE d >= CONVERT(DATE, '01/02/2026') ORDER BY id;
+SELECT id FROM set_dateformat_guc_fi2 WHERE d >= N'01/02/2026' ORDER BY id;
+SELECT id FROM set_dateformat_guc_fi2 WHERE e IN (N'01/02/2026', N'01/03/2026') ORDER BY id;
+GO
+~~START~~
+int#!#date
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+
+SET DATEFORMAT mdy;
+GO
+
+SELECT id, d FROM set_dateformat_guc_fi WHERE d >= CONVERT(DATE, '01/02/2026') ORDER BY id;
+SELECT id FROM set_dateformat_guc_fi2 WHERE d >= N'01/02/2026' ORDER BY id;
+SELECT id FROM set_dateformat_guc_fi2 WHERE e IN (N'01/02/2026', N'01/03/2026') ORDER BY id;
+GO
+~~START~~
+int#!#date
+1#!#2026-01-15
+2#!#2026-01-15
+~~END~~
+
+~~START~~
+int
+1
+2
+~~END~~
+
+~~START~~
+int
+1
+2
+~~END~~
+
+
+DECLARE @v VARCHAR(10) = (SELECT reset_val FROM pg_settings WHERE name = 'enable_seqscan');
+DECLARE @x VARCHAR(10) = (SELECT set_config('enable_seqscan', @v, false));
+GO
+
+-- tsql
+SET DATEFORMAT mdy;
+GO
+
+DROP TABLE set_dateformat_guc_fi;
+DROP TABLE set_dateformat_guc_fi2;
+GO

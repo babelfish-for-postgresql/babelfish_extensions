@@ -89,7 +89,7 @@ GO
 ~~ROW COUNT: 1~~
 
 
-    -- SET DATEFORMAT dmy (not supported, treated as mdy)
+    -- SET DATEFORMAT dmy
 SET DATEFORMAT dmy;
 GO
 INSERT INTO datename_stability_test (config_type, config_value, test_date, datepart, result)

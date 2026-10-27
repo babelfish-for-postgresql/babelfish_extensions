@@ -790,15 +790,16 @@ SELECT CONVERT(DATE, '2-3-4')
 GO
 ~~START~~
 date
-2004-02-03
+2004-03-02
 ~~END~~
 
 
 SELECT CONVERT(DATE, '22-03-2024')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The conversion of a varchar data type to a date data type resulted in an out-of-range value.)~~
+~~START~~
+date
+2024-03-22
+~~END~~
 
 
 SET DATEFORMAT 'YMD'
@@ -808,7 +809,7 @@ SELECT CONVERT(DATE, '2-3-4')
 GO
 ~~START~~
 date
-2004-02-03
+2002-03-04
 ~~END~~
 
 
@@ -827,15 +828,16 @@ SELECT CONVERT(DATE, '2-3-4')
 GO
 ~~START~~
 date
-2004-02-03
+2003-02-04
 ~~END~~
 
 
 SELECT CONVERT(DATE, '03-2024-22')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+date
+2024-03-22
+~~END~~
 
 
 SET DATEFORMAT 'DYM'
@@ -845,15 +847,16 @@ SELECT CONVERT(DATE, '2-3-4')
 GO
 ~~START~~
 date
-2004-02-03
+2003-04-02
 ~~END~~
 
 
 SELECT CONVERT(DATE, '22-2024-03')
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+date
+2024-03-22
+~~END~~
 
 
 SET DATEFORMAT 'YDM'
@@ -863,10 +866,9 @@ GO
 -- character string format to DATE, Hence following query should throw error
 SELECT CONVERT(DATE, '2-3-4')
 GO
-~~START~~
-date
-2004-02-03
-~~END~~
+~~ERROR (Code: 9808)~~
+
+~~ERROR (Message: This session's YDM date format is not supported when converting from this character string format to date, time, datetime2 or datetimeoffset. Change the session's date format or provide a style to the explicit conversion.)~~
 
 
 -- For DATE as follows, it will always be treated as YMD DATEFORMAT as YDM is not supported.

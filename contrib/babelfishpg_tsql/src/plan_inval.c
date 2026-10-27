@@ -13,6 +13,7 @@
 #include "parser/parser.h"
 #include "utils/plancache.h"
 
+#include "guc.h"
 #include "pltsql.h"
 
 const char *pltsql_identity_insert_name = "tsql_identity_insert";
@@ -22,7 +23,8 @@ const char *pltsql_identity_insert_name = "tsql_identity_insert";
  */
 typedef enum
 {
-	IDENTITY_INSERT
+	IDENTITY_INSERT,
+	DATEFORMAT
 } plan_info_enum_list;
 
 void		pltsql_add_guc_plan(CachedPlanSource *plansource);
@@ -31,6 +33,10 @@ bool		pltsql_check_guc_plan(CachedPlanSource *plansource);
 static void pltsql_initialize_identity_insert_plan(CachedPlanSource *plansource);
 static bool pltsql_revalidate_identity_insert_plan(CachedPlanSource *plansource,
 												   List *info_sublist);
+static void pltsql_initialize_dateformat_plan(CachedPlanSource *plansource);
+static void pltsql_record_dateformat(List *querytree_list, void *arg);
+static bool pltsql_revalidate_dateformat_plan(CachedPlanSource *plansource,
+											  List *info_sublist);
 
 /*
  * Add global variables or GUCs to the plan info list for revalidation use.
@@ -47,6 +53,7 @@ pltsql_add_guc_plan(CachedPlanSource *plansource)
 	Assert(CurrentMemoryContext == plansource->context);
 
 	pltsql_initialize_identity_insert_plan(plansource);
+	pltsql_initialize_dateformat_plan(plansource);
 }
 
 /*
@@ -76,6 +83,9 @@ pltsql_check_guc_plan(CachedPlanSource *plansource)
 			if (valid && enum_list == IDENTITY_INSERT)
 				valid = pltsql_revalidate_identity_insert_plan(plansource, info_sublist);
 		}
+
+		if (valid && enum_list == DATEFORMAT)
+			valid = pltsql_revalidate_dateformat_plan(plansource, info_sublist);
 
 		/* Return if invalidated */
 		if (!valid)
@@ -153,4 +163,56 @@ pltsql_revalidate_identity_insert_plan(CachedPlanSource *plansource,
 	}
 
 	return true;
+}
+
+/*
+ * Record the DATEFORMAT setting the query is parsed with.  The plan info isn't
+ * set up again when the query is parsed again, which can also happen for
+ * reasons other than this setting, so a post-rewrite hook records it then.
+ */
+static void
+pltsql_initialize_dateformat_plan(CachedPlanSource *plansource)
+{
+	List	   *dateformat_info_sublist = NIL;
+	char	   *dateformat;
+
+	dateformat = palloc(4);
+	pltsql_record_dateformat(NIL, dateformat);
+
+	dateformat_info_sublist = lappend(dateformat_info_sublist, (void *) DATEFORMAT);
+	dateformat_info_sublist = lappend(dateformat_info_sublist, dateformat);
+
+	plansource->pltsql_plan_info = lappend(plansource->pltsql_plan_info,
+										   dateformat_info_sublist);
+
+	if (plansource->postRewrite == NULL)
+		SetPostRewriteHook(plansource, pltsql_record_dateformat, dateformat);
+}
+
+static void
+pltsql_record_dateformat(List *querytree_list, void *arg)
+{
+	strlcpy((char *) arg, pltsql_get_dateformat(), 4);
+}
+
+/*
+ * Date strings in a query are read when it is parsed, so a plan parsed with
+ * another DATEFORMAT setting has to be parsed again, the way SQL Server
+ * recompiles after a SET option changes.
+ */
+static bool
+pltsql_revalidate_dateformat_plan(CachedPlanSource *plansource,
+								  List *info_sublist)
+{
+	char	   *dateformat = (char *) lsecond(info_sublist);
+
+	/*
+	 * Only SQL functions set their own post-rewrite hook, and they run in the
+	 * PostgreSQL dialect, so this is not expected.  Without the hook the
+	 * recorded setting may be out of date, so parse again.
+	 */
+	if (plansource->postRewrite != pltsql_record_dateformat)
+		return false;
+
+	return strcmp(dateformat, pltsql_get_dateformat()) == 0;
 }

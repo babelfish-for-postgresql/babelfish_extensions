@@ -63,6 +63,7 @@ P0001#!#%s#!#Cannot construct data type datetime, some of the arguments have val
 2200N#!#%s#!#invalid XML content#!#9451
 2200N#!#%s#!#invalid XML content#invalid XML declaration#!#9441
 P0001#!#%s#!#is not supported for conversions from#!#9809
+P0001#!#%s#!#date format is not supported when converting from this character string format#!#9808
 22003#!#"%s" is out of range for type real#!##!#232
 42809#!#"%s" is not a table#!##!#4708
 42809#!#The request for procedure '%s' failed because '%s' is a table valued function object.#!##!#2809
@@ -213,6 +214,7 @@ XX000#!#The table-valued parameter "%s" must be declared with the READONLY optio
 22008#!#Adding a value to a '%s' column caused an overflow.#!##!#517
 42P01#!#FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.#!##!#13600
 42P01#!#sub-select and values for json auto are not currently supported.#!##!#13600
+22023#!#SET DATEFORMAT date order '%s' is invalid.#!##!#2741
 ~~END~~
 
 
