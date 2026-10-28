@@ -1087,7 +1087,11 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 					foreach(paramcell, stmt->params)
 					{
 						tsql_exec_param *p = (tsql_exec_param *) lfirst(paramcell);
-						if (argnames[i] && p->name && pg_strcasecmp(argnames[i], p->name) == 0)
+
+						/* proargnames holds long (>= 64 byte) names in their truncated form */
+						if (argnames[i] && p->name &&
+							(pg_strcasecmp(argnames[i], p->name) == 0 ||
+							 pg_strcasecmp(argnames[i], downcase_truncate_identifier(p->name, strlen(p->name), true)) == 0))
 							break;
 						relativeArgIndex++;
 					}
@@ -2850,10 +2854,18 @@ read_param_val(PLtsql_execstate *estate, List *params, InlineCodeBlockArgs *args
 		 */
 		else
 		{
+			/*
+			 * The declared parameter names were parsed and stored in their
+			 * truncated form, so a long name passed by name must be
+			 * truncated the same way before comparing.
+			 */
+			const char *trunc_name = downcase_truncate_identifier(p->name, strlen(p->name), true);
+
 			for (j = i; j < args->numargs; j++)
 			{
 				/* Case insensitive param names can be used. */
-				if (pg_strcasecmp(p->name, args->argnames[j]) == 0)
+				if (pg_strcasecmp(p->name, args->argnames[j]) == 0 ||
+					pg_strcasecmp(trunc_name, args->argnames[j]) == 0)
 				{
 					/* Check if the param's declared mode matches called mode */
 					if (!check_spexecutesql_param(&(args->argmodes[j]), p))

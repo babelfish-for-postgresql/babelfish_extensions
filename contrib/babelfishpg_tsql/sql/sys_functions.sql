@@ -3089,6 +3089,8 @@ BEGIN
         IF cs_as_sub_securable IS NULL THEN
             RETURN NULL;
         END IF;
+        -- long column names (>= 64 bytes) are stored in their truncated form
+        cs_as_sub_securable := sys.babelfish_truncate_identifier(cs_as_sub_securable);
     END IF;
 
     SELECT p.implied_dbo_permissions,p.fully_supported 
@@ -3161,7 +3163,9 @@ BEGIN
     -- Translate schema name from bbf to postgres, e.g. dbo -> master_dbo
     pg_schema := (SELECT nspname 
                     FROM sys.babelfish_namespace_ext ext 
-                    WHERE ext.orig_name = bbf_schema_name COLLATE sys.database_default 
+                    WHERE (ext.orig_name = bbf_schema_name COLLATE sys.database_default
+                            -- babelfish_split_object_name returns long schema names in their truncated form
+                            OR sys.babelfish_truncate_identifier(pg_catalog.lower(ext.orig_name::text)) = bbf_schema_name COLLATE sys.database_default)
                         AND CAST(ext.dbid AS oid) = CAST(database_id AS oid));
 
     IF pg_schema IS NULL THEN

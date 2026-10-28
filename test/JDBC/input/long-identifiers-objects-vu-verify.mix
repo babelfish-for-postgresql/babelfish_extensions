@@ -265,3 +265,19 @@ GO
 -- terminate-tsql-conn user=Very_Long_Catalog_Session_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU password=12345678
 
 -- tsql
+-- sp_columns_100 reports the type of a long column after upgrade
+EXEC sp_columns_100 @table_name = 'Very_Long_Table_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters_VU_TVC';
+GO
+-- HAS_PERMS_BY_NAME resolves a long schema and a long column after upgrade
+SELECT HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU.hp_t', 'OBJECT', 'SELECT') AS tbl,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU.hp_t', 'OBJECT', 'SELECT', 'Very_Long_Has_Perms_Column_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU', 'COLUMN') AS long_col,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU.hp_t', 'OBJECT', 'SELECT', 'a', 'COLUMN') AS short_col;
+GO
+-- long OUTPUT parameter passed by name out of order, on a procedure created before upgrade
+DECLARE @r INT;
+EXEC Very_Long_Out_Param_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU @Very_Long_Out_Param_O1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU = @r OUTPUT, @Very_Long_Out_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU = 4;
+SELECT @r AS outval;
+GO
+-- sp_executesql with a long parameter passed by name
+EXEC sp_executesql N'SELECT @Very_Long_Exec_Param_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU + 1 AS r', N'@Very_Long_Exec_Param_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU INT', @Very_Long_Exec_Param_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU = 5;
+GO

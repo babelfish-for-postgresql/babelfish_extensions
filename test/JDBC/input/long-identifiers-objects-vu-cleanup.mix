@@ -1,4 +1,11 @@
 -- tsql
+DROP PROCEDURE Very_Long_Out_Param_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
+GO
+DROP TABLE Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU.hp_t;
+GO
+DROP SCHEMA Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
+GO
+
 DROP USER Very_Long_Catalog_Session_User_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
 GO
 DROP LOGIN Very_Long_Catalog_Session_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;

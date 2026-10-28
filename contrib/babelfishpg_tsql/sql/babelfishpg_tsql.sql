@@ -440,7 +440,7 @@ FROM
 	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
 	LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
 	JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
-	LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname::sys.nvarchar(128) = t4."COLUMN_NAME"
+	LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attnum = t4."ORDINAL_POSITION"
 	LEFT JOIN pg_type t ON t.oid = a.atttypid
 	LEFT JOIN sys.columns t6 ON
 	(

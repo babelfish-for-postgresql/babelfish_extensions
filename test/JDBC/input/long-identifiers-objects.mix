@@ -2002,6 +2002,204 @@ DEALLOCATE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 DEALLOCATE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxy;
 GO
 
+-- sp_columns reports the type of a column with a long name
+CREATE TABLE babel7239_spcol_t (Very_Long_Column_Name_For_Sp_Columns_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT, c2 VARCHAR(5));
+GO
+EXEC sp_columns @table_name = 'babel7239_spcol_t';
+GO
+-- inline table-valued function with a long parameter name
+CREATE FUNCTION babel7239_itvf_longparam(@Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT) RETURNS TABLE AS RETURN SELECT @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx + 1 AS c;
+GO
+SELECT * FROM babel7239_itvf_longparam(5);
+GO
+-- sp_executesql with a long parameter name passed by name
+EXEC sp_executesql N'SELECT @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx + 1 AS r', N'@Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT', @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = 5;
+GO
+DECLARE @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT;
+EXEC sp_executesql N'SELECT @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = 7', N'@Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT OUTPUT', @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx OUTPUT;
+SELECT @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS outval;
+GO
+-- HAS_PERMS_BY_NAME with a long schema name and a long column name
+CREATE SCHEMA Very_Long_Schema_Name_For_Has_Perms_By_Name_Check_xxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+CREATE TABLE Very_Long_Schema_Name_For_Has_Perms_By_Name_Check_xxxxxxxxxxxxxxxxxxxxxxxxxx.babel7239_hp_t (a INT);
+GO
+SELECT HAS_PERMS_BY_NAME('Very_Long_Schema_Name_For_Has_Perms_By_Name_Check_xxxxxxxxxxxxxxxxxxxxxxxxxx.babel7239_hp_t', 'OBJECT', 'SELECT');
+GO
+SELECT HAS_PERMS_BY_NAME('Very_Long_Schema_Name_For_Has_Perms_By_Name_Check_xxxxxxxxxxxxxxxxxxxxxxxxxx.babel7239_hp_t', 'OBJECT', 'SELECT', 'a', 'COLUMN');
+GO
+SELECT HAS_PERMS_BY_NAME('babel7239_spcol_t', 'OBJECT', 'SELECT', 'Very_Long_Column_Name_For_Sp_Columns_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'COLUMN');
+GO
+DROP TABLE Very_Long_Schema_Name_For_Has_Perms_By_Name_Check_xxxxxxxxxxxxxxxxxxxxxxxxxx.babel7239_hp_t;
+GO
+DROP SCHEMA Very_Long_Schema_Name_For_Has_Perms_By_Name_Check_xxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP FUNCTION babel7239_itvf_longparam;
+GO
+DROP TABLE babel7239_spcol_t;
+GO
+
+-- OUTPUT parameter with a long name passed by name, out of declaration order
+CREATE PROCEDURE babel7239_longout_p @Very_Long_Proc_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT, @Very_Long_Proc_Param_Out_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT OUTPUT AS SET @Very_Long_Proc_Param_Out_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @Very_Long_Proc_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx * 2;
+GO
+DECLARE @r INT;
+EXEC babel7239_longout_p @Very_Long_Proc_Param_Out_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r OUTPUT, @Very_Long_Proc_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = 4;
+SELECT @r AS outval;
+GO
+DECLARE @r INT;
+EXEC babel7239_longout_p @VERY_LONG_PROC_PARAM_IN_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = 5, @very_long_proc_param_out_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r OUTPUT;
+SELECT @r AS outval;
+GO
+DROP PROCEDURE babel7239_longout_p;
+GO
+
+-- BABEL-7239: more cases for sp_columns, inline TVF / sp_executesql / EXEC parameter
+-- names and HAS_PERMS_BY_NAME with long (>= 64 byte) identifiers
+
+-- sp_columns_100 reports the type of a column with a long name
+CREATE TABLE babel7239_spcol100_t (Very_Long_Column_Name_For_Sp_Columns_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx DECIMAL(10,2), c2 NVARCHAR(7));
+GO
+EXEC sp_columns_100 @table_name = 'babel7239_spcol100_t';
+GO
+-- sp_columns on short names is unchanged: mixed case, delimited, user type, renamed and dropped columns
+CREATE TYPE babel7239_spcol_ty FROM VARCHAR(9);
+GO
+CREATE TABLE babel7239_spcol_short (Id INT IDENTITY(1,1), MixedCase VARCHAR(10), [col with space] NVARCHAR(20), [dot.col] INT, gone INT, k babel7239_spcol_ty, c BIT);
+GO
+ALTER TABLE babel7239_spcol_short DROP COLUMN gone;
+GO
+EXEC sp_rename 'babel7239_spcol_short.c', 'c_renamed', 'COLUMN';
+GO
+EXEC sp_columns @table_name = 'babel7239_spcol_short';
+GO
+DROP TABLE babel7239_spcol_short;
+GO
+DROP TYPE babel7239_spcol_ty;
+GO
+DROP TABLE babel7239_spcol100_t;
+GO
+
+-- inline TVF: two long parameters, each used more than once
+CREATE FUNCTION babel7239_itvf_two(@Very_Long_Itvf_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT, @Very_Long_Itvf_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT) RETURNS TABLE AS
+RETURN SELECT @Very_Long_Itvf_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx - @Very_Long_Itvf_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS diff WHERE @Very_Long_Itvf_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx > @Very_Long_Itvf_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+SELECT * FROM babel7239_itvf_two(5, 1);
+GO
+SELECT * FROM babel7239_itvf_two(1, 5);
+GO
+DROP FUNCTION babel7239_itvf_two;
+GO
+-- inline TVF: parameter names at the 63/64 byte boundary
+CREATE FUNCTION babel7239_itvf_63(@P63_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT) RETURNS TABLE AS RETURN SELECT @P63_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS c;
+GO
+SELECT * FROM babel7239_itvf_63(63);
+GO
+CREATE FUNCTION babel7239_itvf_64(@P63_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT) RETURNS TABLE AS RETURN SELECT @P63_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS c;
+GO
+SELECT * FROM babel7239_itvf_64(64);
+GO
+CREATE FUNCTION babel7239_itvf_65(@P64_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT) RETURNS TABLE AS RETURN SELECT @P64_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS c;
+GO
+SELECT * FROM babel7239_itvf_65(65);
+GO
+DROP FUNCTION babel7239_itvf_63;
+GO
+DROP FUNCTION babel7239_itvf_64;
+GO
+DROP FUNCTION babel7239_itvf_65;
+GO
+
+-- sp_executesql: long parameters passed by name in another case and out of order
+EXEC sp_executesql N'SELECT @Very_Long_Exec_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx - @Very_Long_Exec_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS diff', N'@Very_Long_Exec_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT, @Very_Long_Exec_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT', @VERY_LONG_EXEC_PARAM_B_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = 1, @very_long_exec_param_a_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = 5;
+GO
+-- sp_executesql: long parameters passed by position
+EXEC sp_executesql N'SELECT @Very_Long_Exec_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx - @Very_Long_Exec_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS diff', N'@Very_Long_Exec_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT, @Very_Long_Exec_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT', 5, 1;
+GO
+-- sp_executesql: unknown long parameter name still raises an error
+EXEC sp_executesql N'SELECT @Very_Long_Exec_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS v', N'@Very_Long_Exec_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT', @Very_Long_Exec_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = 1;
+GO
+
+-- EXEC: two long OUTPUT parameters passed by name in reverse order
+CREATE PROCEDURE babel7239_longout2_p @Very_Long_Out_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT, @Very_Long_Out_Param_O1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT OUTPUT, @Very_Long_Out_Param_O2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT OUTPUT AS
+BEGIN
+    SET @Very_Long_Out_Param_O1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @Very_Long_Out_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx * 2;
+    SET @Very_Long_Out_Param_O2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @Very_Long_Out_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx * 3;
+END;
+GO
+DECLARE @r1 INT, @r2 INT;
+EXEC babel7239_longout2_p @Very_Long_Out_Param_O2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r2 OUTPUT, @Very_Long_Out_Param_O1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r1 OUTPUT, @Very_Long_Out_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = 4;
+SELECT @r1 AS out1, @r2 AS out2;
+GO
+-- long INOUT parameter passed by name without OUTPUT keeps the caller value
+DECLARE @r1 INT = -1, @r2 INT;
+EXEC babel7239_longout2_p @Very_Long_Out_Param_O2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r2 OUTPUT, @Very_Long_Out_Param_O1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r1, @Very_Long_Out_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = 4;
+SELECT @r1 AS out1, @r2 AS out2;
+GO
+-- positional call is unchanged
+DECLARE @r1 INT, @r2 INT;
+EXEC babel7239_longout2_p 4, @r1 OUTPUT, @r2 OUTPUT;
+SELECT @r1 AS out1, @r2 AS out2;
+GO
+DROP PROCEDURE babel7239_longout2_p;
+GO
+-- OUTPUT parameter names at the 63/64 byte boundary passed by name out of order
+CREATE PROCEDURE babel7239_out63_p @a INT, @P63_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT OUTPUT AS SET @P63_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @a * 2;
+GO
+DECLARE @r INT;
+EXEC babel7239_out63_p @P63_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r OUTPUT, @a = 4;
+SELECT @r AS outval;
+GO
+CREATE PROCEDURE babel7239_out64_p @a INT, @P64_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT OUTPUT AS SET @P64_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @a * 2;
+GO
+DECLARE @r INT;
+EXEC babel7239_out64_p @P64_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r OUTPUT, @a = 5;
+SELECT @r AS outval;
+GO
+DROP PROCEDURE babel7239_out63_p;
+GO
+DROP PROCEDURE babel7239_out64_p;
+GO
+
+-- HAS_PERMS_BY_NAME on every object kind in a schema with a long name
+CREATE SCHEMA Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+CREATE TABLE Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t (a INT, Very_Long_Column_Name_For_Sp_Columns_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT);
+GO
+CREATE VIEW Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_v AS SELECT a FROM Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t;
+GO
+CREATE PROCEDURE Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_p AS SELECT 1;
+GO
+CREATE FUNCTION Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_f() RETURNS INT AS BEGIN RETURN 1 END;
+GO
+SELECT HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t', 'OBJECT', 'SELECT') AS tbl,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_v', 'OBJECT', 'SELECT') AS vw,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_p', 'OBJECT', 'EXECUTE') AS proc_exec,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_f', 'OBJECT', 'EXECUTE') AS func_exec,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t', 'OBJECT', 'ANY') AS any_perm,
+       HAS_PERMS_BY_NAME('[Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx].[hp_t]', 'OBJECT', 'SELECT') AS bracketed,
+       HAS_PERMS_BY_NAME('VERY_LONG_HAS_PERMS_SCHEMA_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.HP_T', 'OBJECT', 'SELECT') AS upper_case,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'SCHEMA', 'SELECT') AS schema_class;
+GO
+-- long column in a long schema, other case, and a column that does not exist
+SELECT HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t', 'OBJECT', 'SELECT', 'Very_Long_Column_Name_For_Sp_Columns_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'COLUMN') AS long_col,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t', 'OBJECT', 'SELECT', 'VERY_LONG_COLUMN_NAME_FOR_SP_COLUMNS_CHECK_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', 'COLUMN') AS long_col_upper,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t', 'OBJECT', 'SELECT', 'Very_Long_Column_Name_For_Sp_Columns_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_nope', 'COLUMN') AS missing_col,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t', 'OBJECT', 'SELECT', 'a', 'COLUMN') AS short_col;
+GO
+-- object that does not exist in the long schema
+SELECT HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_nope', 'OBJECT', 'SELECT') AS missing_obj;
+GO
+DROP FUNCTION Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_f;
+GO
+DROP PROCEDURE Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_p;
+GO
+DROP VIEW Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_v;
+GO
+DROP TABLE Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t;
+GO
+DROP SCHEMA Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+
 -- CLEANUP
 -- ===========================================
 DROP VIEW Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;
