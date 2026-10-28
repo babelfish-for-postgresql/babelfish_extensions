@@ -7499,6 +7499,10 @@ makeDeclareCursorStatement(TSqlParser::Declare_cursorContext *ctx)
 	else
 	{
 		curvar = build_cursor_variable(cursor_name.c_str(), getLineNo(ctx));
+
+		/* A long name is hashed; keep the original so it can be reported. */
+		if (cursor_name.length() >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+			curvar->cursor_orig_name = downcase_identifier(cursor_name_raw.c_str(), cursor_name_raw.length(), false, false);
 	}
 
 	int cursor_option = 0;

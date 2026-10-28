@@ -231,6 +231,30 @@ GO
 DROP TABLE #babel7239_vu_helpuser;
 GO
 
+-- BABEL-7239: sp_cursor_list and sp_describe_cursor report and find a cursor with a long name.
+-- sp_cursor_list, long name
+DECLARE @ref sysname, @cn sysname, @sc smallint, @st smallint, @mo smallint, @co smallint, @sl smallint, @os smallint, @cr numeric(10,0), @fs smallint, @cc smallint, @rc numeric(10,0), @lo smallint, @ch int;
+DECLARE @r CURSOR;
+DECLARE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU CURSOR LOCAL FOR SELECT 1 AS a;
+OPEN Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
+EXEC sp_cursor_list @r OUTPUT, 3;
+FETCH NEXT FROM @r INTO @ref, @cn, @sc, @st, @mo, @co, @sl, @os, @cr, @fs, @cc, @rc, @lo, @ch;
+SELECT @ref, @cn;
+CLOSE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
+DEALLOCATE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
+GO
+-- sp_describe_cursor, long name (any case)
+DECLARE @ref sysname, @cn sysname, @sc smallint, @st smallint, @mo smallint, @co smallint, @sl smallint, @os smallint, @cr numeric(10,0), @fs smallint, @cc smallint, @rc numeric(10,0), @lo smallint, @ch int;
+DECLARE @r CURSOR;
+DECLARE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU CURSOR LOCAL FOR SELECT 1 AS a;
+OPEN Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
+EXEC sp_describe_cursor @r OUTPUT, N'local', N'VERY_LONG_CATALOG_CURSOR_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX_VU';
+FETCH NEXT FROM @r INTO @ref, @cn, @sc, @st, @mo, @co, @sl, @os, @cr, @fs, @cc, @rc, @lo, @ch;
+SELECT @ref, @cn;
+CLOSE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
+DEALLOCATE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
+GO
+
 -- sys.dm_exec_sessions and sys.sysprocesses show the original long login name.
 -- tsql user=Very_Long_Catalog_Session_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU password=12345678
 SELECT login_name, original_login_name FROM sys.dm_exec_sessions WHERE session_id = @@SPID;

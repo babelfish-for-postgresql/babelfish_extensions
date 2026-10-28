@@ -458,6 +458,13 @@ typedef struct PLtsql_var
 	/* to identify if variable is getting used for babelfish GUC */
 	bool is_babelfish_guc;
 
+	/*
+	 * Lowercased original name of a declared cursor whose name was truncated
+	 * and hashed to fit NAMEDATALEN; NULL otherwise. Only used to report the
+	 * name to the user (sp_cursor_list).
+	 */
+	char	   *cursor_orig_name;
+
 	/* Fields below here can change at runtime */
 
 	Datum		value pg_node_attr(read_write_ignore, read_as(0));
