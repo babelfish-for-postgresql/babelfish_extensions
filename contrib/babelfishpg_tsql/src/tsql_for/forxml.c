@@ -36,13 +36,13 @@ typedef struct forxml_auto_state
 	char		  **table_aliases;		/* table_aliases[i] = table name for column i */
 	char		  **column_names;		/* column_names[i] = original col name */
 
-	/* Output function cache - populated on first row for fast type conversion */
+	/* Output function cache - built once in the sfunc's AUTO setup block */
 	FmgrInfo	   *out_finfo;			/* Cached output function info per column */
 	Oid			   *base_types;			/* Base type OID per column (after domain flattening) */
 	bool			out_funcs_cached;	/* Whether output functions have been cached */
 
 	/*
-	 * T-SQL datatype conversion cache - populated on first row.
+	 * T-SQL datatype conversion cache - built once in the sfunc's AUTO setup.
 	 * Caches the result of update_tsql_datatype_and_val's SPI_gettype +
 	 * get_namespace_oid + GetSysCacheOid2 lookups per column.
 	 * 0 = no conversion needed, 1 = datetime/smalldatetime/datetime2,
@@ -52,13 +52,13 @@ typedef struct forxml_auto_state
 	bool			tsql_types_cached;	/* Whether T-SQL type cache is populated */
 
 	/*
-	 * Equality-operator cache for sibling-group detection.  Populated on the
-	 * first row.  Grouping in FOR XML AUTO must follow T-SQL semantics, which
-	 * uses the column's type+collation equality, not byte equality of the
-	 * serialized form (e.g. two rows whose parent column differs only in
-	 * letter case under a case-insensitive collation must be merged).
-	 * For types with no default btree equality (xml, json, etc.) we fall
-	 * back to strcmp on the serialized form.
+	 * Equality-operator cache for sibling-group detection, built once in the
+	 * sfunc's AUTO setup.  Grouping in FOR XML AUTO must follow T-SQL
+	 * semantics, which uses the column's type+collation equality, not byte
+	 * equality of the serialized form (e.g. two rows whose parent column
+	 * differs only in letter case under a case-insensitive collation must be
+	 * merged).  For types with no default btree equality (xml, json, etc.) we
+	 * fall back to strcmp on the serialized form.
 	 */
 	FmgrInfo	   *eq_finfo;			/* Per-column equality FmgrInfo */
 	Oid			   *eq_collation;		/* Collation to pass to eq operator */
@@ -544,7 +544,7 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		 */
 		fstate->row_context = AllocSetContextCreate(agg_context,
 													"FOR XML per-row",
-													ALLOCSET_SMALL_SIZES);
+													ALLOCSET_DEFAULT_SIZES);
 		root_name = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(5));
 		fstate->has_root = (root_name != NULL && strlen(root_name) > 0);
 
@@ -1370,12 +1370,12 @@ xml_auto_parse_metadata(forxml_auto_state *auto_state, const char *metadata_str,
 
 	auto_state->max_depth = 0;
 
-	/* Output function cache arrays — populated on first row in cached_value_to_xml_string */
+	/* Output function cache arrays, filled by init_output_func_cache() */
 	auto_state->out_finfo = (FmgrInfo *) palloc0(num_cols * sizeof(FmgrInfo));
 	auto_state->base_types = (Oid *) palloc0(num_cols * sizeof(Oid));
 	auto_state->out_funcs_cached = false;
 
-	/* T-SQL type conversion cache — populated on first row */
+	/* T-SQL type conversion cache, filled by init_tsql_type_cache() */
 	auto_state->tsql_convert_type = (int *) palloc0(num_cols * sizeof(int));
 	auto_state->tsql_types_cached = false;
 

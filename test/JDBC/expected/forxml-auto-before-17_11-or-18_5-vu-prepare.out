@@ -403,3 +403,46 @@ INSERT INTO forxmlauto_t_ci_child VALUES (10, 1), (20, 2);
 GO
 ~~ROW COUNT: 2~~
 
+
+-- ============================================
+-- SECTION: XML-typed column (no default btree equality operator)
+--
+-- FOR XML AUTO decides sibling grouping by comparing each column against
+-- the previous row.  The xml type has no default btree equality operator,
+-- so AUTO cannot compare such a column with an equality operator and
+-- falls back to comparing the serialized string form kept from the
+-- previous row.  Doc repeats on adjacent rows (1, 2), changes (3), is
+-- NULL on adjacent rows (4, 5) and re-appears non-adjacently (6), so the
+-- fallback comparison is exercised for every outcome.  No other FOR XML
+-- AUTO test reads an xml-typed column.
+-- ============================================
+CREATE TABLE forxmlauto_t_xmlcol_parent (
+    ParentID INT PRIMARY KEY,
+    Doc XML
+);
+GO
+
+CREATE TABLE forxmlauto_t_xmlcol_child (
+    ChildID INT PRIMARY KEY,
+    ParentID INT,
+    ChildName VARCHAR(20)
+);
+GO
+
+INSERT INTO forxmlauto_t_xmlcol_parent VALUES
+    (1, '<d><k>1</k></d>'),
+    (2, '<d><k>1</k></d>'),
+    (3, '<d><k>2</k></d>'),
+    (4, NULL),
+    (5, NULL),
+    (6, '<d><k>2</k></d>');
+GO
+~~ROW COUNT: 6~~
+
+
+INSERT INTO forxmlauto_t_xmlcol_child VALUES
+    (10, 1, 'c-one'), (11, 1, 'c-two'), (12, 2, 'c-three'), (13, 3, 'c-four'),
+    (14, 3, 'c-five'), (15, 4, 'c-six'), (16, 5, 'c-seven'), (17, 6, 'c-eight');
+GO
+~~ROW COUNT: 8~~
+
