@@ -2590,6 +2590,7 @@ void		pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, c
 void		pltsql_function_probin_reader(ParseState *pstate,
 										  List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
 extern void probin_json_reader(text *probin, int **typmod_arr_p, int typmod_arr_len);
+extern Datum pltsql_truncate_identifier_func(PG_FUNCTION_ARGS);
 
 /*
  * This variable is set to true, if setval should behave in T-SQL way, i.e.,

@@ -81,6 +81,10 @@ GO
 -- BABEL-7239: objects for the remaining catalog surfaces, checked after upgrade.
 CREATE FUNCTION Very_Long_Catalog_Syscolumns_Tvf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU() RETURNS TABLE AS RETURN (SELECT 1 AS Very_Long_Catalog_Syscolumns_Tvf_Column_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU);
 GO
+CREATE FUNCTION Very_Long_Catalog_Mixed_Tvf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU() RETURNS TABLE AS RETURN (SELECT 1 AS short_col, 2 AS Very_Long_Catalog_Mixed_Tvf_Column_Sharing_More_Than_Sixty_Three_Bytes_xxxxx_A_VU, 3 AS Very_Long_Catalog_Mixed_Tvf_Column_Sharing_More_Than_Sixty_Three_Bytes_xxxxx_B_VU);
+GO
+CREATE FUNCTION Very_Long_Catalog_Param_Tvf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU(@Very_Long_Catalog_Tvf_Param_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU INT) RETURNS TABLE AS RETURN (SELECT @Very_Long_Catalog_Tvf_Param_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU AS Very_Long_Catalog_Param_Tvf_Column_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU, 1 AS short_col);
+GO
 CREATE TYPE Very_Long_Catalog_Table_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU AS TABLE (Very_Long_Catalog_Table_Type_Column_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU INT);
 GO
 CREATE TABLE Very_Long_Catalog_Default_Table_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU (c INT DEFAULT 1);
@@ -96,17 +100,13 @@ GO
 
 -- BABEL-7239: objects for fn_listextendedproperty, ERROR_PROCEDURE() and default schema /
 -- session login name checks after upgrade.
-CREATE PROCEDURE Very_Long_Catalog_XProp_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU AS SELECT 1;
+CREATE SCHEMA Very_Long_Catalog_XProp_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
 GO
-CREATE TYPE Very_Long_Catalog_XProp_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU FROM INT;
+CREATE PROCEDURE Very_Long_Catalog_XProp_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU.Very_Long_Catalog_XProp_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU AS SELECT 1;
 GO
-CREATE SEQUENCE Very_Long_Catalog_XProp_Seq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
+CREATE TYPE Very_Long_Catalog_XProp_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU.Very_Long_Catalog_XProp_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU FROM INT;
 GO
-EXEC sp_addextendedproperty 'babel7239_vu_xp', 'v', 'schema', 'dbo', 'procedure', 'Very_Long_Catalog_XProp_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU';
-GO
-EXEC sp_addextendedproperty 'babel7239_vu_xp', 'v', 'schema', 'dbo', 'type', 'Very_Long_Catalog_XProp_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU';
-GO
-EXEC sp_addextendedproperty 'babel7239_vu_xp', 'v', 'schema', 'dbo', 'sequence', 'Very_Long_Catalog_XProp_Seq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU';
+CREATE SEQUENCE Very_Long_Catalog_XProp_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU.Very_Long_Catalog_XProp_Seq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
 GO
 CREATE PROCEDURE Very_Long_Catalog_Error_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU AS BEGIN TRY SELECT 1/0 END TRY BEGIN CATCH SELECT ERROR_PROCEDURE() END CATCH;
 GO

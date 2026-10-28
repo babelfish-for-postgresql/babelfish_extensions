@@ -1,6 +1,8 @@
 #include "postgres.h"
 #include "varatt.h"
 
+#include "access/htup_details.h"
+#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
@@ -16,6 +18,7 @@
 #include "pltsql.h"
 #include "pltsql_permissions.h"
 #include "storage/lock.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
 #include "utils/lsyscache.h"
@@ -58,6 +61,7 @@ extern char *construct_unique_index_name(char *index_name, char *relation_name);
 extern char *get_physical_schema_name(char *db_name, const char *schema_name);
 extern char *get_dbo_schema_name(const char *dbname);
 PG_FUNCTION_INFO_V1(split_identifier_internal);
+PG_FUNCTION_INFO_V1(babelfish_restore_itvf_column_names);
 
 /* To cache oid of sys.varchar */
 static Oid sys_varcharoid = InvalidOid;
@@ -2135,6 +2139,112 @@ get_inline_tvf_original_column_name(Oid funcid, AttrNumber attnum)
 
 	ReleaseSysCache(proctup);
 	return result;
+}
+
+/*
+ * babelfish_restore_itvf_column_names
+ *
+ * Called from a dump (see dumpBBFItvfColumnNames() in pg_dump) right after an
+ * inline table-valued function is recreated. CREATE FUNCTION dumps the output
+ * columns as identifiers, so the restore clipped the long ones to NAMEDATALEN-1
+ * bytes. Put back the full pg_proc.proargnames, dumped as a string literal.
+ */
+Datum
+babelfish_restore_itvf_column_names(PG_FUNCTION_ARGS)
+{
+	Oid			funcid = PG_GETARG_OID(0);
+	ArrayType  *names = PG_GETARG_ARRAYTYPE_P(1);
+	Relation	rel;
+	HeapTuple	proctup;
+	HeapTuple	newtup;
+	Datum		proargnames;
+	Datum		proargmodes;
+	bool		isnull;
+	Datum	   *oldNames;
+	Datum	   *newNames;
+	Datum	   *modes;
+	int			nold;
+	int			nnew;
+	int			nmodes;
+	Datum		values[Natts_pg_proc] = {0};
+	bool		nulls[Natts_pg_proc] = {0};
+	bool		replaces[Natts_pg_proc] = {0};
+
+	if (!babelfish_dump_restore)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called during dump and restore",
+						"babelfish_restore_itvf_column_names")));
+
+	if (!object_ownercheck(ProcedureRelationId, funcid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION, get_func_name(funcid));
+
+	rel = table_open(ProcedureRelationId, RowExclusiveLock);
+	proctup = SearchSysCacheCopy1(PROCOID, ObjectIdGetDatum(funcid));
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup failed for function %u", funcid);
+
+	proargnames = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_proargnames, &isnull);
+	if (isnull)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("function \"%s\" has no argument names", get_func_name(funcid))));
+	proargmodes = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_proargmodes, &isnull);
+	if (isnull)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("function \"%s\" has no argument modes", get_func_name(funcid))));
+
+	if (array_contains_nulls(names))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("argument names must not be NULL")));
+
+	deconstruct_array(DatumGetArrayTypeP(proargnames), TEXTOID, -1, false, TYPALIGN_INT,
+					  &oldNames, NULL, &nold);
+	deconstruct_array(DatumGetArrayTypeP(proargmodes), CHAROID, 1, true, TYPALIGN_CHAR,
+					  &modes, NULL, &nmodes);
+	deconstruct_array(names, TEXTOID, -1, false, TYPALIGN_INT, &newNames, NULL, &nnew);
+	if (nold != nnew || nold != nmodes)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("argument names do not match function \"%s\"", get_func_name(funcid))));
+
+	/*
+	 * Only the output column of a table function that the restore truncated
+	 * can change: its name must be at least NAMEDATALEN bytes and truncate to
+	 * the stored name. Every other name must be unchanged.
+	 */
+	for (int i = 0; i < nold; i++)
+	{
+		char	   *stored = TextDatumGetCString(oldNames[i]);
+		char	   *full = TextDatumGetCString(newNames[i]);
+
+		if (strcmp(stored, full) == 0)
+			continue;
+
+		if (DatumGetChar(modes[i]) != PROARGMODE_TABLE ||
+			strlen(full) < NAMEDATALEN ||
+			strcmp(stored, TextDatumGetCString(DirectFunctionCall1(pltsql_truncate_identifier_func,
+																   newNames[i]))) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("argument name \"%s\" does not match \"%s\" of function \"%s\"",
+							full, stored, get_func_name(funcid))));
+	}
+
+	values[Anum_pg_proc_proargnames - 1] =
+		PointerGetDatum(construct_array(newNames, nnew, TEXTOID, -1, false, TYPALIGN_INT));
+	replaces[Anum_pg_proc_proargnames - 1] = true;
+
+	newtup = heap_modify_tuple(proctup, RelationGetDescr(rel), values, nulls, replaces);
+	CatalogTupleUpdate(rel, &newtup->t_self, newtup);
+
+	heap_freetuple(newtup);
+	heap_freetuple(proctup);
+	table_close(rel, RowExclusiveLock);
+
+	PG_RETURN_VOID();
 }
 
 void

@@ -6616,7 +6616,7 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 			{
 				int dno;
 				/* namespace entries are stored downcased and truncated, long names must be looked up the same way */
-				const char *ns_name = downcase_truncate_identifier(local_id_lookup.c_str(), local_id_lookup.length(), true);
+				const char *ns_name = downcase_truncate_identifier(local_id_lookup.c_str(), local_id_lookup.length(), false);
 				PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, ns_name, nullptr, nullptr, nullptr);
 				if (nse)
 					dno = nse->itemno;

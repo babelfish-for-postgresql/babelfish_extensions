@@ -388,6 +388,33 @@ Very_Long_Catalog_Syscolumns_Tvf_Column_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU
 ~~END~~
 
 
+-- inline TVF keeps short and long column names in order, even long ones sharing 63 bytes.
+SELECT name, colid FROM sys.syscolumns WHERE id = OBJECT_ID('Very_Long_Catalog_Mixed_Tvf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU') ORDER BY colid;
+GO
+~~START~~
+varchar#!#smallint
+short_col#!#1
+Very_Long_Catalog_Mixed_Tvf_Column_Sharing_More_Than_Sixty_Three_Bytes_xxxxx_A_VU#!#2
+Very_Long_Catalog_Mixed_Tvf_Column_Sharing_More_Than_Sixty_Three_Bytes_xxxxx_B_VU#!#3
+~~END~~
+
+SELECT * FROM Very_Long_Catalog_Mixed_Tvf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU();
+GO
+~~START~~
+int#!#int#!#int
+1#!#2#!#3
+~~END~~
+
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT * FROM Very_Long_Catalog_Mixed_Tvf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU()', NULL, 0) ORDER BY column_ordinal;
+GO
+~~START~~
+varchar
+short_col
+Very_Long_Catalog_Mixed_Tvf_Column_Sharing_More_Than_Sixty_Three_Bytes_xxxxx_A_VU
+Very_Long_Catalog_Mixed_Tvf_Column_Sharing_More_Than_Sixty_Three_Bytes_xxxxx_B_VU
+~~END~~
+
+
 -- INFORMATION_SCHEMA.DOMAINS shows the original table type name.
 SELECT DOMAIN_NAME FROM INFORMATION_SCHEMA.DOMAINS WHERE DOMAIN_NAME = 'Very_Long_Catalog_Table_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU';
 GO
@@ -439,28 +466,60 @@ Very_Long_Catalog_User_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU#
 DROP TABLE #babel7239_vu_helpuser;
 GO
 
+-- inline TVF with a long input parameter and a long output column (a dump/restore must keep the parameter as it is).
+SELECT name FROM sys.sp_describe_first_result_set_internal(N'SELECT * FROM Very_Long_Catalog_Param_Tvf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU(5)', NULL, 0) ORDER BY column_ordinal;
+GO
+~~START~~
+varchar
+Very_Long_Catalog_Param_Tvf_Column_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU
+short_col
+~~END~~
+
+SELECT * FROM Very_Long_Catalog_Param_Tvf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU(5);
+GO
+~~START~~
+int#!#int
+5#!#1
+~~END~~
+
+
 -- BABEL-7239: fn_listextendedproperty shows original names for long procedures, types and sequences.
-SELECT objtype, objname FROM fn_listextendedproperty('babel7239_vu_xp', 'schema', 'dbo', 'procedure', NULL, NULL, NULL);
+-- The properties are added and dropped here, not in vu-prepare: other tests list the extended
+-- properties of every schema, and would otherwise see these.
+EXEC sp_addextendedproperty 'babel7239_vu_xp', 'v', 'schema', 'Very_Long_Catalog_XProp_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU', 'procedure', 'Very_Long_Catalog_XProp_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU';
+GO
+EXEC sp_addextendedproperty 'babel7239_vu_xp', 'v', 'schema', 'Very_Long_Catalog_XProp_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU', 'type', 'Very_Long_Catalog_XProp_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU';
+GO
+EXEC sp_addextendedproperty 'babel7239_vu_xp', 'v', 'schema', 'Very_Long_Catalog_XProp_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU', 'sequence', 'Very_Long_Catalog_XProp_Seq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU';
+GO
+SELECT objtype, objname FROM fn_listextendedproperty('babel7239_vu_xp', 'schema', 'Very_Long_Catalog_XProp_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU', 'procedure', NULL, NULL, NULL);
 GO
 ~~START~~
 varchar#!#varchar
 PROCEDURE#!#very_long_catalog_xprop_proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_vu
 ~~END~~
 
-SELECT objtype, objname FROM fn_listextendedproperty('babel7239_vu_xp', 'schema', 'dbo', 'type', NULL, NULL, NULL);
+SELECT objtype, objname FROM fn_listextendedproperty('babel7239_vu_xp', 'schema', 'Very_Long_Catalog_XProp_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU', 'type', NULL, NULL, NULL);
 GO
 ~~START~~
 varchar#!#varchar
 TYPE#!#very_long_catalog_xprop_type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_vu
 ~~END~~
 
-SELECT objtype, objname FROM fn_listextendedproperty('babel7239_vu_xp', 'schema', 'dbo', 'sequence', NULL, NULL, NULL);
+SELECT objtype, objname FROM fn_listextendedproperty('babel7239_vu_xp', 'schema', 'Very_Long_Catalog_XProp_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU', 'sequence', NULL, NULL, NULL);
 GO
 ~~START~~
 varchar#!#varchar
 SEQUENCE#!#very_long_catalog_xprop_seq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_vu
 ~~END~~
 
+
+EXEC sp_dropextendedproperty 'babel7239_vu_xp', 'schema', 'Very_Long_Catalog_XProp_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU', 'procedure', 'Very_Long_Catalog_XProp_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU';
+GO
+EXEC sp_dropextendedproperty 'babel7239_vu_xp', 'schema', 'Very_Long_Catalog_XProp_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU', 'type', 'Very_Long_Catalog_XProp_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU';
+GO
+EXEC sp_dropextendedproperty 'babel7239_vu_xp', 'schema', 'Very_Long_Catalog_XProp_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU', 'sequence', 'Very_Long_Catalog_XProp_Seq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU';
+GO
 
 -- ERROR_PROCEDURE() returns the original name of a long procedure.
 EXEC Very_Long_Catalog_Error_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
@@ -529,8 +588,12 @@ very_long_catalog_cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_vu#!
 ~~END~~
 
 
--- tsql user=Very_Long_Catalog_Session_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU password=12345678
 -- sys.dm_exec_sessions and sys.sysprocesses show the original long login name.
+-- reset the login password (a dump does not carry it)
+ALTER LOGIN Very_Long_Catalog_Session_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU WITH PASSWORD = '12345678';
+GO
+
+-- tsql user=Very_Long_Catalog_Session_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU password=12345678
 SELECT login_name, original_login_name FROM sys.dm_exec_sessions WHERE session_id = @@SPID;
 GO
 ~~START~~
@@ -586,3 +649,15 @@ int
 6
 ~~END~~
 
+
+-- psql
+-- after upgrade, EXECUTE on the dump/restore helper is still revoked from PUBLIC
+SELECT has_function_privilege('public', 'sys.babelfish_restore_itvf_column_names(pg_catalog.regprocedure, pg_catalog.text[])', 'EXECUTE');
+GO
+~~START~~
+bool
+f
+~~END~~
+
+
+-- tsql

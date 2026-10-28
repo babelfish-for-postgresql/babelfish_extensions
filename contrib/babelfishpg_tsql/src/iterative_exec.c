@@ -40,6 +40,7 @@ static void read_throw_params(PLtsql_execstate *estate, List *params,
 							  char **msg, int *err_no, int *state);
 static int	read_throw_params_explain(List *params);
 static char *get_proc_name(PLtsql_execstate *estate);
+static void resolve_proc_orig_name(PLtsql_execstate *estate, ExecCodes *exec_codes);
 static bool is_seterror_on(PLtsql_stmt *stmt);
 static void send_env_change_token_on_txn_abort(void);
 
@@ -1536,6 +1537,9 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 	size = vec_size(exec_codes->codes);
 	initialize_trace(config->trace_mode, &stat, &proc_begin, size);
 
+	/* resolve the original procedure name before any error can occur */
+	resolve_proc_orig_name(estate, exec_codes);
+
 	/* Guard against stack overflow due to complex, recursive statements */
 	check_stack_depth();
 
@@ -2189,37 +2193,49 @@ read_throw_params(PLtsql_execstate *estate, List *params,
 						errmsg("state argument of THROW is null")));
 }
 
+/*
+ * Replace a truncated proc_name by the original name before any error can
+ * occur: get_proc_name() runs in a PG_CATCH block, where catalog access is
+ * unsafe. Not done at codegen, as the procedure may be compiled during CREATE,
+ * before its babelfish_function_ext row exists.
+ */
+static void
+resolve_proc_orig_name(PLtsql_execstate *estate, ExecCodes *exec_codes)
+{
+	HeapTuple	proctup;
+	char	   *orig;
+
+	/* a physical name is shorter than NAMEDATALEN, so a longer one is already the original */
+	if (!exec_codes->proc_name ||
+		strlen(exec_codes->proc_name) < BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD ||
+		strlen(exec_codes->proc_name) >= NAMEDATALEN ||
+		!estate->func || !OidIsValid(estate->func->fn_oid))
+		return;
+
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(estate->func->fn_oid));
+	if (!HeapTupleIsValid(proctup))
+		return;
+
+	orig = get_bbf_original_object_name(ProcedureRelationId, proctup);
+	if (orig)
+	{
+		char	   *old_name = exec_codes->proc_name;
+
+		/* keep it as long as exec_codes itself lives */
+		exec_codes->proc_name = MemoryContextStrdup(GetMemoryChunkContext(exec_codes), orig);
+		pfree(old_name);
+		pfree(orig);
+	}
+	ReleaseSysCache(proctup);
+}
+
 static char *
 get_proc_name(PLtsql_execstate *estate)
 {
-	char	   *result = NULL;
-
 	if (estate && estate->func && estate->func->exec_codes &&
 		estate->func->exec_codes->proc_name)
-	{
-		result = pstrdup(estate->func->exec_codes->proc_name);
-
-		/*
-		 * Long names are stored truncated and hashed, so resolve the original
-		 * name here, at error time. The procedure may have been compiled
-		 * during CREATE, before its babelfish_function_ext row existed.
-		 */
-		if (strlen(result) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
-		{
-			HeapTuple	proctup = SearchSysCache1(PROCOID,
-												  ObjectIdGetDatum(estate->func->fn_oid));
-
-			if (HeapTupleIsValid(proctup))
-			{
-				char	   *orig = get_bbf_original_object_name(ProcedureRelationId, proctup);
-
-				if (orig)
-					result = orig;
-				ReleaseSysCache(proctup);
-			}
-		}
-	}
-	return result;
+		return pstrdup(estate->func->exec_codes->proc_name);
+	return NULL;
 }
 
 static bool

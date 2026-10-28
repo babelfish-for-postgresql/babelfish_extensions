@@ -6237,7 +6237,7 @@ DECLARE
 BEGIN
     return_value := NULL;
 
-    -- Lower-case to avoid case issues, remove trailing whitespace to match SQL SERVER behavior
+    -- Lower-case to avoid case issues, remove trailing whitespace to match T-SQL behavior
     -- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
     cs_as_securable = pg_catalog.lower(PG_CATALOG.rtrim(cs_as_securable));
     cs_as_securable_class = pg_catalog.lower(PG_CATALOG.rtrim(cs_as_securable_class));
@@ -6269,7 +6269,7 @@ BEGIN
     END IF;
 
     IF cs_as_securable_class = 'server' THEN
-        -- SQL Server does not permit a securable_class value of 'server'.
+        -- T-SQL does not permit a securable_class value of 'server'.
         -- securable_class should be NULL to evaluate server permissions.
         RETURN NULL;
     ELSIF cs_as_securable_class IS NULL THEN
@@ -6480,6 +6480,13 @@ GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
     permission sys.SYSNAME, 
     sub_securable sys.SYSNAME,
     sub_securable_class sys.nvarchar(60)) TO PUBLIC;
+
+-- Puts the full output column names of an inline table-valued function back
+-- after restore; called from pg_dump output only (see dumpBBFItvfColumnNames).
+CREATE OR REPLACE FUNCTION sys.babelfish_restore_itvf_column_names(func pg_catalog.regprocedure, names pg_catalog.text[])
+RETURNS void
+AS 'babelfishpg_tsql', 'babelfish_restore_itvf_column_names' LANGUAGE C STRICT;
+REVOKE ALL ON FUNCTION sys.babelfish_restore_itvf_column_names(pg_catalog.regprocedure, pg_catalog.text[]) FROM PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'spt_columns_view_managed_deprecated_in_6_3_0');
 

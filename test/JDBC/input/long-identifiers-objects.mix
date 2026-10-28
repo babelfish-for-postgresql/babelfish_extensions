@@ -2200,6 +2200,72 @@ GO
 DROP SCHEMA Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
 GO
 
+-- ERROR_PROCEDURE() for an error raised by an EXEC inside a long-named procedure, under an explicit transaction
+CREATE PROCEDURE babel7239_ep_callee @p1 INT AS SELECT @p1;
+GO
+CREATE PROCEDURE Very_Long_Error_Proc_Name_For_Explicit_Tran_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS BEGIN TRY EXEC babel7239_ep_callee; END TRY BEGIN CATCH SELECT ERROR_PROCEDURE() AS ep, ERROR_NUMBER() AS en; END CATCH;
+GO
+BEGIN TRAN;
+EXEC Very_Long_Error_Proc_Name_For_Explicit_Tran_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+EXEC Very_Long_Error_Proc_Name_For_Explicit_Tran_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+ROLLBACK;
+GO
+DROP PROCEDURE Very_Long_Error_Proc_Name_For_Explicit_Tran_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP PROCEDURE babel7239_ep_callee;
+GO
+
+-- ERROR_PROCEDURE() for a procedure name of 60-63 bytes (same length as its physical name), executed twice
+CREATE PROCEDURE Err_Proc_Sixty_One_Bytes_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS BEGIN TRY SELECT 1/0 END TRY BEGIN CATCH SELECT ERROR_PROCEDURE() AS ep END CATCH;
+GO
+EXEC Err_Proc_Sixty_One_Bytes_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+EXEC Err_Proc_Sixty_One_Bytes_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP PROCEDURE Err_Proc_Sixty_One_Bytes_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+
+-- ===========================================
+-- sys.babelfish_restore_itvf_column_names is for dump and restore only
+-- ===========================================
+CREATE FUNCTION babel7239_restore_tvf() RETURNS TABLE AS RETURN (SELECT 1 AS c1, 2 AS c2);
+GO
+
+-- psql
+-- not allowed outside dump and restore
+SELECT sys.babelfish_restore_itvf_column_names('master_dbo.babel7239_restore_tvf()'::regprocedure, ARRAY['c1', 'c2']);
+GO
+
+-- psql
+-- EXECUTE is revoked from PUBLIC
+SELECT has_function_privilege('public', 'sys.babelfish_restore_itvf_column_names(pg_catalog.regprocedure, pg_catalog.text[])', 'EXECUTE');
+GO
+
+-- psql
+CREATE ROLE babel7239_restore_role;
+GO
+
+-- psql
+SET ROLE babel7239_restore_role;
+GO
+
+-- psql
+-- a role that is neither the owner nor a superuser cannot call it
+SELECT sys.babelfish_restore_itvf_column_names('master_dbo.babel7239_restore_tvf()'::regprocedure, ARRAY['c1', 'c2']);
+GO
+
+-- psql
+RESET ROLE;
+GO
+
+-- psql
+DROP ROLE babel7239_restore_role;
+GO
+
+-- tsql
+DROP FUNCTION babel7239_restore_tvf;
+GO
+
 -- CLEANUP
 -- ===========================================
 DROP VIEW Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;

@@ -1091,7 +1091,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 						/* proargnames holds long (>= 64 byte) names in their truncated form */
 						if (argnames[i] && p->name &&
 							(pg_strcasecmp(argnames[i], p->name) == 0 ||
-							 pg_strcasecmp(argnames[i], downcase_truncate_identifier(p->name, strlen(p->name), true)) == 0))
+							 pg_strcasecmp(argnames[i], downcase_truncate_identifier(p->name, strlen(p->name), false)) == 0))
 							break;
 						relativeArgIndex++;
 					}
@@ -2859,7 +2859,7 @@ read_param_val(PLtsql_execstate *estate, List *params, InlineCodeBlockArgs *args
 			 * truncated form, so a long name passed by name must be
 			 * truncated the same way before comparing.
 			 */
-			const char *trunc_name = downcase_truncate_identifier(p->name, strlen(p->name), true);
+			const char *trunc_name = downcase_truncate_identifier(p->name, strlen(p->name), false);
 
 			for (j = i; j < args->numargs; j++)
 			{

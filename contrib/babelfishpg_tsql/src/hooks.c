@@ -5929,6 +5929,10 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 			appendStringInfoString(buf, ", ");
 
 		appendStringInfoString(buf, modename);
+		/* a dump re-parses long TABLE names as identifiers: print them truncated like T-SQL does */
+		if (argname && argmode == PROARGMODE_TABLE && strlen(argname) >= NAMEDATALEN)
+			argname = text_to_cstring(DatumGetTextPP(DirectFunctionCall1(pltsql_truncate_identifier_func,
+																		 CStringGetTextDatum(argname))));
 		if (argname && argname[0])
 			appendStringInfo(buf, "%s ", quote_identifier(argname));
 		appendStringInfoString(buf, format_type_be(argtype));
