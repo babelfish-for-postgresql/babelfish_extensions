@@ -1927,7 +1927,7 @@ get_bbf_original_colname(Oid relid, int16 attnum, const char *colname)
 		 * Only look up original name if user did not provide a column alias
 		 * (colname matches the physical base column name), and the physical
 		 * name is long enough to have actually been truncated/MD5-hashed
-		 * (mirrors the gate in sys.bbf_get_truncated_att_original_name()).
+		 * (mirrors the octet_length >= 60 gate in the catalog views).
 		 */
 		if (pg_strcasecmp(colname, baseColName) == 0 &&
 			strlen(baseColName) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)

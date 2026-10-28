@@ -5858,7 +5858,18 @@ RETURNS sys.SYSNAME AS $$
         FROM pg_attribute 
         WHERE attrelid = table_id AND attnum = column_id AND attnum > 0;
         
-        RETURN (CASE WHEN octet_length(column_name) >= 60 THEN sys.bbf_get_truncated_att_original_name(column_attoptions, column_name::name) ELSE column_name END)::sys.SYSNAME;
+        RETURN COALESCE(
+            CASE WHEN pg_catalog.octet_length(column_name) >= 60 THEN
+                (SELECT CASE
+                            WHEN column_name = pg_catalog.lower(column_name COLLATE "C")
+                                THEN pg_catalog.lower(pg_catalog.substring(opt, 19) COLLATE "C")
+                            ELSE pg_catalog.substring(opt, 19)
+                        END
+                 FROM pg_catalog.unnest(column_attoptions) opt
+                 WHERE opt LIKE 'bbf_original_name=%'
+                 LIMIT 1)
+            END,
+            column_name)::sys.SYSNAME;
     EXCEPTION
         WHEN OTHERS THEN
             RETURN NULL;
