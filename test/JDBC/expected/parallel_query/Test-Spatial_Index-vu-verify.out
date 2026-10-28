@@ -68,11 +68,7 @@ off
 -- Refresh planner statistics so plan shape (Workers Planned, Index Scan vs
 -- Parallel Bitmap Heap Scan, per-worker row counts) is deterministic across
 -- runners with different CPU counts. Required for parallel-query mode.
--- VACUUM FULL repacks the heap into a deterministic physical layout so the
--- Bitmap Heap Scan "Heap Blocks" count and the Bitmap Index Scan "actual rows"
--- do not vary with the table's history (e.g. after dump/restore), which
--- otherwise makes the STATISTICS PROFILE plan output flaky.
-VACUUM (FULL, ANALYZE) master_dbo.si_geom_tbl;
+ANALYZE master_dbo.si_geom_tbl;
 ANALYZE master_dbo.si_geog_tbl;
 ANALYZE master_dbo.si_multi_tbl;
 ANALYZE master_dbo.si_view_tbl;
@@ -3112,7 +3108,34 @@ off
 SET BABELFISH_STATISTICS PROFILE ON;
 GO
 
+-- 49.1 and 49.3 plan a Bitmap Heap Scan. Its "Heap Blocks", the Bitmap Index
+-- Scan "actual rows" and per-worker counts include dead index entries left by
+-- earlier DML and vary with vacuum timing, so capture these plans with
+-- SHOWPLAN_ALL (no execution counters) and check the count separately.
 -- 49.1 Plain WHERE: prefilter MUST be injected (baseline, sys.&& present).
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+SELECT COUNT(*) AS t49_where FROM si_geom_tbl
+WHERE si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) AS t49_where FROM si_geom_tbl
+WHERE (si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) AND STIntersects(geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
+Aggregate
+  ->  Gather
+        Workers Planned: 3
+        ->  Parallel Bitmap Heap Scan on si_geom_tbl
+              Recheck Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
+              Filter: (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 1)
+              ->  Bitmap Index Scan on si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f
+                    Index Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
+~~END~~
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
 SELECT COUNT(*) AS t49_where FROM si_geom_tbl
 WHERE si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1;
 GO
@@ -3121,23 +3144,8 @@ int
 13
 ~~END~~
 
-~~START~~
-text
-Query Text: SELECT COUNT(*) AS t49_where FROM si_geom_tbl
-WHERE (si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) AND STIntersects(geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
-Aggregate (actual rows=1.00 loops=1)
-  ->  Gather (actual rows=13.00 loops=1)
-        Workers Planned: 3
-        Workers Launched: 3
-        ->  Parallel Bitmap Heap Scan on si_geom_tbl (actual rows=3.25 loops=4)
-              Recheck Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
-              Filter: (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 1)
-              Heap Blocks: exact=3
-              ->  Bitmap Index Scan on si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f (actual rows=13.00 loops=1)
-                    Index Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
-                    Index Searches: 1
-~~END~~
-
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 
 -- 49.2 CASE WHEN in WHERE: prefilter must NOT be injected (no sys.&&).
 SELECT COUNT(*) AS t49_case FROM si_geom_tbl
@@ -3165,6 +3173,33 @@ Aggregate (actual rows=1.00 loops=1)
 
 -- 49.3 Spatial predicate in a subquery's own WHERE: prefilter MUST still inject
 -- (sys.&& present) — the nearest search_condition is the subquery's, not the CASE.
+SET BABELFISH_STATISTICS PROFILE OFF;
+GO
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+SELECT COUNT(*) AS t49_subq FROM (
+  SELECT id FROM si_geom_tbl
+  WHERE si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1
+) sub;
+GO
+~~START~~
+text
+Query Text: SELECT COUNT(*) AS t49_subq FROM (
+  SELECT id FROM si_geom_tbl
+  WHERE (si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) AND STIntersects(geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
+) sub
+Aggregate
+  ->  Gather
+        Workers Planned: 3
+        ->  Parallel Bitmap Heap Scan on si_geom_tbl
+              Recheck Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
+              Filter: (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 1)
+              ->  Bitmap Index Scan on si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f
+                    Index Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
+~~END~~
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
 SELECT COUNT(*) AS t49_subq FROM (
   SELECT id FROM si_geom_tbl
   WHERE si_geom_tbl.geom.STIntersects(geometry::STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) = 1
@@ -3175,25 +3210,8 @@ int
 13
 ~~END~~
 
-~~START~~
-text
-Query Text: SELECT COUNT(*) AS t49_subq FROM (
-  SELECT id FROM si_geom_tbl
-  WHERE (si_geom_tbl.geom OPERATOR(sys.&&) geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326)) AND STIntersects(geometry__STGeomFromText('POLYGON((100 100, 200 100, 200 200, 100 200, 100 100))', 4326),si_geom_tbl.geom) = 1
-) sub
-Aggregate (actual rows=1.00 loops=1)
-  ->  Gather (actual rows=13.00 loops=1)
-        Workers Planned: 3
-        Workers Launched: 3
-        ->  Parallel Bitmap Heap Scan on si_geom_tbl (actual rows=3.25 loops=4)
-              Recheck Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
-              Filter: (stintersects('0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry, geom) = 1)
-              Heap Blocks: exact=3
-              ->  Bitmap Index Scan on si_geomsi_geom_tbl6b6b39b4ad82148e3965c79e11870b9f (actual rows=13.00 loops=1)
-                    Index Cond: (geom && '0103000020E610000001000000050000000000000000005940000000000000594000000000000069400000000000005940000000000000694000000000000069400000000000005940000000000000694000000000000059400000000000005940'::geometry)
-                    Index Searches: 1
-~~END~~
-
+SET BABELFISH_STATISTICS PROFILE ON;
+GO
 
 -- 49.4 IIF(...) — its condition is a search_condition but IIF compiles to a CASE,
 -- so it is not index-sargable: prefilter must NOT be injected (no sys.&&).
