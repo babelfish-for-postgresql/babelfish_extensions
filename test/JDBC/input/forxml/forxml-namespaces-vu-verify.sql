@@ -1289,3 +1289,368 @@ SET @x5 = (SELECT EmpID FROM forxml_ns_employees WHERE EmpID = 1
            FOR XML PATH(''));
 SELECT @x5;
 GO
+-- ============================================
+-- SECTION 37: Empty namespace prefix
+-- [] and "" strip to an empty prefix, which must not be taken for DEFAULT.
+-- T-SQL rejects it with error 1038 followed by 6877. Babelfish raises only
+-- the 1038 text, and every error in this section is reported as 33557097
+-- rather than the T-SQL number given in the comment.
+-- ============================================
+-- 37.1 AS [] in RAW mode (T-SQL 1038, 6877)
+WITH XMLNAMESPACES('http://example.com/x' AS []) SELECT 1 AS a FOR XML RAW;
+GO
+-- 37.2 AS "" with QUOTED_IDENTIFIER ON (T-SQL 1038, 6877)
+SET QUOTED_IDENTIFIER ON;
+GO
+WITH XMLNAMESPACES('http://example.com/x' AS "") SELECT 1 AS a FOR XML RAW;
+GO
+-- 37.3 Control: AS [ ] is not empty but is not an NCName either (T-SQL 6870)
+WITH XMLNAMESPACES('http://example.com/x' AS [ ]) SELECT 1 AS a FOR XML RAW;
+GO
+-- 37.4 AS [] next to a valid prefix, PATH mode (T-SQL 1038, 6877)
+WITH XMLNAMESPACES('urn:p' AS p, 'http://example.com/x' AS []) SELECT 1 AS [p:a] FOR XML PATH('r');
+GO
+-- 37.5 AS [] in the CTE form of the clause (T-SQL 1038, 6877)
+WITH XMLNAMESPACES('http://example.com/x' AS []), c AS (SELECT 1 AS a) SELECT a FROM c FOR XML RAW;
+GO
+-- 37.6 Empty prefix and empty URI in one declaration: the prefix is reported
+-- (T-SQL 1038, 6877)
+WITH XMLNAMESPACES('' AS []) SELECT 1 AS a FOR XML RAW;
+GO
+-- 37.7 Across declarations the first bad one is reported: the empty prefix
+-- (T-SQL 1038, 6877), then the empty URI (T-SQL 6874)
+WITH XMLNAMESPACES('urn:a' AS [], '' AS p) SELECT 1 AS a FOR XML RAW;
+GO
+WITH XMLNAMESPACES('' AS p, 'urn:b' AS []) SELECT 1 AS a FOR XML RAW;
+GO
+-- 37.8 In a procedure body the CREATE is rejected as well (T-SQL 1038, 6877)
+CREATE PROCEDURE forxml_ns_proc7 AS
+  WITH XMLNAMESPACES('urn:b' AS []) SELECT 1 AS a FOR XML RAW;
+GO
+DROP PROCEDURE IF EXISTS forxml_ns_proc7;
+GO
+-- ============================================
+-- SECTION 38: Whitespace in a namespace URI is collapsed
+-- T-SQL treats the URI as xs:anyURI, whose whitespace facet is collapse: TAB,
+-- LF and CR become a space, runs of spaces become one, and both ends are
+-- trimmed. A whitespace-only URI is therefore empty (T-SQL 6874). Every error
+-- in this section is reported as 33557097 rather than the T-SQL number given
+-- in the comment. TAB, LF and CR are built with CHAR() in dynamic SQL.
+-- ============================================
+-- 38.1 Three spaces (T-SQL 6874)
+WITH XMLNAMESPACES('   ' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW;
+GO
+-- 38.2 DEFAULT three spaces (T-SQL 6874)
+WITH XMLNAMESPACES(DEFAULT '   ') SELECT 1 AS a FOR XML RAW;
+GO
+-- 38.3 N-literal three spaces (T-SQL 6874)
+WITH XMLNAMESPACES(N'   ' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW;
+GO
+-- 38.4 TAB only (T-SQL 6874)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''' + CHAR(9) + N''' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 38.5 LF only (T-SQL 6874)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''' + CHAR(10) + N''' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 38.6 CR only (T-SQL 6874)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''' + CHAR(13) + N''' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 38.7 CRLF only (T-SQL 6874)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''' + CHAR(13) + CHAR(10) + N''' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 38.8 Space, TAB, LF, space (T-SQL 6874)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES('' ' + CHAR(9) + CHAR(10) + N' '' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 38.9 DEFAULT TAB only (T-SQL 6874)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(DEFAULT ''' + CHAR(9) + N''') SELECT 1 AS a FOR XML RAW';
+EXEC(@s);
+GO
+-- 38.10 Spaces around real content are trimmed
+WITH XMLNAMESPACES('  urn:x  ' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW;
+GO
+-- 38.11 Same with DEFAULT
+WITH XMLNAMESPACES(DEFAULT '  urn:x  ') SELECT 1 AS a FOR XML RAW;
+GO
+-- 38.12 TABs around real content are trimmed
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''' + CHAR(9) + N'urn:x' + CHAR(9) + N''' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 38.13 The xml URI rules apply after the collapse, so a padded xml namespace
+-- URI may be bound to xml. Babelfish emits xmlns:xml on the row and T-SQL does
+-- not; that difference is the same with an unpadded URI.
+WITH XMLNAMESPACES(' http://www.w3.org/XML/1998/namespace ' AS xml) SELECT 1 AS a FOR XML RAW;
+GO
+-- 38.14 ...and may not be bound to any other prefix (T-SQL 6872)
+WITH XMLNAMESPACES(' http://www.w3.org/XML/1998/namespace' AS p) SELECT 1 AS [p:a] FOR XML RAW;
+GO
+-- 38.15 U+00A0 is not collapsed: an NBSP-only URI is accepted and NBSP
+-- padding is kept
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(N''' + NCHAR(160) + N''' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW';
+EXEC(@s);
+GO
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(N''' + NCHAR(160) + N'urn:x' + NCHAR(160) + N''' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 38.16 Duplicate prefix detection is unaffected (T-SQL 6869)
+WITH XMLNAMESPACES('urn:x' AS p, ' urn:x ' AS p) SELECT 1 AS [p:a] FOR XML RAW;
+GO
+-- 38.17 URIs that are equal after the collapse are both emitted collapsed
+WITH XMLNAMESPACES('urn:x' AS p, ' urn:x ' AS q) SELECT 1 AS [p:a], 2 AS [q:b] FOR XML RAW;
+GO
+-- 38.18 Within one declaration a problem with the prefix, or a second DEFAULT,
+-- is reported ahead of an empty URI
+-- 38.18a Space-only prefix (T-SQL 6870)
+WITH XMLNAMESPACES('   ' AS [ ]) SELECT 1 AS a FOR XML RAW;
+GO
+-- 38.18b xmlns prefix (T-SQL 6871)
+WITH XMLNAMESPACES('   ' AS xmlns) SELECT 1 AS a FOR XML RAW;
+GO
+-- 38.18c xml prefix (T-SQL 6872)
+WITH XMLNAMESPACES('   ' AS xml) SELECT 1 AS a FOR XML RAW;
+GO
+-- 38.18d xmlns prefix with an empty URI (T-SQL 6871)
+WITH XMLNAMESPACES('' AS xmlns) SELECT 1 AS a FOR XML RAW;
+GO
+-- 38.18e xml prefix with an empty URI (T-SQL 6872)
+WITH XMLNAMESPACES('' AS xml) SELECT 1 AS a FOR XML RAW;
+GO
+-- 38.18f Duplicate prefix with an empty URI (T-SQL 6869)
+WITH XMLNAMESPACES('urn:a' AS p, '' AS p) SELECT 1 AS a FOR XML RAW;
+GO
+-- 38.18g Second DEFAULT with an empty URI (T-SQL 6869)
+WITH XMLNAMESPACES(DEFAULT 'urn:a', DEFAULT '') SELECT 1 AS a FOR XML RAW;
+GO
+-- 38.18h Across declarations the first bad one is reported (T-SQL 6874)
+WITH XMLNAMESPACES(DEFAULT '  ', 'urn:b' AS []) SELECT 1 AS a FOR XML RAW;
+GO
+-- 38.19 A whitespace-only URI in a procedure body rejects the CREATE
+-- (T-SQL 6874)
+CREATE PROCEDURE forxml_ns_proc8 AS
+  WITH XMLNAMESPACES('   ' AS p) SELECT 1 AS [p:a] FOR XML RAW;
+GO
+DROP PROCEDURE IF EXISTS forxml_ns_proc8;
+GO
+-- ============================================
+-- SECTION 39: TAB, LF and CR inside a namespace URI
+-- The collapse in SECTION 38 applies inside the URI too, so these characters
+-- never reach the xmlns declaration. T-SQL neither writes them as character
+-- references nor keeps a run of them: each run becomes one space.
+-- ============================================
+-- 39.1 A real LF and TAB inside the literal
+WITH XMLNAMESPACES('urn:line1
+line2	tabbed' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW('Row');
+GO
+-- 39.2 The same URI built with CHAR(10) and CHAR(9)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:line1' + CHAR(10) + N'line2' + CHAR(9) + N'tabbed'' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW(''Row'')';
+EXEC(@s);
+GO
+-- 39.3 CR alone
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + CHAR(13) + N'b'' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW(''Row'')';
+EXEC(@s);
+GO
+-- 39.4 CRLF is one space
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + CHAR(13) + CHAR(10) + N'b'' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW(''Row'')';
+EXEC(@s);
+GO
+-- 39.5 Two TABs are one space
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + CHAR(9) + CHAR(9) + N'b'' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW(''Row'')';
+EXEC(@s);
+GO
+-- 39.6 Two spaces are one space
+WITH XMLNAMESPACES('urn:a  b' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW('Row');
+GO
+-- 39.7 TAB, space, LF are one space
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + CHAR(9) + N' ' + CHAR(10) + N'b'' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW(''Row'')';
+EXEC(@s);
+GO
+-- 39.8 DEFAULT with a TAB
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(DEFAULT ''urn:a' + CHAR(9) + N'b'') SELECT 1 AS a FOR XML RAW(''Row'')';
+EXEC(@s);
+GO
+-- 39.9 PATH mode with an LF
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + CHAR(10) + N'b'' AS ns1) SELECT 1 AS [ns1:a] FOR XML PATH(''r'')';
+EXEC(@s);
+GO
+-- 39.10 AUTO mode with a TAB
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + CHAR(9) + N'b'' AS ns1) SELECT EmpID AS [ns1:id] FROM forxml_ns_employees AS t WHERE EmpID = 1 FOR XML AUTO';
+EXEC(@s);
+GO
+-- 39.11 RAW, TYPE with a TAB
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + CHAR(9) + N'b'' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW(''Row''), TYPE';
+EXEC(@s);
+GO
+-- 39.12 A TAB next to characters that are escaped in the declaration
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + CHAR(9) + N'&<>"b'' AS ns1) SELECT 1 AS [ns1:a] FOR XML RAW(''Row'')';
+EXEC(@s);
+GO
+-- ============================================
+-- SECTION 40: Characters XML does not allow in a namespace URI
+-- C0 controls other than TAB, LF and CR, and U+FFFE/U+FFFF, are rejected
+-- (T-SQL 6875) with the first one reported, after the whitespace collapse.
+-- Babelfish reports every error in this section as 33557097. The characters
+-- are built with NCHAR() in dynamic SQL and appear raw in the message.
+-- ============================================
+-- 40.1 NCHAR(1) in RAW mode (T-SQL 6875, 0x0001)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + NCHAR(1) + N'b'' AS p) SELECT 1 AS [p:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 40.2 NCHAR(31) (T-SQL 6875, 0x001F)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + NCHAR(31) + N'b'' AS p) SELECT 1 AS [p:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 40.3 NCHAR(8) (T-SQL 6875, 0x0008)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + NCHAR(8) + N'b'' AS p) SELECT 1 AS [p:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 40.4 NCHAR(11) (T-SQL 6875, 0x000B)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + NCHAR(11) + N'b'' AS p) SELECT 1 AS [p:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 40.5 NCHAR(12) (T-SQL 6875, 0x000C)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + NCHAR(12) + N'b'' AS p) SELECT 1 AS [p:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 40.6 RAW, TYPE (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + NCHAR(1) + N'b'' AS p) SELECT 1 AS [p:a] FOR XML RAW, TYPE';
+EXEC(@s);
+GO
+-- 40.7 PATH mode (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + NCHAR(31) + N'b'' AS p) SELECT 1 AS [p:a] FOR XML PATH(''r'')';
+EXEC(@s);
+GO
+-- 40.8 DEFAULT (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(DEFAULT ''urn:a' + NCHAR(1) + N'b'') SELECT 1 AS a FOR XML RAW';
+EXEC(@s);
+GO
+-- 40.9 A URI of only NCHAR(1) (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''' + NCHAR(1) + N''' AS p) SELECT 1 AS [p:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 40.10 The URI is reported after the collapse, 'urn:a ' followed by the
+-- character (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a  ' + NCHAR(1) + N''' AS p) SELECT 1 AS [p:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 40.11 Check order: the first bad declaration is reported, and within one
+-- declaration the prefix checks come first
+-- 40.11a Bad character, then [1p] in the next declaration (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + NCHAR(1) + N''' AS q, ''urn:x'' AS [1p]) SELECT 1 AS a FOR XML RAW';
+EXEC(@s);
+GO
+-- 40.11b Bad character, then a duplicate prefix (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + NCHAR(1) + N''' AS q, ''urn:x'' AS q) SELECT 1 AS a FOR XML RAW';
+EXEC(@s);
+GO
+-- 40.11c Bad DEFAULT, then a second DEFAULT (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(DEFAULT ''urn:a' + NCHAR(1) + N''', DEFAULT ''urn:x'') SELECT 1 AS a FOR XML RAW';
+EXEC(@s);
+GO
+-- 40.11d Bad character with prefix xmlns (T-SQL 6871)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + NCHAR(1) + N''' AS xmlns) SELECT 1 AS a FOR XML RAW';
+EXEC(@s);
+GO
+-- 40.11e A clause that nothing uses (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(''urn:a' + NCHAR(1) + N''' AS q) SELECT 1 AS a';
+EXEC(@s);
+GO
+-- 40.12 NCHAR(65535) (T-SQL 6875, 0xFFFF). The message shows each argument
+-- that holds U+FFFF cut right after it, with its last three characters as
+-- dots: 'urn...' and '.', then 'abcdefgh...' and '.'.
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(N''urn:a' + NCHAR(65535) + N'b'' AS p) SELECT 1 AS [p:a] FOR XML RAW';
+EXEC(@s);
+GO
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(N''abcdefghij' + NCHAR(65535) + N''' AS p) SELECT 1 AS [p:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 40.12a NCHAR(1) is reported first and U+FFFF follows it: the URI is still
+-- shown cut, as 'urn:...' (T-SQL 6875, 0x0001)
+DECLARE @s NVARCHAR(MAX) = N'WITH XMLNAMESPACES(N''urn:a' + NCHAR(1) + NCHAR(65535) + N''' AS p) SELECT 1 AS [p:a] FOR XML RAW';
+EXEC(@s);
+GO
+-- 40.13 In a procedure body the CREATE is rejected (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'CREATE PROCEDURE forxml_ns_proc9 AS WITH XMLNAMESPACES(''urn:a' + NCHAR(1) + N'b'' AS p) SELECT 1 AS [p:a] FOR XML RAW';
+EXEC(@s);
+GO
+DROP PROCEDURE IF EXISTS forxml_ns_proc9;
+GO
+-- ============================================
+-- SECTION 41: Empty namespace prefix with FOR XML in routine bodies
+-- The CREATE is rejected (T-SQL 1038, 6877). Babelfish raises only the 1038
+-- text, as error 33557097.
+-- ============================================
+-- 41.1 PATH mode with AS "" (T-SQL 1038, 6877)
+SET QUOTED_IDENTIFIER ON;
+GO
+CREATE PROCEDURE forxml_ns_proc10 AS
+  WITH XMLNAMESPACES('urn:x' AS "") SELECT 1 AS a FOR XML PATH('r');
+GO
+DROP PROCEDURE IF EXISTS forxml_ns_proc10;
+GO
+-- 41.2 Scalar function (T-SQL 1038, 6877)
+CREATE FUNCTION forxml_ns_fn1() RETURNS NVARCHAR(200) AS
+BEGIN
+    DECLARE @r NVARCHAR(200);
+    WITH XMLNAMESPACES('urn:x' AS [])
+    SELECT @r = (SELECT 1 AS a FOR XML RAW);
+    RETURN @r;
+END
+GO
+DROP FUNCTION IF EXISTS forxml_ns_fn1;
+GO
+-- 41.3 Trigger (T-SQL 1038, 6877)
+CREATE TABLE forxml_ns_trig_t (id INT);
+GO
+CREATE TRIGGER forxml_ns_trig1 ON forxml_ns_trig_t AFTER INSERT AS
+  WITH XMLNAMESPACES('urn:x' AS []) SELECT 1 AS a FOR XML RAW;
+GO
+DROP TRIGGER IF EXISTS forxml_ns_trig1;
+DROP TABLE IF EXISTS forxml_ns_trig_t;
+GO
+-- 41.4 AS [] next to a valid prefix (T-SQL 1038, 6877)
+CREATE PROCEDURE forxml_ns_proc11 AS
+  WITH XMLNAMESPACES('urn:p' AS p, 'urn:x' AS []) SELECT 1 AS [p:a] FOR XML RAW;
+GO
+DROP PROCEDURE IF EXISTS forxml_ns_proc11;
+GO
+-- ============================================
+-- SECTION 42: WITH XMLNAMESPACES in a view, FOR XML
+-- The declarations reach the FOR XML output of the view's SELECT.
+-- ============================================
+-- 42.1 RAW, TYPE in a scalar subquery
+CREATE VIEW forxml_ns_v1 AS
+WITH XMLNAMESPACES('urn:x' AS p)
+SELECT (SELECT 1 AS [p:a] FOR XML RAW, TYPE) AS c;
+GO
+SELECT c FROM forxml_ns_v1;
+GO
+-- 42.2 DEFAULT with PATH in a scalar subquery
+CREATE VIEW forxml_ns_v2 AS
+WITH XMLNAMESPACES(DEFAULT 'urn:d')
+SELECT (SELECT 1 AS a FOR XML PATH('r'), TYPE) AS c;
+GO
+SELECT c FROM forxml_ns_v2;
+GO
+-- 42.3 FOR XML at the top level of a view. T-SQL rejects the CREATE (4511,
+-- no column name for column 1). Babelfish creates the view, as it does for
+-- the same view without the clause.
+CREATE VIEW forxml_ns_v3 AS
+WITH XMLNAMESPACES('urn:x' AS p)
+SELECT 1 AS [p:a] FOR XML RAW;
+GO
+SELECT * FROM forxml_ns_v3;
+GO
+-- 42.4 An alias prefix the clause does not declare (T-SQL 6846)
+CREATE VIEW forxml_ns_v4 AS
+WITH XMLNAMESPACES('urn:x' AS p)
+SELECT (SELECT 1 AS [q:a] FOR XML RAW, TYPE) AS c;
+GO
+DROP VIEW IF EXISTS forxml_ns_v1;
+DROP VIEW IF EXISTS forxml_ns_v2;
+DROP VIEW IF EXISTS forxml_ns_v3;
+DROP VIEW IF EXISTS forxml_ns_v4;
+GO
