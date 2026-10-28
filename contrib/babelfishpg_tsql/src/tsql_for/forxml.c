@@ -597,10 +597,9 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 					xml_auto_parse_metadata(auto_st, auto_metadata, tupdesc->natts);
 
 					/*
-					 * Build the per-column caches here rather than lazily on
-					 * the first row.  Every row reads them, so they have to
-					 * live in agg_context, while the row work below runs in a
-					 * context that is reset after each row.  It matters most
+					 * Build the per-column caches once, here in agg_context.
+					 * Every row reads them, while the row work below runs in
+					 * a context that is reset after each row.  It matters most
 					 * for the FmgrInfos: fmgr_info() records the current
 					 * context as fn_mcxt, which is where a function later
 					 * allocates anything it caches in fn_extra, so an
@@ -1955,10 +1954,9 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 
 	/*
 	 * The output-function, T-SQL type and equality caches are built once in
-	 * the sfunc's AUTO setup block, before it installs the per-row context
-	 * (see tsql_query_to_xml_sfunc).  They used to be built lazily here, on
-	 * the first row, which would now put them in a context that is reset
-	 * before the second row reads them.
+	 * the sfunc's AUTO setup block, in the aggregate context (see
+	 * tsql_query_to_xml_sfunc).  This function runs in the per-row context,
+	 * which is reset after every row, so they must not be built here.
 	 */
 	Assert(auto_state->out_funcs_cached);
 	Assert(auto_state->tsql_types_cached);
