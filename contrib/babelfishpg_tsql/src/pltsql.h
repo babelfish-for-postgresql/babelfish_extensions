@@ -2420,6 +2420,7 @@ extern void store_view_original_name(ViewStmt *stmt, const char *queryString);
 
 /* functions in pltsql_utils.c */
 extern char *get_original_relname(Oid relid, bool check_permission);
+extern char *get_bbf_original_object_name(Oid classid, HeapTuple tuple);
 extern void pltsql_substitute_computed_column_names(RangeTblEntry *rte, char **colnames, int num_cols);
 extern char *get_bbf_original_column_name(Oid relid, AttrNumber attnum);
 extern char *get_inline_tvf_original_column_name(Oid funcid, AttrNumber attnum);

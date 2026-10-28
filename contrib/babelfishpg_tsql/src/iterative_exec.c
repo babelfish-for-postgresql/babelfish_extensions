@@ -2196,7 +2196,29 @@ get_proc_name(PLtsql_execstate *estate)
 
 	if (estate && estate->func && estate->func->exec_codes &&
 		estate->func->exec_codes->proc_name)
+	{
 		result = pstrdup(estate->func->exec_codes->proc_name);
+
+		/*
+		 * Long names are stored truncated and hashed, so resolve the original
+		 * name here, at error time. The procedure may have been compiled
+		 * during CREATE, before its babelfish_function_ext row existed.
+		 */
+		if (strlen(result) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+		{
+			HeapTuple	proctup = SearchSysCache1(PROCOID,
+												  ObjectIdGetDatum(estate->func->fn_oid));
+
+			if (HeapTupleIsValid(proctup))
+			{
+				char	   *orig = get_bbf_original_object_name(ProcedureRelationId, proctup);
+
+				if (orig)
+					result = orig;
+				ReleaseSysCache(proctup);
+			}
+		}
+	}
 	return result;
 }
 

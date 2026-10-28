@@ -882,8 +882,8 @@ LANGUAGE 'pltsql';
 CREATE OR REPLACE VIEW sys.spt_columns_view_managed AS
 SELECT
     o.object_id                     AS OBJECT_ID,
-    isc."TABLE_CATALOG"::information_schema.sql_identifier               AS TABLE_CATALOG,
-    isc."TABLE_SCHEMA"::information_schema.sql_identifier                AS TABLE_SCHEMA,
+    CAST(isc."TABLE_CATALOG" AS sys.sysname) COLLATE "C"               AS TABLE_CATALOG,
+    CAST(isc."TABLE_SCHEMA" AS sys.sysname) COLLATE "C"                AS TABLE_SCHEMA,
     o.name                          AS TABLE_NAME,
     c.name                          AS COLUMN_NAME,
     isc."ORDINAL_POSITION"::information_schema.cardinal_number           AS ORDINAL_POSITION,
@@ -915,9 +915,9 @@ SELECT
     isc."COLLATION_CATALOG"::information_schema.sql_identifier           AS COLLATION_CATALOG,
     isc."COLLATION_SCHEMA"::information_schema.sql_identifier            AS COLLATION_SCHEMA,
     c.collation_name                                                     AS COLLATION_NAME,
-    isc."DOMAIN_CATALOG"::information_schema.sql_identifier              AS DOMAIN_CATALOG,
-    isc."DOMAIN_SCHEMA"::information_schema.sql_identifier               AS DOMAIN_SCHEMA,
-    isc."DOMAIN_NAME"::information_schema.sql_identifier                 AS DOMAIN_NAME,
+    CAST(isc."DOMAIN_CATALOG" AS sys.sysname) COLLATE "C"              AS DOMAIN_CATALOG,
+    CAST(isc."DOMAIN_SCHEMA" AS sys.sysname) COLLATE "C"               AS DOMAIN_SCHEMA,
+    CAST(isc."DOMAIN_NAME" AS sys.sysname) COLLATE "C"                 AS DOMAIN_NAME,
     c.is_sparse                     AS IS_SPARSE,
     c.is_column_set                 AS IS_COLUMN_SET,
     c.is_filestream                 AS IS_FILESTREAM
@@ -2425,7 +2425,10 @@ BEGIN
 					WHEN Ext2.orig_username IS NULL THEN 'public'
 					ELSE Ext2.orig_username END 
 					AS SYS.SYSNAME) AS 'RoleName',
-			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN
+						COALESCE(CASE WHEN pg_catalog.octet_length(Base4.rolname) >= 60 THEN
+							(SELECT TOP 1 OwnExt.orig_loginname FROM sys.babelfish_authid_login_ext AS OwnExt WHERE OwnExt.rolname = Base4.rolname)
+						END, CAST(Base4.rolname AS SYS.NVARCHAR(128)) COLLATE database_default)
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(COALESCE(
@@ -2435,7 +2438,14 @@ BEGIN
 			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
 			       END,
 			       LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
-			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(COALESCE(
+			       CASE WHEN pg_catalog.octet_length(Ext1.default_schema_name) >= 60 THEN
+			           (SELECT TOP 1 pg_catalog.lower(ne.orig_name COLLATE "C") COLLATE database_default
+			            FROM sys.babelfish_namespace_ext ne
+			            WHERE ne.dbid = Bsdb.dbid
+			              AND sys.babelfish_truncate_identifier(pg_catalog.lower(ne.orig_name COLLATE "C")) COLLATE database_default = Ext1.default_schema_name)
+			       END,
+			       Ext1.default_schema_name) AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
 					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
@@ -2502,7 +2512,10 @@ BEGIN
 					WHEN Ext2.orig_username IS NULL THEN 'public' 
 					ELSE Ext2.orig_username END 
 					AS SYS.SYSNAME) AS 'RoleName',
-			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN
+						COALESCE(CASE WHEN pg_catalog.octet_length(Base4.rolname) >= 60 THEN
+							(SELECT TOP 1 OwnExt.orig_loginname FROM sys.babelfish_authid_login_ext AS OwnExt WHERE OwnExt.rolname = Base4.rolname)
+						END, CAST(Base4.rolname AS SYS.NVARCHAR(128)) COLLATE database_default)
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(COALESCE(
@@ -2512,7 +2525,14 @@ BEGIN
 			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
 			       END,
 			       LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
-			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(COALESCE(
+			       CASE WHEN pg_catalog.octet_length(Ext1.default_schema_name) >= 60 THEN
+			           (SELECT TOP 1 pg_catalog.lower(ne.orig_name COLLATE "C") COLLATE database_default
+			            FROM sys.babelfish_namespace_ext ne
+			            WHERE ne.dbid = Bsdb.dbid
+			              AND sys.babelfish_truncate_identifier(pg_catalog.lower(ne.orig_name COLLATE "C")) COLLATE database_default = Ext1.default_schema_name)
+			       END,
+			       Ext1.default_schema_name) AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
 					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)

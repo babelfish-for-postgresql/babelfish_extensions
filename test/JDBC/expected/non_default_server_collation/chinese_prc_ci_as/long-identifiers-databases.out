@@ -515,3 +515,165 @@ server-alive
 ~~END~~
 
 
+-- tsql
+-- BABEL-7239: when "<database>_db_owner" exceeds 63 bytes, the db_owner role is created
+-- with a hashed name; looking it up again must build the same name. Otherwise
+-- sys.database_principals, sys.sysusers and sp_addextendedproperty fail with
+-- 'role ... does not exist' once the database has a non-system user.
+CREATE LOGIN babel7239_dbrole_login WITH PASSWORD = '12345678';
+GO
+
+-- 58-character database name (the name itself is not truncated)
+CREATE DATABASE babel7239_db58_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+USE babel7239_db58_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+CREATE USER babel7239_d58_user FOR LOGIN babel7239_dbrole_login;
+GO
+SELECT name FROM sys.database_principals WHERE name = 'babel7239_d58_user';
+GO
+~~START~~
+varchar
+babel7239_d58_user
+~~END~~
+
+SELECT name FROM sys.sysusers WHERE name = 'babel7239_d58_user';
+GO
+~~START~~
+varchar
+babel7239_d58_user
+~~END~~
+
+CREATE TABLE babel7239_d58_t (a INT);
+GO
+EXEC sp_addextendedproperty 'babel7239_prop', 'v', 'schema', 'dbo', 'table', 'babel7239_d58_t';
+GO
+SELECT objname, name FROM fn_listextendedproperty('babel7239_prop', 'schema', 'dbo', 'table', NULL, NULL, NULL);
+GO
+~~START~~
+varchar#!#varchar
+babel7239_d58_t#!#babel7239_prop
+~~END~~
+
+USE master;
+GO
+DROP DATABASE babel7239_db58_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+
+-- Database name over 63 bytes (the name itself is truncated and hashed)
+CREATE DATABASE Babel7239_LongDb_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+USE Babel7239_LongDb_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+CREATE USER babel7239_dlong_user FOR LOGIN babel7239_dbrole_login;
+GO
+SELECT name FROM sys.database_principals WHERE name = 'babel7239_dlong_user';
+GO
+~~START~~
+varchar
+babel7239_dlong_user
+~~END~~
+
+SELECT name FROM sys.sysusers WHERE name = 'babel7239_dlong_user';
+GO
+~~START~~
+varchar
+babel7239_dlong_user
+~~END~~
+
+CREATE TABLE babel7239_dlong_t (a INT);
+GO
+EXEC sp_addextendedproperty 'babel7239_prop', 'v', 'schema', 'dbo', 'table', 'babel7239_dlong_t';
+GO
+SELECT objname, name FROM fn_listextendedproperty('babel7239_prop', 'schema', 'dbo', 'table', NULL, NULL, NULL);
+GO
+~~START~~
+varchar#!#varchar
+babel7239_dlong_t#!#babel7239_prop
+~~END~~
+
+USE master;
+GO
+DROP DATABASE Babel7239_LongDb_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+
+-- Roles renamed by sp_renamedb to a 58-character name
+CREATE DATABASE babel7239_ren_src1;
+GO
+EXEC sp_renamedb 'babel7239_ren_src1', 'babel7239_ren58_yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy';
+GO
+USE babel7239_ren58_yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy;
+GO
+CREATE USER babel7239_r58_user FOR LOGIN babel7239_dbrole_login;
+GO
+SELECT name FROM sys.database_principals WHERE name = 'babel7239_r58_user';
+GO
+~~START~~
+varchar
+babel7239_r58_user
+~~END~~
+
+SELECT name FROM sys.sysusers WHERE name = 'babel7239_r58_user';
+GO
+~~START~~
+varchar
+babel7239_r58_user
+~~END~~
+
+CREATE TABLE babel7239_r58_t (a INT);
+GO
+EXEC sp_addextendedproperty 'babel7239_prop', 'v', 'schema', 'dbo', 'table', 'babel7239_r58_t';
+GO
+SELECT objname, name FROM fn_listextendedproperty('babel7239_prop', 'schema', 'dbo', 'table', NULL, NULL, NULL);
+GO
+~~START~~
+varchar#!#varchar
+babel7239_r58_t#!#babel7239_prop
+~~END~~
+
+USE master;
+GO
+DROP DATABASE babel7239_ren58_yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy;
+GO
+
+-- Roles renamed by ALTER DATABASE ... MODIFY NAME to a name over 63 bytes
+CREATE DATABASE babel7239_ren_src2;
+GO
+ALTER DATABASE babel7239_ren_src2 MODIFY NAME = Babel7239_RenLong_zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz;
+GO
+USE Babel7239_RenLong_zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz;
+GO
+CREATE USER babel7239_rlong_user FOR LOGIN babel7239_dbrole_login;
+GO
+SELECT name FROM sys.database_principals WHERE name = 'babel7239_rlong_user';
+GO
+~~START~~
+varchar
+babel7239_rlong_user
+~~END~~
+
+SELECT name FROM sys.sysusers WHERE name = 'babel7239_rlong_user';
+GO
+~~START~~
+varchar
+babel7239_rlong_user
+~~END~~
+
+CREATE TABLE babel7239_rlong_t (a INT);
+GO
+EXEC sp_addextendedproperty 'babel7239_prop', 'v', 'schema', 'dbo', 'table', 'babel7239_rlong_t';
+GO
+SELECT objname, name FROM fn_listextendedproperty('babel7239_prop', 'schema', 'dbo', 'table', NULL, NULL, NULL);
+GO
+~~START~~
+varchar#!#varchar
+babel7239_rlong_t#!#babel7239_prop
+~~END~~
+
+USE master;
+GO
+DROP DATABASE Babel7239_RenLong_zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz;
+GO
+
+DROP LOGIN babel7239_dbrole_login;
+GO

@@ -77,3 +77,42 @@ CREATE TABLE Very_Long_Catalog_Domain_Usage_Table_That_Exceeds_PostgreSQL_Limit_
     domain_col Very_Long_Catalog_Domain_Type_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars_VU_TVC
 );
 GO
+
+-- BABEL-7239: objects for the remaining catalog surfaces, checked after upgrade.
+CREATE FUNCTION Very_Long_Catalog_Syscolumns_Tvf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU() RETURNS TABLE AS RETURN (SELECT 1 AS Very_Long_Catalog_Syscolumns_Tvf_Column_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU);
+GO
+CREATE TYPE Very_Long_Catalog_Table_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU AS TABLE (Very_Long_Catalog_Table_Type_Column_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU INT);
+GO
+CREATE TABLE Very_Long_Catalog_Default_Table_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU (c INT DEFAULT 1);
+GO
+CREATE SCHEMA Very_Long_Catalog_Managed_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
+GO
+CREATE TABLE Very_Long_Catalog_Managed_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU.Very_Long_Catalog_Managed_Table_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU (Very_Long_Catalog_Managed_Column_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU INT);
+GO
+CREATE LOGIN Very_Long_Catalog_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU WITH PASSWORD = '12345678';
+GO
+CREATE USER Very_Long_Catalog_User_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU FOR LOGIN Very_Long_Catalog_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
+GO
+
+-- BABEL-7239: objects for fn_listextendedproperty, ERROR_PROCEDURE() and default schema /
+-- session login name checks after upgrade.
+CREATE PROCEDURE Very_Long_Catalog_XProp_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU AS SELECT 1;
+GO
+CREATE TYPE Very_Long_Catalog_XProp_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU FROM INT;
+GO
+CREATE SEQUENCE Very_Long_Catalog_XProp_Seq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
+GO
+EXEC sp_addextendedproperty 'babel7239_vu_xp', 'v', 'schema', 'dbo', 'procedure', 'Very_Long_Catalog_XProp_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU';
+GO
+EXEC sp_addextendedproperty 'babel7239_vu_xp', 'v', 'schema', 'dbo', 'type', 'Very_Long_Catalog_XProp_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU';
+GO
+EXEC sp_addextendedproperty 'babel7239_vu_xp', 'v', 'schema', 'dbo', 'sequence', 'Very_Long_Catalog_XProp_Seq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU';
+GO
+CREATE PROCEDURE Very_Long_Catalog_Error_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU AS BEGIN TRY SELECT 1/0 END TRY BEGIN CATCH SELECT ERROR_PROCEDURE() END CATCH;
+GO
+CREATE SCHEMA Very_Long_Catalog_Default_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
+GO
+CREATE LOGIN Very_Long_Catalog_Session_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU WITH PASSWORD = '12345678';
+GO
+CREATE USER Very_Long_Catalog_Session_User_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU FOR LOGIN Very_Long_Catalog_Session_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU WITH DEFAULT_SCHEMA = Very_Long_Catalog_Default_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_VU;
+GO

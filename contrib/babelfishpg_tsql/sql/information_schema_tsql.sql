@@ -401,7 +401,13 @@ GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.domains AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
-		CAST(COALESCE(CASE WHEN pg_catalog.octet_length(t.typname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = t.typname AND bim.nspname = nc.nspname AND bim.pg_catalog_type = 'pg_type'::regclass::oid LIMIT 1) END, t.typname::text) AS sys.sysname) AS "DOMAIN_NAME",
+		CAST(COALESCE(CASE WHEN pg_catalog.octet_length(t.typname) >= 60 THEN
+			CASE WHEN is_tbl_type THEN
+				(SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C") FROM pg_catalog.pg_class tc, pg_catalog.unnest(tc.reloptions) opt WHERE tc.oid = t.typrelid AND opt LIKE 'bbf_original_rel_name=%' LIMIT 1)
+			ELSE
+				(SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = t.typname AND bim.nspname = nc.nspname AND bim.pg_catalog_type = 'pg_type'::regclass::oid LIMIT 1)
+			END
+		END, t.typname::text) AS sys.sysname) AS "DOMAIN_NAME",
 		CAST(case when is_tbl_type THEN 'table type' ELSE tsql_type_name END AS sys.sysname) AS "DATA_TYPE",
 
 		CAST(information_schema_tsql._pgtsql_char_max_length(tsql_type_name, t.typtypmod)

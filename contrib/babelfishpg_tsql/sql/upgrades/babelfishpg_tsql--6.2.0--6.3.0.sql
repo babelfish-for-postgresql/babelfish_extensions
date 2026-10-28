@@ -875,7 +875,14 @@ and has_function_privilege(p.oid, 'EXECUTE')
 union all
 -- details of all default constraints
 select
-    ('DF_' || o.relname || '_' || d.oid)::sys.sysname as name
+    ('DF_' || COALESCE(
+        CASE WHEN pg_catalog.octet_length(o.relname) >= 60 THEN
+            (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+             FROM pg_catalog.unnest(o.reloptions) opt
+             WHERE opt LIKE 'bbf_original_rel_name=%'
+             LIMIT 1)
+        END,
+        o.relname::text) || '_' || d.oid)::sys.sysname as name
   , d.oid as object_id
   , null::int as principal_id
   , o.relnamespace as schema_id
@@ -3685,7 +3692,13 @@ GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.domains AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
-		CAST(COALESCE(CASE WHEN pg_catalog.octet_length(t.typname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = t.typname AND bim.nspname = nc.nspname AND bim.pg_catalog_type = 'pg_type'::regclass::oid LIMIT 1) END, t.typname::text) AS sys.sysname) AS "DOMAIN_NAME",
+		CAST(COALESCE(CASE WHEN pg_catalog.octet_length(t.typname) >= 60 THEN
+			CASE WHEN is_tbl_type THEN
+				(SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C") FROM pg_catalog.pg_class tc, pg_catalog.unnest(tc.reloptions) opt WHERE tc.oid = t.typrelid AND opt LIKE 'bbf_original_rel_name=%' LIMIT 1)
+			ELSE
+				(SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = t.typname AND bim.nspname = nc.nspname AND bim.pg_catalog_type = 'pg_type'::regclass::oid LIMIT 1)
+			END
+		END, t.typname::text) AS sys.sysname) AS "DOMAIN_NAME",
 		CAST(case when is_tbl_type THEN 'table type' ELSE tsql_type_name END AS sys.sysname) AS "DATA_TYPE",
 
 		CAST(information_schema_tsql._pgtsql_char_max_length(tsql_type_name, t.typtypmod)
@@ -4230,7 +4243,10 @@ BEGIN
 					WHEN Ext2.orig_username IS NULL THEN 'public'
 					ELSE Ext2.orig_username END 
 					AS SYS.SYSNAME) AS 'RoleName',
-			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN
+						COALESCE(CASE WHEN pg_catalog.octet_length(Base4.rolname) >= 60 THEN
+							(SELECT TOP 1 OwnExt.orig_loginname FROM sys.babelfish_authid_login_ext AS OwnExt WHERE OwnExt.rolname = Base4.rolname)
+						END, CAST(Base4.rolname AS SYS.NVARCHAR(128)) COLLATE database_default)
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(COALESCE(
@@ -4240,7 +4256,14 @@ BEGIN
 			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
 			       END,
 			       LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
-			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(COALESCE(
+			       CASE WHEN pg_catalog.octet_length(Ext1.default_schema_name) >= 60 THEN
+			           (SELECT TOP 1 pg_catalog.lower(ne.orig_name COLLATE "C") COLLATE database_default
+			            FROM sys.babelfish_namespace_ext ne
+			            WHERE ne.dbid = Bsdb.dbid
+			              AND sys.babelfish_truncate_identifier(pg_catalog.lower(ne.orig_name COLLATE "C")) COLLATE database_default = Ext1.default_schema_name)
+			       END,
+			       Ext1.default_schema_name) AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
 					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
@@ -4307,7 +4330,10 @@ BEGIN
 					WHEN Ext2.orig_username IS NULL THEN 'public' 
 					ELSE Ext2.orig_username END 
 					AS SYS.SYSNAME) AS 'RoleName',
-			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN
+						COALESCE(CASE WHEN pg_catalog.octet_length(Base4.rolname) >= 60 THEN
+							(SELECT TOP 1 OwnExt.orig_loginname FROM sys.babelfish_authid_login_ext AS OwnExt WHERE OwnExt.rolname = Base4.rolname)
+						END, CAST(Base4.rolname AS SYS.NVARCHAR(128)) COLLATE database_default)
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(COALESCE(
@@ -4317,7 +4343,14 @@ BEGIN
 			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
 			       END,
 			       LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
-			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(COALESCE(
+			       CASE WHEN pg_catalog.octet_length(Ext1.default_schema_name) >= 60 THEN
+			           (SELECT TOP 1 pg_catalog.lower(ne.orig_name COLLATE "C") COLLATE database_default
+			            FROM sys.babelfish_namespace_ext ne
+			            WHERE ne.dbid = Bsdb.dbid
+			              AND sys.babelfish_truncate_identifier(pg_catalog.lower(ne.orig_name COLLATE "C")) COLLATE database_default = Ext1.default_schema_name)
+			       END,
+			       Ext1.default_schema_name) AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
 					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
@@ -4691,7 +4724,15 @@ CAST(
     ELSE NULL
   END
   AS SYS.NVARCHAR(60)) AS type_desc,
-CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
+CAST(COALESCE(
+    CASE WHEN pg_catalog.octet_length(Ext.default_schema_name) >= 60 THEN
+        (SELECT pg_catalog.lower(ne.orig_name COLLATE "C")
+         FROM sys.babelfish_namespace_ext ne
+         WHERE ne.dbid = Db.dbid
+           AND sys.babelfish_truncate_identifier(pg_catalog.lower(ne.orig_name COLLATE "C")) = Ext.default_schema_name COLLATE "C"
+         LIMIT 1)
+    END,
+    Ext.default_schema_name) AS SYS.SYSNAME) AS default_schema_name,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
 CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
 CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
@@ -5877,6 +5918,236 @@ RETURNS sys.SYSNAME AS $$
 $$
 LANGUAGE plpgsql IMMUTABLE
 STRICT;
+
+-- sys.sysprocesses / sys.dm_exec_sessions: show the original name of long logins.
+create or replace view sys.sysprocesses as
+select
+  a.pid as spid
+  , null::smallint as kpid
+  , coalesce(blocking_activity.pid, 0) as blocked
+  , null::sys.binary(2) as waittype
+  , 0::bigint as waittime
+  , CAST(a.wait_event_type as sys.nchar(32)) as lastwaittype
+  , null::sys.nchar(256) as waitresource
+  , coalesce(t.database_id, 0)::int as dbid
+  , a.usesysid as uid
+  , 0::int as cpu
+  , 0::bigint as physical_io
+  , 0::int as memusage
+  , cast(a.backend_start as sys.datetime) as login_time
+  , cast(a.query_start as sys.datetime) as last_batch
+  , 0::smallint as ecid
+  , 0::smallint as open_tran
+  , CAST(a.state as sys.nchar(30)) as status
+  , null::sys.binary(86) as sid
+  , CAST(t.host_name AS sys.nchar(128)) as hostname
+  , CAST(a.application_name as sys.nchar(128)) as program_name
+  , t.client_pid::sys.nchar(10) as hostprocess
+  , CAST(a.query as sys.nchar(52)) as cmd
+  , null::sys.nchar(128) as nt_domain
+  , null::sys.nchar(128) as nt_username
+  , null::sys.nchar(12) as net_address
+  , null::sys.nchar(12) as net_library
+  , CAST(COALESCE(CASE WHEN pg_catalog.octet_length(a.usename) >= 60 THEN
+        (SELECT pg_catalog.lower(le.orig_loginname COLLATE "C") FROM sys.babelfish_authid_login_ext le WHERE le.rolname = a.usename LIMIT 1)
+      END, a.usename::text) as sys.nchar(128)) as loginname
+  , t.context_info as context_info
+  , null::sys.binary(20) as sql_handle
+  , 0::int as stmt_start
+  , 0::int as stmt_end
+  , 0::int as request_id
+from pg_stat_activity a
+left join sys.tsql_stat_get_activity('sessions') as t on a.pid = t.procid
+left join pg_catalog.pg_locks as blocked_locks on a.pid = blocked_locks.pid
+left join pg_catalog.pg_locks         blocking_locks
+        ON blocking_locks.locktype = blocked_locks.locktype
+        AND blocking_locks.DATABASE IS NOT DISTINCT FROM blocked_locks.DATABASE
+        AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+        AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
+        AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
+        AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
+        AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
+        AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
+        AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
+        AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
+        AND blocking_locks.pid != blocked_locks.pid
+ left join pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+ where a.datname = current_database(); /* current physical database will always be babelfish database */
+GRANT SELECT ON sys.sysprocesses TO PUBLIC;
+
+create or replace view sys.dm_exec_sessions
+  as
+  select a.pid as session_id
+    , a.backend_start::sys.datetime as login_time
+    , d.host_name::sys.nvarchar(128) as host_name
+    , a.application_name::sys.nvarchar(128) as program_name
+    , d.client_pid as host_process_id
+    , d.client_version as client_version
+    , d.library_name::sys.nvarchar(32) as client_interface_name
+    , null::sys.varbinary(85) as security_id
+    , COALESCE(CASE WHEN pg_catalog.octet_length(a.usename) >= 60 THEN
+        (SELECT pg_catalog.lower(le.orig_loginname COLLATE "C") FROM sys.babelfish_authid_login_ext le WHERE le.rolname = a.usename LIMIT 1)
+      END, a.usename::text)::sys.nvarchar(128) as login_name
+    , (select sys.default_domain())::sys.nvarchar(128) as nt_domain
+    , null::sys.nvarchar(128) as nt_user_name
+    , a.state::sys.nvarchar(30) as status
+    , d.context_info::sys.varbinary(128) as context_info
+    , null::integer as cpu_time
+    , null::integer as memory_usage
+    , null::integer as total_scheduled_time
+    , null::integer as total_elapsed_time
+    , a.client_port as endpoint_id
+    , a.query_start::sys.datetime as last_request_start_time
+    , a.state_change::sys.datetime as last_request_end_time
+    , null::bigint as "reads"
+    , null::bigint as "writes"
+    , null::bigint as logical_reads
+    , CAST(a.client_port > 0 as sys.bit) as is_user_process
+    , d.textsize as text_size
+    , d.language::sys.nvarchar(128) as language
+    , 'ymd'::sys.nvarchar(3) as date_format-- Bld 173 lacks support for SET DATEFORMAT and always expects ymd
+    , d.datefirst::smallint as date_first -- Bld 173 lacks support for SET DATEFIRST and always returns 7
+    , CAST(CAST(d.quoted_identifier as integer) as sys.bit) as quoted_identifier
+    , CAST(CAST(d.arithabort as integer) as sys.bit) as arithabort
+    , CAST(CAST(d.ansi_null_dflt_on as integer) as sys.bit) as ansi_null_dflt_on
+    , CAST(CAST(d.ansi_defaults as integer) as sys.bit) as ansi_defaults
+    , CAST(CAST(d.ansi_warnings as integer) as sys.bit) as ansi_warnings
+    , CAST(CAST(d.ansi_padding as integer) as sys.bit) as ansi_padding
+    , CAST(CAST(d.ansi_nulls as integer) as sys.bit) as ansi_nulls
+    , CAST(CAST(d.concat_null_yields_null as integer) as sys.bit) as concat_null_yields_null
+    , d.transaction_isolation::smallint as transaction_isolation_level
+    , d.lock_timeout as lock_timeout
+    , 0 as deadlock_priority
+    , d.row_count as row_count
+    , d.error as prev_error
+    , null::sys.varbinary(85) as original_security_id
+    , COALESCE(CASE WHEN pg_catalog.octet_length(a.usename) >= 60 THEN
+        (SELECT pg_catalog.lower(le.orig_loginname COLLATE "C") FROM sys.babelfish_authid_login_ext le WHERE le.rolname = a.usename LIMIT 1)
+      END, a.usename::text)::sys.nvarchar(128) as original_login_name
+    , null::sys.datetime as last_successful_logon
+    , null::sys.datetime as last_unsuccessful_logon
+    , null::bigint as unsuccessful_logons
+    , null::int as group_id
+    , d.database_id::smallint as database_id
+    , 0 as authenticating_database_id
+    , d.trancount as open_transaction_count
+  from pg_catalog.pg_stat_activity AS a
+  RIGHT JOIN sys.tsql_stat_get_activity('sessions') AS d ON (a.pid = d.procid);
+  GRANT SELECT ON sys.dm_exec_sessions TO PUBLIC;
+
+-- sys.proc_param_helper (used by sys.syscolumns): resolve long parameter and
+-- inline-TVF output column names instead of the truncated/hashed physical name.
+CREATE OR REPLACE FUNCTION sys.proc_param_helper()
+RETURNS TABLE (
+    name sys.sysname,
+    id int,
+    xtype int,
+    colid smallint,
+    collationid int,
+    prec smallint,
+    scale int,
+    isoutparam int,
+    collation sys.sysname
+)
+AS
+$$
+BEGIN
+RETURN QUERY
+select CAST(COALESCE(
+      CASE WHEN pg_catalog.octet_length(pgproc.proargnames[params.ordinal_position]) >= 60 THEN
+        COALESCE(
+          (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C")
+           FROM sys.babelfish_identifier_mapping bim
+           WHERE bim.truncated_identifier_name = pgproc.proargnames[params.ordinal_position]
+             AND bim.nspname = pgproc.pronamespace::regnamespace::name
+             AND bim.pg_catalog_type = 'pg_proc'::regclass::oid
+             AND bim.parent_name = pgproc.proname
+           LIMIT 1),
+          pgproc.proargnames[params.ordinal_position])
+      END,
+      params.parameter_name) AS sys.sysname)
+  , pgproc.oid::int
+  , CAST(case when pgproc.proallargtypes is null then split_part(pgproc.proargtypes::varchar, ' ', params.ordinal_position)
+    else split_part(btrim(pgproc.proallargtypes::text,'{}'), ',', params.ordinal_position) end AS int)
+  , params.ordinal_position::smallint
+  , coll.oid::int
+  , params.numeric_precision::smallint
+  , params.numeric_scale::int
+  , case params.parameter_mode when 'OUT' then 1 when 'INOUT' then 1 else 0 end
+  , params.collation_name::sys.sysname
+from information_schema.routines routine
+left join information_schema.parameters params
+  on routine.specific_schema = params.specific_schema
+  and routine.specific_name = params.specific_name
+left join pg_collation coll on coll.collname = params.collation_name
+/* assuming routine.specific_name is constructed by concatenating procedure name and oid */
+left join pg_proc pgproc on routine.specific_name = nameconcatoid(pgproc.proname, pgproc.oid)
+left join sys.schemas sch on sch.schema_id = pgproc.pronamespace;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+-- sys.spt_columns_view_managed: name columns change type from sql_identifier
+-- (63 bytes) to sys.sysname, so recreate the view instead of replacing it.
+ALTER VIEW sys.spt_columns_view_managed RENAME TO spt_columns_view_managed_deprecated_in_6_3_0;
+
+CREATE VIEW sys.spt_columns_view_managed AS
+SELECT
+    o.object_id                     AS OBJECT_ID,
+    CAST(isc."TABLE_CATALOG" AS sys.sysname) COLLATE "C"               AS TABLE_CATALOG,
+    CAST(isc."TABLE_SCHEMA" AS sys.sysname) COLLATE "C"                AS TABLE_SCHEMA,
+    o.name                          AS TABLE_NAME,
+    c.name                          AS COLUMN_NAME,
+    isc."ORDINAL_POSITION"::information_schema.cardinal_number           AS ORDINAL_POSITION,
+    isc."COLUMN_DEFAULT"::information_schema.character_data              AS COLUMN_DEFAULT,
+    isc."IS_NULLABLE"::information_schema.yes_or_no                      AS IS_NULLABLE,
+    isc."DATA_TYPE"::information_schema.character_data                   AS DATA_TYPE,
+
+    CAST (CASE WHEN isc."CHARACTER_MAXIMUM_LENGTH" < 0 THEN 0 ELSE isc."CHARACTER_MAXIMUM_LENGTH" END
+		AS information_schema.cardinal_number) AS CHARACTER_MAXIMUM_LENGTH,
+
+    CAST (CASE WHEN isc."CHARACTER_OCTET_LENGTH" < 0 THEN 0 ELSE isc."CHARACTER_OCTET_LENGTH" END
+		AS information_schema.cardinal_number)      AS CHARACTER_OCTET_LENGTH,
+
+    CAST (CASE WHEN isc."NUMERIC_PRECISION" < 0 THEN 0 ELSE isc."NUMERIC_PRECISION" END
+		AS information_schema.cardinal_number)      AS NUMERIC_PRECISION,
+
+    CAST (CASE WHEN isc."NUMERIC_PRECISION_RADIX" < 0 THEN 0 ELSE isc."NUMERIC_PRECISION_RADIX" END
+		AS information_schema.cardinal_number)      AS NUMERIC_PRECISION_RADIX,
+
+    CAST (CASE WHEN isc."NUMERIC_SCALE" < 0 THEN 0 ELSE isc."NUMERIC_SCALE" END
+		AS information_schema.cardinal_number)      AS NUMERIC_SCALE,
+
+    CAST (CASE WHEN isc."DATETIME_PRECISION" < 0 THEN 0 ELSE isc."DATETIME_PRECISION" END
+		AS information_schema.cardinal_number)      AS DATETIME_PRECISION,
+
+    isc."CHARACTER_SET_CATALOG"::information_schema.sql_identifier       AS CHARACTER_SET_CATALOG,
+    isc."CHARACTER_SET_SCHEMA"::information_schema.sql_identifier        AS CHARACTER_SET_SCHEMA,
+    isc."CHARACTER_SET_NAME"::information_schema.sql_identifier          AS CHARACTER_SET_NAME,
+    isc."COLLATION_CATALOG"::information_schema.sql_identifier           AS COLLATION_CATALOG,
+    isc."COLLATION_SCHEMA"::information_schema.sql_identifier            AS COLLATION_SCHEMA,
+    c.collation_name                                                     AS COLLATION_NAME,
+    CAST(isc."DOMAIN_CATALOG" AS sys.sysname) COLLATE "C"              AS DOMAIN_CATALOG,
+    CAST(isc."DOMAIN_SCHEMA" AS sys.sysname) COLLATE "C"               AS DOMAIN_SCHEMA,
+    CAST(isc."DOMAIN_NAME" AS sys.sysname) COLLATE "C"                 AS DOMAIN_NAME,
+    c.is_sparse                     AS IS_SPARSE,
+    c.is_column_set                 AS IS_COLUMN_SET,
+    c.is_filestream                 AS IS_FILESTREAM
+FROM
+    sys.objects o JOIN sys.columns c ON
+        (
+            c.object_id = o.object_id and
+            o.type in ('U', 'V')  -- limit columns to tables and views
+        )
+    LEFT JOIN information_schema_tsql.columns_internal isc ON
+        (
+            o.object_id = isc."TABLE_OID" AND
+            c.name = isc."COLUMN_NAME"
+        )
+    WHERE CAST("COLUMN_NAME" AS sys.nvarchar(128)) NOT IN ('cmin', 'cmax', 'xmin', 'xmax', 'ctid', 'tableoid');
+GRANT SELECT ON sys.spt_columns_view_managed TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'spt_columns_view_managed_deprecated_in_6_3_0');
 
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
