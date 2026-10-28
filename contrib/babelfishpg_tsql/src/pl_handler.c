@@ -103,6 +103,7 @@
 #include "schemacmds.h"
 #include "session.h"
 #include "pltsql.h"
+#include "antlr_batch_parse_cache.h"
 #include "pltsql_partition.h"
 #include "pltsql_permissions.h"
 #include "pl_explain.h"
@@ -7038,6 +7039,12 @@ _PG_init(void)
 
 	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
 
+	/*
+	 * Batch query cache: attach to the shared memory created during server
+	 * start (only when babelfishpg_tds.enable_antlr_batch_parse_cache is on).
+	 */
+	antlr_batch_parse_cache_shmem_startup();
+
 	inited = true;
 }
 
@@ -8565,6 +8572,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 				def->identity = ATTRIBUTE_IDENTITY_ALWAYS;
 				def->is_not_null = true;
 				def->constraints = lappend(def->constraints, constraint);
+				def->location = -1;
 
 				lcmd = makeNode(AlterTableCmd);
 				lcmd->subtype = AT_AddColumn;

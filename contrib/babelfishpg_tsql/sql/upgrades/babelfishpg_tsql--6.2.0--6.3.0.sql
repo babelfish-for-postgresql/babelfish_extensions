@@ -122,43 +122,10 @@ BEGIN
     END IF;
 END $$;
 
--- BABEL-5975: Long Identifiers Support
--- Resolves the original (untruncated) identifier for an object whose PostgreSQL
--- name was truncated to fit the 63-byte NAME limit, using the
--- sys.babelfish_identifier_mapping catalog. Returns truncated_name unchanged
--- when it is short enough to not have been truncated (< 60 bytes).
---
--- id_parent_name disambiguates identifiers that are only unique within a parent
--- object (e.g. a constraint or parameter). Pass the parent object name to match
--- a specific row, or leave it NULL (the default) to match on
--- (name, namespace, pg_catalog_type) alone.
-CREATE OR REPLACE FUNCTION sys.bbf_get_original_identifier_name(
-    truncated_name name,
-    id_nspname name,
-    id_pg_catalog_type oid,
-    id_parent_name name DEFAULT NULL)
-RETURNS text
-LANGUAGE SQL
-STABLE
-PARALLEL SAFE
-RETURN COALESCE(
-    CASE WHEN octet_length(truncated_name) >= 60 THEN
-        (SELECT pg_catalog.lower(m.original_identifier_name COLLATE "C")
-         FROM sys.babelfish_identifier_mapping m
-         WHERE m.truncated_identifier_name = truncated_name
-           AND m.nspname = id_nspname
-           AND m.pg_catalog_type = id_pg_catalog_type
-           AND (id_parent_name IS NULL OR m.parent_name = id_parent_name)
-         LIMIT 1)
-    END,
-    truncated_name::text);
-
-
-
 -- Recreate sys.foreign_keys (constraint name resolution from babelfish_identifier_mapping)
 CREATE OR replace view sys.foreign_keys AS
 SELECT
-  CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END) AS sys.sysname) AS name
+  CAST(COALESCE(CASE WHEN pg_catalog.octet_length(c.conname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = c.conname AND bim.nspname = c.connamespace::regnamespace::name AND bim.pg_catalog_type = 'pg_constraint'::regclass::oid AND ((SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) IS NULL OR bim.parent_name = (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid)) LIMIT 1) END, c.conname::text) AS sys.sysname) AS name
 , CAST(c.oid AS INT) AS object_id
 , CAST(NULL AS INT) AS principal_id
 , CAST(sch.schema_id AS INT) AS schema_id
@@ -220,7 +187,7 @@ GRANT SELECT ON sys.foreign_keys TO PUBLIC;
 -- Recreate sys.key_constraints (constraint name resolution from babelfish_identifier_mapping)
 CREATE OR replace view sys.key_constraints AS
 SELECT
-    CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END) AS sys.sysname) AS name
+    CAST(COALESCE(CASE WHEN pg_catalog.octet_length(c.conname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = c.conname AND bim.nspname = c.connamespace::regnamespace::name AND bim.pg_catalog_type = 'pg_constraint'::regclass::oid AND ((SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) IS NULL OR bim.parent_name = (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid)) LIMIT 1) END, c.conname::text) AS sys.sysname) AS name
   , CAST(c.oid AS INT) AS object_id
   , CAST(0 AS INT) AS principal_id
   , CAST(sch.schema_id AS INT) AS schema_id
@@ -252,7 +219,7 @@ GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
 -- Recreate sys.check_constraints (constraint name resolution from babelfish_identifier_mapping)
 CREATE or replace VIEW sys.check_constraints AS
-SELECT CAST(sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END) as sys.sysname) as name
+SELECT CAST(COALESCE(CASE WHEN pg_catalog.octet_length(c.conname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = c.conname AND bim.nspname = c.connamespace::regnamespace::name AND bim.pg_catalog_type = 'pg_constraint'::regclass::oid AND ((SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) IS NULL OR bim.parent_name = (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid)) LIMIT 1) END, c.conname::text) as sys.sysname) as name
   , CAST(oid as integer) as object_id
   , CAST(NULL as integer) as principal_id 
   , CAST(c.connamespace as integer) as schema_id
@@ -422,24 +389,6 @@ AS 'babelfishpg_tsql', 'bbf_xmlnodes'
 LANGUAGE C STABLE STRICT PARALLEL SAFE;
 
 
--- Helper function for extracting original (untruncated) function/procedure/trigger
--- name from babelfish_function_ext. Only looks up the catalog when the physical
--- proname is potentially truncated (>= 60 bytes).
-CREATE OR REPLACE FUNCTION sys.bbf_get_func_original_name(func_proname name, func_nspname name)
-RETURNS text
-LANGUAGE SQL
-STABLE
-PARALLEL SAFE
-RETURN COALESCE(
-    CASE WHEN octet_length(func_proname) >= 60 THEN
-        (SELECT pg_catalog.lower(f.orig_name COLLATE "C")
-         FROM sys.babelfish_function_ext f
-         WHERE f.funcname = func_proname
-           AND f.nspname = func_nspname
-         LIMIT 1)
-    END,
-    func_proname::text);
-
 -- Backfill orig_name for triggers/functions/procs (previously not populated for triggers)
 UPDATE sys.babelfish_function_ext SET orig_name = funcname WHERE orig_name IS NULL;
 
@@ -488,45 +437,6 @@ format_type(p.prorettype, null) <> 'trigger'
 and has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.procedures TO PUBLIC;
 
--- Recreate sys.all_objects to use babelfish_function_ext.orig_name for procedures
--- BABEL-5975:Store original names in options for tables, views, columns
-
--- Helper function for extracting original (untruncated) relation name from reloptions.
--- Only checks reloptions when relname is potentially truncated (>= 60 bytes).
-CREATE OR REPLACE FUNCTION sys.bbf_get_truncated_rel_original_name(rel_reloptions text[], rel_relname name)
-RETURNS text
-LANGUAGE SQL
-IMMUTABLE
-PARALLEL SAFE
-RETURN COALESCE(
-    CASE WHEN octet_length(rel_relname) >= 60 THEN
-        (SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
-         FROM unnest(rel_reloptions) opt
-         WHERE opt LIKE 'bbf_original_rel_name=%'
-         LIMIT 1)
-    END,
-    rel_relname::text);
-
-CREATE OR REPLACE FUNCTION sys.bbf_get_truncated_att_original_name(att_attoptions text[], att_attname name)
-RETURNS text
-LANGUAGE SQL
-IMMUTABLE
-PARALLEL SAFE
-RETURN COALESCE(
-    CASE WHEN octet_length(att_attname) >= 60 THEN
-        (SELECT CASE
-                    /* Match physical attname casing: table columns are downcased, but view columns
-                     * keep the SELECT alias case (set via res->name), so attname is mixed. */
-                    WHEN att_attname = pg_catalog.lower(att_attname COLLATE "C")
-                        THEN pg_catalog.lower(substring(opt, 19) COLLATE "C")
-                    ELSE substring(opt, 19)
-                END
-         FROM unnest(att_attoptions) opt
-         WHERE opt LIKE 'bbf_original_name=%'
-         LIMIT 1)
-    END,
-    att_attname::text);
-
 
 -- Recreate sys.tables
 create or replace view sys.tables as
@@ -535,7 +445,14 @@ with tt_internal as MATERIALIZED
   select * from sys.table_types_internal
 )
 select
-  CAST(sys.bbf_get_truncated_rel_original_name(t.reloptions, t.relname) as sys._ci_sysname) as name
+  CAST(COALESCE(
+      CASE WHEN pg_catalog.octet_length(t.relname) >= 60 THEN
+          (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+           FROM pg_catalog.unnest(t.reloptions) opt
+           WHERE opt LIKE 'bbf_original_rel_name=%'
+           LIMIT 1)
+      END,
+      t.relname::text) as sys._ci_sysname) as name
   , CAST(t.oid as int) as object_id
   , CAST(NULL as int) as principal_id
   , CAST(t.relnamespace as int) as schema_id
@@ -596,7 +513,14 @@ GRANT SELECT ON sys.tables TO PUBLIC;
 -- Recreate sys.views
 create or replace view sys.views as
 select
-  CAST(sys.bbf_get_truncated_rel_original_name(t.reloptions, t.relname) as sys.sysname) as name
+  CAST(COALESCE(
+      CASE WHEN pg_catalog.octet_length(t.relname) >= 60 THEN
+          (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+           FROM pg_catalog.unnest(t.reloptions) opt
+           WHERE opt LIKE 'bbf_original_rel_name=%'
+           LIMIT 1)
+      END,
+      t.relname::text) as sys.sysname) as name
   , t.oid::int as object_id
   , null::integer as principal_id
   , sch.schema_id::int as schema_id
@@ -671,7 +595,14 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined tables
 select
-    sys.bbf_get_truncated_rel_original_name(t.reloptions, t.relname)::sys.sysname as name
+    COALESCE(
+        CASE WHEN pg_catalog.octet_length(t.relname) >= 60 THEN
+            (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+             FROM pg_catalog.unnest(t.reloptions) opt
+             WHERE opt LIKE 'bbf_original_rel_name=%'
+             LIMIT 1)
+        END,
+        t.relname::text)::sys.sysname as name
   , t.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -719,7 +650,14 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- Details of user defined views
 select
-    sys.bbf_get_truncated_rel_original_name(t.reloptions, t.relname)::sys.sysname as name
+    COALESCE(
+        CASE WHEN pg_catalog.octet_length(t.relname) >= 60 THEN
+            (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+             FROM pg_catalog.unnest(t.reloptions) opt
+             WHERE opt LIKE 'bbf_original_rel_name=%'
+             LIMIT 1)
+        END,
+        t.relname::text)::sys.sysname as name
   , t.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -741,7 +679,7 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined and system foreign key constraints
 select
-    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.sysname as name
+    COALESCE(CASE WHEN pg_catalog.octet_length(c.conname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = c.conname AND bim.nspname = c.connamespace::regnamespace::name AND bim.pg_catalog_type = 'pg_constraint'::regclass::oid AND ((SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) IS NULL OR bim.parent_name = (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid)) LIMIT 1) END, c.conname::text)::sys.sysname as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -763,7 +701,7 @@ and (s.nspname = 'sys' or ext.nspname is not null)
 union all
 -- details of user defined and system primary key constraints
 select
-    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.sysname as name
+    COALESCE(CASE WHEN pg_catalog.octet_length(c.conname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = c.conname AND bim.nspname = c.connamespace::regnamespace::name AND bim.pg_catalog_type = 'pg_constraint'::regclass::oid AND ((SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) IS NULL OR bim.parent_name = (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid)) LIMIT 1) END, c.conname::text)::sys.sysname as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -861,7 +799,7 @@ and p.proname != 'pltsql_call_handler'
 union all
 -- details of user defined procedures
 select
-    sys.bbf_get_func_original_name(p.proname, s.nspname)::sys.sysname as name 
+    COALESCE(CASE WHEN pg_catalog.octet_length(p.proname) >= 60 THEN (SELECT pg_catalog.lower(bfe.orig_name COLLATE "C") FROM sys.babelfish_function_ext bfe WHERE bfe.funcname = p.proname AND bfe.nspname = s.nspname LIMIT 1) END, p.proname::text)::sys.sysname as name 
   , case
       when t.typname = 'trigger' then tr.oid else p.oid
     end as object_id
@@ -961,7 +899,7 @@ and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES
 union all
 -- details of all check constraints
 select
-    sys.bbf_get_original_identifier_name(c.conname, c.connamespace::regnamespace::name, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.sysname
+    COALESCE(CASE WHEN pg_catalog.octet_length(c.conname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = c.conname AND bim.nspname = c.connamespace::regnamespace::name AND bim.pg_catalog_type = 'pg_constraint'::regclass::oid AND ((SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) IS NULL OR bim.parent_name = (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid)) LIMIT 1) END, c.conname::text)::sys.sysname
   , c.oid::integer as object_id
   , NULL::integer as principal_id 
   , s.oid as schema_id
@@ -983,7 +921,7 @@ and (s.nspname = 'sys' or ext.nspname is not null)
 union all
 -- details of user defined and system defined sequence objects
 select
-  sys.bbf_get_original_identifier_name(p.relname, p.relnamespace::regnamespace::name, 'pg_class'::regclass::oid, '')::sys.sysname as name
+  COALESCE(CASE WHEN pg_catalog.octet_length(p.relname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = p.relname AND bim.nspname = p.relnamespace::regnamespace::name AND bim.pg_catalog_type = 'pg_class'::regclass::oid AND bim.parent_name = '' LIMIT 1) END, p.relname::text)::sys.sysname as name
   , p.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1150,7 +1088,7 @@ select
   from sys.check_constraints chk
 union all
 select
-    CAST(sys.bbf_get_original_identifier_name(p.relname, p.relnamespace::regnamespace::name, 'pg_class'::regclass::oid, '') as sys.sysname) as name
+    CAST(COALESCE(CASE WHEN pg_catalog.octet_length(p.relname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = p.relname AND bim.nspname = p.relnamespace::regnamespace::name AND bim.pg_catalog_type = 'pg_class'::regclass::oid AND bim.parent_name = '' LIMIT 1) END, p.relname::text) as sys.sysname) as name
   , CAST(p.oid as int) as object_id
   , CAST(null as int) as principal_id
   , CAST(s.schema_id as int) as schema_id
@@ -1201,11 +1139,7 @@ AS
 SELECT
     CAST(ss.p_oid AS INT) AS object_id
   , CAST(COALESCE(
-      sys.bbf_get_original_identifier_name(
-        ss.proargnames[(ss.x).n],
-        ss.pronspname,
-        'pg_proc'::regclass::oid,
-        ss.proname),
+      COALESCE(CASE WHEN pg_catalog.octet_length(ss.proargnames[(ss.x).n]) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = ss.proargnames[(ss.x).n] AND bim.nspname = ss.pronspname AND bim.pg_catalog_type = 'pg_proc'::regclass::oid AND (ss.proname IS NULL OR bim.parent_name = ss.proname) LIMIT 1) END, ss.proargnames[(ss.x).n]::text),
       ss.proargnames[(ss.x).n], '') AS sys.SYSNAME) AS name
   , CAST(
       CASE 
@@ -1344,14 +1278,15 @@ BEGIN
 				BEGIN
 					DECLARE @relid INT = 0;
 					DECLARE @index_count INT;
-					SELECT @relid = object_id FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-						WHERE s1.name = @schemaname AND o1.name = sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname));
+					-- Look the table up in pg_class by its physical name: the truncated, lowercased form of
+					-- either its original or its physical name. Scanning sys.objects here is far slower.
+					SELECT @relid = CAST(c.oid AS INT) FROM pg_class c INNER JOIN sys.schemas s1 ON c.relnamespace = s1.schema_id WHERE s1.name = @schemaname AND c.relname = sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname));
 					IF @relid = 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;
 						END
 					SELECT @index_count = COUNT(*) FROM pg_index i JOIN pg_class c ON i.indexrelid = c.oid
-						WHERE i.indrelid = @relid AND c.relname = sys.babelfish_construct_unique_index_name(sys.babelfish_truncate_identifier(pg_catalog.lower(@subname)), sys.babelfish_truncate_identifier(pg_catalog.lower(@curr_relname)));
+						WHERE i.indrelid = @relid AND c.relname = sys.babelfish_construct_unique_index_name(pg_catalog.lower(@subname), pg_catalog.lower(@curr_relname));
 					IF @index_count < 0
 						BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;
@@ -1447,7 +1382,18 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_identifier_mapping', '
 -- Recreate sys.all_columns
 create or replace view sys.all_columns as
 select CAST(c.oid as int) as object_id
-  , CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) as sys.sysname) as name
+  , CAST(COALESCE(
+      CASE WHEN pg_catalog.octet_length(a.attname) >= 60 THEN
+          (SELECT CASE
+                      WHEN a.attname = pg_catalog.lower(a.attname COLLATE "C")
+                          THEN pg_catalog.lower(pg_catalog.substring(opt, 19) COLLATE "C")
+                      ELSE pg_catalog.substring(opt, 19)
+                  END
+           FROM pg_catalog.unnest(a.attoptions) opt
+           WHERE opt LIKE 'bbf_original_name=%'
+           LIMIT 1)
+      END,
+      a.attname::text) as sys.sysname) as name
   , CAST(a.attnum as int) as column_id
   , CAST(t.oid as int) as system_type_id
   , CAST(t.oid as int) as user_type_id
@@ -1532,7 +1478,14 @@ CASE
 WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
 ELSE CAST(1 AS smallint)
 END AS NON_UNIQUE,
-CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS INDEX_QUALIFIER,
+CAST(COALESCE(
+    CASE WHEN pg_catalog.octet_length(t1.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(t1.reloptions) opt
+         WHERE opt LIKE 'bbf_original_rel_name=%'
+         LIMIT 1)
+    END,
+    t1.relname::text) AS sys.sysname) AS INDEX_QUALIFIER,
 -- the index name created by CREATE INDEX is re-mapped, find it (by checking
 -- the ones not in pg_constraint) and restoring it back before display
 pg_catalog.lower(COALESCE((SELECT pg_catalog.string_agg(CASE WHEN option LIKE 'bbf_original_rel_name=%' THEN substring(option, 23) COLLATE "C" ELSE NULL END, ',') FROM unnest(t6.reloptions) AS option), t6.relname::text))::sys.sysname 
@@ -1862,7 +1815,14 @@ BEGIN
     SELECT
         CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
         CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-        CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS TABLE_NAME,
+        CAST(COALESCE(
+            CASE WHEN pg_catalog.octet_length(t1.relname) >= 60 THEN
+                (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+                 FROM pg_catalog.unnest(t1.reloptions) opt
+                 WHERE opt LIKE 'bbf_original_rel_name=%'
+                 LIMIT 1)
+            END,
+            t1.relname::text) AS sys.sysname) AS TABLE_NAME,
         CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
         CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
         CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
@@ -1891,7 +1851,14 @@ BEGIN
     SELECT
         CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
         CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-        CAST(sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname) AS sys.sysname) AS TABLE_NAME,
+        CAST(COALESCE(
+            CASE WHEN pg_catalog.octet_length(t1.relname) >= 60 THEN
+                (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+                 FROM pg_catalog.unnest(t1.reloptions) opt
+                 WHERE opt LIKE 'bbf_original_rel_name=%'
+                 LIMIT 1)
+            END,
+            t1.relname::text) AS sys.sysname) AS TABLE_NAME,
         CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t4.grantor) AS sys.sysname) AS GRANTOR,
         CAST((SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = t4.grantee) AS sys.sysname) AS GRANTEE,
         CAST(t4.privilege_type AS sys.sysname) AS PRIVILEGE,
@@ -2284,24 +2251,6 @@ RESET allow_system_table_mods;
 -- 3. Populate orig_name for existing databases (copy from name column for case preservation)
 UPDATE sys.babelfish_sysdatabases SET orig_name = name WHERE orig_name IS NULL;
 
--- BABEL-5975: helper to resolve the original (case/length preserved) database
--- name from a physical (downcased/truncated) name; catalog lookup only for
--- long names (>= 60). Defined here (after orig_name exists) so subsequent
--- view/proc recreations can use it.
-CREATE OR REPLACE FUNCTION sys.bbf_get_original_db_name(physical_db_name sys.sysname)
-RETURNS sys.sysname
-LANGUAGE SQL
-STABLE
-PARALLEL SAFE
-RETURN COALESCE(
-    CASE WHEN octet_length(physical_db_name) >= 60 THEN
-        (SELECT pg_catalog.lower(orig_name COLLATE "C")
-         FROM sys.babelfish_sysdatabases
-         WHERE name COLLATE database_default = physical_db_name
-         LIMIT 1)
-    END,
-    physical_db_name);
-
 -- 5i. sys.databases and sys.sysdatabases (use orig_name)
 -- Save user views depending on wrapper sysdatabases views before rename
 CREATE TEMPORARY TABLE IF NOT EXISTS _saved_sysdatabases_deps (stmt TEXT);
@@ -2650,8 +2599,8 @@ CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
 
 CASE 
-	WHEN p.prokind = 'p' THEN CAST(PG_CATALOG.concat(sys.bbf_get_func_original_name(p.proname, p.pronamespace::regnamespace::name)::sys.NVARCHAR(128), ';1') AS sys.nvarchar(134))
-	ELSE CAST(PG_CATALOG.concat(sys.bbf_get_func_original_name(p.proname, p.pronamespace::regnamespace::name)::sys.NVARCHAR(128), ';0') AS sys.nvarchar(134))
+	WHEN p.prokind = 'p' THEN CAST(PG_CATALOG.concat(COALESCE(CASE WHEN pg_catalog.octet_length(p.proname) >= 60 THEN (SELECT pg_catalog.lower(bfe.orig_name COLLATE "C") FROM sys.babelfish_function_ext bfe WHERE bfe.funcname = p.proname AND bfe.nspname = p.pronamespace::regnamespace::name LIMIT 1) END, p.proname::text)::sys.NVARCHAR(128), ';1') AS sys.nvarchar(134))
+	ELSE CAST(PG_CATALOG.concat(COALESCE(CASE WHEN pg_catalog.octet_length(p.proname) >= 60 THEN (SELECT pg_catalog.lower(bfe.orig_name COLLATE "C") FROM sys.babelfish_function_ext bfe WHERE bfe.funcname = p.proname AND bfe.nspname = p.pronamespace::regnamespace::name LIMIT 1) END, p.proname::text)::sys.NVARCHAR(128), ';0') AS sys.nvarchar(134))
 END AS PROCEDURE_NAME,
 
 -1 AS NUM_INPUT_PARAMS,
@@ -2734,7 +2683,14 @@ CREATE OR REPLACE VIEW sys.sp_tables_view AS
 SELECT
 t2.dbname AS TABLE_QUALIFIER,
 CAST(t3.name AS sys.sysname) AS TABLE_OWNER,
-sys.bbf_get_truncated_rel_original_name(t1.reloptions, t1.relname)::sys.sysname AS TABLE_NAME,
+COALESCE(
+    CASE WHEN pg_catalog.octet_length(t1.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(t1.reloptions) opt
+         WHERE opt LIKE 'bbf_original_rel_name=%'
+         LIMIT 1)
+    END,
+    t1.relname::text)::sys.sysname AS TABLE_NAME,
 
 CASE 
 WHEN t1.relkind = 'v' 
@@ -2873,7 +2829,14 @@ CASE
 AS IS_NULLABLE,
 CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-sys.bbf_get_truncated_rel_original_name(C.reloptions, C.relname)::sys.sysname AS TABLE_NAME,
+COALESCE(
+    CASE WHEN pg_catalog.octet_length(C.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(C.reloptions) opt
+         WHERE opt LIKE 'bbf_original_rel_name=%'
+         LIMIT 1)
+    END,
+    C.relname::text)::sys.sysname AS TABLE_NAME,
 
 CASE 
 	WHEN X.indisprimary
@@ -2907,11 +2870,25 @@ CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
 SELECT
 CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
 CAST(bbf_nsp2.orig_name AS sys.sysname) AS PKTABLE_OWNER ,
-sys.bbf_get_truncated_rel_original_name(c2.reloptions, c2.relname)::sys.sysname AS PKTABLE_NAME,
+COALESCE(
+    CASE WHEN pg_catalog.octet_length(c2.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(c2.reloptions) opt
+         WHERE opt LIKE 'bbf_original_rel_name=%'
+         LIMIT 1)
+    END,
+    c2.relname::text)::sys.sysname AS PKTABLE_NAME,
 CAST(COALESCE(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) AS sys.sysname) AS PKCOLUMN_NAME,
 CAST(nsp_ext.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
 CAST(bbf_nsp.orig_name AS sys.sysname) AS FKTABLE_OWNER ,
-sys.bbf_get_truncated_rel_original_name(c.reloptions, c.relname)::sys.sysname AS FKTABLE_NAME,
+COALESCE(
+    CASE WHEN pg_catalog.octet_length(c.relname) >= 60 THEN
+        (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+         FROM pg_catalog.unnest(c.reloptions) opt
+         WHERE opt LIKE 'bbf_original_rel_name=%'
+         LIMIT 1)
+    END,
+    c.relname::text)::sys.sysname AS FKTABLE_NAME,
 CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname::text) AS sys.sysname) AS FKCOLUMN_NAME,
 CAST(nr AS smallint) AS KEY_SEQ,
 CASE
@@ -2990,7 +2967,14 @@ GRANT SELECT ON sys.sp_fkeys_view TO PUBLIC;
 -- Recreate sys.all_views
 create or replace view sys.all_views as
 SELECT
-    CAST(sys.bbf_get_truncated_rel_original_name(c.reloptions, c.relname) AS sys.SYSNAME) as name
+    CAST(COALESCE(
+        CASE WHEN pg_catalog.octet_length(c.relname) >= 60 THEN
+            (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+             FROM pg_catalog.unnest(c.reloptions) opt
+             WHERE opt LIKE 'bbf_original_rel_name=%'
+             LIMIT 1)
+        END,
+        c.relname::text) AS sys.SYSNAME) as name
   , CAST(c.oid AS INT) as object_id
   , CAST(null AS INT) as principal_id
   , CAST(c.relnamespace as INT) as schema_id
@@ -3104,7 +3088,18 @@ $$
 BEGIN
     RETURN QUERY
 		SELECT CAST(c.oid AS int),
-			CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) AS sys.sysname),
+			CAST(COALESCE(
+			    CASE WHEN pg_catalog.octet_length(a.attname) >= 60 THEN
+			        (SELECT CASE
+			                    WHEN a.attname = pg_catalog.lower(a.attname COLLATE "C")
+			                        THEN pg_catalog.lower(pg_catalog.substring(opt, 19) COLLATE "C")
+			                    ELSE pg_catalog.substring(opt, 19)
+			                END
+			         FROM pg_catalog.unnest(a.attoptions) opt
+			         WHERE opt LIKE 'bbf_original_name=%'
+			         LIMIT 1)
+			    END,
+			    a.attname::text) AS sys.sysname),
 			CAST(a.attnum AS int),
 			CASE 
 			WHEN tsql_type_name IS NOT NULL OR t.typbasetype = 0 THEN
@@ -3690,7 +3685,7 @@ GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.domains AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
-		CAST(sys.bbf_get_original_identifier_name(t.typname, nc.nspname, 'pg_type'::regclass::oid) AS sys.sysname) AS "DOMAIN_NAME",
+		CAST(COALESCE(CASE WHEN pg_catalog.octet_length(t.typname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = t.typname AND bim.nspname = nc.nspname AND bim.pg_catalog_type = 'pg_type'::regclass::oid LIMIT 1) END, t.typname::text) AS sys.sysname) AS "DOMAIN_NAME",
 		CAST(case when is_tbl_type THEN 'table type' ELSE tsql_type_name END AS sys.sysname) AS "DATA_TYPE",
 
 		CAST(information_schema_tsql._pgtsql_char_max_length(tsql_type_name, t.typtypmod)
@@ -3812,7 +3807,7 @@ BEGIN
     RETURN QUERY
     SELECT CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-           CAST(sys.bbf_get_original_identifier_name(c.conname, nsp.nspname, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END) AS sys.sysname) AS "CONSTRAINT_NAME",
+           CAST(COALESCE(CASE WHEN pg_catalog.octet_length(c.conname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = c.conname AND bim.nspname = nsp.nspname AND bim.pg_catalog_type = 'pg_constraint'::regclass::oid AND ((SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) IS NULL OR bim.parent_name = (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid)) LIMIT 1) END, c.conname::text) AS sys.sysname) AS "CONSTRAINT_NAME",
            CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
            CAST(COALESCE(
@@ -3912,7 +3907,7 @@ GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.check_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 	    CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-           sys.bbf_get_original_identifier_name(c.conname, nc.nspname, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.sysname AS "CONSTRAINT_NAME",
+           COALESCE(CASE WHEN pg_catalog.octet_length(c.conname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = c.conname AND bim.nspname = nc.nspname AND bim.pg_catalog_type = 'pg_constraint'::regclass::oid AND ((SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) IS NULL OR bim.parent_name = (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid)) LIMIT 1) END, c.conname::text)::sys.sysname AS "CONSTRAINT_NAME",
 	    CAST(sys.tsql_get_constraintdef(c.oid) AS sys.nvarchar(4000)) AS "CHECK_CLAUSE"
 
     FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
@@ -4071,7 +4066,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	SELECT
 		CAST(db_name AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-		sys.bbf_get_original_identifier_name(c.conname, nsp.nspname, 'pg_constraint'::regclass::oid, CASE WHEN octet_length(c.conname) >= 60 THEN (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) END)::sys.nvarchar(128) AS "CONSTRAINT_NAME",
+		COALESCE(CASE WHEN pg_catalog.octet_length(c.conname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = c.conname AND bim.nspname = nsp.nspname AND bim.pg_catalog_type = 'pg_constraint'::regclass::oid AND ((SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) IS NULL OR bim.parent_name = (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid)) LIMIT 1) END, c.conname::text)::sys.nvarchar(128) AS "CONSTRAINT_NAME",
 		CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		CAST(COALESCE(
@@ -4082,7 +4077,18 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 					 LIMIT 1)
 				END,
 				r.relname::text) AS sys.nvarchar(128)) AS "TABLE_NAME",
-		CAST(sys.bbf_get_truncated_att_original_name(a.attoptions, a.attname) AS sys.nvarchar(128)) AS "COLUMN_NAME",
+		CAST(COALESCE(
+		    CASE WHEN pg_catalog.octet_length(a.attname) >= 60 THEN
+		        (SELECT CASE
+		                    WHEN a.attname = pg_catalog.lower(a.attname COLLATE "C")
+		                        THEN pg_catalog.lower(pg_catalog.substring(opt, 19) COLLATE "C")
+		                    ELSE pg_catalog.substring(opt, 19)
+		                END
+		         FROM pg_catalog.unnest(a.attoptions) opt
+		         WHERE opt LIKE 'bbf_original_name=%'
+		         LIMIT 1)
+		    END,
+		    a.attname::text) AS sys.nvarchar(128)) AS "COLUMN_NAME",
 		CAST(ord AS int) AS "ORDINAL_POSITION"	
 	FROM
 		pg_constraint c 
@@ -4148,8 +4154,15 @@ union all
 select cast(
     case
       when tt.typrelid is not null
-        then sys.bbf_get_truncated_rel_original_name(ttc.reloptions, ttc.relname)
-      else sys.bbf_get_original_identifier_name(t.typname, t.typnamespace::regnamespace::name, 1247)
+        then COALESCE(
+            CASE WHEN pg_catalog.octet_length(ttc.relname) >= 60 THEN
+                (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+                 FROM pg_catalog.unnest(ttc.reloptions) opt
+                 WHERE opt LIKE 'bbf_original_rel_name=%'
+                 LIMIT 1)
+            END,
+            ttc.relname::text)
+      else COALESCE(CASE WHEN pg_catalog.octet_length(t.typname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = t.typname AND bim.nspname = t.typnamespace::regnamespace::name AND bim.pg_catalog_type = 1247 LIMIT 1) END, t.typname::text)
     end
     as sys.sysname) as name
   , cast(t.typbasetype as int) as system_type_id
@@ -4220,7 +4233,13 @@ BEGIN
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
-			   CAST(sys.bbf_get_original_db_name(LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(COALESCE(
+			       CASE WHEN pg_catalog.octet_length(LogExt.default_database_name) >= 60 THEN
+			           (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
+			            FROM sys.babelfish_sysdatabases sdb
+			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
+			       END,
+			       LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
@@ -4291,7 +4310,13 @@ BEGIN
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
-			   CAST(sys.bbf_get_original_db_name(LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(COALESCE(
+			       CASE WHEN pg_catalog.octet_length(LogExt.default_database_name) >= 60 THEN
+			           (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
+			            FROM sys.babelfish_sysdatabases sdb
+			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
+			       END,
+			       LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
@@ -5059,8 +5084,8 @@ CAST(sys.db_name() AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be
 , CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
 , CAST(
 CASE
-  WHEN ss.prokind = 'p' THEN PG_CATALOG.CONCAT(sys.bbf_get_func_original_name(ss.proname, ss.nspname), ';1')
-  ELSE PG_CATALOG.CONCAT(sys.bbf_get_func_original_name(ss.proname, ss.nspname), ';0')
+  WHEN ss.prokind = 'p' THEN PG_CATALOG.CONCAT(COALESCE(CASE WHEN pg_catalog.octet_length(ss.proname) >= 60 THEN (SELECT pg_catalog.lower(bfe.orig_name COLLATE "C") FROM sys.babelfish_function_ext bfe WHERE bfe.funcname = ss.proname AND bfe.nspname = ss.nspname LIMIT 1) END, ss.proname::text), ';1')
+  ELSE PG_CATALOG.CONCAT(COALESCE(CASE WHEN pg_catalog.octet_length(ss.proname) >= 60 THEN (SELECT pg_catalog.lower(bfe.orig_name COLLATE "C") FROM sys.babelfish_function_ext bfe WHERE bfe.funcname = ss.proname AND bfe.nspname = ss.nspname LIMIT 1) END, ss.proname::text), ';0')
 END
 AS sys.nvarchar(134)) AS PROCEDURE_NAME
 , CAST(
@@ -5238,7 +5263,7 @@ CASE
   ELSE sdit.ss_data_type
 END
 AS sys.tinyint) AS SS_DATA_TYPE
-, CAST(sys.bbf_get_func_original_name(ss.proname, ss.nspname) AS sys.sysname) AS original_procedure_name
+, CAST(COALESCE(CASE WHEN pg_catalog.octet_length(ss.proname) >= 60 THEN (SELECT pg_catalog.lower(bfe.orig_name COLLATE "C") FROM sys.babelfish_function_ext bfe WHERE bfe.funcname = ss.proname AND bfe.nspname = ss.nspname LIMIT 1) END, ss.proname::text) AS sys.sysname) AS original_procedure_name
 FROM 
 ( 
   -- CTE to query procedures related to bbf
@@ -5421,7 +5446,14 @@ CAST(
 CAST(Ext.is_disabled AS INT) AS is_disabled,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
 CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
-CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE sys.bbf_get_original_db_name(Ext.default_database_name) END AS SYS.SYSNAME) AS default_database_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE COALESCE(
+    CASE WHEN pg_catalog.octet_length(Ext.default_database_name) >= 60 THEN
+        (SELECT pg_catalog.lower(orig_name COLLATE "C") COLLATE database_default
+         FROM sys.babelfish_sysdatabases
+         WHERE name COLLATE database_default = Ext.default_database_name
+         LIMIT 1)
+    END,
+    Ext.default_database_name) END AS SYS.SYSNAME) AS default_database_name,
 CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
 CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
@@ -5461,7 +5493,14 @@ SELECT
   CAST(Ext.is_disabled AS INT) AS is_disabled,
   CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
   CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
-  CAST(sys.bbf_get_original_db_name(Ext.default_database_name) AS SYS.SYSNAME) AS default_database_name,
+  CAST(COALESCE(
+      CASE WHEN pg_catalog.octet_length(Ext.default_database_name) >= 60 THEN
+          (SELECT pg_catalog.lower(orig_name COLLATE "C") COLLATE database_default
+           FROM sys.babelfish_sysdatabases
+           WHERE name COLLATE database_default = Ext.default_database_name
+           LIMIT 1)
+      END,
+      Ext.default_database_name) AS SYS.SYSNAME) AS default_database_name,
   CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
   CAST(Ext.credential_id AS INT) AS credential_id,
   CAST(
@@ -5487,7 +5526,16 @@ GRANT SELECT ON sys.sql_logins TO PUBLIC;
 -- The output column types are unchanged, so CREATE OR REPLACE is used to avoid
 -- dropping (and CASCADE-destroying) user objects that depend on the view.
 CREATE OR REPLACE VIEW sys.sp_databases_view AS
-	SELECT CAST(sys.bbf_get_original_db_name(database_name) AS sys.SYSNAME) AS database_name,
+	SELECT CAST(
+		COALESCE(
+			CASE WHEN pg_catalog.octet_length(database_name) >= 60 THEN
+				(SELECT pg_catalog.lower(orig_name COLLATE "C")
+				 FROM sys.babelfish_sysdatabases
+				 WHERE name COLLATE sys.database_default = database_name
+				 LIMIT 1)
+			END,
+			database_name)
+		AS sys.SYSNAME) AS database_name,
 	-- DATABASE_SIZE returns a NULL value for databases larger than 2.15 TB
 	CASE WHEN (sum(table_size)::NUMERIC/1024.0) > 2.15 * 1024.0 * 1024.0 * 1024.0 THEN NULL
 		ELSE CAST((sum(table_size)::NUMERIC/1024.0) AS int) END as database_size,
@@ -5540,7 +5588,13 @@ BEGIN
 	SELECT DISTINCT
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
 		CAST(CAST(Base.oid AS INT) AS sys.varbinary(85)) AS SID,
-		CAST(sys.bbf_get_original_db_name(LExt.default_database_name) AS SYS.SYSNAME) AS DefDBName,
+		CAST(COALESCE(
+		    CASE WHEN pg_catalog.octet_length(LExt.default_database_name) >= 60 THEN
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
+		         FROM sys.babelfish_sysdatabases sdb
+		         WHERE sdb.name COLLATE database_default = LExt.default_database_name)
+		    END,
+		    LExt.default_database_name) AS SYS.SYSNAME) AS DefDBName,
 		CAST(LExt.default_language_name AS SYS.SYSNAME) AS DefLangName,
 		CASE
 		    WHEN Ext.login_name IS NOT NULL AND Ext.login_name = LExt.rolname COLLATE database_default THEN CAST('yes' AS sys.char(5)) -- if there exists a mapping between user and logins, then we can say that there are users attached to this login
@@ -5559,7 +5613,13 @@ BEGIN
 	-- second selector in the union is to get all the mapped database/user-defined roles
 	SELECT
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
-		CAST(sys.bbf_get_original_db_name(UExt.database_name) AS sys.SYSNAME) AS DBName,
+		CAST(COALESCE(
+		    CASE WHEN pg_catalog.octet_length(UExt.database_name) >= 60 THEN
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
+		         FROM sys.babelfish_sysdatabases sdb
+		         WHERE sdb.name COLLATE database_default = UExt.database_name)
+		    END,
+		    UExt.database_name) AS sys.SYSNAME) AS DBName,
 		CAST(UExt.orig_username AS SYS.SYSNAME) AS UserName,
 		CAST('User' AS sys.char(8)) AS UserOrAlias
 	FROM sys.babelfish_authid_user_ext UExt
@@ -5589,7 +5649,13 @@ BEGIN
 	UNION
 	SELECT
 		CAST(LExt.orig_loginname AS sys.SYSNAME) AS LoginName,
-		CAST(sys.bbf_get_original_db_name(UExt2.database_name) AS sys.SYSNAME) AS DBName,
+		CAST(COALESCE(
+		    CASE WHEN pg_catalog.octet_length(UExt2.database_name) >= 60 THEN
+		        (SELECT TOP 1 pg_catalog.lower(sdb.orig_name COLLATE "C") COLLATE database_default
+		         FROM sys.babelfish_sysdatabases sdb
+		         WHERE sdb.name COLLATE database_default = UExt2.database_name)
+		    END,
+		    UExt2.database_name) AS sys.SYSNAME) AS DBName,
 		CAST(UExt1.orig_username AS sys.SYSNAME) AS UserName,
 		CAST('MemberOf' AS sys.char(8)) AS UserOrAlias
 	FROM pg_catalog.pg_auth_members AS Authmbr
@@ -5634,7 +5700,7 @@ GRANT EXECUTE ON PROCEDURE sys.sp_helplogins TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SEQUENCE_CATALOG",
             CAST(extc.orig_name AS sys.nvarchar(128)) AS "SEQUENCE_SCHEMA",
-            CAST(sys.bbf_get_original_identifier_name(r.relname, nc.nspname, 'pg_class'::regclass::oid, '') AS sys.nvarchar(128)) AS "SEQUENCE_NAME",
+            CAST(COALESCE(CASE WHEN pg_catalog.octet_length(r.relname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = r.relname AND bim.nspname = nc.nspname AND bim.pg_catalog_type = 'pg_class'::regclass::oid AND bim.parent_name = '' LIMIT 1) END, r.relname::text) AS sys.nvarchar(128)) AS "SEQUENCE_NAME",
             CAST(CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype) ELSE tsql_type_name END
                     AS sys.nvarchar(128))AS "DATA_TYPE",  -- numeric and decimal data types are converted into bigint which is due to Postgres inherent implementation
             CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, -1)

@@ -1,0 +1,58 @@
+-- tsql
+-- Flush the batch query parse cache
+SELECT sys.flush_antlr_batch_parse_cache();
+GO
+
+-- Drop test stored procedure first (references tables)
+DROP PROCEDURE IF EXISTS dbo.cache_test_proc;
+GO
+
+-- Drop test tables
+DROP TABLE IF EXISTS dbo.cache_orders;
+GO
+DROP TABLE IF EXISTS dbo.cache_customers;
+GO
+DROP TABLE IF EXISTS dbo.cache_drop_test;
+GO
+
+-- Drop test user from permission tests
+DROP USER IF EXISTS babel_6890_testuser;
+GO
+IF EXISTS (SELECT * FROM sys.server_principals WHERE name = 'babel_6890_testuser')
+BEGIN
+    DROP LOGIN babel_6890_testuser;
+END
+GO
+
+-- Drop objects from UDT tests (33-36)
+DROP USER IF EXISTS babel_6890_schema_user;
+GO
+IF EXISTS (SELECT * FROM sys.server_principals WHERE name = 'babel_6890_schema_user')
+BEGIN
+    DROP LOGIN babel_6890_schema_user;
+END
+GO
+DROP USER IF EXISTS babel_6890_validate_user;
+GO
+IF EXISTS (SELECT * FROM sys.server_principals WHERE name = 'babel_6890_validate_user')
+BEGIN
+    DROP LOGIN babel_6890_validate_user;
+END
+GO
+DROP TYPE IF EXISTS dbo.babel_6890_udt;
+GO
+DROP TYPE IF EXISTS dbo.babel_6890_t;
+GO
+DROP TYPE IF EXISTS babel_6890_s1.babel_6890_t;
+GO
+DROP TYPE IF EXISTS babel_6890_s2.babel_6890_t;
+GO
+IF EXISTS (SELECT * FROM sys.schemas WHERE name = 'babel_6890_s1')
+    DROP SCHEMA babel_6890_s1;
+GO
+IF EXISTS (SELECT * FROM sys.schemas WHERE name = 'babel_6890_s2')
+    DROP SCHEMA babel_6890_s2;
+GO
+
+PRINT 'BABEL-6890 cleanup completed';
+GO
