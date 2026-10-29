@@ -1,4 +1,3 @@
-
 -- QUERIES for different test cases for sp_xml_preparedocument and sp_xml_removedocument procedure
 -- When 1st (xmltext) and  2nd (xpath namespaces) parameters  are not given
 DECLARE @hdoc INT;
@@ -2112,3 +2111,144 @@ int
 <NULL>
 ~~END~~
 
+
+-- tsql database=master
+-- BABEL-7195: a small (inline) document must be returned as a copy, not as a
+-- pointer into a buffer page that a later scan in the same statement can
+-- recycle; otherwise the result is undefined (crash, error or garbage).
+-- Uses its own session: temp_buffers can only be changed before the
+-- session's first temp table access, and sp_xml_preparedocument uses one.
+SELECT set_config('temp_buffers', '1MB', 'false');
+GO
+~~START~~
+text
+1MB
+~~END~~
+
+
+-- Handle prepared in one batch and used in later batches
+DECLARE @h int;
+DECLARE @doc nvarchar(max) = N'<root xmlns:ns="urn:t">' + REPLICATE(CAST(N'<ns:item id="1">abcdefghij</ns:item>' AS nvarchar(max)), 30) + N'</root>';
+EXEC sp_xml_preparedocument @h OUTPUT, @doc, N'<root xmlns:ns="urn:t"/>';
+CREATE TABLE #babel_7195_handle (h int);
+INSERT INTO #babel_7195_handle VALUES (@h);
+GO
+~~ROW COUNT: 1~~
+
+
+-- Larger than temp_buffers, so scanning it recycles the document's page
+CREATE TABLE #babel_7195_big (a int, b int, c int, d int);
+INSERT INTO #babel_7195_big SELECT TOP 200000 1, 2, 3, 4 FROM sys.all_objects o1 CROSS JOIN sys.all_objects o2;
+GO
+~~ROW COUNT: 200000~~
+
+
+DECLARE @h int = (SELECT h FROM #babel_7195_handle);
+SELECT sys.tsql_openxml_get_xmldoc(@h) AS doc, (SELECT COUNT(*) FROM #babel_7195_big) AS big_rows;
+SELECT COUNT(*) AS items, MIN(id) AS min_id, MAX(v) AS v
+FROM OPENXML(@h, '/root/ns:item', 1) WITH (id int '@id', v varchar(20) 'text()');
+GO
+~~START~~
+xml#!#int
+<root xmlns:ns="urn:t"><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item></root>#!#200000
+~~END~~
+
+~~START~~
+int#!#int#!#varchar
+30#!#1#!#abcdefghij
+~~END~~
+
+
+-- Handle prepared outside a procedure and read inside it.
+-- Procedures are created here rather than in vu-prepare because
+-- sys.tsql_openxml_get_xmldoc does not exist in older base versions.
+CREATE PROCEDURE sp_xml_preparedocument_babel_7195_read @h int
+AS
+BEGIN
+    SELECT sys.tsql_openxml_get_xmldoc(@h) AS doc, (SELECT COUNT(*) FROM #babel_7195_big) AS big_rows;
+END
+GO
+
+DECLARE @h int = (SELECT h FROM #babel_7195_handle);
+EXEC sp_xml_preparedocument_babel_7195_read @h;
+GO
+~~START~~
+xml#!#int
+<root xmlns:ns="urn:t"><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item><ns:item id="1">abcdefghij</ns:item></root>#!#200000
+~~END~~
+
+
+-- Document prepared and read inside a procedure
+CREATE PROCEDURE sp_xml_preparedocument_babel_7195_prep_read
+AS
+BEGIN
+    DECLARE @h int;
+    DECLARE @doc nvarchar(max) = N'<p>' + REPLICATE(CAST(N'<item id="2">klmnopqrst</item>' AS nvarchar(max)), 30) + N'</p>';
+    EXEC sp_xml_preparedocument @h OUTPUT, @doc;
+    SELECT sys.tsql_openxml_get_xmldoc(@h) AS doc, (SELECT COUNT(*) FROM #babel_7195_big) AS big_rows;
+    SELECT COUNT(*) AS items, MIN(id) AS min_id FROM OPENXML(@h, '/p/item', 1) WITH (id int '@id');
+    EXEC sp_xml_removedocument @h;
+END
+GO
+
+EXEC sp_xml_preparedocument_babel_7195_prep_read;
+GO
+~~START~~
+xml#!#int
+<p><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item><item id="2">klmnopqrst</item></p>#!#200000
+~~END~~
+
+~~START~~
+int#!#int
+30#!#2
+~~END~~
+
+
+DECLARE @h int = (SELECT h FROM #babel_7195_handle);
+EXEC sp_xml_removedocument @h;
+DROP TABLE #babel_7195_handle;
+DROP TABLE #babel_7195_big;
+DROP PROCEDURE sp_xml_preparedocument_babel_7195_read;
+DROP PROCEDURE sp_xml_preparedocument_babel_7195_prep_read;
+GO
+
+-- psql
+-- BABEL-7195 over the PostgreSQL endpoint: the same scenario used to crash
+-- the backend in xml_out_internal -> text_to_cstring.
+set temp_buffers = '1MB';
+GO
+
+begin;
+GO
+
+call sys.sp_xml_preparedocument(null,
+  ('<root>' || repeat('<item id="1">abcdefghij</item>', 30) || '</root>')::xml, null);
+GO
+~~START~~
+int4
+1
+~~END~~
+
+
+create temp table babel_7195_big (g int, pad text);
+GO
+
+-- plain storage keeps the rows uncompressed, so the table overflows temp_buffers
+alter table babel_7195_big alter column pad set storage plain;
+GO
+
+insert into babel_7195_big select g, repeat('x', 8000) from generate_series(1, 500) g;
+GO
+~~ROW COUNT: 500~~
+
+
+select sys.tsql_openxml_get_xmldoc(1), (select count(*) from babel_7195_big);
+GO
+~~START~~
+xml#!#int8
+<root><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item><item id="1">abcdefghij</item></root>#!#500
+~~END~~
+
+
+rollback;
+GO
