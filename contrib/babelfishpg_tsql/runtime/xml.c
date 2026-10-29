@@ -1627,7 +1627,7 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 				}
 				else if ((next_ch == '/' || next_ch == ')' || next_ch == ',' ||
 						  next_ch == '[' || next_ch == ']' || next_ch == ' ') &&
-						 (!isdigit(prev_ch)))  // do not modify a trailing dot in a numeric value, e.g. '2.)'
+						 (!isdigit((unsigned char) prev_ch)))	/* keep a trailing dot in a number, e.g. '2.)' */
 				{
 					/* self reference: '.' or './' etc. */
 					appendStringInfo(&result, "(%s/.)", context_node_path);

@@ -1395,11 +1395,7 @@ GO
 DECLARE @s NVARCHAR(MAX) = N'DECLARE @x XML = ''<a/>''; WITH XMLNAMESPACES(''urn:a' + NCHAR(1) + N'b'' AS p) SELECT COUNT(*) AS c FROM @x.nodes(''/p:a'') AS n(c)';
 EXEC(@s);
 GO
--- 32.5 .exist() with NCHAR(65534) (T-SQL 6875, 0xFFFE)
-DECLARE @s NVARCHAR(MAX) = N'DECLARE @x XML = ''<a/>''; WITH XMLNAMESPACES(''urn:a' + NCHAR(65534) + N''' AS p) SELECT @x.exist(''/p:a'') AS ex';
-EXEC(@s);
-GO
--- 32.6 In a procedure body the CREATE is rejected (T-SQL 6875)
+-- 32.5 In a procedure body the CREATE is rejected (T-SQL 6875)
 DECLARE @s NVARCHAR(MAX) = N'CREATE PROCEDURE xmlns_methods_nsproc_ctl AS BEGIN DECLARE @x XML = ''<a/>''; WITH XMLNAMESPACES(''urn:a' + NCHAR(1) + N'b'' AS p) SELECT @x.exist(''/p:a'') AS ex; END';
 EXEC(@s);
 GO

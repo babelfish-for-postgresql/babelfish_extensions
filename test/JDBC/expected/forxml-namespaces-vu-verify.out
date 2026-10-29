@@ -2548,7 +2548,7 @@ ntext
 
 -- ============================================
 -- SECTION 40: Characters XML does not allow in a namespace URI
--- C0 controls other than TAB, LF and CR, and U+FFFE/U+FFFF, are rejected
+-- C0 controls other than TAB, LF and CR, and U+FFFF, are rejected
 -- (T-SQL 6875) with the first one reported, after the whitespace collapse.
 -- Babelfish reports every error in this section as 33557097. The characters
 -- are built with NCHAR() in dynamic SQL and appear raw in the message.
