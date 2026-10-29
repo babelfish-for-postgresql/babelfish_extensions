@@ -2318,6 +2318,229 @@ DROP TABLE dbo.ie_dyn_xactabort;
 GO
 
 -- ============================================================================
+-- Category X: BABEL-7257 - INSERT EXEC into #temp / @tablevar with
+-- QUOTED_IDENTIFIER OFF (sqlcmd/ODBC default). The internal flush statement
+-- used to double-quote the target name ("#t"), which the T-SQL lexer reads as
+-- a string literal when QUOTED_IDENTIFIER is OFF -> syntax error. The JDBC
+-- driver defaults QUOTED_IDENTIFIER ON, so it is turned off explicitly here.
+-- ============================================================================
+CREATE PROCEDURE dbo.ie_qi_off_proc AS
+    SELECT 1 AS id, 'one' AS name
+    UNION ALL SELECT 2, 'two';
+GO
+
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+-- X1: temp table target
+CREATE TABLE #ie_qi_off_temp (id INT, name VARCHAR(20));
+INSERT INTO #ie_qi_off_temp EXEC dbo.ie_qi_off_proc;
+SELECT * FROM #ie_qi_off_temp ORDER BY id;
+DROP TABLE #ie_qi_off_temp;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+
+-- X2: temp table target with explicit column list
+CREATE TABLE #ie_qi_off_cols (id INT, name VARCHAR(20), extra INT);
+INSERT INTO #ie_qi_off_cols (id, name) EXEC dbo.ie_qi_off_proc;
+SELECT * FROM #ie_qi_off_cols ORDER BY id;
+DROP TABLE #ie_qi_off_cols;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar#!#int
+1#!#one#!#<NULL>
+2#!#two#!#<NULL>
+~~END~~
+
+
+-- X3: table variable target
+DECLARE @ie_qi_off_tv TABLE (id INT, name VARCHAR(20));
+INSERT INTO @ie_qi_off_tv EXEC dbo.ie_qi_off_proc;
+SELECT * FROM @ie_qi_off_tv ORDER BY id;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+
+-- X4: temp table target inside dynamic SQL
+EXEC('CREATE TABLE #ie_qi_off_dyn (id INT, name VARCHAR(20)); INSERT INTO #ie_qi_off_dyn EXEC dbo.ie_qi_off_proc; SELECT * FROM #ie_qi_off_dyn ORDER BY id; DROP TABLE #ie_qi_off_dyn;');
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+
+-- X5: table variable target inside dynamic SQL
+EXEC('DECLARE @tv TABLE (id INT, name VARCHAR(20)); INSERT INTO @tv EXEC dbo.ie_qi_off_proc; SELECT * FROM @tv ORDER BY id;');
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+
+-- X6: regular table target still works with QUOTED_IDENTIFIER OFF
+CREATE TABLE dbo.ie_qi_off_reg (id INT, name VARCHAR(20));
+INSERT INTO dbo.ie_qi_off_reg EXEC dbo.ie_qi_off_proc;
+SELECT * FROM dbo.ie_qi_off_reg ORDER BY id;
+DROP TABLE dbo.ie_qi_off_reg;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+
+-- X7: schema name that needs delimiting (space)
+CREATE SCHEMA [ie qi schema];
+GO
+CREATE TABLE [ie qi schema].t (id INT, name VARCHAR(20));
+INSERT INTO [ie qi schema].t EXEC dbo.ie_qi_off_proc;
+SELECT * FROM [ie qi schema].t ORDER BY id;
+DROP TABLE [ie qi schema].t;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+DROP SCHEMA [ie qi schema];
+GO
+
+-- X8: column list with names that need delimiting (space, reserved word)
+CREATE TABLE dbo.ie_qi_off_colnames ([my col] INT, [Order] VARCHAR(20), extra INT);
+INSERT INTO dbo.ie_qi_off_colnames ([my col], [Order]) EXEC dbo.ie_qi_off_proc;
+SELECT [my col], [Order], extra FROM dbo.ie_qi_off_colnames ORDER BY [my col];
+DROP TABLE dbo.ie_qi_off_colnames;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar#!#int
+1#!#one#!#<NULL>
+2#!#two#!#<NULL>
+~~END~~
+
+
+-- X9: temp table with delimited column list
+CREATE TABLE #ie_qi_off_tcol ([my col] INT, [Order] VARCHAR(20));
+INSERT INTO #ie_qi_off_tcol ([my col], [Order]) EXEC dbo.ie_qi_off_proc;
+SELECT [my col], [Order] FROM #ie_qi_off_tcol ORDER BY [my col];
+DROP TABLE #ie_qi_off_tcol;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+
+-- X10: cross-DB target whose database and table names need delimiting
+CREATE DATABASE [ie qi db];
+GO
+USE [ie qi db];
+GO
+CREATE TABLE dbo.[My Target] (id INT, name VARCHAR(20));
+GO
+USE master;
+GO
+INSERT INTO [ie qi db].dbo.[My Target] EXEC dbo.ie_qi_off_proc;
+SELECT * FROM [ie qi db].dbo.[My Target] ORDER BY id;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+DROP DATABASE [ie qi db];
+GO
+
+-- X11: mixed-case schema, table and column names (quote_identifier quotes these)
+CREATE SCHEMA IE_QI_Upper;
+GO
+CREATE TABLE IE_QI_Upper.MixedCaseTarget (Id INT, Name VARCHAR(20));
+INSERT INTO IE_QI_Upper.MixedCaseTarget (Id, Name) EXEC dbo.ie_qi_off_proc;
+SELECT * FROM IE_QI_Upper.MixedCaseTarget ORDER BY Id;
+DROP TABLE IE_QI_Upper.MixedCaseTarget;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+DROP SCHEMA IE_QI_Upper;
+GO
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+-- X12: same targets with QUOTED_IDENTIFIER ON (unchanged behaviour)
+CREATE TABLE #ie_qi_on_temp (id INT, name VARCHAR(20));
+INSERT INTO #ie_qi_on_temp EXEC dbo.ie_qi_off_proc;
+SELECT * FROM #ie_qi_on_temp ORDER BY id;
+DROP TABLE #ie_qi_on_temp;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+
+DECLARE @ie_qi_on_tv TABLE (id INT, name VARCHAR(20));
+INSERT INTO @ie_qi_on_tv EXEC dbo.ie_qi_off_proc;
+SELECT * FROM @ie_qi_on_tv ORDER BY id;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+
+DROP PROCEDURE dbo.ie_qi_off_proc;
+GO
+
+-- ============================================================================
 -- Cleanup verification
 -- ============================================================================
 SELECT 'All INSERT EXEC tests completed successfully' AS status;
