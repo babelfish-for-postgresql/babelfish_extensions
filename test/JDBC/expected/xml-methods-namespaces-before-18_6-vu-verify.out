@@ -914,15 +914,13 @@ int
 20
 ~~END~~
 
--- 20.4 Undeclared prefix without WITH XMLNAMESPACES -> error
+-- 20.4 Undeclared prefix without WITH XMLNAMESPACES -> error (T-SQL 2229)
 DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:item>x</ns1:item></root>';
 SELECT n.c.value('.', 'varchar(20)') FROM @x.nodes('/root/ns1:item') AS n(c);
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: could not create XPath object)~~
+~~ERROR (Message: XQuery [nodes()]: The name "ns1" does not denote a namespace.)~~
 
 -- 20.5 Attribute (@id) of each shredded node
 DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:item id="1">a</ns1:item><ns1:item id="2">b</ns1:item></root>';
@@ -1200,5 +1198,2557 @@ GO
 ~~START~~
 bit#!#xml
 1#!#<ns1:v xmlns:ns1="http://example.com/ns1">hit</ns1:v>
+~~END~~
+
+-- ============================================
+-- SECTION 24: Empty namespace prefix in XML methods
+-- [] and "" strip to an empty prefix. T-SQL rejects it with error 1038
+-- followed by 6877. Babelfish raises only the 1038 text, as error 33557097.
+-- ============================================
+-- 24.1 .query()
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:item>val</ns1:item></root>';
+WITH XMLNAMESPACES('http://example.com/ns1' AS [])
+SELECT @x.query('/root');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as "" or [] are not allowed. Change the alias to a valid name.)~~
+
+-- 24.2 .value()
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:item>val</ns1:item></root>';
+WITH XMLNAMESPACES('http://example.com/ns1' AS [])
+SELECT @x.value('(/root/*)[1]', 'varchar(10)');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as "" or [] are not allowed. Change the alias to a valid name.)~~
+
+-- 24.3 .exist()
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:item>val</ns1:item></root>';
+WITH XMLNAMESPACES('http://example.com/ns1' AS [])
+SELECT @x.exist('/root/item');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as "" or [] are not allowed. Change the alias to a valid name.)~~
+
+-- 24.4 .nodes()
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:item>val</ns1:item></root>';
+WITH XMLNAMESPACES('http://example.com/ns1' AS [])
+SELECT n.c.value('.', 'varchar(10)') FROM @x.nodes('/root/*') AS n(c);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as "" or [] are not allowed. Change the alias to a valid name.)~~
+
+-- 24.5 AS "" with QUOTED_IDENTIFIER ON
+SET QUOTED_IDENTIFIER ON;
+GO
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:item>val</ns1:item></root>';
+WITH XMLNAMESPACES('http://example.com/ns1' AS "")
+SELECT @x.query('/root');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as "" or [] are not allowed. Change the alias to a valid name.)~~
+
+-- ============================================
+-- SECTION 25: Whitespace in a namespace URI in XML methods
+-- The URI is collapsed as xs:anyURI before it is used (see forxml-namespaces
+-- SECTION 38): TAB, LF and CR become a space, runs become one space and both
+-- ends are trimmed. A whitespace-only URI is empty (T-SQL 6874, reported here
+-- as 33557097). TAB and LF are built with CHAR() in dynamic SQL.
+-- ============================================
+-- 25.1 .exist() with three spaces (T-SQL 6874)
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:item>val</ns1:item></root>';
+WITH XMLNAMESPACES('   ' AS ns1)
+SELECT @x.exist('/root');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Empty URI is not allowed in WITH XMLNAMESPACES clause.)~~
+
+-- 25.2 .query() with DEFAULT three spaces (T-SQL 6874)
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:item>val</ns1:item></root>';
+WITH XMLNAMESPACES(DEFAULT '   ')
+SELECT @x.query('/root');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Empty URI is not allowed in WITH XMLNAMESPACES clause.)~~
+
+-- 25.3 .value() with TAB only (T-SQL 6874)
+DECLARE @s NVARCHAR(MAX) = N'DECLARE @x XML = ''<root xmlns:ns1="http://example.com/ns1"><ns1:item>val</ns1:item></root>''; WITH XMLNAMESPACES(''' + CHAR(9) + N''' AS ns1) SELECT @x.value(''(/root/*)[1]'', ''varchar(10)'')';
+EXEC(@s);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Empty URI is not allowed in WITH XMLNAMESPACES clause.)~~
+
+-- 25.4 A padded clause URI matches the unpadded document URI
+DECLARE @x XML = '<root xmlns:ns1="http://example.com/ns1"><ns1:item>val</ns1:item></root>';
+WITH XMLNAMESPACES('  http://example.com/ns1  ' AS p)
+SELECT @x.exist('/root/p:item');
+GO
+~~START~~
+bit
+1
+~~END~~
+
+-- 25.5 A TAB before and an LF after the clause URI are trimmed
+DECLARE @s NVARCHAR(MAX) = N'DECLARE @x XML = ''<root xmlns:ns1="http://example.com/ns1"><ns1:item>val</ns1:item></root>''; WITH XMLNAMESPACES(''' + CHAR(9) + N'http://example.com/ns1' + CHAR(10) + N''' AS ns1) SELECT @x.value(''(/root/ns1:item)[1]'', ''varchar(10)'')';
+EXEC(@s);
+GO
+~~START~~
+varchar
+val
+~~END~~
+
+-- 25.6 A TAB inside the clause URI becomes a space. T-SQL collapses the
+-- document's namespace URI as well and returns 1. Babelfish cannot evaluate
+-- the document at all: PostgreSQL's xpath() rejects a document whose
+-- namespace URI contains whitespace ("could not parse XML document"), with or
+-- without a clause.
+DECLARE @s NVARCHAR(MAX) = N'DECLARE @x XML = ''<r xmlns:d="urn:a b"><d:x>8</d:x></r>''; WITH XMLNAMESPACES(''urn:a' + CHAR(9) + N'b'' AS p) SELECT @x.exist(''/r/p:x'')';
+EXEC(@s);
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not parse XML document)~~
+
+-- ============================================
+-- SECTION 26: Prefixed relative paths on .nodes() output
+-- Under a .nodes() context each relative step is prefixed with the context
+-- node's path. A QName (e:name, @e:id) or an axis step (child::e:name) is one
+-- step, so the path goes in front of it once. The table is created here
+-- rather than in the prepare file and is used again by SECTION 27.
+-- ============================================
+CREATE TABLE xmlns_methods_nsdata (id INT, data XML);
+GO
+INSERT INTO xmlns_methods_nsdata VALUES (1, '<root xmlns:ns="http://example.com/ns1"><ns:child>Hello</ns:child><ns:child>World</ns:child></root>');
+INSERT INTO xmlns_methods_nsdata VALUES (3, '<e:employees xmlns:e="urn:emp"><e:emp e:id="1"><e:name>Alice</e:name></e:emp></e:employees>');
+INSERT INTO xmlns_methods_nsdata VALUES (4, '<e:employees xmlns:e="urn:emp"><e:x>X1</e:x><e:emp e:id="1" plain="p1"><e:name>Alice</e:name><e:info><e:sub>S1</e:sub></e:info></e:emp><e:emp e:id="2" plain="p2"><e:name>Bob</e:name><e:info><e:sub>S2</e:sub></e:info></e:emp></e:employees>');
+INSERT INTO xmlns_methods_nsdata VALUES (5, '<employees><x>X1</x><emp id="1"><name>Alice</name><info><sub>S1</sub></info></emp><emp id="2"><name>Bob</name><info><sub>S2</sub></info></emp></employees>');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+-- 26.1 Relative prefixed element and attribute with all four methods
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('(e:name)[1]', 'VARCHAR(50)') AS v_name, n.c.value('@e:id', 'INT') AS v_id, n.c.exist('e:name') AS ex, n.c.query('e:name') AS q
+FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) WHERE t.id = 3;
+GO
+~~START~~
+varchar#!#int#!#bit#!#xml
+Alice#!#1#!#1#!#<e:name xmlns:e="urn:emp">Alice</e:name>
+~~END~~
+
+-- 26.2 Prefixed wildcard e:*
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('count(e:*)', 'INT') FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) WHERE t.id = 4 ORDER BY 1;
+GO
+~~START~~
+int
+2
+2
+~~END~~
+
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('local-name((e:*)[1])', 'VARCHAR(20)') FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) WHERE t.id = 4 ORDER BY 1;
+GO
+~~START~~
+varchar
+name
+name
+~~END~~
+
+-- 26.3 Prefixed attribute wildcard @e:*: only the e:id attribute is counted
+-- (T-SQL 1)
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('count(@e:*)', 'INT') FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) WHERE t.id = 4 ORDER BY 1;
+GO
+~~START~~
+int
+1
+1
+~~END~~
+
+-- 26.4 child:: axis with a prefixed name
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('(child::e:name)[1]', 'VARCHAR(20)') FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) WHERE t.id = 4 ORDER BY 1;
+GO
+~~START~~
+varchar
+Alice
+Bob
+~~END~~
+
+-- 26.5 ./e:name
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('(./e:name)[1]', 'VARCHAR(20)') FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) WHERE t.id = 4 ORDER BY 1;
+GO
+~~START~~
+varchar
+Alice
+Bob
+~~END~~
+
+-- 26.6 ../e:x
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('(../e:x)[1]', 'VARCHAR(20)') FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) WHERE t.id = 4 ORDER BY 1;
+GO
+~~START~~
+varchar
+X1
+X1
+~~END~~
+
+-- 26.7 Two prefixed steps, e:info/e:sub
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('(e:info/e:sub)[1]', 'VARCHAR(20)') FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) WHERE t.id = 4 ORDER BY 1;
+GO
+~~START~~
+varchar
+S1
+S2
+~~END~~
+
+-- 26.8 Prefixed step with a prefixed attribute predicate
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('(e:emp[@e:id="1"]/e:name)[1]', 'VARCHAR(20)') AS id1, n.c.value('(e:emp[@e:id="2"]/e:name)[1]', 'VARCHAR(20)') AS id2
+FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees') AS n(c) WHERE t.id = 4;
+GO
+~~START~~
+varchar#!#varchar
+Alice#!#Bob
+~~END~~
+
+-- 26.9 A colon inside a string literal is left alone
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('concat("x:y", (e:name)[1])', 'VARCHAR(20)') FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) WHERE t.id = 4 ORDER BY 1;
+GO
+~~START~~
+varchar
+x:yAlice
+x:yBob
+~~END~~
+
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.exist('e:name[. != "a:b"]') FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) WHERE t.id = 4 ORDER BY 1;
+GO
+~~START~~
+bit
+1
+1
+~~END~~
+
+-- 26.10 Nested .nodes() with a relative prefixed path
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT m.d.value('.', 'VARCHAR(20)') FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) CROSS APPLY n.c.nodes('e:info/e:sub') AS m(d) WHERE t.id = 4 ORDER BY 1;
+GO
+~~START~~
+varchar
+S1
+S2
+~~END~~
+
+-- 26.11 local-name(.) and an unprefixed attribute on a prefixed element
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('local-name(.)', 'VARCHAR(20)') AS ln, n.c.value('@plain', 'VARCHAR(20)') AS plain FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) WHERE t.id = 4 ORDER BY 2;
+GO
+~~START~~
+varchar#!#varchar
+emp#!#p1
+emp#!#p2
+~~END~~
+
+-- 26.12 .query() of a relative prefixed path, one fragment per row
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.query('e:info') FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) WHERE t.id = 4;
+GO
+~~START~~
+xml
+<e:info xmlns:e="urn:emp"><e:sub>S1</e:sub></e:info>
+<e:info xmlns:e="urn:emp"><e:sub>S2</e:sub></e:info>
+~~END~~
+
+-- 26.13 Absolute prefixed element and attribute under a .nodes() context
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('(/e:employees/e:emp/e:name)[1]', 'VARCHAR(50)') AS abs_elem, n.c.value('(/e:employees/e:emp/@e:id)[1]', 'INT') AS abs_attr
+FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) WHERE t.id = 3;
+GO
+~~START~~
+varchar#!#int
+Alice#!#1
+~~END~~
+
+-- 26.14 A .nodes() context selected by position rather than by name
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('(e:name)[1]', 'VARCHAR(20)') FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/*/*[2]') AS n(c) WHERE t.id = 4;
+GO
+~~START~~
+varchar
+Alice
+~~END~~
+
+-- 26.15 descendant:: and self:: axes with prefixed names
+;WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('(descendant::e:sub)[1]', 'VARCHAR(20)') AS d, n.c.exist('self::e:emp') AS s FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/e:employees/e:emp') AS n(c) WHERE t.id = 4 ORDER BY 1;
+GO
+~~START~~
+varchar#!#bit
+S1#!#1
+S2#!#1
+~~END~~
+
+-- 26.16 No clause: unprefixed axis steps and unprefixed relative paths
+SELECT n.c.value('(child::name)[1]', 'VARCHAR(20)') AS c, n.c.value('(descendant::sub)[1]', 'VARCHAR(20)') AS d, n.c.exist('self::emp') AS s
+FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/employees/emp') AS n(c) WHERE t.id = 5 ORDER BY 1;
+GO
+~~START~~
+varchar#!#varchar#!#bit
+Alice#!#S1#!#1
+Bob#!#S2#!#1
+~~END~~
+
+SELECT n.c.value('(./name)[1]', 'VARCHAR(20)') AS dot, n.c.value('(../x)[1]', 'VARCHAR(20)') AS up, n.c.value('(info/sub)[1]', 'VARCHAR(20)') AS two_steps
+FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/employees/emp') AS n(c) WHERE t.id = 5 ORDER BY 1;
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+Alice#!#X1#!#S1
+Bob#!#X1#!#S2
+~~END~~
+
+SELECT n.c.value('(emp[@id="2"]/name)[1]', 'VARCHAR(20)') FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/employees') AS n(c) WHERE t.id = 5;
+GO
+~~START~~
+varchar
+Bob
+~~END~~
+
+-- ============================================
+-- SECTION 27: Namespaced XML methods inside routine bodies
+-- The text stored for a routine body comes from the CREATE statement's own
+-- walk, which adds the namespace array to each rewritten XML method call. The
+-- bindings belong to the one statement that carries the clause. Uses
+-- xmlns_methods_nsdata from SECTION 26.
+-- ============================================
+-- 27.1 .query() in a procedure body. T-SQL labels the result with the clause
+-- prefix (x:child), Babelfish keeps the document's prefix (ns:child); the two
+-- are namespace-equivalent and the same as outside a procedure.
+CREATE PROCEDURE xmlns_methods_nsproc_query AS
+BEGIN
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+    SELECT data.query('/root/x:child') FROM xmlns_methods_nsdata WHERE id = 1;
+END;
+GO
+EXEC xmlns_methods_nsproc_query;
+GO
+~~START~~
+xml
+<ns:child xmlns:ns="http://example.com/ns1">Hello</ns:child><ns:child xmlns:ns="http://example.com/ns1">World</ns:child>
+~~END~~
+
+-- 27.2 .value()
+CREATE PROCEDURE xmlns_methods_nsproc_value AS
+BEGIN
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+    SELECT data.value('(/root/x:child)[2]', 'VARCHAR(20)') FROM xmlns_methods_nsdata WHERE id = 1;
+END;
+GO
+EXEC xmlns_methods_nsproc_value;
+GO
+~~START~~
+varchar
+World
+~~END~~
+
+-- 27.3 .exist()
+CREATE PROCEDURE xmlns_methods_nsproc_exist AS
+BEGIN
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+    SELECT data.exist('/root/x:child') FROM xmlns_methods_nsdata WHERE id = 1;
+END;
+GO
+EXEC xmlns_methods_nsproc_exist;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+-- 27.4 .nodes() with .value()
+CREATE PROCEDURE xmlns_methods_nsproc_nodes AS
+BEGIN
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+    SELECT n.c.value('.', 'VARCHAR(20)') FROM xmlns_methods_nsdata t CROSS APPLY t.data.nodes('/root/x:child') AS n(c) WHERE t.id = 1 ORDER BY 1;
+END;
+GO
+EXEC xmlns_methods_nsproc_nodes;
+GO
+~~START~~
+varchar
+Hello
+World
+~~END~~
+
+-- 27.5 table.column.method()
+CREATE PROCEDURE xmlns_methods_nsproc_tblcol AS
+BEGIN
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+    SELECT t.data.value('(/root/x:child)[1]', 'VARCHAR(20)') FROM xmlns_methods_nsdata AS t WHERE t.id = 1;
+END;
+GO
+EXEC xmlns_methods_nsproc_tblcol;
+GO
+~~START~~
+varchar
+Hello
+~~END~~
+
+-- 27.6 @variable.method()
+CREATE PROCEDURE xmlns_methods_nsproc_var AS
+BEGIN
+    DECLARE @x XML = '<root xmlns:ns="http://example.com/ns1"><ns:child>Hello</ns:child></root>';
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+    SELECT @x.value('(/root/x:child)[1]', 'VARCHAR(20)');
+END;
+GO
+EXEC xmlns_methods_nsproc_var;
+GO
+~~START~~
+varchar
+Hello
+~~END~~
+
+-- 27.7 Nested IF and BEGIN...END
+CREATE PROCEDURE xmlns_methods_nsproc_nested AS
+BEGIN
+    IF 1 = 1
+    BEGIN
+        IF 2 = 2
+        BEGIN
+            ;WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+            SELECT data.exist('/root/x:child') FROM xmlns_methods_nsdata WHERE id = 1;
+        END
+    END
+END;
+GO
+EXEC xmlns_methods_nsproc_nested;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+-- 27.8 A later statement with no clause and an unprefixed path
+CREATE PROCEDURE xmlns_methods_nsproc_leak1 AS
+BEGIN
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+    SELECT data.exist('/root/x:child') AS with_clause FROM xmlns_methods_nsdata WHERE id = 1;
+    SELECT data.exist('/root/*') AS no_clause FROM xmlns_methods_nsdata WHERE id = 1;
+END;
+GO
+EXEC xmlns_methods_nsproc_leak1;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+~~START~~
+bit
+1
+~~END~~
+
+-- 27.9 A later statement with no clause does not see the bindings, so the
+-- CREATE is rejected (T-SQL 2229). T-SQL names the method after the table and
+-- column it is called on ([xmlns_methods_nsdata.data.exist()]); Babelfish
+-- gives only the method name, as in all its XQuery messages.
+CREATE PROCEDURE xmlns_methods_nsproc_leak2 AS
+BEGIN
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+    SELECT data.exist('/root/x:child') AS with_clause FROM xmlns_methods_nsdata WHERE id = 1;
+    SELECT data.exist('/root/x:child') AS no_clause_prefixed FROM xmlns_methods_nsdata WHERE id = 1;
+END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [exist()]: The name "x" does not denote a namespace.)~~
+
+SELECT COUNT(*) FROM sys.objects WHERE name = 'xmlns_methods_nsproc_leak2';
+GO
+~~START~~
+int
+0
+~~END~~
+
+-- 27.10 Two statements bind x to different URIs
+CREATE PROCEDURE xmlns_methods_nsproc_rebind AS
+BEGIN
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+    SELECT data.exist('/root/x:child') AS ns1_match FROM xmlns_methods_nsdata WHERE id = 1;
+    ;WITH XMLNAMESPACES('urn:other' AS x)
+    SELECT data.exist('/root/x:child') AS other_match FROM xmlns_methods_nsdata WHERE id = 1;
+END;
+GO
+EXEC xmlns_methods_nsproc_rebind;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+~~START~~
+bit
+0
+~~END~~
+
+-- 27.11 Scalar function body
+CREATE FUNCTION xmlns_methods_nsfn_scalar() RETURNS VARCHAR(20) AS
+BEGIN
+    DECLARE @r VARCHAR(20);
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+    SELECT @r = data.value('(/root/x:child)[1]', 'VARCHAR(20)') FROM xmlns_methods_nsdata WHERE id = 1;
+    RETURN @r;
+END;
+GO
+SELECT dbo.xmlns_methods_nsfn_scalar();
+GO
+~~START~~
+varchar
+Hello
+~~END~~
+
+-- 27.12 Multi-statement table function body
+CREATE FUNCTION xmlns_methods_nsfn_mstvf() RETURNS @t TABLE (v VARCHAR(20)) AS
+BEGIN
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+    INSERT INTO @t SELECT data.value('(/root/x:child)[2]', 'VARCHAR(20)') FROM xmlns_methods_nsdata WHERE id = 1;
+    RETURN;
+END;
+GO
+SELECT * FROM dbo.xmlns_methods_nsfn_mstvf();
+GO
+~~START~~
+varchar
+World
+~~END~~
+
+-- 27.13 Inline table function body
+CREATE FUNCTION xmlns_methods_nsfn_itvf() RETURNS TABLE AS
+RETURN (
+    WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+    SELECT data.value('(/root/x:child)[1]', 'VARCHAR(20)') AS v FROM xmlns_methods_nsdata WHERE id = 1
+);
+GO
+SELECT * FROM dbo.xmlns_methods_nsfn_itvf();
+GO
+~~START~~
+varchar
+Hello
+~~END~~
+
+-- 27.14 Trigger body
+CREATE TABLE xmlns_methods_nstrig_t (id INT);
+GO
+CREATE TABLE xmlns_methods_nstrig_log (v VARCHAR(20));
+GO
+CREATE TRIGGER xmlns_methods_nstrig ON xmlns_methods_nstrig_t AFTER INSERT AS
+BEGIN
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+    INSERT INTO xmlns_methods_nstrig_log SELECT data.value('(/root/x:child)[1]', 'VARCHAR(20)') FROM xmlns_methods_nsdata WHERE id = 1;
+END;
+GO
+INSERT INTO xmlns_methods_nstrig_t VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+SELECT v FROM xmlns_methods_nstrig_log;
+GO
+~~START~~
+varchar
+Hello
+~~END~~
+
+-- 27.15 ALTER PROCEDURE rebinds x to a URI the document does not use
+ALTER PROCEDURE xmlns_methods_nsproc_exist AS
+BEGIN
+    ;WITH XMLNAMESPACES('urn:other' AS x)
+    SELECT data.exist('/root/x:child') FROM xmlns_methods_nsdata WHERE id = 1;
+END;
+GO
+EXEC xmlns_methods_nsproc_exist;
+GO
+~~START~~
+bit
+0
+~~END~~
+
+-- 27.16 The call is inside a CTE of the clause
+CREATE PROCEDURE xmlns_methods_nsproc_cte AS
+BEGIN
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS x),
+         c AS (SELECT data.value('(/root/x:child)[1]', 'VARCHAR(20)') AS v FROM xmlns_methods_nsdata WHERE id = 1)
+    SELECT v FROM c;
+END;
+GO
+EXEC xmlns_methods_nsproc_cte;
+GO
+~~START~~
+varchar
+Hello
+~~END~~
+
+-- 27.17 A bad clause in a routine body rejects the CREATE (T-SQL 6874,
+-- reported as 33557097), and the next CREATE is not disturbed by anything the
+-- failed one left behind
+CREATE PROCEDURE xmlns_methods_nsproc_bad AS
+BEGIN
+    ;WITH XMLNAMESPACES('   ' AS x)
+    SELECT data.exist('/root/x:child') FROM xmlns_methods_nsdata WHERE id = 1;
+END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Empty URI is not allowed in WITH XMLNAMESPACES clause.)~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_bad;
+GO
+CREATE PROCEDURE xmlns_methods_nsproc_after AS
+BEGIN
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS x)
+    SELECT data.exist('/root/x:child') FROM xmlns_methods_nsdata WHERE id = 1;
+END;
+GO
+EXEC xmlns_methods_nsproc_after;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+DROP PROCEDURE xmlns_methods_nsproc_query;
+GO
+DROP PROCEDURE xmlns_methods_nsproc_value;
+GO
+DROP PROCEDURE xmlns_methods_nsproc_exist;
+GO
+DROP PROCEDURE xmlns_methods_nsproc_nodes;
+GO
+DROP PROCEDURE xmlns_methods_nsproc_tblcol;
+GO
+DROP PROCEDURE xmlns_methods_nsproc_var;
+GO
+DROP PROCEDURE xmlns_methods_nsproc_nested;
+GO
+DROP PROCEDURE xmlns_methods_nsproc_leak1;
+GO
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_leak2;
+GO
+DROP PROCEDURE xmlns_methods_nsproc_rebind;
+GO
+DROP PROCEDURE xmlns_methods_nsproc_cte;
+GO
+DROP PROCEDURE xmlns_methods_nsproc_after;
+GO
+DROP FUNCTION xmlns_methods_nsfn_scalar;
+GO
+DROP FUNCTION xmlns_methods_nsfn_mstvf;
+GO
+DROP FUNCTION xmlns_methods_nsfn_itvf;
+GO
+DROP TRIGGER xmlns_methods_nstrig;
+GO
+DROP TABLE xmlns_methods_nstrig_t;
+GO
+DROP TABLE xmlns_methods_nstrig_log;
+GO
+DROP TABLE xmlns_methods_nsdata;
+GO
+-- ============================================
+-- SECTION 28: Wildcards and subtraction under .nodes()
+-- A wildcard (e:*, child::*, @e:*, @*) ends its name test, so a following
+-- '-' is the subtraction operator. Whitespace next to '-' is kept, so that
+-- "@a - 1" is not read as the name "a-1".
+-- ============================================
+-- 28.1 (e:*)[1] - (x)[1] (T-SQL 7)
+DECLARE @x XML = '<x><e:emp xmlns:e="urn:emp" e:n="5"><e:a>10</e:a><x>3</x></e:emp></x>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('(e:*)[1] - (x)[1]', 'FLOAT') AS v FROM @x.nodes('/x/e:emp') AS n(c);
+GO
+~~START~~
+float
+7.0
+~~END~~
+
+-- 28.2 (child::*)[1] - (x)[1] (T-SQL 7)
+DECLARE @x XML = '<x><e:emp xmlns:e="urn:emp" e:n="5"><e:a>10</e:a><x>3</x></e:emp></x>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('(child::*)[1] - (x)[1]', 'FLOAT') AS v FROM @x.nodes('/x/e:emp') AS n(c);
+GO
+~~START~~
+float
+7.0
+~~END~~
+
+-- 28.3 (@e:*)[1] - (x)[1] (T-SQL 2)
+DECLARE @x XML = '<x><e:emp xmlns:e="urn:emp" e:n="5"><e:a>10</e:a><x>3</x></e:emp></x>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('(@e:*)[1] - (x)[1]', 'FLOAT') AS v FROM @x.nodes('/x/e:emp') AS n(c);
+GO
+~~START~~
+float
+2.0
+~~END~~
+
+-- 28.4 e:* - x, @e:* - x, @* - x and e:*-1 have a non-singleton operand,
+-- which T-SQL rejects (2389). Babelfish has no static typing and takes the
+-- first node of each step: 7, 2, 2 and 9.
+DECLARE @x XML = '<x><e:emp xmlns:e="urn:emp" e:n="5"><e:a>10</e:a><x>3</x></e:emp></x>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('e:* - x', 'FLOAT') AS v1, n.c.value('@e:* - x', 'FLOAT') AS v2, n.c.value('@* - x', 'FLOAT') AS v3, n.c.value('e:*-1', 'FLOAT') AS v4
+FROM @x.nodes('/x/e:emp') AS n(c);
+GO
+~~START~~
+float#!#float#!#float#!#float
+7.0#!#2.0#!#2.0#!#9.0
+~~END~~
+
+-- 28.5 e:* and x, e:* or x, exist(e:*[. = 10] and x) with no x under the
+-- context (T-SQL 0, 1, 1), and e:* and x with one (T-SQL 1)
+DECLARE @x XML = '<x><e:emp xmlns:e="urn:emp"><e:a>10</e:a></e:emp></x>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('e:* and x', 'BIT') AS v_and, n.c.value('e:* or x', 'BIT') AS v_or, n.c.exist('e:*[. = 10] and x') AS ex FROM @x.nodes('/x/e:emp') AS n(c);
+GO
+~~START~~
+bit#!#bit#!#bit
+0#!#1#!#1
+~~END~~
+
+DECLARE @x XML = '<x><e:emp xmlns:e="urn:emp"><e:a>10</e:a><x>3</x></e:emp></x>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('e:* and x', 'BIT') AS v_and FROM @x.nodes('/x/e:emp') AS n(c);
+GO
+~~START~~
+bit
+1
+~~END~~
+
+-- 28.6 @a - 1 and @a -1 (T-SQL 9, 9)
+DECLARE @x XML = '<r xmlns:e="urn:emp"><emp a="10" b="3" e:a="20" e:b="4"/></r>';
+SELECT n.c.value('@a - 1', 'FLOAT') AS v1, n.c.value('@a -1', 'FLOAT') AS v2 FROM @x.nodes('/r/emp') AS n(c);
+GO
+~~START~~
+float#!#float
+9.0#!#9.0
+~~END~~
+
+-- 28.7 @a - @b (T-SQL 7)
+DECLARE @x XML = '<r xmlns:e="urn:emp"><emp a="10" b="3" e:a="20" e:b="4"/></r>';
+SELECT n.c.value('@a - @b', 'FLOAT') AS v FROM @x.nodes('/r/emp') AS n(c);
+GO
+~~START~~
+float
+7.0
+~~END~~
+
+-- 28.8 @e:a - @e:b (T-SQL 16)
+DECLARE @x XML = '<r xmlns:e="urn:emp"><emp a="10" b="3" e:a="20" e:b="4"/></r>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('@e:a - @e:b', 'FLOAT') AS v FROM @x.nodes('/r/emp') AS n(c);
+GO
+~~START~~
+float
+16.0
+~~END~~
+
+-- 28.9 Other operators as controls (T-SQL 11, 20, 5, 1)
+DECLARE @x XML = '<r xmlns:e="urn:emp"><emp a="10" b="3" e:a="20" e:b="4"/></r>';
+SELECT n.c.value('@a + 1', 'FLOAT') AS p, n.c.value('@a * 2', 'FLOAT') AS m, n.c.value('@a div 2', 'FLOAT') AS d, n.c.value('@a mod 3', 'FLOAT') AS md
+FROM @x.nodes('/r/emp') AS n(c);
+GO
+~~START~~
+float#!#float#!#float#!#float
+11.0#!#20.0#!#5.0#!#1.0
+~~END~~
+
+-- 28.10 No .nodes(): (/r/emp)[1]/@a - 1, (/r/emp)[1]/@e:a - 1 and
+-- (/r/emp)[1]/@a - (/r/emp)[1]/@b (T-SQL 9, 19, 7)
+DECLARE @x XML = '<r xmlns:e="urn:emp"><emp a="10" b="3" e:a="20" e:b="4"/></r>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT @x.value('(/r/emp)[1]/@a - 1', 'FLOAT') AS v1, @x.value('(/r/emp)[1]/@e:a - 1', 'FLOAT') AS v2, @x.value('(/r/emp)[1]/@a - (/r/emp)[1]/@b', 'FLOAT') AS v3;
+GO
+~~START~~
+float#!#float#!#float
+9.0#!#19.0#!#7.0
+~~END~~
+
+-- 28.11 @a-1 is one name, which matches nothing (T-SQL NULL)
+DECLARE @x XML = '<r><emp a="10"/></r>';
+SELECT n.c.value('@a-1', 'FLOAT') AS v FROM @x.nodes('/r/emp') AS n(c);
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+-- 28.12 @a- 1 is a syntax error. T-SQL reports 2209 "Syntax error near
+-- 'a-'"; Babelfish reports "invalid XPath expression".
+DECLARE @x XML = '<r><emp a="10"/></r>';
+SELECT n.c.value('@a- 1', 'FLOAT') AS v FROM @x.nodes('/r/emp') AS n(c);
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid XPath expression)~~
+
+-- ============================================
+-- SECTION 29: Bare * and text() under .nodes()
+-- A '*' in name-test position and text() are relative steps from the
+-- context node, like a bare name.
+-- ============================================
+-- 29.1 count(*) (T-SQL 2 per row)
+DECLARE @x XML = '<employees><x>X1</x><emp id="1"><name>Alice</name><info><sub>S1</sub></info></emp><emp id="2"><name>Bob</name><info><sub>S2</sub></info></emp></employees>';
+SELECT n.c.value('count(*)', 'INT') AS cnt FROM @x.nodes('/employees/emp') AS n(c);
+GO
+~~START~~
+int
+2
+2
+~~END~~
+
+-- 29.2 (*)[1] and local-name((*)[1]) (T-SQL Alice|name, Bob|name)
+DECLARE @x XML = '<employees><x>X1</x><emp id="1"><name>Alice</name><info><sub>S1</sub></info></emp><emp id="2"><name>Bob</name><info><sub>S2</sub></info></emp></employees>';
+SELECT n.c.value('(*)[1]', 'VARCHAR(20)') AS first_child, n.c.value('local-name((*)[1])', 'VARCHAR(20)') AS ln FROM @x.nodes('/employees/emp') AS n(c);
+GO
+~~START~~
+varchar#!#varchar
+Alice#!#name
+Bob#!#name
+~~END~~
+
+-- 29.3 count(*/*) and (*/sub)[1] (T-SQL 1|S1, 1|S2)
+DECLARE @x XML = '<employees><x>X1</x><emp id="1"><name>Alice</name><info><sub>S1</sub></info></emp><emp id="2"><name>Bob</name><info><sub>S2</sub></info></emp></employees>';
+SELECT n.c.value('count(*/*)', 'INT') AS cnt2, n.c.value('(*/sub)[1]', 'VARCHAR(20)') AS sub FROM @x.nodes('/employees/emp') AS n(c);
+GO
+~~START~~
+int#!#varchar
+1#!#S1
+1#!#S2
+~~END~~
+
+-- 29.4 exist('*') on a context with no element children (T-SQL 0)
+DECLARE @x XML = '<employees><x>X1</x><emp id="1"><name>Alice</name><info><sub>S1</sub></info></emp><emp id="2"><name>Bob</name><info><sub>S2</sub></info></emp></employees>';
+SELECT n.c.exist('*') AS ex FROM @x.nodes('/employees/x') AS n(c);
+GO
+~~START~~
+bit
+0
+~~END~~
+
+-- 29.5 .query('*') returns the children of each row
+DECLARE @x XML = '<employees><x>X1</x><emp id="1"><name>Alice</name><info><sub>S1</sub></info></emp><emp id="2"><name>Bob</name><info><sub>S2</sub></info></emp></employees>';
+SELECT n.c.query('*') AS q FROM @x.nodes('/employees/emp') AS n(c);
+GO
+~~START~~
+xml
+<name>Alice</name><info><sub>S1</sub></info>
+<name>Bob</name><info><sub>S2</sub></info>
+~~END~~
+
+-- 29.6 Nested .nodes('*') (T-SQL 4 rows: name, info, name, info)
+DECLARE @x XML = '<employees><x>X1</x><emp id="1"><name>Alice</name><info><sub>S1</sub></info></emp><emp id="2"><name>Bob</name><info><sub>S2</sub></info></emp></employees>';
+SELECT m.d.value('local-name(.)', 'VARCHAR(20)') AS ln FROM @x.nodes('/employees/emp') AS n(c) CROSS APPLY n.c.nodes('*') AS m(d);
+GO
+~~START~~
+varchar
+name
+info
+name
+info
+~~END~~
+
+-- 29.7 Namespaced document: count(*) and count(e:*) (T-SQL 2|2 per row)
+DECLARE @x XML = '<e:employees xmlns:e="urn:emp"><e:x>X1</e:x><e:emp e:id="1" plain="p1"><e:name>Alice</e:name><e:info><e:sub>S1</e:sub></e:info></e:emp><e:emp e:id="2" plain="p2"><e:name>Bob</e:name><e:info><e:sub>S2</e:sub></e:info></e:emp></e:employees>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('count(*)', 'INT') AS cnt, n.c.value('count(e:*)', 'INT') AS cnt_e FROM @x.nodes('/e:employees/e:emp') AS n(c);
+GO
+~~START~~
+int#!#int
+2#!#2
+2#!#2
+~~END~~
+
+-- 29.8 A '*' after an operator: count(@*) + count(*) (T-SQL 3 per row)
+DECLARE @x XML = '<employees><x>X1</x><emp id="1"><name>Alice</name><info><sub>S1</sub></info></emp><emp id="2"><name>Bob</name><info><sub>S2</sub></info></emp></employees>';
+SELECT n.c.value('count(@*) + count(*)', 'INT') AS s FROM @x.nodes('/employees/emp') AS n(c);
+GO
+~~START~~
+int
+3
+3
+~~END~~
+
+-- 29.9 The multiply operator next to a wildcard step and next to an
+-- attribute: count(*)*2 and @id * 2 (T-SQL 4|2, 4|4)
+DECLARE @x XML = '<employees><x>X1</x><emp id="1"><name>Alice</name><info><sub>S1</sub></info></emp><emp id="2"><name>Bob</name><info><sub>S2</sub></info></emp></employees>';
+SELECT n.c.value('count(*)*2', 'INT') AS c2, n.c.value('@id * 2', 'INT') AS i2 FROM @x.nodes('/employees/emp') AS n(c);
+GO
+~~START~~
+int#!#int
+4#!#2
+4#!#4
+~~END~~
+
+-- 29.10 exist() of a boolean expression is 1 even when it is false
+-- (T-SQL 1, 1, then 1)
+DECLARE @x XML = '<employees><x>X1</x><emp id="1"><name>Alice</name><info><sub>S1</sub></info></emp><emp id="2"><name>Bob</name><info><sub>S2</sub></info></emp></employees>';
+SELECT n.c.exist('@id and *') AS ex FROM @x.nodes('/employees/emp') AS n(c);
+SELECT n.c.exist('@id and *') AS ex_x FROM @x.nodes('/employees/x') AS n(c);
+GO
+~~START~~
+bit
+1
+1
+~~END~~
+
+~~START~~
+bit
+1
+~~END~~
+
+-- 29.11 (text())[1] and count(text()) on mixed content (T-SQL hello|2)
+DECLARE @x XML = '<r>root-text<e>hello<b>x</b>world</e></r>';
+SELECT n.c.value('(text())[1]', 'VARCHAR(20)') AS t1, n.c.value('count(text())', 'INT') AS cnt FROM @x.nodes('/r/e') AS n(c);
+GO
+~~START~~
+varchar#!#int
+hello#!#2
+~~END~~
+
+-- 29.12 count(node()) and count(comment()) (T-SQL 4|1), and exist('text()')
+-- on an element with no text (T-SQL 0)
+DECLARE @x XML = '<r><e>hello<!--c--><b>x</b>world</e></r>';
+SELECT n.c.value('count(node())', 'INT') AS cn, n.c.value('count(comment())', 'INT') AS cc FROM @x.nodes('/r/e') AS n(c);
+GO
+~~START~~
+int#!#int
+4#!#1
+~~END~~
+
+DECLARE @x XML = '<r><e><b>x</b></e></r>';
+SELECT n.c.exist('text()') AS ex FROM @x.nodes('/r/e') AS n(c);
+GO
+~~START~~
+bit
+0
+~~END~~
+
+-- ============================================
+-- SECTION 30: Namespace wildcard on the attribute axis
+-- @e:* and attribute::e:* match only the attributes in the namespace bound
+-- to e, with or without a .nodes() context.
+-- ============================================
+-- 30.1 .nodes() context, e:id and an unprefixed attribute (T-SQL 1)
+DECLARE @x XML = '<e:employees xmlns:e="urn:emp"><e:emp e:id="1" plain="p1"><e:name>Alice</e:name></e:emp></e:employees>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('count(@e:*)', 'INT') AS wild FROM @x.nodes('/e:employees/e:emp') AS n(c);
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- 30.2 Absolute path, same document (T-SQL 1)
+DECLARE @x XML = '<e:employees xmlns:e="urn:emp"><e:emp e:id="1" plain="p1"><e:name>Alice</e:name></e:emp></e:employees>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT @x.value('count(/e:employees/e:emp/@e:*)', 'INT') AS wild;
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- 30.3 A default namespace with the same URI as the prefix (T-SQL 1)
+DECLARE @x XML = '<emp xmlns="urn:emp" xmlns:e="urn:emp" e:id="1" plain="p"/>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT @x.value('count(/e:emp/@e:*)', 'INT') AS wild;
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- 30.4 Unprefixed attributes only (T-SQL 0)
+DECLARE @x XML = '<e:emp xmlns:e="urn:emp" a="1" b="2"/>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT @x.value('count(/e:emp/@e:*)', 'INT') AS wild;
+GO
+~~START~~
+int
+0
+~~END~~
+
+-- 30.5 Two document prefixes for one URI (T-SQL 2)
+DECLARE @x XML = '<r xmlns:e="urn:emp" xmlns:f="urn:emp" e:a="1" f:b="2" c="3"/>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT @x.value('count(/r/@e:*)', 'INT') AS wild;
+GO
+~~START~~
+int
+2
+~~END~~
+
+-- 30.6 Two clause prefixes for one URI (T-SQL 2|2)
+DECLARE @x XML = '<r xmlns:e="urn:emp" xmlns:f="urn:emp" e:a="1" f:b="2" c="3"/>';
+WITH XMLNAMESPACES('urn:emp' AS e, 'urn:emp' AS g)
+SELECT @x.value('count(/r/@e:*)', 'INT') AS wild_e, @x.value('count(/r/@g:*)', 'INT') AS wild_g;
+GO
+~~START~~
+int#!#int
+2#!#2
+~~END~~
+
+-- 30.7 An attribute in another namespace and xml:lang next to e:a (T-SQL 1)
+DECLARE @x XML = '<r xmlns:e="urn:emp" xmlns:o="urn:o" e:a="1" o:b="2" xml:lang="en" c="3"/>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT @x.value('count(/r/@e:*)', 'INT') AS wild;
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- 30.8 Document order, unprefixed attribute first (T-SQL a)
+DECLARE @x XML = '<r xmlns:e="urn:emp" c="3" e:a="1"/>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT @x.value('local-name((/r/@e:*)[1])', 'VARCHAR(10)') AS wild;
+GO
+~~START~~
+varchar
+a
+~~END~~
+
+-- 30.9 In a predicate and in exist(), unprefixed attributes only
+-- (T-SQL 0|0)
+DECLARE @x XML = '<r xmlns:e="urn:emp" c="3"/>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT @x.value('count(/r[@e:*])', 'INT') AS wild, @x.exist('/r/@e:*') AS ex_wild;
+GO
+~~START~~
+int#!#bit
+0#!#0
+~~END~~
+
+-- 30.10 .nodes() context, unprefixed attributes only (T-SQL 0)
+DECLARE @x XML = '<r xmlns:e="urn:emp"><e:emp a="1" b="2"/></r>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('count(@e:*)', 'INT') AS wild FROM @x.nodes('/r/e:emp') AS n(c);
+GO
+~~START~~
+int
+0
+~~END~~
+
+-- 30.11 attribute::e:* (T-SQL 1), and the element wildcard as a control
+-- (T-SQL 1)
+DECLARE @x XML = '<r xmlns:e="urn:emp" xmlns:o="urn:o" e:a="1" c="3"><e:a/><b/><o:c/></r>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT @x.value('count(/r/attribute::e:*)', 'INT') AS attr_axis, @x.value('count(/r/e:*)', 'INT') AS elem;
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+-- 30.12 A string literal is left alone, a predicate follows the namespace
+-- test, and xml:* needs no clause (T-SQL @e:*|1|a, then 1)
+DECLARE @x XML = '<r xmlns:e="urn:emp" c="3" e:a="1" e:b="2"/>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT @x.value('concat("@e:*", "")', 'VARCHAR(10)') AS s, @x.value('count(/r/@e:*[1])', 'INT') AS c1, @x.value('local-name((/r/@e:*[1])[1])', 'VARCHAR(10)') AS ln;
+GO
+~~START~~
+varchar#!#int#!#varchar
+@e:*#!#1#!#a
+~~END~~
+
+DECLARE @x XML = '<r xml:lang="en" a="1"/>';
+SELECT @x.value('count(/r/@xml:*)', 'INT') AS c;
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- ============================================
+-- SECTION 31: A failed statement leaves nothing behind for the next batch
+-- Each failure below is raised while the statement is being rewritten. The
+-- next batch-level CREATE gets only its own bindings and rewrites.
+-- ============================================
+CREATE TABLE xmlns_methods_nsstale (id INT, d XML);
+GO
+INSERT INTO xmlns_methods_nsstale VALUES (1, '<p:a xmlns:p="urn:stale">1</p:a>');
+GO
+~~ROW COUNT: 1~~
+
+-- 31.1 An XML method in GROUP BY under a clause that binds p to urn:stale
+-- (T-SQL: XML methods are not allowed in a GROUP BY clause.)
+WITH XMLNAMESPACES('urn:stale' AS p)
+SELECT COUNT(*) AS c FROM xmlns_methods_nsstale t GROUP BY t.d.value('(/p:a)[1]', 'INT');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML methods are not allowed in a GROUP BY clause.)~~
+
+-- 31.2 A function whose own clause binds p to urn:good (T-SQL 6)
+CREATE FUNCTION xmlns_methods_nsfn_stale() RETURNS INT AS
+BEGIN
+    DECLARE @x XML = '<p:a xmlns:p="urn:good">6</p:a>';
+    DECLARE @r INT;
+    WITH XMLNAMESPACES('urn:good' AS p)
+    SELECT @r = @x.value('(/p:a)[1]', 'INT');
+    RETURN @r;
+END
+GO
+SELECT dbo.xmlns_methods_nsfn_stale() AS v;
+GO
+~~START~~
+int
+6
+~~END~~
+
+-- 31.3 .value() with one argument (T-SQL: The value function requires 2
+-- argument(s).), then a view with no clause (T-SQL 9)
+DECLARE @x XML = '<a>1</a>';
+SELECT @x.value('(/a)[1]') AS v;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value function requires 2 argument(s).)~~
+
+CREATE VIEW xmlns_methods_nsv_stale AS SELECT CAST('<a>9</a>' AS XML).value('(/a)[1]', 'INT') AS v;
+GO
+SELECT v FROM xmlns_methods_nsv_stale;
+GO
+~~START~~
+int
+9
+~~END~~
+
+-- 31.4 The same failure, then a procedure (T-SQL 9)
+DECLARE @x XML = '<a>1</a>';
+SELECT @x.value('(/a)[1]') AS v;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The value function requires 2 argument(s).)~~
+
+CREATE PROCEDURE xmlns_methods_nsproc_stale AS SELECT CAST('<a>9</a>' AS XML).value('(/a)[1]', 'INT') AS v;
+GO
+EXEC xmlns_methods_nsproc_stale;
+GO
+~~START~~
+int
+9
+~~END~~
+
+-- 31.5 The GROUP BY failure, then a procedure with no clause that uses p:
+-- (T-SQL 2229 at CREATE, so the procedure does not exist: 0)
+WITH XMLNAMESPACES('urn:stale' AS p)
+SELECT COUNT(*) AS c FROM xmlns_methods_nsstale t GROUP BY t.d.value('(/p:a)[1]', 'INT');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XML methods are not allowed in a GROUP BY clause.)~~
+
+CREATE PROCEDURE xmlns_methods_nsproc_stale2 AS
+BEGIN
+    DECLARE @x XML = '<p:a xmlns:p="urn:stale">7</p:a>';
+    SELECT @x.value('(/p:a)[1]', 'INT') AS v;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [value()]: The name "p" does not denote a namespace.)~~
+
+SELECT COUNT(*) FROM sys.objects WHERE name = 'xmlns_methods_nsproc_stale2';
+GO
+~~START~~
+int
+0
+~~END~~
+
+-- 31.6 Routines compiled while a statement with a clause runs keep their
+-- own bindings, and so does the statement (T-SQL 1|3 and 2, then 1, 4, 2)
+CREATE FUNCTION xmlns_methods_nsfn_nested() RETURNS INT AS
+BEGIN
+    DECLARE @y XML = '<q:a xmlns:q="urn:inner">3</q:a>';
+    DECLARE @r INT;
+    WITH XMLNAMESPACES('urn:inner' AS q) SELECT @r = @y.value('(/q:a)[1]', 'INT');
+    RETURN @r;
+END
+GO
+DECLARE @x XML = '<p:a xmlns:p="urn:outer">1</p:a>';
+WITH XMLNAMESPACES('urn:outer' AS p) SELECT @x.value('(/p:a)[1]', 'INT') AS v, dbo.xmlns_methods_nsfn_nested() AS f;
+WITH XMLNAMESPACES('urn:outer' AS p) SELECT @x.value('(/p:a)[1]', 'INT') + 1 AS v2;
+GO
+~~START~~
+int#!#int
+1#!#3
+~~END~~
+
+~~START~~
+int
+2
+~~END~~
+
+CREATE PROCEDURE xmlns_methods_nsproc_dyn AS
+BEGIN
+    DECLARE @x XML = '<p:a xmlns:p="urn:outer">1</p:a>';
+    WITH XMLNAMESPACES('urn:outer' AS p) SELECT @x.value('(/p:a)[1]', 'INT') AS v;
+    EXEC sp_executesql N'DECLARE @y XML = ''<q:a xmlns:q="urn:dyn">4</q:a>''; WITH XMLNAMESPACES(''urn:dyn'' AS q) SELECT @y.value(''(/q:a)[1]'', ''INT'') AS d;';
+    WITH XMLNAMESPACES('urn:outer' AS p) SELECT @x.value('(/p:a)[1]', 'INT') + 1 AS v2;
+END
+GO
+EXEC xmlns_methods_nsproc_dyn;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+int
+2
+~~END~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_dyn;
+DROP FUNCTION IF EXISTS xmlns_methods_nsfn_nested;
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_stale2;
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_stale;
+DROP VIEW IF EXISTS xmlns_methods_nsv_stale;
+DROP FUNCTION IF EXISTS xmlns_methods_nsfn_stale;
+DROP TABLE IF EXISTS xmlns_methods_nsstale;
+GO
+-- ============================================
+-- SECTION 32: Characters XML does not allow in a namespace URI, XML methods
+-- The clause is rejected (T-SQL 6875) before any method runs. Babelfish
+-- reports 33557097. The characters are built with NCHAR() in dynamic SQL.
+-- ============================================
+-- 32.1 .exist() with NCHAR(1) (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'DECLARE @x XML = ''<a/>''; WITH XMLNAMESPACES(''urn:a' + NCHAR(1) + N'b'' AS p) SELECT @x.exist(''/p:a'') AS ex';
+EXEC(@s);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: URI 'urn:ab' used in WITH XMLNAMESPACES is invalid. ''(0x0001) is the first character at fault.)~~
+
+-- 32.2 .value() with NCHAR(31) (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'DECLARE @x XML = ''<a/>''; WITH XMLNAMESPACES(''urn:a' + NCHAR(31) + N'b'' AS p) SELECT @x.value(''(/p:a)[1]'', ''INT'') AS v';
+EXEC(@s);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: URI 'urn:ab' used in WITH XMLNAMESPACES is invalid. ''(0x001F) is the first character at fault.)~~
+
+-- 32.3 .query() with NCHAR(11) (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'DECLARE @x XML = ''<a/>''; WITH XMLNAMESPACES(''urn:a' + NCHAR(11) + N'b'' AS p) SELECT @x.query(''/p:a'') AS q';
+EXEC(@s);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: URI 'urn:ab' used in WITH XMLNAMESPACES is invalid. ''(0x000B) is the first character at fault.)~~
+
+-- 32.4 .nodes() with NCHAR(1) (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'DECLARE @x XML = ''<a/>''; WITH XMLNAMESPACES(''urn:a' + NCHAR(1) + N'b'' AS p) SELECT COUNT(*) AS c FROM @x.nodes(''/p:a'') AS n(c)';
+EXEC(@s);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: URI 'urn:ab' used in WITH XMLNAMESPACES is invalid. ''(0x0001) is the first character at fault.)~~
+
+-- 32.5 In a procedure body the CREATE is rejected (T-SQL 6875)
+DECLARE @s NVARCHAR(MAX) = N'CREATE PROCEDURE xmlns_methods_nsproc_ctl AS BEGIN DECLARE @x XML = ''<a/>''; WITH XMLNAMESPACES(''urn:a' + NCHAR(1) + N'b'' AS p) SELECT @x.exist(''/p:a'') AS ex; END';
+EXEC(@s);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: URI 'urn:ab' used in WITH XMLNAMESPACES is invalid. ''(0x0001) is the first character at fault.)~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_ctl;
+GO
+-- ============================================
+-- SECTION 33: URIs that look like SQL are data
+-- The URI is passed to the method as data and nothing in it runs: no
+-- pg_sleep() delay, and the methods find no p:a element. no_delay is 1 when
+-- the batch took less than 5 seconds.
+-- ============================================
+-- 33.1 All four methods, a URI that closes the literal (T-SQL 0|NULL||1, 1)
+DECLARE @t0 DATETIME2 = SYSDATETIME();
+DECLARE @x XML = '<a/>';
+WITH XMLNAMESPACES('a'')||pg_sleep(10)||(''b' AS p)
+SELECT @x.exist('/p:a') AS ex, @x.value('(/p:a)[1]', 'INT') AS v, CAST(@x.query('/p:a') AS NVARCHAR(100)) AS q,
+       (SELECT COUNT(*) FROM @x.nodes('/a') AS n(c)) AS nc;
+SELECT CASE WHEN DATEDIFF(MILLISECOND, @t0, SYSDATETIME()) < 5000 THEN 1 ELSE 0 END AS no_delay;
+GO
+~~START~~
+bit#!#int#!#nvarchar#!#int
+0#!#<NULL>#!##!#1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+-- 33.2 A URI that closes the array literal and the cast (T-SQL 0|NULL, 1)
+DECLARE @t0 DATETIME2 = SYSDATETIME();
+DECLARE @x XML = '<a/>';
+WITH XMLNAMESPACES('a"}}'' AS _text), pg_sleep(10)) --' AS p)
+SELECT @x.exist('/p:a') AS ex, @x.value('(/p:a)[1]', 'INT') AS v;
+SELECT CASE WHEN DATEDIFF(MILLISECOND, @t0, SYSDATETIME()) < 5000 THEN 1 ELSE 0 END AS no_delay;
+GO
+~~START~~
+bit#!#int
+0#!#<NULL>
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+-- 33.3 Under .nodes() with a relative prefixed path (T-SQL NULL|0, 1)
+DECLARE @t0 DATETIME2 = SYSDATETIME();
+DECLARE @x XML = '<r><a>1</a></r>';
+WITH XMLNAMESPACES('a'')||pg_sleep(10)||(''b' AS p)
+SELECT n.c.value('(p:b)[1]', 'INT') AS v, n.c.exist('p:b') AS ex FROM @x.nodes('/r') AS n(c);
+SELECT CASE WHEN DATEDIFF(MILLISECOND, @t0, SYSDATETIME()) < 5000 THEN 1 ELSE 0 END AS no_delay;
+GO
+~~START~~
+int#!#bit
+<NULL>#!#0
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+-- 33.4 Both URIs in a procedure body (T-SQL 0|NULL, 0|NULL, 1)
+CREATE PROCEDURE xmlns_methods_nspay_p AS
+BEGIN
+    DECLARE @x XML = '<a/>';
+    WITH XMLNAMESPACES('a'')||pg_sleep(10)||(''b' AS p)
+    SELECT @x.exist('/p:a') AS ex1, @x.value('(/p:a)[1]', 'INT') AS v1;
+    WITH XMLNAMESPACES('a"}}'' AS _text), pg_sleep(10)) --' AS p)
+    SELECT @x.exist('/p:a') AS ex2, @x.value('(/p:a)[1]', 'INT') AS v2;
+END
+GO
+DECLARE @t0 DATETIME2 = SYSDATETIME();
+EXEC xmlns_methods_nspay_p;
+SELECT CASE WHEN DATEDIFF(MILLISECOND, @t0, SYSDATETIME()) < 5000 THEN 1 ELSE 0 END AS no_delay;
+GO
+~~START~~
+bit#!#int
+0#!#<NULL>
+~~END~~
+
+~~START~~
+bit#!#int
+0#!#<NULL>
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+-- 33.5 Scalar function body (T-SQL 0, 1)
+CREATE FUNCTION xmlns_methods_nspay_f() RETURNS INT AS
+BEGIN
+    DECLARE @x XML = '<a/>';
+    DECLARE @r INT;
+    WITH XMLNAMESPACES('a'')||pg_sleep(10)||(''b' AS p)
+    SELECT @r = @x.exist('/p:a');
+    RETURN @r;
+END
+GO
+DECLARE @t0 DATETIME2 = SYSDATETIME();
+SELECT dbo.xmlns_methods_nspay_f() AS ex;
+SELECT CASE WHEN DATEDIFF(MILLISECOND, @t0, SYSDATETIME()) < 5000 THEN 1 ELSE 0 END AS no_delay;
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nspay_p;
+DROP FUNCTION IF EXISTS xmlns_methods_nspay_f;
+GO
+-- ============================================
+-- SECTION 34: Axis steps, operator-named prefixes, and the empty prefix in
+-- routine bodies
+-- ============================================
+-- 34.1 (child::text())[1] and count(child::text()) (T-SQL hello|2)
+DECLARE @x XML = '<r><e>hello<b>x</b>world</e></r>';
+SELECT n.c.value('(child::text())[1]', 'VARCHAR(20)') AS t1, n.c.value('count(child::text())', 'INT') AS cnt FROM @x.nodes('/r/e') AS n(c);
+GO
+~~START~~
+varchar#!#int
+hello#!#2
+~~END~~
+
+-- 34.2 self::node() (T-SQL 1|1|e)
+DECLARE @x XML = '<r><e>hello<b>x</b>world</e></r>';
+SELECT n.c.value('count(self::node())', 'INT') AS cnt, n.c.exist('self::node()') AS ex, n.c.value('local-name((self::node())[1])', 'VARCHAR(20)') AS ln FROM @x.nodes('/r/e') AS n(c);
+GO
+~~START~~
+int#!#bit#!#varchar
+1#!#1#!#e
+~~END~~
+
+-- 34.3 Prefixed child::text() and self::e:emp (T-SQL hi|Alice|1)
+DECLARE @x XML = '<e:r xmlns:e="urn:emp"><e:emp>hi<e:name>Alice</e:name></e:emp></e:r>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('(child::text())[1]', 'VARCHAR(20)') AS t1, n.c.value('(child::e:name/child::text())[1]', 'VARCHAR(20)') AS t2, n.c.exist('self::e:emp') AS s FROM @x.nodes('/e:r/e:emp') AS n(c);
+GO
+~~START~~
+varchar#!#varchar#!#bit
+hi#!#Alice#!#1
+~~END~~
+
+-- 34.4 Prefix div (T-SQL Alice|1|3|Alice)
+DECLARE @x XML = '<e:r xmlns:e="urn:emp"><e:emp e:id="1"><e:name>Alice</e:name><e:n>10</e:n><e:m>4</e:m></e:emp></e:r>';
+WITH XMLNAMESPACES('urn:emp' AS div)
+SELECT n.c.value('(div:name)[1]', 'VARCHAR(20)') AS nm, n.c.value('@div:id', 'INT') AS id, n.c.value('count(div:*)', 'INT') AS cnt, n.c.value('(child::div:name)[1]', 'VARCHAR(20)') AS ch
+FROM @x.nodes('/div:r/div:emp') AS n(c);
+GO
+~~START~~
+varchar#!#int#!#int#!#varchar
+Alice#!#1#!#3#!#Alice
+~~END~~
+
+-- 34.5 Prefix div with the div operator (T-SQL 2.5)
+DECLARE @x XML = '<e:r xmlns:e="urn:emp"><e:emp e:id="1"><e:name>Alice</e:name><e:n>10</e:n><e:m>4</e:m></e:emp></e:r>';
+WITH XMLNAMESPACES('urn:emp' AS div)
+SELECT n.c.value('(div:n)[1] div (div:m)[1]', 'FLOAT') AS q FROM @x.nodes('/div:r/div:emp') AS n(c);
+GO
+~~START~~
+float
+2.5
+~~END~~
+
+-- 34.6 Prefix mod with the mod operator (T-SQL Alice|2)
+DECLARE @x XML = '<e:r xmlns:e="urn:emp"><e:emp e:id="1"><e:name>Alice</e:name><e:n>10</e:n><e:m>4</e:m></e:emp></e:r>';
+WITH XMLNAMESPACES('urn:emp' AS mod)
+SELECT n.c.value('(mod:name)[1]', 'VARCHAR(20)') AS nm, n.c.value('(mod:n)[1] mod (mod:m)[1]', 'INT') AS r FROM @x.nodes('/mod:r/mod:emp') AS n(c);
+GO
+~~START~~
+varchar#!#int
+Alice#!#2
+~~END~~
+
+-- 34.7 Prefix and with the and operator (T-SQL Alice|1|1)
+DECLARE @x XML = '<e:r xmlns:e="urn:emp"><e:emp e:id="1"><e:name>Alice</e:name><e:n>10</e:n><e:m>4</e:m></e:emp></e:r>';
+WITH XMLNAMESPACES('urn:emp' AS [and])
+SELECT n.c.value('(and:name)[1]', 'VARCHAR(20)') AS nm, n.c.value('(and:n)[1] > 1 and (and:m)[1] > 1', 'BIT') AS b, n.c.exist('and:name') AS ex FROM @x.nodes('/and:r/and:emp') AS n(c);
+GO
+~~START~~
+varchar#!#bit#!#bit
+Alice#!#1#!#1
+~~END~~
+
+-- 34.8 Prefix or with the or operator (T-SQL Alice|1)
+DECLARE @x XML = '<e:r xmlns:e="urn:emp"><e:emp e:id="1"><e:name>Alice</e:name><e:n>10</e:n><e:m>4</e:m></e:emp></e:r>';
+WITH XMLNAMESPACES('urn:emp' AS [or])
+SELECT n.c.value('(or:name)[1]', 'VARCHAR(20)') AS nm, n.c.value('(or:n)[1] < 1 or (or:m)[1] > 1', 'BIT') AS b FROM @x.nodes('/or:r/or:emp') AS n(c);
+GO
+~~START~~
+varchar#!#bit
+Alice#!#1
+~~END~~
+
+-- 34.9 Local names div, and, or and mod, prefixed and unprefixed
+-- (T-SQL D|A|O|M twice)
+DECLARE @x XML = '<e:r xmlns:e="urn:emp"><e:emp><e:div>D</e:div><e:and>A</e:and><e:or>O</e:or><e:mod>M</e:mod></e:emp></e:r>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('(e:div)[1]', 'VARCHAR(5)') AS d, n.c.value('(e:and)[1]', 'VARCHAR(5)') AS a, n.c.value('(e:or)[1]', 'VARCHAR(5)') AS o, n.c.value('(e:mod)[1]', 'VARCHAR(5)') AS m FROM @x.nodes('/e:r/e:emp') AS n(c);
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+D#!#A#!#O#!#M
+~~END~~
+
+DECLARE @x XML = '<r><emp><div>D</div><and>A</and><or>O</or><mod>M</mod></emp></r>';
+SELECT n.c.value('(div)[1]', 'VARCHAR(5)') AS d, n.c.value('(and)[1]', 'VARCHAR(5)') AS a, n.c.value('(or)[1]', 'VARCHAR(5)') AS o, n.c.value('(mod)[1]', 'VARCHAR(5)') AS m FROM @x.nodes('/r/emp') AS n(c);
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+D#!#A#!#O#!#M
+~~END~~
+
+-- 34.10 AS [] with .exist() in a procedure body rejects the CREATE
+-- (T-SQL 1038, 6877; Babelfish reports the 1038 text as 33557097)
+CREATE PROCEDURE xmlns_methods_nsproc_e1 AS
+BEGIN
+    DECLARE @x XML = '<a/>';
+    WITH XMLNAMESPACES('urn:x' AS [])
+    SELECT @x.exist('/a') AS ex;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as "" or [] are not allowed. Change the alias to a valid name.)~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_e1;
+GO
+-- 34.11 AS "" with .value() in a procedure body (T-SQL 1038, 6877)
+SET QUOTED_IDENTIFIER ON;
+GO
+CREATE PROCEDURE xmlns_methods_nsproc_e2 AS
+BEGIN
+    DECLARE @x XML = '<a>1</a>';
+    WITH XMLNAMESPACES('urn:x' AS "")
+    SELECT @x.value('(/a)[1]', 'INT') AS v;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as "" or [] are not allowed. Change the alias to a valid name.)~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_e2;
+GO
+-- 34.12 AS [] with .value() in a function body (T-SQL 1038, 6877)
+CREATE FUNCTION xmlns_methods_nsfn_e1() RETURNS INT AS
+BEGIN
+    DECLARE @x XML = '<a>1</a>';
+    DECLARE @r INT;
+    WITH XMLNAMESPACES('urn:x' AS [])
+    SELECT @r = @x.value('(/a)[1]', 'INT');
+    RETURN @r;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as "" or [] are not allowed. Change the alias to a valid name.)~~
+
+DROP FUNCTION IF EXISTS xmlns_methods_nsfn_e1;
+GO
+-- 34.13 AS [] with .nodes() in a procedure body (T-SQL 1038, 6877)
+CREATE PROCEDURE xmlns_methods_nsproc_e3 AS
+BEGIN
+    DECLARE @x XML = '<a/>';
+    WITH XMLNAMESPACES('urn:x' AS [])
+    SELECT COUNT(*) AS c FROM @x.nodes('/a') AS n(c);
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as "" or [] are not allowed. Change the alias to a valid name.)~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_e3;
+GO
+-- ============================================
+-- SECTION 35: WITH XMLNAMESPACES in a view, XML methods
+-- ============================================
+-- 35.1 Statement form, .value() (T-SQL 5)
+CREATE VIEW xmlns_methods_nsv1 AS
+WITH XMLNAMESPACES('urn:x' AS p)
+SELECT CAST('<p:a xmlns:p="urn:x">5</p:a>' AS XML).value('(/p:a)[1]', 'INT') AS v;
+GO
+SELECT v FROM xmlns_methods_nsv1;
+GO
+~~START~~
+int
+5
+~~END~~
+
+-- 35.2 Clause and a CTE, .exist() in WHERE (T-SQL 5)
+CREATE VIEW xmlns_methods_nsv2 AS
+WITH XMLNAMESPACES('urn:x' AS p), c AS (SELECT CAST('<p:a xmlns:p="urn:x">5</p:a>' AS XML) AS d)
+SELECT d.value('(/p:a)[1]', 'INT') AS v FROM c WHERE d.exist('/p:a') = 1;
+GO
+SELECT v FROM xmlns_methods_nsv2;
+GO
+~~START~~
+int
+5
+~~END~~
+
+-- 35.3 .nodes() with a relative prefixed path (T-SQL 1, 2)
+CREATE VIEW xmlns_methods_nsv3 AS
+WITH XMLNAMESPACES('urn:x' AS p)
+SELECT n.c.value('(p:b)[1]', 'INT') AS v
+FROM (SELECT CAST('<r xmlns:p="urn:x"><p:a><p:b>1</p:b></p:a><p:a><p:b>2</p:b></p:a></r>' AS XML) AS d) AS t
+CROSS APPLY t.d.nodes('/r/p:a') AS n(c);
+GO
+SELECT v FROM xmlns_methods_nsv3 ORDER BY v;
+GO
+~~START~~
+int
+1
+2
+~~END~~
+
+-- 35.4 ALTER VIEW adds the clause (T-SQL 7)
+CREATE VIEW xmlns_methods_nsv4 AS SELECT 1 AS v;
+GO
+ALTER VIEW xmlns_methods_nsv4 AS
+WITH XMLNAMESPACES('urn:x' AS p)
+SELECT CAST('<p:a xmlns:p="urn:x">7</p:a>' AS XML).value('(/p:a)[1]', 'INT') AS v;
+GO
+SELECT v FROM xmlns_methods_nsv4;
+GO
+~~START~~
+int
+7
+~~END~~
+
+-- 35.5 CREATE OR ALTER VIEW (T-SQL 8)
+CREATE OR ALTER VIEW xmlns_methods_nsv5 AS
+WITH XMLNAMESPACES('urn:x' AS p)
+SELECT CAST('<p:a xmlns:p="urn:x">8</p:a>' AS XML).value('(/p:a)[1]', 'INT') AS v;
+GO
+SELECT v FROM xmlns_methods_nsv5;
+GO
+~~START~~
+int
+8
+~~END~~
+
+-- 35.6 A clause with no XML use (T-SQL 11)
+CREATE VIEW xmlns_methods_nsv6 AS
+WITH XMLNAMESPACES('urn:x' AS p)
+SELECT 11 AS v;
+GO
+SELECT v FROM xmlns_methods_nsv6;
+GO
+~~START~~
+int
+11
+~~END~~
+
+-- 35.7 A whitespace-only URI rejects the CREATE (T-SQL 6874)
+CREATE VIEW xmlns_methods_nsv7 AS WITH XMLNAMESPACES('   ' AS p) SELECT 1 AS v;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Empty URI is not allowed in WITH XMLNAMESPACES clause.)~~
+
+-- 35.8 A view with no clause that uses x: (T-SQL 2229 at CREATE)
+CREATE VIEW xmlns_methods_nsv8 AS SELECT CAST('<x:a xmlns:x="urn:x">1</x:a>' AS XML).value('(/x:a)[1]', 'INT') AS v;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [value()]: The name "x" does not denote a namespace.)~~
+
+SELECT COUNT(*) FROM sys.objects WHERE name IN ('xmlns_methods_nsv7', 'xmlns_methods_nsv8');
+GO
+~~START~~
+int
+0
+~~END~~
+
+DROP VIEW IF EXISTS xmlns_methods_nsv1;
+DROP VIEW IF EXISTS xmlns_methods_nsv2;
+DROP VIEW IF EXISTS xmlns_methods_nsv3;
+DROP VIEW IF EXISTS xmlns_methods_nsv4;
+DROP VIEW IF EXISTS xmlns_methods_nsv5;
+DROP VIEW IF EXISTS xmlns_methods_nsv6;
+DROP VIEW IF EXISTS xmlns_methods_nsv7;
+DROP VIEW IF EXISTS xmlns_methods_nsv8;
+GO
+-- ============================================
+-- SECTION 36: Undeclared and predefined prefixes
+-- T-SQL binds every prefix of an XML method's XQuery when the batch or the
+-- routine is compiled. A prefix is bound by the statement's WITH
+-- XMLNAMESPACES, by a "declare namespace" prolog, or because XQuery
+-- predefines it: xml, xs, xsi, fn, xdt, sql and sqltypes. Any other prefix
+-- raises 2229 before anything in the batch runs, and a CREATE is rejected.
+-- Babelfish reports 2229 as 33557097.
+-- ============================================
+-- 36.1 Each predefined prefix needs no clause (T-SQL 0 for each)
+DECLARE @x XML = '<a/>';
+SELECT @x.exist('/xml:zz') AS p_xml, @x.exist('/xs:zz') AS p_xs, @x.exist('/xsi:zz') AS p_xsi, @x.exist('/fn:zz') AS p_fn,
+       @x.exist('/xdt:zz') AS p_xdt, @x.exist('/sql:zz') AS p_sql, @x.exist('/sqltypes:zz') AS p_sqltypes;
+GO
+~~START~~
+bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit
+0#!#0#!#0#!#0#!#0#!#0#!#0
+~~END~~
+
+-- 36.2 The URI behind each predefined prefix (T-SQL en, then 1 for each)
+DECLARE @x XML = '<a xml:lang="en"/>';
+SELECT @x.value('(/a/@xml:lang)[1]', 'VARCHAR(10)') AS lang;
+GO
+~~START~~
+varchar
+en
+~~END~~
+
+SELECT CAST('<r xmlns:q="http://www.w3.org/2001/XMLSchema"><q:b>1</q:b></r>' AS XML).value('(/r/xs:b)[1]', 'INT') AS p_xs,
+       CAST('<r xmlns:q="http://www.w3.org/2001/XMLSchema-instance"><q:b>1</q:b></r>' AS XML).value('(/r/xsi:b)[1]', 'INT') AS p_xsi,
+       CAST('<r xmlns:q="http://www.w3.org/2004/07/xpath-functions"><q:b>1</q:b></r>' AS XML).value('(/r/fn:b)[1]', 'INT') AS p_fn,
+       CAST('<r xmlns:q="http://www.w3.org/2004/07/xpath-datatypes"><q:b>1</q:b></r>' AS XML).value('(/r/xdt:b)[1]', 'INT') AS p_xdt,
+       CAST('<r xmlns:q="urn:schemas-microsoft-com:xml-sql"><q:b>1</q:b></r>' AS XML).value('(/r/sql:b)[1]', 'INT') AS p_sql,
+       CAST('<r xmlns:q="http://schemas.microsoft.com/sqlserver/2004/sqltypes"><q:b>1</q:b></r>' AS XML).value('(/r/sqltypes:b)[1]', 'INT') AS p_sqltypes;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+1#!#1#!#1#!#1#!#1#!#1
+~~END~~
+
+-- 36.3 Prefixes XQuery does not predefine (T-SQL 2229 for each)
+DECLARE @x XML = '<a/>'; SELECT @x.exist('/local:zz') AS ex;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [exist()]: The name "local" does not denote a namespace.)~~
+
+DECLARE @x XML = '<a/>'; SELECT @x.exist('/xsd:zz') AS ex;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [exist()]: The name "xsd" does not denote a namespace.)~~
+
+DECLARE @x XML = '<a/>'; SELECT @x.exist('/op:zz') AS ex;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [exist()]: The name "op" does not denote a namespace.)~~
+
+DECLARE @x XML = '<a/>'; SELECT @x.exist('/xmlns:zz') AS ex;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [exist()]: The name "xmlns" does not denote a namespace.)~~
+
+DECLARE @x XML = '<a/>'; SELECT @x.exist('/err:zz') AS ex;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [exist()]: The name "err" does not denote a namespace.)~~
+
+DECLARE @x XML = '<a/>'; SELECT @x.exist('/sqlxml:zz') AS ex;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [exist()]: The name "sqlxml" does not denote a namespace.)~~
+
+DECLARE @x XML = '<a/>'; SELECT @x.exist('/xf:zz') AS ex;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [exist()]: The name "xf" does not denote a namespace.)~~
+
+-- 36.4 The clause may rebind a predefined prefix (T-SQL 1)
+DECLARE @x XML = '<r xmlns:q="urn:my"><q:b>1</q:b></r>';
+WITH XMLNAMESPACES('urn:my' AS xs)
+SELECT @x.value('(/r/xs:b)[1]', 'INT') AS v;
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- 36.5 A prefix only inside string literals, at batch level and in a
+-- procedure body (T-SQL zz:a|1 twice)
+DECLARE @x XML = '<a b="zz:x"/>'; SELECT @x.value('concat("zz:a", "")', 'VARCHAR(10)') AS s, @x.exist('/a[@b="zz:x"]') AS ex;
+GO
+~~START~~
+varchar#!#bit
+zz:a#!#1
+~~END~~
+
+CREATE PROCEDURE xmlns_methods_nsproc_lit AS
+BEGIN
+    DECLARE @x XML = '<a b="zz:x"/>';
+    SELECT @x.value('concat("zz:a", "")', 'VARCHAR(10)') AS s, @x.exist('/a[@b="zz:x"]') AS ex;
+END
+GO
+EXEC xmlns_methods_nsproc_lit;
+GO
+~~START~~
+varchar#!#bit
+zz:a#!#1
+~~END~~
+
+-- 36.6 A prefix only inside a comment, at batch level, nested, and in a
+-- procedure body (T-SQL 1 for each)
+DECLARE @x XML = '<a/>'; SELECT @x.exist('/a (: x:b :)') AS ex1, @x.exist('/a (: x:b (: y:c :) :)') AS ex2;
+GO
+~~START~~
+bit#!#bit
+1#!#1
+~~END~~
+
+CREATE PROCEDURE xmlns_methods_nsproc_cmt AS
+BEGIN
+    DECLARE @x XML = '<a/>';
+    SELECT @x.exist('/a (: x:b :)') AS ex;
+END
+GO
+EXEC xmlns_methods_nsproc_cmt;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+-- 36.7 Axis steps with no clause (T-SQL 1|1|3)
+DECLARE @x XML = '<a><b/></a>'; SELECT @x.value('count(child::a)', 'INT') AS c1, @x.exist('self::node()') AS e1, @x.value('count(descendant-or-self::node())', 'INT') AS c2;
+GO
+~~START~~
+int#!#bit#!#int
+1#!#1#!#3
+~~END~~
+
+-- 36.8 xsi with no clause: an attribute and an element (T-SQL 1, 1)
+DECLARE @x XML = '<r xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>';
+SELECT @x.value('count(/r/@xsi:nil)', 'INT') AS c;
+GO
+~~START~~
+int
+1
+~~END~~
+
+DECLARE @x XML = '<r xmlns:q="http://www.w3.org/2001/XMLSchema-instance"><q:b>1</q:b></r>';
+SELECT @x.value('(/r/xsi:b)[1]', 'INT') AS v;
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- 36.9 A prolog binds the prefix (T-SQL 1); a prefix the prolog does not
+-- bind is still reported (T-SQL 2229)
+DECLARE @x XML = '<r xmlns:e="urn:emp" e:a="1" c="3"/>';
+SELECT @x.value('declare namespace e="urn:emp"; count(/r/@e:*)', 'INT') AS wild;
+GO
+~~START~~
+int
+1
+~~END~~
+
+DECLARE @x XML = '<a/>'; SELECT @x.exist('declare namespace e="urn:e"; /a/z:b') AS ex;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [exist()]: The name "z" does not denote a namespace.)~~
+
+-- 36.10 Bound only by the document, with no clause (T-SQL 2229 for value(),
+-- exist(), query() and nodes())
+DECLARE @x XML = '<x:a xmlns:x="urn:x">1</x:a>'; SELECT @x.value('(/x:a)[1]', 'INT') AS v;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [value()]: The name "x" does not denote a namespace.)~~
+
+DECLARE @x XML = '<x:a xmlns:x="urn:x">1</x:a>'; SELECT @x.exist('/x:a') AS ex;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [exist()]: The name "x" does not denote a namespace.)~~
+
+DECLARE @x XML = '<x:a xmlns:x="urn:x">1</x:a>'; SELECT @x.query('/x:a') AS q;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [query()]: The name "x" does not denote a namespace.)~~
+
+DECLARE @x XML = '<x:a xmlns:x="urn:x">1</x:a>'; SELECT COUNT(*) AS c FROM @x.nodes('/x:a') AS n(c);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [nodes()]: The name "x" does not denote a namespace.)~~
+
+-- 36.11 An XQuery in a variable is rejected before any prefix is looked at
+-- (T-SQL 8172 text): with no prefix, with an undeclared prefix, with a
+-- declared one, and in a procedure body, where the CREATE is rejected
+DECLARE @x XML = '<a>1</a>'; DECLARE @p NVARCHAR(100) = N'(/a)[1]';
+SELECT @x.value(@p, 'INT') AS v;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "value" must be a string literal.)~~
+
+DECLARE @x XML = '<z:a xmlns:z="urn:z">1</z:a>'; DECLARE @p NVARCHAR(100) = N'(/z:a)[1]';
+SELECT @x.value(@p, 'INT') AS v;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "value" must be a string literal.)~~
+
+DECLARE @x XML = '<z:a xmlns:z="urn:z">1</z:a>'; DECLARE @p NVARCHAR(100) = N'(/z:a)[1]';
+WITH XMLNAMESPACES('urn:z' AS z)
+SELECT @x.value(@p, 'INT') AS v;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "value" must be a string literal.)~~
+
+CREATE PROCEDURE xmlns_methods_nsproc_var2 AS
+BEGIN
+    DECLARE @x XML = '<a>1</a>'; DECLARE @p NVARCHAR(100) = N'(/a)[1]';
+    SELECT @x.value(@p, 'INT') AS v;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The argument 1 of the XML data type method "value" must be a string literal.)~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_var2;
+GO
+-- 36.12 fn: and xs: functions and sql:variable() raise no 2229. T-SQL returns
+-- 1, 5 and 5. Babelfish raises "could not create XPath object": XPath 1.0
+-- has no fn: or xs: functions, and sql:variable() is not supported.
+DECLARE @x XML = '<a/>'; SELECT @x.value('fn:count(/a)', 'INT') AS c;
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not create XPath object)~~
+
+DECLARE @x XML = '<a/>'; SELECT @x.value('xs:int("5")', 'INT') AS i;
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not create XPath object)~~
+
+DECLARE @v INT = 5; DECLARE @x XML = '<a/>'; SELECT @x.value('sql:variable("@v")', 'INT') AS v;
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: could not create XPath object)~~
+
+-- 36.13 DEFAULT binds no prefix (T-SQL 2229)
+DECLARE @x XML = '<x:a xmlns:x="urn:x">1</x:a>';
+WITH XMLNAMESPACES(DEFAULT 'urn:x') SELECT @x.value('(/x:a)[1]', 'INT') AS v;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [value()]: The name "x" does not denote a namespace.)~~
+
+-- 36.14 No statement of the batch runs: the clause is on statement 1 only,
+-- and a SELECT comes first (T-SQL only 2229 for each batch)
+DECLARE @x XML = '<x:a xmlns:x="urn:x">1</x:a>';
+WITH XMLNAMESPACES('urn:x' AS x) SELECT @x.value('(/x:a)[1]', 'INT') AS v1;
+SELECT @x.value('(/x:a)[1]', 'INT') AS v2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [value()]: The name "x" does not denote a namespace.)~~
+
+DECLARE @x XML = '<x:a xmlns:x="urn:x">1</x:a>';
+SELECT 1 AS first_stmt;
+SELECT @x.value('(/x:a)[1]', 'INT') AS v;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [value()]: The name "x" does not denote a namespace.)~~
+
+-- 36.15 The CREATE is rejected: a procedure with the clause on statement 1
+-- only, a procedure and a function with no clause (T-SQL 2229 for each, so
+-- none of them exists: 0)
+CREATE PROCEDURE xmlns_methods_nsproc_u1 AS
+BEGIN
+    DECLARE @x XML = '<x:a xmlns:x="urn:x">1</x:a>';
+    WITH XMLNAMESPACES('urn:x' AS x) SELECT @x.value('(/x:a)[1]', 'INT') AS v1;
+    SELECT @x.value('(/x:a)[1]', 'INT') AS v2;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [value()]: The name "x" does not denote a namespace.)~~
+
+CREATE PROCEDURE xmlns_methods_nsproc_u2 AS
+BEGIN
+    DECLARE @x XML = '<x:a xmlns:x="urn:x">1</x:a>';
+    SELECT @x.exist('/x:a') AS ex;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [exist()]: The name "x" does not denote a namespace.)~~
+
+CREATE FUNCTION xmlns_methods_nsfn_u1() RETURNS INT AS
+BEGIN
+    DECLARE @x XML = '<x:a xmlns:x="urn:x">1</x:a>';
+    RETURN @x.value('(/x:a)[1]', 'INT');
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [value()]: The name "x" does not denote a namespace.)~~
+
+SELECT COUNT(*) FROM sys.objects WHERE name IN ('xmlns_methods_nsproc_u1', 'xmlns_methods_nsproc_u2', 'xmlns_methods_nsfn_u1');
+GO
+~~START~~
+int
+0
+~~END~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_u1;
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_u2;
+DROP FUNCTION IF EXISTS xmlns_methods_nsfn_u1;
+GO
+-- 36.16 A procedure that uses only predefined prefixes (T-SQL 0|0)
+CREATE PROCEDURE xmlns_methods_nsproc_pre AS
+BEGIN
+    DECLARE @x XML = '<a/>';
+    SELECT @x.exist('/xs:zz') AS e1, @x.exist('/xsi:zz') AS e2;
+END
+GO
+EXEC xmlns_methods_nsproc_pre;
+GO
+~~START~~
+bit#!#bit
+0#!#0
+~~END~~
+
+-- 36.17 The clause binds the prefix in its CTEs and subqueries: CTE form at
+-- batch level (T-SQL 4), a CTE of the statement form (T-SQL 8), a subquery
+-- (T-SQL 6), and a CTE in a procedure body (T-SQL 5)
+WITH XMLNAMESPACES('urn:x' AS x), c AS (SELECT CAST('<x:a xmlns:x="urn:x">4</x:a>' AS XML) AS d) SELECT d.value('(/x:a)[1]', 'INT') AS v FROM c;
+GO
+~~START~~
+int
+4
+~~END~~
+
+DECLARE @x XML = '<x:a xmlns:x="urn:x">8</x:a>';
+WITH XMLNAMESPACES('urn:x' AS x), c AS (SELECT @x.value('(/x:a)[1]', 'INT') AS v) SELECT v FROM c;
+GO
+~~START~~
+int
+8
+~~END~~
+
+DECLARE @x XML = '<x:a xmlns:x="urn:x">6</x:a>';
+WITH XMLNAMESPACES('urn:x' AS x) SELECT (SELECT @x.value('(/x:a)[1]', 'INT')) AS v;
+GO
+~~START~~
+int
+6
+~~END~~
+
+CREATE PROCEDURE xmlns_methods_nsproc_cte2 AS
+BEGIN
+    DECLARE @x XML = '<x:a xmlns:x="urn:x">5</x:a>';
+    WITH XMLNAMESPACES('urn:x' AS x), c AS (SELECT @x.value('(/x:a)[1]', 'INT') AS v) SELECT v FROM c;
+END
+GO
+EXEC xmlns_methods_nsproc_cte2;
+GO
+~~START~~
+int
+5
+~~END~~
+
+-- 36.18 An undeclared prefix only in a predicate (T-SQL 2229)
+DECLARE @x XML = '<a/>'; SELECT @x.exist('/a[x:b]') AS ex;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [exist()]: The name "x" does not denote a namespace.)~~
+
+-- 36.19 A direct element constructor binds its own prefix, so there is no
+-- 2229. T-SQL returns <a xmlns:p="urn:p"><p:b/></a>. Babelfish raises
+-- "invalid XPath expression": XPath 1.0 has no constructors.
+DECLARE @x XML = '<a/>'; SELECT @x.query('<a xmlns:p="urn:p"><p:b/></a>') AS q;
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid XPath expression)~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_lit;
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_cmt;
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_pre;
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_cte2;
+GO
+-- ============================================
+-- SECTION 37: XQuery comments and a namespace prolog
+-- Comments (: ... :), which may nest, are ignored. A leading prolog of
+-- "declare namespace p = uri;" declarations binds its prefixes for the
+-- query, after the clause's, so the prolog wins.
+-- ============================================
+-- 37.1 A comment between steps (T-SQL 2)
+DECLARE @x XML = '<r><b/><b/></r>'; SELECT @x.value('count(/r (: c :)/b)', 'INT') AS c;
+GO
+~~START~~
+int
+2
+~~END~~
+
+-- 37.2 A nested comment (T-SQL 2)
+DECLARE @x XML = '<r><b/><b/></r>'; SELECT @x.value('count(/r (: a (: b :) c :)/b)', 'INT') AS c;
+GO
+~~START~~
+int
+2
+~~END~~
+
+-- 37.3 A comment inside a predicate (T-SQL 1)
+DECLARE @x XML = '<r><b n="1"/><b n="2"/></r>'; SELECT @x.value('count(/r/b[(: c :) @n = 1])', 'INT') AS c;
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- 37.4 Two declarations (T-SQL 3)
+DECLARE @x XML = '<r xmlns:e="urn:emp" xmlns:f="urn:f"><e:a>1</e:a><f:b>2</f:b></r>';
+SELECT @x.value('declare namespace e="urn:emp"; declare namespace f="urn:f"; (/r/e:a)[1] + (/r/f:b)[1]', 'INT') AS v;
+GO
+~~START~~
+int
+3
+~~END~~
+
+-- 37.5 A URI in single quotes (T-SQL 7)
+DECLARE @x XML = '<r xmlns:e="urn:emp"><e:a>7</e:a></r>';
+SELECT @x.value('declare namespace e=''urn:emp''; (/r/e:a)[1]', 'INT') AS v;
+GO
+~~START~~
+int
+7
+~~END~~
+
+-- 37.6 A prolog in .nodes()
+-- 37.6a Methods on the rows with no prefix (T-SQL emp|2, emp|1)
+DECLARE @x XML = '<r xmlns:e="urn:emp"><e:emp e:id="1" p="x"/><e:emp e:id="2"/></r>';
+SELECT n.c.value('local-name(.)', 'VARCHAR(10)') AS ln, n.c.value('count(@*)', 'INT') AS ca
+FROM @x.nodes('declare namespace e="urn:emp"; /r/e:emp') AS n(c);
+GO
+~~START~~
+varchar#!#int
+emp#!#2
+emp#!#1
+~~END~~
+
+-- 37.6b The prolog of .nodes() does not bind e for the methods on its rows
+-- (T-SQL 2229)
+DECLARE @x XML = '<r xmlns:e="urn:emp"><e:emp e:id="1" p="x"/><e:emp e:id="2"/></r>';
+SELECT n.c.value('count(@e:*)', 'INT') AS ce
+FROM @x.nodes('declare namespace e="urn:emp"; /r/e:emp') AS n(c);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [value()]: The name "e" does not denote a namespace.)~~
+
+-- 37.6c The methods on the rows bind e with their own prolog (T-SQL 1, 1),
+-- or with the clause while .nodes() uses its prolog (T-SQL 1, 1)
+DECLARE @x XML = '<r xmlns:e="urn:emp"><e:emp e:id="1" p="x"/><e:emp e:id="2"/></r>';
+SELECT n.c.value('declare namespace e="urn:emp"; count(@e:*)', 'INT') AS ce
+FROM @x.nodes('declare namespace e="urn:emp"; /r/e:emp') AS n(c);
+GO
+~~START~~
+int
+1
+1
+~~END~~
+
+DECLARE @x XML = '<r xmlns:e="urn:emp"><e:emp e:id="1"/><e:emp e:id="2"/></r>';
+WITH XMLNAMESPACES('urn:emp' AS e)
+SELECT n.c.value('count(@e:*)', 'INT') AS ce
+FROM @x.nodes('declare namespace f="urn:emp"; /r/f:emp') AS n(c);
+GO
+~~START~~
+int
+1
+1
+~~END~~
+
+-- 37.6d The prolog of .nodes() and the prolog of a method on its rows bind
+-- e to different URIs. T-SQL returns A. Babelfish returns NULL: the context
+-- node path and the method's query are evaluated as one XPath with one set
+-- of bindings, so the method's binding of e applies to both.
+DECLARE @x XML = '<r xmlns:e="urn:emp" xmlns:o="urn:other"><e:emp o:id="1"><o:n>A</o:n></e:emp></r>';
+SELECT n.c.value('declare namespace e="urn:other"; (e:n)[1]', 'VARCHAR(10)') AS v
+FROM @x.nodes('declare namespace e="urn:emp"; /r/e:emp') AS n(c);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+-- 37.7 The prolog rebinds a clause prefix (T-SQL 2)
+DECLARE @x XML = '<r xmlns:a="urn:one" xmlns:b="urn:two"><a:v>1</a:v><b:v>2</b:v></r>';
+WITH XMLNAMESPACES('urn:one' AS p)
+SELECT @x.value('declare namespace p="urn:two"; (/r/p:v)[1]', 'INT') AS v;
+GO
+~~START~~
+int
+2
+~~END~~
+
+-- 37.8 declare default element namespace. T-SQL returns 1. Babelfish raises
+-- "invalid XPath expression": only namespace declarations are taken from
+-- the prolog.
+DECLARE @x XML = '<a xmlns="urn:x"/>';
+SELECT @x.value('declare default element namespace "urn:x"; count(/a)', 'INT') AS c;
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid XPath expression)~~
+
+-- ============================================
+-- SECTION 38: an attribute wildcard whose URI holds both quote kinds
+-- @e:* matches only attributes in the namespace bound to e.
+-- ============================================
+-- 38.1 value(), @e:* (T-SQL 0)
+DECLARE @x XML = '<a xmlns:f="urn:f" f:x="1" y="2"/>';
+WITH XMLNAMESPACES('urn:a''b"c' AS e)
+SELECT @x.value('count(/a/@e:*)', 'INT') AS c;
+GO
+~~START~~
+int
+0
+~~END~~
+
+-- 38.2 value(), attribute::e:* (T-SQL 0)
+DECLARE @x XML = '<a xmlns:f="urn:f" f:x="1" y="2"/>';
+WITH XMLNAMESPACES('urn:a''b"c' AS e)
+SELECT @x.value('count(/a/attribute::e:*)', 'INT') AS c;
+GO
+~~START~~
+int
+0
+~~END~~
+
+-- 38.3 exist() (T-SQL 0)
+DECLARE @x XML = '<a xmlns:f="urn:f" f:x="1" y="2"/>';
+WITH XMLNAMESPACES('urn:a''b"c' AS e)
+SELECT @x.exist('/a/@e:*') AS ex;
+GO
+~~START~~
+bit
+0
+~~END~~
+
+-- 38.4 A URI that starts and ends with quotes and holds adjacent quotes
+-- (T-SQL 0)
+DECLARE @x XML = '<a y="2"/>';
+WITH XMLNAMESPACES('"''u''""' AS e)
+SELECT @x.value('count(/a/@e:*)', 'INT') AS c;
+GO
+~~START~~
+int
+0
+~~END~~
+
+-- 38.5 Next to a binding with no quotes (T-SQL 1)
+DECLARE @x XML = '<a xmlns:f="urn:f" f:x="1" y="2"/>';
+WITH XMLNAMESPACES('urn:a''b"c' AS e, 'urn:f' AS f)
+SELECT @x.value('count(/a/@e:*) * 10 + count(/a/@f:*)', 'INT') AS c;
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- 38.6 In a method on the rows of .nodes(), and in the .nodes() path
+-- (T-SQL 0, 0)
+DECLARE @x XML = '<a xmlns:f="urn:f" f:x="1" y="2"/>';
+WITH XMLNAMESPACES('urn:a''b"c' AS e)
+SELECT n.c.value('count(@e:*)', 'INT') AS c FROM @x.nodes('/a') AS n(c);
+GO
+~~START~~
+int
+0
+~~END~~
+
+DECLARE @x XML = '<a xmlns:f="urn:f" f:x="1" y="2"/>';
+WITH XMLNAMESPACES('urn:a''b"c' AS e)
+SELECT COUNT(*) AS c FROM @x.nodes('/a[@e:*]') AS n(c);
+GO
+~~START~~
+int
+0
+~~END~~
+
+-- ============================================
+-- SECTION 39: what a namespace prolog cannot declare
+-- As in WITH XMLNAMESPACES, a prolog cannot declare xmlns or the same prefix
+-- twice, and can bind xml only to the XML namespace URI and that URI only
+-- to xml.
+-- ============================================
+-- 39.1 xml bound to another URI (T-SQL 2206)
+DECLARE @x XML = '<a b="1"/>';
+SELECT @x.query('declare namespace xml="urn:x"; /a') AS r;
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [query()]: Namespace prefix 'xml' can only be associated with the URI 'http://www.w3.org/XML/1998/namespace' and this URI cannot be used with other prefixes.)~~
+
+-- 39.2 xml bound to its own URI (T-SQL <a b="1"/>)
+DECLARE @x XML = '<a b="1"/>';
+SELECT @x.query('declare namespace xml="http://www.w3.org/XML/1998/namespace"; /a') AS r;
+GO
+~~START~~
+xml
+<a b="1"/>
+~~END~~
+
+-- 39.3 xmlns (T-SQL 2349)
+DECLARE @x XML = '<a b="1"/>';
+SELECT @x.query('declare namespace xmlns="u"; /a') AS r;
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [query()]: Attempt to redefine namespace prefix 'xmlns')~~
+
+-- 39.4 Another prefix bound to the XML namespace URI (T-SQL 2206)
+DECLARE @x XML = '<a b="1"/>';
+SELECT @x.query('declare namespace q="http://www.w3.org/XML/1998/namespace"; /a') AS r;
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [query()]: Namespace prefix 'xml' can only be associated with the URI 'http://www.w3.org/XML/1998/namespace' and this URI cannot be used with other prefixes.)~~
+
+-- 39.5 The same prefix declared twice (T-SQL 2349)
+DECLARE @x XML = '<a b="1"/>';
+SELECT @x.query('declare namespace p="u1"; declare namespace p="u2"; /a') AS r;
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [query()]: Attempt to redefine namespace prefix 'p')~~
+
+-- 39.6 In value(), exist() and .nodes() (T-SQL 2206, 2349, 2206)
+DECLARE @x XML = '<a b="1"/>';
+SELECT @x.value('declare namespace xml="urn:x"; count(/a)', 'INT') AS c;
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [value()]: Namespace prefix 'xml' can only be associated with the URI 'http://www.w3.org/XML/1998/namespace' and this URI cannot be used with other prefixes.)~~
+
+DECLARE @x XML = '<a b="1"/>';
+SELECT @x.exist('declare namespace xmlns="u"; /a') AS ex;
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [exist()]: Attempt to redefine namespace prefix 'xmlns')~~
+
+DECLARE @x XML = '<a b="1"/>';
+SELECT n.c.query('.') AS r FROM @x.nodes('declare namespace xml="urn:x"; /a') AS n(c);
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [nodes()]: Namespace prefix 'xml' can only be associated with the URI 'http://www.w3.org/XML/1998/namespace' and this URI cannot be used with other prefixes.)~~
+
+-- 39.7 The first rule broken is reported (T-SQL 2349 for p)
+DECLARE @x XML = '<a b="1"/>';
+SELECT @x.query('declare namespace p="u1"; declare namespace p="u2"; declare namespace xmlns="u"; /a') AS r;
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [query()]: Attempt to redefine namespace prefix 'p')~~
+
+-- ============================================
+-- SECTION 40: direct constructors after a keyword, nested .nodes() prologs
+-- After return, then, else and the other keywords that take an expression,
+-- "<name" starts a direct element constructor. Its own namespace
+-- declarations, element names and text are not checked when the routine is
+-- created. Babelfish has no constructors and FLWOR at run time, so EXEC
+-- raises "invalid XPath expression" where T-SQL returns the constructed
+-- element. Each .nodes() query keeps its own prolog.
+-- ============================================
+-- 40.1 return of a constructor that declares q for its child: the CREATE
+-- succeeds (T-SQL 1, then other_stmt 1 and <r xmlns:q="urn:q"><q:c/></r>)
+CREATE PROCEDURE xmlns_methods_nsproc_k1 AS
+BEGIN
+    DECLARE @x XML = '<a/>';
+    SELECT 1 AS other_stmt;
+    SELECT @x.query('for $i in /a return <r xmlns:q="urn:q"><q:c/></r>') AS r;
+END
+GO
+SELECT COUNT(*) FROM sys.procedures WHERE name = 'xmlns_methods_nsproc_k1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+EXEC xmlns_methods_nsproc_k1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid XPath expression)~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_k1;
+GO
+-- 40.2 then followed by a constructor whose text holds a colon: the CREATE
+-- succeeds (T-SQL 1, then <r>Error:x</r>)
+CREATE PROCEDURE xmlns_methods_nsproc_k2 AS
+BEGIN
+    DECLARE @x XML = '<a/>';
+    SELECT @x.query('if (/a) then <r>Error:x</r> else ()') AS r;
+END
+GO
+SELECT COUNT(*) FROM sys.procedures WHERE name = 'xmlns_methods_nsproc_k2';
+GO
+~~START~~
+int
+1
+~~END~~
+
+EXEC xmlns_methods_nsproc_k2;
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid XPath expression)~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_k2;
+GO
+-- 40.3 return of a prefixed constructor that binds its own prefix: the
+-- CREATE succeeds (T-SQL 1, then <q:r xmlns:q="urn:q"/>)
+CREATE PROCEDURE xmlns_methods_nsproc_k3 AS
+BEGIN
+    DECLARE @x XML = '<a/>';
+    SELECT @x.query('for $i in /a return <q:r xmlns:q="urn:q"/>') AS r;
+END
+GO
+SELECT COUNT(*) FROM sys.procedures WHERE name = 'xmlns_methods_nsproc_k3';
+GO
+~~START~~
+int
+1
+~~END~~
+
+EXEC xmlns_methods_nsproc_k3;
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid XPath expression)~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_k3;
+GO
+-- 40.4 An unbound prefix in a path after return is still rejected when the
+-- routine is created (T-SQL 2229, then 0)
+CREATE PROCEDURE xmlns_methods_nsproc_k4 AS
+BEGIN
+    DECLARE @x XML = '<a><b/></a>';
+    SELECT @x.query('for $i in /a return $i/zz:b') AS r;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [query()]: The name "zz" does not denote a namespace.)~~
+
+SELECT COUNT(*) FROM sys.procedures WHERE name = 'xmlns_methods_nsproc_k4';
+GO
+~~START~~
+int
+0
+~~END~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_k4;
+GO
+-- 40.5 Nested .nodes() whose prologs both declare e (T-SQL 1, 2)
+DECLARE @x XML = '<e:a xmlns:e="urn:e"><e:b>1</e:b><e:b>2</e:b></e:a>';
+SELECT d.value('.', 'INT') AS v
+FROM @x.nodes('declare namespace e="urn:e"; /e:a') AS T(c)
+CROSS APPLY c.nodes('declare namespace e="urn:e"; e:b') AS S(d);
+GO
+~~START~~
+int
+1
+2
+~~END~~
+
+-- 40.6 Nested .nodes(), outer prolog e and inner prolog f for the same URI
+-- (T-SQL 1, 2)
+DECLARE @x XML = '<e:a xmlns:e="urn:e"><e:b>1</e:b><e:b>2</e:b></e:a>';
+SELECT d.value('.', 'INT') AS v
+FROM @x.nodes('declare namespace e="urn:e"; /e:a') AS T(c)
+CROSS APPLY c.nodes('declare namespace f="urn:e"; f:b') AS S(d);
+GO
+~~START~~
+int
+1
+2
+~~END~~
+
+-- 40.7 Nested .nodes(), the inner prolog binds e to another URI that the
+-- document does not use (T-SQL no rows)
+DECLARE @x XML = '<e:a xmlns:e="urn:e"><e:b>1</e:b><e:b>2</e:b></e:a>';
+SELECT d.value('.', 'INT') AS v
+FROM @x.nodes('declare namespace e="urn:e"; /e:a') AS T(c)
+CROSS APPLY c.nodes('declare namespace e="urn:other"; e:b') AS S(d);
+GO
+~~START~~
+int
+~~END~~
+
+-- 40.8 Nested .nodes(), the inner prolog binds e to the URI of the inner
+-- elements. T-SQL returns 1. Babelfish returns no rows: the outer and inner
+-- paths are evaluated as one XPath with one set of bindings, so the inner
+-- binding of e applies to both.
+DECLARE @x XML = '<e:a xmlns:e="urn:e"><f:b xmlns:f="urn:f">1</f:b></e:a>';
+SELECT d.value('.', 'INT') AS v
+FROM @x.nodes('declare namespace e="urn:e"; /e:a') AS T(c)
+CROSS APPLY c.nodes('declare namespace e="urn:f"; e:b') AS S(d);
+GO
+~~START~~
+int
 ~~END~~
 

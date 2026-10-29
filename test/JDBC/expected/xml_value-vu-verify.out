@@ -383,11 +383,9 @@ Hello#!#Hello<ns:text>World</ns:text>#!#<NULL>
 DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
 SELECT @xml.value('(//ns:data)[1]', 'varchar(100)');
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: could not create XPath object)~~
+~~ERROR (Message: XQuery [value()]: The name "ns" does not denote a namespace.)~~
 
 
 DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
@@ -402,11 +400,9 @@ Hello<ns:text>World</ns:text>
 DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
 SELECT @xml.value('(//child/@ns:attr)[1]', 'varchar(100)');
 GO
-~~START~~
-varchar
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: could not create XPath object)~~
+~~ERROR (Message: XQuery [value()]: The name "ns" does not denote a namespace.)~~
 
 
 -- Test with XML documents containing invalid characters

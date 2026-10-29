@@ -49,6 +49,7 @@ extern "C" {
 #include "catalog/pg_proc.h"
 #include "parser/scansup.h"
 #include "utils/builtins.h"
+#include "miscadmin.h"
 
 #include "guc.h"
 
@@ -916,10 +917,42 @@ strip_string_literal(const std::string &literal)
 }
 
 /*
+ * Apply the xs:anyURI whitespace collapse that T-SQL applies to a
+ * WITH XMLNAMESPACES URI: TAB, LF and CR become a space, runs of spaces become
+ * one, and leading and trailing spaces are dropped. A whitespace-only URI thus
+ * becomes empty and is rejected like ''.
+ *
+ * Only those four ASCII characters count. isspace() is not used because it
+ * also matches \v and \f and depends on the locale, and U+00A0 is kept as
+ * T-SQL keeps it.
+ */
+static std::string
+collapse_uri_whitespace(const std::string &s)
+{
+	std::string out;
+	bool pending_space = false;
+
+	out.reserve(s.size());
+	for (char c : s)
+	{
+		if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
+		{
+			pending_space = true;
+			continue;
+		}
+		if (pending_space && !out.empty())
+			out += ' ';
+		pending_space = false;
+		out += c;
+	}
+	return out;
+}
+
+/*
  * Escape a URI string for embedding inside a PG string-form array literal.
  *
- * The literal is spliced into the rewritten SQL as '{...}'::_text, so there are
- * two nested levels to satisfy:
+ * The literal is spliced into the rewritten SQL as CAST('{...}' AS _text), so
+ * there are two nested levels to satisfy:
  *
  * - The array parser reads double-quoted elements, where " and \ have to be
  *   backslash-escaped. Without this a URI containing '"' produces a malformed
@@ -978,11 +1011,13 @@ xml_escape_attr_value(const std::string &in)
  * One pass over the declarations produces both representations the rewrite
  * needs, so the parse tree is walked and the literals are stripped only once:
  *
- *   array_literal      '{{"ns","http://a"},{"","http://d"}}'::_text
+ *   array_literal      CAST('{{"ns","http://a"},{"","http://d"}}' AS _text)
  *                      appended to the rewritten XML data type method calls and
  *                      passed on to xpath(). The string form is used rather
  *                      than ARRAY[...] because the T-SQL dialect reads square
- *                      brackets as identifier delimiters.
+ *                      brackets as identifier delimiters, and CAST rather than
+ *                      '::' because a routine body is re-parsed by the T-SQL
+ *                      grammar, which has no '::' cast.
  *
  *   decls_for_forxml   xmlns:ns="http://a" xmlns="http://d"
  *                      emitted on the FOR XML row/root element, in REVERSE
@@ -992,10 +1027,13 @@ xml_escape_attr_value(const std::string &in)
  * alias validation, and xsi_declared_uri for the ELEMENTS XSINIL conflict
  * check.
  *
- * Rejects an empty URI, a prefix that is not a valid XML NCName, a duplicate
- * prefix or a second DEFAULT, the reserved 'xmlns' prefix, and 'xml' bound to
- * any URI other than the xml namespace URI (or that URI bound to any other
- * prefix).
+ * Rejects an empty URI (after the xs:anyURI whitespace collapse), a URI with a
+ * character XML does not allow, an empty prefix, a prefix that is not a valid
+ * XML NCName, a duplicate prefix or a second DEFAULT, the reserved 'xmlns'
+ * prefix, and 'xml' bound to any URI other than the xml namespace URI (or that
+ * URI bound to any other prefix).
+ *
+ * The result goes to 'out'.
  *
  * Note: a declared xsi prefix IS included in decls_for_forxml. Deduplication
  * with the xmlns:xsi declaration that ELEMENTS XSINIL emits is handled
@@ -1003,7 +1041,8 @@ xml_escape_attr_value(const std::string &in)
  * present in ns_decls and suppresses the redundant per-row XSINIL declaration.
  */
 static void
-build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext *> &decls)
+build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext *> &decls,
+						   XmlNamespaceContext &out)
 {
 	static const std::string xml_ns_uri = "http://www.w3.org/XML/1998/namespace";
 	std::set<std::string> seen_prefixes;
@@ -1011,7 +1050,7 @@ build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext 
 	/* (prefix, uri) in declaration order; prefix is empty for DEFAULT */
 	std::vector<std::pair<std::string, std::string>> parsed;
 
-	xmlnamespace_ctx.clear();
+	out.clear();
 	if (decls.empty())
 		return;
 
@@ -1021,18 +1060,14 @@ build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext 
 		std::string uri;
 		bool is_default = (decl->DEFAULT() != nullptr);
 
+		/* All checks below and both outputs use the collapsed URI */
 		if (is_default)
-			uri = strip_string_literal(::getFullText(decl->char_string()));
+			uri = collapse_uri_whitespace(strip_string_literal(::getFullText(decl->char_string())));
 		else
 		{
-			uri = strip_string_literal(::getFullText(decl->xml_namespace_uri));
+			uri = collapse_uri_whitespace(strip_string_literal(::getFullText(decl->xml_namespace_uri)));
 			prefix = stripQuoteFromId(decl->id());
 		}
-
-		/* Empty URI is not allowed */
-		if (uri.empty())
-			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
-				"Empty URI is not allowed in WITH XMLNAMESPACES clause.", 0, 0);
 
 		if (is_default)
 		{
@@ -1050,6 +1085,17 @@ build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext 
 		}
 		else
 		{
+			/*
+			 * [] and "" strip to an empty prefix, which the NCName loop below
+			 * would let through and both outputs would then treat as DEFAULT.
+			 */
+			if (prefix.empty())
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+					"An object or column name is missing or empty. For SELECT INTO "
+					"statements, verify each column has a name. For other statements, "
+					"look for empty alias names. Aliases defined as \"\" or [] are not "
+					"allowed. Change the alias to a valid name.", 0, 0);
+
 			/* The prefix must be a valid XML NCName.
 			 *
 			 * NameStartChar: '_' | letter | non-ASCII byte (permissive proxy
@@ -1111,14 +1157,72 @@ build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext 
 			 * assembled array literal.
 			 */
 			if (prefix == "xsi")
-				xmlnamespace_ctx.xsi_declared_uri = uri;
+				out.xsi_declared_uri = uri;
 		}
+
+		/*
+		 * The URI must consist of XML 1.0 characters: C0 controls other than
+		 * TAB, LF and CR (already collapsed to spaces) and U+FFFE/U+FFFF are
+		 * rejected, the first one is reported. T-SQL checks this after the
+		 * prefix, so it sits here.
+		 *
+		 * T-SQL shows a message argument that holds U+FFFF cut right after
+		 * it, with its last three characters turned into dots.
+		 */
+		auto shown = [](const std::string &s) {
+			size_t		cut = s.find("\xEF\xBF\xBF");
+			std::string t;
+			int			dots = 0;
+
+			if (cut == std::string::npos)
+				return s;
+			t = s.substr(0, cut + 3);
+			while (dots < 3 && !t.empty())
+			{
+				size_t		j = t.size() - 1;
+
+				while (j > 0 && ((unsigned char) t[j] & 0xC0) == 0x80)
+					j--;
+				t.erase(j);
+				dots++;
+			}
+			return t + std::string(dots, '.');
+		};
+
+		for (size_t i = 0; i < uri.size(); i++)
+		{
+			unsigned char c = (unsigned char) uri[i];
+			bool is_nonchar = (c == 0xEF && i + 2 < uri.size() &&
+							   (unsigned char) uri[i + 1] == 0xBF &&
+							   ((unsigned char) uri[i + 2] == 0xBE ||
+								(unsigned char) uri[i + 2] == 0xBF));
+
+			if (c < 0x20 || is_nonchar)
+			{
+				std::string bad = shown(uri.substr(i, is_nonchar ? 3 : 1));
+				std::string uri_shown = shown(uri);
+				int64_t code = is_nonchar ? (0xFFC0 | ((unsigned char) uri[i + 2] & 0x3F)) : c;
+
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+					format_errmsg("URI '%s' used in WITH XMLNAMESPACES is invalid. "
+						"'%s'(0x%04X) is the first character at fault.",
+						uri_shown.c_str(), bad.c_str(), code), 0, 0);
+			}
+		}
+
+		/*
+		 * Checked last: T-SQL reports a problem with the prefix, or a second
+		 * DEFAULT, ahead of an empty URI in the same declaration.
+		 */
+		if (uri.empty())
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+				"Empty URI is not allowed in WITH XMLNAMESPACES clause.", 0, 0);
 
 		parsed.emplace_back(prefix, uri);
 	}
 
 	/* Namespace array for xpath(), in declaration order */
-	std::string array_literal = "'{{";
+	std::string array_literal = "CAST('{{";
 	bool first = true;
 	for (const auto &entry : parsed)
 	{
@@ -1128,7 +1232,7 @@ build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext 
 		array_literal += "\"" + entry.first + "\",\"" +
 			escape_for_pg_array_literal(entry.second) + "\"";
 	}
-	array_literal += "}}'::_text";
+	array_literal += "}}' AS _text)";
 
 	/*
 	 * xmlns declarations for FOR XML, in reverse declaration order. Exactly one
@@ -1146,9 +1250,275 @@ build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext 
 			decls_string += "xmlns:" + it->first + "=\"" + escaped_uri + "\"";
 	}
 
-	xmlnamespace_ctx.array_literal = array_literal;
-	xmlnamespace_ctx.decls_for_forxml = decls_string;
-	xmlnamespace_ctx.declared_prefixes = seen_prefixes;
+	out.array_literal = array_literal;
+	out.decls_for_forxml = decls_string;
+	out.declared_prefixes = seen_prefixes;
+}
+
+/*
+ * The WITH XMLNAMESPACES clause owned by a statement node, or nullptr. Only
+ * these five rules carry a with_expression.
+ */
+static TSqlParser::With_expressionContext *
+owned_xmlnamespaces_clause(antlr4::tree::ParseTree *node)
+{
+	TSqlParser::With_expressionContext *wctx = nullptr;
+
+	if (auto *sel = dynamic_cast<TSqlParser::Select_statement_standaloneContext *>(node))
+		wctx = sel->with_expression();
+	else if (auto *ins = dynamic_cast<TSqlParser::Insert_statementContext *>(node))
+		wctx = ins->with_expression();
+	else if (auto *upd = dynamic_cast<TSqlParser::Update_statementContext *>(node))
+		wctx = upd->with_expression();
+	else if (auto *del = dynamic_cast<TSqlParser::Delete_statementContext *>(node))
+		wctx = del->with_expression();
+	else if (auto *mrg = dynamic_cast<TSqlParser::Merge_statementContext *>(node))
+		wctx = mrg->with_expression();
+
+	return (wctx && wctx->XMLNAMESPACES()) ? wctx : nullptr;
+}
+
+/*
+ * The namespace array to append to an XML data type method call, or "" when
+ * no WITH XMLNAMESPACES applies to it. 'declared' (optional) receives the
+ * prefixes that clause binds, DEFAULT excluded.
+ *
+ * The tsqlBuilder walk has already built the statement's context. The
+ * batch-level walk of CREATE/ALTER PROCEDURE/FUNCTION/TRIGGER runs only
+ * tsqlCommonMutator, which never builds it, yet its rewrite is what gets
+ * stored as the routine body. So find the clause of the enclosing statement
+ * here instead; that also keeps the bindings to that one statement. For
+ * CREATE/ALTER VIEW the batch-level path builds the context itself.
+ */
+static std::string
+xml_method_namespace_array(antlr4::ParserRuleContext *ctx,
+						   std::set<std::string> *declared = nullptr)
+{
+	if (!xmlnamespace_ctx.array_literal.empty())
+	{
+		if (declared)
+			*declared = xmlnamespace_ctx.declared_prefixes;
+		return xmlnamespace_ctx.array_literal;
+	}
+
+	for (antlr4::tree::ParseTree *node = ctx->parent; node; node = node->parent)
+	{
+		TSqlParser::With_expressionContext *wctx;
+		TSqlParser::Declare_xmlnamespaces_statementContext *dctx;
+		std::vector<TSqlParser::Xml_declarationContext *> decls;
+
+		/* a clause never reaches past the statement that carries it */
+		if (dynamic_cast<TSqlParser::Sql_clausesContext *>(node))
+			break;
+
+		/* the call is inside one of the clause's CTEs */
+		wctx = dynamic_cast<TSqlParser::With_expressionContext *>(node);
+		if (wctx && wctx->XMLNAMESPACES())
+			decls = wctx->xml_dec;
+
+		dctx = dynamic_cast<TSqlParser::Declare_xmlnamespaces_statementContext *>(node);
+		if (decls.empty() && dctx)
+			decls = dctx->xml_dec;
+
+		/* the call is in the statement that carries the clause */
+		if (decls.empty())
+		{
+			TSqlParser::With_expressionContext *owned = owned_xmlnamespaces_clause(node);
+
+			if (owned)
+				decls = owned->xml_dec;
+		}
+
+		if (!decls.empty())
+		{
+			XmlNamespaceContext found;
+
+			/*
+			 * Fragments collected so far would be left behind for the next
+			 * statement, so drop them on the way out (as in
+			 * process_select_statement).
+			 */
+			try
+			{
+				build_xmlnamespace_context(decls, found);
+			}
+			catch (PGErrorWrapperException &e)
+			{
+				clear_rewritten_query_fragment();
+				throw;
+			}
+			if (declared)
+				*declared = found.declared_prefixes;
+			return found.array_literal;
+		}
+	}
+	return "";
+}
+
+/*
+ * T-SQL binds every prefix of an XML method's XQuery when the batch or the
+ * routine is compiled, and raises 2229 for one that is not bound. Bound are
+ * the clause's prefixes ('declared'), the prefixes XQuery predefines, and
+ * those of a prolog "declare namespace p". String literals, comments and
+ * variable names hold no prefix. A direct element constructor can bind
+ * prefixes of its own, so checking stops at the first one.
+ */
+static void
+check_xquery_prefixes(const std::string &xq, const std::set<std::string> &declared,
+					  const char *method, antlr4::ParserRuleContext *where)
+{
+	std::set<std::string> bound = declared;
+	size_t		n = xq.size();
+	size_t		i = 0;
+	char		last = '\0';	/* last significant character */
+	auto at = [&](size_t k) -> unsigned char {
+		return k < n ? (unsigned char) xq[k] : '\0';
+	};
+	auto name_start = [](unsigned char c) {
+		return isalpha(c) || c == '_' || c >= 0x80;
+	};
+	auto name_char = [&](unsigned char c) {
+		return name_start(c) || isdigit(c) || c == '-' || c == '.';
+	};
+	auto skip_space = [&](size_t k) {
+		while (k < n && isspace(at(k)))
+			k++;
+		return k;
+	};
+	auto read_name = [&](size_t k) {
+		while (k < n && name_char(at(k)))
+			k++;
+		return k;
+	};
+
+	/*
+	 * Keywords followed by an expression. After one of them "<name" starts a
+	 * direct constructor, not a comparison. The same word used as a path step
+	 * (/r/div <b) is read as a keyword too, which only ends the check early.
+	 */
+	static const std::set<std::string> expr_keywords = {
+		"return", "then", "else", "in", "satisfies", "and", "or", "div",
+		"idiv", "mod", "eq", "ne", "lt", "le", "gt", "ge", "is", "to",
+		"union", "intersect", "except"
+	};
+	bool		after_keyword = false;	/* last token is one of expr_keywords */
+
+	for (const char *p : {"xml", "xs", "xsi", "fn", "xdt", "sql", "sqltypes"})
+		bound.insert(p);
+
+	while (i < n)
+	{
+		unsigned char c = at(i);
+
+		if (c == '<' && name_start(at(i + 1)) && after_keyword)
+			return;
+		if (!isspace(c) && !(c == '(' && at(i + 1) == ':'))
+			after_keyword = false;
+
+		if (c == '"' || c == '\'')
+		{
+			size_t		close = xq.find((char) c, i + 1);
+
+			i = (close == std::string::npos) ? n : close + 1;
+			last = (char) c;
+		}
+		else if (c == '(' && at(i + 1) == ':')
+		{
+			int			depth = 1;
+
+			for (i += 2; i < n && depth > 0;)
+			{
+				if ((at(i) == '(' && at(i + 1) == ':') ||
+					(at(i) == ':' && at(i + 1) == ')'))
+				{
+					depth += (at(i) == '(') ? 1 : -1;
+					i += 2;
+				}
+				else
+					i++;
+			}
+		}
+		else if (c == '$')
+		{
+			i++;
+			while (i < n && (name_char(at(i)) || at(i) == ':'))
+				i++;
+			last = 'v';
+		}
+		else if (c == '<' && name_start(at(i + 1)) &&
+				 !(last != '\0' && (name_char((unsigned char) last) ||
+									strchr(")]*\"'", last) != NULL)))
+			return;
+		else if (name_start(c) && (i == 0 || !name_char(at(i - 1))))
+		{
+			size_t		end = read_name(i);
+			std::string name = xq.substr(i, end - i);
+
+			if (at(end) == ':' && at(end + 1) == ':')
+				i = end + 2;
+			else if (at(end) == ':' && (name_start(at(end + 1)) || at(end + 1) == '*'))
+			{
+				if (bound.count(name) == 0)
+					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+						format_errmsg("XQuery [%s()]: The name \"%s\" does not "
+							"denote a namespace.", method, name.c_str()),
+						getLineAndPos(where));
+				i = (at(end + 1) == '*') ? end + 2 : read_name(end + 1);
+			}
+			else
+			{
+				if (name == "declare")
+				{
+					size_t		k = skip_space(end);
+					size_t		k_end = read_name(k);
+
+					if (k > end && xq.compare(k, k_end - k, "namespace") == 0)
+					{
+						size_t		p_start = skip_space(k_end);
+						size_t		p_end = read_name(p_start);
+
+						if (p_start > k_end && p_end > p_start && name_start(at(p_start)))
+							bound.insert(xq.substr(p_start, p_end - p_start));
+					}
+				}
+				i = end;
+				after_keyword = expr_keywords.count(name) > 0;
+			}
+			last = 'n';
+		}
+		else
+		{
+			if (!isspace(c))
+				last = (char) c;
+			i++;
+		}
+	}
+}
+
+/*
+ * Run check_xquery_prefixes for the string literal XQuery of an exist(),
+ * value() or query() call. A non-literal argument has already been rejected
+ * by validateXMLFunctionArgs.
+ */
+static void
+check_xml_method_prefixes(TSqlParser::Xml_func_argContext *fn,
+						  TSqlParser::Expression_listContext *args,
+						  const std::set<std::string> &declared)
+{
+	const char *method = fn->EXIST() ? "exist" : fn->VALUE() ? "value" :
+		fn->QUERY() ? "query" : nullptr;
+	TSqlParser::Constant_exprContext *cexpr;
+
+	if (!method || !args || args->expression().empty())
+		return;
+	cexpr = dynamic_cast<TSqlParser::Constant_exprContext *>(args->expression()[0]);
+	if (cexpr && cexpr->constant()->char_string())
+	{
+		TSqlParser::Char_stringContext *xq = cexpr->constant()->char_string();
+
+		check_xquery_prefixes(strip_string_literal(::getFullText(xq)), declared,
+							  method, xq);
+	}
 }
 
 /*
@@ -1176,6 +1546,65 @@ subtree_declares_xmlnamespaces(antlr4::tree::ParseTree *node)
 			return true;
 	}
 	return false;
+}
+
+/*
+ * Validate every WITH XMLNAMESPACES clause below 'node', in source order.
+ */
+static void
+validate_subtree_xmlnamespaces(antlr4::tree::ParseTree *node)
+{
+	/* a C++ exception, since an ereport would skip the destructors */
+	if (stack_is_too_deep())
+		throw PGErrorWrapperException(ERROR, ERRCODE_STATEMENT_TOO_COMPLEX,
+			"stack depth limit exceeded", 0, 0);
+
+	for (auto *child : node->children)
+	{
+		TSqlParser::Declare_xmlnamespaces_statementContext *dctx;
+		TSqlParser::With_expressionContext *wctx;
+		XmlNamespaceContext tmp;
+
+		dctx = dynamic_cast<TSqlParser::Declare_xmlnamespaces_statementContext *>(child);
+		if (dctx)
+			build_xmlnamespace_context(dctx->xml_dec, tmp);
+
+		wctx = dynamic_cast<TSqlParser::With_expressionContext *>(child);
+		if (wctx && wctx->XMLNAMESPACES())
+			build_xmlnamespace_context(wctx->xml_dec, tmp);
+
+		validate_subtree_xmlnamespaces(child);
+	}
+}
+
+/*
+ * Strip the XMLNAMESPACES clause from the SQL text sent to PG.
+ * Grammar: WITH (XMLNAMESPACES(...) COMMA?)? (CTEs)*
+ *
+ * If CTEs follow, strip "XMLNAMESPACES(...) ," leaving "WITH cte AS(...)".
+ * If no CTEs follow, strip "WITH XMLNAMESPACES(...)" entirely.
+ */
+static void
+strip_xmlnamespaces_clause(TSqlParser::With_expressionContext *ctx)
+{
+	size_t strip_start;
+	size_t strip_end;
+	if (!ctx->ctes.empty())
+	{
+		/* CTEs present: strip from XMLNAMESPACES token to just before first CTE */
+		strip_start = ctx->XMLNAMESPACES()->getSymbol()->getStartIndex();
+		strip_end = ctx->ctes[0]->start->getStartIndex();
+	}
+	else
+	{
+		/* No CTEs: strip from WITH to end of RR_BRACKET */
+		strip_start = ctx->WITH()->getSymbol()->getStartIndex();
+		strip_end = ctx->RR_BRACKET()->getSymbol()->getStopIndex() + 1;
+	}
+	std::string original_text = ctx->start->getInputStream()->getText(
+		antlr4::misc::Interval(strip_start, strip_end - 1));
+	rewritten_query_fragment.emplace(std::make_pair(strip_start,
+		std::make_pair(original_text, "")));
 }
 
 /*
@@ -1883,8 +2312,13 @@ public:
 		 * overload is resolved.
 		 */
 		std::string nodes_tail = ", " + expr;
-		if (!xmlnamespace_ctx.array_literal.empty())
-			nodes_tail += ", " + xmlnamespace_ctx.array_literal;
+		std::set<std::string> declared;
+		std::string ns_array = xml_method_namespace_array(ctx, &declared);
+		if (ctx->xquery)
+			check_xquery_prefixes(strip_string_literal(::getFullText(ctx->xquery)),
+								  declared, "nodes", ctx->xquery);
+		if (!ns_array.empty())
+			nodes_tail += ", " + ns_array;
 		rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()->getSymbol()->getStartIndex(), std::make_pair("", nodes_tail)));		
 	}
 	
@@ -3357,32 +3791,8 @@ public:
 			std::vector<TSqlParser::Xml_declarationContext *> decls;
 			for (auto *d : ctx->xml_dec)
 				decls.push_back(d);
-			build_xmlnamespace_context(decls);
-			/*
-			 * Strip the XMLNAMESPACES clause from the SQL text sent to PG.
-			 * Grammar: WITH (XMLNAMESPACES(...) COMMA?)? (CTEs)*
-			 *
-			 * If CTEs follow, strip "XMLNAMESPACES(...) ," leaving "WITH cte AS(...)".
-			 * If no CTEs follow, strip "WITH XMLNAMESPACES(...)" entirely.
-			 */
-			size_t strip_start;
-			size_t strip_end;
-			if (!ctx->ctes.empty())
-			{
-				/* CTEs present: strip from XMLNAMESPACES token to just before first CTE */
-				strip_start = ctx->XMLNAMESPACES()->getSymbol()->getStartIndex();
-				strip_end = ctx->ctes[0]->start->getStartIndex();
-			}
-			else
-			{
-				/* No CTEs: strip from WITH to end of RR_BRACKET */
-				strip_start = ctx->WITH()->getSymbol()->getStartIndex();
-				strip_end = ctx->RR_BRACKET()->getSymbol()->getStopIndex() + 1;
-			}
-			std::string original_text = ctx->start->getInputStream()->getText(
-				antlr4::misc::Interval(strip_start, strip_end - 1));
-			rewritten_query_fragment.emplace(std::make_pair(strip_start,
-				std::make_pair(original_text, "")));
+			build_xmlnamespace_context(decls, xmlnamespace_ctx);
+			strip_xmlnamespaces_clause(ctx);
 		}
 	}
 
@@ -3410,7 +3820,7 @@ public:
 			std::vector<TSqlParser::Xml_declarationContext *> decls;
 			for (auto *d : xmlns_ctx->xml_dec)
 				decls.push_back(d);
-			build_xmlnamespace_context(decls);
+			build_xmlnamespace_context(decls, xmlnamespace_ctx);
 			/* Find the inner DML and create a PLtsql_stmt for it */
 			ParserRuleContext *inner_dml = nullptr;
 			if (xmlns_ctx->select_statement())
@@ -5098,6 +5508,13 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 		tree::ParseTree *tree = nullptr;
 
 		/*
+		 * Rewrite state belongs to one parse. A parse that failed part-way
+		 * through can leave it set, and this parse would apply it to its own
+		 * text.
+		 */
+		clear_rewritten_query_fragment();
+
+		/*
 		 * The semantic of "RETURN SELECT ..." depends on whether it is used in Inlined Table Value Function or not.
 		 * In ITVF, they should be interpeted as return a result tuple of SELECT statement.
 		 * but in the other case (i.e. procedure or SQL batch), it should be interpreted as two separate statements like "RETURN; SELECT ..."
@@ -5474,6 +5891,31 @@ rewriteBatchLevelStatement(
 	if (ctx->create_or_alter_trigger() && ctx->create_or_alter_trigger()->create_or_alter_dml_trigger())
 		if (ctx->create_or_alter_trigger()->create_or_alter_dml_trigger()->for_replication())
 			removeCtxStringFromQuery(expr, ctx->create_or_alter_trigger()->create_or_alter_dml_trigger()->for_replication(), ctx);
+
+	/*
+	 * The backend parser reads the CREATE text before a routine body is
+	 * compiled and rejects AS [] with its own lexer error, so every clause is
+	 * checked here first, in source order.
+	 */
+	validate_subtree_xmlnamespaces(ctx);
+
+	/*
+	 * A view's SELECT is parsed only by the backend grammar, which has no
+	 * WITH XMLNAMESPACES, so the clause is taken out here and its bindings
+	 * kept for this walk, as tsqlBuilder does for other statements.
+	 */
+	if (ctx->create_or_alter_view())
+	{
+		auto *vctx = ctx->create_or_alter_view();
+		TSqlParser::With_expressionContext *vwctx =
+			owned_xmlnamespaces_clause(vctx->select_statement_standalone());
+
+		if (vwctx)
+		{
+			build_xmlnamespace_context(vwctx->xml_dec, xmlnamespace_ctx);
+			strip_xmlnamespaces_clause(vwctx);
+		}
+	}
 
 	// Run common mutator
 	tsqlCommonMutator cm;
@@ -10887,10 +11329,16 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 	std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, func_call_len + offset1 + 1) + ")";
 
 	/* If XML namespace context is active, inject namespace array as extra argument */
-	if (method->xml_methods() && !xmlnamespace_ctx.array_literal.empty())
+	if (method->xml_methods())
 	{
+		std::set<std::string> declared;
+		std::string ns_array = xml_method_namespace_array(method, &declared);
+
+		check_xml_method_prefixes(method->xml_methods()->xml_func_arg(),
+								  method->xml_methods()->expression_list(), declared);
 		/* Insert namespace array before the closing ')' */
-		rewritten_exp = rewritten_exp.substr(0, rewritten_exp.size() - 1) + "," + xmlnamespace_ctx.array_literal + ")";
+		if (!ns_array.empty())
+			rewritten_exp = rewritten_exp.substr(0, rewritten_exp.size() - 1) + "," + ns_array + ")";
 	}
 
 	if (method->xml_methods() && method->xml_methods()->xml_func_arg()->VALUE())
@@ -11112,9 +11560,15 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 	std::string rewritten_func = expr.substr((int)func_start_index - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, col_len + offset1 + 1) + ")";
 
 	/* If XML namespace context is active, inject namespace array as extra argument */
-	if (ctx->xml_proc_name_table_column() && !xmlnamespace_ctx.array_literal.empty())
+	if (ctx->xml_proc_name_table_column())
 	{
-		rewritten_func = rewritten_func.substr(0, rewritten_func.size() - 1) + "," + xmlnamespace_ctx.array_literal + ")";
+		std::set<std::string> declared;
+		std::string ns_array = xml_method_namespace_array(ctx, &declared);
+
+		check_xml_method_prefixes(ctx->xml_proc_name_table_column()->xml_func_arg(),
+								  ctx->expression_list(), declared);
+		if (!ns_array.empty())
+			rewritten_func = rewritten_func.substr(0, rewritten_func.size() - 1) + "," + ns_array + ")";
 	}
 
 	if (ctx->xml_proc_name_table_column() &&  ctx->xml_proc_name_table_column()->xml_func_arg()->VALUE())
