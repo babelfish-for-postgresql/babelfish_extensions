@@ -2648,3 +2648,33 @@ GO
 
 DISABLE TRIGGER forxmlauto_trg_rcte_ins_first ON forxmlauto_t_rcte;
 GO
+
+
+-- ============================================
+-- SECTION 23: XML-typed column (no default btree equality operator)
+-- ============================================
+-- 23.1 xml column as the only outer-level column
+SELECT p.Doc, c.ChildName
+FROM forxmlauto_t_xmlcol_parent p
+JOIN forxmlauto_t_xmlcol_child c ON c.ParentID = p.ParentID
+ORDER BY p.ParentID, c.ChildID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<p Doc="&lt;d&gt;&lt;k&gt;1&lt;/k&gt;&lt;/d&gt;"><c ChildName="c-one"/><c ChildName="c-two"/><c ChildName="c-three"/></p><p Doc="&lt;d&gt;&lt;k&gt;2&lt;/k&gt;&lt;/d&gt;"><c ChildName="c-four"/><c ChildName="c-five"/></p><p><c ChildName="c-six"/><c ChildName="c-seven"/></p><p Doc="&lt;d&gt;&lt;k&gt;2&lt;/k&gt;&lt;/d&gt;"><c ChildName="c-eight"/></p>
+~~END~~
+
+
+-- 23.2 outer level keyed on ParentID with the xml column alongside
+SELECT p.ParentID, p.Doc, c.ChildName
+FROM forxmlauto_t_xmlcol_parent p
+JOIN forxmlauto_t_xmlcol_child c ON c.ParentID = p.ParentID
+ORDER BY p.ParentID, c.ChildID
+FOR XML AUTO;
+GO
+~~START~~
+ntext
+<p ParentID="1" Doc="&lt;d&gt;&lt;k&gt;1&lt;/k&gt;&lt;/d&gt;"><c ChildName="c-one"/><c ChildName="c-two"/></p><p ParentID="2" Doc="&lt;d&gt;&lt;k&gt;1&lt;/k&gt;&lt;/d&gt;"><c ChildName="c-three"/></p><p ParentID="3" Doc="&lt;d&gt;&lt;k&gt;2&lt;/k&gt;&lt;/d&gt;"><c ChildName="c-four"/><c ChildName="c-five"/></p><p ParentID="4"><c ChildName="c-six"/></p><p ParentID="5"><c ChildName="c-seven"/></p><p ParentID="6" Doc="&lt;d&gt;&lt;k&gt;2&lt;/k&gt;&lt;/d&gt;"><c ChildName="c-eight"/></p>
+~~END~~
+
