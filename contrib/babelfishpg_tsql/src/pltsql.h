@@ -359,6 +359,20 @@ typedef struct PLtsql_expr
 	Bitmapset  *paramnos pg_node_attr(equal_ignore);		/* all dnos referenced by this query */
 	int			rwparam pg_node_attr(equal_ignore);		/* dno of read/write param, or -1 if none */
 
+	/*
+	 * Babelfish: if this expression references a cross-database shared catalog
+	 * (sys / information_schema), these record the referenced logical database
+	 * and schema.  Condition-evaluation paths (IF / WHILE / conditional GOTO)
+	 * use them to switch the logical-database context while the expression is
+	 * evaluated, so the catalog view resolves against the referenced database
+	 * instead of the connected one.  These are runtime-only hints derived from
+	 * the original SQL text; pg_node_attr(equal_ignore) excludes them from the
+	 * generated node equality function.
+	 */
+	bool		is_cross_db pg_node_attr(equal_ignore);
+	char	   *db_name pg_node_attr(equal_ignore);
+	char	   *schema_name pg_node_attr(equal_ignore);
+
 	/* function containing this expr (not set until we first parse query) */
 	struct PLtsql_function *func pg_node_attr(read_write_ignore, read_as(NULL));
 
