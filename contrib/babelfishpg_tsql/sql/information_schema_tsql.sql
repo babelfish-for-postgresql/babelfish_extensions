@@ -328,7 +328,16 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 				THEN ext.orig_name ELSE null END
 				AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
 			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
-				THEN t.typname ELSE null END
+				THEN COALESCE(
+						CASE WHEN octet_length(t.typname) >= 60 THEN
+							(SELECT pg_catalog.lower(m.original_identifier_name COLLATE "C")
+							 FROM sys.babelfish_identifier_mapping m
+							 WHERE m.truncated_identifier_name = t.typname
+								 AND m.nspname = nt.nspname
+								 AND m.pg_catalog_type = 'pg_type'::regclass::oid
+							 LIMIT 1)
+						END,
+						t.typname::text) ELSE null END
 				AS sys.nvarchar(128)) AS "DOMAIN_NAME"
 
 	FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
@@ -392,7 +401,13 @@ GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 CREATE OR REPLACE VIEW information_schema_tsql.domains AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
-		CAST(COALESCE(CASE WHEN pg_catalog.octet_length(t.typname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = t.typname AND bim.nspname = nc.nspname AND bim.pg_catalog_type = 'pg_type'::regclass::oid LIMIT 1) END, t.typname::text) AS sys.sysname) AS "DOMAIN_NAME",
+		CAST(COALESCE(CASE WHEN pg_catalog.octet_length(t.typname) >= 60 THEN
+			CASE WHEN is_tbl_type THEN
+				(SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C") FROM pg_catalog.pg_class tc, pg_catalog.unnest(tc.reloptions) opt WHERE tc.oid = t.typrelid AND opt LIKE 'bbf_original_rel_name=%' LIMIT 1)
+			ELSE
+				(SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = t.typname AND bim.nspname = nc.nspname AND bim.pg_catalog_type = 'pg_type'::regclass::oid LIMIT 1)
+			END
+		END, t.typname::text) AS sys.sysname) AS "DOMAIN_NAME",
 		CAST(case when is_tbl_type THEN 'table type' ELSE tsql_type_name END AS sys.sysname) AS "DATA_TYPE",
 
 		CAST(information_schema_tsql._pgtsql_char_max_length(tsql_type_name, t.typtypmod)
@@ -517,7 +532,14 @@ BEGIN
            COALESCE(CASE WHEN pg_catalog.octet_length(c.conname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = c.conname AND bim.nspname = nsp.nspname AND bim.pg_catalog_type = 'pg_constraint'::regclass::oid AND ((SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) IS NULL OR bim.parent_name = (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid)) LIMIT 1) END, c.conname::text)::sys.sysname AS "CONSTRAINT_NAME",
            CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-           CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
+           CAST(COALESCE(
+				CASE WHEN octet_length(r.relname) >= 60 THEN
+					(SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
+					 FROM unnest(r.reloptions) AS opt
+					 WHERE opt LIKE 'bbf_original_rel_name=%'
+					 LIMIT 1)
+				END,
+				r.relname::text) AS sys.sysname) AS "TABLE_NAME",
            CAST(
              CASE c.contype WHEN 'c' THEN 'CHECK'
                             WHEN 'f' THEN 'FOREIGN KEY'
@@ -637,11 +659,42 @@ SELECT    CAST(tblcat AS sys.nvarchar(128)) AS "TABLE_CATALOG",
           CAST(colname AS sys.nvarchar(128)) AS "COLUMN_NAME",
           CAST(cstrcat AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
           CAST(cstrschema AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-          CAST(cstrname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME"
+          CAST(COALESCE(
+				CASE WHEN octet_length(cstrname) >= 60 THEN
+					(SELECT pg_catalog.lower(m.original_identifier_name COLLATE "C")
+					 FROM sys.babelfish_identifier_mapping m
+					 WHERE m.truncated_identifier_name = cstrname
+						 AND m.nspname = cstrnspname
+						 AND m.pg_catalog_type = 'pg_constraint'::regclass::oid
+						 AND m.parent_name = phystblname
+					 LIMIT 1)
+				END,
+				cstrname::text) AS sys.nvarchar(128)) AS "CONSTRAINT_NAME"
 
 FROM (
         /* check constraints */
-   SELECT DISTINCT extr.orig_name, r.relname, r.relowner, a.attname, extc.orig_name, c.conname, nr.dbname, nc.dbname
+   SELECT DISTINCT extr.orig_name,
+          COALESCE(
+				CASE WHEN octet_length(r.relname) >= 60 THEN
+					(SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
+					 FROM unnest(r.reloptions) AS opt
+					 WHERE opt LIKE 'bbf_original_rel_name=%'
+					 LIMIT 1)
+				END,
+				r.relname::text) AS relname,
+          r.relname AS physrelname,
+          r.relowner,
+          COALESCE(
+				CASE WHEN octet_length(a.attname) >= 60 THEN
+					(SELECT CASE WHEN a.attname = pg_catalog.lower(a.attname COLLATE "C")
+								THEN pg_catalog.lower(substring(opt, 19) COLLATE "C")
+								ELSE substring(opt, 19) END
+					 FROM unnest(a.attoptions) AS opt
+					 WHERE opt LIKE 'bbf_original_name=%'
+					 LIMIT 1)
+				END,
+				a.attname::text) AS attname,
+          extc.orig_name, c.conname, nr.dbname, nc.dbname, nc.nspname
      FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
           sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
           pg_attribute a,
@@ -667,7 +720,28 @@ FROM (
        UNION ALL
 
         /* unique/primary key/foreign key constraints */
-   SELECT extr.orig_name, r.relname, r.relowner, a.attname, extc.orig_name, c.conname, nr.dbname, nc.dbname
+   SELECT extr.orig_name,
+          COALESCE(
+				CASE WHEN octet_length(r.relname) >= 60 THEN
+					(SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
+					 FROM unnest(r.reloptions) AS opt
+					 WHERE opt LIKE 'bbf_original_rel_name=%'
+					 LIMIT 1)
+				END,
+				r.relname::text) AS relname,
+          r.relname AS physrelname,
+          r.relowner,
+          COALESCE(
+				CASE WHEN octet_length(a.attname) >= 60 THEN
+					(SELECT CASE WHEN a.attname = pg_catalog.lower(a.attname COLLATE "C")
+								THEN pg_catalog.lower(substring(opt, 19) COLLATE "C")
+								ELSE substring(opt, 19) END
+					 FROM unnest(a.attoptions) AS opt
+					 WHERE opt LIKE 'bbf_original_name=%'
+					 LIMIT 1)
+				END,
+				a.attname::text) AS attname,
+          extc.orig_name, c.conname, nr.dbname, nc.dbname, nc.nspname
      FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
           sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
           pg_attribute a,
@@ -686,7 +760,7 @@ FROM (
 		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
 		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
-      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat);
+      ) AS x (tblschema, tblname, phystblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat, cstrnspname);
 
 GRANT SELECT ON information_schema_tsql.CONSTRAINT_COLUMN_USAGE TO PUBLIC;
 
@@ -859,7 +933,14 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 		COALESCE(CASE WHEN pg_catalog.octet_length(c.conname) >= 60 THEN (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C") FROM sys.babelfish_identifier_mapping bim WHERE bim.truncated_identifier_name = c.conname AND bim.nspname = nsp.nspname AND bim.pg_catalog_type = 'pg_constraint'::regclass::oid AND ((SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid) IS NULL OR bim.parent_name = (SELECT relname FROM pg_catalog.pg_class WHERE oid = c.conrelid)) LIMIT 1) END, c.conname::text)::sys.nvarchar(128) AS "CONSTRAINT_NAME",
 		CAST(db_name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+		CAST(COALESCE(
+				CASE WHEN octet_length(r.relname) >= 60 THEN
+					(SELECT pg_catalog.lower(substring(opt, 23) COLLATE "C")
+					 FROM unnest(r.reloptions) AS opt
+					 WHERE opt LIKE 'bbf_original_rel_name=%'
+					 LIMIT 1)
+				END,
+				r.relname::text) AS sys.nvarchar(128)) AS "TABLE_NAME",
 		CAST(COALESCE(
 			CASE WHEN pg_catalog.octet_length(a.attname) >= 60 THEN
 				(SELECT CASE

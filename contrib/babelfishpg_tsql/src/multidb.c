@@ -1358,7 +1358,7 @@ get_dbo_schema_name(const char *dbname)
 	else
 	{
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
-		truncate_identifier(name, strlen(name), false);
+		truncate_tsql_identifier(name);
 	}
 	return name;
 }
@@ -1377,7 +1377,7 @@ get_dbo_role_name_by_mode(const char *dbname, MigrationMode mode)
 	else
 	{
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_dbo", dbname);
-		truncate_identifier(name, strlen(name), false);
+		truncate_tsql_identifier(name);
 	}
 	return name;
 }
@@ -1413,7 +1413,7 @@ get_db_owner_name_by_mode(const char *dbname, MigrationMode	mode)
 	else
 	{
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_owner", dbname);
-		truncate_identifier(name, strlen(name), false);
+		truncate_tsql_identifier(name);
 	}
 	return name;
 }
@@ -1447,7 +1447,7 @@ get_db_datareader_name(const char *dbname)
 	else
 	{
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_%s", dbname, DB_DATAREADER);
-		truncate_identifier(name, strlen(name), false);
+		truncate_tsql_identifier(name);
 	}
 	return name;
 }
@@ -1466,7 +1466,7 @@ get_db_datawriter_name(const char *dbname)
 	else
 	{
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_%s", dbname, DB_DATAWRITER);
-		truncate_identifier(name, strlen(name), false);
+		truncate_tsql_identifier(name);
 	}
 	return name;
 }
@@ -1483,7 +1483,7 @@ get_guest_role_name(const char *dbname)
 	 * dbo is an exception.
 	 */
 	snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
-	truncate_identifier(name, strlen(name), false);
+	truncate_tsql_identifier(name);
 	return name;
 }
 
@@ -1499,7 +1499,7 @@ get_db_accessadmin_role_name(const char *dbname)
 	else
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_%s", dbname, DB_ACCESSADMIN);
 
-	truncate_identifier(name, strlen(name), false);
+	truncate_tsql_identifier(name);
 	return name;
 }
 
@@ -1524,7 +1524,7 @@ get_db_securityadmin_role_name(const char *dbname)
 	else
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_%s", dbname, DB_SECURITYADMIN);
 
-	truncate_identifier(name, strlen(name), false);
+	truncate_tsql_identifier(name);
 	return name;
 }
 
@@ -1550,7 +1550,7 @@ get_db_ddladmin_role_name(const char *dbname)
 	else
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_%s", dbname, DB_DDLADMIN);
 
-	truncate_identifier(name, strlen(name), false);
+	truncate_tsql_identifier(name);
 	return name;
 }
 
@@ -1579,7 +1579,7 @@ get_guest_schema_name(const char *dbname)
 	else
 	{
 		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
-		truncate_identifier(name, strlen(name), false);
+		truncate_tsql_identifier(name);
 	}
 	return name;
 }

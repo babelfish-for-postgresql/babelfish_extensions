@@ -1553,7 +1553,719 @@ GO
 DROP FUNCTION babel_7192_event_trigger_func();
 GO
 
+-- ===========================================
+-- Catalog sweep: tables/constraints/columns with long (>=64 byte) names must
+-- show the original name, not the truncated+md5 hashed physical name, across
+-- sys.indexes, COL_NAME, sys.computed_columns, INFORMATION_SCHEMA.TABLE_CONSTRAINTS/
+-- KEY_COLUMN_USAGE/CONSTRAINT_COLUMN_USAGE, sp_pkeys_view, sp_fkeys_view,
+-- sp_sproc_columns_view, and INFORMATION_SCHEMA.COLUMNS/COLUMN_DOMAIN_USAGE.DOMAIN_NAME.
+-- ===========================================
+
 -- tsql
+CREATE TABLE Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars (
+    id INT,
+    CONSTRAINT Very_Long_Catalog_Parent_Pk_Constraint_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars PRIMARY KEY (id)
+);
+GO
+CREATE TABLE Very_Long_Catalog_Child_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars (
+    id INT,
+    CONSTRAINT Very_Long_Catalog_Child_Fk_Constraint_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars FOREIGN KEY (id) REFERENCES Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars(id)
+);
+GO
+
+-- Verify the backing index of an inline long-named PK shows the original
+-- constraint name in sys.indexes, not the truncated+hashed physical name.
+SELECT name FROM sys.indexes WHERE object_id = OBJECT_ID('Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars') AND name IS NOT NULL;
+GO
+
+CREATE TABLE Very_Long_Catalog_Column_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars (
+    Very_Long_Catalog_Column_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT
+);
+GO
+
+-- Verify COL_NAME returns the original column name, not the hashed one.
+SELECT COL_NAME(OBJECT_ID('Very_Long_Catalog_Column_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars'), 1);
+GO
+
+CREATE TABLE Very_Long_Catalog_Computed_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars (
+    Very_Long_Catalog_Base_Column_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters INT,
+    computed_col AS (Very_Long_Catalog_Base_Column_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Characters * 2)
+);
+GO
+
+-- Verify sys.computed_columns.definition deparses the original column name.
+SELECT definition FROM sys.computed_columns WHERE object_id = OBJECT_ID('Very_Long_Catalog_Computed_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars');
+GO
+
+-- Verify INFORMATION_SCHEMA.TABLE_CONSTRAINTS.TABLE_NAME shows the original name.
+SELECT CONSTRAINT_NAME, TABLE_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_NAME = 'Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars';
+GO
+
+-- Verify INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME shows the original name.
+SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME = 'Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars';
+GO
+
+-- Verify INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE shows original names for all three columns.
+SELECT CONSTRAINT_NAME, TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME = 'Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars';
+GO
+
+-- Verify sp_pkeys_view.pk_name shows the original constraint name.
+SELECT pk_name FROM sys.sp_pkeys_view WHERE table_name = 'Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars';
+GO
+
+-- Verify sp_fkeys_view.fk_name/pk_name show the original constraint names.
+SELECT fk_name, pk_name FROM sys.sp_fkeys_view WHERE fktable_name = 'very_long_catalog_child_table_that_exceeds_postgresql_limit_of_sixty_three_chars';
+GO
+
+CREATE PROCEDURE Very_Long_Catalog_Procedure_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars (@Very_Long_Catalog_Parameter_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars INT)
+AS BEGIN SELECT @Very_Long_Catalog_Parameter_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars; END;
+GO
+
+-- Verify sp_sproc_columns_view.column_name shows the original parameter name.
+SELECT column_name FROM sys.sp_sproc_columns_view WHERE procedure_name LIKE 'Very_Long_Catalog_Procedure_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars%' AND column_name LIKE '@Very_Long%';
+GO
+
+CREATE TYPE Very_Long_Catalog_Domain_Type_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars FROM INT;
+GO
+CREATE TABLE Very_Long_Catalog_Domain_Usage_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars (
+    domain_col Very_Long_Catalog_Domain_Type_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
+);
+GO
+
+-- Verify INFORMATION_SCHEMA.COLUMNS.DOMAIN_NAME shows the original domain name.
+SELECT DOMAIN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Very_Long_Catalog_Domain_Usage_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars';
+GO
+
+-- Verify INFORMATION_SCHEMA.COLUMN_DOMAIN_USAGE.DOMAIN_NAME shows the original domain name.
+SELECT DOMAIN_NAME FROM INFORMATION_SCHEMA.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME = 'Very_Long_Catalog_Domain_Usage_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars';
+GO
+
+DROP PROCEDURE Very_Long_Catalog_Procedure_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP TABLE Very_Long_Catalog_Domain_Usage_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Chars;
+GO
+DROP TYPE Very_Long_Catalog_Domain_Type_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP TABLE Very_Long_Catalog_Computed_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP TABLE Very_Long_Catalog_Column_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP TABLE Very_Long_Catalog_Child_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+DROP TABLE Very_Long_Catalog_Parent_Table_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars;
+GO
+
+-- BABEL-7239: remaining catalog surfaces that showed hashed long names.
+CREATE PROCEDURE Very_Long_Catalog_Param_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx @Very_Long_Catalog_Parameter_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT AS SELECT 1;
+GO
+CREATE FUNCTION Very_Long_Catalog_Syscolumns_Tvf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx() RETURNS TABLE AS RETURN (SELECT 1 AS Very_Long_Catalog_Syscolumns_Tvf_Column_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx);
+GO
+
+-- sys.syscolumns shows the original parameter and inline-TVF column names.
+SELECT name FROM sys.syscolumns WHERE id IN (OBJECT_ID('Very_Long_Catalog_Param_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'), OBJECT_ID('Very_Long_Catalog_Syscolumns_Tvf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')) ORDER BY name;
+GO
+
+CREATE TYPE Very_Long_Catalog_Table_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS TABLE (Very_Long_Catalog_Table_Type_Column_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT);
+GO
+
+-- INFORMATION_SCHEMA.DOMAINS shows the original table type name.
+SELECT DOMAIN_NAME FROM INFORMATION_SCHEMA.DOMAINS WHERE DOMAIN_NAME LIKE 'very_long_catalog_table_type%';
+GO
+
+CREATE TABLE Very_Long_Catalog_Default_Table_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (c INT DEFAULT 1);
+GO
+
+-- sys.all_objects builds the DF_ name from the original table name (OID suffix stripped).
+SELECT LEFT(name, LEN(name) - CHARINDEX('_', REVERSE(name))) FROM sys.all_objects WHERE parent_object_id = OBJECT_ID('Very_Long_Catalog_Default_Table_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') AND type = 'D';
+GO
+
+CREATE SCHEMA Very_Long_Catalog_Managed_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+CREATE TABLE Very_Long_Catalog_Managed_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.Very_Long_Catalog_Managed_Table_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (Very_Long_Catalog_Managed_Column_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT);
+GO
+
+-- sys.spt_columns_view_managed shows the original schema name, so sp_columns_managed finds the table.
+SELECT TABLE_SCHEMA, COLUMN_NAME FROM sys.spt_columns_view_managed WHERE TABLE_NAME = 'Very_Long_Catalog_Managed_Table_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+GO
+EXEC sp_columns_managed NULL, 'very_long_catalog_managed_schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'very_long_catalog_managed_table_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+GO
+
+CREATE LOGIN Very_Long_Catalog_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx WITH PASSWORD = '12345678';
+GO
+CREATE USER Very_Long_Catalog_User_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx FOR LOGIN Very_Long_Catalog_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+
+-- sp_helpuser shows the original login name.
+CREATE TABLE #babel7239_helpuser (UserName sys.nvarchar(128), RoleName sys.nvarchar(128), LoginName sys.nvarchar(128), DefDBName sys.nvarchar(128), DefSchemaName sys.nvarchar(128), UserID INT, SID sys.varbinary(85));
+GO
+INSERT INTO #babel7239_helpuser EXEC sp_helpuser 'Very_Long_Catalog_User_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+GO
+SELECT UserName, LoginName FROM #babel7239_helpuser;
+GO
+
+DROP TABLE #babel7239_helpuser;
+GO
+DROP USER Very_Long_Catalog_User_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP LOGIN Very_Long_Catalog_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP TABLE Very_Long_Catalog_Managed_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.Very_Long_Catalog_Managed_Table_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP SCHEMA Very_Long_Catalog_Managed_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP TABLE Very_Long_Catalog_Default_Table_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP TYPE Very_Long_Catalog_Table_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP FUNCTION Very_Long_Catalog_Syscolumns_Tvf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP PROCEDURE Very_Long_Catalog_Param_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+
+-- BABEL-7239: more forms, plus short-name controls whose output must not change.
+CREATE FUNCTION Very_Long_Catalog_Param_Func_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(@Very_Long_Catalog_Func_Parameter_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT) RETURNS INT AS BEGIN RETURN 1 END;
+GO
+CREATE PROCEDURE babel7239_short_proc @ShortParam INT AS SELECT 1;
+GO
+CREATE FUNCTION babel7239_short_tvf() RETURNS TABLE AS RETURN (SELECT 1 AS ShortTvfCol);
+GO
+
+-- sys.syscolumns: long function parameter, then short controls.
+SELECT name FROM sys.syscolumns WHERE id = OBJECT_ID('Very_Long_Catalog_Param_Func_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') AND name LIKE '@%';
+GO
+SELECT name FROM sys.syscolumns WHERE id IN (OBJECT_ID('babel7239_short_proc'), OBJECT_ID('babel7239_short_tvf')) ORDER BY name;
+GO
+
+CREATE TYPE babel7239_ShortTT AS TABLE (a INT);
+GO
+
+-- INFORMATION_SCHEMA.DOMAINS short table type control.
+SELECT DOMAIN_NAME FROM INFORMATION_SCHEMA.DOMAINS WHERE DOMAIN_NAME = 'babel7239_ShortTT';
+GO
+
+CREATE TABLE babel7239_ShortDefault (c INT DEFAULT 1);
+GO
+
+-- sys.all_objects DF_ name for a short table (OID suffix stripped).
+SELECT LEFT(name, LEN(name) - CHARINDEX('_', REVERSE(name))) FROM sys.all_objects WHERE parent_object_id = OBJECT_ID('babel7239_ShortDefault') AND type = 'D';
+GO
+
+CREATE SCHEMA babel7239_MixedSch;
+GO
+CREATE TABLE babel7239_MixedSch.babel7239_mt (c INT);
+GO
+
+-- sp_columns_managed with a short mixed-case schema: output must not change.
+SELECT TABLE_SCHEMA FROM sys.spt_columns_view_managed WHERE TABLE_NAME = 'babel7239_mt';
+GO
+EXEC sp_columns_managed NULL, 'babel7239_mixedsch', 'babel7239_mt';
+GO
+
+CREATE LOGIN Very_Long_Catalog_Login2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx WITH PASSWORD = '12345678';
+GO
+CREATE USER Very_Long_Catalog_User2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx FOR LOGIN Very_Long_Catalog_Login2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+CREATE LOGIN babel7239_short_login WITH PASSWORD = '12345678';
+GO
+CREATE USER babel7239_short_user FOR LOGIN babel7239_short_login;
+GO
+
+-- sp_helpuser without arguments (all users): long and short logins.
+CREATE TABLE #babel7239_helpuser_all (UserName sys.nvarchar(128), RoleName sys.nvarchar(128), LoginName sys.nvarchar(128), DefDBName sys.nvarchar(128), DefSchemaName sys.nvarchar(128), UserID INT, SID sys.varbinary(85));
+GO
+INSERT INTO #babel7239_helpuser_all EXEC sp_helpuser;
+GO
+SELECT UserName, LoginName FROM #babel7239_helpuser_all WHERE UserName IN ('Very_Long_Catalog_User2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'babel7239_short_user') ORDER BY UserName;
+GO
+
+DROP TABLE #babel7239_helpuser_all;
+GO
+DROP USER babel7239_short_user;
+GO
+DROP LOGIN babel7239_short_login;
+GO
+DROP USER Very_Long_Catalog_User2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP LOGIN Very_Long_Catalog_Login2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP TABLE babel7239_MixedSch.babel7239_mt;
+GO
+DROP SCHEMA babel7239_MixedSch;
+GO
+DROP TABLE babel7239_ShortDefault;
+GO
+DROP TYPE babel7239_ShortTT;
+GO
+DROP FUNCTION babel7239_short_tvf;
+GO
+DROP PROCEDURE babel7239_short_proc;
+GO
+DROP FUNCTION Very_Long_Catalog_Param_Func_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+
+-- BABEL-7239: fn_listextendedproperty shows original names for long procedures,
+-- functions, types and sequences (short-name controls first).
+CREATE PROCEDURE babel7239_xp_short_proc AS SELECT 1;
+GO
+CREATE TYPE babel7239_xp_short_type FROM INT;
+GO
+CREATE SEQUENCE babel7239_xp_short_seq;
+GO
+CREATE PROCEDURE Very_Long_Catalog_XProp_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS SELECT 1;
+GO
+CREATE FUNCTION Very_Long_Catalog_XProp_Func_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx() RETURNS INT AS BEGIN RETURN 1 END;
+GO
+CREATE TYPE Very_Long_Catalog_XProp_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx FROM INT;
+GO
+CREATE TYPE Very_Long_Catalog_XProp_TableType_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS TABLE (a INT);
+GO
+CREATE SEQUENCE Very_Long_Catalog_XProp_Seq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+EXEC sp_addextendedproperty 'babel7239_xp', 'v', 'schema', 'dbo', 'procedure', 'babel7239_xp_short_proc';
+GO
+EXEC sp_addextendedproperty 'babel7239_xp', 'v', 'schema', 'dbo', 'type', 'babel7239_xp_short_type';
+GO
+EXEC sp_addextendedproperty 'babel7239_xp', 'v', 'schema', 'dbo', 'sequence', 'babel7239_xp_short_seq';
+GO
+EXEC sp_addextendedproperty 'babel7239_xp', 'v', 'schema', 'dbo', 'procedure', 'Very_Long_Catalog_XProp_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+GO
+EXEC sp_addextendedproperty 'babel7239_xp', 'v', 'schema', 'dbo', 'function', 'Very_Long_Catalog_XProp_Func_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+GO
+EXEC sp_addextendedproperty 'babel7239_xp', 'v', 'schema', 'dbo', 'type', 'Very_Long_Catalog_XProp_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+GO
+EXEC sp_addextendedproperty 'babel7239_xp', 'v', 'schema', 'dbo', 'type', 'Very_Long_Catalog_XProp_TableType_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+GO
+EXEC sp_addextendedproperty 'babel7239_xp', 'v', 'schema', 'dbo', 'sequence', 'Very_Long_Catalog_XProp_Seq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+GO
+SELECT objtype, objname FROM fn_listextendedproperty('babel7239_xp', 'schema', 'dbo', 'procedure', NULL, NULL, NULL) ORDER BY objname;
+GO
+SELECT objtype, objname FROM fn_listextendedproperty('babel7239_xp', 'schema', 'dbo', 'function', NULL, NULL, NULL) ORDER BY objname;
+GO
+SELECT objtype, objname FROM fn_listextendedproperty('babel7239_xp', 'schema', 'dbo', 'type', NULL, NULL, NULL) ORDER BY objname;
+GO
+SELECT objtype, objname FROM fn_listextendedproperty('babel7239_xp', 'schema', 'dbo', 'sequence', NULL, NULL, NULL) ORDER BY objname;
+GO
+-- update and drop still find the long-named objects
+EXEC sp_updateextendedproperty 'babel7239_xp', 'v2', 'schema', 'dbo', 'procedure', 'Very_Long_Catalog_XProp_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+GO
+SELECT objname, CAST(value AS VARCHAR(10)) FROM fn_listextendedproperty('babel7239_xp', 'schema', 'dbo', 'procedure', 'Very_Long_Catalog_XProp_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', NULL, NULL);
+GO
+EXEC sp_dropextendedproperty 'babel7239_xp', 'schema', 'dbo', 'procedure', 'Very_Long_Catalog_XProp_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+GO
+SELECT COUNT(*) FROM fn_listextendedproperty('babel7239_xp', 'schema', 'dbo', 'procedure', 'Very_Long_Catalog_XProp_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', NULL, NULL);
+GO
+DROP SEQUENCE Very_Long_Catalog_XProp_Seq_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP TYPE Very_Long_Catalog_XProp_TableType_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP TYPE Very_Long_Catalog_XProp_Type_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP FUNCTION Very_Long_Catalog_XProp_Func_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP PROCEDURE Very_Long_Catalog_XProp_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP SEQUENCE babel7239_xp_short_seq;
+GO
+DROP TYPE babel7239_xp_short_type;
+GO
+DROP PROCEDURE babel7239_xp_short_proc;
+GO
+
+-- BABEL-7239: ERROR_PROCEDURE() returns the original name of a long procedure.
+CREATE PROCEDURE babel7239_err_short_proc AS BEGIN TRY SELECT 1/0 END TRY BEGIN CATCH SELECT ERROR_PROCEDURE() END CATCH;
+GO
+CREATE PROCEDURE Very_Long_Catalog_Error_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS BEGIN TRY SELECT 1/0 END TRY BEGIN CATCH SELECT ERROR_PROCEDURE() END CATCH;
+GO
+EXEC babel7239_err_short_proc;
+GO
+EXEC Very_Long_Catalog_Error_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP PROCEDURE Very_Long_Catalog_Error_Proc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP PROCEDURE babel7239_err_short_proc;
+GO
+
+-- BABEL-7239: sys.database_principals.default_schema_name and sp_helpuser DefSchemaName
+-- show the original name of a long default schema; the session views show the original
+-- name of a long login.
+CREATE SCHEMA Very_Long_Catalog_Default_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+CREATE SCHEMA babel7239_short_sch;
+GO
+CREATE LOGIN Very_Long_Catalog_Session_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx WITH PASSWORD = '12345678';
+GO
+CREATE LOGIN babel7239_short_login2 WITH PASSWORD = '12345678';
+GO
+CREATE USER Very_Long_Catalog_Session_User_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx FOR LOGIN Very_Long_Catalog_Session_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx WITH DEFAULT_SCHEMA = Very_Long_Catalog_Default_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+CREATE USER babel7239_short_user2 FOR LOGIN babel7239_short_login2 WITH DEFAULT_SCHEMA = babel7239_short_sch;
+GO
+SELECT name, default_schema_name FROM sys.database_principals WHERE name IN ('Very_Long_Catalog_Session_User_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'babel7239_short_user2') ORDER BY name;
+GO
+CREATE TABLE #babel7239_helpuser_ds (UserName sys.nvarchar(128), RoleName sys.nvarchar(128), LoginName sys.nvarchar(128), DefDBName sys.nvarchar(128), DefSchemaName sys.nvarchar(128), UserID INT, SID sys.varbinary(85));
+GO
+INSERT INTO #babel7239_helpuser_ds EXEC sp_helpuser 'Very_Long_Catalog_Session_User_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+GO
+INSERT INTO #babel7239_helpuser_ds EXEC sp_helpuser 'babel7239_short_user2';
+GO
+SELECT UserName, DefSchemaName FROM #babel7239_helpuser_ds ORDER BY UserName;
+GO
+DROP TABLE #babel7239_helpuser_ds;
+GO
+
+-- tsql user=Very_Long_Catalog_Session_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx password=12345678
+SELECT login_name, original_login_name FROM sys.dm_exec_sessions WHERE session_id = @@SPID;
+GO
+SELECT DISTINCT RTRIM(loginname) FROM sys.sysprocesses WHERE spid = @@SPID;
+GO
+
+-- tsql user=babel7239_short_login2 password=12345678
+SELECT login_name, original_login_name FROM sys.dm_exec_sessions WHERE session_id = @@SPID;
+GO
+SELECT DISTINCT RTRIM(loginname) FROM sys.sysprocesses WHERE spid = @@SPID;
+GO
+-- terminate-tsql-conn user=Very_Long_Catalog_Session_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx password=12345678
+-- terminate-tsql-conn user=babel7239_short_login2 password=12345678
+
+-- tsql
+DROP USER Very_Long_Catalog_Session_User_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP USER babel7239_short_user2;
+GO
+DROP LOGIN Very_Long_Catalog_Session_Login_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP LOGIN babel7239_short_login2;
+GO
+DROP SCHEMA Very_Long_Catalog_Default_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP SCHEMA babel7239_short_sch;
+GO
+
+-- BABEL-7239: sp_cursor_list and sp_describe_cursor report and find a cursor with a long name.
+-- sp_cursor_list, short name
+DECLARE @ref sysname, @cn sysname, @sc smallint, @st smallint, @mo smallint, @co smallint, @sl smallint, @os smallint, @cr numeric(10,0), @fs smallint, @cc smallint, @rc numeric(10,0), @lo smallint, @ch int;
+DECLARE @r CURSOR;
+DECLARE babel7239_short_cursor CURSOR LOCAL FOR SELECT 1 AS a;
+OPEN babel7239_short_cursor;
+EXEC sp_cursor_list @r OUTPUT, 3;
+FETCH NEXT FROM @r INTO @ref, @cn, @sc, @st, @mo, @co, @sl, @os, @cr, @fs, @cc, @rc, @lo, @ch;
+SELECT @ref, @cn;
+CLOSE babel7239_short_cursor;
+DEALLOCATE babel7239_short_cursor;
+GO
+-- sp_cursor_list, long name
+DECLARE @ref sysname, @cn sysname, @sc smallint, @st smallint, @mo smallint, @co smallint, @sl smallint, @os smallint, @cr numeric(10,0), @fs smallint, @cc smallint, @rc numeric(10,0), @lo smallint, @ch int;
+DECLARE @r CURSOR;
+DECLARE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx CURSOR LOCAL FOR SELECT 1 AS a;
+OPEN Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+EXEC sp_cursor_list @r OUTPUT, 3;
+FETCH NEXT FROM @r INTO @ref, @cn, @sc, @st, @mo, @co, @sl, @os, @cr, @fs, @cc, @rc, @lo, @ch;
+SELECT @ref, @cn;
+CLOSE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+DEALLOCATE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+-- sp_describe_cursor, short name (any case)
+DECLARE @ref sysname, @cn sysname, @sc smallint, @st smallint, @mo smallint, @co smallint, @sl smallint, @os smallint, @cr numeric(10,0), @fs smallint, @cc smallint, @rc numeric(10,0), @lo smallint, @ch int;
+DECLARE @r CURSOR;
+DECLARE babel7239_short_cursor CURSOR LOCAL FOR SELECT 1 AS a;
+OPEN babel7239_short_cursor;
+EXEC sp_describe_cursor @r OUTPUT, N'local', N'BABEL7239_SHORT_CURSOR';
+FETCH NEXT FROM @r INTO @ref, @cn, @sc, @st, @mo, @co, @sl, @os, @cr, @fs, @cc, @rc, @lo, @ch;
+SELECT @ref, @cn;
+CLOSE babel7239_short_cursor;
+DEALLOCATE babel7239_short_cursor;
+GO
+-- sp_describe_cursor, long name (any case)
+DECLARE @ref sysname, @cn sysname, @sc smallint, @st smallint, @mo smallint, @co smallint, @sl smallint, @os smallint, @cr numeric(10,0), @fs smallint, @cc smallint, @rc numeric(10,0), @lo smallint, @ch int;
+DECLARE @r CURSOR;
+DECLARE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx CURSOR LOCAL FOR SELECT 1 AS a;
+OPEN Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+EXEC sp_describe_cursor @r OUTPUT, N'local', N'VERY_LONG_CATALOG_CURSOR_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+FETCH NEXT FROM @r INTO @ref, @cn, @sc, @st, @mo, @co, @sl, @os, @cr, @fs, @cc, @rc, @lo, @ch;
+SELECT @ref, @cn;
+CLOSE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+DEALLOCATE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+-- sp_describe_cursor tells two long cursors with the same first 63 characters apart
+DECLARE @ref sysname, @cn sysname, @sc smallint, @st smallint, @mo smallint, @co smallint, @sl smallint, @os smallint, @cr numeric(10,0), @fs smallint, @cc smallint, @rc numeric(10,0), @lo smallint, @ch int;
+DECLARE @r CURSOR;
+DECLARE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx CURSOR LOCAL FOR SELECT 1 AS a;
+DECLARE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxy CURSOR LOCAL FOR SELECT 2 AS a;
+OPEN Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+OPEN Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxy;
+EXEC sp_describe_cursor @r OUTPUT, N'local', N'Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxy';
+FETCH NEXT FROM @r INTO @ref, @cn, @sc, @st, @mo, @co, @sl, @os, @cr, @fs, @cc, @rc, @lo, @ch;
+SELECT @ref, @cn;
+CLOSE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+CLOSE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxy;
+DEALLOCATE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+DEALLOCATE Very_Long_Catalog_Cursor_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxy;
+GO
+
+-- sp_columns reports the type of a column with a long name
+CREATE TABLE babel7239_spcol_t (Very_Long_Column_Name_For_Sp_Columns_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT, c2 VARCHAR(5));
+GO
+EXEC sp_columns @table_name = 'babel7239_spcol_t';
+GO
+-- inline table-valued function with a long parameter name
+CREATE FUNCTION babel7239_itvf_longparam(@Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT) RETURNS TABLE AS RETURN SELECT @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx + 1 AS c;
+GO
+SELECT * FROM babel7239_itvf_longparam(5);
+GO
+-- sp_executesql with a long parameter name passed by name
+EXEC sp_executesql N'SELECT @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx + 1 AS r', N'@Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT', @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = 5;
+GO
+DECLARE @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT;
+EXEC sp_executesql N'SELECT @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = 7', N'@Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT OUTPUT', @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx OUTPUT;
+SELECT @Very_Long_Parameter_Name_For_Inline_Tvf_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS outval;
+GO
+-- HAS_PERMS_BY_NAME with a long schema name and a long column name
+CREATE SCHEMA Very_Long_Schema_Name_For_Has_Perms_By_Name_Check_xxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+CREATE TABLE Very_Long_Schema_Name_For_Has_Perms_By_Name_Check_xxxxxxxxxxxxxxxxxxxxxxxxxx.babel7239_hp_t (a INT);
+GO
+SELECT HAS_PERMS_BY_NAME('Very_Long_Schema_Name_For_Has_Perms_By_Name_Check_xxxxxxxxxxxxxxxxxxxxxxxxxx.babel7239_hp_t', 'OBJECT', 'SELECT');
+GO
+SELECT HAS_PERMS_BY_NAME('Very_Long_Schema_Name_For_Has_Perms_By_Name_Check_xxxxxxxxxxxxxxxxxxxxxxxxxx.babel7239_hp_t', 'OBJECT', 'SELECT', 'a', 'COLUMN');
+GO
+SELECT HAS_PERMS_BY_NAME('babel7239_spcol_t', 'OBJECT', 'SELECT', 'Very_Long_Column_Name_For_Sp_Columns_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'COLUMN');
+GO
+DROP TABLE Very_Long_Schema_Name_For_Has_Perms_By_Name_Check_xxxxxxxxxxxxxxxxxxxxxxxxxx.babel7239_hp_t;
+GO
+DROP SCHEMA Very_Long_Schema_Name_For_Has_Perms_By_Name_Check_xxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP FUNCTION babel7239_itvf_longparam;
+GO
+DROP TABLE babel7239_spcol_t;
+GO
+
+-- OUTPUT parameter with a long name passed by name, out of declaration order
+CREATE PROCEDURE babel7239_longout_p @Very_Long_Proc_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT, @Very_Long_Proc_Param_Out_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT OUTPUT AS SET @Very_Long_Proc_Param_Out_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @Very_Long_Proc_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx * 2;
+GO
+DECLARE @r INT;
+EXEC babel7239_longout_p @Very_Long_Proc_Param_Out_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r OUTPUT, @Very_Long_Proc_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = 4;
+SELECT @r AS outval;
+GO
+DECLARE @r INT;
+EXEC babel7239_longout_p @VERY_LONG_PROC_PARAM_IN_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = 5, @very_long_proc_param_out_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r OUTPUT;
+SELECT @r AS outval;
+GO
+DROP PROCEDURE babel7239_longout_p;
+GO
+
+-- BABEL-7239: more cases for sp_columns, inline TVF / sp_executesql / EXEC parameter
+-- names and HAS_PERMS_BY_NAME with long (>= 64 byte) identifiers
+
+-- sp_columns_100 reports the type of a column with a long name
+CREATE TABLE babel7239_spcol100_t (Very_Long_Column_Name_For_Sp_Columns_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx DECIMAL(10,2), c2 NVARCHAR(7));
+GO
+EXEC sp_columns_100 @table_name = 'babel7239_spcol100_t';
+GO
+-- sp_columns on short names is unchanged: mixed case, delimited, user type, renamed and dropped columns
+CREATE TYPE babel7239_spcol_ty FROM VARCHAR(9);
+GO
+CREATE TABLE babel7239_spcol_short (Id INT IDENTITY(1,1), MixedCase VARCHAR(10), [col with space] NVARCHAR(20), [dot.col] INT, gone INT, k babel7239_spcol_ty, c BIT);
+GO
+ALTER TABLE babel7239_spcol_short DROP COLUMN gone;
+GO
+EXEC sp_rename 'babel7239_spcol_short.c', 'c_renamed', 'COLUMN';
+GO
+EXEC sp_columns @table_name = 'babel7239_spcol_short';
+GO
+DROP TABLE babel7239_spcol_short;
+GO
+DROP TYPE babel7239_spcol_ty;
+GO
+DROP TABLE babel7239_spcol100_t;
+GO
+
+-- inline TVF: two long parameters, each used more than once
+CREATE FUNCTION babel7239_itvf_two(@Very_Long_Itvf_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT, @Very_Long_Itvf_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT) RETURNS TABLE AS
+RETURN SELECT @Very_Long_Itvf_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx - @Very_Long_Itvf_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS diff WHERE @Very_Long_Itvf_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx > @Very_Long_Itvf_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+SELECT * FROM babel7239_itvf_two(5, 1);
+GO
+SELECT * FROM babel7239_itvf_two(1, 5);
+GO
+DROP FUNCTION babel7239_itvf_two;
+GO
+-- inline TVF: parameter names at the 63/64 byte boundary
+CREATE FUNCTION babel7239_itvf_63(@P63_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT) RETURNS TABLE AS RETURN SELECT @P63_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS c;
+GO
+SELECT * FROM babel7239_itvf_63(63);
+GO
+CREATE FUNCTION babel7239_itvf_64(@P63_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT) RETURNS TABLE AS RETURN SELECT @P63_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS c;
+GO
+SELECT * FROM babel7239_itvf_64(64);
+GO
+CREATE FUNCTION babel7239_itvf_65(@P64_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT) RETURNS TABLE AS RETURN SELECT @P64_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS c;
+GO
+SELECT * FROM babel7239_itvf_65(65);
+GO
+DROP FUNCTION babel7239_itvf_63;
+GO
+DROP FUNCTION babel7239_itvf_64;
+GO
+DROP FUNCTION babel7239_itvf_65;
+GO
+
+-- sp_executesql: long parameters passed by name in another case and out of order
+EXEC sp_executesql N'SELECT @Very_Long_Exec_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx - @Very_Long_Exec_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS diff', N'@Very_Long_Exec_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT, @Very_Long_Exec_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT', @VERY_LONG_EXEC_PARAM_B_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = 1, @very_long_exec_param_a_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = 5;
+GO
+-- sp_executesql: long parameters passed by position
+EXEC sp_executesql N'SELECT @Very_Long_Exec_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx - @Very_Long_Exec_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS diff', N'@Very_Long_Exec_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT, @Very_Long_Exec_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT', 5, 1;
+GO
+-- sp_executesql: unknown long parameter name still raises an error
+EXEC sp_executesql N'SELECT @Very_Long_Exec_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS v', N'@Very_Long_Exec_Param_A_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT', @Very_Long_Exec_Param_B_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = 1;
+GO
+
+-- EXEC: two long OUTPUT parameters passed by name in reverse order
+CREATE PROCEDURE babel7239_longout2_p @Very_Long_Out_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT, @Very_Long_Out_Param_O1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT OUTPUT, @Very_Long_Out_Param_O2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT OUTPUT AS
+BEGIN
+    SET @Very_Long_Out_Param_O1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @Very_Long_Out_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx * 2;
+    SET @Very_Long_Out_Param_O2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @Very_Long_Out_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx * 3;
+END;
+GO
+DECLARE @r1 INT, @r2 INT;
+EXEC babel7239_longout2_p @Very_Long_Out_Param_O2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r2 OUTPUT, @Very_Long_Out_Param_O1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r1 OUTPUT, @Very_Long_Out_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = 4;
+SELECT @r1 AS out1, @r2 AS out2;
+GO
+-- long INOUT parameter passed by name without OUTPUT keeps the caller value
+DECLARE @r1 INT = -1, @r2 INT;
+EXEC babel7239_longout2_p @Very_Long_Out_Param_O2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r2 OUTPUT, @Very_Long_Out_Param_O1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r1, @Very_Long_Out_Param_In_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = 4;
+SELECT @r1 AS out1, @r2 AS out2;
+GO
+-- positional call is unchanged
+DECLARE @r1 INT, @r2 INT;
+EXEC babel7239_longout2_p 4, @r1 OUTPUT, @r2 OUTPUT;
+SELECT @r1 AS out1, @r2 AS out2;
+GO
+DROP PROCEDURE babel7239_longout2_p;
+GO
+-- OUTPUT parameter names at the 63/64 byte boundary passed by name out of order
+CREATE PROCEDURE babel7239_out63_p @a INT, @P63_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT OUTPUT AS SET @P63_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @a * 2;
+GO
+DECLARE @r INT;
+EXEC babel7239_out63_p @P63_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r OUTPUT, @a = 4;
+SELECT @r AS outval;
+GO
+CREATE PROCEDURE babel7239_out64_p @a INT, @P64_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT OUTPUT AS SET @P64_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @a * 2;
+GO
+DECLARE @r INT;
+EXEC babel7239_out64_p @P64_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = @r OUTPUT, @a = 5;
+SELECT @r AS outval;
+GO
+DROP PROCEDURE babel7239_out63_p;
+GO
+DROP PROCEDURE babel7239_out64_p;
+GO
+
+-- HAS_PERMS_BY_NAME on every object kind in a schema with a long name
+CREATE SCHEMA Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+CREATE TABLE Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t (a INT, Very_Long_Column_Name_For_Sp_Columns_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx INT);
+GO
+CREATE VIEW Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_v AS SELECT a FROM Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t;
+GO
+CREATE PROCEDURE Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_p AS SELECT 1;
+GO
+CREATE FUNCTION Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_f() RETURNS INT AS BEGIN RETURN 1 END;
+GO
+SELECT HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t', 'OBJECT', 'SELECT') AS tbl,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_v', 'OBJECT', 'SELECT') AS vw,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_p', 'OBJECT', 'EXECUTE') AS proc_exec,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_f', 'OBJECT', 'EXECUTE') AS func_exec,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t', 'OBJECT', 'ANY') AS any_perm,
+       HAS_PERMS_BY_NAME('[Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx].[hp_t]', 'OBJECT', 'SELECT') AS bracketed,
+       HAS_PERMS_BY_NAME('VERY_LONG_HAS_PERMS_SCHEMA_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.HP_T', 'OBJECT', 'SELECT') AS upper_case,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'SCHEMA', 'SELECT') AS schema_class;
+GO
+-- long column in a long schema, other case, and a column that does not exist
+SELECT HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t', 'OBJECT', 'SELECT', 'Very_Long_Column_Name_For_Sp_Columns_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'COLUMN') AS long_col,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t', 'OBJECT', 'SELECT', 'VERY_LONG_COLUMN_NAME_FOR_SP_COLUMNS_CHECK_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', 'COLUMN') AS long_col_upper,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t', 'OBJECT', 'SELECT', 'Very_Long_Column_Name_For_Sp_Columns_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_nope', 'COLUMN') AS missing_col,
+       HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t', 'OBJECT', 'SELECT', 'a', 'COLUMN') AS short_col;
+GO
+-- object that does not exist in the long schema
+SELECT HAS_PERMS_BY_NAME('Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_nope', 'OBJECT', 'SELECT') AS missing_obj;
+GO
+DROP FUNCTION Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_f;
+GO
+DROP PROCEDURE Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_p;
+GO
+DROP VIEW Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_v;
+GO
+DROP TABLE Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.hp_t;
+GO
+DROP SCHEMA Very_Long_Has_Perms_Schema_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+
+-- ERROR_PROCEDURE() for an error raised by an EXEC inside a long-named procedure, under an explicit transaction
+CREATE PROCEDURE babel7239_ep_callee @p1 INT AS SELECT @p1;
+GO
+CREATE PROCEDURE Very_Long_Error_Proc_Name_For_Explicit_Tran_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS BEGIN TRY EXEC babel7239_ep_callee; END TRY BEGIN CATCH SELECT ERROR_PROCEDURE() AS ep, ERROR_NUMBER() AS en; END CATCH;
+GO
+BEGIN TRAN;
+EXEC Very_Long_Error_Proc_Name_For_Explicit_Tran_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+EXEC Very_Long_Error_Proc_Name_For_Explicit_Tran_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+ROLLBACK;
+GO
+DROP PROCEDURE Very_Long_Error_Proc_Name_For_Explicit_Tran_Check_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP PROCEDURE babel7239_ep_callee;
+GO
+
+-- ERROR_PROCEDURE() for a procedure name of 60-63 bytes (same length as its physical name), executed twice
+CREATE PROCEDURE Err_Proc_Sixty_One_Bytes_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx AS BEGIN TRY SELECT 1/0 END TRY BEGIN CATCH SELECT ERROR_PROCEDURE() AS ep END CATCH;
+GO
+EXEC Err_Proc_Sixty_One_Bytes_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+EXEC Err_Proc_Sixty_One_Bytes_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+DROP PROCEDURE Err_Proc_Sixty_One_Bytes_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+GO
+
+-- ===========================================
+-- sys.babelfish_restore_itvf_column_names is for dump and restore only
+-- ===========================================
+CREATE FUNCTION babel7239_restore_tvf() RETURNS TABLE AS RETURN (SELECT 1 AS c1, 2 AS c2);
+GO
+
+-- psql
+-- not allowed outside dump and restore
+SELECT sys.babelfish_restore_itvf_column_names('master_dbo.babel7239_restore_tvf()'::regprocedure, ARRAY['c1', 'c2']);
+GO
+
+-- psql
+-- EXECUTE is revoked from PUBLIC
+SELECT has_function_privilege('public', 'sys.babelfish_restore_itvf_column_names(pg_catalog.regprocedure, pg_catalog.text[])', 'EXECUTE');
+GO
+
+-- psql
+CREATE ROLE babel7239_restore_role;
+GO
+
+-- psql
+SET ROLE babel7239_restore_role;
+GO
+
+-- psql
+-- a role that is neither the owner nor a superuser cannot call it
+SELECT sys.babelfish_restore_itvf_column_names('master_dbo.babel7239_restore_tvf()'::regprocedure, ARRAY['c1', 'c2']);
+GO
+
+-- psql
+RESET ROLE;
+GO
+
+-- psql
+DROP ROLE babel7239_restore_role;
+GO
+
+-- tsql
+DROP FUNCTION babel7239_restore_tvf;
+GO
+
 -- CLEANUP
 -- ===========================================
 DROP VIEW Very_Long_View_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars_For_Testing;

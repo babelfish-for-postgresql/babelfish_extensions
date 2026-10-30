@@ -97,3 +97,35 @@ Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC#!#dbo#!#babel5975_u
 
 USE master;
 GO
+
+-- BABEL-7239: catalog views and sp_addextendedproperty work in the long-named database
+-- that has a regular user.
+USE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC;
+GO
+SELECT name FROM sys.database_principals WHERE name = 'babel7239_vu_db_user';
+GO
+~~START~~
+varchar
+babel7239_vu_db_user
+~~END~~
+
+SELECT name FROM sys.sysusers WHERE name = 'babel7239_vu_db_user';
+GO
+~~START~~
+varchar
+babel7239_vu_db_user
+~~END~~
+
+EXEC sp_addextendedproperty 'babel7239_vu_prop', 'v', 'schema', 'dbo', 'table', 'babel7239_vu_db_t';
+GO
+SELECT objname, name FROM fn_listextendedproperty('babel7239_vu_prop', 'schema', 'dbo', 'table', NULL, NULL, NULL);
+GO
+~~START~~
+varchar#!#varchar
+babel7239_vu_db_t#!#babel7239_vu_prop
+~~END~~
+
+EXEC sp_dropextendedproperty 'babel7239_vu_prop', 'schema', 'dbo', 'table', 'babel7239_vu_db_t';
+GO
+USE master;
+GO
