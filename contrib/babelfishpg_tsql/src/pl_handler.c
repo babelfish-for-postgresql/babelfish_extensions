@@ -1922,8 +1922,14 @@ get_bbf_original_colname(Oid relid, int16 attnum, const char *colname)
 		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(attTuple);
 		char *baseColName = NameStr(att->attname);
 
-		/* Only look up original name if user did not provide a column alias */
-		if (pg_strcasecmp(colname, baseColName) == 0)
+		/*
+		 * Only look up original name if user did not provide a column alias
+		 * (colname matches the physical base column name), and the physical
+		 * name is long enough to have actually been truncated/MD5-hashed
+		 * (mirrors the octet_length >= 60 gate in the catalog views).
+		 */
+		if (pg_strcasecmp(colname, baseColName) == 0 &&
+			strlen(baseColName) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
 		{
 			Datum		attOptDatum;
 			bool		attOptIsNull;
@@ -1940,6 +1946,37 @@ get_bbf_original_colname(Oid relid, int16 attnum, const char *colname)
 		ReleaseSysCache(attTuple);
 	}
 	return origName;
+}
+
+/*
+ * pltsql_substitute_computed_column_names
+ *
+ * pltsql_substitute_simple_column_names_hook implementation: for a
+ * relation RTE's already-resolved column display names (as built by
+ * set_simple_column_names() in standalone expression deparsing, e.g.
+ * sys.computed_columns.definition), substitute the original T-SQL column
+ * name for any column whose physical name was truncated/MD5-hashed to fit
+ * NAMEDATALEN. colnames is indexed by physical column position (0-based);
+ * entries are replaced in place.
+ */
+void
+pltsql_substitute_computed_column_names(RangeTblEntry *rte, char **colnames, int num_cols)
+{
+	int			i;
+
+	if (!IS_TDS_CLIENT() || rte->rtekind != RTE_RELATION)
+		return;
+
+	for (i = 0; i < num_cols; i++)
+	{
+		if (colnames[i] != NULL && strlen(colnames[i]) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+		{
+			char *original_name = get_bbf_original_colname(rte->relid, i + 1, colnames[i]);
+
+			if (original_name != NULL)
+				colnames[i] = original_name;
+		}
+	}
 }
 
 /*

@@ -6617,7 +6617,9 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 			if (query.substr(offset, local_id_u32.length()) == local_id_u32) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
 			{
 				int dno;
-				PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, local_id_lookup.c_str(), nullptr, nullptr, nullptr);
+				/* namespace entries are stored downcased and truncated, long names must be looked up the same way */
+				const char *ns_name = downcase_truncate_identifier(local_id_lookup.c_str(), local_id_lookup.length(), false);
+				PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, ns_name, nullptr, nullptr, nullptr);
 				if (nse)
 					dno = nse->itemno;
 				else
@@ -7501,6 +7503,10 @@ makeDeclareCursorStatement(TSqlParser::Declare_cursorContext *ctx)
 	else
 	{
 		curvar = build_cursor_variable(cursor_name.c_str(), getLineNo(ctx));
+
+		/* A long name is hashed; keep the original so it can be reported. */
+		if (cursor_name.length() >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+			curvar->cursor_orig_name = downcase_identifier(cursor_name_raw.c_str(), cursor_name_raw.length(), false, false);
 	}
 
 	int cursor_option = 0;

@@ -498,7 +498,15 @@ CAST(
     ELSE NULL
   END
   AS SYS.NVARCHAR(60)) AS type_desc,
-CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
+CAST(COALESCE(
+    CASE WHEN pg_catalog.octet_length(Ext.default_schema_name) >= 60 THEN
+        (SELECT pg_catalog.lower(ne.orig_name COLLATE "C")
+         FROM sys.babelfish_namespace_ext ne
+         WHERE ne.dbid = Db.dbid
+           AND sys.babelfish_truncate_identifier(pg_catalog.lower(ne.orig_name COLLATE "C")) = Ext.default_schema_name COLLATE "C"
+         LIMIT 1)
+    END,
+    Ext.default_schema_name) AS SYS.SYSNAME) AS default_schema_name,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
 CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
 CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,

@@ -1039,6 +1039,10 @@ get_extended_property_from_tuple(Relation relation, HeapTuple tuple,
 					reloptions = DatumGetArrayTypeP(datum);
 					original_major_name = get_value_by_name_from_array(reloptions, ATTOPTION_BBF_ORIGINAL_TABLE_NAME);
 				}
+				/* Sequences keep their original name in the identifier mapping, not reloptions. */
+				if (strcmp(type, ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SEQUENCE]) == 0 &&
+					strlen(major_name) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+					original_major_name = get_bbf_original_object_name(RelationRelationId, heaptuple);
 				ReleaseSysCache(heaptuple);
 
 				if (strcmp(type, ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE]) == 0 ||
@@ -1066,6 +1070,8 @@ get_extended_property_from_tuple(Relation relation, HeapTuple tuple,
 					{
 						procoid = procform->oid;
 						find = true;
+						if (strlen(major_name) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+							original_major_name = get_bbf_original_object_name(ProcedureRelationId, heaptuple);
 						break;
 					}
 				}
@@ -1091,6 +1097,8 @@ get_extended_property_from_tuple(Relation relation, HeapTuple tuple,
 
 				typeform = (Form_pg_type) GETSTRUCT(heaptuple);
 				typeoid = typeform->oid;
+				if (strlen(major_name) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+					original_major_name = get_bbf_original_object_name(TypeRelationId, heaptuple);
 				ReleaseSysCache(heaptuple);
 
 				if (strcmp(type, ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TYPE]) == 0)
