@@ -83,13 +83,34 @@ extern int	execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockA
 extern InlineCodeBlockArgs *create_args(int numargs);
 
 /*
+ * Quote an identifier with T-SQL brackets ([name]), doubling any embedded ']'.
+ */
+static char *
+quote_tsql_bracket_identifier(const char *ident)
+{
+	StringInfoData	buf;
+	const char 		*p;
+
+	initStringInfo(&buf);
+	appendStringInfoChar(&buf, '[');
+	for (p = ident; *p; p++)
+	{
+		if (*p == ']')
+			appendStringInfoChar(&buf, ']');
+		appendStringInfoChar(&buf, *p);
+	}
+	appendStringInfoChar(&buf, ']');
+	return buf.data;
+}
+
+/*
  * Build a comma-separated list of quoted column identifiers from the parser's
  * List of column-name strings, for use in the temp table CREATE and the flush
  * INSERT. Returns NULL (no explicit column list) when columns is NIL. The
  * caller is responsible for pfree'ing the returned string.
  */
 static char *
-build_quoted_column_list(List *columns)
+build_quoted_column_list(List *columns, bool tsql_brackets)
 {
 	StringInfoData	cols;
 	ListCell	   *lc;
@@ -104,7 +125,10 @@ build_quoted_column_list(List *columns)
 		if (!first)
 			appendStringInfoString(&cols, ", ");
 		first = false;
-		appendStringInfoString(&cols, quote_identifier((char *) lfirst(lc)));
+		if (tsql_brackets)
+			appendStringInfoString(&cols, quote_tsql_bracket_identifier((char *) lfirst(lc)));
+		else
+			appendStringInfoString(&cols, quote_identifier((char *) lfirst(lc)));
 	}
 	return cols.data;
 }
@@ -567,7 +591,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema
 	 * (e.g. pg_temp_0) is not resolvable as a schema under the T-SQL dialect.
 	 */
 	temp_rel = table_open(temp_oid, NoLock);
-	temp_name = quote_identifier(pstrdup(RelationGetRelationName(temp_rel)));
+	temp_name = quote_tsql_bracket_identifier(RelationGetRelationName(temp_rel));
 	table_close(temp_rel, NoLock);
 
 	initStringInfo(&flush_query);
@@ -585,15 +609,15 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema
 	 */
 	if (target_db != NULL)
 		qualified_target = psprintf("%s.%s.%s",
-									quote_identifier(target_db),
-									quote_identifier(target_schema ? target_schema : "dbo"),
-									quote_identifier(target_table));
+									quote_tsql_bracket_identifier(target_db),
+									quote_tsql_bracket_identifier(target_schema ? target_schema : "dbo"),
+									quote_tsql_bracket_identifier(target_table));
 	else if (target_schema != NULL)
 		qualified_target = psprintf("%s.%s",
-									quote_identifier(target_schema),
-									quote_identifier(target_table));
+									quote_tsql_bracket_identifier(target_schema),
+									quote_tsql_bracket_identifier(target_table));
 	else
-		qualified_target = pstrdup(quote_identifier(target_table));
+		qualified_target = quote_tsql_bracket_identifier(target_table);
 
 	appendStringInfo(&flush_query,
 		"INSERT INTO %s%s SELECT * FROM %s",
@@ -867,8 +891,8 @@ insert_exec_setup(PLtsql_execstate *estate,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("'INSERT EXEC' cannot be used within a function")));
 
-	/* Build the quoted column list (if any) for temp table creation */
-	column_list = build_quoted_column_list(info->columns);
+	/* Build the quoted column list (if any) for temp table creation (PG parser) */
+	column_list = build_quoted_column_list(info->columns, false);
 
 	/* Start an implicit transaction for INSERT EXEC if not already in one */
 	if (!pltsql_disable_batch_auto_commit &&
@@ -909,7 +933,8 @@ insert_exec_setup(PLtsql_execstate *estate,
 void
 insert_exec_flush_and_cleanup(PLtsql_execstate *estate, InsertExecInfo *info)
 {
-	char	   *column_list = build_quoted_column_list(info->columns);
+	/* Flush is parsed as T-SQL: bracket-quote the column list */
+	char	   *column_list = build_quoted_column_list(info->columns, true);
 	const char *flush_schema = (info->db_name != NULL || info->schema != NULL) ? info->schema : NULL;
 
 	flush_insert_exec_temp_table(estate, flush_schema, info->db_name, column_list);
