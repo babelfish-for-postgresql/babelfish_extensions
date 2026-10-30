@@ -458,6 +458,13 @@ typedef struct PLtsql_var
 	/* to identify if variable is getting used for babelfish GUC */
 	bool is_babelfish_guc;
 
+	/*
+	 * Lowercased original name of a declared cursor whose name was truncated
+	 * and hashed to fit NAMEDATALEN; NULL otherwise. Only used to report the
+	 * name to the user (sp_cursor_list).
+	 */
+	char	   *cursor_orig_name;
+
 	/* Fields below here can change at runtime */
 
 	Datum		value pg_node_attr(read_write_ignore, read_as(0));
@@ -2420,6 +2427,8 @@ extern void store_view_original_name(ViewStmt *stmt, const char *queryString);
 
 /* functions in pltsql_utils.c */
 extern char *get_original_relname(Oid relid, bool check_permission);
+extern char *get_bbf_original_object_name(Oid classid, HeapTuple tuple);
+extern void pltsql_substitute_computed_column_names(RangeTblEntry *rte, char **colnames, int num_cols);
 extern char *get_bbf_original_column_name(Oid relid, AttrNumber attnum);
 extern char *get_inline_tvf_original_column_name(Oid funcid, AttrNumber attnum);
 extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);
@@ -2581,6 +2590,7 @@ void		pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, c
 void		pltsql_function_probin_reader(ParseState *pstate,
 										  List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
 extern void probin_json_reader(text *probin, int **typmod_arr_p, int typmod_arr_len);
+extern Datum pltsql_truncate_identifier_func(PG_FUNCTION_ARGS);
 
 /*
  * This variable is set to true, if setval should behave in T-SQL way, i.e.,

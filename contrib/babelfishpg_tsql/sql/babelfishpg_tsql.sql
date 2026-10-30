@@ -440,7 +440,7 @@ FROM
 	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
 	LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
 	JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
-	LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname::sys.nvarchar(128) = t4."COLUMN_NAME"
+	LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attnum = t4."ORDINAL_POSITION"
 	LEFT JOIN pg_type t ON t.oid = a.atttypid
 	LEFT JOIN sys.columns t6 ON
 	(
@@ -882,8 +882,8 @@ LANGUAGE 'pltsql';
 CREATE OR REPLACE VIEW sys.spt_columns_view_managed AS
 SELECT
     o.object_id                     AS OBJECT_ID,
-    isc."TABLE_CATALOG"::information_schema.sql_identifier               AS TABLE_CATALOG,
-    isc."TABLE_SCHEMA"::information_schema.sql_identifier                AS TABLE_SCHEMA,
+    CAST(isc."TABLE_CATALOG" AS sys.sysname) COLLATE "C"               AS TABLE_CATALOG,
+    CAST(isc."TABLE_SCHEMA" AS sys.sysname) COLLATE "C"                AS TABLE_SCHEMA,
     o.name                          AS TABLE_NAME,
     c.name                          AS COLUMN_NAME,
     isc."ORDINAL_POSITION"::information_schema.cardinal_number           AS ORDINAL_POSITION,
@@ -915,9 +915,9 @@ SELECT
     isc."COLLATION_CATALOG"::information_schema.sql_identifier           AS COLLATION_CATALOG,
     isc."COLLATION_SCHEMA"::information_schema.sql_identifier            AS COLLATION_SCHEMA,
     c.collation_name                                                     AS COLLATION_NAME,
-    isc."DOMAIN_CATALOG"::information_schema.sql_identifier              AS DOMAIN_CATALOG,
-    isc."DOMAIN_SCHEMA"::information_schema.sql_identifier               AS DOMAIN_SCHEMA,
-    isc."DOMAIN_NAME"::information_schema.sql_identifier                 AS DOMAIN_NAME,
+    CAST(isc."DOMAIN_CATALOG" AS sys.sysname) COLLATE "C"              AS DOMAIN_CATALOG,
+    CAST(isc."DOMAIN_SCHEMA" AS sys.sysname) COLLATE "C"               AS DOMAIN_SCHEMA,
+    CAST(isc."DOMAIN_NAME" AS sys.sysname) COLLATE "C"                 AS DOMAIN_NAME,
     c.is_sparse                     AS IS_SPARSE,
     c.is_column_set                 AS IS_COLUMN_SET,
     c.is_filestream                 AS IS_FILESTREAM
@@ -1249,7 +1249,17 @@ CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
 CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
 CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
 CAST(seq AS smallint) AS KEY_SEQ,
-CAST(t5.conname AS sys.sysname) AS PK_NAME
+CAST(COALESCE(
+		CASE WHEN octet_length(t5.conname) >= 60 THEN
+			(SELECT pg_catalog.lower(m.original_identifier_name COLLATE "C")
+			 FROM sys.babelfish_identifier_mapping m
+			 WHERE m.truncated_identifier_name = t5.conname
+				 AND m.nspname = t2.nspname
+				 AND m.pg_catalog_type = 'pg_constraint'::regclass::oid
+				 AND m.parent_name = t1.relname
+			 LIMIT 1)
+		END,
+		t5.conname::text) AS sys.sysname) AS PK_NAME
 FROM pg_catalog.pg_class t1 
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
@@ -2038,8 +2048,28 @@ CASE
    WHEN const1.confdeltype = 'd' THEN CAST(3 AS smallint) -- set default
    ELSE CAST(0 AS smallint)
 END AS DELETE_RULE,
-CAST(const1.conname AS sys.sysname) AS FK_NAME,
-CAST(const2.conname AS sys.sysname) AS PK_NAME,
+CAST(COALESCE(
+		CASE WHEN octet_length(const1.conname) >= 60 THEN
+			(SELECT pg_catalog.lower(m.original_identifier_name COLLATE "C")
+			 FROM sys.babelfish_identifier_mapping m
+			 WHERE m.truncated_identifier_name = const1.conname
+				 AND m.nspname = nsp_ext.nspname
+				 AND m.pg_catalog_type = 'pg_constraint'::regclass::oid
+				 AND m.parent_name = c.relname
+			 LIMIT 1)
+		END,
+		const1.conname::text) AS sys.sysname) AS FK_NAME,
+CAST(COALESCE(
+		CASE WHEN octet_length(const2.conname) >= 60 THEN
+			(SELECT pg_catalog.lower(m.original_identifier_name COLLATE "C")
+			 FROM sys.babelfish_identifier_mapping m
+			 WHERE m.truncated_identifier_name = const2.conname
+				 AND m.nspname = nsp_ext2.nspname
+				 AND m.pg_catalog_type = 'pg_constraint'::regclass::oid
+				 AND m.parent_name = c2.relname
+			 LIMIT 1)
+		END,
+		const2.conname::text) AS sys.sysname) AS PK_NAME,
 CASE
    WHEN const1.condeferrable = false THEN CAST(7 as smallint) -- not deferrable
    ELSE (CASE WHEN const1.condeferred = false THEN CAST(6 as smallint) --  not deferred by default
@@ -2395,7 +2425,10 @@ BEGIN
 					WHEN Ext2.orig_username IS NULL THEN 'public'
 					ELSE Ext2.orig_username END 
 					AS SYS.SYSNAME) AS 'RoleName',
-			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN
+						COALESCE(CASE WHEN pg_catalog.octet_length(Base4.rolname) >= 60 THEN
+							(SELECT TOP 1 OwnExt.orig_loginname FROM sys.babelfish_authid_login_ext AS OwnExt WHERE OwnExt.rolname = Base4.rolname)
+						END, CAST(Base4.rolname AS SYS.NVARCHAR(128)) COLLATE database_default)
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(COALESCE(
@@ -2405,7 +2438,14 @@ BEGIN
 			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
 			       END,
 			       LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
-			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(COALESCE(
+			       CASE WHEN pg_catalog.octet_length(Ext1.default_schema_name) >= 60 THEN
+			           (SELECT TOP 1 pg_catalog.lower(ne.orig_name COLLATE "C") COLLATE database_default
+			            FROM sys.babelfish_namespace_ext ne
+			            WHERE ne.dbid = Bsdb.dbid
+			              AND sys.babelfish_truncate_identifier(pg_catalog.lower(ne.orig_name COLLATE "C")) COLLATE database_default = Ext1.default_schema_name)
+			       END,
+			       Ext1.default_schema_name) AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
 					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
@@ -2472,7 +2512,10 @@ BEGIN
 					WHEN Ext2.orig_username IS NULL THEN 'public' 
 					ELSE Ext2.orig_username END 
 					AS SYS.SYSNAME) AS 'RoleName',
-			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname COLLATE database_default
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN
+						COALESCE(CASE WHEN pg_catalog.octet_length(Base4.rolname) >= 60 THEN
+							(SELECT TOP 1 OwnExt.orig_loginname FROM sys.babelfish_authid_login_ext AS OwnExt WHERE OwnExt.rolname = Base4.rolname)
+						END, CAST(Base4.rolname AS SYS.NVARCHAR(128)) COLLATE database_default)
 					ELSE LogExt.orig_loginname END
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(COALESCE(
@@ -2482,7 +2525,14 @@ BEGIN
 			            WHERE sdb.name COLLATE database_default = LogExt.default_database_name)
 			       END,
 			       LogExt.default_database_name) AS SYS.SYSNAME) AS 'DefDBName',
-			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(COALESCE(
+			       CASE WHEN pg_catalog.octet_length(Ext1.default_schema_name) >= 60 THEN
+			           (SELECT TOP 1 pg_catalog.lower(ne.orig_name COLLATE "C") COLLATE database_default
+			            FROM sys.babelfish_namespace_ext ne
+			            WHERE ne.dbid = Bsdb.dbid
+			              AND sys.babelfish_truncate_identifier(pg_catalog.lower(ne.orig_name COLLATE "C")) COLLATE database_default = Ext1.default_schema_name)
+			       END,
+			       Ext1.default_schema_name) AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
 					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
@@ -2782,7 +2832,17 @@ CASE
       WHEN ss.proretset THEN '@TABLE_RETURN_VALUE'
     ELSE '@RETURN_VALUE'
   END 
-ELSE COALESCE(ss.proargnames[n], '')
+ELSE COALESCE(COALESCE(
+		CASE WHEN octet_length(ss.proargnames[n]) >= 60 THEN
+			(SELECT pg_catalog.lower(m.original_identifier_name COLLATE "C")
+			 FROM sys.babelfish_identifier_mapping m
+			 WHERE m.truncated_identifier_name = ss.proargnames[n]::name
+				 AND m.nspname = ss.nspname
+				 AND m.pg_catalog_type = 'pg_proc'::regclass::oid
+				 AND m.parent_name = ss.proname
+			 LIMIT 1)
+		END,
+		ss.proargnames[n]), '')
 END
 AS sys.SYSNAME) AS COLUMN_NAME
 , CAST(

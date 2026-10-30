@@ -2748,7 +2748,7 @@ get_bbf_ident_original_name(const char *physical_name, const char *nspname,
  * (restore length, not casing). No permission check: callers that need one
  * perform it before calling. Returns a palloc'd name, or NULL.
  */
-static char *
+char *
 get_bbf_original_object_name(Oid classid, HeapTuple tuple)
 {
 	char	   *orig = NULL;
