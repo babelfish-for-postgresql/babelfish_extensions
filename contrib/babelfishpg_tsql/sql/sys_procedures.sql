@@ -38,7 +38,7 @@ DECLARE
   cur refcursor;
 BEGIN
   IF "@cursor_scope" >= 1 AND "@cursor_scope" <= 3 THEN
-    OPEN cur FOR EXECUTE 'SELECT reference_name::name, cursor_name::name, cursor_scope::smallint, status::smallint, model::smallint, concurrency::smallint, scrollable::smallint, open_status::smallint, cursor_rows::numeric(10,0), fetch_status::smallint, column_count::smallint, row_count::numeric(10,0), last_operation::smallint, cursor_handle::int FROM sys.babelfish_cursor_list($1)' USING "@cursor_scope";
+    OPEN cur FOR EXECUTE 'SELECT reference_name::sys.varchar(128), cursor_name::sys.varchar(128), cursor_scope::smallint, status::smallint, model::smallint, concurrency::smallint, scrollable::smallint, open_status::smallint, cursor_rows::numeric(10,0), fetch_status::smallint, column_count::smallint, row_count::numeric(10,0), last_operation::smallint, cursor_handle::int FROM sys.babelfish_cursor_list($1)' USING "@cursor_scope";
   ELSE
     RAISE 'invalid @cursor_scope: %', "@cursor_scope";
   END IF;
@@ -59,7 +59,13 @@ AS $$
 DECLARE
   cur refcursor;
   cursor_source int;
+  cursor_identity sys.nvarchar(128);
 BEGIN
+  -- A declared cursor of 60+ bytes is reported by its original name; a cursor variable
+  -- keeps its hashed name. Accept the hashed form of the given name as well.
+  cursor_identity := COALESCE(CASE WHEN pg_catalog.octet_length("@cursor_identity") >= 60 THEN
+                                sys.babelfish_truncate_identifier(pg_catalog.lower("@cursor_identity"::pg_catalog.text COLLATE "C"))
+                              END, "@cursor_identity");
   IF pg_catalog.lower("@cursor_source") = 'local' THEN
     cursor_source := 1;
   ELSIF pg_catalog.lower("@cursor_source") = 'global' THEN
@@ -70,7 +76,7 @@ BEGIN
     RAISE 'invalid @cursor_source: %', "@cursor_source";
   END IF;
 
-  OPEN cur FOR EXECUTE 'SELECT reference_name::name, cursor_name::name, cursor_scope::smallint, status::smallint, model::smallint, concurrency::smallint, scrollable::smallint, open_status::smallint, cursor_rows::numeric(10,0), fetch_status::smallint, column_count::smallint, row_count::numeric(10,0), last_operation::smallint, cursor_handle::int FROM sys.babelfish_cursor_list($1) WHERE cursor_source = $1 and reference_name = $2' USING cursor_source, "@cursor_identity";
+  OPEN cur FOR EXECUTE 'SELECT reference_name::sys.varchar(128), cursor_name::sys.varchar(128), cursor_scope::smallint, status::smallint, model::smallint, concurrency::smallint, scrollable::smallint, open_status::smallint, cursor_rows::numeric(10,0), fetch_status::smallint, column_count::smallint, row_count::numeric(10,0), last_operation::smallint, cursor_handle::int FROM sys.babelfish_cursor_list($1) WHERE cursor_source = $1 and (reference_name = $2 or reference_name = $3)' USING cursor_source, "@cursor_identity", cursor_identity;
 
   -- PG cursor evaluates the query at first fetch. We need to evaluate table function now because cursor_list() depeneds on "current" tsql_estate().
   -- Running MOVE fowrard and backward to force evaluating sys.babelfish_cursor_list() now.

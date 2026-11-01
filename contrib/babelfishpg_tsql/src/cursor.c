@@ -866,6 +866,7 @@ cursor_list(PG_FUNCTION_ARGS)
 				&& !(var->cursor_options & PGTSQL_CURSOR_ANONYMOUS))
 			{
 				char	   *curname;
+				char	   *demangled;
 				Datum		values[15];
 				bool		nulls[15];
 				int			cursor_scope;
@@ -884,8 +885,15 @@ cursor_list(PG_FUNCTION_ARGS)
 				if (!(cursor_scope & cursor_scope_required))
 					continue;
 
-				values[0] = CStringGetTextDatum(var->refname);
-				values[1] = CStringGetTextDatum(pltsql_demangle_curname(curname));
+				demangled = pltsql_demangle_curname(curname);
+
+				/*
+				 * A long cursor name is stored hashed; report the original. For
+				 * a declared cursor the cursor name is its reference name.
+				 */
+				values[0] = CStringGetTextDatum(var->cursor_orig_name ? var->cursor_orig_name : var->refname);
+				values[1] = CStringGetTextDatum((var->cursor_orig_name && strcmp(demangled, var->refname) == 0) ?
+												var->cursor_orig_name : demangled);
 				values[2] = cursor_scope;
 				values[3] = cursor_status_impl(var);
 				values[4] = 1;	/* model: always STATIC for now */

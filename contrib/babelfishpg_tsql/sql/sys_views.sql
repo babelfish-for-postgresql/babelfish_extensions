@@ -1109,7 +1109,9 @@ select
   , null::sys.nchar(128) as nt_username
   , null::sys.nchar(12) as net_address
   , null::sys.nchar(12) as net_library
-  , CAST(a.usename as sys.nchar(128)) as loginname
+  , CAST(COALESCE(CASE WHEN pg_catalog.octet_length(a.usename) >= 60 THEN
+        (SELECT pg_catalog.lower(le.orig_loginname COLLATE "C") FROM sys.babelfish_authid_login_ext le WHERE le.rolname = a.usename LIMIT 1)
+      END, a.usename::text) as sys.nchar(128)) as loginname
   , t.context_info as context_info
   , null::sys.binary(20) as sql_handle
   , 0::int as stmt_start
@@ -1673,7 +1675,14 @@ and has_function_privilege(p.oid, 'EXECUTE')
 union all
 -- details of all default constraints
 select
-    ('DF_' || o.relname || '_' || d.oid)::sys.sysname as name
+    ('DF_' || COALESCE(
+        CASE WHEN pg_catalog.octet_length(o.relname) >= 60 THEN
+            (SELECT pg_catalog.lower(pg_catalog.substring(opt, 23) COLLATE "C")
+             FROM pg_catalog.unnest(o.reloptions) opt
+             WHERE opt LIKE 'bbf_original_rel_name=%'
+             LIMIT 1)
+        END,
+        o.relname::text) || '_' || d.oid)::sys.sysname as name
   , d.oid as object_id
   , null::int as principal_id
   , o.relnamespace as schema_id
@@ -2334,7 +2343,19 @@ AS
 $$
 BEGIN
 RETURN QUERY
-select params.parameter_name::sys.sysname
+select CAST(COALESCE(
+      CASE WHEN pg_catalog.octet_length(pgproc.proargnames[params.ordinal_position]) >= 60 THEN
+        COALESCE(
+          (SELECT pg_catalog.lower(bim.original_identifier_name COLLATE "C")
+           FROM sys.babelfish_identifier_mapping bim
+           WHERE bim.truncated_identifier_name = pgproc.proargnames[params.ordinal_position]
+             AND bim.nspname = pgproc.pronamespace::regnamespace::name
+             AND bim.pg_catalog_type = 'pg_proc'::regclass::oid
+             AND bim.parent_name = pgproc.proname
+           LIMIT 1),
+          pgproc.proargnames[params.ordinal_position])
+      END,
+      params.parameter_name) AS sys.sysname)
   , pgproc.oid::int
   , CAST(case when pgproc.proallargtypes is null then split_part(pgproc.proargtypes::varchar, ' ', params.ordinal_position)
     else split_part(btrim(pgproc.proallargtypes::text,'{}'), ',', params.ordinal_position) end AS int)
@@ -2433,7 +2454,9 @@ create or replace view sys.dm_exec_sessions
     , d.client_version as client_version
     , d.library_name::sys.nvarchar(32) as client_interface_name
     , null::sys.varbinary(85) as security_id
-    , a.usename::sys.nvarchar(128) as login_name
+    , COALESCE(CASE WHEN pg_catalog.octet_length(a.usename) >= 60 THEN
+        (SELECT pg_catalog.lower(le.orig_loginname COLLATE "C") FROM sys.babelfish_authid_login_ext le WHERE le.rolname = a.usename LIMIT 1)
+      END, a.usename::text)::sys.nvarchar(128) as login_name
     , (select sys.default_domain())::sys.nvarchar(128) as nt_domain
     , null::sys.nvarchar(128) as nt_user_name
     , a.state::sys.nvarchar(30) as status
@@ -2467,7 +2490,9 @@ create or replace view sys.dm_exec_sessions
     , d.row_count as row_count
     , d.error as prev_error
     , null::sys.varbinary(85) as original_security_id
-    , a.usename::sys.nvarchar(128) as original_login_name
+    , COALESCE(CASE WHEN pg_catalog.octet_length(a.usename) >= 60 THEN
+        (SELECT pg_catalog.lower(le.orig_loginname COLLATE "C") FROM sys.babelfish_authid_login_ext le WHERE le.rolname = a.usename LIMIT 1)
+      END, a.usename::text)::sys.nvarchar(128) as original_login_name
     , null::sys.datetime as last_successful_logon
     , null::sys.datetime as last_unsuccessful_logon
     , null::bigint as unsuccessful_logons

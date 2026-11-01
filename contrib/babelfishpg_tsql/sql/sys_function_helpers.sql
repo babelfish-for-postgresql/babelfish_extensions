@@ -11425,6 +11425,13 @@ CREATE OR REPLACE FUNCTION sys.babelfish_truncate_identifier(IN object_name TEXT
 RETURNS text
 AS 'babelfishpg_tsql', 'pltsql_truncate_identifier_func' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+-- Puts the full output column names of an inline table-valued function back
+-- after restore; called from pg_dump output only (see dumpBBFItvfColumnNames).
+CREATE OR REPLACE FUNCTION sys.babelfish_restore_itvf_column_names(func pg_catalog.regprocedure, names pg_catalog.text[])
+RETURNS void
+AS 'babelfishpg_tsql', 'babelfish_restore_itvf_column_names' LANGUAGE C STRICT;
+REVOKE ALL ON FUNCTION sys.babelfish_restore_itvf_column_names(pg_catalog.regprocedure, pg_catalog.text[]) FROM PUBLIC;
+
 -- internal functions for debuggig/testing purpose
 CREATE OR REPLACE FUNCTION sys.babelfish_pltsql_cursor_show_textptr_only_column_indexes(cursor_handle INT)
 RETURNS text

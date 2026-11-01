@@ -3043,7 +3043,7 @@ DECLARE
 BEGIN
     return_value := NULL;
 
-    -- Lower-case to avoid case issues, remove trailing whitespace to match SQL SERVER behavior
+    -- Lower-case to avoid case issues, remove trailing whitespace to match T-SQL behavior
     -- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
     cs_as_securable = pg_catalog.lower(PG_CATALOG.rtrim(cs_as_securable));
     cs_as_securable_class = pg_catalog.lower(PG_CATALOG.rtrim(cs_as_securable_class));
@@ -3075,7 +3075,7 @@ BEGIN
     END IF;
 
     IF cs_as_securable_class = 'server' THEN
-        -- SQL Server does not permit a securable_class value of 'server'.
+        -- T-SQL does not permit a securable_class value of 'server'.
         -- securable_class should be NULL to evaluate server permissions.
         RETURN NULL;
     ELSIF cs_as_securable_class IS NULL THEN
@@ -3089,6 +3089,8 @@ BEGIN
         IF cs_as_sub_securable IS NULL THEN
             RETURN NULL;
         END IF;
+        -- long column names (>= 64 bytes) are stored in their truncated form
+        cs_as_sub_securable := sys.babelfish_truncate_identifier(cs_as_sub_securable);
     END IF;
 
     SELECT p.implied_dbo_permissions,p.fully_supported 
@@ -3161,7 +3163,9 @@ BEGIN
     -- Translate schema name from bbf to postgres, e.g. dbo -> master_dbo
     pg_schema := (SELECT nspname 
                     FROM sys.babelfish_namespace_ext ext 
-                    WHERE ext.orig_name = bbf_schema_name COLLATE sys.database_default 
+                    WHERE (ext.orig_name = bbf_schema_name COLLATE sys.database_default
+                            -- babelfish_split_object_name returns long schema names in their truncated form
+                            OR sys.babelfish_truncate_identifier(pg_catalog.lower(ext.orig_name::text)) = bbf_schema_name COLLATE sys.database_default)
                         AND CAST(ext.dbid AS oid) = CAST(database_id AS oid));
 
     IF pg_schema IS NULL THEN
@@ -4745,12 +4749,24 @@ CREATE OR REPLACE FUNCTION sys.COL_NAME(IN table_id INT, IN column_id INT)
 RETURNS sys.SYSNAME AS $$
     DECLARE
         column_name TEXT;
+        column_attoptions TEXT[];
     BEGIN
-        SELECT attname INTO STRICT column_name 
+        SELECT attname, attoptions INTO STRICT column_name, column_attoptions
         FROM pg_attribute 
         WHERE attrelid = table_id AND attnum = column_id AND attnum > 0;
         
-        RETURN column_name::sys.SYSNAME;
+        RETURN COALESCE(
+            CASE WHEN pg_catalog.octet_length(column_name) >= 60 THEN
+                (SELECT CASE
+                            WHEN column_name = pg_catalog.lower(column_name COLLATE "C")
+                                THEN pg_catalog.lower(pg_catalog.substring(opt, 19) COLLATE "C")
+                            ELSE pg_catalog.substring(opt, 19)
+                        END
+                 FROM pg_catalog.unnest(column_attoptions) opt
+                 WHERE opt LIKE 'bbf_original_name=%'
+                 LIMIT 1)
+            END,
+            column_name)::sys.SYSNAME;
     EXCEPTION
         WHEN OTHERS THEN
             RETURN NULL;

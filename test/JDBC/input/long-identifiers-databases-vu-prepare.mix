@@ -18,3 +18,17 @@ CREATE SEQUENCE dbo.babel5975_upg_seq START WITH 5 INCREMENT BY 2;
 GO
 USE master;
 GO
+
+-- BABEL-7239: a regular user in the long-named database. "<db>_db_owner" exceeds 63
+-- bytes, so after upgrade sys.database_principals / sys.sysusers must still find the
+-- db_owner role that this version created.
+CREATE LOGIN babel7239_vu_db_login WITH PASSWORD = '12345678';
+GO
+USE Very_Long_Database_Name_That_Exceeds_PostgreSQL_Limit_VU_TVC;
+GO
+CREATE USER babel7239_vu_db_user FOR LOGIN babel7239_vu_db_login;
+GO
+CREATE TABLE dbo.babel7239_vu_db_t (a INT);
+GO
+USE master;
+GO

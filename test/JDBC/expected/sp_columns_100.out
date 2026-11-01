@@ -901,7 +901,7 @@ EXEC sys.sp_columns_100 'long_colname'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
-master#!#dbo#!#long_colname#!#xnffrfrfrfrfjvndjknvjkdfnvjnxfjnvjkxnvjnxfjknvjfnvjkxnfjkvbxjkvjkxfbnvjkbxfkjvbxfkjbvkxfjbvkjxfbvjkfxb#!#4#!#<NULL>#!#10#!#<NULL>#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+master#!#dbo#!#long_colname#!#xnffrfrfrfrfjvndjknvjkdfnvjnxfjnvjkxnvjnxfjknvjfnvjkxnfjkvbxjkvjkxfbnvjkbxfkjvbxfkjbvkxfjbvkjxfbvjkfxb#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
 ~~END~~
 
 
@@ -909,7 +909,7 @@ EXEC sys.sp_columns_100 'long_colname', @column_name = 'xnffrfrfrfrfjvndjknvjkdf
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
-master#!#dbo#!#long_colname#!#xnffrfrfrfrfjvndjknvjkdfnvjnxfjnvjkxnvjnxfjknvjfnvjkxnfjkvbxjkvjkxfbnvjkbxfkjvbxfkjbvkxfjbvkjxfbvjkfxb#!#4#!#<NULL>#!#10#!#<NULL>#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+master#!#dbo#!#long_colname#!#xnffrfrfrfrfjvndjknvjkdfnvjnxfjnvjkxnvjnxfjknvjfnvjkxnfjkvbxjkvjkxfbnvjkbxfkjvbxfkjbvkxfjbvkjxfbvjkfxb#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
 ~~END~~
 
 
@@ -917,7 +917,7 @@ EXEC sys.sp_columns_100 'long_colname', @column_name = 'xnffrfrfrfrfjvndjknvjkdf
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
-master#!#dbo#!#long_colname#!#xnffrfrfrfrfjvndjknvjkdfnvjnxfjnvjkxnvjnxfjknvjfnvjkxnfjkvbxjkvjkxfbnvjkbxfkjvbxfkjbvkxfjbvkjxfbvjkfxb#!#4#!#<NULL>#!#10#!#<NULL>#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+master#!#dbo#!#long_colname#!#xnffrfrfrfrfjvndjknvjkdfnvjnxfjnvjkxnvjnxfjknvjfnvjkxnfjkvbxjkvjkxfbnvjkbxfkjvbxfkjbvkxfjbvkjxfbvjkfxb#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
 ~~END~~
 
 
@@ -925,7 +925,7 @@ EXEC sys.sp_columns_100 'long_colname', @column_name = 'xnffrfrfrfrfjvndjknvjkdf
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
-master#!#dbo#!#long_colname#!#xnffrfrfrfrfjvndjknvjkdfnvjnxfjnvjkxnvjnxfjknvjfnvjkxnfjkvbxjkvjkxfbnvjkbxfkjvbxfkjbvkxfjbvkjxfbvjkfxb#!#4#!#<NULL>#!#10#!#<NULL>#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+master#!#dbo#!#long_colname#!#xnffrfrfrfrfjvndjknvjkdfnvjnxfjnvjkxnvjnxfjknvjfnvjkxnfjkvbxjkvjkxfbnvjkbxfkjvbxfkjbvkxfjbvkjxfbvjkfxb#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
 ~~END~~
 
 
@@ -972,7 +972,7 @@ EXEC sys.sp_columns_100 N'long_col_name', @column_name = 'tide Ntityintbiddgwith
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
-master#!#dbo#!#long_col_name#!#tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63#!#4#!#<NULL>#!#10#!#<NULL>#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+master#!#dbo#!#long_col_name#!#tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
 ~~END~~
 
 
@@ -980,7 +980,7 @@ EXEC sys.sp_columns_100 N'long_col_name', @column_name = 'tide Ntityintbiddgwith
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
-master#!#dbo#!#long_col_name#!#tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63#!#4#!#<NULL>#!#10#!#<NULL>#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+master#!#dbo#!#long_col_name#!#tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
 ~~END~~
 
 
@@ -988,7 +988,7 @@ EXEC sys.sp_columns_100 N'long_col_name', @column_name = 'tide[ ]Ntityintbiddgwi
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
-master#!#dbo#!#long_col_name#!#tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63#!#4#!#<NULL>#!#10#!#<NULL>#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+master#!#dbo#!#long_col_name#!#tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
 ~~END~~
 
 
@@ -996,7 +996,7 @@ EXEC sys.sp_columns_100 N'long_col_name', @column_name = 'Tide Ntityintbiddgwith
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
-master#!#dbo#!#long_col_name#!#tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63#!#4#!#<NULL>#!#10#!#<NULL>#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+master#!#dbo#!#long_col_name#!#tide Ntityintbiddgwithareallyl ongtablenamewhickcausesbabelfishtoaddahadddededjnfjsnjfbsd bbfjdhft63#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
 ~~END~~
 
 

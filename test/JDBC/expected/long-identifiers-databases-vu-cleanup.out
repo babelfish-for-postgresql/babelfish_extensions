@@ -1,4 +1,7 @@
 -- tsql
+DROP LOGIN babel7239_vu_db_login;
+GO
+-- tsql
 -- Cleanup
 USE master;
 GO

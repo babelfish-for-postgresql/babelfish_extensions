@@ -1049,6 +1049,10 @@ store_table_constraint_original_names(CreateStmt *create_stmt, RangeVar *rel,
 					insert_bbf_ident_mapping(con->conname,
 											 original_name, nspname,
 											 BBF_IDENT_CONSTRAINT, phys_relname);
+
+					/* Also store the original name on the PK/UNIQUE constraint's backing index (sys.indexes). */
+					if (con->contype == CONSTR_UNIQUE || con->contype == CONSTR_PRIMARY)
+						exec_add_original_index_name(con->conname, (char *) nspname, original_name);
 				}
 				if (original_name)
 					pfree(original_name);
@@ -1079,6 +1083,10 @@ store_table_constraint_original_names(CreateStmt *create_stmt, RangeVar *rel,
 						insert_bbf_ident_mapping(con->conname,
 												 original_name, nspname,
 												 BBF_IDENT_CONSTRAINT, phys_relname);
+
+						/* Also store the original name on the PK/UNIQUE constraint's backing index (sys.indexes). */
+						if (con->contype == CONSTR_UNIQUE || con->contype == CONSTR_PRIMARY)
+							exec_add_original_index_name(con->conname, (char *) nspname, original_name);
 					}
 					if (original_name)
 						pfree(original_name);
