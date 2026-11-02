@@ -2121,8 +2121,10 @@ bbf_xml_strip_xquery_comments(const char *s)
  * (declare namespace p = "uri";) out of the query, since XPath 1.0 has none.
  * Each binding is added to *namespaces after the ones already there, so it
  * wins over a WITH XMLNAMESPACES binding of the same prefix, and each
- * declaration is appended to 'prolog'. Returns the rest of the query. Any
- * other declaration ends the prolog and is left as written.
+ * declaration is appended to 'prolog' unless it is NULL. A doubled quote in
+ * a URI literal stands for one quote; 'prolog' keeps the literal as written.
+ * Returns the rest of the query. Any other declaration ends the prolog and
+ * is left as written.
  *
  * When 'check_rules' is set, as in T-SQL, the prolog cannot declare xmlns,
  * cannot declare a prefix twice, and can bind xml only to the XML namespace
@@ -2155,8 +2157,10 @@ bbf_xml_take_prolog(const char *xpath, ArrayType **namespaces,
 	{
 		const char *q = p;
 		const char *name;
-		const char *uri;
+		const char *uri_text;	/* the literal's text, quotes doubled */
+		const char *uri;		/* the URI it denotes */
 		int			name_len;
+		int			uri_text_len;
 		int			uri_len;
 		char		quote;
 		bool		is_xml_prefix;
@@ -2193,18 +2197,36 @@ bbf_xml_take_prolog(const char *xpath, ArrayType **namespaces,
 		if (*q != '"' && *q != '\'')
 			break;
 		quote = *q++;
-		uri = q;
-		while (*q && *q != quote)
-			q++;
-		if (*q != quote || q[1] == quote)
+		uri_text = q;
+		while (*q && (*q != quote || q[1] == quote))
+			q += (*q == quote) ? 2 : 1;
+		if (*q != quote)
 			break;
-		uri_len = q - uri;
+		uri_text_len = q - uri_text;
 		q++;
 		while (isspace((unsigned char) *q))
 			q++;
 		if (*q != ';')
 			break;
 		p = q + 1;
+
+		/* a doubled quote in the literal stands for one quote */
+		uri = uri_text;
+		uri_len = uri_text_len;
+		if (memchr(uri_text, quote, uri_text_len) != NULL)
+		{
+			char	   *buf = palloc(uri_text_len);
+			int			k;
+
+			uri_len = 0;
+			for (k = 0; k < uri_text_len; k++)
+			{
+				buf[uri_len++] = uri_text[k];
+				if (uri_text[k] == quote)
+					k++;
+			}
+			uri = buf;
+		}
 
 		/* the first declaration of xmlns, or of xml or its URI elsewhere */
 		is_xml_prefix = (name_len == 3 && strncmp(name, "xml", 3) == 0);
@@ -2246,8 +2268,10 @@ bbf_xml_take_prolog(const char *xpath, ArrayType **namespaces,
 		names[nnames].len = name_len;
 		names[nnames].pos = nnames;
 		nnames++;
-		appendStringInfo(prolog, "declare namespace %.*s=%c%.*s%c;",
-						 name_len, name, quote, uri_len, uri, quote);
+		if (prolog != NULL)
+			appendStringInfo(prolog, "declare namespace %.*s=%c%.*s%c;",
+							 name_len, name, quote, uri_text_len, uri_text,
+							 quote);
 	}
 
 	if (nnames == 0)
@@ -2349,7 +2373,7 @@ bbf_xml_xpath_with_context_node(const char *xpath_pattern, const char *context_n
  * This must be called by all XML method functions:
  * - handle the magic tag added by nodes()
  * - take the namespace prologs of the context node path and of the query
- *   into *namespaces, and append them to 'prolog'
+ *   into *namespaces, and append them to 'prolog' unless it is NULL
  * - compose the final XPath query to be used by the method
  */
 static void
@@ -2419,32 +2443,32 @@ bbf_xml_handle_context_node(const char *xml_str,
 }
 
 /*
- * bbf_xml_get_namespaces - fetch the WITH XMLNAMESPACES array argument.
- *
- * The namespace-aware SQL overloads pass a text[][] namespace array (built by
- * build_xmlnamespace_context in the ANTLR rewrite) as the trailing
- * argument at position ns_argnum. The base (non-namespace) overloads have
- * fewer arguments, in which case only the predefined prefixes below are
- * returned.
- *
- * The array has the shape expected by PG's xpath(): {{prefix,uri},...}, with
- * an empty prefix ("") denoting the DEFAULT namespace.
- *
- * The prefixes that T-SQL's XQuery predefines come first: xs, xsi, fn, xdt,
- * sql and sqltypes (libxml2 binds xml itself). xpath() keeps the last
- * registration of a prefix, so the clause can rebind any of them. An argument
- * of any other shape is returned as it is, for xpath() to reject.
+ * The namespace arrays of one XML method call site, kept in fn_extra and
+ * allocated in fn_mcxt so they live as long as the FmgrInfo.
+ */
+typedef struct BbfXmlNamespaceCache
+{
+	ArrayType  *predefined;		/* the predefined prefixes only */
+	ArrayType  *clause;			/* copy of the cached clause, or NULL */
+	ArrayType  *merged;			/* predefined prefixes, then 'clause' */
+} BbfXmlNamespaceCache;
+
+/*
+ * bbf_xml_merge_namespaces
+ * A new namespace array holding the prefixes that T-SQL's XQuery predefines,
+ * xs, xsi, fn, xdt and sql (libxml2 binds xml itself), followed by the
+ * bindings of 'clause', a 2-D text array or NULL. xpath() keeps the last
+ * registration of a prefix, so the clause can rebind any of them.
  */
 static ArrayType *
-bbf_xml_get_namespaces(FunctionCallInfo fcinfo, int ns_argnum)
+bbf_xml_merge_namespaces(ArrayType *clause)
 {
 	static const char *const predefined[] = {
 		"xs", "http://www.w3.org/2001/XMLSchema",
 		"xsi", "http://www.w3.org/2001/XMLSchema-instance",
 		"fn", "http://www.w3.org/2004/07/xpath-functions",
 		"xdt", "http://www.w3.org/2004/07/xpath-datatypes",
-		"sql", "urn:schemas-microsoft-com:xml-sql",
-		"sqltypes", "http://schemas.microsoft.com/sqlserver/2004/sqltypes"
+		"sql", "urn:schemas-microsoft-com:xml-sql"
 	};
 	int			npredef = lengthof(predefined);
 	Datum	   *clause_elems = NULL;
@@ -2456,15 +2480,9 @@ bbf_xml_get_namespaces(FunctionCallInfo fcinfo, int ns_argnum)
 	int			lbs[2] = {1, 1};
 	int			i;
 
-	if (PG_NARGS() > ns_argnum && !PG_ARGISNULL(ns_argnum))
-	{
-		ArrayType  *clause = PG_GETARG_ARRAYTYPE_P(ns_argnum);
-
-		if (ARR_NDIM(clause) != 2 || ARR_DIMS(clause)[1] != 2)
-			return clause;
+	if (clause != NULL)
 		deconstruct_array_builtin(clause, TEXTOID, &clause_elems, &clause_nulls,
 								  &nclause);
-	}
 
 	elems = palloc((npredef + nclause) * sizeof(Datum));
 	nulls = palloc((npredef + nclause) * sizeof(bool));
@@ -2482,6 +2500,77 @@ bbf_xml_get_namespaces(FunctionCallInfo fcinfo, int ns_argnum)
 	dims[1] = 2;
 	return construct_md_array(elems, nulls, 2, dims, lbs, TEXTOID, -1, false,
 							  TYPALIGN_INT);
+}
+
+/*
+ * bbf_xml_get_namespaces - fetch the WITH XMLNAMESPACES array argument.
+ *
+ * The namespace-aware SQL overloads pass a text[][] namespace array (built by
+ * build_xmlnamespace_context in the ANTLR rewrite) as the trailing
+ * argument at position ns_argnum. The base (non-namespace) overloads have
+ * fewer arguments, in which case only the predefined prefixes are returned.
+ *
+ * The array has the shape expected by PG's xpath(): {{prefix,uri},...}, with
+ * an empty prefix ("") denoting the DEFAULT namespace. The predefined
+ * prefixes come first (see bbf_xml_merge_namespaces). An argument of any
+ * other shape is returned as it is, for xpath() to reject.
+ *
+ * The predefined-only array, and the merged array of a clause argument that
+ * stays the same during the query, are cached in fn_extra. A stable argument
+ * can still change between evaluations of a PL expression that keeps its
+ * state, so a cached clause is used only while the argument matches it byte
+ * for byte. Callers must not change or free the returned array.
+ */
+static ArrayType *
+bbf_xml_get_namespaces(FunctionCallInfo fcinfo, int ns_argnum)
+{
+	FmgrInfo   *flinfo = fcinfo->flinfo;
+	BbfXmlNamespaceCache *cache;
+	ArrayType  *clause = NULL;
+	MemoryContext oldcxt;
+
+	if (PG_NARGS() > ns_argnum && !PG_ARGISNULL(ns_argnum))
+	{
+		clause = PG_GETARG_ARRAYTYPE_P(ns_argnum);
+		if (ARR_NDIM(clause) != 2 || ARR_DIMS(clause)[1] != 2)
+			return clause;
+	}
+
+	if (flinfo == NULL)
+		return bbf_xml_merge_namespaces(clause);
+
+	cache = (BbfXmlNamespaceCache *) flinfo->fn_extra;
+	if (cache == NULL)
+	{
+		oldcxt = MemoryContextSwitchTo(flinfo->fn_mcxt);
+		cache = palloc0(sizeof(*cache));
+		cache->predefined = bbf_xml_merge_namespaces(NULL);
+		MemoryContextSwitchTo(oldcxt);
+		flinfo->fn_extra = cache;
+	}
+
+	if (clause == NULL)
+		return cache->predefined;
+
+	if (cache->clause != NULL &&
+		VARSIZE(cache->clause) == VARSIZE(clause) &&
+		memcmp(cache->clause, clause, VARSIZE(clause)) == 0)
+		return cache->merged;
+
+	if (cache->clause == NULL && get_fn_expr_arg_stable(flinfo, ns_argnum))
+	{
+		ArrayType  *copy;
+
+		oldcxt = MemoryContextSwitchTo(flinfo->fn_mcxt);
+		cache->merged = bbf_xml_merge_namespaces(clause);
+		copy = palloc(VARSIZE(clause));
+		memcpy(copy, clause, VARSIZE(clause));
+		MemoryContextSwitchTo(oldcxt);
+		cache->clause = copy;
+		return cache->merged;
+	}
+
+	return bbf_xml_merge_namespaces(clause);
 }
 
 /*
@@ -2513,7 +2602,6 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 	text       *xpath_text_arg;
 	xmltype    *xml_data_arg;
 	ArrayType  *namespaces = bbf_xml_get_namespaces(fcinfo, 2);
-	StringInfoData prolog;
 	ArrayBuildState *astate;
 
 	/* Validate XML data type before referencing xml_datum */
@@ -2525,14 +2613,13 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 	xml_str = text_to_cstring(DatumGetTextPP(xml_datum));
 
 	/* Handle the context node path, if present */
-	initStringInfo(&prolog);
 	bbf_xml_handle_context_node(xml_str,
 								xpath_expr,
 								&context_node_path,
 								&bare_xml_str,
 								&final_xpath,
 								&namespaces,
-								&prolog,
+								NULL,
 								"query");
 
 	/* Handle empty input */
@@ -2602,7 +2689,6 @@ bbf_xmlvalue(PG_FUNCTION_ARGS)
 	text       *xpath_text_arg;
 	xmltype    *xml_data_arg;
 	ArrayType  *namespaces = bbf_xml_get_namespaces(fcinfo, 3);
-	StringInfoData prolog;
 	ArrayBuildState *astate;
 
 	/* Validate XML data type before referencing xml_datum */
@@ -2614,14 +2700,13 @@ bbf_xmlvalue(PG_FUNCTION_ARGS)
 	xml_str = text_to_cstring(DatumGetTextPP(xml_datum));
 
 	/* Handle the context node path, if present */
-	initStringInfo(&prolog);
 	bbf_xml_handle_context_node(xml_str,
 								xpath_expr,
 								&context_node_path,
 								&bare_xml_str,
 								&final_xpath,
 								&namespaces,
-								&prolog,
+								NULL,
 								"value");
 
 	/* Handle empty input */
@@ -2693,7 +2778,6 @@ bbf_xmlexist(PG_FUNCTION_ARGS)
 	text       *xpath_text_arg;
 	xmltype    *xml_data_arg;
 	ArrayType  *namespaces = bbf_xml_get_namespaces(fcinfo, 2);
-	StringInfoData prolog;
 	int         res_nitems;
 
 	/* Validate XML data type before referencing xml_datum */
@@ -2705,14 +2789,13 @@ bbf_xmlexist(PG_FUNCTION_ARGS)
 	xml_str = text_to_cstring(DatumGetTextPP(xml_datum));
 
 	/* Handle the context node path, if present */
-	initStringInfo(&prolog);
 	bbf_xml_handle_context_node(xml_str,
 								xpath_expr,
 								&context_node_path,
 								&bare_xml_str,
 								&final_xpath,
 								&namespaces,
-								&prolog,
+								NULL,
 								"exist");
 
 	/* Handle empty input */

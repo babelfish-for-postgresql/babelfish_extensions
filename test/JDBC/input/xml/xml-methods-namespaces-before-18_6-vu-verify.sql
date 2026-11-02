@@ -1584,13 +1584,13 @@ GO
 SELECT v FROM xmlns_methods_nsv3 ORDER BY v;
 GO
 -- 35.4 ALTER VIEW adds the clause (T-SQL 7)
-CREATE VIEW xmlns_methods_nsv4 AS SELECT 1 AS v;
+CREATE VIEW xmlns_methods_alterv AS SELECT 1 AS v;
 GO
-ALTER VIEW xmlns_methods_nsv4 AS
+ALTER VIEW xmlns_methods_alterv AS
 WITH XMLNAMESPACES('urn:x' AS p)
 SELECT CAST('<p:a xmlns:p="urn:x">7</p:a>' AS XML).value('(/p:a)[1]', 'INT') AS v;
 GO
-SELECT v FROM xmlns_methods_nsv4;
+SELECT v FROM xmlns_methods_alterv;
 GO
 -- 35.5 CREATE OR ALTER VIEW (T-SQL 8)
 CREATE OR ALTER VIEW xmlns_methods_nsv5 AS
@@ -1617,7 +1617,7 @@ GO
 DROP VIEW IF EXISTS xmlns_methods_nsv1;
 DROP VIEW IF EXISTS xmlns_methods_nsv2;
 DROP VIEW IF EXISTS xmlns_methods_nsv3;
-DROP VIEW IF EXISTS xmlns_methods_nsv4;
+DROP VIEW IF EXISTS xmlns_methods_alterv;
 DROP VIEW IF EXISTS xmlns_methods_nsv5;
 DROP VIEW IF EXISTS xmlns_methods_nsv6;
 DROP VIEW IF EXISTS xmlns_methods_nsv7;
@@ -1635,7 +1635,7 @@ GO
 -- 36.1 Each predefined prefix needs no clause (T-SQL 0 for each)
 DECLARE @x XML = '<a/>';
 SELECT @x.exist('/xml:zz') AS p_xml, @x.exist('/xs:zz') AS p_xs, @x.exist('/xsi:zz') AS p_xsi, @x.exist('/fn:zz') AS p_fn,
-       @x.exist('/xdt:zz') AS p_xdt, @x.exist('/sql:zz') AS p_sql, @x.exist('/sqltypes:zz') AS p_sqltypes;
+       @x.exist('/xdt:zz') AS p_xdt, @x.exist('/sql:zz') AS p_sql;
 GO
 -- 36.2 The URI behind each predefined prefix (T-SQL en, then 1 for each)
 DECLARE @x XML = '<a xml:lang="en"/>';
@@ -1645,8 +1645,7 @@ SELECT CAST('<r xmlns:q="http://www.w3.org/2001/XMLSchema"><q:b>1</q:b></r>' AS 
        CAST('<r xmlns:q="http://www.w3.org/2001/XMLSchema-instance"><q:b>1</q:b></r>' AS XML).value('(/r/xsi:b)[1]', 'INT') AS p_xsi,
        CAST('<r xmlns:q="http://www.w3.org/2004/07/xpath-functions"><q:b>1</q:b></r>' AS XML).value('(/r/fn:b)[1]', 'INT') AS p_fn,
        CAST('<r xmlns:q="http://www.w3.org/2004/07/xpath-datatypes"><q:b>1</q:b></r>' AS XML).value('(/r/xdt:b)[1]', 'INT') AS p_xdt,
-       CAST('<r xmlns:q="urn:schemas-microsoft-com:xml-sql"><q:b>1</q:b></r>' AS XML).value('(/r/sql:b)[1]', 'INT') AS p_sql,
-       CAST('<r xmlns:q="http://schemas.microsoft.com/sqlserver/2004/sqltypes"><q:b>1</q:b></r>' AS XML).value('(/r/sqltypes:b)[1]', 'INT') AS p_sqltypes;
+       CAST('<r xmlns:q="urn:schemas-microsoft-com:xml-sql"><q:b>1</q:b></r>' AS XML).value('(/r/sql:b)[1]', 'INT') AS p_sql;
 GO
 -- 36.3 Prefixes XQuery does not predefine (T-SQL 2229 for each)
 DECLARE @x XML = '<a/>'; SELECT @x.exist('/local:zz') AS ex;
@@ -1826,6 +1825,11 @@ GO
 -- 2229. T-SQL returns <a xmlns:p="urn:p"><p:b/></a>. Babelfish raises
 -- "invalid XPath expression": XPath 1.0 has no constructors.
 DECLARE @x XML = '<a/>'; SELECT @x.query('<a xmlns:p="urn:p"><p:b/></a>') AS q;
+GO
+-- 36.20 The sqltypes prefix is not predefined (T-SQL 0). Babelfish raises
+-- the 2229 text.
+DECLARE @x XML = '<a/>';
+SELECT @x.exist('/sqltypes:zz') AS p_sqltypes;
 GO
 DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_lit;
 DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_cmt;
@@ -2069,4 +2073,34 @@ DECLARE @x XML = '<e:a xmlns:e="urn:e"><f:b xmlns:f="urn:f">1</f:b></e:a>';
 SELECT d.value('.', 'INT') AS v
 FROM @x.nodes('declare namespace e="urn:e"; /e:a') AS T(c)
 CROSS APPLY c.nodes('declare namespace e="urn:f"; e:b') AS S(d);
+GO
+-- ============================================
+-- SECTION 41: a doubled quote in a namespace prolog URI
+-- Inside the URI literal of "declare namespace", a doubled quote stands for
+-- one quote character, as in any XQuery string literal.
+-- ============================================
+-- 41.1 Doubled single quote, binding u'v (T-SQL 1)
+DECLARE @x XML = '<p:a xmlns:p="u''v">1</p:a>';
+SELECT @x.value('declare namespace p = ''u''''v''; (/p:a)[1]', 'INT') AS v;
+GO
+-- 41.2 Doubled double quote, binding u"v (T-SQL 0)
+DECLARE @x XML = '<a/>';
+SELECT @x.exist('declare namespace p = "u""v"; /p:a') AS ex;
+GO
+-- 41.3 Nested .nodes(), both prologs with a doubled quote (T-SQL 1, 2)
+DECLARE @x XML = '<p:a xmlns:p="u''v"><p:b>1</p:b><p:b>2</p:b></p:a>';
+SELECT d.value('.', 'INT') AS v
+FROM @x.nodes('declare namespace p = ''u''''v''; /p:a') AS T(c)
+CROSS APPLY c.nodes('declare namespace p = ''u''''v''; p:b') AS S(d);
+GO
+-- 41.4 In a procedure body (T-SQL 1)
+CREATE PROCEDURE xmlns_methods_nsproc_dq AS
+BEGIN
+    DECLARE @x XML = '<p:a xmlns:p="u''v">1</p:a>';
+    SELECT @x.value('declare namespace p = ''u''''v''; (/p:a)[1]', 'INT') AS v;
+END;
+GO
+EXEC xmlns_methods_nsproc_dq;
+GO
+DROP PROCEDURE xmlns_methods_nsproc_dq;
 GO

@@ -1403,7 +1403,7 @@ check_xquery_prefixes(const std::string &xq, const std::set<std::string> &declar
 	};
 	bool		after_keyword = false;	/* last token is one of expr_keywords */
 
-	for (const char *p : {"xml", "xs", "xsi", "fn", "xdt", "sql", "sqltypes"})
+	for (const char *p : {"xml", "xs", "xsi", "fn", "xdt", "sql"})
 		bound.insert(p);
 
 	while (i < n)
