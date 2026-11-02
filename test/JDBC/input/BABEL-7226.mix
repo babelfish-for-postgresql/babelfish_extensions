@@ -69,6 +69,24 @@ GO
 EXEC babel_7226_p2 5, DEFAULT;
 GO
 
+-- recreating the routine from the T-SQL endpoint rebuilds its catalog entry
+ALTER PROCEDURE babel_7226_p1 @a INT AS SELECT @a;
+GO
+EXEC babel_7226_p1 5;
+GO
+DROP FUNCTION babel_7226_f1;
+GO
+CREATE FUNCTION babel_7226_f1 (@a INT) RETURNS INT AS BEGIN RETURN @a; END
+GO
+SELECT dbo.babel_7226_f1(7);
+GO
+
+-- psql
+SELECT pg_get_function_arguments('master_dbo.babel_7226_p1'::regproc);
+GO
+SELECT pg_get_function_arguments('master_dbo.babel_7226_f1'::regproc);
+GO
+
 -- psql
 -- restore the original names so the catalogs agree again before cleanup
 ALTER PROCEDURE master_dbo.babel_7226_p1(int) RENAME TO babel_7226_p1_nd;
