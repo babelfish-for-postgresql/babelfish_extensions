@@ -2484,6 +2484,22 @@ int#!#varchar
 2#!#two
 ~~END~~
 
+
+-- X10b: cross-DB target with the schema omitted (db..table) - flush defaults
+-- the schema to dbo
+INSERT INTO [ie qi db]..[My Target] EXEC dbo.ie_qi_off_proc;
+SELECT * FROM [ie qi db].dbo.[My Target] ORDER BY id;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+1#!#one
+2#!#two
+2#!#two
+~~END~~
+
 DROP DATABASE [ie qi db];
 GO
 
@@ -2506,10 +2522,94 @@ int#!#varchar
 DROP SCHEMA IE_QI_Upper;
 GO
 
+-- X12: INSERT EXEC inside a procedure body. The procedure is created with
+-- QUOTED_IDENTIFIER OFF (current setting) and called with it OFF here and ON
+-- below. Procedure-body parsing and batch parsing handle QUOTED_IDENTIFIER
+-- differently, so both combinations are exercised.
+CREATE PROCEDURE dbo.ie_qi_off_wrapper AS
+    CREATE TABLE #ie_qi_wrap (id INT, name VARCHAR(20));
+    INSERT INTO #ie_qi_wrap EXEC dbo.ie_qi_off_proc;
+    SELECT * FROM #ie_qi_wrap ORDER BY id;
+    DROP TABLE #ie_qi_wrap;
+    DECLARE @tv TABLE (id INT, name VARCHAR(20));
+    INSERT INTO @tv EXEC dbo.ie_qi_off_proc;
+    SELECT * FROM @tv ORDER BY id;
+GO
+EXEC dbo.ie_qi_off_wrapper;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+
 SET QUOTED_IDENTIFIER ON;
 GO
 
--- X12: same targets with QUOTED_IDENTIFIER ON (unchanged behaviour)
+-- X13: procedure created with QUOTED_IDENTIFIER OFF, called with it ON
+EXEC dbo.ie_qi_off_wrapper;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+DROP PROCEDURE dbo.ie_qi_off_wrapper;
+GO
+
+-- X14: procedure created with QUOTED_IDENTIFIER ON, called with it ON here
+-- and OFF below
+CREATE PROCEDURE dbo.ie_qi_on_wrapper AS
+    CREATE TABLE #ie_qi_wrap (id INT, name VARCHAR(20));
+    INSERT INTO #ie_qi_wrap EXEC dbo.ie_qi_off_proc;
+    SELECT * FROM #ie_qi_wrap ORDER BY id;
+    DROP TABLE #ie_qi_wrap;
+    DECLARE @tv TABLE (id INT, name VARCHAR(20));
+    INSERT INTO @tv EXEC dbo.ie_qi_off_proc;
+    SELECT * FROM @tv ORDER BY id;
+GO
+EXEC dbo.ie_qi_on_wrapper;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+
+-- X15: same targets with QUOTED_IDENTIFIER ON (unchanged behaviour)
 CREATE TABLE #ie_qi_on_temp (id INT, name VARCHAR(20));
 INSERT INTO #ie_qi_on_temp EXEC dbo.ie_qi_off_proc;
 SELECT * FROM #ie_qi_on_temp ORDER BY id;
@@ -2536,6 +2636,66 @@ int#!#varchar
 2#!#two
 ~~END~~
 
+
+-- X16: table and column names containing ']' (only creatable via double
+-- quotes with QUOTED_IDENTIFIER ON; the backend scanner has no ']]' escape).
+-- The flush falls back to quote_identifier() for these names, so they keep
+-- working under QUOTED_IDENTIFIER ON as they did before bracket quoting.
+CREATE TABLE dbo."a]b" (id INT, name VARCHAR(20));
+INSERT INTO dbo."a]b" EXEC dbo.ie_qi_off_proc;
+SELECT * FROM dbo."a]b" ORDER BY id;
+DROP TABLE dbo."a]b";
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+
+CREATE TABLE dbo.ie_qi_brcol ("c]d" INT, name VARCHAR(20));
+INSERT INTO dbo.ie_qi_brcol ("c]d", name) EXEC dbo.ie_qi_off_proc;
+SELECT "c]d", name FROM dbo.ie_qi_brcol ORDER BY "c]d";
+DROP TABLE dbo.ie_qi_brcol;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+-- X17: procedure created with QUOTED_IDENTIFIER ON, called with it OFF
+EXEC dbo.ie_qi_on_wrapper;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+~~END~~
+
+DROP PROCEDURE dbo.ie_qi_on_wrapper;
+GO
+
+SET QUOTED_IDENTIFIER ON;
+GO
 
 DROP PROCEDURE dbo.ie_qi_off_proc;
 GO

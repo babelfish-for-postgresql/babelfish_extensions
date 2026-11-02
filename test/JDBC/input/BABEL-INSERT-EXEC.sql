@@ -1677,6 +1677,12 @@ GO
 INSERT INTO [ie qi db].dbo.[My Target] EXEC dbo.ie_qi_off_proc;
 SELECT * FROM [ie qi db].dbo.[My Target] ORDER BY id;
 GO
+
+-- X10b: cross-DB target with the schema omitted (db..table) - flush defaults
+-- the schema to dbo
+INSERT INTO [ie qi db]..[My Target] EXEC dbo.ie_qi_off_proc;
+SELECT * FROM [ie qi db].dbo.[My Target] ORDER BY id;
+GO
 DROP DATABASE [ie qi db];
 GO
 
@@ -1691,10 +1697,46 @@ GO
 DROP SCHEMA IE_QI_Upper;
 GO
 
+-- X12: INSERT EXEC inside a procedure body. The procedure is created with
+-- QUOTED_IDENTIFIER OFF (current setting) and called with it OFF here and ON
+-- below. Procedure-body parsing and batch parsing handle QUOTED_IDENTIFIER
+-- differently, so both combinations are exercised.
+CREATE PROCEDURE dbo.ie_qi_off_wrapper AS
+    CREATE TABLE #ie_qi_wrap (id INT, name VARCHAR(20));
+    INSERT INTO #ie_qi_wrap EXEC dbo.ie_qi_off_proc;
+    SELECT * FROM #ie_qi_wrap ORDER BY id;
+    DROP TABLE #ie_qi_wrap;
+    DECLARE @tv TABLE (id INT, name VARCHAR(20));
+    INSERT INTO @tv EXEC dbo.ie_qi_off_proc;
+    SELECT * FROM @tv ORDER BY id;
+GO
+EXEC dbo.ie_qi_off_wrapper;
+GO
+
 SET QUOTED_IDENTIFIER ON;
 GO
 
--- X12: same targets with QUOTED_IDENTIFIER ON (unchanged behaviour)
+-- X13: procedure created with QUOTED_IDENTIFIER OFF, called with it ON
+EXEC dbo.ie_qi_off_wrapper;
+GO
+DROP PROCEDURE dbo.ie_qi_off_wrapper;
+GO
+
+-- X14: procedure created with QUOTED_IDENTIFIER ON, called with it ON here
+-- and OFF below
+CREATE PROCEDURE dbo.ie_qi_on_wrapper AS
+    CREATE TABLE #ie_qi_wrap (id INT, name VARCHAR(20));
+    INSERT INTO #ie_qi_wrap EXEC dbo.ie_qi_off_proc;
+    SELECT * FROM #ie_qi_wrap ORDER BY id;
+    DROP TABLE #ie_qi_wrap;
+    DECLARE @tv TABLE (id INT, name VARCHAR(20));
+    INSERT INTO @tv EXEC dbo.ie_qi_off_proc;
+    SELECT * FROM @tv ORDER BY id;
+GO
+EXEC dbo.ie_qi_on_wrapper;
+GO
+
+-- X15: same targets with QUOTED_IDENTIFIER ON (unchanged behaviour)
 CREATE TABLE #ie_qi_on_temp (id INT, name VARCHAR(20));
 INSERT INTO #ie_qi_on_temp EXEC dbo.ie_qi_off_proc;
 SELECT * FROM #ie_qi_on_temp ORDER BY id;
@@ -1704,6 +1746,34 @@ GO
 DECLARE @ie_qi_on_tv TABLE (id INT, name VARCHAR(20));
 INSERT INTO @ie_qi_on_tv EXEC dbo.ie_qi_off_proc;
 SELECT * FROM @ie_qi_on_tv ORDER BY id;
+GO
+
+-- X16: table and column names containing ']' (only creatable via double
+-- quotes with QUOTED_IDENTIFIER ON; the backend scanner has no ']]' escape).
+-- The flush falls back to quote_identifier() for these names, so they keep
+-- working under QUOTED_IDENTIFIER ON as they did before bracket quoting.
+CREATE TABLE dbo."a]b" (id INT, name VARCHAR(20));
+INSERT INTO dbo."a]b" EXEC dbo.ie_qi_off_proc;
+SELECT * FROM dbo."a]b" ORDER BY id;
+DROP TABLE dbo."a]b";
+GO
+
+CREATE TABLE dbo.ie_qi_brcol ("c]d" INT, name VARCHAR(20));
+INSERT INTO dbo.ie_qi_brcol ("c]d", name) EXEC dbo.ie_qi_off_proc;
+SELECT "c]d", name FROM dbo.ie_qi_brcol ORDER BY "c]d";
+DROP TABLE dbo.ie_qi_brcol;
+GO
+
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+-- X17: procedure created with QUOTED_IDENTIFIER ON, called with it OFF
+EXEC dbo.ie_qi_on_wrapper;
+GO
+DROP PROCEDURE dbo.ie_qi_on_wrapper;
+GO
+
+SET QUOTED_IDENTIFIER ON;
 GO
 
 DROP PROCEDURE dbo.ie_qi_off_proc;

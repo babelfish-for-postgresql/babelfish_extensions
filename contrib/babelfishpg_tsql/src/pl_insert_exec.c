@@ -83,23 +83,29 @@ extern int	execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockA
 extern InlineCodeBlockArgs *create_args(int numargs);
 
 /*
- * Quote an identifier with T-SQL brackets ([name]), doubling any embedded ']'.
+ * Quote an identifier for a statement that is parsed as T-SQL (the flush
+ * INSERT run through execute_batch). Brackets ([name]) are identifier
+ * delimiters regardless of the session's QUOTED_IDENTIFIER setting, whereas
+ * the double quotes emitted by quote_identifier() are read as a string literal
+ * when QUOTED_IDENTIFIER is OFF (BABEL-7257).
+ *
+ * The backend T-SQL scanner does not support the ']]' escape inside brackets
+ * (the first ']' terminates the identifier), so a name containing ']' cannot
+ * be bracket-quoted. Fall back to quote_identifier() for such names; they
+ * keep working under QUOTED_IDENTIFIER ON exactly as before.
+ *
+ * Always returns a freshly palloc'd string, so the caller may pfree it.
  */
 static char *
 quote_tsql_bracket_identifier(const char *ident)
 {
-	StringInfoData	buf;
-	const char 		*p;
+	StringInfoData buf;
+
+	if (strchr(ident, ']') != NULL)
+		return pstrdup(quote_identifier(ident));
 
 	initStringInfo(&buf);
-	appendStringInfoChar(&buf, '[');
-	for (p = ident; *p; p++)
-	{
-		if (*p == ']')
-			appendStringInfoChar(&buf, ']');
-		appendStringInfoChar(&buf, *p);
-	}
-	appendStringInfoChar(&buf, ']');
+	appendStringInfo(&buf, "[%s]", ident);
 	return buf.data;
 }
 
@@ -112,9 +118,9 @@ quote_tsql_bracket_identifier(const char *ident)
 static char *
 build_quoted_column_list(List *columns, bool tsql_brackets)
 {
-	StringInfoData	cols;
-	ListCell	   *lc;
-	bool			first = true;
+	StringInfoData cols;
+	ListCell   *lc;
+	bool		first = true;
 
 	if (columns == NIL)
 		return NULL;
@@ -126,7 +132,8 @@ build_quoted_column_list(List *columns, bool tsql_brackets)
 			appendStringInfoString(&cols, ", ");
 		first = false;
 		if (tsql_brackets)
-			appendStringInfoString(&cols, quote_tsql_bracket_identifier((char *) lfirst(lc)));
+			appendStringInfoString(&cols,
+								   quote_tsql_bracket_identifier((char *) lfirst(lc)));
 		else
 			appendStringInfoString(&cols, quote_identifier((char *) lfirst(lc)));
 	}
@@ -610,7 +617,8 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema
 	if (target_db != NULL)
 		qualified_target = psprintf("%s.%s.%s",
 									quote_tsql_bracket_identifier(target_db),
-									quote_tsql_bracket_identifier(target_schema ? target_schema : "dbo"),
+									quote_tsql_bracket_identifier(target_schema ?
+																  target_schema : "dbo"),
 									quote_tsql_bracket_identifier(target_table));
 	else if (target_schema != NULL)
 		qualified_target = psprintf("%s.%s",
