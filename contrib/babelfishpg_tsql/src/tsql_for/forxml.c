@@ -17,7 +17,6 @@
 #include "utils/datum.h"
 #include "utils/xml.h"
 #include "utils/lsyscache.h"
-#include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 #include "catalog/pg_type.h"
@@ -67,14 +66,6 @@ typedef struct forxml_auto_state
 	bool		   *type_typbyval;		/* typbyval of column's base type (for datumCopy) */
 	bool			eq_cache_init;		/* Whether equality cache has been populated */
 
-	/*
-	 * Per-aggregate memory context.  The sfunc runs the row work in a context
-	 * that is reset once the row has been appended, so the prev-row caches
-	 * below — which exist precisely to be read when the *next* row is
-	 * compared — must be allocated here rather than in the current context.
-	 */
-	MemoryContext agg_context;	/* Context cross-row state must live in */
-
 	/* Previous row values, stored as Datums for type-aware comparison. */
 	Datum		   *prev_datums;		/* datumCopy'd previous values */
 	bool		   *prev_isnull;		/* Per-column null flag for prev row */
@@ -102,16 +93,6 @@ typedef struct forxml_state
 
 	bool				ns_has_xsi;		/* True if the declarations bind xsi */
 
-	/*
-	 * Memory contexts.  agg_context is the per-aggregate context this state
-	 * lives in; row_context is a child of it holding one row's worth of
-	 * serialization scratch, reset after every row.  Anything allocated while
-	 * row_context is current and read by a later row has to be put in
-	 * agg_context explicitly.
-	 */
-	MemoryContext agg_context;	/* Lives as long as the aggregate */
-	MemoryContext row_context;	/* Reset after every row */
-
 	/* Column name cache for RAW and PATH - built on the first row */
 	char			  **colnames;		/* colnames[i] = XML name for column i */
 	int					ncolnames;		/* Number of entries in colnames */
@@ -120,9 +101,9 @@ typedef struct forxml_state
 } forxml_state;
 
 static StringInfo for_xml_ffunc(PG_FUNCTION_ARGS);
-static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls, forxml_state *fstate);
-static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls, forxml_state *fstate);
-static void tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state, const char *ns_decls, bool ns_has_xsi);
+static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls, forxml_state *fstate, MemoryContext agg_context);
+static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls, forxml_state *fstate, MemoryContext agg_context);
+static void tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state, const char *ns_decls, bool ns_has_xsi, MemoryContext agg_context);
 static void update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, bool binary_base64, int i);
 static char *tsql_escape_xml(const char *str);
 
@@ -170,9 +151,9 @@ tsql_escape_xml(const char *str)
 	return buf.data;
 }
 
-static int find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc);
+static int	find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, MemoryContext agg_context);
 static void close_all_elements(StringInfo state, forxml_auto_state *auto_state);
-static void output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil, const char *ns_decls, bool ns_has_xsi);
+static void output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil, const char *ns_decls, bool ns_has_xsi, MemoryContext agg_context);
 static char *cached_value_to_xml_string(Datum value, int col_idx, forxml_auto_state *auto_state, Oid orig_type);
 static void init_output_func_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
 static void init_tsql_type_cache(forxml_auto_state *auto_state, TupleDesc tupdesc);
@@ -424,7 +405,7 @@ restore_xml_prefix_colon(char *colname, const char *ns_decls)
  * different rowtype rebuilds rather than returning the wrong names.
  */
 static char **
-forxml_column_names(forxml_state *fstate, TupleDesc tupdesc, const char *all_ns_decls)
+forxml_column_names(forxml_state *fstate, TupleDesc tupdesc, const char *all_ns_decls, MemoryContext agg_context)
 {
 	MemoryContext oldcontext;
 	char	  **names;
@@ -436,12 +417,12 @@ forxml_column_names(forxml_state *fstate, TupleDesc tupdesc, const char *all_ns_
 		return fstate->colnames;
 
 	/*
-	 * This runs on the first row, from inside the per-row context the sfunc
-	 * installs around the row work, but the array and its strings are handed
-	 * back to every later row.  Build them in the aggregate context so the
-	 * reset at the end of this row does not take them with it.
+	 * This runs during row processing, in the per-input-tuple context the
+	 * executor calls the sfunc in and resets after every row, but the array
+	 * and its strings are handed back to every later row, so build them in
+	 * agg_context.
 	 */
-	oldcontext = MemoryContextSwitchTo(fstate->agg_context);
+	oldcontext = MemoryContextSwitchTo(agg_context);
 
 	/*
 	 * Build into a local and publish it only once the loop has completed, so
@@ -531,20 +512,6 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 		fstate->xml_output = makeStringInfo();
 		fstate->auto_state = NULL;
 		state = fstate->xml_output;
-		fstate->agg_context = agg_context;
-
-		/*
-		 * Scratch context for one row's serialization.  Serializing a row
-		 * allocates a handful of short-lived strings per column (the output
-		 * function's result, the XML-escaped copy of it, T-SQL datetime
-		 * reformatting) which the row functions largely do not free; left in
-		 * agg_context they would be retained until the aggregate finished,
-		 * growing with rows x columns.  Created once here and reset after
-		 * each row.
-		 */
-		fstate->row_context = AllocSetContextCreate(agg_context,
-													"FOR XML per-row",
-													ALLOCSET_DEFAULT_SIZES);
 		root_name = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(5));
 		fstate->has_root = (root_name != NULL && strlen(root_name) > 0);
 
@@ -585,7 +552,6 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 				auto_st->first_row = true;
 				auto_st->has_root = (root_name != NULL && strlen(root_name) > 0);
 				auto_st->binary_base64 = binary_base64;
-				auto_st->agg_context = agg_context;
 				fstate->auto_state = auto_st;
 
 				/* Parse metadata now so it's ready for the first row */
@@ -599,12 +565,13 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 					/*
 					 * Build the per-column caches once, here in agg_context.
 					 * Every row reads them, while the row work below runs in
-					 * a context that is reset after each row.  It matters most
-					 * for the FmgrInfos: fmgr_info() records the current
-					 * context as fn_mcxt, which is where a function later
-					 * allocates anything it caches in fn_extra, so an
-					 * FmgrInfo set up inside the per-row context would hand
-					 * out freed memory on a later row.
+					 * the executor's per-input-tuple context, which is reset
+					 * after each row.  It matters most for the FmgrInfos:
+					 * fmgr_info() records the current context as fn_mcxt,
+					 * which is where a function later allocates anything it
+					 * caches in fn_extra, so an FmgrInfo set up in the
+					 * per-input-tuple context would hand out freed memory on
+					 * a later row.
 					 *
 					 * Order matters: init_eq_op_cache() reads base_types[],
 					 * which init_output_func_cache() fills in.
@@ -688,22 +655,25 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	row_ns_decls = fstate->has_root ? NULL : ns_decls;
 
 	/*
-	 * Serialize the row in the per-row context, then flush it.  Everything
-	 * the row functions allocate to build the row's text is dead once the
-	 * text has been appended, so one reset reclaims it and keeps the
-	 * aggregate's footprint flat in the number of rows.
+	 * Serialize the row in the context the executor called the sfunc in. For
+	 * an aggregate that is the per-input-tuple context, which the executor
+	 * resets after every input row, so the short-lived strings the row
+	 * functions allocate per column and do not free (the output function's
+	 * result, the XML-escaped copy of it, T-SQL datetime reformatting) are
+	 * reclaimed row by row.  The helpers that keep something for a later row
+	 * are passed agg_context and allocate it there.
 	 *
 	 * fstate->xml_output is unaffected by the switch: appendStringInfo()
-	 * enlarges the buffer with repalloc(), which works off the chunk's own
-	 * context rather than the current one, and both the StringInfo and its
-	 * initial buffer were allocated in agg_context above.
+	 * enlarges the buffer with repalloc(), which allocates in the chunk's own
+	 * context whatever the current context is, and both the StringInfo and
+	 * its initial buffer were allocated in agg_context above.
 	 */
-	MemoryContextSwitchTo(fstate->row_context);
+	MemoryContextSwitchTo(old_context);
 
 	switch (mode)
 	{
 		case TSQL_FORXML_RAW:	/* FOR XML RAW */
-			tsql_row_to_xml_raw(state, record, element_name, binary_base64, elements, xsinil, row_ns_decls, ns_decls, fstate);
+			tsql_row_to_xml_raw(state, record, element_name, binary_base64, elements, xsinil, row_ns_decls, ns_decls, fstate, agg_context);
 			break;
 		case TSQL_FORXML_AUTO:	/* FOR XML AUTO */
 			{
@@ -714,11 +684,11 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 							(errcode(ERRCODE_INTERNAL_ERROR),
 							 errmsg("FOR XML AUTO state not initialized")));
 
-				tsql_row_to_xml_auto(state, record, elements, xsinil, auto_state, row_ns_decls, fstate->ns_has_xsi);
+				tsql_row_to_xml_auto(state, record, elements, xsinil, auto_state, row_ns_decls, fstate->ns_has_xsi, agg_context);
 			}
 			break;
 		case TSQL_FORXML_PATH:	/* FOR XML PATH */
-			tsql_row_to_xml_path(state, record, element_name, binary_base64, xsinil, row_ns_decls, ns_decls, fstate);
+			tsql_row_to_xml_path(state, record, element_name, binary_base64, xsinil, row_ns_decls, ns_decls, fstate, agg_context);
 			break;
 		case TSQL_FORXML_EXPLICIT:
 
@@ -736,12 +706,6 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("invalid FOR XML mode")));
 	}
-
-	/* Row is in the output buffer; drop the scratch it was built from */
-	MemoryContextSwitchTo(agg_context);
-	MemoryContextReset(fstate->row_context);
-
-	MemoryContextSwitchTo(old_context);
 
 	PG_RETURN_POINTER(fstate);
 }
@@ -839,7 +803,7 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
  * Map an SQL row to an XML element in RAW mode.
  */
 static void
-tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls, forxml_state *fstate)
+tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool elements, bool xsinil, const char *ns_decls, const char *all_ns_decls, forxml_state *fstate, MemoryContext agg_context)
 {
 	HeapTupleHeader td;
 	Oid             tupType;
@@ -876,7 +840,7 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 						"with attribute-centric FOR XML serialization.")));
 	}
 
-	colnames = forxml_column_names(fstate, tupdesc, all_ns_decls);
+	colnames = forxml_column_names(fstate, tupdesc, all_ns_decls, agg_context);
 
 	/* Output opening tag (only when element_name is non-empty) */
 	if (element_name[0] != '\0')
@@ -1038,7 +1002,7 @@ validate_attribute_centric_col_names_xml(const char *element_name, TupleDesc tup
  * Map an SQL row to an XML element in PATH mode.
  */
 static void
-tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls, forxml_state *fstate)
+tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64, bool xsinil, const char *ns_decls, const char *all_ns_decls, forxml_state *fstate, MemoryContext agg_context)
 {
 	HeapTupleHeader td;
 	Oid             tupType;
@@ -1068,7 +1032,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 
 	has_att_centric = validate_attribute_centric_col_names_xml(element_name, tupdesc);
 
-	colnames = forxml_column_names(fstate, tupdesc, all_ns_decls);
+	colnames = forxml_column_names(fstate, tupdesc, all_ns_decls, agg_context);
 
 	/*
 	 * each tuple is either contained in a "row" tag, or standalone if the
@@ -1506,7 +1470,7 @@ auto_column_to_xml_string(Datum colval, bool isnull, HeapTuple tuple, TupleDesc 
  * Returns 1 if this is the first row.
  */
 static int
-find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc)
+find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, MemoryContext agg_context)
 {
 	int i;
 	int first_change = auto_state->max_depth + 1;
@@ -1565,20 +1529,16 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 
 			/*
 			 * Update cached prev string.  curr_str was serialized in the
-			 * per-row context, which is reset before the next row gets here,
-			 * so keep the comparison copy in the aggregate context.
+			 * per-input-tuple context, which the executor resets before the
+			 * next row gets here, so keep the comparison copy in the
+			 * aggregate context.
 			 *
 			 * Copy first, free the old value after, so prev_str_values[i] is
 			 * never left dangling if the copy throws.
 			 */
 			if (curr_str != NULL)
-			{
-				MemoryContext oldcontext = MemoryContextSwitchTo(auto_state->agg_context);
-				char	   *new_str = pstrdup(curr_str);
-
-				MemoryContextSwitchTo(oldcontext);
-				auto_state->prev_str_values[i] = new_str;
-			}
+				auto_state->prev_str_values[i] =
+					MemoryContextStrdup(agg_context, curr_str);
 			else
 				auto_state->prev_str_values[i] = NULL;
 
@@ -1593,8 +1553,8 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 		 * Update prev Datum for eq-op columns.  For pass-by-reference types
 		 * we must datumCopy into the aggregate context, since the source
 		 * tuple will be reclaimed before the next row, and so will the
-		 * per-row context this runs in.  Hence the explicit switch below. For
-		 * pass-by-value types the Datum itself is the value.
+		 * per-input-tuple context this runs in.  Hence the explicit switch
+		 * below.  For pass-by-value types the Datum itself is the value.
 		 *
 		 * datumCopy first, free old after — keeps prev_datums[i] valid if
 		 * the copy throws.
@@ -1605,7 +1565,7 @@ find_first_changed_level(forxml_auto_state *auto_state, HeapTuple tuple, TupleDe
 
 			if (!curr_isnull)
 			{
-				MemoryContext oldcontext = MemoryContextSwitchTo(auto_state->agg_context);
+				MemoryContext oldcontext = MemoryContextSwitchTo(agg_context);
 
 				new_datum = datumCopy(curr_datum,
 									  auto_state->type_typbyval[i],
@@ -1947,7 +1907,7 @@ auto_preformat_value(HeapTuple tuple, TupleDesc tupdesc,
  * 4. Store current values for next row comparison
  */
 static void
-output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil, const char *ns_decls, bool ns_has_xsi)
+output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple, TupleDesc tupdesc, bool elements, bool xsinil, const char *ns_decls, bool ns_has_xsi, MemoryContext agg_context)
 {
 	int first_changed_level;
 	int deepest_level_in_row = auto_state->max_depth;
@@ -1955,15 +1915,16 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 	/*
 	 * The output-function, T-SQL type and equality caches are built once in
 	 * the sfunc's AUTO setup block, in the aggregate context (see
-	 * tsql_query_to_xml_sfunc).  This function runs in the per-row context,
-	 * which is reset after every row, so they must not be built here.
+	 * tsql_query_to_xml_sfunc).  This function runs in the executor's
+	 * per-input-tuple context, which is reset after every row, so they must
+	 * not be built here.
 	 */
 	Assert(auto_state->out_funcs_cached);
 	Assert(auto_state->tsql_types_cached);
 	Assert(auto_state->eq_cache_init);
 
 	/* Find where this row differs from previous */
-	first_changed_level = find_first_changed_level(auto_state, tuple, tupdesc);
+	first_changed_level = find_first_changed_level(auto_state, tuple, tupdesc, agg_context);
 
 	/*
 	 * If no visible column changed (all values identical to previous row),
@@ -2130,9 +2091,10 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 
 			/*
 			 * Both branches cache a value for the next row to compare
-			 * against, so both have to allocate in the aggregate context
-			 * rather than the per-row context this runs in.  Same reasoning
-			 * as the equivalent updates in find_first_changed_level().
+			 * against, so both allocate it in the aggregate context: this
+			 * runs in the per-input-tuple context, which is reset after every
+			 * row.  Same reasoning as the equivalent updates in
+			 * find_first_changed_level().
 			 */
 			if (auto_state->has_eq_op[i])
 			{
@@ -2140,7 +2102,7 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 					auto_state->prev_datums[i] = (Datum) 0;
 				else
 				{
-					MemoryContext oldcontext = MemoryContextSwitchTo(auto_state->agg_context);
+					MemoryContext oldcontext = MemoryContextSwitchTo(agg_context);
 
 					auto_state->prev_datums[i] = datumCopy(curr_datum,
 														   auto_state->type_typbyval[i],
@@ -2154,12 +2116,8 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
 				char	   *curr_str = auto_column_to_xml_string(curr_datum, curr_isnull, tuple, tupdesc, i, auto_state);
 
 				if (curr_str != NULL)
-				{
-					MemoryContext oldcontext = MemoryContextSwitchTo(auto_state->agg_context);
-
-					auto_state->prev_str_values[i] = pstrdup(curr_str);
-					MemoryContextSwitchTo(oldcontext);
-				}
+					auto_state->prev_str_values[i] =
+						MemoryContextStrdup(agg_context, curr_str);
 				else
 					auto_state->prev_str_values[i] = NULL;
 			}
@@ -2179,7 +2137,7 @@ output_row_xml(StringInfo state, forxml_auto_state *auto_state, HeapTuple tuple,
  * Map an SQL row to XML in AUTO mode.
  */
 static void
-tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state, const char *ns_decls, bool ns_has_xsi)
+tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil, forxml_auto_state *auto_state, const char *ns_decls, bool ns_has_xsi, MemoryContext agg_context)
 {
 	HeapTupleHeader td;
 	Oid tupType;
@@ -2208,7 +2166,7 @@ tsql_row_to_xml_auto(StringInfo state, Datum record, bool elements, bool xsinil,
 	}
 
 	/* Generate hierarchical XML output */
-	output_row_xml(state, auto_state, tuple, tupdesc, elements, xsinil, ns_decls, ns_has_xsi);
+	output_row_xml(state, auto_state, tuple, tupdesc, elements, xsinil, ns_decls, ns_has_xsi, agg_context);
 
 	ReleaseTupleDesc(tupdesc);
 }
