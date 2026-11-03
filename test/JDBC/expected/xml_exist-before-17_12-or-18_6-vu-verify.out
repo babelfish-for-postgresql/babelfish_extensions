@@ -310,9 +310,10 @@ DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</n
 WITH XMLNAMESPACES('http://example.com' as ns)
 SELECT @xml.exist('(//ns:data)[1]'), @xml.exist('(//child)[1]'), @xml.exist('(//child/@ns:attr)[1]');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'WITH XMLNAMESPACES' is not currently supported in Babelfish)~~
+~~START~~
+bit#!#bit#!#bit
+1#!#1#!#0
+~~END~~
 
 
 DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
