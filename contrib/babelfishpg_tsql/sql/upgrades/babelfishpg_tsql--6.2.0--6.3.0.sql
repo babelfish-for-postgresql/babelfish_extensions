@@ -29,6 +29,8 @@ EXCEPTION
     when dependent_objects_still_exist then --if 'drop view' statement fails
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
         raise warning '%', error_msg;
+        -- keep the object but detach it from the extension so pg_dump can see it
+        execute query1;
     when undefined_function then --if 'Deprecated function does not exist'
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
         raise warning '%', error_msg;
