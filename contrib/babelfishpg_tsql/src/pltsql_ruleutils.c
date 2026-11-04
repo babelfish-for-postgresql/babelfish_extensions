@@ -68,6 +68,7 @@
 #include "utils/xml.h"
 
 #include "catalog.h"
+#include "hooks.h"
 #include "pltsql.h"
 
 /* ----------
@@ -881,6 +882,14 @@ tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 				nextdefaultposition = list_head(defaultpositions);
 				default_positions_available = true;
 				pfree(str);
+
+				/*
+				 * The loop below advances defaultpositions and argdefaults
+				 * together, so a shorter argdefaults list would leave
+				 * nextargdefault NULL while positions remain.
+				 */
+				check_bbf_default_positions_consistent(proctup, defaultpositions,
+													   argdefaults);
 			}
 			else
 				heap_freetuple(bbffunctuple);

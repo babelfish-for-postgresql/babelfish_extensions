@@ -28,5 +28,7 @@ ignore#!#BABEL-3013
 ignore#!#BABEL-SP_TABLE_PRIVILEGES
 ignore#!#ISC-Columns-vu-verify
 ignore#!#four-part-names-vu-verify
+
+# No parallelism is being tested here; it only checks catalog-mismatch errors.
 ignore#!#BABEL-7226
 

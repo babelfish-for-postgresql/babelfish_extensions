@@ -69,6 +69,10 @@ GO
 EXEC babel_7226_p2 5, DEFAULT;
 GO
 
+-- tsql_print_function_arguments (routine definition): should throw error
+SELECT sys.tsql_get_functiondef(OBJECT_ID('babel_7226_p2'));
+GO
+
 -- recreating the routine from the T-SQL endpoint rebuilds its catalog entry
 ALTER PROCEDURE babel_7226_p1 @a INT AS SELECT @a;
 GO

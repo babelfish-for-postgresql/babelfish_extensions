@@ -5535,20 +5535,52 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 /*
  * Every entry in babelfish_function_ext.default_positions must pair with one
  * entry in pg_proc.proargdefaults; callers index or walk both lists in
- * lockstep.  If the two catalogs disagree report it instead of dereferencing 
+ * lockstep.  If the two catalogs disagree, report it instead of dereferencing
  * a missing list element.
+ *
+ * Checks, all cheap walks over lists the caller has already parsed:
+ *   - count: one position per default expression
+ *   - range: each position is a valid argument index (0 .. pronargs - 1)
+ *   - order: positions are strictly increasing, as the writer records them,
+ *     because the lookups stop scanning once they pass the wanted argument
+ *
+ * Call this only for the routine already chosen, never per candidate during
+ * function lookup, where a bad row must just fail to match.
  */
-static void
+void
 check_bbf_default_positions_consistent(HeapTuple proctup,
 									   const List *default_positions,
 									   const List *argdefaults)
 {
+	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
+	bool		consistent = true;
+
 	if (list_length(default_positions) != list_length(argdefaults))
+		consistent = false;
+	else
+	{
+		ListCell   *lc;
+		int			prev = -1;
+
+		foreach(lc, default_positions)
+		{
+			int			position = intVal((Node *) lfirst(lc));
+
+			if (position <= prev || position >= procform->pronargs)
+			{
+				consistent = false;
+				break;
+			}
+			prev = position;
+		}
+	}
+
+	if (!consistent)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("default argument metadata for function \"%s\" is inconsistent",
-						NameStr(((Form_pg_proc) GETSTRUCT(proctup))->proname)),
-				 errhint("Recreate the function or procedure to repair its catalog entries.")));
+						NameStr(procform->proname)),
+				 errhint("Rename Babelfish functions and procedures from the T-SQL endpoint, not the PostgreSQL endpoint. Recreate or ALTER this routine from the T-SQL endpoint to repair it.")));
 }
 
 static int getDefaultPosition(const List *default_positions, const ListCell *def_idx, int argPosition)
@@ -5772,6 +5804,13 @@ insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **arg
 			str = TextDatumGetCString(arg_default_positions);
 			default_positions = castNode(List, stringToNode(str));
 			pfree(str);
+
+			/*
+			 * forboth() stops at the end of the shorter list, and position
+			 * indexes argarray directly, so a mismatched or out-of-range
+			 * entry would leave an argument NULL or write out of bounds.
+			 */
+			check_bbf_default_positions_consistent(func_tuple, default_positions, defaults);
 
 			forboth(def_idx, default_positions, def_item, defaults)
 			{
