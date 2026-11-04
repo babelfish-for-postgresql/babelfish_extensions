@@ -2489,7 +2489,7 @@ nvarchar
 myschematest_mydb
 ~~END~~
 
-select name from vw_myschematest order by 1
+select cast(name as nvarchar(128)) as name from vw_myschematest order by 1
 go
 ~~START~~
 nvarchar
@@ -4991,7 +4991,7 @@ nvarchar
 myschematest_mydb
 ~~END~~
 
-select name from vw_myschematest order by 1
+select cast(name as nvarchar(128)) as name from vw_myschematest order by 1
 go
 ~~START~~
 nvarchar
@@ -7611,7 +7611,7 @@ nvarchar
 myschematest_mydb
 ~~END~~
 
-select name from vw_myschematest order by 1
+select cast(name as nvarchar(128)) as name from vw_myschematest order by 1
 go
 ~~START~~
 nvarchar
