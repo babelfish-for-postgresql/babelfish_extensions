@@ -83,6 +83,31 @@ extern int	execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockA
 extern InlineCodeBlockArgs *create_args(int numargs);
 
 /*
+ * Quote an identifier for an internally generated INSERT EXEC statement.
+ *
+ * Under the T-SQL dialect use bracket quoting ([name]): brackets are
+ * identifier delimiters regardless of the session's QUOTED_IDENTIFIER setting,
+ * whereas the double quotes emitted by quote_identifier() are read as a string
+ * literal by the T-SQL parser when QUOTED_IDENTIFIER is OFF.
+ * Under the PG dialect use quote_identifier().
+ *
+ * Names containing ']' always use quote_identifier(): the backend T-SQL
+ * scanner has no ']]' escape (the first ']' terminates the identifier), so
+ * such names cannot be bracket-quoted and keep working under
+ * QUOTED_IDENTIFIER ON exactly as before.
+ *
+ * Always returns a freshly palloc'd string, so the caller may pfree it.
+ */
+static char *
+quote_insert_exec_identifier(const char *ident)
+{
+	if (sql_dialect != SQL_DIALECT_TSQL || strchr(ident, ']') != NULL)
+		return pstrdup(quote_identifier(ident));
+
+	return psprintf("[%s]", ident);
+}
+
+/*
  * Build a comma-separated list of quoted column identifiers from the parser's
  * List of column-name strings, for use in the temp table CREATE and the flush
  * INSERT. Returns NULL (no explicit column list) when columns is NIL. The
@@ -104,7 +129,8 @@ build_quoted_column_list(List *columns)
 		if (!first)
 			appendStringInfoString(&cols, ", ");
 		first = false;
-		appendStringInfoString(&cols, quote_identifier((char *) lfirst(lc)));
+		appendStringInfoString(&cols,
+							   quote_insert_exec_identifier((char *) lfirst(lc)));
 	}
 	return cols.data;
 }
@@ -567,7 +593,7 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema
 	 * (e.g. pg_temp_0) is not resolvable as a schema under the T-SQL dialect.
 	 */
 	temp_rel = table_open(temp_oid, NoLock);
-	temp_name = quote_identifier(pstrdup(RelationGetRelationName(temp_rel)));
+	temp_name = quote_insert_exec_identifier(RelationGetRelationName(temp_rel));
 	table_close(temp_rel, NoLock);
 
 	initStringInfo(&flush_query);
@@ -585,15 +611,16 @@ flush_insert_exec_temp_table(PLtsql_execstate *estate, const char *target_schema
 	 */
 	if (target_db != NULL)
 		qualified_target = psprintf("%s.%s.%s",
-									quote_identifier(target_db),
-									quote_identifier(target_schema ? target_schema : "dbo"),
-									quote_identifier(target_table));
+									quote_insert_exec_identifier(target_db),
+									quote_insert_exec_identifier(target_schema ?
+																 target_schema : "dbo"),
+									quote_insert_exec_identifier(target_table));
 	else if (target_schema != NULL)
 		qualified_target = psprintf("%s.%s",
-									quote_identifier(target_schema),
-									quote_identifier(target_table));
+									quote_insert_exec_identifier(target_schema),
+									quote_insert_exec_identifier(target_table));
 	else
-		qualified_target = pstrdup(quote_identifier(target_table));
+		qualified_target = quote_insert_exec_identifier(target_table);
 
 	appendStringInfo(&flush_query,
 		"INSERT INTO %s%s SELECT * FROM %s",
