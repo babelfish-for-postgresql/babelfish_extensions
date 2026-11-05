@@ -96,3 +96,7 @@ DROP TABLE IF EXISTS forxmlauto_t_ci_parent;
 GO
 DROP TABLE IF EXISTS forxmlauto_t_ci_child;
 GO
+DROP TABLE IF EXISTS forxmlauto_t_xmlcol_child;
+GO
+DROP TABLE IF EXISTS forxmlauto_t_xmlcol_parent;
+GO
