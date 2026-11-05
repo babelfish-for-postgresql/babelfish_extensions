@@ -20,6 +20,12 @@ GO
 CREATE PROCEDURE babel_7226_p2_one @a INT, @b INT = 2 AS SELECT @a, @b;
 GO
 
+-- case 3: pg_proc has more defaults than the catalog has default positions
+CREATE PROCEDURE babel_7226_p3 @a INT = 1, @b INT AS SELECT @a, @b;
+GO
+CREATE PROCEDURE babel_7226_p3_two @a INT = 1, @b INT = 2 AS SELECT @a, @b;
+GO
+
 -- consistent catalogs keep working
 EXEC babel_7226_p1 DEFAULT;
 GO
@@ -72,6 +78,13 @@ text
 IN "@a" integer DEFAULT 1, IN "@b" integer DEFAULT 2
 ~~END~~
 
+SELECT pg_get_function_arguments('master_dbo.babel_7226_p3'::regproc);
+GO
+~~START~~
+text
+IN "@a" integer DEFAULT 1, IN "@b" integer
+~~END~~
+
 
 -- make the catalogs disagree
 ALTER PROCEDURE master_dbo.babel_7226_p1(int) RENAME TO babel_7226_p1_old;
@@ -86,13 +99,17 @@ ALTER PROCEDURE master_dbo.babel_7226_p2(int, int) RENAME TO babel_7226_p2_old;
 GO
 ALTER PROCEDURE master_dbo.babel_7226_p2_one(int, int) RENAME TO babel_7226_p2;
 GO
+ALTER PROCEDURE master_dbo.babel_7226_p3(int, int) RENAME TO babel_7226_p3_old;
+GO
+ALTER PROCEDURE master_dbo.babel_7226_p3_two(int, int) RENAME TO babel_7226_p3;
+GO
 
 -- print_pltsql_function_arguments: should throw error
 SELECT pg_get_function_arguments('master_dbo.babel_7226_p1'::regproc);
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: default argument metadata for function "babel_7226_p1" is inconsistent
+~~ERROR (Message: ERROR: default argument metadata for routine "babel_7226_p1" is inconsistent
   Hint: Rename Babelfish functions and procedures from the T-SQL endpoint, not the PostgreSQL endpoint. Recreate this routine from the T-SQL endpoint to repair it.
     Server SQLState: XX001)~~
 
@@ -100,7 +117,7 @@ SELECT pg_get_function_arguments('master_dbo.babel_7226_f1'::regproc);
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: default argument metadata for function "babel_7226_f1" is inconsistent
+~~ERROR (Message: ERROR: default argument metadata for routine "babel_7226_f1" is inconsistent
   Hint: Rename Babelfish functions and procedures from the T-SQL endpoint, not the PostgreSQL endpoint. Recreate this routine from the T-SQL endpoint to repair it.
     Server SQLState: XX001)~~
 
@@ -108,7 +125,15 @@ SELECT pg_get_function_arguments('master_dbo.babel_7226_p2'::regproc);
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: default argument metadata for function "babel_7226_p2" is inconsistent
+~~ERROR (Message: ERROR: default argument metadata for routine "babel_7226_p2" is inconsistent
+  Hint: Rename Babelfish functions and procedures from the T-SQL endpoint, not the PostgreSQL endpoint. Recreate this routine from the T-SQL endpoint to repair it.
+    Server SQLState: XX001)~~
+
+SELECT pg_get_function_arguments('master_dbo.babel_7226_p3'::regproc);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: default argument metadata for routine "babel_7226_p3" is inconsistent
   Hint: Rename Babelfish functions and procedures from the T-SQL endpoint, not the PostgreSQL endpoint. Recreate this routine from the T-SQL endpoint to repair it.
     Server SQLState: XX001)~~
 
@@ -119,19 +144,25 @@ EXEC babel_7226_p1 DEFAULT;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: default argument metadata for function "babel_7226_p1" is inconsistent)~~
+~~ERROR (Message: default argument metadata for routine "babel_7226_p1" is inconsistent)~~
 
 SELECT dbo.babel_7226_f1(DEFAULT);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: default argument metadata for function "babel_7226_f1" is inconsistent)~~
+~~ERROR (Message: default argument metadata for routine "babel_7226_f1" is inconsistent)~~
 
 EXEC babel_7226_p2 5, DEFAULT;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: default argument metadata for function "babel_7226_p2" is inconsistent)~~
+~~ERROR (Message: default argument metadata for routine "babel_7226_p2" is inconsistent)~~
+
+EXEC babel_7226_p3 DEFAULT, DEFAULT;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: default argument metadata for routine "babel_7226_p3" is inconsistent)~~
 
 
 -- calls that leave out a defaulted argument: none of these crash.
@@ -170,7 +201,7 @@ GO
 text
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: default argument metadata for function "babel_7226_p2" is inconsistent)~~
+~~ERROR (Message: default argument metadata for routine "babel_7226_p2" is inconsistent)~~
 
 
 -- recreating the routine from the T-SQL endpoint rebuilds its catalog entry
@@ -225,6 +256,10 @@ ALTER PROCEDURE master_dbo.babel_7226_p2(int, int) RENAME TO babel_7226_p2_one;
 GO
 ALTER PROCEDURE master_dbo.babel_7226_p2_old(int, int) RENAME TO babel_7226_p2;
 GO
+ALTER PROCEDURE master_dbo.babel_7226_p3(int, int) RENAME TO babel_7226_p3_two;
+GO
+ALTER PROCEDURE master_dbo.babel_7226_p3_old(int, int) RENAME TO babel_7226_p3;
+GO
 
 -- tsql
 DROP PROCEDURE babel_7226_p1;
@@ -238,4 +273,8 @@ GO
 DROP PROCEDURE babel_7226_p2;
 GO
 DROP PROCEDURE babel_7226_p2_one;
+GO
+DROP PROCEDURE babel_7226_p3;
+GO
+DROP PROCEDURE babel_7226_p3_two;
 GO

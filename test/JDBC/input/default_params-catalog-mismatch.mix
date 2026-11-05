@@ -20,6 +20,12 @@ GO
 CREATE PROCEDURE babel_7226_p2_one @a INT, @b INT = 2 AS SELECT @a, @b;
 GO
 
+-- case 3: pg_proc has more defaults than the catalog has default positions
+CREATE PROCEDURE babel_7226_p3 @a INT = 1, @b INT AS SELECT @a, @b;
+GO
+CREATE PROCEDURE babel_7226_p3_two @a INT = 1, @b INT = 2 AS SELECT @a, @b;
+GO
+
 -- consistent catalogs keep working
 EXEC babel_7226_p1 DEFAULT;
 GO
@@ -37,6 +43,8 @@ SELECT pg_get_function_arguments('master_dbo.babel_7226_f1'::regproc);
 GO
 SELECT pg_get_function_arguments('master_dbo.babel_7226_p2'::regproc);
 GO
+SELECT pg_get_function_arguments('master_dbo.babel_7226_p3'::regproc);
+GO
 
 -- make the catalogs disagree
 ALTER PROCEDURE master_dbo.babel_7226_p1(int) RENAME TO babel_7226_p1_old;
@@ -51,6 +59,10 @@ ALTER PROCEDURE master_dbo.babel_7226_p2(int, int) RENAME TO babel_7226_p2_old;
 GO
 ALTER PROCEDURE master_dbo.babel_7226_p2_one(int, int) RENAME TO babel_7226_p2;
 GO
+ALTER PROCEDURE master_dbo.babel_7226_p3(int, int) RENAME TO babel_7226_p3_old;
+GO
+ALTER PROCEDURE master_dbo.babel_7226_p3_two(int, int) RENAME TO babel_7226_p3;
+GO
 
 -- print_pltsql_function_arguments: should throw error
 SELECT pg_get_function_arguments('master_dbo.babel_7226_p1'::regproc);
@@ -58,6 +70,8 @@ GO
 SELECT pg_get_function_arguments('master_dbo.babel_7226_f1'::regproc);
 GO
 SELECT pg_get_function_arguments('master_dbo.babel_7226_p2'::regproc);
+GO
+SELECT pg_get_function_arguments('master_dbo.babel_7226_p3'::regproc);
 GO
 
 -- tsql
@@ -67,6 +81,8 @@ GO
 SELECT dbo.babel_7226_f1(DEFAULT);
 GO
 EXEC babel_7226_p2 5, DEFAULT;
+GO
+EXEC babel_7226_p3 DEFAULT, DEFAULT;
 GO
 
 -- calls that leave out a defaulted argument: none of these crash.
@@ -117,6 +133,10 @@ ALTER PROCEDURE master_dbo.babel_7226_p2(int, int) RENAME TO babel_7226_p2_one;
 GO
 ALTER PROCEDURE master_dbo.babel_7226_p2_old(int, int) RENAME TO babel_7226_p2;
 GO
+ALTER PROCEDURE master_dbo.babel_7226_p3(int, int) RENAME TO babel_7226_p3_two;
+GO
+ALTER PROCEDURE master_dbo.babel_7226_p3_old(int, int) RENAME TO babel_7226_p3;
+GO
 
 -- tsql
 DROP PROCEDURE babel_7226_p1;
@@ -130,4 +150,8 @@ GO
 DROP PROCEDURE babel_7226_p2;
 GO
 DROP PROCEDURE babel_7226_p2_one;
+GO
+DROP PROCEDURE babel_7226_p3;
+GO
+DROP PROCEDURE babel_7226_p3_two;
 GO

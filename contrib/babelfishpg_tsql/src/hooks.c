@@ -5578,7 +5578,7 @@ check_bbf_default_positions_consistent(HeapTuple proctup,
 	if (!consistent)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
-				 errmsg("default argument metadata for function \"%s\" is inconsistent",
+				 errmsg("default argument metadata for routine \"%s\" is inconsistent",
 						NameStr(procform->proname)),
 				 errhint("Rename Babelfish functions and procedures from the T-SQL endpoint, not the PostgreSQL endpoint. Recreate this routine from the T-SQL endpoint to repair it.")));
 }
