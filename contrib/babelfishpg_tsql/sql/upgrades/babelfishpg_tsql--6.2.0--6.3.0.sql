@@ -29,6 +29,8 @@ EXCEPTION
     when dependent_objects_still_exist then --if 'drop view' statement fails
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
         raise warning '%', error_msg;
+        -- keep the object but detach it from the extension so pg_dump can see it
+        execute query1;
     when undefined_function then --if 'Deprecated function does not exist'
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
         raise warning '%', error_msg;
@@ -2259,33 +2261,15 @@ RESET allow_system_table_mods;
 UPDATE sys.babelfish_sysdatabases SET orig_name = name WHERE orig_name IS NULL;
 
 -- 5i. sys.databases and sys.sysdatabases (use orig_name)
--- Save user views depending on wrapper sysdatabases views before rename
-CREATE TEMPORARY TABLE IF NOT EXISTS _saved_sysdatabases_deps (stmt TEXT);
+-- Rename each database's dbo.sysdatabases wrapper; views on it keep it, as for other deprecated views
 DO $$
 DECLARE r RECORD;
-    dep RECORD;
-    schema_name TEXT;
 BEGIN
-    FOR r IN SELECT name FROM sys.babelfish_sysdatabases LOOP
-        schema_name := r.name || '_dbo';
-        IF length(schema_name) > 63 THEN
-            schema_name := sys.babelfish_truncate_identifier(schema_name);
-        END IF;
-        FOR dep IN
-            SELECT DISTINCT depv.oid, n.nspname, depv.relname, pg_get_viewdef(depv.oid, true) AS viewdef, depv.relowner
-            FROM pg_depend d
-            JOIN pg_rewrite rw ON rw.oid = d.objid
-            JOIN pg_class depv ON depv.oid = rw.ev_class
-            JOIN pg_class src ON src.oid = d.refobjid
-            JOIN pg_namespace n ON n.oid = depv.relnamespace
-            WHERE src.relname = 'sysdatabases'
-              AND src.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = schema_name)
-              AND depv.oid != src.oid
-              AND depv.relkind = 'v'
-        LOOP
-            INSERT INTO _saved_sysdatabases_deps VALUES (format('CREATE OR REPLACE VIEW %I.%I AS %s', dep.nspname, dep.relname, dep.viewdef));
-            INSERT INTO _saved_sysdatabases_deps VALUES (format('ALTER TABLE %I.%I OWNER TO %s', dep.nspname, dep.relname, (SELECT rolname FROM pg_roles WHERE oid = dep.relowner)));
-        END LOOP;
+    FOR r IN SELECT n.nspname FROM sys.babelfish_namespace_ext e
+             JOIN pg_catalog.pg_namespace n ON n.nspname = e.nspname
+             JOIN pg_catalog.pg_class c ON c.relnamespace = n.oid AND c.relname = 'sysdatabases' AND c.relkind = 'v'
+             WHERE e.orig_name::text COLLATE "C" = 'dbo' LOOP
+        EXECUTE pg_catalog.format('ALTER VIEW %I.sysdatabases RENAME TO sysdatabases_deprecated_in_6_3_0', r.nspname);
     END LOOP;
 END $$;
 
@@ -2652,6 +2636,9 @@ AS 'babelfishpg_tsql', 'babelfish_db_name_internal'
 LANGUAGE C PARALLEL SAFE STABLE;
 
 -- Fix sp_helpdb parameter to accept long names
+-- Retire the 6.2 sp_helpdb(varchar) overload so only the sysname one remains
+ALTER PROCEDURE sys.sp_helpdb(pg_catalog.varchar) RENAME TO sp_helpdb_deprecated_in_6_3_0;
+CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'sp_helpdb_deprecated_in_6_3_0');
 CREATE OR REPLACE PROCEDURE sys.sp_helpdb(IN "@dbname" sys.sysname)
 LANGUAGE 'pltsql'
 AS $$
@@ -2664,7 +2651,7 @@ BEGIN
   CAST(created AS sys.nvarchar(11)),
   CAST(status AS sys.nvarchar(600)),
   CAST(compatibility_level AS sys.tinyint)
-  FROM sys.babelfish_helpdb(CAST("@dbname" AS VARCHAR(128)));
+  FROM sys.babelfish_helpdb(@dbname);
 
   SELECT
   CAST(NULL AS sys.NCHAR(128)) AS name,
@@ -2679,7 +2666,6 @@ BEGIN
   RETURN 0;
 END;
 $$;
-GRANT EXECUTE ON PROCEDURE sys.sp_helpdb(sys.sysname) TO PUBLIC;
 
 
 
@@ -3481,49 +3467,38 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_tables_view_depreca
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_special_columns_view_deprecated_in_6_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_fkeys_view_deprecated_in_6_3_0');
 
--- Drop and recreate wrapper views, then restore user deps
+-- Create the new wrappers with the old owner, ACL and reloptions, then drop the old ones
+-- the way babelfish_drop_deprecated_object does (not extension members, so plain DROP)
 DO $$
 DECLARE r RECORD;
-    schema_name TEXT;
-    dep RECORD;
+    a RECORD;
+    error_msg text;
 BEGIN
-    -- Drop wrapper views
-    FOR r IN SELECT name FROM sys.babelfish_sysdatabases LOOP
-        schema_name := r.name || '_dbo';
-        IF length(schema_name) > 63 THEN
-            schema_name := sys.babelfish_truncate_identifier(schema_name);
-        END IF;
-        EXECUTE format('DROP VIEW IF EXISTS %I.sysdatabases CASCADE', schema_name);
-    END LOOP;
-    -- Recreate wrapper views
-    FOR r IN SELECT name FROM sys.babelfish_sysdatabases LOOP
-        schema_name := r.name || '_dbo';
-        IF length(schema_name) > 63 THEN
-            schema_name := sys.babelfish_truncate_identifier(schema_name);
-        END IF;
-        EXECUTE format('CREATE VIEW %I.sysdatabases AS SELECT * FROM sys.sysdatabases', schema_name);
-        EXECUTE format('ALTER EXTENSION babelfishpg_tsql DROP VIEW %I.sysdatabases', schema_name);
-        EXECUTE format('ALTER TABLE %I.sysdatabases OWNER TO %I', schema_name, schema_name);
-    END LOOP;
-    -- Restore dependent user views
-    FOR dep IN SELECT stmt FROM _saved_sysdatabases_deps LOOP
+    FOR r IN SELECT n.nspname, pg_catalog.pg_get_userbyid(c.relowner) AS owner, c.relacl, c.reloptions
+             FROM sys.babelfish_namespace_ext e
+             JOIN pg_catalog.pg_namespace n ON n.nspname = e.nspname
+             JOIN pg_catalog.pg_class c ON c.relnamespace = n.oid AND c.relname = 'sysdatabases_deprecated_in_6_3_0' AND c.relkind = 'v'
+             WHERE e.orig_name::text COLLATE "C" = 'dbo' LOOP
+        EXECUTE pg_catalog.format('CREATE VIEW %I.sysdatabases%s AS SELECT * FROM sys.sysdatabases', r.nspname,
+            CASE WHEN r.reloptions IS NULL THEN '' ELSE ' WITH (' || pg_catalog.array_to_string(r.reloptions, ', ') || ')' END);
+        EXECUTE pg_catalog.format('ALTER EXTENSION babelfishpg_tsql DROP VIEW %I.sysdatabases', r.nspname);
+        EXECUTE pg_catalog.format('ALTER TABLE %I.sysdatabases OWNER TO %I', r.nspname, r.owner);
+        FOR a IN SELECT x.grantee, x.is_grantable, pg_catalog.string_agg(DISTINCT x.privilege_type, ', ') AS privs
+                 FROM pg_catalog.aclexplode(r.relacl) x
+                 WHERE x.grantee <> (SELECT oid FROM pg_catalog.pg_roles WHERE rolname = r.owner)
+                 GROUP BY x.grantee, x.is_grantable LOOP
+            EXECUTE pg_catalog.format('GRANT %s ON %I.sysdatabases TO %s%s', a.privs, r.nspname,
+                CASE WHEN a.grantee = 0 THEN 'PUBLIC' ELSE pg_catalog.quote_ident(pg_catalog.pg_get_userbyid(a.grantee)) END,
+                CASE WHEN a.is_grantable THEN ' WITH GRANT OPTION' ELSE '' END);
+        END LOOP;
         BEGIN
-            EXECUTE dep.stmt;
-            IF dep.stmt LIKE 'CREATE%VIEW%' THEN
-                DECLARE
-                    view_fqn TEXT;
-                BEGIN
-                    view_fqn := split_part(split_part(dep.stmt, 'VIEW ', 2), ' AS ', 1);
-                    EXECUTE format('ALTER EXTENSION babelfishpg_tsql DROP VIEW %s', view_fqn);
-                EXCEPTION WHEN OTHERS THEN NULL;
-                END;
-            END IF;
-        EXCEPTION WHEN OTHERS THEN
-            RAISE WARNING 'Could not restore dependent view: %', dep.stmt;
+            EXECUTE pg_catalog.format('DROP VIEW %I.sysdatabases_deprecated_in_6_3_0', r.nspname);
+        EXCEPTION WHEN dependent_objects_still_exist THEN
+            GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+            raise warning '%', error_msg;
         END;
     END LOOP;
 END $$;
-DROP TABLE IF EXISTS _saved_sysdatabases_deps;
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysdatabases_deprecated_in_6_3_0');
 
 -- Recreate information_schema views dependent on pg_namespace_ext

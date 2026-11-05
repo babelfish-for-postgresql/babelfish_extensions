@@ -47,7 +47,7 @@ sys_objects_vu_prepare_trig1
 use tempdb
 GO
 
-select name, type, type_desc from tempdb.sys.objects order by name;
+select name, type, type_desc from tempdb.sys.objects where name not like '%[_]deprecated[_]in[_]%' order by name;
 GO
 ~~START~~
 varchar#!#char#!#nvarchar
@@ -77,7 +77,7 @@ sys_objects_vu_prepare_trig1
 ~~END~~
 
 
-select name, type, type_desc from tempdb.sys.objects order by name;
+select name, type, type_desc from tempdb.sys.objects where name not like '%[_]deprecated[_]in[_]%' order by name;
 GO
 ~~START~~
 varchar#!#char#!#nvarchar
