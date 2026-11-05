@@ -2366,3 +2366,100 @@ GO
 
 DROP TABLE IF EXISTS #Smr_3c004f142d4d4e1b8754530db0a35a07_ParamCnt
 GO
+
+-- BABEL-6812: ABS carries no typmod of its own, so a CASE expression mixing it
+-- with a resolvable exact numeric branch used to take its precision and scale
+-- from the other branch alone, losing ABS's scale.
+
+-- Reproducer from the ticket
+SELECT sum(case when 1=1 then 1.9000 else 0 end) AS RESULT
+GO
+
+SELECT sum(case when 1=1 then abs(1.9000) else 0 end) AS RESULT
+GO
+
+SELECT sum(case when 1=1 then abs(1.9000) else cast(0 as numeric(38, 4)) end) AS RESULT
+GO
+
+SELECT sum(case when 1=1 then abs(1.9000) else abs(0.0) end) AS RESULT
+GO
+
+-- ABS in either branch
+SELECT case when 1=1 then abs(1.9000) else 0 end AS RESULT
+GO
+
+SELECT case when 1=0 then 0 else abs(1.9000) end AS RESULT
+GO
+
+-- Negative input
+SELECT case when 1=1 then abs(-1.9000) else 0 end AS RESULT
+GO
+
+-- ABS keeps the argument's precision and scale
+SELECT abs(cast(1.9 as decimal(2,1))) AS RESULT
+GO
+
+SELECT abs(cast(123.45 as decimal(5,2))) AS RESULT
+GO
+
+SELECT abs(cast(1.5 as decimal(16,9))) AS RESULT
+GO
+
+SELECT abs(cast(1.5 as decimal(38,10))) AS RESULT
+GO
+
+-- Nested ABS
+SELECT case when 1=1 then abs(abs(-1.9000)) else 0 end AS RESULT
+GO
+
+-- ABS over a table column (T_Var)
+CREATE TABLE babel_6812_t(a numeric(10,4), b int)
+GO
+
+INSERT INTO babel_6812_t VALUES (1.9000, 0), (-2.5000, 1)
+GO
+
+SELECT case when b = 0 then abs(a) else 0 end AS RESULT FROM babel_6812_t ORDER BY b
+GO
+
+SELECT sum(case when 1=1 then abs(a) else 0 end) AS RESULT FROM babel_6812_t
+GO
+
+-- Same expression through a view (resolved from a plan)
+CREATE VIEW babel_6812_v AS
+SELECT case when 1=1 then abs(a) else 0 end AS c1 FROM babel_6812_t
+GO
+
+SELECT c1 FROM babel_6812_v ORDER BY c1
+GO
+
+-- NULL input
+SELECT case when 1=1 then abs(cast(NULL as numeric(10,4))) else 0 end AS RESULT
+GO
+
+-- Integer, money and float overloads keep their existing handling
+SELECT case when 1=1 then abs(cast(-5 as int)) else 0 end AS RESULT
+GO
+
+SELECT case when 1=1 then abs(cast(-5.25 as money)) else 0 end AS RESULT
+GO
+
+SELECT case when 1=1 then abs(cast(-1.9 as float)) else 0 end AS RESULT
+GO
+
+-- ROUND shares the same check and must be unaffected
+SELECT case when 1=1 then round(1.9000, 4) else 0 end AS RESULT
+GO
+
+-- BABEL-5678 behaviour must be unchanged
+SELECT CASE WHEN 1 = 0 THEN 0.0001 ELSE 123 END AS RESULT
+GO
+
+SELECT CASE WHEN 1 = 0 THEN abs(0.0001) ELSE 123 END AS RESULT
+GO
+
+DROP VIEW babel_6812_v
+GO
+
+DROP TABLE babel_6812_t
+GO

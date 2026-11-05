@@ -1737,7 +1737,12 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					if (funcName &&
 						is_namespace_sys_or_pg_catalog(func_namespace_oid))
 					{
-						if ((strlen(funcName) == 5 && (strncmp(funcName, "round", 5) == 0)))
+						/*
+						 * ROUND and ABS both return the precision and scale of
+						 * their first argument, so take the typmod from there.
+						 */
+						if ((strlen(funcName) == 5 && (strncmp(funcName, "round", 5) == 0)) ||
+							(strlen(funcName) == 3 && (strncmp(funcName, "abs", 3) == 0)))
 						{
 							if (list_length(func->args) >= 1)
 							{
