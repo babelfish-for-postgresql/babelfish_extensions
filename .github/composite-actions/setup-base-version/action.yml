@@ -163,7 +163,7 @@ runs:
 
     - name: Change migration mode to multi-db
       id: change-migration-mode
-      if: ${{ inputs.migration_mode == 'multi-db' }} && always()
+      if: always() && inputs.migration_mode == 'multi-db'
       run: |
         sudo ~/${{ inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
         sudo ~/${{ inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d babelfish_db -U runner -c "SELECT pg_reload_conf();"
