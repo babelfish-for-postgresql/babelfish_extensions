@@ -62,3 +62,7 @@ GO
 
 ~~ERROR (Message: function sys.tsql_openxml_get_xmldoc(integer) does not exist)~~
 
+
+-- Sink table for the cross-endpoint OPENXML case in the verify script
+CREATE TABLE openxml_ns_sink(src varchar(20), val varchar(50))
+GO

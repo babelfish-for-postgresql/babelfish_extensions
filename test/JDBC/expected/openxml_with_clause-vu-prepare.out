@@ -54,3 +54,7 @@ GO
 CREATE VIEW openxml_documents AS 
 SELECT 1 as document_id, sys.tsql_openxml_get_xmldoc(1) AS xml_document;
 GO
+
+-- Sink table for the cross-endpoint OPENXML case in the verify script
+CREATE TABLE openxml_ns_sink(src varchar(20), val varchar(50))
+GO
