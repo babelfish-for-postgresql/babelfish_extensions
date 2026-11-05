@@ -1,0 +1,13 @@
+USE singledb_userdb
+GO
+
+SELECT name FROM singledb_userdb_v1
+GO
+~~START~~
+text
+singledb_userdb
+~~END~~
+
+
+USE master
+GO

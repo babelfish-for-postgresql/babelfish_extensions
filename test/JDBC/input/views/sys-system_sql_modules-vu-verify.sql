@@ -86,5 +86,5 @@ FROM
     FROM
         sys.all_objects
     ) o
-WHERE o.min_val = 0 AND o.max_val = 1
+WHERE o.min_val = 0 AND o.max_val = 1 AND o.name NOT LIKE '%[_]deprecated[_]in[_]%'
 GO

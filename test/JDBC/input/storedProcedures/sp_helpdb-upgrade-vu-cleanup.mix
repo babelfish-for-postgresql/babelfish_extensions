@@ -1,0 +1,3 @@
+-- tsql
+DROP DATABASE sp_helpdb_upgrade_db_name_longer_than_32_chars
+GO
