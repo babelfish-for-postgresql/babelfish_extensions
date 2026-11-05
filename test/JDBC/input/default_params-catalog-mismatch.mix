@@ -69,6 +69,18 @@ GO
 EXEC babel_7226_p2 5, DEFAULT;
 GO
 
+-- calls that leave out a defaulted argument: none of these crash.
+-- babel_7226_p2 5 takes its default from pg_proc; the others are rejected
+-- during lookup, so insert_pltsql_function_defaults is not reached.
+EXEC babel_7226_p2 5;
+GO
+EXEC babel_7226_p2 @a = 5;
+GO
+EXEC babel_7226_p1;
+GO
+SELECT dbo.babel_7226_f1();
+GO
+
 -- tsql_print_function_arguments (routine definition): should throw error
 SELECT sys.tsql_get_functiondef(OBJECT_ID('babel_7226_p2'));
 GO
