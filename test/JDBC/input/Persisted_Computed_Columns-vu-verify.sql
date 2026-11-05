@@ -184,6 +184,26 @@ GO
 SELECT * FROM pcc_conv_money ORDER BY id
 GO
 
+-- Type, typmod and collation of the stored column
+SELECT name, system_type_name, max_length, collation_name
+FROM sys.sp_describe_first_result_set_internal(N'SELECT c FROM pcc_type_collation', NULL, 0)
+GO
+SELECT id, c, CASE WHEN c = 'a' THEN 1 ELSE 0 END AS case_equal
+FROM pcc_type_collation ORDER BY id
+GO
+
+-- The rewritten expression keeps the stored column's metadata and collation
+SET CONCAT_NULL_YIELDS_NULL OFF
+GO
+SELECT name, system_type_name, max_length, collation_name
+FROM sys.sp_describe_first_result_set_internal(N'SELECT c FROM pcc_type_collation', NULL, 0)
+GO
+SELECT id, c, CASE WHEN c = 'a' THEN 1 ELSE 0 END AS case_equal
+FROM pcc_type_collation ORDER BY id
+GO
+SET CONCAT_NULL_YIELDS_NULL ON
+GO
+
 -- Query plan verification (BABELFISH_SHOWPLAN_ALL)
 SELECT set_config('max_parallel_workers_per_gather', '0', false)
 GO
@@ -336,6 +356,36 @@ SET CONCAT_NULL_YIELDS_NULL OFF
 GO
 SELECT e.full_name, m.c, m.d
 FROM pcc_concatfn e JOIN pcc_multi m ON e.first_name = m.a
+GO
+SET CONCAT_NULL_YIELDS_NULL ON
+GO
+
+-- Outer JOINs with correct GUCs
+-- Computed table on the preserved side
+SELECT p.id AS pcc_id, p.c, k.id AS key_id
+FROM pcc_concat p LEFT OUTER JOIN pcc_outer_join_keys k ON p.id = k.id
+WHERE p.id IN (1, 2)
+ORDER BY p.id
+GO
+
+-- Computed table on the null-extended side
+SELECT k.id AS key_id, p.id AS pcc_id, p.c
+FROM pcc_outer_join_keys k LEFT OUTER JOIN pcc_concat p ON k.id = p.id
+ORDER BY k.id
+GO
+
+-- Outer JOINs with wrong GUC re-evaluate real rows and preserve null extension
+SET CONCAT_NULL_YIELDS_NULL OFF
+GO
+SELECT p.id AS pcc_id, p.c, k.id AS key_id
+FROM pcc_concat p LEFT OUTER JOIN pcc_outer_join_keys k ON p.id = k.id
+WHERE p.id IN (1, 2)
+ORDER BY p.id
+GO
+
+SELECT k.id AS key_id, p.id AS pcc_id, p.c
+FROM pcc_outer_join_keys k LEFT OUTER JOIN pcc_concat p ON k.id = p.id
+ORDER BY k.id
 GO
 SET CONCAT_NULL_YIELDS_NULL ON
 GO

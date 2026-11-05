@@ -28,7 +28,11 @@ DROP TABLE IF EXISTS pcc_castsmall
 GO
 DROP TABLE IF EXISTS pcc_conv_money
 GO
+DROP TABLE IF EXISTS pcc_type_collation
+GO
 DROP TABLE IF EXISTS pcc_normal
+GO
+DROP TABLE IF EXISTS pcc_outer_join_keys
 GO
 DROP TABLE IF EXISTS pcc_dst
 GO

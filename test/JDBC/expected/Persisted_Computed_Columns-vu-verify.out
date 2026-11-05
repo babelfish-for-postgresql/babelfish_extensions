@@ -349,6 +349,48 @@ int#!#money#!#text
 ~~END~~
 
 
+-- Type, typmod and collation of the stored column
+SELECT name, system_type_name, max_length, collation_name
+FROM sys.sp_describe_first_result_set_internal(N'SELECT c FROM pcc_type_collation', NULL, 0)
+GO
+~~START~~
+varchar#!#nvarchar#!#smallint#!#varchar
+c#!#varchar#!#7#!#bbf_unicode_cp1_cs_as
+~~END~~
+
+SELECT id, c, CASE WHEN c = 'a' THEN 1 ELSE 0 END AS case_equal
+FROM pcc_type_collation ORDER BY id
+GO
+~~START~~
+int#!#varchar#!#int
+1#!#A#!#0
+2#!#<NULL>#!#0
+~~END~~
+
+
+-- The rewritten expression keeps the stored column's metadata and collation
+SET CONCAT_NULL_YIELDS_NULL OFF
+GO
+SELECT name, system_type_name, max_length, collation_name
+FROM sys.sp_describe_first_result_set_internal(N'SELECT c FROM pcc_type_collation', NULL, 0)
+GO
+~~START~~
+varchar#!#nvarchar#!#smallint#!#varchar
+c#!#varchar#!#7#!#bbf_unicode_cp1_cs_as
+~~END~~
+
+SELECT id, c, CASE WHEN c = 'a' THEN 1 ELSE 0 END AS case_equal
+FROM pcc_type_collation ORDER BY id
+GO
+~~START~~
+int#!#varchar#!#int
+1#!#A#!#0
+2#!#A#!#0
+~~END~~
+
+SET CONCAT_NULL_YIELDS_NULL ON
+GO
+
 -- Query plan verification (BABELFISH_SHOWPLAN_ALL)
 SELECT set_config('max_parallel_workers_per_gather', '0', false)
 GO
@@ -638,6 +680,60 @@ FROM pcc_concatfn e JOIN pcc_multi m ON e.first_name = m.a
 GO
 ~~START~~
 varchar#!#varchar#!#varchar
+~~END~~
+
+SET CONCAT_NULL_YIELDS_NULL ON
+GO
+
+-- Outer JOINs with correct GUCs
+-- Computed table on the preserved side
+SELECT p.id AS pcc_id, p.c, k.id AS key_id
+FROM pcc_concat p LEFT OUTER JOIN pcc_outer_join_keys k ON p.id = k.id
+WHERE p.id IN (1, 2)
+ORDER BY p.id
+GO
+~~START~~
+int#!#varchar#!#int
+1#!#HelloWorld#!#<NULL>
+2#!#<NULL>#!#2
+~~END~~
+
+
+-- Computed table on the null-extended side
+SELECT k.id AS key_id, p.id AS pcc_id, p.c
+FROM pcc_outer_join_keys k LEFT OUTER JOIN pcc_concat p ON k.id = p.id
+ORDER BY k.id
+GO
+~~START~~
+int#!#int#!#varchar
+2#!#2#!#<NULL>
+6#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Outer JOINs with wrong GUC re-evaluate real rows and preserve null extension
+SET CONCAT_NULL_YIELDS_NULL OFF
+GO
+SELECT p.id AS pcc_id, p.c, k.id AS key_id
+FROM pcc_concat p LEFT OUTER JOIN pcc_outer_join_keys k ON p.id = k.id
+WHERE p.id IN (1, 2)
+ORDER BY p.id
+GO
+~~START~~
+int#!#varchar#!#int
+1#!#HelloWorld#!#<NULL>
+2#!#X#!#2
+~~END~~
+
+
+SELECT k.id AS key_id, p.id AS pcc_id, p.c
+FROM pcc_outer_join_keys k LEFT OUTER JOIN pcc_concat p ON k.id = p.id
+ORDER BY k.id
+GO
+~~START~~
+int#!#int#!#varchar
+2#!#2#!#X
+6#!#<NULL>#!#<NULL>
 ~~END~~
 
 SET CONCAT_NULL_YIELDS_NULL ON
