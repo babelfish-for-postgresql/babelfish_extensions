@@ -1218,7 +1218,7 @@ SELECT @xml.value('(/artists/artist/@name)[1]', 'varchar(100)').STDistance(@poin
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+~~ERROR (Message: function starea("varchar") is not unique)~~
 
 
 -- different number of arguments than required (Error will be thrown in this scenario)

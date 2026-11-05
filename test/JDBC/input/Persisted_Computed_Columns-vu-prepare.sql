@@ -105,8 +105,21 @@ CREATE TABLE pcc_conv_money (
 )
 GO
 
+-- Explicit type, typmod and collation for rewrite metadata tests
+CREATE TABLE pcc_type_collation (
+    id INT PRIMARY KEY,
+    a VARCHAR(10),
+    b VARCHAR(10),
+    c AS (CAST(a + b AS VARCHAR(7)) COLLATE SQL_Latin1_General_CP1_CS_AS) PERSISTED
+)
+GO
+
 -- Normal table (no computed cols)
 CREATE TABLE pcc_normal (id INT, val VARCHAR(50))
+GO
+
+-- Lookup table for outer JOIN tests
+CREATE TABLE pcc_outer_join_keys (id INT PRIMARY KEY)
 GO
 
 -- View on pcc_concat
@@ -180,7 +193,13 @@ GO
 INSERT INTO pcc_conv_money (m) VALUES (1234.56), (99999.99)
 GO
 
+INSERT INTO pcc_type_collation VALUES (1, 'A', ''), (2, 'A', NULL)
+GO
+
 INSERT INTO pcc_normal VALUES (1, 'test')
+GO
+
+INSERT INTO pcc_outer_join_keys VALUES (2), (6)
 GO
 
 INSERT INTO pcc_fk_parent (a, b) VALUES (1, 2), (5, 5)

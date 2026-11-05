@@ -46,7 +46,15 @@ extern bool pltsql_numeric_roundabort;
 /* Validators referenced by the whitelist below */
 static bool require_true_flag(HeapTuple procTup, FuncExpr *f, const char *argname);
 
-/* Whitelist: deterministic STABLE functions allowed in PERSISTED columns */
+/*
+ * To onboard a STABLE function:
+ * 1. Verify that it is deterministic under every SET option enforced by
+ *    has_mismatched_set_options(); do not whitelist session-dependent overloads.
+ * 2. Add the exact schema/function identity below.  If determinism depends on
+ *    call arguments, add a validator that fails closed for non-literals.
+ * 3. Add tests for accepted and rejected calls, DDL/DML with mismatched SET
+ *    options, and SELECT re-evaluation under mismatched options.
+ */
 static FuncEntry whitelist[] = {
     /* String concatenation */
     {"babelfish_concat_wrapper",       "sys", NULL, NULL},
@@ -340,25 +348,34 @@ stable_persisted_hook(Node *expr)
     return NULL; 
 }
 
-/* Check if table has any persisted computed columns */
-bool 
-table_has_persisted_computed_cols(Oid relid)
+/* Check if an open relation has any persisted computed columns */
+static bool
+relation_has_persisted_computed_cols(Relation rel)
 {
-    Relation  rel = relation_open(relid, AccessShareLock);
     TupleDesc tupdesc = RelationGetDescr(rel);
-    bool      found = false;
-    
+
     for (int i = 0; i < tupdesc->natts; i++)
     {
         Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+
         if (!attr->attisdropped && attr->attgenerated == ATTRIBUTE_GENERATED_STORED)
-        {
-            found = true;
-            break;
-        }
+            return true;
     }
-    
+
+    return false;
+}
+
+/* Check if table has any persisted computed columns */
+bool
+table_has_persisted_computed_cols(Oid relid)
+{
+    Relation rel;
+    bool     found;
+
+    rel = relation_open(relid, AccessShareLock);
+    found = relation_has_persisted_computed_cols(rel);
     relation_close(rel, AccessShareLock);
+
     return found;
 }
 
@@ -385,13 +402,20 @@ check_dml_target(Oid relid, const char *cmd)
     List       *fk_list;
     ListCell   *lc;
 
-    /* Check if the target table itself has persisted computed columns */
-    if (table_has_persisted_computed_cols(relid))
-        guc_check_dml_error(cmd);
-
-    /* Check if any FK-referenced parent table has persisted computed columns */
     rel = relation_open(relid, AccessShareLock);
-    fk_list = RelationGetFKeyList(rel);
+
+    /* Check the target using the relation already opened for the FK lookup */
+    if (relation_has_persisted_computed_cols(rel))
+    {
+        relation_close(rel, AccessShareLock);
+        guc_check_dml_error(cmd);
+    }
+
+    /*
+     * Copy the relcache-owned list before parent lookups, which may process
+     * invalidations and reset this relation's relcache entry.
+     */
+    fk_list = copyObject(RelationGetFKeyList(rel));
 
     foreach(lc, fk_list)
     {
@@ -399,11 +423,13 @@ check_dml_target(Oid relid, const char *cmd)
 
         if (table_has_persisted_computed_cols(fk->confrelid))
         {
+            list_free_deep(fk_list);
             relation_close(rel, AccessShareLock);
             guc_check_dml_error(cmd);
         }
     }
 
+    list_free_deep(fk_list);
     relation_close(rel, AccessShareLock);
 }
 
