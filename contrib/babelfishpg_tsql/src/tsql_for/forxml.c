@@ -64,6 +64,22 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	{
 		state = (StringInfo) PG_GETARG_POINTER(0);
 	}
+
+	/*
+	 * Serialize the row in the context the executor called the sfunc in. For
+	 * an aggregate that is the per-input-tuple context, which the executor
+	 * resets after every input row, so the short-lived strings the row
+	 * functions allocate per column and do not free (the output function's
+	 * result, the XML-escaped copy of it, T-SQL datetime reformatting) are
+	 * reclaimed row by row.
+	 *
+	 * state is unaffected by the switch: appendStringInfo() enlarges the
+	 * buffer with repalloc(), which allocates in the chunk's own context
+	 * whatever the current context is, and both the StringInfo and its
+	 * initial buffer were allocated in agg_context on the first call.
+	 */
+	MemoryContextSwitchTo(old_context);
+
 	switch (mode)
 	{
 		case TSQL_FORXML_RAW:	/* FOR XML RAW */
@@ -101,8 +117,6 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("invalid FOR XML mode")));
 	}
-
-	MemoryContextSwitchTo(old_context);
 
 	PG_RETURN_POINTER(state);
 }
