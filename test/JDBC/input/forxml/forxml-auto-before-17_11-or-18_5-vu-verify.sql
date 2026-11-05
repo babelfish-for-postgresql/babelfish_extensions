@@ -1501,3 +1501,23 @@ WHERE c.CustomerID = 'ALFKI'
 FOR XML AUTO;
 COMMIT;
 GO
+
+
+-- ============================================
+-- SECTION 23: XML-typed column (no default btree equality operator)
+-- ============================================
+-- 23.1 xml column as the only outer-level column
+SELECT p.Doc, c.ChildName
+FROM forxmlauto_t_xmlcol_parent p
+JOIN forxmlauto_t_xmlcol_child c ON c.ParentID = p.ParentID
+ORDER BY p.ParentID, c.ChildID
+FOR XML AUTO;
+GO
+
+-- 23.2 outer level keyed on ParentID with the xml column alongside
+SELECT p.ParentID, p.Doc, c.ChildName
+FROM forxmlauto_t_xmlcol_parent p
+JOIN forxmlauto_t_xmlcol_child c ON c.ParentID = p.ParentID
+ORDER BY p.ParentID, c.ChildID
+FOR XML AUTO;
+GO
