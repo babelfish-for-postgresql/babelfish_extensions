@@ -1642,3 +1642,178 @@ GO
 
 ~~ERROR (Message: relation "openxml_documents" does not exist)~~
 
+
+-- psql
+-- BABEL-6999: plain PostgreSQL XMLTABLE with an XMLNAMESPACES clause must resolve
+-- namespace prefixes on the PG endpoint. babelfishpg_tsql installs
+-- openxml_set_namespaces_hook for the OPENXML cases above, and that hook must
+-- return false for a plain XMLTABLE so the standard namespace registration runs.
+-- Case 1: single prefix used in the row expression
+SELECT val FROM XMLTABLE(
+    XMLNAMESPACES('http://example.com/ns' AS ns1),
+    '/ns1:root/ns1:item'
+    PASSING XMLPARSE(DOCUMENT '<ns1:root xmlns:ns1="http://example.com/ns"><ns1:item>hello</ns1:item><ns1:item>world</ns1:item></ns1:root>')
+    COLUMNS val TEXT PATH '.')
+GO
+~~START~~
+text
+hello
+world
+~~END~~
+
+-- Case 2: prefix used in column PATH expressions, element and attribute axis
+SELECT id, title FROM XMLTABLE(
+    XMLNAMESPACES('http://example.com/ns' AS n),
+    '/n:catalog/n:book'
+    PASSING XMLPARSE(DOCUMENT '<n:catalog xmlns:n="http://example.com/ns"><n:book n:id="1"><n:title>SQL</n:title></n:book><n:book n:id="2"><n:title>XML</n:title></n:book></n:catalog>')
+    COLUMNS id INT PATH '@n:id', title TEXT PATH 'n:title')
+GO
+~~START~~
+int4#!#text
+1#!#SQL
+2#!#XML
+~~END~~
+
+-- Case 3: two prefixes declared, each resolving a different column
+SELECT a, b FROM XMLTABLE(
+    XMLNAMESPACES('http://example.com/one' AS n1, 'http://example.com/two' AS n2),
+    '/n1:root/n1:row'
+    PASSING XMLPARSE(DOCUMENT '<n1:root xmlns:n1="http://example.com/one" xmlns:n2="http://example.com/two"><n1:row><n1:a>x</n1:a><n2:b>y</n2:b></n1:row></n1:root>')
+    COLUMNS a TEXT PATH 'n1:a', b TEXT PATH 'n2:b')
+GO
+~~START~~
+text#!#text
+x#!#y
+~~END~~
+
+-- Case 4: an undeclared prefix must still be rejected
+SELECT val FROM XMLTABLE(
+    '/nsX:root/nsX:item'
+    PASSING XMLPARSE(DOCUMENT '<ns1:root xmlns:ns1="http://example.com/ns"><ns1:item>hello</ns1:item></ns1:root>')
+    COLUMNS val TEXT PATH '.')
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: could not create XPath object
+  Detail: Undefined namespace prefix
+    Server SQLState: XX000)~~
+
+-- Case 5: DEFAULT namespace remains unsupported by XMLTABLE
+SELECT val FROM XMLTABLE(
+    XMLNAMESPACES(DEFAULT 'http://example.com/ns'),
+    '/root/item'
+    PASSING XMLPARSE(DOCUMENT '<root xmlns="http://example.com/ns"><item>hello</item></root>')
+    COLUMNS val TEXT PATH '.')
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: DEFAULT namespace is not supported
+    Server SQLState: 0A000)~~
+
+-- Case 6: XMLTABLE without an XMLNAMESPACES clause is unaffected
+SELECT val FROM XMLTABLE(
+    '/root/item'
+    PASSING XMLPARSE(DOCUMENT '<root><item>plain</item></root>')
+    COLUMNS val TEXT PATH '.')
+GO
+~~START~~
+text
+plain
+~~END~~
+
+-- Case 7: namespace URI given as a runtime expression rather than a literal
+SELECT val FROM XMLTABLE(
+    XMLNAMESPACES((SELECT 'http://example.com/' || 'ns') AS ns1),
+    '/ns1:root/ns1:item'
+    PASSING XMLPARSE(DOCUMENT '<ns1:root xmlns:ns1="http://example.com/ns"><ns1:item>runtime</ns1:item></ns1:root>')
+    COLUMNS val TEXT PATH '.')
+GO
+~~START~~
+text
+runtime
+~~END~~
+
+-- Case 8: rescan - namespaces must re-register on every scan initialisation
+SELECT t.k, x.val FROM (VALUES (1),(2)) AS t(k),
+  LATERAL XMLTABLE(
+    XMLNAMESPACES('http://example.com/ns' AS ns1),
+    '/ns1:root/ns1:item'
+    PASSING XMLPARSE(DOCUMENT '<ns1:root xmlns:ns1="http://example.com/ns"><ns1:item>resc</ns1:item></ns1:root>')
+    COLUMNS val TEXT PATH '.') AS x
+ORDER BY t.k
+GO
+~~START~~
+int4#!#text
+1#!#resc
+2#!#resc
+~~END~~
+
+-- Case 9: a declared prefix that the XPath never references
+SELECT val FROM XMLTABLE(
+    XMLNAMESPACES('http://example.com/ns' AS ns1, 'http://unused.example.com' AS unused),
+    '/ns1:root/ns1:item'
+    PASSING XMLPARSE(DOCUMENT '<ns1:root xmlns:ns1="http://example.com/ns"><ns1:item>partial</ns1:item></ns1:root>')
+    COLUMNS val TEXT PATH '.')
+GO
+~~START~~
+text
+partial
+~~END~~
+
+-- Cases 10 and 11 cover cross-endpoint routine execution. The dialect in effect
+-- is the routine's own, not the calling session's, so a PG routine must keep
+-- falling through to the standard registration and a TSQL routine must keep
+-- reaching the hook, whichever endpoint invokes it.
+CREATE FUNCTION master_dbo.openxml_ns_pgfn() RETURNS text LANGUAGE plpgsql AS $$
+DECLARE r text;
+BEGIN
+    SELECT val INTO r FROM XMLTABLE(
+        XMLNAMESPACES('http://example.com/ns' AS ns1),
+        '/ns1:root/ns1:item'
+        PASSING XMLPARSE(DOCUMENT '<ns1:root xmlns:ns1="http://example.com/ns"><ns1:item>pgfn</ns1:item></ns1:root>')
+        COLUMNS val TEXT PATH '.');
+    RETURN r;
+END $$
+GO
+SELECT master_dbo.openxml_ns_pgfn() AS pgfn_from_pg
+GO
+~~START~~
+text
+pgfn
+~~END~~
+
+-- tsql
+-- Case 10: PG function using plain XMLTABLE, invoked from the TDS endpoint
+SELECT dbo.openxml_ns_pgfn() AS pgfn_from_tsql
+GO
+~~START~~
+text
+pgfn
+~~END~~
+
+-- Case 11 setup: TSQL procedure containing OPENXML. The procedure cannot be
+-- created in the prepare script because pre-17.7 has no OPENXML WITH support.
+-- Its sink table (created in prepare) is schema qualified because the procedure
+-- is invoked from the PG endpoint below, where the TSQL search_path is not in
+-- effect.
+CREATE PROCEDURE openxml_ns_proc AS
+BEGIN
+    DECLARE @xml nvarchar(1000) = '<root xmlns:ns1="http://example.com/ns1"><ns1:child>value1</ns1:child></root>';
+    DECLARE @ns  nvarchar(200)  = '<root xmlns:ns1="http://example.com/ns1" />';
+    DECLARE @h INT;
+    EXEC sp_xml_preparedocument @h OUTPUT, @xml, @ns;
+    INSERT INTO master_dbo.openxml_ns_sink SELECT 'tsql_proc', child FROM OPENXML(@h, '/root/ns1:child', 3) WITH (child nvarchar(20) '.');
+    EXEC sp_xml_removedocument @h;
+END
+GO
+-- psql
+-- Case 11: TSQL procedure containing OPENXML, invoked from the PG endpoint
+CALL master_dbo.openxml_ns_proc()
+GO
+SELECT src, val FROM master_dbo.openxml_ns_sink
+GO
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"
+tsql_proc#!#value1
+~~END~~
+
