@@ -704,3 +704,4 @@ fk-cascade-trigger
 exec_tvf_named_args
 sp_helpdb-upgrade
 sysdatabases-wrapper-deps
+Persisted_Computed_Columns
