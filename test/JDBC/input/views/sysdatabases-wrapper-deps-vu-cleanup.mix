@@ -1,0 +1,27 @@
+-- tsql
+USE sysdb_wd_db
+GO
+
+DROP VIEW sysdb_wd_v2
+GO
+
+DROP VIEW sysdb_wd_v1
+GO
+
+DROP USER sysdb_wd_user
+GO
+
+DROP USER sysdb_wd_reader
+GO
+
+USE master
+GO
+
+DROP DATABASE sysdb_wd_db
+GO
+
+DROP LOGIN sysdb_wd_login
+GO
+
+DROP LOGIN sysdb_wd_rlogin
+GO

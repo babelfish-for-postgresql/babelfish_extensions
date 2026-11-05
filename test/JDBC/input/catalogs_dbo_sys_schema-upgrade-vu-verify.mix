@@ -632,7 +632,7 @@ select name from .myschematest_mydb..sysusers where name like 'user_myschematest
 go
 exec p_myschematest
 go
-select name from vw_myschematest order by 1
+select cast(name as nvarchar(128)) as name from vw_myschematest order by 1
 go
 
 -- non-catalog table
@@ -1277,7 +1277,7 @@ select name from .myschematest_mydb..sysusers where name like 'user_myschematest
 go
 exec p_myschematest
 go
-select name from vw_myschematest order by 1
+select cast(name as nvarchar(128)) as name from vw_myschematest order by 1
 go
 
 -- non-catalog table
@@ -1949,7 +1949,7 @@ select name from .myschematest_mydb..sysusers where name like 'user_myschematest
 go
 exec p_myschematest
 go
-select name from vw_myschematest order by 1
+select cast(name as nvarchar(128)) as name from vw_myschematest order by 1
 go
 
 -- non-catalog table

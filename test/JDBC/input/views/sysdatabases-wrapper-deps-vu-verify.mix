@@ -1,0 +1,44 @@
+-- tsql
+-- resetting passwords for logins (dump-restore)
+ALTER LOGIN sysdb_wd_login WITH PASSWORD = '12345678'
+GO
+
+ALTER LOGIN sysdb_wd_rlogin WITH PASSWORD = '12345678'
+GO
+
+USE sysdb_wd_db
+GO
+
+SELECT CAST(name AS nvarchar(128)) AS name FROM sysdb_wd_v1
+GO
+
+SELECT CAST(name AS nvarchar(128)) AS name FROM sysdb_wd_v2
+GO
+
+SELECT OBJECT_DEFINITION(OBJECT_ID('sysdb_wd_v2'))
+GO
+
+-- the upgrade must keep the GRANT on sysdb_wd_v1 and db_owner as owner of the wrapper
+-- sp_table_privileges hides db_datareader/db_datawriter grants, so HAS_PERMS_BY_NAME checks them below
+EXEC sp_table_privileges @table_name = 'sysdb_wd_v1'
+GO
+
+EXEC sp_table_privileges @table_name = 'sysdatabases'
+GO
+
+USE master
+GO
+
+-- tsql user=sysdb_wd_login password=12345678 database=sysdb_wd_db
+SELECT HAS_PERMS_BY_NAME('dbo.sysdb_wd_v1','OBJECT','SELECT')
+GO
+
+-- tsql user=sysdb_wd_rlogin password=12345678 database=sysdb_wd_db
+SELECT name FROM sysdatabases WHERE name = 'sysdb_wd_db'
+GO
+
+SELECT HAS_PERMS_BY_NAME('dbo.sysdatabases','OBJECT','SELECT')
+GO
+
+SELECT CAST(name AS nvarchar(128)) AS name FROM sysdb_wd_v1
+GO

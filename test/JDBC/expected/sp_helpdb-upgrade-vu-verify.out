@@ -1,0 +1,58 @@
+-- tsql
+-- QUOTED_IDENTIFIER OFF is the default for sqlcmd and many other clients
+SET QUOTED_IDENTIFIER OFF
+GO
+
+-- dbid, created and status (collation-dependent) vary by instance
+-- ignore_columns 4,5,6
+EXEC sp_helpdb 'master'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint
+master#!#<NULL>#!#jdbc_user#!#120
+~~END~~
+
+~~START~~
+nchar#!#smallint#!#nchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- ignore_columns 4,5,6
+EXEC sp_helpdb 'sp_helpdb_upgrade_db_name_longer_than_32_chars'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#tinyint
+sp_helpdb_upgrade_db_name_longer_than_32_chars#!#<NULL>#!#jdbc_user#!#120
+~~END~~
+
+~~START~~
+nchar#!#smallint#!#nchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- Only sp_helpdb() and sp_helpdb(sysname) must exist
+SELECT count(*) FROM sys.all_objects WHERE name = 'sp_helpdb'
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- psql
+SELECT p.oid::regprocedure::text AS signature
+FROM pg_catalog.pg_proc p
+WHERE p.proname = 'sp_helpdb' AND p.pronamespace = 'sys'::regnamespace
+ORDER BY 1;
+GO
+~~START~~
+text
+sys.sp_helpdb()
+sys.sp_helpdb(sys.sysname)
+~~END~~
+

@@ -1,0 +1,98 @@
+-- tsql
+-- resetting passwords for logins (dump-restore)
+ALTER LOGIN sysdb_wd_login WITH PASSWORD = '12345678'
+GO
+
+ALTER LOGIN sysdb_wd_rlogin WITH PASSWORD = '12345678'
+GO
+
+USE sysdb_wd_db
+GO
+
+SELECT CAST(name AS nvarchar(128)) AS name FROM sysdb_wd_v1
+GO
+~~START~~
+nvarchar
+sysdb_wd_db
+~~END~~
+
+
+SELECT CAST(name AS nvarchar(128)) AS name FROM sysdb_wd_v2
+GO
+~~START~~
+nvarchar
+sysdb_wd_db
+~~END~~
+
+
+SELECT OBJECT_DEFINITION(OBJECT_ID('sysdb_wd_v2'))
+GO
+~~START~~
+nvarchar
+CREATE VIEW sysdb_wd_v2 AS SELECT name FROM sysdb_wd_v1<newline>
+~~END~~
+
+
+-- the upgrade must keep the GRANT on sysdb_wd_v1 and db_owner as owner of the wrapper
+-- sp_table_privileges hides db_datareader/db_datawriter grants, so HAS_PERMS_BY_NAME checks them below
+EXEC sp_table_privileges @table_name = 'sysdb_wd_v1'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+sysdb_wd_db#!#dbo#!#sysdb_wd_v1#!#dbo#!#dbo#!#DELETE#!#YES
+sysdb_wd_db#!#dbo#!#sysdb_wd_v1#!#dbo#!#dbo#!#INSERT#!#YES
+sysdb_wd_db#!#dbo#!#sysdb_wd_v1#!#dbo#!#dbo#!#REFERENCES#!#YES
+sysdb_wd_db#!#dbo#!#sysdb_wd_v1#!#dbo#!#dbo#!#SELECT#!#YES
+sysdb_wd_db#!#dbo#!#sysdb_wd_v1#!#dbo#!#sysdb_wd_user#!#SELECT#!#NO
+sysdb_wd_db#!#dbo#!#sysdb_wd_v1#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+
+EXEC sp_table_privileges @table_name = 'sysdatabases'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+sysdb_wd_db#!#dbo#!#sysdatabases#!#db_owner#!#db_owner#!#DELETE#!#YES
+sysdb_wd_db#!#dbo#!#sysdatabases#!#db_owner#!#db_owner#!#INSERT#!#YES
+sysdb_wd_db#!#dbo#!#sysdatabases#!#db_owner#!#db_owner#!#REFERENCES#!#YES
+sysdb_wd_db#!#dbo#!#sysdatabases#!#db_owner#!#db_owner#!#SELECT#!#YES
+sysdb_wd_db#!#dbo#!#sysdatabases#!#db_owner#!#db_owner#!#UPDATE#!#YES
+~~END~~
+
+
+USE master
+GO
+
+-- tsql user=sysdb_wd_login password=12345678 database=sysdb_wd_db
+SELECT HAS_PERMS_BY_NAME('dbo.sysdb_wd_v1','OBJECT','SELECT')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=sysdb_wd_rlogin password=12345678 database=sysdb_wd_db
+SELECT name FROM sysdatabases WHERE name = 'sysdb_wd_db'
+GO
+~~START~~
+nvarchar
+sysdb_wd_db
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('dbo.sysdatabases','OBJECT','SELECT')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT CAST(name AS nvarchar(128)) AS name FROM sysdb_wd_v1
+GO
+~~START~~
+nvarchar
+sysdb_wd_db
+~~END~~
+
