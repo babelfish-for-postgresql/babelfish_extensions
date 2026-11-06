@@ -4080,11 +4080,52 @@ public:
 		{
 			PLtsql_stmt_if *fragment = (PLtsql_stmt_if *) getPLtsql_fragment(ctx->parent->parent);
 			fragment->cond = rewrite_if_condition(ctx, fragment->cond);
+
+			/*
+			 * Babelfish: record a cross-database shared-catalog reference
+			 * (sys / information_schema) on the condition expression so the
+			 * evaluation path can switch the logical-db context while the
+			 * condition is evaluated.
+			 */
+			if (fragment->cond && is_cross_db)
+			{
+				fragment->cond->is_cross_db = true;
+				if (!schema_name.empty())
+					fragment->cond->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+				if (!db_name.empty())
+					fragment->cond->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
+			}
+
+			/*
+			 * Reset the cross-db builder state so it cannot leak onto a later
+			 * same-db IF / WHILE condition (the object visitors only ever set
+			 * these, never clear them).  A condition that references two
+			 * different foreign databases records only the first; that is a
+			 * known limitation tracked in the PR's follow-ups.
+			 */
+			is_cross_db = false;
+			schema_name.clear();
+			db_name.clear();
 		}
 		else if (((TSqlParser::Cfl_statementContext *) ctx->parent->parent)->while_statement())
 		{
 			PLtsql_stmt_while *fragment = (PLtsql_stmt_while *) getPLtsql_fragment(ctx->parent->parent);
 			fragment->cond = rewrite_if_condition(ctx, fragment->cond);
+
+			/* Babelfish: cross-db shared-catalog context for the loop condition. */
+			if (fragment->cond && is_cross_db)
+			{
+				fragment->cond->is_cross_db = true;
+				if (!schema_name.empty())
+					fragment->cond->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+				if (!db_name.empty())
+					fragment->cond->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
+			}
+
+			/* Reset cross-db builder state; see the IF branch above. */
+			is_cross_db = false;
+			schema_name.clear();
+			db_name.clear();
 		}
 	}
 };

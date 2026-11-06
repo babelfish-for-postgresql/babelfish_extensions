@@ -2175,6 +2175,128 @@ exec_stmts(PLtsql_execstate *estate, List *stmts)
 }
 
 #include "pl_exec-2.c"
+
+/*
+ * Babelfish: a db-qualified reference to the shared sys / information_schema
+ * catalog views resolves against the *current* logical database (those views
+ * filter on sys.db_id()).  exec_stmt_execsql() temporarily switches the
+ * current-database context for such a cross-database reference in a top-level
+ * statement.  Control-flow conditions (IF / WHILE), however, are evaluated via
+ * expression evaluation -- and in the iterative executor as a conditional
+ * GOTO -- not via exec_stmt_execsql, so they must perform the same switch
+ * themselves; otherwise the catalog view resolves against the connected
+ * database and the condition silently yields the wrong result.
+ *
+ * The referenced database/schema are recorded on the condition's PLtsql_expr
+ * at parse time (see tsqlBuilder::exitSearch_condition).  These helpers apply
+ * and undo the switch around the boolean evaluation.  Defined here, ahead of
+ * iterative_exec.c, so exec_stmt_goto() can use them too.
+ */
+static char *
+bbf_crossdb_sys_switch(bool is_cross_db, const char *db_name,
+					   const char *schema_name, int16 *save_db_id)
+{
+	char	   *save_db;
+	int16		target_id;
+
+	if (!is_cross_db || db_name == NULL || schema_name == NULL)
+		return NULL;
+	if (strcmp(schema_name, "sys") != 0 &&
+		strcmp(schema_name, "information_schema") != 0)
+		return NULL;
+
+	save_db = get_cur_db_name();
+	if (save_db == NULL || strcmp(save_db, db_name) == 0)
+	{
+		if (save_db)
+			pfree(save_db);
+		return NULL;
+	}
+
+	target_id = get_db_id(db_name);
+	if (!DbidIsValid(target_id))
+	{
+		pfree(save_db);
+		return NULL;
+	}
+
+	/*
+	 * Match the top-level statement path (exec_stmt_execsql, which switches via
+	 * set_cur_user_db_and_path): refuse to resolve a shared catalog view
+	 * against a database the current login cannot access.  Without this gate an
+	 * authenticated user could enumerate sys / information_schema metadata of
+	 * any logical database from an IF / WHILE / conditional-GOTO condition.
+	 * Raise before changing any session state, so nothing has to be undone when
+	 * access is denied.
+	 */
+	check_session_db_access(db_name);
+
+	/*
+	 * Record the current logical-db id now so the restore path can revert with
+	 * a plain set_cur_db() and never needs a catalog lookup (which could itself
+	 * throw and leave the session pointed at the switched database).
+	 */
+	*save_db_id = get_cur_db_id();
+
+	/*
+	 * Switch ONLY the logical-database identity that sys.db_id() / sys.db_name()
+	 * read, so the already-planned shared catalog view (which filters on
+	 * sys.db_id()) resolves against the referenced database.  Deliberately do
+	 * NOT change search_path / current user / collation here: those invalidate
+	 * the cached plan and force a re-plan, during which the pltsql parser hook
+	 * can crash.  The shared catalog views depend on sys.db_id() only at run
+	 * time, so switching just the identity is sufficient and safe.
+	 */
+	set_cur_db(target_id, db_name);
+	return save_db;
+}
+
+static void
+bbf_crossdb_sys_restore(char *save_db, int16 save_db_id)
+{
+	if (save_db == NULL)
+		return;
+	set_cur_db(save_db_id, save_db);
+	pfree(save_db);
+}
+
+/*
+ * Evaluate a boolean condition expression, switching the logical-database
+ * context first if the expression references a cross-database shared catalog.
+ * The context is always restored, including on the error path.
+ */
+static bool
+bbf_eval_boolean_crossdb(PLtsql_execstate *estate, PLtsql_expr *cond, bool *isnull)
+{
+	volatile bool	value = false;
+	char		   *bbf_save_db;
+	int16			bbf_save_db_id = 0;
+
+	/*
+	 * Plan the condition in the *connected* logical-database context, then
+	 * switch only the logical-db identity (sys.db_id()) while the already
+	 * planned expression executes.  See bbf_crossdb_sys_switch for why only the
+	 * identity is switched.
+	 */
+	if (cond->plan == NULL)
+		exec_prepare_plan(estate, cond, CURSOR_OPT_PARALLEL_OK, true);
+
+	bbf_save_db = bbf_crossdb_sys_switch(cond->is_cross_db,
+										 cond->db_name,
+										 cond->schema_name,
+										 &bbf_save_db_id);
+	PG_TRY();
+	{
+		value = exec_eval_boolean(estate, cond, isnull);
+	}
+	PG_FINALLY();
+	{
+		bbf_crossdb_sys_restore(bbf_save_db, bbf_save_db_id);
+	}
+	PG_END_TRY();
+	return value;
+}
+
 #include "iterative_exec.c"
 
 /* ----------
@@ -2725,7 +2847,7 @@ exec_stmt_if(PLtsql_execstate *estate, PLtsql_stmt_if *stmt)
 	bool		isnull;
 	ListCell   *lc;
 
-	value = exec_eval_boolean(estate, stmt->cond, &isnull);
+	value = bbf_eval_boolean_crossdb(estate, stmt->cond, &isnull);
 	exec_eval_cleanup(estate);
 	if (!isnull && value)
 		return exec_stmt(estate, stmt->then_body);
@@ -2734,7 +2856,7 @@ exec_stmt_if(PLtsql_execstate *estate, PLtsql_stmt_if *stmt)
 	{
 		PLtsql_if_elsif *elif = (PLtsql_if_elsif *) lfirst(lc);
 
-		value = exec_eval_boolean(estate, elif->cond, &isnull);
+		value = bbf_eval_boolean_crossdb(estate, elif->cond, &isnull);
 		exec_eval_cleanup(estate);
 		if (!isnull && value)
 			return exec_stmts(estate, elif->stmts);
@@ -2870,7 +2992,7 @@ exec_stmt_while(PLtsql_execstate *estate, PLtsql_stmt_while *stmt)
 		bool		value;
 		bool		isnull;
 
-		value = exec_eval_boolean(estate, stmt->cond, &isnull);
+		value = bbf_eval_boolean_crossdb(estate, stmt->cond, &isnull);
 		exec_eval_cleanup(estate);
 
 		if (isnull || !value)

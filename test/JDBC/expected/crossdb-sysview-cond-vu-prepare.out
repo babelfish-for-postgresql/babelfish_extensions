@@ -1,0 +1,34 @@
+
+-- Regression coverage for cross-database system catalog references evaluated
+-- inside procedural conditions (IF / ELSE IF / WHILE). The shared sys and
+-- information_schema views are filtered by sys.db_id(), so a reference such as
+-- OtherDb.sys.schemas requires switching the logical database context. That
+-- switch was previously applied only on the top level statement path and not
+-- when the same reference is evaluated as an IF / WHILE condition, which made
+-- the predicate silently resolve against the connected database.
+--
+-- prepare: create a separate database with a schema and a table so that the
+-- verify batch (run from master) references them across databases. Also create
+-- a login that is mapped only in master (no user in crossdb_sysview_db) to
+-- verify the cross-db access check still applies on the condition path.
+CREATE DATABASE crossdb_sysview_db;
+GO
+
+USE crossdb_sysview_db;
+GO
+
+CREATE SCHEMA crossdb_sysview_s1;
+GO
+
+CREATE TABLE crossdb_sysview_t1 (a INT);
+GO
+
+USE master;
+GO
+
+CREATE LOGIN crossdb_sysview_noaccess WITH PASSWORD = '12345678';
+GO
+
+-- Map the login in master only, so it has no access to crossdb_sysview_db.
+CREATE USER crossdb_sysview_noaccess FOR LOGIN crossdb_sysview_noaccess;
+GO
