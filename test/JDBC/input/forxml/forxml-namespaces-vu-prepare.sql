@@ -111,3 +111,29 @@ GO
 CREATE VIEW forxml_ns_view2 AS
 SELECT a, b FROM forxml_ns_simple;
 GO
+-- ============================================
+-- SECTION: A procedure and a view that use WITH XMLNAMESPACES with FOR XML
+-- These objects are kept until vu-cleanup, so their stored namespace
+-- declarations are carried across an upgrade or a dump/restore before
+-- vu-verify runs them.
+-- ============================================
+-- Procedure, FOR XML RAW and FOR XML PATH with prefixed row and column names
+CREATE PROCEDURE forxml_ns_upg_proc AS
+BEGIN
+    ;WITH XMLNAMESPACES('urn:emp' AS e)
+    SELECT EmpID AS [e:id], EmpName AS [e:name]
+    FROM forxml_ns_employees WHERE EmpID <= 2 ORDER BY EmpID
+    FOR XML RAW('e:emp');
+    ;WITH XMLNAMESPACES('urn:simple' AS s)
+    SELECT a AS [s:a], b AS [s:b]
+    FROM forxml_ns_simple ORDER BY a
+    FOR XML PATH('s:row'), ROOT('s:root');
+END;
+GO
+-- View, FOR XML RAW in a scalar subquery (T-SQL rejects FOR XML at the top
+-- level of a view)
+CREATE VIEW forxml_ns_upg_view AS
+WITH XMLNAMESPACES('urn:simple' AS s)
+SELECT (SELECT a AS [s:a], b AS [s:b] FROM forxml_ns_simple ORDER BY a
+        FOR XML RAW('s:r'), TYPE) AS c;
+GO

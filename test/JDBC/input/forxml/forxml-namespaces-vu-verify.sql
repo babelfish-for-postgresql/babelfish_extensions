@@ -1654,3 +1654,17 @@ DROP VIEW IF EXISTS forxml_ns_v2;
 DROP VIEW IF EXISTS forxml_ns_v3;
 DROP VIEW IF EXISTS forxml_ns_v4;
 GO
+-- ============================================
+-- SECTION 43: A procedure and a view created in vu-prepare
+-- These objects come from vu-prepare, so after an upgrade or a dump/restore
+-- they run from their stored definitions. vu-cleanup drops them.
+-- ============================================
+-- 43.1 Procedure, FOR XML RAW then FOR XML PATH with ROOT. T-SQL returns
+-- <e:emp xmlns:e="urn:emp" e:id="1" e:name="Alice"/><e:emp xmlns:e="urn:emp" e:id="2" e:name="Bob"/>
+-- and <s:root xmlns:s="urn:simple"><s:row><s:a>1</s:a><s:b>val1</s:b></s:row><s:row><s:a>2</s:a><s:b>val2</s:b></s:row></s:root>
+EXEC forxml_ns_upg_proc;
+GO
+-- 43.2 View, FOR XML RAW in a scalar subquery. T-SQL returns
+-- <s:r xmlns:s="urn:simple" s:a="1" s:b="val1"/><s:r xmlns:s="urn:simple" s:a="2" s:b="val2"/>
+SELECT c FROM forxml_ns_upg_view;
+GO

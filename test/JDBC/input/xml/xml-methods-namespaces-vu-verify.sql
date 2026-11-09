@@ -2104,3 +2104,34 @@ EXEC xmlns_methods_nsproc_dq;
 GO
 DROP PROCEDURE xmlns_methods_nsproc_dq;
 GO
+-- ============================================
+-- SECTION 42: Routines, a trigger and views created in vu-prepare
+-- These objects come from vu-prepare, so after an upgrade or a dump/restore
+-- they run from their stored definitions. vu-cleanup drops them.
+-- ============================================
+-- 42.1 Procedure, .value() (T-SQL 1 val1, 5 42)
+EXEC xmlns_methods_upg_proc;
+GO
+-- 42.2 Scalar function, .exist() (T-SQL 0, 1, NULL)
+SELECT dbo.xmlns_methods_upg_fn_exist(1) AS id1,
+       dbo.xmlns_methods_upg_fn_exist(2) AS id2,
+       dbo.xmlns_methods_upg_fn_exist(4) AS id4;
+GO
+-- 42.3 Inline table function, .nodes() with relative prefixed paths
+-- (T-SQL 1 SQL 29.99, 2 XML 39.99)
+SELECT book_id, title, price FROM dbo.xmlns_methods_upg_itvf() ORDER BY book_id;
+GO
+-- 42.4 Trigger (T-SQL 1 val1, 2 NULL, 5 42)
+INSERT INTO xmlns_methods_upg_trig_t VALUES (1), (2), (5);
+GO
+SELECT id, v FROM xmlns_methods_upg_log ORDER BY id;
+GO
+-- 42.5 View, .exist() and .value() (T-SQL 1 1 val1, 2 0 NULL, 3 0 NULL,
+-- 4 NULL NULL, 5 1 42)
+SELECT id, has_item, first_item FROM xmlns_methods_upg_view ORDER BY id;
+GO
+-- 42.6 A URI with both quote kinds, procedure and view (T-SQL 0, 1 0)
+EXEC xmlns_methods_upg_proc_quote;
+GO
+SELECT id, cnt FROM xmlns_methods_upg_view_quote;
+GO
