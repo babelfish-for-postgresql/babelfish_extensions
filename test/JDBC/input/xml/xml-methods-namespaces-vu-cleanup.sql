@@ -2,6 +2,24 @@
 -- SECTION: Cleanup
 -- ============================================
 
+DROP TRIGGER xmlns_methods_upg_trig;
+GO
+DROP VIEW xmlns_methods_upg_view;
+GO
+DROP VIEW xmlns_methods_upg_view_quote;
+GO
+DROP FUNCTION xmlns_methods_upg_fn_exist;
+GO
+DROP FUNCTION xmlns_methods_upg_itvf;
+GO
+DROP PROCEDURE xmlns_methods_upg_proc;
+GO
+DROP PROCEDURE xmlns_methods_upg_proc_quote;
+GO
+DROP TABLE xmlns_methods_upg_trig_t;
+GO
+DROP TABLE xmlns_methods_upg_log;
+GO
 DROP VIEW xmlns_methods_view1;
 GO
 

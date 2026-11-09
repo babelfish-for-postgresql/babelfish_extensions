@@ -55,3 +55,71 @@ GO
 INSERT INTO xmlns_methods_comments VALUES (1, '<root xmlns:ns1="http://example.com/ns1"><!-- a comment --><ns1:item>val</ns1:item></root>');
 INSERT INTO xmlns_methods_comments VALUES (2, '<root xmlns:ns1="http://example.com/ns1"><ns1:item><!-- inner comment -->val</ns1:item></root>');
 GO
+-- ============================================
+-- SECTION: Routines, a trigger and views that use WITH XMLNAMESPACES
+-- These objects are kept until vu-cleanup, so their stored namespace
+-- bindings are carried across an upgrade or a dump/restore before vu-verify
+-- runs them.
+-- ============================================
+CREATE TABLE xmlns_methods_upg_trig_t (id INT);
+GO
+CREATE TABLE xmlns_methods_upg_log (id INT, v VARCHAR(20));
+GO
+-- Procedure, .value()
+CREATE PROCEDURE xmlns_methods_upg_proc AS
+BEGIN
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+    SELECT id, data.value('(/root/ns1:item)[1]', 'VARCHAR(20)') AS v
+    FROM xmlns_methods_t1 WHERE id IN (1, 5) ORDER BY id;
+END;
+GO
+-- Scalar function, .exist()
+CREATE FUNCTION xmlns_methods_upg_fn_exist(@id INT) RETURNS INT AS
+BEGIN
+    DECLARE @r INT;
+    ;WITH XMLNAMESPACES('http://example.com/ns2' AS ns2)
+    SELECT @r = data.exist('/root/ns2:b') FROM xmlns_methods_t1 WHERE id = @id;
+    RETURN @r;
+END;
+GO
+-- Inline table function, .nodes() with relative prefixed paths in .value()
+CREATE FUNCTION xmlns_methods_upg_itvf() RETURNS TABLE AS
+RETURN (
+    WITH XMLNAMESPACES('http://example.com/products' AS p)
+    SELECT T.c.value('@p:id', 'INT') AS book_id,
+           T.c.value('(p:title)[1]', 'VARCHAR(20)') AS title,
+           T.c.value('(p:price)[1]', 'VARCHAR(10)') AS price
+    FROM xmlns_methods_t2 CROSS APPLY data.nodes('/catalog/p:book') AS T(c)
+    WHERE id = 1
+);
+GO
+-- Trigger, .value() on the rows of a table joined to inserted
+CREATE TRIGGER xmlns_methods_upg_trig ON xmlns_methods_upg_trig_t AFTER INSERT AS
+BEGIN
+    ;WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+    INSERT INTO xmlns_methods_upg_log
+    SELECT i.id, t.data.value('(/root/ns1:item)[1]', 'VARCHAR(20)')
+    FROM inserted AS i JOIN xmlns_methods_t1 AS t ON t.id = i.id;
+END;
+GO
+-- View, .exist() and .value()
+CREATE VIEW xmlns_methods_upg_view AS
+WITH XMLNAMESPACES('http://example.com/ns1' AS ns1)
+SELECT id, data.exist('/root/ns1:item') AS has_item,
+       data.value('(/root/ns1:item)[1]', 'VARCHAR(20)') AS first_item
+FROM xmlns_methods_t1;
+GO
+-- A URI that holds both quote kinds, in a procedure and in a view. The
+-- document does not use that namespace, so the count is 0.
+CREATE PROCEDURE xmlns_methods_upg_proc_quote AS
+BEGIN
+    DECLARE @x XML = '<r a="1"/>';
+    ;WITH XMLNAMESPACES('urn:a''b"c' AS q)
+    SELECT @x.value('count(/r/@q:*)', 'INT') AS cnt;
+END;
+GO
+CREATE VIEW xmlns_methods_upg_view_quote AS
+WITH XMLNAMESPACES('urn:a''b"c' AS q)
+SELECT id, data.value('count(/root/@q:*)', 'INT') AS cnt
+FROM xmlns_methods_t1 WHERE id = 1;
+GO
