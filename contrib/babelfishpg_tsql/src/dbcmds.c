@@ -40,8 +40,9 @@
 #include "rolecmds.h"
 #include "pltsql.h"
 
-static bool have_createdb_privilege(void);
-static List	*gen_createdb_subcmds(const char *schema,
+
+static bool sessionuser_have_createdb_privilege(void);
+static List *gen_createdb_subcmds(const char *schema,
 								  const char *dbo,
 								  const char *db_owner,
 								  const char *guest,
@@ -56,7 +57,7 @@ static void create_bbf_db_internal(const char *dbname, List *options, const char
 static void drop_related_bbf_namespace_entries(int16 dbid);
 
 static bool
-have_createdb_privilege(void)
+sessionuser_have_createdb_privilege(void)
 {
 	bool		result = false;
 	HeapTuple	utup;
@@ -293,7 +294,12 @@ static int16 getAvailDbid() {
 	int16  dbid;
 	int16  start = 0;
 
-	do {
+	if(!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)) &&
+	   !sessionuser_have_createdb_privilege())
+		return InvalidDbid;
+
+	do
+	{
 		dbid = DirectFunctionCall1(nextval, CStringGetTextDatum("sys.babelfish_db_seq"));
 		if (start == 0)
 			start = dbid;
@@ -307,8 +313,17 @@ static int16 getAvailDbid() {
 static Oid
 do_create_bbf_db(const char *dbname, List *options, const char *owner)
 {
-	int16       dbid;
-	const char	*prev_current_user;
+	int16		dbid;
+	const char *prev_current_user;
+
+	/*
+	 * Check create-database privilege BEFORE any elevation.  This prevents
+	 * unprivileged users from entering the elevated code path at all.
+	 */
+	if (!sessionuser_have_createdb_privilege())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied to create database")));
 
 	if (DbidIsValid(get_db_id(dbname)))
 		ereport(ERROR,
@@ -375,7 +390,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 							user_dbname)));
 	}
 
-	if (!have_createdb_privilege())
+	if (!sessionuser_have_createdb_privilege())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to create database")));
