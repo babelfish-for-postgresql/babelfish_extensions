@@ -198,6 +198,13 @@ typedef struct TdsColumnMetaData
 	bool		attNotNull;		/* true if the column has not null constraint */
 	bool		attidentity;	/* true if it is an identity column */
 	bool		attgenerated;	/* true if it is a computed column */
+
+	/*
+	 * The length was derived from the expression (PostgreSQL did not keep a
+	 * typmod). Values longer than it are clipped, as SQL Server does when it
+	 * converts to the declared type, instead of failing the row.
+	 */
+	bool		clipToMaxSize;
 } TdsColumnMetaData;
 
 /* Partial Length Prefixed-bytes */
