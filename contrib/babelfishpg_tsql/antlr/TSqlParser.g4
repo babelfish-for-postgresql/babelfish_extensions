@@ -3819,7 +3819,7 @@ function_call
     | analytic_windowed_function                       
     | spatial_proc_name_server_database_schema LR_BRACKET function_arg_list? RR_BRACKET 
     | xml_proc_name_table_column LR_BRACKET expression_list? RR_BRACKET
-    | func_proc_name_server_database_schema LR_BRACKET allOrDistinct=(DISTINCT|ALL)? function_arg_list? RR_BRACKET 
+    | func_proc_name_server_database_schema LR_BRACKET allOrDistinct=(DISTINCT|ALL)? function_arg_list? RR_BRACKET over_clause?
     | built_in_functions                               
     | freetext_function                                
     | NEXT VALUE FOR full_object_name		         
