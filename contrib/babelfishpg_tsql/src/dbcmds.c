@@ -45,7 +45,7 @@
 Oid sys_babelfish_db_seq_oid = InvalidOid;
 
 static Oid get_sys_babelfish_db_seq_oid(void);
-static bool have_createdb_privilege(void);
+static bool sessionuser_have_createdb_privilege(void);
 static List *gen_createdb_subcmds(const char *dbname,
 								  const char *owner);
 static List *gen_dropdb_subcmds(const char *dbname,
@@ -70,7 +70,7 @@ get_sys_babelfish_db_seq_oid()
 }
 
 static bool
-have_createdb_privilege(void)
+sessionuser_have_createdb_privilege(void)
 {
 	bool result = false;
 	HeapTuple	utup;
@@ -504,7 +504,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 							user_dbname)));
 	}
 
-	if (!have_createdb_privilege())
+	if (!sessionuser_have_createdb_privilege())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to create database")));
