@@ -1156,6 +1156,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 
 	(void) mark_outside_view((Query*) query);
 	checkForAuto(query);
+	pltsql_current_of_post_analyze(pstate, query);
 
 	if (query->commandType == CMD_INSERT)
 	{

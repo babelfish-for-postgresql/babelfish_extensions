@@ -18,10 +18,13 @@
 #include <ctype.h>
 
 #include "access/detoast.h"
+#include "access/heapam.h"
+#include "access/tableam.h"
 #include "access/htup_details.h"
 #include "access/printtup.h"
 #include "access/transam.h"
 #include "access/tupconvert.h"
+#include "catalog/pg_inherits.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
@@ -35,6 +38,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
 #include "parser/parser.h"		/* only needed for GUC variables */
+#include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_type.h"
 #include "parser/scansup.h"
@@ -303,6 +307,13 @@ static int	exec_stmt_forc(PLtsql_execstate *estate,
 						   PLtsql_stmt_forc *stmt);
 static int	exec_stmt_foreach_a(PLtsql_execstate *estate,
 								PLtsql_stmt_foreach_a *stmt);
+static void current_of_set_position(PLtsql_execstate *estate, PLtsql_var *curvar,
+									Datum *values, bool *nulls);
+static void current_of_check_cursor(PLtsql_execstate *estate,
+									PLtsql_stmt_execsql *stmt);
+static void current_of_after_execution(PLtsql_execstate *estate,
+									   PLtsql_stmt_execsql *stmt,
+									   bool is_update, uint64 processed);
 static int	exec_stmt_open(PLtsql_execstate *estate,
 						   PLtsql_stmt_open *stmt);
 static int	exec_stmt_fetch(PLtsql_execstate *estate,
@@ -4630,6 +4641,9 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	original_query_string = stmt->original_query ? stmt->original_query : NULL;
 	is_schemabinding_view = stmt->is_schemabinding;
 
+	if (stmt->is_current_of)
+		current_of_check_cursor(estate, stmt);
+
 	if (is_cross_db)
 	{
 		/*
@@ -4887,6 +4901,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			estate->eval_processed = SPI_processed;
 			exec_set_rowcount(SPI_processed);
 		}
+
+		if (stmt->is_current_of)
+			current_of_after_execution(estate, stmt,
+									   rc == SPI_OK_UPDATE || rc == SPI_OK_UPDATE_RETURNING,
+									   estate->eval_processed);
 
 		/* Process INTO if present */
 		if (stmt->into || stmt->is_tsql_select_assign_stmt)
@@ -5993,6 +6012,15 @@ exec_stmt_open(PLtsql_execstate *estate, PLtsql_stmt_open *stmt)
 		if (curvar->isconst)
 		{
 			query = curvar->cursor_explicit_expr;
+
+			/*
+			 * Have the row identity columns added if the cursor is used by
+			 * WHERE CURRENT OF. Both flags are fixed once the batch is
+			 * compiled, so a plan made earlier already agrees.
+			 */
+			if (curvar->cursor_current_of)
+				query->cursor_current_of = true;
+
 			if (query->plan == NULL)
 				exec_prepare_plan(estate, query, curvar->cursor_options, true);
 		}
@@ -6013,7 +6041,16 @@ exec_stmt_open(PLtsql_execstate *estate, PLtsql_stmt_open *stmt)
 			}
 
 			if (query->plan == NULL)
+			{
+				/*
+				 * As above. If the cursor the variable refers to was planned
+				 * before without the row identity columns, WHERE CURRENT OF
+				 * will report it as read-only.
+				 */
+				if (curvar->cursor_current_of)
+					query->cursor_current_of = true;
 				exec_prepare_plan(estate, query, cursor_options, true);
+			}
 		}
 	}
 
@@ -6037,6 +6074,9 @@ exec_stmt_open(PLtsql_execstate *estate, PLtsql_stmt_open *stmt)
 	 */
 	if (curname == NULL)
 		assign_text_var(estate, curvar, portal->name);
+
+	/* A newly opened cursor is not positioned on a row */
+	current_of_set_position(estate, curvar, NULL, NULL);
 
 	/* If we had any transient data, clean it up */
 	exec_eval_cleanup(estate);
@@ -6063,6 +6103,283 @@ exec_stmt_open(PLtsql_execstate *estate, PLtsql_stmt_open *stmt)
 
 
 /* ----------
+ * Support for UPDATE/DELETE ... WHERE CURRENT OF cursor.
+ * See pltsql_current_of_post_analyze() for the overall design.
+ * ----------
+ */
+
+/*
+ * Number of trailing row identity columns in the result of the cursor's
+ * query: PLTSQL_CURRENT_OF_NCOLS, or 0 if the cursor is not referenced by
+ * WHERE CURRENT OF or its query is not updatable.
+ */
+static int
+current_of_hidden_cols(PLtsql_var *curvar, TupleDesc tupdesc)
+{
+	int			first;
+
+	if (!curvar->cursor_current_of || tupdesc == NULL ||
+		tupdesc->natts < PLTSQL_CURRENT_OF_NCOLS)
+		return 0;
+
+	first = tupdesc->natts - PLTSQL_CURRENT_OF_NCOLS;
+	for (int i = 0; i < PLTSQL_CURRENT_OF_NCOLS; i++)
+	{
+		if (strcmp(NameStr(TupleDescAttr(tupdesc, first + i)->attname),
+				   pltsql_current_of_colnames[i]) != 0)
+			return 0;
+	}
+	return PLTSQL_CURRENT_OF_NCOLS;
+}
+
+/*
+ * Remember the identity of the row the cursor is positioned on, or forget
+ * it if values is NULL.
+ */
+static void
+current_of_set_position(PLtsql_execstate *estate, PLtsql_var *curvar,
+						Datum *values, bool *nulls)
+{
+	static const Oid typoids[PLTSQL_CURRENT_OF_NCOLS] = {TIDOID, XIDOID, OIDOID};
+	int			dnos[PLTSQL_CURRENT_OF_NCOLS];
+
+	if (!curvar->cursor_current_of)
+		return;
+
+	dnos[0] = curvar->cursor_cof_ctid_dno;
+	dnos[1] = curvar->cursor_cof_xmin_dno;
+	dnos[2] = curvar->cursor_cof_relid_dno;
+
+	for (int i = 0; i < PLTSQL_CURRENT_OF_NCOLS; i++)
+		exec_assign_value(estate, estate->datums[dnos[i]],
+						  values ? values[i] : (Datum) 0,
+						  values ? nulls[i] : true,
+						  typoids[i], -1);
+}
+
+/*
+ * DestReceiver that hides the row identity columns from the client and
+ * keeps those of the last row it has seen.
+ */
+typedef struct CurrentOfDestReceiver
+{
+	DestReceiver pub;
+	DestReceiver *inner;
+	int			nvisible;
+	TupleDesc	visdesc;
+	TupleTableSlot *slot;
+	bool		have_row;
+	Datum		values[PLTSQL_CURRENT_OF_NCOLS];
+	bool		nulls[PLTSQL_CURRENT_OF_NCOLS];
+	ItemPointerData tid;
+} CurrentOfDestReceiver;
+
+static void
+current_of_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
+{
+	CurrentOfDestReceiver *r = (CurrentOfDestReceiver *) self;
+
+	r->nvisible = typeinfo->natts - PLTSQL_CURRENT_OF_NCOLS;
+	r->visdesc = CreateTupleDescTruncatedCopy(typeinfo, r->nvisible);
+	r->slot = MakeSingleTupleTableSlot(r->visdesc, &TTSOpsVirtual);
+	r->inner->rStartup(r->inner, operation, r->visdesc);
+}
+
+static bool
+current_of_dest_receive(TupleTableSlot *slot, DestReceiver *self)
+{
+	CurrentOfDestReceiver *r = (CurrentOfDestReceiver *) self;
+
+	slot_getallattrs(slot);
+
+	for (int i = 0; i < PLTSQL_CURRENT_OF_NCOLS; i++)
+	{
+		r->values[i] = slot->tts_values[r->nvisible + i];
+		r->nulls[i] = slot->tts_isnull[r->nvisible + i];
+	}
+	if (!r->nulls[0])
+	{
+		/* the tid is passed by reference; keep our own copy */
+		r->tid = *DatumGetItemPointer(r->values[0]);
+		r->values[0] = ItemPointerGetDatum(&r->tid);
+	}
+	r->have_row = true;
+
+	ExecClearTuple(r->slot);
+	memcpy(r->slot->tts_values, slot->tts_values, r->nvisible * sizeof(Datum));
+	memcpy(r->slot->tts_isnull, slot->tts_isnull, r->nvisible * sizeof(bool));
+	ExecStoreVirtualTuple(r->slot);
+
+	return r->inner->receiveSlot(r->slot, r->inner);
+}
+
+static void
+current_of_dest_shutdown(DestReceiver *self)
+{
+	CurrentOfDestReceiver *r = (CurrentOfDestReceiver *) self;
+
+	r->inner->rShutdown(r->inner);
+	if (r->slot)
+		ExecDropSingleTupleTableSlot(r->slot);
+	r->slot = NULL;
+}
+
+static void
+current_of_dest_destroy(DestReceiver *self)
+{
+	CurrentOfDestReceiver *r = (CurrentOfDestReceiver *) self;
+
+	r->inner->rDestroy(r->inner);
+	pfree(r);
+}
+
+static CurrentOfDestReceiver *
+current_of_create_dest(DestReceiver *inner)
+{
+	CurrentOfDestReceiver *r = palloc0(sizeof(CurrentOfDestReceiver));
+
+	r->pub.receiveSlot = current_of_dest_receive;
+	r->pub.rStartup = current_of_dest_startup;
+	r->pub.rShutdown = current_of_dest_shutdown;
+	r->pub.rDestroy = current_of_dest_destroy;
+	r->pub.mydest = inner->mydest;
+	r->inner = inner;
+	return r;
+}
+
+/*
+ * Before running UPDATE/DELETE ... WHERE CURRENT OF: the cursor has to be
+ * open, updatable and positioned on a row.
+ */
+static void
+current_of_check_cursor(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
+{
+	PLtsql_var *curvar = (PLtsql_var *) estate->datums[stmt->current_of_curvar];
+	PLtsql_var *ctidvar;
+	Portal		portal = NULL;
+	int			cursor_options = curvar->cursor_options;
+
+	if (!curvar->isnull)
+	{
+		char	   *curname = TextDatumGetCString(curvar->value);
+
+		portal = SPI_cursor_find(curname);
+		if (!curvar->isconst)
+		{
+			/* a cursor variable: the options are those of its cursor */
+			PLtsql_expr *query;
+
+			pltsql_get_cursor_definition(curname, &query, &cursor_options);
+		}
+		pfree(curname);
+	}
+	if (portal == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_STATE),
+				 errmsg("Cursor is not open.")));
+
+	if ((cursor_options & (TSQL_CURSOR_OPT_READ_ONLY | TSQL_CURSOR_OPT_STATIC | CURSOR_OPT_INSENSITIVE)) != 0 ||
+		current_of_hidden_cols(curvar, portal->tupDesc) == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_STATE),
+				 errmsg("The cursor is READ ONLY."),
+				 errdetail("WHERE CURRENT OF needs a cursor that is not declared READ_ONLY, STATIC or FAST_FORWARD and that selects from a single table without DISTINCT, GROUP BY, aggregates or set operators.")));
+
+	ctidvar = (PLtsql_var *) estate->datums[curvar->cursor_cof_ctid_dno];
+	if (ctidvar->isnull)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_STATE),
+				 errmsg("The requested row is not in the fetch buffer.")));
+}
+
+/*
+ * After UPDATE/DELETE ... WHERE CURRENT OF. No row was touched if the row
+ * changed since it was fetched. Otherwise keep the cursor on the row: after
+ * an UPDATE the row has a new version, after a DELETE there is none.
+ */
+static void
+current_of_after_execution(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt,
+						   bool is_update, uint64 processed)
+{
+	PLtsql_var *curvar = (PLtsql_var *) estate->datums[stmt->current_of_curvar];
+	PLtsql_var *ctidvar = (PLtsql_var *) estate->datums[curvar->cursor_cof_ctid_dno];
+	PLtsql_var *relidvar = (PLtsql_var *) estate->datums[curvar->cursor_cof_relid_dno];
+	Datum		values[PLTSQL_CURRENT_OF_NCOLS];
+	bool		nulls[PLTSQL_CURRENT_OF_NCOLS] = {false, false, false};
+	bool		found = false;
+	ItemPointerData tid;
+	Relation	rel;
+	Snapshot	snapshot;
+
+	if (processed == 0)
+	{
+		/* Is the statement's target the table the cursor reads at all? */
+		Oid			cursor_relid = DatumGetObjectId(relidvar->value);
+		Oid			target_relid = InvalidOid;
+		List	   *sources = SPI_plan_get_plan_sources(stmt->sqlstmt->plan);
+
+		if (sources != NIL)
+		{
+			List	   *queries = linitial_node(CachedPlanSource, sources)->query_list;
+
+			if (queries != NIL)
+			{
+				Query	   *q = linitial_node(Query, queries);
+
+				if (q->resultRelation > 0)
+					target_relid = rt_fetch(q->resultRelation, q->rtable)->relid;
+			}
+		}
+
+		if (OidIsValid(target_relid) && target_relid != cursor_relid &&
+			!list_member_oid(find_all_inheritors(target_relid, NoLock, NULL), cursor_relid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_CURSOR_STATE),
+					 errmsg("The cursor does not include the table being modified or the table is not updatable through the cursor.")));
+
+		ereport(ERROR,
+				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+				 errmsg("Optimistic concurrency check failed. The row was modified outside of this cursor.")));
+	}
+
+	if (!is_update)
+	{
+		current_of_set_position(estate, curvar, NULL, NULL);
+		return;
+	}
+
+	/* Follow the update chain to the version our own command has created */
+	tid = *DatumGetItemPointer(ctidvar->value);
+	rel = table_open(DatumGetObjectId(relidvar->value), AccessShareLock);
+	snapshot = RegisterSnapshot(GetLatestSnapshot());
+
+	if (rel->rd_tableam == GetHeapamTableAmRoutine())
+	{
+		TableScanDesc scan = table_beginscan_tid(rel, snapshot);
+		HeapTupleData tuple;
+		Buffer		buffer;
+
+		heap_get_latest_tid(scan, &tid);
+		table_endscan(scan);
+
+		tuple.t_self = tid;
+		if (heap_fetch(rel, snapshot, &tuple, &buffer, false))
+		{
+			values[0] = ItemPointerGetDatum(&tid);
+			values[1] = TransactionIdGetDatum(HeapTupleHeaderGetXmin(tuple.t_data));
+			values[2] = relidvar->value;
+			found = true;
+			ReleaseBuffer(buffer);
+		}
+	}
+
+	UnregisterSnapshot(snapshot);
+	table_close(rel, AccessShareLock);
+
+	current_of_set_position(estate, curvar, found ? values : NULL, nulls);
+}
+
+/* ----------
  * exec_stmt_fetch			Fetch from a cursor into a target, or just
  *							move the current position of the cursor
  * ----------
@@ -6076,6 +6393,7 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 	Portal		portal;
 	char	   *curname;
 	uint64		n;
+	int			nhidden;
 	MemoryContext oldcontext;
 
 	/* ----------
@@ -6115,6 +6433,8 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 		exec_eval_cleanup(estate);
 	}
 
+	nhidden = current_of_hidden_cols(curvar, portal->tupDesc);
+
 	if (!stmt->is_move)
 	{
 		PLtsql_variable *target;
@@ -6135,7 +6455,35 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 			 * ----------
 			 */
 			target = (PLtsql_variable *) estate->datums[stmt->target->dno];
-			if (n == 0)
+			if (nhidden > 0)
+			{
+				/* The target must not see the row identity columns */
+				TupleDesc	tupdesc = tuptab->tupdesc;
+				TupleDesc	visdesc;
+
+				oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
+				visdesc = CreateTupleDescTruncatedCopy(tupdesc, tupdesc->natts - nhidden);
+				MemoryContextSwitchTo(oldcontext);
+
+				if (n == 0)
+				{
+					exec_move_row(estate, target, NULL, visdesc);
+					current_of_set_position(estate, curvar, NULL, NULL);
+				}
+				else
+				{
+					Datum		values[PLTSQL_CURRENT_OF_NCOLS];
+					bool		nulls[PLTSQL_CURRENT_OF_NCOLS];
+
+					for (int i = 0; i < nhidden; i++)
+						values[i] = heap_getattr(tuptab->vals[0],
+												 tupdesc->natts - nhidden + i + 1,
+												 tupdesc, &nulls[i]);
+					exec_move_row(estate, target, tuptab->vals[0], visdesc);
+					current_of_set_position(estate, curvar, values, nulls);
+				}
+			}
+			else if (n == 0)
 				exec_move_row(estate, target, NULL, tuptab->tupdesc);
 			else
 				exec_move_row(estate, target, tuptab->vals[0], tuptab->tupdesc);
@@ -6143,13 +6491,24 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 		else					/* no target. push the result to client */
 		{
 			DestReceiver *receiver;
+			CurrentOfDestReceiver *cofreceiver = NULL;
 
 			receiver = CreateDestReceiver(DestRemote);
 			SetRemoteDestReceiverParams(receiver, portal);
+			if (nhidden > 0)
+			{
+				cofreceiver = current_of_create_dest(receiver);
+				receiver = (DestReceiver *) cofreceiver;
+			}
 
 			SPI_scroll_cursor_fetch_dest(portal, stmt->direction, how_many, receiver);
 			tuptab = SPI_tuptable;
 			n = SPI_processed;
+
+			if (cofreceiver)
+				current_of_set_position(estate, curvar,
+										cofreceiver->have_row ? cofreceiver->values : NULL,
+										cofreceiver->nulls);
 
 			receiver->rDestroy(receiver);
 		}
@@ -6162,6 +6521,9 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 		/* Move the cursor */
 		SPI_scroll_cursor_move(portal, stmt->direction, how_many);
 		n = SPI_processed;
+
+		/* We have not seen the row the cursor is on now */
+		current_of_set_position(estate, curvar, NULL, NULL);
 	}
 
 	/* Set the ROW_COUNT and the global FOUND variable appropriately. */
