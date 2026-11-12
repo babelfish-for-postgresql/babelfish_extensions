@@ -29,6 +29,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
 #include "parser/parse_collate.h"
+#include "utils/array.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 #include "utils/lsyscache.h"
@@ -507,3 +508,4 @@ checkAllowedTsqlAttoptions(Node *options)
 
 	return false;
 }
+
