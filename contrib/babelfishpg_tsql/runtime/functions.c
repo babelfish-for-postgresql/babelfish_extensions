@@ -156,7 +156,11 @@ static Tuplestorestate *get_bbf_pivot_tuplestore(const char 	*sourcetext,
 												 const char 	*funcName,
 												 HTAB 			*bbf_pivot_hash,
 												 TupleDesc 		tupdesc,
-												 bool 			randomAccess);
+												 bool 			randomAccess,
+												 int			nparams,
+												 Oid			*paramtypes,
+												 Datum			*paramvalues,
+												 const char		*paramnulls);
 
 extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
@@ -5294,6 +5298,10 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	char			*src_sql_string;
 	char			*cat_sql_string;
 	char			*funcName;
+	int				nparams = PG_NARGS() - 3;
+	Oid				*paramtypes = NULL;
+	Datum			*paramvalues = NULL;
+	char			*paramnulls = NULL;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -5338,6 +5346,25 @@ bbf_pivot(PG_FUNCTION_ARGS)
 				 errmsg("query-specified return tuple and " \
 						"bbf_pivot function are not compatible")));
 
+	/*
+	 * Values of the T-SQL variables/parameters that the source query refers
+	 * to as $1..$n (see transform_pivot_clause).
+	 */
+	if (nparams > 0)
+	{
+		paramtypes = palloc(sizeof(Oid) * nparams);
+		paramvalues = palloc(sizeof(Datum) * nparams);
+		paramnulls = palloc(sizeof(char) * nparams);
+		for (int i = 0; i < nparams; i++)
+		{
+			paramtypes[i] = get_fn_expr_argtype(fcinfo->flinfo, i + 3);
+			if (!OidIsValid(paramtypes[i]))
+				elog(ERROR, "could not determine the data type of PIVOT parameter %d", i + 1);
+			paramnulls[i] = PG_ARGISNULL(i + 3) ? 'n' : ' ';
+			paramvalues[i] = PG_ARGISNULL(i + 3) ? (Datum) 0 : PG_GETARG_DATUM(i + 3);
+		}
+	}
+
 	/* load up the categories hash table */
 	bbf_pivot_hash = load_categories_hash(cat_sql_string, per_query_ctx);
 
@@ -5349,7 +5376,8 @@ bbf_pivot(PG_FUNCTION_ARGS)
 												funcName,
 												bbf_pivot_hash,
 												tupdesc,
-												rsinfo->allowedModes & SFRM_Materialize_Random);
+												rsinfo->allowedModes & SFRM_Materialize_Random,
+												nparams, paramtypes, paramvalues, paramnulls);
 
 	/*
 	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
@@ -5464,7 +5492,11 @@ get_bbf_pivot_tuplestore(const char 	*sourcetext,
 						 const char		*funcName,
 						 HTAB 			*bbf_pivot_hash,
 						 TupleDesc 		tupdesc,
-						 bool 			randomAccess)
+						 bool 			randomAccess,
+						 int			nparams,
+						 Oid			*paramtypes,
+						 Datum			*paramvalues,
+						 const char		*paramnulls)
 {
 	Tuplestorestate *tupstore;
 	int			num_categories = hash_get_num_entries(bbf_pivot_hash);
@@ -5483,7 +5515,11 @@ get_bbf_pivot_tuplestore(const char 	*sourcetext,
 		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_connect returned %d", ret);
 
 	/* Now retrieve the bbf_pivot source rows */
-	ret = SPI_execute(sourcetext, true, 0);
+	if (nparams > 0)
+		ret = SPI_execute_with_args(sourcetext, nparams, paramtypes, paramvalues,
+									paramnulls, true, 0);
+	else
+		ret = SPI_execute(sourcetext, true, 0);
 	tuple_processed = SPI_processed;
 
 	/* Check for qualifying tuples */
