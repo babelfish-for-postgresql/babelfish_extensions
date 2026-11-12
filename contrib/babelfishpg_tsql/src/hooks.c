@@ -302,6 +302,7 @@ bool TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static Oid  pltsql_GetNewTempObjectId(void);
 static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn);
+static XLogRecPtr pltsql_GetNextAttributeVersion(char relpersistence);
 static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
 static EphemeralNamedRelation find_object_in_enr(Oid catalog_oid, Oid object_id, QueryEnvironment *qe);
@@ -347,6 +348,7 @@ static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static GetNewTempObjectId_hook_type prev_GetNewTempObjectId_hook = NULL;
 static GetNewTempOidWithIndex_hook_type prev_GetNewTempOidWithIndex_hook = NULL;
+static GetNextAttributeVersion_hook_type prev_GetNextAttributeVersion_hook = NULL;
 static pltsql_is_local_only_inval_msg_hook_type prev_pltsql_is_local_only_inval_msg_hook = NULL;
 static find_object_in_enr_hook_type prev_find_object_in_enr_hook = NULL;
 static is_enr_to_sys_object_dependency_hook_type prev_is_enr_to_sys_object_dependency_hook = NULL;
@@ -498,6 +500,9 @@ InstallExtendedHooks(void)
 
 	prev_GetNewTempOidWithIndex_hook = GetNewTempOidWithIndex_hook;
 	GetNewTempOidWithIndex_hook = pltsql_GetNewTempOidWithIndex;
+
+	prev_GetNextAttributeVersion_hook = GetNextAttributeVersion_hook;
+	GetNextAttributeVersion_hook = pltsql_GetNextAttributeVersion;
 
 	prev_pltsql_is_local_only_inval_msg_hook = pltsql_is_local_only_inval_msg_hook;
 	pltsql_is_local_only_inval_msg_hook = pltsql_is_local_only_inval_msg;
@@ -713,6 +718,7 @@ UninstallExtendedHooks(void)
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	GetNewTempObjectId_hook = prev_GetNewTempObjectId_hook;
 	GetNewTempOidWithIndex_hook = prev_GetNewTempOidWithIndex_hook;
+	GetNextAttributeVersion_hook = prev_GetNextAttributeVersion_hook;
 	find_object_in_enr_hook = prev_find_object_in_enr_hook;
 	is_enr_to_sys_object_dependency_hook = prev_is_enr_to_sys_object_dependency_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
@@ -1159,6 +1165,36 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 	} while (collides);
 
 	return newOid;
+}
+
+/*
+ * Supply the attribute version for a T-SQL temp table or table variable.
+ *
+ * The engine's own source cannot serve these relations on either node type.
+ * On a read replica it is not available at all: no LSN is allocated there, so
+ * asking for one aborts the backend. On a writer it is available but does not
+ * advance for them, because their catalog rows live in session memory and are
+ * never WAL-logged; two temp DDLs with no WAL in between would be handed the
+ * same version and fail the monotonicity check.
+ *
+ * Such a relation, its rowtype and every datum of that rowtype belong to one
+ * session and die with it. So a counter private to the backend gives all the
+ * guarantees versions need: it never repeats, it only grows (a rollback does
+ * not reset it, which is what keeps a datum left over from a dropped relation
+ * that reused a rowtype OID detectable), and its values are never compared
+ * with versions from another backend.
+ *
+ * Any other relation is the engine's to version, so decline those.
+ */
+static XLogRecPtr
+pltsql_GetNextAttributeVersion(char relpersistence)
+{
+	static XLogRecPtr tsql_temp_attversion = InvalidXLogRecPtr;
+
+	if (!IsTsqlTempTable(relpersistence))
+		return InvalidXLogRecPtr;
+
+	return ++tsql_temp_attversion;
 }
 
 static AclResult
@@ -8100,20 +8136,27 @@ fetch_table_schema(RangeVar *relation, Node *flag)
 			if (att->attisdropped || att->attnum <= 0 || att->attidentity)
 				continue;
 			
-			/* Get original column name from attoptions */
+			/*
+			 * Get the original column name from attoptions, falling back to
+			 * attname when the option is absent. Keying the fallback off the
+			 * option rather than off a NULL attoptions array matters: the
+			 * engine stores a reserved attribute version on every column, so
+			 * attoptions is never NULL and a column that has no
+			 * bbf_original_name would otherwise leave colname NULL.
+			 */
+			colname = NULL;
 			datum = heap_getattr(tuple, Anum_pg_attribute_attoptions,
 								 RelationGetDescr(attrel), &isnull);
-			
+
 			if (!isnull)
 			{
 				attoptions = DatumGetArrayTypeP(datum);
 				colname = get_value_by_name_from_array(attoptions, ATTOPTION_BBF_ORIGINAL_NAME);
 			}
-			else
-			{
+
+			if (colname == NULL)
 				colname = pstrdup(NameStr(att->attname));
-			}
-			
+
 			/* Create a column definition */
 			fc = makeNode(RangeTableFuncCol);
 			fc->colname = pstrdup(colname);

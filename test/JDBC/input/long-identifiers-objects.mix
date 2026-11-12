@@ -545,7 +545,7 @@ GO
 
 -- psql
 -- Verify column original names in pg_attribute.attoptions
-SELECT unnest(attoptions) FROM pg_attribute WHERE attrelid = (SELECT oid FROM pg_class WHERE relname LIKE 'babel5975_col_test%' AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'master_dbo')) AND attoptions IS NOT NULL;
+SELECT opt FROM pg_attribute, unnest(attoptions) opt WHERE attrelid = (SELECT oid FROM pg_class WHERE relname LIKE 'babel5975_col_test%' AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'master_dbo')) AND opt LIKE 'bbf_original_name=%';
 GO
 
 
