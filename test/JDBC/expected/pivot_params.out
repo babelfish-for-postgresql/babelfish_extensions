@@ -1,0 +1,102 @@
+-- PIVOT whose source query refers to T-SQL variables or parameters
+CREATE TABLE pivot_param_sales (product VARCHAR(50), yr INT, sales INT);
+INSERT INTO pivot_param_sales VALUES ('Apple', 2023, 100), ('Orange', 2023, 150), ('Apple', 2024, 120), ('Orange', 2024, 130), ('Pear', 2024, 7);
+CREATE TABLE pivot_param_os (id INT, idtab INT, idcli INT);
+INSERT INTO pivot_param_os VALUES (10, 1, 5), (11, 2, 19);
+CREATE TABLE pivot_param_price (idtab INT, iditem INT, vlr NUMERIC(10,2));
+INSERT INTO pivot_param_price VALUES (1, 1, 10.5), (1, 2, 20), (2, 1, 11), (2, 3, 33), (4, 1, 99), (4, 2, 98);
+GO
+~~ROW COUNT: 5~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 6~~
+
+-- no parameter
+SELECT product, [2023], [2024] FROM (SELECT product, yr, sales FROM pivot_param_sales) AS s PIVOT (SUM(sales) FOR yr IN ([2023], [2024])) AS p ORDER BY product;
+GO
+~~START~~
+varchar#!#int#!#int
+Apple#!#100#!#120
+Orange#!#150#!#130
+Pear#!#<NULL>#!#7
+~~END~~
+
+-- sp_executesql parameter in the source query (#3532)
+EXEC sp_executesql N'SELECT product, [2023], [2024] FROM (SELECT product, yr, sales FROM pivot_param_sales WHERE product = @product) AS s PIVOT (SUM(sales) FOR yr IN ([2023], [2024])) AS p', N'@product VARCHAR(50)', @product = 'Apple';
+GO
+~~START~~
+varchar#!#int#!#int
+Apple#!#100#!#120
+~~END~~
+
+-- parameter in the WHERE of a source query with JOIN and CASE, two executions
+EXEC sp_executesql N'SELECT MAX(p.[1]) AS c1, MAX(p.[2]) AS c2, MAX(p.[3]) AS c3 FROM (SELECT pr.iditem, pr.vlr FROM pivot_param_os o JOIN pivot_param_price pr ON pr.idtab = CASE WHEN o.idcli IN (19, 1402) THEN 4 ELSE o.idtab END WHERE o.id = @P1) AS res PIVOT (MAX(vlr) FOR res.iditem IN ([1],[2],[3])) AS p', N'@P1 INT', @P1 = 10;
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+10.50000000#!#20.00000000#!#<NULL>
+~~END~~
+
+EXEC sp_executesql N'SELECT MAX(p.[1]) AS c1, MAX(p.[2]) AS c2, MAX(p.[3]) AS c3 FROM (SELECT pr.iditem, pr.vlr FROM pivot_param_os o JOIN pivot_param_price pr ON pr.idtab = CASE WHEN o.idcli IN (19, 1402) THEN 4 ELSE o.idtab END WHERE o.id = @P1) AS res PIVOT (MAX(vlr) FOR res.iditem IN ([1],[2],[3])) AS p', N'@P1 INT', @P1 = 11;
+GO
+~~START~~
+numeric#!#numeric#!#numeric
+99.00000000#!#98.00000000#!#<NULL>
+~~END~~
+
+-- local variables, one of them used twice
+DECLARE @lo INT = 2023, @min INT = 100;
+SELECT product, [2023], [2024] FROM (SELECT product, yr, sales FROM pivot_param_sales WHERE yr >= @lo AND sales >= @min AND (sales > @min OR yr = @lo)) AS s PIVOT (SUM(sales) FOR yr IN ([2023], [2024])) AS p ORDER BY product;
+GO
+~~START~~
+varchar#!#int#!#int
+Apple#!#100#!#120
+Orange#!#150#!#130
+~~END~~
+
+-- NULL parameter
+EXEC sp_executesql N'SELECT product, [2023], [2024] FROM (SELECT product, yr, sales FROM pivot_param_sales WHERE product = @p OR @p IS NULL) AS s PIVOT (SUM(sales) FOR yr IN ([2023], [2024])) AS p ORDER BY product', N'@p VARCHAR(50)', @p = NULL;
+GO
+~~START~~
+varchar#!#int#!#int
+Apple#!#100#!#120
+Orange#!#150#!#130
+Pear#!#<NULL>#!#7
+~~END~~
+
+-- parameter inside a subquery of the source query
+EXEC sp_executesql N'SELECT product, [2023], [2024] FROM (SELECT product, yr, sales FROM pivot_param_sales WHERE yr IN (SELECT yr FROM pivot_param_sales WHERE sales = @s)) AS s PIVOT (COUNT(sales) FOR yr IN ([2023], [2024])) AS p ORDER BY product', N'@s INT', @s = 7;
+GO
+~~START~~
+varchar#!#int#!#int
+Apple#!#0#!#1
+Orange#!#0#!#1
+Pear#!#0#!#1
+~~END~~
+
+-- procedure parameter, executed twice (cached plan)
+CREATE PROCEDURE pivot_param_proc @y INT AS
+SELECT product, [2023], [2024] FROM (SELECT product, yr, sales FROM pivot_param_sales WHERE yr = @y) AS s PIVOT (SUM(sales) FOR yr IN ([2023], [2024])) AS p ORDER BY product;
+GO
+EXEC pivot_param_proc 2023;
+GO
+~~START~~
+varchar#!#int#!#int
+Apple#!#100#!#<NULL>
+Orange#!#150#!#<NULL>
+~~END~~
+
+EXEC pivot_param_proc 2024;
+GO
+~~START~~
+varchar#!#int#!#int
+Apple#!#<NULL>#!#120
+Orange#!#<NULL>#!#130
+Pear#!#<NULL>#!#7
+~~END~~
+
+DROP PROCEDURE pivot_param_proc;
+GO
+DROP TABLE pivot_param_sales, pivot_param_os, pivot_param_price;
+GO

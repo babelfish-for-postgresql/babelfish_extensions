@@ -717,6 +717,12 @@ LANGUAGE C VOLATILE PARALLEL RESTRICTED;
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar, varchar);
 
+-- PIVOT whose source query refers to T-SQL variables or parameters ($1..$n)
+CREATE OR REPLACE FUNCTION sys.bbf_pivot(IN src_sql TEXT, IN cat_sql TEXT, IN agg_func TEXT, VARIADIC params "any")
+RETURNS setof record
+AS 'babelfishpg_tsql', 'bbf_pivot'
+LANGUAGE C STABLE;
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 
