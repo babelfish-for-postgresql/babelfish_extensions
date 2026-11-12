@@ -148,6 +148,7 @@ static bool pltsql_detect_numeric_overflow(int weight, int dscale, int first_blo
 static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray);
 static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
+static XLogRecPtr pltsql_GetNextAttributeVersion(char relpersistence);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
 static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  PlannedStmt *pstmt,
@@ -223,6 +224,7 @@ static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
+static GetNextAttributeVersion_hook_type prev_GetNextAttributeVersion_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static adjust_numeric_result_hook_type prev_adjust_numeric_result_hook = NULL;
@@ -344,6 +346,9 @@ InstallExtendedHooks(void)
 
 	prev_GetNewObjectId_hook = GetNewObjectId_hook;
 	GetNewObjectId_hook = pltsql_GetNewObjectId;
+
+	prev_GetNextAttributeVersion_hook = GetNextAttributeVersion_hook;
+	GetNextAttributeVersion_hook = pltsql_GetNextAttributeVersion;
 
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
@@ -500,6 +505,7 @@ UninstallExtendedHooks(void)
 	ExecutorFinish_hook = prev_ExecutorFinish;
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
+	GetNextAttributeVersion_hook = prev_GetNextAttributeVersion_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
 	adjust_numeric_result_hook = prev_adjust_numeric_result_hook;
@@ -631,6 +637,36 @@ pltsql_GetNewObjectId(VariableCache variableCache)
 
 	ShmemVariableCache->nextOid = minOid + 1;
 	ShmemVariableCache->oidCount = 0;
+}
+
+/*
+ * Supply the attribute version for a T-SQL temp table or table variable.
+ *
+ * The engine's own source cannot serve these relations on either node type.
+ * On a read replica it is not available at all: no LSN is allocated there, so
+ * asking for one aborts the backend. On a writer it is available but does not
+ * advance for them, because their catalog rows live in session memory and are
+ * never WAL-logged; two temp DDLs with no WAL in between would be handed the
+ * same version and fail the monotonicity check.
+ *
+ * Such a relation, its rowtype and every datum of that rowtype belong to one
+ * session and die with it. So a counter private to the backend gives all the
+ * guarantees versions need: it never repeats, it only grows (a rollback does
+ * not reset it, which is what keeps a datum left over from a dropped relation
+ * that reused a rowtype OID detectable), and its values are never compared
+ * with versions from another backend.
+ *
+ * Any other relation is the engine's to version, so decline those.
+ */
+static XLogRecPtr
+pltsql_GetNextAttributeVersion(char relpersistence)
+{
+	static XLogRecPtr tsql_temp_attversion = InvalidXLogRecPtr;
+
+	if (!(sql_dialect == SQL_DIALECT_TSQL && relpersistence == RELPERSISTENCE_TEMP))
+		return InvalidXLogRecPtr;
+
+	return ++tsql_temp_attversion;
 }
 
 static AclResult
