@@ -19,6 +19,7 @@
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "catalog/namespace.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
@@ -83,14 +84,18 @@ static FuncEntry whitelist[] = {
     {NULL, NULL, NULL, NULL}
 };
 
-/* Find matching entry in whitelist, or return NULL */
+/* Find an exact function and namespace match, or return NULL */
 static FuncEntry *
-find_in_whitelist(const char *funcname, const char *nspname)
+find_in_whitelist(const char *funcname, Oid funcnamespace)
 {
     for (int i = 0; whitelist[i].funcname != NULL; i++)
-        if (pg_strcasecmp(funcname, whitelist[i].funcname) == 0 &&
-            pg_strcasecmp(nspname, whitelist[i].nspname) == 0)
+    {
+        Oid nspoid = get_namespace_oid(whitelist[i].nspname, true);
+
+        if (OidIsValid(nspoid) && funcnamespace == nspoid &&
+            strcmp(funcname, whitelist[i].funcname) == 0)
             return &whitelist[i];
+    }
     return NULL;
 }
 
@@ -239,11 +244,7 @@ funcid_is_safe(Oid funcid, FuncExpr *f)
     else if (proc->provolatile == PROVOLATILE_STABLE)
     {
         const char *funcname = NameStr(proc->proname);
-        char       *nspname = get_namespace_name(proc->pronamespace);
-        FuncEntry  *entry = nspname ? find_in_whitelist(funcname, nspname) : NULL;
-
-        if (nspname)
-            pfree(nspname);
+        FuncEntry  *entry = find_in_whitelist(funcname, proc->pronamespace);
 
         if (entry != NULL)
             safe = (entry->validate == NULL) ||
