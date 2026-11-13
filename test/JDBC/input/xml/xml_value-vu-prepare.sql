@@ -138,6 +138,8 @@ EXEC sys.sp_babelfish_volatility 'wrapper_xmlvalue2'
 GO
 
 -- creating computed columns on wrapper function when quoted_identifier is OFF
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE babel_5223_xml_value_compcol2(id INT, col_xml XML, comp_col as dbo.wrapper_xmlvalue2(col_xml))
 GO
 
