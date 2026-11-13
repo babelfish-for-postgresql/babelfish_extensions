@@ -3555,12 +3555,12 @@ GO
 
 
 -- psql
--- EXECUTE is revoked from PUBLIC
+-- EXECUTE is granted to PUBLIC; the function checks dump_restore and ownership
 SELECT has_function_privilege('public', 'sys.babelfish_restore_itvf_column_names(pg_catalog.regprocedure, pg_catalog.text[])', 'EXECUTE');
 GO
 ~~START~~
 bool
-f
+t
 ~~END~~
 
 
@@ -3569,21 +3569,29 @@ CREATE ROLE babel7239_restore_role;
 GO
 
 -- psql
+SET babelfishpg_tsql.dump_restore = on;
+GO
+
+-- psql
 SET ROLE babel7239_restore_role;
 GO
 
 -- psql
--- a role that is neither the owner nor a superuser cannot call it
+-- even during dump and restore, a role that does not own the function cannot call it
 SELECT sys.babelfish_restore_itvf_column_names('master_dbo.babel7239_restore_tvf()'::regprocedure, ARRAY['c1', 'c2']);
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied for function babelfish_restore_itvf_column_names
+~~ERROR (Message: ERROR: must be owner of function babel7239_restore_tvf
     Server SQLState: 42501)~~
 
 
 -- psql
 RESET ROLE;
+GO
+
+-- psql
+RESET babelfishpg_tsql.dump_restore;
 GO
 
 -- psql

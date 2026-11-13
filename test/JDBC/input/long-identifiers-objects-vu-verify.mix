@@ -316,7 +316,7 @@ EXEC sp_executesql N'SELECT @Very_Long_Exec_Param_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 GO
 
 -- psql
--- after upgrade, EXECUTE on the dump/restore helper is still revoked from PUBLIC
+-- after upgrade, PUBLIC keeps the default EXECUTE on the dump/restore helper (gated in C)
 SELECT has_function_privilege('public', 'sys.babelfish_restore_itvf_column_names(pg_catalog.regprocedure, pg_catalog.text[])', 'EXECUTE');
 GO
 
