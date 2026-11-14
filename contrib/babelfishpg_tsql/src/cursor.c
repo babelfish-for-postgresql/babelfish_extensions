@@ -8,6 +8,7 @@
 #include "miscadmin.h"
 #include "parser/parse_expr.h"
 #include "utils/builtins.h"
+#include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"

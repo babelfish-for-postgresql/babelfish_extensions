@@ -469,7 +469,6 @@ tds_status_shmem_startup(void)
 		info.entrysize = state->entry_size;
 		ShmemInitHash(ANTLR_BATCH_PARSE_CACHE_SHMEM_HASH_NAME,
 					  state->num_slots,
-					  state->num_slots,
 					  &info,
 					  HASH_ELEM | HASH_BLOBS);
 	}

@@ -140,7 +140,6 @@ antlr_batch_parse_cache_shmem_startup(void)
 	info.entrysize = state->entry_size;
 	antlr_batch_parse_cache_hash = ShmemInitHash(ANTLR_BATCH_PARSE_CACHE_SHMEM_HASH_NAME,
 												 state->num_slots,
-												 state->num_slots,
 												 &info,
 												 HASH_ELEM | HASH_BLOBS);
 	antlr_batch_parse_cache_state = state;
