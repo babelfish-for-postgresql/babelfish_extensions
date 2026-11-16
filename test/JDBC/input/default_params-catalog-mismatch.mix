@@ -1,0 +1,157 @@
+-- tsql
+-- BABEL-7226: when babelfish_function_ext.default_positions disagrees with
+-- pg_proc.proargdefaults we must raise an error instead of crashing.
+-- The disagreement is produced by renaming routines from the PG endpoint as
+-- superuser, which does not maintain babelfish_function_ext.
+
+-- case 1: catalog has a default position, pg_proc has no defaults
+CREATE PROCEDURE babel_7226_p1 @a INT = 1 AS SELECT @a;
+GO
+CREATE PROCEDURE babel_7226_p1_nd @a INT AS SELECT @a;
+GO
+CREATE FUNCTION babel_7226_f1 (@a INT = 1) RETURNS INT AS BEGIN RETURN @a; END
+GO
+CREATE FUNCTION babel_7226_f1_nd (@a INT) RETURNS INT AS BEGIN RETURN @a; END
+GO
+
+-- case 2: catalog has more default positions than pg_proc has defaults
+CREATE PROCEDURE babel_7226_p2 @a INT = 1, @b INT = 2 AS SELECT @a, @b;
+GO
+CREATE PROCEDURE babel_7226_p2_one @a INT, @b INT = 2 AS SELECT @a, @b;
+GO
+
+-- case 3: pg_proc has more defaults than the catalog has default positions
+CREATE PROCEDURE babel_7226_p3 @a INT = 1, @b INT AS SELECT @a, @b;
+GO
+CREATE PROCEDURE babel_7226_p3_two @a INT = 1, @b INT = 2 AS SELECT @a, @b;
+GO
+
+-- consistent catalogs keep working
+EXEC babel_7226_p1 DEFAULT;
+GO
+SELECT dbo.babel_7226_f1(DEFAULT);
+GO
+EXEC babel_7226_p2 5;
+GO
+EXEC babel_7226_p2 5, DEFAULT;
+GO
+
+-- psql
+SELECT pg_get_function_arguments('master_dbo.babel_7226_p1'::regproc);
+GO
+SELECT pg_get_function_arguments('master_dbo.babel_7226_f1'::regproc);
+GO
+SELECT pg_get_function_arguments('master_dbo.babel_7226_p2'::regproc);
+GO
+SELECT pg_get_function_arguments('master_dbo.babel_7226_p3'::regproc);
+GO
+
+-- make the catalogs disagree
+ALTER PROCEDURE master_dbo.babel_7226_p1(int) RENAME TO babel_7226_p1_old;
+GO
+ALTER PROCEDURE master_dbo.babel_7226_p1_nd(int) RENAME TO babel_7226_p1;
+GO
+ALTER FUNCTION master_dbo.babel_7226_f1(int) RENAME TO babel_7226_f1_old;
+GO
+ALTER FUNCTION master_dbo.babel_7226_f1_nd(int) RENAME TO babel_7226_f1;
+GO
+ALTER PROCEDURE master_dbo.babel_7226_p2(int, int) RENAME TO babel_7226_p2_old;
+GO
+ALTER PROCEDURE master_dbo.babel_7226_p2_one(int, int) RENAME TO babel_7226_p2;
+GO
+ALTER PROCEDURE master_dbo.babel_7226_p3(int, int) RENAME TO babel_7226_p3_old;
+GO
+ALTER PROCEDURE master_dbo.babel_7226_p3_two(int, int) RENAME TO babel_7226_p3;
+GO
+
+-- print_pltsql_function_arguments: should throw error
+SELECT pg_get_function_arguments('master_dbo.babel_7226_p1'::regproc);
+GO
+SELECT pg_get_function_arguments('master_dbo.babel_7226_f1'::regproc);
+GO
+SELECT pg_get_function_arguments('master_dbo.babel_7226_p2'::regproc);
+GO
+SELECT pg_get_function_arguments('master_dbo.babel_7226_p3'::regproc);
+GO
+
+-- tsql
+-- replace_pltsql_function_defaults: should throw error
+EXEC babel_7226_p1 DEFAULT;
+GO
+SELECT dbo.babel_7226_f1(DEFAULT);
+GO
+EXEC babel_7226_p2 5, DEFAULT;
+GO
+EXEC babel_7226_p3 DEFAULT, DEFAULT;
+GO
+
+-- calls that leave out a defaulted argument: none of these crash.
+-- babel_7226_p2 5 takes its default from pg_proc; the others are rejected
+-- during lookup, so insert_pltsql_function_defaults is not reached.
+EXEC babel_7226_p2 5;
+GO
+EXEC babel_7226_p2 @a = 5;
+GO
+EXEC babel_7226_p1;
+GO
+SELECT dbo.babel_7226_f1();
+GO
+
+-- tsql_print_function_arguments (routine definition): should throw error
+SELECT sys.tsql_get_functiondef(OBJECT_ID('babel_7226_p2'));
+GO
+
+-- recreating the routine from the T-SQL endpoint rebuilds its catalog entry
+ALTER PROCEDURE babel_7226_p1 @a INT AS SELECT @a;
+GO
+EXEC babel_7226_p1 5;
+GO
+DROP FUNCTION babel_7226_f1;
+GO
+CREATE FUNCTION babel_7226_f1 (@a INT) RETURNS INT AS BEGIN RETURN @a; END
+GO
+SELECT dbo.babel_7226_f1(7);
+GO
+
+-- psql
+SELECT pg_get_function_arguments('master_dbo.babel_7226_p1'::regproc);
+GO
+SELECT pg_get_function_arguments('master_dbo.babel_7226_f1'::regproc);
+GO
+
+-- psql
+-- restore the original names so the catalogs agree again before cleanup
+ALTER PROCEDURE master_dbo.babel_7226_p1(int) RENAME TO babel_7226_p1_nd;
+GO
+ALTER PROCEDURE master_dbo.babel_7226_p1_old(int) RENAME TO babel_7226_p1;
+GO
+ALTER FUNCTION master_dbo.babel_7226_f1(int) RENAME TO babel_7226_f1_nd;
+GO
+ALTER FUNCTION master_dbo.babel_7226_f1_old(int) RENAME TO babel_7226_f1;
+GO
+ALTER PROCEDURE master_dbo.babel_7226_p2(int, int) RENAME TO babel_7226_p2_one;
+GO
+ALTER PROCEDURE master_dbo.babel_7226_p2_old(int, int) RENAME TO babel_7226_p2;
+GO
+ALTER PROCEDURE master_dbo.babel_7226_p3(int, int) RENAME TO babel_7226_p3_two;
+GO
+ALTER PROCEDURE master_dbo.babel_7226_p3_old(int, int) RENAME TO babel_7226_p3;
+GO
+
+-- tsql
+DROP PROCEDURE babel_7226_p1;
+GO
+DROP PROCEDURE babel_7226_p1_nd;
+GO
+DROP FUNCTION babel_7226_f1;
+GO
+DROP FUNCTION babel_7226_f1_nd;
+GO
+DROP PROCEDURE babel_7226_p2;
+GO
+DROP PROCEDURE babel_7226_p2_one;
+GO
+DROP PROCEDURE babel_7226_p3;
+GO
+DROP PROCEDURE babel_7226_p3_two;
+GO
