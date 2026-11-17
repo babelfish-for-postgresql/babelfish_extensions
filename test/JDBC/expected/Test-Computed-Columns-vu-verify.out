@@ -197,9 +197,9 @@ CREATE TABLE computed_column_vu_prepare_t8
   FullName AS CONCAT(FirstName,' ',LastName)
 )
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: generation expression is not immutable)~~
+~~ERROR (Message: relation "computed_column_vu_prepare_t8" already exists)~~
 
 
 SELECT * FROM computed_column_vu_prepare_t9
