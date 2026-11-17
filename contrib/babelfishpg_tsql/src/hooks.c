@@ -6564,6 +6564,145 @@ make_restarget_from_cstr_list(List * l)
 	return tempResTarget;
 }
 
+/*
+ * Support for T-SQL variables and parameters (@name) in the source query of
+ * PIVOT. The source query is deparsed to text and run by sys.bbf_pivot()
+ * through SPI, which has no access to them. They become $1..$n in that text
+ * and are passed to sys.bbf_pivot() as extra arguments.
+ */
+
+/* collect the distinct @name column references of a raw parse tree */
+static bool
+pivot_collect_variable_refs(Node *node, List **colrefs)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, ColumnRef))
+	{
+		ColumnRef  *cref = (ColumnRef *) node;
+		char	   *name;
+		ListCell   *lc;
+
+		if (list_length(cref->fields) != 1 || !IsA(linitial(cref->fields), String))
+			return false;
+
+		name = strVal(linitial(cref->fields));
+		if (name[0] != '@')
+			return false;
+
+		foreach(lc, *colrefs)
+		{
+			ColumnRef  *seen = (ColumnRef *) lfirst(lc);
+
+			if (pg_strcasecmp(strVal(linitial(seen->fields)), name) == 0)
+				return false;
+		}
+		*colrefs = lappend(*colrefs, cref);
+		return false;
+	}
+
+	return raw_expression_tree_walker(node, pivot_collect_variable_refs, (void *) colrefs);
+}
+
+/* give a nested parse state the column/parameter hooks of the outer one */
+static void
+pivot_src_parser_setup(ParseState *pstate, void *arg)
+{
+	ParseState *outer = (ParseState *) arg;
+
+	pstate->p_pre_columnref_hook = outer->p_pre_columnref_hook;
+	pstate->p_post_columnref_hook = outer->p_post_columnref_hook;
+	pstate->p_paramref_hook = outer->p_paramref_hook;
+	pstate->p_coerce_param_hook = outer->p_coerce_param_hook;
+	pstate->p_ref_hook_state = outer->p_ref_hook_state;
+}
+
+typedef struct pivot_param_map
+{
+	int			nparams;
+	int		   *paramids;		/* paramid of $1..$n in the outer statement */
+} pivot_param_map;
+
+static Node *
+pivot_renumber_params_mutator(Node *node, pivot_param_map *map)
+{
+	if (node == NULL)
+		return NULL;
+
+	if (IsA(node, Param) && ((Param *) node)->paramkind == PARAM_EXTERN)
+	{
+		Param	   *param = (Param *) copyObject(node);
+
+		for (int i = 0; i < map->nparams; i++)
+		{
+			if (map->paramids[i] == param->paramid)
+			{
+				param->paramid = i + 1;
+				return (Node *) param;
+			}
+		}
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("parameter $%d in the source query of PIVOT is not supported",
+						param->paramid)));
+	}
+
+	if (IsA(node, Query))
+		return (Node *) query_tree_mutator((Query *) node,
+										   pivot_renumber_params_mutator,
+										   (void *) map, 0);
+
+	return expression_tree_mutator(node, pivot_renumber_params_mutator, (void *) map);
+}
+
+/*
+ * Analyze the PIVOT source query with the hooks of the outer statement, so
+ * that @name references become parameters, and renumber them $1..$n. The
+ * matching raw column references, to be evaluated by the outer statement,
+ * are returned in *param_args.
+ */
+static Query *
+pivot_analyze_src_query(ParseState *pstate, RawStmt *rawstmt, List **param_args)
+{
+	List	   *colrefs = NIL;
+	Query	   *query;
+	pivot_param_map map;
+	ListCell   *lc;
+
+	*param_args = NIL;
+	pivot_collect_variable_refs(rawstmt->stmt, &colrefs);
+
+	if (colrefs == NIL || pstate->p_pre_columnref_hook == NULL)
+		return parse_analyze_fixedparams(rawstmt, pstrdup(pstate->p_sourcetext),
+										 NULL, 0, NULL);
+
+	query = parse_analyze_withcb(rawstmt, pstrdup(pstate->p_sourcetext),
+								 pivot_src_parser_setup, (void *) pstate, NULL);
+
+	/* find out which parameter each @name became */
+	map.nparams = 0;
+	map.paramids = palloc(sizeof(int) * list_length(colrefs));
+	foreach(lc, colrefs)
+	{
+		ParseState *refstate = make_parsestate(NULL);
+		Node	   *ref;
+
+		refstate->p_sourcetext = pstate->p_sourcetext;
+		pivot_src_parser_setup(refstate, pstate);
+		ref = transformExpr(refstate, copyObject(lfirst(lc)), EXPR_KIND_SELECT_TARGET);
+		free_parsestate(refstate);
+
+		if (ref != NULL && IsA(ref, Param) && ((Param *) ref)->paramkind == PARAM_EXTERN)
+		{
+			map.paramids[map.nparams++] = ((Param *) ref)->paramid;
+			*param_args = lappend(*param_args, copyObject(lfirst(lc)));
+		}
+	}
+
+	return (Query *) pivot_renumber_params_mutator((Node *) query, &map);
+}
+
 static void 
 transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 {
@@ -6590,6 +6729,8 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	Query			*cat_sql_query;
 	char			*src_sql_string;
 	char			*cat_sql_string;
+	List			*pivot_args;
+	List			*param_args;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -6741,9 +6882,9 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	cat_sql_rawstmt->stmt_len = 0;
 
 	/* get psql-text of src_sql and cat_sql */
-	src_sql_query = parse_analyze_fixedparams((RawStmt *) copyObject(src_sql_rawstmt), 
-												pstrdup(pstate->p_sourcetext), 
-												NULL, 0, NULL);
+	src_sql_query = pivot_analyze_src_query(pstate,
+											(RawStmt *) copyObject(src_sql_rawstmt),
+											&param_args);
 	src_sql_string = pg_get_querydef(src_sql_query, true);
 
 	cat_sql_query = parse_analyze_fixedparams((RawStmt *) copyObject(cat_sql_rawstmt), 
@@ -6752,11 +6893,13 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	cat_sql_string = pg_get_querydef(cat_sql_query, true);
 
 	/* Store pivot information in FuncCall to live through parser analyzer */
+	/* parameters of the source query, if any, follow as $1..$n */
+	pivot_args = list_make3((Node *) makeStringConst(src_sql_string, -1),
+							(Node *) makeStringConst(cat_sql_string, -1),
+							(Node *) makeStringConst(pstrdup(funcName->sval), -1));
+	pivot_args = list_concat(pivot_args, param_args);
 	pivot_func = makeFuncCall(list_make2(makeString("sys"), makeString("bbf_pivot")), 
-							  list_make3((Node *) makeStringConst(src_sql_string, -1),
-										 (Node *) makeStringConst(cat_sql_string, -1),
-										 (Node *) makeStringConst(pstrdup(funcName->sval), -1)
-										 ),
+							  pivot_args,
 							  COERCE_EXPLICIT_CALL, 
 							  -1);
 	wrapperSelect_RangeFunction->functions = list_make1(list_make2((Node *) pivot_func, NIL));
