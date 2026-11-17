@@ -1,0 +1,39 @@
+-- tsql
+-- OVER clause on a user-defined aggregate (SQL Server allows it for CLR aggregates)
+CREATE TABLE udagg_over_t (g INT, v INT);
+GO
+INSERT INTO udagg_over_t VALUES (1, 10), (1, 20), (2, 5), (2, 7), (2, 9);
+GO
+
+-- psql
+CREATE AGGREGATE master_dbo.udagg_over_sum(int) (SFUNC = int4pl, STYPE = int, INITCOND = '0');
+GO
+
+-- tsql
+-- plain call still works
+SELECT dbo.udagg_over_sum(v) FROM udagg_over_t;
+GO
+
+-- PARTITION BY
+SELECT g, v, dbo.udagg_over_sum(v) OVER (PARTITION BY g) AS s FROM udagg_over_t ORDER BY g, v;
+GO
+
+-- PARTITION BY + ORDER BY (running total)
+SELECT g, v, dbo.udagg_over_sum(v) OVER (PARTITION BY g ORDER BY v) AS s FROM udagg_over_t ORDER BY g, v;
+GO
+
+-- empty OVER ()
+SELECT g, v, dbo.udagg_over_sum(v) OVER () AS s FROM udagg_over_t ORDER BY g, v;
+GO
+
+-- built-in aggregates are not affected
+SELECT g, SUM(v) OVER (PARTITION BY g) AS s FROM udagg_over_t ORDER BY g, v;
+GO
+
+-- psql
+DROP AGGREGATE master_dbo.udagg_over_sum(int);
+GO
+
+-- tsql
+DROP TABLE udagg_over_t;
+GO
