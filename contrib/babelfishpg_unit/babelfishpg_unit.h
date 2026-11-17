@@ -56,3 +56,6 @@ extern TestResult *test_fixeddecimal_int2_le(void);
 extern TestResult *test_fixeddecimal_int2_gt(void);
 extern TestResult *test_fixeddecimal_int2_ne(void);
 extern TestResult *test_fixeddecimal_int2_cmp(void);
+extern TestResult *test_enr_add_tuple_invalidates_tid(void);
+extern TestResult *test_enr_drop_tuple_pg_dialect_tds(void);
+extern TestResult *test_enr_drop_tuple_invalid_tid_errors(void);

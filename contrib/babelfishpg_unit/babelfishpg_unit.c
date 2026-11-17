@@ -77,6 +77,9 @@ TestInfo tests[]=
     {&test_fixeddecimal_int2_gt, true, "GreaterThanCheck_FIXEDDECIMAL_INT2", "babelfish_money_datatype"},
     {&test_fixeddecimal_int2_ne, true, "NotEqualToCheck_FIXEDDECIMAL_INT2", "babelfish_money_datatype"},
     {&test_fixeddecimal_int2_cmp, true, "Comparison_FIXEDDECIMAL_INT2", "babelfish_money_datatype"},
+    {&test_enr_add_tuple_invalidates_tid, true, "ENRAddTuple_InvalidatesTid", "babelfish_enr"},
+    {&test_enr_drop_tuple_pg_dialect_tds, true, "ENRDropTuple_PgDialectOnTds", "babelfish_enr"},
+    {&test_enr_drop_tuple_invalid_tid_errors, true, "ENRDropTuple_InvalidTidErrors", "babelfish_enr"},
 };
 
 
