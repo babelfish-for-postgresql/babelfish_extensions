@@ -1,0 +1,68 @@
+-- verify: current database is master, which differs from the database
+-- qualifier crossdb_sysview_db. Every assertion below references a shared
+-- system catalog across databases from inside a procedural condition. Before
+-- the fix these silently took the wrong branch (empty result from the catalog
+-- view); the expected output records the correct SQL Server behavior.
+
+-- tsql
+USE master;
+GO
+
+-- Baseline: the same cross-db reference as a standalone SELECT already resolves
+-- correctly on the statement path.
+SELECT COUNT(*) FROM crossdb_sysview_db.sys.schemas WHERE name = 'crossdb_sysview_s1';
+GO
+
+-- (1) IF EXISTS, positive: the schema exists in the other database.
+IF EXISTS (SELECT * FROM crossdb_sysview_db.sys.schemas WHERE name = 'crossdb_sysview_s1')
+    SELECT 'PASS - if exists';
+ELSE
+    SELECT 'FAIL - if exists';
+GO
+
+-- (2) IF EXISTS, negative control: a schema that does not exist.
+IF EXISTS (SELECT * FROM crossdb_sysview_db.sys.schemas WHERE name = 'crossdb_sysview_absent')
+    SELECT 'FAIL - if not exists';
+ELSE
+    SELECT 'PASS - if not exists';
+GO
+
+-- (3) ELSE IF arm also goes through the condition evaluation path.
+IF 1 = 0
+    SELECT 'FAIL - else if first arm';
+ELSE IF EXISTS (SELECT * FROM crossdb_sysview_db.sys.schemas WHERE name = 'crossdb_sysview_s1')
+    SELECT 'PASS - else if';
+ELSE
+    SELECT 'FAIL - else if';
+GO
+
+-- (4) WHILE condition path: the body runs while the cross-db schema is visible
+-- and exits via the counter.
+DECLARE @i INT = 0;
+WHILE (@i < 1 AND EXISTS (SELECT * FROM crossdb_sysview_db.sys.schemas WHERE name = 'crossdb_sysview_s1'))
+BEGIN
+    SELECT 'PASS - while';
+    SET @i = @i + 1;
+END
+GO
+
+-- (5) INFORMATION_SCHEMA cross-db reference inside IF EXISTS.
+IF EXISTS (SELECT * FROM crossdb_sysview_db.INFORMATION_SCHEMA.SCHEMATA WHERE schema_name = 'crossdb_sysview_s1')
+    SELECT 'PASS - if exists information_schema';
+ELSE
+    SELECT 'FAIL - if exists information_schema';
+GO
+
+-- (6) Access control: a login with no user mapped in crossdb_sysview_db must
+-- not be able to resolve that database's shared catalog from an IF condition.
+-- The condition path performs the same cross-db access check as the statement
+-- path, so this raises rather than silently returning a result.
+-- tsql user=crossdb_sysview_noaccess password=12345678
+USE master;
+GO
+
+IF EXISTS (SELECT * FROM crossdb_sysview_db.sys.schemas WHERE name = 'crossdb_sysview_s1')
+    SELECT 'FAIL - access check not enforced';
+ELSE
+    SELECT 'FAIL - access check not enforced';
+GO
