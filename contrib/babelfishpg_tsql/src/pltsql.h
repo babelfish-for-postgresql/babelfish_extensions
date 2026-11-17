@@ -359,6 +359,13 @@ typedef struct PLtsql_expr
 	Bitmapset  *paramnos pg_node_attr(equal_ignore);		/* all dnos referenced by this query */
 	int			rwparam pg_node_attr(equal_ignore);		/* dno of read/write param, or -1 if none */
 
+	/*
+	 * Set on the query of a cursor that is the target of UPDATE/DELETE ...
+	 * WHERE CURRENT OF. Parse analysis then appends the row identity columns
+	 * (see pltsql_current_of_post_analyze).
+	 */
+	bool		cursor_current_of pg_node_attr(equal_ignore);
+
 	/* function containing this expr (not set until we first parse query) */
 	struct PLtsql_function *func pg_node_attr(read_write_ignore, read_as(NULL));
 
@@ -464,6 +471,16 @@ typedef struct PLtsql_var
 	 * name to the user (sp_cursor_list).
 	 */
 	char	   *cursor_orig_name;
+
+	/*
+	 * Set when the cursor is referenced by UPDATE/DELETE ... WHERE CURRENT OF.
+	 * The three datums hold the identity (ctid, xmin, tableoid) of the row
+	 * the cursor is positioned on; they are NULL when there is no such row.
+	 */
+	bool		cursor_current_of;
+	int			cursor_cof_ctid_dno;
+	int			cursor_cof_xmin_dno;
+	int			cursor_cof_relid_dno;
 
 	/* Fields below here can change at runtime */
 
@@ -1331,6 +1348,8 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_set_tran_isolation; /* SET TRANSACTION ISOLATION? */
 	char	   *original_query; /* Only for batch level statement. */
 	bool        is_schemabinding; /* Is schema binding? */
+	bool		is_current_of;	/* UPDATE/DELETE ... WHERE CURRENT OF? */
+	int			current_of_curvar;	/* dno of that cursor, if is_current_of */
 	char	   *xml_namespace_decls;	/* Namespace declarations from WITH
 									 * XMLNAMESPACES, formatted as
 									 * 'xmlns:p1="u1" xmlns:p2="u2"' for
@@ -2219,6 +2238,10 @@ extern PLtsql_function *pltsql_compile(FunctionCallInfo fcinfo,
 extern PLtsql_function *pltsql_compile_inline(char *proc_source,
 											  InlineCodeBlockArgs *args);
 extern char *pltsql_resolve_var_original_name(struct ParseState *pstate, Var *var);
+#define PLTSQL_CURRENT_OF_NCOLS 3
+extern const char *const pltsql_current_of_colnames[PLTSQL_CURRENT_OF_NCOLS];
+extern void pltsql_current_of_post_analyze(struct ParseState *pstate,
+										  Query *query);
 extern void pltsql_parser_setup(struct ParseState *pstate,
 								PLtsql_expr *expr);
 extern bool pltsql_parse_word(char *word1, const char *yytxt,
