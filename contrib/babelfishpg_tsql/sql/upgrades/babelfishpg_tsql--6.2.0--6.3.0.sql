@@ -6456,12 +6456,11 @@ GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
     sub_securable sys.SYSNAME,
     sub_securable_class sys.nvarchar(60)) TO PUBLIC;
 
--- Puts the full output column names of an inline table-valued function back
--- after restore; called from pg_dump output only (see dumpBBFItvfColumnNames).
+-- Puts the full output column names of an inline TVF back after restore (see
+-- dumpBabelItvfColumnNames); only works with dump_restore on, for the TVF owner.
 CREATE OR REPLACE FUNCTION sys.babelfish_restore_itvf_column_names(func pg_catalog.regprocedure, names pg_catalog.text[])
 RETURNS void
 AS 'babelfishpg_tsql', 'babelfish_restore_itvf_column_names' LANGUAGE C STRICT;
-REVOKE ALL ON FUNCTION sys.babelfish_restore_itvf_column_names(pg_catalog.regprocedure, pg_catalog.text[]) FROM PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'spt_columns_view_managed_deprecated_in_6_3_0');
 
