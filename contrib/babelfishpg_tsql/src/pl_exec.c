@@ -6320,7 +6320,7 @@ current_of_after_execution(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt,
 
 		if (sources != NIL)
 		{
-			List	   *queries = linitial_node(CachedPlanSource, sources)->query_list;
+			List	   *queries = ((CachedPlanSource *) linitial(sources))->query_list;
 
 			if (queries != NIL)
 			{
