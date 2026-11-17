@@ -2761,7 +2761,11 @@ TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 	if (maxLen != 0xffff)
 	{
 		if (unlikely(actualLen > maxLen))
-			elog(ERROR, "Number of bytes for the field of varchar(n) exeeds max specified for the field.");
+		{
+			if (!col->clipToMaxSize)
+				elog(ERROR, "Number of bytes for the field of varchar(n) exeeds max specified for the field.");
+			actualLen = pg_encoding_mbcliplen(col->encoding, destBuf, actualLen, maxLen);
+		}
 
 		if ((rc = TdsPutInt16LE(actualLen)) == 0)
 			rc = TdsPutbytes(destBuf, actualLen);
@@ -2952,6 +2956,13 @@ TdsSendTypeNVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 		 * we strip extra spaces here. The FATAL error will never happen if
 		 * the input rules are correct.
 		 */
+		if (col->clipToMaxSize && buf.len > maxlen)
+		{
+			/* keep whole UTF-16 units and do not split a surrogate pair */
+			buf.len = maxlen & ~1;
+			if (buf.len >= 2 && (((unsigned char) buf.data[buf.len - 1]) & 0xFC) == 0xD8)
+				buf.len -= 2;
+		}
 		while (buf.len > 0 && buf.len > col->metaEntry.type2.maxSize)
 		{
 			if (buf.data[buf.len - 2] != ' ' || buf.data[buf.len - 1] != '\0')
