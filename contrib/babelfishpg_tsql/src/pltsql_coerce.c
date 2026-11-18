@@ -1738,8 +1738,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 						is_namespace_sys_or_pg_catalog(func_namespace_oid))
 					{
 						/*
-						 * ROUND and ABS both return the precision and scale of
-						 * their first argument, so take the typmod from there.
+						 * ROUND and ABS return the precision and scale of
+						 * their first argument. Numeric ABS is pg_catalog.abs,
+						 * which upgrades cannot rename. Do not add a
+						 * sys.abs(numeric): deprecating it would break this.
 						 */
 						if ((strlen(funcName) == 5 && (strncmp(funcName, "round", 5) == 0)) ||
 							(strlen(funcName) == 3 && (strncmp(funcName, "abs", 3) == 0)))
