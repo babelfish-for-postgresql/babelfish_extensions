@@ -1680,7 +1680,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				FuncExpr	*func = (FuncExpr *) expr;
 				Oid		func_oid = InvalidOid;
 				int		rettypmod = -1;
-				bool		found_typmod;
+				bool		found_typmod = false;
 				Node		*arg = NULL;
 				/* Be smart about length-coercion functions... */
 				if (exprIsLengthCoercion(expr, &rettypmod))

@@ -2447,6 +2447,36 @@ GO
 SELECT case when 1=1 then abs(cast(-1.9 as float)) else 0 end AS RESULT
 GO
 
+-- ABS over a local variable (T_Param)
+DECLARE @d decimal(10,4) = -1.9
+SELECT case when 1=1 then abs(@d) else 0 end AS RESULT
+GO
+
+-- ABS in COALESCE, ISNULL and NULLIF
+SELECT coalesce(abs(a), 0) AS RESULT FROM babel_6812_t ORDER BY b
+GO
+
+SELECT isnull(abs(a), 0) AS RESULT FROM babel_6812_t ORDER BY b
+GO
+
+SELECT nullif(abs(a), 0) AS RESULT FROM babel_6812_t ORDER BY b
+GO
+
+-- ABS in a UNION ALL branch
+SELECT abs(1.9000) AS RESULT UNION ALL SELECT 0
+GO
+
+-- Combining the branches needs more than 38 digits, so the scale is reduced
+SELECT case when 1=1 then abs(cast(-0.5 as decimal(38,38))) else 1 end AS RESULT
+GO
+
+-- ABS over an arithmetic expression (T_OpExpr)
+SELECT case when 1=1 then abs(a * 2.5) else 0 end AS RESULT FROM babel_6812_t ORDER BY b
+GO
+
+SELECT case when 1=1 then abs(-a) else 0 end AS RESULT FROM babel_6812_t ORDER BY b
+GO
+
 -- ROUND shares the same check and must be unaffected
 SELECT case when 1=1 then round(1.9000, 4) else 0 end AS RESULT
 GO
