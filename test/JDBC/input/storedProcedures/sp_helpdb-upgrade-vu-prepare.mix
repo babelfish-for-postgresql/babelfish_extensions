@@ -1,0 +1,4 @@
+-- tsql
+-- Database name longer than the 32 characters accepted by the 6.2 sp_helpdb(varchar(32)) overload
+CREATE DATABASE sp_helpdb_upgrade_db_name_longer_than_32_chars
+GO

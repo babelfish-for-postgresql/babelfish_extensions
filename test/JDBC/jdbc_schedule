@@ -823,9 +823,9 @@ ignore#!#long-identifiers-trigger-func-proc-before-18_6-vu-cleanup
 ignore#!#long-identifiers-objects-before-18_6-vu-prepare
 ignore#!#long-identifiers-objects-before-18_6-vu-verify
 ignore#!#long-identifiers-objects-before-18_6-vu-cleanup
-ignore#!#sys-sp_statistics-before-16_9-or-17_4-vu-prepare
-ignore#!#sys-sp_statistics-before-16_9-or-17_4-vu-verify
-ignore#!#sys-sp_statistics-before-16_9-or-17_4-vu-cleanup
+ignore#!#sys-sp_statistics-before-16_9-or-17_5-vu-prepare
+ignore#!#sys-sp_statistics-before-16_9-or-17_5-vu-verify
+ignore#!#sys-sp_statistics-before-16_9-or-17_5-vu-cleanup
 ignore#!#antlr_parse_cache_version-vu-prepare
 ignore#!#antlr_parse_cache_version-vu-verify
 ignore#!#antlr_parse_cache_version-vu-cleanup
