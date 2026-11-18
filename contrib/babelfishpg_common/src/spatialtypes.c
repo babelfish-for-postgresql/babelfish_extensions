@@ -18,7 +18,7 @@
 #include "catalog/pg_type.h"
 #include "spatialtypes.h"
 
-static void load_functions();
+static void load_functions(void);
 
 /*
  * Macros for identifying Z and M flags
@@ -634,7 +634,7 @@ PG_FUNCTION_INFO_V1(geography_mlinestring_from_wkb);
  * Module to load external PostGIS functions
  */
 static void
-load_functions()
+load_functions(void)
 {
     if (lwgeom_in_p == NULL)
     {
