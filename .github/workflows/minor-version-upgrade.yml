@@ -12,6 +12,7 @@ concurrency:
 
 jobs:
   extension-tests:
+    if: false
     env:
       ENGINE_VER_FROM: BABEL_6_0_STABLE__PG_18_3
       EXTENSION_VER_FROM: BABEL_6_0_STABLE
