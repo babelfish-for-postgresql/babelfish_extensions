@@ -603,6 +603,7 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 					   VARCHAROID, 600, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "compatibility_level",
 					   INT2OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 
 	tupstore =
 		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
@@ -2324,6 +2325,7 @@ babelfish_inconsistent_metadata(PG_FUNCTION_ARGS)
 					   VARCHAROID, 128, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "detail",
 					   JSONBOID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	tupstore =
 		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
 							  false, 1024);
@@ -6829,6 +6831,7 @@ antlr_parse_cache_stats(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, 3, "cache_writes", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, 4, "cache_evictions", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, 5, "cache_errors", INT4OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	values[0] = Int32GetDatum(pltsql_antlr_parse_cache_stat_hits);

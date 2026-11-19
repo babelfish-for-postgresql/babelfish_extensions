@@ -224,6 +224,7 @@ sp_prepare(PG_FUNCTION_ARGS)
 	/* 5. Return back handle */
 	tupdesc = CreateTemplateTupleDesc(1);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "prep_handle", INT4OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 	tuple = heap_form_tuple(tupdesc, values, &isnull);
 
@@ -1780,6 +1781,7 @@ xp_instance_regread_internal(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "out_param", CSTRINGOID, -1, 0);
 	}
 
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 	tuple = heap_form_tuple(tupdesc, values, &isnull);
 
@@ -5086,6 +5088,7 @@ sp_xml_preparedocument(PG_FUNCTION_ARGS)
 	/* Return back the handle */
 	tupdesc = CreateTemplateTupleDesc(1);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "document_id", INT4OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 	values[0] = Int32GetDatum(document_id);
 	tuple = heap_form_tuple(tupdesc, values, &isnull);

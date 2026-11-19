@@ -575,6 +575,7 @@ prepare_tupledesc_tuplestore_for_openxml(ReturnSetInfo *rsinfo, TupleDesc *tupde
 	TupleDescInitEntry(*tupdesc, (AttrNumber) 7, "datatype", nvarchar_oid, -1, 0);
 	TupleDescInitEntry(*tupdesc, (AttrNumber) 8, "prev", bigint_oid, -1, 0);
 	TupleDescInitEntry(*tupdesc, (AttrNumber) 9, "text", ntext_oid, -1, 0);
+	TupleDescFinalize(*tupdesc);
 	*tupdesc = BlessTupleDesc(*tupdesc);
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
@@ -2169,6 +2170,7 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 
 	tupdesc = CreateTemplateTupleDesc(1);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "xml_node", XMLOID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 	tupstore = tuplestore_begin_heap(true, false, work_mem);
 

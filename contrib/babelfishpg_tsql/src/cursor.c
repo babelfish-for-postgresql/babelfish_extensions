@@ -837,6 +837,7 @@ cursor_list(PG_FUNCTION_ARGS)
 	 */
 	TupleDescInitEntry(tupdesc, (AttrNumber) 15, "cursor_source",
 					   INT2OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 
 	/*
 	 * We put all the tuples into a tuplestore in one scan of the hashtable.

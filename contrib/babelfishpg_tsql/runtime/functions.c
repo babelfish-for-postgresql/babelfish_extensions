@@ -1183,6 +1183,7 @@ get_enr_list(PG_FUNCTION_ARGS)
 					   INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "relname",
 					   TEXTOID, -1, 0);
+	TupleDescFinalize(tupdesc);
 
 	tupstore =
 		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
@@ -1640,6 +1641,7 @@ tsql_stat_get_activity_deprecated_in_2_2_0(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 22, "packet_size", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 23, "encrypt_option", VARCHAROID, 40, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 24, "database_id", INT2OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
@@ -1756,6 +1758,7 @@ tsql_stat_get_activity_deprecated_in_3_2_0(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 23, "encrypt_option", VARCHAROID, 40, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 24, "database_id", INT2OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 25, "host_name", VARCHAROID, 128, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
@@ -1873,6 +1876,7 @@ tsql_stat_get_activity(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 24, "database_id", INT2OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 25, "host_name", VARCHAROID, 128, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 26, "context_info", BYTEAOID, 128, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
@@ -3387,6 +3391,7 @@ sp_datatype_info_helper(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 21, "LENGTH", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 22, "SS_DATA_TYPE", INT2OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 23, "PG_TYPE_NAME", sys_varcharoid, 20, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	/* And set the correct collations to the required fields. */

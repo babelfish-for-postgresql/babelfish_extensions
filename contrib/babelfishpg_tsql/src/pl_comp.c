@@ -1058,6 +1058,7 @@ do_compile(FunctionCallInfo fcinfo,
 								TupleDescInitEntryCollation(row->rowtupdesc, fi + 1,
 															fvar->datatype->collation);
 							}
+							TupleDescFinalize(row->rowtupdesc);
 							break;
 						}
 					}
@@ -2877,6 +2878,8 @@ build_row_from_vars(PLtsql_variable **vars, int numvars)
 						   0);
 		TupleDescInitEntryCollation(row->rowtupdesc, i + 1, typcoll);
 	}
+
+	TupleDescFinalize(row->rowtupdesc);
 
 	return row;
 }

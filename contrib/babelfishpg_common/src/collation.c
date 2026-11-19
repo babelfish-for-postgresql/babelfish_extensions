@@ -1128,6 +1128,7 @@ collation_list_internal(PG_FUNCTION_ARGS)
 					   INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "l5_priority",
 					   INT4OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 
 	tupstore =
 		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,

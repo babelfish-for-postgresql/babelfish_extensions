@@ -509,6 +509,9 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 				cattr->attnullability = orig_nullability;
 		}
 
+		/* Recompute the TupleDesc's cached offsets after the change above */
+		TupleDescFinalize(rel->rd_att);
+
 		CatalogTupleUpdate(attrelation, &heapTup->t_self, heapTup);
 		ReleaseSysCache((HeapTuple) targetType);
 

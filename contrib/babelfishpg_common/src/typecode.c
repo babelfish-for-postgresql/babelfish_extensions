@@ -195,6 +195,7 @@ typecode_list(PG_FUNCTION_ARGS)
 					   INT2OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "sql_variant_hdr_size",
 					   INT2OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 
 	tupstore =
 		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,

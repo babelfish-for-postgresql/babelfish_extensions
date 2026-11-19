@@ -1784,6 +1784,7 @@ process_antlr_parsing_time(PLtsql_execstate *estate)
 
 	tupdesc = CreateTemplateTupleDesc(1);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, NULL, es->format == EXPLAIN_FORMAT_XML ? XMLOID : TEXTOID, -1, 0);
+	TupleDescFinalize(tupdesc);
 
 	receiver = CreateDestReceiver(DestRemote);
 	portal = CreateNewPortal();
@@ -1879,6 +1880,7 @@ process_explain(PLtsql_execstate *estate, bool *show_antlr_parsing_time)
 
 	tupdesc = CreateTemplateTupleDesc(1);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "QUERY PLAN", TEXTOID, -1, 0);
+	TupleDescFinalize(tupdesc);
 
 	receiver = CreateDestReceiver(DestRemote);
 	portal = CreateNewPortal();
@@ -1950,6 +1952,7 @@ process_explain_analyze(PLtsql_execstate *estate, bool *show_antlr_parsing_time)
 
 			tupdesc = CreateTemplateTupleDesc(1);
 			TupleDescInitEntry(tupdesc, (AttrNumber) 1, "QUERY PLAN", restype, -1, 0);
+			TupleDescFinalize(tupdesc);
 
 			receiver = CreateDestReceiver(DestRemote);
 			portal = CreateNewPortal();

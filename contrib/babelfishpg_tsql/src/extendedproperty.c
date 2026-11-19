@@ -809,6 +809,7 @@ fn_listextendedproperty(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "objname", sysname_oid, 128, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "name", sysname_oid, 128, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "value", sql_variant_oid, -1, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	/* And set the correct collations to the required fields. */
