@@ -777,6 +777,83 @@ bbf_store_original_name_options(Oid relid, List *cmds)
 }
 
 /*
+ * bbf_store_original_name_options_as_owner
+ *
+ * Same as bbf_store_original_name_options(), but runs the commands as the
+ * owner of relid. ALTER TABLE ... SET needs ownership, and a relation created
+ * by a user who only has CREATE on the schema is owned by the schema owner
+ * (see pltsql_get_object_owner), so storing its original names as the
+ * current user fails with "must be owner of table".
+ *
+ * This switches to the owner, so only the reserved original-name options are
+ * accepted: bbf_original_rel_name as a reloption and bbf_original_name as an
+ * attoption. Anything else is an internal error.
+ */
+void
+bbf_store_original_name_options_as_owner(Oid relid, List *cmds)
+{
+	Oid			save_userid;
+	int			save_sec_context;
+	Oid			relowner;
+	HeapTuple	tup;
+	ListCell   *lc;
+
+	if (cmds == NIL || !OidIsValid(relid))
+		return;
+
+	/* Validate every command before switching user. */
+	foreach(lc, cmds)
+	{
+		AlterTableCmd *cmd = lfirst_node(AlterTableCmd, lc);
+		const char *allowed;
+		ListCell   *dc;
+
+		if (cmd->subtype == AT_SetRelOptions)
+			allowed = ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
+		else if (cmd->subtype == AT_SetOptions)
+			allowed = ATTOPTION_BBF_ORIGINAL_NAME;
+		else
+			elog(ERROR, "unexpected subcommand type %d for original-name option",
+				 (int) cmd->subtype);
+
+		if (cmd->def == NULL)
+			elog(ERROR, "missing original-name option");
+
+		foreach(dc, castNode(List, cmd->def))
+		{
+			DefElem    *def = lfirst_node(DefElem, dc);
+
+			if (def->defnamespace != NULL || strcmp(def->defname, allowed) != 0)
+				elog(ERROR, "unexpected option \"%s\" for original-name option",
+					 def->defname);
+		}
+	}
+
+	tup = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for relation %u", relid);
+	relowner = ((Form_pg_class) GETSTRUCT(tup))->relowner;
+	ReleaseSysCache(tup);
+
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	PG_TRY();
+	{
+		if (relowner != save_userid)
+			SetUserIdAndSecContext(relowner,
+								   save_sec_context |
+								   SECURITY_LOCAL_USERID_CHANGE |
+								   SECURITY_RESTRICTED_OPERATION);
+
+		bbf_store_original_name_options(relid, cmds);
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
+}
+
+/*
  * Extract the original (untruncated) index name from the query source text.
  *
  * The grammar appends a TSQL_ORIGINAL_NAME_LOCATION option carrying the byte

@@ -8711,6 +8711,9 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
  * This mirrors what CREATE VIEW does (store_view_original_name /
  * store_view_column_original_names); it is best-effort and only runs in the
  * T-SQL dialect outside dump/restore.
+ *
+ * The options are stored as the table's owner: a user with only CREATE on the
+ * schema can run SELECT INTO, but the new table is owned by the schema owner.
  */
 static void
 store_select_into_original_names(CreateTableAsStmt *ctas, const char *queryString,
@@ -8737,7 +8740,7 @@ store_select_into_original_names(CreateTableAsStmt *ctas, const char *queryStrin
 			AlterTableCmd *cmd = build_set_option_cmd(AT_SetRelOptions,
 													  ATTOPTION_BBF_ORIGINAL_TABLE_NAME,
 													  original_name);
-			bbf_store_original_name_options(relid, list_make1(cmd));
+			bbf_store_original_name_options_as_owner(relid, list_make1(cmd));
 			CommandCounterIncrement();
 		}
 		if (original_name)
@@ -8775,7 +8778,7 @@ store_select_into_original_names(CreateTableAsStmt *ctas, const char *queryStrin
 
 	if (cmds != NIL)
 	{
-		bbf_store_original_name_options(relid, cmds);
+		bbf_store_original_name_options_as_owner(relid, cmds);
 		CommandCounterIncrement();
 	}
 }
