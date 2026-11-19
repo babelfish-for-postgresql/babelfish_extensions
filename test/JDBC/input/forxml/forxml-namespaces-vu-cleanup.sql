@@ -2,6 +2,10 @@
 -- SECTION: Cleanup
 -- ============================================
 
+DROP VIEW forxml_ns_upg_view;
+GO
+DROP PROCEDURE forxml_ns_upg_proc;
+GO
 DROP VIEW forxml_ns_view1;
 GO
 
