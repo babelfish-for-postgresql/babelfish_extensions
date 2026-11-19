@@ -949,7 +949,7 @@ collapse_uri_whitespace(const std::string &s)
 }
 
 /*
- * Escape a URI string for embedding inside a PG string-form array literal.
+ * Escape a prefix or URI for embedding inside a PG string-form array literal.
  *
  * The literal is spliced into the rewritten SQL as CAST('{...}' AS _text), so
  * there are two nested levels to satisfy:
@@ -1041,8 +1041,9 @@ xml_escape_attr_value(const std::string &in)
  * present in ns_decls and suppresses the redundant per-row XSINIL declaration.
  */
 static void
-build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext *> &decls,
-						   XmlNamespaceContext &out)
+build_xmlnamespace_context(
+	const std::vector<TSqlParser::Xml_declarationContext *> &decls,
+	XmlNamespaceContext &out)
 {
 	static const std::string xml_ns_uri = "http://www.w3.org/XML/1998/namespace";
 	std::set<std::string> seen_prefixes;
@@ -1062,10 +1063,12 @@ build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext 
 
 		/* All checks below and both outputs use the collapsed URI */
 		if (is_default)
-			uri = collapse_uri_whitespace(strip_string_literal(::getFullText(decl->char_string())));
+			uri = collapse_uri_whitespace(
+				strip_string_literal(::getFullText(decl->char_string())));
 		else
 		{
-			uri = collapse_uri_whitespace(strip_string_literal(::getFullText(decl->xml_namespace_uri)));
+			uri = collapse_uri_whitespace(
+				strip_string_literal(::getFullText(decl->xml_namespace_uri)));
 			prefix = stripQuoteFromId(decl->id());
 		}
 
@@ -1168,6 +1171,10 @@ build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext 
 		 *
 		 * T-SQL shows a message argument that holds U+FFFF cut right after
 		 * it, with its last three characters turned into dots.
+		 *
+		 * The URI is a substring of the batch text, which the server has
+		 * already verified as UTF-8, cut only at ASCII bytes. So EF BF is
+		 * always followed by its third byte here.
 		 */
 		auto shown = [](const std::string &s) {
 			size_t		cut = s.find("\xEF\xBF\xBF");
@@ -1201,7 +1208,8 @@ build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext 
 			{
 				std::string bad = shown(uri.substr(i, is_nonchar ? 3 : 1));
 				std::string uri_shown = shown(uri);
-				int64_t code = is_nonchar ? (0xFFC0 | ((unsigned char) uri[i + 2] & 0x3F)) : c;
+				int64_t code = is_nonchar ?
+					(0xFFC0 | ((unsigned char) uri[i + 2] & 0x3F)) : c;
 
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
 					format_errmsg("URI '%s' used in WITH XMLNAMESPACES is invalid. "
@@ -1229,8 +1237,8 @@ build_xmlnamespace_context(const std::vector<TSqlParser::Xml_declarationContext 
 		if (!first)
 			array_literal += "},{";
 		first = false;
-		array_literal += "\"" + entry.first + "\",\"" +
-			escape_for_pg_array_literal(entry.second) + "\"";
+		array_literal += "\"" + escape_for_pg_array_literal(entry.first) +
+			"\",\"" + escape_for_pg_array_literal(entry.second) + "\"";
 	}
 	array_literal += "}}' AS _text)";
 
@@ -1264,15 +1272,20 @@ owned_xmlnamespaces_clause(antlr4::tree::ParseTree *node)
 {
 	TSqlParser::With_expressionContext *wctx = nullptr;
 
-	if (auto *sel = dynamic_cast<TSqlParser::Select_statement_standaloneContext *>(node))
+	if (auto *sel =
+		dynamic_cast<TSqlParser::Select_statement_standaloneContext *>(node))
 		wctx = sel->with_expression();
-	else if (auto *ins = dynamic_cast<TSqlParser::Insert_statementContext *>(node))
+	else if (auto *ins =
+			 dynamic_cast<TSqlParser::Insert_statementContext *>(node))
 		wctx = ins->with_expression();
-	else if (auto *upd = dynamic_cast<TSqlParser::Update_statementContext *>(node))
+	else if (auto *upd =
+			 dynamic_cast<TSqlParser::Update_statementContext *>(node))
 		wctx = upd->with_expression();
-	else if (auto *del = dynamic_cast<TSqlParser::Delete_statementContext *>(node))
+	else if (auto *del =
+			 dynamic_cast<TSqlParser::Delete_statementContext *>(node))
 		wctx = del->with_expression();
-	else if (auto *mrg = dynamic_cast<TSqlParser::Merge_statementContext *>(node))
+	else if (auto *mrg =
+			 dynamic_cast<TSqlParser::Merge_statementContext *>(node))
 		wctx = mrg->with_expression();
 
 	return (wctx && wctx->XMLNAMESPACES()) ? wctx : nullptr;
@@ -1316,14 +1329,16 @@ xml_method_namespace_array(antlr4::ParserRuleContext *ctx,
 		if (wctx && wctx->XMLNAMESPACES())
 			decls = wctx->xml_dec;
 
-		dctx = dynamic_cast<TSqlParser::Declare_xmlnamespaces_statementContext *>(node);
+		dctx = dynamic_cast<
+			TSqlParser::Declare_xmlnamespaces_statementContext *>(node);
 		if (decls.empty() && dctx)
 			decls = dctx->xml_dec;
 
 		/* the call is in the statement that carries the clause */
 		if (decls.empty())
 		{
-			TSqlParser::With_expressionContext *owned = owned_xmlnamespaces_clause(node);
+			TSqlParser::With_expressionContext *owned =
+				owned_xmlnamespaces_clause(node);
 
 			if (owned)
 				decls = owned->xml_dec;
@@ -1364,7 +1379,8 @@ xml_method_namespace_array(antlr4::ParserRuleContext *ctx,
  * prefixes of its own, so checking stops at the first one.
  */
 static void
-check_xquery_prefixes(const std::string &xq, const std::set<std::string> &declared,
+check_xquery_prefixes(const std::string &xq,
+					  const std::set<std::string> &declared,
 					  const char *method, antlr4::ParserRuleContext *where)
 {
 	std::set<std::string> bound = declared;
@@ -1417,9 +1433,12 @@ check_xquery_prefixes(const std::string &xq, const std::set<std::string> &declar
 
 		if (c == '"' || c == '\'')
 		{
-			size_t		close = xq.find((char) c, i + 1);
+			/* a doubled quote stands for one quote inside the literal */
+			size_t		q = i + 1;
 
-			i = (close == std::string::npos) ? n : close + 1;
+			while (q < n && (at(q) != c || at(q + 1) == c))
+				q += (at(q) == c) ? 2 : 1;
+			i = (q < n) ? q + 1 : n;
 			last = (char) c;
 		}
 		else if (c == '(' && at(i + 1) == ':')
@@ -1456,7 +1475,8 @@ check_xquery_prefixes(const std::string &xq, const std::set<std::string> &declar
 
 			if (at(end) == ':' && at(end + 1) == ':')
 				i = end + 2;
-			else if (at(end) == ':' && (name_start(at(end + 1)) || at(end + 1) == '*'))
+			else if (at(end) == ':' &&
+					 (name_start(at(end + 1)) || at(end + 1) == '*'))
 			{
 				if (bound.count(name) == 0)
 					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
@@ -1477,7 +1497,8 @@ check_xquery_prefixes(const std::string &xq, const std::set<std::string> &declar
 						size_t		p_start = skip_space(k_end);
 						size_t		p_end = read_name(p_start);
 
-						if (p_start > k_end && p_end > p_start && name_start(at(p_start)))
+						if (p_start > k_end && p_end > p_start &&
+							name_start(at(p_start)))
 							bound.insert(xq.substr(p_start, p_end - p_start));
 					}
 				}
@@ -1511,7 +1532,8 @@ check_xml_method_prefixes(TSqlParser::Xml_func_argContext *fn,
 
 	if (!method || !args || args->expression().empty())
 		return;
-	cexpr = dynamic_cast<TSqlParser::Constant_exprContext *>(args->expression()[0]);
+	cexpr = dynamic_cast<TSqlParser::Constant_exprContext *>(
+		args->expression()[0]);
 	if (cexpr && cexpr->constant()->char_string())
 	{
 		TSqlParser::Char_stringContext *xq = cexpr->constant()->char_string();
@@ -1565,7 +1587,8 @@ validate_subtree_xmlnamespaces(antlr4::tree::ParseTree *node)
 		TSqlParser::With_expressionContext *wctx;
 		XmlNamespaceContext tmp;
 
-		dctx = dynamic_cast<TSqlParser::Declare_xmlnamespaces_statementContext *>(child);
+		dctx = dynamic_cast<
+			TSqlParser::Declare_xmlnamespaces_statementContext *>(child);
 		if (dctx)
 			build_xmlnamespace_context(dctx->xml_dec, tmp);
 
@@ -1591,7 +1614,7 @@ strip_xmlnamespaces_clause(TSqlParser::With_expressionContext *ctx)
 	size_t strip_end;
 	if (!ctx->ctes.empty())
 	{
-		/* CTEs present: strip from XMLNAMESPACES token to just before first CTE */
+		/* CTEs present: strip from XMLNAMESPACES up to the first CTE */
 		strip_start = ctx->XMLNAMESPACES()->getSymbol()->getStartIndex();
 		strip_end = ctx->ctes[0]->start->getStartIndex();
 	}
@@ -2315,8 +2338,9 @@ public:
 		std::set<std::string> declared;
 		std::string ns_array = xml_method_namespace_array(ctx, &declared);
 		if (ctx->xquery)
-			check_xquery_prefixes(strip_string_literal(::getFullText(ctx->xquery)),
-								  declared, "nodes", ctx->xquery);
+			check_xquery_prefixes(
+				strip_string_literal(::getFullText(ctx->xquery)),
+				declared, "nodes", ctx->xquery);
 		if (!ns_array.empty())
 			nodes_tail += ", " + ns_array;
 		rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET()->getSymbol()->getStartIndex(), std::make_pair("", nodes_tail)));		
@@ -11334,10 +11358,12 @@ rewrite_dot_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *me
 		std::string ns_array = xml_method_namespace_array(method, &declared);
 
 		check_xml_method_prefixes(method->xml_methods()->xml_func_arg(),
-								  method->xml_methods()->expression_list(), declared);
+								  method->xml_methods()->expression_list(),
+								  declared);
 		/* Insert namespace array before the closing ')' */
 		if (!ns_array.empty())
-			rewritten_exp = rewritten_exp.substr(0, rewritten_exp.size() - 1) + "," + ns_array + ")";
+			rewritten_exp = rewritten_exp.substr(0, rewritten_exp.size() - 1) +
+				"," + ns_array + ")";
 	}
 
 	if (method->xml_methods() && method->xml_methods()->xml_func_arg()->VALUE())
@@ -11564,10 +11590,13 @@ rewrite_function_call_dot_func_ref_args(T ctx)
 		std::set<std::string> declared;
 		std::string ns_array = xml_method_namespace_array(ctx, &declared);
 
-		check_xml_method_prefixes(ctx->xml_proc_name_table_column()->xml_func_arg(),
-								  ctx->expression_list(), declared);
+		check_xml_method_prefixes(
+			ctx->xml_proc_name_table_column()->xml_func_arg(),
+			ctx->expression_list(), declared);
 		if (!ns_array.empty())
-			rewritten_func = rewritten_func.substr(0, rewritten_func.size() - 1) + "," + ns_array + ")";
+			rewritten_func =
+				rewritten_func.substr(0, rewritten_func.size() - 1) + "," +
+				ns_array + ")";
 	}
 
 	if (ctx->xml_proc_name_table_column() &&  ctx->xml_proc_name_table_column()->xml_func_arg()->VALUE())

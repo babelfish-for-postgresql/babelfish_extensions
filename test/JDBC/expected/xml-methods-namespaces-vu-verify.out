@@ -3889,3 +3889,182 @@ int#!#int
 1#!#0
 ~~END~~
 
+-- ============================================
+-- SECTION 43: a doubled quote in an XQuery string literal
+-- Inside an XQuery string literal a doubled quote stands for one quote
+-- character. The prefix check when the batch or routine is compiled skips
+-- the whole literal, and the literal matches the value it denotes.
+-- ============================================
+-- 43.1 Doubled double quote, then a bound QName (T-SQL <n xmlns="urn:p">N</n>)
+DECLARE @x XML = '<root a="x&quot;y:z" b="x''y:z"><n xmlns="urn:p">N</n></root>';
+WITH XMLNAMESPACES('urn:p' AS p)
+SELECT @x.query('/root[@a="x""y:z"]/p:n') AS r;
+GO
+~~START~~
+xml
+<n xmlns="urn:p">N</n>
+~~END~~
+
+-- 43.2 Doubled double quote, no QName after it (T-SQL 1)
+DECLARE @x XML = '<root a="x&quot;y:z" b="x''y:z"><n xmlns="urn:p">N</n></root>';
+WITH XMLNAMESPACES('urn:p' AS p)
+SELECT @x.exist('/root[@a="x""y:z"]') AS ex;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+-- 43.3 Doubled single quote, then a bound QName. In the T-SQL literal ''''
+-- is one doubled XQuery quote (T-SQL <n xmlns="urn:p">N</n>)
+DECLARE @x XML = '<root a="x&quot;y:z" b="x''y:z"><n xmlns="urn:p">N</n></root>';
+WITH XMLNAMESPACES('urn:p' AS p)
+SELECT @x.query('/root[@b=''x''''y:z'']/p:n') AS r;
+GO
+~~START~~
+xml
+<n xmlns="urn:p">N</n>
+~~END~~
+
+-- 43.4 Doubled single quote, no QName after it (T-SQL 1)
+DECLARE @x XML = '<root a="x&quot;y:z" b="x''y:z"><n xmlns="urn:p">N</n></root>';
+WITH XMLNAMESPACES('urn:p' AS p)
+SELECT @x.exist('/root[@b=''x''''y:z'']') AS ex;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+-- 43.5 Doubled double quote, then an unbound QName (T-SQL 2229 for q)
+DECLARE @x XML = '<root a="x&quot;y:z" b="x''y:z"><n xmlns="urn:p">N</n></root>';
+WITH XMLNAMESPACES('urn:p' AS p)
+SELECT @x.query('/root[@a="x""y:z"]/q:n') AS r;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [query()]: The name "q" does not denote a namespace.)~~
+
+-- 43.6 Doubled single quote, then an unbound QName (T-SQL 2229 for q)
+DECLARE @x XML = '<root a="x&quot;y:z" b="x''y:z"><n xmlns="urn:p">N</n></root>';
+WITH XMLNAMESPACES('urn:p' AS p)
+SELECT @x.query('/root[@b=''x''''y:z'']/q:n') AS r;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: XQuery [query()]: The name "q" does not denote a namespace.)~~
+
+-- 43.7 A literal holding both quote kinds, in value() (T-SQL a"b'c:N)
+DECLARE @x XML = '<root a="x&quot;y:z" b="x''y:z"><n xmlns="urn:p">N</n></root>';
+WITH XMLNAMESPACES('urn:p' AS p)
+SELECT @x.value('concat("a""b''c:", string((/root/p:n)[1]))', 'VARCHAR(20)') AS v;
+GO
+~~START~~
+varchar
+a"b'c:N
+~~END~~
+
+-- 43.8 In a .nodes() path and a method on its rows (T-SQL N)
+DECLARE @x XML = '<root a="x&quot;y:z" b="x''y:z"><n xmlns="urn:p">N</n></root>';
+WITH XMLNAMESPACES('urn:p' AS p)
+SELECT n.c.value('.[../@b=''x''''y:z'']', 'VARCHAR(10)') AS v
+FROM @x.nodes('/root[@a="x""y:z"]/p:n') AS n(c);
+GO
+~~START~~
+varchar
+N
+~~END~~
+
+-- 43.9 In a procedure body: the CREATE succeeds (T-SQL 1, then
+-- <n xmlns="urn:p">N</n>)
+CREATE PROCEDURE xmlns_methods_nsproc_lq AS
+BEGIN
+    DECLARE @x XML = '<root a="x&quot;y:z" b="x''y:z"><n xmlns="urn:p">N</n></root>';
+    WITH XMLNAMESPACES('urn:p' AS p)
+    SELECT @x.query('/root[@a="x""y:z"][@b=''x''''y:z'']/p:n') AS r;
+END;
+GO
+SELECT COUNT(*) FROM sys.procedures WHERE name = 'xmlns_methods_nsproc_lq';
+GO
+~~START~~
+int
+1
+~~END~~
+
+EXEC xmlns_methods_nsproc_lq;
+GO
+~~START~~
+xml
+<n xmlns="urn:p">N</n>
+~~END~~
+
+DROP PROCEDURE IF EXISTS xmlns_methods_nsproc_lq;
+GO
+-- ============================================
+-- SECTION 44: the last binding of a prefix wins
+-- WITH XMLNAMESPACES can rebind a prefix XQuery predefines, and a prolog
+-- "declare namespace" can rebind a prefix of the clause.
+-- ============================================
+-- 44.1 The clause rebinds xsi: @xsi:a is the attribute in urn:other
+-- (T-SQL 1, 1)
+DECLARE @x XML = '<r xmlns:o="urn:other" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" o:a="1" i:a="2" i:b="3"/>';
+WITH XMLNAMESPACES('urn:other' AS xsi)
+SELECT @x.value('count(/r/@xsi:a)', 'INT') AS c,
+       @x.value('(/r/@xsi:a)[1]', 'INT') AS v;
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+-- 44.2 The clause rebinds xsi, attribute wildcard (T-SQL 1)
+DECLARE @x XML = '<r xmlns:o="urn:other" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" o:a="1" i:a="2" i:b="3"/>';
+WITH XMLNAMESPACES('urn:other' AS xsi)
+SELECT @x.value('count(/r/@xsi:*)', 'INT') AS c;
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- 44.3 Without the clause xsi is the schema-instance URI (T-SQL 2, 2)
+DECLARE @x XML = '<r xmlns:o="urn:other" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" o:a="1" i:a="2" i:b="3"/>';
+SELECT @x.value('count(/r/@xsi:*)', 'INT') AS c,
+       @x.value('(/r/@xsi:a)[1]', 'INT') AS v;
+GO
+~~START~~
+int#!#int
+2#!#2
+~~END~~
+
+-- 44.4 A prolog rebinds a prefix of the clause (T-SQL 2)
+DECLARE @x XML = '<r xmlns:p1="urn:p1" xmlns:p2="urn:p2"><p1:n>1</p1:n><p2:n>2</p2:n></r>';
+WITH XMLNAMESPACES('urn:p1' AS p)
+SELECT @x.value('declare namespace p="urn:p2"; (/r/p:n)[1]', 'INT') AS v;
+GO
+~~START~~
+int
+2
+~~END~~
+
+-- 44.5 A prolog rebinds a prefix of the clause, attribute wildcard
+-- (T-SQL 1)
+DECLARE @x XML = '<r xmlns:p1="urn:p1" xmlns:p2="urn:p2" p1:a="1" p1:b="2" p2:a="3"/>';
+WITH XMLNAMESPACES('urn:p1' AS p)
+SELECT @x.value('declare namespace p="urn:p2"; count(/r/@p:*)', 'INT') AS c;
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- 44.6 The same document and clause without the prolog (T-SQL 2)
+DECLARE @x XML = '<r xmlns:p1="urn:p1" xmlns:p2="urn:p2" p1:a="1" p1:b="2" p2:a="3"/>';
+WITH XMLNAMESPACES('urn:p1' AS p)
+SELECT @x.value('count(/r/@p:*)', 'INT') AS c;
+GO
+~~START~~
+int
+2
+~~END~~
+

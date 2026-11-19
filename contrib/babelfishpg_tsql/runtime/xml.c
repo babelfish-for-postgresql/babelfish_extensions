@@ -1185,8 +1185,10 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
 				char prev_ch = *(p-1);
 				char next_ch = *(p+1);
 				/* '.' is for cases like '2.' and '.5' */
-				if ((isalnum((unsigned char) prev_ch) || prev_ch == '_' || prev_ch == '.' || prev_ch == '-') &&
-					(isalnum((unsigned char) next_ch) || next_ch == '_' || next_ch == '.' || next_ch == '-'))
+				if ((isalnum((unsigned char) prev_ch) || prev_ch == '_' ||
+					 prev_ch == '.' || prev_ch == '-') &&
+					(isalnum((unsigned char) next_ch) || next_ch == '_' ||
+					 next_ch == '.' || next_ch == '-'))
 				{
 					/* Keep the space to avoid word concatenation */
 					appendStringInfoChar(&result, ch);
@@ -1627,7 +1629,8 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 				}
 				else if ((next_ch == '/' || next_ch == ')' || next_ch == ',' ||
 						  next_ch == '[' || next_ch == ']' || next_ch == ' ') &&
-						 (!isdigit((unsigned char) prev_ch)))	/* keep a trailing dot in a number, e.g. '2.)' */
+						 /* keep a trailing dot in a number, e.g. '2.)' */
+						 (!isdigit((unsigned char) prev_ch)))
 				{
 					/* self reference: '.' or './' etc. */
 					appendStringInfo(&result, "(%s/.)", context_node_path);
@@ -1681,7 +1684,8 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 						appendStringInfoChar(&result, c);
 					/* the colon of a QName (@p:name, @p:*) */
 					else if (c == ':' && !colon_seen &&
-							 (isalpha((unsigned char) p[1]) || p[1] == '_' || p[1] == '*'))
+							 (isalpha((unsigned char) p[1]) || p[1] == '_' ||
+							  p[1] == '*'))
 					{
 						appendStringInfoChar(&result, c);
 						colon_seen = true;
@@ -1728,7 +1732,8 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 						appendStringInfoChar(&ident_buf, ch2);
 						break;
 					}
-					else if (ch2 == ':' && p[1] == ':' && !axis_seen && !colon_seen)
+					else if (ch2 == ':' && p[1] == ':' &&
+							 !axis_seen && !colon_seen)
 					{
 						/* an axis step (child::name, self::*) */
 						appendStringInfoString(&ident_buf, "::");
@@ -1743,7 +1748,8 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 						continue;
 					}
 					else if (ch2 == ':' && !colon_seen &&
-							 (isalpha((unsigned char) p[1]) || p[1] == '_' || p[1] == '*'))
+							 (isalpha((unsigned char) p[1]) || p[1] == '_' ||
+							  p[1] == '*'))
 					{
 						/* the colon of a QName (p:name, p:*) */
 						appendStringInfoChar(&ident_buf, ':');
@@ -1771,7 +1777,8 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 					appendStringInfoString(&result, ident_buf.data);
 				}
 				else if (!axis_seen && !colon_seen &&
-						 (!((prev_ch == '(') || (prev_ch == '/'))) && (bbf_xml_is_xpath_operator(ident_buf.data)))
+						 (!((prev_ch == '(') || (prev_ch == '/'))) &&
+						 (bbf_xml_is_xpath_operator(ident_buf.data)))
 				{
 					/*
 					 * XPath operator - copy as-is. A QName or an axis step is
@@ -2043,8 +2050,9 @@ bbf_xml_rewrite_attribute_wildcards(const char *xpath, ArrayType *namespaces)
 		if (found != NULL)
 		{
 			if (found->literal == NULL)
-				found->literal = bbf_xml_xpath_literal(VARDATA_ANY(found->uri),
-													   VARSIZE_ANY_EXHDR(found->uri));
+				found->literal =
+					bbf_xml_xpath_literal(VARDATA_ANY(found->uri),
+										  VARSIZE_ANY_EXHDR(found->uri));
 			literal = found->literal;
 		}
 		else if (key.len == 3 && strncmp(name, "xml", 3) == 0)
@@ -2078,6 +2086,8 @@ bbf_xml_strip_xquery_comments(const char *s)
 	initStringInfo(&result);
 	while (*p)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		if (*p == '"' || *p == '\'')
 		{
 			int			n = bbf_xml_skip_xpath_chars(p);
@@ -2092,6 +2102,8 @@ bbf_xml_strip_xquery_comments(const char *s)
 
 			while (*q && depth > 0)
 			{
+				CHECK_FOR_INTERRUPTS();
+
 				if ((q[0] == '(' && q[1] == ':') ||
 					(q[0] == ':' && q[1] == ')'))
 				{
@@ -2116,6 +2128,66 @@ bbf_xml_strip_xquery_comments(const char *s)
 }
 
 /*
+ * bbf_xml_rewrite_doubled_quotes
+ * XQuery escapes a quote in a string literal by doubling it, which XPath 1.0
+ * does not allow. Replace each literal that holds a doubled quote with the
+ * XPath expression for its value; other literals are copied as they are. An
+ * unterminated literal is left as written for libxml2 to reject.
+ */
+static char *
+bbf_xml_rewrite_doubled_quotes(const char *s)
+{
+	StringInfoData result;
+	StringInfoData value;
+	const char *p = s;
+
+	if (strstr(s, "\"\"") == NULL && strstr(s, "''") == NULL)
+		return (char *) s;
+
+	initStringInfo(&result);
+	initStringInfo(&value);
+	while (*p)
+	{
+		const char *q;
+		char		quote;
+
+		CHECK_FOR_INTERRUPTS();
+
+		if (*p != '"' && *p != '\'')
+		{
+			appendStringInfoChar(&result, *p++);
+			continue;
+		}
+
+		quote = *p;
+		resetStringInfo(&value);
+		for (q = p + 1; *q && (*q != quote || q[1] == quote);)
+		{
+			CHECK_FOR_INTERRUPTS();
+			appendStringInfoChar(&value, *q);
+			q += (*q == quote) ? 2 : 1;
+		}
+		if (*q != quote)
+		{
+			appendStringInfoString(&result, p);
+			break;
+		}
+		if (q - p - 1 == value.len)
+			appendBinaryStringInfo(&result, p, q - p + 1);
+		else
+		{
+			char	   *lit = bbf_xml_xpath_literal(value.data, value.len);
+
+			appendStringInfoString(&result, lit);
+			pfree(lit);
+		}
+		p = q + 1;
+	}
+	pfree(value.data);
+	return result.data;
+}
+
+/*
  * bbf_xml_take_prolog
  * Take a leading XQuery prolog of namespace declarations
  * (declare namespace p = "uri";) out of the query, since XPath 1.0 has none.
@@ -2126,16 +2198,17 @@ bbf_xml_strip_xquery_comments(const char *s)
  * Returns the rest of the query. Any other declaration ends the prolog and
  * is left as written.
  *
- * When 'check_rules' is set, as in T-SQL, the prolog cannot declare xmlns,
- * cannot declare a prefix twice, and can bind xml only to the XML namespace
- * URI and that URI only to xml. The first declaration that breaks one of
- * these rules raises an error. A nodes() context node path holds the prologs
- * of several nodes() queries, each checked when it ran, so it is taken
- * without the rules and its later binding of a prefix wins.
+ * As in T-SQL, the prolog cannot declare xmlns, and can bind xml only to the
+ * XML namespace URI and that URI only to xml. When 'check_duplicates' is set
+ * it also cannot declare a prefix twice. The first declaration that breaks
+ * one of these rules raises an error. A nodes() context node path holds the
+ * prologs of several nodes() queries, so it is taken without
+ * 'check_duplicates' and its later binding of a prefix wins.
  */
 static const char *
 bbf_xml_take_prolog(const char *xpath, ArrayType **namespaces,
-					StringInfo prolog, const char *caller, bool check_rules)
+					StringInfo prolog, const char *caller,
+					bool check_duplicates)
 {
 	static const char xml_uri[] = "http://www.w3.org/XML/1998/namespace";
 	const char *p = xpath;
@@ -2232,7 +2305,7 @@ bbf_xml_take_prolog(const char *xpath, ArrayType **namespaces,
 		is_xml_prefix = (name_len == 3 && strncmp(name, "xml", 3) == 0);
 		is_xml_uri = (uri_len == sizeof(xml_uri) - 1 &&
 					  strncmp(uri, xml_uri, uri_len) == 0);
-		if (check_rules && bad_pos < 0 &&
+		if (bad_pos < 0 &&
 			((name_len == 5 && strncmp(name, "xmlns", 5) == 0) ||
 			 is_xml_prefix != is_xml_uri))
 		{
@@ -2255,7 +2328,8 @@ bbf_xml_take_prolog(const char *xpath, ArrayType **namespaces,
 			nalloc = Max(nalloc * 2, nelems + 2);
 			elems = repalloc(elems, nalloc * sizeof(Datum));
 			nulls = repalloc(nulls, nalloc * sizeof(bool));
-			names = repalloc(names, (nalloc / 2) * sizeof(BbfXmlPrefix));
+			names = repalloc(names,
+							 Max(nalloc / 2, 4) * sizeof(BbfXmlPrefix));
 		}
 		elems[nelems] =
 			PointerGetDatum(cstring_to_text_with_len(name, name_len));
@@ -2278,7 +2352,7 @@ bbf_xml_take_prolog(const char *xpath, ArrayType **namespaces,
 		return p;
 
 	/* the first declaration that repeats an earlier prefix */
-	if (check_rules && nnames > 1)
+	if (check_duplicates && nnames > 1)
 	{
 		int			i;
 
@@ -2391,7 +2465,10 @@ bbf_xml_handle_context_node(const char *xml_str,
 	/* Extract and remove magic nodes() tag */
 	bbf_xml_split_magic_tag(xml_str, pcontext_node_path, pbare_xml_str);
 
-	/* A nodes() context node path carries the prolog of the nodes() query */
+	/*
+	 * A nodes() context node path carries the prologs of the nodes() queries,
+	 * where nested nodes() may repeat a prefix
+	 */
 	*pcontext_node_path = (char *) bbf_xml_take_prolog(*pcontext_node_path,
 													   namespaces, prolog,
 													   caller, false);
@@ -2432,6 +2509,7 @@ bbf_xml_handle_context_node(const char *xml_str,
 	xpath_cstr = bbf_xml_strip_xquery_comments(xpath_cstr);
 	xpath_cstr = (char *) bbf_xml_take_prolog(xpath_cstr, namespaces, prolog,
 											  caller, true);
+	xpath_cstr = bbf_xml_rewrite_doubled_quotes(xpath_cstr);
 
 	/* Process method query and context node query into the final XPath query */
 	*pfinal_xpath = bbf_xml_patch_xpath_dot_bracket((char *)bbf_xml_xpath_with_context_node(xpath_cstr, *pcontext_node_path));
@@ -2479,6 +2557,7 @@ bbf_xml_merge_namespaces(ArrayType *clause)
 	int			dims[2];
 	int			lbs[2] = {1, 1};
 	int			i;
+	ArrayType  *result;
 
 	if (clause != NULL)
 		deconstruct_array_builtin(clause, TEXTOID, &clause_elems, &clause_nulls,
@@ -2498,8 +2577,20 @@ bbf_xml_merge_namespaces(ArrayType *clause)
 	}
 	dims[0] = (npredef + nclause) / 2;
 	dims[1] = 2;
-	return construct_md_array(elems, nulls, 2, dims, lbs, TEXTOID, -1, false,
-							  TYPALIGN_INT);
+	result = construct_md_array(elems, nulls, 2, dims, lbs, TEXTOID, -1, false,
+								TYPALIGN_INT);
+
+	/* the array holds copies, and an uncached call runs once per row */
+	for (i = 0; i < npredef; i++)
+		pfree(DatumGetPointer(elems[i]));
+	pfree(elems);
+	pfree(nulls);
+	if (clause_elems != NULL)
+	{
+		pfree(clause_elems);
+		pfree(clause_nulls);
+	}
+	return result;
 }
 
 /*
@@ -2527,6 +2618,7 @@ bbf_xml_get_namespaces(FunctionCallInfo fcinfo, int ns_argnum)
 	FmgrInfo   *flinfo = fcinfo->flinfo;
 	BbfXmlNamespaceCache *cache;
 	ArrayType  *clause = NULL;
+	ArrayType  *merged;
 	MemoryContext oldcxt;
 
 	if (PG_NARGS() > ns_argnum && !PG_ARGISNULL(ns_argnum))
@@ -2537,7 +2629,12 @@ bbf_xml_get_namespaces(FunctionCallInfo fcinfo, int ns_argnum)
 	}
 
 	if (flinfo == NULL)
-		return bbf_xml_merge_namespaces(clause);
+	{
+		merged = bbf_xml_merge_namespaces(clause);
+		if (clause != NULL)
+			PG_FREE_IF_COPY(clause, ns_argnum);
+		return merged;
+	}
 
 	cache = (BbfXmlNamespaceCache *) flinfo->fn_extra;
 	if (cache == NULL)
@@ -2555,7 +2652,10 @@ bbf_xml_get_namespaces(FunctionCallInfo fcinfo, int ns_argnum)
 	if (cache->clause != NULL &&
 		VARSIZE(cache->clause) == VARSIZE(clause) &&
 		memcmp(cache->clause, clause, VARSIZE(clause)) == 0)
+	{
+		PG_FREE_IF_COPY(clause, ns_argnum);
 		return cache->merged;
+	}
 
 	if (cache->clause == NULL && get_fn_expr_arg_stable(flinfo, ns_argnum))
 	{
@@ -2567,10 +2667,13 @@ bbf_xml_get_namespaces(FunctionCallInfo fcinfo, int ns_argnum)
 		memcpy(copy, clause, VARSIZE(clause));
 		MemoryContextSwitchTo(oldcxt);
 		cache->clause = copy;
+		PG_FREE_IF_COPY(clause, ns_argnum);
 		return cache->merged;
 	}
 
-	return bbf_xml_merge_namespaces(clause);
+	merged = bbf_xml_merge_namespaces(clause);
+	PG_FREE_IF_COPY(clause, ns_argnum);
+	return merged;
 }
 
 /*
