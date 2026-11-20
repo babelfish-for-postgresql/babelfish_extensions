@@ -741,7 +741,7 @@ build_set_option_cmd(AlterTableType subtype, const char *optname, const char *op
  * Callers must release any reference on relid first; AlterTable() runs
  * CheckTableNotInUse().
  */
-void
+static void
 bbf_store_original_name_options(Oid relid, List *cmds)
 {
 	AlterTableStmt *atstmt;
@@ -777,20 +777,18 @@ bbf_store_original_name_options(Oid relid, List *cmds)
 }
 
 /*
- * bbf_store_original_name_options_as_owner
+ * exec_bbf_original_name_stamp
  *
- * Same as bbf_store_original_name_options(), but runs the commands as the
- * owner of relid. ALTER TABLE ... SET needs ownership, and a relation created
- * by a user who only has CREATE on the schema is owned by the schema owner
- * (see pltsql_get_object_owner), so storing its original names as the
- * current user fails with "must be owner of table".
+ * Run the reserved original-name option commands on relid as its owner. ALTER
+ * TABLE ... SET needs ownership, and Babelfish makes the schema owner own new
+ * objects (see pltsql_get_object_owner).
  *
  * This switches to the owner, so only the reserved original-name options are
  * accepted: bbf_original_rel_name as a reloption and bbf_original_name as an
  * attoption. Anything else is an internal error.
  */
 void
-bbf_store_original_name_options_as_owner(Oid relid, List *cmds)
+exec_bbf_original_name_stamp(Oid relid, List *cmds)
 {
 	Oid			save_userid;
 	int			save_sec_context;
@@ -976,7 +974,7 @@ store_view_original_name(ViewStmt *stmt, const char *queryString)
 			AlterTableCmd *cmd = build_set_option_cmd(AT_SetRelOptions,
 													  ATTOPTION_BBF_ORIGINAL_TABLE_NAME,
 													  original_name);
-			bbf_store_original_name_options(viewOid, list_make1(cmd));
+			exec_bbf_original_name_stamp(viewOid, list_make1(cmd));
 			CommandCounterIncrement();
 		}
 	}
@@ -1325,7 +1323,7 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString, int co
 		relation_close(rel, AccessShareLock);
 		if (explicit_cmds != NIL)
 		{
-			bbf_store_original_name_options(viewOid, explicit_cmds);
+			exec_bbf_original_name_stamp(viewOid, explicit_cmds);
 			CommandCounterIncrement();
 		}
 		return;
@@ -1379,7 +1377,7 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString, int co
 
 	if (cmds != NIL)
 	{
-		bbf_store_original_name_options(viewOid, cmds);
+		exec_bbf_original_name_stamp(viewOid, cmds);
 		CommandCounterIncrement();
 	}
 }
