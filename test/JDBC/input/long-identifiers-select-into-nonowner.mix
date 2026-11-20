@@ -1,0 +1,111 @@
+-- tsql
+-- SELECT INTO by a user who is not the schema owner, with a long table name
+-- and a long column alias. The new table is owned by the schema owner (dbo),
+-- so storing the original names must not need ownership by the current user.
+create login li_si_nonowner_l with password = '12345678';
+go
+create user li_si_nonowner_u for login li_si_nonowner_l;
+go
+-- this user gets no CREATE on the schema
+create login li_si_nogrant_l with password = '12345678';
+go
+create user li_si_nogrant_u for login li_si_nogrant_l;
+go
+create table dbo.li_si_nonowner_src(a int);
+go
+insert into dbo.li_si_nonowner_src values (42);
+go
+grant select on dbo.li_si_nonowner_src to li_si_nonowner_u;
+go
+grant select on dbo.li_si_nonowner_src to li_si_nogrant_u;
+go
+
+-- psql
+-- Let the non-owner create tables in the physical dbo schema
+grant create on schema master_dbo to master_li_si_nonowner_u;
+go
+
+-- tsql user=li_si_nonowner_l password=12345678
+select current_user;
+go
+
+-- 77-character table name
+select a into dbo.li_si_nonowner_long_table_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx from dbo.li_si_nonowner_src;
+go
+
+-- 67-character column alias, mixed-case table name
+select a as Li_Si_NonOwner_Long_Column_Alias_That_Exceeds_The_Sixty_Three_Limit into dbo.Li_Si_NonOwner_Mixed from dbo.li_si_nonowner_src;
+go
+
+-- short mixed-case table name and column alias
+select a as MiXeDCol into dbo.Li_Si_Short_Mixed from dbo.li_si_nonowner_src;
+go
+
+-- tsql user=li_si_nogrant_l password=12345678
+-- Without CREATE on the schema, SELECT INTO must still fail
+select current_user;
+go
+
+select a into dbo.li_si_nogrant_long_table_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx from dbo.li_si_nonowner_src;
+go
+
+-- terminate-tsql-conn user=li_si_nonowner_l password=12345678
+-- terminate-tsql-conn user=li_si_nogrant_l password=12345678
+
+-- tsql
+-- Read the tables back as dbo, which owns them
+select * from dbo.li_si_nonowner_long_table_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+go
+
+select name from sys.tables where object_id = object_id('dbo.li_si_nonowner_long_table_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
+go
+
+select name from sys.columns where object_id = object_id('dbo.Li_Si_NonOwner_Mixed');
+go
+
+-- the user without CREATE created nothing
+select count(*) from sys.objects where name like 'li_si_nogrant%';
+go
+
+-- psql
+-- The original names are stored and the tables are owned by the schema owner
+select c.relname, pg_get_userbyid(c.relowner) as owner,
+       (select o from unnest(c.reloptions) o where o like 'bbf_original_rel_name=%') as original_name
+from pg_class c join pg_namespace n on n.oid = c.relnamespace
+where n.nspname = 'master_dbo' and c.relname like 'li_si_no%' and c.relkind = 'r'
+order by c.relname collate "C";
+go
+
+select a.attname, a.attoptions
+from pg_attribute a
+where a.attrelid = 'master_dbo.li_si_nonowner_mixed'::regclass and a.attnum > 0
+order by a.attnum;
+go
+
+-- tsql
+drop table dbo.li_si_nonowner_long_table_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+go
+drop table dbo.Li_Si_NonOwner_Mixed;
+go
+drop table dbo.Li_Si_Short_Mixed;
+go
+drop table dbo.li_si_nonowner_src;
+go
+
+-- psql
+revoke create on schema master_dbo from master_li_si_nonowner_u;
+go
+
+-- tsql
+drop user li_si_nonowner_u;
+go
+drop user li_si_nogrant_u;
+go
+drop login li_si_nonowner_l;
+go
+drop login li_si_nogrant_l;
+go
+select count(*) from sys.server_principals where name like 'li_si_no%';
+go
+select count(*) from sys.database_principals where name like 'li_si_no%';
+go
