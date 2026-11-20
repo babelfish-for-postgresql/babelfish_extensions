@@ -48,6 +48,12 @@ go
 ~~ROW COUNT: 1~~
 
 
+-- short mixed-case table name and column alias
+select a as MiXeDCol into dbo.Li_Si_Short_Mixed from dbo.li_si_nonowner_src;
+go
+~~ROW COUNT: 1~~
+
+
 -- tsql user=li_si_nogrant_l password=12345678
 -- Without CREATE on the schema, SELECT INTO must still fail
 select current_user;
@@ -134,6 +140,8 @@ li_si_nonowner_long_column_alia502d13f74e17127eda63637119737421#!#{bbf_original_
 drop table dbo.li_si_nonowner_long_table_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
 go
 drop table dbo.Li_Si_NonOwner_Mixed;
+go
+drop table dbo.Li_Si_Short_Mixed;
 go
 drop table dbo.li_si_nonowner_src;
 go

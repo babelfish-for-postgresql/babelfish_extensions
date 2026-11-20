@@ -37,6 +37,10 @@ go
 select a as Li_Si_NonOwner_Long_Column_Alias_That_Exceeds_The_Sixty_Three_Limit into dbo.Li_Si_NonOwner_Mixed from dbo.li_si_nonowner_src;
 go
 
+-- short mixed-case table name and column alias
+select a as MiXeDCol into dbo.Li_Si_Short_Mixed from dbo.li_si_nonowner_src;
+go
+
 -- tsql user=li_si_nogrant_l password=12345678
 -- Without CREATE on the schema, SELECT INTO must still fail
 select current_user;
@@ -82,6 +86,8 @@ go
 drop table dbo.li_si_nonowner_long_table_name_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
 go
 drop table dbo.Li_Si_NonOwner_Mixed;
+go
+drop table dbo.Li_Si_Short_Mixed;
 go
 drop table dbo.li_si_nonowner_src;
 go
