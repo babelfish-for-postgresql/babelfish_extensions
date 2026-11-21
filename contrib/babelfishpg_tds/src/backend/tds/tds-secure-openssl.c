@@ -46,6 +46,7 @@
 #include "storage/latch.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
+#include "utils/wait_event.h"
 
 #include "src/include/tds_secure.h"
 
