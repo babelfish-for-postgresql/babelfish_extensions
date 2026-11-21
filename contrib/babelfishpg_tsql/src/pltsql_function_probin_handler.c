@@ -29,12 +29,12 @@
 
 static char *catalog_read_probin(Oid funcid);
 static Jsonb *ProbinJsonbBuilder(CreateFunctionStmt *stmt, char **probin_str);
-static void pushJsonbPairIntAsText(JsonbParseState **jpstate,
-								   JsonbValue **result, const char *key, const long long int val);
-static void pushJsonbPairText(JsonbParseState **jpstate,
-							  JsonbValue **result, const char *key, char **val);
-static void pushJsonbArray(JsonbParseState **jpstate,
-						   JsonbValue **result, int *items, int array_len);
+static void pushJsonbPairIntAsText(JsonbInState *jpstate,
+								   const char *key, const long long int val);
+static void pushJsonbPairText(JsonbInState *jpstate,
+							  const char *key, char **val);
+static void pushJsonbArray(JsonbInState *jpstate,
+						   int *items, int array_len);
 static void buildTypmodArray(CreateFunctionStmt *stmt, int **typmod_array_p, int *array_len);
 int			adjustTypmod(Oid oid, int typmod);
 
@@ -300,27 +300,26 @@ catalog_read_probin(Oid funcid)
 static Jsonb *
 ProbinJsonbBuilder(CreateFunctionStmt *stmt, char **probin_str)
 {
-	JsonbValue *result;
-	JsonbParseState *jpstate = NULL;
+	JsonbInState jpstate = {0};
 	int		   *typmod_array = NULL;
 	int			array_len;
-	result = pushJsonbValue(&jpstate, WJB_BEGIN_OBJECT, NULL);
+	pushJsonbValue(&jpstate, WJB_BEGIN_OBJECT, NULL);
 
-	pushJsonbPairIntAsText(&jpstate, &result, "version_num", probin_version);
+	pushJsonbPairIntAsText(&jpstate, "version_num", probin_version);
 
-	pushJsonbPairText(&jpstate, &result, "original_probin", probin_str);
+	pushJsonbPairText(&jpstate, "original_probin", probin_str);
 
 	buildTypmodArray(stmt, &typmod_array, &array_len);
-	pushJsonbArray(&jpstate, &result, typmod_array, array_len);
+	pushJsonbArray(&jpstate, typmod_array, array_len);
 	free(typmod_array);
 
-	result = pushJsonbValue(&jpstate, WJB_END_OBJECT, NULL);
+	pushJsonbValue(&jpstate, WJB_END_OBJECT, NULL);
 
-	return JsonbValueToJsonb(result);
+	return JsonbValueToJsonb(jpstate.result);
 }
 
 static void
-pushJsonbPairIntAsText(JsonbParseState **jpstate, JsonbValue **result, const char *key, const long long int val)
+pushJsonbPairIntAsText(JsonbInState *jpstate, const char *key, const long long int val)
 {
 	JsonbValue	v;
 	char		buf[22];
@@ -328,23 +327,23 @@ pushJsonbPairIntAsText(JsonbParseState **jpstate, JsonbValue **result, const cha
 	v.type = jbvString;
 	v.val.string.len = strlen(key);
 	v.val.string.val = (char *) key;
-	*result = pushJsonbValue(jpstate, WJB_KEY, &v);
+	pushJsonbValue(jpstate, WJB_KEY, &v);
 
 	snprintf(buf, 22, "%lld", val);
 	v.val.string.len = strlen(buf);
 	v.val.string.val = pstrdup(buf);
-	*result = pushJsonbValue(jpstate, WJB_VALUE, &v);
+	pushJsonbValue(jpstate, WJB_VALUE, &v);
 }
 
 static void
-pushJsonbPairText(JsonbParseState **jpstate, JsonbValue **result, const char *key, char **val)
+pushJsonbPairText(JsonbInState *jpstate, const char *key, char **val)
 {
 	JsonbValue	v;
 
 	v.type = jbvString;
 	v.val.string.len = strlen(key);
 	v.val.string.val = (char *) key;
-	*result = pushJsonbValue(jpstate, WJB_KEY, &v);
+	pushJsonbValue(jpstate, WJB_KEY, &v);
 	if (val && *val && strlen(*val) != 0)
 	{
 		v.val.string.len = strlen(*val);
@@ -357,12 +356,12 @@ pushJsonbPairText(JsonbParseState **jpstate, JsonbValue **result, const char *ke
 		v.val.string.len = 0;
 		v.val.string.val = "";
 	}
-	*result = pushJsonbValue(jpstate, WJB_VALUE, &v);
+	pushJsonbValue(jpstate, WJB_VALUE, &v);
 }
 
 /* Construct a JSON array from the item list */
 static void
-pushJsonbArray(JsonbParseState **jpstate, JsonbValue **result, int *items, int array_len)
+pushJsonbArray(JsonbInState *jpstate, int *items, int array_len)
 {
 	JsonbValue	v;
 	char		buf[22];
@@ -370,9 +369,9 @@ pushJsonbArray(JsonbParseState **jpstate, JsonbValue **result, int *items, int a
 	v.type = jbvString;
 	v.val.string.len = strlen(typmod_arr_key);
 	v.val.string.val = typmod_arr_key;
-	*result = pushJsonbValue(jpstate, WJB_KEY, &v);
+	pushJsonbValue(jpstate, WJB_KEY, &v);
 
-	*result = pushJsonbValue(jpstate, WJB_BEGIN_ARRAY, NULL);
+	pushJsonbValue(jpstate, WJB_BEGIN_ARRAY, NULL);
 	if (array_len)
 	{
 		for (int i = 0; i < array_len; i++)
@@ -381,11 +380,11 @@ pushJsonbArray(JsonbParseState **jpstate, JsonbValue **result, int *items, int a
 			v.type = jbvString;
 			v.val.string.len = strlen(buf);
 			v.val.string.val = pstrdup(buf);
-			*result = pushJsonbValue(jpstate, WJB_ELEM, &v);
+			pushJsonbValue(jpstate, WJB_ELEM, &v);
 		}
 	}
 
-	*result = pushJsonbValue(jpstate, WJB_END_ARRAY, NULL);
+	pushJsonbValue(jpstate, WJB_END_ARRAY, NULL);
 }
 
 static void

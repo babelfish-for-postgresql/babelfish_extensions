@@ -1,5 +1,6 @@
 #include "postgres.h"
 #include "fmgr.h"
+#include "portability/instr_time.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
 #include <utils/array.h>

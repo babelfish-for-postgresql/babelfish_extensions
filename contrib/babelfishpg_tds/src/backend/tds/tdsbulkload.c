@@ -107,7 +107,7 @@ do \
 } while(0)
 
 void
-TdsResetBcpOffset()
+TdsResetBcpOffset(void)
 {
 	bcpOffset = 0;
 }

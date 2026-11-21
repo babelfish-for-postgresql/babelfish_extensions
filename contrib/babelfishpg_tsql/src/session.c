@@ -285,7 +285,7 @@ reset_session_properties(void)
 }
 
 void
-restore_session_properties()
+restore_session_properties(void)
 {
 	if (DbidIsValid(get_cur_db_id()) && OidIsValid(current_user_id))
 	{
@@ -485,7 +485,7 @@ session_context(PG_FUNCTION_ARGS)
 }
 
 static void
-initialize_context_table()
+initialize_context_table(void)
 {
 	HASHCTL		hash_options;
 

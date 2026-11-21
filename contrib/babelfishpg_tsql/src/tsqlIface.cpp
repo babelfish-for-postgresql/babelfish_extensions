@@ -9580,9 +9580,9 @@ build_cursor_variable(const char *curname, int lineno)
 	appendStringInfo(&ds, "SELECT ");
 	cp1 = curvar->refname;
 	/*
-	 * Don't trust standard_conforming_strings here;
-	 * it might change before we use the string.
-	 */
+	* Since standard_conforming_strings is always TRUE, backslashes
+	* are treated literally and E'' syntax is not needed.
+	*/
 	if (strchr(cp1, '\\') != NULL)
 		appendStringInfo(&ds, "%c", ESCAPE_STRING_SYNTAX);
 	appendStringInfo(&ds, "%c", '\'');

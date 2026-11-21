@@ -63,7 +63,7 @@ static void TdsConsumedBytes(int bytes);
  * --------------------------------
  */
 size_t
-GetAvailableBufferSize()
+GetAvailableBufferSize(void)
 {
 	return TdsBufferSize - TdsSendCur;
 }
@@ -75,7 +75,7 @@ GetAvailableBufferSize()
  * --------------------------------
  */
 int
-FlushBuffer()
+FlushBuffer(void)
 {
 	SocketSetNonblocking(false);
 	if (InternalFlush(false))
@@ -917,7 +917,7 @@ TdsReadNextPendingBcpRequest(StringInfo message)
 }
 
 int
-TdsDiscardAllPendingBcpRequest()
+TdsDiscardAllPendingBcpRequest(void)
 {
 	int			readBytes = 0;
 

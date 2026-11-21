@@ -5,6 +5,10 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup.h"
+#include "access/attmap.h"
+#include "access/tupconvert.h"
+#include "access/table.h"
+#include "access/transam.h"
 #include "access/relation.h"
 #include "access/reloptions.h"
 #include "access/stratnum.h"
@@ -35,7 +39,6 @@
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "commands/copy.h"
-#include "commands/dbcommands.h"
 #include "commands/explain.h"
 #include "commands/extension.h"
 #include "commands/proclang.h"
@@ -216,7 +219,7 @@ static void fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *n
  *****************************************/
 static void pltsql_report_proc_not_found_error(List *names, List *fargs, List *argnames, Oid *input_typeids, int nargs, ParseState *pstate, int location, bool proc_call);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
-extern PLtsql_execstate *get_current_tsql_estate();
+extern PLtsql_execstate *get_current_tsql_estate(void);
 static void pltsql_store_view_definition(const char *queryString, ObjectAddress address);
 static void pltsql_drop_view_definition(Oid objectId);
 static void preserve_view_constraints_from_base_table(ColumnDef *col, Oid tableOid, AttrNumber colId);
@@ -247,7 +250,7 @@ static void pltsql_ExecUpdateResultTypeTL(PlanState *planstate, TupleDesc desc);
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
 
-extern bool called_for_tsql_itvf_func();
+extern bool called_for_tsql_itvf_func(void);
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
@@ -273,7 +276,7 @@ static bool is_bbf_db_ddladmin_operation(Oid namespaceId);
 /*****************************************
  * 			Planner Hook
  *****************************************/
-static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams);
+static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams, ExplainState *es);
 
 /*****************************************
  * 			parser Hook
@@ -831,27 +834,6 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 	return false;
 }									  
 
-Oid prev_cache_collid;
-pg_locale_t *prev_locale = NULL;
-
-pg_locale_t *
-collation_cache_entry_hook_function(Oid collid, pg_locale_t *locale)
-{
-	if(!locale)
-	{
-		if(prev_locale && prev_cache_collid==collid)
-		{
-			return prev_locale;
-		}
-	}
-	else
-	{
-		prev_cache_collid = collid;
-		prev_locale = locale;
-	}
-	return NULL;
-}			
-
 static void
 pltsql_GetNewObjectId(VariableCache variableCache)
 {
@@ -870,7 +852,7 @@ pltsql_GetNewObjectId(VariableCache variableCache)
 }
 
 static Oid
-pltsql_GetNewTempObjectId()
+pltsql_GetNewTempObjectId(void)
 {
 	Oid			result;
 	Oid			tempOidStart;
@@ -1526,24 +1508,20 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 		replace_params_in_plan_tree(queryDesc->plannedstmt->planTree, &context);
 	}
 
-	if (prev_ExecutorStart)
-		prev_ExecutorStart(queryDesc, ef);
-	else
-		standard_ExecutorStart(queryDesc, ef);
-
-	if (is_explain_analyze_mode() && !queryDesc->totaltime)
+	if (is_explain_analyze_mode() && !queryDesc->query_instr)
 	{
 		/*
 		 * Set up to track total elapsed time in ExecutorRun. Make sure the
 		 * space is allocated in the per-query context so it will go away at
 		 * ExecutorEnd.
 		 */
-		MemoryContext oldcxt;
-
-		oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
-		queryDesc->totaltime = InstrAlloc(1, INSTRUMENT_ALL, false);
-		MemoryContextSwitchTo(oldcxt);
+		queryDesc->query_instr_options |= INSTRUMENT_ALL;
 	}
+
+	if (prev_ExecutorStart)
+		prev_ExecutorStart(queryDesc, ef);
+	else
+		standard_ExecutorStart(queryDesc, ef);
 }
 
 static void
@@ -3384,8 +3362,9 @@ pltsql_report_proc_not_found_error(List *names, List *fargs, List *given_argname
 	char	   *schemaname;
 	char	   *funcname;
 	const char *obj_type = proc_call ? "procedure" : "function";
+	int			fgc_flags;		/* not used */
 
-	candidates = FuncnameGetCandidates(names, -1, NIL, false, false, false, true);	/* search all possible
+	candidates = FuncnameGetCandidates(names, -1, NIL, false, false, false, true, &fgc_flags);	/* search all possible
 																					 * candidate regardless
 																					 * of the # of arguments */
 	if (candidates == NULL)
@@ -6114,7 +6093,7 @@ update_rte_perms_info_walker(Node *node, void *context)
 }
 
 static PlannedStmt *
-pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams)
+pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams, ExplainState *es)
 {
 	PlannedStmt *plan;
 	PLtsql_execstate *estate = NULL;
@@ -6129,9 +6108,9 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 		INSTR_TIME_SET_CURRENT(estate->planning_start);
 	}
 	if (prev_planner_hook)
-		plan = prev_planner_hook(parse, query_string, cursorOptions, boundParams);
+		plan = prev_planner_hook(parse, query_string, cursorOptions, boundParams, es);
 	else
-		plan = standard_planner(parse, query_string, cursorOptions, boundParams);
+		plan = standard_planner(parse, query_string, cursorOptions, boundParams, es);
 	if (pltsql_explain_analyze)
 	{
 		INSTR_TIME_SET_CURRENT(estate->planning_end);
@@ -8289,10 +8268,10 @@ pltsql_ExecUpdateResultTypeTL(PlanState *planstate, TupleDesc desc)
 	 * sanity checks
 	 */
 	if (sql_dialect != SQL_DIALECT_TSQL ||
-		!PointerIsValid(desc) ||
-		!PointerIsValid(planstate) ||
-		!PointerIsValid(planstate->plan) ||
-		!PointerIsValid(planstate->plan->targetlist))
+		!desc ||
+		!planstate ||
+		!planstate->plan ||
+		!planstate->plan->targetlist)
 		return;
 
 	targetList = planstate->plan->targetlist;

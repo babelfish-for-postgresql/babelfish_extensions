@@ -8,6 +8,7 @@
 #include "miscadmin.h"
 #include "parser/parse_expr.h"
 #include "utils/builtins.h"
+#include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
@@ -122,7 +123,7 @@ PG_FUNCTION_INFO_V1(pltsql_get_last_stmt_handle);
 
 /* Start of implementation */
 uint32
-get_next_cursor_handle()
+get_next_cursor_handle(void)
 {
 	char		curname[NAMEDATALEN];
 	uint32		old_handle = current_cursor_handle;
@@ -142,7 +143,7 @@ get_next_cursor_handle()
 }
 
 uint32
-get_next_cursor_prepared_handle()
+get_next_cursor_prepared_handle(void)
 {
 	uint32		old_handle = current_cursor_prepared_handle;
 
@@ -173,7 +174,7 @@ is_cursor_datatype(Oid oid)
 }
 
 static Oid
-lookup_tsql_cursor_oid()
+lookup_tsql_cursor_oid(void)
 {
 	Oid			nspoid;
 	Oid			typoid;
@@ -437,14 +438,14 @@ sp_cursor_find_param(ParseState *pstate, ColumnRef *cref)
 }
 
 void
-enable_sp_cursor_find_param_hook()
+enable_sp_cursor_find_param_hook(void)
 {
 	prev_lookup_param_hook = lookup_param_hook;
 	lookup_param_hook = sp_cursor_find_param;
 }
 
 void
-disable_sp_cursor_find_param_hook()
+disable_sp_cursor_find_param_hook(void)
 {
 	lookup_param_hook = prev_lookup_param_hook;
 	prev_lookup_param_hook = NULL;
@@ -457,13 +458,13 @@ add_sp_cursor_param(char *name)
 }
 
 void
-reset_sp_cursor_params()
+reset_sp_cursor_params(void)
 {
 	sp_cursor_params = NIL;
 }
 
 void
-pltsql_create_cursor_htab()
+pltsql_create_cursor_htab(void)
 {
 	HASHCTL		ctl;
 
@@ -836,6 +837,7 @@ cursor_list(PG_FUNCTION_ARGS)
 	 */
 	TupleDescInitEntry(tupdesc, (AttrNumber) 15, "cursor_source",
 					   INT2OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 
 	/*
 	 * We put all the tuples into a tuplestore in one scan of the hashtable.

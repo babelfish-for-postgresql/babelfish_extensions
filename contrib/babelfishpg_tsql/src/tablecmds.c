@@ -164,7 +164,7 @@ lookup_and_drop_triggers(ObjectAccessType access, Oid classId,
 }
 
 void
-assign_object_access_hook_drop_relation()
+assign_object_access_hook_drop_relation(void)
 {
 	if (object_access_hook)
 	{
@@ -174,7 +174,7 @@ assign_object_access_hook_drop_relation()
 }
 
 void
-uninstall_object_access_hook_drop_relation()
+uninstall_object_access_hook_drop_relation(void)
 {
 	if (prev_object_access_hook)
 		object_access_hook = prev_object_access_hook;
@@ -508,6 +508,9 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 			if (orig_nullability != ATTNULLABLE_UNKNOWN)
 				cattr->attnullability = orig_nullability;
 		}
+
+		/* Recompute the TupleDesc's cached offsets after the change above */
+		TupleDescFinalize(rel->rd_att);
 
 		CatalogTupleUpdate(attrelation, &heapTup->t_self, heapTup);
 		ReleaseSysCache((HeapTuple) targetType);

@@ -37,7 +37,7 @@ const char *column_names_to_be_delimited[] = {
 };
 
 size_t
-get_num_column_names_to_be_delimited()
+get_num_column_names_to_be_delimited(void)
 {
 	return lengthof(column_names_to_be_delimited);
 }
@@ -102,7 +102,7 @@ const char *pg_reserved_keywords_to_be_delimited[] = {
 };
 
 size_t
-get_num_pg_reserved_keywords_to_be_delimited()
+get_num_pg_reserved_keywords_to_be_delimited(void)
 {
 	return lengthof(pg_reserved_keywords_to_be_delimited);
 }

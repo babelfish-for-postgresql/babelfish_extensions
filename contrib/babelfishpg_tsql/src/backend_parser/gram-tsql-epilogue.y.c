@@ -1223,7 +1223,7 @@ tsql_update_delete_stmt_from_clause_alias_helper(RangeVar *relation, RangeVar *r
  * use these globals to ensure that they are cleared.
  */
 static void
-tsql_reset_update_delete_globals()
+tsql_reset_update_delete_globals(void)
 {
 	output_update_transformation = false;
 	update_delete_target_alias = NULL;

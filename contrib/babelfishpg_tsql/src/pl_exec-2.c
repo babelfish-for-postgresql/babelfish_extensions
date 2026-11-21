@@ -103,7 +103,7 @@ extern char *pltsql_demangle_curname(char *curname);
 extern void enable_sp_cursor_find_param_hook(void);
 extern void disable_sp_cursor_find_param_hook(void);
 extern void add_sp_cursor_param(char *name);
-extern void reset_sp_cursor_params();
+extern void reset_sp_cursor_params(void);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
 extern const char *gen_schema_name_for_fulltext_index(const char *schema_name);
 
@@ -155,7 +155,7 @@ static void set_search_path_for_sp_procs(char *schema);
 int			pltsql_proc_return_code;
 
 PLtsql_execstate *
-get_current_tsql_estate()
+get_current_tsql_estate(void)
 {
 	ErrorContextCallback *plerrcontext = error_context_stack;
 
@@ -3847,13 +3847,13 @@ get_param_mode(List *params, int paramno, char **modes)
 }
 
 int
-get_insert_bulk_rows_per_batch()
+get_insert_bulk_rows_per_batch(void)
 {
 	return insert_bulk_rows_per_batch;
 }
 
 int
-get_insert_bulk_kilobytes_per_batch()
+get_insert_bulk_kilobytes_per_batch(void)
 {
 	return insert_bulk_kilobytes_per_batch;
 }

@@ -6,6 +6,7 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
+#include "utils/tuplestore.h"
 
 #define FN_MAPPED_SYSTEM_ERROR_LIST_COLS 4
 PG_FUNCTION_INFO_V1(babel_list_mapped_error);
@@ -513,6 +514,7 @@ babel_list_mapped_error(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "error_message", sys_varcharoid, 4000, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "error_msg_parameters", sys_varcharoid, 4000, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "sql_error_code", INT4OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;

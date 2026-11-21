@@ -1037,9 +1037,9 @@ decl_statement	: decl_varname opt_as decl_const decl_datatype decl_collate decl_
 						cp1 = new->refname;
 						cp2 = buf + strlen(buf);
 						/*
-						 * Don't trust standard_conforming_strings here;
-						 * it might change before we use the string.
-						 */
+						* Since standard_conforming_strings is always TRUE, backslashes
+						* are treated literally and E'' syntax is not needed.
+						*/
 						if (strchr(cp1, '\\') != NULL)
 							*cp2++ = ESCAPE_STRING_SYNTAX;
 						*cp2++ = '\'';
@@ -1646,8 +1646,8 @@ stmt_assign		: K_SET assign_var '='
 							cp1 = new_curvar->refname;
 							cp2 = buf + strlen(buf);
 							/*
-							 * Don't trust standard_conforming_strings here;
-							* it might change before we use the string.
+							* Since standard_conforming_strings is always TRUE, backslashes
+							* are treated literally and E'' syntax is not needed.
 							*/
 							if (strchr(cp1, '\\') != NULL)
 								*cp2++ = ESCAPE_STRING_SYNTAX;
@@ -4463,7 +4463,7 @@ typedef struct
  *  targets as a list: @a = 3, b = 3
  */
 static List *
-read_query_targets2()
+read_query_targets2(void)
 {
 	List * result = NIL;
 	query_target *target;
@@ -4627,7 +4627,7 @@ read_query_targets2()
  *  lookup mode.
  */
 static List * 
-read_query_targets()
+read_query_targets(void)
 {
 	IdentifierLookup save = pltsql_IdentifierLookup;
 	List *result;
@@ -6745,7 +6745,7 @@ IncrementInstr(List *raw_parsetree_list)
 				metric = INSTR_TSQL_CALL_STMT;
 				break;
 
-			case T_ClusterStmt:
+			case T_RepackStmt:
 				metric = INSTR_TSQL_CLUSTER_STMT;
 				break;
 
@@ -8306,7 +8306,7 @@ parse_sp_cursor_value(StringInfoData* pbuffer, int *pterm)
 }
 
 static PLtsql_expr *
-parse_select_stmt_for_decl_cursor()
+parse_select_stmt_for_decl_cursor(void)
 {
 	execsql_ctx ctx;
 	PLword firstword;

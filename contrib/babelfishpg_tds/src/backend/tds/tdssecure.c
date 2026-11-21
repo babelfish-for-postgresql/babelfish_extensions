@@ -34,6 +34,7 @@
 #include "utils/memutils.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
+#include "utils/wait_event.h"
 
 #include "src/include/tds_secure.h"
 #include "src/include/tds_int.h"

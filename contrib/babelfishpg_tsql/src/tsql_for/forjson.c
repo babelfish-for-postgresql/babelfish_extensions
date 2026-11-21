@@ -1046,7 +1046,13 @@ checkForDuplicateRows(JsonbValue *jsonbArray, JsonbValue* row, int maxDepth, int
 						sameElem = true;
 						continue;
 					case jbvString:
-						sameElem = (strcmp(arrRowPairs[j].value.val.string.val, rowPairs[j].value.val.string.val) == 0);
+						/*
+						 * jsonb string values are not NUL-terminated, so
+						 * compare the lengths first and then the bytes.
+						 */
+						sameElem = (arrRowPairs[j].value.val.string.len == rowPairs[j].value.val.string.len &&
+									memcmp(arrRowPairs[j].value.val.string.val, rowPairs[j].value.val.string.val,
+										   rowPairs[j].value.val.string.len) == 0);
 						break;
 					case jbvNumeric:
 						sameElem = (compareNumeric(arrRowPairs[j].value.val.numeric, rowPairs[j].value.val.numeric) == 0);

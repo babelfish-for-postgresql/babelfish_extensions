@@ -35,6 +35,7 @@
 #include "utils/resowner.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
+#include "utils/tuplestore.h"
 
 #include "pltsql.h"
 #include "guc.h"
@@ -138,7 +139,6 @@ antlr_batch_parse_cache_shmem_startup(void)
 	/* Same entry size and capacity babelfishpg_tds used to create the hash */
 	info.entrysize = state->entry_size;
 	antlr_batch_parse_cache_hash = ShmemInitHash(ANTLR_BATCH_PARSE_CACHE_SHMEM_HASH_NAME,
-												 state->num_slots,
 												 state->num_slots,
 												 &info,
 												 HASH_ELEM | HASH_BLOBS);

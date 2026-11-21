@@ -10,7 +10,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_namespace.h"
-#include "commands/dbcommands.h"
+#include "catalog/pg_database.h"
 #include "commands/defrem.h"
 #include "commands/extension.h"
 #include "commands/sequence.h"
@@ -58,7 +58,7 @@ static void drop_related_bbf_namespace_entries(int16 dbid);
 
 
 static Oid
-get_sys_babelfish_db_seq_oid()
+get_sys_babelfish_db_seq_oid(void)
 {
 	if(!OidIsValid(sys_babelfish_db_seq_oid))
 	{

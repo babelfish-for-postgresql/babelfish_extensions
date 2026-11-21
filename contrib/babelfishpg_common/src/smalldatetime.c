@@ -8,6 +8,7 @@
 
 #include "postgres.h"
 
+#include <math.h>
 #include "fmgr.h"
 #include "utils/builtins.h"
 #include "utils/date.h"

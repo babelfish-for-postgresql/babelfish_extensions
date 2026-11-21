@@ -8,6 +8,7 @@
 #include "pgstat.h"
 #include "storage/proc.h"
 #include "utils/elog.h"
+#include "utils/wait_event.h"
 #include "utils/hsearch.h"
 #include "utils/palloc.h"		/* Needed for pstrdup() */
 
@@ -32,7 +33,7 @@ error_map_details error_list[] = {
  * Returns list of sql error code for which Babel does have support for.
  */
 void *
-get_mapped_error_list()
+get_mapped_error_list(void)
 {
 	return error_list;
 }
@@ -41,7 +42,7 @@ get_mapped_error_list()
  * Returns list of sql error code for which Babel does have support for.
  */
 int *
-get_mapped_tsql_error_code_list()
+get_mapped_tsql_error_code_list(void)
 {
 	int			i;
 	int		   *list;			/* Temp list to store list of mapped sql error
@@ -78,7 +79,7 @@ get_mapped_tsql_error_code_list()
  * load_err_code_mapping() - loads error code mapping details in HASH table.
  */
 void
-load_error_mapping()
+load_error_mapping(void)
 {
 	HASHCTL		hashCtl;
 	int			i,
@@ -380,7 +381,7 @@ emit_tds_log(ErrorData *edata)
 
 
 void
-reset_error_mapping_cache()
+reset_error_mapping_cache(void)
 {
 	error_map_hash = NULL;
 }

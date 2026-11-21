@@ -352,7 +352,7 @@ pltsql_nextval_identity(Oid seqid, int64 val)
 }
 
 void
-pltsql_resetcache_identity()
+pltsql_resetcache_identity(void)
 {
 	if (prev_pltsql_resetcache_hook)
 		prev_pltsql_resetcache_hook();

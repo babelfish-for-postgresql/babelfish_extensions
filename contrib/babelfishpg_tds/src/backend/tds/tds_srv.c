@@ -549,7 +549,7 @@ pe_read_command(StringInfo inBuf)
 }
 
 static int
-pe_process_command()
+pe_process_command(void)
 {
 	int			result;
 

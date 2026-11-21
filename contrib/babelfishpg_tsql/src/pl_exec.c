@@ -499,7 +499,7 @@ bool  		called_for_tsql_itvf_func(void);
 
 
 bool
-called_for_tsql_itvf_func()
+called_for_tsql_itvf_func(void)
 {
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return false;
@@ -3507,8 +3507,8 @@ exec_stmt_return(PLtsql_execstate *estate, PLtsql_stmt_return *stmt)
 				/* fulfill promise if needed, then handle like regular var */
 				pltsql_fulfill_promise(estate, (PLtsql_var *) retvar);
 
-				/* FALL THRU */
-
+				pg_fallthrough;
+				
 			case PLTSQL_DTYPE_VAR:
 				{
 					PLtsql_var *var = (PLtsql_var *) retvar;
@@ -3655,7 +3655,7 @@ exec_stmt_return_next(PLtsql_execstate *estate,
 				/* fulfill promise if needed, then handle like regular var */
 				pltsql_fulfill_promise(estate, (PLtsql_var *) retvar);
 
-				/* FALL THRU */
+				pg_fallthrough;
 
 			case PLTSQL_DTYPE_VAR:
 				{
@@ -6863,7 +6863,7 @@ exec_eval_datum(PLtsql_execstate *estate,
 			/* fulfill promise if needed, then handle like regular var */
 			pltsql_fulfill_promise(estate, (PLtsql_var *) datum);
 
-			/* FALL THRU */
+			pg_fallthrough;
 
 		case PLTSQL_DTYPE_VAR:
 			{

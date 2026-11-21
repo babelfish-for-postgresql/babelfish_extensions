@@ -1958,16 +1958,15 @@ simple_quote_literal(StringInfo buf, const char *val)
 	const char *valptr;
 
 	/*
-	 * We form the string literal according to the prevailing setting of
-	 * standard_conforming_strings; we never use E''. User is responsible for
-	 * making sure result is used correctly.
-	 */
+	* We always form a standard-conforming string literal. Backslashes are
+	* treated literally and we never use E''.
+	*/
 	appendStringInfoChar(buf, '\'');
 	for (valptr = val; *valptr; valptr++)
 	{
 		char		ch = *valptr;
 
-		if (SQL_STR_DOUBLE(ch, !standard_conforming_strings))
+		if (SQL_STR_DOUBLE(ch, false))
 			appendStringInfoChar(buf, ch);
 		appendStringInfoChar(buf, ch);
 	}
@@ -2141,6 +2140,7 @@ generate_function_name(Oid funcid, int nargs, List *argnames, Oid *argtypes,
 	bool		use_variadic;
 	char	   *nspname;
 	FuncDetailCode p_result;
+	int			fgc_flags;		/* not used */
 	Oid			p_funcid;
 	Oid			p_rettype;
 	bool		p_retset;
@@ -2198,7 +2198,8 @@ generate_function_name(Oid funcid, int nargs, List *argnames, Oid *argtypes,
 	if (!force_qualify)
 		p_result = func_get_detail(list_make1(makeString(proname)),
 								   NIL, argnames, nargs, argtypes,
-								   !use_variadic, true, false,
+								   !use_variadic, true, false, 
+								   &fgc_flags,
 								   &p_funcid, &p_rettype,
 								   &p_retset, &p_nvargs, &p_vatype,
 								   &p_true_typeids, NULL);
@@ -2322,7 +2323,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				}
 				/* else do the same stuff as for T_SubLink et al. */
 			}
-			/* FALLTHROUGH */
+			pg_fallthrough;
 
 		case T_NullTest:
 			switch (nodeTag(parentNode))
@@ -2823,7 +2824,7 @@ find_recursive_union(deparse_namespace *dpns, WorkTableScan *wtscan)
  * Returns a palloc'd string.
  */
 char *
-tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
+tsql_format_type_extended(Oid type_oid, int32 typemod, uint16 flags)
 {
 	HeapTuple	tuple;
 	Form_pg_type typeform;

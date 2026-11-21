@@ -6,6 +6,7 @@
 #include "funcapi.h"
 #include "pgstat.h"
 #include "varatt.h"
+#include "utils/tuplestore.h"
 
 #include "postgres.h"
 #include "access/hash.h"
