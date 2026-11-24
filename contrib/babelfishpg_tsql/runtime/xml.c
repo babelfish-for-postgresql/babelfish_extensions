@@ -1129,8 +1129,8 @@ bbf_xml_skip_xpath_chars(const char *p)
 /*
  * bbf_xml_remove_xpath_whitespace
  * Remove whitespace from XPath query, preserving whitespace inside string
- * literals and predicates. Also preserves whitespace between word characters
- * to avoid concatenation.
+ * literals and predicates. Also keeps whitespace between name characters,
+ * '-' included, so that removing it cannot join two tokens into one name.
  */
 static char *
 bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
@@ -1184,8 +1184,11 @@ bbf_xml_remove_xpath_whitespace(const char *xpath_pattern)
 			{
 				char prev_ch = *(p-1);
 				char next_ch = *(p+1);
-				if ((isalnum((unsigned char) prev_ch) || prev_ch == '_' || prev_ch == '.') &&  // '.' is for cases like '2.'
-				    (isalnum((unsigned char) next_ch) || next_ch == '_' || next_ch == '.'))    // '.' is for cases like '.5'
+				/* '.' is for cases like '2.' and '.5' */
+				if ((isalnum((unsigned char) prev_ch) || prev_ch == '_' ||
+					 prev_ch == '.' || prev_ch == '-') &&
+					(isalnum((unsigned char) next_ch) || next_ch == '_' ||
+					 next_ch == '.' || next_ch == '-'))
 				{
 					/* Keep the space to avoid word concatenation */
 					appendStringInfoChar(&result, ch);
@@ -1227,7 +1230,6 @@ bbf_xml_is_xpath_function(const char *s)
 		"number(",
 		"floor(",
 		"round(",
-		"text(",
 		"last(",
 		"true(",
 		"false(",
@@ -1550,6 +1552,8 @@ bbf_xml_check_final_xpath_query(const char *xpath_pattern, const char *caller)
  * prepending @names and bare identifier names with the context node path.
  * String literals and XPath predicates are not touched.
  * Implicitly, absolute XPath expressions, starting with '/', are not changed.
+ * QNames (p:name, @p:name) and axis steps (child::p:name) are one token, so
+ * the context node path is prepended to the whole step.
  */
 static char *
 bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context_node_path)
@@ -1558,6 +1562,7 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 	StringInfoData result;
 	StringInfoData ident_buf;
 	char *p;
+	bool		prev_was_operator = false;
 
 	if (context_node_path == NULL || strlen(context_node_path) == 0)
 		return pstrdup(xpath_pattern);
@@ -1568,6 +1573,9 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 	p = (char *)xpath_pattern;
 	while (*p)
 	{
+		bool		after_operator = prev_was_operator;
+
+		prev_was_operator = false;
 		ch = *p;
 		/*
 		* Do not touch string literals or predicates. If encountered,
@@ -1621,7 +1629,8 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 				}
 				else if ((next_ch == '/' || next_ch == ')' || next_ch == ',' ||
 						  next_ch == '[' || next_ch == ']' || next_ch == ' ') &&
-						 (!isdigit(prev_ch)))  // do not modify a trailing dot in a numeric value, e.g. '2.)'
+						 /* keep a trailing dot in a number, e.g. '2.)' */
+						 (!isdigit((unsigned char) prev_ch)))
 				{
 					/* self reference: '.' or './' etc. */
 					appendStringInfo(&result, "(%s/.)", context_node_path);
@@ -1648,6 +1657,8 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 		{
 			if (!(isalpha((unsigned char) prev_ch) || prev_ch == '_'))
 			{
+				bool		colon_seen = false;
+
 				/* Collect the @attr name (@name, @*, @id, etc. and append to the context node path */
 				if (prev_ch != '/') 
 				{
@@ -1659,9 +1670,26 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 				while (*p)
 				{
 					char c = *(++p);
-					/* Valid @attr name chars: [A-Za-z0-9_-.*] */
-					if (isalnum((unsigned char) c) || c == '_' || c == '-' || c == '.' || c == '*')
+
+					/* a wildcard ends the name test */
+					if (c == '*' && (p[-1] == '@' || p[-1] == ':'))
+					{
 						appendStringInfoChar(&result, c);
+						p++;
+						break;
+					}
+					/* Valid @attr name chars: [A-Za-z0-9_-.] */
+					if (isalnum((unsigned char) c) || c == '_' ||
+						c == '-' || c == '.')
+						appendStringInfoChar(&result, c);
+					/* the colon of a QName (@p:name, @p:*) */
+					else if (c == ':' && !colon_seen &&
+							 (isalpha((unsigned char) p[1]) || p[1] == '_' ||
+							  p[1] == '*'))
+					{
+						appendStringInfoChar(&result, c);
+						colon_seen = true;
+					}
 					else
 						break;
 				}
@@ -1685,6 +1713,9 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 			if (!(isalpha((unsigned char) prev_ch) || prev_ch == '_'))
 			{
 				char ch2 = ' ';
+				bool		axis_seen = false;
+				bool		colon_seen = false;
+
 				/* Collect characters for this identifier */
 				while (*p)
 				{
@@ -1701,6 +1732,37 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 						appendStringInfoChar(&ident_buf, ch2);
 						break;
 					}
+					else if (ch2 == ':' && p[1] == ':' &&
+							 !axis_seen && !colon_seen)
+					{
+						/* an axis step (child::name, self::*) */
+						appendStringInfoString(&ident_buf, "::");
+						p += 2;
+						axis_seen = true;
+						/* a wildcard ends the name test */
+						if (*p == '*')
+						{
+							appendStringInfoChar(&ident_buf, '*');
+							break;
+						}
+						continue;
+					}
+					else if (ch2 == ':' && !colon_seen &&
+							 (isalpha((unsigned char) p[1]) || p[1] == '_' ||
+							  p[1] == '*'))
+					{
+						/* the colon of a QName (p:name, p:*) */
+						appendStringInfoChar(&ident_buf, ':');
+						p++;
+						colon_seen = true;
+						/* a wildcard ends the name test */
+						if (*p == '*')
+						{
+							appendStringInfoChar(&ident_buf, '*');
+							break;
+						}
+						continue;
+					}
 					else
 					{
 						/* End of identifier found, move 1 character back and proceed at top of loop */
@@ -1714,10 +1776,16 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 					/* XPath function - copy as-is */
 					appendStringInfoString(&result, ident_buf.data);
 				}
-				else if ((!((prev_ch == '(') || (prev_ch == '/'))) && (bbf_xml_is_xpath_operator(ident_buf.data)))
+				else if (!axis_seen && !colon_seen &&
+						 (!((prev_ch == '(') || (prev_ch == '/'))) &&
+						 (bbf_xml_is_xpath_operator(ident_buf.data)))
 				{
-					/* XPath operator - copy as-is */
+					/*
+					 * XPath operator - copy as-is. A QName or an axis step is
+					 * never one, even when its prefix is an operator name.
+					 */
 					appendStringInfoString(&result, ident_buf.data);
+					prev_was_operator = true;
 				}
 				else
 				{
@@ -1748,12 +1816,583 @@ bbf_xml_process_xpath_expressions(const char *xpath_pattern, const char *context
 			}
 		}
 
+		/*
+		 * A '*' that starts the expression or follows '(', ',', '|', an
+		 * operator character or an operator name is a name test, not the
+		 * multiply operator, so it is a relative step like a bare name.
+		 */
+		if (ch == '*' &&
+			(p == xpath_pattern || after_operator ||
+			 strchr("(,|+-=<>", prev_ch) != NULL))
+		{
+			appendStringInfo(&result, "%s/*", context_node_path);
+			p++;
+			continue;
+		}
+
 		/* Default: copy character as-is */
 		appendStringInfoChar(&result, ch);
 		p++;
 	}
 
 	return result.data;
+}
+
+/*
+ * A namespace prefix: its name, its position in the prolog or the namespace
+ * array, and for a namespace array binding, the URI and the XPath literal for
+ * the URI, built on first use.
+ */
+typedef struct BbfXmlPrefix
+{
+	const char *name;
+	int			len;
+	int			pos;
+	text	   *uri;
+	char	   *literal;
+} BbfXmlPrefix;
+
+/* Order prefixes by name, then by position */
+static int
+bbf_xml_prefix_cmp(const void *a, const void *b)
+{
+	const BbfXmlPrefix *x = (const BbfXmlPrefix *) a;
+	const BbfXmlPrefix *y = (const BbfXmlPrefix *) b;
+	int			c = memcmp(x->name, y->name, Min(x->len, y->len));
+
+	if (c == 0)
+		c = (x->len > y->len) - (x->len < y->len);
+	if (c == 0)
+		c = (x->pos > y->pos) - (x->pos < y->pos);
+	return c;
+}
+
+/* Order prefixes by name only, for bsearch */
+static int
+bbf_xml_prefix_name_cmp(const void *a, const void *b)
+{
+	const BbfXmlPrefix *x = (const BbfXmlPrefix *) a;
+	const BbfXmlPrefix *y = (const BbfXmlPrefix *) b;
+	int			c = memcmp(x->name, y->name, Min(x->len, y->len));
+
+	if (c == 0)
+		c = (x->len > y->len) - (x->len < y->len);
+	return c;
+}
+
+/*
+ * bbf_xml_xpath_literal
+ * An XPath 1.0 expression for the string s of length len. XPath literals have
+ * no escapes, so a string holding both quote kinds becomes a concat() of runs
+ * of '"', quoted with ', and runs of other characters, quoted with ".
+ */
+static char *
+bbf_xml_xpath_literal(const char *s, int len)
+{
+	StringInfoData buf;
+	const char *end = s + len;
+	bool		has_dq = memchr(s, '"', len) != NULL;
+	bool		has_sq = memchr(s, '\'', len) != NULL;
+
+	initStringInfo(&buf);
+	if (!has_dq || !has_sq)
+	{
+		char		quote = has_dq ? '\'' : '"';
+
+		appendStringInfo(&buf, "%c%.*s%c", quote, len, s, quote);
+		return buf.data;
+	}
+
+	appendStringInfoString(&buf, "concat(");
+	while (s < end)
+	{
+		const char *r = s;
+		bool		dq = (*s == '"');
+		char		quote = dq ? '\'' : '"';
+
+		while (r < end && (*r == '"') == dq)
+			r++;
+		if (buf.data[buf.len - 1] != '(')
+			appendStringInfoChar(&buf, ',');
+		appendStringInfo(&buf, "%c%.*s%c", quote, (int) (r - s), s, quote);
+		s = r;
+	}
+	appendStringInfoChar(&buf, ')');
+	return buf.data;
+}
+
+/*
+ * bbf_xml_rewrite_attribute_wildcards
+ * libxml2 matches every attribute for a namespace wildcard on the attribute
+ * axis (@p:*, attribute::p:*), whatever its namespace. Rewrite each such step
+ * to @*[namespace-uri()=URI], where URI is the XPath literal for the last
+ * binding of p in the namespace array, the one xpath() registers. String
+ * literals are left alone, and so is a prefix the array does not bind.
+ */
+static char *
+bbf_xml_rewrite_attribute_wildcards(const char *xpath, ArrayType *namespaces)
+{
+	StringInfoData result;
+	BbfXmlPrefix *bindings = NULL;
+	int			nbindings = 0;
+	const char *p = xpath;
+
+	if (strstr(xpath, ":*") == NULL ||
+		ARR_NDIM(namespaces) != 2 || ARR_DIMS(namespaces)[1] != 2)
+		return (char *) xpath;
+
+	initStringInfo(&result);
+
+	while (*p)
+	{
+		const char *step = NULL;
+		const char *name;
+		const char *q;
+		BbfXmlPrefix key;
+		BbfXmlPrefix *found;
+		const char *literal = NULL;
+
+		CHECK_FOR_INTERRUPTS();
+
+		if (*p == '"' || *p == '\'')
+		{
+			int			n = bbf_xml_skip_xpath_chars(p);
+
+			appendBinaryStringInfo(&result, p, n);
+			p += n;
+			continue;
+		}
+
+		if (*p == '@')
+			step = "@";
+		else if (strncmp(p, "attribute::", 11) == 0 &&
+				 (p == xpath ||
+				  !(isalnum((unsigned char) p[-1]) || p[-1] == '_' ||
+					p[-1] == '-' || p[-1] == '.' || p[-1] == ':')))
+			step = "attribute::";
+
+		if (step == NULL)
+		{
+			appendStringInfoChar(&result, *p++);
+			continue;
+		}
+
+		/* the prefix of a p:* name test */
+		name = p + strlen(step);
+		q = name;
+		if (isalpha((unsigned char) *q) || *q == '_')
+		{
+			q++;
+			while (isalnum((unsigned char) *q) || *q == '_' ||
+				   *q == '-' || *q == '.')
+				q++;
+		}
+		if (q == name || q[0] != ':' || q[1] != '*')
+		{
+			appendStringInfoString(&result, step);
+			p = name;
+			continue;
+		}
+
+		/*
+		 * On the first such step, sort the bindings by prefix and keep the
+		 * last binding of each prefix, so each step is one binary search.
+		 */
+		if (bindings == NULL)
+		{
+			Datum	   *elems;
+			bool	   *nulls;
+			int			nelems;
+			int			i;
+
+			deconstruct_array_builtin(namespaces, TEXTOID, &elems, &nulls,
+									  &nelems);
+			bindings = palloc(Max(nelems / 2, 1) * sizeof(BbfXmlPrefix));
+			for (i = 0; i + 1 < nelems; i += 2)
+			{
+				text	   *t;
+
+				if (nulls[i] || nulls[i + 1])
+					continue;
+				t = DatumGetTextPP(elems[i]);
+				bindings[nbindings].name = VARDATA_ANY(t);
+				bindings[nbindings].len = VARSIZE_ANY_EXHDR(t);
+				bindings[nbindings].pos = i;
+				bindings[nbindings].uri = DatumGetTextPP(elems[i + 1]);
+				bindings[nbindings].literal = NULL;
+				nbindings++;
+			}
+			pfree(elems);
+			pfree(nulls);
+			if (nbindings > 1)
+			{
+				int			n = 0;
+
+				qsort(bindings, nbindings, sizeof(BbfXmlPrefix),
+					  bbf_xml_prefix_cmp);
+				for (i = 0; i < nbindings; i++)
+				{
+					if (n > 0 &&
+						bbf_xml_prefix_name_cmp(&bindings[n - 1],
+												&bindings[i]) == 0)
+						bindings[n - 1] = bindings[i];
+					else
+						bindings[n++] = bindings[i];
+				}
+				nbindings = n;
+			}
+		}
+
+		key.name = name;
+		key.len = q - name;
+		found = bsearch(&key, bindings, nbindings, sizeof(BbfXmlPrefix),
+						bbf_xml_prefix_name_cmp);
+		if (found != NULL)
+		{
+			if (found->literal == NULL)
+				found->literal =
+					bbf_xml_xpath_literal(VARDATA_ANY(found->uri),
+										  VARSIZE_ANY_EXHDR(found->uri));
+			literal = found->literal;
+		}
+		else if (key.len == 3 && strncmp(name, "xml", 3) == 0)
+			literal = "\"http://www.w3.org/XML/1998/namespace\"";
+
+		if (literal == NULL)
+			appendBinaryStringInfo(&result, p, q + 2 - p);
+		else
+			appendStringInfo(&result, "%s*[namespace-uri()=%s]",
+							 step, literal);
+		p = q + 2;
+	}
+	return result.data;
+}
+
+/*
+ * bbf_xml_strip_xquery_comments
+ * Replace each XQuery comment "(: ... :)", which may nest, with one space,
+ * since XPath 1.0 has no comments. String literals are copied as they are,
+ * and an unterminated comment is left as written for libxml2 to reject.
+ */
+static char *
+bbf_xml_strip_xquery_comments(const char *s)
+{
+	StringInfoData result;
+	const char *p = s;
+
+	if (strstr(s, "(:") == NULL)
+		return (char *) s;
+
+	initStringInfo(&result);
+	while (*p)
+	{
+		CHECK_FOR_INTERRUPTS();
+
+		if (*p == '"' || *p == '\'')
+		{
+			int			n = bbf_xml_skip_xpath_chars(p);
+
+			appendBinaryStringInfo(&result, p, n);
+			p += n;
+		}
+		else if (p[0] == '(' && p[1] == ':')
+		{
+			const char *q = p + 2;
+			int			depth = 1;
+
+			while (*q && depth > 0)
+			{
+				CHECK_FOR_INTERRUPTS();
+
+				if ((q[0] == '(' && q[1] == ':') ||
+					(q[0] == ':' && q[1] == ')'))
+				{
+					depth += (q[0] == '(') ? 1 : -1;
+					q += 2;
+				}
+				else
+					q++;
+			}
+			if (depth > 0)
+			{
+				appendStringInfoString(&result, p);
+				break;
+			}
+			appendStringInfoChar(&result, ' ');
+			p = q;
+		}
+		else
+			appendStringInfoChar(&result, *p++);
+	}
+	return result.data;
+}
+
+/*
+ * bbf_xml_rewrite_doubled_quotes
+ * XQuery escapes a quote in a string literal by doubling it, which XPath 1.0
+ * does not allow. Replace each literal that holds a doubled quote with the
+ * XPath expression for its value; other literals are copied as they are. An
+ * unterminated literal is left as written for libxml2 to reject.
+ */
+static char *
+bbf_xml_rewrite_doubled_quotes(const char *s)
+{
+	StringInfoData result;
+	StringInfoData value;
+	const char *p = s;
+
+	if (strstr(s, "\"\"") == NULL && strstr(s, "''") == NULL)
+		return (char *) s;
+
+	initStringInfo(&result);
+	initStringInfo(&value);
+	while (*p)
+	{
+		const char *q;
+		char		quote;
+
+		CHECK_FOR_INTERRUPTS();
+
+		if (*p != '"' && *p != '\'')
+		{
+			appendStringInfoChar(&result, *p++);
+			continue;
+		}
+
+		quote = *p;
+		resetStringInfo(&value);
+		for (q = p + 1; *q && (*q != quote || q[1] == quote);)
+		{
+			CHECK_FOR_INTERRUPTS();
+			appendStringInfoChar(&value, *q);
+			q += (*q == quote) ? 2 : 1;
+		}
+		if (*q != quote)
+		{
+			appendStringInfoString(&result, p);
+			break;
+		}
+		if (q - p - 1 == value.len)
+			appendBinaryStringInfo(&result, p, q - p + 1);
+		else
+		{
+			char	   *lit = bbf_xml_xpath_literal(value.data, value.len);
+
+			appendStringInfoString(&result, lit);
+			pfree(lit);
+		}
+		p = q + 1;
+	}
+	pfree(value.data);
+	return result.data;
+}
+
+/*
+ * bbf_xml_take_prolog
+ * Take a leading XQuery prolog of namespace declarations
+ * (declare namespace p = "uri";) out of the query, since XPath 1.0 has none.
+ * Each binding is added to *namespaces after the ones already there, so it
+ * wins over a WITH XMLNAMESPACES binding of the same prefix, and each
+ * declaration is appended to 'prolog' unless it is NULL. A doubled quote in
+ * a URI literal stands for one quote; 'prolog' keeps the literal as written.
+ * Returns the rest of the query. Any other declaration ends the prolog and
+ * is left as written.
+ *
+ * As in T-SQL, the prolog cannot declare xmlns, and can bind xml only to the
+ * XML namespace URI and that URI only to xml. When 'check_duplicates' is set
+ * it also cannot declare a prefix twice. The first declaration that breaks
+ * one of these rules raises an error. A nodes() context node path holds the
+ * prologs of several nodes() queries, so it is taken without
+ * 'check_duplicates' and its later binding of a prefix wins.
+ */
+static const char *
+bbf_xml_take_prolog(const char *xpath, ArrayType **namespaces,
+					StringInfo prolog, const char *caller,
+					bool check_duplicates)
+{
+	static const char xml_uri[] = "http://www.w3.org/XML/1998/namespace";
+	const char *p = xpath;
+	Datum	   *elems = NULL;
+	bool	   *nulls = NULL;
+	int			nelems = 0;
+	int			nalloc = 0;
+	BbfXmlPrefix *names = NULL;
+	int			nnames = 0;
+	int			bad_pos = -1;
+	bool		bad_is_xml = false;
+	const char *bad_name = NULL;
+	int			bad_len = 0;
+
+	if (ARR_NDIM(*namespaces) != 2 || ARR_DIMS(*namespaces)[1] != 2)
+		return xpath;
+
+	for (;;)
+	{
+		const char *q = p;
+		const char *name;
+		const char *uri_text;	/* the literal's text, quotes doubled */
+		const char *uri;		/* the URI it denotes */
+		int			name_len;
+		int			uri_text_len;
+		int			uri_len;
+		char		quote;
+		bool		is_xml_prefix;
+		bool		is_xml_uri;
+
+		CHECK_FOR_INTERRUPTS();
+
+		while (isspace((unsigned char) *q))
+			q++;
+		if (strncmp(q, "declare", 7) != 0 || !isspace((unsigned char) q[7]))
+			break;
+		q += 7;
+		while (isspace((unsigned char) *q))
+			q++;
+		if (strncmp(q, "namespace", 9) != 0 || !isspace((unsigned char) q[9]))
+			break;
+		q += 9;
+		while (isspace((unsigned char) *q))
+			q++;
+		name = q;
+		if (!(isalpha((unsigned char) *q) || *q == '_'))
+			break;
+		while (isalnum((unsigned char) *q) || *q == '_' ||
+			   *q == '-' || *q == '.')
+			q++;
+		name_len = q - name;
+		while (isspace((unsigned char) *q))
+			q++;
+		if (*q != '=')
+			break;
+		q++;
+		while (isspace((unsigned char) *q))
+			q++;
+		if (*q != '"' && *q != '\'')
+			break;
+		quote = *q++;
+		uri_text = q;
+		while (*q && (*q != quote || q[1] == quote))
+			q += (*q == quote) ? 2 : 1;
+		if (*q != quote)
+			break;
+		uri_text_len = q - uri_text;
+		q++;
+		while (isspace((unsigned char) *q))
+			q++;
+		if (*q != ';')
+			break;
+		p = q + 1;
+
+		/* a doubled quote in the literal stands for one quote */
+		uri = uri_text;
+		uri_len = uri_text_len;
+		if (memchr(uri_text, quote, uri_text_len) != NULL)
+		{
+			char	   *buf = palloc(uri_text_len);
+			int			k;
+
+			uri_len = 0;
+			for (k = 0; k < uri_text_len; k++)
+			{
+				buf[uri_len++] = uri_text[k];
+				if (uri_text[k] == quote)
+					k++;
+			}
+			uri = buf;
+		}
+
+		/* the first declaration of xmlns, or of xml or its URI elsewhere */
+		is_xml_prefix = (name_len == 3 && strncmp(name, "xml", 3) == 0);
+		is_xml_uri = (uri_len == sizeof(xml_uri) - 1 &&
+					  strncmp(uri, xml_uri, uri_len) == 0);
+		if (bad_pos < 0 &&
+			((name_len == 5 && strncmp(name, "xmlns", 5) == 0) ||
+			 is_xml_prefix != is_xml_uri))
+		{
+			bad_pos = nnames;
+			bad_is_xml = (is_xml_prefix || is_xml_uri);
+			bad_name = name;
+			bad_len = name_len;
+		}
+
+		/* grow the buffers geometrically; the array is copied in once */
+		if (elems == NULL)
+		{
+			deconstruct_array_builtin(*namespaces, TEXTOID, &elems, &nulls,
+									  &nelems);
+			nalloc = nelems;
+			names = palloc(Max(nalloc / 2, 4) * sizeof(BbfXmlPrefix));
+		}
+		if (nelems + 2 > nalloc)
+		{
+			nalloc = Max(nalloc * 2, nelems + 2);
+			elems = repalloc(elems, nalloc * sizeof(Datum));
+			nulls = repalloc(nulls, nalloc * sizeof(bool));
+			names = repalloc(names,
+							 Max(nalloc / 2, 4) * sizeof(BbfXmlPrefix));
+		}
+		elems[nelems] =
+			PointerGetDatum(cstring_to_text_with_len(name, name_len));
+		elems[nelems + 1] =
+			PointerGetDatum(cstring_to_text_with_len(uri, uri_len));
+		nulls[nelems] = false;
+		nulls[nelems + 1] = false;
+		nelems += 2;
+		names[nnames].name = name;
+		names[nnames].len = name_len;
+		names[nnames].pos = nnames;
+		nnames++;
+		if (prolog != NULL)
+			appendStringInfo(prolog, "declare namespace %.*s=%c%.*s%c;",
+							 name_len, name, quote, uri_text_len, uri_text,
+							 quote);
+	}
+
+	if (nnames == 0)
+		return p;
+
+	/* the first declaration that repeats an earlier prefix */
+	if (check_duplicates && nnames > 1)
+	{
+		int			i;
+
+		qsort(names, nnames, sizeof(BbfXmlPrefix), bbf_xml_prefix_cmp);
+		for (i = 1; i < nnames; i++)
+		{
+			if (names[i].len == names[i - 1].len &&
+				memcmp(names[i].name, names[i - 1].name, names[i].len) == 0 &&
+				(bad_pos < 0 || names[i].pos < bad_pos))
+			{
+				bad_pos = names[i].pos;
+				bad_is_xml = false;
+				bad_name = names[i].name;
+				bad_len = names[i].len;
+			}
+		}
+	}
+	pfree(names);
+
+	if (bad_pos >= 0 && bad_is_xml)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("XQuery [%s()]: Namespace prefix 'xml' can only be associated with the URI '%s' and this URI cannot be used with other prefixes.",
+						caller, xml_uri)));
+	if (bad_pos >= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("XQuery [%s()]: Attempt to redefine namespace prefix '%.*s'",
+						caller, bad_len, bad_name)));
+
+	{
+		int			dims[2] = {nelems / 2, 2};
+		int			lbs[2] = {1, 1};
+
+		*namespaces = construct_md_array(elems, nulls, 2, dims, lbs, TEXTOID,
+										 -1, false, TYPALIGN_INT);
+	}
+	pfree(elems);
+	pfree(nulls);
+	return p;
 }
 
 /*
@@ -1807,6 +2446,8 @@ bbf_xml_xpath_with_context_node(const char *xpath_pattern, const char *context_n
  * bbf_xml_handle_context_node
  * This must be called by all XML method functions:
  * - handle the magic tag added by nodes()
+ * - take the namespace prologs of the context node path and of the query
+ *   into *namespaces, and append them to 'prolog' unless it is NULL
  * - compose the final XPath query to be used by the method
  */
 static void
@@ -1815,12 +2456,22 @@ bbf_xml_handle_context_node(const char *xml_str,
 							char **pcontext_node_path,
 							char **pbare_xml_str,
 							char **pfinal_xpath,
+							ArrayType **namespaces,
+							StringInfo prolog,
 							const char *caller)
 {
 	char *xpath_cstr = text_to_cstring(xpath_expr);
 
 	/* Extract and remove magic nodes() tag */
 	bbf_xml_split_magic_tag(xml_str, pcontext_node_path, pbare_xml_str);
+
+	/*
+	 * A nodes() context node path carries the prologs of the nodes() queries,
+	 * where nested nodes() may repeat a prefix
+	 */
+	*pcontext_node_path = (char *) bbf_xml_take_prolog(*pcontext_node_path,
+													   namespaces, prolog,
+													   caller, false);
 
 	/* Sanity check: special tag should not occur in the user-specified XML doc */
 	if (strstr(*pbare_xml_str, BBF_XMLNODES_MAGIC_TAG_OPEN) != NULL)
@@ -1855,11 +2506,91 @@ bbf_xml_handle_context_node(const char *xml_str,
 						BBF_XMLNODES_MAGIC_TAG_NAME)));
 	}
 
+	xpath_cstr = bbf_xml_strip_xquery_comments(xpath_cstr);
+	xpath_cstr = (char *) bbf_xml_take_prolog(xpath_cstr, namespaces, prolog,
+											  caller, true);
+	xpath_cstr = bbf_xml_rewrite_doubled_quotes(xpath_cstr);
+
 	/* Process method query and context node query into the final XPath query */
 	*pfinal_xpath = bbf_xml_patch_xpath_dot_bracket((char *)bbf_xml_xpath_with_context_node(xpath_cstr, *pcontext_node_path));
+	*pfinal_xpath = bbf_xml_rewrite_attribute_wildcards(*pfinal_xpath,
+														*namespaces);
 
 	/* Check final XPath query for specific error cases */
 	bbf_xml_check_final_xpath_query((const char *)*pfinal_xpath, caller);
+}
+
+/*
+ * The namespace arrays of one XML method call site, kept in fn_extra and
+ * allocated in fn_mcxt so they live as long as the FmgrInfo.
+ */
+typedef struct BbfXmlNamespaceCache
+{
+	ArrayType  *predefined;		/* the predefined prefixes only */
+	ArrayType  *clause;			/* copy of the cached clause, or NULL */
+	ArrayType  *merged;			/* predefined prefixes, then 'clause' */
+} BbfXmlNamespaceCache;
+
+/*
+ * bbf_xml_merge_namespaces
+ * A new namespace array holding the prefixes that T-SQL's XQuery predefines,
+ * xs, xsi, fn, xdt and sql (libxml2 binds xml itself), followed by the
+ * bindings of 'clause', a 2-D text array or NULL. xpath() keeps the last
+ * registration of a prefix, so the clause can rebind any of them.
+ */
+static ArrayType *
+bbf_xml_merge_namespaces(ArrayType *clause)
+{
+	static const char *const predefined[] = {
+		"xs", "http://www.w3.org/2001/XMLSchema",
+		"xsi", "http://www.w3.org/2001/XMLSchema-instance",
+		"fn", "http://www.w3.org/2004/07/xpath-functions",
+		"xdt", "http://www.w3.org/2004/07/xpath-datatypes",
+		"sql", "urn:schemas-microsoft-com:xml-sql"
+	};
+	int			npredef = lengthof(predefined);
+	Datum	   *clause_elems = NULL;
+	bool	   *clause_nulls = NULL;
+	int			nclause = 0;
+	Datum	   *elems;
+	bool	   *nulls;
+	int			dims[2];
+	int			lbs[2] = {1, 1};
+	int			i;
+	ArrayType  *result;
+
+	if (clause != NULL)
+		deconstruct_array_builtin(clause, TEXTOID, &clause_elems, &clause_nulls,
+								  &nclause);
+
+	elems = palloc((npredef + nclause) * sizeof(Datum));
+	nulls = palloc((npredef + nclause) * sizeof(bool));
+	for (i = 0; i < npredef; i++)
+	{
+		elems[i] = CStringGetTextDatum(predefined[i]);
+		nulls[i] = false;
+	}
+	for (i = 0; i < nclause; i++)
+	{
+		elems[npredef + i] = clause_elems[i];
+		nulls[npredef + i] = clause_nulls[i];
+	}
+	dims[0] = (npredef + nclause) / 2;
+	dims[1] = 2;
+	result = construct_md_array(elems, nulls, 2, dims, lbs, TEXTOID, -1, false,
+								TYPALIGN_INT);
+
+	/* the array holds copies, and an uncached call runs once per row */
+	for (i = 0; i < npredef; i++)
+		pfree(DatumGetPointer(elems[i]));
+	pfree(elems);
+	pfree(nulls);
+	if (clause_elems != NULL)
+	{
+		pfree(clause_elems);
+		pfree(clause_nulls);
+	}
+	return result;
 }
 
 /*
@@ -1868,18 +2599,81 @@ bbf_xml_handle_context_node(const char *xml_str,
  * The namespace-aware SQL overloads pass a text[][] namespace array (built by
  * build_xmlnamespace_context in the ANTLR rewrite) as the trailing
  * argument at position ns_argnum. The base (non-namespace) overloads have
- * fewer arguments, in which case an empty array is returned so PG's
- * xpath_internal treats the query as having no declared namespaces.
+ * fewer arguments, in which case only the predefined prefixes are returned.
  *
  * The array has the shape expected by PG's xpath(): {{prefix,uri},...}, with
- * an empty prefix ("") denoting the DEFAULT namespace.
+ * an empty prefix ("") denoting the DEFAULT namespace. The predefined
+ * prefixes come first (see bbf_xml_merge_namespaces). An argument of any
+ * other shape is returned as it is, for xpath() to reject.
+ *
+ * The predefined-only array, and the merged array of a clause argument that
+ * stays the same during the query, are cached in fn_extra. A stable argument
+ * can still change between evaluations of a PL expression that keeps its
+ * state, so a cached clause is used only while the argument matches it byte
+ * for byte. Callers must not change or free the returned array.
  */
 static ArrayType *
 bbf_xml_get_namespaces(FunctionCallInfo fcinfo, int ns_argnum)
 {
+	FmgrInfo   *flinfo = fcinfo->flinfo;
+	BbfXmlNamespaceCache *cache;
+	ArrayType  *clause = NULL;
+	ArrayType  *merged;
+	MemoryContext oldcxt;
+
 	if (PG_NARGS() > ns_argnum && !PG_ARGISNULL(ns_argnum))
-		return PG_GETARG_ARRAYTYPE_P(ns_argnum);
-	return construct_empty_array(TEXTOID);
+	{
+		clause = PG_GETARG_ARRAYTYPE_P(ns_argnum);
+		if (ARR_NDIM(clause) != 2 || ARR_DIMS(clause)[1] != 2)
+			return clause;
+	}
+
+	if (flinfo == NULL)
+	{
+		merged = bbf_xml_merge_namespaces(clause);
+		if (clause != NULL)
+			PG_FREE_IF_COPY(clause, ns_argnum);
+		return merged;
+	}
+
+	cache = (BbfXmlNamespaceCache *) flinfo->fn_extra;
+	if (cache == NULL)
+	{
+		oldcxt = MemoryContextSwitchTo(flinfo->fn_mcxt);
+		cache = palloc0(sizeof(*cache));
+		cache->predefined = bbf_xml_merge_namespaces(NULL);
+		MemoryContextSwitchTo(oldcxt);
+		flinfo->fn_extra = cache;
+	}
+
+	if (clause == NULL)
+		return cache->predefined;
+
+	if (cache->clause != NULL &&
+		VARSIZE(cache->clause) == VARSIZE(clause) &&
+		memcmp(cache->clause, clause, VARSIZE(clause)) == 0)
+	{
+		PG_FREE_IF_COPY(clause, ns_argnum);
+		return cache->merged;
+	}
+
+	if (cache->clause == NULL && get_fn_expr_arg_stable(flinfo, ns_argnum))
+	{
+		ArrayType  *copy;
+
+		oldcxt = MemoryContextSwitchTo(flinfo->fn_mcxt);
+		cache->merged = bbf_xml_merge_namespaces(clause);
+		copy = palloc(VARSIZE(clause));
+		memcpy(copy, clause, VARSIZE(clause));
+		MemoryContextSwitchTo(oldcxt);
+		cache->clause = copy;
+		PG_FREE_IF_COPY(clause, ns_argnum);
+		return cache->merged;
+	}
+
+	merged = bbf_xml_merge_namespaces(clause);
+	PG_FREE_IF_COPY(clause, ns_argnum);
+	return merged;
 }
 
 /*
@@ -1927,6 +2721,8 @@ bbf_xmlquery(PG_FUNCTION_ARGS)
 								&context_node_path,
 								&bare_xml_str,
 								&final_xpath,
+								&namespaces,
+								NULL,
 								"query");
 
 	/* Handle empty input */
@@ -2012,6 +2808,8 @@ bbf_xmlvalue(PG_FUNCTION_ARGS)
 								&context_node_path,
 								&bare_xml_str,
 								&final_xpath,
+								&namespaces,
+								NULL,
 								"value");
 
 	/* Handle empty input */
@@ -2099,6 +2897,8 @@ bbf_xmlexist(PG_FUNCTION_ARGS)
 								&context_node_path,
 								&bare_xml_str,
 								&final_xpath,
+								&namespaces,
+								NULL,
 								"exist");
 
 	/* Handle empty input */
@@ -2142,7 +2942,8 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 	text       *xpath_text_arg;
 	xmltype    *xml_data_arg;
 	ArrayType  *namespaces = bbf_xml_get_namespaces(fcinfo, 2);
-	char	   *prefix;		/* "<magic_tag>(<encoded_xpath>)[" */
+	StringInfoData prolog;
+	char	   *prefix;			/* "<magic_tag><prolog>(<encoded_xpath>)[" */
 	char	   *suffix;		/* "]</magic_tag><bare_xml>" */
 	int			prefix_len;
 	int			suffix_len;
@@ -2181,11 +2982,14 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 	xml_str = text_to_cstring(DatumGetTextPP(xml_datum));
 
 	/* Handle the context node path, if present */
+	initStringInfo(&prolog);
 	bbf_xml_handle_context_node(xml_str,
 								xpath_expr,
 								&context_node_path,
 								&bare_xml_str,
 								&final_xpath,
+								&namespaces,
+								&prolog,
 								"nodes");
 
 	/* Handle empty input */
@@ -2212,10 +3016,12 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 	/*
 	 * Build result set: each row is magic_tag + original XML doc
 	 * Each row has the format:
-	 *   <magic_tag>(<context_node_path>)[<i>]</magic_tag><xml_doc>
-	 * Except for the index value, the magic tag is loop-invariant
+	 * <magic_tag><prolog>(<context_node_path>)[<i>]</magic_tag><xml_doc>
+	 * where <prolog> holds the namespace declarations the context node path
+	 * needs. Except for the index value, the magic tag is loop-invariant
 	 */
-	prefix = psprintf("%s(%s)[", BBF_XMLNODES_MAGIC_TAG_OPEN, encoded_xpath);
+	prefix = psprintf("%s%s(%s)[", BBF_XMLNODES_MAGIC_TAG_OPEN,
+					  bbf_xml_encode_chars(prolog.data), encoded_xpath);
 	suffix = psprintf("]%s%s", BBF_XMLNODES_MAGIC_TAG_CLOSE, bare_xml_str);
 	prefix_len = strlen(prefix);
 	suffix_len = strlen(suffix);

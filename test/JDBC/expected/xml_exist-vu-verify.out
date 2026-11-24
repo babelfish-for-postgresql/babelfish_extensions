@@ -370,11 +370,9 @@ bit#!#bit#!#bit
 DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
 SELECT @xml.exist('(//ns:data)[1]')
 GO
-~~START~~
-bit
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: could not create XPath object)~~
+~~ERROR (Message: XQuery [exist()]: The name "ns" does not denote a namespace.)~~
 
 
 DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
@@ -389,11 +387,9 @@ bit
 DECLARE @xml XML = '<root xmlns:ns="http://example.com"><child><ns:data>Hello</ns:data><![CDATA[<ns:text>World</ns:text>]]><attr ns:attr="value"/></child></root>';
 SELECT @xml.exist('(//child/@ns:attr)[1]');
 GO
-~~START~~
-bit
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: could not create XPath object)~~
+~~ERROR (Message: XQuery [exist()]: The name "ns" does not denote a namespace.)~~
 
 
 -- Test with XML documents containing invalid characters
