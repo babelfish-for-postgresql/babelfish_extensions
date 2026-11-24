@@ -62,7 +62,6 @@ static bool handle_rename(RenameStmt *rename_stmt);
 static bool handle_dropdb(DropdbStmt *dropdb_stmt);
 
 static char *get_role_name(RoleSpec *role);
-static bool have_createdb_privilege(void);
 char	   *get_rolespec_name_internal(const RoleSpec *role, bool missing_ok);
 
 /*
