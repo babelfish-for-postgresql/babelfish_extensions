@@ -1226,28 +1226,6 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 }
 
 /*
- * Check if current user has create db privileges
- */
-static bool
-have_createdb_privilege(void)
-{
-	bool		result = false;
-	HeapTuple	utup;
-
-	/* Superusers can always do everything */
-	if (superuser())
-		return true;
-
-	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(GetUserId()));
-	if (HeapTupleIsValid(utup))
-	{
-		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreatedb;
-		ReleaseSysCache(utup);
-	}
-	return result;
-}
-
-/*
  *  check_babelfish_renamedb_restrictions
  *
  *  Implements following one additional limitation to rename database stmt
