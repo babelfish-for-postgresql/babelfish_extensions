@@ -794,13 +794,12 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						memcpy(&len, &message->data[bcpOffset], sizeof(uint32_t));
 						bcpOffset += sizeof(uint32_t);
 						request->currentBatchSize += sizeof(uint32_t);
-						if (len == 0)	/* null */
-						{
-							rowData->isNull[i] = true;
-							i++;
-							continue;
-						}
 
+						/*
+						 * NULL is signalled by a zero-length text pointer
+						 * (handled above).  A text pointer followed by a data
+						 * length of 0 is an empty value, not NULL.
+						 */
 						CheckForInvalidLength(len, request, i);
 
 						CheckMessageHasEnoughBytesToReadRows(&message, len);
