@@ -1620,6 +1620,20 @@ free_exec_codes(ExecCodes *exec_codes)
  *                         Helper Functions
  **************************************************************************************/
 
+/*
+ * Discard a portal that exists only to carry result-set parameters to a
+ * DestRemote receiver.  Such a portal is never defined or started, so it is
+ * still PORTAL_NEW, and PortalDrop() refuses to drop a portal in that state.
+ * Mark it failed first, which is the transition AtAbort_Portals() applies to a
+ * portal caught mid-setup for exactly this reason.
+ */
+static void
+drop_unstarted_portal(Portal portal)
+{
+	MarkPortalFailed(portal);
+	PortalDrop(portal, false);
+}
+
 static
 void
 process_explain(PLtsql_execstate *estate)
@@ -1677,7 +1691,7 @@ process_explain(PLtsql_execstate *estate)
 	end_tup_output(tstate);
 
 	receiver->rDestroy(receiver);
-	SPI_cursor_close(portal);
+	drop_unstarted_portal(portal);
 
 	/* Let the protocol plugin know that we have finished execution */
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->stmt_end)
@@ -1743,7 +1757,7 @@ process_explain_analyze(PLtsql_execstate *estate)
 			end_tup_output(tstate);
 
 			receiver->rDestroy(receiver);
-			SPI_cursor_close(portal);
+			drop_unstarted_portal(portal);
 
 			/* Let the protocol plugin know that we have finished execution */
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->stmt_end)

@@ -127,6 +127,7 @@ static bool pltsql_detect_numeric_overflow(int weight, int dscale, int first_blo
 static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray);
 static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
+static XLogRecPtr pltsql_GetNextAttributeVersion(char relpersistence);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
 
 /*****************************************
@@ -179,6 +180,7 @@ static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
+static GetNextAttributeVersion_hook_type prev_GetNextAttributeVersion_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
@@ -279,6 +281,9 @@ InstallExtendedHooks(void)
 	prev_GetNewObjectId_hook = GetNewObjectId_hook;
 	GetNewObjectId_hook = pltsql_GetNewObjectId;
 
+	prev_GetNextAttributeVersion_hook = GetNextAttributeVersion_hook;
+	GetNextAttributeVersion_hook = pltsql_GetNextAttributeVersion;
+
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
@@ -372,6 +377,7 @@ UninstallExtendedHooks(void)
 	ExecutorFinish_hook = prev_ExecutorFinish;
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
+	GetNextAttributeVersion_hook = prev_GetNextAttributeVersion_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
@@ -415,6 +421,43 @@ pltsql_GetNewObjectId(VariableCache variableCache)
 
 	ShmemVariableCache->nextOid = minOid + 1;
 	ShmemVariableCache->oidCount = 0;
+}
+
+/*
+ * Supply the attribute version for a T-SQL temp table or table variable.
+ *
+ * The engine's own source cannot serve these relations on either node type.
+ * On a read replica it is not available at all: no LSN is allocated there, so
+ * asking for one aborts the backend. On a writer it is available but does not
+ * advance for them, because their catalog rows live in session memory and are
+ * never WAL-logged; two temp DDLs with no WAL in between would be handed the
+ * same version and fail the monotonicity check.
+ *
+ * Such a relation, its rowtype and every datum of that rowtype belong to one
+ * session and die with it. So a counter private to the backend gives all the
+ * guarantees versions need: it never repeats, it only grows (a rollback does
+ * not reset it, which is what keeps a datum left over from a dropped relation
+ * that reused a rowtype OID detectable), and its values are never compared
+ * with versions from another backend.
+ *
+ * Any other relation is the engine's to version, so decline those.
+ *
+ * Note (REL2_X_DEV backport): the source branch gates this on
+ * IsTsqlTempTable(relpersistence), which does not exist on this major. A
+ * T-SQL temp table or table variable is created with RELPERSISTENCE_TEMP here,
+ * and a temp relation's datums are always session-private, so gating on
+ * RELPERSISTENCE_TEMP gives the same result for the relations this hook must
+ * serve and declines every WAL-logged relation the engine can version itself.
+ */
+static XLogRecPtr
+pltsql_GetNextAttributeVersion(char relpersistence)
+{
+	static XLogRecPtr tsql_temp_attversion = InvalidXLogRecPtr;
+
+	if (relpersistence != RELPERSISTENCE_TEMP)
+		return InvalidXLogRecPtr;
+
+	return ++tsql_temp_attversion;
 }
 
 static void
