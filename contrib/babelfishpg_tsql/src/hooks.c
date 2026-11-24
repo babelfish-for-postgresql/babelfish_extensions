@@ -270,6 +270,7 @@ bool TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static Oid  pltsql_GetNewTempObjectId(void);
 static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn);
+static XLogRecPtr pltsql_GetNextAttributeVersion(char relpersistence);
 static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
 static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
@@ -313,6 +314,7 @@ static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static GetNewTempObjectId_hook_type prev_GetNewTempObjectId_hook = NULL;
 static GetNewTempOidWithIndex_hook_type prev_GetNewTempOidWithIndex_hook = NULL;
+static GetNextAttributeVersion_hook_type prev_GetNextAttributeVersion_hook = NULL;
 static pltsql_is_local_only_inval_msg_hook_type prev_pltsql_is_local_only_inval_msg_hook = NULL;
 static pltsql_get_tsql_enr_from_oid_hook_type prev_pltsql_get_tsql_enr_from_oid_hook = NULL;
 static find_object_in_enr_hook_type prev_find_object_in_enr_hook = NULL;
@@ -454,6 +456,9 @@ InstallExtendedHooks(void)
 
 	prev_GetNewTempOidWithIndex_hook = GetNewTempOidWithIndex_hook;
 	GetNewTempOidWithIndex_hook = pltsql_GetNewTempOidWithIndex;
+
+	prev_GetNextAttributeVersion_hook = GetNextAttributeVersion_hook;
+	GetNextAttributeVersion_hook = pltsql_GetNextAttributeVersion;
 
 	prev_pltsql_is_local_only_inval_msg_hook = pltsql_is_local_only_inval_msg_hook;
 	pltsql_is_local_only_inval_msg_hook = pltsql_is_local_only_inval_msg;
@@ -650,6 +655,7 @@ UninstallExtendedHooks(void)
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	GetNewTempObjectId_hook = prev_GetNewTempObjectId_hook;
 	GetNewTempOidWithIndex_hook = prev_GetNewTempOidWithIndex_hook;
+	GetNextAttributeVersion_hook = prev_GetNextAttributeVersion_hook;
 	find_object_in_enr_hook = prev_find_object_in_enr_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
@@ -979,6 +985,36 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 	} while (collides);
 
 	return newOid;
+}
+
+/*
+ * Supply the attribute version for a T-SQL temp table or table variable.
+ *
+ * The engine's own source cannot serve these relations on either node type.
+ * On a read replica it is not available at all: no LSN is allocated there, so
+ * asking for one aborts the backend. On a writer it is available but does not
+ * advance for them, because their catalog rows live in session memory and are
+ * never WAL-logged; two temp DDLs with no WAL in between would be handed the
+ * same version and fail the monotonicity check.
+ *
+ * Such a relation, its rowtype and every datum of that rowtype belong to one
+ * session and die with it. So a counter private to the backend gives all the
+ * guarantees versions need: it never repeats, it only grows (a rollback does
+ * not reset it, which is what keeps a datum left over from a dropped relation
+ * that reused a rowtype OID detectable), and its values are never compared
+ * with versions from another backend.
+ *
+ * Any other relation is the engine's to version, so decline those.
+ */
+static XLogRecPtr
+pltsql_GetNextAttributeVersion(char relpersistence)
+{
+	static XLogRecPtr tsql_temp_attversion = InvalidXLogRecPtr;
+
+	if (!IsTsqlTempTable(relpersistence))
+		return InvalidXLogRecPtr;
+
+	return ++tsql_temp_attversion;
 }
 
 static AclResult

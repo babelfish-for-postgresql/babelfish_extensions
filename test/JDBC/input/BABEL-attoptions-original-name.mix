@@ -1,0 +1,129 @@
+-- Regression: the original T-SQL column name must be read from
+-- pg_attribute.attoptions BY NAME, not positionally.
+--
+-- Attribute versioning stores a reserved 'pg_attver=<lsn>' entry as attoptions[1]
+-- on every column, so the old 'split_part(attoptions[1], ...)' read returned the
+-- version number instead of the column name.
+--
+-- Two things no other sp_* test covers:
+--   1. A column name containing '=', which split_part truncates even if it were
+--      reading the right array element.
+--   2. sp_column_privileges @column_name, which FILTERS on the same expression -
+--      a broken read there returns zero rows rather than a visibly wrong value.
+
+-- tsql
+create table t_attopt_pk ([Col=A] int, primary key([Col=A]))
+go
+
+create table t_attopt_fk ([Col=B] int, foreign key([Col=B]) references t_attopt_pk([Col=A]))
+go
+
+-- plain mixed case, for contrast with the '=' cases
+create table t_attopt_mc (cOlUmN_x int, primary key(cOlUmN_x))
+go
+
+-- Plain lower-case and mixed-case columns in one table. Before the fix every
+-- column of a table created after the update returned the version number,
+-- including plain lower-case ones whose stored name matches attname, so both
+-- shapes have to be asserted and not just the mixed-case ones.
+create table t_attopt_mixed (plaincol int, MiXeDcOl int, primary key(plaincol))
+go
+
+create table t_attopt_mixed_fk (plaincol int,
+    foreign key(plaincol) references t_attopt_mixed(plaincol))
+go
+
+-- sp_fkeys: PKCOLUMN_NAME / FKCOLUMN_NAME must be Col=A / Col=B
+exec sp_fkeys @pktable_name = 't_attopt_pk'
+go
+
+-- sp_special_columns: COLUMN_NAME must be Col=A
+exec sp_special_columns @table_name = 't_attopt_pk'
+go
+
+exec sp_special_columns @table_name = 't_attopt_mc'
+go
+
+-- sp_column_privileges: COLUMN_NAME must be Col=A
+exec sp_column_privileges @table_name = 't_attopt_pk'
+go
+
+-- the filter path: must return the rows for Col=A, not an empty result set
+exec sp_column_privileges @table_name = 't_attopt_pk', @column_name = 'Col=A'
+go
+
+exec sp_column_privileges @table_name = 't_attopt_mc', @column_name = 'cOlUmN_x'
+go
+
+-- Plain lower-case alongside mixed case, through all three procedures.
+-- sp_fkeys carries a plain name in both PKCOLUMN_NAME and FKCOLUMN_NAME.
+exec sp_fkeys @pktable_name = 't_attopt_mixed'
+go
+
+exec sp_special_columns @table_name = 't_attopt_mixed'
+go
+
+-- both columns in one result set: plaincol and MiXeDcOl
+exec sp_column_privileges @table_name = 't_attopt_mixed'
+go
+
+exec sp_column_privileges @table_name = 't_attopt_mixed', @column_name = 'plaincol'
+go
+
+exec sp_column_privileges @table_name = 't_attopt_mixed', @column_name = 'MiXeDcOl'
+go
+
+-- The identifier shapes below were asserted via raw attoptions in BABEL-2371.
+-- That test runs through the T-SQL parser, which cannot express a prefix-filtered
+-- array lookup, so the value assertion lives here instead and BABEL-2371 keeps
+-- only its attname assertions. DDL copied verbatim from BABEL-2371.
+SET QUOTED_IDENTIFIER ON;
+go
+
+-- non-reserved keyword in PG
+create table t_attopt_kw (LeVeL int)
+go
+
+-- delimited identifiers, including quotes and punctuation
+create table t_attopt_delim ([Abcd] int, "Efgh" int, Ijhl int, [K)@m($[^&] int, "x'AbC""e" int, """""""" int)
+go
+
+CREATE TYPE ty_attopt_tt as table ("a""B""c" int)
+go
+
+SET QUOTED_IDENTIFIER OFF; -- default
+go
+
+-- psql
+-- The stored option itself, projected by name so the per-run LSN in pg_attver
+-- does not leak into the expected output.
+SELECT c.relname, a.attname,
+       (SELECT pg_catalog.substring(opt, pg_catalog.length('bbf_original_name=') + 1)
+        FROM pg_catalog.unnest(a.attoptions) opt
+        WHERE opt LIKE 'bbf_original_name=%') AS bbf_original_name
+FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a
+WHERE c.oid = a.attrelid
+  AND c.relname IN ('t_attopt_pk', 't_attopt_fk', 't_attopt_mc',
+                    't_attopt_mixed', 't_attopt_mixed_fk',
+                    't_attopt_kw', 't_attopt_delim', 'ty_attopt_tt')
+  AND a.attnum > 0 AND NOT a.attisdropped
+ORDER BY c.relname, a.attnum;
+GO
+
+-- tsql
+drop type ty_attopt_tt
+go
+drop table t_attopt_delim
+go
+drop table t_attopt_kw
+go
+drop table t_attopt_mixed_fk
+go
+drop table t_attopt_mixed
+go
+drop table t_attopt_fk
+go
+drop table t_attopt_pk
+go
+drop table t_attopt_mc
+go
