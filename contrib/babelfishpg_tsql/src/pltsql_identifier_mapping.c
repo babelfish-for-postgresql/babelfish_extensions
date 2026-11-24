@@ -741,7 +741,7 @@ build_set_option_cmd(AlterTableType subtype, const char *optname, const char *op
  * Callers must release any reference on relid first; AlterTable() runs
  * CheckTableNotInUse().
  */
-void
+static void
 bbf_store_original_name_options(Oid relid, List *cmds)
 {
 	AlterTableStmt *atstmt;
@@ -774,6 +774,81 @@ bbf_store_original_name_options(Oid relid, List *cmds)
 
 	ProcessUtility(wrapper, "(internal bbf original-name option)", false,
 				   PROCESS_UTILITY_SUBCOMMAND, NULL, NULL, None_Receiver, NULL);
+}
+
+/*
+ * exec_bbf_original_name_stamp
+ *
+ * Run the reserved original-name option commands on relid as its owner. ALTER
+ * TABLE ... SET needs ownership, and Babelfish makes the schema owner own new
+ * objects (see pltsql_get_object_owner).
+ *
+ * This switches to the owner, so only the reserved original-name options are
+ * accepted: bbf_original_rel_name as a reloption and bbf_original_name as an
+ * attoption. Anything else is an internal error.
+ */
+void
+exec_bbf_original_name_stamp(Oid relid, List *cmds)
+{
+	Oid			save_userid;
+	int			save_sec_context;
+	Oid			relowner;
+	HeapTuple	tup;
+	ListCell   *lc;
+
+	if (cmds == NIL || !OidIsValid(relid))
+		return;
+
+	/* Validate every command before switching user. */
+	foreach(lc, cmds)
+	{
+		AlterTableCmd *cmd = lfirst_node(AlterTableCmd, lc);
+		const char *allowed;
+		ListCell   *dc;
+
+		if (cmd->subtype == AT_SetRelOptions)
+			allowed = ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
+		else if (cmd->subtype == AT_SetOptions)
+			allowed = ATTOPTION_BBF_ORIGINAL_NAME;
+		else
+			elog(ERROR, "unexpected subcommand type %d for original-name option",
+				 (int) cmd->subtype);
+
+		if (cmd->def == NULL)
+			elog(ERROR, "missing original-name option");
+
+		foreach(dc, castNode(List, cmd->def))
+		{
+			DefElem    *def = lfirst_node(DefElem, dc);
+
+			if (def->defnamespace != NULL || strcmp(def->defname, allowed) != 0)
+				elog(ERROR, "unexpected option \"%s\" for original-name option",
+					 def->defname);
+		}
+	}
+
+	tup = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for relation %u", relid);
+	relowner = ((Form_pg_class) GETSTRUCT(tup))->relowner;
+	ReleaseSysCache(tup);
+
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	PG_TRY();
+	{
+		if (relowner != save_userid)
+			SetUserIdAndSecContext(relowner,
+								   save_sec_context |
+								   SECURITY_LOCAL_USERID_CHANGE |
+								   SECURITY_RESTRICTED_OPERATION);
+
+		bbf_store_original_name_options(relid, cmds);
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
 }
 
 /*
@@ -899,7 +974,7 @@ store_view_original_name(ViewStmt *stmt, const char *queryString)
 			AlterTableCmd *cmd = build_set_option_cmd(AT_SetRelOptions,
 													  ATTOPTION_BBF_ORIGINAL_TABLE_NAME,
 													  original_name);
-			bbf_store_original_name_options(viewOid, list_make1(cmd));
+			exec_bbf_original_name_stamp(viewOid, list_make1(cmd));
 			CommandCounterIncrement();
 		}
 	}
@@ -1248,7 +1323,7 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString, int co
 		relation_close(rel, AccessShareLock);
 		if (explicit_cmds != NIL)
 		{
-			bbf_store_original_name_options(viewOid, explicit_cmds);
+			exec_bbf_original_name_stamp(viewOid, explicit_cmds);
 			CommandCounterIncrement();
 		}
 		return;
@@ -1302,7 +1377,7 @@ store_view_column_original_names(ViewStmt *stmt, const char *queryString, int co
 
 	if (cmds != NIL)
 	{
-		bbf_store_original_name_options(viewOid, cmds);
+		exec_bbf_original_name_stamp(viewOid, cmds);
 		CommandCounterIncrement();
 	}
 }
