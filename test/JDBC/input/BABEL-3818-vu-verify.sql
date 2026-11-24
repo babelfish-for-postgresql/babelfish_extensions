@@ -15,7 +15,7 @@ alter table cities alter region drop default defRegion
 GO
 
 -- Ensure alter table alter column: collate, not null, and null
--- still throw unsupported feature error
+-- are accepted; an unknown collation name throws an error
 
 alter table cities alter column region varchar(25) collate test
 go

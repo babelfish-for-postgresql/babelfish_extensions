@@ -695,3 +695,4 @@ forxml-namespaces-before-18_6
 xml-methods-namespaces-before-18_6
 fk-cascade-trigger
 exec_tvf_named_args
+alter-table-alter-column-collate

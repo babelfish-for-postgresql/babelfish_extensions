@@ -782,16 +782,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_table(TSqlParser::Al
 	if (ctx->FILESTREAM_ON())
 		handle_storage_partition(ctx->storage_partition_clause());
 
-	if (ctx->COLUMN()) // ALTER TABLE ... ALTER COLUMN
-	{
-		auto cdctx = ctx->column_definition();
-		if(cdctx)
-		{
-			if (!cdctx->collation().empty())
-				handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_COLLATE, "COLLATE in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
-		}
-	}
-
 	if (ctx->ADD() && ctx->WITH())
 		handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_CONSTRAINT_NO_CHECK_ADD, "ALTER TABLE WITH [NO]CHECK ADD", &st_escape_hatch_nocheck_add_constraint, getLineAndPos(ctx->ADD()));
 
