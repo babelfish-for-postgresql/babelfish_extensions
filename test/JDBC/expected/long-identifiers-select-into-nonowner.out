@@ -125,14 +125,15 @@ li_si_nonowner_src#!#master_dbo#!#<NULL>
 ~~END~~
 
 
-select a.attname, a.attoptions
+select a.attname,
+       (select o from unnest(a.attoptions) o where o like 'bbf_original_name=%') as original_name
 from pg_attribute a
 where a.attrelid = 'master_dbo.li_si_nonowner_mixed'::regclass and a.attnum > 0
 order by a.attnum;
 go
 ~~START~~
-name#!#_text
-li_si_nonowner_long_column_alia502d13f74e17127eda63637119737421#!#{bbf_original_name=Li_Si_NonOwner_Long_Column_Alias_That_Exceeds_The_Sixty_Three_Limit}
+name#!#text
+li_si_nonowner_long_column_alia502d13f74e17127eda63637119737421#!#bbf_original_name=Li_Si_NonOwner_Long_Column_Alias_That_Exceeds_The_Sixty_Three_Limit
 ~~END~~
 
 

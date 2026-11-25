@@ -76,7 +76,8 @@ where n.nspname = 'master_dbo' and c.relname like 'li_si_no%' and c.relkind = 'r
 order by c.relname collate "C";
 go
 
-select a.attname, a.attoptions
+select a.attname,
+       (select o from unnest(a.attoptions) o where o like 'bbf_original_name=%') as original_name
 from pg_attribute a
 where a.attrelid = 'master_dbo.li_si_nonowner_mixed'::regclass and a.attnum > 0
 order by a.attnum;
