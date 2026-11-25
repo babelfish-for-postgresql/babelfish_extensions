@@ -1396,7 +1396,12 @@ SELECT
 CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
 CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
-CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
+CAST(COALESCE(
+    (SELECT pg_catalog.substring(opt, pg_catalog.length('bbf_original_name=') + 1) COLLATE "C"
+     FROM pg_catalog.unnest(t6.attoptions) opt
+     WHERE opt LIKE 'bbf_original_name=%'
+     LIMIT 1),
+    t5.column_name) AS sys.sysname) AS COLUMN_NAME,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
 CAST(t5.privilege_type AS sys.varchar(32)) COLLATE sys.database_default AS PRIVILEGE,
@@ -1602,7 +1607,13 @@ $$ LANGUAGE SQL IMMUTABLE;
 CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
 SELECT
 CAST(1 AS SMALLINT) AS SCOPE,
-CAST(coalesce (split_part(a.attoptions[1] COLLATE "C", '=', 2) ,a.attname) AS sys.sysname) AS COLUMN_NAME, -- get original column name if exists
+-- get original column name if exists
+CAST(coalesce(
+    (SELECT pg_catalog.substring(opt, pg_catalog.length('bbf_original_name=') + 1) COLLATE "C"
+     FROM pg_catalog.unnest(a.attoptions) opt
+     WHERE opt LIKE 'bbf_original_name=%'
+     LIMIT 1),
+    a.attname) AS sys.sysname) AS COLUMN_NAME,
 CAST(t6.data_type AS SMALLINT) AS DATA_TYPE,
 
 CASE -- cases for when they are of type identity. 
@@ -1877,11 +1888,21 @@ SELECT
 CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
 CAST(bbf_nsp2.orig_name AS sys.sysname) AS PKTABLE_OWNER ,
 CAST(c2.relname AS sys.sysname) AS PKTABLE_NAME,
-CAST(COALESCE(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) AS sys.sysname) AS PKCOLUMN_NAME,
+CAST(COALESCE(
+    (SELECT pg_catalog.substring(opt, pg_catalog.length('bbf_original_name=') + 1) COLLATE "C"
+     FROM pg_catalog.unnest(a2.attoptions) opt
+     WHERE opt LIKE 'bbf_original_name=%'
+     LIMIT 1),
+    a2.attname) AS sys.sysname) AS PKCOLUMN_NAME,
 CAST(nsp_ext.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
 CAST(bbf_nsp.orig_name AS sys.sysname) AS FKTABLE_OWNER ,
 CAST(c.relname AS sys.sysname) AS FKTABLE_NAME,
-CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname) AS sys.sysname) AS FKCOLUMN_NAME,
+CAST(COALESCE(
+    (SELECT pg_catalog.substring(opt, pg_catalog.length('bbf_original_name=') + 1) COLLATE "C"
+     FROM pg_catalog.unnest(a.attoptions) opt
+     WHERE opt LIKE 'bbf_original_name=%'
+     LIMIT 1),
+    a.attname) AS sys.sysname) AS FKCOLUMN_NAME,
 CAST(nr AS smallint) AS KEY_SEQ,
 CASE
    WHEN const1.confupdtype = 'c' THEN CAST(0 AS smallint) -- cascade
