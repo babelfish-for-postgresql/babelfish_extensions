@@ -385,6 +385,19 @@ GO
 -- CLEANUP
 -- =============================================
 
+-- =============================================
+-- STRING CONCATENATION WITH STR() (GitHub Issue #4297)
+-- =============================================
+-- STR() result should not truncate strings appended after it
+SELECT 'distance:' + STR(123, 4, 0) + ' mi';
+GO
+
+SELECT 'val=' + STR(42, 2, 0) + ',done';
+GO
+
+SELECT STR(1, 1, 0) + ' suffix';
+GO
+
 -- Drop Views
 DROP VIEW str_v1;
 DROP VIEW str_v2;
