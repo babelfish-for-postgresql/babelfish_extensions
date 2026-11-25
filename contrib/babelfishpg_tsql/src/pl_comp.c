@@ -1608,9 +1608,12 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 			if (strncmp(optstr, "bbf_original_name=", 18) == 0)
 			{
 				/*
-				 * We found the original name; rewrite it as bbf_original_name
+				 * We found the original name; rewrite it as bbf_original_name.
+				 * The option text is not NUL-terminated, so never copy past it.
 				 */
-				te->resname = pnstrdup((char *) &optstr[18], strlen(te->resname));
+				te->resname = pnstrdup((char *) &optstr[18],
+									   Min(strlen(te->resname),
+										   VARSIZE(optiondatums[i]) - VARHDRSZ - 18));
 				break;
 			}
 		}
