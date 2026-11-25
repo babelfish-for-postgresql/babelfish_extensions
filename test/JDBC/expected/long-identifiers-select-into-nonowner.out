@@ -132,7 +132,7 @@ order by a.attnum;
 go
 ~~START~~
 name#!#_text
-li_si_nonowner_long_column_alia502d13f74e17127eda63637119737421#!#{bbf_original_name=Li_Si_NonOwner_Long_Column_Alias_That_Exceeds_The_Sixty_Three_Limit}
+li_si_nonowner_long_column_alia502d13f74e17127eda63637119737421#!#{pg_attver=1029904256,bbf_original_name=Li_Si_NonOwner_Long_Column_Alias_That_Exceeds_The_Sixty_Three_Limit}
 ~~END~~
 
 
