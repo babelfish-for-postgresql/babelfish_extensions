@@ -87,7 +87,7 @@ static void disable_statement_timeout(void);
  */
 static
 void
-TdsDiscardAll()
+TdsDiscardAll(void)
 {
 	bool		need_snapshot = !ActiveSnapshotSet();
 	/*
@@ -214,12 +214,12 @@ ResetTDSConnection(void)
 /*
  * SetResetTDSConnectionFlag - Sets reset tds connection flag
  */
-void SetResetTDSConnectionFlag()
+void SetResetTDSConnectionFlag(void)
 {
 	resetTdsConnectionFlag = true;	
 }
 
-bool GetResetTDSConnectionFlag()
+bool GetResetTDSConnectionFlag(void)
 {
 	return resetTdsConnectionFlag;	
 }

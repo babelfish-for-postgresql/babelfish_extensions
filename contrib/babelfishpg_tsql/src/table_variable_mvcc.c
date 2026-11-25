@@ -328,7 +328,7 @@ TVHeapTupleSatisfiesNonVacuumable(HeapTuple htup, Snapshot snapshot, Buffer buff
 	{
 		Assert(TransactionIdIsValid(dead_after));
 
-		if (GlobalVisTestIsRemovableXid(snapshot->vistest, dead_after))
+		if (GlobalVisTestIsRemovableXid(snapshot->vistest, dead_after, true))
 			res = HEAPTUPLE_DEAD;
 	}
 	else

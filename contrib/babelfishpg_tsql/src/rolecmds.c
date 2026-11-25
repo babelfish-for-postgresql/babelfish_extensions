@@ -3265,7 +3265,7 @@ is_grantee_role_db_owner(GrantRoleStmt *stmt)
 }
 
 void
-change_object_owner_if_db_owner()
+change_object_owner_if_db_owner(void)
 {
 	Oid		dbo_id = InvalidOid;
 	Oid		db_owner_id = InvalidOid;

@@ -2727,7 +2727,7 @@ tsql_stmt :
 			| CallStmt
 			| CheckPointStmt
 			| ClosePortalStmt
-			| ClusterStmt
+			| RepackStmt
 			| CommentStmt
 			| ConstraintsSetStmt
 			| CopyStmt

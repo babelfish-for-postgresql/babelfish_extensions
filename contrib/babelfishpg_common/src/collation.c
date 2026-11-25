@@ -1,6 +1,7 @@
 #include "postgres.h"
 #include "varatt.h"
 
+#include "access/htup_details.h"
 #include "utils/guc.h"
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
@@ -19,6 +20,7 @@
 #include "utils/formatting.h"
 
 #include "collation.h"
+#include "utils/tuplestore.h"
 #include "encoding/encoding.h"
 #include "typecode.h"
 #include "sqlvariant.h"
@@ -1126,6 +1128,7 @@ collation_list_internal(PG_FUNCTION_ARGS)
 					   INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "l5_priority",
 					   INT4OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 
 	tupstore =
 		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
@@ -1245,7 +1248,7 @@ get_database_or_server_collation_oid_internal(bool missingOk)
 }
 
 Oid
-BABELFISH_CLUSTER_COLLATION_OID()
+BABELFISH_CLUSTER_COLLATION_OID(void)
 {
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{

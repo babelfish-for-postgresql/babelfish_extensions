@@ -44,7 +44,7 @@ int			tamperByte = INVALID_TAMPER_BYTE;
  * FaultInjectionHashInit - initialize the hash
  */
 static void
-FaultInjectionHashInit()
+FaultInjectionHashInit(void)
 {
 	HASHCTL		hash_ctl;
 	MemoryContext oldContext;
@@ -65,7 +65,7 @@ FaultInjectionHashInit()
  * FaultInjectionInitialize - initializa the fault injection hash with enrties
  */
 static void
-FaultInjectionInitialize()
+FaultInjectionInitialize(void)
 {
 	int			i = 0;
 	bool		foundPtr;

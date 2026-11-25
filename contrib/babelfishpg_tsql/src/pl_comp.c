@@ -1058,6 +1058,7 @@ do_compile(FunctionCallInfo fcinfo,
 								TupleDescInitEntryCollation(row->rowtupdesc, fi + 1,
 															fvar->datatype->collation);
 							}
+							TupleDescFinalize(row->rowtupdesc);
 							break;
 						}
 					}
@@ -2878,6 +2879,8 @@ build_row_from_vars(PLtsql_variable **vars, int numvars)
 		TupleDescInitEntryCollation(row->rowtupdesc, i + 1, typcoll);
 	}
 
+	TupleDescFinalize(row->rowtupdesc);
+
 	return row;
 }
 
@@ -3608,7 +3611,7 @@ delete_cached_batch(int handle)
 }
 
 void
-reset_cached_batch()
+reset_cached_batch(void)
 {
 	while (cur_handle_id > 0)
 		delete_cached_batch(cur_handle_id--);

@@ -120,7 +120,7 @@ extern bool babelfish_dump_restore;
 extern bool pltsql_nocount;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
-extern bool install_backend_gram_hooks();
+extern bool install_backend_gram_hooks(void);
 
 static bool check_identity_insert(char **newal, void **extra, GucSource source);
 static void assign_identity_insert(const char *newval, void *extra);
@@ -135,7 +135,7 @@ extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern void pre_check_trigger_schema(List *object, bool missing_ok);
 static void get_language_procs(const char *langname, Oid *compiler, Oid *validator);
 static void get_func_language_oids(Oid *lang_handler, Oid *lang_validator);
-extern bool pltsql_suppress_string_truncation_error();
+extern bool pltsql_suppress_string_truncation_error(void);
 static Oid	bbf_table_var_lookup(const char *relname, Oid relnamespace);
 extern void assign_object_access_hook_drop_relation(void);
 extern void uninstall_object_access_hook_drop_relation(void);
@@ -1142,7 +1142,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 }
 
 static void
-pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
+pltsql_post_parse_analyze(ParseState *pstate, Query *query, const JumbleState *jstate)
 {
 
 	if (prev_post_parse_analyze_hook)
@@ -7219,8 +7219,7 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 	}
 }
 
-void
-static
+static void
 pltsql_non_tsql_proc_entry(int proc_count, int sys_func_count)
 {
 	elog(DEBUG4, "TSQL TXN PG procedure entry PG count : %d SYS count : %d", proc_count, sys_func_count);
@@ -8263,52 +8262,52 @@ pltsql_revert_guc(int nest_level)
 			{
 				case PGC_BOOL:
 					{
-						struct config_bool *conf = (struct config_bool *) gconf;
+						// struct config_bool *conf = (struct config_bool *) gconf;
 						bool		newval = newvalue.val.boolval;
 						void	   *newextra = newvalue.extra;
 
-						if (*conf->variable != newval || conf->gen.extra != newextra)
+						if (*gconf->_bool.variable != newval || gconf->extra != newextra)
 						{
-							if (conf->assign_hook)
-								conf->assign_hook(newval, newextra);
-							*conf->variable = newval;
-							guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+							if (gconf->_bool.assign_hook)
+								gconf->_bool.assign_hook(newval, newextra);
+							*gconf->_bool.variable = newval;
+							guc_set_extra_field(gconf, &gconf->extra, newextra);
 						}
 						break;
 					}
 				case PGC_INT:
 					{
-						struct config_int *conf = (struct config_int *) gconf;
+						// struct config_int *conf = (struct config_int *) gconf;
 						int			newval = newvalue.val.intval;
 						void	   *newextra = newvalue.extra;
 
-						if (*conf->variable != newval || conf->gen.extra != newextra)
+						if (*gconf->_int.variable != newval || gconf->extra != newextra)
 						{
-							if (conf->assign_hook)
-								conf->assign_hook(newval, newextra);
-							*conf->variable = newval;
-							guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+							if (gconf->_int.assign_hook)
+								gconf->_int.assign_hook(newval, newextra);
+							*gconf->_int.variable = newval;
+							guc_set_extra_field(gconf, &gconf->extra, newextra);
 						}
 						break;
 					}
 				case PGC_REAL:
 					{
-						struct config_real *conf = (struct config_real *) gconf;
+						// struct config_real *conf = (struct config_real *) gconf;
 						double		newval = newvalue.val.realval;
 						void	   *newextra = newvalue.extra;
 
-						if (*conf->variable != newval || conf->gen.extra != newextra)
+						if (*gconf->_real.variable != newval || gconf->extra != newextra)
 						{
-							if (conf->assign_hook)
-								conf->assign_hook(newval, newextra);
-							*conf->variable = newval;
-							guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+							if (gconf->_real.assign_hook)
+								gconf->_real.assign_hook(newval, newextra);
+							*gconf->_real.variable = newval;
+							guc_set_extra_field(gconf, &gconf->extra, newextra);
 						}
 						break;
 					}
 				case PGC_STRING:
 					{
-						struct config_string *conf = (struct config_string *) gconf;
+						// struct config_string *conf = (struct config_string *) gconf;
 						char	   *newval = newvalue.val.stringval;
 						void	   *newextra = newvalue.extra;
 
@@ -8321,12 +8320,12 @@ pltsql_revert_guc(int nest_level)
 							};
 						}
 
-						if (*conf->variable != newval || conf->gen.extra != newextra)
+						if (*gconf->_string.variable != newval || gconf->extra != newextra)
 						{
-							if (conf->assign_hook)
-								conf->assign_hook(newval, newextra);
-							guc_set_string_field(conf, conf->variable, newval);
-							guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+							if (gconf->_string.assign_hook)
+								gconf->_string.assign_hook(newval, newextra);
+							guc_set_string_field(gconf, gconf->_string.variable, newval);
+							guc_set_extra_field(gconf, &gconf->extra, newextra);
 						}
 
 						/*
@@ -8335,22 +8334,22 @@ pltsql_revert_guc(int nest_level)
 						 * have type-specific code anyway, might as well
 						 * inline it.
 						 */
-						guc_set_string_field(conf, &stack->prior.val.stringval, NULL);
-						guc_set_string_field(conf, &stack->masked.val.stringval, NULL);
+						guc_set_string_field(gconf, &stack->prior.val.stringval, NULL);
+						guc_set_string_field(gconf, &stack->masked.val.stringval, NULL);
 						break;
 					}
 				case PGC_ENUM:
 					{
-						struct config_enum *conf = (struct config_enum *) gconf;
+						// struct config_enum *conf = (struct config_enum *) gconf;
 						int			newval = newvalue.val.enumval;
 						void	   *newextra = newvalue.extra;
 
-						if (*conf->variable != newval || conf->gen.extra != newextra)
+						if (*gconf->_enum.variable != newval || gconf->extra != newextra)
 						{
-							if (conf->assign_hook)
-								conf->assign_hook(newval, newextra);
-							*conf->variable = newval;
-							guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+							if (gconf->_enum.assign_hook)
+								gconf->_enum.assign_hook(newval, newextra);
+							*gconf->_enum.variable = newval;
+							guc_set_extra_field(gconf, &gconf->extra, newextra);
 						}
 						break;
 					}

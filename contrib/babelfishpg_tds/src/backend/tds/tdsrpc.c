@@ -3794,7 +3794,7 @@ ProcessRPCRequest(TDSRequest request)
  * TdsIsSPPrepare - Returns true if sp_prepare packet is being processed
  */
 bool
-TdsIsSPPrepare()
+TdsIsSPPrepare(void)
 {
 	TDSRequestSP req;
 

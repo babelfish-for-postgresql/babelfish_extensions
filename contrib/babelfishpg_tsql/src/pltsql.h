@@ -23,6 +23,7 @@
 
 #include "postgres.h"
 #include "access/xact.h"
+#include "portability/instr_time.h"
 #include "catalog/pg_collation.h"
 #include "commands/defrem.h"
 #include "parser/parse_func.h"
@@ -1956,21 +1957,21 @@ typedef struct PLtsql_protocol_plugin
 
 	int			(*TdsGetEncodingFromLcid) (int32_t lcid);
 
-	int			(*get_insert_bulk_rows_per_batch) ();
+	int			(*get_insert_bulk_rows_per_batch) (void);
 
-	int			(*get_insert_bulk_kilobytes_per_batch) ();
+	int			(*get_insert_bulk_kilobytes_per_batch) (void);
 
 	void	   *(*tsql_varchar_input) (const char *s, size_t len, int32 atttypmod);
 
 	void	   *(*tsql_char_input) (const char *s, size_t len, int32 atttypmod);
 
-	char	   *(*get_cur_db_name) ();
+	char	   *(*get_cur_db_name) (void);
 
 	char	   *(*get_physical_schema_name) (char *db_name, const char *schema_name);
 
-	void		(*set_reset_tds_connection_flag) ();
+	void		(*set_reset_tds_connection_flag) (void);
 
-	bool		(*get_reset_tds_connection_flag) ();
+	bool		(*get_reset_tds_connection_flag) (void);
 	void 		(*get_tvp_typename_typeschemaname) (char *proc_name, char *target_arg_name, 
 													char **tvp_type_name, char **tvp_type_schema_name);
 
@@ -2631,7 +2632,7 @@ extern bool 	is_namespace_sys_or_pg_catalog(Oid nspoid);
 /*
  * Function in pltsql_ruleutils.c
  */
-extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
+extern char *tsql_format_type_extended(Oid type_oid, int32 typemod, uint16 flags);
 
 /*
  * INSERT EXEC functions (pl_insert_exec.c)

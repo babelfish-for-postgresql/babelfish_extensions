@@ -259,37 +259,37 @@ _PG_fini(void)
 }
 
 static Size
-TdsStatusArraySize()
+TdsStatusArraySize(void)
 {
 	return mul_size(sizeof(TdsStatus), NumBackendStatSlots);
 }
 
 static Size
-TdsLibraryNameBufferSize()
+TdsLibraryNameBufferSize(void)
 {
 	return mul_size(LIBDATALEN, NumBackendStatSlots);
 }
 
 static Size
-TdsHostNameBufferSize()
+TdsHostNameBufferSize(void)
 {
 	return mul_size(HOSTDATALEN, NumBackendStatSlots);
 }
 
 static Size
-TdsLanguageBufferSize()
+TdsLanguageBufferSize(void)
 {
 	return mul_size(LANGDATALEN, NumBackendStatSlots);
 }
 
 static Size
-TdsContextInfoBufferSize()
+TdsContextInfoBufferSize(void)
 {
 	return mul_size(CONTEXTINFOLEN, NumBackendStatSlots);
 }
 
 static Size
-tds_memsize()
+tds_memsize(void)
 {
 	Size		size;
 
@@ -318,7 +318,7 @@ tds_memsize()
 }
 
 static void
-tds_shmem_request()
+tds_shmem_request(void)
 {
 	if (prev_shmem_request_hook)
 		prev_shmem_request_hook();
@@ -468,7 +468,6 @@ tds_status_shmem_startup(void)
 		info.keysize = sizeof(AntlrBatchParseCacheKey);
 		info.entrysize = state->entry_size;
 		ShmemInitHash(ANTLR_BATCH_PARSE_CACHE_SHMEM_HASH_NAME,
-					  state->num_slots,
 					  state->num_slots,
 					  &info,
 					  HASH_ELEM | HASH_BLOBS);

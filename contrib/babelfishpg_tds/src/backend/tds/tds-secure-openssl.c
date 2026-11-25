@@ -46,6 +46,7 @@
 #include "storage/latch.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
+#include "utils/wait_event.h"
 
 #include "src/include/tds_secure.h"
 
@@ -1078,10 +1079,15 @@ ssl_external_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 {
 	/* same prompt as OpenSSL uses internally */
 	const char *prompt = "Enter PEM pass phrase:";
+	/* 
+	 * MANFRED-34102: cmd temporarily hardcoded to ssl_passphrase_command in order to fix build failures. 
+	 * Further work to be done to integrate server-side SNI support for libpq in APG19. 
+	 */
+	const char *cmd = ssl_passphrase_command;
 
 	Assert(rwflag == 0);
 
-	return run_ssl_passphrase_command(prompt, ssl_is_server_start, buf, size);
+	return run_ssl_passphrase_command(cmd, prompt, ssl_is_server_start, buf, size);
 }
 
 /*

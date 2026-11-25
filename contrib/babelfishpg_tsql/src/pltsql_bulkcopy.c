@@ -388,8 +388,9 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 			cstate->cur_rowno = buffer->linenos[i];
 			recheckIndexes =
 				ExecInsertIndexTuples(resultRelInfo,
-									  buffer->slots[i], estate, false, false,
-									  NULL, NIL, false);
+									  estate, 0,
+									  buffer->slots[i],
+									  NIL, NULL);
 			list_free(recheckIndexes);
 		}
 
@@ -1018,7 +1019,7 @@ BeginBulkCopy(Relation rel,
 	ExecInitResultRelation(cstate->estate, cstate->resultRelInfo, 1);
 
 	/* Verify the named relation is a valid target for INSERT. */
-	CheckValidResultRel(cstate->resultRelInfo, CMD_INSERT, ONCONFLICT_NONE, NIL);
+	CheckValidResultRel(cstate->resultRelInfo, CMD_INSERT, ONCONFLICT_NONE, NIL, NULL);
 
 	CopyMultiInsertInfoInit(&cstate->multiInsertInfo, cstate->resultRelInfo, cstate,
 							cstate->estate, cstate->mycid, ti_options);

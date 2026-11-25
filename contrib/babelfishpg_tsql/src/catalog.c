@@ -321,7 +321,7 @@ init_catalog(PG_FUNCTION_ARGS)
 }
 
 void
-initTsqlSyscache()
+initTsqlSyscache(void)
 {
 	Assert(my_cacheinfo[0].reloid != -1);
 	/* Initialize info for catcache */
@@ -603,6 +603,7 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 					   VARCHAROID, 600, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "compatibility_level",
 					   INT2OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 
 	tupstore =
 		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
@@ -926,7 +927,7 @@ get_login_default_db(char *login_name)
 }
 
 Oid
-get_authid_login_ext_oid()
+get_authid_login_ext_oid(void)
 {
 	if (!OidIsValid(bbf_authid_login_ext_oid))
 		bbf_authid_login_ext_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_TABLE_NAME,
@@ -994,7 +995,7 @@ get_db_principal_kind(Oid role_oid, const char *db_name)
 }
 
 Oid
-get_authid_user_ext_oid()
+get_authid_user_ext_oid(void)
 {
 	if (!OidIsValid(bbf_authid_user_ext_oid))
 		bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
@@ -1279,7 +1280,7 @@ get_user_for_database(const char *db_name)
  *****************************************/
 
 Oid
-get_bbf_view_def_oid()
+get_bbf_view_def_oid(void)
 {
 	if (!OidIsValid(bbf_view_def_oid))
 		bbf_view_def_oid = get_relname_relid(BBF_VIEW_DEF_TABLE_NAME,
@@ -1289,7 +1290,7 @@ get_bbf_view_def_oid()
 }
 
 Oid
-get_bbf_view_def_idx_oid()
+get_bbf_view_def_idx_oid(void)
 {
 	if (!OidIsValid(bbf_view_def_idx_oid))
 		bbf_view_def_idx_oid = get_relname_relid(BBF_VIEW_DEF_IDX_NAME,
@@ -1470,7 +1471,7 @@ clean_up_bbf_view_def(int16 dbid)
  *****************************************/
 
 Oid
-get_bbf_servers_def_oid()
+get_bbf_servers_def_oid(void)
 {
 	if (!OidIsValid(bbf_servers_def_oid))
 		bbf_servers_def_oid = get_relname_relid(BBF_SERVERS_DEF_TABLE_NAME,
@@ -1480,7 +1481,7 @@ get_bbf_servers_def_oid()
 }
 
 Oid
-get_bbf_servers_def_idx_oid()
+get_bbf_servers_def_idx_oid(void)
 {
 	if (!OidIsValid(bbf_servers_def_idx_oid))
 		bbf_servers_def_idx_oid = get_relname_relid(BBF_SERVERS_DEF_IDX_NAME,
@@ -1524,7 +1525,7 @@ get_timeout_from_server_name(char *servername, int attnum)
 }
 
 void
-clean_up_bbf_server_def()
+clean_up_bbf_server_def(void)
 {
 	/* Fetch the relation */
 	Relation bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), AccessExclusiveLock);
@@ -1538,7 +1539,7 @@ clean_up_bbf_server_def()
  *****************************************/
 
 Oid
-get_bbf_function_ext_oid()
+get_bbf_function_ext_oid(void)
 {
 	if (!OidIsValid(bbf_function_ext_oid))
 		bbf_function_ext_oid = get_relname_relid(BBF_FUNCTION_EXT_TABLE_NAME,
@@ -1548,7 +1549,7 @@ get_bbf_function_ext_oid()
 }
 
 Oid
-get_bbf_function_ext_idx_oid()
+get_bbf_function_ext_idx_oid(void)
 {
 	if (!OidIsValid(bbf_function_ext_idx_oid))
 		bbf_function_ext_idx_oid = get_relname_relid(BBF_FUNCTION_EXT_IDX_NAME,
@@ -1845,7 +1846,7 @@ is_classic_catalog(const char *name)
  *****************************************/
 
 Oid
-get_bbf_schema_perms_oid()
+get_bbf_schema_perms_oid(void)
 {
 	if (!OidIsValid(bbf_schema_perms_oid))
 		bbf_schema_perms_oid = get_relname_relid(BBF_SCHEMA_PERMS_TABLE_NAME,
@@ -1854,7 +1855,7 @@ get_bbf_schema_perms_oid()
 }
 
 static Oid
-get_bbf_schema_perms_idx_oid()
+get_bbf_schema_perms_idx_oid(void)
 {
 	if (!OidIsValid(bbf_schema_perms_idx_oid))
 		bbf_schema_perms_idx_oid = get_relname_relid(BBF_SCHEMA_PERMS_IDX_NAME,
@@ -1867,7 +1868,7 @@ get_bbf_schema_perms_idx_oid()
  *****************************************/
 
 Oid
-get_bbf_domain_mapping_oid()
+get_bbf_domain_mapping_oid(void)
 {
 	if (!OidIsValid(bbf_domain_mapping_oid))
 		bbf_domain_mapping_oid = get_relname_relid(BBF_DOMAIN_MAPPING_TABLE_NAME,
@@ -1877,7 +1878,7 @@ get_bbf_domain_mapping_oid()
 }
 
 Oid
-get_bbf_domain_mapping_idx_oid()
+get_bbf_domain_mapping_idx_oid(void)
 {
 	if (!OidIsValid(bbf_domain_mapping_idx_oid))
 		bbf_domain_mapping_idx_oid = get_relname_relid(BBF_DOMAIN_MAPPING_IDX_NAME,
@@ -1891,7 +1892,7 @@ get_bbf_domain_mapping_idx_oid()
  *****************************************/
 
 Oid
-get_bbf_extended_properties_oid()
+get_bbf_extended_properties_oid(void)
 {
 	if (!OidIsValid(bbf_extended_properties_oid))
 		bbf_extended_properties_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_TABLE_NAME,
@@ -1901,7 +1902,7 @@ get_bbf_extended_properties_oid()
 }
 
 Oid
-get_bbf_extended_properties_idx_oid()
+get_bbf_extended_properties_idx_oid(void)
 {
 	if (!OidIsValid(bbf_extended_properties_idx_oid))
 		bbf_extended_properties_idx_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_IDX_NAME,
@@ -1914,7 +1915,7 @@ get_bbf_extended_properties_idx_oid()
  *			PARTITION_FUNCTION
  *****************************************/
 Oid
-get_bbf_partition_function_oid()
+get_bbf_partition_function_oid(void)
 {
 	if (!OidIsValid(bbf_partition_function_oid))
 		bbf_partition_function_oid = get_relname_relid(BBF_PARTITION_FUNCTION_TABLE_NAME,
@@ -1924,7 +1925,7 @@ get_bbf_partition_function_oid()
 }
 
 Oid
-get_bbf_partition_function_seq_oid()
+get_bbf_partition_function_seq_oid(void)
 {
 	if (!OidIsValid(bbf_partition_function_seq_oid))
 	{
@@ -1936,7 +1937,7 @@ get_bbf_partition_function_seq_oid()
 }
 
 Oid
-get_bbf_partition_function_pk_idx_oid()
+get_bbf_partition_function_pk_idx_oid(void)
 {
 	if (!OidIsValid(bbf_partition_function_pk_idx_oid))
 		bbf_partition_function_pk_idx_oid = get_relname_relid(BBF_PARTITION_FUNCTION_PK_IDX_NAME,
@@ -1946,7 +1947,7 @@ get_bbf_partition_function_pk_idx_oid()
 }
 
 Oid
-get_bbf_partition_function_id_idx_oid()
+get_bbf_partition_function_id_idx_oid(void)
 {
 	if (!OidIsValid(bbf_partition_function_id_idx_oid))
 		bbf_partition_function_id_idx_oid = get_relname_relid(BBF_PARTITION_FUNCTION_ID_IDX_NAME,
@@ -1959,7 +1960,7 @@ get_bbf_partition_function_id_idx_oid()
  *			PARTITION_SCHEME
  *****************************************/
 Oid
-get_bbf_partition_scheme_oid()
+get_bbf_partition_scheme_oid(void)
 {
 	if (!OidIsValid(bbf_partition_scheme_oid))
 		bbf_partition_scheme_oid = get_relname_relid(BBF_PARTITION_SCHEME_TABLE_NAME,
@@ -1969,7 +1970,7 @@ get_bbf_partition_scheme_oid()
 }
 
 Oid
-get_bbf_partition_scheme_pk_idx_oid()
+get_bbf_partition_scheme_pk_idx_oid(void)
 {
 	if (!OidIsValid(bbf_partition_scheme_pk_idx_oid))
 		bbf_partition_scheme_pk_idx_oid = get_relname_relid(BBF_PARTITION_SCHEME_PK_IDX_NAME,
@@ -1979,7 +1980,7 @@ get_bbf_partition_scheme_pk_idx_oid()
 }
 
 Oid
-get_bbf_partition_scheme_id_idx_oid()
+get_bbf_partition_scheme_id_idx_oid(void)
 {
 	if (!OidIsValid(bbf_partition_scheme_id_idx_oid))
 		bbf_partition_scheme_id_idx_oid = get_relname_relid(BBF_PARTITION_SCHEME_ID_IDX_NAME,
@@ -1989,7 +1990,7 @@ get_bbf_partition_scheme_id_idx_oid()
 }
 
 Oid
-get_bbf_partition_scheme_seq_oid()
+get_bbf_partition_scheme_seq_oid(void)
 {
 	if (!OidIsValid(bbf_partition_scheme_seq_oid))
 	{
@@ -2005,7 +2006,7 @@ get_bbf_partition_scheme_seq_oid()
  *			PARTITION_DEPEND
  *****************************************/
 Oid
-get_bbf_partition_depend_oid()
+get_bbf_partition_depend_oid(void)
 {
 	if (!OidIsValid(bbf_partition_depend_oid))
 		bbf_partition_depend_oid = get_relname_relid(BBF_PARTITION_DEPEND_TABLE_NAME,
@@ -2015,7 +2016,7 @@ get_bbf_partition_depend_oid()
 }
 
 Oid
-get_bbf_partition_depend_idx_oid()
+get_bbf_partition_depend_idx_oid(void)
 {
 	if (!OidIsValid(bbf_partition_depend_idx_oid))
 		bbf_partition_depend_idx_oid = get_relname_relid(BBF_PARTITION_DEPEND_IDX_NAME,
@@ -2069,7 +2070,7 @@ static Datum get_nspname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_login_rolname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_default_database_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_user_rolname(HeapTuple tuple, TupleDesc dsc);
-static Datum get_database_name(HeapTuple tuple, TupleDesc dsc);
+static Datum get_bbf_database_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_nspname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_perms_schema_name(HeapTuple tuple, TupleDesc dsc);
@@ -2212,7 +2213,7 @@ Rule		must_match_rules_user[] =
 	{"<rolname> in babelfish_authid_user_ext must also exist in pg_authid",
 	"pg_authid", "rolname", NULL, get_user_rolname, NULL, check_exist, NULL},
 	{"<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases",
-	"babelfish_sysdatabases", "name", NULL, get_database_name, NULL, check_exist, NULL}
+	"babelfish_sysdatabases", "name", NULL, get_bbf_database_name, NULL, check_exist, NULL}
 };
 
 /* babelfish_function_ext */
@@ -2324,6 +2325,7 @@ babelfish_inconsistent_metadata(PG_FUNCTION_ARGS)
 					   VARCHAROID, 128, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "detail",
 					   JSONBOID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	tupstore =
 		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
 							  false, 1024);
@@ -2673,7 +2675,7 @@ get_user_rolname(HeapTuple tuple, TupleDesc dsc)
 }
 
 static Datum
-get_database_name(HeapTuple tuple, TupleDesc dsc)
+get_bbf_database_name(HeapTuple tuple, TupleDesc dsc)
 {
 	bool		isNull;
 	Datum		dbname = heap_getattr(tuple, Anum_bbf_authid_user_ext_database_name, dsc, &isNull);
@@ -6829,6 +6831,7 @@ antlr_parse_cache_stats(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, 3, "cache_writes", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, 4, "cache_evictions", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, 5, "cache_errors", INT4OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	values[0] = Int32GetDatum(pltsql_antlr_parse_cache_stat_hits);

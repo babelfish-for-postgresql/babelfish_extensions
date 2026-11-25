@@ -18,7 +18,7 @@ static bool tsql_is_recursive_cte(WithClause *with_clause);
 static void fix_tsql_domain_typmods(TypeName *typname);
 
 void
-install_backend_gram_hooks()
+install_backend_gram_hooks(void)
 {
 	rewrite_typmod_expr_hook = rewrite_typmod_expr;
 	validate_numeric_typmods_hook = TsqlValidateNumericTypmods;

@@ -54,6 +54,7 @@ runs:
         engine_version: ${{ inputs.engine_version }}
         base_version: ${{ inputs.base_version }}
         disable_checksums: ${{ inputs.disable_checksums }}
+        pg_old_dir: ${{ inputs.pg_old_dir }}
 
     - name: Run pg_upgrade
       id: run-pg_upgrade

@@ -2113,8 +2113,7 @@ binaryfloat8(PG_FUNCTION_ARGS)
 int8
 			varbinarycompare(bytea *source1, bytea *source2);
 
-int8
-			inline
+inline int8
 varbinarycompare(bytea *source1, bytea *source2)
 {
 	char	   *data1 = VARDATA_ANY(source1);

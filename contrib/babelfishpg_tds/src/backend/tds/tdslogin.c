@@ -42,6 +42,7 @@
 #include "miscadmin.h"
 #include "replication/walsender.h"
 #include "storage/ipc.h"
+#include "storage/waiteventset.h"
 #include "utils/timestamp.h"
 
 #include "access/printtup.h"
@@ -205,7 +206,7 @@ LoginRequest loginInfo = NULL;
 
 static const char *PreLoginTokenType(uint8_t token);
 static void DebugPrintPreLoginStructure(PreLoginOption *request);
-static int	ParsePreLoginRequest();
+static int	ParsePreLoginRequest(void);
 static int *ProcessVersionNumber(const char *inputString);
 static void SetPreLoginResponseVal(Port *port, uint8_t token,
 								   StringInfo val, StringInfo reqVal,
@@ -331,7 +332,7 @@ DebugPrintPreLoginStructure(PreLoginOption *request)
 
 
 static int
-ParsePreLoginRequest()
+ParsePreLoginRequest(void)
 {
 	uint16_t	data16;
 	PreLoginOption *temp;
@@ -1196,7 +1197,7 @@ ProcessLoginFlags(LoginRequest loginInfo)
  * Wrapper of ProcessLoginFlags, since we do not expose loginInfo.
  */
 void
-TdsResetLoginFlags()
+TdsResetLoginFlags(void)
 {
 	ProcessLoginFlags(loginInfo);
 }
@@ -1896,7 +1897,6 @@ TdsClientAuthentication(Port *port)
 		case uaBSD:
 		case uaLDAP:
 		case uaCert:
-		case uaRADIUS:
 			/* the above authentication methods are not supported for TDS */
 			{
 				char		hostinfo[NI_MAXHOST];
@@ -2119,7 +2119,7 @@ TdsProcessLogin(Port *port, bool loadedSsl)
  *		have changed.
  */
 void
-TdsSetDbContext()
+TdsSetDbContext(void)
 {
 	char	   *dbname = NULL;
 	char	   *user = NULL;

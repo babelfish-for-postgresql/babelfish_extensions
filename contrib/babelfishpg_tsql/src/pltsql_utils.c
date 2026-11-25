@@ -666,7 +666,7 @@ pltsql_read_composite_out_param(Datum comp_value, Datum **values, bool **nulls)
 }
 
 bool
-pltsql_suppress_string_truncation_error()
+pltsql_suppress_string_truncation_error(void)
 {
 	return suppress_string_truncation_error;
 }
@@ -689,6 +689,7 @@ pltsql_read_procedure_info(StringInfo inout_str,
 	CallStmt   *cstmt;
 	FuncCall   *funccall;
 	FuncCandidateList clist;
+	int			fgc_flags;		/* not used */
 	const char *str1 = "EXECUTE ";
 	StringInfoData proc_stmt;
 
@@ -711,7 +712,7 @@ pltsql_read_procedure_info(StringInfo inout_str,
 	 * Parse the name into components and see if it matches any pg_proc
 	 * entries in the current search path.
 	 */
-	clist = FuncnameGetCandidates(funccall->funcname, -1, NIL, false, false, false, false);
+	clist = FuncnameGetCandidates(funccall->funcname, -1, NIL, false, false, false, false, &fgc_flags);
 
 	if (clist == NULL)
 	{
@@ -1983,13 +1984,15 @@ get_original_relname(Oid relid, bool check_permission)
 
 				while (array_iterate(it, &val, &vnull))
 				{
+					text	   *val_text;
 					const char *s;
 					int			len;
 
 					if (vnull)
 						continue;
-					s = VARDATA_ANY(val);
-					len = VARSIZE_ANY_EXHDR(val);
+					val_text = DatumGetTextPP(val);
+					s = VARDATA_ANY(val_text);
+					len = VARSIZE_ANY_EXHDR(val_text);
 					if (len > prefix_len && memcmp(s, prefix, prefix_len) == 0)
 					{
 						result = pnstrdup(s + prefix_len, len - prefix_len);

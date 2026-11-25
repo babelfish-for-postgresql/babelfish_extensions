@@ -13,6 +13,7 @@
 #include "access/relation.h"
 #include "access/table.h"
 #include "access/xact.h"
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_proc.h"
@@ -223,6 +224,7 @@ sp_prepare(PG_FUNCTION_ARGS)
 	/* 5. Return back handle */
 	tupdesc = CreateTemplateTupleDesc(1);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "prep_handle", INT4OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 	tuple = heap_form_tuple(tupdesc, values, &isnull);
 
@@ -1779,6 +1781,7 @@ xp_instance_regread_internal(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "out_param", CSTRINGOID, -1, 0);
 	}
 
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 	tuple = heap_form_tuple(tupdesc, values, &isnull);
 
@@ -3372,6 +3375,7 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 	{
 		List	   *function_name_list;
 		FuncCandidateList candidates = NULL;
+		int			fgc_flags;		/* not used */
 		char	   *full_function_name = NULL;
 		char	   *logical_schema_name = NULL;
 		char	   *physical_schema_name = NULL;
@@ -3432,7 +3436,7 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 
 		/* get function id from function name */
 		function_name_list = list_make2(makeString(physical_schema_name), makeString(function_name));
-		candidates = FuncnameGetCandidates(function_name_list, -1, NIL, false, false, false, true);
+		candidates = FuncnameGetCandidates(function_name_list, -1, NIL, false, false, false, true, &fgc_flags);
 
 		/* if no function is found */
 		if (candidates == NULL)
@@ -4519,7 +4523,7 @@ sp_reset_connection_internal(PG_FUNCTION_ARGS)
  * Errors: Throws error when all possible handle counters are in use
  */
 int 
-get_next_xml_handle_counter()
+get_next_xml_handle_counter(void)
 {
 	int           old_handle_counter = current_xml_handle_counter;
 	bool          handle_valid = false;
@@ -4678,7 +4682,7 @@ generate_unique_table_name(const char *base_name)
  * to TSQL to ensure proper table creation semantics.
  */
 void 
-create_xml_handle_temp_table()  
+create_xml_handle_temp_table(void)  
 {
 	CreateStmt         *stmt = makeNode(CreateStmt);
 	RangeVar           *relation;
@@ -5002,7 +5006,7 @@ delete_xml_handle_entry(int document_id)
  *        This function should be called when a connection is reset or terminated.
  */
 void
-reset_cached_xml_handle()
+reset_cached_xml_handle(void)
 {
 	/* Reset active handles bitmap */
 	bms_free(active_xml_handles_counter);
@@ -5085,6 +5089,7 @@ sp_xml_preparedocument(PG_FUNCTION_ARGS)
 	/* Return back the handle */
 	tupdesc = CreateTemplateTupleDesc(1);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "document_id", INT4OID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 	values[0] = Int32GetDatum(document_id);
 	tuple = heap_form_tuple(tupdesc, values, &isnull);

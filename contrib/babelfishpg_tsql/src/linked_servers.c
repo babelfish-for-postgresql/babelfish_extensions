@@ -1,6 +1,7 @@
 #include "postgres.h"
 #include "funcapi.h"
 #include "varatt.h"
+#include "utils/tuplestore.h"
 
 #include "foreign/foreign.h"
 #include "libpq/pqformat.h"
@@ -1092,6 +1093,7 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 						TupleDescInitEntry(*tupdesc, (AttrNumber) (i + 1), colname[i], tdsTypeToOid(tdsTypeId[i]), tdsTypeTypmod(tdsTypeId[i], collen[i], true, tdsTypePrecision[i], tdsTypeScale[i]), 0);
 					}
 
+					TupleDescFinalize(*tupdesc);
 					*tupdesc = BlessTupleDesc(*tupdesc);
 				}
 				else
@@ -1257,6 +1259,7 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 					TupleDescInitEntry(tupdesc, (AttrNumber) (i + 1), colname, tdsTypeOid, tdsTypeTypmod(coltype, collen, false, typinfo->precision, typinfo->scale), 0);
 				}
+				TupleDescFinalize(tupdesc);
 				tupdesc = BlessTupleDesc(tupdesc);
 
 				per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;

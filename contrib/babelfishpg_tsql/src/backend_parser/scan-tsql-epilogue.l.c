@@ -28,8 +28,6 @@ pgtsql_scanner_init(const char *str,
 	yyext->keyword_tokens = keyword_tokens;
 
 	yyext->backslash_quote = backslash_quote;
-	yyext->escape_string_warning = escape_string_warning;
-	yyext->standard_conforming_strings = standard_conforming_strings;
 
 	/*
 	 * Make a scan buffer with special termination needed by flex.

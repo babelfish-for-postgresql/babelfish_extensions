@@ -25,6 +25,10 @@ inputs:
     description: "Disable data checksums during initdb"
     required: false
     default: 'false'
+  pg_old_dir:
+    description: "Directory of the cluster being upgraded; when set, the new cluster matches its data checksum setting"
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -86,15 +90,37 @@ runs:
       if: always() && steps.build-postgis-extension.outcome == 'success'
       run: |
         cd ~
-        # Disable checksums when:
-        # 1. Explicitly requested (disable_checksums=true)
-        # 2. target.latest EXCEPT when base_version is source.latest (both should have checksums enabled)
-        if [[ "${{ inputs.disable_checksums }}" == "true" ]] || \
-           [[ "${{ inputs.engine_version }}" == "target.latest" && "${{ inputs.base_version }}" != "source.latest" ]]; then
-            ~/${{ inputs.pg_new_dir }}/bin/initdb --no-data-checksums -D ~/${{ inputs.pg_new_dir }}/data
+        # pg_upgrade needs the old and new clusters to have the same data checksum
+        # setting. When the old cluster is known, read its setting; otherwise:
+        # 1. Disable when explicitly requested (disable_checksums=true)
+        # 2. Disable for target.latest EXCEPT when base_version is source.latest (both have checksums enabled)
+        OLD_CONTROLDATA=~/${{ inputs.pg_old_dir }}/bin/pg_controldata
+        if [[ "${{ inputs.disable_checksums }}" == "true" ]]; then
+            NO_CHECKSUMS=1
+        elif [[ -n "${{ inputs.pg_old_dir }}" && -x "$OLD_CONTROLDATA" ]]; then
+            OLD_CHECKSUM_VERSION=$($OLD_CONTROLDATA -D ~/${{ inputs.pg_old_dir }}/data | awk -F: '/^Data page checksum version/ {gsub(/ /, "", $2); print $2}')
+            echo "Old cluster data page checksum version: ${OLD_CHECKSUM_VERSION}"
+            [[ "$OLD_CHECKSUM_VERSION" == "0" ]] && NO_CHECKSUMS=1 || NO_CHECKSUMS=0
+        elif [[ "${{ inputs.engine_version }}" == "target.latest" && "${{ inputs.base_version }}" != "source.latest" ]]; then
+            NO_CHECKSUMS=1
         else
-            ~/${{ inputs.pg_new_dir }}/bin/initdb -D ~/${{ inputs.pg_new_dir }}/data
+            NO_CHECKSUMS=0
         fi
+        if [[ "$NO_CHECKSUMS" == "1" ]]; then
+            NEW_CHECKSUMS=off
+        else
+            NEW_CHECKSUMS=on
+        fi
+        # initdb defaults to checksums on from PG18 (and only then knows --no-data-checksums);
+        # older initdb defaults to off and needs --data-checksums to turn them on.
+        NEW_INITDB=~/${{ inputs.pg_new_dir }}/bin/initdb
+        if $NEW_INITDB --help | grep -q -- '--no-data-checksums'; then
+            [[ "$NEW_CHECKSUMS" == "off" ]] && CHECKSUM_OPT=--no-data-checksums || CHECKSUM_OPT=
+        else
+            [[ "$NEW_CHECKSUMS" == "on" ]] && CHECKSUM_OPT=--data-checksums || CHECKSUM_OPT=
+        fi
+        echo "New cluster data checksums: ${NEW_CHECKSUMS} (initdb option: ${CHECKSUM_OPT:-none})"
+        $NEW_INITDB $CHECKSUM_OPT -D ~/${{ inputs.pg_new_dir }}/data
         cd ~/${{ inputs.pg_new_dir }}/data
         sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" postgresql.conf
         sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'/g" postgresql.conf

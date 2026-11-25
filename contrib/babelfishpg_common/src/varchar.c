@@ -16,6 +16,7 @@
 #include "varatt.h"
 
 #include "access/hash.h"
+#include "access/htup_details.h"
 #include "collation.h"
 #include "common/shortest_dec.h"
 #include "catalog/pg_collation.h"
@@ -1970,7 +1971,9 @@ hashvarchar(PG_FUNCTION_ARGS)
 	else
 	{
 #ifdef USE_ICU
-		if (mylocale->provider == COLLPROVIDER_ICU)
+		coll_info coll_info_of_inputcollid = lookup_collation_table(collid);
+
+		if (OidIsValid(coll_info_of_inputcollid.oid))
 		{
 			int32_t		ulen = -1;
 			UChar	   *uchar = NULL;
@@ -1979,10 +1982,10 @@ hashvarchar(PG_FUNCTION_ARGS)
 
 			ulen = icu_to_uchar(&uchar, keydata, keylen);
 
-			bsize = ucol_getSortKey(mylocale->info.icu.ucol,
+			bsize = ucol_getSortKey(mylocale->icu.ucol,
 									uchar, ulen, NULL, 0);
 			buf = palloc(bsize);
-			ucol_getSortKey(mylocale->info.icu.ucol,
+			ucol_getSortKey(mylocale->icu.ucol,
 							uchar, ulen, buf, bsize);
 
 			result = hash_any(buf, bsize);
@@ -1992,7 +1995,7 @@ hashvarchar(PG_FUNCTION_ARGS)
 		else
 #endif
 			/* shouldn't happen */
-			elog(ERROR, "unsupported collprovider: %c", mylocale->provider);
+			elog(ERROR, "unsupported collprovider");
 	}
 
 	/* Avoid leaking memory for toasted inputs */

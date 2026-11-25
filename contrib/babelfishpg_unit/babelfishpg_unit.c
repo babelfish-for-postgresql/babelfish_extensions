@@ -281,6 +281,7 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupledesc, (AttrNumber) MESSAGE_NAME_COLUMN+1, "MESSAGE", TEXTOID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) RUNTIME_NAME_COLUMN+1, "RUNTIME", INT8OID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) ENABLED_NAME_COLUMN+1, "ENABLED", TEXTOID, -1, 0);
+		TupleDescFinalize(tupledesc);
 
         state->tupledesc = BlessTupleDesc(tupledesc);
         fctx->user_fctx = state;

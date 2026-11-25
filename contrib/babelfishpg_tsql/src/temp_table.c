@@ -24,6 +24,7 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/queryenvironment.h"
+#include "utils/tuplestore.h"
 
 #include "src/hooks.h"
 #include "src/pltsql.h"

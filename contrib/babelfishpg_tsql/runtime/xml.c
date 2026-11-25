@@ -168,7 +168,7 @@ init_xml_handles_htab(long long int nelem)
  * 		Destroys the hash table and frees associated memory.
  */
 static void
-destroy_xml_handles_htab()
+destroy_xml_handles_htab(void)
 {
 	if (ht_xmlNode2Id != NULL)
 	{
@@ -575,6 +575,7 @@ prepare_tupledesc_tuplestore_for_openxml(ReturnSetInfo *rsinfo, TupleDesc *tupde
 	TupleDescInitEntry(*tupdesc, (AttrNumber) 7, "datatype", nvarchar_oid, -1, 0);
 	TupleDescInitEntry(*tupdesc, (AttrNumber) 8, "prev", bigint_oid, -1, 0);
 	TupleDescInitEntry(*tupdesc, (AttrNumber) 9, "text", ntext_oid, -1, 0);
+	TupleDescFinalize(*tupdesc);
 	*tupdesc = BlessTupleDesc(*tupdesc);
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
@@ -1012,7 +1013,7 @@ bbf_xml_split_magic_tag(const char *xml_text, char **context_node_path, char **b
  * Check QUOTED_IDENTIFIER is ON
  */
 static void
-bbf_xml_validate_quoted_identifier()
+bbf_xml_validate_quoted_identifier(void)
 {
 	if (!pltsql_quoted_identifier)
 		ereport(ERROR,
@@ -2169,6 +2170,7 @@ bbf_xmlnodes(PG_FUNCTION_ARGS)
 
 	tupdesc = CreateTemplateTupleDesc(1);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "xml_node", XMLOID, -1, 0);
+	TupleDescFinalize(tupdesc);
 	tupdesc = BlessTupleDesc(tupdesc);
 	tupstore = tuplestore_begin_heap(true, false, work_mem);
 

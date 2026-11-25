@@ -341,7 +341,7 @@ gen_sqlvariant_bytea_from_type_datum(size_t typcode, Datum data)
 
 	if (IS_STRING_TYPE(typcode) || IS_BINARY_TYPE(typcode) || typcode == NUMERIC_T) /* varlena datatype */
 	{
-		data_len = VARSIZE_ANY(data);
+		data_len = VARSIZE_ANY(DatumGetPointer(data));
 		if (SV_CAN_USE_SHORT_VALENA(data_len, svhdr_size))
 		{
 			result_len = VARHDRSZ_SHORT + svhdr_size + data_len;
