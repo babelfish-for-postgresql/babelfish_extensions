@@ -1680,7 +1680,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 				FuncExpr	*func = (FuncExpr *) expr;
 				Oid		func_oid = InvalidOid;
 				int		rettypmod = -1;
-				bool		found_typmod;
+				bool		found_typmod = false;
 				Node		*arg = NULL;
 				/* Be smart about length-coercion functions... */
 				if (exprIsLengthCoercion(expr, &rettypmod))
@@ -1737,7 +1737,14 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr, bool *found)
 					if (funcName &&
 						is_namespace_sys_or_pg_catalog(func_namespace_oid))
 					{
-						if ((strlen(funcName) == 5 && (strncmp(funcName, "round", 5) == 0)))
+						/*
+						 * ROUND and ABS return the precision and scale of
+						 * their first argument. Numeric ABS is pg_catalog.abs,
+						 * which upgrades cannot rename. Do not add a
+						 * sys.abs(numeric): deprecating it would break this.
+						 */
+						if ((strlen(funcName) == 5 && (strncmp(funcName, "round", 5) == 0)) ||
+							(strlen(funcName) == 3 && (strncmp(funcName, "abs", 3) == 0)))
 						{
 							if (list_length(func->args) >= 1)
 							{
