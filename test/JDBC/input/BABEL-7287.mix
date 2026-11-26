@@ -1,0 +1,126 @@
+-- Regression tests: failed sp_getapplock / APPLOCK_TEST calls
+-- must not leak error state (the 5th failure in a session used to PANIC with
+-- ERRORDATA_STACK_SIZE exceeded), and a cancel or statement_timeout while
+-- waiting for an applock must stop the batch instead of returning -2.
+
+-- tsql
+CREATE LOGIN bbf7287_holder WITH PASSWORD = '12345678';
+GO
+
+-- a second session holds the lock
+-- tsql user=bbf7287_holder password=12345678
+exec sp_getapplock @Resource = 'bbf7287', @LockMode = 'Exclusive', @LockOwner = 'Session';
+GO
+
+-- tsql
+-- a session-level lock timeout that every failed call must restore
+SET LOCK_TIMEOUT 1500;
+GO
+SELECT current_setting('lock_timeout');
+GO
+
+-- 10 failed no-wait attempts in one batch: -999 every time, no crash
+DECLARE @r int, @i int = 1, @s varchar(200) = '';
+WHILE @i <= 10
+BEGIN
+    EXEC @r = sp_getapplock @Resource = 'bbf7287', @LockMode = 'Exclusive', @LockOwner = 'Session', @LockTimeout = 0;
+    SET @s = @s + CAST(@r AS varchar(10)) + ' ';
+    SET @i += 1;
+END
+SELECT @s;
+GO
+
+-- 10 more failed no-wait attempts, one per batch
+DECLARE @r int; EXEC @r = sp_getapplock 'bbf7287', 'Exclusive', 'Session', 0; SELECT @r;
+GO
+DECLARE @r int; EXEC @r = sp_getapplock 'bbf7287', 'Exclusive', 'Session', 0; SELECT @r;
+GO
+DECLARE @r int; EXEC @r = sp_getapplock 'bbf7287', 'Exclusive', 'Session', 0; SELECT @r;
+GO
+DECLARE @r int; EXEC @r = sp_getapplock 'bbf7287', 'Exclusive', 'Session', 0; SELECT @r;
+GO
+DECLARE @r int; EXEC @r = sp_getapplock 'bbf7287', 'Exclusive', 'Session', 0; SELECT @r;
+GO
+DECLARE @r int; EXEC @r = sp_getapplock 'bbf7287', 'Exclusive', 'Session', 0; SELECT @r;
+GO
+DECLARE @r int; EXEC @r = sp_getapplock 'bbf7287', 'Exclusive', 'Session', 0; SELECT @r;
+GO
+DECLARE @r int; EXEC @r = sp_getapplock 'bbf7287', 'Exclusive', 'Session', 0; SELECT @r;
+GO
+DECLARE @r int; EXEC @r = sp_getapplock 'bbf7287', 'Exclusive', 'Session', 0; SELECT @r;
+GO
+DECLARE @r int; EXEC @r = sp_getapplock 'bbf7287', 'Exclusive', 'Session', 0; SELECT @r;
+GO
+
+-- APPLOCK_TEST takes the same path with warnings suppressed: 0 every time
+DECLARE @i int = 1, @s varchar(200) = '';
+WHILE @i <= 10
+BEGIN
+    SET @s = @s + CAST(APPLOCK_TEST('public', 'bbf7287', 'Exclusive', 'Session') AS varchar(10)) + ' ';
+    SET @i += 1;
+END
+SELECT @s;
+GO
+
+-- lock wait ended by @LockTimeout: -1 every time, lock_timeout restored
+DECLARE @r int, @i int = 1, @s varchar(200) = '';
+WHILE @i <= 6
+BEGIN
+    EXEC @r = sp_getapplock @Resource = 'bbf7287', @LockMode = 'Exclusive', @LockOwner = 'Session', @LockTimeout = 10;
+    SET @s = @s + CAST(@r AS varchar(10)) + ' ';
+    SET @i += 1;
+END
+SELECT @s;
+GO
+SELECT current_setting('lock_timeout');
+GO
+
+-- statement_timeout while waiting: the error is raised and the rest of the
+-- batch does not run (no -2, no 'after' row)
+SELECT set_config('statement_timeout', '500', false);
+GO
+DECLARE @r int;
+EXEC @r = sp_getapplock @Resource = 'bbf7287', @LockMode = 'Exclusive', @LockOwner = 'Session', @LockTimeout = -1;
+SELECT 'after sp_getapplock', @r;
+GO
+
+-- same inside TRY/CATCH: a cancel is not caught, as in SQL Server
+BEGIN TRY
+    DECLARE @r int;
+    EXEC @r = sp_getapplock @Resource = 'bbf7287', @LockMode = 'Exclusive', @LockOwner = 'Session', @LockTimeout = -1;
+    SELECT 'after sp_getapplock', @r;
+END TRY
+BEGIN CATCH
+    SELECT 'in catch', ERROR_NUMBER();
+END CATCH
+SELECT 'after try/catch';
+GO
+SELECT set_config('statement_timeout', '0', false);
+GO
+
+-- the session lock timeout is unchanged after the cancel
+SELECT current_setting('lock_timeout');
+GO
+
+-- release in the holder session; the waiter can now take and drop the lock
+-- tsql user=bbf7287_holder password=12345678
+exec sp_releaseapplock @Resource = 'bbf7287', @LockOwner = 'Session';
+GO
+
+-- tsql
+DECLARE @r int;
+EXEC @r = sp_getapplock @Resource = 'bbf7287', @LockMode = 'Exclusive', @LockOwner = 'Session', @LockTimeout = 0;
+SELECT @r;
+GO
+SELECT APPLOCK_MODE('public', 'bbf7287', 'Session');
+GO
+exec sp_releaseapplock @Resource = 'bbf7287', @LockOwner = 'Session';
+GO
+
+-- terminate-tsql-conn user=bbf7287_holder password=12345678
+
+-- tsql
+SET LOCK_TIMEOUT -1;
+GO
+DROP LOGIN bbf7287_holder;
+GO

@@ -544,8 +544,8 @@ ApplockGetUsableKey(char *resource)
  * -999: lock request attempt failed.
  * 1: lock acquired successfully but after waiting.
  * -1: timed out.
- * -2: lock request canceled.
  * -3: lock request was chosen as a deadlock victim.
+ * Other errors (e.g. query cancel) are re-thrown.
  */
 static int
 _sp_getapplock_internal(char *resource, char *lockmode,
@@ -562,6 +562,7 @@ _sp_getapplock_internal(char *resource, char *lockmode,
 	AppLockCacheEnt *entry;
 	volatile TimestampTz start_time;
 	AppLockModeNode *node;
+	MemoryContext oldcontext = CurrentMemoryContext;
 
 	/* a few sanity checks */
 	ApplockCheckParallelMode(suppress_warning);
@@ -612,6 +613,8 @@ _sp_getapplock_internal(char *resource, char *lockmode,
 	}
 	PG_CATCH();
 	{
+		int			sqlerrcode;
+
 		/*
 		 * Exceptions during lock acquiring. This could be timeout, deadlock
 		 * or other failures. Note that we have to return something here
@@ -619,6 +622,8 @@ _sp_getapplock_internal(char *resource, char *lockmode,
 		 * won't be able to get the return code as defined in TSQL standard.
 		 * Therefore, we unfortunately can't print PG's nice deadlock report.
 		 */
+		MemoryContextSwitchTo(oldcontext);
+		sqlerrcode = geterrcode();
 
 		/* Un-referencing the global cache entry associated with this key. */
 		ApplockUnrefGlobalCache(key);
@@ -635,10 +640,18 @@ _sp_getapplock_internal(char *resource, char *lockmode,
 		lock_timeout_occurred = timeout >= 0 &&
 			get_timeout_finish_time(LOCK_TIMEOUT)
 			- start_time > (int64) timeout * 1e3 &&
-			geterrcode() == ERRCODE_LOCK_NOT_AVAILABLE;
+			sqlerrcode == ERRCODE_LOCK_NOT_AVAILABLE;
 
 		/* reset timeout back */
 		ApplockSetLockTimeout(cur_timeout);
+
+		/* Not a lock failure (e.g. query cancel): stop the batch. */
+		if (sqlerrcode != ERRCODE_LOCK_NOT_AVAILABLE &&
+			sqlerrcode != ERRCODE_T_R_DEADLOCK_DETECTED)
+			PG_RE_THROW();
+
+		/* Lock failure is reported via the return code. */
+		FlushErrorState();
 
 		if (lock_timeout_occurred)
 		{
@@ -647,29 +660,18 @@ _sp_getapplock_internal(char *resource, char *lockmode,
 			return -1;
 		}
 		/* Not timed out, but it's still due to lock unavailable. */
-		else if (geterrcode() == ERRCODE_LOCK_NOT_AVAILABLE)
+		else if (sqlerrcode == ERRCODE_LOCK_NOT_AVAILABLE)
 		{
 			if (!suppress_warning)
 				ApplockPrintMessage("Applock resource \'%s\' unavailable", resource);
 			return -999;
 		}
 		/* Did deadlock occur? */
-		else if (geterrcode() == ERRCODE_T_R_DEADLOCK_DETECTED)
+		else
 		{
 			if (!suppress_warning)
 				ApplockPrintMessage("Deadlock detected in applock request for \'%s\' ", resource);
 			return -3;
-		}
-
-		/*
-		 * Regard all other exceptions as lock request being canceled (e.g.
-		 * the calling query was interrupted and terminated.)
-		 */
-		else
-		{
-			if (!suppress_warning)
-				ApplockPrintMessage("Applock request for \'%s\' is canceled", resource);
-			return -2;
 		}
 	}
 	PG_END_TRY();
@@ -909,8 +911,8 @@ APPLOCK_TEST(PG_FUNCTION_ARGS)
 	/*
 	 * Pass the arguments and a time out of 0 (no wait) to the internal
 	 * getapplock function. Suppress the warning messages as they would be
-	 * normal during testing a lock. If anything happened besides having
-	 * acquired the lock successfully, just return 0.
+	 * normal during testing a lock. If the lock could not be acquired, just
+	 * return 0; any other error (e.g. a query cancel) is raised.
 	 */
 	if (_sp_getapplock_internal(resource, lockmode, lockowner, 0, dbprincipal, true) != 0)
 		PG_RETURN_INT32(0);
