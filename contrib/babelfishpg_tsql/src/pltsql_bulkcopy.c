@@ -32,6 +32,7 @@
 #include "miscadmin.h"
 #include "parser/parse_relation.h"
 #include "pltsql_bulkcopy.h"
+#include "stable_func_persisted.h"
 #include "rewrite/rewriteHandler.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -104,6 +105,9 @@ BulkCopy(BulkCopyStmt *stmt, uint64 *processed)
 			stmt->cstate = BeginBulkCopy(rel, attnums);
 		else
 			stmt->cstate->rel = rel;
+
+		/* Reject mismatched SET options before computing generated values. */
+		guc_check_bulk_copy(rel);
 
 		*processed = ExecuteBulkCopy(stmt->cstate, stmt->nrow, stmt->ncol, stmt->Values, stmt->Nulls);
 		stmt->rows_processed += *processed;

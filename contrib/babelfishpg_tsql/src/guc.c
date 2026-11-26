@@ -82,7 +82,7 @@ bool		pltsql_enable_alter_owner_from_pg = false;
 bool		pltsql_enable_rename_from_pg = false;
 bool		pltsql_enable_antlr_parse_cache = false;
 bool		pltsql_validate_antlr_parse_cache = false;
-bool		pltsql_enable_stable_func_persisted = true;
+bool		pltsql_enable_stable_func_persisted = false;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -1430,7 +1430,7 @@ define_custom_variables(void)
 										  "and enforces the required SET options for them"),
 							 NULL,
 							 &pltsql_enable_stable_func_persisted,
-							 true,
+							 false,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, assign_enable_stable_func_persisted, NULL);

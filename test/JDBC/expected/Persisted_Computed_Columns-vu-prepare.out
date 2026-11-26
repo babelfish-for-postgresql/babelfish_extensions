@@ -1,6 +1,14 @@
 
 -- Prepare: Create tables, data, view, FK tables and index table for
 -- PERSISTED computed column tests with deterministic STABLE functions
+SELECT set_config('babelfishpg_tsql.enable_stable_functions_in_computed_columns', 'on', false)
+GO
+~~START~~
+text
+on
+~~END~~
+
+
 SET QUOTED_IDENTIFIER ON
 SET CONCAT_NULL_YIELDS_NULL ON
 SET ANSI_NULLS ON

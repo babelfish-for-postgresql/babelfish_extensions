@@ -1,5 +1,13 @@
 
 -- Verify: Test PERSISTED computed columns with deterministic STABLE functions
+SELECT set_config('babelfishpg_tsql.enable_stable_functions_in_computed_columns', 'on', false)
+GO
+~~START~~
+text
+on
+~~END~~
+
+
 SET QUOTED_IDENTIFIER ON
 SET CONCAT_NULL_YIELDS_NULL ON
 SET ANSI_NULLS ON
@@ -842,42 +850,6 @@ GO
 
 ~~ERROR (Message: insert or update on table "pcc_fk_child" violates foreign key constraint "fk_pcc_child")~~
 
-
--- FK child INSERT with wrong GUC (parent has computed col)
-SET CONCAT_NULL_YIELDS_NULL OFF
-GO
-INSERT INTO pcc_fk_child VALUES (3, 3)
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: INSERT failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
-
-SET CONCAT_NULL_YIELDS_NULL ON
-GO
-
--- FK child UPDATE with wrong GUC
-SET CONCAT_NULL_YIELDS_NULL OFF
-GO
-UPDATE pcc_fk_child SET parent_c = 10 WHERE id = 1
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: UPDATE failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
-
-SET CONCAT_NULL_YIELDS_NULL ON
-GO
-
--- FK child DELETE with wrong GUC
-SET CONCAT_NULL_YIELDS_NULL OFF
-GO
-DELETE FROM pcc_fk_child WHERE id = 1
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: DELETE failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
-
-SET CONCAT_NULL_YIELDS_NULL ON
-GO
 
 -- SELECT from FK child with wrong GUC (should PASS — child has no computed cols)
 SET CONCAT_NULL_YIELDS_NULL OFF

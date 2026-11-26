@@ -1,5 +1,8 @@
 -- Verify: Test PERSISTED computed columns with deterministic STABLE functions
 
+SELECT set_config('babelfishpg_tsql.enable_stable_functions_in_computed_columns', 'on', false)
+GO
+
 SET QUOTED_IDENTIFIER ON
 SET CONCAT_NULL_YIELDS_NULL ON
 SET ANSI_NULLS ON
@@ -441,30 +444,6 @@ GO
 
 -- FK violation (value doesn't exist)
 INSERT INTO pcc_fk_child VALUES (2, 99)
-GO
-
--- FK child INSERT with wrong GUC (parent has computed col)
-SET CONCAT_NULL_YIELDS_NULL OFF
-GO
-INSERT INTO pcc_fk_child VALUES (3, 3)
-GO
-SET CONCAT_NULL_YIELDS_NULL ON
-GO
-
--- FK child UPDATE with wrong GUC
-SET CONCAT_NULL_YIELDS_NULL OFF
-GO
-UPDATE pcc_fk_child SET parent_c = 10 WHERE id = 1
-GO
-SET CONCAT_NULL_YIELDS_NULL ON
-GO
-
--- FK child DELETE with wrong GUC
-SET CONCAT_NULL_YIELDS_NULL OFF
-GO
-DELETE FROM pcc_fk_child WHERE id = 1
-GO
-SET CONCAT_NULL_YIELDS_NULL ON
 GO
 
 -- SELECT from FK child with wrong GUC (should PASS — child has no computed cols)

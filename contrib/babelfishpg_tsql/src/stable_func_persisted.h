@@ -5,6 +5,7 @@
 #include "postgres.h"
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
+#include "utils/relcache.h"
 
 /*
  * Extra condition for functions that are only deterministic for certain
@@ -45,6 +46,9 @@ extern bool table_has_persisted_computed_cols(Oid relid);
  * Called from ExecutorStart so that cached plans are still checked.
  */
 extern void guc_check_dml(PlannedStmt *pstmt);
+
+/* Check SET options before TDS bulk copy into an open target relation */
+extern void guc_check_bulk_copy(Relation rel);
 
 /* Rewrite computed column references in SELECT when GUCs don't match */
 extern void query_rewrite_persisted(Query *parse);

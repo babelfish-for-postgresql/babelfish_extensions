@@ -392,46 +392,36 @@ guc_check_dml_error(const char *cmd)
 }
 
 /*
- * Raise an error if the target relation, or any table it references by foreign
- * key, has PERSISTED computed columns.  Callers have already established that
- * the session GUCs do not match the required settings.
+ * Raise an error if the target relation has PERSISTED computed columns.
+ * Callers have already established that the session GUCs do not match the
+ * required settings.
  */
 static void
 check_dml_target(Oid relid, const char *cmd)
 {
-    Relation    rel;
-    List       *fk_list;
-    ListCell   *lc;
+    Relation rel;
+    bool     has_persisted_cols;
 
     rel = relation_open(relid, AccessShareLock);
-
-    /* Check the target using the relation already opened for the FK lookup */
-    if (relation_has_persisted_computed_cols(rel))
-    {
-        relation_close(rel, AccessShareLock);
-        guc_check_dml_error(cmd);
-    }
-
-    /*
-     * Copy the relcache-owned list before parent lookups, which may process
-     * invalidations and reset this relation's relcache entry.
-     */
-    fk_list = copyObject(RelationGetFKeyList(rel));
-
-    foreach(lc, fk_list)
-    {
-        ForeignKeyCacheInfo *fk = (ForeignKeyCacheInfo *) lfirst(lc);
-
-        if (table_has_persisted_computed_cols(fk->confrelid))
-        {
-            list_free_deep(fk_list);
-            relation_close(rel, AccessShareLock);
-            guc_check_dml_error(cmd);
-        }
-    }
-
-    list_free_deep(fk_list);
+    has_persisted_cols = relation_has_persisted_computed_cols(rel);
     relation_close(rel, AccessShareLock);
+
+    if (has_persisted_cols)
+        guc_check_dml_error(cmd);
+}
+
+/* Check SET options before TDS bulk copy computes and stores generated values */
+void
+guc_check_bulk_copy(Relation rel)
+{
+    if (!pltsql_enable_stable_func_persisted ||
+        sql_dialect != SQL_DIALECT_TSQL ||
+        babelfish_dump_restore ||
+        !has_mismatched_set_options())
+        return;
+
+    if (relation_has_persisted_computed_cols(rel))
+        guc_check_dml_error("INSERT");
 }
 
 /*
@@ -460,6 +450,8 @@ guc_check_dml(PlannedStmt *pstmt)
             cmd = "UPDATE"; break;
         case CMD_DELETE: 
             cmd = "DELETE"; break;
+        case CMD_MERGE:
+            cmd = "MERGE"; break;
         default: 
             return;     /* not DML, nothing to check */
     }
