@@ -197,6 +197,7 @@ XX000#!#The table-valued parameter "%s" must be declared with the READONLY optio
 42704#!#trigger "%s" does not exist#!##!#3701
 42704#!#trigger "%s" for table "%s" does not exist#!##!#4920
 42710#!#type "%s" already exists#!##!#219
+42710#!#There is already an object named '%s' in the database.#!##!#2714
 23503#!#update or delete on table "%s" violates foreign key constraint "%s" on table "%s"#!##!#547
 22001#!#value too long for type character(%d)#!##!#8152
 22001#!#value too long for type character varying(%d)#!##!#8152

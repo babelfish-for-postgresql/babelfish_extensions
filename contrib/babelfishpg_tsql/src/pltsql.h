@@ -2375,7 +2375,8 @@ typedef enum BbfIdentMappingObjType
 	BBF_IDENT_CONSTRAINT,		/* pg_constraint */
 	BBF_IDENT_SEQUENCE,			/* pg_class      */
 	BBF_IDENT_TYPE,				/* pg_type       */
-	BBF_IDENT_PARAMETER			/* pg_proc       */
+	BBF_IDENT_PARAMETER,		/* pg_proc       */
+	BBF_IDENT_DEFAULT			/* pg_attrdef, keyed by column name */
 } BbfIdentMappingObjType;
 
 extern Oid	get_bbf_ident_mapping_oid(void);
@@ -2405,6 +2406,16 @@ extern void update_bbf_ident_mapping_nspname(const char *old_nspname,
 extern void clean_up_bbf_ident_mapping(const char *nspname);
 extern void clean_up_bbf_ident_mapping_for_db(int16 dbid);
 extern const char *skip_collist_separators(const char *p);
+extern void store_default_constraint_name(Oid relid, const char *attname,
+										  const char *conname);
+extern char *lookup_default_constraint_column(Oid relid, const char *conname);
+extern void check_constraint_name_not_default(Oid relid, const char *conname);
+extern void forget_default_constraint_names(Oid relid);
+extern void delete_default_constraint_name(Oid relid, const char *attname);
+extern void rename_default_constraint_column(Oid relid, const char *old_attname,
+											 const char *new_attname);
+extern void rename_default_constraint_names(RenameStmt *stmt, Oid relid,
+											const char *old_relname);
 extern void store_table_constraint_original_names(CreateStmt *create_stmt,
 												  RangeVar *rel,
 												  const char *queryString);

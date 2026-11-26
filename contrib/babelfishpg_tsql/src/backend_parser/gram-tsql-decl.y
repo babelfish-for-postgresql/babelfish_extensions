@@ -19,6 +19,7 @@
 %type <partspec> tsql_PartitionSpec
 %type <node> tsql_DropIndexStmt tsql_InsertStmt
 %type <str> tsql_DropIndexStmtSchema
+%type <str> tsql_opt_constraint_name
 %type <node> tsql_CreateLoginStmt tsql_AlterLoginStmt tsql_DropLoginStmt
 %type <node> tsql_CreateUserStmt tsql_DropRoleStmt tsql_AlterUserStmt
 %type <node> tsql_CreateRoleStmt

@@ -151,6 +151,7 @@ SELECT original_identifier_name FROM sys.babelfish_identifier_mapping WHERE orig
 GO
 ~~START~~
 nvarchar
+very_long_default_constraint_nafe6c7d5e2bb39ee6a2e7b81c1c83e08a
 Very_Long_Default_Constraint_Name_That_Exceeds_PostgreSQL_Limit_Of_Sixty_Three_Chars
 ~~END~~
 
