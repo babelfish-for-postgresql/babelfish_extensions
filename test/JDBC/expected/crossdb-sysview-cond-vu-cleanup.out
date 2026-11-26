@@ -1,0 +1,13 @@
+
+-- cleanup: drop the database and the login/user created by the prepare batch.
+USE master;
+GO
+
+DROP USER crossdb_sysview_noaccess;
+GO
+
+DROP LOGIN crossdb_sysview_noaccess;
+GO
+
+DROP DATABASE crossdb_sysview_db;
+GO
