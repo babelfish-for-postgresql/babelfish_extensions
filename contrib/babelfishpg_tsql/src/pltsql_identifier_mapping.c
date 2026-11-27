@@ -28,11 +28,14 @@
 #include "access/table.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_attrdef.h"
+#include "catalog/pg_attribute.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/tablecmds.h"
+#include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
 #include "nodes/parsenodes.h"
 #include "parser/analyze.h"
@@ -89,6 +92,8 @@ bbf_ident_mapping_catalog_oid(BbfIdentMappingObjType objtype)
 			return TypeRelationId;
 		case BBF_IDENT_PARAMETER:
 			return ProcedureRelationId;
+		case BBF_IDENT_DEFAULT:
+			return AttrDefaultRelationId;
 	}
 	/* Should be unreachable; keep the compiler happy. */
 	elog(ERROR, "unexpected babelfish_identifier_mapping object type: %d",
@@ -143,6 +148,9 @@ insert_bbf_ident_mapping(const char *truncated_name,
 
 	if (!OidIsValid(get_bbf_ident_mapping_oid()))
 		return;
+
+	/* DEFAULT rows are written by store_default_constraint_name */
+	Assert(objtype != BBF_IDENT_DEFAULT);
 
 	/*
 	 * If a row for this key already exists, decide between a no-op and an
@@ -426,6 +434,8 @@ delete_bbf_ident_mapping_for_drop(ObjectType removeType,
 			/* All constraints of the table, keyed on the table as parent. */
 			delete_bbf_ident_mapping(NULL, schema_name,
 									 BBF_IDENT_CONSTRAINT, major_name);
+			delete_bbf_ident_mapping(NULL, schema_name,
+									 BBF_IDENT_DEFAULT, major_name);
 			break;
 		case OBJECT_SEQUENCE:
 			/* The sequence itself. */
@@ -1100,6 +1110,9 @@ store_table_constraint_original_names(CreateStmt *create_stmt, RangeVar *rel,
 
 	qlen = strlen(queryString);
 
+	/* drop rows a PG-endpoint DROP TABLE of the same name left behind */
+	forget_default_constraint_names(relOid);
+
 	foreach(lc, create_stmt->tableElts)
 	{
 		Node *elt = (Node *) lfirst(lc);
@@ -1107,6 +1120,9 @@ store_table_constraint_original_names(CreateStmt *create_stmt, RangeVar *rel,
 		if (IsA(elt, Constraint))
 		{
 			Constraint *con = (Constraint *) elt;
+
+			if (con->conname && !create_stmt->tsql_tabletype)
+				check_constraint_name_not_default(relOid, con->conname);
 
 			if (con->conname && con->location >= 0 &&
 				(size_t) con->location + CONSTRAINT_KEYWORD_LEN < qlen &&
@@ -1141,6 +1157,21 @@ store_table_constraint_original_names(CreateStmt *create_stmt, RangeVar *rel,
 			foreach(clc, coldef->constraints)
 			{
 				Constraint *con = (Constraint *) lfirst(clc);
+
+				/* Table types are not tracked: DROP TYPE keeps no row clean. */
+				if (IsA(con, Constraint) && con->contype == CONSTR_DEFAULT &&
+					con->conname && coldef->colname && !create_stmt->tsql_tabletype)
+				{
+					store_default_constraint_name(relOid, coldef->colname,
+												  con->conname);
+
+					/* a long name also keeps its original form below */
+				}
+				else if (IsA(con, Constraint) && con->conname && !create_stmt->tsql_tabletype &&
+						 (con->contype == CONSTR_CHECK || con->contype == CONSTR_FOREIGN ||
+						  con->contype == CONSTR_PRIMARY || con->contype == CONSTR_UNIQUE ||
+						  con->contype == CONSTR_NOTNULL))
+					check_constraint_name_not_default(relOid, con->conname);
 
 				if (IsA(con, Constraint) && con->conname && con->location >= 0 &&
 					(size_t) con->location + CONSTRAINT_KEYWORD_LEN < qlen &&
@@ -1469,4 +1500,494 @@ block_bbf_original_name_reloption(Node *parsetree)
 		default:
 			break;
 	}
+}
+
+
+/*
+ * Named DEFAULT constraints. pg_attrdef has no name, so the name is kept in
+ * babelfish_identifier_mapping (pg_catalog_type = pg_attrdef) keyed by the
+ * physical schema, table and column, in the downcased/truncated form the
+ * T-SQL scanner gives DROP CONSTRAINT <name>.
+ */
+
+/* Resolve the physical (namespace, relation) names of relid; palloc'd. */
+static bool
+default_mapping_keys(Oid relid, char **nspname, char **relname)
+{
+	*nspname = NULL;
+	*relname = NULL;
+
+	if (!OidIsValid(relid) || !OidIsValid(get_bbf_ident_mapping_oid()))
+		return false;
+
+	/*
+	 * Temp tables go away without a T-SQL DROP and their schema is reused, so
+	 * they are not tracked. Neither are views.
+	 */
+	if (get_rel_persistence(relid) == RELPERSISTENCE_TEMP)
+		return false;
+	if (get_rel_relkind(relid) != RELKIND_RELATION &&
+		get_rel_relkind(relid) != RELKIND_PARTITIONED_TABLE)
+		return false;
+
+	*nspname = get_namespace_name(get_rel_namespace(relid));
+	*relname = get_rel_name(relid);
+	if (*nspname == NULL || *relname == NULL)
+	{
+		if (*nspname)
+			pfree(*nspname);
+		if (*relname)
+			pfree(*relname);
+		*nspname = NULL;
+		*relname = NULL;
+		return false;
+	}
+	return true;
+}
+
+/* Does relid.attname currently carry a default? */
+static bool
+column_has_default(Oid relid, const char *attname)
+{
+	HeapTuple	atttup;
+	bool		result = false;
+
+	atttup = SearchSysCacheAttName(relid, attname);
+	if (HeapTupleIsValid(atttup))
+	{
+		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(atttup);
+
+		result = att->atthasdef && !att->attisdropped && att->attgenerated == '\0';
+		ReleaseSysCache(atttup);
+	}
+	return result;
+}
+
+/* Compare a mapping row's original name with key without copying it. */
+static bool
+mapping_name_equals(Datum datum, const char *key, size_t keylen)
+{
+	text	   *t = DatumGetTextPP(datum);
+	bool		result;
+
+	result = VARSIZE_ANY_EXHDR(t) == keylen &&
+		memcmp(VARDATA_ANY(t), key, keylen) == 0;
+	if ((Pointer) t != DatumGetPointer(datum))
+		pfree(t);
+	return result;
+}
+
+/*
+ * Is key the name of a DEFAULT in nspname, other than the one on
+ * excl_relname.excl_attname? Rows whose default no longer exists (left by
+ * PG-endpoint DDL) are ignored.
+ */
+static bool
+default_name_in_use(const char *nspname, const char *key,
+					const char *excl_relname, const char *excl_attname)
+{
+	Relation	rel;
+	SysScanDesc scan;
+	ScanKeyData skey[2];
+	HeapTuple	tuple;
+	NameData	nsp_data;
+	Oid			nspoid = get_namespace_oid(nspname, true);
+	size_t		keylen = strlen(key);
+	bool		taken = false;
+
+	namestrcpy(&nsp_data, nspname);
+	rel = table_open(get_bbf_ident_mapping_oid(), AccessShareLock);
+	ScanKeyInit(&skey[0], Anum_bbf_ident_mapping_nspname,
+				BTEqualStrategyNumber, F_NAMEEQ, NameGetDatum(&nsp_data));
+	ScanKeyInit(&skey[1], Anum_bbf_ident_mapping_pg_catalog_type,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(AttrDefaultRelationId));
+	scan = systable_beginscan(rel, get_bbf_ident_mapping_idx_oid(), true,
+							  NULL, 2, skey);
+	while (!taken && HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		bool		isnull;
+		Datum		orig = heap_getattr(tuple, Anum_bbf_ident_mapping_original_name,
+										RelationGetDescr(rel), &isnull);
+		const char *att;
+		const char *parent;
+		Oid			parent_relid;
+
+		if (isnull || !mapping_name_equals(orig, key, keylen))
+			continue;
+		att = NameStr(*DatumGetName(heap_getattr(tuple, Anum_bbf_ident_mapping_truncated_name,
+												 RelationGetDescr(rel), &isnull)));
+		parent = NameStr(*DatumGetName(heap_getattr(tuple, Anum_bbf_ident_mapping_parent_name,
+													RelationGetDescr(rel), &isnull)));
+		if (excl_relname && excl_attname &&
+			strcmp(parent, excl_relname) == 0 && strcmp(att, excl_attname) == 0)
+			continue;
+		parent_relid = OidIsValid(nspoid) ? get_relname_relid(parent, nspoid) : InvalidOid;
+		if (OidIsValid(parent_relid) && column_has_default(parent_relid, att))
+			taken = true;
+	}
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+
+	return taken;
+}
+
+/* Msg 2714 */
+static void
+report_duplicate_constraint_name(const char *key)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_DUPLICATE_OBJECT),
+			 errmsg("There is already an object named '%s' in the database.", key)));
+}
+
+/*
+ * Error out when key is already the name of a constraint or of another
+ * DEFAULT in the schema; T-SQL constraint names are schema-scoped.
+ */
+static void
+check_default_constraint_name_unused(Oid relid, const char *attname,
+									 const char *nspname, const char *relname,
+									 const char *key)
+{
+	Relation	rel;
+	SysScanDesc scan;
+	ScanKeyData skey[2];
+	HeapTuple	tuple;
+	bool		taken = false;
+
+	/* NOT NULL counts too: DROP CONSTRAINT would find it first */
+	rel = table_open(ConstraintRelationId, AccessShareLock);
+	ScanKeyInit(&skey[0], Anum_pg_constraint_conname, BTEqualStrategyNumber,
+				F_NAMEEQ, CStringGetDatum(key));
+	ScanKeyInit(&skey[1], Anum_pg_constraint_connamespace, BTEqualStrategyNumber,
+				F_OIDEQ, ObjectIdGetDatum(get_rel_namespace(relid)));
+	scan = systable_beginscan(rel, ConstraintNameNspIndexId, true, NULL, 2, skey);
+	while (!taken && HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+
+		if (OidIsValid(con->conrelid) &&
+			(con->contype == CONSTRAINT_CHECK || con->contype == CONSTRAINT_FOREIGN ||
+			 con->contype == CONSTRAINT_PRIMARY || con->contype == CONSTRAINT_UNIQUE ||
+			 con->contype == CONSTRAINT_NOTNULL))
+			taken = true;
+	}
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+
+	if (taken || default_name_in_use(nspname, key, relname, attname))
+		report_duplicate_constraint_name(key);
+}
+
+/* Error out when a new constraint of relid takes a DEFAULT's name. */
+void
+check_constraint_name_not_default(Oid relid, const char *conname)
+{
+	char	   *nspname;
+	char	   *relname;
+	char	   *key;
+
+	if (babelfish_dump_restore || conname == NULL)
+		return;
+	if (!default_mapping_keys(relid, &nspname, &relname))
+		return;
+	key = downcase_truncate_identifier(conname, strlen(conname), false);
+	if (default_name_in_use(nspname, key, NULL, NULL))
+		report_duplicate_constraint_name(key);
+	pfree(key);
+	pfree(nspname);
+	pfree(relname);
+}
+
+/* Set the DEFAULT name of nspname.relname.attname, replacing any old one. */
+static void
+insert_default_constraint_row(const char *nspname, const char *relname,
+							  const char *attname, const char *key)
+{
+	Relation	rel;
+	HeapTuple	tuple;
+	Datum		values[BBF_IDENT_MAPPING_NUM_COLS];
+	bool		nulls[BBF_IDENT_MAPPING_NUM_COLS];
+	NameData	att_data;
+	NameData	nsp_data;
+	NameData	parent_data;
+	char	   *old_key;
+
+	/* a replaced long name also has a long-name row */
+	old_key = lookup_bbf_ident_mapping(attname, nspname, BBF_IDENT_DEFAULT, relname);
+	if (old_key)
+	{
+		if (strlen(old_key) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD && strcmp(old_key, key) != 0)
+			delete_bbf_ident_mapping(old_key, nspname, BBF_IDENT_CONSTRAINT, relname);
+		delete_bbf_ident_mapping(attname, nspname, BBF_IDENT_DEFAULT, relname);
+		pfree(old_key);
+	}
+
+	rel = table_open(get_bbf_ident_mapping_oid(), RowExclusiveLock);
+
+	MemSet(nulls, false, sizeof(nulls));
+	namestrcpy(&nsp_data, nspname);
+	namestrcpy(&att_data, attname);
+	namestrcpy(&parent_data, relname);
+
+	values[Anum_bbf_ident_mapping_nspname - 1] = NameGetDatum(&nsp_data);
+	values[Anum_bbf_ident_mapping_pg_catalog_type - 1] = ObjectIdGetDatum(AttrDefaultRelationId);
+	values[Anum_bbf_ident_mapping_truncated_name - 1] = NameGetDatum(&att_data);
+	values[Anum_bbf_ident_mapping_original_name - 1] = CStringGetTextDatum(key);
+	values[Anum_bbf_ident_mapping_parent_name - 1] = NameGetDatum(&parent_data);
+
+	tuple = heap_form_tuple(RelationGetDescr(rel), values, nulls);
+	CatalogTupleInsert(rel, tuple);
+	heap_freetuple(tuple);
+	table_close(rel, RowExclusiveLock);
+
+	CommandCounterIncrement();
+}
+
+/* Record conname as the DEFAULT name of relid.attname. */
+void
+store_default_constraint_name(Oid relid, const char *attname,
+							  const char *conname)
+{
+	char	   *nspname;
+	char	   *relname;
+	char	   *key;
+
+	if (babelfish_dump_restore || attname == NULL || conname == NULL)
+		return;
+	if (!default_mapping_keys(relid, &nspname, &relname))
+		return;
+
+	key = downcase_truncate_identifier(conname, strlen(conname), false);
+	check_default_constraint_name_unused(relid, attname, nspname, relname, key);
+	insert_default_constraint_row(nspname, relname, attname, key);
+
+	pfree(key);
+	pfree(nspname);
+	pfree(relname);
+}
+
+/* Remove all DEFAULT name rows of relid. */
+void
+forget_default_constraint_names(Oid relid)
+{
+	char	   *nspname;
+	char	   *relname;
+
+	if (babelfish_dump_restore || !default_mapping_keys(relid, &nspname, &relname))
+		return;
+	delete_bbf_ident_mapping(NULL, nspname, BBF_IDENT_DEFAULT, relname);
+	pfree(nspname);
+	pfree(relname);
+}
+
+/*
+ * Match key against the name sys.default_constraints shows for each default
+ * of relid, 'DF_<table>_<oid>', in its scanner (truncated) form. Returns the
+ * column name, or NULL.
+ */
+static char *
+lookup_system_default_name(Oid relid, const char *key)
+{
+	char	   *tabname;
+	Relation	adrel;
+	ScanKeyData skey;
+	SysScanDesc scan;
+	HeapTuple	tup;
+	char	   *result = NULL;
+
+	if (pg_strncasecmp(key, "df_", 3) != 0)
+		return NULL;
+
+	tabname = get_original_relname(relid, false);
+	if (tabname == NULL)
+		return NULL;
+
+	adrel = table_open(AttrDefaultRelationId, AccessShareLock);
+	ScanKeyInit(&skey, Anum_pg_attrdef_adrelid, BTEqualStrategyNumber,
+				F_OIDEQ, ObjectIdGetDatum(relid));
+	scan = systable_beginscan(adrel, AttrDefaultIndexId, true, NULL, 1, &skey);
+	while (result == NULL && HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		Form_pg_attrdef ad = (Form_pg_attrdef) GETSTRUCT(tup);
+		char	   *sysname = psprintf("DF_%s_%u", tabname, ad->oid);
+		char	   *syskey = downcase_truncate_identifier(sysname, strlen(sysname), false);
+		char	   *clipkey = NULL;
+
+		/* the view casts the name to sys.sysname (128 characters) */
+		if (pg_mbstrlen(sysname) > 128)
+		{
+			int			cliplen = pg_mbcharcliplen(sysname, strlen(sysname), 128);
+
+			clipkey = downcase_truncate_identifier(sysname, cliplen, false);
+		}
+
+		if (strcmp(syskey, key) == 0 || (clipkey && strcmp(clipkey, key) == 0))
+		{
+			char	   *att = get_attname(relid, ad->adnum, true);
+
+			if (att && column_has_default(relid, att))
+				result = att;
+		}
+		if (clipkey)
+			pfree(clipkey);
+		pfree(syskey);
+		pfree(sysname);
+	}
+	systable_endscan(scan);
+	table_close(adrel, AccessShareLock);
+	pfree(tabname);
+	return result;
+}
+
+/*
+ * Find the column of relid whose DEFAULT is named conname, by stored name or
+ * by system name. Returns the column name, or NULL.
+ */
+char *
+lookup_default_constraint_column(Oid relid, const char *conname)
+{
+	char	   *nspname;
+	char	   *relname;
+	char	   *result = NULL;
+	char	   *key;
+
+	if (conname == NULL)
+		return NULL;
+
+	key = downcase_truncate_identifier(conname, strlen(conname), false);
+
+	if (default_mapping_keys(relid, &nspname, &relname))
+	{
+		Relation	rel;
+		SysScanDesc scan;
+		ScanKeyData scanKey[3];
+		HeapTuple	tuple;
+		NameData	nsp_data;
+		NameData	parent_data;
+		size_t		keylen = strlen(key);
+
+		namestrcpy(&nsp_data, nspname);
+		namestrcpy(&parent_data, relname);
+
+		rel = table_open(get_bbf_ident_mapping_oid(), AccessShareLock);
+		ScanKeyInit(&scanKey[0], Anum_bbf_ident_mapping_nspname,
+					BTEqualStrategyNumber, F_NAMEEQ, NameGetDatum(&nsp_data));
+		ScanKeyInit(&scanKey[1], Anum_bbf_ident_mapping_pg_catalog_type,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(AttrDefaultRelationId));
+		ScanKeyInit(&scanKey[2], Anum_bbf_ident_mapping_parent_name,
+					BTEqualStrategyNumber, F_NAMEEQ, NameGetDatum(&parent_data));
+		scan = systable_beginscan(rel, get_bbf_ident_mapping_idx_oid(), true,
+								  NULL, 3, scanKey);
+		while (result == NULL && HeapTupleIsValid(tuple = systable_getnext(scan)))
+		{
+			bool		isnull;
+			Datum		orig = heap_getattr(tuple, Anum_bbf_ident_mapping_original_name,
+											RelationGetDescr(rel), &isnull);
+			const char *att;
+
+			if (isnull || !mapping_name_equals(orig, key, keylen))
+				continue;
+			att = NameStr(*DatumGetName(heap_getattr(tuple, Anum_bbf_ident_mapping_truncated_name,
+													 RelationGetDescr(rel), &isnull)));
+			if (column_has_default(relid, att))
+				result = pstrdup(att);
+		}
+		systable_endscan(scan);
+		table_close(rel, AccessShareLock);
+		pfree(nspname);
+		pfree(relname);
+	}
+
+	if (result == NULL)
+		result = lookup_system_default_name(relid, key);
+
+	pfree(key);
+	return result;
+}
+
+/*
+ * Forget the DEFAULT name of relid.attname, and the long-name row that
+ * CREATE TABLE stores for a long name.
+ */
+void
+delete_default_constraint_name(Oid relid, const char *attname)
+{
+	char	   *nspname;
+	char	   *relname;
+	char	   *conname;
+
+	if (babelfish_dump_restore || attname == NULL)
+		return;
+	if (!default_mapping_keys(relid, &nspname, &relname))
+		return;
+	conname = lookup_bbf_ident_mapping(attname, nspname, BBF_IDENT_DEFAULT, relname);
+	if (conname)
+	{
+		if (strlen(conname) >= BBF_ORIGINAL_NAME_LOOKUP_THRESHOLD)
+			delete_bbf_ident_mapping(conname, nspname, BBF_IDENT_CONSTRAINT, relname);
+		delete_bbf_ident_mapping(attname, nspname, BBF_IDENT_DEFAULT, relname);
+		pfree(conname);
+	}
+	pfree(nspname);
+	pfree(relname);
+}
+
+/* Move a DEFAULT name to the renamed column (no uniqueness check). */
+void
+rename_default_constraint_column(Oid relid, const char *old_attname,
+								 const char *new_attname)
+{
+	char	   *nspname;
+	char	   *relname;
+	char	   *conname;
+
+	if (old_attname == NULL || new_attname == NULL ||
+		strcmp(old_attname, new_attname) == 0)
+		return;
+	if (!default_mapping_keys(relid, &nspname, &relname))
+		return;
+	conname = lookup_bbf_ident_mapping(old_attname, nspname, BBF_IDENT_DEFAULT, relname);
+	if (conname)
+	{
+		delete_bbf_ident_mapping(old_attname, nspname, BBF_IDENT_DEFAULT, relname);
+		insert_default_constraint_row(nspname, relname, new_attname, conname);
+		pfree(conname);
+	}
+	pfree(nspname);
+	pfree(relname);
+}
+
+/*
+ * Re-key the DEFAULT name rows of relid after a table rename (from
+ * old_relname) or a column rename, from either endpoint.
+ */
+void
+rename_default_constraint_names(RenameStmt *stmt, Oid relid,
+								const char *old_relname)
+{
+	if (babelfish_dump_restore || !OidIsValid(relid))
+		return;
+
+	if (stmt->renameType == OBJECT_TABLE)
+	{
+		char	   *nspname;
+		char	   *new_relname;
+
+		if (old_relname == NULL || !default_mapping_keys(relid, &nspname, &new_relname))
+			return;
+		if (strcmp(old_relname, new_relname) != 0)
+		{
+			/* rows under the new name are stale and would collide */
+			delete_bbf_ident_mapping(NULL, nspname, BBF_IDENT_DEFAULT, new_relname);
+			update_bbf_ident_mapping_parent(nspname, BBF_IDENT_DEFAULT,
+											old_relname, new_relname);
+		}
+		pfree(nspname);
+		pfree(new_relname);
+	}
+	else if (stmt->renameType == OBJECT_COLUMN)
+		rename_default_constraint_column(relid, stmt->subname, stmt->newname);
 }

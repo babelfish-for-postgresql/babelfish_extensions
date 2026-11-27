@@ -130,3 +130,682 @@ int
 1
 ~~END~~
 
+
+
+-- BABEL-6221 / BABEL-6256: ALTER TABLE ... DROP CONSTRAINT <name> of a DEFAULT constraint
+-- A DEFAULT named in -vu-prepare may come from a version before the fix, which
+-- kept no name; it can always be dropped by the name sys.default_constraints shows
+DECLARE @n sys.sysname = (SELECT name FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('sys_default_constraints_vu_prepare_t1'))
+EXEC('ALTER TABLE sys_default_constraints_vu_prepare_t1 DROP CONSTRAINT ' + @n)
+GO
+
+SELECT COUNT(*) FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('sys_default_constraints_vu_prepare_t1');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- BABEL-6221 repro: ALTER TABLE ... ADD CONSTRAINT <name> DEFAULT ... FOR, dropped by name
+CREATE TABLE babel_6221_mytab (a INT PRIMARY KEY, b INT);
+GO
+
+ALTER TABLE babel_6221_mytab ADD CONSTRAINT DF_babel_6221_mytab DEFAULT (0) FOR b;
+GO
+
+INSERT INTO babel_6221_mytab (a) VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE babel_6221_mytab DROP CONSTRAINT DF_babel_6221_mytab;
+GO
+
+INSERT INTO babel_6221_mytab (a) VALUES (2);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT a, b FROM babel_6221_mytab ORDER BY a;
+GO
+~~START~~
+int#!#int
+1#!#0
+2#!#<NULL>
+~~END~~
+
+
+-- a second drop fails as in SQL Server; IF EXISTS does not
+ALTER TABLE babel_6221_mytab DROP CONSTRAINT DF_babel_6221_mytab;
+GO
+~~ERROR (Code: 3728)~~
+
+~~ERROR (Message: constraint "df_babel_6221_mytab" of relation "babel_6221_mytab" does not exist)~~
+
+
+ALTER TABLE babel_6221_mytab DROP CONSTRAINT IF EXISTS DF_babel_6221_mytab;
+GO
+
+-- BABEL-6256 repro: column-level CONSTRAINT <name> DEFAULT in CREATE TABLE
+CREATE TABLE babel_6221_t1 (col1 INT CONSTRAINT babel_6221_c DEFAULT 0, col2 INT);
+GO
+
+ALTER TABLE babel_6221_t1 DROP CONSTRAINT babel_6221_c;
+GO
+
+INSERT INTO babel_6221_t1 (col2) VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT col1, col2 FROM babel_6221_t1;
+GO
+~~START~~
+int#!#int
+<NULL>#!#1
+~~END~~
+
+
+-- ALTER TABLE ... ADD <column> ... CONSTRAINT <name> DEFAULT; the name is case-insensitive
+CREATE TABLE babel_6221_t2 (a INT);
+GO
+
+ALTER TABLE babel_6221_t2 ADD b INT NOT NULL CONSTRAINT babel_6221_df_t2b DEFAULT 1;
+GO
+
+ALTER TABLE babel_6221_t2 DROP CONSTRAINT [BABEL_6221_DF_T2B];
+GO
+
+SELECT COUNT(*) FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('babel_6221_t2');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- DROP CONSTRAINT IF EXISTS drops a named DEFAULT
+CREATE TABLE babel_6221_t3 (a INT CONSTRAINT babel_6221_df_t3 DEFAULT 3);
+GO
+
+ALTER TABLE babel_6221_t3 DROP CONSTRAINT IF EXISTS babel_6221_df_t3;
+GO
+
+SELECT COUNT(*) FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('babel_6221_t3');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- a schema-qualified table; the same name may be used again in another schema
+CREATE SCHEMA babel_6221_s;
+GO
+
+CREATE TABLE babel_6221_s.t4 (a INT CONSTRAINT babel_6221_df_t4 DEFAULT 4, b INT);
+GO
+
+CREATE TABLE babel_6221_t4 (a INT CONSTRAINT babel_6221_df_t4 DEFAULT 5);
+GO
+
+ALTER TABLE babel_6221_s.t4 DROP CONSTRAINT babel_6221_df_t4;
+GO
+
+INSERT INTO babel_6221_s.t4 (b) VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT a, b FROM babel_6221_s.t4;
+GO
+~~START~~
+int#!#int
+<NULL>#!#1
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('babel_6221_t4');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- the name is scoped to its table: another table of the schema does not find it
+ALTER TABLE babel_6221_mytab DROP CONSTRAINT babel_6221_df_t4;
+GO
+~~ERROR (Code: 3728)~~
+
+~~ERROR (Message: constraint "babel_6221_df_t4" of relation "babel_6221_mytab" does not exist)~~
+
+
+-- the name follows a column rename and then a table rename
+CREATE TABLE babel_6221_t5 (a INT, b INT);
+GO
+
+ALTER TABLE babel_6221_t5 ADD CONSTRAINT babel_6221_df_t5 DEFAULT 7 FOR b;
+GO
+
+EXEC sp_rename 'babel_6221_t5.b', 'b_renamed', 'COLUMN';
+GO
+
+EXEC sp_rename 'babel_6221_t5', 'babel_6221_t5_renamed', 'OBJECT';
+GO
+
+ALTER TABLE babel_6221_t5_renamed DROP CONSTRAINT babel_6221_df_t5;
+GO
+
+INSERT INTO babel_6221_t5_renamed (a) VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT a, b_renamed FROM babel_6221_t5_renamed;
+GO
+~~START~~
+int#!#int
+1#!#<NULL>
+~~END~~
+
+
+-- DEFAULT names are unique within a schema, as in SQL Server (Msg 2714)
+CREATE TABLE babel_6221_t6 (a INT CONSTRAINT babel_6221_df_t6 DEFAULT 1, b INT, CONSTRAINT babel_6221_chk_t6 CHECK (a > 0));
+GO
+
+-- ... against another DEFAULT of the same table
+ALTER TABLE babel_6221_t6 ADD CONSTRAINT babel_6221_df_t6 DEFAULT 2 FOR b;
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: There is already an object named 'babel_6221_df_t6' in the database.)~~
+
+
+-- ... against a CHECK constraint of the same table
+ALTER TABLE babel_6221_t6 ADD CONSTRAINT babel_6221_chk_t6 DEFAULT 2 FOR b;
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: There is already an object named 'babel_6221_chk_t6' in the database.)~~
+
+
+-- ... against a DEFAULT of another table of the schema
+CREATE TABLE babel_6221_t7 (x INT CONSTRAINT babel_6221_df_t6 DEFAULT 1);
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: There is already an object named 'babel_6221_df_t6' in the database.)~~
+
+
+-- ... within one CREATE TABLE
+CREATE TABLE babel_6221_t7 (x INT CONSTRAINT babel_6221_df_t7 DEFAULT 1, y INT CONSTRAINT babel_6221_df_t7 DEFAULT 2);
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: There is already an object named 'babel_6221_df_t7' in the database.)~~
+
+
+-- the failed statements left the existing default and its name in place
+INSERT INTO babel_6221_t6 (b) VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE babel_6221_t6 DROP CONSTRAINT babel_6221_df_t6;
+GO
+
+SELECT COUNT(*) FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('babel_6221_t6');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- other constraint types are dropped by name as before
+ALTER TABLE babel_6221_t6 DROP CONSTRAINT babel_6221_chk_t6;
+GO
+
+ALTER TABLE babel_6221_t6 DROP CONSTRAINT babel_6221_no_such_constraint;
+GO
+~~ERROR (Code: 3728)~~
+
+~~ERROR (Message: constraint "babel_6221_no_such_constraint" of relation "babel_6221_t6" does not exist)~~
+
+
+-- a failed ALTER inside a transaction does not record the name
+BEGIN TRAN;
+GO
+
+ALTER TABLE babel_6221_t6 ADD CONSTRAINT babel_6221_df_bad DEFAULT 1 FOR no_such_column;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "no_such_column" of relation "babel_6221_t6" does not exist)~~
+
+
+IF @@TRANCOUNT > 0 COMMIT;
+GO
+
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name = 'babel_6221_df_bad';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- DROP COLUMN and DROP TABLE remove the stored name; the name can then be used again
+CREATE TABLE babel_6221_t8 (a INT, b INT CONSTRAINT babel_6221_df_t8b DEFAULT 1, c INT CONSTRAINT babel_6221_df_t8c DEFAULT 2);
+GO
+
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping WHERE parent_name = 'babel_6221_t8' ORDER BY original_identifier_name;
+GO
+~~START~~
+nvarchar
+babel_6221_df_t8b
+babel_6221_df_t8c
+~~END~~
+
+
+ALTER TABLE babel_6221_t8 DROP COLUMN b;
+GO
+
+SELECT original_identifier_name FROM sys.babelfish_identifier_mapping WHERE parent_name = 'babel_6221_t8' ORDER BY original_identifier_name;
+GO
+~~START~~
+nvarchar
+babel_6221_df_t8c
+~~END~~
+
+
+CREATE TABLE babel_6221_t9 (a INT CONSTRAINT babel_6221_df_t8b DEFAULT 1);
+GO
+
+DROP TABLE babel_6221_t8;
+GO
+
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE parent_name = 'babel_6221_t8';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+CREATE TABLE babel_6221_t10 (a INT CONSTRAINT babel_6221_df_t8c DEFAULT 1);
+GO
+
+-- replacing a named default: a new named one takes over, an unnamed one forgets the name
+-- (Babelfish still lets ADD DEFAULT overwrite an existing default: BABEL-4103)
+CREATE TABLE babel_6221_t11 (a INT, b INT CONSTRAINT babel_6221_df_t11a DEFAULT 1, c INT CONSTRAINT babel_6221_df_t11c DEFAULT 1);
+GO
+
+ALTER TABLE babel_6221_t11 ADD CONSTRAINT babel_6221_df_t11b DEFAULT 2 FOR b;
+GO
+
+ALTER TABLE babel_6221_t11 DROP CONSTRAINT babel_6221_df_t11a;
+GO
+~~ERROR (Code: 3728)~~
+
+~~ERROR (Message: constraint "babel_6221_df_t11a" of relation "babel_6221_t11" does not exist)~~
+
+
+ALTER TABLE babel_6221_t11 ADD DEFAULT 3 FOR c;
+GO
+
+ALTER TABLE babel_6221_t11 DROP CONSTRAINT babel_6221_df_t11c;
+GO
+~~ERROR (Code: 3728)~~
+
+~~ERROR (Message: constraint "babel_6221_df_t11c" of relation "babel_6221_t11" does not exist)~~
+
+
+ALTER TABLE babel_6221_t11 DROP CONSTRAINT babel_6221_df_t11b;
+GO
+
+INSERT INTO babel_6221_t11 (a) VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT a, b, c FROM babel_6221_t11;
+GO
+~~START~~
+int#!#int#!#int
+1#!#<NULL>#!#3
+~~END~~
+
+
+-- unnamed defaults behave as before and are dropped by the name sys.default_constraints shows
+CREATE TABLE babel_6221_t12 (a INT DEFAULT 5, b INT);
+GO
+
+ALTER TABLE babel_6221_t12 ADD DEFAULT 6 FOR b;
+GO
+
+SELECT COUNT(*) FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('babel_6221_t12') AND is_system_named = 1;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+DECLARE @n sys.sysname = (SELECT name FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('babel_6221_t12') AND parent_column_id = 1)
+EXEC('ALTER TABLE babel_6221_t12 DROP CONSTRAINT ' + @n)
+GO
+
+-- the system name is case-insensitive too
+DECLARE @n sys.sysname = (SELECT UPPER(name) FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('babel_6221_t12'))
+EXEC('ALTER TABLE babel_6221_t12 DROP CONSTRAINT ' + @n)
+GO
+
+SELECT COUNT(*) FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('babel_6221_t12');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- a system name of another table's default does not match (the name embeds an oid, so only the error number is shown)
+CREATE TABLE babel_6221_t13 (a INT DEFAULT 3);
+GO
+
+DECLARE @n sys.sysname = (SELECT name FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('babel_6221_t13'))
+BEGIN TRY
+	EXEC('ALTER TABLE babel_6221_t12 DROP CONSTRAINT ' + @n)
+END TRY
+BEGIN CATCH
+	SELECT ERROR_NUMBER()
+END CATCH
+GO
+~~START~~
+int
+3728
+~~END~~
+
+
+-- a named default is also dropped by its system name
+CREATE TABLE babel_6221_t14 (a INT CONSTRAINT babel_6221_df_t14 DEFAULT 3);
+GO
+
+DECLARE @n sys.sysname = (SELECT name FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('babel_6221_t14'))
+EXEC('ALTER TABLE babel_6221_t14 DROP CONSTRAINT ' + @n)
+GO
+
+SELECT COUNT(*) FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('babel_6221_t14');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- inside a procedure, executed twice (cached plan)
+CREATE TABLE babel_6221_t15 (a INT);
+GO
+
+CREATE PROCEDURE babel_6221_p AS
+BEGIN
+	ALTER TABLE babel_6221_t15 ADD CONSTRAINT babel_6221_df_t15 DEFAULT 5 FOR a
+	INSERT INTO babel_6221_t15 DEFAULT VALUES
+	ALTER TABLE babel_6221_t15 DROP CONSTRAINT babel_6221_df_t15
+	INSERT INTO babel_6221_t15 DEFAULT VALUES
+	SELECT COUNT(*), COUNT(a) FROM babel_6221_t15
+END
+GO
+
+EXEC babel_6221_p;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+2#!#1
+~~END~~
+
+
+EXEC babel_6221_p;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+4#!#2
+~~END~~
+
+
+-- rowversion columns still reject a named default
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+GO
+
+CREATE TABLE babel_6221_t16 (a INT, rv ROWVERSION);
+GO
+
+ALTER TABLE babel_6221_t16 ADD CONSTRAINT babel_6221_df_t16 DEFAULT 1 FOR rv;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Defaults cannot be created on columns of data type timestamp.)~~
+
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+GO
+
+-- a DEFAULT name longer than 63 bytes is dropped by its full name, and its rows go too
+CREATE TABLE babel_6221_t17 (a INT CONSTRAINT Babel_6221_A_Very_Long_Default_Constraint_Name_Exceeding_Sixty_Three_Bytes DEFAULT 1);
+GO
+
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE parent_name = 'babel_6221_t17';
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+ALTER TABLE babel_6221_t17 DROP CONSTRAINT Babel_6221_A_Very_Long_Default_Constraint_Name_Exceeding_Sixty_Three_Bytes;
+GO
+
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE parent_name = 'babel_6221_t17';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- temp tables keep no DEFAULT name (they go away without a T-SQL DROP), so
+-- unlike SQL Server their defaults cannot be dropped by the user-given name
+CREATE TABLE #babel_6221_tmp (a INT CONSTRAINT babel_6221_df_tmp DEFAULT 5);
+GO
+
+ALTER TABLE #babel_6221_tmp DROP CONSTRAINT babel_6221_df_tmp;
+GO
+~~ERROR (Code: 3728)~~
+
+~~ERROR (Message: constraint "babel_6221_df_tmp" of relation "#babel_6221_tmp" does not exist)~~
+
+
+-- a named DEFAULT on a temp table gets the same checks as an unnamed one
+CREATE FUNCTION babel_6221_f() RETURNS INT AS BEGIN RETURN 1 END;
+GO
+
+ALTER TABLE #babel_6221_tmp ADD DEFAULT babel_6221_f() FOR a;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User-defined functions, partition functions, and column references are not allowed in expressions in this context.)~~
+
+
+ALTER TABLE #babel_6221_tmp ADD CONSTRAINT babel_6221_df_tmp2 DEFAULT babel_6221_f() FOR a;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User-defined functions, partition functions, and column references are not allowed in expressions in this context.)~~
+
+
+DROP TABLE #babel_6221_tmp;
+GO
+
+-- a table variable with a named DEFAULT (SQL Server rejects the CONSTRAINT keyword there)
+DECLARE @babel_6221_tv TABLE (a INT CONSTRAINT babel_6221_df_tv DEFAULT 0, b INT);
+INSERT INTO @babel_6221_tv (b) VALUES (1);
+SELECT a, b FROM @babel_6221_tv;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+0#!#1
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.babelfish_identifier_mapping WHERE original_identifier_name = 'babel_6221_df_tv';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- a CHECK, PRIMARY KEY, UNIQUE or FOREIGN KEY may not take the name of a DEFAULT of the schema either
+CREATE TABLE babel_6221_t18 (a INT CONSTRAINT babel_6221_df_t18 DEFAULT 1);
+GO
+
+ALTER TABLE babel_6221_t18 ADD CONSTRAINT babel_6221_df_t18 CHECK (a > 0);
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: There is already an object named 'babel_6221_df_t18' in the database.)~~
+
+
+CREATE TABLE babel_6221_t19 (a INT CONSTRAINT babel_6221_df_t18 PRIMARY KEY);
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: There is already an object named 'babel_6221_df_t18' in the database.)~~
+
+
+CREATE TABLE babel_6221_t19 (a INT, CONSTRAINT babel_6221_df_t18 UNIQUE (a));
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: There is already an object named 'babel_6221_df_t18' in the database.)~~
+
+
+ALTER TABLE babel_6221_t18 ADD b INT CONSTRAINT babel_6221_df_t18 CHECK (b > 0);
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: There is already an object named 'babel_6221_df_t18' in the database.)~~
+
+
+-- the system name of a default of a long-named table is accepted as sys.default_constraints shows it
+CREATE TABLE babel_6221_t20_a_rather_long_table_name_of_fifty_five_chars (a INT DEFAULT 1, b INT DEFAULT 2);
+GO
+
+DECLARE @n sys.sysname = (SELECT name FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('babel_6221_t20_a_rather_long_table_name_of_fifty_five_chars') AND parent_column_id = 1)
+EXEC('ALTER TABLE babel_6221_t20_a_rather_long_table_name_of_fifty_five_chars DROP CONSTRAINT ' + @n)
+GO
+
+SELECT parent_column_id FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('babel_6221_t20_a_rather_long_table_name_of_fifty_five_chars');
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- a table type keeps no DEFAULT name, so the name stays free after DROP TYPE
+CREATE TYPE babel_6221_tt AS TABLE (a INT CONSTRAINT babel_6221_df_tt DEFAULT 1);
+GO
+
+DROP TYPE babel_6221_tt;
+GO
+
+CREATE TABLE babel_6221_t21 (a INT CONSTRAINT babel_6221_df_tt DEFAULT 1);
+GO
+
+ALTER TABLE babel_6221_t21 DROP CONSTRAINT babel_6221_df_tt;
+GO
+
+-- a named DEFAULT calling a system function on a temp table works as an unnamed one does
+CREATE TABLE #babel_6221_tmp2 (a INT, b INT);
+GO
+
+ALTER TABLE #babel_6221_tmp2 ADD DEFAULT ISJSON('a') FOR a;
+GO
+
+ALTER TABLE #babel_6221_tmp2 ADD CONSTRAINT babel_6221_df_tmp3 DEFAULT ISJSON('b') FOR b;
+GO
+
+INSERT INTO #babel_6221_tmp2 DEFAULT VALUES;
+SELECT a, b FROM #babel_6221_tmp2;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+0#!#0
+~~END~~
+
+
+DROP TABLE #babel_6221_tmp2;
+GO
+
+-- a name given twice in one ALTER TABLE, at least once to a DEFAULT, is a duplicate too
+-- (Babelfish accepts only one ADD item per ALTER TABLE, so this is the reachable case)
+CREATE TABLE babel_6221_t22 (a INT, b INT);
+GO
+
+ALTER TABLE babel_6221_t22 ADD c INT CONSTRAINT babel_6221_df_t22 DEFAULT 1 CONSTRAINT babel_6221_df_t22 CHECK (c > 0);
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: There is already an object named 'babel_6221_df_t22' in the database.)~~
+
+
+SELECT COUNT(*) FROM sys.default_constraints WHERE parent_object_id = OBJECT_ID('babel_6221_t22');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- the name of a PostgreSQL NOT NULL constraint is taken too, as DROP CONSTRAINT would find it first
+CREATE TABLE babel_6221_t23 (a INT NOT NULL, b INT);
+GO
+
+DECLARE @n sys.sysname = (SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = OBJECT_ID('babel_6221_t23') AND contype = 'n')
+BEGIN TRY
+	EXEC('ALTER TABLE babel_6221_t23 ADD CONSTRAINT ' + @n + ' DEFAULT 1 FOR b')
+END TRY
+BEGIN CATCH
+	SELECT ERROR_NUMBER()
+END CATCH
+GO
+~~START~~
+int
+2714
+~~END~~
+
+
+-- constraints of a table type are not schema objects and may reuse a DEFAULT's name
+CREATE TABLE babel_6221_t24 (a INT CONSTRAINT babel_6221_df_t24 DEFAULT 1);
+GO
+
+CREATE TYPE babel_6221_tt3 AS TABLE (a INT CONSTRAINT babel_6221_df_t24 CHECK (a > 0));
+GO
+
+DROP TYPE babel_6221_tt3;
+GO

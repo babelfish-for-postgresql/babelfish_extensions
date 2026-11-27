@@ -3150,8 +3150,8 @@ tsql_constraint_check:
 		;
 
 tsql_opt_constraint_name:
-			CONSTRAINT name
-			| /* EMPTY */
+			CONSTRAINT name		{ $$ = $2; }
+			| /* EMPTY */		{ $$ = NULL; }
 		;
 
 /*
@@ -4833,14 +4833,30 @@ tsql_alter_table_cmd:
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("This syntax is only valid when babelfishpg_tsql.sql_dialect is TSQL"),
 								 parser_errposition(@1)));
-					else
-						ereport(NOTICE,
-								errmsg("DEFAULT added. To drop the default, use ALTER TABLE...ALTER COLUMN..."
-									"DROP DEFAULT; it cannot be dropped by name"));
 
-					n->subtype = AT_ColumnDefault;
-					n->name = $6;
-					n->def = $4;
+					if ($2 != NULL)
+					{
+						/*
+						 * Keep the name; bbf_ProcessUtility turns this back
+						 * into SET DEFAULT and records it.
+						 */
+						Constraint *c = makeNode(Constraint);
+
+						c->contype = CONSTR_DEFAULT;
+						c->conname = $2;
+						c->raw_expr = $4;
+						c->cooked_expr = NULL;
+						c->keys = list_make1(makeString($6));
+						c->location = @2;
+						n->subtype = AT_AddConstraint;
+						n->def = (Node *) c;
+					}
+					else
+					{
+						n->subtype = AT_ColumnDefault;
+						n->name = $6;
+						n->def = $4;
+					}
 					$$ = (Node *)n;
 				}
 			/*

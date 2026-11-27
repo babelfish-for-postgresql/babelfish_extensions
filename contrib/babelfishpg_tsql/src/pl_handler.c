@@ -1409,6 +1409,24 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 
 									if (rowversion_column_name)
 										validate_rowversion_table_constraint(c, rowversion_column_name);
+
+									/*
+									 * Named ADD CONSTRAINT ... DEFAULT ...
+									 * FOR: same rowversion rule as
+									 * AT_ColumnDefault below.
+									 */
+									if (c->contype == CONSTR_DEFAULT && list_length(c->keys) == 1 &&
+										rowversion_column_name != NULL)
+									{
+										const char *colname = strVal(linitial(c->keys));
+
+										if (pltsql_case_insensitive_identifiers ?
+											pg_strcasecmp(colname, rowversion_column_name) == 0 :
+											strcmp(colname, rowversion_column_name) == 0)
+											ereport(ERROR,
+													(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+													 errmsg("Defaults cannot be created on columns of data type timestamp.")));
+									}
 								}
 								break;
 							case AT_AlterColumnType:
@@ -3224,6 +3242,205 @@ validateUserAndRole(char *name)
  */
 
 /*
+ * Reject a constraint name used twice in one ALTER TABLE when one of them is
+ * a DEFAULT; the schema-wide checks only see existing objects.
+ */
+static void
+check_statement_default_names(AlterTableStmt *atstmt, List *default_names)
+{
+	List	   *names = NIL;
+	List	   *is_default = NIL;
+	ListCell   *lc;
+	int			i = 0;
+
+	foreach(lc, atstmt->cmds)
+	{
+		AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lc);
+		char	   *default_name = (char *) list_nth(default_names, i++);
+		List	   *cons = NIL;
+		ListCell   *clc;
+
+		if (default_name)
+		{
+			names = lappend(names, downcase_truncate_identifier(default_name, strlen(default_name), false));
+			is_default = lappend_int(is_default, 1);
+			continue;
+		}
+		if (cmd->subtype == AT_AddConstraint && cmd->def && IsA(cmd->def, Constraint))
+			cons = list_make1(cmd->def);
+		else if (cmd->subtype == AT_AddColumn && cmd->def && IsA(cmd->def, ColumnDef))
+			cons = ((ColumnDef *) cmd->def)->constraints;
+		foreach(clc, cons)
+		{
+			Constraint *c = (Constraint *) lfirst(clc);
+
+			if (!IsA(c, Constraint) || c->conname == NULL)
+				continue;
+			names = lappend(names, downcase_truncate_identifier(c->conname, strlen(c->conname), false));
+			is_default = lappend_int(is_default, c->contype == CONSTR_DEFAULT);
+		}
+	}
+
+	for (int a = 0; a < list_length(names); a++)
+		for (int b = a + 1; b < list_length(names); b++)
+			if ((list_nth_int(is_default, a) || list_nth_int(is_default, b)) &&
+				strcmp((char *) list_nth(names, a), (char *) list_nth(names, b)) == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+						 errmsg("There is already an object named '%s' in the database.",
+								(char *) list_nth(names, b))));
+
+	list_free_deep(names);
+	list_free(is_default);
+}
+
+/*
+ * rewrite_default_constraint_cmds
+ *
+ * PostgreSQL has no named column defaults. Turn ADD CONSTRAINT <n> DEFAULT
+ * ... FOR <col> into SET DEFAULT and record <n>; turn DROP CONSTRAINT <n> of
+ * a named DEFAULT into DROP DEFAULT; forget the name when the default or
+ * column goes.
+ */
+static void
+rewrite_default_constraint_cmds(AlterTableStmt *atstmt)
+{
+	ListCell   *lc;
+	Oid			relid;
+	List	   *default_names = NIL;	/* parallel to atstmt->cmds */
+	bool		relevant = false;
+	int			i;
+
+	if (babelfish_dump_restore || atstmt->objtype != OBJECT_TABLE)
+		return;
+
+	/* Convert even if the table is not found, PostgreSQL cannot run it. */
+	foreach(lc, atstmt->cmds)
+	{
+		AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lc);
+		char	   *default_name = NULL;
+
+		switch (cmd->subtype)
+		{
+			case AT_AddConstraint:
+				{
+					Constraint *c = (Constraint *) cmd->def;
+
+					if (c == NULL || !IsA(c, Constraint))
+						break;
+					if (c->contype == CONSTR_DEFAULT)
+					{
+						if (list_length(c->keys) != 1)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("DEFAULT constraint must name exactly one column")));
+						cmd->subtype = AT_ColumnDefault;
+						cmd->name = strVal(linitial(c->keys));
+						cmd->def = c->raw_expr;
+						default_name = c->conname;
+					}
+					relevant = true;
+					break;
+				}
+			case AT_AddColumn:
+			case AT_ColumnDefault:
+			case AT_DropColumn:
+			case AT_DropConstraint:
+				relevant = true;
+				break;
+			default:
+				break;
+		}
+		default_names = lappend(default_names, default_name);
+	}
+
+	if (!relevant)
+		return;
+
+	PreventCommandIfReadOnly(CreateCommandName((Node *) atstmt));
+
+	/*
+	 * Lock and check ownership as ALTER TABLE will, so that non-owners learn
+	 * nothing from the name checks below.
+	 */
+	relid = AlterTableLookupRelation(atstmt, AlterTableGetLockLevel(atstmt->cmds));
+	if (!OidIsValid(relid))
+		return;
+
+	check_statement_default_names(atstmt, default_names);
+
+	i = 0;
+	foreach(lc, atstmt->cmds)
+	{
+		AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lc);
+		char	   *default_name = (char *) list_nth(default_names, i++);
+
+		switch (cmd->subtype)
+		{
+			case AT_AddConstraint:
+				{
+					Constraint *c = (Constraint *) cmd->def;
+
+					if (c && IsA(c, Constraint) && c->conname)
+						check_constraint_name_not_default(relid, c->conname);
+					break;
+				}
+			case AT_AddColumn:
+				{
+					ColumnDef  *coldef = (ColumnDef *) cmd->def;
+					ListCell   *clc;
+
+					if (coldef == NULL || !IsA(coldef, ColumnDef) || coldef->colname == NULL)
+						break;
+					/* drop a row left by PG-endpoint DDL */
+					delete_default_constraint_name(relid, coldef->colname);
+					foreach(clc, coldef->constraints)
+					{
+						Constraint *c = (Constraint *) lfirst(clc);
+
+						if (!IsA(c, Constraint) || c->conname == NULL)
+							continue;
+						if (c->contype == CONSTR_DEFAULT)
+							store_default_constraint_name(relid, coldef->colname, c->conname);
+						else
+							check_constraint_name_not_default(relid, c->conname);
+					}
+					break;
+				}
+			case AT_ColumnDefault:
+				if (default_name)
+					store_default_constraint_name(relid, cmd->name, default_name);
+				else if (cmd->name)
+					delete_default_constraint_name(relid, cmd->name);
+				break;
+			case AT_DropColumn:
+				if (cmd->name)
+					delete_default_constraint_name(relid, cmd->name);
+				break;
+			case AT_DropConstraint:
+				{
+					char	   *colname;
+
+					if (cmd->name == NULL ||
+						OidIsValid(get_relation_constraint_oid(relid, cmd->name, true)))
+						break;
+					colname = lookup_default_constraint_column(relid, cmd->name);
+					if (colname == NULL)
+						break;
+					cmd->subtype = AT_ColumnDefault;
+					cmd->name = colname;
+					cmd->def = NULL;	/* NULL default = DROP DEFAULT */
+					delete_default_constraint_name(relid, colname);
+					break;
+				}
+			default:
+				break;
+		}
+	}
+	list_free(default_names);
+}
+
+/*
  * store_alter_table_constraint_original_names
  *
  * Handle long constraint names for ALTER TABLE ADD/DROP CONSTRAINT:
@@ -4107,6 +4324,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					restrict_alter_table_stmt(atstmt);
 				}
+
+				if (sql_dialect == SQL_DIALECT_TSQL)
+					rewrite_default_constraint_cmds(atstmt);
 
 				/*
 				 * Store long constraint names from ALTER TABLE ADD CONSTRAINT
@@ -5596,6 +5816,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 		case T_RenameStmt:
 			{
 				RenameStmt *stmt = (RenameStmt *) parsetree;
+				Oid			default_relid = InvalidOid;
+				char	   *default_old_relname = NULL;
 
 				/*
 				 * Block RENAME TSQL functions/procedures, and RENAME of the
@@ -5604,12 +5826,27 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_rename_from_pg && !superuser())
 					restrict_rename_stmt(stmt);
 
+				/* Named DEFAULTs are keyed on the table and column names. */
+				if (!babelfish_dump_restore && stmt->relation != NULL &&
+					(stmt->renameType == OBJECT_TABLE ||
+					 (stmt->renameType == OBJECT_COLUMN &&
+					  stmt->relationType == OBJECT_TABLE)))
+				{
+					default_relid = RangeVarGetRelid(stmt->relation, NoLock, true);
+					if (OidIsValid(default_relid))
+						default_old_relname = get_rel_name(default_relid);
+				}
+
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 										params, queryEnv, dest, qc);
 				else
 					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 											params, queryEnv, dest, qc);
+
+				if (OidIsValid(default_relid))
+					rename_default_constraint_names(stmt, default_relid,
+													default_old_relname);
 				
 				if (stmt->renameType == OBJECT_TABLE)
 					bbf_rename_handle_partitioned_table(stmt);
