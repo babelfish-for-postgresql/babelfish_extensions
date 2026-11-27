@@ -1750,6 +1750,71 @@ go
 DROP LOGIN babel_2920_login2
 go
 
+-- MERGE into a PERSISTED computed-column target with mismatched SET options
+SELECT set_config('babelfishpg_tsql.enable_stable_functions_in_computed_columns', 'on', false)
+go
+~~START~~
+text
+on
+~~END~~
+
+SET QUOTED_IDENTIFIER ON
+SET CONCAT_NULL_YIELDS_NULL ON
+SET ANSI_NULLS ON
+SET ANSI_PADDING ON
+SET ANSI_WARNINGS ON
+SET ARITHABORT ON
+SET NUMERIC_ROUNDABORT OFF
+go
+CREATE TABLE babel_2920_pcc_target (
+    id INT PRIMARY KEY,
+    a VARCHAR(20),
+    b VARCHAR(20),
+    c AS (a + b) PERSISTED
+)
+go
+CREATE TABLE babel_2920_pcc_source (id INT PRIMARY KEY, a VARCHAR(20), b VARCHAR(20))
+go
+INSERT INTO babel_2920_pcc_target (id, a, b) VALUES (1, 'old', 'value')
+INSERT INTO babel_2920_pcc_source VALUES (1, 'updated', NULL), (2, 'inserted', NULL)
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+SET CONCAT_NULL_YIELDS_NULL OFF
+go
+-- matched UPDATE and unmatched INSERT must both be rejected before execution
+MERGE INTO babel_2920_pcc_target AS t
+USING babel_2920_pcc_source AS s ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET a = s.a, b = s.b
+WHEN NOT MATCHED BY TARGET THEN INSERT (id, a, b) VALUES (s.id, s.a, s.b);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: MERGE failed because the following SET options have incorrect settings: 'CONCAT_NULL_YIELDS_NULL')~~
+
+SET CONCAT_NULL_YIELDS_NULL ON
+go
+-- target remains unchanged after the failed MERGE
+SELECT id, a, b, c FROM babel_2920_pcc_target ORDER BY id
+go
+~~START~~
+int#!#varchar#!#varchar#!#varchar
+1#!#old#!#value#!#oldvalue
+~~END~~
+
+DROP TABLE babel_2920_pcc_source
+DROP TABLE babel_2920_pcc_target
+go
+SELECT set_config('babelfishpg_tsql.enable_stable_functions_in_computed_columns', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+
 -- psql
 ALTER SYSTEM RESET babelfishpg_tsql.enable_tsql_merge;
 SELECT pg_reload_conf();

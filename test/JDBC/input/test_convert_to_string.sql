@@ -1,6 +1,8 @@
 -- =============================================
 -- Expicit Casting using Convert Function
 -- =============================================
+SELECT set_config('babelfishpg_tsql.enable_stable_functions_in_computed_columns', 'on', false)
+GO
 
 -- Create table with all data types
 CREATE TABLE convert_source_t1 (

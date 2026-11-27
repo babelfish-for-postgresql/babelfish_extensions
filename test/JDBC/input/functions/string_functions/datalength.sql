@@ -1,3 +1,6 @@
+SELECT set_config('babelfishpg_tsql.enable_stable_functions_in_computed_columns', 'on', false)
+GO
+
 CREATE TYPE EmailAddress FROM VARCHAR(255);
 GO
 
