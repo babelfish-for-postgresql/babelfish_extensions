@@ -5359,9 +5359,11 @@ bbf_pivot(PG_FUNCTION_ARGS)
 		{
 			paramtypes[i] = get_fn_expr_argtype(fcinfo->flinfo, i + 3);
 			if (!OidIsValid(paramtypes[i]))
-				elog(ERROR, "could not determine the data type of PIVOT parameter %d", i + 1);
+				elog(ERROR, "could not determine data type of argument %d of sys.bbf_pivot",
+					 i + 4);
 			paramnulls[i] = PG_ARGISNULL(i + 3) ? 'n' : ' ';
-			paramvalues[i] = PG_ARGISNULL(i + 3) ? (Datum) 0 : PG_GETARG_DATUM(i + 3);
+			paramvalues[i] = PG_ARGISNULL(i + 3) ? (Datum) 0 :
+				PG_GETARG_DATUM(i + 3);
 		}
 	}
 
@@ -5377,7 +5379,8 @@ bbf_pivot(PG_FUNCTION_ARGS)
 												bbf_pivot_hash,
 												tupdesc,
 												rsinfo->allowedModes & SFRM_Materialize_Random,
-												nparams, paramtypes, paramvalues, paramnulls);
+												nparams, paramtypes,
+												paramvalues, paramnulls);
 
 	/*
 	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
@@ -5516,8 +5519,8 @@ get_bbf_pivot_tuplestore(const char 	*sourcetext,
 
 	/* Now retrieve the bbf_pivot source rows */
 	if (nparams > 0)
-		ret = SPI_execute_with_args(sourcetext, nparams, paramtypes, paramvalues,
-									paramnulls, true, 0);
+		ret = SPI_execute_with_args(sourcetext, nparams, paramtypes,
+									paramvalues, paramnulls, true, 0);
 	else
 		ret = SPI_execute(sourcetext, true, 0);
 	tuple_processed = SPI_processed;

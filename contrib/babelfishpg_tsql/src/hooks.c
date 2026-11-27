@@ -6571,7 +6571,17 @@ make_restarget_from_cstr_list(List * l)
  * and are passed to sys.bbf_pivot() as extra arguments.
  */
 
-/* collect the distinct @name column references of a raw parse tree */
+/*
+ * pivot_collect_variable_refs
+ *		Collect the distinct T-SQL variable references (@name) of a raw parse
+ *		tree.
+ *
+ * node: raw parse tree node to walk.
+ * colrefs: in/out list of ColumnRef nodes; a reference is added only once,
+ *		names are compared case-insensitively.
+ *
+ * Returns false so that raw_expression_tree_walker() visits the whole tree.
+ */
 static bool
 pivot_collect_variable_refs(Node *node, List **colrefs)
 {
@@ -6584,7 +6594,8 @@ pivot_collect_variable_refs(Node *node, List **colrefs)
 		char	   *name;
 		ListCell   *lc;
 
-		if (list_length(cref->fields) != 1 || !IsA(linitial(cref->fields), String))
+		if (list_length(cref->fields) != 1 ||
+			!IsA(linitial(cref->fields), String))
 			return false;
 
 		name = strVal(linitial(cref->fields));
@@ -6602,10 +6613,22 @@ pivot_collect_variable_refs(Node *node, List **colrefs)
 		return false;
 	}
 
-	return raw_expression_tree_walker(node, pivot_collect_variable_refs, (void *) colrefs);
+	return raw_expression_tree_walker(node,
+									  pivot_collect_variable_refs,
+									  (void *) colrefs);
 }
 
-/* give a nested parse state the column/parameter hooks of the outer one */
+/*
+ * pivot_src_parser_setup
+ *		Parser setup callback for parse_analyze_withcb().
+ *
+ * pstate: the nested parse state being set up.
+ * arg: the ParseState of the outer statement.
+ *
+ * Gives the nested parse state the column and parameter reference hooks of
+ * the outer statement, so that @name references resolve to the same
+ * variables or parameters as in the outer statement.
+ */
 static void
 pivot_src_parser_setup(ParseState *pstate, void *arg)
 {
@@ -6618,12 +6641,26 @@ pivot_src_parser_setup(ParseState *pstate, void *arg)
 	pstate->p_ref_hook_state = outer->p_ref_hook_state;
 }
 
+/*
+ * Maps the parameters of the PIVOT source query to $1..$n: paramids[i] is
+ * the paramid that $(i + 1) has in the outer statement.
+ */
 typedef struct pivot_param_map
 {
 	int			nparams;
-	int		   *paramids;		/* paramid of $1..$n in the outer statement */
+	int		   *paramids;
 } pivot_param_map;
 
+/*
+ * pivot_renumber_params_mutator
+ *		Renumber the external parameters of an analyzed query to $1..$n.
+ *
+ * node: query or expression tree to mutate.
+ * map: paramids of the outer statement, in the order of $1..$n.
+ *
+ * Returns a copy of the tree in which every PARAM_EXTERN Param has its
+ * position in the map as paramid.
+ */
 static Node *
 pivot_renumber_params_mutator(Node *node, pivot_param_map *map)
 {
@@ -6642,10 +6679,13 @@ pivot_renumber_params_mutator(Node *node, pivot_param_map *map)
 				return (Node *) param;
 			}
 		}
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("parameter $%d in the source query of PIVOT is not supported",
-						param->paramid)));
+		/*
+		 * Every external parameter of the source query comes from a @name
+		 * reference collected by pivot_collect_variable_refs(), so this
+		 * cannot be reached from T-SQL.
+		 */
+		elog(ERROR, "unexpected parameter $%d in the source query of PIVOT",
+			 param->paramid);
 	}
 
 	if (IsA(node, Query))
@@ -6653,14 +6693,27 @@ pivot_renumber_params_mutator(Node *node, pivot_param_map *map)
 										   pivot_renumber_params_mutator,
 										   (void *) map, 0);
 
-	return expression_tree_mutator(node, pivot_renumber_params_mutator, (void *) map);
+	return expression_tree_mutator(node, pivot_renumber_params_mutator,
+								   (void *) map);
 }
 
 /*
- * Analyze the PIVOT source query with the hooks of the outer statement, so
- * that @name references become parameters, and renumber them $1..$n. The
- * matching raw column references, to be evaluated by the outer statement,
- * are returned in *param_args.
+ * pivot_analyze_src_query
+ *		Analyze the source query of PIVOT, turning T-SQL variables and
+ *		parameters into $1..$n.
+ *
+ * pstate: parse state of the outer statement; its column and parameter
+ *		hooks resolve @name references.
+ * rawstmt: raw source query.
+ * param_args: output; the raw @name references, in the order of $1..$n, to
+ *		be evaluated by the outer statement and passed to sys.bbf_pivot().
+ *
+ * Returns the analyzed source query. The query is analyzed with the hooks of
+ * the outer statement, so each @name becomes an external parameter numbered
+ * as in the outer statement. To learn which parameter each @name became,
+ * each collected reference is resolved again in a throwaway parse state with
+ * the same hooks; the parameters are then renumbered $1..$n in that order.
+ * Without @name references, the query is analyzed without hooks as before.
  */
 static Query *
 pivot_analyze_src_query(ParseState *pstate, RawStmt *rawstmt, List **param_args)
@@ -6674,7 +6727,8 @@ pivot_analyze_src_query(ParseState *pstate, RawStmt *rawstmt, List **param_args)
 	pivot_collect_variable_refs(rawstmt->stmt, &colrefs);
 
 	if (colrefs == NIL || pstate->p_pre_columnref_hook == NULL)
-		return parse_analyze_fixedparams(rawstmt, pstrdup(pstate->p_sourcetext),
+		return parse_analyze_fixedparams(rawstmt,
+										 pstrdup(pstate->p_sourcetext),
 										 NULL, 0, NULL);
 
 	query = parse_analyze_withcb(rawstmt, pstrdup(pstate->p_sourcetext),
@@ -6690,10 +6744,12 @@ pivot_analyze_src_query(ParseState *pstate, RawStmt *rawstmt, List **param_args)
 
 		refstate->p_sourcetext = pstate->p_sourcetext;
 		pivot_src_parser_setup(refstate, pstate);
-		ref = transformExpr(refstate, copyObject(lfirst(lc)), EXPR_KIND_SELECT_TARGET);
+		ref = transformExpr(refstate, copyObject(lfirst(lc)),
+							EXPR_KIND_SELECT_TARGET);
 		free_parsestate(refstate);
 
-		if (ref != NULL && IsA(ref, Param) && ((Param *) ref)->paramkind == PARAM_EXTERN)
+		if (ref != NULL && IsA(ref, Param) &&
+			((Param *) ref)->paramkind == PARAM_EXTERN)
 		{
 			map.paramids[map.nparams++] = ((Param *) ref)->paramid;
 			*param_args = lappend(*param_args, copyObject(lfirst(lc)));
@@ -6883,7 +6939,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 
 	/* get psql-text of src_sql and cat_sql */
 	src_sql_query = pivot_analyze_src_query(pstate,
-											(RawStmt *) copyObject(src_sql_rawstmt),
+											copyObject(src_sql_rawstmt),
 											&param_args);
 	src_sql_string = pg_get_querydef(src_sql_query, true);
 
@@ -6896,7 +6952,8 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	/* parameters of the source query, if any, follow as $1..$n */
 	pivot_args = list_make3((Node *) makeStringConst(src_sql_string, -1),
 							(Node *) makeStringConst(cat_sql_string, -1),
-							(Node *) makeStringConst(pstrdup(funcName->sval), -1));
+							(Node *) makeStringConst(pstrdup(funcName->sval),
+													 -1));
 	pivot_args = list_concat(pivot_args, param_args);
 	pivot_func = makeFuncCall(list_make2(makeString("sys"), makeString("bbf_pivot")), 
 							  pivot_args,
