@@ -12,6 +12,7 @@ on
 
 
 
+
 -- Create table with all data types
 CREATE TABLE try_convert_source_t1 (
     -- Integer Types
