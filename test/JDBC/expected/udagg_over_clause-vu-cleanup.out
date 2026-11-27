@@ -1,0 +1,11 @@
+-- tsql
+DROP PROCEDURE udagg_over_vu_proc;
+GO
+DROP VIEW udagg_over_vu_view;
+GO
+DROP TABLE udagg_over_vu_t;
+GO
+
+-- psql
+DROP AGGREGATE master_dbo.udagg_over_vu_sum(int);
+GO

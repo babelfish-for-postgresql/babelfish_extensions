@@ -1,12 +1,20 @@
 -- tsql
--- OVER clause on a user-defined aggregate (SQL Server allows it for CLR aggregates)
+-- OVER clause on a user-defined aggregate (T-SQL allows it for CLR aggregates)
 CREATE TABLE udagg_over_t (g INT, v INT);
 GO
-INSERT INTO udagg_over_t VALUES (1, 10), (1, 20), (2, 5), (2, 7), (2, 9);
+INSERT INTO udagg_over_t VALUES (1, 10), (1, 20), (2, 5), (2, 7), (2, 9), (2, NULL), (3, NULL);
+GO
+
+CREATE FUNCTION dbo.udagg_over_scalar(@x INT) RETURNS INT AS BEGIN RETURN @x * 2 END;
 GO
 
 -- psql
 CREATE AGGREGATE master_dbo.udagg_over_sum(int) (SFUNC = int4pl, STYPE = int, INITCOND = '0');
+GO
+CREATE FUNCTION master_dbo.udagg_over_dot_sfunc(int, int, int) RETURNS int
+    LANGUAGE sql IMMUTABLE AS 'SELECT $1 + coalesce($2, 0) * coalesce($3, 0)';
+GO
+CREATE AGGREGATE master_dbo.udagg_over_dot(int, int) (SFUNC = master_dbo.udagg_over_dot_sfunc, STYPE = int, INITCOND = '0');
 GO
 
 -- tsql
@@ -26,11 +34,86 @@ GO
 SELECT g, v, dbo.udagg_over_sum(v) OVER () AS s FROM udagg_over_t ORDER BY g, v;
 GO
 
+-- explicit window frame
+SELECT g, v, dbo.udagg_over_sum(v) OVER (PARTITION BY g ORDER BY v ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS s
+FROM udagg_over_t ORDER BY g, v;
+GO
+
+SELECT g, v, dbo.udagg_over_sum(v) OVER (ORDER BY g, v ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS s
+FROM udagg_over_t ORDER BY g, v;
+GO
+
+-- multi-argument aggregate
+SELECT g, v, dbo.udagg_over_dot(v, g) OVER (PARTITION BY g) AS s FROM udagg_over_t ORDER BY g, v;
+GO
+
+-- table alias and qualified column references
+SELECT t.g, t.v, dbo.udagg_over_sum(t.v) OVER (PARTITION BY t.g ORDER BY t.v) AS s FROM udagg_over_t AS t ORDER BY t.g, t.v;
+GO
+
+-- inside an expression
+SELECT g, v,
+    CASE WHEN dbo.udagg_over_sum(v) OVER (PARTITION BY g) > 20 THEN 'big' ELSE 'small' END AS size,
+    dbo.udagg_over_sum(v) OVER (PARTITION BY g) - ISNULL(v, 0) AS rest
+FROM udagg_over_t ORDER BY g, v;
+GO
+
+-- inside a CTE
+WITH c AS (SELECT g, v, dbo.udagg_over_sum(v) OVER (PARTITION BY g) AS s FROM udagg_over_t)
+SELECT g, v, s FROM c WHERE s > 10 ORDER BY g, v;
+GO
+
+-- inside a stored procedure
+CREATE PROCEDURE udagg_over_proc @g INT AS
+    SELECT g, v, dbo.udagg_over_sum(v) OVER (ORDER BY v) AS s FROM udagg_over_t WHERE g = @g ORDER BY v;
+GO
+EXEC udagg_over_proc 2;
+GO
+DROP PROCEDURE udagg_over_proc;
+GO
+
+-- through sp_executesql (RPC path)
+EXEC sp_executesql N'SELECT g, v, dbo.udagg_over_sum(v) OVER (PARTITION BY g) AS s FROM udagg_over_t WHERE g = @g ORDER BY v', N'@g INT', @g = 1;
+GO
+
 -- built-in aggregates are not affected
 SELECT g, SUM(v) OVER (PARTITION BY g) AS s FROM udagg_over_t ORDER BY g, v;
 GO
 
+-- DISTINCT together with OVER is not allowed
+SELECT g, dbo.udagg_over_sum(DISTINCT v) OVER (PARTITION BY g) AS s FROM udagg_over_t;
+GO
+
+-- OVER on a built-in function that is not an aggregate
+SELECT ISNULL(v, 0) OVER () FROM udagg_over_t;
+GO
+
+SELECT LEN('abc') OVER (PARTITION BY g) FROM udagg_over_t;
+GO
+
+-- OVER on an unqualified user-defined aggregate (T-SQL requires the schema)
+SELECT udagg_over_sum(v) OVER () FROM udagg_over_t;
+GO
+
+-- OVER on a scalar user-defined function
+SELECT dbo.udagg_over_scalar(v) OVER () FROM udagg_over_t;
+GO
+
+-- malformed OVER clause
+SELECT dbo.udagg_over_sum(v) OVER (PARTITION) FROM udagg_over_t;
+GO
+
+SELECT dbo.udagg_over_sum(v) OVER (ORDER BY) FROM udagg_over_t;
+GO
+
+DROP FUNCTION dbo.udagg_over_scalar;
+GO
+
 -- psql
+DROP AGGREGATE master_dbo.udagg_over_dot(int, int);
+GO
+DROP FUNCTION master_dbo.udagg_over_dot_sfunc(int, int, int);
+GO
 DROP AGGREGATE master_dbo.udagg_over_sum(int);
 GO
 
