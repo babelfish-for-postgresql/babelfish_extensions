@@ -1,3 +1,6 @@
+SELECT set_config('babelfishpg_tsql.enable_stable_functions_in_computed_columns', 'on', false)
+GO
+
 INSERT INTO computed_column_vu_prepare_t1 VALUES('abcd');
 SELECT * FROM computed_column_vu_prepare_t1;
 GO
