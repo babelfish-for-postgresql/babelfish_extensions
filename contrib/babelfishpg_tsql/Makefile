@@ -65,7 +65,6 @@ OBJS += src/tsqlHandler.o
 OBJS += src/tsqlUnsupportedFeatureHandler.o
 OBJS += src/tsqlIface.o
 OBJS += src/special_keywords.o
-OBJS += antlr/libantlr_tsql.a
 OBJS += src/multidb.o
 OBJS += src/json_funcs.o
 OBJS += src/pltsql_ruleutils.o
@@ -130,7 +129,7 @@ PG_CFLAGS += -fstack-protector-strong
 PG_CFLAGS += $(PERMIT_MISSING_VARIABLE_DECLARATIONS)
 PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -DFAULT_INJECTOR -Wfloat-conversion
 
-SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto $(ICU_LIBS)
+SHLIB_LINK += antlr/libantlr_tsql.a -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto $(ICU_LIBS)
 
 UPGRADES = $(patsubst sql/upgrades/%.sql,sql/%.sql,$(wildcard sql/upgrades/*.sql))
 
@@ -225,6 +224,9 @@ TSQLSRC = .
 
 antlr/Makefile: antlr/CMakeLists.txt antlr/TSqlLexer.g4 antlr/TSqlLexer.g4
 	cd antlr && $(cmake) . && cd ..
+
+# The native archive must trigger a relink without entering the PGXS bitcode list.
+$(shlib): antlr/libantlr_tsql.a
 
 .PHONY: antlr/libantlr_tsql.a  # to allow CMake's make check the build
 antlr/libantlr_tsql.a: antlr/Makefile
