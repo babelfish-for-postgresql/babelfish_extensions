@@ -535,3 +535,14 @@ Select * from sourceTable
 Select * from destinationTable
 drop table sourceTable
 drop table destinationTable
+
+# Empty text, ntext and image values must stay empty, not become NULL (issue #5135)
+Create table sourceTable(id int, a text, b ntext, c image, d text not null, e ntext not null, f image not null)
+Create table destinationTable(id int, a text, b ntext, c image, d text not null, e ntext not null, f image not null)
+Insert into sourceTable values (1, '', N'', 0x, '', N'', 0x);
+Insert into sourceTable values (2, NULL, NULL, NULL, '', N'', 0x);
+insertbulk#!#sourceTable#!#destinationTable
+Select id, isnull(cast(datalength(a) as varchar(10)), 'NULL'), isnull(cast(datalength(b) as varchar(10)), 'NULL'), isnull(cast(datalength(c) as varchar(10)), 'NULL'), isnull(cast(datalength(d) as varchar(10)), 'NULL'), isnull(cast(datalength(e) as varchar(10)), 'NULL'), isnull(cast(datalength(f) as varchar(10)), 'NULL') from sourceTable order by id
+Select id, isnull(cast(datalength(a) as varchar(10)), 'NULL'), isnull(cast(datalength(b) as varchar(10)), 'NULL'), isnull(cast(datalength(c) as varchar(10)), 'NULL'), isnull(cast(datalength(d) as varchar(10)), 'NULL'), isnull(cast(datalength(e) as varchar(10)), 'NULL'), isnull(cast(datalength(f) as varchar(10)), 'NULL') from destinationTable order by id
+drop table sourceTable
+drop table destinationTable
