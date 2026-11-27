@@ -1,0 +1,19 @@
+-- tsql
+CREATE TABLE udagg_over_vu_t (g INT, v INT);
+GO
+INSERT INTO udagg_over_vu_t VALUES (1, 10), (1, 20), (2, 5), (2, 7), (2, NULL);
+GO
+
+-- psql
+CREATE AGGREGATE master_dbo.udagg_over_vu_sum(int) (SFUNC = int4pl, STYPE = int, INITCOND = '0');
+GO
+
+-- tsql
+CREATE VIEW udagg_over_vu_view AS
+    SELECT g, v, dbo.udagg_over_vu_sum(v) OVER (PARTITION BY g ORDER BY v) AS running_sum
+    FROM udagg_over_vu_t;
+GO
+
+CREATE PROCEDURE udagg_over_vu_proc AS
+    SELECT g, v, dbo.udagg_over_vu_sum(v) OVER (PARTITION BY g) AS s FROM udagg_over_vu_t ORDER BY g, v;
+GO

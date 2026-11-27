@@ -1,0 +1,9 @@
+-- tsql
+SELECT * FROM udagg_over_vu_view ORDER BY g, v;
+GO
+
+EXEC udagg_over_vu_proc;
+GO
+
+SELECT g, v, dbo.udagg_over_vu_sum(v) OVER () AS total FROM udagg_over_vu_t ORDER BY g, v;
+GO

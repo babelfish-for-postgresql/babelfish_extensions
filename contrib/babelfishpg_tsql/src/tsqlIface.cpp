@@ -3862,6 +3862,26 @@ public:
 			rewritten_query_fragment.emplace(std::make_pair(ctx->FOR()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->FOR()), "")));
 			rewritten_query_fragment.emplace(std::make_pair(ctx->full_object_name()->start->getStartIndex(), std::make_pair(::getFullText(ctx->full_object_name()), nextval_string)));
 		}
+		/*
+		 * The generic function call alternative accepts an OVER clause so that
+		 * user-defined aggregates can be used as window functions. T-SQL only
+		 * allows OVER on aggregate and ranking functions, and a user-defined
+		 * aggregate is always invoked with a schema-qualified name, so an
+		 * unqualified name followed by OVER is a built-in function that is not
+		 * an aggregate (e.g. ISNULL). Raise the T-SQL error here instead of
+		 * letting the backend report a PostgreSQL-specific one.
+		 */
+		if (ctx->over_clause() && ctx->func_proc_name_server_database_schema())
+		{
+			auto fpnsds = ctx->func_proc_name_server_database_schema();
+
+			if (fpnsds->DOT().empty())
+				throw PGErrorWrapperException(ERROR, ERRCODE_WRONG_OBJECT_TYPE,
+											  format_errmsg("The function '%s' is not a valid windowing function, and cannot be used with the OVER clause.",
+															::stripQuoteFromId(fpnsds->id().back()).c_str()),
+											  getLineAndPos(ctx->over_clause()));
+		}
+
 		if (ctx->analytic_windowed_function())
 		{
 			auto actx = ctx->analytic_windowed_function();
