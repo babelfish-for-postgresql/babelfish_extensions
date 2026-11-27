@@ -73,9 +73,11 @@ WHERE object_id = OBJECT_ID('alter_col_collate_t2') AND name IN ('widen', 'cs_to
 ORDER BY column_id;
 GO
 
-SELECT name FROM sys.indexes
-WHERE object_id = OBJECT_ID('alter_col_collate_t2') AND name IS NOT NULL
-ORDER BY name;
+-- Match the names by prefix: after an upgrade, sys.indexes shows the internal
+-- name of an index that Babelfish 3.x created (3.x did not store the original name)
+SELECT COUNT(*) AS indexes_kept FROM sys.indexes
+WHERE object_id = OBJECT_ID('alter_col_collate_t2')
+  AND (name LIKE 'alter_col_collate_t2_widen%' OR name LIKE 'alter_col_collate_t2_cs_to_ci%');
 GO
 
 SELECT id FROM alter_col_collate_t2 WHERE widen = 'a' ORDER BY id;
