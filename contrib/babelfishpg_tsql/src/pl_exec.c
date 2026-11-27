@@ -307,7 +307,8 @@ static int	exec_stmt_forc(PLtsql_execstate *estate,
 						   PLtsql_stmt_forc *stmt);
 static int	exec_stmt_foreach_a(PLtsql_execstate *estate,
 								PLtsql_stmt_foreach_a *stmt);
-static void current_of_set_position(PLtsql_execstate *estate, PLtsql_var *curvar,
+static void current_of_set_position(PLtsql_execstate *estate,
+									PLtsql_var *curvar,
 									Datum *values, bool *nulls);
 static void current_of_check_cursor(PLtsql_execstate *estate,
 									PLtsql_stmt_execsql *stmt);
@@ -4624,6 +4625,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	ParamListInfo paramLI;
 	long		tcount;
 	int			rc;
+	uint64		current_of_processed = 0;
+	bool		ran_dml_with_output = false;
 	PLtsql_expr *expr = stmt->sqlstmt;
 	Portal		portal = NULL;
 	ListCell   *lc;
@@ -4781,8 +4784,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * exec_run_dml_with_output(). We can clean up it later.
 		 */
 		if (is_returning && !tsql_identity_insert.valid && !stmt->is_tsql_select_assign_stmt)
+		{
 			rc = exec_run_dml_with_output(estate, (PLtsql_stmt_push_result *) stmt,
 										  portal, expr, cmd, paramLI);
+			ran_dml_with_output = true;
+		}
 		else if (stmt->need_to_push_result)
 			rc = execute_plan_and_push_result(estate, expr, paramLI);
 		else if (stmt->txn_data != NULL && !support_tsql_trans)
@@ -4798,6 +4804,18 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		else
 			rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
 												 estate->readonly_func, tcount);
+
+		/*
+		 * Rows touched by UPDATE/DELETE ... WHERE CURRENT OF. When the
+		 * statement ran through exec_run_dml_with_output() (OUTPUT clause),
+		 * the count is in eval_processed: SPI_processed is not set on that
+		 * path, and a trigger may have changed it. Other statements, such as
+		 * an UPDATE that assigns variables (also run with RETURNING), report
+		 * it in SPI_processed.
+		 */
+		if (stmt->is_current_of)
+			current_of_processed = ran_dml_with_output ?
+				estate->eval_processed : SPI_processed;
 
 		/*
 		 * Check for error, and set FOUND if appropriate (for historical
@@ -4904,8 +4922,9 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 		if (stmt->is_current_of)
 			current_of_after_execution(estate, stmt,
-									   rc == SPI_OK_UPDATE || rc == SPI_OK_UPDATE_RETURNING,
-									   estate->eval_processed);
+									   rc == SPI_OK_UPDATE ||
+									   rc == SPI_OK_UPDATE_RETURNING,
+									   current_of_processed);
 
 		/* Process INTO if present */
 		if (stmt->into || stmt->is_tsql_select_assign_stmt)
@@ -6109,24 +6128,72 @@ exec_stmt_open(PLtsql_execstate *estate, PLtsql_stmt_open *stmt)
  */
 
 /*
- * Number of trailing row identity columns in the result of the cursor's
- * query: PLTSQL_CURRENT_OF_NCOLS, or 0 if the cursor is not referenced by
- * WHERE CURRENT OF or its query is not updatable.
+ * current_of_cursor_expr
+ *		Find the query of the cursor a cursor variable refers to.
+ *
+ * curvar: the cursor, or a cursor variable.
+ * cursor_options: output, the options of the cursor; may be NULL.
+ *
+ * Returns the query, or NULL if the cursor is not open or its definition
+ * cannot be found.
+ */
+static PLtsql_expr *
+current_of_cursor_expr(PLtsql_var *curvar, int *cursor_options)
+{
+	PLtsql_expr *query = NULL;
+	int			options = curvar->cursor_options;
+
+	if (curvar->isconst)
+		query = curvar->cursor_explicit_expr;
+	else if (!curvar->isnull)
+	{
+		char	   *curname = TextDatumGetCString(curvar->value);
+
+		pltsql_get_cursor_definition(curname, &query, &options);
+		pfree(curname);
+	}
+
+	if (cursor_options)
+		*cursor_options = options;
+	return query;
+}
+
+/*
+ * current_of_hidden_cols
+ *		Count the row identity columns at the end of a cursor's result.
+ *
+ * curvar: the cursor, or a cursor variable.
+ * tupdesc: descriptor of the cursor's result.
+ *
+ * Returns PLTSQL_CURRENT_OF_NCOLS if parse analysis appended the row
+ * identity columns to the cursor's query, or 0 otherwise: the cursor is not
+ * referenced by WHERE CURRENT OF, or its query is not updatable. The last
+ * columns must also have the expected names and types (tid, xid, oid), so
+ * that a user column is never treated as one of them.
  */
 static int
 current_of_hidden_cols(PLtsql_var *curvar, TupleDesc tupdesc)
 {
+	static const Oid typoids[PLTSQL_CURRENT_OF_NCOLS] =
+	{TIDOID, XIDOID, OIDOID};
+	PLtsql_expr *query;
 	int			first;
 
 	if (!curvar->cursor_current_of || tupdesc == NULL ||
 		tupdesc->natts < PLTSQL_CURRENT_OF_NCOLS)
 		return 0;
 
+	query = current_of_cursor_expr(curvar, NULL);
+	if (query == NULL || !query->cursor_cof_appended)
+		return 0;
+
 	first = tupdesc->natts - PLTSQL_CURRENT_OF_NCOLS;
 	for (int i = 0; i < PLTSQL_CURRENT_OF_NCOLS; i++)
 	{
-		if (strcmp(NameStr(TupleDescAttr(tupdesc, first + i)->attname),
-				   pltsql_current_of_colnames[i]) != 0)
+		Form_pg_attribute att = TupleDescAttr(tupdesc, first + i);
+
+		if (att->atttypid != typoids[i] ||
+			strcmp(NameStr(att->attname), pltsql_current_of_colnames[i]) != 0)
 			return 0;
 	}
 	return PLTSQL_CURRENT_OF_NCOLS;
@@ -6140,7 +6207,8 @@ static void
 current_of_set_position(PLtsql_execstate *estate, PLtsql_var *curvar,
 						Datum *values, bool *nulls)
 {
-	static const Oid typoids[PLTSQL_CURRENT_OF_NCOLS] = {TIDOID, XIDOID, OIDOID};
+	static const Oid typoids[PLTSQL_CURRENT_OF_NCOLS] =
+	{TIDOID, XIDOID, OIDOID};
 	int			dnos[PLTSQL_CURRENT_OF_NCOLS];
 
 	if (!curvar->cursor_current_of)
@@ -6254,31 +6322,30 @@ current_of_create_dest(DestReceiver *inner)
 static void
 current_of_check_cursor(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
 {
-	PLtsql_var *curvar = (PLtsql_var *) estate->datums[stmt->current_of_curvar];
+	PLtsql_var *curvar =
+		(PLtsql_var *) estate->datums[stmt->current_of_curvar];
 	PLtsql_var *ctidvar;
 	Portal		portal = NULL;
-	int			cursor_options = curvar->cursor_options;
+	int			cursor_options;
 
 	if (!curvar->isnull)
 	{
 		char	   *curname = TextDatumGetCString(curvar->value);
 
 		portal = SPI_cursor_find(curname);
-		if (!curvar->isconst)
-		{
-			/* a cursor variable: the options are those of its cursor */
-			PLtsql_expr *query;
-
-			pltsql_get_cursor_definition(curname, &query, &cursor_options);
-		}
 		pfree(curname);
 	}
-	if (portal == NULL)
+
+	/* for a cursor variable, the options are those of its cursor */
+	if (portal == NULL ||
+		current_of_cursor_expr(curvar, &cursor_options) == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
 				 errmsg("Cursor is not open.")));
 
-	if ((cursor_options & (TSQL_CURSOR_OPT_READ_ONLY | TSQL_CURSOR_OPT_STATIC | CURSOR_OPT_INSENSITIVE)) != 0 ||
+	if ((cursor_options & (TSQL_CURSOR_OPT_READ_ONLY |
+						   TSQL_CURSOR_OPT_STATIC |
+						   CURSOR_OPT_INSENSITIVE)) != 0 ||
 		current_of_hidden_cols(curvar, portal->tupDesc) == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_STATE),
@@ -6302,8 +6369,10 @@ current_of_after_execution(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt,
 						   bool is_update, uint64 processed)
 {
 	PLtsql_var *curvar = (PLtsql_var *) estate->datums[stmt->current_of_curvar];
-	PLtsql_var *ctidvar = (PLtsql_var *) estate->datums[curvar->cursor_cof_ctid_dno];
-	PLtsql_var *relidvar = (PLtsql_var *) estate->datums[curvar->cursor_cof_relid_dno];
+	PLtsql_var *ctidvar =
+		(PLtsql_var *) estate->datums[curvar->cursor_cof_ctid_dno];
+	PLtsql_var *relidvar =
+		(PLtsql_var *) estate->datums[curvar->cursor_cof_relid_dno];
 	Datum		values[PLTSQL_CURRENT_OF_NCOLS];
 	bool		nulls[PLTSQL_CURRENT_OF_NCOLS] = {false, false, false};
 	bool		found = false;
@@ -6320,7 +6389,8 @@ current_of_after_execution(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt,
 
 		if (sources != NIL)
 		{
-			List	   *queries = ((CachedPlanSource *) linitial(sources))->query_list;
+			CachedPlanSource *source = (CachedPlanSource *) linitial(sources);
+			List	   *queries = source->query_list;
 
 			if (queries != NIL)
 			{
@@ -6331,11 +6401,18 @@ current_of_after_execution(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt,
 			}
 		}
 
-		if (OidIsValid(target_relid) && target_relid != cursor_relid &&
-			!list_member_oid(find_all_inheritors(target_relid, NoLock, NULL), cursor_relid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_CURSOR_STATE),
-					 errmsg("The cursor does not include the table being modified or the table is not updatable through the cursor.")));
+		if (OidIsValid(target_relid) && target_relid != cursor_relid)
+		{
+			List	   *children = find_all_inheritors(target_relid, NoLock,
+													   NULL);
+			bool		is_child = list_member_oid(children, cursor_relid);
+
+			list_free(children);
+			if (!is_child)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_CURSOR_STATE),
+						 errmsg("The cursor does not include the table being modified or the table is not updatable through the cursor.")));
+		}
 
 		ereport(ERROR,
 				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
@@ -6348,7 +6425,12 @@ current_of_after_execution(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt,
 		return;
 	}
 
-	/* Follow the update chain to the version our own command has created */
+	/*
+	 * Follow the update chain to the version our own command has created.
+	 * Make that version visible first: after an UPDATE with an OUTPUT
+	 * clause, the command counter has not been incremented yet.
+	 */
+	CommandCounterIncrement();
 	tid = *DatumGetItemPointer(ctidvar->value);
 	rel = table_open(DatumGetObjectId(relidvar->value), AccessShareLock);
 	snapshot = RegisterSnapshot(GetLatestSnapshot());
@@ -6366,7 +6448,8 @@ current_of_after_execution(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt,
 		if (heap_fetch(rel, snapshot, &tuple, &buffer, false))
 		{
 			values[0] = ItemPointerGetDatum(&tid);
-			values[1] = TransactionIdGetDatum(HeapTupleHeaderGetXmin(tuple.t_data));
+			values[1] =
+				TransactionIdGetDatum(HeapTupleHeaderGetXmin(tuple.t_data));
 			values[2] = relidvar->value;
 			found = true;
 			ReleaseBuffer(buffer);
@@ -6462,7 +6545,8 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 				TupleDesc	visdesc;
 
 				oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
-				visdesc = CreateTupleDescTruncatedCopy(tupdesc, tupdesc->natts - nhidden);
+				visdesc = CreateTupleDescTruncatedCopy(tupdesc,
+													   tupdesc->natts - nhidden);
 				MemoryContextSwitchTo(oldcontext);
 
 				if (n == 0)
@@ -6476,9 +6560,12 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 					bool		nulls[PLTSQL_CURRENT_OF_NCOLS];
 
 					for (int i = 0; i < nhidden; i++)
-						values[i] = heap_getattr(tuptab->vals[0],
-												 tupdesc->natts - nhidden + i + 1,
+					{
+						int			attnum = tupdesc->natts - nhidden + i + 1;
+
+						values[i] = heap_getattr(tuptab->vals[0], attnum,
 												 tupdesc, &nulls[i]);
+					}
 					exec_move_row(estate, target, tuptab->vals[0], visdesc);
 					current_of_set_position(estate, curvar, values, nulls);
 				}
@@ -6507,7 +6594,8 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 
 			if (cofreceiver)
 				current_of_set_position(estate, curvar,
-										cofreceiver->have_row ? cofreceiver->values : NULL,
+										cofreceiver->have_row ?
+										cofreceiver->values : NULL,
 										cofreceiver->nulls);
 
 			receiver->rDestroy(receiver);

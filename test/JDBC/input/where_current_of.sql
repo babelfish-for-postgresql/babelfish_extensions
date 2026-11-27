@@ -279,6 +279,126 @@ FETCH c;
 UPDATE where_current_of_t SET acc = 9 WHERE CURRENT OF GLOBAL c;
 GO
 
+-- UPDATE that also assigns a variable (running total), in a cursor loop
+CREATE TABLE where_current_of_run (d INT PRIMARY KEY, q INT, acc INT NULL);
+INSERT INTO where_current_of_run VALUES (1, 5, NULL), (2, -2, NULL), (3, 7, NULL), (4, 1, NULL);
+GO
+DECLARE @tot INT = 100, @q INT;
+DECLARE c CURSOR FOR SELECT q FROM where_current_of_run ORDER BY d FOR UPDATE OF acc;
+OPEN c;
+FETCH c INTO @q;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+	UPDATE where_current_of_run SET acc = @tot + q, @tot = @tot + q WHERE CURRENT OF c;
+	FETCH c INTO @q;
+END
+CLOSE c;
+DEALLOCATE c;
+SELECT @tot AS total;
+SELECT * FROM where_current_of_run ORDER BY d;
+DROP TABLE where_current_of_run;
+GO
+
+-- user columns named like the row identity columns are never taken for them
+CREATE TABLE where_current_of_trap (id INT PRIMARY KEY, [##current_of_ctid] BIGINT, [##current_of_xmin] BIGINT, [##current_of_tableoid] BIGINT);
+INSERT INTO where_current_of_trap VALUES (1, 123456789, 1, 999999), (2, 987654321, 2, 888888);
+GO
+
+-- in a join cursor, which is not updatable
+DECLARE c CURSOR FOR SELECT o.w, t.[##current_of_ctid], t.[##current_of_xmin], t.[##current_of_tableoid] FROM where_current_of_trap t JOIN where_current_of_o o ON o.id = t.id ORDER BY t.id;
+OPEN c;
+FETCH c;
+UPDATE where_current_of_trap SET id = id WHERE CURRENT OF c;
+GO
+
+DECLARE @w INT, @a BIGINT, @b BIGINT, @c BIGINT;
+DECLARE c CURSOR FOR SELECT o.w, t.[##current_of_ctid], t.[##current_of_xmin], t.[##current_of_tableoid] FROM where_current_of_trap t JOIN where_current_of_o o ON o.id = t.id ORDER BY t.id;
+OPEN c;
+FETCH c INTO @w, @a, @b, @c;
+SELECT @w, @a, @b, @c;
+DELETE FROM where_current_of_trap WHERE CURRENT OF c;
+GO
+
+-- in a single-table cursor, which is updatable
+DECLARE c CURSOR FOR SELECT id, [##current_of_ctid], [##current_of_xmin], [##current_of_tableoid] FROM where_current_of_trap ORDER BY id;
+OPEN c;
+FETCH c;
+FETCH c;
+UPDATE where_current_of_trap SET [##current_of_xmin] = 22 WHERE CURRENT OF c;
+CLOSE c;
+DEALLOCATE c;
+SELECT * FROM where_current_of_trap ORDER BY id;
+GO
+
+INSERT INTO where_current_of_t VALUES (10, 9, 1, NULL), (11, 9, 2, NULL), (12, 9, 3, NULL);
+GO
+
+-- through sp_executesql
+EXEC sp_executesql N'DECLARE @i INT;
+DECLARE c CURSOR FOR SELECT id FROM where_current_of_t WHERE g = @g ORDER BY id;
+OPEN c;
+FETCH c INTO @i;
+UPDATE where_current_of_t SET acc = @i * 100 WHERE CURRENT OF c;
+CLOSE c;
+DEALLOCATE c;', N'@g INT', @g = 9;
+SELECT id, acc FROM where_current_of_t WHERE g = 9 ORDER BY id;
+GO
+
+-- optimistic concurrency error caught by TRY/CATCH
+DECLARE @i INT;
+DECLARE c CURSOR FOR SELECT id FROM where_current_of_t WHERE id = 11;
+OPEN c;
+FETCH c INTO @i;
+UPDATE where_current_of_t SET v = v + 1 WHERE id = 11;
+BEGIN TRY
+	UPDATE where_current_of_t SET acc = 7 WHERE CURRENT OF c;
+END TRY
+BEGIN CATCH
+	SELECT ERROR_NUMBER() AS n, ERROR_MESSAGE() AS msg;
+END CATCH
+CLOSE c;
+DEALLOCATE c;
+GO
+
+-- OUTPUT clause without a trigger
+DECLARE c CURSOR FOR SELECT id FROM where_current_of_t WHERE g = 9 ORDER BY id;
+OPEN c;
+FETCH c;
+FETCH c;
+FETCH c;
+UPDATE where_current_of_t SET acc = -1 OUTPUT inserted.id, inserted.acc WHERE CURRENT OF c;
+DELETE FROM where_current_of_t OUTPUT deleted.id, deleted.acc WHERE CURRENT OF c;
+CLOSE c;
+DEALLOCATE c;
+SELECT id, v, acc FROM where_current_of_t WHERE g = 9 ORDER BY id;
+DELETE FROM where_current_of_t WHERE g = 9;
+GO
+
+-- AFTER trigger and OUTPUT clause
+CREATE TABLE where_current_of_log (id INT, w INT);
+GO
+CREATE TRIGGER where_current_of_trg ON where_current_of_o AFTER UPDATE, DELETE AS
+BEGIN
+	INSERT INTO where_current_of_log SELECT id, w FROM inserted;
+	INSERT INTO where_current_of_log SELECT -id, w FROM deleted;
+END;
+GO
+DECLARE c CURSOR FOR SELECT id FROM where_current_of_o ORDER BY id;
+OPEN c;
+FETCH c;
+UPDATE where_current_of_o SET w = w + 1 OUTPUT inserted.id, deleted.w AS old_w, inserted.w AS new_w WHERE CURRENT OF c;
+FETCH c;
+DELETE FROM where_current_of_o OUTPUT deleted.id, deleted.w WHERE CURRENT OF c;
+CLOSE c;
+DEALLOCATE c;
+SELECT * FROM where_current_of_log ORDER BY id;
+SELECT * FROM where_current_of_o ORDER BY id;
+GO
+DROP TRIGGER where_current_of_trg;
+DROP TABLE where_current_of_log;
+DROP TABLE where_current_of_trap;
+GO
+
 SELECT * FROM where_current_of_t ORDER BY id;
 GO
 

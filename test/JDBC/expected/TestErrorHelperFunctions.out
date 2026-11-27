@@ -213,6 +213,12 @@ XX000#!#The table-valued parameter "%s" must be declared with the READONLY optio
 22008#!#Adding a value to a '%s' column caused an overflow.#!##!#517
 42P01#!#FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.#!##!#13600
 42P01#!#sub-select and values for json auto are not currently supported.#!##!#13600
+24000#!#Cursor is not open.#!##!#16917
+24000#!#The cursor is READ ONLY.#!##!#16929
+24000#!#The requested row is not in the fetch buffer.#!##!#16930
+24000#!#The cursor does not include the table being modified or the table is not updatable through the cursor.#!##!#16932
+40001#!#Optimistic concurrency check failed. The row was modified outside of this cursor.#!##!#16934
+34000#!#A cursor with the name '%s' does not exist.#!##!#16916
 ~~END~~
 
 
