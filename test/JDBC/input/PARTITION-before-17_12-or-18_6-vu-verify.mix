@@ -1819,6 +1819,10 @@ GROUP BY p.partition_number, p.rows
 ORDER BY p.partition_number;
 GO
 
+SELECT set_config('babelfishpg_tsql.enable_stable_functions_in_computed_columns', 'on', false)
+GO
+SET QUOTED_IDENTIFIER ON;
+GO
 
 -- Create partitioned table with computed columns
 CREATE TABLE partition_float_real_partitioned_computed_test (
