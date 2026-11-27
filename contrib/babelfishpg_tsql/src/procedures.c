@@ -3324,7 +3324,7 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 	char	   *query = NULL;
 	char	   *function_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *volatility = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
-	Oid			function_id;
+	Oid			function_id = InvalidOid;
 	Oid			user_id = GetUserId();
 
 	if (function_name != NULL)
