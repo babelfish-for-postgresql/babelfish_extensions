@@ -1,3 +1,6 @@
+SELECT set_config('babelfishpg_tsql.enable_stable_functions_in_computed_columns', 'on', false)
+GO
+
 CREATE TABLE computed_column_vu_prepare_t1 (a NVARCHAR(10), b  AS substring(a,1,3) UNIQUE NOT NULL);
 GO
 
