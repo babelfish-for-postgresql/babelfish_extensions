@@ -32,12 +32,12 @@ GO
 
 
 -- Ensure alter table alter column: collate, not null, and null
--- still throw unsupported feature error
+-- are accepted; an unknown collation name throws an error
 alter table cities alter column region varchar(25) collate test
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+~~ERROR (Message: collation "test" for encoding "UTF8" does not exist)~~
 
 
 alter table cities alter column region varchar(50) not null
