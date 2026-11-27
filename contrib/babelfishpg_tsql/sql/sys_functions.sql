@@ -5190,6 +5190,12 @@ RETURNS setof record
 AS 'babelfishpg_tsql', 'bbf_pivot'
 LANGUAGE C STABLE;
 
+-- PIVOT whose source query refers to T-SQL variables or parameters ($1..$n)
+CREATE OR REPLACE FUNCTION sys.bbf_pivot(IN src_sql TEXT, IN cat_sql TEXT, IN agg_func TEXT, VARIADIC params "any")
+RETURNS setof record
+AS 'babelfishpg_tsql', 'bbf_pivot'
+LANGUAGE C STABLE;
+
 -- wrapper functions for reverse
 CREATE OR REPLACE FUNCTION sys.reverse(string sys.NVARCHAR)
 RETURNS sys.NVARCHAR
