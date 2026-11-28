@@ -191,3 +191,9 @@ XX000 ERRCODE_INTERNAL_ERROR	"The table-valued parameter \"%s\" must be declared
 42P01 ERRCODE_UNDEFINED_TABLE	"FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name."		SQL_ERROR_13600	16
 42P01 ERRCODE_FEATURE_NOT_SUPPORTED	"sub-select and values for json auto are not currently supported."		SQL_ERROR_13600	16
 
+24000 ERRCODE_INVALID_CURSOR_STATE	"Cursor is not open."	SQL_ERROR_16917	16
+24000 ERRCODE_INVALID_CURSOR_STATE	"The cursor is READ ONLY."	SQL_ERROR_16929	16
+24000 ERRCODE_INVALID_CURSOR_STATE	"The requested row is not in the fetch buffer."	SQL_ERROR_16930	16
+24000 ERRCODE_INVALID_CURSOR_STATE	"The cursor does not include the table being modified or the table is not updatable through the cursor."	SQL_ERROR_16932	16
+40001 ERRCODE_T_R_SERIALIZATION_FAILURE	"Optimistic concurrency check failed. The row was modified outside of this cursor."	SQL_ERROR_16934	16
+34000 ERRCODE_UNDEFINED_CURSOR	"A cursor with the name \'%s\' does not exist."	SQL_ERROR_16916	16

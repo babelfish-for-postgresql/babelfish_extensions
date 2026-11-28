@@ -1231,9 +1231,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitInsert_statement(TSqlParse
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitUpdate_statement(TSqlParser::Update_statementContext *ctx)
 {
-	if (ctx->CURRENT()) // CURRENT OF
-		handle(INSTR_UNSUPPORTED_TSQL_UPDATE_WHERE_CURRENT_OF, "CURRENT OF", getLineAndPos(ctx->CURRENT()));
-
 	if (ctx->ddl_object() && ctx->ddl_object()->full_object_name() && ctx->ddl_object()->full_object_name()->DOT().size() >= 3 && ctx->ddl_object()->full_object_name()->server)
 		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "UPDATE on a 4-part object name is not yet supported in Babelfish", getLineAndPos(ctx));
 
@@ -1248,9 +1245,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitUpdate_statement(TSqlParse
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDelete_statement(TSqlParser::Delete_statementContext *ctx)
 {
-	if (ctx->CURRENT()) // CURRENT OF
-		handle(INSTR_UNSUPPORTED_TSQL_DELETE_WHERE_CURRENT_OF, "CURRENT OF", getLineAndPos(ctx->CURRENT()));
-
 	return visitChildren(ctx);
 }
 

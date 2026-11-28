@@ -23,7 +23,9 @@
 								 * remove */
 
 #include "access/htup_details.h"
+#include "access/sysattr.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
@@ -2194,6 +2196,224 @@ make_datum_param(PLtsql_expr *expr, int dno, int location)
 	param->location = location;
 
 	return (Node *) param;
+}
+
+/*
+ * Names of the row identity columns appended to the query of a cursor that
+ * is the target of WHERE CURRENT OF.
+ */
+const char *const pltsql_current_of_colnames[PLTSQL_CURRENT_OF_NCOLS] = {
+	"##current_of_ctid", "##current_of_xmin", "##current_of_tableoid"
+};
+
+/*
+ * Is the query something WHERE CURRENT OF can address, i.e. does each of its
+ * rows come from exactly one row of one table?
+ */
+static bool
+current_of_query_is_updatable(Query *query, int *rtindex)
+{
+	RangeTblRef *rtr;
+	RangeTblEntry *rte;
+
+	if (query->commandType != CMD_SELECT ||
+		query->setOperations != NULL ||
+		query->hasAggs ||
+		query->hasWindowFuncs ||
+		query->hasTargetSRFs ||
+		query->hasDistinctOn ||
+		query->distinctClause != NIL ||
+		query->groupClause != NIL ||
+		query->groupingSets != NIL ||
+		query->havingQual != NULL ||
+		query->cteList != NIL)
+		return false;
+
+	if (query->jointree == NULL ||
+		list_length(query->jointree->fromlist) != 1 ||
+		!IsA(linitial(query->jointree->fromlist), RangeTblRef))
+		return false;
+
+	rtr = linitial_node(RangeTblRef, query->jointree->fromlist);
+	rte = rt_fetch(rtr->rtindex, query->rtable);
+	if (rte->rtekind != RTE_RELATION ||
+		(rte->relkind != RELKIND_RELATION &&
+		 rte->relkind != RELKIND_PARTITIONED_TABLE))
+		return false;
+
+	*rtindex = rtr->rtindex;
+	return true;
+}
+
+/*
+ * current_of_eq_operator
+ *		Look up the pg_catalog "=" operator for a type.
+ *
+ * typoid: type of both operands.
+ *
+ * Returns the operator OID; raises an error if there is none. The operators
+ * for xid and oid have no symbolic constant, so they are looked up by name
+ * instead of hardcoding their OIDs.
+ */
+static Oid
+current_of_eq_operator(Oid typoid)
+{
+	return OpernameGetOprid(list_make2(makeString("pg_catalog"),
+									   makeString("=")),
+							typoid, typoid);
+}
+
+/*
+ * current_of_make_eq
+ *		Build "system column = hidden variable" for WHERE CURRENT OF.
+ *
+ * expr: the statement being analyzed.
+ * varno: range table index of the target table.
+ * attno: system column number.
+ * typoid: type of the system column.
+ * dno: datum number of the hidden variable of the cursor.
+ *
+ * Returns the comparison expression.
+ */
+static Expr *
+current_of_make_eq(PLtsql_expr *expr, int varno, AttrNumber attno,
+				   Oid typoid, int dno)
+{
+	Oid			opno;
+	OpExpr	   *op;
+
+	opno = (typoid == TIDOID) ? TIDEqualOperator :
+		current_of_eq_operator(typoid);
+	if (!OidIsValid(opno))
+		elog(ERROR, "could not find equality operator for type %u", typoid);
+
+	op = (OpExpr *) make_opclause(opno, BOOLOID, false,
+								  (Expr *) makeVar(varno, attno, typoid,
+												   -1, InvalidOid, 0),
+								  (Expr *) make_datum_param(expr, dno, -1),
+								  InvalidOid, InvalidOid);
+	set_opfuncid(op);
+	return (Expr *) op;
+}
+
+/*
+ * Support for UPDATE/DELETE ... WHERE CURRENT OF cursor, called after parse
+ * analysis of a statement that belongs to a PL/tsql function.
+ *
+ * A T-SQL cursor is turned into a held (materialized) portal whenever the
+ * statement that follows the FETCH commits, so the executor's own WHERE
+ * CURRENT OF, which needs the portal's live scan, cannot be used. Instead:
+ *
+ * - the query of a cursor that is referenced by WHERE CURRENT OF gets three
+ *   trailing columns with the ctid, xmin and tableoid of the row. FETCH
+ *   strips them from the result and saves them in hidden variables of the
+ *   cursor;
+ *
+ * - WHERE CURRENT OF itself is replaced by a comparison of those three
+ *   system columns with the hidden variables. The xmin makes sure that a row
+ *   version that replaced the fetched one at the same ctid is not touched.
+ */
+void
+pltsql_current_of_post_analyze(ParseState *pstate, Query *query)
+{
+	PLtsql_expr *expr;
+
+	if (pstate == NULL || pstate->p_pre_columnref_hook != pltsql_pre_column_ref)
+		return;
+
+	expr = (PLtsql_expr *) pstate->p_ref_hook_state;
+
+	if (query->commandType == CMD_SELECT)
+	{
+		static const AttrNumber attnos[PLTSQL_CURRENT_OF_NCOLS] = {
+			SelfItemPointerAttributeNumber,
+			MinTransactionIdAttributeNumber,
+			TableOidAttributeNumber
+		};
+		static const Oid typoids[PLTSQL_CURRENT_OF_NCOLS] =
+		{TIDOID, XIDOID, OIDOID};
+		int			rtindex;
+		RangeTblEntry *rte;
+		RTEPermissionInfo *perminfo;
+
+		if (!expr->cursor_current_of)
+			return;
+
+		/*
+		 * Remember whether the columns are appended, so that FETCH never
+		 * mistakes user columns with the same names for them.
+		 */
+		expr->cursor_cof_appended = current_of_query_is_updatable(query,
+																  &rtindex);
+		if (!expr->cursor_cof_appended)
+			return;
+
+		rte = rt_fetch(rtindex, query->rtable);
+		perminfo = getRTEPermissionInfo(query->rteperminfos, rte);
+
+		for (int i = 0; i < PLTSQL_CURRENT_OF_NCOLS; i++)
+		{
+			Var		   *var = makeVar(rtindex, attnos[i], typoids[i],
+									  -1, InvalidOid, 0);
+			TargetEntry *tle;
+
+			tle = makeTargetEntry((Expr *) var,
+								  list_length(query->targetList) + 1,
+								  pstrdup(pltsql_current_of_colnames[i]),
+								  false);
+			query->targetList = lappend(query->targetList, tle);
+			perminfo->selectedCols =
+				bms_add_member(perminfo->selectedCols,
+							   attnos[i] - FirstLowInvalidHeapAttributeNumber);
+		}
+	}
+	else if ((query->commandType == CMD_UPDATE ||
+			  query->commandType == CMD_DELETE) &&
+			 query->jointree != NULL &&
+			 query->jointree->quals != NULL &&
+			 IsA(query->jointree->quals, CurrentOfExpr))
+	{
+		CurrentOfExpr *cexpr = (CurrentOfExpr *) query->jointree->quals;
+		PLtsql_execstate *estate = expr->func->cur_estate;
+		PLtsql_var *curvar;
+		Expr	   *ctid_eq;
+		Expr	   *xmin_eq;
+		Expr	   *relid_eq;
+
+		/* transformCurrentOfExpr() resolved the name if it is our variable */
+		if (cexpr->cursor_name != NULL || cexpr->cursor_param <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_CURSOR),
+					 errmsg("A cursor with the name '%s' does not exist.",
+							cexpr->cursor_name ? cexpr->cursor_name : "?")));
+
+		curvar = (PLtsql_var *) estate->datums[cexpr->cursor_param - 1];
+		if (curvar->dtype != PLTSQL_DTYPE_VAR || !curvar->cursor_current_of)
+			elog(ERROR, "cursor \"%s\" is not set up for WHERE CURRENT OF",
+				 curvar->refname);
+
+		/*
+		 * The xmin comparison makes the statement touch nothing if the row
+		 * changed since it was fetched. It also does so if VACUUM froze the
+		 * tuple in between, since a frozen tuple reports a different xmin;
+		 * the user then gets the optimistic concurrency error, as for a
+		 * changed row.
+		 */
+		ctid_eq = current_of_make_eq(expr, cexpr->cvarno,
+									 SelfItemPointerAttributeNumber, TIDOID,
+									 curvar->cursor_cof_ctid_dno);
+		xmin_eq = current_of_make_eq(expr, cexpr->cvarno,
+									 MinTransactionIdAttributeNumber, XIDOID,
+									 curvar->cursor_cof_xmin_dno);
+		relid_eq = current_of_make_eq(expr, cexpr->cvarno,
+									  TableOidAttributeNumber, OIDOID,
+									  curvar->cursor_cof_relid_dno);
+
+		query->jointree->quals =
+			(Node *) makeBoolExpr(AND_EXPR,
+								  list_make3(ctid_eq, xmin_eq, relid_eq),
+								  -1);
+	}
 }
 
 

@@ -7530,6 +7530,9 @@ makeDeclareCursorStatement(TSqlParser::Declare_cursorContext *ctx)
 			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "both SCROLL_LOCKS and FOR READ ONLY cannot be specified on a cursor declaration", getLineAndPos(ctx->READ()));
 		if (cursor_option & TSQL_CURSOR_OPT_OPTIMISTIC)
 			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "both OPTIMISTIC and FOR READ ONLY cannot be specified on a cursor declaration", getLineAndPos(ctx->READ()));
+
+		/* so that WHERE CURRENT OF is refused for this cursor */
+		cursor_option |= TSQL_CURSOR_OPT_READ_ONLY;
 	}
 
 	/*
@@ -8670,6 +8673,52 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 	}
 }
 
+/*
+ * UPDATE/DELETE ... WHERE CURRENT OF cursor: remember which cursor the
+ * statement refers to, and give that cursor the hidden variables that hold
+ * the identity of the row it is positioned on.
+ */
+template <class T>
+static void
+process_execsql_current_of(T *ctx, PLtsql_stmt_execsql *stmt)
+{
+	if (!ctx->CURRENT())
+		return;
+
+	if (ctx->GLOBAL())
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", getLineAndPos(ctx->GLOBAL()));
+	/* a cursor variable can show up as cursor_name or as cursor_var */
+	auto name = ctx->cursor_var ? ctx->cursor_var->getText() : ::getFullText(ctx->cursor_name());
+	const char *lookup_name = downcase_truncate_identifier(name.c_str(), name.length(), true);
+
+	if (!pltsql_ns_lookup(pltsql_ns_top(), false, lookup_name, nullptr, nullptr, nullptr))
+		throw PGErrorWrapperException(ERROR, ERRCODE_UNDEFINED_CURSOR, format_errmsg("A cursor with the name '%s' does not exist.", name.c_str()), getLineAndPos(ctx->CURRENT()));
+
+	PLtsql_var *curvar = lookup_cursor_variable(name.c_str());
+
+	if (!curvar->cursor_current_of)
+	{
+		struct { const char *suffix; Oid typoid; int *dno; } hidden[] = {
+			{"##current_of_ctid", TIDOID, &curvar->cursor_cof_ctid_dno},
+			{"##current_of_xmin", XIDOID, &curvar->cursor_cof_xmin_dno},
+			{"##current_of_tableoid", OIDOID, &curvar->cursor_cof_relid_dno}
+		};
+
+		for (auto &h : hidden)
+		{
+			std::string varname = std::string(curvar->refname) + h.suffix;
+			PLtsql_variable *var = pltsql_build_variable(pstrdup(varname.c_str()), getLineNo(ctx),
+				pltsql_build_datatype(h.typoid, -1, InvalidOid, NULL), false);
+
+			*h.dno = var->dno;
+		}
+		curvar->cursor_current_of = true;
+	}
+
+	stmt->is_current_of = true;
+	stmt->current_of_curvar = curvar->dno;
+}
+
 void process_execsql_destination(TSqlParser::Dml_statementContext *ctx, PLtsql_stmt_execsql *stmt)
 {
 	Assert(ctx);
@@ -8682,6 +8731,11 @@ void process_execsql_destination(TSqlParser::Dml_statementContext *ctx, PLtsql_s
 	else if (ctx->update_statement())
 	{
 		process_execsql_destination_update(ctx->update_statement(), stmt);
+		process_execsql_current_of(ctx->update_statement(), stmt);
+	}
+	else if (ctx->delete_statement())
+	{
+		process_execsql_current_of(ctx->delete_statement(), stmt);
 	}
 }
 
