@@ -25,6 +25,8 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_cast.h"
+#include "catalog/pg_namespace.h"
+#include "catalog/pg_operator.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/pathnodes.h"
@@ -51,10 +53,10 @@
 #include "src/include/tds_timestamp.h"
 #include "src/include/guc.h"
 
-/* Recover the declared length of string results (see TdsGetUdfVarcharTypmod) */
-static int TdsGetGenericTypmod(Node *expr);
-static int TdsGetUdfVarcharTypmod(PlannedStmt *plannedstmt, Node *expr);
-static int TdsVarcharTypmodWalk(Plan *plan, Node *expr, int depth);
+/* Declared length of string expressions (see TdsVarcharTypmodWalk) */
+static int	TdsGetGenericTypmod(Node *expr);
+static int	TdsGetUdfVarcharTypmod(PlannedStmt *plannedstmt, Node *expr);
+static int	TdsVarcharTypmodWalk(Plan *plan, Node *expr, int depth);
 
 #define SP_FLAGS_WITHRECOMP			0x01
 #define SP_FLAGS_NOMETADATA			0x02
@@ -1156,46 +1158,166 @@ SendColInfoToken(int natts, bool sendRowStat)
 
 
 /*
- * PG drops the typmod of a function result, so a T-SQL scalar
- * UDF declared RETURNS VARCHAR(n) reaches TDS with typmod -1 and is sent as
- * VARCHAR(MAX). Strip relabel/domain/collate wrappers and, for a FuncExpr,
- * read the declared typmod stored in pg_proc.probin (same store CHAR uses).
+ * Declared length of string expressions
+ *
+ * PostgreSQL does not keep a typmod for most string expressions (function
+ * results, concatenation, literals, CASE, UNION branches, ...), so they reach
+ * TDS with typmod -1 and would be announced as VARCHAR(MAX)/NVARCHAR(MAX).
+ * SQL Server instead reports a bounded length for them. The helpers below
+ * recover that length from the planned expression, following SQL Server's
+ * typing rules. Any shape that is not understood returns -1, which keeps the
+ * MAX metadata.
  */
-/* T-SQL length rules for string expressions (SQL Server semantics) */
-static bool
-TdsIsVarlenaString(Oid typid)
-{
-	Oid base = getBaseType(typid);
-	return OidIsValid(base) && TypeCategory(base) == TYPCATEGORY_STRING && get_typlen(base) == -1;
-}
 
-static int32
-TdsStringCap(Oid typid)
+/* OIDs resolved once per backend, see TdsSysNamespace() and TdsStringCap() */
+static Oid	tds_sys_nspoid = InvalidOid;
+static Oid	tds_sys_nvarchar_oid = InvalidOid;
+static Oid	tds_sys_nchar_oid = InvalidOid;
+
+/*
+ * How the result length of a built-in string function is derived.
+ */
+typedef enum TdsStringLenRule
 {
-	char *name = format_type_be(getBaseType(typid));
-	int32 cap = (strstr(name, "nvarchar") != NULL || strstr(name, "nchar") != NULL) ? 4000 : 8000;
-	pfree(name);
-	return cap;
+	TDS_LEN_FROM_ARG,			/* never longer than the first argument */
+	TDS_LEN_CONCAT_WRAPPER,		/* T-SQL '+': sum of the argument lengths */
+	TDS_LEN_CONCAT,				/* CONCAT(...): sum of the argument lengths */
+	TDS_LEN_ISNULL,				/* ISNULL(a, b): typed as a */
+	TDS_LEN_FIXED,				/* fixed length given in the table */
+	TDS_LEN_CAP_IF_BOUNDED		/* cap (8000/4000) unless the input is MAX */
+}			TdsStringLenRule;
+
+typedef struct TdsStringLenRuleEntry
+{
+	const char *funcname;
+	TdsStringLenRule rule;
+	int32		len;			/* only for TDS_LEN_FIXED */
+}			TdsStringLenRuleEntry;
+
+static const TdsStringLenRuleEntry tds_string_len_rules[] = {
+	{"left", TDS_LEN_FROM_ARG, 0},
+	{"right", TDS_LEN_FROM_ARG, 0},
+	{"substring", TDS_LEN_FROM_ARG, 0},
+	{"ltrim", TDS_LEN_FROM_ARG, 0},
+	{"rtrim", TDS_LEN_FROM_ARG, 0},
+	{"trim", TDS_LEN_FROM_ARG, 0},
+	{"upper", TDS_LEN_FROM_ARG, 0},
+	{"lower", TDS_LEN_FROM_ARG, 0},
+	{"reverse", TDS_LEN_FROM_ARG, 0},
+	{"babelfish_concat_wrapper", TDS_LEN_CONCAT_WRAPPER, 0},
+	{"babelfish_concat_wrapper_outer", TDS_LEN_CONCAT_WRAPPER, 0},
+	{"concat", TDS_LEN_CONCAT, 0},
+	{"isnull", TDS_LEN_ISNULL, 0},
+	{"format", TDS_LEN_FIXED, 4000},	/* nvarchar(4000) */
+	{"datename", TDS_LEN_FIXED, 30},
+	/* functions returning sysname */
+	{"db_name", TDS_LEN_FIXED, 128},
+	{"schema_name", TDS_LEN_FIXED, 128},
+	{"object_name", TDS_LEN_FIXED, 128},
+	{"user_name", TDS_LEN_FIXED, 128},
+	{"suser_name", TDS_LEN_FIXED, 128},
+	{"suser_sname", TDS_LEN_FIXED, 128},
+	{"host_name", TDS_LEN_FIXED, 128},
+	{"app_name", TDS_LEN_FIXED, 128},
+	{"original_login", TDS_LEN_FIXED, 128},
+	{"col_name", TDS_LEN_FIXED, 128},
+	{"type_name", TDS_LEN_FIXED, 128},
+	{"object_schema_name", TDS_LEN_FIXED, 128},
+	{"replace", TDS_LEN_CAP_IF_BOUNDED, 0},
+	{"stuff", TDS_LEN_CAP_IF_BOUNDED, 0}
+};
+
+/*
+ * TdsSysNamespace - OID of the sys schema, or InvalidOid if it does not
+ * exist (yet).
+ */
+static Oid
+TdsSysNamespace(void)
+{
+	if (!OidIsValid(tds_sys_nspoid))
+		tds_sys_nspoid = get_namespace_oid("sys", true);
+	return tds_sys_nspoid;
 }
 
 /*
- * Length of a UTF-8 string in UTF-16 code units, which is what TDS counts:
- * characters outside the BMP (e.g. emoji) take two units.
+ * TdsIsSystemNamespace - true for pg_catalog and sys, the schemas that hold
+ * the built-in functions and operators whose length rules we know.
+ */
+static bool
+TdsIsSystemNamespace(Oid nspoid)
+{
+	return nspoid == PG_CATALOG_NAMESPACE ||
+		(OidIsValid(nspoid) && nspoid == TdsSysNamespace());
+}
+
+/*
+ * TdsIsVarlenaString - true if the (base) type is a variable length string
+ * type, such as varchar, nvarchar or text.
+ */
+static bool
+TdsIsVarlenaString(Oid typid)
+{
+	Oid			base = getBaseType(typid);
+
+	return OidIsValid(base) && TypeCategory(base) == TYPCATEGORY_STRING &&
+		get_typlen(base) == -1;
+}
+
+/*
+ * TdsStringCap - largest length SQL Server reports before switching to MAX:
+ * 4000 for nvarchar/nchar, 8000 for the other string types.
+ */
+static int32
+TdsStringCap(Oid typid)
+{
+	Oid			base = getBaseType(typid);
+
+	if (!OidIsValid(tds_sys_nvarchar_oid) || !OidIsValid(tds_sys_nchar_oid))
+	{
+		Oid			nspoid = TdsSysNamespace();
+
+		if (OidIsValid(nspoid))
+		{
+			tds_sys_nvarchar_oid =
+				GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+								CStringGetDatum("nvarchar"),
+								ObjectIdGetDatum(nspoid));
+			tds_sys_nchar_oid =
+				GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+								CStringGetDatum("nchar"),
+								ObjectIdGetDatum(nspoid));
+		}
+	}
+
+	if (OidIsValid(base) &&
+		(base == tds_sys_nvarchar_oid || base == tds_sys_nchar_oid))
+		return 4000;
+	return 8000;
+}
+
+/*
+ * TdsUtf16Units - length of a UTF-8 string in UTF-16 code units, which is
+ * what TDS counts: characters outside the BMP (e.g. emoji) take two units.
  */
 static int32
 TdsUtf16Units(const char *s)
 {
-	int32 n = 0;
+	int32		n = 0;
+
 	while (*s)
 	{
-		int l = pg_utf_mblen((const unsigned char *) s);
+		int			l = pg_utf_mblen((const unsigned char *) s);
+
 		n += (l == 4) ? 2 : 1;
 		s += l;
 	}
 	return n;
 }
 
-/* NULL literal (possibly wrapped in casts): does not constrain length in SQL Server */
+/*
+ * TdsIsNullConst - true for a NULL literal, possibly wrapped in casts. In
+ * SQL Server a NULL arm does not constrain the length of the result.
+ */
 static bool
 TdsIsNullConst(Node *n)
 {
@@ -1207,7 +1329,8 @@ TdsIsNullConst(Node *n)
 			n = (Node *) ((CoerceViaIO *) n)->arg;
 		else if (IsA(n, CollateExpr))
 			n = (Node *) ((CollateExpr *) n)->arg;
-		else if (IsA(n, FuncExpr) && ((FuncExpr *) n)->funcformat != COERCE_EXPLICIT_CALL &&
+		else if (IsA(n, FuncExpr) &&
+				 ((FuncExpr *) n)->funcformat != COERCE_EXPLICIT_CALL &&
 				 list_length(((FuncExpr *) n)->args) >= 1)
 			n = (Node *) linitial(((FuncExpr *) n)->args);
 		else
@@ -1217,9 +1340,329 @@ TdsIsNullConst(Node *n)
 }
 
 /*
- * Walk down the plan following OUTER_VAR/INNER_VAR (and SubqueryScan) to the
- * expression that really produces the column. Bounded depth; any shape we do
- * not understand returns -1, which keeps the stock behaviour.
+ * TdsIsBuiltinConcatOp - true if the operator is a string concatenation
+ * operator ("||" or "+") defined in pg_catalog or sys. A user-defined
+ * operator with the same name has unknown semantics and is not trusted.
+ */
+static bool
+TdsIsBuiltinConcatOp(Oid opno)
+{
+	HeapTuple	tup;
+	Form_pg_operator oprform;
+	bool		result;
+
+	tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(opno));
+	if (!HeapTupleIsValid(tup))
+		return false;
+	oprform = (Form_pg_operator) GETSTRUCT(tup);
+	result = (strcmp(NameStr(oprform->oprname), "||") == 0 ||
+			  strcmp(NameStr(oprform->oprname), "+") == 0) &&
+		TdsIsSystemNamespace(oprform->oprnamespace);
+	ReleaseSysCache(tup);
+	return result;
+}
+
+/*
+ * TdsFindStringLenRule - length rule of a built-in string function, or NULL
+ * if the function is unknown or not defined in pg_catalog/sys. Matching on
+ * the name alone would apply the rules to user functions with the same name
+ * (dbo.format, dbo.replace, ...) and clip their results.
+ */
+static const TdsStringLenRuleEntry *
+TdsFindStringLenRule(Oid funcid)
+{
+	char	   *fname;
+	const		TdsStringLenRuleEntry *found = NULL;
+	int			i;
+
+	if (!TdsIsSystemNamespace(get_func_namespace(funcid)))
+		return NULL;
+	fname = get_func_name(funcid);
+	if (fname == NULL)
+		return NULL;
+	for (i = 0; i < lengthof(tds_string_len_rules); i++)
+	{
+		if (strcmp(fname, tds_string_len_rules[i].funcname) == 0)
+		{
+			found = &tds_string_len_rules[i];
+			break;
+		}
+	}
+	pfree(fname);
+	return found;
+}
+
+/*
+ * TdsSumStringLengths - typmod of the concatenation of the given arguments:
+ * the sum of their lengths. Returns -1 (MAX) if any argument is not a string
+ * of known length, if the sum exceeds the cap of the result type, or if there
+ * are no arguments. The sum is computed in 64 bits so that many long
+ * arguments cannot wrap around into a small, wrong length.
+ */
+static int32
+TdsSumStringLengths(Plan *plan, List *args, Oid restype, int depth)
+{
+	ListCell   *lc;
+	int64		len = 0;
+	int32		cap = TdsStringCap(restype);
+
+	foreach(lc, args)
+	{
+		Node	   *a = (Node *) lfirst(lc);
+		int32		ta;
+
+		if (!TdsIsVarlenaString(exprType(a)))
+			return -1;
+		ta = TdsVarcharTypmodWalk(plan, a, depth + 1);
+		if (ta <= VARHDRSZ)
+			return -1;
+		len += (int64) ta - VARHDRSZ;
+		if (len > cap)
+			return -1;
+	}
+	return (len > 0) ? (int32) len + VARHDRSZ : -1;
+}
+
+/*
+ * TdsConstLengthArg - value of a constant integer length argument (LEFT(s, n),
+ * SUBSTRING(s, start, n)), or -1 if it is not a usable constant.
+ */
+static int32
+TdsConstLengthArg(Node *lenarg)
+{
+	Const	   *c;
+
+	while (lenarg != NULL && IsA(lenarg, RelabelType))
+		lenarg = (Node *) ((RelabelType *) lenarg)->arg;
+	if (lenarg == NULL || !IsA(lenarg, Const) ||
+		((Const *) lenarg)->constisnull)
+		return -1;
+	c = (Const *) lenarg;
+	if (c->consttype == INT4OID)
+		return DatumGetInt32(c->constvalue);
+	if (c->consttype == INT2OID)
+		return DatumGetInt16(c->constvalue);
+	if (c->consttype == INT8OID && DatumGetInt64(c->constvalue) >= 0 &&
+		DatumGetInt64(c->constvalue) < 8000)
+		return (int32) DatumGetInt64(c->constvalue);
+	return -1;
+}
+
+/*
+ * TdsFuncStringTypmod - typmod of a call to a string function, from the
+ * declared UDF length (pg_proc.probin) or from the rules of the built-in
+ * string functions.
+ */
+static int32
+TdsFuncStringTypmod(Plan *plan, FuncExpr *fe, int depth)
+{
+	const		TdsStringLenRuleEntry *rule;
+	Node	   *arg1;
+	int32		typmod;
+
+	/* scalar UDF: declared length is stored in pg_proc.probin */
+	typmod = TdsGetGenericTypmod((Node *) fe);
+	if (typmod > 0)
+		return typmod;
+
+	rule = TdsFindStringLenRule(fe->funcid);
+	if (rule != NULL && rule->rule == TDS_LEN_FIXED)
+		return rule->len + VARHDRSZ;	/* e.g. DB_NAME() takes no argument */
+	if (fe->args == NIL)
+		return -1;
+	arg1 = (Node *) linitial(fe->args);
+
+	if (rule == NULL)
+	{
+		/* string -> text coercion keeps the length */
+		if ((fe->funcformat == COERCE_IMPLICIT_CAST ||
+			 fe->funcformat == COERCE_EXPLICIT_CAST) &&
+			TdsIsSystemNamespace(get_func_namespace(fe->funcid)) &&
+			TdsIsVarlenaString(exprType(arg1)) &&
+			getBaseType(fe->funcresulttype) == TEXTOID)
+			return TdsVarcharTypmodWalk(plan, arg1, depth + 1);
+		return -1;
+	}
+
+	switch (rule->rule)
+	{
+		case TDS_LEN_FROM_ARG:
+			{
+				int32		n = -1;
+
+				if (!TdsIsVarlenaString(exprType(arg1)))
+					return -1;
+				typmod = TdsVarcharTypmodWalk(plan, arg1, depth + 1);
+
+				/*
+				 * LEFT/RIGHT(s, n) and SUBSTRING(s, start, n) with a constant
+				 * n: SQL Server uses n when it is shorter.
+				 */
+				if ((strcmp(rule->funcname, "left") == 0 ||
+					 strcmp(rule->funcname, "right") == 0) &&
+					list_length(fe->args) == 2)
+					n = TdsConstLengthArg((Node *) lsecond(fe->args));
+				else if (strcmp(rule->funcname, "substring") == 0 &&
+						 list_length(fe->args) == 3)
+					n = TdsConstLengthArg((Node *) lthird(fe->args));
+				if (typmod > 0 && n > 0 && n + VARHDRSZ < typmod)
+					typmod = n + VARHDRSZ;
+				return typmod;
+			}
+		case TDS_LEN_CONCAT_WRAPPER:
+			return TdsSumStringLengths(plan, fe->args, fe->funcresulttype,
+									   depth);
+		case TDS_LEN_CONCAT:
+			{
+				List	   *cargs = fe->args;
+
+				/* sys.concat(VARIADIC varchar[]): one ArrayExpr argument */
+				if (fe->funcvariadic && list_length(cargs) == 1 &&
+					IsA(linitial(cargs), ArrayExpr))
+					cargs = ((ArrayExpr *) linitial(cargs))->elements;
+				return TdsSumStringLengths(plan, cargs, fe->funcresulttype,
+										   depth);
+			}
+		case TDS_LEN_ISNULL:
+			/* ISNULL(a, b): SQL Server types the result as a */
+			if (list_length(fe->args) != 2 ||
+				!TdsIsVarlenaString(exprType(arg1)))
+				return -1;
+			return TdsVarcharTypmodWalk(plan, arg1, depth + 1);
+		case TDS_LEN_FIXED:
+			break;				/* handled above */
+		case TDS_LEN_CAP_IF_BOUNDED:
+			/* SQL Server: non-MAX input gives varchar(8000)/nvarchar(4000) */
+			if (!TdsIsVarlenaString(exprType(arg1)) ||
+				TdsVarcharTypmodWalk(plan, arg1, depth + 1) <= 0)
+				return -1;
+			return TdsStringCap(fe->funcresulttype) + VARHDRSZ;
+	}
+	return -1;
+}
+
+/*
+ * TdsVarTypmod - typmod of a Var that refers to the output of a child plan
+ * (OUTER_VAR/INNER_VAR, SubqueryScan, Append/MergeAppend branches).
+ */
+static int32
+TdsVarTypmod(Plan *plan, Var *var, int depth)
+{
+	Plan	   *child;
+	TargetEntry *tle;
+
+	if (var->vartypmod > 0)
+		return var->vartypmod;
+	if (plan == NULL || var->varattno <= 0)
+		return -1;
+
+	if (IsA(plan, Append) || IsA(plan, MergeAppend))
+	{
+		/* UNION [ALL]: the longest branch; any unknown branch gives MAX */
+		List	   *subs = IsA(plan, Append) ? ((Append *) plan)->appendplans
+			: ((MergeAppend *) plan)->mergeplans;
+		ListCell   *lc;
+		int32		max_typmod = -1;
+
+		if (subs == NIL)
+			return -1;
+		foreach(lc, subs)
+		{
+			Plan	   *sub = (Plan *) lfirst(lc);
+			int32		t;
+
+			tle = get_tle_by_resno(sub->targetlist, var->varattno);
+			if (tle == NULL)
+				return -1;
+			if (TdsIsNullConst((Node *) tle->expr))
+				continue;
+			t = TdsVarcharTypmodWalk(sub, (Node *) tle->expr, depth + 1);
+			if (t <= 0)
+				return -1;
+			if (t > max_typmod)
+				max_typmod = t;
+		}
+		return max_typmod;
+	}
+
+	if (var->varno == OUTER_VAR || var->varno == INNER_VAR)
+		child = (var->varno == OUTER_VAR) ? outerPlan(plan) : innerPlan(plan);
+	else if (IsA(plan, SubqueryScan) && !IS_SPECIAL_VARNO(var->varno))
+		child = ((SubqueryScan *) plan)->subplan;
+	else
+		return -1;
+	if (child == NULL)
+		return -1;
+	tle = get_tle_by_resno(child->targetlist, var->varattno);
+	if (tle == NULL)
+		return -1;
+	return TdsVarcharTypmodWalk(child, (Node *) tle->expr, depth + 1);
+}
+
+/*
+ * TdsMaxArmTypmod - CASE and COALESCE: the longest non-NULL arm. Any arm of
+ * unknown length gives MAX.
+ */
+static int32
+TdsMaxArmTypmod(Plan *plan, List *arms, int depth)
+{
+	ListCell   *lc;
+	int32		max_typmod = -1;
+
+	foreach(lc, arms)
+	{
+		Node	   *arm = (Node *) lfirst(lc);
+		int32		typmod;
+
+		if (arm == NULL || TdsIsNullConst(arm))
+			continue;
+		typmod = TdsVarcharTypmodWalk(plan, arm, depth + 1);
+		if (typmod <= 0)
+			return -1;
+		if (typmod > max_typmod)
+			max_typmod = typmod;
+	}
+	return max_typmod;
+}
+
+/*
+ * TdsConstStringTypmod - a string literal: SQL Server types 'abc' as
+ * varchar(3). After constant folding, CAST('x' AS varchar(max)) cannot be
+ * told apart from a literal and also gets the length of the value.
+ */
+static int32
+TdsConstStringTypmod(Const *constant)
+{
+	Oid			basetype = getBaseType(constant->consttype);
+	Oid			output_func;
+	bool		is_varlena;
+	char	   *literal;
+	int32		typmod;
+
+	if (constant->consttypmod > 0)
+		return constant->consttypmod;
+	if (constant->constisnull ||
+		!(constant->consttype == UNKNOWNOID ||
+		  (TypeCategory(basetype) == TYPCATEGORY_STRING &&
+		   get_typlen(basetype) == -1)))
+		return -1;
+
+	getTypeOutputInfo(constant->consttype, &output_func, &is_varlena);
+	literal = OidOutputFunctionCall(output_func, constant->constvalue);
+	typmod = TdsUtf16Units(literal) + VARHDRSZ;
+	pfree(literal);
+	/* '' is reported as length 1, as in SQL Server */
+	return typmod > VARHDRSZ ? typmod : VARHDRSZ + 1;
+}
+
+/* argument of a CoerceViaIO node */
+#define TdsCoerceViaIOArg(n) ((Node *) ((CoerceViaIO *) (n))->arg)
+
+/*
+ * TdsVarcharTypmodWalk - typmod (declared length + VARHDRSZ) of a string
+ * expression, or -1 if it cannot be derived. Follows OUTER_VAR/INNER_VAR and
+ * SubqueryScan references down the plan to the expression that produces the
+ * column. The recursion depth is bounded.
  */
 static int
 TdsVarcharTypmodWalk(Plan *plan, Node *expr, int depth)
@@ -1235,8 +1678,8 @@ TdsVarcharTypmodWalk(Plan *plan, Node *expr, int depth)
 		else if (IsA(expr, CollateExpr))
 			expr = (Node *) ((CollateExpr *) expr)->arg;
 		else if (IsA(expr, CoerceViaIO) &&
-				 TdsIsVarlenaString(exprType((Node *) ((CoerceViaIO *) expr)->arg)))
-			expr = (Node *) ((CoerceViaIO *) expr)->arg;
+				 TdsIsVarlenaString(exprType(TdsCoerceViaIOArg(expr))))
+			expr = TdsCoerceViaIOArg(expr);
 		else
 			break;
 	}
@@ -1244,331 +1687,141 @@ TdsVarcharTypmodWalk(Plan *plan, Node *expr, int depth)
 		return -1;
 	if (exprTypmod(expr) > 0)
 		return exprTypmod(expr);
-	if (IsA(expr, Aggref) && list_length(((Aggref *) expr)->args) == 1)
+
+	switch (nodeTag(expr))
 	{
-		/* MIN/MAX(string): SQL Server keeps the argument length */
-		Aggref *agg = (Aggref *) expr;
-		char *aname = get_func_name(agg->aggfnoid);
-		int32 t = -1;
-		if (aname != NULL && (strcmp(aname, "max") == 0 || strcmp(aname, "min") == 0))
-		{
-			TargetEntry *ate = (TargetEntry *) linitial(agg->args);
-			if (TdsIsVarlenaString(exprType((Node *) ate->expr)))
-				t = TdsVarcharTypmodWalk(plan, (Node *) ate->expr, depth + 1);
-		}
-		if (aname != NULL)
-			pfree(aname);
-		return t;
-	}
-	if (IsA(expr, NullIfExpr) && list_length(((NullIfExpr *) expr)->args) == 2)
-		return TdsVarcharTypmodWalk(plan, (Node *) linitial(((NullIfExpr *) expr)->args), depth + 1);
-	if (IsA(expr, OpExpr) && TdsIsVarlenaString(((OpExpr *) expr)->opresulttype) &&
-		list_length(((OpExpr *) expr)->args) == 2)
-	{
-		/* string concatenation: len(a) + len(b), > cap becomes MAX */
-		OpExpr *op = (OpExpr *) expr;
-		Node *a = (Node *) linitial(op->args);
-		Node *b = (Node *) lsecond(op->args);
-		int32 ta, tb, len;
-		if (!TdsIsVarlenaString(exprType(a)) || !TdsIsVarlenaString(exprType(b)))
-			return -1;
-		ta = TdsVarcharTypmodWalk(plan, a, depth + 1);
-		tb = TdsVarcharTypmodWalk(plan, b, depth + 1);
-		if (ta <= 0 || tb <= 0)
-			return -1;
-		len = (ta - VARHDRSZ) + (tb - VARHDRSZ);
-		if (len > TdsStringCap(op->opresulttype))
-			return -1;
-		return len + VARHDRSZ;
-	}
-	if (IsA(expr, FuncExpr) && TdsIsVarlenaString(((FuncExpr *) expr)->funcresulttype))
-	{
-		FuncExpr *fe = (FuncExpr *) expr;
-		int32 typmod = TdsGetGenericTypmod(expr);
-		char *fname;
-		Node *arg1;
-		if (typmod > 0)
-			return typmod;
-		if (fe->args == NIL)
-			return -1;
-		fname = get_func_name(fe->funcid);
-		if (fname == NULL)
-			return -1;
-		arg1 = (Node *) linitial(fe->args);
-		if (strcmp(fname, "left") == 0 || strcmp(fname, "right") == 0 ||
-			strcmp(fname, "substring") == 0 || strcmp(fname, "ltrim") == 0 ||
-			strcmp(fname, "rtrim") == 0 || strcmp(fname, "trim") == 0 ||
-			strcmp(fname, "upper") == 0 || strcmp(fname, "lower") == 0 ||
-			strcmp(fname, "reverse") == 0)
-		{
-			/* result never longer than the input string */
-			int32 n = -1;
-			Node *lenarg = NULL;
-			if (!TdsIsVarlenaString(exprType(arg1)))
+		case T_Aggref:
 			{
-				pfree(fname);
-				return -1;
-			}
-			typmod = TdsVarcharTypmodWalk(plan, arg1, depth + 1);
-			/* LEFT/RIGHT(s, n) and SUBSTRING(s, start, n) with constant n: SQL Server uses n */
-			if ((strcmp(fname, "left") == 0 || strcmp(fname, "right") == 0) && list_length(fe->args) == 2)
-				lenarg = (Node *) lsecond(fe->args);
-			else if (strcmp(fname, "substring") == 0 && list_length(fe->args) == 3)
-				lenarg = (Node *) lthird(fe->args);
-			while (lenarg != NULL && IsA(lenarg, RelabelType))
-				lenarg = (Node *) ((RelabelType *) lenarg)->arg;
-			if (lenarg != NULL && IsA(lenarg, Const) && !((Const *) lenarg)->constisnull)
-			{
-				Const *c = (Const *) lenarg;
-				if (c->consttype == INT4OID)
-					n = DatumGetInt32(c->constvalue);
-				else if (c->consttype == INT2OID)
-					n = DatumGetInt16(c->constvalue);
-				else if (c->consttype == INT8OID && DatumGetInt64(c->constvalue) < 8000)
-					n = (int32) DatumGetInt64(c->constvalue);
-			}
-			if (typmod > 0 && n > 0 && n + VARHDRSZ < typmod)
-				typmod = n + VARHDRSZ;
-		}
-		else if (strcmp(fname, "babelfish_concat_wrapper") == 0 ||
-				 strcmp(fname, "babelfish_concat_wrapper_outer") == 0)
-		{
-			/* T-SQL '+' on strings: len(a) + len(b), > cap becomes MAX */
-			ListCell *lc;
-			int32 len = 0;
-			typmod = -1;
-			foreach(lc, fe->args)
-			{
-				Node *a = (Node *) lfirst(lc);
-				int32 ta;
-				if (!TdsIsVarlenaString(exprType(a)))
-				{
-					len = -1;
-					break;
-				}
-				ta = TdsVarcharTypmodWalk(plan, a, depth + 1);
-				if (ta <= 0)
-				{
-					len = -1;
-					break;
-				}
-				len += ta - VARHDRSZ;
-			}
-			if (len >= 0 && len <= TdsStringCap(fe->funcresulttype))
-				typmod = len + VARHDRSZ;
-		}
-		else if ((fe->funcformat == COERCE_IMPLICIT_CAST || fe->funcformat == COERCE_EXPLICIT_CAST) &&
-				 list_length(fe->args) >= 1 && TdsIsVarlenaString(exprType(arg1)) &&
-				 getBaseType(fe->funcresulttype) == TEXTOID)
-		{
-			/* string -> text coercion keeps the length */
-			typmod = TdsVarcharTypmodWalk(plan, arg1, depth + 1);
-		}
-		else if (strcmp(fname, "isnull") == 0 && list_length(fe->args) == 2)
-		{
-			/* ISNULL(a, b): SQL Server types the result as a */
-			typmod = TdsIsVarlenaString(exprType(arg1)) ? TdsVarcharTypmodWalk(plan, arg1, depth + 1) : -1;
-		}
-		else if (strcmp(fname, "format") == 0)
-			typmod = 4000 + VARHDRSZ;	/* nvarchar(4000) */
-		else if (strcmp(fname, "concat") == 0)
-		{
-			/* CONCAT(a, b, ...): sum of string argument lengths, > cap becomes MAX */
-			ListCell *lc;
-			int32 len = 0;
-			List *cargs = fe->args;
-			/* sys.concat(VARIADIC varchar[]): arguments arrive as one ArrayExpr */
-			if (fe->funcvariadic && list_length(cargs) == 1 && IsA(linitial(cargs), ArrayExpr))
-				cargs = ((ArrayExpr *) linitial(cargs))->elements;
-			foreach(lc, cargs)
-			{
-				Node *a = (Node *) lfirst(lc);
-				int32 ta = TdsIsVarlenaString(exprType(a)) ? TdsVarcharTypmodWalk(plan, a, depth + 1) : -1;
-				if (ta <= 0)
-				{
-					len = -1;
-					break;
-				}
-				len += ta - VARHDRSZ;
-			}
-			typmod = (len >= 0 && len <= TdsStringCap(fe->funcresulttype)) ? len + VARHDRSZ : -1;
-		}
-		else if (strcmp(fname, "datename") == 0)
-			typmod = 30 + VARHDRSZ;
-		else if (strcmp(fname, "db_name") == 0 || strcmp(fname, "schema_name") == 0 ||
-				 strcmp(fname, "object_name") == 0 || strcmp(fname, "user_name") == 0 ||
-				 strcmp(fname, "suser_name") == 0 || strcmp(fname, "suser_sname") == 0 ||
-				 strcmp(fname, "host_name") == 0 || strcmp(fname, "app_name") == 0 ||
-				 strcmp(fname, "original_login") == 0 || strcmp(fname, "col_name") == 0 ||
-				 strcmp(fname, "type_name") == 0 || strcmp(fname, "object_schema_name") == 0)
-			typmod = 128 + VARHDRSZ;	/* sysname */
-		else if (strcmp(fname, "replace") == 0 || strcmp(fname, "stuff") == 0)
-		{
-			/* SQL Server: non-MAX input gives varchar(8000)/nvarchar(4000) */
-			if (!TdsIsVarlenaString(exprType(arg1)) ||
-				TdsVarcharTypmodWalk(plan, arg1, depth + 1) <= 0)
-				typmod = -1;
-			else
-				typmod = TdsStringCap(fe->funcresulttype) + VARHDRSZ;
-		}
-		else
-			typmod = -1;
-		pfree(fname);
-		return typmod;
-	}
-	if (IsA(expr, CoalesceExpr))
-	{
-		int32 max_typmod = -1;
-		ListCell *lc;
-		foreach(lc, ((CoalesceExpr *) expr)->args)
-		{
-			int32 typmod;
-			if (TdsIsNullConst((Node *) lfirst(lc)))
-				continue;
-			typmod = TdsVarcharTypmodWalk(plan, (Node *) lfirst(lc), depth + 1);
-			if (typmod <= 0)
-				return -1;		/* unknown arm: cannot bound the length */
-			if (typmod > max_typmod)
-				max_typmod = typmod;
-		}
-		return max_typmod;
-	}
-	if (IsA(expr, CaseExpr))
-	{
-		CaseExpr *cexpr = (CaseExpr *) expr;
-		int32 max_typmod;
-		ListCell *lc;
-		max_typmod = -1;
-		if (cexpr->defresult != NULL && !TdsIsNullConst((Node *) cexpr->defresult))
-		{
-			max_typmod = TdsVarcharTypmodWalk(plan, (Node *) cexpr->defresult, depth + 1);
-			if (max_typmod <= 0)
-				return -1;
-		}
-		foreach(lc, cexpr->args)
-		{
-			CaseWhen *when = (CaseWhen *) lfirst(lc);
-			int32 typmod;
-			if (TdsIsNullConst((Node *) when->result))
-				continue;
-			typmod = TdsVarcharTypmodWalk(plan, (Node *) when->result, depth + 1);
-			if (typmod <= 0)
-				return -1;
-			if (typmod > max_typmod)
-				max_typmod = typmod;
-		}
-		return max_typmod;
-	}
-	if (IsA(expr, Const))
-	{
-		/*
-		 * String literal: SQL Server types 'abc' as varchar(3). Caveat: after constant
-		 * folding CAST('x' AS varchar(max)) is indistinguishable and also gets len('x').
-		 */
-		Const *constant = (Const *) expr;
-		Oid output_func;
-		bool is_varlena;
-		char *literal;
-		int32 typmod;
-		Oid basetype = getBaseType(constant->consttype);
-		if (constant->consttypmod > 0)
-			return constant->consttypmod;
-		if (!constant->constisnull &&
-			(constant->consttype == UNKNOWNOID ||
-			 (TypeCategory(basetype) == TYPCATEGORY_STRING && get_typlen(basetype) == -1)))
-		{
-			getTypeOutputInfo(constant->consttype, &output_func, &is_varlena);
-			literal = OidOutputFunctionCall(output_func, constant->constvalue);
-			typmod = TdsUtf16Units(literal) + VARHDRSZ;
-			pfree(literal);
-			return typmod > VARHDRSZ ? typmod : VARHDRSZ + 1;
-		}
-		return -1;
-	}
-	if (IsA(expr, FuncExpr))
-		return TdsGetGenericTypmod(expr);
-	if (IsA(expr, Var))
-	{
-		Var *var = (Var *) expr;
-		Plan *child = NULL;
-		TargetEntry *tle;
-		if (var->vartypmod > 0)
-			return var->vartypmod;
-		if (plan == NULL)
-			return -1;
-		if (IsA(plan, Append) || IsA(plan, MergeAppend))
-		{
-			/* UNION [ALL]: SQL Server uses the longest branch; any unknown branch -> MAX */
-			List *subs = IsA(plan, Append) ? ((Append *) plan)->appendplans
-										   : ((MergeAppend *) plan)->mergeplans;
-			ListCell *lc;
-			int32 max_typmod = -1;
-			if (subs == NIL || var->varattno <= 0)
-				return -1;
-			foreach(lc, subs)
-			{
-				Plan *sub = (Plan *) lfirst(lc);
-				int32 t;
-				tle = get_tle_by_resno(sub->targetlist, var->varattno);
-				if (tle == NULL)
+				/* MIN/MAX(string): SQL Server keeps the argument length */
+				Aggref	   *agg = (Aggref *) expr;
+				TargetEntry *ate;
+				char	   *aname;
+				bool		minmax;
+
+				if (list_length(agg->args) != 1 ||
+					!TdsIsSystemNamespace(get_func_namespace(agg->aggfnoid)))
 					return -1;
-				if (TdsIsNullConst((Node *) tle->expr))
-					continue;
-				t = TdsVarcharTypmodWalk(sub, (Node *) tle->expr, depth + 1);
-				if (t <= 0)
+				aname = get_func_name(agg->aggfnoid);
+				minmax = aname != NULL &&
+					(strcmp(aname, "max") == 0 || strcmp(aname, "min") == 0);
+				if (aname != NULL)
+					pfree(aname);
+				if (!minmax)
 					return -1;
-				if (t > max_typmod)
-					max_typmod = t;
+				ate = (TargetEntry *) linitial(agg->args);
+				if (!TdsIsVarlenaString(exprType((Node *) ate->expr)))
+					return -1;
+				return TdsVarcharTypmodWalk(plan, (Node *) ate->expr,
+											depth + 1);
 			}
-			return max_typmod;
-		}
-		if (var->varno == OUTER_VAR || var->varno == INNER_VAR)
-		{
-			child = (var->varno == OUTER_VAR) ? outerPlan(plan) : innerPlan(plan);
-		}
-		else if (IsA(plan, SubqueryScan) && !IS_SPECIAL_VARNO(var->varno))
-			child = ((SubqueryScan *) plan)->subplan;
-		else
+		case T_NullIfExpr:
+			{
+				/* NULLIF(a, b) is typed as a */
+				NullIfExpr *nullif = (NullIfExpr *) expr;
+
+				if (list_length(nullif->args) != 2)
+					return -1;
+				return TdsVarcharTypmodWalk(plan,
+											(Node *) linitial(nullif->args),
+											depth + 1);
+			}
+		case T_OpExpr:
+			{
+				/* string concatenation: len(a) + len(b), above cap is MAX */
+				OpExpr	   *op = (OpExpr *) expr;
+
+				if (!TdsIsVarlenaString(op->opresulttype) ||
+					list_length(op->args) != 2 ||
+					!TdsIsBuiltinConcatOp(op->opno))
+					return -1;
+				return TdsSumStringLengths(plan, op->args, op->opresulttype,
+										   depth);
+			}
+		case T_FuncExpr:
+			if (TdsIsVarlenaString(((FuncExpr *) expr)->funcresulttype))
+				return TdsFuncStringTypmod(plan, (FuncExpr *) expr, depth);
+			return TdsGetGenericTypmod(expr);
+		case T_CoalesceExpr:
+			return TdsMaxArmTypmod(plan, ((CoalesceExpr *) expr)->args, depth);
+		case T_CaseExpr:
+			{
+				CaseExpr   *cexpr = (CaseExpr *) expr;
+				List	   *arms = NIL;
+				ListCell   *lc;
+				int32		typmod;
+
+				foreach(lc, cexpr->args)
+					arms = lappend(arms, ((CaseWhen *) lfirst(lc))->result);
+				if (cexpr->defresult != NULL)
+					arms = lappend(arms, cexpr->defresult);
+				typmod = TdsMaxArmTypmod(plan, arms, depth);
+				list_free(arms);
+				return typmod;
+			}
+		case T_Const:
+			return TdsConstStringTypmod((Const *) expr);
+		case T_Var:
+			return TdsVarTypmod(plan, (Var *) expr, depth);
+		default:
 			return -1;
-		if (child == NULL || var->varattno <= 0)
-			return -1;
-		tle = get_tle_by_resno(child->targetlist, var->varattno);
-		if (tle == NULL)
-			return -1;
-		return TdsVarcharTypmodWalk(child, (Node *) tle->expr, depth + 1);
 	}
-	return -1;
 }
 
+/*
+ * TdsGetUdfVarcharTypmod - declared length (as a typmod) of a varchar or
+ * nvarchar result column whose typmod PostgreSQL did not keep, or -1 to keep
+ * the MAX metadata. Only typmods that describe a positive length are
+ * returned.
+ */
 static int
 TdsGetUdfVarcharTypmod(PlannedStmt *plannedstmt, Node *expr)
 {
-	Node *e = expr;
-	int32 typmod;
-	while (e != NULL && (IsA(e, RelabelType) || IsA(e, CoerceToDomain) || IsA(e, CollateExpr)))
-	{
-		if (IsA(e, RelabelType))
-			e = (Node *) ((RelabelType *) e)->arg;
-		else if (IsA(e, CoerceToDomain))
-			e = (Node *) ((CoerceToDomain *) e)->arg;
-		else
-			e = (Node *) ((CollateExpr *) e)->arg;
-	}
-	if (e == NULL)
-		return -1;
-	/* scalar UDF: declared length is stored in pg_proc.probin */
-	if (IsA(e, FuncExpr))
-	{
-		typmod = TdsGetGenericTypmod(e);
-		if (typmod > 0)
-			return typmod;
-	}
+	int32		typmod;
+
 	/*
 	 * Do not use pltsql_resolve_numeric_typmod_from_exp here: it is numeric
-	 * oriented and returns bogus lengths for string aggregates/UNION branches.
+	 * oriented and returns bogus lengths for string aggregates/UNION
+	 * branches.
 	 */
-	typmod = TdsVarcharTypmodWalk(plannedstmt ? plannedstmt->planTree : NULL, e, 0);
-	return typmod > 0 ? typmod : -1;
+	typmod = TdsVarcharTypmodWalk(plannedstmt ? plannedstmt->planTree : NULL,
+								  expr, 0);
+	return typmod > VARHDRSZ ? typmod : -1;
+}
+
+/*
+ * TdsIsMultibyteCollation - true if varchar data in this collation is sent
+ * in a client code page that can use more than one byte per character.
+ * Derived lengths count characters, while varchar(n) is enforced in bytes of
+ * that code page, so no length is derived for such columns.
+ */
+static bool
+TdsIsMultibyteCollation(Oid collation)
+{
+	coll_info_t cinfo = TdsLookupCollationTableCallback(collation);
+	int			enc;
+
+	enc = (cinfo.oid == InvalidOid) ? TdsDefaultClientEncoding : cinfo.enc;
+
+	return pg_encoding_max_length(enc) > 1;
+}
+
+/*
+ * TdsDerivedStringTypmod - derived typmod for a varchar (cap 8000) or
+ * nvarchar (cap 4000) result column, or -1. Only lengths between 1 and the
+ * cap are accepted; anything else keeps the MAX metadata.
+ */
+static int32
+TdsDerivedStringTypmod(PlannedStmt *plannedstmt, Node *expr, int32 cap,
+					   Oid collation, bool is_varchar)
+{
+	int32		typmod;
+
+	if (is_varchar && TdsIsMultibyteCollation(collation))
+		return -1;
+	typmod = TdsGetUdfVarcharTypmod(plannedstmt, expr);
+	if (typmod <= VARHDRSZ || typmod - VARHDRSZ > cap)
+		return -1;
+	return typmod;
 }
 
 static
@@ -1802,9 +2055,10 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 			case TDS_SEND_VARCHAR:
 				if (atttypmod == -1 && tle != NULL)
 				{
-					atttypmod = TdsGetUdfVarcharTypmod(plannedstmt, (Node *) tle->expr);
-					if (atttypmod - VARHDRSZ > 8000)
-						atttypmod = -1;
+					atttypmod = TdsDerivedStringTypmod(plannedstmt,
+													   (Node *) tle->expr,
+													   8000, att->attcollation,
+													   true);
 					col->clipToMaxSize = (atttypmod != -1);
 				}
 
@@ -1822,9 +2076,10 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 			case TDS_SEND_NVARCHAR:
 				if (atttypmod == -1 && tle != NULL)
 				{
-					atttypmod = TdsGetUdfVarcharTypmod(plannedstmt, (Node *) tle->expr);
-					if (atttypmod - VARHDRSZ > 4000)
-						atttypmod = -1;
+					atttypmod = TdsDerivedStringTypmod(plannedstmt,
+													   (Node *) tle->expr,
+													   4000, att->attcollation,
+													   false);
 					col->clipToMaxSize = (atttypmod != -1);
 				}
 

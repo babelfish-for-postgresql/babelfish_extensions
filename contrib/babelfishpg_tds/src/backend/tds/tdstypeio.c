@@ -2764,7 +2764,8 @@ TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 		{
 			if (!col->clipToMaxSize)
 				elog(ERROR, "Number of bytes for the field of varchar(n) exeeds max specified for the field.");
-			actualLen = pg_encoding_mbcliplen(col->encoding, destBuf, actualLen, maxLen);
+			actualLen = pg_encoding_mbcliplen(col->encoding, destBuf,
+											  actualLen, maxLen);
 		}
 
 		if ((rc = TdsPutInt16LE(actualLen)) == 0)
@@ -2960,7 +2961,8 @@ TdsSendTypeNVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 		{
 			/* keep whole UTF-16 units and do not split a surrogate pair */
 			buf.len = maxlen & ~1;
-			if (buf.len >= 2 && (((unsigned char) buf.data[buf.len - 1]) & 0xFC) == 0xD8)
+			if (buf.len >= 2 &&
+				(((unsigned char) buf.data[buf.len - 1]) & 0xFC) == 0xD8)
 				buf.len -= 2;
 		}
 		while (buf.len > 0 && buf.len > col->metaEntry.type2.maxSize)
