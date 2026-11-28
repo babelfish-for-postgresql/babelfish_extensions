@@ -361,18 +361,20 @@ typedef struct PLtsql_expr
 
 	/*
 	 * Set on the query of a cursor that is the target of UPDATE/DELETE ...
-	 * WHERE CURRENT OF. Parse analysis then appends the row identity columns
-	 * (see pltsql_current_of_post_analyze).
+	 * WHERE CURRENT OF, when the cursor is opened. Parse analysis then
+	 * appends the row identity columns (see pltsql_current_of_post_analyze).
+	 * Runtime state: not part of the serialized parse tree.
 	 */
-	bool		cursor_current_of pg_node_attr(equal_ignore);
+	bool		cursor_current_of pg_node_attr(equal_ignore, read_write_ignore, read_as(false));
 
 	/*
 	 * Set by parse analysis of a cursor query that has cursor_current_of:
 	 * true if the row identity columns were actually appended, false if the
 	 * query is not updatable. FETCH and WHERE CURRENT OF only treat the last
-	 * columns of the cursor as row identity when this is true.
+	 * columns of the cursor as row identity when this is true. Runtime state:
+	 * not part of the serialized parse tree.
 	 */
-	bool		cursor_cof_appended pg_node_attr(equal_ignore);
+	bool		cursor_cof_appended pg_node_attr(equal_ignore, read_write_ignore, read_as(false));
 
 	/* function containing this expr (not set until we first parse query) */
 	struct PLtsql_function *func pg_node_attr(read_write_ignore, read_as(NULL));
